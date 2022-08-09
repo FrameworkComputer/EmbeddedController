@@ -21,7 +21,7 @@
 #include "test/drivers/utils.h"
 #include "usbc_ppc.h"
 
-#define SYV682X_ORD DT_DEP_ORD(DT_NODELABEL(syv682x_emul))
+#define SYV682X_NODE DT_NODELABEL(syv682x_emul)
 #define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)
 
 struct ppc_syv682x_fixture {
@@ -43,7 +43,7 @@ static void *syv682x_test_setup(void)
 {
 	static struct ppc_syv682x_fixture fixture;
 
-	fixture.ppc_emul = syv682x_emul_get(SYV682X_ORD);
+	fixture.ppc_emul = EMUL_DT_GET(SYV682X_NODE);
 	fixture.common_data =
 		emul_syv682x_get_i2c_common_data(fixture.ppc_emul);
 	zassume_not_null(fixture.ppc_emul, NULL);

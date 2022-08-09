@@ -28,7 +28,7 @@
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
 #define TCPCI_EMUL_LABEL2 DT_NODELABEL(ps8xxx_emul)
 
-#define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
+#define BATTERY_NODE DT_NODELABEL(battery)
 
 #define GPIO_AC_OK_PATH DT_PATH(named_gpios, acok_od)
 #define GPIO_AC_OK_PIN DT_GPIO_PIN(GPIO_AC_OK_PATH, gpios)
@@ -47,7 +47,7 @@ static void integration_usb_before(void *state)
 	/* Reset vbus to 0mV */
 	/* TODO(b/217610871): Remove redundant test state cleanup */
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
-	const struct emul *battery_emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *battery_emul = EMUL_DT_GET(BATTERY_NODE);
 	struct sbat_emul_bat_data *bat;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
@@ -70,7 +70,6 @@ static void integration_usb_before(void *state)
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul2), NULL);
 
 	/* Battery defaults to charging, so reset to not charging. */
-	battery_emul = sbat_emul_get_ptr(BATTERY_ORD);
 	bat = sbat_emul_get_bat_data(battery_emul);
 	bat->cur = -5;
 

@@ -28,9 +28,7 @@
 #define GPIO_USB_C1_RT_RST_ODL_PATH DT_PATH(named_gpios, usb_c1_rt_rst_odl)
 #define GPIO_USB_C1_RT_RST_ODL_PORT \
 	DT_GPIO_PIN(GPIO_USB_C1_RT_RST_ODL_PATH, gpios)
-#define EMUL_LABEL DT_NODELABEL(usb_c1_bb_retimer_emul)
-
-#define BB_RETIMER_ORD DT_DEP_ORD(EMUL_LABEL)
+#define BB_RETIMER_NODE DT_NODELABEL(usb_c1_bb_retimer_emul)
 
 /** Test is retimer fw update capable function. */
 ZTEST_USER(bb_retimer, test_bb_is_fw_update_capable)
@@ -44,7 +42,7 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_state)
 {
 	struct pd_discovery *disc;
 	uint32_t conn, exp_conn;
-	const struct emul *emul = bb_emul_get(BB_RETIMER_ORD);
+	const struct emul *emul = EMUL_DT_GET(BB_RETIMER_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bb_retimer_get_i2c_common_data(emul);
 	bool ack_required;
@@ -202,10 +200,8 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
 	union tbt_mode_resp_cable cable_resp;
 	struct pd_discovery *disc, *dev_disc;
 	uint32_t conn, exp_conn;
-	const struct emul *emul = bb_emul_get(BB_RETIMER_ORD);
+	const struct emul *emul = EMUL_DT_GET(BB_RETIMER_NODE);
 	bool ack_required;
-
-	emul = bb_emul_get(BB_RETIMER_ORD);
 
 	set_test_runner_tid();
 
@@ -464,13 +460,11 @@ ZTEST_USER(bb_retimer, test_bb_init)
 {
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_LS_EN_PATH, gpios));
-	const struct emul *emul = bb_emul_get(BB_RETIMER_ORD);
+	const struct emul *emul = EMUL_DT_GET(BB_RETIMER_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bb_retimer_get_i2c_common_data(emul);
 
 	zassert_not_null(gpio_dev, "Cannot get GPIO device");
-
-	emul = bb_emul_get(BB_RETIMER_ORD);
 
 	/* Set AP to normal state and wait for chipset task */
 	test_set_chipset_to_s0();

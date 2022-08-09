@@ -84,8 +84,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_partner_pd_completed)
 
 ZTEST(usb_attach_5v_3a_pd_sink, test_battery_is_discharging)
 {
-	const struct emul *emul =
-		sbat_emul_get_ptr(DT_DEP_ORD(DT_NODELABEL(battery)));
+	const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(battery));
 	uint16_t battery_status;
 
 	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
@@ -140,8 +139,7 @@ ZTEST(usb_attach_5v_3a_pd_sink, test_power_info)
 
 ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_battery_discharging)
 {
-	const struct emul *emul =
-		sbat_emul_get_ptr(DT_DEP_ORD(DT_NODELABEL(battery)));
+	const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(battery));
 	uint16_t battery_status;
 
 	disconnect_sink_from_port(fixture->tcpci_emul);

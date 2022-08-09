@@ -18,8 +18,6 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
-
 struct usb_attach_5v_3a_pd_source_rev3_fixture {
 	struct tcpci_partner_data source_5v_3a;
 	struct tcpci_src_emul_data src_ext;

@@ -37,15 +37,6 @@
  */
 
 /**
- * @brief Get pointer to BB retimer emulator using device tree order number.
- *
- * @param ord Device tree order number obtained from DT_DEP_ORD macro
- *
- * @return Pointer to BB retimer emulator
- */
-const struct emul *bb_emul_get(int ord);
-
-/**
  * @brief Set value of given register of BB retimer
  *
  * @param emul Pointer to BB retimer emulator

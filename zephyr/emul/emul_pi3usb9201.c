@@ -158,9 +158,6 @@ static int pi3usb9201_emul_init(const struct emul *emul,
 	const struct pi3usb9201_emul_cfg *cfg = emul->cfg;
 	struct pi3usb9201_emul_data *data = cfg->data;
 
-	data->emul.api = &pi3usb9201_emul_api;
-	data->emul.addr = cfg->addr;
-	data->emul.target = emul;
 	data->i2c = parent;
 	data->cfg = cfg;
 
@@ -180,19 +177,5 @@ static int pi3usb9201_emul_init(const struct emul *emul,
 			    &pi3usb9201_emul_cfg_##n, &pi3usb9201_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(PI3USB9201_EMUL)
-
-#define PI3USB9201_EMUL_CASE(n)  \
-	case DT_INST_DEP_ORD(n): \
-		return pi3usb9201_emul_data_##n.emul.target;
-
-const struct emul *pi3usb9201_emul_get(int ord)
-{
-	switch (ord) {
-		DT_INST_FOREACH_STATUS_OKAY(PI3USB9201_EMUL_CASE)
-
-	default:
-		return NULL;
-	}
-}
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

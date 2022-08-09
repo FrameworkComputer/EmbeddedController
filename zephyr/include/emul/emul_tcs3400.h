@@ -75,15 +75,6 @@ enum tcs_emul_axis {
 #define TCS_EMUL_REG_COUNT (TCS_EMUL_LAST_REG - TCS_EMUL_FIRST_REG + 1)
 
 /**
- * @brief Get pointer to TCS3400 emulator using device tree order number.
- *
- * @param ord Device tree order number obtained from DT_DEP_ORD macro
- *
- * @return Pointer to TCS3400 emulator
- */
-const struct emul *tcs_emul_get(int ord);
-
-/**
  * @brief Set value of given register of TCS3400
  *
  * @param emul Pointer to TCS3400 emulator

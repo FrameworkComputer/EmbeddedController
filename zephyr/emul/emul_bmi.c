@@ -1034,13 +1034,9 @@ static int bmi_emul_handle_read(const struct emul *emul, int reg, uint8_t *buf,
  */
 static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 {
-	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct bmi_emul_data *data = emul->data;
 
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = cfg;
 	i2c_common_emul_init(&data->common);
 
 	switch (data->type) {
@@ -1088,21 +1084,6 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 			    &bmi_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL)
-
-#define BMI_EMUL_CASE(n)         \
-	case DT_INST_DEP_ORD(n): \
-		return bmi_emul_data_##n.common.emul.target;
-
-/** Check description in emul_bmi.h */
-const struct emul *bmi_emul_get(int ord)
-{
-	switch (ord) {
-		DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL_CASE)
-
-	default:
-		return NULL;
-	}
-}
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
 

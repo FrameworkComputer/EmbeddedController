@@ -465,13 +465,9 @@ static int ln9310_emul_access_reg(const struct emul *emul, int reg, int bytes,
 static int emul_ln9310_init(const struct emul *emul,
 			    const struct device *parent)
 {
-	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct ln9310_emul_data *data = emul->data;
 
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = cfg;
 	i2c_common_emul_init(&data->common);
 
 	singleton = emul;

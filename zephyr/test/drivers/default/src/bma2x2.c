@@ -19,9 +19,7 @@
 /** How accurate comparision of vectors should be. */
 #define V_EPS 8
 
-#define EMUL_NODE DT_NODELABEL(bma_emul)
-
-#define BMA_ORD DT_DEP_ORD(EMUL_NODE)
+#define BMA_NODE DT_NODELABEL(bma_emul)
 
 /** Mutex for test motion sensor  */
 static mutex_t sensor_mutex;
@@ -52,7 +50,7 @@ static struct motion_sensor_t ms = {
 	.mutex = &sensor_mutex,
 	.drv_data = &acc_data,
 	.port = I2C_PORT_NODELABEL(i2c0),
-	.i2c_spi_addr_flags = DT_REG_ADDR(EMUL_NODE),
+	.i2c_spi_addr_flags = DT_REG_ADDR(BMA_NODE),
 	.rot_standard_ref = NULL,
 	.current_range = 0,
 };
@@ -156,14 +154,12 @@ static int emul_read_reset(const struct emul *emul, int reg, uint8_t *buf,
  */
 ZTEST_USER(bma2x2, test_bma_get_offset)
 {
-	const struct emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMA_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	int16_t ret_offset[3];
 	int16_t exp_offset[3];
 	int16_t temp;
-
-	emul = bma_emul_get(BMA_ORD);
 
 	/* Test fail on each axis */
 	i2c_common_emul_set_read_fail_reg(common_data,
@@ -213,14 +209,12 @@ ZTEST_USER(bma2x2, test_bma_get_offset)
  */
 ZTEST_USER(bma2x2, test_bma_set_offset)
 {
-	const struct emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMA_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	int16_t ret_offset[3];
 	int16_t exp_offset[3];
 	int16_t temp = 0;
-
-	emul = bma_emul_get(BMA_ORD);
 
 	/* Test fail on each axis */
 	i2c_common_emul_set_write_fail_reg(common_data,
@@ -316,12 +310,10 @@ static void check_set_range_f(const struct emul *emul, int range, int rnd,
 /** Test set range with and without I2C errors. */
 ZTEST_USER(bma2x2, test_bma_set_range)
 {
-	const struct emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMA_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	int start_range;
-
-	emul = bma_emul_get(BMA_ORD);
 
 	/* Setup starting range, shouldn't be changed on error */
 	start_range = 2;
@@ -396,11 +388,9 @@ ZTEST_USER(bma2x2, test_bma_set_range)
 ZTEST_USER(bma2x2, test_bma_init)
 {
 	struct reset_func_data reset_func_data;
-	const struct emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMA_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
-
-	emul = bma_emul_get(BMA_ORD);
 
 	/* Setup emulator fail read function */
 	i2c_common_emul_set_read_fail_reg(common_data, BMA2x2_CHIP_ID_ADDR);
@@ -532,13 +522,11 @@ static void check_set_rate_f(const struct emul *emul, int rate, int rnd,
 /** Test set and get rate with and without I2C errors. */
 ZTEST_USER(bma2x2, test_bma_rate)
 {
-	const struct emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMA_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	uint8_t reg_rate;
 	int drv_rate;
-
-	emul = bma_emul_get(BMA_ORD);
 
 	/* Test setting rate with rounding down */
 	check_set_rate(emul, 1, 0, 7812);
@@ -644,14 +632,12 @@ ZTEST_USER(bma2x2, test_bma_rate)
 /** Test read with and without I2C errors. */
 ZTEST_USER(bma2x2, test_bma_read)
 {
-	const struct emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMA_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	int16_t ret_acc[3];
 	int16_t exp_acc[3];
 	intv3_t ret_acc_v;
-
-	emul = bma_emul_get(BMA_ORD);
 
 	/* Set offset 0 to simplify test */
 	bma_emul_set_off(emul, BMA_EMUL_AXIS_X, 0);
@@ -789,7 +775,7 @@ static int emul_write_calib_func(const struct emul *emul, int reg, uint8_t val,
 ZTEST_USER(bma2x2, test_bma_perform_calib)
 {
 	struct calib_func_data func_data;
-	const struct emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMA_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	int16_t start_off[3];

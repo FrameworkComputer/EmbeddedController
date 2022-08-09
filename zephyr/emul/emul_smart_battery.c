@@ -783,13 +783,9 @@ static int sbat_emul_access_reg(const struct emul *emul, int reg, int bytes,
  */
 static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 {
-	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct sbat_emul_data *data = emul->data;
 
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = emul->cfg;
 
 	i2c_common_emul_init(&data->common);
 
@@ -880,25 +876,15 @@ DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL)
 	case DT_INST_DEP_ORD(n):   \
 		return sbat_emul_data_##n.common.emul.target;
 
-/** Check description in emul_smart_battery.h */
-const struct emul *sbat_emul_get_ptr(int ord)
+static void emul_smart_battery_reset_capacity(const struct emul *emul)
 {
-	switch (ord) {
-		DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL_CASE)
-
-	default:
-		return NULL;
-	}
-}
-
-static void emul_smart_battery_reset_capacity(struct sbat_emul_data *bat_data)
-{
+	struct sbat_emul_data *bat_data = emul->data;
 	bat_data->bat.cap = bat_data->bat.default_cap;
 	bat_data->bat.full_cap = bat_data->bat.default_full_cap;
 }
 
 #define SBAT_EMUL_RESET_RULE_AFTER(n) \
-	emul_smart_battery_reset_capacity(&sbat_emul_data_##n)
+	emul_smart_battery_reset_capacity(EMUL_DT_GET(DT_DRV_INST(n)))
 
 static void emul_sbat_reset(const struct ztest_unit_test *test, void *data)
 {

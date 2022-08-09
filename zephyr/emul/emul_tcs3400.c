@@ -576,14 +576,9 @@ static int tcs_emul_write_byte(const struct emul *emul, int reg, uint8_t val,
  */
 static int tcs_emul_init(const struct emul *emul, const struct device *parent)
 {
-	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct tcs_emul_data *data = emul->data;
 
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = cfg;
-	i2c_common_emul_init(&data->common);
 
 	i2c_common_emul_init(&data->common);
 
@@ -626,24 +621,10 @@ static int tcs_emul_init(const struct emul *emul, const struct device *parent)
 
 DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL)
 
-#define TCS3400_EMUL_CASE(n)     \
-	case DT_INST_DEP_ORD(n): \
-		return tcs_emul_data_##n.common.emul.target;
-
-/** Check description in emul_tcs3400.h */
-const struct emul *tcs_emul_get(int ord)
-{
-	switch (ord) {
-		DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL_CASE)
-
-	default:
-		return NULL;
-	}
-}
-
 #ifdef CONFIG_ZTEST_NEW_API
 #define TCS3400_EMUL_RESET_RULE_BEFORE(n) \
-	tcs_emul_reset((tcs_emul_data_##n.common.emul.target));
+	tcs_emul_reset(EMUL_DT_GET(DT_DRV_INST(n)));
+
 static void emul_tcs3400_reset_rule_before(const struct ztest_unit_test *test,
 					   void *data)
 {

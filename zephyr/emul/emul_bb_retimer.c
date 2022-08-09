@@ -296,13 +296,9 @@ static int bb_emul_access_reg(const struct emul *emul, int reg, int bytes,
  */
 static int bb_emul_init(const struct emul *emul, const struct device *parent)
 {
-	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct bb_emul_data *data = emul->data;
 
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = cfg;
 
 	i2c_common_emul_init(&data->common);
 
@@ -337,21 +333,6 @@ static int bb_emul_init(const struct emul *emul, const struct device *parent)
 			    &bb_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(BB_RETIMER_EMUL)
-
-#define BB_RETIMER_EMUL_CASE(n)  \
-	case DT_INST_DEP_ORD(n): \
-		return bb_emul_data_##n.common.emul.target;
-
-/** Check description in emul_bb_emulator.h */
-const struct emul *bb_emul_get(int ord)
-{
-	switch (ord) {
-		DT_INST_FOREACH_STATUS_OKAY(BB_RETIMER_EMUL_CASE)
-
-	default:
-		return NULL;
-	}
-}
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
 

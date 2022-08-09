@@ -21,9 +21,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test_drivers_bc12, LOG_LEVEL_DBG);
 
-#define EMUL_LABEL DT_NODELABEL(pi3usb9201_emul)
-
-#define PI3USB9201_ORD DT_DEP_ORD(EMUL_LABEL)
+#define EMUL_NODE DT_NODELABEL(pi3usb9201_emul)
 
 /* Control_1 register bit definitions */
 #define PI3USB9201_REG_CTRL_1_INT_MASK BIT(0)
@@ -96,7 +94,7 @@ static const struct bc12_status bc12_chg_limits[] = {
 
 static void test_bc12_pi3usb9201_host_mode(void)
 {
-	const struct emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
+	const struct emul *emul = EMUL_DT_GET(EMUL_NODE);
 	uint8_t a, b;
 
 	/*
@@ -143,7 +141,7 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 				 enum charge_supplier supplier,
 				 int current_limit)
 {
-	const struct emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
+	const struct emul *emul = EMUL_DT_GET(EMUL_NODE);
 	uint8_t a, b;
 	int port, voltage;
 
@@ -230,7 +228,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 {
 	const struct device *batt_pres_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
-	const struct emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
+	const struct emul *emul = EMUL_DT_GET(EMUL_NODE);
 	uint8_t a, b;
 
 	/* Pretend we have battery and AC so charging works normally. */

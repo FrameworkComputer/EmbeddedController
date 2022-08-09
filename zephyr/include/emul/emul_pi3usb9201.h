@@ -22,15 +22,6 @@
 #define PI3USB9201_REG_HOST_STS 0x3
 
 /**
- * @brief Get pointer to pi3usb9201 emulator using device tree order number.
- *
- * @param ord Device tree order number obtained from DT_DEP_ORD macro
- *
- * @return Pointer to pi3usb9201 emulator
- */
-const struct emul *pi3usb9201_emul_get(int ord);
-
-/**
  * @brief Set value of given register of pi3usb9201
  *
  * @param emul Pointer to pi3usb9201 emulator

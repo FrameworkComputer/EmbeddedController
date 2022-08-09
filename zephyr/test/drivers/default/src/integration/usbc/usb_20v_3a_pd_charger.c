@@ -13,7 +13,7 @@
 #include "test/drivers/utils.h"
 #include "usb_pd.h"
 
-#define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
+#define BATTERY_NODE DT_NODELABEL(battery)
 
 struct usb_attach_20v_3a_pd_charger_fixture {
 	struct tcpci_partner_data charger_20v;
@@ -87,7 +87,7 @@ ZTEST_SUITE(usb_attach_20v_3a_pd_charger, drivers_predicate_post_main,
 
 ZTEST(usb_attach_20v_3a_pd_charger, test_battery_is_charging)
 {
-	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	uint16_t battery_status;
 
 	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
@@ -155,7 +155,7 @@ ZTEST(usb_attach_20v_3a_pd_charger, test_power_info)
 
 ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_battery_not_charging)
 {
-	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	uint16_t battery_status;
 
 	disconnect_charger_from_port(fixture);

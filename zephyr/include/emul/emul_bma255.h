@@ -59,15 +59,6 @@
 #define BMA_EMUL_1G BIT(10)
 
 /**
- * @brief Get pointer to BMA255 emulator using device tree order number.
- *
- * @param ord Device tree order number obtained from DT_DEP_ORD macro
- *
- * @return Pointer to BMA255 emulator
- */
-const struct emul *bma_emul_get(int ord);
-
-/**
  * @brief Set value of given register of BMA255
  *
  * @param emul Pointer to BMA255 emulator

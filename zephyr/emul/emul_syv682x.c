@@ -209,8 +209,10 @@ static int syv682x_emul_read_byte(const struct emul *emul, int reg,
 	return ret;
 }
 
-static void syv682x_emul_reset(struct syv682x_emul_data *data)
+static void syv682x_emul_reset(const struct emul *emul)
 {
+	struct syv682x_emul_data *data = emul->data;
+
 	memset(data->reg, 0, sizeof(data->reg));
 
 	syv682x_emul_set_alert(data, false);
@@ -235,18 +237,12 @@ static void syv682x_emul_reset(struct syv682x_emul_data *data)
 static int syv682x_emul_init(const struct emul *emul,
 			     const struct device *parent)
 {
-	const struct syv682x_emul_cfg *cfg = emul->cfg;
 	struct syv682x_emul_data *data = emul->data;
 
-	data->cfg = cfg;
-
-	data->common.emul.addr = cfg->common.addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = &cfg->common;
 	i2c_common_emul_init(&data->common);
 
-	syv682x_emul_reset(data);
+	syv682x_emul_reset(emul);
 	return 0;
 }
 
@@ -277,23 +273,11 @@ static int syv682x_emul_init(const struct emul *emul,
 
 DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL)
 
-#define SYV682X_EMUL_CASE(n)     \
-	case DT_INST_DEP_ORD(n): \
-		return syv682x_emul_data_##n.common.emul.target;
-
-const struct emul *syv682x_emul_get(int ord)
-{
-	switch (ord) {
-		DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL_CASE)
-
-	default:
-		return NULL;
-	}
-}
-
 #ifdef CONFIG_ZTEST_NEW_API
+
 #define SYV682X_EMUL_RESET_RULE_BEFORE(n) \
-	syv682x_emul_reset(&syv682x_emul_data_##n);
+	syv682x_emul_reset(EMUL_DT_GET(DT_DRV_INST(n)));
+
 static void emul_syv682x_reset_before(const struct ztest_unit_test *test,
 				      void *data)
 {

@@ -958,13 +958,9 @@ static int bma_emul_write_byte(const struct emul *emul, int reg, uint8_t val,
  */
 static int bma_emul_init(const struct emul *emul, const struct device *parent)
 {
-	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct bma_emul_data *data = emul->data;
 
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = cfg;
 
 	i2c_common_emul_init(&data->common);
 
@@ -1013,21 +1009,6 @@ static int bma_emul_init(const struct emul *emul, const struct device *parent)
 			    &bma_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL)
-
-#define BMA255_EMUL_CASE(n)      \
-	case DT_INST_DEP_ORD(n): \
-		return bma_emul_data_##n.common.emul.target;
-
-/** Check description in emul_bma255.h */
-const struct emul *bma_emul_get(int ord)
-{
-	switch (ord) {
-		DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL_CASE)
-
-	default:
-		return NULL;
-	}
-}
 
 struct i2c_common_emul_data *
 emul_bma_get_i2c_common_data(const struct emul *emul)

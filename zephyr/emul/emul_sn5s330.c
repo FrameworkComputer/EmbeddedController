@@ -316,15 +316,11 @@ void sn5s330_emul_reset(const struct emul *emul)
 static int emul_sn5s330_init(const struct emul *emul,
 			     const struct device *parent)
 {
-	const struct sn5s330_emul_cfg *cfg = emul->cfg;
 	struct sn5s330_emul_data *data = emul->data;
 
 	sn5s330_emul_deassert_interrupt(emul);
 
-	data->common.emul.addr = cfg->common.addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = &cfg->common;
 	i2c_common_emul_init(&data->common);
 
 	return 0;

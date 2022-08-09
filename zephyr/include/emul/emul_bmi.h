@@ -221,15 +221,6 @@ const struct bmi_emul_type_data *get_bmi160_emul_type_data(void);
 const struct bmi_emul_type_data *get_bmi260_emul_type_data(void);
 
 /**
- * @brief Get pointer to BMI emulator using device tree order number.
- *
- * @param ord Device tree order number obtained from DT_DEP_ORD macro
- *
- * @return Pointer to BMI emulator
- */
-const struct emul *bmi_emul_get(int ord);
-
-/**
  * @brief Set value of given register of BMI
  *
  * @param emul Pointer to BMI emulator

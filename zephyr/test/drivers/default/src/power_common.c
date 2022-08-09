@@ -27,7 +27,7 @@
 #include "battery_smart.h"
 #include "test/drivers/utils.h"
 
-#define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
+#define BATTERY_NODE DT_NODELABEL(battery)
 
 /* Description of all power states with chipset state masks */
 static struct {
@@ -296,7 +296,7 @@ ZTEST(power_common, test_power_hc_smart_discharge)
 	struct ec_params_smart_discharge params;
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
-	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_smart_battery_get_i2c_common_data(emul);
 	int hours_to_zero;
@@ -304,8 +304,6 @@ ZTEST(power_common, test_power_hc_smart_discharge)
 	int cutoff_drate;
 	int stayup_cap;
 	int cutoff_cap;
-
-	emul = sbat_emul_get_ptr(BATTERY_ORD);
 
 	/* Set up host command parameters */
 	params.flags = EC_SMART_DISCHARGE_FLAGS_SET;
@@ -394,14 +392,13 @@ ZTEST(power_common, test_power_board_system_is_idle)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
 	struct sbat_emul_bat_data *bat;
-	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_smart_battery_get_i2c_common_data(emul);
 	uint64_t last_shutdown_time = 0;
 	uint64_t target;
 	uint64_t now;
 
-	emul = sbat_emul_get_ptr(BATTERY_ORD);
 	bat = sbat_emul_get_bat_data(emul);
 
 	/* Set up host command parameters */
@@ -464,10 +461,9 @@ static void setup_hibernation_delay(void *state)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
 	struct sbat_emul_bat_data *bat;
-	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	ARG_UNUSED(state);
 
-	emul = sbat_emul_get_ptr(BATTERY_ORD);
 	bat = sbat_emul_get_bat_data(emul);
 
 	/* Setup smart discharge zone and set capacity to safe zone */

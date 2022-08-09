@@ -104,15 +104,6 @@
 #define SYV682X_CONTROL_4_NONE 0
 
 /**
- * @brief Get pointer to SYV682x emulator using device tree order number.
- *
- * @param ord Device tree order number obtained from DT_DEP_ORD macro
- *
- * @return Pointer to smart battery emulator
- */
-const struct emul *syv682x_emul_get(int ord);
-
-/**
  * @brief Set the underlying interrupt conditions affecting the SYV682x
  *
  * @param emul      SYV682x emulator

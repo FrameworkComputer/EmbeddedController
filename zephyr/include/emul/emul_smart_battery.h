@@ -118,15 +118,6 @@ struct sbat_emul_bat_data {
 };
 
 /**
- * @brief Get pointer to smart battery emulator using device tree order number.
- *
- * @param ord Device tree order number obtained from DT_DEP_ORD macro
- *
- * @return Pointer to smart battery emulator
- */
-const struct emul *sbat_emul_get_ptr(int ord);
-
-/**
  * @brief Function which allows to get properties of emulated smart battery
  *
  * @param emul Pointer to smart battery emulator

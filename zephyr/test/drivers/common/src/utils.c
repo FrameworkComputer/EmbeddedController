@@ -23,14 +23,14 @@
 #include "test/drivers/stubs.h"
 #include "test/drivers/utils.h"
 
-#define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
+#define BATTERY_NODE DT_NODELABEL(battery)
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
 void test_set_chipset_to_s0(void)
 {
 	struct sbat_emul_bat_data *bat;
-	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	const struct device *battery_gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
 

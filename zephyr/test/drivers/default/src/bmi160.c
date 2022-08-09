@@ -17,7 +17,7 @@
 #include "driver/accelgyro_bmi_common.h"
 #include "test/drivers/test_state.h"
 
-#define BMI_ORD DT_DEP_ORD(DT_NODELABEL(accel_bmi160))
+#define BMI_NODE DT_NODELABEL(accel_bmi160)
 #define BMI_ACC_SENSOR_ID SENSOR_ID(DT_NODELABEL(ms_bmi160_accel))
 #define BMI_GYR_SENSOR_ID SENSOR_ID(DT_NODELABEL(ms_bmi160_gyro))
 #define BMI_INT_EVENT \
@@ -137,7 +137,7 @@ static void compare_int3v_f(intv3_t exp_v, intv3_t v, int eps, int line)
 ZTEST_USER(bmi160, test_bmi_acc_get_offset)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int16_t ret[3];
@@ -145,7 +145,6 @@ ZTEST_USER(bmi160, test_bmi_acc_get_offset)
 	intv3_t exp_v;
 	int16_t temp;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Set emulator offset */
@@ -195,7 +194,7 @@ ZTEST_USER(bmi160, test_bmi_acc_get_offset)
 ZTEST_USER(bmi160, test_bmi_gyr_get_offset)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int16_t ret[3];
@@ -203,7 +202,6 @@ ZTEST_USER(bmi160, test_bmi_gyr_get_offset)
 	intv3_t exp_v;
 	int16_t temp;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Do not fail on read */
@@ -263,7 +261,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_get_offset)
 ZTEST_USER(bmi160, test_bmi_acc_set_offset)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int16_t input_v[3];
@@ -271,7 +269,6 @@ ZTEST_USER(bmi160, test_bmi_acc_set_offset)
 	intv3_t ret_v;
 	intv3_t exp_v;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Test fail on OFFSET EN GYR98 register read and write */
@@ -348,7 +345,7 @@ ZTEST_USER(bmi160, test_bmi_acc_set_offset)
 ZTEST_USER(bmi160, test_bmi_gyr_set_offset)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int16_t input_v[3];
@@ -356,7 +353,6 @@ ZTEST_USER(bmi160, test_bmi_gyr_set_offset)
 	intv3_t ret_v;
 	intv3_t exp_v;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Test fail on OFFSET EN GYR98 register read and write */
@@ -471,12 +467,11 @@ static void check_set_acc_range_f(const struct emul *emul,
 ZTEST_USER(bmi160, test_bmi_acc_set_range)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int start_range;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Setup starting range, shouldn't be changed on error */
@@ -582,12 +577,11 @@ static void check_set_gyr_range_f(const struct emul *emul,
 ZTEST_USER(bmi160, test_bmi_gyr_set_range)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int start_range;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Setup starting range, shouldn't be changed on error */
@@ -730,14 +724,13 @@ static void check_set_acc_rate_f(const struct emul *emul,
 ZTEST_USER(bmi160, test_bmi_acc_rate)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	uint8_t reg_rate;
 	int pmu_status;
 	int drv_rate;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Test setting rate with rounding down */
@@ -923,14 +916,13 @@ static void check_set_gyr_rate_f(const struct emul *emul,
 ZTEST_USER(bmi160, test_bmi_gyr_rate)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	uint8_t reg_rate;
 	int pmu_status;
 	int drv_rate;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Test setting rate with rounding down */
@@ -1084,13 +1076,12 @@ ZTEST_USER(bmi160, test_bmi_scale)
 ZTEST_USER(bmi160, test_bmi_read_temp)
 {
 	struct motion_sensor_t *ms_acc, *ms_gyr;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int ret_temp;
 	int exp_temp;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
 	ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
 
@@ -1166,7 +1157,7 @@ ZTEST_USER(bmi160, test_bmi_read_temp)
 ZTEST_USER(bmi160, test_bmi_acc_read)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	intv3_t ret_v;
@@ -1175,7 +1166,6 @@ ZTEST_USER(bmi160, test_bmi_acc_read)
 			     MOTION_SENSE_DEFAULT_SCALE,
 			     MOTION_SENSE_DEFAULT_SCALE };
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Set offset 0 to simplify test */
@@ -1278,7 +1268,7 @@ ZTEST_USER(bmi160, test_bmi_acc_read)
 ZTEST_USER(bmi160, test_bmi_gyr_read)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	intv3_t ret_v;
@@ -1287,7 +1277,6 @@ ZTEST_USER(bmi160, test_bmi_gyr_read)
 			     MOTION_SENSE_DEFAULT_SCALE,
 			     MOTION_SENSE_DEFAULT_SCALE };
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Set offset 0 to simplify test */
@@ -1407,7 +1396,7 @@ static int emul_nrdy(const struct emul *emul, int reg, uint8_t *val, int byte,
 ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	uint8_t pmu_status;
@@ -1420,7 +1409,6 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 			   { 0, FLOAT_TO_FP(1), 0 },
 			   { 0, 0, FLOAT_TO_FP(-1) } };
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Enable sensors */
@@ -1538,7 +1526,7 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 ZTEST_USER(bmi160, test_bmi_gyr_perform_calib)
 {
 	struct motion_sensor_t *ms;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	uint8_t pmu_status;
@@ -1548,7 +1536,6 @@ ZTEST_USER(bmi160, test_bmi_gyr_perform_calib)
 	int range;
 	int rate;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Enable sensors */
@@ -1630,9 +1617,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_perform_calib)
 ZTEST_USER(bmi160, test_bmi_init)
 {
 	struct motion_sensor_t *ms_acc, *ms_gyr;
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
 	ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
 
@@ -1767,14 +1752,13 @@ ZTEST_USER(bmi160, test_bmi_acc_fifo)
 	struct motion_sensor_t *ms, *ms_gyr;
 	struct fifo_func_data func_data;
 	struct bmi_emul_frame f[3];
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int gyr_range = 125;
 	int acc_range = 2;
 	int event;
 
-	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 	ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
 
@@ -1915,7 +1899,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_fifo)
 ZTEST_USER(bmi160, test_bmi_sec_raw_read8)
 {
 	struct motion_sensor_t *ms = &motion_sensors[BMI_ACC_SENSOR_ID];
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	uint8_t expected_read_value = 0xAA;
 	uint8_t requested_reg_addr = 0x55;
 	uint8_t actual_reg_addr;
@@ -1947,7 +1931,7 @@ ZTEST_USER(bmi160, test_bmi_sec_raw_read8)
 ZTEST_USER(bmi160, test_bmi_sec_raw_write8)
 {
 	struct motion_sensor_t *ms = &motion_sensors[BMI_ACC_SENSOR_ID];
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	uint8_t expected_write_value = 0xAB;
 	uint8_t requested_reg_addr = 0x56;
 	uint8_t actual_reg_addr;
@@ -2014,7 +1998,7 @@ ZTEST_USER(bmi160, test_bmi_perform_calib_invalid_type)
 /** Test reading the onboard temperature sensor */
 ZTEST_USER(bmi160, test_bmi_temp_sensor)
 {
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	int ret;
 
 	/* Part 1:
@@ -2082,7 +2066,7 @@ FAKE_VALUE_FUNC(int, bmi_init_chip_id_mock_write_fn, const struct emul *, int,
 ZTEST_USER(bmi160, test_bmi_init_chip_id)
 {
 	struct motion_sensor_t *ms = &motion_sensors[BMI_ACC_SENSOR_ID];
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	int ret;
@@ -2138,7 +2122,7 @@ ZTEST_USER(bmi160, test_bmi_init_chip_id)
 static void bmi160_before(void *fixture)
 {
 	ARG_UNUSED(fixture);
-	const struct emul *emul = bmi_emul_get(BMI_ORD);
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
 	struct motion_sensor_t *acc_ms;

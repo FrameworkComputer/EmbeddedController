@@ -19,14 +19,13 @@
 const struct device *isl923x_emul_get_parent(const struct emul *emulator);
 
 /**
- * @brief Get the I2C emulator struct
- *
- * This is generally coupled with calls to i2c_common_emul_* functions.
+ * @brief Get pointer to emulator i2c_common_emul_cfg
  *
  * @param emulator The emulator to look-up
- * @return Pointer to the I2C emulator struct
+ * @return Pointer to the i2c_common_emul_cfg struct
  */
-struct i2c_emul *isl923x_emul_get_i2c_emul(const struct emul *emulator);
+const struct i2c_common_emul_cfg *
+isl923x_emul_get_cfg(const struct emul *emulator);
 
 /**
  * @brief Reset all registers

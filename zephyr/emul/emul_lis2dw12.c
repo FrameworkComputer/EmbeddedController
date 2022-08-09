@@ -239,14 +239,9 @@ static int lis2dw12_emul_write_byte(const struct emul *emul, int reg,
 static int emul_lis2dw12_init(const struct emul *emul,
 			      const struct device *parent)
 {
-	const struct lis2dw12_emul_cfg *lis2dw12_cfg = emul->cfg;
-	const struct i2c_common_emul_cfg *cfg = &(lis2dw12_cfg->common);
 	struct lis2dw12_emul_data *data = emul->data;
 
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.target = emul;
 	data->common.i2c = parent;
-	data->common.cfg = cfg;
 	i2c_common_emul_init(&data->common);
 
 	return 0;
