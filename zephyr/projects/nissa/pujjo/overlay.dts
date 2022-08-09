@@ -87,19 +87,9 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_interrupt";
 		};
-		int_usb_c1: usb_c1 {
-			irq-pin = <&gpio_sb_1>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_interrupt";
-		};
 	};
 
 	named-gpios {
-		gpio_sb_1: sb_1 {
-			gpios = <&gpio0 2 GPIO_PULL_UP>;
-			no-auto-init;
-		};
-
 		gpio_sb_2: sb_2 {
 			gpios = <&gpiod 4 GPIO_OUTPUT>;
 			no-auto-init;
@@ -126,12 +116,6 @@
 	 * Aliases used for sub-board GPIOs.
 	 */
 	aliases {
-		/*
-		 * Input GPIO when used with type-C port 1
-		 * Output when used with HDMI sub-board
-		 */
-		gpio-usb-c1-int-odl = &gpio_sb_1;
-		gpio-en-rails-odl = &gpio_sb_1;
 		/*
 		 * Sub-board with type A USB, enable.
 		 */

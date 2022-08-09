@@ -71,9 +71,11 @@ static void hdmi_hpd_interrupt(const struct device *device,
 
 void nissa_configure_hdmi_rails(void)
 {
+#if DT_NODE_EXISTS(GPIO_DT_FROM_ALIAS(gpio_en_rails_odl))
 	gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_rails_odl),
 			      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |
 				      GPIO_PULL_UP | GPIO_ACTIVE_LOW);
+#endif
 }
 
 void nissa_configure_hdmi_vcc(void)
@@ -270,8 +272,10 @@ static void board_init(void)
 	 * Enable USB-C interrupts.
 	 */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0));
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	if (board_get_usb_pd_port_count() == 2)
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
