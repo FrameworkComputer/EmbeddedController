@@ -29,7 +29,13 @@ SPECIAL_BOARDS = ["herobrine"]
 
 def run_twister(platform_ec, code_coverage=False, extra_args=None):
     """Build the tests using twister."""
-    cmd = [platform_ec / "twister", "--outdir", platform_ec / "twister-out"]
+    cmd = [
+        platform_ec / "twister",
+        "--outdir",
+        platform_ec / "twister-out",
+        "-v",
+        "-i",
+    ]
 
     if extra_args:
         cmd.extend(extra_args)
