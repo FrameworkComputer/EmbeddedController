@@ -796,5 +796,8 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_rejected_port);
 	RUN_TEST(test_unknown_dualrole_capability);
 
+	/* Some handlers are still running after the test ends. */
+	sleep(2);
+
 	test_print_result();
 }
