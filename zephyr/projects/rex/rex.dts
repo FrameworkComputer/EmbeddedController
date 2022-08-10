@@ -161,6 +161,6 @@
 	charger: isl9241@9 {
 		compatible = "intersil,isl9241";
 		status = "okay";
-		reg = <0x73>;
+		reg = <0x09>;
 	};
 };
