@@ -49,18 +49,6 @@
 	};
 
 	soc {
-		/* TODO(b/265198571): Migrate Zephyr EC builds to upstream SHI
-		 * drivers.
-		 */
-		/delete-node/ shi@f03a00;
-		shi: shi@f03a00 {
-			compatible = "ite,it8xxx2-cros-shi";
-			reg = <0x00f03a00 0x30>;
-			interrupts = <171 0>;
-			interrupt-parent = <&intc>;
-			status = "disabled";
-		};
-
 		fiu0: cros-flash@80000000 {
 			compatible = "ite,it8xxx2-cros-flash";
 			reg = <0x80000000 0x100000>;

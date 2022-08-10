@@ -209,7 +209,7 @@ static int cros_flash_it8xxx2_erase(const struct device *dev, int offset,
 	 */
 	if (IS_ENABLED(HAS_TASK_HOSTCMD) &&
 	    IS_ENABLED(CONFIG_HOST_COMMAND_STATUS)) {
-		irq_enable(DT_IRQN(DT_NODELABEL(shi)));
+		irq_enable(DT_IRQN(DT_NODELABEL(shi0)));
 	}
 	/* Always use sector erase command */
 	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE) {

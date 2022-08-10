@@ -36,7 +36,7 @@
 	};
 };
 
-&shi {
+&shi0 {
 	status = "okay";
 	pinctrl-0 = <&shi_gp46_47_53_55>;
 	pinctrl-1 = <&shi_gpio_gp46_47_53_55>;

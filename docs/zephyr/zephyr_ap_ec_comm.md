@@ -110,20 +110,19 @@ selected host interface and SoC family. Each SoC driver has specific
 compatibility string which is used to get node with configuration from the
 device tree.
 For example, the nuvoton npcx chip uses compatibility string
-`nuvoton,npcx-cros-shi`.
+`nuvoton,npcx-shi`.
 
 The node's required properties are defined in yaml files: [SHI bindings]
 
 ```
 / {
-	shi: shi@4000f000 {
-		compatible = "nuvoton,npcx-cros-shi";
+	shi0: shi@4000f000 {
+		compatible = "nuvoton,npcx-shi";
 		reg = <0x4000f000 0x120>;
 		interrupts = <18 1>;
 		clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL5 1>;
 		pinctrl-0 = <&altc_shi_sl>;
 		shi-cs-wui =<&wui_io53>;
-		label = "SHI";
 	};
 }
 ```

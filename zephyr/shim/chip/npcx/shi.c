@@ -21,7 +21,7 @@
 
 LOG_MODULE_REGISTER(shim_cros_shi, LOG_LEVEL_DBG);
 
-#define SHI_NODE DT_NODELABEL(shi)
+#define SHI_NODE DT_NODELABEL(shi0)
 
 static void shi_enable(void)
 {
