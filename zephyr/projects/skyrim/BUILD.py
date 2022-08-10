@@ -33,3 +33,4 @@ def register_variant(project_name):
 
 
 register_variant(project_name="skyrim")
+register_variant(project_name="winterhold")

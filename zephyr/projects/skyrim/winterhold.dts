@@ -1,0 +1,229 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_wp;
+		gpio-cbi-wp = &gpio_cbi_wp;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	named-gpios {
+		/* Skyrim-specific GPIO customizations */
+		gpio_usb_fault_odl: usb_fault_odl {
+			gpios = <&gpio5 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+		};
+		gpio_ec_i2c_usbc_pd_int: ec_i2c_usbc_pd_int {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+		};
+		gpio_soc_thermtrip_odl: soc_thermtrip_odl {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+		};
+		gpio_hub_rst: hub_rst {
+			gpios = <&gpio6 6 GPIO_OUTPUT_HIGH>;
+		};
+		ec_soc_int_l {
+			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
+		};
+		/* TODO: Add interrupt handler to shut down */
+		pcore_ocp_r_l {
+			gpios = <&gpioa 5 GPIO_INPUT>;
+		};
+		gpio_usb_hub_fault_q_odl: usb_hub_fault_q_odl {
+			gpios = <&gpioe 5 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
+			gpios = <&gpio7 3 GPIO_INPUT>;
+		};
+		3axis_int_l {
+			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
+			gpios = <&gpioa 7 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_volup_btn_odl: volup_btn_odl {
+			gpios = <&gpio6 7 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_voldn_btn_odl: voldn_btn_odl {
+			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		ec_sc_rst {
+			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_cbi_wp: ec_cbi_wp {
+			gpios = <&gpio8 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_wp: ec_wp_l {
+			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
+			gpios = <&gpio6 0 GPIO_INPUT>;
+		};
+		ec_espi_rst_l {
+			gpios = <&gpio5 4 GPIO_PULL_DOWN>;
+		};
+		gpio_accel_gyro_int_l: accel_gyro_int_l {
+			gpios = <&gpioa 0 GPIO_INPUT>;
+		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		pch-sys-prwok {
+			enum-name = "GPIO_PCH_SYS_PWROK";
+		};
+	};
+
+	named-temp-sensors {
+		soc-pct2075 {
+			compatible = "cros-ec,temp-sensor-pct2075",
+				     "cros-ec,temp-sensor";
+			enum-name = "TEMP_SENSOR_SOC";
+			pct2075-name = "PCT2075_SOC";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS0";
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_host_release_halt = <80>;
+			temp_fan_off = <0>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+		};
+		amb-pct2075 {
+			compatible = "cros-ec,temp-sensor-pct2075",
+				     "cros-ec,temp-sensor";
+			enum-name = "TEMP_SENSOR_AMB";
+			pct2075-name = "PCT2075_AMB";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS7";
+			power-good-pin = <&gpio_pg_pwr_s5>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_pg_lpddr_s3: pg_lpddr_s3 {
+			irq-pin = <&gpio_pg_lpddr5_s3_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_set_en_pwr_pcore";
+		};
+		int_pg_lpddr_s0: pg_lpddr_s0 {
+			irq-pin = <&gpio_pg_lpddr5_s0_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_set_soc_pwr_pgood";
+		};
+		int_s0_pgood: s0_pgood {
+			irq-pin = <&gpio_s0_pgood>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_s0_pgood";
+		};
+	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the board
+	 * dts files.
+	 */
+	skyrim-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <0>;
+			size = <1>;
+
+			ff-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CLAMSHELL";
+				value = <0>;
+			};
+			ff-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CONVERTIBLE";
+				value = <1>;
+				default;
+			};
+		};
+		io-db {
+			enum-name = "FW_IO_DB";
+			start = <6>;
+			size = <2>;
+
+			io-db-ps8811-ps8818 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_PS8811_PS8818";
+				value = <0>;
+			};
+			io-db-none-anx7483 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_NONE_ANX7483";
+				value = <1>;
+				default;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		fan {
+			enum-name = "FW_FAN";
+			start = <10>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
