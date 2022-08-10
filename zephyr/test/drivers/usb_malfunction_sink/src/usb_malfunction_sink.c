@@ -15,7 +15,13 @@
 #include "tcpm/tcpci.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "test/drivers/stubs.h"
 #include "usb_pd.h"
+#include "usb_tc_sm.h"
+#include "timer.h"
+
+/* USB-C port used to connect port partner in this testsuite */
+#define TEST_PORT USBC_PORT_C0
 
 struct usb_malfunction_sink_fixture {
 	struct tcpci_partner_data sink;
@@ -24,11 +30,14 @@ struct usb_malfunction_sink_fixture {
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 	struct tcpci_faulty_ext_action actions[2];
+	int port;
 };
 
 static void *usb_malfunction_sink_setup(void)
 {
 	static struct usb_malfunction_sink_fixture test_fixture;
+
+	test_fixture.port = TEST_PORT;
 
 	/* Get references for the emulators */
 	test_fixture.tcpci_emul =
@@ -191,6 +200,44 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap)
 
 		msg_cnt++;
 		expect_hard_reset = !expect_hard_reset;
+	}
+}
+
+ZTEST_F(usb_malfunction_sink, test_hard_reset_disconnect)
+{
+	struct ec_response_typec_status typec_status;
+	int try_count;
+
+	/*
+	 * Test if disconnection during the power sequence doesn't have impact
+	 * on next tries
+	 */
+	for (try_count = 1; try_count < 5; try_count++) {
+		/* Connect port partner and check Vconn state */
+		connect_sink_to_port(&fixture->sink, fixture->tcpci_emul,
+				     fixture->charger_emul);
+		typec_status = host_cmd_typec_status(fixture->port);
+		zassert_equal(typec_status.vconn_role, PD_ROLE_VCONN_SRC,
+			      "Vconn should be present after connection (%d)",
+			      try_count);
+
+		/* Send hard reset to trigger power sequence on source side */
+		tcpci_partner_common_send_hard_reset(&fixture->sink);
+
+		/*
+		 * Wait for start of power sequence after hard reset and half
+		 * the time of source recovery (first step of power sequence
+		 * when vconn should be disabled)
+		 */
+		k_sleep(K_USEC(PD_T_PS_HARD_RESET + PD_T_SRC_RECOVER / 2));
+
+		typec_status = host_cmd_typec_status(fixture->port);
+		zassert_equal(typec_status.vconn_role, PD_ROLE_VCONN_OFF,
+			      "Vconn should be disabled at power sequence (%d)",
+			      try_count);
+
+		/* Disconnect partner at the middle of power sequence */
+		disconnect_sink_from_port(fixture->tcpci_emul);
 	}
 }
 
