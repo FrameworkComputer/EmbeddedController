@@ -50,15 +50,13 @@
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #define FORCED_SHUTDOWN_DELAY (8 * SECOND)
 
-/* Long power key press to boot from S5/G3 state. */
-#define POWERBTN_BOOT_DELAY (10 * MSEC)
-#define PMIC_EN_PULSE_MS 50
-
 /* PG4200 S5 ready delay */
 #define PG_PP4200_S5_DELAY (100 * MSEC)
 
 /* Maximum time it should for PMIC to turn on after toggling PMIC_EN_ODL. */
 #define PMIC_EN_TIMEOUT (300 * MSEC)
+#define PMIC_EN_PULSE_MS 50
+#define PMIC_HARD_OFF_DELAY (8 * SECOND)
 
 /* 30 ms for hard reset, we hold it longer to prevent TPM false alarm. */
 #define SYS_RST_PULSE_LENGTH (50 * MSEC)
@@ -77,13 +75,45 @@
 
 /* indicate MT8186 is processing a chipset reset. */
 static bool is_resetting;
-/* indicate MT8186 is processing a AP shutdown. */
+/* indicate MT8186 is processing a AP forcing shutdown. */
 static bool is_shutdown;
 /*
  * indicate exiting off state, and don't respect the power signals until chipset
  * on.
  */
 static bool is_exiting_off = true;
+
+/* Turn on the PMIC power source to AP, this also boots AP. */
+static void set_pmic_pwron(void)
+{
+	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
+	msleep(PMIC_EN_PULSE_MS);
+	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
+	msleep(PMIC_EN_PULSE_MS);
+	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
+}
+
+/* Turn off the PMIC power source to AP (forcely), this could take up to 8
+ * seconds
+ */
+static void set_pmic_pwroff(void)
+{
+	timestamp_t pmic_off_timeout;
+
+	/* We don't have a PMIC PG signal, so we can only blindly assert
+	 * the PMIC EN for a long delay time that the spec requiring.
+	 */
+	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
+
+	pmic_off_timeout = get_time();
+	pmic_off_timeout.val += PMIC_HARD_OFF_DELAY;
+
+	while (!timestamp_expired(pmic_off_timeout, NULL)) {
+		msleep(100);
+	};
+
+	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
+}
 
 static void reset_request_interrupt_deferred(void)
 {
@@ -120,30 +150,12 @@ void chipset_watchdog_interrupt(enum gpio_signal signal)
 				   NORMAL_SHUTDOWN_DELAY);
 }
 
-static void release_power_button(void)
-{
-	CPRINTS("release power button");
-	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
-}
-DECLARE_DEFERRED(release_power_button);
-
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s: 0x%x", __func__, reason);
 	report_ap_reset(reason);
 
 	is_shutdown = true;
-	/*
-	 * Force power off. This condition will reset once the state machine
-	 * transitions to G3.
-	 */
-	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
-	if (reason != CHIPSET_SHUTDOWN_BUTTON) {
-		CPRINTS("Forcing pmic off with long press.");
-		GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
-		hook_call_deferred(&release_power_button_data,
-				   FORCED_SHUTDOWN_DELAY + SECOND);
-	}
 
 	task_wake(TASK_ID_CHIPSET);
 }
@@ -159,19 +171,6 @@ static void mt8186_exit_off(void)
 	is_exiting_off = true;
 	chipset_exit_hard_off();
 }
-
-void chipset_exit_hard_off_button(void)
-{
-	/*
-	 * release power button in case we are in the 8 seconds long hold
-	 * period
-	 */
-	hook_call_deferred(&release_power_button_data, -1);
-	release_power_button();
-	/* Power up from off */
-	mt8186_exit_off();
-}
-DECLARE_DEFERRED(chipset_exit_hard_off_button);
 
 static void reset_flag_deferred(void)
 {
@@ -217,7 +216,7 @@ static void power_reset_host_sleep_state(void)
  *
  * S5 is only used when exit from G3 in power_common_state().
  * is_resetting flag indicate it's resetting chipset, and it's always S0.
- * is_shutdown flag indicates it's shutting down the AP, it goes for G3.
+ * is_shutdown flag indicates it's shutting down the AP, it goes for S5.
  */
 static enum power_state power_get_signal_state(void)
 {
@@ -229,14 +228,8 @@ static enum power_state power_get_signal_state(void)
 	 */
 	if (is_resetting)
 		return POWER_S0;
-	if (is_shutdown) {
-		/* We are in S5 and pressing the powerkey to shutdown PMIC. */
-		if (!gpio_get_level(GPIO_EC_PMIC_EN_ODL))
-			return POWER_S5;
-		/* Powerkey released, PMIC full off. */
-		else
-			return POWER_G3;
-	}
+	if (is_shutdown)
+		return POWER_S5;
 	if (power_get_signals() & IN_AP_RST)
 		return POWER_G3;
 	if (power_get_signals() & IN_SUSPEND_ASSERTED)
@@ -304,7 +297,6 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
-		is_shutdown = false;
 		if (next_state != POWER_G3)
 			return POWER_G3S5;
 		break;
@@ -312,8 +304,6 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5:
 		if (is_exiting_off)
 			return POWER_S5S3;
-		else if (next_state == POWER_S5)
-			return POWER_S5;
 		else if (next_state == POWER_G3)
 			return POWER_S5G3;
 		else
@@ -352,12 +342,9 @@ enum power_state power_handle_state(enum power_state state)
 						    PG_PP4200_S5_DELAY))
 			return POWER_S5G3;
 #endif
+		set_pmic_pwron();
 
 		GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
-		msleep(PMIC_EN_PULSE_MS);
-		GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
-		msleep(PMIC_EN_PULSE_MS);
-		GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
 
 		if (power_wait_mask_signals_timeout(0, IN_AP_RST,
 						    PMIC_EN_TIMEOUT))
@@ -414,21 +401,6 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		enable_sleep(SLEEP_MASK_AP_RUN);
 
-		/*
-		 * In case the power button is held awaiting power-off timeout,
-		 * power off immediately now that we're entering S3.
-		 */
-		if (power_button_is_pressed()) {
-			hook_call_deferred(&chipset_force_shutdown_button_data,
-					   -1);
-			/*
-			 * if the ap is shutting down, but it doesn't report
-			 * the reason, report it now.
-			 */
-			if (!is_shutdown)
-				chipset_force_shutdown_button();
-		}
-
 		hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
 
 		return POWER_S3;
@@ -437,29 +409,27 @@ enum power_state power_handle_state(enum power_state state)
 		power_signal_disable_interrupt(GPIO_AP_IN_SLEEP_L);
 		power_signal_disable_interrupt(GPIO_AP_EC_WDTRST_L);
 		power_signal_disable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
+		GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
 
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
+		/* If this is a forcing shutdown, power off the PMIC now,
+		 * and can wait at most up to 8 seconds.
+		 */
+		if (is_shutdown)
+			set_pmic_pwroff();
+
 #if DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5), 0);
+#endif
 
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
-#endif
+
+		is_shutdown = false;
 		return POWER_S5;
 
 	case POWER_S5G3:
-#if !DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
-		/*
-		 * Normally, this is called in S3S5, but if it's a shutdown
-		 * triggered by EC side, then EC is unable to set up PMIC
-		 * registers for a graceful shutdown. What we can do instead
-		 * is a force shutdown by asserting EC_PMIC_EN_ODL for 8
-		 * seconds, and all the rails are forced off, and the system
-		 * will enter G3 after EC_PMIC_EN_ODL is released.
-		 */
-		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
-#endif
 		return POWER_G3;
 	default:
 		CPRINTS("Unexpected power state %d", state);
@@ -473,15 +443,11 @@ static void power_button_changed(void)
 {
 	if (power_button_is_pressed()) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			hook_call_deferred(&chipset_exit_hard_off_button_data,
-					   POWERBTN_BOOT_DELAY);
-
+			mt8186_exit_off();
 		/* Delayed power down from S0/S3, cancel on PB release */
 		hook_call_deferred(&chipset_force_shutdown_button_data,
 				   FORCED_SHUTDOWN_DELAY);
 	} else {
-		/* Power button released, cancel deferred shutdown/boot */
-		hook_call_deferred(&chipset_exit_hard_off_button_data, -1);
 		hook_call_deferred(&chipset_force_shutdown_button_data, -1);
 	}
 }

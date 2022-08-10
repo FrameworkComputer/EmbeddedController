@@ -179,7 +179,8 @@ ZTEST(power_seq, test_host_sleep_hang)
 	zassert_true(host_is_event_set(EC_HOST_EVENT_HANG_DETECT));
 }
 
-/* Shutdown from EC, S0 -> S5 (8 secs) -> G3 */
+/* Shutdown from EC, S0 -> power key press (8 secs) -> S3S5 (8 secs) -> S5 -> G3
+ */
 ZTEST(power_seq, test_force_shutdown)
 {
 	const struct gpio_dt_spec *sys_rst_odl =
@@ -196,19 +197,20 @@ ZTEST(power_seq, test_force_shutdown)
 
 	/* Verify that ec resets ap and holds power button */
 	chipset_force_shutdown(CHIPSET_SHUTDOWN_CONSOLE_CMD);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(gpio_emul_output_get(sys_rst_odl->port, sys_rst_odl->pin),
-		      0);
-	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
-					   ec_pmic_en_odl->pin),
 		      0);
 
 	/* Emulate AP power down (hw state G3, sw state unchanged),
 	 * Verify power state stops at S5
 	 */
 	set_signal_state(POWER_G3);
-	zassert_equal(power_get_state(), POWER_S5);
+	zassert_equal(power_get_state(), POWER_S3S5);
+	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
+					   ec_pmic_en_odl->pin),
+		      0);
 
-	/* Wait 10 seconds for power button release and drop to G3 */
+	/* Wait 10 seconds for EC_PMIC_EN_ODL release and drop to G3 */
 	k_sleep(K_SECONDS(10));
 	zassert_equal(gpio_emul_output_get(sys_rst_odl->port, sys_rst_odl->pin),
 		      0);
@@ -218,7 +220,7 @@ ZTEST(power_seq, test_force_shutdown)
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
-/* Shutdown from AP, S0 -> G3 */
+/* Shutdown from AP, S0 -> powerkey hold (8 secs) -> S3S5 (8 secs) -> G3 */
 ZTEST(power_seq, test_force_shutdown_button)
 {
 	const struct gpio_dt_spec *sys_rst_odl =
@@ -234,16 +236,36 @@ ZTEST(power_seq, test_force_shutdown_button)
 	zassert_equal(power_get_state(), POWER_S0);
 
 	power_button_simulate_press(10000); /* 10 seconds */
-	k_sleep(K_SECONDS(2)); /* AP off after 2 seconds */
-	set_signal_state(POWER_G3);
+	zassert_equal(power_get_state(), POWER_S0);
+	k_sleep(K_SECONDS(9)); /* AP off after 8 seconds */
 	zassert_equal(gpio_emul_output_get(sys_rst_odl->port, sys_rst_odl->pin),
 		      0);
 	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
 					   ec_pmic_en_odl->pin),
-		      1);
-	zassert_equal(power_get_state(), POWER_G3);
+		      0);
 
-	k_sleep(K_SECONDS(10)); /* Wait for power button release */
+	zassert_equal(power_get_state(), POWER_S3S5);
+	zassert_equal(gpio_emul_output_get(sys_rst_odl->port, sys_rst_odl->pin),
+		      0);
+	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
+					   ec_pmic_en_odl->pin),
+		      0);
+
+	k_sleep(K_SECONDS(5)); /* Wait for power button release */
+	/* Signal has dropped, but PMIC_EN is still held */
+	set_signal_state(POWER_G3);
+	zassert_equal(power_get_state(), POWER_S3S5);
+	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
+					   ec_pmic_en_odl->pin),
+		      0);
+
+	k_sleep(K_SECONDS(3)); /* Wait for G3 */
+
+	/* PMIC_EN released */
+	zassert_equal(power_get_state(), POWER_G3);
+	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
+					   ec_pmic_en_odl->pin),
+		      1);
 }
 
 /* AP reset (S0 -> S0).
