@@ -86,6 +86,13 @@
 /* SYV682 isn't connected to CC, so TCPC must provide VCONN */
 #define CONFIG_USBC_PPC_SYV682X_NO_CC
 
+/*
+ * SMP battery sleep mode time is 5 second.
+ * Change max sleep time from once/min to once/4sec to prevent
+ * battery entering sleeping mode. See b/226259582.
+ */
+#define CHARGE_MAX_SLEEP_USEC (4 * SECOND)
+
 #ifndef __ASSEMBLER__
 
 /* support factory keyboard test */
