@@ -38,31 +38,29 @@ appear to be caused in part by using relative paths instead of absolute paths.)
 
 To build the Zephyr unit tests for code coverage run:
 
-`zmake test --host-tests-only --coverage`
-`genhtml -q -o build/zephyr/coverage_rpt/ build/zephyr/all_tests.info`
+`./twister -v -i --coverage -p native_posix -p unit_testing`
 
 The coverage report top-level page is
-`build/zephyr/coverage_rpt/index.html`.
+`twister-out/coverage/index.html`.
 
 However you probably want to merge that with a single board's coverage report
 also, so that you can include code that is not part of any test as well.
 
 ```
 zmake build --coverage herobrine
-zmake test --host-tests-only --coverage
+./twister -v -i --coverage -p native_posix -p unit_testing
 genhtml -q -s --branch-coverage -o build/zephyr/coverage_rpt/ \
-  build/zephyr/all_tests.info build/zephyr/herobrine/output/zephyr.info
+  twister-out/coverage.info
 ```
 
 The coverage report top-level page is
 `build/zephyr/coverage_rpt/index.html`.
 
 For coverage report for a single test you can run:
-`zmake test --coverage <TESTNAME>`
+`./twister -v -i --coverage -p native_posix -p unit_testing -s <pathToTest>/<testName>`
 
-Example:
-`zmake test --coverage test-drivers`
-`genhtml -q -o build/zephyr/test-drivers/output/coverage_rpt/ build/zephyr/test-drivers/output/zephyr.info`
+Example of running test tasks.default from zephyr/test/tasks/testcase.yaml:
+`./twister -v -i --coverage -p native_posix -p unit_testing -s zephyr/test/tasks/tasks.default`
 
 ## Code Coverage in CQ
 
