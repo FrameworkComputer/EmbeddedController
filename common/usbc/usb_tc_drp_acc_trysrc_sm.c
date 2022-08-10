@@ -2258,10 +2258,11 @@ static void tc_unattached_snk_entry(const int port)
 	pd_execute_data_swap(port, PD_ROLE_DISCONNECTED);
 	pd_timer_enable(port, TC_TIMER_NEXT_ROLE_SWAP, PD_T_DRP_SNK);
 
-	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		CLR_FLAGS_ON_DISCONNECT(port);
-		tc_enable_pd(port, 0);
-	}
+#ifdef CONFIG_USB_PE_SM
+	CLR_FLAGS_ON_DISCONNECT(port);
+	tc_enable_pd(port, 0);
+	tc[port].ps_reset_state = PS_STATE0;
+#endif
 }
 
 static void tc_unattached_snk_run(const int port)
@@ -2808,10 +2809,11 @@ static void tc_unattached_src_entry(const int port)
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
-	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
-		CLR_FLAGS_ON_DISCONNECT(port);
-		tc_enable_pd(port, 0);
-	}
+#ifdef CONFIG_USB_PE_SM
+	CLR_FLAGS_ON_DISCONNECT(port);
+	tc_enable_pd(port, 0);
+	tc[port].ps_reset_state = PS_STATE0;
+#endif
 
 	pd_timer_enable(port, TC_TIMER_NEXT_ROLE_SWAP, PD_T_DRP_SRC);
 }
