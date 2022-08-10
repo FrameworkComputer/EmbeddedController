@@ -34,18 +34,8 @@ def find_checkout() -> Path:
         return None
 
 
-def find_modules(mod_dir: Path) -> list:
-    """Find Zephyr modules in the given directory `dir`."""
-
-    modules = []
-    for child in mod_dir.iterdir():
-        if child.is_dir() and (child / "zephyr" / "module.yml").exists():
-            modules.append(child)
-    return modules
-
-
-def main():
-    """Run Twister using defaults for the EC project."""
+def find_paths():
+    """Find EC base, Zephyr base, and Zephyr modules paths and return as a 3-tuple."""
 
     # Determine where the source tree is checked out. Will be None if operating outside
     # of the chroot (e.g. Gitlab builds). In this case, additional paths need to be
@@ -77,6 +67,25 @@ def main():
             raise RuntimeError(
                 "MODULES_DIR unspecified. Please pass as env var or use chroot."
             ) from err
+
+    return (ec_base, zephyr_base, zephyr_modules_dir)
+
+
+def find_modules(mod_dir: Path) -> list:
+    """Find Zephyr modules in the given directory `dir`."""
+
+    modules = []
+    for child in mod_dir.iterdir():
+        if child.is_dir() and (child / "zephyr" / "module.yml").exists():
+            modules.append(child)
+    return modules
+
+
+def main():
+    """Run Twister using defaults for the EC project."""
+
+    # Get paths for the build.
+    ec_base, zephyr_base, zephyr_modules_dir = find_paths()
 
     zephyr_modules = find_modules(zephyr_modules_dir)
     zephyr_modules.append(ec_base)
@@ -144,12 +153,14 @@ def main():
         sys.stdout.flush()
 
     # Invoke Twister and wait for it to exit.
-    with subprocess.Popen(
-        twister_cli,
-        env=twister_env,
-    ) as proc:
-        proc.wait()
-        sys.exit(proc.returncode)
+    result = subprocess.run(twister_cli, env=twister_env, check=False)
+
+    if result.returncode == 0:
+        print("TEST EXECUTION SUCCESSFUL")
+    else:
+        print("TEST EXECUTION FAILED")
+
+    sys.exit(result.returncode)
 
 
 if __name__ == "__main__":
