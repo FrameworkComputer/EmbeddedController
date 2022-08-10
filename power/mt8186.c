@@ -99,11 +99,8 @@ void chipset_reset_request_interrupt(enum gpio_signal signal)
 
 static void watchdog_interrupt_deferred(void)
 {
-	/*
-	 * If this is a real WDT, AP_IN_SLEEP_L should keep high after
-	 * the WDT interrupt is fired. Otherwise, it's a normal shutdown.
-	 */
-	if (gpio_get_level(GPIO_AP_IN_SLEEP_L))
+	/* If it's a real WDT, it must be in S0. */
+	if (!(power_get_signals() & (IN_AP_RST | IN_SUSPEND_ASSERTED)))
 		chipset_reset(CHIPSET_RESET_AP_WATCHDOG);
 }
 DECLARE_DEFERRED(watchdog_interrupt_deferred);
