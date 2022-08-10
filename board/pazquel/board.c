@@ -402,6 +402,22 @@ static void board_shutdown_complete(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, board_shutdown_complete,
 	     HOOK_PRIO_DEFAULT);
 
+__override uint32_t board_get_sku_id(void)
+{
+	static int sku_id = -1;
+
+	if (sku_id == -1) {
+		int bits[3];
+
+		bits[0] = gpio_get_ternary(GPIO_SKU_ID0);
+		bits[1] = gpio_get_ternary(GPIO_SKU_ID1);
+		bits[2] = gpio_get_ternary(GPIO_SKU_ID2);
+		sku_id = binary_first_base3_from_bits(bits, ARRAY_SIZE(bits));
+	}
+
+	return (uint32_t)sku_id;
+}
+
 void board_set_switchcap_power(int enable)
 {
 	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
