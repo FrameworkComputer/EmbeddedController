@@ -85,6 +85,11 @@ i2c_pwr_cbi: &i2c0 {
 		status = "okay";
 		reg = <0x70>;
 	};
+
+	it5205_mux_0: it5205-mux-0@48 {
+		compatible = "ite,it5205";
+		reg = <0x48>;
+	};
 };
 
 &i2c3 {

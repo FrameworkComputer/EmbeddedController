@@ -18,11 +18,6 @@
 			usb-muxes = <&it5205_mux_0 &virtual_mux_0>;
 		};
 		port0-muxes {
-			it5205_mux_0: it5205-mux-0 {
-				compatible = "ite,it5205";
-				port = <&i2c_usb_c0>;
-				i2c-addr-flags = "IT5205_I2C_ADDR1_FLAGS";
-			};
 			virtual_mux_0: virtual-mux-0 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
@@ -37,15 +32,17 @@
 			usb-muxes = <&tusb1064_mux_1 &virtual_mux_1>;
 		};
 		port1-muxes {
-			tusb1064_mux_1: tusb1064-mux-1 {
-				compatible = "ti,tusb1064";
-				port = <&i2c_usb_c1>;
-				i2c-addr-flags = "TUSB1064_I2C_ADDR0_FLAGS";
-			};
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
+	};
+};
+
+&i2c4 {
+	tusb1064_mux_1: tusb1064-mux-1@44 {
+		compatible = "ti,tusb1064";
+		reg = <0x44>;
 	};
 };
 

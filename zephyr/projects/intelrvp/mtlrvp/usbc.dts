@@ -16,13 +16,6 @@
 			usb-muxes = <&usb_c0_hb_retimer &virtual_mux_c0>;
 		};
 		port0-muxes {
-			usb_c0_hb_retimer: jhl8040r-c0 {
-				compatible = "intel,jhl8040r";
-				port = <&typec_aic1>;
-				i2c-addr-flags = <0x56>;
-				reset-pin = <&usb_c0_hb_retimer_rst>;
-				ls-en-pin = <&usb_c0_hb_retimer_ls_en>;
-			};
 			virtual_mux_c0: virtual-mux-c0 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
@@ -35,13 +28,6 @@
 			usb-muxes = <&usb_c1_hb_retimer &virtual_mux_c1>;
 		};
 		port1-muxes {
-			usb_c1_hb_retimer: jhl8040r-c1 {
-				compatible = "intel,jhl8040r";
-				port = <&typec_aic1>;
-				i2c-addr-flags = <0x57>;
-				reset-pin = <&usb_c1_hb_retimer_rst>;
-				ls-en-pin = <&usb_c1_hb_retimer_ls_en>;
-			};
 			virtual_mux_c1: virtual-mux-c1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
@@ -54,13 +40,6 @@
 			usb-muxes = <&usb_c2_hb_retimer &virtual_mux_c2>;
 		};
 		port2-muxes {
-			usb_c2_hb_retimer: jhl8040r-c2 {
-				compatible = "intel,jhl8040r";
-				port = <&typec_aic2>;
-				i2c-addr-flags = <0x58>;
-				reset-pin = <&usb_c2_hb_retimer_rst>;
-				ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
-			};
 			virtual_mux_c2: virtual-mux-c2 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
@@ -73,13 +52,6 @@
 			usb-muxes = <&usb_c3_hb_retimer &virtual_mux_c3>;
 		};
 		port3-muxes {
-			usb_c3_hb_retimer: jhl8040r-c3 {
-				compatible = "intel,jhl8040r";
-				port = <&typec_aic2>;
-				i2c-addr-flags = <0x59>;
-				reset-pin = <&usb_c3_hb_retimer_rst>;
-				ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
-			};
 			virtual_mux_c3: virtual-mux-c3 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};

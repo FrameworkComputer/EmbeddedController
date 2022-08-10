@@ -10,13 +10,12 @@
 
 #define IT5205_USB_MUX_COMPAT ite_it5205
 
-#define USB_MUX_CONFIG_IT5205(mux_id, port_id, idx)                            \
-	{                                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),                   \
-			.driver = &it5205_usb_mux_driver,                      \
-			.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),        \
-			.i2c_addr_flags =                                      \
-				DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags), \
+#define USB_MUX_CONFIG_IT5205(mux_id, port_id, idx)            \
+	{                                                      \
+		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),   \
+			.driver = &it5205_usb_mux_driver,      \
+			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
+			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
 
 #endif /* __ZEPHYR_SHIM_IT5205_USB_MUX_H */

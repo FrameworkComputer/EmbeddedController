@@ -117,6 +117,12 @@
 		status = "okay";
 		reg = <0x72>;
 	};
+
+	ps8743_mux_1: ps8743-mux-1@10 {
+		compatible = "parade,ps8743";
+		reg = <0x10>;
+		board-init = "ps8743_mux_1_board_init";
+	};
 };
 
 &i2c_ctrl2 {

@@ -154,6 +154,14 @@
 
 	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
 	pinctrl-names = "default";
+
+	usb_c0_hb_retimer: jhl8040r-c0@56 {
+		compatible = "intel,jhl8040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c0_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c0_rt_int_odl>;
+		reset-pin = <&ioex_usb_c0_rt_rst_ls_l>;
+	};
 };
 
 &i2c4_1 {

@@ -6,7 +6,7 @@ description: Intel JHL8040R Thunderbolt 4 Retimer
 
 compatible: "intel,jhl8040r"
 
-include: cros-ec,usbc-mux.yaml
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
 
 properties:
     reset-pin:
@@ -20,13 +20,3 @@ properties:
     ls-en-pin:
       type: phandle
       required: false
-
-    port:
-      type: phandle
-      required: true
-      description: phandle to the named i2c port
-
-    i2c-addr-flags:
-      type: int
-      required: true
-      description: I2C address of chip

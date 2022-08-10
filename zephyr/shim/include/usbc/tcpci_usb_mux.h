@@ -25,8 +25,8 @@
 			.driver = &tcpci_tcpm_usb_mux_driver,                 \
 			.hpd_update =                                         \
 				USB_MUX_CALLBACK_OR_NULL(mux_id, hpd_update), \
-			.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),       \
-			.i2c_addr_flags = DT_PROP(mux_id, i2c_addr_flags),    \
+			.i2c_port = I2C_PORT_BY_DEV(mux_id),                  \
+			.i2c_addr_flags = DT_REG_ADDR(mux_id),                \
 	}
 
 /** Use I2C configuration from TCPC */
@@ -38,11 +38,9 @@
 				USB_MUX_CALLBACK_OR_NULL(mux_id, hpd_update), \
 	}
 
-/** This macro will fail if only port or i2c_addr_flags property is present */
 #define USB_MUX_CONFIG_TCPCI_TCPM(mux_id, port_id, idx)                     \
 	COND_CODE_1(                                                        \
-		UTIL_OR(DT_NODE_HAS_PROP(mux_id, port),                     \
-			DT_NODE_HAS_PROP(mux_id, i2c_addr_flags)),          \
+		DT_NODE_HAS_PROP(mux_id, reg),                              \
 		(USB_MUX_CONFIG_TCPCI_TCPM_WITH_I2C(mux_id, port_id, idx)), \
 		(USB_MUX_CONFIG_TCPCI_TCPM_WO_I2C(mux_id, port_id, idx)))
 

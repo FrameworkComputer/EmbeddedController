@@ -10,13 +10,13 @@
 
 #define BB_RETIMER_USB_MUX_COMPAT intel_jhl8040r
 
-#define USB_MUX_CONFIG_BB_RETIMER(mux_id, port_id, idx)                    \
-	{                                                                  \
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),               \
-			.driver = &bb_usb_retimer,                         \
-			.hpd_update = bb_retimer_hpd_update,               \
-			.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),    \
-			.i2c_addr_flags = DT_PROP(mux_id, i2c_addr_flags), \
+#define USB_MUX_CONFIG_BB_RETIMER(mux_id, port_id, idx)        \
+	{                                                      \
+		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),   \
+			.driver = &bb_usb_retimer,             \
+			.hpd_update = bb_retimer_hpd_update,   \
+			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
+			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
 
 #define BB_RETIMER_CONTROLS_CONFIG(mux_id, port_id, idx)              \

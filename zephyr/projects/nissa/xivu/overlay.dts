@@ -229,11 +229,6 @@
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
-			anx7483_mux_1: anx7483-mux-1 {
-				compatible = "analogix,anx7483";
-				port = <&i2c_ec_i2c_sub_usb_c1>;
-				i2c-addr-flags = "ANX7483_I2C_ADDR0_FLAGS";
-			};
 		};
 	};
 
@@ -321,6 +316,11 @@
 		compatible = "intersil,isl923x";
 		status = "okay";
 		reg = <0x9>;
+	};
+
+	anx7483_mux_1: anx7483-mux-1@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
 	};
 };
 

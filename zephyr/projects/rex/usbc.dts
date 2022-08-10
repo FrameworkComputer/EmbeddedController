@@ -18,14 +18,6 @@
 			usb-muxes = <&usb_c0_hb_retimer &virtual_mux_c0>;
 		};
 		port0-muxes {
-			usb_c0_hb_retimer: jhl8040r-c0 {
-				compatible = "intel,jhl8040r";
-				port = <&i2c_ec_i2c_usb_c0_rt>;
-				i2c-addr-flags = <0x56>;
-				ls-en-pin = <&gpio_usb_c0_rt_3p3_sx_en>;
-				int-pin = <&gpio_usb_c0_rt_int_odl>;
-				reset-pin = <&ioex_usb_c0_rt_rst_ls_l>;
-			};
 			virtual_mux_c0: virtual-mux-c0 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
