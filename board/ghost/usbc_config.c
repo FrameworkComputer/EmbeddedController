@@ -86,6 +86,7 @@ static const struct usb_mux usbc0_tcss_usb_mux = {
 };
 static const struct usb_mux usbc1_tcss_usb_mux = {
 	.usb_port = USBC_PORT_C1,
+	.flags = USB_MUX_FLAG_POLARITY_INVERTED,
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
@@ -101,6 +102,7 @@ const struct usb_mux usb_muxes[] = {
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
+		.flags = USB_MUX_FLAG_POLARITY_INVERTED,
 		.driver = &bb_usb_retimer,
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C1_RT,
