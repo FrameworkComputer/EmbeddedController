@@ -12,6 +12,7 @@ parameters that may be used, please consult the Twister documentation.
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -83,12 +84,11 @@ def main():
     # Prepare environment variables for export to Twister and inherit the
     # parent environment.
     twister_env = dict(os.environ)
-    twister_env.update(
-        {
-            "TOOLCHAIN_ROOT": str(ec_base / "zephyr"),
-            "ZEPHYR_TOOLCHAIN_VARIANT": "llvm",
-        }
-    )
+    extra_env_vars = {
+        "TOOLCHAIN_ROOT": str(ec_base / "zephyr"),
+        "ZEPHYR_TOOLCHAIN_VARIANT": "llvm",
+    }
+    twister_env.update(extra_env_vars)
 
     # Twister CLI args
     twister_cli = [
@@ -133,9 +133,15 @@ def main():
 
     # Print exact CLI args and environment variables depending on verbosity.
     if intercepted_args.verbose > 0:
-        print("Calling:", twister_cli)
-    if intercepted_args.verbose > 1:
-        print("With environment:", twister_env)
+        print("Calling:", " ".join(shlex.quote(str(x)) for x in twister_cli))
+        print(
+            "With environment overrides:",
+            " ".join(
+                f"{name}={shlex.quote(val)}"
+                for name, val in extra_env_vars.items()
+            ),
+        )
+        sys.stdout.flush()
 
     # Invoke Twister and wait for it to exit.
     with subprocess.Popen(
