@@ -119,7 +119,7 @@ def main():
     # user does pass their own `-T` flags, pass them through instead. Do the
     # same with verbosity. Other arguments get passed straight through,
     # including -h/--help so that Twister's own help text gets displayed.
-    parser = argparse.ArgumentParser(add_help=False)
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     parser.add_argument("-T", "--testsuite-root", action="append")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     intercepted_args, other_args = parser.parse_known_args()
