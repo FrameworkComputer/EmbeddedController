@@ -309,7 +309,7 @@ ZTEST_USER(bmi260, test_bmi_acc_set_offset)
 	struct motion_sensor_t *ms;
 	const struct emul *emul;
 	struct i2c_common_emul_data *common_data;
-	int16_t input_v[3];
+	int16_t input_v[3] = { 0, 0, 0 };
 	int16_t temp = 0;
 	intv3_t ret_v;
 	intv3_t exp_v;
