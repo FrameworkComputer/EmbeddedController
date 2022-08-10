@@ -230,7 +230,7 @@ zephyr_coverage:
   needs: ["seed_cache"]
   script:
     - ${EC_DIR}/twister --coverage --outdir "${EC_DIR}/twister-out/"
-      -p native_posix
+      -v -i -p native_posix -p unit_testing
   artifacts:
     paths:
       - ${EC_DIR}/twister-out/coverage.info
@@ -300,8 +300,8 @@ testall:
   stage: test
   needs: ["seed_cache"]
   script:
-    - ${EC_DIR}/twister --coverage --outdir "${EC_DIR}/twister-out/"
-      -p native_posix
+    - ${EC_DIR}/twister --outdir "${EC_DIR}/twister-out/"
+      -v -i
 
 twister_coverage:
   stage: test
