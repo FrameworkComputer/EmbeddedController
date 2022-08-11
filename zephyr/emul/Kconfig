@@ -80,6 +80,12 @@ config EMUL_CROS_FLASH
 	help
 	  This option enables the flash emulator for testing.
 
+config PWM_MOCK
+	bool "Mock implementation of an PWM device"
+	help
+	  Enable the PWM mock. This driver is a pure mock and does nothing by
+	  default.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"
