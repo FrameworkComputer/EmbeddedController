@@ -58,7 +58,7 @@ static void console_cmd_accelread_after(void *fixture)
 	motion_sensors[0].drv = this->sensor_0_drv;
 }
 
-ZTEST_SUITE(console_cmd_accelread, drivers_predicate_post_main,
+ZTEST_SUITE(console_cmd_accelread, drivers_predicate_pre_main,
 	    console_cmd_accelread_setup, console_cmd_accelread_before,
 	    console_cmd_accelread_after, NULL);
 
