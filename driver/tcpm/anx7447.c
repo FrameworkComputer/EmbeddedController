@@ -604,15 +604,21 @@ static int anx7447_mux_init(const struct usb_mux *me)
 	int port = me->usb_port;
 	int i;
 	bool unused;
+	const uint16_t tcpc_i2c_addr =
+		I2C_STRIP_FLAGS(tcpc_config[me->usb_port].i2c_info.addr_flags);
+	const uint16_t mux_i2c_addr =
+		I2C_STRIP_FLAGS(usb_muxes[port].i2c_addr_flags);
 
 	/*
 	 * find corresponding anx7447 SPI address according to
-	 * specified MUX address
+	 * specified MUX address from mux and tcpc i2c addr config.
 	 */
 	for (i = 0; i < ARRAY_SIZE(anx7447_i2c_addrs_flags); i++) {
-		if (I2C_STRIP_FLAGS(usb_muxes[port].i2c_addr_flags) ==
-		    I2C_STRIP_FLAGS(
-			    anx7447_i2c_addrs_flags[i].tcpc_addr_flags)) {
+		uint16_t i2c_addr_key = I2C_STRIP_FLAGS(
+			anx7447_i2c_addrs_flags[i].tcpc_addr_flags);
+
+		if (i2c_addr_key == tcpc_i2c_addr ||
+		    i2c_addr_key == mux_i2c_addr) {
 			anx[port].i2c_addr_flags =
 				anx7447_i2c_addrs_flags[i].spi_addr_flags;
 			break;
