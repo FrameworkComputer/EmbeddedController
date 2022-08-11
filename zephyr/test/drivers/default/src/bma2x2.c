@@ -213,7 +213,7 @@ ZTEST_USER(bma2x2, test_bma_set_offset)
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	int16_t ret_offset[3];
-	int16_t exp_offset[3];
+	int16_t exp_offset[3] = { 0, 0, 0 };
 	int16_t temp = 0;
 
 	/* Test fail on each axis */
@@ -933,5 +933,10 @@ static void *bma2x2_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(bma2x2, drivers_predicate_post_main, bma2x2_setup, NULL, NULL,
-	    NULL);
+static void bma2x2_after(void *data)
+{
+	ms.rot_standard_ref = NULL;
+}
+
+ZTEST_SUITE(bma2x2, drivers_predicate_post_main, bma2x2_setup, NULL,
+	    bma2x2_after, NULL);
