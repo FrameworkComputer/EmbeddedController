@@ -2157,5 +2157,5 @@ static void bmi160_after(void *state)
 	gyr_ms->drv->set_data_rate(gyr_ms, 0, 0);
 }
 
-ZTEST_SUITE(bmi160, drivers_predicate_post_main, NULL, bmi160_before,
+ZTEST_SUITE(bmi160, drivers_predicate_pre_main, NULL, bmi160_before,
 	    bmi160_after, NULL);

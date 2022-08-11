@@ -2301,5 +2301,5 @@ static void bmi260_test_before(void *arg)
 	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI260_CHIP_ID_MAJOR);
 }
 
-ZTEST_SUITE(bmi260, drivers_predicate_post_main, NULL, bmi260_test_before, NULL,
+ZTEST_SUITE(bmi260, drivers_predicate_pre_main, NULL, bmi260_test_before, NULL,
 	    NULL);
