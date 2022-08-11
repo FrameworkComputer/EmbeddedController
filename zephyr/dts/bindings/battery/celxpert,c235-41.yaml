@@ -1,12 +1,12 @@
-description: "AS3GWRc3KA C235-41"
-compatible: "as3gwrc3ka,c235-41"
+description: "Celxpert C235-41"
+compatible: "celxpert,c235-41"
 
 include: battery-smart.yaml
 
 properties:
    enum-name:
       type: string
-      default: "as3gwrc3ka,c235-41"
+      default: "celxpert,c235-41"
 
    # Fuel gauge
    manuf_name:

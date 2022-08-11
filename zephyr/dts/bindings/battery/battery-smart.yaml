@@ -12,8 +12,8 @@ properties:
       type: string
       enum:
          - "aec,5477109"
-         - "as3gwrc3ka,c235-41"
          - "byd,l22b3pg0"
+         - "celxpert,c235-41"
          - "celxpert,l22c3pg0"
          - "cosmx,ap20cbl"
          - "cosmx,gh02047xl"
