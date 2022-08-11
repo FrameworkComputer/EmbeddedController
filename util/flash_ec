@@ -467,6 +467,15 @@ servo_usbpd_hard_reset() {
 
 servo_fpmcu_hard_reset() {
 	dut_control fpmcu_reset:on sleep:0.5 fpmcu_reset:off
+
+	# b/177331210: Workaround for an outstanding issue that prevents
+	# flashing dartmonkey with a servo_micro. The exact root cause is still
+	# unknown, but it's been observed that repeating the FPMCU reset
+	# sequence twice makes the operation succeed.
+	if [[ "${BOARD}" =~ "dartmonkey" ]] ; then
+		warn "Workaround for dartmonkey + servo_micro: repeat FPMCU reset sequence"
+		dut_control fpmcu_reset:on sleep:0.5 fpmcu_reset:off
+	fi
 }
 
 servo_sh_hard_reset() {
