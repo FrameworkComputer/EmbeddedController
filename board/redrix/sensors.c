@@ -114,7 +114,7 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 			.cover_scale = ALS_CHANNEL_SCALE(1.6)
 		}
 	},
-	.calibration.irt = INT_TO_FP(0.41),
+	.calibration.irt = FLOAT_TO_FP(0.41),
 	.saturation.again = TCS_DEFAULT_AGAIN,
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
