@@ -468,7 +468,7 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED_WHITE] = {
 		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq_hz = 2000,
 	},
 };

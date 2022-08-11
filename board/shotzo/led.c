@@ -299,8 +299,6 @@ static int command_led(int argc, char **argv)
 		led_alert(1);
 	} else if (!strcasecmp(argv[1], "crit")) {
 		show_critical_error();
-	} else if (!strcasecmp(argv[1], "sus")) {
-		led_suspend_hook();
 	} else if (!strcasecmp(argv[1], "resume")) {
 		led_resume_hook();
 	} else {
@@ -308,6 +306,5 @@ static int command_led(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|white|off|alert|crit|sus|resume]",
+DECLARE_CONSOLE_COMMAND(led, command_led, "[debug|white|off|alert|crit|resume]",
 			"Turn on/off LED.");
