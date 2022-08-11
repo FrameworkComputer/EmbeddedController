@@ -898,6 +898,14 @@ const struct {
 		.name = "PAD_INTP_CTRL",
 		.addr = ANX7447_REG_PAD_INTP_CTRL,
 	},
+	{
+		.name = "OCM_MAIN_VERSION",
+		.addr = ANX7447_REG_OCM_MAIN_VERSION,
+	},
+	{
+		.name = "OCM_BUILD_VERSION",
+		.addr = ANX7447_REG_OCM_BUILD_VERSION,
+	},
 };
 
 /*
