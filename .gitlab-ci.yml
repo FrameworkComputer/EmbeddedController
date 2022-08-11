@@ -301,7 +301,7 @@ testall:
   needs: ["seed_cache"]
   script:
     - ${EC_DIR}/twister --outdir "${EC_DIR}/twister-out/"
-      -v -i
+      -v -i -p native_posix -p unit_testing
 
 twister_coverage:
   stage: test

@@ -136,6 +136,7 @@ def main():
         # Use EC base dir when no -T args specified. This will cause all
         # Twister-compatible EC tests to run.
         twister_cli.extend(["-T", str(ec_base)])
+        twister_cli.extend(["-T", str(zephyr_base / "tests/subsys/shell")])
 
     # Append additional user-supplied args
     twister_cli.extend(other_args)

@@ -35,6 +35,10 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
         platform_ec / "twister-out",
         "-v",
         "-i",
+        "-p",
+        "native_posix",
+        "-p",
+        "unit_testing",
     ]
 
     if extra_args:
@@ -46,8 +50,6 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
         cmd.extend(
             [
                 "--coverage",
-                "-p",
-                "native_posix",
             ]
         )
     print(" ".join(shlex.quote(str(x)) for x in cmd))
