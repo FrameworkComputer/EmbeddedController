@@ -45,7 +45,7 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
             ]
         )
     print(" ".join(shlex.quote(str(x)) for x in cmd))
-    subprocess.run(cmd, check=True, cwd=platform_ec)
+    subprocess.run(cmd, check=True, cwd=platform_ec, stdin=subprocess.DEVNULL)
 
 
 def build(opts):
@@ -58,13 +58,14 @@ def build(opts):
         [platform_ec / "util" / "check_clang_format.py"],
         check=True,
         cwd=platform_ec,
+        stdin=subprocess.DEVNULL,
     )
 
     cmd = ["zmake", "-D", "build", "-a"]
     if opts.code_coverage:
         cmd.append("--coverage")
     print(" ".join(shlex.quote(str(x)) for x in cmd))
-    subprocess.run(cmd, cwd=zephyr_dir, check=True)
+    subprocess.run(cmd, cwd=zephyr_dir, check=True, stdin=subprocess.DEVNULL)
     if not opts.code_coverage:
         for project in zmake.project.find_projects(zephyr_dir).values():
             if project.config.is_test:
@@ -159,7 +160,7 @@ def bundle_coverage(opts):
     tarball_path = bundle_dir / tarball_name
     cmd = ["tar", "cvfj", tarball_path, "lcov.info"]
     print(" ".join(shlex.quote(str(x)) for x in cmd))
-    subprocess.run(cmd, cwd=build_dir, check=True)
+    subprocess.run(cmd, cwd=build_dir, check=True, stdin=subprocess.DEVNULL)
     meta = info.objects.add()
     meta.file_name = tarball_name
     meta.lcov_info.type = (
@@ -168,7 +169,7 @@ def bundle_coverage(opts):
     (bundle_dir / "html").mkdir(exist_ok=True)
     cmd = ["mv", "lcov_rpt", bundle_dir / "html/lcov_rpt"]
     print(" ".join(shlex.quote(str(x)) for x in cmd))
-    subprocess.run(cmd, cwd=build_dir, check=True)
+    subprocess.run(cmd, cwd=build_dir, check=True, stdin=subprocess.DEVNULL)
     meta = info.objects.add()
     meta.file_name = "html"
     meta.coverage_html.SetInParent()
@@ -194,7 +195,9 @@ def bundle_firmware(opts):
         tarball_path = bundle_dir.joinpath(tarball_name)
         cmd = ["tar", "cvfj", tarball_path, "."]
         print(" ".join(shlex.quote(str(x)) for x in cmd))
-        subprocess.run(cmd, cwd=artifacts_dir, check=True)
+        subprocess.run(
+            cmd, cwd=artifacts_dir, check=True, stdin=subprocess.DEVNULL
+        )
         meta = info.objects.add()
         meta.file_name = tarball_name
         meta.tarball_info.type = (
@@ -215,7 +218,10 @@ def test(opts):
     # Run zmake tests to ensure we have a fully working zmake before
     # proceeding.
     subprocess.run(
-        [zephyr_dir / "zmake" / "run_tests.sh"], check=True, cwd=zephyr_dir
+        [zephyr_dir / "zmake" / "run_tests.sh"],
+        check=True,
+        cwd=zephyr_dir,
+        stdin=subprocess.DEVNULL,
     )
 
     # Twister-based tests
@@ -235,12 +241,15 @@ def test(opts):
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
+            stdin=subprocess.DEVNULL,
         ).stdout
         _extract_lcov_summary("EC_ZEPHYR_TESTS", metrics, output)
 
         cmd = ["make", "test-coverage", f"-j{opts.cpus}"]
         print(" ".join(shlex.quote(str(x)) for x in cmd))
-        subprocess.run(cmd, cwd=platform_ec, check=True)
+        subprocess.run(
+            cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL
+        )
 
         output = subprocess.run(
             [
@@ -252,6 +261,7 @@ def test(opts):
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
+            stdin=subprocess.DEVNULL,
         ).stdout
         _extract_lcov_summary("EC_LEGACY_TESTS", metrics, output)
 
@@ -273,6 +283,7 @@ def test(opts):
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
+            stdin=subprocess.DEVNULL,
         ).stdout
         _extract_lcov_summary("ALL_TESTS", metrics, output)
 
@@ -294,6 +305,7 @@ def test(opts):
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
+            stdin=subprocess.DEVNULL,
         ).stdout
         _extract_lcov_summary("EC_ZEPHYR_MERGED", metrics, output)
 
@@ -313,6 +325,7 @@ def test(opts):
             cmd,
             cwd=zephyr_dir,
             check=True,
+            stdin=subprocess.DEVNULL,
         )
 
         cmd = [
@@ -334,6 +347,7 @@ def test(opts):
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
+            stdin=subprocess.DEVNULL,
         ).stdout
         _extract_lcov_summary("ALL_MERGED", metrics, output)
 
@@ -351,6 +365,7 @@ def test(opts):
             ],
             cwd=zephyr_dir,
             check=True,
+            stdin=subprocess.DEVNULL,
         )
 
         third_party = platform_ec.parent.parent / "third_party"
@@ -372,6 +387,7 @@ def test(opts):
                 cmd,
                 cwd=zephyr_dir,
                 check=True,
+                stdin=subprocess.DEVNULL,
             )
             # Exclude file patterns we don't want
             cmd = [
@@ -406,6 +422,7 @@ def test(opts):
                 cmd,
                 cwd=zephyr_dir,
                 check=True,
+                stdin=subprocess.DEVNULL,
             )
             # Then keep only files present in the board build
             filenames = set()
@@ -431,6 +448,7 @@ def test(opts):
                 check=True,
                 stdout=subprocess.PIPE,
                 universal_newlines=True,
+                stdin=subprocess.DEVNULL,
             ).stdout
             _extract_lcov_summary(f"BOARD_{board}".upper(), metrics, output)
 
