@@ -944,6 +944,9 @@ build_cros_ec_commands: $(out_cros_ec_commands)
 $(out_cros_ec_commands): include/ec_commands.h util/make_linux_ec_commands_h.sh
 	util/make_linux_ec_commands_h.sh $< $@
 
+# Include IDE configurations targets.
+include Makefile.ide
+
 # Pull in special rules/targets for third_party software
 -include third_party/rules.mk
 

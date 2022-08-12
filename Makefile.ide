@@ -1,0 +1,75 @@
+# -*- makefile -*-
+# vim: set filetype=make :
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Embedded Controller firmware build system - IDE integration support
+#
+
+# If env EXTERNAL_TRUNK_PATH is defined, we use this to build the
+# absolute path to the ec directory. Otherwise, we just take the abspath of ".".
+ide_ec_path_ext = \
+	$(if $(EXTERNAL_TRUNK_PATH),$(EXTERNAL_TRUNK_PATH)/src/platform/ec)
+ide_ec_path_abs = $(abspath .)
+ide_ec_path = $(or $(ide_ec_path_ext),$(ide_ec_path_abs))
+
+# Clang doesn't support these GCC options.
+ide_cflags = $(filter-out -mno-sched-prolog -fconserve-stack,$(CFLAGS))
+
+# The all-ide-compile-cmds target takes about 2 minutes using 8 cores when all
+# work is replaced by the |true| command. Thus, the build system itself
+# takes 2m independent of the text manipulation.
+.PHONY: all-ide-compile-cmds
+all-ide-compile-cmds: $(foreach b, $(BOARDS), ide-compile-cmds-$(b))
+ide-compile-cmds-%:
+	$(MAKE) BOARD=$* V=$(V) ide-compile-cmds
+
+ide-compile-cmds-y                        = $(out)/RW/compile_commands.json
+ide-compile-cmds-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/compile_commands.json
+
+.PHONY: ide-compile-cmds
+ide-compile-cmds: $(ide-compile-cmds-y)
+
+# All but the last file/json-object need to have a trailing comma.
+#
+# The first sed line prepends 4 spaces to all lines and then adds a
+# comma + implicit-newline to the end of the last line of the file.
+# The second sed line prepends 4 spaces to all lines and then adds an
+# implicit new line.
+cmd_combine_compile_cmd_json =                                                 \
+	printf '[\n'                                                      >$@ ;\
+	echo $^ | xargs -n1 | head -n-1 | xargs -n1 sed 's/^/    /;$$s/$$/,/'  \
+									 >>$@ ;\
+	sed 's/^/    /' $(lastword $^)                                   >>$@ ;\
+	printf ']\n'                                                     >>$@ ;
+
+$(out)/RW/compile_commands.json: override BLD:=RW
+$(out)/RW/compile_commands.json: private objs := $(rw-objs:.o=.json)
+$(out)/RW/compile_commands.json: $(rw-objs:.o=.compile_cmd.json)
+	$(call quiet,combine_compile_cmd_json,COMBINE)
+$(out)/RO/compile_commands.json: override BLD:=RO
+$(out)/RO/compile_commands.json: private objs := $(ro-objs:.o=.json)
+$(out)/RO/compile_commands.json: $(ro-objs:.o=.compile_cmd.json)
+	$(call quiet,combine_compile_cmd_json,COMBINE)
+
+cmd_c_to_compile_cmd_json =                                                    \
+	printf '{\n'                                                     >$@  ;\
+	printf '    "arguments": [\n'                                   >>$@  ;\
+	printf '        "%s",\n' cc -c -std=gnu11 $(C_WARN) $(ide_cflags)      \
+		-o $(@D)/$(@F:.compile_cmd.json=.o)                     >>$@  ;\
+	printf '        "$<"\n'                                         >>$@  ;\
+	printf '    ],\n'                                               >>$@  ;\
+	printf '    "directory": "$(ide_ec_path)",\n'                   >>$@  ;\
+	printf '    "file": "$<"\n'                                     >>$@  ;\
+	printf '}\n'                                                    >>$@  ;
+
+$(out)/RO/%.compile_cmd.json:%.c
+	$(call quiet,c_to_compile_cmd_json,JSON   )
+$(out)/RW/%.compile_cmd.json:%.c
+	$(call quiet,c_to_compile_cmd_json,JSON   )
+
+$(out)/RO/%.compile_cmd.json:%.S
+	$(call quiet,c_to_compile_cmd_json,JSON   )
+$(out)/RW/%.compile_cmd.json:%.S
+	$(call quiet,c_to_compile_cmd_json,JSON   )
