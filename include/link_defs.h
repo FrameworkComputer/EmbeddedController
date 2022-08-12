@@ -136,6 +136,19 @@ extern void *__dram_data_end;
 extern void *__dram_bss_start;
 extern void *__dram_bss_end;
 
+#if defined(CHIP_VARIANT_MT8195) && defined(CONFIG_CHIP_MEMORY_REGIONS)
+/* clear up NOLOAD region */
+#define REGION(name, attr, start, size) \
+	extern void *__##name##_start;  \
+	extern void *__##name##_end;
+#define REGION_LOAD(name, attr, start, size) \
+	extern void *__##name##_start;       \
+	extern void *__##name##_end;
+#include "memory_regions.inc"
+#undef REGION
+#undef REGION_LOAD
+#endif
+
 /* Helper for special chip-specific memory sections */
 #if defined(CONFIG_CHIP_MEMORY_REGIONS) || defined(CONFIG_DRAM_BASE)
 #define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))

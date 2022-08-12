@@ -110,6 +110,15 @@ test_mockable __keep int main(void)
 	       (uintptr_t)(&__dram_data_end) - (uintptr_t)(&__dram_data_start));
 #endif
 
+#if defined(CHIP_VARIANT_MT8195) && defined(CONFIG_CHIP_MEMORY_REGIONS)
+	/* clear up NOLOAD region. */
+#define REGION(name, attr, start, size) \
+	memset(&__##name##_start, 0,    \
+	       (uintptr_t)(&__##name##_end) - (uintptr_t)(&__##name##_start));
+#include "memory_regions.inc"
+#undef REGION
+#endif
+
 #if defined(CONFIG_FLASH_PHYSICAL)
 	/*
 	 * Initialize flash and apply write protect if necessary.  Requires
