@@ -474,7 +474,7 @@ sensor (in nocturne), not the FPC 1025 sensor (hatch).
 Convert the buffer in proprietary format into png:
 
 ```bash
-(dut) $ /opt/fpc/fputils.py /tmp/fp.raw --png
+(dut) $ /usr/local/opt/fpc/fputils.py /tmp/fp.raw --png
 Extraction found 2 images
 Wrote /tmp/fp.0.png (14085 bytes)
 Wrote /tmp/fp.1.png (14025 bytes)
