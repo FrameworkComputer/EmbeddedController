@@ -276,7 +276,7 @@
 			gpios = <&ioex_port1 4 GPIO_ODR_HIGH>;
 			no-auto-init;
 		};
-		usb_c0_frs_en {
+		usb_c0_frs_en: usb_c0_frs_en {
 			gpios = <&ioex_port1 6 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_FRS_EN";
 			no-auto-init;
@@ -297,7 +297,7 @@
 			gpios = <&ioex_port2 4 GPIO_ODR_HIGH>;
 			no-auto-init;
 		};
-		usb_c2_frs_en {
+		usb_c2_frs_en: usb_c2_frs_en {
 			gpios = <&ioex_port2 6 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C2_FRS_EN";
 			no-auto-init;

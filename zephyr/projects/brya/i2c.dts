@@ -138,11 +138,25 @@
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
 
+	ppc_port0: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+	};
+
 	bc12_port0: pi3usb9201@5f {
 		compatible = "pericom,pi3usb9201";
 		status = "okay";
 		reg = <0x5f>;
 		irq = <&int_usb_c0_bc12>;
+	};
+
+	ppc_port2: syv682x@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&usb_c2_frs_en>;
 	};
 
 	bc12_port2: pi3usb9201@5d {
@@ -219,6 +233,12 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
 	pinctrl-names = "default";
+
+	ppc_port1: nx20p348x@72 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x72>;
+	};
 
 	bc12_port1: pi3usb9201@5f {
 		compatible = "pericom,pi3usb9201";
