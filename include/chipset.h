@@ -263,6 +263,14 @@ get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
 		   size_t num_reset_log_entries,
 		   uint32_t *resets_since_ec_boot);
 
+/**
+ * Check the reason given in the last call to report_ap_reset() .
+ *
+ * @return Reason argument that was passed to the last call to
+ * report_ap_reset(). Zero if report_ap_reset() has not been called.
+ */
+enum chipset_shutdown_reason chipset_get_shutdown_reason(void);
+
 #else
 
 static inline void report_ap_reset(enum chipset_shutdown_reason reason)
@@ -274,6 +282,11 @@ get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
 		   size_t num_reset_log_entries, uint32_t *resets_since_ec_boot)
 {
 	return EC_SUCCESS;
+}
+
+static inline enum chipset_shutdown_reason chipset_get_shutdown_reason(void)
+{
+	return CHIPSET_RESET_UNKNOWN;
 }
 
 #endif /* !CONFIG_CMD_AP_RESET_LOG */

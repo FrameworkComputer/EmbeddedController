@@ -118,4 +118,19 @@ get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
 	return EC_SUCCESS;
 }
 
+enum chipset_shutdown_reason chipset_get_shutdown_reason(void)
+{
+	enum chipset_shutdown_reason reason = CHIPSET_RESET_UNKNOWN;
+
+	mutex_lock(&reset_log_mutex);
+	if (ap_resets_since_ec_boot != 0) {
+		int i = (next_reset_log == 0) ? ARRAY_SIZE(reset_logs) - 1 :
+						next_reset_log - 1;
+		reason = reset_logs[i].reset_cause;
+	}
+	mutex_unlock(&reset_log_mutex);
+
+	return reason;
+}
+
 #endif /* !CONFIG_AP_RESET_LOG */

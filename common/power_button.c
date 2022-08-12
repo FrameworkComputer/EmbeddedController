@@ -6,6 +6,7 @@
 /* Power button module for Chrome EC */
 
 #include "button.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -135,6 +136,10 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pb_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void pb_chipset_shutdown(void)
 {
+	/* Don't set AP_IDLE if shutting down due to power failure. */
+	if (chipset_get_shutdown_reason() == CHIPSET_SHUTDOWN_POWERFAIL)
+		return;
+
 	chip_save_reset_flags(chip_read_reset_flags() | EC_RESET_FLAG_AP_IDLE);
 	system_set_reset_flags(EC_RESET_FLAG_AP_IDLE);
 	CPRINTS("Saved AP_IDLE flag");
