@@ -74,8 +74,7 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
             fnames: Dict of regexp to filename. If the regexp matches the
             command, then the filename will be returned as the output.
         """
-        super().__init__()
-        self.jobserver = zmake.jobserver.GNUMakeJobServer(jobs=2)
+        super().__init__(jobs=2)
         self.fnames = fnames
 
     def get_job(self):
@@ -97,7 +96,7 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
         else:
             raise Exception('No pattern matched "%s"' % " ".join(cmd))
         kwargs.pop("env", None)
-        return self.jobserver.popen(new_cmd, *args, **kwargs)
+        return super().popen(new_cmd, *args, **kwargs)
 
 
 def get_test_filepath(suffix):
