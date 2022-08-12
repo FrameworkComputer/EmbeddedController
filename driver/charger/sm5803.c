@@ -1434,6 +1434,18 @@ static enum ec_error_list sm5803_set_current(int chgnum, int current)
 	enum ec_error_list rv;
 	int reg;
 
+	if (current == 0) {
+		/*
+		 * Per Silicon Mitus, setting the fast charge current limit to 0
+		 * causes "much unstable". This normally happens when the
+		 * battery is fully charged (so we don't expect fast charge to
+		 * be in use): turn 0 into the minimum nonzero value so we
+		 * avoid setting this register to 0 but still make the requested
+		 * current as small as possible.
+		 */
+		current = SM5803_REG_TO_CURRENT(1);
+	}
+
 	rv = chg_read8(chgnum, SM5803_REG_FAST_CONF4, &reg);
 	if (rv)
 		return rv;
