@@ -1,31 +1,22 @@
-This is the combined driver test. The goal is to have many driver test suites
-in one binary, so that compile time will be faster than many small tests, and
+This is the drivers test directory. The goal is to have many driver test suites
+in few binaries, so that compile time will be faster than many small tests, and
 so we can test interactions between different subsystems easily.
 
 ## Run all the test suites
 
 ```bash
-(chroot) zmake test test-drivers
+(chroot) ec $ ./twister -T zephyr/test/drivers
 ```
 
-To see all the output of zmake (for example if the build fails)
+To see all the output of twister in stdout (for example if the build fails)
 
 ```bash
-(chroot) zmake -l DEBUG -j 1 test test-drivers
+(chroot) ec $ ./twister -v -i -T zephyr/test/drivers
 ```
 
 ## Code coverage
 
-To calculate code coverage for this test only
-
-```bash
-(chroot) zmake test --coverage test-drivers
-(chroot) genhtml --branch-coverage -q \
-        -o build/zephyr/test-drivers/output/coverage_rpt \
-        build/zephyr/test-drivers/output/zephyr.info
-```
-
-The report will be in build/zephyr/test-drivers/output/coverage_rpt/index.html
+See the [EC code coverage] doc.
 
 ## Debugging
 
@@ -35,15 +26,24 @@ You need the host version of gdb:
 (chroot) sudo emerge -j sys-devel/gdb
 ```
 
-Build the test
+Build all the drivers tests
 ```bash
-(chroot) zmake build test-drivers
+(chroot) ec $ ./twister -b -T zephyr/test/drivers
 ```
 
 Then run gdb
 
+Example of running gdb on the `drivers.default` test binary:
+
 ```
-(chroot) gdb build/zephyr/test-drivers/build-singleimage/zephyr/zephyr.exe
+(chroot) ec $ gdb twister-out/native_posix/drivers.default/zephyr/zephyr.exe
 # Set breakpoints, run, etc.
 ```
 
+Another of running gdb now on the `drivers.chargesplash` test binary:
+
+```
+(chroot) ec $ gdb twister-out/native_posix/drivers.chargesplash/zephyr/zephyr.exe
+```
+
+[EC code coverage]: ../../../docs/code_coverage.md#zephyr-ztest-code-coverage
