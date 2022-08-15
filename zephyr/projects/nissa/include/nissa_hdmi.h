@@ -50,6 +50,6 @@ void nissa_configure_hdmi_vcc(void);
  * A board should override this function if it needs to enable more IOs for
  * HDMI, or if some pins need to be conditionally enabled.
  */
-__overridable void nissa_configure_hdmi_power_gpios(void);
+__override_proto void nissa_configure_hdmi_power_gpios(void);
 
 #endif /* __CROS_EC_NISSA_NISSA_HDMI_H__ */
