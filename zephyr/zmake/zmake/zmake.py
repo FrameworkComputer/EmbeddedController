@@ -11,7 +11,6 @@ import pathlib
 import re
 import shutil
 import subprocess
-import uuid
 from typing import Dict, Optional, Set, Union
 
 import zmake.build_config
@@ -240,7 +239,6 @@ class Zmake:
         build_dir=None,
         toolchain=None,
         build_after_configure=False,
-        test_after_configure=False,
         clobber=False,
         bringup=False,
         coverage=False,
@@ -274,7 +272,6 @@ class Zmake:
                     build_dir=project_build_dir,
                     toolchain=toolchain,
                     build_after_configure=build_after_configure,
-                    test_after_configure=test_after_configure,
                     clobber=clobber,
                     bringup=bringup,
                     coverage=coverage,
@@ -292,16 +289,6 @@ class Zmake:
         result = self.executor.wait()
         if result:
             return result
-        test_projects = [p for p in projects if p.config.is_test]
-        if len(test_projects) > 1 and coverage and test_after_configure:
-            result = self._merge_lcov_files(
-                projects=test_projects,
-                build_dir=build_dir,
-                output_file=build_dir / "all_tests.info",
-            )
-            if result:
-                self.failed_projects.append(str(build_dir / "all_tests.info"))
-                return result
         non_test_projects = [p for p in projects if not p.config.is_test]
         if len(non_test_projects) > 1 and coverage and build_after_configure:
             result = self._merge_lcov_files(
@@ -348,113 +335,31 @@ class Zmake:
             static_version=static_version,
         )
 
-    def test(  # pylint: disable=too-many-arguments,too-many-locals
+    def test(  # pylint: disable=too-many-arguments,too-many-locals,unused-argument
         self,
         project_names,
-        build_dir=None,
-        toolchain=None,
-        clobber=False,
-        bringup=False,
-        coverage=False,
-        allow_warnings=False,
-        all_projects=False,
-        host_tests_only=False,
-        extra_cflags=None,
-        no_rebuild=False,
-        delete_intermediates=False,
-        boards_only=False,
-        static_version=False,
     ):
-        """Locate and build the specified projects."""
-        if not no_rebuild:
-            return self.configure(
-                project_names,
-                build_dir=build_dir,
-                toolchain=toolchain,
-                clobber=clobber,
-                bringup=bringup,
-                coverage=coverage,
-                allow_warnings=allow_warnings,
-                all_projects=all_projects,
-                host_tests_only=host_tests_only,
-                extra_cflags=extra_cflags,
-                test_after_configure=True,
-                delete_intermediates=delete_intermediates,
-                boards_only=boards_only,
-                static_version=static_version,
-            )
-        # Resolve build_dir if needed.
-        if not build_dir:
-            build_dir = self.module_paths["ec"] / "build" / "zephyr"
+        """Build and run tests for the specified projects.
 
-        projects = self._resolve_projects(
-            project_names,
-            all_projects=all_projects,
-            host_tests_only=host_tests_only,
-            boards_only=boards_only,
+        Using zmake to run tests is no longer supported. Use twister.
+        """
+        self.logger.error(
+            "zmake test is deprecated. Use twister -T zephyr/test/<test_dir>."
         )
-        test_projects = [p for p in projects if p.config.is_test]
-        for project in test_projects:
-            project_build_dir = (
-                pathlib.Path(build_dir) / project.config.project_name
-            )
-            gcov = "gcov.sh-not-found"
-            for build_name, _ in project.iter_builds():
-                target_build_dir = project_build_dir / "build-{}".format(
-                    build_name
-                )
-                gcov = target_build_dir / "gcov.sh"
-            self.executor.append(
-                func=functools.partial(
-                    self._run_test,
-                    project=project,
-                    coverage=coverage,
-                    gcov=gcov,
-                    build_dir=project_build_dir,
-                    lcov_file=project_build_dir / "output" / "zephyr.info",
-                    timeout=project.config.test_timeout_secs,
-                )
-            )
-            if self._sequential:
-                result = self.executor.wait()
-                if result:
-                    return result
-        result = self.executor.wait()
-        if result:
-            return result
-        if len(test_projects) > 1 and coverage:
-            result = self._merge_lcov_files(
-                projects=test_projects,
-                build_dir=build_dir,
-                output_file=build_dir / "all_tests.info",
-            )
-            if result:
-                self.failed_projects.append(str(build_dir / "all_tests.info"))
-                return result
+
         return 0
 
     def testall(  # pylint: disable=too-many-arguments
         self,
-        build_dir=None,
-        toolchain=None,
-        clobber=False,
-        bringup=False,
-        coverage=False,
-        allow_warnings=False,
-        static_version=False,
     ):
-        """Locate and build all the projects."""
-        return self.test(
-            [],
-            build_dir=build_dir,
-            toolchain=toolchain,
-            clobber=clobber,
-            bringup=bringup,
-            coverage=coverage,
-            allow_warnings=allow_warnings,
-            all_projects=True,
-            static_version=static_version,
+        """Build and run tests for all projects.
+
+        Using zmake to run tests is no longer supported. Use twister.
+        """
+        self.logger.error(
+            "zmake testall is deprecated. To build all packages, use zmake build -a."
         )
+        return self.test([])
 
     def _configure(
         self,
@@ -462,7 +367,6 @@ class Zmake:
         build_dir: pathlib.Path,
         toolchain=None,
         build_after_configure=False,
-        test_after_configure=False,
         clobber=False,
         bringup=False,
         coverage=False,
@@ -649,7 +553,7 @@ class Zmake:
             )
 
             output_files = []
-            if build_after_configure or test_after_configure:
+            if build_after_configure:
                 result = self._build(
                     build_dir=build_dir,
                     project=project,
@@ -661,22 +565,6 @@ class Zmake:
                 if result:
                     self.failed_projects.append(project.config.project_name)
                     return result
-            if test_after_configure and project.config.is_test:
-                gcov = "gcov.sh-not-found"
-                for build_name, _ in project.iter_builds():
-                    target_build_dir = build_dir / "build-{}".format(build_name)
-                    gcov = target_build_dir / "gcov.sh"
-                self.executor.append(
-                    func=functools.partial(
-                        self._run_test,
-                        project=project,
-                        coverage=coverage,
-                        gcov=gcov,
-                        build_dir=build_dir,
-                        lcov_file=build_dir / "output" / "zephyr.info",
-                        timeout=project.config.test_timeout_secs,
-                    )
-                )
 
             if delete_intermediates:
                 outdir = build_dir / "output"
@@ -847,86 +735,6 @@ class Zmake:
                 output_files_out.append(output_file)
 
         return 0
-
-    def _run_test(  # pylint: disable=too-many-arguments
-        self,
-        project: zmake.project.Project,
-        coverage,
-        gcov,
-        build_dir,
-        lcov_file,
-        timeout=None,
-    ):
-        """Run a single test, with goma if enabled.
-
-        Args:
-            project: The project to run the test from.
-            coverage: True if coverage is enabled.
-            gcov: Path to the gcov binary.
-            build_dir: Path to the build directory
-            lcov_file: Output path for the generated lcov file.
-        """
-
-        try:
-            cmd = []
-            if self.goma:
-                cmd.append(self.gomacc)
-
-            elf_file = build_dir / "output" / "zephyr.elf"
-            cmd.append(elf_file)
-
-            execution_tmp_dir = build_dir / "tmp" / str(uuid.uuid4())
-            execution_tmp_dir.mkdir(parents=True, exist_ok=True)
-            for arg in project.config.test_args:
-                cmd.append(arg.format(test_temp_dir=execution_tmp_dir))
-
-            def _run():
-                self.logger.info("Running tests in %s.", elf_file)
-                proc = self.jobserver.popen(
-                    cmd,
-                    cwd=elf_file.parent,
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding="utf-8",
-                    errors="replace",
-                )
-                job_id = "test {}".format(elf_file)
-                zmake.multiproc.LogWriter.log_output(
-                    self.logger,
-                    logging.DEBUG,
-                    proc.stdout,
-                    job_id=job_id,
-                )
-                zmake.multiproc.LogWriter.log_output(
-                    self.logger,
-                    logging.ERROR,
-                    proc.stderr,
-                    job_id=job_id,
-                )
-                try:
-                    if proc.wait(timeout=timeout):
-                        raise OSError(get_process_failure_msg(proc))
-                    if coverage:
-                        self._run_lcov(
-                            build_dir, lcov_file, initial=False, gcov=gcov
-                        )
-                except subprocess.TimeoutExpired as e:
-                    proc.terminate()
-                    try:
-                        proc.wait(timeout=1)
-                    except subprocess.TimeoutExpired:
-                        proc.kill()
-                    raise e
-
-            if self.goma:
-                _run()
-            else:
-                with self.jobserver.get_job():
-                    _run()
-        except Exception:
-            self.failed_projects.append(project.config.project_name)
-            raise
 
     def _run_lcov(
         self,

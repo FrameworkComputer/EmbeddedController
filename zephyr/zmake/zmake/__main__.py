@@ -204,9 +204,11 @@ def get_argparser():
         help="Optional directory to search for BUILD.py files in.",
     )
 
+    # TODO(b/b/242563072): Remove stub support for test and testall entirely after users have gotten
+    # used to twister.
     test = sub.add_parser(
         "test",
-        help="Configure, build and run tests on specified projects",
+        help="Configure, build and run tests on specified projects; DEPRECATED",
     )
     test.add_argument(
         "--no-rebuild",
@@ -217,7 +219,7 @@ def get_argparser():
 
     testall = sub.add_parser(
         "testall",
-        help="Alias for test --all",
+        help="Alias for test --all; DEPRECATED",
     )
     testall.add_argument(
         "--clobber",
