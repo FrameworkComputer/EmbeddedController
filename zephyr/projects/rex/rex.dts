@@ -68,10 +68,10 @@
 		irq = <&int_usb_c0_bc12>;
 	};
 
-	tcpc_port0: nct38xx@73 {
+	tcpc_port0: nct38xx@70 {
 		compatible = "nuvoton,nct38xx";
 		gpio-dev = <&nct3807_C0>;
-		reg = <0x73>;
+		reg = <0x70>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
 	};
 
