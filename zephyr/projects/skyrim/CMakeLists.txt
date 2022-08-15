@@ -9,6 +9,8 @@ project(skyrim)
 
 cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SKYRIM include)
 
+zephyr_library_sources_ifdef(CONFIG_BOARD_SKYRIM "common.c")
+
 zephyr_library_sources_ifdef(CONFIG_BOARD_SKYRIM "power_signals.c")
 
 zephyr_library_sources_ifdef(CONFIG_BOARD_SKYRIM "usbc_config.c")
