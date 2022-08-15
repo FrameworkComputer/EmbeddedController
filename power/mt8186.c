@@ -373,7 +373,6 @@ enum power_state power_handle_state(enum power_state state)
 			/* Give up, go back to G3. */
 			return POWER_S5G3;
 
-		msleep(500);
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		/*
