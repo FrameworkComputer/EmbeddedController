@@ -147,6 +147,14 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success(" +123", "%+5d", 123));
 	T(expect_success("00123", "%05d", 123));
 	T(expect_success("00123", "%005d", 123));
+	/* Fixed point. */
+	T(expect_success("0.00123", "%.5d", 123));
+	T(expect_success("12.3", "%2.1d", 123));
+	/* Precision or width larger than buffer should fail. */
+	T(expect(EC_ERROR_OVERFLOW, "  1", false, 4, "%5d", 123));
+	T(expect(EC_ERROR_OVERFLOW, "   ", false, 4, "%10d", 123));
+	T(expect(EC_ERROR_OVERFLOW, "123", false, 4, "%-10d", 123));
+	T(expect(EC_ERROR_OVERFLOW, "0.0", false, 4, "%.10d", 123));
 	if (use_builtin_stdlib) {
 		/*
 		 * TODO(b/239233116): These are incorrect and should be fixed.
