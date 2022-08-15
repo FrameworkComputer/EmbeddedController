@@ -19,6 +19,7 @@
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
+#include "usbc_ppc.h"
 #include "fw_config.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -90,7 +91,7 @@ int board_set_active_charge_port(int port)
 		/* Make sure BJ adapter is sourcing power */
 		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL))
 			return EC_ERROR_INVAL;
-		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
+		ppc_vbus_sink_enable(0, 0);
 		break;
 	default:
 		return EC_ERROR_INVAL;
