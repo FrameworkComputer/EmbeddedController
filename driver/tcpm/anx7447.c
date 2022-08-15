@@ -36,6 +36,7 @@ static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 
 static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
 static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_MAX_COUNT];
+static bool anx7447_bist_test_mode[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #ifdef CONFIG_USB_PD_FRS_TCPC
 /* an array to indicate which port is waiting for FRS disablement. */
@@ -978,6 +979,15 @@ enum ec_error_list anx7447_set_bist_test_mode(const int port, const bool enable)
 	RETURN_ERROR(tcpc_write(port, ANX7447_REG_CC_DEBOUNCE_TIME,
 				enable ? 2 : 10));
 
+	anx7447_bist_test_mode[port] = enable;
+
+	return EC_SUCCESS;
+}
+
+enum ec_error_list anx7447_get_bist_test_mode(const int port, bool *enable)
+{
+	*enable = anx7447_bist_test_mode[port];
+
 	return EC_SUCCESS;
 }
 
@@ -1024,6 +1034,7 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.set_frs_enable = &anx7447_set_frs_enable,
 #endif
 	.set_bist_test_mode = &anx7447_set_bist_test_mode,
+	.get_bist_test_mode = &anx7447_get_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
 	.dump_registers = &anx7447_dump_registers,
 #endif
