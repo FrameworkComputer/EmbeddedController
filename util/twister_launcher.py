@@ -90,12 +90,16 @@ def main():
     zephyr_modules = find_modules(zephyr_modules_dir)
     zephyr_modules.append(ec_base)
 
-    # Prepare environment variables for export to Twister and inherit the
-    # parent environment.
+    # Prepare environment variables for export to Twister. Inherit the parent
+    # process's environment, but set some default values if not already set.
     twister_env = dict(os.environ)
     extra_env_vars = {
-        "TOOLCHAIN_ROOT": str(ec_base / "zephyr"),
-        "ZEPHYR_TOOLCHAIN_VARIANT": "llvm",
+        "TOOLCHAIN_ROOT": os.environ.get(
+            "TOOLCHAIN_ROOT", str(ec_base / "zephyr")
+        ),
+        "ZEPHYR_TOOLCHAIN_VARIANT": os.environ.get(
+            "ZEPHYR_TOOLCHAIN_VARIANT", "llvm"
+        ),
     }
     twister_env.update(extra_env_vars)
 
@@ -107,8 +111,6 @@ def main():
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_BASE={zephyr_base}",
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
-        "--gcov-tool",
-        ec_base / "util" / "llvm-gcov.sh",
     ]
 
     # `-T` flags (used for specifying test directories to build and run)
@@ -122,6 +124,9 @@ def main():
     parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     parser.add_argument("-T", "--testsuite-root", action="append")
     parser.add_argument("-v", "--verbose", action="count", default=0)
+    parser.add_argument(
+        "--gcov-tool", default=str(ec_base / "util" / "llvm-gcov.sh")
+    )
     intercepted_args, other_args = parser.parse_known_args()
 
     for _ in range(intercepted_args.verbose):
@@ -137,6 +142,15 @@ def main():
         # Twister-compatible EC tests to run.
         twister_cli.extend(["-T", str(ec_base)])
         twister_cli.extend(["-T", str(zephyr_base / "tests/subsys/shell")])
+
+    # Pass through the chosen coverage tool, or fall back on the default choice
+    # (see add_argument above).
+    twister_cli.extend(
+        [
+            "--gcov-tool",
+            intercepted_args.gcov_tool,
+        ]
+    )
 
     # Append additional user-supplied args
     twister_cli.extend(other_args)
