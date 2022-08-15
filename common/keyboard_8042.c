@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i8042_protocol.h"
+#include "atkbd_protocol.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
@@ -650,65 +651,65 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 
 	default: /* STATE_NORMAL */
 		switch (data) {
-		case I8042_CMD_GSCANSET: /* also I8042_CMD_SSCANSET */
+		case ATKBD_CMD_GSCANSET: /* also ATKBD_CMD_SSCANSET */
 			output[out_len++] = I8042_RET_ACK;
 			data_port_state = STATE_SCANCODE;
 			break;
 
-		case I8042_CMD_SETLEDS:
+		case ATKBD_CMD_SETLEDS:
 			/* Chrome OS doesn't have keyboard LEDs, so ignore */
 			output[out_len++] = I8042_RET_ACK;
 			data_port_state = STATE_SETLEDS;
 			break;
 
-		case I8042_CMD_EX_SETLEDS:
+		case ATKBD_CMD_EX_SETLEDS:
 			output[out_len++] = I8042_RET_ACK;
 			data_port_state = STATE_EX_SETLEDS_1;
 			break;
 
-		case I8042_CMD_DIAG_ECHO:
+		case ATKBD_CMD_DIAG_ECHO:
 			output[out_len++] = I8042_RET_ACK;
-			output[out_len++] = I8042_CMD_DIAG_ECHO;
+			output[out_len++] = ATKBD_CMD_DIAG_ECHO;
 			break;
 
-		case I8042_CMD_GETID: /* fall-thru */
-		case I8042_CMD_OK_GETID:
+		case ATKBD_CMD_GETID: /* fall-thru */
+		case ATKBD_CMD_OK_GETID:
 			output[out_len++] = I8042_RET_ACK;
 			output[out_len++] = 0xab; /* Regular keyboards */
 			output[out_len++] = 0x83;
 			break;
 
-		case I8042_CMD_SETREP:
+		case ATKBD_CMD_SETREP:
 			output[out_len++] = I8042_RET_ACK;
 			data_port_state = STATE_SETREP;
 			break;
 
-		case I8042_CMD_ENABLE:
+		case ATKBD_CMD_ENABLE:
 			output[out_len++] = I8042_RET_ACK;
 			keystroke_enable(1);
 			keyboard_clear_buffer();
 			break;
 
-		case I8042_CMD_RESET_DIS:
+		case ATKBD_CMD_RESET_DIS:
 			output[out_len++] = I8042_RET_ACK;
 			keystroke_enable(0);
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			break;
 
-		case I8042_CMD_RESET_DEF:
+		case ATKBD_CMD_RESET_DEF:
 			output[out_len++] = I8042_RET_ACK;
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			break;
 
-		case I8042_CMD_RESET:
+		case ATKBD_CMD_RESET:
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			output[out_len++] = I8042_RET_ACK;
 			break;
 
-		case I8042_CMD_RESEND:
+		case ATKBD_CMD_RESEND:
 			save_for_resend = 0;
 			for (i = 0; i < resend_command_len; ++i)
 				output[out_len++] = resend_command[i];
@@ -719,9 +720,9 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 			/* U-boot hack.  Just ignore; don't reply. */
 			break;
 
-		case I8042_CMD_SETALL_MB: /* fall-thru */
-		case I8042_CMD_SETALL_MBR:
-		case I8042_CMD_EX_ENABLE:
+		case ATKBD_CMD_SETALL_MB: /* fall-thru */
+		case ATKBD_CMD_SETALL_MBR:
+		case ATKBD_CMD_EX_ENABLE:
 		default:
 			output[out_len++] = I8042_RET_NAK;
 			CPRINTS("KB Unsupported i8042 data 0x%02x", data);

@@ -5,6 +5,7 @@
  * Tests for keyboard MKBP protocol
  */
 
+#include "atkbd_protocol.h"
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -50,20 +51,20 @@ static void press_key(int c, int r, int pressed)
 
 static void enable_keystroke(int enabled)
 {
-	uint8_t data = enabled ? I8042_CMD_ENABLE : I8042_CMD_RESET_DIS;
+	uint8_t data = enabled ? ATKBD_CMD_ENABLE : ATKBD_CMD_RESET_DIS;
 	keyboard_host_write(data, 0);
 	msleep(30);
 }
 
 static void reset_8042(void)
 {
-	keyboard_host_write(I8042_CMD_RESET_DEF, 0);
+	keyboard_host_write(ATKBD_CMD_RESET_DEF, 0);
 	msleep(30);
 }
 
 static void set_typematic(uint8_t val)
 {
-	keyboard_host_write(I8042_CMD_SETREP, 0);
+	keyboard_host_write(ATKBD_CMD_SETREP, 0);
 	msleep(30);
 	keyboard_host_write(val, 0);
 	msleep(30);
@@ -71,7 +72,7 @@ static void set_typematic(uint8_t val)
 
 static void set_scancode(uint8_t s)
 {
-	keyboard_host_write(I8042_CMD_SSCANSET, 0);
+	keyboard_host_write(ATKBD_CMD_SSCANSET, 0);
 	msleep(30);
 	keyboard_host_write(s, 0);
 	msleep(30);
