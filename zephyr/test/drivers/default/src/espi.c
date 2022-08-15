@@ -13,6 +13,8 @@
 
 #define PORT 0
 
+#define AC_OK_OD_GPIO_NAME "acok_od"
+
 ZTEST_USER(espi, test_host_command_get_protocol_info)
 {
 	struct ec_response_get_protocol_info response;
@@ -80,7 +82,7 @@ ZTEST_USER(espi, test_host_command_gpio_get_v0)
 {
 	struct ec_params_gpio_get p = {
 		/* Checking for AC enabled */
-		.name = "acok_od",
+		.name = AC_OK_OD_GPIO_NAME,
 	};
 	struct ec_response_gpio_get response;
 
@@ -102,6 +104,39 @@ ZTEST_USER(espi, test_host_command_gpio_get_v0)
 	zassert_ok(args.result, NULL);
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_false(response.val, NULL);
+}
+
+ZTEST_USER(espi, test_host_command_gpio_get_v1_get_by_name)
+{
+	struct ec_params_gpio_get_v1 p = {
+		.subcmd = EC_GPIO_GET_BY_NAME,
+		/* Checking for AC enabled */
+		.get_value_by_name = {
+			   AC_OK_OD_GPIO_NAME,
+		},
+	};
+	struct ec_response_gpio_get_v1 response;
+
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_GPIO_GET, 1, response, p);
+
+	/* Test true */
+	set_ac_enabled(true);
+
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_ok(args.result, NULL);
+	zassert_equal(args.response_size, sizeof(response.get_value_by_name),
+		      NULL);
+	zassert_true(response.get_info.val, NULL);
+
+	/* Test false */
+	set_ac_enabled(false);
+
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_ok(args.result, NULL);
+	zassert_equal(args.response_size, sizeof(response.get_value_by_name),
+		      NULL);
+	zassert_false(response.get_info.val, NULL);
 }
 
 ZTEST_SUITE(espi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
