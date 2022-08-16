@@ -23,7 +23,7 @@
 		color-map-amber  = <100  60>;
 
 		/* brightness-range = <red green blue yellow white amber> */
-		brightness-range = <100 100 0 0 0 0>;
+		brightness-range = <100 100 0 0 0 100>;
 
 		#address-cells = <1>;
 		#size-cells = <0>;
