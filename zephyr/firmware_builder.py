@@ -234,6 +234,7 @@ def test(opts):
 
     # Twister-based tests
     platform_ec = zephyr_dir.parent
+    third_party = platform_ec.parent.parent / "third_party"
     run_twister(platform_ec, opts.code_coverage, ["--test-only"])
 
     if opts.code_coverage:
@@ -347,6 +348,7 @@ def test(opts):
             platform_ec / "build/**",
             platform_ec / "twister-out*/**",
             "/usr/include/**",
+            "/usr/lib/**",
         ]
         print(" ".join(shlex.quote(str(x)) for x in cmd))
         output = subprocess.run(
@@ -358,6 +360,32 @@ def test(opts):
             stdin=subprocess.DEVNULL,
         ).stdout
         _extract_lcov_summary("ALL_MERGED", metrics, output)
+
+        # Create an info file without any test code, just for the metric.
+        cmd = [
+            "/usr/bin/lcov",
+            "-o",
+            build_dir / "lcov_no_tests.info",
+            "--rc",
+            "lcov_branch_coverage=1",
+            "-r",
+            build_dir / "lcov.info",
+            platform_ec / "test/**",
+            zephyr_dir / "test/**",
+            zephyr_dir / "emul/**",
+            third_party / "main/subsys/emul/**",
+            third_party / "main/subsys/testsuite/**",
+        ]
+        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        output = subprocess.run(
+            cmd,
+            cwd=zephyr_dir,
+            check=True,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+            stdin=subprocess.DEVNULL,
+        ).stdout
+        _extract_lcov_summary("ALL_FILTERED", metrics, output)
 
         subprocess.run(
             [
@@ -376,7 +404,6 @@ def test(opts):
             stdin=subprocess.DEVNULL,
         )
 
-        third_party = platform_ec.parent.parent / "third_party"
         for board in SPECIAL_BOARDS:
             # Merge board coverage with tests
             cmd = [
