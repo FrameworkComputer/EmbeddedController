@@ -139,4 +139,20 @@ ZTEST_USER(espi, test_host_command_gpio_get_v1_get_by_name)
 	zassert_false(response.get_info.val, NULL);
 }
 
+ZTEST_USER(espi, test_host_command_gpio_get_v1_get_count)
+{
+	struct ec_params_gpio_get_v1 p = {
+		.subcmd = EC_GPIO_GET_COUNT,
+	};
+	struct ec_response_gpio_get_v1 response;
+
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_GPIO_GET, 1, response, p);
+
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_ok(args.result, NULL);
+	zassert_equal(args.response_size, sizeof(response.get_count), NULL);
+	zassert_equal(response.get_count.val, GPIO_COUNT, NULL);
+}
+
 ZTEST_SUITE(espi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
