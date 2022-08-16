@@ -43,6 +43,7 @@ target_sources(app PRIVATE
     src/ps8xxx.c
     src/smart.c
     src/stm_mems_common.c
+    src/system.c
     src/tcpci.c
     src/tcpci_test_common.c
     src/tcs3400.c
