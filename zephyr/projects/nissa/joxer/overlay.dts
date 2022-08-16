@@ -98,7 +98,6 @@
 		unused-gpios = <&gpioc 3 0>,
 			       <&gpiod 4 0>,
 			       <&gpioh 2 0>,
-			       <&gpioj 7 0>,
 			       <&gpiol 4 0>;
 	};
 
