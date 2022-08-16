@@ -237,7 +237,7 @@ void obp_point_95(void)
 
 	/* Trigger the PROCHOT */
 	gpio_set_level(GPIO_EC_PROCHOT_ODL, 0);
-	CPRINTF("Adapter voltage over then 95%% trigger prochot.");
+	CPRINTS("Adapter voltage over 95%% trigger prochot.");
 }
 
 void obp_point_85(void)
@@ -249,7 +249,7 @@ void obp_point_85(void)
 
 	/* Release the PROCHOT */
 	gpio_set_level(GPIO_EC_PROCHOT_ODL, 1);
-	CPRINTF("Adapter voltage less then 85%% release prochot.");
+	CPRINTS("Adapter voltage lower than 85%% release prochot.");
 }
 
 struct npcx_adc_thresh_t adc_obp_point_95 = {
