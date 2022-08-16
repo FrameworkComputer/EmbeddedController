@@ -18,6 +18,9 @@
 #include "host_command.h"
 #include "power.h"
 
+/** @brief Set emulated battery level. Call all necessary hooks. */
+void test_set_battery_level(int percentage);
+
 /** @brief Set chipset to S0 state. Call all necessary hooks. */
 void test_set_chipset_to_s0(void);
 

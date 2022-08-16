@@ -27,28 +27,15 @@
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
-void test_set_chipset_to_s0(void)
+void test_set_battery_level(int percentage)
 {
 	struct sbat_emul_bat_data *bat;
 	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	const struct device *battery_gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
-
-	printk("%s: Forcing power on\n", __func__);
-
-	task_wake(TASK_ID_CHIPSET);
-	k_sleep(K_SECONDS(1));
-
 	bat = sbat_emul_get_bat_data(emul);
 
-	/*
-	 * Make sure that battery is in good condition to
-	 * not trigger hibernate in charge_state_v2.c
-	 * Set battery voltage to expected value and capacity to 75%. Battery
-	 * will not be full and accepts charging, but will not trigger
-	 * hibernate. Charge level is chosen arbitrary.
-	 */
-	bat->cap = bat->full_cap * 3 / 4;
+	bat->cap = bat->full_cap * percentage / 100;
 	bat->volt = battery_get_info()->voltage_normal;
 	bat->design_mv = bat->volt;
 
@@ -60,6 +47,23 @@ void test_set_chipset_to_s0(void)
 	/* We need to wait for the charge task to re-read battery parameters */
 	WAIT_FOR(!charge_want_shutdown(), CHARGE_MAX_SLEEP_USEC + 1,
 		 k_sleep(K_SECONDS(1)));
+}
+
+void test_set_chipset_to_s0(void)
+{
+	printk("%s: Forcing power on\n", __func__);
+
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_SECONDS(1));
+
+	/*
+	 * Make sure that battery is in good condition to
+	 * not trigger hibernate in charge_state_v2.c
+	 * Set battery voltage to expected value and capacity to 75%. Battery
+	 * will not be full and accepts charging, but will not trigger
+	 * hibernate. Charge level is chosen arbitrary.
+	 */
+	test_set_battery_level(75);
 
 	/* The easiest way to power on seems to be the shell command. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power on"),
