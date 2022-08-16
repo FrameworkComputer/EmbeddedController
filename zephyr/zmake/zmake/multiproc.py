@@ -56,7 +56,7 @@ class LogWriter:
         """Reset this module to its starting state (useful for tests)"""
         LogWriter._logging_map.clear()
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         logger,
         log_level,
@@ -202,7 +202,7 @@ class LogWriter:
                 LogWriter._log_fd(file)
 
     @classmethod
-    def log_output(  # pylint: disable=too-many-arguments
+    def log_output(
         cls,
         logger,
         log_level,

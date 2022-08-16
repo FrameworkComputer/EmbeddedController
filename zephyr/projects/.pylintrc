@@ -1,7 +1,3 @@
-[MESSAGES CONTROL]
-
-disable=format,fixme
-
 [BASIC]
 additional-builtins=
     here,
@@ -11,3 +7,21 @@ additional-builtins=
     register_npcx_project,
     register_raw_project,
 good-names=BUILD
+
+# cros lint doesn't inherit the pylintrc from the parent dir.
+# These settings are copied from platform/ec/pylintrc
+[MESSAGES CONTROL]
+
+disable=
+    bad-continuation,
+    bad-whitespace,
+    # These have nothing to do with black, they are just annoying
+    fixme,
+    too-many-arguments,
+    too-many-statements,
+    too-many-branches,
+    too-many-locals
+
+[format]
+
+string-quote=double

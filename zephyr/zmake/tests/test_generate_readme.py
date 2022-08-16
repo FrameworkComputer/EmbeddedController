@@ -33,7 +33,7 @@ def test_generate_readme_diff(
     expected_contents,
     actual_contents,
     return_code,
-):  # pylint: disable=too-many-arguments
+):
     """Verify that the diff function can detect different text."""
 
     def generate_readme():

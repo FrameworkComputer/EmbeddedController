@@ -152,7 +152,7 @@ class Zmake:
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         checkout=None,
         jobserver: Optional[zmake.jobserver.JobClient] = None,
@@ -233,7 +233,7 @@ class Zmake:
                     ) from e
         return projects
 
-    def configure(  # pylint: disable=too-many-arguments,too-many-locals
+    def configure(
         self,
         project_names,
         build_dir=None,
@@ -301,7 +301,7 @@ class Zmake:
                 return result
         return 0
 
-    def build(  # pylint: disable=too-many-arguments
+    def build(
         self,
         project_names,
         build_dir=None,
@@ -335,7 +335,7 @@ class Zmake:
             static_version=static_version,
         )
 
-    def test(  # pylint: disable=too-many-arguments,too-many-locals,unused-argument
+    def test(  # pylint: disable=unused-argument
         self,
         project_names,
     ):
@@ -349,7 +349,7 @@ class Zmake:
 
         return 0
 
-    def testall(  # pylint: disable=too-many-arguments
+    def testall(
         self,
     ):
         """Build and run tests for all projects.
@@ -376,8 +376,6 @@ class Zmake:
         delete_intermediates=False,
         static_version=False,
     ):
-        # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
-        # pylint: disable=too-many-statements
         """Set up a build directory to later be built by "zmake build"."""
         try:
             # Clobber build directory if requested.
@@ -580,7 +578,7 @@ class Zmake:
             self.failed_projects.append(project.config.project_name)
             raise
 
-    def _build(  # pylint: disable=too-many-arguments
+    def _build(
         self,
         build_dir,
         project: zmake.project.Project,
@@ -589,7 +587,6 @@ class Zmake:
         multiproject=False,
         static_version=False,
     ):
-        # pylint: disable=too-many-locals,too-many-branches
         """Build a pre-configured build directory."""
 
         def wait_and_check_success(procs, writers):

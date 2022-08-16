@@ -11,7 +11,10 @@ disable=
     bad-whitespace,
     # These have nothing to do with black, they are just annoying
     fixme,
-    too-many-arguments
+    too-many-arguments,
+    too-many-statements,
+    too-many-branches,
+    too-many-locals
 
 [format]
 

@@ -280,7 +280,7 @@ class TestFilters:
 )
 def test_list_projects(
     project_names, fmt, search_dir, expected_output, capsys, zmake_from_dir
-):  # pylint: disable=too-many-arguments
+):
     """Test listing projects with default directory."""
     fake_projects = {
         name: zmake.project.Project(
