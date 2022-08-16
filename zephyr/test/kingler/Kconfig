@@ -1,0 +1,15 @@
+# Copyright 2022 The ChromiumOS Authors.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config TEST_FORM_FACTOR_CLAMSHELL
+	bool "Run the tests intended for clamshells"
+	help
+	  Include clamshell tests into the binary.
+
+config TEST_FORM_FACTOR_CONVERTIBLE
+	bool "Run the tests intended for convertibles"
+	help
+	  Include convertible tests into the binary.
+
+source "Kconfig.zephyr"

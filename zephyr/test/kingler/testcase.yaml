@@ -1,0 +1,15 @@
+# Copyright 2022 The ChromiumOS Authors.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_posix
+tests:
+  kingler.steelix:
+    extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/cbi_steelix.dts;../projects/corsola/gpio_steelix.dts"
+    extra_configs:
+      - CONFIG_TEST_FORM_FACTOR_CONVERTIBLE=y
+  kingler.rusty:
+    extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/cbi_steelix.dts;../projects/corsola/gpio_steelix.dts"
+    extra_configs:
+      - CONFIG_TEST_FORM_FACTOR_CLAMSHELL=y

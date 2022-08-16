@@ -1,0 +1,266 @@
+/* Copyright 2022 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Contains emulators for devices normally found on NPCX chips.
+ * To use, include this file, then the board's gpio definitions.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	gpio1: gpio@101 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x101 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpio3: gpio@301 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x301 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpio4: gpio@400 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x400 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpio5: gpio@500 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x500 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpio6: gpio@600 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x600 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpio7: gpio@700 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x700 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpio8: gpio@801 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x801 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpio9: gpio@900 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x900 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioa: gpio@a00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xa00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpiob: gpio@b00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xb00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioc: gpio@c00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xc00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpiod: gpio@d00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xd00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioe: gpio@e00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xe00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpiof: gpio@f00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xf00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	i2c_ctrl0: i2c@40009000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x40009000 0x1000>;
+	};
+	i2c_ctrl1: i2c@4000b000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x4000b000 0x1000>;
+	};
+
+	i2c_ctrl2: i2c@400c0000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x400c0000 0x1000>;
+	};
+
+	i2c_ctrl3: i2c@400c2000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x400c2000 0x1000>;
+	};
+
+	i2c_ctrl4: i2c@40008000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x40008000 0x1000>;
+	};
+
+	i2c_ctrl5: i2c@40017000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x40017000 0x1000>;
+	};
+
+	i2c_ctrl6: i2c@40018000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x40018000 0x1000>;
+	};
+
+	i2c_ctrl7: i2c@40019000 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x40019000 0x1000>;
+	};
+	scfg: scfg@400c3000 {
+		compatible = "nuvoton,npcx-scfg";
+		/* First reg region is System Configuration Device */
+		/* Second reg region is System Glue Device */
+		reg = <0x400c3000 0x70
+			0x400a5000 0x2000>;
+		reg-names = "scfg", "glue";
+		#alt-cells = <3>;
+		#lvol-cells = <2>;
+	};
+};
+
+&gpio0 {
+	ngpios = <8>;
+};
