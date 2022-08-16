@@ -50,7 +50,7 @@ also, so that you can include code that is not part of any test as well.
 zmake build --coverage herobrine
 ./twister -v -i --coverage -p native_posix -p unit_testing
 genhtml -q -s --branch-coverage -o build/zephyr/coverage_rpt/ \
-  twister-out/coverage.info
+  twister-out/coverage.info build/zephyr/herobrine/output/zephyr.info
 ```
 
 The coverage report top-level page is
