@@ -10,8 +10,10 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "extpower.h"
+#include "driver/accel_kionix.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_bmi323.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -262,17 +264,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
 };
-
-static void board_update_sensor_config_clamshell(void)
-{
-	motion_sensor_count = 0;
-	gmr_tablet_switch_disable();
-	/* The sensors are not stuffed; don't allow lines to float */
-	gpio_set_flags(GPIO_ACCEL_GYRO_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
-	gpio_set_flags(GPIO_LID_ACCEL_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
-}
-DECLARE_HOOK(HOOK_INIT, board_update_sensor_config_clamshell,
-	     HOOK_PRIO_INIT_I2C + 2);
 /* Initialize board. */
 static void board_init(void)
 {
@@ -561,90 +552,148 @@ uint16_t tcpc_get_alert_status(void)
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
-static struct bmi_drv_data_t g_bmi160_data;
-static struct accelgyro_saved_data_t g_bma255_data;
-
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
 				       { 0, FLOAT_TO_FP(-1), 0 },
 				       { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
-					     { FLOAT_TO_FP(-1), 0, 0 },
-					     { 0, 0, FLOAT_TO_FP(1) } };
+static struct kionix_accel_data g_kx022_data;
 
+static const mat33_fp_t lid_standard_ref_kx022 = { { FLOAT_TO_FP(1), 0, 0 },
+						   { 0, FLOAT_TO_FP(1), 0 },
+						   { 0, 0, FLOAT_TO_FP(-1) } };
+
+static struct bmi_drv_data_t g_bmi_data;
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
-	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMA255,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bma2x2_accel_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bma255_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
-	 .rot_standard_ref = &lid_standard_ref,
-	 .default_range = 2, /* g, to support lid angle calculation. */
-	 .min_frequency = BMA255_ACCEL_MIN_FREQ,
-	 .max_frequency = BMA255_ACCEL_MAX_FREQ,
-	 .config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_KX022,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &kionix_accel_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_kx022_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+		.rot_standard_ref = &lid_standard_ref_kx022,
+		.default_range = 2, /* g */
+		/* We only use 2g because its resolution is only 8-bits */
+		.min_frequency = KX022_ACCEL_MIN_FREQ,
+		.max_frequency = KX022_ACCEL_MAX_FREQ,
+		.config = {
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
 		},
-		/* Sensor on for lid angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	 },
 	},
 	/*
-	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Note: bmi232: supports accelerometer and gyro sensor
 	 * Requirement: accelerometer sensor must init before gyro sensor
 	 * DO NOT change the order of the following table.
 	 */
 	[BASE_ACCEL] = {
-	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .rot_standard_ref = &base_standard_ref,
-	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-	 .min_frequency = BMI_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI_ACCEL_MAX_FREQ,
-	 .config = {
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-		 },
-		 /* Sensor on for lid angle detection */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-		 },
-	 },
+		.name = "Base Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_BMI323,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &bmi3xx_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &g_bmi_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
+		.rot_standard_ref = &base_standard_ref,
+		.min_frequency = BMI_ACCEL_MIN_FREQ,
+		.max_frequency = BMI_ACCEL_MAX_FREQ,
+		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 12500 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+			},
+			/* Sensor on in S3 */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 12500 | ROUND_UP_FLAG,
+				.ec_rate = 0,
+			},
+		},
 	},
 	[BASE_GYRO] = {
-	 .name = "Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = BMI_GYRO_MIN_FREQ,
-	 .max_frequency = BMI_GYRO_MAX_FREQ,
+		.name = "Base Gyro",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_BMI323,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &bmi3xx_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &g_bmi_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
+		.default_range = 1000, /* dps */
+		.rot_standard_ref = &base_standard_ref,
+		.min_frequency = BMI_GYRO_MIN_FREQ,
+		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+static void board_update_sensor_config_from_sku(void)
+{
+	if (board_is_clamshell()) {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		/* The sensors are not stuffed; don't allow lines to float */
+		gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_LID_ACCEL_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	} else {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable interrupt for the base accel sensor */
+		gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_update_sensor_config_from_sku,
+	     HOOK_PRIO_INIT_I2C + 2);
+
+static uint8_t sku_id;
+
+enum board_model {
+	PAZQUEL,
+	PAZQUEL360,
+	UNKNOWN,
+};
+
+static const char *const model_name[] = {
+	"PAZQUEL",
+	"PAZQUEL360",
+	"UNKNOWN",
+};
+
+static enum board_model get_model(void)
+{
+	if (sku_id == 0 || sku_id == 1 || sku_id == 2 || sku_id == 3 ||
+	    sku_id == 4 || sku_id == 5 || sku_id == 6)
+		return PAZQUEL;
+	if (sku_id >= 8)
+		return PAZQUEL360;
+	return UNKNOWN;
+}
+
+int board_is_clamshell(void)
+{
+	return get_model() == PAZQUEL;
+}
+
+/* Read SKU ID from GPIO and initialize variables for board variants */
+static void sku_init(void)
+{
+	sku_id = system_get_sku_id();
+	CPRINTS("SKU: %u (%s)", sku_id, model_name[get_model()]);
+}
+DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_INIT_I2C + 1);

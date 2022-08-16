@@ -39,7 +39,7 @@ GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs
 
 /* Sensor interrupts */
 GPIO_INT(TABLET_MODE_L,     PIN(C, 6), GPIO_INT_BOTH, gmr_tablet_switch_isr)
-GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
+GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, bmi3xx_interrupt)  /* Accelerometer/gyro interrupt */
 
 /*
  * EC_RST_ODL used to be a wake source from PSL mode. However, we disabled

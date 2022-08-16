@@ -42,14 +42,14 @@
 
 /* Sensors */
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-/* BMI160 Base accel/gyro */
-#define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
+/* BMI323 Base accel/gyro */
+#define CONFIG_ACCELGYRO_BMI3XX
+#define CONFIG_ACCELGYRO_BMI3XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
-/* BMA253 lid accel */
-#define CONFIG_ACCEL_BMA255
+/* KX022 lid accel */
+#define CONFIG_ACCEL_KX022
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
 #define CONFIG_LID_ANGLE
@@ -97,6 +97,7 @@ enum battery_type {
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
+int board_is_clamshell(void);
 
 #endif /* !defined(__ASSEMBLER__) */
 
