@@ -3407,9 +3407,6 @@
  */
 #undef CONFIG_MCDP28X0
 
-/* Define clock input to MFT module. */
-#undef CONFIG_MFT_INPUT_LFCLK
-
 /* Minute-IA watchdog timer vector number. */
 #define CONFIG_MIA_WDT_VEC 0xFF
 
