@@ -109,6 +109,12 @@ static void reset_state(void *unused)
 {
 	test_set_chipset_to_g3();
 
+	/*
+	 * Prevent critical low battery from moving us back to G3 when
+	 * lid is opened.
+	 */
+	test_set_battery_level(75);
+
 	if (lid_is_open()) {
 		set_lid(false, false);
 	}
