@@ -48,7 +48,7 @@ def main(argv=None):
 
     result = subprocess.run(
         ["clang-format", "--dry-run", *clang_format_files],
-        check=True,
+        check=False,
         cwd=ec_dir,
         stderr=subprocess.PIPE,
         encoding="utf-8",
@@ -58,6 +58,9 @@ def main(argv=None):
         for line in result.stderr.splitlines():
             logging.error("%s", line)
         return 1
+    if result.returncode != 0:
+        logging.error("clang-format failed with no output!")
+        return result.returncode
 
     logging.info("No clang-format issues found!")
     return 0
