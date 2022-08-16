@@ -144,7 +144,7 @@ static int mft_fan_rpm(int ch)
 /**
  * Set fan prescaler based on apb1 clock
  *
- * @param   none
+ * @param   ch      operation channel
  * @return  none
  * @notes   changed when initial or HOOK_FREQ_CHANGE command
  */
