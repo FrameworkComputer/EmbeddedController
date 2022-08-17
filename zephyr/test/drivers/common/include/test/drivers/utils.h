@@ -133,16 +133,20 @@ host_cmd_usb_pd_control(int port, enum usb_pd_control_swap swap)
 }
 
 /**
- * Run the host command to get the charge state.
+ * Run the host command to control or query the charge state
  *
  * @return The result of the query.
  */
 static inline struct ec_response_charge_control
-host_cmd_get_charge_control(void)
+host_cmd_charge_control(enum ec_charge_control_mode mode,
+			enum ec_charge_control_cmd cmd)
 {
-	struct ec_params_charge_control params = {
-		.cmd = EC_CHARGE_CONTROL_CMD_GET
-	};
+	struct ec_params_charge_control params = { .cmd = cmd,
+						   .mode = mode,
+						   .sustain_soc = {
+							   .lower = -1,
+							   .upper = -1,
+						   } };
 	struct ec_response_charge_control response;
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, 2, response, params);
