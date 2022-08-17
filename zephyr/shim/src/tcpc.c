@@ -10,9 +10,11 @@
 #include "usbc/tcpc_anx7447.h"
 #include "usbc/tcpc_ccgxxf.h"
 #include "usbc/tcpc_fusb302.h"
+#include "usbc/tcpc_generic_emul.h"
 #include "usbc/tcpc_it8xxx2.h"
 #include "usbc/tcpc_nct38xx.h"
 #include "usbc/tcpc_ps8xxx.h"
+#include "usbc/tcpc_ps8xxx_emul.h"
 #include "usbc/tcpc_rt1718s.h"
 #include "usbc/tcpci.h"
 #include "usbc/utils.h"
@@ -31,6 +33,16 @@
 	COND_CODE_1(DT_NODE_HAS_COMPAT(tcpc_id, compat),  \
 		    (TCPC_CHIP_ENTRY(usbc_id, tcpc_id, config_fn)), ())
 
+#ifdef TEST_BUILD
+#define TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)              \
+	CHECK_COMPAT(TCPCI_EMUL_COMPAT, usbc_id, tcpc_id,  \
+		     TCPC_CONFIG_TCPCI_EMUL)               \
+	CHECK_COMPAT(PS8XXX_EMUL_COMPAT, usbc_id, tcpc_id, \
+		     TCPC_CONFIG_PS8XXX_EMUL)
+#else
+#define TCPC_CHIP_FIND_EMUL(...)
+#endif /* TEST_BUILD */
+
 #define TCPC_CHIP_FIND(usbc_id, tcpc_id)                                       \
 	CHECK_COMPAT(ANX7447_TCPC_COMPAT, usbc_id, tcpc_id,                    \
 		     TCPC_CONFIG_ANX7447)                                      \
@@ -44,7 +56,8 @@
 		     TCPC_CONFIG_NCT38XX)                                      \
 	CHECK_COMPAT(RT1718S_TCPC_COMPAT, usbc_id, tcpc_id,                    \
 		     TCPC_CONFIG_RT1718S)                                      \
-	CHECK_COMPAT(TCPCI_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_TCPCI)
+	CHECK_COMPAT(TCPCI_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_TCPCI)        \
+	TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)
 
 #define TCPC_CHIP(usbc_id)                           \
 	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, tcpc), \

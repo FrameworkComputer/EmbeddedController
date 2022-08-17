@@ -118,25 +118,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
-struct tcpc_config_t tcpc_config[] = {
-	[USBC_PORT_C0] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C0,
-			.addr_flags = DT_REG_ADDR(DT_NODELABEL(tcpci_emul)),
-		},
-		.drv = &tcpci_tcpm_drv,
-	},
-	[USBC_PORT_C1] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1,
-			.addr_flags = DT_REG_ADDR(DT_NODELABEL(ps8xxx_emul)),
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 static uint16_t ps8xxx_product_id = PS8805_PRODUCT_ID;
