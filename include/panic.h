@@ -208,12 +208,20 @@ noreturn void panic_assert_fail(const char *msg, const char *func,
  *
  * @param msg	Panic message
  */
-noreturn void panic(const char *msg);
+#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+noreturn
+#endif
+	void
+	panic(const char *msg);
 
 /**
  * Display a default message and reset
  */
-noreturn void panic_reboot(void);
+#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+noreturn
+#endif
+	void
+	panic_reboot(void);
 
 #ifdef CONFIG_SOFTWARE_PANIC
 /**
