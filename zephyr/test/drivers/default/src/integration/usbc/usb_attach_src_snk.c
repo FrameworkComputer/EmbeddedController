@@ -25,9 +25,6 @@
 #define SNK_PORT USBC_PORT_C0
 #define SRC_PORT USBC_PORT_C1
 
-#define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
-#define TCPCI_PS8XXX_EMUL_LABEL DT_NODELABEL(ps8xxx_emul)
-
 #define DEFAULT_VBUS_MV 5000
 
 /* Determined by CONFIG_PLATFORM_EC_USB_PD_PULLUP */
@@ -60,10 +57,8 @@ struct integration_usb_attach_snk_then_src_fixture {
 
 static void integration_usb_setup(struct emul_state *fixture)
 {
-	const struct emul *tcpci_emul =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	const struct emul *tcpci_emul2 =
-		emul_get_binding(DT_LABEL(TCPCI_PS8XXX_EMUL_LABEL));
+	const struct emul *tcpci_emul = EMUL_GET_USBC_BINDING(0, tcpc);
+	const struct emul *tcpci_emul2 = EMUL_GET_USBC_BINDING(1, tcpc);
 	const struct emul *charger_emul = EMUL_GET_USBC_BINDING(0, chg);
 
 	/* Setting these are required because compiler believes these values are

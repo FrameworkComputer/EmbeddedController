@@ -25,9 +25,6 @@
 #include "test/drivers/utils.h"
 #include "test/drivers/test_state.h"
 
-#define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
-#define TCPCI_EMUL_LABEL2 DT_NODELABEL(ps8xxx_emul)
-
 #define BATTERY_NODE DT_NODELABEL(battery)
 
 #define GPIO_AC_OK_PATH DT_PATH(named_gpios, acok_od)
@@ -38,10 +35,8 @@
 
 static void integration_usb_before(void *state)
 {
-	const struct emul *tcpci_emul =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	const struct emul *tcpci_emul2 =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
+	const struct emul *tcpci_emul = EMUL_GET_USBC_BINDING(0, tcpc);
+	const struct emul *tcpci_emul2 = EMUL_GET_USBC_BINDING(1, tcpc);
 	const struct emul *charger_emul = EMUL_GET_USBC_BINDING(0, chg);
 	/* Reset vbus to 0mV */
 	/* TODO(b/217610871): Remove redundant test state cleanup */
@@ -80,10 +75,8 @@ static void integration_usb_before(void *state)
 
 static void integration_usb_after(void *state)
 {
-	const struct emul *tcpci_emul =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	const struct emul *tcpci_emul2 =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
+	const struct emul *tcpci_emul = EMUL_GET_USBC_BINDING(0, tcpc);
+	const struct emul *tcpci_emul2 = EMUL_GET_USBC_BINDING(1, tcpc);
 	const struct emul *charger_emul = EMUL_GET_USBC_BINDING(0, chg);
 	ARG_UNUSED(state);
 
@@ -104,8 +97,7 @@ static void integration_usb_after(void *state)
 
 ZTEST(integration_usb, test_attach_drp)
 {
-	const struct emul *tcpci_emul =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
+	const struct emul *tcpci_emul = EMUL_GET_USBC_BINDING(0, tcpc);
 	struct tcpci_partner_data my_drp;
 	struct tcpci_drp_emul_data drp_ext;
 	struct tcpci_src_emul_data src_ext;

@@ -30,11 +30,9 @@ static void *usb_pd_bist_shared_setup(void)
 	static struct usb_pd_bist_shared_fixture test_fixture;
 
 	/* Get references for the emulators */
-	test_fixture.tcpci_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
+	test_fixture.tcpci_emul = EMUL_GET_USBC_BINDING(0, tcpc);
 	test_fixture.charger_emul = EMUL_GET_USBC_BINDING(0, chg);
-	test_fixture.tcpci_ps8xxx_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ps8xxx_emul)));
+	test_fixture.tcpci_ps8xxx_emul = EMUL_GET_USBC_BINDING(1, tcpc);
 
 	return &test_fixture;
 }

@@ -41,8 +41,7 @@ static void *usb_malfunction_sink_setup(void)
 	test_fixture.port = TEST_PORT;
 
 	/* Get references for the emulators */
-	test_fixture.tcpci_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
+	test_fixture.tcpci_emul = EMUL_GET_USBC_BINDING(TEST_PORT, tcpc);
 	test_fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
 
 	/* Initialized the sink to request 5V and 3A */
