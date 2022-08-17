@@ -8,6 +8,7 @@
 #include <zephyr/ztest.h>
 
 #include "ec_commands.h"
+#include "gpio.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
@@ -97,7 +98,6 @@ ZTEST_USER(espi, test_host_command_gpio_get_v0)
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_true(response.val, NULL);
 
-	/* Verify command response sees change */
 	set_ac_enabled(false);
 
 	zassert_ok(host_command_process(&args), NULL);
@@ -128,7 +128,6 @@ ZTEST_USER(espi, test_host_command_gpio_get_v1_get_by_name)
 		      NULL);
 	zassert_true(response.get_info.val, NULL);
 
-	/* Verify command response sees change */
 	set_ac_enabled(false);
 
 	zassert_ok(host_command_process(&args), NULL);
@@ -176,7 +175,6 @@ ZTEST_USER(espi, test_host_command_gpio_get_v1_get_info)
 	zassert_ok(strcmp(response.get_info.name, AC_OK_OD_GPIO_NAME), NULL);
 	zassert_true(response.get_info.val, NULL);
 
-	/* Verify command response sees change */
 	set_ac_enabled(false);
 
 	zassert_ok(host_command_process(&args), NULL);
@@ -184,6 +182,32 @@ ZTEST_USER(espi, test_host_command_gpio_get_v1_get_info)
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_ok(strcmp(response.get_info.name, AC_OK_OD_GPIO_NAME), NULL);
 	zassert_false(response.get_info.val, NULL);
+}
+
+ZTEST_USER(espi, test_host_command_gpio_set)
+{
+	struct nothing {
+		int place_holder;
+	};
+	const struct gpio_dt_spec *gp = GPIO_DT_FROM_NODELABEL(gpio_test);
+	struct ec_params_gpio_set p = {
+		.name = "test",
+		.val = 0,
+	};
+
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_GPIO_SET, 0, p);
+
+	/* Force value to 1 to see change */
+	zassume_ok(gpio_pin_set_dt(gp, 1), NULL);
+
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(gpio_pin_get_dt(gp), p.val, NULL);
+
+	p.val = 1;
+
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(gpio_pin_get_dt(gp), p.val, NULL);
 }
 
 ZTEST_SUITE(espi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
