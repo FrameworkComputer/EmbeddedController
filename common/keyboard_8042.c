@@ -601,31 +601,31 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 	case STATE_ATKBD_SCANCODE:
 		CPRINTS5("KB eaten by STATE_ATKBD_SCANCODE: 0x%02x", data);
 		if (data == SCANCODE_GET_SET) {
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			output[out_len++] = scancode_set;
 		} else {
 			scancode_set = data;
 			CPRINTS("KB scancode set to %d", scancode_set);
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 		}
 		data_port_state = STATE_ATKBD_CMD;
 		break;
 
 	case STATE_ATKBD_SETLEDS:
 		CPRINTS5("KB eaten by STATE_ATKBD_SETLEDS");
-		output[out_len++] = I8042_RET_ACK;
+		output[out_len++] = ATKBD_RET_ACK;
 		data_port_state = STATE_ATKBD_CMD;
 		break;
 
 	case STATE_ATKBD_EX_SETLEDS_1:
 		CPRINTS5("KB eaten by STATE_ATKBD_EX_SETLEDS_1");
-		output[out_len++] = I8042_RET_ACK;
+		output[out_len++] = ATKBD_RET_ACK;
 		data_port_state = STATE_ATKBD_EX_SETLEDS_2;
 		break;
 
 	case STATE_ATKBD_EX_SETLEDS_2:
 		CPRINTS5("KB eaten by STATE_ATKBD_EX_SETLEDS_2");
-		output[out_len++] = I8042_RET_ACK;
+		output[out_len++] = ATKBD_RET_ACK;
 		data_port_state = STATE_ATKBD_CMD;
 		break;
 
@@ -646,60 +646,60 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		CPRINTS5("KB eaten by STATE_ATKBD_SETREP: 0x%02x", data);
 		set_typematic_delays(data);
 
-		output[out_len++] = I8042_RET_ACK;
+		output[out_len++] = ATKBD_RET_ACK;
 		data_port_state = STATE_ATKBD_CMD;
 		break;
 
 	default: /* STATE_ATKBD_CMD */
 		switch (data) {
 		case ATKBD_CMD_GSCANSET: /* also ATKBD_CMD_SSCANSET */
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			data_port_state = STATE_ATKBD_SCANCODE;
 			break;
 
 		case ATKBD_CMD_SETLEDS:
 			/* Chrome OS doesn't have keyboard LEDs, so ignore */
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			data_port_state = STATE_ATKBD_SETLEDS;
 			break;
 
 		case ATKBD_CMD_EX_SETLEDS:
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			data_port_state = STATE_ATKBD_EX_SETLEDS_1;
 			break;
 
 		case ATKBD_CMD_DIAG_ECHO:
-			output[out_len++] = I8042_RET_ACK;
-			output[out_len++] = ATKBD_CMD_DIAG_ECHO;
+			output[out_len++] = ATKBD_RET_ACK;
+			output[out_len++] = ATKBD_RET_ECHO;
 			break;
 
 		case ATKBD_CMD_GETID: /* fall-thru */
 		case ATKBD_CMD_OK_GETID:
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			output[out_len++] = 0xab; /* Regular keyboards */
 			output[out_len++] = 0x83;
 			break;
 
 		case ATKBD_CMD_SETREP:
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			data_port_state = STATE_ATKBD_SETREP;
 			break;
 
 		case ATKBD_CMD_ENABLE:
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			keystroke_enable(1);
 			keyboard_clear_buffer();
 			break;
 
 		case ATKBD_CMD_RESET_DIS:
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			keystroke_enable(0);
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			break;
 
 		case ATKBD_CMD_RESET_DEF:
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			break;
@@ -707,7 +707,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case ATKBD_CMD_RESET:
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
-			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = ATKBD_RET_ACK;
 			break;
 
 		case ATKBD_CMD_RESEND:
@@ -725,7 +725,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case ATKBD_CMD_SETALL_MBR:
 		case ATKBD_CMD_EX_ENABLE:
 		default:
-			output[out_len++] = I8042_RET_NAK;
+			output[out_len++] = ATKBD_RET_RESEND;
 			CPRINTS("KB Unsupported AT keyboard command 0x%02x",
 				data);
 			break;

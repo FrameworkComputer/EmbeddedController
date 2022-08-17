@@ -48,13 +48,9 @@
 /* port 0x60 return value */
 #define I8042_RET_EMUL0 0xe0
 #define I8042_RET_EMUL1 0xe1
-#define I8042_RET_ECHO 0xee
 #define I8042_RET_RELEASE 0xf0
 #define I8042_RET_HANJA 0xf1
 #define I8042_RET_HANGEUL 0xf2
-#define I8042_RET_ACK 0xfa
-#define I8042_RET_TEST_FAIL 0xfc
-#define I8042_RET_INTERNAL_FAIL 0xfd
 #define I8042_RET_NAK 0xfe
 #define I8042_RET_ERR 0xff
 

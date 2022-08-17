@@ -34,4 +34,12 @@
 #define ATKBD_CMD_RESEND 0xfe
 #define ATKBD_CMD_RESET 0xff
 
+#define ATKBD_RET_OVERFLOW 0x00
+#define ATKBD_RET_TEST_SUCCESS 0xaa
+#define ATKBD_RET_ECHO 0xee
+#define ATKBD_RET_ACK 0xfa
+#define ATKBD_RET_TEST_FAIL 0xfc
+#define ATKBD_RET_INTERNAL_FAIL 0xfd
+#define ATKBD_RET_RESEND 0xfe
+
 #endif /* __CROS_EC_ATKBD_PROTOCOL_H */
