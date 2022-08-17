@@ -33,6 +33,21 @@ def register_variant(
 
 
 register_variant(
+    project_name="evoker",
+    extra_dts_overlays=[
+        here / "display.dts",
+        here / "battery_evoker.dts",
+        here / "gpio_evoker.dts",
+        here / "led_pins_evoker.dts",
+        here / "led_policy_evoker.dts",
+        here / "motionsense.dts",
+        here / "switchcap.dts",
+        here / "usbc_evoker.dts",
+    ],
+    extra_kconfig_files=[here / "prj_evoker.conf"],
+)
+
+register_variant(
     project_name="herobrine",
     extra_dts_overlays=[
         here / "display.dts",
@@ -46,7 +61,6 @@ register_variant(
     ],
     extra_kconfig_files=[here / "prj_herobrine.conf"],
 )
-
 
 register_variant(
     project_name="hoglin",
@@ -62,7 +76,6 @@ register_variant(
     extra_kconfig_files=[here / "prj_hoglin.conf"],
 )
 
-
 register_variant(
     project_name="villager",
     extra_dts_overlays=[
@@ -77,18 +90,16 @@ register_variant(
     extra_kconfig_files=[here / "prj_villager.conf"],
 )
 
-
 register_variant(
-    project_name="evoker",
+    project_name="zoglin",
     extra_dts_overlays=[
-        here / "display.dts",
-        here / "battery_evoker.dts",
-        here / "gpio_evoker.dts",
-        here / "led_pins_evoker.dts",
-        here / "led_policy_evoker.dts",
-        here / "motionsense.dts",
-        here / "switchcap.dts",
-        here / "usbc_evoker.dts",
+        here / "battery_hoglin.dts",
+        here / "gpio_hoglin.dts",
+        here / "led_pins_hoglin.dts",
+        here / "led_policy_hoglin.dts",
+        here / "motionsense_hoglin.dts",
+        here / "switchcap_hoglin.dts",
+        here / "usbc_hoglin.dts",
     ],
-    extra_kconfig_files=[here / "prj_evoker.conf"],
+    extra_kconfig_files=[here / "prj_zoglin.conf"],
 )
