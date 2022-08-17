@@ -21,6 +21,7 @@ target_sources(app PRIVATE
     src/console_cmd/gpio.c
     src/console_cmd/tcpci_dump.c
     src/console_cmd/usb_pd_console.c
+    src/console_cmd/waitms.c
     src/cros_cbi.c
     src/espi.c
     src/gpio.c
