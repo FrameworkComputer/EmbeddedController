@@ -72,7 +72,12 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
-		lsm6dso_data: lsm6dso-drv-data {
+		lsm6dso_accel_data: lsm6dso-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dso";
+			status = "okay";
+		};
+
+		lsm6dso_gyro_data: lsm6dso-gyro-drv-data {
 			compatible = "cros-ec,drvdata-lsm6dso";
 			status = "okay";
 		};
@@ -130,7 +135,7 @@
 			mutex = <&base_mutex>;
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&lsm6dso_data>;
+			drv-data = <&lsm6dso_accel_data>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -153,7 +158,7 @@
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
-			drv-data = <&lsm6dso_data>;
+			drv-data = <&lsm6dso_gyro_data>;
 		};
 	};
 

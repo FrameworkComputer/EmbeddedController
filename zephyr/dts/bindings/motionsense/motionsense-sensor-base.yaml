@@ -46,7 +46,10 @@ properties:
   drv-data:
     type: phandle
     required: false
-    description: phandle to driver data to be used for the motion sensor
+    description: phandle to driver data to be used for the motion sensor.
+      Some drivers require this to be a global shared datas structure
+      used by all instances of this device, others require separate
+      data structures for each instance.
   alternate-for:
     type: phandle
     description: phandle to another sensor that can be swapped with this one

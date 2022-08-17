@@ -17,8 +17,8 @@
  */
 
 /*
- * Create driver data. It can be shared among the entries in
- * motion_sensors array which are using the same lsm6dso driver.
+ * Create driver data. This must be a separate instance for
+ * each entry of the lsm6dso device in the motion_sensors array.
  */
 #define CREATE_SENSOR_DATA_LSM6DSO(id, drvdata_name) \
 	static struct stprivate_data drvdata_name;
