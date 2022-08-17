@@ -32,8 +32,7 @@ static void *usb_pd_bist_shared_setup(void)
 	/* Get references for the emulators */
 	test_fixture.tcpci_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
-	test_fixture.charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	test_fixture.charger_emul = EMUL_GET_USBC_BINDING(0, chg);
 	test_fixture.tcpci_ps8xxx_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ps8xxx_emul)));
 

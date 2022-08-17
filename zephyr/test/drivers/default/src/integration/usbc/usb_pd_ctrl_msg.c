@@ -17,7 +17,8 @@
 #include "test/usb_pe.h"
 #include "usb_pd.h"
 
-#define TEST_USB_PORT USBC_PORT_C0
+#define TEST_USB_PORT 0
+BUILD_ASSERT(TEST_USB_PORT == USBC_PORT_C0);
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
 
@@ -77,8 +78,7 @@ static void *usb_pd_ctrl_msg_setup_emul(void)
 	/* Get references for the emulators */
 	fixture.tcpci_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
-	fixture.charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_USB_PORT, chg);
 
 	return &fixture;
 }

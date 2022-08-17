@@ -17,6 +17,33 @@
 #include "extpower.h"
 #include "host_command.h"
 #include "power.h"
+#include "usbc/utils.h"
+
+/**
+ * @brief Helper macro for EMUL_GET_USBC_BINDING. If @p usbc_id has the same
+ *        port number as @p port, then emul_get_binding for @p chip phandle is
+ *        returned.
+ *
+ * @param usbc_id Named usbc port ID
+ * @param port Port number to match with named usbc port
+ * @param chip Name of chip phandle property
+ */
+#define EMUL_GET_USBC_BINDING_IF_PORT_MATCH(usbc_id, port, chip)             \
+	COND_CODE_1(IS_EQ(USBC_PORT_NEW(usbc_id), port),                     \
+		    (emul_get_binding(DT_LABEL(DT_PHANDLE(usbc_id, chip)))), \
+		    ())
+
+/**
+ * @brief Get struct emul using emul_get_binding from phandle @p chip property
+ *        of USBC @p port
+ *
+ * @param port Named usbc port number. The value has to be integer literal.
+ * @param chip Name of chip property that is phandle to required emulator.
+ */
+#define EMUL_GET_USBC_BINDING(port, chip)                                 \
+	DT_FOREACH_STATUS_OKAY_VARGS(named_usbc_port,                     \
+				     EMUL_GET_USBC_BINDING_IF_PORT_MATCH, \
+				     port, chip)
 
 /** @brief Set emulated battery level. Call all necessary hooks. */
 void test_set_battery_level(int percentage);

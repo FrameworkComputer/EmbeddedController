@@ -64,8 +64,7 @@ static void integration_usb_setup(struct emul_state *fixture)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	const struct emul *tcpci_emul2 =
 		emul_get_binding(DT_LABEL(TCPCI_PS8XXX_EMUL_LABEL));
-	const struct emul *charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	const struct emul *charger_emul = EMUL_GET_USBC_BINDING(0, chg);
 
 	/* Setting these are required because compiler believes these values are
 	 * not compile time constants.

@@ -20,7 +20,8 @@
 #include "test/drivers/utils.h"
 #include "test/drivers/test_state.h"
 
-#define TEST_PORT USBC_PORT_C0
+#define TEST_PORT 0
+BUILD_ASSERT(TEST_PORT == USBC_PORT_C0);
 
 struct usbc_alt_mode_fixture {
 	const struct emul *tcpci_emul;
@@ -149,8 +150,7 @@ static void *usbc_alt_mode_setup(void)
 	/* Get references for the emulators */
 	fixture.tcpci_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
-	fixture.charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
 
 	add_discovery_responses(partner);
 	add_displayport_mode_responses(partner);
@@ -176,8 +176,7 @@ static void *usbc_alt_mode_dp_unsupported_setup(void)
 	/* The configured TCPCI rev must match the emulator's supported rev. */
 	tcpc_config[TEST_PORT].flags |= TCPC_FLAGS_TCPCI_REV2_0;
 	tcpci_emul_set_rev(fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
-	fixture.charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
 
 	/*
 	 * Respond to discovery REQs to indicate DisplayPort support, but do not

@@ -21,7 +21,8 @@
 #include "timer.h"
 
 /* USB-C port used to connect port partner in this testsuite */
-#define TEST_PORT USBC_PORT_C0
+#define TEST_PORT 0
+BUILD_ASSERT(TEST_PORT == USBC_PORT_C0);
 
 struct usb_malfunction_sink_fixture {
 	struct tcpci_partner_data sink;
@@ -30,7 +31,7 @@ struct usb_malfunction_sink_fixture {
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 	struct tcpci_faulty_ext_action actions[2];
-	int port;
+	enum usbc_port port;
 };
 
 static void *usb_malfunction_sink_setup(void)
@@ -42,8 +43,7 @@ static void *usb_malfunction_sink_setup(void)
 	/* Get references for the emulators */
 	test_fixture.tcpci_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
-	test_fixture.charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	test_fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
 
 	/* Initialized the sink to request 5V and 3A */
 	tcpci_partner_init(&test_fixture.sink, PD_REV20);
