@@ -8,6 +8,7 @@ target_sources(app PRIVATE
     src/charge_manager.c
     src/console_cmd/charge_manager.c
     src/console_cmd/charge_state.c
+    src/console_cmd/charger.c
     src/console_cmd/accelinit.c
     src/console_cmd/accelinfo.c
     src/console_cmd/accelspoof.c
