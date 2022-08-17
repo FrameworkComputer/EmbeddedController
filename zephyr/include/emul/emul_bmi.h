@@ -183,6 +183,19 @@ struct bmi_emul_type_data {
 	int (*handle_read)(uint8_t *regs, const struct emul *emul, int reg,
 			   int byte, char *buf);
 	/**
+	 * @brief Model specific finish read function. It should modify state of
+	 *        emulator if required.
+	 *
+	 * @param regs Pointer to array of emulator's registers
+	 * @param emul Pointer to BMI emulator
+	 * @param reg Selected register
+	 * @param bytes Number of bytes read
+	 *
+	 * @return 0 on success
+	 */
+	int (*finish_read)(uint8_t *regs, const struct emul *emul, int reg,
+			   int bytes);
+	/**
 	 * @brief Model specific reset function. It should modify state of
 	 *        emulator to imitate after reset conditions.
 	 *

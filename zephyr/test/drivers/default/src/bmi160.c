@@ -2159,3 +2159,30 @@ static void bmi160_after(void *state)
 
 ZTEST_SUITE(bmi160, drivers_predicate_pre_main, NULL, bmi160_before,
 	    bmi160_after, NULL);
+
+/** Cause an interrupt and verify the motion_sense task handled it. */
+ZTEST_USER(bmi160_tasks, test_irq_handling)
+{
+	struct bmi_emul_frame f[3];
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
+
+	f[0].type = BMI_EMUL_FRAME_ACC;
+	f[0].acc_x = BMI_EMUL_1G / 10;
+	f[0].acc_y = BMI_EMUL_1G / 20;
+	f[0].acc_z = -(int)BMI_EMUL_1G / 30;
+	f[0].next = NULL;
+	bmi_emul_append_frame(emul, f);
+	bmi_emul_set_reg(emul, BMI160_INT_STATUS_0, BMI160_FWM_INT & 0xff);
+	bmi_emul_set_reg(emul, BMI160_INT_STATUS_1,
+			 (BMI160_FWM_INT >> 8) & 0xff);
+
+	bmi160_interrupt(0);
+	k_sleep(K_SECONDS(10));
+
+	/* Verify that the motion_sense_task read it. */
+	zassert_equal(bmi_emul_get_reg(emul, BMI160_INT_STATUS_0), 0, NULL);
+	zassert_equal(bmi_emul_get_reg(emul, BMI160_INT_STATUS_1), 0, NULL);
+}
+
+ZTEST_SUITE(bmi160_tasks, drivers_predicate_post_main, NULL, bmi160_before,
+	    bmi160_after, NULL);

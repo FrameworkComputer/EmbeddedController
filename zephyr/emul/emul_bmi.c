@@ -1019,6 +1019,31 @@ static int bmi_emul_handle_read(const struct emul *emul, int reg, uint8_t *buf,
 	return 0;
 }
 
+/**
+ * @brief Called at the end of I2C read message.
+ *
+ * @param target Pointer to emulator
+ * @param reg Address which is now accessed by read command (first byte of last
+ *            I2C write message)
+ * @param bytes Number of bytes responeded to the I2C read message
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
+static int bmi_emul_finish_read(const struct emul *emul, int reg, int bytes)
+{
+	struct bmi_emul_data *data;
+	int ret;
+
+	data = emul->data;
+
+	if (data->type_data->finish_read == NULL) {
+		return 0;
+	}
+	ret = data->type_data->finish_read(data->reg, emul, reg, bytes);
+	return ret;
+}
+
 /* Device instantiation */
 
 /**
@@ -1071,7 +1096,7 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 			.finish_write = NULL,				\
 			.start_read = NULL,				\
 			.read_byte = bmi_emul_handle_read,		\
-			.finish_read = NULL,				\
+			.finish_read = bmi_emul_finish_read,		\
 			.access_reg = NULL,				\
 		},							\
 	};         \
