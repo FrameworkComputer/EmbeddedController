@@ -46,12 +46,12 @@ ZTEST(ln9310, test_ln9310_read_chip_fails)
 
 	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_BC_STS_C);
 
-	zassert_true(ln9310_init() != 0, NULL);
-	zassert_false(ln9310_emul_is_init(emulator), NULL);
+	zassert_true(ln9310_init() != 0);
+	zassert_false(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -68,17 +68,17 @@ ZTEST(ln9310, test_ln9310_2s_powers_up)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	ln9310_software_enable(true);
 
 	k_msleep(TEST_DELAY_MS);
-	zassert_true(ln9310_power_good(), NULL);
+	zassert_true(ln9310_power_good());
 }
 
 ZTEST(ln9310, test_ln9310_3s_powers_up)
@@ -92,17 +92,17 @@ ZTEST(ln9310, test_ln9310_3s_powers_up)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_3S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	ln9310_software_enable(true);
 
 	k_msleep(TEST_DELAY_MS);
-	zassert_true(ln9310_power_good(), NULL);
+	zassert_true(ln9310_power_good());
 }
 
 struct startup_workaround_data {
@@ -150,29 +150,29 @@ ZTEST(ln9310, test_ln9310_2s_cfly_precharge_startup)
 	ln9310_emul_set_version(emulator,
 				REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(
 		common_data, mock_write_fn_intercept_startup_workaround,
 		&test_data);
 
 	ln9310_software_enable(true);
-	zassert_true(test_data.startup_workaround_attempted, NULL);
+	zassert_true(test_data.startup_workaround_attempted);
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_true(ln9310_power_good(), NULL);
+	zassert_true(ln9310_power_good());
 
 	ln9310_software_enable(false);
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
@@ -196,29 +196,29 @@ ZTEST(ln9310, test_ln9310_3s_cfly_precharge_startup)
 	ln9310_emul_set_version(emulator,
 				REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(
 		common_data, mock_write_fn_intercept_startup_workaround,
 		&test_data);
 
 	ln9310_software_enable(true);
-	zassert_true(test_data.startup_workaround_attempted, NULL);
+	zassert_true(test_data.startup_workaround_attempted);
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_true(ln9310_power_good(), NULL);
+	zassert_true(ln9310_power_good());
 
 	ln9310_software_enable(false);
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
@@ -246,23 +246,23 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_exceeds_retries)
 	ln9310_emul_set_version(emulator,
 				REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(
 		common_data, mock_write_fn_intercept_startup_workaround,
 		&test_data);
 
 	ln9310_software_enable(true);
-	zassert_true(test_data.startup_workaround_attempted, NULL);
+	zassert_true(test_data.startup_workaround_attempted);
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
@@ -282,18 +282,18 @@ ZTEST(ln9310, test_ln9310_battery_unknown)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_UNKNOWN);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	zassert_true(ln9310_init() != 0, NULL);
-	zassert_false(ln9310_emul_is_init(emulator), NULL);
+	zassert_true(ln9310_init() != 0);
+	zassert_false(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	ln9310_software_enable(true);
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 }
 
 ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
@@ -312,12 +312,12 @@ ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
 
 	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_BC_STS_B);
 
-	zassert_true(ln9310_init() != 0, NULL);
-	zassert_false(ln9310_emul_is_init(emulator), NULL);
+	zassert_true(ln9310_init() != 0);
+	zassert_false(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	/* For Battery 2S Versions: Test Read Battery Voltage Failure Too */
 	ln9310_emul_reset(emulator);
@@ -326,7 +326,7 @@ ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
 
 	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_TRACK_CTRL);
 
-	zassert_false(ln9310_init() == 0, NULL);
+	zassert_false(ln9310_init() == 0);
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
@@ -347,17 +347,17 @@ ZTEST(ln9310, test_ln9310_lion_ctrl_reg_fails)
 
 	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_LION_CTRL);
 
-	zassert_true(ln9310_init() != 0, NULL);
-	zassert_false(ln9310_emul_is_init(emulator), NULL);
+	zassert_true(ln9310_init() != 0);
+	zassert_false(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
 	ln9310_software_enable(true);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -416,12 +416,12 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_timesout)
 	ln9310_emul_set_version(emulator,
 				REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(
 		common_data, mock_intercept_startup_ctrl_reg, &test_data);
@@ -429,9 +429,9 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_timesout)
 	ln9310_software_enable(true);
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_true(test_data.handled_clearing_standby_en_bit_timeout, NULL);
+	zassert_true(test_data.handled_clearing_standby_en_bit_timeout);
 	/* It only times out on one attempt, it should subsequently startup */
-	zassert_true(ln9310_power_good(), NULL);
+	zassert_true(ln9310_power_good());
 
 	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
@@ -472,8 +472,8 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	i2c_common_emul_set_read_func(
 		common_data, mock_read_intercept_reg_to_fail, &test_data);
@@ -486,8 +486,8 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
-	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
+	zassert_false(ln9310_power_good());
+	zassert_true(test_data.reg_access_fail_countdown <= 0);
 
 	/* Fail in irq interrupt handler */
 	test_data.reg_access_fail_countdown = 2;
@@ -495,8 +495,8 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 	ln9310_software_enable(true);
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
-	zassert_false(ln9310_power_good(), NULL);
-	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
+	zassert_false(ln9310_power_good());
+	zassert_true(test_data.reg_access_fail_countdown <= 0);
 
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
@@ -519,8 +519,8 @@ ZTEST(ln9310, test_ln9310_sys_sts_reg_fail)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	i2c_common_emul_set_read_func(
 		common_data, &mock_read_intercept_reg_to_fail, &test_data);
@@ -534,8 +534,8 @@ ZTEST(ln9310, test_ln9310_sys_sts_reg_fail)
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
 
-	zassert_false(ln9310_power_good(), NULL);
-	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
+	zassert_false(ln9310_power_good());
+	zassert_true(test_data.reg_access_fail_countdown <= 0);
 
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
@@ -576,8 +576,8 @@ ZTEST(ln9310, test_ln9310_reset_explicit_detected_startup)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	i2c_common_emul_set_read_func(common_data, &mock_read_interceptor,
 				      &test_data);
@@ -587,7 +587,7 @@ ZTEST(ln9310, test_ln9310_reset_explicit_detected_startup)
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
 
-	zassert_true(ln9310_power_good(), NULL);
+	zassert_true(ln9310_power_good());
 
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
@@ -615,16 +615,16 @@ ZTEST(ln9310, test_ln9310_update_startup_seq_fails)
 	i2c_common_emul_set_read_func(
 		common_data, &mock_read_intercept_reg_to_fail, &test_data);
 
-	zassert_false(ln9310_init() == 0, NULL);
-	zassert_false(ln9310_emul_is_init(emulator), NULL);
+	zassert_false(ln9310_init() == 0);
+	zassert_false(ln9310_emul_is_init(emulator));
 
 	ln9310_software_enable(true);
 
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
 
-	zassert_false(ln9310_power_good(), NULL);
-	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
+	zassert_false(ln9310_power_good());
+	zassert_true(test_data.reg_access_fail_countdown <= 0);
 
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
@@ -647,8 +647,8 @@ ZTEST(ln9310, test_ln9310_state_change_only_on_mode_change_interrupt)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	zassert_ok(ln9310_init(), NULL);
-	zassert_true(ln9310_emul_is_init(emulator), NULL);
+	zassert_ok(ln9310_init());
+	zassert_true(ln9310_emul_is_init(emulator));
 
 	i2c_common_emul_set_read_func(common_data, &mock_read_interceptor,
 				      &test_data);
@@ -658,7 +658,7 @@ ZTEST(ln9310, test_ln9310_state_change_only_on_mode_change_interrupt)
 	/* TODO(b/201420132) */
 	k_msleep(TEST_DELAY_MS);
 
-	zassert_false(ln9310_power_good(), NULL);
+	zassert_false(ln9310_power_good());
 
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }

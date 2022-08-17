@@ -136,7 +136,7 @@ static void check_valid_temperature(const struct device *adc_dev, int sensor)
 	zassert_ok(adc_emul_const_value_set(adc_dev, temp_sensors[sensor].idx,
 					    1000),
 		   "adc_emul_const_value_set() failed (sensor %d)", sensor);
-	zassert_equal(EC_SUCCESS, temp_sensor_read(sensor, &temp), NULL);
+	zassert_equal(EC_SUCCESS, temp_sensor_read(sensor, &temp));
 	zassert_within(
 		temp, 273 + 50, 51,
 		"Expected temperature in 0*C-100*C, got %d*C (sensor %d)",

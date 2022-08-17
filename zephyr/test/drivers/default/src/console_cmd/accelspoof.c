@@ -46,7 +46,7 @@ ZTEST_USER(console_cmd_accelspoof, test_invalid_sensor_id)
 
 ZTEST_USER(console_cmd_accelspoof, test_print_mode)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0"));
 }
 
 ZTEST_USER(console_cmd_accelspoof, test_invalid_boolean)
@@ -59,11 +59,11 @@ ZTEST_USER(console_cmd_accelspoof, test_invalid_boolean)
 
 ZTEST_USER(console_cmd_accelspoof, test_enable_disable)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0 on"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0 on"));
 	zassert_true(motion_sensors[0].flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE,
 		     NULL);
 
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0 off"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0 off"));
 	zassert_false(motion_sensors[0].flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE,
 		      NULL);
 }
@@ -80,9 +80,9 @@ ZTEST_USER(console_cmd_accelspoof, test_enable_explicit_values)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0 on 1 2 3"),
 		   NULL);
-	zassert_equal(1, motion_sensors[0].spoof_xyz[0], NULL);
-	zassert_equal(2, motion_sensors[0].spoof_xyz[1], NULL);
-	zassert_equal(3, motion_sensors[0].spoof_xyz[2], NULL);
+	zassert_equal(1, motion_sensors[0].spoof_xyz[0]);
+	zassert_equal(2, motion_sensors[0].spoof_xyz[1]);
+	zassert_equal(3, motion_sensors[0].spoof_xyz[2]);
 }
 
 ZTEST_USER(console_cmd_accelspoof, test_enable_implicit_values)
@@ -90,8 +90,8 @@ ZTEST_USER(console_cmd_accelspoof, test_enable_implicit_values)
 	motion_sensors[0].raw_xyz[0] = 4;
 	motion_sensors[0].raw_xyz[1] = 5;
 	motion_sensors[0].raw_xyz[2] = 6;
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0 on"), NULL);
-	zassert_equal(4, motion_sensors[0].spoof_xyz[0], NULL);
-	zassert_equal(5, motion_sensors[0].spoof_xyz[1], NULL);
-	zassert_equal(6, motion_sensors[0].spoof_xyz[2], NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelspoof 0 on"));
+	zassert_equal(4, motion_sensors[0].spoof_xyz[0]);
+	zassert_equal(5, motion_sensors[0].spoof_xyz[1]);
+	zassert_equal(6, motion_sensors[0].spoof_xyz[2]);
 }

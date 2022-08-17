@@ -463,9 +463,8 @@ ZTEST(usb_uninit_mux, test_usb_mux_init)
 	usb_mux_init(USBC_PORT_C1);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, NUM_OF_PROXY);
 	/* Check if board_init was called for proxy 1 */
-	zassert_equal(1, mock_board_init_fake.call_count, NULL);
-	zassert_equal(proxy_chain_1.mux, mock_board_init_fake.arg0_history[0],
-		      NULL);
+	zassert_equal(1, mock_board_init_fake.call_count);
+	zassert_equal(proxy_chain_1.mux, mock_board_init_fake.arg0_history[0]);
 
 	proxy_mux_1.board_init = NULL;
 }
@@ -498,7 +497,7 @@ ZTEST(usb_uninit_mux, test_usb_mux_set)
 	/* usb mux 1 shouldn't be set with polarity mode, because of flag */
 	zassert_equal(exp_mode | USB_PD_MUX_POLARITY_INVERTED,
 		      proxy_set_fake.arg1_history[0], NULL);
-	zassert_equal(exp_mode, proxy_set_fake.arg1_history[1], NULL);
+	zassert_equal(exp_mode, proxy_set_fake.arg1_history[1]);
 	zassert_equal(exp_mode | USB_PD_MUX_POLARITY_INVERTED,
 		      proxy_set_fake.arg1_history[2], NULL);
 
@@ -510,10 +509,9 @@ ZTEST(usb_uninit_mux, test_usb_mux_set)
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, 0);
 	CHECK_PROXY_FAKE_CALL_CNT_MUX_STATE(proxy_set, NUM_OF_PROXY, exp_mode);
 	/* Check if board_set was called for proxy 1 */
-	zassert_equal(1, mock_board_set_fake.call_count, NULL);
-	zassert_equal(proxy_chain_1.mux, mock_board_set_fake.arg0_history[0],
-		      NULL);
-	zassert_equal(exp_mode, mock_board_set_fake.arg1_history[0], NULL);
+	zassert_equal(1, mock_board_set_fake.call_count);
+	zassert_equal(proxy_chain_1.mux, mock_board_set_fake.arg0_history[0]);
+	zassert_equal(exp_mode, mock_board_set_fake.arg1_history[0]);
 
 	/* Test set function with error in usb_mux */
 	reset_proxy_fakes();
@@ -523,7 +521,7 @@ ZTEST(usb_uninit_mux, test_usb_mux_set)
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, 0);
 	CHECK_PROXY_FAKE_CALL_CNT_MUX_STATE(proxy_set, 2, exp_mode);
 	/* board_set shouldn't be called after fail */
-	zassert_equal(0, mock_board_set_fake.call_count, NULL);
+	zassert_equal(0, mock_board_set_fake.call_count);
 
 	proxy_mux_1.board_set = NULL;
 }
@@ -673,7 +671,7 @@ ZTEST(usb_uninit_mux, test_usb_mux_flip)
 	/* usb mux 1 shouldn't be set with polarity mode, because of flag */
 	zassert_equal(exp_mode | USB_PD_MUX_POLARITY_INVERTED,
 		      proxy_set_fake.arg1_history[0], NULL);
-	zassert_equal(exp_mode, proxy_set_fake.arg1_history[1], NULL);
+	zassert_equal(exp_mode, proxy_set_fake.arg1_history[1]);
 	zassert_equal(exp_mode | USB_PD_MUX_POLARITY_INVERTED,
 		      proxy_set_fake.arg1_history[2], NULL);
 
@@ -807,7 +805,7 @@ ZTEST(usb_init_mux, test_usb_mux_hc_mux_info)
 
 	/* Test invalid port parameter */
 	params.port = 5;
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
 
 	/* Set correct port for rest of the test */
 	params.port = USBC_PORT_C1;
@@ -815,14 +813,14 @@ ZTEST(usb_init_mux, test_usb_mux_hc_mux_info)
 	/* Test error on getting mux mode */
 	set_proxy_get_mux_state_seq(USB_PD_MUX_USB_ENABLED);
 	proxy_get_fake.return_val = EC_ERROR_UNKNOWN;
-	zassert_equal(EC_RES_ERROR, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_ERROR, host_command_process(&args));
 
 	/* Test getting mux mode */
 	reset_proxy_fakes();
 	exp_mode = USB_PD_MUX_USB_ENABLED;
 	set_proxy_get_mux_state_seq(exp_mode);
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
-	zassert_equal(args.response_size, sizeof(response), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(exp_mode, response.flags, "mode is 0x%x (!= 0x%x)",
 		      response.flags, exp_mode);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_get, NUM_OF_PROXY);
@@ -832,8 +830,8 @@ ZTEST(usb_init_mux, test_usb_mux_hc_mux_info)
 	exp_mode = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_HPD_LVL |
 		   USB_PD_MUX_HPD_IRQ;
 	set_proxy_get_mux_state_seq(exp_mode);
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
-	zassert_equal(args.response_size, sizeof(response), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(exp_mode, response.flags, "mode is 0x%x (!= 0x%x)",
 		      response.flags, exp_mode);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_get, NUM_OF_PROXY);

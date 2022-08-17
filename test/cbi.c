@@ -40,7 +40,7 @@ DECLARE_EC_TEST(test_uint8)
 	zassert_equal(cbi_set_board_info(tag, &d8, sizeof(d8)), EC_SUCCESS,
 		      NULL);
 	size = 1;
-	zassert_equal(cbi_get_board_info(tag, &d8, &size), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_board_info(tag, &d8, &size), EC_SUCCESS);
 	zassert_equal(d8, 0xa5, "0x%x, 0x%x", d8, 0xa5);
 	zassert_equal(size, 1, "%x, %x", size, 1);
 
@@ -79,7 +79,7 @@ DECLARE_EC_TEST(test_uint32)
 	zassert_equal(cbi_set_board_info(tag, &d8, sizeof(d8)), EC_SUCCESS,
 		      NULL);
 	size = 1;
-	zassert_equal(cbi_get_board_info(tag, &d8, &size), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_board_info(tag, &d8, &size), EC_SUCCESS);
 	zassert_equal(d8, 0xa5, "0x%x, 0x%x", d8, 0xa5);
 	zassert_equal(size, 1, "%u, %u", size, 1);
 
@@ -97,8 +97,8 @@ DECLARE_EC_TEST(test_string)
 	zassert_equal(cbi_set_board_info(tag, string, sizeof(string)),
 		      EC_SUCCESS, NULL);
 	size = sizeof(buf);
-	zassert_equal(cbi_get_board_info(tag, buf, &size), EC_SUCCESS, NULL);
-	zassert_equal(strncmp(buf, string, sizeof(string)), 0, NULL);
+	zassert_equal(cbi_get_board_info(tag, buf, &size), EC_SUCCESS);
+	zassert_equal(strncmp(buf, string, sizeof(string)), 0);
 	/* Size contains null byte */
 	/* This should be zassert_equal, but for EC test fmt is always "0x%x"
 	 * which will generate compilation error.
@@ -191,16 +191,16 @@ DECLARE_EC_TEST(test_all_tags)
 	count++;
 
 	/* Read out all */
-	zassert_equal(cbi_get_board_version(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_board_version(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
-	zassert_equal(cbi_get_oem_id(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_oem_id(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
-	zassert_equal(cbi_get_sku_id(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_sku_id(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
 	size = sizeof(buf);
 	zassert_equal(cbi_get_board_info(CBI_TAG_DRAM_PART_NUM, buf, &size),
 		      EC_SUCCESS, NULL);
-	zassert_equal(strncmp(buf, string, sizeof(string)), 0, NULL);
+	zassert_equal(strncmp(buf, string, sizeof(string)), 0);
 	/* This should be zassert_equal, but for EC test fmt is always "0x%x"
 	 * which will generate compilation error.
 	 */
@@ -209,23 +209,23 @@ DECLARE_EC_TEST(test_all_tags)
 	size = sizeof(buf);
 	zassert_equal(cbi_get_board_info(CBI_TAG_OEM_NAME, buf, &size),
 		      EC_SUCCESS, NULL);
-	zassert_equal(strncmp(buf, string, sizeof(string)), 0, NULL);
+	zassert_equal(strncmp(buf, string, sizeof(string)), 0);
 	/* This should be zassert_equal, but for EC test fmt is always "0x%x"
 	 * which will generate compilation error.
 	 */
 	zassert_true((size_t)size - 1 == strlen(buf), "%zu, %zu",
 		     (size_t)size - 1, strlen(buf));
-	zassert_equal(cbi_get_model_id(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_model_id(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
-	zassert_equal(cbi_get_fw_config(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_fw_config(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
-	zassert_equal(cbi_get_pcb_supplier(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_pcb_supplier(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
-	zassert_equal(cbi_get_ssfc(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_ssfc(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
-	zassert_equal(cbi_get_factory_calibration_data(&d32), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_factory_calibration_data(&d32), EC_SUCCESS);
 	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
-	zassert_equal(cbi_get_rework_id(&d64), EC_SUCCESS, NULL);
+	zassert_equal(cbi_get_rework_id(&d64), EC_SUCCESS);
 	/* This should be zassert_equal, but for EC test fmt is always "0x%x"
 	 * which will generate compilation error.
 	 */
@@ -238,7 +238,7 @@ DECLARE_EC_TEST(test_all_tags)
 
 	/* Write protect */
 	write_protect_set(1);
-	zassert_equal(cbi_write(), EC_ERROR_ACCESS_DENIED, NULL);
+	zassert_equal(cbi_write(), EC_ERROR_ACCESS_DENIED);
 
 	return EC_SUCCESS;
 }

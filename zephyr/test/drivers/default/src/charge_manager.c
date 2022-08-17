@@ -30,11 +30,11 @@ ZTEST_USER(charge_manager, test_default_fill_power_info)
 	};
 
 	board_fill_source_power_info(0, &info);
-	zassert_equal(info.meas.voltage_now, 0, NULL);
-	zassert_equal(info.meas.voltage_max, 0, NULL);
-	zassert_equal(info.meas.current_max, 0, NULL);
-	zassert_equal(info.meas.current_lim, 0, NULL);
-	zassert_equal(info.max_power, 0, NULL);
+	zassert_equal(info.meas.voltage_now, 0);
+	zassert_equal(info.meas.voltage_max, 0);
+	zassert_equal(info.meas.current_max, 0);
+	zassert_equal(info.meas.current_lim, 0);
+	zassert_equal(info.max_power, 0);
 }
 
 /**
@@ -43,16 +43,16 @@ ZTEST_USER(charge_manager, test_default_fill_power_info)
  */
 ZTEST_USER(charge_manager, test_default_charge_port_is_connected)
 {
-	zassert_true(board_charge_port_is_connected(-1), NULL);
-	zassert_true(board_charge_port_is_connected(0), NULL);
-	zassert_true(board_charge_port_is_connected(1), NULL);
-	zassert_true(board_charge_port_is_connected(500), NULL);
+	zassert_true(board_charge_port_is_connected(-1));
+	zassert_true(board_charge_port_is_connected(0));
+	zassert_true(board_charge_port_is_connected(1));
+	zassert_true(board_charge_port_is_connected(500));
 }
 
 ZTEST_USER(charge_manager, test_default_charge_port_is_sink)
 {
-	zassert_true(board_charge_port_is_sink(-1), NULL);
-	zassert_true(board_charge_port_is_sink(0), NULL);
-	zassert_true(board_charge_port_is_sink(1), NULL);
-	zassert_true(board_charge_port_is_sink(500), NULL);
+	zassert_true(board_charge_port_is_sink(-1));
+	zassert_true(board_charge_port_is_sink(0));
+	zassert_true(board_charge_port_is_sink(1));
+	zassert_true(board_charge_port_is_sink(500));
 }

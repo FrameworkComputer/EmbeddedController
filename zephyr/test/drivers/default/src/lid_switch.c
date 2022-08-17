@@ -49,8 +49,8 @@ static void *lid_switch_setup(void)
 static void lid_switch_before(void *unused)
 {
 	/* Make sure that interrupt fire at the next lid open/close */
-	zassume_ok(emul_lid_close(), NULL);
-	zassume_ok(emul_lid_open(), NULL);
+	zassume_ok(emul_lid_close());
+	zassume_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
 }
 
@@ -79,39 +79,39 @@ static void lid_switch_after(void *unused)
 ZTEST(lid_switch, test_lid_open)
 {
 	/* Start closed. */
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 }
 
 ZTEST(lid_switch, test_lid_debounce)
 {
 	/* Start closed. */
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 
 	/* Create interrupts quickly before they can be handled. */
-	zassert_ok(emul_lid_open(), NULL);
-	zassert_ok(emul_lid_close(), NULL);
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_open());
+	zassert_ok(emul_lid_close());
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 }
 
 ZTEST(lid_switch, test_lid_close)
 {
 	/* Start open. */
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
 
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(200));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 }
 
 ZTEST(lid_switch, test_enable_lid_detect)
@@ -144,99 +144,99 @@ ZTEST(lid_switch, test_enable_lid_detect)
 ZTEST(lid_switch, test_cmd_lidopen)
 {
 	/* Start closed. */
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 
 	/* Forced override lid open. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "lidopen"),
 		      NULL);
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 	k_sleep(K_MSEC(100));
 
 	printk("GPIO lid open/close\n");
 	/* Open & close with gpio. */
-	zassert_ok(emul_lid_open(), NULL);
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_open());
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(500));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 }
 
 ZTEST(lid_switch, test_cmd_lidopen_bounce)
 {
 	/* Start closed. */
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 
 	printk("Console lid open\n");
 	/* Forced override lid open. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "lidopen"),
 		      NULL);
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 	k_sleep(K_MSEC(100));
 
 	printk("Console lid open\n");
 	/* Forced override lid open. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "lidopen"),
 		      NULL);
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 	k_sleep(K_MSEC(100));
 
 	printk("GPIO lid open/close\n");
 	/* Open & close with gpio. */
-	zassert_ok(emul_lid_open(), NULL);
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_open());
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(500));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 }
 
 ZTEST(lid_switch, test_cmd_lidclose)
 {
 	/* Start open. */
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 
 	/* Forced override lid close. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "lidclose"),
 		      NULL);
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 	k_sleep(K_MSEC(100));
 
 	printk("GPIO lid close/open\n");
 	/* Close & open with gpio. */
-	zassert_ok(emul_lid_close(), NULL);
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_close());
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(500));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 }
 
 ZTEST(lid_switch, test_cmd_lidclose_bounce)
 {
 	/* Start open. */
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 
 	/* Forced override lid close. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "lidclose"),
 		      NULL);
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 	k_sleep(K_MSEC(100));
 
 	/* Forced override lid close. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "lidclose"),
 		      NULL);
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 	k_sleep(K_MSEC(100));
 
 	printk("GPIO lid close/open\n");
 	/* Close & open with gpio. */
-	zassert_ok(emul_lid_close(), NULL);
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_close());
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(500));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 }
 
 #if defined(CONFIG_SHELL_BACKEND_DUMMY)
@@ -246,9 +246,9 @@ ZTEST(lid_switch, test_cmd_lidstate_open)
 	size_t buffer_size;
 
 	/* Start open. */
-	zassert_ok(emul_lid_open(), NULL);
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 
 	/* Read the state with console. */
 	shell_backend_dummy_clear_output(get_ec_shell());
@@ -265,9 +265,9 @@ ZTEST(lid_switch, test_cmd_lidstate_close)
 	size_t buffer_size;
 
 	/* Start closed. */
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 
 	/* Read the state with console. */
 	shell_backend_dummy_clear_output(get_ec_shell());
@@ -290,14 +290,14 @@ ZTEST(lid_switch, test_hc_force_lid_open)
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FORCE_LID_OPEN, 0, params);
 
 	/* Start closed. */
-	zassert_ok(emul_lid_close(), NULL);
+	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 0, NULL);
+	zassert_equal(lid_is_open(), 0);
 
-	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	zassert_ok(host_command_process(&args));
+	zassert_ok(args.result);
 	k_sleep(K_MSEC(100));
-	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_equal(lid_is_open(), 1);
 }
 
 ZTEST_SUITE(lid_switch, drivers_predicate_post_main, lid_switch_setup,

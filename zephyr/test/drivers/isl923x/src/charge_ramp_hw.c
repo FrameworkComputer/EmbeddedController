@@ -20,12 +20,12 @@ ZTEST_SUITE(charge_ramp_hw, drivers_predicate_post_main, NULL, NULL, NULL,
 
 ZTEST(charge_ramp_hw, test_charge_ramp_hw_ramp)
 {
-	zassert_ok(isl923x_drv.set_hw_ramp(CHARGER_NUM, 1), NULL);
+	zassert_ok(isl923x_drv.set_hw_ramp(CHARGER_NUM, 1));
 
-	zassert_ok(isl923x_drv.ramp_is_stable(CHARGER_NUM), NULL);
-	zassert_true(isl923x_drv.ramp_is_detected(CHARGER_NUM), NULL);
+	zassert_ok(isl923x_drv.ramp_is_stable(CHARGER_NUM));
+	zassert_true(isl923x_drv.ramp_is_detected(CHARGER_NUM));
 
-	zassert_ok(isl923x_drv.set_input_current_limit(CHARGER_NUM, 512), NULL);
+	zassert_ok(isl923x_drv.set_input_current_limit(CHARGER_NUM, 512));
 	zassert_equal(512, isl923x_drv.ramp_get_current_limit(CHARGER_NUM),
 		      NULL);
 }
@@ -47,5 +47,5 @@ ZTEST(charge_ramp_hw, test_charge_ramp_hw_ramp_read_fail_acl1)
 
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
-	zassert_equal(0, isl923x_drv.ramp_get_current_limit(CHARGER_NUM), NULL);
+	zassert_equal(0, isl923x_drv.ramp_get_current_limit(CHARGER_NUM));
 }

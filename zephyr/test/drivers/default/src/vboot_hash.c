@@ -34,23 +34,23 @@ ZTEST_USER(vboot_hash, test_hostcmd_abort)
 		BUILD_HOST_COMMAND(EC_CMD_VBOOT_HASH, 0, response, get_params);
 
 	/* Start hashing. The command doesn't wait to finish. */
-	zassert_ok(host_command_process(&start_args), NULL);
-	zassert_ok(start_args.result, NULL);
-	zassert_equal(start_args.response_size, sizeof(response), NULL);
+	zassert_ok(host_command_process(&start_args));
+	zassert_ok(start_args.result);
+	zassert_equal(start_args.response_size, sizeof(response));
 	zassert_equal(response.status, EC_VBOOT_HASH_STATUS_BUSY,
 		      "response.status = %d", response.status);
 
 	/* Abort it immediately */
-	zassert_ok(host_command_process(&abort_args), NULL);
-	zassert_ok(abort_args.result, NULL);
+	zassert_ok(host_command_process(&abort_args));
+	zassert_ok(abort_args.result);
 
 	/* Give it a bit time. The abort is being processed in the background */
 	k_msleep(20);
 
 	/* Get the hash result. Should be NONE. */
-	zassert_ok(host_command_process(&get_args), NULL);
-	zassert_ok(get_args.result, NULL);
-	zassert_equal(get_args.response_size, sizeof(response), NULL);
+	zassert_ok(host_command_process(&get_args));
+	zassert_ok(get_args.result);
+	zassert_equal(get_args.response_size, sizeof(response));
 	zassert_equal(response.status, EC_VBOOT_HASH_STATUS_NONE,
 		      "response.status = %d", response.status);
 }
@@ -68,9 +68,9 @@ ZTEST_USER(vboot_hash, test_hostcmd_recalc)
 		EC_CMD_VBOOT_HASH, 0, response, recalc_params);
 
 	/* Recalculate the hash. The command waits to finish. */
-	zassert_ok(host_command_process(&recalc_args), NULL);
-	zassert_ok(recalc_args.result, NULL);
-	zassert_equal(recalc_args.response_size, sizeof(response), NULL);
+	zassert_ok(host_command_process(&recalc_args));
+	zassert_ok(recalc_args.result);
+	zassert_equal(recalc_args.response_size, sizeof(response));
 	zassert_equal(response.status, EC_VBOOT_HASH_STATUS_DONE,
 		      "response.status = %d", response.status);
 	zassert_equal(response.digest_size, SHA256_DIGEST_SIZE,

@@ -67,7 +67,7 @@ ZTEST_USER(console_cmd_accelrange, test_bad_sensor_num)
 
 ZTEST_USER(console_cmd_accelrange, test_print_range)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0"));
 }
 
 ZTEST_USER(console_cmd_accelrange, test_set_invalid_range)
@@ -80,7 +80,7 @@ ZTEST_USER(console_cmd_accelrange, test_set_invalid_range)
 
 ZTEST_USER(console_cmd_accelrange, test_set_range_round_up_implicit)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0 3"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0 3"));
 	zassert_equal(motion_sensors[0].current_range, 4,
 		      "Expected 4, but got %d",
 		      motion_sensors[0].current_range);
@@ -88,7 +88,7 @@ ZTEST_USER(console_cmd_accelrange, test_set_range_round_up_implicit)
 
 ZTEST_USER(console_cmd_accelrange, test_set_range_round_up_explicit)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0 3 1"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0 3 1"));
 	zassert_equal(motion_sensors[0].current_range, 4,
 		      "Expected 4, but got %d",
 		      motion_sensors[0].current_range);
@@ -96,7 +96,7 @@ ZTEST_USER(console_cmd_accelrange, test_set_range_round_up_explicit)
 
 ZTEST_USER(console_cmd_accelrange, test_set_range_round_down)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0 5 0"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrange 0 5 0"));
 	zassert_equal(motion_sensors[0].current_range, 4,
 		      "Expected 4, but got %d",
 		      motion_sensors[0].current_range);

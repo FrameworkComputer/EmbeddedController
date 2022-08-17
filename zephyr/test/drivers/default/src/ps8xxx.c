@@ -82,19 +82,19 @@ ZTEST(ps8805, test_ps8805_init)
 	/* Test fail on read I2C debug reg */
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  PS8XXX_REG_I2C_DEBUGGING_ENABLE);
-	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on read DCI reg */
 	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  PS8XXX_P1_REG_MUX_USB_DCI_CFG);
-	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test successful init */
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	check_tcpci_reg(ps8xxx_emul, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
 			PS8XXX_REG_I2C_DEBUGGING_ENABLE_ON);
 	zassert_equal(PS8XXX_REG_MUX_USB_DCI_CFG_MODE_OFF,
@@ -119,12 +119,12 @@ ZTEST(ps8815, test_ps8815_init)
 	/* Test fail on reading HW revision register */
 	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  PS8815_P1_REG_HW_REVISION);
-	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test successful init */
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 }
 
 /** Test PS8xxx release */
@@ -138,14 +138,14 @@ static void test_ps8xxx_release(void)
 
 	/* Test successful release with correct FW reg read */
 	start_ms = k_uptime_get();
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1));
 	zassert_true(k_uptime_get() - start_ms < 10,
 		     "release on correct FW reg read shouldn't wait for chip");
 
 	/* Test delay on FW reg read fail */
 	i2c_common_emul_set_read_fail_reg(common_data, PS8XXX_REG_FW_REV);
 	start_ms = k_uptime_get();
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1));
 	zassert_true(k_uptime_get() - start_ms >= 10,
 		     "release on FW reg read fail should wait for chip");
 }
@@ -211,7 +211,7 @@ ZTEST(ps8815, test_ps8815_set_cc)
 
 	/* Set firmware version <= 0x10 to set "disable rp detect" workaround */
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x8);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, RP_DETECT_DISABLE,
 			    "fw rev 0x8 \"disable rp detect\" workaround");
@@ -231,7 +231,7 @@ ZTEST(ps8815, test_ps8815_set_cc)
 	 * again
 	 */
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0xa);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 
 	/* CC RD shouldn't trigger "disable rp detect" workaround */
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RD, 0,
@@ -242,7 +242,7 @@ ZTEST(ps8815, test_ps8815_set_cc)
 	 * workaround
 	 */
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x12);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 
 	/* Firmware > 0x10 shouldn't trigger "disable rp detect" workaround */
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
@@ -253,7 +253,7 @@ ZTEST(ps8815, test_ps8815_set_cc)
 	 * 1 ms on role control reg update)
 	 */
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a00);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 
 	start_time = k_uptime_get();
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
@@ -267,7 +267,7 @@ ZTEST(ps8815, test_ps8815_set_cc)
 	 * 1 ms on role control reg update)
 	 */
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a01);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	start_time = k_uptime_get();
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
 			    "delay on HW rev 0x0a01");
@@ -280,7 +280,7 @@ ZTEST(ps8815, test_ps8815_set_cc)
 	 * 1 ms on role control reg update)
 	 */
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a02);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	start_time = k_uptime_get();
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
 			    "no delay on other HW rev");
@@ -349,7 +349,7 @@ static void test_ps8xxx_transmit(void)
 			      USBC_PORT_C1, TCPCI_MSG_TX_BIST_MODE_2, 0, NULL),
 		      NULL);
 	check_tcpci_reg(ps8xxx_emul, PS8XXX_REG_BIST_CONT_MODE_CTR, 0);
-	zassert_equal(TCPCI_MSG_TX_BIST_MODE_2, msg->sop_type, NULL);
+	zassert_equal(TCPCI_MSG_TX_BIST_MODE_2, msg->sop_type);
 
 	/* Check BIST counter value */
 	zassert_ok(tcpci_emul_get_reg(ps8xxx_emul,
@@ -469,7 +469,7 @@ ZTEST(ps8815, test_ps8815_drp_toggle)
 	 * 1 ms on role control reg update)
 	 */
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a00);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	test_ps88x5_drp_toggle(true);
 
 	/*
@@ -477,7 +477,7 @@ ZTEST(ps8815, test_ps8815_drp_toggle)
 	 * 1 ms on role control reg update)
 	 */
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a02);
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 	test_ps88x5_drp_toggle(false);
 }
 
@@ -522,10 +522,10 @@ static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 	zassert_equal(EC_SUCCESS,
 		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
 		      NULL);
-	zassert_equal(vendor, info.vendor_id, NULL);
-	zassert_equal(product, info.product_id, NULL);
-	zassert_equal(device_id, info.device_id, NULL);
-	zassert_equal(fw_rev, info.fw_version_number, NULL);
+	zassert_equal(vendor, info.vendor_id);
+	zassert_equal(product, info.product_id);
+	zassert_equal(device_id, info.device_id);
+	zassert_equal(fw_rev, info.fw_version_number);
 
 	/* Test fail on wrong vendor id */
 	vendor = 0x0;
@@ -557,10 +557,10 @@ static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 	zassert_equal(EC_SUCCESS,
 		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 0, &info),
 		      NULL);
-	zassert_equal(vendor, info.vendor_id, NULL);
-	zassert_equal(product, info.product_id, NULL);
-	zassert_equal(device_id, info.device_id, NULL);
-	zassert_equal(fw_rev, info.fw_version_number, NULL);
+	zassert_equal(vendor, info.vendor_id);
+	zassert_equal(product, info.product_id);
+	zassert_equal(device_id, info.device_id);
+	zassert_equal(fw_rev, info.fw_version_number);
 
 	/* Set wrong vendor id */
 	vendor = 0;
@@ -575,10 +575,10 @@ static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 	zassert_equal(EC_SUCCESS,
 		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 0, &info),
 		      NULL);
-	zassert_equal(PS8XXX_VENDOR_ID, info.vendor_id, NULL);
-	zassert_equal(product, info.product_id, NULL);
-	zassert_equal(device_id, info.device_id, NULL);
-	zassert_equal(fw_rev, info.fw_version_number, NULL);
+	zassert_equal(PS8XXX_VENDOR_ID, info.vendor_id);
+	zassert_equal(product, info.product_id);
+	zassert_equal(device_id, info.device_id);
+	zassert_equal(fw_rev, info.fw_version_number);
 
 	/* Set correct vendor id */
 	vendor = PS8XXX_VENDOR_ID;
@@ -597,13 +597,13 @@ static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 	zassert_equal(EC_SUCCESS,
 		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 0, &info),
 		      NULL);
-	zassert_equal(vendor, info.vendor_id, NULL);
+	zassert_equal(vendor, info.vendor_id);
 	zassert_equal(board_get_ps8xxx_product_id(USBC_PORT_C1),
 		      info.product_id, NULL);
-	zassert_equal(device_id, info.device_id, NULL);
-	zassert_equal(fw_rev, info.fw_version_number, NULL);
+	zassert_equal(device_id, info.device_id);
+	zassert_equal(fw_rev, info.fw_version_number);
 
-	zassert_equal(false, check_ps8755_chip(USBC_PORT_C1), NULL);
+	zassert_equal(false, check_ps8755_chip(USBC_PORT_C1));
 }
 
 ZTEST(ps8805, test_ps8805_get_chip_info)
@@ -655,7 +655,7 @@ ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 	/* Set correct power status for this test */
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_POWER_STATUS, 0x0);
 	/* Init to allow access to "hidden" I2C ports */
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 
 	/* Set device id which requires fixing */
 	device_id = 0x1;
@@ -870,7 +870,7 @@ ZTEST(ps8805, test_ps8805_gpio)
 	/* Set correct power status for this test */
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_POWER_STATUS, 0x0);
 	/* Init to allow access to "hidden" I2C ports */
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 
 	/* Test fail on invalid signal for gpio control reg */
 	zassert_equal(EC_ERROR_INVAL,
@@ -1268,7 +1268,7 @@ static void ps8805_before(void *state)
 	board_set_ps8xxx_product_id(PS8805_PRODUCT_ID);
 	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8805_PRODUCT_ID);
 	setup_no_fail_all();
-	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 }
 
 static void ps8805_after(void *state)
@@ -1292,7 +1292,7 @@ static void ps8815_before(void *state)
 	board_set_ps8xxx_product_id(PS8815_PRODUCT_ID);
 	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8815_PRODUCT_ID);
 	setup_no_fail_all();
-	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
 }
 
 static void ps8815_after(void *state)

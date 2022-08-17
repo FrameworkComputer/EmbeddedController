@@ -43,7 +43,7 @@ static inline void disconnect_charger_from_port(
 	struct usb_attach_20v_3a_pd_charger_fixture *fixture)
 {
 	set_ac_enabled(false);
-	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul), NULL);
+	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul));
 	isl923x_emul_set_adc_vbus(fixture->charger_emul, 0);
 	k_sleep(K_SECONDS(1));
 }
@@ -189,9 +189,9 @@ ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_typec_status)
 	disconnect_charger_from_port(fixture);
 	typec_status = host_cmd_typec_status(0);
 
-	zassert_false(typec_status.pd_enabled, NULL);
-	zassert_false(typec_status.dev_connected, NULL);
-	zassert_false(typec_status.sop_connected, NULL);
+	zassert_false(typec_status.pd_enabled);
+	zassert_false(typec_status.dev_connected);
+	zassert_false(typec_status.sop_connected);
 	zassert_equal(typec_status.source_cap_count, 0,
 		      "Expected 0 source caps, but got %d",
 		      typec_status.source_cap_count);

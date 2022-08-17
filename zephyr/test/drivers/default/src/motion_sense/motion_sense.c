@@ -18,16 +18,16 @@ ZTEST_USER(motion_sense, ec_motion_sensor_fill_values)
 	const int32_t v[] = { 4, 5, 6 };
 
 	ec_motion_sensor_fill_values(&dst, v);
-	zassert_equal(dst.data[0], v[0], NULL);
-	zassert_equal(dst.data[1], v[1], NULL);
-	zassert_equal(dst.data[2], v[2], NULL);
+	zassert_equal(dst.data[0], v[0]);
+	zassert_equal(dst.data[1], v[1]);
+	zassert_equal(dst.data[2], v[2]);
 }
 
 ZTEST_USER(motion_sense, ec_motion_sensor_clamp_i16)
 {
-	zassert_equal(ec_motion_sensor_clamp_i16(0), 0, NULL);
-	zassert_equal(ec_motion_sensor_clamp_i16(200), 200, NULL);
-	zassert_equal(ec_motion_sensor_clamp_i16(-512), -512, NULL);
+	zassert_equal(ec_motion_sensor_clamp_i16(0), 0);
+	zassert_equal(ec_motion_sensor_clamp_i16(200), 200);
+	zassert_equal(ec_motion_sensor_clamp_i16(-512), -512);
 	zassert_equal(ec_motion_sensor_clamp_i16(INT16_MAX + 1), INT16_MAX,
 		      NULL);
 	zassert_equal(ec_motion_sensor_clamp_i16(INT16_MIN - 1), INT16_MIN,

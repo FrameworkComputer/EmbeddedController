@@ -50,7 +50,7 @@ DECLARE_EC_TEST(test_calibrated_correctly_with_kasa)
 	accumulate(0.7171f, 0.7171f, 0.7171f, 21.0f);
 	has_bias = accumulate(-0.6971f, -0.6971f, -0.6971f, 21.0f);
 
-	zassert_true(has_bias, NULL);
+	zassert_true(has_bias);
 	zassert_within(cal.bias[X], 0.01f, 0.0001f, "%f", cal.bias[X]);
 	zassert_within(cal.bias[Y], 0.01f, 0.0001f, "%f", cal.bias[Y]);
 	zassert_within(cal.bias[Z], 0.01f, 0.0001f, "%f", cal.bias[Z]);
@@ -74,13 +74,13 @@ DECLARE_EC_TEST(test_calibrated_correctly_with_newton)
 
 	kasa_reset(&kasa);
 	for (i = 0; i < ARRAY_SIZE(data); i += 3) {
-		zassert_false(has_bias, NULL);
+		zassert_false(has_bias);
 		kasa_accumulate(&kasa, data[i], data[i + 1], data[i + 2]);
 		has_bias = accumulate(data[i], data[i + 1], data[i + 2], 21.0f);
 	}
 
 	kasa_compute(&kasa, kasa_bias, &kasa_radius);
-	zassert_true(has_bias, NULL);
+	zassert_true(has_bias);
 	/* Check that the bias is right */
 	zassert_within(cal.bias[X], 0.01f, 0.001f, "%f", cal.bias[X]);
 	zassert_within(cal.bias[Y], 0.01f, 0.001f, "%f", cal.bias[Y]);
@@ -110,7 +110,7 @@ DECLARE_EC_TEST(test_temperature_gates)
 	accumulate(0.7171f, 0.7171f, 0.7171f, 21.0f);
 	has_bias = accumulate(-0.6971f, -0.6971f, -0.6971f, 31.0f);
 
-	zassert_false(has_bias, NULL);
+	zassert_false(has_bias);
 
 	return EC_SUCCESS;
 }

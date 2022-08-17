@@ -86,10 +86,10 @@ ZTEST(ppc_sn5s330, test_fail_once_func_set1)
 	i2c_common_emul_set_write_func(COMMON_DATA, fail_until_write_func,
 				       &count);
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
-	zassert_equal(count, 0, NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
+	zassert_equal(count, 0);
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1, &func_set1_value);
-	zassert_true((func_set1_value & SN5S330_ILIM_1_62) != 0, NULL);
+	zassert_true((func_set1_value & SN5S330_ILIM_1_62) != 0);
 	i2c_common_emul_set_write_func(COMMON_DATA, NULL, NULL);
 }
 
@@ -110,7 +110,7 @@ ZTEST(ppc_sn5s330, test_dead_battery_boot_force_pp2_fets_set)
 	i2c_common_emul_set_read_func(COMMON_DATA, intercept_read_func,
 				      &test_read_data);
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	/*
 	 * Although the device enables PP2_FET on dead battery boot by setting
@@ -119,8 +119,8 @@ ZTEST(ppc_sn5s330, test_dead_battery_boot_force_pp2_fets_set)
 	 *
 	 * TODO(b/207034759): Verify need or remove redundant PP2 set.
 	 */
-	zassert_true(test_write_data.val_intercepted & SN5S330_PP2_EN, NULL);
-	zassert_false(sn5s330_drv.is_sourcing_vbus(SN5S330_PORT), NULL);
+	zassert_true(test_write_data.val_intercepted & SN5S330_PP2_EN);
+	zassert_false(sn5s330_drv.is_sourcing_vbus(SN5S330_PORT));
 }
 
 ZTEST(ppc_sn5s330, test_enter_low_power_mode)
@@ -140,30 +140,30 @@ ZTEST(ppc_sn5s330, test_enter_low_power_mode)
 	 * For Reference: b/111006203#comment35
 	 */
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
-	zassert_ok(sn5s330_drv.enter_low_power_mode(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
+	zassert_ok(sn5s330_drv.enter_low_power_mode(SN5S330_PORT));
 
 	/* 1) Verify VBUS power paths are off */
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
-	zassert_equal(func_set3_reg & SN5S330_PP1_EN, 0, NULL);
-	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0, NULL);
+	zassert_equal(func_set3_reg & SN5S330_PP1_EN, 0);
+	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0);
 
 	/* 2) Verify VCONN power path is off */
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET4, &func_set4_reg);
 	zassert_not_equal(func_set4_reg & SN5S330_CC_EN, 0, NULL);
-	zassert_equal(func_set4_reg & SN5S330_VCONN_EN, 0, NULL);
+	zassert_equal(func_set4_reg & SN5S330_VCONN_EN, 0);
 
 	/* 3) Verify SBU FET is off */
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET2, &func_set2_reg);
-	zassert_equal(func_set2_reg & SN5S330_SBU_EN, 0, NULL);
+	zassert_equal(func_set2_reg & SN5S330_SBU_EN, 0);
 
 	/* 4) Verify VBUS and SBU OVP comparators are off */
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET9, &func_set9_reg);
-	zassert_equal(func_set9_reg & SN5S330_FORCE_OVP_EN_SBU, 0, NULL);
-	zassert_equal(func_set9_reg & SN5S330_PWR_OVR_VBUS, 0, NULL);
+	zassert_equal(func_set9_reg & SN5S330_FORCE_OVP_EN_SBU, 0);
+	zassert_equal(func_set9_reg & SN5S330_PWR_OVR_VBUS, 0);
 	zassert_not_equal(func_set9_reg & SN5S330_OVP_EN_CC, 0, NULL);
-	zassert_equal(func_set9_reg & SN5S330_FORCE_ON_VBUS_OVP, 0, NULL);
-	zassert_equal(func_set9_reg & SN5S330_FORCE_ON_VBUS_UVP, 0, NULL);
+	zassert_equal(func_set9_reg & SN5S330_FORCE_ON_VBUS_OVP, 0);
+	zassert_equal(func_set9_reg & SN5S330_FORCE_ON_VBUS_UVP, 0);
 }
 
 ZTEST(ppc_sn5s330, test_vbus_source_sink_enable)
@@ -171,25 +171,25 @@ ZTEST(ppc_sn5s330, test_vbus_source_sink_enable)
 	const struct emul *emul = EMUL;
 	uint8_t func_set3_reg;
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	/* Test enable/disable VBUS source FET */
-	zassert_ok(sn5s330_drv.vbus_source_enable(SN5S330_PORT, true), NULL);
+	zassert_ok(sn5s330_drv.vbus_source_enable(SN5S330_PORT, true));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
 	zassert_not_equal(func_set3_reg & SN5S330_PP1_EN, 0, NULL);
 
-	zassert_ok(sn5s330_drv.vbus_source_enable(SN5S330_PORT, false), NULL);
+	zassert_ok(sn5s330_drv.vbus_source_enable(SN5S330_PORT, false));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
-	zassert_equal(func_set3_reg & SN5S330_PP1_EN, 0, NULL);
+	zassert_equal(func_set3_reg & SN5S330_PP1_EN, 0);
 
 	/* Test enable/disable VBUS sink FET */
-	zassert_ok(sn5s330_drv.vbus_sink_enable(SN5S330_PORT, true), NULL);
+	zassert_ok(sn5s330_drv.vbus_sink_enable(SN5S330_PORT, true));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
 	zassert_not_equal(func_set3_reg & SN5S330_PP2_EN, 0, NULL);
 
-	zassert_ok(sn5s330_drv.vbus_sink_enable(SN5S330_PORT, false), NULL);
+	zassert_ok(sn5s330_drv.vbus_sink_enable(SN5S330_PORT, false));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
-	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0, NULL);
+	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0);
 }
 
 /* This test depends on EC GIPO initialization happening before I2C */
@@ -200,16 +200,16 @@ ZTEST(ppc_sn5s330, test_vbus_discharge)
 	const struct emul *emul = EMUL;
 	uint8_t func_set3_reg;
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	/* Test enable/disable VBUS discharging */
-	zassert_ok(sn5s330_drv.discharge_vbus(SN5S330_PORT, true), NULL);
+	zassert_ok(sn5s330_drv.discharge_vbus(SN5S330_PORT, true));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
 	zassert_not_equal(func_set3_reg & SN5S330_VBUS_DISCH_EN, 0, NULL);
 
-	zassert_ok(sn5s330_drv.discharge_vbus(SN5S330_PORT, false), NULL);
+	zassert_ok(sn5s330_drv.discharge_vbus(SN5S330_PORT, false));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
-	zassert_equal(func_set3_reg & SN5S330_VBUS_DISCH_EN, 0, NULL);
+	zassert_equal(func_set3_reg & SN5S330_VBUS_DISCH_EN, 0);
 }
 
 ZTEST(ppc_sn5s330, test_set_vbus_source_current_limit)
@@ -218,7 +218,7 @@ ZTEST(ppc_sn5s330, test_set_vbus_source_current_limit)
 	uint8_t func_set1_reg;
 
 	/* Test every TCPC Pull Resistance Value */
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	/* USB */
 	zassert_ok(sn5s330_drv.set_vbus_source_current_limit(SN5S330_PORT,
@@ -259,17 +259,17 @@ ZTEST(ppc_sn5s330, test_sn5s330_set_sbu)
 	const struct emul *emul = EMUL;
 	uint8_t func_set2_reg;
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	/* Verify driver enables SBU FET */
-	zassert_ok(sn5s330_drv.set_sbu(SN5S330_PORT, true), NULL);
+	zassert_ok(sn5s330_drv.set_sbu(SN5S330_PORT, true));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET2, &func_set2_reg);
 	zassert_not_equal(func_set2_reg & SN5S330_SBU_EN, 0, NULL);
 
 	/* Verify driver disables SBU FET */
-	zassert_ok(sn5s330_drv.set_sbu(SN5S330_PORT, false), NULL);
+	zassert_ok(sn5s330_drv.set_sbu(SN5S330_PORT, false));
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET2, &func_set2_reg);
-	zassert_equal(func_set2_reg & SN5S330_SBU_EN, 0, NULL);
+	zassert_equal(func_set2_reg & SN5S330_SBU_EN, 0);
 }
 #else
 {
@@ -282,7 +282,7 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 	const struct emul *emul = EMUL;
 	uint8_t int_trip_rise_reg1;
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	sn5s330_emul_make_vbus_overcurrent(emul);
 	/*
@@ -290,7 +290,7 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 	 */
 	/* Make sure interrupt happens first. */
 	k_msleep(SN5S330_INTERRUPT_DELAYMS);
-	zassert_true(sn5s330_emul_interrupt_set_stub_fake.call_count > 0, NULL);
+	zassert_true(sn5s330_emul_interrupt_set_stub_fake.call_count > 0);
 
 	/*
 	 * Verify we cleared vbus overcurrent interrupt trip rise bit so the
@@ -298,7 +298,7 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 	 */
 	sn5s330_emul_peek_reg(emul, SN5S330_INT_TRIP_RISE_REG1,
 			      &int_trip_rise_reg1);
-	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0, NULL);
+	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0);
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
@@ -311,9 +311,9 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
 	 * to function.
 	 */
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 	system_jumped_late_fake.return_val = 1;
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	sn5s330_emul_make_vbus_overcurrent(emul);
 	/*
@@ -321,7 +321,7 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
 	 */
 	/* Make sure interrupt happens first. */
 	k_msleep(SN5S330_INTERRUPT_DELAYMS);
-	zassert_true(sn5s330_emul_interrupt_set_stub_fake.call_count > 0, NULL);
+	zassert_true(sn5s330_emul_interrupt_set_stub_fake.call_count > 0);
 
 	/*
 	 * Verify we cleared vbus overcurrent interrupt trip rise bit so the
@@ -329,7 +329,7 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
 	 */
 	sn5s330_emul_peek_reg(emul, SN5S330_INT_TRIP_RISE_REG1,
 			      &int_trip_rise_reg1);
-	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0, NULL);
+	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0);
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt)
@@ -337,10 +337,10 @@ ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt)
 	const struct emul *emul = EMUL;
 
 	/* Interrupt disabled here */
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 	/* Would normally cause a vbus low interrupt */
 	sn5s330_emul_lower_vbus_below_minv(emul);
-	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0, NULL);
+	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0);
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt_late_jump)
@@ -352,13 +352,13 @@ ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt_late_jump)
 	 * to function.
 	 */
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 	system_jumped_late_fake.return_val = 1;
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	/* Would normally cause a vbus low interrupt */
 	sn5s330_emul_lower_vbus_below_minv(emul);
-	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0, NULL);
+	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0);
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_set_vconn_fet)
@@ -371,11 +371,11 @@ ZTEST(ppc_sn5s330, test_sn5s330_set_vconn_fet)
 	const struct emul *emul = EMUL;
 	uint8_t func_set4_reg;
 
-	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
 	sn5s330_drv.set_vconn(SN5S330_PORT, false);
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET4, &func_set4_reg);
-	zassert_equal(func_set4_reg & SN5S330_VCONN_EN, 0, NULL);
+	zassert_equal(func_set4_reg & SN5S330_VCONN_EN, 0);
 
 	sn5s330_drv.set_vconn(SN5S330_PORT, true);
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET4, &func_set4_reg);

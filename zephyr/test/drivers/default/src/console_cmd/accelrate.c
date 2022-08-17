@@ -64,7 +64,7 @@ ZTEST_USER(console_cmd_accelrate, test_invalid_sensor_num)
 
 ZTEST_USER(console_cmd_accelrate, test_print_rate)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrate 0"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrate 0"));
 }
 
 ZTEST_USER(console_cmd_accelrate, test_bad_rate_value)
@@ -80,7 +80,7 @@ ZTEST_USER(console_cmd_accelrate, test_set_ap_rate)
 	test_set_chipset_to_s0();
 
 	motion_sensors[0].config[SENSOR_CONFIG_EC_S0].odr = 0;
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrate 0 100"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelrate 0 100"));
 	zassert_equal(100 | ROUND_UP_FLAG,
 		      motion_sensors[0].config[SENSOR_CONFIG_EC_S0].odr,
 		      "Expected %d, but got %d", 100 | ROUND_UP_FLAG,

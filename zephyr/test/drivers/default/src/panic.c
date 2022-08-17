@@ -78,15 +78,15 @@ ZTEST(panic, test_panic_reason)
 
 	panic_get_reason(&reason, &info, &exception);
 
-	zassert_equal(PANIC_SW_WATCHDOG, reason, NULL);
-	zassert_equal(0, info, NULL);
-	zassert_equal(0, exception, NULL);
+	zassert_equal(PANIC_SW_WATCHDOG, reason);
+	zassert_equal(0, info);
+	zassert_equal(0, exception);
 
 	pdata = panic_get_data();
 	zassert_not_null(pdata, NULL);
-	zassert_equal(pdata->struct_version, 2, NULL);
-	zassert_equal(pdata->magic, PANIC_DATA_MAGIC, NULL);
-	zassert_equal(pdata->struct_size, CONFIG_PANIC_DATA_SIZE, NULL);
+	zassert_equal(pdata->struct_version, 2);
+	zassert_equal(pdata->magic, PANIC_DATA_MAGIC);
+	zassert_equal(pdata->struct_size, CONFIG_PANIC_DATA_SIZE);
 
 	panic_data_print(pdata);
 }

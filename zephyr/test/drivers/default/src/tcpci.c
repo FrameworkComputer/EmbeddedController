@@ -311,14 +311,14 @@ ZTEST(tcpci, test_generic_tcpci_mux_init)
 	/* Make sure that TCPC is not accessed */
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_FAIL_ALL_REG);
-	zassert_equal(EC_SUCCESS, tcpci_tcpm_mux_init(tcpci_usb_mux), NULL);
+	zassert_equal(EC_SUCCESS, tcpci_tcpm_mux_init(tcpci_usb_mux));
 
 	/* Set as only usb mux without TCPC for rest of the test */
 	set_usb_mux_not_tcpc();
 
 	/* Test fail on power status read */
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_POWER_STATUS);
-	zassert_equal(EC_ERROR_INVAL, tcpci_tcpm_mux_init(tcpci_usb_mux), NULL);
+	zassert_equal(EC_ERROR_INVAL, tcpci_tcpm_mux_init(tcpci_usb_mux));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -349,7 +349,7 @@ ZTEST(tcpci, test_generic_tcpci_mux_init)
 	tcpci_emul_set_reg(emul, TCPC_REG_ALERT_MASK, 0xffff);
 
 	/* Test success init */
-	zassert_equal(EC_SUCCESS, tcpci_tcpm_mux_init(tcpci_usb_mux), NULL);
+	zassert_equal(EC_SUCCESS, tcpci_tcpm_mux_init(tcpci_usb_mux));
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, 0);
 	check_tcpci_reg(emul, TCPC_REG_ALERT, 0);
 }

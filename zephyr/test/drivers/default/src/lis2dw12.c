@@ -67,7 +67,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_read_who_am_i)
 
 	i2c_common_emul_set_read_fail_reg(common_data, LIS2DW12_WHO_AM_I_REG);
 	rv = ms->drv->init(ms);
-	zassert_equal(EC_ERROR_INVAL, rv, NULL);
+	zassert_equal(EC_ERROR_INVAL, rv);
 }
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_who_am_i)
@@ -95,7 +95,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_write_soft_reset)
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   LIS2DW12_SOFT_RESET_ADDR);
 	rv = ms->drv->init(ms);
-	zassert_equal(EC_ERROR_INVAL, rv, NULL);
+	zassert_equal(EC_ERROR_INVAL, rv);
 }
 
 ZTEST(lis2dw12, test_lis2dw12_init__timeout_read_soft_reset)

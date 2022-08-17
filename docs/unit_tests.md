@@ -90,7 +90,7 @@ test_static EC_TEST_RETURN test_my_function(void)
     bool condition = some_function();
 
     /* Check that the expected condition is correct. */
-    zassert_true(condition, NULL);
+    zassert_true(condition);
 
     return EC_SUCCESS;
 }
@@ -113,7 +113,7 @@ test_static EC_TEST_RETURN test_my_function(void)
 ```
 
 The only difference between those two versions of `test/my_test.c` is the
-assertion: `c zassert_true(condition, NULL);` versus `c TEST_EQ(condition, true,
+assertion: `c zassert_true(condition);` versus `c TEST_EQ(condition, true,
 "%d");`
 
 ### Specify the test cases to run

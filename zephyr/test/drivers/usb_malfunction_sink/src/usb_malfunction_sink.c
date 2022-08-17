@@ -97,9 +97,9 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_disable)
 	typec_status = host_cmd_typec_status(0);
 
 	/* Device is connected, but PD wasn't able to establish contract */
-	zassert_true(typec_status.pd_enabled, NULL);
-	zassert_true(typec_status.dev_connected, NULL);
-	zassert_false(typec_status.sop_connected, NULL);
+	zassert_true(typec_status.pd_enabled);
+	zassert_true(typec_status.dev_connected);
+	zassert_false(typec_status.sop_connected);
 }
 
 ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_connect)
@@ -121,9 +121,9 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_connect)
 
 	typec_status = host_cmd_typec_status(0);
 
-	zassert_true(typec_status.pd_enabled, NULL);
-	zassert_true(typec_status.dev_connected, NULL);
-	zassert_true(typec_status.sop_connected, NULL);
+	zassert_true(typec_status.pd_enabled);
+	zassert_true(typec_status.dev_connected);
+	zassert_true(typec_status.sop_connected);
 
 	info = host_cmd_power_info(0);
 
@@ -265,7 +265,7 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap_and_pd_disable)
 	typec_status = host_cmd_typec_status(0);
 
 	/* Device is connected, but PD wasn't able to establish contract */
-	zassert_true(typec_status.pd_enabled, NULL);
-	zassert_true(typec_status.dev_connected, NULL);
-	zassert_false(typec_status.sop_connected, NULL);
+	zassert_true(typec_status.pd_enabled);
+	zassert_true(typec_status.dev_connected);
+	zassert_false(typec_status.sop_connected);
 }

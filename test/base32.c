@@ -25,7 +25,7 @@ DECLARE_EC_TEST(test_crc5)
 		seen = 0;
 		for (j = 0; j < 32; j++)
 			seen |= 1 << crc5_sym(j, i);
-		zassert_equal(seen, 0xffffffff, NULL);
+		zassert_equal(seen, 0xffffffff);
 	}
 
 	/*
@@ -36,7 +36,7 @@ DECLARE_EC_TEST(test_crc5)
 		seen = 0;
 		for (j = 0; j < 32; j++)
 			seen |= 1 << crc5_sym(i, j);
-		zassert_equal(seen, 0xffffffff, NULL);
+		zassert_equal(seen, 0xffffffff);
 	}
 
 	/* Transposing different symbols generates distinct CRCs */
@@ -49,7 +49,7 @@ DECLARE_EC_TEST(test_crc5)
 			}
 		}
 	}
-	zassert_equal(errors, 0, NULL);
+	zassert_equal(errors, 0);
 
 	return EC_SUCCESS;
 }
@@ -77,8 +77,8 @@ DECLARE_EC_TEST(test_encode)
 
 	/* Test for enough space; error produces null string */
 	*enc = 1;
-	zassert_equal(base32_encode(enc, 3, src1, 15, 0), EC_ERROR_INVAL, NULL);
-	zassert_equal(*enc, 0, NULL);
+	zassert_equal(base32_encode(enc, 3, src1, 15, 0), EC_ERROR_INVAL);
+	zassert_equal(*enc, 0);
 
 	/* Empty source */
 	ENCTEST("\x00", 0, 0, "");
@@ -138,7 +138,7 @@ static int dectest(const void *dec, int decbits, int crc_every, const char *enc)
 	int wantbits = decbits > 0 ? decbits : 5 * strlen(enc);
 	int gotbits = base32_decode(dest, destbits, enc, crc_every);
 
-	zassert_equal(gotbits, wantbits, NULL);
+	zassert_equal(gotbits, wantbits);
 	if (gotbits != wantbits)
 		return -1;
 	return cmpbytes(dec, dest, (decbits + 7) / 8, "decode");
@@ -164,7 +164,7 @@ DECLARE_EC_TEST(test_decode)
 	DECTEST("\xff\x00\xff\x00\xff", 40, 0, " 96\tA-R\r8A H9\n");
 
 	/* Invalid symbol fails */
-	zassert_equal(base32_decode(dec, 16, "AI", 0), -1, NULL);
+	zassert_equal(base32_decode(dec, 16, "AI", 0), -1);
 
 	/* If dest buffer is big, use all the source bits */
 	DECTEST("", 0, 0, "");
@@ -185,14 +185,14 @@ DECLARE_EC_TEST(test_decode)
 	DECTEST("\xff\x00\xff\x00\xff", 40, 8, "96AR8AH9L");
 
 	/* CRC requires exact multiple of symbol count */
-	zassert_equal(base32_decode(dec, 40, "96ARL8AH9", 4), -1, NULL);
+	zassert_equal(base32_decode(dec, 40, "96ARL8AH9", 4), -1);
 	/* But what matters is symbol count, not bit count */
 	DECTEST("\xff\x00\xff\x00\xfe", 39, 4, "96ARU8AH8P");
 
 	/* Detect errors in data, CRC, and transposition */
-	zassert_equal(base32_decode(dec, 40, "96AQL", 4), -1, NULL);
-	zassert_equal(base32_decode(dec, 40, "96ARM", 4), -1, NULL);
-	zassert_equal(base32_decode(dec, 40, "96RAL", 4), -1, NULL);
+	zassert_equal(base32_decode(dec, 40, "96AQL", 4), -1);
+	zassert_equal(base32_decode(dec, 40, "96ARM", 4), -1);
+	zassert_equal(base32_decode(dec, 40, "96RAL", 4), -1);
 
 	/* Detect error when not enough data is given */
 	zassert_equal(base32_decode(dec, 40, "AA", 4), -1, NULL);

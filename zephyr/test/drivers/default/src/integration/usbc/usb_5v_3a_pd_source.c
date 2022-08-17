@@ -168,9 +168,9 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_typec_status)
 	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 	typec_status = host_cmd_typec_status(0);
 
-	zassert_false(typec_status.pd_enabled, NULL);
-	zassert_false(typec_status.dev_connected, NULL);
-	zassert_false(typec_status.sop_connected, NULL);
+	zassert_false(typec_status.pd_enabled);
+	zassert_false(typec_status.dev_connected);
+	zassert_false(typec_status.sop_connected);
 	zassert_equal(typec_status.source_cap_count, 0,
 		      "Expected 0 source caps, but got %d",
 		      typec_status.source_cap_count);

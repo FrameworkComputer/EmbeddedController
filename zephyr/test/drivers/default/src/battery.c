@@ -30,11 +30,11 @@ ZTEST_USER(battery, test_battery_is_present_gpio)
 
 	zassert_not_null(dev, NULL);
 	/* ec_batt_pres_odl = 0 means battery present. */
-	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 0), NULL);
-	zassert_equal(BP_YES, battery_is_present(), NULL);
+	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 0));
+	zassert_equal(BP_YES, battery_is_present());
 	/* ec_batt_pres_odl = 1 means battery missing. */
-	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 1), NULL);
-	zassert_equal(BP_NO, battery_is_present(), NULL);
+	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 1));
+	zassert_equal(BP_NO, battery_is_present());
 }
 
 ZTEST_SUITE(battery, drivers_predicate_post_main, NULL, NULL, battery_after,

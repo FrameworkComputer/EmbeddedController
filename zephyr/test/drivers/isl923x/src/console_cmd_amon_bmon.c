@@ -29,13 +29,13 @@ ZTEST_SUITE(console_cmd_amon_bmon, drivers_predicate_post_main, NULL, NULL,
 ZTEST(console_cmd_amon_bmon, test_isl923x_amonbmon_shell_cmd)
 {
 	/* Validate combinations of well formed shell commands */
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon a 0"), NULL);
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon ac 0"), NULL);
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon ad 0"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon a 0"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon ac 0"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon ad 0"));
 
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon b 0"), NULL);
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon bc 0"), NULL);
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon bd 0"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon b 0"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon bc 0"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "amonbmon bd 0"));
 
 	/* Check error returned for malformed shell command */
 	zassert_equal(EC_ERROR_PARAM2,

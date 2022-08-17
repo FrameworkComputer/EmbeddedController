@@ -28,12 +28,12 @@ ZTEST_USER(math, arc_cos__x_above_range)
 
 ZTEST_USER(math, int_sqrtf)
 {
-	zassert_equal(int_sqrtf(0), 0, NULL);
-	zassert_equal(int_sqrtf(15), 3, NULL);
-	zassert_equal(int_sqrtf(25), 5, NULL);
-	zassert_equal(int_sqrtf(1111088889), 33333, NULL);
-	zassert_equal(int_sqrtf(123456789), 11111, NULL);
-	zassert_equal(int_sqrtf(1000000000000000005), 1000000000, NULL);
+	zassert_equal(int_sqrtf(0), 0);
+	zassert_equal(int_sqrtf(15), 3);
+	zassert_equal(int_sqrtf(25), 5);
+	zassert_equal(int_sqrtf(1111088889), 33333);
+	zassert_equal(int_sqrtf(123456789), 11111);
+	zassert_equal(int_sqrtf(1000000000000000005), 1000000000);
 }
 
 ZTEST_USER(math, fp_sqrtf)

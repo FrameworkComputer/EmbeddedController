@@ -32,7 +32,7 @@ static void setup_snapshots_and_messages(void *unused)
 		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_CONSOLE_SNAPSHOT, 0);
 
 	/* Set first snapshot before first message */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
 	cputs(CC_COMMAND, msg1);
 
 	/* Read everything from buffer */
@@ -44,7 +44,7 @@ static void setup_snapshots_and_messages(void *unused)
 	} while (read_args.response_size != 0);
 
 	/* Set second snapshot after first message */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
 	cputs(CC_COMMAND, msg2);
 }
 
@@ -74,7 +74,7 @@ static void test_uart_hc_read_next(int ver)
 	}
 
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal('\0', response[read_args.response_size],
 		      "Last byte of response is not '\\0' (got 0x%x)",
 		      response[read_args.response_size]);
@@ -90,10 +90,10 @@ static void test_uart_hc_read_next(int ver)
 			  msg1_start);
 
 	/* Set new snapshot which should include message 2 */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
 
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal('\0', response[read_args.response_size],
 		      "Last byte of response is not '\\0' (got 0x%x)",
 		      response[read_args.response_size]);
@@ -117,16 +117,16 @@ static void test_uart_hc_read_next(int ver)
 
 	/* Check read next without new snapshot, no data should be read */
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal(0, read_args.response_size,
 		      "expected message length 0, got %d",
 		      read_args.response_size);
 
 	/* Set new snapshot which should include message 3 */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
 
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal('\0', response[read_args.response_size],
 		      "Last byte of response is not '\\0' (got 0x%x)",
 		      response[read_args.response_size]);
@@ -170,7 +170,7 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 
 	/* Only message 1 which is between two last snapshots should be read */
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal('\0', response[read_args.response_size],
 		      "Last byte of response is not '\\0' (got 0x%x)",
 		      response[read_args.response_size]);
@@ -183,11 +183,11 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 			  response);
 
 	/* Set new snapshot after second message */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
 
 	/* Only message between two last snapshots should be read */
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal('\0', response[read_args.response_size],
 		      "Last byte of response is not '\\0' (got 0x%x)",
 		      response[read_args.response_size]);
@@ -204,17 +204,17 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 
 	/* Check that message is not read without setting snapshot */
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal(0, read_args.response_size,
 		      "expected message length 0, got %d",
 		      read_args.response_size);
 
 	/* Set new snapshot */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
 
 	/* This time only third message should be read */
 	read_args.response_size = 0;
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args), NULL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
 	zassert_equal('\0', response[read_args.response_size],
 		      "Last byte of response is not '\\0' (got 0x%x)",
 		      response[read_args.response_size]);

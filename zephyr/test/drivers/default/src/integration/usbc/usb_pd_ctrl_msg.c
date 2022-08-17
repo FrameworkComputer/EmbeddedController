@@ -65,7 +65,7 @@ tcpci_drp_emul_connect_partner(struct tcpci_partner_data *partner_emul,
 
 static void disconnect_partner(struct usb_pd_ctrl_msg_test_fixture *fixture)
 {
-	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul), NULL);
+	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul));
 	k_sleep(K_SECONDS(1));
 }
 
@@ -315,8 +315,8 @@ ZTEST(usb_pd_ctrl_msg_test_source, verify_dpm_get_sink_cap)
 
 	typec_status = host_cmd_typec_status(TEST_USB_PORT);
 
-	zassert_true(typec_status.sink_cap_count > 1, NULL);
-	zassert_equal(typec_status.sink_cap_pdos[1], TEST_ADDED_PDO, NULL);
+	zassert_true(typec_status.sink_cap_count > 1);
+	zassert_equal(typec_status.sink_cap_pdos[1], TEST_ADDED_PDO);
 }
 
 /**
@@ -336,8 +336,8 @@ ZTEST(usb_pd_ctrl_msg_test_sink, verify_get_sink_cap)
 
 	typec_status = host_cmd_typec_status(TEST_USB_PORT);
 
-	zassert_true(typec_status.sink_cap_count > 1, NULL);
-	zassert_equal(typec_status.sink_cap_pdos[1], TEST_ADDED_PDO, NULL);
+	zassert_true(typec_status.sink_cap_count > 1);
+	zassert_equal(typec_status.sink_cap_pdos[1], TEST_ADDED_PDO);
 }
 
 /**
@@ -360,10 +360,10 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_bist_tx_mode2)
 
 	pd_dpm_request(TEST_USB_PORT, DPM_REQUEST_BIST_TX);
 	k_sleep(K_MSEC(10));
-	zassert_equal(get_state_pe(TEST_USB_PORT), PE_BIST_TX, NULL);
+	zassert_equal(get_state_pe(TEST_USB_PORT), PE_BIST_TX);
 
 	k_sleep(K_SECONDS(5));
-	zassert_equal(get_state_pe(TEST_USB_PORT), PE_SNK_READY, NULL);
+	zassert_equal(get_state_pe(TEST_USB_PORT), PE_SNK_READY);
 }
 
 /**
@@ -387,9 +387,9 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_bist_tx_test_data)
 
 	pd_dpm_request(TEST_USB_PORT, DPM_REQUEST_BIST_TX);
 	k_sleep(K_SECONDS(5));
-	zassert_equal(get_state_pe(TEST_USB_PORT), PE_BIST_TX, NULL);
+	zassert_equal(get_state_pe(TEST_USB_PORT), PE_BIST_TX);
 
 	tcpci_partner_common_send_hard_reset(&super_fixture->partner_emul);
 	k_sleep(K_SECONDS(1));
-	zassert_equal(get_state_pe(TEST_USB_PORT), PE_SNK_READY, NULL);
+	zassert_equal(get_state_pe(TEST_USB_PORT), PE_SNK_READY);
 }

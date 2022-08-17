@@ -86,7 +86,7 @@ ZTEST_USER(console_cmd_accelres, test_invalid_sensor_num)
 
 ZTEST_USER(console_cmd_accelres, test_print_res)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelres 0"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelres 0"));
 }
 
 ZTEST_USER(console_cmd_accelres, test_set_res__invalid_data)
@@ -101,7 +101,7 @@ ZTEST_USER(console_cmd_accelres, test_set_res__no_setter)
 {
 	int resolution;
 
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelres 0 4"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelres 0 4"));
 	resolution = motion_sensors[0].drv->get_resolution(&motion_sensors[0]);
 	zassert_equal(BMA2x2_RESOLUTION, resolution, "Expected %d, but got %d",
 		      BMA2x2_RESOLUTION, resolution);

@@ -474,19 +474,18 @@ void z_ztest_run_test_suite(const char *name, struct unit_test *suite);
  * can add the correct format (the zassert_equal_ptr), but others we just
  * don't know, so I'll just dump out the value in hex.
  */
-#define zassert(cond, msg, ...) TEST_ASSERT(cond)
-#define zassert_unreachable(msg, ...) TEST_ASSERT(0)
-#define zassert_true(cond, msg, ...) TEST_ASSERT(cond)
-#define zassert_false(cond, msg, ...) TEST_ASSERT(!(cond))
-#define zassert_ok(cond, msg, ...) TEST_ASSERT(!(cond))
-#define zassert_is_null(ptr, msg, ...) TEST_ASSERT((ptr) == NULL)
-#define zassert_not_null(ptr, msg, ...) TEST_ASSERT((ptr) != NULL)
-#define zassert_equal(a, b, msg, ...) TEST_EQ((a), (b), "0x%x")
-#define zassert_not_equal(a, b, msg, ...) TEST_NE((a), (b), "0x%x")
-#define zassert_equal_ptr(a, b, msg, ...) \
-	TEST_EQ((void *)(a), (void *)(b), "0x%x")
-#define zassert_within(a, b, d, msg, ...) TEST_NEAR((a), (b), (d), msg)
-#define zassert_mem_equal(buf, exp, size, msg, ...) \
+#define zassert(cond, ...) TEST_ASSERT(cond)
+#define zassert_unreachable(...) TEST_ASSERT(0)
+#define zassert_true(cond, ...) TEST_ASSERT(cond)
+#define zassert_false(cond, ...) TEST_ASSERT(!(cond))
+#define zassert_ok(cond, ...) TEST_ASSERT(!(cond))
+#define zassert_is_null(ptr, ...) TEST_ASSERT((ptr) == NULL)
+#define zassert_not_null(ptr, ...) TEST_ASSERT((ptr) != NULL)
+#define zassert_equal(a, b, ...) TEST_EQ((a), (b), "0x%x")
+#define zassert_not_equal(a, b, ...) TEST_NE((a), (b), "0x%x")
+#define zassert_equal_ptr(a, b, ...) TEST_EQ((void *)(a), (void *)(b), "0x%x")
+#define zassert_within(a, b, d, ...) TEST_NEAR((a), (b), (d), "%f")
+#define zassert_mem_equal(buf, exp, size, ...) \
 	TEST_ASSERT_ARRAY_EQ(buf, exp, size)
 #endif /* CONFIG_ZEPHYR */
 

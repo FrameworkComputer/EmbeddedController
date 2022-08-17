@@ -122,7 +122,7 @@ ZTEST_USER(console_cmd_charge_state, test_debug_on_show_charging_progress)
 	/* Sleep at least 1 full iteration of the charge state loop */
 	k_sleep(K_USEC(CHARGE_MAX_SLEEP_USEC + 1));
 
-	zassert_true(charging_progress_displayed(), NULL);
+	zassert_true(charging_progress_displayed());
 }
 
 ZTEST_USER(console_cmd_charge_state, test_sustain_too_few_args__2_args)
@@ -206,11 +206,11 @@ ZTEST_USER_F(console_cmd_charge_state, test_idle_on_from_normal)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Move to idle */
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"), NULL);
-	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_IDLE, NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"));
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_IDLE);
 }
 
 ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
@@ -220,16 +220,16 @@ ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Move to idle */
-	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"), NULL);
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_IDLE, NULL);
+	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"));
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_IDLE);
 
 	/* Move back to normal */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle off"),
 		   NULL);
-	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 }
 
 ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
@@ -239,12 +239,12 @@ ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Enable discharge */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"),
 		   NULL);
-	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE, NULL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE);
 }
 
 ZTEST_USER_F(console_cmd_charge_state, test_discharge_off)
@@ -254,17 +254,17 @@ ZTEST_USER_F(console_cmd_charge_state, test_discharge_off)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Enable discharge */
 	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"),
 		   NULL);
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE, NULL);
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE);
 
 	/* Disable discharge */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge off"),
 		   NULL);
-	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 }
 
 ZTEST_USER(console_cmd_charge_state, test_sustain)
@@ -277,6 +277,6 @@ ZTEST_USER(console_cmd_charge_state, test_sustain)
 
 	charge_control_values = host_cmd_charge_control(
 		CHARGE_CONTROL_NORMAL, EC_CHARGE_CONTROL_CMD_GET);
-	zassert_equal(charge_control_values.sustain_soc.lower, 30, NULL);
-	zassert_equal(charge_control_values.sustain_soc.upper, 50, NULL);
+	zassert_equal(charge_control_values.sustain_soc.lower, 30);
+	zassert_equal(charge_control_values.sustain_soc.upper, 50);
 }

@@ -37,11 +37,11 @@ DECLARE_EC_TEST(test_wp)
 	int cbi_wp;
 
 	cbi_wp = gpio_get_level(GPIO_EC_CBI_WP);
-	zassert_equal(cbi_wp, 0, NULL);
+	zassert_equal(cbi_wp, 0);
 
 	cbi_latch_eeprom_wp();
 	cbi_wp = gpio_get_level(GPIO_EC_CBI_WP);
-	zassert_equal(cbi_wp, 1, NULL);
+	zassert_equal(cbi_wp, 1);
 
 	return EC_SUCCESS;
 }

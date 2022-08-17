@@ -88,7 +88,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_board_is_syv682c)
 	 * The SYV682x driver should assume a version-C part in the absence of a
 	 * board override.
 	 */
-	zassert_true(syv682x_board_is_syv682c(syv682x_port), NULL);
+	zassert_true(syv682x_board_is_syv682c(syv682x_port));
 }
 
 static void check_control_1_default_init(uint8_t control_1)

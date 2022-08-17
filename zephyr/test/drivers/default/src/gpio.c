@@ -168,21 +168,21 @@ ZTEST(gpio, test_legacy_gpio_enable_interrupt)
 	/* Test invalid signal */
 	zassert_not_equal(EC_SUCCESS, gpio_disable_interrupt(GPIO_COUNT), NULL);
 	zassert_not_equal(EC_SUCCESS, gpio_enable_interrupt(GPIO_COUNT), NULL);
-	zassert_false(gpio_test_interrupt_triggered, NULL);
+	zassert_false(gpio_test_interrupt_triggered);
 
 	/* Test valid signal */
-	zassert_ok(gpio_disable_interrupt(signal), NULL);
+	zassert_ok(gpio_disable_interrupt(signal));
 	gpio_set_level(signal, 0);
-	zassert_false(gpio_test_interrupt_triggered, NULL);
+	zassert_false(gpio_test_interrupt_triggered);
 	gpio_set_level(signal, 1);
-	zassert_false(gpio_test_interrupt_triggered, NULL);
+	zassert_false(gpio_test_interrupt_triggered);
 
-	zassert_ok(gpio_enable_interrupt(signal), NULL);
+	zassert_ok(gpio_enable_interrupt(signal));
 	gpio_set_level(signal, 0);
-	zassert_true(gpio_test_interrupt_triggered, NULL);
+	zassert_true(gpio_test_interrupt_triggered);
 	gpio_test_interrupt_triggered = false;
 	gpio_set_level(signal, 1);
-	zassert_true(gpio_test_interrupt_triggered, NULL);
+	zassert_true(gpio_test_interrupt_triggered);
 }
 
 /**
@@ -387,18 +387,18 @@ ZTEST(gpio, test_gpio_enable_dt_interrupt)
 	gpio_test_interrupt_triggered = false;
 
 	/* Test valid signal */
-	zassert_ok(gpio_disable_dt_interrupt(intr), NULL);
+	zassert_ok(gpio_disable_dt_interrupt(intr));
 	gpio_pin_set_dt(gp, 0);
-	zassert_false(gpio_test_interrupt_triggered, NULL);
+	zassert_false(gpio_test_interrupt_triggered);
 	gpio_pin_set_dt(gp, 1);
-	zassert_false(gpio_test_interrupt_triggered, NULL);
+	zassert_false(gpio_test_interrupt_triggered);
 
-	zassert_ok(gpio_enable_dt_interrupt(intr), NULL);
+	zassert_ok(gpio_enable_dt_interrupt(intr));
 	gpio_pin_set_dt(gp, 0);
-	zassert_true(gpio_test_interrupt_triggered, NULL);
+	zassert_true(gpio_test_interrupt_triggered);
 	gpio_test_interrupt_triggered = false;
 	gpio_pin_set_dt(gp, 1);
-	zassert_true(gpio_test_interrupt_triggered, NULL);
+	zassert_true(gpio_test_interrupt_triggered);
 }
 
 /**

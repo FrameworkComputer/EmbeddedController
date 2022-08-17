@@ -33,9 +33,9 @@ ZTEST_USER(i2c_passthru, test_read_without_write)
 	args.response = &response_buf;
 	args.response_max = sizeof(response_buf);
 
-	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
-	zassert_equal(response->i2c_status, EC_I2C_STATUS_NAK, NULL);
+	zassert_ok(host_command_process(&args));
+	zassert_ok(args.result);
+	zassert_equal(response->i2c_status, EC_I2C_STATUS_NAK);
 	zassert_equal(args.response_size,
 		      sizeof(struct ec_response_i2c_passthru), NULL);
 }

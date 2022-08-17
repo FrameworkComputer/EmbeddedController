@@ -191,7 +191,7 @@ ZTEST(isl923x, test_isl923x_set_input_current_limit)
 
 ZTEST(isl923x, test_isl923x_psys)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "psys"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "psys"));
 }
 
 ZTEST(isl923x, test_manufacturer_id)
@@ -200,8 +200,8 @@ ZTEST(isl923x, test_manufacturer_id)
 	int id;
 
 	isl923x_emul_set_manufacturer_id(isl923x_emul, 0x1234);
-	zassert_ok(isl923x_drv.manufacturer_id(CHARGER_NUM, &id), NULL);
-	zassert_equal(0x1234, id, NULL);
+	zassert_ok(isl923x_drv.manufacturer_id(CHARGER_NUM, &id));
+	zassert_equal(0x1234, id);
 
 	/* Test read error */
 	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
@@ -220,8 +220,8 @@ ZTEST(isl923x, test_device_id)
 	int id;
 
 	isl923x_emul_set_device_id(isl923x_emul, 0x5678);
-	zassert_ok(isl923x_drv.device_id(CHARGER_NUM, &id), NULL);
-	zassert_equal(0x5678, id, NULL);
+	zassert_ok(isl923x_drv.device_id(CHARGER_NUM, &id));
+	zassert_equal(0x5678, id);
 
 	/* Test read error */
 	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_DEVICE_ID);
@@ -266,8 +266,8 @@ ZTEST(isl923x, test_options)
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test normal write/read, note that bits 23 and 0 are always 0 */
-	zassert_ok(isl923x_drv.set_option(CHARGER_NUM, 0xffffffff), NULL);
-	zassert_ok(isl923x_drv.get_option(CHARGER_NUM, &option), NULL);
+	zassert_ok(isl923x_drv.set_option(CHARGER_NUM, 0xffffffff));
+	zassert_ok(isl923x_drv.get_option(CHARGER_NUM, &option));
 	zassert_equal(0xff7ffffe, option,
 		      "Expected options 0xff7ffffe but got 0x%x", option);
 }
@@ -276,13 +276,13 @@ ZTEST(isl923x, test_get_info)
 {
 	const struct charger_info *info = isl923x_drv.get_info(CHARGER_NUM);
 
-	zassert_ok(strcmp("isl9238", info->name), NULL);
-	zassert_equal(ISL9238_SYS_VOLTAGE_REG_MAX, info->voltage_max, NULL);
-	zassert_equal(ISL923X_SYS_VOLTAGE_REG_MIN, info->voltage_min, NULL);
-	zassert_equal(8, info->voltage_step, NULL);
-	zassert_equal(EXPECTED_CURRENT_MA(6080), info->current_max, NULL);
-	zassert_equal(EXPECTED_CURRENT_MA(4), info->current_min, NULL);
-	zassert_equal(EXPECTED_CURRENT_MA(4), info->current_step, NULL);
+	zassert_ok(strcmp("isl9238", info->name));
+	zassert_equal(ISL9238_SYS_VOLTAGE_REG_MAX, info->voltage_max);
+	zassert_equal(ISL923X_SYS_VOLTAGE_REG_MIN, info->voltage_min);
+	zassert_equal(8, info->voltage_step);
+	zassert_equal(EXPECTED_CURRENT_MA(6080), info->current_max);
+	zassert_equal(EXPECTED_CURRENT_MA(4), info->current_min);
+	zassert_equal(EXPECTED_CURRENT_MA(4), info->current_step);
 	zassert_equal(EXPECTED_INPUT_CURRENT_MA(6080), info->input_current_max,
 		      NULL);
 	zassert_equal(EXPECTED_INPUT_CURRENT_MA(4), info->input_current_min,
@@ -295,8 +295,8 @@ ZTEST(isl923x, test_status)
 {
 	int status;
 
-	zassert_ok(isl923x_drv.get_status(CHARGER_NUM, &status), NULL);
-	zassert_equal(CHARGER_LEVEL_2, status, NULL);
+	zassert_ok(isl923x_drv.get_status(CHARGER_NUM, &status));
+	zassert_equal(CHARGER_LEVEL_2, status);
 }
 
 ZTEST(isl923x, test_set_mode)
@@ -304,22 +304,22 @@ ZTEST(isl923x, test_set_mode)
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 
 	/* Enable learn mode and set mode (actual value doesn't matter) */
-	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
-	zassert_ok(isl923x_drv.set_mode(CHARGER_NUM, 0), NULL);
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, true));
+	zassert_ok(isl923x_drv.set_mode(CHARGER_NUM, 0));
 	/* Learn mode should still be set */
-	zassert_true(isl923x_emul_is_learn_mode_enabled(isl923x_emul), NULL);
+	zassert_true(isl923x_emul_is_learn_mode_enabled(isl923x_emul));
 
 	/* Disable learn mode, but keep the bits */
-	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, false), NULL);
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, false));
 	isl923x_emul_set_learn_mode_enabled(isl923x_emul, true);
-	zassert_ok(isl923x_drv.set_mode(CHARGER_NUM, 0), NULL);
+	zassert_ok(isl923x_drv.set_mode(CHARGER_NUM, 0));
 	/* Learn mode should still be off */
-	zassert_true(!isl923x_emul_is_learn_mode_enabled(isl923x_emul), NULL);
+	zassert_true(!isl923x_emul_is_learn_mode_enabled(isl923x_emul));
 }
 
 ZTEST(isl923x, test_post_init)
 {
-	zassert_ok(isl923x_drv.post_init(CHARGER_NUM), NULL);
+	zassert_ok(isl923x_drv.post_init(CHARGER_NUM));
 }
 
 ZTEST(isl923x, test_set_ac_prochot)
@@ -470,20 +470,20 @@ ZTEST(isl923x, test_comparator_inversion)
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test enable comparator inversion */
-	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, true), NULL);
+	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, true));
 	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
 				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   "Failed to read CTRL 2 register");
-	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) != 0, NULL);
+	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) != 0);
 
 	/* Test disable comparator inversion */
-	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, false), NULL);
+	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, false));
 	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
 				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   "Failed to read CTRL 2 register");
-	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) == 0, NULL);
+	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) == 0);
 }
 
 ZTEST(isl923x, test_discharge_on_ac)
@@ -504,7 +504,7 @@ ZTEST(isl923x, test_discharge_on_ac)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set CTRL1 register to 0 */
-	zassert_ok(i2c_write(i2c_dev, tx_buf, sizeof(tx_buf), cfg->addr), NULL);
+	zassert_ok(i2c_write(i2c_dev, tx_buf, sizeof(tx_buf), cfg->addr));
 
 	/* Test failure to write CTRL1 register */
 	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL1);
@@ -514,27 +514,27 @@ ZTEST(isl923x, test_discharge_on_ac)
 				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   NULL);
-	zassert_equal(0, reg_value, NULL);
+	zassert_equal(0, reg_value);
 	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test enabling discharge on AC */
-	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, true));
 
 	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
 				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   NULL);
-	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) != 0, NULL);
+	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) != 0);
 
 	/* Test disabling discharge on AC */
-	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, false), NULL);
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, false));
 
 	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
 				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   NULL);
-	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) == 0, NULL);
+	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) == 0);
 }
 
 ZTEST(isl923x, test_get_vbus_voltage)

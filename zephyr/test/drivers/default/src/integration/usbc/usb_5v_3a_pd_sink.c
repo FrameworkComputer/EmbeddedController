@@ -77,7 +77,7 @@ ZTEST_SUITE(usb_attach_5v_3a_pd_sink, drivers_predicate_post_main,
 
 ZTEST_F(usb_attach_5v_3a_pd_sink, test_partner_pd_completed)
 {
-	zassert_true(fixture->snk_ext.pd_completed, NULL);
+	zassert_true(fixture->snk_ext.pd_completed);
 }
 
 ZTEST(usb_attach_5v_3a_pd_sink, test_battery_is_discharging)
@@ -86,8 +86,7 @@ ZTEST(usb_attach_5v_3a_pd_sink, test_battery_is_discharging)
 	uint16_t battery_status;
 
 	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
-					  &battery_status),
-		   NULL);
+					  &battery_status));
 	zassert_equal(battery_status & STATUS_DISCHARGING, STATUS_DISCHARGING,
 		      "Battery is not discharging: %d", battery_status);
 }
@@ -142,8 +141,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_battery_discharging)
 
 	disconnect_sink_from_port(fixture->tcpci_emul);
 	zassert_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
-					  &battery_status),
-		   NULL);
+					  &battery_status));
 	zassert_equal(battery_status & STATUS_DISCHARGING, STATUS_DISCHARGING,
 		      "Battery is not discharging: %d", battery_status);
 }
@@ -173,9 +171,9 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_typec_status)
 	disconnect_sink_from_port(fixture->tcpci_emul);
 	typec_status = host_cmd_typec_status(0);
 
-	zassert_false(typec_status.pd_enabled, NULL);
-	zassert_false(typec_status.dev_connected, NULL);
-	zassert_false(typec_status.sop_connected, NULL);
+	zassert_false(typec_status.pd_enabled);
+	zassert_false(typec_status.dev_connected);
+	zassert_false(typec_status.sop_connected);
 	zassert_equal(typec_status.source_cap_count, 0,
 		      "Expected 0 source caps, but got %d",
 		      typec_status.source_cap_count);
@@ -230,7 +228,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_goto_min)
 	pd_dpm_request(0, DPM_REQUEST_GOTO_MIN);
 	k_sleep(K_SECONDS(1));
 
-	zassert_true(fixture->snk_ext.pd_completed, NULL);
+	zassert_true(fixture->snk_ext.pd_completed);
 }
 
 /**
@@ -251,5 +249,5 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_ping_msg)
 	pd_dpm_request(0, DPM_REQUEST_SEND_PING);
 	k_sleep(K_USEC(PD_T_SOURCE_ACTIVITY));
 
-	zassert_true(fixture->snk_ext.ping_received, NULL);
+	zassert_true(fixture->snk_ext.ping_received);
 }

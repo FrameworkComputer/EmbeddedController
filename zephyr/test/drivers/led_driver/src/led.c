@@ -64,8 +64,8 @@ ZTEST(led_driver, test_led_brightness)
 	 * brightness array.
 	 */
 	led_get_brightness_range(EC_LED_ID_SYSRQ_DEBUG_LED, brightness);
-	zassert_equal(brightness[EC_LED_COLOR_BLUE], 1, NULL);
-	zassert_equal(brightness[EC_LED_COLOR_WHITE], 1, NULL);
+	zassert_equal(brightness[EC_LED_COLOR_BLUE], 1);
+	zassert_equal(brightness[EC_LED_COLOR_WHITE], 1);
 
 	/* Verify LED set to WHITE */
 	led_set_brightness(EC_LED_ID_SYSRQ_DEBUG_LED, brightness);

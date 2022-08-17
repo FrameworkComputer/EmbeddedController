@@ -50,14 +50,14 @@ void test_tcpci_init(const struct emul *emul,
 
 	/* Test fail on power status read */
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_POWER_STATUS);
-	zassert_equal(EC_ERROR_INVAL, drv->init(port), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->init(port));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on uninitialised bit set */
 	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
 			   TCPC_REG_POWER_STATUS_UNINIT);
-	zassert_equal(EC_ERROR_TIMEOUT, drv->init(port), NULL);
+	zassert_equal(EC_ERROR_TIMEOUT, drv->init(port));
 
 	/*
 	 * Set expected alert mask. It is used in test until vSafe0V tcpc
@@ -73,9 +73,9 @@ void test_tcpci_init(const struct emul *emul,
 			   TCPC_REG_POWER_STATUS_VBUS_DET);
 
 	/* Test init with VBUS safe0v without vSafe0V tcpc config flag */
-	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
-	zassert_true(drv->check_vbus_level(port, VBUS_SAFE0V), NULL);
-	zassert_false(drv->check_vbus_level(port, VBUS_PRESENT), NULL);
+	zassert_equal(EC_SUCCESS, drv->init(port));
+	zassert_true(drv->check_vbus_level(port, VBUS_SAFE0V));
+	zassert_false(drv->check_vbus_level(port, VBUS_PRESENT));
 	check_tcpci_reg(emul, TCPC_REG_POWER_STATUS_MASK,
 			TCPC_REG_POWER_STATUS_VBUS_PRES);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
@@ -86,9 +86,9 @@ void test_tcpci_init(const struct emul *emul,
 				   TCPC_REG_POWER_STATUS_VBUS_DET);
 
 	/* Test init with VBUS present without vSafe0V tcpc config flag */
-	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
-	zassert_false(drv->check_vbus_level(port, VBUS_SAFE0V), NULL);
-	zassert_true(drv->check_vbus_level(port, VBUS_PRESENT), NULL);
+	zassert_equal(EC_SUCCESS, drv->init(port));
+	zassert_false(drv->check_vbus_level(port, VBUS_SAFE0V));
+	zassert_true(drv->check_vbus_level(port, VBUS_PRESENT));
 	check_tcpci_reg(emul, TCPC_REG_POWER_STATUS_MASK,
 			TCPC_REG_POWER_STATUS_VBUS_PRES);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
@@ -98,9 +98,9 @@ void test_tcpci_init(const struct emul *emul,
 	tcpc_config[port].flags = TCPC_FLAGS_TCPCI_REV2_0;
 
 	/* Test init with VBUS present with vSafe0V tcpc config flag */
-	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
-	zassert_false(drv->check_vbus_level(port, VBUS_SAFE0V), NULL);
-	zassert_true(drv->check_vbus_level(port, VBUS_PRESENT), NULL);
+	zassert_equal(EC_SUCCESS, drv->init(port));
+	zassert_false(drv->check_vbus_level(port, VBUS_SAFE0V));
+	zassert_true(drv->check_vbus_level(port, VBUS_PRESENT));
 	check_tcpci_reg(emul, TCPC_REG_POWER_STATUS_MASK,
 			TCPC_REG_POWER_STATUS_VBUS_PRES);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
@@ -112,9 +112,9 @@ void test_tcpci_init(const struct emul *emul,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 
 	/* Test init with VBUS safe0v with vSafe0V tcpc config flag */
-	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
-	zassert_true(drv->check_vbus_level(port, VBUS_SAFE0V), NULL);
-	zassert_false(drv->check_vbus_level(port, VBUS_PRESENT), NULL);
+	zassert_equal(EC_SUCCESS, drv->init(port));
+	zassert_true(drv->check_vbus_level(port, VBUS_SAFE0V));
+	zassert_false(drv->check_vbus_level(port, VBUS_PRESENT));
 	check_tcpci_reg(emul, TCPC_REG_POWER_STATUS_MASK,
 			TCPC_REG_POWER_STATUS_VBUS_PRES);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
@@ -126,9 +126,9 @@ void test_tcpci_init(const struct emul *emul,
 	tcpci_emul_set_reg(emul, TCPC_REG_EXT_STATUS, 0);
 
 	/* Test init with VBUS not safe0v with vSafe0V tcpc config flag */
-	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
-	zassert_false(drv->check_vbus_level(port, VBUS_SAFE0V), NULL);
-	zassert_false(drv->check_vbus_level(port, VBUS_PRESENT), NULL);
+	zassert_equal(EC_SUCCESS, drv->init(port));
+	zassert_false(drv->check_vbus_level(port, VBUS_SAFE0V));
+	zassert_false(drv->check_vbus_level(port, VBUS_PRESENT));
 	check_tcpci_reg(emul, TCPC_REG_POWER_STATUS_MASK,
 			TCPC_REG_POWER_STATUS_VBUS_PRES);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
@@ -143,7 +143,7 @@ void test_tcpci_release(const struct emul *emul,
 
 	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, 0xffff);
 
-	zassert_equal(EC_SUCCESS, drv->release(port), NULL);
+	zassert_equal(EC_SUCCESS, drv->release(port));
 	check_tcpci_reg(emul, TCPC_REG_POWER_STATUS_MASK, 0);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, 0);
 	check_tcpci_reg(emul, TCPC_REG_ALERT, 0);
@@ -263,30 +263,30 @@ void test_tcpci_set_cc(const struct emul *emul,
 	/* Test setting default RP and cc open */
 	rp = TYPEC_RP_USB;
 	cc = TYPEC_CC_OPEN;
-	zassert_equal(EC_SUCCESS, drv->select_rp_value(port, rp), NULL);
-	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc), NULL);
+	zassert_equal(EC_SUCCESS, drv->select_rp_value(port, rp));
+	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc));
 	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL,
 			TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, rp, cc, cc));
 
 	/* Test error on failed role ctrl set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ROLE_CTRL);
-	zassert_equal(EC_ERROR_INVAL, drv->set_cc(port, TYPEC_CC_OPEN), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->set_cc(port, TYPEC_CC_OPEN));
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting 1.5 RP and cc RD */
 	rp = TYPEC_RP_1A5;
 	cc = TYPEC_CC_RD;
-	zassert_equal(EC_SUCCESS, drv->select_rp_value(port, rp), NULL);
-	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc), NULL);
+	zassert_equal(EC_SUCCESS, drv->select_rp_value(port, rp));
+	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc));
 	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL,
 			TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, rp, cc, cc));
 
 	/* Test setting 3.0 RP and cc RP */
 	rp = TYPEC_RP_3A0;
 	cc = TYPEC_CC_RP;
-	zassert_equal(EC_SUCCESS, drv->select_rp_value(port, rp), NULL);
-	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc), NULL);
+	zassert_equal(EC_SUCCESS, drv->select_rp_value(port, rp));
+	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc));
 	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL,
 			TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, rp, cc, cc));
 
@@ -295,7 +295,7 @@ void test_tcpci_set_cc(const struct emul *emul,
 	 * intentionally not called to check if selected rp is persistent.
 	 */
 	cc = TYPEC_CC_RA;
-	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_cc(port, cc));
 	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL,
 			TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, rp, cc, cc));
 }
@@ -325,12 +325,12 @@ void test_tcpci_set_polarity(const struct emul *emul,
 
 	/* Test setting polarity CC2 */
 	exp_ctrl = initial_ctrl | TCPC_REG_TCPC_CTRL_SET(1);
-	zassert_equal(EC_SUCCESS, drv->set_polarity(port, POLARITY_CC2), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_polarity(port, POLARITY_CC2));
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
 
 	/* Test setting polarity CC1 */
 	exp_ctrl = initial_ctrl & ~TCPC_REG_TCPC_CTRL_SET(1);
-	zassert_equal(EC_SUCCESS, drv->set_polarity(port, POLARITY_CC1), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_polarity(port, POLARITY_CC1));
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
 
 	/* Test setting polarity CC2 DTS */
@@ -363,19 +363,19 @@ void test_tcpci_set_vconn(const struct emul *emul,
 	/* Test error on failed vconn set */
 	exp_ctrl = initial_ctrl;
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_POWER_CTRL);
-	zassert_equal(EC_ERROR_INVAL, drv->set_vconn(port, 1), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->set_vconn(port, 1));
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
 
 	/* Test vconn enable */
 	exp_ctrl = initial_ctrl | TCPC_REG_POWER_CTRL_SET(1);
-	zassert_equal(EC_SUCCESS, drv->set_vconn(port, 1), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_vconn(port, 1));
 	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
 
 	/* Test vconn disable */
 	exp_ctrl = initial_ctrl & ~TCPC_REG_POWER_CTRL_SET(1);
-	zassert_equal(EC_SUCCESS, drv->set_vconn(port, 0), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_vconn(port, 0));
 	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
 }
 
@@ -432,38 +432,38 @@ void test_tcpci_set_rx_detect(const struct emul *emul,
 
 	/* Test error from rx_enable on rx detect set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_RX_DETECT);
-	zassert_equal(EC_ERROR_INVAL, drv->set_rx_enable(port, 1), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->set_rx_enable(port, 1));
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test rx disable */
-	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 0), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 0));
 	check_tcpci_reg(emul, TCPC_REG_RX_DETECT, 0x0);
 
 	/* Test setting sop prime with rx disable doesn't change RX_DETECT */
-	zassert_equal(EC_SUCCESS, drv->sop_prime_enable(port, 1), NULL);
+	zassert_equal(EC_SUCCESS, drv->sop_prime_enable(port, 1));
 	check_tcpci_reg(emul, TCPC_REG_RX_DETECT, 0x0);
 
 	/* Test that enabling rx after sop prime will set RX_DETECT properly */
-	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 1), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 1));
 	check_tcpci_reg(emul, TCPC_REG_RX_DETECT,
 			TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK);
 
 	/* Test error from sop_prime on rx detect set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_RX_DETECT);
-	zassert_equal(EC_ERROR_INVAL, drv->sop_prime_enable(port, 0), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->sop_prime_enable(port, 0));
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test disabling sop prime with rx enabled does change RX_DETECT */
-	zassert_equal(EC_SUCCESS, drv->sop_prime_enable(port, 0), NULL);
+	zassert_equal(EC_SUCCESS, drv->sop_prime_enable(port, 0));
 	check_tcpci_reg(emul, TCPC_REG_RX_DETECT,
 			TCPC_REG_RX_DETECT_SOP_HRST_MASK);
 
 	/* Test that enabling rx after disabling sop prime set RX_DETECT */
-	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 0), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 0));
 	check_tcpci_reg(emul, TCPC_REG_RX_DETECT, 0x0);
-	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 1), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_rx_enable(port, 1));
 	check_tcpci_reg(emul, TCPC_REG_RX_DETECT,
 			TCPC_REG_RX_DETECT_SOP_HRST_MASK);
 }
@@ -577,13 +577,13 @@ void test_tcpci_transmit(const struct emul *emul,
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_CABLE_RESET, 0, NULL),
 		      NULL);
-	zassert_equal(TCPCI_MSG_CABLE_RESET, msg->sop_type, NULL);
+	zassert_equal(TCPCI_MSG_CABLE_RESET, msg->sop_type);
 
 	/* Test transmit hard reset */
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_TX_HARD_RESET, 0, NULL),
 		      NULL);
-	zassert_equal(TCPCI_MSG_TX_HARD_RESET, msg->sop_type, NULL);
+	zassert_equal(TCPCI_MSG_TX_HARD_RESET, msg->sop_type);
 
 	/* Test transmit fail on rx buffer */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TX_BUFFER);
@@ -599,9 +599,9 @@ void test_tcpci_transmit(const struct emul *emul,
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_SOP_PRIME, header, data),
 		      NULL);
-	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->sop_type, NULL);
+	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->sop_type);
 	zassert_mem_equal(msg->buf, &header, 2, NULL);
-	zassert_equal(2, msg->cnt, NULL);
+	zassert_equal(2, msg->cnt);
 
 	/* Test transmit message */
 	/* Build random header with count 6 */
@@ -610,10 +610,10 @@ void test_tcpci_transmit(const struct emul *emul,
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_SOP_PRIME, header, data),
 		      NULL);
-	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->sop_type, NULL);
+	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->sop_type);
 	zassert_mem_equal(msg->buf, &header, 2, NULL);
 	zassert_mem_equal(msg->buf + 2, data, 6 * sizeof(uint32_t), NULL);
-	zassert_equal(2 + 6 * sizeof(uint32_t), msg->cnt, NULL);
+	zassert_equal(2 + 6 * sizeof(uint32_t), msg->cnt);
 }
 
 /** Test TCPCI alert */
@@ -700,7 +700,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
 
 	/* Check if msg1 is in queue */
-	zassert_true(tcpm_has_pending_message(port), NULL);
+	zassert_true(tcpm_has_pending_message(port));
 	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(port, payload, &head),
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
@@ -708,7 +708,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 		      "Received header 0x%08lx, expected 0x%08lx", head,
 		      exp_head);
 	zassert_mem_equal(payload, buf1 + 2, size, NULL);
-	zassert_false(tcpm_has_pending_message(port), NULL);
+	zassert_false(tcpm_has_pending_message(port));
 
 	/* Test receiving two messages */
 	zassert_equal(TCPCI_EMUL_TX_SUCCESS,
@@ -721,7 +721,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
 
 	/* Check if msg1 is in queue */
-	zassert_true(tcpm_has_pending_message(port), NULL);
+	zassert_true(tcpm_has_pending_message(port));
 	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(port, payload, &head),
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
@@ -730,7 +730,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 		      exp_head);
 	zassert_mem_equal(payload, buf1 + 2, size, NULL);
 	/* Check if msg2 is in queue */
-	zassert_true(tcpm_has_pending_message(port), NULL);
+	zassert_true(tcpm_has_pending_message(port));
 	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(port, payload, &head),
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP_PRIME << 28) | (buf2[1] << 8) | buf2[0];
@@ -738,7 +738,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 		      "Received header 0x%08lx, expected 0x%08lx", head,
 		      exp_head);
 	zassert_mem_equal(payload, buf2 + 2, size, NULL);
-	zassert_false(tcpm_has_pending_message(port), NULL);
+	zassert_false(tcpm_has_pending_message(port));
 
 	/* Test with too long first message */
 	msg1.cnt = 32;
@@ -754,7 +754,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
 
 	/* Check if msg2 is in queue */
-	zassert_true(tcpm_has_pending_message(port), NULL);
+	zassert_true(tcpm_has_pending_message(port));
 	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(port, payload, &head),
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP_PRIME << 28) | (buf2[1] << 8) | buf2[0];
@@ -762,7 +762,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 		      "Received header 0x%08lx, expected 0x%08lx", head,
 		      exp_head);
 	zassert_mem_equal(payload, buf2 + 2, size, NULL);
-	zassert_false(tcpm_has_pending_message(port), NULL);
+	zassert_false(tcpm_has_pending_message(port));
 
 	/* Test constant read message failure */
 	zassert_equal(TCPCI_EMUL_TX_SUCCESS,
@@ -772,7 +772,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 	msg1.next = &msg1;
 	drv->tcpc_alert(port);
 	/* Nothing should be in queue */
-	zassert_false(tcpm_has_pending_message(port), NULL);
+	zassert_false(tcpm_has_pending_message(port));
 
 	/* Test constant correct messages stream */
 	msg1.cnt = size + 3;
@@ -782,7 +782,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 	/* msg1 should be at least twice in queue */
 	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
 	for (i = 0; i < 2; i++) {
-		zassert_true(tcpm_has_pending_message(port), NULL);
+		zassert_true(tcpm_has_pending_message(port));
 		zassert_equal(EC_SUCCESS,
 			      tcpm_dequeue_message(port, payload, &head), NULL);
 		zassert_equal(exp_head, head,
@@ -791,14 +791,14 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 		zassert_mem_equal(payload, buf1 + 2, size, NULL);
 	}
 	tcpm_clear_pending_messages(port);
-	zassert_false(tcpm_has_pending_message(port), NULL);
+	zassert_false(tcpm_has_pending_message(port));
 
 	/* Read message that is left in TCPC buffer */
 	drv->tcpc_alert(port);
 	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
 
 	/* Check if msg1 is in queue */
-	zassert_true(tcpm_has_pending_message(port), NULL);
+	zassert_true(tcpm_has_pending_message(port));
 	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(port, payload, &head),
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
@@ -806,7 +806,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 		      "Received header 0x%08lx, expected 0x%08lx", head,
 		      exp_head);
 	zassert_mem_equal(payload, buf1 + 2, size, NULL);
-	zassert_false(tcpm_has_pending_message(port), NULL);
+	zassert_false(tcpm_has_pending_message(port));
 }
 
 /** Test TCPCI auto discharge on disconnect */
@@ -845,15 +845,15 @@ void test_tcpci_drp_toggle(const struct emul *emul,
 
 	/* Test error on failed role CTRL set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ROLE_CTRL);
-	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port));
 
 	/* Test error on failed TCPC CTRL set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TCPC_CTRL);
-	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port));
 
 	/* Test error on failed command set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_COMMAND);
-	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port));
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -870,7 +870,7 @@ void test_tcpci_drp_toggle(const struct emul *emul,
 			TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
 	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
 					       TYPEC_CC_RP, TYPEC_CC_RP);
-	zassert_equal(EC_SUCCESS, drv->drp_toggle(port), NULL);
+	zassert_equal(EC_SUCCESS, drv->drp_toggle(port));
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_tcpc_ctrl);
 	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
 	check_tcpci_reg(emul, TCPC_REG_COMMAND,
@@ -894,7 +894,7 @@ void test_tcpci_drp_toggle(const struct emul *emul,
 			TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
 	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
 					       TYPEC_CC_RD, TYPEC_CC_RD);
-	zassert_equal(EC_SUCCESS, drv->drp_toggle(port), NULL);
+	zassert_equal(EC_SUCCESS, drv->drp_toggle(port));
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_tcpc_ctrl);
 	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
 	check_tcpci_reg(emul, TCPC_REG_COMMAND,
@@ -912,15 +912,15 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 
 	/* Test error on failed vendor id get */
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
-	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
 
 	/* Test error on failed product id get */
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_PRODUCT_ID);
-	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
 
 	/* Test error on failed BCD get */
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
-	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -931,10 +931,10 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 	tcpci_emul_set_reg(emul, TCPC_REG_VENDOR_ID, vendor);
 	tcpci_emul_set_reg(emul, TCPC_REG_PRODUCT_ID, product);
 	tcpci_emul_set_reg(emul, TCPC_REG_BCD_DEV, bcd);
-	zassert_equal(EC_SUCCESS, drv->get_chip_info(port, 1, &info), NULL);
-	zassert_equal(vendor, info.vendor_id, NULL);
-	zassert_equal(product, info.product_id, NULL);
-	zassert_equal(bcd, info.device_id, NULL);
+	zassert_equal(EC_SUCCESS, drv->get_chip_info(port, 1, &info));
+	zassert_equal(vendor, info.vendor_id);
+	zassert_equal(product, info.product_id);
+	zassert_equal(bcd, info.device_id);
 
 	/* Test reading cached chip info */
 	info.vendor_id = 0;
@@ -943,12 +943,12 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 	/* Make sure, that TCPC is not accessed */
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_FAIL_ALL_REG);
-	zassert_equal(EC_SUCCESS, drv->get_chip_info(port, 0, &info), NULL);
+	zassert_equal(EC_SUCCESS, drv->get_chip_info(port, 0, &info));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	zassert_equal(vendor, info.vendor_id, NULL);
-	zassert_equal(product, info.product_id, NULL);
-	zassert_equal(bcd, info.device_id, NULL);
+	zassert_equal(vendor, info.vendor_id);
+	zassert_equal(product, info.product_id);
+	zassert_equal(bcd, info.device_id);
 }
 
 /** Test TCPCI enter low power mode */
@@ -960,12 +960,12 @@ void test_tcpci_low_power_mode(const struct emul *emul,
 
 	/* Test error on failed command set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_COMMAND);
-	zassert_equal(EC_ERROR_INVAL, drv->enter_low_power_mode(port), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->enter_low_power_mode(port));
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test correct command is issued */
-	zassert_equal(EC_SUCCESS, drv->enter_low_power_mode(port), NULL);
+	zassert_equal(EC_SUCCESS, drv->enter_low_power_mode(port));
 	check_tcpci_reg(emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
 }
 
@@ -980,11 +980,11 @@ void test_tcpci_set_bist_mode(const struct emul *emul,
 
 	/* Test error on TCPC CTRL set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TCPC_CTRL);
-	zassert_equal(EC_ERROR_INVAL, drv->set_bist_test_mode(port, 1), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->set_bist_test_mode(port, 1));
 
 	/* Test error on alert mask set */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ALERT_MASK);
-	zassert_equal(EC_ERROR_INVAL, drv->set_bist_test_mode(port, 1), NULL);
+	zassert_equal(EC_ERROR_INVAL, drv->set_bist_test_mode(port, 1));
 	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -1000,14 +1000,14 @@ void test_tcpci_set_bist_mode(const struct emul *emul,
 	/* Test enabling bist test mode */
 	exp_mask = initial_mask & ~TCPC_REG_ALERT_RX_STATUS;
 	exp_ctrl = initial_ctrl | TCPC_REG_TCPC_CTRL_BIST_TEST_MODE;
-	zassert_equal(EC_SUCCESS, drv->set_bist_test_mode(port, 1), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_bist_test_mode(port, 1));
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 
 	/* Test disabling bist test mode */
 	exp_mask = initial_mask | TCPC_REG_ALERT_RX_STATUS;
 	exp_ctrl = initial_ctrl & ~TCPC_REG_TCPC_CTRL_BIST_TEST_MODE;
-	zassert_equal(EC_SUCCESS, drv->set_bist_test_mode(port, 0), NULL);
+	zassert_equal(EC_SUCCESS, drv->set_bist_test_mode(port, 0));
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 }

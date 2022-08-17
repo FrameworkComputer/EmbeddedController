@@ -109,7 +109,7 @@ static void test_bc12_pi3usb9201_host_mode(void)
 	 */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_CDP_HOST_MODE << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
-	zassert_equal(a, b, NULL);
+	zassert_equal(a, b);
 
 	/* Pretend that a device has been plugged in. */
 	msleep(500);
@@ -120,7 +120,7 @@ static void test_bc12_pi3usb9201_host_mode(void)
 	/* Expect the pi3usb9201 driver to configure SDP host mode. */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_SDP_HOST_MODE << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
-	zassert_equal(a, b, NULL);
+	zassert_equal(a, b);
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_HOST_STS, 0);
 
 	/* Pretend that a device has been unplugged. */
@@ -132,7 +132,7 @@ static void test_bc12_pi3usb9201_host_mode(void)
 	/* Expect the pi3usb9201 driver to configure CDP host mode. */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_CDP_HOST_MODE << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
-	zassert_equal(a, b, NULL);
+	zassert_equal(a, b);
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_HOST_STS, 0);
 }
 
@@ -159,10 +159,10 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	 */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_CLIENT_MODE << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
-	zassert_equal(a, b, NULL);
+	zassert_equal(a, b);
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_2, &a);
 	b = PI3USB9201_REG_CTRL_2_START_DET;
-	zassert_equal(a, b, NULL);
+	zassert_equal(a, b);
 
 	/* Pretend that detection completed. */
 	msleep(500);
@@ -172,7 +172,7 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	msleep(1);
 	/* Expect the pi3usb9201 driver to clear the start bit. */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_2, &a);
-	zassert_equal(a, 0, NULL);
+	zassert_equal(a, 0);
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_CLIENT_STS, 0);
 	/*
 	 * Expect the charge manager to select the detected BC1.2 supplier.
@@ -185,11 +185,11 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	}
 	/* Wait for the charge port to update. */
 	msleep(500);
-	zassert_equal(charge_manager_get_active_charge_port(), port, NULL);
-	zassert_equal(charge_manager_get_supplier(), supplier, NULL);
+	zassert_equal(charge_manager_get_active_charge_port(), port);
+	zassert_equal(charge_manager_get_supplier(), supplier);
 	zassert_equal(charge_manager_get_charger_current(), current_limit,
 		      NULL);
-	zassert_equal(charge_manager_get_charger_voltage(), voltage, NULL);
+	zassert_equal(charge_manager_get_charger_voltage(), voltage);
 
 	/*
 	 * Pretend that the USB-C Port Manager (TCPMv2) has set the port data
@@ -205,14 +205,14 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_POWER_DOWN << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
 	b |= PI3USB9201_REG_CTRL_1_INT_MASK;
-	zassert_equal(a, b, NULL);
+	zassert_equal(a, b);
 	/* Expect the charge manager to have no active supplier. */
 	zassert_equal(charge_manager_get_active_charge_port(), CHARGE_PORT_NONE,
 		      NULL);
 	zassert_equal(charge_manager_get_supplier(), CHARGE_SUPPLIER_NONE,
 		      NULL);
-	zassert_equal(charge_manager_get_charger_current(), 0, NULL);
-	zassert_equal(charge_manager_get_charger_voltage(), 0, NULL);
+	zassert_equal(charge_manager_get_charger_current(), 0);
+	zassert_equal(charge_manager_get_charger_voltage(), 0);
 }
 
 /*
@@ -235,7 +235,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	zassert_ok(gpio_emul_input_set(batt_pres_dev, GPIO_BATT_PRES_ODL_PORT,
 				       0),
 		   NULL);
-	zassert_equal(BP_YES, battery_is_present(), NULL);
+	zassert_equal(BP_YES, battery_is_present());
 	set_ac_enabled(true);
 
 	/* Wait long enough for TCPMv2 to be idle. */
@@ -255,7 +255,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_POWER_DOWN << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
 	b |= PI3USB9201_REG_CTRL_1_INT_MASK;
-	zassert_equal(a, b, NULL);
+	zassert_equal(a, b);
 
 	test_bc12_pi3usb9201_host_mode();
 

@@ -174,8 +174,8 @@ ZTEST_USER(bmi160, test_bmi_acc_get_offset)
 	ms->rot_standard_ref = NULL;
 
 	/* Test get offset without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
-	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp));
+	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v(exp_v, ret_v);
 
@@ -184,8 +184,8 @@ ZTEST_USER(bmi160, test_bmi_acc_get_offset)
 	rotate_int3v_by_test_rotation(exp_v);
 
 	/* Test get offset with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
-	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp));
+	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v(exp_v, ret_v);
 }
@@ -238,8 +238,8 @@ ZTEST_USER(bmi160, test_bmi_gyr_get_offset)
 	ms->rot_standard_ref = NULL;
 
 	/* Test get offset without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
-	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp));
+	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v_eps(exp_v, ret_v, 64);
 
@@ -248,8 +248,8 @@ ZTEST_USER(bmi160, test_bmi_gyr_get_offset)
 	rotate_int3v_by_test_rotation(exp_v);
 
 	/* Test get offset with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
-	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp));
+	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v_eps(exp_v, ret_v, 64);
 }
@@ -310,7 +310,7 @@ ZTEST_USER(bmi160, test_bmi_acc_set_offset)
 	ms->rot_standard_ref = NULL;
 
 	/* Test set offset without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
 	get_emul_acc_offset(emul, ret_v);
 	/*
 	 * Depending on used range, accelerometer values may be up to 6 bits
@@ -329,7 +329,7 @@ ZTEST_USER(bmi160, test_bmi_acc_set_offset)
 	convert_int3v_int16(ret_v, input_v);
 
 	/* Test set offset with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
 	get_emul_acc_offset(emul, ret_v);
 	compare_int3v_eps(exp_v, ret_v, 64);
 	/* Accelerometer offset should be enabled */
@@ -394,7 +394,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_set_offset)
 	ms->rot_standard_ref = NULL;
 
 	/* Test set offset without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
 	get_emul_gyr_offset(emul, ret_v);
 	compare_int3v(exp_v, ret_v);
 	/* Gyroscope offset should be enabled */
@@ -409,7 +409,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_set_offset)
 	convert_int3v_int16(ret_v, input_v);
 
 	/* Test set offset with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
 	get_emul_gyr_offset(emul, ret_v);
 	compare_int3v(exp_v, ret_v);
 	zassert_true(bmi_emul_get_reg(emul, BMI160_OFFSET_EN_GYR98) &
@@ -482,12 +482,12 @@ ZTEST_USER(bmi160, test_bmi_acc_set_range)
 	i2c_common_emul_set_write_fail_reg(common_data, BMI160_ACC_RANGE);
 
 	/* Test fail on write */
-	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 12, 0), NULL);
-	zassert_equal(start_range, ms->current_range, NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 12, 0));
+	zassert_equal(start_range, ms->current_range);
 	zassert_equal(BMI160_GSEL_2G, bmi_emul_get_reg(emul, BMI160_ACC_RANGE),
 		      NULL);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 12, 1), NULL);
-	zassert_equal(start_range, ms->current_range, NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 12, 1));
+	zassert_equal(start_range, ms->current_range);
 	zassert_equal(BMI160_GSEL_2G, bmi_emul_get_reg(emul, BMI160_ACC_RANGE),
 		      NULL);
 
@@ -592,12 +592,12 @@ ZTEST_USER(bmi160, test_bmi_gyr_set_range)
 	i2c_common_emul_set_write_fail_reg(common_data, BMI160_GYR_RANGE);
 
 	/* Test fail on write */
-	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 125, 0), NULL);
-	zassert_equal(start_range, ms->current_range, NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 125, 0));
+	zassert_equal(start_range, ms->current_range);
 	zassert_equal(BMI160_DPS_SEL_250,
 		      bmi_emul_get_reg(emul, BMI160_GYR_RANGE), NULL);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 125, 1), NULL);
-	zassert_equal(start_range, ms->current_range, NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 125, 1));
+	zassert_equal(start_range, ms->current_range);
 	zassert_equal(BMI160_DPS_SEL_250,
 		      bmi_emul_get_reg(emul, BMI160_GYR_RANGE), NULL);
 
@@ -651,13 +651,13 @@ ZTEST_USER(bmi160, test_bmi_get_resolution)
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Resolution should be always 16 bits */
-	zassert_equal(16, ms->drv->get_resolution(ms), NULL);
+	zassert_equal(16, ms->drv->get_resolution(ms));
 
 	/* Test gyroscope */
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Resolution should be always 16 bits */
-	zassert_equal(16, ms->drv->get_resolution(ms), NULL);
+	zassert_equal(16, ms->drv->get_resolution(ms));
 }
 
 /**
@@ -803,12 +803,12 @@ ZTEST_USER(bmi160, test_bmi_acc_rate)
 	/* Test fail on read */
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 0),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF));
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 1),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF));
 
 	/* Do not fail on read */
 	i2c_common_emul_set_read_fail_reg(common_data,
@@ -820,12 +820,12 @@ ZTEST_USER(bmi160, test_bmi_acc_rate)
 	/* Test fail on write */
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 0),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF));
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 1),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF));
 
 	/* Do not fail on write */
 	i2c_common_emul_set_write_fail_reg(common_data,
@@ -835,7 +835,7 @@ ZTEST_USER(bmi160, test_bmi_acc_rate)
 	pmu_status = BMI160_PMU_NORMAL << BMI160_PMU_ACC_OFFSET;
 	pmu_status |= BMI160_PMU_NORMAL << BMI160_PMU_GYR_OFFSET;
 	bmi_emul_set_reg(emul, BMI160_PMU_STATUS, pmu_status);
-	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 0, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 0, 0));
 
 	bmi_read8(ms->port, ms->i2c_spi_addr_flags, BMI160_PMU_STATUS,
 		  &pmu_status);
@@ -844,7 +844,7 @@ ZTEST_USER(bmi160, test_bmi_acc_rate)
 
 	/* Test enabling sensor */
 	bmi_emul_set_reg(emul, BMI160_PMU_STATUS, 0);
-	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 50000, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 50000, 0));
 
 	bmi_read8(ms->port, ms->i2c_spi_addr_flags, BMI160_PMU_STATUS,
 		  &pmu_status);
@@ -989,12 +989,12 @@ ZTEST_USER(bmi160, test_bmi_gyr_rate)
 	/* Test fail on read */
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 0),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF));
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 1),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF));
 
 	/* Do not fail on read */
 	i2c_common_emul_set_read_fail_reg(common_data,
@@ -1006,12 +1006,12 @@ ZTEST_USER(bmi160, test_bmi_gyr_rate)
 	/* Test fail on write */
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 0),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF));
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 1),
 		      NULL);
-	zassert_equal(drv_rate, ms->drv->get_data_rate(ms), NULL);
-	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF), NULL);
+	zassert_equal(drv_rate, ms->drv->get_data_rate(ms));
+	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF));
 
 	/* Do not fail on write */
 	i2c_common_emul_set_write_fail_reg(common_data,
@@ -1021,7 +1021,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_rate)
 	pmu_status = BMI160_PMU_NORMAL << BMI160_PMU_ACC_OFFSET;
 	pmu_status |= BMI160_PMU_NORMAL << BMI160_PMU_GYR_OFFSET;
 	bmi_emul_set_reg(emul, BMI160_PMU_STATUS, pmu_status);
-	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 0, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 0, 0));
 
 	bmi_read8(ms->port, ms->i2c_spi_addr_flags, BMI160_PMU_STATUS,
 		  &pmu_status);
@@ -1030,7 +1030,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_rate)
 
 	/* Test enabling sensor */
 	bmi_emul_set_reg(emul, BMI160_PMU_STATUS, 0);
-	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 50000, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 50000, 0));
 
 	bmi_read8(ms->port, ms->i2c_spi_addr_flags, BMI160_PMU_STATUS,
 		  &pmu_status);
@@ -1052,24 +1052,24 @@ ZTEST_USER(bmi160, test_bmi_scale)
 	/* Test accelerometer */
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
-	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, exp_scale, 0), NULL);
-	zassert_equal(EC_SUCCESS, ms->drv->get_scale(ms, ret_scale, &t), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, exp_scale, 0));
+	zassert_equal(EC_SUCCESS, ms->drv->get_scale(ms, ret_scale, &t));
 
-	zassert_equal(t, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
-	zassert_equal(exp_scale[0], ret_scale[0], NULL);
-	zassert_equal(exp_scale[1], ret_scale[1], NULL);
-	zassert_equal(exp_scale[2], ret_scale[2], NULL);
+	zassert_equal(t, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP);
+	zassert_equal(exp_scale[0], ret_scale[0]);
+	zassert_equal(exp_scale[1], ret_scale[1]);
+	zassert_equal(exp_scale[2], ret_scale[2]);
 
 	/* Test gyroscope */
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
-	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, exp_scale, 0), NULL);
-	zassert_equal(EC_SUCCESS, ms->drv->get_scale(ms, ret_scale, &t), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, exp_scale, 0));
+	zassert_equal(EC_SUCCESS, ms->drv->get_scale(ms, ret_scale, &t));
 
-	zassert_equal(t, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
-	zassert_equal(exp_scale[0], ret_scale[0], NULL);
-	zassert_equal(exp_scale[1], ret_scale[1], NULL);
-	zassert_equal(exp_scale[2], ret_scale[2], NULL);
+	zassert_equal(t, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP);
+	zassert_equal(exp_scale[0], ret_scale[0]);
+	zassert_equal(exp_scale[1], ret_scale[1]);
+	zassert_equal(exp_scale[2], ret_scale[2]);
 }
 
 /** Test reading temperature using accelerometer and gyroscope sensors */
@@ -1117,40 +1117,40 @@ ZTEST_USER(bmi160, test_bmi_read_temp)
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_1, 0x00);
 	zassert_equal(EC_SUCCESS, ms_acc->drv->read_temp(ms_acc, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 	zassert_equal(EC_SUCCESS, ms_gyr->drv->read_temp(ms_gyr, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 
 	exp_temp = C_TO_K(87);
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_0, 0xff);
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_1, 0x7f);
 	zassert_equal(EC_SUCCESS, ms_acc->drv->read_temp(ms_acc, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 	zassert_equal(EC_SUCCESS, ms_gyr->drv->read_temp(ms_gyr, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 
 	exp_temp = C_TO_K(-41);
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_0, 0x01);
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_1, 0x80);
 	zassert_equal(EC_SUCCESS, ms_acc->drv->read_temp(ms_acc, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 	zassert_equal(EC_SUCCESS, ms_gyr->drv->read_temp(ms_gyr, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 
 	exp_temp = C_TO_K(47);
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_0, 0x00);
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_1, 0x30);
 	zassert_equal(EC_SUCCESS, ms_acc->drv->read_temp(ms_acc, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 	zassert_equal(EC_SUCCESS, ms_gyr->drv->read_temp(ms_gyr, &ret_temp),
 		      NULL);
-	zassert_equal(exp_temp, ret_temp, NULL);
+	zassert_equal(exp_temp, ret_temp);
 }
 
 /** Test reading accelerometer sensor data */
@@ -1175,7 +1175,7 @@ ZTEST_USER(bmi160, test_bmi_acc_read)
 
 	/* Fail on read status */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_STATUS);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -1190,12 +1190,12 @@ ZTEST_USER(bmi160, test_bmi_acc_read)
 
 	/* Status not ready */
 	bmi_emul_set_reg(emul, BMI160_STATUS, 0);
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	compare_int3v(exp_v, ret_v);
 
 	/* Status only GYR ready */
 	bmi_emul_set_reg(emul, BMI160_STATUS, BMI160_DRDY_GYR);
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	compare_int3v(exp_v, ret_v);
 
 	/* Status ACC ready */
@@ -1209,20 +1209,20 @@ ZTEST_USER(bmi160, test_bmi_acc_read)
 	/* Disable rotation */
 	ms->rot_standard_ref = NULL;
 	/* Set scale */
-	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, scale, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, scale, 0));
 	/* Set range to 2G */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 2, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 2, 0));
 
 	/* Test read without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_acc_to_emul(ret_v, 2, ret_v);
 	compare_int3v(exp_v, ret_v);
 
 	/* Set range to 4G */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 4, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 4, 0));
 
 	/* Test read without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_acc_to_emul(ret_v, 4, ret_v);
 	compare_int3v(exp_v, ret_v);
 
@@ -1230,34 +1230,34 @@ ZTEST_USER(bmi160, test_bmi_acc_read)
 	ms->rot_standard_ref = &test_rotation;
 	rotate_int3v_by_test_rotation(exp_v);
 	/* Set range to 2G */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 2, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 2, 0));
 
 	/* Test read with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_acc_to_emul(ret_v, 2, ret_v);
 	compare_int3v(exp_v, ret_v);
 
 	/* Set range to 4G */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 4, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 4, 0));
 
 	/* Test read with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_acc_to_emul(ret_v, 4, ret_v);
 	compare_int3v(exp_v, ret_v);
 
 	/* Fail on read of data registers */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_ACC_X_L_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_ACC_X_H_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_ACC_Y_L_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_ACC_Y_H_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_ACC_Z_L_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_ACC_Z_H_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -1286,7 +1286,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_read)
 
 	/* Fail on read status */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_STATUS);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -1301,12 +1301,12 @@ ZTEST_USER(bmi160, test_bmi_gyr_read)
 
 	/* Status not ready */
 	bmi_emul_set_reg(emul, BMI160_STATUS, 0);
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	compare_int3v(exp_v, ret_v);
 
 	/* Status only ACC ready */
 	bmi_emul_set_reg(emul, BMI160_STATUS, BMI160_DRDY_ACC);
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	compare_int3v(exp_v, ret_v);
 
 	/* Status GYR ready */
@@ -1320,20 +1320,20 @@ ZTEST_USER(bmi160, test_bmi_gyr_read)
 	/* Disable rotation */
 	ms->rot_standard_ref = NULL;
 	/* Set scale */
-	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, scale, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_scale(ms, scale, 0));
 	/* Set range to 125°/s */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 125, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 125, 0));
 
 	/* Test read without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_gyr_to_emul(ret_v, 125, ret_v);
 	compare_int3v(exp_v, ret_v);
 
 	/* Set range to 1000°/s */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 1000, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 1000, 0));
 
 	/* Test read without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_gyr_to_emul(ret_v, 1000, ret_v);
 	compare_int3v(exp_v, ret_v);
 
@@ -1341,34 +1341,34 @@ ZTEST_USER(bmi160, test_bmi_gyr_read)
 	ms->rot_standard_ref = &test_rotation;
 	rotate_int3v_by_test_rotation(exp_v);
 	/* Set range to 125°/s */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 125, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 125, 0));
 
 	/* Test read with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_gyr_to_emul(ret_v, 125, ret_v);
 	compare_int3v(exp_v, ret_v);
 
 	/* Set range to 1000°/s */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 1000, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, 1000, 0));
 
 	/* Test read with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->read(ms, ret_v));
 	drv_gyr_to_emul(ret_v, 1000, ret_v);
 	compare_int3v(exp_v, ret_v);
 
 	/* Fail on read of data registers */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_GYR_X_L_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_GYR_X_H_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_GYR_Y_L_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_GYR_Y_H_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_GYR_Z_L_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_GYR_Z_H_G);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, ret_v));
 
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -1419,8 +1419,8 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 	/* Range and rate cannot change after calibration */
 	range = 4;
 	rate = 50000;
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, range, 0), NULL);
-	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, rate, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, range, 0));
+	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, rate, 0));
 
 	/* Set offset 0 */
 	start_off[0] = 0;
@@ -1444,15 +1444,15 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 
 	/* Test fail on rate set */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_ACC_CONF);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 
 	/* Test fail on status read */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_STATUS);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	/* Stop fast offset compensation before next test */
 	bmi_emul_set_reg(emul, BMI160_CMD_REG, BMI160_CMD_NOOP);
 
@@ -1460,9 +1460,9 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	i2c_common_emul_set_read_func(common_data, emul_nrdy, NULL);
-	zassert_equal(EC_RES_TIMEOUT, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_RES_TIMEOUT, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	/* Remove custom emulator read function */
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 	/* Stop fast offset compensation before next test */
@@ -1471,9 +1471,9 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 	/* Disable rotation */
 	ms->rot_standard_ref = NULL;
 	/* Test successful offset compenastion without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	get_emul_acc_offset(emul, ret_off);
 	/*
 	 * Depending on used range, accelerometer values may be up to 6 bits
@@ -1492,9 +1492,9 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 	exp_off[2] = 1234;
 
 	/* Test successful offset compenastion with negative Z rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	get_emul_acc_offset(emul, ret_off);
 	compare_int3v_eps(exp_off, ret_off, 64);
 	/* Acelerometer offset should be enabled */
@@ -1509,9 +1509,9 @@ ZTEST_USER(bmi160, test_bmi_acc_perform_calib)
 	exp_off[2] = 1234;
 
 	/* Test successful offset compenastion with positive Z rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	get_emul_acc_offset(emul, ret_off);
 	compare_int3v_eps(exp_off, ret_off, 64);
 	/* Acelerometer offset should be enabled */
@@ -1546,8 +1546,8 @@ ZTEST_USER(bmi160, test_bmi_gyr_perform_calib)
 	/* Range and rate cannot change after calibration */
 	range = 250;
 	rate = 50000;
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, range, 0), NULL);
-	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, rate, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, range, 0));
+	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, rate, 0));
 
 	/* Set offset 0 */
 	start_off[0] = 0;
@@ -1567,21 +1567,21 @@ ZTEST_USER(bmi160, test_bmi_gyr_perform_calib)
 	exp_off[2] = -exp_off[2];
 
 	/* Test success on disabling calibration */
-	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 0), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 0));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 
 	/* Test fail on rate set */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_GYR_CONF);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 
 	/* Test fail on status read */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_STATUS);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	/* Stop fast offset compensation before next test */
 	bmi_emul_set_reg(emul, BMI160_CMD_REG, BMI160_CMD_NOOP);
 
@@ -1589,18 +1589,18 @@ ZTEST_USER(bmi160, test_bmi_gyr_perform_calib)
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	i2c_common_emul_set_read_func(common_data, emul_nrdy, NULL);
-	zassert_equal(EC_RES_TIMEOUT, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_RES_TIMEOUT, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	/* Remove custom emulator read function */
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 	/* Stop fast offset compensation before next test */
 	bmi_emul_set_reg(emul, BMI160_CMD_REG, BMI160_CMD_NOOP);
 
 	/* Test successful offset compenastion */
-	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1), NULL);
-	zassert_equal(range, ms->current_range, NULL);
-	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->perform_calib(ms, 1));
+	zassert_equal(range, ms->current_range);
+	zassert_equal(rate, ms->drv->get_data_rate(ms));
 	get_emul_gyr_offset(emul, ret_off);
 	/*
 	 * Depending on used range, gyroscope values may be up to 4 bits
@@ -1622,9 +1622,9 @@ ZTEST_USER(bmi160, test_bmi_init)
 	ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Test successful init */
-	zassert_equal(EC_RES_SUCCESS, ms_acc->drv->init(ms_acc), NULL);
+	zassert_equal(EC_RES_SUCCESS, ms_acc->drv->init(ms_acc));
 
-	zassert_equal(EC_RES_SUCCESS, ms_gyr->drv->init(ms_gyr), NULL);
+	zassert_equal(EC_RES_SUCCESS, ms_gyr->drv->init(ms_gyr));
 }
 
 /** Data for custom emulator read function used in FIFO test */
@@ -1763,8 +1763,8 @@ ZTEST_USER(bmi160, test_bmi_acc_fifo)
 	ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* init bmi before test */
-	zassert_equal(EC_RES_SUCCESS, ms->drv->init(ms), NULL);
-	zassert_equal(EC_RES_SUCCESS, ms_gyr->drv->init(ms_gyr), NULL);
+	zassert_equal(EC_RES_SUCCESS, ms->drv->init(ms));
+	zassert_equal(EC_RES_SUCCESS, ms_gyr->drv->init(ms_gyr));
 
 	/* Need to be set to collect all data in FIFO */
 	ms->oversampling_ratio = 1;
@@ -1778,9 +1778,9 @@ ZTEST_USER(bmi160, test_bmi_acc_fifo)
 
 	/* Test fail to read interrupt status registers */
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_INT_STATUS_0);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event));
 	i2c_common_emul_set_read_fail_reg(common_data, BMI160_INT_STATUS_1);
-	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -1789,7 +1789,7 @@ ZTEST_USER(bmi160, test_bmi_acc_fifo)
 	bmi_emul_set_reg(emul, BMI160_INT_STATUS_1, 0);
 
 	/* Enable sensor FIFO */
-	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 50000, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 50000, 0));
 
 	/* Trigger irq handler and check results */
 	check_fifo(ms, ms_gyr, NULL, acc_range, gyr_range);
@@ -1797,7 +1797,7 @@ ZTEST_USER(bmi160, test_bmi_acc_fifo)
 	/* Set custom function for FIFO test */
 	i2c_common_emul_set_read_func(common_data, emul_fifo_func, &func_data);
 	/* Set range */
-	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, acc_range, 0), NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, acc_range, 0));
 	zassert_equal(EC_SUCCESS, ms_gyr->drv->set_range(ms_gyr, gyr_range, 0),
 		      NULL);
 	/* Setup single accelerometer frame */

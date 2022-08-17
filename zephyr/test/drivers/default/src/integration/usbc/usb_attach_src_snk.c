@@ -117,21 +117,21 @@ static void attach_src_snk_common_before(struct emul_state *my_emul_state)
 	/* TODO(b/217737667): Remove driver specific code. */
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 
-	zassume_ok(tcpc_config[SNK_PORT].drv->init(SNK_PORT), NULL);
+	zassume_ok(tcpc_config[SNK_PORT].drv->init(SNK_PORT));
 	/*
 	 * Arbitrary FW ver. The emulator should really be setting this
 	 * during its init.
 	 */
 	tcpci_emul_set_reg(tcpci_emul_snk, PS8XXX_REG_FW_REV, 0x31);
 
-	zassume_ok(tcpc_config[SRC_PORT].drv->init(SRC_PORT), NULL);
+	zassume_ok(tcpc_config[SRC_PORT].drv->init(SRC_PORT));
 
 	pd_set_suspend(SNK_PORT, false);
 	pd_set_suspend(SRC_PORT, false);
 
 	/* Reset to disconnected state. */
-	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_src), NULL);
-	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_snk), NULL);
+	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_src));
+	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_snk));
 
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
@@ -542,7 +542,7 @@ struct usb_detach_test_fixture {
 
 static void integration_usb_test_detach(const struct emul *e)
 {
-	zassume_ok(tcpci_emul_disconnect_partner(e), NULL);
+	zassume_ok(tcpci_emul_disconnect_partner(e));
 }
 
 static void integration_usb_test_sink_detach(struct emul_state *fixture)

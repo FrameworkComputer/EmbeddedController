@@ -31,28 +31,28 @@ ZTEST_USER(smart_battery, test_battery_getters)
 
 	bat = sbat_emul_get_bat_data(emul);
 
-	zassert_equal(EC_SUCCESS, battery_get_mode(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_get_mode(&word));
 	zassert_equal(bat->mode, word, "%d != %d", bat->mode, word);
 
 	expected = 100 * bat->cap / bat->design_cap;
-	zassert_equal(EC_SUCCESS, battery_state_of_charge_abs(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_state_of_charge_abs(&word));
 	zassert_equal(expected, word, "%d != %d", expected, word);
 
-	zassert_equal(EC_SUCCESS, battery_cycle_count(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_cycle_count(&word));
 	zassert_equal(bat->cycle_count, word, "%d != %d", bat->cycle_count,
 		      word);
-	zassert_equal(EC_SUCCESS, battery_design_voltage(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_design_voltage(&word));
 	zassert_equal(bat->design_mv, word, "%d != %d", bat->design_mv, word);
-	zassert_equal(EC_SUCCESS, battery_serial_number(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_serial_number(&word));
 	zassert_equal(bat->sn, word, "%d != %d", bat->sn, word);
 	zassert_equal(EC_SUCCESS, get_battery_manufacturer_name(block, 32),
 		      NULL);
 	zassert_mem_equal(block, bat->mf_name, bat->mf_name_len, "%s != %s",
 			  block, bat->mf_name);
-	zassert_equal(EC_SUCCESS, battery_device_name(block, 32), NULL);
+	zassert_equal(EC_SUCCESS, battery_device_name(block, 32));
 	zassert_mem_equal(block, bat->dev_name, bat->dev_name_len, "%s != %s",
 			  block, bat->dev_name);
-	zassert_equal(EC_SUCCESS, battery_device_chemistry(block, 32), NULL);
+	zassert_equal(EC_SUCCESS, battery_device_chemistry(block, 32));
 	zassert_mem_equal(block, bat->dev_chem, bat->dev_chem_len, "%s != %s",
 			  block, bat->dev_chem);
 	word = battery_get_avg_current();
@@ -62,17 +62,17 @@ ZTEST_USER(smart_battery, test_battery_getters)
 
 	bat->avg_cur = 200;
 	expected = (bat->full_cap - bat->cap) * 60 / bat->avg_cur;
-	zassert_equal(EC_SUCCESS, battery_time_to_full(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_time_to_full(&word));
 	zassert_equal(expected, word, "%d != %d", expected, word);
 
 	bat->cur = -200;
 	expected = bat->cap * 60 / (-bat->cur);
-	zassert_equal(EC_SUCCESS, battery_run_time_to_empty(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_run_time_to_empty(&word));
 	zassert_equal(expected, word, "%d != %d", expected, word);
 
 	bat->avg_cur = -200;
 	expected = bat->cap * 60 / (-bat->avg_cur);
-	zassert_equal(EC_SUCCESS, battery_time_to_empty(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_time_to_empty(&word));
 	zassert_equal(expected, word, "%d != %d", expected, word);
 }
 
@@ -89,28 +89,28 @@ ZTEST_USER(smart_battery, test_battery_get_capacity)
 
 	/* Test fail when checking battery mode */
 	i2c_common_emul_set_read_fail_reg(common_data, SB_BATTERY_MODE);
-	zassert_equal(EC_ERROR_INVAL, battery_remaining_capacity(&word), NULL);
+	zassert_equal(EC_ERROR_INVAL, battery_remaining_capacity(&word));
 	zassert_equal(EC_ERROR_INVAL, battery_full_charge_capacity(&word),
 		      NULL);
-	zassert_equal(EC_ERROR_INVAL, battery_design_capacity(&word), NULL);
+	zassert_equal(EC_ERROR_INVAL, battery_design_capacity(&word));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test getting remaining capacity and if mAh mode is forced */
 	bat->mode |= MODE_CAPACITY;
-	zassert_equal(EC_SUCCESS, battery_remaining_capacity(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_remaining_capacity(&word));
 	zassert_equal(bat->cap, word, "%d != %d", bat->cap, word);
 	zassert_false(bat->mode & MODE_CAPACITY, "mAh mode not forced");
 
 	/* Test getting full charge capacity and if mAh mode is forced */
 	bat->mode |= MODE_CAPACITY;
-	zassert_equal(EC_SUCCESS, battery_full_charge_capacity(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_full_charge_capacity(&word));
 	zassert_equal(bat->full_cap, word, "%d != %d", bat->full_cap, word);
 	zassert_false(bat->mode & MODE_CAPACITY, "mAh mode not forced");
 
 	/* Test getting design capacity and if mAh mode is forced */
 	bat->mode |= MODE_CAPACITY;
-	zassert_equal(EC_SUCCESS, battery_design_capacity(&word), NULL);
+	zassert_equal(EC_SUCCESS, battery_design_capacity(&word));
 	zassert_equal(bat->design_cap, word, "%d != %d", bat->design_cap, word);
 	zassert_false(bat->mode & MODE_CAPACITY, "mAh mode not forced");
 }
@@ -136,7 +136,7 @@ ZTEST_USER(smart_battery, test_battery_status)
 	expected |= STATUS_DISCHARGING;
 	expected |= STATUS_CODE_OVERUNDERFLOW;
 
-	zassert_equal(EC_SUCCESS, battery_status(&status), NULL);
+	zassert_equal(EC_SUCCESS, battery_status(&status));
 	zassert_equal(expected, status, "%d != %d", expected, status);
 }
 
@@ -150,12 +150,12 @@ ZTEST_USER(smart_battery, test_battery_wait_for_stable)
 	/* Should fail when read function always fail */
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_FAIL_ALL_REG);
-	zassert_equal(EC_ERROR_NOT_POWERED, battery_wait_for_stable(), NULL);
+	zassert_equal(EC_ERROR_NOT_POWERED, battery_wait_for_stable());
 
 	/* Should be ok with default handler */
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	zassert_equal(EC_SUCCESS, battery_wait_for_stable(), NULL);
+	zassert_equal(EC_SUCCESS, battery_wait_for_stable());
 }
 
 /** Test manufacture date */
@@ -229,7 +229,7 @@ ZTEST_USER(smart_battery, test_battery_time_at_rate)
 	rate = -300;
 	expect_time = 600;
 
-	zassert_equal(EC_SUCCESS, battery_time_at_rate(rate, &minutes), NULL);
+	zassert_equal(EC_SUCCESS, battery_time_at_rate(rate, &minutes));
 	zassert_equal(expect_time, minutes, "%d != %d", expect_time, minutes);
 
 	/* 1000mAh at rate 1000mA will be charged in 1h */
@@ -238,7 +238,7 @@ ZTEST_USER(smart_battery, test_battery_time_at_rate)
 	/* battery_time_at_rate report time to full as negative number */
 	expect_time = -60;
 
-	zassert_equal(EC_SUCCESS, battery_time_at_rate(rate, &minutes), NULL);
+	zassert_equal(EC_SUCCESS, battery_time_at_rate(rate, &minutes));
 	zassert_equal(expect_time, minutes, "%d != %d", expect_time, minutes);
 }
 

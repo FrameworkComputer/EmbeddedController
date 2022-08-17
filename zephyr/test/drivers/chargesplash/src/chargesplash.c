@@ -102,7 +102,7 @@ static void set_lid(bool open, bool inhibit_boot)
 /* Simulate a regular power button press */
 static void pulse_power_button(void)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "powerbtn"), NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "powerbtn"));
 }
 
 static void reset_state(void *unused)
@@ -290,14 +290,14 @@ ZTEST_USER(chargesplash, test_display_loop)
 
 	set_lid(true, true);
 	set_ac_enabled(true);
-	zassert_true(is_chargesplash_requested(), NULL);
+	zassert_true(is_chargesplash_requested());
 	wait_for_chipset_startup();
 
 	zassert_ok(chargesplash_hostcmd(EC_CHARGESPLASH_DISPLAY_READY,
 					&response),
 		   NULL);
 
-	zassert_true(is_chargesplash_requested(), NULL);
+	zassert_true(is_chargesplash_requested());
 	pulse_power_button();
-	zassert_false(is_chargesplash_requested(), NULL);
+	zassert_false(is_chargesplash_requested());
 }
