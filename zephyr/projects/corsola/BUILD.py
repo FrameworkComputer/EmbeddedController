@@ -103,7 +103,7 @@ register_corsola_project(
 register_corsola_project(
     "tentacruel",
     extra_dts_overlays=[
-        here / "adc_krabby.dts",
+        here / "adc_tentacruel.dts",
         here / "battery_tentacruel.dts",
         here / "cbi_tentacruel.dts",
         here / "gpio_tentacruel.dts",
