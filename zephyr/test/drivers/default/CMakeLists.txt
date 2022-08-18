@@ -18,6 +18,7 @@ target_sources(app PRIVATE
     src/console_cmd/accelread.c
     src/console_cmd/accelres.c
     src/console_cmd/gpio.c
+    src/console_cmd/tcpci_dump.c
     src/console_cmd/usb_pd_console.c
     src/cros_cbi.c
     src/espi.c
