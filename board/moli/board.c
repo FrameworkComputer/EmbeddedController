@@ -127,7 +127,7 @@ static const struct {
 	  .voltage = 19000,
 	  .current = 4740 },
 	{ /* 1 - 135W */
-	  .voltage = 19000,
+	  .voltage = 19500,
 	  .current = 6920 },
 };
 
