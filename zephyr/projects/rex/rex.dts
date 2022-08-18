@@ -27,6 +27,20 @@
 		ioex_usb_c0_rt_rst_ls_l: usb_c0_rt_rst_ls_l {
 			gpios = <&ioex_c0_port0 7 GPIO_OUTPUT>;
 		};
+
+		/* Need to designate 1.8V for I2C buses on the 1800mV rail */
+		ec-i2c-sensor-scl {
+			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpiob 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-c0-rt-scl {
+			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-c0-rt-sda {
+			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 	};
 };
 
@@ -120,7 +134,7 @@
 };
 
 &i2c3_0 {
-	label = "I2C_USB_C0_C2_MUX";
+	label = "I2C_USB_C0_RT";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
