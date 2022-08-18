@@ -16,6 +16,7 @@
 #include "keyboard_scan.h"
 #include "lpc.h"
 #include "power_button.h"
+#include "queue.h"
 #include "system.h"
 #include "test_util.h"
 #include "timer.h"
@@ -26,6 +27,15 @@ static const char *action[2] = { "release", "press" };
 #define BUF_SIZE 16
 static char lpc_char_buf[BUF_SIZE];
 static unsigned int lpc_char_cnt;
+
+static struct queue const aux_to_device = QUEUE_NULL(16, uint8_t);
+
+struct to_host_data {
+	uint8_t data;
+	int irq;
+};
+
+static struct queue const aux_to_host = QUEUE_NULL(16, struct to_host_data);
 
 /*****************************************************************************/
 /* Mock functions */
@@ -40,6 +50,19 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	lpc_char_buf[lpc_char_cnt++] = chr;
 }
 
+void send_aux_data_to_device(uint8_t data)
+{
+	if (queue_add_unit(&aux_to_device, &data) == 0)
+		ccprintf("%s: ERROR: aux_to_device queue is full!\n", __FILE__);
+}
+
+void lpc_aux_put_char(uint8_t chr, int send_irq)
+{
+	struct to_host_data data = { .data = chr, .irq = send_irq };
+
+	if (queue_add_unit(&aux_to_host, &data) == 0)
+		ccprintf("%s: ERROR: aux_to_host queue is full!\n", __FILE__);
+}
 /*****************************************************************************/
 /* Test utilities */
 
@@ -121,8 +144,168 @@ static int __verify_no_char(void)
 
 #define VERIFY_NO_CHAR() TEST_ASSERT(__verify_no_char() == EC_SUCCESS)
 
+#define VERIFY_AUX_TO_HOST(expected_data, expected_irq)                    \
+	do {                                                               \
+		struct to_host_data data;                                  \
+		msleep(30);                                                \
+		TEST_EQ(queue_remove_unit(&aux_to_host, &data), (size_t)1, \
+			"%zd");                                            \
+		TEST_EQ(data.data, expected_data, "%#x");                  \
+		TEST_EQ(data.irq, expected_irq, "%u");                     \
+	} while (0)
+
+#define VERIFY_AUX_TO_HOST_EMPTY()                         \
+	do {                                               \
+		msleep(30);                                \
+		TEST_ASSERT(queue_is_empty(&aux_to_host)); \
+	} while (0)
+
+#define VERIFY_AUX_TO_DEVICE(expected_data)                                   \
+	do {                                                                  \
+		uint8_t _data;                                                \
+		msleep(30);                                                   \
+		TEST_EQ(queue_remove_unit(&aux_to_device, &_data), (size_t)1, \
+			"%zd");                                               \
+		TEST_EQ(_data, expected_data, "%#x");                         \
+	} while (0)
+
+#define VERIFY_AUX_TO_DEVICE_EMPTY()                         \
+	do {                                                 \
+		msleep(30);                                  \
+		TEST_ASSERT(queue_is_empty(&aux_to_device)); \
+	} while (0)
+
+/*
+ * We unfortunately don't have an Input Buffer Full (IBF). Instead we
+ * directly write to the task's input queue. Ideally we would have an
+ * emulator that emulates the 8042 input/output buffers.
+ */
+#define i8042_write_cmd(cmd) keyboard_host_write(cmd, 1)
+#define i8042_write_data(data) keyboard_host_write(data, 0)
+
 /*****************************************************************************/
 /* Tests */
+
+void before_test(void)
+{
+	/* Make sure all tests start with the controller in the same state */
+	write_cmd_byte(I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS);
+}
+
+void after_test(void)
+{
+	/* Hrmm, we can't fail the test here :( */
+
+	if (!queue_is_empty(&aux_to_device))
+		ccprintf("%s: ERROR: AUX to device queue is not empty!\n",
+			 __FILE__);
+
+	if (!queue_is_empty(&aux_to_host))
+		ccprintf("%s: ERROR: AUX to host queue is not empty!\n",
+			 __FILE__);
+}
+
+static int test_8042_aux_loopback(void)
+{
+	/* Disable all IRQs */
+	write_cmd_byte(0);
+
+	i8042_write_cmd(I8042_ECHO_MOUSE);
+	i8042_write_data(0x01);
+	VERIFY_AUX_TO_HOST(0x01, 0);
+
+	/* Enable AUX IRQ */
+	write_cmd_byte(I8042_ENIRQ12);
+
+	i8042_write_cmd(I8042_ECHO_MOUSE);
+	i8042_write_data(0x02);
+	VERIFY_AUX_TO_HOST(0x02, 1);
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_two_way_communication(void)
+{
+	/* Enable AUX IRQ */
+	write_cmd_byte(I8042_ENIRQ12);
+
+	i8042_write_cmd(I8042_SEND_TO_MOUSE);
+	i8042_write_data(0x01);
+	/* No response expected from the 8042 controller*/
+	VERIFY_AUX_TO_HOST_EMPTY();
+	VERIFY_AUX_TO_DEVICE(0x01);
+
+	/* Simulate the AUX device sending a response to the host */
+	send_aux_data_to_host_interrupt(0x02);
+	VERIFY_AUX_TO_HOST(0x02, 1);
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_inhibit(void)
+{
+	/* Enable AUX IRQ, but inhibit the AUX device from sending data. */
+	write_cmd_byte(I8042_ENIRQ12 | I8042_AUX_DIS);
+
+	/* Simulate the AUX device sending a response to the host */
+	send_aux_data_to_host_interrupt(0x02);
+	VERIFY_AUX_TO_HOST_EMPTY();
+
+	/* Stop inhibiting the AUX device */
+	write_cmd_byte(I8042_ENIRQ12);
+	/*
+	 * This is wrong. When the CLK is inhibited the device will queue up
+	 * events/scan codes in it's internal buffer. Once the inhibit is
+	 * released, the device will start clocking out the data. So in this
+	 * test we should be receiving a 0x02 byte, but we don't.
+	 *
+	 * In order to fix this we either need to plumb an inhibit function
+	 * to the AUX PS/2 controller so it can hold the CLK line low, and thus
+	 * tell the AUX device to buffer. Or, we can have the 8042 controller
+	 * buffer the data internally and start replying it when the device is
+	 * no longer inhibited.
+	 */
+	VERIFY_AUX_TO_HOST_EMPTY();
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_controller_commands(void)
+{
+	uint8_t ctrl;
+
+	/* Start with empty controller flags. i.e., AUX Enabled */
+	write_cmd_byte(0);
+
+	/* Send the AUX DISABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_DIS_MOUSE);
+	ctrl = read_cmd_byte();
+	TEST_ASSERT(ctrl & I8042_AUX_DIS);
+
+	/* Send the AUX ENABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_ENA_MOUSE);
+	ctrl = read_cmd_byte();
+	TEST_ASSERT(!(ctrl & I8042_AUX_DIS));
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_test_command(void)
+{
+	/* This isn't properly cleaned, so explicitly clear it. */
+	lpc_char_cnt = 0;
+
+	/* Send the AUX DISABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_TEST_MOUSE);
+
+	/* VERIFY_LPC_CHAR doesn't work on NULL strings */
+	msleep(30);
+	TEST_EQ(lpc_char_cnt, 1, "%d");
+	TEST_EQ(lpc_char_buf[0], I8042_TEST_MOUSE_NO_ERROR, "%d");
+	lpc_char_cnt = 0;
+
+	return EC_SUCCESS;
+}
 
 static int test_single_key_press(void)
 {
@@ -331,6 +514,11 @@ void run_test(int argc, char **argv)
 	wait_for_task_started();
 
 	if (system_get_image_copy() == EC_IMAGE_RO) {
+		RUN_TEST(test_8042_aux_loopback);
+		RUN_TEST(test_8042_aux_two_way_communication);
+		RUN_TEST(test_8042_aux_inhibit);
+		RUN_TEST(test_8042_aux_controller_commands);
+		RUN_TEST(test_8042_aux_test_command);
 		RUN_TEST(test_single_key_press);
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);
