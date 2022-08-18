@@ -14,14 +14,14 @@
  * Source of truth is the project/brya/mithrax/config.star configuration file.
  */
 
-enum ec_cfg_usb_db_type { DB_USB3_PS8815 = 1, DB_USB4_NCT3807 = 2 };
+enum ec_cfg_usb_db_type { DB_USB_ABSENT = 0, DB_USB3_PS8815 = 1 };
 
 enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_DISABLED = 0,
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
-enum ec_cfg_usb_mb_type { MB_USB4_TBT = 0, MB_USB3_NON_TBT = 1 };
+enum ec_cfg_usb_mb_type { NA = 0, MB_USB3_NON_TBT = 1 };
 
 enum ec_cfg_stylus_type { STYLUS_ABSENT = 0, STYLUS_PRSENT = 1 };
 

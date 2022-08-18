@@ -15,7 +15,5 @@
 enum usbc_port { USBC_PORT_C2 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
 
 void config_usb_db_type(void);
-void db_update_usb4_config_from_config(void);
-void mb_update_usb4_tbt_config_from_config(void);
 
 #endif /* __CROS_EC_USBC_CONFIG_H */

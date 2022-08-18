@@ -160,14 +160,6 @@
 /*
  *
  */
-#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR 0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR 0x58
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
 
 /* Retimer */
 #define CONFIG_USBC_RETIMER_FW_UPDATE

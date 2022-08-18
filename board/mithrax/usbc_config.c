@@ -63,17 +63,6 @@ struct tcpc_config_t tcpc_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
-struct tcpc_config_t tcpc_config_c1 = {
-	.bus_type = EC_BUS_TYPE_I2C,
-	.i2c_info = {
-		.port = I2C_PORT_USB_C1_TCPC,
-		.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
-	},
-	.drv = &nct38xx_tcpm_drv,
-	.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-		TCPC_FLAGS_NO_DEBUG_ACC_CONTROL,
-};
-
 /* USBC PPC configuration */
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C2] = {
@@ -91,25 +80,6 @@ struct ppc_config_t ppc_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
-struct ppc_config_t ppc_chips_c1 = {
-	.i2c_port = I2C_PORT_USB_C1_PPC,
-	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-	.drv = &syv682x_drv,
-};
-
-/* USBC mux configuration - Alder Lake includes internal mux */
-static const struct usb_mux usbc2_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C2,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-
-static const struct usb_mux usbc1_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
 
 /*
  * USB3 DB mux configuration - the top level mux still needs to be set
@@ -137,24 +107,6 @@ struct usb_mux usb_muxes[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
-
-static const struct usb_mux usb_muxes_c1 = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &bb_usb_retimer,
-	.hpd_update = bb_retimer_hpd_update,
-	.i2c_port = I2C_PORT_USB_C1_MUX,
-	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
-	.next_mux = &usbc1_tcss_usb_mux,
-};
-
-static const struct usb_mux usb_muxes_c2 = {
-	.usb_port = USBC_PORT_C2,
-	.driver = &bb_usb_retimer,
-	.hpd_update = bb_retimer_hpd_update,
-	.i2c_port = I2C_PORT_USB_C2_MUX,
-	.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
-	.next_mux = &usbc2_tcss_usb_mux,
-};
 
 /* BC1.2 charger detect configuration */
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
@@ -250,9 +202,6 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_C2_TCPC_RST_ODL, 0);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
 
-	if (ec_cfg_usb_db_type() == DB_USB4_NCT3807)
-		gpio_set_level(GPIO_USB_C1_RST_ODL, 0);
-
 	/*
 	 * delay for power-on to reset-off and min. assertion time
 	 */
@@ -261,9 +210,6 @@ void board_reset_pd_mcu(void)
 
 	gpio_set_level(GPIO_USB_C0_C2_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
-
-	if (ec_cfg_usb_db_type() == DB_USB4_NCT3807)
-		gpio_set_level(GPIO_USB_C1_RST_ODL, 1);
 
 	/* wait for chips to come up */
 
@@ -286,8 +232,6 @@ static void board_tcpc_init(void)
 		 * C0/C2 TCPC, so they must be set up after the TCPC has
 		 * been taken out of reset.
 		 */
-		if (ec_cfg_usb_db_type() == DB_USB4_NCT3807)
-			enable_ioex(IOEX_C1_NCT38XX);
 		enable_ioex(IOEX_C2_NCT38XX);
 	}
 
@@ -359,14 +303,7 @@ void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C1_PPC_INT_ODL:
-		switch (ec_cfg_usb_db_type()) {
-		case DB_USB3_PS8815:
-			nx20p348x_interrupt(USBC_PORT_C1);
-			break;
-		case DB_USB4_NCT3807:
-			syv682x_interrupt(USBC_PORT_C1);
-			break;
-		}
+		nx20p348x_interrupt(USBC_PORT_C1);
 		break;
 	case GPIO_USB_C2_PPC_INT_ODL:
 		syv682x_interrupt(USBC_PORT_C2);
@@ -390,11 +327,6 @@ __override bool board_is_dts_port(int port)
 
 __override bool board_is_tbt_usb4_port(int port)
 {
-	if (((port == USBC_PORT_C2) && (ec_cfg_usb_mb_type() == MB_USB4_TBT)) ||
-	    ((port == USBC_PORT_C1) &&
-	     (ec_cfg_usb_db_type() == DB_USB4_NCT3807)))
-		return true;
-
 	return false;
 }
 
@@ -404,16 +336,4 @@ __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 		return TBT_SS_RES_0;
 
 	return TBT_SS_TBT_GEN3;
-}
-
-void db_update_usb4_config_from_config(void)
-{
-	tcpc_config[USBC_PORT_C1] = tcpc_config_c1;
-	ppc_chips[USBC_PORT_C1] = ppc_chips_c1;
-	usb_muxes[USBC_PORT_C1] = usb_muxes_c1;
-}
-
-void mb_update_usb4_tbt_config_from_config(void)
-{
-	usb_muxes[USBC_PORT_C2] = usb_muxes_c2;
 }
