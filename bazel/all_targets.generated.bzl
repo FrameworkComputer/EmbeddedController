@@ -918,6 +918,15 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "geralt_scp_core1",
+        baseboard = "mtscp-rv32i",
+        board = "geralt_scp_core1",
+        chip = "mt_scp",
+        core = "riscv-rv32i",
+        real_board = "geralt_scp",
+        zephyr = False,
+    )
+    ec_target(
         name = "gimble",
         baseboard = "brya",
         board = "gimble",
