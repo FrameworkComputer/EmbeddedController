@@ -10,6 +10,8 @@
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
+#include "uart.h"
+#include "ec_commands.h"
 
 static int cmd_1_call_cnt;
 static int cmd_2_call_cnt;
@@ -284,6 +286,34 @@ static int test_output_channel(void)
 	return EC_SUCCESS;
 }
 
+/* This test is identical to console::buf_notify_null in
+ * zephyr/test/drivers/default/src/console.c. Please keep them in sync to
+ * verify that uart_console_read_buffer works identically in legacy EC and
+ * zephyr.
+ */
+static int test_buf_notify_null(void)
+{
+	char buffer[100];
+	uint16_t write_count;
+
+	/* Flush the console buffer before we start. */
+	TEST_ASSERT(uart_console_read_buffer_init() == 0);
+
+	/* Write a nul char to the buffer. */
+	cprintf(CC_SYSTEM, "ab%cc", 0);
+	cflush();
+
+	/* Check if the nul is present in the buffer. */
+	TEST_ASSERT(uart_console_read_buffer_init() == 0);
+	TEST_ASSERT(uart_console_read_buffer(CONSOLE_READ_RECENT, buffer,
+					     sizeof(buffer),
+					     &write_count) == 0);
+	TEST_ASSERT(strncmp(buffer, "abc", 4) == 0);
+	TEST_EQ(write_count, 4, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -301,6 +331,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_history_stash);
 	RUN_TEST(test_history_list);
 	RUN_TEST(test_output_channel);
+	RUN_TEST(test_buf_notify_null);
 
 	test_print_result();
 }
