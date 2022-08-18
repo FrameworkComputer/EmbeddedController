@@ -319,46 +319,76 @@ void lpc_update_host_event_status(void)
 	uint32_t status;
 	int need_sci = 0;
 	int need_smi = 0;
+	int rv;
 
 	if (!init_done)
 		return;
 
 	/* Disable PMC1 interrupt while updating status register */
 	enable = 0;
-	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
-			       &enable);
-
-	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
-	if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SMI)) {
-		/* Only generate SMI for first event */
-		if (!(status & EC_LPC_STATUS_SMI_PENDING))
-			need_smi = 1;
-
-		status |= EC_LPC_STATUS_SMI_PENDING;
-		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
-	} else {
-		status &= ~EC_LPC_STATUS_SMI_PENDING;
-		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	rv = espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
+				    &enable);
+	if (rv) {
+		LOG_ERR("ESPI write failed: "
+			"ECUSTOM_HOST_SUBS_INTERRUPT_EN = %d",
+			rv);
+		return;
 	}
 
-	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
-	if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SCI)) {
-		/* Generate SCI for every event */
-		need_sci = 1;
-
-		status |= EC_LPC_STATUS_SCI_PENDING;
-		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	rv = espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	if (rv) {
+		LOG_ERR("ESPI read failed: EACPI_READ_STS = %d", rv);
 	} else {
-		status &= ~EC_LPC_STATUS_SCI_PENDING;
-		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+		if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SMI)) {
+			/* Only generate SMI for first event */
+			if (!(status & EC_LPC_STATUS_SMI_PENDING))
+				need_smi = 1;
+
+			status |= EC_LPC_STATUS_SMI_PENDING;
+			rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_STS,
+						    &status);
+		} else {
+			status &= ~EC_LPC_STATUS_SMI_PENDING;
+			rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_STS,
+						    &status);
+		}
+		if (rv) {
+			LOG_ERR("ESPI write failed: EACPI_WRITE_STS = %d", rv);
+		}
+	}
+
+	rv = espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	if (rv) {
+		LOG_ERR("ESPI read failed: EACPI_READ_STS = %d", rv);
+	} else {
+		if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SCI)) {
+			/* Generate SCI for every event */
+			need_sci = 1;
+
+			status |= EC_LPC_STATUS_SCI_PENDING;
+			rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_STS,
+						    &status);
+		} else {
+			status &= ~EC_LPC_STATUS_SCI_PENDING;
+			rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_STS,
+						    &status);
+		}
+		if (rv) {
+			LOG_ERR("ESPI write failed: EACPI_WRITE_STS = %d", rv);
+		}
 	}
 
 	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
 		lpc_get_host_events();
 
 	enable = 1;
-	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
-			       &enable);
+	rv = espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
+				    &enable);
+	if (rv) {
+		LOG_ERR("ESPI write failed: "
+			"ECUSTOM_HOST_SUBS_INTERRUPT_EN = %d",
+			rv);
+	}
 
 	/* Process the wake events. */
 	lpc_update_wake(lpc_get_host_events_by_type(LPC_HOST_EVENT_WAKE));
@@ -392,19 +422,30 @@ static void handle_acpi_write(uint32_t data)
 	uint8_t value, result;
 	uint8_t is_cmd = is_acpi_command(data);
 	uint32_t status;
+	int rv;
 
 	value = get_acpi_value(data);
 
 	/* Handle whatever this was. */
 	if (acpi_ap_to_ec(is_cmd, value, &result)) {
 		data = result;
-		espi_write_lpc_request(espi_dev, EACPI_WRITE_CHAR, &data);
+		rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_CHAR, &data);
+		if (rv) {
+			LOG_ERR("ESPI write failed: EACPI_WRITE_CHAR = %d", rv);
+		}
 	}
 
 	/* Clear processing flag */
-	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
-	status &= ~EC_LPC_STATUS_PROCESSING;
-	espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	rv = espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	if (rv) {
+		LOG_ERR("ESPI read failed: EACPI_READ_STS = %d", rv);
+	} else {
+		status &= ~EC_LPC_STATUS_PROCESSING;
+		rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+		if (rv) {
+			LOG_ERR("ESPI write failed: EACPI_WRITE_STS = %d", rv);
+		}
+	}
 
 	/*
 	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
@@ -416,17 +457,24 @@ static void handle_acpi_write(uint32_t data)
 static void lpc_send_response_packet(struct host_packet *pkt)
 {
 	uint32_t data;
+	int rv;
 
 	/* TODO(b/176523211): check whether add EC_RES_IN_PROGRESS handle */
 
 	/* Write result to the data byte.  This sets the TOH status bit. */
 	data = pkt->driver_result;
-	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_CMD_SEND_RESULT, &data);
+	rv = espi_write_lpc_request(espi_dev, ECUSTOM_HOST_CMD_SEND_RESULT,
+				    &data);
+	if (rv) {
+		LOG_ERR("ESPI write failed: ECUSTOM_HOST_CMD_SEND_RESULT = %d",
+			rv);
+	}
 }
 
 static void handle_host_write(uint32_t data)
 {
 	uint32_t shm_mem_host_cmd;
+	int rv;
 
 	if (EC_COMMAND_PROTOCOL_3 != (data & 0xff)) {
 		LOG_ERR("Don't support this version of the host command");
@@ -434,9 +482,12 @@ static void handle_host_write(uint32_t data)
 		return;
 	}
 
-	espi_read_lpc_request(espi_dev, ECUSTOM_HOST_CMD_GET_PARAM_MEMORY,
-			      &shm_mem_host_cmd);
-
+	rv = espi_read_lpc_request(espi_dev, ECUSTOM_HOST_CMD_GET_PARAM_MEMORY,
+				   &shm_mem_host_cmd);
+	if (rv) {
+		LOG_ERR("ESPI read failed: EACPI_READ_STS = %d", rv);
+		return;
+	}
 	lpc_packet.send_response = lpc_send_response_packet;
 
 	lpc_packet.request = (const void *)shm_mem_host_cmd;
@@ -458,17 +509,35 @@ static void handle_host_write(uint32_t data)
 void lpc_set_acpi_status_mask(uint8_t mask)
 {
 	uint32_t status;
-	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	int rv;
+
+	rv = espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	if (rv) {
+		LOG_ERR("ESPI read failed: EACPI_READ_STS = %d", rv);
+		return;
+	}
 	status |= mask;
-	espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	if (rv) {
+		LOG_ERR("ESPI write failed: EACPI_WRITE_STS = %d", rv);
+	}
 }
 
 void lpc_clear_acpi_status_mask(uint8_t mask)
 {
 	uint32_t status;
-	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	int rv;
+
+	rv = espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	if (rv) {
+		LOG_ERR("ESPI read failed: EACPI_READ_STS = %d", rv);
+		return;
+	}
 	status &= ~mask;
-	espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	rv = espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	if (rv) {
+		LOG_ERR("ESPI write failed: EACPI_WRITE_STS = %d", rv);
+	}
 }
 
 /* Get protocol information */
@@ -499,23 +568,38 @@ void lpc_keyboard_resume_irq(void)
 
 void lpc_keyboard_clear_buffer(void)
 {
+	int rv;
 	/* Clear OBF flag in host STATUS and HIKMST regs */
-	espi_write_lpc_request(espi_dev, E8042_CLEAR_OBF, 0);
+	rv = espi_write_lpc_request(espi_dev, E8042_CLEAR_OBF, 0);
+	if (rv) {
+		LOG_ERR("ESPI write failed: E8042_CLEAR_OBF = %d", rv);
+	}
 }
+
 int lpc_keyboard_has_char(void)
 {
 	uint32_t status;
+	int rv;
 
 	/* if OBF bit is '1', that mean still have a data in DBBOUT */
-	espi_read_lpc_request(espi_dev, E8042_OBF_HAS_CHAR, &status);
+	rv = espi_read_lpc_request(espi_dev, E8042_OBF_HAS_CHAR, &status);
+	if (rv) {
+		LOG_ERR("ESPI read failed: E8042_OBF_HAS_CHAR = %d", rv);
+		return 0;
+	}
 	return status;
 }
 
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	uint32_t kb_char = chr;
+	int rv;
 
-	espi_write_lpc_request(espi_dev, E8042_WRITE_KB_CHAR, &kb_char);
+	rv = espi_write_lpc_request(espi_dev, E8042_WRITE_KB_CHAR, &kb_char);
+	if (rv) {
+		LOG_ERR("ESPI write failed: E8042_WRITE_KB_CHAR = %d", rv);
+		return;
+	}
 	LOG_INF("KB put %02x", kb_char);
 }
 
@@ -524,9 +608,16 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 {
 	uint32_t kb_char = chr;
 	uint32_t status = I8042_AUX_DATA;
+	int rv;
 
-	espi_write_lpc_request(espi_dev, E8042_SET_FLAG, &status);
-	espi_write_lpc_request(espi_dev, E8042_WRITE_KB_CHAR, &kb_char);
+	rv = espi_write_lpc_request(espi_dev, E8042_SET_FLAG, &status);
+	if (rv) {
+		LOG_ERR("ESPI write failed: E8042_SET_FLAG = %d", rv);
+	}
+	rv = espi_write_lpc_request(espi_dev, E8042_WRITE_KB_CHAR, &kb_char);
+	if (rv) {
+		LOG_ERR("ESPI write failed: E8042_WRITE_KB_CHAR = %d", rv);
+	}
 	LOG_INF("AUX put %02x", kb_char);
 }
 
@@ -535,11 +626,16 @@ static void kbc_ibf_obe_handler(uint32_t data)
 #ifdef HAS_TASK_KEYPROTO
 	uint8_t is_ibf = is_8042_ibf(data);
 	uint32_t status = I8042_AUX_DATA;
+	int rv;
 
 	if (is_ibf) {
 		keyboard_host_write(get_8042_data(data), get_8042_type(data));
 	} else if (IS_ENABLED(CONFIG_8042_AUX)) {
-		espi_write_lpc_request(espi_dev, E8042_CLEAR_FLAG, &status);
+		rv = espi_write_lpc_request(espi_dev, E8042_CLEAR_FLAG,
+					    &status);
+		if (rv) {
+			LOG_ERR("ESPI write failed: E8042_CLEAR_FLAG = %d", rv);
+		}
 	}
 	task_wake(TASK_ID_KEYPROTO);
 #endif
@@ -548,9 +644,14 @@ static void kbc_ibf_obe_handler(uint32_t data)
 int lpc_keyboard_input_pending(void)
 {
 	uint32_t status;
+	int rv;
 
 	/* if IBF bit is '1', that mean still have a data in DBBIN */
-	espi_read_lpc_request(espi_dev, E8042_IBF_HAS_CHAR, &status);
+	rv = espi_read_lpc_request(espi_dev, E8042_IBF_HAS_CHAR, &status);
+	if (rv) {
+		LOG_ERR("ESPI read failed: E8042_IBF_HAS_CHAR = %d", rv);
+		return 0;
+	}
 	return status;
 }
 
