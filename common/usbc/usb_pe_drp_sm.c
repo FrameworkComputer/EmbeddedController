@@ -7716,6 +7716,12 @@ static void pe_ddr_perform_data_reset_run(int port)
 	} else if (PE_CHK_FLAG(port, PE_FLAGS_DATA_RESET_COMPLETE) &&
 		   !pd_timer_is_disabled(port, PE_TIMER_DATA_RESET_FAIL)) {
 		pd_timer_disable(port, PE_TIMER_DATA_RESET_FAIL);
+		/*
+		 * Because the cable power-cycled, reset the Tx (optional) and
+		 * cached Rx (mandatory) message IDs.
+		 */
+		prl_reset_msg_ids(port, TCPCI_MSG_SOP_PRIME);
+		prl_reset_msg_ids(port, TCPCI_MSG_SOP_PRIME_PRIME);
 		send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_DATA_RESET_COMPLETE);
 	} else if (PE_CHK_FLAG(port, PE_FLAGS_DATA_RESET_COMPLETE)) {
 		/*
