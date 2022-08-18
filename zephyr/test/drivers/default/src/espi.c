@@ -210,4 +210,52 @@ ZTEST_USER(espi, test_host_command_gpio_set)
 	zassert_equal(gpio_pin_get_dt(gp), p.val, NULL);
 }
 
+ZTEST(espi, test_hc_gpio_get_v0_invalid_name)
+{
+	struct ec_response_gpio_get response;
+	struct ec_params_gpio_get params = { .name = "INVALID_GPIO_NAME" };
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_GPIO_GET, 0, response, params);
+
+	zassert_equal(EC_RES_ERROR, host_command_process(&args), NULL);
+}
+
+ZTEST(espi, test_hc_gpio_get_v1_get_by_name_invalid_name)
+{
+	struct ec_response_gpio_get_v1 response;
+	struct ec_params_gpio_get_v1 params = {
+		.subcmd = EC_GPIO_GET_BY_NAME,
+		.get_value_by_name.name = "INVALID_GPIO_NAME",
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_GPIO_GET, 1, response, params);
+
+	zassert_equal(EC_RES_ERROR, host_command_process(&args), NULL);
+}
+
+ZTEST(espi, test_hc_gpio_get_v1_get_info_invalid_index)
+{
+	struct ec_response_gpio_get_v1 response;
+	struct ec_params_gpio_get_v1 params = {
+		.subcmd = EC_GPIO_GET_INFO,
+		.get_info.index = GPIO_COUNT,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_GPIO_GET, 1, response, params);
+
+	zassert_equal(EC_RES_ERROR, host_command_process(&args), NULL);
+}
+
+ZTEST(espi, test_hc_gpio_get_v1_invalid_subcmd)
+{
+	struct ec_response_gpio_get_v1 response;
+	struct ec_params_gpio_get_v1 params = {
+		.subcmd = EC_CMD_GPIO_GET,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_GPIO_GET, 1, response, params);
+
+	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
+}
+
 ZTEST_SUITE(espi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
