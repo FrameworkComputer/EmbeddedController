@@ -38,6 +38,13 @@ config BOARD_JOXER
 	  Build Google Joxer reference board. Joxer has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_YAVIKS
+	bool "Google Yaviks Board"
+	help
+	  Build Google Yaviks board. Yaviks has Intel ADL-N SoC
+	  with IT81302 EC.
+
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"

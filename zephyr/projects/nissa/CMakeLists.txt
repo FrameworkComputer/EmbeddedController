@@ -68,3 +68,13 @@ if(DEFINED CONFIG_BOARD_JOXER)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "joxer/src/charger.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "joxer/src/fan.c")
 endif()
+if(DEFINED CONFIG_BOARD_YAVIKS)
+	project(yaviks)
+	zephyr_library_sources(
+			"src/led.c"
+			"yaviks/src/keyboard.c"
+			"yaviks/src/hdmi.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "yaviks/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "yaviks/src/charger.c")
+endif()
