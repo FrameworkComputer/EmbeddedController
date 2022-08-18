@@ -65,7 +65,12 @@
 			status = "okay";
 		};
 
-		lsm6dso_data: lsm6dso-drv-data {
+		lsm6dso_accel_data: lsm6dso-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dso";
+			status = "okay";
+		};
+
+		lsm6dso_gyro_data: lsm6dso-drv-data {
 			compatible = "cros-ec,drvdata-lsm6dso";
 			status = "okay";
 		};
@@ -175,7 +180,7 @@
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			default-range = <4>;
-			drv-data = <&lsm6dso_data>;
+			drv-data = <&lsm6dso_accel_data>;
 			i2c-spi-addr-flags = "LSM6DSO_ADDR0_FLAGS";
 			configs {
 				compatible =
@@ -201,7 +206,7 @@
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
-			drv-data = <&lsm6dso_data>;
+			drv-data = <&lsm6dso_gyro_data>;
 			i2c-spi-addr-flags = "LSM6DSO_ADDR0_FLAGS";
 		};
 
