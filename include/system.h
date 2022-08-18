@@ -89,6 +89,12 @@ void system_enter_hibernate(uint32_t seconds, uint32_t microseconds);
 __test_only void system_common_reset_state(void);
 
 /**
+ * Return the value of reboot_at_shutdown and reset its value, useful for
+ * testing.
+ */
+__test_only enum ec_reboot_cmd system_common_get_reset_reboot_at_shutdown(void);
+
+/**
  * @brief Allow tests to manually set the jump data address.
  *
  * This function allows an override of the location of the jump data (which is

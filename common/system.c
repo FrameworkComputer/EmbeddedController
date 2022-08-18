@@ -1828,3 +1828,12 @@ __test_only void system_common_reset_state(void)
 	reset_flags = 0;
 	jumped_to_image = 0;
 }
+
+__test_only enum ec_reboot_cmd system_common_get_reset_reboot_at_shutdown(void)
+{
+	int ret = reboot_at_shutdown;
+
+	reboot_at_shutdown = 0;
+
+	return ret;
+}
