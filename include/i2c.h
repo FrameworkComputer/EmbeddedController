@@ -589,4 +589,6 @@ const struct i2c_port_t *get_i2c_port(const int port);
 int i2c_port_is_locked(int port);
 #endif
 
+__test_only void i2c_passthru_protect_reset(void);
+
 #endif /* __CROS_EC_I2C_H */

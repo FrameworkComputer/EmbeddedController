@@ -1358,6 +1358,11 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU, i2c_command_passthru, EC_VER_MASK(0));
 
+__test_only void i2c_passthru_protect_reset(void)
+{
+	memset(port_protected, 0, sizeof(port_protected));
+}
+
 static void i2c_passthru_protect_port(uint32_t port)
 {
 	if (port < ARRAY_SIZE(port_protected))
