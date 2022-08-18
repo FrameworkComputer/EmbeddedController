@@ -92,6 +92,15 @@ void prl_set_rev(int port, enum tcpci_msg_type type, enum pd_rev_type rev);
 enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type type);
 
 /**
+ * Reset Tx and Rx message IDs for the specified partner to their initial
+ * values.
+ *
+ * @param port USB-C port number
+ * @param type Transmit type
+ */
+void prl_reset_msg_ids(int port, enum tcpci_msg_type type);
+
+/**
  * Sends a PD control message
  *
  * @param port USB-C port number

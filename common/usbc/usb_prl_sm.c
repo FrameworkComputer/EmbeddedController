@@ -573,10 +573,8 @@ static void prl_init(int port)
 
 	prl_hr[port].flags = 0;
 
-	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
-		prl_rx[port].msg_id[i] = -1;
-		prl_tx[port].msg_id_counter[i] = 0;
-	}
+	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
+		prl_reset_msg_ids(port, i);
 
 	pd_timer_disable_range(port, PR_TIMER_RANGE);
 
@@ -775,6 +773,12 @@ enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type type)
 	ASSERT(type < NUM_SOP_STAR_TYPES);
 
 	return pdmsg[port].rev[type];
+}
+
+void prl_reset_msg_ids(int port, enum tcpci_msg_type type)
+{
+	prl_tx[port].msg_id_counter[type] = 0;
+	prl_rx[port].msg_id[type] = -1;
 }
 
 static void prl_copy_msg_to_buffer(int port)
@@ -1018,16 +1022,14 @@ static void prl_tx_layer_reset_for_transmit_entry(const int port)
 		 * From section 6.3.13 Soft Reset Message in the USB PD 3.0
 		 * v2.0 spec, Soft_Reset Message Shall be targeted at a
 		 * specific entity depending on the type of SOP* Packet used.
-		 */
-		prl_tx[port].msg_id_counter[pdmsg[port].xmit_type] = 0;
-
-		/*
+		 *
+		 *
 		 * From section 6.11.2.3.2, the MessageID should be cleared
 		 * from the PRL_Rx_Layer_Reset_for_Receive state. However, we
 		 * don't implement a full state machine for PRL RX states so
 		 * clear the MessageID here.
 		 */
-		prl_rx[port].msg_id[pdmsg[port].xmit_type] = -1;
+		prl_reset_msg_ids(port, pdmsg[port].xmit_type);
 	}
 }
 
@@ -1312,8 +1314,7 @@ static void prl_hr_reset_layer_entry(const int port)
 
 	/* Hard reset resets messageIDCounters for all TX types */
 	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
-		prl_rx[port].msg_id[i] = -1;
-		prl_tx[port].msg_id_counter[i] = 0;
+		prl_reset_msg_ids(port, i);
 	}
 
 	/* Disable RX */
@@ -2194,10 +2195,8 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 
 	/* Handle incoming soft reset as special case */
 	if (cnt == 0 && type == PD_CTRL_SOFT_RESET) {
-		/* Clear MessageIdCounter */
-		prl_tx[port].msg_id_counter[prl_rx[port].sop] = 0;
-		/* Clear stored MessageID value */
-		prl_rx[port].msg_id[prl_rx[port].sop] = -1;
+		/* Clear MessageIdCounter and stored MessageID value. */
+		prl_reset_msg_ids(port, prl_rx[port].sop);
 
 		/* Soft Reset occurred */
 		set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
