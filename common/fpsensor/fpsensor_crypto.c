@@ -44,6 +44,12 @@ static int get_ikm(uint8_t *ikm)
 	return EC_SUCCESS;
 }
 
+void compute_hmac_sha256(uint8_t *output, const uint8_t *key, const int key_len,
+			 const uint8_t *message, const int message_len)
+{
+	hmac_SHA256(output, key, key_len, message, message_len);
+}
+
 static void hkdf_extract(uint8_t *prk, const uint8_t *salt, size_t salt_size,
 			 const uint8_t *ikm, size_t ikm_size)
 {
@@ -51,7 +57,7 @@ static void hkdf_extract(uint8_t *prk, const uint8_t *salt, size_t salt_size,
 	 * Derive a key with the "extract" step of HKDF
 	 * https://tools.ietf.org/html/rfc5869#section-2.2
 	 */
-	hmac_SHA256(prk, salt, salt_size, ikm, ikm_size);
+	compute_hmac_sha256(prk, salt, salt_size, ikm, ikm_size);
 }
 
 static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
@@ -75,7 +81,7 @@ static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
 	memcpy(message_buf, info, info_size);
 	/* 1 step, set the counter byte to 1. */
 	message_buf[info_size] = 0x01;
-	hmac_SHA256(key_buf, prk, prk_size, message_buf, info_size + 1);
+	compute_hmac_sha256(key_buf, prk, prk_size, message_buf, info_size + 1);
 
 	memcpy(out_key, key_buf, out_key_size);
 	always_memset(key_buf, 0, sizeof(key_buf));
@@ -123,8 +129,8 @@ int hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk, size_t prk_size,
 		memcpy(info_buffer, T, T_len);
 		memcpy(info_buffer + T_len, info, info_size);
 		info_buffer[T_len + info_size] = count;
-		hmac_SHA256(T_buffer, prk, prk_size, info_buffer,
-			    T_len + info_size + sizeof(count));
+		compute_hmac_sha256(T_buffer, prk, prk_size, info_buffer,
+				    T_len + info_size + sizeof(count));
 		memcpy(out_key, T_buffer, block_size);
 
 		T += T_len;
