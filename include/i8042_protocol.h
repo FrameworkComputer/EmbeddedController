@@ -2,19 +2,17 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * i8042 keyboard protocol constants
+ * i8042 keyboard protocol constants.
+ *
+ * See the IBM PS/2 Hardware Interface Technical Reference Manual
+ *
+ * https://archive.org/details/ps-2-hardware-interface-technical-reference-ocr/PS2HardwareInterfaceTechnicalReference-OCR/page/n371/mode/1up
  */
 
 #ifndef __CROS_EC_I8042_PROTOCOL_H
 #define __CROS_EC_I8042_PROTOCOL_H
 
 /* Some commands appear more than once.  Why? */
-
-/* port 0x60 */
-#define I8042_CMD_MOUSE_1_1 0xe6
-#define I8042_CMD_MOUSE_2_1 0xe7
-#define I8042_CMD_MOUSE_RES 0xe8
-#define I8042_CMD_GET_MOUSE 0xe9
 
 /* port 0x64 */
 #define I8042_READ_CMD_BYTE 0x20
@@ -51,13 +49,7 @@
 #define I8042_PULSE_END 0xff
 
 /* port 0x60 return value */
-#define I8042_RET_EMUL0 0xe0
-#define I8042_RET_EMUL1 0xe1
-#define I8042_RET_RELEASE 0xf0
-#define I8042_RET_HANJA 0xf1
-#define I8042_RET_HANGEUL 0xf2
 #define I8042_RET_NAK 0xfe
-#define I8042_RET_ERR 0xff
 
 /* port 64 - command byte bits */
 #define I8042_XLATE BIT(6)
