@@ -1011,3 +1011,20 @@ void test_tcpci_set_bist_mode(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 }
+
+void test_tcpci_hard_reset_reinit(const struct emul *emul,
+				  struct i2c_common_emul_data *common_data,
+				  enum usbc_port port)
+{
+	const struct tcpm_drv *drv = tcpc_config[port].drv;
+	uint16_t power_status_mask;
+	uint16_t alert_mask;
+
+	zassume_equal(EC_SUCCESS, drv->init(port), NULL);
+	tcpci_emul_get_reg(emul, TCPC_REG_POWER_STATUS_MASK,
+			   &power_status_mask);
+	tcpci_emul_get_reg(emul, TCPC_REG_ALERT_MASK, &alert_mask);
+	zassert_ok(tcpci_hard_reset_reinit(USBC_PORT_C0), NULL);
+	check_tcpci_reg(emul, TCPC_REG_POWER_STATUS_MASK, power_status_mask);
+	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, alert_mask);
+}

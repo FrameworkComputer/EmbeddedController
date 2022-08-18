@@ -222,4 +222,16 @@ void test_tcpci_set_bist_mode(const struct emul *emul,
 			      struct i2c_common_emul_data *common_data,
 			      enum usbc_port port);
 
+/**
+ * @brief Test TCPCI hard reset re-init callback
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to emulated I2C bus
+ * @param port Select USBC port that will be used to obtain tcpm_drv from
+ *             tcpc_config
+ */
+void test_tcpci_hard_reset_reinit(const struct emul *emul,
+				  struct i2c_common_emul_data *common_data,
+				  enum usbc_port port);
+
 #endif /* __TCPCI_TEST_COMMON_H */

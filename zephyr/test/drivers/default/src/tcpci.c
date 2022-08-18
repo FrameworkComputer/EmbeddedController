@@ -496,6 +496,15 @@ ZTEST(tcpci, test_generic_tcpci_mux_set_get__not_tcpc)
 	set_usb_mux_tcpc();
 }
 
+ZTEST(tcpci, test_generic_tcpci_hard_reset_reinit)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(emul);
+
+	test_tcpci_hard_reset_reinit(emul, common_data, USBC_PORT_C0);
+}
+
 static void *tcpci_setup(void)
 {
 	/* This test suite assumes that first usb mux for port C0 is TCPCI */
