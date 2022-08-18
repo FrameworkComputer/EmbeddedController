@@ -472,7 +472,7 @@ void z_ztest_run_test_suite(const char *name, struct unit_test *suite);
 #define zassert_unreachable(msg, ...) TEST_ASSERT(0)
 #define zassert_true(cond, msg, ...) TEST_ASSERT(cond)
 #define zassert_false(cond, msg, ...) TEST_ASSERT(!(cond))
-#define zassert_ok(cond, msg, ...) TEST_ASSERT(cond)
+#define zassert_ok(cond, msg, ...) TEST_ASSERT(!(cond))
 #define zassert_is_null(ptr, msg, ...) TEST_ASSERT((ptr) == NULL)
 #define zassert_not_null(ptr, msg, ...) TEST_ASSERT((ptr) != NULL)
 #define zassert_equal(a, b, msg, ...) TEST_EQ((a), (b), "0x%x")
