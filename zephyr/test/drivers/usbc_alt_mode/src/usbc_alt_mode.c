@@ -247,6 +247,7 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 	k_sleep(K_SECONDS(1));
 
 	/* Verify host command when VDOs are present. */
+	struct ec_response_typec_status status;
 	struct ec_params_usb_pd_get_mode_response response;
 	int response_size;
 
@@ -261,6 +262,38 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 	/* DPM configures the partner on DP mode entry */
 	/* Verify port partner thinks its configured for DisplayPort */
 	zassert_true(fixture->partner.displayport_configured, NULL);
+	/* Verify we also set up DP on our mux */
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED),
+		      USB_PD_MUX_DP_ENABLED, "Failed to see DP set in mux");
+
+	/*
+	 * DP alt mode partner sends HPD through VDM:Attention, which uses the
+	 * same format as the DP Status data
+	 */
+	uint32_t vdm_attention_data[2];
+
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(1) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION);
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+
+	k_sleep(K_SECONDS(1));
+	/* Verify the board's HPD notification triggered */
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
+		      USB_PD_MUX_HPD_LVL, "Failed to set HPD level in mux");
+	zassert_equal((status.mux_state & USB_PD_MUX_HPD_IRQ),
+		      USB_PD_MUX_HPD_IRQ, "Failed to set HPD IRQin mux");
 }
 
 ZTEST_F(usbc_alt_mode, verify_displayport_mode_reentry)
