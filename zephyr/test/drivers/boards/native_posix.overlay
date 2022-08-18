@@ -235,8 +235,7 @@
 
 		named_i2c0: i2c0 {
 			i2c-port = <&i2c0>;
-			enum-names = "I2C_PORT_USB_C0",
-				"I2C_PORT_BATTERY",
+			enum-names = "I2C_PORT_BATTERY",
 				"I2C_PORT_POWER",
 				"I2C_PORT_CHARGER",
 				"I2C_PORT_EEPROM",
@@ -245,8 +244,15 @@
 		};
 		named_i2c1: i2c1 {
 			i2c-port = <&i2c1>;
-			enum-names = "I2C_PORT_USB_C1",
-				"I2C_PORT_SENSOR";
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		named_i2c2: i2c2 {
+			i2c-port = <&i2c2>;
+			enum-names = "I2C_PORT_USB_C0";
+		};
+		named_i2c3: i2c3 {
+			i2c-port = <&i2c3>;
+			enum-names = "I2C_PORT_USB_C1";
 		};
 	};
 
@@ -641,8 +647,8 @@
 	};
 
 	/*
-	 * Second i2c bus is required, because there are already devices with
-	 * addresses 0x68, 0xb and 0x9 on the first bus
+	 * Add extra i2c buses to test the I2C passthrough: 1 for sensor and
+	 * 2 dedicated for TCPC.
 	 */
 	i2c1: i2c@400 {
 		status = "okay";
@@ -653,16 +659,6 @@
 		reg = <0x400 4>;
 		label = "I2C_1";
 
-		ps8xxx_emul: ps8xxx_emul@b {
-			compatible = "cros,ps8xxx-emul";
-			reg = <0xb>;
-			alert_gpio = <&usb_c1_tcpc_int_odl>;
-			p0-i2c-addr = <0x8>;
-			p1-i2c-addr = <0x9>;
-			gpio-i2c-addr = <0x1a>;
-			label = "PS8XXX_EMUL";
-		};
-
 		tcs_emul: tcs@39 {
 			compatible = "zephyr,tcs3400";
 			reg = <0x39>;
@@ -671,6 +667,58 @@
 			error-on-reserved-bit-write;
 			error-on-msb-first-access;
 		};
+
+		accel_bmi160: bmi160@68 {
+			compatible = "zephyr,bmi";
+			reg = <0x68>;
+			label = "BMI160";
+			device-model = "BMI_EMUL_160";
+			error-on-ro-write;
+			error-on-wo-read;
+			error-on-reserved-bit-write;
+			simulate-command-exec-time;
+		};
+	};
+
+	i2c2: i2c@500 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x500 4>;
+		label = "I2C_2";
+
+		pi3usb9201_emul: pi3usb9201@5f {
+			compatible = "zephyr,pi3usb9201-emul";
+			reg = <0x5f>;
+			label = "PI3USB9201_EMUL";
+		};
+
+		sn5s330_emul: sn5s330@40 {
+			compatible = "cros,sn5s330-emul";
+			reg = <0x40>;
+			label = "SN5S330_EMUL";
+			int-pin = <&gpio_usb_c0_ppc_int>;
+		};
+
+		tcpci_emul: tcpci_emul@82 {
+			compatible = "cros,tcpci-generic-emul";
+			status = "okay";
+			reg = <0x82>;
+			label = "TCPCI_EMUL";
+			alert_gpio = <&usb_c0_tcpc_int_odl>;
+		};
+	};
+
+	i2c3: i2c@600 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x600 4>;
+		label = "I2C_3";
 
 		syv682x_emul: syv682x@41 {
 			compatible = "zephyr,syv682x-emul";
@@ -689,15 +737,14 @@
 			error-on-reserved-bit-write;
 		};
 
-		accel_bmi160: bmi160@68 {
-			compatible = "zephyr,bmi";
-			reg = <0x68>;
-			label = "BMI160";
-			device-model = "BMI_EMUL_160";
-			error-on-ro-write;
-			error-on-wo-read;
-			error-on-reserved-bit-write;
-			simulate-command-exec-time;
+		ps8xxx_emul: ps8xxx_emul@b {
+			compatible = "cros,ps8xxx-emul";
+			reg = <0xb>;
+			alert_gpio = <&usb_c1_tcpc_int_odl>;
+			p0-i2c-addr = <0x8>;
+			p1-i2c-addr = <0x9>;
+			gpio-i2c-addr = <0x1a>;
+			label = "PS8XXX_EMUL";
 		};
 	};
 
@@ -767,19 +814,6 @@
 		error-on-msb-first-access;
 	};
 
-	pi3usb9201_emul: pi3usb9201@5f {
-		compatible = "zephyr,pi3usb9201-emul";
-		reg = <0x5f>;
-		label = "PI3USB9201_EMUL";
-	};
-
-	sn5s330_emul: sn5s330@40 {
-		compatible = "cros,sn5s330-emul";
-		reg = <0x40>;
-		label = "SN5S330_EMUL";
-		int-pin = <&gpio_usb_c0_ppc_int>;
-	};
-
 	accel_bmi260: bmi260@68 {
 		compatible = "zephyr,bmi";
 		reg = <0x68>;
@@ -821,13 +855,6 @@
 		battery = <&battery>;
 	};
 
-	tcpci_emul: tcpci_emul@82 {
-		compatible = "cros,tcpci-generic-emul";
-		status = "okay";
-		reg = <0x82>;
-		label = "TCPCI_EMUL";
-		alert_gpio = <&usb_c0_tcpc_int_odl>;
-	};
 
 };
 
