@@ -39,16 +39,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
-		int_vol_down: vol_down {
-			irq-pin = <&gpio_voldn_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
-		};
-		int_vol_up: vol_up {
-			irq-pin = <&gpio_volup_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
-		};
 		int_wp_l: wp_l {
 			irq-pin = <&gpio_ec_wp_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -58,16 +48,6 @@
 			irq-pin = <&gpio_lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
-		};
-		int_tablet_mode: tablet_mode {
-			irq-pin = <&gpio_tablet_mode_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "gmr_tablet_switch_isr";
-		};
-		int_imu: ec_imu {
-		  irq-pin = <&gpio_imu_int_l>;
-		  flags = <GPIO_INT_EDGE_FALLING>;
-		  handler = "bmi3xx_interrupt";
 		};
 		int_usb_c0: usb_c0 {
 			irq-pin = <&gpio_usb_c0_int_odl>;
@@ -83,10 +63,15 @@
 
 	unused-pins {
 		compatible = "unused-gpios";
-		unused-gpios = <&gpioc 3 0>,
+		unused-gpios = <&gpioa 7 0>,
+			       <&gpioc 0 0>,
+			       <&gpioc 3 0>,
 			       <&gpiod 4 0>,
 			       <&gpiod 7 0>,
 			       <&gpioh 2 0>,
+			       <&gpioi 6 0>,
+			       <&gpioi 7 0>,
+			       <&gpioj 0 0>,
 			       <&gpioj 7 0>,
 			       <&gpiol 4 0>;
 	};

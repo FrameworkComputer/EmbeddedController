@@ -112,7 +112,6 @@ yaviks = register_nissa_project(
     extra_dts_overlays=[
         "gpio.dts",
         "overlay.dts",
-        "motionsense.dts",
         "keyboard.dts",
         "power_signals.dts",
         "pwm_leds.dts",
