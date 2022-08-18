@@ -365,6 +365,9 @@ static int command_wait(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM1;
 
+	if (i < 0)
+		return EC_ERROR_PARAM1;
+
 	/*
 	 * Reload the watchdog so that issuing multiple small waitms commands
 	 * quickly one after the other will not cause a reset.
