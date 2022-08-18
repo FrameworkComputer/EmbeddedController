@@ -10,6 +10,7 @@
 #include "ec_commands.h"
 #include "fpsensor_crypto.h"
 #include "fpsensor_state.h"
+#include "mock/fpsensor_crypto_mock.h"
 #include "mock/fpsensor_state_mock.h"
 #include "mock/rollback_mock.h"
 #include "mock/timer_mock.h"
@@ -413,6 +414,92 @@ test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+
+	/* GIVEN that the user ID is set to a known value. */
+	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+
+	/*
+	 * GIVEN that the TPM seed is set, and reading the rollback secret will
+	 * succeed.
+	 */
+	TEST_ASSERT(fp_tpm_seed_is_set() &&
+		    !mock_ctrl_rollback.get_secret_fail);
+
+	/* GIVEN that the salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+
+	/* GIVEN that the sha256 output is trivial (0x00) */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_ZEROS;
+
+	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt) ==
+		    EC_ERROR_HW_INTERNAL);
+
+	/* Now verify success is possible after reverting */
+
+	/* GIVEN that the sha256 output is non-trivial */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL;
+
+	/* THEN the derivation will succeed */
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt) == EC_SUCCESS);
+
+	/* Clean up any mock changes */
+	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;
+
+	return EC_SUCCESS;
+}
+
+test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+
+	/* GIVEN that the user ID is set to a known value. */
+	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+
+	/*
+	 * GIVEN that the TPM seed is set, and reading the rollback secret will
+	 * succeed.
+	 */
+	TEST_ASSERT(fp_tpm_seed_is_set() &&
+		    !mock_ctrl_rollback.get_secret_fail);
+
+	/* GIVEN that the salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+
+	/* GIVEN that the sha256 output is trivial (0xFF) */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_FF;
+
+	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt) ==
+		    EC_ERROR_HW_INTERNAL);
+
+	/* Now verify success is possible after reverting */
+
+	/* GIVEN that the sha256 output is non-trivial */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL;
+
+	/* THEN the derivation will succeed */
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt) == EC_SUCCESS);
+
+	/* Clean up any mock changes */
+	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;
+
+	return EC_SUCCESS;
+}
+
 static int test_enable_positive_match_secret_once(
 	struct positive_match_secret_state *dumb_state)
 {
@@ -616,6 +703,8 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_derive_new_pos_match_secret);
 	RUN_TEST(test_derive_positive_match_secret_fail_rollback_fail);
 	RUN_TEST(test_derive_positive_match_secret_fail_salt_trivial);
+	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0x00);
+	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0xff);
 	RUN_TEST(test_enable_positive_match_secret);
 	RUN_TEST(test_disable_positive_match_secret);
 	RUN_TEST(test_command_read_match_secret);

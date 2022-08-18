@@ -44,8 +44,10 @@ static int get_ikm(uint8_t *ikm)
 	return EC_SUCCESS;
 }
 
-void compute_hmac_sha256(uint8_t *output, const uint8_t *key, const int key_len,
-			 const uint8_t *message, const int message_len)
+test_mockable void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
+				       const int key_len,
+				       const uint8_t *message,
+				       const int message_len)
 {
 	hmac_SHA256(output, key, key_len, message, message_len);
 }
