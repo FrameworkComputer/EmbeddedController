@@ -126,7 +126,7 @@ static void lte_power_handler(struct ap_power_ev_callback *cb,
 		LOG_DBG("Enabling LTE sub-board power rails");
 		gpio_pin_set_dt(s5_rail, 1);
 		break;
-	case AP_POWER_SHUTDOWN:
+	case AP_POWER_HARD_OFF:
 		LOG_DBG("Disabling LTE sub-board power rails");
 		gpio_pin_set_dt(s5_rail, 0);
 		break;
@@ -252,7 +252,7 @@ static void nereid_subboard_config(void)
 		 * exiting S5 state.
 		 */
 		ap_power_ev_init_callback(&power_cb, lte_power_handler,
-					  AP_POWER_SHUTDOWN |
+					  AP_POWER_HARD_OFF |
 						  AP_POWER_PRE_INIT);
 		ap_power_ev_add_callback(&power_cb);
 		break;
