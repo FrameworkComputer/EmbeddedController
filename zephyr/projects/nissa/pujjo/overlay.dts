@@ -132,29 +132,29 @@
 	};
 
 	named-temp-sensors {
-		memory {
+		CPU {
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 			enum-name = "TEMP_SENSOR_1";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <90>;
+			temp_host_halt = <100>;
+			temp_host_release_high = <85>;
 			adc = <&adc_temp_sensor_1>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 		};
-		charger {
+		DDR {
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 			enum-name = "TEMP_SENSOR_2";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <90>;
+			temp_host_halt = <100>;
+			temp_host_release_high = <85>;
 			adc = <&adc_temp_sensor_2>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 		};
@@ -165,9 +165,9 @@
 			enum-name = "TEMP_SENSOR_3";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <90>;
+			temp_host_halt = <100>;
+			temp_host_release_high = <85>;
 			adc = <&adc_temp_sensor_3>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 		};
