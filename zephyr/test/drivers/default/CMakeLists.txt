@@ -7,6 +7,7 @@ target_sources(app PRIVATE
     src/bmi260.c
     src/charge_manager.c
     src/console.c
+    src/console_cmd/adc.c
     src/console_cmd/battery.c
     src/console_cmd/charge_manager.c
     src/console_cmd/charge_state.c
