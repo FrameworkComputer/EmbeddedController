@@ -10,6 +10,9 @@
 
 #include "baseboard.h"
 
+/* Free up flash space */
+#undef CONFIG_CONSOLE_CMDHELP
+
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 
 /* Internal SPI flash on NPCX7 */
