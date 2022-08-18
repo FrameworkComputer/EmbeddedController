@@ -353,4 +353,8 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_chipset_on_pd_button_behavior)
 	zassert_true(fixture->src_ext.alert_received, NULL);
 	zassert_true(fixture->src_ext.status_received, NULL);
 	zassert_true(chipset_in_state(CHIPSET_STATE_ANY_OFF), NULL);
+
+	/* Wake device to setup for subsequent tests */
+	chipset_power_on();
+	k_sleep(K_SECONDS(10));
 }
