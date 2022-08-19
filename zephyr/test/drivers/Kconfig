@@ -29,4 +29,7 @@ config LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE
 config LINK_TEST_SUITE_USBC_ALT_MODE
 	bool "Link and test the usbc_alt_mode tests"
 
+config LINK_TEST_SUITE_USBC_TBT_MODE
+	bool "Link and test the usbc_tbt_mode tests"
+
 source "Kconfig.zephyr"
