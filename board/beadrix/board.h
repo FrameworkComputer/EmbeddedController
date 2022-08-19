@@ -12,8 +12,7 @@
 #define VARIANT_DEDEDE_EC_IT8320
 #include "baseboard.h"
 
-/* System unlocked in early development */
-#define CONFIG_SYSTEM_UNLOCKED
+#undef CONFIG_I2C_DEBUG
 
 /* EC console commands */
 #define CONFIG_CMD_CHARGER_DUMP
