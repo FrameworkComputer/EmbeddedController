@@ -23,6 +23,9 @@ config LINK_TEST_SUITE_PWM_LED_DRIVER
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 
+config LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE
+	bool "Link and test the usb_retimer_fw_update tests"
+
 config LINK_TEST_SUITE_USBC_ALT_MODE
 	bool "Link and test the usbc_alt_mode tests"
 
