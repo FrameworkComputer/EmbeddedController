@@ -14,6 +14,12 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef USE_BUILTIN_STDLIB
+static const bool use_builtin_stdlib = true;
+#else
+static const bool use_builtin_stdlib = false;
+#endif
+
 static int test_isalpha(void)
 {
 	TEST_ASSERT(isalpha('a'));
@@ -47,7 +53,19 @@ static int test_strstr(void)
 	const char s1[] = "abcde";
 
 	TEST_ASSERT(strstr(s1, "ab") == s1);
-	TEST_ASSERT(strstr(s1, "") == NULL);
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(strstr(s1, "") == NULL);
+	} else {
+		/*
+		 * From the man page: If needle is the empty string, the return
+		 * value is always haystack itself.
+		 */
+		TEST_ASSERT(strstr(s1, "") == s1);
+	}
 	TEST_ASSERT(strstr("", "ab") == NULL);
 	TEST_ASSERT(strstr("", "x") == NULL);
 	TEST_ASSERT(strstr(s1, "de") == &s1[3]);
@@ -66,8 +84,25 @@ static int test_strtoull(void)
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+010", &e, 0) == 8);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-010", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(strtoull("-010", &e, 0) == 0);
+		TEST_ASSERT(e && (*e == '-'));
+	} else {
+		/*
+		 * From the man page: The strtoull() function returns either
+		 * the result of the conversion or, if there was a leading
+		 * minus sign, the negation of the result of the conversion
+		 * represented as an unsigned value, unless the original
+		 * (nonnegated) value would overflow
+		 */
+		TEST_ASSERT(strtoull("-010", &e, 0) == 0xFFFFFFFFFFFFFFF8);
+	}
+
 	TEST_ASSERT(strtoull("0x1f z", &e, 0) == 31);
 	TEST_ASSERT(e && (*e == ' '));
 	TEST_ASSERT(strtoull("0X1f z", &e, 0) == 31);
@@ -78,38 +113,113 @@ static int test_strtoull(void)
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+0x02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0);
-	TEST_ASSERT(e && (*e == '-'));
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0);
+		TEST_ASSERT(e && (*e == '-'));
+	} else {
+		TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0xFFFFFFFFFFFFFFD4);
+	}
+
 	TEST_ASSERT(strtoull("0x02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+0x02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0);
+		TEST_ASSERT(e && (*e == '-'));
+	} else {
+		TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0xFFFFFFFFFFFFFFD4);
+	}
+
 	TEST_ASSERT(strtoull("0X02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+0X02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0);
-	TEST_ASSERT(e && (*e == '-'));
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0);
+		TEST_ASSERT(e && (*e == '-'));
+	} else {
+		TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0xFFFFFFFFFFFFFFD4);
+	}
+
 	TEST_ASSERT(strtoull("0X02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+0X02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoull("   -12", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0);
+		TEST_ASSERT(e && (*e == '-'));
+	} else {
+		TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0xFFFFFFFFFFFFFFD4);
+	}
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(strtoull("   -12", &e, 0) == 0);
+		TEST_ASSERT(e && (*e == '-'));
+	} else {
+		TEST_ASSERT(strtoull("   -12", &e, 0) == 0xFFFFFFFFFFFFFFF4);
+	}
+
 	TEST_ASSERT(strtoull("!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
+
 	TEST_ASSERT(strtoull("+!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(http://b/243192369): This is incorrect and should be
+		 * fixed.
+		 */
+		TEST_ASSERT(e && (*e == '!'));
+	} else {
+		TEST_ASSERT(e && (*e == '+'));
+	}
+
 	TEST_ASSERT(strtoull("+0!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
+
 	TEST_ASSERT(strtoull("+0x!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
+	if (use_builtin_stdlib) {
+		TEST_ASSERT(e && (*e == '!'));
+	} else {
+		if (IS_ENABLED(EMU_BUILD))
+			TEST_ASSERT(e && (*e == 'x'));
+		else
+			TEST_ASSERT(e && (*e == '+'));
+	}
+
 	TEST_ASSERT(strtoull("+0X!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
+	if (use_builtin_stdlib) {
+		TEST_ASSERT(e && (*e == '!'));
+	} else {
+		if (IS_ENABLED(EMU_BUILD))
+			TEST_ASSERT(e && (*e == 'X'));
+		else
+			TEST_ASSERT(e && (*e == '+'));
+	}
 
 	return EC_SUCCESS;
 }
@@ -256,7 +366,7 @@ static int test_memmove(void)
 	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
 	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
-	if (!IS_ENABLED(EMU_BUILD))
+	if (!IS_ENABLED(EMU_BUILD) && use_builtin_stdlib)
 		TEST_ASSERT((t1.val - t0.val) > (t3.val - t2.val));
 
 	/* Test small moves */
