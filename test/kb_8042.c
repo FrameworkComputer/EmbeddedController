@@ -125,13 +125,20 @@ static int _write_cmd_byte(uint8_t val)
 }
 #define WRITE_CMD_BYTE(val) TEST_EQ(_write_cmd_byte(val), EC_SUCCESS, "%d")
 
-static uint8_t read_cmd_byte(void)
+static int _read_cmd_byte(uint8_t *cmd)
 {
 	lpc_char_cnt = 0;
 	keyboard_host_write(I8042_READ_CMD_BYTE, 1);
 	msleep(30);
-	return lpc_char_buf[0];
+	*cmd = lpc_char_buf[0];
+	return EC_SUCCESS;
 }
+#define READ_CMD_BYTE(cmd_ptr)                                   \
+	({                                                       \
+		uint8_t cmd;                                     \
+		TEST_EQ(_read_cmd_byte(&cmd), EC_SUCCESS, "%d"); \
+		cmd;                                             \
+	})
 
 static int __verify_lpc_char(char *arr, unsigned int sz, int delay_ms)
 {
@@ -295,12 +302,12 @@ static int test_8042_aux_controller_commands(void)
 
 	/* Send the AUX DISABLE command and verify the ctrl got updated */
 	i8042_write_cmd(I8042_DIS_MOUSE);
-	ctrl = read_cmd_byte();
+	ctrl = READ_CMD_BYTE();
 	TEST_ASSERT(ctrl & I8042_AUX_DIS);
 
 	/* Send the AUX ENABLE command and verify the ctrl got updated */
 	i8042_write_cmd(I8042_ENA_MOUSE);
-	ctrl = read_cmd_byte();
+	ctrl = READ_CMD_BYTE();
 	TEST_ASSERT(!(ctrl & I8042_AUX_DIS));
 
 	return EC_SUCCESS;
@@ -381,13 +388,13 @@ static int test_scancode_set2(void)
 {
 	SET_SCANCODE(2);
 
-	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
 	VERIFY_LPC_CHAR("\x81");
 
-	WRITE_CMD_BYTE(read_cmd_byte() & ~I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() & ~I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x76");
 	press_key(1, 1, 0);
@@ -409,7 +416,7 @@ static int test_power_button(void)
 	VERIFY_LPC_CHAR_DELAY("\xe0\xde", 100);
 
 	SET_SCANCODE(2);
-	WRITE_CMD_BYTE(read_cmd_byte() & ~I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() & ~I8042_XLATE);
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
 	VERIFY_LPC_CHAR_DELAY("\xe0\x37", 100);
@@ -441,13 +448,13 @@ static int test_sysjump(void)
 
 static int test_sysjump_cont(void)
 {
-	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
 	VERIFY_LPC_CHAR("\x81");
 
-	WRITE_CMD_BYTE(read_cmd_byte() & ~I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() & ~I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x76");
 	press_key(1, 1, 0);
@@ -507,17 +514,17 @@ static int test_vivaldi_top_keys(void)
 	SET_SCANCODE(2);
 
 	/* Test REFRESH key */
-	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
 	press_key(2, 3, 1); /* Press T2 */
 	VERIFY_LPC_CHAR("\xe0\x67"); /* Check REFRESH scancode in set-1 */
 
 	/* Test SNAPSHOT key */
-	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
 	press_key(4, 3, 1); /* Press T2 */
 	VERIFY_LPC_CHAR("\xe0\x13"); /* Check SNAPSHOT scancode in set-1 */
 
 	/* Test VOL_UP key */
-	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
 	press_key(5, 3, 1); /* Press T2 */
 	VERIFY_LPC_CHAR("\xe0\x30"); /* Check VOL_UP scancode in set-1 */
 
