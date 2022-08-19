@@ -1999,6 +1999,15 @@
  */
 #undef CONFIG_FAN_UPDATE_PERIOD
 
+/*
+ * Enable fan slow response control mechanism.
+ * A specific type of fan needs a longer time to output the TACH
+ * signal to EC after EC outputs the PWM signal to the fan.
+ * During this period, the driver will read two consecutive RPM = 0.
+ * In this case, don't step the PWM duty too aggressively
+ */
+#undef CONFIG_FAN_BYPASS_SLOW_RESPONSE
+
 /*****************************************************************************/
 /* Flash configuration */
 

@@ -299,7 +299,8 @@ enum fan_status fan_smart_control(int ch, int rpm_actual, int rpm_target)
 	 * In this case, don't step the PWM duty too aggressively.
 	 * See b:225208265 for more detail.
 	 */
-	if (rpm_pre[ch] == 0 && rpm_actual == 0) {
+	if (rpm_pre[ch] == 0 && rpm_actual == 0 &&
+	    IS_ENABLED(CONFIG_FAN_BYPASS_SLOW_RESPONSE)) {
 		rpm_diff = RPM_MARGIN(rpm_target) + 1;
 	} else {
 		rpm_diff = rpm_target - rpm_actual;

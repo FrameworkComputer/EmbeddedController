@@ -610,6 +610,11 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_FANS CONFIG_PLATFORM_EC_NUM_FANS
 #endif
 
+#undef CONFIG_FAN_BYPASS_SLOW_RESPONSE
+#ifdef PLATFORM_EC_FAN_BYPASS_SLOW_RESPONSE
+#define CONFIG_FAN_BYPASS_SLOW_RESPONSE
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_I2C
 /* Also see shim/include/i2c/i2c.h which defines the ports enum */
 #define CONFIG_I2C_CONTROLLER
