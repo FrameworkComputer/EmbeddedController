@@ -116,6 +116,29 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_cmd)
 }
 
 /**
+ * @brief TestPurpose: Verify EC_CMD_HOST_EVENT_GET_WAKE_MASK get host command.
+ *
+ * EC_CMD_HOST_EVENT_GET_WAKE_MASK is deprecated.  See ec_command.h for detauls.
+ */
+ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_wake_mask)
+{
+#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status ret_val;
+	struct ec_response_host_event_mask result = { 0 };
+
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_HOST_EVENT_GET_WAKE_MASK, 0, result);
+
+	ret_val = host_command_process(&args);
+
+	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
+		      EC_RES_SUCCESS, ret_val);
+#else
+	ztest_test_skip();
+#endif
+}
+
+/**
  * @brief TestPurpose: Verify EC_CMD_HOST_EVENT set host command.
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_set_cmd)
