@@ -39,6 +39,7 @@ void check_tcpci_reg_with_mask_f(const struct emul *emul, int reg,
  * @brief Test TCPCI init and vbus level callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -50,6 +51,7 @@ void test_tcpci_init(const struct emul *emul,
  * @brief Test TCPCI release callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -61,6 +63,7 @@ void test_tcpci_release(const struct emul *emul,
  * @brief Test TCPCI get cc callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -72,6 +75,7 @@ void test_tcpci_get_cc(const struct emul *emul,
  * @brief Test TCPCI set cc callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -83,6 +87,7 @@ void test_tcpci_set_cc(const struct emul *emul,
  * @brief Test TCPCI set polarity callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -94,6 +99,7 @@ void test_tcpci_set_polarity(const struct emul *emul,
  * @brief Test TCPCI set vconn callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -105,6 +111,7 @@ void test_tcpci_set_vconn(const struct emul *emul,
  * @brief Test TCPCI set msg header callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -116,6 +123,7 @@ void test_tcpci_set_msg_header(const struct emul *emul,
  * @brief Test TCPCI rx and sop prime enable callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -138,6 +146,7 @@ void test_tcpci_get_rx_message_raw(const struct emul *emul,
  * @brief Test TCPCI transmitting message from TCPC callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -149,6 +158,7 @@ void test_tcpci_transmit(const struct emul *emul,
  * @brief Test TCPCI alert callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -160,6 +170,7 @@ void test_tcpci_alert(const struct emul *emul,
  * @brief Test TCPCI alert RX message callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -171,6 +182,7 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
  * @brief Test TCPCI auto discharge on disconnect callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -182,6 +194,7 @@ void test_tcpci_auto_discharge(const struct emul *emul,
  * @brief Test TCPCI drp toggle callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -193,6 +206,7 @@ void test_tcpci_drp_toggle(const struct emul *emul,
  * @brief Test TCPCI get chip info callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -204,6 +218,7 @@ void test_tcpci_get_chip_info(const struct emul *emul,
  * @brief Test TCPCI enter low power mode callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */
@@ -215,6 +230,7 @@ void test_tcpci_low_power_mode(const struct emul *emul,
  * @brief Test TCPCI set bist test mode callback
  *
  * @param emul Pointer to TCPCI emulator
+ * @param common_data Pointer to argument emul's i2c_common_emul_data
  * @param port Select USBC port that will be used to obtain tcpm_drv from
  *             tcpc_config
  */

@@ -50,7 +50,7 @@ enum ps8xxx_emul_port {
 #define PS8XXX_REG_FW_REV 0x82
 
 /**
- * @brief Get pointer to specific "hidden" I2C device
+ * @brief Get pointer to i2c_common_data for specific "hidden" I2C device
  *
  * @param emul Pointer to PS8xxx emulator
  * @param port Select which "hidden" I2C device should be obtained

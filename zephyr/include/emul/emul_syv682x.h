@@ -149,10 +149,10 @@ int syv682x_emul_set_reg(const struct emul *emul, int reg, uint8_t val);
 int syv682x_emul_get_reg(const struct emul *emul, int reg, uint8_t *val);
 
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for given emul
  *
  * @param emul Pointer to SYV682X emulator
- * @return Pointer to SYV682X emulator associated i2c_common_emul_data
+ * @return common_data Pointer to i2c_common_emul_data
  */
 struct i2c_common_emul_data *
 emul_syv682x_get_i2c_common_data(const struct emul *emul);

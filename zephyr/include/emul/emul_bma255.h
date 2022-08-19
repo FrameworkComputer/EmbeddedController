@@ -176,10 +176,10 @@ void bma_emul_set_err_on_msb_first(const struct emul *emul, bool set);
 int bma_emul_access_reg(const struct emul *emul, int reg, int bytes, bool read);
 
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for argument emul
  *
  * @param emul Pointer to BMA emulator
- * @return Pointer to BMA emulator associated i2c_common_emul_data
+ * @return Pointer to i2c_common_emul_data from argument emul
  */
 struct i2c_common_emul_data *
 emul_bma_get_i2c_common_data(const struct emul *emul);

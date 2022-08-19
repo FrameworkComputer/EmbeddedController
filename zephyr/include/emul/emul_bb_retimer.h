@@ -74,10 +74,10 @@ void bb_emul_set_err_on_ro_write(const struct emul *emul, bool set);
 void bb_emul_set_err_on_rsvd_write(const struct emul *emul, bool set);
 
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for given emul
  *
  * @param emul Pointer to bb retimer emulator
- * @return Pointer to bb retimer emulator associated i2c_common_emul_data
+ * @return Pointer to i2c_common_emul_data for emul argument
  */
 struct i2c_common_emul_data *
 emul_bb_retimer_get_i2c_common_data(const struct emul *emul);

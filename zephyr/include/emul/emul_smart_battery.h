@@ -185,10 +185,10 @@ void sbat_emul_set_response(const struct emul *emul, int cmd, uint8_t *buf,
 			    int len, bool fail);
 
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for argument emul
  *
  * @param emul Pointer to smart_battery emulator
- * @return Pointer to smart_battery emulator associated i2c_common_emul_data
+ * @return Pointer to i2c_common_emul_data from argument emul
  */
 struct i2c_common_emul_data *
 emul_smart_battery_get_i2c_common_data(const struct emul *emul);

@@ -429,10 +429,10 @@ void bmi_emul_state_to_reg(const struct emul *emul, int acc_shift,
 			   int sensortime_reg, bool acc_off_en,
 			   bool gyr_off_en);
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for given emul
  *
  * @param emul Pointer to BMI emulator
- * @return Pointer to BMI emulator associated i2c_common_emul_data
+ * @return Pointer to i2c_common_emul_data for emul argument
  */
 struct i2c_common_emul_data *
 emul_bmi_get_i2c_common_data(const struct emul *emul);

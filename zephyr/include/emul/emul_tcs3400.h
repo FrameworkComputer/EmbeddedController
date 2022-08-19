@@ -142,10 +142,10 @@ void tcs_emul_set_err_on_rsvd_write(const struct emul *emul, bool set);
 void tcs_emul_set_err_on_msb_first(const struct emul *emul, bool set);
 
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for argument emul
  *
- * @param emul Pointer to LN9310 emulator
- * @return Pointer to TCS3400 emulator associated i2c_common_emul_data
+ * @param emul Pointer to tcs3400 emulator
+ * @return Pointer to i2c_common_emul_data from argument emul
  */
 struct i2c_common_emul_data *
 emul_tcs3400_get_i2c_common_data(const struct emul *emul);

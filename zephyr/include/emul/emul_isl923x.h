@@ -96,10 +96,10 @@ void raa489000_emul_set_acok_pin(const struct emul *emulator, uint16_t value);
 uint16_t isl923x_emul_peek_reg(const struct emul *emul, int reg);
 
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for argument emul
  *
  * @param emul Pointer to ISL923X emulator
- * @return Pointer to ISL923X emulator associated i2c_common_emul_data
+ * @return Pointer to i2c_common_emul_data from argument emul
  */
 struct i2c_common_emul_data *
 emul_isl923x_get_i2c_common_data(const struct emul *emul);

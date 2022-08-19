@@ -89,10 +89,10 @@ int lis2dw12_emul_set_accel_reading(const struct emul *emul, intv3_t reading);
 void lis2dw12_emul_clear_accel_reading(const struct emul *emul);
 
 /**
- * @brief Saves current internal state of sensors to emulator's registers.
+ * @brief Returns pointer to i2c_common_emul_data for argument emul
  *
  * @param emul Pointer to LIS2DW12 emulator
- * @return Pointer to LIS2DW12 emulator associated i2c_common_emul_data
+ * @return Pointer to i2c_common_emul_data from argument emul
  */
 struct i2c_common_emul_data *
 emul_lis2dw12_get_i2c_common_data(const struct emul *emul);
