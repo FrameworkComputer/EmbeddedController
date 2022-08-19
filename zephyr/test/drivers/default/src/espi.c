@@ -258,4 +258,31 @@ ZTEST(espi, test_hc_gpio_get_v1_invalid_subcmd)
 	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
 }
 
+/* EC_CMD_GET_FEATURES */
+ZTEST_USER(espi, test_host_command_ec_cmd_get_features)
+{
+	struct ec_response_get_features response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_FEATURES, 0, response);
+
+	int rv = host_command_process(&args);
+
+	zassert_equal(rv, EC_RES_SUCCESS, "Expected %d, but got %d",
+		      EC_RES_SUCCESS, rv);
+
+	/* Check features returned */
+	uint32_t feature_mask;
+
+	feature_mask = EC_FEATURE_MASK_0(EC_FEATURE_FLASH);
+	feature_mask |= EC_FEATURE_MASK_0(EC_FEATURE_MOTION_SENSE);
+	feature_mask |= EC_FEATURE_MASK_0(EC_FEATURE_KEYB);
+	zassert_true((response.flags[0] & feature_mask),
+		     "Known features were not returned.");
+	feature_mask = EC_FEATURE_MASK_1(EC_FEATURE_UNIFIED_WAKE_MASKS);
+	feature_mask |= EC_FEATURE_MASK_1(EC_FEATURE_HOST_EVENT64);
+	feature_mask |= EC_FEATURE_MASK_1(EC_FEATURE_EXEC_IN_RAM);
+	zassert_true((response.flags[1] & feature_mask),
+		     "Known features were not returned.");
+}
+
 ZTEST_SUITE(espi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
