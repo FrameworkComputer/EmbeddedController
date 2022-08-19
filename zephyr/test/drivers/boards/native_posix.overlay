@@ -931,10 +931,10 @@
 		simulate-command-exec-time;
 	};
 
-	ln9310: ln9310@80 {
+	ln9310: ln9310@72 {
 		compatible = "cros,ln9310-emul";
 		status = "okay";
-		reg = <0x80>;
+		reg = <0x72>;
 		label = "LN9310";
 		pg-int-pin = <&gpio_switchcap_pg_int_l>;
 	};
