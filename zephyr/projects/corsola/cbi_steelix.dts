@@ -27,5 +27,28 @@
 				value = <0>;
 			};
 		};
+
+		/* FW_CONFIG field to indicate which DB is attached. */
+		db_config: db {
+			enum-name = "DB";
+			start = <0>;
+			size = <4>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_NONE";
+				value = <0>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_USBA_HDMI";
+				value = <1>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_USBA_HDMI_LTE";
+				value = <2>;
+			};
+		};
 	};
 };
