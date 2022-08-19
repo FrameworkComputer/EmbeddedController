@@ -151,7 +151,7 @@
 
 &i2c5_0 {
 	label = "I2C__BATTERY";
-	clock-frequency = <I2C_BITRATE_FAST>;
+	clock-frequency = <I2C_BITRATE_STANDARD>;
 
 	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
 	pinctrl-names = "default";
