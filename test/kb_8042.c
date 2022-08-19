@@ -24,16 +24,21 @@
 
 static const char *action[2] = { "release", "press" };
 
-#define BUF_SIZE 16
-static char lpc_char_buf[BUF_SIZE];
-static unsigned int lpc_char_cnt;
-
-static struct queue const aux_to_device = QUEUE_NULL(16, uint8_t);
-
 struct to_host_data {
 	uint8_t data;
 	int irq;
 };
+
+/*
+ * Keyboard or 8042 controller output to host.
+ *
+ * In the future we should have a separate keyboard queue and 8042 controller
+ * queue so we don't lose keys while the keyboard port is inhibited.
+ */
+static struct queue const kbd_8042_ctrl_to_host =
+	QUEUE_NULL(16, struct to_host_data);
+
+static struct queue const aux_to_device = QUEUE_NULL(16, uint8_t);
 
 static struct queue const aux_to_host = QUEUE_NULL(16, struct to_host_data);
 
@@ -47,7 +52,11 @@ int lid_is_open(void)
 
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
-	lpc_char_buf[lpc_char_cnt++] = chr;
+	struct to_host_data data = { .data = chr, .irq = send_irq };
+
+	if (queue_add_unit(&kbd_8042_ctrl_to_host, &data) == 0)
+		ccprintf("%s: ERROR: kbd_8042_ctrl_to_host queue is full!\n",
+			 __FILE__);
 }
 
 void send_aux_data_to_device(uint8_t data)
@@ -66,6 +75,34 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 /*****************************************************************************/
 /* Test utilities */
 
+/*
+ * This is a bit tricky, the second parameter to _Static_assert must be a string
+ * literal, so we use that property to assert x is a string literal.
+ */
+#define ASSERT_IS_STRING_LITERAL(x) _Static_assert(true, x)
+
+#define VERIFY_LPC_CHAR_DELAY(s, d)                                       \
+	do {                                                              \
+		struct to_host_data _data;                                \
+		const uint8_t *expected = s;                              \
+		ASSERT_IS_STRING_LITERAL(s);                              \
+		msleep(d);                                                \
+		for (int _i = 0; _i < sizeof(s) - 1; ++_i) {              \
+			TEST_EQ(queue_remove_unit(&kbd_8042_ctrl_to_host, \
+						  &_data),                \
+				(size_t)1, "%zd");                        \
+			TEST_EQ(_data.data, expected[_i], "0x%x");        \
+		}                                                         \
+	} while (0)
+#define VERIFY_LPC_CHAR(s) VERIFY_LPC_CHAR_DELAY(s, 30)
+#define VERIFY_ATKBD_ACK(s) VERIFY_LPC_CHAR("\xfa") /* ATKBD_RET_ACK */
+
+#define VERIFY_NO_CHAR()                                                  \
+	do {                                                              \
+		msleep(30);                                               \
+		TEST_EQ(queue_is_empty(&kbd_8042_ctrl_to_host), 1, "%d"); \
+	} while (0)
+
 static void press_key(int c, int r, int pressed)
 {
 	ccprintf("Input %s (%d, %d)\n", action[pressed], c, r);
@@ -76,7 +113,7 @@ static int _enable_keystroke(int enabled)
 {
 	uint8_t data = enabled ? ATKBD_CMD_ENABLE : ATKBD_CMD_RESET_DIS;
 	keyboard_host_write(data, 0);
-	msleep(30);
+	VERIFY_ATKBD_ACK();
 
 	return EC_SUCCESS;
 }
@@ -86,7 +123,7 @@ static int _enable_keystroke(int enabled)
 static int _reset_8042(void)
 {
 	keyboard_host_write(ATKBD_CMD_RESET_DEF, 0);
-	msleep(30);
+	VERIFY_ATKBD_ACK();
 
 	return EC_SUCCESS;
 }
@@ -95,9 +132,10 @@ static int _reset_8042(void)
 static int _set_typematic(uint8_t val)
 {
 	keyboard_host_write(ATKBD_CMD_SETREP, 0);
-	msleep(30);
+	VERIFY_ATKBD_ACK();
+
 	keyboard_host_write(val, 0);
-	msleep(30);
+	VERIFY_ATKBD_ACK();
 
 	return EC_SUCCESS;
 }
@@ -106,9 +144,10 @@ static int _set_typematic(uint8_t val)
 static int _set_scancode(uint8_t s)
 {
 	keyboard_host_write(ATKBD_CMD_SSCANSET, 0);
-	msleep(30);
+	VERIFY_ATKBD_ACK();
+
 	keyboard_host_write(s, 0);
-	msleep(30);
+	VERIFY_ATKBD_ACK();
 
 	return EC_SUCCESS;
 }
@@ -117,9 +156,10 @@ static int _set_scancode(uint8_t s)
 static int _write_cmd_byte(uint8_t val)
 {
 	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
-	msleep(30);
+	VERIFY_NO_CHAR();
+
 	keyboard_host_write(val, 0);
-	msleep(30);
+	VERIFY_NO_CHAR();
 
 	return EC_SUCCESS;
 }
@@ -127,10 +167,14 @@ static int _write_cmd_byte(uint8_t val)
 
 static int _read_cmd_byte(uint8_t *cmd)
 {
-	lpc_char_cnt = 0;
+	struct to_host_data data;
+
 	keyboard_host_write(I8042_READ_CMD_BYTE, 1);
 	msleep(30);
-	*cmd = lpc_char_buf[0];
+	if (queue_remove_unit(&kbd_8042_ctrl_to_host, &data) == 0)
+		return EC_ERROR_UNKNOWN;
+	*cmd = data.data;
+
 	return EC_SUCCESS;
 }
 #define READ_CMD_BYTE(cmd_ptr)                                   \
@@ -139,33 +183,6 @@ static int _read_cmd_byte(uint8_t *cmd)
 		TEST_EQ(_read_cmd_byte(&cmd), EC_SUCCESS, "%d"); \
 		cmd;                                             \
 	})
-
-static int __verify_lpc_char(char *arr, unsigned int sz, int delay_ms)
-{
-	int i;
-
-	lpc_char_cnt = 0;
-	for (i = 0; i < sz; ++i)
-		lpc_char_buf[i] = 0;
-	msleep(delay_ms);
-	TEST_ASSERT_ARRAY_EQ(arr, lpc_char_buf, sz);
-	return EC_SUCCESS;
-}
-
-#define VERIFY_LPC_CHAR(s) \
-	TEST_ASSERT(__verify_lpc_char(s, strlen(s), 30) == EC_SUCCESS)
-#define VERIFY_LPC_CHAR_DELAY(s, t) \
-	TEST_ASSERT(__verify_lpc_char(s, strlen(s), t) == EC_SUCCESS)
-
-static int __verify_no_char(void)
-{
-	lpc_char_cnt = 0;
-	msleep(30);
-	TEST_ASSERT(lpc_char_cnt == 0);
-	return EC_SUCCESS;
-}
-
-#define VERIFY_NO_CHAR() TEST_ASSERT(__verify_no_char() == EC_SUCCESS)
 
 #define VERIFY_AUX_TO_HOST(expected_data, expected_irq)                    \
 	do {                                                               \
@@ -315,17 +332,10 @@ static int test_8042_aux_controller_commands(void)
 
 static int test_8042_aux_test_command(void)
 {
-	/* This isn't properly cleaned, so explicitly clear it. */
-	lpc_char_cnt = 0;
-
 	/* Send the AUX DISABLE command and verify the ctrl got updated */
 	i8042_write_cmd(I8042_TEST_MOUSE);
 
-	/* VERIFY_LPC_CHAR doesn't work on NULL strings */
-	msleep(30);
-	TEST_EQ(lpc_char_cnt, 1, "%d");
-	TEST_EQ(lpc_char_buf[0], I8042_TEST_MOUSE_NO_ERROR, "%d");
-	lpc_char_cnt = 0;
+	VERIFY_LPC_CHAR("\x00");
 
 	return EC_SUCCESS;
 }
