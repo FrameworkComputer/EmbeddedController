@@ -373,8 +373,8 @@ def test(opts):
             platform_ec / "test/**",
             zephyr_dir / "test/**",
             zephyr_dir / "emul/**",
-            third_party / "main/subsys/emul/**",
-            third_party / "main/subsys/testsuite/**",
+            third_party / "zephyr/main/subsys/emul/**",
+            third_party / "zephyr/main/subsys/testsuite/**",
         ]
         print(" ".join(shlex.quote(str(x)) for x in cmd))
         output = subprocess.run(
