@@ -20,9 +20,11 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "fan.c")
 if(DEFINED CONFIG_BOARD_SKYRIM)
 	project(skyrim)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SKYRIM include)
-	zephyr_library_sources_ifdef(CONFIG_BOARD_SKYRIM "usbc_config.c")
+	zephyr_library_sources(
+			"src/skyrim/form_factor.c"
+			"usbc_config.c"
+	)
 endif()
-
 
 if(DEFINED CONFIG_BOARD_WINTERHOLD)
 	project(winterhold)

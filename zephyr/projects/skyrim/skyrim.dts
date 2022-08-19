@@ -213,6 +213,12 @@
 				 0 0 1>;
 		};
 
+		lid_rot_ref1: lid-rotation-ref1 {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+
 		base_rot_ref: base-rotation-ref {
 			mat33 = <0 1 0
 				 (-1) 0 0
