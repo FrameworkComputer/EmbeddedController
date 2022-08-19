@@ -21,10 +21,12 @@
  */
 #include "builtin/stdio.h"
 #define VSNPRINTF crec_vsnprintf
+#define SNPRINTF crec_snprintf
 static const bool use_builtin_stdlib = true;
 #else
 #include <stdio.h>
 #define VSNPRINTF vsnprintf
+#define SNPRINTF snprintf
 static const bool use_builtin_stdlib = false;
 #endif
 
@@ -147,14 +149,55 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success(" +123", "%+5d", 123));
 	T(expect_success("00123", "%05d", 123));
 	T(expect_success("00123", "%005d", 123));
-	/* Fixed point. */
-	T(expect_success("0.00123", "%.5d", 123));
-	T(expect_success("12.3", "%2.1d", 123));
-	/* Precision or width larger than buffer should fail. */
-	T(expect(EC_ERROR_OVERFLOW, "  1", false, 4, "%5d", 123));
-	T(expect(EC_ERROR_OVERFLOW, "   ", false, 4, "%10d", 123));
-	T(expect(EC_ERROR_OVERFLOW, "123", false, 4, "%-10d", 123));
-	T(expect(EC_ERROR_OVERFLOW, "0.0", false, 4, "%.10d", 123));
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): These are incorrect and should be fixed.
+		 */
+		/* Fixed point. */
+		T(expect_success("0.00123", "%.5d", 123));
+		T(expect_success("12.3", "%2.1d", 123));
+		/* Precision or width larger than buffer should fail. */
+		T(expect(EC_ERROR_OVERFLOW, "  1", false, 4, "%5d", 123));
+		T(expect(EC_ERROR_OVERFLOW, "   ", false, 4, "%10d", 123));
+		T(expect(EC_ERROR_OVERFLOW, "123", false, 4, "%-10d", 123));
+		T(expect(EC_ERROR_OVERFLOW, "0.0", false, 4, "%.10d", 123));
+	} else {
+		int ret;
+
+		T(expect_success("00123", "%.5d", 123));
+		T(expect_success("123", "%2.1d", 123));
+
+		/*
+		 * From the man page: The functions  snprintf() and vsnprintf()
+		 * do not write more than size bytes (including the
+		 * terminating null byte ('\0')). If the output was truncated
+		 * due to this limit, then the return value is the number of
+		 * characters (excluding the terminating null byte) which
+		 * would have been written to the final string if enough
+		 * space had been available. Thus, a return value of size or
+		 * more means that the output was truncated.
+		 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+		ret = SNPRINTF(output, 4, "%5d", 123);
+		TEST_ASSERT_ARRAY_EQ(output, "  1", 4);
+		TEST_EQ(ret, 5, "%d");
+
+		ret = SNPRINTF(output, 4, "%10d", 123);
+		TEST_ASSERT_ARRAY_EQ(output, "   ", 4);
+		TEST_EQ(ret, 10, "%d");
+
+		ret = SNPRINTF(output, 4, "%-10d", 123);
+		TEST_ASSERT_ARRAY_EQ(output, "123", 4);
+		TEST_EQ(ret, 10, "%d");
+
+		ret = SNPRINTF(output, 4, "%.10d", 123);
+		TEST_ASSERT_ARRAY_EQ(output, "000", 4);
+		TEST_EQ(ret, 10, "%d");
+#pragma GCC diagnostic pop
+	}
+
 	if (use_builtin_stdlib) {
 		/*
 		 * TODO(b/239233116): These are incorrect and should be fixed.
