@@ -131,6 +131,11 @@
 
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
+	ppc_port0_syv: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+	};
 };
 
 &i2c3_0 {
