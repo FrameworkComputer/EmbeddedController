@@ -103,6 +103,37 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 		TEST_EQ(queue_is_empty(&kbd_8042_ctrl_to_host), 1, "%d"); \
 	} while (0)
 
+#define VERIFY_AUX_TO_HOST(expected_data, expected_irq)                    \
+	do {                                                               \
+		struct to_host_data data;                                  \
+		msleep(30);                                                \
+		TEST_EQ(queue_remove_unit(&aux_to_host, &data), (size_t)1, \
+			"%zd");                                            \
+		TEST_EQ(data.data, expected_data, "%#x");                  \
+		TEST_EQ(data.irq, expected_irq, "%u");                     \
+	} while (0)
+
+#define VERIFY_AUX_TO_HOST_EMPTY()                         \
+	do {                                               \
+		msleep(30);                                \
+		TEST_ASSERT(queue_is_empty(&aux_to_host)); \
+	} while (0)
+
+#define VERIFY_AUX_TO_DEVICE(expected_data)                                   \
+	do {                                                                  \
+		uint8_t _data;                                                \
+		msleep(30);                                                   \
+		TEST_EQ(queue_remove_unit(&aux_to_device, &_data), (size_t)1, \
+			"%zd");                                               \
+		TEST_EQ(_data, expected_data, "%#x");                         \
+	} while (0)
+
+#define VERIFY_AUX_TO_DEVICE_EMPTY()                         \
+	do {                                                 \
+		msleep(30);                                  \
+		TEST_ASSERT(queue_is_empty(&aux_to_device)); \
+	} while (0)
+
 static void press_key(int c, int r, int pressed)
 {
 	ccprintf("Input %s (%d, %d)\n", action[pressed], c, r);
@@ -183,37 +214,6 @@ static int _read_cmd_byte(uint8_t *cmd)
 		TEST_EQ(_read_cmd_byte(&cmd), EC_SUCCESS, "%d"); \
 		cmd;                                             \
 	})
-
-#define VERIFY_AUX_TO_HOST(expected_data, expected_irq)                    \
-	do {                                                               \
-		struct to_host_data data;                                  \
-		msleep(30);                                                \
-		TEST_EQ(queue_remove_unit(&aux_to_host, &data), (size_t)1, \
-			"%zd");                                            \
-		TEST_EQ(data.data, expected_data, "%#x");                  \
-		TEST_EQ(data.irq, expected_irq, "%u");                     \
-	} while (0)
-
-#define VERIFY_AUX_TO_HOST_EMPTY()                         \
-	do {                                               \
-		msleep(30);                                \
-		TEST_ASSERT(queue_is_empty(&aux_to_host)); \
-	} while (0)
-
-#define VERIFY_AUX_TO_DEVICE(expected_data)                                   \
-	do {                                                                  \
-		uint8_t _data;                                                \
-		msleep(30);                                                   \
-		TEST_EQ(queue_remove_unit(&aux_to_device, &_data), (size_t)1, \
-			"%zd");                                               \
-		TEST_EQ(_data, expected_data, "%#x");                         \
-	} while (0)
-
-#define VERIFY_AUX_TO_DEVICE_EMPTY()                         \
-	do {                                                 \
-		msleep(30);                                  \
-		TEST_ASSERT(queue_is_empty(&aux_to_device)); \
-	} while (0)
 
 /*
  * We unfortunately don't have an Input Buffer Full (IBF). Instead we
