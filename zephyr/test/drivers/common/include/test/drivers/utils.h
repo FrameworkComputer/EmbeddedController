@@ -56,6 +56,28 @@ void test_set_chipset_to_g3(void);
 #define zassume_unreachable(msg, ...) zassert_unreachable(msg, ##__VA_ARGS__)
 
 /**
+ * Run an ACPI read to the specified address.
+ *
+ * This function assumes a successful ACPI read process and will make a
+ * call to the zassume_* API. A failure here will skip the calling test.
+ *
+ * @param acpi_addr Address to query
+ * @return Byte read
+ */
+uint8_t acpi_read(uint8_t acpi_addr);
+
+/**
+ * Run an ACPI write to the specified address.
+ *
+ * This function assumes a successful ACPI write process and will make a
+ * call to the zassume_* API. A failure here will skip the calling test.
+ *
+ * @param acpi_addr Address to write
+ * @param write_byte Byte to write to address
+ */
+void acpi_write(uint8_t acpi_addr, uint8_t write_byte);
+
+/**
  * Run the host command to get the charge state for a given charger number.
  *
  * This function assumes a successful host command processing and will make a

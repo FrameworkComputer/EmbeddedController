@@ -8,6 +8,7 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/ztest.h>
 
+#include "acpi.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "charge_state.h"
@@ -175,6 +176,41 @@ void disconnect_sink_from_port(const struct emul *tcpci_emul)
 {
 	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 	k_sleep(K_SECONDS(1));
+}
+
+uint8_t acpi_read(uint8_t acpi_addr)
+{
+	uint8_t readval;
+	/*
+	 * See ec_commands.h for details on the required process
+	 * First, send the read command, which should populate no data
+	 */
+	zassume_ok(acpi_ap_to_ec(true, EC_CMD_ACPI_READ, &readval),
+		   "Failed to send read command");
+
+	/* Next, time for the address which should populate our result */
+	zassume_equal(acpi_ap_to_ec(false, acpi_addr, &readval), 1,
+		      "Failed to read value");
+	return readval;
+}
+
+void acpi_write(uint8_t acpi_addr, uint8_t write_byte)
+{
+	uint8_t readval;
+	/*
+	 * See ec_commands.h for details on the required process
+	 * First, send the read command, which should populate no data
+	 */
+	zassume_ok(acpi_ap_to_ec(true, EC_CMD_ACPI_WRITE, &readval),
+		   "Failed to send read command");
+
+	/* Next, time for the address we want to write */
+	zassume_ok(acpi_ap_to_ec(false, acpi_addr, &readval),
+		   "Failed to write address");
+
+	/* Finally, time to write the data */
+	zassume_ok(acpi_ap_to_ec(false, write_byte, &readval),
+		   "Failed to write value");
 }
 
 void host_cmd_motion_sense_dump(int max_sensor_count,
