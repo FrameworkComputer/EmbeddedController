@@ -3,12 +3,10 @@
  * found in the LICENSE file.
  */
 
-/dts-v1/;
-
+#include <ite/it8xxx2.dtsi>
+#include <cros/ite/it8xxx2.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/gpio/ite-it8xxx2-gpio.h>
-#include <cros/ite/it8xxx2.dtsi>
-#include <ite/it8xxx2.dtsi>
 
 #define GPIO_VOLTAGE_1P8 IT8XXX2_GPIO_VOLTAGE_1P8
 
