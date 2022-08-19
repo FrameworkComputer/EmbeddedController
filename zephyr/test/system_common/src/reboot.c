@@ -17,6 +17,8 @@ static struct reboot_fixture {
 	int reset_called;
 	int reset_flags;
 	int hibernate_called;
+	uint32_t hibernate_seconds;
+	uint32_t hibernate_microseconds;
 } reboot_fixture;
 
 __override void system_reset(int flags)
@@ -27,6 +29,8 @@ __override void system_reset(int flags)
 
 __override void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
+	reboot_fixture.hibernate_seconds = seconds;
+	reboot_fixture.hibernate_microseconds = microseconds;
 	reboot_fixture.hibernate_called++;
 }
 
@@ -226,4 +230,48 @@ ZTEST(host_cmd_reboot, test_reboot)
 			      "Unexpected hibernate call count (%d): %d", i,
 			      reboot_fixture.hibernate_called);
 	}
+}
+
+ZTEST_SUITE(console_cmd_hibernate, NULL, NULL, system_reset_fixture_reset, NULL,
+	    NULL);
+
+int chipset_in_state(int state_mask)
+{
+	return 0;
+}
+
+ZTEST(console_cmd_hibernate, test_hibernate_default)
+{
+	int ret;
+
+	ret = shell_execute_cmd(get_ec_shell(), "hibernate");
+
+	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
+	zassert_equal(reboot_fixture.hibernate_called, 1,
+		      "Unexpected hibernate call count: %d",
+		      reboot_fixture.hibernate_called);
+	zassert_equal(reboot_fixture.hibernate_seconds, 0,
+		      "Unexpected hibernate_secondst: %d",
+		      reboot_fixture.hibernate_seconds);
+	zassert_equal(reboot_fixture.hibernate_microseconds, 0,
+		      "Unexpected hibernate_secondst: %d",
+		      reboot_fixture.hibernate_microseconds);
+}
+
+ZTEST(console_cmd_hibernate, test_hibernate_args)
+{
+	int ret;
+
+	ret = shell_execute_cmd(get_ec_shell(), "hibernate 123 456");
+
+	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
+	zassert_equal(reboot_fixture.hibernate_called, 1,
+		      "Unexpected hibernate call count: %d",
+		      reboot_fixture.hibernate_called);
+	zassert_equal(reboot_fixture.hibernate_seconds, 123,
+		      "Unexpected hibernate_secondst: %d",
+		      reboot_fixture.hibernate_seconds);
+	zassert_equal(reboot_fixture.hibernate_microseconds, 456,
+		      "Unexpected hibernate_secondst: %d",
+		      reboot_fixture.hibernate_microseconds);
 }
