@@ -10,6 +10,7 @@
 #include "common.h"
 #include "console.h"
 #include "chipset.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "queue.h"
@@ -62,9 +63,6 @@ enum mux_config_type {
 	USB_MUX_HPD_UPDATE,
 };
 
-/* Set all muxes for this board's port */
-#define USB_MUX_ALL_CHIPS 0xff
-
 /* Define a USB mux task ID for the purpose of linking */
 #ifndef HAS_TASK_USB_MUX
 #define TASK_ID_USB_MUX TASK_ID_INVALID
@@ -89,7 +87,7 @@ BUILD_ASSERT(POWER_OF_TWO(MUX_QUEUE_DEPTH));
 
 struct mux_queue_entry {
 	enum mux_config_type type;
-	int index; /* Index to set, or USB_MUX_ALL_CHIPS */
+	int index; /* Index to set, or TYPEC_USB_MUX_SET_ALL_CHIPS */
 	mux_state_t mux_mode; /* For both HPD and mux set */
 	enum usb_switch usb_config; /* Set only */
 	int polarity; /* Set only */
@@ -280,7 +278,7 @@ static int configure_mux(int port, int index, enum mux_config_type config,
 		const struct usb_mux_driver *drv = mux_ptr->driver;
 		bool ack_required = false;
 
-		if (index != USB_MUX_ALL_CHIPS && index != chip)
+		if (index != TYPEC_USB_MUX_SET_ALL_CHIPS && index != chip)
 			continue;
 
 		/* Action time!  Lock this mux */
@@ -422,7 +420,8 @@ static void enter_low_power_mode(int port)
 	atomic_or(&flags[port], USB_MUX_FLAG_IN_LPM);
 
 	/* Apply any low power customization if present */
-	configure_mux(port, USB_MUX_ALL_CHIPS, USB_MUX_LOW_POWER, NULL);
+	configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS, USB_MUX_LOW_POWER,
+		      NULL);
 }
 
 static int exit_low_power_mode(int port)
@@ -454,7 +453,8 @@ void usb_mux_init(int port)
 		return;
 	}
 
-	rv = configure_mux(port, USB_MUX_ALL_CHIPS, USB_MUX_INIT, NULL);
+	rv = configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS, USB_MUX_INIT,
+			   NULL);
 
 	if (rv == EC_SUCCESS)
 		atomic_or(&flags[port], USB_MUX_FLAG_INIT);
@@ -524,11 +524,12 @@ void usb_mux_set(int port, mux_state_t mux_mode, enum usb_switch usb_mode,
 
 	/* Block if we have no mux task, but otherwise queue it up and return */
 	if (IS_ENABLED(HAS_TASK_USB_MUX))
-		mux_task_enqueue(port, USB_MUX_ALL_CHIPS, USB_MUX_SET_MODE,
-				 mux_mode, usb_mode, polarity);
+		mux_task_enqueue(port, TYPEC_USB_MUX_SET_ALL_CHIPS,
+				 USB_MUX_SET_MODE, mux_mode, usb_mode,
+				 polarity);
 	else
-		perform_mux_set(port, USB_MUX_ALL_CHIPS, mux_mode, usb_mode,
-				polarity);
+		perform_mux_set(port, TYPEC_USB_MUX_SET_ALL_CHIPS, mux_mode,
+				usb_mode, polarity);
 }
 
 void usb_mux_set_single(int port, int index, mux_state_t mux_mode,
@@ -587,8 +588,8 @@ static enum ec_error_list try_usb_mux_get(int port, mux_state_t *mux_state)
 		return EC_SUCCESS;
 	}
 
-	return configure_mux(port, USB_MUX_ALL_CHIPS, USB_MUX_GET_MODE,
-			     mux_state);
+	return configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS,
+			     USB_MUX_GET_MODE, mux_state);
 }
 
 mux_state_t usb_mux_get(int port)
@@ -616,7 +617,7 @@ void usb_mux_flip(int port)
 	if (exit_low_power_mode(port) != EC_SUCCESS)
 		return;
 
-	if (configure_mux(port, USB_MUX_ALL_CHIPS, USB_MUX_GET_MODE,
+	if (configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS, USB_MUX_GET_MODE,
 			  &mux_state))
 		return;
 
@@ -625,7 +626,8 @@ void usb_mux_flip(int port)
 	else
 		mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
-	configure_mux(port, USB_MUX_ALL_CHIPS, USB_MUX_SET_MODE, &mux_state);
+	configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS, USB_MUX_SET_MODE,
+		      &mux_state);
 }
 
 static void perform_mux_hpd_update(int port, int index, mux_state_t hpd_state)
@@ -647,10 +649,11 @@ void usb_mux_hpd_update(int port, mux_state_t hpd_state)
 
 	/* Send to the mux task if present to maintain sequencing with sets */
 	if (IS_ENABLED(HAS_TASK_USB_MUX))
-		mux_task_enqueue(port, USB_MUX_ALL_CHIPS, USB_MUX_HPD_UPDATE,
-				 hpd_state, 0, 0);
+		mux_task_enqueue(port, TYPEC_USB_MUX_SET_ALL_CHIPS,
+				 USB_MUX_HPD_UPDATE, hpd_state, 0, 0);
 	else
-		perform_mux_hpd_update(port, USB_MUX_ALL_CHIPS, hpd_state);
+		perform_mux_hpd_update(port, TYPEC_USB_MUX_SET_ALL_CHIPS,
+				       hpd_state);
 }
 
 int usb_mux_retimer_fw_update_port_info(void)
@@ -677,8 +680,8 @@ static void mux_chipset_reset(void)
 	int port;
 
 	for (port = 0; port < board_get_usb_pd_port_count(); ++port)
-		configure_mux(port, USB_MUX_ALL_CHIPS, USB_MUX_CHIPSET_RESET,
-			      NULL);
+		configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS,
+			      USB_MUX_CHIPSET_RESET, NULL);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, mux_chipset_reset, HOOK_PRIO_DEFAULT);
 

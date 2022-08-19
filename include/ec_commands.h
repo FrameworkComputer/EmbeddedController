@@ -6769,6 +6769,8 @@ enum typec_tbt_ufp_reply {
 	TYPEC_TBT_UFP_REPLY_ACK,
 };
 
+#define TYPEC_USB_MUX_SET_ALL_CHIPS 0xFF
+
 struct typec_usb_mux_set {
 	/* Index of the mux to set in the chain */
 	uint8_t mux_index;
