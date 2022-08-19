@@ -340,6 +340,62 @@ static int test_8042_aux_test_command(void)
 	return EC_SUCCESS;
 }
 
+static int test_8042_keyboard_controller_commands(void)
+{
+	uint8_t ctrl;
+
+	/* Start with empty controller flags. i.e., Keyboard Enabled */
+	WRITE_CMD_BYTE(0);
+
+	/* Send the Keyboard DISABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_DIS_KB);
+	ctrl = READ_CMD_BYTE();
+	TEST_ASSERT(ctrl & I8042_KBD_DIS);
+
+	/* Send the Keyboard ENABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_ENA_KB);
+	ctrl = READ_CMD_BYTE();
+	TEST_ASSERT(!(ctrl & I8042_KBD_DIS));
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_keyboard_key_pressed_while_inhibited(void)
+{
+	ENABLE_KEYSTROKE(1);
+
+	/* Inhibit the keyboard device from sending data. */
+	WRITE_CMD_BYTE(I8042_XLATE | I8042_KBD_DIS);
+
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+
+	/*
+	 * FIXME: This is wrong! We shouldn't be sending scan codes to the
+	 * host while the keyboard channel is inhibited. This should be
+	 * VERIFY_NO_CHAR();
+	 */
+	VERIFY_LPC_CHAR("\x01");
+
+	/* FIXME: This is also wrong for the same reason as above! */
+	press_key(1, 1, 0);
+	VERIFY_LPC_CHAR("\x81");
+
+	/* Stop inhibiting the keyboard */
+	WRITE_CMD_BYTE(0);
+
+	/*
+	 * FIXME: This is wrong. When the CLK is inhibited the device will queue
+	 * up events/scan codes in it's internal buffer. Once the inhibit is
+	 * released, the device will start clocking out the data. So in this
+	 * test we should be receiving the 0x01, and x81 here, but we received
+	 * them above.
+	 */
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+
 static int test_single_key_press(void)
 {
 	ENABLE_KEYSTROKE(1);
@@ -552,6 +608,8 @@ void run_test(int argc, char **argv)
 		RUN_TEST(test_8042_aux_inhibit);
 		RUN_TEST(test_8042_aux_controller_commands);
 		RUN_TEST(test_8042_aux_test_command);
+		RUN_TEST(test_8042_keyboard_controller_commands);
+		RUN_TEST(test_8042_keyboard_key_pressed_while_inhibited);
 		RUN_TEST(test_single_key_press);
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);
