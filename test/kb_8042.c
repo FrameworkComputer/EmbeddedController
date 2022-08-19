@@ -72,42 +72,58 @@ static void press_key(int c, int r, int pressed)
 	keyboard_state_changed(r, c, pressed);
 }
 
-static void enable_keystroke(int enabled)
+static int _enable_keystroke(int enabled)
 {
 	uint8_t data = enabled ? ATKBD_CMD_ENABLE : ATKBD_CMD_RESET_DIS;
 	keyboard_host_write(data, 0);
 	msleep(30);
-}
 
-static void reset_8042(void)
+	return EC_SUCCESS;
+}
+#define ENABLE_KEYSTROKE(enabled) \
+	TEST_EQ(_enable_keystroke(enabled), EC_SUCCESS, "%d")
+
+static int _reset_8042(void)
 {
 	keyboard_host_write(ATKBD_CMD_RESET_DEF, 0);
 	msleep(30);
-}
 
-static void set_typematic(uint8_t val)
+	return EC_SUCCESS;
+}
+#define RESET_8042() TEST_EQ(_reset_8042(), EC_SUCCESS, "%d")
+
+static int _set_typematic(uint8_t val)
 {
 	keyboard_host_write(ATKBD_CMD_SETREP, 0);
 	msleep(30);
 	keyboard_host_write(val, 0);
 	msleep(30);
-}
 
-static void set_scancode(uint8_t s)
+	return EC_SUCCESS;
+}
+#define SET_TYPEMATIC(val) TEST_EQ(_set_typematic(val), EC_SUCCESS, "%d")
+
+static int _set_scancode(uint8_t s)
 {
 	keyboard_host_write(ATKBD_CMD_SSCANSET, 0);
 	msleep(30);
 	keyboard_host_write(s, 0);
 	msleep(30);
-}
 
-static void write_cmd_byte(uint8_t val)
+	return EC_SUCCESS;
+}
+#define SET_SCANCODE(s) TEST_EQ(_set_scancode(s), EC_SUCCESS, "%d")
+
+static int _write_cmd_byte(uint8_t val)
 {
 	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
 	msleep(30);
 	keyboard_host_write(val, 0);
 	msleep(30);
+
+	return EC_SUCCESS;
 }
+#define WRITE_CMD_BYTE(val) TEST_EQ(_write_cmd_byte(val), EC_SUCCESS, "%d")
 
 static uint8_t read_cmd_byte(void)
 {
@@ -189,7 +205,7 @@ static int __verify_no_char(void)
 void before_test(void)
 {
 	/* Make sure all tests start with the controller in the same state */
-	write_cmd_byte(I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS);
+	_write_cmd_byte(I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS);
 }
 
 void after_test(void)
@@ -208,14 +224,14 @@ void after_test(void)
 static int test_8042_aux_loopback(void)
 {
 	/* Disable all IRQs */
-	write_cmd_byte(0);
+	WRITE_CMD_BYTE(0);
 
 	i8042_write_cmd(I8042_ECHO_MOUSE);
 	i8042_write_data(0x01);
 	VERIFY_AUX_TO_HOST(0x01, 0);
 
 	/* Enable AUX IRQ */
-	write_cmd_byte(I8042_ENIRQ12);
+	WRITE_CMD_BYTE(I8042_ENIRQ12);
 
 	i8042_write_cmd(I8042_ECHO_MOUSE);
 	i8042_write_data(0x02);
@@ -227,7 +243,7 @@ static int test_8042_aux_loopback(void)
 static int test_8042_aux_two_way_communication(void)
 {
 	/* Enable AUX IRQ */
-	write_cmd_byte(I8042_ENIRQ12);
+	WRITE_CMD_BYTE(I8042_ENIRQ12);
 
 	i8042_write_cmd(I8042_SEND_TO_MOUSE);
 	i8042_write_data(0x01);
@@ -245,14 +261,14 @@ static int test_8042_aux_two_way_communication(void)
 static int test_8042_aux_inhibit(void)
 {
 	/* Enable AUX IRQ, but inhibit the AUX device from sending data. */
-	write_cmd_byte(I8042_ENIRQ12 | I8042_AUX_DIS);
+	WRITE_CMD_BYTE(I8042_ENIRQ12 | I8042_AUX_DIS);
 
 	/* Simulate the AUX device sending a response to the host */
 	send_aux_data_to_host_interrupt(0x02);
 	VERIFY_AUX_TO_HOST_EMPTY();
 
 	/* Stop inhibiting the AUX device */
-	write_cmd_byte(I8042_ENIRQ12);
+	WRITE_CMD_BYTE(I8042_ENIRQ12);
 	/*
 	 * This is wrong. When the CLK is inhibited the device will queue up
 	 * events/scan codes in it's internal buffer. Once the inhibit is
@@ -275,7 +291,7 @@ static int test_8042_aux_controller_commands(void)
 	uint8_t ctrl;
 
 	/* Start with empty controller flags. i.e., AUX Enabled */
-	write_cmd_byte(0);
+	WRITE_CMD_BYTE(0);
 
 	/* Send the AUX DISABLE command and verify the ctrl got updated */
 	i8042_write_cmd(I8042_DIS_MOUSE);
@@ -309,7 +325,7 @@ static int test_8042_aux_test_command(void)
 
 static int test_single_key_press(void)
 {
-	enable_keystroke(1);
+	ENABLE_KEYSTROKE(1);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
@@ -325,7 +341,7 @@ static int test_single_key_press(void)
 
 static int test_disable_keystroke(void)
 {
-	enable_keystroke(0);
+	ENABLE_KEYSTROKE(0);
 	press_key(1, 1, 1);
 	VERIFY_NO_CHAR();
 	press_key(1, 1, 0);
@@ -336,12 +352,12 @@ static int test_disable_keystroke(void)
 
 static int test_typematic(void)
 {
-	enable_keystroke(1);
+	ENABLE_KEYSTROKE(1);
 
 	/*
 	 * 250ms delay, 8 chars / sec.
 	 */
-	set_typematic(0xf);
+	SET_TYPEMATIC(0xf);
 
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR_DELAY("\x01\x01\x01\x01\x01", 650);
@@ -351,7 +367,7 @@ static int test_typematic(void)
 	/*
 	 * 500ms delay, 10.9 chars / sec.
 	 */
-	reset_8042();
+	RESET_8042();
 
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR_DELAY("\x01\x01\x01", 650);
@@ -363,15 +379,15 @@ static int test_typematic(void)
 
 static int test_scancode_set2(void)
 {
-	set_scancode(2);
+	SET_SCANCODE(2);
 
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
 	VERIFY_LPC_CHAR("\x81");
 
-	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+	WRITE_CMD_BYTE(read_cmd_byte() & ~I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x76");
 	press_key(1, 1, 0);
@@ -383,7 +399,7 @@ static int test_scancode_set2(void)
 static int test_power_button(void)
 {
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
-	set_scancode(1);
+	SET_SCANCODE(1);
 	test_chipset_on();
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
@@ -392,8 +408,8 @@ static int test_power_button(void)
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 	VERIFY_LPC_CHAR_DELAY("\xe0\xde", 100);
 
-	set_scancode(2);
-	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+	SET_SCANCODE(2);
+	WRITE_CMD_BYTE(read_cmd_byte() & ~I8042_XLATE);
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
 	VERIFY_LPC_CHAR_DELAY("\xe0\x37", 100);
@@ -414,8 +430,8 @@ static int test_power_button(void)
 
 static int test_sysjump(void)
 {
-	set_scancode(2);
-	enable_keystroke(1);
+	SET_SCANCODE(2);
+	ENABLE_KEYSTROKE(1);
 
 	system_run_image_copy(EC_IMAGE_RW);
 
@@ -425,13 +441,13 @@ static int test_sysjump(void)
 
 static int test_sysjump_cont(void)
 {
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
 	VERIFY_LPC_CHAR("\x81");
 
-	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+	WRITE_CMD_BYTE(read_cmd_byte() & ~I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x76");
 	press_key(1, 1, 0);
@@ -488,20 +504,20 @@ static int test_ec_cmd_get_keybd_config(void)
 
 static int test_vivaldi_top_keys(void)
 {
-	set_scancode(2);
+	SET_SCANCODE(2);
 
 	/* Test REFRESH key */
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
 	press_key(2, 3, 1); /* Press T2 */
 	VERIFY_LPC_CHAR("\xe0\x67"); /* Check REFRESH scancode in set-1 */
 
 	/* Test SNAPSHOT key */
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
 	press_key(4, 3, 1); /* Press T2 */
 	VERIFY_LPC_CHAR("\xe0\x13"); /* Check SNAPSHOT scancode in set-1 */
 
 	/* Test VOL_UP key */
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(read_cmd_byte() | I8042_XLATE);
 	press_key(5, 3, 1); /* Press T2 */
 	VERIFY_LPC_CHAR("\xe0\x30"); /* Check VOL_UP scancode in set-1 */
 
