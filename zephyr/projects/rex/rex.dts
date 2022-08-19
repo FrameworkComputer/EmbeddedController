@@ -75,13 +75,6 @@
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
 
-	bc12_port0: pi3usb9201@5f {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5f>;
-		irq = <&int_usb_c0_bc12>;
-	};
-
 	tcpc_port0: nct38xx@70 {
 		compatible = "nuvoton,nct38xx";
 		gpio-dev = <&nct3807_C0>;
@@ -131,6 +124,14 @@
 
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
+
+	bc12_port0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
+
 	ppc_port0_syv: ppc_syv@40 {
 		compatible = "silergy,syv682x";
 		status = "okay";
