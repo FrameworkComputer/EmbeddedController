@@ -158,6 +158,26 @@ host_cmd_usb_pd_control(int port, enum usb_pd_control_swap swap)
 }
 
 /**
+ * Run the host command to suspend/resume PD ports
+ *
+ * This function assumes a successful host command processing and will make a
+ * call to the zassume_* API. A failure here will skip the calling test.
+ *
+ * @param port The USB port to operate on
+ * @param cmd The sub-command to run
+ */
+static inline void host_cmd_pd_control(int port, enum ec_pd_control_cmd cmd)
+{
+	struct ec_params_pd_control params = { .chip = port, .subcmd = cmd };
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PD_CONTROL, 0, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to process pd_control for port %d, cmd %d", port,
+		   cmd);
+}
+
+/**
  * Run the host command to control or query the charge state
  *
  * @return The result of the query.
