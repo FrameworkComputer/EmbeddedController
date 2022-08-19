@@ -41,9 +41,7 @@ static void host_event_set_wake_mask_helper(uint32_t mask)
 }
 
 /**
- * @brief TestPurpose: Verify EC_CMD_HOST_EVENT_GET_WAKE_MASK get host command.
- *
- * EC_CMD_HOST_EVENT_GET_WAKE_MASK is deprecated.  See ec_command.h for detauls.
+ * @brief TestPurpose: Verify EC_CMD_HOST_EVENT_GET_WAKE_MASK host command.
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_wake_mask)
 {
@@ -57,9 +55,7 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_wake_mask)
 }
 
 /**
- * @brief TestPurpose: Verify EC_CMD_HOST_EVENT_SET_WAKE_MASK get host command.
- *
- * EC_CMD_HOST_EVENT_SET_WAKE_MASK is deprecated.  See ec_command.h for detauls.
+ * @brief TestPurpose: Verify EC_CMD_HOST_EVENT_SET_WAKE_MASK host command.
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_set_wake_mask)
 {
