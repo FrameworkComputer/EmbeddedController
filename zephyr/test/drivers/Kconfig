@@ -20,6 +20,9 @@ config LINK_TEST_SUITE_LED_DRIVER
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 
+config LINK_TEST_SUITE_USB_PD_DPS
+	bool "Link and test the dps tests"
+
 config LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE
 	bool "Link and test the usb_retimer_fw_update tests"
 

@@ -15,6 +15,10 @@ tests:
   drivers.chargesplash:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
+  drivers.dps:
+    extra_args: CONF_FILE="prj.conf;dps/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USB_PD_DPS=y
   drivers.isl923x:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_ISL923X=y
