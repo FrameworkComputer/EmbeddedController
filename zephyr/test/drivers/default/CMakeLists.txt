@@ -69,5 +69,6 @@ target_sources(app PRIVATE
     src/usb_mux.c
     src/usb_pd_host_cmd.c
     src/vboot_hash.c
+    src/virtual_battery.c
     src/watchdog.c
 )
