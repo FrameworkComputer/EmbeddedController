@@ -59,6 +59,8 @@ __override uint8_t board_get_usb_pd_port_count(void)
 		} else {
 			return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 		}
+	} else if (corsola_get_db_type() == CORSOLA_DB_NONE) {
+		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 	}
 
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
@@ -253,6 +255,11 @@ static void baseboard_x_ec_gpio2_init(void)
 	static struct ppc_drv virtual_ppc_drv = { 0 };
 	static struct tcpm_drv virtual_tcpc_drv = { 0 };
 	static struct bc12_drv virtual_bc12_drv = { 0 };
+
+	/* no sub board */
+	if (corsola_get_db_type() == CORSOLA_DB_NONE) {
+		return;
+	}
 
 	/* type-c: USB_C1_PPC_INT_ODL / hdmi: PS185_EC_DP_HPD */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));

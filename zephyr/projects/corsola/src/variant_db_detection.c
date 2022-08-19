@@ -7,6 +7,7 @@
 #include <zephyr/drivers/gpio.h>
 
 #include "console.h"
+#include "cros_cbi.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 
@@ -45,6 +46,15 @@ static void corsola_db_config(enum corsola_db_type type)
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_dp_in_hpd),
 				      GPIO_OUTPUT_LOW);
 		return;
+	case CORSOLA_DB_NONE:
+		/* Set floating pins as input with PU to prevent leakage */
+		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_x_gpio1),
+				      GPIO_INPUT | GPIO_PULL_UP);
+		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_x_ec_gpio2),
+				      GPIO_INPUT | GPIO_PULL_UP);
+		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_x_gpio3),
+				      GPIO_INPUT | GPIO_PULL_UP);
+		return;
 	default:
 		break;
 	}
@@ -52,9 +62,13 @@ static void corsola_db_config(enum corsola_db_type type)
 
 enum corsola_db_type corsola_get_db_type(void)
 {
-	static enum corsola_db_type db = CORSOLA_DB_NONE;
+#if DT_NODE_EXISTS(DT_NODELABEL(db_config))
+	int ret;
+	uint32_t val;
+#endif
+	static enum corsola_db_type db = CORSOLA_DB_UNINIT;
 
-	if (db != CORSOLA_DB_NONE) {
+	if (db != CORSOLA_DB_UNINIT) {
 		return db;
 	}
 
@@ -64,9 +78,33 @@ enum corsola_db_type corsola_get_db_type(void)
 		db = CORSOLA_DB_TYPEC;
 	}
 
+/* Detect for no sub board case by FW_CONFIG */
+#if DT_NODE_EXISTS(DT_NODELABEL(db_config))
+	ret = cros_cbi_get_fw_config(DB, &val);
+	if (ret != 0) {
+		CPRINTS("Error retrieving CBI FW_CONFIG field %d", DB);
+	} else if (val == DB_NONE) {
+		db = CORSOLA_DB_NONE;
+	}
+#endif
+
 	corsola_db_config(db);
 
-	CPRINTS("Detect %s DB", db == CORSOLA_DB_HDMI ? "HDMI" : "TYPEC");
+	switch (db) {
+	case CORSOLA_DB_NONE:
+		CPRINTS("Detect %s DB", "NONE");
+		break;
+	case CORSOLA_DB_TYPEC:
+		CPRINTS("Detect %s DB", "TYPEC");
+		break;
+	case CORSOLA_DB_HDMI:
+		CPRINTS("Detect %s DB", "HDMI");
+		break;
+	default:
+		CPRINTS("DB UNINIT");
+		break;
+	}
+
 	return db;
 }
 
