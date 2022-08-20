@@ -30,6 +30,8 @@
 #define CONFIG_USB_PD_CUSTOM_PDO
 #define CONFIG_USB_PD_DUAL_ROLE
 
+#define CONFIG_CMD_AP_RESET_LOG
+
 #include "gpio_signal.h"
 
 enum temp_sensor_id {
