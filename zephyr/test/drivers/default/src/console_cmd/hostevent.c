@@ -12,6 +12,12 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
+#ifdef CONFIG_HOST_EVENT64
+#define HOSTEVENT_PRINT_FORMAT "016" PRIx64
+#else
+#define HOSTEVENT_PRINT_FORMAT "08" PRIx32
+#endif
+
 struct console_cmd_hostevent_fixture {
 	struct host_events_ctx ctx;
 };
@@ -37,6 +43,21 @@ static void console_cmd_hostevent_after(void *fixture)
 	host_events_restore(&f->ctx);
 }
 
+static int console_cmd_hostevent(const char *subcommand, host_event_t mask)
+{
+	int rv;
+	char cmd_buf[CONFIG_SHELL_CMD_BUFF_SIZE];
+
+	rv = snprintf(cmd_buf, CONFIG_SHELL_CMD_BUFF_SIZE,
+		      "hostevent %s 0x%" HOSTEVENT_PRINT_FORMAT, subcommand,
+		      mask);
+
+	zassume_between_inclusive(rv, 0, CONFIG_SHELL_CMD_BUFF_SIZE,
+				  "hostevent console command too long");
+
+	return shell_execute_cmd(get_ec_shell(), cmd_buf);
+}
+
 /* hostevent with no arguments */
 ZTEST_USER(console_cmd_hostevent, test_hostevent)
 {
@@ -48,9 +69,10 @@ ZTEST_USER(console_cmd_hostevent, test_hostevent)
 ZTEST_USER(console_cmd_hostevent, test_hostevent_invalid)
 {
 	int rv;
+	host_event_t mask = 0;
 
 	/* Test invalid sub-command */
-	rv = shell_execute_cmd(get_ec_shell(), "hostevent invalid 0xFFFF");
+	rv = console_cmd_hostevent("invalid", mask);
 	zassert_equal(rv, EC_ERROR_PARAM1, "Expected %d, but got %d",
 		      EC_ERROR_PARAM1, rv);
 
