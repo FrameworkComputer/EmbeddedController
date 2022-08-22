@@ -44,6 +44,22 @@ ZTEST_USER(console_cmd_hostevent, test_hostevent)
 		   "Failed default print");
 }
 
+/* hostevent with invalid arguments */
+ZTEST_USER(console_cmd_hostevent, test_hostevent_invalid)
+{
+	int rv;
+
+	/* Test invalid sub-command */
+	rv = shell_execute_cmd(get_ec_shell(), "hostevent invalid 0xFFFF");
+	zassert_equal(rv, EC_ERROR_PARAM1, "Expected %d, but got %d",
+		      EC_ERROR_PARAM1, rv);
+
+	/* Test invalid mask */
+	rv = shell_execute_cmd(get_ec_shell(), "hostevent set invalid-mask");
+	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",
+		      EC_ERROR_PARAM2, rv);
+}
+
 ZTEST_SUITE(console_cmd_hostevent, drivers_predicate_post_main,
 	    console_cmd_hostevent_setup, console_cmd_hostevent_before,
 	    console_cmd_hostevent_after, NULL);
