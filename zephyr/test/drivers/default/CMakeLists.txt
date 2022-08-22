@@ -28,6 +28,7 @@ target_sources(app PRIVATE
     src/espi.c
     src/gpio.c
     src/host_cmd/host_event_commands.c
+    src/host_cmd/get_pd_port_caps.c
     src/host_cmd/motion_sense.c
     src/integration/usbc/usb.c
     src/integration/usbc/usb_20v_3a_pd_charger.c
