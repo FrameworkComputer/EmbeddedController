@@ -5,6 +5,7 @@
  * Tests for keyboard MKBP protocol
  */
 
+#include <stdbool.h>
 #include "atkbd_protocol.h"
 #include "common.h"
 #include "console.h"
@@ -18,29 +19,26 @@
 #include "power_button.h"
 #include "queue.h"
 #include "system.h"
+#include "task.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
 static const char *action[2] = { "release", "press" };
 
-struct to_host_data {
-	uint8_t data;
-	int irq;
-};
-
 /*
- * Keyboard or 8042 controller output to host.
- *
- * In the future we should have a separate keyboard queue and 8042 controller
- * queue so we don't lose keys while the keyboard port is inhibited.
+ * This simulates the hardware output buffer. The x86 will read the output
+ * buffer from IOx60. Since we don't have actual hardware, we emulate the
+ * output buffer.
  */
-static struct queue const kbd_8042_ctrl_to_host =
-	QUEUE_NULL(16, struct to_host_data);
+static volatile struct {
+	bool full;
+	uint8_t data;
+	bool irq;
+	bool from_aux;
+} output_buffer;
 
 static struct queue const aux_to_device = QUEUE_NULL(16, uint8_t);
-
-static struct queue const aux_to_host = QUEUE_NULL(16, struct to_host_data);
 
 /*****************************************************************************/
 /* Mock functions */
@@ -50,13 +48,23 @@ int lid_is_open(void)
 	return 1;
 }
 
+int lpc_keyboard_has_char(void)
+{
+	return output_buffer.full;
+}
+
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
-	struct to_host_data data = { .data = chr, .irq = send_irq };
+	if (lpc_keyboard_has_char()) {
+		ccprintf("%s:%s ERROR: output buffer is full!\n", __FILE__,
+			 __func__);
+		return;
+	}
 
-	if (queue_add_unit(&kbd_8042_ctrl_to_host, &data) == 0)
-		ccprintf("%s: ERROR: kbd_8042_ctrl_to_host queue is full!\n",
-			 __FILE__);
+	output_buffer.data = chr;
+	output_buffer.irq = send_irq;
+	output_buffer.from_aux = false;
+	output_buffer.full = true;
 }
 
 void send_aux_data_to_device(uint8_t data)
@@ -67,10 +75,16 @@ void send_aux_data_to_device(uint8_t data)
 
 void lpc_aux_put_char(uint8_t chr, int send_irq)
 {
-	struct to_host_data data = { .data = chr, .irq = send_irq };
+	if (lpc_keyboard_has_char()) {
+		ccprintf("%s:%s ERROR: output buffer is full!\n", __FILE__,
+			 __func__);
+		return;
+	}
 
-	if (queue_add_unit(&aux_to_host, &data) == 0)
-		ccprintf("%s: ERROR: aux_to_host queue is full!\n", __FILE__);
+	output_buffer.data = chr;
+	output_buffer.irq = send_irq;
+	output_buffer.from_aux = true;
+	output_buffer.full = true;
 }
 /*****************************************************************************/
 /* Test utilities */
@@ -81,43 +95,56 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
  */
 #define ASSERT_IS_STRING_LITERAL(x) _Static_assert(true, x)
 
-#define VERIFY_LPC_CHAR_DELAY(s, d)                                       \
-	do {                                                              \
-		struct to_host_data _data;                                \
-		const uint8_t *expected = s;                              \
-		ASSERT_IS_STRING_LITERAL(s);                              \
-		msleep(d);                                                \
-		for (int _i = 0; _i < sizeof(s) - 1; ++_i) {              \
-			TEST_EQ(queue_remove_unit(&kbd_8042_ctrl_to_host, \
-						  &_data),                \
-				(size_t)1, "%zd");                        \
-			TEST_EQ(_data.data, expected[_i], "0x%x");        \
-		}                                                         \
+int _wait_for_data(int delay_ms)
+{
+	while (!output_buffer.full) {
+		if (delay_ms <= 0)
+			break;
+		delay_ms -= 1;
+
+		msleep(1);
+	}
+	TEST_ASSERT(output_buffer.full);
+
+	return EC_SUCCESS;
+}
+
+#define WAIT_FOR_DATA(d) TEST_EQ(_wait_for_data(d), EC_SUCCESS, "%d")
+
+#define VERIFY_LPC_CHAR_ALL(s, d, aux, _irq)                               \
+	do {                                                               \
+		const uint8_t *expected = s;                               \
+		ASSERT_IS_STRING_LITERAL(s);                               \
+		for (int _i = 0; _i < sizeof(s) - 1; ++_i) {               \
+			WAIT_FOR_DATA(d);                                  \
+			TEST_EQ(output_buffer.from_aux, aux, "%d");        \
+			if (_irq >= 0)                                     \
+				TEST_EQ(output_buffer.irq,                 \
+					_irq > 0 ? true : false, "%d");    \
+			TEST_EQ(output_buffer.data, expected[_i], "0x%x"); \
+			output_buffer.full = false;                        \
+			task_wake(TASK_ID_KEYPROTO);                       \
+		}                                                          \
 	} while (0)
-#define VERIFY_LPC_CHAR(s) VERIFY_LPC_CHAR_DELAY(s, 30)
+
+#define VERIFY_LPC_CHAR_DELAY(s, d)                    \
+	do {                                           \
+		msleep(d);                             \
+		VERIFY_LPC_CHAR_ALL(s, 10, false, -1); \
+	} while (0)
+#define VERIFY_LPC_CHAR(s) VERIFY_LPC_CHAR_ALL(s, 30, false, -1)
 #define VERIFY_ATKBD_ACK(s) VERIFY_LPC_CHAR("\xfa") /* ATKBD_RET_ACK */
 
-#define VERIFY_NO_CHAR()                                                  \
-	do {                                                              \
-		msleep(30);                                               \
-		TEST_EQ(queue_is_empty(&kbd_8042_ctrl_to_host), 1, "%d"); \
+#define VERIFY_NO_CHAR()                              \
+	do {                                          \
+		msleep(30);                           \
+		TEST_EQ(output_buffer.full, 0, "%d"); \
 	} while (0)
 
-#define VERIFY_AUX_TO_HOST(expected_data, expected_irq)                    \
-	do {                                                               \
-		struct to_host_data data;                                  \
-		msleep(30);                                                \
-		TEST_EQ(queue_remove_unit(&aux_to_host, &data), (size_t)1, \
-			"%zd");                                            \
-		TEST_EQ(data.data, expected_data, "%#x");                  \
-		TEST_EQ(data.irq, expected_irq, "%u");                     \
-	} while (0)
+#define VERIFY_AUX_TO_HOST(expected_data, expected_irq) \
+	VERIFY_LPC_CHAR_ALL(expected_data, 30, true, expected_irq)
 
-#define VERIFY_AUX_TO_HOST_EMPTY()                         \
-	do {                                               \
-		msleep(30);                                \
-		TEST_ASSERT(queue_is_empty(&aux_to_host)); \
-	} while (0)
+#define VERIFY_AUX_TO_HOST_EMPTY VERIFY_NO_CHAR
 
 #define VERIFY_AUX_TO_DEVICE(expected_data)                                   \
 	do {                                                                  \
@@ -198,13 +225,13 @@ static int _write_cmd_byte(uint8_t val)
 
 static int _read_cmd_byte(uint8_t *cmd)
 {
-	struct to_host_data data;
-
 	keyboard_host_write(I8042_READ_CMD_BYTE, 1);
-	msleep(30);
-	if (queue_remove_unit(&kbd_8042_ctrl_to_host, &data) == 0)
-		return EC_ERROR_UNKNOWN;
-	*cmd = data.data;
+	WAIT_FOR_DATA(30);
+	TEST_EQ(output_buffer.from_aux, 0, "%d");
+
+	*cmd = output_buffer.data;
+	output_buffer.full = false;
+	task_wake(TASK_ID_KEYPROTO);
 
 	return EC_SUCCESS;
 }
@@ -234,15 +261,9 @@ void before_test(void)
 
 void after_test(void)
 {
-	/* Hrmm, we can't fail the test here :( */
-
-	if (!queue_is_empty(&aux_to_device))
-		ccprintf("%s: ERROR: AUX to device queue is not empty!\n",
-			 __FILE__);
-
-	if (!queue_is_empty(&aux_to_host))
-		ccprintf("%s: ERROR: AUX to host queue is not empty!\n",
-			 __FILE__);
+	if (output_buffer.full)
+		ccprintf("%s:%s ERROR: output buffer is not empty!\n", __FILE__,
+			 __func__);
 }
 
 static int test_8042_aux_loopback(void)
@@ -252,14 +273,14 @@ static int test_8042_aux_loopback(void)
 
 	i8042_write_cmd(I8042_ECHO_MOUSE);
 	i8042_write_data(0x01);
-	VERIFY_AUX_TO_HOST(0x01, 0);
+	VERIFY_AUX_TO_HOST("\x01", 0);
 
 	/* Enable AUX IRQ */
 	WRITE_CMD_BYTE(I8042_ENIRQ12);
 
 	i8042_write_cmd(I8042_ECHO_MOUSE);
 	i8042_write_data(0x02);
-	VERIFY_AUX_TO_HOST(0x02, 1);
+	VERIFY_AUX_TO_HOST("\x02", 1);
 
 	return EC_SUCCESS;
 }
@@ -277,7 +298,7 @@ static int test_8042_aux_two_way_communication(void)
 
 	/* Simulate the AUX device sending a response to the host */
 	send_aux_data_to_host_interrupt(0x02);
-	VERIFY_AUX_TO_HOST(0x02, 1);
+	VERIFY_AUX_TO_HOST("\x02", 1);
 
 	return EC_SUCCESS;
 }
@@ -332,7 +353,6 @@ static int test_8042_aux_controller_commands(void)
 
 static int test_8042_aux_test_command(void)
 {
-	/* Send the AUX DISABLE command and verify the ctrl got updated */
 	i8042_write_cmd(I8042_TEST_MOUSE);
 
 	VERIFY_LPC_CHAR("\x00");
