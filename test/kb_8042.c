@@ -471,8 +471,13 @@ static int test_scancode_set2(void)
 
 static int test_power_button(void)
 {
+	ENABLE_KEYSTROKE(0);
+
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
+	msleep(100);
+
 	SET_SCANCODE(1);
+	ENABLE_KEYSTROKE(1);
 	test_chipset_on();
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
