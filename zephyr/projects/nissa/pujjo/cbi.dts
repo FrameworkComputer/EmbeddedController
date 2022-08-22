@@ -1,0 +1,146 @@
+/* Copyright 2022 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Pujjo-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to enable KB back light or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <3>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field for KB PWB present or not.
+		 */
+		kb-pwb {
+			enum-name = "FW_KB_PWB";
+			start = <4>;
+			size = <1>;
+
+			no-kb-pwb {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_PWB_NOT_PRESENT";
+				value = <0>;
+			};
+			kb-pwb-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_PWB_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field for tablet present or not.
+		 */
+		tablet {
+			enum-name = "FW_TABLET";
+			start = <5>;
+			size = <1>;
+
+			no-tablet {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_NOT_PRESENT";
+				value = <0>;
+			};
+			tablet-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field for LTE board present or not.
+		 *
+		 *	start = <6>;
+		 *	size = <1>;
+		 */
+
+		/*
+		 * FW_CONFIG field for SD card present or not.
+		 *
+		 *	start = <7>;
+		 *	size = <1>;
+		 */
+
+		/*
+		 * FW_CONFIG field for pen present or not.
+		 */
+		pen {
+			enum-name = "FW_PEN";
+			start = <8>;
+			size = <1>;
+
+			no-pen {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PEN_NOT_PRESENT";
+				value = <0>;
+			};
+			pen-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PEN_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field for WF camera present or not.
+		 *
+		 *	start = <9>;
+		 *	size = <1>;
+		 */
+
+		/*
+		 * FW_CONFIG field for multiple thermal table.
+		 */
+		therm-table {
+			enum-name = "THERM_TABLE";
+			start = <10>;
+			size = <2>;
+
+			therm-table-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "THERM_TABLE_1";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field for multiple audio module.
+		 *
+		 *	start = <12>;
+		 *	size = <3>;
+		 */
+
+		/*
+		 * FW_CONFIG field for EXT_VR.
+		 *
+		 *	start = <15>;
+		 *	size = <1>;
+		 */
+
+		/*
+		 * FW_CONFIG field for multiple wi-fi SAR.
+		 *
+		 *	start = <16>;
+		 *	size = <2>;
+		 */
+	};
+};
