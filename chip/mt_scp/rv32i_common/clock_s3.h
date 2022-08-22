@@ -18,5 +18,13 @@ void clock_select_clock(enum scp_clock_source src);
 
 #define TASK_EVENT_SUSPEND TASK_EVENT_CUSTOM_BIT(4)
 #define TASK_EVENT_RESUME TASK_EVENT_CUSTOM_BIT(5)
+#define TASK_EVENT_C1_READY TASK_EVENT_CUSTOM_BIT(6)
+
+/* core 0 -> core 1 */
+#define S3_IPI_SUSPEND 12
+#define S3_IPI_RESUME 13
+
+/* core 1 -> core 0 */
+#define S3_IPI_READY 8
 
 #endif /* __CLOCK_S3_H */
