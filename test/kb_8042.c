@@ -58,7 +58,8 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	if (lpc_keyboard_has_char()) {
 		ccprintf("%s:%s ERROR: output buffer is full!\n", __FILE__,
 			 __func__);
-		return;
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
 	}
 
 	output_buffer.data = chr;
@@ -69,8 +70,11 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 
 void send_aux_data_to_device(uint8_t data)
 {
-	if (queue_add_unit(&aux_to_device, &data) == 0)
+	if (queue_add_unit(&aux_to_device, &data) == 0) {
 		ccprintf("%s: ERROR: aux_to_device queue is full!\n", __FILE__);
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
+	}
 }
 
 void lpc_aux_put_char(uint8_t chr, int send_irq)
@@ -78,7 +82,8 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 	if (lpc_keyboard_has_char()) {
 		ccprintf("%s:%s ERROR: output buffer is full!\n", __FILE__,
 			 __func__);
-		return;
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
 	}
 
 	output_buffer.data = chr;
@@ -261,9 +266,12 @@ void before_test(void)
 
 void after_test(void)
 {
-	if (output_buffer.full)
+	if (output_buffer.full) {
 		ccprintf("%s:%s ERROR: output buffer is not empty!\n", __FILE__,
 			 __func__);
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
+	}
 }
 
 static int test_8042_aux_loopback(void)
