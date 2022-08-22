@@ -39,7 +39,7 @@ struct usb_mux usb_mux_c1;
 const struct usb_mux *org_mux[NUM_OF_PROXY];
 
 /** Proxy function which check calls from usb_mux framework to driver */
-FAKE_VALUE_FUNC1(int, proxy_init, const struct usb_mux *);
+FAKE_VALUE_FUNC(int, proxy_init, const struct usb_mux *);
 static int proxy_init_custom(const struct usb_mux *me)
 {
 	int i = me->i2c_addr_flags;
@@ -62,7 +62,7 @@ static int proxy_init_custom(const struct usb_mux *me)
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
-FAKE_VALUE_FUNC3(int, proxy_set, const struct usb_mux *, mux_state_t, bool *);
+FAKE_VALUE_FUNC(int, proxy_set, const struct usb_mux *, mux_state_t, bool *);
 static int proxy_set_custom(const struct usb_mux *me, mux_state_t mux_state,
 			    bool *ack_required)
 {
@@ -89,7 +89,7 @@ static int proxy_set_custom(const struct usb_mux *me, mux_state_t mux_state,
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
-FAKE_VALUE_FUNC2(int, proxy_get, const struct usb_mux *, mux_state_t *);
+FAKE_VALUE_FUNC(int, proxy_get, const struct usb_mux *, mux_state_t *);
 /** Sequence of mux_state values returned by proxy_get function */
 static mux_state_t proxy_get_mux_state_seq[NUM_OF_PROXY];
 /** Index of next mux_state to return from proxy_get_function */
@@ -132,7 +132,7 @@ static int proxy_get_custom(const struct usb_mux *me, mux_state_t *mux_state)
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
-FAKE_VALUE_FUNC1(int, proxy_enter_low_power_mode, const struct usb_mux *);
+FAKE_VALUE_FUNC(int, proxy_enter_low_power_mode, const struct usb_mux *);
 static int proxy_enter_low_power_mode_custom(const struct usb_mux *me)
 {
 	int i = me->i2c_addr_flags;
@@ -156,7 +156,7 @@ static int proxy_enter_low_power_mode_custom(const struct usb_mux *me)
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
-FAKE_VALUE_FUNC1(int, proxy_chipset_reset, const struct usb_mux *);
+FAKE_VALUE_FUNC(int, proxy_chipset_reset, const struct usb_mux *);
 static int proxy_chipset_reset_custom(const struct usb_mux *me)
 {
 	int i = me->i2c_addr_flags;
@@ -185,7 +185,7 @@ static bool proxy_fw_update_cap(void)
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
-FAKE_VOID_FUNC3(proxy_hpd_update, const struct usb_mux *, mux_state_t, bool *);
+FAKE_VOID_FUNC(proxy_hpd_update, const struct usb_mux *, mux_state_t, bool *);
 static void proxy_hpd_update_custom(const struct usb_mux *me,
 				    mux_state_t mux_state, bool *ack_required)
 {
@@ -216,7 +216,7 @@ const struct usb_mux_driver proxy_usb_mux = {
 };
 
 /** Mock function used in init test */
-FAKE_VALUE_FUNC1(int, mock_board_init, const struct usb_mux *);
+FAKE_VALUE_FUNC(int, mock_board_init, const struct usb_mux *);
 static int mock_board_init_custom(const struct usb_mux *me)
 {
 	if (task_get_current() == TASK_ID_TEST_RUNNER) {
@@ -230,7 +230,7 @@ static int mock_board_init_custom(const struct usb_mux *me)
 }
 
 /** Mock function used in set test */
-FAKE_VALUE_FUNC2(int, mock_board_set, const struct usb_mux *, mux_state_t);
+FAKE_VALUE_FUNC(int, mock_board_set, const struct usb_mux *, mux_state_t);
 static int mock_board_set_custom(const struct usb_mux *me,
 				 mux_state_t mux_state)
 {
