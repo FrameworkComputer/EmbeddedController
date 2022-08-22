@@ -48,3 +48,30 @@ ZTEST_USER(console_cmd_md, test_count_arg)
 	zassume_true(sprintf(cmd, "md %llu 2", memory) != 0, NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 }
+
+ZTEST_USER(console_cmd_md, test_byte_format)
+{
+	uint8_t memory[] = { 0x01, 0x02, 0x03, 0x04 };
+	char cmd[128] = { 0 };
+
+	zassume_true(sprintf(cmd, "md .b %llu", memory) != 0, NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
+}
+
+ZTEST_USER(console_cmd_md, test_half_format)
+{
+	uint8_t memory[] = { 0x01, 0x02, 0x03, 0x04 };
+	char cmd[128] = { 0 };
+
+	zassume_true(sprintf(cmd, "md .h %llu", memory) != 0, NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
+}
+
+ZTEST_USER(console_cmd_md, test_string_format)
+{
+	char memory[] = "hello world";
+	char cmd[128] = { 0 };
+
+	zassume_true(sprintf(cmd, "md .s %llu 12", memory) != 0, NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
+}
