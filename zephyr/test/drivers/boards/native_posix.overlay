@@ -250,10 +250,12 @@
 		};
 		named_i2c2: i2c2 {
 			i2c-port = <&i2c2>;
+			dynamic-speed;
 			enum-names = "I2C_PORT_USB_C0";
 		};
 		named_i2c3: i2c3 {
 			i2c-port = <&i2c3>;
+			dynamic-speed;
 			enum-names = "I2C_PORT_USB_C1";
 		};
 	};

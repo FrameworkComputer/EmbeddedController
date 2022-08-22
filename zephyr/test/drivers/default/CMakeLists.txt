@@ -40,6 +40,7 @@ target_sources(app PRIVATE
     src/integration/usbc/usb_pd_bist_shared.c
     src/integration/usbc/usb_pd_ctrl_msg.c
     src/integration/usbc/usb_pd_rev3.c
+    src/i2c.c
     src/i2c_passthru.c
     src/isl923x.c
     src/keyboard_scan.c
