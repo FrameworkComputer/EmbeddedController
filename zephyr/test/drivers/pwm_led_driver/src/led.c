@@ -12,6 +12,7 @@
 #include "ec_commands.h"
 #include "led.h"
 #include "led_common.h"
+#include "pwm_mock.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
