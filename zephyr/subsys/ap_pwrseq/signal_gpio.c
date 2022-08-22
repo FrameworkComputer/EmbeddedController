@@ -107,7 +107,7 @@ int power_signal_gpio_get(enum pwr_sig_gpio index)
 	 * physical level of the pin (open drain outputs
 	 * may have a low voltage).
 	 */
-	if (gpio_config[index].output) {
+	if (IS_ENABLED(CONFIG_GPIO_GET_CONFIG) && gpio_config[index].output) {
 		int rv;
 		gpio_flags_t flags;
 
