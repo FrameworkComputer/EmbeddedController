@@ -20,7 +20,13 @@
 
 #define TIMER_SYSTEM 5
 #define TIMER_EVENT 3
+
+#ifdef CHIP_VARIANT_MT8195
+#define TIMER_CLOCK_MHZ 31
+#else
 #define TIMER_CLOCK_MHZ 32.5
+#endif
+
 #define OVERFLOW_TICKS (TIMER_CLOCK_MHZ * 0x100000000 - 1)
 
 /* High 32-bit for system timer. */
