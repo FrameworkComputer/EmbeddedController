@@ -88,7 +88,11 @@ def main():
     ec_base, zephyr_base, zephyr_modules_dir = find_paths()
 
     zephyr_modules = find_modules(zephyr_modules_dir)
-    zephyr_modules.append(ec_base)
+
+    # Add the EC dir as a module if not already included (resolve all paths to
+    # account for symlinked or relative paths)
+    if ec_base.resolve() not in {p.resolve() for p in zephyr_modules}:
+        zephyr_modules.append(ec_base)
 
     # Prepare environment variables for export to Twister. Inherit the parent
     # process's environment, but set some default values if not already set.
