@@ -424,6 +424,122 @@ static int test_8042_keyboard_key_pressed_while_inhibited(void)
 	return EC_SUCCESS;
 }
 
+static int test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte(void)
+{
+	ENABLE_KEYSTROKE(1);
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/*
+	 * We should have a press scan code in the output buffer, and a
+	 * release scan code queued up in the keyboard queue.
+	 */
+	WAIT_FOR_DATA(30);
+
+	/* Inhibit the keyboard device from sending data. */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE | I8042_KBD_DIS, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Stop inhibiting the keyboard */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Verify the scan codes from above */
+	VERIFY_LPC_CHAR("\x01");
+	VERIFY_LPC_CHAR("\x81");
+
+	return EC_SUCCESS;
+}
+
+static int
+test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte_with_read(void)
+{
+	uint8_t cmd;
+
+	ENABLE_KEYSTROKE(1);
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/*
+	 * We should have a press scan code in the output buffer, and a
+	 * release scan code queued up in the keyboard queue.
+	 */
+	WAIT_FOR_DATA(30);
+
+	/* Inhibit the keyboard device from sending data. */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE | I8042_KBD_DIS, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Read the key press scan code from the output buffer. */
+	VERIFY_LPC_CHAR("\x01");
+
+	/*
+	 * With the keyboard output suppressed, we should be able to read from
+	 * the 8042 controller.
+	 */
+	cmd = READ_CMD_BYTE();
+
+	/* Verify we got the cmd byte we set above */
+	TEST_EQ(cmd, I8042_XLATE | I8042_KBD_DIS, "%d");
+
+	/* Stop inhibiting the keyboard */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Verify the key release scan code from above */
+	/*
+	 * FIXME: This is wrong. We should receive the key release scan code
+	 * 0x81. Instead the `I8042_READ_CMD_BYTE` above cleared the keyboard's
+	 * output queue. It did this because the 8042 and keyboard output queues
+	 * are implemented as the same thing.
+	 */
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_keyboard_key_pressed_before_inhibit_using_cmd(void)
+{
+	ENABLE_KEYSTROKE(1);
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/*
+	 * We should have a press scan code in the output buffer, and a
+	 * release scan code queued up in the keyboard queue.
+	 */
+	WAIT_FOR_DATA(30);
+
+	/* Inhibit the keyboard device from sending data. */
+	keyboard_host_write(I8042_DIS_KB, 1);
+
+	/* Stop inhibiting the keyboard */
+	keyboard_host_write(I8042_ENA_KB, 1);
+
+	/* Verify the scan codes from above */
+	VERIFY_LPC_CHAR("\x01");
+	/*
+	 * FIXME: This is wrong. When the keyboard CLK is inhibited the keyboard
+	 * will queue up events/scan codes in it's internal buffer. Once the
+	 * inhibit is released, the keyboard will start clocking out the data.
+	 * So in this test we should be receiving 0x81, but the keyboard buffer
+	 * was cleared by the I8042_DIS_KB above.
+	 */
+	VERIFY_NO_CHAR();
+	return EC_SUCCESS;
+}
+
 static int test_single_key_press(void)
 {
 	ENABLE_KEYSTROKE(1);
@@ -643,6 +759,12 @@ void run_test(int argc, char **argv)
 		RUN_TEST(test_8042_aux_test_command);
 		RUN_TEST(test_8042_keyboard_controller_commands);
 		RUN_TEST(test_8042_keyboard_key_pressed_while_inhibited);
+		RUN_TEST(
+			test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte);
+		RUN_TEST(
+			test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte_with_read);
+		RUN_TEST(
+			test_8042_keyboard_key_pressed_before_inhibit_using_cmd);
 		RUN_TEST(test_single_key_press);
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);
