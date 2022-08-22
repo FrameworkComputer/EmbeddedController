@@ -4,44 +4,17 @@
  */
 
 #include <zephyr/device.h>
+#include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
 
 #include "host_command.h"
 #include "system.h"
 
-/* This has to be declared here so it's visible in system_reset(), so no point
- * passing it through the fixture parameter of the ztest APIs.
- */
-static struct reboot_fixture {
-	int reset_called;
-	int reset_flags;
-	int hibernate_called;
-	uint32_t hibernate_seconds;
-	uint32_t hibernate_microseconds;
-} reboot_fixture;
+FAKE_VOID_FUNC(system_reset, int);
+FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
-__override void system_reset(int flags)
-{
-	reboot_fixture.reset_called++;
-	reboot_fixture.reset_flags = flags;
-}
-
-__override void system_hibernate(uint32_t seconds, uint32_t microseconds)
-{
-	reboot_fixture.hibernate_seconds = seconds;
-	reboot_fixture.hibernate_microseconds = microseconds;
-	reboot_fixture.hibernate_called++;
-}
-
-static void system_reset_fixture_reset(void *fixture)
-{
-	ARG_UNUSED(fixture);
-	memset(&reboot_fixture, 0, sizeof(reboot_fixture));
-}
-
-ZTEST_SUITE(console_cmd_reboot, NULL, NULL, system_reset_fixture_reset, NULL,
-	    NULL);
+ZTEST_SUITE(console_cmd_reboot, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(console_cmd_reboot, test_reboot_valid)
 {
@@ -53,43 +26,79 @@ ZTEST(console_cmd_reboot, test_reboot_valid)
 		int expect_called;
 		int expect_flags;
 	} tests[] = {
-		{ "reboot hard", 1,
-		  SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_HARD },
-		{ "reboot cold", 1,
-		  SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_HARD },
-		{ "reboot soft", 1, SYSTEM_RESET_MANUALLY_TRIGGERED },
-		{ "reboot ap-off", 1,
-		  SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_LEAVE_AP_OFF },
-		{ "reboot ap-off-in-ro", 1,
-		  SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_LEAVE_AP_OFF |
-			  SYSTEM_RESET_STAY_IN_RO },
-		{ "reboot ro", 1,
-		  SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_STAY_IN_RO },
-		{ "reboot cancel", 0, 0 },
-		{ "reboot preserve", 1,
-		  SYSTEM_RESET_MANUALLY_TRIGGERED |
-			  SYSTEM_RESET_PRESERVE_FLAGS },
-		{ "reboot wait-ext", 1,
-		  SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_WAIT_EXT },
+		{
+			.cmd = "reboot hard",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED |
+					SYSTEM_RESET_HARD,
+		},
+		{
+			.cmd = "reboot cold",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED |
+					SYSTEM_RESET_HARD,
+		},
+		{
+			.cmd = "reboot soft",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED,
+		},
+		{
+			.cmd = "reboot ap-off",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED |
+					SYSTEM_RESET_LEAVE_AP_OFF,
+		},
+		{
+			.cmd = "reboot ap-off-in-ro",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED |
+					SYSTEM_RESET_LEAVE_AP_OFF |
+					SYSTEM_RESET_STAY_IN_RO,
+		},
+		{
+			.cmd = "reboot ro",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED |
+					SYSTEM_RESET_STAY_IN_RO,
+		},
+		{
+			.cmd = "reboot cancel",
+			.expect_called = 0,
+			.expect_flags = 0,
+		},
+		{
+			.cmd = "reboot preserve",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED |
+					SYSTEM_RESET_PRESERVE_FLAGS,
+		},
+		{
+			.cmd = "reboot wait-ext",
+			.expect_called = 1,
+			.expect_flags = SYSTEM_RESET_MANUALLY_TRIGGERED |
+					SYSTEM_RESET_WAIT_EXT,
+		},
 	};
 
 	for (i = 0; i < ARRAY_SIZE(tests); i++) {
 		char *cmd = tests[i].cmd;
 
-		/* Make sure the fixture gets reset before each re-run. */
-		system_reset_fixture_reset(NULL);
+		RESET_FAKE(system_reset);
+		RESET_FAKE(system_hibernate);
 
 		ret = shell_execute_cmd(get_ec_shell(), cmd);
 
 		zassert_equal(ret, EC_SUCCESS,
-			      "invalid return value for '%s': %d", cmd, ret);
-		zassert_equal(reboot_fixture.reset_called,
+			      "Unexpected return value for '%s': %d", cmd, ret);
+		zassert_equal(system_reset_fake.call_count,
 			      tests[i].expect_called,
 			      "Unexpected call count for '%s': %d", cmd,
-			      reboot_fixture.reset_called);
-		zassert_equal(reboot_fixture.reset_flags, tests[i].expect_flags,
+			      system_reset_fake.call_count);
+		zassert_equal(system_reset_fake.arg0_history[0],
+			      tests[i].expect_flags,
 			      "Unexpected flags for '%s': %x", cmd,
-			      reboot_fixture.reset_flags);
+			      system_reset_fake.arg0_history[0]);
 	}
 }
 
@@ -100,12 +109,12 @@ ZTEST(console_cmd_reboot, test_reboot_invalid)
 	ret = shell_execute_cmd(get_ec_shell(), "reboot i-am-not-an-argument");
 
 	zassert_equal(ret, EC_ERROR_PARAM1, "invalid return value: %d", ret);
-	zassert_equal(reboot_fixture.reset_called, 0,
-		      "Unexpected call count: %d", reboot_fixture.reset_called);
+	zassert_equal(system_reset_fake.call_count, 0,
+		      "Unexpected call count: %d",
+		      system_reset_fake.call_count);
 }
 
-ZTEST_SUITE(host_cmd_reboot, NULL, NULL, system_reset_fixture_reset, NULL,
-	    NULL);
+ZTEST_SUITE(host_cmd_reboot, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(host_cmd_reboot, test_reboot)
 {
@@ -204,8 +213,8 @@ ZTEST(host_cmd_reboot, test_reboot)
 		p.cmd = tests[i].cmd;
 		p.flags = tests[i].flags;
 
-		/* Make sure the fixture gets reset before each re-run. */
-		system_reset_fixture_reset(NULL);
+		RESET_FAKE(system_reset);
+		RESET_FAKE(system_hibernate);
 
 		ret = host_command_process(&args);
 
@@ -217,23 +226,22 @@ ZTEST(host_cmd_reboot, test_reboot)
 			reboot_at_shutdown, tests[i].expect_reboot_at_shutdown,
 			"Unexpected value for reboot_at_shutdown (%d): %d", i,
 			reboot_at_shutdown);
-		zassert_equal(reboot_fixture.reset_called,
+		zassert_equal(system_reset_fake.call_count,
 			      tests[i].expect_reset_called,
 			      "Unexpected reset call count (%d): %d", i,
-			      reboot_fixture.reset_called);
-		zassert_equal(reboot_fixture.reset_flags,
+			      system_reset_fake.call_count);
+		zassert_equal(system_reset_fake.arg0_history[0],
 			      tests[i].expect_reset_flags,
 			      "Unexpected flags (%d): %x", i,
-			      reboot_fixture.reset_flags);
-		zassert_equal(reboot_fixture.hibernate_called,
+			      system_reset_fake.arg0_history[0]);
+		zassert_equal(system_hibernate_fake.call_count,
 			      tests[i].expect_hibernate_called,
 			      "Unexpected hibernate call count (%d): %d", i,
-			      reboot_fixture.hibernate_called);
+			      system_hibernate_fake.call_count);
 	}
 }
 
-ZTEST_SUITE(console_cmd_hibernate, NULL, NULL, system_reset_fixture_reset, NULL,
-	    NULL);
+ZTEST_SUITE(console_cmd_hibernate, NULL, NULL, NULL, NULL, NULL);
 
 int chipset_in_state(int state_mask)
 {
@@ -244,34 +252,38 @@ ZTEST(console_cmd_hibernate, test_hibernate_default)
 {
 	int ret;
 
+	RESET_FAKE(system_hibernate);
+
 	ret = shell_execute_cmd(get_ec_shell(), "hibernate");
 
 	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
-	zassert_equal(reboot_fixture.hibernate_called, 1,
+	zassert_equal(system_hibernate_fake.call_count, 1,
 		      "Unexpected hibernate call count: %d",
-		      reboot_fixture.hibernate_called);
-	zassert_equal(reboot_fixture.hibernate_seconds, 0,
+		      system_hibernate_fake.call_count);
+	zassert_equal(system_hibernate_fake.arg0_history[0], 0,
 		      "Unexpected hibernate_secondst: %d",
-		      reboot_fixture.hibernate_seconds);
-	zassert_equal(reboot_fixture.hibernate_microseconds, 0,
+		      system_hibernate_fake.arg0_history[0]);
+	zassert_equal(system_hibernate_fake.arg1_history[0], 0,
 		      "Unexpected hibernate_secondst: %d",
-		      reboot_fixture.hibernate_microseconds);
+		      system_hibernate_fake.arg1_history[0]);
 }
 
 ZTEST(console_cmd_hibernate, test_hibernate_args)
 {
 	int ret;
 
+	RESET_FAKE(system_hibernate);
+
 	ret = shell_execute_cmd(get_ec_shell(), "hibernate 123 456");
 
 	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
-	zassert_equal(reboot_fixture.hibernate_called, 1,
+	zassert_equal(system_hibernate_fake.call_count, 1,
 		      "Unexpected hibernate call count: %d",
-		      reboot_fixture.hibernate_called);
-	zassert_equal(reboot_fixture.hibernate_seconds, 123,
+		      system_hibernate_fake.call_count);
+	zassert_equal(system_hibernate_fake.arg0_history[0], 123,
 		      "Unexpected hibernate_secondst: %d",
-		      reboot_fixture.hibernate_seconds);
-	zassert_equal(reboot_fixture.hibernate_microseconds, 456,
+		      system_hibernate_fake.arg0_history[0]);
+	zassert_equal(system_hibernate_fake.arg1_history[0], 456,
 		      "Unexpected hibernate_secondst: %d",
-		      reboot_fixture.hibernate_microseconds);
+		      system_hibernate_fake.arg1_history[0]);
 }

@@ -11,8 +11,6 @@
 #include "host_command.h"
 #include "system.h"
 
-DEFINE_FFF_GLOBALS;
-
 ZTEST_SUITE(host_cmd_get_build_info, NULL, NULL, NULL, NULL, NULL);
 
 FAKE_VALUE_FUNC(const char *, system_get_build_info);
