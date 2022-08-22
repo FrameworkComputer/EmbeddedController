@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "charger.h"
+#include "lpc.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "extpower.h"
 #include "host_command.h"
@@ -226,6 +227,17 @@ host_cmd_charge_control(enum ec_charge_control_mode mode,
 
 	return response;
 }
+
+/**
+ * @brief Call the host command HOST_EVENT with the user supplied action.
+ *
+ * @param action    - HOST_EVENT action parameter.
+ * @param mask_type - Event mask type to apply to the HOST_EVENT action.
+ * @param r         - Pointer to the response object to fill.
+ */
+enum ec_status host_cmd_host_event(enum ec_host_event_action action,
+				   enum ec_host_event_mask_type mask_type,
+				   struct ec_response_host_event *r);
 
 /**
  * @brief Call the host command MOTION_SENSE with the dump sub-command
@@ -479,6 +491,28 @@ void host_cmd_typec_control_usb_mux_set(int port,
  *			definitions for options)
  */
 void host_cmd_typec_control_clear_events(int port, uint32_t events);
+
+struct host_events_ctx {
+	host_event_t lpc_host_events;
+	host_event_t lpc_host_event_mask[LPC_HOST_EVENT_COUNT];
+};
+
+/**
+ * Save all host events. This should be run as part of the "before" action for
+ * any test suite that manipulates the host events.
+ *
+ * @param host_events_ctx	Caller allocated storage to save the host
+ *				events.
+ */
+void host_events_save(struct host_events_ctx *host_events_ctx);
+
+/**
+ * Restore all host events. This should be run as part of the "after" action for
+ * any test suite that manipulates the host events.
+ *
+ * @param host_events_ctx	Saved host events context information.
+ */
+void host_events_restore(struct host_events_ctx *host_events_ctx);
 
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
 #define GPIO_ACOK_OD_PIN DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
