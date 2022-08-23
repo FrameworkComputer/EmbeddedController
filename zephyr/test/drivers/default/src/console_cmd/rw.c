@@ -23,3 +23,13 @@ ZTEST_USER(console_cmd_rw, test_error_param1)
 	zassert_equal(EC_ERROR_PARAM1,
 		      shell_execute_cmd(get_ec_shell(), "rw .j"), NULL);
 }
+
+ZTEST_USER(console_cmd_rw, test_error_bad_address)
+{
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(get_ec_shell(), "rw not_an_address"),
+		      NULL);
+	zassert_equal(EC_ERROR_PARAM2,
+		      shell_execute_cmd(get_ec_shell(), "rw .b not_an_address"),
+		      NULL);
+}
