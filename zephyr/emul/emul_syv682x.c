@@ -264,7 +264,7 @@ static int syv682x_emul_init(const struct emul *emul,
 	}; \
 	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {          \
 		.common = {                                                    \
-			.dev_label = DT_INST_LABEL(n),                         \
+			.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),        \
 			.addr = DT_INST_REG_ADDR(n),                           \
 		},                                                             \
 	}; \

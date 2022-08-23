@@ -720,7 +720,6 @@
 		syv682x_emul: syv682x@41 {
 			compatible = "zephyr,syv682x-emul";
 			reg = <0x41>;
-			label = "SYV682X_EMUL";
 			frs_en_gpio = <&gpio_usb_c1_frs_en>;
 			alert_gpio = <&gpio_usb_c1_ppc_int>;
 		};
