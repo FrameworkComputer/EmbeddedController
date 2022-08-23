@@ -756,7 +756,6 @@
 
 	cros_kb_raw: kb-raw-emul {
 		compatible = "cros-ec,kb-raw-emul";
-		label = "KB_RAW";
 	};
 
 	cros_flash: cros-flash {
