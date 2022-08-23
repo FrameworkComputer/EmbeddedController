@@ -33,6 +33,5 @@
 	bmi_i2c: bmi@68 {
 		compatible = "bosch,bmi160";
 		reg = <0x68>;
-		label = "accel-i2c";
 	};
 };

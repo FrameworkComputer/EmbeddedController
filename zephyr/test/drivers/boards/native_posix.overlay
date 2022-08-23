@@ -672,7 +672,6 @@
 		accel_bmi160: bmi160@68 {
 			compatible = "zephyr,bmi";
 			reg = <0x68>;
-			label = "BMI160";
 			device-model = "BMI_EMUL_160";
 			error-on-ro-write;
 			error-on-wo-read;
@@ -908,7 +907,6 @@
 	bma_emul: bma@18 {
 		compatible = "zephyr,bma255";
 		reg = <0x18>;
-		label = "BMA_EMUL";
 		error-on-compensation-not-ready;
 		error-on-ro-write;
 		error-on-reserved-bit-write;
@@ -918,7 +916,6 @@
 	accel_bmi260: bmi260@68 {
 		compatible = "zephyr,bmi";
 		reg = <0x68>;
-		label = "BMI260";
 		device-model = "BMI_EMUL_260";
 		error-on-ro-write;
 		error-on-wo-read;
