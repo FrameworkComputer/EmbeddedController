@@ -325,7 +325,7 @@ static int bb_emul_init(const struct emul *emul, const struct device *parent)
 	};         \
                                                                     \
 	static const struct i2c_common_emul_cfg bb_emul_cfg_##n = { \
-		.dev_label = DT_INST_LABEL(n),                      \
+		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),     \
 		.data = &bb_emul_data_##n.common,                   \
 		.addr = DT_INST_REG_ADDR(n),                        \
 	};                                                          \

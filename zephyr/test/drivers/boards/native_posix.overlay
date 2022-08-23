@@ -727,7 +727,6 @@
 		usb_c1_bb_retimer_emul: bbretimer@42 {
 			compatible = "cros,bb-retimer-emul";
 			reg = <0x42>;
-			label = "USB_C1_BB_RETIMER";
 			vendor = "BB_RETIMER_VENDOR_ID_1";
 			error-on-ro-write;
 			error-on-reserved-bit-write;
