@@ -153,7 +153,7 @@ static int ec_command_dev_v2(int command, int version, const void *outdata,
 			strresult(s_cmd->result));
 		if (errno == EAGAIN && s_cmd->result == EC_RES_IN_PROGRESS) {
 			s_cmd->command = EC_CMD_RESEND_RESPONSE;
-			r = ioctl(fd, CROS_EC_DEV_IOCXCMD_V2, &s_cmd);
+			r = ioctl(fd, CROS_EC_DEV_IOCXCMD_V2, s_cmd);
 			if (r < 0) {
 				fprintf(stderr,
 					"ioctl %d, errno %d (%s), EC result %d (%s)\n",
