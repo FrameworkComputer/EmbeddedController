@@ -13,7 +13,6 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x400 4>;
-		label = "I2C_1";
 	};
 
 	named-i2c-ports {
