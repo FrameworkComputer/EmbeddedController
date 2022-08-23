@@ -3,18 +3,23 @@
  * found in the LICENSE file.
  */
 
+#include "compile_time_macros.h"
+#include "fpsensor_utils.h"
+
+extern "C" {
 #include "atomic.h"
 #include "common.h"
 #include "cryptoc/util.h"
 #include "ec_commands.h"
-#include "fpsensor.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_state.h"
-#include "fpsensor_utils.h"
 #include "host_command.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
+}
+
+#include "fpsensor.h"
+#include "fpsensor_crypto.h"
+#include "fpsensor_state.h"
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
@@ -111,7 +116,8 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_FINGERPRINT, fp_get_next_event);
 
 static enum ec_status fp_command_tpm_seed(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_seed *params = args->params;
+	const struct ec_params_fp_seed *params =
+		static_cast<const ec_params_fp_seed *>(args->params);
 
 	if (params->struct_version != FP_TEMPLATE_FORMAT_VERSION) {
 		CPRINTS("Invalid seed format %d", params->struct_version);
@@ -137,7 +143,8 @@ int fp_tpm_seed_is_set(void)
 static enum ec_status
 fp_command_encryption_status(struct host_cmd_handler_args *args)
 {
-	struct ec_response_fp_encryption_status *r = args->response;
+	struct ec_response_fp_encryption_status *r =
+		static_cast<ec_response_fp_encryption_status *>(args->response);
 
 	r->valid_flags = FP_ENC_STATUS_SEED_SET;
 	r->status = fp_encryption_status;
@@ -202,8 +209,10 @@ enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 
 static enum ec_status fp_command_mode(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_mode *p = args->params;
-	struct ec_response_fp_mode *r = args->response;
+	const struct ec_params_fp_mode *p =
+		static_cast<const ec_params_fp_mode *>(args->params);
+	struct ec_response_fp_mode *r =
+		static_cast<ec_response_fp_mode *>(args->response);
 
 	enum ec_status ret = fp_set_sensor_mode(p->mode, &r->mode);
 
@@ -216,7 +225,8 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_MODE, fp_command_mode, EC_VER_MASK(0));
 
 static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_context_v1 *p = args->params;
+	const struct ec_params_fp_context_v1 *p =
+		static_cast<const ec_params_fp_context_v1 *>(args->params);
 	uint32_t mode_output;
 
 	switch (p->action) {
@@ -272,8 +282,11 @@ void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
 static enum ec_status
 fp_command_read_match_secret(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_read_match_secret *params = args->params;
-	struct ec_response_fp_read_match_secret *response = args->response;
+	const struct ec_params_fp_read_match_secret *params =
+		static_cast<const ec_params_fp_read_match_secret *>(
+			args->params);
+	struct ec_response_fp_read_match_secret *response =
+		static_cast<ec_response_fp_read_match_secret *>(args->response);
 	int8_t fgr = params->fgr;
 	timestamp_t now = get_time();
 	struct positive_match_secret_state state_copy =

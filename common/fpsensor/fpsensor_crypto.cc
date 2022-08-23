@@ -2,16 +2,26 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "aes-gcm.h"
-#include "aes.h"
-#include "cryptoc/util.h"
+
 #include "fpsensor_crypto.h"
 #include "fpsensor_state.h"
 #include "fpsensor_utils.h"
+
+extern "C" {
+#include "aes-gcm.h"
+#include "aes.h"
+#include "cryptoc/util.h"
 #include "rollback.h"
+#include "sha256.h"
+
+test_export_static int get_ikm(uint8_t *ikm);
+test_mockable void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
+				       const int key_len,
+				       const uint8_t *message,
+				       const int message_len);
+}
 
 #include <stdbool.h>
-
 #if !defined(CONFIG_AES) || !defined(CONFIG_AES_GCM) || \
 	!defined(CONFIG_ROLLBACK_SECRET_SIZE)
 #error "fpsensor requires AES, AES_GCM and ROLLBACK_SECRET_SIZE"

@@ -18,6 +18,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* if no special memory regions are defined, fallback on regular SRAM */
 #ifndef FP_FRAME_SECTION
 #define FP_FRAME_SECTION
@@ -134,5 +138,9 @@ int fp_enable_positive_match_secret(uint32_t fgr,
  * @param state the state of positive match secret, e.g. readable or not.
  */
 void fp_disable_positive_match_secret(struct positive_match_secret_state *state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_STATE_H */

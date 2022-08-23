@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Compares given finger image against enrolled templates.
  *
@@ -74,5 +78,9 @@ int fp_enrollment_finish(void *templ);
  * due to finger covering too little area of the sensor
  */
 int fp_finger_enroll(uint8_t *image, int *completion);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_ALG_H */

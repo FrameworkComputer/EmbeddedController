@@ -12,11 +12,6 @@ extern "C" {
 #include "console.h"
 #include "cryptoc/util.h"
 #include "ec_commands.h"
-#include "fpsensor.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_detect.h"
-#include "fpsensor_state.h"
-#include "fpsensor_utils.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "link_defs.h"
@@ -29,6 +24,12 @@ extern "C" {
 #include "util.h"
 #include "watchdog.h"
 }
+
+#include "fpsensor.h"
+#include "fpsensor_crypto.h"
+#include "fpsensor_detect.h"
+#include "fpsensor_state.h"
+#include "fpsensor_utils.h"
 
 #if !defined(CONFIG_RNG)
 #error "fpsensor requires RNG"

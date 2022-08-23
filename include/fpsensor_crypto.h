@@ -8,10 +8,15 @@
 #ifndef __CROS_EC_FPSENSOR_CRYPTO_H
 #define __CROS_EC_FPSENSOR_CRYPTO_H
 
+#include "compile_time_macros.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "sha256.h"
 
 #include <stddef.h>
-
 #define HKDF_MAX_INFO_SIZE 128
 #define HKDF_SHA256_MAX_BLOCK_COUNT 255
 
@@ -89,5 +94,9 @@ int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
 		    const uint8_t *ciphertext, int text_size,
 		    const uint8_t *nonce, int nonce_size, const uint8_t *tag,
 		    int tag_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_CRYPTO_H */

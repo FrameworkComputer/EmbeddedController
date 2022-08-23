@@ -16,6 +16,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef SPI_FP_DEVICE
 #define SPI_FP_DEVICE (&spi_devices[0])
 #endif
@@ -141,5 +145,9 @@ int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
  * @return EC_SUCCESS on success
  */
 int fp_maintenance(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_H */
