@@ -48,3 +48,13 @@ ZTEST_USER(console_cmd_rw, test_read)
 	zassume_true(sprintf(cmd, "rw %llu", memory) != 0, NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 }
+
+ZTEST_USER(console_cmd_rw, test_write_invalid_value)
+{
+	zassert_equal(EC_ERROR_PARAM2,
+		      shell_execute_cmd(get_ec_shell(), "rw 0 not-a-value"),
+		      NULL);
+	zassert_equal(EC_ERROR_PARAM3,
+		      shell_execute_cmd(get_ec_shell(), "rw .b 0 not-a-value"),
+		      NULL);
+}
