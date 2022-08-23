@@ -37,11 +37,10 @@
  * RT9490 can't measure the 50mA charge current precisely due to insufficient
  * ADC resolution, and faulty leads it into battery supply mode.
  * the final number would be expected between 100mA ~ 200mA.
- * In reality, we don't actually need that small charging current.
- * Tentacool's battery pack requests 256mA as the minimum current,
- * so that can be a SW workaround.
+ * Vendor has done the FT correlation and will revise the datasheet's
+ * CHARGE_I_MIN value from 50mA to 150mA as the final solution.
  */
-#define CHARGE_I_MIN 256
+#define CHARGE_I_MIN 150
 #define CHARGE_I_STEP 10
 #define INPUT_I_MAX 3300
 #define INPUT_I_MIN 100
