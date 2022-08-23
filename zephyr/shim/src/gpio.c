@@ -105,12 +105,18 @@ int gpio_get_level(enum gpio_signal signal)
 		gpio_flags_t flags;
 
 		rv = gpio_pin_get_config_dt(&configs[signal].spec, &flags);
-		if (rv != 0) {
+		if (rv == 0) {
+			return (flags & GPIO_OUTPUT_INIT_HIGH) ? 1 : 0;
+		}
+		/*
+		 * -ENOSYS is returned when this API call is not supported,
+		 *  so drop into the default method of returning the pin value.
+		 */
+		if (rv != -ENOSYS) {
 			LOG_ERR("Cannot get config for %s (%d)",
 				configs[signal].name, rv);
 			return 0;
 		}
-		return (flags & GPIO_OUTPUT_INIT_HIGH) ? 1 : 0;
 	}
 
 	const int l = gpio_pin_get_raw(configs[signal].spec.port,
