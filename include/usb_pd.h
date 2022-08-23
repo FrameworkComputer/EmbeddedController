@@ -2604,6 +2604,15 @@ extern const uint32_t pd_snk_pdo[];
 extern const int pd_snk_pdo_cnt;
 
 /**
+ * TEST ONLY: Set PD_CONTROL command to enabled on this port
+ *
+ * @param port USB-C port number
+ */
+#ifdef TEST_BUILD
+void pd_control_port_enable(int port);
+#endif
+
+/**
  * Request that a host event be sent to notify the AP of a PD power event.
  *
  * Note: per-port events should be retrieved through pd_get_events(), but this

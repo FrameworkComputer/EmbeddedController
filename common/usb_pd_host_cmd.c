@@ -494,9 +494,18 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_CAPS, hc_get_pd_port_caps,
 		     EC_VER_MASK(0));
 
 #ifdef CONFIG_HOSTCMD_PD_CONTROL
+static int pd_control_disabled[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+/* Only allow port re-enable in unit tests */
+#ifdef TEST_BUILD
+void pd_control_port_enable(int port)
+{
+	pd_control_disabled[port] = 0;
+}
+#endif /* TEST_BUILD */
+
 static enum ec_status pd_control(struct host_cmd_handler_args *args)
 {
-	static int pd_control_disabled[CONFIG_USB_PD_PORT_MAX_COUNT];
 	const struct ec_params_pd_control *cmd = args->params;
 	int enable = 0;
 
