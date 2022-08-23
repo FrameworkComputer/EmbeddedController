@@ -12,7 +12,6 @@
 
 	bbram: test-bbram-dev {
 		compatible = "zephyr,bbram-emul";
-		label = "TEST_BBRAM_DEV";
 		size = <64>;
 	};
 

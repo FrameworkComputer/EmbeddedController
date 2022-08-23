@@ -691,7 +691,6 @@
 		pi3usb9201_emul: pi3usb9201@5f {
 			compatible = "zephyr,pi3usb9201-emul";
 			reg = <0x5f>;
-			label = "PI3USB9201_EMUL";
 		};
 
 		sn5s330_emul: sn5s330@40 {
@@ -755,7 +754,6 @@
 		compatible = "zephyr,counter-watchdog";
 		status = "okay";
 		counter = <&counter0>;
-		label = "WDT_COUNTER";
 	};
 
 	cros_kb_raw: kb-raw-emul {
@@ -873,7 +871,6 @@
 		status = "okay";
 		compatible = "zephyr,espi-emul-espi-host";
 		reg = <0x0>;
-		label = "ESPI_HOST";
 	};
 };
 
