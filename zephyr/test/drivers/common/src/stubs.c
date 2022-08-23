@@ -226,6 +226,8 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 DEFINE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
+DEFINE_FAKE_VOID_FUNC(board_reset_pd_mcu);
+
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;

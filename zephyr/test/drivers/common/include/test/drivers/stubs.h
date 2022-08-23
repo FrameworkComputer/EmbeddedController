@@ -24,6 +24,8 @@ void board_set_ps8xxx_product_id(uint16_t product_id);
 /* Declare fake function to allow tests to examine calls to this function */
 DECLARE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
+DECLARE_FAKE_VOID_FUNC(board_reset_pd_mcu);
+
 void sys_arch_reboot(int type);
 
 /* Declare GPIO_TEST interrupt handler */

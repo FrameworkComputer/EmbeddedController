@@ -86,7 +86,7 @@ test_mockable const char *system_get_chip_revision(void)
 	return "";
 }
 
-void board_reset_pd_mcu(void)
+test_mockable void board_reset_pd_mcu(void)
 {
 }
 
