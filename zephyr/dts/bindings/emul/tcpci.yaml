@@ -4,7 +4,11 @@
 
 description: Common TCPCI properties
 
-include: base.yaml
+# TODO(b/239165779): Reduce or remove the usage of label properties
+include:
+  - name: base.yaml
+    property-blocklist:
+      - label
 
 properties:
     alert_gpio:
@@ -12,3 +16,6 @@ properties:
       required: false
       description:
         Reference to Alert# GPIO.
+    label:
+      type: string
+      required: false
