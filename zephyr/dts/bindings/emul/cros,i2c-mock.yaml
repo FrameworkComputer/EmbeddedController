@@ -6,7 +6,15 @@ description: A generic I2C mock
 
 compatible: "cros,i2c-mock"
 
-include: base.yaml
+# TODO(b/239165779): Reduce or remove the usage of label properties
+include:
+  - name: base.yaml
+    property-blocklist:
+      - label
+
 properties:
    reg:
      required: true
+   label:
+     type: string
+     required: false
