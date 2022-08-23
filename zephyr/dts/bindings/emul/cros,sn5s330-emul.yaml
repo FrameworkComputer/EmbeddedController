@@ -6,7 +6,11 @@ description: sn5s330 emulator
 
 compatible: "cros,sn5s330-emul"
 
-include: base.yaml
+# TODO(b/239165779): Reduce or remove the usage of label properties
+include:
+  - name: base.yaml
+    property-blocklist:
+      - label
 properties:
     reg:
       required: true
@@ -14,3 +18,6 @@ properties:
       type: phandle
       description: The GPIO that receives an interrupt signal from this device
       required: true
+    label:
+      type: string
+      required: false
