@@ -320,7 +320,6 @@
 		nchannels = <6>;
 		ref-internal-mv = <3300>;
 		#io-channel-cells = <1>;
-		label = "ADC_0";
 		status = "okay";
 	};
 
