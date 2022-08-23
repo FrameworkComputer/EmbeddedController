@@ -82,12 +82,15 @@ static int ec_command_dev(int command, int version, const void *outdata,
 		if (errno == EAGAIN && s_cmd.result == EC_RES_IN_PROGRESS) {
 			s_cmd.command = EC_CMD_RESEND_RESPONSE;
 			r = ioctl(fd, CROS_EC_DEV_IOCXCMD, &s_cmd);
-			fprintf(stderr,
-				"ioctl %d, errno %d (%s), EC result %d (%s)\n",
-				r, errno, strerror(errno), s_cmd.result,
-				strresult(s_cmd.result));
+			if (r < 0) {
+				fprintf(stderr,
+					"ioctl %d, errno %d (%s), EC result %d (%s)\n",
+					r, errno, strerror(errno), s_cmd.result,
+					strresult(s_cmd.result));
+			}
 		}
-	} else if (s_cmd.result != EC_RES_SUCCESS) {
+	}
+	if (r >= 0 && s_cmd.result != EC_RES_SUCCESS) {
 		fprintf(stderr, "EC result %d (%s)\n", s_cmd.result,
 			strresult(s_cmd.result));
 		return -EECRESULT - s_cmd.result;
@@ -151,12 +154,16 @@ static int ec_command_dev_v2(int command, int version, const void *outdata,
 		if (errno == EAGAIN && s_cmd->result == EC_RES_IN_PROGRESS) {
 			s_cmd->command = EC_CMD_RESEND_RESPONSE;
 			r = ioctl(fd, CROS_EC_DEV_IOCXCMD_V2, &s_cmd);
-			fprintf(stderr,
-				"ioctl %d, errno %d (%s), EC result %d (%s)\n",
-				r, errno, strerror(errno), s_cmd->result,
-				strresult(s_cmd->result));
+			if (r < 0) {
+				fprintf(stderr,
+					"ioctl %d, errno %d (%s), EC result %d (%s)\n",
+					r, errno, strerror(errno),
+					s_cmd->result,
+					strresult(s_cmd->result));
+			}
 		}
-	} else {
+	}
+	if (r >= 0) {
 		memcpy(indata, s_cmd->data, MIN(r, insize));
 		if (s_cmd->result != EC_RES_SUCCESS) {
 			fprintf(stderr, "EC result %d (%s)\n", s_cmd->result,
