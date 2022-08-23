@@ -6,7 +6,12 @@ description: ISL923X Charger emulator
 
 compatible: "cros,isl923x-emul"
 
-include: base.yaml
+# TODO(b/239165779): Reduce or remove the usage of label properties
+include:
+  - name: base.yaml
+    property-blocklist:
+      - label
+
 properties:
    reg:
      required: true
@@ -15,3 +20,6 @@ properties:
      required: false
      description:
        Reference to battery emulator.
+   label:
+     type: string
+     required: false
