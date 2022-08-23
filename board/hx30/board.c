@@ -21,6 +21,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "cypress5525.h"
+#include "diagnostics.h"
 #include "driver/als_cm32183.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -669,13 +670,16 @@ void charger_psys_enable(uint8_t enable)
 static void board_init(void)
 {
 	uint8_t memcap;
+	uint8_t standalone;
 
 	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
+	board_spi_read_byte(SPI_STANDALONE_OFFSET, &standalone);
 
 	if (memcap && !ac_boot_status())
 		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
 
 	check_chassis_open(1);
+	set_standalone_mode((int)standalone);
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);

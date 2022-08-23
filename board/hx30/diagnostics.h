@@ -43,6 +43,9 @@ enum diagnostics_device_idx {
 void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error);
 void set_bios_diagnostic(uint8_t code);
 
+void set_standalone_mode(int enable);
+int get_standalone_mode(void);
+
 void reset_diagnostics(void);
 
 void cancel_diagnostics(void);

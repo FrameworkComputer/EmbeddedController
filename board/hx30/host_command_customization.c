@@ -339,3 +339,26 @@ static enum ec_status thermal_qevent(struct host_cmd_handler_args *args)
 	return EC_ERROR_INVAL;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_QEVENT, thermal_qevent, EC_VER_MASK(0));
+
+
+static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_standalone_mode *p = args->params;
+	static int curr;
+
+	curr = get_standalone_mode();
+
+	if ((int)p->enable != curr) {
+		/*
+		 * BIOS writes the host command after board initial,
+		 * if curr mode is different with parameters from host command,
+		 * updates the SPI ROM value, also updates the current standalone mode.
+		 */
+
+		board_spi_write_byte(SPI_STANDALONE_OFFSET, p->enable);
+		set_standalone_mode((int)p->enable);
+		return EC_RES_SUCCESS;
+	}
+	return EC_ERROR_INVAL;
+}
+DECLARE_HOST_COMMAND(EC_CMD_STANDALONE_MODE, standalone_mode, EC_VER_MASK(0));
