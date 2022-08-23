@@ -17,3 +17,9 @@ ZTEST_USER(console_cmd_rw, test_too_few_args)
 	zassert_equal(EC_ERROR_PARAM_COUNT,
 		      shell_execute_cmd(get_ec_shell(), "rw"), NULL);
 }
+
+ZTEST_USER(console_cmd_rw, test_error_param1)
+{
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(get_ec_shell(), "rw .j"), NULL);
+}
