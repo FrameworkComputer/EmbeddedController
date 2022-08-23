@@ -104,9 +104,14 @@ def main():
     twister_env.update(extra_env_vars)
 
     # Twister CLI args
+    # TODO(b/239165779): Reduce or remove the usage of label properties
+    # Zephyr upstream has deprecated the label property. We need to allow
+    # warnings during twister runs until all the label properties are removed
+    # from all board and test overlays.
     twister_cli = [
         str(zephyr_base / "scripts" / "twister"),  # Executable path
         "--ninja",
+        "--disable-warnings-as-errors",
         f"-x=DTS_ROOT={str( ec_base / 'zephyr')}",
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_BASE={zephyr_base}",
