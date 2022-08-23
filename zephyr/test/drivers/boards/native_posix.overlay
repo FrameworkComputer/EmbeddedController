@@ -664,7 +664,6 @@
 		tcs_emul: tcs@39 {
 			compatible = "zephyr,tcs3400";
 			reg = <0x39>;
-			label = "TCS_EMUL";
 			error-on-ro-write;
 			error-on-reserved-bit-write;
 			error-on-msb-first-access;
