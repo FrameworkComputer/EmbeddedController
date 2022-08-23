@@ -4,18 +4,34 @@
  */
 
 #include <string.h>
+#include <zephyr/fff.h>
 #include <zephyr/zephyr.h>
 #include <zephyr/ztest.h>
 
 #include "ec_commands.h"
 #include "gpio.h"
 #include "host_command.h"
+#include "system.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
 #define PORT 0
 
 #define AC_OK_OD_GPIO_NAME "acok_od"
+
+FAKE_VALUE_FUNC(int, system_is_locked);
+
+static void espi_before(void *state)
+{
+	ARG_UNUSED(state);
+	RESET_FAKE(system_is_locked);
+}
+
+static void espi_after(void *state)
+{
+	ARG_UNUSED(state);
+	RESET_FAKE(system_is_locked);
+}
 
 ZTEST_USER(espi, test_host_command_get_protocol_info)
 {
@@ -285,4 +301,27 @@ ZTEST_USER(espi, test_host_command_ec_cmd_get_features)
 		     "Known features were not returned.");
 }
 
-ZTEST_SUITE(espi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+ZTEST(espi, test_hc_gpio_set_system_is_locked)
+{
+	struct ec_params_gpio_set params;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_GPIO_SET, 0, params);
+
+	system_is_locked_fake.return_val = 1;
+	zassert_equal(EC_RES_ACCESS_DENIED, host_command_process(&args), NULL);
+}
+
+ZTEST(espi, test_hc_gpio_set_invalid_gpio_name)
+{
+	struct ec_params_gpio_set params = {
+		.name = "",
+		.val = 0,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_GPIO_SET, 0, params);
+
+	zassert_equal(EC_RES_ERROR, host_command_process(&args), NULL);
+}
+
+ZTEST_SUITE(espi, drivers_predicate_post_main, NULL, espi_before, espi_after,
+	    NULL);
