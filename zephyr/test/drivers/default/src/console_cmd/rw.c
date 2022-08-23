@@ -33,3 +33,18 @@ ZTEST_USER(console_cmd_rw, test_error_bad_address)
 		      shell_execute_cmd(get_ec_shell(), "rw .b not_an_address"),
 		      NULL);
 }
+
+ZTEST_USER(console_cmd_rw, test_read)
+{
+	uint8_t memory[] = { 0x01, 0x02, 0x03, 0x04 };
+	char cmd[128] = { 0 };
+
+	zassume_true(sprintf(cmd, "rw .b %llu", memory) != 0, NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
+
+	zassume_true(sprintf(cmd, "rw .h %llu", memory) != 0, NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
+
+	zassume_true(sprintf(cmd, "rw %llu", memory) != 0, NULL);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
+}
