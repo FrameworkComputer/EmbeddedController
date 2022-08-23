@@ -529,7 +529,7 @@
 	 * motion sensor IDs for lid angle calculation.
 	 */
 	motionsense-sensor {
-		ms_bma255: ms-bma255 {
+		base_accel: ms_bma255: ms-bma255 {
 			compatible = "cros-ec,bma255";
 			status = "okay";
 
@@ -555,7 +555,7 @@
 				};
 			};
 		};
-		ms_bmi260_accel: ms-bmi260-accel {
+		lid_accel: ms_bmi260_accel: ms-bmi260-accel {
 			compatible = "cros-ec,bmi260-accel";
 			status = "okay";
 

@@ -56,4 +56,7 @@ void gmr_tablet_switch_disable(void);
  */
 int board_sensor_at_360(void);
 
+/** Reset internal tablet mode state, used for testing. */
+__test_only void tablet_reset(void);
+
 #endif /* __CROS_EC_TABLET_MODE_H */

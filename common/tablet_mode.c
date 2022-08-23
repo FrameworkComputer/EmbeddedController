@@ -208,3 +208,10 @@ static int command_settabletmode(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(tabletmode, command_settabletmode, "[on | off | reset]",
 			"Manually force tablet mode to on, off or reset.");
 #endif
+
+__test_only void tablet_reset(void)
+{
+	tablet_mode = 0;
+	tablet_mode_forced = false;
+	disabled = false;
+}
