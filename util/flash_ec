@@ -1292,7 +1292,10 @@ function flash_it83xx() {
 		dut_control_or_die i2c_ec_bus_speed:400
 
 		# We need to swing the DUT-side muxes to I2C instead of UART.
-		# This is done by convention with EC_FLASH_SELECT pin from H1
+		# This is done by convention with EC_FLASH_SELECT pin of the
+		# GSC. Also make sure that the setting is restored after
+		# completion.
+		servo_save_add "ec_flash_select" "off"
 		dut_control_or_die ec_flash_select:on
 	fi
 
