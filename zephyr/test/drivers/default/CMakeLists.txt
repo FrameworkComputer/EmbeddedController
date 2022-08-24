@@ -21,6 +21,7 @@ target_sources(app PRIVATE
     src/console_cmd/accelres.c
     src/console_cmd/cutoff.c
     src/console_cmd/gpio.c
+    src/console_cmd/i2c_portmap.c
     src/console_cmd/md.c
     src/console_cmd/panic_output.c
     src/console_cmd/port80.c
