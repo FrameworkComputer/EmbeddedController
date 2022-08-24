@@ -76,7 +76,6 @@ pujjo = register_nissa_project(
         "motionsense.dts",
         "keyboard.dts",
         "power_signals.dts",
-        "pwm_leds.dts",
     ],
 )
 

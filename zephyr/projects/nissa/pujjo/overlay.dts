@@ -110,6 +110,12 @@
 		gpio_power_led: power_led {
 			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
 		};
+		gpio_led_1_odl: led_1_odl {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_2_odl: led_2_odl {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	/*
