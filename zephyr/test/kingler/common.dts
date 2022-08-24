@@ -56,6 +56,10 @@
 			i2c-port = <&i2c0_0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
+		i2c_eeprom: sensor {
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_EEPROM";
+		};
 	};
 	/* TODO(jbettis): Move the i2c ports and pinctrls to npcx_emul.dts,
 	 * and add all of them instead of just these.
