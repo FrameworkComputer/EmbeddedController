@@ -30,6 +30,7 @@ target_sources(app PRIVATE
     src/console_cmd/waitms.c
     src/cros_cbi.c
     src/espi.c
+    src/flash.c
     src/gpio.c
     src/host_cmd/battery_cut_off.c
     src/host_cmd/get_pd_port_caps.c
