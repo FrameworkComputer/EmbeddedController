@@ -2,14 +2,20 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-module = SKYRIM
-module-str = Skyrim board-specific code
-source "subsys/logging/Kconfig.template.log_config"
-
 config BOARD_SKYRIM
 	bool "Google Skyrim Board"
 	help
 	  Build Google Skyrim reference board.  This board uses an AMD SoC
 	  and NPCX9 EC
+
+config BOARD_WINTERHOLD
+	bool "Google Winterhold Board"
+	help
+	  Build Google Winterhold reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
+
+module = SKYRIM
+module-str = Skyrim board-specific code
+source "subsys/logging/Kconfig.template.log_config"
 
 source "Kconfig.zephyr"

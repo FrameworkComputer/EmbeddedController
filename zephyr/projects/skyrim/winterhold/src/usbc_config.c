@@ -1,9 +1,9 @@
-/* Copyright 2021 The ChromiumOS Authors.
+/* Copyright 2022 The ChromiumOS Authors.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* Skyrim family-specific USB-C configuration */
+/* winterhold-specific USB-C configuration */
 
 #include <zephyr/drivers/gpio.h>
 
@@ -444,10 +444,10 @@ void usb_pd_soc_interrupt(enum gpio_signal signal)
 }
 
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
-#define SKYRIM_AC_PROCHOT_CURRENT_MA 3328
+#define WINTERHOLD_AC_PROCHOT_CURRENT_MA 3328
 static void set_ac_prochot(void)
 {
-	isl9241_set_ac_prochot(CHARGER_SOLO, SKYRIM_AC_PROCHOT_CURRENT_MA);
+	isl9241_set_ac_prochot(CHARGER_SOLO, WINTERHOLD_AC_PROCHOT_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
 

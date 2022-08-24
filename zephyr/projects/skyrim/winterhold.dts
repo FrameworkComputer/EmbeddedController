@@ -11,7 +11,7 @@
 	};
 
 	named-gpios {
-		/* Skyrim-specific GPIO customizations */
+		/* Winterhold-specific GPIO customizations */
 		gpio_usb_fault_odl: usb_fault_odl {
 			gpios = <&gpio5 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 		};
@@ -140,7 +140,7 @@
 	 * Note this is expected to vary per-board, so we keep it in the board
 	 * dts files.
 	 */
-	skyrim-fw-config {
+	Winterhold-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
 		form-factor {
