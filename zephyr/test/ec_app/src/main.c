@@ -7,6 +7,7 @@
 #include <zephyr/ztest_test_new.h>
 #include "ec_app_main.h"
 #include "hooks.h"
+#include "task.h"
 
 #ifdef CONFIG_CMD_AP_RESET_LOG
 ZTEST(ec_app_tests, test_init_reset_log)
@@ -85,13 +86,16 @@ ZTEST(ec_app_tests, test_hook_notify_init)
 #ifdef CONFIG_SHIMMED_TASKS
 ZTEST(ec_app_tests, test_start_ec_tasks)
 {
-	zassert_unreachable("TODO: Implement this test.");
+	zassert_equal(task_start_called(), 1, "Tasks did not start.");
 }
 #endif
 
 /* Does setup for all of the test cases. */
 void *ec_app_setup(void)
 {
+#ifdef CONFIG_SHIMMED_TASKS
+	zassert_equal(task_start_called(), 0, "Tasks have already started.");
+#endif
 	ec_app_main();
 	return NULL;
 }
