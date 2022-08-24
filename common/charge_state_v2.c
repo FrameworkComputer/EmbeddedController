@@ -1856,21 +1856,6 @@ void charger_task(void *u)
 		if (curr.batt.state_of_charge >=
 			    CONFIG_CHARGE_MANAGER_BAT_PCT_SAFE_MODE_EXIT &&
 		    !battery_seems_disconnected) {
-			/*
-			 * Sometimes the fuel gauge will report that it has
-			 * sufficient state of charge and remaining capacity,
-			 * but in actuality it doesn't.  When the EC sees that
-			 * information, it trusts it and leaves charge manager
-			 * safe mode.  Doing so will allow CHARGE_PORT_NONE to
-			 * be selected, thereby cutting off the input FETs.
-			 * When the battery cannot provide the charge it claims,
-			 * the system loses power, shuts down, and the battery
-			 * is not charged even though the charger is plugged in.
-			 * By waiting 500ms, we can avoid the selection of
-			 * CHARGE_PORT_NONE around init time and not cut off the
-			 * input FETs.
-			 */
-			msleep(500);
 			charge_manager_leave_safe_mode();
 		}
 #endif
