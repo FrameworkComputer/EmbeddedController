@@ -15,7 +15,7 @@
 #include "i2c/i2c.h"
 #include "test/drivers/test_state.h"
 
-#define MOCK_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(i2c_mock)))
+#define MOCK_EMUL EMUL_DT_GET(DT_NODELABEL(i2c_mock))
 #define COMMON_DATA emul_i2c_mock_get_i2c_common_data(MOCK_EMUL)
 
 struct mock_properties {

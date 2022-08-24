@@ -58,7 +58,7 @@ static int i2c_mock_init(const struct emul *emul, const struct device *parent)
 
 #define INIT_I2C_MOCK(n)                                             \
 	static const struct i2c_common_emul_cfg i2c_mock_cfg_##n = { \
-		.dev_label = DT_INST_LABEL(n),                       \
+		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),      \
 		.addr = DT_INST_REG_ADDR(n),                         \
 	};                                                           \
 	static struct i2c_common_emul_data i2c_mock_data_##n;        \

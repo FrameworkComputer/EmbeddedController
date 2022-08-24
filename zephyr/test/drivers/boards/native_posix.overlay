@@ -931,7 +931,6 @@
 		compatible = "cros,i2c-mock";
 		status = "okay";
 		reg = <0x84>;
-		label = "I2C_MOCK";
 	};
 
 	isl923x_emul: isl923x@9 {
