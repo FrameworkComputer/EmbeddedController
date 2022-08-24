@@ -17,7 +17,6 @@
 #include "charger.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl9241.h"
-#include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/anx7483_public.h"
 #include "driver/retimer/ps8811.h"
@@ -84,16 +83,13 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_fault_interrupt_disable,
 	     HOOK_PRIO_DEFAULT);
 
 struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		/* Device does not talk I2C */
-		.drv = &aoz1380_drv
-	},
+	[USBC_PORT_C0] = { .i2c_port = I2C_PORT_TCPC0,
+			   .i2c_addr_flags = NX20P3483_ADDR1_FLAGS,
+			   .drv = &nx20p348x_drv },
 
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = NX20P3483_ADDR1_FLAGS,
-		.drv = &nx20p348x_drv
-	},
+	[USBC_PORT_C1] = { .i2c_port = I2C_PORT_TCPC1,
+			   .i2c_addr_flags = NX20P3483_ADDR1_FLAGS,
+			   .drv = &nx20p348x_drv },
 };
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
@@ -391,21 +387,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-/*
- * In the AOZ1380 PPC, there are no programmable features.  We use
- * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
- * current limits.
- */
-int board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
-{
-	int rv = EC_SUCCESS;
-
-	rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
-			    (rp == TYPEC_RP_3A0) ? 1 : 0);
-
-	return rv;
-}
-
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
@@ -538,7 +519,7 @@ void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_PPC_INT_ODL:
-		aoz1380_interrupt(USBC_PORT_C0);
+		nx20p348x_interrupt(USBC_PORT_C0);
 		break;
 
 	case GPIO_USB_C1_PPC_INT_ODL:
