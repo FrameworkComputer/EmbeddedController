@@ -311,6 +311,16 @@ void board_tcpc_init(void)
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
 						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	/*
+	 * Pazquel/pazquel360 share the same firmware ,only pazquel360 has
+	 * volume keys. So disable volume keys for pazquel board
+	 */
+	if (!board_has_side_volume_buttons()) {
+		button_disable_gpio(BUTTON_VOLUME_UP);
+		button_disable_gpio(BUTTON_VOLUME_DOWN);
+		gpio_set_flags(GPIO_VOLUME_DOWN_L, GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_VOLUME_UP_L, GPIO_INPUT | GPIO_PULL_DOWN);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -697,3 +707,12 @@ static void sku_init(void)
 	CPRINTS("SKU: %u (%s)", sku_id, model_name[get_model()]);
 }
 DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_INIT_I2C + 1);
+
+int board_has_side_volume_buttons(void)
+{
+	return get_model() == PAZQUEL360;
+}
+__override int mkbp_support_volume_buttons(void)
+{
+	return board_has_side_volume_buttons();
+}
