@@ -20,12 +20,12 @@
 #include "tcpm/tcpci.h"
 #include "test/drivers/test_state.h"
 
-#define EMUL_LABEL "TCPCI_EMUL"
+#define TCPCI_EMUL_NODE DT_NODELABEL(tcpci_emul)
 
 /** Test TCPCI init and vbus level */
 ZTEST(tcpci, test_generic_tcpci_init)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -35,7 +35,7 @@ ZTEST(tcpci, test_generic_tcpci_init)
 /** Test TCPCI release */
 ZTEST(tcpci, test_generic_tcpci_release)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -45,7 +45,7 @@ ZTEST(tcpci, test_generic_tcpci_release)
 /** Test TCPCI get cc */
 ZTEST(tcpci, test_generic_tcpci_get_cc)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -55,7 +55,7 @@ ZTEST(tcpci, test_generic_tcpci_get_cc)
 /** Test TCPCI set cc */
 ZTEST(tcpci, test_generic_tcpci_set_cc)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -65,7 +65,7 @@ ZTEST(tcpci, test_generic_tcpci_set_cc)
 /** Test TCPCI set polarity */
 ZTEST(tcpci, test_generic_tcpci_set_polarity)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -75,7 +75,7 @@ ZTEST(tcpci, test_generic_tcpci_set_polarity)
 /** Test TCPCI set vconn */
 ZTEST(tcpci, test_generic_tcpci_set_vconn)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -85,7 +85,7 @@ ZTEST(tcpci, test_generic_tcpci_set_vconn)
 /** Test TCPCI set msg header */
 ZTEST(tcpci, test_generic_tcpci_set_msg_header)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -95,7 +95,7 @@ ZTEST(tcpci, test_generic_tcpci_set_msg_header)
 /** Test TCPCI rx and sop prime enable */
 ZTEST(tcpci, test_generic_tcpci_set_rx_detect)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -105,7 +105,7 @@ ZTEST(tcpci, test_generic_tcpci_set_rx_detect)
 /** Test TCPCI get raw message from TCPC revision 2.0 */
 ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev2)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -116,7 +116,7 @@ ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev2)
 /** Test TCPCI get raw message from TCPC revision 1.0 */
 ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev1)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -129,7 +129,7 @@ ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev1)
 /** Test TCPCI transmitting message from TCPC revision 2.0 */
 ZTEST(tcpci, test_generic_tcpci_transmit_rev2)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -140,7 +140,7 @@ ZTEST(tcpci, test_generic_tcpci_transmit_rev2)
 /** Test TCPCI transmitting message from TCPC revision 1.0 */
 ZTEST(tcpci, test_generic_tcpci_transmit_rev1)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -153,7 +153,7 @@ ZTEST(tcpci, test_generic_tcpci_transmit_rev1)
 /** Test TCPCI alert */
 ZTEST(tcpci, test_generic_tcpci_alert)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -163,7 +163,7 @@ ZTEST(tcpci, test_generic_tcpci_alert)
 /** Test TCPCI alert RX message */
 ZTEST(tcpci, test_generic_tcpci_alert_rx_message)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -173,7 +173,7 @@ ZTEST(tcpci, test_generic_tcpci_alert_rx_message)
 /** Test TCPCI auto discharge on disconnect */
 ZTEST(tcpci, test_generic_tcpci_auto_discharge)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -183,7 +183,7 @@ ZTEST(tcpci, test_generic_tcpci_auto_discharge)
 /** Test TCPCI drp toggle */
 ZTEST(tcpci, test_generic_tcpci_drp_toggle)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -193,7 +193,7 @@ ZTEST(tcpci, test_generic_tcpci_drp_toggle)
 /** Test TCPCI get chip info */
 ZTEST(tcpci, test_generic_tcpci_get_chip_info)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -203,7 +203,7 @@ ZTEST(tcpci, test_generic_tcpci_get_chip_info)
 /** Test TCPCI enter low power mode */
 ZTEST(tcpci, test_generic_tcpci_low_power_mode)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -213,7 +213,7 @@ ZTEST(tcpci, test_generic_tcpci_low_power_mode)
 /** Test TCPCI set bist test mode */
 ZTEST(tcpci, test_generic_tcpci_set_bist_mode)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
@@ -223,7 +223,7 @@ ZTEST(tcpci, test_generic_tcpci_set_bist_mode)
 /** Test TCPCI discharge vbus */
 ZTEST(tcpci, test_generic_tcpci_discharge_vbus)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	uint8_t exp_ctrl, initial_ctrl;
 
 	/* Set initial value for POWER ctrl register. Chosen arbitrary. */
@@ -245,7 +245,7 @@ ZTEST(tcpci, test_generic_tcpci_discharge_vbus)
 /** Test TCPC xfer */
 ZTEST(tcpci, test_tcpc_xfer)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	uint16_t val, exp_val;
 	uint8_t reg;
 
@@ -264,7 +264,7 @@ ZTEST(tcpci, test_tcpc_xfer)
 /** Test TCPCI debug accessory enable/disable */
 ZTEST(tcpci, test_generic_tcpci_debug_accessory)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	uint8_t exp_val, initial_val;
 
 	/* Set initial value for STD output register. Chosen arbitrary. */
@@ -300,7 +300,7 @@ static void set_usb_mux_tcpc(void)
 /** Test TCPCI mux init */
 ZTEST(tcpci, test_generic_tcpci_mux_init)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
@@ -357,7 +357,7 @@ ZTEST(tcpci, test_generic_tcpci_mux_init)
 /** Test TCPCI mux enter low power mode */
 ZTEST(tcpci, test_generic_tcpci_mux_enter_low_power)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
@@ -390,7 +390,7 @@ ZTEST(tcpci, test_generic_tcpci_mux_enter_low_power)
 /** Test TCPCI mux set and get */
 static void test_generic_tcpci_mux_set_get(void)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
@@ -498,7 +498,7 @@ ZTEST(tcpci, test_generic_tcpci_mux_set_get__not_tcpc)
 
 ZTEST(tcpci, test_generic_tcpci_hard_reset_reinit)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
 

@@ -121,8 +121,7 @@ static void *console_cmd_charger_setup(void)
 		     "Insufficient chargers found");
 
 	/* Get references for the emulators */
-	fixture.tcpci_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
+	fixture.tcpci_emul = EMUL_DT_GET(DT_NODELABEL(tcpci_emul));
 	fixture.charger_emul = EMUL_DT_GET(DT_NODELABEL(isl923x_emul));
 
 	/* Initialized the source to supply 5V and 3A */

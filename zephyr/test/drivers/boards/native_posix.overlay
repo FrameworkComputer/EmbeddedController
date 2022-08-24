@@ -705,7 +705,6 @@
 			compatible = "cros,tcpci-generic-emul";
 			status = "okay";
 			reg = <0x82>;
-			label = "TCPCI_EMUL";
 			alert_gpio = <&usb_c0_tcpc_int_odl>;
 		};
 	};
