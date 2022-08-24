@@ -20,7 +20,7 @@
 
 /** This must match the index of the sn5s330 in ppc_chips[] */
 #define SN5S330_PORT 0
-#define EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(sn5s330_emul)))
+#define EMUL EMUL_DT_GET(DT_NODELABEL(sn5s330_emul))
 #define COMMON_DATA emul_sn5s330_get_i2c_common_data(EMUL)
 #define FUNC_SET1_ILIMPP1_MSK 0x1F
 #define SN5S330_INTERRUPT_DELAYMS 15

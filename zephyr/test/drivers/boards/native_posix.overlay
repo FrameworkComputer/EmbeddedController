@@ -697,7 +697,6 @@
 		sn5s330_emul: sn5s330@40 {
 			compatible = "cros,sn5s330-emul";
 			reg = <0x40>;
-			label = "SN5S330_EMUL";
 			int-pin = <&gpio_usb_c0_ppc_int>;
 		};
 

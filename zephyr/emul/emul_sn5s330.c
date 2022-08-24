@@ -342,7 +342,7 @@ static int emul_sn5s330_init(const struct emul *emul,
 	};              \
 	static struct sn5s330_emul_cfg sn5s330_emul_cfg_##n = {                \
 		.common = {                                                    \
-			.dev_label = DT_INST_LABEL(n),                         \
+			.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),        \
 			.addr = DT_INST_REG_ADDR(n),                           \
 		},                                                             \
 	}; \
