@@ -91,8 +91,6 @@ DECLARE_HOOK(HOOK_INIT, sample_init_hook, HOOK_PRIO_DEFAULT);
  */
 ZTEST(ec_app_tests, test_hook_notify_init)
 {
-	sample_init_hook_count = 0;
-	ec_app_main();
 	zassert_equal(1, sample_init_hook_count,
 		      "Expected sample_init_hook to run once.");
 }
@@ -112,4 +110,11 @@ ZTEST(ec_app_tests, test_start_ec_tasks)
 #endif
 }
 
-ZTEST_SUITE(ec_app_tests, NULL, NULL, NULL, NULL, NULL);
+/* Does setup for all of the test cases. */
+void *ec_app_setup(void)
+{
+	ec_app_main();
+	return NULL;
+}
+
+ZTEST_SUITE(ec_app_tests, NULL, ec_app_setup, NULL, NULL, NULL);
