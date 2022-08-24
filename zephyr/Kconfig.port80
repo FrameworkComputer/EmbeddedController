@@ -11,4 +11,12 @@ config PLATFORM_EC_PORT80_4_BYTE
 	  codes when AP sends 4-byte Port80 codes via eSPI PUT_IOWR_SHORT
 	  protocol in a single transaction.
 
+config PLATFORM_EC_PORT80_QUIET
+	bool "Do not log Port80 codes when they are received"
+	help
+	  Enable this config to avoid logging the entire buffer of
+	  Port80 codes as each are received.
+	  The history is still available via the 'port80' EC command.
+	  Enabling this will reduce the logging overhead during AP startup.
+
 endif # PLATFORM_EC_HOST_INTERFACE_ESPI
