@@ -52,6 +52,12 @@
 			enum-name = "TEMP_SENSOR_AMB";
 			adc = <&adc_ambient>;
 		};
+		charger {
+			compatible = "cros-ec,temp-sensor-rt9490",
+				     "cros-ec,temp-sensor";
+			enum-name = "TEMP_SENSOR_CHARGER";
+			port = <&i2c_charger>;
+		};
 	};
 };
 
