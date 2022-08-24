@@ -14,6 +14,7 @@
 		cros-ec,espi = &espi0;
 		cros-ec,watchdog = &wdt_counter;
 		cros-ec,raw-kb = &cros_kb_raw;
+		cros-ec,flash = &flash0;
 		cros-ec,flash-controller = &cros_flash;
 	};
 
@@ -964,4 +965,10 @@
 
 &thermistor_3V3_51K1_47K_4050B  {
 	status = "okay";
+};
+
+&flash0 {
+        erase-block-size = <0x10000>;
+        write-block-size = <1>;
+        reg = <0x00000000 DT_SIZE_K(512)>;
 };
