@@ -22,7 +22,7 @@
 
 static void console_cmd_accelrange_after(void *fixture)
 {
-	const struct emul *emul = emul_get_binding(DEVICE_DT_NAME(EMUL_NODE));
+	const struct emul *emul = EMUL_DT_GET(EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 
@@ -104,7 +104,7 @@ ZTEST_USER(console_cmd_accelrange, test_set_range_round_down)
 
 ZTEST_USER(console_cmd_accelrange, test_i2c_error)
 {
-	const struct emul *emul = emul_get_binding(DEVICE_DT_NAME(EMUL_NODE));
+	const struct emul *emul = EMUL_DT_GET(EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bma_get_i2c_common_data(emul);
 	int rv;
