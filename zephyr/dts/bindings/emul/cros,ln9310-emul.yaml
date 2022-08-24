@@ -6,11 +6,7 @@ description: Cros LN9310 Emulator
 
 compatible: "cros,ln9310-emul"
 
-# TODO(b/239165779): Reduce or remove the usage of label properties
-include:
-  - name: base.yaml
-    property-blocklist:
-      - label
+include: base.yaml
 
 properties:
   reg:
@@ -20,6 +16,3 @@ properties:
     description:
       GPIO that receives interrupt signal from this device.
     required: true
-  label:
-      type: string
-      required: false

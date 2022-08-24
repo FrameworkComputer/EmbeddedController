@@ -21,6 +21,8 @@
  */
 #define TEST_DELAY_MS 50
 
+#define EMUL_LN9310_NODE DT_NODELABEL(ln9310)
+
 /*
  * Chip revisions below LN9310_BC_STS_C_CHIP_REV_FIXED require an alternative
  * software startup to properly initialize and power up.
@@ -30,8 +32,7 @@
 
 ZTEST(ln9310, test_ln9310_read_chip_fails)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 
@@ -58,8 +59,7 @@ ZTEST(ln9310, test_ln9310_read_chip_fails)
 
 ZTEST(ln9310, test_ln9310_2s_powers_up)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 
 	zassert_not_null(emulator, NULL);
 
@@ -83,8 +83,7 @@ ZTEST(ln9310, test_ln9310_2s_powers_up)
 
 ZTEST(ln9310, test_ln9310_3s_powers_up)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 
 	zassert_not_null(emulator, NULL);
 
@@ -134,8 +133,7 @@ static int mock_write_fn_intercept_startup_workaround(const struct emul *emul,
 
 ZTEST(ln9310, test_ln9310_2s_cfly_precharge_startup)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 
@@ -181,8 +179,7 @@ ZTEST(ln9310, test_ln9310_2s_cfly_precharge_startup)
 
 ZTEST(ln9310, test_ln9310_3s_cfly_precharge_startup)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 
@@ -228,8 +225,7 @@ ZTEST(ln9310, test_ln9310_3s_cfly_precharge_startup)
 
 ZTEST(ln9310, test_ln9310_cfly_precharge_exceeds_retries)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 
@@ -273,8 +269,7 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_exceeds_retries)
 
 ZTEST(ln9310, test_ln9310_battery_unknown)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 
 	zassert_not_null(emulator, NULL);
 
@@ -303,8 +298,7 @@ ZTEST(ln9310, test_ln9310_battery_unknown)
 
 ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 
@@ -339,8 +333,7 @@ ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
 
 ZTEST(ln9310, test_ln9310_lion_ctrl_reg_fails)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 
@@ -400,8 +393,7 @@ static int mock_intercept_startup_ctrl_reg(const struct emul *emulator, int reg,
 
 ZTEST(ln9310, test_ln9310_cfly_precharge_timesout)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 	struct precharge_timeout_data test_data = {
@@ -464,8 +456,7 @@ static int mock_read_intercept_reg_to_fail(const struct emul *emul, int reg,
 
 ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_fail_data test_data = {
@@ -512,8 +503,7 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 
 ZTEST(ln9310, test_ln9310_sys_sts_reg_fail)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_fail_data test_data = {
@@ -570,8 +560,7 @@ static int mock_read_interceptor(const struct emul *emul, int reg, uint8_t *val,
 
 ZTEST(ln9310, test_ln9310_reset_explicit_detected_startup)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_intercept test_data = {
@@ -605,8 +594,7 @@ ZTEST(ln9310, test_ln9310_reset_explicit_detected_startup)
 
 ZTEST(ln9310, test_ln9310_update_startup_seq_fails)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_fail_data test_data = {
@@ -643,8 +631,7 @@ ZTEST(ln9310, test_ln9310_update_startup_seq_fails)
 
 ZTEST(ln9310, test_ln9310_state_change_only_on_mode_change_interrupt)
 {
-	const struct emul *emulator =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	const struct emul *emulator = EMUL_DT_GET(EMUL_LN9310_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_intercept test_data = {

@@ -921,7 +921,6 @@
 		compatible = "cros,ln9310-emul";
 		status = "okay";
 		reg = <0x72>;
-		label = "LN9310";
 		pg-int-pin = <&gpio_switchcap_pg_int_l>;
 	};
 
