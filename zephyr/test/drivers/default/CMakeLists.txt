@@ -23,6 +23,7 @@ target_sources(app PRIVATE
     src/console_cmd/gpio.c
     src/console_cmd/md.c
     src/console_cmd/panic_output.c
+    src/console_cmd/port80.c
     src/console_cmd/rw.c
     src/console_cmd/tcpci_dump.c
     src/console_cmd/usb_pd_console.c
@@ -54,6 +55,7 @@ target_sources(app PRIVATE
     src/ln9310.c
     src/motion_sense/motion_sense.c
     src/panic.c
+    src/port80.c
     src/power_common.c
     src/ppc_sn5s330.c
     src/ppc_syv682x.c
