@@ -330,7 +330,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		return rc;
 	}
 
-	switch (rx_msg->type) {
+	switch (rx_msg->sop_type) {
 	case TCPCI_MSG_SOP:
 		rx_detect_mask = TCPC_REG_RX_DETECT_SOP;
 		break;
@@ -370,7 +370,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	get_reg(ctx, TCPC_REG_ALERT, &alert_reg);
 
 	/* Handle HardReset */
-	if (rx_msg->type == TCPCI_MSG_TX_HARD_RESET) {
+	if (rx_msg->sop_type == TCPCI_MSG_TX_HARD_RESET) {
 		tcpci_emul_disable_pd_msg_delivery(emul);
 		tcpci_emul_reset_mask_regs(ctx);
 
@@ -383,7 +383,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	}
 
 	/* Handle CableReset */
-	if (rx_msg->type == TCPCI_MSG_CABLE_RESET) {
+	if (rx_msg->sop_type == TCPCI_MSG_CABLE_RESET) {
 		tcpci_emul_disable_pd_msg_delivery(emul);
 		/* Rest of CableReset handling is the same as SOP* message */
 	}
@@ -886,7 +886,7 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		} else if (bytes == 1) {
-			*val = ctx->rx_msg->type;
+			*val = ctx->rx_msg->sop_type;
 		} else if (ctx->rx_msg->idx < ctx->rx_msg->cnt) {
 			*val = ctx->rx_msg->buf[ctx->rx_msg->idx];
 			ctx->rx_msg->idx++;
@@ -907,7 +907,7 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 		if (ctx->rx_msg == NULL) {
 			*val = 0;
 		} else {
-			*val = ctx->rx_msg->type;
+			*val = ctx->rx_msg->sop_type;
 		}
 		break;
 
@@ -1189,7 +1189,7 @@ static int tcpci_emul_handle_transmit(const struct emul *emul)
 	enum tcpci_msg_type type;
 
 	ctx->tx_msg->cnt = ctx->tx_msg->idx;
-	ctx->tx_msg->type = TCPC_REG_TRANSMIT_TYPE(ctx->write_data);
+	ctx->tx_msg->sop_type = TCPC_REG_TRANSMIT_TYPE(ctx->write_data);
 	ctx->tx_msg->idx = 0;
 
 	type = TCPC_REG_TRANSMIT_TYPE(ctx->write_data);

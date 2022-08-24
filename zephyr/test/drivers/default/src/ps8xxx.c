@@ -349,7 +349,7 @@ static void test_ps8xxx_transmit(void)
 			      USBC_PORT_C1, TCPCI_MSG_TX_BIST_MODE_2, 0, NULL),
 		      NULL);
 	check_tcpci_reg(ps8xxx_emul, PS8XXX_REG_BIST_CONT_MODE_CTR, 0);
-	zassert_equal(TCPCI_MSG_TX_BIST_MODE_2, msg->type, NULL);
+	zassert_equal(TCPCI_MSG_TX_BIST_MODE_2, msg->sop_type, NULL);
 
 	/* Check BIST counter value */
 	zassert_ok(tcpci_emul_get_reg(ps8xxx_emul,

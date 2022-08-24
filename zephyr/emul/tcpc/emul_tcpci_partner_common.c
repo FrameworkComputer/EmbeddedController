@@ -60,7 +60,7 @@ static struct tcpci_partner_msg *tcpci_partner_alloc_msg_helper(size_t size)
 	}
 
 	/* Set default message type to SOP */
-	new_msg->msg.type = TCPCI_MSG_SOP;
+	new_msg->msg.sop_type = TCPCI_MSG_SOP;
 	new_msg->msg.cnt = size;
 
 	return new_msg;
@@ -162,7 +162,7 @@ static enum tcpci_emul_tx_status *tcpci_partner_log_msg(
 	}
 
 	log_msg->cnt = cnt;
-	log_msg->sop = msg->type;
+	log_msg->sop = msg->sop_type;
 	log_msg->time = k_uptime_get();
 	log_msg->sender = sender;
 	log_msg->status = status;
@@ -487,7 +487,7 @@ void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data)
 	tcpci_partner_common_hard_reset(data);
 
 	msg = tcpci_partner_alloc_standard_msg(0);
-	msg->msg.type = TCPCI_MSG_TX_HARD_RESET;
+	msg->msg.sop_type = TCPCI_MSG_TX_HARD_RESET;
 
 	tcpci_partner_send_msg(data, msg, 0);
 }

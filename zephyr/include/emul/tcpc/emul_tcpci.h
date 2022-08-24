@@ -32,7 +32,7 @@ struct tcpci_emul_msg {
 	/** Number of bytes in buf */
 	int cnt;
 	/** Type of message (SOP, SOP', etc) */
-	uint8_t type;
+	uint8_t sop_type;
 	/** Index used to mark accessed byte */
 	int idx;
 	/** Pointer to optional second message */

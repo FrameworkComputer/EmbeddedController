@@ -493,7 +493,7 @@ void test_tcpci_get_rx_message_raw(const struct emul *emul,
 	}
 	msg.buf = buf;
 	msg.cnt = 31;
-	msg.type = TCPCI_MSG_SOP;
+	msg.sop_type = TCPCI_MSG_SOP;
 	zassert_equal(TCPCI_EMUL_TX_SUCCESS,
 		      tcpci_emul_add_rx_msg(emul, &msg, true),
 		      "Failed to setup emulator message");
@@ -529,7 +529,7 @@ void test_tcpci_get_rx_message_raw(const struct emul *emul,
 	/* Test alert register and message payload on success */
 	size = 28;
 	msg.cnt = size + 2;
-	msg.type = TCPCI_MSG_SOP_PRIME;
+	msg.sop_type = TCPCI_MSG_SOP_PRIME;
 	zassert_equal(TCPCI_EMUL_TX_SUCCESS,
 		      tcpci_emul_add_rx_msg(emul, &msg, true),
 		      "Failed to setup emulator message");
@@ -577,13 +577,13 @@ void test_tcpci_transmit(const struct emul *emul,
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_CABLE_RESET, 0, NULL),
 		      NULL);
-	zassert_equal(TCPCI_MSG_CABLE_RESET, msg->type, NULL);
+	zassert_equal(TCPCI_MSG_CABLE_RESET, msg->sop_type, NULL);
 
 	/* Test transmit hard reset */
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_TX_HARD_RESET, 0, NULL),
 		      NULL);
-	zassert_equal(TCPCI_MSG_TX_HARD_RESET, msg->type, NULL);
+	zassert_equal(TCPCI_MSG_TX_HARD_RESET, msg->sop_type, NULL);
 
 	/* Test transmit fail on rx buffer */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TX_BUFFER);
@@ -599,7 +599,7 @@ void test_tcpci_transmit(const struct emul *emul,
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_SOP_PRIME, header, data),
 		      NULL);
-	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->type, NULL);
+	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->sop_type, NULL);
 	zassert_mem_equal(msg->buf, &header, 2, NULL);
 	zassert_equal(2, msg->cnt, NULL);
 
@@ -610,7 +610,7 @@ void test_tcpci_transmit(const struct emul *emul,
 	zassert_equal(EC_SUCCESS,
 		      drv->transmit(port, TCPCI_MSG_SOP_PRIME, header, data),
 		      NULL);
-	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->type, NULL);
+	zassert_equal(TCPCI_MSG_SOP_PRIME, msg->sop_type, NULL);
 	zassert_mem_equal(msg->buf, &header, 2, NULL);
 	zassert_mem_equal(msg->buf + 2, data, 6 * sizeof(uint32_t), NULL);
 	zassert_equal(2 + 6 * sizeof(uint32_t), msg->cnt, NULL);
@@ -686,11 +686,11 @@ void test_tcpci_alert_rx_message(const struct emul *emul,
 	size = 23;
 	msg1.buf = buf1;
 	msg1.cnt = size + 3;
-	msg1.type = TCPCI_MSG_SOP;
+	msg1.sop_type = TCPCI_MSG_SOP;
 
 	msg2.buf = buf2;
 	msg2.cnt = size + 3;
-	msg2.type = TCPCI_MSG_SOP_PRIME;
+	msg2.sop_type = TCPCI_MSG_SOP_PRIME;
 
 	/* Test receiving one message */
 	zassert_equal(TCPCI_EMUL_TX_SUCCESS,
