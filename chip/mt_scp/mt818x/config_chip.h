@@ -12,8 +12,13 @@
 #define HOOK_TICK_INTERVAL_MS 500
 #define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
+#ifdef CHIP_VARIANT_MT8186
+/* Default to UART 1 (AP UART) for EC console */
+#define CONFIG_UART_CONSOLE 1
+#else
 /* Default to UART 2 (AP UART) for EC console */
 #define CONFIG_UART_CONSOLE 2
+#endif
 
 /* Number of IRQ vectors */
 #define CONFIG_IRQ_COUNT 56
