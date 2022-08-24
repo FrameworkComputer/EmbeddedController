@@ -27,10 +27,12 @@
 #define CONFIG_HOSTCMD_ALIGNED
 
 /*
+ * mt8183:
+ *
  * RW only, no flash
  * +-------------------- 0x0
  * | ROM vectortable, .text, .rodata, .data LMA
- * +-------------------- 0x10000
+ * +-------------------- 0x58000
  * | RAM .bss, .data
  * +-------------------- 0x7BDB0
  * | IPI shared buffer with AP (288 + 8) * 2
@@ -40,11 +42,23 @@
  * | 8KB D-CACHE
  * +-------------------- 0x80000
  */
-#ifdef CHIP_VARIANT_MT8186
-#define ICACHE_BASE 0x3E000
-#else
-#define ICACHE_BASE 0x7C000
-#endif
+
+/*
+ * mt8186:
+ *
+ * RW only, no flash
+ * +-------------------- 0x0
+ * | ROM vectortable, .text, .rodata, .data LMA
+ * +-------------------- 0x2C000
+ * | RAM .bss, .data
+ * +-------------------- 0x3BDB0
+ * | IPI shared buffer with AP (288 + 8) * 2 => 0x250
+ * +-------------------- 0x3C000
+ * | 8KB I-CACHE
+ * +-------------------- 0x3E000
+ * | 8KB D-CACHE
+ * +-------------------- 0x40000
+ */
 
 #define CONFIG_ROM_BASE 0x0
 
@@ -52,6 +66,12 @@
 #define CONFIG_RAM_BASE 0x2C000
 #else
 #define CONFIG_RAM_BASE 0x58000
+#endif
+
+#ifdef CHIP_VARIANT_MT8186
+#define ICACHE_BASE 0x3C000
+#else
+#define ICACHE_BASE 0x7C000
 #endif
 
 #define CONFIG_ROM_SIZE (CONFIG_RAM_BASE - CONFIG_ROM_BASE)
@@ -64,7 +84,14 @@
 #define CONFIG_DRAM_BASE 0x10000000
 /* Shared memory address in AP physical address space. */
 #define CONFIG_DRAM_BASE_LOAD 0x50000000
+
+#ifdef CHIP_VARIANT_MT8186
+#define CONFIG_DRAM_SIZE 0x010a0000 /* 16 MB */
+#define CACHE_TRANS_AP_SIZE 0x010a0000
+#else
 #define CONFIG_DRAM_SIZE 0x01400000 /* 20 MB */
+#define CACHE_TRANS_AP_SIZE 0x00400000
+#endif
 
 /* IPI configs */
 #define CONFIG_IPC_SHARED_OBJ_BUF_SIZE 288
