@@ -153,8 +153,8 @@ void connect_sink_to_port(struct tcpci_partner_data *partner,
 	 *   function.
 	 */
 	/* Enforce that we only support the isl923x emulator for now */
-	__ASSERT_NO_MSG(emul_get_binding(DT_LABEL(
-				DT_NODELABEL(isl923x_emul))) == charger_emul);
+	__ASSERT_NO_MSG(EMUL_DT_GET(DT_NODELABEL(isl923x_emul)) ==
+			charger_emul);
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
 			   TCPC_REG_POWER_STATUS_VBUS_DET);
