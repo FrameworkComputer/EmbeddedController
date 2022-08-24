@@ -739,7 +739,6 @@
 			p0-i2c-addr = <0x8>;
 			p1-i2c-addr = <0x9>;
 			gpio-i2c-addr = <0x1a>;
-			label = "PS8XXX_EMUL";
 		};
 	};
 

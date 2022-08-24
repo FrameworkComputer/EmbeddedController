@@ -20,12 +20,12 @@
 #include "driver/tcpm/ps8xxx_public.h"
 #include "test/drivers/test_state.h"
 
-#define PS8XXX_EMUL_LABEL DT_LABEL(DT_NODELABEL(ps8xxx_emul))
+#define PS8XXX_EMUL_NODE DT_NODELABEL(ps8xxx_emul)
 
 /** Test PS8xxx init fail conditions common for all PS8xxx devices */
 static void test_ps8xxx_init_fail(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -67,7 +67,7 @@ ZTEST(ps8815, test_init_fail)
  */
 ZTEST(ps8805, test_ps8805_init)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 	struct i2c_common_emul_data *p1_i2c_common_data =
@@ -106,7 +106,7 @@ ZTEST(ps8805, test_ps8805_init)
 /** Test PS8815 init */
 ZTEST(ps8815, test_ps8815_init)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *p1_i2c_common_data =
 		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
 						PS8XXX_EMUL_PORT_1);
@@ -130,7 +130,7 @@ ZTEST(ps8815, test_ps8815_init)
 /** Test PS8xxx release */
 static void test_ps8xxx_release(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -167,7 +167,7 @@ ZTEST(ps8815, test_release)
 static void check_ps8815_set_cc(enum tcpc_rp_value rp, enum tcpc_cc_pull cc,
 				uint16_t rp_detect_ctrl, const char *test_case)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	uint16_t reg_val, exp_role_ctrl;
 
 	/* Clear RP detect register to see if it is set after test */
@@ -198,7 +198,7 @@ static void check_ps8815_set_cc(enum tcpc_rp_value rp, enum tcpc_cc_pull cc,
 /** Test PS8815 set cc and device specific workarounds */
 ZTEST(ps8815, test_ps8815_set_cc)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	int64_t start_time;
 	int64_t delay;
 
@@ -323,7 +323,7 @@ ZTEST(ps8815, test_set_vconn)
 /** Test PS8xxx transmitting message from TCPC */
 static void test_ps8xxx_transmit(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -385,7 +385,7 @@ ZTEST(ps8815, test_transmit)
 /** Test PS8805 and PS8815 drp toggle */
 static void test_ps88x5_drp_toggle(bool delay_expected)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -462,7 +462,7 @@ static void test_ps88x5_drp_toggle(bool delay_expected)
 /** Test PS8815 drp toggle */
 ZTEST(ps8815, test_ps8815_drp_toggle)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 
 	/*
 	 * Set hw revision 0x0a00 to enable workaround for b/171430855 (delay
@@ -490,7 +490,7 @@ ZTEST(ps8805, test_drp_toggle)
 /** Test PS8xxx get chip info code used by all PS8xxx devices */
 static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -619,7 +619,7 @@ ZTEST(ps8815, test_ps8815_get_chip_info)
 /** Test PS8805 get chip info and indirectly ps8805_make_device_id */
 ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *p0_i2c_common_data =
 		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
 						PS8XXX_EMUL_PORT_0);
@@ -713,7 +713,7 @@ ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 /** Test PS8815 get chip info and indirectly ps8815_make_device_id */
 ZTEST(ps8815, test_ps8815_get_chip_info_fix_dev_id)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *p1_i2c_common_data =
 		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
 						PS8XXX_EMUL_PORT_1);
@@ -807,7 +807,7 @@ ZTEST(ps8815, test_ps8815_get_chip_info_fix_dev_id)
 /** Test PS8805 get/set gpio */
 ZTEST(ps8805, test_ps8805_gpio)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *gpio_i2c_common_data =
 		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
 						PS8XXX_EMUL_PORT_GPIO);
@@ -948,7 +948,7 @@ ZTEST(ps8805, test_ps8805_gpio)
 /** Test TCPCI init and vbus level */
 static void test_ps8xxx_tcpci_init(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -968,7 +968,7 @@ ZTEST(ps8815, test_tcpci_init)
 /** Test TCPCI release */
 static void test_ps8xxx_tcpci_release(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -988,7 +988,7 @@ ZTEST(ps8815, test_tcpci_release)
 /** Test TCPCI get cc */
 static void test_ps8xxx_tcpci_get_cc(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1008,7 +1008,7 @@ ZTEST(ps8815, test_tcpci_get_cc)
 /** Test TCPCI set cc */
 static void test_ps8xxx_tcpci_set_cc(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1028,7 +1028,7 @@ ZTEST(ps8815, test_tcpci_set_cc)
 /** Test TCPCI set polarity */
 static void test_ps8xxx_tcpci_set_polarity(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1048,7 +1048,7 @@ ZTEST(ps8815, test_tcpci_set_polarity)
 /** Test TCPCI set vconn */
 static void test_ps8xxx_tcpci_set_vconn(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1068,7 +1068,7 @@ ZTEST(ps8815, test_tcpci_set_vconn)
 /** Test TCPCI set msg header */
 static void test_ps8xxx_tcpci_set_msg_header(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1088,7 +1088,7 @@ ZTEST(ps8815, test_tcpci_set_msg_header)
 /** Test TCPCI get raw message */
 static void test_ps8xxx_tcpci_get_rx_message_raw(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1108,7 +1108,7 @@ ZTEST(ps8815, test_tcpci_get_rx_message_raw)
 /** Test TCPCI transmitting message */
 static void test_ps8xxx_tcpci_transmit(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1128,7 +1128,7 @@ ZTEST(ps8815, test_tcpci_transmit)
 /** Test TCPCI alert */
 static void test_ps8xxx_tcpci_alert(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1148,7 +1148,7 @@ ZTEST(ps8815, test_tcpci_alert)
 /** Test TCPCI alert RX message */
 static void test_ps8xxx_tcpci_alert_rx_message(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1168,7 +1168,7 @@ ZTEST(ps8815, test_tcpci_alert_rx_message)
 /** Test TCPCI enter low power mode */
 static void test_ps8xxx_tcpci_low_power_mode(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 	/*
@@ -1195,7 +1195,7 @@ ZTEST(ps8815, test_tcpci_low_power_mode)
 /** Test TCPCI set bist test mode */
 static void test_ps8xxx_tcpci_set_bist_mode(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1215,7 +1215,7 @@ ZTEST(ps8815, test_tcpci_set_bist_mode)
 /* Setup no fail for all I2C devices associated with PS8xxx emulator */
 static void setup_no_fail_all(void)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
@@ -1262,7 +1262,7 @@ static void setup_no_fail_all(void)
  */
 static void ps8805_before(void *state)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	ARG_UNUSED(state);
 
 	board_set_ps8xxx_product_id(PS8805_PRODUCT_ID);
@@ -1273,7 +1273,7 @@ static void ps8805_before(void *state)
 
 static void ps8805_after(void *state)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	ARG_UNUSED(state);
 
 	/* Set correct firmware revision */
@@ -1286,7 +1286,7 @@ static void ps8805_after(void *state)
  */
 static void ps8815_before(void *state)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	ARG_UNUSED(state);
 
 	board_set_ps8xxx_product_id(PS8815_PRODUCT_ID);
@@ -1297,7 +1297,7 @@ static void ps8815_before(void *state)
 
 static void ps8815_after(void *state)
 {
-	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
 	ARG_UNUSED(state);
 
 	/* Set correct firmware revision */
