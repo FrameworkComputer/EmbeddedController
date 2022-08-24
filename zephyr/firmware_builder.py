@@ -175,7 +175,10 @@ def bundle_coverage(opts):
         firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
     )
     (bundle_dir / "html").mkdir(exist_ok=True)
-    cmd = ["mv", "lcov_rpt", bundle_dir / "html/lcov_rpt"]
+    cmd = ["mv", "lcov_rpt"]
+    for board in SPECIAL_BOARDS:
+        cmd.append(board + "_rpt")
+    cmd.append(bundle_dir / "html/")
     print(" ".join(shlex.quote(str(x)) for x in cmd))
     subprocess.run(cmd, cwd=build_dir, check=True, stdin=subprocess.DEVNULL)
     meta = info.objects.add()
@@ -486,6 +489,22 @@ def test(opts):
                 stdin=subprocess.DEVNULL,
             ).stdout
             _extract_lcov_summary(f"BOARD_{board}".upper(), metrics, output)
+            subprocess.run(
+                [
+                    "/usr/bin/genhtml",
+                    "--branch-coverage",
+                    "-q",
+                    "-o",
+                    build_dir / (board + "_rpt"),
+                    "-t",
+                    f"{board} ec code only",
+                    "-s",
+                    build_dir / (board + "_final.info"),
+                ],
+                cwd=zephyr_dir,
+                check=True,
+                stdin=subprocess.DEVNULL,
+            )
 
     with open(opts.metrics, "w") as file:
         file.write(json_format.MessageToJson(metrics))  # type: ignore
