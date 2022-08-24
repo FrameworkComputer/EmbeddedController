@@ -17,6 +17,8 @@
 #include <zephyr/drivers/i2c_emul.h>
 #include <stdint.h>
 
+#include "emul/emul_common_i2c.h"
+
 /**
  * @brief Smart Battery emulator backend API
  * @defgroup sbat_emul Smart Battery emulator
