@@ -80,10 +80,8 @@ void system_pre_init(void)
 	/* CM4 Modification */
 	scp_cm4_mod();
 
-/* Clock */
-#ifdef CHIP_VARIANT_MT8183
+	/* Clock */
 	scp_enable_clock();
-#endif
 
 	/* Peripheral IRQ */
 	scp_enable_pirq();

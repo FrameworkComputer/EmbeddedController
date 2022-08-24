@@ -100,8 +100,15 @@ static void clock_ulposc_config_cali(struct opp_ulposc_cfg *opp,
 
 static unsigned int clock_ulposc_measure_freq(int osc)
 {
-	unsigned int result = 0;
+	unsigned int clk_dbg_cfg, clk_misc_cfg_0, clk26cali_0, clk26cali_1,
+		result = 0;
 	int cnt;
+
+	/* backup */
+	clk_dbg_cfg = AP_CLK_DBG_CFG;
+	clk_misc_cfg_0 = AP_CLK_MISC_CFG_0;
+	clk26cali_0 = AP_SCP_CFG_0;
+	clk26cali_1 = AP_SCP_CFG_1;
 
 	/* Before select meter clock input, bit[1:0] = b00 */
 	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) | DBG_MODE_SET_CLOCK;
@@ -138,6 +145,13 @@ static unsigned int clock_ulposc_measure_freq(int osc)
 
 	/* Disable freq meter */
 	AP_SCP_CFG_0 &= ~CFG_FREQ_METER_ENABLE;
+
+	/* restore */
+	AP_CLK_DBG_CFG = clk_dbg_cfg;
+	AP_CLK_MISC_CFG_0 = clk_misc_cfg_0;
+	AP_SCP_CFG_0 = clk26cali_0;
+	AP_SCP_CFG_1 = clk26cali_1;
+
 	return result;
 }
 
@@ -265,13 +279,32 @@ void scp_use_clock(enum scp_clock_source src)
 
 void clock_init(void)
 {
+	/* Enable fast wakeup support */
+	SCP_CLK_ON_CTRL = (SCP_CLK_ON_CTRL & ~HIGH_FINAL_VAL_MASK) |
+			  HIGH_FINAL_VAL_DEFAULT;
+	SCP_FAST_WAKE_CNT_END =
+		(SCP_FAST_WAKE_CNT_END & ~FAST_WAKE_CNT_END_MASK) |
+		FAST_WAKE_CNT_END_DEFAULT;
+
+	/* Set slow wake clock */
+	SCP_WAKE_CKSW = (SCP_WAKE_CKSW & ~WAKE_CKSW_SEL_SLOW_MASK) |
+			WAKE_CKSW_SEL_SLOW_DEFAULT;
+
+	/* Select CLK_HIGH as wakeup clock */
+	SCP_CLK_SLOW_SEL = (SCP_CLK_SLOW_SEL &
+			    (CKSW_SEL_SLOW_MASK | CKSW_SEL_SLOW_DIV_MASK)) |
+			   CKSW_SEL_SLOW_ULPOSC2_CLK;
+}
+
+void scp_enable_clock(void)
+{
 	int i;
 
 	/* Select default CPU clock */
 	scp_use_clock(SCP_CLK_26M);
 
 	/* VREQ */
-	SCP_CPU_VREQ = VREQ_SEL | VREQ_DVFS_SEL;
+	SCP_CPU_VREQ = VREQ_DVFS_SEL;
 	SCP_SECURE_CTRL |= ENABLE_SPM_MASK_VREQ;
 	SCP_CLK_CTRL_GENERAL_CTRL &= ~VREQ_PMIC_WRAP_SEL;
 
@@ -285,6 +318,11 @@ void clock_init(void)
 			   CLK_HIGH_VAL(1);
 	SCP_CLK_SLEEP_CTRL = (SCP_CLK_SLEEP_CTRL & ~VREQ_COUNTER_MASK) |
 			     VREQ_COUNTER_VAL(1);
+
+	/* Disable slow wake */
+	SCP_CLK_SLEEP = SLOW_WAKE_DISABLE;
+	/* Disable SPM sleep control, disable sleep mode */
+	SCP_CLK_SLEEP_CTRL &= ~(SPM_SLEEP_MODE | EN_SLEEP_CTRL);
 
 	/* Set RG MUX to SW mode */
 	AP_PLL_CON0 = LTECLKSQ_EN | LTECLKSQ_LPF_EN | LTECLKSQ_HYS_EN |
