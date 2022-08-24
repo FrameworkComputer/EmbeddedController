@@ -6,15 +6,8 @@ description: CROS implementation of the LIS2DW12 emulator
 
 compatible: "cros,lis2dw12-emul"
 
-# TODO(b/239165779): Reduce or remove the usage of label properties
-include:
-  - name: base.yaml
-    property-blocklist:
-      - label
+include: base.yaml
 
 properties:
   reg:
     required: true
-  label:
-    type: string
-    required: false

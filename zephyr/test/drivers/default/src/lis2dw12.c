@@ -12,7 +12,7 @@
 
 #define LIS2DW12_NODELABEL DT_NODELABEL(ms_lis2dw12_accel)
 #define LIS2DW12_SENSOR_ID SENSOR_ID(LIS2DW12_NODELABEL)
-#define EMUL_LABEL DT_LABEL(DT_NODELABEL(lis2dw12_emul))
+#define LIS2DW12_EMUL_NODE DT_NODELABEL(lis2dw12_emul)
 
 #include <stdio.h>
 
@@ -37,7 +37,7 @@ enum lis2dw12_round_mode {
 
 static inline void lis2dw12_setup(void)
 {
-	lis2dw12_emul_reset(emul_get_binding(EMUL_LABEL));
+	lis2dw12_emul_reset(EMUL_DT_GET(LIS2DW12_EMUL_NODE));
 
 	/* Reset certain sensor struct values */
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -59,7 +59,7 @@ static void lis2dw12_after(void *state)
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_read_who_am_i)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -72,7 +72,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_read_who_am_i)
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_who_am_i)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
 	int rv;
 
@@ -86,7 +86,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_who_am_i)
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_write_soft_reset)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -100,7 +100,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_write_soft_reset)
 
 ZTEST(lis2dw12, test_lis2dw12_init__timeout_read_soft_reset)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -126,7 +126,7 @@ static int lis2dw12_test_mock_write_fail_set_bdu(const struct emul *emul,
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_set_bdu)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -143,7 +143,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_set_bdu)
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_set_lir)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -172,7 +172,7 @@ static int lis2dw12_test_mock_write_fail_set_power_mode(const struct emul *emul,
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_set_power_mode)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -191,7 +191,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_set_power_mode)
 
 ZTEST(lis2dw12, test_lis2dw12_init__success)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
 	struct stprivate_data *drvdata = ms->drv_data;
 
@@ -209,7 +209,7 @@ ZTEST(lis2dw12, test_lis2dw12_init__success)
 
 ZTEST(lis2dw12, test_lis2dw12_set_power_mode)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -236,7 +236,7 @@ ZTEST(lis2dw12, test_lis2dw12_set_power_mode)
 
 ZTEST(lis2dw12, test_lis2dw12_set_range)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -261,7 +261,7 @@ ZTEST(lis2dw12, test_lis2dw12_set_range)
 
 ZTEST(lis2dw12, test_lis2dw12_set_rate)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
 	struct stprivate_data *drv_data = ms->drv_data;
 	int rv;
@@ -365,7 +365,7 @@ ZTEST(lis2dw12, test_lis2dw12_set_rate)
 
 ZTEST(lis2dw12, test_lis2dw12_read)
 {
-	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	const struct emul *emul = EMUL_DT_GET(LIS2DW12_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_lis2dw12_get_i2c_common_data(emul);
 

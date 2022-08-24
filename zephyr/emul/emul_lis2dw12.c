@@ -287,7 +287,7 @@ void lis2dw12_emul_clear_accel_reading(const struct emul *emul)
 	}; \
 	static const struct lis2dw12_emul_cfg lis2dw12_emul_cfg_##n = {   \
 		.common = {                                               \
-			.dev_label = DT_INST_LABEL(n),                    \
+			.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),   \
 			.addr = DT_INST_REG_ADDR(n),                      \
 		},                                                        \
 	}; \

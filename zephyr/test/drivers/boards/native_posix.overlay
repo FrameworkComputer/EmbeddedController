@@ -926,7 +926,6 @@
 		compatible = "cros,lis2dw12-emul";
 		status = "okay";
 		reg = <0x19>;
-		label = "LIS2DW12_EMUL";
 	};
 
 	i2c_mock: i2c_mock@84 {
