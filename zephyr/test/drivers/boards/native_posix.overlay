@@ -906,6 +906,8 @@
 		/* Real battery voltages are multiples of 4.4V. */
 		desired-charg-volt = <5000>;
 		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
 	};
 
 	bma_emul: bma@18 {

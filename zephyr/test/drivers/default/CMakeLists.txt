@@ -19,6 +19,7 @@ target_sources(app PRIVATE
     src/console_cmd/accelrange.c
     src/console_cmd/accelread.c
     src/console_cmd/accelres.c
+    src/console_cmd/cutoff.c
     src/console_cmd/gpio.c
     src/console_cmd/md.c
     src/console_cmd/panic_output.c
