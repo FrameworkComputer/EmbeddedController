@@ -3,11 +3,21 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/sys/util.h>
+
 #include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"
+
+/*
+ * This workaround and the board id checks only apply to krabby and early
+ * tentacruel devices.
+ * Newer project should have all of these fixed.
+ */
+BUILD_ASSERT(IS_ENABLED(CONFIG_BOARD_KRABBY) ||
+	     IS_ENABLED(CONFIG_BOARD_TENTACRUEL));
 
 static void enter_hidden_mode(void)
 {
@@ -42,10 +52,10 @@ static void ibus_adc_workaround(void)
 /* b/214880220#comment44: lock i2c at 400khz */
 static void i2c_speed_workaround(void)
 {
-	/*
-	 * This workaround can be applied to all version of RT9490 in our cases
-	 * no need to identify chip version.
-	 */
+	if (system_get_board_version() >= 3) {
+		return;
+	}
+
 	enter_hidden_mode();
 	/* Set to Auto mode, default run at 400kHz */
 	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
@@ -53,14 +63,6 @@ static void i2c_speed_workaround(void)
 	/* Manually select for 400kHz, valid only when 0x71[7] == 1 */
 	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
 		   chg_chips[CHARGER_SOLO].i2c_addr_flags, 0xF7, 0x14);
-}
-
-static void pwm_freq_workaround(void)
-{
-	/* Reduce SW freq from 1.5MHz to 1MHz
-	 * for 10% higher current rating b/215294785
-	 */
-	rt9490_enable_pwm_1mhz(CHARGER_SOLO, true);
 }
 
 static void eoc_deglitch_workaround(void)
@@ -75,11 +77,24 @@ static void eoc_deglitch_workaround(void)
 		    RT9490_REG_ADD_CTRL0, RT9490_TD_EOC, MASK_CLR);
 }
 
+static void disable_safety_timer(void)
+{
+	if (system_get_board_version() >= 2) {
+		return;
+	}
+	/* Disable charge timer */
+	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
+		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		   RT9490_REG_SAFETY_TMR_CTRL,
+		   RT9490_EN_TRICHG_TMR | RT9490_EN_PRECHG_TMR |
+			   RT9490_EN_FASTCHG_TMR);
+}
+
 static void board_rt9490_workaround(void)
 {
 	ibus_adc_workaround();
 	i2c_speed_workaround();
-	pwm_freq_workaround();
 	eoc_deglitch_workaround();
+	disable_safety_timer();
 }
 DECLARE_HOOK(HOOK_INIT, board_rt9490_workaround, HOOK_PRIO_DEFAULT);
