@@ -14,12 +14,17 @@ LOG_MODULE_REGISTER(emul_flash);
 #include <drivers/cros_flash.h>
 #include <zephyr/sys/__assert.h>
 
+#include "flash.h"
+
 struct flash_emul_data {};
 
 struct flash_emul_cfg {
 	/** Pointer to run-time data */
 	struct flash_emul_data *data;
 };
+
+/* Variables to emulate the protection */
+bool ro_protected, all_protected;
 
 void system_jump_to_booter(void)
 {
@@ -60,26 +65,66 @@ static int cros_flash_emul_erase(const struct device *dev, int offset, int size)
 
 static int cros_flash_emul_get_protect(const struct device *dev, int bank)
 {
-	__ASSERT(false, "Not implemented");
-	return -EINVAL;
+	if (all_protected) {
+		return EC_ERROR_ACCESS_DENIED;
+	}
+	if (ro_protected && bank >= WP_BANK_OFFSET &&
+	    bank < WP_BANK_OFFSET + WP_BANK_COUNT) {
+		return EC_ERROR_ACCESS_DENIED;
+	}
+
+	return EC_SUCCESS;
 }
 
 static uint32_t cros_flash_emul_get_protect_flags(const struct device *dev)
 {
-	return EC_FLASH_PROTECT_ERROR_UNKNOWN;
+	uint32_t flags = 0;
+
+	if (ro_protected) {
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW;
+	}
+	if (all_protected) {
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
+	}
+	return flags;
 }
 
 static int cros_flash_emul_protect_at_boot(const struct device *dev,
 					   uint32_t new_flags)
 {
-	__ASSERT(false, "Not implemented");
-	return -EINVAL;
+	if ((new_flags & (EC_FLASH_PROTECT_RO_AT_BOOT |
+			  EC_FLASH_PROTECT_ALL_AT_BOOT)) == 0) {
+		/* Clear protection if allowed */
+		if (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) {
+			return EC_ERROR_ACCESS_DENIED;
+		}
+
+		ro_protected = all_protected = false;
+		return EC_SUCCESS;
+	}
+
+	ro_protected = true;
+
+	if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) {
+		all_protected = true;
+	}
+
+	return EC_SUCCESS;
 }
 
 static int cros_flash_emul_protect_now(const struct device *dev, int all)
 {
-	__ASSERT(false, "Not implemented");
-	return -EINVAL;
+	/* Emulate ALL_NOW only */
+	if (all) {
+		all_protected = true;
+	}
+
+	return EC_SUCCESS;
+}
+
+void cros_flash_emul_protect_reset(void)
+{
+	ro_protected = all_protected = false;
 }
 
 static int cros_flash_emul_get_jedec_id(const struct device *dev,
