@@ -45,7 +45,7 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_CHARGER_ISL9238),
 #endif
 
 #define CHARGER_NUM get_charger_num(&isl923x_drv)
-#define ISL923X_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)))
+#define ISL923X_EMUL EMUL_DT_GET(DT_NODELABEL(isl923x_emul))
 #define COMMON_DATA emul_isl923x_get_i2c_common_data(ISL923X_EMUL)
 
 static int mock_write_fn_always_fail(const struct emul *emul, int reg,

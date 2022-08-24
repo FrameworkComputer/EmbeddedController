@@ -78,8 +78,7 @@ static void *usbc_tbt_mode_setup(void)
 	/* Get references for the emulators */
 	fixture.tcpci_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
-	fixture.charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	fixture.charger_emul = EMUL_DT_GET(DT_NODELABEL(isl923x_emul));
 
 	add_sop_discovery_responses(partner);
 	/* Note: cable behavior will vary by test case */

@@ -429,7 +429,7 @@ static int emul_isl923x_init(const struct emul *emul,
 	}; \
 	static struct isl923x_emul_cfg isl923x_emul_cfg_##n = {                \
 	.common = {                                                            \
-		.dev_label = DT_INST_LABEL(n),                                 \
+		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),                \
 		.addr = DT_INST_REG_ADDR(n),                                   \
 		},                                                             \
 	}; \

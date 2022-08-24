@@ -21,7 +21,7 @@
 
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 #define CHARGER_NUM get_charger_num(&isl923x_drv)
-#define ISL923X_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)))
+#define ISL923X_EMUL EMUL_DT_GET(DT_NODELABEL(isl923x_emul))
 
 ZTEST_SUITE(console_cmd_amon_bmon, drivers_predicate_post_main, NULL, NULL,
 	    NULL, NULL);
