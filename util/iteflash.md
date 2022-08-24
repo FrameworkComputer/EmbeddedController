@@ -6,8 +6,8 @@ First written: 2019-04-02
 <br>
 Last updated: 2019-04-03
 
-Familiarity with [Chromium OS](https://www.chromium.org/chromium-os)
-[Embedded Controller (EC) development](../README.md) is assumed.
+Familiarity with [Chromium OS](https://www.chromium.org/chromium-os) and
+[Embedded Controller (EC)](../README.md) development is assumed.
 
 [TOC]
 
@@ -48,9 +48,10 @@ An ITE EC is reflashed using a Servo by:
 
 ### Further reading
 
-Googlers, and Partners involved in ITE EC projects, see
-[The State of ITE CrOS EC Reflashing](https://docs.google.com/document/d/1fs29eBvwKrOWYozLZXTg7ObwAO5dyM4Js2Vq301EwAU/preview).
-That document is not public, do not request access if you lack it.
+* [ITE EC firmware reflashing via Servo: How it works](../docs/ite-ec-reflashing.md)
+* Googlers, and Partners involved in ITE EC projects *only*:
+[The State of ITE CrOS EC Reflashing](https://docs.google.com/document/d/1fs29eBvwKrOWYozLZXTg7ObwAO5dyM4Js2Vq301EwAU/preview)
+  * That document is not public, do not request access if you lack it.
 
 ## How to reflash
 
