@@ -5,6 +5,8 @@
 
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
+#include <zephyr/shell/shell_dummy.h> /* nocheck */
+
 #include "ec_app_main.h"
 #include "hooks.h"
 #include "task.h"
@@ -54,7 +56,15 @@ ZTEST(ec_app_tests, test_watchdog_init)
 #ifdef CONFIG_PLATFORM_EC_VBOOT_EFS2
 ZTEST(ec_app_tests, test_vboot_main)
 {
-	zassert_unreachable("TODO: Implement this test.");
+	const struct shell *shell_zephyr = get_ec_shell();
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* vboot_main logs the message "VB Verifying hash" */
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, /* nocheck */
+						   &buffer_size);
+	zassert_true(strstr(outbuffer, "VB Verifying hash") != NULL,
+		     "'VB Verifying hash' not found in %s", outbuffer);
 }
 #endif
 
