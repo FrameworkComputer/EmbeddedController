@@ -75,8 +75,8 @@ tcpci_drp_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
 			data->in_pwr_swap = false;
 
 			/* Reset counters */
-			common_data->msg_id = 0;
-			common_data->recv_msg_id = -1;
+			common_data->sop_msg_id = 0;
+			common_data->sop_recv_msg_id = -1;
 
 			/* Perform power role swap */
 			if (common_data->power_role == PD_ROLE_SOURCE) {

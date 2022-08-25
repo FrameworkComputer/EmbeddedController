@@ -192,12 +192,24 @@ void tcpci_partner_free_msg(struct tcpci_partner_msg *msg)
 void tcpci_partner_set_header(struct tcpci_partner_data *data,
 			      struct tcpci_partner_msg *msg)
 {
+	uint16_t msg_id;
+	uint16_t header;
+
 	/* Header msg id has only 3 bits and wraps around after 8 messages */
-	uint16_t msg_id = data->msg_id & 0x7;
-	uint16_t header = PD_HEADER(msg->type, data->power_role,
-				    data->data_role, msg_id, msg->data_objects,
-				    data->rev, msg->extended);
-	data->msg_id++;
+	if (msg->msg.sop_type == TCPCI_MSG_SOP) {
+		msg_id = data->sop_msg_id & 0x7;
+		header = PD_HEADER(msg->type, data->power_role, data->data_role,
+				   msg_id, msg->data_objects, data->rev,
+				   msg->extended);
+		data->sop_msg_id++;
+	} else if (msg->msg.sop_type == TCPCI_MSG_SOP_PRIME) {
+		msg_id = data->sop_prime_msg_id & 0x7;
+		header = PD_HEADER(msg->type, PD_PLUG_FROM_CABLE, 0, msg_id,
+				   msg->data_objects, data->rev, msg->extended);
+		data->sop_prime_msg_id++;
+	} else {
+		return;
+	}
 
 	msg->msg.buf[1] = (header >> 8) & 0xff;
 	msg->msg.buf[0] = header & 0xff;
@@ -422,6 +434,36 @@ int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
 	return tcpci_partner_send_msg(data, msg, delay);
 }
 
+/* Note: Cables can send from both SOP' and SOP'', so accept a type argument */
+int tcpci_cable_send_data_msg(struct tcpci_partner_data *data,
+			      enum pd_data_msg_type type, uint32_t *data_obj,
+			      int data_obj_num, enum tcpci_msg_type sop_type,
+			      uint64_t delay)
+{
+	struct tcpci_partner_msg *msg;
+	int addr;
+
+	/* TODO(b/243151272): Add SOP'' support */
+	if (sop_type != TCPCI_MSG_SOP_PRIME)
+		return -EINVAL;
+
+	msg = tcpci_partner_alloc_standard_msg(data_obj_num);
+	if (msg == NULL) {
+		return -ENOMEM;
+	}
+
+	for (int i = 0; i < data_obj_num; i++) {
+		/* Address of given data object in message buffer */
+		addr = TCPCI_MSG_HEADER_LEN + i * TCPCI_MSG_DO_LEN;
+		sys_put_le32(data_obj[i], msg->msg.buf + addr);
+	}
+
+	msg->msg.sop_type = sop_type;
+	msg->type = type;
+
+	return tcpci_partner_send_msg(data, msg, delay);
+}
+
 int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
 {
 	struct tcpci_partner_msg *msg;
@@ -454,8 +496,10 @@ int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
 static void tcpci_partner_common_reset(struct tcpci_partner_data *data)
 {
 	tcpci_partner_clear_msg_queue(data);
-	data->msg_id = 0;
-	data->recv_msg_id = -1;
+	data->sop_msg_id = 0;
+	data->sop_prime_msg_id = 0;
+	data->sop_recv_msg_id = -1;
+	data->sop_prime_recv_msg_id = -1;
 	data->in_soft_reset = false;
 	data->vconn_role = PD_ROLE_VCONN_OFF;
 	tcpci_partner_stop_sender_response_timer(data);
@@ -495,8 +539,10 @@ void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data)
 void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data)
 {
 	/* Reset counters */
-	data->msg_id = 0;
-	data->recv_msg_id = -1;
+	data->sop_msg_id = 0;
+	data->sop_prime_msg_id = 0;
+	data->sop_recv_msg_id = -1;
+	data->sop_prime_recv_msg_id = -1;
 
 	tcpci_partner_common_clear_ams_ctrl_msg(data);
 
@@ -690,6 +736,66 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 	}
 }
 
+static enum tcpci_partner_handler_res
+tcpci_partner_common_cable_handler(struct tcpci_partner_data *data,
+				   const struct tcpci_emul_msg *message,
+				   enum tcpci_msg_type sop_type)
+{
+	uint32_t vdm_header = sys_get_le32(message->buf + TCPCI_MSG_HEADER_LEN);
+	uint32_t response_vdm_header;
+	uint16_t header = sys_get_le16(&message->buf[0]);
+
+	/* TODO(b/243151272): Add soft reset support */
+	/* Ensure we are replying to a VDM */
+	if (PD_HEADER_CNT(header) == 0 ||
+	    PD_HEADER_TYPE(header) != PD_DATA_VENDOR_DEF ||
+	    PD_HEADER_EXT(header) != 0)
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+
+	/*
+	 * Ignore any VDMs which are not sent by an initiator.  As a cable, we
+	 * never expect to be the initiator processing ACKs.
+	 * TODO(b/225397796): Validate VDM fields more thoroughly.
+	 */
+	if (PD_VDO_CMDT(vdm_header) != CMDT_INIT || !PD_VDO_SVDM(vdm_header)) {
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	}
+
+	/* If we have no cable, we must not GoodCRC */
+	if (data->cable == NULL)
+		return TCPCI_PARTNER_COMMON_MSG_NO_GOODCRC;
+
+	/* TODO(b/243151272): Add SOP'' support */
+	if (sop_type == TCPCI_MSG_SOP_PRIME_PRIME) {
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+
+	switch (PD_VDO_CMD(vdm_header)) {
+	case CMD_DISCOVER_IDENT:
+		if (data->cable->identity_vdos > 0) {
+			tcpci_cable_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						  data->cable->identity_vdm,
+						  data->cable->identity_vdos,
+						  TCPCI_MSG_SOP_PRIME, 0);
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		}
+		/* A cable with no identity shouldn't GoodCRC */
+		return TCPCI_PARTNER_COMMON_MSG_NO_GOODCRC;
+	default:
+		/*
+		 * Cable must support VDMs, so generate a NAK on unfamiliar
+		 * commands
+		 */
+		response_vdm_header =
+			VDO(PD_VDO_VID(vdm_header), true,
+			    VDO_CMDT(CMDT_RSP_NAK) | PD_VDO_CMD(vdm_header));
+		tcpci_cable_send_data_msg(data, PD_DATA_VENDOR_DEF,
+					  &response_vdm_header, 1, sop_type, 0);
+
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	}
+}
+
 /**
  * @brief Handle a received Battery Capability message from the TCPC. Save the
  *        contents to the emulator data struct for analysis.
@@ -872,13 +978,12 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 	header = sys_get_le16(tx_msg->buf);
 	msg_type = PD_HEADER_TYPE(header);
 
-	if (PD_HEADER_ID(header) == data->recv_msg_id &&
+	if (PD_HEADER_ID(header) == data->sop_recv_msg_id &&
 	    msg_type != PD_CTRL_SOFT_RESET) {
 		/* Repeated message mark as handled */
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	}
-
-	data->recv_msg_id = PD_HEADER_ID(header);
+	data->sop_recv_msg_id = PD_HEADER_ID(header);
 
 	if (PD_HEADER_EXT(header)) {
 		/* Extended message */
@@ -925,7 +1030,7 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 	/* Handle control message */
 	switch (PD_HEADER_TYPE(header)) {
 	case PD_CTRL_SOFT_RESET:
-		data->msg_id = 0;
+		data->sop_msg_id = 0;
 		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
 
 		for (ext = data->extensions; ext != NULL; ext = ext->next) {
@@ -1247,8 +1352,8 @@ static void tcpci_partner_transmit_op(const struct emul *emul,
 		goto message_handled;
 	}
 
-	/* Skip handling of none SOP messages */
-	if (type != TCPCI_MSG_SOP) {
+	/* Skip handling of non-SOP/SOP'/SOP'' messages */
+	if (type > TCPCI_MSG_SOP_PRIME_PRIME) {
 		/* Never send GoodCRC for cable reset */
 		if (data->send_goodcrc && type != TCPCI_MSG_CABLE_RESET) {
 			tcpci_partner_received_msg_status(
@@ -1258,10 +1363,22 @@ static void tcpci_partner_transmit_op(const struct emul *emul,
 	}
 
 	/* Call common SOP handler */
-	processed = tcpci_partner_common_sop_msg_handler(data, tx_msg);
-	/* Always send GoodCRC for messages handled by common handler */
-	if (data->send_goodcrc ||
-	    processed != TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED) {
+	if (type == TCPCI_MSG_SOP) {
+		processed = tcpci_partner_common_sop_msg_handler(data, tx_msg);
+	} else {
+		processed =
+			tcpci_partner_common_cable_handler(data, tx_msg, type);
+	}
+	if (processed == TCPCI_PARTNER_COMMON_MSG_NO_GOODCRC) {
+		/*
+		 * Fail message send if common handler knows message shouldn't
+		 * transit successfully.
+		 */
+		tcpci_partner_received_msg_status(data, TCPCI_EMUL_TX_FAILED);
+		goto message_handled;
+	} else if (data->send_goodcrc ||
+		   processed != TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED) {
+		/* Always send GoodCRC for messages handled by common handler */
 		tcpci_partner_received_msg_status(data, TCPCI_EMUL_TX_SUCCESS);
 	}
 
@@ -1404,4 +1521,6 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	/* Reset the data structure used to store battery capability responses
 	 */
 	tcpci_partner_reset_battery_capability_state(data);
+
+	data->cable = NULL;
 }

@@ -64,9 +64,13 @@ struct tcpci_partner_data {
 	/** Mutex for to_send queue */
 	struct k_mutex to_send_mutex;
 	/** Next SOP message id */
-	int msg_id;
+	int sop_msg_id;
+	/** Next SOP' message id */
+	int sop_prime_msg_id;
 	/** Last received message id */
-	int recv_msg_id;
+	int sop_recv_msg_id;
+	/** Last received SOP' message id */
+	int sop_prime_recv_msg_id;
 	/** Power role (used in message header) */
 	enum pd_power_role power_role;
 	/** Data role (used in message header) */
@@ -172,6 +176,24 @@ struct tcpci_partner_data {
 		 */
 		bool have_response[PD_BATT_MAX];
 	} battery_capabilities;
+
+	/*
+	 * Cable which is "plugged in" to this port partner
+	 * Note: Much as in real life, cable should be attached before the port
+	 * partner can be plugged in to properly discover its information.
+	 * For tests, this means this poitner should be set before connecting
+	 * the source or sink partner.
+	 */
+	struct tcpci_cable_data *cable;
+};
+
+struct tcpci_cable_data {
+	/*
+	 * Identity VDM ACKs which the cable is expected to send
+	 * These include the VDM header
+	 */
+	uint32_t identity_vdm[VDO_MAX_SIZE];
+	int identity_vdos;
 };
 
 /** Structure of message used by TCPCI partner emulator */
@@ -223,7 +245,8 @@ struct tcpci_partner_log_msg {
 enum tcpci_partner_handler_res {
 	TCPCI_PARTNER_COMMON_MSG_HANDLED,
 	TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED,
-	TCPCI_PARTNER_COMMON_MSG_HARD_RESET
+	TCPCI_PARTNER_COMMON_MSG_HARD_RESET,
+	TCPCI_PARTNER_COMMON_MSG_NO_GOODCRC,
 };
 
 /** Structure of TCPCI partner extension */
