@@ -85,6 +85,15 @@ static uint16_t virtual_battery_read16(uint8_t command)
 	return ((int)read_buf[1] << 8) | read_buf[0];
 }
 
+static void virtual_battery_write16(uint8_t command, uint16_t data)
+{
+	uint8_t write_buf[3] = { command };
+
+	*((uint16_t *)&write_buf[1]) = data;
+
+	virtual_battery_xfer(write_buf, 3, NULL, 0);
+}
+
 static int virtual_battery_read_str(uint8_t command, char **read_buf,
 				    int read_len)
 {
@@ -212,8 +221,20 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	 *   SB_DESIGN_VOLTAGE
 	 *   SB_MANUFACTURER_DATA
 	 *   SB_MANUFACTURE_INFO
-	 *   SB_MANUFACTURER_ACCESS
 	 */
+}
+
+ZTEST_USER(virtual_battery, test_write_mfgacc)
+{
+	struct sbat_emul_bat_data *bat;
+	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
+	uint16_t cmd = PARAM_OPERATION_STATUS;
+
+	bat = sbat_emul_get_bat_data(emul);
+
+	/* Write the command to the SB_MANUFACTURER_ACCESS and check */
+	virtual_battery_write16(SB_MANUFACTURER_ACCESS, cmd);
+	zassert_equal(bat->mf_access, cmd, "%d != %d", bat->mf_access, cmd);
 }
 
 ZTEST_SUITE(virtual_battery, drivers_predicate_post_main, NULL, NULL, NULL,
