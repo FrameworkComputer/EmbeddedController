@@ -22,11 +22,6 @@ cmd_libcryptoc = $(MAKE) -C $(CRYPTOC_DIR) \
 	SUPPORT_UNALIGNED=1
 cmd_libcryptoc_clean = $(cmd_libcryptoc) -q && echo clean
 
-ifneq ($(BOARD),host)
-ifeq ($(USE_BUILTIN_STDLIB), 1)
-CPPFLAGS += -I$(abspath ./builtin)
-endif
-endif
 CPPFLAGS += -I$(CRYPTOC_DIR)/include
 CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
 
@@ -38,6 +33,10 @@ CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
 ifneq ($(shell $(cmd_libcryptoc_clean)),clean)
 .PHONY: $(out)/cryptoc/libcryptoc.a
 endif
+# Rewrite the CFLAGS include paths to be absolute, since cryptoc is built
+# using a different working directory. This is only relevant because
+# cryptoc makes use of stdlibs, which EC provides from the builtin/ directory.
+$(out)/cryptoc/libcryptoc.a: CFLAGS := $(patsubst -I%,-I$(abspath %),$(CFLAGS))
 $(out)/cryptoc/libcryptoc.a:
 	+$(call quiet,libcryptoc,MAKE   )
 
