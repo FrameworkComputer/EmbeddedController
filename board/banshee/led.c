@@ -28,7 +28,7 @@
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5
 
-#define BREATH_LIGHT_LENGTH 55
+#define BREATH_LIGHT_LENGTH 100
 #define BREATH_HOLD_LENGTH 50
 #define BREATH_OFF_LENGTH 200
 
@@ -54,7 +54,7 @@ struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_GREEN] = { 0, 50, 0 },
 	[EC_LED_COLOR_BLUE] = { 0, 0, 8 },
 	[EC_LED_COLOR_YELLOW] = { 40, 50, 0 },
-	[EC_LED_COLOR_WHITE] = { 20, 50, 25 },
+	[EC_LED_COLOR_WHITE] = { 4, 10, 5 },
 	[EC_LED_COLOR_AMBER] = { 45, 5, 0 },
 };
 
@@ -96,8 +96,8 @@ DECLARE_DEFERRED(breath_led_pwm_deferred);
 
 /*
  *	Breath LED API
- *	Max duty (percentage) = BREATH_LIGHT_LENGTH (55%)
- *	Fade time (second) = 550ms(In) / 550ms(Out)
+ *	Max duty (percentage) = BREATH_LIGHT_LENGTH (100%)
+ *	Fade time (second) = 1000ms(In) / 1000ms(Out)
  *	Duration time (second) = BREATH_HOLD_LENGTH(500ms)
  *	Interval time (second) = BREATH_OFF_LENGTH(2000ms)
  */
@@ -319,7 +319,7 @@ static void led_set_battery(void)
 							      -1);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		set_active_port_color(EC_LED_COLOR_GREEN);
+		set_active_port_color(EC_LED_COLOR_WHITE);
 		break;
 	case PWR_STATE_IDLE:
 		set_active_port_color(EC_LED_COLOR_AMBER);
@@ -335,6 +335,12 @@ static void led_set_battery(void)
 
 static void led_set_power(void)
 {
+	/* turn off led when lid is close*/
+	if (!lid_is_open()) {
+		set_pwr_led_color(PWM_LED1, -1);
+		return;
+	}
+
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		breath_led_run(1);
 		return;
