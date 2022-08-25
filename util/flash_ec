@@ -1110,7 +1110,7 @@ function flash_flashrom() {
 
 function flash_stm32() {
 	local STM32MON
-	local STM32MON_OPT
+	local STM32MON_OPT=()
 
 	if ! servo_has_cold_reset; then
 		die "Cold reset must be available for STM32 programming"
@@ -1126,8 +1126,8 @@ function flash_stm32() {
 
 	info "Using serial flasher : ${STM32MON}"
 	info "${MCU} UART pty : ${EC_UART}"
-	claim_pty ${EC_UART}
-	STM32MON_OPT="-d ${EC_UART}"
+	claim_pty "${EC_UART}"
+	STM32MON_OPT+=(-d "${EC_UART}")
 
 	# Make sure EC reboots in serial monitor mode.
 	ec_enable_boot0 "bitbang"
@@ -1170,12 +1170,12 @@ function flash_stm32() {
 	# ccdstate once a second, so a 2 second delay should be safe.
 	if servo_is_ccd ; then
 		sleep 2
-		STM32MON_OPT+=" -c"
+		STM32MON_OPT+=(-c)
 	fi
 
 	if [ -n "${FLAGS_logfile}" ]; then
 		info "Saving log in ${FLAGS_logfile}"
-		STM32MON_OPT+=" -L ${FLAGS_logfile}"
+		STM32MON_OPT+=(-L "${FLAGS_logfile}")
 	fi
 
 	local IMG_READ="${FLAGS_read}"
@@ -1183,12 +1183,12 @@ function flash_stm32() {
 	if [[ -z "${IMG_READ}" ]]; then
 		info "Programming EC firmware image."
 		# Unprotect flash, erase, and write
-		local STM32MON_COMMAND="${STM32MON} ${STM32MON_OPT} -U -u -e -w"
+		local STM32MON_COMMAND=("${STM32MON}" "${STM32MON_OPT[@]}" -U -u -e -w)
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${STM32MON_COMMAND} ${IMG}"
+			echo "${STM32MON_COMMAND[*]} ${IMG}"
 		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${STM32MON_COMMAND} "${IMG}" \
+			"${STM32MON_COMMAND[@]}" "${IMG}" \
 			|| die "${MSG_PROGRAM_FAIL}"
 
 		# If it is a program-verify request, then make a temporary
@@ -1207,12 +1207,12 @@ function flash_stm32() {
 	# Read EC image.
 	if [[ -n "${IMG_READ}" ]]; then
 		info "Reading EC firmware image."
-		local STM32MON_READ_CMD="${STM32MON} ${STM32MON_OPT} -U -r"
+		local STM32MON_READ_CMD=("${STM32MON}" "${STM32MON_OPT[@]}" -U -r)
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${STM32MON_READ_CMD} ${IMG_READ}"
+			echo "${STM32MON_READ_CMD[*]} ${IMG_READ}"
 		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${STM32MON_READ_CMD} "${IMG_READ}" \
+			"${STM32MON_READ_CMD[@]}" "${IMG_READ}" \
 			|| die "${MSG_READ_FAIL}"
 	fi
 
