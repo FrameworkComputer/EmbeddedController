@@ -11,6 +11,7 @@ tests:
   drivers.host_cmd:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
+      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
   drivers.ap_mux_control:
     extra_args: CONF_FILE="prj.conf;ap_mux_control/prj.conf"
     extra_configs:
