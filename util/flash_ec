@@ -231,7 +231,7 @@ function dut_control() {
 		DUT_CTRL_CML+=( "$p" )
 	done
 
-	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
+	if [ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]; then
 		echo "${DUT_CTRL_CML[*]}" 1>&2
 	fi
 
@@ -388,7 +388,7 @@ case "${CHIP}" in
 
 		# If verification is not supported, then show a warning message.
 		# Keep it running however.
-		if [[ "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
 			warn "Ignoring '--verify'" \
 			"since read is not supported on ${CHIP}."
 		fi
@@ -517,7 +517,7 @@ servo_micro_ec_boot0() {
 	# circuit that is controlled by the EC_FLASH_ODL pin. For those boards,
 	# we want to continue to drive the EC_FLASH_ODL if they do not have the
 	# servo micro rework listed below.
-	if [[ "${FLAGS_servo_micro_uart_rx_rework}" == ${FLAGS_TRUE} ]]; then
+	if [[ "${FLAGS_servo_micro_uart_rx_rework}" == "${FLAGS_TRUE}" ]]; then
 		info "Servo micro $2 mode: $1 (using rx_rework)"
 
 		# Setting the test point allows the EC_TX_SERVO_RX line
@@ -605,9 +605,9 @@ on_raiden() {
 		return 0
 	fi
 	if [ -z "${BOARD}" ]; then
-		[ "${FLAGS_raiden}" = ${FLAGS_TRUE} ] && return 0 || return 1
+		[ "${FLAGS_raiden}" = "${FLAGS_TRUE}" ] && return 0 || return 1
 	fi
-	if [ "${FLAGS_raiden}" = ${FLAGS_TRUE} ]; then
+	if [ "${FLAGS_raiden}" = "${FLAGS_TRUE}" ]; then
 		if in_array "${BOARDS_RAIDEN[@]}" "${BOARD}"; then
 			return 0
 		fi
@@ -677,13 +677,13 @@ trap cleanup EXIT
 # the RO image includes a header.
 # NPCX images use "build-ro/zephyr/zephyr.npcx.bin"
 # ITE images use "build-ro/zephyr/zephyr.bin"
-if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] && [ "${FLAGS_zephyr}" = ${FLAGS_TRUE} ]
+if [ "${FLAGS_ro}" = "${FLAGS_TRUE}" ] && [ "${FLAGS_zephyr}" = "${FLAGS_TRUE}" ]
 then
 	die "The --ro flag is not supported with the --zephyr flag"
 fi
 
 # Possible default EC images
-if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
+if [ "${FLAGS_ro}" = "${FLAGS_TRUE}" ] ; then
 	EC_FILE=ec.RO.flat
 else
 	EC_FILE=ec.bin
@@ -691,9 +691,9 @@ fi
 
 LOCAL_BUILD=
 if [[ -n "${EC_DIR}" ]]; then
-	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
+	if [ "${FLAGS_ro}" = "${FLAGS_TRUE}" ] ; then
 		LOCAL_BUILD="${EC_DIR}/build/${BOARD}/RO/${EC_FILE}"
-	elif [ "${FLAGS_zephyr}" = ${FLAGS_TRUE} ] ; then
+	elif [ "${FLAGS_zephyr}" = "${FLAGS_TRUE}" ] ; then
 		LOCAL_BUILD="${EC_DIR}/build/zephyr/${BOARD}/output/${EC_FILE}"
 	else
 		LOCAL_BUILD="${EC_DIR}/build/${BOARD}/${EC_FILE}"
@@ -1052,7 +1052,7 @@ function flash_flashrom() {
 		# Program EC image.
 		# flashrom should report the image size at the end of the output.
 		local FLASHROM_GETSIZE="sudo ${FLASHROM_CMDLINE} --flash-size"
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_GETSIZE}" 1>&2
 		fi
@@ -1088,7 +1088,7 @@ function flash_flashrom() {
 
 		info "Programming EC firmware image."
 		local FLASHROM_WRITE="${FLASHROM_CMDLINE} ${FLASHROM_OPTIONS}"
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_WRITE} -w ${T}" 1>&2
 		fi
@@ -1098,7 +1098,7 @@ function flash_flashrom() {
 	else
 		# Read EC image.
 		info "Reading EC firmware image."
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_CMDLINE} -r ${FLAGS_read}" 1>&2
 		fi
@@ -1184,7 +1184,7 @@ function flash_stm32() {
 		info "Programming EC firmware image."
 		# Unprotect flash, erase, and write
 		local STM32MON_COMMAND="${STM32MON} ${STM32MON_OPT} -U -u -e -w"
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			echo "${STM32MON_COMMAND} ${IMG}"
 		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
@@ -1193,7 +1193,7 @@ function flash_stm32() {
 
 		# If it is a program-verify request, then make a temporary
 		# directory to store the image
-		if [[ "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
 			local TEMP_SUFFIX=".$(basename ${SCRIPT}).${CHIP}"
 			local TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
 
@@ -1206,7 +1206,7 @@ function flash_stm32() {
 	if [[ -n "${IMG_READ}" ]]; then
 		info "Reading EC firmware image."
 		local STM32MON_READ_CMD="${STM32MON} ${STM32MON_OPT} -U -r"
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			echo "${STM32MON_READ_CMD} ${IMG_READ}"
 		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
@@ -1216,9 +1216,9 @@ function flash_stm32() {
 
 	# Verify the flash by comparing the source image to the read image,
 	# only if it was a flash write request.
-	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
 		info "Verifying EC firmware image."
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			echo "cmp -n ${IMG_SIZE} ${IMG} ${IMG_READ}"
 		fi
 		cmp -s -n "${IMG_SIZE}" "${IMG}" "${IMG_READ}" \
@@ -1377,7 +1377,7 @@ function flash_it83xx() {
 		ITEFLASH_ARGS+=( "--noverify" )
 	fi
 
-	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+	if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 		ITEFLASH_ARGS+=( "--debug" )
 		echo "${ITEFLASH_ARGS[@]}"
 	fi
@@ -1409,7 +1409,7 @@ function flash_ite_spi_ccd_i2c() {
 function flash_npcx_jtag() {
 	IMG_PATH="${EC_DIR}/build/${BOARD}"
 	OCD_CHIP_CFG="npcx_chip.cfg"
-	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
+	if [ "${FLAGS_ro}" = "${FLAGS_TRUE}" ] ; then
 		# Program RO region only
 		OCD_CMDS="init; flash_npcx_ro ${CHIP} ${IMG_PATH} ${FLAGS_offset}; shutdown;"
 	else
@@ -1508,7 +1508,7 @@ function flash_npcx_uut() {
 				"--file=${MON}" )
 
 		# Load monitor binary to address 0x200C3020
-		if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]]; then
 			echo "${UUT_MON[*]}"
 		fi
 
@@ -1536,7 +1536,7 @@ function flash_npcx_uut() {
 		local UUT_WR=( "${NPCX_UUT}" "${UUT_ARGS[@]}"      \
 			       "--auto" "--offset=${FLAGS_offset}" \
 			       "--file=${IMG}" )
-		if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]]; then
 			echo "${UUT_WR[*]}"
 		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
@@ -1544,7 +1544,7 @@ function flash_npcx_uut() {
 
 		# If it is a program-verify request, then make a temporary
 		# directory to store the image.
-		if [[ "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
 			local TEMP_SUFFIX=".$(basename ${SCRIPT}).${CHIP}.$$"
 			local TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
 
@@ -1560,7 +1560,7 @@ function flash_npcx_uut() {
 		local UUT_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
 			      "--read-flash" "--file=${IMG_READ}" )
 
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			echo "${UUT_RD[*]}"
 		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
@@ -1569,10 +1569,10 @@ function flash_npcx_uut() {
 
 	# Verify the flash by comparing the source image to the read image,
 	# only if it was a flash write request.
-	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == ${FLAGS_TRUE} ]]; then
+	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
 		info "Verifying EC firmware image."
 
-		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			echo "cmp -n ${IMG_SIZE} ${IMG} ${IMG_READ}"
 		fi
 
