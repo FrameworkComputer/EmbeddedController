@@ -49,26 +49,37 @@ ZTEST_USER(console, buf_notify_null)
 	zassert_equal(write_count, 4, "got %d", write_count);
 }
 
+static const char *large_string =
+	"This is a very long string, it will cause a buffer flush at "
+	"some point while printing to the shell. Long long text. Blah "
+	"blah. Long long text. Blah blah. Long long text. Blah blah.";
 ZTEST_USER(console, shell_fprintf_full)
 {
 	const struct shell *shell_zephyr = get_ec_shell();
-	const char *buffer =
-		"This is a very long string, it will cause a buffer flush at "
-		"some point while printing to the shell. Long long text. Blah "
-		"blah. Long long text. Blah blah. Long long text. Blah blah.";
 	const char *outbuffer;
 	size_t buffer_size;
 
-	zassert_true(strlen(buffer) >= shell_zephyr->fprintf_ctx->buffer_size,
-		     "buffer is too short, fix test.");
+	zassert_true(strlen(large_string) >=
+			     shell_zephyr->fprintf_ctx->buffer_size,
+		     "large_string is too short, fix test.");
 
 	shell_backend_dummy_clear_output(shell_zephyr); /* nocheck */
-	shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buffer);
+	shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", large_string);
 
 	outbuffer = shell_backend_dummy_get_output(shell_zephyr, /* nocheck */
 						   &buffer_size);
-	zassert_true(strncmp(outbuffer, buffer, strlen(buffer)) == 0,
+	zassert_true(strncmp(outbuffer, large_string, strlen(large_string)) ==
+			     0,
 		     "Invalid console output %s", outbuffer);
+}
+
+ZTEST_USER(console, cprint_too_big)
+{
+	zassert_true(strlen(large_string) >= CONFIG_SHELL_PRINTF_BUFF_SIZE,
+		     "buffer is too short, fix test.");
+
+	zassert_equal(cprintf(CC_COMMAND, "%s", large_string),
+		      -EC_ERROR_OVERFLOW, NULL);
 }
 
 ZTEST_SUITE(console, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
