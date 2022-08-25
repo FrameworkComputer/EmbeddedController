@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
@@ -243,6 +244,15 @@ static void print_battery_info(void)
 
 	print_item_name("shutdown_soc:");
 	ccprintf("%d %%\n", batt_host_shutdown_pct);
+
+#ifdef CONFIG_BATTERY_FUEL_GAUGE
+	value = battery_is_charge_fet_disabled();
+	/* reverse the flag if no error */
+	if (value != -1)
+		value = !value;
+	print_item_name("C-FET:");
+	ccprintf("%d\n", value);
+#endif
 }
 
 void print_battery_debug(void)
