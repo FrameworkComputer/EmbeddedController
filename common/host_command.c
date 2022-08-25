@@ -907,6 +907,8 @@ DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command, "cmd ver param",
 #ifdef CONFIG_CMD_HCDEBUG
 static int command_hcdebug(int argc, char **argv)
 {
+	if (argc >= 3)
+		return EC_ERROR_PARAM_COUNT;
 	if (argc > 1) {
 		int i;
 
