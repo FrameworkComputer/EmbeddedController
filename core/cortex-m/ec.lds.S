@@ -347,6 +347,14 @@ SECTIONS
 		. = ALIGN(64);
 		KEEP(*(.google))
 #endif
+		/*
+		 * Empty C++ exception index table. The exception index
+		 * table is described in more detail in "Exception Handling
+		 * ABI for ARM Architecture":
+		 * https://github.com/ARM-software/abi-aa/blob/60a8eb8c55e999d74dac5e368fc9d7e36e38dda4/ehabi32/ehabi32.rst#54the-object-producer-interface
+		 */
+		__exidx_start = 0;
+		__exidx_end = 0;
 
 		. = ALIGN(4);
 	} > EC_IMAGE_VMA_MEM_REGION AT > EC_IMAGE_LMA_MEM_REGION

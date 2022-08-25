@@ -115,6 +115,8 @@ C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
 COMMON_WARN = -Wall -Wundef -Werror-implicit-function-declaration \
 	-Wno-trigraphs -Wno-format-security -Wno-address-of-packed-member \
 	-fno-common -fno-strict-aliasing -fno-strict-overflow
+# See https://www.chromium.org/chromium-os/build/c-exception-support
+COMMON_WARN+=-fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables
 
 ifndef ALLOW_WARNINGS
 COMMON_WARN+=-Werror
