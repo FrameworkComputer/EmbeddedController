@@ -32,4 +32,7 @@ config LINK_TEST_SUITE_USBC_ALT_MODE
 config LINK_TEST_SUITE_USBC_TBT_MODE
 	bool "Link and test the usbc_tbt_mode tests"
 
+config LINK_TEST_SUITE_HOST_COMMANDS
+	bool "Link and test the host command tests"
+
 source "Kconfig.zephyr"

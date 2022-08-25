@@ -33,12 +33,6 @@ target_sources(app PRIVATE
     src/espi.c
     src/flash.c
     src/gpio.c
-    src/host_cmd/battery_cut_off.c
-    src/host_cmd/get_pd_port_caps.c
-    src/host_cmd/host_event_commands.c
-    src/host_cmd/host_event_commands_deprecated.c
-    src/host_cmd/motion_sense.c
-    src/host_cmd/pd_control.c
     src/integration/usbc/usb.c
     src/integration/usbc/usb_20v_3a_pd_charger.c
     src/integration/usbc/usb_5v_3a_pd_sink.c
