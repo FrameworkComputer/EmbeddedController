@@ -100,6 +100,7 @@ joxer = register_nissa_project(
     chip="it81302bx",
     extra_dts_overlays=[
         "generated.dts",
+        "cbi.dts",
         "overlay.dts",
         "motionsense.dts",
         "keyboard.dts",
