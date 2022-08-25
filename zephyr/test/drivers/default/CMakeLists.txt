@@ -9,6 +9,7 @@ target_sources(app PRIVATE
     src/console.c
     src/console_cmd/adc.c
     src/console_cmd/battery.c
+    src/console_cmd/cbi.c
     src/console_cmd/charge_manager.c
     src/console_cmd/charge_state.c
     src/console_cmd/charger.c
