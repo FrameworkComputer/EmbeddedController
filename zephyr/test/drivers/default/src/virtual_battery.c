@@ -140,7 +140,11 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	/* The expected value is calculated */
 	expected = 100 * bat->cap / bat->full_cap;
 	word = virtual_battery_read16(SB_RELATIVE_STATE_OF_CHARGE);
-	zassert_equal(expected, word, "%d != %d", expected, word);
+
+	/* TODO(b/243816417): Flaky virtual battery test for mocked power */
+	if (!IS_ENABLED(CONFIG_POWER_SEQUENCE_MOCK)) {
+		zassert_equal(expected, word, "%d != %d", expected, word);
+	}
 
 	word = virtual_battery_read16(SB_TEMPERATURE);
 	zassert_equal(bat->temp, word, "%d != %d", bat->temp, word);
@@ -167,7 +171,10 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	zassert_equal(bat->design_cap, word, "%d != %d", bat->design_cap, word);
 
 	word = virtual_battery_read16(SB_REMAINING_CAPACITY);
-	zassert_equal(bat->cap, word, "%d != %d", bat->cap, word);
+	/* TODO(b/243816417): Flaky virtual battery test for mocked power */
+	if (!IS_ENABLED(CONFIG_POWER_SEQUENCE_MOCK)) {
+		zassert_equal(bat->cap, word, "%d != %d", bat->cap, word);
+	}
 
 	len = virtual_battery_read_str(SB_MANUFACTURER_NAME, &str, 32);
 	zassert_equal(bat->mf_name_len, len, "%d != %d", bat->mf_name_len, len);
