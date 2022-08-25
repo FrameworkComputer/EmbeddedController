@@ -64,6 +64,7 @@
 
 /* charger */
 &i2c7_0 {
+	label = "I2C_CHARGER";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
@@ -130,6 +131,7 @@
 
 /* typec_aic1 */
 &i2c0_0 {
+	label = "I2C_USB_C0_C1_TCPC";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
@@ -217,6 +219,7 @@
 
 /* typec_aic2 */
 &i2c1_0 {
+	label = "I2C_USB_C2_C3_TCPC";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
