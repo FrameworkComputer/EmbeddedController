@@ -11,6 +11,7 @@
 
 #include "ec_commands.h"
 #include "emul/emul_flash.h"
+#include "flash.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 
@@ -132,6 +133,61 @@ ZTEST_USER(flash, test_hostcmd_flash_protect_wp_deasserted)
 		      response.flags);
 }
 
+#define TEST_BUF_SIZE 0x100
+
+ZTEST_USER(flash, test_hostcmd_flash_write_and_erase)
+{
+	uint8_t in_buf[TEST_BUF_SIZE];
+	uint8_t out_buf[sizeof(struct ec_params_flash_write) + TEST_BUF_SIZE];
+
+	struct ec_params_flash_read read_params = {
+		.offset = 0x10000,
+		.size = TEST_BUF_SIZE,
+	};
+	struct host_cmd_handler_args read_args =
+		BUILD_HOST_COMMAND(EC_CMD_FLASH_READ, 0, in_buf, read_params);
+
+	struct ec_params_flash_erase erase_params = {
+		.offset = 0x10000,
+		.size = 0x10000,
+	};
+	struct host_cmd_handler_args erase_args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FLASH_ERASE, 0, erase_params);
+
+	/* The write host command structs need to be filled run-time */
+	struct ec_params_flash_write *write_params =
+		(struct ec_params_flash_write *)out_buf;
+	struct host_cmd_handler_args write_args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_FLASH_WRITE, 0);
+
+	write_params->offset = 0x10000;
+	write_params->size = TEST_BUF_SIZE;
+	write_args.params = write_params;
+	write_args.params_size = sizeof(*write_params) + TEST_BUF_SIZE;
+
+	/* Flash write to all 0xec */
+	memset(write_params + 1, 0xec, TEST_BUF_SIZE);
+	zassert_ok(host_command_process(&write_args), NULL);
+
+	/* Flash read and compare the readback data */
+	zassert_ok(host_command_process(&read_args), NULL);
+	zassert_equal(read_args.response_size, TEST_BUF_SIZE, NULL);
+	zassert_equal(in_buf[0], 0xec, "readback data not expected: 0x%x",
+		      in_buf[0]);
+	zassert_equal(in_buf[TEST_BUF_SIZE - 1], 0xec,
+		      "readback data not expected: 0x%x", in_buf[0]);
+
+	/* Flash erase */
+	zassert_ok(host_command_process(&erase_args), NULL);
+
+	/* Flash read and compare the readback data */
+	zassert_ok(host_command_process(&read_args), NULL);
+	zassert_equal(in_buf[0], 0xff, "readback data not expected: 0x%x",
+		      in_buf[0]);
+	zassert_equal(in_buf[TEST_BUF_SIZE - 1], 0xff,
+		      "readback data not expected: 0x%x", in_buf[0]);
+}
+
 static void flash_reset(void)
 {
 	/* Set the GPIO WP_L to default */
@@ -151,6 +207,9 @@ static void flash_after(void *data)
 {
 	ARG_UNUSED(data);
 	flash_reset();
+
+	/* The test modifies this bank. Erase it in case of failure. */
+	crec_flash_erase(0x10000, 0x10000);
 }
 
 ZTEST_SUITE(flash, drivers_predicate_post_main, NULL, flash_before, flash_after,
