@@ -29,6 +29,10 @@ endif
 # library.
 USE_BUILTIN_STDLIB:=1
 
+# When set to 1, link with the C++ compiler.
+# When set to 0, link with the C compiler.
+USE_CXX_COMPILER:=0
+
 # Boards that compile with clang by default.
 # We can't use a config for this since the config generation uses the compiler.
 CLANG_BOARDS:= \
@@ -42,6 +46,13 @@ CLANG_BOARDS:= \
 ifeq ($(filter $(BOARD), $(CLANG_BOARDS)), $(BOARD))
 CC=clang
 USE_BUILTIN_STDLIB:=0
+USE_CXX_COMPILER:=1
+endif
+
+ifeq ($(USE_CXX_COMPILER), 1)
+COMPILER=$(CXX)
+else
+COMPILER=$(CC)
 endif
 
 # Set the prefix for the compiler if specified (e.g., "x86_64-pc-linux-gnu-").
