@@ -34,17 +34,3 @@
 		};
 	};
 };
-
-&i2c1_0 {
-	tcpc_port0: ps8xxx@b {
-		compatible = "parade,ps8xxx";
-		reg = <0xb>;
-	};
-};
-
-&i2c2_0 {
-	tcpc_port1: ps8xxx@b {
-		compatible = "parade,ps8xxx";
-		reg = <0xb>;
-	};
-};

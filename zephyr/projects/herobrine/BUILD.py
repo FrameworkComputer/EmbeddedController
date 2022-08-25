@@ -16,7 +16,6 @@ def register_variant(
             # Common to all projects.
             here / "adc.dts",
             here / "common.dts",
-            here / "i2c.dts",
             here / "interrupts.dts",
             here / "keyboard.dts",
             here / "default_gpio_pinctrl.dts",
@@ -38,6 +37,7 @@ register_variant(
         here / "display.dts",
         here / "battery_evoker.dts",
         here / "gpio_evoker.dts",
+        here / "i2c_evoker.dts",
         here / "led_pins_evoker.dts",
         here / "led_policy_evoker.dts",
         here / "motionsense.dts",
@@ -53,6 +53,7 @@ register_variant(
         here / "display.dts",
         here / "battery_herobrine.dts",
         here / "gpio.dts",
+        here / "i2c_herobrine.dts",
         here / "led_pins_herobrine.dts",
         here / "led_policy_herobrine.dts",
         here / "motionsense.dts",
@@ -67,6 +68,7 @@ register_variant(
     extra_dts_overlays=[
         here / "battery_hoglin.dts",
         here / "gpio_hoglin.dts",
+        here / "i2c_hoglin.dts",
         here / "led_pins_hoglin.dts",
         here / "led_policy_hoglin.dts",
         here / "motionsense_hoglin.dts",
@@ -81,6 +83,7 @@ register_variant(
     extra_dts_overlays=[
         here / "battery_villager.dts",
         here / "gpio_villager.dts",
+        here / "i2c_villager.dts",
         here / "led_pins_villager.dts",
         here / "led_policy_villager.dts",
         here / "motionsense_villager.dts",
@@ -95,6 +98,7 @@ register_variant(
     extra_dts_overlays=[
         here / "battery_hoglin.dts",
         here / "gpio_hoglin.dts",
+        here / "i2c_hoglin.dts",
         here / "led_pins_hoglin.dts",
         here / "led_policy_hoglin.dts",
         here / "motionsense_hoglin.dts",

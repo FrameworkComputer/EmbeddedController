@@ -43,7 +43,6 @@ register_intelrvp_project(
     chip="npcx9m7f",
     extra_dts_overlays=[
         here / "adlrvp/adlrvp_npcx/adlrvp_npcx.dts",
-        here / "adlrvp/adlrvp_npcx/cbi_eeprom.dts",
         here / "adlrvp/adlrvp_npcx/fan.dts",
         here / "adlrvp/adlrvp_npcx/gpio.dts",
         here / "adlrvp/adlrvp_npcx/interrupts.dts",
@@ -62,7 +61,6 @@ register_intelrvp_project(
     project_name="mtlrvpp_npcx",
     chip="npcx9m3f",
     extra_dts_overlays=[
-        here / "adlrvp/adlrvp_npcx/cbi_eeprom.dts",
         here / "mtlrvp/mtlrvpp_npcx/fan.dts",
         here / "mtlrvp/mtlrvpp_npcx/gpio.dts",
         here / "mtlrvp/mtlrvpp_npcx/keyboard.dts",

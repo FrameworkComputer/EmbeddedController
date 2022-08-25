@@ -15,7 +15,6 @@ def register_npcx9_variant(
         dts_overlays=[
             "adc.dts",
             "battery.dts",
-            "cbi_eeprom.dts",
             "fan.dts",
             "gpio.dts",
             "i2c.dts",

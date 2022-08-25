@@ -39,13 +39,6 @@
 	};
 };
 
-&i2c4 {
-	tusb1064_mux_1: tusb1064-mux-1@44 {
-		compatible = "ti,tusb1064";
-		reg = <0x44>;
-	};
-};
-
 &usbpd0 {
 	status = "okay";
 };

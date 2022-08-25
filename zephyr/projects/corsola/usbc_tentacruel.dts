@@ -39,13 +39,6 @@
 	};
 };
 
-&i2c4 {
-	ps8743_mux_1: ps8743-mux-1@10 {
-		compatible = "parade,ps8743";
-		reg = <0x10>;
-	};
-};
-
 &usbpd0 {
 	status = "okay";
 };

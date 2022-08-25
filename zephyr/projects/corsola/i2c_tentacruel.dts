@@ -1,4 +1,4 @@
-/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+/* Copyright 2022 The ChromiumOS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -140,8 +140,8 @@
 		frs_en_gpio = <&gpio_ec_x_gpio1>;
 	};
 
-	tusb1064_mux_1: tusb1064-mux-1@44 {
-		compatible = "ti,tusb1064";
-		reg = <0x44>;
+	ps8743_mux_1: ps8743-mux-1@10 {
+		compatible = "parade,ps8743";
+		reg = <0x10>;
 	};
 };
