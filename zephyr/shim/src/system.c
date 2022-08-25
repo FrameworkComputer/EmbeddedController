@@ -197,7 +197,7 @@ const char *system_get_chip_revision(void)
 	return cros_system_chip_revision(sys_dev);
 }
 
-void system_reset(int flags)
+test_mockable void system_reset(int flags)
 {
 	int err;
 	uint32_t save_flags;

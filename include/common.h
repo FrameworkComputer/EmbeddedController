@@ -252,11 +252,15 @@
 #define test_mockable __attribute__((weak))
 #define test_mockable_static __attribute__((weak))
 #define test_mockable_static_inline __attribute__((weak))
+#define test_mockable_noreturn __attribute__((weak))
+#define test_mockable_static_noreturn __attribute__((weak))
 #define test_export_static
 #else
 #define test_mockable
 #define test_mockable_static static
 #define test_mockable_static_inline static inline
+#define test_mockable_noreturn noreturn
+#define test_mockable_static_noreturn static noreturn
 #define test_export_static static
 #endif
 

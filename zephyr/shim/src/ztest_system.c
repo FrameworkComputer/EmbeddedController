@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include "system.h"
-#include "cros_version.h"
 #include "battery.h"
 #include "charge_manager.h"
+#include "common.h"
+#include "cros_version.h"
 #include "sysjump.h"
+#include "system.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
@@ -22,6 +23,11 @@ struct jump_data *get_jump_data(void)
 #endif
 
 __attribute__((weak)) void system_reset(int flags)
+{
+	__builtin_unreachable();
+}
+
+__attribute__((weak)) void software_panic(uint32_t reason, uint32_t info)
 {
 	__builtin_unreachable();
 }

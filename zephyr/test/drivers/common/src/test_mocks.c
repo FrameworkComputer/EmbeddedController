@@ -16,6 +16,8 @@ DEFINE_FAKE_VALUE_FUNC(int, init_rom_copy, int, int, int);
 
 /* Mocks for common/system.c */
 DEFINE_FAKE_VALUE_FUNC(int, system_jumped_late);
+DEFINE_FAKE_VOID_FUNC(system_reset, int);
+DEFINE_FAKE_VOID_FUNC(software_panic, uint32_t, uint32_t);
 
 /**
  * @brief Reset all the fakes before each test.
@@ -30,6 +32,8 @@ static void fff_reset_rule_before(const struct ztest_unit_test *test,
 	RESET_FAKE(init_rom_unmap);
 	RESET_FAKE(init_rom_copy);
 	RESET_FAKE(system_jumped_late);
+	RESET_FAKE(system_reset);
+	RESET_FAKE(software_panic);
 }
 
 ZTEST_RULE(fff_reset_rule, fff_reset_rule_before, NULL);

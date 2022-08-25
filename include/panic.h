@@ -15,6 +15,19 @@
 
 #include "software_panic.h"
 
+/*
+ * Define these helpers if needed. While normally they would be derived from
+ * common.h, we cannot include that header here because this file is also used
+ * in the ectool and the build breaks.
+ */
+#ifndef test_mockable_noreturn
+#if defined(TEST_BUILD) || defined(CONFIG_ZTEST)
+#define test_mockable_noreturn __attribute__((weak))
+#else
+#define test_mockable_noreturn noreturn
+#endif
+#endif /* test_mockable_noreturn */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -197,10 +210,10 @@ void panic_data_ccprint(const struct panic_data *pdata);
  * @param linenum	Line number where assertion happened
  */
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
-noreturn void panic_assert_fail(const char *fname, int linenum);
+test_mockable_noreturn void panic_assert_fail(const char *fname, int linenum);
 #else
-noreturn void panic_assert_fail(const char *msg, const char *func,
-				const char *fname, int linenum);
+test_mockable_noreturn void panic_assert_fail(const char *msg, const char *func,
+					      const char *fname, int linenum);
 #endif
 
 /**
@@ -228,7 +241,7 @@ noreturn
  * Store a panic log and halt the system for a software-related reason, such as
  * stack overflow or assertion failure.
  */
-noreturn void software_panic(uint32_t reason, uint32_t info);
+test_mockable_noreturn void software_panic(uint32_t reason, uint32_t info);
 
 /**
  * Log a panic in the panic log, but don't halt the system. Normally

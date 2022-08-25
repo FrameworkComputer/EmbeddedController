@@ -121,7 +121,7 @@ void panic_reboot(void)
 }
 
 /* Complete the processing of a panic, after the initial message is shown */
-static noreturn void complete_panic(int linenum)
+test_mockable_static_noreturn void complete_panic(int linenum)
 {
 	if (IS_ENABLED(CONFIG_SOFTWARE_PANIC))
 		software_panic(PANIC_SW_ASSERT, linenum);

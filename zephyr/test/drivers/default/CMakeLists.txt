@@ -57,6 +57,7 @@ target_sources(app PRIVATE
     src/locate_chip.c
     src/motion_sense/motion_sense.c
     src/panic.c
+    src/panic_output.c
     src/port80.c
     src/power_common.c
     src/ppc_sn5s330.c

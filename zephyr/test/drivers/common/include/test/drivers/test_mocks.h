@@ -105,3 +105,5 @@ DECLARE_FAKE_VALUE_FUNC(int, init_rom_copy, int, int, int);
 
 /* Mocks for common/system.c */
 DECLARE_FAKE_VALUE_FUNC(int, system_jumped_late);
+DECLARE_FAKE_VOID_FUNC(system_reset, int);
+DECLARE_FAKE_VOID_FUNC(software_panic, uint32_t, uint32_t);
