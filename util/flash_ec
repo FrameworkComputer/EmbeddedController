@@ -282,43 +282,43 @@ in_array() {
 
 declare -a SUPPORTED_CHIPS
 
-if $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
+if in_array "${BOARDS_STM32[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("stm32")
 fi
 
-if $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
+if in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("stm32_dfu")
 fi
 
-if $(in_array "${BOARDS_NPCX_5M5G_JTAG[@]}" "${BOARD}"); then
+if in_array "${BOARDS_NPCX_5M5G_JTAG[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("npcx_5m5g_jtag")
 fi
 
-if $(in_array "${BOARDS_NPCX_5M6G_JTAG[@]}" "${BOARD}"); then
+if in_array "${BOARDS_NPCX_5M6G_JTAG[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("npcx_5m6g_jtag")
 fi
 
-if $(in_array "${BOARDS_NPCX_7M6X_JTAG[@]}" "${BOARD}"); then
+if in_array "${BOARDS_NPCX_7M6X_JTAG[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("npcx_7m6x_jtag")
 fi
 
-if $(in_array "${BOARDS_NPCX_7M7X_JTAG[@]}" "${BOARD}"); then
+if in_array "${BOARDS_NPCX_7M7X_JTAG[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("npcx_7m7x_jtag")
 fi
 
-if $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
+if in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("npcx_spi")
 fi
 
-if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
+if in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("npcx_int_spi")
 fi
 
-if $(in_array "${BOARDS_IT83XX[@]}" "${BOARD}"); then
+if in_array "${BOARDS_IT83XX[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("it83xx")
 fi
 
-if $(in_array "${BOARDS_IT83XX_SPI_PROGRAMMING[@]}" "${BOARD}"); then
+if in_array "${BOARDS_IT83XX_SPI_PROGRAMMING[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("ite_spi")
 fi
 
@@ -345,7 +345,7 @@ if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 ]]; then
 elif [[ ${#SUPPORTED_CHIPS[@]} -eq 1 ]]; then
 	CHIP="${SUPPORTED_CHIPS[0]}"
 elif [ -n "${FLAGS_chip}" ]; then
-	if $(in_array "${SUPPORTED_CHIPS[@]}" "${FLAGS_chip}"); then
+	if in_array "${SUPPORTED_CHIPS[@]}" "${FLAGS_chip}"; then
 		CHIP="${FLAGS_chip}"
 	else
 		die "board ${BOARD} only supports (${SUPPORTED_CHIPS[@]})," \
@@ -566,7 +566,7 @@ servo_sh_boot0() {
 ec_switch_boot0() {
 	local on_value=$1
 	# Enable programming GPIOs
-	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
+	if in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"; then
 		servo_save_add "prog_en"
 
 		dut_control prog_en:yes
@@ -982,7 +982,7 @@ function flash_flashrom() {
 	fi
 
 	if ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
-		if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
+		if in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"; then
 			SPI_VOLTAGE="pp1800"
 		elif [[ "${CHIP}" == "ite_spi" || "${CHIP}" == "ite_spi_ccd_i2c" ]]; then
 			SPI_VOLTAGE="pp1800"
