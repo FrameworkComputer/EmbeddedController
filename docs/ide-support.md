@@ -70,6 +70,10 @@ ChromeOS source files.
 Support for `platform/ec` is not available out of the box (yet), but can be
 manually enabled following these steps.
 
+### Prerequisites
+
+Install CrOS IDE following the [quickstart guide]
+
 <!-- mdformat off(b/139308852) -->
 *** note
 NOTE: CrOS IDE uses the VSCode extension `clangd` for code completion and
@@ -78,37 +82,40 @@ navigation. The installation of CrOS IDE disables the built-in
 ***
 <!-- mdformat on -->
 
-### Prerequisites
-
-1.  Install CrOS IDE following the [quickstart guide]
-1.  Install `bear`, a utility to generate the compilation database
-
-    ```
-    (chroot) $ sudo emerge bear
-    ```
-
-[quickstart guide]: https://chromium.googlesource.com/chromiumos/chromite/+/main/ide_tooling/docs/quickstart.md
-
 ### Configure EC Board
 
-1.  Build the image and create new compile_commands.json using `bear`
-
-    ```
-    (chroot) $ cd ~/chromiumos/src/platform/ec
-    export BOARD=bloonchipper
-    make clean BOARD=${BOARD}
-    bear make -j BOARD=${BOARD}
-    mv compile_commands.json compile_commands_inside_chroot.json
-    ```
-
-1.  Generate the new compile_commands.json (use the absolute path outside chroot
-    as first argument)
+1.  Enter the EC repository:
 
     ```bash
-    (chroot) $ cd ~/chromiumos/chromite/ide_tooling/scripts
-    python compdb_no_chroot.py ${EXTERNAL_TRUNK_PATH} \
-      < ~/chromiumos/src/platform/ec/compile_commands_inside_chroot.json \
-      > ~/chromiumos/src/platform/ec/compile_commands.json
+    (chroot) $ cd ~/chromiumos/src/platform/ec
     ```
-    The command will overwrite the file `compile_commands.json`, if it already
-    exists.
+
+1.  Create a `compile_commands.json` for the all EC boards:
+
+    ```bash
+    (chroot) $ make all-ide-compile-cmds -j
+    ```
+
+1.  Select a particular board:
+
+    ```bash
+    (chroot) $ export BOARD=bloonchipper
+    ```
+
+1.  Copy the new `compile_commands.json` in the root of the EC repository:
+
+    ```bash
+    cp build/${BOARD}/RW/compile_commands.json .
+    ```
+
+Note: a single `compile_commands.json` can only cover one specific build
+configuration. Only the `compile_commands.json`placed in the root of the EC
+repository is considered active. When the build configuration changes (e.g. user
+wants to use a different board), repeat steps 3 and 4 to replace the active
+`compile_commands.json` file.
+
+To create a `compile_commands.json` for a specific EC board:
+
+```bash
+(chroot) $ make BOARD=${BOARD} ide-compile-cmds
+```
