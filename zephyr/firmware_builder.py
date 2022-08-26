@@ -351,6 +351,7 @@ def test(opts):
             platform_ec / "private/fingerprint/google-fpalg/mcutest/**",
             zephyr_dir / "test/**",
             zephyr_dir / "emul/**",
+            zephyr_dir / "mock/**",
             third_party / "zephyr/main/subsys/emul/**",
             third_party / "zephyr/main/subsys/testsuite/**",
         ]
