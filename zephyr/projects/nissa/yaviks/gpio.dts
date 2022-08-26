@@ -73,9 +73,6 @@
 			gpios = <&gpiol 7 GPIO_OUTPUT>;
 			no-auto-init;
 		};
-		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
-			gpios = <&gpiok 7 GPIO_OUTPUT>;
-		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			gpios = <&gpiod 5 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_EC_INT_L";
@@ -133,9 +130,6 @@
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			gpios = <&gpioe 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_POWER_BUTTON_L";
-		};
-		gpio_hdmi_sel: hdmi_sel {
-			gpios = <&gpioc 6 GPIO_OUTPUT>;
 		};
 		gpio_imvp91_vrrdy_od: imvp91_vrrdy_od {
 			gpios = <&gpioj 4 GPIO_INPUT>;

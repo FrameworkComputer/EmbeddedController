@@ -77,7 +77,6 @@ if(DEFINED CONFIG_BOARD_YAVIKS)
 	zephyr_library_sources(
 			"yaviks/src/led.c"
 			"yaviks/src/keyboard.c"
-			"yaviks/src/hdmi.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "yaviks/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "yaviks/src/charger.c")
