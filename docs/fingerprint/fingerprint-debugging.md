@@ -197,7 +197,7 @@ In your editor, specify the IP address and port for `gdbserver`:
 You will also want to provide the symbol files:
 
 *   RW image: `build/<board>/RW/ec.RW.elf`
-*   RO image: `build/<board>/RO.ec.RO.elf`
+*   RO image: `build/<board>/RO/ec.RO.elf`
 
 Also, since we're compiling the firmware in the chroot, but your editor is
 running outside of the chroot, you'll want to remap the source code path to
