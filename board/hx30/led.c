@@ -305,7 +305,7 @@ static void led_set_power(void)
 		if (charge_prevent_power_on(0))
 			set_pwr_led_color(PWM_LED2, (power_tick %
 				LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-				EC_LED_COLOR_RED : -1);
+				EC_LED_COLOR_WHITE : -1);
 		else
 			set_pwr_led_color(PWM_LED2, EC_LED_COLOR_WHITE);
 	} else
