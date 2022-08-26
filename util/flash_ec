@@ -359,7 +359,7 @@ else
 	"(${FILTERED_CHIPS[@]}). Use --chip= to choose one."
 fi
 
-if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
+if [ -n "${FLAGS_chip}" ] && [ "${CHIP}" != "${FLAGS_chip}" ]; then
 	die "board ${BOARD} doesn't use chip ${FLAGS_chip}"
 fi
 
@@ -658,7 +658,7 @@ cleanup() {
 
 	servo_restore
 
-	if [ "${CHIP}" = "stm32" -o "${CHIP}" = "npcx_uut" ]; then
+	if [ "${CHIP}" = "stm32" ] || [ "${CHIP}" = "npcx_uut" ]; then
 		dut_control "${MCU}"_boot_mode:off
 	fi
 
