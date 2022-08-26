@@ -27,6 +27,12 @@ DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 SPECIAL_BOARDS = ["herobrine"]
 
 
+def log_cmd(cmd):
+    """Log subprocess command."""
+    print(" ".join(shlex.quote(str(x)) for x in cmd))
+    sys.stdout.flush()
+
+
 def run_twister(platform_ec, code_coverage=False, extra_args=None):
     """Build the tests using twister."""
     cmd = [
@@ -52,7 +58,7 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
                 "--coverage",
             ]
         )
-    print(" ".join(shlex.quote(str(x)) for x in cmd))
+    log_cmd(cmd)
     subprocess.run(cmd, check=True, cwd=platform_ec, stdin=subprocess.DEVNULL)
 
 
@@ -72,7 +78,7 @@ def build(opts):
     cmd = ["zmake", "-D", "build", "-a"]
     if opts.code_coverage:
         cmd.append("--coverage")
-    print(" ".join(shlex.quote(str(x)) for x in cmd))
+    log_cmd(cmd)
     subprocess.run(cmd, cwd=zephyr_dir, check=True, stdin=subprocess.DEVNULL)
     if not opts.code_coverage:
         for project in zmake.project.find_projects(zephyr_dir).values():
@@ -167,7 +173,7 @@ def bundle_coverage(opts):
     tarball_name = "coverage.tbz2"
     tarball_path = bundle_dir / tarball_name
     cmd = ["tar", "cvfj", tarball_path, "lcov.info"]
-    print(" ".join(shlex.quote(str(x)) for x in cmd))
+    log_cmd(cmd)
     subprocess.run(cmd, cwd=build_dir, check=True, stdin=subprocess.DEVNULL)
     meta = info.objects.add()
     meta.file_name = tarball_name
@@ -179,7 +185,7 @@ def bundle_coverage(opts):
     for board in SPECIAL_BOARDS:
         cmd.append(board + "_rpt")
     cmd.append(bundle_dir / "html/")
-    print(" ".join(shlex.quote(str(x)) for x in cmd))
+    log_cmd(cmd)
     subprocess.run(cmd, cwd=build_dir, check=True, stdin=subprocess.DEVNULL)
     meta = info.objects.add()
     meta.file_name = "html"
@@ -205,7 +211,7 @@ def bundle_firmware(opts):
         tarball_name = f"{project.config.project_name}.firmware.tbz2"
         tarball_path = bundle_dir.joinpath(tarball_name)
         cmd = ["tar", "cvfj", tarball_path, "."]
-        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        log_cmd(cmd)
         subprocess.run(
             cmd, cwd=artifacts_dir, check=True, stdin=subprocess.DEVNULL
         )
@@ -258,7 +264,7 @@ def test(opts):
         _extract_lcov_summary("EC_ZEPHYR_TESTS", metrics, output)
 
         cmd = ["make", "test-coverage", f"-j{opts.cpus}"]
-        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        log_cmd(cmd)
         subprocess.run(
             cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL
         )
@@ -288,7 +294,7 @@ def test(opts):
             "-a",
             platform_ec / "twister-out" / "coverage.info",
         ]
-        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        log_cmd(cmd)
         output = subprocess.run(
             cmd,
             cwd=zephyr_dir,
@@ -310,7 +316,7 @@ def test(opts):
             "-a",
             build_dir / "all_tests.info",
         ]
-        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        log_cmd(cmd)
         output = subprocess.run(
             cmd,
             cwd=zephyr_dir,
@@ -332,13 +338,29 @@ def test(opts):
             "-a",
             platform_ec / "build/coverage/lcov.info",
         ]
-        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        log_cmd(cmd)
         subprocess.run(
             cmd,
             cwd=zephyr_dir,
             check=True,
             stdin=subprocess.DEVNULL,
         )
+
+        test_patterns = [
+            platform_ec / "test/**",
+            platform_ec / "private/fingerprint/google-fpalg/mcutest/**",
+            zephyr_dir / "test/**",
+            zephyr_dir / "emul/**",
+            third_party / "zephyr/main/subsys/emul/**",
+            third_party / "zephyr/main/subsys/testsuite/**",
+        ]
+
+        generated_and_system_patterns = [
+            platform_ec / "build/**",
+            platform_ec / "twister-out*/**",
+            "/usr/include/**",
+            "/usr/lib/**",
+        ]
 
         cmd = [
             "/usr/bin/lcov",
@@ -348,12 +370,8 @@ def test(opts):
             "lcov_branch_coverage=1",
             "-r",
             build_dir / "lcov_unfiltered.info",
-            platform_ec / "build/**",
-            platform_ec / "twister-out*/**",
-            "/usr/include/**",
-            "/usr/lib/**",
-        ]
-        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        ] + generated_and_system_patterns
+        log_cmd(cmd)
         output = subprocess.run(
             cmd,
             cwd=zephyr_dir,
@@ -373,13 +391,8 @@ def test(opts):
             "lcov_branch_coverage=1",
             "-r",
             build_dir / "lcov.info",
-            platform_ec / "test/**",
-            zephyr_dir / "test/**",
-            zephyr_dir / "emul/**",
-            third_party / "zephyr/main/subsys/emul/**",
-            third_party / "zephyr/main/subsys/testsuite/**",
-        ]
-        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        ] + test_patterns
+        log_cmd(cmd)
         output = subprocess.run(
             cmd,
             cwd=zephyr_dir,
@@ -420,7 +433,7 @@ def test(opts):
                 "-a",
                 build_dir / board / "output/zephyr.info",
             ]
-            print(" ".join(shlex.quote(str(x)) for x in cmd))
+            log_cmd(cmd)
             subprocess.run(
                 cmd,
                 cwd=zephyr_dir,
@@ -428,34 +441,29 @@ def test(opts):
                 stdin=subprocess.DEVNULL,
             )
             # Exclude file patterns we don't want
-            cmd = [
-                "/usr/bin/lcov",
-                "-o",
-                build_dir / (board + "_filtered.info"),
-                "--rc",
-                "lcov_branch_coverage=1",
-                "-r",
-                build_dir / (board + "_merged.info"),
-                # Exclude generated files
-                platform_ec / "build/**",
-                platform_ec / "twister-out*/**",
-                # Exclude system headers
-                "/usr/include/**",
-                # Exclude third_party code (specifically zephyr)
-                third_party / "**",
-                # These are questionable, but they are essentically untestable
-                zephyr_dir / "drivers/**",
-                zephyr_dir / "include/drivers/**",
-                zephyr_dir / "projects/**",
-                zephyr_dir / "shim/chip/**",
-                zephyr_dir / "shim/chip/npcx/npcx_monitor/**",
-                zephyr_dir / "shim/core/**",
-                # Exclude tests
-                platform_ec / "test/**",
-                zephyr_dir / "emul/**",
-                zephyr_dir / "test/**",
-            ]
-            print(" ".join(shlex.quote(str(x)) for x in cmd))
+            cmd = (
+                [
+                    "/usr/bin/lcov",
+                    "-o",
+                    build_dir / (board + "_filtered.info"),
+                    "--rc",
+                    "lcov_branch_coverage=1",
+                    "-r",
+                    build_dir / (board + "_merged.info"),
+                    # Exclude third_party code (specifically zephyr)
+                    third_party / "**",
+                    # These are questionable, but they are essentially untestable
+                    zephyr_dir / "drivers/**",
+                    zephyr_dir / "include/drivers/**",
+                    zephyr_dir / "projects/**",
+                    zephyr_dir / "shim/chip/**",
+                    zephyr_dir / "shim/chip/npcx/npcx_monitor/**",
+                    zephyr_dir / "shim/core/**",
+                ]
+                + generated_and_system_patterns
+                + test_patterns
+            )
+            log_cmd(cmd)
             subprocess.run(
                 cmd,
                 cwd=zephyr_dir,
@@ -479,7 +487,7 @@ def test(opts):
                 "-e",
                 build_dir / (board + "_filtered.info"),
             ] + list(filenames)
-            print(" ".join(shlex.quote(str(x)) for x in cmd))
+            log_cmd(cmd)
             output = subprocess.run(
                 cmd,
                 cwd=zephyr_dir,
