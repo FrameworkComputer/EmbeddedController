@@ -22,8 +22,22 @@ LOG_MODULE_REGISTER(pwm_led, LOG_LEVEL_ERR);
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 	     "Multiple CrOS EC PWM LED instances defined");
-BUILD_ASSERT(DT_INST_PROP_LEN(0, leds) <= 2,
+
+#define PWM_LEDS_LEN DT_INST_PROP_LEN(0, leds)
+BUILD_ASSERT((PWM_LEDS_LEN > 0) && (PWM_LEDS_LEN <= 2),
 	     "Unsupported number of LEDs defined");
+
+#define PWM_LED_0_0_PERIOD \
+	DT_PWMS_PERIOD_BY_IDX(DT_INST_PHANDLE_BY_IDX(0, leds, 0), 0)
+#define PWM_LED_PERIOD_BUILD_ASSERT(node_id, prop, idx, ...)      \
+	BUILD_ASSERT(PWM_LED_0_0_PERIOD ==                        \
+			     DT_PWMS_PERIOD_BY_IDX(node_id, idx), \
+		     "PWM LED period mismatch");
+#define PWM_LEDS_BUILD_ASSERT(node_id, prop, idx)                         \
+	DT_FOREACH_PROP_ELEM_VARGS(DT_PHANDLE_BY_IDX(node_id, prop, idx), \
+				   pwms, PWM_LED_PERIOD_BUILD_ASSERT)
+
+DT_INST_FOREACH_PROP_ELEM(0, leds, PWM_LEDS_BUILD_ASSERT)
 
 #define PWM_LED_NAME(node_id) DT_STRING_UPPER_TOKEN(node_id, ec_led_name)
 #define PWM_LED_NAME_WITH_COMMA(node_id) PWM_LED_NAME(node_id),
@@ -165,6 +179,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 }
 
 #if DT_INST_NODE_HAS_PROP(0, sidesel)
+
+BUILD_ASSERT((PWM_LED_0_0_PERIOD * 2) ==
+		     DT_PWMS_PERIOD(DT_INST_PROP(0, sidesel)),
+	     "Sidesel PWM period not properly set");
 
 static const struct pwm_dt_spec _pwm_dt_spec_sidesel =
 	PWM_DT_SPEC_GET_BY_IDX(DT_INST_PROP(0, sidesel), 0);
