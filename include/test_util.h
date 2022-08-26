@@ -8,6 +8,12 @@
 #ifndef __CROS_EC_TEST_UTIL_H
 #define __CROS_EC_TEST_UTIL_H
 
+#include "compile_time_macros.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "common.h"
 #include "console.h"
 #include "stack_trace.h"
@@ -483,5 +489,9 @@ void z_ztest_run_test_suite(const char *name, struct unit_test *suite);
 #define zassert_mem_equal(buf, exp, size, msg, ...) \
 	TEST_ASSERT_ARRAY_EQ(buf, exp, size)
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TEST_UTIL_H */
