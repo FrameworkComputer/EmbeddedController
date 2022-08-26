@@ -15,7 +15,11 @@
 			ppc = <&ppc_port0_syv>;
 			tcpc = <&tcpc_port0>;
 			chg = <&charger>;
-			usb-muxes = <&usb_c0_hb_retimer &virtual_mux_c0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c0_hb_retimer
+					     &virtual_mux_c0>;
+			};
 		};
 		port0-muxes {
 			virtual_mux_c0: virtual-mux-c0 {
