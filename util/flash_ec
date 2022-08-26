@@ -1034,21 +1034,21 @@ function flash_flashrom() {
 
 		[[ -z "${FLAGS_read}" ]] && dump_fmap -F "${IMG}" > "${L}"
 
-		FLASHROM_OPTIONS="-i EC_RW -i WP_RO -l "${L}" --noverify-all"
+		FLASHROM_OPTIONS=(-i EC_RW -i WP_RO -l "${L}" --noverify-all)
 	fi
 
 	# Generate the correct flashrom command base.
 	# shellcheck disable=SC2206
-	FLASHROM_CMDLINE="${FLASHROM} ${FLASHROM_ARGS}"
+	FLASHROM_CMDLINE=("${FLASHROM}" ${FLASHROM_ARGS})
 	if [[ -z "${FLAGS_read}" ]]; then
 		# Program EC image.
 		# flashrom should report the image size at the end of the output.
-		local FLASHROM_GETSIZE="sudo ${FLASHROM_CMDLINE} --flash-size"
+		local FLASHROM_GETSIZE=(sudo "${FLASHROM_CMDLINE[@]}" --flash-size)
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_GETSIZE}" 1>&2
+			echo " ${FLASHROM_GETSIZE[*]}" 1>&2
 		fi
-		SPI_SIZE=$(${FLASHROM_GETSIZE} | grep -oe '[0-9]\+$' |
+		SPI_SIZE=$("${FLASHROM_GETSIZE[@]}" | grep -oe '[0-9]\+$' |
 			   tail -n1) || die "Failed to determine chip size!"
 		[[ ${SPI_SIZE} -eq 0 ]] && die "Chip size is 0!"
 
@@ -1079,23 +1079,23 @@ function flash_flashrom() {
 		fi
 
 		info "Programming EC firmware image."
-		local FLASHROM_WRITE="${FLASHROM_CMDLINE} ${FLASHROM_OPTIONS}"
+		local FLASHROM_WRITE=("${FLASHROM_CMDLINE[@]}" "${FLASHROM_OPTIONS[@]}")
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_WRITE} -w ${T}" 1>&2
+			echo " ${FLASHROM_WRITE[*]} -w ${T}" 1>&2
 		fi
 		print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${FLASHROM_WRITE} -w "${T}" \
+			"${FLASHROM_WRITE[@]}" -w "${T}" \
 			|| die "${MSG_PROGRAM_FAIL}"
 	else
 		# Read EC image.
 		info "Reading EC firmware image."
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_CMDLINE} -r ${FLAGS_read}" 1>&2
+			echo " ${FLASHROM_CMDLINE[*]} -r ${FLAGS_read}" 1>&2
 		fi
 		print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			${FLASHROM_CMDLINE} -r "${FLAGS_read}" \
+			"${FLASHROM_CMDLINE[@]}" -r "${FLAGS_read}" \
 			|| die "${MSG_READ_FAIL}"
 	fi
 }
