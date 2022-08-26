@@ -244,6 +244,19 @@ struct product_vdo {
  * Table 5-1 Certified Cables Where USB4-compatible Operation is Expected
  * This table lists the USB-C cables those support USB4
  */
+enum usb_rev30_plug {
+	USB_REV30_TYPE_C = 2,
+	USB_REV30_CAPTIVE = 3,
+};
+
+enum usb_rev30_latency {
+	USB_REV30_LATENCY_1m = 1,
+	USB_REV30_LATENCY_2m = 2,
+	USB_REV30_LATENCY_3m = 3,
+	USB_REV30_LATENCY_4m = 4,
+	USB_REV30_LATENCY_5m = 5,
+	USB_REV30_LATENCY_6m = 6,
+};
 
 enum usb_rev30_ss {
 	USB_R30_SS_U2_ONLY,
@@ -281,6 +294,11 @@ union passive_cable_vdo_rev30 {
 	};
 	uint32_t raw_value;
 };
+
+/* Macro passive VDO generator */
+#define VDO_REV30_PASSIVE(ss, vbus_cur, latency, plug)                \
+	((ss & 0x7) | (vbus_cur & 0x3) << 5 | (latency & 0xf) << 13 | \
+	 (plug & 0x3) << 18)
 
 /*****************************************************************************/
 /*
