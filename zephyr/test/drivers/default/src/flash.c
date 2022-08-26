@@ -13,6 +13,7 @@
 #include "emul/emul_flash.h"
 #include "flash.h"
 #include "host_command.h"
+#include "system.h"
 #include "test/drivers/test_state.h"
 
 #define WP_L_GPIO_PATH DT_PATH(named_gpios, wp_l)
@@ -186,6 +187,68 @@ ZTEST_USER(flash, test_hostcmd_flash_write_and_erase)
 		      in_buf[0]);
 	zassert_equal(in_buf[TEST_BUF_SIZE - 1], 0xff,
 		      "readback data not expected: 0x%x", in_buf[0]);
+}
+
+#define EC_FLASH_REGION_START \
+	MIN(CONFIG_EC_PROTECTED_STORAGE_OFF, CONFIG_EC_WRITABLE_STORAGE_OFF)
+
+static void test_region_info(uint32_t region, uint32_t expected_offset,
+			     uint32_t expected_size)
+{
+	struct ec_response_flash_region_info response;
+	struct ec_params_flash_region_info params = {
+		.region = region,
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_FLASH_REGION_INFO, 1, response, params);
+
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(response.offset, expected_offset, NULL);
+	zassert_equal(response.size, expected_size, NULL);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_region_info_ro)
+{
+	test_region_info(EC_FLASH_REGION_RO,
+			 CONFIG_EC_PROTECTED_STORAGE_OFF +
+				 CONFIG_RO_STORAGE_OFF - EC_FLASH_REGION_START,
+			 EC_FLASH_REGION_RO_SIZE);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_region_info_active)
+{
+	test_region_info(EC_FLASH_REGION_ACTIVE,
+			 flash_get_rw_offset(system_get_active_copy()) -
+				 EC_FLASH_REGION_START,
+			 CONFIG_EC_WRITABLE_STORAGE_SIZE);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_region_info_active_wp_ro)
+{
+	test_region_info(EC_FLASH_REGION_WP_RO,
+			 CONFIG_WP_STORAGE_OFF - EC_FLASH_REGION_START,
+			 CONFIG_WP_STORAGE_SIZE);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_region_info_active_update)
+{
+	test_region_info(EC_FLASH_REGION_UPDATE,
+			 flash_get_rw_offset(system_get_update_copy()) -
+				 EC_FLASH_REGION_START,
+			 CONFIG_EC_WRITABLE_STORAGE_SIZE);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_region_info_active_invalid)
+{
+	struct ec_response_flash_region_info response;
+	struct ec_params_flash_region_info params = {
+		/* Get an invalid region */
+		.region = 10,
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_FLASH_REGION_INFO, 1, response, params);
+
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM, NULL);
 }
 
 static void flash_reset(void)
