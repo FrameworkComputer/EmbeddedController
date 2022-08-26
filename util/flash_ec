@@ -911,7 +911,7 @@ repo sync && sudo emerge hdctools servo-firmware && sudo servo_updater -b c2d2"
 		while [[ "$(dut_control_get h1_vref_present)" = "off" \
 			&& "${LOOP_COUNTER}" -gt 1 ]] ; do
 			sleep 0.1
-			let LOOP_COUNTER=LOOP_COUNTER-1
+			(( LOOP_COUNTER=LOOP_COUNTER-1 ))
 		done
 		# If we ran out of time, then just die now
 		if [[ "${LOOP_COUNTER}" -eq 1 ]] ; then
@@ -1060,7 +1060,7 @@ function flash_flashrom() {
 			   tail -n1) || die "Failed to determine chip size!"
 		[[ ${SPI_SIZE} -eq 0 ]] && die "Chip size is 0!"
 
-		PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
+		PATCH_SIZE=$(( SPI_SIZE - IMG_SIZE ))
 
 		# Temp image
 		T=/tmp/flash_spi_$$
