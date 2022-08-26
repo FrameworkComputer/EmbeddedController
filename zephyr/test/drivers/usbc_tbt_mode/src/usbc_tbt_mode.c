@@ -284,7 +284,7 @@ ZTEST_F(usbc_tbt_mode, verify_tbt_entry_fail)
 }
 
 /* With passive e-marked cable, TBT mode can be entered on SOP only */
-ZTEST_F(usbc_tbt_mode, verify_tbt_passive_entry)
+ZTEST_F(usbc_tbt_mode, verify_tbt_passive_entry_exit)
 {
 	struct ec_response_typec_status status;
 
@@ -317,6 +317,19 @@ ZTEST_F(usbc_tbt_mode, verify_tbt_passive_entry)
 	status = host_cmd_typec_status(TEST_PORT);
 	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
 		      USB_PD_MUX_TBT_COMPAT_ENABLED, "Failed to see TBT set");
+
+	/* Exit modes now */
+	tcpci_partner_common_clear_logged_msgs(&fixture->partner);
+	tcpci_partner_common_enable_pd_logging(&fixture->partner, true);
+	host_cmd_typec_control_exit_modes(TEST_PORT);
+	k_sleep(K_SECONDS(1));
+
+	/* Verify we sent a single TBT SOP ExitMode. */
+	tcpci_partner_common_enable_pd_logging(&fixture->partner, false);
+	verify_vdm_messages(fixture, SOP_EXPECTED, CMD_EXIT_MODE);
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
+		      USB_PD_MUX_USB_ENABLED, "Failed to see USB set");
 }
 
 ZTEST_SUITE(usbc_tbt_mode, drivers_predicate_post_main, usbc_tbt_mode_setup,
