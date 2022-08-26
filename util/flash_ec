@@ -147,7 +147,7 @@ BITBANG_RATE="57600"  # Could be overwritten by a command line option.
 
 # Flags
 DEFINE_integer bitbang_rate "${BITBANG_RATE}" \
-	"UART baud rate to use when bit bang programming, "\
+	"UART baud rate to use when bit bang programming, " \
 "standard UART rates from 9600 to 57600 are supported."
 DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
@@ -223,7 +223,7 @@ function print_or_run() {
 function dut_control() {
 	local DUT_CTRL_CML=( "${DUT_CONTROL_CMD[@]}" )
 
-	for p in $@ ; do
+	for p in "$@" ; do
 		# Only add the prefix if the arg is a control name.
 		if [[ ${p} != -* ]] ; then
 			p="${DUT_CTRL_PREFIX}${p}"
