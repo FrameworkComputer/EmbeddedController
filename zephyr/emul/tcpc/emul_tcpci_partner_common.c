@@ -31,7 +31,7 @@ void tcpci_partner_common_hard_reset_as_role(struct tcpci_partner_data *data,
 	data->data_role = power_role == PD_ROLE_SOURCE ? PD_ROLE_DFP :
 							 PD_ROLE_UFP;
 	data->displayport_configured = false;
-	atomic_clear(&data->displayport_enter_attempts);
+	atomic_clear(&data->mode_enter_attempts);
 }
 
 /**
@@ -686,14 +686,14 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	case CMD_ENTER_MODE:
 		/* Partner emulator only supports entering DP mode */
-		if (data->dp_enter_mode_vdos > 0 &&
-		    (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT)) {
+		if (data->enter_mode_vdos > 0 &&
+		    (PD_VDO_VID(vdm_header) ==
+		     PD_VDO_VID(data->enter_mode_vdm[0]))) {
 			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
-						    data->dp_enter_mode_vdm,
-						    data->dp_enter_mode_vdos,
-						    0);
+						    data->enter_mode_vdm,
+						    data->enter_mode_vdos, 0);
 		}
-		atomic_inc(&data->displayport_enter_attempts);
+		atomic_inc(&data->mode_enter_attempts);
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	case CMD_EXIT_MODE:
 		if (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT) {
@@ -1131,7 +1131,7 @@ void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
 	tcpci_partner_stop_sender_response_timer(data);
 	data->tcpci_emul = NULL;
 	data->displayport_configured = false;
-	atomic_clear(&data->displayport_enter_attempts);
+	atomic_clear(&data->mode_enter_attempts);
 }
 
 int tcpci_partner_common_enable_pd_logging(struct tcpci_partner_data *data,
@@ -1516,7 +1516,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->ops.control_change = NULL;
 	data->ops.disconnect = tcpci_partner_disconnect_op;
 	data->displayport_configured = false;
-	atomic_clear(&data->displayport_enter_attempts);
+	atomic_clear(&data->mode_enter_attempts);
 
 	/* Reset the data structure used to store battery capability responses
 	 */

@@ -135,10 +135,10 @@ struct tcpci_partner_data {
 	enum tcpci_emul_tx_status *received_msg_status;
 	/** Whether port partner is configured in DisplayPort mode */
 	bool displayport_configured;
-	/** The number of DisplayPort Enter Mode REQs received since connection
+	/** The number of Enter Mode REQs received since connection
 	 *  or the last Hard Reset, whichever was more recent.
 	 */
-	atomic_t displayport_enter_attempts;
+	atomic_t mode_enter_attempts;
 
 	/* VDMs with which the partner responds to discovery REQs. The VDM
 	 * buffers include the VDM header, and the VDO counts include 1 for the
@@ -151,9 +151,9 @@ struct tcpci_partner_data {
 	int svids_vdos;
 	uint32_t modes_vdm[VDO_MAX_SIZE];
 	int modes_vdos;
-	/* VDMs sent when responding to DisplayPort mode entry command */
-	uint32_t dp_enter_mode_vdm[VDO_MAX_SIZE];
-	int dp_enter_mode_vdos;
+	/* VDMs sent when responding to a mode entry command */
+	uint32_t enter_mode_vdm[VDO_MAX_SIZE];
+	int enter_mode_vdos;
 	/* VDMs sent when responding to DisplayPort status update command */
 	uint32_t dp_status_vdm[VDO_MAX_SIZE];
 	int dp_status_vdos;
