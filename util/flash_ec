@@ -266,7 +266,7 @@ function dut_control_get_or_die {
 	    die "command exited $? (non-zero): dut-control --value_only $*"
 }
 
-: ${BOARD:=${FLAGS_board}}
+: "${BOARD:=${FLAGS_board}}"
 
 in_array() {
 	local n=$#
@@ -323,7 +323,7 @@ if in_array "${BOARDS_IT83XX_SPI_PROGRAMMING[@]}" "${BOARD}"; then
 fi
 
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
-	SUPPORTED_CHIPS+="${FLAGS_chip}"
+	SUPPORTED_CHIPS+=("${FLAGS_chip}")
 fi
 
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 ]]; then
