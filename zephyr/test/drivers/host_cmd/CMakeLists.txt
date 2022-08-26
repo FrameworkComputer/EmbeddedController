@@ -10,4 +10,5 @@ target_sources(app PRIVATE
     src/motion_sense.c
     src/pd_control.c
     src/pd_chip_info.c
+    src/usb_pd_control.c
 )
