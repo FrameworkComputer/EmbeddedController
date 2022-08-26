@@ -493,7 +493,7 @@ ec_reset() {
 	fi
 
 	if [[ -n "${stype}" ]]; then
-		eval ${stype}_${MCU}_hard_reset
+		eval "${stype}_${MCU}_hard_reset"
 	fi
 }
 
@@ -509,7 +509,7 @@ ccd_ec_boot0() {
 		dut_control cold_reset:on
 	fi
 
-	dut_control "ccd_ec_boot_mode_${boot_mode}":"${on_value}"
+	dut_control "ccd_ec_boot_mode_${boot_mode}:${on_value}"
 }
 
 servo_micro_ec_boot0() {
@@ -527,28 +527,28 @@ servo_micro_ec_boot0() {
 		# HW Rework (b/143163043#comment3):
 		#   - Disconnect U45.1 from ground
 		#   - Connected U45.1 to TP1 pad
-		dut_control tp1:$1
-		dut_control servo_micro_ec_boot_mode_$2:$1
+		dut_control "tp1:$1"
+		dut_control "servo_micro_ec_boot_mode_$2:$1"
 	else
 		info "Servo micro $2 mode: $1 (using FW_UP_L)"
-		dut_control ec_boot_mode:$1
+		dut_control "ec_boot_mode:$1"
 	fi
 }
 
 servo_ec_boot0() {
-	dut_control ec_boot_mode:$1
+	dut_control "ec_boot_mode:$1"
 }
 
 c2d2_ec_boot0() {
-	dut_control ec_boot_mode_uut:$1
+	dut_control "ec_boot_mode_uut:$1"
 }
 
 servo_usbpd_boot0() {
-	dut_control usbpd_boot_mode:$1
+	dut_control "usbpd_boot_mode:$1"
 }
 
 servo_fpmcu_boot0() {
-	dut_control fpmcu_boot_mode:"$1"
+	dut_control "fpmcu_boot_mode:$1"
 }
 
 servo_micro_fpmcu_boot0() {
@@ -560,7 +560,7 @@ servo_micro_usbpd_boot0() {
 }
 
 servo_sh_boot0() {
-	dut_control sh_boot_mode:$1
+	dut_control "sh_boot_mode:$1"
 }
 
 ec_switch_boot0() {
@@ -580,15 +580,15 @@ ec_switch_boot0() {
 	else
 		stype=${SERVO_TYPE}
 	fi
-	eval ${stype}_${MCU}_boot0 "${on_value}" $2
+	eval "${stype}_${MCU}_boot0" "${on_value}" "$2"
 }
 
 ec_enable_boot0() {
-	ec_switch_boot0 "on" $1
+	ec_switch_boot0 "on" "$1"
 }
 
 ec_disable_boot0() {
-	ec_switch_boot0 "off" $1
+	ec_switch_boot0 "off" "$1"
 }
 
 # Returns 0 on success (if on beaglebone)
@@ -707,11 +707,11 @@ BASEBOARD=
 # setting BASEBOARD
 set +e
 if [[ -n "${EC_DIR}" ]]; then
-	BASEBOARD=$(make --quiet -C ${EC_DIR} BOARD=${BOARD} print-baseboard \
+	BASEBOARD=$(make --quiet -C "${EC_DIR}" BOARD="${BOARD}" print-baseboard \
 		2>/dev/null)
 elif [[ -d "${HOME}/trunk/src/platform/ec" ]]; then
-	BASEBOARD=$(make --quiet -C ${HOME}/trunk/src/platform/ec \
-		BOARD=${BOARD} print-baseboard 2>/dev/null)
+	BASEBOARD=$(make --quiet -C "${HOME}"/trunk/src/platform/ec \
+		BOARD="${BOARD}" print-baseboard 2>/dev/null)
 else
 	info "Could not find ec build folder to calculate baseboard."
 fi
@@ -773,7 +773,7 @@ function servo_ec_uart() {
 	if [[ -z "${PTY}" ]]; then
 	    die "${SERVOD_FAIL}"
 	fi
-	echo $PTY
+	echo "$PTY"
 }
 
 # Not every control is supported on every servo type.  Therefore, define which
@@ -858,18 +858,18 @@ function claim_pty() {
 	    warn "hdctools cannot disconnect the EC-3PO interpreter from" \
 	    "the UART."
 
-	pids=$(lsof -FR 2>/dev/null -- $1 | grep -v '^f' | tr -d 'pR')
+	pids=$(lsof -FR 2>/dev/null -- "$1" | grep -v '^f' | tr -d 'pR')
 	FROZEN_PIDS=""
 
 	# reverse order to SIGSTOP parents before children
-	for pid in $(echo ${pids} | tac -s " "); do
+	for pid in $(echo "${pids}" | tac -s " "); do
 		if ps -o cmd= "${pid}" | grep -qE "(servod|/sbin/init)"; then
 			info "Skip stopping servod or init: process ${pid}."
 		else
 			info "Sending SIGSTOP to process ${pid}!"
 			FROZEN_PIDS+=" ${pid}"
 			sleep 0.02
-			kill -STOP ${pid}
+			kill -STOP "${pid}"
 		fi
 	done
 }
@@ -1244,21 +1244,21 @@ function flash_stm32_dfu() {
 	info "Using dfu flasher : ${DFU_UTIL}"
 
 	dev_cnt=$(lsusb -d $DFU_DEVICE | wc -l)
-	if [ $dev_cnt -eq 0 ] ; then
+	if [ "$dev_cnt" -eq 0 ] ; then
 		die "unable to locate dfu device at $DFU_DEVICE"
-	elif [ $dev_cnt -ne 1 ] ; then
+	elif [ "$dev_cnt" -ne 1 ] ; then
 		die "too many dfu devices (${dev_cnt}). Disconnect all but one."
 	fi
 
-	SIZE=$(wc -c ${IMG} | cut -d' ' -f1)
+	SIZE=$(wc -c "${IMG}" | cut -d' ' -f1)
 	# Remove read protection
 	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" $DFU_UTIL -a 0 \
-		-d "${DFU_DEVICE}" -s ${ADDR}:${SIZE}:force:unprotect -D "${IMG}"
+		-d "${DFU_DEVICE}" -s "${ADDR}:${SIZE}:force:unprotect" -D "${IMG}"
 	# Wait for mass-erase and reboot after unprotection
 	print_or_run sleep 1
 	# Actual image flashing
 	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" $DFU_UTIL -a 0 \
-		-d "${DFU_DEVICE}" -s ${ADDR}:${SIZE} -D "${IMG}"
+		-d "${DFU_DEVICE}" -s "${ADDR}:${SIZE}" -D "${IMG}"
 }
 
 function dut_i2c_dev() {
@@ -1466,7 +1466,7 @@ function flash_npcx_uut() {
 
 	info "Using: NPCX UART Update Tool"
 	info "${MCU} UART pty : ${EC_UART}"
-	claim_pty ${EC_UART}
+	claim_pty "${EC_UART}"
 
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
 		# Ti50 does not yet support ccd_keepalive option which
@@ -1632,5 +1632,5 @@ if [ "${NEED_SERVO}" != "no" ] ; then
 fi
 
 info "Flashing chip ${CHIP}."
-flash_${CHIP}
+flash_"${CHIP}"
 info "Flashing done."
