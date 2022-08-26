@@ -139,6 +139,8 @@ struct tcpci_partner_data {
 	 *  or the last Hard Reset, whichever was more recent.
 	 */
 	atomic_t mode_enter_attempts;
+	/* SVID of entered mode (0 if no mode is entered) */
+	uint16_t entered_svid;
 
 	/* VDMs with which the partner responds to discovery REQs. The VDM
 	 * buffers include the VDM header, and the VDO counts include 1 for the

@@ -31,6 +31,7 @@ void tcpci_partner_common_hard_reset_as_role(struct tcpci_partner_data *data,
 	data->data_role = power_role == PD_ROLE_SOURCE ? PD_ROLE_DFP :
 							 PD_ROLE_UFP;
 	data->displayport_configured = false;
+	data->entered_svid = 0;
 	atomic_clear(&data->mode_enter_attempts);
 }
 
@@ -685,10 +686,15 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 		}
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	case CMD_ENTER_MODE:
-		/* Partner emulator only supports entering DP mode */
+		/* Partner emulator only supports entering one mode */
 		if (data->enter_mode_vdos > 0 &&
 		    (PD_VDO_VID(vdm_header) ==
 		     PD_VDO_VID(data->enter_mode_vdm[0]))) {
+			/* Squirrel away the SVID if we're sending ACK */
+			if (PD_VDO_CMDT(data->enter_mode_vdm[0]) ==
+			    CMDT_RSP_ACK)
+				data->entered_svid = PD_VDO_VID(vdm_header);
+
 			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
 						    data->enter_mode_vdm,
 						    data->enter_mode_vdos, 0);
@@ -696,22 +702,25 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 		atomic_inc(&data->mode_enter_attempts);
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	case CMD_EXIT_MODE:
-		if (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT) {
+		/* Only exit a SVID we know we entered */
+		if (PD_VDO_VID(vdm_header) == data->entered_svid) {
 			uint32_t response_vdm_header;
 
-			if (data->displayport_configured) {
-				data->displayport_configured = false;
-				response_vdm_header = VDO(
-					USB_SID_DISPLAYPORT, true,
-					VDO_CMDT(CMDT_RSP_ACK) | CMD_EXIT_MODE);
-			} else {
-				response_vdm_header = VDO(
-					USB_SID_DISPLAYPORT, true,
-					VDO_CMDT(CMDT_RSP_NAK) | CMD_EXIT_MODE);
-			}
+			response_vdm_header =
+				VDO(PD_VDO_VID(vdm_header), true,
+				    VDO_CMDT(CMDT_RSP_ACK) | CMD_EXIT_MODE);
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    &response_vdm_header, 1, 0);
+		} else {
+			uint32_t response_vdm_header;
+
+			response_vdm_header =
+				VDO(PD_VDO_VID(vdm_header), true,
+				    VDO_CMDT(CMDT_RSP_NAK) | CMD_EXIT_MODE);
 			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
 						    &response_vdm_header, 1, 0);
 		}
+		data->displayport_configured = false;
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	case CMD_DP_STATUS:
 		if (data->dp_status_vdos > 0 &&
@@ -1131,6 +1140,7 @@ void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
 	tcpci_partner_stop_sender_response_timer(data);
 	data->tcpci_emul = NULL;
 	data->displayport_configured = false;
+	data->entered_svid = 0;
 	atomic_clear(&data->mode_enter_attempts);
 }
 
@@ -1516,6 +1526,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->ops.control_change = NULL;
 	data->ops.disconnect = tcpci_partner_disconnect_op;
 	data->displayport_configured = false;
+	data->entered_svid = 0;
 	atomic_clear(&data->mode_enter_attempts);
 
 	/* Reset the data structure used to store battery capability responses
