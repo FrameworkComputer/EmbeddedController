@@ -8,8 +8,25 @@ tests:
   kingler.steelix:
     extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/cbi_steelix.dts;../projects/corsola/gpio_steelix.dts"
     extra_configs:
+      - CONFIG_TEST_STEELIX_RUSTY=y
       - CONFIG_TEST_FORM_FACTOR_CONVERTIBLE=y
   kingler.rusty:
     extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/cbi_steelix.dts;../projects/corsola/gpio_steelix.dts"
     extra_configs:
+      - CONFIG_TEST_STEELIX_RUSTY=y
       - CONFIG_TEST_FORM_FACTOR_CLAMSHELL=y
+  kingler.db_detect_typec:
+    extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/gpio_steelix.dts;"
+    extra_configs:
+      - CONFIG_TEST_DB_DETECT_TYPEC=y
+      - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+  kingler.db_detect_hdmi:
+    extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/gpio_steelix.dts"
+    extra_configs:
+      - CONFIG_TEST_DB_DETECT_HDMI=y
+      - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+  kingler.db_detect_none:
+    extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/cbi_steelix.dts;../projects/corsola/gpio_steelix.dts"
+    extra_configs:
+      - CONFIG_TEST_DB_DETECT_NONE=y
+      - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y

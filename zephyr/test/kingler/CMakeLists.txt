@@ -6,11 +6,21 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(kingler)
 
-target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/projects/corsola/src/kingler/board_steelix.c)
+zephyr_include_directories("${PLATFORM_EC}/zephyr/projects/corsola/include")
 
 target_sources(app PRIVATE src/fakes.c)
 
+target_sources_ifdef(CONFIG_TEST_STEELIX_RUSTY
+app PRIVATE ${PLATFORM_EC}/zephyr/projects/corsola/src/kingler/board_steelix.c)
 target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CONVERTIBLE
 			app PRIVATE src/tablet.c)
 target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CLAMSHELL
 			app PRIVATE src/clamshell.c)
+target_sources_ifdef(CONFIG_VARIANT_CORSOLA_DB_DETECTION
+app PRIVATE ${PLATFORM_EC}/zephyr/projects/corsola/src/variant_db_detection.c)
+target_sources_ifdef(CONFIG_TEST_DB_DETECT_TYPEC
+			app PRIVATE src/db_detect_typec.c)
+target_sources_ifdef(CONFIG_TEST_DB_DETECT_HDMI
+			app PRIVATE src/db_detect_hdmi.c)
+target_sources_ifdef(CONFIG_TEST_DB_DETECT_NONE
+			app PRIVATE src/db_detect_none.c)
