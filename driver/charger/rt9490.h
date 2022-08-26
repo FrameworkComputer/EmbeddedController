@@ -252,3 +252,15 @@ int rt9490_enable_adc(int chgnum, bool en);
 int rt9490_enable_pwm_1mhz(int chgnum, bool en);
 
 #endif /* __CROS_EC_RT9490_H */
+
+int rt9490_get_thermistor_val(int idx, int *temp_ptr);
+
+struct charger_thermistor_data_pair {
+	uint16_t mv; /* Scaled voltage level at ADC (in mV) */
+	uint8_t temp; /* Temperature in Celsius */
+};
+
+struct charger_thermistor_info {
+	uint8_t num_pairs;
+	const struct charger_thermistor_data_pair *data;
+};

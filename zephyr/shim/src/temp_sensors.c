@@ -4,6 +4,7 @@
  */
 
 #include "adc.h"
+#include "driver/charger/rt9490.h"
 #include "temp_sensor.h"
 #include "temp_sensor/pct2075.h"
 #include "temp_sensor/sb_tsi.h"
@@ -159,6 +160,33 @@ const struct tmp112_sensor_t tmp112_sensors[TMP112_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_tmp112, DEFINE_TMP112_DATA)
 };
 
+#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_temp_sensor_rt9490)
+static int rt9490_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
+{
+	return rt9490_get_thermistor_val(sensor->idx, temp_ptr);
+}
+
+/* There can be only one thermistor on RT9490 with current driver */
+#if DT_NUM_INST_STATUS_OKAY(cros_ec_temp_sensor_rt9490) > 1
+#error "Unsupported number of thermistor on RT9490"
+#endif
+
+#endif /* cros_ec_temp_sensor_rt9490 */
+
+#define GET_ZEPHYR_TEMP_SENSOR_RT9490(node_id) \
+	(&(struct zephyr_temp_sensor){         \
+		.read = &rt9490_get_temp,      \
+		.thermistor = NULL,            \
+	})
+
+#define TEMP_RT9490(node_id)                                           \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                            \
+		.name = DT_NODE_FULL_NAME(node_id),                    \
+		.idx = 0,                                              \
+		.type = TEMP_SENSOR_TYPE_BOARD,                        \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_RT9490(node_id), \
+	},
+
 const struct temp_sensor_t temp_sensors[] = {
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_thermistor, TEMP_THERMISTOR)
 		DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_pct2075,
@@ -167,6 +195,9 @@ const struct temp_sensor_t temp_sensors[] = {
 					       TEMP_SB_TSI)
 				DT_FOREACH_STATUS_OKAY(
 					cros_ec_temp_sensor_tmp112, TEMP_TMP112)
+					DT_FOREACH_STATUS_OKAY(
+						cros_ec_temp_sensor_rt9490,
+						TEMP_RT9490)
 };
 
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
