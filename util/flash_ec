@@ -854,7 +854,7 @@ function claim_pty() {
 	# interfere with flashing.
 	servo_save_add "${MCU}_ec3po_interp_connect"
 
-	dut_control ${MCU}_ec3po_interp_connect:off || \
+	dut_control "${MCU}_ec3po_interp_connect:off" || \
 	    warn "hdctools cannot disconnect the EC-3PO interpreter from" \
 	    "the UART."
 
@@ -1017,7 +1017,7 @@ function flash_flashrom() {
 		servo_save_add "spi1_buf_en" "off"
 
 		# Turn on SPI1 interface on servo for SPI Flash Chip
-		dut_control spi1_vref:${SPI_VOLTAGE} spi1_buf_en:on
+		dut_control "spi1_vref:${SPI_VOLTAGE}" spi1_buf_en:on
 		if [[ ! "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 			# Servo micro doesn't support this control.
 			servo_save_add "spi1_buf_on_flex_en" "off"
@@ -1072,18 +1072,18 @@ function flash_flashrom() {
 		{	# Patch temp image up to SPI_SIZE
 			cat "${IMG}"
 			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
-				dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
+				dd if=/dev/zero bs="${PATCH_SIZE}" count=1 | \
 					tr '\0' '\377'
 			fi
-		} > ${T}
+		} > "${T}"
 		else
 		{	# Patch temp image up to SPI_SIZE
 			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
-				dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
+				dd if=/dev/zero bs="${PATCH_SIZE}" count=1 | \
 					tr '\0' '\377'
 			fi
 			cat "${IMG}"
-		} > ${T}
+		} > "${T}"
 		fi
 
 		info "Programming EC firmware image."
@@ -1238,12 +1238,12 @@ function flash_stm32_dfu() {
 	DFU_DEVICE=0483:df11
 	ADDR=0x08000000
 	DFU_UTIL='dfu-util'
-	which ${DFU_UTIL} &> /dev/null || die \
+	which "${DFU_UTIL}" &> /dev/null || die \
 		"no dfu-util util found.  Did you 'sudo emerge dfu-util'"
 
 	info "Using dfu flasher : ${DFU_UTIL}"
 
-	dev_cnt=$(lsusb -d ${DFU_DEVICE} | wc -l)
+	dev_cnt=$(lsusb -d "${DFU_DEVICE}" | wc -l)
 	if [ "${dev_cnt}" -eq 0 ] ; then
 		die "unable to locate dfu device at ${DFU_DEVICE}"
 	elif [ "${dev_cnt}" -ne 1 ] ; then
@@ -1252,12 +1252,12 @@ function flash_stm32_dfu() {
 
 	SIZE=$(wc -c "${IMG}" | cut -d' ' -f1)
 	# Remove read protection
-	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" ${DFU_UTIL} -a 0 \
+	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" "${DFU_UTIL}" -a 0 \
 		-d "${DFU_DEVICE}" -s "${ADDR}:${SIZE}:force:unprotect" -D "${IMG}"
 	# Wait for mass-erase and reboot after unprotection
 	print_or_run sleep 1
 	# Actual image flashing
-	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" ${DFU_UTIL} -a 0 \
+	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" "${DFU_UTIL}" -a 0 \
 		-d "${DFU_DEVICE}" -s "${ADDR}:${SIZE}" -D "${IMG}"
 }
 
