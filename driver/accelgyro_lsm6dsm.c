@@ -726,6 +726,17 @@ static int read_temp(const struct motion_sensor_t *s, int *temp)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_BODY_DETECTION
+static int get_rms_noise(const struct motion_sensor_t *s)
+{
+	/*
+	 * RMS | Acceleration RMS noise in normal/low-power mode
+	 * FS = ±4 g | 2.0 mg(RMS)
+	 */
+	return 2000;
+}
+#endif
+
 const struct accelgyro_drv lsm6dsm_drv = {
 	.init = init,
 	.read = read,
@@ -739,4 +750,10 @@ const struct accelgyro_drv lsm6dsm_drv = {
 #ifdef ACCEL_LSM6DSM_INT_ENABLE
 	.irq_handler = irq_handler,
 #endif /* ACCEL_LSM6DSM_INT_ENABLE */
+#ifdef CONFIG_BODY_DETECTION
+	.get_rms_noise = get_rms_noise,
+#endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	.list_activities = st_list_activities,
+#endif
 };

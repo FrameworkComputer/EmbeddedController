@@ -187,7 +187,7 @@ static inline int load_fifo(struct motion_sensor_t *main_s,
 static int accelgyro_config_fifo(const struct motion_sensor_t *s)
 {
 	int err;
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
+	struct stprivate_data *data = s->drv_data;
 	uint8_t reg_val;
 	uint8_t fifo_odr_mask;
 
@@ -311,7 +311,7 @@ static int set_range(struct motion_sensor_t *s, int range, int rnd)
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	int ret, normalized_rate = 0;
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
+	struct stprivate_data *data = s->drv_data;
 	uint8_t ctrl_reg, reg_val = 0;
 
 	ctrl_reg = LSM6DSO_ODR_REG(s->type);
@@ -406,7 +406,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
+	struct stprivate_data *data = s->drv_data;
 
 	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSO_WHO_AM_I_REG,
 			   &tmp);
@@ -468,7 +468,7 @@ err_unlock:
 }
 
 #ifdef CONFIG_BODY_DETECTION
-int get_rms_noise(const struct motion_sensor_t *s)
+static int get_rms_noise(const struct motion_sensor_t *s)
 {
 	/*
 	 * RMS | Acceleration RMS noise in normal/low-power mode
@@ -477,17 +477,6 @@ int get_rms_noise(const struct motion_sensor_t *s)
 	return 2000;
 }
 #endif
-
-#ifdef CONFIG_GESTURE_HOST_DETECTION
-int lsm_list_activities(const struct motion_sensor_t *s, uint32_t *enabled,
-			uint32_t *disabled)
-{
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
-	*enabled = data->enabled_activities;
-	*disabled = data->disabled_activities;
-	return EC_RES_SUCCESS;
-}
-#endif /* CONFIG_GESTURE_HOST_DETECTION */
 
 const struct accelgyro_drv lsm6dso_drv = {
 	.init = init,
@@ -504,7 +493,7 @@ const struct accelgyro_drv lsm6dso_drv = {
 	.get_rms_noise = get_rms_noise,
 #endif
 #ifdef CONFIG_GESTURE_HOST_DETECTION
-	.list_activities = lsm_list_activities,
+	.list_activities = st_list_activities,
 #endif
 #endif /* ACCEL_LSM6DSO_INT_ENABLE */
 };

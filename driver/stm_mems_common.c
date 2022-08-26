@@ -136,3 +136,20 @@ void st_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data)
 	for (i = X; i <= Z; i++)
 		v[i] += (drvdata->offset[i] << 5) / s->current_range;
 }
+
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+/**
+ * st_list_activities - Apply to LSB data sensitivity and rotation
+ * @s: Motion sensor pointer
+ * @enabled: Activities that are enabled (bitmap)
+ * @disabled: Activities that are disabled (bitmap)
+ */
+int st_list_activities(const struct motion_sensor_t *s, uint32_t *enabled,
+		       uint32_t *disabled)
+{
+	struct stprivate_data *data = s->drv_data;
+	*enabled = data->enabled_activities;
+	*disabled = data->disabled_activities;
+	return EC_RES_SUCCESS;
+}
+#endif /* CONFIG_GESTURE_HOST_DETECTION */

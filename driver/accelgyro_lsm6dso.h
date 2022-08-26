@@ -199,8 +199,6 @@ struct lsm6dso_data {
  */
 #define LSM6DSO_DISCARD_SAMPLES 3
 
-#define LSM6DSO_GET_DATA(_s) ((struct stprivate_data *)((_s)->drv_data))
-
 /* Macro to initialize motion_sensors structure */
 #define LSM6DSO_ST_DATA(g, type) (&((g).st_data[type]))
 

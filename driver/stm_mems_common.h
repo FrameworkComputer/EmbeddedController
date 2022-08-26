@@ -110,11 +110,22 @@ int st_get_data_rate(const struct motion_sensor_t *s);
  */
 void st_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data);
 
+/**
+ * st_list_activities - Apply to LSB data sensitivity and rotation
+ * @s: Motion sensor pointer
+ * @enabled: Activities that are enabled (bitmap)
+ * @disabled: Activities that are disabled (bitmap)
+ */
+int st_list_activities(const struct motion_sensor_t *s, uint32_t *enabled,
+		       uint32_t *disabled);
+
 /* Internal data structure for sensors */
 struct stprivate_data {
 	struct accelgyro_saved_data_t base;
+#ifdef CONFIG_GESTURE_HOST_DETECTION
 	uint8_t enabled_activities;
 	uint8_t disabled_activities;
+#endif /* CONFIG_GESTURE_HOST_DETECTION */
 	int16_t offset[3];
 	uint8_t resol;
 };
