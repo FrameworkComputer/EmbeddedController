@@ -244,7 +244,7 @@ function dut_control_or_die {
 
 function dut_control_get() {
 	if [ $# -gt 1 ]; then
-		error "${FUNCNAME[0]} failed: more than one argument: $@"
+		error "${FUNCNAME[0]} failed: more than one argument: $*"
 		return 1
 	fi
 
@@ -348,7 +348,7 @@ elif [ -n "${FLAGS_chip}" ]; then
 	if in_array "${SUPPORTED_CHIPS[@]}" "${FLAGS_chip}"; then
 		CHIP="${FLAGS_chip}"
 	else
-		die "board ${BOARD} only supports (${SUPPORTED_CHIPS[@]})," \
+		die "board ${BOARD} only supports (${SUPPORTED_CHIPS[*]})," \
 			"not ${FLAGS_chip}."
 	fi
 else
@@ -356,7 +356,7 @@ else
 	# file, instead of having multiple board-to-chip mapping info in this
 	# script. Please refer to crrev.com/c/1496460 for example.
 	die "board ${BOARD} supports multiple chips" \
-	"(${FILTERED_CHIPS[@]}). Use --chip= to choose one."
+	"(${FILTERED_CHIPS[*]}). Use --chip= to choose one."
 fi
 
 if [ -n "${FLAGS_chip}" ] && [ "${CHIP}" != "${FLAGS_chip}" ]; then
