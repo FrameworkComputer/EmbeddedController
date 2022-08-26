@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_FPC_PRIVATE_H
 #define __CROS_EC_FPC_PRIVATE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* External error codes from FPC's sensor library */
 enum fpc_error_code_external {
 	FPC_ERROR_NONE = 0,
@@ -156,5 +160,9 @@ int fp_sensor_maintenance(uint8_t *image_data,
  * - EC_ERROR_INVAL or EC_ERROR_HW_INTERNAL on error
  */
 int fpc_get_hwid(uint16_t *id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPC_PRIVATE_H */

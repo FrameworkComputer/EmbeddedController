@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_FPC_PRIVATE_H
 #define __CROS_EC_FPC_PRIVATE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 typedef struct {
@@ -45,5 +49,9 @@ int fp_sensor_maintenance(uint8_t *image_data,
  * - EC_ERROR_INVAL or FP_ERROR_SPI_COMM on error
  */
 int fpc_get_hwid(uint16_t *id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPC_PRIVATE_H */
