@@ -25,6 +25,9 @@
 		cosmx {
 			compatible = "cosmx,ap20cbl", "battery-smart";
 		};
+		cosmx-2 {
+			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {

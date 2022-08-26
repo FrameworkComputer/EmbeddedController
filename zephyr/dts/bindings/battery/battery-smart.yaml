@@ -16,6 +16,7 @@ properties:
          - "celxpert,c235-41"
          - "celxpert,l22c3pg0"
          - "cosmx,ap20cbl"
+         - "cosmx,ap20cbl-2"
          - "cosmx,gh02047xl"
          - "cosmx,l22x3pg0"
          - "dynapack,atl_gh02047xl"
