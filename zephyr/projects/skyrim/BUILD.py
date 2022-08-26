@@ -32,6 +32,20 @@ def register_skyrim_project(
 
 
 register_skyrim_project(
+    project_name="morthal",
+    extra_dts_overlays=[
+        here / "morthal.dts",
+        here / "battery_morthal.dts",
+        here / "led_pins_morthal.dts",
+        here / "led_policy_morthal.dts",
+    ],
+    extra_kconfig_files=[
+        here / "prj_morthal.conf",
+    ],
+)
+
+
+register_skyrim_project(
     project_name="skyrim",
     extra_dts_overlays=[
         here / "skyrim.dts",

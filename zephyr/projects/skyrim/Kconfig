@@ -2,6 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config BOARD_MORTHAL
+	bool "Google Morthal Board"
+	help
+	  Build Google Morthal reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
+
 config BOARD_SKYRIM
 	bool "Google Skyrim Board"
 	help
