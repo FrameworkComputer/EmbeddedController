@@ -1957,6 +1957,7 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 					  PD_DISC_FAIL);
 		pd_notify_event(port, PD_STATUS_EVENT_SOP_DISC_DONE);
 		pd_notify_event(port, PD_STATUS_EVENT_SOP_PRIME_DISC_DONE);
+		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 		return false;
 	}
 
