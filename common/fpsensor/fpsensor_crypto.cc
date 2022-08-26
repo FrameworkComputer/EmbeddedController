@@ -19,7 +19,6 @@ extern "C" {
 #include "sha256.h"
 #include "util.h"
 
-test_export_static int get_ikm(uint8_t *ikm);
 test_mockable void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
 				       const int key_len,
 				       const uint8_t *message,
