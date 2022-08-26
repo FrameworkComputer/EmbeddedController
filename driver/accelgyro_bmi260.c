@@ -166,6 +166,13 @@ static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
 	return ret;
 }
 
+#ifdef CONFIG_BODY_DETECTION
+static int get_rms_noise(const struct motion_sensor_t *s)
+{
+	return bmi_get_rms_noise(s, BMI260_ACCEL_RMS_NOISE_100HZ);
+}
+#endif
+
 static int wait_and_read_data(const struct motion_sensor_t *s, intv3_t v,
 			      int try_cnt, int msec)
 {
@@ -595,7 +602,7 @@ const struct accelgyro_drv bmi260_drv = {
 	.list_activities = bmi_list_activities,
 #endif
 #ifdef CONFIG_BODY_DETECTION
-	.get_rms_noise = bmi_get_rms_noise,
+	.get_rms_noise = get_rms_noise,
 #endif
 };
 

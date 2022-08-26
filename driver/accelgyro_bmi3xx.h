@@ -214,6 +214,9 @@
  */
 #define BMI3_FIFO_FILL_LVL_MASK 0x07FF
 
+/* Root mean square noise of 100 Hz accelerometer, units: ug */
+#define BMI3_ACCEL_RMS_NOISE_100HZ 1200
+
 /* Enum to define interrupt lines */
 enum bmi3_hw_int_pin {
 	BMI3_INT_NONE,

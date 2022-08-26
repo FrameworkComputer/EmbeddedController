@@ -624,30 +624,21 @@ int bmi_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 }
 
 #ifdef CONFIG_BODY_DETECTION
-int bmi_get_rms_noise(const struct motion_sensor_t *s)
+int bmi_get_rms_noise(const struct motion_sensor_t *accel,
+		      int rms_noise_100hz_mg)
 {
-	int ret;
-	fp_t noise_100hz, rate, sqrt_rate_ratio;
+	fp_t rate, sqrt_rate_ratio;
 
-	switch (s->type) {
-	case MOTIONSENSE_TYPE_ACCEL:
-		/* change unit of ODR to Hz to prevent INT_TO_FP() overflow */
-		rate = INT_TO_FP(bmi_get_data_rate(s) / 1000);
-		/*
-		 * Since the noise is proportional to sqrt(ODR) in BMI, and we
-		 * have rms noise in 100 Hz, we multiply it with the sqrt(ratio
-		 * of ODR to 100Hz) to get current noise.
-		 */
-		noise_100hz = INT_TO_FP(BMI_ACCEL_RMS_NOISE_100HZ(V(s)));
-		sqrt_rate_ratio =
-			fp_sqrtf(fp_div(rate, INT_TO_FP(BMI_ACCEL_100HZ)));
-		ret = FP_TO_INT(fp_mul(noise_100hz, sqrt_rate_ratio));
-		break;
-	default:
-		CPRINTS("%s with gyro/mag is not implemented", __func__);
-		return 0;
-	}
-	return ret;
+	/* change unit of ODR to Hz to prevent INT_TO_FP() overflow */
+	rate = INT_TO_FP(bmi_get_data_rate(accel) / 1000);
+	/*
+	 * Since the noise is proportional to sqrt(ODR) in BMI, and we
+	 * have rms noise in 100 Hz, we multiply it with the sqrt(ratio
+	 * of ODR to 100Hz) to get current noise.
+	 */
+	sqrt_rate_ratio = fp_sqrtf(fp_div(rate, INT_TO_FP(BMI_ACCEL_100HZ)));
+	return FP_TO_INT(
+		fp_mul(INT_TO_FP(rms_noise_100hz_mg), sqrt_rate_ratio));
 }
 #endif
 

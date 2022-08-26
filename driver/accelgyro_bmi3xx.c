@@ -711,9 +711,9 @@ static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
 }
 
 #ifdef CONFIG_BODY_DETECTION
-int get_rms_noise(const struct motion_sensor_t *s)
+static int get_rms_noise(const struct motion_sensor_t *s)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	return bmi_get_rms_noise(s, BMI3_ACCEL_RMS_NOISE_100HZ);
 }
 #endif
 
