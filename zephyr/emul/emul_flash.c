@@ -32,6 +32,7 @@ struct flash_emul_cfg {
 
 /* Variables to emulate the protection */
 bool ro_protected, all_protected;
+static enum ec_image shrspi_image_copy = EC_IMAGE_RO;
 
 void system_jump_to_booter(void)
 {
@@ -45,7 +46,12 @@ uint32_t system_get_lfw_address(void)
 
 enum ec_image system_get_shrspi_image_copy(void)
 {
-	return EC_IMAGE_RO;
+	return shrspi_image_copy;
+}
+
+void system_set_shrspi_image_copy(enum ec_image new_image_copy)
+{
+	shrspi_image_copy = new_image_copy;
 }
 
 void system_set_image_copy(enum ec_image copy)

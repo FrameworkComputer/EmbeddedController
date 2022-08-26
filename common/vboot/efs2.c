@@ -216,6 +216,13 @@ bool vboot_allow_usb_pd(void)
 	return pd_comm_enabled;
 }
 
+#ifdef TEST_BUILD
+void vboot_disable_pd(void)
+{
+	pd_comm_enabled = false;
+}
+#endif
+
 __overridable void show_critical_error(void)
 {
 	CPRINTS("%s", __func__);

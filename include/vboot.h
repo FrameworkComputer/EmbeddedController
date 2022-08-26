@@ -186,4 +186,11 @@ BUILD_ASSERT(sizeof(enum boot_mode) == sizeof(uint8_t));
  */
 __override_proto bool vboot_allow_usb_pd(void);
 
+#ifdef TEST_BUILD
+/**
+ * Set the vboot_allow_usb_pd flag to false.
+ */
+__test_only void vboot_disable_pd(void);
+#endif
+
 #endif /* __CROS_EC_INCLUDE_VBOOT_H */
