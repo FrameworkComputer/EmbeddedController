@@ -7,6 +7,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/shell/shell_uart.h>
 
 #include "chipset.h"
@@ -447,6 +448,40 @@ ZTEST(power_common, test_power_board_system_is_idle)
 	zassert_equal(CRITICAL_SHUTDOWN_HIBERNATE,
 		      board_system_is_idle(last_shutdown_time, &target, now),
 		      NULL);
+}
+
+/**
+ * Test power console command
+ */
+ZTEST(power_common, power_console_cmd)
+{
+	const char *buffer;
+	size_t buffer_size;
+
+	test_set_chipset_to_g3();
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power"),
+		      NULL);
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(strcasecmp(buffer, "\r\noff\r\n") == 0,
+		     "Invalid console output %s", buffer);
+
+	test_set_chipset_to_s0();
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power"),
+		      NULL);
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(strcasecmp(buffer, "\r\non\r\n") == 0,
+		     "Invalid console output %s", buffer);
+
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(get_ec_shell(), "power x"), NULL);
+
+	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power on"),
+		      NULL);
+
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(get_ec_shell(), "power off"), NULL);
 }
 
 /**
