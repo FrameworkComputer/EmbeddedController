@@ -5,7 +5,7 @@
 # found in the LICENSE file.
 
 SCRIPT="$(readlink -f "$0")"
-SCRIPT_DIR="$(dirname "$SCRIPT")"
+SCRIPT_DIR="$(dirname "${SCRIPT}")"
 
 EC_DIR="$(readlink -f "${SCRIPT_DIR}/..")"
 if [[ "$(basename "${EC_DIR}")" != "ec" ]]; then
@@ -228,7 +228,7 @@ function dut_control() {
 		if [[ ${p} != -* ]] ; then
 			p="${DUT_CTRL_PREFIX}${p}"
 		fi
-		DUT_CTRL_CML+=( "$p" )
+		DUT_CTRL_CML+=( "${p}" )
 	done
 
 	if [ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]; then
@@ -773,7 +773,7 @@ function servo_ec_uart() {
 	if [[ -z "${PTY}" ]]; then
 	    die "${SERVOD_FAIL}"
 	fi
-	echo "$PTY"
+	echo "${PTY}"
 }
 
 # Not every control is supported on every servo type.  Therefore, define which
@@ -804,7 +804,7 @@ function servo_save_add() {
 			# Don't save the control with the prefix, because
 			# dut_control will add the prefix again when we restore
 			# the settings.
-			save=( "${CTRL_RESULT#$DUT_CTRL_PREFIX}" "${save[@]}" )
+			save=( "${CTRL_RESULT#${DUT_CTRL_PREFIX}}" "${save[@]}" )
 		   fi
 		   ;;
 		2) save=( "$1:$2" "${save[@]}" )
@@ -954,7 +954,7 @@ function flash_openocd() {
 
 # helper function for using servo with flashrom
 function flash_flashrom() {
-	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH:/usr/sbin"
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}:/usr/sbin"
 	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
 
 	if on_servov3; then
@@ -970,13 +970,13 @@ function flash_flashrom() {
 		FLASHROM_ARGS="-p ft2232_spi:type=google-servo-v2,port=B,"
 	fi
 
-	if [ ! -x "$FLASHROM" ]; then
+	if [ ! -x "${FLASHROM}" ]; then
 		die "no flashrom util found."
 	fi
 
 	if ! on_servov3; then
 		SERIALNAME=$(get_serial)
-		if [[ "$SERIALNAME" != "" ]] ; then
+		if [[ "${SERIALNAME}" != "" ]] ; then
 			FLASHROM_ARGS+="serial=${SERIALNAME}"
 		fi
 	fi
@@ -1070,20 +1070,20 @@ function flash_flashrom() {
 		   [[ "${CHIP}" =~ "ite_spi_ccd_i2c" ]] ||
 		   [[ "${CHIP}" =~ "ite_spi" ]] ; then
 		{	# Patch temp image up to SPI_SIZE
-			cat "$IMG"
+			cat "${IMG}"
 			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
 				dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
 					tr '\0' '\377'
 			fi
-		} > $T
+		} > ${T}
 		else
 		{	# Patch temp image up to SPI_SIZE
 			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
 				dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
 					tr '\0' '\377'
 			fi
-			cat "$IMG"
-		} > $T
+			cat "${IMG}"
+		} > ${T}
 		fi
 
 		info "Programming EC firmware image."
@@ -1116,11 +1116,11 @@ function flash_stm32() {
 		die "Cold reset must be available for STM32 programming"
 	fi
 
-	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
 	EC_UART="$(servo_ec_uart)"
 	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
-	if [ ! -x "$STM32MON" ]; then
+	if [ ! -x "${STM32MON}" ]; then
 		die "no stm32mon util found."
 	fi
 
@@ -1238,34 +1238,34 @@ function flash_stm32_dfu() {
 	DFU_DEVICE=0483:df11
 	ADDR=0x08000000
 	DFU_UTIL='dfu-util'
-	which $DFU_UTIL &> /dev/null || die \
+	which ${DFU_UTIL} &> /dev/null || die \
 		"no dfu-util util found.  Did you 'sudo emerge dfu-util'"
 
 	info "Using dfu flasher : ${DFU_UTIL}"
 
-	dev_cnt=$(lsusb -d $DFU_DEVICE | wc -l)
-	if [ "$dev_cnt" -eq 0 ] ; then
-		die "unable to locate dfu device at $DFU_DEVICE"
-	elif [ "$dev_cnt" -ne 1 ] ; then
+	dev_cnt=$(lsusb -d ${DFU_DEVICE} | wc -l)
+	if [ "${dev_cnt}" -eq 0 ] ; then
+		die "unable to locate dfu device at ${DFU_DEVICE}"
+	elif [ "${dev_cnt}" -ne 1 ] ; then
 		die "too many dfu devices (${dev_cnt}). Disconnect all but one."
 	fi
 
 	SIZE=$(wc -c "${IMG}" | cut -d' ' -f1)
 	# Remove read protection
-	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" $DFU_UTIL -a 0 \
+	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" ${DFU_UTIL} -a 0 \
 		-d "${DFU_DEVICE}" -s "${ADDR}:${SIZE}:force:unprotect" -D "${IMG}"
 	# Wait for mass-erase and reboot after unprotection
 	print_or_run sleep 1
 	# Actual image flashing
-	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" $DFU_UTIL -a 0 \
+	print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" ${DFU_UTIL} -a 0 \
 		-d "${DFU_DEVICE}" -s "${ADDR}:${SIZE}" -D "${IMG}"
 }
 
 function dut_i2c_dev() {
-	if [ -n "$DUT_I2C_DEV" ]; then
-		[ -e "$DUT_I2C_DEV" ] ||
-			die "\$DUT_I2C_DEV is a non-existent path: $DUT_I2C_DEV"
-		echo "$DUT_I2C_DEV"
+	if [ -n "${DUT_I2C_DEV}" ]; then
+		[ -e "${DUT_I2C_DEV}" ] ||
+			die "\$DUT_I2C_DEV is a non-existent path: ${DUT_I2C_DEV}"
+		echo "${DUT_I2C_DEV}"
 		return
 	fi
 
@@ -1281,15 +1281,15 @@ function dut_i2c_dev() {
 	local adap_num=
 	adap_num="$(dut_control_get_or_die \
 	    "${ACTIVE_DEVICE}_i2c_pseudo_adapter_num")"
-	echo /dev/i2c-"$adap_num"
+	echo /dev/i2c-"${adap_num}"
 }
 
 function flash_it83xx() {
-	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
+	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
 	local ITEFLASH_BIN
 	ITEFLASH_BIN=$(PATH="${TOOL_PATH}" which iteflash)
 
-	if [[ ! -x "$ITEFLASH_BIN" ]]; then
+	if [[ ! -x "${ITEFLASH_BIN}" ]]; then
 		die "no iteflash util found."
 	fi
 
@@ -1431,7 +1431,7 @@ function flash_npcx_jtag() {
 function flash_npcx_uut() {
 	local NPCX_UUT
 	local EC_UART
-	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
+	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
 	NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
 	EC_UART="$(servo_ec_uart)"
 
@@ -1439,15 +1439,15 @@ function flash_npcx_uut() {
 	# the same path as the EC binary.
 	local MON=""
 	for dir in \
-		"$(dirname "$IMG")/chip/npcx/spiflashfw" \
-		"$(dirname "$IMG")" \
+		"$(dirname "${IMG}")/chip/npcx/spiflashfw" \
+		"$(dirname "${IMG}")" \
 		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
 		"${EC_DIR}/build/zephyr/${BOARD}/output" \
-		"$(dirname "$LOCAL_BUILD")" \
-		"$(dirname "$EMERGE_BUILD")" ;
+		"$(dirname "${LOCAL_BUILD}")" \
+		"$(dirname "${EMERGE_BUILD}")" ;
 	do
-		if [ -f "$dir/npcx_monitor.bin" ] ; then
-			MON="$dir/npcx_monitor.bin"
+		if [ -f "${dir}/npcx_monitor.bin" ] ; then
+			MON="${dir}/npcx_monitor.bin"
 			break
 		fi
 	done
@@ -1460,7 +1460,7 @@ function flash_npcx_uut() {
 	# The start address to restore monitor firmware binary
 	local MON_ADDR="0x200C3020"
 
-	if [ ! -x "$NPCX_UUT" ]; then
+	if [ ! -x "${NPCX_UUT}" ]; then
 		die "no NPCX UART Update Tool found."
 	fi
 
