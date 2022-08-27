@@ -276,9 +276,9 @@ static void nct38xx_tcpc_alert(int port)
 	 * The nct38xx exits Idle mode when ALERT is signaled, so there
 	 * is no need to run the TCPM LPM exit code to check the ALERT
 	 * register bits (Ref. NCT38n7/8 Datasheet S 2.3.4 "Setting the
-	 * I2C to * Idle"). In fact, running the TCPM LPM exit code
-	 * causes a new CC Status ALERT which has the effect of creating
-	 * a new ALERT as a side-effect of handing an ALERT.
+	 * I2C to Idle"). In fact, running the TCPM LPM exit code causes
+	 * a new CC Status ALERT which has the effect of creating a new
+	 * ALERT as a side-effect of handing an ALERT.
 	 */
 	rv = tcpc_read_alert_no_lpm_exit(port, &alert);
 	if (rv == EC_SUCCESS && alert == TCPC_REG_ALERT_NONE) {
