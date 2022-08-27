@@ -42,15 +42,6 @@
 			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 	};
-
-	hibernate-wake-pins {
-		compatible = "cros-ec,hibernate-wake-pins";
-		wakeup-irqs = <
-			&int_ac_present
-			&int_power_button
-			&int_lid_open
-		>;
-	};
 };
 
 /* host interface */
@@ -58,6 +49,38 @@
 	status = "okay";
 	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
 	pinctrl-names = "default";
+};
+
+/* Power switch logic input pads */
+&psl_in1_gpd2 {
+	/* LID_OPEN */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+&psl_in2_gp00 {
+	/* ACOK_OD */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+&psl_in3_gp01 {
+	/* GSC_EC_PWR_BTN_ODL */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+&psl_in4_gp02 {
+	/* MECH_PWR_BTN_ODL */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in3_gp01 &psl_in4_gp02>;
 };
 
 /* ADC and GPIO alt-function specifications */
