@@ -2116,6 +2116,7 @@ static void tc_disabled_entry(const int port)
 	 * to indicate to pd_is_port_enabled that we are now suspended.
 	 */
 	TC_SET_FLAG(port, TC_FLAGS_SUSPENDED);
+	tcpm_release(port);
 }
 
 static void tc_disabled_run(const int port)
