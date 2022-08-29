@@ -7,6 +7,7 @@
 
 #ifndef ___INIT
 #define ___INIT
+#include "compiler.h"
 #include "config.h"
 #include <task.h>
 #endif
@@ -39,13 +40,10 @@ void default_handler(void)
 extern void stack_end(void); /* not technically correct, it's just a pointer */
 extern void reset(void);
 
-#pragma GCC diagnostic push
-#if __GNUC__ >= 8
-#pragma GCC diagnostic ignored "-Wattribute-alias"
-#endif
+DISABLE_GCC_WARNING("-Wattribute-alias")
 /* Call default_handler if svc_handler is not found (task.c is not built) */
 void weak_with_default svc_handler(int desched, task_id_t resched);
-#pragma GCC diagnostic pop
+ENABLE_GCC_WARNING("-Wattribute-alias")
 
 /*
  * SVC handler helper
@@ -91,10 +89,7 @@ void svc_helper_handler(void)
 /* Disable warning that "initializer overrides prior initialization of this
  * subobject", since we are explicitly doing this to handle the unused IRQs.
  */
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winitializer-overrides"
-#endif /* __clang__ */
+DISABLE_CLANG_WARNING("-Winitializer-overrides")
 
 #define table(x)                                     \
 	const func vectors[] __attribute__((section( \
@@ -156,9 +151,7 @@ table(item(stack_end) item(reset) vec(nmi) vec(hard_fault) vec(mpu_fault) vec(
 																						      irq(239))
 
 #if PASS == 2
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif /* __clang__ */
+	ENABLE_CLANG_WARNING("-Winitializer-overrides")
 #endif
 
 #if PASS == 1

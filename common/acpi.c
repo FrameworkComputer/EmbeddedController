@@ -134,19 +134,14 @@ static int acpi_read(uint8_t addr)
 	uint8_t *memmap_addr = (uint8_t *)(lpc_get_memmap_range() + addr -
 					   EC_ACPI_MEM_MAPPED_BEGIN);
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
-#endif /* __clang__ */
+	DISABLE_CLANG_WARNING("-Wtautological-constant-out-of-range-compare");
 	/* Check for out-of-range read. */
 	if (addr < EC_ACPI_MEM_MAPPED_BEGIN ||
 	    addr >= EC_ACPI_MEM_MAPPED_BEGIN + EC_ACPI_MEM_MAPPED_SIZE) {
 		CPRINTS("ACPI read 0x%02x (ignored)", acpi_addr);
 		return 0xff;
 	}
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif /* __clang__ */
+	ENABLE_CLANG_WARNING("-Wtautological-constant-out-of-range-compare");
 
 	/* Read from cache if enabled (burst mode). */
 	if (acpi_read_cache.enabled) {

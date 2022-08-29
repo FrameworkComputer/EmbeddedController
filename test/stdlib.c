@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include "compiler.h"
 #include "console.h"
 #include "system.h"
 #include "printf.h"
@@ -237,12 +238,9 @@ static int test_strncpy(void)
 	 * error: ‘__builtin_strncpy’ output truncated copying 10 bytes from a
 	 * string of length 12 [-Werror=stringop-truncation]
 	 */
-#pragma GCC diagnostic push
-#if defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC diagnostic ignored "-Wstringop-truncation"
-#endif
+	DISABLE_GCC_WARNING("-Wstringop-truncation");
 	strncpy(dest, "testtesttest", 10);
-#pragma GCC diagnostic pop
+	ENABLE_GCC_WARNING("-Wstringop-truncation");
 	TEST_ASSERT_ARRAY_EQ("testtestte", dest, 10);
 
 	return EC_SUCCESS;

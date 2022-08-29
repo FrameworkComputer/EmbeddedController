@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "compiler.h"
 #include "config.h"
 #include "panic-internal.h"
 #include "task.h"
@@ -66,10 +67,7 @@ extern void reset(void);
 /* Disable warning that "initializer overrides prior initialization of this
  * subobject", since we are explicitly doing this to handle the unused IRQs.
  */
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winitializer-overrides"
-#endif /* __clang__ */
+DISABLE_CLANG_WARNING("-Winitializer-overrides")
 
 #define table(x)                             \
 	const func vectors[] __attribute__(( \
@@ -95,9 +93,7 @@ table(item(stack_end) item(reset) vec(nmi) vec(hard_fault) vec(mpu_fault) vec(
 							      irq(31));
 
 #if PASS == 2
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif /* __clang__ */
+ENABLE_CLANG_WARNING("-Winitializer-overrides")
 #endif
 
 #if PASS == 1

@@ -304,14 +304,10 @@ DECLARE_HOOK(HOOK_CHIPSET_RESET, panic_init, HOOK_PRIO_LAST);
  * Disable infinite recursion warning, since we're intentionally doing that
  * here.
  */
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winfinite-recursion"
-#endif /* __clang__ */
+DISABLE_CLANG_WARNING("-Winfinite-recursion")
 #if __GNUC__ >= 12
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winfinite-recursion"
-#endif /* __GNUC__ >= 12 */
+DISABLE_GCC_WARNING("-Winfinite-recursion")
+#endif
 static void stack_overflow_recurse(int n)
 {
 	ccprintf("+%d", n);
@@ -330,12 +326,10 @@ static void stack_overflow_recurse(int n)
 	 */
 	ccprintf("-%d", n);
 }
+ENABLE_CLANG_WARNING("-Winfinite-recursion")
 #if __GNUC__ >= 12
-#pragma GCC diagnostic pop
-#endif /* __GNUC__ >= 12 */
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif /* __clang__ */
+ENABLE_GCC_WARNING("-Winfinite-recursion")
+#endif
 #endif /* CONFIG_CMD_STACKOVERFLOW */
 
 /*****************************************************************************/

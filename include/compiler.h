@@ -42,4 +42,55 @@
 #define FORWARD_DECLARE_ENUM(x) enum x
 #endif /* __cplusplus */
 
+#define _DO_PRAGMA(x) _Pragma(#x)
+
+#define _DISABLE_COMPILER_WARNING(compiler, warning) \
+	_DO_PRAGMA(compiler diagnostic push)         \
+	_DO_PRAGMA(compiler diagnostic ignored warning)
+
+#define _ENABLE_COMPILER_WARNING(compiler, warning) \
+	_DO_PRAGMA(compiler diagnostic pop)
+
+/**
+ * Disable the specified compiler warning for both clang and gcc.
+ */
+#define DISABLE_COMPILER_WARNING(warning) \
+	_DISABLE_COMPILER_WARNING(GCC, warning)
+
+/**
+ * Re-enable the specified compiler warning for both clang and gcc. Can only be
+ * used after a call to DISABLE_COMPILER_WARNING.
+ */
+#define ENABLE_COMPILER_WARNING(warning) _ENABLE_COMPILER_WARNING(GCC, warning)
+
+#ifdef __clang__
+/**
+ * Disable the specified compiler warning for clang.
+ */
+#define DISABLE_CLANG_WARNING(warning) _DISABLE_COMPILER_WARNING(clang, warning)
+/**
+ * Re-enable the specified compiler warning for clang. Can only be used after
+ * a call to DISABLE_CLANG_WARNING.
+ */
+#define ENABLE_CLANG_WARNING(warning) _ENABLE_COMPILER_WARNING(clang, warning)
+#else
+#define DISABLE_CLANG_WARNING(warning)
+#define ENABLE_CLANG_WARNING(warning)
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__)
+/**
+ * Disable the specified compiler warning for gcc.
+ */
+#define DISABLE_GCC_WARNING(warning) _DISABLE_COMPILER_WARNING(GCC, warning)
+/**
+ * Re-enable the specified compiler warning for clang. Can only be used after
+ * a call to DISABLE_GCC_WARNING.
+ */
+#define ENABLE_GCC_WARNING(warning) _ENABLE_COMPILER_WARNING(GCC, warning)
+#else
+#define DISABLE_GCC_WARNING(warning)
+#define ENABLE_GCC_WARNING(warning)
+#endif
+
 #endif /* __CROS_EC_COMPILER_H */

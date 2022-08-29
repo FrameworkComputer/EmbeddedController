@@ -8,6 +8,7 @@
 #include <stddef.h>
 
 #include "common.h"
+#include "compiler.h"
 #include "printf.h"
 #include "test_util.h"
 #include "util.h"
@@ -178,8 +179,8 @@ test_static int test_vsnprintf_int(void)
 		 * space had been available. Thus, a return value of size or
 		 * more means that the output was truncated.
 		 */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-truncation"
+		DISABLE_COMPILER_WARNING("-Wformat-truncation");
+
 		ret = SNPRINTF(output, 4, "%5d", 123);
 		TEST_ASSERT_ARRAY_EQ(output, "  1", 4);
 		TEST_EQ(ret, 5, "%d");
@@ -195,7 +196,8 @@ test_static int test_vsnprintf_int(void)
 		ret = SNPRINTF(output, 4, "%.10d", 123);
 		TEST_ASSERT_ARRAY_EQ(output, "000", 4);
 		TEST_EQ(ret, 10, "%d");
-#pragma GCC diagnostic pop
+
+		ENABLE_COMPILER_WARNING("-Wformat-truncation");
 	}
 
 	if (use_builtin_stdlib) {
