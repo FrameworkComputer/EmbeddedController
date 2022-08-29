@@ -1,0 +1,53 @@
+description: "ATL-NVT ATL-ATL3.66 DELL CFD72"
+compatible: "atl,cfd72"
+
+include: battery-smart.yaml
+
+properties:
+   enum-name:
+      type: string
+      default: "atl,cfd72"
+
+   # Fuel Gauge
+   manuf_name:
+      default: "ATL-ATL3.66"
+   device_name:
+      default: "DELL CFD72"
+   ship_mode_reg_addr:
+      default: 0x00
+   ship_mode_reg_data:
+      default: [ 0x0010, 0x0010 ]
+   fet_mfgacc_support:
+      default: 0
+   fet_reg_addr:
+      default: 0x43
+   fet_reg_mask:
+      default: 0x0001
+   fet_disconnect_val:
+      default: 0x0000
+   fet_cfet_mask:
+      default: 0x0002
+   fet_cfet_off_val:
+      default: 0x0000
+
+   # Battery info
+   voltage_max:
+      default: 17600
+   voltage_normal:
+      default: 15000
+   voltage_min:
+      default: 12000
+   precharge_current:
+      default: 256
+   start_charging_min_c:
+      default: 0
+   start_charging_max_c:
+      default: 45
+   charging_min_c:
+      default: 0
+   charging_max_c:
+      default: 50
+   discharging_min_c:
+      default: -20
+   discharging_max_c:
+      default: 70

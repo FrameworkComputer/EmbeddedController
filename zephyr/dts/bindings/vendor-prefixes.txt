@@ -19,3 +19,4 @@ celxpert	Battery vendor
 sunwoda	Battery vendor
 cosmx	Battery vendor
 dynapack	Battery vendor
+atl	Battery vendor
