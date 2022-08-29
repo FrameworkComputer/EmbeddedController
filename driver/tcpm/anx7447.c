@@ -494,6 +494,29 @@ static void anx7447_tcpc_alert(int port)
 	tcpci_tcpc_alert(port);
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static int anx7447_tcpc_enter_low_power_mode(int port)
+{
+	int rv;
+
+	/*
+	 * if anx7447 is in source mode, need to set Rp to default before
+	 * entering the low power mode.
+	 */
+	if (pd_get_dual_role(port) == PD_DRP_FORCE_SOURCE) {
+		rv = tcpc_write(
+			port, TCPC_REG_ROLE_CTRL,
+			TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, TYPEC_RP_USB,
+					       TYPEC_CC_RP, TYPEC_CC_RP));
+		if (rv) {
+			return rv;
+		}
+	}
+
+	return tcpci_enter_low_power_mode(port);
+}
+#endif
+
 #ifdef CONFIG_USB_PD_FRS_TCPC
 static void anx7447_disable_frs_deferred(void)
 {
@@ -1028,7 +1051,7 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.set_snk_ctrl = &tcpci_tcpm_set_snk_ctrl,
 	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode = &tcpci_enter_low_power_mode,
+	.enter_low_power_mode = &anx7447_tcpc_enter_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable = &anx7447_set_frs_enable,
