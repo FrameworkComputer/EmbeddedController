@@ -572,21 +572,12 @@ config_nami() {
 }
 
 config_nocturne() {
-  readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev32765.0"
+  local device="/dev/spidev1.0"
+  # Support kernel version 4.4 during transition to 5.10
+  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
 
-  readonly GPIO_CHIP="gpiochip360"
-  # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
-  readonly GPIO_NRST=418
-  # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
-  readonly GPIO_BOOT0=416
-  # FP_PWR_EN is on GPP_A11 = 360 + 11 = 371
-  readonly GPIO_PWREN=371
-}
-
-config_nocturne-kernelnext() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev1.0"
+  readonly DEVICE="${device}"
 
   readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
