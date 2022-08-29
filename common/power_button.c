@@ -200,7 +200,7 @@ void power_button_interrupt(enum gpio_signal signal)
 			   power_button.debounce_us);
 }
 
-void power_button_simulate_press(int duration)
+void power_button_simulate_press(unsigned int duration)
 {
 	ccprintf("Simulating %d ms %s press.\n", duration, power_button.name);
 	simulate_power_pressed = 1;
@@ -226,7 +226,7 @@ static int command_powerbtn(int argc, const char **argv)
 
 	if (argc > 1) {
 		ms = strtoi(argv[1], &e, 0);
-		if (*e)
+		if (*e || ms < 0)
 			return EC_ERROR_PARAM1;
 	}
 
