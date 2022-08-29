@@ -14,6 +14,7 @@ Patterns                                              | Vague Type
 ----------------------------------------------------- | ----------
 `README.*`                                            | Text
 `Makefile.rules`, `Makefile.toolchain`                | Makefile
+`Makefile.ide`                                        | Makefile
 `gpio.wrap`                                           | C Header
 `gpio.inc`                                            | C Header
 `*.tasklist`, `*.irqlist`, `*.mocklist`, `*.testlist` | C Header
