@@ -1,0 +1,118 @@
+/* Copyright 2022 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include "led_it81202_base.dtsi"
+
+/ {
+	led_colors: led-colors {
+		compatible = "cros-ec,led-policy";
+
+		/* Magikarp LED bat charge */
+		bat-power-state-charge {
+			charge-state = "PWR_STATE_CHARGE";
+			/* Battery percent range (>= Empty, <= 94%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY
+				   (BATTERY_LEVEL_NEAR_FULL - 3)>;
+			color-0 {
+				led-color = <&color_battery_amber>;
+			};
+		};
+
+		bat-power-state-charge-near-full {
+			charge-state = "PWR_STATE_CHARGE";
+			/* Battery percent range (>= 95%, <= Full) */
+			batt-lvl = <(BATTERY_LEVEL_NEAR_FULL - 2)
+				     BATTERY_LEVEL_FULL>;
+			color-0 {
+				led-color = <&color_battery_white>;
+			};
+		};
+
+		/* Magikarp LED bat discharge */
+		bat-power-state-discharge {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= 11%, <= Full) */
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
+
+			color-0 {
+				led-color = <&color_battery_white>;
+			};
+		};
+
+		bat-power-state-discharge-s3 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			color-0 {
+				led-color = <&color_battery_white>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <3000>;
+			};
+		};
+
+		bat-power-state-discharge-s5 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S5";
+			color-0 {
+				led-color = <&color_battery_off>;
+			};
+		};
+
+		/* Magikarp LED bat error */
+		bat-power-state-error {
+			charge-state = "PWR_STATE_ERROR";
+			chipset-state = "POWER_S0";
+
+			color-0 {
+				led-color = <&color_battery_amber>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		bat-power-state-error-s3 {
+			charge-state = "PWR_STATE_ERROR";
+			chipset-state = "POWER_S3";
+
+			color-0 {
+				led-color = <&color_battery_white>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <3000>;
+			};
+		};
+
+		bat-power-state-error-s5 {
+			charge-state = "PWR_STATE_ERROR";
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_battery_off>;
+			};
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		/* Overwrite Power LED white to off */
+		color_power_white: color-power-white {
+			led-color = "LED_WHITE";
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pins = <&led_power_white 0>;
+		};
+	};
+};

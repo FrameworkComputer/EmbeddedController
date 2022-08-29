@@ -61,5 +61,16 @@ elseif(DEFINED CONFIG_BOARD_TENTACRUEL)
 				"src/krabby/usb_pd_policy.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 				"src/krabby/usbc_config_tentacruel.c")
+
+elseif(DEFINED CONFIG_BOARD_MAGIKARP)
+	project(magikarp)
+	zephyr_library_sources("src/krabby/hooks.c"
+				"src/krabby/sensor_magikarp.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C "src/krabby/i2c.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+				"src/krabby/usb_pd_policy.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+				"src/krabby/usbc_config_magikarp.c")
+
 endif()
 
