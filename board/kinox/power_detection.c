@@ -68,15 +68,6 @@ struct adpater_id_params tio2_power[] = {
 		.obp85 = 960,
 	},
 	{
-		.min_voltage = 531,
-		.max_voltage = 607,
-		.charge_voltage = 20000,
-		.charge_current = 6000,
-		.watt = 120,
-		.obp95 = 1990,
-		.obp85 = 1780,
-	},
-	{
 		.min_voltage = 384,
 		.max_voltage = 480,
 		.charge_voltage = 20000,
@@ -84,6 +75,15 @@ struct adpater_id_params tio2_power[] = {
 		.watt = 150,
 		.obp95 = 2490,
 		.obp85 = 2220,
+	},
+	{
+		.min_voltage = 531,
+		.max_voltage = 607,
+		.charge_voltage = 20000,
+		.charge_current = 6000,
+		.watt = 120,
+		.obp95 = 1990,
+		.obp85 = 1780,
 	},
 	{
 		.min_voltage = 1062,
@@ -356,8 +356,8 @@ void adp_id_deferred(void)
 		adp_type = TINY;
 	} else {
 		CPRINTS("ADP_ID mismatch anything!");
-		/* Set the default 65w adaptor max ADC value */
-		adp_finial_adc_value = 0x69;
+		/* Set the default TINY 45w adapter */
+		adp_finial_adc_value = 142;
 		adp_type = TINY;
 	}
 
@@ -392,9 +392,9 @@ static void barrel_jack_setting(void)
 	struct charge_port_info pi = { 0 };
 	/* Check ADP_ID when barrel jack is present */
 	if (!gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL)) {
-		/* Set the default 65w adaptor */
+		/* Set the default TINY 45w adapter */
 		pi.voltage = 20000;
-		pi.current = 3250;
+		pi.current = 2250;
 
 		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 					     DEDICATED_CHARGE_PORT, &pi);
