@@ -51,4 +51,45 @@
 			};
 		};
 	};
+
+	/* Steelix-specific ssfc fields. */
+	steelix-ssfc {
+		compatible = "named-cbi-ssfc";
+
+		/* SSFC field to identify BASE motion sensor. */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <3>;
+
+			base_sensor_0: bmi323 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			base_sensor_1: lsm6dsm {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+
+		/* SSFC field to identify LID motion sensor. */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <3>;
+
+			lid_sensor_0: bma422 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			lid_sensor_1: lis2dw12 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+	};
 };
