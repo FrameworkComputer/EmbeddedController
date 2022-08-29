@@ -159,10 +159,8 @@ enum i2c_ports_chip {
 
 BUILD_ASSERT(I2C_PORT_COUNT != 0, "No I2C devices defined");
 
-#define DT_PROP_BY_IDX_UPPER_TOKEN(id, prop, idx) \
-	DT_PROP(id, prop##_IDX_##idx##_UPPER_TOKEN)
-#define I2C_PORT_ENUM_IDX_COMMA(i2c_named_id, prop, idx)      \
-	DT_PROP_BY_IDX_UPPER_TOKEN(i2c_named_id, prop, idx) = \
+#define I2C_PORT_ENUM_IDX_COMMA(i2c_named_id, prop, idx)        \
+	DT_STRING_UPPER_TOKEN_BY_IDX(i2c_named_id, prop, idx) = \
 		I2C_PORT(i2c_named_id),
 #define NAMED_I2C_PORT_COMMA(i2c_named_id) \
 	DT_FOREACH_PROP_ELEM(i2c_named_id, enum_names, I2C_PORT_ENUM_IDX_COMMA)
