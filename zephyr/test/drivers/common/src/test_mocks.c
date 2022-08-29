@@ -18,6 +18,7 @@ DEFINE_FAKE_VALUE_FUNC(int, init_rom_copy, int, int, int);
 DEFINE_FAKE_VALUE_FUNC(int, system_jumped_late);
 DEFINE_FAKE_VOID_FUNC(system_reset, int);
 DEFINE_FAKE_VOID_FUNC(software_panic, uint32_t, uint32_t);
+DEFINE_FAKE_VOID_FUNC(assert_post_action, const char *, unsigned int);
 
 /**
  * @brief Reset all the fakes before each test.
@@ -34,6 +35,7 @@ static void fff_reset_rule_before(const struct ztest_unit_test *test,
 	RESET_FAKE(system_jumped_late);
 	RESET_FAKE(system_reset);
 	RESET_FAKE(software_panic);
+	RESET_FAKE(assert_post_action);
 }
 
 ZTEST_RULE(fff_reset_rule, fff_reset_rule_before, NULL);
