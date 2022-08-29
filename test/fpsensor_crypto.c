@@ -17,6 +17,8 @@
 #include "test_util.h"
 #include "util.h"
 
+extern int get_ikm(uint8_t *ikm);
+
 static const uint8_t fake_positive_match_salt[] = {
 	0x04, 0x1f, 0x5a, 0xac, 0x5f, 0x79, 0x10, 0xaf,
 	0x04, 0x1d, 0x46, 0x3a, 0x5f, 0x08, 0xee, 0xcb,
@@ -98,6 +100,15 @@ static const uint8_t expected_positive_match_secret_for_fake_user_id[] = {
 	0xc6, 0xca, 0x8a, 0x41, 0x69, 0x8a, 0xd3, 0xcf, 0x0b, 0xc4, 0x5a,
 	0x5f, 0x4d, 0x54, 0xeb, 0x7b, 0xad, 0x5d, 0x1b, 0xbe, 0x30,
 };
+
+test_static int test_get_ikm_failure_seed_not_set(void)
+{
+	uint8_t ikm;
+
+	TEST_ASSERT(fp_tpm_seed_is_set() == 0);
+	TEST_ASSERT(get_ikm(&ikm) == EC_ERROR_ACCESS_DENIED);
+	return EC_SUCCESS;
+}
 
 static int test_hkdf_expand_raw(const uint8_t *prk, size_t prk_size,
 				const uint8_t *info, size_t info_size,
@@ -689,7 +700,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_hkdf_expand);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);
 	RUN_TEST(test_derive_positive_match_secret_fail_seed_not_set);
-
+	RUN_TEST(test_get_ikm_failure_seed_not_set);
 	/*
 	 * Set the TPM seed here because it can only be set once and cannot be
 	 * cleared.

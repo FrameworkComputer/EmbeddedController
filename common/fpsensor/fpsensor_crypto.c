@@ -17,7 +17,7 @@
 #error "fpsensor requires AES, AES_GCM and ROLLBACK_SECRET_SIZE"
 #endif
 
-static int get_ikm(uint8_t *ikm)
+test_export_static int get_ikm(uint8_t *ikm)
 {
 	int ret;
 
