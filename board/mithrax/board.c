@@ -27,6 +27,7 @@
 #include "usbc_config.h"
 #include "keyboard_backlight.h"
 #include "rgb_keyboard.h"
+#include "ec_commands.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -172,9 +173,12 @@ static void rgb_backlight_config(void)
 void board_kblight_init(void)
 {
 	if ((IS_ENABLED(CONFIG_PWM_KBLIGHT)) &&
-	    (ec_cfg_kb_backlight() == SOLID_COLOR))
+	    (ec_cfg_kb_backlight() == SOLID_COLOR)) {
 		kblight_register(&kblight_pwm);
-	else if ((IS_ENABLED(CONFIG_RGB_KEYBOARD)) &&
-		 (ec_cfg_kb_backlight() == RGB))
+		rgbkbd_type = EC_RGBKBD_TYPE_UNKNOWN;
+	} else if ((IS_ENABLED(CONFIG_RGB_KEYBOARD)) &&
+		   (ec_cfg_kb_backlight() == RGB)) {
 		kblight_register(&kblight_rgbkbd);
+		rgbkbd_type = EC_RGBKBD_TYPE_FOUR_ZONES_4_LEDS;
+	}
 }

@@ -61,8 +61,7 @@ const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
 const uint8_t rgbkbd_hsize = RGB_GRID0_COL;
 const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
-const enum ec_rgbkbd_type rgbkbd_type = EC_RGBKBD_TYPE_FOUR_ZONES_4_LEDS;
-
+enum ec_rgbkbd_type rgbkbd_type;
 #define LED(x, y) RGBKBD_COORD((x), (y))
 #define DELM RGBKBD_DELM
 

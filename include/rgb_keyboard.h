@@ -157,7 +157,7 @@ extern const uint8_t rgbkbd_vsize;
  * rgbkbd_type describes the rgb kb type supported.
  * i.e. Number of zones and number of LEDs
  */
-extern const enum ec_rgbkbd_type rgbkbd_type;
+extern enum ec_rgbkbd_type rgbkbd_type;
 
 /*
  * rgbkbd_map describes a mapping from key IDs to LED IDs.
