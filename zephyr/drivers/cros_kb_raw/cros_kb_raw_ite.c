@@ -131,6 +131,51 @@ static int cros_kb_raw_ite_drive_column(const struct device *dev, int col)
 	return 0;
 }
 
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
+static int cros_kb_raw_ite_config_alt(const struct device *dev, bool enable)
+{
+	const struct cros_kb_raw_ite_config *config;
+	const struct device *gpio_ksi;
+	const struct device *gpio_ksoh;
+	const struct device *gpio_ksol;
+	gpio_pin_t pin;
+	int status = 0;
+
+	if (enable) {
+		config = dev->config;
+
+		/* Set KSI/KSO pins of cros_kb_raw node to kbs mode */
+		status = pinctrl_apply_state(config->pcfg,
+					     PINCTRL_STATE_DEFAULT);
+		if (status < 0) {
+			LOG_ERR("Failed to enable KSI and KSO kbs mode");
+			return status;
+		}
+	} else {
+		gpio_ksi = DEVICE_DT_GET(DT_NODELABEL(gpioksi));
+		gpio_ksoh = DEVICE_DT_GET(DT_NODELABEL(gpioksoh));
+		gpio_ksol = DEVICE_DT_GET(DT_NODELABEL(gpioksol));
+
+		/* Set KSI[7:0]/KSO[12:0] pins to gpio input mode */
+		for (pin = 0; pin < 8; pin++) {
+			status |= gpio_pin_configure(gpio_ksi, pin, GPIO_INPUT);
+			status |=
+				gpio_pin_configure(gpio_ksol, pin, GPIO_INPUT);
+			if (pin <= 4) {
+				status |= gpio_pin_configure(gpio_ksoh, pin,
+							     GPIO_INPUT);
+			}
+		}
+		if (status < 0) {
+			LOG_ERR("Failed to enable KSI and KSO gpio mode");
+			return status;
+		}
+	}
+
+	return 0;
+}
+#endif
+
 static void cros_kb_raw_ite_ksi_isr(const struct device *dev)
 {
 	const struct cros_kb_raw_ite_config *config = dev->config;
@@ -237,6 +282,9 @@ static const struct cros_kb_raw_driver_api cros_kb_raw_ite_driver_api = {
 	.drive_colum = cros_kb_raw_ite_drive_column,
 	.read_rows = cros_kb_raw_ite_read_row,
 	.enable_interrupt = cros_kb_raw_ite_enable_interrupt,
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
+	.config_alt = cros_kb_raw_ite_config_alt,
+#endif
 };
 static const struct cros_kb_raw_wuc_map_cfg
 	cros_kb_raw_wuc_0[IT8XXX2_DT_INST_WUCCTRL_LEN(0)] =
