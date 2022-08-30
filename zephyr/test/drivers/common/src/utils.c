@@ -60,11 +60,12 @@ void test_set_chipset_to_s0(void)
 	/*
 	 * Make sure that battery is in good condition to
 	 * not trigger hibernate in charge_state_v2.c
-	 * Set battery voltage to expected value and capacity to 75%. Battery
+	 * Set battery voltage to expected value and capacity to 50%. Battery
 	 * will not be full and accepts charging, but will not trigger
-	 * hibernate. Charge level is chosen arbitrary.
+	 * hibernate. Charge level is set to the default value of an emulator
+	 * (emul/emul_smart_battery.c). b/244366201.
 	 */
-	test_set_battery_level(75);
+	test_set_battery_level(50);
 
 	/* The easiest way to power on seems to be the shell command. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power on"),
