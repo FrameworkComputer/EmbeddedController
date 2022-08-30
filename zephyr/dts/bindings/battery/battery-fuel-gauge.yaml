@@ -9,10 +9,16 @@ compatible: "battery-fuel-gauge"
 
 properties:
    manuf_name:
-      description: Manufacturer name
+      description: |
+        String returned by the smart battery attribute
+        ManufacturerName (0x20), which is used to help
+        uniquely identify the type of battery.
       type: string
    device_name:
-      description: Model/Device name
+      description: |
+        String returned by the smart battery attribute
+        DeviceName (0x21), which is used to help
+        uniquely identify the type of battery.
       type: string
    ship_mode_wb_support:
       description: |
