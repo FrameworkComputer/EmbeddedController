@@ -719,6 +719,7 @@ elif [[ -d "${HOME}/trunk/src/platform/ec" ]]; then
 else
 	info "Could not find ec build folder to calculate baseboard."
 fi
+# shellcheck disable=SC2181
 if [ $? -ne 0 ]; then
 	info "EC build system didn't recognize ${BOARD}. Assuming no baseboard."
 fi
@@ -1037,6 +1038,7 @@ function flash_flashrom() {
 	fi
 
 	# Generate the correct flashrom command base.
+	# shellcheck disable=SC2206
 	FLASHROM_CMDLINE="${FLASHROM} ${FLASHROM_ARGS}"
 	if [[ -z "${FLAGS_read}" ]]; then
 		# Program EC image.
