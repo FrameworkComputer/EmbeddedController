@@ -55,6 +55,7 @@
 		charger {
 			compatible = "cros-ec,temp-sensor-rt9490",
 				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_rt9490>;
 			enum-name = "TEMP_SENSOR_CHARGER";
 			port = <&i2c_charger>;
 		};

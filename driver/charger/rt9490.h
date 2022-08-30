@@ -6,6 +6,8 @@
  */
 #include <stdbool.h>
 
+#include "temp_sensor.h"
+
 #ifndef __CROS_EC_RT9490_H
 #define __CROS_EC_RT9490_H
 
@@ -253,14 +255,11 @@ int rt9490_enable_pwm_1mhz(int chgnum, bool en);
 
 #endif /* __CROS_EC_RT9490_H */
 
-int rt9490_get_thermistor_val(int idx, int *temp_ptr);
+/*
+ * Required for TS_ADC temperature calculation.
+ * Non-zephyr devices that using TS_ADC must define this in board layer.
+ */
+extern const struct thermistor_info rt9490_thermistor_info;
 
-struct charger_thermistor_data_pair {
-	uint16_t mv; /* Scaled voltage level at ADC (in mV) */
-	uint8_t temp; /* Temperature in Celsius */
-};
-
-struct charger_thermistor_info {
-	uint8_t num_pairs;
-	const struct charger_thermistor_data_pair *data;
-};
+int rt9490_get_thermistor_val(const struct temp_sensor_t *sensor,
+			      int *temp_ptr);

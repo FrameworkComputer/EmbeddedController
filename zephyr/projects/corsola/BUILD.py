@@ -110,6 +110,7 @@ register_corsola_project(
         here / "led_tentacruel.dts",
         here / "motionsense_tentacruel.dts",
         here / "usbc_tentacruel.dts",
+        here / "thermistor_tentacruel.dts",
     ],
     extra_kconfig_files=[
         here / "prj_it81202_base.conf",

@@ -22,6 +22,7 @@
 #include "usb_pd.h"
 #include "util.h"
 #include "temp_sensor/temp_sensor.h"
+#include "temp_sensor/thermistor.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -737,64 +738,20 @@ struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
 };
 #endif /* CONFIG_BC12_SINGLE_DRIVER */
 
-__overridable struct charger_thermistor_data_pair charger_thermistor_data[] = {
-	{ 731, 0 },   { 708, 5 },  { 682, 10 }, { 653, 15 }, { 622, 20 },
-	{ 589, 25 },  { 554, 30 }, { 519, 35 }, { 483, 40 }, { 446, 45 },
-	{ 411, 50 },  { 376, 55 }, { 343, 60 }, { 312, 65 }, { 284, 70 },
-	{ 257, 75 },  { 232, 80 }, { 209, 85 }, { 188, 90 }, { 169, 95 },
-	{ 152, 100 },
-};
-
-__overridable struct charger_thermistor_info charger_thermistor_info = {
-	.num_pairs = ARRAY_SIZE(charger_thermistor_data),
-	.data = charger_thermistor_data,
-};
-
-int thermistor_linear(uint16_t mv, const struct charger_thermistor_info *info)
-{
-	const struct charger_thermistor_data_pair *data = info->data;
-	int v_high = 0, v_low = 0, t_low, t_high, num_steps;
-	int head, tail, mid = 0;
-	/* We need at least two points to form a line. */
-	ASSERT(info->num_pairs >= 2);
-
-	/*
-	 * If input value is out of bounds return the lowest or highest
-	 * value in the data sets provided.
-	 */
-	if (mv > data[0].mv)
-		return data[0].temp;
-	else if (mv < data[info->num_pairs - 1].mv)
-		return data[info->num_pairs - 1].temp;
-
-	head = 0;
-	tail = info->num_pairs - 1;
-	while (head != tail) {
-		mid = (head + tail) / 2;
-		v_high = data[mid].mv;
-		v_low = data[mid + 1].mv;
-		if ((mv <= v_high) && (mv >= v_low))
-			break;
-		else if (mv > v_high)
-			tail = mid;
-		else if (mv < v_low)
-			head = mid + 1;
-	}
-
-	t_low = data[mid].temp;
-	t_high = data[mid + 1].temp;
-	num_steps = ((v_high - mv) * (t_high - t_low)) / (v_high - v_low);
-	return t_low + num_steps;
-}
-
-int rt9490_get_thermistor_val(int idx, int *temp_ptr)
+int rt9490_get_thermistor_val(const struct temp_sensor_t *sensor, int *temp_ptr)
 {
 	uint16_t mv;
+	int idx = sensor->idx;
+#if IS_ENABLED(CONFIG_ZEPHYR) && IS_ENABLED(CONFIG_TEMP_SENSOR)
+	const struct thermistor_info *info = sensor->zephyr_info->thermistor;
+#else
+	const struct thermistor_info *info = &rt9490_thermistor_info;
+#endif
 
 	if (idx != 0)
 		return EC_ERROR_PARAM1;
-	rt9490_read16(idx, RT9490_REG_TS_ADC, &mv);
-	*temp_ptr = thermistor_linear(mv, &charger_thermistor_info);
+	RETURN_ERROR(rt9490_read16(idx, RT9490_REG_TS_ADC, &mv));
+	*temp_ptr = thermistor_linear_interpolate(mv, info);
 	*temp_ptr = C_TO_K(*temp_ptr);
 	return EC_SUCCESS;
 }

@@ -14,3 +14,7 @@ properties:
       required: true
       type: phandle
       description: phandle to the named i2c port
+
+    thermistor:
+      type: phandle
+      description: Underlying thermistor device

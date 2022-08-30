@@ -160,23 +160,16 @@ const struct tmp112_sensor_t tmp112_sensors[TMP112_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_tmp112, DEFINE_TMP112_DATA)
 };
 
-#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_temp_sensor_rt9490)
-static int rt9490_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
-{
-	return rt9490_get_thermistor_val(sensor->idx, temp_ptr);
-}
-
 /* There can be only one thermistor on RT9490 with current driver */
 #if DT_NUM_INST_STATUS_OKAY(cros_ec_temp_sensor_rt9490) > 1
 #error "Unsupported number of thermistor on RT9490"
 #endif
 
-#endif /* cros_ec_temp_sensor_rt9490 */
-
-#define GET_ZEPHYR_TEMP_SENSOR_RT9490(node_id) \
-	(&(struct zephyr_temp_sensor){         \
-		.read = &rt9490_get_temp,      \
-		.thermistor = NULL,            \
+#define GET_ZEPHYR_TEMP_SENSOR_RT9490(node_id)                                \
+	(&(struct zephyr_temp_sensor){                                        \
+		.read = &rt9490_get_thermistor_val,                           \
+		.thermistor =                                                 \
+			GET_THERMISTOR_INFO(DT_PHANDLE(node_id, thermistor)), \
 	})
 
 #define TEMP_RT9490(node_id)                                           \
