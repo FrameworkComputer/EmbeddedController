@@ -11,9 +11,9 @@ properties:
 
    # Fuel gauge
    manuf_name:
-      default: "SMP"
+      default: "AS3GWQd3jB"
    device_name:
-      default: "C31N2005"
+      default: "C490-42"
    ship_mode_reg_addr:
       default: 0x00
    ship_mode_reg_data:
