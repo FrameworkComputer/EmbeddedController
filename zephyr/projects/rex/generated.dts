@@ -56,7 +56,7 @@
 			gpios = <&gpio7 3 GPIO_OUTPUT>;
 		};
 		gpio_ec_edp_bl_en: ec_edp_bl_en {
-			gpios = <&gpiod 3 GPIO_ODR_HIGH>;
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
