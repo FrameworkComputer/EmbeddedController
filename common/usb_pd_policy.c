@@ -78,15 +78,6 @@ __overridable void pd_check_dr_role(int port, enum pd_data_role dr_role,
 		pd_request_data_swap(port);
 }
 
-#ifdef CONFIG_MKBP_EVENT
-static int dp_alt_mode_entry_get_next_event(uint8_t *data)
-{
-	return EC_SUCCESS;
-}
-DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED,
-		     dp_alt_mode_entry_get_next_event);
-#endif /* CONFIG_MKBP_EVENT */
-
 /* Last received source cap */
 static uint32_t pd_src_caps[CONFIG_USB_PD_PORT_MAX_COUNT][PDO_MAX_OBJECTS];
 static uint8_t pd_src_cap_cnt[CONFIG_USB_PD_PORT_MAX_COUNT];

@@ -1065,6 +1065,15 @@ void pd_send_host_event(int mask)
 }
 #endif /* defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD) */
 
+#ifdef CONFIG_MKBP_EVENT
+static int dp_alt_mode_entry_get_next_event(uint8_t *data)
+{
+	return EC_SUCCESS;
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED,
+		     dp_alt_mode_entry_get_next_event);
+#endif /* CONFIG_MKBP_EVENT */
+
 __overridable void pd_notify_dp_alt_mode_entry(int port)
 {
 	if (IS_ENABLED(CONFIG_MKBP_EVENT)) {
