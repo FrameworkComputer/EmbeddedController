@@ -1,0 +1,77 @@
+/* Copyright 2022 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Xivu-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to enable WFC or not.
+		 */
+		 wfc {
+			enum-name = "FW_WFC";
+			start = <0>;
+			size = <1>;
+
+			wfc-mipi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WFC_MIPI";
+				value = <0>;
+			};
+			wfc-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WFC_ABSENT";
+				value = <1>;
+			};
+		 };
+
+		/*
+		 * FW_CONFIG field to enable stylus or not.
+		 */
+		 stylus {
+			enum-name = "FW_STYLUS";
+			start = <1>;
+			size = <1>;
+
+			stylus-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_PRESENT";
+				value = <0>;
+			};
+			stylus-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_ABSENT";
+				value = <1>;
+			};
+		 };
+		/*
+		 * FW_CONFIG field to indicate which sub-board
+		 * is attached.
+		 */
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <2>;
+			size = <2>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_1";
+				value = <1>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_2";
+				value = <2>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_3";
+				value = <3>;
+			};
+		};
+
+/delete-node/ fan;
+	};
+
+};
