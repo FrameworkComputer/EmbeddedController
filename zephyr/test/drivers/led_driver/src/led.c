@@ -71,3 +71,23 @@ ZTEST(led_driver, test_led_brightness)
 	led_set_brightness(EC_LED_ID_SYSRQ_DEBUG_LED, brightness);
 	VERIFY_LED_COLOR(LED_WHITE, EC_LED_ID_SYSRQ_DEBUG_LED);
 }
+
+ZTEST(led_driver, test_get_chipset_state)
+{
+	enum power_state pwr_state;
+
+	test_set_chipset_to_g3();
+	pwr_state = get_chipset_state();
+	zassert_equal(pwr_state, POWER_S5, "expected=%d, returned=%d", POWER_S5,
+		      pwr_state);
+
+	test_set_chipset_to_s0();
+	pwr_state = get_chipset_state();
+	zassert_equal(pwr_state, POWER_S0, "expected=%d, returned=%d", POWER_S0,
+		      pwr_state);
+
+	test_set_chipset_to_power_level(POWER_S3);
+	pwr_state = get_chipset_state();
+	zassert_equal(pwr_state, POWER_S3, "expected=%d, returned=%d", POWER_S3,
+		      pwr_state);
+}

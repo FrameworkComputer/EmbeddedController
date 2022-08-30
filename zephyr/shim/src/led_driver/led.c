@@ -116,7 +116,7 @@ struct node_prop_t {
 static const struct node_prop_t node_array[] = { DT_FOREACH_CHILD(
 	LED_COLOR_NODE, SET_LED_VALUES) };
 
-static enum power_state get_chipset_state(void)
+test_export_static enum power_state get_chipset_state(void)
 {
 	enum power_state chipset_state = 0;
 

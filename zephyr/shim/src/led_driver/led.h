@@ -118,6 +118,8 @@ void led_set_color_with_node(const struct led_pins_node_t *pins_node);
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
 					   enum ec_led_id led_id);
+
+enum power_state get_chipset_state(void);
 #endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_LED_H__ */
