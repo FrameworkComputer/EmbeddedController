@@ -102,58 +102,6 @@ uint8_t pd_get_src_cap_cnt(int port)
 	return pd_src_cap_cnt[port];
 }
 
-static struct pd_cable cable[CONFIG_USB_PD_PORT_MAX_COUNT];
-
-enum pd_rev_type get_usb_pd_cable_revision(int port)
-{
-	return cable[port].rev;
-}
-
-bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id)
-{
-	if (cable[port].last_sop_p_msg_id != msg_id) {
-		cable[port].last_sop_p_msg_id = msg_id;
-		return false;
-	}
-	CPRINTF("C%d SOP Prime repeat msg_id %d\n", port, msg_id);
-	return true;
-}
-
-bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id)
-{
-	if (cable[port].last_sop_p_p_msg_id != msg_id) {
-		cable[port].last_sop_p_p_msg_id = msg_id;
-		return false;
-	}
-	CPRINTF("C%d SOP Prime Prime repeat msg_id %d\n", port, msg_id);
-	return true;
-}
-
-__maybe_unused static uint8_t is_sop_prime_ready(int port)
-{
-	/*
-	 * Ref: USB PD 3.0 sec 2.5.4: When an Explicit Contract is in place the
-	 * VCONN Source (either the DFP or the UFP) can communicate with the
-	 * Cable Plug(s) using SOP’/SOP’’ Packets
-	 *
-	 * Ref: USB PD 2.0 sec 2.4.4: When an Explicit Contract is in place the
-	 * DFP (either the Source or the Sink) can communicate with the
-	 * Cable Plug(s) using SOP’/SOP” Packets.
-	 * Sec 3.6.11 : Before communicating with a Cable Plug a Port Should
-	 * ensure that it is the Vconn Source
-	 */
-	return (pd_get_vconn_state(port) &&
-		(IS_ENABLED(CONFIG_USB_PD_REV30) ||
-		 (pd_get_data_role(port) == PD_ROLE_DFP)));
-}
-
-void reset_pd_cable(int port)
-{
-	memset(&cable[port], 0, sizeof(cable[port]));
-	cable[port].last_sop_p_msg_id = INVALID_MSG_ID_COUNTER;
-	cable[port].last_sop_p_p_msg_id = INVALID_MSG_ID_COUNTER;
-}
-
 #ifdef CONFIG_USB_PD_ALT_MODE
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -231,15 +179,6 @@ static int process_am_discover_ident_sop(int port, int cnt, uint32_t head,
 	pd_dfp_discovery_init(port);
 	pd_dfp_mode_init(port);
 	dfp_consume_identity(port, TCPCI_MSG_SOP, cnt, payload);
-
-	return dfp_discover_svids(payload);
-}
-
-static int process_am_discover_ident_sop_prime(int port, int cnt, uint32_t head,
-					       uint32_t *payload)
-{
-	dfp_consume_identity(port, TCPCI_MSG_SOP_PRIME, cnt, payload);
-	cable[port].rev = PD_HEADER_REV(head);
 
 	return dfp_discover_svids(payload);
 }
@@ -341,15 +280,9 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 		switch (cmd) {
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		case CMD_DISCOVER_IDENT:
-			/* Received a SOP' Discover Ident msg */
-			if (sop == TCPCI_MSG_SOP_PRIME) {
-				rsize = process_am_discover_ident_sop_prime(
-					port, cnt, head, payload);
-				/* Received a SOP Discover Ident Message */
-			} else {
-				rsize = process_am_discover_ident_sop(
-					port, cnt, head, payload, rtype);
-			}
+			/* Received a SOP Discover Ident Message */
+			rsize = process_am_discover_ident_sop(port, cnt, head,
+							      payload, rtype);
 			break;
 		case CMD_DISCOVER_SVID:
 			rsize = process_am_discover_svids(port, cnt, payload,
@@ -453,7 +386,6 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			rsize = 0;
 		}
 	} else if (cmd_type == CMDT_RSP_NAK) {
-		/* Passive cable Nacked for Discover SVID */
 		rsize = 0;
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 	} else {
