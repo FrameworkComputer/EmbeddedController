@@ -3,7 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "zephyr/kernel.h"
+#include <stdlib.h>
+#include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/ztest.h>
 
