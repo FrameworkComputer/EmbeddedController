@@ -77,7 +77,7 @@ static const char *lock_to_string(const enum bus_lock val)
 	return names[val];
 }
 
-static int command_bus_status(int argc, char **argv)
+static int command_bus_status(int argc, const char **argv)
 {
 	if (argc > 1)
 		return EC_ERROR_PARAM_COUNT;
@@ -334,7 +334,7 @@ USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI,
 /******************************************************************************
  * Check parity setting on usarts.
  */
-static int command_uart_parity(int argc, char **argv)
+static int command_uart_parity(int argc, const char **argv)
 {
 	int parity = 0, newparity;
 	struct usart_config const *usart;
@@ -374,7 +374,7 @@ DECLARE_CONSOLE_COMMAND(parity, command_uart_parity, "usart[2|3|4] [0|1|2]",
 /******************************************************************************
  * Set baud rate setting on usarts.
  */
-static int command_uart_baud(int argc, char **argv)
+static int command_uart_baud(int argc, const char **argv)
 {
 	int baud = 0;
 	struct usart_config const *usart;
@@ -406,7 +406,7 @@ DECLARE_CONSOLE_COMMAND(baud, command_uart_baud, "usart[2|3|4] rate",
 /******************************************************************************
  * Hold the usart pins low while disabling it, or return it to normal.
  */
-static int command_hold_usart_low(int argc, char **argv)
+static int command_hold_usart_low(int argc, const char **argv)
 {
 	enum bus_lock *bus;
 	enum gpio_signal rx;
@@ -490,7 +490,7 @@ enum vref {
 	PP3300 = 3300,
 };
 
-static int command_enable_spi(int argc, char **argv)
+static int command_enable_spi(int argc, const char **argv)
 {
 	static enum vref current_spi_vref_state;
 
@@ -652,7 +652,7 @@ static inline int to_kbps(enum i2c_freq freq)
 	}
 }
 
-static int command_enable_i2c(int argc, char **argv)
+static int command_enable_i2c(int argc, const char **argv)
 {
 	int i2c_index;
 	enum bus_lock *bus;
@@ -736,7 +736,7 @@ DECLARE_CONSOLE_COMMAND(enable_i2c, command_enable_i2c,
  * Console commands for asserting H1 reset and EC Power button
  */
 
-static int command_vref_alternate(int argc, char **argv,
+static int command_vref_alternate(int argc, const char **argv,
 				  const enum gpio_signal vref_signal,
 				  const enum gpio_signal en_signal,
 				  const int state_flag,
@@ -792,7 +792,7 @@ busy_error_unlock:
 	return EC_ERROR_BUSY;
 }
 
-static int command_pwr_button(int argc, char **argv)
+static int command_pwr_button(int argc, const char **argv)
 {
 	return command_vref_alternate(argc, argv,
 				      GPIO_SPIVREF_HOLDN_ECVREF_H1_PWRBTN_ODL,
@@ -802,13 +802,13 @@ static int command_pwr_button(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(pwr_button, command_pwr_button, "[0|1]?",
 			"Get/set the power button state");
 
-static int command_h1_reset(int argc, char **argv)
+static int command_h1_reset(int argc, const char **argv)
 {
 	if ((argc == 2) && !strncasecmp("pulse", argv[1], strlen(argv[1]))) {
 		int rv;
 		int c = 2;
-		char *cmd_on[] = { "", "1", "" };
-		char *cmd_off[] = { "", "0", "" };
+		const char *cmd_on[] = { "", "1", "" };
+		const char *cmd_off[] = { "", "0", "" };
 
 		rv = command_vref_alternate(c, cmd_on,
 					    GPIO_SPIVREF_RSVD_H1VREF_H1_RST_ODL,
@@ -841,7 +841,7 @@ DECLARE_CONSOLE_COMMAND(h1_reset, command_h1_reset, "[0|1|pulse]?",
 static enum vref h1_vref;
 static enum vref ec_vref;
 
-static int command_h1_vref_present(int argc, char **argv)
+static int command_h1_vref_present(int argc, const char **argv)
 {
 	ccprintf("H1 Vref: %s\n", h1_vref ? "on" : "off");
 

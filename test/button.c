@@ -272,7 +272,7 @@ static void button_test_init(void)
 		button_state[i] = UNCHANGED;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

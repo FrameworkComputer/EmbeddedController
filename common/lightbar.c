@@ -1887,7 +1887,7 @@ static void show_msg_names(void)
 		 lightbar_cmds[st.cur_seq].string);
 }
 
-static int command_lightbar(int argc, char **argv)
+static int command_lightbar(int argc, const char **argv)
 {
 	int i;
 	uint8_t num, led, r = 0, g = 0, b = 0;

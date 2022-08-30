@@ -341,9 +341,9 @@ static int fsm_run(int index)
 
 /* ------ Console commands ------ */
 
-static int hex8tou32(char *str, uint32_t *val)
+static int hex8tou32(const char *str, uint32_t *val)
 {
-	char *ptr = str;
+	const char *ptr = str;
 	uint32_t tmp = 0;
 
 	while (*ptr) {
@@ -363,7 +363,7 @@ static int hex8tou32(char *str, uint32_t *val)
 	return EC_SUCCESS;
 }
 
-static int cmd_fsm(int argc, char **argv)
+static int cmd_fsm(int argc, const char **argv)
 {
 	int index;
 	char *e;
@@ -380,7 +380,7 @@ static int cmd_fsm(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_send(int argc, char **argv)
+static int cmd_send(int argc, const char **argv)
 {
 	int pol, cnt, i;
 	uint16_t header;
@@ -409,7 +409,7 @@ static int cmd_send(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_cc_level(int argc, char **argv)
+static int cmd_cc_level(int argc, const char **argv)
 {
 	ccprintf("CC1 = %d mV ; CC2 = %d mV\n", pd_adc_read(0, 0),
 		 pd_adc_read(0, 1));
@@ -417,7 +417,7 @@ static int cmd_cc_level(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_resistor(int argc, char **argv)
+static int cmd_resistor(int argc, const char **argv)
 {
 	int p, r;
 
@@ -439,7 +439,7 @@ static int cmd_resistor(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_tx_clock(int argc, char **argv)
+static int cmd_tx_clock(int argc, const char **argv)
 {
 	int freq;
 	char *e;
@@ -456,7 +456,7 @@ static int cmd_tx_clock(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_rx_threshold(int argc, char **argv)
+static int cmd_rx_threshold(int argc, const char **argv)
 {
 	int mv;
 	char *e;
@@ -475,7 +475,7 @@ static int cmd_rx_threshold(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_ina_dump(int argc, char **argv, int index)
+static int cmd_ina_dump(int argc, const char **argv, int index)
 {
 	if (index == 1) { /* VCONN INA is off by default, switch it on */
 		ina2xx_write(index, INA2XX_REG_CONFIG, 0x4123);
@@ -495,7 +495,7 @@ static int cmd_ina_dump(int argc, char **argv, int index)
 	return EC_SUCCESS;
 }
 
-static int cmd_bufwr(int argc, char **argv)
+static int cmd_bufwr(int argc, const char **argv)
 {
 	int idx, cnt, i;
 	char *e;
@@ -515,7 +515,7 @@ static int cmd_bufwr(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_bufrd(int argc, char **argv)
+static int cmd_bufrd(int argc, const char **argv)
 {
 	int idx, i;
 	int cnt = 1;
@@ -541,7 +541,7 @@ static int cmd_bufrd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_sink(int argc, char **argv)
+static int cmd_sink(int argc, const char **argv)
 {
 	/*
 	 * Jump to the RW section which should contain a firmware acting
@@ -552,7 +552,7 @@ static int cmd_sink(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_trace(int argc, char **argv)
+static int cmd_trace(int argc, const char **argv)
 {
 	if (argc < 1)
 		return EC_ERROR_PARAM_COUNT;
@@ -569,7 +569,7 @@ static int cmd_trace(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int command_tw(int argc, char **argv)
+static int command_tw(int argc, const char **argv)
 {
 	if (!strcasecmp(argv[1], "send"))
 		return cmd_send(argc - 2, argv + 2);

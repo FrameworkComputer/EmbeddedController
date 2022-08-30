@@ -973,7 +973,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
 		     EC_VER_MASK(0));
 
 #if DEBUG_LPC
-static int command_lpc(int argc, char **argv)
+static int command_lpc(int argc, const char **argv)
 {
 	if (argc == 1)
 		return EC_ERROR_PARAM1;

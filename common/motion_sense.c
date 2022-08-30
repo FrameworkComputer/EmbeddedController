@@ -1572,7 +1572,7 @@ DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD, host_cmd_motion_sense,
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_ACCELS
-static int command_accelrange(int argc, char **argv)
+static int command_accelrange(int argc, const char **argv)
 {
 	char *e;
 	int id, data, round = 1;
@@ -1617,7 +1617,7 @@ static int command_accelrange(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(accelrange, command_accelrange, "id [data [roundup]]",
 			"Read or write accelerometer range");
 
-static int command_accelresolution(int argc, char **argv)
+static int command_accelresolution(int argc, const char **argv)
 {
 	char *e;
 	int id, data, round = 1;
@@ -1665,7 +1665,7 @@ DECLARE_CONSOLE_COMMAND(accelres, command_accelresolution,
 			"id [data [roundup]]",
 			"Read or write accelerometer resolution");
 
-static int command_accel_data_rate(int argc, char **argv)
+static int command_accel_data_rate(int argc, const char **argv)
 {
 	char *e;
 	int id, data, round = 1;
@@ -1722,7 +1722,7 @@ DECLARE_CONSOLE_COMMAND(accelrate, command_accel_data_rate,
 			"id [data [roundup]]",
 			"Read or write accelerometer ODR");
 
-static int command_accel_read_xyz(int argc, char **argv)
+static int command_accel_read_xyz(int argc, const char **argv)
 {
 	char *e;
 	int id, n = 1, ret;
@@ -1760,7 +1760,7 @@ static int command_accel_read_xyz(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(accelread, command_accel_read_xyz, "id [n]",
 			"Read sensor x/y/z");
 
-static int command_accel_init(int argc, char **argv)
+static int command_accel_init(int argc, const char **argv)
 {
 	char *e;
 	int id, ret;
@@ -1784,7 +1784,7 @@ static int command_accel_init(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(accelinit, command_accel_init, "id", "Init sensor");
 
 #ifdef CONFIG_CMD_ACCEL_INFO
-static int command_display_accel_info(int argc, char **argv)
+static int command_display_accel_info(int argc, const char **argv)
 {
 	int val, i, j;
 
@@ -1844,7 +1844,7 @@ static void print_spoof_mode_status(int id)
 }
 
 #ifdef CONFIG_CMD_ACCELSPOOF
-static int command_accelspoof(int argc, char **argv)
+static int command_accelspoof(int argc, const char **argv)
 {
 	char *e;
 	int id, enable, i;

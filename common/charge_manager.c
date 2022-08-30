@@ -400,7 +400,7 @@ int charge_manager_get_vbus_voltage(int port)
 }
 
 #ifdef CONFIG_CMD_VBUS
-static int command_vbus(int argc, char **argv)
+static int command_vbus(int argc, const char **argv)
 {
 	/* port = -1 to print all the ports */
 	int port = -1;
@@ -1554,7 +1554,7 @@ DECLARE_HOST_COMMAND(EC_CMD_OVERRIDE_DEDICATED_CHARGER_LIMIT,
 		     hc_override_dedicated_charger_limit, EC_VER_MASK(0));
 #endif
 
-static int command_charge_port_override(int argc, char **argv)
+static int command_charge_port_override(int argc, const char **argv)
 {
 	int port = OVERRIDE_OFF;
 	int ret = EC_SUCCESS;
@@ -1617,7 +1617,7 @@ hc_external_power_limit(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_EXTERNAL_POWER_LIMIT, hc_external_power_limit,
 		     EC_VER_MASK(1));
 
-static int command_external_power_limit(int argc, char **argv)
+static int command_external_power_limit(int argc, const char **argv)
 {
 	int max_current;
 	int max_voltage;
@@ -1648,7 +1648,7 @@ DECLARE_CONSOLE_COMMAND(chglim, command_external_power_limit,
 #endif /* CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT */
 
 #ifdef CONFIG_CMD_CHARGE_SUPPLIER_INFO
-static int charge_supplier_info(int argc, char **argv)
+static int charge_supplier_info(int argc, const char **argv)
 {
 	int p, s;
 	int port_printed;

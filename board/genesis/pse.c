@@ -173,7 +173,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, pse_init, HOOK_PRIO_DEFAULT);
 /* Also reset the PSE on a reboot to toggle the power. */
 DECLARE_HOOK(HOOK_CHIPSET_RESET, pse_init, HOOK_PRIO_DEFAULT);
 
-static int command_pse(int argc, char **argv)
+static int command_pse(int argc, const char **argv)
 {
 	int port;
 

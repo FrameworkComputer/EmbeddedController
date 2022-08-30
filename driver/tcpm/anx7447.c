@@ -250,7 +250,7 @@ int anx7447_flash_erase(int port)
 }
 
 /* Add console command to erase OCM flash if needed. */
-static int command_anx_ocm(int argc, char **argv)
+static int command_anx_ocm(int argc, const char **argv)
 {
 	char *e = NULL;
 	int port;

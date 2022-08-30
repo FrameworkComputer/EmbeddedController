@@ -526,7 +526,7 @@ int battery_wait_for_stable(void)
 }
 
 #if defined(CONFIG_CMD_BATTFAKE)
-static int command_battfake(int argc, char **argv)
+static int command_battfake(int argc, const char **argv)
 {
 	char *e;
 	int v;
@@ -548,7 +548,7 @@ DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
 			"percent (-1 = use real level)",
 			"Set fake battery level");
 
-static int command_batttempfake(int argc, char **argv)
+static int command_batttempfake(int argc, const char **argv)
 {
 	char *e;
 	int t;
@@ -574,7 +574,7 @@ DECLARE_CONSOLE_COMMAND(
 #endif
 
 #ifdef CONFIG_CMD_BATT_MFG_ACCESS
-static int command_batt_mfg_access_read(int argc, char **argv)
+static int command_batt_mfg_access_read(int argc, const char **argv)
 {
 	char *e;
 	uint8_t data[32];

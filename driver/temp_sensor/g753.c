@@ -128,9 +128,9 @@ static int print_status(void)
 	return EC_SUCCESS;
 }
 
-static int command_g753(int argc, char **argv)
+static int command_g753(int argc, const char **argv)
 {
-	char *command;
+	const char *command;
 	char *e;
 	int data;
 	int offset;

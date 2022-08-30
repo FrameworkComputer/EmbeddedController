@@ -106,7 +106,7 @@ static int sync_init(struct motion_sensor_t *s)
 }
 
 #ifdef CONFIG_SYNC_COMMAND
-static int command_sync(int argc, char **argv)
+static int command_sync(int argc, const char **argv)
 {
 	int count = 1, i;
 

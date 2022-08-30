@@ -153,7 +153,7 @@ static int command_i2ctrace_enable(int port, int addr_lo, int addr_hi)
 	return EC_ERROR_MEMORY_ALLOCATION;
 }
 
-static int command_i2ctrace(int argc, char **argv)
+static int command_i2ctrace(int argc, const char **argv)
 {
 	int id_or_port;
 	int address_low;

@@ -350,7 +350,7 @@ int rollback_add_entropy(const uint8_t *data, unsigned int len)
 	return rollback_update(-1, data, len);
 }
 
-static int command_rollback_update(int argc, char **argv)
+static int command_rollback_update(int argc, const char **argv)
 {
 	int32_t min_version;
 	char *e;
@@ -369,7 +369,7 @@ DECLARE_CONSOLE_COMMAND(rollbackupdate, command_rollback_update, "min_version",
 			"Update rollback info");
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-static int command_rollback_add_entropy(int argc, char **argv)
+static int command_rollback_add_entropy(int argc, const char **argv)
 {
 	int len;
 
@@ -443,7 +443,7 @@ DECLARE_HOST_COMMAND(EC_CMD_ADD_ENTROPY, hc_rollback_add_entropy,
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 #endif /* CONFIG_ROLLBACK_UPDATE */
 
-static int command_rollback_info(int argc, char **argv)
+static int command_rollback_info(int argc, const char **argv)
 {
 	int ret = EC_ERROR_UNKNOWN;
 	int region, min_region;

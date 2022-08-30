@@ -280,7 +280,7 @@ void board_print_temps(void)
 				   temps_interval * SECOND);
 }
 
-static int command_temps_log(int argc, char **argv)
+static int command_temps_log(int argc, const char **argv)
 {
 	char *e = NULL;
 

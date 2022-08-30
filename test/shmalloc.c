@@ -206,7 +206,7 @@ bailout:
  */
 static uint32_t test_map;
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	int index;
 	const int shmem_size = shared_mem_size();

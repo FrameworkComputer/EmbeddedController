@@ -356,7 +356,7 @@ void chg_ramp_task(void *u)
 }
 
 #ifdef CONFIG_CMD_CHGRAMP
-static int command_chgramp(int argc, char **argv)
+static int command_chgramp(int argc, const char **argv)
 {
 	int i;
 	int port;

@@ -481,7 +481,7 @@ void rtc_set(uint32_t sec)
 /**
  * Print low power idle statistics
  */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 

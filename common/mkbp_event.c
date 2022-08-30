@@ -541,7 +541,7 @@ static enum ec_status hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, hc_mkbp_wake_mask, EC_VER_MASK(0));
 
-static int command_mkbp_wake_mask(int argc, char **argv)
+static int command_mkbp_wake_mask(int argc, const char **argv)
 {
 	if (argc == 3) {
 		char *e;

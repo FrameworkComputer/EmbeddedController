@@ -304,7 +304,7 @@ int ppc_is_vbus_present(int port)
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 
 #ifdef CONFIG_CMD_PPC_DUMP
-static int command_ppc_dump(int argc, char **argv)
+static int command_ppc_dump(int argc, const char **argv)
 {
 	int port;
 	int rv = EC_ERROR_UNIMPLEMENTED;

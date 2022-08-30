@@ -422,7 +422,7 @@ static void simulate_button(uint32_t button_mask, int press_ms)
 #endif /* #ifdef CONFIG_SIMULATED_BUTTON */
 
 #ifdef CONFIG_CMD_BUTTON
-static int console_command_button(int argc, char **argv)
+static int console_command_button(int argc, const char **argv)
 {
 	int press_ms = 50;
 	char *e;

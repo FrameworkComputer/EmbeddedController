@@ -250,7 +250,7 @@ void board_reset_pd_mcu(void)
 	hook_call_deferred(&deferred_reset_pd_mcu_data, 10 * MSEC);
 }
 
-static int command_pd_reset(int argc, char **argv)
+static int command_pd_reset(int argc, const char **argv)
 {
 	board_reset_pd_mcu();
 	return EC_SUCCESS;

@@ -663,7 +663,7 @@ const struct pchg_drv ctn730_drv = {
 	.update_close = ctn730_update_close,
 };
 
-static int cc_ctn730(int argc, char **argv)
+static int cc_ctn730(int argc, const char **argv)
 {
 	int port;
 	char *end;

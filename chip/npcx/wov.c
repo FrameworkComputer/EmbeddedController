@@ -1815,7 +1815,7 @@ void wov_handle_event(enum wov_events event)
 static uint32_t voice_buffer[VOICE_BUF_SIZE] = { 0 };
 
 /* voice data 16Khz 2ch 16bit 1s */
-static int command_wov(int argc, char **argv)
+static int command_wov(int argc, const char **argv)
 {
 	static int bit_clk;
 	static enum wov_dai_format i2s_fmt;

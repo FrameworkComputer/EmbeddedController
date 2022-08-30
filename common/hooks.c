@@ -265,7 +265,7 @@ static void print_hook_delay(uint32_t interval, uint32_t delay, uint32_t avg)
 	ccprintf("  Average:     %7d us (%d%%)\n\n", avg, percent_avg);
 }
 
-static int command_stats(int argc, char **argv)
+static int command_stats(int argc, const char **argv)
 {
 	int i;
 

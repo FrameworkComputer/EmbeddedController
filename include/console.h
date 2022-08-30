@@ -69,7 +69,7 @@ struct console_command {
 	/* Command name.  Case-insensitive. */
 	const char *name;
 	/* Handler for the command.  argv[0] will be the command name. */
-	int (*handler)(int argc, char **argv);
+	int (*handler)(int argc, const char **argv);
 #ifdef CONFIG_CONSOLE_CMDHELP
 	/* Description of args */
 	const char *argdesc;
@@ -209,18 +209,18 @@ void console_has_input(void);
  *                      long (excluding null terminator).  Note this is NOT in
  *                      quotes so it can be concatenated to form a struct name.
  * @param routine       Command handling routine, of the form
- *                      int handler(int argc, char **argv)
+ *                      int handler(int argc, const char **argv)
  * @param argdesc       String describing arguments to command; NULL if none.
  * @param help          String with one-line description of command, or NULL.
  * @param flags         Per-command flags, if needed.
  */
 #if !defined(HAS_TASK_CONSOLE) && !defined(CONFIG_ZEPHYR)
 #define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP) \
-	static int(ROUTINE)(int argc, char **argv) __attribute__((unused))
+	static int(ROUTINE)(int argc, const char **argv) __attribute__((unused))
 #define DECLARE_SAFE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP) \
-	static int(ROUTINE)(int argc, char **argv) __attribute__((unused))
+	static int(ROUTINE)(int argc, const char **argv) __attribute__((unused))
 #define DECLARE_CONSOLE_COMMAND_FLAGS(NAME, ROUTINE, ARGDESC, HELP, FLAGS) \
-	static int(ROUTINE)(int argc, char **argv) __attribute__((unused))
+	static int(ROUTINE)(int argc, const char **argv) __attribute__((unused))
 #elif defined(HAS_TASK_CONSOLE)
 
 /* We always provde help args, but we may discard them to save space. */
@@ -239,7 +239,7 @@ void console_has_input(void);
 
 /* This macro takes all possible args and discards the ones we don't use */
 #define _DCL_CON_CMD_ALL(NAME, ROUTINE, ARGDESC, HELP, FLAGS)       \
-	static int(ROUTINE)(int argc, char **argv);                 \
+	static int(ROUTINE)(int argc, const char **argv);           \
 	static const char __con_cmd_label_##NAME[] = #NAME;         \
 	_STATIC_ASSERT(sizeof(__con_cmd_label_##NAME) < 16,         \
 		       "command name '" #NAME "' is too long");     \

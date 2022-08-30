@@ -75,7 +75,7 @@ int i2c_get_port_from_remote_port(int remote_port)
 }
 
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
-static int command_i2c_portmap(int argc, char **argv)
+static int command_i2c_portmap(int argc, const char **argv)
 {
 	int i;
 

@@ -132,9 +132,9 @@ struct mpu_entry {
 void cache_init(void);
 
 #ifdef DEBUG
-int command_enable_pmu(int argc, char **argv);
-int command_disable_pmu(int argc, char **argv);
-int command_show_pmu(int argc, char **argv);
+int command_enable_pmu(int argc, const char **argv);
+int command_disable_pmu(int argc, const char **argv);
+int command_show_pmu(int argc, const char **argv);
 #endif
 
 #endif /* #ifndef __CROS_EC_CACHE_H */

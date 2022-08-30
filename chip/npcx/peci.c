@@ -276,7 +276,7 @@ DECLARE_IRQ(NPCX_IRQ_PECI, peci_done_interrupt, 4);
 /*****************************************************************************/
 /* Console commands */
 
-static int command_peci_temp(int argc, char **argv)
+static int command_peci_temp(int argc, const char **argv)
 {
 	int t = peci_get_cpu_temp();
 	if (t == -1) {

@@ -579,7 +579,7 @@ static int int_to_rgb(const char *code, struct rgb_s *rgb)
 	return EC_SUCCESS;
 }
 
-test_export_static int cc_rgb(int argc, char **argv)
+test_export_static int cc_rgb(int argc, const char **argv)
 {
 	char *end, *comma;
 	struct rgb_s rgb, scale;

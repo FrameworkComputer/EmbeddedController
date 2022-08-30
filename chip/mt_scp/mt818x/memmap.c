@@ -189,7 +189,7 @@ static void scp_cache_init(void)
 	cpu_invalidate_dcache();
 }
 
-static int command_cacheinfo(int argc, char **argv)
+static int command_cacheinfo(int argc, const char **argv)
 {
 	const char cache_name[] = { 'I', 'D' };
 	int c;

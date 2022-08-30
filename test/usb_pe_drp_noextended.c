@@ -33,7 +33,7 @@ void before_test(void)
 	mock_tc_port_reset();
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

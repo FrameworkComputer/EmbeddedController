@@ -149,7 +149,7 @@ DECLARE_HOOK(HOOK_SECOND, onewire_led_tick, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Console commands */
 #define CONFIG_CMD_POWERLED
-static int command_powerled(int argc, char **argv)
+static int command_powerled(int argc, const char **argv)
 {
 	int i;
 

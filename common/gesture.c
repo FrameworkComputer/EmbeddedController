@@ -304,7 +304,7 @@ void gesture_calc(uint32_t *event)
 
 /*****************************************************************************/
 /* Console commands */
-static int command_tap_info(int argc, char **argv)
+static int command_tap_info(int argc, const char **argv)
 {
 	int val;
 

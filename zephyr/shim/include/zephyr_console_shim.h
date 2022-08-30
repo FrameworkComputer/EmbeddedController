@@ -10,7 +10,7 @@
 
 struct zephyr_console_command {
 	/* Handler for the command.  argv[0] will be the command name. */
-	int (*handler)(int argc, char **argv);
+	int (*handler)(int argc, const char **argv);
 #ifdef CONFIG_SHELL_HELP
 	/* Description of args */
 	const char *argdesc;
@@ -36,7 +36,7 @@ struct zephyr_console_command {
  * Return: the return value from the handler.
  */
 int zshim_run_ec_console_command(const struct zephyr_console_command *command,
-				 size_t argc, char **argv);
+				 size_t argc, const char **argv);
 
 /* Internal wrappers for DECLARE_CONSOLE_COMMAND_* macros. */
 #define _ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,       \
@@ -45,7 +45,7 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 		.handler = ROUTINE_ID, _HELP_ARGS(ARGDESC, HELP)            \
 	};                                                                  \
 	static int WRAPPER_ID(const struct shell *shell, size_t argc,       \
-			      char **argv)                                  \
+			      const char **argv)                            \
 	{                                                                   \
 		return zshim_run_ec_console_command(&ENTRY_ID, argc, argv); \
 	}                                                                   \

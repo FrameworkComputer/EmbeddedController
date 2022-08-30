@@ -339,7 +339,7 @@ static int get_offset(int offset)
 /****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_HASH
-static int command_hash(int argc, char **argv)
+static int command_hash(int argc, const char **argv)
 {
 	uint32_t offset =
 		CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;

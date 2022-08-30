@@ -281,7 +281,7 @@ int led_set_brightness(enum ec_led_id id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
-static int command_led(int argc, char **argv)
+static int command_led(int argc, const char **argv)
 {
 	enum ec_led_id id = EC_LED_ID_POWER_LED;
 

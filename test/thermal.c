@@ -625,7 +625,7 @@ static int test_thermistor_linear_interpolate(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_init_val);
 	RUN_TEST(test_sensors_can_be_read);

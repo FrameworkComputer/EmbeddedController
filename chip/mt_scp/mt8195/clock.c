@@ -488,7 +488,7 @@ void clock_init(void)
 }
 
 #ifdef DEBUG
-int command_ulposc(int argc, char *argv[])
+int command_ulposc(int argc, const char *argv[])
 {
 	uint32_t osc;
 

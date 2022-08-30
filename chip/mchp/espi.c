@@ -1398,7 +1398,7 @@ void espi_init(void)
 }
 
 #ifdef CONFIG_MCHP_ESPI_EC_CMD
-static int command_espi(int argc, char **argv)
+static int command_espi(int argc, const char **argv)
 {
 	uint32_t chan, w0, w1, w2;
 	char *e;

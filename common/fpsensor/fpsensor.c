@@ -761,7 +761,7 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 	return EC_ERROR_TIMEOUT;
 }
 
-static int command_fpcapture(int argc, char **argv)
+static int command_fpcapture(int argc, const char **argv)
 {
 	int capture_type = FP_CAPTURE_SIMPLE_IMAGE;
 	uint32_t mode;
@@ -794,7 +794,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(fpcapture, command_fpcapture, NULL,
 			      "Capture fingerprint in PGM format",
 			      CMD_FLAG_RESTRICTED);
 
-static int command_fpenroll(int argc, char **argv)
+static int command_fpenroll(int argc, const char **argv)
 {
 	enum ec_error_list rc;
 	int percent = 0;
@@ -834,7 +834,7 @@ static int command_fpenroll(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND_FLAGS(fpenroll, command_fpenroll, NULL,
 			      "Enroll a new fingerprint", CMD_FLAG_RESTRICTED);
 
-static int command_fpmatch(int argc, char **argv)
+static int command_fpmatch(int argc, const char **argv)
 {
 	enum ec_error_list rc = fp_console_action(FP_MODE_MATCH);
 	uint32_t event = atomic_clear(&fp_events);
@@ -852,7 +852,7 @@ static int command_fpmatch(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(fpmatch, command_fpmatch, NULL,
 			"Run match algorithm against finger");
 
-static int command_fpclear(int argc, char **argv)
+static int command_fpclear(int argc, const char **argv)
 {
 	/*
 	 * We intentionally run this on the fp_task so that we use the
@@ -870,7 +870,7 @@ static int command_fpclear(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(fpclear, command_fpclear, NULL,
 			"Clear fingerprint sensor context");
 
-static int command_fpmaintenance(int argc, char **argv)
+static int command_fpmaintenance(int argc, const char **argv)
 {
 #ifdef HAVE_FP_PRIVATE_DRIVER
 	return fp_maintenance();

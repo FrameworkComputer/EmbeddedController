@@ -33,7 +33,7 @@ void base_set_state(int state)
 }
 #endif
 
-static int command_setbasestate(int argc, char **argv)
+static int command_setbasestate(int argc, const char **argv)
 {
 	if (argc != 2)
 		return EC_ERROR_PARAM_COUNT;

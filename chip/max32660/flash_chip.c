@@ -306,7 +306,7 @@ int crec_flash_pre_init(void)
  * NOTE: This is a DESTRUCTIVE test for the range of flash pages tested
  *       make sure that PAGE_START is beyond your flash code.
  */
-static int command_flash_test1(int argc, char **argv)
+static int command_flash_test1(int argc, const char **argv)
 {
 	int i;
 	uint8_t *ptr;

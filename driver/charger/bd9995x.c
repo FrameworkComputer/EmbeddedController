@@ -1492,7 +1492,7 @@ static void console_bd9995x_dump_regs(int chgnum)
 #endif /* CONFIG_CMD_CHARGER_DUMP */
 
 #ifdef CONFIG_CMD_CHARGER
-static int console_command_bd9995x(int argc, char **argv)
+static int console_command_bd9995x(int argc, const char **argv)
 {
 	int rv, reg, data, val;
 	char rw, *e;
@@ -1590,7 +1590,7 @@ static int bd9995x_enable_psys(int chgnum)
  * update "psys" console command to use charger_get_system_power and move it
  * to some common code.
  */
-static int console_command_psys(int argc, char **argv)
+static int console_command_psys(int argc, const char **argv)
 {
 	int rv;
 
@@ -1677,7 +1677,7 @@ static int bd9995x_amon_bmon(int chgnum, int amon_bmon)
 /**
  * Get charger AMON and BMON current.
  */
-static int console_command_amon_bmon(int argc, char **argv)
+static int console_command_amon_bmon(int argc, const char **argv)
 {
 	int rv = EC_ERROR_PARAM1;
 

@@ -220,7 +220,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	return TMR_EVENT_IRQ;
 }
 
-static int hwtimer_display(int argc, char **argv)
+static int hwtimer_display(int argc, const char **argv)
 {
 	CPRINTS(" TMR_EVENT count 0x%08x", TMR_EVENT->cnt);
 	CPRINTS(" TMR_ROLLOVER count 0x%08x", TMR_ROLLOVER->cnt);

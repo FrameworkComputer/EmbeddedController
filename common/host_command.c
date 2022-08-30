@@ -800,7 +800,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_FEATURES, host_command_get_features,
 /* Console commands */
 
 #ifdef CONFIG_CMD_HOSTCMD
-static int parse_byte(char *b, uint8_t *out)
+static int parse_byte(const char *b, uint8_t *out)
 {
 	int i;
 	*out = 0;
@@ -819,7 +819,7 @@ static int parse_byte(char *b, uint8_t *out)
 	return EC_SUCCESS;
 }
 
-static int parse_params(char *s, uint8_t *params)
+static int parse_params(const char *s, uint8_t *params)
 {
 	int len = 0;
 
@@ -833,7 +833,7 @@ static int parse_params(char *s, uint8_t *params)
 	return len;
 }
 
-static int command_host_command(int argc, char **argv)
+static int command_host_command(int argc, const char **argv)
 {
 	struct host_cmd_handler_args args;
 	char *cmd_params;
@@ -905,7 +905,7 @@ DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command, "cmd ver param",
 #endif /* CONFIG_CMD_HOSTCMD */
 
 #ifdef CONFIG_CMD_HCDEBUG
-static int command_hcdebug(int argc, char **argv)
+static int command_hcdebug(int argc, const char **argv)
 {
 	if (argc >= 3)
 		return EC_ERROR_PARAM_COUNT;

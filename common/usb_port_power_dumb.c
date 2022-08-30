@@ -87,7 +87,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_CHARGE_SET_MODE, usb_port_command_set_mode,
 /*****************************************************************************/
 /* Console commands */
 
-static int command_set_mode(int argc, char **argv)
+static int command_set_mode(int argc, const char **argv)
 {
 	int port_id = -1;
 	int mode = -1;

@@ -1801,7 +1801,7 @@ USB_DECLARE_EP(USB_EP_ST_TOUCHPAD_INT, st_tp_interrupt_tx, st_tp_interrupt_tx,
 #endif
 
 /* Debugging commands */
-static int command_touchpad_st(int argc, char **argv)
+static int command_touchpad_st(int argc, const char **argv)
 {
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;

@@ -71,7 +71,7 @@ void before_test(void)
 	interrupt_enable_count = 0;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

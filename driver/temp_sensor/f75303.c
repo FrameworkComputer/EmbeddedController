@@ -58,7 +58,7 @@ static void f75303_sensor_poll(void)
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
-static int f75303_set_fake_temp(int argc, char **argv)
+static int f75303_set_fake_temp(int argc, const char **argv)
 {
 	int index;
 	int value;

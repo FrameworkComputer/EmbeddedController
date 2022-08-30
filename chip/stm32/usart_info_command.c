@@ -9,7 +9,7 @@
 #include "console.h"
 #include "usart.h"
 
-static int command_usart_info(int argc, char **argv)
+static int command_usart_info(int argc, const char **argv)
 {
 	struct usart_configs configs = usart_get_configs();
 	size_t i;

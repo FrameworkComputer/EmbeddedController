@@ -969,7 +969,7 @@ void task_print_list(void)
 	}
 }
 
-static int command_task_info(int argc, char **argv)
+static int command_task_info(int argc, const char **argv)
 {
 #ifdef CONFIG_TASK_PROFILING
 	int total = 0;
@@ -1002,7 +1002,7 @@ DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info, NULL,
 			     "Print task info");
 
 #ifdef CONFIG_CMD_TASKREADY
-static int command_task_ready(int argc, char **argv)
+static int command_task_ready(int argc, const char **argv)
 {
 	if (argc < 2) {
 		ccprintf("tasks_ready: 0x%08x\n", (int)tasks_ready);
@@ -1069,7 +1069,7 @@ int task_start(void)
 }
 
 #ifdef CONFIG_CMD_TASK_RESET
-static int command_task_reset(int argc, char **argv)
+static int command_task_reset(int argc, const char **argv)
 {
 	task_id_t id;
 	char *e;

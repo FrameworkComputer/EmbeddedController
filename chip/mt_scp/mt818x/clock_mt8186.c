@@ -365,7 +365,7 @@ void clock_fast_wakeup_irq(void)
 }
 
 /* Console command */
-static int command_ulposc(int argc, char *argv[])
+static int command_ulposc(int argc, const char *argv[])
 {
 	int i;
 

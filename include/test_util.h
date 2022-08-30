@@ -139,7 +139,7 @@ void before_test(void);
 void after_test(void);
 
 /* Test entry point */
-void run_test(int argc, char **argv);
+void run_test(int argc, const char **argv);
 
 /* Test entry point for fuzzing tests. */
 int test_fuzz_one_input(const uint8_t *data, unsigned int size);
@@ -372,14 +372,14 @@ int test_attach_i2c(const int port, const uint16_t addr_flags);
 #define TEST_MAIN() void test_main(void)
 #define TEST_SUITE(name) void name(void)
 #else
-#define TEST_MAIN()                          \
-	void test_main(void);                \
-	void run_test(int argc, char **argv) \
-	{                                    \
-		test_reset();                \
-		test_main();                 \
-		test_print_result();         \
-	}                                    \
+#define TEST_MAIN()                                \
+	void test_main(void);                      \
+	void run_test(int argc, const char **argv) \
+	{                                          \
+		test_reset();                      \
+		test_main();                       \
+		test_print_result();               \
+	}                                          \
 	void test_main(void)
 #define TEST_SUITE(name) TEST_MAIN()
 #endif

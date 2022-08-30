@@ -87,7 +87,7 @@ void device_enable_event(enum ec_device_event event)
 /* Console commands */
 
 #ifdef CONFIG_CMD_DEVICE_EVENT
-static int command_device_event(int argc, char **argv)
+static int command_device_event(int argc, const char **argv)
 {
 	/* Handle sub-commands */
 	if (argc == 3) {

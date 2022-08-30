@@ -110,7 +110,7 @@ static void amd_stt_handler(void)
 }
 DECLARE_HOOK(HOOK_SECOND, amd_stt_handler, HOOK_PRIO_TEMP_SENSOR + 1);
 
-static int command_stt(int argc, char **argv)
+static int command_stt(int argc, const char **argv)
 {
 	int sensor_id;
 	int temp;

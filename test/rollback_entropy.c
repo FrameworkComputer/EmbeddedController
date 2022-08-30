@@ -182,7 +182,7 @@ test_static int test_add_entropy(void)
 	return rv;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	ccprintf("Running rollback_entropy test\n");
 	RUN_TEST(test_add_entropy);

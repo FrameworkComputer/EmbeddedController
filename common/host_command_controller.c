@@ -183,7 +183,7 @@ int pd_host_command(int command, int version, const void *outdata, int outsize,
 	return rv;
 }
 
-static int command_pd_mcu(int argc, char **argv)
+static int command_pd_mcu(int argc, const char **argv)
 {
 	char *e;
 	static char outbuf[128];

@@ -567,7 +567,7 @@ int battery_wait_for_stable(void)
 
 #ifdef CONFIG_CMD_BATDEBUG
 
-static int command_fgunseal(int argc, char **argv)
+static int command_fgunseal(int argc, const char **argv)
 {
 	int rv = EC_SUCCESS;
 
@@ -581,7 +581,7 @@ static int command_fgunseal(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(fgunseal, command_fgunseal, "", "Unseal the fg");
 
-static int command_fgseal(int argc, char **argv)
+static int command_fgseal(int argc, const char **argv)
 {
 	int rv = EC_SUCCESS;
 
@@ -595,7 +595,7 @@ static int command_fgseal(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(fgseal, command_fgseal, "", "Seal the fg");
 
-static int command_fginit(int argc, char **argv)
+static int command_fginit(int argc, const char **argv)
 {
 	int rv = EC_SUCCESS;
 	int force = 0;
@@ -628,7 +628,7 @@ static int command_fginit(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(fginit, command_fginit, "[force]", "Initialize the fg");
 
-static int command_fgprobe(int argc, char **argv)
+static int command_fgprobe(int argc, const char **argv)
 {
 	int rv = EC_SUCCESS;
 
@@ -642,7 +642,7 @@ static int command_fgprobe(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(fgprobe, command_fgprobe, "", "Probe the fg");
 
-static int command_fgrd(int argc, char **argv)
+static int command_fgrd(int argc, const char **argv)
 {
 	int cmd, len;
 	int rv = EC_SUCCESS;
@@ -675,7 +675,7 @@ static int command_fgrd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(fgrd, command_fgrd, "cmd len",
 			"Read _len_ words from the fg");
 
-static int command_fgcmd(int argc, char **argv)
+static int command_fgcmd(int argc, const char **argv)
 {
 	int cmd, data, byte = 0;
 	char *e;
@@ -709,7 +709,7 @@ static int command_fgcmd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(fgcmd, command_fgcmd, "cmd data [byte]",
 			"Send a cmd to the fg");
 
-static int command_fgcmdrd(int argc, char **argv)
+static int command_fgcmdrd(int argc, const char **argv)
 {
 	int cmd, data, val;
 	int rv = EC_SUCCESS;

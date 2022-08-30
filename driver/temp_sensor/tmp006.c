@@ -402,7 +402,7 @@ static int tmp006_print(int idx)
 	return EC_SUCCESS;
 }
 
-static int command_sensor_info(int argc, char **argv)
+static int command_sensor_info(int argc, const char **argv)
 {
 	int i;
 	int rv, rv1;
@@ -433,7 +433,7 @@ DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info, "[ <index> ]",
 
 /* Disable the t6cal command until/unless we have FP support in printf */
 #if 0
-static int command_t6cal(int argc, char **argv)
+static int command_t6cal(int argc, const char **argv)
 {
 	struct tmp006_data_t *tdata;
 	char *e;

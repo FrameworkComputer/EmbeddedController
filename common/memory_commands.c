@@ -55,7 +55,7 @@ static void show_val(uint32_t address, uint32_t index, enum format fmt)
 	cflush();
 }
 
-static int command_mem_dump(int argc, char **argv)
+static int command_mem_dump(int argc, const char **argv)
 {
 	uint32_t address, i, num = 1;
 	char *e;
@@ -112,7 +112,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(
 #endif /* CONFIG_CMD_MD */
 
 #ifdef CONFIG_CMD_RW
-static int command_read_word(int argc, char **argv)
+static int command_read_word(int argc, const char **argv)
 {
 	volatile uint32_t *address;
 	uint32_t value;

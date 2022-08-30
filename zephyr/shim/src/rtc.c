@@ -135,7 +135,7 @@ void print_system_rtc(enum console_channel ch)
  * chip-specific code. We should factor out the common parts.
  */
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_RTC
-static int command_system_rtc(int argc, char **argv)
+static int command_system_rtc(int argc, const char **argv)
 {
 	if (argc == 3 && !strcasecmp(argv[1], "set")) {
 		char *e;
@@ -160,7 +160,7 @@ DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc, "[set <seconds>]",
 /**
  * Test the RTC alarm by setting an interrupt on RTC match.
  */
-static int command_rtc_alarm_test(int argc, char **argv)
+static int command_rtc_alarm_test(int argc, const char **argv)
 {
 	int s = 1, us = 0;
 	char *e;

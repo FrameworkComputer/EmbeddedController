@@ -456,7 +456,7 @@ static void dump_cbi(void)
 static uint8_t
 	buf[sizeof(struct ec_params_set_cbi) + CONFIG_CONSOLE_INPUT_LINE_SIZE];
 
-static int cc_cbi(int argc, char **argv)
+static int cc_cbi(int argc, const char **argv)
 {
 	struct __ec_align4 ec_params_set_cbi *setter =
 		(struct __ec_align4 ec_params_set_cbi *)buf;

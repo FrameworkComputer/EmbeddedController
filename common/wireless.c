@@ -134,7 +134,7 @@ static enum ec_status wireless_enable_cmd(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS, wireless_enable_cmd,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
-static int command_wireless(int argc, char **argv)
+static int command_wireless(int argc, const char **argv)
 {
 	char *e;
 	int i;

@@ -194,7 +194,7 @@ int test_pd_extract_pdo_power(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_pd_get_cc_state);
 	RUN_TEST(test_pd_extract_pdo_power);

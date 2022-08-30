@@ -1049,7 +1049,7 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_KEYBOARD
-static int command_typematic(int argc, char **argv)
+static int command_typematic(int argc, const char **argv)
 {
 	int i;
 
@@ -1071,7 +1071,7 @@ static int command_typematic(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int command_codeset(int argc, char **argv)
+static int command_codeset(int argc, const char **argv)
 {
 	if (argc == 2) {
 		int set = strtoi(argv[1], NULL, 0);
@@ -1090,7 +1090,7 @@ static int command_codeset(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int command_controller_ram(int argc, char **argv)
+static int command_controller_ram(int argc, const char **argv)
 {
 	int index;
 
@@ -1108,7 +1108,7 @@ static int command_controller_ram(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int command_keyboard_log(int argc, char **argv)
+static int command_keyboard_log(int argc, const char **argv)
 {
 	int i;
 
@@ -1151,7 +1151,7 @@ static int command_keyboard_log(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int command_keyboard(int argc, char **argv)
+static int command_keyboard(int argc, const char **argv)
 {
 	int ena;
 
@@ -1166,7 +1166,7 @@ static int command_keyboard(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int command_8042_internal(int argc, char **argv)
+static int command_8042_internal(int argc, const char **argv)
 {
 	int i;
 
@@ -1223,7 +1223,7 @@ DECLARE_CONSOLE_COMMAND(kbd, command_keyboard, "[on | off]",
 			"Print or toggle keyboard info");
 #endif
 
-static int command_8042(int argc, char **argv)
+static int command_8042(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "internal"))
@@ -1241,7 +1241,7 @@ static int command_8042(int argc, char **argv)
 		else
 			return EC_ERROR_PARAM1;
 	} else {
-		char *ctlram_argv[] = { "ctrlram", "0" };
+		const char *ctlram_argv[] = { "ctrlram", "0" };
 
 		ccprintf("\n- Typematic:\n");
 		command_typematic(argc, argv);

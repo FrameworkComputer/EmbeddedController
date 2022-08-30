@@ -195,7 +195,7 @@ static void simulate_key(int row, int col, int pressed)
 	mkbp_fifo_add((uint8_t)EC_MKBP_EVENT_KEY_MATRIX, simulated_key);
 }
 
-static int command_mkbp_keyboard_press(int argc, char **argv)
+static int command_mkbp_keyboard_press(int argc, const char **argv)
 {
 	if (argc == 1) {
 		int i, j;

@@ -225,7 +225,7 @@ unlock:
 }
 
 /* Enable ITE direct firmware update (DFU) mode. */
-static int command_enable_ite_dfu(int argc, char **argv)
+static int command_enable_ite_dfu(int argc, const char **argv)
 {
 	if (argc > 1)
 		return EC_ERROR_PARAM_COUNT;
@@ -338,7 +338,7 @@ DECLARE_CONSOLE_COMMAND(enable_ite_dfu, command_enable_ite_dfu, "",
 			"Enable ITE Direct Firmware Update (DFU) mode");
 
 /* Read ITE chip ID.  Can be used to verify ITE DFU mode. */
-static int command_get_ite_chipid(int argc, char **argv)
+static int command_get_ite_chipid(int argc, const char **argv)
 {
 	if (argc > 1)
 		return EC_ERROR_PARAM_COUNT;

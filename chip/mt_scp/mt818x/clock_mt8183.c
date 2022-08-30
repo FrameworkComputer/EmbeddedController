@@ -353,7 +353,7 @@ static void clock_fast_wakeup_irq(void)
 }
 
 /* Console command */
-static int command_ulposc(int argc, char *argv[])
+static int command_ulposc(int argc, const char *argv[])
 {
 	if (argc > 1 && !strncmp(argv[1], "cal", 3)) {
 		scp_calibrate_ulposc(0, ULPOSC1_CLOCK_MHZ);

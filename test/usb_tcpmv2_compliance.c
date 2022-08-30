@@ -30,7 +30,7 @@ void before_test(void)
 	tc_try_src_override(TRY_SRC_OVERRIDE_OFF);
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

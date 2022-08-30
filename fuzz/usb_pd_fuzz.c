@@ -192,7 +192,7 @@ enum tcpc_cc_voltage_status next_cc1, next_cc2;
 #define MAX_MESSAGES 8
 static struct message messages[MAX_MESSAGES];
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	uint8_t port = PORT0;
 	int i;

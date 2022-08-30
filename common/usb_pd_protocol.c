@@ -5110,7 +5110,7 @@ void pd_update_contract(int port)
 
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
-static int command_pd(int argc, char **argv)
+static int command_pd(int argc, const char **argv)
 {
 	int port;
 	char *e;

@@ -201,7 +201,7 @@ static void board_gpu_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_gpu_init, HOOK_PRIO_DEFAULT);
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	memmap_gpu = (uint8_t *)host_get_memmap(EC_MEMMAP_GPU);
 

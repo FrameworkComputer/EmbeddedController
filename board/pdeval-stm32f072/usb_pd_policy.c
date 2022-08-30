@@ -108,7 +108,7 @@ void button_event(enum gpio_signal signal)
 	CPRINTS("VBUS %d", vbus_present);
 }
 
-static int command_vbus_toggle(int argc, char **argv)
+static int command_vbus_toggle(int argc, const char **argv)
 {
 	vbus_present = !vbus_present;
 	CPRINTS("VBUS %d", vbus_present);

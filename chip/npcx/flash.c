@@ -787,7 +787,7 @@ static int flash_spi_sel_lock(int enable)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_flash_spi_sel_lock(int argc, char **argv)
+static int command_flash_spi_sel_lock(int argc, const char **argv)
 {
 	int ena;
 
@@ -802,7 +802,7 @@ static int command_flash_spi_sel_lock(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(flash_spi_lock, command_flash_spi_sel_lock,
 			"[on | off]", "Lock spi flash interface selection");
 
-static int command_flash_tristate(int argc, char **argv)
+static int command_flash_tristate(int argc, const char **argv)
 {
 	int ena;
 
@@ -819,7 +819,7 @@ DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate, "[on | off]",
 			"Tristate spi flash pins");
 #endif /* CONFIG_CMD_FLASH_TRISTATE */
 
-static int command_flash_chip(int argc, char **argv)
+static int command_flash_chip(int argc, const char **argv)
 {
 	uint8_t jedec_id[3];
 	uint8_t sr1, sr2;

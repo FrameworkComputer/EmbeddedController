@@ -29,7 +29,7 @@ uint64_t __keep __aeabi_llsr(uint64_t v, uint32_t shift)
 
 #ifdef CONFIG_LLSR_TEST
 
-static int command_llsr(int argc, char **argv)
+static int command_llsr(int argc, const char **argv)
 {
 	/* Volatile to prevent compilier optimization from interfering. */
 	volatile uint64_t start = 0x123456789ABCDEF0ull;

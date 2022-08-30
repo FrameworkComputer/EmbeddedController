@@ -142,7 +142,7 @@ int print_temps(void)
 /* Console commands */
 
 #ifdef CONFIG_CMD_TEMP_SENSOR
-static int command_temps(int argc, char **argv)
+static int command_temps(int argc, const char **argv)
 {
 	return print_temps();
 }

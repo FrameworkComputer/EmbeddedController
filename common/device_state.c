@@ -66,7 +66,7 @@ static void check_device_state(void)
 }
 DECLARE_HOOK(HOOK_SECOND, check_device_state, HOOK_PRIO_DEFAULT);
 
-static int command_devices(int argc, char **argv)
+static int command_devices(int argc, const char **argv)
 {
 	const struct device_config *dc = device_states;
 	int i;

@@ -75,7 +75,7 @@ static void dump_pe(int port)
 	}
 }
 
-static int command_pe(int argc, char **argv)
+static int command_pe(int argc, const char **argv)
 {
 	int port;
 	char *e;
@@ -106,7 +106,7 @@ static const char *const cable_curr[] = {
 	[USB_VBUS_CUR_5A] = "5A",
 };
 
-static int command_cable(int argc, char **argv)
+static int command_cable(int argc, const char **argv)
 {
 	int port;
 	char *e;

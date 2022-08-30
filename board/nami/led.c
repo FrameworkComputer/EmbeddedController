@@ -587,7 +587,7 @@ static void print_config(enum ec_led_id id)
 	ccprintf("  Interval:%d\n", tick[id].interval);
 }
 
-static int command_led(int argc, char **argv)
+static int command_led(int argc, const char **argv)
 {
 	enum ec_led_id id = EC_LED_ID_BATTERY_LED;
 	static int alert = 0;

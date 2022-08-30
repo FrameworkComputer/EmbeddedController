@@ -427,7 +427,7 @@ void before_test(void)
 	motion_sense_fifo_reset();
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 	motion_sense_fifo_init();

@@ -255,7 +255,7 @@ static int mcdp_appstest(uint8_t cmd, int paramc, char **paramv)
 	return EC_SUCCESS;
 }
 
-int command_mcdp(int argc, char **argv)
+int command_mcdp(int argc, const char **argv)
 {
 	int rv = EC_SUCCESS;
 	char *e;

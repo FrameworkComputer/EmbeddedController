@@ -130,7 +130,7 @@ int task_test(void *unused)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	msleep(30); /* Wait for TASK_ID_TEST to initialize */
 	task_wake(TASK_ID_TEST);

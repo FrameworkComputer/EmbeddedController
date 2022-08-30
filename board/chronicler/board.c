@@ -427,7 +427,7 @@ DECLARE_HOOK(HOOK_INIT, battery_runtime_init, HOOK_PRIO_LAST);
 
 #ifdef BATTERY_RUNTIME_TEST
 /* test command */
-static int command_manual_run_time(int argc, char **argv)
+static int command_manual_run_time(int argc, const char **argv)
 {
 	char *e = NULL;
 

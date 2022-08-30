@@ -105,7 +105,7 @@ test_static int test_lock_rollback_region_1(void)
 	return _test_lock_rollback(&rollback_info, 1);
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	if (argc < 2) {
 		ccprintf("usage: runtest [region0|region1]\n");

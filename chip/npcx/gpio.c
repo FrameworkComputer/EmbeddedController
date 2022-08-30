@@ -670,7 +670,7 @@ void gpio_interrupt(struct npcx_wui wui_int)
  * Command used to disable input buffer of gpios one by one to
  * investigate power consumption
  */
-static int command_gpiodisable(int argc, char **argv)
+static int command_gpiodisable(int argc, const char **argv)
 {
 	uint8_t i;
 	uint8_t offset;

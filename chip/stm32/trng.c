@@ -104,7 +104,7 @@ test_mockable void trng_exit(void)
  * update RO once in production.
  */
 #if defined(SECTION_IS_RW)
-static int command_rand(int argc, char **argv)
+static int command_rand(int argc, const char **argv)
 {
 	uint8_t data[32];
 	char str_buf[hex_str_buf_size(sizeof(data))];

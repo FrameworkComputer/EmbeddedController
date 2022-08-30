@@ -77,7 +77,7 @@ static void print_port_status(void)
 	CPRINTS("USB MUX: %s", gpio_get_level(GPIO_EN_USB_MUX2) ? "ON" : "OFF");
 }
 
-static int command_cc_flip(int argc, char *argv[])
+static int command_cc_flip(int argc, const char *argv[])
 {
 	int enable;
 
@@ -268,7 +268,7 @@ static void set_mux(enum usb_mux mux, uint8_t val)
 }
 
 /* This function assumes only 1 port works at a time. */
-static int command_portctl(int argc, char **argv)
+static int command_portctl(int argc, const char **argv)
 {
 	int port;
 	int enable;
@@ -333,7 +333,7 @@ DECLARE_CONSOLE_COMMAND(portctl, command_portctl,
 			"<port# 0-19> <enable/disable>",
 			"enable or disable a port");
 
-static int command_status(int argc, char **argv)
+static int command_status(int argc, const char **argv)
 {
 	int vbus_mv = adc_read_channel(ADC_PPVAR_VBUS_DUT);
 

@@ -118,7 +118,7 @@ test_static int test_flash_config(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	ccprintf("Running flash physical test\n");
 	RUN_TEST(test_flash_config);

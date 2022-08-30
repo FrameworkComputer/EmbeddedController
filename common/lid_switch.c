@@ -133,21 +133,21 @@ void enable_lid_detect(bool enable)
 	}
 }
 
-static int command_lidopen(int argc, char **argv)
+static int command_lidopen(int argc, const char **argv)
 {
 	lid_switch_open();
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen, NULL, "Simulate lid open");
 
-static int command_lidclose(int argc, char **argv)
+static int command_lidclose(int argc, const char **argv)
 {
 	lid_switch_close();
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose, NULL, "Simulate lid close");
 
-static int command_lidstate(int argc, char **argv)
+static int command_lidstate(int argc, const char **argv)
 {
 	ccprintf("lid state: %s\n", debounced_lid_open ? "open" : "closed");
 

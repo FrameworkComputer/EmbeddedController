@@ -322,7 +322,7 @@ void board_debug_gpio(enum debug_gpio trigger, int level, int pulse_usec)
 	}
 }
 
-static int command_dplane(int argc, char **argv)
+static int command_dplane(int argc, const char **argv)
 {
 	char *e;
 	int lane;

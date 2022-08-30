@@ -139,7 +139,7 @@ void power_led_task(void)
 
 #define CONFIG_CMD_POWERLED
 #ifdef CONFIG_CMD_POWERLED
-static int command_powerled(int argc, char **argv)
+static int command_powerled(int argc, const char **argv)
 {
 	enum powerled_state state;
 

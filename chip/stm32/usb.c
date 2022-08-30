@@ -921,7 +921,7 @@ static int usb_save_serial(const char *serialno)
 	return rv;
 }
 
-static int command_serialno(int argc, char **argv)
+static int command_serialno(int argc, const char **argv)
 {
 	struct usb_string_desc *sd = usb_serialno_desc;
 	char buf[CONFIG_SERIALNO_LEN];
@@ -975,7 +975,7 @@ static int usb_save_mac_addr(const char *mac_addr)
 	}
 }
 
-static int command_macaddr(int argc, char **argv)
+static int command_macaddr(int argc, const char **argv)
 {
 	const char *buf;
 	int rv = EC_SUCCESS;

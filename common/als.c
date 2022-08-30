@@ -101,7 +101,7 @@ DECLARE_HOOK(HOOK_INIT, als_task_init, HOOK_PRIO_ALS_INIT);
 /* Console commands */
 
 #ifdef CONFIG_CMD_ALS
-static int command_als(int argc, char **argv)
+static int command_als(int argc, const char **argv)
 {
 	int i, rv, val;
 

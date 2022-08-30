@@ -306,7 +306,7 @@ int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 }
 
 #ifdef CONFIG_CMD_GL3590
-static int command_gl3590(int argc, char **argv)
+static int command_gl3590(int argc, const char **argv)
 {
 	char *e;
 	int port;

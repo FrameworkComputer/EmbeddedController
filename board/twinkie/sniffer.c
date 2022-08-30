@@ -385,7 +385,7 @@ static void sniffer_sysjump(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, sniffer_sysjump, HOOK_PRIO_DEFAULT);
 
-static int command_sniffer(int argc, char **argv)
+static int command_sniffer(int argc, const char **argv)
 {
 	ccprintf("Seq number:%d Overflows: %d\n", seq, oflow);
 

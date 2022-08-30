@@ -674,7 +674,7 @@ test_static int test_uint64_to_str(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

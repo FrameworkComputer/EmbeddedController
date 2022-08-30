@@ -19,7 +19,7 @@
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 
-static int cmd_gp_get_config(int argc, char **argv)
+static int cmd_gp_get_config(int argc, const char **argv)
 {
 	char *e;
 	int i;
@@ -57,7 +57,7 @@ static int cmd_gp_get_config(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(gpgetcfg, cmd_gp_get_config, "[number]",
 			"Read GPIO config");
 
-static int cmd_gp_set_config(int argc, char **argv)
+static int cmd_gp_set_config(int argc, const char **argv)
 {
 	char *e;
 	int i;

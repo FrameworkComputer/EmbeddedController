@@ -184,7 +184,7 @@ void sy21612_task(void *u)
 #endif
 
 #ifdef CONFIG_CMD_CHARGER
-static int command_sy21612(int argc, char **argv)
+static int command_sy21612(int argc, const char **argv)
 {
 	int i, val, rv;
 

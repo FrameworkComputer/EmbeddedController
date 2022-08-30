@@ -109,13 +109,13 @@ static void print_channel(enum pwm_channel ch, int max_duty)
 		ccprintf("  %d: disabled\n", ch);
 }
 
-static int cc_pwm_duty(int argc, char **argv)
+static int cc_pwm_duty(int argc, const char **argv)
 {
 	int value = 0;
 	int max_duty = 100;
 	int ch;
 	char *e;
-	char *raw;
+	const char *raw;
 
 	if (argc < 2) {
 		ccprintf("PWM channels:\n");

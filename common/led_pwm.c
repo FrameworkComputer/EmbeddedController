@@ -265,7 +265,7 @@ DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_LED_PWM_TASK_DISABLED */
 
 #ifdef CONFIG_CMD_LEDTEST
-static int command_ledtest(int argc, char **argv)
+static int command_ledtest(int argc, const char **argv)
 {
 	int enable;
 	int pwm_led_id;

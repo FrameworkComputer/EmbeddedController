@@ -184,7 +184,7 @@ void before_test(void)
 	gyro_cal_initialization_for_test(&gyro_cal_data);
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

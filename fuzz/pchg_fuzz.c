@@ -93,7 +93,7 @@ void irq_task(int argc, char **argv)
 	}
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	ccprints("Fuzzing task started");
 	task_wait_event(-1);

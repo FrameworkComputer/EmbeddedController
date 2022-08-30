@@ -621,7 +621,7 @@ static void clock_chipset_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clock_chipset_shutdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, clock_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
-static int command_clock(int argc, char **argv)
+static int command_clock(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "hsi"))
@@ -1104,7 +1104,7 @@ void __idle(void)
 /*****************************************************************************/
 /* Console commands */
 /* Print low power idle statistics. */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 

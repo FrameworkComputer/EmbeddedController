@@ -361,7 +361,7 @@ void base_pwr_fault_interrupt(enum gpio_signal s)
 	}
 }
 
-static int command_basedetectdebug(int argc, char **argv)
+static int command_basedetectdebug(int argc, const char **argv)
 {
 	if ((argc > 1) && !parse_bool(argv[1], &debug))
 		return EC_ERROR_PARAM1;

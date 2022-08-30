@@ -857,7 +857,7 @@ static const char *const state_name[] = {
 	"on",
 };
 
-static int command_power(int argc, char **argv)
+static int command_power(int argc, const char **argv)
 {
 	int v;
 

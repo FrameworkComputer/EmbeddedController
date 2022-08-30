@@ -399,7 +399,7 @@ static void cps8100_dump(struct pchg *ctx)
 		cps8100_print_alert_info(val);
 }
 
-static int cc_cps8100(int argc, char **argv)
+static int cc_cps8100(int argc, const char **argv)
 {
 	struct pchg *ctx;
 	char *end;

@@ -660,7 +660,7 @@ uint32_t i2c_idle_not_allowed(void)
 	return i2c_idle_disabled;
 }
 
-static int command_i2c_idle_mask(int argc, char **argv)
+static int command_i2c_idle_mask(int argc, const char **argv)
 {
 	ccprintf("i2c idle mask: %08x\n", i2c_idle_disabled);
 

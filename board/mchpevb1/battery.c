@@ -214,7 +214,7 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 	return EC_RES_INVALID_PARAM;
 }
 
-static int command_fastcharge(int argc, char **argv)
+static int command_fastcharge(int argc, const char **argv)
 {
 	if (argc > 1 && !parse_bool(argv[1], &fast_charging_allowed))
 		return EC_ERROR_PARAM1;

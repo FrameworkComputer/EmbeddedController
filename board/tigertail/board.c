@@ -311,7 +311,7 @@ void uart_sbu_tick(void)
 }
 DECLARE_HOOK(HOOK_TICK, uart_sbu_tick, HOOK_PRIO_DEFAULT);
 
-static int command_uart(int argc, char **argv)
+static int command_uart(int argc, const char **argv)
 {
 	const char *uart_state_str = "off";
 	const char *uart_detect_str = "manual";
@@ -447,7 +447,7 @@ void button_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&button_interrupt_deferred_data, 0);
 }
 
-static int command_mux(int argc, char **argv)
+static int command_mux(int argc, const char **argv)
 {
 	char *mux_state_str = "off";
 

@@ -1171,7 +1171,7 @@ int keyboard_get_keyboard_id(void)
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_KEYBOARD
-static int command_ksstate(int argc, char **argv)
+static int command_ksstate(int argc, const char **argv)
 {
 	if (argc > 1) {
 		if (!strcasecmp(argv[1], "force")) {
@@ -1193,7 +1193,7 @@ static int command_ksstate(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(ksstate, command_ksstate, "ksstate [on | off | force]",
 			"Show or toggle printing keyboard scan state");
 
-static int command_keyboard_press(int argc, char **argv)
+static int command_keyboard_press(int argc, const char **argv)
 {
 	if (argc == 1) {
 		int i, j;

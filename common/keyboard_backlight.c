@@ -153,7 +153,7 @@ DECLARE_HOOK(HOOK_LID_CHANGE, kblight_lid_change, HOOK_PRIO_DEFAULT);
 /*
  * Console and host commands
  */
-static int cc_kblight(int argc, char **argv)
+static int cc_kblight(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		char *e;

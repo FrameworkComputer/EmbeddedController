@@ -202,7 +202,7 @@ void uart_shell_start(void)
 }
 
 #ifdef CONFIG_SHELL_HELP
-static void print_console_help(char *name,
+static void print_console_help(const char *name,
 			       const struct zephyr_console_command *command)
 {
 	if (command->help)
@@ -213,7 +213,7 @@ static void print_console_help(char *name,
 #endif
 
 int zshim_run_ec_console_command(const struct zephyr_console_command *command,
-				 size_t argc, char **argv)
+				 size_t argc, const char **argv)
 {
 	int ret;
 

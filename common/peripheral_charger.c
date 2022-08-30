@@ -744,7 +744,7 @@ static enum ec_status hc_pchg_update(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PCHG_UPDATE, hc_pchg_update, EC_VER_MASK(0));
 
-static int cc_pchg(int argc, char **argv)
+static int cc_pchg(int argc, const char **argv)
 {
 	int port;
 	char *end;

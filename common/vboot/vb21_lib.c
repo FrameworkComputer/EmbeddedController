@@ -74,7 +74,7 @@ static void read_rwsig_info(struct ec_response_rwsig_info *r)
 	r->key_is_valid = (rv == EC_SUCCESS);
 }
 
-static int command_rwsig_info(int argc, char **argv)
+static int command_rwsig_info(int argc, const char **argv)
 {
 	int i;
 	struct ec_response_rwsig_info r;

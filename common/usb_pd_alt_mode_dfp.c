@@ -1496,7 +1496,7 @@ const struct svdm_amode_fx supported_modes[] = {
 const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 
 #ifdef CONFIG_CMD_MFALLOW
-static int command_mfallow(int argc, char **argv)
+static int command_mfallow(int argc, const char **argv)
 {
 	char *e;
 	int port;

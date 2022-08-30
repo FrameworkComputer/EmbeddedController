@@ -56,7 +56,7 @@ int watchdog_init(void)
 	return EC_SUCCESS;
 }
 
-static int command_watchdog_test(int argc, char **argv)
+static int command_watchdog_test(int argc, const char **argv)
 {
 	starve_dog = 1;
 

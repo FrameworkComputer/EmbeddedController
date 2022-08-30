@@ -624,7 +624,7 @@ const struct usb_mux_driver bb_usb_retimer = {
 };
 
 #ifdef CONFIG_CMD_RETIMER
-static int console_command_bb_retimer(int argc, char **argv)
+static int console_command_bb_retimer(int argc, const char **argv)
 {
 	char rw, *e;
 	int port, reg, data, val = 0;

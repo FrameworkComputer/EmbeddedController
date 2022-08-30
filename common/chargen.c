@@ -37,7 +37,7 @@
  *
  * Hitting 'x' on the keyboard stops the generator.
  */
-static int command_chargen(int argc, char **argv)
+static int command_chargen(int argc, const char **argv)
 {
 	int wrap_value = 0;
 	int wrap_counter = 0;

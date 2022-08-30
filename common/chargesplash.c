@@ -171,7 +171,7 @@ static void handle_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, handle_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
-static int command_chargesplash(int argc, char **argv)
+static int command_chargesplash(int argc, const char **argv)
 {
 	if (argc != 2) {
 		return EC_ERROR_PARAM_COUNT;

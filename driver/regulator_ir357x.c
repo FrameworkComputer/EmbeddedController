@@ -195,7 +195,7 @@ static int ir357x_check(void)
 }
 
 #ifdef CONFIG_CMD_REGULATOR
-static int command_ir357x(int argc, char **argv)
+static int command_ir357x(int argc, const char **argv)
 {
 	int reg, val;
 	char *rem;

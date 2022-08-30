@@ -467,7 +467,7 @@ void baseboard_power_button_evt(int level)
 			   POWER_BUTTON_DEBOUNCE_USEC);
 }
 
-static int command_pwr_btn(int argc, char **argv)
+static int command_pwr_btn(int argc, const char **argv)
 {
 	if (argc == 1) {
 		task_set_event(TASK_ID_POWER_BUTTON, BUTTON_EVT_INFO);

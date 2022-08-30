@@ -1185,7 +1185,7 @@ static void do_cc(int cc_config_new)
 	}
 }
 
-static int command_cc(int argc, char **argv)
+static int command_cc(int argc, const char **argv)
 {
 	int cc_config_new = cc_config;
 
@@ -1258,7 +1258,7 @@ static void fake_disconnect_start(void)
 }
 DECLARE_DEFERRED(fake_disconnect_start);
 
-static int cmd_fake_disconnect(int argc, char *argv[])
+static int cmd_fake_disconnect(int argc, const char *argv[])
 {
 	int delay_ms, duration_ms;
 	char *e;
@@ -1288,7 +1288,7 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
 			"<delay_ms> <duration_ms>", NULL);
 
-static int cmd_ada_srccaps(int argc, char *argv[])
+static int cmd_ada_srccaps(int argc, const char *argv[])
 {
 	int i;
 	const uint32_t *const ada_srccaps = pd_get_src_caps(CHG);
@@ -1310,7 +1310,7 @@ static int cmd_ada_srccaps(int argc, char *argv[])
 DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps, "",
 			"Print adapter SrcCap");
 
-static int cmd_dp_action(int argc, char *argv[])
+static int cmd_dp_action(int argc, const char *argv[])
 {
 	int i;
 	char *e;
@@ -1407,7 +1407,7 @@ static int cmd_dp_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 
-static int cmd_usbc_action(int argc, char *argv[])
+static int cmd_usbc_action(int argc, const char *argv[])
 {
 	if (argc >= 2 && !strcasecmp(argv[1], "dp"))
 		return cmd_dp_action(argc - 1, &argv[1]);

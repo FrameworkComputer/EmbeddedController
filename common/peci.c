@@ -73,7 +73,7 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_PECI
-static int peci_cmd(int argc, char **argv)
+static int peci_cmd(int argc, const char **argv)
 {
 	uint8_t r_buf[PECI_READ_DATA_FIFO_SIZE] = { 0 };
 	uint8_t w_buf[PECI_WRITE_DATA_FIFO_SIZE] = { 0 };
@@ -153,7 +153,7 @@ static int peci_cmd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(peci, peci_cmd, "addr wlen rlen cmd timeout(us)",
 			"PECI command");
 
-static int command_peci_temp(int argc, char **argv)
+static int command_peci_temp(int argc, const char **argv)
 {
 	int t;
 

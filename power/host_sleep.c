@@ -211,7 +211,7 @@ void sleep_reset_tracking(void)
 	timeout_hang_type = SLEEP_HANG_NONE;
 }
 
-static int command_sleep_fail_timeout(int argc, char **argv)
+static int command_sleep_fail_timeout(int argc, const char **argv)
 {
 	if (argc < 2) {
 		/* no arguments - just print the current timeout */

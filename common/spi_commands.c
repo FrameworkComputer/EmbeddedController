@@ -13,7 +13,7 @@
 #include "timer.h"
 #include "util.h"
 
-static int command_spixfer(int argc, char **argv)
+static int command_spixfer(int argc, const char **argv)
 {
 	int dev_id;
 	uint8_t offset;

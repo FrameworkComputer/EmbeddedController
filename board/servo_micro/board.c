@@ -133,7 +133,7 @@ USB_STREAM_CONFIG_USART_IFACE(usart4_usb, USB_IFACE_USART4_STREAM,
 /******************************************************************************
  * Check parity setting on usarts.
  */
-static int command_uart_parity(int argc, char **argv)
+static int command_uart_parity(int argc, const char **argv)
 {
 	int parity = 0, newparity;
 	struct usart_config const *usart;
@@ -173,7 +173,7 @@ DECLARE_CONSOLE_COMMAND(parity, command_uart_parity, "usart[2|3|4] [0|1|2]",
 /******************************************************************************
  * Set baud rate setting on usarts.
  */
-static int command_uart_baud(int argc, char **argv)
+static int command_uart_baud(int argc, const char **argv)
 {
 	int baud = 0;
 	struct usart_config const *usart;
@@ -205,7 +205,7 @@ DECLARE_CONSOLE_COMMAND(baud, command_uart_baud, "usart[2|3|4] rate",
 /******************************************************************************
  * Hold the usart pins low while disabling it, or return it to normal.
  */
-static int command_hold_usart_low(int argc, char **argv)
+static int command_hold_usart_low(int argc, const char **argv)
 {
 	/* Each bit represents if that port rx is being held low */
 	static int usart_status;

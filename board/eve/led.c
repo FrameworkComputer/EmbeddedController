@@ -632,7 +632,7 @@ void led_task(void *u)
 
 /******************************************************************/
 /* Console commands */
-static int command_led(int argc, char **argv)
+static int command_led(int argc, const char **argv)
 {
 	int side = LED_BOTH;
 	char *e;

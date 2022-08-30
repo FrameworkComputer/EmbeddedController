@@ -207,7 +207,7 @@ int test_pd_timers(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_pd_timers_init);
 	RUN_TEST(test_pd_timers_bit_ops);

@@ -547,7 +547,7 @@ void dps_task(void *u)
 	}
 }
 
-static int command_dps(int argc, char **argv)
+static int command_dps(int argc, const char **argv)
 {
 	int port = charge_manager_get_active_charge_port();
 	int input_pwr, vbus, input_curr;

@@ -69,7 +69,7 @@ static int src_host_pdo_cnt_override;
 #define PD_DR_SWAP_ATTEMPT_MAX 3
 static int pd_dr_swap_attempt_count[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-static int command_hostpdo(int argc, char **argv)
+static int command_hostpdo(int argc, const char **argv)
 {
 	char *e;
 	int limit;

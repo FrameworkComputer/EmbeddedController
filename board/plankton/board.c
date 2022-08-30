@@ -547,7 +547,7 @@ static int sn75dp130_redriver_init(void)
 	return rv;
 }
 
-static int cmd_usbc_action(int argc, char *argv[])
+static int cmd_usbc_action(int argc, const char *argv[])
 {
 	enum usbc_action act;
 
@@ -621,7 +621,7 @@ void board_maybe_reset_usb_hub(void)
 		board_usb_hub_reset();
 }
 
-static int cmd_usb_hub_reset(int argc, char *argv[])
+static int cmd_usb_hub_reset(int argc, const char *argv[])
 {
 	return board_usb_hub_reset();
 }
@@ -740,7 +740,7 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-static int cmd_fake_disconnect(int argc, char *argv[])
+static int cmd_fake_disconnect(int argc, const char *argv[])
 {
 	int delay_ms, duration_ms;
 	char *e;
@@ -777,7 +777,7 @@ static void trigger_dfu_release(void)
 }
 DECLARE_DEFERRED(trigger_dfu_release);
 
-static int cmd_trigger_dfu(int argc, char *argv[])
+static int cmd_trigger_dfu(int argc, const char *argv[])
 {
 	gpio_set_level(GPIO_CASE_CLOSE_DFU_L, 0);
 	ccprintf("Asserting CASE_CLOSE_DFU_L.\n");

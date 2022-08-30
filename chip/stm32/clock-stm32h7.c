@@ -590,7 +590,7 @@ void __idle(void)
 /**
  * Print low power idle statistics
  */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 
@@ -657,7 +657,7 @@ void clock_init(void)
 #endif
 }
 
-static int command_clock(int argc, char **argv)
+static int command_clock(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "hsi"))

@@ -174,7 +174,7 @@ DECLARE_HOOK(HOOK_SECOND, thermal_control_dptf, HOOK_PRIO_TEMP_SENSOR_DONE);
 /*****************************************************************************/
 /* Console commands */
 
-static int command_dptftemp(int argc, char **argv)
+static int command_dptftemp(int argc, const char **argv)
 {
 	int id, t;
 	int temp, trig;

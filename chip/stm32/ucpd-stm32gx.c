@@ -1490,7 +1490,7 @@ void ucpd_info(int port)
 	ucpd_task_log_dump();
 }
 
-static int command_ucpd(int argc, char **argv)
+static int command_ucpd(int argc, const char **argv)
 {
 	uint32_t tx_data = 0;
 	char *e;

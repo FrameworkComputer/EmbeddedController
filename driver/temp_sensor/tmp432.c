@@ -297,11 +297,11 @@ static int print_status(void)
 	return EC_SUCCESS;
 }
 
-static int command_tmp432(int argc, char **argv)
+static int command_tmp432(int argc, const char **argv)
 {
-	char *command;
+	const char *command;
 	char *e;
-	char *power;
+	const char *power;
 	int data;
 	int offset;
 	int rv;

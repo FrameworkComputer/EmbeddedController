@@ -866,7 +866,7 @@ err_free:
 /* Serial NOR Flash console commands. */
 
 #ifdef CONFIG_CMD_SPI_NOR
-static int command_spi_nor_info(int argc, char **argv)
+static int command_spi_nor_info(int argc, const char **argv)
 {
 	int rv = EC_SUCCESS;
 
@@ -934,7 +934,7 @@ DECLARE_CONSOLE_COMMAND(spinorinfo, command_spi_nor_info, "[device]",
 #endif /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
-static int command_spi_nor_erase(int argc, char **argv)
+static int command_spi_nor_erase(int argc, const char **argv)
 {
 	const struct spi_nor_device_t *spi_nor_device;
 	int spi_nor_device_index;
@@ -963,7 +963,7 @@ DECLARE_CONSOLE_COMMAND(spinorerase, command_spi_nor_erase,
 #endif /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
-static int command_spi_nor_write(int argc, char **argv)
+static int command_spi_nor_write(int argc, const char **argv)
 {
 	const struct spi_nor_device_t *spi_nor_device;
 	int spi_nor_device_index;
@@ -1013,7 +1013,7 @@ DECLARE_CONSOLE_COMMAND(spinorwrite, command_spi_nor_write,
 #endif /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
-static int command_spi_nor_read(int argc, char **argv)
+static int command_spi_nor_read(int argc, const char **argv)
 {
 	const struct spi_nor_device_t *spi_nor_device;
 	int spi_nor_device_index;

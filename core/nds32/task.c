@@ -678,7 +678,7 @@ void task_print_list(void)
 	}
 }
 
-static int command_task_info(int argc, char **argv)
+static int command_task_info(int argc, const char **argv)
 {
 #ifdef CONFIG_TASK_PROFILING
 	int total = 0;
@@ -710,7 +710,7 @@ static int command_task_info(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info, NULL, "Print task info");
 
-static int command_task_ready(int argc, char **argv)
+static int command_task_ready(int argc, const char **argv)
 {
 	if (argc < 2) {
 		ccprintf("tasks_ready: 0x%08x\n", (int)tasks_ready);

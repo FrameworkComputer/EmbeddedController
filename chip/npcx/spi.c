@@ -233,7 +233,7 @@ static int printrx(const char *desc, const uint8_t *txdata, int txlen,
 	return EC_SUCCESS;
 }
 
-static int command_spirom(int argc, char **argv)
+static int command_spirom(int argc, const char **argv)
 {
 	uint8_t txmandev[] = { 0x90, 0x00, 0x00, 0x00 };
 	uint8_t txjedec[] = { 0x9f };

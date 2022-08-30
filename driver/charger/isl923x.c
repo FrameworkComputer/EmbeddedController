@@ -1107,7 +1107,7 @@ int charger_get_system_power(void)
 	return adc;
 }
 
-static int console_command_psys(int argc, char **argv)
+static int console_command_psys(int argc, const char **argv)
 {
 	ccprintf("PSYS = %d uW\n", charger_get_system_power());
 	return 0;
@@ -1137,7 +1137,7 @@ static int print_amon_bmon(int chgnum, enum isl923x_amon_bmon amon,
 /**
  * Get charger AMON and BMON current.
  */
-static int console_command_amon_bmon(int argc, char **argv)
+static int console_command_amon_bmon(int argc, const char **argv)
 {
 	int ret = EC_SUCCESS;
 	int print_ac = 1;

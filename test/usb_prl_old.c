@@ -1301,7 +1301,7 @@ void before_test(void)
 	cycle_through_state_machine(PORT0, 10, MSEC);
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

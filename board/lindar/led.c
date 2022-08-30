@@ -662,7 +662,7 @@ static int help(const char *cmd)
 }
 #endif
 
-static int command_lightbar(int argc, char **argv)
+static int command_lightbar(int argc, const char **argv)
 {
 	/* no args = dump lightbar status */
 	if (argc == 1) {

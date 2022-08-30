@@ -135,7 +135,7 @@ static void port80_dump_buffer(void)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_port80(int argc, char **argv)
+static int command_port80(int argc, const char **argv)
 {
 	/*
 	 * 'port80 scroll' toggles whether port 80 output begins with a newline

@@ -681,7 +681,7 @@ void __ram_code __idle(void)
 /**
  * Print low power idle statistics
  */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 

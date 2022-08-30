@@ -20,7 +20,7 @@ LOG_MODULE_REGISTER(mock_power);
 DEFINE_FAKE_VALUE_FUNC(enum power_state, power_handle_state, enum power_state);
 DEFINE_FAKE_VOID_FUNC(chipset_force_shutdown, enum chipset_shutdown_reason);
 DEFINE_FAKE_VOID_FUNC(chipset_power_on);
-DEFINE_FAKE_VALUE_FUNC(int, command_power, int, char **);
+DEFINE_FAKE_VALUE_FUNC(int, command_power, int, const char **);
 
 #define MOCK_POWER_LIST(FAKE)                 \
 	{                                     \
@@ -115,7 +115,7 @@ static const char *const state_name[] = {
 	"ON",
 };
 
-int command_power_custom_fake(int argc, char **argv)
+int command_power_custom_fake(int argc, const char **argv)
 {
 	int v, req;
 

@@ -479,7 +479,7 @@ int spi_flash_set_protect(unsigned int offset, unsigned int bytes)
 	return spi_flash_set_status(sr1, sr2);
 }
 
-static int command_spi_flashinfo(int argc, char **argv)
+static int command_spi_flashinfo(int argc, const char **argv)
 {
 	uint8_t jedec[3];
 	uint8_t unique[8];
@@ -527,7 +527,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_SPI_INFO, flash_command_spi_info,
 #endif /* CONFIG_HOSTCMD_FLASH_SPI_INFO */
 
 #ifdef CONFIG_CMD_SPI_FLASH
-static int command_spi_flasherase(int argc, char **argv)
+static int command_spi_flasherase(int argc, const char **argv)
 {
 	int offset = -1;
 	int bytes = 4096;
@@ -548,7 +548,7 @@ static int command_spi_flasherase(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spi_flasherase, command_spi_flasherase,
 			"offset [bytes]", "Erase flash");
 
-static int command_spi_flashwrite(int argc, char **argv)
+static int command_spi_flashwrite(int argc, const char **argv)
 {
 	int offset = -1;
 	int bytes = SPI_FLASH_MAX_WRITE_SIZE;
@@ -593,7 +593,7 @@ static int command_spi_flashwrite(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spi_flashwrite, command_spi_flashwrite,
 			"offset [bytes]", "Write pattern to flash");
 
-static int command_spi_flashread(int argc, char **argv)
+static int command_spi_flashread(int argc, const char **argv)
 {
 	int i;
 	int offset = -1;
@@ -650,7 +650,7 @@ static int command_spi_flashread(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spi_flashread, command_spi_flashread, "offset bytes",
 			"Read flash");
 
-static int command_spi_flashread_sr(int argc, char **argv)
+static int command_spi_flashread_sr(int argc, const char **argv)
 {
 	spi_enable(SPI_FLASH_DEVICE, 1);
 
@@ -662,7 +662,7 @@ static int command_spi_flashread_sr(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spi_flash_rsr, command_spi_flashread_sr, NULL,
 			"Read status registers");
 
-static int command_spi_flashwrite_sr(int argc, char **argv)
+static int command_spi_flashwrite_sr(int argc, const char **argv)
 {
 	int val1 = 0;
 	int val2 = 0;
@@ -680,7 +680,7 @@ static int command_spi_flashwrite_sr(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spi_flash_wsr, command_spi_flashwrite_sr,
 			"value1 value2", "Write to status registers");
 
-static int command_spi_flashprotect(int argc, char **argv)
+static int command_spi_flashprotect(int argc, const char **argv)
 {
 	int val1 = 0;
 	int val2 = 0;

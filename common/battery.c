@@ -263,7 +263,7 @@ void print_battery_debug(void)
 	print_battery_info();
 }
 
-static int command_battery(int argc, char **argv)
+static int command_battery(int argc, const char **argv)
 {
 	int repeat = 1;
 	int loop;
@@ -374,7 +374,7 @@ static void check_pending_cutoff(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, check_pending_cutoff, HOOK_PRIO_LAST);
 
-static int command_cutoff(int argc, char **argv)
+static int command_cutoff(int argc, const char **argv)
 {
 	int rv;
 
@@ -438,7 +438,7 @@ __overridable int battery_set_vendor_param(uint32_t param, uint32_t value)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-static int console_command_battery_vendor_param(int argc, char **argv)
+static int console_command_battery_vendor_param(int argc, const char **argv)
 {
 	uint32_t param;
 	uint32_t value;

@@ -728,7 +728,7 @@ int rt1718s_gpio_get_level(int port, enum rt1718s_gpio signal)
 	return !!(val & RT1718S_GPIO_CTRL_I);
 }
 
-static int command_rt1718s_gpio(int argc, char **argv)
+static int command_rt1718s_gpio(int argc, const char **argv)
 {
 	int i, j;
 	uint32_t flags;

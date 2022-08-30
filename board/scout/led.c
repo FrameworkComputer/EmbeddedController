@@ -233,7 +233,7 @@ void show_critical_error(void)
 		set_color(EC_LED_ID_POWER_LED, LED_RED, 100);
 }
 
-static int command_led(int argc, char **argv)
+static int command_led(int argc, const char **argv)
 {
 	enum ec_led_id id = EC_LED_ID_POWER_LED;
 

@@ -145,7 +145,7 @@ int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
 /*****************************************************************************/
 /* Console commands */
 
-static int command_set_mode(int argc, char **argv)
+static int command_set_mode(int argc, const char **argv)
 {
 	int port_id = -1;
 	int mode = -1, inhibit_charge = 0;

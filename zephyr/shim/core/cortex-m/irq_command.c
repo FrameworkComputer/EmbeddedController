@@ -21,7 +21,7 @@ void sys_trace_isr_enter_user(int nested_interrupts)
 	irq_count[irq]++;
 }
 
-static int command_irq(int argc, char **argv)
+static int command_irq(int argc, const char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);

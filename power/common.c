@@ -903,7 +903,7 @@ inline void power_set_pause_in_s5(int pause)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_powerinfo(int argc, char **argv)
+static int command_powerinfo(int argc, const char **argv)
 {
 	/*
 	 * Print power state in same format as state machine.  This is
@@ -918,7 +918,7 @@ DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo, NULL,
 			"Show current power state");
 
 #ifdef CONFIG_CMD_POWERINDEBUG
-static int command_powerindebug(int argc, char **argv)
+static int command_powerindebug(int argc, const char **argv)
 {
 	const struct power_signal_info *s = power_signal_list;
 	int i;
@@ -954,7 +954,7 @@ DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug, "[mask]",
 
 #ifdef CONFIG_CMD_S5_TIMEOUT
 /* Allow command-line access to configure our S5 delay for power testing */
-static int command_s5_timeout(int argc, char **argv)
+static int command_s5_timeout(int argc, const char **argv)
 {
 	char *e;
 
@@ -977,7 +977,7 @@ DECLARE_CONSOLE_COMMAND(s5_timeout, command_s5_timeout, "[sec]",
 #endif
 
 #ifdef CONFIG_HIBERNATE
-static int command_hibernation_delay(int argc, char **argv)
+static int command_hibernation_delay(int argc, const char **argv)
 {
 	char *e;
 	uint32_t time_g3 =
@@ -1054,7 +1054,7 @@ host_command_pause_in_s5(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5, host_command_pause_in_s5,
 		     EC_VER_MASK(0));
 
-static int command_pause_in_s5(int argc, char **argv)
+static int command_pause_in_s5(int argc, const char **argv)
 {
 	if (argc > 1 && !parse_bool(argv[1], &pause_in_s5))
 		return EC_ERROR_INVAL;
@@ -1123,7 +1123,7 @@ DECLARE_HOOK(HOOK_SYSJUMP, preserve_enable_5v_state, HOOK_PRIO_DEFAULT);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 
 #ifdef CONFIG_POWERSEQ_FAKE_CONTROL
-static int command_power_fake(int argc, char **argv)
+static int command_power_fake(int argc, const char **argv)
 {
 	if (argc < 2) {
 		ccprints("Error: Argument required");

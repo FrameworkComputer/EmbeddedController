@@ -121,7 +121,7 @@ static void ina3221_dump(unsigned int unit)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_ina(int argc, char **argv)
+static int command_ina(int argc, const char **argv)
 {
 	char *e;
 	unsigned int unit;

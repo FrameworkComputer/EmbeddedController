@@ -143,7 +143,7 @@ static void npcx_lct_init(void)
 DECLARE_HOOK(HOOK_INIT, npcx_lct_init, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_RTC_ALARM
-static int command_lctalarm(int argc, char **argv)
+static int command_lctalarm(int argc, const char **argv)
 {
 	char *e;
 	int seconds;

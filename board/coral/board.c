@@ -938,7 +938,7 @@ static void print_form_factor_list(int low, int high)
 	}
 }
 
-static int command_sku(int argc, char **argv)
+static int command_sku(int argc, const char **argv)
 {
 	enum adc_channel chan;
 

@@ -166,7 +166,7 @@ void after_test(void)
 	enable_prl(PORT0, 0);
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_receive_control_msg);
 	RUN_TEST(test_send_control_msg);

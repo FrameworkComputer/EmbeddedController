@@ -561,7 +561,7 @@ static void dump_register(int reg)
 		ccprintf("ERR (%d)\n", rv);
 }
 
-static int it8801_dump(int argc, char **argv)
+static int it8801_dump(int argc, const char **argv)
 {
 	dump_register(IT8801_REG_KSIIER);
 	dump_register(IT8801_REG_KSIEER);

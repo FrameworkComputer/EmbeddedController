@@ -174,7 +174,7 @@ void gmr_tablet_switch_disable(void)
 #endif
 
 #ifdef CONFIG_TABLET_MODE
-static int command_settabletmode(int argc, char **argv)
+static int command_settabletmode(int argc, const char **argv)
 {
 	static uint32_t tablet_mode_store;
 

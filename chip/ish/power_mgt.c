@@ -708,7 +708,7 @@ static void print_stats(const char *name, const struct pm_stat *stat)
 /**
  * Print low power idle statistics
  */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	struct ish_aon_share *aon_share = pm_ctx.aon_share;
 

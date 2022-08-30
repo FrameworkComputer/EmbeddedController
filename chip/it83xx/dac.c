@@ -44,7 +44,7 @@ static void dac_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, dac_init, HOOK_PRIO_INIT_DAC);
 
-static int command_dac(int argc, char **argv)
+static int command_dac(int argc, const char **argv)
 {
 	char *e;
 	int ch, mv, rv;

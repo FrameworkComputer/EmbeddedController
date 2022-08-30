@@ -122,7 +122,7 @@ static void ina2xx_dump(uint8_t idx)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_ina(int argc, char **argv)
+static int command_ina(int argc, const char **argv)
 {
 	char *e;
 	int idx;

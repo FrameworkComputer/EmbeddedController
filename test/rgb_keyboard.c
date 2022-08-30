@@ -212,7 +212,7 @@ static int test_rgbkbd_startup(void)
 	return EC_SUCCESS;
 }
 
-int cc_rgb(int argc, char **argv);
+int cc_rgb(int argc, const char **argv);
 extern enum ec_rgbkbd_demo demo;
 
 static int test_rgbkbd_console_command(void)
@@ -222,10 +222,10 @@ static int test_rgbkbd_console_command(void)
 	char buf[8];
 	int i, x, y, r, c;
 	uint8_t offset;
-	char *argv_demo[] = { "rgbk", "demo", "0" };
-	char *argv_gcc[] = { "rgbk", "100" };
-	char *argv_color[] = { "rgbk", buf, "0x010203" };
-	char *argv_all[] = { "rgbk", "all", "0x010203" };
+	const char *argv_demo[] = { "rgbk", "demo", "0" };
+	const char *argv_gcc[] = { "rgbk", "100" };
+	const char *argv_color[] = { "rgbk", buf, "0x010203" };
+	const char *argv_all[] = { "rgbk", "all", "0x010203" };
 
 	/* Test 'rgbk demo 0'. */
 	before_test();
@@ -342,7 +342,7 @@ static int test_rgbkbd_rotate_color(void)
 static int test_rgbkbd_demo_flow(void)
 {
 	struct rgb_s copy[ARRAY_SIZE(rgbkbds)][RGB_GRID0_COL * RGB_GRID0_ROW];
-	char *argv_demo[] = { "rgbk", "demo", "1" };
+	const char *argv_demo[] = { "rgbk", "demo", "1" };
 	struct rgb_s *p;
 	int argc;
 	struct rgbkbd *ctx;
@@ -387,7 +387,7 @@ static int test_rgbkbd_demo_flow(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_rgbkbd_startup);
 	RUN_TEST(test_rgbkbd_console_command);

@@ -184,7 +184,7 @@ void print_charger_debug(int chgnum)
 		ccputs("disabled\n");
 }
 
-static int command_charger(int argc, char **argv)
+static int command_charger(int argc, const char **argv)
 {
 	int d;
 	char *e;

@@ -389,7 +389,7 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 }
 #endif /* CONFIG_BATTERY_REVIVE_DISCONNECT */
 
-static int command_battfake(int argc, char **argv)
+static int command_battfake(int argc, const char **argv)
 {
 	char *e;
 	int v;

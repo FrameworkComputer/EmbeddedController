@@ -100,7 +100,7 @@ static enum ec_error_list ioex_set(const char *name, int value)
 	return ioex_set_level(signal, value);
 }
 
-static int command_ioex_set(int argc, char **argv)
+static int command_ioex_set(int argc, const char **argv)
 {
 	char *e;
 	int v;
@@ -120,7 +120,7 @@ static int command_ioex_set(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(ioexset, command_ioex_set, "name <0 | 1>",
 			"Set level of a IO expander pin");
 
-static int command_ioex_get(int argc, char **argv)
+static int command_ioex_get(int argc, const char **argv)
 {
 	enum ioex_signal signal;
 

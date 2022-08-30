@@ -410,7 +410,7 @@ void __idle(void)
 /**
  * Print low power idle statistics
  */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 
@@ -429,7 +429,7 @@ DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 /**
  * Configure deep sleep clock settings.
  */
-static int command_dsleep(int argc, char **argv)
+static int command_dsleep(int argc, const char **argv)
 {
 	int v;
 

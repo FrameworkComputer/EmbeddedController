@@ -134,7 +134,7 @@ retry:
 /*
  * Display TPM event logs.
  */
-static int command_dlog(int argc, char **argv)
+static int command_dlog(int argc, const char **argv)
 {
 	size_t log_cur;
 	const uint8_t *const log_events_end =

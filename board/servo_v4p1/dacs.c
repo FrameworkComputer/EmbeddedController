@@ -103,7 +103,7 @@ int write_dac(enum dac_t dac, uint16_t value)
 }
 
 #ifdef SECTION_IS_RO
-static int cmd_cc_dac(int argc, char *argv[])
+static int cmd_cc_dac(int argc, const char *argv[])
 {
 	uint8_t dac;
 	uint64_t mv;

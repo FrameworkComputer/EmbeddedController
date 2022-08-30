@@ -1521,7 +1521,7 @@ DECLARE_HOST_COMMAND(EC_CMD_I2C_CONTROL, i2c_command_control, EC_VER_MASK(0));
 /* Console commands */
 
 #ifdef CONFIG_CMD_I2C_PROTECT
-static int command_i2cprotect(int argc, char **argv)
+static int command_i2cprotect(int argc, const char **argv)
 {
 	if (argc == 1) {
 		int i, port;
@@ -1597,7 +1597,7 @@ scan_bus_exit:
 	ccputs("\n");
 }
 
-static int command_scan(int argc, char **argv)
+static int command_scan(int argc, const char **argv)
 {
 	int port;
 	char *e;
@@ -1632,7 +1632,7 @@ DECLARE_CONSOLE_COMMAND(i2cscan, command_scan, "i2cscan [port]",
 #endif
 
 #ifdef CONFIG_CMD_I2C_XFER
-static int command_i2cxfer(int argc, char **argv)
+static int command_i2cxfer(int argc, const char **argv)
 {
 	int port;
 	uint16_t addr_flags;
@@ -1801,7 +1801,7 @@ static const char *const i2c_freq_str[] = {
 
 BUILD_ASSERT(ARRAY_SIZE(i2c_freq_str) == I2C_FREQ_COUNT + 1);
 
-static int command_i2c_speed(int argc, char **argv)
+static int command_i2c_speed(int argc, const char **argv)
 {
 	int port;
 	char *e;
@@ -1880,7 +1880,7 @@ static void i2c_test_status(struct i2c_test_results *i2c_test, int test_dev)
 }
 
 #define I2C_STRESS_TEST_DATA_VERIFY_RETRY_COUNT 3
-static int command_i2ctest(int argc, char **argv)
+static int command_i2ctest(int argc, const char **argv)
 {
 	char *e;
 	int i, j, rv;

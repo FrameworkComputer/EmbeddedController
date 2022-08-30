@@ -1161,7 +1161,7 @@ int test_task(void *u)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 #if defined(TEST_USB_SM_FRAMEWORK_H3)

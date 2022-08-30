@@ -749,7 +749,7 @@ test_static int test_command_read_match_secret_unreadable(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_hkdf_expand);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);

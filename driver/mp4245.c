@@ -163,7 +163,7 @@ void mp4245_get_status(void)
 	ccprintf("\tIlim   = %d mA, Ibus = %d mA\n", ilim, ibus);
 }
 
-static int command_mp4245(int argc, char **argv)
+static int command_mp4245(int argc, const char **argv)
 {
 	char *e;
 	int val;

@@ -168,7 +168,7 @@ static int test_hmac(const uint8_t *key, int key_len, const uint8_t *input,
 	return 1;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	ccprintf("Testing short message (8 bytes)\n");
 	if (!test_sha256(sha256_8_input, sizeof(sha256_8_input),

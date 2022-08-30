@@ -115,7 +115,7 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #ifdef CONFIG_DMA_HELP
 #include "dma.h"
-static int command_dma_help(int argc, char **argv)
+static int command_dma_help(int argc, const char **argv)
 {
 	dma_dump(STM32_DMA2_STREAM0);
 	dma_test(STM32_DMA2_STREAM0);

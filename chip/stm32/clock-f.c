@@ -397,7 +397,7 @@ void print_system_rtc(enum console_channel ch)
 }
 
 #ifdef CONFIG_CMD_RTC
-static int command_system_rtc(int argc, char **argv)
+static int command_system_rtc(int argc, const char **argv)
 {
 	char *e;
 	uint32_t t;
@@ -418,7 +418,7 @@ DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc, "[set <seconds>]",
 			"Get/set real-time clock");
 
 #ifdef CONFIG_CMD_RTC_ALARM
-static int command_rtc_alarm_test(int argc, char **argv)
+static int command_rtc_alarm_test(int argc, const char **argv)
 {
 	int s = 1, us = 0;
 	struct rtc_time_reg rtc;

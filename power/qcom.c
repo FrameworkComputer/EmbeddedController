@@ -904,7 +904,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
  */
 static int fake_suspend = -1;
 
-static int command_fake_suspend(int argc, char **argv)
+static int command_fake_suspend(int argc, const char **argv)
 {
 	int v;
 
@@ -1204,7 +1204,7 @@ static const char *const state_name[] = {
 	"on",
 };
 
-test_mockable_static int command_power(int argc, char **argv)
+test_mockable_static int command_power(int argc, const char **argv)
 {
 	int v;
 

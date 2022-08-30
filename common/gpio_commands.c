@@ -127,7 +127,7 @@ static void print_gpio_info(int gpio)
 	cflush();
 }
 
-static int command_gpio_get(int argc, char **argv)
+static int command_gpio_get(int argc, const char **argv)
 {
 	int i;
 
@@ -154,7 +154,7 @@ static int command_gpio_get(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(gpioget, command_gpio_get, "[name]",
 			     "Read GPIO value(s)");
 
-static int command_gpio_set(int argc, char **argv)
+static int command_gpio_set(int argc, const char **argv)
 {
 #ifdef CONFIG_CMD_GPIO_EXTENDED
 	int gpio;

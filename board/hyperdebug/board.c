@@ -263,7 +263,7 @@ static enum gpio_signal find_signal_by_name(const char *name)
 /*
  * Set the mode of a GPIO pin: input/opendrain/pushpull.
  */
-static int command_gpio_mode(int argc, char **argv)
+static int command_gpio_mode(int argc, const char **argv)
 {
 	int gpio;
 	int flags;
@@ -297,7 +297,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(gpiomode, command_gpio_mode,
 /*
  * Set the weak pulling of a GPIO pin: up/down/none.
  */
-static int command_gpio_pull_mode(int argc, char **argv)
+static int command_gpio_pull_mode(int argc, const char **argv)
 {
 	int gpio;
 	int flags;

@@ -196,7 +196,7 @@ int fan_percent_to_rpm(int fan, int pct)
 }
 
 #ifdef BOARD_FAN_TEST
-static int command_fan_test(int argc, char **argv)
+static int command_fan_test(int argc, const char **argv)
 {
 	char *e;
 	int t;

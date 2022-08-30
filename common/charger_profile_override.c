@@ -134,7 +134,7 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 }
 
 #ifdef CONFIG_CMD_CHARGER_PROFILE_OVERRIDE
-static int command_fastcharge(int argc, char **argv)
+static int command_fastcharge(int argc, const char **argv)
 {
 	if (argc > 1 && !parse_bool(argv[1], &fast_charging_allowed))
 		return EC_ERROR_PARAM1;
@@ -152,7 +152,7 @@ DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge, "[on|off]",
  * fast charging profile is selected.
  */
 #ifdef CONFIG_CMD_CHARGER_PROFILE_OVERRIDE_TEST
-static int command_fastcharge_test(int argc, char **argv)
+static int command_fastcharge_test(int argc, const char **argv)
 {
 	char *e;
 	int test_on;

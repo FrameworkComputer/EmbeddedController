@@ -710,7 +710,7 @@ static void usb_mux_reset_in_g3(void)
 DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, usb_mux_reset_in_g3, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_TYPEC
-static int command_typec(int argc, char **argv)
+static int command_typec(int argc, const char **argv)
 {
 	const char *const mux_name[] = { "none", "usb", "dp", "dock" };
 	char *e;

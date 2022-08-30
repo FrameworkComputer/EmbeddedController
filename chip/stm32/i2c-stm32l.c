@@ -409,7 +409,7 @@ void i2c_init(void)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_i2cdump(int argc, char **argv)
+static int command_i2cdump(int argc, const char **argv)
 {
 	dump_i2c_reg(I2C_PORT_MASTER, "dump");
 	return EC_SUCCESS;

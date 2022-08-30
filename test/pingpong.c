@@ -60,7 +60,7 @@ int task_tick(void *data)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	wait_for_task_started();
 	task_wake(TASK_ID_TICK);

@@ -208,7 +208,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HANG_DETECT, hang_detect_host_command,
 /*****************************************************************************/
 /* Console command */
 
-static int command_hang_detect(int argc, char **argv)
+static int command_hang_detect(int argc, const char **argv)
 {
 	ccprintf("flags:  0x%x\n", hdparams.flags);
 

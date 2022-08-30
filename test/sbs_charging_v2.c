@@ -942,7 +942,7 @@ static int test_battery_sustainer_discharge_idle(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_charge_state);
 	RUN_TEST(test_low_battery);

@@ -97,7 +97,7 @@ void board_power_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&bypass_pp3300_s5_deferred_data, 0);
 }
 
-static int cc_blockseq(int argc, char *argv[])
+static int cc_blockseq(int argc, const char *argv[])
 {
 	if (argc > 1) {
 		if (!parse_bool(argv[1], &block_sequence)) {

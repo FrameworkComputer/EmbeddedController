@@ -2694,7 +2694,7 @@ DECLARE_HOST_COMMAND(EC_CMD_CHARGE_STATE, charge_command_charge_state,
 
 #ifdef CONFIG_CMD_PWR_AVG
 
-static int command_pwr_avg(int argc, char **argv)
+static int command_pwr_avg(int argc, const char **argv)
 {
 	int avg_mv;
 	int avg_ma;
@@ -2718,7 +2718,7 @@ DECLARE_CONSOLE_COMMAND(pwr_avg, command_pwr_avg, NULL,
 
 #endif /* CONFIG_CMD_PWR_AVG */
 
-static int command_chgstate(int argc, char **argv)
+static int command_chgstate(int argc, const char **argv)
 {
 	int rv;
 	int val;
@@ -2776,7 +2776,7 @@ DECLARE_CONSOLE_COMMAND(chgstate, command_chgstate,
 			"Get/set charge state machine status");
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-static int command_chgdualdebug(int argc, char **argv)
+static int command_chgdualdebug(int argc, const char **argv)
 {
 	int val;
 	char *e;

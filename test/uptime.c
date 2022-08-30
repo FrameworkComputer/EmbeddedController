@@ -62,7 +62,7 @@ test_static int test_host_uptime_info_command_failure(void)
 	return EC_RES_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

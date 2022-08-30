@@ -474,7 +474,7 @@ static int kb800x_enter_low_power_mode(const struct usb_mux *me)
 
 #ifdef CONFIG_CMD_RETIMER
 
-static int console_command_kb800x_xfer(int argc, char **argv)
+static int console_command_kb800x_xfer(int argc, const char **argv)
 {
 	char rw, *e;
 	int rv, port, reg, val;

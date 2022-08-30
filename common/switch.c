@@ -99,7 +99,7 @@ void switch_interrupt(enum gpio_signal signal)
 }
 
 #ifdef CONFIG_CMD_MMAPINFO
-static int command_mmapinfo(int argc, char **argv)
+static int command_mmapinfo(int argc, const char **argv)
 {
 	uint8_t *memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
 	uint8_t val = *memmap_switches;

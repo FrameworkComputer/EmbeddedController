@@ -1302,7 +1302,7 @@ static void usb_info(void)
 	}
 }
 
-static int command_usb(int argc, char **argv)
+static int command_usb(int argc, const char **argv)
 {
 	if (argc > 1) {
 		if (!strcasecmp("on", argv[1]))
@@ -1378,7 +1378,7 @@ static int usb_save_serial(const char *serialno)
 	return rv;
 }
 
-static int command_serialno(int argc, char **argv)
+static int command_serialno(int argc, const char **argv)
 {
 	struct usb_string_desc *sd = usb_serialno_desc;
 	char buf[CONFIG_SERIALNO_LEN];
