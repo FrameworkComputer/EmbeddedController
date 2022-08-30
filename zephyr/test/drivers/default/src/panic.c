@@ -90,3 +90,19 @@ ZTEST(panic, test_panic_reason)
 
 	panic_data_print(pdata);
 }
+
+ZTEST(panic, test_panic_data_start_bad_magic)
+{
+	struct panic_data *pdata = get_panic_data_write();
+
+	pdata->magic = PANIC_DATA_MAGIC + 1;
+	zassert_equal(0, get_panic_data_start(), NULL);
+}
+
+ZTEST(panic, test_get_panic_data_start)
+{
+	struct panic_data *pdata = get_panic_data_write();
+
+	pdata->magic = PANIC_DATA_MAGIC;
+	zassert_equal((uintptr_t)pdata, get_panic_data_start(), NULL);
+}
