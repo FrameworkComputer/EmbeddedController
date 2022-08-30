@@ -4,6 +4,7 @@
 
 target_sources(app PRIVATE
     src/battery_cut_off.c
+    src/get_panic_info.c
     src/get_pd_port_caps.c
     src/host_event_commands.c
     src/host_event_commands_deprecated.c
