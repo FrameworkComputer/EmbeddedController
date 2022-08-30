@@ -799,7 +799,7 @@ function servo_save_add() {
 	local CTRL_RESULT=
 	case $# in
 		1) CTRL_RESULT="$( "${DUT_CONTROL_CMD[@]}" \
-				"${DUT_CTRL_PREFIX}$@" )"
+				"${DUT_CTRL_PREFIX}$*" )"
 		   if [[ -n "${CTRL_RESULT}" ]]; then
 			# Don't save the control with the prefix, because
 			# dut_control will add the prefix again when we restore
