@@ -780,17 +780,6 @@ function servo_ec_uart() {
 	echo "${PTY}"
 }
 
-# Not every control is supported on every servo type.  Therefore, define which
-# controls are supported by each servo type.
-servo_v2_VARS=( "cold_reset" )
-servo_micro_VARS=( "cold_reset" )
-servo_v4_with_ccd_cr50_VARS=( "cold_reset" )
-c2d2_VARS=( "cold_reset" )
-
-# Some servo boards use the same controls.
-servo_v3_VARS=( "${servo_v2_VARS[@]}" )
-servo_v4_with_servo_micro_VARS=( "${servo_micro_VARS[@]}" )
-
 declare -a save
 
 #######################################
@@ -819,10 +808,7 @@ function servo_save_add() {
 }
 
 function servo_save() {
-	local SERVO_VARS_NAME="${SERVO_TYPE}_VARS[@]"
-	for ctrl in "${!SERVO_VARS_NAME}"; do
-		servo_save_add "${ctrl}"
-	done
+	servo_save_add "cold_reset"
 
 	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
 		servo_save_add "i2c_mux_en"
