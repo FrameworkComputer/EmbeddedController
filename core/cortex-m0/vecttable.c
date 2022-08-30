@@ -47,12 +47,6 @@ void __attribute__((naked)) default_handler(void)
 extern void stack_end(void); /* not technically correct, it's just a pointer */
 extern void reset(void);
 
-#pragma GCC diagnostic push
-#if __GNUC__ >= 8
-#pragma GCC diagnostic ignored "-Wattribute-alias"
-#endif
-#pragma GCC diagnostic pop
-
 #endif /* PASS 1 */
 
 #if PASS == 2
