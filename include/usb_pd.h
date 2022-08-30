@@ -894,7 +894,6 @@ enum pd_states {
 	PD_STATE_BIST_RX, /* C36 */
 	PD_STATE_BIST_TX, /* C37 */
 	PD_STATE_DRP_AUTO_TOGGLE, /* C38 */
-	PD_STATE_ENTER_USB, /* C39 */
 	/* Number of states. Not an actual state. */
 	PD_STATE_COUNT,
 };
