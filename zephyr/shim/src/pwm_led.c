@@ -40,10 +40,9 @@ BUILD_ASSERT((PWM_LEDS_LEN > 0) && (PWM_LEDS_LEN <= 2),
 DT_INST_FOREACH_PROP_ELEM(0, leds, PWM_LEDS_BUILD_ASSERT)
 
 #define PWM_LED_NAME(node_id) DT_STRING_UPPER_TOKEN(node_id, ec_led_name)
-#define PWM_LED_NAME_WITH_COMMA(node_id) PWM_LED_NAME(node_id),
 
-const enum ec_led_id supported_led_ids[] = { DT_INST_FOREACH_CHILD(
-	0, PWM_LED_NAME_WITH_COMMA) };
+const enum ec_led_id supported_led_ids[] = { DT_INST_FOREACH_CHILD_SEP(
+	0, PWM_LED_NAME, (, )) };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 BUILD_ASSERT(ARRAY_SIZE(supported_led_ids) == DT_INST_PROP_LEN(0, leds),

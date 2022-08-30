@@ -33,16 +33,14 @@
 /*
  * Create an enum list of the interrupts
  */
-#define GPIO_INT_ENUM_WITH_COMMA(id) GPIO_INT_ENUM(id),
 enum gpio_interrupts {
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
-	DT_FOREACH_CHILD(DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
-			 GPIO_INT_ENUM_WITH_COMMA)
+	DT_FOREACH_CHILD_SEP(
+		DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
+		GPIO_INT_ENUM, (, )),
 #endif
-		GPIO_INT_COUNT
+	GPIO_INT_COUNT
 };
-
-#undef GPIO_INT_ENUM_WITH_COMMA
 
 /*
  * Forward reference to avoiding exposing internal structure

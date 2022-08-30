@@ -11,16 +11,14 @@
 #ifdef CONFIG_ADC
 
 #define ZSHIM_ADC_ID(node_id) DT_STRING_UPPER_TOKEN(node_id, enum_name)
-#define ADC_ID_WITH_COMMA(node_id) ZSHIM_ADC_ID(node_id),
 
 enum adc_channel {
 #if DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
-	DT_FOREACH_CHILD(DT_INST(0, named_adc_channels), ADC_ID_WITH_COMMA)
+	DT_FOREACH_CHILD_SEP(DT_INST(0, named_adc_channels), ZSHIM_ADC_ID,
+			     (, )),
 #endif /* named_adc_channels */
-		ADC_CH_COUNT
+	ADC_CH_COUNT
 };
-
-#undef ADC_ID_WITH_COMMA
 
 struct adc_t {
 	const char *name;
