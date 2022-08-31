@@ -24,6 +24,11 @@ properties:
     required: false
     description: |
       Charger chip for the USB-C port.
+  chg_alt:
+    type: phandle
+    required: false
+    description: |
+      Alternative charger for the USB-C port.
   ppc:
     type: phandle
     required: false

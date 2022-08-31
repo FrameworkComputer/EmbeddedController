@@ -31,12 +31,21 @@
 	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, chg), \
 		    (CHG_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, chg))), ())
 
+#define CHG_CHIP_ALT(usbc_id)                                               \
+	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, chg_alt),                     \
+		    (CHG_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, chg_alt))), \
+		    ())
+
 #define MAYBE_CONST \
 	COND_CODE_1(CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG, (), (const))
 
 /* Charger chips */
 MAYBE_CONST struct charger_config_t chg_chips[] = { DT_FOREACH_STATUS_OKAY(
 	named_usbc_port, CHG_CHIP) };
+
+/* Alternate options */
+const struct charger_config_t chg_chips_alt[] = { DT_FOREACH_STATUS_OKAY(
+	named_usbc_port, CHG_CHIP_ALT) };
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_SINGLE_CHIP
 BUILD_ASSERT(ARRAY_SIZE(chg_chips) == 1,
