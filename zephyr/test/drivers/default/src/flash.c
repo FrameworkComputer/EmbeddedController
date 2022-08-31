@@ -356,6 +356,66 @@ ZTEST_USER(flash, test_console_cmd_flashwp__bad_param)
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "flashwp xyz"), NULL);
 }
 
+/**
+ * @brief Prepare a region of flash for the test_crec_flash_is_erased* tests
+ *
+ * @param offset Offset to write bytes at.
+ * @param size Number of bytes to erase.
+ * @param make_write If true, write an arbitrary byte after erase so the region
+ *                   is no longer fully erased.
+ */
+static void setup_flash_region_helper(uint32_t offset, uint32_t size,
+				      bool make_write)
+{
+	struct ec_params_flash_erase erase_params = {
+		.offset = offset,
+		.size = size,
+	};
+	struct host_cmd_handler_args erase_args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FLASH_ERASE, 0, erase_params);
+
+	zassume_ok(host_command_process(&erase_args), NULL);
+
+	if (make_write) {
+		/* Sized for flash_write header plus one byte of data */
+		uint8_t out_buf[sizeof(struct ec_params_flash_write) +
+				sizeof(uint8_t)];
+
+		struct ec_params_flash_write *write_params =
+			(struct ec_params_flash_write *)out_buf;
+		struct host_cmd_handler_args write_args =
+			BUILD_HOST_COMMAND_SIMPLE(EC_CMD_FLASH_WRITE, 0);
+
+		write_params->offset = offset;
+		write_params->size = 1;
+		write_args.params = write_params;
+		write_args.params_size = sizeof(out_buf);
+
+		/* Write one byte at start of region */
+		out_buf[sizeof(*write_params)] = 0xec;
+
+		zassume_ok(host_command_process(&write_args), NULL);
+	}
+}
+
+ZTEST_USER(flash, test_crec_flash_is_erased__happy)
+{
+	uint32_t offset = 0x10000;
+
+	setup_flash_region_helper(offset, TEST_BUF_SIZE, false);
+
+	zassert_true(crec_flash_is_erased(offset, TEST_BUF_SIZE), NULL);
+}
+
+ZTEST_USER(flash, test_crec_flash_is_erased__not_erased)
+{
+	uint32_t offset = 0x10000;
+
+	setup_flash_region_helper(offset, TEST_BUF_SIZE, true);
+
+	zassert_true(!crec_flash_is_erased(offset, TEST_BUF_SIZE), NULL);
+}
+
 static void flash_reset(void)
 {
 	/* Set the GPIO WP_L to default */

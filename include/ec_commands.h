@@ -1744,7 +1744,14 @@ struct ec_params_flash_read {
 struct ec_params_flash_write {
 	uint32_t offset;
 	uint32_t size;
-	/* Followed by data to write */
+	/* Followed by data to write. This union allows accessing an
+	 * underlying buffer as uint32s or uint8s for convenience. This does not
+	 * increase the size of the struct.
+	 */
+	union {
+		uint32_t words32[0];
+		uint8_t bytes[0];
+	} data;
 } __ec_align4;
 
 /* Erase flash */
