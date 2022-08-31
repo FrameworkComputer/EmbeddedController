@@ -264,7 +264,7 @@ zephyr_coverage:
   stage: test
   needs: ["seed_cache"]
   script:
-    - ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
+    - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
       -v -i --gcov-tool gcov -x=ALLOW_WARNINGS=ON
   artifacts:
     paths:
@@ -336,7 +336,7 @@ testall:
   stage: test
   needs: ["seed_cache"]
   script:
-    - ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
+    - python3 ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
       -x=ALLOW_WARNINGS=ON
 
 twister_coverage:

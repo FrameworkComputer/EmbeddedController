@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env vpython3
 
 # Copyright 2022 The ChromiumOS Authors.
 # Use of this source code is governed by a BSD-style license that can be
@@ -9,6 +9,58 @@ This script is a wrapper for invoking Twister, the Zephyr test runner, using
 default parameters for the ChromiumOS EC project. For an overview of CLI
 parameters that may be used, please consult the Twister documentation.
 """
+
+# [VPYTHON:BEGIN]
+# python_version: "3.8"
+# wheel: <
+#   name: "infra/python/wheels/anytree-py2_py3"
+#   version: "version:2.8.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/colorama-py3"
+#   version: "version:0.4.1"
+# >
+# wheel: <
+#   name: "infra/python/wheels/docopt-py2_py3"
+#   version: "version:0.6.2"
+# >
+# wheel: <
+#   name: "infra/python/wheels/ply-py2_py3"
+#   version: "version:3.11"
+# >
+# wheel: <
+#   name: "infra/python/wheels/psutil/${vpython_platform}"
+#   version: "version:5.8.0.chromium.3"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pykwalify-py2_py3"
+#   version: "version:1.8.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pyserial-py2_py3"
+#   version: "version:3.4"
+# >
+# wheel: <
+#   name: "infra/python/wheels/python-dateutil-py2_py3"
+#   version: "version:2.8.1"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pyyaml-py3"
+#   version: "version:5.3.1"
+# >
+# wheel: <
+#   name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
+#   version: "version:0.2.6"
+# >
+# wheel: <
+#   name: "infra/python/wheels/ruamel_yaml-py3"
+#   version: "version:0.17.16"
+# >
+# wheel: <
+#   name: "infra/python/wheels/six-py2_py3"
+#   version: "version:1.16.0"
+# >
+# [VPYTHON:END]
 
 import argparse
 import os
@@ -113,6 +165,7 @@ def main():
     # warnings during twister runs until all the label properties are removed
     # from all board and test overlays.
     twister_cli = [
+        sys.executable,
         str(zephyr_base / "scripts" / "twister"),  # Executable path
         "--ninja",
         "--disable-warnings-as-errors",
