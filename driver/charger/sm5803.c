@@ -360,8 +360,9 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
 			 * Only enable auto fast charge when a battery is
 			 * connected and out of cutoff.
 			 */
-			if (battery_get_disconnect_state() ==
-			    BATTERY_NOT_DISCONNECTED) {
+			if (IS_ENABLED(CONFIG_BATTERY) &&
+			    battery_get_disconnect_state() ==
+				    BATTERY_NOT_DISCONNECTED) {
 				rv = sm5803_flow2_update(
 					chgnum, SM5803_FLOW2_AUTO_ENABLED,
 					MASK_SET);
@@ -470,9 +471,6 @@ static void sm5803_init(int chgnum)
 	enum ec_error_list rv;
 	int reg;
 	int vbus_mv;
-	const struct battery_info *batt_info;
-	int pre_term;
-	int cells;
 
 	/*
 	 * If a charger is not currently present, disable switching per OCPC
@@ -746,40 +744,52 @@ static void sm5803_init(int chgnum)
 	rv |= chg_write8(chgnum, SM5803_REG_FLOW2, SM5803_FLOW2_HOST_MODE_EN);
 
 	if (chgnum == CHARGER_PRIMARY) {
-		int ibat_eoc_ma;
+		if (IS_ENABLED(CONFIG_BATTERY)) {
+			const struct battery_info *batt_info;
+			int ibat_eoc_ma;
+			int pre_term;
+			int cells;
 
-		/* Set end of fast charge threshold */
-		batt_info = battery_get_info();
-		ibat_eoc_ma = batt_info->precharge_current - 50;
-		ibat_eoc_ma /= 100;
-		ibat_eoc_ma = CLAMP(ibat_eoc_ma, 0, SM5803_CONF5_IBAT_EOC_TH);
-		rv |= chg_read8(chgnum, SM5803_REG_FAST_CONF5, &reg);
-		reg &= ~SM5803_CONF5_IBAT_EOC_TH;
-		reg |= ibat_eoc_ma;
-		rv |= chg_write8(CHARGER_PRIMARY, SM5803_REG_FAST_CONF5, reg);
+			/* Set end of fast charge threshold */
+			batt_info = battery_get_info();
+			ibat_eoc_ma = batt_info->precharge_current - 50;
+			ibat_eoc_ma /= 100;
+			ibat_eoc_ma =
+				CLAMP(ibat_eoc_ma, 0, SM5803_CONF5_IBAT_EOC_TH);
+			rv |= chg_read8(chgnum, SM5803_REG_FAST_CONF5, &reg);
+			reg &= ~SM5803_CONF5_IBAT_EOC_TH;
+			reg |= ibat_eoc_ma;
+			rv |= chg_write8(CHARGER_PRIMARY, SM5803_REG_FAST_CONF5,
+					 reg);
 
-		/* Setup the proper precharge thresholds. */
-		cells = batt_info->voltage_max / 4;
-		pre_term = batt_info->voltage_min / cells;
-		pre_term /= 100; /* Convert to decivolts. */
-		pre_term = CLAMP(pre_term, SM5803_VBAT_PRE_TERM_MIN_DV,
-				 SM5803_VBAT_PRE_TERM_MAX_DV);
-		pre_term -= SM5803_VBAT_PRE_TERM_MIN_DV; /* Convert to regval */
+			/* Setup the proper precharge thresholds. */
+			cells = batt_info->voltage_max / 4;
+			pre_term = batt_info->voltage_min / cells;
+			/* Convert to decivolts. */
+			pre_term /= 100;
+			pre_term = CLAMP(pre_term, SM5803_VBAT_PRE_TERM_MIN_DV,
+					 SM5803_VBAT_PRE_TERM_MAX_DV);
+			/* Convert to regval */
+			pre_term -= SM5803_VBAT_PRE_TERM_MIN_DV;
 
-		rv |= chg_read8(chgnum, SM5803_REG_PRE_FAST_CONF_REG1, &reg);
-		reg &= ~SM5803_VBAT_PRE_TERM;
-		reg |= pre_term << SM5803_VBAT_PRE_TERM_SHIFT;
-		rv |= chg_write8(chgnum, SM5803_REG_PRE_FAST_CONF_REG1, reg);
+			rv |= chg_read8(chgnum, SM5803_REG_PRE_FAST_CONF_REG1,
+					&reg);
+			reg &= ~SM5803_VBAT_PRE_TERM;
+			reg |= pre_term << SM5803_VBAT_PRE_TERM_SHIFT;
+			rv |= chg_write8(chgnum, SM5803_REG_PRE_FAST_CONF_REG1,
+					 reg);
 
-		/*
-		 * Set up precharge current
-		 * Note it is preferred to under-shoot the precharge current
-		 * requested. Upper bits of this register are read/write 1 to
-		 * clear
-		 */
-		reg = SM5803_CURRENT_TO_REG(batt_info->precharge_current);
-		reg = MIN(reg, SM5803_PRECHG_ICHG_PRE_SET);
-		rv |= chg_write8(chgnum, SM5803_REG_PRECHG, reg);
+			/*
+			 * Set up precharge current
+			 * Note it is preferred to under-shoot the precharge
+			 * current requested. Upper bits of this register are
+			 * read/write 1 to clear
+			 */
+			reg = SM5803_CURRENT_TO_REG(
+				batt_info->precharge_current);
+			reg = MIN(reg, SM5803_PRECHG_ICHG_PRE_SET);
+			rv |= chg_write8(chgnum, SM5803_REG_PRECHG, reg);
+		}
 
 		/*
 		 * Set up BFET alerts
@@ -894,6 +904,7 @@ static void sm5803_disable_runtime_low_power_mode(void)
 DECLARE_HOOK(HOOK_USB_PD_CONNECT, sm5803_disable_runtime_low_power_mode,
 	     HOOK_PRIO_FIRST);
 
+#ifdef CONFIG_BATTERY
 static enum ec_error_list sm5803_enable_linear_charge(int chgnum, bool enable)
 {
 	int rv;
@@ -942,6 +953,7 @@ static enum ec_error_list sm5803_enable_linear_charge(int chgnum, bool enable)
 
 	return rv;
 }
+#endif
 
 static void sm5803_enable_runtime_low_power_mode(void)
 {
@@ -1102,8 +1114,7 @@ void sm5803_handle_interrupt(int chgnum)
 	enum ec_error_list rv;
 	int int_reg, meas_reg;
 	static bool throttled;
-	struct batt_params bp;
-	int act_chg, val;
+	int act_chg;
 
 	/* Note: Interrupt registers are clear on read */
 	rv = main_read8(chgnum, SM5803_REG_INT1_REQ, &int_reg);
@@ -1243,8 +1254,12 @@ void sm5803_handle_interrupt(int chgnum)
 		return;
 	}
 
-	if ((int_reg & SM5803_INT3_BFET_PWR_LIMIT) ||
-	    (int_reg & SM5803_INT3_BFET_PWR_HWSAFE_LIMIT)) {
+	if (IS_ENABLED(CONFIG_BATTERY) &&
+	    ((int_reg & SM5803_INT3_BFET_PWR_LIMIT) ||
+	     (int_reg & SM5803_INT3_BFET_PWR_HWSAFE_LIMIT))) {
+		struct batt_params bp;
+		int val;
+
 		battery_get_params(&bp);
 		act_chg = charge_manager_get_active_charge_port();
 		CPRINTS("%s BFET power limit reached! (%s)", CHARGER_NAME,
@@ -1516,6 +1531,7 @@ static enum ec_error_list sm5803_set_voltage(int chgnum, int voltage)
 
 	/* Once battery is connected, set up fast charge enable */
 	if (fast_charge_disabled && chgnum == CHARGER_PRIMARY &&
+	    IS_ENABLED(CONFIG_BATTERY) &&
 	    battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
 		rv = sm5803_flow2_update(chgnum, SM5803_FLOW2_AUTO_ENABLED,
 					 MASK_SET);
@@ -2047,7 +2063,9 @@ const struct charger_drv sm5803_drv = {
 	.is_sourcing_otg_power = &sm5803_is_sourcing_otg_power,
 	.set_vsys_compensation = &sm5803_set_vsys_compensation,
 	.is_icl_reached = &sm5803_is_input_current_limit_reached,
+#ifdef CONFIG_BATTERY
 	.enable_linear_charge = &sm5803_enable_linear_charge,
+#endif
 #ifdef CONFIG_CHARGE_RAMP_HW
 	.set_hw_ramp = &sm5803_set_hw_ramp,
 	.ramp_is_stable = &sm5803_ramp_is_stable,
