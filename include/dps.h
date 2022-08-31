@@ -72,6 +72,10 @@ void dps_update_stabilized_time(int port);
 __test_only void dps_enable(bool en);
 __test_only int dps_init(void);
 __test_only struct dps_config_t *dps_get_config(void);
+__test_only bool dps_is_fake_enabled(void);
+__test_only int dps_get_fake_mv(void);
+__test_only int dps_get_fake_ma(void);
+__test_only int *dps_get_debug_level(void);
 #endif
 
 #endif /* __CROS_EC_DPS__H */
