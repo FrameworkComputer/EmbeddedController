@@ -181,6 +181,10 @@
 			#led-pin-cells = <1>;
 			gpios = <&gpio0 33 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
 		};
+		ap_ec_int_l {
+			gpios = <&gpio0 34 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
+		};
 	};
 
 	gpio-interrupts {
@@ -870,7 +874,7 @@
 };
 
 &gpio0 {
-	ngpios = <34>;
+	ngpios = <35>;
 };
 
 &i2c0 {
