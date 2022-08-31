@@ -8,6 +8,7 @@ tests:
       - CONFIG_LINK_TEST_SUITE_DEFAULT=y
       - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
       - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
   drivers.default.mock_power:
     timeout: 240
     extra_args: CONF_FILE="prj.conf;default/prj.conf"
@@ -15,6 +16,7 @@ tests:
       - CONFIG_LINK_TEST_SUITE_DEFAULT=y
       - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
       - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
       - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.host_cmd:
     extra_configs:
