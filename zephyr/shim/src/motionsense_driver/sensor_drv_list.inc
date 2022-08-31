@@ -52,3 +52,6 @@
 #ifdef CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO
 #include "lsm6dso-drvinfo.inc"
 #endif
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM
+#include "lsm6dsm-drvinfo.inc"
+#endif

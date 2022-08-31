@@ -2014,6 +2014,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_ACCELGYRO_LSM6DSO
 #endif
 
+#undef CONFIG_ACCELGYRO_LSM6DSM
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM
+#define CONFIG_ACCELGYRO_LSM6DSM
+#endif
+
 #endif /* CONFIG_PLATFORM_EC_MOTIONSENSE */
 
 #undef CONFIG_MATH_UTIL
