@@ -353,6 +353,9 @@ uint16_t tcpc_get_alert_status(void)
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
+	if (port == CHARGER_SOLO) {
+		charger_set_input_current_limit(CHARGER_SOLO, max_ma);
+	}
 }
 
 __override int extpower_is_present(void)
