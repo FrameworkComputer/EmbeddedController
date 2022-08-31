@@ -10,6 +10,7 @@
 	chosen {
 		cros-ec,flash = &flash1;
 		cros-ec,flash-controller = &cros_flash;
+		zephyr,shell-uart = &test_uart;
 	};
 	aliases {
 		gpio-wp = &gpio_wp_l;
@@ -74,7 +75,6 @@
 			compatible = "cros,tcpci-generic-emul";
 			status = "okay";
 			reg = <0x82>;
-			label = "TCPCI_EMUL";
 			alert_gpio = <&usb_c0_tcpc_int_odl>;
 		};
 	};
@@ -97,6 +97,12 @@
 		default_battery: lgc_ac17a8m {
 			compatible = "lgc,ac17a8m", "battery-smart";
 		};
+	};
+	test_uart: uart@55556666 {
+		compatible = "vnd,serial";
+		reg = <0x55556666 0x1000>;
+		status = "okay";
+		buffer-size = <200>;
 	};
 };
 
@@ -121,7 +127,6 @@
 		compatible = "cros,isl923x-emul";
 		status = "okay";
 		reg = <0x9>;
-		label = "ISL923X_EMUL";
 		battery = <&battery>;
 	};
 };

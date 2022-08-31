@@ -223,10 +223,12 @@ void vboot_disable_pd(void)
 }
 #endif
 
+/* LCOV_EXCL_START - This is just a stub intended to be overridden */
 __overridable void show_critical_error(void)
 {
 	CPRINTS("%s", __func__);
 }
+/* LCOV_EXCL_STOP */
 
 static void verify_and_jump(void)
 {
@@ -251,14 +253,16 @@ static void verify_and_jump(void)
 	}
 }
 
+/* LCOV_EXCL_START - This is just a stub intended to be overridden */
 __overridable void show_power_shortage(void)
 {
 	CPRINTS("%s", __func__);
 }
+/* LCOV_EXCL_STOP */
 
 static bool is_battery_ready(void)
 {
-	/* TODO: Add battery check (https://crbug.com/1045216) */
+	/* TODO(b/172210316): Add battery check */
 	return true;
 }
 
@@ -300,12 +304,16 @@ void vboot_main(void)
 		 * If battery is drained or bad, we will boot in NO_BOOT mode to
 		 * inform the user of the problem.
 		 */
+		/* LCOV_EXCL_START - TODO(b/172210316) implement
+		 * is_battery_ready(), and remove this lcov excl.
+		 */
 		if (!is_battery_ready()) {
 			CPRINTS("Battery not ready or bad");
 			if (set_boot_mode(BOOT_MODE_NO_BOOT) ==
 			    CR50_COMM_SUCCESS)
 				enable_pd();
 		}
+		/* LCOV_EXCL_STOP */
 
 		/* We'll enter recovery mode immediately, later, or never. */
 		return;

@@ -56,6 +56,8 @@ static struct k_poll_signal shell_init_signal;
  * (which requires locking the shell).
  */
 static bool shell_stopped;
+
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 RING_BUF_DECLARE(rx_buffer, CONFIG_UART_RX_BUF_SIZE);
 
 static void uart_rx_handle(const struct device *dev)
@@ -90,10 +92,12 @@ static void uart_callback(const struct device *dev, void *user_data)
 	if (uart_irq_rx_ready(dev))
 		uart_rx_handle(dev);
 }
+#endif
 
 static void shell_uninit_callback(const struct shell *shell, int res)
 {
 	if (!res) {
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 		/* Set the new callback */
 		uart_irq_callback_user_data_set(uart_shell_dev, uart_callback,
 						NULL);
@@ -106,6 +110,7 @@ static void shell_uninit_callback(const struct shell *shell, int res)
 
 		/* Enable RX interrupts */
 		uart_irq_rx_enable(uart_shell_dev);
+#endif
 	}
 
 	/* Notify the uninit signal that we finished */
@@ -126,9 +131,11 @@ int uart_shell_stop(void)
 	/* Clear all pending input */
 	uart_clear_input();
 
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	/* Disable RX and TX interrupts */
 	uart_irq_rx_disable(uart_shell_dev);
 	uart_irq_tx_disable(uart_shell_dev);
+#endif
 
 	/* Initialize the uninit signal */
 	k_poll_signal_init(&shell_uninit_signal);
@@ -169,8 +176,10 @@ static void shell_init_from_work(struct k_work *work)
 	k_thread_priority_set(shell_zephyr->ctx->tid,
 			      EC_TASK_PRIORITY(EC_SHELL_PRIO));
 
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	uart_irq_rx_enable(uart_shell_dev);
 	uart_irq_tx_enable(uart_shell_dev);
+#endif
 
 	/* Notify the init signal that initialization is complete */
 	k_poll_signal_raise(&shell_init_signal, 0);
@@ -183,9 +192,11 @@ void uart_shell_start(void)
 		K_POLL_TYPE_SIGNAL, K_POLL_MODE_NOTIFY_ONLY,
 		&shell_init_signal);
 
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	/* Disable RX and TX interrupts */
 	uart_irq_rx_disable(uart_shell_dev);
 	uart_irq_tx_disable(uart_shell_dev);
+#endif
 
 	/* Initialize k_work to call shell init (this makes it thread safe) */
 	k_work_init(&shell_init_work, shell_init_from_work);
@@ -316,24 +327,39 @@ void uart_flush_output(void)
 
 void uart_tx_flush(void)
 {
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	while (!uart_irq_tx_complete(uart_shell_dev))
 		;
+#endif
 }
 
 int uart_getc(void)
 {
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	uint8_t c;
 
 	if (ring_buf_get(&rx_buffer, &c, 1)) {
 		return c;
 	}
 	return -1;
+#else
+	uint8_t c;
+	int rv;
+
+	rv = uart_poll_in(uart_shell_dev, &c);
+	if (rv) {
+		return rv;
+	}
+	return c;
+#endif
 }
 
 void uart_clear_input(void)
 {
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	/* Reset the input ring buffer */
 	ring_buf_reset(&rx_buffer);
+#endif
 }
 
 static void handle_sprintf_rv(int rv, size_t *len)

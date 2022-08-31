@@ -3,21 +3,25 @@
  * found in the LICENSE file.
  */
 
-#include "zephyr/kernel.h"
+#include "driver/bc12/pi3usb9201_public.h"
+#include "driver/tcpm/tcpci.h"
+#include "ec_app_main.h"
+#include "emul/emul_flash.h"
+#include "hooks.h"
+#include "ppc/sn5s330_public.h"
+#include "task.h"
+#include "usb_mux.h"
+#include "usbc_ppc.h"
+#include "vboot.h"
+
+#include <stdint.h>
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/uart/serial_test.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
-#include <zephyr/shell/shell_dummy.h>
-
-#include "ec_app_main.h"
-#include "hooks.h"
-#include "task.h"
-#include "emul/emul_flash.h"
-#include "vboot.h"
-#include "driver/bc12/pi3usb9201_public.h"
-#include "usb_mux.h"
-#include "driver/tcpm/tcpci.h"
-#include "ppc/sn5s330_public.h"
-#include "usbc_ppc.h"
 
 static int show_power_shortage_called;
 void show_power_shortage(void)
@@ -126,15 +130,139 @@ ZTEST(vboot_efs2, test_vboot_main_jump_timeout)
 	zassert_equal(show_power_shortage_called, 0, NULL);
 }
 
-/* TODO(jbettis): Add cases for verify_and_jump() CR50_COMM_ERR_BAD_PAYLOAD &
- * CR50_COMM_SUCCESS
- */
+#define PACKET_MODE_GPIO DT_PATH(named_gpios, ec_gsc_packet_mode)
+
+static const struct device *uart_shell_dev =
+	DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
+static const struct device *gpio_dev =
+	DEVICE_DT_GET(DT_GPIO_CTLR(PACKET_MODE_GPIO, gpios));
+
+static void reply_cr50_payload(const struct device *dev, void *user_data)
+{
+	if (gpio_emul_output_get(gpio_dev,
+				 DT_GPIO_PIN(PACKET_MODE_GPIO, gpios))) {
+		struct cr50_comm_request req;
+		uint32_t bytes_read;
+
+		bytes_read = serial_vnd_peek_out_data(
+			uart_shell_dev, (void *)&req, sizeof(req));
+		/* If ! valid cr50_comm_request header, read 1 byte. */
+		while (bytes_read == sizeof(req) &&
+		       req.magic != CR50_PACKET_MAGIC) {
+			/* Consume one byte and then peek again. */
+			serial_vnd_read_out_data(uart_shell_dev, NULL, 1);
+			bytes_read = serial_vnd_peek_out_data(
+				uart_shell_dev, (void *)&req, sizeof(req));
+		}
+		if (bytes_read == sizeof(req)) {
+			/* If we have a full packet, consume it, and reply
+			 * with whatever is in user_data which holds a cr50
+			 * reply.
+			 */
+			if (req.size <=
+			    serial_vnd_out_data_size_get(uart_shell_dev)) {
+				serial_vnd_read_out_data(uart_shell_dev, NULL,
+							 req.size);
+				serial_vnd_queue_in_data(
+					uart_shell_dev, user_data,
+					sizeof(struct cr50_comm_response));
+			}
+		}
+	} else {
+		/* Packet mode is off, so just consume some bytes from the out
+		 * buffer. The buffer is only 200 in the dts, so 1000 will
+		 * consume it all.
+		 */
+		serial_vnd_read_out_data(uart_shell_dev, NULL, 1000);
+	}
+}
+
+ZTEST(vboot_efs2, test_vboot_main_jump_bad_payload)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+	const char *outbuffer;
+	size_t buffer_size;
+	struct cr50_comm_response resp = {
+		.error = CR50_COMM_ERR_BAD_PAYLOAD,
+	};
+
+	serial_vnd_set_callback(uart_shell_dev, reply_cr50_payload, &resp);
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+	vboot_main();
+
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+
+	zassert_true(strstr(outbuffer, "VB Ping Cr50") != NULL,
+		     "Expected msg not in %s", outbuffer);
+	zassert_true(strstr(outbuffer, "VB Hash mismatch") != NULL,
+		     "Expected msg not in %s", outbuffer);
+	zassert_true(vboot_allow_usb_pd(), NULL);
+	zassert_equal(show_power_shortage_called, 0, NULL);
+	zassert_equal(show_critical_error_called, 0, NULL);
+}
+
+/* This hits the default case in verify_and_jump. */
+ZTEST(vboot_efs2, test_vboot_main_jump_bad_crc)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+	const char *outbuffer;
+	size_t buffer_size;
+	struct cr50_comm_response resp = {
+		.error = CR50_COMM_ERR_CRC,
+	};
+
+	serial_vnd_set_callback(uart_shell_dev, reply_cr50_payload, &resp);
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+	vboot_main();
+
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+
+	zassert_true(strstr(outbuffer, "VB Ping Cr50") != NULL,
+		     "Expected msg not in %s", outbuffer);
+	zassert_true(strstr(outbuffer, "VB Failed to verify RW (0xec03)") !=
+			     NULL,
+		     "Expected msg not in %s", outbuffer);
+	zassert_false(vboot_allow_usb_pd(), NULL);
+	zassert_equal(show_power_shortage_called, 0, NULL);
+	zassert_equal(show_critical_error_called, 1, NULL);
+}
+
+ZTEST(vboot_efs2, test_vboot_main_jump_success)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+	const char *outbuffer;
+	size_t buffer_size;
+	struct cr50_comm_response resp = {
+		.error = CR50_COMM_SUCCESS,
+	};
+
+	serial_vnd_set_callback(uart_shell_dev, reply_cr50_payload, &resp);
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+	vboot_main();
+
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+
+	zassert_true(strstr(outbuffer, "VB Ping Cr50") != NULL,
+		     "Expected msg not in %s", outbuffer);
+	zassert_true(strstr(outbuffer, "VB Failed to jump") != NULL,
+		     "Expected msg not in %s", outbuffer);
+	zassert_false(vboot_allow_usb_pd(), NULL);
+	zassert_equal(show_power_shortage_called, 0, NULL);
+	zassert_equal(show_critical_error_called, 1, NULL);
+	zassert_equal(system_get_reset_flags(), 0, NULL);
+}
 
 void *vboot_efs2_setup(void)
 {
 	/* Wait for the shell to start. */
 	k_sleep(K_MSEC(1));
 	zassert_equal(get_ec_shell()->ctx->state, SHELL_STATE_ACTIVE, NULL);
+
+	system_common_pre_init();
+
 	return NULL;
 }
 
@@ -146,8 +274,9 @@ void vboot_efs2_cleanup(void *fixture)
 	show_power_shortage_called = 0;
 	show_critical_error_called = 0;
 	system_exit_manual_recovery();
-	system_clear_reset_flags(EC_RESET_FLAG_STAY_IN_RO);
+	system_clear_reset_flags(EC_RESET_FLAG_STAY_IN_RO | EC_RESET_FLAG_EFS);
 	vboot_disable_pd();
+	serial_vnd_set_callback(uart_shell_dev, NULL, NULL);
 }
 
 ZTEST_SUITE(vboot_efs2, NULL, vboot_efs2_setup, NULL, vboot_efs2_cleanup, NULL);
