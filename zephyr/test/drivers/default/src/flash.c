@@ -279,6 +279,83 @@ ZTEST_USER(flash, test_hostcmd_flash_info)
 		"response.write_ideal_size = %d", response.write_ideal_size);
 }
 
+ZTEST_USER(flash, test_console_cmd_flashwp__invalid)
+{
+	/* Command requires a 2nd CLI arg */
+	zassert_ok(!shell_execute_cmd(get_ec_shell(), "flashwp"), NULL);
+}
+
+ZTEST_USER(flash, test_console_cmd_flashwp__now)
+{
+	uint32_t current;
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "flashwp true"), NULL);
+
+	current = crec_flash_get_protect();
+	zassert_true(EC_FLASH_PROTECT_GPIO_ASSERTED & current, "current = %08x",
+		     current);
+	zassert_true(EC_FLASH_PROTECT_RO_AT_BOOT & current, "current = %08x",
+		     current);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "flashwp now"), NULL);
+
+	current = crec_flash_get_protect();
+	zassert_true(current & EC_FLASH_PROTECT_ALL_NOW, "current = %08x",
+		     current);
+}
+
+ZTEST_USER(flash, test_console_cmd_flashwp__all)
+{
+	uint32_t current;
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "flashwp true"), NULL);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "flashwp all"), NULL);
+
+	current = crec_flash_get_protect();
+	zassert_true(EC_FLASH_PROTECT_ALL_NOW & current, "current = %08x",
+		     current);
+}
+
+ZTEST_USER(flash, test_console_cmd_flashwp__bool_false)
+{
+	uint32_t current;
+
+	/* Set RO_AT_BOOT and verify */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "flashwp true"), NULL);
+
+	current = crec_flash_get_protect();
+	zassert_true(current & EC_FLASH_PROTECT_RO_AT_BOOT, "current = %08x",
+		     current);
+
+	gpio_wp_l_set(1);
+
+	/* Now clear it */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "flashwp false"), NULL);
+
+	current = crec_flash_get_protect();
+	zassert_false(current & EC_FLASH_PROTECT_RO_AT_BOOT, "current = %08x",
+		      current);
+}
+
+ZTEST_USER(flash, test_console_cmd_flashwp__bool_true)
+{
+	uint32_t current;
+
+	gpio_wp_l_set(1);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "flashwp true"), NULL);
+
+	current = crec_flash_get_protect();
+	zassert_equal(EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW,
+		      current, "current = %08x", current);
+}
+
+ZTEST_USER(flash, test_console_cmd_flashwp__bad_param)
+{
+	zassert_ok(!shell_execute_cmd(get_ec_shell(), "flashwp xyz"), NULL);
+}
+
 static void flash_reset(void)
 {
 	/* Set the GPIO WP_L to default */
