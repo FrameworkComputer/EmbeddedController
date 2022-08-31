@@ -125,7 +125,7 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 		task_wake(TASK_ID_KEYSCAN);
 }
 
-static void get_keyscan_config(struct ec_mkbp_config *dst)
+test_export_static void get_keyscan_config(struct ec_mkbp_config *dst)
 {
 	const struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 

@@ -9,6 +9,7 @@
 #define __CROS_EC_KEYBOARD_MKBP_H
 
 #include "common.h"
+#include "ec_commands.h"
 #include "keyboard_config.h"
 
 /**
@@ -17,5 +18,9 @@
  * @return EC_SUCCESS if entry added, EC_ERROR_OVERFLOW if FIFO is full
  */
 int mkbp_keyboard_add(const uint8_t *buffp);
+
+#ifdef TEST_BUILD
+void get_keyscan_config(struct ec_mkbp_config *dst);
+#endif
 
 #endif /* __CROS_EC_KEYBOARD_MKBP_H */
