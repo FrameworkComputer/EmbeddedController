@@ -129,7 +129,6 @@ UNUSED(PIN(0, 2))       /* GPIO02 */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(8, 1))       /* GPIO81 */
-UNUSED(PIN(7, 3))       /* GPIO73 */
 UNUSED(PIN(6, 0))       /* GPIO60 */
 UNUSED(PIN(C, 2))       /* GPIOC2 */
 UNUSED(PIN(E, 1))       /* GPIOE1 */
