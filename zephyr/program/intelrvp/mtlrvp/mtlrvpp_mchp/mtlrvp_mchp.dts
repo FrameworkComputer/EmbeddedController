@@ -236,9 +236,23 @@
 		ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
 	};
 
+	usb_c2_alt_hb_retimer: jhl9040r-c2@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		reset-pin = <&usb_c2_hb_retimer_rst>;
+		ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
+	};
+
 	usb_c3_hb_retimer: jhl9040r-c3@59 {
 		compatible = "intel,jhl9040r";
 		reg = <0x59>;
+		reset-pin = <&usb_c3_hb_retimer_rst>;
+		ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
+	};
+
+	usb_c3_alt_hb_retimer: jhl9040r-c3@57 {
+		compatible = "intel,jhl9040r";
+		reg = <0x57>;
 		reset-pin = <&usb_c3_hb_retimer_rst>;
 		ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
 	};

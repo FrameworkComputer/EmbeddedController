@@ -28,6 +28,7 @@
 #include "task.h"
 #include "tusb1064.h"
 #include "usb_mux.h"
+#include "usbc/usb_muxes.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -40,6 +41,10 @@
 /* PPC */
 #define I2C_ADDR_SN5S330_P0 0x40
 #define I2C_ADDR_SN5S330_P1 0x41
+
+#define MTLP_DDR5_RVP_SKU_BOARD_ID 0x01
+#define MTLP_LP5_RVP_SKU_BOARD_ID 0x02
+#define MTL_RVP_BOARD_ID(id) ((id)&0x3F)
 
 /* IOEX ports */
 enum ioex_port {
@@ -214,7 +219,7 @@ __override int board_get_version(void)
 
 	/*
 	 * IOExpander that has Board ID information is on DSW-VAL rail on
-	 * ADL RVP. On cold boot cycles, DSW-VAL rail is taking time to settle.
+	 * MTL RVP. On cold boot cycles, DSW-VAL rail is taking time to settle.
 	 * This loop retries to ensure rail is settled and read is successful
 	 */
 	for (i = 0; i < RVP_VERSION_READ_RETRY_CNT; i++) {
@@ -280,6 +285,56 @@ static void board_int_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_dc_jack_present));
 }
 
+static void configure_retimer_usbmux(void)
+{
+	switch (MTL_RVP_BOARD_ID(board_get_version())) {
+	case MTLP_LP5_RVP_SKU_BOARD_ID:
+		/* No retimer on Port 0 */
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_alt_chain_0);
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_alt_chain_1);
+#if defined(HAS_TASK_PD_C2)
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_alt_chain_2);
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_alt_chain_3);
+#endif
+		break;
+		/* Add additional board SKUs */
+	default:
+		break;
+	}
+}
+
+__override bool board_is_tbt_usb4_port(int port)
+{
+	bool tbt_usb4 = true;
+
+	switch (MTL_RVP_BOARD_ID(board_get_version())) {
+	case MTLP_LP5_RVP_SKU_BOARD_ID:
+		/* No retimer on port 0; and port 1 is not available */
+		if ((port == USBC_PORT_C0) || (port == USBC_PORT_C1))
+			tbt_usb4 = false;
+		break;
+	default:
+		break;
+	}
+	return tbt_usb4;
+}
+
+__override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
+{
+	enum tbt_compat_cable_speed max_speed = TBT_SS_TBT_GEN3;
+
+	switch (MTL_RVP_BOARD_ID(board_get_version())) {
+	case MTLP_LP5_RVP_SKU_BOARD_ID:
+		if (port == USBC_PORT_C2)
+			max_speed = TBT_SS_U32_GEN1_GEN2;
+		break;
+	default:
+		break;
+	}
+
+	return max_speed;
+}
+
 static int board_pre_task_peripheral_init(const struct device *unused)
 {
 	ARG_UNUSED(unused);
@@ -295,6 +350,9 @@ static int board_pre_task_peripheral_init(const struct device *unused)
 
 	/* Make sure SBU are routed to CCD or AUX based on CCD status at init */
 	board_connect_c0_sbu_deferred();
+
+	/* Configure board specific retimer & mux */
+	configure_retimer_usbmux();
 
 	return 0;
 }
