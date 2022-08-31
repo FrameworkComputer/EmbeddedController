@@ -61,6 +61,9 @@ DEFINE_boolean 'private' "${FLAGS_PRIVATE_DEFAULT}" \
 
 # Usage: assoc-add-keys <associate_array_name> [item1 [item2...]]
 assoc-add-keys() {
+  # Shellcheck doesn't seem to support nameref variables yet.
+  # See https://github.com/koalaman/shellcheck/issues/1544.
+  # shellcheck disable=SC2034,SC2178
   local -n arr="${1}"
   shift
 
@@ -71,6 +74,9 @@ assoc-add-keys() {
 
 # Usage: assoc-rm-keys <associate_array_name> [item1 [item2...]
 assoc-rm-keys() {
+  # Shellcheck doesn't seem to support nameref variables yet.
+  # See https://github.com/koalaman/shellcheck/issues/1544.
+  # shellcheck disable=SC2034,SC2178
   local -n arr="${1}"
   shift
 
@@ -102,6 +108,8 @@ boards-with() {
 
 # Usage: parse-boards <associate_array_name> [board-grp1 [board-grp2...]]
 parse-boards() {
+  # Shellcheck doesn't seem to support nameref variables yet.
+  # See https://github.com/koalaman/shellcheck/issues/1544.
   # shellcheck disable=SC2034
   local -n boards="$1"
   shift
