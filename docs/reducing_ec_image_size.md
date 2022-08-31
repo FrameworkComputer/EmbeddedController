@@ -175,13 +175,13 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_CHGRAMP | `chgramp` | |
 | | CONFIG_CMD_CLOCKGATES | `clockgates` | |
 | | CONFIG_CMD_COMXTEST | `comxtest` | |
-| x | CONFIG_CMD_CRASH | `crash` | |
+| x | CONFIG_CMD_CRASH | `crash` | Used by TAST `crash.ECCrash`, FAFT `firmware_ECSharedMem` |
 | | CONFIG_CMD_DEVICE_EVENT | `deviceevent` | |
 | | CONFIG_CMD_DLOG | `dlog` | |
 | | CONFIG_CMD_ECTEMP | `ectemp` | |
 | | CONFIG_CMD_FASTCHARGE | `fastcharge` | Obsolete? use CONFIG_CMD_CHARGER_PROFILE_OVERRIDE? |
 | | CONFIG_CMD_FLASH | `flasherase`<br>`flashwrite`<br>`flashread` | |
-| | CONFIG_CMD_FLASHINFO | `flashinfo` | |
+| x | CONFIG_CMD_FLASHINFO | `flashinfo` | Used by TAST `firmware.ECSize` |
 | | CONFIG_CMD_FLASH_TRISTATE | `fpcapture`<br>`flash_tristate` | |
 | | CONFIG_CMD_FLASH_WP | `flashwp` | |
 | | CONFIG_CMD_FORCETIME | `forcetime` | |
@@ -208,14 +208,14 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_IDLE_STATS | `idlestats` | |
 | | CONFIG_CMD_INA | `ina` | |
 | | CONFIG_CMD_JUMPTAGS | `jumptags` | |
-| x | CONFIG_CMD_KEYBOARD | `8042`<br>`ksstate`<br>`kbpress` | |
+| x | CONFIG_CMD_KEYBOARD | `8042`<br>`ksstate`<br>`kbpress` | Used by `firmware_ECKeyboard` |
 | | CONFIG_CMD_LEDTEST | `ledtest` | |
 | | CONFIG_CMD_MCDP | `mcdp` | |
 | | CONFIG_CMD_MD | `md` | |
 | | CONFIG_CMD_MEM | | Not a console command - gates `md` and `rw` |
 | | CONFIG_CMD_MFALLOW | `mfallow` | |
 | | CONFIG_CMD_MMAPINFO | `mmapinfo` | |
-| x | CONFIG_CMD_PD | `pd` | Used by FAFT PD |
+| x | CONFIG_CMD_PD | `pd` | Used by FAFT PD, TAST `firmware.ECSystemLocked` |
 | | CONFIG_CMD_PD_DEV_DUMP_INFO | | Not a console command |
 | | CONFIG_CMD_PD_FLASH | `pd flash` | Not supported by TCPMv2 |
 | | CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE | `pd <port> srccaps` | Defining this reduces the verbosity of this command, saving bytes |
