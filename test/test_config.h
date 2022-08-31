@@ -20,7 +20,11 @@
 
 /* Don't compile features unless specifically testing for them */
 #undef CONFIG_VBOOT_HASH
+
+/* Only disable this if we didn't explicitly enable it in Kconfig */
+#ifndef CONFIG_PLATFORM_EC_USB_PD_LOGGING
 #undef CONFIG_USB_PD_LOGGING
+#endif
 
 #if defined(TEST_AES) || defined(TEST_CRYPTO_BENCHMARK)
 #define CONFIG_AES
