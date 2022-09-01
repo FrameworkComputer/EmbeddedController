@@ -50,18 +50,17 @@ before_script:
   - echo "CI_PROJECT_DIR is at ${CI_PROJECT_DIR}"
   # Move freshly-checked out ec code to subdirectory
   - cd ${CI_PROJECT_DIR}
-  - shopt -s extglob
   - mkdir -p ec_dir
-  - mv -- !(ec_dir) ec_dir
-  - shopt -u extglob
+  - find . -mindepth 1 -maxdepth 1 -name ec_dir -o -print0 | xargs -0 -I {} mv {} ec_dir
   - export EC_DIR="${CI_PROJECT_DIR}/ec_dir"
   # Remove old zephyr and module checkouts (unwanted cache artifact)
-  - rm -rf ${EC_DIR}/zephyr/main
-  - rm -rf ${EC_DIR}/modules
-  # Get Zephyr repo and modules
   - export MODULES_DIR="$CI_PROJECT_DIR/modules"
-  - mkdir -p "${MODULES_DIR}"
   - export ZEPHYR_BASE="${CI_PROJECT_DIR}/zephyr/main"
+  - mkdir -p "${CI_PROJECT_DIR}/zephyr"
+  - test -d ${EC_DIR}/zephyr/main && mv -T ${EC_DIR}/zephyr/main ${ZEPHYR_BASE}
+  - test -d ${EC_DIR}/modules && mv -T ${EC_DIR}/modules ${MODULES_DIR}
+  # Get Zephyr repo and modules
+  - mkdir -p "${MODULES_DIR}"
   - mkdir -p "${ZEPHYR_BASE}"
   - test -d "${ZEPHYR_BASE}/.git" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}"
   - test -d "${MODULES_DIR}/cmsis" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
