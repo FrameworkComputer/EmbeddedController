@@ -14,7 +14,7 @@ zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 if(DEFINED CONFIG_BOARD_NIVVIKS)
 	project(nivviks)
 	zephyr_library_sources(
-			"src/led.c"
+			"nivviks/src/led.c"
 			"nivviks/src/form_factor.c"
 			"nivviks/src/keyboard.c"
 	)
