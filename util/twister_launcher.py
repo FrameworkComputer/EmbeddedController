@@ -77,7 +77,7 @@ def find_modules(mod_dir: Path) -> list:
     modules = []
     for child in mod_dir.iterdir():
         if child.is_dir() and (child / "zephyr" / "module.yml").exists():
-            modules.append(child)
+            modules.append(child.resolve())
     return modules
 
 
@@ -91,7 +91,7 @@ def main():
 
     # Add the EC dir as a module if not already included (resolve all paths to
     # account for symlinked or relative paths)
-    if ec_base.resolve() not in {p.resolve() for p in zephyr_modules}:
+    if ec_base.resolve() not in zephyr_modules:
         zephyr_modules.append(ec_base)
 
     # Prepare environment variables for export to Twister. Inherit the parent
