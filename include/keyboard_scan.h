@@ -183,4 +183,27 @@ struct keyboard_type {
 extern struct keyboard_type key_typ;
 #endif
 
+#ifdef TEST_BUILD
+/**
+ * @brief Get the value of print_state_changes
+ *
+ * @return non-zero if state change printing is enabled, zero if not.
+ */
+__test_only int keyboard_scan_get_print_state_changes(void);
+
+/**
+ * @brief Forcibly set the value of print_state_changes
+ *
+ * @param val Value to set
+ */
+__test_only void keyboard_scan_set_print_state_changes(int val);
+
+/**
+ * @brief Checks if keyboard scanning is currently enabled.
+ *
+ * @return int non-zero if enabled, zero otherwise.
+ */
+int keyboard_scan_is_enabled(void);
+#endif /* TEST_BUILD */
+
 #endif /* __CROS_EC_KEYBOARD_SCAN_H */
