@@ -429,9 +429,3 @@ int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 	 */
 	return 0;
 }
-
-int charge_prevent_power_on(int power_button_pressed)
-{
-	/* Assume there is always sufficient power from charger to power on. */
-	return 0;
-}

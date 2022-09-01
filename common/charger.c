@@ -215,13 +215,15 @@ static int command_charger(int argc, const char **argv)
 		if (*e)
 			return EC_ERROR_PARAM2 + idx_provided;
 		return charger_set_input_current_limit(chgnum, d);
-	} else if (strcasecmp(argv[1 + idx_provided], "current") == 0) {
+	} else if (IS_ENABLED(CONFIG_BATTERY) &&
+		   strcasecmp(argv[1 + idx_provided], "current") == 0) {
 		d = strtoi(argv[2 + idx_provided], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2 + idx_provided;
 		chgstate_set_manual_current(d);
 		return charger_set_current(chgnum, d);
-	} else if (strcasecmp(argv[1 + idx_provided], "voltage") == 0) {
+	} else if (IS_ENABLED(CONFIG_BATTERY) &&
+		   strcasecmp(argv[1 + idx_provided], "voltage") == 0) {
 		d = strtoi(argv[2 + idx_provided], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2 + idx_provided;

@@ -94,7 +94,14 @@ uint32_t charge_get_flags(void);
 /**
  * Return current battery charge percentage.
  */
+#if defined(CONFIG_BATTERY) || defined(TEST_BUILD)
 int charge_get_percent(void);
+#else
+static inline int charge_get_percent(void)
+{
+	return 100;
+}
+#endif
 
 /**
  * Return current battery charge if not using charge manager sub-system.
@@ -119,7 +126,7 @@ __override_proto int charge_is_consuming_full_input_current(void);
 /**
  * Return non-zero if discharging and battery so low we should shut down.
  */
-#ifdef CONFIG_CHARGER
+#if defined(CONFIG_CHARGER) && defined(CONFIG_BATTERY)
 int charge_want_shutdown(void);
 #else
 static inline int charge_want_shutdown(void)
@@ -135,7 +142,14 @@ static inline int charge_want_shutdown(void)
  * @param power_button_pressed	True if the power-up attempt is caused by a
  *				power button press.
  */
+#ifdef CONFIG_BATTERY
 int charge_prevent_power_on(int power_button_pressed);
+#else
+static inline int charge_prevent_power_on(int power_button_pressed)
+{
+	return 0;
+}
+#endif
 
 /**
  * Get the last polled battery/charger temperature.
