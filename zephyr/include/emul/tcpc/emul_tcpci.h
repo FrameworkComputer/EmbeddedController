@@ -85,7 +85,6 @@ struct tcpci_ctx {
 
 /** Run-time data used by the emulator */
 struct tcpc_emul_data {
-	struct i2c_common_emul_data common;
 	/** Pointer to the common TCPCI emulator context */
 	struct tcpci_ctx *tcpci_ctx;
 
@@ -146,67 +145,6 @@ enum tcpci_emul_tx_status {
 	 * the TCPCI spec.
 	 */
 	TCPCI_EMUL_TX_UNKNOWN
-};
-
-/** TCPCI specific device operations. Not all of them need to be implemented. */
-struct tcpci_emul_dev_ops {
-	/**
-	 * @brief Function called for each byte of read message
-	 *
-	 * @param emul Pointer to TCPCI emulator
-	 * @param ops Pointer to device operations structure
-	 * @param reg First byte of last write message
-	 * @param val Pointer where byte to read should be stored
-	 * @param bytes Number of bytes already readded
-	 *
-	 * @return TCPCI_EMUL_CONTINUE to continue with default handler
-	 * @return TCPCI_EMUL_DONE to immedietly return success
-	 * @return TCPCI_EMUL_ERROR to immedietly return error
-	 */
-	enum tcpci_emul_ops_resp (*read_byte)(
-		const struct emul *emul, const struct tcpci_emul_dev_ops *ops,
-		int reg, uint8_t *val, int bytes);
-
-	/**
-	 * @brief Function called for each byte of write message
-	 *
-	 * @param emul Pointer to TCPCI emulator
-	 * @param ops Pointer to device operations structure
-	 * @param reg First byte of write message
-	 * @param val Received byte of write message
-	 * @param bytes Number of bytes already received
-	 *
-	 * @return TCPCI_EMUL_CONTINUE to continue with default handler
-	 * @return TCPCI_EMUL_DONE to immedietly return success
-	 * @return TCPCI_EMUL_ERROR to immedietly return error
-	 */
-	enum tcpci_emul_ops_resp (*write_byte)(
-		const struct emul *emul, const struct tcpci_emul_dev_ops *ops,
-		int reg, uint8_t val, int bytes);
-
-	/**
-	 * @brief Function called on the end of write message
-	 *
-	 * @param emul Pointer to TCPCI emulator
-	 * @param ops Pointer to device operations structure
-	 * @param reg Register which is written
-	 * @param msg_len Length of handled I2C message
-	 *
-	 * @return TCPCI_EMUL_CONTINUE to continue with default handler
-	 * @return TCPCI_EMUL_DONE to immedietly return success
-	 * @return TCPCI_EMUL_ERROR to immedietly return error
-	 */
-	enum tcpci_emul_ops_resp (*handle_write)(
-		const struct emul *emul, const struct tcpci_emul_dev_ops *ops,
-		int reg, int msg_len);
-
-	/**
-	 * @brief Function called on reset
-	 *
-	 * @param emul Pointer to TCPCI emulator
-	 * @param ops Pointer to device operations structure
-	 */
-	void (*reset)(const struct emul *emul, struct tcpci_emul_dev_ops *ops);
 };
 
 /** TCPCI partner operations. Not all of them need to be implemented. */
@@ -378,15 +316,6 @@ struct tcpci_emul_msg *tcpci_emul_get_tx_msg(const struct emul *emul);
  * @param rev Requested revision
  */
 void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev);
-
-/**
- * @brief Set callbacks for specific TCPC device emulator
- *
- * @param emul Pointer to TCPCI emulator
- * @param dev_ops Pointer to callbacks
- */
-void tcpci_emul_set_dev_ops(const struct emul *emul,
-			    struct tcpci_emul_dev_ops *dev_ops);
 
 /**
  * @brief Set callback which is called when alert register is changed
