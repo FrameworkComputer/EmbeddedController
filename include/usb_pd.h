@@ -204,7 +204,11 @@ enum pd_rx_errors {
 #ifndef CONFIG_USB_PD_TCPMV2
 #define PD_T_SENDER_RESPONSE (30 * MSEC) /* between 24ms and 30ms */
 #else
-#define PD_T_SENDER_RESPONSE (24 * MSEC) /* between 24ms and 30ms */
+/*
+ * In USB Power Delivery Specification Revision 3.1, Version 1.5,
+ * the tSenderResponse have changed to min 26/ max 32 ms.
+ */
+#define PD_T_SENDER_RESPONSE (26 * MSEC) /* between 26ms and 32ms */
 #endif
 #define PD_T_PS_TRANSITION (500 * MSEC) /* between 450ms and 550ms */
 /*
