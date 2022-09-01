@@ -725,7 +725,8 @@ static int test_low_battery_hostevents(void)
 	TEST_ASSERT(!is_shutdown);
 
 	/* (Shout) a little bit louder now */
-	sb_write(SB_RELATIVE_STATE_OF_CHARGE, BATTERY_LEVEL_CRITICAL + 1);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE,
+		 CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE + 1);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
@@ -734,7 +735,8 @@ static int test_low_battery_hostevents(void)
 	TEST_ASSERT(!is_shutdown);
 
 	/* (Shout) a little bit louder now */
-	sb_write(SB_RELATIVE_STATE_OF_CHARGE, BATTERY_LEVEL_CRITICAL - 1);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE,
+		 CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE - 1);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));

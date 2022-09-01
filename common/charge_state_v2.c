@@ -1266,6 +1266,29 @@ static int shutdown_on_critical_battery(void)
 	return 1;
 }
 
+int battery_is_below_threshold(enum batt_threshold_type type, bool transitioned)
+{
+	int threshold;
+
+	/* We can't tell what the current charge is. Assume it's okay. */
+	if (curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)
+		return 0;
+
+	switch (type) {
+	case BATT_THRESHOLD_TYPE_LOW:
+		threshold = BATTERY_LEVEL_LOW;
+		break;
+	case BATT_THRESHOLD_TYPE_SHUTDOWN:
+		threshold = CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE;
+		break;
+	default:
+		return 0;
+	}
+
+	return curr.batt.state_of_charge <= threshold &&
+	       (!transitioned || prev_charge > threshold);
+}
+
 /*
  * Send host events as the battery charge drops below certain thresholds.
  * We handle forced shutdown and other actions elsewhere; this is just for the
@@ -1274,17 +1297,11 @@ static int shutdown_on_critical_battery(void)
  */
 static void notify_host_of_low_battery_charge(void)
 {
-	/* We can't tell what the current charge is. Assume it's okay. */
-	if (curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)
-		return;
-
 #ifdef CONFIG_HOSTCMD_EVENTS
-	if (curr.batt.state_of_charge <= BATTERY_LEVEL_LOW &&
-	    prev_charge > BATTERY_LEVEL_LOW)
+	if (battery_is_below_threshold(BATT_THRESHOLD_TYPE_LOW, true))
 		host_set_single_event(EC_HOST_EVENT_BATTERY_LOW);
 
-	if (curr.batt.state_of_charge <= BATTERY_LEVEL_CRITICAL &&
-	    prev_charge > BATTERY_LEVEL_CRITICAL)
+	if (battery_is_below_threshold(BATT_THRESHOLD_TYPE_SHUTDOWN, true))
 		host_set_single_event(EC_HOST_EVENT_BATTERY_CRITICAL);
 #endif
 }

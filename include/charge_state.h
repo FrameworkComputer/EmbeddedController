@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "timer.h"
+#include "stdbool.h"
 
 /* Stuff that's common to all charger implementations can go here. */
 
@@ -130,6 +131,27 @@ __override_proto int charge_is_consuming_full_input_current(void);
 int charge_want_shutdown(void);
 #else
 static inline int charge_want_shutdown(void)
+{
+	return 0;
+}
+#endif
+
+/**
+ * Return true if battery level is below threshold, false otherwise,
+ * or if SoC can't be determined.
+ *
+ * @param transitioned	True to check if SoC is previously above threshold
+ */
+enum batt_threshold_type {
+	BATT_THRESHOLD_TYPE_LOW = 0,
+	BATT_THRESHOLD_TYPE_SHUTDOWN
+};
+#if defined(CONFIG_CHARGER) && defined(CONFIG_BATTERY)
+int battery_is_below_threshold(enum batt_threshold_type type,
+			       bool transitioned);
+#else
+static inline int battery_is_below_threshold(enum batt_threshold_type type,
+					     bool transitioned)
 {
 	return 0;
 }
