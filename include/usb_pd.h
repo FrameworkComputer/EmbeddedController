@@ -207,7 +207,10 @@ enum pd_rx_errors {
 #define PD_T_SENDER_RESPONSE (24 * MSEC) /* between 24ms and 30ms */
 #endif
 #define PD_T_PS_TRANSITION (500 * MSEC) /* between 450ms and 550ms */
-#define PD_T_PS_SOURCE_ON (480 * MSEC) /* between 390ms and 480ms */
+/*
+ * This is adjusted for PD3.1 Compliance test TEST.PD.PROT.SRC.10.
+ */
+#define PD_T_PS_SOURCE_ON (435 * MSEC) /* between 390ms and 480ms */
 #define PD_T_PS_SOURCE_OFF (835 * MSEC) /* between 750ms and 920ms */
 #define PD_T_PS_HARD_RESET (25 * MSEC) /* between 25ms and 35ms */
 #define PD_T_ERROR_RECOVERY (240 * MSEC) /* min 240ms if sourcing VConn */
