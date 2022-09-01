@@ -51,6 +51,13 @@ tests:
     extra_args: CONF_FILE="prj.conf;led_driver/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./led_driver/led_pins.dts;./led_driver/led_policy.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_LED_DRIVER=y
+  drivers.mkbp:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_MKBP=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=y
+      - CONFIG_PLATFORM_EC_MKBP_INPUT_DEVICES=y
+      - CONFIG_PLATFORM_EC_MKBP_EVENT=y
+      - CONFIG_PLATFORM_EC_MKBP_USE_GPIO=y
   drivers.usb_retimer_fw_update:
     extra_args: CONF_FILE="prj.conf;usb_retimer_fw_update/prj.conf"
     extra_configs:
