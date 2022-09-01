@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <strings.h>
+#include <string.h>
 #include <zephyr/ztest.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
@@ -464,7 +464,8 @@ ZTEST(power_common, power_console_cmd)
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power"),
 		      NULL);
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
-	zassert_true(strcasecmp(buffer, "\r\noff\r\n") == 0,
+	zassert_true(strcmp(buffer, "\r\noff\r\n") == 0 ||
+			     strcmp(buffer, "\r\nOFF\r\n") == 0,
 		     "Invalid console output %s", buffer);
 
 	test_set_chipset_to_s0();
@@ -472,7 +473,8 @@ ZTEST(power_common, power_console_cmd)
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power"),
 		      NULL);
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
-	zassert_true(strcasecmp(buffer, "\r\non\r\n") == 0,
+	zassert_true(strcmp(buffer, "\r\non\r\n") == 0 ||
+			     strcmp(buffer, "\r\nON\r\n") == 0,
 		     "Invalid console output %s", buffer);
 
 	zassert_equal(EC_ERROR_PARAM1,
