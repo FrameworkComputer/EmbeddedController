@@ -217,7 +217,7 @@
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
-			gpios = <&gpio0 3 GPIO_ODR_HIGH>;
+			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_c0_rt_int_odl: usb_c0_rt_int_odl {
 			gpios = <&gpioa 0 GPIO_INPUT>;
