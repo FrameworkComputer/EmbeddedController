@@ -57,17 +57,17 @@
 			sub-board-1 {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_SUB_BOARD_1";
-				value = <1>;
+				value = <0>;
 			};
 			sub-board-2 {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_SUB_BOARD_2";
-				value = <2>;
+				value = <1>;
 			};
 			sub-board-3 {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_SUB_BOARD_3";
-				value = <3>;
+				value = <2>;
 			};
 		};
 
