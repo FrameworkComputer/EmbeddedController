@@ -181,6 +181,7 @@ struct usb_mux_chain usb_muxes[] = {
 		.next = &usbc0_virtual_usb_mux_chain,
 	},
 	[USBC_PORT_C1] = {
+#ifdef CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
 		.mux = &(const struct usb_mux){
 			.usb_port = USBC_PORT_C1,
 			.driver = &bb_usb_retimer,
@@ -190,10 +191,12 @@ struct usb_mux_chain usb_muxes[] = {
 						usb_c1_bb_retimer_emul)),
 		},
 		.next = &usbc1_virtual_usb_mux_chain,
+#endif
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
+#ifdef CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
 struct bb_usb_control bb_controls[] = {
 	[USBC_PORT_C0] = {
 		/* USB-C port 0 doesn't have a retimer */
@@ -205,6 +208,7 @@ struct bb_usb_control bb_controls[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
+#endif
 
 void pd_power_supply_reset(int port)
 {

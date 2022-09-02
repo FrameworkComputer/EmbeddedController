@@ -86,6 +86,14 @@ config PLATFORM_EC_USB_PD_INITIAL_DEBUG_LEVEL
 	  through to 3 will increase the level of debug logging.
 	  If this config is not set, the default level will be set to 1.
 
+config USB_PD_XID
+	int "USB XID"
+	default 0
+	help
+	  Sets the device XID reported for USB-C Authentication. Devices that
+	  have not been submitted for certification and assigned XIDs by USB-IF
+	  should use 0.
+
 config PLATFORM_EC_USB_PD_5V_EN_CUSTOM
 	bool "Custom method of detecting VBUS"
 	help
@@ -375,6 +383,8 @@ config PLATFORM_EC_USB_PD_LONG_PRESS_MAX_MS
 	 state. This value sets how long the EC waits for a release alert from the
 	 partner in ms. Any press longer than this will not be considered a valid USB
 	 PD button press.
+
+rsource "Kconfig.svdm_rsp"
 
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
 

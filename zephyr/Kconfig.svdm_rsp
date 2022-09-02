@@ -1,0 +1,44 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+choice SVDM_RSP_CHOICE
+	prompt "SVDM handler implementation"
+	# Default value is the first listed choice that has satisfied
+	# dependencies: this defaults to DFP_ONLY if possible.
+	help
+	  Select how USB-PD Structured Vendor Defined Messages (SVDM) will be
+	  handled.
+
+config SVDM_RSP_DFP_ONLY
+	bool "DFP-only"
+	# USB4 and TBT modes require more support
+	depends on !PLATFORM_EC_USB_PD_USB4
+	depends on !PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+	# DRDs are not DFP-only
+	depends on !PLATFORM_EC_USB_PD_USB32_DRD
+	help
+	  Respond to Discover Identity requests only, reporting DFP-only
+	  operation on all ports. The Identity response indicates the device has
+	  Type-C receptacles and supports USB 3.2, operating as a USB-PD host.
+
+	  This is appropriate for systems that only ever operate as USB hosts
+	  and do not require support for more complex modes like USB4 or TBT.
+
+config SVDM_RSP_CUSTOM
+	bool "Custom"
+	help
+	  The application defines SVDM handler functions appropriate to its
+	  feature set by populating fields of the svdm_rsp struct:
+
+	      __override const struct svdm_response svdm_rsp = { ... };
+
+	  If any pointer in this struct is NULL, that command is unsupported:
+	  matching SVDM commands that are received will be ignored and a
+	  Not_Supported reply sent if required. If no definition __overrides
+	  the default, all SVDM commands are treated as unsupported.
+
+endchoice
+endif  # PLATFORM_EC_USB_POWER_DELIVERY
