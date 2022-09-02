@@ -572,7 +572,7 @@ static int has_ghosting(const uint8_t *state)
 }
 
 /* Inform keyboard module if scanning is enabled */
-static void key_state_changed(int row, int col, uint8_t state)
+test_mockable_static void key_state_changed(int row, int col, uint8_t state)
 {
 	if (!keyboard_scan_is_enabled())
 		return;
