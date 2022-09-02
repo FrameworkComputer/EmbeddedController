@@ -32,11 +32,12 @@ uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 			      [FP_POSITIVE_MATCH_SALT_BYTES];
 
-struct positive_match_secret_state positive_match_secret_state = {
-	.template_matched = FP_NO_SUCH_TEMPLATE,
-	.readable = false,
-	.deadline.val = 0,
-};
+struct positive_match_secret_state
+	positive_match_secret_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
+					.readable = false,
+					.deadline = {
+						.val = 0,
+					} };
 
 /* Index of the last enrolled but not retrieved template. */
 int8_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;

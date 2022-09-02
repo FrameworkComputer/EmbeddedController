@@ -582,11 +582,12 @@ static int test_enable_positive_match_secret_once(
 
 test_static int test_enable_positive_match_secret(void)
 {
-	struct positive_match_secret_state dumb_state = {
-		.template_matched = FP_NO_SUCH_TEMPLATE,
-		.readable = false,
-		.deadline.val = 0,
-	};
+	struct positive_match_secret_state
+		dumb_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
+			       .readable = false,
+			       .deadline = {
+				       .val = 0,
+			       } };
 
 	TEST_ASSERT(test_enable_positive_match_secret_once(&dumb_state) ==
 		    EC_SUCCESS);
@@ -603,11 +604,12 @@ test_static int test_enable_positive_match_secret(void)
 
 test_static int test_disable_positive_match_secret(void)
 {
-	struct positive_match_secret_state dumb_state = {
-		.template_matched = FP_NO_SUCH_TEMPLATE,
-		.readable = false,
-		.deadline.val = 0,
-	};
+	struct positive_match_secret_state
+		dumb_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
+			       .readable = false,
+			       .deadline = {
+				       .val = 0,
+			       } };
 
 	TEST_ASSERT(test_enable_positive_match_secret_once(&dumb_state) ==
 		    EC_SUCCESS);
