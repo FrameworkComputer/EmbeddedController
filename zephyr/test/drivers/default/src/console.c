@@ -5,7 +5,7 @@
 
 #include <zephyr/zephyr.h>
 #include <zephyr/ztest.h>
-#include <zephyr/shell/shell_dummy.h> /* nocheck */
+#include <zephyr/shell/shell_dummy.h>
 
 #include "builtin/stdio.h"
 #include "test/drivers/test_state.h"
@@ -63,11 +63,10 @@ ZTEST_USER(console, shell_fprintf_full)
 			     shell_zephyr->fprintf_ctx->buffer_size,
 		     "large_string is too short, fix test.");
 
-	shell_backend_dummy_clear_output(shell_zephyr); /* nocheck */
+	shell_backend_dummy_clear_output(shell_zephyr);
 	shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", large_string);
 
-	outbuffer = shell_backend_dummy_get_output(shell_zephyr, /* nocheck */
-						   &buffer_size);
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
 	zassert_true(strncmp(outbuffer, large_string, strlen(large_string)) ==
 			     0,
 		     "Invalid console output %s", outbuffer);

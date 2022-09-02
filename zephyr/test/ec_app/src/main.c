@@ -5,7 +5,7 @@
 
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
-#include <zephyr/shell/shell_dummy.h> /* nocheck */
+#include <zephyr/shell/shell_dummy.h>
 
 #include "ec_app_main.h"
 #include "hooks.h"
@@ -61,8 +61,7 @@ ZTEST(ec_app_tests, test_vboot_main)
 	size_t buffer_size;
 
 	/* vboot_main logs the message "VB Verifying hash" */
-	outbuffer = shell_backend_dummy_get_output(shell_zephyr, /* nocheck */
-						   &buffer_size);
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
 	zassert_true(strstr(outbuffer, "VB Verifying hash") != NULL,
 		     "'VB Verifying hash' not found in %s", outbuffer);
 }
