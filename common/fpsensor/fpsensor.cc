@@ -421,7 +421,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 	uint32_t idx = FP_FRAME_GET_BUFFER_INDEX(params->offset);
 	uint32_t offset = params->offset & FP_FRAME_OFFSET_MASK;
 	uint32_t size = params->size;
-	uint32_t fgr;
+	uint16_t fgr;
 	uint8_t key[SBP_ENC_KEY_LEN];
 	struct ec_fp_template_encryption_metadata *enc_info;
 	int ret;
@@ -489,11 +489,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 				FP_CONTEXT_ENCRYPTION_SALT_BYTES);
 		trng_exit();
 
-		/*
-		 * TODO(http://b/244781166): Use consistent types so cast is
-		 * not needed.
-		 */
-		if (fgr == (uint32_t)template_newly_enrolled) {
+		if (fgr == template_newly_enrolled) {
 			/*
 			 * Newly enrolled templates need new positive match
 			 * salt, new positive match secret and new validation

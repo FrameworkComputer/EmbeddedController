@@ -45,9 +45,9 @@ struct positive_match_secret_state
 					} };
 
 /* Index of the last enrolled but not retrieved template. */
-int8_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
+uint16_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
 /* Number of used templates */
-uint32_t templ_valid;
+uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
 uint32_t templ_dirty;
 /* Current user ID */
@@ -254,7 +254,7 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(1));
 
-int fp_enable_positive_match_secret(uint32_t fgr,
+int fp_enable_positive_match_secret(uint16_t fgr,
 				    struct positive_match_secret_state *state)
 {
 	timestamp_t now;

@@ -39,7 +39,7 @@ extern "C" {
 #define TASK_EVENT_SENSOR_IRQ TASK_EVENT_CUSTOM_BIT(0)
 #define TASK_EVENT_UPDATE_CONFIG TASK_EVENT_CUSTOM_BIT(1)
 
-#define FP_NO_SUCH_TEMPLATE -1
+#define FP_NO_SUCH_TEMPLATE (UINT16_MAX)
 
 /* --- Global variables defined in fpsensor_state.c --- */
 
@@ -58,9 +58,9 @@ extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
 extern uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 				     [FP_POSITIVE_MATCH_SALT_BYTES];
 /* Index of the last enrolled but not retrieved template. */
-extern int8_t template_newly_enrolled;
+extern uint16_t template_newly_enrolled;
 /* Number of used templates */
-extern uint32_t templ_valid;
+extern uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
 extern uint32_t templ_dirty;
 /* Current user ID */
@@ -74,7 +74,7 @@ extern uint32_t sensor_mode;
 
 struct positive_match_secret_state {
 	/* Index of the most recently matched template. */
-	int8_t template_matched;
+	uint16_t template_matched;
 	/* Flag indicating positive match secret can be read. */
 	bool readable;
 	/* Deadline to read positive match secret. */
@@ -129,7 +129,7 @@ enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output);
  * @param state the state of positive match secret, e.g. readable or not.
  * @return EC_SUCCESS if the request is valid, error code otherwise.
  */
-int fp_enable_positive_match_secret(uint32_t fgr,
+int fp_enable_positive_match_secret(uint16_t fgr,
 				    struct positive_match_secret_state *state);
 
 /**
