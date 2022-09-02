@@ -4,89 +4,8 @@
  */
 
 / {
-	aliases {
-		gpio-wp = &gpio_wp;
-		gpio-cbi-wp = &gpio_cbi_wp;
-		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
-	};
-
 	named-gpios {
 		/* Skyrim-specific GPIO customizations */
-		gpio_usb_fault_odl: usb_fault_odl {
-			gpios = <&gpio5 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
-		};
-		gpio_en_pwr_s3: en_pwr_s3 {
-			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
-		};
-		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
-			gpios = <&gpiof 0 GPIO_INPUT>;
-		};
-		gpio_ec_i2c_usbc_pd_int: ec_i2c_usbc_pd_int {
-			gpios = <&gpioa 3 GPIO_INPUT>;
-		};
-		gpio_soc_thermtrip_odl: soc_thermtrip_odl {
-			gpios = <&gpio9 5 GPIO_INPUT>;
-		};
-		gpio_hub_rst: hub_rst {
-			gpios = <&gpio6 6 GPIO_OUTPUT_HIGH>;
-		};
-		ec_soc_int_l {
-			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
-			enum-name = "GPIO_EC_INT_L";
-		};
-		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
-			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
-		};
-		/* TODO: Add interrupt handler to shut down */
-		pcore_ocp_r_l {
-			gpios = <&gpioa 5 GPIO_INPUT>;
-		};
-		gpio_usb_hub_fault_q_odl: usb_hub_fault_q_odl {
-			gpios = <&gpioe 5 GPIO_INPUT_PULL_UP>;
-		};
-		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
-			gpios = <&gpio7 3 GPIO_INPUT>;
-		};
-		3axis_int_l {
-			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
-		};
-		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
-			gpios = <&gpioa 7 GPIO_OUTPUT_HIGH>;
-			enum-name = "GPIO_PCH_PWRBTN_L";
-		};
-		gpio_volup_btn_odl: volup_btn_odl {
-			gpios = <&gpio6 7 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_VOLUME_UP_L";
-		};
-		gpio_voldn_btn_odl: voldn_btn_odl {
-			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_VOLUME_DOWN_L";
-		};
-		ec_sc_rst {
-			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;
-		};
-		gpio_cbi_wp: ec_cbi_wp {
-			gpios = <&gpio8 1 GPIO_OUTPUT_LOW>;
-		};
-		gpio_wp: ec_wp_l {
-			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
-			gpios = <&gpio6 0 GPIO_INPUT>;
-		};
-		ec_espi_rst_l {
-			gpios = <&gpio5 4 GPIO_PULL_DOWN>;
-		};
-		gpio_accel_gyro_int_l: accel_gyro_int_l {
-			gpios = <&gpioa 0 GPIO_INPUT>;
-		};
-		/* unimplemented GPIOs */
-		entering-rw {
-			enum-name = "GPIO_ENTERING_RW";
-		};
-		pch-sys-prwok {
-			enum-name = "GPIO_PCH_SYS_PWROK";
-		};
 	};
 
 	named-temp-sensors {
@@ -255,11 +174,4 @@
 
 &usbc_port0 {
 	chg_alt = <&alt_charger>;
-};
-
-/* host interface */
-&espi0 {
-	status = "okay";
-	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
-	pinctrl-names = "default";
 };
