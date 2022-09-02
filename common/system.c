@@ -1042,7 +1042,8 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	}
 }
 
-void system_enter_hibernate(uint32_t seconds, uint32_t microseconds)
+test_mockable void system_enter_hibernate(uint32_t seconds,
+					  uint32_t microseconds)
 {
 	if (!IS_ENABLED(CONFIG_HIBERNATE))
 		return;

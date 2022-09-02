@@ -339,6 +339,64 @@ ZTEST(keyboard_scan, host_command_simulate__key_press)
 	zassert_false(key_state_changed_fake.arg2_history[1], NULL);
 }
 
+FAKE_VOID_FUNC(system_enter_hibernate, uint32_t, uint32_t);
+FAKE_VOID_FUNC(chipset_reset, int);
+
+ZTEST(keyboard_scan, special_key_combos)
+{
+	system_is_locked_fake.return_val = 0;
+	zassume_false(system_is_locked(), "Expecting unlocked system.");
+
+	/* Set the volume up key coordinates to something arbitrary */
+	int vol_up_col = 1;
+	int vol_up_row = 2;
+
+	set_vol_up_key(vol_up_row, vol_up_col);
+
+	/* Vol up and the alt keys must be in different columns */
+	zassume_false(vol_up_col == KEYBOARD_COL_LEFT_ALT, NULL);
+
+	/* Hold down volume up, left alt (either alt key works), and R */
+	zassert_ok(send_keypress_host_command(vol_up_col, vol_up_row, 1), NULL);
+	zassert_ok(send_keypress_host_command(KEYBOARD_COL_LEFT_ALT,
+					      KEYBOARD_ROW_LEFT_ALT, 1),
+		   NULL);
+	zassert_ok(send_keypress_host_command(KEYBOARD_COL_KEY_R,
+					      KEYBOARD_ROW_KEY_R, 1),
+		   NULL);
+
+	k_sleep(K_MSEC(100));
+
+	/* Release R and the press H */
+	zassert_ok(send_keypress_host_command(KEYBOARD_COL_KEY_R,
+					      KEYBOARD_ROW_KEY_R, 0),
+		   NULL);
+	zassert_ok(send_keypress_host_command(KEYBOARD_COL_KEY_H,
+					      KEYBOARD_ROW_KEY_H, 1),
+		   NULL);
+
+	k_sleep(K_MSEC(100));
+
+	/* Release all */
+	zassert_ok(send_keypress_host_command(vol_up_col, vol_up_row, 0), NULL);
+	zassert_ok(send_keypress_host_command(KEYBOARD_COL_LEFT_ALT,
+					      KEYBOARD_ROW_LEFT_ALT, 0),
+		   NULL);
+	zassert_ok(send_keypress_host_command(KEYBOARD_COL_KEY_H,
+					      KEYBOARD_ROW_KEY_H, 0),
+		   NULL);
+
+	/* Check that a reboot was requested (VOLUP + ALT + R) */
+	zassert_equal(1, chipset_reset_fake.call_count,
+		      "Did not try to reboot");
+	zassert_equal(CHIPSET_RESET_KB_WARM_REBOOT,
+		      chipset_reset_fake.arg0_history[0], NULL);
+
+	/* Check that we called system_enter_hibernate (VOLUP + ALT + H) */
+	zassert_equal(1, system_enter_hibernate_fake.call_count,
+		      "Did not enter hibernate");
+}
+
 static void reset_keyboard(void *data)
 {
 	ARG_UNUSED(data);
@@ -351,9 +409,11 @@ static void reset_keyboard(void *data)
 	/* Turn off key state change printing */
 	keyboard_scan_set_print_state_changes(0);
 
-	/* Reset the key state callback and system locked mocks */
+	/* Reset all mocks. */
 	RESET_FAKE(key_state_changed);
 	RESET_FAKE(system_is_locked);
+	RESET_FAKE(system_enter_hibernate);
+	RESET_FAKE(chipset_reset);
 
 	/* Be locked by default */
 	system_is_locked_fake.return_val = 1;

@@ -887,7 +887,7 @@ static void check_for_warm_reset_event(void)
 	}
 }
 
-void chipset_reset(enum chipset_shutdown_reason reason)
+test_mockable void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
