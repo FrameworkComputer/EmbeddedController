@@ -6,21 +6,21 @@ cmake_minimum_required(VERSION 3.13.1)
 
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
-zephyr_library_sources("common.c")
-zephyr_library_sources("power_signals.c")
+zephyr_library_sources("src/common.c")
+zephyr_library_sources("src/power_signals.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-	"usb_pd_policy.c")
+	"src/usb_pd_policy.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
-	"led.c")
+	"src/led.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
-	"stt.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "fan.c")
+	"src/stt.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/fan.c")
 
 if(DEFINED CONFIG_BOARD_MORTHAL)
 	project(morthal)
 	zephyr_library_sources(
-		"usbc_config.c"
+		"src/usbc_config.c"
 )
 endif()
 
@@ -30,7 +30,7 @@ if(DEFINED CONFIG_BOARD_SKYRIM)
 	zephyr_library_sources(
 			"src/skyrim/form_factor.c"
 			"src/skyrim/alt_charger.c"
-			"usbc_config.c"
+			"src/usbc_config.c"
 	)
 endif()
 
