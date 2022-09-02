@@ -7,6 +7,11 @@ image: sjg20/ubuntu-25feb22c
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
 
+# Only run on main and coverage branches
+workflow:
+  rules:
+    - if: ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "coverage")
+
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
