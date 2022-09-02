@@ -1745,12 +1745,13 @@ struct ec_params_flash_write {
 	uint32_t offset;
 	uint32_t size;
 	/* Followed by data to write. This union allows accessing an
-	 * underlying buffer as uint32s or uint8s for convenience. This does not
-	 * increase the size of the struct.
+	 * underlying buffer as uint32s or uint8s for convenience. Flexible
+	 * array members are not available in C++, so the size is 1 for C++
+	 * compatibility.
 	 */
 	union {
-		uint32_t words32[0];
-		uint8_t bytes[0];
+		uint32_t words32[1];
+		uint8_t bytes[1];
 	} data;
 } __ec_align4;
 
