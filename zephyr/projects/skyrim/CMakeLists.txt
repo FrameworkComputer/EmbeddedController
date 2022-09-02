@@ -15,7 +15,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"src/stt.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/fan.c")
 
 if(DEFINED CONFIG_BOARD_MORTHAL)
 	project(morthal)
@@ -32,6 +31,7 @@ if(DEFINED CONFIG_BOARD_SKYRIM)
 			"src/skyrim/alt_charger.c"
 			"src/usbc_config.c"
 	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/skyrim/fan.c")
 endif()
 
 if(DEFINED CONFIG_BOARD_WINTERHOLD)
