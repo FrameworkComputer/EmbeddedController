@@ -42,6 +42,21 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_set_en_pwr_pcore";
 		};
+		int_pg_lpddr_s3: pg_lpddr_s3 {
+			irq-pin = <&gpio_pg_lpddr5_s3_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_set_en_pwr_pcore";
+		};
+		int_pg_lpddr_s0: pg_lpddr_s0 {
+			irq-pin = <&gpio_pg_lpddr5_s0_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_set_soc_pwr_pgood";
+		};
+		int_s0_pgood: s0_pgood {
+			irq-pin = <&gpio_s0_pgood>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_s0_pgood";
+		};
 		int_soc_thermtrip: soc_thermtrip {
 			irq-pin = <&gpio_soc_thermtrip_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
