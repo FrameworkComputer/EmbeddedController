@@ -12,6 +12,7 @@
 #include <emul/emul_kb_raw.h>
 
 #include "console.h"
+#include "host_command.h"
 #include "keyboard_scan.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
@@ -252,6 +253,92 @@ ZTEST(keyboard_scan, console_command_kbpress__press_and_release)
 	zassert_false(key_state_changed_fake.arg2_history[3], NULL);
 }
 
+ZTEST(keyboard_scan, host_command_simulate_key__locked)
+{
+	uint16_t ret;
+
+	zassume_true(system_is_locked(), "Expecting locked system.");
+
+	struct ec_response_keyboard_factory_test response;
+	struct ec_params_mkbp_simulate_key params;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MKBP_SIMULATE_KEY, 0, response, params);
+
+	ret = host_command_process(&args);
+	zassert_equal(EC_RES_ACCESS_DENIED, ret, "Command returned %u", ret);
+}
+
+ZTEST(keyboard_scan, host_command_simulate_key__bad_params)
+{
+	uint16_t ret;
+
+	system_is_locked_fake.return_val = 0;
+	zassume_false(system_is_locked(), "Expecting unlocked system.");
+
+	struct ec_response_keyboard_factory_test response;
+	struct ec_params_mkbp_simulate_key params = {
+		.col = KEYBOARD_COLS_MAX,
+		.row = KEYBOARD_ROWS,
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MKBP_SIMULATE_KEY, 0, response, params);
+
+	ret = host_command_process(&args);
+	zassert_equal(EC_RES_INVALID_PARAM, ret, "Command returned %u", ret);
+}
+
+/**
+ * @brief Helper function that sends a host command to press or release the
+ *        specified key.
+ *
+ * @param col Key column
+ * @param row Key row
+ * @param pressed 1=press, 0=release
+ * @return uint16_t Host command return code.
+ */
+static uint16_t send_keypress_host_command(uint8_t col, uint8_t row,
+					   uint8_t pressed)
+{
+	struct ec_params_mkbp_simulate_key params = {
+		.col = col,
+		.row = row,
+		.pressed = pressed,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_MKBP_SIMULATE_KEY, 0, params);
+
+	return host_command_process(&args);
+}
+
+ZTEST(keyboard_scan, host_command_simulate__key_press)
+{
+	uint16_t ret;
+
+	system_is_locked_fake.return_val = 0;
+	zassume_false(system_is_locked(), "Expecting unlocked system.");
+
+	ret = send_keypress_host_command(1, 2, 1);
+	zassert_equal(EC_RES_SUCCESS, ret, "Command returned %u", ret);
+
+	/* Release the key */
+	ret = send_keypress_host_command(1, 2, 0);
+	zassert_equal(EC_RES_SUCCESS, ret, "Command returned %u", ret);
+
+	/* Verify key events happened */
+
+	zassert_equal(2, key_state_changed_fake.call_count, NULL);
+
+	/* Press col=1,row=2 (state==1) */
+	zassert_equal(1, key_state_changed_fake.arg1_history[0], NULL);
+	zassert_equal(2, key_state_changed_fake.arg0_history[0], NULL);
+	zassert_true(key_state_changed_fake.arg2_history[0], NULL);
+
+	/* Release col=1,row=2 (state==0) */
+	zassert_equal(1, key_state_changed_fake.arg1_history[1], NULL);
+	zassert_equal(2, key_state_changed_fake.arg0_history[1], NULL);
+	zassert_false(key_state_changed_fake.arg2_history[1], NULL);
+}
+
 static void reset_keyboard(void *data)
 {
 	ARG_UNUSED(data);
@@ -264,8 +351,12 @@ static void reset_keyboard(void *data)
 	/* Turn off key state change printing */
 	keyboard_scan_set_print_state_changes(0);
 
-	/* Reset the key state callback mock */
+	/* Reset the key state callback and system locked mocks */
 	RESET_FAKE(key_state_changed);
+	RESET_FAKE(system_is_locked);
+
+	/* Be locked by default */
+	system_is_locked_fake.return_val = 1;
 }
 
 ZTEST_SUITE(keyboard_scan, drivers_predicate_post_main, NULL, reset_keyboard,
