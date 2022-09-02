@@ -85,6 +85,8 @@ static void host_cmd_motion_sense_after(void *fixture)
 	motion_sensors[0].drv = this->sensor_0_drv;
 	host_cmd_motion_sense_int_enable(0, &response);
 	motion_sensors[0].flags &= ~MOTIONSENSE_FLAG_IN_SPOOF_MODE;
+	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
+	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 1000 * MSEC;
 }
 
 ZTEST_SUITE(host_cmd_motion_sense, drivers_predicate_post_main,
