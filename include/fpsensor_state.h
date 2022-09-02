@@ -117,7 +117,7 @@ int fp_tpm_seed_is_set(void);
  * @param mode_output   resulting mode
  * @return EC_RES_SUCCESS on success. Error code on failure.
  */
-int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output);
+enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output);
 
 /**
  * Allow reading positive match secret for |fgr| in the next 5 seconds.

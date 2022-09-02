@@ -178,7 +178,7 @@ static int validate_fp_mode(const uint32_t mode)
 	return EC_SUCCESS;
 }
 
-int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
+enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 {
 	int ret;
 
@@ -205,7 +205,7 @@ static enum ec_status fp_command_mode(struct host_cmd_handler_args *args)
 	const struct ec_params_fp_mode *p = args->params;
 	struct ec_response_fp_mode *r = args->response;
 
-	int ret = fp_set_sensor_mode(p->mode, &r->mode);
+	enum ec_status ret = fp_set_sensor_mode(p->mode, &r->mode);
 
 	if (ret == EC_RES_SUCCESS)
 		args->response_size = sizeof(*r);
