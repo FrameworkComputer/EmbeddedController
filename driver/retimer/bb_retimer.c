@@ -146,10 +146,10 @@ __overridable int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 1);
 		/*
-		 * Allow 1ms time for the retimer to power up lc_domain
+		 * Allow 50 ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
-		msleep(1);
+		msleep(50);
 	} else {
 		gpio_set_level(control->retimer_rst_gpio, 0);
 		msleep(1);
