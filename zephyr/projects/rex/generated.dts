@@ -156,7 +156,6 @@
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_imvp92_vrrdy_od: imvp92_vrrdy_od {
 			gpios = <&gpio4 3 GPIO_INPUT>;
@@ -179,6 +178,7 @@
 		};
 		gpio_mech_pwr_btn_odl: mech_pwr_btn_odl {
 			gpios = <&gpio0 2 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_seq_ec_all_sys_pg: seq_ec_all_sys_pg {
 			gpios = <&gpiof 4 GPIO_INPUT>;

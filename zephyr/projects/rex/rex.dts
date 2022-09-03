@@ -69,12 +69,6 @@
 	psl-in-pol = "high-rising";
 };
 
-&psl_in3_gp01 {
-	/* GSC_EC_PWR_BTN_ODL */
-	psl-in-mode = "edge";
-	psl-in-pol = "low-falling";
-};
-
 &psl_in4_gp02 {
 	/* MECH_PWR_BTN_ODL */
 	psl-in-mode = "edge";
