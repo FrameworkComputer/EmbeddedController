@@ -36,6 +36,11 @@
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&tusb1064_mux_1 &virtual_mux_1>;
 			};
+			usb_mux_chain_1_hdmi_db: usb-mux-chain-1-hdmi-db {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
+			};
 		};
 		port1-muxes {
 			virtual_mux_1: virtual-mux-1 {
