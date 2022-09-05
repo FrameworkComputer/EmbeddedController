@@ -18,6 +18,7 @@
 #include "hooks.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "usbc/usb_muxes.h"
 #include "task.h"
 
 #include "nissa_common.h"
@@ -180,7 +181,7 @@ static void nereid_subboard_config(void)
 				      GPIO_INPUT | GPIO_PULL_UP);
 	} else {
 		/* Port doesn't exist, doesn't need muxing */
-		usb_muxes[1].next = NULL;
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_1_no_mux);
 	}
 #endif
 

@@ -223,11 +223,12 @@
 			chg = <&chg_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				/*
-				 * Some sub-boards may disable all usb muxes in
-				 * chain except virtual_mux_1
-				 */
 				usb-muxes = <&virtual_mux_1 &tcpci_mux_1>;
+			};
+			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
 			};
 		};
 		port1-muxes {
