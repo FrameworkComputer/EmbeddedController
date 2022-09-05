@@ -63,6 +63,9 @@
 #define PD_MAX_CURRENT_MA 3000
 #define PD_MAX_VOLTAGE_MV 20000
 
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
+#define CONFIG_PWR_STATE_DISCHARGE_FULL
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
