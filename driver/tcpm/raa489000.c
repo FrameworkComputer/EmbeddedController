@@ -375,4 +375,7 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 #ifdef CONFIG_CMD_TCPC_DUMP
 	.dump_registers = &raa489000_dump_registers,
 #endif
+#ifdef CONFIG_USB_PD_FRS
+	.set_frs_enable = &tcpci_tcpc_fast_role_swap_enable,
+#endif
 };
