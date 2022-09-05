@@ -57,6 +57,36 @@ static atomic_t signal_valid;
 
 BUILD_ASSERT(ARRAY_SIZE(vw_config) <= (sizeof(atomic_t) * 8));
 
+/*
+ * Set the value of the VW signal, and optionally
+ * call the power signal interrupt handling.
+ */
+static void vw_set(int index, int data, bool notify)
+{
+	bool value = vw_config[index].invert ? !data : !!data;
+
+	atomic_set_bit_to(&signal_data, index, value);
+	atomic_set_bit(&signal_valid, index);
+	if (notify) {
+		power_signal_interrupt(vw_config[index].signal, value);
+	}
+}
+
+/*
+ * Update all the VW signals.
+ */
+static void vw_update_all(bool notify)
+{
+	for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
+		uint8_t vw_value;
+
+		if (espi_receive_vwire(espi_dev, vw_config[i].espi_signal,
+				       &vw_value) == 0) {
+			vw_set(i, vw_value, notify);
+		}
+	}
+}
+
 void power_signal_espi_cb(const struct device *dev, struct espi_callback *cb,
 			  struct espi_event event)
 {
@@ -68,24 +98,22 @@ void power_signal_espi_cb(const struct device *dev, struct espi_callback *cb,
 		break;
 
 	case ESPI_BUS_EVENT_CHANNEL_READY:
-		/* Virtual wire channel is not ready, clear valid flag */
-		if (event.evt_details == ESPI_CHANNEL_VWIRE &&
-		    !event.evt_data) {
-			atomic_clear(&signal_valid);
+		/* Virtual wire channel status change */
+		if (event.evt_details == ESPI_CHANNEL_VWIRE) {
+			if (event.evt_data) {
+				/* If now ready, update all the signals */
+				vw_update_all(true);
+			} else {
+				/* If not ready, invalidate the signals */
+				atomic_clear(&signal_valid);
+			}
 		}
 		break;
 
 	case ESPI_BUS_EVENT_VWIRE_RECEIVED:
 		for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
 			if (event.evt_details == vw_config[i].espi_signal) {
-				bool value = vw_config[i].invert ?
-						     !event.evt_data :
-						     !!event.evt_data;
-
-				atomic_set_bit_to(&signal_data, i, value);
-				atomic_set_bit(&signal_valid, i);
-				power_signal_interrupt(vw_config[i].signal,
-						       value);
+				vw_set(i, event.evt_data, true);
 			}
 		}
 		break;
@@ -108,19 +136,7 @@ void power_signal_vw_init(void)
 	 * initialise the current values of the signals.
 	 */
 	if (espi_get_channel_status(espi_dev, ESPI_CHANNEL_VWIRE)) {
-		for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
-			uint8_t vw_value;
-
-			if (espi_receive_vwire(espi_dev,
-					       vw_config[i].espi_signal,
-					       &vw_value) == 0) {
-				atomic_set_bit_to(&signal_data, i,
-						  vw_config[i].invert ?
-							  !vw_value :
-							  !!vw_value);
-				atomic_set_bit(&signal_valid, i);
-			}
-		}
+		vw_update_all(false);
 	}
 }
 
