@@ -19,7 +19,7 @@ CFLAGS  := -std=gnu99 \
         -Wredundant-decls \
         -Wmissing-declarations
 
-ifneq ($(DEBUG),)
+ifeq ($(DEBUG),1)
 CFLAGS += -g -O0
 else
 CFLAGS += -O3

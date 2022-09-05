@@ -19,10 +19,10 @@ CFLAGS  := -std=gnu99 \
         -Wredundant-decls \
         -Wmissing-declarations
 
-ifneq ($(DEBUG),)
-CFLAGS += -O0
-else
+ifeq (DEBUG,)
 CFLAGS += -O3
+else
+CFLAGS += -O0
 endif
 
 #
@@ -52,3 +52,4 @@ clean:
 
 parser_debug: desc_parser.c
 	gcc -g -O0  -DTEST_PARSER desc_parser.c -o dp
+
