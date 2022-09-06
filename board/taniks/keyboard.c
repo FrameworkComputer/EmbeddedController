@@ -28,7 +28,7 @@ __override struct keyboard_scan_config keyscan_config = {
 };
 
 static const struct ec_response_keybd_config taniks_kb = {
-	.num_top_row_keys = 14,
+	.num_top_row_keys = 11,
 	.action_keys = {
 		TK_BACK,		/* T1 */
 		TK_REFRESH,		/* T2 */
@@ -37,16 +37,46 @@ static const struct ec_response_keybd_config taniks_kb = {
 		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_ABSENT,		/* T8 */
-		TK_ABSENT,		/* T9 */
-		TK_ABSENT,		/* T10 */
-		TK_MICMUTE,		/* T11 */
-		TK_VOL_MUTE,		/* T12 */
-		TK_VOL_DOWN,		/* T13 */
-		TK_VOL_UP,		/* T14 */
+		TK_MICMUTE,		/* T8 */
+		TK_VOL_MUTE,		/* T9 */
+		TK_VOL_DOWN,		/* T10 */
+		TK_VOL_UP,		/* T11 */
 	},
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
+
+/*
+ * Row Column info for Top row keys T1 - T15.
+ * For taniks keyboard layout(T11 - T14) and
+ * printing(F8 - F11) are different issue.
+ * Move T11 - T14 row and col setting to T8 - T11.
+ * Need define row col to mapping matrix layout.
+ * Change T8 row, col to (0,1)
+ * Change T9 row, col to (1,5)
+ * Change T10 row, col to (3,5)
+ * Change T11 row, col to (0,9)
+ */
+__override const struct key {
+	uint8_t row;
+	uint8_t col;
+} vivaldi_keys[] = {
+	{ .row = 0, .col = 2 }, /* T1 */
+	{ .row = 3, .col = 2 }, /* T2 */
+	{ .row = 2, .col = 2 }, /* T3 */
+	{ .row = 1, .col = 2 }, /* T4 */
+	{ .row = 3, .col = 4 }, /* T5 */
+	{ .row = 2, .col = 4 }, /* T6 */
+	{ .row = 1, .col = 4 }, /* T7 */
+	{ .row = 0, .col = 1 }, /* T8 */
+	{ .row = 1, .col = 5 }, /* T9 */
+	{ .row = 3, .col = 5 }, /* T10 */
+	{ .row = 0, .col = 9 }, /* T11 */
+	{ .row = 2, .col = 9 }, /* T12 */
+	{ .row = 1, .col = 9 }, /* T13 */
+	{ .row = 0, .col = 4 }, /* T14 */
+	{ .row = 0, .col = 11 }, /* T15 */
+};
+BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
 
 static struct rgb_s grid0[RGB_GRID0_COL * RGB_GRID0_ROW];
 
