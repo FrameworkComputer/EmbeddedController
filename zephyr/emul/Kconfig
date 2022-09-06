@@ -80,6 +80,13 @@ config EMUL_CROS_FLASH
 	help
 	  This option enables the flash emulator for testing.
 
+config EMUL_RT9490
+	bool "Rt9490 charger emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the RT9490 light sensor emulator. This driver use emulated I2C
+	  bus. Emulators API is available in zephyr/include/emul/emul_rt9490.h.
+
 config PWM_MOCK
 	bool "Mock implementation of an PWM device"
 	help
