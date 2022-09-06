@@ -42,6 +42,21 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bc12_interrupt";
 		};
+		int_usb_c1_tcpc: usb_c1_tcpc {
+			irq-pin = <&gpio_usb_c1_tcpc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c1_ppc: usb_c1_ppc {
+			irq-pin = <&gpio_usb_c1_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usb_c1_bc12: usb_c1_bc12 {
+			irq-pin = <&gpio_usb_c1_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bc12_interrupt";
+		};
 		int_imu: ec_imu {
 			irq-pin = <&gpio_ec_imu_int_r_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;

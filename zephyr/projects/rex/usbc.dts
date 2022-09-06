@@ -11,7 +11,7 @@
 		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			bc12 = <&i2c_ec_i2c_usb_c0_ppc_b>;
+			bc12 = <&bc12_port0>;
 			ppc = <&ppc_port0_syv>;
 			tcpc = <&tcpc_port0>;
 			chg = <&charger>;
@@ -23,6 +23,27 @@
 		};
 		port0-muxes {
 			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			bc12 = <&bc12_port1>;
+			ppc = <&ppc_port1_nxp>;
+			tcpc = <&tcpc_port1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_c1 &tcpci_mux_c1>;
+			};
+		};
+		port1-muxes {
+			tcpci_mux_c1: tcpci-mux-c1 {
+				compatible = "cros-ec,usbc-mux-tcpci";
+				hpd-update = "ps8xxx_tcpc_update_hpd_status";
+			};
+			virtual_mux_c1: virtual-mux-c1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};

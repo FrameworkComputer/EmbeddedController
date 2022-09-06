@@ -15,11 +15,13 @@
 #include "driver/charger/isl9241.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/nct38xx.h"
+#include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
+#include "driver/ppc/nx20p348x.h"
 #include "ppc/syv682x_public.h"
 #include "system.h"
 #include "task.h"
@@ -33,19 +35,27 @@
 /* USB-C Configuration Start */
 
 /* USB-C ports */
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
+enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
 BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 static void usbc_interrupt_init(void)
 {
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_late()) {
+		board_reset_pd_mcu();
+	}
+
 	/* Enable PPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
 
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
 
 	/* Enable SBU fault interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_sbu_fault));
@@ -75,6 +85,9 @@ void tcpc_alert_event(enum gpio_signal signal)
 	switch (signal) {
 	case GPIO_USB_C0_TCPC_INT_ODL:
 		port = 0;
+		break;
+	case GPIO_USB_C1_TCPC_INT_ODL:
+		port = 1;
 		break;
 	default:
 		return;
@@ -115,6 +128,12 @@ void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */
 	reset_nct38xx_port(USBC_PORT_C0);
+
+	/* Reset TCPC1 */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 0);
+	msleep(PS8XXX_RESET_DELAY_MS);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -122,9 +141,14 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 	const struct gpio_dt_spec *tcpc_c0_rst_l;
 	const struct gpio_dt_spec *tcpc_c0_int_l;
+	const struct gpio_dt_spec *tcpc_c1_rst_l;
+	const struct gpio_dt_spec *tcpc_c1_int_l;
 
 	tcpc_c0_rst_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_odl);
 	tcpc_c0_int_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl);
+
+	tcpc_c1_rst_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl);
+	tcpc_c1_int_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl);
 
 	/*
 	 * Check which port has the ALERT line set and ignore if that TCPC has
@@ -132,6 +156,10 @@ uint16_t tcpc_get_alert_status(void)
 	 */
 	if (!gpio_pin_get_dt(tcpc_c0_int_l) && gpio_pin_get_dt(tcpc_c0_rst_l)) {
 		status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!gpio_pin_get_dt(tcpc_c1_int_l) && gpio_pin_get_dt(tcpc_c1_rst_l)) {
+		status |= PD_STATUS_TCPC_ALERT_1;
 	}
 
 	return status;
@@ -143,7 +171,9 @@ void ppc_interrupt(enum gpio_signal signal)
 	case GPIO_USB_C0_PPC_INT_ODL:
 		syv682x_interrupt(USBC_PORT_C0);
 		break;
-
+	case GPIO_USB_C1_PPC_INT_ODL:
+		nx20p348x_interrupt(USBC_PORT_C1);
+		break;
 	default:
 		break;
 	}
@@ -155,7 +185,9 @@ void bc12_interrupt(enum gpio_signal signal)
 	case GPIO_USB_C0_BC12_INT_ODL:
 		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 		break;
-
+	case GPIO_USB_C1_BC12_INT_ODL:
+		usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
+		break;
 	default:
 		break;
 	}
@@ -218,38 +250,18 @@ int board_set_active_charge_port(int port)
 	 * normal control.
 	 */
 	rv = EC_SUCCESS;
-	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-		if (nct38xx_get_boot_type(i) != NCT38XX_BOOT_DEAD_BATTERY) {
-			continue;
-		}
-
+	if (port == USBC_PORT_C0 &&
+	    nct38xx_get_boot_type(port) == NCT38XX_BOOT_DEAD_BATTERY) {
 		/* Handle dead battery boot case */
-		CPRINTSUSB("Found dead battery on %d", i);
+		CPRINTSUSB("Found dead battery on C0");
 		/*
 		 * If we have battery, get this port reset ASAP.
 		 * This means temporarily rejecting charge manager
 		 * sets to it.
 		 */
 		if (pd_is_battery_capable()) {
-			reset_nct38xx_port(i);
-			pd_set_error_recovery(i);
-
-			if (port == i) {
-				rv = EC_ERROR_INVAL;
-			}
-		} else if (port != i) {
-			/*
-			 * If other port is selected and in dead battery
-			 * mode, reset this port.  Otherwise, reject
-			 * change because we'll brown out.
-			 */
-			if (nct38xx_get_boot_type(port) ==
-			    NCT38XX_BOOT_DEAD_BATTERY) {
-				reset_nct38xx_port(i);
-				pd_set_error_recovery(i);
-			} else {
-				rv = EC_ERROR_INVAL;
-			}
+			reset_nct38xx_port(port);
+			pd_set_error_recovery(port);
 		}
 	}
 

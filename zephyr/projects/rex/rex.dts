@@ -197,6 +197,16 @@
 
 	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
 	pinctrl-names = "default";
+
+	tcpc_port1: ps8xxx@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
+			TCPC_FLAGS_CONTROL_VCONN |
+			TCPC_FLAGS_CONTROL_FRS)>;
+	};
 };
 
 &i2c5_0 {
@@ -213,6 +223,19 @@
 
 	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
 	pinctrl-names = "default";
+
+	bc12_port1: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c1_bc12>;
+	};
+
+	ppc_port1_nxp: nx20p348x@72 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x72>;
+	};
 };
 
 &i2c7_0 {
