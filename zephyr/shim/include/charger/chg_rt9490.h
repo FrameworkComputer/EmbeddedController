@@ -7,6 +7,7 @@
 #include "driver/charger/rt9490.h"
 
 #define RT9490_CHG_COMPAT richtek_rt9490
+#define RT9490_EMUL_COMPAT zephyr_rt9490_emul
 
 #define CHG_CONFIG_RT9490(id)                      \
 	{                                          \
