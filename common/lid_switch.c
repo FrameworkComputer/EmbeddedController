@@ -161,12 +161,14 @@ DECLARE_CONSOLE_COMMAND(lidstate, command_lidstate, NULL, "Get state of lid");
 static enum ec_status hc_force_lid_open(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_force_lid_open *p = args->params;
+	int old_state = forced_lid_open;
 
 	/* Override lid open if necessary */
 	forced_lid_open = p->enabled ? 1 : 0;
 
 	/* Make this take effect immediately; no debounce time */
-	hook_call_deferred(&lid_change_deferred_data, 0);
+	if (forced_lid_open != old_state)
+		hook_call_deferred(&lid_change_deferred_data, 0);
 
 	return EC_RES_SUCCESS;
 }
