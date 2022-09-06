@@ -37,11 +37,13 @@ static void mkbp_fifo_before(void *data)
 
 	mkbp_clear_fifo();
 	memset(fixture->input_event_data, 0, MAX_EVENT_DATA_SIZE);
+	mkbp_fifo_depth_update(FIFO_DEPTH);
 }
 
 static void mkbp_fifo_after(void *data)
 {
 	mkbp_clear_fifo();
+	mkbp_fifo_depth_update(FIFO_DEPTH);
 }
 
 static void fill_array_with_incrementing_numbers(int8_t *dst, int size)
@@ -72,6 +74,28 @@ ZTEST_F(mkbp_fifo, test_fifo_add_keyboard_key_matrix_event)
 	zassert_mem_equal(fixture->input_event_data, out,
 			  KEY_MATRIX_EVENT_DATA_SIZE, NULL);
 	zassert_equal(out[KEY_MATRIX_EVENT_DATA_SIZE], 0, NULL);
+}
+
+ZTEST_F(mkbp_fifo, test_fifo_depth_update)
+{
+	uint8_t out[KEY_MATRIX_EVENT_DATA_SIZE + 1];
+	uint8_t new_depth = 0;
+
+	mkbp_fifo_depth_update(new_depth);
+	fill_array_with_incrementing_numbers(fixture->input_event_data,
+					     MAX_EVENT_DATA_SIZE);
+	zassert_equal(EC_ERROR_OVERFLOW,
+		      mkbp_fifo_add(EC_MKBP_EVENT_KEY_MATRIX,
+				    fixture->input_event_data),
+		      NULL);
+	zassert_equal(-1, /* get_next_event explicitly returns -1 */
+		      mkbp_fifo_get_next_event(out, EC_MKBP_EVENT_KEY_MATRIX),
+		      NULL);
+
+	mkbp_fifo_depth_update(FIFO_DEPTH);
+	zassert_ok(mkbp_fifo_add(EC_MKBP_EVENT_KEY_MATRIX,
+				 fixture->input_event_data),
+		   NULL);
 }
 
 ZTEST_SUITE(mkbp_fifo, drivers_predicate_post_main, mkbp_fifo_setup,
