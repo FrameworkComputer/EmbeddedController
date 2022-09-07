@@ -3,8 +3,8 @@
 # found in the LICENSE file.
 
 description: >
-  Properties for a TMP112 I2C temperature sensor
+  Properties for a PCT2075 I2C temperature sensor
 
-compatible: "cros-ec,temp-sensor-tmp112"
+compatible: "nxp,pct2075"
 
 include: i2c-device.yaml

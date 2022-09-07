@@ -19,17 +19,19 @@
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
 
+#define GPIO_EC_PG_PIN_TEMP_PATH DT_PATH(named_gpios, ec_pg_pin_temp)
+#define GPIO_EC_PG_PIN_TEMP_PORT DT_GPIO_PIN(GPIO_EC_PG_PIN_TEMP_PATH, gpios)
+
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 
 /* TODO replace counting macros with DT macro when
  * https://github.com/zephyrproject-rtos/zephyr/issues/38715 lands
  */
 #define _ACCUMULATOR(x) 1 +
-#define NAMED_TEMP_SENSORS_SIZE                                     \
-	DT_FOREACH_CHILD(DT_PATH(named_temp_sensors), _ACCUMULATOR) \
-	0
-#define TEMP_SENSORS_ENABLED_SIZE \
-	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor, _ACCUMULATOR) 0
+#define NAMED_TEMP_SENSORS_SIZE \
+	DT_FOREACH_CHILD(TEMP_SENSORS_NODEID, _ACCUMULATOR) 0
+
+#define TEMP_SENSORS_ENABLED_SIZE FOREACH_TEMP_SENSOR(_ACCUMULATOR) 0
 
 /* Conversion of temperature doesn't need to be 100% accurate */
 #define TEMP_EPS 2
@@ -246,12 +248,12 @@ static void do_thermistor_test(const struct temp_sensor_t *temp_sensor,
 		      temp_sensor->name);
 }
 
-#define GET_THERMISTOR_REF_MV(node_id)             \
-	[ZSHIM_TEMP_SENSOR_ID(node_id)] = DT_PROP( \
+#define GET_THERMISTOR_REF_MV(node_id)              \
+	[TEMP_SENSOR_ID_BY_DEV(node_id)] = DT_PROP( \
 		DT_PHANDLE(node_id, thermistor), steinhart_reference_mv),
 
-#define GET_THERMISTOR_REF_RES(node_id)            \
-	[ZSHIM_TEMP_SENSOR_ID(node_id)] = DT_PROP( \
+#define GET_THERMISTOR_REF_RES(node_id)             \
+	[TEMP_SENSOR_ID_BY_DEV(node_id)] = DT_PROP( \
 		DT_PHANDLE(node_id, thermistor), steinhart_reference_res),
 
 ZTEST_USER(thermistor, test_thermistors_adc_temperature_conversion)
@@ -259,9 +261,9 @@ ZTEST_USER(thermistor, test_thermistors_adc_temperature_conversion)
 	int sensor_idx;
 
 	const static int reference_mv_arr[] = { DT_FOREACH_STATUS_OKAY(
-		cros_ec_temp_sensor, GET_THERMISTOR_REF_MV) };
+		THERMISTOR_COMPAT, GET_THERMISTOR_REF_MV) };
 	const static int reference_res_arr[] = { DT_FOREACH_STATUS_OKAY(
-		cros_ec_temp_sensor, GET_THERMISTOR_REF_RES) };
+		THERMISTOR_COMPAT, GET_THERMISTOR_REF_RES) };
 
 	for (sensor_idx = 0; sensor_idx < NAMED_TEMP_SENSORS_SIZE; sensor_idx++)
 		do_thermistor_test(&temp_sensors[sensor_idx],
@@ -282,10 +284,14 @@ static void *thermistor_setup(void)
 {
 	const struct device *dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
+	const struct device *dev_pin =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_EC_PG_PIN_TEMP_PATH, gpios));
 
 	zassert_not_null(dev, NULL);
-	/* Before tests make sure that power pin is set. */
+	/* Before tests make sure that power pins are set. */
 	zassert_ok(gpio_emul_input_set(dev, GPIO_PG_EC_DSW_PWROK_PORT, 1),
+		   NULL);
+	zassert_ok(gpio_emul_input_set(dev_pin, GPIO_EC_PG_PIN_TEMP_PORT, 1),
 		   NULL);
 
 	return NULL;
@@ -297,9 +303,9 @@ static void thermistor_cleanup(void *state)
 	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 
 	const static int reference_mv_arr[] = { DT_FOREACH_STATUS_OKAY(
-		cros_ec_temp_sensor, GET_THERMISTOR_REF_MV) };
+		THERMISTOR_COMPAT, GET_THERMISTOR_REF_MV) };
 	const static int reference_res_arr[] = { DT_FOREACH_STATUS_OKAY(
-		cros_ec_temp_sensor, GET_THERMISTOR_REF_RES) };
+		THERMISTOR_COMPAT, GET_THERMISTOR_REF_RES) };
 
 	if (adc_dev == NULL)
 		TC_ERROR("Cannot get ADC device");

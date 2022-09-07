@@ -20,6 +20,9 @@
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
 
+#define GPIO_EC_PG_PIN_TEMP_PATH DT_PATH(named_gpios, ec_pg_pin_temp)
+#define GPIO_EC_PG_PIN_TEMP_PORT DT_GPIO_PIN(GPIO_EC_PG_PIN_TEMP_PATH, gpios)
+
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 #define ADC_CHANNELS_NUM DT_PROP(DT_NODELABEL(adc0), nchannels)
 
@@ -49,17 +52,67 @@ ZTEST_USER(temp_sensor, test_temp_sensor_adc_error)
 		   NULL);
 
 	zassert_equal(EC_ERROR_NOT_POWERED,
-		      temp_sensor_read(TEMP_SENSOR_CHARGER, &temp), NULL);
+		      temp_sensor_read(
+			      TEMP_SENSOR_ID(DT_NODELABEL(named_temp_charger)),
+			      &temp),
+		      NULL);
 	zassert_equal(EC_ERROR_NOT_POWERED,
-		      temp_sensor_read(TEMP_SENSOR_DDR_SOC, &temp), NULL);
+		      temp_sensor_read(
+			      TEMP_SENSOR_ID(DT_NODELABEL(named_temp_ddr_soc)),
+			      &temp),
+		      NULL);
+	zassert_equal(
+		EC_ERROR_NOT_POWERED,
+		temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(named_temp_fan)),
+				 &temp),
+		NULL);
 	zassert_equal(EC_ERROR_NOT_POWERED,
-		      temp_sensor_read(TEMP_SENSOR_FAN, &temp), NULL);
-	zassert_equal(EC_ERROR_NOT_POWERED,
-		      temp_sensor_read(TEMP_SENSOR_PP3300_REGULATOR, &temp),
+		      temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
+					       named_temp_pp3300_regulator)),
+				       &temp),
 		      NULL);
 
 	/* power ADC */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_PG_EC_DSW_PWROK_PORT, 1),
+		   NULL);
+}
+
+/** Test error code when temp_sensor_read() is called power-good-pin low */
+ZTEST_USER(temp_sensor, test_temp_sensor_pg_pin)
+{
+	const struct device *gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_EC_PG_PIN_TEMP_PATH, gpios));
+	int temp;
+
+	zassert_not_null(gpio_dev, "Cannot get GPIO device");
+
+	/* ec_pg_pin_temp = 0 means temperature sensors are not powered. */
+	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_EC_PG_PIN_TEMP_PORT, 0),
+		   NULL);
+
+	zassert_equal(EC_ERROR_NOT_POWERED,
+		      temp_sensor_read(
+			      TEMP_SENSOR_ID(DT_NODELABEL(named_temp_charger)),
+			      &temp),
+		      NULL);
+	zassert_equal(EC_ERROR_NOT_POWERED,
+		      temp_sensor_read(
+			      TEMP_SENSOR_ID(DT_NODELABEL(named_temp_ddr_soc)),
+			      &temp),
+		      NULL);
+	zassert_equal(
+		EC_ERROR_NOT_POWERED,
+		temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(named_temp_fan)),
+				 &temp),
+		NULL);
+	zassert_equal(EC_ERROR_NOT_POWERED,
+		      temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
+					       named_temp_pp3300_regulator)),
+				       &temp),
+		      NULL);
+
+	/* power ADC */
+	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_EC_PG_PIN_TEMP_PORT, 1),
 		   NULL);
 }
 
@@ -109,10 +162,14 @@ ZTEST_USER(temp_sensor, test_temp_sensor_read)
 			   "channel %d adc_emul_value_func_set() failed", chan);
 	}
 
-	check_valid_temperature(adc_dev, TEMP_SENSOR_CHARGER);
-	check_valid_temperature(adc_dev, TEMP_SENSOR_DDR_SOC);
-	check_valid_temperature(adc_dev, TEMP_SENSOR_FAN);
-	check_valid_temperature(adc_dev, TEMP_SENSOR_PP3300_REGULATOR);
+	check_valid_temperature(
+		adc_dev, TEMP_SENSOR_ID(DT_NODELABEL(named_temp_charger)));
+	check_valid_temperature(
+		adc_dev, TEMP_SENSOR_ID(DT_NODELABEL(named_temp_ddr_soc)));
+	check_valid_temperature(adc_dev,
+				TEMP_SENSOR_ID(DT_NODELABEL(named_temp_fan)));
+	check_valid_temperature(adc_dev, TEMP_SENSOR_ID(DT_NODELABEL(
+						 named_temp_pp3300_regulator)));
 
 	/* Return correct value on all ADC channels */
 	for (chan = 0; chan < ADC_CHANNELS_NUM; chan++) {
@@ -126,10 +183,14 @@ static void *temp_sensor_setup(void)
 {
 	const struct device *dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
+	const struct device *dev_pin =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_EC_PG_PIN_TEMP_PATH, gpios));
 
 	zassert_not_null(dev, NULL);
-	/* Before tests make sure that power pin is set. */
+	/* Before tests make sure that power pins are set. */
 	zassert_ok(gpio_emul_input_set(dev, GPIO_PG_EC_DSW_PWROK_PORT, 1),
+		   NULL);
+	zassert_ok(gpio_emul_input_set(dev_pin, GPIO_EC_PG_PIN_TEMP_PORT, 1),
 		   NULL);
 
 	return NULL;

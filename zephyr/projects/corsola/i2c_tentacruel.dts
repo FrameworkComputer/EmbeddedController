@@ -5,6 +5,15 @@
 
 #include "i2c_krabby_tentacruel.dtsi"
 
+&i2c0 {
+	charger: rt9490@53 {
+		compatible = "richtek,rt9490";
+		status = "okay";
+		reg = <0x53>;
+		thermistor = <&thermistor_rt9490>;
+	};
+};
+
 &i2c2 {
 	bc12_port0: pi3usb9201@5f {
 		compatible = "pericom,pi3usb9201";

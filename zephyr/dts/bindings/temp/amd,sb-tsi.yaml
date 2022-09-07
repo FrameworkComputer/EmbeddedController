@@ -5,12 +5,6 @@
 description: >
   Properties for an Side Band Temperature Sensor Interface sensor
 
-include: cros-ec,temp-sensor.yaml
+compatible: "amd,sb-tsi"
 
-compatible: "cros-ec,temp-sensor-sb-tsi"
-
-properties:
-    port:
-      required: true
-      type: phandle
-      description: phandle to the sensor's i2c port
+include: i2c-device.yaml

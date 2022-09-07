@@ -201,6 +201,9 @@
 			gpios = <&gpio1 4 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
+		gpio_ec_pg_pin_temp: ec_pg_pin_temp {
+			gpios = <&gpio0 4 GPIO_INPUT>;
+		};
 	};
 
 	gpio1: gpio@101 {
@@ -389,58 +392,68 @@
 		};
 	};
 
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_13K7_47K_4050B>;
+		adc = <&adc_charger>;
+	};
+	temp_pp3300_regulator: pp3300-regulator {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_pp3300_regulator>;
+	};
+	temp_ddr_soc: ddr-soc {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_ddr_soc>;
+	};
+	temp_fan: fan {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_fan>;
+	};
+
 	named-temp-sensors {
-		charger {
-			thermistor = <&thermistor_3V3_13K7_47K_4050B>;
+		compatible = "cros-ec,temp-sensors";
+		named_temp_charger: charger {
 			status = "okay";
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			enum-name = "TEMP_SENSOR_CHARGER";
 			temp_fan_off = <40>;
 			temp_fan_max = <55>;
 			temp_host_high = <75>;
 			temp_host_halt = <80>;
 			temp_host_release_high = <65>;
-			adc = <&adc_charger>;
+			power-good-pin = <&gpio_ec_pg_pin_temp>;
+			sensor = <&temp_charger>;
 		};
-		pp3300-regulator {
-			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		named_temp_pp3300_regulator: pp3300-regulator {
 			status = "okay";
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			enum-name = "TEMP_SENSOR_PP3300_REGULATOR";
 			temp_fan_off = <40>;
 			temp_fan_max = <55>;
 			temp_host_high = <75>;
 			temp_host_halt = <80>;
 			temp_host_release_high = <65>;
-			adc = <&adc_pp3300_regulator>;
+			power-good-pin = <&gpio_ec_pg_pin_temp>;
+			sensor = <&temp_pp3300_regulator>;
 		};
-		ddr-soc {
-			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		named_temp_ddr_soc: ddr-soc {
 			status = "okay";
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			enum-name = "TEMP_SENSOR_DDR_SOC";
 			temp_fan_off = <35>;
 			temp_fan_max = <50>;
 			temp_host_high = <70>;
 			temp_host_halt = <80>;
 			temp_host_release_high = <65>;
-			adc = <&adc_ddr_soc>;
+			power-good-pin = <&gpio_ec_pg_pin_temp>;
+			sensor = <&temp_ddr_soc>;
 		};
-		fan {
-			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		named_temp_fan: fan {
 			status = "okay";
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			enum-name = "TEMP_SENSOR_FAN";
 			temp_fan_off = <35>;
 			temp_fan_max = <50>;
 			temp_host_high = <70>;
 			temp_host_halt = <80>;
 			temp_host_release_high = <65>;
-			adc = <&adc_fan>;
+			power-good-pin = <&gpio_ec_pg_pin_temp>;
+			sensor = <&temp_fan>;
 		};
 	};
 

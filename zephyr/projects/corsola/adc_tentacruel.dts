@@ -44,20 +44,19 @@
 };
 
 / {
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
+		adc = <&adc_ambient>;
+	};
+
 	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
 		ambient {
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
-			enum-name = "TEMP_SENSOR_AMB";
-			adc = <&adc_ambient>;
+			sensor = <&temp_ambient>;
 		};
-		charger {
-			compatible = "cros-ec,temp-sensor-rt9490",
-				     "cros-ec,temp-sensor";
-			thermistor = <&thermistor_rt9490>;
-			enum-name = "TEMP_SENSOR_CHARGER";
-			port = <&i2c_charger>;
+		temp_charger: charger {
+			sensor = <&charger>;
 		};
 	};
 };

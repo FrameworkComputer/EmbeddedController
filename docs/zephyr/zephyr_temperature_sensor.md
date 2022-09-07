@@ -74,21 +74,26 @@ on Zephyr-based boards.
 
 ## Device Tree Nodes
 
-Temperature sensors are declared in a `named-temp-sensors section` in the device
-tree. This example is from [zephyr/boards/arm/brya/brya.dts](../../zephyr/boards/arm/brya/brya.dts):
+Temperature sensors are declared as separate nodes and additional properties are
+defined by the `cros-ec,temp-sensors` node in the device tree. This example is
+from [zephyr/projects/brya/temp_sensors.dts](../../zephyr/projects/brya/temp_sensors.dts):
 
 ```
+	temp_ddr_soc: ddr_soc {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_ddr_soc>;
+	};
+
 	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
 		ddr_soc {
-			compatible = "cros-ec,temp-sensor";
-			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
-			enum-name = "TEMP_SENSOR_1_DDR_SOC";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
-			adc = <&adc_ddr_soc>;
+			sensor = <&temp_ddr_soc>;
 		};
 ```
 

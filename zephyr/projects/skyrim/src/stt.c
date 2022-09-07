@@ -14,7 +14,8 @@ int board_get_soc_temp_mk(int *temp_mk)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
 
-	return pct2075_get_val_mk(PCT2075_SOC, temp_mk);
+	return pct2075_get_val_mk(PCT2075_SENSOR_ID(DT_NODELABEL(soc_pct2075)),
+				  temp_mk);
 }
 
 int board_get_ambient_temp_mk(int *temp_mk)
@@ -22,5 +23,6 @@ int board_get_ambient_temp_mk(int *temp_mk)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
 
-	return pct2075_get_val_mk(PCT2075_AMB, temp_mk);
+	return pct2075_get_val_mk(PCT2075_SENSOR_ID(DT_NODELABEL(amb_pct2075)),
+				  temp_mk);
 }

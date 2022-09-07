@@ -29,7 +29,7 @@ static int average_tempature(void)
 	static int avg_temp;
 	int cur_temp, t;
 
-	temp_sensor_read(TEMP_SENSOR_CHARGER, &t);
+	temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(temp_charger)), &t);
 	cur_temp = K_TO_C(t);
 	past_temp = temp_history_buffer[buff_ptr];
 	temp_history_buffer[buff_ptr] = cur_temp;

@@ -11,13 +11,8 @@
 	};
 
 	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
 		soc-pct2075 {
-			compatible = "cros-ec,temp-sensor-pct2075",
-				     "cros-ec,temp-sensor";
-			enum-name = "TEMP_SENSOR_SOC";
-			pct2075-name = "PCT2075_SOC";
-			port = <&i2c_sensor>;
-			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS0";
 			temp_host_high = <100>;
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
@@ -25,15 +20,11 @@
 			temp_fan_off = <35>;
 			temp_fan_max = <70>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&soc_pct2075>;
 		};
 		amb-pct2075 {
-			compatible = "cros-ec,temp-sensor-pct2075",
-				     "cros-ec,temp-sensor";
-			enum-name = "TEMP_SENSOR_AMB";
-			pct2075-name = "PCT2075_AMB";
-			port = <&i2c_sensor>;
-			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS7";
 			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&amb_pct2075>;
 		};
 	};
 

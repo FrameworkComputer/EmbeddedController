@@ -54,12 +54,6 @@
 		     &i2c0_data_gpb4_default>;
 	pinctrl-names = "default";
 
-	charger: rt9490@53 {
-		compatible = "richtek,rt9490";
-		status = "okay";
-		reg = <0x53>;
-	};
-
 	cbi_eeprom: eeprom@50 {
 		compatible = "atmel,at24";
 		reg = <0x50>;

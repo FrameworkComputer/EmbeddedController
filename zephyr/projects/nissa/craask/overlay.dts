@@ -146,45 +146,50 @@
 		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
+	temp_memory: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
 	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
 		memory {
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			enum-name = "TEMP_SENSOR_1";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
-			adc = <&adc_temp_sensor_1>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_memory>;
 		};
 		charger {
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			enum-name = "TEMP_SENSOR_2";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
-			adc = <&adc_temp_sensor_2>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_charger>;
 		};
 		ambient {
-			compatible = "cros-ec,temp-sensor-thermistor",
-				     "cros-ec,temp-sensor";
-			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			enum-name = "TEMP_SENSOR_3";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
-			adc = <&adc_temp_sensor_3>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_ambient>;
 		};
 	};
 

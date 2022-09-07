@@ -5,6 +5,14 @@
 
 #include "i2c_krabby_tentacruel.dtsi"
 
+&i2c0 {
+	charger: rt9490@53 {
+		compatible = "richtek,rt9490";
+		status = "okay";
+		reg = <0x53>;
+	};
+};
+
 &i2c4 {
 	ps8743_mux_1: ps8743-mux-1@10 {
 		compatible = "parade,ps8743";
