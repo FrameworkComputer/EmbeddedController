@@ -5,13 +5,15 @@
 
 #include <zephyr/devicetree.h>
 #include "usbc_ppc.h"
+#include "usbc/ppc_aoz1380.h"
 #include "usbc/ppc_nx20p348x.h"
 #include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"
 #include "usbc/ppc.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(NX20P348X_COMPAT) ||      \
+#if DT_HAS_COMPAT_STATUS_OKAY(AOZ1380_COMPAT) ||        \
+	DT_HAS_COMPAT_STATUS_OKAY(NX20P348X_COMPAT) ||  \
 	DT_HAS_COMPAT_STATUS_OKAY(RT1739_PPC_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(SN5S330_COMPAT) ||    \
 	DT_HAS_COMPAT_STATUS_OKAY(SYV682X_COMPAT)
@@ -24,6 +26,7 @@
 		    (PPC_CHIP_ENTRY(usbc_id, ppc_id, config_fn)), ())
 
 #define PPC_CHIP_FIND(usbc_id, ppc_id)                                      \
+	CHECK_COMPAT(AOZ1380_COMPAT, usbc_id, ppc_id, PPC_CHIP_AOZ1380)     \
 	CHECK_COMPAT(NX20P348X_COMPAT, usbc_id, ppc_id, PPC_CHIP_NX20P348X) \
 	CHECK_COMPAT(RT1739_PPC_COMPAT, usbc_id, ppc_id, PPC_CHIP_RT1739)   \
 	CHECK_COMPAT(SN5S330_COMPAT, usbc_id, ppc_id, PPC_CHIP_SN5S330)     \

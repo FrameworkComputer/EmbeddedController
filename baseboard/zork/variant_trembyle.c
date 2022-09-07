@@ -9,7 +9,7 @@
 #include "console.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl9241.h"
-#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/ps8802.h"
 #include "driver/retimer/ps8818.h"

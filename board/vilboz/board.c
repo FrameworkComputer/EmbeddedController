@@ -11,7 +11,7 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ioexpander/pcal6408.h"
-#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/aoz1380_public.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "extpower.h"

@@ -16,7 +16,7 @@
 #include "chip/npcx/ps2_chip.h"
 #include "chip/npcx/pwm_chip.h"
 #include "chipset.h"
-#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/anx7491.h"
 #include "driver/retimer/ps8811.h"

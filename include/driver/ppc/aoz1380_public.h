@@ -11,8 +11,8 @@
  * controlled PPC chips that are similar to the AOZ1380
  */
 
-#ifndef __CROS_EC_AOZ1380_H
-#define __CROS_EC_AOZ1380_H
+#ifndef __CROS_EC_AOZ1380_PUBLIC_H
+#define __CROS_EC_AOZ1380_PUBLIC_H
 
 #include "usb_pd_tcpm.h"
 
