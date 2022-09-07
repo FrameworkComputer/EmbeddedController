@@ -610,4 +610,14 @@ void test_free(void *mem);
  */
 void test_set_chipset_to_g3_then_transition_to_s5(void);
 
+/**
+ * @brief Checks console command with expected console output and expected
+ * return value
+ *
+ */
+#define CHECK_CONSOLE_CMD(cmd, expected_output, expected_rv)                 \
+	check_console_cmd((cmd), (expected_output), (expected_rv), __FILE__, \
+			  __LINE__)
+void check_console_cmd(const char *cmd, const char *expected_output,
+		       const int expected_rv, const char *file, const int line);
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

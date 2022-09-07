@@ -4,6 +4,8 @@
  */
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_dummy.h> /* nocheck */
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
@@ -601,3 +603,25 @@ int emul_init_stub(const struct device *dev)
 /* These 2 lines are needed because we don't define an espi host driver */
 #define DT_DRV_COMPAT zephyr_espi_emul_espi_host
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
+
+void check_console_cmd(const char *cmd, const char *expected_output,
+		       const int expected_rv, const char *file, const int line)
+{
+	const char *buffer;
+	size_t buffer_size;
+	int rv;
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	rv = shell_execute_cmd(get_ec_shell(), cmd);
+
+	zassert_equal(expected_rv, rv,
+		      "%s:%u \'%s\' - Expected %d, returned %d", file, line,
+		      cmd, expected_rv, rv);
+
+	if (expected_output) {
+		buffer = shell_backend_dummy_get_output(get_ec_shell(),
+							&buffer_size);
+		zassert_true(strstr(buffer, expected_output),
+			     "Invalid console output %s", buffer);
+	}
+}
