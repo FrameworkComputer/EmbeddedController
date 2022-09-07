@@ -287,7 +287,7 @@
 		ioex_usb_a0_fault_odl: usb_a0_fault_odl {
 			gpios = <&ioex_c0_port1 6 GPIO_INPUT>;
 		};
-		usb_c0_sbu_flip {
+		ioex_usb_c0_sbu_flip: usb_c0_sbu_flip {
 			gpios = <&ioex_c0_port1 7 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_SBU_FLIP";
 		};
@@ -324,7 +324,7 @@
 		ioex_usb_a1_fault_db_odl: usb_a1_fault_db_odl {
 			gpios = <&ioex_c1_port1 6 GPIO_INPUT>;
 		};
-		usb_c1_sbu_flip {
+		ioex_usb_c1_sbu_flip: usb_c1_sbu_flip {
 			gpios = <&ioex_c1_port1 7 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C1_SBU_FLIP";
 		};
