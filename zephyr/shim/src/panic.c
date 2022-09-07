@@ -27,15 +27,37 @@
 
 #if defined(CONFIG_ARM)
 #define PANIC_ARCH PANIC_ARCH_CORTEX_M
-#define PANIC_REG_LIST(M)             \
-	M(basic.r0, cm.frame[0], a1)  \
-	M(basic.r1, cm.frame[1], a2)  \
-	M(basic.r2, cm.frame[2], a3)  \
-	M(basic.r3, cm.frame[3], a4)  \
-	M(basic.r12, cm.frame[4], ip) \
-	M(basic.lr, cm.frame[5], lr)  \
-	M(basic.pc, cm.frame[6], pc)  \
-	M(basic.xpsr, cm.frame[7], xpsr)
+#if defined(CONFIG_EXTRA_EXCEPTION_INFO)
+#define EXTRA_PANIC_REG_LIST(M)                                              \
+	M(extra_info.callee->v1, cm.regs[CORTEX_PANIC_REGISTER_R4], v1)      \
+	M(extra_info.callee->v2, cm.regs[CORTEX_PANIC_REGISTER_R5], v2)      \
+	M(extra_info.callee->v3, cm.regs[CORTEX_PANIC_REGISTER_R6], v3)      \
+	M(extra_info.callee->v4, cm.regs[CORTEX_PANIC_REGISTER_R7], v4)      \
+	M(extra_info.callee->v5, cm.regs[CORTEX_PANIC_REGISTER_R8], v5)      \
+	M(extra_info.callee->v6, cm.regs[CORTEX_PANIC_REGISTER_R9], v6)      \
+	M(extra_info.callee->v7, cm.regs[CORTEX_PANIC_REGISTER_R10], v7)     \
+	M(extra_info.callee->v8, cm.regs[CORTEX_PANIC_REGISTER_R11], v8)     \
+	M(extra_info.callee->psp, cm.regs[CORTEX_PANIC_REGISTER_PSP], psp)   \
+	M(extra_info.exc_return, cm.regs[CORTEX_PANIC_REGISTER_LR], exc_rtn) \
+	M(extra_info.msp, cm.regs[CORTEX_PANIC_REGISTER_MSP], msp)
+/*
+ * IPSR is not copied. IPSR is a subset of xPSR, which is already
+ * captured in PANIC_REG_LIST.
+ */
+#else
+#define EXTRA_PANIC_REG_LIST(M)
+#endif
+/* TODO(b/245423691): Copy other status registers (e.g. CFSR) when available. */
+#define PANIC_REG_LIST(M)                \
+	M(basic.r0, cm.frame[0], a1)     \
+	M(basic.r1, cm.frame[1], a2)     \
+	M(basic.r2, cm.frame[2], a3)     \
+	M(basic.r3, cm.frame[3], a4)     \
+	M(basic.r12, cm.frame[4], ip)    \
+	M(basic.lr, cm.frame[5], lr)     \
+	M(basic.pc, cm.frame[6], pc)     \
+	M(basic.xpsr, cm.frame[7], xpsr) \
+	EXTRA_PANIC_REG_LIST(M)
 #define PANIC_REG_EXCEPTION(pdata) pdata->cm.regs[1]
 #define PANIC_REG_REASON(pdata) pdata->cm.regs[3]
 #define PANIC_REG_INFO(pdata) pdata->cm.regs[4]

@@ -31,4 +31,7 @@ config SHELL_THREAD_PRIORITY_OVERRIDE
 config SHELL_THREAD_PRIORITY
 	default 12  # track EC_SHELL_PRIO
 
+config EXTRA_EXCEPTION_INFO
+	default y if ARCH_HAS_EXTRA_EXCEPTION_INFO
+
 orsource "Kconfig.defaults-$(ARCH)"
