@@ -117,6 +117,5 @@ yaviks = register_nissa_project(
         "overlay.dts",
         "keyboard.dts",
         "power_signals.dts",
-        "pwm_leds.dts",
     ],
 )

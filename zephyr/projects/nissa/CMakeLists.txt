@@ -74,7 +74,7 @@ endif()
 if(DEFINED CONFIG_BOARD_YAVIKS)
 	project(yaviks)
 	zephyr_library_sources(
-			"src/led.c"
+			"yaviks/src/led.c"
 			"yaviks/src/keyboard.c"
 			"yaviks/src/hdmi.c"
 	)
