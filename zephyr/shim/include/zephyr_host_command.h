@@ -40,11 +40,6 @@ bool in_host_command_main(void);
  * garbage-collect it since it is behind 'if (0)'
  */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask) \
-	int __remove_##command(void)                         \
-	{                                                    \
-		if (0)                                       \
-			routine(NULL);                       \
-		return 0;                                    \
-	}
+	int __remove_##command = (0 && (int)(routine))
 
 #endif /* CONFIG_PLATFORM_EC_HOSTCMD */
