@@ -23,8 +23,6 @@
 #include "intc.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -466,16 +464,6 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 
 	charger_set_otg_current_voltage(port, current, 5000);
 }
-
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_WHITE] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq_hz = 2000,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {

@@ -20,9 +20,6 @@
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
 
-/* PWM */
-#define CONFIG_PWM
-
 /* TCPC */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0: ITE EC TCPC */
@@ -80,11 +77,6 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
-enum pwm_channel {
-	PWM_CH_LED_WHITE,
-	PWM_CH_COUNT,
-};
 
 /* ADC channels */
 enum adc_channel {
