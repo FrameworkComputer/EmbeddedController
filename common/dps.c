@@ -16,6 +16,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "ec_commands.h"
+#include "hooks.h"
 #include "math_util.h"
 #include "task.h"
 #include "timer.h"
@@ -30,13 +31,8 @@
 #define T_REQUEST_STABLE_TIME (10 * SECOND)
 #define T_NEXT_CHECK_TIME (5 * SECOND)
 
-#define DPS_FLAG_DISABLED BIT(0)
-#define DPS_FLAG_NO_SRCCAP BIT(1)
-#define DPS_FLAG_WAITING BIT(2)
-#define DPS_FLAG_SAMPLED BIT(3)
-#define DPS_FLAG_NEED_MORE_PWR BIT(4)
-
-#define DPS_FLAG_STOP_EVENTS (DPS_FLAG_DISABLED | DPS_FLAG_NO_SRCCAP)
+#define DPS_FLAG_STOP_EVENTS \
+	(DPS_FLAG_DISABLED | DPS_FLAG_NO_SRCCAP | DPS_FLAG_NO_BATTERY)
 #define DPS_FLAG_ALL GENMASK(31, 0)
 
 #define MAX_MOVING_AVG_WINDOW 5
@@ -52,7 +48,7 @@ static bool fake_enabled;
 static int fake_mv, fake_ma;
 static int dynamic_mv;
 static int dps_port = CHARGE_PORT_NONE;
-static uint32_t flag;
+static atomic_t flag;
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, "DPS " format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, "DPS " format, ##args)
@@ -370,18 +366,18 @@ __maybe_unused static bool has_new_power_request(struct pdo_candidate *cand)
 	 */
 	if (is_near_limit(input_pwr_avg, req_pwr) ||
 	    is_near_limit(input_curr_avg, MIN(req_ma, input_curr_limit))) {
-		flag |= DPS_FLAG_NEED_MORE_PWR;
+		atomic_or(&flag, DPS_FLAG_NEED_MORE_PWR);
 		if (!fake_enabled)
 			input_pwr_avg = req_pwr + 1;
 	} else {
-		flag &= ~DPS_FLAG_NEED_MORE_PWR;
+		atomic_clear_bits(&flag, DPS_FLAG_NEED_MORE_PWR);
 	}
 
 	if (debug_level)
 		CPRINTS("C%d 0x%x last (%dmW %dmV) input (%dmW %dmV %dmA) "
 			"avg (%dmW, %dmA)",
-			active_port, flag, req_pwr, req_mv, input_pwr, vbus,
-			input_curr, input_pwr_avg, input_curr_avg);
+			active_port, (int)flag, req_pwr, req_mv, input_pwr,
+			vbus, input_curr, input_pwr_avg, input_curr_avg);
 
 	for (int i = 0; i < board_get_usb_pd_port_count(); ++i) {
 		const uint32_t *const src_caps = pd_get_src_caps(i);
@@ -498,29 +494,34 @@ void dps_task(void *u)
 			dps_reset();
 			task_wait_event(-1);
 			/* clear flags after wake up. */
-			flag = 0;
+			atomic_clear(&flag);
 			update_timeout(dps_config.t_check);
 			continue;
 		} else if (now.val < timeout.val) {
-			flag |= DPS_FLAG_WAITING;
+			atomic_or(&flag, DPS_FLAG_WAITING);
 			task_wait_event(timeout.val - now.val);
-			flag &= ~DPS_FLAG_WAITING;
+			atomic_clear_bits(&flag, DPS_FLAG_WAITING);
 			continue;
 		}
 
 		if (!is_enabled) {
-			flag |= DPS_FLAG_DISABLED;
+			atomic_or(&flag, DPS_FLAG_DISABLED);
 			continue;
 		}
 
 		if (!has_srccap()) {
-			flag |= DPS_FLAG_NO_SRCCAP;
+			atomic_or(&flag, DPS_FLAG_NO_SRCCAP);
+			continue;
+		}
+
+		if (battery_is_present() != BP_YES) {
+			atomic_or(&flag, DPS_FLAG_NO_BATTERY);
 			continue;
 		}
 
 		if (!has_new_power_request(&curr_cand)) {
 			sample_count = 0;
-			flag &= ~DPS_FLAG_SAMPLED;
+			atomic_clear_bits(&flag, DPS_FLAG_SAMPLED);
 		} else {
 			if (last_cand.port == curr_cand.port &&
 			    last_cand.mv == curr_cand.mv &&
@@ -528,7 +529,7 @@ void dps_task(void *u)
 				sample_count++;
 			else
 				sample_count = 1;
-			flag |= DPS_FLAG_SAMPLED;
+			atomic_or(&flag, DPS_FLAG_SAMPLED);
 		}
 
 		if (sample_count == dps_config.k_sample) {
@@ -536,16 +537,27 @@ void dps_task(void *u)
 			dps_port = curr_cand.port;
 			pd_dpm_request(dps_port, DPM_REQUEST_NEW_POWER_LEVEL);
 			sample_count = 0;
-			flag &= ~(DPS_FLAG_SAMPLED | DPS_FLAG_NEED_MORE_PWR);
+			atomic_clear_bits(&flag, (DPS_FLAG_SAMPLED |
+						  DPS_FLAG_NEED_MORE_PWR));
 		}
 
 		last_cand.port = curr_cand.port;
 		last_cand.mv = curr_cand.mv;
 		last_cand.mw = curr_cand.mw;
-
 		update_timeout(dps_config.t_check);
 	}
 }
+
+void check_battery_present(void)
+{
+	const struct batt_params *batt = charger_current_battery_params();
+
+	if (batt->is_present == BP_YES && (flag & DPS_FLAG_NO_BATTERY)) {
+		atomic_clear_bits(&flag, DPS_FLAG_NO_BATTERY);
+		task_wake(TASK_ID_DPS);
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, check_battery_present, HOOK_PRIO_DEFAULT);
 
 static int command_dps(int argc, const char **argv)
 {
@@ -558,8 +570,9 @@ static int command_dps(int argc, const char **argv)
 		int batt_mv;
 
 		ccprintf("flag=0x%x k_more=%d k_less=%d k_sample=%d k_win=%d\n",
-			 flag, dps_config.k_more_pwr, dps_config.k_less_pwr,
-			 dps_config.k_sample, dps_config.k_window);
+			 (int)flag, dps_config.k_more_pwr,
+			 dps_config.k_less_pwr, dps_config.k_sample,
+			 dps_config.k_window);
 		ccprintf("t_stable=%d t_check=%d\n",
 			 dps_config.t_stable / SECOND,
 			 dps_config.t_check / SECOND);
@@ -702,5 +715,9 @@ __test_only int dps_get_fake_ma(void)
 __test_only int *dps_get_debug_level(void)
 {
 	return &debug_level;
+}
+__test_only int dps_get_flag(void)
+{
+	return flag;
 }
 #endif /* TEST_BUILD */
