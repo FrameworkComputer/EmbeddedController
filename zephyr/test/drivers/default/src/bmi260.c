@@ -1960,7 +1960,7 @@ ZTEST_USER(bmi260, test_unsupported_configs)
 	memcpy(&ms_fake, &motion_sensors[BMI_ACC_SENSOR_ID], sizeof(ms_fake));
 	ms_fake.type = MOTIONSENSE_TYPE_MAG;
 
-	int16_t offset[3];
+	int16_t offset[3] = { 0 };
 	int ret =
 		ms_fake.drv->set_offset(&ms_fake, (const int16_t *)&offset, 0);
 	zassert_equal(
