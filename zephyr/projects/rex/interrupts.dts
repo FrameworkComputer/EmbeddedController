@@ -42,6 +42,21 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bc12_interrupt";
 		};
+		int_imu: ec_imu {
+			irq-pin = <&gpio_ec_imu_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lsm6dso_interrupt";
+		};
+		int_als_rgb: ec_als_rgb {
+			irq-pin = <&gpio_ec_als_rgb_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcs3400_interrupt";
+		};
+		int_accel: ec_accel {
+			irq-pin = <&gpio_ec_accel_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
+		};
 	};
 };
 

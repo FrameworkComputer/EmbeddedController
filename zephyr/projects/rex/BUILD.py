@@ -39,6 +39,7 @@ register_variant(
         here / "led.dts",
         here / "fan.dts",
         here / "temp_sensors.dts",
+        here / "motionsense.dts",
     ],
     extra_kconfig_files=[here / "prj_rex.conf"],
 )
