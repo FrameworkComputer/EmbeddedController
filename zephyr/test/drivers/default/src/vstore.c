@@ -3,10 +3,17 @@
  * found in the LICENSE file.
  */
 
+#include <setjmp.h>
+
+#include <console.h>
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 #include "ec_commands.h"
 #include "host_command.h"
+#include "system.h"
+#include "system_fake.h"
 #include "vstore.h"
 #include "test/drivers/test_state.h"
 
@@ -166,4 +173,58 @@ ZTEST_USER(vstore, test_vstore_write_read)
 		     "Please set CONFIG_VSTORE_SLOT_COUNT to >= 2");
 	do_vstore_write_read(0);
 	do_vstore_write_read(1);
+}
+
+ZTEST_USER(vstore, test_vstore_state)
+{
+	struct ec_params_vstore_write write_params = {
+		.slot = 0,
+		/* .data is set up below */
+	};
+	struct host_cmd_handler_args write_args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_VSTORE_WRITE, 0, write_params);
+
+	struct ec_params_reboot_ec reboot_params = {
+		.cmd = EC_REBOOT_JUMP_RW,
+	};
+	struct host_cmd_handler_args reboot_args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_REBOOT_EC, 0, reboot_params);
+	struct ec_response_vstore_info info_response;
+	struct host_cmd_handler_args info_args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_VSTORE_INFO, 0, info_response);
+	jmp_buf env;
+	int i;
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	system_common_pre_init();
+
+	for (i = 0; i < EC_VSTORE_SLOT_SIZE; i++)
+		write_params.data[i] = i + 1;
+
+	/* Write to a slot */
+	zassert_ok(host_command_process(&write_args), NULL);
+	zassert_ok(write_args.result, NULL);
+
+	/* Set up so we get back to this test on a reboot */
+	if (!setjmp(env)) {
+		system_fake_setenv(&env);
+
+		/* Reboot to RW  */
+		zassert_ok(host_command_process(&reboot_args), NULL);
+
+		/* Does not return unless something went wrong */
+		zassert_unreachable("Failed to reboot");
+	}
+
+	/* the reboot should end up here: check the slot is still locked */
+	zassert_ok(host_command_process(&info_args), NULL);
+	zassert_ok(info_args.result, NULL);
+	zassert_equal(info_args.response_size, sizeof(info_response), NULL);
+	zassert_equal(info_response.slot_count, CONFIG_VSTORE_SLOT_COUNT,
+		      "response.slot_count = %d", info_response.slot_count);
+	zassert_equal(info_response.slot_locked, 1 << 0,
+		      "response.slot_locked = %#x", info_response.slot_locked);
+
+	/* Clear locks to put things into a normal state */
+	vstore_clear_lock();
 }
