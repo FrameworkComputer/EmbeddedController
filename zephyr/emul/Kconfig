@@ -80,6 +80,11 @@ config EMUL_CROS_FLASH
 	help
 	  This option enables the flash emulator for testing.
 
+config EMUL_RTC
+	bool "Emulated RTC driver for Zephyr shim"
+	help
+	  This options enables the RTC emulator for testing.
+
 config EMUL_RT9490
 	bool "Rt9490 charger emulator"
 	select EMUL_COMMON_I2C

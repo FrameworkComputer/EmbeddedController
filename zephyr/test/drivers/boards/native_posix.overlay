@@ -16,6 +16,7 @@
 		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,flash = &flash0;
 		cros-ec,flash-controller = &cros_flash;
+		cros,rtc = &cros_rtc;
 	};
 
 	aliases {
@@ -789,6 +790,10 @@
 
 	cros_flash: cros-flash {
 		compatible = "cros-ec,flash-emul";
+	};
+
+	cros_rtc: cros-rtc {
+		compatible = "cros-ec,rtc-emul";
 	};
 
 	pwms {

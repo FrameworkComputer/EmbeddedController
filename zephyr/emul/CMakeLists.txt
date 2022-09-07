@@ -22,6 +22,7 @@ zephyr_library_sources_ifdef(CONFIG_EMUL_CLOCK_CONTROL	emul_clock_control.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_SN5S330	emul_sn5s330.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_KB_RAW		emul_kb_raw.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_CROS_FLASH	emul_flash.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_RTC		emul_rtc.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_RT9490		emul_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PWM_MOCK            pwm_mock.c)
 
