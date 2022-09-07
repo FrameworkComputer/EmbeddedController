@@ -308,6 +308,10 @@ DECLARE_HOOK(HOOK_CHIPSET_RESET, panic_init, HOOK_PRIO_LAST);
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif /* __clang__ */
+#if __GNUC__ >= 12
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winfinite-recursion"
+#endif /* __GNUC__ >= 12 */
 static void stack_overflow_recurse(int n)
 {
 	ccprintf("+%d", n);
@@ -326,6 +330,9 @@ static void stack_overflow_recurse(int n)
 	 */
 	ccprintf("-%d", n);
 }
+#if __GNUC__ >= 12
+#pragma GCC diagnostic pop
+#endif /* __GNUC__ >= 12 */
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif /* __clang__ */
