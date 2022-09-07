@@ -12,14 +12,13 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "system.h"
+#include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
 #define PORT 0
 
 #define AC_OK_OD_GPIO_NAME "acok_od"
-
-FAKE_VALUE_FUNC(int, system_is_locked);
 
 static void espi_before(void *state)
 {

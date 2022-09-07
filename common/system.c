@@ -1827,6 +1827,7 @@ __test_only void system_common_reset_state(void)
 	jdata = 0;
 	reset_flags = 0;
 	jumped_to_image = 0;
+	system_info_flags = 0;
 }
 
 __test_only enum ec_reboot_cmd system_common_get_reset_reboot_at_shutdown(void)
