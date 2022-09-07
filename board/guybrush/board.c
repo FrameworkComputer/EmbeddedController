@@ -479,8 +479,7 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
 		.temp_host_release = {
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
 		},
-		/* TODO: Setting fan off to 0 so it's allways on */
-		.temp_fan_off = C_TO_K(0),
+		.temp_fan_off = C_TO_K(25),
 		.temp_fan_max = C_TO_K(70),
 	},
 	[TEMP_SENSOR_CHARGER] = {
