@@ -16,7 +16,7 @@
 			chg = <&charger>;
 		};
 
-		port1@1 {
+		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			bc12 = <&bc12_port1>;

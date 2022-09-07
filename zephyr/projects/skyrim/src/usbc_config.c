@@ -83,21 +83,6 @@ static void usb_fault_interrupt_disable(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_fault_interrupt_disable,
 	     HOOK_PRIO_DEFAULT);
 
-struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		/* Device does not talk I2C */
-		.drv = &aoz1380_drv
-	},
-
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = NX20P3483_ADDR1_FLAGS,
-		.drv = &nx20p348x_drv
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
 /*
  * .init is not necessary here because it has nothing
  * to do. Primary mux will handle mux state so .get is

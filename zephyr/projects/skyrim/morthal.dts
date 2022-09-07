@@ -124,4 +124,25 @@
 				 0 0 1>;
 		};
 	};
+
+	ppc_port0: aoz1380 {
+		compatible = "aoz,aoz1380";
+		status = "okay";
+	};
+};
+
+&i2c1_0 {
+	ppc_port1: nx20p348x@71 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x71>;
+	};
+};
+
+&usbc_port0 {
+	ppc = <&ppc_port0>;
+};
+
+&usbc_port1 {
+	ppc = <&ppc_port1>;
 };
