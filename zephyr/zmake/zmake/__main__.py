@@ -283,6 +283,12 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         help="Generate static version information for reproducible builds",
     )
     sub_parser.add_argument(
+        "--save-temps",
+        action="store_true",
+        dest="save_temps",
+        help="Save the temporary files containing preprocessor output",
+    )
+    sub_parser.add_argument(
         "--allow-warnings",
         action="store_true",
         default=False,

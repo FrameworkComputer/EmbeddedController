@@ -249,6 +249,7 @@ class Zmake:
         delete_intermediates=False,
         boards_only=False,
         static_version=False,
+        save_temps=False,
     ):
         """Locate and configure the specified projects."""
         # Resolve build_dir if needed.
@@ -280,6 +281,7 @@ class Zmake:
                     multiproject=len(projects) > 1,
                     delete_intermediates=delete_intermediates,
                     static_version=static_version,
+                    save_temps=save_temps,
                 )
             )
             if self._sequential:
@@ -316,6 +318,7 @@ class Zmake:
         delete_intermediates=False,
         boards_only=False,
         static_version=False,
+        save_temps=False,
     ):
         """Locate and build the specified projects."""
         return self.configure(
@@ -333,6 +336,7 @@ class Zmake:
             delete_intermediates=delete_intermediates,
             boards_only=boards_only,
             static_version=static_version,
+            save_temps=save_temps,
         )
 
     def test(  # pylint: disable=unused-argument
@@ -375,6 +379,7 @@ class Zmake:
         multiproject=False,
         delete_intermediates=False,
         static_version=False,
+        save_temps=False,
     ):
         """Set up a build directory to later be built by "zmake build"."""
         try:
@@ -408,6 +413,11 @@ class Zmake:
                     **(
                         {"EXTRA_EC_VERSION_FLAGS": "--static"}
                         if static_version
+                        else {}
+                    ),
+                    **(
+                        {"EXTRA_CFLAGS": "-save-temps=obj"}
+                        if save_temps
                         else {}
                     ),
                 },
