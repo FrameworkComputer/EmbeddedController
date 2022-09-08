@@ -9,7 +9,7 @@
 #include <zephyr/dt-bindings/clock/npcx_clock.h>
 #include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 
 #include <ap_power/ap_power.h>
 #include "chipset.h"

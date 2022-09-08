@@ -5,7 +5,7 @@
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/shell/shell_uart.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
 #include "acpi.h"

@@ -13,7 +13,7 @@
 #include <zephyr/drivers/espi.h>
 #include <zephyr/drivers/espi_emul.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
 #include "ap_power/ap_power.h"

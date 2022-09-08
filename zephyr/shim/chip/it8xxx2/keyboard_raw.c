@@ -8,7 +8,7 @@
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 
 #include "drivers/cros_kb_raw.h"
 #include "keyboard_raw.h"

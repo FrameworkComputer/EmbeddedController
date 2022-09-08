@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/pm/pm.h>
 #include <zephyr/pm/policy.h>
 #include <soc.h>

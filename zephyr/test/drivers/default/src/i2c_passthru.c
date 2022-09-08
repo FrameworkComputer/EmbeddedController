@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
 #include "driver/ln9310.h"

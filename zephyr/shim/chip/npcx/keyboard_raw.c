@@ -10,7 +10,7 @@
 #include <zephyr/logging/log.h>
 #include <soc.h>
 #include <soc_gpio.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 
 #include "drivers/cros_kb_raw.h"
 #include "keyboard_raw.h"

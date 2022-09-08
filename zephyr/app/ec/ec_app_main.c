@@ -6,7 +6,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/shell/shell_uart.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 
 #include "ap_power/ap_pwrseq.h"
 #include "button.h"

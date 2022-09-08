@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 
 #include "host_command.h"
 #include "task.h"

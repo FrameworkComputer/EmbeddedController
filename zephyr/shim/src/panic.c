@@ -7,7 +7,7 @@
 #include <zephyr/fatal.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/logging/log_ctrl.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 
 #include "common.h"
 #include "panic.h"

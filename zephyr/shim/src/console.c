@@ -14,7 +14,7 @@
 #include <string.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/ring_buffer.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 /*

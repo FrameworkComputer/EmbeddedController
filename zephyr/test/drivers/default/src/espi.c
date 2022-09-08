@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include <zephyr/fff.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
 #include "ec_commands.h"
