@@ -48,6 +48,7 @@ if(DEFINED CONFIG_BOARD_PUJJO)
 			"pujjo/src/led.c"
 			"pujjo/src/keyboard.c"
 			"pujjo/src/hdmi.c"
+			"pujjo/src/form_factor.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "pujjo/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pujjo/src/usbc.c")
