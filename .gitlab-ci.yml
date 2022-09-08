@@ -77,7 +77,7 @@ before_script:
   # Install Python and packages
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install "${EC_DIR}/zephyr/zmake[tests]" --user
-  - python3 -m pip install pyyaml packaging ply psutil
+  - python3 -m pip install pyyaml packaging ply psutil 'pyelftools>=0.28'
   - export PATH="$PATH:$HOME/.local/bin"
   - export PYTHONIOENCODING=utf-8
   # Build directory
