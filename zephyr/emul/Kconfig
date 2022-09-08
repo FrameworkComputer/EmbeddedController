@@ -77,6 +77,7 @@ config EMUL_KB_RAW
 config EMUL_CROS_FLASH
 	bool "Emulated flash driver for the Zephyr shim"
 	select PLATFORM_EC_FLASH_CROS
+	imply SYSTEM_FAKE
 	help
 	  This option enables the flash emulator for testing.
 

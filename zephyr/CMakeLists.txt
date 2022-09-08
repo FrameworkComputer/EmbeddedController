@@ -563,6 +563,7 @@ add_subdirectory(linker)
 add_subdirectory("app")
 add_subdirectory("drivers")
 add_subdirectory("emul")
+add_subdirectory("fake")
 add_subdirectory("mock")
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 

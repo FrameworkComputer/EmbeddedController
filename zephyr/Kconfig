@@ -5,6 +5,7 @@
 rsource "app/Kconfig"
 rsource "drivers/Kconfig"
 rsource "emul/Kconfig"
+rsource "fake/Kconfig"
 rsource "mock/Kconfig"
 rsource "subsys/Kconfig"
 
