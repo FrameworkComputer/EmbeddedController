@@ -18,7 +18,7 @@ LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 #define HAS_NAMED_ADC_CHANNELS DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
 
 #if HAS_NAMED_ADC_CHANNELS
-#define ADC_CHANNEL_COMMA(node_id) \
+#define ADC_CHANNEL_INIT(node_id) \
 	[ZSHIM_ADC_ID(node_id)] = {                                       \
 		.name = DT_NODE_FULL_NAME(node_id),                       \
 		.dev = DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(node_id)),       \
@@ -36,10 +36,10 @@ LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 	},
 #ifdef CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
 struct adc_t adc_channels[] = { DT_FOREACH_CHILD(DT_INST(0, named_adc_channels),
-						 ADC_CHANNEL_COMMA) };
+						 ADC_CHANNEL_INIT) };
 #else
 const struct adc_t adc_channels[] = { DT_FOREACH_CHILD(
-	DT_INST(0, named_adc_channels), ADC_CHANNEL_COMMA) };
+	DT_INST(0, named_adc_channels), ADC_CHANNEL_INIT) };
 #endif
 #endif /* named_adc_channels */
 
