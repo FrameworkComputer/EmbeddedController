@@ -73,6 +73,20 @@
 extern "C" {
 #endif
 
+/**
+ * Constant for creation of flexible array members that work in both C and
+ * C++. Flexible array members were added in C99 and are not part of the C++
+ * standard. However, clang++ and g++ support them in C++.
+ * When compiling C code, flexible array members are not allowed to appear
+ * in an otherwise empty struct, so we use the GCC zero-length array
+ * extension that works with both clang and gcc.
+ */
+#ifdef __cplusplus
+#define FLEXIBLE_ARRAY_MEMBER_SIZE
+#else
+#define FLEXIBLE_ARRAY_MEMBER_SIZE 0
+#endif
+
 /*
  * Current version of this protocol
  *
@@ -1745,14 +1759,14 @@ struct ec_params_flash_write {
 	uint32_t offset;
 	uint32_t size;
 	/* Followed by data to write. This union allows accessing an
-	 * underlying buffer as uint32s or uint8s for convenience. This does not
-	 * increase the size of the struct.
+	 * underlying buffer as uint32s or uint8s for convenience.
 	 */
 	union {
-		uint32_t words32[0];
-		uint8_t bytes[0];
+		uint32_t words32[FLEXIBLE_ARRAY_MEMBER_SIZE];
+		uint8_t bytes[FLEXIBLE_ARRAY_MEMBER_SIZE];
 	} data;
 } __ec_align4;
+BUILD_ASSERT(member_size(struct ec_params_flash_write, data) == 0);
 
 /* Erase flash */
 #define EC_CMD_FLASH_ERASE 0x0013
@@ -1970,18 +1984,12 @@ struct ec_params_rand_num {
 
 struct ec_response_rand_num {
 	/**
-	 * generated random numbers in the range of 1 to EC_MAX_INSIZE. The size
-	 * of this is set to 1 in order to support C++ compilation. The true
+	 * generated random numbers in the range of 1 to EC_MAX_INSIZE. The true
 	 * size of rand is determined by ec_params_rand_num's num_rand_bytes.
 	 */
-	uint8_t rand[1];
+	uint8_t rand[FLEXIBLE_ARRAY_MEMBER_SIZE];
 } __ec_align1;
-
-/* C++ requires all structs to be at least 1 byte long. Since struct
- * ec_response_rand_num will never be used with num_rand_bytes == 0 (from
- * ec_params_rand_num) it is set to always be at least 1.
- */
-BUILD_ASSERT(sizeof(struct ec_response_rand_num) == 1);
+BUILD_ASSERT(sizeof(struct ec_response_rand_num) == 0);
 
 /**
  * Get information about the key used to sign the RW firmware.
