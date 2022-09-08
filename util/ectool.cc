@@ -10162,7 +10162,9 @@ int cmd_typec_control(int argc, char *argv[])
 			"    4: Set USB mux mode\n"
 			"        args: <mux_index> <mux_mode>\n"
 			"        <mux_mode> is one of: dp, dock, usb, tbt,\n"
-			"                              usb4, none, safe\n",
+			"                              usb4, none, safe\n"
+			"    5: Enable bist share mode\n"
+			"        args: <0: DISABLE, 1: ENABLE>\n",
 			argv[0]);
 		return -1;
 	}
@@ -10251,6 +10253,20 @@ int cmd_typec_control(int argc, char *argv[])
 			fprintf(stderr, "Bad mux mode\n");
 			return -1;
 		}
+		break;
+	case TYPEC_CONTROL_COMMAND_BIST_SHARE_MODE:
+		if (argc < 4) {
+			fprintf(stderr, "Missing reply\n");
+			return -1;
+		}
+
+		conversion_result = strtol(argv[3], &endptr, 0);
+		if ((endptr && *endptr) || conversion_result > UINT8_MAX ||
+		    conversion_result < 0) {
+			fprintf(stderr, "Bad index\n");
+			return -1;
+		}
+		p.bist_share_mode = conversion_result;
 		break;
 	}
 

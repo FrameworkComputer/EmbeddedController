@@ -492,6 +492,15 @@ void host_cmd_typec_control_usb_mux_set(int port,
  */
 void host_cmd_typec_control_clear_events(int port, uint32_t events);
 
+/**
+ * Run the host command to control PD port behavior, with the sub-command of
+ * TYPEC_CONTROL_COMMAND_BIST_SHARE_MODE
+ *
+ * @param port		The USB-C port number
+ * @param enable	enable bist share mode or not
+ */
+void host_cmd_typec_control_bist_share_mode(int port, int enable);
+
 struct host_events_ctx {
 	host_event_t lpc_host_events;
 	host_event_t lpc_host_event_mask[LPC_HOST_EVENT_COUNT];

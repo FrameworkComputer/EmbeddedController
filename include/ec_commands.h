@@ -6769,6 +6769,7 @@ enum typec_control_command {
 	TYPEC_CONTROL_COMMAND_ENTER_MODE,
 	TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY,
 	TYPEC_CONTROL_COMMAND_USB_MUX_SET,
+	TYPEC_CONTROL_COMMAND_BIST_SHARE_MODE,
 };
 
 /* Modes (USB or alternate) that a type-C port may enter. */
@@ -6813,6 +6814,8 @@ struct ec_params_typec_control {
 		uint8_t tbt_ufp_reply;
 		/* Used for USB_MUX_SET */
 		struct typec_usb_mux_set mux_params;
+		/* Used for BIST_SHARE_MODE */
+		uint8_t bist_share_mode;
 		uint8_t placeholder[128];
 	};
 } __ec_align1;

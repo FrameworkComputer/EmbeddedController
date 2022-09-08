@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
@@ -137,6 +138,8 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 				   USB_SWITCH_CONNECT,
 				   polarity_rm_dts(pd_get_polarity(p->port)));
 		return EC_RES_SUCCESS;
+	case TYPEC_CONTROL_COMMAND_BIST_SHARE_MODE:
+		return pd_set_bist_share_mode(p->bist_share_mode);
 	default:
 		return EC_RES_INVALID_PARAM;
 	}

@@ -145,6 +145,15 @@ void dpm_bist_shared_mode_enter(int port);
 void dpm_bist_shared_mode_exit(int port);
 
 /*
+ * Set BIST Shared Test Mode
+ */
+enum ec_status pd_set_bist_share_mode(uint8_t enable);
+
+/*
+ * Get BIST Shared Test Mode status
+ */
+uint8_t pd_get_bist_share_mode(void);
+/*
  * Build SOP Status Data Block (SDB)
  *
  * @param port		USB-C port number
