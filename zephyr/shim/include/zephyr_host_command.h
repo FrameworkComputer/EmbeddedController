@@ -36,10 +36,10 @@ bool in_host_command_main(void);
 #else /* !CONFIG_PLATFORM_EC_HOSTCMD */
 
 /*
- * Create a fake routine to call the function. The linker should
- * garbage-collect it since it is behind 'if (0)'
+ * Create a global var to reference the host command. The linker should remove
+ * it since it is never referenced.
  */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask) \
-	int __remove_##command = (0 && (int)(routine))
+	int __remove_##command = ((int)(routine))
 
 #endif /* CONFIG_PLATFORM_EC_HOSTCMD */
