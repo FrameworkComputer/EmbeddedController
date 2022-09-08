@@ -23,6 +23,29 @@ data into a code coverage report using the `lcov` and `genhtml` tools.
 
 The coverage report top-level page is `build/coverage/coverage_rpt/index.html`.
 
+To get a report for one specific board's coverage run these commands:
+
+```
+BOARD=eldrid
+make -j$(nproc) build/coverage/initial-${BOARD}.info test-coverage
+# Merge board coverage and test coverage
+lcov -o build/coverage/${BOARD}_merged.info --rc lcov_branch_coverage=1 \
+  -a build/coverage/initial-${BOARD}.info -a build/coverage/lcov.info
+# Filter out some unhelpful paths
+lcov -o build/coverage/${BOARD}_filtered.info --rc lcov_branch_coverage=1 \
+  -r build/coverage/${BOARD}_merged.info ${PWD}'/third_party/**' \
+  ${PWD}'/build/**' '/usr/include/**' '/usr/lib/**' '${PWD}/test/**' \
+  ${PWD}'/private/fingerprint/google-fpalg/mcutest/**'
+# Restrict to only files used by the board
+grep "SF:" "build/coverage/initial-${BOARD}.info" | sort -u | \
+      sed -e 's|^SF:||' | xargs lcov --rc lcov_branch_coverage=1 \
+      -o build/coverage/${BOARD}_final.info \
+      -e build/coverage/${BOARD}_filtered.info
+# Generate HTML
+genhtml --branch-coverage -q -o build/coverage/${BOARD}_rpt \
+  -t "${BOARD} coverage" -s build/coverage/${BOARD}_final.info
+```
+
 ### Noise in the build output
 
 When building for code coverage, you may see multiple warnings of the form
