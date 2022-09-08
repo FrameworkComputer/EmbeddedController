@@ -433,7 +433,7 @@ void cypd_set_error_recovery(void)
 			 * We can write the 0xC0 to avoid cypd to do the error recovery before we
 			 * change the system power state
 			 */
-			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC1);
+			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
 			reconnect_flag = false;
 		} else
 			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
