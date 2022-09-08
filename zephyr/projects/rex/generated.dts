@@ -79,7 +79,7 @@
 			gpios = <&gpiof 0 GPIO_INPUT>;
 		};
 		gpio_ec_prochot_odl: ec_prochot_odl {
-			gpios = <&gpio6 3 GPIO_ODR_LOW>;
+			gpios = <&gpio6 3 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_rst_r_odl: ec_rst_r_odl {
 			gpios = <&gpio7 7 GPIO_INPUT>;
