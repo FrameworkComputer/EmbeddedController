@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #endif
 
+#include <assert.h>
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -31,6 +32,15 @@ int __test_error_count;
 /* Weak reference function as an entry point for unit test */
 test_mockable void run_test(int argc, const char **argv)
 {
+	/* This function should always be replaced by a real implementation of
+	 * run_test().
+	 * If this assertion is failing, it means your test was not linked
+	 * correctly. Check the signature of run_test() defined in your test
+	 * matches the one above.
+	 */
+	ccprintf("%s:%d: ASSERTION failed: ran weakly linked fallback test\n",
+		 __FILE__, __LINE__);
+	assert(0);
 }
 
 /* Default mock test init */
