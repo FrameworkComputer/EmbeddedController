@@ -469,10 +469,11 @@
 /* The jump data goes at the end of data ram, so for posix, the end of ram is
  * wherever the jump data ended up.
  */
-extern struct jump_data mock_jump_data;
+#include "sysjump.h"
+extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_RAM_BASE 0x0
 #define CONFIG_DATA_RAM_SIZE \
-	(((uintptr_t)&mock_jump_data) + sizeof(struct jump_data))
+	(((uintptr_t)&mock_jump_data) + sizeof(mock_jump_data))
 #else
 #error "A zephyr,sram device must be chosen in the device tree"
 #endif
