@@ -134,7 +134,9 @@ static int command_cable(int argc, const char **argv)
 	cable_rev = pd_get_rev(port, TCPCI_MSG_SOP_PRIME);
 	disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 	cable_mode_resp.raw_value =
-		pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
+		IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) ?
+			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME) :
+			0;
 
 	/* Cable revision */
 	ccprintf("Cable Rev: %d.0\n", cable_rev + 1);

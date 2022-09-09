@@ -241,7 +241,8 @@ static uint8_t get_pd_control_flags(int port)
 	union tbt_mode_resp_device device_resp;
 	uint8_t control_flags = 0;
 
-	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP) ||
+	    !IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
 		return 0;
 
 	cable_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
@@ -364,8 +365,12 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 		r_v2->control_flags = get_pd_control_flags(p->port);
 		if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 			r_v2->dp_mode = get_dp_pin_mode(p->port);
-			r_v2->cable_speed = get_tbt_cable_speed(p->port);
-			r_v2->cable_gen = get_tbt_rounded_support(p->port);
+			if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
+				r_v2->cable_speed =
+					get_tbt_cable_speed(p->port);
+				r_v2->cable_gen =
+					get_tbt_rounded_support(p->port);
+			}
 		}
 
 		if (args->version == 1)
