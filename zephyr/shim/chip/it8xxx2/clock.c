@@ -8,7 +8,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr/kernel.h>
 #include <soc/ite_it8xxx2/reg_def_cros.h>
 #include <zephyr/sys/util.h>
 

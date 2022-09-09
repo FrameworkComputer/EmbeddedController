@@ -10,7 +10,6 @@
 
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
-#include <zephyr/kernel.h>
 
 #include "common.h"
 #include "cros_version.h"

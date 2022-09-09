@@ -10,7 +10,6 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/kernel.h>
 #include <stdint.h>
-#include <zephyr/kernel.h>
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>

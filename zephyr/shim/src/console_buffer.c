@@ -4,7 +4,6 @@
  */
 
 #include <zephyr/kernel.h>
-#include <zephyr/kernel.h>
 
 #include "common.h"
 #include "console.h"

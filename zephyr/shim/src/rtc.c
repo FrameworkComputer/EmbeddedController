@@ -5,7 +5,6 @@
 
 #include <zephyr/logging/log.h>
 #include <zephyr/kernel.h>
-#include <zephyr/kernel.h>
 
 #include "console.h"
 #include "drivers/cros_rtc.h"

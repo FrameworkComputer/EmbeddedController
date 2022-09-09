@@ -5,7 +5,6 @@
 
 #include <zephyr/kernel.h>
 #include <stdint.h>
-#include <zephyr/kernel.h>
 
 #include "hwtimer.h"
 

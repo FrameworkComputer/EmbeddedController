@@ -9,7 +9,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr/kernel.h>
 
 #include "clock_chip.h"
 #include "module_id.h"
