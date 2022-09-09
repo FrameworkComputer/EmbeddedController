@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "compile_time_macros.h"
-
-extern "C" {
 #include "atomic.h"
 #include "clock.h"
 #include "common.h"
@@ -28,7 +25,6 @@ extern "C" {
 #include "trng.h"
 #include "util.h"
 #include "watchdog.h"
-}
 
 #if !defined(CONFIG_RNG)
 #error "fpsensor requires RNG"
@@ -235,7 +231,7 @@ static void fp_process_finger(void)
 }
 #endif /* HAVE_FP_PRIVATE_DRIVER */
 
-extern "C" void fp_task(void)
+void fp_task(void)
 {
 	int timeout_us = -1;
 
@@ -340,9 +336,8 @@ extern "C" void fp_task(void)
 
 static enum ec_status fp_command_passthru(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_passthru *params =
-		static_cast<const ec_params_fp_passthru *>(args->params);
-	uint8_t *out = static_cast<uint8_t *>(args->response);
+	const struct ec_params_fp_passthru *params = args->params;
+	void *out = args->response;
 	int rc;
 	enum ec_status ret = EC_RES_SUCCESS;
 
@@ -374,8 +369,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_PASSTHRU, fp_command_passthru, EC_VER_MASK(0));
 
 static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_fp_info *r =
-		static_cast<ec_response_fp_info *>(args->response);
+	struct ec_response_fp_info *r = args->response;
 
 #ifdef HAVE_FP_PRIVATE_DRIVER
 	if (fp_sensor_get_info(r) < 0)
@@ -415,8 +409,7 @@ int validate_fp_buffer_offset(const uint32_t buffer_size, const uint32_t offset,
 
 static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_frame *params =
-		static_cast<const struct ec_params_fp_frame *>(args->params);
+	const struct ec_params_fp_frame *params = args->params;
 	void *out = args->response;
 	uint32_t idx = FP_FRAME_GET_BUFFER_INDEX(params->offset);
 	uint32_t offset = params->offset & FP_FRAME_OFFSET_MASK;
@@ -480,8 +473,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		 * The beginning of the buffer contains nonce, encryption_salt
 		 * and tag.
 		 */
-		enc_info = (struct ec_fp_template_encryption_metadata
-				    *)(fp_enc_buffer);
+		enc_info = (void *)fp_enc_buffer;
 		enc_info->struct_version = FP_TEMPLATE_FORMAT_VERSION;
 		trng_init();
 		trng_rand_bytes(enc_info->nonce, FP_CONTEXT_NONCE_BYTES);
@@ -542,8 +534,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_FRAME, fp_command_frame, EC_VER_MASK(0));
 
 static enum ec_status fp_command_stats(struct host_cmd_handler_args *args)
 {
-	struct ec_response_fp_stats *r =
-		static_cast<struct ec_response_fp_stats *>(args->response);
+	struct ec_response_fp_stats *r = args->response;
 
 	r->capture_time_us = capture_time_us;
 	r->matching_time_us = matching_time_us;
@@ -584,8 +575,7 @@ validate_template_format(struct ec_fp_template_encryption_metadata *enc_info)
 
 static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_template *params =
-		static_cast<const struct ec_params_fp_template *>(args->params);
+	const struct ec_params_fp_template *params = args->params;
 	uint32_t size = params->size & ~FP_TEMPLATE_COMMIT;
 	int xfer_complete = params->size & FP_TEMPLATE_COMMIT;
 	uint32_t offset = params->offset;
@@ -624,8 +614,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 		 * The beginning of the buffer contains nonce, encryption_salt
 		 * and tag.
 		 */
-		enc_info = (struct ec_fp_template_encryption_metadata *)
-			fp_enc_buffer;
+		enc_info = (void *)fp_enc_buffer;
 		ret = validate_template_format(enc_info);
 		if (ret != EC_RES_SUCCESS) {
 			CPRINTS("fgr%d: Template format not supported", idx);
