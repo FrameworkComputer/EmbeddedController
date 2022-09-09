@@ -63,6 +63,8 @@
 #define CONF_DRPDTS(c)                                  \
 	CONF_SET_CLEAR(c, CC_ALLOW_SRC | CC_ENABLE_DRP, \
 		       CC_DISABLE_DTS | CC_SNK_WITH_PD)
+#define CONF_DTSOFF(c) CONF_SET_CLEAR(c, CC_DISABLE_DTS, 0)
+#define CONF_DTSON(c) CONF_SET_CLEAR(c, 0, CC_DISABLE_DTS)
 
 /* Macros to apply Rd/Rp to CC lines */
 #define DUT_ACTIVE_CC_SET(r, flags)                            \
@@ -1084,6 +1086,10 @@ static int command_cc(int argc, const char **argv)
 			cc_config_new = CONF_PDSNKDTS(cc_config_new);
 		else if (!strcasecmp(argv[1], "drpdts"))
 			cc_config_new = CONF_DRPDTS(cc_config_new);
+		else if (!strcasecmp(argv[1], "dtsoff"))
+			cc_config_new = CONF_DTSOFF(cc_config_new);
+		else if (!strcasecmp(argv[1], "dtson"))
+			cc_config_new = CONF_DTSON(cc_config_new);
 		else
 			return EC_ERROR_PARAM2;
 	}
@@ -1102,7 +1108,7 @@ static int command_cc(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(cc, command_cc,
 			"[off|on|src|snk|pdsnk|drp|srcdts|snkdts|pdsnkdts|"
-			"drpdts] [cc1|cc2]",
+			"drpdts|dtsoff|dtson] [cc1|cc2]",
 			"Servo_v4 DTS and CHG mode");
 
 static void fake_disconnect_end(void)
