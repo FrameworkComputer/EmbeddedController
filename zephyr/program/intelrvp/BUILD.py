@@ -78,6 +78,27 @@ register_intelrvp_project(
 
 
 register_intelrvp_project(
+    project_name="mtlrvpp_mchp",
+    chip="mec1727",
+    extra_dts_overlays=[
+        here / "mtlrvp/mtlrvpp_mchp/fan.dts",
+        here / "mtlrvp/mtlrvpp_mchp/gpio.dts",
+        here / "mtlrvp/mtlrvpp_mchp/keyboard.dts",
+        here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp.dts",
+        here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp_power_signals.dts",
+        here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
+        here / "mtlrvp/usbc.dts",
+    ],
+    extra_kconfig_files=[
+        here / "zephyr_ap_pwrseq.conf",
+        here / "mtlrvp/mtlrvpp_mchp/prj.conf",
+    ],
+)
+
+
+register_intelrvp_project(
     project_name="mtlrvpp_npcx",
     chip="npcx9m3f",
     extra_dts_overlays=[
