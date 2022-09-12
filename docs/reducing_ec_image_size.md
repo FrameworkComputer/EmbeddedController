@@ -117,12 +117,19 @@ The Cmake system utilized by Zephyr provides two build targets `rom_report` and
 This can be useful for identifying particular modules that contribute to the
 image size.
 
+The `rom_report` and `ram_report` targets are currently only supported when
+working outside the chroot.  Follow the [instructions][1] for building zephyr-ec
+images outside chroot before running the commands below.
+
 ```
-# Build herobrine image
-$ zmake build herobrine
+# Configure the Herobrine zephyr project, storing the build files in /tmp/zephyr-herobrine
+$ zmake configure -B /tmp/zephyr-herobrine herobrine
+
+# Build the RO image
+$ ninja -C /tmp/zephyr-herobrine/herobrine/build-ro
 
 # Generate the ROM report, report sent to stdout
-$ ninja -C build/zephyr/herobrine/build-ro rom_report
+$ ninja -C /tmp/zephyr-herobrine/herobrine/build-ro rom_report
 ```
 
 Please refer to the [Zephyr Optimization Tools][3] documentation for details on
