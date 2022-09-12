@@ -23,7 +23,7 @@ static inline uint32_t next_idx(uint32_t cur_idx)
 
 K_MUTEX_DEFINE(console_write_lock);
 
-void console_buf_notify_chars(const char *s, size_t len)
+size_t console_buf_notify_chars(const char *s, size_t len)
 {
 	/*
 	 * This is just notifying of console characters for debugging
@@ -31,9 +31,9 @@ void console_buf_notify_chars(const char *s, size_t len)
 	 * then just drop the string.
 	 */
 	if (k_mutex_lock(&console_write_lock, K_NO_WAIT))
-		return;
+		return 0;
 	/* We got the mutex. */
-	while (len--) {
+	for (size_t i = 0; i < len; i++) {
 		/* Don't copy null byte into buffer */
 		if (!(*s)) {
 			s++;
@@ -58,6 +58,7 @@ void console_buf_notify_chars(const char *s, size_t len)
 		tail_idx = new_tail;
 	}
 	k_mutex_unlock(&console_write_lock);
+	return len;
 }
 
 enum ec_status uart_console_read_buffer_init(void)

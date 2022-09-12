@@ -33,12 +33,16 @@ ZTEST_USER(console, buf_notify_null)
 {
 	char buffer[100];
 	uint16_t write_count;
+	size_t consumed_count;
 
 	/* Flush the console buffer before we start. */
 	zassert_ok(uart_console_read_buffer_init(), NULL);
 
 	/* Write a nul char to the buffer. */
-	console_buf_notify_chars("ab\0c", 4);
+	consumed_count = console_buf_notify_chars("ab\0c", 4);
+
+	/* Check if all bytes were consumed by console buffer */
+	zassert_equal(consumed_count, 4, "got %d", consumed_count);
 
 	/* Check if the nul is present in the buffer. */
 	zassert_ok(uart_console_read_buffer_init(), NULL);
