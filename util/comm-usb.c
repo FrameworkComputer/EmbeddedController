@@ -22,7 +22,8 @@
 		r, libusb_strerror(r))
 
 #ifdef DEBUG
-#define debug(fmt, arg...) printf("%s:%d: " fmt, __FILE__, __LINE__, ##arg)
+#define debug(fmt, arg...) \
+	fprintf(stderr, "%s:%d: " fmt, __FILE__, __LINE__, ##arg)
 #else
 #define debug(...)
 #endif
@@ -53,7 +54,8 @@ void comm_usb_exit(void)
  * Actual USB transfer function, <allow_less> indicates that a valid response
  * (e.g. EC_CMD_GET_BUILD_INFO) could be shorter than <inlen>.
  *
- * Returns enum libusb_error (< 0) or -EECRESULT on error, <outlen> on success.
+ * Returns enum libusb_error (< 0) or -EECRESULT on error. On success, returns
+ * actually transferred OUT data size or IN data size if read is performed.
  */
 static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		   void *inbuf, int inlen, int allow_less)
@@ -65,7 +67,7 @@ static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		actual = 0;
 		r = libusb_bulk_transfer(uep->devh, uep->ep_num, outbuf, outlen,
 					 &actual, 2000);
-		if (r < 0) {
+		if (r != 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			return r;
 		}
@@ -75,14 +77,18 @@ static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 			return -EECRESULT;
 		}
 	}
-	debug("Sent %d bytes, expecting %d bytes.\n", outlen, inlen);
+	debug("Sent %d bytes, expecting to receive %d bytes.\n", outlen, inlen);
 
 	/* Read reply back */
 	if (inbuf && inlen) {
 		actual = 0;
+		/*
+		 * libusb_bulk_transfer may time out if actual < inlen and
+		 * actual is a multiple of ep->wMaxPacketSize.
+		 */
 		r = libusb_bulk_transfer(uep->devh, uep->ep_num | USB_DIR_IN,
 					 inbuf, inlen, &actual, 5000);
-		if (r < 0) {
+		if (r != 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			return r;
 		}
@@ -93,8 +99,10 @@ static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		}
 	}
 
-	debug("Received %d bytes.\n", inlen);
-	return outlen;
+	debug("Received %d bytes.\n", actual);
+
+	/* actual is useful for allow_less. */
+	return actual;
 }
 
 /* Return iface # or -1 if not found. */
@@ -314,9 +322,10 @@ static int ec_command_usb(int command, int version, const void *outdata,
 
 	if (indata)
 		memcpy(indata, &res[1], insize);
-	if (res->result != EC_RES_SUCCESS) {
+	if (res->result == EC_RES_SUCCESS)
+		rv = res->data_len;
+	else
 		rv = -EECRESULT - res->result;
-	}
 
 out:
 	if (req)
