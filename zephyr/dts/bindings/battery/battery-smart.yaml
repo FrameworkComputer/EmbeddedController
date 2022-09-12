@@ -41,6 +41,7 @@ properties:
          - "panasonic,ap19a5k"
          - "powertech,batgqa05l22"
          - "smp,atlxdy9k"
+         - "smp,c31n1915"
          - "smp,c31n2005"
          - "smp,l20m3pg0"
          - "smp,l20m3pg1"

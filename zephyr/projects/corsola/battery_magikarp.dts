@@ -5,8 +5,8 @@
 
 / {
 	batteries {
-		default_battery: dynapack_c140254 {
-			compatible = "dynapack,c140254", "battery-smart";
+		default_battery: smp_c31n1915 {
+			compatible = "smp,c31n1915", "battery-smart";
 		};
 	};
 };
