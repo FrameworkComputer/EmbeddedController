@@ -57,7 +57,8 @@ void set_non_acpi_mode(int enable)
 static void sci_enable(void)
 {
 	uint8_t dataInSPI;
-	int dataInEMI;
+	int biosSetup = 0;
+	
 
 	if (*host_get_customer_memmap(0x00) & BIT(0)) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
@@ -65,10 +66,16 @@ static void sci_enable(void)
 		update_soc_power_limit(true, false);
 
 	/* check the Flag in EEPROM and EMI, if values are different, write the value in EEPROM */
-		board_spi_read_byte(SPI_AC_BOOT_OFFSET, &dataInSPI);
-		dataInEMI = ac_boot_status();
-		if ((int)dataInSPI != dataInEMI)
-			board_spi_write_byte(SPI_AC_BOOT_OFFSET, (uint8_t)dataInEMI);
+		board_spi_read_byte(SPI_BIOS_SETUP, &dataInSPI);
+
+		if (ac_boot_status())
+			biosSetup |= BIT(0);
+		
+		if (get_standalone_mode())
+			biosSetup |= BIT(1);
+
+		if ((int)dataInSPI != biosSetup)
+			board_spi_write_byte(SPI_BIOS_SETUP, (uint8_t)biosSetup);
 
 		set_non_acpi_mode(0);
 	} else
@@ -158,7 +165,7 @@ static enum ec_status factory_mode(struct host_cmd_handler_args *args)
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
-		board_spi_write_byte(SPI_AC_BOOT_OFFSET, 0);
+		board_spi_write_byte(SPI_BIOS_SETUP, 0);
 		system_set_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, 0);
 	}
 
@@ -344,21 +351,9 @@ DECLARE_HOST_COMMAND(EC_CMD_THERMAL_QEVENT, thermal_qevent, EC_VER_MASK(0));
 static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_standalone_mode *p = args->params;
-	static int curr;
 
-	curr = get_standalone_mode();
+	set_standalone_mode((int)p->enable);
+	return EC_RES_SUCCESS;
 
-	if ((int)p->enable != curr) {
-		/*
-		 * BIOS writes the host command after board initial,
-		 * if curr mode is different with parameters from host command,
-		 * updates the SPI ROM value, also updates the current standalone mode.
-		 */
-
-		board_spi_write_byte(SPI_STANDALONE_OFFSET, p->enable);
-		set_standalone_mode((int)p->enable);
-		return EC_RES_SUCCESS;
-	}
-	return EC_ERROR_INVAL;
 }
 DECLARE_HOST_COMMAND(EC_CMD_STANDALONE_MODE, standalone_mode, EC_VER_MASK(0));

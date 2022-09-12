@@ -336,8 +336,10 @@
  */
 #define CONFIG_FLASH_SIZE 0x100000
 #define CONFIG_SPI_FLASH_W25Q80
-#define SPI_AC_BOOT_OFFSET 0x00
-#define SPI_STANDALONE_OFFSET 0x01
+#define SPI_BIOS_SETUP 0x00
+
+#define BIOS_SETUP_AC_BOOT	BIT(0)
+#define BIOS_SETUP_STANDALONE	BIT(1)
 
 /*
  * Enable extra SPI flash and generic SPI

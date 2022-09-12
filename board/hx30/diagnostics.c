@@ -37,6 +37,7 @@ int standalone_mode;
 
 void set_standalone_mode(int enable)
 {
+	CPRINTS("set standalone = %d", enable);
 	standalone_mode = enable;
 }
 
