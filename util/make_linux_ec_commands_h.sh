@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Copyright 2019 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -47,14 +47,14 @@ trap cleanup EXIT
 # Replace license
 patch "${tmp}" << EOF
 @@ -1,6 +1,11 @@
--/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+-/* Copyright 2014 The ChromiumOS Authors
 - * Use of this source code is governed by a BSD-style license that can be
 - * found in the LICENSE file.
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Host communication command constants for ChromeOS EC
 + *
-+ * Copyright (C) 2012 Google, Inc
++ * Copyright 2012 Google, Inc
 + *
 + * NOTE: This file is auto-generated from ChromeOS EC Open Source code from
 + * https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/include/ec_commands.h

@@ -1,7 +1,7 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Copyright 2013 Google Inc.
+ * Copyright 2013 Google LLC
  *
  * Tests for keyboard scan deghosting and debouncing.
  */

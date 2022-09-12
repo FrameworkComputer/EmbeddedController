@@ -1,4 +1,4 @@
-# Copyright (c) 2021 The Chromium OS Authors
+# Copyright 2021 The ChromiumOS Authors
 # SPDX-License-Identifier: Apache-2.0
 
 description: I2C port base properties

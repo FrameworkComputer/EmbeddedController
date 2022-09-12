@@ -1,4 +1,4 @@
-# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -11,7 +11,7 @@ setuptools.setup(
     description="CrOS Zephyr Utilities",
     long_description="Utilities used for working on a Zephyr-based EC",
     url="https://chromium.googlesource.com/chromiumos/platform/ec",
-    author="Chromium OS Authors",
+    author="ChromiumOS Authors",
     author_email="chromiumos-dev@chromium.org",
     license="BSD",
     # What does your project relate to?

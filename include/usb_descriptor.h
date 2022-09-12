@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -185,7 +185,7 @@ struct usb_endpoint_descriptor {
 #define USB_CLASS_APP_SPEC 0xfe
 #define USB_CLASS_VENDOR_SPEC 0xff
 
-/* USB Vendor ID assigned to Google Inc. */
+/* USB Vendor ID assigned to Google LLC */
 #define USB_VID_GOOGLE 0x18d1
 
 /* Google specific SubClass/Protocol assignments */

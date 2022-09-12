@@ -142,7 +142,7 @@ record keeping.)
 
 ISC license used for completely new code in BoringSSL:
 
-/* Copyright (c) 2015, Google Inc.
+/* Copyright 2015 Google LLC
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -200,7 +200,7 @@ notice, this list of conditions and the following disclaimer.
 copyright notice, this list of conditions and the following disclaimer
 in the documentation and/or other materials provided with the
 distribution.
-   * Neither the name of Google Inc. nor the names of its
+   * Neither the name of Google LLC nor the names of its
 contributors may be used to endorse or promote products derived from
 this software without specific prior written permission.
 
@@ -222,7 +222,7 @@ trybots etc. The scripts which manage this, and the script for generating build
 metadata, are under the Chromium license. Distributing code linked against
 BoringSSL does not trigger this license.
 
-Copyright 2015 The Chromium Authors. All rights reserved.
+Copyright 2015 The Chromium Authors
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -234,7 +234,7 @@ notice, this list of conditions and the following disclaimer.
 copyright notice, this list of conditions and the following disclaimer
 in the documentation and/or other materials provided with the
 distribution.
-   * Neither the name of Google Inc. nor the names of its
+   * Neither the name of Google LLC nor the names of its
 contributors may be used to endorse or promote products derived from
 this software without specific prior written permission.
 

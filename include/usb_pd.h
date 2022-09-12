@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -828,7 +828,7 @@ struct pd_cable {
 #define USB_SID_DISPLAYPORT 0xff01
 
 #define USB_GOOGLE_TYPEC_URL "http://www.google.com/chrome/devices/typec"
-/* USB Vendor ID assigned to Google Inc. */
+/* USB Vendor ID assigned to Google LLC */
 #define USB_VID_GOOGLE 0x18d1
 
 /* Other Vendor IDs */
