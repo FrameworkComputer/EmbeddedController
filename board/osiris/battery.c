@@ -7,6 +7,9 @@
 
 #include "battery_fuel_gauge.h"
 #include "cbi.h"
+#include "charge_ramp.h"
+#include "charge_state.h"
+#include "charger_profile_override.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "gpio.h"
@@ -73,4 +76,70 @@ enum battery_present battery_hw_present(void)
 {
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
+}
+
+static int charger_should_discharge_on_ac(struct charge_state_data *curr)
+{
+	/* can not discharge on AC without battery */
+	if (curr->batt.is_present != BP_YES)
+		return 0;
+
+	/* Do not discharge on AC if the battery is still waking up */
+	if ((curr->batt.flags & BATT_FLAG_BAD_STATUS) ||
+	    (!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+	     !(curr->batt.status & STATUS_FULLY_CHARGED)))
+		return 0;
+
+	/*
+	 * In heavy load (>3A being withdrawn from VSYS) the DCDC of the
+	 * charger operates on hybrid mode. This causes a slight voltage
+	 * ripple on VSYS that falls in the audible noise frequency (single
+	 * digit kHz range). This small ripple generates audible noise in
+	 * the output ceramic capacitors (caps on VSYS and any input of
+	 * DCDC under VSYS).
+	 *
+	 * To overcome this issue, force battery discharging when battery
+	 * full, So the battery MOS of NVDC charger will turn on always,
+	 * it make the Vsys same as Vbat and the noise has been improved.
+	 */
+	if (!battery_is_cut_off() &&
+	    !(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+	    (curr->batt.status & STATUS_FULLY_CHARGED))
+		return 1;
+
+	return 0;
+}
+
+/*
+ * This can override the smart battery's charging profile. To make a change,
+ * modify one or more of requested_voltage, requested_current, or state.
+ * Leave everything else unchanged.
+ *
+ * Return the next poll period in usec, or zero to use the default (which is
+ * state dependent).
+ */
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int disch_on_ac = charger_should_discharge_on_ac(curr);
+
+	charger_discharge_on_ac(disch_on_ac);
+
+	if (disch_on_ac) {
+		curr->state = ST_DISCHARGE;
+		return 0;
+	}
+
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
 }
