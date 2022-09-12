@@ -64,6 +64,7 @@ parameters that may be used, please consult the Twister documentation.
 
 import argparse
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -133,6 +134,51 @@ def find_modules(mod_dir: Path) -> list:
     return modules
 
 
+def is_rdb_login():
+    """Checks if user is logged into rdb"""
+    cmd = ["rdb", "auth-info"]
+    ret = subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+    if ret.returncode == 0:
+        print("\nrdb auth-info: " + ret.stdout.split("\n")[0])
+    else:
+        print("\nrdb auth-info: " + ret.stderr)
+
+    return ret.returncode == 0
+
+
+def upload_results(ec_base):
+    """Uploads Zephyr Test results to ResultDB"""
+    flag = False
+
+    if is_rdb_login():
+        json_path = ec_base / "twister-out" / "twister.json"
+        cmd = [
+            "rdb",
+            "stream",
+            "-new",
+            "-realm",
+            "chromium:public",
+            "--",
+            str(ec_base / "util/zephyr_to_resultdb.py"),
+            "--result=" + str(json_path),
+            "--upload=True",
+        ]
+
+        ret = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+        # Extract URL to test report from captured output
+        rdb_url = re.search(
+            r"(?P<url>https?://[^\s]+)", ret.stderr.split("\n")[0]
+        ).group("url")
+        print("\nTEST RESULTS: " + rdb_url + "\n")
+        flag = ret.returncode == 0
+    else:
+        print("Unable to upload test results, please run 'rdb auth-login'\n")
+
+    return flag
+
+
 def main():
     """Run Twister using defaults for the EC project."""
 
@@ -192,6 +238,10 @@ def main():
     parser.add_argument(
         "--gcov-tool", default=str(ec_base / "util" / "llvm-gcov.sh")
     )
+    parser.add_argument(
+        "--no-upload-cros-rdb", dest="upload_cros_rdb", action="store_false"
+    )
+
     intercepted_args, other_args = parser.parse_known_args()
 
     for _ in range(intercepted_args.verbose):
@@ -247,6 +297,9 @@ def main():
         print("TEST EXECUTION SUCCESSFUL")
     else:
         print("TEST EXECUTION FAILED")
+
+    if intercepted_args.upload_cros_rdb:
+        upload_results(ec_base)
 
     sys.exit(result.returncode)
 

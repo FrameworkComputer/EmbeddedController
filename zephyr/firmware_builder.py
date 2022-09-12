@@ -45,6 +45,7 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
         "native_posix",
         "-p",
         "unit_testing",
+        "--no-upload-cros-rdb",
     ]
 
     if extra_args:
