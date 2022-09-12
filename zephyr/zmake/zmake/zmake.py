@@ -1,4 +1,4 @@
-# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -391,36 +391,31 @@ class Zmake:
                 shutil.rmtree(build_dir)
 
             generated_include_dir = (build_dir / "include").resolve()
+            cmake_defs = {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "DTS_ROOT": str(self.module_paths["ec"] / "zephyr"),
+                "SYSCALL_INCLUDE_DIRS": str(
+                    self.module_paths["ec"] / "zephyr" / "include" / "drivers"
+                ),
+                "USER_CACHE_DIR": str(
+                    self.module_paths["ec"] / "build" / "zephyr" / "user-cache"
+                ),
+                "ZEPHYR_BASE": str(self.zephyr_base),
+                "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
+                "ZMAKE_PROJECT_NAME": project.config.project_name,
+                **(
+                    {"EXTRA_EC_VERSION_FLAGS": "--static"}
+                    if static_version
+                    else {}
+                ),
+                **({"EXTRA_CFLAGS": "-save-temps=obj"} if save_temps else {}),
+            }
+            vpython = shutil.which("vpython3")
+            if vpython:
+                cmake_defs["Python3_EXECUTABLE"] = vpython
+
             base_config = zmake.build_config.BuildConfig(
-                cmake_defs={
-                    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                    "DTS_ROOT": str(self.module_paths["ec"] / "zephyr"),
-                    "SYSCALL_INCLUDE_DIRS": str(
-                        self.module_paths["ec"]
-                        / "zephyr"
-                        / "include"
-                        / "drivers"
-                    ),
-                    "USER_CACHE_DIR": str(
-                        self.module_paths["ec"]
-                        / "build"
-                        / "zephyr"
-                        / "user-cache"
-                    ),
-                    "ZEPHYR_BASE": str(self.zephyr_base),
-                    "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
-                    "ZMAKE_PROJECT_NAME": project.config.project_name,
-                    **(
-                        {"EXTRA_EC_VERSION_FLAGS": "--static"}
-                        if static_version
-                        else {}
-                    ),
-                    **(
-                        {"EXTRA_CFLAGS": "-save-temps=obj"}
-                        if save_temps
-                        else {}
-                    ),
-                },
+                cmake_defs=cmake_defs,
             )
 
             # Prune the module paths to just those required by the project.

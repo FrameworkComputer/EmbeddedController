@@ -1,6 +1,6 @@
 #!/usr/bin/env vpython3
 
-# Copyright 2022 The ChromiumOS Authors.
+# Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -59,6 +59,18 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/six-py2_py3"
 #   version: "version:1.16.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/packaging-py2_py3"
+#   version: "version:16.8"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pyparsing-py2_py3"
+#   version: "version:2.4.7"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pyelftools-py2_py3"
+#   version: "version:0.29"
 # >
 # [VPYTHON:END]
 
