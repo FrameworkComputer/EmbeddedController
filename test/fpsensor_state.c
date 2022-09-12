@@ -193,10 +193,6 @@ test_static int test_fp_command_read_match_secret_fail_fgr_less_than_zero(void)
 		.fgr = -1,
 	};
 
-	/*
-	 * FP_COMMAND_READ_MATCH_SECRET should have if the finger number is <
-	 * 0
-	 */
 	TEST_ASSERT(test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0,
 					   &test_match_secret,
 					   sizeof(test_match_secret), NULL,
@@ -211,10 +207,7 @@ test_static int test_fp_command_read_match_secret_fail_fgr_large_than_max(void)
 	struct ec_params_fp_read_match_secret test_match_secret = {
 		.fgr = FP_MAX_FINGER_COUNT,
 	};
-	/*
-	 * FP_COMMAND_READ_MATCH_SECRET should have if the finger number is <
-	 * 0
-	 */
+
 	TEST_ASSERT(test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0,
 					   &test_match_secret,
 					   sizeof(test_match_secret), NULL,
