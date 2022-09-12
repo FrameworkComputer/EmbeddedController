@@ -188,7 +188,7 @@
 			#led-pin-cells = <1>;
 			gpios = <&gpio1 1 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
 		};
-		ap_ec_int_l {
+		gpio_ap_ec_int_l: ap_ec_int_l {
 			gpios = <&gpio1 2 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_EC_INT_L";
 		};

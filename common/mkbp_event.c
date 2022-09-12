@@ -583,5 +583,8 @@ void mkbp_event_clear_all(void)
 	mutex_lock(&state.lock);
 	state.events = 0;
 	mutex_unlock(&state.lock);
+
+	/* Reset the interrupt line */
+	mkbp_set_host_active(0, NULL);
 }
 #endif

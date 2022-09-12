@@ -12,8 +12,26 @@
 #include "console.h"
 #include "host_command.h"
 #include "mkbp_event.h"
+#include "mkbp_fifo.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+/**
+ * @brief FFF fake that will be registered as a callback to monitor the EC->AP
+ *        interrupt pin. Implements `gpio_callback_handler_t`.
+ */
+FAKE_VOID_FUNC(interrupt_gpio_monitor, const struct device *,
+	       struct gpio_callback *, gpio_port_pins_t);
+
+/**
+ * @brief Fixture to hold state while the suite is running.
+ */
+struct event_fixture {
+	/** Configuration for the interrupt pin change callback */
+	struct gpio_callback callback_config;
+};
+
+static struct event_fixture fixture;
 
 ZTEST(mkbp_event, host_command_get_events__empty)
 {
@@ -47,7 +65,7 @@ ZTEST(mkbp_event, host_command_get_events__get_event)
 	/* Add the above event to the MKBP keyboard FIFO and raise the event */
 
 	ret = mkbp_fifo_add(expected_event.event_type,
-			    &expected_event.data.key_matrix);
+			    (uint8_t *)&expected_event.data.key_matrix);
 	activate_mkbp_with_events(BIT(expected_event.event_type));
 
 	zassert_equal(EC_SUCCESS, ret, "Got %d when adding to FIFO", ret);
@@ -69,6 +87,45 @@ ZTEST(mkbp_event, host_command_get_events__get_event)
 			  &response.data.key_matrix,
 			  sizeof(expected_event.data.key_matrix),
 			  "Event data payload does not match.");
+
+	/* Check for two pin change events (initial assertion when the event
+	 * was sent, and a de-assertion once we retrieved it through the host
+	 * command)
+	 */
+
+	zassert_equal(2, interrupt_gpio_monitor_fake.call_count,
+		      "Only %d pin events",
+		      interrupt_gpio_monitor_fake.call_count);
+}
+
+ZTEST(mkbp_event, no_ap_response)
+{
+	/* Cause an event but do not send any host commands. This should cause
+	 * the EC to send the interrupt to the AP 3 times before giving up.
+	 * Use the GPIO emulator to monitor for interrupts.
+	 */
+
+	int ret;
+
+	struct ec_response_get_next_event expected_event = {
+		.event_type = EC_MKBP_EVENT_KEY_MATRIX,
+	};
+
+	ret = mkbp_fifo_add(expected_event.event_type,
+			    (uint8_t *)&expected_event.data.key_matrix);
+	activate_mkbp_with_events(BIT(expected_event.event_type));
+	zassert_equal(EC_SUCCESS, ret, "Got %d when adding to FIFO", ret);
+
+	/* EC will attempt to signal the interrupt 3 times. Each attempt lasts
+	 * 1 second, so sleep for 5 and then count the number of times the
+	 * interrupt pin was asserted. (It does not get de-asserted)
+	 */
+
+	k_sleep(K_SECONDS(5));
+
+	zassert_equal(3, interrupt_gpio_monitor_fake.call_count,
+		      "Interrupt pin asserted only %d times.",
+		      interrupt_gpio_monitor_fake.call_count);
 }
 
 /* Set up a mock for mkbp_send_event(). This function is called by the MKBP
@@ -82,6 +139,38 @@ ZTEST(mkbp_event, host_command_get_events__get_event)
  */
 FAKE_VALUE_FUNC(int, mkbp_send_event, uint8_t);
 
+static void *setup(void)
+{
+	/* Add a callback to the EC->AP interrupt pin so we can log interrupt
+	 * attempts with an FFF fake.
+	 */
+
+	const struct gpio_dt_spec *interrupt_pin =
+		GPIO_DT_FROM_NODELABEL(gpio_ap_ec_int_l);
+
+	fixture.callback_config = (struct gpio_callback){
+		.pin_mask = BIT(interrupt_pin->pin),
+		.handler = interrupt_gpio_monitor,
+	};
+
+	zassume_ok(gpio_add_callback(interrupt_pin->port,
+				     &fixture.callback_config),
+		   "Could not configure GPIO callback.");
+
+	return &fixture;
+}
+
+static void teardown(void *data)
+{
+	/* Remove the GPIO callback on the interrupt pin */
+
+	struct event_fixture *f = (struct event_fixture *)data;
+	const struct gpio_dt_spec *interrupt_pin =
+		GPIO_DT_FROM_NODELABEL(gpio_ap_ec_int_l);
+
+	gpio_remove_callback(interrupt_pin->port, &f->callback_config);
+}
+
 static void reset_events(void *data)
 {
 	/* Clear any keyboard scan events (type EC_MKBP_EVENT_KEY_MATRIX) */
@@ -91,9 +180,10 @@ static void reset_events(void *data)
 	mkbp_event_clear_all();
 
 	/* Mock reset */
+	RESET_FAKE(interrupt_gpio_monitor);
 	RESET_FAKE(mkbp_send_event);
 	mkbp_send_event_fake.return_val = 1;
 }
 
-ZTEST_SUITE(mkbp_event, drivers_predicate_post_main, NULL, reset_events,
-	    reset_events, NULL);
+ZTEST_SUITE(mkbp_event, drivers_predicate_post_main, setup, reset_events,
+	    reset_events, teardown);
