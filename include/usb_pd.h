@@ -1930,68 +1930,6 @@ void dfp_consume_modes(int port, enum tcpci_msg_type type, int cnt,
 bool is_vpd_ct_supported(int port);
 
 /**
- * Returns CTVPD ground impedance
- *
- * @param port     USB-C port number
- * @return         Ground impedance through the VPD in 1 mOhm increments, else
- *                 0 if Charge Through isn't supported
- */
-uint8_t get_vpd_ct_gnd_impedance(int port);
-
-/**
- * Returns CTVPD VBUS impedance
- *
- * @param port     USB-C port number
- * @return         VBUS impedance through the VPD in 2 mOhm increments, else
- *                 0 if Charge Through isn't supported
- */
-uint8_t get_vpd_ct_vbus_impedance(int port);
-
-/**
- * Returns CTVPD Current support
- *
- * @param port     USB-C port number
- * @return         0 - 3A capable or
- *                 1 - 5A capable
- */
-uint8_t get_vpd_ct_current_support(int port);
-
-/**
- * Returns CTVPD Maximum VBUS Voltage
- *
- * @param port     USB-C port number
- * @return         0 - 20V
- *                 1 - 30V
- *                 2 - 40V
- *                 3 - 50V
- */
-uint8_t get_vpd_ct_max_vbus_voltage(int port);
-
-/**
- * Returns VPD VDO Version
- *
- * @param port     USB-C port number
- * @return         0 for Version 1.0
- */
-uint8_t get_vpd_ct_vdo_version(int port);
-
-/**
- * Returns VPD Firmware Version
- *
- * @param port     USB-C port number
- * @return         Firmware version assigned by the VID owner
- */
-uint8_t get_vpd_ct_firmware_verion(int port);
-
-/**
- * Returns HW Firmware Version
- *
- * @param port     USB-C port number
- * @return         HW version assigned by the VID owner
- */
-uint8_t get_vpd_ct_hw_version(int port);
-
-/**
  * Initialize alternate mode discovery info for DFP
  *
  * @param port     USB-C port number

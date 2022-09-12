@@ -724,69 +724,6 @@ bool is_vpd_ct_supported(int port)
 	return vpd.ct_support;
 }
 
-uint8_t get_vpd_ct_gnd_impedance(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	union vpd_vdo vpd = disc->identity.product_t1.vpd;
-
-	return vpd.gnd_impedance;
-}
-
-uint8_t get_vpd_ct_vbus_impedance(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	union vpd_vdo vpd = disc->identity.product_t1.vpd;
-
-	return vpd.vbus_impedance;
-}
-
-uint8_t get_vpd_ct_current_support(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	union vpd_vdo vpd = disc->identity.product_t1.vpd;
-
-	return vpd.ct_current_support;
-}
-
-uint8_t get_vpd_ct_max_vbus_voltage(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	union vpd_vdo vpd = disc->identity.product_t1.vpd;
-
-	return vpd.max_vbus_voltage;
-}
-
-uint8_t get_vpd_ct_vdo_version(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	union vpd_vdo vpd = disc->identity.product_t1.vpd;
-
-	return vpd.vdo_version;
-}
-
-uint8_t get_vpd_ct_firmware_verion(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	union vpd_vdo vpd = disc->identity.product_t1.vpd;
-
-	return vpd.firmware_version;
-}
-
-uint8_t get_vpd_ct_hw_version(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	union vpd_vdo vpd = disc->identity.product_t1.vpd;
-
-	return vpd.hw_version;
-}
-
 /*
  * ############################################################################
  *
