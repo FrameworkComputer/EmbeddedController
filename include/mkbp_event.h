@@ -57,4 +57,16 @@ struct mkbp_event_source {
 		__attribute__((section(".rodata.evtsrcs"))) = { type, func }
 #endif
 
+#ifdef TEST_BUILD
+/* Allow directly raising events in unit tests */
+void activate_mkbp_with_events(uint32_t events_to_add);
+
+/**
+ * @brief Force the event bits to zero, causing the event handling code to
+ *        believe there are no pending events to service. This has no effect on
+ *        any event sources' internal queues or logic.
+ */
+__test_only void mkbp_event_clear_all(void);
+#endif /* TEST_BUILD */
+
 #endif /* __CROS_EC_MKBP_EVENT_H */

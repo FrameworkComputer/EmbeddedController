@@ -201,7 +201,7 @@ static inline int host_is_sleeping(void)
 static void force_mkbp_if_events(void);
 DECLARE_DEFERRED(force_mkbp_if_events);
 
-static void activate_mkbp_with_events(uint32_t events_to_add)
+test_export_static void activate_mkbp_with_events(uint32_t events_to_add)
 {
 	int interrupt_id = -1;
 	int skip_interrupt = 0;
@@ -576,3 +576,12 @@ DECLARE_CONSOLE_COMMAND(mkbpwakemask, command_mkbp_wake_mask,
 			"[event | hostevent] [new_mask]",
 			"Show or set MKBP event/hostevent wake mask");
 #endif /* CONFIG_MKBP_(HOST)?EVENT_WAKEUP_MASK */
+
+#ifdef TEST_BUILD
+void mkbp_event_clear_all(void)
+{
+	mutex_lock(&state.lock);
+	state.events = 0;
+	mutex_unlock(&state.lock);
+}
+#endif

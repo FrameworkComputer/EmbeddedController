@@ -2,4 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-target_sources(app PRIVATE src/keyboard_scan.c)
+target_sources(app PRIVATE
+  src/keyboard_scan.c
+  src/mkbp_event.c
+)
