@@ -34,27 +34,6 @@ void board_config_pre_init(void)
 #define USB_STREAM_TX_SIZE 16
 
 /******************************************************************************
- * Forward USART1 as a simple USB serial interface.
- */
-
-static struct usart_config const usart1;
-struct usb_stream_config const usart1_usb;
-
-static struct queue const usart1_to_usb =
-	QUEUE_DIRECT(64, uint8_t, usart1.producer, usart1_usb.consumer);
-static struct queue const usb_to_usart1 =
-	QUEUE_DIRECT(64, uint8_t, usart1_usb.producer, usart1.consumer);
-
-static struct usart_config const usart1 =
-	USART_CONFIG(usart1_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
-		     0, usart1_to_usb, usb_to_usart1);
-
-USB_STREAM_CONFIG(usart1_usb, USB_IFACE_USART1_STREAM,
-		  USB_STR_USART1_STREAM_NAME, USB_EP_USART1_STREAM,
-		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart1,
-		  usart1_to_usb)
-
-/******************************************************************************
  * Forward USART2 as a simple USB serial interface.
  */
 
@@ -74,6 +53,27 @@ USB_STREAM_CONFIG(usart2_usb, USB_IFACE_USART2_STREAM,
 		  USB_STR_USART2_STREAM_NAME, USB_EP_USART2_STREAM,
 		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart2,
 		  usart2_to_usb)
+
+/******************************************************************************
+ * Forward USART3 as a simple USB serial interface.
+ */
+
+static struct usart_config const usart3;
+struct usb_stream_config const usart3_usb;
+
+static struct queue const usart3_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart3.producer, usart3_usb.consumer);
+static struct queue const usb_to_usart3 =
+	QUEUE_DIRECT(64, uint8_t, usart3_usb.producer, usart3.consumer);
+
+static struct usart_config const usart3 =
+	USART_CONFIG(usart3_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart3_to_usb, usb_to_usart3);
+
+USB_STREAM_CONFIG(usart3_usb, USB_IFACE_USART3_STREAM,
+		  USB_STR_USART3_STREAM_NAME, USB_EP_USART3_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart3,
+		  usart3_to_usb)
 
 /******************************************************************************
  * Forward USART4 as a simple USB serial interface.
@@ -97,25 +97,25 @@ USB_STREAM_CONFIG(usart4_usb, USB_IFACE_USART4_STREAM,
 		  usart4_to_usb)
 
 /******************************************************************************
- * Forward LPUART (USART9) as a simple USB serial interface.
+ * Forward USART5 as a simple USB serial interface.
  */
 
-static struct usart_config const usart9;
-struct usb_stream_config const usart9_usb;
+static struct usart_config const usart5;
+struct usb_stream_config const usart5_usb;
 
-static struct queue const usart9_to_usb =
-	QUEUE_DIRECT(64, uint8_t, usart9.producer, usart9_usb.consumer);
-static struct queue const usb_to_usart9 =
-	QUEUE_DIRECT(64, uint8_t, usart9_usb.producer, usart9.consumer);
+static struct queue const usart5_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart5.producer, usart5_usb.consumer);
+static struct queue const usb_to_usart5 =
+	QUEUE_DIRECT(64, uint8_t, usart5_usb.producer, usart5.consumer);
 
-static struct usart_config const usart9 =
-	USART_CONFIG(usart9_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
-		     0, usart9_to_usb, usb_to_usart9);
+static struct usart_config const usart5 =
+	USART_CONFIG(usart5_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart5_to_usb, usb_to_usart5);
 
-USB_STREAM_CONFIG(usart9_usb, USB_IFACE_USART9_STREAM,
-		  USB_STR_USART9_STREAM_NAME, USB_EP_USART9_STREAM,
-		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart9,
-		  usart9_to_usb)
+USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
+		  USB_STR_USART5_STREAM_NAME, USB_EP_USART5_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart5,
+		  usart5_to_usb)
 
 /******************************************************************************
  * Support SPI bridging over USB, this requires usb_spi_board_enable and
@@ -194,10 +194,10 @@ const void *const usb_strings[] = {
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("HyperDebug Shell"),
 	[USB_STR_SPI_NAME] = USB_STRING_DESC("SPI"),
 	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
-	[USB_STR_USART1_STREAM_NAME] = USB_STRING_DESC("UART1"),
 	[USB_STR_USART2_STREAM_NAME] = USB_STRING_DESC("UART2"),
+	[USB_STR_USART3_STREAM_NAME] = USB_STRING_DESC("UART3"),
 	[USB_STR_USART4_STREAM_NAME] = USB_STRING_DESC("UART4"),
-	[USB_STR_USART9_STREAM_NAME] = USB_STRING_DESC("UART9"),
+	[USB_STR_USART5_STREAM_NAME] = USB_STRING_DESC("UART5"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
@@ -214,21 +214,21 @@ static void board_init(void)
 	STM32_PWR_CR2 |= STM32_PWR_CR2_IOSV;
 
 	/* USB to serial queues */
-	queue_init(&usart1_to_usb);
-	queue_init(&usb_to_usart1);
 	queue_init(&usart2_to_usb);
 	queue_init(&usb_to_usart2);
+	queue_init(&usart3_to_usb);
+	queue_init(&usb_to_usart3);
 	queue_init(&usart4_to_usb);
 	queue_init(&usb_to_usart4);
-	queue_init(&usart9_to_usb);
-	queue_init(&usb_to_usart9);
+	queue_init(&usart5_to_usb);
+	queue_init(&usb_to_usart5);
 
 	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0x0F000000;
 	/* UART init */
-	usart_init(&usart1);
 	usart_init(&usart2);
+	usart_init(&usart3);
 	usart_init(&usart4);
-	usart_init(&usart9);
+	usart_init(&usart5);
 
 	/* Structured endpoints */
 	usb_spi_enable(&usb_spi, 1);
