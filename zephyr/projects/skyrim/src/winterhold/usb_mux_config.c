@@ -108,35 +108,3 @@ int board_anx7483_c1_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 
 	return EC_SUCCESS;
 }
-
-int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
-{
-	CPRINTSUSB("C1: PS8818 mux using default tuning");
-
-	/* Once a DP connection is established, we need to set IN_HPD */
-	if (mux_state & USB_PD_MUX_DP_ENABLED)
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
-	else
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
-
-	return 0;
-}
-
-static void setup_mux(void)
-{
-	uint32_t val;
-
-	if (cros_cbi_get_fw_config(FW_IO_DB, &val) != 0)
-		CPRINTSUSB("Error finding FW_DB_IO in CBI FW_CONFIG");
-	/* Val will have our dts default on error, so continue setup */
-
-	if (val == FW_IO_DB_PS8811_PS8818) {
-		CPRINTSUSB("C1: Setting PS8818 mux");
-		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_ps8818_port1);
-	} else if (val == FW_IO_DB_NONE_ANX7483) {
-		CPRINTSUSB("C1: Setting ANX7483 mux");
-	} else {
-		CPRINTSUSB("Unexpected DB_IO board: %d", val);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_INIT_I2C);

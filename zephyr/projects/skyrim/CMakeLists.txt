@@ -42,5 +42,6 @@ if(DEFINED CONFIG_BOARD_WINTERHOLD)
 	zephyr_library_sources(
 		"src/winterhold/usb_mux_config.c"
 		"src/winterhold/ppc_config.c"
+		"src/winterhold/kb_backlight.c"
     )
 endif()
