@@ -149,6 +149,10 @@
 			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
+		ccd_mode_odl {
+			gpios = <&gpioc 4 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		};
 	};
 
 	/*
@@ -180,14 +184,14 @@
 			<&gpioe 1 GPIO_INPUT>,
 			/* ec_pen_chg_dis_odl */
 			<&gpioh 3 GPIO_ODR_HIGH>,
-			/* ccd_mode_odl */
-			<&gpioc 4 GPIO_INPUT>,
 			/* unnamed nc pins */
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
-			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
+			/* reserved for b:241345809 */
+			<&gpiod 7 GPIO_OUTPUT_LOW>,
+			<&gpiog 2 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
