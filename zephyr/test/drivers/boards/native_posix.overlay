@@ -7,6 +7,7 @@
 #include <cros/binman.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/pwm/pwm.h>
 #include <freq.h>
 
 / {
@@ -803,25 +804,31 @@
 		pwm_blue_left: pwm@0 {
 			compatible = "cros,pwm-mock";
 			reg = <0 1>;
-			#pwm-cells = <2>;
+			#pwm-cells = <3>;
 			status = "okay";
 		};
 		pwm_white_left: pwm@1 {
 			compatible = "cros,pwm-mock";
 			reg = <1 1>;
-			#pwm-cells = <2>;
+			#pwm-cells = <3>;
 			status = "okay";
 		};
 		pwm_amber_right: pwm@2 {
 			compatible = "cros,pwm-mock";
 			reg = <2 1>;
-			#pwm-cells = <2>;
+			#pwm-cells = <3>;
 			status = "okay";
 		};
 		pwm_white_right: pwm@3 {
 			compatible = "cros,pwm-mock";
 			reg = <3 1>;
-			#pwm-cells = <2>;
+			#pwm-cells = <3>;
+			status = "okay";
+		};
+		pwm_kblight: pwm@4 {
+			compatible = "cros,pwm-mock";
+			reg = <4 1>;
+			#pwm-cells = <3>;
 			status = "okay";
 		};
 	};
@@ -831,19 +838,19 @@
 
 		pwmled_blue_left: pwmled_b_left {
 			#led-pin-cells = <1>;
-			pwms = <&pwm_blue_left 0 1000000>;
+			pwms = <&pwm_blue_left 0 1000000 PWM_POLARITY_NORMAL>;
 		};
 		pwmled_white_left: pwmled_w_left {
 			#led-pin-cells = <1>;
-			pwms = <&pwm_white_left 0 1000000>;
+			pwms = <&pwm_white_left 0 1000000 PWM_POLARITY_NORMAL>;
 		};
 		pwmled_amber_right: pwmled_y_right {
 			#led-pin-cells = <1>;
-			pwms = <&pwm_amber_right 0 1000000>;
+			pwms = <&pwm_amber_right 0 1000000 PWM_POLARITY_NORMAL>;
 		};
 		pwmled_white_right: pwmled_w_right {
 			#led-pin-cells = <1>;
-			pwms = <&pwm_white_right 0 1000000>;
+			pwms = <&pwm_white_right 0 1000000 PWM_POLARITY_NORMAL>;
 		};
 	};
 
@@ -894,6 +901,12 @@
 
 	led-colors {
 		compatible = "cros-ec,led-policy";
+	};
+
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm_kblight 0 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
+		generic-pwm-channel = <0>;
 	};
 };
 

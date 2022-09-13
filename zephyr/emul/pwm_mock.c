@@ -17,6 +17,7 @@
 struct pwm_mock_data {
 	uint32_t period_cycles;
 	uint32_t pulse_cycles;
+	pwm_flags_t pwm_flags;
 };
 
 static int pwm_mock_init(const struct device *dev)
@@ -32,6 +33,7 @@ static int pwm_mock_set_cycles(const struct device *dev, uint32_t channel,
 
 	data->period_cycles = period_cycles;
 	data->pulse_cycles = pulse_cycles;
+	data->pwm_flags = flags;
 
 	return 0;
 }
@@ -53,6 +55,15 @@ int pwm_mock_get_duty(const struct device *dev, uint32_t channel)
 	}
 
 	return data->pulse_cycles * 100 / data->period_cycles;
+}
+
+pwm_flags_t pwm_mock_get_flags(const struct device *dev, uint32_t channel)
+{
+	ARG_UNUSED(channel);
+
+	struct pwm_mock_data *const data = dev->data;
+
+	return data->pwm_flags;
 }
 
 static const struct pwm_driver_api pwm_mock_api = {
