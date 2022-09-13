@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 target_sources(app PRIVATE
+  src/keyboard_backlight.c
   src/keyboard_scan.c
   src/keyboard_test_utils.c
   src/mkbp_event.c
