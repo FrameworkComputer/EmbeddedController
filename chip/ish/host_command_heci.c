@@ -119,7 +119,8 @@ static void cros_ec_ishtp_subsys_new_msg_received(const heci_handle_t handle,
 	heci_packet.response_size = 0;
 
 	heci_packet.driver_result = EC_RES_SUCCESS;
-	host_packet_receive(&heci_packet);
+	if (IS_ENABLED(HAS_TASK_HOSTCMD))
+		host_packet_receive(&heci_packet);
 }
 
 /*
