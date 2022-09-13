@@ -149,7 +149,7 @@ def main():
     # Prepare environment variables for export to Twister. Inherit the parent
     # process's environment, but set some default values if not already set.
     twister_env = dict(os.environ)
-    is_in_chroot = os.environ.get("CROS_WORKON_SRCROOT") is not None
+    is_in_chroot = Path("/etc/cros_chroot_version").is_file()
     extra_env_vars = {
         "TOOLCHAIN_ROOT": os.environ.get(
             "TOOLCHAIN_ROOT",
