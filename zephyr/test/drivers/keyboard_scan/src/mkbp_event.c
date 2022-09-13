@@ -65,7 +65,7 @@ ZTEST(mkbp_event, host_command_get_events__get_event)
 	/* Add the above event to the MKBP keyboard FIFO and raise the event */
 
 	ret = mkbp_fifo_add(expected_event.event_type,
-			    (uint8_t *)&expected_event.data.key_matrix);
+			    (const uint8_t *)&expected_event.data.key_matrix);
 	activate_mkbp_with_events(BIT(expected_event.event_type));
 
 	zassert_equal(EC_SUCCESS, ret, "Got %d when adding to FIFO", ret);

@@ -9,6 +9,7 @@
 #include "emul/emul_flash.h"
 #include "hooks.h"
 #include "ppc/sn5s330_public.h"
+#include "system_fake.h"
 #include "task.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"

@@ -1964,7 +1964,7 @@ ZTEST_USER(bmi160, test_bmi_set_offset_invalid_type)
 {
 	struct motion_sensor_t ms_fake;
 	int ret;
-	int16_t unused_offset;
+	int16_t unused_offset = 0;
 	int16_t temp = 0;
 
 	/* make a copy of the accel motion sensor so we modify its type */

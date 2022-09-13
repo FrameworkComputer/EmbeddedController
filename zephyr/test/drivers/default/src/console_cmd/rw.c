@@ -39,13 +39,16 @@ ZTEST_USER(console_cmd_rw, test_read)
 	uint8_t memory[] = { 0x01, 0x02, 0x03, 0x04 };
 	char cmd[128] = { 0 };
 
-	zassume_true(sprintf(cmd, "rw .b %llu", memory) != 0, NULL);
+	zassume_true(sprintf(cmd, "rw .b %" PRIuPTR, (uintptr_t)memory) != 0,
+		     NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 
-	zassume_true(sprintf(cmd, "rw .h %llu", memory) != 0, NULL);
+	zassume_true(sprintf(cmd, "rw .h %" PRIuPTR, (uintptr_t)memory) != 0,
+		     NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 
-	zassume_true(sprintf(cmd, "rw %llu", memory) != 0, NULL);
+	zassume_true(sprintf(cmd, "rw %" PRIuPTR, (uintptr_t)memory) != 0,
+		     NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 }
 
@@ -64,7 +67,9 @@ ZTEST_USER(console_cmd_rw, test_write)
 	uint8_t memory[4] = { 0 };
 	char cmd[128] = { 0 };
 
-	zassume_true(sprintf(cmd, "rw .b %llu 1", memory) != 0, NULL);
+	zassume_true(sprintf(cmd, "rw .b %" PRIuPTR " 1", (uintptr_t)memory) !=
+			     0,
+		     NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 	zassert_equal(1, memory[0], "memory[0] was %u", memory[0]);
 	zassert_equal(0, memory[1], "memory[1] was %u", memory[1]);
@@ -72,7 +77,9 @@ ZTEST_USER(console_cmd_rw, test_write)
 	zassert_equal(0, memory[3], "memory[3] was %u", memory[3]);
 
 	memset(memory, 0, 4);
-	zassume_true(sprintf(cmd, "rw .h %llu 258", memory) != 0, NULL);
+	zassume_true(sprintf(cmd, "rw .h %" PRIuPTR " 258",
+			     (uintptr_t)memory) != 0,
+		     NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 	zassert_equal(2, memory[0], "memory[0] was %u", memory[0]);
 	zassert_equal(1, memory[1], "memory[1] was %u", memory[1]);
@@ -80,7 +87,9 @@ ZTEST_USER(console_cmd_rw, test_write)
 	zassert_equal(0, memory[3], "memory[3] was %u", memory[3]);
 
 	memset(memory, 0, 4);
-	zassume_true(sprintf(cmd, "rw %llu 16909060", memory) != 0, NULL);
+	zassume_true(sprintf(cmd, "rw %" PRIuPTR " 16909060",
+			     (uintptr_t)memory) != 0,
+		     NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd), NULL);
 	zassert_equal(4, memory[0], "memory[0] was %u", memory[0]);
 	zassert_equal(3, memory[1], "memory[1] was %u", memory[1]);
