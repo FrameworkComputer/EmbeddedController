@@ -29,8 +29,19 @@ endif
 # library.
 USE_BUILTIN_STDLIB:=1
 
+# Set the prefix for the compiler if specified (e.g., "x86_64-pc-linux-gnu-").
+ifeq ($(origin BUILDCC_PREFIX),undefined)
+# If building with Portage use the environment variable it provides.
+# https://wiki.gentoo.org/wiki/Embedded_Handbook/General/Introduction#Environment_variables
+ifneq ($(CBUILD),)
+BUILDCC_PREFIX:=$(CBUILD)-
+else
+BUILDCC_PREFIX:=x86_64-pc-linux-gnu-
+endif
+endif
+
 # Extract cc-name
-cc-name:=$(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
+cc-name:=$(shell $(BUILDCC_PREFIX)$(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
 
 # Assume we want to use same compiler for both C and C++
 ifeq ($(cc-name),gcc)
@@ -55,7 +66,7 @@ OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
 ADDR2LINE=$(CROSS_COMPILE)addr2line
 PKG_CONFIG?=pkg-config
-BUILDCC?=$(CCACHE) $(cc-name)
+BUILDCC?=$(CCACHE) $(BUILDCC_PREFIX)$(cc-name)
 HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)$(cc-name)
 HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)clang++
 HOST_PKG_CONFIG?=$(HOST_CROSS_COMPILE)pkg-config

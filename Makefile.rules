@@ -829,6 +829,8 @@ help:
 	@echo "  V=1                  - Show make output"
 	@echo "  BOARD=               - Set the board name to build (Default is $(BOARD))"
 	@echo "  STATIC_VERSION=1     - Force a constant version string for reproducable builds"
+	@echo "  BUILDCC_PREFIX=      - Set the compiler prefix for the system doing "
+	@echo "     the build (defaults to 'x86_64-pc-linux-gnu-')."
 	@echo "  CROSS_COMPILE=       - Set the compiler for the board"
 	@echo "  CROSS_COMPILE_arch=  - Set the compiler for arch"
 	@echo "     The board picks its CROSS_COMPILE_arch if CROSS_COMPILE is not set."
