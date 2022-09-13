@@ -77,7 +77,7 @@ get_tree_version() {
     # Ex VCSID: 0.0.1-r1519-9b368af6a4943b90941471d0bdf7e7208788f898
     if [[ -n "${VCSID}" ]]; then
       ghash="${VCSID##*-}"
-      vbase="1.1.9999-${ghash:0:7}"
+      vbase="v2.1.9999-${ghash:0:8}"
     else
       # then ultimately fails to "no_version"
       vbase="no_version"
