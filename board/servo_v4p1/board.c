@@ -363,7 +363,7 @@ const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_EMPTY) = {
 
 const void *const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
-	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
 	[USB_STR_PRODUCT] = USB_STRING_DESC("Servo V4p1"),
 	[USB_STR_SERIALNO] = USB_STRING_DESC("1234-a"),
 	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),

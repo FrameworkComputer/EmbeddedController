@@ -187,7 +187,7 @@ int usb_i2c_board_is_enabled(void)
 
 const void *const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
-	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
 	[USB_STR_PRODUCT] = USB_STRING_DESC("HyperDebug"),
 	[USB_STR_SERIALNO] = 0,
 	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),

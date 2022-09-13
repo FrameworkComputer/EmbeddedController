@@ -110,7 +110,7 @@ DECLARE_HOOK(HOOK_TICK, usb_gpio_tick, HOOK_PRIO_DEFAULT);
  */
 const void *const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
-	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
 	[USB_STR_PRODUCT] = USB_STRING_DESC("discovery-stm32f072"),
 	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
 	[USB_STR_STREAM_NAME] = USB_STRING_DESC("Forward"),

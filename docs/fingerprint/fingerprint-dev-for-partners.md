@@ -533,7 +533,7 @@ supply.
 (chroot) $ lsusb
 
 Bus 002 Device 003: ID 0897:0004 Lauterbach  # ← This is my Lauterbach (debugger)
-Bus 001 Device 013: ID 18d1:5002 Google Inc. # ← This is servo
+Bus 001 Device 013: ID 18d1:5002 Google LLC # ← This is servo
 ```
 
 ### "No servos found" when running servod
