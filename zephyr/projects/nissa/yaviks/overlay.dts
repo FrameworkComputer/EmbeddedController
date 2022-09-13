@@ -137,11 +137,11 @@
 	};
 
 	named-temp-sensors {
-		memory {
+		cpu {
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			enum-name = "TEMP_SENSOR_1";
+			enum-name = "TEMP_SENSOR_CPU";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
 			temp_host_high = <85>;
@@ -150,11 +150,11 @@
 			adc = <&adc_temp_sensor_1>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 		};
-		charger {
+		5v_regulator {
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			enum-name = "TEMP_SENSOR_CHARGER";
+			enum-name = "TEMP_SENSOR_PP5000_REGULATOR";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
 			temp_host_high = <85>;
@@ -163,11 +163,11 @@
 			adc = <&adc_temp_sensor_2>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 		};
-		ambient {
+		charger {
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			enum-name = "TEMP_SENSOR_AMB";
+			enum-name = "TEMP_SENSOR_CHARGER";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
 			temp_host_high = <85>;
