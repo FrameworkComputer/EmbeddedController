@@ -260,27 +260,51 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 		.temp_host_release = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(77), \
 		}, \
-		.temp_fan_off = C_TO_K(30), \
-		.temp_fan_max = C_TO_K(47), \
+		.temp_fan_off = C_TO_K(24), \
+		.temp_fan_max = C_TO_K(51), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
-#define THERMAL_DDR                                                     \
-	{                                                               \
-		.temp_fan_off = C_TO_K(56), .temp_fan_max = C_TO_K(59), \
+#define THERMAL_DDR              \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(78), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+		}, \
+		.temp_fan_off = C_TO_K(56), \
+		.temp_fan_max = C_TO_K(59), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_ddr = THERMAL_DDR;
 
-#define THERMAL_CHARGER                                                 \
-	{                                                               \
-		.temp_fan_off = C_TO_K(67), .temp_fan_max = C_TO_K(70), \
+#define THERMAL_CHARGER          \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(86), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(89), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(86), \
+		}, \
+		.temp_fan_off = C_TO_K(67), \
+		.temp_fan_max = C_TO_K(70), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_charger =
 	THERMAL_CHARGER;
 
-#define THERMAL_AMBIENT                                                 \
-	{                                                               \
-		.temp_fan_off = C_TO_K(38), .temp_fan_max = C_TO_K(45), \
+#define THERMAL_AMBIENT          \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(57), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(60), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(57), \
+		}, \
+		.temp_fan_off = C_TO_K(38), \
+		.temp_fan_max = C_TO_K(45), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_ambient =
 	THERMAL_AMBIENT;
