@@ -99,7 +99,7 @@ int charge_get_percent(void);
 #else
 static inline int charge_get_percent(void)
 {
-	return 100;
+	return 0;
 }
 #endif
 
