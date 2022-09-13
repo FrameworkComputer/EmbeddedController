@@ -76,12 +76,12 @@ extern "C" {
 /**
  * Constant for creation of flexible array members that work in both C and
  * C++. Flexible array members were added in C99 and are not part of the C++
- * standard. However, clang++ and g++ support them in C++.
- * When compiling C code, flexible array members are not allowed to appear
+ * standard. However, clang++ supports them for C++.
+ * When compiling with gcc, flexible array members are not allowed to appear
  * in an otherwise empty struct, so we use the GCC zero-length array
- * extension that works with both clang and gcc.
+ * extension that works with both clang/gcc/g++.
  */
-#ifdef __cplusplus
+#if defined(__cplusplus) && defined(__clang__)
 #define FLEXIBLE_ARRAY_MEMBER_SIZE
 #else
 #define FLEXIBLE_ARRAY_MEMBER_SIZE 0
