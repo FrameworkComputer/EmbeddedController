@@ -12,31 +12,9 @@ workflow:
   rules:
     - if: ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "coverage")
 
-# Change pip's cache directory to be inside the project directory since we can
-# only cache local items.
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-
-# Pip's cache doesn't store the python packages
-# https://pip.pypa.io/en/stable/reference/pip_install/#caching
-#
-# If you want to also cache the installed packages, you have to install
-# them in a virtualenv and cache it as well.
-cache:
-  key: ${CI_COMMIT_SHA}
-  policy: pull
-  paths:
-    - .cache/pip
-    - venv/
-    - modules/
-    - zephyr/
-
-
 # The directory structure is:
 #
 # ${CI_PROJECT_DIR}
-#    |_ .cache/
-#        |_ pip/          - PIP Cache
 #    |_ ec_dir/           - EC repo (${EC_DIR})
 #        |_ build/        - make and zmake artifacts (${BUILD_DIR})
 #        |_ twister-out/  - Twister artifacts (${TWISTER_OUT_DIR})
@@ -58,20 +36,42 @@ before_script:
   - mkdir -p ec_dir
   - find . -mindepth 1 -maxdepth 1 -name ec_dir -o -print0 | xargs -0 -I {} mv {} ec_dir
   - export EC_DIR="${CI_PROJECT_DIR}/ec_dir"
-  # Remove old zephyr and module checkouts (unwanted cache artifact)
   - export MODULES_DIR="$CI_PROJECT_DIR/modules"
   - export ZEPHYR_BASE="${CI_PROJECT_DIR}/zephyr/main"
-  - mkdir -p "${CI_PROJECT_DIR}/zephyr"
-  - test -d ${EC_DIR}/zephyr/main && mv -T ${EC_DIR}/zephyr/main ${ZEPHYR_BASE}
-  - test -d ${EC_DIR}/modules && mv -T ${EC_DIR}/modules ${MODULES_DIR}
+  - git config --global --add safe.directory '*'
   # Get Zephyr repo and modules
-  - mkdir -p "${MODULES_DIR}"
-  - mkdir -p "${ZEPHYR_BASE}"
-  - test -d "${ZEPHYR_BASE}/.git" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}"
-  - test -d "${MODULES_DIR}/cmsis" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
-  - test -d "${MODULES_DIR}/hal_stm32" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
-  - test -d "${MODULES_DIR}/nanopb" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
-  - test -d "${MODULES_DIR}/cryptoc" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/cryptoc "${MODULES_DIR}/cryptoc"
+  - checkout_at_date() {
+            local url="$1" ;
+            local branch="$2" ;
+            local path="$3" ;
+            local date="$4" ;
+            local retries=5 ;
+
+            while [ ${retries} -gt 0 ] ; do
+              rm -rf "${path}" ;
+              mkdir -p "${path}" ;
+              git clone --depth 1 -b "${branch}" "${url}" "${path}" || echo "git clone failed will retry ${retries} times";
+              if [ $? -eq 0 ]; then
+                break ;
+              fi ;
+              retries="$(( ${retries} - 1 ))" ;
+            done ;
+            cd "${path}" ;
+            rev="$(git rev-list -n 1 --before="${date}" "${branch}")" ;
+            depth=1 ;
+            while [ -z "${rev}" ] ; do
+              depth="$(( ${depth} + 100 ))" ;
+              git fetch --depth="${depth}" ;
+              rev="$(git rev-list -n 1 --before="${date}" "${branch}")" ;
+            done ;
+            git checkout -d "${rev}" ;
+    }
+  - ec_commit_date="$(cd ${EC_DIR} ; git log -1 HEAD --format=%cd --date=iso)"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr" "main" "${ZEPHYR_BASE}" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis" "chromeos-main" "${MODULES_DIR}/cmsis" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32" "chromeos-main" "${MODULES_DIR}/hal_stm32" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb" "main" "${MODULES_DIR}/nanopb" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/cryptoc" "main" "${MODULES_DIR}/cryptoc" "${ec_commit_date}"
   # Add a symlink so the ec appears in modules directory (hack to make zmake work)
   - ln -s "${EC_DIR}" "${MODULES_DIR}/ec"
   # Install Python and packages
@@ -88,25 +88,11 @@ before_script:
   - export TOOLCHAIN_ROOT=${ZEPHYR_BASE}
   - export ZEPHYR_TOOLCHAIN_VARIANT=host
 
-seed_cache:
-  stage: build
-  needs: []
-  cache:
-    key: ${CI_COMMIT_SHA}
-    paths:
-      - .cache/pip
-      - venv/
-      - modules/
-      - zephyr/
-    policy: push
-  script:
-    - ls "${MODULES_DIR}" "${ZEPHYR_BASE}"
-
 # Users of this template must set:
 # $PROJECT to the project to build. E.g., "lazor"
 .build_template: &build_template
   stage: build
-  needs: ["seed_cache"]
+  needs: []
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG build
@@ -258,7 +244,7 @@ skyrim_coverage:
 
 ec_coverage:
   stage: test
-  needs: ["seed_cache"]
+  needs: []
   script:
     - cd ${EC_DIR}
     - make -j8 CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
@@ -273,7 +259,7 @@ ec_coverage:
 
 zephyr_coverage:
   stage: test
-  needs: ["seed_cache"]
+  needs: []
   script:
     - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
       -v -i --gcov-tool gcov -x=ALLOW_WARNINGS=ON
@@ -285,7 +271,7 @@ zephyr_coverage:
 
 zephyr_boards_coverage:
   stage: build
-  needs: ["seed_cache"]
+  needs: []
   script:
     - cd ${EC_DIR}
     - zmake --zephyr-base "${ZEPHYR_BASE}"
@@ -345,14 +331,14 @@ merged_coverage:
 
 testall:
   stage: test
-  needs: ["seed_cache"]
+  needs: []
   script:
     - python3 ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
       -x=ALLOW_WARNINGS=ON
 
 twister_coverage:
   stage: test
-  needs: ["seed_cache"]
+  needs: []
   script:
     - mkdir -p ${BUILD_DIR}/zephyr_codecov
     - for commitid in $(cd "${ZEPHYR_BASE}" ; git fetch --depth=100 ; git log | awk '/GitOrigin-RevId:/ {print $2}') ; do
@@ -379,7 +365,7 @@ twister_coverage:
 
 zmake_coverage:
   stage: test
-  needs: ["seed_cache"]
+  needs: []
   script:
     - cd ${EC_DIR}/zephyr/zmake
     - coverage run --source=zmake -m pytest .
