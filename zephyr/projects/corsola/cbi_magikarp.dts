@@ -12,7 +12,7 @@
 		 */
 		base-gyro {
 			enum-name = "FW_BASE_GYRO";
-			start = <8>;
+			start = <0>;
 			size = <2>;
 
 			None {
