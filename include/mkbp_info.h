@@ -1,4 +1,4 @@
-/* Copyright 2022 The ChromiumOS Authors
+/* Copyright 2022 The ChromiumOS Authors.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,5 +18,10 @@
  * @return 1 if volume buttons supported else 0
  */
 __override_proto int mkbp_support_volume_buttons(void);
+
+#ifdef TEST_BUILD
+uint32_t get_supported_buttons(void);
+uint32_t get_supported_switches(void);
+#endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_MKBP_INFO_H */

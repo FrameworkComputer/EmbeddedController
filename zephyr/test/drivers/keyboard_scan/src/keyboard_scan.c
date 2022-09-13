@@ -1,4 +1,4 @@
-/* Copyright 2022 The ChromiumOS Authors
+/* Copyright 2022 The ChromiumOS Authors.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,15 +14,9 @@
 #include "console.h"
 #include "host_command.h"
 #include "keyboard_scan.h"
+#include "keyboard_test_utils.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
-
-int emulate_keystate(int row, int col, int pressed)
-{
-	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(cros_kb_raw));
-
-	return emul_kb_raw_set_kbstate(dev, row, col, pressed);
-}
 
 ZTEST(keyboard_scan, test_boot_key)
 {
@@ -408,6 +402,9 @@ static void reset_keyboard(void *data)
 
 	/* Turn off key state change printing */
 	keyboard_scan_set_print_state_changes(0);
+
+	/* Reset KB emulator */
+	clear_emulated_keys();
 
 	/* Reset all mocks. */
 	RESET_FAKE(key_state_changed);

@@ -1,4 +1,4 @@
-/* Copyright 2021 The ChromiumOS Authors
+/* Copyright 2021 The ChromiumOS Authors.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,7 +25,7 @@ __overridable int mkbp_support_volume_buttons(void)
 #endif
 }
 
-static uint32_t get_supported_buttons(void)
+test_export_static uint32_t get_supported_buttons(void)
 {
 	uint32_t val = 0;
 
@@ -44,7 +44,7 @@ static uint32_t get_supported_buttons(void)
 	return val;
 }
 
-static uint32_t get_supported_switches(void)
+test_export_static uint32_t get_supported_switches(void)
 {
 	uint32_t val = 0;
 
