@@ -9,6 +9,7 @@
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
+#include "system.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "usb_pd.h"
@@ -204,4 +205,44 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_power_info)
 	zassert_true(power_info.meas.current_lim >= 0,
 		     "Expected the PD current limit to be >= 0, but got %dmA",
 		     power_info.meas.current_lim);
+}
+
+ZTEST(usb_attach_5v_3a_pd_source,
+      test_ap_can_boot_on_low_battery_while_charging)
+{
+	const struct emul *smart_batt_emul = EMUL_DT_GET(DT_NODELABEL(battery));
+	struct sbat_emul_bat_data *batt_data =
+		sbat_emul_get_bat_data(smart_batt_emul);
+
+	/* Set capacity to what gives a charge percentage less than required
+	 * for booting the AP
+	 *
+	 * Capacaity is reset by emulator's ZTEST_RULE
+	 */
+	batt_data->cap = (CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON *
+			  batt_data->design_cap / 100) -
+			 1;
+
+	zassert_true(system_can_boot_ap(), NULL);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source,
+	test_ap_fails_to_boot_on_low_battery_while_not_charging)
+{
+	const struct emul *smart_batt_emul = EMUL_DT_GET(DT_NODELABEL(battery));
+	struct sbat_emul_bat_data *batt_data =
+		sbat_emul_get_bat_data(smart_batt_emul);
+
+	/* Set capacity to what gives a charge percentage less than required
+	 * for booting the AP
+	 *
+	 * Capacaity is reset by emulator's ZTEST_RULE
+	 */
+	batt_data->cap = (CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON *
+			  batt_data->design_cap / 100) -
+			 1;
+
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
+
+	zassert_false(system_can_boot_ap(), NULL);
 }
