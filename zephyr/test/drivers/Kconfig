@@ -23,6 +23,9 @@ config LINK_TEST_SUITE_LED_DRIVER
 config LINK_TEST_SUITE_MKBP
 	bool "Link and test the mkbp tests"
 
+config LINK_TEST_SUITE_RT9490
+	bool "Link and test the rt9490 tests"
+
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 

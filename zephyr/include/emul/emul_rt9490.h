@@ -12,4 +12,6 @@ void rt9490_emul_reset_regs(const struct emul *emul);
 
 int rt9490_emul_peek_reg(const struct emul *emul, int reg);
 
+int rt9490_emul_write_reg(const struct emul *emul, int reg, int val);
+
 #endif

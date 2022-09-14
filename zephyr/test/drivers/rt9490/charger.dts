@@ -1,0 +1,30 @@
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&rt9490>;
+			bc12 = <&rt9490_bc12>;
+			tcpc = <&tcpci_emul>;
+		};
+
+		port1@1 {
+			bc12 = <&rt9490_bc12>;
+		};
+	};
+
+	rt9490_bc12: rt9490-bc12 {
+		compatible = "richtek,rt9490-bc12";
+		status = "okay";
+	};
+};
+
+&i2c0 {
+	status="okay";
+
+	rt9490: rt9490@53 {
+		compatible = "zephyr,rt9490-emul";
+		status = "okay";
+		reg = <0x53>;
+	};
+};

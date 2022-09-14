@@ -21,7 +21,9 @@ struct rt9490_data {
 };
 
 static const uint8_t default_values[RT9490_REG_MAX + 1] = {
+	[RT9490_REG_CHG_CTRL0] = 0xA2,
 	[RT9490_REG_SAFETY_TMR_CTRL] = 0x3D,
+	[RT9490_REG_DEVICE_INFO] = 0x60,
 	[RT9490_REG_ADD_CTRL0] = 0x76,
 };
 
@@ -41,6 +43,19 @@ int rt9490_emul_peek_reg(const struct emul *emul, int reg)
 		return -1;
 	}
 	return regs[reg];
+}
+
+int rt9490_emul_write_reg(const struct emul *emul, int reg, int val)
+{
+	struct rt9490_data *data = emul->data;
+	uint8_t *regs = data->regs;
+
+	if (!IN_RANGE(reg, 0, RT9490_REG_MAX)) {
+		return -1;
+	}
+	regs[reg] = val;
+
+	return 0;
 }
 
 static int rt9490_emul_read(const struct emul *emul, int reg, uint8_t *val,
