@@ -21,6 +21,11 @@
 #include "test/drivers/test_state.h"
 
 #define TEST_PORT 0
+
+/* Arbitrary */
+#define PARTNER_PRODUCT_ID 0x1234
+#define PARTNER_DEV_BINARY_CODED_DECIMAL 0x5678
+
 BUILD_ASSERT(TEST_PORT == USBC_PORT_C0);
 
 struct usbc_alt_mode_fixture {
@@ -79,7 +84,8 @@ static void add_discovery_responses(struct tcpci_partner_data *partner)
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_AMA,
 		/* modal operation */ true, USB_VID_GOOGLE);
 	partner->identity_vdm[VDO_INDEX_CSTAT] = 0xabcdabcd;
-	partner->identity_vdm[VDO_INDEX_PRODUCT] = VDO_PRODUCT(0x1234, 0x5678);
+	partner->identity_vdm[VDO_INDEX_PRODUCT] = VDO_PRODUCT(
+		PARTNER_PRODUCT_ID, PARTNER_DEV_BINARY_CODED_DECIMAL);
 	/* Hardware version 1, firmware version 2 */
 	partner->identity_vdm[VDO_INDEX_AMA] = 0x12000000;
 	partner->identity_vdos = VDO_INDEX_AMA + 1;
@@ -324,6 +330,21 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_reentry)
 	zassert_equal(response.svid, USB_SID_DISPLAYPORT, NULL);
 	zassert_equal(response.vdo[0],
 		      fixture->partner.modes_vdm[response.opos], NULL);
+}
+
+ZTEST_F(usbc_alt_mode, verify_discovery_via_pd_host_cmd)
+{
+	struct ec_params_usb_pd_info_request params = { .port = TEST_PORT };
+	struct ec_params_usb_pd_discovery_entry response;
+
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_USB_PD_DISCOVERY, 0, response, params);
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(response), NULL);
+	zassert_equal(response.ptype, IDH_PTYPE_AMA);
+	zassert_equal(response.vid, USB_VID_GOOGLE);
+	zassert_equal(response.pid, PARTNER_PRODUCT_ID);
 }
 
 ZTEST_SUITE(usbc_alt_mode, drivers_predicate_post_main, usbc_alt_mode_setup,
