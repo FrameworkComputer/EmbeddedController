@@ -273,7 +273,7 @@ static int configure_mux(int port, int index, enum mux_config_type config,
 	 * to make sure they are all updated appropriately.
 	 */
 	for (mux_chain = &usb_muxes[port];
-	     rv == EC_SUCCESS && mux_chain != NULL;
+	     rv == EC_SUCCESS && mux_chain != NULL && mux_chain->mux != NULL;
 	     mux_chain = mux_chain->next, chip++) {
 		mux_state_t lcl_state;
 		const struct usb_mux *mux_ptr = mux_chain->mux;
@@ -667,7 +667,7 @@ int usb_mux_retimer_fw_update_port_info(void)
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		mux_chain = &usb_muxes[i];
-		while (mux_chain) {
+		while (mux_chain && mux_chain->mux) {
 			mux_ptr = mux_chain->mux;
 			if (mux_ptr->driver &&
 			    mux_ptr->driver->is_retimer_fw_update_capable &&
@@ -702,7 +702,7 @@ static void usb_mux_reset_in_g3(void)
 	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
 		mux_chain = &usb_muxes[port];
 
-		while (mux_chain) {
+		while (mux_chain && mux_chain->mux) {
 			mux_ptr = mux_chain->mux;
 			if (mux_ptr->flags & USB_MUX_FLAG_RESETS_IN_G3) {
 				atomic_clear_bits(&flags[port],
