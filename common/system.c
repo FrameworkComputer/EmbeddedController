@@ -67,6 +67,11 @@ static enum ec_reboot_cmd reboot_at_shutdown;
 
 static enum sysinfo_flags system_info_flags;
 
+/* Ensure enough space for panic_data, jump_data and at least one jump tag */
+BUILD_ASSERT((sizeof(struct panic_data) + sizeof(struct jump_data) +
+	      JUMP_TAG_MAX_SIZE) <= CONFIG_PRESERVED_END_OF_RAM_SIZE,
+	     "End of ram data size is too small for panic and jump data");
+
 STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_seconds;
 STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_microseconds;
 
@@ -349,15 +354,24 @@ test_mockable int system_jumped_late(void)
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 {
 	struct jump_tag *t;
+	size_t new_entry_size;
 
 	/* Only allowed during a sysjump */
 	if (!jdata || jdata->magic != JUMP_DATA_MAGIC)
 		return EC_ERROR_UNKNOWN;
 
 	/* Make room for the new tag */
-	if (size > 255)
+	if (size > JUMP_TAG_MAX_SIZE)
 		return EC_ERROR_INVAL;
-	jdata->jump_tag_total += ROUNDUP4(size) + sizeof(struct jump_tag);
+
+	new_entry_size = ROUNDUP4(size) + sizeof(struct jump_tag);
+
+	if (system_usable_ram_end() - new_entry_size < JUMP_DATA_MIN_ADDRESS) {
+		ccprintf("ERROR: out of space for jump tags\n");
+		return EC_ERROR_INVAL;
+	}
+
+	jdata->jump_tag_total += new_entry_size;
 
 	t = (struct jump_tag *)system_usable_ram_end();
 	t->tag = tag;
@@ -376,6 +390,10 @@ test_mockable const uint8_t *system_get_jump_tag(uint16_t tag, int *version,
 	int used = 0;
 
 	if (!jdata)
+		return NULL;
+
+	/* Ensure system_usable_ram_end() is within bounds */
+	if (system_usable_ram_end() < JUMP_DATA_MIN_ADDRESS)
 		return NULL;
 
 	/* Search through tag data for a match */
@@ -917,6 +935,18 @@ void system_common_pre_init(void)
 			delta = sizeof(struct jump_data) - JUMP_DATA_SIZE_V2;
 		else
 			delta = sizeof(struct jump_data) - jdata->struct_size;
+
+		/*
+		 * Check if enough space for jump data.
+		 * Clear jump data and return if not.
+		 */
+		if (system_usable_ram_end() < JUMP_DATA_MIN_ADDRESS) {
+			/* TODO(b/251190975): This failure should be reported
+			 * in the panic data structure for more visibility.
+			 */
+			memset(jdata, 0, sizeof(struct jump_data));
+			return;
+		}
 
 		if (delta && jdata->jump_tag_total) {
 			uint8_t *d = (uint8_t *)system_usable_ram_end();

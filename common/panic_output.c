@@ -208,7 +208,7 @@ struct panic_data *get_panic_data_write(void)
 	 * end of RAM.
 	 */
 	struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
-	const struct jump_data *jdata_ptr;
+	struct jump_data *jdata_ptr;
 	uintptr_t data_begin;
 	size_t move_size;
 	int delta;
@@ -262,6 +262,16 @@ struct panic_data *get_panic_data_write(void)
 	else {
 		/* Unknown jump data version - set move size to 0 */
 		move_size = 0;
+	}
+
+	/* Check if there's enough space for jump tags after move */
+	if (data_begin - move_size < JUMP_DATA_MIN_ADDRESS) {
+		/* Not enough room for jump tags, clear tags.
+		 * TODO(b/251190975): This failure should be reported
+		 * in the panic data structure for more visibility.
+		 */
+		move_size -= jdata_ptr->jump_tag_total;
+		jdata_ptr->jump_tag_total = 0;
 	}
 
 	data_begin -= move_size;
