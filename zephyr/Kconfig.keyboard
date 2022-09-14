@@ -99,15 +99,15 @@ config PLATFORM_EC_KEYBOARD_PWRBTN_ASSERTS_KSI2
 	bool "Forces KSI2 to be asserted"
 	help
 	  Enable this if KSI2 is stuck 'asserted' for all scan columns if the
-	  power button is held. We must be aware of this case in order to
-	  correctly handle recovery-mode key combinations.
+	  power button is held. This applies if the refresh key is on KSI2.
+	  The GSC will assert this row for all columns during a recovery boot.
 
 config PLATFORM_EC_KEYBOARD_PWRBTN_ASSERTS_KSI3
 	bool "Forces KSI3 to be asserted"
 	help
 	  Enable this if KSI3 is stuck 'asserted' for all scan columns if the
-	  power button is held. We must be aware of this case in order to
-	  correctly handle recovery-mode key combinations.
+	  power button is held. This applies if the refresh key is on KSI3.
+	  The GSC will assert this row for all columns during a recovery boot.
 
 endchoice # PLATFORM_EC_KEYBOARD_PWRBTN_MODE
 
