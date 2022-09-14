@@ -7,6 +7,7 @@
 #include <zephyr/logging/log.h>
 
 #include "accelgyro.h"
+#include "button.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "driver/accelgyro_bmi323.h"
@@ -44,12 +45,33 @@ static void form_factor_init(void)
 {
 	int ret;
 	uint32_t val;
+	enum nissa_sub_board_type sb = nissa_get_sb_type();
+
+	ret = cbi_get_board_version(&val);
+	if (ret != EC_SUCCESS) {
+		LOG_ERR("Error retrieving CBI BOARD_VER.");
+		return;
+	}
+	/*
+	 * The volume up/down button are exchanged on ver3 USB
+	 * sub board.
+	 *
+	 * LTE:
+	 *   volup -> gpioa2, voldn -> gpio93
+	 * USB:
+	 *   volup -> gpio93, voldn -> gpioa2
+	 */
+	if (val == 3 && sb == NISSA_SB_C_A) {
+		LOG_INF("Volume up/down btn exchanged on ver3 USB sku");
+		buttons[BUTTON_VOLUME_UP].gpio = GPIO_VOLUME_DOWN_L;
+		buttons[BUTTON_VOLUME_DOWN].gpio = GPIO_VOLUME_UP_L;
+	}
+
 	/*
 	 * If the board version is 1
 	 * use ver1 rotation matrix.
 	 */
-	ret = cbi_get_board_version(&val);
-	if (ret == EC_SUCCESS && val == 1) {
+	if (val == 1) {
 		LOG_INF("Switching to ver1 base");
 		motion_sensors[BASE_SENSOR].rot_standard_ref = &ALT_MAT;
 		motion_sensors[BASE_GYRO].rot_standard_ref = &ALT_MAT;
