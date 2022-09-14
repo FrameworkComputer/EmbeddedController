@@ -30,7 +30,7 @@
 		};
 
 		/* Magikarp LED bat discharge */
-		bat-power-state-discharge {
+		bat-power-state-discharge-s0 {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery percent range (>= 11%, <= Full) */
@@ -38,6 +38,24 @@
 
 			color-0 {
 				led-color = <&color_battery_white>;
+			};
+		};
+
+
+		bat-power-state-discharge-s0-bat-low {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= Empty, <= 10%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			color-0 {
+				led-color = <&color_battery_amber>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <3000>;
 			};
 		};
 
