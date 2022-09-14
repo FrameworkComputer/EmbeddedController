@@ -146,6 +146,12 @@ struct charger_drv {
 	 */
 	enum ec_error_list (*enable_bypass_mode)(int chgnum, bool enable);
 
+	/*
+	 * Get the number of battery cells from charging mode set by sensing an
+	 * external resistor
+	 */
+	enum ec_error_list (*get_battery_cells)(int chgnum, int *cells);
+
 	/* Dumps charger registers */
 	void (*dump_registers)(int chgnum);
 };
@@ -390,6 +396,20 @@ enum ec_error_list charger_enable_linear_charge(int chgnum, bool enable);
 enum ec_error_list charger_enable_bypass_mode(int chgnum, int enable);
 
 /**
+ * Get the charger configuration for the number of battery cells
+ *
+ * The default charging mode is configured by sensing an external
+ * resistor. The number of battery cells can be determined from the
+ * charging mode.
+ *
+ * @param chgnum: Active charge port.
+ * @param cells: The number of battery cells.
+ *
+ * @return EC_SUCCESS on success, an error otherwise.
+ */
+enum ec_error_list charger_get_battery_cells(int chgnum, int *cells);
+
+/*
  * Print all charger info for debugging purposes
  * @param chgnum: charger IC index.
  */

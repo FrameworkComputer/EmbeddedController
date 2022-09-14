@@ -64,4 +64,9 @@ const enum battery_type DEFAULT_BATTERY_TYPE =
 	BATTERY_TYPE(DT_NODELABEL(default_battery));
 #endif
 
+#if DT_NODE_EXISTS(DT_NODELABEL(default_battery_3s))
+#define BAT_ENUM(node) DT_CAT(BATTERY_, node)
+const enum battery_type DEFAULT_BATTERY_TYPE_3S =
+	BATTERY_TYPE(DT_NODELABEL(default_battery_3s));
+#endif
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(battery_smart) */

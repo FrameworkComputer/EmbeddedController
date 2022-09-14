@@ -785,3 +785,14 @@ inline int charger_get_min_bat_pct_for_power_on(void)
 	return CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON;
 }
 #endif
+
+enum ec_error_list charger_get_battery_cells(int chgnum, int *cells)
+{
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count()))
+		return EC_ERROR_INVAL;
+
+	if (chg_chips[chgnum].drv->get_battery_cells)
+		return chg_chips[chgnum].drv->get_battery_cells(chgnum, cells);
+
+	return EC_ERROR_UNIMPLEMENTED;
+}

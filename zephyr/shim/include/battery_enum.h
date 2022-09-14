@@ -21,3 +21,7 @@ enum battery_type {
 };
 
 #undef BATTERY_TYPE_WITH_COMMA
+
+#if DT_NODE_EXISTS(DT_NODELABEL(default_battery_3s))
+extern const enum battery_type DEFAULT_BATTERY_TYPE_3S;
+#endif
