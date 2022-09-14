@@ -347,6 +347,39 @@ ZTEST_F(usbc_alt_mode, verify_discovery_via_pd_host_cmd)
 	zassert_equal(response.pid, PARTNER_PRODUCT_ID);
 }
 
+ZTEST_F(usbc_alt_mode, verify_mode_entry_via_pd_host_cmd)
+{
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		ztest_test_skip();
+	}
+
+	/* Verify entering mode */
+	struct ec_params_usb_pd_set_mode_request set_mode_params = {
+		.cmd = PD_ENTER_MODE,
+		.port = TEST_PORT,
+		.opos = 1, /* Second VDO (after Discovery Responses) */
+		.svid = USB_SID_DISPLAYPORT,
+	};
+
+	struct host_cmd_handler_args set_mode_args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_USB_PD_SET_AMODE, 0, set_mode_params);
+
+	zassert_ok(host_command_process(&set_mode_args));
+
+	/* Verify that DisplayPort is the active alternate mode. */
+	struct ec_params_usb_pd_get_mode_response get_mode_response;
+	int response_size;
+
+	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &get_mode_response,
+				  &response_size);
+
+	/* Response should be populated with a DisplayPort VDO */
+	zassert_equal(response_size, sizeof(get_mode_response), NULL);
+	zassert_equal(get_mode_response.svid, USB_SID_DISPLAYPORT, NULL);
+	zassert_equal(get_mode_response.vdo[0],
+		      fixture->partner.modes_vdm[get_mode_response.opos], NULL);
+}
+
 ZTEST_SUITE(usbc_alt_mode, drivers_predicate_post_main, usbc_alt_mode_setup,
 	    usbc_alt_mode_before, usbc_alt_mode_after, NULL);
 
