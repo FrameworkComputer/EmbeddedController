@@ -24,3 +24,5 @@ target_sources_ifdef(CONFIG_TEST_DB_DETECT_HDMI
 			app PRIVATE src/db_detect_hdmi.c)
 target_sources_ifdef(CONFIG_TEST_DB_DETECT_NONE
 			app PRIVATE src/db_detect_none.c)
+target_sources_ifdef(CONFIG_TEST_ALT_SENSOR_PROBE
+			app PRIVATE src/alt_sensor.c)

@@ -576,6 +576,29 @@ int cbi_set_fw_config(uint32_t fw_config)
 
 	return EC_SUCCESS;
 }
+
+int cbi_set_ssfc(uint32_t ssfc)
+{
+	/* Check write protect status */
+	if (cbi_config.drv->is_protected())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/* Ensure that CBI has been configured */
+	if (cbi_read())
+		cbi_create();
+
+	/* Update the SSFC field */
+	cbi_set_board_info(CBI_TAG_SSFC, (uint8_t *)&ssfc, sizeof(int));
+
+	/* Update CRC calculation and write to the storage */
+	head->crc = cbi_crc8(head);
+	if (cbi_write())
+		return EC_ERROR_UNKNOWN;
+
+	dump_cbi();
+
+	return EC_SUCCESS;
+}
 #endif
 
 #endif /* !HOST_TOOLS_BUILD */

@@ -42,4 +42,10 @@ config TEST_DB_DETECT_NONE
 	  Include none DB tests into the binary.
 	  test for DB GPIOs and interrupt.
 
+config TEST_ALT_SENSOR_PROBE
+	bool "Run the tests intended for alt sensor probe"
+	help
+	  Include alt_sensor.c into the binary to test the alt sensor probe via
+	  SSFC.
+
 source "Kconfig.zephyr"
