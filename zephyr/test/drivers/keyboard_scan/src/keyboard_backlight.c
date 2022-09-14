@@ -47,6 +47,27 @@ ZTEST(keyboard_backlight, host_command_set_backlight__out_of_range)
 		      set_backlight_percent_helper(expected_percentage), NULL);
 }
 
+ZTEST(keyboard_backlight, host_command_get_backlight__normal)
+{
+	/* Set this backlight intensity and verify via host command */
+	uint8_t expected_percentage = 50;
+	int ret;
+
+	zassume_ok(set_backlight_percent_helper(expected_percentage), NULL);
+
+	/* Brief delay to allow a deferred function to enable the backlight */
+	k_sleep(K_MSEC(50));
+
+	struct ec_response_pwm_get_keyboard_backlight response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT, 0, response);
+
+	ret = host_command_process(&args);
+	zassert_ok(ret, "Host command failed: %d", ret);
+	zassert_equal(expected_percentage, response.percent, NULL);
+	zassert_equal(1, response.enabled, "Got 0x%02x", response.enabled);
+}
+
 static void reset(void *data)
 {
 	ARG_UNUSED(data);
