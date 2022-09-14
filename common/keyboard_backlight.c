@@ -199,3 +199,10 @@ hc_set_keyboard_backlight(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT,
 		     hc_set_keyboard_backlight, EC_VER_MASK(0));
+
+#ifdef TEST_BUILD
+uint8_t kblight_get_current_enable(void)
+{
+	return current_enable;
+}
+#endif /* TEST_BUILD */

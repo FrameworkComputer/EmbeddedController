@@ -4,10 +4,13 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include <zephyr/ztest.h>
 #include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
 
+#include "console.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "test/drivers/test_state.h"
@@ -66,6 +69,56 @@ ZTEST(keyboard_backlight, host_command_get_backlight__normal)
 	zassert_ok(ret, "Host command failed: %d", ret);
 	zassert_equal(expected_percentage, response.percent, NULL);
 	zassert_equal(1, response.enabled, "Got 0x%02x", response.enabled);
+}
+
+ZTEST(keyboard_backlight, console_command__noargs)
+{
+	/* Command should print current status. Set backlight on and to 70% */
+
+	const char *outbuffer;
+	size_t buffer_size;
+
+	zassume_ok(set_backlight_percent_helper(70), NULL);
+	k_sleep(K_MSEC(50));
+
+	/* With no args, print current state */
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kblight"), NULL);
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_ok(!strstr(outbuffer, "Keyboard backlight: 70% enabled: 1"),
+		   "Actual string: `%s`", outbuffer);
+}
+
+ZTEST(keyboard_backlight, console_command__set_on)
+{
+	/* Command should enable backlight to given intensity */
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kblight 65"), NULL);
+	zassert_equal(65, kblight_get(), NULL);
+	zassert_equal(1, kblight_get_current_enable(), NULL);
+}
+
+ZTEST(keyboard_backlight, console_command__set_off)
+{
+	zassume_ok(set_backlight_percent_helper(40), NULL);
+	k_sleep(K_MSEC(50));
+
+	/* Turn back off */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kblight 0"), NULL);
+	zassert_equal(0, kblight_get(), NULL);
+	zassert_equal(0, kblight_get_current_enable(), NULL);
+}
+
+ZTEST(keyboard_backlight, console_command__bad_params)
+{
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(get_ec_shell(), "kblight NaN"), NULL);
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(get_ec_shell(), "kblight -1"), NULL);
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(get_ec_shell(), "kblight 101"), NULL);
 }
 
 static void reset(void *data)
