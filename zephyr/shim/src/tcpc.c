@@ -8,6 +8,7 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pd.h"
 #include "usbc/tcpc_anx7447.h"
+#include "usbc/tcpc_anx7447_emul.h"
 #include "usbc/tcpc_ccgxxf.h"
 #include "usbc/tcpc_fusb302.h"
 #include "usbc/tcpc_generic_emul.h"
@@ -34,11 +35,13 @@
 		    (TCPC_CHIP_ENTRY(usbc_id, tcpc_id, config_fn)), ())
 
 #ifdef TEST_BUILD
-#define TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)              \
-	CHECK_COMPAT(TCPCI_EMUL_COMPAT, usbc_id, tcpc_id,  \
-		     TCPC_CONFIG_TCPCI_EMUL)               \
-	CHECK_COMPAT(PS8XXX_EMUL_COMPAT, usbc_id, tcpc_id, \
-		     TCPC_CONFIG_PS8XXX_EMUL)
+#define TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)               \
+	CHECK_COMPAT(TCPCI_EMUL_COMPAT, usbc_id, tcpc_id,   \
+		     TCPC_CONFIG_TCPCI_EMUL)                \
+	CHECK_COMPAT(PS8XXX_EMUL_COMPAT, usbc_id, tcpc_id,  \
+		     TCPC_CONFIG_PS8XXX_EMUL)               \
+	CHECK_COMPAT(ANX7447_EMUL_COMPAT, usbc_id, tcpc_id, \
+		     TCPC_CONFIG_ANX7447_EMUL)
 #else
 #define TCPC_CHIP_FIND_EMUL(...)
 #endif /* TEST_BUILD */
