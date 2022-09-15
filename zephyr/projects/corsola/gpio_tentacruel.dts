@@ -70,8 +70,13 @@
 		gpio_x_ec_gpio2: x_ec_gpio2 {
 			gpios = <&gpiob 2 GPIO_INPUT>;
 		};
-		usb_c0_ppc_bc12_int_odl: usb_c0_ppc_bc12_int_odl {
+		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+		usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		usb_c1_bc12_charger_int_odl: usb_c1_bc12_charger_int_odl {
 			gpios = <&gpioj 4 GPIO_INPUT>;
@@ -116,8 +121,9 @@
 		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {
 			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
 		};
-		usb_c0_ppc_frsinfo: usb_c0_ppc_frsinfo {
-			gpios = <&gpiof 0 GPIO_INPUT>;
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
 		};
 		ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioc 0 GPIO_INPUT>;
@@ -187,7 +193,6 @@
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
-			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
