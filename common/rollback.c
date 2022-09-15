@@ -115,7 +115,7 @@ int read_rollback(int region, struct rollback_data *data)
  * Return most recent region index on success (>= 0, or 0 if no rollback
  * region is valid), negative value on error.
  */
-static int get_latest_rollback(struct rollback_data *data)
+test_mockable_static int get_latest_rollback(struct rollback_data *data)
 {
 	int ret = -1;
 	int region;
