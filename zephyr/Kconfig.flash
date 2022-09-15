@@ -18,6 +18,7 @@ config PLATFORM_EC_SPI_FLASH_REGS
 config PLATFORM_EC_CONSOLE_CMD_CHARGEN
 	bool "Console command: chargen"
 	depends on UART_INTERRUPT_DRIVEN
+	default y
 	help
 	  Enables the "chargen" console command, which sends a continuous
 	  stream of characters to the EC console.
