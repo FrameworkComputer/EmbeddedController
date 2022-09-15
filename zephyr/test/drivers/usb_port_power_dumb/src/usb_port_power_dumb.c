@@ -87,6 +87,55 @@ ZTEST(usb_port_power_dumb, console_command__invalid)
 		NULL);
 }
 
+ZTEST(usb_port_power_dumb, host_command__enable)
+{
+	int ret;
+	struct ec_params_usb_charge_set_mode params = {
+		.mode = USB_CHARGE_MODE_ENABLED,
+		.usb_port_id = PORT_ID,
+	};
+
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_USB_CHARGE_SET_MODE, 0, params);
+	ret = host_command_process(&args);
+
+	zassert_ok(ret, "Host command returned %d", ret);
+	zassert_true(check_gpio_status_for_port(PORT_ID), NULL);
+}
+
+ZTEST(usb_port_power_dumb, host_command__invalid_port_id)
+{
+	int ret;
+	struct ec_params_usb_charge_set_mode params = {
+		.mode = USB_CHARGE_MODE_ENABLED,
+		/* This port ID does not exist */
+		.usb_port_id = UINT8_MAX,
+	};
+
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_USB_CHARGE_SET_MODE, 0, params);
+	ret = host_command_process(&args);
+
+	zassert_equal(EC_RES_ERROR, ret, "Host command returned %d", ret);
+	zassert_false(check_gpio_status_for_port(PORT_ID), NULL);
+}
+
+ZTEST(usb_port_power_dumb, host_command__invalid_mode)
+{
+	int ret;
+	struct ec_params_usb_charge_set_mode params = {
+		.mode = USB_CHARGE_MODE_COUNT, /* Invalid */
+		.usb_port_id = PORT_ID,
+	};
+
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_USB_CHARGE_SET_MODE, 0, params);
+	ret = host_command_process(&args);
+
+	zassert_equal(EC_RES_ERROR, ret, "Host command returned %d", ret);
+	zassert_false(check_gpio_status_for_port(PORT_ID), NULL);
+}
+
 static void reset(void *data)
 {
 	ARG_UNUSED(data);
