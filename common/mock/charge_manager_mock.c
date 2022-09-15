@@ -36,6 +36,20 @@ int charge_manager_get_active_charge_port(void)
 	return 0;
 }
 
+int charge_manager_get_charger_voltage(void)
+{
+	return 0;
+}
+
+void charge_manager_force_ceil(int port, int ceil)
+{
+}
+
+enum charge_supplier charge_manager_get_supplier(void)
+{
+	return CHARGE_SUPPLIER_NONE;
+}
+
 int charge_manager_get_vbus_voltage(int port)
 {
 	return mock_ctrl_charge_manager.vbus_voltage_mv;

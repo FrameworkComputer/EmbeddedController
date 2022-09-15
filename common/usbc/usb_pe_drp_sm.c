@@ -3352,6 +3352,26 @@ static void pe_snk_select_capability_entry(int port)
 	tc_pd_connection(port, 1);
 }
 
+static void pe_snk_apply_psnkstdby(int port)
+{
+	uint32_t mv = pd_get_requested_voltage(port);
+	uint32_t high;
+
+	/*
+	 * Apply 2.5W ceiling during transition. We need choose the larger of
+	 * the current input voltage and the new PDO voltage because during a
+	 * transition, both voltages can be applied to the device. If the
+	 * current source isn't PD, we don't need to care about drawing more
+	 * than pSnkStdby. Thus, it's not considered (in the else clause).
+	 */
+	if (charge_manager_get_supplier() == CHARGE_SUPPLIER_PD)
+		high = MAX(charge_manager_get_charger_voltage(), mv);
+	else
+		high = mv;
+	charge_manager_force_ceil(
+		port, high > 0 ? PD_SNK_STDBY_MW * 1000 / high : PD_MIN_MA);
+}
+
 static void pe_snk_select_capability_run(int port)
 {
 	uint8_t type;
@@ -3415,6 +3435,9 @@ static void pe_snk_select_capability_run(int port)
 			if (type == PD_CTRL_ACCEPT) {
 				/* explicit contract is now in place */
 				pe_set_explicit_contract(port);
+
+				if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+					pe_snk_apply_psnkstdby(port);
 
 				set_state_pe(port, PE_SNK_TRANSITION_SINK);
 

@@ -1461,6 +1461,9 @@ enum cable_outlet {
 /* Voltage threshold to detect connection when presenting Rd */
 #define PD_SNK_VA_MV 250
 
+/* Maximum power consumption while in Sink Standby */
+#define PD_SNK_STDBY_MW 2500
+
 /* --- Policy layer functions --- */
 
 /** Schedules the interrupt handler for the TCPC on a high priority task. */

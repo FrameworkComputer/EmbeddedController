@@ -383,8 +383,7 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 				  pd_get_src_caps(port), max_mv, &pdo);
 		pd_extract_pdo_power(pdo, &ma, &mv, &unused);
 
-		/* Set max. limit, but apply 500mA ceiling */
-		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, PD_MIN_MA);
+		/* Set max. limit, but 2.5 W ceiling will be applied later. */
 		pd_set_input_current_limit(port, ma, mv);
 	}
 }
