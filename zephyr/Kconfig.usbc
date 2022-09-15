@@ -123,6 +123,29 @@ config PLATFORM_EC_USB_PD_TCPC_VCONN
 	  present. Some TCPC/PPC can't handle 5V on its host-side CC pins, so
           disable this config in those cases.
 
+config PLATFORM_EC_USB_PD_CLEAR_HARD_RESET_STATUS
+	bool "Clear PD hard reset status when PD setup completes"
+	default y if SOC_SERIES_RISCV32_IT8XXX2
+	help
+	  Enabling this config will clear the Hard Reset event status
+	  after the PD connection is finished initialization,
+	  to avoid the AP getting a stale event notification.
+
+	  The detection of a PD Hard Reset sets an status flag that
+	  is then read by the AP in order to reset the USB muxes.
+	  However by the time this is read, the connection may
+	  have been re-initialized and is ready, but the AP may
+	  process the hard reset as if it were still current,
+	  causing the USB port to be incorrectly disabled.
+	  The hard reset of the PD connection can be triggered
+	  when the EC is detected as being initially powered on
+	  (as opposed to being reset), to force clearing the connection.
+
+	  This config is set by default for the IT8XXX2 EC, which
+	  cannot distinguish between a reset and power-on, so a power-on
+	  is assumed, which leads to the PD hard reset when the EC
+	  undergoes a reset (such as when entering recovery mode).
+
 config PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
 	bool "Console command: ppc_dump"
 	depends on PLATFORM_EC_USBC_PPC

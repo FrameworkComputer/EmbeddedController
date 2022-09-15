@@ -234,6 +234,8 @@ ZTEST_F(usb_malfunction_sink, test_hard_reset_disconnect)
 		zassert_equal(typec_status.vconn_role, PD_ROLE_VCONN_OFF,
 			      "Vconn should be disabled at power sequence (%d)",
 			      try_count);
+		zassert_true(typec_status.events & PD_STATUS_EVENT_HARD_RESET,
+			     "Hard reset status should be set (%d)", try_count);
 
 		/* Disconnect partner at the middle of power sequence */
 		disconnect_sink_from_port(fixture->tcpci_emul);

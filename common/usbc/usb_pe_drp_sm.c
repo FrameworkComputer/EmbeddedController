@@ -2732,6 +2732,10 @@ static void pe_src_ready_entry(int port)
 	/* Ensure any message send flags are cleaned up */
 	PE_CLR_MASK(port, PE_MASK_READY_CLR);
 
+	/* If configured, clear any stale hard reset events */
+	if (IS_ENABLED(CONFIG_USB_PD_CLEAR_HARD_RESET_STATUS))
+		pd_clear_events(port, PD_STATUS_EVENT_HARD_RESET);
+
 	/* Clear DPM Current Request */
 	pe[port].dpm_curr_request = 0;
 
@@ -3574,6 +3578,10 @@ static void pe_snk_ready_entry(int port)
 
 	/* Ensure any message send flags are cleaned up */
 	PE_CLR_MASK(port, PE_MASK_READY_CLR);
+
+	/* If configured, clear any stale hard reset events */
+	if (IS_ENABLED(CONFIG_USB_PD_CLEAR_HARD_RESET_STATUS))
+		pd_clear_events(port, PD_STATUS_EVENT_HARD_RESET);
 
 	/* Clear DPM Current Request */
 	pe[port].dpm_curr_request = 0;
