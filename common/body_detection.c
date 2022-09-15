@@ -113,6 +113,11 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 		/* reset time counting of stationary */
 		stationary_timeframe = 0;
 	}
+
+#ifdef CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+#endif
+
 	/* state changing log */
 	CPRINTS("body_detect changed state to: %s body",
 		motion_state ? "on" : "off");

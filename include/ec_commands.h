@@ -416,6 +416,7 @@ extern "C" {
 /*
  * Report device orientation
  *  Bits       Definition
+ *  4          Off Body/On Body status: 0 = Off Body.
  *  3:1        Device DPTF Profile Number (DDPN)
  *               0   = Reserved for backward compatibility (indicates no valid
  *                     profile number. Host should fall back to using TBMD).
@@ -428,6 +429,8 @@ extern "C" {
 #define EC_ACPI_MEM_TBMD_MASK 0x1
 #define EC_ACPI_MEM_DDPN_SHIFT 1
 #define EC_ACPI_MEM_DDPN_MASK 0x7
+#define EC_ACPI_MEM_STTB_SHIFT 4
+#define EC_ACPI_MEM_STTB_MASK 0x1
 
 /*
  * Report device features. Uses the same format as the host command, except:
@@ -752,6 +755,7 @@ enum host_event_code {
 	 *
 	 * - TABLET/LAPTOP mode
 	 * - detachable base attach/detach event
+	 * - on body/off body transition event
 	 */
 	EC_HOST_EVENT_MODE_CHANGE = 29,
 

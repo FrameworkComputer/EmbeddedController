@@ -5,6 +5,7 @@
 
 #include "acpi.h"
 #include "battery.h"
+#include "body_detection.h"
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
@@ -234,6 +235,11 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			result |= (acpi_dptf_get_profile_num() &
 				   EC_ACPI_MEM_DDPN_MASK)
 				  << EC_ACPI_MEM_DDPN_SHIFT;
+#endif
+
+#ifdef CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE
+			if (body_detect_get_state() == BODY_DETECTION_ON_BODY)
+				result |= BIT(EC_ACPI_MEM_STTB_SHIFT);
 #endif
 			break;
 
