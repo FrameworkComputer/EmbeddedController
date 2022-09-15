@@ -1,0 +1,14 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Add a USB-A port to the board. Uses a GPIO pin defined in
+	 * zephyr/test/drivers/boards/native_posix.overlay
+	 */
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_pp5000_usba_r>;
+	};
+};

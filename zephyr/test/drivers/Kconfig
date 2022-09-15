@@ -26,6 +26,9 @@ config LINK_TEST_SUITE_MKBP
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 
+config LINK_TEST_SUITE_USB_PORT_POWER_DUMB
+	bool "Link and test the usb_port_power_dumb tests"
+
 config LINK_TEST_SUITE_USB_PD_DPS
 	bool "Link and test the dps tests"
 
