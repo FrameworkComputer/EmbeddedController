@@ -231,15 +231,6 @@ static int rt9490_is_sourcing_otg_power(int chgnum, int port)
 }
 #endif
 
-/* Reset all registers' value to default */
-static int rt9490_reset_chip(int chgnum)
-{
-	/* disable hz before reset chip */
-	RETURN_ERROR(rt9490_enable_hz(chgnum, false));
-
-	return rt9490_set_bit(chgnum, RT9490_REG_EOC_CTRL, RT9490_RST_ALL_MASK);
-}
-
 static inline int rt9490_enable_chgdet_flow(int chgnum, bool en)
 {
 	return rt9490_update8(chgnum, RT9490_REG_CHG_CTRL2, RT9490_BC12_EN,
@@ -387,24 +378,6 @@ static enum ec_error_list rt9490_get_status(int chgnum, int *status)
 		*status |= CHARGER_RES_HOT;
 		*status |= CHARGER_RES_OR;
 	}
-	return EC_SUCCESS;
-}
-
-static int rt9490_reset_to_zero(int chgnum)
-{
-	RETURN_ERROR(rt9490_set_current(chgnum, 0));
-	RETURN_ERROR(rt9490_set_voltage(chgnum, 0));
-	RETURN_ERROR(rt9490_enable_hz(chgnum, true));
-
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list rt9490_set_mode(int chgnum, int mode)
-{
-	if (mode & CHARGE_FLAG_POR_RESET)
-		RETURN_ERROR(rt9490_reset_chip(chgnum));
-	if (mode & CHARGE_FLAG_RESET_TO_ZERO)
-		RETURN_ERROR(rt9490_reset_to_zero(chgnum));
 	return EC_SUCCESS;
 }
 
@@ -568,7 +541,6 @@ const struct charger_drv rt9490_drv = {
 	.init = &rt9490_init,
 	.get_info = &rt9490_get_info,
 	.get_status = &rt9490_get_status,
-	.set_mode = &rt9490_set_mode,
 #ifdef CONFIG_CHARGER_OTG
 	.enable_otg_power = &rt9490_enable_otg_power,
 	.set_otg_current_voltage = &rt9490_set_otg_current_voltage,
