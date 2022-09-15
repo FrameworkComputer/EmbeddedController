@@ -40,7 +40,7 @@ register_variant(
         here / "i2c_evoker.dts",
         here / "led_pins_evoker.dts",
         here / "led_policy_evoker.dts",
-        here / "motionsense.dts",
+        here / "motionsense_evoker.dts",
         here / "switchcap.dts",
         here / "usbc_evoker.dts",
     ],
