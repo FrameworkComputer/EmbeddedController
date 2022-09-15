@@ -175,3 +175,4 @@ config PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
 endif # PLATFORM_EC_ACCEL_SPOOF_MODE
 
 rsource "Kconfig.sensor_devices"
+rsource "Kconfig.body_detection"
