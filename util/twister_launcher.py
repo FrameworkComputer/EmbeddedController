@@ -69,6 +69,7 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+from shutil import which
 
 
 def find_checkout() -> Path:
@@ -132,6 +133,11 @@ def find_modules(mod_dir: Path) -> list:
         if child.is_dir() and (child / "zephyr" / "module.yml").exists():
             modules.append(child.resolve())
     return modules
+
+
+def is_tool(name):
+    """Check if 'name' is on PATH and marked executable."""
+    return which(name) is not None
 
 
 def is_rdb_login():
@@ -298,7 +304,7 @@ def main():
     else:
         print("TEST EXECUTION FAILED")
 
-    if intercepted_args.upload_cros_rdb:
+    if is_tool("rdb") and intercepted_args.upload_cros_rdb:
         upload_results(ec_base)
 
     sys.exit(result.returncode)
