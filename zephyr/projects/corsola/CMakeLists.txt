@@ -69,7 +69,7 @@ elseif(DEFINED CONFIG_BOARD_MAGIKARP)
 	project(magikarp)
 	zephyr_library_sources("src/krabby/hooks.c"
 				"src/krabby/sensor_magikarp.c"
-				"src/krabby/ppc_krabby.c"
+				"src/krabby/ppc_magikarp.c"
 				"src/krabby/keyboard_magikarp.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C "src/krabby/i2c.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
