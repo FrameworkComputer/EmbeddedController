@@ -19,7 +19,6 @@ def register_skyrim_project(
             here / "adc.dts",
             here / "fan.dts",
             here / "gpio.dts",
-            here / "i2c.dts",
             here / "interrupts.dts",
             here / "keyboard.dts",
             here / "motionsense.dts",

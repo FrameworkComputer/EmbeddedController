@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "i2c_common.dtsi"
+
 / {
 	named-gpios {
 		/* Skyrim-specific GPIO customizations */
