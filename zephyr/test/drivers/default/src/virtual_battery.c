@@ -170,18 +170,20 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	word = virtual_battery_read16(SB_REMAINING_CAPACITY);
 	zassert_equal(bat->cap, word, "%d != %d", bat->cap, word);
 
-	len = virtual_battery_read_str(SB_MANUFACTURER_NAME, &str, 32);
+	len = virtual_battery_read_str(SB_MANUFACTURER_NAME, &str,
+				       SB_MAX_STR_SIZE);
 	zassert_equal(bat->mf_name_len, len, "%d != %d", bat->mf_name_len, len);
 	zassert_mem_equal(str, bat->mf_name, bat->mf_name_len, "%s != %s", str,
 			  bat->mf_name);
 
-	len = virtual_battery_read_str(SB_DEVICE_NAME, &str, 32);
+	len = virtual_battery_read_str(SB_DEVICE_NAME, &str, SB_MAX_STR_SIZE);
 	zassert_equal(bat->dev_name_len, len, "%d != %d", bat->dev_name_len,
 		      len);
 	zassert_mem_equal(str, bat->dev_name, bat->dev_name_len, "%s != %s",
 			  str, bat->dev_name);
 
-	len = virtual_battery_read_str(SB_DEVICE_CHEMISTRY, &str, 32);
+	len = virtual_battery_read_str(SB_DEVICE_CHEMISTRY, &str,
+				       SB_MAX_STR_SIZE);
 	zassert_equal(bat->dev_chem_len, len, "%d != %d", bat->dev_chem_len,
 		      len);
 	zassert_mem_equal(str, bat->dev_chem, bat->dev_chem_len, "%s != %s",
