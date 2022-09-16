@@ -150,7 +150,7 @@ void reset_parse_state(void)
  * Copy memmap string data from offset to dest, up to size len, in the format
  * expected by SBS (first byte of dest contains strlen).
  */
-void copy_memmap_string(uint8_t *dest, int offset, int len)
+static void copy_memmap_string(uint8_t *dest, int offset, int len)
 {
 	uint8_t *memmap_str;
 	uint8_t memmap_strlen;
