@@ -117,4 +117,13 @@ config AP_PWRSEQ_S0IX_ERROR_RECOVERY
 	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
 	  command.
 
+config AP_PWRSEQ_DEBUG_MODE_COMMAND
+	bool "Console commands to enable/disable AP debug mode"
+	depends on X86_NON_DSX_PWRSEQ
+	default y
+	help
+	  Intel debugger puts SOC in boot halt mode for step debugging,
+	  during this time EC may lose Sx lines, This option enables console
+	  command to enable debug mode and prevent force shutdown.
+
 endif
