@@ -15,6 +15,8 @@
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 2
 
+#define CONFIG_LTO
+
 /* Optional features */
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
