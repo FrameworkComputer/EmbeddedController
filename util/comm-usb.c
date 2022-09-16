@@ -17,9 +17,7 @@
 #include "misc_util.h"
 #include "usb_descriptor.h"
 
-#define USB_ERROR(m, r)                                                        \
-	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, m, \
-		r, libusb_strerror(r))
+#define USB_ERROR(m, r) print_libusb_error(__FILE__, __LINE__, m, r)
 
 #ifdef DEBUG
 #define debug(fmt, arg...) \
@@ -36,6 +34,16 @@ struct usb_endpoint {
 };
 
 struct usb_endpoint uep;
+
+static void print_libusb_error(const char *file, int line, const char *message,
+			       int error_code)
+{
+	/*
+	 * TODO(b/247573723): Remove cast when libusb is upgraded.
+	 */
+	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", file, line, message,
+		error_code, libusb_strerror((enum libusb_error)error_code));
+}
 
 void comm_usb_exit(void)
 {
@@ -65,8 +73,9 @@ static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 	/* Send data out */
 	if (outbuf && outlen) {
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num, outbuf, outlen,
-					 &actual, 2000);
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num,
+					 (uint8_t *)outbuf, outlen, &actual,
+					 2000);
 		if (r != 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			return r;
@@ -87,7 +96,8 @@ static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		 * actual is a multiple of ep->wMaxPacketSize.
 		 */
 		r = libusb_bulk_transfer(uep->devh, uep->ep_num | USB_DIR_IN,
-					 inbuf, inlen, &actual, 5000);
+					 (uint8_t *)inbuf, inlen, &actual,
+					 5000);
 		if (r != 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			return r;
@@ -297,9 +307,9 @@ static int ec_command_usb(int command, int version, const void *outdata,
 	assert(insize == 0 || indata != NULL);
 
 	req_len = sizeof(*req) + outsize;
-	req = malloc(req_len);
+	req = (struct ec_host_request *)malloc(req_len);
 	res_len = sizeof(*res) + insize;
-	res = malloc(res_len);
+	res = (struct ec_host_response *)malloc(res_len);
 	if (req == NULL || res == NULL)
 		goto out;
 

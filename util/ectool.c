@@ -1379,7 +1379,7 @@ static int cmd_rgbkbd_set_color(int argc, char *argv[])
 	int rv = -1;
 
 	outlen = sizeof(*p) + sizeof(struct rgb_s) * EC_RGBKBD_MAX_KEY_COUNT;
-	p = malloc(outlen);
+	p = (struct ec_params_rgbkbd_set_color *)malloc(outlen);
 	if (p == NULL)
 		return -1;
 	memset(p, 0, outlen);
