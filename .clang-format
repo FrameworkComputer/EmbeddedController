@@ -66,11 +66,16 @@ DerivePointerAlignment: false
 DisableFormat: false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: false
-IncludeBlocks: Preserve
+IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '.*'
+  - Regex: '^".*\.h"$'
+    Priority: 0
+  - Regex: '^<(assert|complex|ctype|errno|fenv|float|inttypes|limits|locale|math|setjmp|signal|stdarg|stdbool|stddef|stdint|stdio|stdlib|string|tgmath|time|wchar|wctype)\.h>$'
     Priority: 1
-IncludeIsMainRegex: '(Test)?$'
+  - Regex: '^\<zephyr/.*\.h\>$'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
 IndentCaseLabels: false
 IndentPPDirectives: None
 IndentWidth: 8
@@ -98,7 +103,6 @@ PenaltyReturnTypeOnItsOwnLine: 60
 
 PointerAlignment: Right
 ReflowComments: true
-SortIncludes: false
 SortUsingDeclarations: false
 SpaceAfterCStyleCast: false
 SpaceAfterTemplateKeyword: true
