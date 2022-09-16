@@ -109,19 +109,25 @@ static int virtual_battery_read_str(uint8_t command, char **read_buf,
 	return len;
 }
 
+static void virtual_battery_read_data(uint8_t command, char **read_buf,
+				      int read_len)
+{
+	uint8_t write_buf[1] = { command };
+
+	virtual_battery_xfer(write_buf, 1, (uint8_t **)read_buf, read_len);
+}
+
 #define BATTERY_NODE DT_NODELABEL(battery)
 
 ZTEST_USER(virtual_battery, test_read_regs)
 {
-	struct sbat_emul_bat_data *bat;
 	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
+	struct sbat_emul_bat_data *bat = sbat_emul_get_bat_data(emul);
 	int16_t int16;
 	uint16_t word;
 	int expected;
 	char *str;
 	int len;
-
-	bat = sbat_emul_get_bat_data(emul);
 
 	/*
 	 * Iterate all the registers, which issues the I2C passthru host
@@ -218,12 +224,20 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	word = virtual_battery_read16(SB_SPECIFICATION_INFO);
 	zassert_equal(expected, word, "%d != %d", expected, word);
 
+	zassume_ok(battery_status(&expected));
+	word = virtual_battery_read16(SB_BATTERY_STATUS);
+	zassert_equal(expected, word, "%d != %d", expected, word);
+
+	zassume_ok(battery_design_voltage(&expected));
+	word = virtual_battery_read16(SB_DESIGN_VOLTAGE);
+	zassert_equal(expected, word, "%d != %d", expected, word);
+
+	virtual_battery_read_data(SB_MANUFACTURER_DATA, &str, bat->mf_data_len);
+	zassert_mem_equal(str, bat->mf_data, bat->mf_data_len, "%s != %s", str,
+			  bat->mf_data);
+
 	/*
-	 * TODO: Test the following registers:
-	 *   SB_BATTERY_STATUS
-	 *   SB_DESIGN_VOLTAGE
-	 *   SB_MANUFACTURER_DATA
-	 *   SB_MANUFACTURE_INFO
+	 * TODO(b/247103618): Verify manufacturer info extended SB spec command
 	 */
 }
 

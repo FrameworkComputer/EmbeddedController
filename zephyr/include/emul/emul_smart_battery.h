@@ -67,6 +67,8 @@ struct sbat_emul_bat_data {
 	uint16_t error_code;
 	/** Design battery voltage in mV */
 	uint16_t design_mv;
+	/** Default Design battery voltage in mV */
+	const uint16_t default_design_mv;
 	/** Battery temperature at the moment in Kelvins */
 	uint16_t temp;
 	/** Battery voltage at the moment in mV */

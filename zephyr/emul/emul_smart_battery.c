@@ -815,6 +815,7 @@ static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 				(DT_INST_PROP(n, primary_battery) *	\
 				 MODE_PRIMARY_BATTERY_SUPPORT),		\
 			.design_mv = DT_INST_PROP(n, design_mv),	\
+			.default_design_mv = DT_INST_PROP(n, design_mv),\
 			.design_cap = DT_INST_PROP(n, design_cap),	\
 			.temp = DT_INST_PROP(n, temperature),		\
 			.volt = DT_INST_PROP(n, volt),			\
@@ -881,6 +882,7 @@ static void emul_smart_battery_reset_capacity(const struct emul *emul)
 	struct sbat_emul_data *bat_data = emul->data;
 	bat_data->bat.cap = bat_data->bat.default_cap;
 	bat_data->bat.full_cap = bat_data->bat.default_full_cap;
+	bat_data->bat.design_mv = bat_data->bat.default_design_mv;
 }
 
 #define SBAT_EMUL_RESET_RULE_AFTER(n) \
