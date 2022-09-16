@@ -34,6 +34,11 @@ config NUM_PREEMPT_PRIORITIES
 config SYSTEM_WORKQUEUE_PRIORITY
 	default 24
 
+# eSPI is chatty, so default to Error only
+choice ESPI_LOG_LEVEL_CHOICE
+	default ESPI_LOG_LEVEL_ERR
+endchoice
+
 config LTO
 	bool "Link Time Optimization (LTO)"
 	default y if !SOC_POSIX
