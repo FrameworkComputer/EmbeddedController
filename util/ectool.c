@@ -1457,7 +1457,7 @@ static int cmd_rgbkbd(int argc, char *argv[])
 		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, sizeof(r));
 	} else if (argc == 2 && !strcasecmp(argv[1], "getconfig")) {
 		/* Usage 5 */
-		char *type;
+		const char *type;
 
 		p.subcmd = EC_RGBKBD_SUBCMD_GET_CONFIG;
 		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, sizeof(r));
