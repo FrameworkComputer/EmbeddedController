@@ -26,6 +26,10 @@
 #undef CONFIG_USB_PD_LOGGING
 #endif
 
+#ifdef TEST_ALWAYS_MEMSET
+#define CONFIG_LIBCRYPTOC
+#endif
+
 #if defined(TEST_AES) || defined(TEST_CRYPTO_BENCHMARK)
 #define CONFIG_AES
 #define CONFIG_AES_GCM
