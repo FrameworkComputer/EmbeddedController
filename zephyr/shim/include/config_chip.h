@@ -1847,6 +1847,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_USB_PD_USB4
 #endif
 
+#undef CONFIG_USB_PD_DATA_RESET_MSG
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DATA_RESET_MSG
+#define CONFIG_USB_PD_DATA_RESET_MSG
+#endif
+
 #undef CONFIG_USB_PD_FRS
 #ifdef CONFIG_PLATFORM_EC_USB_PD_FRS
 #define CONFIG_USB_PD_FRS
