@@ -281,8 +281,8 @@ ZTEST_USER(host_cmd_motion_sense, test_set_ec_rate)
 	zassert_ok(host_cmd_motion_sense_ec_rate(
 			   /*sensor_num=*/0, /*data_rate_ms=*/2000, &response),
 		   NULL);
-	/* The command should return the previous rate */
-	zassert_equal(response.ec_rate.ret, 1000, "Expected 1000, but got %d",
+	/* The command should return the new rate */
+	zassert_equal(response.ec_rate.ret, 2000, "Expected 2000, but got %d",
 		      response.ec_rate.ret);
 	/* The sensor's AP config value should be updated */
 	zassert_equal(motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate,

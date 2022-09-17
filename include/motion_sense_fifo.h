@@ -38,6 +38,15 @@ void motion_sense_set_data_period(int sensor_num, uint32_t data_period);
 int motion_sense_fifo_bypass_needed(void);
 
 /**
+ * Whether or not we need to interrupt the AP
+ *
+ * Return true when we have not send FIFO event for a long time.
+ *
+ * @return Non zero when a wake-up is needed.
+ */
+int motion_sense_fifo_interrupt_needed(void);
+
+/**
  * Whether or not we need to wake up the AP.
  *
  * When the wakeup flag is set, the bypass flag must be set to.

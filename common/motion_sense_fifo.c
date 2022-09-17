@@ -17,6 +17,14 @@
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 
+/*
+ * Adjustment in us to ec rate when calculating interrupt interval:
+ * To be sure the EC will send an interrupt even if it finishes processing
+ * events slightly earlier than the previous period.
+ */
+#define MOTION_SENSOR_INT_ADJUSTMENT_US \
+	(CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC / 10)
+
 /**
  * Staged metadata for the fifo queue.
  * @read_ts: The timestamp at which the staged data was read. This value will
@@ -87,6 +95,15 @@ static int bypass_needed;
 
 /** Need to wake up the AP. */
 static int wake_up_needed;
+
+/** Need to interrupt the AP. */
+static int ap_interrupt_needed;
+
+/**
+ * Timestamp of the first event put in the fifo during the
+ * last motion_task invocation.
+ */
+uint32_t ts_last_int[MAX_MOTION_SENSORS];
 
 /**
  * Check whether or not a give sensor data entry is a timestamp or not.
@@ -379,6 +396,11 @@ void motion_sense_fifo_init(void)
 		online_calibration_init();
 }
 
+int motion_sense_fifo_interrupt_needed(void)
+{
+	return ap_interrupt_needed;
+}
+
 int motion_sense_fifo_bypass_needed(void)
 {
 	return bypass_needed;
@@ -391,6 +413,18 @@ int motion_sense_fifo_wake_up_needed(void)
 
 void motion_sense_fifo_reset_needed_flags(void)
 {
+	int i;
+
+	if (ap_interrupt_needed) {
+		ap_interrupt_needed = 0;
+		/*
+		 * The FIFO is emptied, note timestamp of the last event sent
+		 * as we start counting the delay based on that timestamp.
+		 */
+		for (i = 0; i < MAX_MOTION_SENSORS; i++)
+			if (!is_new_timestamp(i))
+				ts_last_int[i] = next_timestamp[i].prev;
+	}
 	wake_up_needed = 0;
 	bypass_needed = 0;
 }
@@ -418,11 +452,19 @@ void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
 				  struct motion_sensor_t *sensor,
 				  int valid_data, uint32_t time)
 {
+	int id = data->sensor_num;
+
 	if (IS_ENABLED(CONFIG_SENSOR_TIGHT_TIMESTAMPS)) {
 		/* First entry, save the time for spreading later. */
 		if (!fifo_staged.count)
 			fifo_staged.read_ts = __hw_clock_source_read();
 		fifo_stage_timestamp(time, data->sensor_num);
+	}
+	if (sensor->config[SENSOR_CONFIG_AP].ec_rate > 0 &&
+	    time_after(time, ts_last_int[id] +
+				     sensor->config[SENSOR_CONFIG_AP].ec_rate -
+				     MOTION_SENSOR_INT_ADJUSTMENT_US)) {
+		ap_interrupt_needed = 1;
 	}
 	fifo_stage_unit(data, sensor, valid_data);
 }
@@ -632,6 +674,15 @@ void motion_sense_fifo_reset(void)
 void motion_sense_set_data_period(int sensor_num, uint32_t data_period)
 {
 	expected_data_periods[sensor_num] = data_period;
+	/*
+	 * Reset the timestamp:
+	 * - Avoid overflow when the sensor has been disabled for a long
+	 * time.
+	 * - First ODR setting.
+	 * We may not send the first sample on time, but that is acceptable
+	 * for CTS.
+	 */
+	ts_last_int[sensor_num] = __hw_clock_source_read();
 	next_timestamp_initialized &= ~BIT(sensor_num);
 }
 

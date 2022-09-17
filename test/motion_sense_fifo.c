@@ -417,6 +417,79 @@ static int test_get_info_size(void)
 	return EC_SUCCESS;
 }
 
+static int test_check_ap_interval_set_one_sample(void)
+{
+	uint32_t now;
+	int read_count;
+
+	/* The AP needs data every sample (200 Hz). */
+	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 5000; /* us */
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sense_set_data_period(0, 5000 /* us */);
+	msleep(5);
+	now = __hw_clock_source_read();
+
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now);
+	motion_sense_fifo_commit_data();
+	read_count = motion_sense_fifo_read(
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
+	TEST_EQ(read_count, 2, "%d");
+	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+	TEST_EQ(data[0].timestamp, now, "%u");
+	TEST_EQ(motion_sense_fifo_interrupt_needed(), 1, "%d");
+
+	/* Simulate interrupt processing. */
+	motion_sense_fifo_reset_needed_flags();
+
+	msleep(5);
+	now = __hw_clock_source_read();
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now);
+	motion_sense_fifo_commit_data();
+	read_count = motion_sense_fifo_read(
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
+	TEST_EQ(read_count, 2, "%d");
+	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+	TEST_EQ(data[0].timestamp, now, "%u");
+	TEST_EQ(motion_sense_fifo_interrupt_needed(), 1, "%d");
+
+	return EC_SUCCESS;
+}
+
+static int test_check_ap_interval_set_multiple_sample(void)
+{
+	uint32_t now;
+	int read_count;
+
+	/* The AP needs data every 2 samples. */
+	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 10000; /* us */
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sense_set_data_period(0, 5000 /* us */);
+	msleep(5);
+	now = __hw_clock_source_read();
+
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now);
+	motion_sense_fifo_commit_data();
+	read_count = motion_sense_fifo_read(
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
+	TEST_EQ(read_count, 2, "%d");
+	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+	TEST_EQ(data[0].timestamp, now, "%u");
+	TEST_EQ(motion_sense_fifo_interrupt_needed(), 0, "%d");
+
+	msleep(5);
+	now = __hw_clock_source_read();
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now);
+	motion_sense_fifo_commit_data();
+	read_count = motion_sense_fifo_read(
+		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
+	TEST_EQ(read_count, 2, "%d");
+	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+	TEST_EQ(data[0].timestamp, now, "%u");
+	TEST_EQ(motion_sense_fifo_interrupt_needed(), 1, "%d");
+
+	return EC_SUCCESS;
+}
+
 void before_test(void)
 {
 	motion_sense_fifo_commit_data();
@@ -447,6 +520,8 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_spread_data_by_collection_rate);
 	RUN_TEST(test_commit_non_data_or_timestamp_entries);
 	RUN_TEST(test_get_info_size);
+	RUN_TEST(test_check_ap_interval_set_one_sample);
+	RUN_TEST(test_check_ap_interval_set_multiple_sample);
 
 	test_print_result();
 }
