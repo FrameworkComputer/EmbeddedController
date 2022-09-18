@@ -1117,6 +1117,10 @@ void ps8xxx_wake_from_standby(const struct usb_mux *me)
 static int ps8xxx_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 			  bool *ack_required)
 {
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
+
 	if (product_id[me->usb_port] == PS8751_PRODUCT_ID &&
 	    me->flags & USB_MUX_FLAG_NOT_TCPC) {
 		ps8xxx_wake_from_standby(me);

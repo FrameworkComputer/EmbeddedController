@@ -550,11 +550,7 @@ void set_usb_mux_with_current_data_role(int port)
 void usb_mux_set_safe_mode(int port)
 {
 	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
-		usb_mux_set(port,
-			    IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
-				    USB_PD_MUX_SAFE_MODE :
-				    USB_PD_MUX_NONE,
-			    USB_SWITCH_CONNECT,
+		usb_mux_set(port, USB_PD_MUX_SAFE_MODE, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 

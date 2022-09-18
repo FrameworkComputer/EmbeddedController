@@ -83,6 +83,10 @@ static int ps8822_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
 
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
+
 	rv = ps8822_read(me, PS8822_REG_PAGE0, PS8822_REG_MODE, &reg);
 	if (rv)
 		return rv;

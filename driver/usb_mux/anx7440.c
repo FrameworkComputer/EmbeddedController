@@ -68,6 +68,10 @@ static int anx7440_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
 
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
+
 	res = anx7440_read(me, ANX7440_REG_CHIP_CTRL, &reg);
 	if (res)
 		return res;

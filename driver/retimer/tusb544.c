@@ -60,6 +60,10 @@ static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
 
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
+
 	if (mux_state == USB_PD_MUX_NONE)
 		return tusb544_enter_low_power_mode(me);
 

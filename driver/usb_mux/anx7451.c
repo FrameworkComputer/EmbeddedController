@@ -96,6 +96,10 @@ static int anx7451_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
 
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
+
 	/*
 	 * Mux is not powered in Z1, and will start up in USB mode.  Ensure any
 	 * mux sets when off get run again so we don't leave the retimer on with
