@@ -194,6 +194,7 @@ class AllTests:
         """Return public test configs for the specified board."""
         tests = [
             TestConfig(test_name="aes"),
+            TestConfig(test_name="always_memset"),
             TestConfig(test_name="cec"),
             TestConfig(test_name="cortexm_fpu"),
             TestConfig(test_name="crc"),

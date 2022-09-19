@@ -27,6 +27,7 @@ endif
 # will fail on device.
 test-list-y=\
        aes \
+       always_memset \
        cec \
        compile_time_macros \
        cortexm_fpu \
