@@ -10,7 +10,8 @@ zephyr_library_sources("src/common.c")
 zephyr_library_sources("src/power_signals.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-	"src/usb_pd_policy.c")
+	"src/usb_pd_policy.c"
+	"src/usbc_config.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
@@ -21,7 +22,6 @@ if(DEFINED CONFIG_BOARD_MORTHAL)
 	zephyr_library_sources(
 		"src/morthal/ppc_config.c"
 		"src/morthal/usb_mux_config.c"
-		"src/usbc_config.c"
 )
 endif()
 
@@ -33,7 +33,6 @@ if(DEFINED CONFIG_BOARD_SKYRIM)
 			"src/skyrim/ppc_config.c"
 			"src/skyrim/form_factor.c"
 			"src/skyrim/alt_charger.c"
-			"src/usbc_config.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/skyrim/fan.c")
 endif()
@@ -42,7 +41,6 @@ if(DEFINED CONFIG_BOARD_WINTERHOLD)
 	project(winterhold)
 	zephyr_library_sources(
 		"src/winterhold/usb_mux_config.c"
-    		"src/winterhold/usbc_config.c"
 		"src/winterhold/ppc_config.c"
     )
 endif()
