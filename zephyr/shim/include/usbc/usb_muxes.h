@@ -9,6 +9,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
+#include "usbc/amd_fp6_usb_mux.h"
 #include "usbc/anx7447_usb_mux.h"
 #include "usbc/anx7483_usb_mux.h"
 #include "usbc/bb_retimer_usb_mux.h"
@@ -24,7 +25,8 @@
  *        element of list has to have (compatible, config) format.
  */
 #define USB_MUX_DRIVERS                                                 \
-	(ANX7447_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7447),               \
+	(AMD_FP6_USB_MUX_COMPAT, USB_MUX_CONFIG_AMD_FP6),               \
+		(ANX7447_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7447),       \
 		(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),       \
 		(BB_RETIMER_USB_MUX_COMPAT, USB_MUX_CONFIG_BB_RETIMER), \
 		(IT5205_USB_MUX_COMPAT, USB_MUX_CONFIG_IT5205),         \
