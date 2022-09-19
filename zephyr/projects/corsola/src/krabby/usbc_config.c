@@ -7,57 +7,15 @@
 
 #include "adc.h"
 #include "baseboard_usbc_config.h"
-#include "bc12/pi3usb9201_public.h"
 #include "charge_manager.h"
-#include "charger.h"
 #include "console.h"
-#include "driver/charger/rt9490.h"
-#include "driver/ppc/rt1739.h"
 #include "driver/tcpm/it83xx_pd.h"
-#include "driver/usb_mux/tusb1064.h"
-#include "gpio/gpio_int.h"
-#include "hooks.h"
-#include "ppc/syv682x_public.h"
-#include "usb_mux/it5205_public.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
-
-#include "variant_db_detection.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
-
-void c0_bc12_interrupt(enum gpio_signal signal)
-{
-	rt1739_interrupt(0);
-}
-
-static void board_usbc_init(void)
-{
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc_bc12));
-}
-DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_POST_DEFAULT);
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	if (signal == GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_ppc_int_odl))) {
-		syv682x_interrupt(1);
-	}
-}
-
-int ppc_get_alert_status(int port)
-{
-	if (port == 0) {
-		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-			       usb_c0_ppc_bc12_int_odl)) == 0;
-	}
-	if (port == 1 && corsola_get_db_type() == CORSOLA_DB_TYPEC) {
-		return gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(
-			       gpio_usb_c1_ppc_int_odl)) == 0;
-	}
-
-	return 0;
-}
 
 const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 {
@@ -78,11 +36,6 @@ const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 		};
 
 	return &cc_parameter[port];
-}
-
-void board_overcurrent_event(int port, int is_overcurrented)
-{
-	/* TODO: check correct operation for Corsola */
 }
 
 uint16_t tcpc_get_alert_status(void)

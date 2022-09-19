@@ -1,0 +1,98 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Tentacruel PPC/BC12 (mixed RT1739 or PI3USB9201+SYV682X) configuration */
+
+#include "baseboard_usbc_config.h"
+#include "console.h"
+#include "cros_board_info.h"
+#include "gpio/gpio_int.h"
+#include "hooks.h"
+#include "usbc/ppc.h"
+#include "variant_db_detection.h"
+
+#include <zephyr/logging/log.h>
+
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+
+LOG_MODULE_REGISTER(alt_dev_replacement);
+
+#define BOARD_VERSION_UNKNOWN 0xffffffff
+
+/* Check board version to decide which ppc/bc12 is used. */
+static bool board_has_syv_ppc(void)
+{
+	static uint32_t board_version = BOARD_VERSION_UNKNOWN;
+
+	if (board_version == BOARD_VERSION_UNKNOWN) {
+		if (cbi_get_board_version(&board_version) != EC_SUCCESS) {
+			LOG_ERR("Failed to get board version.");
+			board_version = 0;
+		}
+	}
+
+	return (board_version >= 3);
+}
+
+static void check_alternate_devices(void)
+{
+	/* Configure the PPC driver */
+	if (board_has_syv_ppc())
+		/* Arg is the USB port number */
+		PPC_ENABLE_ALTERNATE(0);
+}
+DECLARE_HOOK(HOOK_INIT, check_alternate_devices, HOOK_PRIO_DEFAULT);
+
+void bc12_interrupt(enum gpio_signal signal)
+{
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
+}
+
+static void board_usbc_init(void)
+{
+	if (board_has_syv_ppc()) {
+		/* Enable PPC interrupts. */
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
+
+		/* Enable BC1.2 interrupts. */
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
+	} else {
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_POST_DEFAULT);
+
+void ppc_interrupt(enum gpio_signal signal)
+{
+	if (signal == GPIO_SIGNAL(DT_NODELABEL(usb_c0_ppc_int_odl))) {
+		if (board_has_syv_ppc()) {
+			syv682x_interrupt(0);
+		} else {
+			rt1739_interrupt(0);
+		}
+	}
+	if (signal == GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_ppc_int_odl))) {
+		syv682x_interrupt(1);
+	}
+}
+
+int ppc_get_alert_status(int port)
+{
+	if (port == 0) {
+		return gpio_pin_get_dt(
+			       GPIO_DT_FROM_NODELABEL(usb_c0_ppc_int_odl)) == 0;
+	}
+	if (port == 1 && corsola_get_db_type() == CORSOLA_DB_TYPEC) {
+		return gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(
+			       gpio_usb_c1_ppc_int_odl)) == 0;
+	}
+
+	return 0;
+}
