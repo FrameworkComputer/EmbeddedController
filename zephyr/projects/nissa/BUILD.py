@@ -17,12 +17,18 @@ def register_nissa_project(
     if chip.startswith("npcx"):
         register_func = register_npcx_project
 
+    chip_kconfig = {"it81302bx": "it8xxx2", "npcx9m3f": "npcx"}[chip]
+
     return register_func(
         project_name=project_name,
         zephyr_board=chip,
         dts_overlays=["cbi.dts"]
         + [here / project_name / filename for filename in extra_dts_overlays],
-        kconfig_files=[here / "prj.conf", here / project_name / "prj.conf"],
+        kconfig_files=[
+            here / "prj.conf",
+            here / f"prj_{chip_kconfig}.conf",
+            here / project_name / "prj.conf",
+        ],
     )
 
 
