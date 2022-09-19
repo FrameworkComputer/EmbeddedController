@@ -285,15 +285,25 @@ noreturn static int cros_system_xec_hibernate(const struct device *dev,
 					      uint32_t microseconds)
 {
 	struct pcr_regs *const pcr = HAL_PCR_INST(dev);
+#ifdef CONFIG_ADC_XEC_V2
 	struct adc_regs *adc0 = STRUCT_ADC_REG_BASE_ADDR;
+#endif
+#ifdef CONFIG_UART_XEC
 	struct uart_regs *uart0 = STRUCT_UART_REG_BASE_ADDR;
+#endif
 	struct ecs_regs *ecs = STRUCT_ECS_REG_BASE_ADDR;
 	struct btmr_regs *btmr4 = STRUCT_TIMER4_REG_BASE_ADDR;
 	struct espi_iom_regs *espi0 = STRUCT_ESPI_REG_BASE_ADDR;
+#ifdef CONFIG_CROS_KB_RAW_XEC
 	struct kscan_regs *kbd = STRUCT_KBD_REG_BASE_ADDR;
+#endif
 	struct qmspi_regs *qmspi0 = STRUCT_QMSPI_REG_BASE_ADDR;
+#if defined(CONFIG_PWM_XEC)
 	struct pwm_regs *pwm0 = STRUCT_PWM_REG_BASE_ADDR;
+#endif
+#if defined(CONFIG_TACH_XEC)
 	struct tach_regs *tach0 = STRUCT_TACH_REG_BASE_ADDR;
+#endif
 	struct ecia_regs *ecia = (struct ecia_regs *)(ECIA_BASE_ADDR);
 	int i;
 
