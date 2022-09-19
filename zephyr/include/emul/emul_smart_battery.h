@@ -119,6 +119,10 @@ struct sbat_emul_bat_data {
 	uint8_t mf_data[MAX_BLOCK_SIZE];
 	/** Manufacturer data length */
 	int mf_data_len;
+	/** Manufacture info */
+	uint8_t mf_info[MAX_BLOCK_SIZE];
+	/** Manufacture info length */
+	int mf_info_len;
 };
 
 /**

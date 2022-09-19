@@ -236,9 +236,10 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	zassert_mem_equal(str, bat->mf_data, bat->mf_data_len, "%s != %s", str,
 			  bat->mf_data);
 
-	/*
-	 * TODO(b/247103618): Verify manufacturer info extended SB spec command
-	 */
+	/* At present, this command is used nowhere in our codebase. */
+	virtual_battery_read_data(SB_MANUFACTURE_INFO, &str, bat->mf_info_len);
+	zassert_mem_equal(str, bat->mf_info, bat->mf_info_len, "%s != %s", str,
+			  bat->mf_info);
 }
 
 ZTEST_USER(virtual_battery, test_write_mfgacc)

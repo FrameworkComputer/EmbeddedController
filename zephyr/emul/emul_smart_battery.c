@@ -486,6 +486,10 @@ int sbat_emul_get_block_data(const struct emul *emul, int cmd, uint8_t **blk,
 		*blk = bat->mf_data;
 		*len = bat->mf_data_len;
 		return 0;
+	case SB_MANUFACTURE_INFO:
+		*blk = bat->mf_info;
+		*len = bat->mf_info_len;
+		return 0;
 	default:
 		/* Unknown command or return value is not word */
 		return 1;
@@ -844,6 +848,9 @@ static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 			.dev_chem = DT_INST_PROP(n, dev_chem),		\
 			.dev_chem_len = sizeof(				\
 					DT_INST_PROP(n, dev_chem)) - 1,	\
+			.mf_info = DT_INST_PROP(n, mf_info),		\
+			.mf_info_len = sizeof(				\
+					DT_INST_PROP(n, mf_info)) - 1,	\
 			.mf_date = 0,					\
 			.cap_alarm = 0,					\
 			.time_alarm = 0,				\

@@ -153,3 +153,9 @@ properties:
         required: false
         default: "LION"
         description: Manufacturer data. Length has to be smaller than 32 bytes.
+
+    mf-info:
+       type: string
+       required: false
+       default: "LION"
+       description: Manufacturer info. Length has to be smaller than 32 bytes.
