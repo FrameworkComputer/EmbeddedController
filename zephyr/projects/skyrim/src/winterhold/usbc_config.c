@@ -20,7 +20,7 @@
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/anx7483_public.h"
 #include "driver/retimer/ps8811.h"
-#include "driver/retimer/ps8818.h"
+#include "driver/retimer/ps8818_public.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp6.h"
 #include "gpio/gpio_int.h"

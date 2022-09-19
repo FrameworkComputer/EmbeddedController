@@ -17,7 +17,7 @@
 #include "driver/charger/isl9241.h"
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/ps8811.h"
-#include "driver/retimer/ps8818.h"
+#include "driver/retimer/ps8818_public.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/pct2075.h"
 #include "extpower.h"

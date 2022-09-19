@@ -8,10 +8,10 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/retimer/ps8818_public.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "ioexpander.h"
-#include "ps8818.h"
 #include "usb_mux.h"
 
 #define PS8818_DEBUG 0

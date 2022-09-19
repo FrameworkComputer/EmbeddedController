@@ -14,7 +14,7 @@
 #include "console.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/syv682x_public.h"
-#include "driver/retimer/ps8818.h"
+#include "driver/retimer/ps8818_public.h"
 #include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"

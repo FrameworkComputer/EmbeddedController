@@ -17,7 +17,7 @@
 #include "driver/accelgyro_bmi323.h"
 #include "driver/accel_bma422.h"
 #include "driver/retimer/ps8811.h"
-#include "driver/retimer/ps8818.h"
+#include "driver/retimer/ps8818_public.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/tmp112.h"
 #include "extpower.h"

@@ -14,7 +14,7 @@
 #include "hooks.h"
 #include "driver/tcpm/it8xxx2_pd_public.h"
 #include "driver/ppc/syv682x_public.h"
-#include "driver/retimer/ps8818.h"
+#include "driver/retimer/ps8818_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
