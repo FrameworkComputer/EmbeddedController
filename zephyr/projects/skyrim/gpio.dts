@@ -274,7 +274,7 @@
 		usb_c0_ppc_en_l {
 			gpios = <&ioex_c0_port1 0 GPIO_OUTPUT_LOW>;
 		};
-		usb_c0_ppc_ilim_3a_en {
+		ioex_usb_c0_ilim_3a_en: usb_c0_ppc_ilim_3a_en {
 			gpios = <&ioex_c0_port1 1 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_PPC_ILIM_3A_EN";
 		};

@@ -17,7 +17,6 @@
 #include "charger.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl9241.h"
-#include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/anx7483_public.h"
 #include "driver/retimer/ps8811.h"
@@ -316,21 +315,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-/*
- * In the AOZ1380 PPC, there are no programmable features.  We use
- * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
- * current limits.
- */
-int board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
-{
-	int rv = EC_SUCCESS;
-
-	rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
-			    (rp == TYPEC_RP_3A0) ? 1 : 0);
-
-	return rv;
-}
-
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
@@ -457,22 +441,6 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	return status;
-}
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		aoz1380_interrupt(USBC_PORT_C0);
-		break;
-
-	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(USBC_PORT_C1);
-		break;
-
-	default:
-		break;
-	}
 }
 
 void bc12_interrupt(enum gpio_signal signal)

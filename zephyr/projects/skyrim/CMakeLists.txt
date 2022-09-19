@@ -19,6 +19,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 if(DEFINED CONFIG_BOARD_MORTHAL)
 	project(morthal)
 	zephyr_library_sources(
+		"src/morthal/ppc_config.c"
 		"src/usbc_config.c"
 )
 endif()
@@ -27,6 +28,7 @@ if(DEFINED CONFIG_BOARD_SKYRIM)
 	project(skyrim)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SKYRIM include)
 	zephyr_library_sources(
+			"src/skyrim/ppc_config.c"
 			"src/skyrim/form_factor.c"
 			"src/skyrim/alt_charger.c"
 			"src/usbc_config.c"
@@ -38,5 +40,6 @@ if(DEFINED CONFIG_BOARD_WINTERHOLD)
 	project(winterhold)
 	zephyr_library_sources(
     		"src/winterhold/usbc_config.c"
+		"src/winterhold/ppc_config.c"
     )
 endif()
