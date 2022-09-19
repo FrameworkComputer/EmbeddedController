@@ -68,6 +68,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 from pathlib import Path
 from shutil import which
 
@@ -171,13 +172,15 @@ def upload_results(ec_base):
             "--upload=True",
         ]
 
+        start_time = time.time()
         ret = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        end_time = time.time()
 
         # Extract URL to test report from captured output
         rdb_url = re.search(
             r"(?P<url>https?://[^\s]+)", ret.stderr.split("\n")[0]
         ).group("url")
-        print("\nTEST RESULTS: " + rdb_url + "\n")
+        print(f"\nTEST RESULTS ({end_time - start_time:.3f}s): {rdb_url}\n")
         flag = ret.returncode == 0
     else:
         print("Unable to upload test results, please run 'rdb auth-login'\n")
