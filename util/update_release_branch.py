@@ -75,7 +75,7 @@ BRANCH=None
 {BUG_FIELD}
 TEST=`make -j buildall`
 
-Cq-Include-Trybots: chromeos/cq:cq-orchestrator
+Force-Relevant-Builds: all
 """
     # Wrap the commands and bug field such that we don't exceed 72 cols.
     relevant_commits_cmd = textwrap.fill(relevant_commits_cmd, width=72)
