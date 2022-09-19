@@ -247,8 +247,9 @@ ec_coverage:
   needs: []
   script:
     - cd ${EC_DIR}
-    - make -j8 CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
+    - make -j$(nproc) CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
       CROSS_COMPILE_arm=/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-
+      CROSS_COMPILE_host=/usr/bin/
       test-coverage
   artifacts:
     paths:
