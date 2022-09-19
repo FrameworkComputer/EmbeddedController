@@ -5,3 +5,5 @@
 
 /* remove pinctrl to avoid pull in too many unwanted dependency */
 /delete-node/ &pinctrl;
+
+/delete-node/ &{/hibernate-wake-pins};

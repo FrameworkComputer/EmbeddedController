@@ -68,7 +68,6 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-#ifndef CONFIG_TEST
 int board_set_active_charge_port(int port)
 {
 	int i;
@@ -127,7 +126,6 @@ int board_set_active_charge_port(int port)
 
 	return EC_SUCCESS;
 }
-#endif
 
 #ifdef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 enum adc_channel board_get_vbus_adc(int port)
