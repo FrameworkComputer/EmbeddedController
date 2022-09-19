@@ -53,7 +53,13 @@ endif
 # Try not to assume too much about optional tools and prefixes
 CCACHE:=$(shell which ccache 2>/dev/null)
 ifeq ($(origin HOST_CROSS_COMPILE),undefined)
+# If building with Portage use the environment variable it provides.
+# https://wiki.gentoo.org/wiki/Embedded_Handbook/General/Introduction#Environment_variables
+ifneq ($(CHOST),)
+HOST_CROSS_COMPILE:=$(CHOST)-
+else
 HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-$(cc-name) 2>/dev/null),x86_64-pc-linux-gnu-,)
+endif
 endif
 
 AR=$(CROSS_COMPILE)ar
