@@ -100,3 +100,6 @@ tests:
   drivers.usbc_ocp:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
+  drivers.usbc_ppc:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_PPC=y

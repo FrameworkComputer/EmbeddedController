@@ -56,5 +56,7 @@ config LINK_TEST_SUITE_USBC_TBT_MODE
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"
 
+config LINK_TEST_SUITE_USBC_PPC
+	bool "Link tests for common USBC PPC code"
 
 source "Kconfig.zephyr"
