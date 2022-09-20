@@ -8,6 +8,9 @@ config BUG_249829957
 config LINK_TEST_SUITE_DEFAULT
 	bool "Link and test the default test suite"
 
+config LINK_TEST_SUITE_ANX7447
+	bool "Link and test the anx7447 tests"
+
 config LINK_TEST_SUITE_AP_MUX_CONTROL
 	bool "Link and test the ap_mux_control tests"
 

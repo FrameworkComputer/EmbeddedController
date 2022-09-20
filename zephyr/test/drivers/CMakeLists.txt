@@ -45,6 +45,7 @@ endif()
 
 # Add linked suites here
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_DEFAULT default)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ANX7447 anx7447)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL ap_mux_control)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_CHARGESPLASH chargesplash)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ISL923X isl923x)
