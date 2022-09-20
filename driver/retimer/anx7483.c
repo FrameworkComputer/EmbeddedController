@@ -31,7 +31,7 @@ struct anx7483_tuning_set {
 	uint8_t value;
 };
 
-static struct anx7483_tuning_set anx7483_usb_enabled[] = {
+const static struct anx7483_tuning_set anx7483_usb_enabled[] = {
 	{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
 	{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
 	{ ANX7483_DRX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
@@ -277,9 +277,9 @@ static int anx7483_get(const struct usb_mux *me, mux_state_t *mux_state)
 }
 
 /* Helper to apply entire array of tuning registers, returning on first error */
-static enum ec_error_list anx7483_apply_tuning(const struct usb_mux *me,
-					       struct anx7483_tuning_set *reg,
-					       int num)
+static enum ec_error_list
+anx7483_apply_tuning(const struct usb_mux *me,
+		     const struct anx7483_tuning_set *reg, int num)
 {
 	int i;
 
