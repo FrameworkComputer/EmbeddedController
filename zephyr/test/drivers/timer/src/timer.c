@@ -4,7 +4,9 @@
  */
 #include <zephyr/ztest.h>
 #include <zephyr/fff.h>
+#include <zephyr/shell/shell_dummy.h>
 
+#include "console.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
@@ -54,6 +56,49 @@ ZTEST(timer, init_from_zero)
 	zassert_equal(0, __hw_clock_source_init64_fake.arg0_history[0], NULL);
 }
 
+ZTEST(timer, console_cmd_gettime)
+{
+	/* Should print the current time */
+	timestamp_t fake_time;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Make get_time() return a mocked value */
+	fake_time.val = 100;
+	get_time_mock = &fake_time;
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "gettime"), NULL);
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_ok(!strstr(outbuffer, "Time: 0x0000000000000064 = 0.000100 s"),
+		   "Actual: '%s'", outbuffer);
+}
+
+ZTEST(timer, console_cmd_timerinfo)
+{
+	/* Prints current time and info on running timers. */
+	timestamp_t fake_time;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Make get_time() return a mocked value */
+	fake_time.val = 100;
+	get_time_mock = &fake_time;
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "timerinfo"), NULL);
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_ok(!strstr(outbuffer,
+			   "Time:     0x0000000000000064 us,    0.000100 s"),
+		   "Actual: '%s'", outbuffer);
+
+	/* Task timer information not printed here if running in a Zephyr EC */
+}
+
 /**
  * @brief Custom fake for system_get_jump_tag
  *
@@ -82,6 +127,9 @@ static uint8_t *system_get_jump_tag_custom_fake(uint16_t tag, int *version,
 static void reset(void *data)
 {
 	ARG_UNUSED(data);
+
+	/* Disable get_time() mocked return value */
+	get_time_mock = NULL;
 
 	RESET_FAKE(__hw_clock_source_init64);
 	RESET_FAKE(system_get_jump_tag)
