@@ -143,6 +143,7 @@ BUILD_ASSERT(PD_STATUS_TCPC_ALERT_3 == (PD_STATUS_TCPC_ALERT_0 << 3));
  * is not.
  */
 
+#if !defined(CONFIG_ZEPHYR) || defined(CONFIG_HAS_TASK_PD_INT_SHARED)
 void pd_shared_alert_task(void *p)
 {
 	const int sources_mask = (int)((intptr_t)p);
@@ -209,3 +210,4 @@ void pd_shared_alert_task(void *p)
 		} while (have_alerts != 0);
 	}
 }
+#endif /* !CONFIG_ZEPHYR || CONFIG_HAS_TASK_PD_INT_SHARED */
