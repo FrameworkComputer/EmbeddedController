@@ -75,3 +75,6 @@ tests:
   drivers.usbc_tbt_mode:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE=y
+  drivers.usbc_ocp:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_OCP=y

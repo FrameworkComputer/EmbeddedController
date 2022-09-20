@@ -41,4 +41,7 @@ config LINK_TEST_SUITE_USBC_TBT_MODE
 config LINK_TEST_SUITE_HOST_COMMANDS
 	bool "Link and test the host command tests"
 
+config LINK_TEST_SUITE_USBC_OCP
+	bool "Link tests for common USBC OCP code"
+
 source "Kconfig.zephyr"
