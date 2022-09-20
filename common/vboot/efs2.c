@@ -78,8 +78,13 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 
 	if (uart_shell_stop()) {
 		/* Failed to stop the shell. */
+		/* LCOV_EXCL_START - At least on posix systems, uart_shell_stop
+		 * will never fail, it will crash the binary or hang forever on
+		 * error.
+		 */
 		board_enable_packet_mode(false);
 		return CR50_COMM_ERR_UNKNOWN;
+		/* LCOV_EXCL_STOP */
 	}
 
 	/*
