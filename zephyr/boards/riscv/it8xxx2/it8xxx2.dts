@@ -40,10 +40,6 @@
 	pinctrl-names = "default";
 };
 
-&cros_kb_raw {
-	status = "okay";	/* Override in project dts if not required */
-};
-
 &espi0 {
 	status = "okay";
 };
