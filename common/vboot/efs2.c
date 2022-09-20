@@ -29,6 +29,9 @@
 #define CPRINTS(format, args...) cprints(CC_VBOOT, "VB " format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_VBOOT, "VB " format, ##args)
 
+/* LCOV_EXCL_START - TODO(b/172210316) implement is_battery_ready(), and remove
+ * this lcov excl.
+ */
 static const char *boot_mode_to_string(uint8_t mode)
 {
 	static const char *boot_mode_str[] = {
@@ -39,6 +42,7 @@ static const char *boot_mode_to_string(uint8_t mode)
 		return boot_mode_str[mode];
 	return "UNDEF";
 }
+/* LCOV_EXCL_STOP */
 
 /*
  * Check whether the session has successfully ended or not. ERR_TIMEOUT is
@@ -191,6 +195,9 @@ static enum cr50_comm_err verify_hash(void)
 	return cmd_to_cr50(CR50_COMM_CMD_VERIFY_HASH, hash, SHA256_DIGEST_SIZE);
 }
 
+/* LCOV_EXCL_START - TODO(b/172210316) implement is_battery_ready(), and remove
+ * this lcov excl.
+ */
 static enum cr50_comm_err set_boot_mode(uint8_t mode)
 {
 	enum cr50_comm_err rv;
@@ -202,6 +209,7 @@ static enum cr50_comm_err set_boot_mode(uint8_t mode)
 		CPRINTS("Failed to set boot mode");
 	return rv;
 }
+/* LCOV_EXCL_STOP */
 
 static bool pd_comm_enabled;
 
