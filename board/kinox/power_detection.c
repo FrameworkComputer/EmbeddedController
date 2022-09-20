@@ -46,8 +46,8 @@ struct adpater_id_params tio2_power[] = {
 		.charge_voltage = 20000,
 		.charge_current = 8500,
 		.watt = 170,
-		.obp95 = 2820,
-		.obp85 = 916,
+		.obp95 = 2816,
+		.obp85 = 2520,
 	},
 	{
 		.min_voltage = 68,
@@ -91,8 +91,8 @@ struct adpater_id_params tio2_power[] = {
 		.charge_voltage = 20000,
 		.charge_current = 8500,
 		.watt = 170,
-		.obp95 = 2820,
-		.obp85 = 916,
+		.obp95 = 2816,
+		.obp85 = 2520,
 	},
 	{
 		.min_voltage = 2816,
@@ -139,8 +139,8 @@ struct adpater_id_params tiny_power[] = {
 		.charge_voltage = 20000,
 		.charge_current = 6000,
 		.watt = 120,
-		.obp95 = 0x2D3,
-		.obp85 = 0x286,
+		.obp95 = 1990,
+		.obp85 = 1780,
 	},
 	{
 		.min_voltage = 653,
@@ -166,8 +166,8 @@ struct adpater_id_params tiny_power[] = {
 		.charge_voltage = 20000,
 		.charge_current = 8500,
 		.watt = 170,
-		.obp95 = 2820,
-		.obp85 = 916,
+		.obp95 = 2816,
+		.obp85 = 2520,
 	},
 	{
 		.min_voltage = 1749,
@@ -175,8 +175,8 @@ struct adpater_id_params tiny_power[] = {
 		.charge_voltage = 20000,
 		.charge_current = 11500,
 		.watt = 230,
-		.obp95 = 3810,
-		.obp85 = 3410,
+		.obp95 = 2816,
+		.obp85 = 2815,
 	},
 };
 
