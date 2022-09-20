@@ -7759,6 +7759,7 @@ static void pe_ddr_perform_data_reset_exit(int port)
 	pd_timer_disable(port, PE_TIMER_VCONN_REAPPLIED);
 	pd_timer_disable(port, PE_TIMER_DATA_RESET_FAIL);
 	PE_CLR_FLAG(port, PE_FLAGS_DATA_RESET_COMPLETE);
+	pd_dpm_request(port, DPM_REQUEST_PORT_DISCOVERY);
 	dpm_data_reset_complete(port);
 }
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
