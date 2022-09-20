@@ -2650,4 +2650,9 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_PERIPHERAL_CHARGER
 #endif
 
+#undef CONFIG_CPS8100
+#ifdef CONFIG_PLATFORM_EC_CPS8100
+#define CONFIG_CPS8100
+#endif
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */
