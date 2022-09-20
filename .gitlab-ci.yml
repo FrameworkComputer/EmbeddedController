@@ -50,9 +50,10 @@ before_script:
             while [ ${retries} -gt 0 ] ; do
               rm -rf "${path}" ;
               mkdir -p "${path}" ;
-              git clone --depth 1 -b "${branch}" "${url}" "${path}" || echo "git clone failed will retry ${retries} times";
-              if [ $? -eq 0 ]; then
+              if git clone --depth 1 -b "${branch}" "${url}" "${path}"; then
                 break ;
+              else
+                echo "git clone failed will retry ${retries} times";
               fi ;
               retries="$(( ${retries} - 1 ))" ;
             done ;
