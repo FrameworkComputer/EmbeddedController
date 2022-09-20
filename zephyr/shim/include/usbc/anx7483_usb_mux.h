@@ -10,13 +10,12 @@
 
 #define ANX7483_USB_MUX_COMPAT analogix_anx7483
 
-#define USB_MUX_CONFIG_ANX7483(mux_id)                            \
-	{                                                         \
-		USB_MUX_COMMON_FIELDS(mux_id),                    \
-			.driver = &anx7483_usb_retimer_driver,    \
-			.board_set = &anx7483_set_default_tuning, \
-			.i2c_port = I2C_PORT_BY_DEV(mux_id),      \
-			.i2c_addr_flags = DT_REG_ADDR(mux_id),    \
+#define USB_MUX_CONFIG_ANX7483(mux_id)                         \
+	{                                                      \
+		USB_MUX_COMMON_FIELDS(mux_id),                 \
+			.driver = &anx7483_usb_retimer_driver, \
+			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
+			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
 
 #endif /* __ZEPHYR_SHIM_ANX7483_USB_MUX_H */
