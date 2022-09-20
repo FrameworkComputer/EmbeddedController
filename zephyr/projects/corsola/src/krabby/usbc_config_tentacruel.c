@@ -82,14 +82,13 @@ DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_POST_DEFAULT);
 
 void ppc_interrupt(enum gpio_signal signal)
 {
-	if (board_has_syv_ppc()) {
-		if (signal == GPIO_SIGNAL(DT_NODELABEL(usb_c0_ppc_int_odl))) {
+	if (signal == GPIO_SIGNAL(DT_NODELABEL(usb_c0_ppc_int_odl))) {
+		if (board_has_syv_ppc()) {
 			syv682x_interrupt(0);
+		} else {
+			rt1739_interrupt(0);
 		}
-	} else {
-		rt1739_interrupt(0);
 	}
-
 	if (signal == GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_ppc_int_odl))) {
 		syv682x_interrupt(1);
 	}
