@@ -369,7 +369,8 @@ int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 	return EC_SUCCESS;
 }
 
-const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
+test_mockable const uint8_t *system_get_jump_tag(uint16_t tag, int *version,
+						 int *size)
 {
 	const struct jump_tag *t;
 	int used = 0;

@@ -32,6 +32,9 @@ config LINK_TEST_SUITE_RT9490
 config LINK_TEST_SUITE_SYSTEM
 	bool "Link tests for common system code"
 
+config LINK_TEST_SUITE_TIMER
+	bool "Link and test the timer tests"
+
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 
