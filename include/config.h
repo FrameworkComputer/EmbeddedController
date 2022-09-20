@@ -5755,7 +5755,7 @@
  * Define CONFIG_HOST_ESPI_VW_POWER_SIGNAL if any power signals from the host
  * are configured as virtual wires.
  */
-#if defined(CONFIG_HOSTCMD_ESPI_VW_SLP_S3) ||            \
+#if defined(CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3) ||     \
 	defined(CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4) || \
 	defined(CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S5)
 #define CONFIG_HOST_ESPI_VW_POWER_SIGNAL
