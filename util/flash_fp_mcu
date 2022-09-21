@@ -460,7 +460,8 @@ flash_fp_mcu_stm32() {
   # TODO(b/179839337): Make this the default and properly support
   # open-drain outputs on other platforms.
   if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
-     [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]]; then
+     [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "zork" ]]; then
     gpio in       "${gpio_boot0}" "${gpio_nrst}"
   fi
   gpio unexport "${gpio_boot0}" "${gpio_nrst}"
