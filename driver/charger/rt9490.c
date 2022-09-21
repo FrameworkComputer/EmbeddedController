@@ -520,6 +520,19 @@ static int rt9490_ramp_get_current_limit(int chgnum)
 }
 #endif
 
+static enum ec_error_list rt9490_get_option(int chgnum, int *option)
+{
+	/* Ignored: does not exist */
+	*option = 0;
+	return EC_SUCCESS;
+}
+
+static enum ec_error_list rt9490_set_option(int chgnum, int option)
+{
+	/* Ignored: does not exist */
+	return EC_SUCCESS;
+}
+
 #ifdef CONFIG_CMD_CHARGER_DUMP
 static void dump_range(int chgnum, int from, int to)
 {
@@ -572,6 +585,8 @@ const struct charger_drv rt9490_drv = {
 	.set_input_current_limit = &rt9490_set_input_current_limit,
 	.get_input_current_limit = &rt9490_get_input_current_limit,
 	.get_input_current = &rt9490_get_input_current,
+	.get_option = &rt9490_get_option,
+	.set_option = &rt9490_set_option,
 	.device_id = &rt9490_device_id,
 #ifdef CONFIG_CHARGE_RAMP_HW
 	.set_hw_ramp = &rt9490_set_hw_ramp,

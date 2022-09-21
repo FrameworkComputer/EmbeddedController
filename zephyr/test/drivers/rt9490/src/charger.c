@@ -195,6 +195,17 @@ ZTEST(rt9490_chg, test_charge_ramp_hw_ramp)
 		      NULL);
 }
 
+ZTEST(rt9490_chg, test_option)
+{
+	int opt;
+
+	zassert_ok(rt9490_drv.get_option(CHARGER_NUM, &opt), NULL);
+	zassert_true(opt == 0, NULL);
+	zassert_ok(rt9490_drv.set_option(CHARGER_NUM, 5566), NULL);
+	zassert_ok(rt9490_drv.get_option(CHARGER_NUM, &opt), NULL);
+	zassert_true(opt == 0, NULL);
+}
+
 ZTEST(rt9490_chg, misc_info)
 {
 	int status;
