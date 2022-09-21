@@ -303,7 +303,7 @@ static void dpm_attempt_mode_entry(int port)
 	 * of the modes can get out of sync, causing the attempt to
 	 * enter the mode to fail prematurely.
 	 */
-	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON))
 		return;
 #endif
 	/*
