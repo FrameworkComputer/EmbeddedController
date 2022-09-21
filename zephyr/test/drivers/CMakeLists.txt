@@ -59,6 +59,7 @@ add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE usbc_alt_mode)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE usbc_tbt_mode)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_OCP usbc_ocp)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_HOST_COMMANDS host_cmd)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_SYSTEM system)
 
 get_target_property(TEST_SOURCES_NEW app SOURCES)
 

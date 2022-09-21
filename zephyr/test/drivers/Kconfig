@@ -11,6 +11,9 @@ config LINK_TEST_SUITE_AP_MUX_CONTROL
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
 
+config LINK_TEST_SUITE_HOST_COMMANDS
+	bool "Link and test the host command tests"
+
 config LINK_TEST_SUITE_ISL923X
 	bool "Link and test the isl923x tests"
 
@@ -25,6 +28,9 @@ config LINK_TEST_SUITE_MKBP
 
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
+
+config LINK_TEST_SUITE_SYSTEM
+	bool "Link tests for common system code"
 
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
@@ -44,10 +50,8 @@ config LINK_TEST_SUITE_USBC_ALT_MODE
 config LINK_TEST_SUITE_USBC_TBT_MODE
 	bool "Link and test the usbc_tbt_mode tests"
 
-config LINK_TEST_SUITE_HOST_COMMANDS
-	bool "Link and test the host command tests"
-
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"
+
 
 source "Kconfig.zephyr"
