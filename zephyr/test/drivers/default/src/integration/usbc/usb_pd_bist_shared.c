@@ -214,6 +214,8 @@ ZTEST_F(usb_pd_bist_shared, verify_control_bist_shared_mode)
 	zassert_equal(PDO_FIXED_VOLTAGE(f5v_cap), 5000, "PDO voltage wrong");
 	zassert_equal(PDO_FIXED_CURRENT(f5v_cap), 3000,
 		      "PDO initial current wrong");
+	zassert_equal(typec_get_default_current_limit_rp(USBC_PORT_C0),
+		      TYPEC_RP_3A0, "Default rp not 3A");
 
 	host_cmd_typec_control_bist_share_mode(USBC_PORT_C0, 0);
 }

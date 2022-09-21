@@ -1284,7 +1284,12 @@ void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
 }
 __overridable int typec_get_default_current_limit_rp(int port)
 {
-	return CONFIG_USB_PD_PULLUP;
+	int rp = CONFIG_USB_PD_PULLUP;
+
+	if (pd_get_bist_share_mode())
+		rp = TYPEC_RP_3A0;
+
+	return rp;
 }
 void typec_select_src_collision_rp(int port, enum tcpc_rp_value rp)
 {

@@ -41,6 +41,11 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
 		},
 } };
 
+uint8_t pd_get_bist_share_mode(void)
+{
+	return 0;
+}
+
 void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
 {
 	/* Do Nothing, but needed for linking */
