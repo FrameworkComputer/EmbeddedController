@@ -6,7 +6,11 @@
 / {
 	kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm0 0 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
+		/*
+		 * Use 324 Hz so that 32Khz clock source is used,
+		 * which is not gated in power saving mode.
+		 */
+		pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 	};
 };
 
