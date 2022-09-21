@@ -46,13 +46,13 @@ ZTEST_USER(system, test_hostcmd_board_version)
 
 /* System Function Testing */
 
-static void system_flags_before_after(void *data)
+static void system_before_after(void *data)
 {
 	ARG_UNUSED(data);
 	system_clear_reset_flags(-1);
 }
 
-ZTEST(system_save_flags, test_system_encode_save_flags)
+ZTEST(system, test_system_encode_save_flags)
 {
 	int flags_to_save = 0;
 	uint32_t saved_flags = 0;
@@ -73,8 +73,7 @@ ZTEST(system_save_flags, test_system_encode_save_flags)
 	zassert_not_equal(0, saved_flags & EC_RESET_FLAG_AP_WATCHDOG, NULL);
 }
 
-ZTEST(system_save_flags,
-      test_system_encode_save_flags_mutually_exclusive_reset_flags)
+ZTEST(system, test_system_encode_save_flags_mutually_exclusive_reset_flags)
 {
 	int flags_to_save = 0;
 	uint32_t saved_flags = 0;
@@ -107,7 +106,5 @@ ZTEST(system_save_flags,
 	zassert_not_equal(0, saved_flags & EC_RESET_FLAG_SOFT, NULL);
 }
 
-ZTEST_SUITE(system, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
-
-ZTEST_SUITE(system_save_flags, drivers_predicate_post_main, NULL,
-	    system_flags_before_after, system_flags_before_after, NULL);
+ZTEST_SUITE(system, drivers_predicate_post_main, NULL, system_before_after,
+	    system_before_after, NULL);
