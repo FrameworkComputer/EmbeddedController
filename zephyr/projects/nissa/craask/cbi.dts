@@ -30,6 +30,28 @@
 				value = <1>;
 			};
 		};
+		/*
+		 * FW_CONFIG field to describe Clamshell/Convertible.
+		 */
+		form_factor {
+			enum-name = "FORM_FACTOR";
+			start = <9>;
+			size = <1>;
+
+			/*
+			 * 0: convertible, 1: clamshell
+			 */
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <0>;
+			};
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <1>;
+			};
+		};
 	};
 	/* Craask-specific ssfc fields. */
 	cbi-ssfc {
