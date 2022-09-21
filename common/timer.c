@@ -37,15 +37,18 @@ extern __error("k_usleep() should only be called from Zephyr code") int32_t
 /* High 32-bits of the 64-bit timestamp counter. */
 STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) volatile uint32_t clksrc_high;
 
+/* Hardware timer routine IRQ number */
+static int timer_irq;
+
+#ifndef CONFIG_ZEPHYR
 /* Bitmap of currently running timers */
 static uint32_t timer_running;
+
+BUILD_ASSERT((sizeof(timer_running) * 8) > TASK_ID_COUNT);
 
 /* Deadlines of all timers */
 static timestamp_t timer_deadline[TASK_ID_COUNT];
 static uint32_t next_deadline = 0xffffffff;
-
-/* Hardware timer routine IRQ number */
-static int timer_irq;
 
 static void expire_timer(task_id_t tskid)
 {
@@ -53,18 +56,6 @@ static void expire_timer(task_id_t tskid)
 	atomic_clear_bits((atomic_t *)&timer_running, 1 << tskid);
 	/* wake up the taks waiting for this timer */
 	task_set_event(tskid, TASK_EVENT_TIMER);
-}
-
-int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
-{
-	timestamp_t now_val;
-
-	if (!now) {
-		now_val = get_time();
-		now = &now_val;
-	}
-
-	return ((int64_t)(now->val - deadline.val) >= 0);
 }
 
 void process_timers(int overflow)
@@ -108,6 +99,19 @@ void process_timers(int overflow)
 		__hw_clock_event_set(next.le.lo);
 		next_deadline = next.le.lo;
 	} while (next.val <= get_time().val);
+}
+#endif /* !defined(CONFIG_ZEPHYR) */
+
+int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
+{
+	timestamp_t now_val;
+
+	if (!now) {
+		now_val = get_time();
+		now = &now_val;
+	}
+
+	return ((int64_t)(now->val - deadline.val) >= 0);
 }
 
 #ifndef CONFIG_HW_SPECIFIC_UDELAY
@@ -300,7 +304,6 @@ void timer_print_info(void)
 {
 	timestamp_t t = get_time();
 	uint64_t deadline = (uint64_t)t.le.hi << 32 | __hw_clock_event_get();
-	int tskid;
 
 	ccprintf("Time:     0x%016llx us, %11.6lld s\n"
 		 "Deadline: 0x%016llx -> %11.6lld s from now\n"
@@ -308,7 +311,8 @@ void timer_print_info(void)
 		 t.val, t.val, deadline, deadline - t.val);
 	cflush();
 
-	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
+#ifndef CONFIG_ZEPHYR
+	for (int tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
 		if (timer_running & BIT(tskid)) {
 			ccprintf("  Tsk %2d  0x%016llx -> %11.6lld\n", tskid,
 				 timer_deadline[tskid].val,
@@ -316,14 +320,13 @@ void timer_print_info(void)
 			cflush();
 		}
 	}
+#endif /* !defined(CONFIG_ZEPHYR) */
 }
 
 void timer_init(void)
 {
 	const timestamp_t *ts;
 	int size, version;
-
-	BUILD_ASSERT(TASK_ID_COUNT < sizeof(timer_running) * 8);
 
 	/* Restore time from before sysjump */
 	ts = (const timestamp_t *)system_get_jump_tag(TIMER_SYSJUMP_TAG,
