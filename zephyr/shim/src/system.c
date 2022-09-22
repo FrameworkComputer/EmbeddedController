@@ -130,7 +130,7 @@ int system_get_scratchpad(uint32_t *value)
 	return 0;
 }
 
-void system_hibernate(uint32_t seconds, uint32_t microseconds)
+test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
 	int err;

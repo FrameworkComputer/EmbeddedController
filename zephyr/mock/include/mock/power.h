@@ -6,6 +6,10 @@
 #ifndef ZEPHYR_TEST_MOCK_POWER_H
 #define ZEPHYR_TEST_MOCK_POWER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #include <zephyr/fff.h>
 #include "power.h"
 

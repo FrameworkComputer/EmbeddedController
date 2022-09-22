@@ -10,7 +10,11 @@
 #include "host_command.h"
 #include "panic.h"
 #include "system.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+#include "mock/power.h"
 
 /* System Host Commands */
 
@@ -37,6 +41,43 @@ static void system_before_after(void *data)
 {
 	ARG_UNUSED(data);
 	system_clear_reset_flags(-1);
+}
+
+ZTEST(system, test_system_enter_hibernate__at_g3)
+{
+	set_ac_enabled(false);
+	test_set_chipset_to_g3();
+
+	/* Reset after set to g3 */
+	chipset_force_shutdown_fake.call_count = 0;
+
+	/* Arbitrary Args */
+	system_enter_hibernate(0x12, 0x34);
+	zassert_equal(chipset_force_shutdown_fake.call_count, 0);
+	zassert_equal(system_hibernate_fake.call_count, 1);
+}
+
+ZTEST(system, test_system_enter_hibernate__ac_on)
+{
+	test_set_chipset_to_s0();
+	set_ac_enabled(true);
+
+	/* Arbitrary Args */
+	system_enter_hibernate(0x12, 0x34);
+	zassert_equal(chipset_force_shutdown_fake.call_count, 0);
+}
+
+ZTEST(system, test_system_enter_hibernate__at_s0)
+{
+	test_set_chipset_to_s0();
+	set_ac_enabled(false);
+
+	/* Arbitrary Args */
+	system_enter_hibernate(0x12, 0x34);
+
+	zassert_equal(chipset_force_shutdown_fake.call_count, 1);
+	zassert_equal(chipset_force_shutdown_fake.arg0_val,
+		      CHIPSET_SHUTDOWN_CONSOLE_CMD);
 }
 
 ZTEST(system, test_get_program_memory_addr_bad_args)

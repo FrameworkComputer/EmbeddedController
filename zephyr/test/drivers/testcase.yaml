@@ -68,6 +68,7 @@ tests:
   drivers.system:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.system_board_version_cbi:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_SYSTEM=y
