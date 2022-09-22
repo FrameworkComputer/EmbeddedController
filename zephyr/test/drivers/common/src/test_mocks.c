@@ -7,8 +7,6 @@
 
 #include "test/drivers/test_mocks.h"
 
-DEFINE_FFF_GLOBALS;
-
 /* Mocks for common/init_rom.c */
 DEFINE_FAKE_VALUE_FUNC(const void *, init_rom_map, const void *, int);
 DEFINE_FAKE_VOID_FUNC(init_rom_unmap, const void *, int);

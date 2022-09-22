@@ -7,6 +7,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(drivers)
 
 add_subdirectory(common)
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
 get_target_property(TEST_SOURCES app SOURCES)
 

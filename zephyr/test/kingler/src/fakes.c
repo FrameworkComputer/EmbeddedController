@@ -6,7 +6,6 @@
 #include <zephyr/fff.h>
 #include "gpio_signal.h"
 
-DEFINE_FFF_GLOBALS;
 FAKE_VOID_FUNC(power_button_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(button_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(lid_interrupt, enum gpio_signal);

@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(krabby)
 
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
+
 zephyr_include_directories("${PLATFORM_EC}/zephyr/projects/corsola/include")
 
 target_sources(app PRIVATE

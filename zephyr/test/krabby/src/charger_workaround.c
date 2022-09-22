@@ -15,8 +15,6 @@
 #include "i2c.h"
 #include "system.h"
 
-DEFINE_FFF_GLOBALS;
-
 FAKE_VALUE_FUNC(int, board_get_version);
 
 const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(charger));
