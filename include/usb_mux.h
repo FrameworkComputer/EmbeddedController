@@ -29,6 +29,7 @@
 #define USB_MUX_FLAG_SET_WITHOUT_FLIP BIT(1) /* SET should not flip */
 #define USB_MUX_FLAG_RESETS_IN_G3 BIT(2) /* Mux chip will reset in G3 */
 #define USB_MUX_FLAG_POLARITY_INVERTED BIT(3) /* Mux polarity is inverted */
+#define USB_MUX_FLAG_CAN_IDLE BIT(4) /* MUX supports idle mode */
 
 #endif /* CONFIG_ZEPHYR */
 
@@ -101,6 +102,22 @@ struct usb_mux_driver {
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
 	int (*chipset_reset)(const struct usb_mux *me);
+
+	/**
+	 * Optional method that is called on HOOK_CHIPSET_{SUSPEND,RESUME}.
+	 *
+	 * Note: This notifies the mux that the rest of the system
+	 * entered (left) a low power state such as S0ix or S3. This
+	 * enables the mux driver to make power optimization decisions
+	 * such as powering down the USB3 retimer when not in use. If
+	 * the associated port is in low power mode, idle mode is not
+	 * used.
+	 *
+	 * @param me usb_mux
+	 * @param idle bool
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*set_idle_mode)(const struct usb_mux *me, bool idle);
 };
 
 /* Describes a USB mux present in the system */

@@ -33,6 +33,8 @@ struct usb_mux_chain usb_mux_c1;
 
 /** Number of usb mux proxies in chain */
 #define NUM_OF_PROXY 3
+/** Number of usb mux proxies in chain that CAN_IDLE */
+#define NUM_OF_PROXY_CAN_IDLE 1
 
 /** Pointers to original usb muxes chain of port c1 */
 const struct usb_mux *org_mux[NUM_OF_PROXY];
@@ -177,6 +179,29 @@ static int proxy_chipset_reset_custom(const struct usb_mux *me)
 	return ec;
 }
 
+/** Proxy function which check calls from usb_mux framework to driver */
+FAKE_VALUE_FUNC(int, proxy_set_idle_mode, const struct usb_mux *, bool);
+static int proxy_set_idle_mode_custom(const struct usb_mux *me, bool idle)
+{
+	int i = me->i2c_addr_flags;
+	int ec = EC_SUCCESS;
+
+	zassert_true(i < NUM_OF_PROXY, "Proxy called for non proxy usb_mux");
+
+	if (org_mux[i] != NULL && org_mux[i]->driver->set_idle_mode != NULL) {
+		ec = org_mux[i]->driver->set_idle_mode(org_mux[i], idle);
+	}
+
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		RETURN_FAKE_RESULT(proxy_set_idle_mode);
+	}
+
+	/* Discard this call if made from different thread */
+	proxy_set_idle_mode_fake.call_count--;
+
+	return ec;
+}
+
 /** Proxy function for fw update capability */
 static bool proxy_fw_update_cap(void)
 {
@@ -211,6 +236,7 @@ const struct usb_mux_driver proxy_usb_mux = {
 	.get = &proxy_get,
 	.enter_low_power_mode = &proxy_enter_low_power_mode,
 	.chipset_reset = &proxy_chipset_reset,
+	.set_idle_mode = &proxy_set_idle_mode,
 	.is_retimer_fw_update_capable = &proxy_fw_update_cap,
 };
 
@@ -254,6 +280,7 @@ static void reset_proxy_fakes(void)
 	RESET_FAKE(proxy_get);
 	RESET_FAKE(proxy_enter_low_power_mode);
 	RESET_FAKE(proxy_chipset_reset);
+	RESET_FAKE(proxy_set_idle_mode);
 	RESET_FAKE(proxy_hpd_update);
 	RESET_FAKE(mock_board_init);
 	RESET_FAKE(mock_board_set);
@@ -265,6 +292,7 @@ static void reset_proxy_fakes(void)
 	proxy_enter_low_power_mode_fake.custom_fake =
 		proxy_enter_low_power_mode_custom;
 	proxy_chipset_reset_fake.custom_fake = proxy_chipset_reset_custom;
+	proxy_set_idle_mode_fake.custom_fake = proxy_set_idle_mode_custom;
 	proxy_hpd_update_fake.custom_fake = proxy_hpd_update_custom;
 	mock_board_init_fake.custom_fake = mock_board_init_custom;
 	mock_board_set_fake.custom_fake = mock_board_set_custom;
@@ -275,6 +303,7 @@ static void reset_proxy_fakes(void)
 	proxy_get_fake.return_val = EC_SUCCESS;
 	proxy_enter_low_power_mode_fake.return_val = EC_SUCCESS;
 	proxy_chipset_reset_fake.return_val = EC_SUCCESS;
+	proxy_set_idle_mode_fake.return_val = EC_SUCCESS;
 	mock_board_init_fake.return_val = EC_SUCCESS;
 	mock_board_set_fake.return_val = EC_SUCCESS;
 }
@@ -748,6 +777,23 @@ ZTEST(usb_init_mux, test_usb_mux_chipset_reset)
 	/* After this hook chipset reset functions should be called */
 	hook_notify(HOOK_CHIPSET_RESET);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_chipset_reset, NUM_OF_PROXY);
+}
+
+ZTEST(usb_init_mux, test_usb_mux_set_idle_mode)
+{
+	/* After the SUSPEND hook, set_idle_mode functions should be called */
+	proxy_mux_0.flags |= USB_MUX_FLAG_CAN_IDLE;
+	hook_notify(HOOK_CHIPSET_SUSPEND);
+	CHECK_PROXY_FAKE_CALL_CNT(proxy_set_idle_mode, NUM_OF_PROXY_CAN_IDLE);
+
+	/*
+	 * Other tests will fail if we leave the chipset in SUSPEND,
+	 * so we test the RESUME case here.
+	 */
+	proxy_set_idle_mode_fake.call_count = 0;
+	/* After the RESUME hook, set_idle_mode functions should be called */
+	hook_notify(HOOK_CHIPSET_RESUME);
+	CHECK_PROXY_FAKE_CALL_CNT(proxy_set_idle_mode, NUM_OF_PROXY_CAN_IDLE);
 }
 
 /* Test host command get mux info */

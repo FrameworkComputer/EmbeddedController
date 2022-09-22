@@ -59,6 +59,8 @@ enum mux_config_type {
 	USB_MUX_LOW_POWER,
 	USB_MUX_SET_MODE,
 	USB_MUX_GET_MODE,
+	USB_MUX_CHIPSET_IDLE,
+	USB_MUX_CHIPSET_ACTIVE,
 	USB_MUX_CHIPSET_RESET,
 	USB_MUX_HPD_UPDATE,
 };
@@ -303,6 +305,20 @@ static int configure_mux(int port, int index, enum mux_config_type config,
 		case USB_MUX_LOW_POWER:
 			if (drv && drv->enter_low_power_mode)
 				rv = drv->enter_low_power_mode(mux_ptr);
+
+			break;
+
+		case USB_MUX_CHIPSET_IDLE:
+			if ((mux_ptr->flags & USB_MUX_FLAG_CAN_IDLE) && drv &&
+			    drv->set_idle_mode)
+				rv = drv->set_idle_mode(mux_ptr, true);
+
+			break;
+
+		case USB_MUX_CHIPSET_ACTIVE:
+			if ((mux_ptr->flags & USB_MUX_FLAG_CAN_IDLE) && drv &&
+			    drv->set_idle_mode)
+				rv = drv->set_idle_mode(mux_ptr, false);
 
 			break;
 
@@ -688,6 +704,34 @@ static void mux_chipset_reset(void)
 			      USB_MUX_CHIPSET_RESET, NULL);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, mux_chipset_reset, HOOK_PRIO_DEFAULT);
+
+static void mux_chipset_suspend(void)
+{
+	int port;
+
+	for (port = 0; port < board_get_usb_pd_port_count(); ++port) {
+		if (flags[port] & USB_MUX_FLAG_IN_LPM)
+			continue;
+
+		configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS,
+			      USB_MUX_CHIPSET_IDLE, NULL);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, mux_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+static void mux_chipset_resume(void)
+{
+	int port;
+
+	for (port = 0; port < board_get_usb_pd_port_count(); ++port) {
+		if (flags[port] & USB_MUX_FLAG_IN_LPM)
+			continue;
+
+		configure_mux(port, TYPEC_USB_MUX_SET_ALL_CHIPS,
+			      USB_MUX_CHIPSET_ACTIVE, NULL);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, mux_chipset_resume, HOOK_PRIO_DEFAULT);
 
 /*
  * For muxes which have powered off in G3, clear any cached INIT and LPM flags

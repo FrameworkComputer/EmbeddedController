@@ -15,5 +15,6 @@
 #define USB_MUX_FLAG_SET_WITHOUT_FLIP BIT(1) /* SET should not flip */
 #define USB_MUX_FLAG_RESETS_IN_G3 BIT(2) /* Mux chip will reset in G3 */
 #define USB_MUX_FLAG_POLARITY_INVERTED BIT(3) /* Mux polarity is inverted */
+#define USB_MUX_FLAG_CAN_IDLE BIT(4) /* MUX supports idle mode */
 
 #endif /* DT_BINDINGS_USBC_MUX_H_ */
