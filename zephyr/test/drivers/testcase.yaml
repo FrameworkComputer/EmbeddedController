@@ -68,6 +68,11 @@ tests:
   drivers.system:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+  drivers.system_board_version_cbi:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+      - CONFIG_PLATFORM_EC_BOARD_VERSION_CBI=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.usb_port_power_dumb:
     extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;./usb_port_power_dumb/usba.dts"
     extra_configs:
