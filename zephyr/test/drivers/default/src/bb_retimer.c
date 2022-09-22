@@ -193,6 +193,51 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_state)
 		      exp_conn, conn);
 }
 
+/** Test retimer idle mode setting. */
+ZTEST_USER(bb_retimer_no_tasks, test_bb_set_idle_mode)
+{
+	const uint32_t usb3_conn =
+		BB_RETIMER_ACTIVE_PASSIVE | BB_RETIMER_USB_3_SPEED |
+		BB_RETIMER_USB_3_CONNECTION | BB_RETIMER_RE_TIMER_DRIVER |
+		BB_RETIMER_DATA_CONNECTION_PRESENT;
+	const uint32_t idle_conn =
+		BB_RETIMER_ACTIVE_PASSIVE | BB_RETIMER_USB_3_SPEED |
+		BB_RETIMER_RE_TIMER_DRIVER | BB_RETIMER_DATA_CONNECTION_PRESENT;
+	const struct emul *emul = EMUL_DT_GET(BB_RETIMER_NODE);
+	struct usb_mux usb_mux_c1;
+	uint32_t conn;
+	bool ack_required;
+
+	set_test_runner_tid();
+
+	/* Enable IDLE mode port C1 mux */
+	usb_mux_c1 = *usb_muxes[USBC_PORT_C1].mux;
+	usb_mux_c1.flags |= USB_MUX_FLAG_CAN_IDLE;
+
+	/* Check if USB3 is enabled before idle entry */
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_mux_c1, USB_PD_MUX_USB_ENABLED,
+					 &ack_required),
+		      NULL);
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	zassert_equal(conn, usb3_conn, "Expected state 0x%02x, got 0x%02x",
+		      usb3_conn, conn);
+
+	/* Check if USB3 is disabled on idle entry */
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set_idle_mode(&usb_mux_c1, true), NULL);
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	zassert_equal(conn, idle_conn, "Expected state 0x%02x, got 0x%02x",
+		      idle_conn, conn);
+
+	/* Check if USB3 is re-enabled on idle exit */
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set_idle_mode(&usb_mux_c1, false), NULL);
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	zassert_equal(conn, usb3_conn, "Expected state 0x%02x, got 0x%02x",
+		      usb3_conn, conn);
+}
+
 /** Test setting different options for DFP role */
 ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
 {

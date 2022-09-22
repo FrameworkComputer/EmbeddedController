@@ -53,7 +53,7 @@ __override_proto int bb_retimer_power_enable(const struct usb_mux *me,
  * @param[out] ack_required	Outputs whether the given change will require
  *				the AP to ACK before proceeding
  */
-void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
 			   bool *ack_required);
 
 /**

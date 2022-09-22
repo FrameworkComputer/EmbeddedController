@@ -43,6 +43,10 @@
  * accessed from multiple tasks.
  */
 static mutex_t bb_retimer_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
+/*
+ * Requested BB mux state.
+ */
+static mux_state_t bb_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /**
  * Utility functions
@@ -389,6 +393,7 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 	*ack_required = false;
 
 	mutex_lock(&bb_retimer_lock[port]);
+	bb_mux_state[port] = mux_state;
 
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT
@@ -480,7 +485,38 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 	return rv;
 }
 
-void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+static int bb_set_idle_mode(const struct usb_mux *me, bool idle)
+{
+	bool usb3_enable;
+	int rv;
+	uint32_t reg_val;
+	int port = me->usb_port;
+
+	mutex_lock(&bb_retimer_lock[port]);
+
+	if (!(bb_mux_state[port] & USB_PD_MUX_USB_ENABLED)) {
+		mutex_unlock(&bb_retimer_lock[port]);
+		return EC_SUCCESS;
+	}
+
+	rv = bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE, &reg_val);
+	if (rv != EC_SUCCESS) {
+		mutex_unlock(&bb_retimer_lock[port]);
+		return rv;
+	}
+
+	usb3_enable = !idle;
+
+	/* Bit 5: BB_RETIMER_USB_3_CONNECTION */
+	WRITE_BIT(reg_val, 5, usb3_enable);
+	rv = bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE, reg_val);
+
+	mutex_unlock(&bb_retimer_lock[port]);
+
+	return rv;
+}
+
+void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
 			   bool *ack_required)
 {
 	uint32_t retimer_con_reg = 0;
@@ -490,6 +526,8 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 	*ack_required = false;
 
 	mutex_lock(&bb_retimer_lock[port]);
+	bb_mux_state[port] = (bb_mux_state[port] & ~MUX_STATE_HPD_UPDATE_MASK) |
+			     (hpd_state & MUX_STATE_HPD_UPDATE_MASK);
 
 	if (bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE,
 			    &retimer_con_reg) != EC_SUCCESS) {
@@ -501,7 +539,7 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 	 * 0 - No IRQ_HPD
 	 * 1 - IRQ_HPD received
 	 */
-	if (mux_state & USB_PD_MUX_HPD_IRQ)
+	if (hpd_state & USB_PD_MUX_HPD_IRQ)
 		retimer_con_reg |= BB_RETIMER_IRQ_HPD;
 	else
 		retimer_con_reg &= ~BB_RETIMER_IRQ_HPD;
@@ -521,7 +559,7 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 	 * only when the HPD bit is set so that the retimer stays in
 	 * low power mode until the external monitor is connected.
 	 */
-	if (mux_state & USB_PD_MUX_HPD_LVL)
+	if (hpd_state & USB_PD_MUX_HPD_LVL)
 		retimer_con_reg |=
 			(BB_RETIMER_HPD_LVL | BB_RETIMER_DP_CONNECTION);
 	else
@@ -536,26 +574,7 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 
 void bb_retimer_set_usb3(const struct usb_mux *me, bool enable)
 {
-	int rv;
-	uint32_t reg_val = 0;
-	int port = me->usb_port;
-
-	mutex_lock(&bb_retimer_lock[port]);
-
-	rv = bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE, &reg_val);
-	if (rv != EC_SUCCESS) {
-		mutex_unlock(&bb_retimer_lock[port]);
-		return;
-	}
-	/* Bit 5: USB_3_CONNECTION */
-	WRITE_BIT(reg_val, 5, enable);
-	rv = bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE, reg_val);
-	if (rv != EC_SUCCESS) {
-		mutex_unlock(&bb_retimer_lock[port]);
-		return;
-	}
-
-	mutex_unlock(&bb_retimer_lock[port]);
+	bb_set_idle_mode(me, !enable);
 }
 
 #ifdef CONFIG_ZEPHYR
@@ -572,6 +591,9 @@ DECLARE_HOOK(HOOK_INIT, init_retimer_mutexes, HOOK_PRIO_FIRST);
 
 static int retimer_low_power_mode(const struct usb_mux *me)
 {
+	const int port = me->usb_port;
+
+	bb_mux_state[port] = USB_PD_MUX_NONE;
 	return bb_retimer_power_enable(me, false);
 }
 
@@ -584,6 +606,9 @@ static int retimer_init(const struct usb_mux *me)
 {
 	int rv;
 	uint32_t data;
+	const int port = me->usb_port;
+
+	bb_mux_state[port] = USB_PD_MUX_NONE;
 
 	/* Burnside Bridge is powered by main AP rail */
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
@@ -627,6 +652,7 @@ static int retimer_init(const struct usb_mux *me)
 const struct usb_mux_driver bb_usb_retimer = {
 	.init = retimer_init,
 	.set = retimer_set_state,
+	.set_idle_mode = bb_set_idle_mode,
 	.enter_low_power_mode = retimer_low_power_mode,
 	.is_retimer_fw_update_capable = is_retimer_fw_update_capable,
 };
