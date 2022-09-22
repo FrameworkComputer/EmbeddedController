@@ -38,6 +38,11 @@ static void system_before_after(void *data)
 	system_clear_reset_flags(-1);
 }
 
+ZTEST(system, test_get_program_memory_addr_bad_args)
+{
+	zassert_equal(get_program_memory_addr(-1), INVALID_ADDR);
+}
+
 ZTEST(system, test_system_encode_save_flags)
 {
 	int flags_to_save = 0;
