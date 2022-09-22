@@ -381,30 +381,18 @@ void motion_sense_fifo_init(void)
 
 int motion_sense_fifo_bypass_needed(void)
 {
-	int res;
-
-	mutex_lock(&g_sensor_mutex);
-	res = bypass_needed;
-	mutex_unlock(&g_sensor_mutex);
-	return res;
+	return bypass_needed;
 }
 
 int motion_sense_fifo_wake_up_needed(void)
 {
-	int res;
-
-	mutex_lock(&g_sensor_mutex);
-	res = wake_up_needed;
-	mutex_unlock(&g_sensor_mutex);
-	return res;
+	return wake_up_needed;
 }
 
 void motion_sense_fifo_reset_needed_flags(void)
 {
-	mutex_lock(&g_sensor_mutex);
 	wake_up_needed = 0;
 	bypass_needed = 0;
-	mutex_unlock(&g_sensor_mutex);
 }
 
 void motion_sense_fifo_insert_async_event(struct motion_sensor_t *sensor,
