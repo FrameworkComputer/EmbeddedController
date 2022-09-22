@@ -572,11 +572,6 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
 	mutex_unlock(&bb_retimer_lock[port]);
 }
 
-void bb_retimer_set_usb3(const struct usb_mux *me, bool enable)
-{
-	bb_set_idle_mode(me, !enable);
-}
-
 #ifdef CONFIG_ZEPHYR
 static void init_retimer_mutexes(void)
 {
