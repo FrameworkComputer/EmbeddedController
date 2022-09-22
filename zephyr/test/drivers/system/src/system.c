@@ -8,6 +8,7 @@
 
 #include "ec_commands.h"
 #include "host_command.h"
+#include "panic.h"
 #include "system.h"
 #include "test/drivers/test_state.h"
 
@@ -41,6 +42,19 @@ static void system_before_after(void *data)
 ZTEST(system, test_get_program_memory_addr_bad_args)
 {
 	zassert_equal(get_program_memory_addr(-1), INVALID_ADDR);
+}
+
+ZTEST(system, test_system_common_pre_init__watch_dog_panic)
+{
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+
+	/* Clear all reset flags and set them arbitrarily */
+	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
+	system_common_pre_init();
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG);
 }
 
 ZTEST(system, test_system_encode_save_flags)
