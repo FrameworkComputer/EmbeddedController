@@ -150,6 +150,14 @@ const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USBC_PORT_C0,
+			/*
+			 * When a USB-A card is connected to the
+			 * chromebook, the USB_3_CONNECTION bit will be
+			 * enabled. This increases BBR power
+			 * consumption, so clear the USB3_CONNECTION bit
+			 * in S0ix and re-enable when returning to S0.
+			 */
+			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
 			.hpd_update = bb_retimer_hpd_update,
 			.i2c_port = I2C_PORT_USB_C0_C1_MUX,
@@ -160,6 +168,7 @@ const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C1] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USBC_PORT_C1,
+			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
 			.hpd_update = bb_retimer_hpd_update,
 			.i2c_port = I2C_PORT_USB_C0_C1_MUX,
@@ -170,6 +179,7 @@ const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C2] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USBC_PORT_C2,
+			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
 			.hpd_update = bb_retimer_hpd_update,
 			.i2c_port = I2C_PORT_USB_C2_C3_MUX,
@@ -180,6 +190,7 @@ const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C3] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USBC_PORT_C3,
+			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
 			.hpd_update = bb_retimer_hpd_update,
 			.i2c_port = I2C_PORT_USB_C2_C3_MUX,
