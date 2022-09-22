@@ -12,10 +12,18 @@
 			};
 		};
 
-		power-state-near-full {
+		power-state-charge-lvl-2 {
 			charge-state = "PWR_STATE_CHARGE";
-			/* Battery percent range (>= 95%, <= Full) */
-			batt-lvl = <95 100>;
+			/* Battery percent range (>= 95%, <= Near Full) */
+			batt-lvl = <95 97>;
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_white>;
