@@ -6,5 +6,7 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(vboot_efs2)
 
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
+
 FILE(GLOB app_sources src/*.c)
 target_sources(app PRIVATE ${app_sources})

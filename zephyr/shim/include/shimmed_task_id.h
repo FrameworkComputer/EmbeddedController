@@ -171,7 +171,35 @@ enum {
 #if defined(CONFIG_TEST_TASK_LIST) && !defined(CROS_EC_TASK_LIST)
 #define CROS_EC_TASK_LIST CONFIG_TEST_TASK_LIST
 #endif /* CONFIG_TEST_TASK_LIST && !CROS_EC_TASK_LIST */
-#endif /* !CONFIG_ZTEST */
+
+/*
+ * Tests often must link in files that reference task IDs, even when the
+ * shimmed tasks are not created.  Define stub tasks to satisfy the final link.
+ */
+#else /* !CONFIG_SHIMMED_TASKS && !CONFIG_HAS_TEST_TASKS */
+#define CROS_EC_TASK_LIST                                                   \
+	CROS_EC_TASK(CHG_RAMP, NULL, 0, 0, EC_TASK_CHG_RAMP_PRIO)           \
+	CROS_EC_TASK(USB_CHG, NULL, 0, 0, EC_TASK_USB_CHG_PRIO)             \
+	CROS_EC_TASK(DPS, NULL, 0, 0, EC_TASK_DPS_PRIO)                     \
+	CROS_EC_TASK(CHARGER, NULL, 0, 0, EC_TASK_CHARGER_PRIO)             \
+	CROS_EC_TASK(CHIPSET, NULL, 0, 0, EC_TASK_CHIPSET_PRIO)             \
+	CROS_EC_TASK(MOTIONSENSE, NULL, 0, 0, EC_TASK_MOTIONSENSE_PRIO)     \
+	CROS_EC_TASK(USB_MUX, NULL, 0, 0, EC_TASK_USB_MUX_PRIO)             \
+	CROS_EC_TASK(HOSTCMD, NULL, 0, 0, EC_TASK_HOSTCMD_PRIO)             \
+	CROS_EC_TASK(KEYPROTO, NULL, 0, 0, EC_TASK_KEYPROTO_PRIO)           \
+	CROS_EC_TASK(POWERBTN, NULL, 0, 0, EC_TASK_POWERBTN_PRIO)           \
+	CROS_EC_TASK(KEYSCAN, NULL, 0, 0, EC_TASK_KEYSCAN_PRIO)             \
+	CROS_EC_TASK(PD_C0, NULL, 0, 0, EC_TASK_PD_C0_PRIO)                 \
+	CROS_EC_TASK(PD_C1, NULL, 0, 0, EC_TASK_PD_C1_PRIO)                 \
+	CROS_EC_TASK(PD_C2, NULL, 0, 0, EC_TASK_PD_C2_PRIO)                 \
+	CROS_EC_TASK(PD_C3, NULL, 0, 0, EC_TASK_PD_C3_PRIO)                 \
+	CROS_EC_TASK(PD_INT_SHARED, NULL, 0, 0, EC_TASK_PD_INT_SHARED_PRIO) \
+	CROS_EC_TASK(PD_INT_C0, NULL, 0, 0, EC_TASK_PD_INT_C0_PRIO)         \
+	CROS_EC_TASK(PD_INT_C1, NULL, 1, 0, EC_TASK_PD_INT_C1_PRIO)         \
+	CROS_EC_TASK(PD_INT_C2, NULL, 2, 0, EC_TASK_PD_INT_C2_PRIO)         \
+	CROS_EC_TASK(PD_INT_C3, NULL, 3, 0, EC_TASK_PD_INT_C3_PRIO)
+
+#endif /* CONFIG_SHIMMED_TASKS */
 
 #ifndef CROS_EC_TASK_LIST
 #define CROS_EC_TASK_LIST
