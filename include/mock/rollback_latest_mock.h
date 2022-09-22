@@ -29,4 +29,8 @@ struct mock_ctrl_latest_rollback {
 
 extern struct mock_ctrl_latest_rollback mock_ctrl_latest_rollback;
 
+extern const struct rollback_data fake_latest_rollback_zeros;
+
+extern const struct rollback_data fake_latest_rollback_real;
+
 #endif /* __MOCK_ROLLBACK_LATEST_MOCK_H */

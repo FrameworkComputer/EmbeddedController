@@ -23,7 +23,7 @@
 struct mock_ctrl_latest_rollback mock_ctrl_latest_rollback =
 	MOCK_CTRL_DEFAULT_LATEST_ROLLBACK;
 
-static const struct rollback_data fake_latest_rollback_zeros = {
+const struct rollback_data fake_latest_rollback_zeros = {
 	.cookie = 0,
 	.secret = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -34,7 +34,7 @@ static const struct rollback_data fake_latest_rollback_zeros = {
 	.rollback_min_version = 0,
 };
 
-static const struct rollback_data fake_latest_rollback_real = {
+const struct rollback_data fake_latest_rollback_real = {
 	.cookie = 9,
 	.secret = {
 	0xcf, 0xe3, 0x23, 0x76, 0x35, 0x04, 0xc2, 0x0f, 0x0d, 0xb6, 0x02,
