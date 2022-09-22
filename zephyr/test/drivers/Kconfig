@@ -17,6 +17,9 @@ config LINK_TEST_SUITE_HOST_COMMANDS
 config LINK_TEST_SUITE_ISL923X
 	bool "Link and test the isl923x tests"
 
+config LINK_TEST_SUITE_I2C_CONTROLLER
+	bool "Link and test the i2c_controller tests"
+
 config LINK_TEST_SUITE_KEYBOARD_SCAN
 	bool "Link and test the keyboard_scan tests"
 
