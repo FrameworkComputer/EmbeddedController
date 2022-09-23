@@ -304,7 +304,7 @@ config PLATFORM_EC_USB_PD_TRY_SRC
 config PLATFORM_EC_USB_PD_USB4
 	bool "USB4 support"
 	depends on PLATFORM_EC_USB_PD_REV30
-	default y
+	default n
 	help
 	  This enables support for entering into USB4 mode between two port
 	  partners. The provides new features such as higher speeds and more
