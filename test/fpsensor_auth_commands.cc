@@ -94,6 +94,19 @@ test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 	positive_match_secret_state.template_matched = 0;
 	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
 
+	fp_reset_and_clear_context();
+	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
+
+	enum ec_status rv;
+	struct ec_response_fp_generate_nonce nonce_response;
+
+	rv = test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
+				    &nonce_response, sizeof(nonce_response));
+
+	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
+
+	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
+
 	return EC_SUCCESS;
 }
 
@@ -330,12 +343,26 @@ test_static enum ec_error_list test_fp_command_load_pairing_key_fail(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list test_fp_command_generate_nonce(void)
+{
+	enum ec_status rv;
+	struct ec_response_fp_generate_nonce nonce_response;
+
+	rv = test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
+				    &nonce_response, sizeof(nonce_response));
+
+	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 extern "C" void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_command_establish_pairing_key_without_seed);
 	RUN_TEST(test_fp_command_check_context_cleared);
+	RUN_TEST(test_fp_command_generate_nonce);
 
 	// All tests after this require the TPM seed to be set.
 	RUN_TEST(test_set_fp_tpm_seed);

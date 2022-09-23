@@ -8,9 +8,14 @@
 #ifndef __CROS_EC_FPSENSOR_AUTH_COMMANDS_H
 #define __CROS_EC_FPSENSOR_AUTH_COMMANDS_H
 
+#include <array>
+
 extern "C" {
 #include "common.h"
 }
+
+/* The auth nonce for GSC session key. */
+extern std::array<uint8_t, FP_CK_AUTH_NONCE_LEN> auth_nonce;
 
 /**
  * Check the context has been cleared or not.
