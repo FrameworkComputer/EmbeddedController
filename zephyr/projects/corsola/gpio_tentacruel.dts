@@ -9,6 +9,12 @@
 	aliases {
 		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &ec_flash_wp_odl;
+		gpio-en-hdmi-pwr = &gpio_ec_x_gpio1;
+		gpio-usb-c1-frs-en = &gpio_ec_x_gpio1;
+		gpio-usb-c1-ppc-int-odl = &gpio_x_ec_gpio2;
+		gpio-ps185-ec-dp-hpd = &gpio_x_ec_gpio2;
+		gpio-usb-c1-dp-in-hpd = &gpio_ec_x_gpio3;
+		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
 	};
 
 	named-gpios {
@@ -155,18 +161,6 @@
 			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
-	};
-
-	/*
-	 * aliases for sub-board GPIOs
-	 */
-	aliases {
-		gpio-en-hdmi-pwr = &gpio_ec_x_gpio1;
-		gpio-usb-c1-frs-en = &gpio_ec_x_gpio1;
-		gpio-usb-c1-ppc-int-odl = &gpio_x_ec_gpio2;
-		gpio-ps185-ec-dp-hpd = &gpio_x_ec_gpio2;
-		gpio-usb-c1-dp-in-hpd = &gpio_ec_x_gpio3;
-		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
 	};
 
 	hibernate-wake-pins {

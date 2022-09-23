@@ -65,12 +65,12 @@
 			status = "okay";
 		};
 
-		lsm6dso_accel_data: lsm6dso-drv-data {
+		lsm6dso_accel_data: lsm6dso-accel-drv-data {
 			compatible = "cros-ec,drvdata-lsm6dso";
 			status = "okay";
 		};
 
-		lsm6dso_gyro_data: lsm6dso-drv-data {
+		lsm6dso_gyro_data: lsm6dso-gyro-drv-data {
 			compatible = "cros-ec,drvdata-lsm6dso";
 			status = "okay";
 		};
