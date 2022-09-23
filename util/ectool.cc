@@ -316,7 +316,9 @@ const char help_str[] =
 	"  switches\n"
 	"      Prints current EC switch positions\n"
 	"  temps <sensorid>\n"
-	"      Print temperature and fan speed\n"
+	"      Print temperature and temperature ratio between fan_off and\n"
+	"      fan_max values, which could be a fan speed if it's controlled\n"
+	"      linearly\n"
 	"  tempsinfo <sensorid>\n"
 	"      Print temperature sensor info.\n"
 	"  thermalget <platform-specific args>\n"
@@ -3279,40 +3281,50 @@ int read_mapped_temperature(int id)
 	return rv;
 }
 
-static int get_thermal_fan_percent(int temp, int sensor_id)
+static int get_temp_ratio(int temp, int fan_off, int fan_max)
 {
-	struct ec_params_thermal_get_threshold_v1 p;
-	struct ec_thermal_config r;
-	int rv = 0;
-
-	p.sensor_num = sensor_id;
-	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1, &p, sizeof(p), &r,
-			sizeof(r));
-
-	if (rv <= 0 || r.temp_fan_max == r.temp_fan_off)
-		return -1;
-	if (temp < r.temp_fan_off)
+	if (temp < fan_off)
 		return 0;
-	if (temp > r.temp_fan_max)
+	if (temp > fan_max)
 		return 100;
-	return 100 * (temp - r.temp_fan_off) /
-	       (r.temp_fan_max - r.temp_fan_off);
+	return 100 * (temp - fan_off) / (fan_max - fan_off);
 }
 
 static int cmd_temperature_print(int id, int mtemp)
 {
-	struct ec_response_temp_sensor_get_info r;
-	struct ec_params_temp_sensor_get_info p;
+	struct ec_response_temp_sensor_get_info temp_r;
+	struct ec_params_temp_sensor_get_info temp_p;
+	struct ec_params_thermal_get_threshold_v1 p;
+	struct ec_thermal_config r;
 	int rc;
 	int temp = mtemp + EC_TEMP_SENSOR_OFFSET;
 
-	p.id = id;
-	rc = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0, &p, sizeof(p), &r,
-			sizeof(r));
+	temp_p.id = id;
+	rc = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0, &temp_p,
+			sizeof(temp_p), &temp_r, sizeof(temp_r));
 	if (rc < 0)
 		return rc;
-	printf("%-20s  %d K (= %d C) %11d%%\n", r.sensor_name, temp,
-	       K_TO_C(temp), get_thermal_fan_percent(temp, id));
+
+	p.sensor_num = id;
+	rc = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1, &p, sizeof(p), &r,
+			sizeof(r));
+
+	printf("%-20s  %d K (= %d C)", temp_r.sensor_name, temp, K_TO_C(temp));
+
+	if(rc >= 0)
+		/*
+		 * Check for fan_off == fan_max when their
+		 * values are either zero or non-zero
+		 */
+		if (r.temp_fan_off == r.temp_fan_max)
+			printf("        N/A (fan_off=%d K, fan_max=%d K)",
+			       r.temp_fan_off, r.temp_fan_max);
+		else
+			printf("  %10d%% (%d K and %d K)",
+			       get_temp_ratio(temp, r.temp_fan_off,
+			       r.temp_fan_max), r.temp_fan_off, r.temp_fan_max);
+	else
+		printf("%20s(rc=%d)", "error", rc);
 
 	return 0;
 }
@@ -3323,7 +3335,7 @@ int cmd_temperature(int argc, char *argv[])
 	int id;
 	char *e;
 	const char header[] = "--sensor name -------- temperature "
-			      "-------- fan speed --\n";
+			      "-------- ratio (fan_off and fan_max) --\n";
 
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <sensorid> | all\n", argv[0]);
@@ -3349,6 +3361,7 @@ int cmd_temperature(int argc, char *argv[])
 				break;
 			default:
 				cmd_temperature_print(id, mtemp);
+				printf("\n");
 			}
 		}
 		return 0;
