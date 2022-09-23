@@ -7870,6 +7870,17 @@ struct ec_response_fp_generate_nonce {
 	uint8_t nonce[FP_CK_AUTH_NONCE_LEN];
 } __ec_align4;
 
+#define FP_CONTEXT_USERID_LEN 32
+#define FP_CONTEXT_USERID_IV_LEN 16
+#define FP_CONTEXT_KEY_LEN 32
+
+#define EC_CMD_FP_NONCE_CONTEXT 0x0414
+struct ec_params_fp_nonce_context {
+	uint8_t gsc_nonce[FP_CK_AUTH_NONCE_LEN];
+	uint8_t enc_user_id[FP_CONTEXT_USERID_LEN];
+	uint8_t enc_user_id_iv[FP_CONTEXT_USERID_IV_LEN];
+} __ec_align4;
+
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */
 

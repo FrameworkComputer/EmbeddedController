@@ -356,6 +356,31 @@ test_static enum ec_error_list test_fp_command_generate_nonce(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list test_fp_command_nonce_context(void)
+{
+	enum ec_status rv;
+	struct ec_response_fp_generate_nonce nonce_response;
+	struct ec_params_fp_nonce_context nonce_params = {};
+
+	fp_reset_and_clear_context();
+
+	templ_valid = 1;
+
+	rv = test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
+				    &nonce_response, sizeof(nonce_response));
+
+	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
+
+	rv = test_send_host_command(EC_CMD_FP_NONCE_CONTEXT, 0, &nonce_params,
+				    sizeof(nonce_params), NULL, 0);
+
+	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
+
+	TEST_EQ(templ_valid, 1u, "%d");
+
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 extern "C" void run_test(int argc, const char **argv)
@@ -371,5 +396,6 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_establish_pairing_key_fail);
 	RUN_TEST(test_fp_command_establish_and_load_pairing_key);
 	RUN_TEST(test_fp_command_load_pairing_key_fail);
+	RUN_TEST(test_fp_command_nonce_context);
 	test_print_result();
 }
