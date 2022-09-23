@@ -42,7 +42,7 @@ static enum rgbkbd_state rgbkbd_state;
 const struct rgbkbd_init rgbkbd_init_default = {
 	.gcc = RGBKBD_MAX_GCC_LEVEL / 2,
 	.scale = { RGBKBD_MAX_SCALE, RGBKBD_MAX_SCALE, RGBKBD_MAX_SCALE },
-	.color = { .r = 0xff, .g = 0xff, .b = 0xff }, /* white */
+	.color = { .r = 0x0, .g = 0x0, .b = 0x0 },
 };
 
 const struct rgbkbd_init *rgbkbd_init_setting = &rgbkbd_init_default;
