@@ -199,13 +199,15 @@ config PLATFORM_EC_USB_PD_ALT_MODE_UFP
 	  resolves to the UFP role.
 
 config PLATFORM_EC_USB_PD_USB32_DRD
-	bool "Port is cable of operating as an USB3.2 device"
-	default y
+	bool "Port is capable of operating as a USB3.2 device"
+	default n
 	help
 	  Enable this if the board's USB Power Delivery Downward Facing Port is
-	  able to support the USB3.2 standard. This is advertised to the
-	  other end so that it can potentially take advantage of the additional
-	  features available.
+	  capable of operating as both a USB Host (DFP, assumed by default) and a USB
+	  Device (UFP): it is a Dual-Role Data (DRD) device.
+
+	  This is advertised to port partners so they can potentially take advantage
+	  of the additional features available.
 
 config PLATFORM_EC_USB_PD_DP_HPD_GPIO
 	bool "Hotplug Detect (HPD) is controlled by an EC GPIO"
