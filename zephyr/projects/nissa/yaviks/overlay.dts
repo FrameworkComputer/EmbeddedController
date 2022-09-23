@@ -116,6 +116,10 @@
 			gpios = <&gpioe 0 0>;
 			no-auto-init;
 		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpioa 1 GPIO_OUTPUT>;
+			no-auto-init;
+		};
 	};
 
 	/*
@@ -245,6 +249,18 @@
 			tcpci_mux_1: tcpci-mux-1 {
 				compatible = "parade,usbc-mux-ps8xxx";
 			};
+		};
+	};
+
+	fans {
+		compatible = "cros-ec,fans";
+		fan_0 {
+			pwms = <&pwm2 PWM_CHANNEL_2 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
+			tach = <&tach1>;
+			rpm_min = <1500>;
+			rpm_start = <1500>;
+			rpm_max = <6500>;
+			enable_gpio = <&gpio_fan_enable>;
 		};
 	};
 };
@@ -383,4 +399,20 @@
 
 &usbpd0 {
 	status = "okay";
+};
+
+/* pwm for fan */
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+/* fan tachometer sensor */
+&tach1 {
+	status = "okay";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
+	pinctrl-0 = <&tach1a_gpd7_default>;
+	pinctrl-names = "default";
 };
