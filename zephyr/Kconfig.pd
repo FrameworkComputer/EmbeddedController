@@ -314,7 +314,7 @@ config PLATFORM_EC_USB_PD_USB4
 config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
 	bool "Thunderbolt-compatible mode support"
 	depends on PLATFORM_EC_USB_PD_REV30
-	default y
+	default n
 	help
 	  Enable this to allow entering into Thunderbolt-compatible mode between
 	  two port partners. This does not require that USB4 mode be enabled.
