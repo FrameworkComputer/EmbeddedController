@@ -116,11 +116,13 @@ int print_temps(void)
 #ifdef CONFIG_THROTTLE_AP
 			if (thermal_params[i].temp_fan_off &&
 			    thermal_params[i].temp_fan_max)
-				ccprintf("  %11d%%",
+				ccprintf("  %11d%% (%d K and %d K)",
 					 thermal_fan_percent(
 						 thermal_params[i].temp_fan_off,
 						 thermal_params[i].temp_fan_max,
-						 t));
+						 t),
+					 thermal_params[i].temp_fan_off,
+					 thermal_params[i].temp_fan_max);
 #endif
 			ccprintf("\n");
 			break;
@@ -147,7 +149,7 @@ static int command_temps(int argc, const char **argv)
 	return print_temps();
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps, NULL,
-			"Print temp sensors and fan speed");
+			"Print temp sensors and temp ratio.");
 #endif
 
 /*****************************************************************************/
