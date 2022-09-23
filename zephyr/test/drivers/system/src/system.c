@@ -4,6 +4,7 @@
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 #include "ec_commands.h"
@@ -15,6 +16,10 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "mock/power.h"
+
+FAKE_VALUE_FUNC(int, system_run_image_copy_with_flags, enum ec_image, int);
+FAKE_VOID_FUNC(system_disable_jump);
+FAKE_VOID_FUNC(jump_to_image, uintptr_t);
 
 /* System Host Commands */
 
@@ -41,6 +46,10 @@ static void system_before_after(void *data)
 {
 	ARG_UNUSED(data);
 	system_clear_reset_flags(-1);
+
+	RESET_FAKE(system_run_image_copy_with_flags);
+	RESET_FAKE(system_disable_jump);
+	RESET_FAKE(jump_to_image);
 }
 
 ZTEST(system, test_system_enter_hibernate__at_g3)
@@ -150,6 +159,106 @@ ZTEST(system, test_system_encode_save_flags_mutually_exclusive_reset_flags)
 	zassert_equal(0, saved_flags & EC_RESET_FLAG_HARD, NULL);
 	zassert_equal(0, saved_flags & EC_RESET_FLAG_HIBERNATE, NULL);
 	zassert_not_equal(0, saved_flags & EC_RESET_FLAG_SOFT, NULL);
+}
+
+/* System Console Commands */
+
+ZTEST_USER(system, test_console_cmd_sysjump__no_args)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	/* No output from no-arg commands, so just test failure */
+	zassert_equal(shell_execute_cmd(shell_zephyr, "sysjump"),
+		      EC_ERROR_PARAM_COUNT);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__RO)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	/* Since we start at RO this acts as NOOP */
+	zassert_ok(shell_execute_cmd(shell_zephyr, "sysjump RO"));
+
+	zassert_equal(system_run_image_copy_with_flags_fake.call_count, 1);
+	zassert_equal(system_run_image_copy_with_flags_fake.arg0_val,
+		      EC_IMAGE_RO);
+	zassert_equal(system_run_image_copy_with_flags_fake.arg1_val,
+		      EC_RESET_FLAG_STAY_IN_RO);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__RW)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "sysjump RW"));
+	zassert_equal(system_run_image_copy_with_flags_fake.call_count, 1);
+	zassert_equal(system_run_image_copy_with_flags_fake.arg0_val,
+		      EC_IMAGE_RW);
+	zassert_equal(system_run_image_copy_with_flags_fake.arg1_val, 0);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__A)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "sysjump A"));
+	zassert_equal(system_run_image_copy_with_flags_fake.call_count, 1);
+	zassert_equal(system_run_image_copy_with_flags_fake.arg0_val,
+		      EC_IMAGE_RW);
+	zassert_equal(system_run_image_copy_with_flags_fake.arg1_val, 0);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__B)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	/* Downstream Zephyr isn't setup with A/B images */
+	zassert_equal(shell_execute_cmd(shell_zephyr, "sysjump B"),
+		      EC_ERROR_PARAM1);
+	zassert_equal(system_run_image_copy_with_flags_fake.call_count, 0);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__disable)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "sysjump disable"));
+	zassert_equal(system_run_image_copy_with_flags_fake.call_count, 0);
+	zassert_equal(system_disable_jump_fake.call_count, 1);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__addr_while_sys_locked)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	system_is_locked_fake.return_val = true;
+
+	/* No output to test against */
+	zassert_equal(shell_execute_cmd(shell_zephyr, "sysjump 0x1234"),
+		      EC_ERROR_ACCESS_DENIED);
+	zassert_equal(system_is_locked_fake.call_count, 1);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__addr)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	/* No output to test against */
+	zassert_ok(shell_execute_cmd(shell_zephyr, "sysjump 0x1234"));
+	zassert_equal(system_is_locked_fake.call_count, 1);
+	zassert_equal(jump_to_image_fake.call_count, 1);
+	zassert_equal(jump_to_image_fake.arg0_val, 0x1234);
+}
+
+ZTEST_USER(system, test_console_cmd_sysjump__addr_bad_number)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	/* No output to test against */
+	zassert_equal(shell_execute_cmd(shell_zephyr, "sysjump O___o"),
+		      EC_ERROR_PARAM1);
+	zassert_equal(system_is_locked_fake.call_count, 1);
+	zassert_equal(jump_to_image_fake.call_count, 0);
 }
 
 ZTEST_SUITE(system, drivers_predicate_post_main, NULL, system_before_after,
