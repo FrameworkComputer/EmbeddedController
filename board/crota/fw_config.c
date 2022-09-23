@@ -43,8 +43,6 @@ void board_init_fw_config(void)
 		if (fw_config.raw_value == 0) {
 			CPRINTS("CBI: FW_CONFIG is zero, using board defaults");
 			fw_config = fw_config_defaults;
-		} else if (fw_config.usb_db == DB_USB_ABSENT2) {
-			fw_config.usb_db = DB_USB_ABSENT;
 		}
 	}
 }
@@ -52,9 +50,4 @@ void board_init_fw_config(void)
 union brya_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
-}
-
-enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void)
-{
-	return fw_config.usb_db;
 }

@@ -223,17 +223,6 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 #endif /* CONFIG_CHARGE_RAMP_SW */
 
-void config_usb_db_type(void)
-{
-	enum ec_cfg_usb_db_type db_type = ec_cfg_usb_db_type();
-
-	/*
-	 * TODO(b/180434685): implement multiple DB types
-	 */
-
-	CPRINTS("Configured USB DB type number is %d", db_type);
-}
-
 __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
 	enum ioex_signal rst_signal;
