@@ -20,6 +20,12 @@ config BOARD_WINTERHOLD
 	  Build Google Winterhold reference board.  This board uses an AMD SoC
 	  and NPCX9 EC
 
+config BOARD_FROSTFLOW
+	bool "Google Frostflow Board"
+	help
+	  Build Google Frostflow reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
+
 module = SKYRIM
 module-str = Skyrim board-specific code
 source "subsys/logging/Kconfig.template.log_config"

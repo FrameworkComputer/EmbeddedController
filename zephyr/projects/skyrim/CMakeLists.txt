@@ -45,3 +45,15 @@ if(DEFINED CONFIG_BOARD_WINTERHOLD)
 		"src/winterhold/kb_backlight.c"
     )
 endif()
+
+if(DEFINED CONFIG_BOARD_FROSTFLOW)
+	project(frostflow)
+	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_FROSTFLOW include)
+	zephyr_library_sources(
+			"src/frostflow/usb_mux_config.c"
+			"src/frostflow/ppc_config.c"
+			"src/frostflow/form_factor.c"
+			"src/frostflow/alt_charger.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/frostflow/fan.c")
+endif()
