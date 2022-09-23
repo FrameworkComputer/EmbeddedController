@@ -16,6 +16,7 @@ void basic_i2c_device_reset(const struct emul *emul)
 		(struct basic_i2c_device_data *)emul->data;
 
 	memset(data->regs, 0, sizeof(data->regs));
+	memset(data->extended_regs, 0, sizeof(data->extended_regs));
 }
 
 static int basic_i2c_device_write(const struct emul *emul, int reg, uint8_t val,
@@ -24,7 +25,18 @@ static int basic_i2c_device_write(const struct emul *emul, int reg, uint8_t val,
 	struct basic_i2c_device_data *data =
 		(struct basic_i2c_device_data *)emul->data;
 
-	uint8_t *regs = data->regs;
+	uint8_t *regs;
+
+	if (data->regs[BASIC_I2C_DEV_EXT_ACCESS_REG]) {
+		/* Accessing the extended register set */
+		regs = data->extended_regs;
+
+		/* Decrement one to account for the extended access reg byte */
+		reg = data->regs[BASIC_I2C_DEV_EXT_ACCESS_REG] - 1;
+	} else {
+		regs = data->regs;
+	}
+
 	int pos = reg + bytes - 1;
 
 	if (!IN_RANGE(pos, 0, sizeof(data->regs) - 1)) {
@@ -41,7 +53,16 @@ static int basic_i2c_device_read(const struct emul *emul, int reg, uint8_t *val,
 	struct basic_i2c_device_data *data =
 		(struct basic_i2c_device_data *)emul->data;
 
-	uint8_t *regs = data->regs;
+	uint8_t *regs;
+
+	if (data->regs[BASIC_I2C_DEV_EXT_ACCESS_REG]) {
+		/* Accessing the extended register set */
+		regs = data->extended_regs;
+		reg = data->regs[BASIC_I2C_DEV_EXT_ACCESS_REG];
+	} else {
+		regs = data->regs;
+	}
+
 	int pos = reg + bytes;
 
 	if (!IN_RANGE(pos, 0, sizeof(data->regs) - 1)) {

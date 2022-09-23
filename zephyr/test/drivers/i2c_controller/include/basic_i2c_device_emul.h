@@ -7,6 +7,8 @@
 
 #include "emul/emul_common_i2c.h"
 
+#define BASIC_I2C_DEV_EXT_ACCESS_REG 0xFF
+
 /**
  * @brief Emulator state struct
  *
@@ -14,6 +16,7 @@
 struct basic_i2c_device_data {
 	struct i2c_common_emul_data common;
 	uint8_t regs[256];
+	uint8_t extended_regs[256];
 };
 
 /**
