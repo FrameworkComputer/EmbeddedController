@@ -25,6 +25,7 @@ import yaml  # pylint: disable=import-error
 
 TAG_TO_DESCRIPTION = {
     "common": "Directly test shared code in the ec/common dir",
+    "mkbp": "Testing the MKBP (Matrix Keyboard Protocol) stack",
     "system": "Directly test functions in common/system.c or shim/src/system.c",
 }
 

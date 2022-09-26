@@ -65,6 +65,9 @@ tests:
       - CONFIG_PLATFORM_EC_MKBP_INPUT_DEVICES=y
       - CONFIG_PLATFORM_EC_MKBP_EVENT=y
       - CONFIG_PLATFORM_EC_MKBP_USE_GPIO=y
+    tags:
+      common
+      mkbp
   drivers.rt9490:
     extra_args: CONF_FILE="prj.conf;rt9490/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./rt9490/charger.dts"
     extra_configs:
