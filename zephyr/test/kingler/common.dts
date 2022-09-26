@@ -7,6 +7,19 @@
 #include <npcx_emul.dts>
 
 / {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+		};
+	};
+
 	/* These are temporary just to get the test to build.
 	 * Should be replaced with the correct accel drivers,
 	 * but we're not testing that code right now anyway.

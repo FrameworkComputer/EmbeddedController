@@ -167,7 +167,7 @@
 			gpios = <&gpio6 2 GPIO_OUTPUT_LOW>;
 		};
 		dp_aux_path_sel: dp_aux_path_sel {
-			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio6 3 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_ec_bl_en_od: ec_bl_en_od {
 			gpios = <&gpio4 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
@@ -216,7 +216,7 @@
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
-		ccd_mode_odl {
+		gpio_ccd_mode_odl: ccd_mode_odl {
 			gpios = <&gpioe 5 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};

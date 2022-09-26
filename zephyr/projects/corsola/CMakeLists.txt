@@ -10,6 +10,7 @@ cros_ec_library_include_directories(include)
 
 # Include selected EC source from the baseboard
 zephyr_library_sources(
+	"src/board.c"
 	"src/board_chipset.c"
 	"src/hibernate.c"
 )

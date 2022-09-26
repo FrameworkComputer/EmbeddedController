@@ -49,6 +49,11 @@ static void baseboard_init(void)
 #ifdef CONFIG_VARIANT_CORSOLA_USBA
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usba));
 #endif
+	/* If CCD mode has enabled before init, force the ccd_interrupt. */
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ccd_mode_odl))) {
+		ccd_interrupt(GPIO_CCD_MODE_ODL);
+	}
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ccd_mode_odl));
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_PRE_DEFAULT);
 

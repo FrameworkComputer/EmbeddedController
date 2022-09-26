@@ -30,6 +30,10 @@ tests:
     extra_configs:
       - CONFIG_TEST_DB_DETECT_NONE=y
       - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+  kingler.ccd:
+    extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/cbi_steelix.dts;../projects/corsola/gpio_steelix.dts"
+    extra_configs:
+      - CONFIG_TEST_KINGLER_CCD=y
   kingler.alt_sensor:
     extra_args: DTC_OVERLAY_FILE="./common.dts;../projects/corsola/interrupts_kingler.dts;../projects/corsola/interrupts_steelix.dts;../projects/corsola/cbi_steelix.dts;../projects/corsola/gpio_steelix.dts"
     extra_configs:

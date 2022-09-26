@@ -18,6 +18,9 @@ FAKE_VOID_FUNC(switch_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(tcpc_alert_event, enum gpio_signal);
 FAKE_VOID_FUNC(ppc_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bc12_interrupt, enum gpio_signal);
+#ifndef CONFIG_TEST_KINGLER_CCD
+FAKE_VOID_FUNC(ccd_interrupt, enum gpio_signal);
+#endif
 
 #ifdef CONFIG_TEST_STEELIX_RUSTY
 FAKE_VOID_FUNC(x_ec_interrupt, enum gpio_signal);

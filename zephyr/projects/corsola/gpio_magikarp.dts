@@ -155,7 +155,7 @@
 			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
-		ccd_mode_odl {
+		gpio_ccd_mode_odl: ccd_mode_odl {
 			gpios = <&gpioc 4 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};

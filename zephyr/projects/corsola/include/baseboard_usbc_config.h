@@ -17,6 +17,7 @@
 #endif
 
 void ppc_interrupt(enum gpio_signal signal);
+void ccd_interrupt(enum gpio_signal signal);
 
 /* USB-A ports */
 enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_COUNT };

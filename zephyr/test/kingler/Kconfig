@@ -48,4 +48,9 @@ config TEST_ALT_SENSOR_PROBE
 	  Include alt_sensor.c into the binary to test the alt sensor probe via
 	  SSFC.
 
+config TEST_KINGLER_CCD
+	bool "Run the tests intended for alt sensor probe"
+	help
+	  Include alt_sensor.c into the binary to test the alt sensor probe via
+	  SSFC.
 source "Kconfig.zephyr"

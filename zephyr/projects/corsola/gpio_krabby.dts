@@ -155,6 +155,10 @@
 			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			gpios = <&gpioc 4 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		};
 	};
 
 	hibernate-wake-pins {
@@ -174,8 +178,6 @@
 			<&gpioe 1 GPIO_INPUT>,
 			/* ec_pen_chg_dis_odl */
 			<&gpioh 3 GPIO_ODR_HIGH>,
-			/* ccd_mode_odl */
-			<&gpioc 4 GPIO_INPUT>,
 			/* unnamed nc pins */
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
