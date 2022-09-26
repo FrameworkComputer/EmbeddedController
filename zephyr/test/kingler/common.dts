@@ -52,11 +52,11 @@
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
-		i2c_sensor: sensor {
+		i2c_sensor: i2c-sensor {
 			i2c-port = <&i2c0_0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
-		i2c_eeprom: sensor {
+		i2c_eeprom: i2c-eeprom {
 			i2c-port = <&i2c3_0>;
 			enum-names = "I2C_PORT_EEPROM";
 		};
