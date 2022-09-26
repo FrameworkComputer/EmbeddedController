@@ -38,15 +38,6 @@ const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 	return &cc_parameter[port];
 }
 
-uint16_t tcpc_get_alert_status(void)
-{
-	/*
-	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
-	 * chip code (it83xx/intc.c)
-	 */
-	return 0;
-}
-
 void board_reset_pd_mcu(void)
 {
 	/*

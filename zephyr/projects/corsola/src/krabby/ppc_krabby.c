@@ -29,17 +29,3 @@ void ppc_interrupt(enum gpio_signal signal)
 		syv682x_interrupt(1);
 	}
 }
-
-int ppc_get_alert_status(int port)
-{
-	if (port == 0) {
-		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-			       usb_c0_ppc_bc12_int_odl)) == 0;
-	}
-	if (port == 1 && corsola_get_db_type() == CORSOLA_DB_TYPEC) {
-		return gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(
-			       gpio_usb_c1_ppc_int_odl)) == 0;
-	}
-
-	return 0;
-}
