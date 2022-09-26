@@ -1,4 +1,11 @@
 common:
   platform_allow: native_posix
 tests:
-  system.default: {}
+  system.default:
+    extra_configs:
+      - CONFIG_SHELL_BACKEND_DUMMY=y
+      - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=1000
+      - CONFIG_SHELL_BACKEND_SERIAL=n
+    tags:
+      common
+      system
