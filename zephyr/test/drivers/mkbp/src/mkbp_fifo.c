@@ -78,6 +78,24 @@ ZTEST_F(mkbp_fifo, test_fifo_add_keyboard_key_matrix_event)
 	zassert_equal(out[KEY_MATRIX_EVENT_DATA_SIZE], 0, NULL);
 }
 
+ZTEST_F(mkbp_fifo, test_fifo_add_unknown_event)
+{
+	uint8_t out[KEY_MATRIX_EVENT_DATA_SIZE + 1];
+
+	memset(out, 0, sizeof(out));
+
+	fill_array_with_incrementing_numbers(fixture->input_event_data,
+					     KEY_MATRIX_EVENT_DATA_SIZE);
+
+	/* Keyboard Key Matrix Event */
+	zassert_ok(mkbp_fifo_add(EC_MKBP_EVENT_COUNT,
+				 fixture->input_event_data),
+		   NULL);
+
+	zassert_equal(mkbp_fifo_get_next_event(out, EC_MKBP_EVENT_COUNT),
+		      -EC_ERROR_UNKNOWN);
+}
+
 ZTEST_F(mkbp_fifo, test_fifo_add_keyboard_host_event64)
 {
 	uint8_t out[KEY_MATRIX_EVENT_DATA_SIZE + 1];
