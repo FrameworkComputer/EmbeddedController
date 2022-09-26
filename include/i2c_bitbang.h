@@ -5,6 +5,8 @@
 #ifndef __CROS_EC_I2C_BITBANG_H
 #define __CROS_EC_I2C_BITBANG_H
 
+#include <stdbool.h>
+
 #include "i2c.h"
 
 extern const struct i2c_drv bitbang_drv;
