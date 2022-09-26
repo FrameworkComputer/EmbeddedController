@@ -8,7 +8,6 @@
 #include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
-#include "cryptoc/util.h"
 #include "util.h"
 
 int find_base(int base, int *c, const char **nptr)
@@ -86,7 +85,21 @@ int parse_bool(const char *s, int *dest)
 /* Constant-time memory comparison */
 int safe_memcmp(const void *s1, const void *s2, size_t size)
 {
-	return ct_memeq(s1, s2, size);
+	const uint8_t *us1 = s1;
+	const uint8_t *us2 = s2;
+	int result = 0;
+
+	if (size == 0)
+		return 0;
+
+	/*
+	 * Code snippet without data-dependent branch due to Nate Lawson
+	 * (nate@root.org) of Root Labs.
+	 */
+	while (size--)
+		result |= *us1++ ^ *us2++;
+
+	return result != 0;
 }
 
 void reverse(void *dest, size_t len)

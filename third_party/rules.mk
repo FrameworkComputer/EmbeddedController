@@ -9,6 +9,7 @@
 
 # Build and link against libcryptoc.
 # See https://chromium.googlesource.com/chromiumos/third_party/cryptoc .
+ifeq ($(CONFIG_LIBCRYPTOC),y)
 
 # The cryptoc path can be overridden on invocation, as in the following example:
 # $ make CRYPTOC_DIR=~/src/cryptoc BOARD=bloonchipper
@@ -52,3 +53,5 @@ test-targets=$(foreach test,$(test-list-y),\
 	$(out)/RW/$(test).RW.elf $(out)/RO/$(test).RO.elf)
 $(test-targets): LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
 $(test-targets): $(out)/cryptoc/libcryptoc.a
+
+endif # CONFIG_LIBCRYPTOC

@@ -396,6 +396,9 @@
 /* Define which ALS sensor is used for dimming the lightbar when dark */
 #undef CONFIG_ALS_LIGHTBAR_DIMMING
 
+/* Link against third_party/cryptoc. */
+#undef CONFIG_LIBCRYPTOC
+
 /* Support AP hang detection host command and state machine */
 #undef CONFIG_AP_HANG_DETECT
 
@@ -6247,6 +6250,14 @@
 #endif
 
 /*****************************************************************************/
+/*
+ * Define CONFIG_LIBCRYPTOC if a board needs to read secret data from the
+ * anti-rollback block.
+ */
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+#define CONFIG_LIBCRYPTOC
+#endif
+
 /*
  * Handle task-dependent configs.
  *

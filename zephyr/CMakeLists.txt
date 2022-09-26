@@ -130,19 +130,6 @@ endif()
 
 add_subdirectory("subsys")
 
-set(cryptoc_dir "../../../third_party/cryptoc")
-zephyr_library_sources(
-        ${cryptoc_dir}/hmac.c
-        ${cryptoc_dir}/md5.c
-        ${cryptoc_dir}/p256.c
-        ${cryptoc_dir}/p256_ec.c
-        ${cryptoc_dir}/p256_ecdsa.c
-        ${cryptoc_dir}/p256_prng.c
-        ${cryptoc_dir}/sha224.c
-        ${cryptoc_dir}/util.c
-)
-zephyr_library_include_directories(${cryptoc_dir}/include)
-
 # Creates a phony target all.libraries in case you only want to build the
 # libraries and not the binaries. For example for creating the initial zero
 # coverage files.
