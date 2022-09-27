@@ -97,8 +97,6 @@ def build(opts):
     with open(opts.metrics, "w") as file:
         file.write(json_format.MessageToJson(metric_list))
 
-    run_twister(platform_ec, opts.code_coverage, ["--build-only"])
-
 
 UNITS = {
     "B": 1,
@@ -245,7 +243,7 @@ def test(opts):
     # Twister-based tests
     platform_ec = zephyr_dir.parent
     third_party = platform_ec.parent.parent / "third_party"
-    run_twister(platform_ec, opts.code_coverage, ["--test-only"])
+    run_twister(platform_ec, opts.code_coverage)
 
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
