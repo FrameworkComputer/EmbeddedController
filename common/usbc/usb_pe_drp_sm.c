@@ -1356,8 +1356,8 @@ void pe_message_sent(int port)
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
-void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
-		 int count)
+test_mockable void pd_send_vdm(int port, uint32_t vid, int cmd,
+			       const uint32_t *data, int count)
 {
 	/* Copy VDM Header */
 	pe[port].vdm_data[0] =
