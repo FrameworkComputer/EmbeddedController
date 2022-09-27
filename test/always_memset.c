@@ -88,7 +88,9 @@ test_static void exercise_memset(char **p)
 	 *
 	 * Without volatile, space will be optimized out.
 	 */
-	volatile char __unused space[EXTRA_STACK_SIZE] = { 0 };
+	volatile char __unused space[EXTRA_STACK_SIZE] = {
+		[0 ... EXTRA_STACK_SIZE - 1] = 's'
+	};
 
 	char buf[] = UNIQUE_STRING;
 	*p = buf;
@@ -142,7 +144,9 @@ test_static void exercise_always_memset(char **p)
 	 *
 	 * Without volatile, space will be optimized out.
 	 */
-	volatile char __unused space[EXTRA_STACK_SIZE] = { 0 };
+	volatile char __unused space[EXTRA_STACK_SIZE] = {
+		[0 ... EXTRA_STACK_SIZE - 1] = 's'
+	};
 
 	char buf[] = UNIQUE_STRING;
 	*p = buf;
