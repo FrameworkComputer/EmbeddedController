@@ -186,6 +186,27 @@ def get_argparser():
     add_common_configure_args(build)
     add_common_build_args(build)
 
+    compare_builds = sub.add_parser(
+        "compare-builds", help="Compare output binaries from two commits"
+    )
+    compare_builds.add_argument(
+        "--ref1",
+        default="HEAD",
+        help="1st git reference (commit, branch, etc), default=HEAD",
+    )
+    compare_builds.add_argument(
+        "--ref2",
+        default="HEAD~",
+        help="2nd git reference (commit, branch, etc), default=HEAD~",
+    )
+    compare_builds.add_argument(
+        "-k",
+        "--keep-temps",
+        action="store_true",
+        help="Keep temporary build directories on exit",
+    )
+    add_common_build_args(compare_builds)
+
     list_projects = sub.add_parser(
         "list-projects",
         help="List projects known to zmake.",

@@ -87,6 +87,28 @@ Chromium OS's meta-build tool for Zephyr
 | `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
 
+### zmake compare-builds
+
+**Usage:** `zmake compare-builds [-h] [--ref1 REF1] [--ref2 REF2] [-k] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+
+#### Positional Arguments
+
+|   |   |
+|---|---|
+| `project_name` | Name(s) of the project(s) to build |
+
+#### Optional Arguments
+
+|   |   |
+|---|---|
+| `-h`, `--help` | show this help message and exit |
+| `--ref1 REF1` | 1st git reference (commit, branch, etc), default=HEAD |
+| `--ref2 REF2` | 2nd git reference (commit, branch, etc), default=HEAD~ |
+| `-k`, `--keep-temps` | Keep temporary build directories on exit |
+| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
+| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
+| `-a`, `--all` | Select all projects |
+
 ### zmake list-projects
 
 **Usage:** `zmake list-projects [-h] [--format FMT] [search_dir]`
