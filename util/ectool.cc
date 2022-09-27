@@ -984,9 +984,29 @@ int cmd_inventory(int argc, char *argv[])
 	return 0;
 }
 
-int cmd_cmdversions(int argc, char *argv[])
+static int get_cmdversions_v0(uint8_t cmd, uint32_t *version_mask)
 {
 	struct ec_params_get_cmd_versions p;
+	struct ec_response_get_cmd_versions r;
+	int rv;
+
+	p.cmd = cmd;
+	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &p, sizeof(p), &r,
+			sizeof(r));
+	if (rv < 0) {
+		if (rv == -EC_RES_INVALID_PARAM)
+			printf("Command 0x%02x not supported by EC.\n", cmd);
+
+		return rv;
+	}
+
+	*version_mask = r.version_mask;
+	return 0;
+}
+
+int cmd_cmdversions(int argc, char *argv[])
+{
+	struct ec_params_get_cmd_versions_v1 p;
 	struct ec_response_get_cmd_versions r;
 	char *e;
 	int cmd;
@@ -997,19 +1017,38 @@ int cmd_cmdversions(int argc, char *argv[])
 		return -1;
 	}
 	cmd = strtol(argv[1], &e, 0);
-	if ((e && *e) || cmd < 0 || cmd > 0xff) {
+	if ((e && *e) || cmd < 0 || cmd > 0xffff) {
 		fprintf(stderr, "Bad command number.\n");
 		return -1;
 	}
 
-	p.cmd = cmd;
-	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &p, sizeof(p), &r,
-			sizeof(r));
-	if (rv < 0) {
-		if (rv == -EC_RES_INVALID_PARAM)
-			printf("Command 0x%02x not supported by EC.\n", cmd);
+	if (cmd > 0xff) {
+		/* Ensure the EC support GET_CMD_VERSIONS v1. */
+		rv = get_cmdversions_v0(EC_CMD_GET_CMD_VERSIONS,
+					&r.version_mask);
+		if (rv < 0)
+			return rv;
 
-		return rv;
+		if (!(r.version_mask & EC_VER_MASK(1))) {
+			printf("16 bits cmdversions not supported by EC.\n");
+			return -1;
+		}
+
+		/* Use GET_CMD_VERSIONS v1. */
+		p.cmd = cmd;
+		rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 1, &p, sizeof(p), &r,
+				sizeof(r));
+		if (rv < 0) {
+			if (rv == -EC_RES_INVALID_PARAM)
+				printf("Command 0x%02x not supported by EC.\n",
+				       cmd);
+
+			return rv;
+		}
+	} else {
+		rv = get_cmdversions_v0(cmd, &r.version_mask);
+		if (rv < 0)
+			return rv;
 	}
 
 	printf("Command 0x%02x supports version mask 0x%08x\n", cmd,
