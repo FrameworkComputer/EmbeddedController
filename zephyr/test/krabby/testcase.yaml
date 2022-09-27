@@ -7,3 +7,13 @@ common:
 tests:
   krabby.default:
     extra_args: DTC_OVERLAY_FILE="common.dts;../projects/corsola/interrupts_krabby.dts;../projects/corsola/gpio_krabby.dts;pinctrl.dts"
+    extra_configs:
+      - CONFIG_MUX_INIT_ADC=y
+  krabby.tentacruel:
+    extra_args: DTC_OVERLAY_FILE="common.dts;adc_temp.dts;../projects/corsola/interrupts_tentacruel.dts;../projects/corsola/gpio_tentacruel.dts;../projects/corsola/thermistor_tentacruel.dts;pinctrl.dts"
+    extra_configs:
+      - CONFIG_TEST_TENTACRUEL=y
+      - CONFIG_PLATFORM_EC_TEMP_SENSOR=y
+      - CONFIG_PLATFORM_EC_THERMISTOR=y
+      - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
+      - CONFIG_ADC_EMUL=y
