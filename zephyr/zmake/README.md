@@ -35,7 +35,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--extra-cflags EXTRA_CFLAGS] [--delete-intermediates] (-a | project_name [project_name ...])`
+**Usage:** `zmake configure [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -48,7 +48,6 @@ Chromium OS's meta-build tool for Zephyr
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
-| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--bringup` | Enable bringup debugging features |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
 | `--static` | Generate static version information for reproducible builds |
@@ -56,13 +55,14 @@ Chromium OS's meta-build tool for Zephyr
 | `--allow-warnings` | Do not treat warnings as errors |
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
-| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `--delete-intermediates` | Delete intermediate files to save disk space |
+| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
+| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
 
 ### zmake build
 
-**Usage:** `zmake build [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--extra-cflags EXTRA_CFLAGS] [--delete-intermediates] (-a | project_name [project_name ...])`
+**Usage:** `zmake build [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -75,7 +75,6 @@ Chromium OS's meta-build tool for Zephyr
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
-| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--bringup` | Enable bringup debugging features |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
 | `--static` | Generate static version information for reproducible builds |
@@ -83,8 +82,9 @@ Chromium OS's meta-build tool for Zephyr
 | `--allow-warnings` | Do not treat warnings as errors |
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
-| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `--delete-intermediates` | Delete intermediate files to save disk space |
+| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
+| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
 
 ### zmake list-projects
@@ -106,7 +106,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake test
 
-**Usage:** `zmake test [-h] [--no-rebuild] [-t TOOLCHAIN] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--extra-cflags EXTRA_CFLAGS] [--delete-intermediates] (-a | project_name [project_name ...])`
+**Usage:** `zmake test [-h] [--no-rebuild] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -120,7 +120,6 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `-h`, `--help` | show this help message and exit |
 | `--no-rebuild` | Do not configure or build before running tests. |
-| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--bringup` | Enable bringup debugging features |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
 | `--static` | Generate static version information for reproducible builds |
@@ -128,8 +127,9 @@ Chromium OS's meta-build tool for Zephyr
 | `--allow-warnings` | Do not treat warnings as errors |
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
-| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `--delete-intermediates` | Delete intermediate files to save disk space |
+| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
+| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
 
 ### zmake testall

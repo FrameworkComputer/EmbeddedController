@@ -177,12 +177,14 @@ def get_argparser():
         help="Set up a build directory to be built later by the build subcommand",
     )
     add_common_configure_args(configure)
+    add_common_build_args(configure)
 
     build = sub.add_parser(
         "build",
         help="Configure and build projects",
     )
     add_common_configure_args(build)
+    add_common_build_args(build)
 
     list_projects = sub.add_parser(
         "list-projects",
@@ -216,6 +218,7 @@ def get_argparser():
         help="Do not configure or build before running tests.",
     )
     add_common_configure_args(test)
+    add_common_build_args(test)
 
     testall = sub.add_parser(
         "testall",
@@ -259,11 +262,34 @@ def get_argparser():
     return parser, sub
 
 
-def add_common_configure_args(sub_parser: argparse.ArgumentParser):
-    """Adds common arguments used by configure-like subcommands."""
+def add_common_build_args(sub_parser: argparse.ArgumentParser):
+    """Adds common arguments used by build-like subcommands"""
     sub_parser.add_argument(
         "-t", "--toolchain", help="Name of toolchain to use"
     )
+    sub_parser.add_argument(
+        "--extra-cflags",
+        help="Additional CFLAGS to use for target builds",
+    )
+    group = sub_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        dest="all_projects",
+        help="Select all projects",
+    )
+    group.add_argument(
+        "project_names",
+        nargs="*",
+        metavar="project_name",
+        help="Name(s) of the project(s) to build",
+        default=[],
+    )
+
+
+def add_common_configure_args(sub_parser: argparse.ArgumentParser):
+    """Adds common arguments used by configure-like subcommands."""
     sub_parser.add_argument(
         "--bringup",
         action="store_true",
@@ -309,29 +335,10 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         help="Enable CONFIG_COVERAGE Kconfig.",
     )
     sub_parser.add_argument(
-        "--extra-cflags",
-        help="Additional CFLAGS to use for target builds",
-    )
-    sub_parser.add_argument(
         "--delete-intermediates",
         action="store_true",
         dest="delete_intermediates",
         help="Delete intermediate files to save disk space",
-    )
-    group = sub_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        "-a",
-        "--all",
-        action="store_true",
-        dest="all_projects",
-        help="Select all projects",
-    )
-    group.add_argument(
-        "project_names",
-        nargs="*",
-        metavar="project_name",
-        help="Name(s) of the project(s) to build",
-        default=[],
     )
 
 
