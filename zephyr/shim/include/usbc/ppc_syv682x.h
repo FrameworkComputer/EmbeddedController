@@ -6,6 +6,7 @@
 #include "ppc/syv682x_public.h"
 
 #define SYV682X_COMPAT silergy_syv682x
+#define SYV682X_EMUL_COMPAT zephyr_syv682x_emul
 
 #define PPC_CHIP_SYV682X(id)                                              \
 	{                                                                 \

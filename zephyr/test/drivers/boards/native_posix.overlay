@@ -37,12 +37,14 @@
 			reg = <0>;
 			chg = <&isl923x_emul>;
 			tcpc = <&tcpci_emul>;
+			ppc = <&sn5s330_emul>;
 		};
 
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			tcpc = <&ps8xxx_emul>;
+			ppc = <&syv682x_emul>;
 		};
 	};
 

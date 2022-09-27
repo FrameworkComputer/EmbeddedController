@@ -220,23 +220,6 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
-/* USBC PPC configuration */
-struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = SYV682X_ADDR1_FLAGS,
-		.frs_en = GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c1_frs_en)),
-		.drv = &syv682x_drv,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
 DEFINE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
 DEFINE_FAKE_VOID_FUNC(board_reset_pd_mcu);

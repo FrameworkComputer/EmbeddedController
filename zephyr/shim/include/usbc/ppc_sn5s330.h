@@ -6,6 +6,7 @@
 #include "ppc/sn5s330_public.h"
 
 #define SN5S330_COMPAT ti_sn5s330
+#define SN5S330_EMUL_COMPAT cros_sn5s330_emul
 
 #define PPC_CHIP_SN5S330(id)                 \
 	{ .i2c_port = I2C_PORT_BY_DEV(id),   \
