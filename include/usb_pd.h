@@ -2565,7 +2565,7 @@ void pd_control_port_enable(int port);
  *
  * @param mask host event mask.
  */
-#if defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD)
+#if defined(CONFIG_USB_PD_HOST_CMD) && !defined(CONFIG_USB_PD_TCPM_STUB)
 void pd_send_host_event(int mask);
 #else
 static inline void pd_send_host_event(int mask)

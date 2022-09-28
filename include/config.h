@@ -4474,7 +4474,9 @@
 #define CONFIG_USB_PD_CONSOLE_CMD
 
 /* Enables PD Host commands */
+#ifdef HAS_TASK_HOSTCMD
 #define CONFIG_USB_PD_HOST_CMD
+#endif
 
 /* Support for USB PD alternate mode */
 #undef CONFIG_USB_PD_ALT_MODE

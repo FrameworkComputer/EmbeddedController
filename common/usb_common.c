@@ -134,8 +134,6 @@ int remote_flashing(int argc, char **argv)
 struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
 #endif /* CONFIG_COMMON_RUNTIME */
 
-static __maybe_unused atomic_t pd_host_event_status __aligned(4);
-
 bool pd_firmware_upgrade_check_power_readiness(int port)
 {
 	if (IS_ENABLED(HAS_TASK_CHARGER)) {
@@ -1047,19 +1045,6 @@ int pd_send_alert_msg(int port, uint32_t ado)
 	return EC_ERROR_INVALID_CONFIG;
 #endif
 }
-
-#if defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD)
-void pd_send_host_event(int mask)
-{
-	/* mask must be set */
-	if (!mask)
-		return;
-
-	atomic_or(&pd_host_event_status, mask);
-	/* interrupt the AP */
-	host_set_single_event(EC_HOST_EVENT_PD_MCU);
-}
-#endif /* defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD) */
 
 #ifdef CONFIG_MKBP_EVENT
 static int dp_alt_mode_entry_get_next_event(uint8_t *data)

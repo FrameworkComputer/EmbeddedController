@@ -214,16 +214,38 @@ ZTEST_USER(usb_pd_host_cmd,
 	zassert_equal(pd_send_vdm_fake.call_count, 0);
 }
 
+ZTEST_USER(usb_pd_host_cmd, test_hc_pd_host_event_status)
+{
+	struct ec_response_host_event_status response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_PD_HOST_EVENT_STATUS, 0, response);
+
+	/* Clear events */
+	zassert_ok(host_command_process(&args));
+
+	/* Send arbitrary event */
+	pd_send_host_event(1);
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(response));
+	zassert_true(response.status & 1);
+
+	/* Send again to make sure the host command cleared the event */
+	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(response));
+	zassert_equal(response.status, 0);
+}
+
 ZTEST_USER(usb_pd_host_cmd, test_host_command_hc_pd_ports)
 {
 	struct ec_response_usb_pd_ports response;
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_USB_PD_PORTS, 0, response);
 
-	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
-	zassert_equal(args.response_size, sizeof(response), NULL);
-	zassert_equal(response.num_ports, CONFIG_USB_PD_PORT_MAX_COUNT, NULL);
+	zassert_ok(host_command_process(&args));
+	zassert_ok(args.result);
+	zassert_equal(args.response_size, sizeof(response));
+	zassert_equal(response.num_ports, CONFIG_USB_PD_PORT_MAX_COUNT);
 }
 
 static void usb_pd_host_cmd_before_after(void *test_data)
