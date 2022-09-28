@@ -38,6 +38,11 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 	};
+
+	/* Override keyboard scanning */
+	soc {
+		/delete-node/ kscan@400a3000;
+	};
 };
 
 &uart1 {
