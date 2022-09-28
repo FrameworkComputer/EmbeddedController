@@ -435,6 +435,7 @@ const struct ppc_drv rt1739_ppc_drv = {
 #ifdef CONFIG_USB_PD_FRS_PPC
 	.set_frs_enable = &rt1739_set_frs_enable,
 #endif
+	.interrupt = &rt1739_interrupt,
 };
 
 const struct bc12_drv rt1739_bc12_drv = {
