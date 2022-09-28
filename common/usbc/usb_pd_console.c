@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "usb_common.h"
+#include "usb_pd_dpm.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
@@ -21,6 +22,7 @@ static
 {
 	int port;
 	char *e;
+	int rv = EC_SUCCESS;
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
@@ -63,6 +65,14 @@ static
 	} else if (!strcasecmp(argv[1], "version")) {
 		ccprintf("%d\n", PD_STACK_VERSION);
 		return EC_SUCCESS;
+	} else if (!strcasecmp(argv[1], "bistsharemode")) {
+		if (!strcasecmp(argv[2], "disable"))
+			rv = pd_set_bist_share_mode(0);
+		else if (!strcasecmp(argv[2], "enable"))
+			rv = pd_set_bist_share_mode(1);
+		else
+			rv = EC_ERROR_PARAM2;
+		return rv;
 	}
 
 	/* command: pd <port> <subcmd> [args] */
@@ -208,6 +218,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 #ifdef CONFIG_USB_PD_TRY_SRC
 			"\ntrysrc [0|1|2]"
 #endif
+			"\nbistsharemode [disable|enable]"
 			"\n\t<port> state"
 			"\n\t<port> srccaps"
 			"\n\t<port> cc"

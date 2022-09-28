@@ -10,6 +10,8 @@
 #include "ec_commands.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "usb_pd.h"
+#include "usb_pd_dpm.h"
 #include "usb_prl_sm.h"
 
 static void console_cmd_usb_pd_after(void *fixture)
@@ -25,6 +27,7 @@ static void console_cmd_usb_pd_after(void *fixture)
 	/* Keep port used by testsuite enabled (default state) */
 	pd_comm_enable(0, 1);
 	pd_set_suspend(0, 0);
+	pd_set_bist_share_mode(0);
 }
 
 ZTEST_SUITE(console_cmd_usb_pd, drivers_predicate_post_main, NULL, NULL,
@@ -170,6 +173,19 @@ ZTEST_USER(console_cmd_usb_pd, test_resume)
 	int rv;
 
 	rv = shell_execute_cmd(get_ec_shell(), "pd 0 resume");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+}
+
+ZTEST_USER(console_cmd_usb_pd, test_bistsharemode)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pd bistsharemode enable");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pd bistsharemode disable");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
 }
