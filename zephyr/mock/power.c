@@ -52,13 +52,6 @@ static void mock_power_rule_before(const struct ztest_unit_test *test,
 
 ZTEST_RULE(mock_power_rule, mock_power_rule_before, NULL);
 
-enum power_request_t {
-	POWER_REQ_NONE,
-	POWER_REQ_OFF,
-	POWER_REQ_ON,
-	POWER_REQ_COUNT,
-};
-
 static const char *power_req_name[POWER_REQ_COUNT] = {
 	"none",
 	"OFF",
@@ -68,7 +61,7 @@ static const char *power_req_name[POWER_REQ_COUNT] = {
 static enum power_request_t current_power_request = POWER_REQ_NONE;
 static enum power_request_t pending_power_request = POWER_REQ_NONE;
 
-void handle_power_request(enum power_request_t req)
+static void handle_power_request(enum power_request_t req)
 {
 	if (current_power_request == POWER_REQ_NONE) {
 		current_power_request = req;
@@ -78,6 +71,13 @@ void handle_power_request(enum power_request_t req)
 			power_req_name[req]);
 		pending_power_request = req;
 	}
+}
+
+void mock_power_request(enum power_request_t req)
+{
+	handle_power_request(req);
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_SECONDS(1));
 }
 
 void power_request_complete(void)
