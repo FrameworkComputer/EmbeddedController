@@ -61,7 +61,7 @@ static int init_device_bindings(const struct device *device)
 }
 SYS_INIT(init_device_bindings, POST_KERNEL, 51);
 
-int adc_read_channel(enum adc_channel ch)
+test_mockable int adc_read_channel(enum adc_channel ch)
 {
 	int ret = 0, rv;
 	struct adc_sequence seq = {
