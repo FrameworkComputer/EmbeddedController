@@ -2840,8 +2840,8 @@ struct ec_motion_sense_activity {
 	uint8_t activity; /* one of enum motionsensor_activity */
 	uint8_t enable; /* 1: enable, 0: disable */
 	uint8_t reserved;
-	uint16_t parameters[3]; /* activity dependent parameters */
-} __ec_todo_unpacked;
+	uint16_t parameters[4]; /* activity dependent parameters */
+} __ec_todo_packed;
 
 /* Module flag masks used for the dump sub-command. */
 #define MOTIONSENSE_MODULE_FLAG_ACTIVE BIT(0)
