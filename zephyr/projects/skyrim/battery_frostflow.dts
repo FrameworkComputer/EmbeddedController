@@ -5,11 +5,8 @@
 
 / {
 	batteries {
-		default_battery: aec_5477109 {
-			compatible = "aec,5477109", "battery-smart";
-		};
-		smp_l20m3pg1 {
-			compatible = "smp,l20m3pg1", "battery-smart";
+		default_battery: cdt_c340152 {
+			compatible = "cdt,c340152", "battery-smart";
 		};
 	};
 };
