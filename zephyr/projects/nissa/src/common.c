@@ -81,8 +81,8 @@ static void board_setup_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_INIT_I2C);
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
+					  int max_ma, int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
