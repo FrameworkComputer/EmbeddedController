@@ -39,7 +39,7 @@
 		color_white: color-white {
 			led-color = "LED_WHITE";
 			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_BLUE";
+			br-color = "EC_LED_COLOR_WHITE";
 			led-pins = <&pwm_y 0>,
 				   <&pwm_w 100>;
 		};

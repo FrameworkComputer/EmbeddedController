@@ -1,22 +1,40 @@
-#include <dt-bindings/battery.h>
-
 / {
 	led-colors {
 		compatible = "cros-ec,led-policy";
 
 		power-state-charge {
 			charge-state = "PWR_STATE_CHARGE";
+			/* Battery percent range (>= Empty, <= 94%) */
+			batt-lvl = <0 94>;
 
 			color-0 {
 				led-color = <&color_amber>;
 			};
 		};
 
+		power-state-charge-lvl-2 {
+			charge-state = "PWR_STATE_CHARGE";
+			/* Battery percent range (>= 95%, <= Near Full) */
+			batt-lvl = <95 97>;
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
 		power-state-discharge-s0 {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
-			/* Battery percent range (> Low, <= Full) */
-			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
+			/* Battery percent range (>= 11%, <= Full) */
+			batt-lvl = <11 100>;
 
 			color-0 {
 				led-color = <&color_white>;
@@ -26,17 +44,17 @@
 		power-state-discharge-s0-batt-low {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
-			/* Battery percent range (>= Empty, <= Low) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+			/* Battery percent range (>= Empty, <= 10%) */
+			batt-lvl = <0 10>;
 
-			/* White 2 sec, off 1 sec */
+			/* Amber 1 sec, off 3 sec */
 			color-0 {
-				led-color = <&color_white>;
-				period-ms = <2000>;
+				led-color = <&color_amber>;
+				period-ms = <1000>;
 			};
 			color-1 {
 				led-color = <&color_off>;
-				period-ms = <1000>;
+				period-ms = <3000>;
 			};
 		};
 
@@ -44,14 +62,14 @@
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S3";
 
-			/* White 1 sec, off 1 sec */
+			/* White 1 sec, off 3 sec */
 			color-0 {
 				led-color = <&color_white>;
 				period-ms = <1000>;
 			};
 			color-1 {
 				led-color = <&color_off>;
-				period-ms = <1000>;
+				period-ms = <3000>;
 			};
 		};
 
@@ -64,9 +82,9 @@
 			};
 		};
 
-		power-state-error {
+		power-state-error-s0 {
 			charge-state = "PWR_STATE_ERROR";
-
+			chipset-state = "POWER_S0";
 			/* Amber 1 sec, off 1 sec */
 			color-0 {
 				led-color = <&color_amber>;
@@ -78,25 +96,26 @@
 			};
 		};
 
-		power-state-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
-
+		power-state-error-s3 {
+			charge-state = "PWR_STATE_ERROR";
+			chipset-state = "POWER_S3";
+			/* White 1 sec, off 3 sec */
 			color-0 {
 				led-color = <&color_white>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <3000>;
 			};
 		};
 
-		power-state-forced-idle {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+		power-state-error-s5 {
+			charge-state = "PWR_STATE_ERROR";
+			chipset-state = "POWER_S5";
 
-			/* Amber 2 sec, White 2 sec */
 			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <2000>;
-			};
-			color-1 {
-				led-color = <&color_white>;
-				period-ms = <2000>;
+				led-color = <&color_off>;
 			};
 		};
 	};
