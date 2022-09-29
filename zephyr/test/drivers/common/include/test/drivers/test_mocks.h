@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#ifndef __TEST_DRIVERS_TEST_MOCKS_H
+#define __TEST_DRIVERS_TEST_MOCKS_H
+
 #include <zephyr/fff.h>
 
 /*
@@ -112,3 +115,5 @@ DECLARE_FAKE_VOID_FUNC(assert_post_action, const char *, unsigned int);
 
 /* Mocks for common/lid_angle.c */
 DECLARE_FAKE_VOID_FUNC(lid_angle_peripheral_enable, int);
+
+#endif /* __TEST_DRIVERS_TEST_MOCKS_H */
