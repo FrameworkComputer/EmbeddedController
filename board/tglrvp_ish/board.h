@@ -9,12 +9,6 @@
 #define __CROS_EC_BOARD_H
 
 /*
- * Allow dangerous commands.
- * TODO: Don't use this on production systems.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-
-/*
  * By default, enable all console messages except HC, ACPI and event
  * The sensor stack is generating a lot of activity.
  */
@@ -25,26 +19,29 @@
 #undef CONFIG_DEBUG_ASSERT
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_ISH_UART_0
+
 /* EC */
 #define CONFIG_FLASH_SIZE_BYTES 0x80000
 #define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 
-#define CONFIG_ACCELGYRO_LSM6DSM /* For LSM6DS3 */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(BASE_ACCEL)
-
 /* Host command over HECI */
 #define CONFIG_HOST_INTERFACE_HECI
 
+#ifdef BOARD_TGLRVP_ISH
+#define CONFIG_ACCELGYRO_LSM6DSM /* For LSM6DS3 */
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(BASE_ACCEL)
+
 /* I2C ports */
 #define I2C_PORT_SENSOR ISH_I2C1
-#define CONFIG_CMD_I2C_XFER
 
 /* EC Console Commands */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_TIMERINFO
+#define CONFIG_CMD_I2C_XFER
+#endif /* BOARD_TGLRVP_ISH */
 
 /* Undefined features */
 #undef CONFIG_CMD_HASH

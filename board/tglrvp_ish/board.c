@@ -18,6 +18,11 @@
 #include "gpio_list.h" /* has to be included last */
 
 /* I2C port map */
+#ifdef BOARD_ADL_ISH_LITE
+const struct i2c_port_t i2c_ports[] = {};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+#elif defined(BOARD_TGLRVP_ISH)
 const struct i2c_port_t i2c_ports[] = {
 	{ .name = "sensor", .port = I2C_PORT_SENSOR, .kbps = 1000 },
 };
@@ -56,6 +61,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#endif /* BOARD_TGLRVP_ISH */
 
 int chipset_in_state(int state_mask)
 {
