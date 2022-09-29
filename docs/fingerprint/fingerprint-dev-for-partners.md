@@ -27,6 +27,13 @@ The Fingerprint MCU (FPMCU) board has the MCU that handles all
 fingerprint-related functionality (matching, encryption, etc). The fingerprint
 sensor itself connects to the FPMCU board.
 
+<!-- mdformat off(b/139308852) -->
+*** note
+Older revisions of these boards are not supported. If you have an older version
+of the board, please request a replacement.
+***
+<!-- mdformat on -->
+
 This FPMCU board is the Dragonclaw Rev 0.3. |
 ------------------------------------------- |
 ![Dragonclaw board]                         |
@@ -38,12 +45,6 @@ Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 **Googlers**: You can pick up a Dragonclaw development board at Chromestop.
 
 **Partners**: You can request a Dragonclaw development board from Google.
-***
-
-*** note
-Dragonclaw Rev 0.2 needs a [rework](#dragonclaw-rev-0.2-rework) for the FPC
-sensor to work while being powered through Servo. All of the boards at Chromestop
-have already been reworked.
 ***
 <!-- mdformat on -->
 
@@ -483,34 +484,6 @@ From the DUT, flash the firmware you copied:
 ![FPMCU devboard environment v2 with satlab]
 
 ## Troubleshooting
-
-### Dragonclaw Rev 0.2 Rework {#dragonclaw-rev-0.2-rework}
-
-<!-- mdformat off(b/139308852) -->
-*** note
-**NOTE**: All Dragonclaw v0.2 boards have been reworked, so it is not necessary
-to perform the rework yourself.
-***
-<!-- mdformat on -->
-
-Dragonclaw **Rev 0.2** has two load switches (`U4` and `U6`) that enable the
-1.8V power rail from the servo connector or motherboard connector. However, this
-switch is not compatible with 1.8V, so will always output 0V.
-
-The [rework document][Dragonclaw Rev 0.2 1.8V Rework] describes replacing these
-two switches with ones compatible with 1.8V.
-
-### Dragonclaw Rev 0.1 Servo Fix
-
-Dragonclaw **Rev 0.1** has a known issue with UART and JTAG. Most notably, this
-issue causes servo micro to fail to program the FPMCU over UART.
-
-This issue can be fixed with the following rework steps:
-
-*   Connect servo header pin 13 to pin 18
-*   Connect servo header pin 13 to pin 29
-
-![Dragonclaw servo fix diagram]
 
 ### Verify that servo and debugger are connected to USB {#servo-connected}
 
