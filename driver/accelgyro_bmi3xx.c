@@ -265,14 +265,17 @@ static void bmi3_parse_fifo_data(struct motion_sensor_t *s,
 				 * 0x8000.
 				 */
 				if (fifo_frame->data[fifo_index] == 0x8000)
-					break;
+					return;
 
 				/*
 				 * In case the frame has been cut, FIFO was
 				 * greater than our buffer.
+				 * When a frame is only partially read out, it
+				 * is retransmitted at the next readout.
+				 * No need to process it here.
 				 */
 				if (fifo_size < BMI3_FIFO_ENTRY)
-					break;
+					return;
 
 				/* Frame is complete, but may have no data. */
 				fifo_size -= BMI3_FIFO_ENTRY;
