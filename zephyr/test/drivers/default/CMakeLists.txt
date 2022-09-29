@@ -81,6 +81,7 @@ target_sources(app PRIVATE
     src/thermistor.c
     src/uart_hostcmd.c
     src/usb_mux.c
+    src/util.c
     src/vboot_hash.c
     src/virtual_battery.c
     src/vstore.c
