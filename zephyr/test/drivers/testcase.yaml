@@ -107,6 +107,7 @@ tests:
    extra_configs:
      - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
      - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
+     - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.usbc_tbt_mode:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE=y
