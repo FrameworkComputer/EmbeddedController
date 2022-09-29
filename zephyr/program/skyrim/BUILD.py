@@ -21,7 +21,6 @@ def register_skyrim_project(
             here / "gpio.dts",
             here / "interrupts.dts",
             here / "keyboard.dts",
-            here / "motionsense.dts",
             here / "usbc.dts",
             # Project-specific DTS customizations.
             *extra_dts_overlays,
@@ -37,6 +36,7 @@ register_skyrim_project(
         here / "battery_morthal.dts",
         here / "led_pins_morthal.dts",
         here / "led_policy_morthal.dts",
+        here / "motionsense_morthal.dts",
     ],
     extra_kconfig_files=[
         here / "prj_morthal.conf",
@@ -51,6 +51,7 @@ register_skyrim_project(
         here / "battery_skyrim.dts",
         here / "led_pins_skyrim.dts",
         here / "led_policy_skyrim.dts",
+        here / "motionsense_skyrim.dts",
     ],
     extra_kconfig_files=[
         here / "prj_skyrim.conf",
@@ -65,6 +66,7 @@ register_skyrim_project(
         here / "battery_winterhold.dts",
         here / "led_pins_winterhold.dts",
         here / "led_policy_winterhold.dts",
+        here / "motionsense_winterhold.dts",
     ],
     extra_kconfig_files=[
         here / "prj_winterhold.conf",
@@ -79,6 +81,7 @@ register_skyrim_project(
         here / "battery_frostflow.dts",
         here / "led_pins_frostflow.dts",
         here / "led_policy_frostflow.dts",
+        here / "motionsense_frostflow.dts",
     ],
     extra_kconfig_files=[
         here / "prj_frostflow.conf",
