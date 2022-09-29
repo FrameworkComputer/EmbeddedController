@@ -268,10 +268,6 @@ function dut_control_get_or_die {
 
 : "${BOARD:=${FLAGS_board}}"
 
-if [ "${BOARD}" == "" ]; then
-  die "Must specify board."
-fi
-
 in_array() {
 	local n=$#
 	local value=${!n}
