@@ -87,4 +87,11 @@ config PLATFORM_EC_BODY_DETECTION_NOTIFY_MODE_CHANGE
 	  status is changed, in addition to adding an event in the motion sensor
 	  FIFO queue.
 
+config PLATFORM_EC_BODY_DETECTION_ALWAYS_ENABLE_IN_S0
+	bool "Always enable body detection function in S0"
+	default n
+	help
+	  Always enable the body detection function in S0
+	  w/o the host command
+
 endif # PLATFORM_EC_BODY_DETECTION

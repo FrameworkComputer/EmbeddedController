@@ -328,7 +328,12 @@ static void motion_sense_switch_sensor_rate(void)
 			body_detect_set_enable(false);
 			break;
 		case SENSOR_ACTIVE_S0:
-			body_detect_set_enable(was_enabled);
+			/* force to enable the body detection in S0 */
+			if (IS_ENABLED(
+				    CONFIG_BODY_DETECTION_ALWAYS_ENABLE_IN_S0))
+				body_detect_set_enable(true);
+			else
+				body_detect_set_enable(was_enabled);
 			break;
 		default:
 			break;
