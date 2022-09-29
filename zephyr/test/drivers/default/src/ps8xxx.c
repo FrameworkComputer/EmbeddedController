@@ -61,6 +61,11 @@ ZTEST(ps8815, test_init_fail)
 	test_ps8xxx_init_fail();
 }
 
+ZTEST(ps8745, test_init_fail)
+{
+	test_ps8xxx_init_fail();
+}
+
 /**
  * Test PS8805 init and indirectly ps8705_dci_disable which is
  * used by PS8805
@@ -125,6 +130,30 @@ ZTEST(ps8815, test_ps8815_init)
 
 	/* Test successful init */
 	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
+}
+
+/** Test PS8745 init */
+ZTEST(ps8745, test_ps8745_init)
+{
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
+	struct i2c_common_emul_data *p1_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_1);
+
+	/* Set arbitrary FW reg value != 0 for this test */
+	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
+	/* Set correct power status for rest of the test */
+	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_POWER_STATUS, 0x0);
+
+	/* Test fail on reading HW revision register */
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
+					  PS8815_P1_REG_HW_REVISION);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test successful init */
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
 }
 
 /** Test PS8xxx release */
@@ -616,6 +645,11 @@ ZTEST(ps8815, test_ps8815_get_chip_info)
 	test_ps8xxx_get_chip_info(PS8815_PRODUCT_ID);
 }
 
+ZTEST(ps8745, test_ps8745_get_chip_info)
+{
+	test_ps8xxx_get_chip_info(PS8815_PRODUCT_ID);
+}
+
 /** Test PS8805 get chip info and indirectly ps8805_make_device_id */
 ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 {
@@ -707,6 +741,100 @@ ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 			"0x%x != (FW rev = 0x%x) in test case %d (chip_rev 0x%x)",
 			fw_rev, info.fw_version_number, i,
 			test_param[i].chip_rev);
+	}
+}
+
+/** Test PS8745 get chip info and indirectly ps8745_make_device_id */
+ZTEST(ps8745, test_ps8745_get_chip_info_fix_dev_id)
+{
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
+	struct i2c_common_emul_data *p1_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_1);
+	struct ec_response_pd_chip_info_v1 info;
+	uint16_t vendor, product, device_id, fw_rev;
+	uint16_t hw_rev;
+
+	struct {
+		uint16_t exp_dev_id;
+		uint16_t hw_rev;
+	} test_param[] = {
+		/* Test A0 HW revision */
+		{
+			.exp_dev_id = 0x1,
+			.hw_rev = 0x0a00,
+		},
+		/* Test A1 HW revision */
+		{
+			.exp_dev_id = 0x2,
+			.hw_rev = 0x0a01,
+		},
+		/* Test A2 HW revision */
+		{
+			.exp_dev_id = 0x3,
+			.hw_rev = 0x0a02,
+		},
+	};
+
+	/* Setup chip info */
+	vendor = PS8XXX_VENDOR_ID;
+	product = PS8815_PRODUCT_ID;
+	/* Arbitrary revision */
+	fw_rev = 0x32;
+	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_VENDOR_ID, vendor);
+	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_PRODUCT_ID, product);
+	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, fw_rev);
+
+	/* Set device id which requires fixing */
+	device_id = 0x1;
+	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_BCD_DEV, device_id);
+
+	/* Test error on fixing device id because of fail hw revision read */
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
+					  PS8815_P1_REG_HW_REVISION);
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set wrong hw revision */
+	hw_rev = 0x32;
+	ps8xxx_emul_set_hw_rev(ps8xxx_emul, hw_rev);
+
+	/* Test error on fixing device id */
+	zassert_equal(EC_ERROR_UNKNOWN,
+		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+		      NULL);
+
+	/* Test fixing device id for specific HW revisions */
+	for (int i = 0; i < ARRAY_SIZE(test_param); i++) {
+		ps8xxx_emul_set_hw_rev(ps8xxx_emul, test_param[i].hw_rev);
+
+		/* Test correct device id after fixing */
+		zassert_equal(
+			EC_SUCCESS,
+			ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+			"Failed to get chip info in test case %d (hw_rev 0x%x)",
+			i, test_param[i].hw_rev);
+		zassert_equal(
+			vendor, info.vendor_id,
+			"0x%x != (vendor = 0x%x) in test case %d (hw_rev 0x%x)",
+			vendor, info.vendor_id, i, test_param[i].hw_rev);
+		zassert_equal(
+			product, info.product_id,
+			"0x%x != (product = 0x%x) in test case %d (hw_rev 0x%x)",
+			product, info.product_id, i, test_param[i].hw_rev);
+		zassert_equal(
+			test_param[i].exp_dev_id, info.device_id,
+			"0x%x != (device = 0x%x) in test case %d (hw_rev 0x%x)",
+			test_param[i].exp_dev_id, info.device_id, i,
+			test_param[i].hw_rev);
+		zassert_equal(
+			fw_rev, info.fw_version_number,
+			"0x%x != (FW rev = 0x%x) in test case %d (hw_rev 0x%x)",
+			fw_rev, info.fw_version_number, i,
+			test_param[i].hw_rev);
 	}
 }
 
@@ -965,6 +1093,11 @@ ZTEST(ps8815, test_tcpci_init)
 	test_ps8xxx_tcpci_init();
 }
 
+ZTEST(ps8745, test_tcpci_init)
+{
+	test_ps8xxx_tcpci_init();
+}
+
 /** Test TCPCI release */
 static void test_ps8xxx_tcpci_release(void)
 {
@@ -1021,6 +1154,11 @@ ZTEST(ps8805, test_tcpci_set_cc)
 }
 
 ZTEST(ps8815, test_tcpci_set_cc)
+{
+	test_ps8xxx_tcpci_set_cc();
+}
+
+ZTEST(ps8745, test_tcpci_set_cc)
 {
 	test_ps8xxx_tcpci_set_cc();
 }
@@ -1101,6 +1239,11 @@ ZTEST(ps8805, test_tcpci_get_rx_message_raw)
 }
 
 ZTEST(ps8815, test_tcpci_get_rx_message_raw)
+{
+	test_ps8xxx_tcpci_get_rx_message_raw();
+}
+
+ZTEST(ps8745, test_tcpci_get_rx_message_raw)
 {
 	test_ps8xxx_tcpci_get_rx_message_raw();
 }
@@ -1290,6 +1433,7 @@ static void ps8815_before(void *state)
 	ARG_UNUSED(state);
 
 	board_set_ps8xxx_product_id(PS8815_PRODUCT_ID);
+	ps8xxx_emul_set_reg_id(ps8xxx_emul, PS8815_REG_ID);
 	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8815_PRODUCT_ID);
 	setup_no_fail_all();
 	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1));
@@ -1304,8 +1448,36 @@ static void ps8815_after(void *state)
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
 }
 
+/**
+ * Setup PS8xxx emulator to mimic PS8745 and setup no fail for all I2C devices
+ * associated with PS8xxx emulator
+ */
+static void ps8745_before(void *state)
+{
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
+	ARG_UNUSED(state);
+
+	board_set_ps8xxx_product_id(PS8815_PRODUCT_ID);
+	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8815_PRODUCT_ID);
+	ps8xxx_emul_set_reg_id(ps8xxx_emul, PS8745_REG_ID);
+	setup_no_fail_all();
+	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+}
+
+static void ps8745_after(void *state)
+{
+	const struct emul *ps8xxx_emul = EMUL_DT_GET(PS8XXX_EMUL_NODE);
+	ARG_UNUSED(state);
+
+	/* Set correct firmware revision */
+	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
+}
+
 ZTEST_SUITE(ps8805, drivers_predicate_pre_main, NULL, ps8805_before,
 	    ps8805_after, NULL);
 
 ZTEST_SUITE(ps8815, drivers_predicate_pre_main, NULL, ps8815_before,
 	    ps8815_after, NULL);
+
+ZTEST_SUITE(ps8745, drivers_predicate_pre_main, NULL, ps8745_before,
+	    ps8745_after, NULL);
