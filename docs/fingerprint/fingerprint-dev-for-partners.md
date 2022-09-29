@@ -27,7 +27,7 @@ The Fingerprint MCU (FPMCU) board has the MCU that handles all
 fingerprint-related functionality (matching, encryption, etc). The fingerprint
 sensor itself connects to the FPMCU board.
 
-This FPMCU board is the Dragonclaw Rev 0.2. |
+This FPMCU board is the Dragonclaw Rev 0.3. |
 ------------------------------------------- |
 ![Dragonclaw board]                         |
 
@@ -78,7 +78,7 @@ debug a running program.
 
 There are several variants of Servo and the fingerprint team uses the
 [Servo Micro](#servo-micro) for its simplicity. It lacks builtin JTAG/SWD
-support for single step debugging, but Dragonclaw v0.2 and Icetower v0.1 have an
+support for single step debugging, but Dragonclaw v0.3 and Icetower v0.1 have an
 [SWD connector](#servo-micro-swd) that can be used.
 
 [Servo Micro](#servo-micro) |
@@ -594,7 +594,7 @@ Make sure that this interface is disabled:
 
 [Servo Micro]: ../images/servo_micro.jpg
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
-[Dragonclaw board]: ../images/dragonclaw_rev_0.2.jpg
+[Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
 [Icetower board]: ../images/icetower_v0.1.jpg
 

@@ -22,7 +22,7 @@ used for JTAG and SWD for ARM devices.
 *   JTAG/SWD Debugger Probe: Any debug probe that supports SWD will work, but
     this document assumes that you're using a
     [Segger J-Trace PRO for Cortex-M][J-Trace].
-*   [Dragonclaw v0.2 Development board][FPMCU dev board] or
+*   [Dragonclaw v0.3 Development board][FPMCU dev board] or
     [Icetower v0.1 Development board][FPMCU dev board].
 *   [Servo Micro].
 
@@ -53,27 +53,27 @@ be complete.
 
 ## Connecting SWD {#connect-swd}
 
-### Dragonclaw v0.2
+### Dragonclaw v0.3
 
-The connector for SWD is `J4` on Dragonclaw v0.2.
+The connector for SWD is `J4` on Dragonclaw v0.3.
 
 <!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: Pay attention to the location of pin 1 (red wire) in the
 photos below so that you connect with the correct orientation.
 
-`SW2` on the bottom of Dragonclaw must be set to `CORESIGHT`.
+`SW2` on the edge of Dragonclaw must be set to `CORESIGHT`.
 
 If you want to connect a 20-Pin ARM Standard JTAG Connector (0.10" / 2.54 mm),
 you can use the following [adapter][JTAG to SWD Adapter] and [cable][SWD Cable].
 ***
 <!-- mdformat on -->
 
-Dragonclaw v0.2 with 20-pin SWD (0.05" / 1.27mm) on J4. Only half the pins are connected. |
+Dragonclaw v0.3 with 20-pin SWD (0.05" / 1.27mm) on J4. Only half the pins are connected. |
 ----------------------------------------------------------------------------------------- |
 ![Dragonclaw with 20-pin SWD]                                                             |
 
-Dragonclaw v0.2 with 10-pin SWD (0.05" / 1.27mm) on J4. |
+Dragonclaw v0.3 with 10-pin SWD (0.05" / 1.27mm) on J4. |
 ------------------------------------------------------- |
 ![Dragonclaw with 10-pin SWD]                           |
 
@@ -230,7 +230,7 @@ Ozone is a free standalone debugger provided by Segger that works with the
 gdbserver can provide. For example, Ozone has a register mapping for the MCUs we
 use, so you can easily inspect CPU registers. It can also be automated with a
 scripting language and show code coverage when used with a [J-Trace] that is
-connected to the trace pins on a board. Note that the Dragonclaw v0.2 uses an
+connected to the trace pins on a board. Note that the Dragonclaw v0.3 uses an
 STM32F412 package that does not have the synchronous trace pins, but the
 [Nucleo STM32F412ZG] does have the trace pins.
 
