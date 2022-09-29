@@ -56,6 +56,7 @@ static const char *power_req_name[POWER_REQ_COUNT] = {
 	"none",
 	"OFF",
 	"ON",
+	"SOFT_OFF",
 };
 
 static enum power_request_t current_power_request = POWER_REQ_NONE;
@@ -176,12 +177,15 @@ enum power_state power_handle_state_custom_fake(enum power_state state)
 			new_state = POWER_S5S3;
 		} else if (current_power_request == POWER_REQ_OFF) {
 			/* S5 timeout should transition to G3 */
+		} else if (current_power_request == POWER_REQ_SOFT_OFF) {
+			power_request_complete();
 		}
 		break;
 	case POWER_S3: /* Suspend; RAM on, processor is asleep */
 		if (current_power_request == POWER_REQ_ON) {
 			new_state = POWER_S3S0;
-		} else if (current_power_request == POWER_REQ_OFF) {
+		} else if (current_power_request == POWER_REQ_OFF ||
+			   current_power_request == POWER_REQ_SOFT_OFF) {
 			new_state = POWER_S3S5;
 		}
 		break;
@@ -192,7 +196,8 @@ enum power_state power_handle_state_custom_fake(enum power_state state)
 
 			sleep_notify_transition(SLEEP_NOTIFY_RESUME,
 						HOOK_CHIPSET_RESUME);
-		} else if (current_power_request == POWER_REQ_OFF) {
+		} else if (current_power_request == POWER_REQ_OFF ||
+			   current_power_request == POWER_REQ_SOFT_OFF) {
 			new_state = POWER_S0S3;
 		}
 		break;
