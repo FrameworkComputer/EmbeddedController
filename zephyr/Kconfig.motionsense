@@ -174,5 +174,10 @@ config PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
 
 endif # PLATFORM_EC_ACCEL_SPOOF_MODE
 
+config PLATFORM_EC_GESTURE_HOST_DETECTION
+	bool "Gesture host detection"
+	help
+	  Enable gesture host interface
+
 rsource "Kconfig.sensor_devices"
 rsource "Kconfig.body_detection"
