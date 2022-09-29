@@ -82,6 +82,21 @@ config PLATFORM_EC_KEYBOARD_VIVALDI
 	  - A response to EC_CMD_GET_KEYBD_CONFIG command.
 	  - Boards can specify their custom layout for top keys.
 
+config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	bool "Support keyboard customization"
+	help
+		Enable support for customization keyboard, some boards need to custom matrix
+		because those board keyboard layout doesn't follow a common matrix.
+
+		If define, the board layer
+		needs to implement:
+		1. the scancode_set2 and keycap_label array
+		2. keyboard_customization.h which is similar to keyboard_config.h
+
+		Note that if your board has the standard chromeos keyboard layout other
+		than the top row, and you are looking only for top row customization,
+		then you should be looking at overriding board_vivaldi_keybd_config() instead.
+
 choice PLATFORM_EC_KEYBOARD_PWRBTN_MODE
 	prompt "Select the impact of pressing the power button"
 	help
