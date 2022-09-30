@@ -258,7 +258,6 @@ enum usb_pe_state {
 	PE_INIT_VDM_MODES_REQUEST,
 	PE_VDM_REQUEST_DPM,
 	PE_VDM_RESPONSE,
-	PE_HANDLE_CUSTOM_VDM_REQUEST,
 	PE_WAIT_FOR_ERROR_RECOVERY,
 	PE_BIST_TX,
 	PE_DEU_SEND_ENTER_USB,
@@ -391,7 +390,6 @@ __maybe_unused static __const_data const char *const pe_state_names[] = {
 	[PE_INIT_VDM_MODES_REQUEST] = "PE_INIT_VDM_Modes_Request",
 	[PE_VDM_REQUEST_DPM] = "PE_VDM_Request_DPM",
 	[PE_VDM_RESPONSE] = "PE_VDM_Response",
-	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
 	[PE_BIST_TX] = "PE_Bist_TX",
 	[PE_DEU_SEND_ENTER_USB] = "PE_DEU_Send_Enter_USB",
@@ -2783,16 +2781,16 @@ static void pe_src_ready_run(int port)
 			case PD_DATA_SINK_CAP:
 				break;
 			case PD_DATA_VENDOR_DEF:
-				if (PD_HEADER_TYPE(rx_emsg[port].header) ==
-				    PD_DATA_VENDOR_DEF) {
-					if (PD_VDO_SVDM(*payload)) {
-						set_state_pe(port,
-							     PE_VDM_RESPONSE);
-					} else
-						set_state_pe(
-							port,
-							PE_HANDLE_CUSTOM_VDM_REQUEST);
-				}
+				if (PD_VDO_SVDM(*payload))
+					set_state_pe(port, PE_VDM_RESPONSE);
+				/* The TCPM does not support any unstructured
+				 * VDMs. For PD 3.x, send Not Supported. For
+				 * PD 2.0, ignore.
+				 */
+				else if (prl_get_rev(port, TCPCI_MSG_SOP) >
+					 PD_REV20)
+					set_state_pe(port,
+						     PE_SEND_NOT_SUPPORTED);
 				return;
 			case PD_DATA_BIST:
 				set_state_pe(port, PE_BIST_TX);
@@ -3632,22 +3630,22 @@ static void pe_snk_ready_run(int port)
 			switch (type) {
 			case PD_DATA_SOURCE_CAP:
 				set_state_pe(port, PE_SNK_EVALUATE_CAPABILITY);
-				break;
+				return;
 			case PD_DATA_VENDOR_DEF:
-				if (PD_HEADER_TYPE(rx_emsg[port].header) ==
-				    PD_DATA_VENDOR_DEF) {
-					if (PD_VDO_SVDM(*payload))
-						set_state_pe(port,
-							     PE_VDM_RESPONSE);
-					else
-						set_state_pe(
-							port,
-							PE_HANDLE_CUSTOM_VDM_REQUEST);
-				}
-				break;
+				if (PD_VDO_SVDM(*payload))
+					set_state_pe(port, PE_VDM_RESPONSE);
+				/* The TCPM does not support any unstructured
+				 * VDMs. For PD 3.x, send Not Supported. For
+				 * PD 2.0, ignore.
+				 */
+				else if (prl_get_rev(port, TCPCI_MSG_SOP) >
+					 PD_REV20)
+					set_state_pe(port,
+						     PE_SEND_NOT_SUPPORTED);
+				return;
 			case PD_DATA_BIST:
 				set_state_pe(port, PE_BIST_TX);
-				break;
+				return;
 #ifdef CONFIG_USB_PD_REV30
 			case PD_DATA_ALERT:
 				set_state_pe(port, PE_ALERT_RECEIVED);
@@ -3655,8 +3653,8 @@ static void pe_snk_ready_run(int port)
 #endif /* CONFIG_USB_PD_REV30 */
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
+				return;
 			}
-			return;
 		}
 		/* Control Messages */
 		else {
@@ -5390,57 +5388,6 @@ static void pe_wait_for_error_recovery_entry(int port)
 static void pe_wait_for_error_recovery_run(int port)
 {
 	/* Stay here until error recovery is complete */
-}
-
-/**
- * PE_Handle_Custom_Vdm_Request
- */
-static void pe_handle_custom_vdm_request_entry(int port)
-{
-	/* Get the message */
-	uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
-	int cnt = PD_HEADER_CNT(rx_emsg[port].header);
-	int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	int rlen = 0;
-	uint32_t *rdata;
-
-	print_current_state(port);
-
-	/* This is an Interruptible AMS */
-	PE_SET_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
-
-	rlen = pd_custom_vdm(port, cnt, payload, &rdata);
-	if (rlen > 0) {
-		tx_emsg[port].len = rlen * 4;
-		memcpy(tx_emsg[port].buf, (uint8_t *)rdata, tx_emsg[port].len);
-		send_data_msg(port, sop, PD_DATA_VENDOR_DEF);
-	} else {
-		if (prl_get_rev(port, TCPCI_MSG_SOP) > PD_REV20) {
-			set_state_pe(port, PE_SEND_NOT_SUPPORTED);
-		} else {
-			PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
-			pe_set_ready_state(port);
-		}
-	}
-}
-
-static void pe_handle_custom_vdm_request_run(int port)
-{
-	/* Wait for ACCEPT, WAIT or Reject message to send. */
-	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
-		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-
-		/*
-		 * Message sent. Transition back to
-		 * PE_SRC_Ready or PE_SINK_Ready
-		 */
-		pe_set_ready_state(port);
-	}
-}
-
-static void pe_handle_custom_vdm_request_exit(int port)
-{
-	PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 }
 
 static enum vdm_response_result parse_vdm_response_common(int port)
@@ -8167,11 +8114,6 @@ static __const_data const struct usb_state pe_states[] = {
 		.entry = pe_vdm_response_entry,
 		.run   = pe_vdm_response_run,
 		.exit  = pe_vdm_response_exit,
-	},
-	[PE_HANDLE_CUSTOM_VDM_REQUEST] = {
-		.entry = pe_handle_custom_vdm_request_entry,
-		.run   = pe_handle_custom_vdm_request_run,
-		.exit  = pe_handle_custom_vdm_request_exit,
 	},
 	[PE_DEU_SEND_ENTER_USB] = {
 		.entry = pe_enter_usb_entry,
