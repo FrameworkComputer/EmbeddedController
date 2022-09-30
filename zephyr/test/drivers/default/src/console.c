@@ -156,3 +156,27 @@ ZTEST_USER(console, test_cmd_chan_save_restore)
 }
 
 ZTEST_SUITE(console, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+
+ZTEST_USER(console_pre, test_cmd_chan_save_restore)
+{
+	/* These are not mentioned in ec-console in native_posix.overlay. */
+	zassert_false(console_channel_is_disabled(CC_COMMAND));
+	zassert_false(console_channel_is_disabled(CC_ACCEL));
+	zassert_false(console_channel_is_disabled(CC_CHARGER));
+	/* These are disabled in ec-console in native_posix.overlay. */
+	zassert_true(console_channel_is_disabled(CC_EVENTS));
+	zassert_true(console_channel_is_disabled(CC_LPC));
+	zassert_true(console_channel_is_disabled(CC_HOSTCMD));
+
+	/* Disable an invalid channel, and verify nothing changed. */
+	console_channel_disable("not_a_valid_channel");
+
+	zassert_false(console_channel_is_disabled(CC_COMMAND));
+	zassert_false(console_channel_is_disabled(CC_ACCEL));
+	zassert_false(console_channel_is_disabled(CC_CHARGER));
+	zassert_true(console_channel_is_disabled(CC_EVENTS));
+	zassert_true(console_channel_is_disabled(CC_LPC));
+	zassert_true(console_channel_is_disabled(CC_HOSTCMD));
+}
+
+ZTEST_SUITE(console_pre, drivers_predicate_pre_main, NULL, NULL, NULL, NULL);
