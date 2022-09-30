@@ -67,21 +67,6 @@ struct pd_pref_config_t {
 int hex8tou32(char *str, uint32_t *val);
 
 /*
- * Flash a USB PD device using the ChromeOS Vendor Defined Command.
- *
- * @param argc number arguments in argv. Must be greater than 3.
- * @param argv [1] is the usb port
- *             [2] unused
- *             [3] is the command {"erase", "rebooot", "signature",
- *                                 "info", "version", "write"}
- *             [4] if command was "write", then this will be the
- *                 start of the data that will be written.
- * @return EC_SUCCESS on success, else EC_ERROR_PARAM_COUNT or EC_ERROR_PARAM2
- *         on failure.
- */
-int remote_flashing(int argc, char **argv);
-
-/*
  * When AP requests to suspend PD traffic on the EC so it can do
  * firmware upgrade (retimer firmware, or TCPC chips firmware),
  * it calls this function to check if power is ready for performing
