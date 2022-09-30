@@ -1,4 +1,6 @@
 common:
   platform_allow: native_posix
 tests:
-  system_shim.default: {}
+  system_shim.default:
+    tags:
+      system

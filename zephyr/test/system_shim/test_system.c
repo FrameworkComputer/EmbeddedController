@@ -54,3 +54,12 @@ ZTEST(system, test_bbram_get)
 	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFF(try_slot),
 			  BBRAM_REGION_SIZE(try_slot), NULL);
 }
+
+ZTEST(system, test_save_read_chip_reset_flags)
+{
+	uint32_t arbitrary_flags = 0x1234;
+
+	chip_save_reset_flags(0);
+	chip_save_reset_flags(arbitrary_flags);
+	zassert_equal(chip_read_reset_flags(), arbitrary_flags);
+}
