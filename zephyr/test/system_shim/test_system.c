@@ -63,3 +63,14 @@ ZTEST(system, test_save_read_chip_reset_flags)
 	chip_save_reset_flags(arbitrary_flags);
 	zassert_equal(chip_read_reset_flags(), arbitrary_flags);
 }
+
+ZTEST(system, test_system_set_get_scratchpad)
+{
+	/* Arbitrary values */
+	uint32_t scratch_set = 0x1234;
+	uint32_t scratch_read;
+
+	system_set_scratchpad(scratch_set);
+	system_get_scratchpad(&scratch_read);
+	zassert_equal(scratch_read, scratch_set);
+}
