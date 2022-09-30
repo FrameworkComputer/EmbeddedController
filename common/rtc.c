@@ -53,10 +53,15 @@ struct calendar_date sec_to_date(uint32_t sec)
 		day_tmp += IS_LEAP_YEAR(time.year) ? 366 : 365;
 	}
 	for (i = 1; i < 12; i++) {
-		if (days_since_year_start[i] +
-			    (IS_LEAP_YEAR(time.year) && (i >= 2)) >=
-		    day_tmp)
+		int month_offset = days_since_year_start[i];
+
+		if (IS_LEAP_YEAR(time.year) && (i >= 2)) {
+			month_offset++;
+		}
+
+		if (month_offset >= day_tmp) {
 			break;
+		}
 	}
 	time.month = i;
 
