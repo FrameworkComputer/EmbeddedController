@@ -362,6 +362,7 @@ extern const struct svdm_amode_fx supported_modes[];
 extern const int supported_modes_cnt;
 
 /* 4 entry rw_hash table of type-C devices that AP has firmware updates for. */
+/* This is *NOT* a hash-table, it's a table (ring-buffer) of hashes */
 #ifdef CONFIG_COMMON_RUNTIME
 #define RW_HASH_ENTRIES 4
 extern struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
