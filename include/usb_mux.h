@@ -33,6 +33,9 @@
 
 #endif /* CONFIG_ZEPHYR */
 
+/* usb_mux.hpd_update API only specifies 2 relevant bits in mux_state */
+#define MUX_STATE_HPD_UPDATE_MASK (USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ)
+
 /*
  * USB-C mux state
  *
@@ -168,11 +171,11 @@ struct usb_mux {
 	 *
 	 * @param[in]  me usb_mux
 	 * @param[in]  mux_state with HPD IRQ and HPD LVL flags set
-	 *	       accordingly
+	 *	       accordingly. Other flags are undefined.
 	 * @param[out] ack_required: indication of whether this function
 	 *	       requires a wait for an AP ACK after
 	 */
-	void (*hpd_update)(const struct usb_mux *me, mux_state_t mux_state,
+	void (*hpd_update)(const struct usb_mux *me, mux_state_t hpd_state,
 			   bool *ack_required);
 };
 
@@ -206,7 +209,7 @@ extern const struct usb_mux_chain usb_muxes[];
 #endif
 
 /* Supported hpd_update functions */
-void virtual_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+void virtual_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
 			bool *ack_required);
 
 /*
@@ -300,7 +303,7 @@ void usb_mux_flip(int port);
  * @param port port number.
  * @param mux_state HPD IRQ and LVL mux flags
  */
-void usb_mux_hpd_update(int port, mux_state_t mux_state);
+void usb_mux_hpd_update(int port, mux_state_t hpd_state);
 
 /**
  * Port information about retimer firmware update support.
