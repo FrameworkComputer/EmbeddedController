@@ -185,6 +185,7 @@ cortexm_fpu-y=cortexm_fpu.o
 crc-y=crc.o
 debug-y=debug.o
 entropy-y=entropy.o
+exception-y=exception.o
 extpwr_gpio-y=extpwr_gpio.o
 fan-y=fan.o
 flash-y=flash.o
@@ -308,3 +309,7 @@ static_if_error-y=static_if_error.o.cmd
 run-genvif_test:
 	@echo "  TEST    genvif_test"
 	@test/genvif/genvif.sh
+
+# This test requires C++ exceptions to be enabled.
+$(out)/RW/test/exception.o: CXXFLAGS+=-fexceptions
+$(out)/RO/test/exception.o: CXXFLAGS+=-fexceptions

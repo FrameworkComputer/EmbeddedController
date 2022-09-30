@@ -199,6 +199,7 @@ class AllTests:
             TestConfig(test_name="cec"),
             TestConfig(test_name="cortexm_fpu"),
             TestConfig(test_name="crc"),
+            TestConfig(test_name="exception"),
             TestConfig(
                 test_name="flash_physical",
                 image_to_use=ImageType.RO,
