@@ -34,6 +34,7 @@ static int test_queue8_init(void)
 	TEST_ASSERT(queue_add_units(&test_queue8, &tmp, 1) == 1);
 	queue_init(&test_queue8);
 	TEST_ASSERT(queue_is_empty(&test_queue8));
+	TEST_ASSERT(queue_remove_unit(&test_queue8, &tmp) == 0);
 
 	return EC_SUCCESS;
 }
@@ -55,13 +56,16 @@ static int test_queue8_fifo(void)
 
 static int test_queue8_multiple_units_add(void)
 {
-	char buf1[5] = { 1, 2, 3, 4, 5 };
+	char buf1[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 	char buf2[5];
 
 	TEST_ASSERT(queue_space(&test_queue8) >= 5);
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
 	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 5) == 5);
 	TEST_ASSERT_ARRAY_EQ(buf1, buf2, 5);
+
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 8) == 8);
+	TEST_ASSERT(queue_add_unit(&test_queue8, &buf1[8]) == 0);
 
 	return EC_SUCCESS;
 }
@@ -379,6 +383,9 @@ static int test_queue2_iterate_next_full(void)
 	queue_next(q, &it);
 	TEST_NE(it.ptr, NULL, "%p");
 	TEST_EQ(*((int16_t *)it.ptr), -788, "%d");
+
+	queue_next(q, &it);
+	TEST_EQ(it.ptr, NULL, "%p");
 
 	queue_next(q, &it);
 	TEST_EQ(it.ptr, NULL, "%p");
