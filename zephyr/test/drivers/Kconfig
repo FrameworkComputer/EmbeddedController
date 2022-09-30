@@ -65,4 +65,10 @@ config LINK_TEST_SUITE_USBC_OCP
 config LINK_TEST_SUITE_USBC_PPC
 	bool "Link tests for common USBC PPC code"
 
+config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
+	bool "Link tests for alternate operations of the locate chip host cmd"
+	help
+	  Compile a binary that allows the non herobrine paths of the locate
+	  chip command to execute
+
 source "Kconfig.zephyr"

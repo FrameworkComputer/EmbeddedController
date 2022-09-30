@@ -42,7 +42,8 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 				tcpc_config[params->index].i2c_info.addr_flags;
 		}
 #else
-		return EC_RES_UNAVAILABLE;
+		/* Not reachable in new boards. */
+		return EC_RES_UNAVAILABLE; /* LCOV_EXCL_LINE */
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 		break;
 	default:
