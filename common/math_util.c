@@ -61,7 +61,7 @@ fp_t arc_cos(fp_t x)
 	 * Shouldn't be possible to get here because inputs are clipped to
 	 * [-1, 1] and the cos_lut[] table goes over the same range.
 	 */
-	__builtin_unreachable();
+	__builtin_unreachable(); /* LCOV_EXCL_LINE */
 }
 
 /**
@@ -306,10 +306,7 @@ uint64_t bitmask_uint64(int offset)
 #endif
 		};
 		uint64_t val;
-	} mask;
-
-	/* Clear out the mask */
-	mask.val = 0;
+	} mask = { 0 };
 
 	/*
 	 * If the shift is out of range the result should
