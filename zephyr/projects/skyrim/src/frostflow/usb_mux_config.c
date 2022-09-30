@@ -121,20 +121,3 @@ int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 
 	return 0;
 }
-
-static void setup_mux(void)
-{
-	uint32_t val;
-
-	if (cros_cbi_get_fw_config(FW_IO_DB, &val) != 0)
-		CPRINTSUSB("Error finding FW_DB_IO in CBI FW_CONFIG");
-	/* Val will have our dts default on error, so continue setup */
-
-	if (val == FW_IO_DB_PS8811_PS8818) {
-		CPRINTSUSB("C1: Setting PS8818 mux");
-		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_ps8818_port1);
-	} else {
-		CPRINTSUSB("Unexpected DB_IO board: %d", val);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_INIT_I2C);
