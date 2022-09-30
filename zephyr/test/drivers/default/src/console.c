@@ -104,6 +104,30 @@ ZTEST_USER(console, test_cmd_chan_set)
 	zassert_true(console_channel_is_disabled(CC_CHARGER));
 }
 
+ZTEST_USER(console, test_cmd_chan_by_name)
+{
+	const char name[] = "charger";
+	char cmd[100];
+
+	console_channel_enable(name);
+
+	/* Toggle 'charger' off */
+	zassert_true(crec_snprintf(cmd, sizeof(cmd), "chan %s", name) > 0,
+		     "Failed to compose chan %s command.", name);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd),
+		   "Failed to execute chan %s command.", name);
+	zassert_true(console_channel_is_disabled(CC_CHARGER),
+		     "Failed to enable %s channel.", name);
+
+	/* Toggle 'charger' on */
+	zassert_true(crec_snprintf(cmd, sizeof(cmd), "chan %s", name) > 0,
+		     "Failed to compose chan %s command.", name);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd),
+		   "Failed to execute chan %s command.", name);
+	zassert_false(console_channel_is_disabled(CC_CHARGER),
+		      "Failed to disable %s channel.", name);
+}
+
 ZTEST_USER(console, test_cmd_chan_show)
 {
 	const struct shell *shell_zephyr = get_ec_shell();

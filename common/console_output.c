@@ -167,12 +167,24 @@ static int command_ch(int argc, const char **argv)
 
 		} else {
 			/* Set the mask */
-			int m = strtoi(argv[1], &e, 0);
-			if (*e)
-				return EC_ERROR_PARAM1;
+			int index = console_channel_name_to_index(argv[1]);
 
-			/* No disabling the command output channel */
-			channel_mask = m | CC_MASK(CC_COMMAND);
+			if (index >= 0) {
+				if (console_channel_is_disabled(index)) {
+					console_channel_enable(argv[1]);
+					ccprintf("chan %s enabled\n", argv[1]);
+				} else {
+					console_channel_disable(argv[1]);
+					ccprintf("chan %s disabled\n", argv[1]);
+				}
+			} else {
+				int m = strtoi(argv[1], &e, 0);
+				if (*e) {
+					return EC_ERROR_PARAM1;
+				}
+				/* No disabling the command output channel */
+				channel_mask = m | CC_MASK(CC_COMMAND);
+			}
 
 			return EC_SUCCESS;
 		}
@@ -188,6 +200,7 @@ static int command_ch(int argc, const char **argv)
 	}
 	return EC_SUCCESS;
 };
-DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch, "[ save | restore | <mask> ]",
+DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch,
+			     "[ save | restore | <mask> | <name> ]",
 			     "Save, restore, get or set console channel mask");
 #endif /* CONFIG_CONSOLE_CHANNEL */
