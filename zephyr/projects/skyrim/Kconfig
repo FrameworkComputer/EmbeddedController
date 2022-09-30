@@ -26,6 +26,12 @@ config BOARD_FROSTFLOW
 	  Build Google Frostflow reference board.  This board uses an AMD SoC
 	  and NPCX9 EC
 
+config BOARD_INPUT_CURRENT_SCALE_FACTOR
+	int "Input current scale factor"
+	default 100
+	help
+	  Limit input current to fraction of negotiated limit.
+
 module = SKYRIM
 module-str = Skyrim board-specific code
 source "subsys/logging/Kconfig.template.log_config"
