@@ -1041,6 +1041,7 @@ __overridable void svdm_exit_dp_mode(int port)
 #endif
 }
 
+#ifdef CONFIG_USB_PD_TCPMV1
 __overridable int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
 {
 	/* Always enter GFU mode */
@@ -1070,6 +1071,7 @@ __overridable int svdm_gfu_attention(int port, uint32_t *payload)
 {
 	return 0;
 }
+#endif /* CONFIG_USB_PD_TCPMV1 */
 
 #ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
 __overridable int svdm_tbt_compat_enter_mode(int port, uint32_t mode_caps)
@@ -1111,7 +1113,7 @@ const struct svdm_amode_fx supported_modes[] = {
 		.attention = &svdm_dp_attention,
 		.exit = &svdm_exit_dp_mode,
 	},
-
+#ifdef CONFIG_USB_PD_TCPMV1
 	{
 		.svid = USB_VID_GOOGLE,
 		.enter = &svdm_enter_gfu_mode,
@@ -1120,6 +1122,7 @@ const struct svdm_amode_fx supported_modes[] = {
 		.attention = &svdm_gfu_attention,
 		.exit = &svdm_exit_gfu_mode,
 	},
+#endif /* CONFIG_USB_PD_TCPMV1 */
 #ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
 	{
 		.svid = USB_VID_INTEL,
