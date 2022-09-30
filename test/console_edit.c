@@ -314,6 +314,25 @@ static int test_buf_notify_null(void)
 	return EC_SUCCESS;
 }
 
+static const char *large_string =
+	"This is a very long string, it will cause a buffer flush at "
+	"some point while printing to the shell. Long long text. Blah "
+	"blah. Long long text. Blah blah. Long long text. Blah blah."
+	"This is a very long string, it will cause a buffer flush at "
+	"some point while printing to the shell. Long long text. Blah "
+	"blah. Long long text. Blah blah. Long long text. Blah blah."
+	"This is a very long string, it will cause a buffer flush at "
+	"some point while printing to the shell. Long long text. Blah "
+	"blah. Long long text. Blah blah. Long long text. Blah blah.";
+static int test_cprints_overflow(void)
+{
+	TEST_GE(strlen(large_string), (size_t)CONFIG_UART_TX_BUF_SIZE, "%ld");
+
+	TEST_NE(cprints(CC_SYSTEM, large_string), 0, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	test_reset();
@@ -332,6 +351,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_history_list);
 	RUN_TEST(test_output_channel);
 	RUN_TEST(test_buf_notify_null);
+	RUN_TEST(test_cprints_overflow);
 
 	test_print_result();
 }
