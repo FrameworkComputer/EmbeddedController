@@ -426,7 +426,7 @@
 /* pwm for fan */
 &pwm7 {
 	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C4>;
+	prescaler-cx = <PWM_PRESCALER_C6>;
 	pinctrl-0 = <&pwm7_gpa7_default>;
 	pinctrl-names = "default";
 };
