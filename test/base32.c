@@ -194,6 +194,9 @@ DECLARE_EC_TEST(test_decode)
 	zassert_equal(base32_decode(dec, 40, "96ARM", 4), -1, NULL);
 	zassert_equal(base32_decode(dec, 40, "96RAL", 4), -1, NULL);
 
+	/* Detect error when not enough data is given */
+	zassert_equal(base32_decode(dec, 40, "AA", 4), -1, NULL);
+
 	return EC_SUCCESS;
 }
 
