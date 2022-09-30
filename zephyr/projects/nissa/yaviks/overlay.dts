@@ -252,11 +252,11 @@
 	fans {
 		compatible = "cros-ec,fans";
 		fan_0 {
-			pwms = <&pwm2 PWM_CHANNEL_2 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
+			pwms = <&pwm2 PWM_CHANNEL_2 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
 			tach = <&tach1>;
-			rpm_min = <1500>;
-			rpm_start = <1500>;
-			rpm_max = <6500>;
+			rpm_min = <2500>;
+			rpm_start = <2500>;
+			rpm_max = <4100>;
 			enable_gpio = <&gpio_fan_enable>;
 		};
 	};
