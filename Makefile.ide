@@ -4,8 +4,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Embedded Controller firmware build system - IDE integration support
+# Embedded Controller firmware build system - IDE support
 #
+# One caveat with this approach is that we still don't capture modified make
+# variables that are associated with a specific build target, like the following:
+#
+# $(out)/RW/common/blah.o: CFLAGS += -g
+#
+# This is because our compile commands json targets will not match this rule.
 
 # If env EXTERNAL_TRUNK_PATH is defined, we use this to build the
 # absolute path to the ec directory. Otherwise, we just take the abspath of ".".
@@ -15,7 +21,15 @@ ide_ec_path_abs = $(abspath .)
 ide_ec_path = $(or $(ide_ec_path_ext),$(ide_ec_path_abs))
 
 # Clang doesn't support these GCC options.
-ide_cflags = $(filter-out -mno-sched-prolog -fconserve-stack,$(CFLAGS))
+ide-filters = -mno-sched-prolog -fconserve-stack
+
+# The complete compile_commands.json targets.
+ide-compile-cmds-y                        = $(out)/RW/compile_commands.json
+ide-compile-cmds-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/compile_commands.json
+
+# All individual <src_file>.compile_cmds.json targets.
+ide-rw-objs = $(rw-objs:.o=.compile_cmd.json)
+ide-ro-objs = $(ro-objs:.o=.compile_cmd.json)
 
 # The all-ide-compile-cmds target takes about 2 minutes using 8 cores when all
 # work is replaced by the |true| command. Thus, the build system itself
@@ -24,9 +38,6 @@ ide_cflags = $(filter-out -mno-sched-prolog -fconserve-stack,$(CFLAGS))
 all-ide-compile-cmds: $(foreach b, $(BOARDS), ide-compile-cmds-$(b))
 ide-compile-cmds-%:
 	$(MAKE) BOARD=$* V=$(V) ide-compile-cmds
-
-ide-compile-cmds-y                        = $(out)/RW/compile_commands.json
-ide-compile-cmds-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/compile_commands.json
 
 .PHONY: ide-compile-cmds
 ide-compile-cmds: $(ide-compile-cmds-y)
@@ -44,32 +55,59 @@ cmd_combine_compile_cmd_json =                                                 \
 	sed 's/^/    /' $(lastword $^)                                   >>$@ ;\
 	printf ']\n'                                                     >>$@ ;
 
-$(out)/RW/compile_commands.json: override BLD:=RW
-$(out)/RW/compile_commands.json: private objs := $(rw-objs:.o=.json)
-$(out)/RW/compile_commands.json: $(rw-objs:.o=.compile_cmd.json)
+$(out)/RW/compile_commands.json: override BLD := RW
+$(out)/RW/compile_commands.json: private objs := $(rw-objs)
+$(out)/RW/compile_commands.json: $(ide-rw-objs)
 	$(call quiet,combine_compile_cmd_json,COMBINE)
-$(out)/RO/compile_commands.json: override BLD:=RO
-$(out)/RO/compile_commands.json: private objs := $(ro-objs:.o=.json)
-$(out)/RO/compile_commands.json: $(ro-objs:.o=.compile_cmd.json)
+$(out)/RO/compile_commands.json: override BLD := RO
+$(out)/RO/compile_commands.json: private objs := $(ro-objs)
+$(out)/RO/compile_commands.json: $(ide-ro-objs)
 	$(call quiet,combine_compile_cmd_json,COMBINE)
 
-cmd_c_to_compile_cmd_json =                                                    \
+# Quote all words and add a comma between words.
+# The quotes are applied as \", so that they will escape shell removal.
+#
+# $(1) - The space separated list of words.
+ide-comma = ,
+ide-space = $() $()
+ide-esc-quoted = $(patsubst %,\"%\",$(1))
+ide-comma-sep = $(subst $(ide-space),$(ide-comma)$(ide-space),$(ide-esc-quoted))
+cmd_json_list = $(ide-comma-sep)
+
+# Replace any ".compile_cmd.json" with ".o" and filter out $(ide-filters) words.
+# The replace is needed because we are invoking build commands from within our
+# make rules that have targets set to files of type .compile_cmd.json.
+# The compile commands will use special variables that pull this name into
+# the command.
+#
+# $(1) - The compilation command.
+cmd_rep_filter = $(subst .compile_cmd.json,.o,$(filter-out $(ide-filters),$(1)))
+
+# Form a compile command JSON block.
+#
+# $(1) - Used by quiet function, but it is this command name.
+# $(2) - Used by quiet function, but it is the pretty action label.
+# $(3) - The compilation command to place in the JSON blob.
+cmd_to_compile_cmd_json =                                                      \
 	printf '{\n'                                                     >$@  ;\
 	printf '    "arguments": [\n'                                   >>$@  ;\
-	printf '        "%s",\n' cc -c -std=gnu11 $(C_WARN) $(ide_cflags)      \
-		-o $(@D)/$(@F:.compile_cmd.json=.o)                     >>$@  ;\
-	printf '        "$<"\n'                                         >>$@  ;\
+	printf '        %s\n'                                                  \
+	  $(call cmd_json_list,$(call cmd_rep_filter,$(3)))             >>$@  ;\
 	printf '    ],\n'                                               >>$@  ;\
 	printf '    "directory": "$(ide_ec_path)",\n'                   >>$@  ;\
 	printf '    "file": "$<"\n'                                     >>$@  ;\
 	printf '}\n'                                                    >>$@  ;
 
+# Disable ccache, since this is only going to control whether the ccache
+# executable shows in the compile_commands.json file.
+%.compile_cmd.json: CCACHE :=
+
 $(out)/RO/%.compile_cmd.json:%.c
-	$(call quiet,c_to_compile_cmd_json,JSON   )
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
 $(out)/RW/%.compile_cmd.json:%.c
-	$(call quiet,c_to_compile_cmd_json,JSON   )
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
 
 $(out)/RO/%.compile_cmd.json:%.S
-	$(call quiet,c_to_compile_cmd_json,JSON   )
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
 $(out)/RW/%.compile_cmd.json:%.S
-	$(call quiet,c_to_compile_cmd_json,JSON   )
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
