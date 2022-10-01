@@ -107,6 +107,11 @@ $(out)/RO/%.compile_cmd.json:%.c
 $(out)/RW/%.compile_cmd.json:%.c
 	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
 
+$(out)/RO/%.compile_cmd.json:%.cc
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o))
+$(out)/RW/%.compile_cmd.json: %.cc
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o))
+
 $(out)/RO/%.compile_cmd.json:%.S
 	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
 $(out)/RW/%.compile_cmd.json:%.S
