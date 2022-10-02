@@ -26,10 +26,17 @@ ide-filters = -mno-sched-prolog -fconserve-stack
 # The complete compile_commands.json targets.
 ide-compile-cmds-y                        = $(out)/RW/compile_commands.json
 ide-compile-cmds-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/compile_commands.json
+ide-compile-cmds-y                       += $(out)/util/compile_commands.json
 
 # All individual <src_file>.compile_cmds.json targets.
 ide-rw-objs = $(rw-objs:.o=.compile_cmd.json)
 ide-ro-objs = $(ro-objs:.o=.compile_cmd.json)
+
+ide-build-utils    = $(build-utils:=.compile_cmd.json)
+ide-host-utils     = $(host-utils:=.compile_cmd.json)
+ide-host-utils-cxx = $(host-utils-cxx:=.compile_cmd.json)
+
+ide-utils = $(ide-build-utils) $(ide-host-utils) $(ide-host-utils-cxx)
 
 # The all-ide-compile-cmds target takes about 2 minutes using 8 cores when all
 # work is replaced by the |true| command. Thus, the build system itself
@@ -58,10 +65,14 @@ cmd_combine_compile_cmd_json =                                                 \
 $(out)/RW/compile_commands.json: override BLD := RW
 $(out)/RW/compile_commands.json: private objs := $(rw-objs)
 $(out)/RW/compile_commands.json: $(ide-rw-objs)
+$(out)/RW/compile_commands.json: $(ide-utils)
 	$(call quiet,combine_compile_cmd_json,COMBINE)
 $(out)/RO/compile_commands.json: override BLD := RO
 $(out)/RO/compile_commands.json: private objs := $(ro-objs)
 $(out)/RO/compile_commands.json: $(ide-ro-objs)
+$(out)/RO/compile_commands.json: $(ide-utils)
+	$(call quiet,combine_compile_cmd_json,COMBINE)
+$(out)/util/compile_commands.json: $(ide-utils)
 	$(call quiet,combine_compile_cmd_json,COMBINE)
 
 # Quote all words and add a comma between words.
@@ -81,21 +92,24 @@ cmd_json_list = $(ide-comma-sep)
 # the command.
 #
 # $(1) - The compilation command.
-cmd_rep_filter = $(subst .compile_cmd.json,.o,$(filter-out $(ide-filters),$(1)))
+# $(2) - The original target extension, like ".o" or "".
+cmd_rep_filter = $(subst .compile_cmd.json,$(2),$(filter-out $(ide-filters),$(1)))
 
 # Form a compile command JSON block.
 #
 # $(1) - Used by quiet function, but it is this command name.
 # $(2) - Used by quiet function, but it is the pretty action label.
 # $(3) - The compilation command to place in the JSON blob.
+# $(4) - The original target extension, like ".o" or "".
+# $(5) - The source file this compile command applies to.
 cmd_to_compile_cmd_json =                                                      \
 	printf '{\n'                                                     >$@  ;\
 	printf '    "arguments": [\n'                                   >>$@  ;\
 	printf '        %s\n'                                                  \
-	  $(call cmd_json_list,$(call cmd_rep_filter,$(3)))             >>$@  ;\
+	  $(call cmd_json_list,$(call cmd_rep_filter,$(3),$(4)))        >>$@  ;\
 	printf '    ],\n'                                               >>$@  ;\
 	printf '    "directory": "$(ide_ec_path)",\n'                   >>$@  ;\
-	printf '    "file": "$<"\n'                                     >>$@  ;\
+	printf '    "file": "$(5)"\n'                                   >>$@  ;\
 	printf '}\n'                                                    >>$@  ;
 
 # Disable ccache, since this is only going to control whether the ccache
@@ -103,16 +117,28 @@ cmd_to_compile_cmd_json =                                                      \
 %.compile_cmd.json: CCACHE :=
 
 $(out)/RO/%.compile_cmd.json:%.c
-	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
 $(out)/RW/%.compile_cmd.json:%.c
-	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
 
 $(out)/RO/%.compile_cmd.json:%.cc
-	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o))
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o),.o,$<)
 $(out)/RW/%.compile_cmd.json: %.cc
-	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o))
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o),.o,$<)
 
 $(out)/RO/%.compile_cmd.json:%.S
-	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
 $(out)/RW/%.compile_cmd.json:%.S
-	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o))
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
+
+$(ide-build-utils): $(out)/%.compile_cmd.json:$(build-srcs)
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_build),\
+		$(EMPTY),$*.c)
+
+$(ide-host-utils): $(out)/%.compile_cmd.json:$(host-srcs)
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_host),\
+		$(EMPTY),$*.c)
+
+$(ide-host-utils-cxx): $(out)/%.compile_cmd.json:$(host-srcs-cxx)
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_host),\
+		$(EMPTY),$*.cc)
