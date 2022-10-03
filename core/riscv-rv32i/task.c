@@ -291,9 +291,7 @@ task_ *__ram_code next_sched_task(void)
 		int i = task_get_current();
 
 		panic_printf("\n\nStack overflow in %s task!\n", task_names[i]);
-#ifdef CONFIG_SOFTWARE_PANIC
 		software_panic(PANIC_SW_STACK_OVERFLOW, i);
-#endif
 	}
 #endif
 

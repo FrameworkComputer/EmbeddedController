@@ -95,14 +95,12 @@
 /* Not implemented for this arch */
 #define PANIC_ARCH 0
 #define PANIC_REG_LIST(M)
-#ifdef CONFIG_PLATFORM_EC_SOFTWARE_PANIC
 static uint8_t placeholder_exception_reg;
 static uint32_t placeholder_reason_reg;
 static uint32_t placeholder_info_reg;
 #define PANIC_REG_EXCEPTION(unused) placeholder_exception_reg
 #define PANIC_REG_REASON(unused) placeholder_reason_reg
 #define PANIC_REG_INFO(unused) placeholder_info_reg
-#endif /* CONFIG_PLATFORM_EC_SOFTWARE_PANIC */
 #endif
 
 /* Macros to be applied to PANIC_REG_LIST as M */
@@ -157,7 +155,6 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 	CODE_UNREACHABLE;
 }
 
-#ifdef CONFIG_PLATFORM_EC_SOFTWARE_PANIC
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
 	struct panic_data *const pdata = get_panic_data_write();
@@ -196,4 +193,3 @@ __overridable void arch_panic_set_reason(uint32_t reason, uint32_t info,
 {
 	/* Default implementation, do nothing. */
 }
-#endif /* CONFIG_PLATFORM_EC_SOFTWARE_PANIC */

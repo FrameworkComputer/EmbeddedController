@@ -416,7 +416,6 @@ void exception_panic(void)
 		"r8", "r9", "r10", "r11", "cc", "memory");
 }
 
-#ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
 	__asm__("mov " STRINGIFY(
@@ -463,7 +462,6 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 		*exception = *reason = *info = 0;
 	}
 }
-#endif
 
 void bus_fault_handler(void)
 {

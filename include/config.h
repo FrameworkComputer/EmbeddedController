@@ -1670,12 +1670,6 @@
 #define CONFIG_COMMON_PANIC_OUTPUT
 
 /*
- * Store a panic log and halt the system for a software-related reasons, such as
- * stack overflow or assertion failure.
- */
-#undef CONFIG_SOFTWARE_PANIC
-
-/*
  * Certain platforms(e.g. eve, poppy) cannot retain panic info in data ram since
  * VCC is powered down on EC reset. On such platforms, panic data needs to be
  * saved/restored to persistent storage by using chip specific

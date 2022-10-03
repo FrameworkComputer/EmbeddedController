@@ -304,9 +304,7 @@ void svc_handler(int desched, task_id_t resched)
 	if (*current->stack != STACK_UNUSED_VALUE) {
 		panic_printf("\n\nStack overflow in %s task!\n",
 			     task_names[current - tasks]);
-#ifdef CONFIG_SOFTWARE_PANIC
 		software_panic(PANIC_SW_STACK_OVERFLOW, current - tasks);
-#endif
 	}
 #endif
 

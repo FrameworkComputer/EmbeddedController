@@ -10,8 +10,6 @@
 #define BFD_ARCH "i386"
 #define BFD_FORMAT "elf32-i386"
 
-#define CONFIG_SOFTWARE_PANIC
-
 /*
  * Since all implementations minute-ia are a single core, we do not need a
  * "lock;" prefix on any instructions. We use the below define in places where

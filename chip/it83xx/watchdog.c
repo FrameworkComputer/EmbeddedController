@@ -38,14 +38,12 @@ static void watchdog_set_warning_timer(int32_t ms, int init)
 
 void watchdog_warning_irq(void)
 {
-#ifdef CONFIG_SOFTWARE_PANIC
 	struct panic_data *const pdata_ptr = get_panic_data_write();
 
 #if defined(CHIP_CORE_NDS32)
 	pdata_ptr->nds_n8.ipc = get_ipc();
 #elif defined(CHIP_CORE_RISCV)
 	pdata_ptr->riscv.mepc = get_mepc();
-#endif
 #endif
 	/* clear interrupt status */
 	task_clear_pending_irq(et_ctrl_regs[WDT_EXT_TIMER].irq);

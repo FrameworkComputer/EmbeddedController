@@ -75,7 +75,6 @@ static const char *const itype_exc_type[16] = {
 };
 #endif /* CONFIG_DEBUG_EXCEPTIONS */
 
-#ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
 	asm volatile("mov55  $r6, %0" : : "r"(reason));
@@ -133,7 +132,6 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 		*exception = *reason = *info = 0;
 	}
 }
-#endif /* CONFIG_SOFTWARE_PANIC */
 
 static void print_panic_information(uint32_t *regs, uint32_t itype,
 				    uint32_t ipc, uint32_t ipsw)
@@ -159,13 +157,11 @@ static void print_panic_information(uint32_t *regs, uint32_t itype,
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 	panic_printf("SWID of ITYPE: %x\n", ((itype >> 16) & 0x7fff));
 	if (panic_sw_reason_is_valid(regs[SOFT_PANIC_GPR_REASON])) {
-#ifdef CONFIG_SOFTWARE_PANIC
 		panic_printf("Software panic reason %s\n",
 			     panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
 					       PANIC_SW_BASE)]);
 		panic_printf("Software panic info 0x%x\n",
 			     regs[SOFT_PANIC_GPR_INFO]);
-#endif
 	} else {
 		panic_printf("Exception type: General exception [%s]\n",
 			     itype_exc_type[(itype & 0xf)]);

@@ -34,7 +34,6 @@ static const char *const exc_type[16] = {
 };
 #endif /* CONFIG_DEBUG_EXCEPTIONS */
 
-#ifdef CONFIG_SOFTWARE_PANIC
 /* General purpose register (s0) for saving software panic reason */
 #define SOFT_PANIC_GPR_REASON 11
 /* General purpose register (s1) for saving software panic information */
@@ -97,7 +96,6 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 		*exception = *reason = *info = 0;
 	}
 }
-#endif /* CONFIG_SOFTWARE_PANIC */
 
 static void print_panic_information(uint32_t *regs, uint32_t mcause,
 				    uint32_t mepc)
@@ -122,13 +120,11 @@ static void print_panic_information(uint32_t *regs, uint32_t mcause,
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 	if ((regs[SOFT_PANIC_GPR_REASON] & 0xfffffff0) == PANIC_SW_BASE) {
-#ifdef CONFIG_SOFTWARE_PANIC
 		panic_printf("Software panic reason: %s\n",
 			     panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
 					       PANIC_SW_BASE)]);
 		panic_printf("Software panic info:   %d\n",
 			     regs[SOFT_PANIC_GPR_INFO]);
-#endif
 	} else {
 		panic_printf("Exception type: %s\n", exc_type[(mcause & 0xf)]);
 	}
@@ -195,13 +191,11 @@ static void ccprint_panic_information(uint32_t *regs, uint32_t mcause,
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 	if ((regs[SOFT_PANIC_GPR_REASON] & 0xfffffff0) == PANIC_SW_BASE) {
-#ifdef CONFIG_SOFTWARE_PANIC
 		ccprintf("Software panic reason: %s\n",
 			 panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
 					   PANIC_SW_BASE)]);
 		ccprintf("Software panic info:   %d\n",
 			 regs[SOFT_PANIC_GPR_INFO]);
-#endif /* CONFIG_SOFTWARE_PANIC */
 	} else {
 		ccprintf("Exception type: %s\n", exc_type[(mcause & 0xf)]);
 	}

@@ -875,7 +875,6 @@ system_get_build_info(void)
 
 void system_common_pre_init(void)
 {
-#ifdef CONFIG_SOFTWARE_PANIC
 	/*
 	 * Log panic cause if watchdog caused reset and panic cause
 	 * was not already logged. This must happen before calculating
@@ -890,7 +889,6 @@ void system_common_pre_init(void)
 		if (reason != PANIC_SW_WATCHDOG)
 			panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
 	}
-#endif
 
 	jdata = get_jump_data();
 

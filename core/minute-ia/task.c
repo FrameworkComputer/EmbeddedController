@@ -225,9 +225,7 @@ uint32_t switch_handler(int desched, task_id_t resched)
 		panic_printf("\n\nStack overflow in %s task!\n",
 			     task_get_name(current - tasks));
 
-		if (IS_ENABLED(CONFIG_SOFTWARE_PANIC))
-			software_panic(PANIC_SW_STACK_OVERFLOW,
-				       current - tasks);
+		software_panic(PANIC_SW_STACK_OVERFLOW, current - tasks);
 	}
 
 	if (desched && !current->events) {

@@ -18,7 +18,6 @@
 #define CONFIG_SOFTWARE_CLZ
 #define CONFIG_SOFTWARE_CTZ
 #endif /* __clang__ */
-#define CONFIG_SOFTWARE_PANIC
 
 #define CONFIG_ASSEMBLY_MULA32
 

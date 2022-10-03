@@ -35,11 +35,9 @@ static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 
 /* Common SW Panic reasons strings */
 const char *const panic_sw_reasons[] = {
-#ifdef CONFIG_SOFTWARE_PANIC
 	"PANIC_SW_DIV_ZERO",   "PANIC_SW_STACK_OVERFLOW", "PANIC_SW_PD_CRASH",
 	"PANIC_SW_ASSERT",     "PANIC_SW_WATCHDOG",	  "PANIC_SW_RNG",
 	"PANIC_SW_PMIC_FAULT",
-#endif
 };
 
 /**
@@ -49,7 +47,7 @@ const char *const panic_sw_reasons[] = {
  */
 int panic_sw_reason_is_valid(uint32_t reason)
 {
-	return (IS_ENABLED(CONFIG_SOFTWARE_PANIC) && reason >= PANIC_SW_BASE &&
+	return (reason >= PANIC_SW_BASE &&
 		(reason - PANIC_SW_BASE) < ARRAY_SIZE(panic_sw_reasons));
 }
 
@@ -128,10 +126,7 @@ test_mockable_static
 	void
 	complete_panic(int linenum)
 {
-	if (IS_ENABLED(CONFIG_SOFTWARE_PANIC))
-		software_panic(PANIC_SW_ASSERT, linenum);
-	else
-		panic_reboot();
+	software_panic(PANIC_SW_ASSERT, linenum);
 }
 
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
