@@ -15,6 +15,9 @@
 		 */
 		bmi3xx-int = &base_accel;
 		lis2dw12-int = &base_accel;
+
+		/* Use base accelerometer for on-body sensor */
+		on-body-sensor = &base_accel;
 	};
 
 	/*
