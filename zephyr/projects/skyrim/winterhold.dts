@@ -101,6 +101,14 @@
 	};
 };
 
+&i2c4_1 {
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
 &usbc_port0 {
 	ppc = <&ppc_port0>;
 	usb-mux-chain-0 {

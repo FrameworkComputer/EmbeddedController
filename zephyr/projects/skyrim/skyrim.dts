@@ -172,6 +172,11 @@
 };
 
 &i2c4_1 {
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
 	alt_charger: isl9538@9 {
 		compatible = "intersil,isl923x";
 		status = "okay";

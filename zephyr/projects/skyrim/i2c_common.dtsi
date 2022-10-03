@@ -227,12 +227,6 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
 	pinctrl-names = "default";
-
-	charger: isl9241@9 {
-		compatible = "intersil,isl9241";
-		status = "okay";
-		reg = <0x9>;
-	};
 };
 
 &i2c_ctrl4 {
