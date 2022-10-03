@@ -193,6 +193,7 @@ class AllTests:
     def get_public_tests(board_config: BoardConfig) -> List[TestConfig]:
         """Return public test configs for the specified board."""
         tests = [
+            TestConfig(test_name="abort"),
             TestConfig(test_name="aes"),
             TestConfig(test_name="always_memset"),
             TestConfig(test_name="cec"),
