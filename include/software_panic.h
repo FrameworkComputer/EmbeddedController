@@ -22,6 +22,7 @@
 #define PANIC_SW_WATCHDOG (PANIC_SW_BASE + 4)
 #define PANIC_SW_BAD_RNG (PANIC_SW_BASE + 5)
 #define PANIC_SW_PMIC_FAULT (PANIC_SW_BASE + 6)
+#define PANIC_SW_EXIT (PANIC_SW_BASE + 7)
 
 #ifndef __ASSEMBLER__
 extern const char *const panic_sw_reasons[];

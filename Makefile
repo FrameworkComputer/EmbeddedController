@@ -268,6 +268,8 @@ include $(BDIR)/build.mk
 endif
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 include builtin/build.mk
+else
+include libc/build.mk
 endif
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
@@ -310,6 +312,8 @@ endif
 all-obj-$(1)+=$(call objs_from_dir_p,common,common,$(1))
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 all-obj-$(1)+=$(call objs_from_dir_p,builtin,builtin,$(1))
+else
+all-obj-$(1)+=$(call objs_from_dir_p,libc,libc,$(1))
 endif
 all-obj-$(1)+=$(call objs_from_dir_p,driver,driver,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,power,power,$(1))
@@ -364,6 +368,8 @@ dirs+=$(shell find common -type d)
 dirs+=$(shell find driver -type d)
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 dirs+=builtin
+else
+dirs+=libc
 endif
 common_dirs=util
 
