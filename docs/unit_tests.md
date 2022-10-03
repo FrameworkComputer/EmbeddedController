@@ -186,6 +186,17 @@ Make sure you test shows up in the "host" tests:
 host-my_test
 run-my_test
 ```
+### Test Config File
+
+Add any test-specific configurations to the [test_config.h](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/HEAD:src/platform/ec/test/test_config.h) file:
+
+```c
+#ifdef TEST_<my_test>
+/*
+ * Add test-specific configurations here.
+ */
+#endif
+```
 
 ### Build and Run
 
