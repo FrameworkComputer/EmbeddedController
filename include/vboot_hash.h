@@ -28,6 +28,15 @@
 int vboot_get_rw_hash(const uint8_t **dst);
 
 /**
+ * @brief Computes the hash of the RO image. This blocks until the hash is
+ *        ready.
+ *
+ * @param dst	(OUT) Address where computed hash is stored.
+ * @return	enum ec_error_list.
+ */
+int vboot_get_ro_hash(const uint8_t **dst);
+
+/**
  * Invalidate the hash if the hashed data overlaps the specified region.
  *
  * @param offset	Region start offset in flash

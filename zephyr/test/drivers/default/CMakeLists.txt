@@ -40,6 +40,7 @@ target_sources(app PRIVATE
     src/console_cmd/sysinfo.c
     src/console_cmd/tcpci_dump.c
     src/console_cmd/usb_pd_console.c
+    src/console_cmd/vboot_hash.c
     src/console_cmd/version.c
     src/console_cmd/waitms.c
     src/cros_cbi.c

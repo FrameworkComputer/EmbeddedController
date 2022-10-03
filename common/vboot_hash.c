@@ -321,6 +321,16 @@ int vboot_get_rw_hash(const uint8_t **dst)
 	return rv;
 }
 
+int vboot_get_ro_hash(const uint8_t **dst)
+{
+	int rv = vboot_hash_start(CONFIG_EC_PROTECTED_STORAGE_OFF +
+					  CONFIG_RO_STORAGE_OFF,
+				  system_get_image_used(EC_IMAGE_RO), NULL, 0,
+				  VBOOT_HASH_BLOCKING);
+	*dst = hash;
+	return rv;
+}
+
 /**
  * Returns the offset of RO or RW image if the either region is specifically
  * requested otherwise return the current hash offset.
