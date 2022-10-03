@@ -49,10 +49,14 @@ endif()
 if(DEFINED CONFIG_BOARD_FROSTFLOW)
 	project(frostflow)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_FROSTFLOW include)
+	zephyr_include_directories("include/frostflow")
 	zephyr_library_sources(
 			"src/frostflow/usb_mux_config.c"
 			"src/frostflow/ppc_config.c"
 			"src/frostflow/alt_charger.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/frostflow/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+		"src/frostflow/keyboard.c"
+		"src/frostflow/keyboard_customization.c")
 endif()
