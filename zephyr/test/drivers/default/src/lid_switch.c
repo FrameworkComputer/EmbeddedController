@@ -114,6 +114,33 @@ ZTEST(lid_switch, test_lid_close)
 	zassert_equal(lid_is_open(), 0, NULL);
 }
 
+ZTEST(lid_switch, test_enable_lid_detect)
+{
+	/* Start open. */
+	zassert_ok(emul_lid_open(), NULL);
+	k_sleep(K_MSEC(500));
+	zassert_equal(lid_is_open(), 1, NULL);
+
+	/* Disable lid detect interrupts */
+	enable_lid_detect(false);
+	k_sleep(K_MSEC(100));
+
+	/* Close lid but check if still indicates open as interrupt is
+	 * disabled
+	 */
+	zassert_ok(emul_lid_close(), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_equal(lid_is_open(), 1, NULL);
+	zassert_ok(emul_lid_open(), NULL);
+	k_sleep(K_MSEC(100));
+
+	/* Restore lid detect interrupts, confirm interrupt is firing again */
+	enable_lid_detect(true);
+	zassert_ok(emul_lid_close(), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_equal(lid_is_open(), 0, NULL);
+}
+
 ZTEST(lid_switch, test_cmd_lidopen)
 {
 	/* Start closed. */
