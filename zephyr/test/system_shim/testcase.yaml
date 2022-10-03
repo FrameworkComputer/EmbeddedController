@@ -4,3 +4,12 @@ tests:
   system_shim.default:
     tags:
       system
+    extra_configs:
+      # Make console work
+      - CONFIG_SERIAL=y
+      - CONFIG_SHELL_BACKEND_DUMMY=y
+      - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=1000
+      - CONFIG_SHELL_BACKEND_SERIAL=n
+      # Make cros_system driver work
+      - CONFIG_PM=y
+      - CONFIG_CROS_SYSTEM_NATIVE_POSIX=y

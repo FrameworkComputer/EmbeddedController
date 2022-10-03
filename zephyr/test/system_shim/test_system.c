@@ -5,7 +5,9 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/bbram.h>
+#include <zephyr/fff.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
 
@@ -21,7 +23,15 @@ LOG_MODULE_REGISTER(test);
 static char mock_data[64] =
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@";
 
-ZTEST_SUITE(system, NULL, NULL, NULL, NULL, NULL);
+FAKE_VALUE_FUNC(uint64_t, cros_system_native_posix_deep_sleep_ticks,
+		const struct device *)
+
+static void system_before_after(void *test_data)
+{
+	RESET_FAKE(cros_system_native_posix_deep_sleep_ticks);
+}
+
+ZTEST_SUITE(system, NULL, NULL, system_before_after, system_before_after, NULL);
 
 ZTEST(system, test_bbram_get)
 {
@@ -73,4 +83,28 @@ ZTEST(system, test_system_set_get_scratchpad)
 	system_set_scratchpad(scratch_set);
 	system_get_scratchpad(&scratch_read);
 	zassert_equal(scratch_read, scratch_set);
+}
+
+ZTEST_USER(system, test_system_console_cmd__idlestats)
+{
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+	const struct shell *shell_zephyr = get_ec_shell();
+	const char *outbuffer;
+	size_t buffer_size;
+
+	zassert_not_null(sys_dev);
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+
+	k_sleep(K_SECONDS(1));
+	zassert_ok(shell_execute_cmd(shell_zephyr, "idlestats"), NULL);
+
+	/* Weakly verify contents */
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_not_equal(buffer_size, 0);
+	zassert_not_null(strstr(outbuffer, "Time spent in deep-sleep:"));
+	zassert_not_null(strstr(outbuffer, "Total time on:"));
+
+	zassert_equal(cros_system_native_posix_deep_sleep_ticks_fake.call_count,
+		      1);
 }

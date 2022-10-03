@@ -68,3 +68,27 @@ config CROS_SYSTEM_XEC_INIT_PRIORITY
 	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
 
 endif # CONFIG_CROS_SYSTEM_XEC
+
+menuconfig CROS_SYSTEM_NATIVE_POSIX
+	bool "Native POSIX cros system driver (test only)"
+	depends on SOC_POSIX && CROS_EC
+	default y
+	help
+	  This option enables the cros system driver for the native POSIX
+	  testing board. Currently, Zephyr doesn't provide the system related
+	  API.  The cros system driver provides fakable stubs for the low-level
+	  driver related to chromium ec system functionality.
+
+if CROS_SYSTEM_NATIVE_POSIX
+
+config CROS_SYSTEM_NATIVE_POSIX_INIT_PRIORITY
+	int "cros_system native POSIX initialization priority (test only)"
+	default 10
+	range 10 19
+	help
+	  This sets the native POSIX cros_system driver initialization
+	  priority. The cros_system driver provides access to mockable cros
+	  system functions to facillitate testing and must be higher priority
+	  than CONFIG_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CROS_SYSTEM_NATIVE_POSIX
