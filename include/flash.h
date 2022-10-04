@@ -80,6 +80,29 @@ void crec_flash_print_region_info(void);
  */
 int crec_flash_total_banks(void);
 
+/**
+ * Fill flash info response structure (version 2)
+ *
+ * The function is responsible for filling 'num_banks_desc', 'num_banks_total'
+ * and 'banks' fields with information about flash layout.
+ *
+ * We are passing the whole response structure because it is marked
+ * as '__ec_align4', so it's packed, and should be aligned also but on most
+ * systems it's not because CONFIG_HOSTCMD_OPTION is not enabled. It means that
+ * the structure can be placed at ANY address. Passing the response structure
+ * gives information to the compiler how members should be accessed.
+ * Passing pointer to structure member is an error, and compiler will warn
+ * about it. Taking pointer to structure member, passing it as uint8_t and
+ * casting it is dangerous because the compiler will assume that the address
+ * is aligned and you won't get any warning about it.
+ *
+ * @param pointer to flash info version 2 response structure
+ * @param size of 'banks' array inside response structure
+ * @return EC_RES_SUCCESS or other error code.
+ */
+int crec_flash_response_fill_banks(struct ec_response_flash_info_2 *r,
+				   int num_banks);
+
 /* Persistent protection state flash offset / size / bank */
 #if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
 
