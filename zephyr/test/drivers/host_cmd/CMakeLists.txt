@@ -10,6 +10,7 @@ target_sources(app PRIVATE
     src/get_panic_info.c
     src/get_pd_port_caps.c
     src/host_command_test_protocol.c
+    src/host_command.c
     src/host_event_commands.c
     src/host_event_commands_deprecated.c
     src/host_request_expected_size.c
