@@ -125,6 +125,9 @@ const uint32_t pstate_data __attribute__((section(".rodata.pstate"))) =
 #endif /* !CONFIG_FLASH_PSTATE_BANK */
 #endif /* CONFIG_FLASH_PSTATE */
 
+/* Shim layer provides implementation of these functions based on Zephyr API */
+#if !defined(CONFIG_ZEPHYR) || \
+	!defined(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT)
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 const struct ec_flash_bank *flash_bank_info(int bank)
 {
@@ -260,6 +263,9 @@ int crec_flash_total_banks(void)
 {
 	return PHYSICAL_BANKS;
 }
+#endif /* !defined(CONFIG_ZEPHYR) ||                                \
+	* !defined(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT) \
+	*/
 
 static int flash_range_ok(int offset, int size_req, int align)
 {
@@ -1025,6 +1031,8 @@ static void flash_erase_deferred(void)
 DECLARE_DEFERRED(flash_erase_deferred);
 #endif
 
+#if !defined(CONFIG_ZEPHYR) || \
+	!defined(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT)
 void crec_flash_print_region_info(void)
 {
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
@@ -1046,6 +1054,7 @@ void crec_flash_print_region_info(void)
 	ccprintf("Protect: %4d B\n", CONFIG_FLASH_BANK_SIZE);
 #endif
 }
+#endif
 
 /*****************************************************************************/
 /* Console commands */

@@ -119,4 +119,12 @@ config PLATFORM_EC_FLASH_PSTATE
 	  defined, write protect state is maintained solely by the physical
 	  flash driver.
 
+config PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT
+	bool "Use Zephyr flash page layout API to get sector information"
+	default y if SOC_FAMILY_STM32
+	select FLASH_PAGE_LAYOUT
+	help
+	  When enabled, EC will use flash page layout API to get information
+	  about flash sectors (index, offset, and size).
+
 endif # PLATFORM_EC_FLASH_CROS
