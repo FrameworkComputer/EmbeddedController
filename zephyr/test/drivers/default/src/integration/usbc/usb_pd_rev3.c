@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
 
 #include "battery.h"
@@ -355,4 +357,44 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_chipset_on_pd_button_behavior)
 	/* Wake device to setup for subsequent tests */
 	chipset_power_on();
 	k_sleep(K_SECONDS(10));
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_uvdm_not_supported)
+{
+	uint32_t vdm_header = VDO(USB_VID_GOOGLE, 0 /* unstructured */, 0);
+
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, true);
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_VENDOR_DEF,
+				    &vdm_header, 1, 0);
+	k_sleep(K_SECONDS(1));
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, false);
+
+	bool not_supported_seen = false;
+	struct tcpci_partner_log_msg *msg;
+
+	/* The TCPM does not support any unstructured VDMs. In PD 3.0, it should
+	 * respond with Not_Supported.
+	 */
+
+	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->source_5v_3a.msg_log, msg, node)
+	{
+		uint16_t header = sys_get_le16(msg->buf);
+
+		/* Ignore messages from the port partner. */
+		if (msg->sender == TCPCI_PARTNER_SENDER_PARTNER) {
+			continue;
+		}
+
+		if (msg->sender == TCPCI_PARTNER_SENDER_TCPM &&
+		    PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
+		    PD_HEADER_CNT(header) == 0 && PD_HEADER_EXT(header) == 0 &&
+		    PD_HEADER_TYPE(header) == PD_CTRL_NOT_SUPPORTED) {
+			not_supported_seen = true;
+			break;
+		}
+	}
+
+	zassert_true(
+		not_supported_seen,
+		"Sent unstructured VDM to TCPM; did not receive Not_Supported");
 }

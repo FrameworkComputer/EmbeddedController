@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
 
 #include "battery_smart.h"
@@ -245,4 +247,38 @@ ZTEST_F(usb_attach_5v_3a_pd_source,
 	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 
 	zassert_false(system_can_boot_ap(), NULL);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source, test_uvdm_ignored)
+{
+	uint32_t vdm_header = VDO(USB_VID_GOOGLE, 0 /* unstructured */, 0);
+
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, true);
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_VENDOR_DEF,
+				    &vdm_header, 1, 0);
+	k_sleep(K_SECONDS(1));
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, false);
+
+	bool tcpm_response = false;
+	struct tcpci_partner_log_msg *msg;
+
+	/* The TCPM does not support any unstructured VDMs. In PD 2.0, it should
+	 * ignore them.
+	 */
+
+	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->source_5v_3a.msg_log, msg, node)
+	{
+		/* Ignore messages from the port partner */
+		if (msg->sender == TCPCI_PARTNER_SENDER_PARTNER) {
+			continue;
+		}
+
+		if (msg->sender == TCPCI_PARTNER_SENDER_TCPM) {
+			tcpm_response = true;
+			break;
+		}
+	}
+
+	zassert_false(tcpm_response,
+		      "Sent unstructured VDM to TCPM; TCPM did not ignore");
 }
