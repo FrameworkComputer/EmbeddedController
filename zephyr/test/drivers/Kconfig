@@ -50,6 +50,11 @@ config LINK_TEST_SUITE_COMMON_CBI_GPIO
 config LINK_TEST_SUITE_COMMON_CHARGER
 	bool "Link and execute the common/charger.c tests"
 
+config LINK_TEST_SUITE_CROS_FLASH
+	bool "Link and execute the cros-flash driver tests"
+	help
+	  Include the test suite exercising cros-flash driver in the binary.
+
 config LINK_TEST_SUITE_FLASH
 	bool "Link and execute the common/flash.c tests"
 	help

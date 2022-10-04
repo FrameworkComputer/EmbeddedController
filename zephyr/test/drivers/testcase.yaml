@@ -163,6 +163,16 @@ tests:
     extra_conf_files:
     - prj.conf
     - console_cmd_mfallow/prj.conf
+  drivers.cros_flash:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_CROS_FLASH=y
+    - CONFIG_CROS_FLASH_BACKEND_FAKE=y
+    - CONFIG_CROS_FLASH_READOUT_PROTECTION=y
+    - CONFIG_PLATFORM_EC_INTERNAL_STORAGE=y
+    - CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY=60
+    - CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY=72
+    extra_dtc_overlay_files:
+    - cros_flash/boards/native_posix.overlay
   drivers.dps:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USB_PD_DPS=y
