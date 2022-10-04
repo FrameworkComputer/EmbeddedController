@@ -94,6 +94,8 @@
 #define PD_MAX_CURRENT_MA 3000
 #define PD_MAX_VOLTAGE_MV 20000
 
+#undef CONFIG_CMD_POWERINDEBUG
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
