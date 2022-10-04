@@ -984,20 +984,11 @@ static void flash_erase_deferred(void)
 DECLARE_DEFERRED(flash_erase_deferred);
 #endif
 
-/*****************************************************************************/
-/* Console commands */
-
-#ifdef CONFIG_CMD_FLASHINFO
-#define BIT_TO_ON_OFF(value, mask) \
-	((((value) & (mask)) == (mask)) ? "ON" : "OFF")
-static int command_flash_info(int argc, const char **argv)
+void crec_flash_print_region_info(void)
 {
-	int i, flags;
-
-	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE_BYTES / 1024);
-	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
-		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
+	int i;
+
 	ccprintf("Regions:\n");
 	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
 		ccprintf(" %d region%s:\n", flash_bank_array[i].count,
@@ -1013,6 +1004,22 @@ static int command_flash_info(int argc, const char **argv)
 		 CONFIG_FLASH_ERASED_VALUE32 ? 1 : 0);
 	ccprintf("Protect: %4d B\n", CONFIG_FLASH_BANK_SIZE);
 #endif
+}
+
+/*****************************************************************************/
+/* Console commands */
+
+#ifdef CONFIG_CMD_FLASHINFO
+#define BIT_TO_ON_OFF(value, mask) \
+	((((value) & (mask)) == (mask)) ? "ON" : "OFF")
+static int command_flash_info(int argc, const char **argv)
+{
+	int i, flags;
+
+	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE_BYTES / 1024);
+	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
+		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
+	crec_flash_print_region_info();
 	flags = crec_flash_get_protect();
 	ccprintf("Flags:\n");
 	ccprintf("  wp_gpio_asserted: %s\n",
