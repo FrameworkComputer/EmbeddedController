@@ -7,6 +7,7 @@ menuconfig CROS_FLASH_NPCX
 	depends on SOC_FAMILY_NPCX
 	default y
 	select PLATFORM_EC_FLASH_CROS
+	select PLATFORM_EC_SPI_FLASH_REGS
 	help
 	  This option enables a flash unit interface (FIU) driver for the NPCX
 	  chip. This is used instead of the flash memory interface so we can
@@ -41,6 +42,7 @@ config CROS_FLASH_XEC
 	depends on SOC_FAMILY_MEC
 	default y
 	select PLATFORM_EC_FLASH_CROS
+	select PLATFORM_EC_SPI_FLASH_REGS
 	help
 	  This option enables the flash driver for the MEC172x chips. Flash
 	  access is via the QSPI driver to one of three ports: internal 512KB

@@ -2,5 +2,4 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-rsource "zephyr/Kconfig"
-rsource "common/Kconfig"
+add_subdirectory_ifdef(CONFIG_PLATFORM_EC_SPI_FLASH_REGS flash_reg)

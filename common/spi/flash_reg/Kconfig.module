@@ -1,0 +1,12 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_SPI_FLASH_REGS
+	bool
+	help
+	  Enables flash registers for SPI flash (both internal and external).
+	  When enabled, two new functions will become available: (1) a function
+	  to compute the block write protection range from a set of status
+	  registers, and (2) the inverse function to set the status registers
+	  based on the desired protection offset/length.
