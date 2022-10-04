@@ -467,6 +467,48 @@ int host_cmd_motion_sense_spoof(uint8_t sensor_num, uint8_t enable,
 	return host_command_process(&args);
 }
 
+int host_cmd_motion_sense_kb_wake_angle(
+	int16_t data, struct ec_response_motion_sense *response)
+{
+	struct ec_params_motion_sense params = {
+		.cmd = MOTIONSENSE_CMD_KB_WAKE_ANGLE,
+		.kb_wake_angle = {
+			.data = data,
+		},
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
+
+	return host_command_process(&args);
+}
+
+int host_cmd_motion_sense_lid_angle(struct ec_response_motion_sense *response)
+{
+	struct ec_params_motion_sense params = {
+		.cmd = MOTIONSENSE_CMD_LID_ANGLE,
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
+
+	return host_command_process(&args);
+}
+
+int host_cmd_motion_sense_tablet_mode_lid_angle(
+	int16_t lid_angle, int16_t hys_degree,
+	struct ec_response_motion_sense *response)
+{
+	struct ec_params_motion_sense
+		params = { .cmd = MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE,
+			   .tablet_mode_threshold = {
+				   .lid_angle = lid_angle,
+				   .hys_degree = hys_degree,
+			   } };
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
+
+	return host_command_process(&args);
+}
+
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 			      void *response, size_t response_size)
 {

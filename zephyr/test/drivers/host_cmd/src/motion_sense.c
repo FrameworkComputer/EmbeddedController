@@ -10,6 +10,8 @@
 #include "atomic.h"
 #include "console.h"
 #include "driver/accel_bma2x2.h"
+#include "lid_angle.h"
+#include "motion_lid.h"
 #include "motion_sense.h"
 #include "motion_sense_fifo.h"
 #include "test/drivers/test_state.h"
@@ -75,6 +77,9 @@ static void host_cmd_motion_sense_before(void *fixture)
 	atomic_clear(&motion_sensors[0].flush_pending);
 	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
 	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 1000 * MSEC;
+
+	/* Reset the lid wake angle to 0 degrees. */
+	lid_angle_set_wake_angle(0);
 }
 
 static void host_cmd_motion_sense_after(void *fixture)
@@ -865,4 +870,51 @@ ZTEST(host_cmd_motion_sense, test_spoof_invalid_mode)
 	zassert_equal(EC_RES_INVALID_PARAM,
 		      host_cmd_motion_sense_spoof(0, 0xff, 0, 0, 0, &response),
 		      NULL);
+}
+
+ZTEST(host_cmd_motion_sense, set_kb_wake_lid_angle)
+{
+	struct ec_response_motion_sense response;
+	int16_t expected_lid_angle = 45;
+	int rv;
+
+	rv = host_cmd_motion_sense_kb_wake_angle(expected_lid_angle, &response);
+
+	zassert_ok(rv, "Got %d", rv);
+	zassert_equal(expected_lid_angle, lid_angle_get_wake_angle());
+	zassert_equal(expected_lid_angle, response.kb_wake_angle.ret);
+}
+
+ZTEST(host_cmd_motion_sense, get_lid_angle)
+{
+	struct ec_response_motion_sense response;
+	int rv;
+
+	rv = host_cmd_motion_sense_lid_angle(&response);
+
+	zassert_ok(rv, "Got %d", rv);
+	zassert_equal(motion_lid_get_angle(), response.lid_angle.value);
+}
+
+ZTEST(host_cmd_motion_sense, test_tablet_mode_lid_angle)
+{
+	struct ec_response_motion_sense response;
+	int16_t expected_angle = 45;
+	int16_t expected_hys = 3;
+	int rv;
+
+	rv = host_cmd_motion_sense_tablet_mode_lid_angle(
+		expected_angle, expected_hys, &response);
+
+	zassert_ok(rv, "Got %d", rv);
+	zassert_equal(expected_angle, response.tablet_mode_threshold.lid_angle);
+	zassert_equal(expected_hys, response.tablet_mode_threshold.hys_degree);
+}
+
+ZTEST(host_cmd_motion_sense, test_tablet_mode_lid_angle__invalid)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_ok(!host_cmd_motion_sense_tablet_mode_lid_angle(-100, -100,
+								&response));
 }
