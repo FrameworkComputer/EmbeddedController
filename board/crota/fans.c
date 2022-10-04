@@ -107,7 +107,7 @@ static void fan_get_rpm(int fan)
 	/* Record actual RPM every 2 minutes. */
 	if (timestamp_expired(deadline, NULL)) {
 		ccprints("fan actual rpm: %d", fan_get_rpm_actual(FAN_CH(fan)));
-		deadline.val += RECORD_TIME;
+		deadline.val = get_time().val + RECORD_TIME;
 	}
 }
 
