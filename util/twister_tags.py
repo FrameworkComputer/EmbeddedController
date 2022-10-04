@@ -19,6 +19,7 @@ testcase.yaml files to see if they only used predefined tags.
 import argparse
 import logging
 import os
+import pathlib
 import sys
 
 import yaml  # pylint: disable=import-error
@@ -37,7 +38,7 @@ def main(args):
     """List and/or validate testcase.yaml tags."""
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--list-tags", action="store_true")
-    parser.add_argument("--validate-files", nargs="+", type=str)
+    parser.add_argument("--validate-files", nargs="*", type=pathlib.Path)
     args = parser.parse_args()
 
     list_tags = args.list_tags
@@ -58,7 +59,8 @@ def main(args):
 
         for validated_file in validate_files:
             if os.path.basename(validated_file) == "testcase.yaml":
-                testcase_yamls.append(validated_file)
+                if validated_file.exists():
+                    testcase_yamls.append(validated_file)
 
         def test_tags_generator(root):
             """Returns space separated tags denoted by a tags key"""
