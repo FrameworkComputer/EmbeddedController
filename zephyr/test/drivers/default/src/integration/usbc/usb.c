@@ -129,5 +129,23 @@ ZTEST(integration_usb, test_attach_drp)
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 }
 
+ZTEST(integration_usb, test_event_loop)
+{
+	int paused = tc_event_loop_is_paused(USBC_PORT_C0);
+
+	tc_pause_event_loop(USBC_PORT_C0);
+	zassert_equal(1, tc_event_loop_is_paused(USBC_PORT_C0));
+
+	tc_start_event_loop(USBC_PORT_C0);
+	zassert_equal(0, tc_event_loop_is_paused(USBC_PORT_C0));
+
+	/* Restore pause state from beginning */
+	if (paused) {
+		tc_pause_event_loop(USBC_PORT_C0);
+	} else {
+		tc_start_event_loop(USBC_PORT_C0);
+	}
+}
+
 ZTEST_SUITE(integration_usb, drivers_predicate_post_main, NULL,
 	    integration_usb_before, integration_usb_after, NULL);
