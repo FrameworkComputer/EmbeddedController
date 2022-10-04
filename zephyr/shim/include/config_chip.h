@@ -478,6 +478,8 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #error "A zephyr,sram device must be chosen in the device tree"
 #endif
 
+#define CONFIG_RAM_SIZE CONFIG_DATA_RAM_SIZE
+
 #define CONFIG_RO_MEM_OFF CONFIG_CROS_EC_RO_MEM_OFF
 #define CONFIG_RO_MEM_SIZE CONFIG_CROS_EC_RO_MEM_SIZE
 #define CONFIG_RW_MEM_OFF CONFIG_CROS_EC_RW_MEM_OFF
@@ -521,8 +523,6 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_EC_PROTECTED_STORAGE_SIZE DT_PROP(_BINMAN_RO_PATH, size)
 #define CONFIG_EC_WRITABLE_STORAGE_OFF DT_PROP(_BINMAN_RW_PATH, offset)
 #define CONFIG_EC_WRITABLE_STORAGE_SIZE DT_PROP(_BINMAN_RW_PATH, size)
-
-#define CONFIG_RAM_SIZE CONFIG_DATA_RAM_SIZE
 
 #ifdef CONFIG_PLATFORM_EC_EXTERNAL_STORAGE
 #define CONFIG_EXTERNAL_STORAGE
