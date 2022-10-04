@@ -8,7 +8,7 @@
 #define __MOCK_USB_PD_DPM_MOCK_H
 
 #include "common.h"
-#include "usb_pd_dpm.h"
+#include "usb_pd_dpm_sm.h"
 
 /* Defaults should all be 0 values. */
 struct mock_dpm_port_t {

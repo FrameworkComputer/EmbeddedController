@@ -11,7 +11,7 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "usb_pd.h"
-#include "usb_pd_dpm.h"
+#include "usb_pd_dpm_sm.h"
 #include "usb_prl_sm.h"
 
 static void console_cmd_usb_pd_after(void *fixture)

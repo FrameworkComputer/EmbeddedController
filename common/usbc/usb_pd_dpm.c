@@ -25,11 +25,12 @@
 #include "usb_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
-#include "usb_pd_dpm.h"
 #include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
+#include "usb_pd_dpm_sm.h"
+#include "usb_tc_sm.h"
 #include "usb_tbt_alt_mode.h"
 
 #ifdef CONFIG_ZEPHYR
@@ -48,6 +49,8 @@
 #define DPM_ATTENION_MAX_VDO 2
 
 static struct {
+	/* state machine context */
+	struct sm_ctx ctx;
 	atomic_t flags;
 	uint32_t vdm_req[VDO_MAX_SIZE];
 	int vdm_req_cnt;
@@ -73,6 +76,44 @@ static struct {
 #define DPM_FLAG_DATA_RESET_DONE BIT(7)
 #define DPM_FLAG_PD_BUTTON_PRESSED BIT(8)
 #define DPM_FLAG_PD_BUTTON_RELEASED BIT(9)
+#define DPM_FLAG_PE_READY BIT(10)
+
+/* List of all Device Policy Manager level states */
+enum usb_dpm_state {
+	/* Normal States */
+	DPM_WAITING,
+	DPM_READY,
+};
+
+/* Forward declare the full list of states. This is indexed by usb_pd_state */
+static const struct usb_state dpm_states[];
+
+/* List of human readable state names for console debugging */
+__maybe_unused static __const_data const char *const dpm_state_names[] = {
+	/* Normal States */
+	[DPM_WAITING] = "DPM Waiting",
+	[DPM_READY] = "DPM Ready",
+};
+
+static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+/* Set the DPM state machine to a new state. */
+static void set_state_dpm(const int port, const enum usb_dpm_state new_state)
+{
+	set_state(port, &dpm[port].ctx, &dpm_states[new_state]);
+}
+
+/* Get the current TypeC state. */
+__maybe_unused test_export_static enum usb_dpm_state
+get_state_dpm(const int port)
+{
+	return dpm[port].ctx.current - &dpm_states[0];
+}
+
+static void print_current_state(const int port)
+{
+	CPRINTS("C%d: %s", port, dpm_state_names[get_state_dpm(port)]);
+}
 
 #ifdef CONFIG_ZEPHYR
 static int init_vdm_req_mutex(const struct device *dev)
@@ -180,6 +221,9 @@ void dpm_init(int port)
 {
 	dpm[port].flags = 0;
 	dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
+
+	/* Ensure that DPM state machine gets reset */
+	set_state_dpm(port, DPM_WAITING);
 }
 
 void dpm_mode_exit_complete(int port)
@@ -206,6 +250,18 @@ void dpm_data_reset_complete(int port)
 	DPM_CLR_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
 	DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_DONE);
 	DPM_CLR_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE);
+}
+
+void dpm_set_pe_ready(int port, bool enable)
+{
+	/*
+	 * DPM should remain DPM_WAITING state until the PE is in its ready
+	 * state and is able to accept requests from the DPM layer.
+	 */
+	if (enable)
+		DPM_SET_FLAG(port, DPM_FLAG_PE_READY);
+	else
+		DPM_CLR_FLAG(port, DPM_FLAG_PE_READY);
 }
 
 static void dpm_clear_mode_exit_request(int port)
@@ -638,24 +694,6 @@ static void dpm_run_pd_button_sm(int port)
 	/* After checking flags, clear them. */
 	DPM_CLR_FLAG(port, DPM_FLAG_PD_BUTTON_PRESSED);
 	DPM_CLR_FLAG(port, DPM_FLAG_PD_BUTTON_RELEASED);
-}
-
-void dpm_run(int port)
-{
-	if (pd_get_data_role(port) == PD_ROLE_DFP) {
-		/* Run DFP related DPM requests */
-		if (DPM_CHK_FLAG(port, DPM_FLAG_EXIT_REQUEST))
-			dpm_attempt_mode_exit(port);
-		else if (!DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE))
-			dpm_attempt_mode_entry(port);
-
-		/* Run USB PD Power button state machine */
-		dpm_run_pd_button_sm(port);
-	}
-
-	/* Run any VDM REQ messages */
-	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ))
-		dpm_send_req_vdm(port);
 }
 
 /*
@@ -1199,3 +1237,91 @@ uint8_t pd_get_bist_share_mode(void)
 {
 	return bist_shared_mode_enabled;
 }
+
+void dpm_run(int port, int evt, int en)
+{
+	switch (local_state[port]) {
+	case SM_PAUSED:
+		if (!en)
+			break;
+		__fallthrough;
+	case SM_INIT:
+		dpm_init(port);
+		local_state[port] = SM_RUN;
+		__fallthrough;
+	case SM_RUN:
+		if (!en) {
+			local_state[port] = SM_PAUSED;
+			/*
+			 * While we are paused, exit all states and wait until
+			 * initialized again.
+			 */
+			set_state(port, &dpm[port].ctx, NULL);
+			break;
+		}
+
+		/* Run state machine */
+		run_state(port, &dpm[port].ctx);
+
+		break;
+	}
+}
+
+/*
+ * DPM_WAITING
+ */
+static void dpm_waiting_entry(const int port)
+{
+	DPM_CLR_FLAG(port, DPM_FLAG_PE_READY);
+	print_current_state(port);
+}
+
+static void dpm_waiting_run(const int port)
+{
+	if (DPM_CHK_FLAG(port, DPM_FLAG_PE_READY)) {
+		set_state_dpm(port, DPM_READY);
+	}
+}
+
+/*
+ * DPM_READY
+ */
+static void dpm_ready_entry(const int port)
+{
+	print_current_state(port);
+}
+
+static void dpm_ready_run(const int port)
+{
+	if (!DPM_CHK_FLAG(port, DPM_FLAG_PE_READY)) {
+		set_state_dpm(port, DPM_WAITING);
+		return;
+	}
+
+	if (pd_get_data_role(port) == PD_ROLE_DFP) {
+		/* Run DFP related DPM requests */
+		if (DPM_CHK_FLAG(port, DPM_FLAG_EXIT_REQUEST))
+			dpm_attempt_mode_exit(port);
+		else if (!DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE))
+			dpm_attempt_mode_entry(port);
+
+		/* Run USB PD Power button state machine */
+		dpm_run_pd_button_sm(port);
+	}
+
+	/* Run any VDM REQ messages */
+	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ))
+		dpm_send_req_vdm(port);
+}
+
+static __const_data const struct usb_state dpm_states[] = {
+	/* Normal States */
+	[DPM_WAITING] = {
+		.entry = dpm_waiting_entry,
+		.run   = dpm_waiting_run,
+	},
+	[DPM_READY] = {
+		.entry = dpm_ready_entry,
+		.run   = dpm_ready_run,
+	},
+};

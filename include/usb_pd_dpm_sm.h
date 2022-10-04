@@ -21,6 +21,15 @@
  */
 void dpm_init(int port);
 
+/**
+ * Runs the Device Policy Manager State Machine
+ *
+ * @param port USB-C port number
+ * @param evt  system event, ie: PD_EVENT_RX
+ * @param en   0 to disable the machine, 1 to enable the machine
+ */
+void dpm_run(int port, int evt, int en);
+
 /*
  * Informs the DPM that a mode exit is complete.
  *
@@ -41,6 +50,14 @@ void dpm_set_mode_exit_request(int port);
  * @param port USB-C port number
  */
 void dpm_data_reset_complete(int port);
+
+/*
+ * Informs the DPM that PE layer is in ready state so that data role can be
+ * checked and DPM can know to exit the idle state.
+ *
+ * @param port USB-C port number
+ */
+void dpm_set_pe_ready(int port, bool enable);
 
 /*
  * Informs the DPM that a VDM ACK was received.
@@ -64,13 +81,6 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
  */
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		   uint8_t vdm_cmd);
-
-/*
- * Drives the Policy Engine through entry/exit mode process
- *
- * @param port USB-C port number
- */
-void dpm_run(int port);
 
 /*
  * Determines the current allocation for the connection, past the basic

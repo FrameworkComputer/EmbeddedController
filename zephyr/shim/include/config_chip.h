@@ -1330,6 +1330,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_USB_PE_SM
 #endif
 
+#undef CONFIG_USB_DPM_SM
+#ifdef CONFIG_PLATFORM_EC_USB_DPM_SM
+#define CONFIG_USB_DPM_SM
+#endif
+
 #undef CONFIG_USB_PD_DECODE_SOP
 #ifdef CONFIG_PLATFORM_EC_USB_PD_DECODE_SOP
 #define CONFIG_USB_PD_DECODE_SOP

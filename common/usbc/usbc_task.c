@@ -27,6 +27,7 @@
 #include "usb_pd_timer.h"
 #include "usb_prl_sm.h"
 #include "tcpm/tcpm.h"
+#include "usb_pd_dpm_sm.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm.h"
@@ -140,6 +141,10 @@ static bool pd_task_loop(int port)
 	 */
 	if (IS_ENABLED(CONFIG_USB_PD_TCPC))
 		tcpc_run(port, evt);
+
+	/* Run Device Policy Manager */
+	if (IS_ENABLED(CONFIG_USB_DPM_SM))
+		dpm_run(port, evt, tc_get_pd_enabled(port));
 
 	/* Run policy engine state machine */
 	if (IS_ENABLED(CONFIG_USB_PE_SM))

@@ -304,6 +304,15 @@ config PLATFORM_EC_USB_PE_SM
 	  USB devices. You should normally define this unless you want to
 	  override it in your board code, which is not recommended.
 
+config PLATFORM_EC_USB_DPM_SM
+	bool "Device Policy Manager (DPM) state machine"
+	default y
+	help
+	  This enables the device policy manager portion of the power-delivery
+	  (PD), protocol which is used to define port policy decision.  You
+	  should normally define this unless you want to override it in your
+	  board code, which is not recommended.
+
 config PLATFORM_EC_USB_PD_DECODE_SOP
 	def_bool y  # Required for TCPMV2
 	help

@@ -15,7 +15,7 @@
 #include <stdint.h>
 
 #include "tcpm/tcpm.h"
-#include "usb_pd_dpm.h"
+#include "usb_pd_dpm_sm.h"
 
 /*
  * Initialize DP state for the specified port.

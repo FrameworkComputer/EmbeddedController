@@ -27,7 +27,7 @@
 #include "usb_dp_alt_mode.h"
 #include "usb_mode.h"
 #include "usb_mux.h"
-#include "usb_pd_dpm.h"
+#include "usb_pd_dpm_sm.h"
 #include "usb_pd_policy.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -2927,9 +2927,15 @@ static void pe_src_ready_run(int port)
 		if (pe_attempt_port_discovery(port))
 			return;
 
-		/* No DPM requests; attempt mode entry/exit if needed */
-		dpm_run(port);
+		/* Inform DPM state machine that PE is set for messages */
+		dpm_set_pe_ready(port, true);
 	}
+}
+
+static void pe_src_ready_exit(int port)
+{
+	/* Inform DPM state machine that PE is in ready state */
+	dpm_set_pe_ready(port, false);
 }
 
 /**
@@ -3803,9 +3809,15 @@ static void pe_snk_ready_run(int port)
 		if (pe_attempt_port_discovery(port))
 			return;
 
-		/* No DPM requests; attempt mode entry/exit if needed */
-		dpm_run(port);
+		/* Inform DPM state machine that PE is set for messages */
+		dpm_set_pe_ready(port, true);
 	}
+}
+
+static void pe_snk_ready_exit(int port)
+{
+	/* Inform DPM state machine that PE is in ready state */
+	dpm_set_pe_ready(port, false);
 }
 
 /**
@@ -7902,6 +7914,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_SRC_READY] = {
 		.entry = pe_src_ready_entry,
 		.run   = pe_src_ready_run,
+		.exit   = pe_src_ready_exit,
 	},
 	[PE_SRC_DISABLED] = {
 		.entry = pe_src_disabled_entry,
@@ -7948,6 +7961,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_SNK_READY] = {
 		.entry = pe_snk_ready_entry,
 		.run   = pe_snk_ready_run,
+		.exit   = pe_snk_ready_exit,
 	},
 	[PE_SNK_HARD_RESET] = {
 		.entry = pe_snk_hard_reset_entry,

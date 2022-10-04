@@ -403,6 +403,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
 #undef CONFIG_USB_PD_HOST_CMD
+#undef CONFIG_USB_DPM_SM
 #define CONFIG_USB_PRL_SM
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
@@ -423,6 +424,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_EXTENDED_MESSAGES
 #define CONFIG_USB_PD_TCPMV2
 #undef CONFIG_USB_PE_SM
+#undef CONFIG_USB_DPM_SM
 #undef CONFIG_USB_TYPEC_SM
 #undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PRL_SM
@@ -531,6 +533,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_POWER_DELIVERY
 #undef CONFIG_USB_PRL_SM
 #undef CONFIG_USB_PE_SM
+#undef CONFIG_USB_DPM_SM
 #undef CONFIG_USB_PD_HOST_CMD
 #endif
 
@@ -615,6 +618,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_CMD_PD_TIMER
 #undef CONFIG_USB_PD_HOST_CMD
 #undef CONFIG_USB_PRL_SM
+#undef CONFIG_USB_DPM_SM
 #endif
 
 #if defined(TEST_CHARGE_MANAGER) || defined(TEST_CHARGE_MANAGER_DRP_CHARGING)
