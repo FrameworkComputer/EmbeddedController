@@ -40,22 +40,30 @@ static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
 			int *size_out)
 {
 	switch (idx) {
+#if DT_NODE_EXISTS(BBRAM_REGION_PD0)
 	case SYSTEM_BBRAM_IDX_PD0:
 		*offset_out = DT_PROP(BBRAM_REGION_PD0, offset);
 		*size_out = DT_PROP(BBRAM_REGION_PD0, size);
 		break;
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_PD1)
 	case SYSTEM_BBRAM_IDX_PD1:
 		*offset_out = DT_PROP(BBRAM_REGION_PD1, offset);
 		*size_out = DT_PROP(BBRAM_REGION_PD1, size);
 		break;
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_PD2)
 	case SYSTEM_BBRAM_IDX_PD2:
 		*offset_out = DT_PROP(BBRAM_REGION_PD2, offset);
 		*size_out = DT_PROP(BBRAM_REGION_PD2, size);
 		break;
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_TRY_SLOT)
 	case SYSTEM_BBRAM_IDX_TRY_SLOT:
 		*offset_out = DT_PROP(BBRAM_REGION_TRY_SLOT, offset);
 		*size_out = DT_PROP(BBRAM_REGION_TRY_SLOT, size);
 		break;
+#endif
 	default:
 		return EC_ERROR_INVAL;
 	}
