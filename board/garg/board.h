@@ -10,7 +10,9 @@
 
 /* Free up flash space */
 #define CONFIG_LTO
+#undef CONFIG_CMD_ACCELSPOOF
 #undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_MEM
 
 /* Select Baseboard features */
 #define VARIANT_OCTOPUS_EC_NPCX796FB
