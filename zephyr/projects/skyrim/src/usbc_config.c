@@ -229,6 +229,7 @@ void usb_pd_soc_interrupt(enum gpio_signal signal)
 	CPRINTSUSB("SOC PD Interrupt");
 }
 
+#ifdef CONFIG_CHARGER_ISL9241
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
 #define SKYRIM_AC_PROCHOT_CURRENT_MA 3328
 static void set_ac_prochot(void)
@@ -236,6 +237,7 @@ static void set_ac_prochot(void)
 	isl9241_set_ac_prochot(CHARGER_SOLO, SKYRIM_AC_PROCHOT_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_CHARGER_ISL9241 */
 
 void tcpc_alert_event(enum gpio_signal signal)
 {
