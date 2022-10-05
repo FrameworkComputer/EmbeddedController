@@ -15,10 +15,10 @@
 
 # If env EXTERNAL_TRUNK_PATH is defined, we use this to build the
 # absolute path to the ec directory. Otherwise, we just take the abspath of ".".
-ide_ec_path_ext = \
+ide-ec-path-ext = \
 	$(if $(EXTERNAL_TRUNK_PATH),$(EXTERNAL_TRUNK_PATH)/src/platform/ec)
-ide_ec_path_abs = $(abspath .)
-ide_ec_path = $(or $(ide_ec_path_ext),$(ide_ec_path_abs))
+ide-ec-path-abs = $(abspath .)
+ide-ec-path = $(or $(ide-ec-path-ext),$(ide-ec-path-abs))
 
 # Clang doesn't support these GCC options.
 ide-filters = -mno-sched-prolog -fconserve-stack
@@ -82,8 +82,7 @@ $(out)/util/compile_commands.json: $(ide-utils)
 ide-comma = ,
 ide-space = $() $()
 ide-esc-quoted = $(patsubst %,\"%\",$(1))
-ide-comma-sep = $(subst $(ide-space),$(ide-comma)$(ide-space),$(ide-esc-quoted))
-cmd_json_list = $(ide-comma-sep)
+cmd_json_list = $(subst $(ide-space),$(ide-comma)$(ide-space),$(ide-esc-quoted))
 
 # Replace any ".compile_cmd.json" with ".o" and filter out $(ide-filters) words.
 # The replace is needed because we are invoking build commands from within our
@@ -108,7 +107,7 @@ cmd_to_compile_cmd_json =                                                      \
 	printf '        %s\n'                                                  \
 	  $(call cmd_json_list,$(call cmd_rep_filter,$(3),$(4)))        >>$@  ;\
 	printf '    ],\n'                                               >>$@  ;\
-	printf '    "directory": "$(ide_ec_path)",\n'                   >>$@  ;\
+	printf '    "directory": "$(ide-ec-path)",\n'                   >>$@  ;\
 	printf '    "file": "$(5)"\n'                                   >>$@  ;\
 	printf '}\n'                                                    >>$@  ;
 
