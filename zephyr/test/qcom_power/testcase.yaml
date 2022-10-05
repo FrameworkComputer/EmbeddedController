@@ -1,0 +1,4 @@
+common:
+  platform_allow: native_posix
+tests:
+  qcom_power.default: {}
