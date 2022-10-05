@@ -159,9 +159,15 @@ test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 		return;
 	}
 
+	/*
+	 * Ignore infinite loop for coverage as the test would fail via timeout
+	 * and not report regardless of executing code.
+	 */
+	/* LCOV_EXCL_START */
 	/* should never reach this point */
 	while (1)
 		continue;
+	/* LCOV_EXCL_STOP */
 }
 
 #ifdef CONFIG_PM
