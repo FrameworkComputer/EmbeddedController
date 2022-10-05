@@ -968,6 +968,9 @@ static int anx7447_get_chip_info(int port, int live,
 
 	RETURN_ERROR(tcpci_get_chip_info(port, live, chip_info));
 
+	if (chip_info == NULL)
+		return EC_SUCCESS;
+
 	if (chip_info->fw_version_number == -1 || live) {
 		/*
 		 * Before reading ANX7447 SPI target address 0x7e for
