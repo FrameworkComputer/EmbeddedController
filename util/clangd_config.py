@@ -17,8 +17,8 @@ from pathlib import Path
 from typing import List, Optional
 
 
-def fetch_boards(ec_root: Path) -> Optional[List[str]]:
-    """Return a list of boards."""
+def ec_fetch_boards(ec_root: Path) -> Optional[List[str]]:
+    """Return a list of EC boards seen."""
 
     base = str(ec_root) + "/board/"
 
@@ -29,9 +29,21 @@ def fetch_boards(ec_root: Path) -> Optional[List[str]]:
     return [b[len(base) :] for b in boards]
 
 
+def zephyr_fetch_projects(ec_root: Path) -> Optional[List[str]]:
+    """Return a list of Zephyr projects seen."""
+
+    base = str(ec_root) + "/zephyr/projects/"
+
+    boards = glob.glob(base + "*")
+    if boards is None:
+        return None
+
+    return [b[len(base) :] for b in boards]
+
+
 # We would use image: Literal["RW", "RO"], but it was only added in Python 3.8.
-def build(ec_root: Path, board: str, image: str) -> Optional[Path]:
-    """Build the correct compile_commands.json."""
+def ec_build(ec_root: Path, board: str, image: str) -> Optional[Path]:
+    """Build the correct compile_commands.json for EC board/image."""
 
     target = Path(f"build/{board}/{image}/compile_commands.json")
     cmd = [
@@ -47,6 +59,13 @@ def build(ec_root: Path, board: str, image: str) -> Optional[Path]:
     if status.returncode != 0:
         return None
     return target
+
+
+# We would use image: Literal["RW", "RO"], but it was only added in Python 3.8.
+def zephyr_build(ec_root: Path, board: str, image: str) -> Optional[Path]:
+    """Build the correct compile_commands.json for Zephyr board/image"""
+
+    raise NotImplementedError("Zephyr is currently unsupported.")
 
 
 def copy(ec_root: Path, target: Path) -> None:
@@ -87,17 +106,47 @@ def main(argv: List[str]) -> int:
     parser.add_argument(
         "-s", help="symbolically link instead of copying.", action="store_true"
     )
+    parser.add_argument(
+        "--os",
+        help="OS used to build board",
+        nargs="?",
+        choices=["auto", "ec", "zephyr"],
+        default="auto",
+        type=str.lower,
+    )
     args = parser.parse_args(argv)
 
     ec_root = Path(os.path.relpath(os.path.dirname(__file__) + "/.."))
 
-    boards = fetch_boards(ec_root)
-    if boards is None:
-        parser.error("Can't find boards directory.")
-    if not args.board in boards:
+    ec_boards = ec_fetch_boards(ec_root)
+    if ec_boards is None:
+        parser.error("Can't find EC boards directory.")
+
+    zephyr_projects = zephyr_fetch_projects(ec_root)
+    if zephyr_projects is None:
+        parser.error("Can't find Zephyr projects directory.")
+
+    is_in_ec = args.board in ec_boards
+    is_in_zephyr = args.board in zephyr_projects
+
+    if not is_in_ec and not is_in_zephyr:
         parser.error(f"Board '{args.board}' does not exist.")
 
-    target = build(ec_root, args.board, args.image.upper())
+    # When "os" is auto, try Zephyr first, fall back to EC.
+    os_selection = args.os
+    if os_selection == "auto":
+        if is_in_zephyr:
+            os_selection = "zephyr"
+        else:
+            os_selection = "ec"
+
+    print(f"Configuring for {os_selection}.")
+
+    if os_selection == "ec":
+        target = ec_build(ec_root, args.board, args.image.upper())
+    else:
+        target = zephyr_build(ec_root, args.board, args.image.upper())
+
     if target is None:
         print("Failed to build compile_commands.json")
         return 1
