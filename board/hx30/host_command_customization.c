@@ -27,6 +27,7 @@
 #include "diagnostics.h"
 #include "driver/als_cm32183.h"
 #include "cpu_power.h"
+#include "flash_storage.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #ifdef CONFIG_EMI_REGION1
@@ -56,26 +57,16 @@ void set_non_acpi_mode(int enable)
 
 static void sci_enable(void)
 {
-	uint8_t dataInSPI;
-	int biosSetup = 0;
-	
-
 	if (*host_get_customer_memmap(0x00) & BIT(0)) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		update_soc_power_limit(true, false);
 
-	/* check the Flag in EEPROM and EMI, if values are different, write the value in EEPROM */
-		board_spi_read_byte(SPI_BIOS_SETUP, &dataInSPI);
+	/*  Write the value in EEPROM */
 
-		if (ac_boot_status())
-			biosSetup |= BIT(0);
-		
-		if (get_standalone_mode())
-			biosSetup |= BIT(1);
-
-		if ((int)dataInSPI != biosSetup)
-			board_spi_write_byte(SPI_BIOS_SETUP, (uint8_t)biosSetup);
+		flash_storage_update(FLASH_FLAGS_ACPOWERON, ac_boot_status() ? 1 : 0);
+		flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
+		flash_storage_commit();
 
 		set_non_acpi_mode(0);
 	} else
@@ -165,7 +156,8 @@ static enum ec_status factory_mode(struct host_cmd_handler_args *args)
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
-		board_spi_write_byte(SPI_BIOS_SETUP, 0);
+		flash_storage_load_defaults();
+		flash_storage_commit();
 		system_set_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, 0);
 	}
 

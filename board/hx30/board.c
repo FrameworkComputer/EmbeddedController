@@ -74,6 +74,7 @@
 #include "keyboard_8042.h"
 #include "keyboard_8042_sharedlib.h"
 #include "host_command_customization.h"
+#include "flash_storage.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -372,7 +373,6 @@ void board_reset_pd_mcu(void)
 
 }
 
-#define SPI_FLAGS_REGION 0x80000
 
 void spi_mux_control(int enable)
 {
@@ -390,52 +390,13 @@ void spi_mux_control(int enable)
 }
 
 
-void board_spi_read_byte(uint8_t offset, uint8_t *data)
-{
-	int rv;
-
-	spi_mux_control(1);
-
-	rv = spi_flash_read(data, SPI_FLAGS_REGION + offset, 0x01);
-	if (rv != EC_SUCCESS)
-		CPRINTS("SPI fail to read");
-
-	CPRINTS("%s, offset:0x%02x, data:0x%02x", __func__, offset, *data);
-
-	spi_mux_control(0);
-}
-
-void board_spi_write_byte(uint8_t offset, uint8_t data)
-{
-	int rv;
-
-	spi_mux_control(1);
-
-	rv = spi_flash_erase(SPI_FLAGS_REGION, 0x1000);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("SPI fail to erase");
-
-	rv = spi_flash_write(SPI_FLAGS_REGION + offset, 0x01, &data);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("SPI fail to write");
-
-	CPRINTS("%s, offset:0x%02x, data:0x%02x", __func__, offset, data);
-
-	spi_mux_control(0);
-}
 
 /**
  * Check the plug-in AC then power on system setting.
  */
 bool ac_poweron_check(void)
 {
-	uint8_t memcap;
-
-	board_spi_read_byte(SPI_BIOS_SETUP, &memcap);
-
-	return (memcap & BIOS_SETUP_AC_BOOT) ? true : false;
+	return flash_storage_get(FLASH_FLAGS_ACPOWERON);
 }
 
 int poweron_reason_acin(void)
@@ -669,14 +630,11 @@ void charger_psys_enable(uint8_t enable)
 /* Initialize board. */
 static void board_init(void)
 {
-	uint8_t memcap;
 
-	board_spi_read_byte(SPI_BIOS_SETUP, &memcap);
+	if (flash_storage_get(FLASH_FLAGS_ACPOWERON) && !ac_boot_status())
+		*host_get_customer_memmap(0x48) = flash_storage_get(FLASH_FLAGS_ACPOWERON);
 
-	if ((memcap & BIOS_SETUP_AC_BOOT) && !ac_boot_status())
-		*host_get_customer_memmap(0x48) = (memcap & BIOS_SETUP_AC_BOOT);
-
-	if (memcap & BIOS_SETUP_STANDALONE)
+	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
 
 	check_chassis_open(1);
@@ -1263,24 +1221,6 @@ static int cmd_spimux(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
 			"[enable/disable]",
 			"Set if spi CLK is in SPI mode (true) or PWM mode");
-
-
-static int cmd_boardspicontrol(int argc, char **argv)
-{
-	uint8_t data;
-
-	if (!strcasecmp(argv[1], "read")) {
-		board_spi_read_byte(0x01, &data);
-		CPRINTS("DEBUG: cmd get data:0x%02x", data);
-	} else if (!strcasecmp(argv[1], "write")) {
-		board_spi_write_byte(0x01, 0xAA);
-	}
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(boardspi, cmd_boardspicontrol,
-			"[read/write]",
-			"test");
 
 #define FP_LOCKOUT_TIMEOUT (8 * SECOND)
 static void fingerprint_ctrl_detection_deferred(void);

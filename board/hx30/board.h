@@ -781,6 +781,8 @@ int poweron_reason_acin(void);
 
 enum battery_present board_batt_is_present(void);
 
+void spi_mux_control(int enable);
+
 #ifdef CONFIG_EMI_REGION1
 void power_state_clear(int state);
 #endif
