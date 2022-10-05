@@ -306,9 +306,18 @@ static void vboot_hash_init(void)
 	      EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY)))
 #endif
 	{
-		/* Start computing the hash of RW firmware */
-		vboot_hash_start(flash_get_rw_offset(system_get_active_copy()),
-				 get_rw_size(), NULL, 0, VBOOT_HASH_DEFERRED);
+		/*
+		 * At this point, it's likely that EFS2 vboot_main() already
+		 * requested the RW hash calculation once.
+		 *
+		 * Start computing the hash of RW firmware only if we haven't
+		 * done it before.
+		 */
+		if (!hash) {
+			vboot_hash_start(
+				flash_get_rw_offset(system_get_active_copy()),
+				get_rw_size(), NULL, 0, VBOOT_HASH_DEFERRED);
+		}
 	}
 }
 DECLARE_HOOK(HOOK_INIT, vboot_hash_init, HOOK_PRIO_INIT_VBOOT_HASH);
