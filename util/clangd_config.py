@@ -80,8 +80,9 @@ def main(argv: List[str]) -> int:
         "image",
         help="EC firmware copy",
         nargs="?",
-        choices=["RO", "RW", "ro", "rw"],
-        default="RW",
+        choices=["ro", "rw"],
+        default="rw",
+        type=str.lower,
     )
     parser.add_argument(
         "-s", help="symbolically link instead of copying.", action="store_true"
