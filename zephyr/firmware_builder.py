@@ -24,7 +24,7 @@ DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
 # Boards that we want to track the coverage of our own files specifically.
-SPECIAL_BOARDS = ["herobrine"]
+SPECIAL_BOARDS = ["herobrine", "krabby", "nivviks", "skyrim"]
 
 
 def log_cmd(cmd):

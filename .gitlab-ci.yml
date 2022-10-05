@@ -193,6 +193,11 @@ herobrine_coverage:
     PROJECT: "herobrine"
   <<: *coverage_template
 
+nivviks_coverage:
+  variables:
+    PROJECT: "nivviks"
+  <<: *coverage_template
+
 it8xxx2_evb:
   variables:
     PROJECT: "it8xxx2_evb"
