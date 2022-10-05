@@ -31,6 +31,10 @@
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
+/*
+ * TODO(b/251281997): Switch zasserts back to zassumes when they loudly fail
+ */
+
 void test_set_battery_level(int percentage)
 {
 	struct sbat_emul_bat_data *bat;
@@ -130,7 +134,7 @@ void connect_source_to_port(struct tcpci_partner_data *partner,
 			    const struct emul *charger_emul)
 {
 	set_ac_enabled(true);
-	zassume_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul), NULL);
+	zassert_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul), NULL);
 
 	isl923x_emul_set_adc_vbus(charger_emul,
 				  PDO_FIXED_GET_VOLT(src->pdo[pdo_index]));
@@ -142,7 +146,7 @@ void disconnect_source_from_port(const struct emul *tcpci_emul,
 				 const struct emul *charger_emul)
 {
 	set_ac_enabled(false);
-	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 	k_sleep(K_SECONDS(1));
 }
@@ -168,7 +172,7 @@ void connect_sink_to_port(struct tcpci_partner_data *partner,
 	tcpci_tcpc_alert(0);
 	k_sleep(K_SECONDS(1));
 
-	zassume_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul), NULL);
+	zassert_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul), NULL);
 
 	/* Wait for PD negotiation and current ramp.
 	 * TODO(b/213906889): Check message timing and contents.
@@ -178,7 +182,7 @@ void connect_sink_to_port(struct tcpci_partner_data *partner,
 
 void disconnect_sink_from_port(const struct emul *tcpci_emul)
 {
-	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 	k_sleep(K_SECONDS(1));
 }
 
@@ -189,11 +193,11 @@ uint8_t acpi_read(uint8_t acpi_addr)
 	 * See ec_commands.h for details on the required process
 	 * First, send the read command, which should populate no data
 	 */
-	zassume_ok(acpi_ap_to_ec(true, EC_CMD_ACPI_READ, &readval),
+	zassert_ok(acpi_ap_to_ec(true, EC_CMD_ACPI_READ, &readval),
 		   "Failed to send read command");
 
 	/* Next, time for the address which should populate our result */
-	zassume_equal(acpi_ap_to_ec(false, acpi_addr, &readval), 1,
+	zassert_equal(acpi_ap_to_ec(false, acpi_addr, &readval), 1,
 		      "Failed to read value");
 	return readval;
 }
@@ -205,15 +209,15 @@ void acpi_write(uint8_t acpi_addr, uint8_t write_byte)
 	 * See ec_commands.h for details on the required process
 	 * First, send the read command, which should populate no data
 	 */
-	zassume_ok(acpi_ap_to_ec(true, EC_CMD_ACPI_WRITE, &readval),
+	zassert_ok(acpi_ap_to_ec(true, EC_CMD_ACPI_WRITE, &readval),
 		   "Failed to send read command");
 
 	/* Next, time for the address we want to write */
-	zassume_ok(acpi_ap_to_ec(false, acpi_addr, &readval),
+	zassert_ok(acpi_ap_to_ec(false, acpi_addr, &readval),
 		   "Failed to write address");
 
 	/* Finally, time to write the data */
-	zassume_ok(acpi_ap_to_ec(false, write_byte, &readval),
+	zassert_ok(acpi_ap_to_ec(false, write_byte, &readval),
 		   "Failed to write value");
 }
 
@@ -247,7 +251,7 @@ void host_cmd_motion_sense_dump(int max_sensor_count,
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 		EC_CMD_MOTION_SENSE_CMD, 4, *response, params);
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to get motion_sense dump");
 }
 
@@ -477,7 +481,7 @@ void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 	args.response = response;
 	args.response_max = response_size;
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to get Type-C state for port %d", port);
 }
 
@@ -491,7 +495,7 @@ void host_cmd_typec_control_enter_mode(int port, enum typec_mode mode)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -503,7 +507,7 @@ void host_cmd_typec_control_exit_modes(int port)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -518,7 +522,7 @@ void host_cmd_typec_control_usb_mux_set(int port,
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -532,7 +536,7 @@ void host_cmd_typec_control_clear_events(int port, uint32_t events)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -562,7 +566,7 @@ void host_cmd_usb_pd_get_amode(
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_USB_PD_GET_AMODE, 0, params);
 	args.response = response;
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to get alternate-mode info for port %d", port);
 	*response_size = args.response_size;
 }
