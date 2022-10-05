@@ -28,6 +28,12 @@ FAKE_VALUE_FUNC(uint64_t, cros_system_native_posix_deep_sleep_ticks,
 		const struct device *);
 FAKE_VALUE_FUNC(int, cros_system_native_posix_hibernate, const struct device *,
 		uint32_t, uint32_t);
+FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_vendor,
+		const struct device *);
+FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_name,
+		const struct device *);
+FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_revision,
+		const struct device *);
 
 static void system_before_after(void *test_data)
 {
@@ -148,6 +154,37 @@ ZTEST(system, test_system_hibernate__failure)
 		      sys_dev);
 	zassert_equal(cros_system_native_posix_hibernate_fake.arg1_val, secs);
 	zassert_equal(cros_system_native_posix_hibernate_fake.arg2_val, msecs);
+}
+
+ZTEST(system, test_system_get_chip_values)
+{
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+
+	zassert_not_null(sys_dev);
+
+	/* Vendor */
+	cros_system_native_posix_get_chip_vendor_fake.return_val = "a";
+	zassert_mem_equal(system_get_chip_vendor(), "a", sizeof("a"));
+	zassert_equal(cros_system_native_posix_get_chip_vendor_fake.call_count,
+		      1);
+	zassert_equal(cros_system_native_posix_get_chip_vendor_fake.arg0_val,
+		      sys_dev);
+
+	/* Name */
+	cros_system_native_posix_get_chip_name_fake.return_val = "b";
+	zassert_mem_equal(system_get_chip_name(), "b", sizeof("b"));
+	zassert_equal(cros_system_native_posix_get_chip_name_fake.call_count,
+		      1);
+	zassert_equal(cros_system_native_posix_get_chip_name_fake.arg0_val,
+		      sys_dev);
+
+	/* Revision */
+	cros_system_native_posix_get_chip_revision_fake.return_val = "c";
+	zassert_mem_equal(system_get_chip_revision(), "c", sizeof("c"));
+	zassert_equal(
+		cros_system_native_posix_get_chip_revision_fake.call_count, 1);
+	zassert_equal(cros_system_native_posix_get_chip_revision_fake.arg0_val,
+		      sys_dev);
 }
 
 ZTEST_USER(system, test_system_console_cmd__idlestats)
