@@ -34,6 +34,8 @@ FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_name,
 		const struct device *);
 FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_revision,
 		const struct device *);
+FAKE_VALUE_FUNC(int, cros_system_native_posix_soc_reset, const struct device *);
+FAKE_VOID_FUNC(watchdog_reload);
 
 static void system_before_after(void *test_data)
 {
@@ -184,6 +186,49 @@ ZTEST(system, test_system_get_chip_values)
 	zassert_equal(
 		cros_system_native_posix_get_chip_revision_fake.call_count, 1);
 	zassert_equal(cros_system_native_posix_get_chip_revision_fake.arg0_val,
+		      sys_dev);
+}
+
+static int _test_cros_system_native_posix_soc_reset(const struct device *dev)
+{
+	printf("called from soc reset");
+	longjmp(jmp_hibernate, 1);
+
+	return 0;
+}
+
+ZTEST(system, test_system_reset)
+{
+	/*
+	 * Despite using setjmp this test consistently covers the code under
+	 * test. Context: https://github.com/llvm/llvm-project/issues/50119
+	 */
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+	int ret = setjmp(jmp_hibernate);
+	uint32_t arbitrary_flags_w_reset_wait_ext = 0x1234 |
+						    SYSTEM_RESET_WAIT_EXT;
+	uint32_t encoded_arbitrary_flags_w_reset_wait_ext;
+
+	system_encode_save_flags(arbitrary_flags_w_reset_wait_ext,
+				 &encoded_arbitrary_flags_w_reset_wait_ext);
+
+	zassert_not_null(sys_dev);
+
+	cros_system_native_posix_soc_reset_fake.custom_fake =
+		_test_cros_system_native_posix_soc_reset;
+
+	if (ret == 0) {
+		system_reset(arbitrary_flags_w_reset_wait_ext);
+	}
+
+	zassert_not_null(sys_dev);
+
+	zassert_equal(chip_read_reset_flags(),
+		      encoded_arbitrary_flags_w_reset_wait_ext);
+
+	zassert_equal(watchdog_reload_fake.call_count, 1000);
+	zassert_equal(cros_system_native_posix_soc_reset_fake.call_count, 1);
+	zassert_equal(cros_system_native_posix_soc_reset_fake.arg0_val,
 		      sys_dev);
 }
 

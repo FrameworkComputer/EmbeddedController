@@ -49,7 +49,7 @@ void watchdog_stop_and_unlock(void);
 #ifdef CONFIG_WATCHDOG
 void watchdog_reload(void);
 #else
-static inline void watchdog_reload(void)
+test_mockable_static_inline void watchdog_reload(void)
 {
 }
 #endif

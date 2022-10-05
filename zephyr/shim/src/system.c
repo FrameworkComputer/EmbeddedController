@@ -244,9 +244,15 @@ test_mockable void system_reset(int flags)
 	if (err < 0)
 		LOG_ERR("soc reset failed");
 
+	/*
+	 * Ignore infinite loop for coverage as the test would fail via timeout
+	 * and not report regardless of executing code.
+	 */
+	/* LCOV_EXCL_START */
 	/* should never return */
 	while (1)
 		continue;
+	/* LCOV_EXCL_STOP */
 }
 
 static int check_reset_cause(void)
