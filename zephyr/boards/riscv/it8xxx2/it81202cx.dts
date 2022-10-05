@@ -5,5 +5,6 @@
 
 /dts-v1/;
 
-#include "it8xxx2.dts"
+#include <ite/it81xx2.dtsi>
 #include <ite/it81202cx.dtsi>
+#include "it8xxx2.dts"
