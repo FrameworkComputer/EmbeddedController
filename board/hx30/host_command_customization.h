@@ -216,4 +216,10 @@ struct ec_params_thermal_qevent_control {
 	uint8_t send_event;
 } __ec_align1;
 
+#define EC_CMD_STANDALONE_MODE 0x3E13
+
+struct ec_params_standalone_mode {
+	uint8_t enable;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

@@ -21,6 +21,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "cypress5525.h"
+#include "diagnostics.h"
 #include "driver/als_cm32183.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -432,9 +433,9 @@ bool ac_poweron_check(void)
 {
 	uint8_t memcap;
 
-	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
+	board_spi_read_byte(SPI_BIOS_SETUP, &memcap);
 
-	return memcap ? true : false;
+	return (memcap & BIOS_SETUP_AC_BOOT) ? true : false;
 }
 
 int poweron_reason_acin(void)
@@ -670,10 +671,13 @@ static void board_init(void)
 {
 	uint8_t memcap;
 
-	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
+	board_spi_read_byte(SPI_BIOS_SETUP, &memcap);
 
-	if (memcap && !ac_boot_status())
-		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
+	if ((memcap & BIOS_SETUP_AC_BOOT) && !ac_boot_status())
+		*host_get_customer_memmap(0x48) = (memcap & BIOS_SETUP_AC_BOOT);
+
+	if (memcap & BIOS_SETUP_STANDALONE)
+		set_standalone_mode(1);
 
 	check_chassis_open(1);
 
