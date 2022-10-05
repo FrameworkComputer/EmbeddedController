@@ -432,7 +432,7 @@ board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
  * @param state		Current power state
  * @return Updated power state
  */
-static enum power_state power_common_state(enum power_state state)
+static enum power_state power_common_state(void)
 {
 	switch (state) {
 	case POWER_G3:
@@ -673,7 +673,7 @@ void test_power_common_state(void)
 	enum power_state new_state;
 
 	task_wake(task_get_current());
-	new_state = power_common_state(state);
+	new_state = power_common_state();
 	if (new_state != state)
 		power_set_state(new_state);
 }
@@ -714,7 +714,7 @@ void chipset_task(void *u)
 		 * handler.
 		 */
 		if (new_state == state)
-			new_state = power_common_state(state);
+			new_state = power_common_state();
 
 		/* Handle state changes */
 		if (new_state != state) {
