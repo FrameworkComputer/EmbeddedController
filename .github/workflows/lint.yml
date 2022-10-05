@@ -21,7 +21,7 @@ jobs:
 
       - name: checkpatch
         run: |
-          git diff origin/${{ github.base_ref }} | ./checkpatch.pl --mailback --no-tree --ignore MAINTAINERS,FILE_PATH_CHANGES - > checkpatch.txt || true
+          git diff origin/${{ github.base_ref }} | ./checkpatch.pl --mailback --no-tree --ignore MAINTAINERS,FILE_PATH_CHANGES,SPDX_LICENSE_TAG - > checkpatch.txt || true
           if [ -s checkpatch.txt ]; then
             errors=$(cat checkpatch.txt)
             errors="${errors//'%'/'%25'}"
