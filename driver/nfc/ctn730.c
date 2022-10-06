@@ -446,6 +446,13 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 				return EC_ERROR_INVAL;
 			ctx->event = PCHG_EVENT_DEVICE_LOST;
 			break;
+		case WLC_CHG_CTRL_DEVICE_STATE_DEVICE_FO_PRESENT:
+			if (len != WLC_CHG_CTRL_DEVICE_STATE_EVT_SIZE)
+				return EC_ERROR_INVAL;
+			ctx->event = PCHG_EVENT_ERROR;
+			ctx->error |=
+				PCHG_ERROR_MASK(PCHG_ERROR_FOREIGN_OBJECT);
+			break;
 		default:
 			return EC_ERROR_INVAL;
 		}
