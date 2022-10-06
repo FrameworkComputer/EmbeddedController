@@ -20,14 +20,26 @@ On Ubuntu you can install the development tools easily.
 sudo apt install gcc-arm-none-eabi libftdi1-dev build-essential pkg-config
 ```
 
-## Framework Laptop EC for Intel 11th Gen Core Processors
+## Framework Laptop EC
 
-Building the project
-```
+The different Framework Laptops are each implemented as their own board:
+
+| Laptop Generation | Board Name |
+| --- | --- |
+| Intel 11th Gen Core Processors  | `hx20` |
+| Intel 12th Gen Core Processors  | `hx30` |
+
+Building the project - run the command for the processor you have:
+
+```sh
+# hx20 (11th Gen)
 make BOARD=hx20 CROSS_COMPILE=arm-none-eabi-
+
+# hx30 (12th Gen)
+make BOARD=hx30 CROSS_COMPILE=arm-none-eabi-
 ```
 
-The output artifact is ```build/hx20/ec.bin``` which can be flashed to the EC SPI flash ROM.
+The output artifact is `build/hx20/ec.bin` which can be flashed to the EC SPI flash ROM.
 
 ### EC Flash configuration
 
