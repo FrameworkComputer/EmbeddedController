@@ -33,6 +33,7 @@ if(DEFINED CONFIG_BOARD_SKYRIM)
 			"src/skyrim/ppc_config.c"
 			"src/skyrim/form_factor.c"
 			"src/skyrim/alt_charger.c"
+			"src/skyrim/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/skyrim/fan.c")
 endif()
