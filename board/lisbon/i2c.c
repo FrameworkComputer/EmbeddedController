@@ -10,60 +10,36 @@
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		/* I2C0 */
-		.name = "dp_redriver",
-		.port = I2C_PORT_DP_REDRIVER,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_DP_SCL,
-		.sda = GPIO_EC_I2C_DP_SDA,
-	},
-	{
 		/* I2C1 */
-		.name = "tcpc0,2",
-		.port = I2C_PORT_USB_C0_C2_TCPC,
+		.name = "tcpc0",
+		.port = I2C_PORT_USB_C0_TCPC,
 		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C2_TCPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C2_TCPC_SDA,
 	},
 	{
 		/* I2C2 */
-		.name = "ppc0,2",
-		.port = I2C_PORT_USB_C0_C2_PPC,
+		.name = "ppc, bc1.2 c0",
+		.port = I2C_PORT_USB_C0_PPC_BC12,
 		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SDA,
 	},
 	{
 		/* I2C3 */
-		.name = "retimer0,2",
-		.port = I2C_PORT_USB_C0_C2_MUX,
+		.name = "retimer0",
+		.port = I2C_PORT_USB_C0_MUX,
 		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C2_RT_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
 	},
 	{
-		/* I2C4 C1 TCPC */
-		.name = "tcpc1",
-		.port = I2C_PORT_USB_C1_TCPC,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
-	},
-	{
-		/* I2C5 */
-		.name = "wireless_charger",
-		.port = I2C_PORT_QI,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_QI_SCL,
-		.sda = GPIO_EC_I2C_QI_SDA,
-	},
-	{
 		/* I2C6 */
-		.name = "ppc1",
-		.port = I2C_PORT_USB_C1_PPC,
+		.name = "usba2_retimer, usba3_retimer",
+		.port = I2C_PORT_USB_A2_A3_RT,
 		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C1_MIX_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_MIX_SDA,
+		.scl = GPIO_EC_I2C_USB_A2_A3_SCL,
+		.sda = GPIO_EC_I2C_USB_A2_A3_SDA,
 	},
 	{
 		/* I2C7 */
