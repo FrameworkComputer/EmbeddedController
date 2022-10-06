@@ -398,6 +398,8 @@ static void setup_flash_region_helper(uint32_t offset, uint32_t size,
 	}
 }
 
+/* TODO(b/251471020) */
+ZTEST_EXPECT_SKIP(flash, test_crec_flash_is_erased__happy);
 ZTEST_USER(flash, test_crec_flash_is_erased__happy)
 {
 	uint32_t offset = 0x10000;
@@ -407,6 +409,8 @@ ZTEST_USER(flash, test_crec_flash_is_erased__happy)
 	zassert_true(crec_flash_is_erased(offset, TEST_BUF_SIZE), NULL);
 }
 
+/* TODO(b/251471020) */
+ZTEST_EXPECT_SKIP(flash, test_crec_flash_is_erased__not_erased);
 ZTEST_USER(flash, test_crec_flash_is_erased__not_erased)
 {
 	uint32_t offset = 0x10000;
