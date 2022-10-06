@@ -16,10 +16,6 @@
 
 #include "baseboard_usbc_config.h"
 
-#if CONFIG_USB_PD_3A_PORTS != 1
-#error Corsola reference must have at least one 3.0 A port
-#endif
-
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
