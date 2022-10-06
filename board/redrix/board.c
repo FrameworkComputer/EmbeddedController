@@ -50,6 +50,10 @@ struct pchg pchgs[] = {
 			.full_percent = 96,
 			.block_size = 128,
 		},
+		.policy = {
+			[PCHG_CHIPSET_STATE_ON] = &pchg_policy_on,
+			[PCHG_CHIPSET_STATE_SUSPEND] = &pchg_policy_suspend,
+		},
 		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
 	},
 };

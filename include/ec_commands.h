@@ -7029,10 +7029,22 @@ struct ec_response_pchg_count {
  */
 #define EC_CMD_PCHG 0x0135
 
+/* For v1 and v2 */
 struct ec_params_pchg {
 	uint8_t port;
 } __ec_align1;
 
+struct ec_params_pchg_v3 {
+	uint8_t port;
+	/* Below are new in v3. */
+	uint8_t reserved1;
+	uint8_t reserved2;
+	uint8_t reserved3;
+	/* Errors acked by the host (thus to be cleared) */
+	uint32_t error;
+} __ec_align1;
+
+/* For v1 */
 struct ec_response_pchg {
 	uint32_t error; /* enum pchg_error */
 	uint8_t state; /* enum pchg_state state */
@@ -7044,6 +7056,7 @@ struct ec_response_pchg {
 	uint32_t dropped_event_count;
 } __ec_align4;
 
+/* For v2 and v3 */
 struct ec_response_pchg_v2 {
 	uint32_t error; /* enum pchg_error */
 	uint8_t state; /* enum pchg_state state */

@@ -114,9 +114,7 @@ enum pchg_event {
 	PCHG_EVENT_IN_NORMAL,
 
 	/* Errors */
-	PCHG_EVENT_CHARGE_ERROR,
-	PCHG_EVENT_UPDATE_ERROR,
-	PCHG_EVENT_OTHER_ERROR,
+	PCHG_EVENT_ERROR,
 
 	/* Internal (a.k.a. Host) Events */
 	PCHG_EVENT_ENABLE,
@@ -124,23 +122,33 @@ enum pchg_event {
 	PCHG_EVENT_UPDATE_OPEN,
 	PCHG_EVENT_UPDATE_WRITE,
 	PCHG_EVENT_UPDATE_CLOSE,
+	PCHG_EVENT_UPDATE_ERROR,
 
 	/* Counter. Add new entry above. */
-	PCHG_EVENT_COUNT,
+	PCHG_EVENT_COUNT
 };
+BUILD_ASSERT(PCHG_EVENT_COUNT <= sizeof(uint32_t) * 8);
 
 enum pchg_error {
-	/* Errors reported by host. */
-	PCHG_ERROR_HOST,
+	/* Communication error in link layer (i2c, spi, etc.). */
+	PCHG_ERROR_COMMUNICATION,
+
 	PCHG_ERROR_OVER_TEMPERATURE,
 	PCHG_ERROR_OVER_CURRENT,
 	PCHG_ERROR_FOREIGN_OBJECT,
-	/* Errors reported by chip. */
+
+	/* Protocol error (e.g. NACK returned from a chip). */
+	PCHG_ERROR_RESPONSE,
+	/* Other errors reported by a chip. */
 	PCHG_ERROR_FW_VERSION,
 	PCHG_ERROR_INVALID_FW,
 	PCHG_ERROR_WRITE_FLASH,
+
 	/* All other errors */
 	PCHG_ERROR_OTHER,
+
+	/* Add no entries below here. */
+	PCHG_ERROR_COUNT
 };
 
 #define PCHG_ERROR_MASK(e) BIT(e)
@@ -149,7 +157,14 @@ enum pchg_mode {
 	PCHG_MODE_NORMAL = 0,
 	PCHG_MODE_DOWNLOAD,
 	/* Add no more entries below here. */
-	PCHG_MODE_COUNT,
+	PCHG_MODE_COUNT
+};
+
+enum pchg_chipset_state {
+	PCHG_CHIPSET_STATE_ON = 0,
+	PCHG_CHIPSET_STATE_SUSPEND,
+	/* No more new entries below here */
+	PCHG_CHIPSET_STATE_COUNT
 };
 
 /**
@@ -183,6 +198,14 @@ struct pchg_update {
 	uint8_t data[128];
 };
 
+struct pchg_policy_t {
+	uint32_t evt_mask;
+	uint32_t err_mask;
+};
+
+extern struct pchg_policy_t pchg_policy_on;
+extern struct pchg_policy_t pchg_policy_suspend;
+
 /**
  * Data struct describing the status of a peripheral charging port. It provides
  * the state machine and a charger driver with a context to work on.
@@ -190,6 +213,8 @@ struct pchg_update {
 struct pchg {
 	/* Static configuration */
 	const struct pchg_config *const cfg;
+	/* Event & error report policy. */
+	struct pchg_policy_t *policy[PCHG_CHIPSET_STATE_COUNT];
 	/* Current state of the port */
 	enum pchg_state state;
 	/* Event queue */
@@ -218,6 +243,10 @@ struct pchg {
 
 /**
  * Peripheral charger driver
+ *
+ * These functions shall return only communication errors (e.g. i2c error). If
+ * the error is internal to PCHG, they should return EC_SUCCESS and set
+ * ctx->event to PCHG_EVENT_ERROR and set a flag in ctx->error.
  */
 struct pchg_drv {
 	/*
