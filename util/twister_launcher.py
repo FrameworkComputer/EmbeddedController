@@ -63,6 +63,7 @@ parameters that may be used, please consult the Twister documentation.
 # [VPYTHON:END]
 
 import argparse
+import json
 import os
 import re
 import shlex
@@ -188,6 +189,25 @@ def upload_results(ec_base):
     return flag
 
 
+def check_for_skipped_tests(ec_base):
+    """Checks Twister json test report for skipped tests"""
+    found_skipped = False
+    json_path = ec_base / "twister-out" / "twister.json"
+    with open(json_path) as file:
+        data = json.load(file)
+
+        for testsuite in data["testsuites"]:
+            for testcase in testsuite["testcases"]:
+                if testcase["status"] == "skipped":
+                    tc_name = testcase["identifier"]
+                    print(f"TEST SKIPPED: {tc_name}")
+                    found_skipped = True
+
+        file.close()
+
+    return found_skipped
+
+
 def main():
     """Run Twister using defaults for the EC project."""
 
@@ -301,6 +321,9 @@ def main():
 
     # Invoke Twister and wait for it to exit.
     result = subprocess.run(twister_cli, env=twister_env, check=False)
+
+    if check_for_skipped_tests(ec_base):
+        result.returncode = 1
 
     if result.returncode == 0:
         print("TEST EXECUTION SUCCESSFUL")
