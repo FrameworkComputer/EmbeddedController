@@ -280,3 +280,10 @@ void system_pre_init(void)
 	*(uintptr_t *)(__host_flash + CONFIG_RW_MEM_OFF + 4) =
 		(uintptr_t)__rw_jump_resetvec;
 }
+
+test_mockable enum ec_error_list
+get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
+		   size_t num_reset_log_entries, uint32_t *resets_since_ec_boot)
+{
+	return EC_ERROR_INVAL;
+}

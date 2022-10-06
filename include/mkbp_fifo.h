@@ -38,7 +38,7 @@ void mkbp_clear_fifo(void);
  * @param buffp		Pointer to the event data to enqueue.
  * @return EC_SUCCESS if entry added, EC_ERROR_OVERFLOW if FIFO is full.
  */
-test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp);
+int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp);
 
 /**
  * Remove an element from the common MKBP FIFO.

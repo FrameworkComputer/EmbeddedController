@@ -10,10 +10,10 @@
 
 #include <stdnoreturn.h>
 
-#ifndef TEST_FUZZ
+#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
 noreturn
 #endif
 	void
 	emulator_reboot(void);
 
-#endif
+#endif /* __CROS_EC_REBOOT_H */

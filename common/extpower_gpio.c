@@ -14,7 +14,7 @@
 
 static int debounced_extpower_presence;
 
-int extpower_is_present(void)
+test_mockable int extpower_is_present(void)
 {
 	return debounced_extpower_presence;
 }

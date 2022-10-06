@@ -246,7 +246,7 @@
 
 /*
  * Define test_mockable and test_mockable_static for mocking
- * functions.
+ * functions. Don't use test_mockable in .h files.
  */
 #ifdef TEST_BUILD
 #define test_mockable __attribute__((weak))

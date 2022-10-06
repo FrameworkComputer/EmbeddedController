@@ -258,7 +258,7 @@ void report_ap_reset(enum chipset_shutdown_reason reason);
  * @param num_reset_log_entries   Number of items in reset_log_entries.
  * @param resets_since_ec_boot    Number of AP resets since EC boot.
  */
-test_mockable enum ec_error_list
+enum ec_error_list
 get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
 		   size_t num_reset_log_entries,
 		   uint32_t *resets_since_ec_boot);
