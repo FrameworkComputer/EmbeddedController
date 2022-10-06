@@ -156,6 +156,7 @@ enum pchg_error {
 enum pchg_mode {
 	PCHG_MODE_NORMAL = 0,
 	PCHG_MODE_DOWNLOAD,
+	PCHG_MODE_PASSTHRU,
 	/* Add no more entries below here. */
 	PCHG_MODE_COUNT
 };
@@ -276,6 +277,8 @@ struct pchg_drv {
 	int (*update_write)(struct pchg *ctx);
 	/* close update session */
 	int (*update_close)(struct pchg *ctx);
+	/* Toggle pass-through mode. */
+	int (*passthru)(struct pchg *ctx, bool enable);
 };
 
 /**

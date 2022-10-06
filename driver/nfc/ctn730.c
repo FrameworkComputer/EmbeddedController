@@ -205,9 +205,9 @@ static int ctn730_init(struct pchg *ctx)
 	cmd->message_type = CTN730_MESSAGE_TYPE_COMMAND;
 	cmd->instruction = WLC_HOST_CTRL_RESET;
 	cmd->length = WLC_HOST_CTRL_RESET_CMD_SIZE;
-	cmd->payload[0] = ctx->mode == PCHG_MODE_NORMAL ?
-				  WLC_HOST_CTRL_RESET_CMD_MODE_NORMAL :
-				  WLC_HOST_CTRL_RESET_CMD_MODE_DOWNLOAD;
+	cmd->payload[0] = ctx->mode == PCHG_MODE_DOWNLOAD ?
+				  WLC_HOST_CTRL_RESET_CMD_MODE_DOWNLOAD :
+				  WLC_HOST_CTRL_RESET_CMD_MODE_NORMAL;
 
 	/* TODO: Run 1 sec timeout timer. */
 	rv = _send_command(ctx, cmd);
@@ -345,6 +345,9 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 			ctx->battery_percent = buf[1];
 			ctx->event = PCHG_EVENT_CHARGE_UPDATE;
 		}
+		break;
+	case WLC_HOST_CTRL_BIST:
+		CPRINTS("Received BIST response");
 		break;
 	default:
 		CPRINTS("Received unknown response (%d)", res->instruction);
@@ -602,6 +605,13 @@ static int ctn730_update_close(struct pchg *ctx)
 	return EC_SUCCESS_IN_PROGRESS;
 }
 
+static int ctn730_passthru(struct pchg *ctx, bool enable)
+{
+	ctx->mode = enable ? PCHG_MODE_PASSTHRU : PCHG_MODE_NORMAL;
+
+	return EC_SUCCESS;
+}
+
 /**
  * Send command in blocking loop
  *
@@ -673,6 +683,7 @@ const struct pchg_drv ctn730_drv = {
 	.update_open = ctn730_update_open,
 	.update_write = ctn730_update_write,
 	.update_close = ctn730_update_close,
+	.passthru = ctn730_passthru,
 };
 
 static int cc_ctn730(int argc, const char **argv)
@@ -712,12 +723,12 @@ static int cc_ctn730(int argc, const char **argv)
 		cmd->payload[0] = id;
 
 		switch (id) {
-		case 0x01:
-			/* Switch on RF field. Tx driver conf not implemented */
+		case WLC_BIST_CMD_RF_SWITCH_ON:
+		case WLC_BIST_CMD_RF_SWITCH_OFF:
+			/* Tx driver configuration is not implemented. */
 			cmd->length = 1;
 			break;
-		case 0x04:
-			/* WLC device activation test */
+		case WLC_BIST_CMD_DEVICE_ACTIVATION_TEST:
 			cmd->length = 1;
 			break;
 		default:
