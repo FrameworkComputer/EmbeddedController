@@ -1,0 +1,19 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ITE, IT8XXX2 Serial Host Interface (SHI) node
+
+compatible: "ite,it8xxx2-cros-shi"
+
+include: [base.yaml, pinctrl-device.yaml]
+
+properties:
+    reg:
+      required: true
+
+    pinctrl-0:
+      required: true
+
+    pinctrl-names:
+      required: true

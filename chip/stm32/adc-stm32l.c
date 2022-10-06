@@ -1,10 +1,9 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "clock.h"
@@ -92,7 +91,7 @@ static void adc_init(void)
 
 	if (!adc_powered())
 		/* Power on ADC module */
-		STM32_ADC_CR2 |= BIT(0);  /* ADON */
+		STM32_ADC_CR2 |= BIT(0); /* ADON */
 
 	/* Set right alignment */
 	STM32_ADC_CR2 &= ~BIT(11);
@@ -166,6 +165,7 @@ int adc_read_channel(enum adc_channel ch)
 	adc_release();
 
 	mutex_unlock(&adc_lock);
-	return (value == ADC_READ_ERROR) ? ADC_READ_ERROR :
-	       value * adc->factor_mul / adc->factor_div + adc->shift;
+	return (value == ADC_READ_ERROR) ?
+		       ADC_READ_ERROR :
+		       value * adc->factor_mul / adc->factor_div + adc->shift;
 }

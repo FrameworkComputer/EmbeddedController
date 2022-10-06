@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,17 +11,19 @@
 /* board revision */
 #include "board_revs.h"
 
+/* Free up some flash space */
+#define CONFIG_DEBUG_ASSERT_BRIEF
+#define CONFIG_USB_PD_DEBUG_LEVEL 0
+
 #define CONFIG_LTO
 
 #if BOARD_REV >= OAK_REV5
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_KX022
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
 #endif
 
 #define CONFIG_ADC
-#undef  CONFIG_ADC_WATCHDOG
+#undef CONFIG_ADC_WATCHDOG
 
 #if BOARD_REV >= OAK_REV5
 /* Add for Ambient Light Sensor */
@@ -57,7 +59,6 @@
 #define CONFIG_CMD_TYPEC
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_FORCE_CONSOLE_RESUME
-#define CONFIG_CMD_CHARGER_ADC_AMON_BMON
 
 /*
  * EC_WAKE: PA0 - WKUP1
@@ -77,7 +78,7 @@
 #define CONFIG_HOSTCMD_PD
 #define CONFIG_HOSTCMD_PD_PANIC
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_LED_COMMON
@@ -103,13 +104,13 @@
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_TCPC
 #define CONFIG_SPI
-#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_CONTROLLER
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_VBOOT_HASH
-#undef  CONFIG_WATCHDOG_HELP
+#undef CONFIG_WATCHDOG_HELP
 #define CONFIG_SWITCH
 #define CONFIG_BOARD_VERSION_GPIO
-#undef  CONFIG_UART_CONSOLE
+#undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP432
@@ -127,6 +128,7 @@
 
 /* Optional features */
 #define CONFIG_CMD_HOSTCMD
+#undef CONFIG_CMD_MFALLOW
 
 /* Drivers */
 /* USB Mux */
@@ -147,19 +149,19 @@
 #define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C, GPIO_D
 
 /* 2 I2C master ports, connect to battery, charger, pd and USB switches */
-#define I2C_PORT_MASTER  0
-#define I2C_PORT_ACCEL   0
-#define I2C_PORT_ALS     0
+#define I2C_PORT_MASTER 0
+#define I2C_PORT_ACCEL 0
+#define I2C_PORT_ALS 0
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
 #define I2C_PORT_PERICOM 0
 #define I2C_PORT_THERMAL 0
-#define I2C_PORT_PD_MCU  1
+#define I2C_PORT_PD_MCU 1
 #define I2C_PORT_USB_MUX 1
-#define I2C_PORT_TCPC    1
+#define I2C_PORT_TCPC 1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* First SPI master port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT 0 /* First SPI controller port (SPI2) */
 
 /* Ambient Light Sensor address */
 #define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
@@ -169,12 +171,12 @@
 #define TIM_WATCHDOG 4
 
 /* Define the host events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_FASTBOOT))
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK                     \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |          \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |      \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |       \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_FASTBOOT))
 
 #include "gpio_signal.h"
 
@@ -192,9 +194,9 @@ enum pwm_channel {
 };
 
 enum adc_channel {
-	ADC_PSYS = 0,  /* PC1: STM32_AIN(2) */
+	ADC_PSYS = 0, /* PC1: STM32_AIN(2) */
 	ADC_AMON_BMON, /* PC0: STM32_AIN(10) */
-	ADC_VBUS,      /* PA2: STM32_AIN(11) */
+	ADC_VBUS, /* PA2: STM32_AIN(11) */
 	ADC_CH_COUNT
 };
 
@@ -233,17 +235,16 @@ enum als_id {
  * delay to turn on the power supply max is ~16ms.
  * delay to turn off the power supply max is about ~180ms.
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* delay to turn on/off vconn */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     CONFIG_CHARGER_MAX_INPUT_CURRENT
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_POWER_MW 60000
+#define PD_MAX_CURRENT_MA CONFIG_CHARGER_MAX_INPUT_CURRENT
+#define PD_MAX_VOLTAGE_MV 20000
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
@@ -255,6 +256,6 @@ void board_typec_dp_on(int port);
 void board_typec_dp_off(int port, int *dp_flags);
 void board_typec_dp_set(int port, int level);
 
-#endif  /* !__ASSEMBLER__ */
+#endif /* !__ASSEMBLER__ */
 
-#endif  /* __CROS_EC_BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

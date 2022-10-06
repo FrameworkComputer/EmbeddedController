@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -29,7 +29,7 @@
  * required because the queue isn't notified that it has been read from until
  * after the DMA transfer completes.
  */
-#define USART_TX_DMA(CHANNEL, MAX_BYTES)			\
+#define USART_TX_DMA(CHANNEL, MAX_BYTES) \
 	((struct usart_tx_dma const) {				\
 		.usart_tx = {					\
 			.consumer_ops = {			\

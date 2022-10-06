@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -37,11 +37,10 @@ GPIO_INT(IT8801_SMB_INT,    PIN(A, 8),  GPIO_INT_FALLING | GPIO_PULL_UP,
          io_expander_it8801_interrupt) /* KB_INT_ODL */
 GPIO_INT(AP_EC_WATCHDOG_L,  PIN(D, 2),  GPIO_INT_FALLING,
          chipset_watchdog_interrupt)
-GPIO_INT(TABLET_MODE_L,     PIN(B, 11), GPIO_INT_BOTH,
-         gmr_tablet_switch_isr)
 
 /* Unimplemented interrupts */
 GPIO(ALS_RGB_INT_ODL,      PIN(C, 10), GPIO_INPUT)
+GPIO(TABLET_MODE_L,        PIN(B, 11), GPIO_INPUT)
 
 /* Reset pins */
 GPIO(AP_SYS_RST_L,         PIN(C, 11), GPIO_OUT_LOW)
@@ -117,5 +116,5 @@ ALTERNATE(PIN_MASK(A, 0x8000), 0, MODULE_SPI,        0)
 /* EMMC SPI SLAVE: PB13/14/15 */
 ALTERNATE(PIN_MASK(B, 0xE000), 0, MODULE_SPI_FLASH,  0)
 /* SENSORS SPI MASTER: PB10, PB12, PC2, PC3 */
-ALTERNATE(PIN_MASK(B, 0x0400), 5, MODULE_SPI_MASTER, 0)
-ALTERNATE(PIN_MASK(C, 0x000C), 1, MODULE_SPI_MASTER, 0)
+ALTERNATE(PIN_MASK(B, 0x0400), 5, MODULE_SPI_CONTROLLER, 0)
+ALTERNATE(PIN_MASK(C, 0x000C), 1, MODULE_SPI_CONTROLLER, 0)

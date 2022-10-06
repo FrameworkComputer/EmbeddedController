@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,8 +12,8 @@
  * the system will have to charge ramp.
  */
 
+#include "builtin/assert.h"
 #include "max14637.h"
-#include "cannonlake.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
@@ -21,14 +21,15 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "power.h"
+#include "power/cannonlake.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 /**
@@ -38,10 +39,10 @@
  * @return 1 if charger detect is activated (high when active high or
  *	low with active low), otherwise 0.
  */
-static int is_chg_det_activated(const struct max14637_config_t * const cfg)
+static int is_chg_det_activated(const struct max14637_config_t *const cfg)
 {
 	return !!gpio_get_level(cfg->chg_det_pin) ^
-		!!(cfg->flags & MAX14637_FLAGS_CHG_DET_ACTIVE_LOW);
+	       !!(cfg->flags & MAX14637_FLAGS_CHG_DET_ACTIVE_LOW);
 }
 #endif
 
@@ -52,48 +53,26 @@ static int is_chg_det_activated(const struct max14637_config_t * const cfg)
  * @param enable 1 to activate gpio (high for active high and low for active
  *	low).
  */
-static void activate_chip_enable(
-	const struct max14637_config_t * const cfg, const int enable)
+static void activate_chip_enable(const struct max14637_config_t *const cfg,
+				 const int enable)
 {
-	gpio_set_level(
-		cfg->chip_enable_pin,
-		!!enable ^ !!(cfg->flags & MAX14637_FLAGS_ENABLE_ACTIVE_LOW));
+	gpio_set_level(cfg->chip_enable_pin,
+		       !!enable ^ !!(cfg->flags &
+				     MAX14637_FLAGS_ENABLE_ACTIVE_LOW));
 }
 
 /**
- * Perform BC1.2 detection and update charge manager.
+ * Update BC1.2 detected status to charge manager.
  *
  * @param port: The Type-C port where VBUS is present.
  */
-static void bc12_detect(const int port)
+static void update_bc12_status_to_charger_manager(const int port)
 {
-	const struct max14637_config_t * const cfg = &max14637_config[port];
+	const struct max14637_config_t *const cfg = &max14637_config[port];
 	struct charge_port_info new_chg;
-
-	/*
-	 * Enable the IC to begin detection and connect switches if
-	 * necessary. This is only necessary if the port power role is a
-	 * sink. If the power role is a source then just keep the max14637
-	 * powered on so that data switches are close. Note that the gpio enable
-	 * for this chip is active by default. In order to trigger bc1.2
-	 * detection, the chip enable must be driven low, then high again so the
-	 * chip will start bc1.2 client side detection. Add a 100 msec delay to
-	 * avoid collision with a device that might be doing bc1.2 client side
-	 * detection.
-	 */
-	msleep(100);
-	activate_chip_enable(cfg, 0);
-	msleep(1);
-	activate_chip_enable(cfg, 1);
 
 	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
-	/*
-	 * Apple or TomTom charger detection can take as long as 600ms.  Wait a
-	 * little bit longer for margin.
-	 */
-	msleep(630);
-
 	/*
 	 * The driver assumes that CHG_AL_N and SW_OPEN are not connected,
 	 * therefore an activated CHG_DET indicates whether the source is NOT a
@@ -116,6 +95,40 @@ static void bc12_detect(const int port)
 }
 
 /**
+ * Perform BC1.2 detection.
+ *
+ * @param port: The Type-C port where VBUS is present.
+ */
+static void bc12_detect(const int port)
+{
+	const struct max14637_config_t *const cfg = &max14637_config[port];
+
+	/*
+	 * Enable the IC to begin detection and connect switches if
+	 * necessary. This is only necessary if the port power role is a
+	 * sink. If the power role is a source then just keep the max14637
+	 * powered on so that data switches are close. Note that the gpio enable
+	 * for this chip is active by default. In order to trigger bc1.2
+	 * detection, the chip enable must be driven low, then high again so the
+	 * chip will start bc1.2 client side detection. Add a 100 msec delay to
+	 * avoid collision with a device that might be doing bc1.2 client side
+	 * detection.
+	 */
+	msleep(100);
+	activate_chip_enable(cfg, 0);
+	msleep(CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS);
+	activate_chip_enable(cfg, 1);
+
+#if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
+	/*
+	 * Apple or TomTom charger detection can take as long as 600ms.  Wait a
+	 * little bit longer for margin.
+	 */
+	msleep(630);
+#endif /* !defined(CONFIG_CHARGE_RAMP_SW && CONFIG_CHARGE_RAMP_HW) */
+}
+
+/**
  * If VBUS is present and port power role is sink, then trigger bc1.2 client
  * detection. If VBUS is not present then update charge manager. Note that both
  * chip_enable and VBUS must be active for the IC to be powered up. Chip enable
@@ -135,26 +148,36 @@ static void detect_or_power_down_ic(const int port)
 #endif /* !defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) */
 
 	if (vbus_present) {
-#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(CONFIG_AP_POWER_CONTROL)
 		/* Turn on the 5V rail to allow the chip to be powered. */
 		power_5v_enable(task_get_current(), 1);
 #endif
-		if (pd_get_power_role(port) == PD_ROLE_SINK)
+		if (pd_get_power_role(port) == PD_ROLE_SINK) {
 			bc12_detect(port);
+			update_bc12_status_to_charger_manager(port);
+		}
 	} else {
 		/* Let charge manager know there's no more charge available. */
 		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, NULL);
-#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+		/*
+		 * If latest attached charger is PD Adapter then it would be
+		 * detected as DCP and data switch of USB2.0 would be open which
+		 * prevents USB 2.0 data path from working later. As a result,
+		 * bc12_detect() is called again here and SCP would be detected
+		 * due to D+/D- are NC (open) if nothing is attached then data
+		 * switch of USB2.0 can be kept close from now on.
+		 */
+		bc12_detect(port);
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(CONFIG_AP_POWER_CONTROL)
 		/* Issue a request to turn off the rail. */
 		power_5v_enable(task_get_current(), 0);
 #endif
 	}
 }
 
-static void max14637_usb_charger_task(const int port)
+static void max14637_usb_charger_task_init(const int port)
 {
-	uint32_t evt;
-	const struct max14637_config_t * const cfg = &max14637_config[port];
+	const struct max14637_config_t *const cfg = &max14637_config[port];
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	/*
@@ -165,13 +188,12 @@ static void max14637_usb_charger_task(const int port)
 	activate_chip_enable(cfg, 1);
 	/* Check whether bc1.2 client mode detection needs to be triggered */
 	detect_or_power_down_ic(port);
+}
 
-	while (1) {
-		evt = task_wait_event(-1);
-
-		if (evt & USB_CHG_EVENT_VBUS)
-			detect_or_power_down_ic(port);
-	}
+static void max14637_usb_charger_task_event(const int port, uint32_t evt)
+{
+	if (evt & USB_CHG_EVENT_VBUS)
+		detect_or_power_down_ic(port);
 }
 
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
@@ -207,14 +229,14 @@ static void bc12_chipset_startup(void)
 	 * not drop even during the USB PD hard reset.
 	 */
 	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
-		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_VBUS, 0);
+		usb_charger_task_set_event(port, USB_CHG_EVENT_VBUS);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, bc12_chipset_startup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, bc12_chipset_startup, HOOK_PRIO_DEFAULT);
 
 const struct bc12_drv max14637_drv = {
-	.usb_charger_task = max14637_usb_charger_task,
+	.usb_charger_task_init = max14637_usb_charger_task_init,
+	.usb_charger_task_event = max14637_usb_charger_task_event,
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 	.ramp_allowed = max14637_ramp_allowed,
 	.ramp_max = max14637_ramp_max,

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -38,7 +38,8 @@ int task_abc(void *data)
 			wake_count[0] = wake_count[1] = wake_count[2] = 0;
 			task_wait_event(-1);
 		} else {
-			task_set_event(next, TASK_EVENT_WAKE, 1);
+			task_set_event(next, TASK_EVENT_WAKE);
+			task_wait_event(-1);
 		}
 	}
 
@@ -59,7 +60,7 @@ int task_tick(void *data)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	wait_for_task_started();
 	task_wake(TASK_ID_TICK);

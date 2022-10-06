@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,6 +15,11 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
+
+#ifndef CONFIG_ZEPHYR
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
 	const struct temp_sensor_t *sensor;
@@ -25,6 +30,7 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 
 	return sensor->read(sensor->idx, temp_ptr);
 }
+#endif
 
 static void update_mapped_memory(void)
 {
@@ -38,8 +44,7 @@ static void update_mapped_memory(void)
 		 */
 		if (i == EC_TEMP_SENSOR_ENTRIES)
 			mptr = host_get_memmap(EC_MEMMAP_TEMP_SENSOR_B);
-		else if (i >= EC_TEMP_SENSOR_ENTRIES +
-			 EC_TEMP_SENSOR_B_ENTRIES)
+		else if (i >= EC_TEMP_SENSOR_ENTRIES + EC_TEMP_SENSOR_B_ENTRIES)
 			break;
 
 		switch (temp_sensor_read(i, &t)) {
@@ -94,27 +99,24 @@ static void temp_sensor_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, temp_sensor_init, HOOK_PRIO_DEFAULT);
 
-/*****************************************************************************/
-/* Console commands */
-
-static int command_temps(int argc, char **argv)
+int print_temps(void)
 {
 	int t, i;
 	int rv, rv1 = EC_SUCCESS;
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		ccprintf("  %-20s: ", temp_sensors[i].name);
+		ccprintf("  %-20s  ", temp_sensors[i].name);
 		rv = temp_sensor_read(i, &t);
 		if (rv)
 			rv1 = rv;
 
 		switch (rv) {
 		case EC_SUCCESS:
-			ccprintf("%d K = %d C", t, K_TO_C(t));
+			ccprintf("%d K (= %d C)", t, K_TO_C(t));
 #ifdef CONFIG_THROTTLE_AP
 			if (thermal_params[i].temp_fan_off &&
 			    thermal_params[i].temp_fan_max)
-				ccprintf("  %d%%",
+				ccprintf("  %11d%%",
 					 thermal_fan_percent(
 						 thermal_params[i].temp_fan_off,
 						 thermal_params[i].temp_fan_max,
@@ -135,14 +137,24 @@ static int command_temps(int argc, char **argv)
 
 	return rv1;
 }
-DECLARE_CONSOLE_COMMAND(temps, command_temps,
-			NULL,
-			"Print temp sensors");
+
+/*****************************************************************************/
+/* Console commands */
+
+#ifdef CONFIG_CMD_TEMP_SENSOR
+static int command_temps(int argc, const char **argv)
+{
+	return print_temps();
+}
+DECLARE_CONSOLE_COMMAND(temps, command_temps, NULL,
+			"Print temp sensors and fan speed");
+#endif
 
 /*****************************************************************************/
 /* Host commands */
 
-enum ec_status temp_sensor_command_get_info(struct host_cmd_handler_args *args)
+static enum ec_status
+temp_sensor_command_get_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_temp_sensor_get_info *p = args->params;
 	struct ec_response_temp_sensor_get_info *r = args->response;
@@ -158,6 +170,5 @@ enum ec_status temp_sensor_command_get_info(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_TEMP_SENSOR_GET_INFO,
-		     temp_sensor_command_get_info,
+DECLARE_HOST_COMMAND(EC_CMD_TEMP_SENSOR_GET_INFO, temp_sensor_command_get_info,
 		     EC_VER_MASK(0));

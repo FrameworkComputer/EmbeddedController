@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Puff board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
@@ -38,7 +37,7 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_common.h"
@@ -46,8 +45,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
@@ -89,8 +88,8 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 /* Called when the charge manager has switched to a new port. */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Blink alert if insufficient power per system_can_boot_ap(). */
 	int insufficient_power =
@@ -106,14 +105,14 @@ static int32_t base_5v_power;
  * Power usage for each port as measured or estimated.
  * Units are milliwatts (5v x ma current)
  */
-#define PWR_BASE_LOAD	(5*1335)
-#define PWR_FRONT_HIGH	(5*1603)
-#define PWR_FRONT_LOW	(5*963)
-#define PWR_REAR	(5*1075)
-#define PWR_HDMI	(5*562)
-#define PWR_C_HIGH	(5*3740)
-#define PWR_C_LOW	(5*2090)
-#define PWR_MAX		(5*10000)
+#define PWR_BASE_LOAD (5 * 1335)
+#define PWR_FRONT_HIGH (5 * 1603)
+#define PWR_FRONT_LOW (5 * 963)
+#define PWR_REAR (5 * 1075)
+#define PWR_HDMI (5 * 562)
+#define PWR_C_HIGH (5 * 3740)
+#define PWR_C_LOW (5 * 2090)
+#define PWR_MAX (5 * 10000)
 
 /*
  * Update the 5V power usage, assuming no throttling,
@@ -186,16 +185,14 @@ static const struct {
 	int current;
 } bj_power[] = {
 	{ /* 0 - 65W (also default) */
-	.voltage = 19000,
-	.current = 3420
-	},
+	  .voltage = 19000,
+	  .current = 3420 },
 	{ /* 1 - 90W */
-	.voltage = 19000,
-	.current = 4740
-	},
+	  .voltage = 19000,
+	  .current = 4740 },
 };
 
-#define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
+#define ADP_DEBOUNCE_MS 1000 /* Debounce time for BJ plug/unplug */
 /* Debounced connection state of the barrel jack */
 static int8_t adp_connected = -1;
 static void adp_connect_deferred(void)
@@ -238,31 +235,28 @@ static void adp_state_init(void)
 	/* Report charge state from the barrel jack. */
 	adp_connect_deferred();
 }
-DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
-
+DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
 #include "gpio_list.h" /* Must come after other header files. */
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_FAN]        = { .channel = 5,
-				.flags = PWM_CONFIG_OPEN_DRAIN,
-				.freq = 25000},
-	[PWM_CH_LED_RED]    = { .channel = 0,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
-					 PWM_CONFIG_DSLEEP,
-				.freq = 2000 },
-	[PWM_CH_LED_GREEN]  = { .channel = 2,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
-					 PWM_CONFIG_DSLEEP,
-				.freq = 2000 },
+	[PWM_CH_FAN] = { .channel = 5,
+			 .flags = PWM_CONFIG_OPEN_DRAIN,
+			 .freq = 25000 },
+	[PWM_CH_LED_RED] = { .channel = 0,
+			     .flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+			     .freq = 2000 },
+	[PWM_CH_LED_GREEN] = { .channel = 2,
+			       .flags = PWM_CONFIG_ACTIVE_LOW |
+					PWM_CONFIG_DSLEEP,
+			       .freq = 2000 },
 };
 
 /******************************************************************************/
@@ -278,22 +272,44 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = TCPC_FLAGS_RESET_ACTIVE_HIGH,
 	},
 };
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
-		.usb_port = USB_PD_PORT_TCPC_0,
-		.driver = &anx7447_usb_mux_driver,
-		.hpd_update = &anx7447_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_TCPC_0,
+			.driver = &anx7447_usb_mux_driver,
+			.hpd_update = &anx7447_tcpc_update_hpd_status,
+		},
 	},
 };
 
 /******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
-	{"ina",     I2C_PORT_INA,     400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"ppc0",    I2C_PORT_PPC0,    400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"power",   I2C_PORT_POWER,   400, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
-	{"eeprom",  I2C_PORT_EEPROM,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
+	{ .name = "ina",
+	  .port = I2C_PORT_INA,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "ppc0",
+	  .port = I2C_PORT_PPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 400,
+	  .scl = GPIO_I2C5_SCL,
+	  .sda = GPIO_I2C5_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_I2C7_SCL,
+	  .sda = GPIO_I2C7_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -349,15 +365,14 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
 /* Wake up pins */
-const enum gpio_signal hibernate_wake_pins[] = {
-};
+const enum gpio_signal hibernate_wake_pins[] = {};
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -376,42 +391,52 @@ BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /******************************************************************************/
 /* Thermal control; drive fan based on temperature sensors. */
-const static struct ec_thermal_config thermal_a = {
-	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(78),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(58),
-		[EC_TEMP_THRESH_HALT] = 0,
-	},
-	.temp_fan_off = C_TO_K(41),
-	.temp_fan_max = C_TO_K(72),
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_A                \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(78), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(58), \
+			[EC_TEMP_THRESH_HALT] = 0, \
+		}, \
+		.temp_fan_off = C_TO_K(41), \
+		.temp_fan_max = C_TO_K(72), \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
 
-const static struct ec_thermal_config thermal_b = {
-	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = 0,
-	},
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_B                \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(78), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+			[EC_TEMP_THRESH_HALT] = 0, \
+		}, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_b = THERMAL_B;
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_CORE] = thermal_a,
+	[TEMP_SENSOR_CORE] = THERMAL_A,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -480,7 +505,7 @@ static void board_init(void)
 	 * button is not available.
 	 */
 	if (board_version < 2)
-		button_disable_gpio(GPIO_EC_RECOVERY_BTN_ODL);
+		button_disable_gpio(BUTTON_RECOVERY);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -498,16 +523,13 @@ static void board_chipset_startup(void)
 	if (ppc_is_sourcing_vbus(0))
 		ppc_vbus_source_enable(0, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USB_PD_PORT_TCPC_0] = {
-		.i2c_port = I2C_PORT_PPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	[USB_PD_PORT_TCPC_0] = { .i2c_port = I2C_PORT_PPC0,
+				 .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				 .drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -540,14 +562,12 @@ static void board_tcpc_init(void)
 		/*
 		 * By default configured as output low.
 		 */
-		gpio_set_flags(GPIO_USB_A4_OC_ODL,
-			       GPIO_INPUT | GPIO_INT_BOTH);
+		gpio_set_flags(GPIO_USB_A4_OC_ODL, GPIO_INPUT | GPIO_INT_BOTH);
 		gpio_enable_interrupt(GPIO_USB_A4_OC_ODL);
 	} else {
 		/* Ensure no interrupts from pin */
 		gpio_disable_interrupt(GPIO_USB_A4_OC_ODL);
 	}
-
 }
 /* Make sure this is called after fw_config is initialised */
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
@@ -666,8 +686,8 @@ void board_enable_s0_rails(int enable)
 
 unsigned int ec_config_get_bj_power(void)
 {
-	unsigned int bj =
-		(fw_config & EC_CFG_BJ_POWER_MASK) >> EC_CFG_BJ_POWER_L;
+	unsigned int bj = (fw_config & EC_CFG_BJ_POWER_MASK) >>
+			  EC_CFG_BJ_POWER_L;
 	/* Out of range value defaults to 0 */
 	if (bj >= ARRAY_SIZE(bj_power))
 		bj = 0;
@@ -742,23 +762,23 @@ DECLARE_HOOK(HOOK_INIT, setup_thermal, HOOK_PRIO_DEFAULT - 1);
  *
  *  All measurements are in milliwatts.
  */
-#define THROT_TYPE_A		BIT(0)
-#define THROT_TYPE_C		BIT(1)
-#define THROT_PROCHOT		BIT(2)
+#define THROT_TYPE_A BIT(0)
+#define THROT_TYPE_C BIT(1)
+#define THROT_PROCHOT BIT(2)
 
 /*
  * Power gain if front USB A ports are limited.
  */
-#define POWER_GAIN_TYPE_A	3200
+#define POWER_GAIN_TYPE_A 3200
 /*
  * Power gain if Type C port is limited.
  */
-#define POWER_GAIN_TYPE_C	8800
+#define POWER_GAIN_TYPE_C 8800
 /*
  * Power is averaged over 10 ms, with a reading every 2 ms.
  */
-#define POWER_DELAY_MS		2
-#define POWER_READINGS		(10/POWER_DELAY_MS)
+#define POWER_DELAY_MS 2
+#define POWER_READINGS (10 / POWER_DELAY_MS)
 
 static void power_monitor(void)
 {
@@ -773,8 +793,7 @@ static void power_monitor(void)
 	 * If CPU is off or suspended, no need to throttle
 	 * or restrict power.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-			     CHIPSET_STATE_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF | CHIPSET_STATE_SUSPEND)) {
 		/*
 		 * Slow down monitoring, assume no throttling required.
 		 */
@@ -802,7 +821,7 @@ static void power_monitor(void)
 			 */
 			power = (adc_read_channel(ADC_VBUS) *
 				 adc_read_channel(ADC_PPVAR_IMON)) /
-				 1000;
+				1000;
 			/* Init power table */
 			if (history[0] == 0) {
 				for (i = 0; i < POWER_READINGS; i++)
@@ -829,8 +848,7 @@ static void power_monitor(void)
 			 * For barrel-jack supplies, the rating can be
 			 * exceeded briefly, so use the average.
 			 */
-			if (charge_manager_get_supplier() ==
-			    CHARGE_SUPPLIER_PD)
+			if (charge_manager_get_supplier() == CHARGE_SUPPLIER_PD)
 				power = max;
 			else
 				power = total / POWER_READINGS;
@@ -922,8 +940,9 @@ static void power_monitor(void)
 		gpio_set_level(GPIO_EC_PROCHOT_ODL, prochot);
 	}
 	if (diff & THROT_TYPE_C) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C)
-			? TYPEC_RP_1A5 : TYPEC_RP_3A0;
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
 
 		ppc_set_vbus_source_current_limit(0, rp);
 		tcpm_select_rp_value(0, rp);

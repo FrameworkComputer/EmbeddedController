@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,66 +18,67 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
+#include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
-#define DUT_PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
-			     PDO_FIXED_COMM_CAP)
+#define DUT_PDO_FIXED_FLAGS \
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP)
 
-#define CHG_PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP)
-
-#define VBUS_UNCHANGED(curr, pend, new) (curr == new && pend == new)
+#define VBUS_UNCHANGED(curr, pend, new) (curr == new &&pend == new)
 
 /* Macros to config the PD role */
 #define CONF_SET_CLEAR(c, set, clear) ((c | (set)) & ~(clear))
-#define CONF_SRC(c) CONF_SET_CLEAR(c, \
-				CC_DISABLE_DTS | CC_ALLOW_SRC, \
-				CC_ENABLE_DRP | CC_SNK_WITH_PD)
-#define CONF_SNK(c) CONF_SET_CLEAR(c, \
-				CC_DISABLE_DTS, \
-				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_SNK_WITH_PD)
-#define CONF_PDSNK(c) CONF_SET_CLEAR(c, \
-				CC_DISABLE_DTS | CC_SNK_WITH_PD, \
-				CC_ALLOW_SRC | CC_ENABLE_DRP)
-#define CONF_DRP(c) CONF_SET_CLEAR(c, \
-				CC_DISABLE_DTS | CC_ALLOW_SRC | CC_ENABLE_DRP, \
-				CC_SNK_WITH_PD)
-#define CONF_SRCDTS(c) CONF_SET_CLEAR(c, \
-				CC_ALLOW_SRC, \
-				CC_ENABLE_DRP | CC_DISABLE_DTS | CC_SNK_WITH_PD)
-#define CONF_SNKDTS(c) CONF_SET_CLEAR(c, \
-				0, \
-				CC_ALLOW_SRC | CC_ENABLE_DRP | \
-				CC_DISABLE_DTS | CC_SNK_WITH_PD)
-#define CONF_PDSNKDTS(c) CONF_SET_CLEAR(c, \
-				CC_SNK_WITH_PD, \
-				CC_ALLOW_SRC | CC_ENABLE_DRP | CC_DISABLE_DTS)
-#define CONF_DRPDTS(c) CONF_SET_CLEAR(c, \
-				CC_ALLOW_SRC | CC_ENABLE_DRP, \
-				CC_DISABLE_DTS | CC_SNK_WITH_PD)
+#define CONF_SRC(c)                                      \
+	CONF_SET_CLEAR(c, CC_DISABLE_DTS | CC_ALLOW_SRC, \
+		       CC_ENABLE_DRP | CC_SNK_WITH_PD)
+#define CONF_SNK(c)                       \
+	CONF_SET_CLEAR(c, CC_DISABLE_DTS, \
+		       CC_ALLOW_SRC | CC_ENABLE_DRP | CC_SNK_WITH_PD)
+#define CONF_PDSNK(c)                                      \
+	CONF_SET_CLEAR(c, CC_DISABLE_DTS | CC_SNK_WITH_PD, \
+		       CC_ALLOW_SRC | CC_ENABLE_DRP)
+#define CONF_DRP(c)                                                      \
+	CONF_SET_CLEAR(c, CC_DISABLE_DTS | CC_ALLOW_SRC | CC_ENABLE_DRP, \
+		       CC_SNK_WITH_PD)
+#define CONF_SRCDTS(c)                  \
+	CONF_SET_CLEAR(c, CC_ALLOW_SRC, \
+		       CC_ENABLE_DRP | CC_DISABLE_DTS | CC_SNK_WITH_PD)
+#define CONF_SNKDTS(c)                                                 \
+	CONF_SET_CLEAR(c, 0,                                           \
+		       CC_ALLOW_SRC | CC_ENABLE_DRP | CC_DISABLE_DTS | \
+			       CC_SNK_WITH_PD)
+#define CONF_PDSNKDTS(c)                  \
+	CONF_SET_CLEAR(c, CC_SNK_WITH_PD, \
+		       CC_ALLOW_SRC | CC_ENABLE_DRP | CC_DISABLE_DTS)
+#define CONF_DRPDTS(c)                                  \
+	CONF_SET_CLEAR(c, CC_ALLOW_SRC | CC_ENABLE_DRP, \
+		       CC_DISABLE_DTS | CC_SNK_WITH_PD)
+#define CONF_DTSOFF(c) CONF_SET_CLEAR(c, CC_DISABLE_DTS, 0)
+#define CONF_DTSON(c) CONF_SET_CLEAR(c, 0, CC_DISABLE_DTS)
 
 /* Macros to apply Rd/Rp to CC lines */
-#define DUT_ACTIVE_CC_SET(r, flags) \
-	gpio_set_flags(cc_config & CC_POLARITY ? \
-				CONCAT2(GPIO_USB_DUT_CC2_, r) : \
-				CONCAT2(GPIO_USB_DUT_CC1_, r), \
+#define DUT_ACTIVE_CC_SET(r, flags)                            \
+	gpio_set_flags(cc_config &CC_POLARITY ?                \
+			       CONCAT2(GPIO_USB_DUT_CC2_, r) : \
+			       CONCAT2(GPIO_USB_DUT_CC1_, r),  \
 		       flags)
-#define DUT_INACTIVE_CC_SET(r, flags) \
-	gpio_set_flags(cc_config & CC_POLARITY ? \
-				CONCAT2(GPIO_USB_DUT_CC1_, r) : \
-				CONCAT2(GPIO_USB_DUT_CC2_, r), \
+#define DUT_INACTIVE_CC_SET(r, flags)                          \
+	gpio_set_flags(cc_config &CC_POLARITY ?                \
+			       CONCAT2(GPIO_USB_DUT_CC1_, r) : \
+			       CONCAT2(GPIO_USB_DUT_CC2_, r),  \
 		       flags)
-#define DUT_BOTH_CC_SET(r, flags) \
-	do { \
+#define DUT_BOTH_CC_SET(r, flags)                                     \
+	do {                                                          \
 		gpio_set_flags(CONCAT2(GPIO_USB_DUT_CC1_, r), flags); \
 		gpio_set_flags(CONCAT2(GPIO_USB_DUT_CC2_, r), flags); \
 	} while (0)
@@ -88,32 +89,6 @@
 #define DUT_BOTH_CC_PD(r) DUT_BOTH_CC_SET(r, GPIO_OUT_LOW)
 #define DUT_BOTH_CC_OPEN(r) DUT_BOTH_CC_SET(r, GPIO_INPUT)
 
-/*
- * Dynamic PDO that reflects capabilities present on the CHG port. Allow for
- * multiple entries so that we can offer greater than 5V charging. The 1st
- * entry will be fixed 5V, but its current value may change based on the CHG
- * port vbus info. Subsequent entries are used for when offering vbus greater
- * than 5V.
- */
-static const uint16_t pd_src_voltages_mv[] = {
-		5000, 9000, 10000, 12000, 15000, 20000,
-};
-static uint32_t pd_src_chg_pdo[ARRAY_SIZE(pd_src_voltages_mv)];
-static uint8_t chg_pdo_cnt;
-
-const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000, 500, CHG_PDO_FIXED_FLAGS),
-		PDO_BATT(4750, 21000, 15000),
-		PDO_VAR(4750, 21000, 3000),
-};
-const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
-
-struct vbus_prop {
-	int mv;
-	int ma;
-};
-static struct vbus_prop vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
-static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 
@@ -121,15 +96,15 @@ static int cc_config = CC_ALLOW_SRC;
 
 /* Voltage thresholds for no connect in DTS mode */
 static int pd_src_vnc_dts[TYPEC_RP_RESERVED][2] = {
-	{PD_SRC_3_0_VNC_MV, PD_SRC_1_5_VNC_MV},
-	{PD_SRC_1_5_VNC_MV, PD_SRC_DEF_VNC_MV},
-	{PD_SRC_3_0_VNC_MV, PD_SRC_DEF_VNC_MV},
+	{ PD_SRC_3_0_VNC_MV, PD_SRC_1_5_VNC_MV },
+	{ PD_SRC_1_5_VNC_MV, PD_SRC_DEF_VNC_MV },
+	{ PD_SRC_3_0_VNC_MV, PD_SRC_DEF_VNC_MV },
 };
 /* Voltage thresholds for Ra attach in DTS mode */
 static int pd_src_rd_threshold_dts[TYPEC_RP_RESERVED][2] = {
-	{PD_SRC_3_0_RD_THRESH_MV, PD_SRC_1_5_RD_THRESH_MV},
-	{PD_SRC_1_5_RD_THRESH_MV, PD_SRC_DEF_RD_THRESH_MV},
-	{PD_SRC_3_0_RD_THRESH_MV, PD_SRC_DEF_RD_THRESH_MV},
+	{ PD_SRC_3_0_RD_THRESH_MV, PD_SRC_1_5_RD_THRESH_MV },
+	{ PD_SRC_1_5_RD_THRESH_MV, PD_SRC_DEF_RD_THRESH_MV },
+	{ PD_SRC_3_0_RD_THRESH_MV, PD_SRC_DEF_RD_THRESH_MV },
 };
 /* Voltage thresholds for no connect in normal SRC mode */
 static int pd_src_vnc[TYPEC_RP_RESERVED] = {
@@ -160,18 +135,17 @@ static int cc_pull_stored = TYPEC_CC_RD;
 
 static int user_limited_max_mv = 20000;
 
+static uint8_t allow_pr_swap = 1;
+static uint8_t allow_dr_swap = 1;
+
 static uint32_t max_supported_voltage(void)
 {
 	int board_max_mv = board_get_version() >= BOARD_VERSION_BLACK ?
-		PD_MAX_VOLTAGE_MV : MAX_MV_RED_BLUE;
+				   PD_MAX_VOLTAGE_MV :
+				   MAX_MV_RED_BLUE;
 
 	return board_max_mv < user_limited_max_mv ? board_max_mv :
 						    user_limited_max_mv;
-}
-
-static int charge_port_is_active(void)
-{
-	return active_charge_port == CHG && vbus[CHG].mv > 0;
 }
 
 static int is_charge_through_allowed(void)
@@ -270,7 +244,7 @@ static void board_manage_dut_port(void)
 static void update_ports(void)
 {
 	int pdo_index, src_index, snk_index, i;
-	uint32_t pdo, max_ma, max_mv;
+	uint32_t pdo, max_ma, max_mv, unused;
 
 	/*
 	 * CHG Vbus has changed states, update PDO that reflects CHG port
@@ -285,6 +259,20 @@ static void update_ports(void)
 			src_index = 0;
 			snk_index = -1;
 
+			/*
+			 * TODO: This code artificially limits PDO
+			 * to entries in pd_src_voltages_mv table
+			 *
+			 * This is artificially overconstrainted.
+			 *
+			 * Allow non-standard PDO objects so long
+			 * as they are valid. See: crrev/c/730877
+			 * for where this started.
+			 *
+			 * This needs to be rearchitected in order
+			 * to support Variable PDO passthrough.
+			 */
+
 			for (i = 0; i < ARRAY_SIZE(pd_src_voltages_mv); ++i) {
 				/* Adhere to board voltage limits */
 				if (pd_src_voltages_mv[i] >
@@ -292,8 +280,8 @@ static void update_ports(void)
 					break;
 
 				/* Find the 'best' PDO <= voltage */
-				pdo_index =
-				pd_find_pdo_index(pd_get_src_cap_cnt(CHG),
+				pdo_index = pd_find_pdo_index(
+					pd_get_src_cap_cnt(CHG),
 					pd_get_src_caps(CHG),
 					pd_src_voltages_mv[i], &pdo);
 				/* Don't duplicate PDOs */
@@ -304,20 +292,54 @@ static void update_ports(void)
 					continue;
 
 				snk_index = pdo_index;
-				pd_extract_pdo_power(pdo, &max_ma, &max_mv);
-				pd_src_chg_pdo[src_index++] =
+				pd_extract_pdo_power(pdo, &max_ma, &max_mv,
+						     &unused);
+				pd_src_chg_pdo[src_index] =
 					PDO_FIXED_VOLT(max_mv) |
-					PDO_FIXED_CURR(max_ma) |
-					DUT_PDO_FIXED_FLAGS |
-					PDO_FIXED_UNCONSTRAINED;
+					PDO_FIXED_CURR(max_ma);
+
+				if (src_index == 0) {
+					/*
+					 * TODO: 1st PDO *should* always be
+					 * vSafe5v PDO. But not always with bad
+					 * DUT. Should re-index and re-map.
+					 *
+					 * TODO: Add variable voltage PDO
+					 * conversion.
+					 */
+					pd_src_chg_pdo[src_index] &=
+						~(DUT_PDO_FIXED_FLAGS |
+						  PDO_FIXED_UNCONSTRAINED);
+
+					/*
+					 * TODO: Keep Unconstrained Power knobs
+					 * exposed and well-defined.
+					 *
+					 * Current method is workaround that
+					 * force-rejects PR_SWAPs in lieu of UP.
+					 *
+					 * Migrate to use config flag such as:
+					 * ((cc_config &
+					 * CC_UNCONSTRAINED_POWER)?
+					 * PDO_FIXED_UNCONSTRAINED:0)
+					 */
+					pd_src_chg_pdo[src_index] |=
+						(DUT_PDO_FIXED_FLAGS |
+						 PDO_FIXED_UNCONSTRAINED);
+				}
+				src_index++;
 			}
 			chg_pdo_cnt = src_index;
 		} else {
 			/* 5V PDO */
 			pd_src_chg_pdo[0] = PDO_FIXED_VOLT(PD_MIN_MV) |
-				PDO_FIXED_CURR(vbus[CHG].ma) |
-				DUT_PDO_FIXED_FLAGS |
-				PDO_FIXED_UNCONSTRAINED;
+					    PDO_FIXED_CURR(vbus[CHG].ma) |
+					    DUT_PDO_FIXED_FLAGS |
+					    PDO_FIXED_UNCONSTRAINED;
+			/*
+			 * TODO: Keep Unconstrained Power knobs
+			 * exposed and well-defined.
+			 */
 
 			chg_pdo_cnt = 1;
 		}
@@ -342,8 +364,8 @@ int board_set_active_charge_port(int charge_port)
 	return 0;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	if (port != CHG)
 		return;
@@ -389,8 +411,9 @@ int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel)
 	if (cc_config & CC_DISABLE_DTS)
 		nc = cc_volt >= pd_src_vnc[rp_index];
 	else
-		nc = cc_volt >= pd_src_vnc_dts[rp_index][
-				cc_config & CC_POLARITY ? !cc_sel : cc_sel];
+		nc = cc_volt >=
+		     pd_src_vnc_dts[rp_index]
+				   [cc_config & CC_POLARITY ? !cc_sel : cc_sel];
 
 	return nc;
 }
@@ -416,19 +439,30 @@ int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel)
 	if (cc_config & CC_DISABLE_DTS)
 		ra = cc_volt < pd_src_rd_threshold[rp_index];
 	else
-		ra = cc_volt < pd_src_rd_threshold_dts[rp_index][
-				cc_config & CC_POLARITY ? !cc_sel : cc_sel];
+		ra = cc_volt <
+		     pd_src_rd_threshold_dts[rp_index]
+					    [cc_config & CC_POLARITY ? !cc_sel :
+								       cc_sel];
 
 	return ra;
+}
+
+/* DUT CC readings aren't valid if we aren't applying CC pulls */
+bool cc_is_valid(void)
+{
+	if ((cc_config & CC_DETACH) || (cc_pull_stored == TYPEC_CC_OPEN) ||
+	    ((cc_pull_stored == TYPEC_CC_RP) &&
+	     (rp_value_stored == TYPEC_RP_RESERVED)))
+		return false;
+	return true;
 }
 
 int pd_adc_read(int port, int cc)
 {
 	int mv;
-
 	if (port == 0)
 		mv = adc_read_channel(cc ? ADC_CHG_CC2_PD : ADC_CHG_CC1_PD);
-	else if (!(cc_config & CC_DETACH)) {
+	else if (cc_is_valid()) {
 		/*
 		 * In servo v4 hardware logic, both CC lines are wired directly
 		 * to DUT. When servo v4 as a snk, DUT may source Vconn to CC2
@@ -459,7 +493,6 @@ int pd_adc_read(int port, int cc)
 		 */
 		mv = 0;
 	}
-
 	return mv;
 }
 
@@ -568,7 +601,6 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value)
 			DUT_ACTIVE_CC_PD(RD);
 		else
 			DUT_BOTH_CC_PD(RD);
-
 	}
 
 	rp_value_stored = rp_value;
@@ -594,28 +626,12 @@ int board_select_rp_value(int port, int rp)
 	return EC_SUCCESS;
 }
 
-int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
-{
-	int pdo_cnt = 0;
-
-	/*
-	 * If CHG is providing VBUS, then advertise what's available on the CHG
-	 * port, otherwise we provide no power.
-	 */
-	if (charge_port_is_active()) {
-		*src_pdo =  pd_src_chg_pdo;
-		pdo_cnt = chg_pdo_cnt;
-	}
-
-	return pdo_cnt;
-}
-
 __override void pd_transition_voltage(int idx)
 {
 	timestamp_t deadline;
-	uint32_t ma, mv;
+	uint32_t ma, mv, unused;
 
-	pd_extract_pdo_power(pd_src_chg_pdo[idx - 1], &ma, &mv);
+	pd_extract_pdo_power(pd_src_chg_pdo[idx - 1], &ma, &mv, &unused);
 	/* Is this a transition to a new voltage? */
 	if (charge_port_is_active() && vbus[CHG].mv != mv) {
 		/*
@@ -627,8 +643,7 @@ __override void pd_transition_voltage(int idx)
 		/* Wait for CHG transition */
 		deadline.val = get_time().val + PD_T_PS_TRANSITION;
 		CPRINTS("Waiting for CHG port transition");
-		while (charge_port_is_active() &&
-		       vbus[CHG].mv != mv &&
+		while (charge_port_is_active() && vbus[CHG].mv != mv &&
 		       get_time().val < deadline.val)
 			msleep(10);
 
@@ -688,9 +703,7 @@ void pd_power_supply_reset(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-
-	return gpio_get_level(port ? GPIO_USB_DET_PP_DUT :
-				     GPIO_USB_DET_PP_CHG);
+	return gpio_get_level(port ? GPIO_USB_DET_PP_DUT : GPIO_USB_DET_PP_CHG);
 }
 
 __override int pd_check_power_swap(int port)
@@ -707,14 +720,17 @@ __override int pd_check_power_swap(int port)
 	if (port == CHG)
 		return 0;
 
+	if (pd_get_power_role(port) == PD_ROLE_SINK &&
+	    !(cc_config & CC_ALLOW_SRC))
+		return 0;
+
 	if (pd_snk_is_vbus_provided(CHG))
-		return 1;
+		return allow_pr_swap;
 
 	return 0;
 }
 
-__override int pd_check_data_swap(int port,
-				  enum pd_data_role data_role)
+__override int pd_check_data_swap(int port, enum pd_data_role data_role)
 {
 	/*
 	 * Servo should allow data role swaps to let DUT see the USB hub, but
@@ -723,11 +739,10 @@ __override int pd_check_data_swap(int port,
 	if (port == CHG)
 		return 0;
 
-	return 1;
+	return allow_dr_swap;
 }
 
-__override void pd_execute_data_swap(int port,
-				     enum pd_data_role data_role)
+__override void pd_execute_data_swap(int port, enum pd_data_role data_role)
 {
 	/*
 	 * TODO(b/137887386): Turn on the fastboot/DFU path when data swap to
@@ -735,8 +750,7 @@ __override void pd_execute_data_swap(int port,
 	 */
 }
 
-__override void pd_check_pr_role(int port,
-				 enum pd_power_role pr_role,
+__override void pd_check_pr_role(int port, enum pd_power_role pr_role,
 				 int flags)
 {
 	/*
@@ -747,9 +761,7 @@ __override void pd_check_pr_role(int port,
 	 */
 }
 
-__override void pd_check_dr_role(int port,
-				 enum pd_data_role dr_role,
-				 int flags)
+__override void pd_check_dr_role(int port, enum pd_data_role dr_role, int flags)
 {
 	if (port == CHG)
 		return;
@@ -759,15 +771,14 @@ __override void pd_check_dr_role(int port,
 		pd_request_data_swap(port);
 }
 
-
 /* ----------------- Vendor Defined Messages ------------------ */
 /*
  * DP alt-mode config, user configurable.
  * Default is the mode disabled, supporting the C and D pin assignment,
  * multi-function preferred, and a plug.
  */
-static int alt_dp_config = (ALT_DP_PIN_C | ALT_DP_PIN_D | ALT_DP_MF_PREF |
-			    ALT_DP_PLUG);
+static int alt_dp_config =
+	(ALT_DP_PIN_C | ALT_DP_PIN_D | ALT_DP_MF_PREF | ALT_DP_PLUG);
 
 /**
  * Get the pins based on the user config.
@@ -802,8 +813,8 @@ const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
 
 const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
-				 CONFIG_USB_PD_IDENTITY_SW_VERS,
-				 0, 0, 0, 0, /* SS[TR][12] */
+				 CONFIG_USB_PD_IDENTITY_SW_VERS, 0, 0, 0,
+				 0, /* SS[TR][12] */
 				 0, /* Vconn power */
 				 0, /* Vconn power required */
 				 0, /* Vbus power required */
@@ -841,13 +852,13 @@ uint32_t vdo_dp_mode[MODE_CNT];
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
-	vdo_dp_mode[0] =
-		VDO_MODE_DP(0,             /* UFP pin cfg supported: none */
-			    alt_dp_config_pins(),  /* DFP pin */
-			    1,             /* no usb2.0 signalling in AMode */
-			    alt_dp_config_cable(), /* plug or receptacle */
-			    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
-			    MODE_DP_SNK);  /* Its a sink only */
+	vdo_dp_mode[0] = VDO_MODE_DP(0, /* UFP pin cfg supported: none */
+				     alt_dp_config_pins(), /* DFP pin */
+				     1, /* no usb2.0 signalling in AMode */
+				     alt_dp_config_cable(), /* plug or
+							       receptacle */
+				     MODE_DP_V13, /* DPv1.3 Support, no Gen2 */
+				     MODE_DP_SNK); /* Its a sink only */
 
 	/* CCD uses the SBU lines; don't enable DP when dts-mode enabled */
 	if (!(cc_config & CC_DISABLE_DTS))
@@ -914,17 +925,18 @@ static int dp_status(int port, uint32_t *payload)
 	int hpd = get_hpd_level();
 
 	if (opos != OPOS)
-		return 0;  /* NAK */
+		return 0; /* NAK */
 
-	payload[1] = VDO_DP_STATUS(
-		0,                /* IRQ_HPD */
-		hpd,              /* HPD_HI|LOW */
-		0,                /* request exit DP */
-		0,                /* request exit USB */
-		(alt_dp_config & ALT_DP_MF_PREF) != 0,  /* MF pref */
-		is_typec_dp_muxed(),
-		0,                /* power low */
-		hpd ? 0x2 : 0);
+	payload[1] =
+		VDO_DP_STATUS(0, /* IRQ_HPD */
+			      hpd, /* HPD_HI|LOW */
+			      0, /* request exit DP */
+			      0, /* request exit USB */
+			      (alt_dp_config & ALT_DP_MF_PREF) != 0, /* MF
+									pref
+								      */
+			      is_typec_dp_muxed(), 0, /* power low */
+			      hpd ? 0x2 : 0);
 	return 2;
 }
 
@@ -944,15 +956,15 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	/* SID & mode request is valid */
 	if ((PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) ||
 	    (PD_VDO_OPOS(payload[0]) != OPOS))
-		return 0;  /* NAK */
+		return 0; /* NAK */
 
 	alt_mode = OPOS;
 	return 1;
 }
 
-int pd_alt_mode(int port, enum tcpm_transmit_type type, uint16_t svid)
+int pd_alt_mode(int port, enum tcpci_msg_type type, uint16_t svid)
 {
-	if (type == TCPC_TX_SOP && svid == USB_SID_DISPLAYPORT)
+	if (type == TCPCI_MSG_SOP && svid == USB_SID_DISPLAYPORT)
 		return alt_mode;
 
 	return 0;
@@ -983,7 +995,7 @@ const struct svdm_response svdm_rsp = {
 };
 
 __override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-		  uint32_t **rpayload)
+			     uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 
@@ -995,7 +1007,7 @@ __override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	case VDO_CMD_VERSION:
 		/* guarantee last byte of payload is null character */
 		*(payload + cnt - 1) = 0;
-		CPRINTF("ver: %s\n", (char *)(payload+1));
+		CPRINTF("ver: %s\n", (char *)(payload + 1));
 		break;
 	case VDO_CMD_CURRENT:
 		CPRINTF("Current: %dmA\n", payload[1]);
@@ -1017,11 +1029,9 @@ static void print_cc_mode(void)
 		 gpio_get_level(GPIO_DUT_CHG_EN) ? "on" : "off");
 	ccprintf("chg allowed: %s\n", cc_config & CC_ALLOW_SRC ? "on" : "off");
 	ccprintf("drp enabled: %s\n", cc_config & CC_ENABLE_DRP ? "on" : "off");
-	ccprintf("cc polarity: %s\n", cc_config & CC_POLARITY ? "cc2" :
-								"cc1");
+	ccprintf("cc polarity: %s\n", cc_config & CC_POLARITY ? "cc2" : "cc1");
 	ccprintf("pd enabled: %s\n", pd_comm_is_enabled(DUT) ? "on" : "off");
 }
-
 
 static void do_cc(int cc_config_new)
 {
@@ -1031,7 +1041,7 @@ static void do_cc(int cc_config_new)
 	if (cc_config_new != cc_config) {
 		if (!(cc_config & CC_DETACH)) {
 			/* Force detach */
-			pd_power_supply_reset(DUT);
+			gpio_set_level(GPIO_DUT_CHG_EN, 0);
 			/* Always set to 0 here so both CC lines are changed */
 			cc_config &= ~(CC_DISABLE_DTS & CC_ALLOW_SRC);
 
@@ -1092,7 +1102,7 @@ static void do_cc(int cc_config_new)
 	}
 }
 
-static int command_cc(int argc, char **argv)
+static int command_cc(int argc, const char **argv)
 {
 	int cc_config_new = cc_config;
 
@@ -1123,6 +1133,10 @@ static int command_cc(int argc, char **argv)
 			cc_config_new = CONF_PDSNKDTS(cc_config_new);
 		else if (!strcasecmp(argv[1], "drpdts"))
 			cc_config_new = CONF_DRPDTS(cc_config_new);
+		else if (!strcasecmp(argv[1], "dtsoff"))
+			cc_config_new = CONF_DTSOFF(cc_config_new);
+		else if (!strcasecmp(argv[1], "dtson"))
+			cc_config_new = CONF_DTSON(cc_config_new);
 		else
 			return EC_ERROR_PARAM2;
 	}
@@ -1141,7 +1155,7 @@ static int command_cc(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(cc, command_cc,
 			"[off|on|src|snk|pdsnk|drp|srcdts|snkdts|pdsnkdts|"
-			"drpdts] [cc1|cc2]",
+			"drpdts|dtsoff|dtson] [cc1|cc2]",
 			"Servo_v4 DTS and CHG mode");
 
 static void fake_disconnect_end(void)
@@ -1161,7 +1175,7 @@ static void fake_disconnect_start(void)
 }
 DECLARE_DEFERRED(fake_disconnect_start);
 
-static int cmd_fake_disconnect(int argc, char *argv[])
+static int cmd_fake_disconnect(int argc, const char *argv[])
 {
 	int delay_ms, duration_ms;
 	char *e;
@@ -1183,41 +1197,36 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 	fake_pd_disconnect_duration_us = duration_ms * MSEC;
 	hook_call_deferred(&fake_disconnect_start_data, delay_ms * MSEC);
 
-	ccprintf("Fake disconnect for %d ms starting in %d ms.\n",
-		duration_ms, delay_ms);
+	ccprintf("Fake disconnect for %d ms starting in %d ms.\n", duration_ms,
+		 delay_ms);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
 			"<delay_ms> <duration_ms>", NULL);
 
-static int cmd_ada_srccaps(int argc, char *argv[])
+static int cmd_ada_srccaps(int argc, const char *argv[])
 {
 	int i;
-	const uint32_t * const ada_srccaps = pd_get_src_caps(CHG);
+	const uint32_t *const ada_srccaps = pd_get_src_caps(CHG);
 
 	for (i = 0; i < pd_get_src_cap_cnt(CHG); ++i) {
-		uint32_t max_ma, max_mv;
+		uint32_t max_ma, max_mv, unused;
 
-		pd_extract_pdo_power(ada_srccaps[i], &max_ma, &max_mv);
+		if (IS_ENABLED(CONFIG_USB_PD_ONLY_FIXED_PDOS) &&
+		    (ada_srccaps[i] & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+			continue;
+
+		pd_extract_pdo_power(ada_srccaps[i], &max_ma, &max_mv, &unused);
 		ccprintf("%d: %dmV/%dmA\n", i, max_mv, max_ma);
 	}
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps,
-			"",
+DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps, "",
 			"Print adapter SrcCap");
 
-static void chg_pd_disconnect(void)
-{
-	/* Clear charger PDO on CHG port disconnected. */
-	if (pd_is_disconnected(CHG))
-		pd_set_src_caps(CHG, 0, NULL);
-}
-DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, chg_pd_disconnect, HOOK_PRIO_DEFAULT);
-
-static int cmd_dp_action(int argc, char *argv[])
+static int cmd_dp_action(int argc, const char *argv[])
 {
 	int i;
 	char *e;
@@ -1236,8 +1245,8 @@ static int cmd_dp_action(int argc, char *argv[])
 		alt_dp_config &= ~ALT_DP_ENABLE;
 	} else if (!strcasecmp(argv[1], "pins")) {
 		if (argc >= 3) {
-			alt_dp_config &= ~(ALT_DP_PIN_C | ALT_DP_PIN_D |
-					   ALT_DP_PIN_E);
+			alt_dp_config &=
+				~(ALT_DP_PIN_C | ALT_DP_PIN_D | ALT_DP_PIN_E);
 			for (i = 0; i < 3; i++) {
 				if (!argv[2][i])
 					break;
@@ -1310,10 +1319,10 @@ static int cmd_dp_action(int argc, char *argv[])
 			}
 		}
 		CPRINTS("HPD source: %s",
-			(alt_dp_config & ALT_DP_OVERRIDE_HPD) ? "overridden"
-							      : "external");
+			(alt_dp_config & ALT_DP_OVERRIDE_HPD) ? "overridden" :
+								"external");
 		CPRINTS("HPD level: %d", get_hpd_level());
-	}  else if (!strcasecmp(argv[1], "help")) {
+	} else if (!strcasecmp(argv[1], "help")) {
 		CPRINTS("Usage: usbc_action dp [enable|disable|hpd|mf|pins|"
 			"plug]");
 	}
@@ -1321,7 +1330,7 @@ static int cmd_dp_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 
-static int cmd_usbc_action(int argc, char *argv[])
+static int cmd_usbc_action(int argc, const char *argv[])
 {
 	if (argc >= 2 && !strcasecmp(argv[1], "dp"))
 		return cmd_dp_action(argc - 1, &argv[1]);
@@ -1375,6 +1384,27 @@ static int cmd_usbc_action(int argc, char *argv[])
 		 * Drop this message if when we phase out the usbc_role control.
 		 */
 		ccprintf("CHG SRC %dmV\n", user_limited_max_mv);
+	} else if (!strcasecmp(argv[1], "drswap")) {
+		if (argc == 2) {
+			CPRINTF("allow_dr_swap = %d\n", allow_dr_swap);
+			return EC_SUCCESS;
+		}
+
+		if (argc != 3)
+			return EC_ERROR_PARAM2;
+
+		allow_dr_swap = !!atoi(argv[2]);
+
+	} else if (!strcasecmp(argv[1], "prswap")) {
+		if (argc == 2) {
+			CPRINTF("allow_pr_swap = %d\n", allow_pr_swap);
+			return EC_SUCCESS;
+		}
+
+		if (argc != 3)
+			return EC_ERROR_PARAM2;
+
+		allow_pr_swap = !!atoi(argv[2]);
 	} else {
 		return EC_ERROR_PARAM1;
 	}
@@ -1382,5 +1412,6 @@ static int cmd_usbc_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
-			"5v|12v|20v|dev|pol0|pol1|drp|dp|chg x(x=voltage)",
+			"5v|12v|20v|dev|pol0|pol1|drp|dp|chg x(x=voltage)|"
+			"drswap [1|0]|prswap [1|0]",
 			"Set Servo v4 type-C port state");

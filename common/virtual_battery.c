@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,7 +14,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 #define BATT_MODE_UNINITIALIZED -1
 
@@ -25,8 +25,8 @@
 enum batt_cmd_parse_state {
 	IDLE = 0, /* initial state */
 	START = 1, /* received the register address (command code) */
-	WRITE_VB, /* writing data bytes to the slave */
-	READ_VB, /* reading data bytes to the slave */
+	WRITE_VB, /* writing data bytes to the peripheral */
+	READ_VB, /* reading data bytes to the peripheral */
 };
 
 static enum batt_cmd_parse_state sb_cmd_state;
@@ -34,12 +34,10 @@ static uint8_t cache_hit;
 static const uint8_t *batt_cmd_head;
 static int acc_write_len;
 
-int virtual_battery_handler(struct ec_response_i2c_passthru *resp,
-				   int in_len, int *err_code, int xferflags,
-				   int read_len, int write_len,
-				   const uint8_t *out)
+int virtual_battery_handler(struct ec_response_i2c_passthru *resp, int in_len,
+			    int *err_code, int xferflags, int read_len,
+			    int write_len, const uint8_t *out)
 {
-
 #if defined(CONFIG_BATTERY_PRESENT_GPIO) || \
 	defined(CONFIG_BATTERY_PRESENT_CUSTOM)
 	/*
@@ -74,7 +72,7 @@ int virtual_battery_handler(struct ec_response_i2c_passthru *resp,
 		} else {
 			sb_cmd_state = READ_VB;
 			*err_code = virtual_battery_operation(batt_cmd_head,
-						NULL, 0, 0);
+							      NULL, 0, 0);
 			/*
 			 * If the reg is not handled by virtual battery, we
 			 * do not support it.
@@ -118,10 +116,8 @@ int virtual_battery_handler(struct ec_response_i2c_passthru *resp,
 		/* write to virtual battery */
 		case START:
 		case WRITE_VB:
-			virtual_battery_operation(batt_cmd_head,
-						NULL,
-						0,
-						acc_write_len);
+			virtual_battery_operation(batt_cmd_head, NULL, 0,
+						  acc_write_len);
 			break;
 		/* read from virtual battery */
 		case READ_VB:
@@ -129,15 +125,13 @@ int virtual_battery_handler(struct ec_response_i2c_passthru *resp,
 				read_len += in_len;
 				memset(&resp->data[0], 0, read_len);
 				virtual_battery_operation(batt_cmd_head,
-							&resp->data[0],
-							read_len,
-							0);
+							  &resp->data[0],
+							  read_len, 0);
 			}
 			break;
 		default:
 			reset_parse_state();
 			return EC_ERROR_INVAL;
-
 		}
 		/* Reset the state in the end of messages */
 		reset_parse_state();
@@ -156,7 +150,7 @@ void reset_parse_state(void)
  * Copy memmap string data from offset to dest, up to size len, in the format
  * expected by SBS (first byte of dest contains strlen).
  */
-void copy_memmap_string(uint8_t *dest, int offset, int len)
+static void copy_memmap_string(uint8_t *dest, int offset, int len)
 {
 	uint8_t *memmap_str;
 	uint8_t memmap_strlen;
@@ -166,18 +160,29 @@ void copy_memmap_string(uint8_t *dest, int offset, int len)
 	memmap_str = host_get_memmap(offset);
 	/* memmap_str might not be NULL terminated */
 	memmap_strlen = *(memmap_str + EC_MEMMAP_TEXT_MAX - 1) == '\0' ?
-			strlen(memmap_str) : EC_MEMMAP_TEXT_MAX;
+				strlen(memmap_str) :
+				EC_MEMMAP_TEXT_MAX;
 	dest[0] = memmap_strlen;
 	memcpy(dest + 1, memmap_str, MIN(memmap_strlen, len - 1));
 }
 
-int virtual_battery_operation(const uint8_t *batt_cmd_head,
-			      uint8_t *dest,
-			      int read_len,
-			      int write_len)
+static void copy_battery_info_string(uint8_t *dst, const uint8_t *src, int len)
+{
+	if (len == 0)
+		return;
+
+	dst[0] = strlen(src);
+	strncpy(dst + 1, src, len - 1);
+}
+
+int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
+			      int read_len, int write_len)
 {
 	int val;
 	int year, month, day;
+#ifdef CONFIG_BATTERY_SMART
+	char str[32];
+#endif
 	/*
 	 * We cache battery operational mode locally for both read and write
 	 * commands. If MODE_CAPACITY bit is set, battery capacity will be
@@ -192,6 +197,14 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	 * are two bytes.
 	 */
 	int bounded_read_len = MIN(read_len, 2);
+	const struct battery_static_info *bs;
+
+	if (IS_ENABLED(CONFIG_BATTERY_V2))
+		/*
+		 * TODO: To support multiple batteries, we need to translate
+		 * i2c address to a battery index.
+		 */
+		bs = &battery_static[BATT_IDX_MAIN];
 
 	curr_batt = charger_current_battery_params();
 	switch (*batt_cmd_head) {
@@ -213,9 +226,8 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 					 * typical SB defaults.
 					 */
 					batt_mode_cache =
-					   MODE_INTERNAL_CHARGE_CONTROLLER |
-					   MODE_ALARM |
-					   MODE_CHARGER;
+						MODE_INTERNAL_CHARGE_CONTROLLER |
+						MODE_ALARM | MODE_CHARGER;
 
 			memcpy(dest, &batt_mode_cache, bounded_read_len);
 		}
@@ -244,9 +256,21 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			return EC_ERROR_BUSY;
 		memcpy(dest, &(curr_batt->current), bounded_read_len);
 		break;
+	case SB_AVERAGE_CURRENT:
+		/* This may cause an i2c transaction */
+		if (curr_batt->flags & BATT_FLAG_BAD_AVERAGE_CURRENT)
+			return EC_ERROR_BUSY;
+		val = battery_get_avg_current();
+		memcpy(dest, &val, bounded_read_len);
+		break;
+	case SB_MAX_ERROR:
+		/* report as 3% to make kernel happy */
+		val = BATTERY_LEVEL_SHUTDOWN;
+		memcpy(dest, &val, bounded_read_len);
+		break;
 	case SB_FULL_CHARGE_CAPACITY:
 		if (curr_batt->flags & BATT_FLAG_BAD_FULL_CAPACITY ||
-				curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
+		    curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
 			return EC_ERROR_BUSY;
 		val = curr_batt->full_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
@@ -276,7 +300,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		break;
 	case SB_REMAINING_CAPACITY:
 		if (curr_batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY ||
-				curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
+		    curr_batt->flags & BATT_FLAG_BAD_VOLTAGE)
 			return EC_ERROR_BUSY;
 		val = curr_batt->remaining_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
@@ -284,10 +308,24 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_MANUFACTURER_NAME:
-		copy_memmap_string(dest, EC_MEMMAP_BATT_MFGR, read_len);
+		if (IS_ENABLED(CONFIG_BATTERY_V2))
+			copy_battery_info_string(dest, bs->manufacturer_ext,
+						 read_len);
+		else
+			copy_memmap_string(dest, EC_MEMMAP_BATT_MFGR, read_len);
 		break;
 	case SB_DEVICE_NAME:
-		copy_memmap_string(dest, EC_MEMMAP_BATT_MODEL, read_len);
+		if (IS_ENABLED(CONFIG_BATTERY_V2))
+			copy_battery_info_string(dest, bs->model_ext, read_len);
+		else
+			copy_memmap_string(dest, EC_MEMMAP_BATT_MODEL,
+					   read_len);
+		break;
+	case SB_DEVICE_CHEMISTRY:
+		if (IS_ENABLED(CONFIG_BATTERY_V2))
+			copy_battery_info_string(dest, bs->type_ext, read_len);
+		else
+			copy_memmap_string(dest, EC_MEMMAP_BATT_TYPE, read_len);
 		break;
 	case SB_AVERAGE_TIME_TO_FULL:
 		/* This may cause an i2c transaction */
@@ -299,6 +337,30 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		/* This may cause an i2c transaction */
 		if (battery_time_to_empty(&val))
 			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+#ifdef CONFIG_BATTERY_SMART
+	/*
+	 * Only supports sb for now, respective gauges should implement their
+	 * function.
+	 */
+	case SB_RUN_TIME_TO_EMPTY:
+		/* This may cause an i2c transaction */
+		if (battery_run_time_to_empty(&val))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+#endif
+	case SB_CHARGING_CURRENT:
+		if (curr_batt->flags & BATT_FLAG_BAD_DESIRED_CURRENT)
+			return EC_ERROR_BUSY;
+		val = curr_batt->desired_current;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+	case SB_CHARGING_VOLTAGE:
+		if (curr_batt->flags & BATT_FLAG_BAD_DESIRED_VOLTAGE)
+			return EC_ERROR_BUSY;
+		val = curr_batt->desired_voltage;
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_MANUFACTURE_DATE:
@@ -315,13 +377,50 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		}
 		memcpy(dest, &val, bounded_read_len);
 		break;
+#ifdef CONFIG_BATTERY_SMART
+	case SB_MANUFACTURER_DATA:
+		if (read_len > ARRAY_SIZE(str))
+			return EC_ERROR_INVAL;
+		/* This may cause an i2c transaction */
+		if (battery_manufacturer_data(str, ARRAY_SIZE(str)))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &str, read_len);
+		break;
+
+	case SB_MANUFACTURE_INFO:
+		if (sb_read_string(*batt_cmd_head, str, sizeof(str)))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &str, MIN(read_len, sizeof(str)));
+		break;
+#endif
 	case SB_MANUFACTURER_ACCESS:
-		/* No manuf. access reg access allowed over VB interface */
+#ifdef CONFIG_BATTERY_SMART
+		if ((write_len >= 2) && (write_len <= 3)) {
+			val = batt_cmd_head[1] | batt_cmd_head[2] << 8;
+			/* This may cause an i2c transaction */
+			if (!battery_manufacturer_access(val))
+				return EC_SUCCESS;
+		}
+#endif
 		return EC_ERROR_INVAL;
+	case SB_SPECIFICATION_INFO:
+		/* v1.1 without PEC, no scale factor to voltage and current */
+		val = 0x0011;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+#ifdef CONFIG_SMART_BATTERY_OPTIONAL_MFG_FUNC
+	case SB_OPTIONAL_MFG_FUNC1:
+	case SB_OPTIONAL_MFG_FUNC2:
+	case SB_OPTIONAL_MFG_FUNC3:
+	case SB_OPTIONAL_MFG_FUNC4:
+		if (sb_read(*batt_cmd_head, &val))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+#endif
 	default:
 		CPRINTS("Unhandled VB reg %x", *batt_cmd_head);
 		return EC_ERROR_INVAL;
 	}
 	return EC_SUCCESS;
 }
-

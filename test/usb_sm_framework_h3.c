@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -112,7 +112,7 @@ enum state_id {
 	EXIT_C,
 };
 
-#define PORT0   0
+#define PORT0 0
 
 struct sm_ {
 	/* struct sm_obj must be first */
@@ -198,7 +198,6 @@ static void sm_test_super_A2_exit(const int port)
 	sm[port].seq[sm[port].idx++] = EXIT_A2;
 }
 
-
 static void sm_test_super_B2_entry(const int port)
 {
 	sm[port].seq[sm[port].idx++] = ENTER_B2;
@@ -269,7 +268,6 @@ static void sm_test_A4_exit(const int port)
 	sm[port].seq[sm[port].idx++] = EXIT_A4;
 }
 
-
 static void sm_test_A5_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
@@ -290,7 +288,6 @@ static void sm_test_A5_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_A5;
 }
-
 
 static void sm_test_A6_entry(const int port)
 {
@@ -355,7 +352,6 @@ static void sm_test_B4_exit(const int port)
 	sm[port].seq[sm[port].idx++] = EXIT_B4;
 }
 
-
 static void sm_test_B5_entry(const int port)
 {
 	sm[port].sv_tmp = 0;
@@ -376,7 +372,6 @@ static void sm_test_B5_exit(const int port)
 {
 	sm[port].seq[sm[port].idx++] = EXIT_B5;
 }
-
 
 static void sm_test_B6_entry(const int port)
 {
@@ -440,63 +435,88 @@ test_static int test_hierarchy_0(void)
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_C, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_C, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A7, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	for (; i < SEQUENCE_SIZE; i++)
 		TEST_EQ(sm[port].seq[i], 0, "%d");
@@ -512,71 +532,104 @@ test_static int test_hierarchy_1(void)
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A3, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B3, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_C, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_C, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A7, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A3, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	for (i = 33; i < SEQUENCE_SIZE; i++)
 		TEST_EQ(sm[port].seq[i], 0, "%d");
@@ -586,88 +639,130 @@ test_static int test_hierarchy_1(void)
 
 test_static int test_hierarchy_2(void)
 {
-
 	int port = PORT0;
 	int i = 0;
 
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A2, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B2, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B2, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_C, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_C, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A7, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A2, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A2, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A2, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	for (; i < SEQUENCE_SIZE; i++)
 		TEST_EQ(sm[port].seq[i], 0, "%d");
@@ -677,100 +772,154 @@ test_static int test_hierarchy_2(void)
 
 test_static int test_hierarchy_3(void)
 {
-
 	int port = PORT0;
 	int i = 0;
 
 	set_state_sm(port, SM_TEST_A4);
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A1, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B1, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B1, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B1, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_C, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_C, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_C, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_C, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A7, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A7, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A1, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A7, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A6, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A1, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A5, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_A5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_A1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_A5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_A1, "%d");
+	++i;
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A4, "%d");
+	++i;
 
 	for (; i < SEQUENCE_SIZE; i++)
 		TEST_EQ(sm[port].seq[i], 0, "%d");
@@ -787,35 +936,53 @@ test_static int test_set_state_from_parents(void)
 	test_control.a3_entry_to = &states[SM_TEST_B4];
 	run_sm();
 	set_state_sm(port, SM_TEST_A4);
-	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A3, "%d");
+	++i;
 	/* Does not enter or exit A4 */
-	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_A1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_A1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B4, "%d");
+	++i;
 	/* Ensure we didn't go further than above statements */
 	TEST_EQ(sm[port].seq[i], 0, "%d");
 
 	test_control.b3_run_to = &states[SM_TEST_B5];
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B3, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B3, "%d");
+	++i;
 	/* Does not run b2 or b1 */
-	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B4, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B3, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B5, "%d");
+	++i;
 	/* Ensure we didn't go further than above statements */
 	TEST_EQ(sm[port].seq[i], 0, "%d");
 
 	run_sm();
-	TEST_EQ(sm[port].seq[i], RUN_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], RUN_B1, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], RUN_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], RUN_B1, "%d");
+	++i;
 	/* Ensure we didn't go further than above statements */
 	TEST_EQ(sm[port].seq[i], 0, "%d");
 
@@ -827,15 +994,24 @@ test_static int test_set_state_from_parents(void)
 	test_control.c_entry_to = &states[SM_TEST_A7];
 	test_control.c_exit_to = &states[SM_TEST_A4];
 	run_sm();
-	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B2, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_B1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_C, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], EXIT_C, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d"); ++i;
-	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d"); ++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B5, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B2, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_B6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B6, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_B1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_C, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], EXIT_C, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A1, "%d");
+	++i;
+	TEST_EQ(sm[port].seq[i], ENTER_A7, "%d");
+	++i;
 	/* Ensure we didn't go further than above statements */
 	TEST_EQ(sm[port].seq[i], 0, "%d");
 
@@ -985,7 +1161,7 @@ int test_task(void *u)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 #if defined(TEST_USB_SM_FRAMEWORK_H3)

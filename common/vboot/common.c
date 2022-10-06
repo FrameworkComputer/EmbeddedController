@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,8 +10,8 @@
 #include "shared_mem.h"
 #include "vboot.h"
 
-#define CPRINTS(format, args...) cprints(CC_VBOOT, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_VBOOT, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ##args)
 
 int vboot_is_padding_valid(const uint8_t *data, uint32_t start, uint32_t end)
 {
@@ -32,8 +32,8 @@ int vboot_is_padding_valid(const uint8_t *data, uint32_t start, uint32_t end)
 	return EC_SUCCESS;
 }
 
-int vboot_verify(const uint8_t *data, int len,
-		 const struct rsa_public_key *key, const uint8_t *sig)
+int vboot_verify(const uint8_t *data, int len, const struct rsa_public_key *key,
+		 const uint8_t *sig)
 {
 	struct sha256_ctx ctx;
 	uint8_t *hash;

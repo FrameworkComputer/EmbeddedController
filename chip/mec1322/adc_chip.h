@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,12 +16,6 @@ struct adc_t {
 	int shift;
 	int channel;
 };
-
-/*
- * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board.
- */
-extern const struct adc_t adc_channels[];
 
 /* Minimum and maximum values returned by adc_read_channel(). */
 #define ADC_READ_MIN 0

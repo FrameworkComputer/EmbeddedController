@@ -1,0 +1,12 @@
+description: USBC TCPC
+
+compatible: "parade,ps8xxx"
+
+include: i2c-device.yaml
+
+properties:
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags

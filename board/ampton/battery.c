@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -116,30 +116,35 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c = 60,
 		},
 	},
+	[BATTERY_C204_SECOND] = {
+		.fuel_gauge = {
+			.manuf_name = "AS3FXXd3KB",
+			.device_name = "C214-43",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.reg_addr = 0x99,
+				.reg_mask = 0x000C,
+				.disconnect_val = 0x000C,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0004
+			},
+		},
+		.batt_info = {
+			.voltage_max = 13200,
+			.voltage_normal = 11550,
+			.voltage_min = 9000,
+			.precharge_current = 256,
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.discharging_min_c = -20,
+			.discharging_max_c = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C214;
-
-/* Lower our input voltage to 5V in S5/G3 when battery is full. */
-static void reduce_input_voltage_when_full(void)
-{
-	int max_pd_voltage_mv;
-	int port;
-
-	if (charge_get_percent() == 100 &&
-	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
-		max_pd_voltage_mv = 5000;
-	else
-		max_pd_voltage_mv = PD_MAX_VOLTAGE_MV;
-	if (pd_get_max_voltage() != max_pd_voltage_mv) {
-		for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
-			pd_set_external_voltage_limit(port, max_pd_voltage_mv);
-	}
-}
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, reduce_input_voltage_when_full,
-	     HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, reduce_input_voltage_when_full,
-	     HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reduce_input_voltage_when_full,
-	     HOOK_PRIO_DEFAULT);

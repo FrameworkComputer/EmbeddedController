@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,16 +26,16 @@
 #include "power.h"
 #include "stdbool.h"
 #include "system.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "timer.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /******************************************************************************/
 /* Wake up pins */
@@ -52,25 +52,65 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
 #ifdef CONFIG_ACCEL_FIFO
-	{"sensor",  I2C_PORT_SENSOR,  100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 100,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
 #endif
-	{"ppc0",    I2C_PORT_PPC0,    100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{ .name = "ppc0",
+	  .port = I2C_PORT_PPC0,
+	  .kbps = 100,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	{"tcpc1",   I2C_PORT_TCPC1,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
 #endif
-	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
 #ifdef BOARD_AKEMI
-	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+	{ .name = "thermal",
+	  .port = I2C_PORT_THERMAL,
+	  .kbps = 400,
+	  .scl = GPIO_I2C4_SCL,
+	  .sda = GPIO_I2C4_SDA },
 #endif
 #ifdef BOARD_JINLON
-	{"thermal", I2C_PORT_THERMAL, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+	{ .name = "thermal",
+	  .port = I2C_PORT_THERMAL,
+	  .kbps = 100,
+	  .scl = GPIO_I2C4_SCL,
+	  .sda = GPIO_I2C4_SDA },
 #endif
 #ifdef BOARD_MUSHU
-	{"f75303_temp", I2C_PORT_THERMAL, 100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"gpu_temp", I2C_PORT_GPU, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+	{ .name = "f75303_temp",
+	  .port = I2C_PORT_THERMAL,
+	  .kbps = 100,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "gpu_temp",
+	  .port = I2C_PORT_GPU,
+	  .kbps = 100,
+	  .scl = GPIO_I2C4_SCL,
+	  .sda = GPIO_I2C4_SDA },
 #endif
-	{"power",   I2C_PORT_POWER,   100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
-	{"eeprom",  I2C_PORT_EEPROM,  100, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_I2C5_SCL,
+	  .sda = GPIO_I2C5_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 100,
+	  .scl = GPIO_I2C7_SCL,
+	  .sda = GPIO_I2C7_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -93,14 +133,6 @@ __attribute__((weak)) bool board_has_kb_backlight(void)
 	return true;
 }
 
-/* Called on AP S5 -> S3 transition */
-static void baseboard_chipset_startup(void)
-{
-	/* TODD(b/122266850): Need to fill out this hook */
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_chipset_startup,
-	     HOOK_PRIO_DEFAULT);
-
 /* Called on AP S0iX -> S0 transition */
 static void baseboard_chipset_resume(void)
 {
@@ -118,14 +150,6 @@ static void baseboard_chipset_suspend(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
 	     HOOK_PRIO_DEFAULT);
 
-/* Called on AP S3 -> S5 transition */
-static void baseboard_chipset_shutdown(void)
-{
-
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
-	     HOOK_PRIO_DEFAULT);
-
 void board_hibernate(void)
 {
 	int port;
@@ -134,7 +158,7 @@ void board_hibernate(void)
 	 * To support hibernate from ectool, keyboard, and console,
 	 * ensure that the AP is fully shutdown before hibernating.
 	 */
-#ifdef HAS_TASK_CHIPSET
+#ifdef CONFIG_AP_POWER_CONTROL
 	chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
 #endif
 
@@ -158,17 +182,13 @@ void board_hibernate(void)
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USB_PD_PORT_TCPC_0] = {
-		.i2c_port = I2C_PORT_PPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	[USB_PD_PORT_TCPC_0] = { .i2c_port = I2C_PORT_PPC0,
+				 .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				 .drv = &sn5s330_drv },
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	[USB_PD_PORT_TCPC_1] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	[USB_PD_PORT_TCPC_1] = { .i2c_port = I2C_PORT_TCPC1,
+				 .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				 .drv = &sn5s330_drv },
 #endif
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
@@ -226,8 +246,8 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-static void reset_pd_port(int port, enum gpio_signal reset_gpio,
-			  int hold_delay, int finish_delay)
+static void reset_pd_port(int port, enum gpio_signal reset_gpio, int hold_delay,
+			  int finish_delay)
 {
 	int level = !!(tcpc_config[port].flags & TCPC_FLAGS_RESET_ACTIVE_HIGH);
 
@@ -264,8 +284,7 @@ void board_reset_pd_mcu(void)
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)
@@ -321,39 +340,37 @@ int ppc_get_alert_status(int port)
 	if (port == USB_PD_PORT_TCPC_0)
 		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
 	return port == USB_PD_PORT_TCPC_0 ?
-		gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0 :
+		       gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0 :
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-		gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
+		       gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
 #else
-		EC_SUCCESS;
+		       EC_SUCCESS;
 #endif
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 #ifdef USB_PD_PORT_TCPC_MST
 void baseboard_mst_enable_control(enum mst_source src, int level)
 {
-	static uint32_t mst_input_levels;
+	static atomic_t mst_input_levels;
 
 	if (level)
-		deprecated_atomic_or(&mst_input_levels, 1 << src);
+		atomic_or(&mst_input_levels, 1 << src);
 	else
-		deprecated_atomic_clear_bits(&mst_input_levels, 1 << src);
+		atomic_clear_bits(&mst_input_levels, 1 << src);
 
 	gpio_set_level(GPIO_EN_MST, mst_input_levels ? 1 : 0);
 }
 #endif
 
 /* Enable or disable input devices, based on chipset state */
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	if (board_is_convertible()) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
@@ -361,7 +378,6 @@ void lid_angle_peripheral_enable(int enable)
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
-#endif
 
 static uint8_t sku_id;
 static uint8_t board_id;

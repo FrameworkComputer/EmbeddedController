@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,11 +6,13 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "board.h"
+#include "builtin/assert.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -23,25 +25,41 @@
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_timer.h"
 #include "usb_prl_sm.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm.h"
 #include "usb_tc_sm.h"
 #include "usbc_ppc.h"
-#include "version.h"
 
 #define USBC_EVENT_TIMEOUT (5 * MSEC)
+#define USBC_MIN_EVENT_TIMEOUT (1 * MSEC)
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+
+/*
+ * If CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT is not defined then
+ * _GPIO_CCD_MODE_ODL is not needed. Declare as extern so IS_ENABLED will work.
+ */
+#ifndef CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT
+extern int _GPIO_CCD_MODE_ODL;
+#else
+#define _GPIO_CCD_MODE_ODL GPIO_CCD_MODE_ODL
+#endif /* CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT */
 
 static uint8_t paused[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void tc_pause_event_loop(int port)
 {
 	paused[port] = 1;
+}
+
+bool tc_event_loop_is_paused(int port)
+{
+	return paused[port];
 }
 
 void tc_start_event_loop(int port)
@@ -52,7 +70,7 @@ void tc_start_event_loop(int port)
 	 */
 	if (paused[port]) {
 		paused[port] = 0;
-		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE);
 	}
 }
 
@@ -71,15 +89,40 @@ static void pd_task_init(int port)
 	 */
 	if (IS_ENABLED(CONFIG_HAS_TASK_PD_INT))
 		schedule_deferred_pd_interrupt(port);
+
+	/*
+	 * GPIO_CCD_MODE_ODL must be initialized with GPIO_ODR_HIGH
+	 * when CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT is enabled
+	 */
+	if (IS_ENABLED(CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT))
+		ASSERT(gpio_get_default_flags(_GPIO_CCD_MODE_ODL) &
+		       GPIO_ODR_HIGH);
+}
+
+static int pd_task_timeout(int port)
+{
+	int timeout;
+
+	if (paused[port])
+		timeout = -1;
+	else {
+		timeout = pd_timer_next_expiration(port);
+		if (timeout < 0 || timeout > USBC_EVENT_TIMEOUT)
+			timeout = USBC_EVENT_TIMEOUT;
+		else if (timeout < USBC_MIN_EVENT_TIMEOUT)
+			timeout = USBC_MIN_EVENT_TIMEOUT;
+	}
+	return timeout;
 }
 
 static bool pd_task_loop(int port)
 {
 	/* wait for next event/packet or timeout expiration */
-	const uint32_t evt =
-		task_wait_event(paused[port]
-					? -1
-					: USBC_EVENT_TIMEOUT);
+	const uint32_t evt = task_wait_event(pd_task_timeout(port));
+
+	/* Manage expired PD Timers on timeouts */
+	if (evt & TASK_EVENT_TIMER)
+		pd_timer_manage_expired(port);
 
 	/*
 	 * Re-use TASK_EVENT_RESET_DONE in tests to restart the USB task
@@ -124,7 +167,12 @@ void pd_task(void *u)
 	if (port >= board_get_usb_pd_port_count())
 		return;
 
+#if CONFIG_USB_PD_STARTUP_DELAY_MS > 0
+	msleep(CONFIG_USB_PD_STARTUP_DELAY_MS);
+#endif
+
 	while (1) {
+		pd_timer_init(port);
 		pd_task_init(port);
 
 		/* As long as pd_task_loop returns true, keep running the loop.

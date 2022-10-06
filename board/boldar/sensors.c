@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,12 +6,13 @@
 /* Volteer family-specific sensor configuration */
 #include "common.h"
 #include "accelgyro.h"
-#include "driver/accel_bma2x2.h"
+#include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/als_tcs3400.h"
 #include "driver/sync.h"
 #include "keyboard_scan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"
@@ -23,8 +24,8 @@
 static struct mutex g_lid_accel_mutex;
 static struct mutex g_base_mutex;
 
-/* BMA253 private data */
-static struct accelgyro_saved_data_t g_bma253_data;
+/* Lid accel private data */
+static struct stprivate_data g_lis2dh_data;
 
 /* BMI260 private data */
 static struct bmi_drv_data_t g_bmi260_data;
@@ -84,33 +85,29 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 };
 
 /* Rotation matrix for the lid accelerometer */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				       { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA255,
+		.chip = MOTIONSENSE_CHIP_LIS2DH,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_LID,
-		.drv = &bma2x2_accel_drv,
+		.drv = &lis2dh_drv,
 		.mutex = &g_lid_accel_mutex,
-		.drv_data = &g_bma253_data,
+		.drv_data = &g_lis2dh_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
+		.i2c_spi_addr_flags = LIS2DH_ADDR0_FLAGS,
 		.rot_standard_ref = &lid_standard_ref,
-		.min_frequency = BMA255_ACCEL_MIN_FREQ,
-		.max_frequency = BMA255_ACCEL_MAX_FREQ,
+		.min_frequency = LIS2DH_ODR_MIN_VAL,
+		.max_frequency = LIS2DH_ODR_MAX_VAL,
 		.default_range = 2, /* g, to support tablet mode */
 		.config = {
 			/* EC use accel for angle detection */
@@ -224,22 +221,3 @@ static void baseboard_sensors_init(void)
 	gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_DEFAULT);
-
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
-#endif

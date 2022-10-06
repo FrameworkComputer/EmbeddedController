@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2014 The Chromium OS Authors. All rights reserved.
+# Copyright 2014 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -10,21 +10,27 @@
 _common_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 common-y=util.o
-common-y+=version.o printf.o queue.o queue_policies.o
+common-y+=version.o printf.o queue.o queue_policies.o irq_locking.o
 
 common-$(CONFIG_ACCELGYRO_BMI160)+=math_util.o
+common-$(CONFIG_ACCELGYRO_BMI220)+=math_util.o
 common-$(CONFIG_ACCELGYRO_BMI260)+=math_util.o
+common-$(CONFIG_ACCELGYRO_BMI3XX)+=math_util.o
 common-$(CONFIG_ACCELGYRO_ICM426XX)+=math_util.o
+common-$(CONFIG_ACCELGYRO_ICM42607)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DS0)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DSM)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DSO)+=math_util.o
 common-$(CONFIG_ACCEL_FIFO)+=motion_sense_fifo.o
 common-$(CONFIG_ACCEL_BMA255)+=math_util.o
+common-$(CONFIG_ACCEL_BMA4XX)+=math_util.o
 common-$(CONFIG_ACCEL_LIS2DW12)+=math_util.o
 common-$(CONFIG_ACCEL_LIS2DH)+=math_util.o
 common-$(CONFIG_ACCEL_LIS2DS)+=math_util.o
 common-$(CONFIG_ACCEL_KXCJ9)+=math_util.o
 common-$(CONFIG_ACCEL_KX022)+=math_util.o
+common-$(CONFIG_TEMP_SENSOR_TMP112)+=math_util.o
+common-$(CONFIG_TEMP_SENSOR_PCT2075)+=math_util.o
 ifneq ($(CORE),cortex-m)
 common-$(CONFIG_AES)+=aes.o
 endif
@@ -40,25 +46,36 @@ common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BASE32)+=base32.o
 common-$(CONFIG_BLINK)+=blink.o
 common-$(CONFIG_DETACHABLE_BASE)+=base_state.o
-common-$(CONFIG_BATTERY)+=battery.o
+common-$(CONFIG_BATTERY)+=battery.o math_util.o
+common-$(CONFIG_BATTERY_V1)+=battery_v1.o
+common-$(CONFIG_BATTERY_V2)+=battery_v2.o
 common-$(CONFIG_BATTERY_FUEL_GAUGE)+=battery_fuel_gauge.o
 common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
 common-$(CONFIG_BODY_DETECTION)+=body_detection.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CEC)+=cec.o
-common-$(CONFIG_CROS_BOARD_INFO)+=cbi.o
+common-$(CONFIG_CBI_EEPROM)+=cbi.o cbi_eeprom.o
+common-$(CONFIG_USB_PD_FLAGS)+=usb_pd_flags.o
+common-$(CONFIG_CBI_GPIO)+=cbi.o cbi_gpio.o
+ifeq ($(HAS_MOCK_CHARGE_MANAGER),)
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
+endif
 common-$(CONFIG_CHARGE_RAMP_HW)+=charge_ramp.o
 common-$(CONFIG_CHARGE_RAMP_SW)+=charge_ramp.o charge_ramp_sw.o
+common-$(CONFIG_CHARGESPLASH)+=chargesplash.o
+common-$(CONFIG_CHIP_INIT_ROM_REGION)+=init_rom.o
 common-$(CONFIG_CMD_CHARGEN) += chargen.o
-common-$(CONFIG_CHARGER)+=charger.o charge_state_v2.o
+common-$(CONFIG_CHARGER)+=charger.o
+ifneq ($(CONFIG_CHARGER),)
+common-$(CONFIG_BATTERY)+=charge_state_v2.o
+endif
 common-$(CONFIG_CHARGER_PROFILE_OVERRIDE_COMMON)+=charger_profile_override.o
 common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
 common-$(CONFIG_COMMON_GPIO)+=gpio.o gpio_commands.o
-common-$(CONFIG_IO_EXPANDER)+=ioexpander.o
+common-$(CONFIG_IO_EXPANDER)+=ioexpander.o ioexpander_commands.o
 common-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic_output.o
-common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o init_rom.o
+common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o
 common-$(CONFIG_COMMON_TIMER)+=timer.o
 common-$(CONFIG_CRC8)+= crc8.o
 common-$(CONFIG_CURVE25519)+=curve25519.o
@@ -69,32 +86,36 @@ common-$(CONFIG_DEDICATED_RECOVERY_BUTTON)+=button.o
 common-$(CONFIG_DEVICE_EVENT)+=device_event.o
 common-$(CONFIG_DEVICE_STATE)+=device_state.o
 common-$(CONFIG_DPTF)+=dptf.o
-common-$(CONFIG_EC_EC_COMM_MASTER)+=ec_ec_comm_master.o
-common-$(CONFIG_EC_EC_COMM_SLAVE)+=ec_ec_comm_slave.o
-common-$(CONFIG_HOSTCMD_ESPI)+=espi.o
+common-$(CONFIG_EC_EC_COMM_CLIENT)+=ec_ec_comm_client.o
+common-$(CONFIG_EC_EC_COMM_SERVER)+=ec_ec_comm_server.o
+common-$(CONFIG_HOST_INTERFACE_ESPI)+=espi.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_EXTPOWER)+=extpower_common.o
 common-$(CONFIG_FANS)+=fan.o pwm.o
-common-$(CONFIG_FLASH)+=flash.o
+common-$(CONFIG_FLASH_CROS)+=flash.o
 common-$(CONFIG_FMAP)+=fmap.o
 common-$(CONFIG_GESTURE_SW_DETECTION)+=gesture.o
 common-$(CONFIG_HOSTCMD_EVENTS)+=host_event_commands.o
 common-$(CONFIG_HOSTCMD_GET_UPTIME_INFO)+=uptime.o
-common-$(CONFIG_HOSTCMD_PD)+=host_command_master.o
+common-$(CONFIG_HOSTCMD_PD)+=host_command_controller.o
 common-$(CONFIG_HOSTCMD_REGULATOR)+=regulator.o
 common-$(CONFIG_HOSTCMD_RTC)+=rtc.o
 common-$(CONFIG_I2C_DEBUG)+=i2c_trace.o
 common-$(CONFIG_I2C_HID_TOUCHPAD)+=i2c_hid_touchpad.o
-common-$(CONFIG_I2C_MASTER)+=i2c_master.o
-common-$(CONFIG_I2C_SLAVE)+=i2c_slave.o
+common-$(CONFIG_I2C_CONTROLLER)+=i2c_controller.o
+common-$(CONFIG_I2C_CONTROLLER)+=i2c_controller_cros_ec.o
+common-$(CONFIG_I2C_PERIPHERAL)+=i2c_peripheral.o
 common-$(CONFIG_I2C_BITBANG)+=i2c_bitbang.o
 common-$(CONFIG_I2C_VIRTUAL_BATTERY)+=virtual_battery.o
 common-$(CONFIG_INDUCTIVE_CHARGING)+=inductive_charging.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_8042)+=keyboard_8042.o \
 	keyboard_8042_sharedlib.o
-common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o
+common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o mkbp_fifo.o \
+	mkbp_info.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_KEYBOARD_VIVALDI)+=keyboard_vivaldi.o
+common-$(CONFIG_MKBP_INPUT_DEVICES)+=mkbp_input_devices.o mkbp_fifo.o \
+	mkbp_info.o
 common-$(CONFIG_LED_COMMON)+=led_common.o
 common-$(CONFIG_LED_POLICY_STD)+=led_policy_std.o
 common-$(CONFIG_LED_PWM)+=led_pwm.o
@@ -108,13 +129,16 @@ common-$(CONFIG_MAG_CALIBRATE)+= mag_cal.o math_util.o vec3.o mat33.o mat44.o \
 common-$(CONFIG_MKBP_EVENT)+=mkbp_event.o
 common-$(CONFIG_OCPC)+=ocpc.o
 common-$(CONFIG_ONEWIRE)+=onewire.o
+common-$(CONFIG_ORIENTATION_SENSOR)+=motion_orientation.o
 common-$(CONFIG_PECI_COMMON)+=peci.o
+common-$(CONFIG_PERIPHERAL_CHARGER)+=peripheral_charger.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_PWM)+=pwm.o
 common-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
 common-$(CONFIG_KEYBOARD_BACKLIGHT)+=keyboard_backlight.o
+common-$(CONFIG_RGB_KEYBOARD)+=rgb_keyboard.o
 common-$(CONFIG_RSA)+=rsa.o
 common-$(CONFIG_ROLLBACK)+=rollback.o
 common-$(CONFIG_RWSIG)+=rwsig.o vboot/common.o
@@ -124,7 +148,13 @@ common-$(CONFIG_ONLINE_CALIB)+=stillness_detector.o kasa.o math_util.o \
 	mat44.o vec3.o newton_fit.o accel_cal.o online_calibration.o \
 	mkbp_event.o mag_cal.o math_util.o mat33.o gyro_cal.o gyro_still_det.o
 common-$(CONFIG_SHA1)+= sha1.o
-common-$(CONFIG_SHA256)+=sha256.o
+ifeq ($(CONFIG_SHA256),y)
+# use the standard software SHA256 lib if the chip cannot support SHA256
+# hardware accelerator.
+ifeq ($(CONFIG_SHA256_HW_ACCELERATE),)
+common-y+=sha256.o
+endif
+endif
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SOFTWARE_CTZ)+=ctz.o
 common-$(CONFIG_CMD_SPI_XFER)+=spi_commands.o
@@ -140,33 +170,46 @@ common-$(CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT)+=throttle_ap.o
 common-$(CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE)+=throttle_ap.o
 common-$(CONFIG_USB_CHARGER)+=usb_charger.o
 common-$(CONFIG_USB_CONSOLE_STREAM)+=usb_console_stream.o
+common-$(CONFIG_HOST_INTERFACE_USB)+=usb_host_command.o
 common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
 common-$(CONFIG_HAS_TASK_PD_INT)+=usbc_intr_task.o
 ifneq ($(CONFIG_USB_POWER_DELIVERY),)
-common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o
+common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o usb_pd_pdo.o typec_control.o
 ifneq ($(CONFIG_USB_PD_TCPMV1),)
-common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o
+common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o \
+	usb_pd_pdo.o
 endif
 common-$(CONFIG_USB_PD_DUAL_ROLE)+=usb_pd_dual_role.o
 common-$(CONFIG_USB_PD_HOST_CMD)+=usb_pd_host_cmd.o
 common-$(CONFIG_USB_PD_CONSOLE_CMD)+=usb_pd_console_cmd.o
 endif
 common-$(CONFIG_USB_PD_ALT_MODE_DFP)+=usb_pd_alt_mode_dfp.o
+common-$(CONFIG_USB_PD_ALT_MODE_UFP)+=usb_pd_alt_mode_ufp.o
+common-$(CONFIG_USB_PD_DPS)+=dps.o
 common-$(CONFIG_USB_PD_LOGGING)+=event_log.o pd_log.o
 common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o
 common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o
+common-$(CONFIG_USBC_OCP)+=usbc_ocp.o
 common-$(CONFIG_USBC_PPC)+=usbc_ppc.o
 common-$(CONFIG_VBOOT_EFS)+=vboot/vboot.o
 common-$(CONFIG_VBOOT_EFS2)+=vboot/efs2.o
-common-$(CONFIG_VBOOT_HASH)+=sha256.o vboot_hash.o
+ifeq ($(CONFIG_VBOOT_HASH),y)
+common-y+=vboot_hash.o
+# use the standard software SHA256 lib if the chip cannot support SHA256
+# hardware accelerator.
+ifeq ($(CONFIG_SHA256_HW_ACCELERATE),)
+common-y+=sha256.o
+endif
+endif
 common-$(CONFIG_VOLUME_BUTTONS)+=button.o
 common-$(CONFIG_VSTORE)+=vstore.o
 common-$(CONFIG_WEBUSB_URL)+=webusb_desc.o
 common-$(CONFIG_WIRELESS)+=wireless.o
 common-$(HAS_TASK_CHIPSET)+=chipset.o
-common-$(HAS_TASK_CONSOLE)+=console.o console_output.o uart_buffering.o
+common-$(HAS_TASK_CONSOLE)+=console.o console_output.o
+common-$(HAS_TASK_CONSOLE)+=uart_buffering.o uart_hostcmd.o uart_printf.o
 common-$(CONFIG_CMD_MEM)+=memory_commands.o
 common-$(HAS_TASK_HOSTCMD)+=host_command.o ec_features.o
 common-$(HAS_TASK_PDCMD)+=host_command_pd.o
@@ -179,8 +222,10 @@ common-$(CONFIG_AUDIO_CODEC_WOV)+=hotword_dsp_api.o
 endif
 
 ifneq ($(CONFIG_COMMON_RUNTIME),)
+ifneq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
 common-$(CONFIG_MALLOC)+=shmalloc.o
 common-$(call not_cfg,$(CONFIG_MALLOC))+=shared_mem.o
+endif
 endif
 
 ifeq ($(CTS_MODULE),)
@@ -220,10 +265,6 @@ $(out)/.fake-bootblock:
 
 endif # BOOTBLOCK
 
-build-util-bin += gen_emmc_transfer_data
-
-# Bootblock is only packed in RO image.
-$(out)/util/gen_emmc_transfer_data: BUILD_LDFLAGS += -DSECTION_IS_RO=$(EMPTY)
 $(out)/bootblock_data.h: $(out)/util/gen_emmc_transfer_data $(out)/.bootblock
 	$(call quiet,emmc_bootblock,BTBLK  )
 
@@ -278,35 +319,6 @@ $(out)/RW/common/rma_auth.o: $(out)/rma_key_from_blob.h
 $(out)/rma_key_from_blob.h: board/$(BOARD)/$(BLOB_FILE) util/bin2h.sh
 	$(Q)util/bin2h.sh RMA_KEY_BLOB $< $@
 
-endif
-
-# Build and link against libcryptoc.
-ifeq ($(CONFIG_LIBCRYPTOC),y)
-CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
-ifneq ($(BOARD),host)
-CPPFLAGS += -I$(abspath ./builtin)
-endif
-CPPFLAGS += -I$(CRYPTOCLIB)/include
-CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
-
-# Force the external build each time, so it can look for changed sources.
-.PHONY: $(out)/cryptoc/libcryptoc.a
-$(out)/cryptoc/libcryptoc.a:
-	+$(call quiet,libcryptoc,MAKE   )
-
-# Link RO and RW against cryptoc.
-$(out)/RO/ec.RO.elf $(out)/RO/ec.RO_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
-$(out)/RO/ec.RO.elf $(out)/RO/ec.RO_B.elf: $(out)/cryptoc/libcryptoc.a
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
-$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/cryptoc/libcryptoc.a
-# Host test executables (including fuzz tests).
-$(out)/$(PROJECT).exe: LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
-$(out)/$(PROJECT).exe: $(out)/cryptoc/libcryptoc.a
-# On-device tests.
-test-targets=$(foreach test,$(test-list-y),\
-	$(out)/RW/$(test).RW.elf $(out)/RO/$(test).RO.elf)
-$(test-targets): LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
-$(test-targets): $(out)/cryptoc/libcryptoc.a
 endif
 
 include $(_common_dir)fpsensor/build.mk

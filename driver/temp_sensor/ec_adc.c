@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,7 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "ec_adc.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "util.h"
 
 /* Get temperature from requested sensor */
@@ -23,15 +23,15 @@ static int get_temp(int idx, int *temp_ptr)
 	if (temp_raw == ADC_READ_ERROR)
 		return EC_ERROR_UNKNOWN;
 
-	/* TODO : Need modification here if the result is not 10-bit */
+		/* TODO : Need modification here if the result is not 10-bit */
 
-	/* If there is no thermistor calculation function.
-	 *  1. Add adjusting function like thermistor_ncp15wb.c
-	 *  2. Place function here with ifdef
-	 *  3. define it on board.h
-	 */
+		/* If there is no thermistor calculation function.
+		 *  1. Add adjusting function like thermistor_ncp15wb.c
+		 *  2. Place function here with ifdef
+		 *  3. define it on board.h
+		 */
 #ifdef CONFIG_THERMISTOR_NCP15WB
-	*temp_ptr = ncp15wb_calculate_temp((uint16_t) temp_raw);
+	*temp_ptr = ncp15wb_calculate_temp((uint16_t)temp_raw);
 #else
 #error "Unknown thermistor for ec_adc"
 	return EC_ERROR_UNKNOWN;
@@ -45,7 +45,7 @@ int ec_adc_get_val(int idx, int *temp_ptr)
 	int ret;
 	int temp_c;
 
-	if(idx < 0 || idx >= ADC_CH_COUNT)
+	if (idx < 0 || idx >= ADC_CH_COUNT)
 		return EC_ERROR_INVAL;
 
 	ret = get_temp(idx, &temp_c);

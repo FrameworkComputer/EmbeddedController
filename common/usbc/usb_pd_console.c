@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,13 +6,18 @@
 #include "common.h"
 #include "console.h"
 #include "usb_common.h"
+#include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
 #include "usb_pd.h"
 #include "util.h"
 
-test_export_static int command_pd(int argc, char **argv)
+#ifndef TEST_USB_PD_CONSOLE
+static
+#endif
+	int
+	command_pd(int argc, const char **argv)
 {
 	int port;
 	char *e;
@@ -39,7 +44,7 @@ test_export_static int command_pd(int argc, char **argv)
 			return EC_SUCCESS;
 		}
 	} else if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC) &&
-				!strcasecmp(argv[1], "trysrc")) {
+		   !strcasecmp(argv[1], "trysrc")) {
 		enum try_src_override_t ov = tc_get_try_src_override();
 
 		if (argc >= 3) {
@@ -107,12 +112,13 @@ test_export_static int command_pd(int argc, char **argv)
 			else if (!strcasecmp(argv[3], "data"))
 				pd_dpm_request(port, DPM_REQUEST_DR_SWAP);
 			else if (IS_ENABLED(CONFIG_USBC_VCONN_SWAP) &&
-					!strcasecmp(argv[3], "vconn"))
+				 !strcasecmp(argv[3], "vconn"))
 				pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
 			else
 				return EC_ERROR_PARAM3;
 		} else if (!strcasecmp(argv[2], "dualrole")) {
 			if (argc < 4) {
+				cflush();
 				ccprintf("dual-role toggling: ");
 				switch (pd_get_dual_role(port)) {
 				case PD_DRP_TOGGLE_ON:
@@ -130,66 +136,91 @@ test_export_static int command_pd(int argc, char **argv)
 				case PD_DRP_FORCE_SOURCE:
 					ccprintf("force source\n");
 					break;
+					cflush();
 				}
 			} else {
 				if (!strcasecmp(argv[3], "on"))
 					pd_set_dual_role(port,
-							PD_DRP_TOGGLE_ON);
+							 PD_DRP_TOGGLE_ON);
 				else if (!strcasecmp(argv[3], "off"))
 					pd_set_dual_role(port,
-							PD_DRP_TOGGLE_OFF);
+							 PD_DRP_TOGGLE_OFF);
 				else if (!strcasecmp(argv[3], "freeze"))
 					pd_set_dual_role(port, PD_DRP_FREEZE);
 				else if (!strcasecmp(argv[3], "sink"))
 					pd_set_dual_role(port,
-							PD_DRP_FORCE_SINK);
+							 PD_DRP_FORCE_SINK);
 				else if (!strcasecmp(argv[3], "source"))
 					pd_set_dual_role(port,
-							PD_DRP_FORCE_SOURCE);
+							 PD_DRP_FORCE_SOURCE);
 				else
 					return EC_ERROR_PARAM4;
 			}
 			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[2], "suspend")) {
+			pd_comm_enable(port, 0);
+			pd_set_suspend(port, 1);
+		} else if (!strcasecmp(argv[2], "resume")) {
+			pd_comm_enable(port, 1);
+			pd_set_suspend(port, 0);
 		}
 	}
 
 	if (!strcasecmp(argv[2], "state")) {
-		ccprintf("Port C%d CC%d, %s - Role: %s-%s",
-		port, pd_get_polarity(port) + 1,
-		pd_comm_is_enabled(port) ? "Enable" : "Disable",
-		pd_get_power_role(port) ==
-					PD_ROLE_SOURCE ? "SRC" : "SNK",
-		pd_get_data_role(port) == PD_ROLE_DFP ? "DFP" : "UFP");
+		cflush();
+		ccprintf("Port C%d CC%d, %s - Role: %s-%s", port,
+			 pd_get_polarity(port) + 1,
+			 pd_comm_is_enabled(port) ? "Enable" : "Disable",
+			 pd_get_power_role(port) == PD_ROLE_SOURCE ? "SRC" :
+								     "SNK",
+			 pd_get_data_role(port) == PD_ROLE_DFP ? "DFP" : "UFP");
 
 		if (IS_ENABLED(CONFIG_USBC_VCONN))
 			ccprintf("%s ", tc_is_vconn_src(port) ? "-VC" : "");
 
 		ccprintf("TC State: %s, Flags: 0x%04x",
-			tc_get_current_state(port),
-			tc_get_flags(port));
+			 tc_get_current_state(port), tc_get_flags(port));
 
 		if (IS_ENABLED(CONFIG_USB_PE_SM))
 			ccprintf(" PE State: %s, Flags: 0x%04x\n",
-				pe_get_current_state(port),
-				pe_get_flags(port));
+				 pe_get_current_state(port),
+				 pe_get_flags(port));
 		else
 			ccprintf("\n");
+
+		cflush();
+	} else if (!strcasecmp(argv[2], "srccaps")) {
+		pd_srccaps_dump(port);
+	} else if (!strcasecmp(argv[2], "cc")) {
+		ccprintf("Port C%d CC%d\n", port, pd_get_task_cc_state(port));
+	}
+
+	if (IS_ENABLED(CONFIG_CMD_PD_TIMER) && !strcasecmp(argv[2], "timer")) {
+		pd_timer_dump(port);
 	}
 
 	return EC_SUCCESS;
 }
+#ifndef TEST_USB_PD_CONSOLE
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
-	 "version"
-	 "\ndump [0|1|2|3]"
+			"version"
+			"\ndump [0|1|2|3]"
 #ifdef CONFIG_USB_PD_TRY_SRC
-	"\ntrysrc [0|1|2]"
+			"\ntrysrc [0|1|2]"
 #endif
-	"\n\t<port> state"
+			"\n\t<port> state"
+			"\n\t<port> srccaps"
+			"\n\t<port> cc"
+#ifdef CONFIG_CMD_PD_TIMER
+			"\n\t<port> timer"
+#endif /* CONFIG_CMD_PD_TIMER */
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	"|tx|charger|dev"
-	"\n\t<port> disable|enable|soft|hard"
-	"\n\t<port> dualrole [on|off|freeze|sink|source]"
-	"\n\t<port> swap [power|data|vconn]"
+			"|tx|charger|dev"
+			"\n\t<port> disable|enable|soft|hard"
+			"\n\t<port> suspend|resume"
+			"\n\t<port> dualrole [on|off|freeze|sink|source]"
+			"\n\t<port> swap [power|data|vconn]"
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
-	,
-	"USB PD");
+			,
+			"USB PD");
+#endif

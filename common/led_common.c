@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -16,7 +16,7 @@
 
 static uint32_t led_auto_control_flags = ~0x00;
 
-static int led_is_supported(enum ec_led_id led_id)
+__overridable int led_is_supported(enum ec_led_id led_id)
 {
 	int i;
 	static int supported_leds = -1;
@@ -47,6 +47,16 @@ int led_auto_control_is_enabled(enum ec_led_id led_id)
 	return (led_auto_control_flags & LED_AUTO_CONTROL_FLAG(led_id)) != 0;
 }
 
+__attribute__((weak)) void board_led_auto_control(void)
+{
+	/*
+	 * The projects have only power led won't change the led
+	 * state immediately as the auto command is called for
+	 * they only check the led state while the power state
+	 * is changed.
+	 */
+}
+
 static enum ec_status led_command_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_led_control *p = args->params;
@@ -69,6 +79,8 @@ static enum ec_status led_command_control(struct host_cmd_handler_args *args)
 
 	if (p->flags & EC_LED_FLAGS_AUTO) {
 		led_auto_control(p->led_id, 1);
+		if (!IS_ENABLED(CONFIG_LED_ONOFF_STATES))
+			board_led_auto_control();
 	} else {
 		if (led_set_brightness(p->led_id, p->brightness) != EC_SUCCESS)
 			return EC_RES_INVALID_PARAM;
@@ -79,8 +91,8 @@ static enum ec_status led_command_control(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_LED_CONTROL, led_command_control, EC_VER_MASK(1));
 
-__attribute__((weak))
-void led_control(enum ec_led_id led_id, enum ec_led_state state)
+__attribute__((weak)) void led_control(enum ec_led_id led_id,
+				       enum ec_led_state state)
 {
 	/*
 	 * Default weak implementation that does not affect the state of

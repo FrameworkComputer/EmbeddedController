@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,8 +25,8 @@
 #include "vboot.h"
 #include "vb21_struct.h"
 
-#define CPRINTS(format, args...) cprints(CC_VBOOT,"VB " format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_VBOOT,"VB " format, ## args)
+#define CPRINTS(format, args...) cprints(CC_VBOOT, "VB " format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_VBOOT, "VB " format, ##args)
 
 static int has_matrix_keyboard(void)
 {
@@ -45,34 +45,34 @@ static int verify_slot(enum ec_image slot)
 
 	CPRINTS("Verifying %s", ec_image_to_string(slot));
 
-	vb21_key = (const struct vb21_packed_key *)(
-			CONFIG_MAPPED_STORAGE_BASE +
-			CONFIG_EC_PROTECTED_STORAGE_OFF +
-			CONFIG_RO_PUBKEY_STORAGE_OFF);
+	vb21_key =
+		(const struct vb21_packed_key *)(CONFIG_MAPPED_STORAGE_BASE +
+						 CONFIG_EC_PROTECTED_STORAGE_OFF +
+						 CONFIG_RO_PUBKEY_STORAGE_OFF);
 	rv = vb21_is_packed_key_valid(vb21_key);
 	if (rv) {
 		CPRINTS("Invalid key (%d)", rv);
 		return EC_ERROR_VBOOT_KEY;
 	}
-	key = (const struct rsa_public_key *)
-		((const uint8_t *)vb21_key + vb21_key->key_offset);
+	key = (const struct rsa_public_key *)((const uint8_t *)vb21_key +
+					      vb21_key->key_offset);
 
 	if (slot == EC_IMAGE_RW_A) {
 		data = (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
-				CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_A_STORAGE_OFF);
-		vb21_sig = (const struct vb21_signature *)(
-				CONFIG_MAPPED_STORAGE_BASE +
-				CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_A_SIGN_STORAGE_OFF);
+					 CONFIG_EC_WRITABLE_STORAGE_OFF +
+					 CONFIG_RW_A_STORAGE_OFF);
+		vb21_sig = (const struct vb21_signature
+				    *)(CONFIG_MAPPED_STORAGE_BASE +
+				       CONFIG_EC_WRITABLE_STORAGE_OFF +
+				       CONFIG_RW_A_SIGN_STORAGE_OFF);
 	} else {
 		data = (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
-				CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_B_STORAGE_OFF);
-		vb21_sig = (const struct vb21_signature *)(
-				CONFIG_MAPPED_STORAGE_BASE +
-				CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_B_SIGN_STORAGE_OFF);
+					 CONFIG_EC_WRITABLE_STORAGE_OFF +
+					 CONFIG_RW_B_STORAGE_OFF);
+		vb21_sig = (const struct vb21_signature
+				    *)(CONFIG_MAPPED_STORAGE_BASE +
+				       CONFIG_EC_WRITABLE_STORAGE_OFF +
+				       CONFIG_RW_B_SIGN_STORAGE_OFF);
 	}
 
 	rv = vb21_is_signature_valid(vb21_sig, vb21_key);
@@ -187,7 +187,7 @@ void vboot_main(void)
 		return;
 	}
 
-	if (!(flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
+	if (!(crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
 		/*
 		 * If hardware WP is disabled, PD communication is enabled.
 		 * We can return and wait for more power.

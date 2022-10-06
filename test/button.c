@@ -1,9 +1,9 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * Test non-keyboard buttons.
-*
+ *
  * Using GPIOS and buttons[] defined in board/host/board.c
  * Volume down is active low with a debounce time of 30 mSec.
  * Volume up is active high with a debounce time of 60 mSec.
@@ -272,7 +272,7 @@ static void button_test_init(void)
 		button_state[i] = UNCHANGED;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

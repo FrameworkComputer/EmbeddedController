@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -98,39 +98,30 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 
 	/* return cached values for at most CACHE_INVALIDATION_TIME_US */
 	fix_single_param(batt->flags & BATT_FLAG_BAD_STATE_OF_CHARGE,
-			&batt_cache.state_of_charge,
-			&batt->state_of_charge);
+			 &batt_cache.state_of_charge, &batt->state_of_charge);
 	fix_single_param(batt->flags & BATT_FLAG_BAD_VOLTAGE,
-			&batt_cache.voltage,
-			&batt->voltage);
+			 &batt_cache.voltage, &batt->voltage);
 	fix_single_param(batt->flags & BATT_FLAG_BAD_CURRENT,
-			&batt_cache.current,
-			&batt->current);
+			 &batt_cache.current, &batt->current);
 	fix_single_param(batt->flags & BATT_FLAG_BAD_DESIRED_VOLTAGE,
-			&batt_cache.desired_voltage,
-			&batt->desired_voltage);
+			 &batt_cache.desired_voltage, &batt->desired_voltage);
 	fix_single_param(batt->flags & BATT_FLAG_BAD_DESIRED_CURRENT,
-			&batt_cache.desired_current,
-			&batt->desired_current);
+			 &batt_cache.desired_current, &batt->desired_current);
 	fix_single_param(batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY,
-			&batt_cache.remaining_capacity,
-			&batt->remaining_capacity);
+			 &batt_cache.remaining_capacity,
+			 &batt->remaining_capacity);
 	fix_single_param(batt->flags & BATT_FLAG_BAD_FULL_CAPACITY,
-			&batt_cache.full_capacity,
-			&batt->full_capacity);
-	fix_single_param(batt->flags & BATT_FLAG_BAD_STATUS,
-			&batt_cache.status,
-			&batt->status);
+			 &batt_cache.full_capacity, &batt->full_capacity);
+	fix_single_param(batt->flags & BATT_FLAG_BAD_STATUS, &batt_cache.status,
+			 &batt->status);
 	fix_single_param(batt->flags & BATT_FLAG_BAD_TEMPERATURE,
-			&batt_cache.temperature,
-			&batt->temperature);
+			 &batt_cache.temperature, &batt->temperature);
 	/*
 	 * If battery_compensate_params() didn't calculate display_charge
 	 * for us, also update it with last good value.
 	 */
-	fix_single_param(batt->display_charge == 0,
-			&batt_cache.display_charge,
-			&batt->display_charge);
+	fix_single_param(batt->display_charge == 0, &batt_cache.display_charge,
+			 &batt->display_charge);
 
 	/* remove bad flags after applying cached values */
 	batt->flags &= ~BATT_FLAG_BAD_ANY;

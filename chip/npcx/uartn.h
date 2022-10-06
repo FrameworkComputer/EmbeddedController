@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,7 +22,7 @@ void uartn_init(uint8_t uart_num);
  */
 void uartn_tx_start(uint8_t uart_num);
 
- /* Disable the UART transmit interrupt. */
+/* Disable the UART transmit interrupt. */
 void uartn_tx_stop(uint8_t uart_num, uint8_t sleep_ena);
 
 /* Flush the transmit FIFO. */
@@ -62,4 +62,4 @@ void uartn_rx_int_en(uint8_t uart_num);
 void uartn_wui_en(uint8_t uart_num);
 /* Enable/disable Tx NXMIP (No Transmit In Progress) interrupt */
 void uartn_enable_tx_complete_int(uint8_t uart_num, uint8_t enable);
-#endif  /* __CROS_EC_UARTN_H */
+#endif /* __CROS_EC_UARTN_H */

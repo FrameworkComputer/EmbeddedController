@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -99,4 +99,4 @@ ALTERNATE(PIN_MASK(B, 0x0038), 0, MODULE_SPI,        0)
 /* SPI SLAVE CS: PA15 */
 ALTERNATE(PIN_MASK(A, 0x8000), 0, MODULE_SPI,        0)
 /* SPI MASTER: PD1/3/4 */
-ALTERNATE(PIN_MASK(D, 0x001a), 1, MODULE_SPI_MASTER, 0)
+ALTERNATE(PIN_MASK(D, 0x001a), 1, MODULE_SPI_CONTROLLER, 0)

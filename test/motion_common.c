@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -15,9 +15,9 @@
 
 /*****************************************************************************/
 /* Mock functions */
-static int accel_init(const struct motion_sensor_t *s)
+static int accel_init(struct motion_sensor_t *s)
 {
-	return EC_SUCCESS;
+	return sensor_init_done(s);
 }
 
 static int accel_read(const struct motion_sensor_t *s, intv3_t v)
@@ -26,9 +26,10 @@ static int accel_read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int accel_get_range(const struct motion_sensor_t *s)
+static int accel_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
-	return s->default_range;
+	s->current_range = range;
+	return EC_SUCCESS;
 }
 
 static int accel_get_resolution(const struct motion_sensor_t *s)
@@ -42,9 +43,8 @@ static int accel_get_resolution(const struct motion_sensor_t *s)
 
 int test_data_rate[2] = { 0 };
 
-static int accel_set_data_rate(const struct motion_sensor_t *s,
-			      const int rate,
-			      const int rnd)
+static int accel_set_data_rate(const struct motion_sensor_t *s, const int rate,
+			       const int rnd)
 {
 	test_data_rate[s - motion_sensors] = rate | (rnd ? ROUND_UP_FLAG : 0);
 	return EC_SUCCESS;
@@ -61,8 +61,8 @@ static int accel_get_rms_noise(const struct motion_sensor_t *s)
 	/* Assume we are using BMI160 */
 	fp_t rate = INT_TO_FP(accel_get_data_rate(s) / 1000);
 	fp_t noise_100hz = INT_TO_FP(BMI160_ACCEL_RMS_NOISE_100HZ);
-	fp_t sqrt_rate_ratio = fp_sqrtf(fp_div(rate,
-					       INT_TO_FP(BMI_ACCEL_100HZ)));
+	fp_t sqrt_rate_ratio =
+		fp_sqrtf(fp_div(rate, INT_TO_FP(BMI_ACCEL_100HZ)));
 	return FP_TO_INT(fp_mul(noise_100hz, sqrt_rate_ratio));
 }
 #endif
@@ -70,7 +70,7 @@ static int accel_get_rms_noise(const struct motion_sensor_t *s)
 const struct accelgyro_drv test_motion_sense = {
 	.init = accel_init,
 	.read = accel_read,
-	.get_range = accel_get_range,
+	.set_range = accel_set_range,
 	.get_resolution = accel_get_resolution,
 	.set_data_rate = accel_set_data_rate,
 	.get_data_rate = accel_get_data_rate,
@@ -117,7 +117,7 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Read 6 samples from array to sensor vectors, convert units if necessary. */
 void feed_accel_data(const float *array, int *idx,
-		int (filler)(const struct motion_sensor_t*, const float))
+		     int(filler)(const struct motion_sensor_t *, const float))
 {
 	int i, j;
 
@@ -137,9 +137,6 @@ void wait_for_valid_sample(void)
 
 	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	usleep(TEST_LID_EC_RATE);
-	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		usleep(TEST_LID_SLEEP_RATE);
 }
-
-

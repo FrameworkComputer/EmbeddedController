@@ -1,0 +1,12 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: c235 {
+			compatible = "celxpert,c235-41", "battery-smart";
+		};
+	};
+};

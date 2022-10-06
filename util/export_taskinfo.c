@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -25,14 +25,13 @@ struct taskinfo {
 	uint32_t stack_size;
 };
 
-#define TASK(n, r, d, s, ...)  {	\
-	.name = #n,			\
-	.routine = #r,			\
-	.stack_size = s,		\
-},
-static const struct taskinfo taskinfos[] = {
-	CONFIG_TASK_LIST
-};
+#define TASK(n, r, d, s, ...)    \
+	{                        \
+		.name = #n,      \
+		.routine = #r,   \
+		.stack_size = s, \
+	},
+static const struct taskinfo taskinfos[] = { CONFIG_TASK_LIST };
 #undef TASK
 
 uint32_t GET_TASKINFOS_FUNC(const struct taskinfo **infos)

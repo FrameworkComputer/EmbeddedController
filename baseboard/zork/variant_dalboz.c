@@ -1,10 +1,9 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
@@ -15,7 +14,7 @@
 #include "i2c.h"
 #include "power.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S3_N] = {
@@ -55,6 +54,11 @@ int board_get_temp(int idx, int *temp_k)
 	case TEMP_SENSOR_SOC:
 		/* thermistor is not powered in G3 */
 		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		/* adc power not ready when transition to S5 */
+		if (chipset_in_or_transitioning_to_state(
+			    CHIPSET_STATE_SOFT_OFF))
 			return EC_ERROR_NOT_POWERED;
 
 		channel = ADC_TEMP_SENSOR_SOC;
@@ -111,6 +115,37 @@ const struct temp_sensor_t temp_sensors[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+__overridable struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
+	[TEMP_SENSOR_CHARGER] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		}
+	},
+	[TEMP_SENSOR_SOC] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		}
+	},
+	[TEMP_SENSOR_CPU] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		}
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 const struct i2c_port_t i2c_ports[] = {
 	{

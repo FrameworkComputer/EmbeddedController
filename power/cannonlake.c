@@ -1,24 +1,24 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Cannonlake chipset power control module for Chrome EC */
 
-#include "cannonlake.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "intel_x86.h"
 #include "power.h"
+#include "power/cannonlake.h"
+#include "power/intel_x86.h"
 #include "power_button.h"
 #include "task.h"
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
-static int forcing_shutdown;  /* Forced shutdown in progress? */
+static int forcing_shutdown; /* Forced shutdown in progress? */
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -47,7 +47,7 @@ void chipset_handle_espi_reset_assert(void)
 	 * power button. If yes, release power button.
 	 */
 	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
-		forcing_shutdown) {
+	    forcing_shutdown) {
 		power_button_pch_release();
 		forcing_shutdown = 0;
 	}

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,8 +26,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_MOTION_LID, outstr)
-#define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ##args)
 
 #ifdef CONFIG_TABLET_MODE
 /* Previous lid_angle. */
@@ -50,7 +50,7 @@ static int lid_angle_is_reliable;
 static intv3_t smoothed_base, smoothed_lid;
 
 /* 8.7 m/s^2 is the the maximum acceleration parallel to the hinge */
-#define SCALED_HINGE_VERTICAL_MAXIMUM  \
+#define SCALED_HINGE_VERTICAL_MAXIMUM \
 	((int)((8.7f * MOTION_SCALING_FACTOR) / MOTION_ONE_G))
 
 #define SCALED_HINGE_VERTICAL_SMOOTHING_START \
@@ -78,7 +78,7 @@ static intv3_t smoothed_base, smoothed_lid;
  * is less than 1<<31, so magnitude is less sqrt(2)*(1<<15), less than ~40% over
  * 1g. This is way above any usable noise. Assume noise is less than 10%.
  */
-#define MOTION_SCALING_AXIS_MAX (MOTION_SCALING_FACTOR * 110)
+#define MOTION_SCALING_AXIS_MAX ((MOTION_SCALING_FACTOR * 110) / 100)
 
 #define MOTION_SCALING_FACTOR2 (MOTION_SCALING_FACTOR * MOTION_SCALING_FACTOR)
 
@@ -88,17 +88,26 @@ static intv3_t smoothed_base, smoothed_lid;
  * frame before calculating lid angle).
  */
 #ifdef CONFIG_ACCEL_STD_REF_FRAME_OLD
-static const intv3_t hinge_axis = { 0, 1, 0};
+static const intv3_t hinge_axis = { 0, 1, 0 };
 #define HINGE_AXIS Y
 #else
-static const intv3_t hinge_axis = { 1, 0, 0};
+static const intv3_t hinge_axis = { 1, 0, 0 };
 #define HINGE_AXIS X
 #endif
 
-static const struct motion_sensor_t * const accel_base =
+static const struct motion_sensor_t *const accel_base =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_BASE];
-static const struct motion_sensor_t * const accel_lid =
+static const struct motion_sensor_t *const accel_lid =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
+
+STATIC_IF(CONFIG_TABLET_MODE) void motion_lid_set_tablet_mode(int reliable);
+STATIC_IF(CONFIG_TABLET_MODE)
+int lid_angle_set_tablet_mode_threshold(int angle, int hys);
+
+STATIC_IF(CONFIG_TABLET_MODE) fp_t tablet_zone_lid_angle;
+STATIC_IF(CONFIG_TABLET_MODE) fp_t laptop_zone_lid_angle;
+STATIC_IF(CONFIG_TABLET_MODE) int tablet_mode_lid_angle;
+STATIC_IF(CONFIG_TABLET_MODE) int tablet_mode_hys_degree;
 
 #ifdef CONFIG_TABLET_MODE
 __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
@@ -133,18 +142,16 @@ __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
  * by using MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE.
  */
 
-#define DEFAULT_TABLET_MODE_ANGLE	(180)
-#define DEFAULT_TABLET_MODE_HYS	(20)
+#define DEFAULT_TABLET_MODE_ANGLE (180)
+#define DEFAULT_TABLET_MODE_HYS (20)
 
-#define TABLET_ZONE_ANGLE(a, h)	((a) + (h))
-#define LAPTOP_ZONE_ANGLE(a, h)	((a) - (h))
+#define TABLET_ZONE_ANGLE(a, h) ((a) + (h))
+#define LAPTOP_ZONE_ANGLE(a, h) ((a) - (h))
 
-static fp_t tablet_zone_lid_angle =
-	FLOAT_TO_FP(TABLET_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANGLE,
-				      DEFAULT_TABLET_MODE_HYS));
-static fp_t laptop_zone_lid_angle =
-	FLOAT_TO_FP(LAPTOP_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANGLE,
-				      DEFAULT_TABLET_MODE_HYS));
+static fp_t tablet_zone_lid_angle = FLOAT_TO_FP(
+	TABLET_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANGLE, DEFAULT_TABLET_MODE_HYS));
+static fp_t laptop_zone_lid_angle = FLOAT_TO_FP(
+	LAPTOP_ZONE_ANGLE(DEFAULT_TABLET_MODE_ANGLE, DEFAULT_TABLET_MODE_HYS));
 
 static int tablet_mode_lid_angle = DEFAULT_TABLET_MODE_ANGLE;
 static int tablet_mode_hys_degree = DEFAULT_TABLET_MODE_HYS;
@@ -167,7 +174,7 @@ static void motion_lid_set_tablet_mode(int reliable)
 				/* Alright, we're convinced. */
 				tablet_mode_debounce_cnt =
 					TABLET_MODE_DEBOUNCE_COUNT;
-				tablet_set_mode(new_mode);
+				tablet_set_mode(new_mode, TABLET_TRIGGER_LID);
 				return;
 			}
 			tablet_mode_debounce_cnt--;
@@ -208,7 +215,13 @@ static int lid_angle_set_tablet_mode_threshold(int angle, int hys)
 
 #if defined(CONFIG_DPTF_MULTI_PROFILE) && \
 	defined(CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR)
+#define MOTION_LID_SET_DPTF_PROFILE
+#endif
 
+STATIC_IF(MOTION_LID_SET_DPTF_PROFILE)
+void motion_lid_set_dptf_profile(int reliable);
+
+#ifdef MOTION_LID_SET_DPTF_PROFILE
 /*
  * If CONFIG_DPTF_MULTI_PROFILE is defined by a board, then lid motion driver
  * sets different profile numbers depending upon the current lid
@@ -264,7 +277,7 @@ static void motion_lid_set_dptf_profile(int reliable)
 	debounce_cnt = DPTF_MODE_DEBOUNCE_COUNT;
 }
 
-#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR */
+#endif /* MOTION_LID_SET_DPTF_PROFILE */
 
 /**
  * Calculate the lid angle using two acceleration vectors, one recorded in
@@ -292,10 +305,8 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	 * possible.
 	 */
 	for (i = X; i <= Z; i++) {
-		scaled_base[i] = base[i] *
-			accel_base->drv->get_range(accel_base);
-		scaled_lid[i] = lid[i] *
-			accel_lid->drv->get_range(accel_lid);
+		scaled_base[i] = base[i] * accel_base->current_range;
+		scaled_lid[i] = lid[i] * accel_lid->current_range;
 		if (ABS(scaled_base[i]) > MOTION_SCALING_AXIS_MAX ||
 		    ABS(scaled_lid[i]) > MOTION_SCALING_AXIS_MAX) {
 			reliable = 0;
@@ -309,11 +320,11 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	 * less than 1<<30.
 	 */
 	base_magnitude2 = scaled_base[X] * scaled_base[X] +
-		scaled_base[Y] * scaled_base[Y] +
-		scaled_base[Z] * scaled_base[Z];
+			  scaled_base[Y] * scaled_base[Y] +
+			  scaled_base[Z] * scaled_base[Z];
 	lid_magnitude2 = scaled_lid[X] * scaled_lid[X] +
-		scaled_lid[Y] * scaled_lid[Y] +
-		scaled_lid[Z] * scaled_lid[Z];
+			 scaled_lid[Y] * scaled_lid[Y] +
+			 scaled_lid[Z] * scaled_lid[Z];
 
 	/*
 	 * Check to see if they differ than more than NOISY_MAGNITUDE_DEVIATION.
@@ -345,14 +356,16 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 		goto end_calculate_lid_angle;
 	}
 
-	largest_hinge_accel = MAX(ABS(scaled_base[HINGE_AXIS]),
-				  ABS(scaled_lid[HINGE_AXIS]));
+	largest_hinge_accel =
+		MAX(ABS(scaled_base[HINGE_AXIS]), ABS(scaled_lid[HINGE_AXIS]));
 
-	smoothed_ratio = MAX(INT_TO_FP(0), MIN(INT_TO_FP(1),
-		fp_div(INT_TO_FP(largest_hinge_accel -
-				 SCALED_HINGE_VERTICAL_SMOOTHING_START),
-		       INT_TO_FP(SCALED_HINGE_VERTICAL_MAXIMUM -
-				 SCALED_HINGE_VERTICAL_SMOOTHING_START))));
+	smoothed_ratio = MAX(
+		INT_TO_FP(0),
+		MIN(INT_TO_FP(1),
+		    fp_div(INT_TO_FP(largest_hinge_accel -
+				     SCALED_HINGE_VERTICAL_SMOOTHING_START),
+			   INT_TO_FP(SCALED_HINGE_VERTICAL_MAXIMUM -
+				     SCALED_HINGE_VERTICAL_SMOOTHING_START))));
 
 	/* Check hinge is not too vertical */
 	if (largest_hinge_accel > SCALED_HINGE_VERTICAL_MAXIMUM) {
@@ -389,15 +402,14 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	if (dot_product(cross, hinge_axis) > 0)
 		lid_to_base_fp = FLOAT_TO_FP(360) - lid_to_base_fp;
 
-#ifndef CONFIG_ACCEL_STD_REF_FRAME_OLD
 	/*
 	 * Angle is between the keyboard and the front of screen: we need to
 	 * anlge between keyboard and back of screen:
 	 * 180 instead of 0 when lid and base are flat on surface.
 	 * 0 instead of 180 when lid is closed on keyboard.
 	 */
-	lid_to_base_fp = FLOAT_TO_FP(180) - lid_to_base_fp;
-#endif
+	if (!IS_ENABLED(CONFIG_ACCEL_STD_REF_FRAME_OLD))
+		lid_to_base_fp = FLOAT_TO_FP(180) - lid_to_base_fp;
 
 	/* Place lid angle between 0 and 360 degrees. */
 	if (lid_to_base_fp < 0)
@@ -405,8 +417,7 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 
 #ifdef CONFIG_TABLET_MODE
 	/* Ignore large angles when the lid is closed. */
-	if (!lid_is_open() &&
-	    (lid_to_base_fp > SMALL_LID_ANGLE_RANGE)) {
+	if (!lid_is_open() && (lid_to_base_fp > SMALL_LID_ANGLE_RANGE)) {
 		reliable = 0;
 		goto end_calculate_lid_angle;
 	}
@@ -422,8 +433,7 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	 * may wake us up.  This is because we require at least 4 consecutive
 	 * reliable readings over a threshold to disable key scanning.
 	 */
-	if (lid_is_open() &&
-	    (lid_to_base_fp <= SMALL_LID_ANGLE_RANGE)) {
+	if (lid_is_open() && (lid_to_base_fp <= SMALL_LID_ANGLE_RANGE)) {
 		reliable = 0;
 		goto end_calculate_lid_angle;
 	}
@@ -439,10 +449,8 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	 * prove the small angle we see is correct so we take the angle
 	 * as is.
 	 */
-	if ((last_lid_angle_fp >=
-	     FLOAT_TO_FP(360) - DEBOUNCE_ANGLE_DELTA) &&
-	     (lid_to_base_fp <= DEBOUNCE_ANGLE_DELTA) &&
-	     (lid_is_open()))
+	if ((last_lid_angle_fp >= FLOAT_TO_FP(360) - DEBOUNCE_ANGLE_DELTA) &&
+	    (lid_to_base_fp <= DEBOUNCE_ANGLE_DELTA) && (lid_is_open()))
 		last_lid_angle_fp = FLOAT_TO_FP(360) - lid_to_base_fp;
 	else
 		last_lid_angle_fp = lid_to_base_fp;
@@ -457,12 +465,9 @@ end_calculate_lid_angle:
 	if (board_is_lid_angle_tablet_mode())
 		motion_lid_set_tablet_mode(reliable);
 
-#if defined(CONFIG_DPTF_MULTI_PROFILE) && \
-	defined(CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR)
-	motion_lid_set_dptf_profile(reliable);
-#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR */
-
-#else    /* CONFIG_TABLET_MODE */
+	if (IS_ENABLED(MOTION_LID_SET_DPTF_PROFILE))
+		motion_lid_set_dptf_profile(reliable);
+#else /* CONFIG_TABLET_MODE */
 end_calculate_lid_angle:
 	if (reliable)
 		*lid_angle = FP_TO_INT(lid_to_base_fp + FLOAT_TO_FP(0.5));
@@ -485,17 +490,14 @@ void motion_lid_calc(void)
 {
 	/* Calculate angle of lid accel. */
 	lid_angle_is_reliable = calculate_lid_angle(
-			accel_base->xyz, accel_lid->xyz,
-			&lid_angle_deg);
+		accel_base->xyz, accel_lid->xyz, &lid_angle_deg);
 
-#ifdef CONFIG_LID_ANGLE_UPDATE
-	lid_angle_update(motion_lid_get_angle());
-#endif
+	if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE))
+		lid_angle_update(motion_lid_get_angle());
 }
 
 /*****************************************************************************/
 /* Host commands */
-
 
 enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 {
@@ -504,35 +506,38 @@ enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 	switch (in->cmd) {
 	case MOTIONSENSE_CMD_KB_WAKE_ANGLE:
-#ifdef CONFIG_LID_ANGLE_UPDATE
-		/* Set new keyboard wake lid angle if data arg has value. */
-		if (in->kb_wake_angle.data != EC_MOTION_SENSE_NO_VALUE)
-			lid_angle_set_wake_angle(in->kb_wake_angle.data);
+		if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE)) {
+			/*
+			 * Set new keyboard wake lid angle if data arg has
+			 * value.
+			 */
+			if (in->kb_wake_angle.data != EC_MOTION_SENSE_NO_VALUE)
+				lid_angle_set_wake_angle(
+					in->kb_wake_angle.data);
 
-		out->kb_wake_angle.ret = lid_angle_get_wake_angle();
-#else
-		out->kb_wake_angle.ret = 0;
-#endif
+			out->kb_wake_angle.ret = lid_angle_get_wake_angle();
+		} else {
+			out->kb_wake_angle.ret = 0;
+		}
 		args->response_size = sizeof(out->kb_wake_angle);
 
 		break;
 
 	case MOTIONSENSE_CMD_LID_ANGLE:
-#ifdef CONFIG_LID_ANGLE
-		out->lid_angle.value = motion_lid_get_angle();
-		args->response_size = sizeof(out->lid_angle);
-#else
-		return EC_RES_INVALID_PARAM;
-#endif
+		if (IS_ENABLED(CONFIG_LID_ANGLE)) {
+			out->lid_angle.value = motion_lid_get_angle();
+			args->response_size = sizeof(out->lid_angle);
+		} else {
+			return EC_RES_INVALID_PARAM;
+		}
 		break;
 
 	case MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE:
-		{
-#ifdef CONFIG_TABLET_MODE
+		if (IS_ENABLED(CONFIG_TABLET_MODE)) {
 			int ret;
 			ret = lid_angle_set_tablet_mode_threshold(
-					in->tablet_mode_threshold.lid_angle,
-					in->tablet_mode_threshold.hys_degree);
+				in->tablet_mode_threshold.lid_angle,
+				in->tablet_mode_threshold.hys_degree);
 
 			if (ret != EC_RES_SUCCESS)
 				return ret;
@@ -544,9 +549,8 @@ enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 			args->response_size =
 				sizeof(out->tablet_mode_threshold);
-#else
+		} else {
 			return EC_RES_INVALID_PARAM;
-#endif
 		}
 		break;
 	default:
@@ -555,4 +559,3 @@ enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-

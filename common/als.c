@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,10 +19,16 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ALS, outstr)
+<<<<<<< HEAD
 #define CPRINTS(format, args...) cprints(CC_ALS, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_ALS, format, ## args)
 
 #ifndef ALS_POLL_PERIOD
+=======
+#define CPRINTS(format, args...) cprints(CC_ALS, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_ALS, format, ##args)
+
+>>>>>>> chromium/main
 #define ALS_POLL_PERIOD SECOND
 #endif
 
@@ -91,8 +97,7 @@ static void als_task_init(void)
 	 * Enable ALS task in S0 only and may need to re-enable
 	 * when sysjumped.
 	 */
-	if (system_jumped_late() &&
-		chipset_in_state(CHIPSET_STATE_ON))
+	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		als_task_enable();
 }
 
@@ -104,7 +109,7 @@ DECLARE_HOOK(HOOK_INIT, als_task_init, HOOK_PRIO_ALS_INIT);
 /* Console commands */
 
 #ifdef CONFIG_CMD_ALS
-static int command_als(int argc, char **argv)
+static int command_als(int argc, const char **argv)
 {
 	int i, rv, val;
 
@@ -122,7 +127,5 @@ static int command_als(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(als, command_als,
-			NULL,
-			"Print ALS values");
+DECLARE_CONSOLE_COMMAND(als, command_als, NULL, "Print ALS values");
 #endif

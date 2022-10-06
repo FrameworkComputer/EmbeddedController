@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,7 +24,7 @@ GPIO_INT(ACOK_OD,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_inter
 GPIO_INT(EC_WP_L,		PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
-GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	bmi160_interrupt)
+GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	motion_interrupt)
 GPIO_INT(TABLET_MODE_L,		PIN(4, 4), GPIO_INT_BOTH,			gmr_tablet_switch_isr)
 GPIO_INT(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INT_BOTH,			hdmi_hpd_interrupt)
 
@@ -53,6 +53,7 @@ GPIO(EC_DP1_HPD,		PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
 GPIO(EN_PWR_TOUCHPAD_PS2,	PIN(C, 2), GPIO_INPUT)				/* Touchpad Power */
+GPIO(USB_C1_HPD_IN_DB,		PIN(B, 1), GPIO_OUT_LOW)			/* C1 HPD for board version 2 */
 
 UNIMPLEMENTED(NO_HPD)
 UNIMPLEMENTED(PCH_SMI_L)
@@ -75,7 +76,7 @@ IOEX(USB_C0_DATA_EN,		EXPIN(USBC_PORT_C0, 1, 4), GPIO_OUT_LOW)	/* C0 Data Enable
 IOEX(EN_USB_A0_5V,		EXPIN(USBC_PORT_C0, 1, 5), GPIO_OUT_LOW)	/* A0 5V Source Enable */
 IOEX(USB_A0_CHARGE_EN_L,	EXPIN(USBC_PORT_C0, 1, 6), GPIO_OUT_HIGH)	/* A0 5V High Current Enable */
 
-IOEX(USB_C1_HPD_IN_DB,		EXPIN(USBC_PORT_C1, 0, 2), GPIO_OUT_LOW)	/* C1 HPD */
+IOEX(USB_C1_HPD_IN_DB,		EXPIN(USBC_PORT_C1, 0, 2), GPIO_OUT_LOW)	/* C1 HPD for board version 1*/
 IOEX(HDMI_POWER_EN_DB,		EXPIN(USBC_PORT_C1, 0, 3), GPIO_OUT_LOW)	/* HDMI retimer power enable */
 IOEX(USB_C1_TCPC_FASTSW_CTL_EN,	EXPIN(USBC_PORT_C1, 0, 4), GPIO_OUT_LOW)	/* C1 FastSwitch Control */
 IOEX(USB_C1_MUX_RST_DB,		EXPIN(USBC_PORT_C1, 1, 1), GPIO_OUT_LOW)	/* C1 Mux Reset */

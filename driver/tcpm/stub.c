@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,8 +6,8 @@
 /* TCPM for MCU also running TCPC */
 
 #include "task.h"
-#include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpci.h"
+#include "tcpm/tcpm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
 #include "usb_pd_tcpm.h"
@@ -22,8 +22,8 @@ static int init_alert_mask(int port)
 	 * signal the TCPM via the Alert# gpio line.
 	 */
 	mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
-		TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
-		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS;
+	       TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
+	       TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS;
 	/* Set the alert mask in TCPC */
 	rv = tcpc_alert_mask_set(port, mask);
 
@@ -48,7 +48,7 @@ int tcpm_init(int port)
 }
 
 int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+		enum tcpc_cc_voltage_status *cc2)
 {
 	return tcpc_get_cc(port, cc1, cc2);
 }
@@ -65,7 +65,7 @@ int tcpm_set_cc(int port, int pull)
 
 int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
-	return tcpc_set_polarity(port, polarity);
+	return tcpc_set_polarity(port, polarity_rm_dts(polarity));
 }
 
 int tcpm_set_vconn(int port, int enable)
@@ -113,7 +113,7 @@ void tcpm_clear_pending_messages(int port)
 	rx_buf_clear(port);
 }
 
-int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
+int tcpm_transmit(int port, enum tcpci_msg_type type, uint16_t header,
 		  const uint32_t *data)
 {
 	return tcpc_transmit(port, type, header, data);
@@ -136,7 +136,7 @@ void tcpc_alert(int port)
 
 	if (status & TCPC_REG_ALERT_CC_STATUS) {
 		/* CC status changed, wake task */
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 	}
 	if (status & TCPC_REG_ALERT_RX_STATUS) {
 		/*
@@ -148,12 +148,12 @@ void tcpc_alert(int port)
 	if (status & TCPC_REG_ALERT_RX_HARD_RST) {
 		/* hard reset received */
 		task_set_event(PD_PORT_TO_TASK_ID(port),
-			PD_EVENT_RX_HARD_RESET, 0);
+			       PD_EVENT_RX_HARD_RESET);
 	}
 	if (status & TCPC_REG_ALERT_TX_COMPLETE) {
 		/* transmit complete */
 		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_SUCCESS ?
-					   TCPC_TX_COMPLETE_SUCCESS :
-					   TCPC_TX_COMPLETE_FAILED);
+						   TCPC_TX_COMPLETE_SUCCESS :
+						   TCPC_TX_COMPLETE_FAILED);
 	}
 }

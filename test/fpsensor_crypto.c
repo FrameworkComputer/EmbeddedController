@@ -1,19 +1,23 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include <stdbool.h>
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor_crypto.h"
 #include "fpsensor_state.h"
+#include "mock/fpsensor_crypto_mock.h"
 #include "mock/fpsensor_state_mock.h"
 #include "mock/rollback_mock.h"
 #include "mock/timer_mock.h"
 #include "test_util.h"
 #include "util.h"
+
+extern int get_ikm(uint8_t *ikm);
 
 static const uint8_t fake_positive_match_salt[] = {
 	0x04, 0x1f, 0x5a, 0xac, 0x5f, 0x79, 0x10, 0xaf,
@@ -21,10 +25,9 @@ static const uint8_t fake_positive_match_salt[] = {
 };
 
 static const uint8_t fake_user_id[] = {
-	0x28, 0xb5, 0x5a, 0x55, 0x57, 0x1b, 0x26, 0x88,
-	0xce, 0xc5, 0xd1, 0xfe, 0x1d, 0x58, 0x5b, 0x94,
-	0x51, 0xa2, 0x60, 0x49, 0x9f, 0xea, 0xb1, 0xea,
-	0xf7, 0x04, 0x2f, 0x0b, 0x20, 0xa5, 0x93, 0x64,
+	0x28, 0xb5, 0x5a, 0x55, 0x57, 0x1b, 0x26, 0x88, 0xce, 0xc5, 0xd1,
+	0xfe, 0x1d, 0x58, 0x5b, 0x94, 0x51, 0xa2, 0x60, 0x49, 0x9f, 0xea,
+	0xb1, 0xea, 0xf7, 0x04, 0x2f, 0x0b, 0x20, 0xa5, 0x93, 0x64,
 };
 
 /*
@@ -83,10 +86,9 @@ static const uint8_t fake_user_id[] = {
  * go run util/all_tests.go
  */
 static const uint8_t expected_positive_match_secret_for_empty_user_id[] = {
-	0x8d, 0xc4, 0x5b, 0xdf, 0x55, 0x1e, 0xa8, 0x72,
-	0xd6, 0xdd, 0xa1, 0x4c, 0xb8, 0xa1, 0x76, 0x2b,
-	0xde, 0x38, 0xd5, 0x03, 0xce, 0xe4, 0x74, 0x51,
-	0x63, 0x6c, 0x6a, 0x26, 0xa9, 0xb7, 0xfa, 0x68,
+	0x8d, 0xc4, 0x5b, 0xdf, 0x55, 0x1e, 0xa8, 0x72, 0xd6, 0xdd, 0xa1,
+	0x4c, 0xb8, 0xa1, 0x76, 0x2b, 0xde, 0x38, 0xd5, 0x03, 0xce, 0xe4,
+	0x74, 0x51, 0x63, 0x6c, 0x6a, 0x26, 0xa9, 0xb7, 0xfa, 0x68,
 };
 
 /*
@@ -94,11 +96,73 @@ static const uint8_t expected_positive_match_secret_for_empty_user_id[] = {
  * |fake_user_id| instead of all-zero user_id.
  */
 static const uint8_t expected_positive_match_secret_for_fake_user_id[] = {
-	0x0d, 0xf5, 0xac, 0x7c, 0xad, 0x37, 0x0a, 0x66,
-	0x2f, 0x71, 0xf6, 0xc6, 0xca, 0x8a, 0x41, 0x69,
-	0x8a, 0xd3, 0xcf, 0x0b, 0xc4, 0x5a, 0x5f, 0x4d,
-	0x54, 0xeb, 0x7b, 0xad, 0x5d, 0x1b, 0xbe, 0x30,
+	0x0d, 0xf5, 0xac, 0x7c, 0xad, 0x37, 0x0a, 0x66, 0x2f, 0x71, 0xf6,
+	0xc6, 0xca, 0x8a, 0x41, 0x69, 0x8a, 0xd3, 0xcf, 0x0b, 0xc4, 0x5a,
+	0x5f, 0x4d, 0x54, 0xeb, 0x7b, 0xad, 0x5d, 0x1b, 0xbe, 0x30,
 };
+
+test_static int test_get_ikm_failure_seed_not_set(void)
+{
+	uint8_t ikm;
+
+	TEST_ASSERT(fp_tpm_seed_is_set() == 0);
+	TEST_ASSERT(get_ikm(&ikm) == EC_ERROR_ACCESS_DENIED);
+	return EC_SUCCESS;
+}
+
+test_static int test_get_ikm_failure_cannot_get_rollback_secret(void)
+{
+	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + FP_CONTEXT_TPM_BYTES];
+
+	/* Given that the tmp seed has been set. */
+	TEST_ASSERT(fp_tpm_seed_is_set());
+
+	/* GIVEN that reading the rollback secret will fail. */
+	mock_ctrl_rollback.get_secret_fail = true;
+
+	/* THEN get_ikm should fail. */
+	TEST_ASSERT(get_ikm(ikm) == EC_ERROR_HW_INTERNAL);
+
+	/*
+	 * Enable get_rollback_secret to succeed before returning from this
+	 * test function.
+	 */
+	mock_ctrl_rollback.get_secret_fail = false;
+
+	return EC_SUCCESS;
+}
+
+test_static int test_get_ikm_success(void)
+{
+	/*
+	 * Expected ikm is the concatenation of the rollback secret and the
+	 * seed from the TPM.
+	 */
+	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + FP_CONTEXT_TPM_BYTES];
+	static const uint8_t expected_ikm[] = {
+		0xcf, 0xe3, 0x23, 0x76, 0x35, 0x04, 0xc2, 0x0f, 0x0d, 0xb6,
+		0x02, 0xa9, 0x68, 0xba, 0x2a, 0x61, 0x86, 0x2a, 0x85, 0xd1,
+		0xca, 0x09, 0x54, 0x8a, 0x6b, 0xe2, 0xe3, 0x38, 0xde, 0x5d,
+		0x59, 0x14, 0xd9, 0x71, 0xaf, 0xc4, 0xcd, 0x36, 0xe3, 0x60,
+		0xf8, 0x5a, 0xa0, 0xa6, 0x2c, 0xb3, 0xf5, 0xe2, 0xeb, 0xb9,
+		0xd8, 0x2f, 0xb5, 0x78, 0x5c, 0x79, 0x82, 0xce, 0x06, 0x3f,
+		0xcc, 0x23, 0xb9, 0xe7
+	};
+
+	/* GIVEN that the TPM seed has been set. */
+	TEST_ASSERT(fp_tpm_seed_is_set());
+
+	/* GIVEN that reading the rollback secret will succeed. */
+	mock_ctrl_rollback.get_secret_fail = false;
+
+	/* THEN get_ikm will succeed. */
+	TEST_ASSERT(get_ikm(ikm) == EC_SUCCESS);
+	TEST_ASSERT_ARRAY_EQ(ikm, expected_ikm,
+			     CONFIG_ROLLBACK_SECRET_SIZE +
+				     FP_CONTEXT_TPM_BYTES);
+
+	return EC_SUCCESS;
+}
 
 static int test_hkdf_expand_raw(const uint8_t *prk, size_t prk_size,
 				const uint8_t *info, size_t info_size,
@@ -106,8 +170,8 @@ static int test_hkdf_expand_raw(const uint8_t *prk, size_t prk_size,
 {
 	uint8_t actual_okm[okm_size];
 
-	TEST_ASSERT(hkdf_expand(actual_okm, okm_size, prk, prk_size,
-				info, info_size) == EC_SUCCESS);
+	TEST_ASSERT(hkdf_expand(actual_okm, okm_size, prk, prk_size, info,
+				info_size) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(expected_okm, actual_okm, okm_size);
 	return EC_SUCCESS;
 }
@@ -122,16 +186,14 @@ test_static int test_hkdf_expand(void)
 		0x22, 0xec, 0x84, 0x4a, 0xd7, 0xc2, 0xb3, 0xe5,
 	};
 	static const uint8_t info1[] = {
-		0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
-		0xf8, 0xf9,
+		0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9,
 	};
 	static const uint8_t expected_okm1[] = {
-		0x3c, 0xb2, 0x5f, 0x25, 0xfa, 0xac, 0xd5, 0x7a,
-		0x90, 0x43, 0x4f, 0x64, 0xd0, 0x36, 0x2f, 0x2a,
-		0x2d, 0x2d, 0x0a, 0x90, 0xcf, 0x1a, 0x5a, 0x4c,
-		0x5d, 0xb0, 0x2d, 0x56, 0xec, 0xc4, 0xc5, 0xbf,
-		0x34, 0x00, 0x72, 0x08, 0xd5, 0xb8, 0x87, 0x18,
-		0x58, 0x65,
+		0x3c, 0xb2, 0x5f, 0x25, 0xfa, 0xac, 0xd5, 0x7a, 0x90,
+		0x43, 0x4f, 0x64, 0xd0, 0x36, 0x2f, 0x2a, 0x2d, 0x2d,
+		0x0a, 0x90, 0xcf, 0x1a, 0x5a, 0x4c, 0x5d, 0xb0, 0x2d,
+		0x56, 0xec, 0xc4, 0xc5, 0xbf, 0x34, 0x00, 0x72, 0x08,
+		0xd5, 0xb8, 0x87, 0x18, 0x58, 0x65,
 	};
 	static const uint8_t prk2[] = {
 		0x06, 0xa6, 0xb8, 0x8c, 0x58, 0x53, 0x36, 0x1a,
@@ -140,28 +202,24 @@ test_static int test_hkdf_expand(void)
 		0x4a, 0x19, 0x3f, 0x40, 0xc1, 0x5f, 0xc2, 0x44,
 	};
 	static const uint8_t info2[] = {
-		0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
-		0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
-		0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
-		0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
-		0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7,
-		0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
-		0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
-		0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
-		0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
-		0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
+		0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9,
+		0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc0, 0xc1, 0xc2, 0xc3,
+		0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd,
+		0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7,
+		0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xe0, 0xe1,
+		0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb,
+		0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5,
+		0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
 	};
 	static const uint8_t expected_okm2[] = {
-		0xb1, 0x1e, 0x39, 0x8d, 0xc8, 0x03, 0x27, 0xa1,
-		0xc8, 0xe7, 0xf7, 0x8c, 0x59, 0x6a, 0x49, 0x34,
-		0x4f, 0x01, 0x2e, 0xda, 0x2d, 0x4e, 0xfa, 0xd8,
-		0xa0, 0x50, 0xcc, 0x4c, 0x19, 0xaf, 0xa9, 0x7c,
-		0x59, 0x04, 0x5a, 0x99, 0xca, 0xc7, 0x82, 0x72,
-		0x71, 0xcb, 0x41, 0xc6, 0x5e, 0x59, 0x0e, 0x09,
-		0xda, 0x32, 0x75, 0x60, 0x0c, 0x2f, 0x09, 0xb8,
-		0x36, 0x77, 0x93, 0xa9, 0xac, 0xa3, 0xdb, 0x71,
-		0xcc, 0x30, 0xc5, 0x81, 0x79, 0xec, 0x3e, 0x87,
-		0xc1, 0x4c, 0x01, 0xd5, 0xc1, 0xf3, 0x43, 0x4f,
+		0xb1, 0x1e, 0x39, 0x8d, 0xc8, 0x03, 0x27, 0xa1, 0xc8, 0xe7,
+		0xf7, 0x8c, 0x59, 0x6a, 0x49, 0x34, 0x4f, 0x01, 0x2e, 0xda,
+		0x2d, 0x4e, 0xfa, 0xd8, 0xa0, 0x50, 0xcc, 0x4c, 0x19, 0xaf,
+		0xa9, 0x7c, 0x59, 0x04, 0x5a, 0x99, 0xca, 0xc7, 0x82, 0x72,
+		0x71, 0xcb, 0x41, 0xc6, 0x5e, 0x59, 0x0e, 0x09, 0xda, 0x32,
+		0x75, 0x60, 0x0c, 0x2f, 0x09, 0xb8, 0x36, 0x77, 0x93, 0xa9,
+		0xac, 0xa3, 0xdb, 0x71, 0xcc, 0x30, 0xc5, 0x81, 0x79, 0xec,
+		0x3e, 0x87, 0xc1, 0x4c, 0x01, 0xd5, 0xc1, 0xf3, 0x43, 0x4f,
 		0x1d, 0x87,
 	};
 	static const uint8_t prk3[] = {
@@ -171,52 +229,48 @@ test_static int test_hkdf_expand(void)
 		0xac, 0x43, 0x4c, 0x1c, 0x29, 0x3c, 0xcb, 0x04,
 	};
 	static const uint8_t expected_okm3[] = {
-		0x8d, 0xa4, 0xe7, 0x75, 0xa5, 0x63, 0xc1, 0x8f,
-		0x71, 0x5f, 0x80, 0x2a, 0x06, 0x3c, 0x5a, 0x31,
-		0xb8, 0xa1, 0x1f, 0x5c, 0x5e, 0xe1, 0x87, 0x9e,
-		0xc3, 0x45, 0x4e, 0x5f, 0x3c, 0x73, 0x8d, 0x2d,
-		0x9d, 0x20, 0x13, 0x95, 0xfa, 0xa4, 0xb6, 0x1a,
-		0x96, 0xc8,
+		0x8d, 0xa4, 0xe7, 0x75, 0xa5, 0x63, 0xc1, 0x8f, 0x71,
+		0x5f, 0x80, 0x2a, 0x06, 0x3c, 0x5a, 0x31, 0xb8, 0xa1,
+		0x1f, 0x5c, 0x5e, 0xe1, 0x87, 0x9e, 0xc3, 0x45, 0x4e,
+		0x5f, 0x3c, 0x73, 0x8d, 0x2d, 0x9d, 0x20, 0x13, 0x95,
+		0xfa, 0xa4, 0xb6, 0x1a, 0x96, 0xc8,
 	};
 	static uint8_t unused_output[SHA256_DIGEST_SIZE] = { 0 };
 
 	TEST_ASSERT(test_hkdf_expand_raw(prk1, sizeof(prk1), info1,
 					 sizeof(info1), expected_okm1,
-					 sizeof(expected_okm1))
-			    == EC_SUCCESS);
+					 sizeof(expected_okm1)) == EC_SUCCESS);
 	TEST_ASSERT(test_hkdf_expand_raw(prk2, sizeof(prk2), info2,
 					 sizeof(info2), expected_okm2,
-					 sizeof(expected_okm2))
-			    == EC_SUCCESS);
+					 sizeof(expected_okm2)) == EC_SUCCESS);
 	TEST_ASSERT(test_hkdf_expand_raw(prk3, sizeof(prk3), NULL, 0,
-					 expected_okm3, sizeof(expected_okm3))
-			    == EC_SUCCESS);
+					 expected_okm3,
+					 sizeof(expected_okm3)) == EC_SUCCESS);
 
-	TEST_ASSERT(hkdf_expand(NULL, sizeof(unused_output), prk1,
-				sizeof(prk1), info1, sizeof(info1))
-			    == EC_ERROR_INVAL);
-	TEST_ASSERT(hkdf_expand(unused_output, sizeof(unused_output),
-				NULL, sizeof(prk1), info1, sizeof(info1))
-			    == EC_ERROR_INVAL);
-	TEST_ASSERT(hkdf_expand(unused_output, sizeof(unused_output),
-				prk1, sizeof(prk1), NULL, sizeof(info1))
-			    == EC_ERROR_INVAL);
+	TEST_ASSERT(hkdf_expand(NULL, sizeof(unused_output), prk1, sizeof(prk1),
+				info1, sizeof(info1)) == EC_ERROR_INVAL);
+	TEST_ASSERT(hkdf_expand(unused_output, sizeof(unused_output), NULL,
+				sizeof(prk1), info1,
+				sizeof(info1)) == EC_ERROR_INVAL);
+	TEST_ASSERT(hkdf_expand(unused_output, sizeof(unused_output), prk1,
+				sizeof(prk1), NULL,
+				sizeof(info1)) == EC_ERROR_INVAL);
 	/* Info size too long. */
-	TEST_ASSERT(hkdf_expand(unused_output, sizeof(unused_output),
-				prk1, sizeof(prk1), info1, 1024)
-			    == EC_ERROR_INVAL);
+	TEST_ASSERT(hkdf_expand(unused_output, sizeof(unused_output), prk1,
+				sizeof(prk1), info1, 1024) == EC_ERROR_INVAL);
 	/* OKM size too big. */
-	TEST_ASSERT(hkdf_expand(unused_output, 256 * SHA256_DIGEST_SIZE,
-				prk1, sizeof(prk1), info1, sizeof(info1))
-			    == EC_ERROR_INVAL);
+	TEST_ASSERT(hkdf_expand(unused_output, 256 * SHA256_DIGEST_SIZE, prk1,
+				sizeof(prk1), info1,
+				sizeof(info1)) == EC_ERROR_INVAL);
 	return EC_SUCCESS;
 }
 
 test_static int test_derive_encryption_key_failure_seed_not_set(void)
 {
 	static uint8_t unused_key[SBP_ENC_KEY_LEN];
-	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES]
-		= { 0 };
+	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
+		0
+	};
 
 	/* GIVEN that the TPM seed is not set. */
 	if (fp_tpm_seed_is_set()) {
@@ -314,8 +368,9 @@ test_static int test_derive_encryption_key(void)
 test_static int test_derive_encryption_key_failure_rollback_fail(void)
 {
 	static uint8_t unused_key[SBP_ENC_KEY_LEN];
-	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES]
-		= { 0 };
+	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
+		0
+	};
 
 	/* GIVEN that reading the rollback secret will fail. */
 	mock_ctrl_rollback.get_secret_fail = true;
@@ -346,11 +401,10 @@ test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
 
 	/* Deriving positive match secret will fail. */
 	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt)
-		== EC_ERROR_ACCESS_DENIED);
+						 fake_positive_match_salt) ==
+		    EC_ERROR_ACCESS_DENIED);
 
 	return EC_SUCCESS;
-
 }
 
 test_static int test_derive_new_pos_match_secret(void)
@@ -367,30 +421,26 @@ test_static int test_derive_new_pos_match_secret(void)
 	 * GIVEN that the TPM seed is set, and reading the rollback secret will
 	 * succeed.
 	 */
-	TEST_ASSERT(
-		fp_tpm_seed_is_set() && !mock_ctrl_rollback.get_secret_fail);
+	TEST_ASSERT(fp_tpm_seed_is_set() &&
+		    !mock_ctrl_rollback.get_secret_fail);
 
 	/* GIVEN that the salt is not trivial. */
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
 				       sizeof(fake_positive_match_salt)));
 
 	/* THEN the derivation will succeed. */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt)
-		== EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
-		output,
-		expected_positive_match_secret_for_empty_user_id,
+		output, expected_positive_match_secret_for_empty_user_id,
 		sizeof(expected_positive_match_secret_for_empty_user_id));
 
 	/* Now change the user_id to be non-trivial. */
 	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt)
-		== EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
-		output,
-		expected_positive_match_secret_for_fake_user_id,
+		output, expected_positive_match_secret_for_fake_user_id,
 		sizeof(expected_positive_match_secret_for_fake_user_id));
 	memset(user_id, 0, sizeof(user_id));
 
@@ -409,8 +459,8 @@ test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 
 	/* Deriving positive match secret will fail. */
 	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt)
-		== EC_ERROR_HW_INTERNAL);
+						 fake_positive_match_salt) ==
+		    EC_ERROR_HW_INTERNAL);
 	mock_ctrl_rollback.get_secret_fail = false;
 
 	return EC_SUCCESS;
@@ -424,8 +474,94 @@ test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 	static const uint8_t salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = { 0 };
 
 	/* THEN deriving positive match secret will fail. */
-	TEST_ASSERT(derive_positive_match_secret(output, salt)
-		== EC_ERROR_INVAL);
+	TEST_ASSERT(derive_positive_match_secret(output, salt) ==
+		    EC_ERROR_INVAL);
+	return EC_SUCCESS;
+}
+
+test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+
+	/* GIVEN that the user ID is set to a known value. */
+	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+
+	/*
+	 * GIVEN that the TPM seed is set, and reading the rollback secret will
+	 * succeed.
+	 */
+	TEST_ASSERT(fp_tpm_seed_is_set() &&
+		    !mock_ctrl_rollback.get_secret_fail);
+
+	/* GIVEN that the salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+
+	/* GIVEN that the sha256 output is trivial (0x00) */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_ZEROS;
+
+	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt) ==
+		    EC_ERROR_HW_INTERNAL);
+
+	/* Now verify success is possible after reverting */
+
+	/* GIVEN that the sha256 output is non-trivial */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL;
+
+	/* THEN the derivation will succeed */
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt) == EC_SUCCESS);
+
+	/* Clean up any mock changes */
+	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;
+
+	return EC_SUCCESS;
+}
+
+test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
+{
+	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+
+	/* GIVEN that the user ID is set to a known value. */
+	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+
+	/*
+	 * GIVEN that the TPM seed is set, and reading the rollback secret will
+	 * succeed.
+	 */
+	TEST_ASSERT(fp_tpm_seed_is_set() &&
+		    !mock_ctrl_rollback.get_secret_fail);
+
+	/* GIVEN that the salt is not trivial. */
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
+				       sizeof(fake_positive_match_salt)));
+
+	/* GIVEN that the sha256 output is trivial (0xFF) */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_FF;
+
+	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt) ==
+		    EC_ERROR_HW_INTERNAL);
+
+	/* Now verify success is possible after reverting */
+
+	/* GIVEN that the sha256 output is non-trivial */
+	mock_ctrl_fpsensor_crypto.output_type =
+		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL;
+
+	/* THEN the derivation will succeed */
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt) == EC_SUCCESS);
+
+	/* Clean up any mock changes */
+	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;
+
 	return EC_SUCCESS;
 }
 
@@ -435,8 +571,8 @@ static int test_enable_positive_match_secret_once(
 	const int8_t kIndexToEnable = 0;
 	timestamp_t now = get_time();
 
-	TEST_ASSERT(fp_enable_positive_match_secret(
-		kIndexToEnable, dumb_state) == EC_SUCCESS);
+	TEST_ASSERT(fp_enable_positive_match_secret(kIndexToEnable,
+						    dumb_state) == EC_SUCCESS);
 	TEST_ASSERT(dumb_state->template_matched == kIndexToEnable);
 	TEST_ASSERT(dumb_state->readable);
 	TEST_ASSERT(dumb_state->deadline.val == now.val + (5 * SECOND));
@@ -446,18 +582,19 @@ static int test_enable_positive_match_secret_once(
 
 test_static int test_enable_positive_match_secret(void)
 {
-	struct positive_match_secret_state dumb_state = {
-		.template_matched = FP_NO_SUCH_TEMPLATE,
-		.readable = false,
-		.deadline.val = 0,
-	};
+	struct positive_match_secret_state
+		dumb_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
+			       .readable = false,
+			       .deadline = {
+				       .val = 0,
+			       } };
 
-	TEST_ASSERT(test_enable_positive_match_secret_once(&dumb_state)
-		== EC_SUCCESS);
+	TEST_ASSERT(test_enable_positive_match_secret_once(&dumb_state) ==
+		    EC_SUCCESS);
 
 	/* Trying to enable again before reading secret should fail. */
 	TEST_ASSERT(fp_enable_positive_match_secret(0, &dumb_state) ==
-		EC_ERROR_UNKNOWN);
+		    EC_ERROR_UNKNOWN);
 	TEST_ASSERT(dumb_state.template_matched == FP_NO_SUCH_TEMPLATE);
 	TEST_ASSERT(!dumb_state.readable);
 	TEST_ASSERT(dumb_state.deadline.val == 0);
@@ -467,14 +604,15 @@ test_static int test_enable_positive_match_secret(void)
 
 test_static int test_disable_positive_match_secret(void)
 {
-	struct positive_match_secret_state dumb_state = {
-		.template_matched = FP_NO_SUCH_TEMPLATE,
-		.readable = false,
-		.deadline.val = 0,
-	};
+	struct positive_match_secret_state
+		dumb_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
+			       .readable = false,
+			       .deadline = {
+				       .val = 0,
+			       } };
 
-	TEST_ASSERT(test_enable_positive_match_secret_once(&dumb_state)
-		== EC_SUCCESS);
+	TEST_ASSERT(test_enable_positive_match_secret_once(&dumb_state) ==
+		    EC_SUCCESS);
 
 	fp_disable_positive_match_secret(&dumb_state);
 	TEST_ASSERT(dumb_state.template_matched == FP_NO_SUCH_TEMPLATE);
@@ -601,8 +739,7 @@ test_static int test_command_read_match_secret_unreadable(void)
 	positive_match_secret_state.readable = false;
 
 	/* EVEN IF the finger is just matched. */
-	TEST_ASSERT(positive_match_secret_state.template_matched
-		== params.fgr);
+	TEST_ASSERT(positive_match_secret_state.template_matched == params.fgr);
 
 	/* EVEN IF encryption salt is non-trivial. */
 	memcpy(fp_positive_match_salt[0], fake_positive_match_salt,
@@ -614,25 +751,29 @@ test_static int test_command_read_match_secret_unreadable(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_hkdf_expand);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);
 	RUN_TEST(test_derive_positive_match_secret_fail_seed_not_set);
-
+	RUN_TEST(test_get_ikm_failure_seed_not_set);
 	/*
 	 * Set the TPM seed here because it can only be set once and cannot be
 	 * cleared.
 	 */
 	ASSERT(fpsensor_state_mock_set_tpm_seed(default_fake_tpm_seed) ==
-		    EC_SUCCESS);
+	       EC_SUCCESS);
 
 	/* The following test requires TPM seed to be already set. */
+	RUN_TEST(test_get_ikm_failure_cannot_get_rollback_secret);
+	RUN_TEST(test_get_ikm_success);
 	RUN_TEST(test_derive_encryption_key);
 	RUN_TEST(test_derive_encryption_key_failure_rollback_fail);
 	RUN_TEST(test_derive_new_pos_match_secret);
 	RUN_TEST(test_derive_positive_match_secret_fail_rollback_fail);
 	RUN_TEST(test_derive_positive_match_secret_fail_salt_trivial);
+	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0x00);
+	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0xff);
 	RUN_TEST(test_enable_positive_match_secret);
 	RUN_TEST(test_disable_positive_match_secret);
 	RUN_TEST(test_command_read_match_secret);

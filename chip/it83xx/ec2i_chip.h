@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_EC2I_CHIP_H
 #define __CROS_EC_EC2I_CHIP_H
 
-#define P80L_P80LB               0
-#define P80L_P80LE               0x3F
-#define P80L_P80LC               0
+#define P80L_P80LB 0
+#define P80L_P80LE 0x3F
+#define P80L_P80LC 0
 #define P80L_BRAM_BANK1_SIZE_MASK 0x3F
 
 /* Index list of the host interface registers of PNPCFG */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 The Chromium OS Authors. All rights reserved.
+ * Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -21,7 +21,7 @@ struct protect_range {
 	enum bit_state cmp;
 	enum bit_state sec;
 	enum bit_state tb;
-	enum bit_state bp[3];    /* Ordered {BP2, BP1, BP0} */
+	enum bit_state bp[3]; /* Ordered {BP2, BP1, BP0} */
 	uint32_t protect_start;
 	uint32_t protect_len;
 };
@@ -39,7 +39,7 @@ struct protect_range {
  */
 #if defined(CONFIG_SPI_FLASH_W25X40) || defined(CONFIG_SPI_FLASH_GD25Q41B)
 static const struct protect_range spi_flash_protect_ranges[] = {
-	{ IGN, IGN, IGN, { 0, 0, 0 }, 0, 0 },     /* No protection */
+	{ IGN, IGN, IGN, { 0, 0, 0 }, 0, 0 }, /* No protection */
 	{ IGN, IGN, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/2 */
 	{ IGN, IGN, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/4 */
 };
@@ -49,17 +49,17 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 /* For GD25LQ40, BP3 and BP4 have same meaning as TB and SEC */
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
-	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },         /* No protection */
-	{ 0, 0, 1, { 0, 1, 0 }, 0, 0x20000 },       /* Lower 1/4 */
-	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 },       /* Lower 1/2 */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 }, /* No protection */
+	{ 0, 0, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/4 */
+	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/2 */
 	/* CMP = 1 */
-	{ 1, 0, 0, { 0, 1, 1 }, 0, 0x40000 },       /* Lower 1/2 */
-	{ 1, 0, IGN, { 1, IGN, IGN }, 0, 0 },       /* None (W25Q40EW only) */
+	{ 1, 0, 0, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/2 */
+	{ 1, 0, IGN, { 1, IGN, IGN }, 0, 0 }, /* None (W25Q40EW only) */
 };
 
 #elif defined(CONFIG_SPI_FLASH_W25Q64)
 static const struct protect_range spi_flash_protect_ranges[] = {
-	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },    /* No protection */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 }, /* No protection */
 	{ 0, 0, 1, { 1, 1, 0 }, 0, 0x400000 }, /* Lower 1/2 */
 	{ 0, 0, 1, { 1, 0, 1 }, 0, 0x200000 }, /* Lower 1/4 */
 };
@@ -67,7 +67,7 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 #elif defined(CONFIG_SPI_FLASH_W25Q80)
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
-	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },   /* No protection */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 }, /* No protection */
 	{ 0, 0, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/8 */
 	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/4 */
 	{ 0, 0, 1, { 1, 0, 0 }, 0, 0x80000 }, /* Lower 1/2 */
@@ -75,7 +75,7 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 #elif defined(CONFIG_SPI_FLASH_W25Q128)
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
-	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 },   /* No protection */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 }, /* No protection */
 	{ 0, 0, 1, { 1, 0, 0 }, 0, 0x20000 }, /* Lower 1/8 */
 	{ 0, 0, 1, { 1, 0, 1 }, 0, 0x40000 }, /* Lower 1/4 */
 	{ 0, 0, 1, { 1, 1, 0 }, 0, 0x80000 }, /* Lower 1/2 */
@@ -107,8 +107,9 @@ int spi_flash_reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 	cmp = (sr2 & SPI_FLASH_SR2_CMP) ? 1 : 0;
 	sec = (sr1 & SPI_FLASH_SR1_SEC) ? 1 : 0;
 	tb = (sr1 & SPI_FLASH_SR1_TB) ? 1 : 0;
-	bp = (sr1 & (SPI_FLASH_SR1_BP2 | SPI_FLASH_SR1_BP1 | SPI_FLASH_SR1_BP0))
-		 >> 2;
+	bp = (sr1 &
+	      (SPI_FLASH_SR1_BP2 | SPI_FLASH_SR1_BP1 | SPI_FLASH_SR1_BP0)) >>
+	     2;
 
 	/* Bad pointers or invalid data */
 	if (!start || !len || sr1 == 0xff || sr2 == 0xff)
@@ -163,7 +164,7 @@ int spi_flash_protect_to_reg(unsigned int start, unsigned int len, uint8_t *sr1,
 		return EC_ERROR_INVAL;
 
 	/* Invalid data */
-	if ((start && !len) || start + len > CONFIG_FLASH_SIZE)
+	if ((start && !len) || start + len > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	for (i = 0; i < ARRAY_SIZE(spi_flash_protect_ranges); ++i) {
@@ -174,12 +175,10 @@ int spi_flash_protect_to_reg(unsigned int start, unsigned int len, uint8_t *sr1,
 			sec = GET_BIT(range->sec);
 			tb = GET_BIT(range->tb);
 			bp = GET_BIT(range->bp[0]) << 2 |
-			     GET_BIT(range->bp[1]) << 1 |
-			     GET_BIT(range->bp[2]);
+			     GET_BIT(range->bp[1]) << 1 | GET_BIT(range->bp[2]);
 
 			*sr1 = (sec ? SPI_FLASH_SR1_SEC : 0) |
-			       (tb ? SPI_FLASH_SR1_TB : 0) |
-			       (bp << 2);
+			       (tb ? SPI_FLASH_SR1_TB : 0) | (bp << 2);
 			*sr2 = (cmp ? SPI_FLASH_SR2_CMP : 0);
 			return EC_SUCCESS;
 		}

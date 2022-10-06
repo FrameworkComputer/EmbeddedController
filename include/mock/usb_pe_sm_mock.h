@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,9 +9,10 @@
 
 #include "common.h"
 #include "usb_pe_sm.h"
+#include "usb_pd_tcpm.h"
 
 struct mock_pe_port_t {
-	enum tcpm_transmit_type sop;
+	enum tcpci_msg_type sop;
 
 	int mock_pe_message_sent;
 	int mock_pe_error;

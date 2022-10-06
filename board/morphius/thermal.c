@@ -1,13 +1,15 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
 #include "fan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
@@ -19,7 +21,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 struct fan_step {
 	/*
@@ -43,316 +45,315 @@ static const struct fan_step *fan_step_table;
 static const struct fan_step fan1_table_clamshell[] = {
 	{
 		/* level 0 */
-		.on = {-1, -1, -1, -1},
-		.off = {-1, -1, -1, -1},
-		.rpm = {0},
+		.on = { -1, -1, -1, -1 },
+		.off = { -1, -1, -1, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {-1, -1, 40, -1},
-		.off = {-1, -1, 31, -1},
-		.rpm = {1900},
+		.on = { -1, -1, 40, -1 },
+		.off = { -1, -1, 31, -1 },
+		.rpm = { 1900 },
 	},
 	{
 		/* level 2 */
-		.on = {-1, -1, 45, -1},
-		.off = {-1, -1, 43, -1},
-		.rpm = {2900},
+		.on = { -1, -1, 45, -1 },
+		.off = { -1, -1, 43, -1 },
+		.rpm = { 2900 },
 	},
 	{
 		/* level 3 */
-		.on = {-1, -1, 48, -1},
-		.off = {-1, -1, 46, -1},
-		.rpm = {3200},
+		.on = { -1, -1, 48, -1 },
+		.off = { -1, -1, 46, -1 },
+		.rpm = { 3200 },
 	},
 	{
 		/* level 4 */
-		.on = {-1, -1, 51, -1},
-		.off = {-1, -1, 49, -1},
-		.rpm = {3550},
+		.on = { -1, -1, 51, -1 },
+		.off = { -1, -1, 49, -1 },
+		.rpm = { 3550 },
 	},
 	{
 		/* level 5 */
-		.on = {-1, -1, 54, -1},
-		.off = {-1, -1, 52, -1},
-		.rpm = {3950},
+		.on = { -1, -1, 54, -1 },
+		.off = { -1, -1, 52, -1 },
+		.rpm = { 3950 },
 	},
 	{
 		/* level 6 */
-		.on = {-1, -1, 57, -1},
-		.off = {-1, -1, 55, -1},
-		.rpm = {4250},
+		.on = { -1, -1, 57, -1 },
+		.off = { -1, -1, 55, -1 },
+		.rpm = { 4250 },
 	},
 	{
 		/* level 7 */
-		.on = {-1, -1, 60, -1},
-		.off = {-1, -1, 58, -1},
-		.rpm = {4650},
+		.on = { -1, -1, 60, -1 },
+		.off = { -1, -1, 58, -1 },
+		.rpm = { 4650 },
 	},
 };
 
 static const struct fan_step fan1_table_tablet[] = {
 	{
 		/* level 0 */
-		.on = {-1, -1, -1, -1},
-		.off = {-1, -1, -1, -1},
-		.rpm = {0},
+		.on = { -1, -1, -1, -1 },
+		.off = { -1, -1, -1, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {-1, -1, 41, -1},
-		.off = {-1, -1, 31, -1},
-		.rpm = {2100},
+		.on = { -1, -1, 41, -1 },
+		.off = { -1, -1, 31, -1 },
+		.rpm = { 2100 },
 	},
 	{
 		/* level 2 */
-		.on = {-1, -1, 50, -1},
-		.off = {-1, -1, 48, -1},
-		.rpm = {2600},
+		.on = { -1, -1, 50, -1 },
+		.off = { -1, -1, 48, -1 },
+		.rpm = { 2600 },
 	},
 	{
 		/* level 3 */
-		.on = {-1, -1, 54, -1},
-		.off = {-1, -1, 52, -1},
-		.rpm = {2800},
+		.on = { -1, -1, 54, -1 },
+		.off = { -1, -1, 52, -1 },
+		.rpm = { 2800 },
 	},
 	{
 		/* level 4 */
-		.on = {-1, -1, 57, -1},
-		.off = {-1, -1, 55, -1},
-		.rpm = {3300},
+		.on = { -1, -1, 57, -1 },
+		.off = { -1, -1, 55, -1 },
+		.rpm = { 3300 },
 	},
 	{
 		/* level 5 */
-		.on = {-1, -1, 60, -1},
-		.off = {-1, -1, 58, -1},
-		.rpm = {3800},
+		.on = { -1, -1, 60, -1 },
+		.off = { -1, -1, 58, -1 },
+		.rpm = { 3800 },
 	},
 	{
 		/* level 6 */
-		.on = {-1, -1, 72, -1},
-		.off = {-1, -1, 69, -1},
-		.rpm = {4000},
+		.on = { -1, -1, 72, -1 },
+		.off = { -1, -1, 69, -1 },
+		.rpm = { 4000 },
 	},
 	{
 		/* level 7 */
-		.on = {-1, -1, 74, -1},
-		.off = {-1, -1, 73, -1},
-		.rpm = {4300},
+		.on = { -1, -1, 74, -1 },
+		.off = { -1, -1, 73, -1 },
+		.rpm = { 4300 },
 	},
 };
 
 static const struct fan_step fan1_table_stand[] = {
 	{
 		/* level 0 */
-		.on = {-1, -1, -1, -1},
-		.off = {-1, -1, -1, -1},
-		.rpm = {0},
+		.on = { -1, -1, -1, -1 },
+		.off = { -1, -1, -1, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {-1, -1, 34, -1},
-		.off = {-1, -1, 31, -1},
-		.rpm = {1850},
+		.on = { -1, -1, 34, -1 },
+		.off = { -1, -1, 31, -1 },
+		.rpm = { 1850 },
 	},
 	{
 		/* level 2 */
-		.on = {-1, -1, 42, -1},
-		.off = {-1, -1, 39, -1},
-		.rpm = {2550},
+		.on = { -1, -1, 42, -1 },
+		.off = { -1, -1, 39, -1 },
+		.rpm = { 2550 },
 	},
 	{
 		/* level 3 */
-		.on = {-1, -1, 49, -1},
-		.off = {-1, -1, 48, -1},
-		.rpm = {2900},
+		.on = { -1, -1, 49, -1 },
+		.off = { -1, -1, 48, -1 },
+		.rpm = { 2900 },
 	},
 	{
 		/* level 4 */
-		.on = {-1, -1, 51, -1},
-		.off = {-1, -1, 50, -1},
-		.rpm = {3350},
+		.on = { -1, -1, 51, -1 },
+		.off = { -1, -1, 50, -1 },
+		.rpm = { 3350 },
 	},
 	{
 		/* level 5 */
-		.on = {-1, -1, 53, -1},
-		.off = {-1, -1, 52, -1},
-		.rpm = {3700},
+		.on = { -1, -1, 53, -1 },
+		.off = { -1, -1, 52, -1 },
+		.rpm = { 3700 },
 	},
 	{
 		/* level 6 */
-		.on = {-1, -1, 55, -1},
-		.off = {-1, -1, 54, -1},
-		.rpm = {3900},
+		.on = { -1, -1, 55, -1 },
+		.off = { -1, -1, 54, -1 },
+		.rpm = { 3900 },
 	},
 	{
 		/* level 7 */
-		.on = {-1, -1, 57, -1},
-		.off = {-1, -1, 56, -1},
-		.rpm = {4250},
+		.on = { -1, -1, 57, -1 },
+		.off = { -1, -1, 56, -1 },
+		.rpm = { 4250 },
 	},
 };
 
 static const struct fan_step fan0_table_clamshell[] = {
 	{
 		/* level 0 */
-		.on = {-1, -1, -1, -1},
-		.off = {-1, -1, -1, -1},
-		.rpm = {0},
+		.on = { -1, -1, -1, -1 },
+		.off = { -1, -1, -1, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {-1, -1, 41, -1},
-		.off = {-1, -1, 31, -1},
-		.rpm = {2350},
+		.on = { -1, -1, 41, -1 },
+		.off = { -1, -1, 31, -1 },
+		.rpm = { 2350 },
 	},
 	{
 		/* level 2 */
-		.on = {-1, -1, 44, -1},
-		.off = {-1, -1, 42, -1},
-		.rpm = {3300},
+		.on = { -1, -1, 44, -1 },
+		.off = { -1, -1, 42, -1 },
+		.rpm = { 3300 },
 	},
 	{
 		/* level 3 */
-		.on = {-1, -1, 47, -1},
-		.off = {-1, -1, 45, -1},
-		.rpm = {3600},
+		.on = { -1, -1, 47, -1 },
+		.off = { -1, -1, 45, -1 },
+		.rpm = { 3600 },
 	},
 	{
 		/* level 4 */
-		.on = {-1, -1, 50, -1},
-		.off = {-1, -1, 48, -1},
-		.rpm = {4050},
+		.on = { -1, -1, 50, -1 },
+		.off = { -1, -1, 48, -1 },
+		.rpm = { 4050 },
 	},
 	{
 		/* level 5 */
-		.on = {-1, -1, 53, -1},
-		.off = {-1, -1, 51, -1},
-		.rpm = {4450},
+		.on = { -1, -1, 53, -1 },
+		.off = { -1, -1, 51, -1 },
+		.rpm = { 4450 },
 	},
 	{
 		/* level 6 */
-		.on = {-1, -1, 56, -1},
-		.off = {-1, -1, 54, -1},
-		.rpm = {4750},
+		.on = { -1, -1, 56, -1 },
+		.off = { -1, -1, 54, -1 },
+		.rpm = { 4750 },
 	},
 	{
 		/* level 7 */
-		.on = {-1, -1, 59, -1},
-		.off = {-1, -1, 57, -1},
-		.rpm = {5150},
+		.on = { -1, -1, 59, -1 },
+		.off = { -1, -1, 57, -1 },
+		.rpm = { 5150 },
 	},
 };
 
 static const struct fan_step fan0_table_tablet[] = {
 	{
 		/* level 0 */
-		.on = {-1, -1, -1, -1},
-		.off = {-1, -1, -1, -1},
-		.rpm = {0},
+		.on = { -1, -1, -1, -1 },
+		.off = { -1, -1, -1, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {-1, -1, 41, -1},
-		.off = {-1, -1, 31, -1},
-		.rpm = {2250},
+		.on = { -1, -1, 41, -1 },
+		.off = { -1, -1, 31, -1 },
+		.rpm = { 2250 },
 	},
 	{
 		/* level 2 */
-		.on = {-1, -1, 50, -1},
-		.off = {-1, -1, 48, -1},
-		.rpm = {2850},
+		.on = { -1, -1, 50, -1 },
+		.off = { -1, -1, 48, -1 },
+		.rpm = { 2850 },
 	},
 	{
 		/* level 3 */
-		.on = {-1, -1, 54, -1},
-		.off = {-1, -1, 51, -1},
-		.rpm = {3100},
+		.on = { -1, -1, 54, -1 },
+		.off = { -1, -1, 51, -1 },
+		.rpm = { 3100 },
 	},
 	{
 		/* level 4 */
-		.on = {-1, -1, 57, -1},
-		.off = {-1, -1, 55, -1},
-		.rpm = {3500},
+		.on = { -1, -1, 57, -1 },
+		.off = { -1, -1, 55, -1 },
+		.rpm = { 3500 },
 	},
 	{
 		/* level 5 */
-		.on = {-1, -1, 60, -1},
-		.off = {-1, -1, 58, -1},
-		.rpm = {3900},
+		.on = { -1, -1, 60, -1 },
+		.off = { -1, -1, 58, -1 },
+		.rpm = { 3900 },
 	},
 	{
 		/* level 6 */
-		.on = {-1, -1, 72, -1},
-		.off = {-1, -1, 69, -1},
-		.rpm = {4150},
+		.on = { -1, -1, 72, -1 },
+		.off = { -1, -1, 69, -1 },
+		.rpm = { 4150 },
 	},
 	{
 		/* level 7 */
-		.on = {-1, -1, 74, -1},
-		.off = {-1, -1, 73, -1},
-		.rpm = {4400},
+		.on = { -1, -1, 74, -1 },
+		.off = { -1, -1, 73, -1 },
+		.rpm = { 4400 },
 	},
 };
 
 static const struct fan_step fan0_table_stand[] = {
 	{
 		/* level 0 */
-		.on = {-1, -1, -1, -1},
-		.off = {-1, -1, -1, -1},
-		.rpm = {0},
+		.on = { -1, -1, -1, -1 },
+		.off = { -1, -1, -1, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {-1, -1, 34, -1},
-		.off = {-1, -1, 31, -1},
-		.rpm = {2250},
+		.on = { -1, -1, 34, -1 },
+		.off = { -1, -1, 31, -1 },
+		.rpm = { 2250 },
 	},
 	{
 		/* level 2 */
-		.on = {-1, -1, 42, -1},
-		.off = {-1, -1, 39, -1},
-		.rpm = {2800},
+		.on = { -1, -1, 42, -1 },
+		.off = { -1, -1, 39, -1 },
+		.rpm = { 2800 },
 	},
 	{
 		/* level 3 */
-		.on = {-1, -1, 49, -1},
-		.off = {-1, -1, 48, -1},
-		.rpm = {3150},
+		.on = { -1, -1, 49, -1 },
+		.off = { -1, -1, 48, -1 },
+		.rpm = { 3150 },
 	},
 	{
 		/* level 4 */
-		.on = {-1, -1, 51, -1},
-		.off = {-1, -1, 50, -1},
-		.rpm = {3550},
+		.on = { -1, -1, 51, -1 },
+		.off = { -1, -1, 50, -1 },
+		.rpm = { 3550 },
 	},
 	{
 		/* level 5 */
-		.on = {-1, -1, 53, -1},
-		.off = {-1, -1, 52, -1},
-		.rpm = {3900},
+		.on = { -1, -1, 53, -1 },
+		.off = { -1, -1, 52, -1 },
+		.rpm = { 3900 },
 	},
 	{
 		/* level 6 */
-		.on = {-1, -1, 55, -1},
-		.off = {-1, -1, 54, -1},
-		.rpm = {4150},
+		.on = { -1, -1, 55, -1 },
+		.off = { -1, -1, 54, -1 },
+		.rpm = { 4150 },
 	},
 	{
 		/* level 7 */
-		.on = {-1, -1, 57, -1},
-		.off = {-1, -1, 56, -1},
-		.rpm = {4400},
+		.on = { -1, -1, 57, -1 },
+		.off = { -1, -1, 56, -1 },
+		.rpm = { 4400 },
 	},
 };
 
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan1_table_clamshell)
 
-#define lid_angle_tablet	340
+#define lid_angle_tablet 340
 static int throttle_on;
 
-BUILD_ASSERT(ARRAY_SIZE(fan1_table_clamshell) ==
-	ARRAY_SIZE(fan1_table_tablet));
+BUILD_ASSERT(ARRAY_SIZE(fan1_table_clamshell) == ARRAY_SIZE(fan1_table_tablet));
 
 #define average_time 60
 int fan_table_to_rpm(int fan, int *temp)
@@ -403,7 +404,7 @@ int fan_table_to_rpm(int fan, int *temp)
 	for (j = 0; j < average_time; j++)
 		avg_sum = avg_sum + avg_calc_tmp[TEMP_SENSOR_CPU][j];
 
-	avg_tmp[TEMP_SENSOR_CPU] = avg_sum/average_time;
+	avg_tmp[TEMP_SENSOR_CPU] = avg_sum / average_time;
 
 	/*
 	 * Compare the current and previous temperature, we have
@@ -415,10 +416,10 @@ int fan_table_to_rpm(int fan, int *temp)
 	if (avg_tmp[TEMP_SENSOR_CPU] < prev_tmp[TEMP_SENSOR_CPU]) {
 		for (i = current_level; i >= 0; i--) {
 			if (avg_tmp[TEMP_SENSOR_CPU] <
-				fan_step_table[i].off[TEMP_SENSOR_CPU]) {
-			/*
-			 * fan step down debounce
-			 */
+			    fan_step_table[i].off[TEMP_SENSOR_CPU]) {
+				/*
+				 * fan step down debounce
+				 */
 				if (fan_down_count < 10) {
 					fan_down_count++;
 					fan_up_count = 0;
@@ -433,12 +434,12 @@ int fan_table_to_rpm(int fan, int *temp)
 				break;
 		}
 	} else if (avg_tmp[TEMP_SENSOR_CPU] > prev_tmp[TEMP_SENSOR_CPU]) {
-		for (i = current_level+1; i < NUM_FAN_LEVELS; i++) {
+		for (i = current_level + 1; i < NUM_FAN_LEVELS; i++) {
 			if ((avg_tmp[TEMP_SENSOR_CPU] >
-				 fan_step_table[i].on[TEMP_SENSOR_CPU])) {
-			/*
-			 * fan step up debounce
-			 */
+			     fan_step_table[i].on[TEMP_SENSOR_CPU])) {
+				/*
+				 * fan step up debounce
+				 */
 				if (fan_up_count < 10) {
 					fan_up_count++;
 					fan_down_count = 0;
@@ -495,21 +496,33 @@ void board_override_fan_control(int fan, int *tmp)
 
 void thermal_protect(void)
 {
+	int rv1, rv2;
 	int thermal_sensor1, thermal_sensor2;
 
-	temp_sensor_read(TEMP_SENSOR_5V_REGULATOR, &thermal_sensor1);
-	temp_sensor_read(TEMP_SENSOR_CPU, &thermal_sensor2);
+	rv1 = temp_sensor_read(TEMP_SENSOR_5V_REGULATOR, &thermal_sensor1);
+	rv2 = temp_sensor_read(TEMP_SENSOR_CPU, &thermal_sensor2);
 
-	if ((!lid_is_open()) && (!extpower_is_present())) {
-		if (thermal_sensor2 > C_TO_K(70)) {
-			chipset_throttle_cpu(1);
-			throttle_on = 1;
-		} else if (thermal_sensor2 < C_TO_K(60) && throttle_on) {
-			chipset_throttle_cpu(0);
-			throttle_on = 0;
+	if (rv2 == EC_SUCCESS) {
+		if ((!lid_is_open()) && (!extpower_is_present())) {
+			if (thermal_sensor2 > C_TO_K(70)) {
+				chipset_throttle_cpu(1);
+				throttle_on = 1;
+			} else if (thermal_sensor2 < C_TO_K(60) &&
+				   throttle_on) {
+				chipset_throttle_cpu(0);
+				throttle_on = 0;
+			}
+		} else {
+			if (throttle_on == 1) {
+				chipset_throttle_cpu(0);
+				throttle_on = 0;
+			}
 		}
+	}
 
-		if (thermal_sensor1 > C_TO_K(51))
+	if (rv1 == EC_SUCCESS) {
+		if ((!lid_is_open()) && (!extpower_is_present()) &&
+		    thermal_sensor1 > C_TO_K(51))
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
 	}
 }

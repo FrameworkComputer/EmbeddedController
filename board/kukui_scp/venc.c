@@ -1,17 +1,17 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-#include "chip/mt_scp/ipi_chip.h"
-#include "chip/mt_scp/registers.h"
 #include "console.h"
 #include "hooks.h"
+#include "ipi_chip.h"
+#include "queue.h"
+#include "queue_policies.h"
+#include "registers.h"
 #include "task.h"
 #include "util.h"
 #include "venc.h"
-#include "queue.h"
-#include "queue_policies.h"
 
 #define CPRINTF(format, args...) cprintf(CC_IPI, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
@@ -20,11 +20,11 @@
 static struct consumer const event_venc_consumer;
 static void event_venc_written(struct consumer const *consumer, size_t count);
 
-static struct queue const event_venc_queue = QUEUE_DIRECT(8,
-	struct venc_msg, null_producer, event_venc_consumer);
+static struct queue const event_venc_queue =
+	QUEUE_DIRECT(8, struct venc_msg, null_producer, event_venc_consumer);
 static struct consumer const event_venc_consumer = {
 	.queue = &event_venc_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_venc_written,
 	}),
 };
@@ -33,7 +33,11 @@ static venc_msg_handler mtk_venc_msg_handle[VENC_MAX];
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
-void venc_h264_msg_handler(void *data) {}
+#ifndef HAVE_PRIVATE_MT8186
+void venc_h264_msg_handler(void *data)
+{
+}
+#endif
 #endif
 
 static void event_venc_written(struct consumer const *consumer, size_t count)

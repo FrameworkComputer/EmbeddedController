@@ -27,125 +27,79 @@ The Fingerprint MCU (FPMCU) board has the MCU that handles all
 fingerprint-related functionality (matching, encryption, etc). The fingerprint
 sensor itself connects to the FPMCU board.
 
-This FPMCU board is the Dragonclaw Rev 0.2. |
+<!-- mdformat off(b/139308852) -->
+*** note
+Older revisions of these boards are not supported. If you have an older version
+of the board, please request a replacement.
+***
+<!-- mdformat on -->
+
+This FPMCU board is the Dragonclaw Rev 0.3. |
 ------------------------------------------- |
 ![Dragonclaw board]                         |
 
 Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 
+<!-- mdformat off(b/139308852) -->
 *** note
-**Googlers**: You can pick up the Dragonclaw development board at Chromestop.
+**Googlers**: You can pick up a Dragonclaw development board at Chromestop.
+
 **Partners**: You can request a Dragonclaw development board from Google.
 ***
+<!-- mdformat on -->
 
+This FPMCU board is Icetower Rev 0.1. |
+------------------------------------- |
+![Icetower board]                     |
+
+<!-- mdformat off(b/139308852) -->
 *** note
-Dragonclaw Rev 0.2 needs a [rework](#dragonclaw-rev-0.2-rework) for the FPC
-sensor to work while being powered through Servo. All of the boards at Chromestop
-have already been reworked.
-***
+**Googlers**: You can pick up an Icetower development board at Chromestop.
 
-This FPMCU board is the Dartmonkey Rev 0.1. |
-------------------------------------------- |
-![Dartmonkey board]                         |
+**Partners**: You can request an Icetower development board from Google.
+***
+<!-- mdformat on -->
 
 ### Servo
 
 Servo is a general purpose debug board that connects to a header on the FPMCU
 board. Among other things, the servo supplies power to the FPMCU and can be used
 to program the FPMCU, interact with the EC console, take power measurements, and
-debug a running program. It supports SPI, UART, I2C, as well as JTAG/SWD.
+debug a running program.
 
-There are two different servo debugger setups supported, the
-[Servo Micro](#servo-micro) and the [Servo V2 + Yoshi](#servo-v2-yoshi). The
-servo micro is recommended for its simplicity. It lacks builtin JTAG/SWD support
-for single step debugging, but Dragonclaw v0.2 has an
+There are several variants of Servo and the fingerprint team uses the
+[Servo Micro](#servo-micro) for its simplicity. It lacks builtin JTAG/SWD
+support for single step debugging, but Dragonclaw v0.3 and Icetower v0.1 have an
 [SWD connector](#servo-micro-swd) that can be used.
 
-[Servo Micro](#servo-micro) | [ServoV2 + Yoshi](#servo-v2-yoshi)
---------------------------- | ----------------------------------
-![Servo Micro]              | ServoV2 ![Servo v2] Yoshi Flex ![Standard Yoshi Flex]
+[Servo Micro](#servo-micro) |
+--------------------------- |
+![Servo Micro]              |
 
+<!-- mdformat off(b/139308852) -->
 *** note
-For more information about both servos, see [servo].
+For more information about Servo, see [servo].
 ***
+<!-- mdformat on -->
 
 ### Servo Micro
 
-Unlike the Servo V2, the newer servo micro does not require any adapters to
-interface with the FPMCU board.
+Servo Micro does not require any adapters to interface with the FPMCU board.
 
 As you can see below, one end connects to the FPMCU board and the other connect
 to the developer's computer over micro USB.
 
 ![Servo Micro with Dragonclaw]
 
+<!-- mdformat off(b/139308852) -->
 *** note
 For more information about Servo Micro, see [Servo Micro Info].
 ***
+<!-- mdformat on -->
 
 #### Using SWD (Optional) {#servo-micro-swd}
 
 Instructions for setup are described in [Fingerprint Debugging].
-
-### Servo V2 + Yoshi
-
-Servo V2 is the original full featured debugger. It requires a
-[Yoshi Flex Cable](#yoshi-flex-cable) to interface with the FPMCU.
-
-![Servo v2]
-
-*** note
-NOTE: More information on servo can be found in the [servo] documentation.
-***
-
-#### Yoshi Flex Cable
-
-The Yoshi Flex cable is used to connect Servo v2 to the FPMCU board. The
-standard cable does not work with SWD, but a simple rework can be performed to
-support SWD.
-
-Standard Yoshi Flex    | Yoshi Flex Reworked to Support SWD
----------------------- | -------------------------------------
-![Standard Yoshi Flex] | ![Yoshi Flex Reworked to Support SWD]
-
-Rework steps:
-
-*   Remove R18 and R19
-*   Wire from Pin 6 of U21 to right side of R18
-*   Wire from Pin 6 of U21 to right side of R19
-
-#### Micro USB Cable
-
-A micro USB cable is needed to connect the the servo v2 board to your host Linux
-development machine.
-
-*   [Micro USB Cable]
-
-#### Servo V2 Hardware Setup
-
-1.  Connect the Yoshi Flex cable to servo, paying attention to the pin
-    numbering.
-
-    ![Connect Yoshi Flex] ![Another Yoshi Flex image]
-
-2.  Connect the other end of the Yoshi Flex cable to the servo header on the
-    FPMCU board.
-
-    ![Connect Yoshi Flex to FPMCU board] ![Another image]
-
-3.  Connect the fingerprint sensor to the header on the FPMCU board.
-
-4.  Connect the micro USB cable to servo's `HOST_IN` port. The other end of the
-    USB cable should be plugged into your host development machine.
-
-    ![Connect USB to Servo]
-
-5.  Optional: Connect SWD Debugger
-
-    If you want to use SWD for debugging, connect your debugger to the `JTAG`
-    header on servo v2.
-
-    ![Connect SWD Debugger]
 
 ## Software Setup
 
@@ -168,9 +122,11 @@ Open **two** terminals and enter the chroot in each:
 (outside chroot) $ cros_sdk --no-ns-pid
 ```
 
+<!-- mdformat off(b/139308852) -->
 *** note
 NOTE: More information on servo can be found in the [servo] documentation.
 ***
+<!-- mdformat on -->
 
 In one of the terminals, build and start `servod`
 
@@ -180,10 +136,12 @@ Build and install `servod` in the chroot:
 (chroot) $ sudo emerge hdctools
 ```
 
+<!-- mdformat off(b/139308852) -->
 *** note
 In all of the following commands, replace `<BOARD>` in the command with
 `bloonchipper` or `dartmonkey` depending on the development board you are using.
 ***
+<!-- mdformat on -->
 
 Run `servod`:
 
@@ -292,7 +250,7 @@ Prepare a serial terminal in your chroot:
 Connect to the UART pty:
 
 ```bash
-(chroot) $ sudo screen $(dut-control raw_fpmcu_uart_pty | cut -d: -f2)
+(chroot) $ sudo screen $(dut-control raw_fpmcu_console_uart_pty | cut -d: -f2)
 ```
 
 Press enter key several times (may need to wait up to 20 seconds). Then you will
@@ -348,6 +306,12 @@ You can get a summary of the power over `N` seconds with:
 (chroot) $ dut-control -t N pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
+When measuring the power, make sure that any debuggers are disconnected. The
+most reliable way to make sure it is disconnected is to physically disconnect
+the debugger and servo_micro from the board. Then re-attach servo_micro and
+restart `servod`.
+
+<!-- mdformat off(b/139308852) -->
 *** note
 The `_mv` suffix denotes millivolt and `_mw` suffix denotes milliwatt.
 ***
@@ -355,6 +319,7 @@ The `_mv` suffix denotes millivolt and `_mw` suffix denotes milliwatt.
 *** note
 See [Power Measurement Documentation] for more information.
 ***
+<!-- mdformat on -->
 
 ### Toggling Hardware Write Protect
 
@@ -397,7 +362,7 @@ some docs to help you get started:
 *   [Git: Concepts and Workflow]: Good overview of how `git` actually works.
 *   [Gerrit: Concepts and Workflow]: Good overview of how Gerrit works; assumes
     you understand `git` basics.
-*   [Life of a patch]: Android workflow, but similar to Chrome OS.
+*   [Life of a patch]: Android workflow, but similar to ChromeOS.
 
 The Gerrit dashboard that will show your pending reviews (and ones we have for
 you):
@@ -413,6 +378,7 @@ register for an account on the [Internal Gerrit]. Refer to the
 account, your contact at Google can make sure you have the necessary permissions
 to access the private repository.
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: In order to use a private repository you will have to manually add it
 to the repo manifest file before running `repo sync`. Check with your contact
@@ -435,6 +401,7 @@ at Google for the exact values to use below:
         review="https://chrome-internal-review.googlesource.com" />
 ```
 ***
+<!-- mdformat on -->
 
 ### Tracking Issues and Communication
 
@@ -462,7 +429,7 @@ from the UI.
 
 ### Developer Mode and Write Protection
 
-Make sure that your fingerprint-equipped Chrome OS device is in [developer mode]
+Make sure that your fingerprint-equipped ChromeOS device is in [developer mode]
 with a *test* image flashed and [hardware write protection] disabled. Using the
 test image will allow you to SSH into the device and disabling hardware write
 protection allows you to have full access to flashing the FPMCU firmware.
@@ -509,37 +476,14 @@ From the DUT, flash the firmware you copied:
 ```bash
 (device) $ flash_fp_mcu /tmp/ec.bin
 ```
+
 ## Commit-queue Prototype Environment
 
-![Dragonclaw in CQ Prototype Environment]
+![CQ Prototype Environment]
+
+![FPMCU devboard environment v2 with satlab]
 
 ## Troubleshooting
-
-### Dragonclaw Rev 0.2 Rework {#dragonclaw-rev-0.2-rework}
-
-*** note
-**NOTE**: All Dragonclaw v0.2 boards have been reworked, so it is not necessary
-to perform the rework yourself.
-***
-
-Dragonclaw **Rev 0.2** has two load switches (`U4` and `U6`) that enable the
-1.8V power rail from the servo connector or motherboard connector. However, this
-switch is not compatible with 1.8V, so will always output 0V.
-
-The [rework document][Dragonclaw Rev 0.2 1.8V Rework] describes replacing these
-two switches with ones compatible with 1.8V.
-
-### Dragonclaw Rev 0.1 Servo Fix
-
-Dragonclaw **Rev 0.1** has a known issue with UART and JTAG. Most notably, this
-issue causes servo micro to fail to program the FPMCU over UART.
-
-This issue can be fixed with the following rework steps:
-
-*   Connect servo header pin 13 to pin 18
-*   Connect servo header pin 13 to pin 29
-
-![Dragonclaw servo fix diagram]
 
 ### Verify that servo and debugger are connected to USB {#servo-connected}
 
@@ -552,7 +496,7 @@ supply.
 (chroot) $ lsusb
 
 Bus 002 Device 003: ID 0897:0004 Lauterbach  # ← This is my Lauterbach (debugger)
-Bus 001 Device 013: ID 18d1:5002 Google Inc. # ← This is servo
+Bus 001 Device 013: ID 18d1:5002 Google LLC # ← This is servo
 ```
 
 ### "No servos found" when running servod
@@ -584,27 +528,27 @@ Make sure that this interface is disabled:
 <!-- Links -->
 
 [EC]: https://chromium.googlesource.com/chromiumos/platform/ec
-[ectool_servo_spi]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/util/comm-servo-spi.c#15
-[servo]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/README.md
-[developer mode]: https://chromium.googlesource.com/chromiumos/docs/+/master/debug_buttons.md#firmware-keyboard-interface
-[hardware write protection]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/docs/write_protection.md
-[have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#Prerequisites
-[get the source]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#get-the-source
-[enter the `chroot`]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#building-chromium-os
-[Chromium OS Contributing Guide]: https://chromium.googlesource.com/chromiumos/docs/+/master/contributing.md
-[Servo Micro Info]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/servo_micro.md
-[Set your editor]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#Set-your-editor
+[ectool_servo_spi]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/comm-servo-spi.c#15
+[servo]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/README.md
+[developer mode]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/debug_buttons.md#firmware-keyboard-interface
+[hardware write protection]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/write_protection.md
+[have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Prerequisites
+[get the source]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#get-the-source
+[enter the `chroot`]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#building-chromium-os
+[Chromium OS Contributing Guide]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/contributing.md
+[Servo Micro Info]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servo_micro.md
+[Set your editor]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Set-your-editor
 [Life of a patch]: https://source.android.com/setup/contribute/life-of-a-patch
 [Git: Concepts and Workflow]: https://docs.google.com/presentation/d/1IQCRPHEIX-qKo7QFxsD3V62yhyGA9_5YsYXFOiBpgkk/
 [Gerrit: Concepts and Workflow]: https://docs.google.com/presentation/d/1C73UgQdzZDw0gzpaEqIC6SPujZJhqamyqO1XOHjH-uk/
 [Public Gerrit]: https://chromium-review.googlesource.com
-[Power Measurement Documentation]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/power_measurement.md
+[Power Measurement Documentation]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/power_measurement.md
 [Internal Gerrit]: https://chrome-internal-review.googlesource.com
 [Gerrit Credentials Setup]: https://www.chromium.org/chromium-os/developer-guide/gerrit-guide
 [Micro USB Cable]: https://www.monoprice.com/product?p_id=9762
 [PNM]: https://en.wikipedia.org/wiki/Netpbm_format
-[Git and Gerrit Intro for Chromium OS]: https://chromium.googlesource.com/chromiumos/docs/+/master/git_and_gerrit_intro.md
-[Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#installing-chromium-os-on-your-device
+[Git and Gerrit Intro for Chromium OS]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/git_and_gerrit_intro.md
+[Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#installing-chromium-os-on-your-device
 [FPMCU documentation]: ./fingerprint.md
 [Fingerprint Debugging]: ./fingerprint-debugging.md
 [dragonclaw schematics]: ../schematics/dragonclaw
@@ -613,24 +557,21 @@ Make sure that this interface is disabled:
 
 [Servo Micro]: ../images/servo_micro.jpg
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
-[Servo v2]: ../images/servo_v2.jpg
-[Standard Yoshi Flex]: ../images/yoshi_flex.jpg
-[Yoshi Flex Reworked to Support SWD]: ../images/yoshi_flex_swd_rework.jpg
-[Dragonclaw board]: ../images/dragonclaw_rev_0.2.jpg
+[Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
-[Connect USB to Servo]: ../images/servo_v2_with_micro_usb.jpg
-[Connect Yoshi Flex]: ../images/servo_v2_with_yoshi_flex.jpg
-[Another Yoshi Flex image]: ../images/servo_v2_with_yoshi_flex2.jpg
-[Connect Yoshi Flex to FPMCU board]: ../images/dragonclaw_yoshi_flex_header.jpg
-[Another image]: ../images/dragonclaw_yoshi_flex_header2.jpg
-[Connect SWD Debugger]: ../images/servo_v2_jtag_header.jpg
-[Dartmonkey board]: ../images/dartmonkey.jpg
+[Icetower board]: ../images/icetower_v0.1.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->
 
 <!-- https://docs.google.com/drawings/d/1YhOUD-Qf69NUdugT6n0cX7o7CWvb5begcdmJwv7ch6I -->
-[Dragonclaw Rev 0.2 1.8V Rework]: https://github.com/coreboot/chrome-ec/blob/master/docs/images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
+
+[Dragonclaw Rev 0.2 1.8V Rework]: https://github.com/coreboot/chrome-ec/blob/HEAD/docs/images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
 
 <!-- https://docs.google.com/drawings/d/1w2qbb4AsSxY-KTK2vXZ6TKeWHveWvS3Dkgh61ocu0wc -->
-[Dragonclaw in CQ Prototype Environment]: ../images/Dragonclaw_in_CQ_Prototype_Environment.jpg
+
+[CQ Prototype Environment]: ../images/CQ_Prototype_Environment.jpg
+
+<!-- https://docs.google.com/drawings/d/13hsnPBa1aeMVU7CjrK1nz-aeYSQcdLxrylOEJNOiEA0 -->
+
+[FPMCU devboard environment v2 with satlab]: ../images/FPMCU_devboard_environment_v2_with_Satlab.jpg

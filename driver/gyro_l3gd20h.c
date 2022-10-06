@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,8 +17,8 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
 /*
  * Struct for pairing an engineering value with the register value for a
@@ -33,15 +33,13 @@ struct gyro_param_pair {
  * List of angular rate range values in +/-dps's
  * and their associated register values.
  */
-const struct gyro_param_pair dps_ranges[] = {
-	{245, L3GD20_DPS_SEL_245},
-	{500, L3GD20_DPS_SEL_500},
-	{2000, L3GD20_DPS_SEL_2000_0},
-	{2000, L3GD20_DPS_SEL_2000_1}
-};
+const struct gyro_param_pair dps_ranges[] = { { 245, L3GD20_DPS_SEL_245 },
+					      { 500, L3GD20_DPS_SEL_500 },
+					      { 2000, L3GD20_DPS_SEL_2000_0 },
+					      { 2000, L3GD20_DPS_SEL_2000_1 } };
 
-static inline const struct gyro_param_pair *get_range_table(
-		enum motionsensor_type type, int *psize)
+static inline const struct gyro_param_pair *
+get_range_table(enum motionsensor_type type, int *psize)
 {
 	if (psize)
 		*psize = ARRAY_SIZE(dps_ranges);
@@ -50,19 +48,19 @@ static inline const struct gyro_param_pair *get_range_table(
 
 /* List of ODR values in mHz and their associated register values. */
 const struct gyro_param_pair gyro_odr[] = {
-	{0,      L3GD20_ODR_PD | L3GD20_LOW_ODR_MASK},
-	{12500,  L3GD20_ODR_12_5HZ | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK},
-	{25000,  L3GD20_ODR_25HZ | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK},
-	{50000,  L3GD20_ODR_50HZ_0 | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK},
-	{50000,  L3GD20_ODR_50HZ_1 | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK},
-	{100000, L3GD20_ODR_100HZ | L3GD20_ODR_PD_MASK},
-	{200000, L3GD20_ODR_200HZ | L3GD20_ODR_PD_MASK},
-	{400000, L3GD20_ODR_400HZ | L3GD20_ODR_PD_MASK},
-	{800000, L3GD20_ODR_800HZ | L3GD20_ODR_PD_MASK},
+	{ 0, L3GD20_ODR_PD | L3GD20_LOW_ODR_MASK },
+	{ 12500, L3GD20_ODR_12_5HZ | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK },
+	{ 25000, L3GD20_ODR_25HZ | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK },
+	{ 50000, L3GD20_ODR_50HZ_0 | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK },
+	{ 50000, L3GD20_ODR_50HZ_1 | L3GD20_ODR_PD_MASK | L3GD20_LOW_ODR_MASK },
+	{ 100000, L3GD20_ODR_100HZ | L3GD20_ODR_PD_MASK },
+	{ 200000, L3GD20_ODR_200HZ | L3GD20_ODR_PD_MASK },
+	{ 400000, L3GD20_ODR_400HZ | L3GD20_ODR_PD_MASK },
+	{ 800000, L3GD20_ODR_800HZ | L3GD20_ODR_PD_MASK },
 };
 
-static inline const struct gyro_param_pair *get_odr_table(
-		enum motionsensor_type type, int *psize)
+static inline const struct gyro_param_pair *
+get_odr_table(enum motionsensor_type type, int *psize)
 {
 	if (psize)
 		*psize = ARRAY_SIZE(gyro_odr);
@@ -86,14 +84,14 @@ static inline int get_xyz_reg(enum motionsensor_type type)
  * outside the range of values, it returns the closest valid reg value.
  */
 static int get_reg_val(const int eng_val, const int round_up,
-		const struct gyro_param_pair *pairs, const int size)
+		       const struct gyro_param_pair *pairs, const int size)
 {
 	int i;
 	for (i = 0; i < size - 1; i++) {
 		if (eng_val <= pairs[i].val)
 			break;
 
-		if (eng_val < pairs[i+1].val) {
+		if (eng_val < pairs[i + 1].val) {
 			if (round_up)
 				i += 1;
 			break;
@@ -106,7 +104,8 @@ static int get_reg_val(const int eng_val, const int round_up,
  * @return engineering value that matches the given reg val
  */
 static int get_engineering_val(const int reg_val,
-		const struct gyro_param_pair *pairs, const int size)
+			       const struct gyro_param_pair *pairs,
+			       const int size)
 {
 	int i;
 	for (i = 0; i < size; i++) {
@@ -120,7 +119,7 @@ static int get_engineering_val(const int reg_val,
  * Read register from Gyrometer.
  */
 static inline int raw_read8(const int port, const int addr, const int reg,
-							int *data_ptr)
+			    int *data_ptr)
 {
 	return i2c_read8(port, addr, reg, data_ptr);
 }
@@ -129,19 +128,16 @@ static inline int raw_read8(const int port, const int addr, const int reg,
  * Write register from Gyrometer.
  */
 static inline int raw_write8(const int port, const int addr, const int reg,
-							 int data)
+			     int data)
 {
 	return i2c_write8(port, addr, reg, data);
 }
 
-static int set_range(const struct motion_sensor_t *s,
-				int range,
-				int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int ret, ctrl_val, range_tbl_size;
 	uint8_t ctrl_reg, reg_val;
 	const struct gyro_param_pair *ranges;
-	struct l3gd20_data *data = (struct l3gd20_data *)s->drv_data;
 
 	ctrl_reg = L3GD20_CTRL_REG4;
 	ranges = get_range_table(s->type, &range_tbl_size);
@@ -163,19 +159,12 @@ static int set_range(const struct motion_sensor_t *s,
 
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->base.range = get_engineering_val(reg_val, ranges,
-							 range_tbl_size);
+		s->current_range =
+			get_engineering_val(reg_val, ranges, range_tbl_size);
 
 gyro_cleanup:
 	mutex_unlock(s->mutex);
 	return EC_SUCCESS;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct l3gd20_data *data = (struct l3gd20_data *)s->drv_data;
-
-	return data->base.range;
 }
 
 static int get_resolution(const struct motion_sensor_t *s)
@@ -183,9 +172,7 @@ static int get_resolution(const struct motion_sensor_t *s)
 	return L3GD20_RESOLUTION;
 }
 
-static int set_data_rate(const struct motion_sensor_t *s,
-				int rate,
-				int rnd)
+static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	int ret, val, odr_tbl_size;
 	uint8_t ctrl_reg, reg_val;
@@ -207,13 +194,13 @@ static int set_data_rate(const struct motion_sensor_t *s,
 		goto gyro_cleanup;
 
 	val = (val & ~(L3GD20_ODR_MASK | L3GD20_ODR_PD_MASK)) |
-		(reg_val & ~L3GD20_LOW_ODR_MASK);
+	      (reg_val & ~L3GD20_LOW_ODR_MASK);
 	ret = raw_write8(s->port, s->addr, ctrl_reg, val);
 
 	/* Now that we have set the odr, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->base.odr = get_engineering_val(reg_val, data_rates,
-						       odr_tbl_size);
+		data->base.odr =
+			get_engineering_val(reg_val, data_rates, odr_tbl_size);
 
 	ret = raw_read8(s->port, s->addr, L3GD20_LOW_ODR, &val);
 	if (ret != EC_SUCCESS)
@@ -271,9 +258,8 @@ static int get_data_rate(const struct motion_sensor_t *s)
 	return data->base.odr;
 }
 
-static int set_offset(const struct motion_sensor_t *s,
-			const int16_t *offset,
-			int16_t    temp)
+static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
+		      int16_t temp)
 {
 	/* temperature is ignored */
 	struct l3gd20_data *data = s->drv_data;
@@ -283,9 +269,8 @@ static int set_offset(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int get_offset(const struct motion_sensor_t *s,
-			int16_t    *offset,
-			int16_t    *temp)
+static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
+		      int16_t *temp)
 {
 	struct l3gd20_data *data = s->drv_data;
 	offset[X] = data->offset[X];
@@ -349,14 +334,14 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	rotate(v, *s->rot_standard_ref, v);
 
 	/* apply offset in the device coordinates */
-	range = get_range(s);
+	range = s->current_range;
 	for (i = X; i <= Z; i++)
 		v[i] += (data->offset[i] << 5) / range;
 
 	return EC_SUCCESS;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 
@@ -392,7 +377,6 @@ const struct accelgyro_drv l3gd20h_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,

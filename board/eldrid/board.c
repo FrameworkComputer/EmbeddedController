@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,6 +16,7 @@
 #include "driver/ppc/syv682x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
 #include "extpower.h"
@@ -23,6 +24,8 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "isl9241.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "keyboard_scan.h"
@@ -45,10 +48,10 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/* Increase from 50 us, because KSO_02 passes through the H1. */
 	.output_settle_us = 80,
 	/* Other values should be the same as the default configuration. */
@@ -71,10 +74,58 @@ union volteer_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB3_ACTIVE,
 };
 
+static void board_charger_config(void)
+{
+	/*
+	 * b/166728543, we configured charger setting to throttle CPU
+	 * when the system loading is at battery current limit.
+	 */
+	int reg;
+
+	/*
+	 * Set DCProchot# to 5120mA
+	 */
+	isl9241_set_dc_prochot(CHARGER_SOLO, 5120);
+
+	/*
+	 * Set Control1 bit<3> = 1, PSYS = 1
+	 */
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		       ISL9241_REG_CONTROL1, &reg) == EC_SUCCESS) {
+		reg |= ISL9241_CONTROL1_PSYS;
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+				ISL9241_REG_CONTROL1, reg))
+			CPRINTS("Failed to set isl9241");
+	}
+
+	/*
+	 * Set Control2 bit<10:9> = 00, PROCHOT# Debounce = 7us
+	 */
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		       ISL9241_REG_CONTROL2, &reg) == EC_SUCCESS) {
+		reg &= ~ISL9241_CONTROL2_PROCHOT_DEBOUNCE_MASK;
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+				ISL9241_REG_CONTROL2, reg))
+			CPRINTS("Failed to set isl9241");
+	}
+
+	/*
+	 * Set Control4 bit<11> = 1, PSYS Rsense Ratio = 1:1
+	 */
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		       ISL9241_REG_CONTROL4, &reg) == EC_SUCCESS) {
+		reg |= ISL9241_CONTROL4_PSYS_RSENSE_RATIO;
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+				ISL9241_REG_CONTROL4, reg))
+			CPRINTS("Failed to set isl9241");
+	}
+}
+
 static void board_init(void)
 {
 	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 100);
+	board_charger_config();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -115,23 +166,30 @@ __override bool board_is_tbt_usb4_port(int port)
 	 * TODO (b/147732807): All the USB-C ports need to support same
 	 * features. Need to fix once USB-C feature set is known for Volteer.
 	 */
-	return ((port == USBC_PORT_C1)
-		&& ((usb_db == DB_USB4_GEN2) || (usb_db == DB_USB4_GEN3)));
+	return ((port == USBC_PORT_C1) &&
+		((usb_db == DB_USB4_GEN2) || (usb_db == DB_USB4_GEN3)));
 }
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+				       int max_ma, int charge_mv)
 {
 	/*
-	 * Follow OEM request to limit the input current to
-	 * 90% negotiated limit when S0.
+	 * b/166728543
+	 * Set different AC_PROCHOT value when using different wattage ADT.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		charge_ma = charge_ma * 90 / 100;
+	if (max_ma * charge_mv == PD_MAX_POWER_MW * 1000)
+		isl9241_set_ac_prochot(0, 3840);
+	else
+		isl9241_set_ac_prochot(0, 3328);
 
-	charge_set_input_current_limit(MAX(charge_ma,
-					CONFIG_CHARGER_INPUT_CURRENT),
-					charge_mv);
+	/*
+	 * Follow OEM request to limit the input current to
+	 * 90% negotiated limit.
+	 */
+	charge_ma = charge_ma * 90 / 100;
+
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /******************************************************************************/
@@ -139,7 +197,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
@@ -256,11 +314,10 @@ static const struct tcpc_config_t tcpc_config_p1_usb3 = {
 	.bus_type = EC_BUS_TYPE_I2C,
 	.i2c_info = {
 		.port = I2C_PORT_USB_C1,
-		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 	},
 	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
 	.drv = &ps8xxx_tcpm_drv,
-	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 };
 
 /*
@@ -268,24 +325,33 @@ static const struct tcpc_config_t tcpc_config_p1_usb3 = {
  * virtual_usb_mux_driver so the AP gets notified of mux changes and updates
  * the TCSS configuration on state changes.
  */
-static const struct usb_mux usbc1_usb3_db_retimer = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &tcpci_tcpm_usb_mux_driver,
-	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	.next_mux = NULL,
+static const struct usb_mux_chain usbc1_usb3_db_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		},
+	.next = NULL,
 };
 
-static const struct usb_mux mux_config_p1_usb3_active = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-	.next_mux = &usbc1_usb3_db_retimer,
+static const struct usb_mux_chain mux_config_p1_usb3_active = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
+	.next = &usbc1_usb3_db_retimer,
 };
 
-static const struct usb_mux mux_config_p1_usb3_passive = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
+static const struct usb_mux_chain mux_config_p1_usb3_passive = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
 };
 
 /******************************************************************************/
@@ -302,8 +368,7 @@ static void ps8815_reset(void)
 	int val;
 
 	gpio_set_level(ps8xxx_rst_odl, 0);
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
-			   PS8815_PWR_H_RST_H_DELAY_MS));
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS, PS8815_PWR_H_RST_H_DELAY_MS));
 	gpio_set_level(ps8xxx_rst_odl, 1);
 	msleep(PS8815_FW_INIT_DELAY_MS);
 
@@ -314,16 +379,16 @@ static void ps8815_reset(void)
 
 	CPRINTS("%s: patching ps8815 registers", __func__);
 
-	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_USB_C1, PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) ==
+	    EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
 
-	if (i2c_write8(I2C_PORT_USB_C1,
-		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+	if (i2c_write8(I2C_PORT_USB_C1, PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f,
+		       0x31) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f set to 0x31");
 
-	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_USB_C1, PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) ==
+	    EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
 
@@ -335,7 +400,9 @@ void board_reset_pd_mcu(void)
 	/* Daughterboard specific reset for port 1 */
 	if (usb_db == DB_USB3_ACTIVE) {
 		ps8815_reset();
-		usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
+		usb_mux_hpd_update(USBC_PORT_C1,
+				   USB_PD_MUX_HPD_LVL_DEASSERTED |
+					   USB_PD_MUX_HPD_IRQ_DEASSERTED);
 	}
 }
 
@@ -365,10 +432,28 @@ static void config_db_usb3_passive(void)
 	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3_passive;
 }
 
+static void config_port_discrete_tcpc(int port)
+{
+	/*
+	 * Support 2 Pin-to-Pin compatible parts: TUSB422 and RT1715, for
+	 * simplicity allow either and decide which we are using.
+	 * Default to TUSB422, and switch to RT1715 after BOARD_ID >=1.
+	 */
+	if (get_board_id() >= 1) {
+		CPRINTS("C%d: RT1715", port);
+		tcpc_config[port].i2c_info.addr_flags = RT1715_I2C_ADDR_FLAGS;
+		tcpc_config[port].drv = &rt1715_tcpm_drv;
+		return;
+	}
+	CPRINTS("C%d: Default to TUSB422", port);
+}
+
 static const char *db_type_prefix = "USB DB type: ";
 __override void board_cbi_init(void)
 {
 	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
+
+	config_port_discrete_tcpc(0);
 
 	switch (usb_db) {
 	case DB_USB_ABSENT:
@@ -395,6 +480,13 @@ __override void board_cbi_init(void)
 	if ((!IS_ENABLED(TEST_BUILD) && !ec_cfg_has_numeric_pad()) ||
 	    get_board_id() < 1)
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+
+	/*
+	 * If keyboard is US2(KB_LAYOUT_1), we need translate right ctrl
+	 * to backslash(\|) key.
+	 */
+	if (ec_cfg_keyboard_layout() == KB_LAYOUT_1)
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
 }
 
 /******************************************************************************/
@@ -453,7 +545,6 @@ struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
 		},
 		.drv = &tusb422_tcpm_drv,
-		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -462,7 +553,6 @@ struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
 		},
 		.drv = &tusb422_tcpm_drv,
-		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -470,16 +560,20 @@ BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
 	},
 	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C1,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);

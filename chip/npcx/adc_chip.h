@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
-#include "adc.h"
+#include "common.h"
 
 /* Minimum and maximum values returned by raw ADC read. */
 #define ADC_READ_MIN 0
@@ -32,7 +32,7 @@ enum npcx_adc_input_channel {
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
 	NPCX_ADC_CH10,
 	NPCX_ADC_CH11,
- #endif
+#endif
 	NPCX_ADC_CH_COUNT
 };
 
@@ -44,12 +44,6 @@ struct adc_t {
 	int factor_div;
 	int shift;
 };
-
-/*
- * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board.
- */
-extern const struct adc_t adc_channels[];
 
 /*
  * Boards may configure a ADC channel for use with thershold interrupts.

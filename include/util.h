@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,11 +10,20 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
-#include "panic.h"
 
-#include "builtin/assert.h"         /* For ASSERT(). */
+#include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/sys/util.h>
+/**
+ * TODO(b/237712836): Remove once Zephyr's libc has strcasecmp.
+ */
+#include "builtin/strings.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,26 +33,29 @@ extern "C" {
 #define GENERIC_MAX(x, y) ((x) > (y) ? (x) : (y))
 #define GENERIC_MIN(x, y) ((x) < (y) ? (x) : (y))
 #ifndef MAX
-#define MAX(a, b)					\
-	({						\
-		__typeof__(a) temp_a = (a);		\
-		__typeof__(b) temp_b = (b);		\
-							\
-		GENERIC_MAX(temp_a, temp_b);		\
+#define MAX(a, b)                            \
+	({                                   \
+		__typeof__(a) temp_a = (a);  \
+		__typeof__(b) temp_b = (b);  \
+                                             \
+		GENERIC_MAX(temp_a, temp_b); \
 	})
 #endif
 #ifndef MIN
-#define MIN(a, b)					\
-	({						\
-		__typeof__(a) temp_a = (a);		\
-		__typeof__(b) temp_b = (b);		\
-							\
-		GENERIC_MIN(temp_a, temp_b);		\
+#define MIN(a, b)                            \
+	({                                   \
+		__typeof__(a) temp_a = (a);  \
+		__typeof__(b) temp_b = (b);  \
+                                             \
+		GENERIC_MIN(temp_a, temp_b); \
 	})
 #endif
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
+
+/* Returns true if string is not null and not empty */
+#define IS_NONEMPTY_STRING(s) ((s) && (s)[0])
 
 /**
  * Ensure that value `v` is between `min` and `max`.
@@ -54,27 +66,31 @@ extern "C" {
  * @return `v` if it is already between `min`/`max`, `min` if `v` was smaller
  * than `min`, `max` if `v` was bigger than `max`.
  */
+#ifndef CONFIG_ZEPHYR
 #define CLAMP(v, min, max) MIN(max, MAX(v, min))
+#endif
 
 /*
  * Convert a pointer to a base struct into a pointer to the struct that
  * contains the base struct.  This requires knowing where in the contained
  * struct the base struct resides, this is the member parameter to downcast.
  */
-#define DOWNCAST(pointer, type, member)					\
-	((type *)(((uint8_t *) pointer) - offsetof(type, member)))
+#define DOWNCAST(pointer, type, member) \
+	((type *)(((uint8_t *)pointer) - offsetof(type, member)))
 
 /* True of x is a power of two */
-#define POWER_OF_TWO(x) ((x) && !((x) & ((x) - 1)))
+#define POWER_OF_TWO(x) ((x) && !((x) & ((x)-1)))
 
 /* Macro to check if the value is in range */
-#define IN_RANGE(x, min, max) ((x) >= (min) && (x) < (max))
+#ifndef CONFIG_ZEPHYR
+#define IN_RANGE(x, min, max) ((x) >= (min) && (x) <= (max))
+#endif
 
 /*
  * macros for integer division with various rounding variants
  * default integer division rounds down.
  */
-#define DIV_ROUND_UP(x, y) (((x) + ((y) - 1)) / (y))
+#define DIV_ROUND_UP(x, y) (((x) + ((y)-1)) / (y))
 #define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
 
 /*
@@ -83,48 +99,18 @@ extern "C" {
  * Swapping composites (e.g. a+b, x++) doesn't make sense. So, <a> and <b>
  * can only be a variable (x) or a pointer reference (*x) without operator.
  */
-#define swap(a, b) \
-	do { \
+#define swap(a, b)               \
+	do {                     \
 		typeof(a) __t__; \
-		__t__ = a; \
-		a = b; \
-		b = __t__; \
+		__t__ = a;       \
+		a = b;           \
+		b = __t__;       \
 	} while (0)
-
-#ifndef HIDE_EC_STDLIB
-
-/* Standard library functions */
-int atoi(const char *nptr);
-int isdigit(int c);
-int isspace(int c);
-int isalpha(int c);
-int isupper(int c);
-int isprint(int c);
-int memcmp(const void *s1, const void *s2, size_t len);
-void *memcpy(void *dest, const void *src, size_t len);
-void *memset(void *dest, int c, size_t len);
-void *memmove(void *dest, const void *src, size_t len);
-void *memchr(const void *buffer, int c, size_t n);
-int strcasecmp(const char *s1, const char *s2);
-int strncasecmp(const char *s1, const char *s2, size_t size);
-
-/**
- * Find the first occurrence of the substring <s2> in the string <s1>
- *
- * @param s1	String where <s2> is searched.
- * @param s2	Substring to be located in <s1>
- * @return	Pointer to the located substring or NULL if not found.
- */
-char *strstr(const char *s1, const char *s2);
-
-size_t strlen(const char *s);
-size_t strnlen(const char *s, size_t maxlen);
-char *strncpy(char *dest, const char *src, size_t n);
-int strncmp(const char *s1, const char *s2, size_t n);
 
 /* Like strtol(), but for integers. */
 int strtoi(const char *nptr, char **endptr, int base);
-uint64_t strtoul(const char *nptr, char **endptr, int base);
+
+unsigned long long int strtoull(const char *nptr, char **endptr, int base);
 
 /* Like strncpy(), but guarantees null termination. */
 char *strzcpy(char *dest, const char *src, int len);
@@ -147,9 +133,6 @@ char *strzcpy(char *dest, const char *src, int len);
  * Other strings return 0 and leave *dest unchanged.
  */
 int parse_bool(const char *s, int *dest);
-
-int tolower(int c);
-#endif  /* !HIDE_EC_STDLIB */
 
 /**
  * Constant time implementation of memcmp to avoid timing side channels.
@@ -196,11 +179,21 @@ bool bytes_are_trivial(const uint8_t *buffer, size_t size);
 bool is_aligned(uint32_t addr, uint32_t align);
 
 /**
+ * Get the alignment of x; the number of trailing zero bits.
+ *
+ * x must not be zero, otherwise the result is undefined (and will panic
+ * in debug builds).
+ *
+ * @return the number of consecutive zero bits in x starting from the lsb
+ */
+int alignment_log2(unsigned int x);
+
+/**
  * Reverse's the byte-order of the provided buffer.
  */
 void reverse(void *dest, size_t len);
 
-
+int find_base(int base, int *c, const char **nptr);
 /****************************************************************************/
 /* Conditional stuff.
  *
@@ -227,25 +220,49 @@ typedef uint8_t cond_t;
 
 /* Initialize a conditional to a specific state. Do this first. */
 void cond_init(cond_t *c, int boolean);
-static inline void cond_init_false(cond_t *c) { cond_init(c, 0); }
-static inline void cond_init_true(cond_t *c) { cond_init(c, 1); }
+static inline void cond_init_false(cond_t *c)
+{
+	cond_init(c, 0);
+}
+static inline void cond_init_true(cond_t *c)
+{
+	cond_init(c, 1);
+}
 
 /* Set the current state. Do this as often as you like. */
 void cond_set(cond_t *c, int boolean);
-static inline void cond_set_false(cond_t *c) { cond_set(c, 0); }
-static inline void cond_set_true(cond_t *c) { cond_set(c, 1); }
+static inline void cond_set_false(cond_t *c)
+{
+	cond_set(c, 0);
+}
+static inline void cond_set_true(cond_t *c)
+{
+	cond_set(c, 1);
+}
 
 /* Get the current state. Do this as often as you like. */
 int cond_is(cond_t *c, int boolean);
-static inline int cond_is_false(cond_t *c) { return cond_is(c, 0); }
-static inline int cond_is_true(cond_t *c) { return cond_is(c, 1); }
+static inline int cond_is_false(cond_t *c)
+{
+	return cond_is(c, 0);
+}
+static inline int cond_is_true(cond_t *c)
+{
+	return cond_is(c, 1);
+}
 
 /* See if the state has transitioned. If it has, the corresponding function
  * will return true ONCE only, until it's changed back.
  */
 int cond_went(cond_t *c, int boolean);
-static inline int cond_went_false(cond_t *c) { return cond_went(c, 0); }
-static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
+static inline int cond_went_false(cond_t *c)
+{
+	return cond_went(c, 0);
+}
+static inline int cond_went_true(cond_t *c)
+{
+	return cond_went(c, 1);
+}
 
 /****************************************************************************/
 /* Console command parsing */
@@ -253,8 +270,8 @@ static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
 /* Parse command-line arguments given integer shift value to obtain
  * offset and size.
  */
-int parse_offset_size(int argc, char **argv, int shift,
-			     int *offset, int *size);
+int parse_offset_size(int argc, const char **argv, int shift, int *offset,
+		      int *size);
 
 /**
  * Print binary in hex and ASCII
@@ -308,8 +325,58 @@ static inline uint64_t mulaa32(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
  */
 void wait_for_ready(volatile uint32_t *reg, uint32_t enable, uint32_t ready);
 
+/**
+ * Convert the ternary bit array (each element is either 0, 1, or 2) to a
+ * non-standard ternary number system where the first 2^n natural numbers are
+ * represented as they would be in a binary system (without any Z digits) and
+ * the following 3^n-2^n numbers use the remaining ternary representations in
+ * the normal ternary system order (skipping the values that were already used
+ * up).
+ *
+ * This function is useful for converting BOARD ID, which is initially used a
+ * binary and later decided to switch to tri-state after some revisions have
+ * already been built.
+ *
+ * Example: For nbits = 2 we get the following representation:
+ *
+ *   Number      X1     X0
+ *     0          0      0
+ *     1          0      1
+ *     2          1      0
+ *     3          1      1	// Start counting ternaries back at 0 after this
+ *     4          0      2	// Skipping 00 and 01 which are already used up
+ *     5          1      2	// Skipping 10 and 11 which are already used up
+ *     6          2      0
+ *     7          2      1
+ *     8          2      2
+ *
+ * @param bits		Array of ternary bits (LSB first).
+ * @param nbits		Total number of bits.
+ * @return Number in the binary-first ternary number system.
+ */
+int binary_first_base3_from_bits(int *bits, int nbits);
+
+/**
+ * Convert the binary bit array to integer value.
+ *
+ * @param bits    array of integers with values of 0 and 1
+ * @param nbits   number of bits to decode
+ * @return        integer decoded from bits
+ */
+int binary_from_bits(int *bits, int nbits);
+
+/**
+ * Convert the ternary bit array to integer value.
+ * This function is used to handle 'Z' state of gpio as value of '2'.
+ *
+ * @param bits    array of integers with values of 0, 1 or 2
+ * @param nbits   number of bits to decode
+ * @return        integer decoded from bits
+ */
+int ternary_from_bits(int *bits, int nbits);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __CROS_EC_UTIL_H */
+#endif /* __CROS_EC_UTIL_H */

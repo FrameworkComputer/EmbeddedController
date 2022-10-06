@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -43,11 +43,9 @@ static struct stprivate_data g_lis2dh_data;
 static struct lis2mdl_private_data lis2mdl_a_data;
 
 /* Matrix to rotate base sensor into standard reference frame */
-const mat33_fp_t base_rot_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_rot_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				  { FLOAT_TO_FP(-1), 0, 0 },
+				  { 0, 0, FLOAT_TO_FP(1) } };
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
@@ -61,8 +59,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_a_data,
 				MOTIONSENSE_TYPE_ACCEL),
-		.int_signal = GPIO_ACCEL_GYRO_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.rot_standard_ref = NULL,
@@ -91,8 +87,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_a_data,
 				MOTIONSENSE_TYPE_GYRO),
-		.int_signal = GPIO_ACCEL_GYRO_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */

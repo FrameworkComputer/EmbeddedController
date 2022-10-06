@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,14 +13,14 @@ GPIO_INT(USB_C1_PD_INT_ODL,	PIN(C, 5), GPIO_INT_FALLING,			tcpc_alert_event)
 #ifdef CONFIG_POWER_S0IX
 GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3
 #ifdef BOARD_LUX
 GPIO_INT(PCH_SLP_S3_L,		PIN(2, 2), GPIO_INT_BOTH,			power_signal_interrupt)
 #else
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif
-#endif /* CONFIG_HOSTCMD_ESPI_VW_SLP_S3 */
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#endif /* CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3 */
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif
 GPIO_INT(PCH_SLP_SUS_L,		PIN(6, 2), GPIO_INT_BOTH,			power_signal_interrupt)
@@ -117,7 +117,7 @@ GPIO(PPVAR_VAR_BASE,		PIN(1, 2), GPIO_OUT_LOW)
 #else
 GPIO(PP3300_DX_BASE,		PIN(1, 1), GPIO_OUT_LOW)
 GPIO(TP_EC_GPIO_07,		PIN(0, 7), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(TP_EC_GPIO_10,		PIN(1, 0), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(TP_EC_GPIO_10,		PIN(1, 0), GPIO_INPUT)
 GPIO(TP_EC_GPIO_15,		PIN(1, 5), GPIO_INPUT | GPIO_PULL_UP)
 #endif
 

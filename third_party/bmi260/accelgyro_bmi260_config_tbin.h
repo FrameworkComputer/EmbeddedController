@@ -700,4 +700,3 @@ const unsigned char __init_rom g_bmi260_config_tbin[] = {
 
 BUILD_ASSERT(ARRAY_SIZE(g_bmi260_config_tbin) == 8192);
 const unsigned int g_bmi260_config_tbin_len = ARRAY_SIZE(g_bmi260_config_tbin);
-

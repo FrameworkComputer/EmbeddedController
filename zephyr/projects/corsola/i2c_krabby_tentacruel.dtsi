@@ -1,0 +1,136 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		battery {
+			i2c-port = <&i2c1>;
+			remote-port = <1>;
+			enum-names = "I2C_PORT_BATTERY",
+				"I2C_PORT_VIRTUAL_BATTERY";
+		};
+		i2c_charger: charger {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_CHARGER",
+				"I2C_PORT_EEPROM";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c3>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_usb_c0: usb-c0 {
+			i2c-port = <&i2c2>;
+			enum-names = "I2C_PORT_USB_C0",
+				"I2C_PORT_USB_MUX0";
+		};
+		i2c_usb_c1: usb-c1 {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_USB_C1",
+				"I2C_PORT_USB_MUX1";
+		};
+	};
+
+};
+
+&pinctrl {
+	i2c3_clk_gpf2_sleep: i2c3_clk_gpf2_sleep {
+		pinmuxs = <&pinctrlf 2 IT8XXX2_ALT_DEFAULT>;
+	};
+	i2c3_data_gpf3_sleep: i2c3_data_gpf3_sleep {
+		pinmuxs = <&pinctrlf 3 IT8XXX2_ALT_DEFAULT>;
+	};
+};
+
+&i2c0 {
+	/* EC_I2C_PWR_CBI */
+	label = "I2C_PWR_CBI";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_clk_gpb3_default
+		     &i2c0_data_gpb4_default>;
+	pinctrl-names = "default";
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+
+	bc12_port1: rt9490-bc12@53 {
+		compatible = "richtek,rt9490-bc12";
+		status = "okay";
+		reg = <0x53>;
+		irq = <&int_usb_c1_bc12_charger>;
+	};
+};
+
+&i2c1 {
+	/* EC_I2C_BATTERY */
+	label = "I2C_BATTERY";
+	status = "okay";
+	clock-frequency = <50000>;
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		     &i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
+};
+
+&i2c2 {
+	/* EC_I2C_USB_C0 */
+	label = "I2C_USB_C0";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c2_clk_gpf6_default
+		     &i2c2_data_gpf7_default>;
+	pinctrl-names = "default";
+
+	bc12_ppc_port0: rt1739@70 {
+		compatible = "richtek,rt1739";
+		status = "okay";
+		reg = <0x70>;
+	};
+
+	it5205_mux_0: it5205-mux-0@48 {
+		compatible = "ite,it5205";
+		reg = <0x48>;
+	};
+};
+
+&i2c3 {
+	/* EC_I2C_SENSOR */
+	label = "I2C_SENSOR";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	scl-gpios = <&gpiof 2 0>;
+	sda-gpios = <&gpiof 3 0>;
+	pinctrl-0 = <&i2c3_clk_gpf2_default
+		     &i2c3_data_gpf3_default>;
+	pinctrl-1 = <&i2c3_clk_gpf2_sleep
+		     &i2c3_data_gpf3_sleep>;
+	pinctrl-names = "default", "sleep";
+	prescale-scl-low = <1>;
+};
+
+&i2c4 {
+	/* EC_I2C_USB_C1 */
+	label = "I2C_USB_C1";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
+	prescale-scl-low = <1>;
+
+	ppc_port1: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_ec_x_gpio1>;
+	};
+};

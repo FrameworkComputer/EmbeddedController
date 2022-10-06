@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -14,8 +14,8 @@
 #include "usb_pd_test_util.h"
 #include "util.h"
 
-#define PORT0	0
-#define PORT1	1
+#define PORT0 0
+#define PORT1 1
 
 #define BATTERY_DESIGN_VOLTAGE 7600
 #define BATTERY_DESIGN_CAPACITY 5131
@@ -87,7 +87,7 @@ int pd_adc_read(int port, int cc)
 		/* we are source connected to sink, return Rd/Open */
 		return (pd_port[port].partner_polarity == cc) ? 400 : 3000;
 	else if (!pd_port[port].host_mode &&
-		  pd_port[port].partner_role == PD_ROLE_SOURCE)
+		 pd_port[port].partner_role == PD_ROLE_SOURCE)
 		/* we are sink connected to source, return Rp/Open */
 		return (pd_port[port].partner_polarity == cc) ? 1700 : 0;
 	else if (pd_port[port].host_mode)
@@ -179,39 +179,38 @@ static void simulate_rx_msg(int port, uint16_t header, int cnt,
 
 static void simulate_wait(int port)
 {
-	uint16_t header = PD_HEADER(PD_CTRL_WAIT, PD_ROLE_SOURCE,
-				    PD_ROLE_DFP, pd_port[port].msg_rx_id,
-				    0, pd_port[port].rev, 0);
+	uint16_t header = PD_HEADER(PD_CTRL_WAIT, PD_ROLE_SOURCE, PD_ROLE_DFP,
+				    pd_port[port].msg_rx_id, 0,
+				    pd_port[port].rev, 0);
 
 	simulate_rx_msg(port, header, 0, NULL);
 }
 
 static void simulate_accept(int port)
 {
-	uint16_t header = PD_HEADER(PD_CTRL_ACCEPT, PD_ROLE_SOURCE,
-				PD_ROLE_DFP, pd_port[port].msg_rx_id,
-				0, pd_port[port].rev, 0);
+	uint16_t header = PD_HEADER(PD_CTRL_ACCEPT, PD_ROLE_SOURCE, PD_ROLE_DFP,
+				    pd_port[port].msg_rx_id, 0,
+				    pd_port[port].rev, 0);
 
 	simulate_rx_msg(port, header, 0, NULL);
 }
 
 static void simulate_reject(int port)
 {
-	uint16_t header = PD_HEADER(PD_CTRL_REJECT, PD_ROLE_SOURCE,
-				PD_ROLE_DFP, pd_port[port].msg_rx_id,
-				0, pd_port[port].rev, 0);
+	uint16_t header = PD_HEADER(PD_CTRL_REJECT, PD_ROLE_SOURCE, PD_ROLE_DFP,
+				    pd_port[port].msg_rx_id, 0,
+				    pd_port[port].rev, 0);
 
 	simulate_rx_msg(port, header, 0, NULL);
 }
-
 
 #ifdef CONFIG_USB_PD_REV30
 static void simulate_get_bat_cap(int port)
 {
 	uint16_t msg[2];
 	uint16_t header = PD_HEADER(PD_EXT_GET_BATTERY_CAP, PD_ROLE_SOURCE,
-			PD_ROLE_DFP, pd_port[port].msg_rx_id,
-			1, pd_port[port].rev, 1);
+				    PD_ROLE_DFP, pd_port[port].msg_rx_id, 1,
+				    pd_port[port].rev, 1);
 
 	/* set extended header */
 	msg[0] = PD_EXT_HEADER(0, 0, 1);
@@ -226,8 +225,8 @@ static void simulate_get_bat_status(int port)
 {
 	uint16_t msg[2];
 	uint16_t header = PD_HEADER(PD_EXT_GET_BATTERY_STATUS, PD_ROLE_SOURCE,
-			PD_ROLE_DFP, pd_port[port].msg_rx_id,
-			1, pd_port[port].rev, 1);
+				    PD_ROLE_DFP, pd_port[port].msg_rx_id, 1,
+				    pd_port[port].rev, 1);
 
 	/* set extended header */
 	msg[0] = PD_EXT_HEADER(0, 0, 1);
@@ -252,18 +251,20 @@ static void simulate_source_cap(int port, uint32_t cnt)
 
 static void simulate_goodcrc(int port, int role, int id)
 {
-	simulate_rx_msg(port, PD_HEADER(PD_CTRL_GOOD_CRC, role, role, id, 0,
-					pd_port[port].rev, 0), 0, NULL);
+	simulate_rx_msg(port,
+			PD_HEADER(PD_CTRL_GOOD_CRC, role, role, id, 0,
+				  pd_port[port].rev, 0),
+			0, NULL);
 }
 
 static int verify_goodcrc(int port, int role, int id)
 {
-
 	return pd_test_tx_msg_verify_sop(port) &&
-		pd_test_tx_msg_verify_short(port, PD_HEADER(PD_CTRL_GOOD_CRC,
-					role, role, id, 0, 0, 0)) &&
-		pd_test_tx_msg_verify_crc(port) &&
-		pd_test_tx_msg_verify_eop(port);
+	       pd_test_tx_msg_verify_short(port,
+					   PD_HEADER(PD_CTRL_GOOD_CRC, role,
+						     role, id, 0, 0, 0)) &&
+	       pd_test_tx_msg_verify_crc(port) &&
+	       pd_test_tx_msg_verify_eop(port);
 }
 
 static void plug_in_source(int port, int polarity)
@@ -272,7 +273,7 @@ static void plug_in_source(int port, int polarity)
 	pd_port[port].partner_role = PD_ROLE_SOURCE;
 	pd_port[port].partner_polarity = polarity;
 	/* Indicate that the CC lines have changed. */
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 }
 
 static void plug_in_sink(int port, int polarity)
@@ -281,7 +282,7 @@ static void plug_in_sink(int port, int polarity)
 	pd_port[port].partner_role = PD_ROLE_SINK;
 	pd_port[port].partner_polarity = polarity;
 	/* Indicate that the CC lines have changed. */
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 }
 
 static void unplug(int port)
@@ -291,12 +292,12 @@ static void unplug(int port)
 	pd_port[port].has_vbus = 0;
 	pd_port[port].partner_role = -1;
 	/* Indicate that the CC lines have changed. */
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 	task_wake(PD_PORT_TO_TASK_ID(port));
 	usleep(30 * MSEC);
 }
 
-void pd_snk_give_back(int port, uint32_t * const ma, uint32_t * const mv)
+void pd_snk_give_back(int port, uint32_t *const ma, uint32_t *const mv)
 {
 	if (*ma == 3000)
 		give_back_called = 1;
@@ -304,9 +305,9 @@ void pd_snk_give_back(int port, uint32_t * const ma, uint32_t * const mv)
 
 static void simulate_ps_rdy(int port)
 {
-	uint16_t header = PD_HEADER(PD_CTRL_PS_RDY, PD_ROLE_SOURCE,
-				PD_ROLE_DFP, pd_port[port].msg_rx_id,
-				0, pd_port[port].rev, 0);
+	uint16_t header = PD_HEADER(PD_CTRL_PS_RDY, PD_ROLE_SOURCE, PD_ROLE_DFP,
+				    pd_port[port].msg_rx_id, 0,
+				    pd_port[port].rev, 0);
 
 	simulate_rx_msg(port, header, 0, NULL);
 }
@@ -314,7 +315,8 @@ static void simulate_ps_rdy(int port)
 static void simulate_goto_min(int port)
 {
 	uint16_t header = PD_HEADER(PD_CTRL_GOTO_MIN, PD_ROLE_SOURCE,
-		PD_ROLE_DFP, pd_port[port].msg_rx_id, 0, pd_port[port].rev, 0);
+				    PD_ROLE_DFP, pd_port[port].msg_rx_id, 0,
+				    pd_port[port].rev, 0);
 
 	simulate_rx_msg(port, header, 0, NULL);
 }
@@ -324,8 +326,9 @@ static int test_request_with_wait_and_contract(void)
 #ifdef CONFIG_USB_PD_REV30
 	uint32_t expected_status_bsdo =
 		BSDO_CAP(DIV_ROUND_NEAREST(BATTERY_REMAINING_CAPACITY *
-					BATTERY_DESIGN_VOLTAGE, 100000)) |
-					BSDO_PRESENT;
+						   BATTERY_DESIGN_VOLTAGE,
+					   100000)) |
+		BSDO_PRESENT;
 	uint16_t expected_cap_hdr = PD_EXT_HEADER(0, 0, 9);
 	uint16_t expected_cap_vid = USB_VID_GOOGLE;
 #ifdef CONFIG_USB_PID
@@ -333,12 +336,10 @@ static int test_request_with_wait_and_contract(void)
 #else
 	uint16_t expected_cap_pid = 0;
 #endif
-	uint16_t expected_cap_des =
-		DIV_ROUND_NEAREST(BATTERY_DESIGN_CAPACITY *
-			BATTERY_DESIGN_VOLTAGE, 100000);
-	uint16_t expected_cap_ful =
-		DIV_ROUND_NEAREST(BATTERY_FULL_CHARGE_CAPACITY *
-			BATTERY_DESIGN_VOLTAGE, 100000);
+	uint16_t expected_cap_des = DIV_ROUND_NEAREST(
+		BATTERY_DESIGN_CAPACITY * BATTERY_DESIGN_VOLTAGE, 100000);
+	uint16_t expected_cap_ful = DIV_ROUND_NEAREST(
+		BATTERY_FULL_CHARGE_CAPACITY * BATTERY_DESIGN_VOLTAGE, 100000);
 	uint16_t expected_cap_type = 0;
 #endif
 
@@ -358,8 +359,8 @@ static int test_request_with_wait_and_contract(void)
 	/* We're in SNK_DISCOVERY now. Let's send the source cap. */
 	simulate_source_cap(port, 1);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port, PD_ROLE_SINK,
-						pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -368,9 +369,10 @@ static int test_request_with_wait_and_contract(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -399,8 +401,8 @@ static int test_request_with_wait_and_contract(void)
 	 */
 	simulate_source_cap(port, 1);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port, PD_ROLE_SINK,
-					pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -409,9 +411,10 @@ static int test_request_with_wait_and_contract(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -441,11 +444,10 @@ static int test_request_with_wait_and_contract(void)
 	/* We had an explicit contract. So request should have been resent. */
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1,
-			pd_port[port].rev, 0
-	)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -492,9 +494,10 @@ static int test_request_with_wait_and_contract(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
 		PD_HEADER(PD_EXT_BATTERY_CAP, PD_ROLE_SINK, PD_ROLE_UFP,
-		pd_port[port].msg_tx_id, 3, pd_port[port].rev, 1)));
+			  pd_port[port].msg_tx_id, 3, pd_port[port].rev, 1)));
 	TEST_ASSERT(pd_test_tx_msg_verify_short(port, expected_cap_hdr));
 	TEST_ASSERT(pd_test_tx_msg_verify_short(port, expected_cap_vid));
 	TEST_ASSERT(pd_test_tx_msg_verify_short(port, expected_cap_pid));
@@ -524,9 +527,10 @@ static int test_request_with_wait_and_contract(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
 		PD_HEADER(PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP,
-		pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_status_bsdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -564,7 +568,7 @@ static int test_request_with_wait(void)
 {
 #ifdef CONFIG_USB_PD_GIVE_BACK
 	uint32_t expected_rdo = RDO_FIXED(1, 900, PD_MIN_CURRENT_MA,
-					RDO_CAP_MISMATCH | RDO_GIVE_BACK);
+					  RDO_CAP_MISMATCH | RDO_GIVE_BACK);
 #else
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
 #endif
@@ -578,8 +582,8 @@ static int test_request_with_wait(void)
 	/* We're in SNK_DISCOVERY now. Let's send the source cap. */
 	simulate_source_cap(port, 0);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port,
-			PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -588,9 +592,10 @@ static int test_request_with_wait(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -617,8 +622,8 @@ static int test_request_with_wait(void)
 	/* Resend Source Cap. */
 	simulate_source_cap(port, 0);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port,
-			PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -627,9 +632,10 @@ static int test_request_with_wait(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -652,7 +658,7 @@ static int test_request_with_wait_no_src_cap(void)
 {
 #ifdef CONFIG_USB_PD_GIVE_BACK
 	uint32_t expected_rdo = RDO_FIXED(1, 900, PD_MIN_CURRENT_MA,
-					RDO_CAP_MISMATCH | RDO_GIVE_BACK);
+					  RDO_CAP_MISMATCH | RDO_GIVE_BACK);
 #else
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
 #endif
@@ -666,8 +672,8 @@ static int test_request_with_wait_no_src_cap(void)
 	/* We're in SNK_DISCOVERY now. Let's send the source cap. */
 	simulate_source_cap(port, 0);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port,
-			PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -676,9 +682,10 @@ static int test_request_with_wait_no_src_cap(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -711,9 +718,10 @@ static int test_request_with_wait_no_src_cap(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -736,7 +744,7 @@ static int test_request_with_reject(void)
 {
 #ifdef CONFIG_USB_PD_GIVE_BACK
 	uint32_t expected_rdo = RDO_FIXED(1, 900, PD_MIN_CURRENT_MA,
-					RDO_CAP_MISMATCH | RDO_GIVE_BACK);
+					  RDO_CAP_MISMATCH | RDO_GIVE_BACK);
 #else
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
 #endif
@@ -750,8 +758,8 @@ static int test_request_with_reject(void)
 	/* We're in SNK_DISCOVERY now. Let's send the source cap. */
 	simulate_source_cap(port, 0);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port,
-			PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -760,9 +768,10 @@ static int test_request_with_reject(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -788,8 +797,8 @@ static int test_request_with_reject(void)
 	/* We're in SNK_READY. Send source cap. again. */
 	simulate_source_cap(port, 0);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port,
-			PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -798,9 +807,10 @@ static int test_request_with_reject(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -814,7 +824,7 @@ static int test_request(void)
 {
 #ifdef CONFIG_USB_PD_GIVE_BACK
 	uint32_t expected_rdo = RDO_FIXED(1, 900, PD_MIN_CURRENT_MA,
-					RDO_CAP_MISMATCH | RDO_GIVE_BACK);
+					  RDO_CAP_MISMATCH | RDO_GIVE_BACK);
 #else
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
 #endif
@@ -828,8 +838,8 @@ static int test_request(void)
 	/* We're in SNK_DISCOVERY now. Let's send the source cap. */
 	simulate_source_cap(port, 0);
 	task_wait_event(30 * MSEC);
-	TEST_ASSERT(verify_goodcrc(port,
-				PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	/* Wait for the power request */
 	task_wake(PD_PORT_TO_TASK_ID(port));
@@ -838,9 +848,10 @@ static int test_request(void)
 
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
-			pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
+			  pd_port[port].msg_tx_id, 1, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_rdo));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(port));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(port));
@@ -872,10 +883,10 @@ static int test_sink(void)
 
 	/* The source cap should be sent */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_SOURCE_CAP, PD_ROLE_SOURCE,
-				  PD_ROLE_DFP, pd_port[port].msg_tx_id,
-				  pd_src_pdo_cnt, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port, PD_HEADER(PD_DATA_SOURCE_CAP, PD_ROLE_SOURCE, PD_ROLE_DFP,
+				pd_port[port].msg_tx_id, pd_src_pdo_cnt,
+				pd_port[port].rev, 0)));
 
 	for (i = 0; i < pd_src_pdo_cnt; ++i)
 		TEST_ASSERT(pd_test_tx_msg_verify_word(port, pd_src_pdo[i]));
@@ -900,7 +911,7 @@ static int test_sink(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 	init_ports();

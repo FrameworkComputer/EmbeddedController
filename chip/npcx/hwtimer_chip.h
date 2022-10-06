@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,14 +9,14 @@
 #define __CROS_EC_HWTIMER_CHIP_H
 
 /* Use ITIM32 as main hardware timer */
-#define TICK_ITIM32_MAX_CNT  0xFFFFFFFF
+#define TICK_ITIM32_MAX_CNT 0xFFFFFFFF
 /* Maximum deadline of event */
-#define EVT_MAX_EXPIRED_US   TICK_ITIM32_MAX_CNT
+#define EVT_MAX_EXPIRED_US TICK_ITIM32_MAX_CNT
 
 /* Clock source for ITIM16 */
 enum ITIM_SOURCE_CLOCK_T {
 	ITIM_SOURCE_CLOCK_APB2 = 0,
-	ITIM_SOURCE_CLOCK_32K  = 1,
+	ITIM_SOURCE_CLOCK_32K = 1,
 };
 
 /**

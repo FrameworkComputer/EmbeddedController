@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -97,12 +97,12 @@ extern struct usart_tx const usart_tx_interrupt;
  * structure are provided by each variants driver, one per physical USART.
  */
 struct usart_hw_config {
-	int      index;
+	int index;
 	intptr_t base;
-	int      irq;
+	int irq;
 
 	uint32_t volatile *clock_register;
-	uint32_t           clock_enable;
+	uint32_t clock_enable;
 
 	struct usart_hw_ops const *ops;
 };
@@ -160,7 +160,7 @@ struct usart_config {
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
  */
-#define USART_CONFIG(HW, RX, TX, BAUD, FLAGS, RX_QUEUE, TX_QUEUE)	\
+#define USART_CONFIG(HW, RX, TX, BAUD, FLAGS, RX_QUEUE, TX_QUEUE) \
 	((struct usart_config const) {					\
 		.hw       = &HW,					\
 		.rx       = &RX,					\
@@ -208,9 +208,9 @@ void usart_tx_start(struct usart_config const *config);
  * change.  The baud rate divisor input frequency is passed in Hertz.
  */
 void usart_set_baud_f0_l(struct usart_config const *config, int baud,
-			int frequency_hz);
+			 int frequency_hz);
 void usart_set_baud_f(struct usart_config const *config, int baud,
-		int frequency_hz);
+		      int frequency_hz);
 
 /*
  * Allow specification of parity for this usart.
@@ -249,7 +249,7 @@ struct usart_configs {
 	 *
 	 * configs[i]->hw->index == i;
 	 */
-	struct usart_config const * const *configs;
+	struct usart_config const *const *configs;
 
 	/*
 	 * The total possible number of configs that this family supports.

@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -23,57 +23,41 @@
 #include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 
 #define SPI_BYTE_TRANSFER_TIMEOUT_US (3 * MSEC)
 #define SPI_BYTE_TRANSFER_POLL_INTERVAL_US 100
 
-
+#if defined(CONFIG_MCHP_GPSPI) && defined(CHIP_FAMILY_MEC152X)
+#error "FORCED BUILD ERROR: MEC152X does not implement GPSPI!"
+#endif
 
 static const struct dma_option spi_rx_option[] = {
-	{
-		MCHP_DMAC_QMSPI0_RX,
-		(void *)(MCHP_QMSPI0_RX_FIFO_ADDR),
-		MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM
-	},
+	{ MCHP_DMAC_QMSPI0_RX, (void *)(MCHP_QMSPI0_RX_FIFO_ADDR),
+	  MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM },
 #if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
 #if CONFIG_MCHP_GPSPI & 0x01
-	{
-		MCHP_DMAC_SPI0_RX,
-		(void *)&MCHP_SPI_RD(0),
-		MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM
-	},
+	{ MCHP_DMAC_SPI0_RX, (void *)&MCHP_SPI_RD(0),
+	  MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM },
 #endif
 #if CONFIG_MCHP_GPSPI & 0x02
-	{
-		MCHP_DMAC_SPI1_RX,
-		(void *)&MCHP_SPI_RD(1),
-		MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM
-	},
+	{ MCHP_DMAC_SPI1_RX, (void *)&MCHP_SPI_RD(1),
+	  MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM },
 #endif
 #endif
 };
 
 static const struct dma_option spi_tx_option[] = {
-	{
-		MCHP_DMAC_QMSPI0_TX,
-		(void *)(MCHP_QMSPI0_TX_FIFO_ADDR),
-		MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM
-	},
+	{ MCHP_DMAC_QMSPI0_TX, (void *)(MCHP_QMSPI0_TX_FIFO_ADDR),
+	  MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM },
 #if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
 #if CONFIG_MCHP_GPSPI & 0x01
-	{
-		MCHP_DMAC_SPI0_TX,
-		(void *)&MCHP_SPI_TD(0),
-		MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM
-	},
+	{ MCHP_DMAC_SPI0_TX, (void *)&MCHP_SPI_TD(0),
+	  MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM },
 #endif
 #if CONFIG_MCHP_GPSPI & 0x02
-	{
-		MCHP_DMAC_SPI1_TX,
-		(void *)&MCHP_SPI_TD(1),
-		MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM
-	},
+	{ MCHP_DMAC_SPI1_TX, (void *)&MCHP_SPI_TD(1),
+	  MCHP_DMA_XFER_SIZE(1) + MCHP_DMA_INC_MEM },
 #endif
 #endif
 };
@@ -129,8 +113,7 @@ static void spi_mutex_unlock(uint8_t hw_port)
  * Public SPI interface
  */
 
-const void *spi_dma_option(const struct spi_device_t *spi_device,
-				int is_tx)
+const void *spi_dma_option(const struct spi_device_t *spi_device, int is_tx)
 {
 	uint32_t n;
 
@@ -155,8 +138,8 @@ const void *spi_dma_option(const struct spi_device_t *spi_device,
 }
 
 int spi_transaction_async(const struct spi_device_t *spi_device,
-				const uint8_t *txdata, int txlen,
-				uint8_t *rxdata, int rxlen)
+			  const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			  int rxlen)
 {
 	int rc;
 
@@ -167,13 +150,13 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 #if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
 	case GPSPI0_PORT:
 	case GPSPI1_PORT:
-		rc = gpspi_transaction_async(spi_device, txdata,
-				txlen, rxdata, rxlen);
+		rc = gpspi_transaction_async(spi_device, txdata, txlen, rxdata,
+					     rxlen);
 		break;
 #endif
 	case QMSPI0_PORT:
-		rc = qmspi_transaction_async(spi_device, txdata,
-				txlen, rxdata, rxlen);
+		rc = qmspi_transaction_async(spi_device, txdata, txlen, rxdata,
+					     rxlen);
 		break;
 	default:
 		rc = EC_ERROR_INVAL;
@@ -241,8 +224,8 @@ int spi_transaction_wait(const struct spi_device_t *spi_device)
  * without the overhead of DMA setup.
  */
 int spi_transaction(const struct spi_device_t *spi_device,
-		    const uint8_t *txdata, int txlen,
-		    uint8_t *rxdata, int rxlen)
+		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+		    int rxlen)
 {
 	int rc;
 
@@ -267,31 +250,26 @@ int spi_transaction(const struct spi_device_t *spi_device,
 /**
  * Enable SPI port and associated controller
  *
- * @param port Zero based index into spi_device an array of
- *             struct spi_device_t
+ * @param spi_device SPI device
  * @param enable
  * @return EC_SUCCESS or EC_ERROR_INVAL if port is unrecognized
  * @note called from common/spi_flash.c
  *
- * spi_devices[].port is defined as
+ * spi_device->port is defined as
  * bits[3:0] = controller instance
  * bits[7:4] = controller family 0 = QMSPI, 1 = GPSPI
  */
-int spi_enable(int port, int enable)
+int spi_enable(const struct spi_device_t *spi_device, int enable)
 {
 	int rc;
-	uint8_t hw_port;
-
+	uint8_t hw_port = spi_device->port;
 	rc = EC_ERROR_INVAL;
-	if (port < spi_devices_used) {
-		hw_port = spi_devices[port].port;
-		if ((hw_port & 0xF0) == QMSPI_CLASS)
-			rc = qmspi_enable(hw_port, enable);
-#if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
-		if ((hw_port & 0xF0) == GPSPI_CLASS)
-			rc = gpspi_enable(hw_port, enable);
-#endif
-	}
 
+	if ((hw_port & 0xF0) == QMSPI_CLASS)
+		rc = qmspi_enable(hw_port, enable);
+#if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
+	if ((hw_port & 0xF0) == GPSPI_CLASS)
+		rc = gpspi_enable(hw_port, enable);
+#endif
 	return rc;
 }

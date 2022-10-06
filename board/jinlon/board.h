@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,7 +19,7 @@
 #define CONFIG_LED_COMMON
 #define CONFIG_LOW_POWER_IDLE
 
-#define CONFIG_HOSTCMD_ESPI
+#define CONFIG_HOST_INTERFACE_ESPI
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
@@ -32,12 +32,13 @@
  * Jinlon's battery takes several seconds to come back out of its disconnect
  * state (~4 seconds, but give it 6 for margin).
  */
-#undef  CONFIG_POWER_BUTTON_INIT_TIMEOUT
+#undef CONFIG_POWER_BUTTON_INIT_TIMEOUT
 #define CONFIG_POWER_BUTTON_INIT_TIMEOUT 6
+
+#define CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV 5000
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
@@ -50,7 +51,6 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_GMR_TABLET_MODE
-#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_COMM_LOCKED
@@ -98,7 +98,7 @@
 #define CONFIG_FAN_INIT_SPEED 50
 #define RPM_DEVIATION 1
 #define CONFIG_TEMP_SENSOR_OTI502
-#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_A_RAILS
+#define CONFIG_TEMP_SENSOR_POWER
 #define CONFIG_THERMISTOR
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
@@ -117,15 +117,16 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_PCH_RSMRST_L	GPIO_EC_PCH_RSMRST_L
-#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
-#define GPIO_CPU_PROCHOT	GPIO_EC_PROCHOT_ODL
-#define GPIO_AC_PRESENT		GPIO_ACOK_OD
-#define GPIO_RSMRST_L_PGOOD	GPIO_PG_EC_RSMRST_L
-#define GPIO_PCH_SYS_PWROK	GPIO_EC_PCH_SYS_PWROK
-#define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
-#define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
-#define GPIO_EN_PP5000		GPIO_EN_PP5000_A
+#define GPIO_PCH_RSMRST_L GPIO_EC_PCH_RSMRST_L
+#define GPIO_PCH_SLP_S0_L GPIO_SLP_S0_L
+#define GPIO_CPU_PROCHOT GPIO_EC_PROCHOT_ODL
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_PG_EC_RSMRST_ODL GPIO_PG_EC_RSMRST_L
+#define GPIO_PCH_SYS_PWROK GPIO_EC_PCH_SYS_PWROK
+#define GPIO_PCH_SLP_S3_L GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L GPIO_SLP_S4_L
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_A_RAILS
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 
 #ifndef __ASSEMBLER__
 
@@ -133,9 +134,9 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,	/* ADC0 */
-	ADC_TEMP_SENSOR_2,	/* ADC1 */
-	ADC_TEMP_SENSOR_3,	/* ADC2 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
+	ADC_TEMP_SENSOR_3, /* ADC2 */
 	ADC_CH_COUNT
 };
 
@@ -146,12 +147,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_FAN,
-	PWM_CH_FAN2,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT, PWM_CH_FAN, PWM_CH_FAN2, PWM_CH_COUNT };
 
 enum fan_channel {
 	FAN_CH_0 = 0,
@@ -177,14 +173,9 @@ enum temp_sensor_id {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_DANAPACK_COS,
+	BATTERY_DYNAPACK_COS,
 	BATTERY_TYPE_COUNT,
 };
-
-#ifdef CONFIG_KEYBOARD_FACTORY_TEST
-extern const int keyboard_factory_scan_pins[][2];
-extern const int keyboard_factory_scan_pins_used;
-#endif
 
 #endif /* !__ASSEMBLER__ */
 

@@ -1,0 +1,21 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config EMUL_CLOCK_CONTROL
+	bool "Emulated clock control"
+	default y
+	depends on DT_HAS_CROS_CLOCK_CONTROL_EMUL_ENABLED
+	help
+	  Enable the emulated clock control module. This module introduces a
+	  functioning clock control implementation along with backdoor APIs to
+	  verify and override behavior. Emulator API is available in
+	  zephyr/include/emul/emul_clock_control.h
+
+if EMUL_CLOCK_CONTROL
+
+module = CLOCK_CONTROL_EMUL
+module-str = clock_control_emul
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # EMUL_CLOCK_CONTROL

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -8,6 +8,7 @@
 #include "amd_fp5.h"
 #include "chipset.h"
 #include "common.h"
+#include "console.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "queue.h"
@@ -21,8 +22,7 @@ static inline int amd_fp5_mux_read(const struct usb_mux *me, uint8_t *val)
 	uint8_t buf[3] = { 0 };
 	int rv;
 
-	rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
-		      NULL, 0, buf, 3);
+	rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags, NULL, 0, buf, 3);
 	if (rv)
 		return rv;
 
@@ -33,8 +33,7 @@ static inline int amd_fp5_mux_read(const struct usb_mux *me, uint8_t *val)
 
 static inline int amd_fp5_mux_write(const struct usb_mux *me, uint8_t val)
 {
-	return i2c_write8(me->i2c_port, me->i2c_addr_flags,
-			  me->usb_port, val);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, me->usb_port, val);
 }
 
 static int amd_fp5_init(const struct usb_mux *me)
@@ -42,9 +41,17 @@ static int amd_fp5_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int amd_fp5_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int amd_fp5_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	uint8_t val = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
 
 	saved_mux_state[me->usb_port] = mux_state;
 
@@ -55,20 +62,22 @@ static int amd_fp5_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 	 * it because a powered down MUX is off.
 	 */
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return (mux_state == USB_PD_MUX_NONE)
-			? EC_SUCCESS
-			: EC_ERROR_NOT_POWERED;
+		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS :
+							EC_ERROR_NOT_POWERED;
 
 	if ((mux_state & USB_PD_MUX_USB_ENABLED) &&
-		(mux_state & USB_PD_MUX_DP_ENABLED))
-		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-			? AMD_FP5_MUX_DOCK_INVERTED : AMD_FP5_MUX_DOCK;
+	    (mux_state & USB_PD_MUX_DP_ENABLED))
+		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+			      AMD_FP5_MUX_DOCK_INVERTED :
+			      AMD_FP5_MUX_DOCK;
 	else if (mux_state & USB_PD_MUX_USB_ENABLED)
-		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-			? AMD_FP5_MUX_USB_INVERTED : AMD_FP5_MUX_USB;
+		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+			      AMD_FP5_MUX_USB_INVERTED :
+			      AMD_FP5_MUX_USB;
 	else if (mux_state & USB_PD_MUX_DP_ENABLED)
-		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-			? AMD_FP5_MUX_DP_INVERTED : AMD_FP5_MUX_DP;
+		val = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+			      AMD_FP5_MUX_DP_INVERTED :
+			      AMD_FP5_MUX_DP;
 
 	return amd_fp5_mux_write(me, val);
 }
@@ -96,21 +105,21 @@ static int amd_fp5_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 		break;
 	case AMD_FP5_MUX_USB_INVERTED:
 		*mux_state = USB_PD_MUX_USB_ENABLED |
-				USB_PD_MUX_POLARITY_INVERTED;
+			     USB_PD_MUX_POLARITY_INVERTED;
 		break;
 	case AMD_FP5_MUX_DOCK:
 		*mux_state = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED;
 		break;
 	case AMD_FP5_MUX_DOCK_INVERTED:
-		*mux_state = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED
-			     | USB_PD_MUX_POLARITY_INVERTED;
+		*mux_state = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED |
+			     USB_PD_MUX_POLARITY_INVERTED;
 		break;
 	case AMD_FP5_MUX_DP:
 		*mux_state = USB_PD_MUX_DP_ENABLED;
 		break;
 	case AMD_FP5_MUX_DP_INVERTED:
 		*mux_state = USB_PD_MUX_DP_ENABLED |
-				USB_PD_MUX_POLARITY_INVERTED;
+			     USB_PD_MUX_POLARITY_INVERTED;
 		break;
 	case AMD_FP5_MUX_SAFE:
 	default:
@@ -121,16 +130,18 @@ static int amd_fp5_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 	return EC_SUCCESS;
 }
 
-static struct queue const chipset_reset_queue
-	= QUEUE_NULL(CONFIG_USB_PD_PORT_MAX_COUNT, struct usb_mux *);
+static struct queue const chipset_reset_queue =
+	QUEUE_NULL(CONFIG_USB_PD_PORT_MAX_COUNT, struct usb_mux *);
 
 static void amd_fp5_chipset_reset_delay(void)
 {
 	struct usb_mux *me;
 	int rv;
+	bool unused;
 
 	while (queue_remove_unit(&chipset_reset_queue, &me)) {
-		rv = amd_fp5_set_mux(me, saved_mux_state[me->usb_port]);
+		rv = amd_fp5_set_mux(me, saved_mux_state[me->usb_port],
+				     &unused);
 		if (rv)
 			ccprints("C%d restore mux rv:%d", me->usb_port, rv);
 	}

@@ -1,10 +1,9 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
@@ -26,6 +25,7 @@
 #include "i2c.h"
 #include "i2c_bitbang.h"
 #include "lid_switch.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -34,15 +34,15 @@
 #include "spi.h"
 #include "system.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -54,37 +54,50 @@ static void tcpc_alert_event(enum gpio_signal signal)
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = {"BOARD_ID", 3300, 4096, 0, STM32_AIN(10)},
-	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
-	[ADC_POGO_ADC_INT_L] = {"POGO_ADC_INT_L", 3300, 4096, 0, STM32_AIN(6)},
+	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(10) },
+	[ADC_EC_SKU_ID] = { "EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8) },
+	[ADC_POGO_ADC_INT_L] = { "POGO_ADC_INT_L", 3300, 4096, 0,
+				 STM32_AIN(6) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"typec", 0, 400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"other", 1, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA,
-		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED},
+	{ .name = "typec",
+	  .port = 0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "other",
+	  .port = 1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA,
+	  .flags = I2C_PORT_FLAG_DYNAMIC_SPEED },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct i2c_port_t i2c_bitbang_ports[] = {
-	{"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
+	{ .name = "battery",
+	  .port = 2,
+	  .kbps = 100,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA,
+	  .drv = &bitbang_drv },
 };
 const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_IN_SLEEP_L,   POWER_SIGNAL_ACTIVE_LOW,  "AP_IN_S3_L"},
-	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3_L" },
+	{ GPIO_PMIC_EC_RESETB, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
@@ -104,16 +117,18 @@ struct mt6370_thermal_bound thermal_bound = {
 	.err = 4,
 };
 
-static void board_hpd_status(const struct usb_mux *me,
-			     int hpd_lvl, int hpd_irq)
+static void board_hpd_status(const struct usb_mux *me, mux_state_t mux_state,
+			     bool *ack_required)
 {
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
 	/*
 	 * svdm_dp_attention() did most of the work, we only need to notify
 	 * host here.
 	 */
 	host_set_single_event(EC_HOST_EVENT_USB_MUX);
 }
-
 
 __override const struct rt946x_init_setting *board_rt946x_init_setting(void)
 {
@@ -129,13 +144,16 @@ __override const struct rt946x_init_setting *board_rt946x_init_setting(void)
 	return &battery_init_setting;
 }
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
-		.driver = &it5205_usb_mux_driver,
-		.hpd_update = &board_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_MUX,
+				.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
+				.driver = &it5205_usb_mux_driver,
+				.hpd_update = &board_hpd_status,
+			},
 	},
 };
 
@@ -216,9 +234,8 @@ int extpower_is_present(void)
 	if (board_vbus_source_enabled(CHARGE_PORT_USB_C))
 		usb_c_extpower_present = 0;
 	else
-		usb_c_extpower_present = tcpm_check_vbus_level(
-							CHARGE_PORT_USB_C,
-							VBUS_PRESENT);
+		usb_c_extpower_present =
+			tcpm_check_vbus_level(CHARGE_PORT_USB_C, VBUS_PRESENT);
 
 	return usb_c_extpower_present;
 }
@@ -238,11 +255,11 @@ static void board_init(void)
 #ifdef SECTION_IS_RW
 	int val;
 
-	i2c_read8(I2C_PORT_CHARGER, CHARGER_I2C_ADDR_FLAGS,
-			RT946X_REG_CHGCTRL1, &val);
+	i2c_read8(I2C_PORT_CHARGER, CHARGER_I2C_ADDR_FLAGS, RT946X_REG_CHGCTRL1,
+		  &val);
 	val &= RT946X_MASK_OPA_MODE;
 	i2c_write8(I2C_PORT_CHARGER, CHARGER_I2C_ADDR_FLAGS,
-		RT946X_REG_CHGCTRL1, (val | RT946X_MASK_STAT_EN));
+		   RT946X_REG_CHGCTRL1, (val | RT946X_MASK_STAT_EN));
 #endif
 
 	/* If the reset cause is external, pulse PMIC force reset. */
@@ -295,7 +312,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void board_i2c_init(void)
 {
 	if (board_get_version() < 2)
-		i2c_set_freq(1,  I2C_FREQ_100KHZ);
+		i2c_set_freq(1, I2C_FREQ_100KHZ);
 }
 DECLARE_HOOK(HOOK_INIT, board_i2c_init, HOOK_PRIO_INIT_I2C);
 
@@ -307,11 +324,9 @@ static struct mutex g_lid_mutex;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-static const mat33_fp_t lid_standard_ref = {
-	{0, FLOAT_TO_FP(1), 0},
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -323,8 +338,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &lsm6dsm_drv,
 	 .mutex = &g_lid_mutex,
 	 .drv_data = LSM6DSM_ST_DATA(lsm6dsm_data, MOTIONSENSE_TYPE_ACCEL),
-	 .int_signal = GPIO_ACCEL_INT_ODL,
-	 .flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 	 .port = I2C_PORT_ACCEL,
 	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	 .rot_standard_ref = &lid_standard_ref,

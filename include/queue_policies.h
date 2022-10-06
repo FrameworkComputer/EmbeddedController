@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -27,7 +27,7 @@ struct queue_policy_direct {
 void queue_add_direct(struct queue_policy const *policy, size_t count);
 void queue_remove_direct(struct queue_policy const *policy, size_t count);
 
-#define QUEUE_POLICY_DIRECT(PRODUCER, CONSUMER)			\
+#define QUEUE_POLICY_DIRECT(PRODUCER, CONSUMER) \
 	((struct queue_policy_direct const) {			\
 		.policy = {					\
 			.add    = queue_add_direct,		\
@@ -37,7 +37,7 @@ void queue_remove_direct(struct queue_policy const *policy, size_t count);
 		.consumer = &CONSUMER,				\
 	})
 
-#define QUEUE_DIRECT(SIZE, TYPE, PRODUCER, CONSUMER)			\
+#define QUEUE_DIRECT(SIZE, TYPE, PRODUCER, CONSUMER) \
 	QUEUE(SIZE, TYPE, QUEUE_POLICY_DIRECT(PRODUCER, CONSUMER).policy)
 
 /*

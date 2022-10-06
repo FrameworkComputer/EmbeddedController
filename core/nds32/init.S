@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -87,7 +87,7 @@ vector irq_15,   15	/* HW 15 */
 .global eflash_sig
 eflash_sig:
 .byte 0xA5, 0xA5, 0xA5, 0xA5, 0xA5, 0xA5
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 .byte 0xA4 /* eSPI */
 #else
 .byte 0xA5 /* LPC */

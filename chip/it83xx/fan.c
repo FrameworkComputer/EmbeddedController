@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,12 +18,12 @@
 #include "task.h"
 #include "util.h"
 
-#define TACH_EC_FREQ                8000000
-#define FAN_CTRL_BASED_MS           10
-#define FAN_CTRL_INTERVAL_MAX_MS    60
+#define TACH_EC_FREQ 8000000
+#define FAN_CTRL_BASED_MS 10
+#define FAN_CTRL_INTERVAL_MAX_MS 60
 
 /* The sampling rate (fs) is FreqEC / 128 */
-#define TACH_DATA_VALID_TIMEOUT_MS  (0xFFFF * 128 / (TACH_EC_FREQ / 1000))
+#define TACH_DATA_VALID_TIMEOUT_MS (0xFFFF * 128 / (TACH_EC_FREQ / 1000))
 
 /*
  * Fan Speed (RPM) = 60 / (1/fs sec * {FnTMRR, FnTLRR} * P)
@@ -37,25 +37,25 @@
 #define TACH1_TO_RPM(pulse, raw) (raw * 120 / (pulse * 2))
 
 enum fan_output_s {
-	FAN_DUTY_I  = 0x01,
-	FAN_DUTY_R  = 0x02,
+	FAN_DUTY_I = 0x01,
+	FAN_DUTY_R = 0x02,
 	FAN_DUTY_OV = 0x03,
 	FAN_DUTY_DONE = 0x04,
 };
 
 struct fan_info {
-	unsigned int    flags;
-	int             fan_mode;
-	int             fan_p;
-	int             rpm_target;
-	int             rpm_actual;
-	int             tach_valid_ms;
-	int             rpm_re;
-	int             fan_ms;
-	int             fan_ms_idx;
-	int             startup_duty;
+	unsigned int flags;
+	int fan_mode;
+	int fan_p;
+	int rpm_target;
+	int rpm_actual;
+	int tach_valid_ms;
+	int rpm_re;
+	int fan_ms;
+	int fan_ms_idx;
+	int startup_duty;
 	enum fan_status fan_sts;
-	int             enabled;
+	int enabled;
 };
 static struct fan_info fan_info_data[TACH_CH_COUNT];
 
@@ -72,7 +72,8 @@ static void fan_set_interval(int ch)
 	tach_ch = tach_bind(ch);
 
 	diff = ABS(fan_info_data[tach_ch].rpm_target -
-		fan_info_data[tach_ch].rpm_actual) / 100;
+		   fan_info_data[tach_ch].rpm_actual) /
+	       100;
 
 	fan_ms = FAN_CTRL_INTERVAL_MAX_MS;
 
@@ -122,7 +123,7 @@ void fan_set_enabled(int ch, int enabled)
 		disable_sleep(SLEEP_MASK_FAN);
 		/* enable timer interrupt for fan control */
 		ext_timer_start(FAN_CTRL_EXT_TIMER, 1);
-	/* disable */
+		/* disable */
 	} else {
 		fan_set_duty(ch, 0);
 
@@ -245,9 +246,8 @@ enum fan_status fan_get_status(int ch)
 int fan_is_stalled(int ch)
 {
 	/* Must be enabled with non-zero target to stall */
-	if (!fan_get_enabled(ch) ||
-		fan_get_rpm_target(ch) == 0 ||
-		!fan_get_duty(ch))
+	if (!fan_get_enabled(ch) || fan_get_rpm_target(ch) == 0 ||
+	    !fan_get_duty(ch))
 		return 0;
 
 	/* Check for stall condition */
@@ -273,8 +273,7 @@ static void fan_ctrl(int ch)
 	tach_ch = tach_bind(ch);
 
 	fan_info_data[tach_ch].fan_ms_idx += FAN_CTRL_BASED_MS;
-	if (fan_info_data[tach_ch].fan_ms_idx >
-		fan_info_data[tach_ch].fan_ms) {
+	if (fan_info_data[tach_ch].fan_ms_idx > fan_info_data[tach_ch].fan_ms) {
 		fan_info_data[tach_ch].fan_ms_idx = 0x00;
 		adjust = 1;
 	}
@@ -411,7 +410,7 @@ static void proc_tach(int ch)
 	} else {
 		fan_info_data[tach_ch].tach_valid_ms += FAN_CTRL_BASED_MS;
 		if (fan_info_data[tach_ch].tach_valid_ms >
-			TACH_DATA_VALID_TIMEOUT_MS)
+		    TACH_DATA_VALID_TIMEOUT_MS)
 			fan_info_data[tach_ch].rpm_actual = 0;
 	}
 }
@@ -436,14 +435,12 @@ static void fan_init(void)
 	enum tach_ch_sel tach_ch;
 
 	for (ch = 0; ch < fan_get_count(); ch++) {
-
 		rpm_re = fan_tach[pwm_channels[FAN_CH(ch)].channel].rpm_re;
 		fan_p = fan_tach[pwm_channels[FAN_CH(ch)].channel].fan_p;
 		s_duty = fan_tach[pwm_channels[FAN_CH(ch)].channel].s_duty;
 		tach_ch = tach_bind(FAN_CH(ch));
 
 		if (tach_ch < TACH_CH_COUNT) {
-
 			if (tach_ch == TACH_CH_TACH0B) {
 				/* GPJ2 will select TACH0B as its alt. */
 				IT83XX_GPIO_GRC5 |= 0x01;
@@ -473,6 +470,6 @@ static void fan_init(void)
 
 	/* init external timer for fan control */
 	ext_timer_ms(FAN_CTRL_EXT_TIMER, EXT_PSR_32P768K_HZ, 0, 0,
-			FAN_CTRL_BASED_MS, 1, 0);
+		     FAN_CTRL_BASED_MS, 1, 0);
 }
 DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_INIT_FAN);

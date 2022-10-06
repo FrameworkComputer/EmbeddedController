@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -105,11 +105,11 @@ static void ep_tx(void)
 		btable_ep[USB_EP_SNIFFER].tx_addr = usb_sram_addr(ep_buf[b]);
 	}
 	/* re-enable data transmission if we have available data */
-	btable_ep[USB_EP_SNIFFER].tx_count = (free_usb & (1<<b)) ? 0
-								 : EP_BUF_SIZE;
+	btable_ep[USB_EP_SNIFFER].tx_count =
+		(free_usb & (1 << b)) ? 0 : EP_BUF_SIZE;
 	STM32_TOGGLE_EP(USB_EP_SNIFFER, EP_TX_MASK, EP_TX_VALID, 0);
 	/* wake up the processing */
-	task_set_event(TASK_ID_SNIFFER, USB_EVENT, 0);
+	task_set_event(TASK_ID_SNIFFER, USB_EVENT);
 }
 
 static void ep_event(enum usb_ep_event evt)
@@ -127,7 +127,6 @@ static void ep_event(enum usb_ep_event evt)
 }
 USB_DECLARE_EP(USB_EP_SNIFFER, ep_tx, ep_tx, ep_event);
 
-
 /* --- RX operation using comparator linked to timer --- */
 /* RX on CC1 is using COMP1 triggering TIM1 CH1 */
 #define TIM_RX1 1
@@ -144,13 +143,13 @@ USB_DECLARE_EP(USB_EP_SNIFFER, ep_tx, ep_tx, ep_event);
 static const struct dma_option dma_tim_cc1 = {
 	DMAC_TIM_RX1, (void *)&STM32_TIM_CCRx(TIM_RX1, TIM_RX1_CCR_IDX),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
-	STM32_DMA_CCR_CIRC | STM32_DMA_CCR_TCIE | STM32_DMA_CCR_HTIE
+		STM32_DMA_CCR_CIRC | STM32_DMA_CCR_TCIE | STM32_DMA_CCR_HTIE
 };
 
 static const struct dma_option dma_tim_cc2 = {
 	DMAC_TIM_RX2, (void *)&STM32_TIM_CCRx(TIM_RX2, TIM_RX2_CCR_IDX),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
-	STM32_DMA_CCR_CIRC | STM32_DMA_CCR_TCIE | STM32_DMA_CCR_HTIE
+		STM32_DMA_CCR_CIRC | STM32_DMA_CCR_TCIE | STM32_DMA_CCR_HTIE
 };
 
 /* sequence number for sample buffers */
@@ -161,7 +160,7 @@ static uint32_t oflow;
 #define SNIFFER_CHANNEL_CC1 0
 #define SNIFFER_CHANNEL_CC2 1
 
-#define get_channel(b)   (((b) >> 12) & 0x1)
+#define get_channel(b) (((b) >> 12) & 0x1)
 
 void tim_rx1_handler(uint32_t stat)
 {
@@ -171,8 +170,7 @@ void tim_rx1_handler(uint32_t stat)
 	uint32_t next = idx ? 0x0001 : 0x0100;
 
 	sample_tstamp[idx] = __hw_clock_source_read();
-	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) |
-			(SNIFFER_CHANNEL_CC1<<12);
+	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) | (SNIFFER_CHANNEL_CC1 << 12);
 	if (filled_dma & next) {
 		oflow++;
 		sample_seq[idx] |= 0x8000;
@@ -193,8 +191,7 @@ void tim_rx2_handler(uint32_t stat)
 
 	idx += 2;
 	sample_tstamp[idx] = __hw_clock_source_read();
-	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) |
-			(SNIFFER_CHANNEL_CC2<<12);
+	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) | (SNIFFER_CHANNEL_CC2 << 12);
 	if (filled_dma & next) {
 		oflow++;
 		sample_seq[idx] |= 0x8000;
@@ -206,19 +203,19 @@ void tim_rx2_handler(uint32_t stat)
 	led_set_activity(1);
 }
 
-void tim_dma_handler(void)
+static void tim_dma_handler(void)
 {
 	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
-	uint32_t stat = dma->isr & (STM32_DMA_ISR_HTIF(DMAC_TIM_RX1)
-				  | STM32_DMA_ISR_TCIF(DMAC_TIM_RX1)
-				  | STM32_DMA_ISR_HTIF(DMAC_TIM_RX2)
-				  | STM32_DMA_ISR_TCIF(DMAC_TIM_RX2));
+	uint32_t stat = dma->isr & (STM32_DMA_ISR_HTIF(DMAC_TIM_RX1) |
+				    STM32_DMA_ISR_TCIF(DMAC_TIM_RX1) |
+				    STM32_DMA_ISR_HTIF(DMAC_TIM_RX2) |
+				    STM32_DMA_ISR_TCIF(DMAC_TIM_RX2));
 	if (stat & STM32_DMA_ISR_ALL(DMAC_TIM_RX2))
 		tim_rx2_handler(stat);
 	else
 		tim_rx1_handler(stat);
 	/* time to process the samples */
-	task_set_event(TASK_ID_SNIFFER, USB_EVENT, 0);
+	task_set_event(TASK_ID_SNIFFER, USB_EVENT);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, tim_dma_handler, 1);
 
@@ -251,30 +248,26 @@ static void rx_timer_init(int tim_id, timer_ctlr_t *tim, int ch_idx, int up_idx)
 	tim->sr = 0;
 }
 
-
-
 void sniffer_init(void)
 {
 	/* remap TIM1 CH1/2/3 to DMA channel 6 */
 	STM32_SYSCFG_CFGR1 |= BIT(28);
 
 	/* TIM1 CH1 for CC1 RX */
-	rx_timer_init(TIM_RX1, (void *)STM32_TIM_BASE(TIM_RX1),
-		      TIM_RX1_CCR_IDX, 2);
+	rx_timer_init(TIM_RX1, (void *)STM32_TIM_BASE(TIM_RX1), TIM_RX1_CCR_IDX,
+		      2);
 	/* TIM3 CH4 for CC2 RX */
-	rx_timer_init(TIM_RX2, (void *)STM32_TIM_BASE(TIM_RX2),
-		      TIM_RX2_CCR_IDX, 2);
+	rx_timer_init(TIM_RX2, (void *)STM32_TIM_BASE(TIM_RX2), TIM_RX2_CCR_IDX,
+		      2);
 
 	/* turn on COMP/SYSCFG */
 	STM32_RCC_APB2ENR |= BIT(0);
-	STM32_COMP_CSR = STM32_COMP_CMP1EN | STM32_COMP_CMP1MODE_HSPEED |
-			 STM32_COMP_CMP1INSEL_VREF12 |
-			 STM32_COMP_CMP1OUTSEL_TIM1_IC1 |
-			 STM32_COMP_CMP1HYST_HI |
-			 STM32_COMP_CMP2EN | STM32_COMP_CMP2MODE_HSPEED |
-			 STM32_COMP_CMP2INSEL_VREF12 |
-			 STM32_COMP_CMP2OUTSEL_TIM2_IC4 |
-			 STM32_COMP_CMP2HYST_HI;
+	STM32_COMP_CSR =
+		STM32_COMP_CMP1EN | STM32_COMP_CMP1MODE_HSPEED |
+		STM32_COMP_CMP1INSEL_VREF12 | STM32_COMP_CMP1OUTSEL_TIM1_IC1 |
+		STM32_COMP_CMP1HYST_HI | STM32_COMP_CMP2EN |
+		STM32_COMP_CMP2MODE_HSPEED | STM32_COMP_CMP2INSEL_VREF12 |
+		STM32_COMP_CMP2OUTSEL_TIM2_IC4 | STM32_COMP_CMP2HYST_HI;
 
 	/* start sampling the edges on the CC lines using the RX timers */
 	dma_start_rx(&dma_tim_cc1, RX_COUNT, samples[0]);
@@ -311,15 +304,14 @@ void sniffer_task(void)
 			ep_buf[u][0] = sample_seq[d >> 3] | (d & 7);
 			ep_buf[u][1] = sample_tstamp[d >> 3];
 
-			memcpy_to_usbram(
-					((void *)usb_sram_addr(ep_buf[u]
-						+ (EP_PACKET_HEADER_SIZE>>1))),
-					samples[d >> 4]+off,
-					EP_PAYLOAD_SIZE);
-			deprecated_atomic_clear_bits((uint32_t *)&free_usb,
-						     1 << u);
+			memcpy_to_usbram(((void *)usb_sram_addr(
+						 ep_buf[u] +
+						 (EP_PACKET_HEADER_SIZE >> 1))),
+					 samples[d >> 4] + off,
+					 EP_PAYLOAD_SIZE);
+			atomic_clear_bits((atomic_t *)&free_usb, 1 << u);
 			u = !u;
-			deprecated_atomic_clear_bits(&filled_dma, 1 << d);
+			atomic_clear_bits((atomic_t *)&filled_dma, 1 << d);
 		}
 		led_reset_record();
 
@@ -333,8 +325,8 @@ void sniffer_task(void)
 
 int wait_packet(int pol, uint32_t min_edges, uint32_t timeout_us)
 {
-	stm32_dma_chan_t *chan = dma_get_channel(pol ? DMAC_TIM_RX2
-						     : DMAC_TIM_RX1);
+	stm32_dma_chan_t *chan =
+		dma_get_channel(pol ? DMAC_TIM_RX2 : DMAC_TIM_RX1);
 	uint32_t t0 = __hw_clock_source_read();
 	uint32_t c0 = chan->cndtr;
 	uint32_t t_gap = t0;
@@ -356,7 +348,7 @@ int wait_packet(int pol, uint32_t min_edges, uint32_t timeout_us)
 				total_edges += nb;
 			} else {
 				if ((t - t_gap) > 20 &&
-				    (total_edges - (t - t0)/256) >= min_edges)
+				    (total_edges - (t - t0) / 256) >= min_edges)
 					/* real gap after the packet */
 					break;
 			}
@@ -393,11 +385,10 @@ static void sniffer_sysjump(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, sniffer_sysjump, HOOK_PRIO_DEFAULT);
 
-static int command_sniffer(int argc, char **argv)
+static int command_sniffer(int argc, const char **argv)
 {
 	ccprintf("Seq number:%d Overflows: %d\n", seq, oflow);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sniffer, command_sniffer,
-			"[]", "Buffering status");
+DECLARE_CONSOLE_COMMAND(sniffer, command_sniffer, "[]", "Buffering status");

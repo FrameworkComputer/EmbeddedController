@@ -1,4 +1,4 @@
-# Copyright 2015 The Chromium OS Authors. All rights reserved.
+# Copyright 2015 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -19,7 +19,3 @@ could be something like autotest.  The interpreter is also responsible for the
 automatic command retrying if the EC drops a character in a command.  This is a
 stopgap until all commands are communicated via host commands.
 """
-
-import console
-import interpreter
-import threadproc_shim

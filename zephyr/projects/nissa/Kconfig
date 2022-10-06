@@ -1,0 +1,52 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_NIVVIKS
+	bool "Google Nivviks Board"
+	help
+	  Build Google Nivviks reference board. Nivviks has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
+config BOARD_NEREID
+	bool "Google Nereid Board"
+	help
+	  Build Google Nereid reference board. Nereid has Intel ADL-N SoC
+	  with IT81302 EC.
+
+config BOARD_CRAASK
+	bool "Google Craask Board"
+	help
+	  Build Google Craask board. Craask has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
+config BOARD_PUJJO
+	bool "Google Pujjo Board"
+	help
+	  Build Google Pujjo board. Pujjo has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
+config BOARD_XIVU
+        bool "Google Xivu Board"
+        help
+          Build Google Xivu board. Xivu has Intel ADL-N SoC
+          with NPCX993FA0BX EC.
+
+config BOARD_JOXER
+	bool "Google Joxer Board"
+	help
+	  Build Google Joxer reference board. Joxer has Intel ADL-N SoC
+	  with IT81302 EC.
+
+config BOARD_YAVIKS
+	bool "Google Yaviks Board"
+	help
+	  Build Google Yaviks board. Yaviks has Intel ADL-N SoC
+	  with IT81302 EC.
+
+
+module = NISSA
+module-str = Nissa board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"

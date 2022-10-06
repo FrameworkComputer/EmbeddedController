@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,21 +10,21 @@
 
 /* Memory mapping */
 #if !defined(TEST_NVMEM) && !defined(TEST_CR50_FUZZ)
-#define CONFIG_FLASH_SIZE 0x00020000
+#define CONFIG_FLASH_SIZE_BYTES 0x00020000
 #define CONFIG_FLASH_BANK_SIZE 0x1000
 #else
-#define CONFIG_FLASH_SIZE (512 * 1024)
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
 #define CONFIG_FLASH_BANK_SIZE 0x800
 #endif
 
-extern char __host_flash[CONFIG_FLASH_SIZE];
+extern char __host_flash[CONFIG_FLASH_SIZE_BYTES];
 
 #define CONFIG_PROGRAM_MEMORY_BASE ((uintptr_t)__host_flash)
-#define CONFIG_FLASH_ERASE_SIZE 0x0010	     /* erase bank size */
-#define CONFIG_FLASH_WRITE_SIZE 0x0002	     /* minimum write size */
+#define CONFIG_FLASH_ERASE_SIZE 0x0010 /* erase bank size */
+#define CONFIG_FLASH_WRITE_SIZE 0x0002 /* minimum write size */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x0080 /* ideal write size */
-#define CONFIG_RAM_BASE 0x0		     /* Not supported */
-#define CONFIG_RAM_SIZE                0x0 /* Not supported */
+#define CONFIG_RAM_BASE 0x0 /* Not supported */
+#define CONFIG_RAM_SIZE 0x0 /* Not supported */
 
 #define CONFIG_FPU
 
@@ -43,7 +43,7 @@ extern char __host_flash[CONFIG_FLASH_SIZE];
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 250
-#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
+#define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Do NOT use common panic code (designed to output information on the UART) */
 #undef CONFIG_COMMON_PANIC_OUTPUT

@@ -1,0 +1,50 @@
+description: IEOX chip definition
+
+compatible: "cros,ioex-chip"
+
+include: [base.yaml]
+
+properties:
+    i2c-port:
+      type: phandle
+      description:
+        Handle to the i2c named-port containing the IO expander chip
+
+    i2c-addr:
+      type: int
+      required: true
+      description:
+        I2C address of chip
+
+    flags:
+      type: int
+      required: true
+      description:
+        Value which represents IOEX_FLAGS_* or other internal flags
+        for IO expander chip.
+
+    drv:
+      type: string
+      required: true
+      description:
+        CrOS EC driver used to communicate with chip
+      enum:
+        - "ccgxxf_ioexpander_drv"
+        - "it8801_ioexpander_drv"
+        - "nct38xx_ioexpander_drv"
+        - "pca9675_ioexpander_drv"
+        - "pcal6408_ioexpander_drv"
+        - "tca64xxa_ioexpander_drv"
+
+    int-gpios:
+      type: phandle-array
+      required: false
+      description:
+        GPIO connected to the interrupt output signal of IO expander chip
+
+    "#address-cells":
+      required: true
+      const: 1
+    "#size-cells":
+      required: true
+      const: 0

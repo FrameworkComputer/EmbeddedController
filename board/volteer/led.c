@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -18,17 +18,17 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-struct pwm_led led_color_map[] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED] =    {  100,   0,     0 },
-	[EC_LED_COLOR_GREEN] =  {    0, 100,     0 },
-	[EC_LED_COLOR_BLUE] =   {    0,   0,   100 },
+struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
+	/* Red, Green, Blue */
+	[EC_LED_COLOR_RED] = { 100, 0, 0 },
+	[EC_LED_COLOR_GREEN] = { 0, 100, 0 },
+	[EC_LED_COLOR_BLUE] = { 0, 0, 100 },
 	/* The green LED seems to be brighter than the others, so turn down
 	 * green from its natural level for these secondary colors.
 	 */
-	[EC_LED_COLOR_YELLOW] = {  100,  70,     0 },
-	[EC_LED_COLOR_WHITE] =  {  100,  70,   100 },
-	[EC_LED_COLOR_AMBER] =  {  100,  20,     0 },
+	[EC_LED_COLOR_YELLOW] = { 100, 70, 0 },
+	[EC_LED_COLOR_WHITE] = { 100, 70, 100 },
+	[EC_LED_COLOR_AMBER] = { 100, 20, 0 },
 };
 
 struct pwm_led pwm_leds[] = {
@@ -102,3 +102,11 @@ static void led_set_charge_port_tick(void)
 		pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
 }
 DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);
+
+static void board_led_init(void)
+{
+	/* Illuminate motherboard and daughter board LEDs equally to start. */
+	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
+	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
+}
+DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);

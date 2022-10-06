@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -16,7 +16,6 @@
 #define USB_BB_PROTOCOL 0x00
 #define USB_BB_EP0_PACKET_SIZE 8
 #define USB_BB_CAP_DESC_TYPE 0x0d
-
 
 #define USB_BB_CAPS_SVID_SIZE 4
 struct usb_bb_caps_svid_descriptor {
@@ -38,17 +37,14 @@ struct usb_bb_caps_base_descriptor {
 	uint32_t bReserved; /* SBZ */
 } __packed;
 
-
-#define USB_BB_VCONN_PWRON(x)    (x << 15)
-#define USB_BB_VCONN_PWR_1W      0
-#define USB_BB_VCONN_PWR_1p5W    1
-#define USB_BB_VCONN_PWR_2W      2
-#define USB_BB_VCONN_PWR_3W      3
-#define USB_BB_VCONN_PWR_4W      4
-#define USB_BB_VCONN_PWR_5W      5
-#define USB_BB_VCONN_PWR_6W      6
+#define USB_BB_VCONN_PWRON(x) (x << 15)
+#define USB_BB_VCONN_PWR_1W 0
+#define USB_BB_VCONN_PWR_1p5W 1
+#define USB_BB_VCONN_PWR_2W 2
+#define USB_BB_VCONN_PWR_3W 3
+#define USB_BB_VCONN_PWR_4W 4
+#define USB_BB_VCONN_PWR_5W 5
+#define USB_BB_VCONN_PWR_6W 6
 /* Note, 7W (111b) is reserved */
 
-
 #endif /* __CROS_EC_USB_BB_H */
-

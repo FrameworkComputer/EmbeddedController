@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,12 +25,12 @@ GPIO_INT(PG_VPRIM_CORE_A_OD,   PIN(2, 3), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP1050_A_OD,       PIN(2, 2), GPIO_INT_BOTH, power_signal_interrupt)
 /* EC output, but also interrupt so this can be polled as a power signal */
 GPIO_INT(EC_PCH_RSMRST_L,      PIN(A, 6), GPIO_OUTPUT | GPIO_INT_F_RISING | GPIO_INT_F_FALLING, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4
 GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(PG_PP2500_DRAM_U_OD,  PIN(2, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP1200_U_OD,       PIN(2, 1), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3
 GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, slp_s3_interrupt)
 #endif
 GPIO_INT(PG_PP950_VCCIO_OD,    PIN(1, 7), GPIO_INT_BOTH, power_signal_interrupt)
@@ -42,7 +42,11 @@ GPIO_INT(USB_C0_TCPPC_INT_ODL, PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C0_TCPC_INT_ODL,  PIN(6, 2), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C1_TCPPC_INT_ODL, PIN(A, 2), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(E, 4), GPIO_INT_FALLING, tcpc_alert_event)
-GPIO_INT(PANEL_BACKLIGHT_EN,	PIN(B, 1), GPIO_INT_RISING, backlight_enable_interrupt)
+GPIO_INT(PANEL_BACKLIGHT_EN,	PIN(B, 1), GPIO_INT_RISING, board_backlight_enable_interrupt)
+
+/* Sensor Interrupts */
+GPIO_INT(ALS_GSENSOR_INT_ODL, PIN(9, 6), GPIO_INT_FALLING, tcs3400_interrupt)
+
 /*
  * Directly connected recovery button.
  */
@@ -58,14 +62,14 @@ GPIO_INT(USB_A0_OC_ODL,        PIN(F, 5), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A1_OC_ODL,        PIN(0, 3), GPIO_INT_BOTH, port_ocp_interrupt)
 
 /* Volume button interrupts */
-GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(C, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,     PIN(8, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* PCH/CPU signals */
 GPIO(EC_PCH_PWROK,             PIN(0, 5), GPIO_OUT_LOW)
 GPIO(EC_PCH_SYS_PWROK,         PIN(3, 7), GPIO_OUT_LOW)
 GPIO(EC_PCH_PWR_BTN_ODL,       PIN(C, 1), GPIO_ODR_HIGH)
-GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_ODR_HIGH)
+GPIO(EC_PCH_RTCRST,            PIN(7, 6), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_PROCHOT_IN_OD,         PIN(3, 4), GPIO_INPUT)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
@@ -130,6 +134,7 @@ ALTERNATE(PIN_MASK(3, 0x48), 0, MODULE_I2C, 0)                  /* I2C5 */
 ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, 0)                  /* I2C7 */
 
 /* PWM */
+ALTERNATE(PIN_MASK(C, 0x08), 0, MODULE_PWM, 0)                  /* PWM0 - Red Led */
 ALTERNATE(PIN_MASK(C, 0x10), 0, MODULE_PWM, 0)                  /* PWM2 - White Led */
 ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                  /* PWM5 - Fan 1 */
 ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)                  /* TA2 - Fan Tachometer */
@@ -146,12 +151,18 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC 
 GPIO(PANEL_ID0,			PIN(0, 2), GPIO_INPUT)
 GPIO(PANEL_ID1,			PIN(C, 6), GPIO_INPUT)
 
+/*
+ * EDID write protect control
+ * EDID ROM powered by EN_ROA_RAILS, init low to prevent power leakage
+ * high to enable EDID ROM WP
+ * low to disable EDID ROM WP
+ */
+GPIO(EC_EDID_WP_DISABLE_L,	PIN(D, 3), GPIO_OUT_LOW)
+
 /* Unused pins */
-UNUSED(PIN(D, 3))						/* E9  TP55 */
 UNUSED(PIN(9, 5))						/* H10 TP54 */
 UNUSED(PIN(4, 0))						/* E4  TP56 */
 UNUSED(PIN(5, 0))						/* G4 NC */
-UNUSED(PIN(9, 6))						/* M12 TP998 */
 UNUSED(PIN(0, 7))						/* E8  TP991 */
 UNUSED(PIN(0, 6))						/* B10 TP992 */
 UNUSED(PIN(D, 6))						/* F6 */

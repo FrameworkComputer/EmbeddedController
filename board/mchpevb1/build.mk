@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2015 The Chromium OS Authors. All rights reserved.
+# Copyright 2015 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -10,8 +10,8 @@
 # external SPI is 512KB
 # external clock is crystal
 CHIP:=mchp
-CHIP_FAMILY:=mec17xx
-CHIP_VARIANT:=mec17xx_2E00
+CHIP_FAMILY:=mec170x
+CHIP_VARIANT:=mec1701
 CHIP_SPI_SIZE_KB:=512
 
 board-y=board.o led.o

@@ -1,0 +1,248 @@
+# Copyright 2020 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Please keep these tasks in alphabetical order
+
+menu "Tasks"
+
+config TASKS_SET_TEST_RUNNER_TID_RULE
+	bool "Automatically call set_test_runner_tid() for each test"
+	depends on ZTEST && ZTEST_NEW_API
+	help
+	  This enables the test rule which will run before each unit test and
+	  call set_test_runner_tid(). This function is needed to allow-list the
+	  new thread created by ztest to access some of the components in the
+	  EC.
+
+config HAS_TASK_CHARGER
+	bool
+	depends on PLATFORM_EC_BATTERY
+	help
+	  This turns on the charger task. This deals with monitoring the
+	  battery to make sure it is present and is responding properly to
+	  requests. If the battery is not full, it enables charging from a
+	  suitable power source.
+
+if HAS_TASK_CHARGER
+
+config TASK_CHARGER_STACK_SIZE
+	int "CHARGER task stack size"
+	default 1024	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	help
+	  The stack size of the charger task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_CHARGER
+
+config HAS_TASK_CHG_RAMP
+	bool
+	depends on PLATFORM_EC_BATTERY
+	help
+	  This turns on the charger ramp task. This attempts to ramp up the
+	  current from an attached charger to the maximum available current.
+	  It handles the incoming VBUS voltage sagging as well as the user
+	  attaching different chargers.
+
+if HAS_TASK_CHG_RAMP
+
+config TASK_CHG_RAMP_STACK_SIZE
+	int "CHG_RAMP task stack size"
+	default 768	# EC uses TASK_STACK_SIZE which is 512 for npcx
+	help
+	  The stack size of the charger task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_CHG_RAMP
+
+config HAS_TASK_CHIPSET
+	bool
+	depends on PLATFORM_EC_POWERSEQ
+	help
+	  This turns on the chipset task which handles powering the chipset
+	  on and off. Powering on involves going through a sequence of enabling
+	  different power rails (e.g. by enabling GPIOs that control a PMIC)
+	  and monitoring power-good indicators to meet the specifications
+	  defined by the vendor.
+
+if HAS_TASK_CHIPSET
+
+config TASK_CHIPSET_STACK_SIZE
+	int "CHIPSET task stack size"
+	default 1024
+	help
+	  The stack size of the power button task.
+
+endif # HAS_TASK_CHIPSET
+
+config HAS_TASK_HOSTCMD
+	bool
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  This turns on the hostcmd task which handles communication with the
+	  AP. The AP sends a command to the EC and it responds when able. An
+	  interrupt can be used to indicate to the AP that the EC has something
+	  for it.
+
+if HAS_TASK_HOSTCMD
+
+choice TASK_HOSTCMD_THREAD_MODE
+	prompt "Host command thread selection"
+	default TASK_HOSTCMD_THREAD_DEDICATED if ZTEST
+
+config TASK_HOSTCMD_THREAD_MAIN
+	bool "Run the host command in the main thread"
+	help
+	  Run the HOSTCMD task in the main thread, reusing the main thread
+	  resources. Set the stack size using MAIN_STACK_SIZE.
+
+config TASK_HOSTCMD_THREAD_DEDICATED
+	bool "Run the host command in a dedicated thread"
+	help
+	  Run the HOSTCMD task in a dedicated thread.
+
+endchoice
+
+config TASK_HOSTCMD_STACK_SIZE
+	int "HOSTCMD task stack size"
+	depends on TASK_HOSTCMD_THREAD_DEDICATED
+	default 1024
+	help
+	  The size of the host-command task stack.
+
+endif # HAS_TASK_HOSTCMD
+
+config HAS_TASK_KEYPROTO
+	bool
+	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+	help
+	  This turns on the keyproto task which handles conversion of keyboard
+	  scans into i8042 messages on x86 platforms. This is not used or needed
+	  on ARM platforms, which send the raw keyboard scans to the AP for
+	  processing.
+
+if HAS_TASK_KEYPROTO
+
+config TASK_KEYPROTO_STACK_SIZE
+	int "KEYPROTO task stack size"
+	default 768
+	help
+	  The stack size of the keyproto task.
+
+endif # HAS_TASK_KEYPROTO
+
+config HAS_TASK_KEYSCAN
+	bool
+	depends on PLATFORM_EC_KEYBOARD
+	help
+	  This turns on the keyscan task which handles scanning the keyboard
+	  and producing a list of changes in the key state. This list can either
+	  be sent to the keyboard-protocol task or directly to the AP for
+	  processing.
+
+if HAS_TASK_KEYSCAN
+
+config TASK_KEYSCAN_STACK_SIZE
+	int "KEYSCAN task stack size"
+	default 768
+	help
+	  The stack size of the keyscan task.
+
+endif # HAS_TASK_KEYSCAN
+
+config HAS_TASK_MOTIONSENSE
+	bool
+	help
+	  This turns on the motion sense task which collects sensor data from the
+	  sensors and reports them to AP. Using the data, it also produces other
+	  meaningful reports to AP like lid angle and tablet mode.
+
+if HAS_TASK_MOTIONSENSE
+
+config TASK_MOTIONSENSE_STACK_SIZE
+	int "MOTIONSENSE task stack size"
+	default 4096
+	help
+	  The size of the motion sense task stack.
+
+endif # HAS_TASK_MOTIONSENSE
+
+config HAS_TASK_POWERBTN
+	bool
+	depends on PLATFORM_EC_POWER_BUTTON
+	help
+	  This turns on the powerbtn task which handles monitoring the power
+	  button. When the application processor (AP) is off (S5 or G3 states),
+	  this task triggers a power-up sequence on a power-button press. When
+	  the AP is on (S3 or above state) x86 machines normally reset when the
+	  power button is held for 4 seconds but this tasks adjusts that to 8
+	  seconds, to allow time for the usual Chromium OS shutdown sequence.
+
+if HAS_TASK_POWERBTN
+
+config TASK_POWERBTN_STACK_SIZE
+	int "POWERBTN task stack size"
+	default 1024
+	help
+	  The stack size of the power-button task.
+
+endif # HAS_TASK_POWERBTN
+
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+config TASK_PD_STACK_SIZE
+	int "PD tasks stack size"
+	default 1024	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	help
+	  The stack size of the PD_Cx tasks.
+
+config TASK_PD_INT_STACK_SIZE
+	int "PD_INT task stack size"
+	default 1280
+	help
+	  The stack size of the PD_Cn_INT tasks.
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY
+
+if HAS_TASK_DPS
+
+config TASK_DPS_STACK_SIZE
+	int "DPS task stack size"
+	default 1024
+	help
+	  The stack size of the DPS task.
+
+endif # HAS_TASK_DPS
+
+config HAS_TASK_DPS
+	bool
+	depends on PLATFORM_EC_USB_PD_DPS
+	help
+	  This turns on the DPS task which evalutes the SRCCAP from all the SNK
+	  ports and issues a new power request to the port which has the most
+	  efficient power data object (PDO).
+
+
+config HAS_TASK_PD_INT_SHARED
+	bool # Selected by PLATFORM_EC_USB_PD_INT_SHARED
+	help
+	  This turns on the PD_INT_SHARED task which services PD message
+	  interrupts for any port which has a shared IRQ enabled.
+
+
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+config TASK_USB_CHG_STACK_SIZE
+	int "USB_CHG tasks stack size"
+	default 1280	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	help
+	  The stack size of the USB charger task. If there are multiple tasks,
+	  each one gets the same stack size.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY
+
+endmenu # Tasks

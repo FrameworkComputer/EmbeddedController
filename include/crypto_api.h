@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,8 +26,8 @@ extern "C" {
  *		    value exceeds SHA1 size (20 bytes), the rest of the
  *		    hash is filled up with zeros.
  */
-void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
-		      uint8_t *p_hash, size_t hash_len);
+void app_compute_hash(uint8_t *p_buf, size_t num_bytes, uint8_t *p_hash,
+		      size_t hash_len);
 
 #define CIPHER_SALT_SIZE 16
 

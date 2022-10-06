@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -11,4 +11,4 @@
 int isl29035_init(void);
 int isl29035_read_lux(int *lux, int af);
 
-#endif	/* __CROS_EC_ALS_ISL29035_H */
+#endif /* __CROS_EC_ALS_ISL29035_H */

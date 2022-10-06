@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,7 +17,7 @@
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
@@ -26,6 +26,11 @@
 #define CONFIG_LED_COMMON
 #define CONFIG_CMD_LEDTEST
 #define CONFIG_KEYBOARD_FACTORY_TEST
+
+/* Thermal */
+#define CONFIG_CHIPSET_CAN_THROTTLE
+#define CONFIG_CPU_PROCHOT_ACTIVE_LOW
+#define CONFIG_THROTTLE_AP
 
 #define CONFIG_BATTERY_MEASURE_IMBALANCE
 #define CONFIG_BATTERY_BQ4050
@@ -36,26 +41,19 @@
 
 #ifndef __ASSEMBLER__
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT = 0, PWM_CH_COUNT };
 
 enum battery_type {
-	BATTERY_DANAPACK_COS,
-	BATTERY_DANAPACK_ATL,
-	BATTERY_DANAPACK_SDI,
+	BATTERY_DYNAPACK_COS,
+	BATTERY_DYNAPACK_ATL,
+	BATTERY_DYNAPACK_SDI,
 	BATTERY_SAMSUNG_SDI,
 	BATTERY_SIMPLO_COS,
 	BATTERY_SIMPLO_ATL,
 	BATTERY_SIMPLO_HIGHPOWER,
+	BATTERY_COS,
 	BATTERY_TYPE_COUNT,
 };
-
-#ifdef CONFIG_KEYBOARD_FACTORY_TEST
-extern const int keyboard_factory_scan_pins[][2];
-extern const int keyboard_factory_scan_pins_used;
-#endif
 
 #endif /* !__ASSEMBLER__ */
 

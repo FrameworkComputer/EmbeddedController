@@ -1,0 +1,72 @@
+# Copyright 2022 The ChromiumOS Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: Charger chip
+
+include: i2c-device.yaml
+
+# Example
+# The charger chips nodes have to be placed under the USB-C
+# nodes(named-usbc-port).If the OCPC(on-charger per type-c port) config is
+# enabled, the charger chips has to be defiend per USB-C port, with the primary
+# one defined under port 0. If the CHARGER_SINGLE_CHIP config is enabled, only
+# one charger chip must be defined. It has to be done under the port 0.
+# For OCPC:
+#	usbc {
+#		#address-cells = <1>;
+#		#size-cells = <0>;
+#
+#		port0@0 {
+#			compatible = "named-usbc-port";
+#			reg = <0>;
+#			bc12 = <&bc12_port0>;
+#			chg = <&chg_port0>;
+#		};
+#		port1@1 {
+#			compatible = "named-usbc-port";
+#			reg = <1>;
+#			bc12 = <&bc12_port1>;
+#			chg = <&chg_port1>;
+#		};
+#	};
+#
+#	&i2c5 {
+#		chg_port0: sm5803@32 {
+#			compatible = "siliconmitus,sm5803";
+#			status = "okay";
+#			reg = <0x32>;
+#		};
+#	};
+#
+#	&i2c4 {
+#		chg_port1: sm5803@32 {
+#			compatible = "siliconmitus,sm5803";
+#			status = "okay";
+#			reg = <0x32>;
+#		};
+#	};
+#
+# For CHARGER_SINGLE_CHIP:
+#	usbc {
+#		#address-cells = <1>;
+#		#size-cells = <0>;
+#
+#		port0@0 {
+#			compatible = "named-usbc-port";
+#			reg = <0>;
+#			chg = <&charger>;
+#		};
+#		port1@1 {
+#			compatible = "named-usbc-port";
+#			reg = <1>;
+#			bc12 = <&bc12_port1>;
+#		};
+#	};
+#
+#	&i2c5 {
+#		charger: sm5803@32 {
+#			compatible = "siliconmitus,sm5803";
+#			status = "okay";
+#			reg = <0x32>;
+#		};
+#	};

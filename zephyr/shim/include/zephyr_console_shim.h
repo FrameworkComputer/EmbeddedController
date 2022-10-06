@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,41 +6,56 @@
 #ifndef __CROS_EC_ZEPHYR_CONSOLE_SHIM_H
 #define __CROS_EC_ZEPHYR_CONSOLE_SHIM_H
 
-#include <shell/shell.h>
+#include <zephyr/shell/shell.h>
+
+struct zephyr_console_command {
+	/* Handler for the command.  argv[0] will be the command name. */
+	int (*handler)(int argc, const char **argv);
+#ifdef CONFIG_SHELL_HELP
+	/* Description of args */
+	const char *argdesc;
+	/* Short help for command */
+	const char *help;
+#endif
+};
+
+#ifdef CONFIG_SHELL_HELP
+#define _HELP_ARGS(A, H) .argdesc = A, .help = H,
+#else
+#define _HELP_ARGS(A, H)
+#endif
 
 /**
  * zshim_run_ec_console_command() - Dispatch a CrOS EC console command
  * using Zephyr's shell
  *
- * @handler:		A CrOS EC shell command handler.
- * @shell:		The Zephyr shell to run on.
+ * @command:		Pointer to a struct zephyr_console_command
  * @argc:		The number of command line arguments.
  * @argv:		The NULL-terminated list of arguments.
- * @help_str:		The help string to display when "-h" is passed.
- * @argdesc:		The string describing the arguments to the command.
  *
  * Return: the return value from the handler.
  */
-int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
-				 const struct shell *shell, size_t argc,
-				 char **argv, const char *help_str,
-				 const char *argdesc);
+int zshim_run_ec_console_command(const struct zephyr_console_command *command,
+				 size_t argc, const char **argv);
 
 /* Internal wrappers for DECLARE_CONSOLE_COMMAND_* macros. */
-#define _ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,	\
-				     WRAPPER_ID)			\
-	static int WRAPPER_ID(const struct shell *shell, size_t argc,        \
-			      char **argv)                                   \
-	{                                                                    \
-		return zshim_run_ec_console_command(ROUTINE_ID, shell, argc, \
-						    argv, HELP, ARGDESC);    \
-	}                                                                    \
-	SHELL_CMD_ARG_REGISTER(NAME, NULL, HELP, WRAPPER_ID, 0,              \
+#define _ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,       \
+				     WRAPPER_ID, ENTRY_ID)                  \
+	static const struct zephyr_console_command ENTRY_ID = {             \
+		.handler = ROUTINE_ID, _HELP_ARGS(ARGDESC, HELP)            \
+	};                                                                  \
+	static int WRAPPER_ID(const struct shell *shell, size_t argc,       \
+			      const char **argv)                            \
+	{                                                                   \
+		return zshim_run_ec_console_command(&ENTRY_ID, argc, argv); \
+	}                                                                   \
+	SHELL_CMD_ARG_REGISTER(NAME, NULL, HELP, WRAPPER_ID, 0,             \
 			       SHELL_OPT_ARG_MAX)
 
-#define _ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE_ID, ARGDESC, HELP)   \
-	_ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP, \
-				     UTIL_CAT(zshim_wrapper_, ROUTINE_ID))
+#define _ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE_ID, ARGDESC, HELP)        \
+	_ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,      \
+				     UTIL_CAT(zshim_wrapper_, ROUTINE_ID), \
+				     UTIL_CAT(zshim_entry_, ROUTINE_ID))
 
 /* These macros mirror the macros provided by the CrOS EC. */
 #define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP) \
@@ -55,4 +70,15 @@ int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 #define DECLARE_SAFE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP) \
 	_ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE, ARGDESC, HELP)
 
-#endif  /* __CROS_EC_ZEPHYR_CONSOLE_SHIM_H */
+/**
+ * console_buf_notify_chars() - Notify the console host command buffer
+ * of bytes on the console.
+ *
+ * @s:			The pointer to the string.
+ * @len:		The size of the string.
+ *
+ * Return: the number of bytes consumed.
+ */
+size_t console_buf_notify_chars(const char *s, size_t len);
+
+#endif /* __CROS_EC_ZEPHYR_CONSOLE_SHIM_H */

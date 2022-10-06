@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,6 +7,8 @@
 
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
+
+#include <stdint.h>
 
 #include "common.h"
 
@@ -59,13 +61,13 @@ enum vcmp_scan_period {
 	VCMP_SCAN_PERIOD_400US = 0x30,
 	VCMP_SCAN_PERIOD_600US = 0x40,
 	VCMP_SCAN_PERIOD_800US = 0x50,
-	VCMP_SCAN_PERIOD_1MS   = 0x60,
+	VCMP_SCAN_PERIOD_1MS = 0x60,
 	VCMP_SCAN_PERIOD_1_5MS = 0x70,
-	VCMP_SCAN_PERIOD_2MS   = 0x80,
+	VCMP_SCAN_PERIOD_2MS = 0x80,
 	VCMP_SCAN_PERIOD_2_5MS = 0x90,
-	VCMP_SCAN_PERIOD_3MS   = 0xA0,
-	VCMP_SCAN_PERIOD_4MS   = 0xB0,
-	VCMP_SCAN_PERIOD_5MS   = 0xC0,
+	VCMP_SCAN_PERIOD_3MS = 0xA0,
+	VCMP_SCAN_PERIOD_4MS = 0xB0,
+	VCMP_SCAN_PERIOD_5MS = 0xC0,
 };
 
 /* Data structure to define ADC channel control registers. */
@@ -93,8 +95,8 @@ struct vcmp_ctrl_t {
 };
 
 /* supported flags (member "flag" in struct vcmp_t) for voltage comparator */
-#define GREATER_THRESHOLD         BIT(0)
-#define LESS_EQUAL_THRESHOLD      BIT(1)
+#define GREATER_THRESHOLD BIT(0)
+#define LESS_EQUAL_THRESHOLD BIT(1)
 
 /* Data structure for board to define voltage comparator list. */
 struct vcmp_t {
@@ -120,12 +122,6 @@ struct vcmp_t {
 	 */
 	enum chip_adc_channel adc_ch;
 };
-
-/*
- * Boards must provide this list of ADC channel definitions. This must match
- * the enum adc_channel list provided by the board.
- */
-extern const struct adc_t adc_channels[];
 
 #ifdef CONFIG_ADC_VOLTAGE_COMPARATOR
 /*

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,21 +8,22 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#include "compiler.h"
 #include "stdbool.h"
 
 /*
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
 /* NPCX7 config */
-#define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
-#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
+#define NPCX7_PWM1_SEL 0 /* GPIO C2 is not used as PWM1. */
+#define NPCX_UART_MODULE2 1 /* GPIO64/65 are used as UART pins. */
 /* Internal SPI flash on NPCX796FC is 512 kB */
-#define CONFIG_FLASH_SIZE (512 * 1024)
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #define CONFIG_I2C
@@ -34,7 +35,7 @@
 #define CONFIG_ADC
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
-#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CBI_EEPROM
 #define CONFIG_DPTF
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_LED_ONOFF_STATES
@@ -96,29 +97,28 @@
 #define CONFIG_CHARGER_BQ25710
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT 512 /* Allow low-current USB charging */
+#undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
-#define CONFIG_CHARGER_NARROW_VDC
 #define CONFIG_CHARGE_RAMP_HW
-#define CONFIG_CHARGER_SENSE_RESISTOR 10
-#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR 10
+#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC 10
 /*
  * Don't allow the system to boot to S0 when the battery is low and unable to
  * communicate on locked systems (which haven't PD negotiated)
  */
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT 15000
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC 1
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15001
 
 /* Common battery defines */
 #define CONFIG_BATTERY_CUT_OFF
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
-#undef  CONFIG_BATT_HOST_FULL_FACTOR
-#define CONFIG_BATT_HOST_FULL_FACTOR	100
+#undef CONFIG_BATT_HOST_FULL_FACTOR
+#define CONFIG_BATT_HOST_FULL_FACTOR 100
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_POWER_DELIVERY
@@ -153,9 +153,9 @@
 /* Include CLI command needed to support CCD testing. */
 #define CONFIG_CMD_CHARGEN
 
-#define USB_PD_PORT_TCPC_0	0
+#define USB_PD_PORT_TCPC_0 0
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-#define USB_PD_PORT_TCPC_1	1
+#define USB_PD_PORT_TCPC_1 1
 #endif
 
 /* BC 1.2 */
@@ -167,33 +167,32 @@
 #endif
 
 /* TODO(b/122273953): Use correct PD delay values */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
-#define PD_VCONN_SWAP_DELAY		5000	/* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* TODO(b/122273953): Use correct PD power values */
-#define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		60000
-#define PD_MAX_CURRENT_MA	3000
-#define PD_MAX_VOLTAGE_MV	20000
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW 60000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
-#define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
-#define I2C_PORT_PPC0		NPCX_I2C_PORT1_0
-#define I2C_PORT_TCPC1		NPCX_I2C_PORT2_0
-#define I2C_PORT_TCPC0		NPCX_I2C_PORT3_0
-#define I2C_PORT_THERMAL	NPCX_I2C_PORT4_1
-#define I2C_PORT_POWER		NPCX_I2C_PORT5_0
-#define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
-#define I2C_ADDR_EEPROM_FLAGS	0x50
-#define I2C_PORT_BATTERY	I2C_PORT_POWER
-#define I2C_PORT_CHARGER	I2C_PORT_POWER
+#define CONFIG_I2C_CONTROLLER
+#define I2C_PORT_SENSOR NPCX_I2C_PORT0_0
+#define I2C_PORT_PPC0 NPCX_I2C_PORT1_0
+#define I2C_PORT_TCPC1 NPCX_I2C_PORT2_0
+#define I2C_PORT_TCPC0 NPCX_I2C_PORT3_0
+#define I2C_PORT_THERMAL NPCX_I2C_PORT4_1
+#define I2C_PORT_POWER NPCX_I2C_PORT5_0
+#define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
+#define I2C_ADDR_EEPROM_FLAGS 0x50
+#define I2C_PORT_BATTERY I2C_PORT_POWER
+#define I2C_PORT_CHARGER I2C_PORT_POWER
 
 /* Other common defines */
 #define CONFIG_BACKLIGHT_LID
-#define GPIO_ENABLE_BACKLIGHT   GPIO_EDP_BKLTEN_OD
+#define GPIO_ENABLE_BACKLIGHT GPIO_EDP_BKLTEN_OD
 
 #define PP5000_PGOOD_POWER_SIGNAL_MASK POWER_SIGNAL_MASK(X86_PP5000_A_PGOOD)
 
@@ -212,6 +211,8 @@ unsigned char get_board_id(void);
 void board_reset_pd_mcu(void);
 void baseboard_mst_enable_control(enum mst_source, int level);
 bool board_is_convertible(void);
+
+FORWARD_DECLARE_ENUM(battery_present);
 
 /* Check with variant about battery presence. */
 enum battery_present variant_battery_present(void);

@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,9 +13,9 @@
 
 /* Event log FIFO */
 #define UNIT_SIZE sizeof(struct event_log_entry)
-#define UNIT_COUNT (CONFIG_EVENT_LOG_SIZE/UNIT_SIZE)
-#define UNIT_COUNT_MASK		(UNIT_COUNT - 1)
-static struct event_log_entry __bss_slow log_events[UNIT_COUNT];
+#define UNIT_COUNT (CONFIG_EVENT_LOG_SIZE / UNIT_SIZE)
+#define UNIT_COUNT_MASK (UNIT_COUNT - 1)
+static struct event_log_entry log_events[UNIT_COUNT];
 BUILD_ASSERT(POWER_OF_TWO(UNIT_COUNT));
 
 /*
@@ -42,31 +42,32 @@ static size_t log_tail;
 static size_t log_tail_next;
 
 /* Size of one FIFO entry */
-#define ENTRY_SIZE(payload_sz) (1+DIV_ROUND_UP((payload_sz), UNIT_SIZE))
+#define ENTRY_SIZE(payload_sz) (1 + DIV_ROUND_UP((payload_sz), UNIT_SIZE))
 
-void log_add_event(uint8_t type, uint8_t size, uint16_t data,
-			  void *payload, uint32_t timestamp)
+void log_add_event(uint8_t type, uint8_t size, uint16_t data, void *payload,
+		   uint32_t timestamp)
 {
 	struct event_log_entry *r;
 	size_t payload_size = EVENT_LOG_SIZE(size);
 	size_t total_size = ENTRY_SIZE(payload_size);
 	size_t current_tail, first;
+	uint32_t lock_key;
 
 	/* --- critical section : reserve queue space --- */
-	interrupt_disable();
+	lock_key = irq_lock();
 	current_tail = log_tail_next;
 	log_tail_next = current_tail + total_size;
-	interrupt_enable();
+	irq_unlock(lock_key);
 	/* --- end of critical section --- */
 
 	/* Out of space : discard the oldest entry */
 	while ((UNIT_COUNT - (current_tail - log_head)) < total_size) {
 		struct event_log_entry *oldest;
 		/* --- critical section : atomically free-up space --- */
-		interrupt_disable();
+		lock_key = irq_lock();
 		oldest = log_events + (log_head & UNIT_COUNT_MASK);
 		log_head += ENTRY_SIZE(EVENT_LOG_SIZE(oldest->size));
-		interrupt_enable();
+		irq_unlock(lock_key);
 		/* --- end of critical section --- */
 	}
 
@@ -77,13 +78,13 @@ void log_add_event(uint8_t type, uint8_t size, uint16_t data,
 	r->size = size;
 	r->data = data;
 	/* copy the payload into the FIFO */
-	first = MIN(total_size - 1, (UNIT_COUNT -
-		    (current_tail & UNIT_COUNT_MASK)) - 1);
+	first = MIN(total_size - 1,
+		    (UNIT_COUNT - (current_tail & UNIT_COUNT_MASK)) - 1);
 	if (first)
 		memcpy(r->payload, payload, first * UNIT_SIZE);
 	if (first < total_size - 1)
 		memcpy(log_events, ((uint8_t *)payload) + first * UNIT_SIZE,
-			(total_size - first) * UNIT_SIZE);
+		       (total_size - first) * UNIT_SIZE);
 	/* mark the entry available in the queue if nobody is behind us */
 	if (current_tail == log_tail)
 		log_tail = log_tail_next;
@@ -95,6 +96,7 @@ int log_dequeue_event(struct event_log_entry *r)
 	unsigned int total_size, first;
 	struct event_log_entry *entry;
 	size_t current_head;
+	uint32_t lock_key;
 
 retry:
 	current_head = log_head;
@@ -110,16 +112,16 @@ retry:
 	first = MIN(total_size, UNIT_COUNT - (current_head & UNIT_COUNT_MASK));
 	memcpy(r, entry, first * UNIT_SIZE);
 	if (first < total_size)
-		memcpy(r + first, log_events, (total_size-first) * UNIT_SIZE);
+		memcpy(r + first, log_events, (total_size - first) * UNIT_SIZE);
 
 	/* --- critical section : remove the entry from the queue --- */
-	interrupt_disable();
+	lock_key = irq_lock();
 	if (log_head != current_head) { /* our entry was thrown away */
-		interrupt_enable();
+		irq_unlock(lock_key);
 		goto retry;
 	}
 	log_head += total_size;
-	interrupt_enable();
+	irq_unlock(lock_key);
 	/* --- end of critical section --- */
 
 	/* fixup the timestamp : number of milliseconds in the past */
@@ -132,10 +134,10 @@ retry:
 /*
  * Display TPM event logs.
  */
-static int command_dlog(int argc, char **argv)
+static int command_dlog(int argc, const char **argv)
 {
 	size_t log_cur;
-	const uint8_t * const log_events_end =
+	const uint8_t *const log_events_end =
 		(uint8_t *)&log_events[UNIT_COUNT];
 
 	if (argc > 1) {
@@ -162,7 +164,7 @@ static int command_dlog(int argc, char **argv)
 		log_cur += ENTRY_SIZE(payload_bytes);
 
 		ccprintf("%10d   %4d  0x%04X   %4d   ", r->timestamp, r->type,
-			r->data, payload_bytes);
+			 r->data, payload_bytes);
 
 		/* display payload if exists */
 		payload = r->payload;
@@ -177,8 +179,6 @@ static int command_dlog(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dlog,
-			command_dlog,
-			"[clear]",
+DECLARE_CONSOLE_COMMAND(dlog, command_dlog, "[clear]",
 			"Display/clear TPM event logs");
 #endif

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,7 @@
  *
  */
 
-#include "chipset.h"  /* This module implements chipset functions too */
+#include "chipset.h" /* This module implements chipset functions too */
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -22,7 +22,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 #define IN_SUSPEND POWER_SIGNAL_MASK(ECDRIVEN_SUSPEND_ASSERTED)
 

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -74,4 +74,4 @@ int acpi_dptf_set_profile_num(int n);
  */
 int acpi_dptf_get_profile_num(void);
 
-#endif	/* __CROS_EC_ACPI_H */
+#endif /* __CROS_EC_ACPI_H */

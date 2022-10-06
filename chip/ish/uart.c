@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,20 +17,14 @@
 #include "system.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_LPC, format, ##args)
 
 static const uint32_t baud_conf[][BAUD_TABLE_MAX] = {
-	{B9600, 9600},
-	{B57600, 57600},
-	{B115200, 115200},
-	{B921600, 921600},
-	{B2000000, 2000000},
-	{B3000000, 3000000},
-	{B3250000, 3250000},
-	{B3500000, 3500000},
-	{B4000000, 4000000},
-	{B19200, 19200},
+	{ B9600, 9600 },       { B57600, 57600 },     { B115200, 115200 },
+	{ B921600, 921600 },   { B2000000, 2000000 }, { B3000000, 3000000 },
+	{ B3250000, 3250000 }, { B3500000, 3500000 }, { B4000000, 4000000 },
+	{ B19200, 19200 },
 };
 
 static struct uart_ctx uart_ctx[UART_DEVICES] = {
@@ -122,7 +116,7 @@ int uart_read_char(void)
 	return RBR(ISH_DEBUG_UART);
 }
 
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();
@@ -146,7 +140,7 @@ static int uart_return_baud_rate_by_id(int baud_rate_id)
 
 static void uart_hw_init(enum UART_PORT id)
 {
-	uint32_t divisor;	/* baud rate divisor */
+	uint32_t divisor; /* baud rate divisor */
 	uint8_t mcr = 0;
 	uint8_t fcr = 0;
 	struct uart_ctx *ctx = &uart_ctx[id];
@@ -156,7 +150,8 @@ static void uart_hw_init(enum UART_PORT id)
 	divisor = (ctx->input_freq / ctx->baud_rate) >> 4;
 	if (IS_ENABLED(CONFIG_ISH_DW_UART)) {
 		/* calculate the fractional part */
-		fraction = ceil_for(ctx->input_freq, ctx->baud_rate) - (divisor << 4);
+		fraction = ceil_for(ctx->input_freq, ctx->baud_rate) -
+			   (divisor << 4);
 	} else {
 		MUL(ctx->id) = (divisor * ctx->baud_rate);
 		DIV(ctx->id) = (ctx->input_freq / 16);
@@ -189,8 +184,7 @@ static void uart_hw_init(enum UART_PORT id)
 		fcr = FCR_FIFO_SIZE_64 | FCR_ITL_FIFO_64_BYTES_1;
 
 	/* configure FIFOs */
-	FCR(ctx->id) = (fcr | FCR_FIFO_ENABLE
-			| FCR_RESET_RX | FCR_RESET_TX);
+	FCR(ctx->id) = (fcr | FCR_FIFO_ENABLE | FCR_RESET_RX | FCR_RESET_TX);
 
 	if (!IS_ENABLED(CONFIG_ISH_DW_UART))
 		/* enable UART unit */
@@ -229,8 +223,8 @@ static void uart_stop_hw(enum UART_PORT id)
 
 	if (!IS_ENABLED(CONFIG_ISH_DW_UART)) {
 		/* Manually clearing the fifo from possible noise.
-	 	 * Entering D0i3 when fifo is not cleared may result in a hang.
-	 	 */
+		 * Entering D0i3 when fifo is not cleared may result in a hang.
+		 */
 		fifo_len = (FOR(id) & FOR_OCCUPANCY_MASK) >> FOR_OCCUPANCY_OFFS;
 
 		for (i = 0; i < fifo_len; i++)
@@ -264,7 +258,7 @@ static int uart_client_init(enum UART_PORT id, uint32_t baud_rate_id, int flags)
 
 	uart_ctx[id].client_flags = flags;
 
-	deprecated_atomic_and(&uart_ctx[id].uart_state, ~UART_STATE_CG);
+	atomic_and(&uart_ctx[id].uart_state, ~UART_STATE_CG);
 	uart_hw_init(id);
 
 	return EC_SUCCESS;
@@ -280,10 +274,10 @@ static void uart_drv_init(void)
 
 	if (!IS_ENABLED(CONFIG_ISH_DW_UART))
 		/* Enable HSU global interrupts (DMA/U0/U1) and set PMEN bit
-	 	 * to allow PMU to clock gate ISH
-	 	 */
-		HSU_REG_GIEN = (GIEN_DMA_EN | GIEN_UART0_EN
-				| GIEN_UART1_EN | GIEN_PWR_MGMT);
+		 * to allow PMU to clock gate ISH
+		 */
+		HSU_REG_GIEN = (GIEN_DMA_EN | GIEN_UART0_EN | GIEN_UART1_EN |
+				GIEN_PWR_MGMT);
 
 	task_enable_irq(ISH_DEBUG_UART_IRQ);
 }

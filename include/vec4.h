@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,5 +12,4 @@
 typedef float floatv4_t[4];
 typedef fp_t fpv4_t[4];
 
-#endif  /* __CROS_EC_VEC_4_H */
-
+#endif /* __CROS_EC_VEC_4_H */

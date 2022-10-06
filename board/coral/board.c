@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Coral board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
@@ -34,6 +33,7 @@
 #include "math_util.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -45,7 +45,7 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -54,15 +54,15 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define IN_ALL_SYS_PG	POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
-#define IN_PGOOD_PP3300	POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
-#define IN_PGOOD_PP5000	POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
+#define IN_ALL_SYS_PG POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
+#define IN_PGOOD_PP3300 POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
+#define IN_PGOOD_PP5000 POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
 
-#define USB_PD_PORT_ANX74XX	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX74XX 0
+#define USB_PD_PORT_PS8751 1
 
 static int sku_id;
 
@@ -100,7 +100,7 @@ static void anx74xx_cable_det_handler(void)
 	 * and if in normal mode, then there is no need to trigger a tcpc reset.
 	 */
 	if (cable_det && !reset_n)
-		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET);
 }
 DECLARE_DEFERRED(anx74xx_cable_det_handler);
 
@@ -119,7 +119,6 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 static void enable_input_devices(void);
 DECLARE_DEFERRED(enable_input_devices);
 
-#define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
@@ -130,41 +129,51 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vfs = Vref = 2.816V, 10-bit unsigned reading */
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_TEMP_SENSOR_AMB] = {
-		"AMBIENT", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_BOARD_ID] = {
-		"BRD_ID", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_BOARD_SKU_1] = {
-		"BRD_SKU_1", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_BOARD_SKU_0] = {
-		"BRD_SKU_0", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
+	[ADC_TEMP_SENSOR_CHARGER] = { "CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				      ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_AMB] = { "AMBIENT", NPCX_ADC_CH1, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_BOARD_ID] = { "BRD_ID", NPCX_ADC_CH2, ADC_MAX_VOLT,
+			   ADC_READ_MAX + 1, 0 },
+	[ADC_BOARD_SKU_1] = { "BRD_SKU_1", NPCX_ADC_CH3, ADC_MAX_VOLT,
+			      ADC_READ_MAX + 1, 0 },
+	[ADC_BOARD_SKU_0] = { "BRD_SKU_0", NPCX_ADC_CH4, ADC_MAX_VOLT,
+			      ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] =   { 4, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_KBLIGHT] = { 4, PWM_CONFIG_DSLEEP, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc0",     NPCX_I2C_PORT0_0, 400,
-		GPIO_EC_I2C_USB_C0_PD_SCL, GPIO_EC_I2C_USB_C0_PD_SDA},
-	{"tcpc1",     NPCX_I2C_PORT0_1, 400,
-		GPIO_EC_I2C_USB_C1_PD_SCL, GPIO_EC_I2C_USB_C1_PD_SDA},
-	{"accelgyro", I2C_PORT_GYRO,   400,
-		GPIO_EC_I2C_GYRO_SCL,      GPIO_EC_I2C_GYRO_SDA},
-	{"sensors",   NPCX_I2C_PORT2,   400,
-		GPIO_EC_I2C_SENSOR_SCL,    GPIO_EC_I2C_SENSOR_SDA},
-	{"batt",      NPCX_I2C_PORT3,   100,
-		GPIO_EC_I2C_POWER_SCL,     GPIO_EC_I2C_POWER_SDA},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "tcpc0",
+	  .port = NPCX_I2C_PORT0_0,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_USB_C0_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_PD_SDA },
+	{ .name = "tcpc1",
+	  .port = NPCX_I2C_PORT0_1,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_USB_C1_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C1_PD_SDA },
+	{ .name = "accelgyro",
+	  .port = I2C_PORT_GYRO,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_GYRO_SCL,
+	  .sda = GPIO_EC_I2C_GYRO_SDA },
+	{ .name = "sensors",
+	  .port = NPCX_I2C_PORT2,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
+	{ .name = "batt",
+	  .port = NPCX_I2C_PORT3,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_POWER_SCL,
+	  .sda = GPIO_EC_I2C_POWER_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -183,7 +192,7 @@ struct i2c_stress_test i2c_stress_tests[] = {
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 	{
 		.port = NPCX_I2C_PORT0_1,
-		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 		.i2c_test = &ps8xxx_i2c_stress_test_dev,
 	},
 #endif
@@ -234,7 +243,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = NPCX_I2C_PORT0_1,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -280,17 +289,21 @@ static int ps8751_tune_mux(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
-		.usb_port = USB_PD_PORT_ANX74XX,
-		.driver = &anx74xx_tcpm_usb_mux_driver,
-		.hpd_update = &anx74xx_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ANX74XX,
+			.driver = &anx74xx_tcpm_usb_mux_driver,
+			.hpd_update = &anx74xx_tcpc_update_hpd_status,
+		},
 	},
 	[USB_PD_PORT_PS8751] = {
-		.usb_port = USB_PD_PORT_PS8751,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-		.board_init = &ps8751_tune_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_PS8751,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+			.board_init = &ps8751_tune_mux,
+		},
 	}
 };
 
@@ -396,27 +409,28 @@ static void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_CABLE_DET);
 #endif
 	/*
-	* Initialize HPD to low; after sysjump SOC needs to see
-	* HPD pulse to enable video path
-	*/
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
-		usb_mux_hpd_update(port, 0, 0);
+		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_DEFAULT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -456,7 +470,7 @@ static void board_set_tablet_mode(void)
 	if (SKU_IS_CONVERTIBLE(sku_id))
 		tablet_mode = !gpio_get_level(GPIO_TABLET_MODE_L);
 
-	tablet_set_mode(tablet_mode);
+	tablet_set_mode(tablet_mode, TABLET_TRIGGER_LID);
 }
 
 /* Initialize board. */
@@ -540,8 +554,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Enable charging trigger by BC1.2 detection */
 	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
@@ -553,8 +567,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		return;
 
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**
@@ -585,8 +599,7 @@ static void enable_input_devices(void)
 }
 
 /* Enable or disable input devices, based on chipset state and tablet mode */
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	/* If the lid is in 360 position, ignore the lid angle,
 	 * which might be faulty. Disable keyboard.
@@ -595,7 +608,6 @@ void lid_angle_peripheral_enable(int enable)
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
-#endif
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
@@ -666,17 +678,17 @@ void board_hibernate_late(void)
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
+		{ GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN },
 
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
 		 * charge output in hibernate. Charger will assert ACOK_OD
 		 * when VBUS or VCC are plugged in.
 		 */
-		{GPIO_USB_C0_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
-		{GPIO_USB_C1_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
+		{ GPIO_USB_C0_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
+		{ GPIO_USB_C1_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
 	};
 
 	/* Change GPIOs' state in hibernate for better power consumption */
@@ -703,17 +715,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t mag_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t mag_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
@@ -823,8 +831,8 @@ static void board_set_motion_sensor_count(uint8_t sku_id)
 	 * sensor. If a new SKU id is used that is not in the table, then the
 	 * number of motion sensors will remain as ARRAY_SIZE(motion_sensors).
 	 */
-	motion_sensor_count = SKU_IS_CONVERTIBLE(sku_id) ?
-		ARRAY_SIZE(motion_sensors) : 0;
+	motion_sensor_count =
+		SKU_IS_CONVERTIBLE(sku_id) ? ARRAY_SIZE(motion_sensors) : 0;
 
 	CPRINTS("Motion Sensor Count = %d", motion_sensor_count);
 }
@@ -835,11 +843,11 @@ struct {
 } const coral_board_versions[] = {
 	/* Vin = 3.3V, Ideal voltage, R2 values listed below */
 	/* R1 = 51.1 kOhm */
-	{ BOARD_VERSION_1, 200 },  /* 124 mV, 2.0 Kohm */
-	{ BOARD_VERSION_2, 366 },  /* 278 mV, 4.7 Kohm */
-	{ BOARD_VERSION_3, 550 },  /* 456 mV, 8.2  Kohm */
-	{ BOARD_VERSION_4, 752 },  /* 644 mV, 12.4 Kohm */
-	{ BOARD_VERSION_5, 927},   /* 860 mV, 18.0 Kohm */
+	{ BOARD_VERSION_1, 200 }, /* 124 mV, 2.0 Kohm */
+	{ BOARD_VERSION_2, 366 }, /* 278 mV, 4.7 Kohm */
+	{ BOARD_VERSION_3, 550 }, /* 456 mV, 8.2  Kohm */
+	{ BOARD_VERSION_4, 752 }, /* 644 mV, 12.4 Kohm */
+	{ BOARD_VERSION_5, 927 }, /* 860 mV, 18.0 Kohm */
 	{ BOARD_VERSION_6, 1073 }, /* 993 mV, 22.0 Kohm */
 	{ BOARD_VERSION_7, 1235 }, /* 1152 mV, 27.4 Kohm */
 	{ BOARD_VERSION_8, 1386 }, /* 1318 mV, 34.0 Kohm */
@@ -892,7 +900,7 @@ int board_get_version(void)
 	return version;
 }
 
-static void board_get_sku_id(void)
+static void sku_id_init(void)
 {
 	int sku_id_lower;
 	int sku_id_higher;
@@ -911,12 +919,12 @@ static void board_get_sku_id(void)
 			CPRINTS("Disable tablet mode interrupt");
 			gpio_disable_interrupt(GPIO_TABLET_MODE_L);
 			/* Enfore device in laptop mode */
-			tablet_set_mode(0);
+			tablet_set_mode(0, TABLET_TRIGGER_LID);
 		}
 	}
 }
 /* This can't run until after the ADC module has been initialized */
-DECLARE_HOOK(HOOK_INIT, board_get_sku_id, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, sku_id_init, HOOK_PRIO_INIT_ADC + 1);
 
 static void print_form_factor_list(int low, int high)
 {
@@ -926,15 +934,15 @@ static void print_form_factor_list(int low, int high)
 	if (high > 255)
 		high = 255;
 	for (id = low; id <= high; id++) {
-		ccprintf("SKU ID %03d: %s\n", id, SKU_IS_CONVERTIBLE(id) ?
-			 "Convertible" : "Clamshell");
+		ccprintf("SKU ID %03d: %s\n", id,
+			 SKU_IS_CONVERTIBLE(id) ? "Convertible" : "Clamshell");
 		/* Don't print too many lines at once */
 		if (!(++count % 5))
 			msleep(20);
 	}
 }
 
-static int command_sku(int argc, char **argv)
+static int command_sku(int argc, const char **argv)
 {
 	enum adc_channel chan;
 
@@ -977,20 +985,19 @@ static int command_sku(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sku, command_sku,
-			"<board|line0|line1|form [low high]>",
+DECLARE_CONSOLE_COMMAND(sku, command_sku, "<board|line0|line1|form [low high]>",
 			"Get board id, sku, form factor");
 
-uint32_t system_get_sku_id(void)
+__override uint32_t board_get_sku_id(void)
 {
 	if (sku_id == BOARD_VERSION_UNKNOWN)
-		board_get_sku_id();
+		sku_id_init();
 
 	return (uint32_t)sku_id;
 }
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/*
 	 * F3 key scan cycle completed but scan input is not
 	 * charging to logic high when EC start scan next

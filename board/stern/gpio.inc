@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -111,5 +111,5 @@ ALTERNATE(PIN_MASK(A, 0x8000), 0, MODULE_SPI,        0)
 /* EMMC SPI SLAVE: PB13/14/15 */
 ALTERNATE(PIN_MASK(B, 0xE000), 0, MODULE_SPI_FLASH,  0)
 /* SENSORS SPI MASTER: PB10, PB12, PC2, PC3 */
-ALTERNATE(PIN_MASK(B, 0x0400), 5, MODULE_SPI_MASTER, 0)
-ALTERNATE(PIN_MASK(C, 0x000C), 1, MODULE_SPI_MASTER, 0)
+ALTERNATE(PIN_MASK(B, 0x0400), 5, MODULE_SPI_CONTROLLER, 0)
+ALTERNATE(PIN_MASK(C, 0x000C), 1, MODULE_SPI_CONTROLLER, 0)

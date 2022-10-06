@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,16 +15,16 @@
  */
 
 /* Baud rate scan steps: */
-#define BR_BIG_STEP 20       /* in percents from current baud rate */
-#define BR_MEDIUM_STEP 10    /* in percents from current baud rate */
-#define BR_SMALL_STEP 1      /* in percents from current baud rate */
-#define BR_MIN_STEP 5        /* in absolute baud rate units */
-#define BR_LOW_LIMIT 400     /* Automatic BR detection starts at this value */
+#define BR_BIG_STEP 20 /* in percents from current baud rate */
+#define BR_MEDIUM_STEP 10 /* in percents from current baud rate */
+#define BR_SMALL_STEP 1 /* in percents from current baud rate */
+#define BR_MIN_STEP 5 /* in absolute baud rate units */
+#define BR_LOW_LIMIT 400 /* Automatic BR detection starts at this value */
 #define BR_HIGH_LIMIT 150000 /* Automatic BR detection ends at this value */
 
-#define OPR_WRITE_MEM "wr"      /* Write To Memory/Flash */
-#define OPR_READ_MEM "rd"       /* Read From Memory/Flash */
-#define OPR_EXECUTE_EXIT "go"   /* Execute a non-return code */
+#define OPR_WRITE_MEM "wr" /* Write To Memory/Flash */
+#define OPR_READ_MEM "rd" /* Read From Memory/Flash */
+#define OPR_EXECUTE_EXIT "go" /* Execute a non-return code */
 #define OPR_EXECUTE_CONT "call" /* Execute returnable code */
 
 enum sync_result {

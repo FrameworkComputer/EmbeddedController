@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -66,7 +66,7 @@ void cts_irq2(enum gpio_signal signal)
 
 void clean_state(void)
 {
-	uint32_t *event;
+	atomic_t *event;
 
 	interrupt_enable();
 	got_interrupt = 0;

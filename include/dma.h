@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -17,14 +17,14 @@
 
 /* DMA channel options */
 struct dma_option {
-	enum dma_channel channel;	/* DMA channel */
-	void *periph;		/* Pointer to peripheral data register */
-	unsigned flags;		/* DMA flags for the control register. Normally
-				   used to select memory size. */
+	enum dma_channel channel; /* DMA channel */
+	void *periph; /* Pointer to peripheral data register */
+	unsigned flags; /* DMA flags for the control register. Normally
+			   used to select memory size. */
 };
 
-#define DMA_POLLING_INTERVAL_US	100	/* us */
-#define DMA_TRANSFER_TIMEOUT_US	(100 * MSEC) /* us */
+#define DMA_POLLING_INTERVAL_US 100 /* us */
+#define DMA_TRANSFER_TIMEOUT_US (100 * MSEC) /* us */
 
 /**
  * Get a pointer to a DMA channel.
@@ -117,7 +117,7 @@ void dma_dump(enum dma_channel channel);
  * Testing: Test that DMA works correctly for memory to memory transfers
  */
 void dma_test(enum dma_channel channel);
-#endif  /* CONFIG_DMA_HELP */
+#endif /* CONFIG_DMA_HELP */
 
 /**
  * Clear the DMA interrupt/event flags for a given channel

@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,6 +26,7 @@
  */
 
 #include "battery.h"
+#include "builtin/assert.h"
 #include "chipset.h" /* ./common/chipset.c implements chipset functions too */
 #include "common.h"
 #include "gpio.h"
@@ -40,38 +41,38 @@
 #include "test_util.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
-#define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
+#define INT_BOTH_PULL_UP (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 
 /* masks for power signals */
 #define IN_POWER_GOOD POWER_SIGNAL_MASK(MTK_POWER_GOOD)
 #define IN_SUSPEND POWER_SIGNAL_MASK(MTK_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN  (8000 * MSEC)	/* 8 seconds */
+#define DELAY_FORCE_SHUTDOWN (8000 * MSEC) /* 8 seconds */
 
 /*
  * The power signal from SoC should be kept at least 50ms.
  */
-#define POWER_DEBOUNCE_TIME     (50 * MSEC)
+#define POWER_DEBOUNCE_TIME (50 * MSEC)
 
 /*
  * The suspend signal from SoC should be kept at least 50ms.
  */
-#define SUSPEND_DEBOUNCE_TIME   (50 * MSEC)
+#define SUSPEND_DEBOUNCE_TIME (50 * MSEC)
 
 /*
  * The time to bootup the PMIC from power-off to power-on.
  */
-#define PMIC_PWRON_PRESS_TIME   (5000 * MSEC)
+#define PMIC_PWRON_PRESS_TIME (5000 * MSEC)
 
 /*
  * The minimum time to assert the PMIC THERM pin is 32us. However,
  * it needs to be extended to about 50ms to let the 5V rail
  * dissipate fully.
  */
-#define PMIC_THERM_HOLD_TIME  (50 * MSEC)
+#define PMIC_THERM_HOLD_TIME (50 * MSEC)
 
 /*
  * If the power key is pressed to turn on, then held for this long, we
@@ -81,7 +82,7 @@
  *    into the inner loop, waiting for next event to occur (power button
  *    press or POWER_GOOD == 0).
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8000 * MSEC)	/* 8 seconds */
+#define DELAY_SHUTDOWN_ON_POWER_HOLD (8000 * MSEC) /* 8 seconds */
 
 /*
  * The hold time for pulling down the PMIC_WARM_RESET_H pin so that
@@ -387,9 +388,8 @@ static void mtk_lid_event(void)
 	/* Override the panel backlight enable signal from SoC,
 	 * force the backlight off on lid close.
 	 */
-	bl_override = lid_is_open() ?
-		MTK_BACKLIGHT_CONTROL_BY_SOC :
-		MTK_BACKLIGHT_FORCE_OFF;
+	bl_override = lid_is_open() ? MTK_BACKLIGHT_CONTROL_BY_SOC :
+				      MTK_BACKLIGHT_FORCE_OFF;
 	mtk_backlight_override(bl_override);
 
 	/* Power task only cares about lid-open events */
@@ -539,7 +539,8 @@ static int check_for_power_on_event(void)
 			CPRINTS("system is on, but EC_RESET_FLAG_AP_OFF is on");
 			return POWER_ON_CANCEL;
 		} else {
-			CPRINTS("system is on, thus clear " "auto_power_on");
+			CPRINTS("system is on, thus clear "
+				"auto_power_on");
 			/* no need to arrange another power on */
 			auto_power_on = 0;
 			return POWER_ON_BY_IN_POWER_GOOD;
@@ -644,7 +645,7 @@ static void power_on(void)
 	CPRINTS("AP running ...");
 }
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s: %d", __func__, reason);
 	report_ap_reset(reason);
@@ -748,6 +749,12 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 		return POWER_G3;
+
+	default:
+		/* Elm does not have space for such an extravagant print. */
+		/* CPRINTS("Unexpected power state %d", state); */
+		ASSERT(0);
+		break;
 	}
 
 	return state;
@@ -778,14 +785,14 @@ enum power_state_t {
 	PSTATE_COUNT,
 };
 
-static const char * const state_name[] = {
+static const char *const state_name[] = {
 	"unknown",
 	"off",
 	"suspend",
 	"on",
 };
 
-static int command_power(int argc, char **argv)
+static int command_power(int argc, const char **argv)
 {
 	int v;
 
@@ -813,6 +820,4 @@ static int command_power(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(power, command_power,
-			"on/off",
-			"Turn AP power on/off");
+DECLARE_CONSOLE_COMMAND(power, command_power, "on/off", "Turn AP power on/off");

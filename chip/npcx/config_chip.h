@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,20 +13,20 @@
  * Set the chip family version to 4 digits to keep the flexibility in case
  * we need the minor version for chip variants in a family.
  */
-#define NPCX_FAMILY_NPCX5        5000
-#define NPCX_FAMILY_NPCX7        7000
-#define NPCX_FAMILY_NPCX9        9000
+#define NPCX_FAMILY_NPCX5 5000
+#define NPCX_FAMILY_NPCX7 7000
+#define NPCX_FAMILY_NPCX9 9000
 
 /* Features depend on chip family */
 #if defined(CHIP_FAMILY_NPCX5)
 #include "config_chip-npcx5.h"
-#define NPCX_FAMILY_VERSION      NPCX_FAMILY_NPCX5
+#define NPCX_FAMILY_VERSION NPCX_FAMILY_NPCX5
 #elif defined(CHIP_FAMILY_NPCX7)
 #include "config_chip-npcx7.h"
-#define NPCX_FAMILY_VERSION      NPCX_FAMILY_NPCX7
+#define NPCX_FAMILY_VERSION NPCX_FAMILY_NPCX7
 #elif defined(CHIP_FAMILY_NPCX9)
 #include "config_chip-npcx9.h"
-#define NPCX_FAMILY_VERSION      NPCX_FAMILY_NPCX9
+#define NPCX_FAMILY_VERSION NPCX_FAMILY_NPCX9
 #else
 #error "Unsupported chip family"
 #endif
@@ -46,27 +46,27 @@
  * Notice instant wake-up from deep-idle cannot exceed 200 ms
  */
 #define HOOK_TICK_INTERVAL_MS 200
-#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
+#define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* System stack size */
-#define CONFIG_STACK_SIZE       1024
+#define CONFIG_STACK_SIZE 1024
 
 /* non-standard task stack sizes */
-#define IDLE_TASK_STACK_SIZE		672
-#define LARGER_TASK_STACK_SIZE		800
-#define VENTI_TASK_STACK_SIZE		928
-#define ULTRA_TASK_STACK_SIZE		1056
-#define TRENTA_TASK_STACK_SIZE		1184
+#define IDLE_TASK_STACK_SIZE 672
+#define LARGER_TASK_STACK_SIZE 800
+#define VENTI_TASK_STACK_SIZE 928
+#define ULTRA_TASK_STACK_SIZE 1056
+#define TRENTA_TASK_STACK_SIZE 1184
 
-#define CHARGER_TASK_STACK_SIZE		800
-#define HOOKS_TASK_STACK_SIZE		800
-#define CONSOLE_TASK_STACK_SIZE		800
+#define CHARGER_TASK_STACK_SIZE 800
+#define HOOKS_TASK_STACK_SIZE 800
+#define CONSOLE_TASK_STACK_SIZE 800
 
 /* Default task stack size */
-#define TASK_STACK_SIZE			672
+#define TASK_STACK_SIZE 672
 
 /* Address of RAM log used by Booter */
-#define ADDR_BOOT_RAMLOG        0x100C7FC0
+#define ADDR_BOOT_RAMLOG 0x100C7FC0
 
 #include "config_flash_layout.h"
 
@@ -79,9 +79,13 @@
 /* Chip needs to do custom pre-init */
 #define CONFIG_CHIP_PRE_INIT
 /* Default use UART1 as console */
-#define CONFIG_CONSOLE_UART    0
+#define CONFIG_CONSOLE_UART 0
 
 #define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
-#endif  /* __CROS_EC_CONFIG_CHIP_H */
+#if !defined(HAS_TASK_KEYSCAN)
+#define NPCX_SELECT_KSI_TO_GPIO
+#endif
+
+#endif /* __CROS_EC_CONFIG_CHIP_H */

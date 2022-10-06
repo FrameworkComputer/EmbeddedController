@@ -1,13 +1,15 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Flash memory module for Chrome EC */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "console.h"
 #include "flash.h"
+#include "panic.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -34,7 +36,8 @@ static void lock(void)
 	ignore_bus_fault(1);
 
 	STM32_FLASH_PECR = STM32_FLASH_PECR_PE_LOCK |
-		STM32_FLASH_PECR_PRG_LOCK | STM32_FLASH_PECR_OPT_LOCK;
+			   STM32_FLASH_PECR_PRG_LOCK |
+			   STM32_FLASH_PECR_OPT_LOCK;
 
 	ignore_bus_fault(0);
 }
@@ -105,8 +108,8 @@ static uint16_t read_optb(int offset)
  */
 static void write_optb(int offset, uint16_t value)
 {
-	REG32(STM32_OPTB_BASE + offset) =
-		(uint32_t)value | ((uint32_t)(~value) << 16);
+	REG32(STM32_OPTB_BASE + offset) = (uint32_t)value |
+					  ((uint32_t)(~value) << 16);
 }
 
 /**
@@ -115,7 +118,7 @@ static void write_optb(int offset, uint16_t value)
 static uint32_t read_optb_wrp(void)
 {
 	return read_optb(STM32_OPTB_WRP1L) |
-		((uint32_t)read_optb(STM32_OPTB_WRP1H) << 16);
+	       ((uint32_t)read_optb(STM32_OPTB_WRP1H) << 16);
 }
 
 /**
@@ -133,8 +136,8 @@ static void write_optb_wrp(uint32_t value)
  * This function lives in internal RAM, as we cannot read flash during writing.
  * You must not call other functions from this one or declare it static.
  */
-void  __attribute__((section(".iram.text")))
-	iram_flash_write(uint32_t *addr, uint32_t *data)
+void __attribute__((section(".iram.text")))
+iram_flash_write(uint32_t *addr, uint32_t *data)
 {
 	int i;
 
@@ -158,7 +161,7 @@ void  __attribute__((section(".iram.text")))
 	STM32_FLASH_PECR &= ~(STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_FPRG);
 }
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	uint32_t *data32 = (uint32_t *)data;
 	uint32_t *address = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
@@ -189,7 +192,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 	/* Update flash timeout based on current clock speed */
 	flash_timeout_loop = FLASH_TIMEOUT_MS * (clock_get_freq() / MSEC) /
-		CYCLE_PER_FLASH_LOOP;
+			     CYCLE_PER_FLASH_LOOP;
 
 	while (size > 0) {
 		/*
@@ -204,7 +207,8 @@ int flash_physical_write(int offset, int size, const char *data)
 
 			/* Wait for writes to complete */
 			for (i = 0; ((STM32_FLASH_SR & 9) != 8) &&
-				     (i < flash_timeout_loop); i++)
+				    (i < flash_timeout_loop);
+			     i++)
 				;
 
 			size -= sizeof(uint32_t);
@@ -240,7 +244,7 @@ exit_wr:
 	return res;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	uint32_t *address;
 	int res = EC_SUCCESS;
@@ -257,13 +261,13 @@ int flash_physical_erase(int offset, int size)
 
 	for (address = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
-	     address += CONFIG_FLASH_ERASE_SIZE / sizeof(uint32_t)) {
+	    address += CONFIG_FLASH_ERASE_SIZE / sizeof(uint32_t)) {
 		timestamp_t deadline;
 
 		/* Do nothing if already erased */
-		if (flash_is_erased((uint32_t)address -
-				    CONFIG_PROGRAM_MEMORY_BASE,
-				    CONFIG_FLASH_ERASE_SIZE))
+		if (crec_flash_is_erased((uint32_t)address -
+						 CONFIG_PROGRAM_MEMORY_BASE,
+					 CONFIG_FLASH_ERASE_SIZE))
 			continue;
 
 		/* Start erase */
@@ -304,20 +308,20 @@ exit_er:
 	return res;
 }
 
-int flash_physical_get_protect(int block)
+int crec_flash_physical_get_protect(int block)
 {
 	/*
 	 * If the entire flash interface is locked, then all blocks are
 	 * protected until reboot.
 	 */
-	if (flash_physical_get_protect_flags() & EC_FLASH_PROTECT_ALL_NOW)
+	if (crec_flash_physical_get_protect_flags() & EC_FLASH_PROTECT_ALL_NOW)
 		return 1;
 
 	/* Check the active write protect status */
 	return STM32_FLASH_WRPR & BIT(block);
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	uint32_t prot;
 	uint32_t mask = (BIT(WP_BANK_COUNT) - 1) << WP_BANK_OFFSET;
@@ -336,7 +340,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 		prot &= ~mask;
 
 	if (prot == read_optb_wrp())
-		return EC_SUCCESS;  /* No bits changed */
+		return EC_SUCCESS; /* No bits changed */
 
 	/* Unlock option bytes */
 	rv = unlock(STM32_FLASH_PECR_OPT_LOCK);
@@ -352,7 +356,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	return EC_SUCCESS;
 }
 
-int flash_physical_force_reload(void)
+int crec_flash_physical_force_reload(void)
 {
 	int rv = unlock(STM32_FLASH_PECR_OPT_LOCK);
 
@@ -367,7 +371,7 @@ int flash_physical_force_reload(void)
 	return EC_ERROR_UNKNOWN;
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -382,7 +386,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		/* Re-lock the registers if they're unlocked */
@@ -400,14 +404,13 @@ int flash_physical_protect_now(int all)
 	}
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -426,10 +429,10 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
-	uint32_t prot_flags = flash_get_protect();
+	uint32_t prot_flags = crec_flash_get_protect();
 	int need_reset = 0;
 
 	/*
@@ -448,7 +451,7 @@ int flash_pre_init(void)
 			 * update to the write protect register and reboot so
 			 * it takes effect.
 			 */
-			flash_protect_at_boot(EC_FLASH_PROTECT_RO_AT_BOOT);
+			crec_flash_protect_at_boot(EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 
@@ -457,8 +460,8 @@ int flash_pre_init(void)
 			 * Write protect register was in an inconsistent state.
 			 * Set it back to a good state and reboot.
 			 */
-			flash_protect_at_boot(prot_flags &
-					EC_FLASH_PROTECT_RO_AT_BOOT);
+			crec_flash_protect_at_boot(prot_flags &
+						   EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 	} else if (prot_flags & (EC_FLASH_PROTECT_RO_NOW |

@@ -1,13 +1,14 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "bluetooth_le.h"
 #include "util.h"
 #include "console.h"
 
-#define CPRINTF(format, args...) cprintf(CC_BLUETOOTH_LE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_BLUETOOTH_LE, format, ##args)
 
 /*
  * Convert from BLE Channel to frequency
@@ -15,11 +16,11 @@
  * Bluetooth 4.1 Vol 6 pg 36 4.1 Table 1.1
  */
 
-#define CHAN_0_MHZ      2404
-#define CHAN_11_MHZ     2428
-#define CHAN_37_MHZ     2402
-#define CHAN_38_MHZ     2426
-#define CHAN_39_MHZ     2480
+#define CHAN_0_MHZ 2404
+#define CHAN_11_MHZ 2428
+#define CHAN_37_MHZ 2402
+#define CHAN_38_MHZ 2426
+#define CHAN_39_MHZ 2480
 
 int chan2freq(int channel)
 {
@@ -72,11 +73,11 @@ uint8_t get_next_data_channel(struct remapping_table *rt)
 
 	/* Check if the channel is mapped */
 	if (rt->map[rt->last_unmapped_channel / 8] &
-			(1 << (rt->last_unmapped_channel % 8)))
+	    (1 << (rt->last_unmapped_channel % 8)))
 		return rt->last_unmapped_channel;
 	else
-		return rt->remapping_index
-			[rt->last_unmapped_channel % rt->num_used_channels];
+		return rt->remapping_index[rt->last_unmapped_channel %
+					   rt->num_used_channels];
 }
 
 /* BLE 4.1 Vol 3 Part C 11 */
@@ -85,27 +86,27 @@ uint8_t get_next_data_channel(struct remapping_table *rt)
 uint8_t *pack_adv(uint8_t *dest, int length, int type, const uint8_t *data)
 {
 	/* Add the structure length */
-	dest[0] = (uint8_t)length+1;
+	dest[0] = (uint8_t)length + 1;
 	/* Add the structure type */
 	dest[1] = (uint8_t)type;
 	/* Add the data */
 	memcpy(&dest[2], data, length);
 
 	/* Return a pointer to the next structure */
-	return &dest[2+length];
+	return &dest[2 + length];
 }
 
 uint8_t *pack_adv_int(uint8_t *dest, int length, int type, int data)
 {
 	/* Add the structure length */
-	dest[0] = (uint8_t)length+1;
+	dest[0] = (uint8_t)length + 1;
 	/* Add the structure type */
 	dest[1] = (uint8_t)type;
 	/* Add the data */
 	memcpy(&dest[2], &data, length);
 
 	/* Return a pointer to the next structure */
-	return &dest[2+length];
+	return &dest[2 + length];
 }
 
 uint8_t *pack_adv_addr(uint8_t *dest, uint64_t addr)
@@ -139,7 +140,7 @@ static void mem_dump(uint8_t *mem, int len)
 	for (i = 0; i < len; i++) {
 		value = mem[i];
 		if (i % 8 == 0)
-			CPRINTF("\n%pP: %02x", &mem[i], value);
+			CPRINTF("\n%p: %02x", &mem[i], value);
 		else
 			CPRINTF(" %02x", value);
 	}
@@ -160,19 +161,19 @@ void dump_ble_packet(struct ble_pdu *ble_p)
 	int curr_offs;
 
 	if (ble_p->header_type_adv) {
-		CPRINTF("BLE packet @ %pP: type %d, len %d, %s %s\n",
-			ble_p, ble_p->header.adv.type, ble_p->header.adv.length,
+		CPRINTF("BLE packet @ %p: type %d, len %d, %s %s\n", ble_p,
+			ble_p->header.adv.type, ble_p->header.adv.length,
 			(ble_p->header.adv.txaddr ? " TXADDR" : ""),
 			(ble_p->header.adv.rxaddr ? " RXADDR" : ""));
 
 		curr_offs = 0;
 
 		if (ble_p->header.adv.type ==
-			BLE_ADV_HEADER_PDU_TYPE_SCAN_REQ) {
+		    BLE_ADV_HEADER_PDU_TYPE_SCAN_REQ) {
 			dump_ble_addr(ble_p->payload, "ScanA");
 			curr_offs += BLUETOOTH_ADDR_OCTETS;
 		} else if (ble_p->header.adv.type ==
-			BLE_ADV_HEADER_PDU_TYPE_CONNECT_REQ) {
+			   BLE_ADV_HEADER_PDU_TYPE_CONNECT_REQ) {
 			dump_ble_addr(ble_p->payload, "InitA");
 			curr_offs += BLUETOOTH_ADDR_OCTETS;
 		}
@@ -187,7 +188,7 @@ void dump_ble_packet(struct ble_pdu *ble_p)
 			mem_dump(ble_p->payload + curr_offs,
 				 ble_p->header.adv.length - curr_offs);
 	} else { /* Data PDUs */
-		CPRINTF("BLE data packet @%pP: LLID %d,"
+		CPRINTF("BLE data packet @%p: LLID %d,"
 			" nesn %d, sn %d, md %d, length %d\n",
 			ble_p, ble_p->header.data.llid, ble_p->header.data.nesn,
 			ble_p->header.data.sn, ble_p->header.data.md,
@@ -195,4 +196,3 @@ void dump_ble_packet(struct ble_pdu *ble_p)
 		mem_dump(ble_p->payload, ble_p->header.data.length);
 	}
 }
-

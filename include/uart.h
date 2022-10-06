@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_UART_H
 #define __CROS_EC_UART_H
 
-#include <stdarg.h>  /* For va_list */
+#include <stdarg.h> /* For va_list */
 #include "common.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 
 /**
  * Initialize the UART module.
@@ -72,8 +72,8 @@ int uart_put_raw(const char *out, int len);
  *
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
-__attribute__((__format__(__printf__, 1, 2)))
-int uart_printf(const char *format, ...);
+__attribute__((__format__(__printf__, 1, 2))) int
+uart_printf(const char *format, ...);
 
 /**
  * Print formatted output to the UART, like vprintf().
@@ -83,6 +83,22 @@ int uart_printf(const char *format, ...);
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
 int uart_vprintf(const char *format, va_list args);
+
+/**
+ * Put a single character into the transmit buffer.
+ *
+ * Does not enable the transmit interrupt; assumes that happens elsewhere.
+ *
+ * @param context	Context; ignored.
+ * @param c		Character to write.
+ * @return 0 if the character was transmitted, 1 if it was dropped.
+ *
+ * Note: This is intended to be implemented by the UART buffering
+ * module, and called only by the implementations of the uart_*
+ * functions.  You should stick to the higher level functions, such as
+ * uart_putc, outside of the UART implementation.
+ */
+int uart_tx_char_raw(void *context, int c);
 
 /**
  * Flush output.  Blocks until UART has transmitted all output.
@@ -242,7 +258,9 @@ void uart_exit_dsleep(void);
  */
 void uart_deepsleep_interrupt(enum gpio_signal signal);
 #else
-static inline void uart_deepsleep_interrupt(enum gpio_signal signal) { }
+static inline void uart_deepsleep_interrupt(enum gpio_signal signal)
+{
+}
 #endif /* !CONFIG_LOW_POWER_IDLE */
 
 #if defined(HAS_TASK_CONSOLE) && defined(CONFIG_FORCE_CONSOLE_RESUME)
@@ -253,7 +271,9 @@ static inline void uart_deepsleep_interrupt(enum gpio_signal signal) { }
  */
 void uart_enable_wakeup(int enable);
 #elif !defined(CHIP_FAMILY_NPCX5)
-static inline void uart_enable_wakeup(int enable) {}
+static inline void uart_enable_wakeup(int enable)
+{
+}
 #endif
 
 #ifdef CONFIG_UART_INPUT_FILTER
@@ -319,7 +339,7 @@ void uart_reset_default_pad_panic(void);
  *           time specified in timeout_us.
  */
 int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
-			int timeout_us);
+			    int timeout_us);
 
 /**
  * Interrupt handler for default UART RX pin transition when UART is switched
@@ -356,9 +376,7 @@ enum ec_status uart_console_read_buffer_init(void);
  *
  * @return result status (EC_RES_*)
  */
-int uart_console_read_buffer(uint8_t type,
-			     char *dest,
-			     uint16_t dest_size,
+int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 			     uint16_t *write_count);
 
 /**
@@ -366,4 +384,4 @@ int uart_console_read_buffer(uint8_t type,
  */
 void uart_init_buffer(void);
 
-#endif  /* __CROS_EC_UART_H */
+#endif /* __CROS_EC_UART_H */

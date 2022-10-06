@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,6 +15,7 @@
 enum pe_error {
 	ERR_RCH_CHUNKED,
 	ERR_RCH_MSG_REC,
+	ERR_RCH_CHUNK_WAIT_TIMEOUT,
 	ERR_TCH_CHUNKED,
 	ERR_TCH_XMIT,
 };
@@ -49,7 +50,7 @@ void pe_message_sent(int port);
  * @param  e    error
  * @param type  port address where error was generated
  */
-void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type);
+void pe_report_error(int port, enum pe_error e, enum tcpci_msg_type type);
 
 /**
  * Informs the Policy Engine of a discard.
@@ -140,6 +141,15 @@ int pd_is_port_partner_dualrole(int port);
 void pe_invalidate_explicit_contract(int port);
 
 /*
+ * Return true if the PE is in middle of a fast role swap (FRS). If so, the
+ * Rp/Rd will be flipped from the actual power roles.
+ *
+ *
+ * @param port USB-C port number
+ */
+bool pe_in_frs_mode(int port);
+
+/*
  * Return true if the PE is is within an atomic
  * messaging sequence that it initiated with a SOP* port partner.
  *
@@ -167,12 +177,36 @@ const char *pe_get_current_state(int port);
 uint32_t pe_get_flags(int port);
 
 /**
- * Sets event for PE layer to report and triggers a notification up to the AP.
+ * Sets the Alert Data Object (ADO) in the PE state
  *
  * @param port USB-C port number
- * @param event_mask of bits to set (PD_STATUS_EVENT_* events in ec_commands.h)
+ * @param data - ADO data sent during alert messages
+ * @return EC_SUCCESS if successful and EC_ERROR_BUSY if not
  */
-void pe_notify_event(int port, uint32_t event_mask);
+int pe_set_ado(int port, uint32_t data);
+
+/**
+ * Clears the Alert Data Object (ADO) in the PE state
+ *
+ * @param port USB-C port number
+ */
+void pe_clear_ado(int port);
+
+/**
+ * Gets port partner's RMDO from the PE state.
+ *
+ * @param port USB-C port number
+ * @return port partner's Revision Message Data Object (RMDO).
+ */
+struct rmdo pe_get_partner_rmdo(int port);
+
+#ifdef TEST_BUILD
+/**
+ * Clears all internal port data, as we would on a detach event
+ *
+ * @param port USB-C port number
+ */
+void pe_clear_port_data(int port);
+#endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_USB_PE_H */
-

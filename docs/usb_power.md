@@ -135,43 +135,59 @@ in-depth information can be found in the [USB Type-C Specification] \(section
 
 ### ChromeOS as Source - Policy for Type-C
 
+**Note:** Behavior outlined here is only implemented in the TCPMv2 Device
+Policy Manager (DPM) when a board defines a non-zero maximum number of 3A
+ports supported through `CONFIG_USB_PD_3A_PORTS`.
+
 ChromeOS devices currently source power to external USB devices at 5V with a
-typical current of 1.5A for each Type-C port. In certain scenarios, a single
-Type-C port can source up to 3A @ 5V.
+typical current of 1.5A for each Type-C port. In certain scenarios, a Type-C
+port can source up to 3A @ 5V.
 
-ChromeOS prefers that the first PD-capable Type-C device **that claims 3A**
-should get 3A guaranteed at 5V. Once a PD-capable Type-C device has claimed 3A,
-then other PD-capable Type-C devices will only be offered a maximum of 1.5A.
+ChromeOS prefers that the first PD-capable Type-C device **that requires 3A**
+should get 3A guaranteed at 5V. Once the maximum supported number of PD-capable
+Type-C device has claimed 3A, then other PD-capable Type-C devices will only be
+offered a maximum of 1.5A.
 
-If there are no PD-capable Type-C devices claiming 3A, then the first non-PD
-device will be given 3A until a PD-capable device **that claims 3A** is
-inserted.
+If Fast Role Swap (FRS) is supported and a sourcing port partner reports
+requiring 3A after a fast role swap, then this port should be allocated 3A if
+no more PD-capable sinks require 3A, and FRS detection may be enabled.  Once a
+PD-capable device **that requires 3A** is inserted, the FRS port may have FRS
+detection disabled if the maximum number of 3A ports has been reached.
 
-The 3A is only offered after a minimum delay of 200 ms following the initial
-connection. One main reason for this delay is to protect against non-PD capabale
-devices that only sample the CC resistors once at initial connection from
-continuing to consume 3A after we downgrade the CC resistors to 1.5A at a later
-point in the future. The motivation for this is that any non-PD device that
-notices that it can draw more current from a CC resistor change that happens 200
-ms after the initial connection will also notice a CC resistor change if we
-downgrade the CC resistors to a lower current advertisement. We want consistent
-behavior across non-PD capable devices and PD-capable devices, so we will only
-offer the additional 1.5A to PD ports after the same delay.
+If there are no PD-capable Type-C devices requiring 3A and no FRS ports
+requiring 3A, then the first non-PD device will be given 3A until a PD-capable
+device **that requires 3A** is inserted, or until an FRS source that requires
+3A is inserted.
 
-When a device that is currently claiming 3A is removed or proactively reduces
-its power contract to 1.5A or less, then the next oldest PD-capable device is
-offered 3A in order. If no PD-capable devices claims 3A, then the oldest non-PD
-capable device is given 3A through a CC resistor change.
+Devices will indicate they require 3A operating current in their sink
+capabilities, and this will be used as the trigger to let the EC know to
+offer that port a 3A source contract.  FRS source partners will also
+indicate the need for 3A in their sink capabilities, under their Fast Role
+Swap required current.
+
+This policy is laid out in the following flow chart.  Current policy for the
+"next" port allocation is to select the lowest port number any time more than
+one port meets criteria to receive 3A.
+
+Port balancing will occur when:
+* Sink Capabilities are received for a device
+* Source capabilities are not replied to after nCapsCount, indicating a non-PD
+  sink
+* Power roles are swapped
+* Detach occurs
+
+![Source Port Balancing](images/usb_source_port_balancing.png "Source Port Balancing")
 
 Inserting a Type-A device does not affect the power assignment for Type-C ports;
 only Type-C devices affect the power of Type-C ports.
 
-For example, the below sequence of events illustrates the above Type-C policy:
+For example, the below sequence of events illustrates the above Type-C policy
+with a board with a maximum number of 1 3A-ports supported:
 
 1.  A non-PD capable Type-C keyboard is inserted first
     *   Keyboard will be offered 1.5A initially
     *   Current state: `keyboard @ 1.5A`.
-2.  More than 200ms pass.
+2.  Partner is established to be non-PD through reaching PE\_SRC\_Disabled.
     *   Since there are no other PD-capable devices and this is the first
         device, offer this device 3A via CC resistor change.
     *   Current state: `keyboard @ 3A`.
@@ -179,53 +195,64 @@ For example, the below sequence of events illustrates the above Type-C policy:
     *   It will be offered 1.5A since there is already another non-PD device
         claiming 3A.
     *   Current state: `keyboard @ 3A` and `mouse @ 1.5A`.
-4.  A PD-capable Type-C dock is inserted third
-    *   Initially negotiate for 1.5A, then wait 200ms after negotiating.
-    *   Since this is the first PD device, we offer it 3A after 200ms from
-        initial power negotiation.
-    *   Dock does not want high power from Chromebook; dock continues to selects
+4.  A PD-capable Type-C hub is inserted third
+    *   Initially negotiate for 1.5A.
+    *   Since this is a PD device, query its operational current through
+        requesting Sink Capabilities.
+    *   Hub does not want high power from Chromebook; hub continues to receive
         1.5A.
     *   Keyboard gets to maintain higher 3A current supply.
-    *   Current state: `keyboard @ 3A` and `mouse @ 1.5A` and `dock @ 1.5A`.
+    *   Current state: `keyboard @ 3A` and `mouse @ 1.5A` and `hub @ 1.5A`.
 5.  A PD-capable Type-C phone is inserted fourth
     *   Phone is initially offered 1.5A.
-    *   Since there isn't an existing PD-capable device claiming 3A, the phone
-        is offered 3A after waiting the 200ms delay from initial negotiation.
-    *   The phone wants high power; phone selects 3A.
+    *   Since this is a PD device, query its operational current through
+        requesting Sink Capabilities.
+    *   The phone reports it wants 3A.
     *   Since PD devices are preferred for 3A, the non-PD keyboard will be
         downgraded from 3A to 1.5A via a CC resistor change.
-    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `dock @ 1.5A`
+    *   After tSinkAdj (60 ms), phone is offered 3A through new Source
+        Capabilities.
+    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `hub @ 1.5A`
         and `phone @ 3A`.
 6.  A PD-capable Type-C tablet is inserted fifth
-    *   Since there is already a PD-capable device claiming 3A, the tablet is
-        only offered 1.5A.
-    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `dock @ 1.5A`
+    *   Tablet is initially offered 1.5A.
+    *   Since this is a PD device, query its operational current through
+        requesting Sink Capabilities.
+    *   Tablet would like 3A, but the board has reached its maximum number of
+        supported 3A ports.  Note this port's desired current for later.
+    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `hub @ 1.5A`
         and `phone @ 3A` and `tablet @ 1.5A`.
-7.  The PD-capable phone is done charging so it downgrades its power contract to
-    1.5A without any user interaction
-    *   The next oldest PD-capable device is offered 3A in order: dock then
-        phone then tablet.
-    *   The dock and phone continue to select 1.5A, then the tablet takes 3A.
-    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `dock @ 1.5A`
-        and `phone @ 1.5A` and `tablet @ 3A`.
-8.  The PD-capable tablet is removed
-    *   The next oldest PD-capable device is offered 3A. If there are no
-        PD-capable devices claiming 3A, then the oldest non-PD capable device is
-        given 3A.
-    *   The dock and phone continue to select 1.5A, so keyboard is given 3A via
-        CC resistor change.
-    *   Current state: `keyboard @ 3A` and `mouse @ 1.5A` and `dock @ 1.5A` and
-        `phone @ 1.5A`.
-9.  The non-PD capable keyboard is removed
-    *   The next oldest PD-capable device is offered 3A. If there are no
-        PD-capable devices claiming 3A, then the next oldest non-PD capable
-        device is given 3A.
-    *   The dock and phone continue to select 1.5A, so mouse is given 3A via CC
+7.  The PD-capable phone is removed
+    *   The next PD-capable sink device is offered 3A: the tablet
+    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `hub @ 1.5A`
+        and `tablet @ 3A`.
+8.  A FRS-capable dock is inserted
+    *   The dock is sourcing us
+    *   Since this is a PD capable device, query its FRS current through
+        requesting Sink Capabilities.
+    *   Dock reports requiring 3A current after FRS.
+    *   Tablet is currently occupying the 3A port, so note this port's desired
+        FRS current for later.
+    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `hub @ 1.5A`
+        and `tablet @ 3A`; dock `FRS detection disabled`
+9.  The PD-capable tablet is removed
+    *   The next PD-capable device requiring 3A is offered 3A. If there are
+        no PD-capable devices requiring 3A, then the next FRS device is
+        allocated 3A.
+    *   The hub only requires 1.5A, so FRS is enabled for the dock.
+    *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `hub @ 1.5A`;
+        dock `FRS detection enabled`
+10.  The FRS dock is removed
+    *   The next PD-capable  device requiring 3A is offered 3A. If there are
+        no PD-capable devices requiring 3A, then the next FRS device is
+        allocated 3A.  If there are no FRS devices, then the next non-PD
+        capable device is given 3A.
+    *   The hub only requires 1.5A, so mouse is given 3A via CC
         resistor change.
-    *   Current state: `mouse @ 3A` and `dock @ 1.5A` and `phone @ 1.5A`.
-10. The non-PD capable mouse is removed
-    *   The dock and phone continue to select 1.5A.
-    *   Current state: `dock @ 1.5A` and `phone @ 1.5A`.
+    *   Current state: `keyboard @ 1.5A` and `mouse @ 3A` and `hub @ 1.5A`.
+11. The non-PD capable mouse is removed
+    *   The hub does not require 3A.
+    *   Current state: `keyboard @ 3A` and `hub @ 1.5A`.
 
 Note: Not all released Chromebooks implement the above policy due to
 pre-existing hardware design constraints.

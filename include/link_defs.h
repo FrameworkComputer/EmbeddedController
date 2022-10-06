@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -14,6 +14,10 @@
 #include "mkbp_event.h"
 #include "task.h"
 #include "test_util.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <linker.h>
+#endif
 
 /* Console commands */
 extern const struct console_command __cmds[];
@@ -50,6 +54,8 @@ extern const struct hook_data __hooks_chipset_shutdown[];
 extern const struct hook_data __hooks_chipset_shutdown_end[];
 extern const struct hook_data __hooks_chipset_shutdown_complete[];
 extern const struct hook_data __hooks_chipset_shutdown_complete_end[];
+extern const struct hook_data __hooks_chipset_hard_off[];
+extern const struct hook_data __hooks_chipset_hard_off_end[];
 extern const struct hook_data __hooks_chipset_reset[];
 extern const struct hook_data __hooks_chipset_reset_end[];
 extern const struct hook_data __hooks_ac_change[];
@@ -76,6 +82,8 @@ extern const struct hook_data __hooks_usb_pd_disconnect[];
 extern const struct hook_data __hooks_usb_pd_disconnect_end[];
 extern const struct hook_data __hooks_usb_pd_connect[];
 extern const struct hook_data __hooks_usb_pd_connect_end[];
+extern const struct hook_data __hooks_power_supply_change[];
+extern const struct hook_data __hooks_power_supply_change_end[];
 
 /* Deferrable functions and firing times*/
 extern const struct deferred_data __deferred_funcs[];
@@ -102,7 +110,7 @@ extern const void *__irqhandler[];
 extern const struct irq_def __irq_data[], __irq_data_end[];
 
 /* Shared memory buffer.  Use via shared_mem.h interface. */
-extern uint8_t __shared_mem_buf[];
+extern char __shared_mem_buf[];
 
 /* Image sections used by the TPM2 library */
 extern uint8_t *__bss_libtpm2_start;
@@ -125,7 +133,7 @@ extern void *__dram_bss_end;
 /* Helper for special chip-specific memory sections */
 #if defined(CONFIG_CHIP_MEMORY_REGIONS) || defined(CONFIG_DRAM_BASE)
 #define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))
-#define __SECTION_KEEP(name)                                                   \
+#define __SECTION_KEEP(name) \
 	__keep __attribute__((section("." STRINGIFY(name) ".keep.50_auto")))
 #else
 #define __SECTION(name)
@@ -140,8 +148,11 @@ extern void *__dram_bss_end;
 #endif /* __CROS_EC_LINK_DEFS_H */
 
 #ifdef CONFIG_PRESERVE_LOGS
-#define __preserved_logs(name)                                                 \
+#define __preserved_logs(name) \
 	__attribute__((section(".preserved_logs." STRINGIFY(name))))
+/* preserved_logs section. */
+extern const char __preserved_logs_start[];
+extern const char __preserved_logs_size[];
 #else
 #define __preserved_logs(name)
 #endif

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,8 +17,8 @@
  * Microseconds time to drain entire UART_TX console buffer at 115200 b/s, 10
  * bits per character.
  */
-#define BUFFER_DRAIN_TIME_US (1000000UL * 10 * CONFIG_UART_TX_BUF_SIZE         \
-				/ CONFIG_UART_BAUD_RATE)
+#define BUFFER_DRAIN_TIME_US \
+	(1000000UL * 10 * CONFIG_UART_TX_BUF_SIZE / CONFIG_UART_BAUD_RATE)
 
 /*
  * Generate a stream of characters on the UART (and USB) console.
@@ -37,7 +37,7 @@
  *
  * Hitting 'x' on the keyboard stops the generator.
  */
-static int command_chargen(int argc, char **argv)
+static int command_chargen(int argc, const char **argv)
 {
 	int wrap_value = 0;
 	int wrap_counter = 0;
@@ -68,6 +68,8 @@ static int command_chargen(int argc, char **argv)
 	}
 #endif
 
+	uart_shell_stop();
+
 	c = '0';
 	prev_watchdog_time = get_time();
 	while (uart_getc() != 'x' && usb_getc() != 'x') {
@@ -78,7 +80,7 @@ static int command_chargen(int argc, char **argv)
 			 * Let's let other tasks run for a bit while buffer is
 			 * being drained a little.
 			 */
-			usleep(BUFFER_DRAIN_TIME_US/10);
+			usleep(BUFFER_DRAIN_TIME_US / 10);
 
 			current_time = get_time();
 
@@ -89,6 +91,9 @@ static int command_chargen(int argc, char **argv)
 			watchdog_reload();
 			prev_watchdog_time.val = current_time.val;
 		}
+
+		if (IS_ENABLED(CONFIG_ZEPHYR) && c == '0')
+			watchdog_reload();
 
 		putc_(c++);
 
@@ -105,11 +110,14 @@ static int command_chargen(int argc, char **argv)
 			c = '0';
 		else if (c == ('Z' + 1))
 			c = 'a';
-		else if (c  == ('9' + 1))
+		else if (c == ('9' + 1))
 			c = 'A';
 	}
 
 	putc_('\n');
+
+	uart_shell_start();
+
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(chargen, command_chargen,
@@ -120,6 +128,5 @@ DECLARE_SAFE_CONSOLE_COMMAND(chargen, command_chargen,
 #endif
 			     "Generate a constant stream of characters on the "
 			     "UART console,\nrepeating every 'seq_length' "
-			     "characters, up to 'num_chars' total."
-	);
-#endif  /* !SECTION_IS_RO */
+			     "characters, up to 'num_chars' total.");
+#endif /* !SECTION_IS_RO */

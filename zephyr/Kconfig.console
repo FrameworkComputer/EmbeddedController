@@ -1,0 +1,90 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_CONSOLE_CHANNEL
+	bool "Console channels"
+	depends on CONSOLE
+	default y
+	help
+	  Make it possible for console to be output to different channels that
+	  can be turned on and off. Channels are organized by functional area
+	  such as "charger", "motionsense", "usbpd" and others.
+
+	  This is useful as a developer convenience when the console is crowded
+	  with messages, to make it easier to use the interactive console.
+
+	  The `chan` console command with no arguments shows all available
+	  channels.
+
+	  FAFT and servod also use this feature.
+
+	  Boards may #undef this to reduce image size.
+
+# Adjusted to the account for the build_info[] string (about 160 bytes) plus
+# the image type (about 16 bytes).
+# printed by the banner.
+config SHELL_PRINTF_BUFF_SIZE
+	default 180
+
+# Some boards may need to increase the size, depending on the amount of output
+config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
+	default 1024
+
+# For FAFT, need a larger RX ring
+config SHELL_BACKEND_SERIAL_RX_RING_BUFFER_SIZE
+	default 192
+
+menuconfig PLATFORM_EC_HOSTCMD_CONSOLE
+	bool "Console Host Command"
+	depends on PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Enable the EC_CMD_CONSOLE_SNAPSHOT and EC_CMD_CONSOLE_READ
+	  host commands, used for reading the EC console from the AP.
+
+if PLATFORM_EC_HOSTCMD_CONSOLE
+
+config PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE
+	int "Console buffer size"
+	default 4096
+	help
+	  The EC will use a circular buffer to store bytes outputted
+	  to the console for the AP to read.  This changes the maximal
+	  number of bytes from the console output which can be saved.
+
+	  Choosing a power-of-two for this value is optimal, as
+	  modular arithmetic is used.
+
+endif # PLATFORM_EC_HOSTCMD_CONSOLE
+
+menuconfig PLATFORM_EC_CONSOLE_DEBUG
+	bool "Console Debug"
+	depends on CONSOLE
+	default n
+	help
+	  Write all zephyr_print() messages to printk() also. Not recommended
+	  outside of tests.
+
+
+config PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER
+	bool "Logging backend for the console buffer"
+	depends on PLATFORM_EC_HOSTCMD_CONSOLE
+	select LOG_OUTPUT
+	help
+	  Enable the logging backend for the console buffer.
+
+	  This will copy messages sent to the zephyr logging subsystem
+	  to the EC console buffer. This allows the AP to access the
+	  log messages with the console host command.
+
+config PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER_TMP_BUF_SIZE
+	int "Size of temporary buffer used by console buffer logging backend"
+	default 128 if LOG_MODE_DEFERRED
+	default 1
+	depends on PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER
+	help
+	  The size of the temporary buffer used by the console buffer backend.
+	  The logging subsystem will buffer up to this many bytes before calling
+	  the backend in deferred logging mode. Ideally this will be large
+	  enough to fit an entire log line.

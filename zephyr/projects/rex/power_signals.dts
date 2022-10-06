@@ -1,0 +1,152 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		intel-ap-pwrseq,espi = &espi0;
+	};
+
+	common-pwrseq {
+		compatible = "intel,ap-pwrseq";
+
+		sys-pwrok-delay = <3>;
+		all-sys-pwrgd-timeout = <20>;
+	};
+
+	pwr-en-pp3300-s5 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP1800_S5/PP3300_S5 enable output to LS";
+		enum-name = "PWR_EN_PP3300_A";
+		gpios = <&gpiob 6 GPIO_ACTIVE_HIGH>;
+		output;
+	};
+	pwr-pg-ec-rsmrst-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST power good from regulator";
+		enum-name = "PWR_RSMRST";
+		gpios = <&gpioe 2 GPIO_ACTIVE_HIGH>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-ec-pch-rsmrst-odl {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST output to PCH";
+		enum-name = "PWR_EC_PCH_RSMRST";
+		gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
+		output;
+	};
+	pwr-pch-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+		gpios = <&gpioa 5 GPIO_ACTIVE_HIGH>;
+		output;
+	};
+	pwr-ec-pch-sys-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_PWROK output to PCH";
+		enum-name = "PWR_EC_PCH_SYS_PWROK";
+		gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+		output;
+	};
+	pwr-sys-rst-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_RESET# output to PCH";
+		enum-name = "PWR_SYS_RST";
+		gpios = <&gpioc 5 (GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN)>;
+		output;
+	};
+	pwr-slp-s0-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S0_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		gpios = <&gpiod 5 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-s3-l {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S3_L input from PCH";
+		enum-name = "PWR_SLP_S3";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		vw-invert;
+/*
+ * TODO: Initially, use virtual wire for sleep S3 signal instead of
+ * of the GPIO signal which also exists.
+ *		compatible = "intel,ap-pwrseq-gpio";
+ *		gpios = <&gpio4 1 GPIO_ACTIVE_LOW>;
+ *		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+ */
+	};
+	pwr-slp-s4 {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S4 virtual wire input from PCH";
+		enum-name = "PWR_SLP_S4";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		vw-invert;
+	};
+	pwr-slp-s5 {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S5 virtual wire input from PCH";
+		enum-name = "PWR_SLP_S5";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		vw-invert;
+	};
+	pwr-all-sys-pwrgd {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+		gpios = <&gpiof 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+};
+
+/*
+ * Because the power signals directly reference the GPIOs,
+ * the corresponding named-gpios need to have no-auto-init set.
+ */
+ /* pwr-en-pp3300-s5 */
+&gpio_en_s5_rails {
+	no-auto-init;
+};
+
+/* pwr-pg-ec-rsmrst-od */
+&gpio_seq_ec_rsmrst_odl{
+	no-auto-init;
+};
+
+/* pwr-ec-pch-rsmrst-odl */
+&gpio_ec_soc_rsmrst_l{
+	no-auto-init;
+};
+
+/* pwr-pch-pwrok */
+&gpio_soc_pwrok{
+	no-auto-init;
+};
+
+/* pwr-ec-pch-sys-pwrok */
+&gpio_sys_pwrok{
+	no-auto-init;
+};
+
+/* pwr-sys-rst-l */
+&gpio_sys_rst_odl{
+	no-auto-init;
+};
+
+/* pwr-slp-s0-l */
+&gpio_sys_slp_s0ix_3v3_l{
+	no-auto-init;
+};
+
+/* pwr-slp-s3-l */
+&gpio_slp_s3_ls_l{
+	no-auto-init;
+};
+
+/* pwr-all-sys-pwrgd */
+&gpio_seq_ec_all_sys_pg{
+	no-auto-init;
+};
+

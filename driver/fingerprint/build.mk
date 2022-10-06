@@ -1,4 +1,4 @@
-# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Copyright 2019 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -7,4 +7,5 @@
 # Note that this variable includes the trailing "/"
 _fingerprint_cur_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
+include $(_fingerprint_cur_dir)elan/build.mk
 include $(_fingerprint_cur_dir)fpc/build.mk

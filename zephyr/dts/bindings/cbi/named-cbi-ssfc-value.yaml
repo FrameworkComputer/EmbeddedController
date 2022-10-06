@@ -1,0 +1,22 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description:
+    Possible CBI SSFC field values.
+    It has to be defied as grandchild on the "named-cbi-ssfc"
+
+compatible: "named-cbi-ssfc-value"
+
+properties:
+    value:
+        type: int
+        required: true
+        description:
+          Unique value of CBI SSFC field
+    default:
+        type: boolean
+        description:
+          Indicates that the specified value is default for the parent
+          CBI SSFC field node. It should appear only once for the CBI SSFC
+          definition.

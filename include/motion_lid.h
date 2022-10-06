@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -34,6 +34,4 @@ enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args);
 
 void motion_lid_calc(void);
 
-#endif  /* __CROS_EC_MOTION_LID_H */
-
-
+#endif /* __CROS_EC_MOTION_LID_H */

@@ -1,0 +1,244 @@
+# Copyright 2020 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_POWERSEQ
+	bool "Power sequencing"
+	depends on AP
+	depends on !AP_PWRSEQ
+	select HAS_TASK_CHIPSET
+	help
+	  Enable shimming the platform/ec AP power sequencing code. This
+	  handles powering the chipset on and off.
+
+	  Enabling this automatically enables HAS_TASK_CHIPSET since power
+	  sequencing must run in its own task.
+
+if PLATFORM_EC_POWERSEQ
+
+config PLATFORM_EC_POWERSEQ_S0IX
+	bool "Enable S0ix sleep states"
+	select PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	help
+	  Enable the CONFIG_POWER_S0IX platform/ec configuration
+	  option, Intel's low-power idle sleep state, also known as
+	  "modern sleep".
+
+config PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	bool "Track host sleep states"
+	help
+	  Enable EC code to track the AP sleep states.  This is
+	  required for S0ix support on Intel platforms, and optional
+	  for boards without S0ix support.
+
+config PLATFORM_EC_POWER_SLEEP_FAILURE_DETECTION
+	bool "Detect failure to enter a sleep state (S0ix/S3)"
+	depends on PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	help
+	  Enables detection of the AP failing to go to sleep, perhaps due to a
+	  bug in the internal SoC periodic housekeeping code.
+
+	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
+	  command.
+
+config PLATFORM_EC_HOSTCMD_AP_RESET
+	bool "Host command: EC_CMD_AP_RESET"
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Enable support for EC_CMD_AP_RESET, used by the AP to request that
+	  the EC perform a reset of the AP.
+
+	  Warning: This command skips the normal reset mechanism on the AP and
+	  may leave data unsaved.
+
+config PLATFORM_EC_POWERSEQ_PP5000_CONTROL
+	bool "Enable a task-safe way to control the PP5000 rail"
+	depends on !AP_X86_AMD
+	default y
+	help
+	  Guard access to the PP5000 GPIO using mutex locks, allowing
+	  the rail to be changed in a task-safe manner.
+
+config PLATFORM_EC_POWERSEQ_RSMRST_DELAY
+	bool "Wait at least 10ms before deasserting RSMRST to PCH"
+	default y if AP_X86_INTEL_TGL
+	depends on AP_X86_AMD || AP_X86_INTEL
+	help
+	  Wait at least 10ms between power signals going high and
+	  deasserting RSMRST to PCH.
+
+config PLATFORM_EC_POWERSEQ_FAKE_CONTROL
+	bool "Console command: powerfake"
+	depends on PLATFORM_EC_SYSTEM_UNLOCKED
+	help
+	  Enable fake control of the power sequencing on the platform.  This
+	  will require some SoC-specific implementation and allows a fake boot
+	  without an SoC present.  This command should not be used on platforms
+	  with an SoC present.
+
+menuconfig PLATFORM_EC_POWERSEQ_AMD
+	bool "AMD power sequencing"
+	depends on AP_X86_AMD
+	select HAS_TASK_POWERBTN
+	default y
+	help
+	  Enable AMD power sequencing code.
+
+if PLATFORM_EC_POWERSEQ_AMD
+
+config PLATFORM_EC_POWER_BUTTON_TO_PCH_CUSTOM
+	bool "Custom board_pwrbtn_to_pch"
+	help
+	  The board support code provides a custom function,
+	  board_pwrbtn_to_pch, that replaces the standard GPIO set
+	  level to the SoC.
+
+endif  # PLATFORM_EC_POWERSEQ_AMD
+
+menuconfig PLATFORM_EC_POWERSEQ_INTEL
+	bool "Enable shimming common Intel power sequencing code"
+	depends on AP_X86_INTEL
+	select HAS_TASK_POWERBTN
+	default y
+	help
+	  Enable shimming platform/ec AP power sequencing code for
+	  Intel.
+
+if PLATFORM_EC_POWERSEQ_INTEL
+
+config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
+	bool "The CPU_PROCHOT signal is an active low signal"
+	default y
+	help
+	  If CPU_PROCHOT should be treated as active-low, enable this
+	  configuration option.
+
+config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_GATE_ON_C10
+	bool "Gate PROCHOT detection based on the AP C10 state"
+	default y if PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
+	help
+	  When the AP enters C10, the power rails VCCIO, VCCSTG, and VCCPLL_OC
+	  may be turned off by the board.  If the PROCHOT# signal is pulled up
+	  by any of these rails, PROCHOT is not valid while the AP is in C10,
+	  Enable this option to gate PROCHOT detection when C10 is active.
+
+config PLATFORM_EC_POWERSEQ_RTC_RESET
+	bool "Board has an RTC reset"
+	help
+	  This project has a gpio named GPIO_PCH_RTCRST defined in
+	  the GPIO configuration, which can be used to reset the AP's RTC when
+	  set high.
+
+config PLATFORM_EC_POWERSEQ_S4
+	bool "Advertise S4 residency"
+	depends on PLATFORM_HOST_INTERFACE_EC_HOST_INTERFACE_ESPI_VW_SLP_S5
+	default y if AP_X86_INTEL_TGL
+	default y if AP_X86_INTEL_ADL
+	default y if AP_X86_INTEL_MTL
+	help
+	  Advertise S4 residency capabilities to the AP. This is required for
+	  AP hibernate (suspend-to-disk) on Intel platforms with Key Locker
+	  support (TGL+)
+
+config PLATFORM_EC_POWERSEQ_COMETLAKE
+	bool "Use common Comet Lake code for power sequencing"
+	depends on AP_X86_INTEL_CML
+	default y
+	help
+	  Use the Comet Lake code for power sequencing.
+
+config CHIPSET_ALDERLAKE_SLG4BD44540
+       bool "Use powersequencing with Silego"
+       depends on AP_X86_INTEL_ADL
+       default y
+       help
+          Use this for AlderLake power sequencing with the
+          Silego chips.
+
+config PLATFORM_EC_POWERSEQ_METEORLAKE
+	bool "Use common Meteorlake code for power sequencing"
+	depends on AP_X86_INTEL_MTL
+	default n
+	help
+	  Use the Meteorlake common code for power sequencing. Note that
+	  this applies to Meteorlake and potentially future SoCs.
+
+menuconfig PLATFORM_EC_POWERSEQ_ICELAKE
+	bool "Use common Icelake code for power sequencing"
+	depends on AP_X86_INTEL_TGL
+	default n
+	help
+	  Use the Icelake common code for power sequencing.  Note that
+	  this applies to more platforms than just Icelake.  For
+	  example, Tigerlake uses this code too.
+
+if PLATFORM_EC_POWERSEQ_ICELAKE
+
+config PLATFORM_EC_POWERSEQ_SLP_S3_L_OVERRIDE
+	bool "Enable a quirk to release SLP_S3_L after DSW_PWROK is high"
+	default y if AP_X86_INTEL_TGL
+	help
+	  Enable a quirk to reconfigure SLP_S3_L back to an input a
+	  short delay after DSW_PWROK goes high.
+
+config PLATFORM_EC_POWERSEQ_PP3300_RAIL_FIRST
+	bool "Turn on the PP3300 rail before PP5000"
+	default y if AP_X86_INTEL_TGL
+	help
+	  When switching from G3 to S5, turn on the PP3300 rail before
+	  the PP5500 rail.
+
+endif # PLATFORM_EC_POWERSEQ_ICELAKE
+
+if PLATFORM_EC_POWERSEQ_RTC_RESET
+
+config PLATFORM_EC_S5_EXIT_WAIT
+	int "time(in secs) for EC to wait for system to exit from S5"
+	default 4
+	help
+	  Timeout value for which EC has to wait for system to exit from S5
+	  before performing RTC reset and moving the system to G3.
+
+endif # PLATFORM_EC_POWERSEQ_RTC_RESET
+
+endif # PLATFORM_EC_POWERSEQ_INTEL
+
+config PLATFORM_EC_POWERSEQ_MT8192
+	bool "Use common MT8192 code for power sequencing"
+	default y
+	depends on AP_ARM_MTK_MT8192
+	help
+	  Use the MT8192 code for power sequencing.
+
+config PLATFORM_EC_POWERSEQ_MT8186
+	bool "Use common MT8186 code for power sequencing"
+	default y
+	depends on AP_ARM_MTK_MT8186
+	help
+	  Use the MT8186 code for power sequencing.
+
+config PLATFORM_EC_POWERSEQ_SC7180
+	bool "SC7180 power sequencing"
+	depends on AP_ARM_QUALCOMM_SC7180
+	default y
+	help
+	  Enable power sequencing for the Qualcomm Snapdragon SC7180
+	  chipset.
+
+config PLATFORM_EC_POWERSEQ_SC7280
+	bool "SC7280 power sequencing"
+	depends on AP_ARM_QUALCOMM_SC7280
+	default y
+	help
+	  Enable power sequencing for the Qualcomm Snapdragon SC7280
+	  chipset.
+
+config PLATFORM_EC_CONSOLE_CMD_S5_TIMEOUT
+	bool "Console command: s5_timeout"
+	help
+	  Enable the console command 's5_timeout'. This command is used to
+	  change the timeout waiting for inactivity in the S5 power state before
+	  transitioning to the G3 state. This command is useful for power
+	  testing.
+
+endif # PLATFORM_EC_POWERSEQ

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,6 +10,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "atomic.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "link_defs.h"
@@ -26,14 +28,13 @@
 #endif
 
 #define SBP_ENC_KEY_LEN 16
-#define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
-	(FP_ALGORITHM_TEMPLATE_SIZE + \
-		FP_POSITIVE_MATCH_SALT_BYTES + \
-		sizeof(struct ec_fp_template_encryption_metadata))
+#define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE                         \
+	(FP_ALGORITHM_TEMPLATE_SIZE + FP_POSITIVE_MATCH_SALT_BYTES + \
+	 sizeof(struct ec_fp_template_encryption_metadata))
 
 /* Events for the FPSENSOR task */
-#define TASK_EVENT_SENSOR_IRQ     TASK_EVENT_CUSTOM_BIT(0)
-#define TASK_EVENT_UPDATE_CONFIG  TASK_EVENT_CUSTOM_BIT(1)
+#define TASK_EVENT_SENSOR_IRQ TASK_EVENT_CUSTOM_BIT(0)
+#define TASK_EVENT_UPDATE_CONFIG TASK_EVENT_CUSTOM_BIT(1)
 
 #define FP_NO_SUCH_TEMPLATE -1
 
@@ -51,8 +52,8 @@ extern uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE];
  */
 extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
 /* Salt used in derivation of positive match secret. */
-extern uint8_t fp_positive_match_salt
-	[FP_MAX_FINGER_COUNT][FP_POSITIVE_MATCH_SALT_BYTES];
+extern uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
+				     [FP_POSITIVE_MATCH_SALT_BYTES];
 /* Index of the last enrolled but not retrieved template. */
 extern int8_t template_newly_enrolled;
 /* Number of used templates */
@@ -64,7 +65,7 @@ extern uint32_t user_id[FP_CONTEXT_USERID_WORDS];
 /* Part of the IKM used to derive encryption keys received from the TPM. */
 extern uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 
-extern uint32_t fp_events;
+extern atomic_t fp_events;
 
 extern uint32_t sensor_mode;
 
@@ -116,7 +117,7 @@ int fp_tpm_seed_is_set(void);
  * @param mode_output   resulting mode
  * @return EC_RES_SUCCESS on success. Error code on failure.
  */
-int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output);
+enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output);
 
 /**
  * Allow reading positive match secret for |fgr| in the next 5 seconds.
@@ -126,14 +127,13 @@ int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output);
  * @return EC_SUCCESS if the request is valid, error code otherwise.
  */
 int fp_enable_positive_match_secret(uint32_t fgr,
-	struct positive_match_secret_state *state);
+				    struct positive_match_secret_state *state);
 
 /**
  * Disallow positive match secret for any finger to be read.
  *
  * @param state the state of positive match secret, e.g. readable or not.
  */
-void fp_disable_positive_match_secret(
-	struct positive_match_secret_state *state);
+void fp_disable_positive_match_secret(struct positive_match_secret_state *state);
 
 #endif /* __CROS_EC_FPSENSOR_STATE_H */

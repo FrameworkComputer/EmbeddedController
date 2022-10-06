@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -20,7 +20,7 @@ const struct monitor_header_tag monitor_hdr = {
 	 * programed into the SPI flash.
 	 */
 	CONFIG_PROGRAM_MEMORY_BASE,
-	/* 0x0C:The Flash start address to be programmed*/
+/* 0x0C:The Flash start address to be programmed*/
 #ifdef SECTION_IS_RO
 	/* Default: RO image is programed from the start of SPI flash */
 	CONFIG_EC_PROTECTED_STORAGE_OFF,

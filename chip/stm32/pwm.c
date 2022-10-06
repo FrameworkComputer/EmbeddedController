@@ -1,10 +1,11 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* PWM control module for STM32 */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "clock-f.h"
 #include "gpio.h"
@@ -17,7 +18,7 @@
 #include "util.h"
 
 /* Bitmap of currently active PWM channels. 1 bit per channel. */
-static uint32_t using_pwm;
+static atomic_t using_pwm;
 
 void pwm_set_duty(enum pwm_channel ch, int percent)
 {
@@ -99,7 +100,7 @@ static void pwm_configure(enum pwm_channel ch)
 	/* Enable auto-reload preload, start counting */
 	tim->cr1 |= BIT(7) | BIT(0);
 
-	deprecated_atomic_or(&using_pwm, 1 << ch);
+	atomic_or(&using_pwm, 1 << ch);
 
 	/* Prevent sleep */
 	disable_sleep(SLEEP_MASK_PWM);
@@ -125,7 +126,7 @@ static void pwm_disable(enum pwm_channel ch)
 	/* Allow sleep */
 	enable_sleep(SLEEP_MASK_PWM);
 
-	deprecated_atomic_clear_bits(&using_pwm, 1 << ch);
+	atomic_clear_bits(&using_pwm, 1 << ch);
 
 	/* Unless another PWM is active... Then prevent sleep */
 	if (using_pwm)
@@ -147,7 +148,7 @@ int pwm_get_enabled(enum pwm_channel ch)
 
 static void pwm_reconfigure(enum pwm_channel ch)
 {
-	deprecated_atomic_clear_bits(&using_pwm, 1 << ch);
+	atomic_clear_bits(&using_pwm, 1 << ch);
 	pwm_configure(ch);
 }
 

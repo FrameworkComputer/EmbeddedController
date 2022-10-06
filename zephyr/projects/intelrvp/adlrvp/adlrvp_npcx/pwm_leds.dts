@@ -1,0 +1,57 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm4 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
+		};
+		pwm_led1: pwm_led_1 {
+			pwms = <&pwm5 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+
+		leds = <&pwm_led0 &pwm_led1>;
+
+		color-map-green  = <100>;
+
+		/* brightness-range = <red green blue yellow white amber> */
+		brightness-range = <0 100 0 0 0 0>;
+
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		};
+
+		pwm_led_1@1 {
+			reg = <1>;
+			ec-led-name = "EC_LED_ID_POWER_LED";
+		};
+	};
+};
+
+/* LED1 */
+&pwm4 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm4_gpb6>;
+	pinctrl-names = "default";
+};
+
+/* LED2 */
+&pwm5 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};

@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,11 +6,11 @@
 /* Rammus board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "anx7447.h"
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charge_ramp.h"
@@ -19,7 +19,11 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
+#include "driver/accel_kx022.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -35,6 +39,7 @@
 #include "math_util.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
+#include "panic.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
@@ -55,11 +60,11 @@
 #include "util.h"
 #include "espi.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
-#define USB_PD_PORT_PS8751	1
-#define USB_PD_PORT_ANX7447	0
+#define USB_PD_PORT_PS8751 1
+#define USB_PD_PORT_ANX7447 0
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -105,12 +110,12 @@ void vbus1_evt(enum gpio_signal signal)
 
 void usb0_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 void usb1_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
 #include "gpio_list.h"
@@ -126,23 +131,44 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing (10x voltage divider). */
-	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
 	 */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT*1000/18,
-			   ADC_READ_MAX+1, 0},
+	[ADC_AMON_BMON] = { "AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT * 1000 / 18,
+			    ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C port map */
-const struct i2c_port_t i2c_ports[]  = {
-	{"i2c_0_0", NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"i2c_0_1", NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"i2c_1",   NPCX_I2C_PORT1,   100, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
-	{"i2c_2",   NPCX_I2C_PORT2,   400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
-	{"i2c_3",   NPCX_I2C_PORT3,   400, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "i2c_0_0",
+	  .port = NPCX_I2C_PORT0_0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_0_SCL,
+	  .sda = GPIO_I2C0_0_SDA },
+	{ .name = "i2c_0_1",
+	  .port = NPCX_I2C_PORT0_1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_1_SCL,
+	  .sda = GPIO_I2C0_1_SDA },
+	{ .name = "i2c_1",
+	  .port = NPCX_I2C_PORT1,
+	  .kbps = 100,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "i2c_2",
+	  .port = NPCX_I2C_PORT2,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "i2c_3",
+	  .port = NPCX_I2C_PORT3,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -161,7 +187,7 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC1,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -176,16 +202,20 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_PS8751] = {
-		.usb_port = USB_PD_PORT_PS8751,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_PS8751,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		},
 	},
 	[USB_PD_PORT_ANX7447] = {
-		.usb_port = USB_PD_PORT_ANX7447,
-		.driver = &anx7447_usb_mux_driver,
-		.hpd_update = &anx7447_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ANX7447,
+			.driver = &anx7447_usb_mux_driver,
+			.hpd_update = &anx7447_tcpc_update_hpd_status,
+		},
 	}
 };
 
@@ -228,7 +258,7 @@ static void ps8751_i2c_remap(void)
 	uint32_t board_version;
 
 	if (cbi_get_board_version(&board_version) != EC_SUCCESS ||
-		board_version > 1)
+	    board_version > 1)
 		return;
 	/*
 	 * Due to b/118063849, we separate the ps8751 and anx3447 to
@@ -258,9 +288,10 @@ void board_tcpc_init(void)
 	 * HPD pulse to enable video path
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
-		usb_mux_hpd_update(port, 0, 0);
+		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 uint16_t tcpc_get_alert_status(void)
 {
@@ -280,17 +311,17 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
 
 	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM0},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM1},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM2},
-	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM3},
+	{ "Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM0 },
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM1 },
+	{ "DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM2 },
+	{ "eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -306,8 +337,8 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault)
-	    != EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault) !=
+	    EC_SUCCESS)
 		return;
 
 	if (!(vrfault & BIT(4)))
@@ -398,8 +429,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x38, 0x7a);
 }
 
-__override void power_board_handle_host_sleep_event(
-		enum host_sleep_event state)
+__override void power_board_handle_host_sleep_event(enum host_sleep_event state)
 {
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
 		board_pmic_enable_slp_s0_vr_decay();
@@ -473,7 +503,7 @@ static void usb_charge_mode_init(void)
 	 * inhibit_charging_in_suspend.
 	 */
 	usb_charge_set_mode(0, CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE,
-			USB_DISALLOW_SUSPEND_CHARGE);
+			    USB_DISALLOW_SUSPEND_CHARGE);
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_mode_init, HOOK_PRIO_DEFAULT + 1);
 
@@ -517,10 +547,12 @@ int board_set_active_charge_port(int charge_port)
 	} else {
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_EN_USB_C0_CHARGE_EC_L :
-					     GPIO_EN_USB_C1_CHARGE_EC_L, 1);
+					     GPIO_EN_USB_C1_CHARGE_EC_L,
+			       1);
 		/* Enable charging port */
 		gpio_set_level(charge_port ? GPIO_EN_USB_C1_CHARGE_EC_L :
-					     GPIO_EN_USB_C0_CHARGE_EC_L, 0);
+					     GPIO_EN_USB_C0_CHARGE_EC_L,
+			       0);
 	}
 
 	return EC_SUCCESS;
@@ -534,8 +566,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/*
 	 * Limit the input current to 96% negotiated limit,
@@ -543,8 +575,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 */
 	charge_ma = charge_ma * 96 / 100;
 	charge_set_input_current_limit(
-			MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT),
-			charge_mv);
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void board_hibernate(void)
@@ -583,21 +614,98 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm426xx_data;
 
-/* BMA255 private data */
+/* private data */
 static struct accelgyro_saved_data_t g_bma255_data;
+static struct kionix_accel_data g_kx022_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0 },
-	{ 0,  FLOAT_TO_FP(-1), 0 },
-	{ 0, 0, FLOAT_TO_FP(-1) }
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, FLOAT_TO_FP(-1), 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
+
+const mat33_fp_t base_standard_ref_icm = { { 0, FLOAT_TO_FP(1), 0 },
+					   { FLOAT_TO_FP(1), 0, 0 },
+					   { 0, 0, FLOAT_TO_FP(-1) } };
+
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
+
+struct motion_sensor_t base_accel_icm = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.rot_standard_ref = &base_standard_ref_icm,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
 };
 
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0 },
-	{ 0,  FLOAT_TO_FP(1), 0 },
-	{ 0, 0, FLOAT_TO_FP(-1) }
+struct motion_sensor_t base_gyro_icm = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref_icm,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
+
+struct motion_sensor_t lid_accel_kx022 = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_kx022_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.min_frequency = KX022_ACCEL_MIN_FREQ,
+	.max_frequency = KX022_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, to support lid angle calculation. */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -676,9 +784,33 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BASE_ICM426XX)
+		icm426xx_interrupt(signal);
+	else
+		bmi160_interrupt(signal);
+}
+
+static void board_detect_motionsense(void)
+{
+	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_LID_KX022) {
+		motion_sensors[LID_ACCEL] = lid_accel_kx022;
+		ccprints("LID_ACCEL is KX022");
+	} else
+		ccprints("LID_ACCEL is BMA253");
+
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BASE_ICM426XX) {
+		motion_sensors[BASE_ACCEL] = base_accel_icm;
+		motion_sensors[BASE_GYRO] = base_gyro_icm;
+		ccprints("BASE_ACCEL is ICM426XX");
+	} else
+		ccprints("BASE_ACCEL is BMI160");
+}
+DECLARE_HOOK(HOOK_INIT, board_detect_motionsense, HOOK_PRIO_DEFAULT);
+
 /* Enable or disable input devices, based on chipset state and tablet mode */
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	/* If the lid is in 360 position, ignore the lid angle,
 	 * which might be faulty. Disable keyboard.
@@ -687,7 +819,6 @@ void lid_angle_peripheral_enable(int enable)
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
-#endif
 
 static void board_chipset_reset(void)
 {

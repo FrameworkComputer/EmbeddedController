@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -51,7 +51,7 @@ static void update_plt_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_plt_resume, HOOK_PRIO_DEFAULT);
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* wait time to evaluate charger thermal status */
 static timestamp_t thermal_wait_until;
@@ -117,7 +117,7 @@ static void battery_thermal_control(struct charge_state_data *curr)
 		return;
 
 	/* If we fail to read input curr limit, skip for this cycle. */
-	if (charger_get_input_current(CHARGER_SOLO, &input_current))
+	if (charger_get_input_current_limit(CHARGER_SOLO, &input_current))
 		return;
 
 	/*
@@ -155,7 +155,7 @@ thermal_exit:
 	thermal_wait_until.val = get_time().val + (3 * SECOND);
 }
 
-int command_jc(int argc, char **argv)
+static int command_jc(int argc, const char **argv)
 {
 	static int prev_jc_temp;
 	int jc_temp;
@@ -304,8 +304,8 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 				 * and TE function.
 				 */
 				hook_call_deferred(
-						&charge_enable_eoc_and_te_data,
-						(4.5 * SECOND));
+					&charge_enable_eoc_and_te_data,
+					(4.5 * SECOND));
 			}
 		}
 	}
@@ -339,7 +339,6 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 		curr->batt.state_of_charge = MAX(BATTERY_LEVEL_NEAR_FULL,
 						 curr->batt.state_of_charge);
 	}
-
 }
 
 #ifndef CONFIG_BATTERY_SMART
@@ -352,13 +351,12 @@ static void board_charge_termination(void)
 			te = 1;
 	}
 }
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
-	     board_charge_termination,
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, board_charge_termination,
 	     HOOK_PRIO_DEFAULT);
 #endif
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	prev_charge_limit = charge_ma;
 	prev_charge_mv = charge_mv;

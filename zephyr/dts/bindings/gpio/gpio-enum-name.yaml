@@ -1,0 +1,167 @@
+description: Named GPIOs parent node
+properties:
+  enum-name:
+    type: string
+    description:
+      Enum used in code.
+      These names MUST ONLY be referenced by legacy code that is
+      included with Zephyr projects.
+
+      Some development boards like trogdor, volteer etc. shim in
+      the older baseboard/board headers and code, so they
+      are also using most of these names. When these
+      boards get removed, these names can be removed
+
+      Do not add any more names to this list. Please remove
+      any names that are not referenced by Zephyr projects (or
+      are not in included common legacy code)
+    enum:
+      - GPIO_AC_PRESENT
+      - GPIO_AP_EC_SYSRST_ODL
+      - GPIO_AP_EC_WARM_RST_REQ
+      - GPIO_AP_EC_WATCHDOG_L
+      - GPIO_AP_EC_WDTRST_L
+      - GPIO_AP_IN_SLEEP_L
+      - GPIO_AP_RST_L
+      - GPIO_AP_SUSPEND
+      - GPIO_BATT_PRES_ODL
+      - GPIO_BC12_DET_EN
+      - GPIO_BOARD_VERSION1
+      - GPIO_BOARD_VERSION2
+      - GPIO_BOARD_VERSION3
+      - GPIO_CCD_MODE_ODL
+      - GPIO_CPU_PROCHOT
+      - GPIO_DA9313_GPIO0
+      - GPIO_DC_JACK_PRESENT
+      - GPIO_DEPRECATED_AP_RST_REQ
+      - GPIO_EC_INT_L
+      - GPIO_EC_KB_BL_EN_L
+      - GPIO_EC_PCH_SYS_PWROK
+      - GPIO_EC_PMIC_EN_ODL
+      - GPIO_EC_PMIC_WATCHDOG_L
+      - GPIO_EC_PROCHOT_IN_L
+      - GPIO_ENABLE_BACKLIGHT
+      - GPIO_ENABLE_BACKLIGHT_L
+      - GPIO_ENTERING_RW
+      - GPIO_EN_KEYBOARD_BACKLIGHT
+      - GPIO_EN_PP3300_A
+      - GPIO_EN_PP5000
+      - GPIO_EN_PP5000_A
+      - GPIO_EN_PP5000_USBA
+      - GPIO_EN_PP5000_USBA_R
+      - GPIO_EN_PPVAR_VCCIN
+      - GPIO_EN_PWR_A
+      - GPIO_EN_S5_RAILS
+      - GPIO_EN_USB_A_5V
+      - GPIO_IMVP9_VRRDY_OD
+      - GPIO_KB_DISCRETE_INT
+      - GPIO_LID_ACCEL_INT_L
+      - GPIO_LID_OPEN
+      - GPIO_PACKET_MODE_EN
+      - GPIO_PCH_DSW_PWROK
+      - GPIO_PCH_PWRBTN_L
+      - GPIO_PCH_PWROK
+      - GPIO_PCH_RSMRST_L
+      - GPIO_PCH_RTCRST
+      - GPIO_PCH_SLP_S0_L
+      - GPIO_PCH_SLP_S3_L
+      - GPIO_PCH_SLP_S5_L
+      - GPIO_PCH_SLP_SUS_L
+      - GPIO_PCH_SYS_PWROK
+      - GPIO_PG_EC_ALL_SYS_PWRGD
+      - GPIO_PG_EC_DSW_PWROK
+      - GPIO_PG_EC_RSMRST_ODL
+      - GPIO_PMIC_EC_PWRGD
+      - GPIO_PMIC_KPD_PWR_ODL
+      - GPIO_PMIC_RESIN_L
+      - GPIO_POWER_BUTTON_L
+      - GPIO_POWER_GOOD
+      - GPIO_PS_HOLD
+      - GPIO_S0_PGOOD
+      - GPIO_S5_PGOOD
+      - GPIO_SLP_SUS_L
+      - GPIO_SWITCHCAP_ON
+      - GPIO_SWITCHCAP_ON_L
+      - GPIO_SWITCHCAP_PG
+      - GPIO_SWITCHCAP_PG_INT_L
+      - GPIO_SYS_RESET_L
+      - GPIO_SYS_RST_ODL
+      - GPIO_TABLET_MODE_L
+      - GPIO_TEMP_SENSOR_POWER
+      - GPIO_TEST
+      - GPIO_USB_C0_BC12_INT_ODL
+      - GPIO_USB_C0_C2_TCPC_INT_ODL
+      - GPIO_USB_C0_C2_TCPC_RST_ODL
+      - GPIO_USB_C0_DISCHARGE
+      - GPIO_USB_C0_DP_HPD
+      - GPIO_USB_C0_OC_ODL
+      - GPIO_USB_C0_PD_INT_ODL
+      - GPIO_USB_C0_PPC_INT_ODL
+      - GPIO_USB_C0_SWCTL_INT_ODL
+      - GPIO_USB_C0_TCPC_INT_ODL
+      - GPIO_USB_C0_TCPC_RST_L
+      - GPIO_USB_C1_BC12_INT_ODL
+      - GPIO_USB_C1_DISCHARGE
+      - GPIO_USB_C1_DP_HPD
+      - GPIO_USB_C0_FRS_EN
+      - GPIO_USB_C1_FRS_EN
+      - GPIO_USB_C1_LS_EN
+      - GPIO_USB_C1_OC_ODL
+      - GPIO_USB_C1_PD_INT_ODL
+      - GPIO_USB_C1_PPC_INT_ODL
+      - GPIO_USB_C1_RST_ODL
+      - GPIO_USB_C1_RT_RST_ODL
+      - GPIO_USB_C1_RT_RST_R_ODL
+      - GPIO_USB_C1_SWCTL_INT_ODL
+      - GPIO_USB_C1_TCPC_INT_ODL
+      - GPIO_USB_C1_TCPC_RST_L
+      - GPIO_USB_C2_BC12_INT_ODL
+      - GPIO_USB_C2_DISCHARGE
+      - GPIO_USB_C2_PPC_INT_ODL
+      - GPIO_USB1_CTL1
+      - GPIO_USB1_CTL2
+      - GPIO_USB1_CTL3
+      - GPIO_USB1_ILIM_SEL
+      - GPIO_USB2_CTL1
+      - GPIO_USB2_CTL2
+      - GPIO_USB2_CTL3
+      - GPIO_USB2_ILIM_SEL
+      - GPIO_VBOB_EN
+      - GPIO_VCCST_PWRGD_OD
+      - GPIO_VOLUME_DOWN_L
+      - GPIO_VOLUME_UP_L
+      - GPIO_WARM_RESET_L
+      - IOEX_USB_A1_RETIMER_EN
+      - IOEX_USB_C0_BB_RETIMER_LS_EN
+      - IOEX_USB_C0_BB_RETIMER_RST
+      - IOEX_USB_C0_C1_OC
+      - IOEX_USB_C0_FRS_EN
+      - IOEX_USB_C0_HBR_LS_EN
+      - IOEX_USB_C0_HBR_RST
+      - IOEX_USB_C0_MUX_SBU_SEL_0
+      - IOEX_USB_C0_MUX_SBU_SEL_1
+      - IOEX_USB_C0_PPC_ILIM_3A_EN
+      - IOEX_USB_C0_SBU_FLIP
+      - IOEX_USB_C0_TCPC_FASTSW_CTL_EN
+      - IOEX_USB_C0_USB_MUX_CNTRL_0
+      - IOEX_USB_C0_USB_MUX_CNTRL_1
+      - IOEX_USB_C1_BB_RETIMER_LS_EN
+      - IOEX_USB_C1_BB_RETIMER_RST
+      - IOEX_USB_C1_FAULT_ODL
+      - IOEX_USB_C1_HBR_LS_EN
+      - IOEX_USB_C1_HBR_RST
+      - IOEX_USB_C1_HPD
+      - IOEX_USB_C1_HPD_IN_DB
+      - IOEX_USB_C1_PPC_ILIM_3A_EN
+      - IOEX_USB_C1_SBU_FLIP
+      - IOEX_USB_C1_TCPC_FASTSW_CTL_EN
+      - IOEX_USB_C2_BB_RETIMER_LS_EN
+      - IOEX_USB_C2_BB_RETIMER_RST
+      - IOEX_USB_C2_HBR_RST
+      - IOEX_USB_C2_HBR_LS_EN
+      - IOEX_USB_C2_C3_OC
+      - IOEX_USB_C2_FRS_EN
+      - IOEX_USB_C3_BB_RETIMER_LS_EN
+      - IOEX_USB_C3_BB_RETIMER_RST
+      - IOEX_USB_C3_HBR_RST
+      - IOEX_USB_C3_HBR_LS_EN

@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,44 +16,31 @@
 #define STM32_BKP_ENTRIES (STM32_BKP_BYTES / 2)
 
 /*
- * Use 32-bit for reset flags, if we have space for it:
- *  - 2 indexes are used unconditionally (SCRATCHPAD and SAVED_RESET_FLAGS)
- *  - VBNV_CONTEXT requires 8 indexes, so a total of 10 (which is the total
- *    number of entries on some STM32 variants).
- *  - Other config options are not a problem (they only take a few entries)
- *
- * Given this, we can only add an extra entry for the top 16-bit of reset flags
- * if VBNV_CONTEXT is not enabled, or if we have more than 10 entries.
+ * Add new entries at the end of the enum. Otherwise you will break RO/RW
+ * compatibility.
  */
-#if !defined(CONFIG_HOSTCMD_VBNV_CONTEXT) || STM32_BKP_ENTRIES > 10
-#define CONFIG_STM32_RESET_FLAGS_EXTENDED
-#endif
-
 enum bkpdata_index {
-	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
-	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
-#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
-	BKPDATA_INDEX_SAVED_RESET_FLAGS_2,   /* Saved reset flags (cont) */
-#endif
-#ifdef CONFIG_HOSTCMD_VBNV_CONTEXT
-	BKPDATA_INDEX_VBNV_CONTEXT0,
-	BKPDATA_INDEX_VBNV_CONTEXT1,
-	BKPDATA_INDEX_VBNV_CONTEXT2,
-	BKPDATA_INDEX_VBNV_CONTEXT3,
-	BKPDATA_INDEX_VBNV_CONTEXT4,
-	BKPDATA_INDEX_VBNV_CONTEXT5,
-	BKPDATA_INDEX_VBNV_CONTEXT6,
-	BKPDATA_INDEX_VBNV_CONTEXT7,
+	BKPDATA_INDEX_SCRATCHPAD, /* General-purpose scratchpad */
+	BKPDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
+#ifdef CONFIG_STM32_EXTENDED_RESET_FLAGS
+	BKPDATA_INDEX_SAVED_RESET_FLAGS_2, /* Saved reset flags (cont) */
 #endif
 #ifdef CONFIG_SOFTWARE_PANIC
-	BKPDATA_INDEX_SAVED_PANIC_REASON,    /* Saved panic reason */
-	BKPDATA_INDEX_SAVED_PANIC_INFO,      /* Saved panic data */
+	BKPDATA_INDEX_SAVED_PANIC_REASON, /* Saved panic reason */
+	BKPDATA_INDEX_SAVED_PANIC_INFO, /* Saved panic data */
 	BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, /* Saved panic exception code */
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	BKPDATA_INDEX_PD0,		     /* USB-PD saved port0 state */
-	BKPDATA_INDEX_PD1,		     /* USB-PD saved port1 state */
-	BKPDATA_INDEX_PD2,		     /* USB-PD saved port2 state */
+	BKPDATA_INDEX_PD0, /* USB-PD saved port0 state */
+	BKPDATA_INDEX_PD1, /* USB-PD saved port1 state */
+	BKPDATA_INDEX_PD2, /* USB-PD saved port2 state */
+#endif
+#ifdef CONFIG_SOFTWARE_PANIC
+	/**
+	 * Saving the panic flags in case that AP thinks the panic is new
+	 * after a hard reset.
+	 */
+	BKPDATA_INDEX_SAVED_PANIC_FLAGS, /* Saved panic flags */
 #endif
 	BKPDATA_COUNT
 };

@@ -1,0 +1,56 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config TEST_STEELIX_RUSTY
+	bool "Run the tests intended for steelix and rusty"
+	help
+	  Include board_steelix.c into the binary to test the clamshell and
+	  convertible.
+
+config TEST_FORM_FACTOR_CLAMSHELL
+	bool "Run the tests intended for clamshells"
+	help
+	  Include clamshell tests into the binary.
+
+config TEST_FORM_FACTOR_CONVERTIBLE
+	bool "Run the tests intended for convertibles"
+	help
+	  Include convertible tests into the binary.
+
+config VARIANT_CORSOLA_DB_DETECTION
+	bool "Run the tests intended for corsola DB detection"
+	help
+	  Include variant_db_detection.c into the binary to test the type-c DB
+	  tests, HDMI DB tests and none DB tests.
+
+config TEST_DB_DETECT_TYPEC
+	bool "Run the tests intended for type-c DB"
+	help
+	  Include type-c DB tests into the binary.
+	  test for DB GPIOs and interrupt.
+
+config TEST_DB_DETECT_HDMI
+	bool "Run the tests intended for HDMI DB"
+	help
+	  Include HDMI DB tests into the binary.
+	  test for DB GPIOs and interrupt.
+
+config TEST_DB_DETECT_NONE
+	bool "Run the tests intended for none DB"
+	help
+	  Include none DB tests into the binary.
+	  test for DB GPIOs and interrupt.
+
+config TEST_ALT_SENSOR_PROBE
+	bool "Run the tests intended for alt sensor probe"
+	help
+	  Include alt_sensor.c into the binary to test the alt sensor probe via
+	  SSFC.
+
+config TEST_KINGLER_CCD
+	bool "Run the tests intended for alt sensor probe"
+	help
+	  Include alt_sensor.c into the binary to test the alt sensor probe via
+	  SSFC.
+source "Kconfig.zephyr"

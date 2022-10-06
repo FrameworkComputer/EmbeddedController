@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,7 @@
 /* Phaser board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
+#include "builtin/stdnoreturn.h"
 #include "button.h"
 #include "charge_state.h"
 #include "common.h"
@@ -25,23 +25,25 @@
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
+#include "system_chip.h"
 #include "task.h"
 #include "tablet_mode.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "usbc_ppc.h"
 #include "util.h"
 #include "battery_smart.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define USB_PD_PORT_ANX7447	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX7447 0
+#define USB_PD_PORT_PS8751 1
 
 static uint8_t sku_id;
 static bool support_syv_ppc;
+static uint8_t is_psl_hibernate;
 
 /* Check PPC ID and board version to decide which one ppc is used. */
 static bool board_is_support_syv_ppc(void)
@@ -84,31 +86,31 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
 	/* Vbus sensing (1/10 voltage divider). */
-	[ADC_VBUS_C0] = {
-		"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	[ADC_VBUS_C1] = {
-		"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C0] = { "VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
+	[ADC_VBUS_C1] = { "VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -118,11 +120,9 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate lid and base sensor into standard reference frame */
-const mat33_fp_t standard_rot_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t standard_rot_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct stprivate_data g_lis2dh_data;
@@ -168,8 +168,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
 				MOTIONSENSE_TYPE_ACCEL),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.rot_standard_ref = &standard_rot_ref,
@@ -200,8 +198,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
 				MOTIONSENSE_TYPE_GYRO),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
@@ -215,8 +211,8 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int board_is_convertible(void)
 {
-	return sku_id == 2 || sku_id == 3 || sku_id == 4 || sku_id == 5 || \
-		sku_id == 255;
+	return sku_id == 2 || sku_id == 3 || sku_id == 4 || sku_id == 5 ||
+	       sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -245,12 +241,103 @@ static void cbi_init(void)
 	board_update_sensor_config_from_sku();
 
 	support_syv_ppc = board_is_support_syv_ppc();
+
+	/* Please correct the SKU ID checking if it is not right */
+	if (sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 4)
+		is_psl_hibernate = 0;
+	else
+		is_psl_hibernate = 1;
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
-#ifndef TEST_BUILD
+static void system_psl_type_sel(int psl_no, uint32_t flags)
+{
+	/* Set PSL input events' type as level or edge trigger */
+	if ((flags & GPIO_INT_F_HIGH) || (flags & GPIO_INT_F_LOW))
+		CLEAR_BIT(NPCX_GLUE_PSL_CTS, psl_no + 4);
+	else if ((flags & GPIO_INT_F_RISING) || (flags & GPIO_INT_F_FALLING))
+		SET_BIT(NPCX_GLUE_PSL_CTS, psl_no + 4);
+
+	/*
+	 * Set PSL input events' polarity is low (high-to-low) active or
+	 * high (low-to-high) active
+	 */
+	if (flags & GPIO_HIB_WAKE_HIGH)
+		SET_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_no);
+	else
+		CLEAR_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_no);
+}
+
+int system_config_psl_mode(enum gpio_signal signal)
+{
+	int psl_no;
+	const struct gpio_info *g = gpio_list + signal;
+
+	if (g->port == GPIO_PORT_D && g->mask == MASK_PIN2) /* GPIOD2 */
+		psl_no = 0;
+	else if (g->port == GPIO_PORT_0 && (g->mask & 0x07)) /* GPIO00/01/02 */
+		psl_no = GPIO_MASK_TO_NUM(g->mask) + 1;
+	else
+		return 0;
+
+	system_psl_type_sel(psl_no, g->flags);
+	return 1;
+}
+
+void system_enter_psl_mode(void)
+{
+	/* Configure pins from GPIOs to PSL which rely on VSBY power rail. */
+	gpio_config_module(MODULE_PMU, 1);
+
+	/*
+	 * Only PSL_IN events can pull PSL_OUT to high and reboot ec.
+	 * We should treat it as wake-up pin reset.
+	 */
+	NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
+
+	/*
+	 * Pull PSL_OUT (GPIO85) to low to cut off ec's VCC power rail by
+	 * setting bit 5 of PDOUT(8).
+	 */
+	SET_BIT(NPCX_PDOUT(GPIO_PORT_8), 5);
+}
+
+/* Hibernate function implemented by PSL (Power Switch Logic) mode. */
+noreturn void __keep __enter_hibernate_in_psl(void)
+{
+	system_enter_psl_mode();
+	/* Spin and wait for PSL cuts power; should never return */
+	while (1)
+		;
+}
+void board_hibernate_late(void)
+{
+	int i;
+
+	/*
+	 * If the SKU cannot use PSL hibernate, immediately return to go the
+	 * non-PSL hibernate flow.
+	 */
+	if (!is_psl_hibernate) {
+		NPCX_KBSINPU = 0x0A;
+		return;
+	}
+
+	for (i = 0; i < hibernate_wake_pins_used; i++) {
+		/* Config PSL pins setting for wake-up inputs */
+		if (!system_config_psl_mode(hibernate_wake_pins[i]))
+			ccprintf("Invalid PSL setting in wake-up pin %d\n", i);
+	}
+
+	/* Clear all pending IRQ otherwise wfi will have no affect */
+	for (i = NPCX_IRQ_0; i < NPCX_IRQ_COUNT; i++)
+		task_clear_pending_irq(i);
+
+	__enter_hibernate_in_psl();
+}
+
 /* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	/*
 	 * If the lid is in tablet position via other sensors,
@@ -263,7 +350,6 @@ void lid_angle_peripheral_enable(int enable)
 	if (board_is_convertible())
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
-#endif
 
 int board_is_lid_angle_tablet_mode(void)
 {
@@ -271,11 +357,11 @@ int board_is_lid_angle_tablet_mode(void)
 }
 
 /* Battery functions */
-#define SB_OPTIONALMFG_FUNCTION2		0x3e
+#define SB_OPTIONALMFG_FUNCTION2 0x3e
 /* Optional mfg function2 */
-#define SMART_QUICK_CHARGE			(1<<12)
+#define SMART_QUICK_CHARGE (1 << 12)
 /* Quick charge support */
-#define MODE_QUICK_CHARGE_SUPPORT		(1<<4)
+#define MODE_QUICK_CHARGE_SUPPORT (1 << 4)
 
 static void sb_quick_charge_mode(int enable)
 {
@@ -324,15 +410,15 @@ void board_overcurrent_event(int port, int is_overcurrented)
 }
 
 static const struct ppc_config_t ppc_syv682x_port0 = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+	.i2c_port = I2C_PORT_TCPC0,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
 };
 
 static const struct ppc_config_t ppc_syv682x_port1 = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
 };
 
 static void board_setup_ppc(void)
@@ -340,12 +426,10 @@ static void board_setup_ppc(void)
 	if (!support_syv_ppc)
 		return;
 
-	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
-		&ppc_syv682x_port0,
-		sizeof(struct ppc_config_t));
-	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
-		&ppc_syv682x_port1,
-		sizeof(struct ppc_config_t));
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0], &ppc_syv682x_port0,
+	       sizeof(struct ppc_config_t));
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1], &ppc_syv682x_port1,
+	       sizeof(struct ppc_config_t));
 
 	gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
 	gpio_set_flags(GPIO_USB_PD_C1_INT_ODL, GPIO_INT_BOTH);

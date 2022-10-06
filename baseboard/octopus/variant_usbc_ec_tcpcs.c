@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,13 +17,13 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "system.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define USB_PD_PORT_ITE_0	0
-#define USB_PD_PORT_ITE_1	1
+#define USB_PD_PORT_ITE_0 0
+#define USB_PD_PORT_ITE_1 1
 
 /******************************************************************************/
 /* USB-C TPCP Configuration */
@@ -49,10 +49,15 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 /* TODO(crbug.com/826441): Consolidate this logic with other impls */
 static void board_it83xx_hpd_status(const struct usb_mux *me,
-				    int hpd_lvl, int hpd_irq)
+				    mux_state_t mux_state, bool *ack_required)
 {
-	enum gpio_signal gpio = me->usb_port ?
-		GPIO_USB_C1_HPD_1V8_ODL : GPIO_USB_C0_HPD_1V8_ODL;
+	int hpd_lvl = (mux_state & USB_PD_MUX_HPD_LVL) ? 1 : 0;
+	int hpd_irq = (mux_state & USB_PD_MUX_HPD_IRQ) ? 1 : 0;
+	enum gpio_signal gpio = me->usb_port ? GPIO_USB_C1_HPD_1V8_ODL :
+					       GPIO_USB_C0_HPD_1V8_ODL;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	/* Invert HPD level since GPIOs are active low. */
 	hpd_lvl = !hpd_lvl;
@@ -66,38 +71,38 @@ static void board_it83xx_hpd_status(const struct usb_mux *me,
 }
 
 /* This configuration might be override by each boards */
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
-		.usb_port = USB_PD_PORT_ITE_0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
-		.driver = &it5205_usb_mux_driver,
-		.hpd_update = &board_it83xx_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ITE_0,
+			.i2c_port = I2C_PORT_USB_MUX,
+			.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
+			.driver = &it5205_usb_mux_driver,
+			.hpd_update = &board_it83xx_hpd_status,
+		},
 	},
 	[USB_PD_PORT_ITE_1] = {
-		.usb_port = USB_PD_PORT_ITE_1,
-		/* Use PS8751 as mux only */
-		.i2c_port = I2C_PORT_USBC1,
-		.i2c_addr_flags = PS8751_I2C_ADDR1_FLAGS,
-		.flags = USB_MUX_FLAG_NOT_TCPC,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ITE_1,
+			/* Use PS8751 as mux only */
+			.i2c_port = I2C_PORT_USBC1,
+			.i2c_addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
+			.flags = USB_MUX_FLAG_NOT_TCPC,
+			.driver = &ps8xxx_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		},
 	}
 };
 
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USB_PD_PORT_ITE_0] = {
-		.i2c_port = I2C_PORT_USBC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	[USB_PD_PORT_ITE_1] = {
-		.i2c_port = I2C_PORT_USBC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	[USB_PD_PORT_ITE_0] = { .i2c_port = I2C_PORT_USBC0,
+				.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				.drv = &sn5s330_drv },
+	[USB_PD_PORT_ITE_1] = { .i2c_port = I2C_PORT_USBC1,
+				.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				.drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -152,6 +157,6 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 	 * correctly in the PPC driver via the pd state machine.
 	 */
 	if (ppc_set_vconn(port, enabled) != EC_SUCCESS)
-		cprints(CC_USBPD, "C%d: Failed %sabling vconn",
-			port, enabled ? "en" : "dis");
+		cprints(CC_USBPD, "C%d: Failed %sabling vconn", port,
+			enabled ? "en" : "dis");
 }

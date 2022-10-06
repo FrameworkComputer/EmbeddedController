@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -15,17 +15,58 @@
 
 #include "software_panic.h"
 
+/*
+ * Define these helpers if needed. While normally they would be derived from
+ * common.h, we cannot include that header here because this file is also used
+ * in the ectool and the build breaks.
+ */
+#ifndef test_mockable_noreturn
+#if defined(TEST_BUILD) || defined(CONFIG_ZTEST)
+#define test_mockable_noreturn __attribute__((weak))
+#else
+#define test_mockable_noreturn noreturn
+#endif
+#endif /* test_mockable_noreturn */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+enum cortex_panic_frame_registers {
+	CORTEX_PANIC_FRAME_REGISTER_R0 = 0,
+	CORTEX_PANIC_FRAME_REGISTER_R1,
+	CORTEX_PANIC_FRAME_REGISTER_R2,
+	CORTEX_PANIC_FRAME_REGISTER_R3,
+	CORTEX_PANIC_FRAME_REGISTER_R12,
+	CORTEX_PANIC_FRAME_REGISTER_LR,
+	CORTEX_PANIC_FRAME_REGISTER_PC,
+	CORTEX_PANIC_FRAME_REGISTER_PSR,
+	NUM_CORTEX_PANIC_FRAME_REGISTERS
+};
+
+enum cortex_panic_registers {
+	CORTEX_PANIC_REGISTER_PSP = 0,
+	CORTEX_PANIC_REGISTER_IPSR,
+	CORTEX_PANIC_REGISTER_MSP,
+	CORTEX_PANIC_REGISTER_R4,
+	CORTEX_PANIC_REGISTER_R5,
+	CORTEX_PANIC_REGISTER_R6,
+	CORTEX_PANIC_REGISTER_R7,
+	CORTEX_PANIC_REGISTER_R8,
+	CORTEX_PANIC_REGISTER_R9,
+	CORTEX_PANIC_REGISTER_R10,
+	CORTEX_PANIC_REGISTER_R11,
+	CORTEX_PANIC_REGISTER_LR,
+	NUM_CORTEX_PANIC_REGISTERS
+};
+
 /* ARM Cortex-Mx registers saved on panic */
 struct cortex_panic_data {
-	uint32_t regs[12];        /* psp, ipsr, msp, r4-r11, lr(=exc_return).
-				   * In version 1, that was uint32_t regs[11] =
-				   * psp, ipsr, lr, r4-r11
-				   */
-	uint32_t frame[8];        /* r0-r3, r12, lr, pc, xPSR */
+	/* See cortex_panic_registers enum for information about registers */
+	uint32_t regs[NUM_CORTEX_PANIC_REGISTERS];
+
+	/* See cortex_panic_frame_registers enum for more information */
+	uint32_t frame[NUM_CORTEX_PANIC_FRAME_REGISTERS];
 
 	uint32_t cfsr;
 	uint32_t bfar;
@@ -38,21 +79,21 @@ struct cortex_panic_data {
 /* NDS32 N8 registers saved on panic */
 struct nds32_n8_panic_data {
 	uint32_t itype;
-	uint32_t regs[16];        /* r0-r10, r15, fp, gp, lp, sp */
+	uint32_t regs[16]; /* r0-r10, r15, fp, gp, lp, sp */
 	uint32_t ipc;
 	uint32_t ipsw;
 };
 
 /* RISC-V RV32I registers saved on panic */
 struct rv32i_panic_data {
-	uint32_t regs[31];        /* sp, ra, gp, tp, a0-a7, t0-t6 s0-s11 */
-	uint32_t mepc;            /* mepc */
-	uint32_t mcause;          /* mcause */
+	uint32_t regs[31]; /* sp, ra, gp, tp, a0-a7, t0-t6, s0-s11 */
+	uint32_t mepc; /* mepc */
+	uint32_t mcause; /* mcause */
 };
 
 /* x86 registers saved on panic */
 struct x86_panic_data {
-	uint32_t vector;          /* Exception vector number */
+	uint32_t vector; /* Exception vector number */
 
 	/* Data pushed when exception handler called */
 	uint32_t error_code;
@@ -74,33 +115,41 @@ struct x86_panic_data {
 
 /* Data saved across reboots */
 struct panic_data {
-	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
-	uint8_t struct_version;   /* Structure version (currently 2) */
-	uint8_t flags;            /* Flags (PANIC_DATA_FLAG_*) */
-	uint8_t reserved;         /* Reserved; set 0 */
+	uint8_t arch; /* Architecture (PANIC_ARCH_*) */
+	uint8_t struct_version; /* Structure version (currently 2) */
+	uint8_t flags; /* Flags (PANIC_DATA_FLAG_*) */
+	uint8_t reserved; /* Reserved; set 0 */
 
 	/* core specific panic data */
 	union {
-		struct cortex_panic_data cm;       /* Cortex-Mx registers */
+		struct cortex_panic_data cm; /* Cortex-Mx registers */
 		struct nds32_n8_panic_data nds_n8; /* NDS32 N8 registers */
-		struct x86_panic_data x86;         /* Intel x86 */
-		struct rv32i_panic_data riscv;     /* RISC-V RV32I */
+		struct x86_panic_data x86; /* Intel x86 */
+#ifndef CONFIG_DO_NOT_INCLUDE_RV32I_PANIC_DATA
+		struct rv32i_panic_data riscv; /* RISC-V RV32I */
+#endif
 	};
 
 	/*
 	 * These fields go at the END of the struct so we can find it at the
 	 * end of memory.
 	 */
-	uint32_t struct_size;     /* Size of this struct */
-	uint32_t magic;           /* PANIC_SAVE_MAGIC if valid */
+	uint32_t struct_size; /* Size of this struct */
+	uint32_t magic; /* PANIC_SAVE_MAGIC if valid */
 };
 
-#define PANIC_DATA_MAGIC 0x21636e50  /* "Pnc!" */
+#ifdef CONFIG_RO_PANIC_DATA_SIZE
+BUILD_ASSERT(sizeof(struct panic_data) == CONFIG_RO_PANIC_DATA_SIZE);
+#endif
+
+#define PANIC_DATA_MAGIC 0x21636e50 /* "Pnc!" */
 enum panic_arch {
-	PANIC_ARCH_CORTEX_M = 1,     /* Cortex-M architecture */
-	PANIC_ARCH_NDS32_N8 = 2,     /* NDS32 N8 architecture */
-	PANIC_ARCH_X86 = 3,          /* Intel x86 */
-	PANIC_ARCH_RISCV_RV32I = 4,  /* RISC-V RV32I */
+	PANIC_ARCH_CORTEX_M = 1, /* Cortex-M architecture */
+	PANIC_ARCH_NDS32_N8 = 2, /* NDS32 N8 architecture */
+	PANIC_ARCH_X86 = 3, /* Intel x86 */
+#ifndef CONFIG_DO_NOT_INCLUDE_RV32I_PANIC_DATA
+	PANIC_ARCH_RISCV_RV32I = 4, /* RISC-V RV32I */
+#endif
 };
 
 /* Use PANIC_DATA_PTR to refer to the persistent storage location */
@@ -108,13 +157,13 @@ enum panic_arch {
 
 /* Flags for panic_data.flags */
 /* panic_data.frame is valid */
-#define PANIC_DATA_FLAG_FRAME_VALID    BIT(0)
+#define PANIC_DATA_FLAG_FRAME_VALID BIT(0)
 /* Already printed at console */
-#define PANIC_DATA_FLAG_OLD_CONSOLE    BIT(1)
+#define PANIC_DATA_FLAG_OLD_CONSOLE BIT(1)
 /* Already returned via host command */
-#define PANIC_DATA_FLAG_OLD_HOSTCMD    BIT(2)
+#define PANIC_DATA_FLAG_OLD_HOSTCMD BIT(2)
 /* Already reported via host event */
-#define PANIC_DATA_FLAG_OLD_HOSTEVENT  BIT(3)
+#define PANIC_DATA_FLAG_OLD_HOSTEVENT BIT(3)
 
 /**
  * Write a string to the panic reporting device
@@ -134,8 +183,8 @@ void panic_puts(const char *s);
  * @param format	printf-style format string
  * @param ...		Arguments to process
  */
-__attribute__((__format__(__printf__, 1, 2)))
-void panic_printf(const char *format, ...);
+__attribute__((__format__(__printf__, 1, 2))) void
+panic_printf(const char *format, ...);
 
 /*
  * Print saved panic information
@@ -143,6 +192,14 @@ void panic_printf(const char *format, ...);
  * @param pdata pointer to saved panic data
  */
 void panic_data_print(const struct panic_data *pdata);
+
+/*
+ * Print saved panic information on console channel to observe panic
+ * information
+ *
+ * @param pdata pointer to saved panic data
+ */
+void panic_data_ccprint(const struct panic_data *pdata);
 
 /**
  * Report an assertion failure and reset
@@ -153,10 +210,10 @@ void panic_data_print(const struct panic_data *pdata);
  * @param linenum	Line number where assertion happened
  */
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
-noreturn void panic_assert_fail(const char *fname, int linenum);
+test_mockable_noreturn void panic_assert_fail(const char *fname, int linenum);
 #else
-noreturn void panic_assert_fail(const char *msg, const char *func,
-				const char *fname, int linenum);
+test_mockable_noreturn void panic_assert_fail(const char *msg, const char *func,
+					      const char *fname, int linenum);
 #endif
 
 /**
@@ -164,19 +221,27 @@ noreturn void panic_assert_fail(const char *msg, const char *func,
  *
  * @param msg	Panic message
  */
-noreturn void panic(const char *msg);
+#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+noreturn
+#endif
+	void
+	panic(const char *msg);
 
 /**
  * Display a default message and reset
  */
-noreturn void panic_reboot(void);
+#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+noreturn
+#endif
+	void
+	panic_reboot(void);
 
 #ifdef CONFIG_SOFTWARE_PANIC
 /**
  * Store a panic log and halt the system for a software-related reason, such as
  * stack overflow or assertion failure.
  */
-noreturn void software_panic(uint32_t reason, uint32_t info);
+test_mockable_noreturn void software_panic(uint32_t reason, uint32_t info);
 
 /**
  * Log a panic in the panic log, but don't halt the system. Normally
@@ -188,7 +253,16 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception);
  * Retrieve the currently stored panic reason + info.
  */
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception);
-#endif
+
+#ifdef CONFIG_ZEPHYR
+/**
+ * Zephyr utility for architecture specific logic to run when setting panic
+ * reason.
+ */
+__override_proto void arch_panic_set_reason(uint32_t reason, uint32_t info,
+					    uint8_t exception);
+#endif /* CONFIG_ZEPHYR */
+#endif /* CONFIG_SOFTWARE_PANIC */
 
 /**
  * Enable/disable bus fault handler
@@ -201,8 +275,8 @@ void ignore_bus_fault(int ignored);
  * Return a pointer to the saved data from a previous panic that can be
  * safely interpreted
  *
- * @param pointer to the valid panic data, or NULL if none available (for example,
- * the last reboot was not caused by a panic).
+ * @param pointer to the valid panic data, or NULL if none available (for
+ * example, the last reboot was not caused by a panic).
  */
 struct panic_data *panic_get_data(void);
 
@@ -241,4 +315,4 @@ void chip_panic_data_backup(void);
 }
 #endif
 
-#endif  /* __CROS_EC_PANIC_H */
+#endif /* __CROS_EC_PANIC_H */

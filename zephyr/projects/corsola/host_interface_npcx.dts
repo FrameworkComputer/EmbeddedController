@@ -1,0 +1,12 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* host interface */
+&shi {
+	status = "okay";
+	pinctrl-0 = <&shi_gp46_47_53_55>;
+	pinctrl-1 = <&shi_gpio_gp46_47_53_55>;
+	pinctrl-names = "default", "sleep";
+};

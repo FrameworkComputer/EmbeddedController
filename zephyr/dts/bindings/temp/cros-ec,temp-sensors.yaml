@@ -1,0 +1,74 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: >
+  Common properties for temperature sensors that are not handled by drivers.
+  Zero values in degrees K(-273 in degrees C)in thermal thresholds will
+  be ignored
+
+compatible: "cros-ec,temp-sensors"
+
+child-binding:
+  description: Named temperature sensor node
+  properties:
+    sensor:
+      type: phandle
+      required: true
+      description:
+        A pointer to a coresponding temperature sensor node.
+
+    power-good-pin:
+      type: phandle
+      description:
+        If this sensor will be unpowered some of the time, provide an input GPIO
+        which can be referenced to detect whether the sensor is powered before
+        reading.
+
+    temp_fan_off:
+      type: int
+      description:
+        Temperature threshold in degrees C when no active cooling
+        is needed
+
+    temp_fan_max:
+      type: int
+      description:
+        Temperature threshold in degrees C when max active cooling
+        is needed
+
+    temp_host_warn:
+      type: int
+      description:
+        Temperature threshold in degrees C of thermal warn.
+        Temperatures above the thermal warn threshold generate a
+        request to the AP to throttle itself.
+
+    temp_host_high:
+      type: int
+      description:
+        Temperature threshold in degrees C of thermal high.
+        Temperatures above the thermal high threshold cause the EC to
+        assert a signal (usually PROCHOT) to the AP and force the AP to
+        throttle.
+
+    temp_host_halt:
+      type: int
+      description:
+        Temperature threshold in degrees C that forces AP to shutdown
+        due to thermal reason
+
+    temp_host_release_warn:
+      type: int
+      description:
+        Temperature release threshold in degrees C of thermal warn
+
+    temp_host_release_high:
+      type: int
+      description:
+        Temperature release threshold in degrees C of thermal high
+
+    temp_host_release_halt:
+      type: int
+      description:
+        Temperature release threshold in degrees C of thermal shutdown

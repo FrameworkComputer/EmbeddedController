@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,9 +6,11 @@
 /* Task scheduling / events module for Chrome EC operating system */
 
 #include "atomic.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "debug.h"
 #include "link_defs.h"
 #include "panic.h"
 #include "task.h"
@@ -21,10 +23,10 @@ typedef union {
 		 * Note that sp must be the first element in the task struct
 		 * for __switchto() to work.
 		 */
-		uint32_t sp;       /* Saved stack pointer for context switch */
-		uint32_t events;   /* Bitmaps of received events */
-		uint64_t runtime;  /* Time spent in task */
-		uint32_t *stack;   /* Start of stack */
+		uint32_t sp; /* Saved stack pointer for context switch */
+		atomic_t events; /* Bitmaps of received events */
+		uint64_t runtime; /* Time spent in task */
+		uint32_t *stack; /* Start of stack */
 	};
 } task_;
 
@@ -40,12 +42,10 @@ CONFIG_CTS_TASK_LIST
 #undef TASK
 
 /* Task names for easier debugging */
-#define TASK(n, r, d, s)  #n,
-static const char * const task_names[] = {
+#define TASK(n, r, d, s) #n,
+static const char *const task_names[] = {
 	"<< idle >>",
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-	CONFIG_CTS_TASK_LIST
+	CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST
 };
 #undef TASK
 
@@ -55,12 +55,12 @@ static uint64_t task_start_time; /* Time task scheduling started */
  * We only keep 32-bit values for exception start/end time, to avoid
  * accounting errors when we service interrupt when the timer wraps around.
  */
-static uint32_t exc_start_time;  /* Time of task->exception transition */
-static uint32_t exc_end_time;    /* Time of exception->task transition */
-static uint64_t exc_total_time;  /* Total time in exceptions */
-static uint32_t svc_calls;       /* Number of service calls */
-static uint32_t task_switches;   /* Number of times active task changed */
-static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
+static uint32_t exc_start_time; /* Time of task->exception transition */
+static uint32_t exc_end_time; /* Time of exception->task transition */
+static uint64_t exc_total_time; /* Total time in exceptions */
+static uint32_t svc_calls; /* Number of service calls */
+static uint32_t task_switches; /* Number of times active task changed */
+static uint32_t irq_dist[CONFIG_IRQ_COUNT]; /* Distribution of IRQ calls */
 #endif
 
 extern void __switchto(task_ *from, task_ *to);
@@ -79,7 +79,7 @@ void __idle(void)
 		 * CSAE bit is set. Please notice this symptom only
 		 * occurs at npcx5.
 		 */
-#if defined(CHIP_FAMILY_NPCX5) && defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CHIP_FAMILY_NPCX5) && defined(CONFIG_HOST_INTERFACE_ESPI)
 		/* Enable Host access wakeup */
 		SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6);
 #endif
@@ -91,21 +91,20 @@ void __idle(void)
 		 * shortly therefore, resumes execution on exiting idle mode.
 		 * Workaround: Replace the idle function with the followings
 		 */
-		asm (
-			"cpsid i\n"             /* Disable interrupt */
-			"push {r0-r5}\n"        /* Save needed registers */
-			"wfi\n"                 /* Wait for int to enter idle */
-			"ldm %0, {r0-r5}\n"     /* Add a delay after WFI */
-			"pop {r0-r5}\n" /* Restore regs before enabling ints */
-			"isb\n"                 /* Flush the cpu pipeline */
-			"cpsie i\n" :: "r" (0x100A8000)  /* Enable interrupts */
+		asm("cpsid i\n" /* Disable interrupt */
+		    "push {r0-r5}\n" /* Save needed registers */
+		    "wfi\n" /* Wait for int to enter idle */
+		    "ldm %0, {r0-r5}\n" /* Add a delay after WFI */
+		    "pop {r0-r5}\n" /* Restore regs before enabling ints */
+		    "isb\n" /* Flush the cpu pipeline */
+		    "cpsie i\n" ::"r"(0x100A8000) /* Enable interrupts */
 		);
 #else
 		/*
 		 * Wait for the next irq event.  This stops the CPU clock
 		 * (sleep / deep sleep, depending on chip config).
 		 */
-		asm("wfi");
+		cpu_enter_suspend_mode();
 #endif
 	}
 }
@@ -121,20 +120,19 @@ static void task_exit_trap(void)
 }
 
 /* Startup parameters for all tasks. */
-#define TASK(n, r, d, s)  {	\
-	.r0 = (uint32_t)d,	\
-	.pc = (uint32_t)r,	\
-	.stack_size = s,	\
-},
+#define TASK(n, r, d, s)           \
+	{                          \
+		.r0 = (uint32_t)d, \
+		.pc = (uint32_t)r, \
+		.stack_size = s,   \
+	},
 static const struct {
 	uint32_t r0;
 	uint32_t pc;
 	uint16_t stack_size;
 } tasks_init[] = {
 	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-	CONFIG_CTS_TASK_LIST
+		CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST
 };
 #undef TASK
 
@@ -142,17 +140,16 @@ static const struct {
 static task_ tasks[TASK_ID_COUNT];
 
 /* Reset constants and state for all tasks */
-#define TASK_RESET_SUPPORTED		BIT(31)
-#define TASK_RESET_LOCK			BIT(30)
-#define TASK_RESET_STATE_MASK		(TASK_RESET_SUPPORTED | TASK_RESET_LOCK)
-#define TASK_RESET_WAITERS_MASK		~TASK_RESET_STATE_MASK
-#define TASK_RESET_UNSUPPORTED		0
-#define TASK_RESET_STATE_LOCKED		(TASK_RESET_SUPPORTED | TASK_RESET_LOCK)
-#define TASK_RESET_STATE_UNLOCKED	TASK_RESET_SUPPORTED
+#define TASK_RESET_SUPPORTED BIT(31)
+#define TASK_RESET_LOCK BIT(30)
+#define TASK_RESET_STATE_MASK (TASK_RESET_SUPPORTED | TASK_RESET_LOCK)
+#define TASK_RESET_WAITERS_MASK ~TASK_RESET_STATE_MASK
+#define TASK_RESET_UNSUPPORTED 0
+#define TASK_RESET_STATE_LOCKED (TASK_RESET_SUPPORTED | TASK_RESET_LOCK)
+#define TASK_RESET_STATE_UNLOCKED TASK_RESET_SUPPORTED
 
 #ifdef CONFIG_TASK_RESET_LIST
-#define ENABLE_RESET(n) \
-	[TASK_ID_##n] = TASK_RESET_SUPPORTED,
+#define ENABLE_RESET(n) [TASK_ID_##n] = TASK_RESET_SUPPORTED,
 static uint32_t task_reset_state[TASK_ID_COUNT] = {
 #ifdef CONFIG_TASK_RESET_LIST
 	CONFIG_TASK_RESET_LIST
@@ -167,13 +164,10 @@ BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 BUILD_ASSERT(BIT(TASK_ID_COUNT) < TASK_RESET_LOCK);
 
 /* Stacks for all tasks */
-#define TASK(n, r, d, s)  + s
-uint8_t task_stacks[0
-		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
-		    CONFIG_TASK_LIST
-		    CONFIG_TEST_TASK_LIST
-		    CONFIG_CTS_TASK_LIST
-] __aligned(8);
+#define TASK(n, r, d, s) +s
+uint8_t task_stacks[0 TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
+			    CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST
+				    CONFIG_CTS_TASK_LIST] __aligned(8);
 
 #undef TASK
 
@@ -202,15 +196,15 @@ static int need_resched_or_profiling;
  * can do their init within a task switching context.  The hooks task will then
  * make a call to enable all tasks.
  */
-static uint32_t tasks_ready = BIT(TASK_ID_HOOKS);
+static atomic_t tasks_ready = BIT(TASK_ID_HOOKS);
 /*
  * Initially allow only the HOOKS and IDLE task to run, regardless of ready
  * status, in order for HOOK_INIT to complete before other tasks.
  * task_enable_all_tasks() will open the flood gates.
  */
-static uint32_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
+static atomic_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
 
-static int start_called;  /* Has task swapping started */
+static int start_called; /* Has task swapping started */
 
 static inline task_ *__task_id_to_ptr(task_id_t id)
 {
@@ -227,11 +221,22 @@ void interrupt_enable(void)
 	asm("cpsie i");
 }
 
-inline int in_interrupt_context(void)
+inline bool is_interrupt_enabled(void)
+{
+	int primask;
+
+	/* Interrupts are enabled when PRIMASK bit is 0 */
+	asm("mrs %0, primask" : "=r"(primask));
+
+	return !(primask & 0x1);
+}
+
+inline bool in_interrupt_context(void)
 {
 	int ret;
-	asm("mrs %0, ipsr \n"             /* read exception number */
-	    "lsl %0, #23  \n":"=r"(ret)); /* exception bits are the 9 LSB */
+	asm("mrs %0, ipsr \n" /* read exception number */
+	    "lsl %0, #23  \n"
+	    : "=r"(ret)); /* exception bits are the 9 LSB */
 	return ret;
 }
 
@@ -239,8 +244,8 @@ inline int in_interrupt_context(void)
 static inline int get_interrupt_context(void)
 {
 	int ret;
-	asm("mrs %0, ipsr \n":"=r"(ret)); /* read exception number */
-	return ret & 0x1ff;               /* exception bits are the 9 LSB */
+	asm("mrs %0, ipsr \n" : "=r"(ret)); /* read exception number */
+	return ret & 0x1ff; /* exception bits are the 9 LSB */
 }
 #endif
 
@@ -253,7 +258,7 @@ task_id_t task_get_current(void)
 	return current_task - tasks;
 }
 
-uint32_t *task_get_event_bitmap(task_id_t tskid)
+atomic_t *task_get_event_bitmap(task_id_t tskid)
 {
 	task_ *tsk = __task_id_to_ptr(tskid);
 	return &tsk->events;
@@ -341,7 +346,7 @@ void svc_handler(int desched, task_id_t resched)
 	if (next == current)
 		return;
 
-	/* Switch to new task */
+		/* Switch to new task */
 #ifdef CONFIG_TASK_PROFILING
 	task_switches++;
 #endif
@@ -354,7 +359,7 @@ void __schedule(int desched, int resched)
 	register int p0 asm("r0") = desched;
 	register int p1 asm("r1") = resched;
 
-	asm("svc 0"::"r"(p0),"r"(p1));
+	asm("svc 0" ::"r"(p0), "r"(p1));
 }
 
 #ifdef CONFIG_TASK_PROFILING
@@ -379,7 +384,9 @@ void __keep task_start_irq_handler(void *excep_return)
 	 * and we are not called from another exception (this must match the
 	 * logic for when we chain to svc_handler() below).
 	 */
-	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
+	if (!need_resched_or_profiling ||
+	    (((uint32_t)excep_return & EXC_RETURN_MODE_MASK) ==
+	     EXC_RETURN_MODE_HANDLER))
 		return;
 
 	exc_start_time = t;
@@ -392,7 +399,9 @@ void __keep task_resched_if_needed(void *excep_return)
 	 * Continue iff a rescheduling event happened or profiling is active,
 	 * and we are not called from another exception.
 	 */
-	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
+	if (!need_resched_or_profiling ||
+	    (((uint32_t)excep_return & EXC_RETURN_MODE_MASK) ==
+	     EXC_RETURN_MODE_HANDLER))
 		return;
 
 	svc_handler(0, 0);
@@ -405,6 +414,15 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	uint32_t evt;
 	int ret __attribute__((unused));
 
+	/*
+	 * Scheduling task when interrupts are disabled will result in Forced
+	 * Hard Fault because:
+	 * - Disabling interrupt using 'cpsid i' also disables SVCall handler
+	 *   (because it has configurable priority)
+	 * - Escalation to Hard Fault (also known as 'priority escalation')
+	 *   occurs when handler for that fault is not enabled
+	 */
+	ASSERT(is_interrupt_enabled());
 	ASSERT(!in_interrupt_context());
 
 	if (timeout_us > 0) {
@@ -413,7 +431,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 		ret = timer_arm(deadline, me);
 		ASSERT(ret == EC_SUCCESS);
 	}
-	while (!(evt = deprecated_atomic_read_clear(&tsk->events))) {
+	while (!(evt = atomic_clear(&tsk->events))) {
 		/* Remove ourself and get the next task in the scheduler */
 		__schedule(1, resched);
 		resched = TASK_ID_IDLE;
@@ -421,35 +439,30 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	if (timeout_us > 0) {
 		timer_cancel(me);
 		/* Ensure timer event is clear, we no longer care about it */
-		deprecated_atomic_clear_bits(&tsk->events, TASK_EVENT_TIMER);
+		atomic_clear_bits(&tsk->events, TASK_EVENT_TIMER);
 	}
 	return evt;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
+void task_set_event(task_id_t tskid, uint32_t event)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 	ASSERT(receiver);
 
 	/* Set the event bit in the receiver message bitmap */
-	deprecated_atomic_or(&receiver->events, event);
+	atomic_or(&receiver->events, event);
 
 	/* Re-schedule if priorities have changed */
-	if (in_interrupt_context()) {
+	if (in_interrupt_context() || !is_interrupt_enabled()) {
 		/* The receiver might run again */
-		deprecated_atomic_or(&tasks_ready, 1 << tskid);
+		atomic_or(&tasks_ready, 1 << tskid);
 #ifndef CONFIG_TASK_PROFILING
 		if (start_called)
 			need_resched_or_profiling = 1;
 #endif
 	} else {
-		if (wait)
-			return __wait_evt(-1, tskid);
-		else
-			__schedule(0, tskid);
+		__schedule(0, tskid);
 	}
-
-	return 0;
 }
 
 uint32_t task_wait_event(int timeout_us)
@@ -480,8 +493,7 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 	/* Re-post any other events collected */
 	if (events & ~event_mask)
-		deprecated_atomic_or(&current_task->events,
-				     events & ~event_mask);
+		atomic_or(&current_task->events, events & ~event_mask);
 
 	return events & event_mask;
 }
@@ -491,19 +503,21 @@ void task_enable_all_tasks(void)
 	/* Mark all tasks as ready and able to run. */
 	tasks_ready = tasks_enabled = BIT(TASK_ID_COUNT) - 1;
 	/* Reschedule the highest priority task. */
-	__schedule(0, 0);
+	if (is_interrupt_enabled())
+		__schedule(0, 0);
 }
 
 void task_enable_task(task_id_t tskid)
 {
-	deprecated_atomic_or(&tasks_enabled, BIT(tskid));
+	atomic_or(&tasks_enabled, BIT(tskid));
 }
 
 void task_disable_task(task_id_t tskid)
 {
-	deprecated_atomic_clear_bits(&tasks_enabled, BIT(tskid));
+	atomic_clear_bits(&tasks_enabled, BIT(tskid));
 
-	if (!in_interrupt_context() && tskid == task_get_current())
+	if (!in_interrupt_context() && is_interrupt_enabled() &&
+	    tskid == task_get_current())
 		__schedule(0, 0);
 }
 
@@ -520,6 +534,15 @@ void __keep task_disable_irq(int irq)
 void task_clear_pending_irq(int irq)
 {
 	CPU_NVIC_UNPEND(irq / 32) = 1 << (irq % 32);
+}
+
+/*
+ * Reading interrupt clear-pending register gives us information if interrupt
+ * is pending.
+ */
+bool task_is_irq_pending(int irq)
+{
+	return CPU_NVIC_UNPEND(irq / 32) & (1 << (irq % 32));
 }
 
 void task_trigger_irq(int irq)
@@ -542,10 +565,10 @@ static uint32_t init_task_context(task_id_t id)
 	tasks[id].sp = (uint32_t)sp;
 
 	/* Initial context on stack (see __switchto()) */
-	sp[8] = tasks_init[id].r0;          /* r0 */
-	sp[13] = (uint32_t)task_exit_trap;  /* lr */
-	sp[14] = tasks_init[id].pc;         /* pc */
-	sp[15] = 0x01000000;                /* psr */
+	sp[8] = tasks_init[id].r0; /* r0 */
+	sp[13] = (uint32_t)task_exit_trap; /* lr */
+	sp[14] = tasks_init[id].pc; /* pc */
+	sp[15] = 0x01000000; /* psr */
 
 	/* Fill unused stack; also used to detect stack overflow. */
 	for (sp = tasks[id].stack; sp < (uint32_t *)tasks[id].sp; sp++)
@@ -579,8 +602,7 @@ static void deferred_task_reset(void)
 	while (deferred_reset_task_ids) {
 		task_id_t reset_id = __fls(deferred_reset_task_ids);
 
-		deprecated_atomic_clear_bits(&deferred_reset_task_ids,
-					     1 << reset_id);
+		atomic_clear_bits(&deferred_reset_task_ids, 1 << reset_id);
 		do_task_reset(reset_id);
 	}
 }
@@ -591,8 +613,7 @@ DECLARE_DEFERRED(deferred_task_reset);
  * and if it matches if_value, updates the state to new_value, and returns
  * TRUE.
  */
-static int update_reset_state(uint32_t *state,
-			      uint32_t if_value,
+static int update_reset_state(uint32_t *state, uint32_t if_value,
 			      uint32_t to_value)
 {
 	int update;
@@ -648,8 +669,7 @@ void task_enable_resets(void)
 	uint32_t *state = &task_reset_state[id];
 
 	if (*state == TASK_RESET_UNSUPPORTED) {
-		cprints(CC_TASK,
-			"%s called from non-resettable task, id: %d",
+		cprints(CC_TASK, "%s called from non-resettable task, id: %d",
 			__func__, id);
 		return;
 	}
@@ -675,7 +695,7 @@ void task_enable_resets(void)
 		return;
 
 	/* People are waiting for us to reset; schedule a reset. */
-	deprecated_atomic_or(&deferred_reset_task_ids, 1 << id);
+	atomic_or(&deferred_reset_task_ids, 1 << id);
 	/*
 	 * This will always trigger a deferred call after our new ID was
 	 * written. If the hook call is currently executing, it will run
@@ -692,8 +712,7 @@ void task_disable_resets(void)
 	uint32_t *state = &task_reset_state[id];
 
 	if (*state == TASK_RESET_UNSUPPORTED) {
-		cprints(CC_TASK,
-			"%s called from non-resettable task, id %d",
+		cprints(CC_TASK, "%s called from non-resettable task, id %d",
 			__func__, id);
 		return;
 	}
@@ -748,8 +767,8 @@ int task_reset_cleanup(void)
 	if (cleanup_req) {
 		while (!try_release_reset_lock(state)) {
 			/* Find the first waiter to notify. */
-			task_id_t notify_id = __fls(
-			    *state & TASK_RESET_WAITERS_MASK);
+			task_id_t notify_id =
+				__fls(*state & TASK_RESET_WAITERS_MASK);
 			/*
 			 * Remove the task from waiters first, so that
 			 * when it wakes after being notified, it is in
@@ -760,15 +779,14 @@ int task_reset_cleanup(void)
 			 * itself back to the list of tasks to notify,
 			 * and we will notify it again.
 			 */
-			deprecated_atomic_clear_bits(state, 1 << notify_id);
+			atomic_clear_bits(state, 1 << notify_id);
 			/*
 			 * Skip any invalid ids set by tasks that
 			 * requested a non-blocking reset.
 			 */
 			if (notify_id < TASK_ID_COUNT)
 				task_set_event(notify_id,
-					       TASK_EVENT_RESET_DONE,
-					       0);
+					       TASK_EVENT_RESET_DONE);
 		}
 	}
 
@@ -878,7 +896,7 @@ void mutex_lock(struct mutex *mtx)
 
 	id = 1 << task_get_current();
 
-	deprecated_atomic_or(&mtx->waiters, id);
+	atomic_or(&mtx->waiters, id);
 
 	do {
 		/* Try to get the lock (set 1 into the lock field) */
@@ -886,8 +904,9 @@ void mutex_lock(struct mutex *mtx)
 				     "   teq     %0, #0\n"
 				     "   it eq\n"
 				     "   strexeq %0, %2, [%1]\n"
-				     : "=&r" (value)
-				     : "r" (&mtx->lock), "r" (2) : "cc");
+				     : "=&r"(value)
+				     : "r"(&mtx->lock), "r"(2)
+				     : "cc");
 		/*
 		 * "value" is equals to 1 if the store conditional failed,
 		 * 2 if somebody else owns the mutex, 0 else.
@@ -897,7 +916,7 @@ void mutex_lock(struct mutex *mtx)
 			task_wait_event_mask(TASK_EVENT_MUTEX, 0);
 	} while (value);
 
-	deprecated_atomic_clear_bits(&mtx->waiters, id);
+	atomic_clear_bits(&mtx->waiters, id);
 }
 
 void mutex_unlock(struct mutex *mtx)
@@ -919,11 +938,11 @@ void mutex_unlock(struct mutex *mtx)
 		waiters &= ~BIT(id);
 
 		/* Somebody is waiting on the mutex */
-		task_set_event(id, TASK_EVENT_MUTEX, 0);
+		task_set_event(id, TASK_EVENT_MUTEX);
 	}
 
 	/* Ensure no event is remaining from mutex wake-up */
-	deprecated_atomic_clear_bits(&tsk->events, TASK_EVENT_MUTEX);
+	atomic_clear_bits(&tsk->events, TASK_EVENT_MUTEX);
 }
 
 void task_print_list(void)
@@ -933,7 +952,7 @@ void task_print_list(void)
 	ccputs("Task Ready Name         Events      Time (s)  StkUsed\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
-		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
+		char is_ready = ((uint32_t)tasks_ready & BIT(i)) ? 'R' : ' ';
 		uint32_t *sp;
 
 		int stackused = tasks_init[i].stack_size;
@@ -944,13 +963,13 @@ void task_print_list(void)
 			stackused -= sizeof(uint32_t);
 
 		ccprintf("%4d %c %-16s %08x %11.6lld  %3d/%3d\n", i, is_ready,
-			 task_names[i], tasks[i].events, tasks[i].runtime,
+			 task_names[i], (int)tasks[i].events, tasks[i].runtime,
 			 stackused, tasks_init[i].stack_size);
 		cflush();
 	}
 }
 
-int command_task_info(int argc, char **argv)
+static int command_task_info(int argc, const char **argv)
 {
 #ifdef CONFIG_TASK_PROFILING
 	int total = 0;
@@ -979,25 +998,23 @@ int command_task_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info, NULL,
 			     "Print task info");
 
 #ifdef CONFIG_CMD_TASKREADY
-static int command_task_ready(int argc, char **argv)
+static int command_task_ready(int argc, const char **argv)
 {
 	if (argc < 2) {
-		ccprintf("tasks_ready: 0x%08x\n", tasks_ready);
+		ccprintf("tasks_ready: 0x%08x\n", (int)tasks_ready);
 	} else {
 		tasks_ready = strtoi(argv[1], NULL, 16);
-		ccprintf("Setting tasks_ready to 0x%08x\n", tasks_ready);
+		ccprintf("Setting tasks_ready to 0x%08x\n", (int)tasks_ready);
 		__schedule(0, 0);
 	}
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
-			"[setmask]",
+DECLARE_CONSOLE_COMMAND(taskready, command_task_ready, "[setmask]",
 			"Print/set ready tasks");
 #endif
 
@@ -1052,7 +1069,7 @@ int task_start(void)
 }
 
 #ifdef CONFIG_CMD_TASK_RESET
-static int command_task_reset(int argc, char **argv)
+static int command_task_reset(int argc, const char **argv)
 {
 	task_id_t id;
 	char *e;
@@ -1067,7 +1084,6 @@ static int command_task_reset(int argc, char **argv)
 
 	return EC_ERROR_PARAM_COUNT;
 }
-DECLARE_CONSOLE_COMMAND(taskreset, command_task_reset,
-			"task_id",
+DECLARE_CONSOLE_COMMAND(taskreset, command_task_reset, "task_id",
 			"Reset a task");
-#endif  /* CONFIG_CMD_TASK_RESET */
+#endif /* CONFIG_CMD_TASK_RESET */

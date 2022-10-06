@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -67,8 +67,13 @@ static enum ec_error_list set(const char *name, int value)
 	if (!gpio_is_implemented(signal))
 		return EC_ERROR_INVAL;
 
-	if (!(gpio_get_default_flags(signal) & GPIO_OUTPUT))
-		return EC_ERROR_INVAL;
+	if (IS_ENABLED(CONFIG_GPIO_GET_EXTENDED)) {
+		if (!(gpio_get_flags(signal) & GPIO_OUTPUT))
+			return EC_ERROR_INVAL;
+	} else {
+		if (!(gpio_get_default_flags(signal) & GPIO_OUTPUT))
+			return EC_ERROR_INVAL;
+	}
 
 	gpio_set_level(signal, value);
 
@@ -78,45 +83,42 @@ static enum ec_error_list set(const char *name, int value)
 /* Console commands */
 
 struct gpio_flag_description {
-    const int bitfield;
-    const char* name;
+	const int bitfield;
+	const char *name;
 };
 
-const struct gpio_flag_description gpio_descriptions[] = {
-	{GPIO_INPUT, "I"},
-	{GPIO_OUTPUT, "O"},
-	{GPIO_LOW, "L"},
-	{GPIO_HIGH, "H"},
-	{GPIO_ANALOG, "A"},
-	{GPIO_OPEN_DRAIN, "ODR"},
-	{GPIO_PULL_UP, "PU"},
-	{GPIO_PULL_DOWN, "PD"},
-	{GPIO_ALTERNATE, "ALT"},
-	{GPIO_SEL_1P8V, "1P8"},
-	{GPIO_LOCKED, "LCK"}
+__maybe_unused static const struct gpio_flag_description gpio_descriptions[] = {
+	{ GPIO_INPUT, "I" },	    { GPIO_OUTPUT, "O" },
+	{ GPIO_LOW, "L" },	    { GPIO_HIGH, "H" },
+	{ GPIO_OPEN_DRAIN, "ODR" }, { GPIO_PULL_UP, "PU" },
+	{ GPIO_PULL_DOWN, "PD" },   { GPIO_SEL_1P8V, "1P8" },
+#ifndef CONFIG_ZEPHYR
+	{ GPIO_ANALOG, "A" },	    { GPIO_ALTERNATE, "ALT" },
+	{ GPIO_LOCKED, "LCK" }
+#endif
 };
 
 static void print_gpio_info(int gpio)
 {
-	int changed, v, flags, i;
+	int changed, v, i;
 
 	if (!gpio_is_implemented(gpio))
-		return;  /* Skip unsupported signals */
+		return; /* Skip unsupported signals */
 
 	v = gpio_get_level(gpio);
-#ifdef CONFIG_CMD_GPIO_EXTENDED
-	flags = gpio_get_flags(gpio);
-#else
-	flags = 0;
-#endif
 	changed = last_val_changed(gpio, v);
 
-	/* Split the printf call into multiple calls to reduce the stack usage. */
+	/* Split the printf call into multiple calls to reduce the stack usage.
+	 */
 	ccprintf("  %d%c ", v, (changed ? '*' : ' '));
 
-	for (i = 0; i < ARRAY_SIZE(gpio_descriptions); i++) {
-		if (flags & gpio_descriptions[i].bitfield)
-			ccprintf("%s ", gpio_descriptions[i].name);
+	if (IS_ENABLED(CONFIG_CMD_GPIO_EXTENDED)) {
+		int flags = gpio_get_flags(gpio);
+
+		for (i = 0; i < ARRAY_SIZE(gpio_descriptions); i++) {
+			if (flags & gpio_descriptions[i].bitfield)
+				ccprintf("%s ", gpio_descriptions[i].name);
+		}
 	}
 
 	ccprintf("%s\n", gpio_get_name(gpio));
@@ -125,7 +127,7 @@ static void print_gpio_info(int gpio)
 	cflush();
 }
 
-static int command_gpio_get(int argc, char **argv)
+static int command_gpio_get(int argc, const char **argv)
 {
 	int i;
 
@@ -142,18 +144,17 @@ static int command_gpio_get(int argc, char **argv)
 	/* Otherwise print them all */
 	for (i = 0; i < GPIO_COUNT; i++) {
 		if (!gpio_is_implemented(i))
-			continue;  /* Skip unsupported signals */
+			continue; /* Skip unsupported signals */
 
 		print_gpio_info(i);
 	}
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(gpioget, command_gpio_get,
-			     "[name]",
+DECLARE_SAFE_CONSOLE_COMMAND(gpioget, command_gpio_get, "[name]",
 			     "Read GPIO value(s)");
 
-static int command_gpio_set(int argc, char **argv)
+static int command_gpio_set(int argc, const char **argv)
 {
 #ifdef CONFIG_CMD_GPIO_EXTENDED
 	int gpio;
@@ -216,9 +217,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(gpioset, command_gpio_set,
 #else
 			      "name <0 | 1>",
 #endif
-			      "Set a GPIO",
-			      CMD_FLAG_RESTRICTED
-);
+			      "Set a GPIO", CMD_FLAG_RESTRICTED);
 
 /*****************************************************************************/
 /* Host commands */
@@ -261,7 +260,7 @@ static enum ec_status gpio_command_get(struct host_cmd_handler_args *args)
 
 		i = p_v1->get_info.index;
 		len = strlen(gpio_get_name(i));
-		memcpy(r_v1->get_info.name, gpio_get_name(i), len+1);
+		memcpy(r_v1->get_info.name, gpio_get_name(i), len + 1);
 		r_v1->get_info.val = gpio_get_level(i);
 		r_v1->get_info.flags = gpio_get_default_flags(i);
 		args->response_size = sizeof(r_v1->get_info);
@@ -271,7 +270,6 @@ static enum ec_status gpio_command_get(struct host_cmd_handler_args *args)
 	}
 
 	return EC_RES_SUCCESS;
-
 }
 DECLARE_HOST_COMMAND(EC_CMD_GPIO_GET, gpio_command_get,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));

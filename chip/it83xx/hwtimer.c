@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -55,18 +55,18 @@
 #define MS_TO_COUNT(hz, ms) ((hz) * (ms) / 1000)
 
 const struct ext_timer_ctrl_t et_ctrl_regs[] = {
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x08,
-		IT83XX_IRQ_EXT_TIMER3},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x10,
-		IT83XX_IRQ_EXT_TIMER4},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x20,
-		IT83XX_IRQ_EXT_TIMER5},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x40,
-		IT83XX_IRQ_EXT_TIMER6},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x80,
-		IT83XX_IRQ_EXT_TIMER7},
-	{&IT83XX_INTC_IELMR10, &IT83XX_INTC_IPOLR10, &IT83XX_INTC_ISR10, 0x01,
-		IT83XX_IRQ_EXT_TMR8},
+	{ &IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x08,
+	  IT83XX_IRQ_EXT_TIMER3 },
+	{ &IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x10,
+	  IT83XX_IRQ_EXT_TIMER4 },
+	{ &IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x20,
+	  IT83XX_IRQ_EXT_TIMER5 },
+	{ &IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x40,
+	  IT83XX_IRQ_EXT_TIMER6 },
+	{ &IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x80,
+	  IT83XX_IRQ_EXT_TIMER7 },
+	{ &IT83XX_INTC_IELMR10, &IT83XX_INTC_IPOLR10, &IT83XX_INTC_ISR10, 0x01,
+	  IT83XX_IRQ_EXT_TMR8 },
 };
 BUILD_ASSERT(ARRAY_SIZE(et_ctrl_regs) == EXT_TIMER_COUNT);
 
@@ -128,7 +128,8 @@ void __hw_clock_event_set(uint32_t deadline)
 	wait = deadline - __hw_clock_source_read();
 	IT83XX_ETWD_ETXCNTLR(EVENT_EXT_TIMER) =
 		wait < EVENT_TIMER_COUNT_TO_US(0xffffffff) ?
-		EVENT_TIMER_US_TO_COUNT(wait) : 0xffffffff;
+			EVENT_TIMER_US_TO_COUNT(wait) :
+			0xffffffff;
 	/* enable and re-start timer */
 	IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) |= 0x03;
 	task_enable_irq(et_ctrl_regs[EVENT_EXT_TIMER].irq);
@@ -225,7 +226,7 @@ DECLARE_IRQ(CPU_INT_GROUP_3, __hw_clock_source_irq, 1);
 
 #ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 /* Number of CPU cycles in 125 us */
-#define CYCLES_125NS (125*(PLL_CLOCK/SECOND) / 1000)
+#define CYCLES_125NS (125 * (PLL_CLOCK / SECOND) / 1000)
 uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer)
 {
 	uint32_t prev_mask = read_clear_int_mask();
@@ -245,8 +246,8 @@ uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer)
 		/* read for the second time */
 		"lwi %0,[%1]\n\t"
 		: "=&r"(val)
-		: "r"((uintptr_t) &IT83XX_ETWD_ETXCNTOR(ext_timer)),
-			"i"(CYCLES_125NS));
+		: "r"((uintptr_t)&IT83XX_ETWD_ETXCNTOR(ext_timer)),
+		  "i"(CYCLES_125NS));
 	/* restore interrupts */
 	set_int_mask(prev_mask);
 
@@ -275,10 +276,8 @@ void ext_timer_stop(enum ext_timer_sel ext_timer, int dis_irq)
 }
 
 static void ext_timer_ctrl(enum ext_timer_sel ext_timer,
-		enum ext_timer_clock_source ext_timer_clock,
-		int start,
-		int with_int,
-		int32_t count)
+			   enum ext_timer_clock_source ext_timer_clock,
+			   int start, int with_int, int32_t count)
 {
 	uint8_t intc_mask;
 
@@ -307,12 +306,8 @@ static void ext_timer_ctrl(enum ext_timer_sel ext_timer,
 }
 
 int ext_timer_ms(enum ext_timer_sel ext_timer,
-		enum ext_timer_clock_source ext_timer_clock,
-		int start,
-		int with_int,
-		int32_t ms,
-		int first_time_enable,
-		int raw)
+		 enum ext_timer_clock_source ext_timer_clock, int start,
+		 int with_int, int32_t ms, int first_time_enable, int raw)
 {
 	uint32_t count;
 

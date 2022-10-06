@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,16 +11,22 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "port80.h"
+#include "printf.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_PORT80, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_PORT80, format, ##args)
 
-static uint16_t __bss_slow history[CONFIG_PORT80_HISTORY_LEN];
-static int __bss_slow writes;    /* Number of port 80 writes so far */
-static int last_boot; /* Last code from previous boot */
-static int __bss_slow scroll;
+#ifdef CONFIG_PORT80_4_BYTE
+typedef uint32_t port80_code_t;
+#else
+typedef uint16_t port80_code_t;
+#endif
+static port80_code_t history[CONFIG_PORT80_HISTORY_LEN];
+static int writes; /* Number of port 80 writes so far */
+static uint16_t last_boot; /* Last code from previous boot */
+static int scroll;
 
 #ifdef CONFIG_BRINGUP
 #undef CONFIG_PORT80_PRINT_IN_INT
@@ -34,6 +40,8 @@ DECLARE_DEFERRED(port80_dump_buffer);
 
 void port_80_write(int data)
 {
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
+
 	/*
 	 * By default print_in_int is disabled if:
 	 * 1. CONFIG_BRINGUP is not defined
@@ -47,11 +55,8 @@ void port_80_write(int data)
 	 * schedule a deferred call 4 seconds after the last port80 write to
 	 * dump the current port80 buffer to EC console. This is to allow
 	 * developers to help debug BIOS progress by tracing port80 messages.
-	 *
-	 * P.S.: Deferred call is not scheduled for special event codes (data >=
-	 * 0x100). This is because only 8-bit port80 messages are assumed to be
-	 * coming from the host.
 	 */
+<<<<<<< HEAD
 #ifndef CONFIG_CUSTOMER_PORT80
 	if (print_in_int)
 		CPRINTF("%c[%pT Port 80: 0x%02x]",
@@ -62,12 +67,27 @@ void port_80_write(int data)
 	/* this is for customer design to show port80 on 7-segment display */
 	CPRINTF("PORT80: 00%02X\n", data);
 #endif
+=======
+	if (print_in_int) {
+		snprintf_timestamp_now(ts_str, sizeof(ts_str));
+		CPRINTF("%c[%s Port 80: 0x%02x]", scroll ? '\n' : '\r', ts_str,
+			data);
+	}
+
+	if (!IS_ENABLED(CONFIG_PORT80_QUIET)) {
+		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
+	}
+>>>>>>> chromium/main
 
 	/* Save current port80 code if system is resetting */
 	if (data == PORT_80_EVENT_RESET && writes) {
-		int prev = history[(writes-1) % ARRAY_SIZE(history)];
+		port80_code_t prev =
+			history[(writes - 1) % ARRAY_SIZE(history)];
 
-		/* Ignore special event codes */
+		/*
+		 * last_boot only reports 8-bit codes.
+		 * Ignore special event codes and 4-byte codes.
+		 */
 		if (prev < 0x100)
 			last_boot = prev;
 	}
@@ -133,7 +153,7 @@ int port_80_last(void)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_port80(int argc, char **argv)
+static int command_port80(int argc, const char **argv)
 {
 	/*
 	 * 'port80 scroll' toggles whether port 80 output begins with a newline
@@ -160,8 +180,7 @@ static int command_port80(int argc, char **argv)
 	port80_dump_buffer();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(port80, command_port80,
-			"[scroll | intprint | flush]",
+DECLARE_CONSOLE_COMMAND(port80, command_port80, "[scroll | intprint | flush]",
 			"Print port80 writes or toggle port80 scrolling");
 
 enum ec_status port80_last_boot(struct host_cmd_handler_args *args)
@@ -174,7 +193,7 @@ enum ec_status port80_last_boot(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-enum ec_status port80_command_read(struct host_cmd_handler_args *args)
+static enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_port80_read *p = args->params;
 	uint32_t offset = p->read_buffer.offset;
@@ -193,24 +212,23 @@ enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 	} else if (p->subcmd == EC_PORT80_READ_BUFFER) {
 		/* do not allow bad offset or size */
 		if (offset >= ARRAY_SIZE(history) || entries == 0 ||
-			entries > args->response_max)
+		    entries > args->response_max)
 			return EC_RES_INVALID_PARAM;
 
 		for (i = 0; i < entries; i++) {
-			uint16_t e = history[(i + offset) %
-				ARRAY_SIZE(history)];
+			uint16_t e =
+				history[(i + offset) % ARRAY_SIZE(history)];
 			rsp->data.codes[i] = e;
 		}
 
-		args->response_size = entries*sizeof(uint16_t);
+		args->response_size = entries * sizeof(uint16_t);
 		return EC_RES_SUCCESS;
 	}
 
 	return EC_RES_INVALID_PARAM;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PORT80_READ,
-		port80_command_read,
-		EC_VER_MASK(0) | EC_VER_MASK(1));
+DECLARE_HOST_COMMAND(EC_CMD_PORT80_READ, port80_command_read,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static void port80_log_resume(void)
 {

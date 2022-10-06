@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -110,4 +110,4 @@ ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART, GPIO_PULL_UP) /* USART1: PA9/PA10
 ALTERNATE(PIN_MASK(B, 0x00c0), 1, MODULE_I2C,        0) /* I2C MASTER:PB6/7 */
 ALTERNATE(PIN_MASK(B, 0x6000), 5, MODULE_I2C,        0) /* I2C MASTER:PB13/14 */
 ALTERNATE(PIN_MASK(A, 0x00f0), 0, MODULE_SPI,        0) /* SPI SLAVE:PA4/5/6/7 */
-ALTERNATE(PIN_MASK(D, 0x001A), 1, MODULE_SPI_MASTER, 0) /* SPI MASTER:PD1/3/4 */
+ALTERNATE(PIN_MASK(D, 0x001A), 1, MODULE_SPI_CONTROLLER, 0) /* SPI MASTER:PD1/3/4 */

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,6 +9,7 @@
 #define __CROS_EC_MATH_UTIL_H
 
 #include <stdint.h>
+#include "limits.h"
 
 #ifdef CONFIG_FPU
 typedef float fp_t;
@@ -39,9 +40,9 @@ typedef int64_t fp_inter_t;
 #define INT_TO_FP(x) ((fp_t)(x) << FP_BITS)
 #define FP_TO_INT(x) ((int32_t)((x) >> FP_BITS))
 /* Float to fixed-point, only for compile-time constants and unit tests */
-#define FLOAT_TO_FP(x) ((fp_t)((x) * (float)(1<<FP_BITS)))
+#define FLOAT_TO_FP(x) ((fp_t)((x) * (float)(1 << FP_BITS)))
 /* Fixed-point to float, for unit tests */
-#define FP_TO_FLOAT(x) ((float)(x) / (float)(1<<FP_BITS))
+#define FP_TO_FLOAT(x) ((float)(x) / (float)(1 << FP_BITS))
 
 #define FLT_MAX INT32_MAX
 #define FLT_MIN INT32_MIN
@@ -136,6 +137,11 @@ static inline int ceil_for(int n, int m)
 }
 
 /**
+ * Integer square root
+ */
+int int_sqrtf(fp_inter_t x);
+
+/**
  * Square root
  */
 fp_t fp_sqrtf(fp_t a);
@@ -152,9 +158,7 @@ typedef fp_t mat33_fp_t[3][3];
 typedef int intv3_t[3];
 
 /* For vectors, define which coordinates are in which location. */
-enum {
-	X, Y, Z, W
-};
+enum { X, Y, Z, W };
 /*
  * Return absolute value of x.  Note that as a macro expansion, this may have
  * side effects if x includes function calls, which is why inline functions
@@ -187,7 +191,6 @@ void cross_product(const intv3_t v1, const intv3_t v2, intv3_t v);
  * Scale a vector by fixed point constant.
  */
 void vector_scale(intv3_t v, fp_t s);
-
 
 /**
  * Find the cosine of the angle between two vectors.
@@ -224,5 +227,14 @@ void rotate_inv(const intv3_t v, const mat33_fp_t R, intv3_t res);
  * Divide dividend by divisor and round it to the nearest integer.
  */
 int round_divide(int64_t dividend, int divisor);
+
+/**
+ * Create a 64 bit bitmask of 2^offset
+ */
+#if ULONG_MAX == 0xFFFFFFFFUL
+uint64_t bitmask_uint64(int offset);
+#else
+#define bitmask_uint64(o) ((uint64_t)1 << (o))
+#endif
 
 #endif /* __CROS_EC_MATH_UTIL_H */

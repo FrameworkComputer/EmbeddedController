@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,12 +11,6 @@
 #endif
 
 typedef __SIZE_TYPE__ size_t;
-/* There is a GCC macro for a size_t type, but not for a ssize_t type.
- * The following construct convinces GCC to make __SIZE_TYPE__ signed.
- */
-#define unsigned signed
-typedef __SIZE_TYPE__ ssize_t;
-#undef unsigned
 
 #ifndef NULL
 #define NULL ((void *)0)
@@ -36,7 +30,7 @@ typedef __WCHAR_TYPE__ wchar_t;
  * check for safety.
  */
 #ifndef offsetof
-#define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
+#define offsetof(TYPE, MEMBER) __builtin_offsetof(TYPE, MEMBER)
 #endif
 
 #endif /* __CROS_EC_STDDEF_H__ */

@@ -1,0 +1,51 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC
+
+config PLATFORM_EC_CONSOLE_CMD_SCRATCHPAD
+	bool "Console Command: scratchpad"
+	help
+	  Enable the scratchpad console command. The scratchpad register
+	  maintain its contents across a software-requested warm reset. The
+	  command is used to set or get the scratchpad.
+
+config PLATFORM_EC_CONSOLE_CMD_SYSINFO
+	bool "Console Command: sysinfo"
+	default y
+	help
+	  Enable the sysinfo console command, which shows statistics
+	  about the current image copy running, reset flags, etc.
+
+config PLATFORM_EC_HIBERNATE_PSL
+	bool "System hibernating with PSL (Power Switch Logic) mechanism"
+	default y
+	depends on DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED
+	depends on SOC_FAMILY_NPCX
+	help
+	  Use PSL (Power Switch Logic) for hibernating. It turns off VCC power
+	  rail for ultra-low power consumption and uses PSL inputs rely on VSBY
+	  power rail to wake up ec and the whole system.
+
+config PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
+	int "System pre-initialization priority"
+	default 20
+	range 0 99
+	help
+	  This defines the initialization priority for the CROS
+	  system_pre_init() function. system_pre_init() reads chip level reset
+	  cause and stores it into the system reset flags. All drivers, except
+	  those critical to determining the reset type, should be initialized at
+	  lower priority so that the system reset flags are valid.
+
+config PLATFORM_EC_FW_RESET_VECTOR
+	bool "Firmware Reset Vector chip specific retrieval"
+	default y if SOC_FAMILY_RISCV_ITE
+	help
+	  This defines if there is a chip specific machanism for
+	  retrieving the firmware reset vector. The function that
+	  needs to be provided is system_get_fw_reset_vector that
+	  will return the address of the reset vector.
+
+endif # PLATFORM_EC

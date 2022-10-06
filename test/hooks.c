@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -41,7 +41,7 @@ static void tick2_hook(void)
 	tick_count_seen_by_tick2 = tick_hook_count;
 }
 /* tick2_hook() prio means it should be called after tick_hook() */
-DECLARE_HOOK(HOOK_TICK, tick2_hook, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_TICK, tick2_hook, HOOK_PRIO_DEFAULT + 1);
 
 static void second_hook(void)
 {
@@ -62,9 +62,7 @@ static void non_deferred_func(void)
 	deferred_call_count++;
 }
 
-static const struct deferred_data non_deferred_func_data = {
-	non_deferred_func
-};
+static const struct deferred_data non_deferred_func_data = { non_deferred_func };
 
 static int test_init_hook(void)
 {
@@ -85,8 +83,7 @@ static int test_ticks(void)
 	usleep(1300 * MSEC);
 
 	interval = tick_time[1].val - tick_time[0].val;
-	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 /
-		    HOOK_TICK_INTERVAL;
+	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 / HOOK_TICK_INTERVAL;
 	TEST_ASSERT_ABS_LESS(error_pct, 10);
 
 	interval = second_time[1].val - second_time[0].val;
@@ -159,7 +156,7 @@ static int test_repeating_deferred(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

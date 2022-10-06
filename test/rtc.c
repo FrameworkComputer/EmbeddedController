@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -16,15 +16,14 @@ static struct {
 	struct calendar_date time;
 	uint32_t sec;
 } test_case[] = {
-	{{8, 3, 1}, 1204329600},
-	{{17, 10, 1}, 1506816000},
+	{ { 8, 3, 1 }, 1204329600 },
+	{ { 17, 10, 1 }, 1506816000 },
 };
 
 static int calendar_time_comp(struct calendar_date time_1,
-			   struct calendar_date time_2)
+			      struct calendar_date time_2)
 {
-	return (time_1.year == time_2.year &&
-		time_1.month == time_2.month &&
+	return (time_1.year == time_2.year && time_1.month == time_2.month &&
 		time_1.day == time_2.day);
 }
 
@@ -96,7 +95,7 @@ static int test_time_conversion(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_time_conversion);
 

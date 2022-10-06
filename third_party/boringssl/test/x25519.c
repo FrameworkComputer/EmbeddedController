@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, Google Inc.
+/* Copyright 2015 Google LLC
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -180,7 +180,7 @@ static void test_x25519_speed(void)
 	ccprintf("X25519 duration %lld us\n", (long long)(t1.val - t0.val));
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	watchdog_reload();
 	/* do not check speed, just as a benchmark */

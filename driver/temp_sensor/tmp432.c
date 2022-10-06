@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,10 +16,10 @@
 static int temp_val_local;
 static int temp_val_remote1;
 static int temp_val_remote2;
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 static uint8_t is_sensor_shutdown;
 #endif
-static int fake_temp[TMP432_IDX_COUNT] = {-1, -1, -1};
+static int fake_temp[TMP432_IDX_COUNT] = { -1, -1, -1 };
 
 /**
  * Determine whether the sensor is powered.
@@ -28,8 +28,8 @@ static int fake_temp[TMP432_IDX_COUNT] = {-1, -1, -1};
  */
 static int has_power(void)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return !is_sensor_shutdown;
 #endif
@@ -37,14 +37,14 @@ static int has_power(void)
 
 static int raw_read8(const int offset, int *data_ptr)
 {
-	return i2c_read8(I2C_PORT_THERMAL, TMP432_I2C_ADDR_FLAGS,
-			 offset, data_ptr);
+	return i2c_read8(I2C_PORT_THERMAL, TMP432_I2C_ADDR_FLAGS, offset,
+			 data_ptr);
 }
 
 static int raw_write8(const int offset, int data)
 {
-	return i2c_write8(I2C_PORT_THERMAL, TMP432_I2C_ADDR_FLAGS,
-			  offset, data);
+	return i2c_write8(I2C_PORT_THERMAL, TMP432_I2C_ADDR_FLAGS, offset,
+			  data);
 }
 
 static int get_temp(const int offset, int *temp_ptr)
@@ -92,7 +92,7 @@ int tmp432_get_val(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 static int tmp432_shutdown(uint8_t want_shutdown)
 {
 	int ret, value;
@@ -150,7 +150,7 @@ int tmp432_set_therm_limit(int channel, int limit_c, int hysteresis)
 		return EC_ERROR_INVAL;
 
 	if (hysteresis > TMP432_HYSTERESIS_HIGH_LIMIT ||
-		hysteresis < TMP432_HYSTERESIS_LOW_LIMIT)
+	    hysteresis < TMP432_HYSTERESIS_LOW_LIMIT)
 		return EC_ERROR_INVAL;
 
 	/* hysteresis must be less than high limit */
@@ -228,12 +228,10 @@ static int tmp432_set_fake_temp(int index, int degree_c)
 	return EC_SUCCESS;
 }
 
-static void print_temps(
-		const char *name,
-		const int tmp432_temp_reg,
-		const int tmp432_therm_limit_reg,
-		const int tmp432_high_limit_reg,
-		const int tmp432_low_limit_reg)
+static void print_temps(const char *name, const int tmp432_temp_reg,
+			const int tmp432_therm_limit_reg,
+			const int tmp432_high_limit_reg,
+			const int tmp432_low_limit_reg)
 {
 	int value;
 
@@ -261,20 +259,14 @@ static int print_status(void)
 {
 	int value, i;
 
-	print_temps("Local", TMP432_LOCAL,
-		    TMP432_LOCAL_THERM_LIMIT,
-		    TMP432_LOCAL_HIGH_LIMIT_R,
-		    TMP432_LOCAL_LOW_LIMIT_R);
+	print_temps("Local", TMP432_LOCAL, TMP432_LOCAL_THERM_LIMIT,
+		    TMP432_LOCAL_HIGH_LIMIT_R, TMP432_LOCAL_LOW_LIMIT_R);
 
-	print_temps("Remote1", TMP432_REMOTE1,
-		    TMP432_REMOTE1_THERM_LIMIT,
-		    TMP432_REMOTE1_HIGH_LIMIT_R,
-		    TMP432_REMOTE1_LOW_LIMIT_R);
+	print_temps("Remote1", TMP432_REMOTE1, TMP432_REMOTE1_THERM_LIMIT,
+		    TMP432_REMOTE1_HIGH_LIMIT_R, TMP432_REMOTE1_LOW_LIMIT_R);
 
-	print_temps("Remote2", TMP432_REMOTE2,
-		    TMP432_REMOTE2_THERM_LIMIT,
-		    TMP432_REMOTE2_HIGH_LIMIT_R,
-		    TMP432_REMOTE2_LOW_LIMIT_R);
+	print_temps("Remote2", TMP432_REMOTE2, TMP432_REMOTE2_THERM_LIMIT,
+		    TMP432_REMOTE2_HIGH_LIMIT_R, TMP432_REMOTE2_LOW_LIMIT_R);
 
 	ccprintf("\n");
 
@@ -294,22 +286,22 @@ static int print_status(void)
 	ccprintf("\n");
 
 	if (raw_read8(TMP432_STATUS, &value) == EC_SUCCESS)
-		ccprintf("STATUS:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("STATUS:  0x%x\n", value);
 
 	if (raw_read8(TMP432_CONFIGURATION1_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG1: %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("CONFIG1: 0x%x\n", value);
 
 	if (raw_read8(TMP432_CONFIGURATION2_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG2: %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("CONFIG2: 0x%x\n", value);
 
 	return EC_SUCCESS;
 }
 
-static int command_tmp432(int argc, char **argv)
+static int command_tmp432(int argc, const char **argv)
 {
-	char *command;
+	const char *command;
 	char *e;
-	char *power;
+	const char *power;
 	int data;
 	int offset;
 	int rv;
@@ -321,8 +313,7 @@ static int command_tmp432(int argc, char **argv)
 			rv = tmp432_set_power(TMP432_POWER_ON);
 			if (!rv)
 				print_status();
-		}
-		else if (!strncasecmp(power, "off", sizeof("off")))
+		} else if (!strncasecmp(power, "off", sizeof("off")))
 			rv = tmp432_set_power(TMP432_POWER_OFF);
 		else
 			return EC_ERROR_PARAM2;
@@ -351,8 +342,7 @@ static int command_tmp432(int argc, char **argv)
 		rv = raw_read8(offset, &data);
 		if (rv < 0)
 			return rv;
-		ccprintf("Byte at offset 0x%02x is %pb\n",
-			 offset, BINARY_VALUE(data, 8));
+		ccprintf("Byte at offset 0x%02x is 0x%x\n", offset, data);
 		return rv;
 	}
 
@@ -379,7 +369,8 @@ static int command_tmp432(int argc, char **argv)
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(tmp432, command_tmp432,
+DECLARE_CONSOLE_COMMAND(
+	tmp432, command_tmp432,
 	"[settemp|setbyte <offset> <value>] or [getbyte <offset>] or"
 	"[fake <index> <value>] or [power <on|off>]. "
 	"Temps in Celsius.",
@@ -388,12 +379,11 @@ DECLARE_CONSOLE_COMMAND(tmp432, command_tmp432,
 
 int tmp432_set_power(enum tmp432_power_state power_on)
 {
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 	uint8_t shutdown = (power_on == TMP432_POWER_OFF) ? 1 : 0;
 	return tmp432_shutdown(shutdown);
 #else
-	gpio_set_level(CONFIG_TEMP_SENSOR_POWER_GPIO, power_on);
+	gpio_set_level(GPIO_TEMP_SENSOR_POWER, power_on);
 	return EC_SUCCESS;
 #endif
 }
-

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -72,7 +72,7 @@ void keyboard_raw_enable_interrupt(int enable)
 	}
 }
 
-void keyboard_raw_interrupt(void)
+static void keyboard_raw_interrupt(void)
 {
 	/* Clear interrupt status bits */
 	MEC1322_KS_KSI_STATUS = 0xff;

@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Meep/Mimrock board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "battery.h"
 #include "button.h"
 #include "cbi_ssfc.h"
@@ -36,20 +35,20 @@
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-#define USB_PD_PORT_ANX7447	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX7447 0
+#define USB_PD_PORT_PS8751 1
 
 #ifdef CONFIG_KEYBOARD_KEYPAD
 #error "KSO_14 was repurposed to PPC_ID pin so CONFIG_KEYBOARD_KEYPAD \
@@ -87,32 +86,32 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
 	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
-	[ADC_VBUS_C0] = {
-		"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C0] = { "VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
-	[ADC_VBUS_C1] = {
-		"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C1] = { "VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -122,17 +121,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t lid_standrd_ref = {
-	{ FLOAT_TO_FP(1),  0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t lid_standrd_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				     { 0, FLOAT_TO_FP(-1), 0 },
+				     { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1),  0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, FLOAT_TO_FP(-1), 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* sensor private data */
 static struct kionix_accel_data kx022_data;
@@ -177,8 +172,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
 				MOTIONSENSE_TYPE_ACCEL),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
@@ -209,8 +202,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_base_mutex,
 		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
 				MOTIONSENSE_TYPE_GYRO),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
@@ -233,9 +224,9 @@ int board_is_convertible(void)
 	 * Vortininja: 49, 50, 51, 52
 	 * Unprovisioned: 255
 	 */
-	return sku_id == 1 || sku_id == 2 || sku_id == 3 ||
-	       sku_id == 4 || sku_id == 49 || sku_id == 50 ||
-	       sku_id == 51 || sku_id == 52 || sku_id == 255;
+	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 4 ||
+	       sku_id == 49 || sku_id == 50 || sku_id == 51 || sku_id == 52 ||
+	       sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -311,17 +302,16 @@ void board_hibernate_late(void)
 
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs before going to hibernate */
-		{GPIO_BAT_LED_WHITE_L, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_BAT_LED_AMBER_L, GPIO_INPUT | GPIO_PULL_UP},
+		{ GPIO_BAT_LED_WHITE_L, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_BAT_LED_AMBER_L, GPIO_INPUT | GPIO_PULL_UP },
 	};
 
 	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
 		gpio_set_flags(hibernate_pins[i][0], hibernate_pins[i][1]);
 }
 
-#ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	/*
 	 * If the lid is in tablet position via other sensors,
@@ -334,7 +324,6 @@ void lid_angle_peripheral_enable(int enable)
 	if (board_is_convertible())
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
-#endif
 
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST
 /*
@@ -343,15 +332,15 @@ void lid_angle_peripheral_enable(int enable)
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-		{0, 7}, {1, 4}, {1, 3}, {1, 6}, {1, 7},
-		{3, 1}, {2, 0}, {1, 5}, {2, 6}, {2, 7},
-		{2, 1}, {2, 4}, {2, 5}, {1, 2}, {2, 3},
-		{2, 2}, {3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ -1, -1 }, { 0, 5 }, { 1, 1 },	  { 1, 0 },   { 0, 6 },
+	{ 0, 7 },   { 1, 4 }, { 1, 3 },	  { 1, 6 },   { 1, 7 },
+	{ 3, 1 },   { 2, 0 }, { 1, 5 },	  { 2, 6 },   { 2, 7 },
+	{ 2, 1 },   { 2, 4 }, { 2, 5 },	  { 1, 2 },   { 2, 3 },
+	{ 2, 2 },   { 3, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
 void board_overcurrent_event(int port, int is_overcurrented)
@@ -396,31 +385,29 @@ __override uint16_t board_get_ps8xxx_product_id(int port)
 }
 
 static const struct ppc_config_t ppc_syv682x_port0 = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+	.i2c_port = I2C_PORT_TCPC0,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
 };
 
 static const struct ppc_config_t ppc_syv682x_port1 = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
 };
 
 static void board_setup_ppc(void)
 {
 	if (c0_port_ppc == PPC_SYV682X) {
-		memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
-			   &ppc_syv682x_port0,
-			   sizeof(struct ppc_config_t));
+		memcpy(&ppc_chips[USB_PD_PORT_TCPC_0], &ppc_syv682x_port0,
+		       sizeof(struct ppc_config_t));
 
 		gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
 	}
 
 	if (c1_port_ppc == PPC_SYV682X) {
-		memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
-			   &ppc_syv682x_port1,
-			   sizeof(struct ppc_config_t));
+		memcpy(&ppc_chips[USB_PD_PORT_TCPC_1], &ppc_syv682x_port1,
+		       sizeof(struct ppc_config_t));
 
 		gpio_set_flags(GPIO_USB_PD_C1_INT_ODL, GPIO_INT_BOTH);
 	}

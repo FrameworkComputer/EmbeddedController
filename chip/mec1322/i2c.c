@@ -1,10 +1,11 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* I2C port module for MEC1322 */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -16,7 +17,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 #define I2C_CLOCK 16000000 /* 16 MHz */
 
@@ -36,7 +37,7 @@
 #define CTRL_PIN BIT(7) /* Pending interrupt not */
 
 /* Completion */
-#define COMP_IDLE BIT(29)    /* i2c bus is idle */
+#define COMP_IDLE BIT(29) /* i2c bus is idle */
 #define COMP_RW_BITS_MASK 0x3C /* R/W bits mask */
 
 /* Maximum transfer of a SMBUS block transfer */
@@ -68,10 +69,8 @@ static struct {
 
 /* Map port number to port name in datasheet, for debug prints. */
 static const char *i2c_port_names[MEC1322_I2C_PORT_COUNT] = {
-	[MEC1322_I2C0_0] = "0_0",
-	[MEC1322_I2C0_1] = "0_1",
-	[MEC1322_I2C1] = "1",
-	[MEC1322_I2C2] = "2",
+	[MEC1322_I2C0_0] = "0_0", [MEC1322_I2C0_1] = "0_1",
+	[MEC1322_I2C1] = "1",	  [MEC1322_I2C2] = "2",
 	[MEC1322_I2C3] = "3",
 };
 
@@ -114,8 +113,8 @@ static void configure_controller(int controller, int kbps)
 	MEC1322_I2C_CTRL(controller) = CTRL_PIN;
 	MEC1322_I2C_OWN_ADDR(controller) = 0x0;
 	configure_controller_speed(controller, kbps);
-	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
-				       CTRL_ACK | CTRL_ENI;
+	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO | CTRL_ACK |
+				       CTRL_ENI;
 	MEC1322_I2C_CONFIG(controller) |= BIT(10); /* ENAB */
 
 	/* Enable interrupt */
@@ -211,16 +210,15 @@ static void select_port(int port)
 
 	MEC1322_I2C_CONFIG(controller) &= ~0xf;
 	MEC1322_I2C_CONFIG(controller) |= port_sel;
-
 }
 
 static inline int get_line_level(int controller)
 {
 	int ret, ctrl;
 	/*
-	* We need to enable BB (Bit Bang) mode in order to read line level
-	* properly, othervise line levels return always idle (0x60).
-	*/
+	 * We need to enable BB (Bit Bang) mode in order to read line level
+	 * properly, othervise line levels return always idle (0x60).
+	 */
 	ctrl = MEC1322_I2C_BB_CTRL(controller);
 	MEC1322_I2C_BB_CTRL(controller) |= 1;
 	ret = (MEC1322_I2C_BB_CTRL(controller) >> 5) & 0x3;
@@ -236,10 +234,8 @@ static inline void push_in_buf(uint8_t **in, uint8_t val, int skip)
 	}
 }
 
-int chip_i2c_xfer(const int port,
-		  const uint16_t slave_addr_flags,
-		  const uint8_t *out, int out_size,
-		  uint8_t *in, int in_size, int flags)
+int chip_i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
+		  int out_size, uint8_t *in, int in_size, int flags)
 {
 	int i;
 	int controller;
@@ -263,8 +259,7 @@ int chip_i2c_xfer(const int port,
 	if (send_start &&
 	    cdata[controller].transaction_state == I2C_TRANSACTION_STOPPED &&
 	    (((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
-			    (get_line_level(controller)
-			    != I2C_LINE_IDLE))) {
+	     (get_line_level(controller) != I2C_LINE_IDLE))) {
 		CPRINTS("i2c%s bad status 0x%02x, SCL=%d, SDA=%d",
 			i2c_port_names[port], reg,
 			get_line_level(controller) & I2C_LINE_SCL_HIGH,
@@ -287,8 +282,7 @@ int chip_i2c_xfer(const int port,
 	if (out_size) {
 		if (send_start) {
 			MEC1322_I2C_DATA(controller) =
-				(uint8_t)(I2C_GET_ADDR(slave_addr_flags)
-					  << 1);
+				(uint8_t)(I2C_STRIP_FLAGS(addr_flags) << 1);
 
 			/* Clock out the slave address, sending START bit */
 			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
@@ -326,24 +320,20 @@ int chip_i2c_xfer(const int port,
 			/* Repeated start case */
 			if (cdata[controller].transaction_state ==
 			    I2C_TRANSACTION_OPEN)
-				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
-							       CTRL_STA |
-							       CTRL_ACK |
-							       CTRL_ENI;
+				MEC1322_I2C_CTRL(controller) =
+					CTRL_ESO | CTRL_STA | CTRL_ACK |
+					CTRL_ENI;
 
 			MEC1322_I2C_DATA(controller) =
-				(uint8_t)(I2C_GET_ADDR(slave_addr_flags)
-					  << 1)
-				| 0x01;
+				(uint8_t)(I2C_STRIP_FLAGS(addr_flags) << 1) |
+				0x01;
 
 			/* New transaction case, clock out slave address. */
 			if (cdata[controller].transaction_state ==
 			    I2C_TRANSACTION_STOPPED)
-				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
-							       CTRL_STA |
-							       CTRL_ACK |
-							       CTRL_ENI |
-							       CTRL_PIN;
+				MEC1322_I2C_CTRL(controller) =
+					CTRL_ESO | CTRL_STA | CTRL_ACK |
+					CTRL_ENI | CTRL_PIN;
 
 			cdata[controller].transaction_state =
 				I2C_TRANSACTION_OPEN;
@@ -379,8 +369,8 @@ int chip_i2c_xfer(const int port,
 				goto err_chip_i2c_xfer;
 
 			/* Send STOP */
-			MEC1322_I2C_CTRL(controller) =
-				CTRL_PIN | CTRL_ESO | CTRL_ACK | CTRL_STO;
+			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
+						       CTRL_ACK | CTRL_STO;
 
 			cdata[controller].transaction_state =
 				I2C_TRANSACTION_STOPPED;
@@ -403,8 +393,8 @@ int chip_i2c_xfer(const int port,
 	return EC_SUCCESS;
 err_chip_i2c_xfer:
 	/* Send STOP and return error */
-	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
-				       CTRL_STO | CTRL_ACK;
+	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO | CTRL_STO |
+				       CTRL_ACK;
 	cdata[controller].transaction_state = I2C_TRANSACTION_STOPPED;
 	if (ret_done == STS_LRB)
 		return EC_ERROR_BUSY;
@@ -417,8 +407,7 @@ err_chip_i2c_xfer:
 		 */
 		reset_controller(controller);
 		return EC_ERROR_TIMEOUT;
-	}
-	else
+	} else
 		return EC_ERROR_UNKNOWN;
 }
 
@@ -517,13 +506,25 @@ static void handle_interrupt(int controller)
 
 	/* Wake up the task which was waiting on the I2C interrupt, if any. */
 	if (id != TASK_ID_INVALID)
-		task_set_event(id, TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(id, TASK_EVENT_I2C_IDLE);
 }
 
-void i2c0_interrupt(void) { handle_interrupt(0); }
-void i2c1_interrupt(void) { handle_interrupt(1); }
-void i2c2_interrupt(void) { handle_interrupt(2); }
-void i2c3_interrupt(void) { handle_interrupt(3); }
+static void i2c0_interrupt(void)
+{
+	handle_interrupt(0);
+}
+static void i2c1_interrupt(void)
+{
+	handle_interrupt(1);
+}
+static void i2c2_interrupt(void)
+{
+	handle_interrupt(2);
+}
+static void i2c3_interrupt(void)
+{
+	handle_interrupt(3);
+}
 
 DECLARE_IRQ(MEC1322_IRQ_I2C_0, i2c0_interrupt, 2);
 DECLARE_IRQ(MEC1322_IRQ_I2C_1, i2c1_interrupt, 2);

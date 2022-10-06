@@ -1,0 +1,21 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: motionsense sensor node for LIS2DW12 Accelerometer
+
+compatible: "cros-ec,lis2dw12"
+
+# every motionsense sensor node should include motionsense-sensor-base.yaml
+include: motionsense-sensor-base.yaml
+
+properties:
+  i2c-spi-addr-flags:
+    type: string
+    description: i2c address or SPI peripheral logic GPIO
+    enum:
+      - "LIS2DWL_ADDR0_FLAGS"
+      - "LIS2DWL_ADDR1_FLAGS"
+    default: "LIS2DWL_ADDR1_FLAGS"
+  default-range:
+    default: 2

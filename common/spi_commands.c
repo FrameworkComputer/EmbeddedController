@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 The Chromium OS Authors. All rights reserved.
+ * Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -8,11 +8,12 @@
 
 #include "common.h"
 #include "console.h"
+#include "printf.h"
 #include "spi.h"
 #include "timer.h"
 #include "util.h"
 
-static int command_spixfer(int argc, char **argv)
+static int command_spixfer(int argc, const char **argv)
 {
 	int dev_id;
 	uint8_t offset;
@@ -45,8 +46,13 @@ static int command_spixfer(int argc, char **argv)
 
 		rv = spi_transaction(&spi_devices[dev_id], &cmd, 1, data, v);
 
-		if (!rv)
-			ccprintf("Data: %ph\n", HEX_BUF(data, v));
+		if (!rv) {
+			char str_buf[hex_str_buf_size(v)];
+
+			snprintf_hex_buffer(str_buf, sizeof(str_buf),
+					    HEX_BUF(data, v));
+			ccprintf("Data: %s\n", str_buf);
+		}
 
 	} else if (strcasecmp(argv[1], "w") == 0) {
 		/* 8-bit write */
@@ -68,4 +74,3 @@ static int command_spixfer(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spixfer, command_spixfer,
 			"rlen/w id offset [value | len]",
 			"Read write spi. id is spi_devices array index");
-

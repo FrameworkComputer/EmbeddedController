@@ -1,0 +1,6 @@
+# Paths of interest to be included in the commit message for
+# merge commits to the firmware-fpmcu-<BOARD>-release branch when
+# using update_release_branch.py.
+common/fpsensor
+docs/fingerprint
+driver/fingerprint

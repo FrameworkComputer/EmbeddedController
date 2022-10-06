@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -12,22 +12,19 @@
 
 static inline int lm3509_write(uint8_t reg, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS,
-			  reg, val);
+	return i2c_write8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS, reg, val);
 }
 
 static inline int lm3509_read(uint8_t reg, int *val)
 {
-	return i2c_read8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS,
-			 reg, val);
+	return i2c_read8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS, reg, val);
 }
 
 /* Brightness level (0.0 to 100.0%) to brightness register conversion table */
 static const uint16_t lm3509_brightness[32] = {
-	  0,   1,   6,  10,  11,  13,  16,  20,
-	 24,  28,  31,  37,  43,  52,  62,  75,
-	 87, 100, 125, 150, 168, 187, 225, 262,
-	312, 375, 437, 525, 612, 700, 875, 1000
+	0,   1,	  6,   10,  11,	 13,  16,  20,	24,  28,  31,
+	37,  43,  52,  62,  75,	 87,  100, 125, 150, 168, 187,
+	225, 262, 312, 375, 437, 525, 612, 700, 875, 1000
 };
 
 static int brightness_to_bmain(int percent)
@@ -52,6 +49,17 @@ static int lm3509_power(int enable)
 	/* Enable both MAIN and SUB in unison mode.
 	 * Don't alter brightness here. It's not driver's business. */
 	return lm3509_write(LM3509_REG_GP, enable ? 0x7 : 0);
+}
+
+static int lm3509_get_power(void)
+{
+	int rv, val;
+
+	rv = lm3509_read(LM3509_REG_GP, &val);
+	if (rv)
+		return -1;
+	/* Bit 0: Enable MAIN. Bit 1: Enable SUB/FB */
+	return (val & 0x3) == 0x3 ? 1 : 0;
 }
 
 static int lm3509_set_brightness(int percent)
@@ -82,4 +90,5 @@ const struct kblight_drv kblight_lm3509 = {
 	.set = lm3509_set_brightness,
 	.get = lm3509_get_brightness,
 	.enable = lm3509_power,
+	.get_enabled = lm3509_get_power,
 };

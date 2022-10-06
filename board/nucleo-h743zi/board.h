@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -28,6 +28,6 @@
  * Enable the blink example that exercises the LEDs.
  */
 #define CONFIG_BLINK
-#define CONFIG_BLINK_LEDS    GPIO_LED1, GPIO_LED2, GPIO_LED3
+#define CONFIG_BLINK_LEDS GPIO_LED1, GPIO_LED2, GPIO_LED3
 
 #endif /* __BOARD_H */

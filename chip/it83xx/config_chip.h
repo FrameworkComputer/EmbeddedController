@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
-#if defined(CHIP_FAMILY_IT8320)    /* N8 core */
+#if defined(CHIP_FAMILY_IT8320) /* N8 core */
 #include "config_chip_it8320.h"
 #elif defined(CHIP_FAMILY_IT8XXX2) /* RISCV core */
 #include "config_chip_it8xxx2.h"
@@ -19,7 +19,7 @@
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
-#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
+#define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Default PLL frequency. */
 #define PLL_CLOCK 48000000
@@ -35,34 +35,34 @@
 #define I2C_ENHANCED_PORT_COUNT 3
 
 /* System stack size */
-#define CONFIG_STACK_SIZE           1024
+#define CONFIG_STACK_SIZE 1024
 
 /* non-standard task stack sizes */
-#define SMALLER_TASK_STACK_SIZE     (384 + CHIP_EXTRA_STACK_SPACE)
-#define IDLE_TASK_STACK_SIZE        (512 + CHIP_EXTRA_STACK_SPACE)
-#define LARGER_TASK_STACK_SIZE      (768 + CHIP_EXTRA_STACK_SPACE)
-#define VENTI_TASK_STACK_SIZE       (896 + CHIP_EXTRA_STACK_SPACE)
-#define ULTRA_TASK_STACK_SIZE       (1056 + CHIP_EXTRA_STACK_SPACE)
-#define TRENTA_TASK_STACK_SIZE      (1184 + CHIP_EXTRA_STACK_SPACE)
+#define SMALLER_TASK_STACK_SIZE (384 + CHIP_EXTRA_STACK_SPACE)
+#define IDLE_TASK_STACK_SIZE (512 + CHIP_EXTRA_STACK_SPACE)
+#define LARGER_TASK_STACK_SIZE (768 + CHIP_EXTRA_STACK_SPACE)
+#define VENTI_TASK_STACK_SIZE (896 + CHIP_EXTRA_STACK_SPACE)
+#define ULTRA_TASK_STACK_SIZE (1056 + CHIP_EXTRA_STACK_SPACE)
+#define TRENTA_TASK_STACK_SIZE (1184 + CHIP_EXTRA_STACK_SPACE)
 
 /* Default task stack size */
-#define TASK_STACK_SIZE             (512 + CHIP_EXTRA_STACK_SPACE)
+#define TASK_STACK_SIZE (512 + CHIP_EXTRA_STACK_SPACE)
 
 #ifdef IT83XX_CHIP_FLASH_IS_KGD
-#define CONFIG_FLASH_BANK_SIZE      0x00001000  /* protect bank size */
-#define CONFIG_FLASH_ERASE_SIZE     0x00001000  /* erase bank size */
+#define CONFIG_FLASH_BANK_SIZE 0x00001000 /* protect bank size */
+#define CONFIG_FLASH_ERASE_SIZE 0x00001000 /* erase bank size */
 #else
-#define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
-#define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
+#define CONFIG_FLASH_BANK_SIZE 0x00000800 /* protect bank size */
+#define CONFIG_FLASH_ERASE_SIZE 0x00000400 /* erase bank size */
 #endif
-#define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */
+#define CONFIG_FLASH_WRITE_SIZE 0x00000004 /* minimum write size */
 
 /*
  * This is the block size of the ILM on the it83xx chip.
  * The ILM for static code cache, CPU fetch instruction from
  * ILM(ILM -> CPU)instead of flash(flash -> IMMU -> CPU) if enabled.
  */
-#define IT83XX_ILM_BLOCK_SIZE       0x00001000
+#define IT83XX_ILM_BLOCK_SIZE 0x00001000
 
 #ifdef IT83XX_CHIP_FLASH_IS_KGD
 /*
@@ -101,9 +101,9 @@
  * IT8xxx2 series support mapping LPC/eSPI I/O cycle 800h ~ 9FFh
  * to 0x80081800 ~ 0x800819FF of DLM1.
  */
-#define CONFIG_H2RAM_BASE               (CHIP_H2RAM_BASE)
-#define CONFIG_H2RAM_SIZE               0x00001000
-#define CONFIG_H2RAM_HOST_LPC_IO_BASE   0x800
+#define CONFIG_H2RAM_BASE (CHIP_H2RAM_BASE)
+#define CONFIG_H2RAM_SIZE 0x00001000
+#define CONFIG_H2RAM_HOST_LPC_IO_BASE 0x800
 
 /****************************************************************************/
 /* Customize the build */
@@ -121,4 +121,6 @@
 #define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
-#endif  /* __CROS_EC_CONFIG_CHIP_H */
+#define __RAM_CODE_SECTION_NAME ".ram_code"
+
+#endif /* __CROS_EC_CONFIG_CHIP_H */

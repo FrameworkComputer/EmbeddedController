@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,7 +19,9 @@
  */
 void switch_interrupt(enum gpio_signal signal);
 #else
-static inline void switch_interrupt(enum gpio_signal signal) { }
-#endif  /* !CONFIG_SWITCH */
+static inline void switch_interrupt(enum gpio_signal signal)
+{
+}
+#endif /* !CONFIG_SWITCH */
 
-#endif  /* __CROS_EC_SWITCH_H */
+#endif /* __CROS_EC_SWITCH_H */

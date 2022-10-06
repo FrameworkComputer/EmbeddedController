@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -52,7 +52,6 @@ const struct vb21_packed_key *vb21_get_packed_key(void)
 
 static void read_rwsig_info(struct ec_response_rwsig_info *r)
 {
-
 	const struct vb21_packed_key *vb21_key;
 	int rv;
 
@@ -61,17 +60,21 @@ static void read_rwsig_info(struct ec_response_rwsig_info *r)
 	r->sig_alg = vb21_key->sig_alg;
 	r->hash_alg = vb21_key->hash_alg;
 	r->key_version = vb21_key->key_version;
-	{ BUILD_ASSERT(sizeof(r->key_id) == sizeof(vb21_key->id),
-		       "key ID sizes must match"); }
-	{ BUILD_ASSERT(sizeof(vb21_key->id) == sizeof(vb21_key->id.raw),
-		       "key ID sizes must match"); }
+	{
+		BUILD_ASSERT(sizeof(r->key_id) == sizeof(vb21_key->id),
+			     "key ID sizes must match");
+	}
+	{
+		BUILD_ASSERT(sizeof(vb21_key->id) == sizeof(vb21_key->id.raw),
+			     "key ID sizes must match");
+	}
 	memcpy(r->key_id, vb21_key->id.raw, sizeof(r->key_id));
 
 	rv = vb21_is_packed_key_valid(vb21_key);
 	r->key_is_valid = (rv == EC_SUCCESS);
 }
 
-static int command_rwsig_info(int argc, char **argv)
+static int command_rwsig_info(int argc, const char **argv)
 {
 	int i;
 	struct ec_response_rwsig_info r;

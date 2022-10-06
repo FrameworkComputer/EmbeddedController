@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -20,10 +20,10 @@
 
 #ifdef CTS_MODULE
 #undef STM32_IRQ_EXT2_3_PRIORITY
-#define STM32_IRQ_EXT2_3_PRIORITY	2
+#define STM32_IRQ_EXT2_3_PRIORITY 2
 #ifdef CTS_MODULE_I2C
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -34,13 +34,11 @@ static int suspend_flags = CONFIG_WIRELESS_SUSPEND;
 static void wireless_enable(int flags)
 {
 #ifdef WIRELESS_GPIO_WLAN
-	gpio_set_level(WIRELESS_GPIO_WLAN,
-		       flags & EC_WIRELESS_SWITCH_WLAN);
+	gpio_set_level(WIRELESS_GPIO_WLAN, flags & EC_WIRELESS_SWITCH_WLAN);
 #endif
 
 #ifdef WIRELESS_GPIO_WWAN
-	gpio_set_level(WIRELESS_GPIO_WWAN,
-		       flags & EC_WIRELESS_SWITCH_WWAN);
+	gpio_set_level(WIRELESS_GPIO_WWAN, flags & EC_WIRELESS_SWITCH_WWAN);
 #endif
 
 #ifdef WIRELESS_GPIO_BLUETOOTH
@@ -57,7 +55,6 @@ static void wireless_enable(int flags)
 		       !(flags & EC_WIRELESS_SWITCH_WLAN_POWER));
 #endif /* CONFIG_WLAN_POWER_ACTIVE_LOW */
 #endif
-
 }
 
 static int wireless_get(void)
@@ -126,7 +123,7 @@ static enum ec_status wireless_enable_cmd(struct host_cmd_handler_args *args)
 			(p->now_flags & p->now_mask));
 
 	suspend_flags = (suspend_flags & ~p->suspend_mask) |
-		(p->suspend_flags & p->suspend_mask);
+			(p->suspend_flags & p->suspend_mask);
 
 	/* And return the current flags */
 	r->now_flags = wireless_get();
@@ -134,11 +131,10 @@ static enum ec_status wireless_enable_cmd(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,
-		     wireless_enable_cmd,
+DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS, wireless_enable_cmd,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
-static int command_wireless(int argc, char **argv)
+static int command_wireless(int argc, const char **argv)
 {
 	char *e;
 	int i;
@@ -164,6 +160,5 @@ static int command_wireless(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(wireless, command_wireless,
-			"[now [suspend]]",
+DECLARE_CONSOLE_COMMAND(wireless, command_wireless, "[now [suspend]]",
 			"Get/set wireless flags");

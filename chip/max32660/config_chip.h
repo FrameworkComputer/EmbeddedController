@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -50,7 +50,7 @@
 #define TASK_STACK_SIZE 512
 
 #define CONFIG_PROGRAM_MEMORY_BASE 0x00000000
-#define CONFIG_FLASH_BANK_SIZE 0x00002000  /* protect bank size */
+#define CONFIG_FLASH_BANK_SIZE 0x00002000 /* protect bank size */
 #define CONFIG_FLASH_ERASE_SIZE 0x00002000 /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE 0x00000004 /* minimum write size */
 
@@ -61,7 +61,7 @@
  * in order to emulate per-bank write-protection UNTIL REBOOT. The hardware
  * doesn't support a write-protect pin, and if we make the write-protection
  * permanent, it can't be undone easily enough to support RMA. */
-#define CONFIG_FLASH_SIZE 0x00040000 /* 256K MAX32660 FLASH Size */
+#define CONFIG_FLASH_SIZE_BYTES 0x00040000 /* 256K MAX32660 FLASH Size */
 
 /****************************************************************************/
 /* Define our flash layout. */

@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,18 +10,18 @@
 
 /* Optional modules */
 #define CONFIG_ADC
-#undef  CONFIG_ADC_WATCHDOG
+#undef CONFIG_ADC_WATCHDOG
 #define CONFIG_CHIPSET_RK3399
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_RTC
 #define CONFIG_HOSTCMD_RTC
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_I2C_PASSTHRU_RESTRICTED
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_POWER_COMMON
 #define CONFIG_SPI
-#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_CONTROLLER
 #define CONFIG_STM_HWTIMER32
 /* Source RTCCLK from external 32.768kHz source on PC15/OSC32_IN. */
 #define CONFIG_STM32_CLOCK_LSE
@@ -30,11 +30,11 @@
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
-#undef  CONFIG_UART_CONSOLE
+#undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 
 /* Region sizes are no longer a power of 2 so we can't enable MPU */
-#undef  CONFIG_MPU
+#undef CONFIG_MPU
 
 /* Enable a different power-on sequence than the one on gru */
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
@@ -42,7 +42,6 @@
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
-#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 #define CONFIG_CHARGER_ILIM_PIN_DISABLED
 #define CONFIG_FORCE_CONSOLE_RESUME
@@ -68,7 +67,6 @@
 
 /* Motion Sensors */
 #define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
 #define CONFIG_BARO_BMP280
@@ -106,39 +104,38 @@
 #define CONFIG_USB_PD_COMM_LOCKED
 
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     12850
+#define PD_MAX_POWER_MW ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 12850
 
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Timer selection */
-#define TIM_CLOCK32  2
+#define TIM_CLOCK32 2
 #define TIM_WATCHDOG 7
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
 /* Optional for testing */
-#undef  CONFIG_PECI
-#undef  CONFIG_PSTORE
+#undef CONFIG_PECI
+#undef CONFIG_PSTORE
 
 #define CONFIG_TASK_PROFILING
 
 #define I2C_PORT_TCPC0 1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT 0 /* The first SPI controller port (SPI2) */
 
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 /* Define the host events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK                \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 
 #ifndef __ASSEMBLER__
 

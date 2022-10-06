@@ -1,4 +1,4 @@
-// Copyright 2018 The Chromium OS Authors. All rights reserved.
+// Copyright 2018 The ChromiumOS Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -9,48 +9,76 @@
 
 #include <algorithm>
 
-namespace fuzz {
+namespace fuzz
+{
 
-template <typename T>
-class span {
- public:
-  typedef T value_type;
+template <typename T> class span {
+    public:
+	typedef T value_type;
 
-  constexpr span() : span<T>(nullptr, nullptr) {}
-  constexpr span(T* begin, size_t size) : begin_(begin), end_(begin + size) {}
-  constexpr span(T* begin, T* end) : begin_(begin), end_(end) {}
+	constexpr span()
+		: span<T>(nullptr, nullptr)
+	{
+	}
+	constexpr span(T *begin, size_t size)
+		: begin_(begin)
+		, end_(begin + size)
+	{
+	}
+	constexpr span(T *begin, T *end)
+		: begin_(begin)
+		, end_(end)
+	{
+	}
 
-  template <class Container>
-  constexpr span(Container& container)
-      : begin_(container.begin()), end_(container.end()){};
+	template <class Container>
+	constexpr span(Container &container)
+		: begin_(container.begin())
+		, end_(container.end()){};
 
-  constexpr T* begin() const { return begin_; }
-  constexpr T* end() const { return end_; }
+	constexpr T *begin() const
+	{
+		return begin_;
+	}
+	constexpr T *end() const
+	{
+		return end_;
+	}
 
-  constexpr T* data() const { return begin_; }
+	constexpr T *data() const
+	{
+		return begin_;
+	}
 
-  constexpr bool empty() const { return begin_ == end_; }
-  constexpr size_t size() const { return end_ - begin_; }
+	constexpr bool empty() const
+	{
+		return begin_ == end_;
+	}
+	constexpr size_t size() const
+	{
+		return end_ - begin_;
+	}
 
- private:
-  T* begin_;
-  T* end_;
+    private:
+	T *begin_;
+	T *end_;
 };
 
 template <typename Source, typename Destination>
-size_t CopyWithPadding(Source source,
-                       Destination destination,
-                       typename Destination::value_type fill_value) {
-  if (source.size() >= destination.size()) {
-    std::copy(source.begin(), source.begin() + destination.size(),
-              destination.begin());
-    return destination.size();
-  }
-  std::copy(source.begin(), source.end(), destination.begin());
-  std::fill(destination.begin() + source.size(), destination.end(), fill_value);
-  return source.size();
+size_t CopyWithPadding(Source source, Destination destination,
+		       typename Destination::value_type fill_value)
+{
+	if (source.size() >= destination.size()) {
+		std::copy(source.begin(), source.begin() + destination.size(),
+			  destination.begin());
+		return destination.size();
+	}
+	std::copy(source.begin(), source.end(), destination.begin());
+	std::fill(destination.begin() + source.size(), destination.end(),
+		  fill_value);
+	return source.size();
 }
 
-}  // namespace fuzz
+} // namespace fuzz
 
-#endif  // __FUZZ_SPAN_H
+#endif // __FUZZ_SPAN_H

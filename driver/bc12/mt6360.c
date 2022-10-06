@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,8 +7,9 @@
 #include "charge_manager.h"
 #include "console.h"
 #include "crc8.h"
-#include "driver/bc12/mt6360.h"
+#include "mt6360.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"
@@ -18,20 +19,20 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) \
-	cprints(CC_USBCHARGE, "%s " format, "MT6360", ## args)
+	cprints(CC_USBCHARGE, "%s " format, "MT6360", ##args)
 
 static enum ec_error_list mt6360_read8(int reg, int *val)
 {
 	return i2c_read8(mt6360_config.i2c_port, mt6360_config.i2c_addr_flags,
-			reg, val);
+			 reg, val);
 }
 
 static enum ec_error_list mt6360_write8(int reg, int val)
 {
 	return i2c_write8(mt6360_config.i2c_port, mt6360_config.i2c_addr_flags,
-			reg, val);
+			  reg, val);
 }
 
 static int mt6360_update_bits(int reg, int mask, int val)
@@ -118,7 +119,9 @@ static void mt6360_update_charge_manager(int port,
 	static enum charge_supplier current_bc12_type = CHARGE_SUPPLIER_NONE;
 
 	if (new_bc12_type != current_bc12_type) {
-		charge_manager_update_charge(current_bc12_type, port, NULL);
+		if (current_bc12_type >= 0)
+			charge_manager_update_charge(current_bc12_type, port,
+						     NULL);
 
 		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
 			struct charge_port_info chg = {
@@ -143,39 +146,45 @@ static void mt6360_handle_bc12_irq(int port)
 		/* Check vbus again to avoid timing issue */
 		if (pd_snk_is_vbus_provided(port))
 			mt6360_update_charge_manager(
-					port, mt6360_get_bc12_device_type());
+				port, mt6360_get_bc12_device_type());
 		else
-			mt6360_update_charge_manager(
-					0, CHARGE_SUPPLIER_NONE);
+			mt6360_update_charge_manager(0, CHARGE_SUPPLIER_NONE);
 	}
 
 	/* write clear */
 	mt6360_write8(MT6360_REG_DPDMIRQ, reg);
 }
 
-static void mt6360_usb_charger_task(const int port)
+static void mt6360_usb_charger_task_init(const int port)
 {
 	mt6360_clr_bit(MT6360_REG_DPDM_MASK1,
 		       MT6360_REG_DPDM_MASK1_CHGDET_DONEI_M);
 	mt6360_enable_bc12_detection(0);
+}
 
-	while (1) {
-		uint32_t evt = task_wait_event(-1);
+static void mt6360_usb_charger_task_event(const int port, uint32_t evt)
+{
+	/* vbus change, start bc12 detection */
+	if (evt & USB_CHG_EVENT_VBUS) {
+		bool is_sink = pd_get_power_role(port) == PD_ROLE_SINK;
+		bool is_non_pd_sink = !pd_capable(port) && is_sink &&
+				      pd_snk_is_vbus_provided(port);
 
-		/* vbus change, start bc12 detection */
-		if (evt & USB_CHG_EVENT_VBUS) {
-			if (pd_snk_is_vbus_provided(port))
-				mt6360_enable_bc12_detection(1);
-			else
-				mt6360_update_charge_manager(
-						0, CHARGE_SUPPLIER_NONE);
-		}
+		if (is_sink)
+			mt6360_clr_bit(MT6360_REG_CHG_CTRL1, MT6360_MASK_HZ);
+		else
+			mt6360_set_bit(MT6360_REG_CHG_CTRL1, MT6360_MASK_HZ);
 
-		/* detection done, update charge_manager and stop detection */
-		if (evt & USB_CHG_EVENT_BC12) {
-			mt6360_handle_bc12_irq(port);
-			mt6360_enable_bc12_detection(0);
-		}
+		if (is_non_pd_sink)
+			mt6360_enable_bc12_detection(1);
+		else
+			mt6360_update_charge_manager(0, CHARGE_SUPPLIER_NONE);
+	}
+
+	/* detection done, update charge_manager and stop detection */
+	if (evt & USB_CHG_EVENT_BC12) {
+		mt6360_handle_bc12_irq(port);
+		mt6360_enable_bc12_detection(0);
 	}
 }
 
@@ -186,15 +195,15 @@ static int mt6360_regulator_write8(uint8_t addr, int reg, int val)
 	 * Note: The checksum from I2C_FLAG_PEC happens to be correct because
 	 * length == 1 -> the high 3 bits of the offset byte is 0.
 	 */
-	return i2c_write8(mt6360_config.i2c_port,
-			  addr | I2C_FLAG_PEC, reg, val);
+	return i2c_write8(mt6360_config.i2c_port, addr | I2C_FLAG_PEC, reg,
+			  val);
 }
 
 static int mt6360_regulator_read8(int addr, int reg, int *val)
 {
 	int rv;
 	uint8_t crc = 0, real_crc;
-	uint8_t out[3] = {(addr << 1) | 1, reg};
+	uint8_t out[3] = { (addr << 1) | 1, reg };
 
 	rv = i2c_read16(mt6360_config.i2c_port, addr, reg, val);
 	if (rv)
@@ -203,7 +212,7 @@ static int mt6360_regulator_read8(int addr, int reg, int *val)
 	real_crc = (*val >> 8) & 0xFF;
 	*val &= 0xFF;
 	out[2] = *val;
-	crc = crc8(out, ARRAY_SIZE(out));
+	crc = cros_crc8(out, ARRAY_SIZE(out));
 
 	if (crc != real_crc)
 		return EC_ERROR_CRC;
@@ -251,22 +260,10 @@ static const uint16_t MT6360_LDO5_VOSEL_TABLE[8] = {
 };
 
 static const uint16_t MT6360_LDO6_VOSEL_TABLE[16] = {
-	[0x0] = 500,
-	[0x1] = 600,
-	[0x2] = 700,
-	[0x3] = 800,
-	[0x4] = 900,
-	[0x5] = 1000,
-	[0x6] = 1100,
-	[0x7] = 1200,
-	[0x8] = 1300,
-	[0x9] = 1400,
-	[0xA] = 1500,
-	[0xB] = 1600,
-	[0xC] = 1700,
-	[0xD] = 1800,
-	[0xE] = 1900,
-	[0xF] = 2000,
+	[0x0] = 500,  [0x1] = 600,  [0x2] = 700,  [0x3] = 800,
+	[0x4] = 900,  [0x5] = 1000, [0x6] = 1100, [0x7] = 1200,
+	[0x8] = 1300, [0x9] = 1400, [0xA] = 1500, [0xB] = 1600,
+	[0xC] = 1700, [0xD] = 1800, [0xE] = 1900, [0xF] = 2000,
 };
 
 /* LDO7 VOSEL table is the same as LDO6's. */
@@ -280,7 +277,7 @@ struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 		.name = "mt6360_ldo3",
 		.ldo_vosel_table = MT6360_LDO3_VOSEL_TABLE,
 		.ldo_vosel_table_len = ARRAY_SIZE(MT6360_LDO3_VOSEL_TABLE),
-		.addr = MT6360_LDO_SLAVE_ADDR_FLAGS,
+		.addr = MT6360_LDO_I2C_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_LDO3_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_LDO3_CTRL3,
 		.mask_vosel = MT6360_MASK_LDO3_VOSEL,
@@ -291,7 +288,7 @@ struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 		.name = "mt6360_ldo5",
 		.ldo_vosel_table = MT6360_LDO5_VOSEL_TABLE,
 		.ldo_vosel_table_len = ARRAY_SIZE(MT6360_LDO5_VOSEL_TABLE),
-		.addr = MT6360_LDO_SLAVE_ADDR_FLAGS,
+		.addr = MT6360_LDO_I2C_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_LDO5_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_LDO5_CTRL3,
 		.mask_vosel = MT6360_MASK_LDO5_VOSEL,
@@ -302,7 +299,7 @@ struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 		.name = "mt6360_ldo6",
 		.ldo_vosel_table = MT6360_LDO6_VOSEL_TABLE,
 		.ldo_vosel_table_len = ARRAY_SIZE(MT6360_LDO6_VOSEL_TABLE),
-		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.addr = MT6360_PMIC_I2C_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_LDO6_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_LDO6_CTRL3,
 		.mask_vosel = MT6360_MASK_LDO6_VOSEL,
@@ -313,7 +310,7 @@ struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 		.name = "mt6360_ldo7",
 		.ldo_vosel_table = MT6360_LDO7_VOSEL_TABLE,
 		.ldo_vosel_table_len = MT6360_LDO7_VOSEL_TABLE_SIZE,
-		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.addr = MT6360_PMIC_I2C_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_LDO7_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_LDO7_CTRL3,
 		.mask_vosel = MT6360_MASK_LDO7_VOSEL,
@@ -322,7 +319,7 @@ struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 	},
 	[MT6360_BUCK1] = {
 		.name = "mt6360_buck1",
-		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.addr = MT6360_PMIC_I2C_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_BUCK1_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_BUCK1_VOSEL,
 		.mask_vosel = MT6360_MASK_BUCK1_VOSEL,
@@ -331,7 +328,7 @@ struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 	},
 	[MT6360_BUCK2] = {
 		.name = "mt6360_buck2",
-		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.addr = MT6360_PMIC_I2C_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_BUCK2_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_BUCK2_VOSEL,
 		.mask_vosel = MT6360_MASK_BUCK2_VOSEL,
@@ -399,14 +396,12 @@ int mt6360_regulator_enable(enum mt6360_regulator_id id, uint8_t enable)
 
 	if (enable)
 		return mt6360_regulator_update_bits(
-			data->addr,
-			data->reg_en_ctrl2,
+			data->addr, data->reg_en_ctrl2,
 			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN,
 			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN);
 	else
 		return mt6360_regulator_update_bits(
-			data->addr,
-			data->reg_en_ctrl2,
+			data->addr, data->reg_en_ctrl2,
 			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN,
 			MT6360_MASK_RGL_SW_OP_EN);
 }
@@ -457,8 +452,7 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 
 		step = (mv - MT6360_BUCK_VOSEL_MIN) / MT6360_BUCK_VOSEL_STEP_MV;
 
-		return mt6360_regulator_update_bits(data->addr,
-						    data->reg_ctrl3,
+		return mt6360_regulator_update_bits(data->addr, data->reg_ctrl3,
 						    data->mask_vosel, step);
 	}
 
@@ -478,8 +472,7 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 		if (mv + step * MT6360_LDO_VOCAL_STEP_MV > max_mv)
 			continue;
 		return mt6360_regulator_update_bits(
-			data->addr,
-			data->reg_ctrl3,
+			data->addr, data->reg_ctrl3,
 			data->mask_vosel | data->mask_vocal,
 			(i << data->shift_vosel) | step);
 	}
@@ -535,7 +528,7 @@ DECLARE_HOOK(HOOK_INIT, mt6360_led_init, HOOK_PRIO_DEFAULT);
 
 int mt6360_led_enable(enum mt6360_led_id led_id, int enable)
 {
-	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))
+	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT - 1))
 		return EC_ERROR_INVAL;
 
 	if (enable)
@@ -548,9 +541,9 @@ int mt6360_led_set_brightness(enum mt6360_led_id led_id, int brightness)
 {
 	int val;
 
-	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))
+	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT - 1))
 		return EC_ERROR_INVAL;
-	if (!IN_RANGE(brightness, 0, 16))
+	if (!IN_RANGE(brightness, 0, 15))
 		return EC_ERROR_INVAL;
 
 	RETURN_ERROR(mt6360_read8(MT6360_REG_RGB_ISINK(led_id), &val));
@@ -561,7 +554,8 @@ int mt6360_led_set_brightness(enum mt6360_led_id led_id, int brightness)
 }
 
 const struct bc12_drv mt6360_drv = {
-	.usb_charger_task = mt6360_usb_charger_task,
+	.usb_charger_task_init = mt6360_usb_charger_task_init,
+	.usb_charger_task_event = mt6360_usb_charger_task_event,
 };
 
 #ifdef CONFIG_BC12_SINGLE_DRIVER

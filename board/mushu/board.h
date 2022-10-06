@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,12 +11,20 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Reduce flash usage */
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_CHARGER_DUMP
+#undef CONFIG_CMD_PPC_DUMP
+#undef CONFIG_CONSOLE_CMDHELP
+
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
 #define CONFIG_LOW_POWER_IDLE
 
-#define CONFIG_HOSTCMD_ESPI
+#define CONFIG_HOST_INTERFACE_ESPI
+#undef CONFIG_CMD_MFALLOW
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
@@ -24,10 +32,8 @@
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
 
-
 /* Sensors */
 /* BMI160 Base accel/gyro */
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
@@ -45,7 +51,7 @@
 #define CONFIG_ALS_TCS3400
 #define CONFIG_ALS_TCS3400_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-#define I2C_PORT_ALS      I2C_PORT_SENSOR
+#define I2C_PORT_ALS I2C_PORT_SENSOR
 #define CONFIG_TEMP_SENSOR
 /* AMD SMBUS Temp sensors */
 #define CONFIG_TEMP_SENSOR_AMD_R19ME4070
@@ -56,7 +62,7 @@
 #define I2C_PORT_THERMAL I2C_PORT_SENSOR
 
 /* GPU features */
-#define I2C_PORT_GPU                    NPCX_I2C_PORT4_1
+#define I2C_PORT_GPU NPCX_I2C_PORT4_1
 
 /* USB Type C and USB PD defines */
 #undef CONFIG_USB_PD_TCPMV1
@@ -65,6 +71,7 @@
  * parade PS8751 TCPC
  */
 #define CONFIG_USB_PD_TCPMV2
+#undef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 #define CONFIG_USB_PID 0x5047
 #define CONFIG_USB_PD_DECODE_SOP
 #define CONFIG_USB_PD_TRY_SRC
@@ -111,7 +118,7 @@
 #define CONFIG_CUSTOM_FAN_CONTROL
 #undef CONFIG_FAN_INIT_SPEED
 #define CONFIG_FAN_INIT_SPEED 50
-#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_A_RAILS
+#define CONFIG_TEMP_SENSOR_POWER
 #define CONFIG_THERMISTOR
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
@@ -130,15 +137,16 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_PCH_RSMRST_L	GPIO_EC_PCH_RSMRST_L
-#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
-#define GPIO_CPU_PROCHOT	GPIO_EC_PROCHOT_ODL
-#define GPIO_AC_PRESENT		GPIO_ACOK_OD
-#define GPIO_RSMRST_L_PGOOD	GPIO_PG_EC_RSMRST_L
-#define GPIO_PCH_SYS_PWROK	GPIO_EC_PCH_SYS_PWROK
-#define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
-#define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
-#define GPIO_EN_PP5000		GPIO_EN_PP5000_A
+#define GPIO_PCH_RSMRST_L GPIO_EC_PCH_RSMRST_L
+#define GPIO_PCH_SLP_S0_L GPIO_SLP_S0_L
+#define GPIO_CPU_PROCHOT GPIO_EC_PROCHOT_ODL
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_PG_EC_RSMRST_ODL GPIO_PG_EC_RSMRST_L
+#define GPIO_PCH_SYS_PWROK GPIO_EC_PCH_SYS_PWROK
+#define GPIO_PCH_SLP_S3_L GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L GPIO_SLP_S4_L
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_A_RAILS
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 
 #ifndef __ASSEMBLER__
 
@@ -150,8 +158,8 @@
 extern enum gpio_signal gpio_en_pp5000_a;
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,	/* ADC0 */
-	ADC_TEMP_SENSOR_2,	/* ADC1 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
 	ADC_CH_COUNT
 };
 
@@ -164,12 +172,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_FAN,
-	PWM_CH_FAN2,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT, PWM_CH_FAN, PWM_CH_FAN2, PWM_CH_COUNT };
 
 enum fan_channel {
 	FAN_CH_0 = 0,
@@ -202,15 +205,14 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-
 #undef PD_OPERATING_POWER_MW
-#define PD_OPERATING_POWER_MW	15000
+#define PD_OPERATING_POWER_MW 15000
 #undef PD_MAX_POWER_MW
-#define PD_MAX_POWER_MW		100000
+#define PD_MAX_POWER_MW 100000
 #undef PD_MAX_CURRENT_MA
-#define PD_MAX_CURRENT_MA	5000
+#define PD_MAX_CURRENT_MA 5000
 #undef PD_MAX_VOLTAGE_MV
-#define PD_MAX_VOLTAGE_MV	20000
+#define PD_MAX_VOLTAGE_MV 20000
 
 #endif /* !__ASSEMBLER__ */
 

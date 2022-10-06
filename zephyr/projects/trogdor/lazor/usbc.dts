@@ -1,0 +1,36 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* TODO(b/227359762): lazor: move UBC-C configuration into the
+		 * devicetree
+		 */
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+
+			bc12 = <&bc12_port0>;
+			tcpc = <&tcpc_port0>;
+
+			ppc = <&ppc_port0>;
+
+			chg = <&charger>;
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+
+			bc12 = <&bc12_port1>;
+			tcpc = <&tcpc_port1>;
+
+			ppc = <&ppc_port1>;
+		};
+	};
+};

@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -71,4 +71,4 @@ int board_get_entropy(void *buffer, int len);
 
 #endif
 
-#endif  /* __CROS_EC_ROLLBACK_H */
+#endif /* __CROS_EC_ROLLBACK_H */

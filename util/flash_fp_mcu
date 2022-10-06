@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Copyright 2019 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -19,46 +19,78 @@ DEFINE_boolean 'remove_flash_write_protect' "${FLAGS_TRUE}" \
 DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
 DEFINE_integer 'baudrate' "${STM32MON_SERIAL_BAUDRATE}" 'Specify UART baudrate' 'B'
 DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
-FLAGS_HELP="Usage: ${0} [flags] ec.bin"
+DEFINE_boolean 'services' "${FLAGS_TRUE}" \
+  'Stop and restart conflicting fingerprint services' 's'
+FLAGS_HELP="Usage: ${0} [flags] [ec.bin]"
+
+#        EXIT_SUCCESS=0
+#        EXIT_FAILURE=1
+#        EXIT_BASHBUILTIN=2
+readonly EXIT_ARGUMENT=3
+readonly EXIT_CONFIG=4
+readonly EXIT_PRECONDITION=5
+readonly EXIT_RUNTIME=6
 
 # Process commandline flags
-FLAGS "${@}" || exit 1
+FLAGS "${@}" || exit "${EXIT_ARGUMENT}"
 eval set -- "${FLAGS_ARGV}"
-
-if [[ "$#" -eq 0 ]] && [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
-  echo "Missing filename"
-  flags_help
-  exit 1
-fi
-
-# print out canonical path to differentiate between /usr/local/bin and
-# /usr/bin installs
-echo "$(readlink -f "$0")"
 
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
 
 readonly CROS_EC_UART_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-uart"
 
+klog() {
+  echo "flash_fp_mcu: $*" > /dev/kmsg
+}
+
 check_hardware_write_protect_disabled() {
-  local hardware_write_protect_state="$(crossystem wpsw_cur)"
+  local hardware_write_protect_state
+  if ! hardware_write_protect_state="$(crossystem wpsw_cur)"; then
+    echo "Failed to get hardware write protect status" >&2
+    exit "${EXIT_PRECONDITION}"
+  fi
   if [[ "${hardware_write_protect_state}" != "0" ]]; then
     echo "Please make sure hardware write protect is disabled."
     echo "See https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection"
-    exit 1
+    exit "${EXIT_PRECONDITION}"
   fi
+}
+
+# Get the gpiochip base number from sysfs that matches
+# a device path
+get_sysfs_gpiochip_base() {
+  local match="${1}"
+
+  for chip in /sys/class/gpio/gpiochip*
+  do
+    case "$(readlink ${chip})" in
+     ${match})
+      echo "${chip#/sys/class/gpio/gpiochip}"
+      return 0
+      ;;
+    esac
+  done
+
+  return 1
 }
 
 # Get the spiid for the fingerprint sensor based on the modalias
 # string: https://crbug.com/955117
 get_spiid() {
+  # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
+  if [[ -n "${DEVICEID}" ]]; then
+    echo "${DEVICEID}"
+    return 0
+  fi
+
   for dev in /sys/bus/spi/devices/*; do
     if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_SPI_MODALIAS_STR}" ]]; then
-      echo "$(basename "${dev}")"
-      exit 0
+      basename "${dev}"
+      return 0
     fi
   done
 
-  exit 1
+  return 1
 }
 
 # Get the uartid for the fingerprint sensor based on the modalias
@@ -66,17 +98,69 @@ get_uartid() {
   for dev in /sys/bus/serial/devices/*; do
     if [ -f "${dev}/modalias" ]; then
       if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_UART_MODALIAS_STR}" ]]; then
-        echo "$(basename "${dev}")"
-        exit 0
+        basename "${dev}"
+        return 0
       fi
     fi
   done
 
-  exit 1
+  return 1
+}
+
+# Usage: gpio <unexport|export|in|out|0|1|get> <signal> [signal...]
+gpio() {
+  local cmd="$1"
+  shift
+
+  for signal in "$@"; do
+    case "${cmd}" in
+      unexport|export)
+        klog "Set gpio ${signal} to ${cmd}"
+        echo "${signal}" > "/sys/class/gpio/${cmd}"
+        ;;
+      in|out)
+        local direction="${cmd}"
+        klog "Set gpio ${signal} direction to ${direction}"
+        echo "${direction}" > "/sys/class/gpio/gpio${signal}/direction"
+        ;;
+      0|1)
+        local value="${cmd}"
+        klog "Set gpio ${signal} to ${value}"
+        echo "${value}" > "/sys/class/gpio/gpio${signal}/value"
+        ;;
+      get)
+        local value="${cmd}"
+        klog "Get gpio ${signal}"
+        cat "/sys/class/gpio/gpio${signal}/value"
+        ;;
+      *)
+        echo "Invalid gpio command: ${cmd}" >&2
+        exit "${EXIT_RUNTIME}"
+        ;;
+    esac
+  done
+}
+
+# Usage: warn_gpio <signal> <expected_value> <msg>
+warn_gpio() {
+  local signal=$1
+  local expected_value=$2
+  local msg=$3
+
+  local value
+  if ! value="$(gpio get "${signal}")"; then
+    echo "Error fetching gpio value ${signal}" >&2
+    exit "${EXIT_RUNTIME}"
+  fi
+
+  if [[ "${value}" != "${expected_value}" ]]; then
+    echo "${msg}" >&2
+    return 1
+  fi
 }
 
 # Taken verbatim from
-# https://chromium.googlesource.com/chromiumos/docs/+/master/lsb-release.md#shell
+# https://chromium.googlesource.com/chromiumos/docs/+/HEAD/lsb-release.md#shell
 # This should not be used by anything except get_platform_name.
 # See https://crbug.com/98462.
 lsbval() {
@@ -97,6 +181,8 @@ lsbval() {
 
 # Get the underlying board (reference design) that we're running on (not the
 # FPMCU or sensor).
+# This may be an extended platform name, like nami-kernelnext, hatch-arc-r,
+# or hatch-borealis.
 get_platform_name() {
   local platform_name
 
@@ -117,18 +203,83 @@ get_platform_name() {
   echo "Getting platform name from /etc/lsb-release." 1>&2
   platform_name="$(lsbval "CHROMEOS_RELEASE_BOARD")"
   if [[ -z "${platform_name}" ]]; then
-    exit 1
+    return 1
   fi
 
   echo "${platform_name}"
 }
 
-check_gpio_chip_exists() {
-  local gpiochip="$1"
-  if [[ ! -e "/sys/class/gpio/${gpiochip}" ]]; then
-    echo "Cannot find GPIO chip: ${gpiochip}"
-    exit 1
+# Test the current running kernel version against a regular expression.
+# Returns 0 if the regex matches.
+match_kernel_regex() {
+  local match_exp=$1
+  local kversion
+  kversion=$(uname -r)
+  [[ $kversion =~ $match_exp ]]
+  return $?
+}
+
+# Given a full platform name, extract the base platform.
+#
+# Tests are also run on modified images, like hatch-arc-r, hatch-borealis, or
+# hatch-kernelnext. These devices still have fingerprint and are expected to
+# pass tests. The full platform name reflects these modifications and might
+# be needed to apply an alternative configuration (kernelnext). Other modified
+# tests (arc-r) just need to default to the base platform config, which is
+# identified by this function.
+# See b/186697064.
+#
+# Examples:
+# * platform_base_name "hatch-kernelnext" --> "hatch"
+# * platform_base_name "hatch-arc-r"      --> "hatch"
+# * platform_base_name "hatch-borealis"   --> "hatch"
+# * platform_base_name "hatch"            --> "hatch"
+#
+# Usage: platform_base_name <platform_name>
+platform_base_name() {
+  local platform_name="$1"
+
+  # We remove any suffix starting at the first '-'.
+  echo "${platform_name%%-*}"
+}
+
+get_default_fw() {
+  local board
+  board="$(cros_config /fingerprint board)"
+
+  # If cros_config returns "", that is okay assuming there is only
+  # one firmware file on disk.
+
+  local -a fws
+  mapfile -t fws < <(find /opt/google/biod/fw -name "${board}*.bin")
+
+  if [[ "${#fws[@]}" -ne 1 ]]; then
+    return 1
   fi
+
+  echo "${fws[0]}"
+}
+
+# Find processes that have the named file, active or deleted, open.
+#
+# Deleted files are important because unbinding/rebinding cros-ec
+# with biod/timberslide running will result in the processes holding open
+# a deleted version of the files. Issues can arise if the process continue
+# to interact with the deleted files (ex kernel panic) while the raw driver
+# is being used in flash_fp_mcu. The lsof and fuser tools can't seem to
+# identify usages of the deleted named file directly, without listing all
+# files. This takes a large amount out time on Chromebooks, thus we need this
+# custom search routine.
+#
+# Usage: proc_open_file [file_pattern]
+proc_open_file() {
+  local file_pattern="$1"
+
+  # Avoid overloading kernel max arguments with the number of file names.
+  local -a FDS=( /proc/*/fd/* )
+  xargs ls -l <<<"${FDS[*]}" 2>/dev/null | grep "${file_pattern}" | \
+    awk '{split($9,p,"/"); print "PID", p[3], "->", $11, $12}'
+  return "${PIPESTATUS[1]}"
 }
 
 flash_fp_mcu_stm32() {
@@ -161,46 +312,43 @@ flash_fp_mcu_stm32() {
       # Read from FPMCU to file
       if [[ -e "${file}" ]]; then
         echo "Output file already exists: ${file}"
-        exit 1
+        return "${EXIT_PRECONDITION}"
       fi
+      echo "# Reading to '${file}' over ${transport}"
       stm32mon_flags+=" -r ${file}"
     else
       # Write to FPMCU from file
       if [[ ! -f "${file}" ]]; then
         echo "Invalid image file: ${file}"
-        exit 1
+        return "${EXIT_PRECONDITION}"
       fi
+      echo "# Flashing '${file}' over ${transport}"
       stm32mon_flags+=" -e -w ${file}"
     fi
+  else
+    echo "# Saying hello over ${transport}"
   fi
 
 
   check_hardware_write_protect_disabled
 
   if [[ "${transport}" == "UART" ]]; then
-    deviceid="$(get_uartid)"
-    if [[ $? -ne 0 ]]; then
+    if ! deviceid="$(get_uartid)"; then
       echo "Unable to find FP sensor UART device: ${CROS_EC_UART_MODALIAS_STR}"
-      exit 1
+      return "${EXIT_PRECONDITION}"
     fi
   else
-    deviceid="$(get_spiid)"
-    if [[ $? -ne 0 ]]; then
+
+    if ! deviceid="$(get_spiid)"; then
       echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
-      exit 1
+      return "${EXIT_PRECONDITION}"
     fi
   fi
 
   echo "Flashing ${transport} device ID: ${deviceid}"
 
-  # Ensure the ACPI is not cutting power when unloading cros-ec-spi
-  if [[ "${gpio_pwren}" -gt 0 ]]; then
-    echo "${gpio_pwren}" > /sys/class/gpio/export
-    echo "out" > "/sys/class/gpio/gpio${gpio_pwren}/direction"
-    echo 1 > "/sys/class/gpio/gpio${gpio_pwren}/value"
-  fi
-
   # Remove cros_fp if present
+  klog "Unbinding cros-ec driver"
   if [[ "${transport}" == "UART" ]]; then
     echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
   else
@@ -208,40 +356,59 @@ flash_fp_mcu_stm32() {
   fi
 
   # Configure the MCU Boot0 and NRST GPIOs
-  echo "${gpio_boot0}" > /sys/class/gpio/export
-  echo "out" > "/sys/class/gpio/gpio${gpio_boot0}/direction"
-  echo "${gpio_nrst}" > /sys/class/gpio/export
-  echo "out" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
+  gpio export "${gpio_boot0}" "${gpio_nrst}"
+  gpio out    "${gpio_boot0}" "${gpio_nrst}"
 
   # Reset sequence to enter bootloader mode
-  echo 1 > "/sys/class/gpio/gpio${gpio_boot0}/value"
-  echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+  gpio 1 "${gpio_boot0}"
+  gpio 0 "${gpio_nrst}"
   sleep 0.001
 
+  klog "Binding raw driver"
   if [[ "${transport}" == "UART" ]]; then
-    # load AMD0020:01 ttyS1
-    echo AMD0020:01 > /sys/bus/platform/drivers/dw-apb-uart/unbind;
-    echo AMD0020:01 > /sys/bus/platform/drivers/dw-apb-uart/bind;
+    # load AMDI0020:01 ttyS1
+    echo AMDI0020:01 > /sys/bus/platform/drivers/dw-apb-uart/unbind;
+    echo AMDI0020:01 > /sys/bus/platform/drivers/dw-apb-uart/bind;
   else
-    # load spidev (fail on cros-ec-spi first to change modalias)
-    echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind 2>/dev/null
+    echo spidev > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/spidev/bind
     # The following sleep is a workaround to mitigate the effects of a
     # poorly behaved chip select line. See b/145023809.
   fi
   sleep 0.5
 
+  # We do not expect the drivers to change the pin state when binding.
+  # If you receive this warning, the driver needs to be fixed on this board
+  # and this flash attempt will probably fail.
+  warn_gpio "${gpio_boot0}" 1 \
+    "WARNING: One of the drivers changed BOOT0 pin state on bind attempt."
+  warn_gpio "${gpio_nrst}" 0 \
+    "WARNING: One of the drivers changed NRST pin state on bind attempt."
+
+  if [[ ! -c "${device}" ]]; then
+    echo "Failed to bind raw device driver." >&2
+    return "${EXIT_RUNTIME}"
+  fi
+
   local attempt=0
   local cmd_exit_status=1
   local cmd="stm32mon ${stm32mon_flags}"
 
-  for attempt in $(seq ${FLAGS_retries}); do
+  for attempt in $(seq "${FLAGS_retries}"); do
     # Reset sequence to enter bootloader mode
-    echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+    gpio 0 "${gpio_nrst}"
     sleep 0.01
 
     # Release reset as the SPI bus is now ready
-    echo 1 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+    gpio 1 "${gpio_nrst}"
+
+    # As per section '68: Bootloader timings' from application note below:
+    # https://www.st.com/resource/en/application_note/cd00167594-stm32-microcontroller-system-memory-boot-mode-stmicroelectronics.pdf
+    # bootloader startup time is 16.63 ms for STM32F74xxx/75xxx and 53.975 ms
+    # for STM32H74xxx/75xxx. SPI needs 1 us delay for one SPI byte sending.
+    # Keeping some margin, add delay of 100 ms to consider minimum bootloader
+    # startup time after the reset for stm32 devices.
+    sleep 0.1
 
     # Print out the actual underlying command we're running and run it
     echo "# ${cmd}"
@@ -258,50 +425,85 @@ flash_fp_mcu_stm32() {
 
   # unload device
   if [[ "${transport}" != "UART" ]]; then
+    klog "Unbinding raw driver"
     echo "${deviceid}" > /sys/bus/spi/drivers/spidev/unbind
   fi
 
   # Go back to normal mode
-  echo "out" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
-  echo 0 > "/sys/class/gpio/gpio${gpio_boot0}/value"
-  echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
-  echo 1 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+  gpio 0   "${gpio_boot0}"
 
-  # Give up GPIO control
-  echo "in" > "/sys/class/gpio/gpio${gpio_boot0}/direction"
-  echo "in" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
-  echo "${gpio_boot0}" > /sys/class/gpio/unexport
-  echo "${gpio_nrst}" > /sys/class/gpio/unexport
+  # Dartmonkey's RO has a flashprotect logic issue that forces reboot loops
+  # when SW-WP is enabled and HW-WP is disabled. It is avoided if a POR is
+  # detected on boot. We force a POR here to ensure we avoid this reboot loop.
+  # See to b/146428434.
+  if [[ "${gpio_pwren}" -gt 0 ]]; then
+    echo "Power cycling the FPMCU."
+    gpio export "${gpio_pwren}"
+    gpio out    "${gpio_pwren}"
+    gpio 0      "${gpio_pwren}"
+    # Must outlast hardware soft start, which is typically ~3ms.
+    sleep 0.5
+    gpio 1      "${gpio_pwren}"
+    # Power enable line is externally pulled down, so leave as output-high.
+    gpio unexport "${gpio_pwren}"
+  else
+    echo "Reset the FPMCU."
+    gpio out	"${gpio_nrst}"
+    gpio 0	"${gpio_nrst}"
+    # Make sure that we keep nRST line low long enough.
+    sleep 0.01
+    gpio 1	"${gpio_nrst}"
+  fi
 
-  # wait for FP MCU to come back up (including RWSIG delay)
-  sleep 2
+  # Give up GPIO control, unless we need to keep these driving as
+  # outputs because they're not open-drain signals.
+  # TODO(b/179839337): Make this the default and properly support
+  # open-drain outputs on other platforms.
+  if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "zork" ]]; then
+    gpio in       "${gpio_boot0}" "${gpio_nrst}"
+  fi
+  gpio unexport "${gpio_boot0}" "${gpio_nrst}"
 
   # Put back cros_fp driver if transport is SPI
   if [[ "${transport}" != "UART" ]]; then
+    # wait for FP MCU to come back up (including RWSIG delay)
+    sleep 2
+    klog "Binding cros-ec driver"
+    echo "" > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
-
-    # Kernel driver is back, we are no longer controlling power
-    if [[ "${gpio_pwren}" -gt 0 ]]; then
-      echo "${gpio_pwren}" > /sys/class/gpio/unexport
-    fi
+  else
+    # FPMCU can still have ro_now protection (sector write protection) enabled
+    # e.g. when flash_fp_mcu was run with --read option. It is disabled when
+    # FPMCU boots with HW write protect disabled.
+    # Disabling sector write protection takes some time due to flash internal
+    # structures update. During that time we can't reset or power cycle FPMCU
+    # otherwise we will corrupt internal flash state which will brick FPMCU.
+    # This situation can occur if DUT is rebooted immediately after flash_fp_mcu
+    # finishes, so give some time to remove sector write protection. No need to
+    # wait if transport is SPI because later we query for version and reset
+    # flags.
+    sleep 3
   fi
 
   if [[ "${cmd_exit_status}" -ne 0 ]]; then
-    exit 1
+    return "${EXIT_RUNTIME}"
   fi
 
   # Inform user to reboot if transport is UART.
-  # Display fw version is transport is SPI 
+  # Display fw version is transport is SPI
   if [[ "${transport}" == "UART" ]]; then
     echo "Please reboot this device."
   else
     # Test it
+    klog "Query version and reset flags"
     ectool --name=cros_fp version
+    ectool --name=cros_fp uptimeinfo
   fi
 }
 
 config_hatch() {
-  check_gpio_chip_exists "gpiochip200"
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev1.1"
   # See
@@ -309,21 +511,59 @@ config_hatch() {
   # for pin name to number mapping.
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
-  # FPMCU RST_ODL is on GPP_A12 = 200 + 12 = 212
-  readonly GPIO_NRST=212
-  # FPMCU BOOT0 is on GPP_A22 = 200 + 22 = 222
-  readonly GPIO_BOOT0=222
-  # FP_PWR_EN is on GPP_C11 = 456 + (192 - 181) = 456 + 11 = 467
-  readonly GPIO_PWREN=467
+ 
+  local gpiochip="gpiochip712"
+  # Support kernel version 4.x, 5.4 and 5.10 during transition to 5.15+
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && gpiochip="gpiochip200"
+  readonly GPIO_CHIP="${gpiochip}"
+  local offset=0
+  # Support kernel version 4.x, 5.4 and 5.10 during transition to 5.15+
+  # v4.4 has GPIOs that are offset by -512
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && offset=512
+  
+  # FPMCU RST_ODL is on GPP_A12 = 712 + 12 = 724
+  local gpionrst=724
+  readonly GPIO_NRST=$(( gpionrst - offset ))
+  # FPMCU BOOT0 is on GPP_A22 = 712 + 22 = 734
+  local gpioboot=734
+  readonly GPIO_BOOT0=$(( gpioboot - offset ))
+  # FP_PWR_EN is on GPP_C11 = 968 + (192 - 181) = 968 + 11 = 979
+  local gpiopwren=979
+  readonly GPIO_PWREN=$(( gpiopwren - offset ))
 }
 
+config_herobrine() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev9.0"
+  # TODO(b/179533783): Fix this script to look for non-ACPI modalias
+  readonly DEVICEID="spi9.0"
+
+  local dev_path="*/platform/soc@0/f100000.pinctrl/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+  # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
+  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
+  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+
+  # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 42
+  readonly GPIO_PWREN=$((${gpiobase} + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
+}
 
 config_nami() {
-  check_gpio_chip_exists "gpiochip360"
+  local device="/dev/spidev1.0"
+  # Support kernel version 4.4 during transition to 5.4
+  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
 
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev32765.0"
+  readonly DEVICE="${device}"
 
+  readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
   readonly GPIO_NRST=417
   # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
@@ -333,11 +573,14 @@ config_nami() {
 }
 
 config_nocturne() {
-  check_gpio_chip_exists "gpiochip360"
+  local device="/dev/spidev1.0"
+  # Support kernel version 4.4 during transition to 5.10
+  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
 
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev32765.0"
+  readonly DEVICE="${device}"
 
+  readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
   readonly GPIO_NRST=418
   # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
@@ -346,9 +589,35 @@ config_nocturne() {
   readonly GPIO_PWREN=371
 }
 
-config_volteer() {
-  check_gpio_chip_exists "gpiochip152"
+config_strongbad() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev10.0"
+  # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
+  readonly DEVICEID="spi10.0"
 
+  local dev_path="*/platform/soc@0/3500000.pinctrl/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+  # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
+  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
+  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+
+  # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 74 (if available)
+  local en_fp_rails
+  if en_fp_rails=$(gpiofind EN_FP_RAILS); then
+    readonly GPIO_PWREN=$((${gpiobase} + $(echo $en_fp_rails|cut -f2 -d" ")))
+  else
+    readonly GPIO_PWREN=-1
+  fi
+}
+
+config_volteer() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev1.0"
 
@@ -358,59 +627,229 @@ config_volteer() {
   # volteer device to determine gpio number from pin number.
   # For example: GPP_C23 is UART2_CTS which can be queried from EDS
   # the pin number is 194. From the gpio-ranges, the gpio value is
-  # 408 + (194-171) = 431
+  # 920 + (194-171) = 943
 
-  # FPMCU RST_ODL is on GPP_C23 = 408 + (194 - 171) = 431
-  readonly GPIO_NRST=431
-  # FPMCU BOOT0 is on GPP_C22 = 408 + (193 - 171) = 430
-  readonly GPIO_BOOT0=430
-  # FP_PWR_EN is on GPP_A21 = 216 + (63 - 42) = 237
-  readonly GPIO_PWREN=237
+  local gpiochip="gpiochip664"
+  # Support kernel version 4.x, 5.4, 5.10 during transition to 5.15+
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\..))" && gpiochip="gpiochip152"
+  readonly GPIO_CHIP="${gpiochip}"
+  local offset=0
+  # Support kernel version 4.x, 5.4, 5.10 during transition to 5.15+
+  # v4.4 has GPIOs that are offset by -512
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && offset=512
+
+  # FPMCU RST_ODL is on GPP_C23 = 920 + (194 - 171) = 943
+  local gpionrst=943
+  readonly GPIO_NRST=$(( gpionrst - offset ))
+  # FPMCU BOOT0 is on GPP_C22 = 920 + (193 - 171) = 942
+  local gpioboot=942
+  readonly GPIO_BOOT0=$(( gpioboot - offset ))
+  # FP_PWR_EN is on GPP_A21 = 728 + (63 - 42) = 749
+  local gpiopwren=749
+  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+}
+
+config_brya() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev0.0"
+
+  # See kernel/v5.10/drivers/pinctrl/intel/pinctrl-tigerlake.c
+  # for pin name and pin number.
+  # Examine `cat /sys/kernel/debug/pinctrl/INTC1055:00/gpio-ranges` on a
+  # brya device to determine gpio number from pin number.
+  # For example: GPP_D1 is ISH_GP_1 which can be queried from EDS
+  # the pin number is 100 from the pinctrl-tigerlake.c.
+  # From the gpio-ranges, the gpio value is 824 + (100-99) = 825
+
+  local gpiochip="gpiochip664"
+  # Support kernel version 5.10 during transition to 5.15+
+  match_kernel_regex "^5\.10\." && gpiochip="gpiochip152"
+  readonly GPIO_CHIP="${gpiochip}"
+
+  local offset=0
+  # Support kernel version 5.10 during transition to 5.15+
+  # v5.10 has GPIOs that are offset by -512
+  match_kernel_regex "^5\.10\." && offset=512
+
+  # FPMCU RST_ODL is on GPP_D1 = 824 + (100 - 99) = 825
+  local gpionrst=825
+  readonly GPIO_NRST=$(( gpionrst - offset ))
+  # FPMCU BOOT0 is on GPP_D0 = 824 + (99 - 99) = 824
+  local gpioboot=824
+  readonly GPIO_BOOT0=$(( gpioboot - offset ))
+  # FP_PWR_EN is on GPP_D2 = 824 + (101 - 99) = 826
+  local gpiopwren=826
+  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+}
+
+config_brask() {
+  # Let's call the config_brya since brask follows the brya HW design
+  config_brya
+}
+
+config_ghost() {
+  # No changes to brya.
+  config_brya
 }
 
 config_zork() {
-  check_gpio_chip_exists "gpiochip320"
+  readonly TRANSPORT="UART"
+  readonly DEVICE="/dev/ttyS1"
 
+  readonly GPIO_CHIP="gpiochip256"
+  # FPMCU RST_ODL is on AGPIO 11 = 256 + 11 = 267
+  readonly GPIO_NRST=267
+  # FPMCU BOOT0 is on AGPIO 69 = 256 + 69 = 325
+  readonly GPIO_BOOT0=325
+  # FPMCU PWR_EN is on AGPIO 32 = 256 + 32 = 288
+  readonly GPIO_PWREN=288
+}
+
+config_guybrush() {
   readonly TRANSPORT="UART"
 
   readonly DEVICE="/dev/ttyS1"
 
-  # FPMCU RST_ODL is on AGPIO 11 = 320 + 11 = 331
-  readonly GPIO_NRST=331
-  # FPMCU BOOT0 is on AGPIO 69 = 320 + 69 = 389
-  readonly GPIO_BOOT0=389
-  # FPMCU PWR_EN is not available on Zork. Set invalid value
-  readonly GPIO_PWREN=-1
+  readonly GPIO_CHIP="gpiochip256"
+  # FPMCU RST_ODL is on AGPIO 11 = 256 + 11 = 267
+  readonly GPIO_NRST=267
+  # FPMCU BOOT0 is on AGPIO 144 = 256 + 144 = 400
+  readonly GPIO_BOOT0=400
+  # FPMCU PWR_EN is on AGPIO 3 = 256 + 3 = 259
+  readonly GPIO_PWREN=259
 }
 
-# The "platform name" corresponds to the underlying board (reference design)
-# that we're running on (not the FPMCU or sensor). At the moment all of the
-# reference designs use the same GPIOs. If for some reason a design differs in
-# the future, we will want to add a nested check in the config_<platform_name>
-# function. Doing it in this manner allows us to reduce the number of
-# configurations that we have to maintain (and reduces the amount of testing
-# if we're only updating a specific config_<platform_name>).
-readonly PLATFORM_NAME="$(get_platform_name)"
+config_skyrim() {
+  readonly TRANSPORT="UART"
 
-echo "Using config for ${PLATFORM_NAME}"
+  readonly DEVICE="/dev/ttyS1"
 
-# Check that the config function exists
-if [[ "$(type -t "config_${PLATFORM_NAME}")" != "function" ]]; then
-  echo "No config for platform ${PLATFORM_NAME}"
-  exit 1
-fi
+  readonly GPIO_CHIP="gpiochip768"
+  # FPMCU RST_ODL is on AGPIO 12 = 768 + 12 = 780
+  readonly GPIO_NRST=780
+  # FPMCU BOOT0 is on AGPIO 130 = 768 + 130 = 898
+  readonly GPIO_BOOT0=898
+  # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
+  readonly GPIO_PWREN=772
+}
 
-config_${PLATFORM_NAME}
+main() {
+  local filename="$1"
 
-if [[ $? -ne 0 ]]; then
-  echo "Configuration failed for platform ${PLATFORM_NAME}"
-  exit 1
-fi
+  # print out canonical path to differentiate between /usr/local/bin and
+  # /usr/bin installs
+  readlink -f "$0"
 
-flash_fp_mcu_stm32 \
-  "${TRANSPORT}"   \
-  "${DEVICE}"      \
-  "${GPIO_NRST}"   \
-  "${GPIO_BOOT0}"  \
-  "${GPIO_PWREN}"  \
-  "${1}"
+  # The "platform name" corresponds to the underlying board (reference design)
+  # that we're running on (not the FPMCU or sensor). At the moment all of the
+  # reference designs use the same GPIOs. If for some reason a design differs in
+  # the future, we will want to add a nested check in the config_<platform_name>
+  # function. Doing it in this manner allows us to reduce the number of
+  # configurations that we have to maintain (and reduces the amount of testing
+  # if we're only updating a specific config_<platform_name>).
+  if ! PLATFORM_NAME="$(get_platform_name)"; then
+    echo "Failed to get platform name"
+    exit "${EXIT_CONFIG}"
+  fi
+  readonly PLATFORM_NAME
+
+  if ! PLATFORM_BASE_NAME="$(platform_base_name "${PLATFORM_NAME}")"; then
+    echo "Failed to get platform base name"
+    exit "${EXIT_CONFIG}"
+  fi
+  readonly PLATFORM_BASE_NAME
+
+  echo "Platform name is ${PLATFORM_NAME} (${PLATFORM_BASE_NAME})."
+
+  # Check that the config function exists
+  if [[ "$(type -t "config_${PLATFORM_NAME}")" == "function" ]]; then
+    readonly PLATFORM_CONFIG="${PLATFORM_NAME}"
+  elif [[ "$(type -t "config_${PLATFORM_BASE_NAME}")" == "function" ]]; then
+    readonly PLATFORM_CONFIG="${PLATFORM_BASE_NAME}"
+  else
+    echo "No config for platform ${PLATFORM_NAME}." >&2
+    exit "${EXIT_CONFIG}"
+  fi
+
+  echo "Using config for ${PLATFORM_CONFIG}."
+
+  if ! "config_${PLATFORM_CONFIG}"; then
+    echo "Configuration failed for platform ${PLATFORM_CONFIG}." >&2
+    exit "${EXIT_CONFIG}"
+  fi
+
+  # Help the user out with defaults, if no *file* was given.
+  if [[ "$#" -eq 0 ]]; then
+    # If we are actually reading, set to a timestamped temp file.
+    if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
+      filename="/tmp/fpmcu-fw-$(date --iso-8601=seconds).bin"
+    else
+      # Assume we are "writing" the default firmware to the FPMCU.
+      if ! filename="$(get_default_fw)"; then
+        echo "Failed to identify a default firmware file" >&2
+        exit "${EXIT_CONFIG}"
+      fi
+    fi
+  fi
+
+  # Check that the gpiochip exists
+  if [[ ! -e "/sys/class/gpio/${GPIO_CHIP}" ]]; then
+    echo "Cannot find GPIO chip: ${GPIO_CHIP}"
+    exit "${EXIT_CONFIG}"
+  fi
+
+  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
+    echo "# Stopping biod and timberslide"
+    stop biod
+    stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+  fi
+
+  # If cros-ec driver isn't bound on startup, this means the final rebinding
+  # may fail.
+  if [[ ! -c "/dev/cros_fp" ]]; then
+    echo "WARNING: The cros-ec driver was not bound on startup." >&2
+  fi
+  if [[ -c "${DEVICE}" ]]; then
+    echo "WARNING: The raw driver was bound on startup." >&2
+  fi
+  local files_open
+  # Ensure no processes have cros_fp device or debug device open.
+  # This might be biod and/or timberslide.
+  if files_open=$(proc_open_file "/dev/cros_fp\|/sys/kernel/debug/cros_fp/*")
+  then
+    echo "WARNING: Another process has a cros_fp device file open." >&2
+    echo "${files_open}" >&2
+    echo "Try 'stop biod' and" >&2
+    echo "'stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log'" >&2
+    echo "before running this script." >&2
+    echo "See b/188985272." >&2
+  fi
+  # Ensure no processes are using the raw driver. This might be a wedged
+  # stm32mon process spawned by this script.
+  if files_open=$(proc_open_file "${DEVICE}"); then
+    echo "WARNING: Another process has ${DEVICE} open." >&2
+    echo "${files_open}" >&2
+    echo "Try 'fuser -k ${DEVICE}' before running this script." >&2
+    echo "See b/188985272." >&2
+  fi
+
+  local ret
+  flash_fp_mcu_stm32 \
+    "${TRANSPORT}"   \
+    "${DEVICE}"      \
+    "${GPIO_NRST}"   \
+    "${GPIO_BOOT0}"  \
+    "${GPIO_PWREN}"  \
+    "${filename}"
+  ret=$?
+
+  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
+    echo "# Restarting biod and timberslide"
+    start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+    start biod
+  fi
+
+  exit "${ret}"
+}
+
+main "$@"

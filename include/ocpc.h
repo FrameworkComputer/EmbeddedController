@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,7 +17,7 @@ struct ocpc_data {
 	int active_chg_chip;
 
 	int combined_rsys_rbatt_mo; /* System resistance b/w output and Vbatt */
-	int rsys_mo;  /* System resistance b/w output and VSYS node */
+	int rsys_mo; /* System resistance b/w output and VSYS node */
 	int rbatt_mo; /* Resistance between VSYS node and battery */
 
 	/* ADC values */
@@ -38,7 +38,7 @@ struct ocpc_data {
 #endif /* HAS_TASK_PD_C1 */
 };
 
-#define OCPC_NO_ISYS_MEAS_CAP	BIT(0)
+#define OCPC_NO_ISYS_MEAS_CAP BIT(0)
 
 /** Set the VSYS target for the secondary charger IC.
  *
@@ -49,8 +49,8 @@ struct ocpc_data {
  * @return EC_SUCCESS on success, error otherwise.
  */
 int ocpc_config_secondary_charger(int *desired_input_current,
-				  struct ocpc_data *ocpc,
-				  int voltage_mv, int current_ma);
+				  struct ocpc_data *ocpc, int voltage_mv,
+				  int current_ma);
 
 /** Get the runtime data from the various ADCs.
  *
@@ -59,9 +59,8 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 void ocpc_get_adcs(struct ocpc_data *ocpc);
 
 /* Set the PID constants for the charging loop */
-__overridable void ocpc_get_pid_constants(int *kp, int *kp_div,
-					  int *ki, int *ki_div,
-					  int *kd, int *kd_div);
+__overridable void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+					  int *ki_div, int *kd, int *kd_div);
 
 /*
  ** Set up some initial values for the OCPC data structure.  This will call off
@@ -70,6 +69,14 @@ __overridable void ocpc_get_pid_constants(int *kp, int *kp_div,
  * @param ocpc: Pointer to OCPC data
  */
 void ocpc_init(struct ocpc_data *ocpc);
+
+/**
+ * Reset the OCPC module.  This also sets the initial VSYS target to the current
+ * battery voltage
+ *
+ * @param ocpc: Pointer to OCPC data
+ */
+void ocpc_reset(struct ocpc_data *ocpc);
 
 /**
  * Board specific OCPC data structure initialization.  This can be used to set

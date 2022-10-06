@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,9 +17,8 @@
 #define POLL_PERIOD_USEC 1000
 /* After 30 seconds of no port 80 data, disable the timer interrupt. */
 #define INTERRUPT_DISABLE_TIMEOUT_SEC 30
-#define INTERRUPT_DISABLE_IDLE_COUNT (INTERRUPT_DISABLE_TIMEOUT_SEC \
-				      * 1000000 \
-				      / POLL_PERIOD_USEC)
+#define INTERRUPT_DISABLE_IDLE_COUNT \
+	(INTERRUPT_DISABLE_TIMEOUT_SEC * 1000000 / POLL_PERIOD_USEC)
 
 /* Count the number of consecutive interrupts with no port 80 data. */
 static int idle_count;
@@ -84,7 +83,7 @@ static void port_80_interrupt_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, port_80_interrupt_init, HOOK_PRIO_DEFAULT);
 
-void port_80_interrupt(void)
+static void port_80_interrupt(void)
 {
 	int data;
 

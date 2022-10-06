@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,9 +16,11 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "intel_x86.h"
 #include "lpc.h"
 #include "power.h"
+#include "power/amd_x86.h"
+#include "power/intel_x86.h"
+#include "power/qcom.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -26,8 +28,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
 /*
  * Default timeout in us; if we've been waiting this long for an input
@@ -35,35 +37,31 @@
  */
 #define DEFAULT_TIMEOUT SECOND
 
-/* Timeout for dropping back from S5 to G3 */
-#define S5_INACTIVITY_TIMEOUT (10 * SECOND)
+/* Timeout for dropping back from S5 to G3 in seconds */
+#ifdef CONFIG_CMD_S5_TIMEOUT
+static int s5_inactivity_timeout = 10;
+#else
+static const int s5_inactivity_timeout = 10;
+#endif
 
-static const char * const state_names[] = {
-	"G3",
-	"S5",
-	"S3",
-	"S0",
+static const char *const state_names[] = {
+	"G3",	    "S5",	"S4",	  "S3",	    "S0",
 #ifdef CONFIG_POWER_S0IX
 	"S0ix",
 #endif
-	"G3->S5",
-	"S5->S3",
-	"S3->S0",
-	"S0->S3",
-	"S3->S5",
-	"S5->G3",
+	"G3->S5",   "S5->S3",	"S3->S0", "S0->S3", "S3->S5",
+	"S5->G3",   "S3->S4",	"S4->S3", "S4->S5", "S5->S4",
 #ifdef CONFIG_POWER_S0IX
-	"S0ix->S0",
-	"S0->S0ix",
+	"S0ix->S0", "S0->S0ix",
 #endif
 };
 
-static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
-static uint32_t in_want;      /* Input signal state we're waiting for */
-static uint32_t in_debug;     /* Signal values which print debug output */
+static uint32_t in_signals; /* Current input signal states (IN_PGOOD_*) */
+static uint32_t in_want; /* Input signal state we're waiting for */
+static uint32_t in_debug; /* Signal values which print debug output */
 
-static enum power_state state = POWER_G3;  /* Current state */
-static int want_g3_exit;      /* Should we exit the G3 state? */
+static enum power_state state = POWER_G3; /* Current state */
+static int want_g3_exit; /* Should we exit the G3 state? */
 static uint64_t last_shutdown_time; /* When did we enter G3? */
 
 #ifdef CONFIG_HIBERNATE
@@ -76,50 +74,68 @@ static uint32_t hibernate_delay = CONFIG_HIBERNATE_DELAY_SEC;
 static int pause_in_s5;
 #endif
 
-static bool want_reboot_ap_at_g3;/* Want to reboot AP from G3? */
+static bool want_reboot_ap_at_g3; /* Want to reboot AP from G3? */
+/* Want to reboot AP from G3 with delay? */
+static uint64_t reboot_ap_at_g3_delay;
 
 static enum ec_status
 host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
 {
+	const struct ec_params_reboot_ap_on_g3_v1 *cmd = args->params;
+
 	/* Store request for processing at g3 */
 	want_reboot_ap_at_g3 = true;
 
+<<<<<<< HEAD
 #ifdef CONFIG_CUSTOM_BOOT_G3
 	boot_ap_on_g3();
 #endif
+=======
+	switch (args->version) {
+	case 0:
+		break;
+	case 1:
+		/* Store user specified delay to wait in G3 state */
+		reboot_ap_at_g3_delay = cmd->reboot_ap_at_g3_delay;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+>>>>>>> chromium/main
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3,
-		     host_command_reboot_ap_on_g3,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3, host_command_reboot_ap_on_g3,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 __overridable int power_signal_get_level(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_get_wire(signal);
+			return espi_vw_get_wire((enum espi_vw_signal)signal);
 	}
 	return gpio_get_level(signal);
 }
 
 int power_signal_disable_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_disable_wire_int(signal);
+			return espi_vw_disable_wire_int(
+				(enum espi_vw_signal)signal);
 	}
 	return gpio_disable_interrupt(signal);
 }
 
 int power_signal_enable_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_enable_wire_int(signal);
+			return espi_vw_enable_wire_int(
+				(enum espi_vw_signal)signal);
 	}
 	return gpio_enable_interrupt(signal);
 }
@@ -127,16 +143,17 @@ int power_signal_enable_interrupt(enum gpio_signal signal)
 int power_signal_is_asserted(const struct power_signal_info *s)
 {
 	return power_signal_get_level(s->gpio) ==
-		!!(s->flags & POWER_SIGNAL_ACTIVE_STATE);
+	       !!(s->flags & POWER_SIGNAL_ACTIVE_STATE);
 }
 
 #ifdef CONFIG_BRINGUP
 static const char *power_signal_get_name(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_INTERFACE_ESPI)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_get_wire_name(signal);
+			return espi_vw_get_wire_name(
+				(enum espi_vw_signal)signal);
 	}
 	return gpio_get_name(signal);
 }
@@ -172,8 +189,8 @@ int power_has_signals(uint32_t want)
 	if ((in_signals & want) == want)
 		return 1;
 
-	CPRINTS("power lost input; wanted 0x%04x, got 0x%04x",
-		want, in_signals & want);
+	CPRINTS("power lost input; wanted 0x%04x, got 0x%04x", want,
+		in_signals & want);
 
 	return 0;
 }
@@ -227,11 +244,11 @@ void power_set_state(enum power_state new_state)
 
 	/*
 	 * Reset want_g3_exit flag here to prevent the situation that if the
-	 * error handler in POWER_S5S3 decides to force shutdown the system and
+	 * error handler in POWER_S5S4 decides to force shutdown the system and
 	 * the flag is set, the system will go to G3 and then immediately exit
 	 * G3 again.
 	 */
-	if (state == POWER_S5S3)
+	if ((state == POWER_S5S4) || (state == POWER_S5S3))
 		want_g3_exit = 0;
 }
 
@@ -243,18 +260,19 @@ enum power_state power_get_state(void)
 #ifdef CONFIG_HOSTCMD_X86
 
 /* If host doesn't program s0ix lazy wake mask, use default s0ix mask */
-#define DEFAULT_WAKE_MASK_S0IX  (EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
-				EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
+#define DEFAULT_WAKE_MASK_S0IX                        \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
 
- /*
-  * Set the wake mask according to the current power state:
-  * 1. On transition to S0, wake mask is reset.
-  * 2. In non-S0 states, active mask set by host gets a higher preference.
-  * 3. If host has not set any active mask, then check if a lazy mask exists
-  *    for the current power state.
-  * 4. If state is S0ix and no lazy or active wake mask is set, then use default
-  *    S0ix mask to be compatible with older BIOS versions.
-  */
+/*
+ * Set the wake mask according to the current power state:
+ * 1. On transition to S0, wake mask is reset.
+ * 2. In non-S0 states, active mask set by host gets a higher preference.
+ * 3. If host has not set any active mask, then check if a lazy mask exists
+ *    for the current power state.
+ * 4. If state is S0ix and no lazy or active wake mask is set, then use default
+ *    S0ix mask to be compatible with older BIOS versions.
+ */
 
 void power_update_wake_mask(void)
 {
@@ -276,11 +294,11 @@ void power_update_wake_mask(void)
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, wake_mask);
 }
- /*
-  * Set wake mask after power state has stabilized, 5ms after power state
-  * change. The reason for making this a deferred call is to avoid race
-  * conditions occurring from S0ix periodic wakes on the SoC.
-  */
+/*
+ * Set wake mask after power state has stabilized, 5ms after power state
+ * change. The reason for making this a deferred call is to avoid race
+ * conditions occurring from S0ix periodic wakes on the SoC.
+ */
 
 static void power_update_wake_mask_deferred(void);
 DECLARE_DEFERRED(power_update_wake_mask_deferred);
@@ -305,12 +323,13 @@ static void power_set_active_wake_mask(void)
 	 * that it takes ~2msec for the periodic wake cycle to complete on the
 	 * host for KBL.
 	 */
-	hook_call_deferred(&power_update_wake_mask_deferred_data,
-			   5 * MSEC);
+	hook_call_deferred(&power_update_wake_mask_deferred_data, 5 * MSEC);
 }
 
 #else
-static void power_set_active_wake_mask(void) { }
+static void power_set_active_wake_mask(void)
+{
+}
 #endif
 
 #ifdef CONFIG_HIBERNATE
@@ -354,15 +373,15 @@ static enum ec_status hc_smart_discharge(struct host_cmd_handler_args *args)
 		else if (p->drate.cutoff > 0 && p->drate.hibern > 0)
 			drate = p->drate;
 		else if (p->drate.cutoff == 0 && p->drate.hibern == 0)
-			;  /* no-op. use the current drate. */
+			; /* no-op. use the current drate. */
 		else
 			return EC_RES_INVALID_PARAM;
 
 		/* Commit */
 		hours_to_zero = p->hours_to_zero;
 		sdzone.stayup = MIN(hours_to_zero * drate.hibern / 1000, cap);
-		sdzone.cutoff = MIN(hours_to_zero * drate.cutoff / 1000,
-				    sdzone.stayup);
+		sdzone.cutoff =
+			MIN(hours_to_zero * drate.cutoff / 1000, sdzone.stayup);
 	}
 
 	/* Return the effective values. */
@@ -373,12 +392,12 @@ static enum ec_status hc_smart_discharge(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SMART_DISCHARGE,
-		     hc_smart_discharge,
+DECLARE_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, hc_smart_discharge,
 		     EC_VER_MASK(0));
 
-__overridable enum critical_shutdown board_system_is_idle(
-		uint64_t last_shutdown_time, uint64_t *target, uint64_t now)
+__overridable enum critical_shutdown
+board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
+		     uint64_t now)
 {
 	int remain;
 
@@ -403,14 +422,15 @@ __overridable enum critical_shutdown board_system_is_idle(
 }
 #else
 /* Default implementation for battery-less systems */
-__overridable enum critical_shutdown board_system_is_idle(
-		uint64_t last_shutdown_time, uint64_t *target, uint64_t now)
+__overridable enum critical_shutdown
+board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
+		     uint64_t now)
 {
-	return now > *target ?
-			CRITICAL_SHUTDOWN_HIBERNATE : CRITICAL_SHUTDOWN_IGNORE;
+	return now > *target ? CRITICAL_SHUTDOWN_HIBERNATE :
+			       CRITICAL_SHUTDOWN_IGNORE;
 }
-#endif	/* CONFIG_BATTERY */
-#endif	/* CONFIG_HIBERNATE */
+#endif /* CONFIG_BATTERY */
+#endif /* CONFIG_HIBERNATE */
 
 /**
  * Common handler for steady states
@@ -418,13 +438,24 @@ __overridable enum critical_shutdown board_system_is_idle(
  * @param state		Current power state
  * @return Updated power state
  */
-static enum power_state power_common_state(enum power_state state)
+static enum power_state power_common_state(void)
 {
 	switch (state) {
 	case POWER_G3:
 		if (want_g3_exit || want_reboot_ap_at_g3) {
+			uint64_t i;
+
 			want_g3_exit = 0;
 			want_reboot_ap_at_g3 = false;
+			reboot_ap_at_g3_delay = reboot_ap_at_g3_delay * MSEC;
+			/*
+			 * G3->S0 transition should happen only after the
+			 * user specified delay. Hence, wait until the
+			 * user specified delay times out.
+			 */
+			for (i = 0; i < reboot_ap_at_g3_delay; i += 100)
+				msleep(100);
+			reboot_ap_at_g3_delay = 0;
 
 			return POWER_G3S5;
 		}
@@ -439,7 +470,8 @@ static enum power_state power_common_state(enum power_state state)
 			}
 
 			now = get_time().val;
-			target = last_shutdown_time + hibernate_delay * SECOND;
+			target = last_shutdown_time +
+				 (uint64_t)hibernate_delay * SECOND;
 			switch (board_system_is_idle(last_shutdown_time,
 						     &target, now)) {
 			case CRITICAL_SHUTDOWN_HIBERNATE:
@@ -480,33 +512,34 @@ static enum power_state power_common_state(enum power_state state)
 		 */
 		want_g3_exit = 0;
 
-		/* Wait for inactivity timeout */
 		power_wait_signals(0);
-		if (task_wait_event(S5_INACTIVITY_TIMEOUT) ==
-		    TASK_EVENT_TIMER) {
+
+		/* Wait for inactivity timeout, if desired */
+		if (s5_inactivity_timeout == 0) {
+			return POWER_S5G3;
+		} else if (s5_inactivity_timeout < 0) {
+			task_wait_event(-1);
+		} else if (task_wait_event(s5_inactivity_timeout * SECOND) ==
+			   TASK_EVENT_TIMER) {
 			/* Prepare to drop to G3; wake not requested yet */
 			return POWER_S5G3;
 		}
 		break;
 
+	case POWER_S4:
+		/* fallthrough */
 	case POWER_S3:
+		/* fallthrough */
+	case POWER_S0:
+#ifdef CONFIG_POWER_S0IX
+		/* fallthrough */
+	case POWER_S0ix:
+#endif
 		/* Wait for a message */
 		power_wait_signals(0);
 		task_wait_event(-1);
 		break;
 
-	case POWER_S0:
-		/* Wait for a message */
-		power_wait_signals(0);
-		task_wait_event(-1);
-		break;
-#ifdef CONFIG_POWER_S0IX
-	case POWER_S0ix:
-		/* Wait for a message */
-		power_wait_signals(0);
-		task_wait_event(-1);
-		break;
-#endif
 	default:
 		/* No common functionality for transition states */
 		break;
@@ -540,10 +573,15 @@ int chipset_in_state(int state_mask)
 		need_mask = CHIPSET_STATE_HARD_OFF | CHIPSET_STATE_SOFT_OFF;
 		break;
 	case POWER_S5:
+	case POWER_S5S4:
+	case POWER_S4S5:
+	case POWER_S4:
 		need_mask = CHIPSET_STATE_SOFT_OFF;
 		break;
 	case POWER_S5S3:
 	case POWER_S3S5:
+	case POWER_S4S3:
+	case POWER_S3S4:
 		need_mask = CHIPSET_STATE_SOFT_OFF | CHIPSET_STATE_SUSPEND;
 		break;
 	case POWER_S3:
@@ -578,11 +616,16 @@ int chipset_in_or_transitioning_to_state(int state_mask)
 	case POWER_S5G3:
 		return state_mask & CHIPSET_STATE_HARD_OFF;
 	case POWER_S5:
-	case POWER_G3S5:
+	case POWER_S4:
 	case POWER_S3S5:
+	case POWER_G3S5:
+	case POWER_S4S5:
+	case POWER_S5S4:
+	case POWER_S3S4:
 		return state_mask & CHIPSET_STATE_SOFT_OFF;
-	case POWER_S3:
 	case POWER_S5S3:
+	case POWER_S3:
+	case POWER_S4S3:
 	case POWER_S0S3:
 		return state_mask & CHIPSET_STATE_SUSPEND;
 #ifdef CONFIG_POWER_S0IX
@@ -630,6 +673,18 @@ void chipset_exit_hard_off(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 
+#ifdef CONFIG_ZTEST
+void test_power_common_state(void)
+{
+	enum power_state new_state;
+
+	task_wake(task_get_current());
+	new_state = power_common_state();
+	if (new_state != state)
+		power_set_state(new_state);
+}
+#endif
+
 /*****************************************************************************/
 /* Task function */
 
@@ -649,8 +704,8 @@ void chipset_task(void *u)
 		 */
 		this_in_signals = in_signals;
 		if (this_in_signals != last_in_signals || state != last_state) {
-			CPRINTS("power state %d = %s, in 0x%04x",
-				state, state_names[state], this_in_signals);
+			CPRINTS("power state %d = %s, in 0x%04x", state,
+				state_names[state], this_in_signals);
 			if (IS_ENABLED(CONFIG_SEVEN_SEG_DISPLAY))
 				display_7seg_write(SEVEN_SEG_EC_DISPLAY, state);
 			last_in_signals = this_in_signals;
@@ -665,12 +720,16 @@ void chipset_task(void *u)
 		 * handler.
 		 */
 		if (new_state == state)
-			new_state = power_common_state(state);
+			new_state = power_common_state();
 
 		/* Handle state changes */
 		if (new_state != state) {
 			power_set_state(new_state);
 			power_set_active_wake_mask();
+
+			/* Call hooks before we enter G3 */
+			if (new_state == POWER_G3)
+				hook_notify(HOOK_CHIPSET_HARD_OFF);
 		}
 	}
 }
@@ -686,15 +745,15 @@ static void power_common_init(void)
 	/* Update input state */
 	power_update_signals();
 
-	/* Call chipset-specific init to set initial state */
-	power_set_state(power_chipset_init());
-
 	/* Enable interrupts for input signals */
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++)
 		if (s->flags & POWER_SIGNAL_DISABLE_AT_BOOT)
 			power_signal_disable_interrupt(s->gpio);
 		else
 			power_signal_enable_interrupt(s->gpio);
+
+	/* Call chipset-specific init to set initial state */
+	power_set_state(power_chipset_init());
 
 	/*
 	 * Update input state again since there is a small window
@@ -746,7 +805,7 @@ static struct {
 static void siglog_deferred(void)
 {
 	unsigned int i;
-	timestamp_t tdiff = {.val = 0};
+	timestamp_t tdiff = { .val = 0 };
 
 	/* Disable interrupts for input signals while we print stuff.*/
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
@@ -755,10 +814,9 @@ static void siglog_deferred(void)
 	CPRINTF("%d signal changes:\n", siglog_entries);
 	for (i = 0; i < siglog_entries; i++) {
 		if (i)
-			tdiff.val = siglog[i].time.val - siglog[i-1].time.val;
-		CPRINTF("  %.6lld  +%.6lld  %s => %d\n",
-			siglog[i].time.val, tdiff.val,
-			power_signal_get_name(siglog[i].signal),
+			tdiff.val = siglog[i].time.val - siglog[i - 1].time.val;
+		CPRINTF("  %.6lld  +%.6lld  %s => %d\n", siglog[i].time.val,
+			tdiff.val, power_signal_get_name(siglog[i].signal),
 			siglog[i].level);
 	}
 	if (siglog_truncated)
@@ -790,7 +848,7 @@ static void siglog_add(enum gpio_signal signal)
 
 #else
 #define SIGLOG(S)
-#endif	/* CONFIG_BRINGUP */
+#endif /* CONFIG_BRINGUP */
 
 #ifdef CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD
 /*
@@ -807,8 +865,7 @@ static void reset_power_signal_interrupt_count(void)
 	for (i = 0; i < POWER_SIGNAL_COUNT; ++i)
 		power_signal_interrupt_count[i] = 0;
 }
-DECLARE_HOOK(HOOK_SECOND,
-	     reset_power_signal_interrupt_count,
+DECLARE_HOOK(HOOK_SECOND, reset_power_signal_interrupt_count,
 	     HOOK_PRIO_DEFAULT);
 #endif
 
@@ -821,7 +878,7 @@ void power_signal_interrupt(enum gpio_signal signal)
 	for (i = 0; i < POWER_SIGNAL_COUNT; ++i) {
 		if (power_signal_list[i].gpio == signal) {
 			if (power_signal_interrupt_count[i]++ ==
-			   CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD)
+			    CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD)
 				CPRINTS("Interrupt storm! Signal %d", i);
 			break;
 		}
@@ -852,23 +909,22 @@ inline void power_set_pause_in_s5(int pause)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_powerinfo(int argc, char **argv)
+static int command_powerinfo(int argc, const char **argv)
 {
 	/*
 	 * Print power state in same format as state machine.  This is
 	 * used by FAFT tests, so must match exactly.
 	 */
-	ccprintf("power state %d = %s, in 0x%04x\n",
-		 state, state_names[state], in_signals);
+	ccprintf("power state %d = %s, in 0x%04x\n", state, state_names[state],
+		 in_signals);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
-			NULL,
+DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo, NULL,
 			"Show current power state");
 
 #ifdef CONFIG_CMD_POWERINDEBUG
-static int command_powerindebug(int argc, char **argv)
+static int command_powerindebug(int argc, const char **argv)
 {
 	const struct power_signal_info *s = power_signal_list;
 	int i;
@@ -892,23 +948,46 @@ static int command_powerindebug(int argc, char **argv)
 	ccprintf("bit meanings:\n");
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++) {
 		int mask = 1 << i;
-		ccprintf("  0x%04x %d %s\n",
-			 mask, in_signals & mask ? 1 : 0, s->name);
+		ccprintf("  0x%04x %d %s\n", mask, in_signals & mask ? 1 : 0,
+			 s->name);
 	}
 
 	return EC_SUCCESS;
 };
-DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug,
-			"[mask]",
+DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug, "[mask]",
 			"Get/set power input debug mask");
 #endif
 
-#ifdef CONFIG_HIBERNATE
-static int command_hibernation_delay(int argc, char **argv)
+#ifdef CONFIG_CMD_S5_TIMEOUT
+/* Allow command-line access to configure our S5 delay for power testing */
+static int command_s5_timeout(int argc, const char **argv)
 {
 	char *e;
-	uint32_t time_g3 = ((uint32_t)(get_time().val - last_shutdown_time))
-				/ SECOND;
+
+	if (argc >= 2) {
+		uint32_t s = strtoi(argv[1], &e, 0);
+
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		s5_inactivity_timeout = s;
+	}
+
+	/* Print the current setting */
+	ccprintf("S5 inactivity timeout: %d s\n", s5_inactivity_timeout);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(s5_timeout, command_s5_timeout, "[sec]",
+			"Set the timeout from S5 to G3 transition, "
+			"-1 to indicate no transition");
+#endif
+
+#ifdef CONFIG_HIBERNATE
+static int command_hibernation_delay(int argc, const char **argv)
+{
+	char *e;
+	uint32_t time_g3 =
+		((uint32_t)(get_time().val - last_shutdown_time)) / SECOND;
 
 	if (argc >= 2) {
 		uint32_t s = strtoi(argv[1], &e, 0);
@@ -926,8 +1005,7 @@ static int command_hibernation_delay(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
-			"[sec]",
+DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay, "[sec]",
 			"Set the delay before going into hibernation");
 
 static enum ec_status
@@ -958,10 +1036,9 @@ host_command_hibernation_delay(struct host_cmd_handler_args *args)
 	r->hibernate_delay = hibernate_delay;
 
 	args->response_size = sizeof(struct ec_response_hibernation_delay);
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY,
-		     host_command_hibernation_delay,
+DECLARE_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY, host_command_hibernation_delay,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HIBERNATE */
 
@@ -980,11 +1057,10 @@ host_command_pause_in_s5(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5,
-		     host_command_pause_in_s5,
+DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5, host_command_pause_in_s5,
 		     EC_VER_MASK(0));
 
-static int command_pause_in_s5(int argc, char **argv)
+static int command_pause_in_s5(int argc, const char **argv)
 {
 	if (argc > 1 && !parse_bool(argv[1], &pause_in_s5))
 		return EC_ERROR_INVAL;
@@ -993,8 +1069,7 @@ static int command_pause_in_s5(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5,
-			"[on|off]",
+DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5, "[on|off]",
 			"Should the AP pause in S5 during shutdown?");
 #endif /* CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5 */
 
@@ -1009,7 +1084,7 @@ __overridable void board_power_5v_enable(int enable)
 
 /* 5V enable request bitmask from various tasks. */
 static uint32_t pwr_5v_en_req;
-static struct mutex pwr_5v_ctl_mtx;
+K_MUTEX_DEFINE(pwr_5v_ctl_mtx);
 
 void power_5v_enable(task_id_t tid, int enable)
 {
@@ -1028,14 +1103,13 @@ void power_5v_enable(task_id_t tid, int enable)
 	mutex_unlock(&pwr_5v_ctl_mtx);
 }
 
-#define P5_SYSJUMP_TAG 0x5005  /* "P5" */
+#define P5_SYSJUMP_TAG 0x5005 /* "P5" */
 static void restore_enable_5v_state(void)
 {
 	const uint32_t *state;
 	int size;
 
-	state = (const uint32_t *) system_get_jump_tag(P5_SYSJUMP_TAG, 0,
-						       &size);
+	state = (const uint32_t *)system_get_jump_tag(P5_SYSJUMP_TAG, 0, &size);
 	if (state && size == sizeof(pwr_5v_en_req)) {
 		mutex_lock(&pwr_5v_ctl_mtx);
 		pwr_5v_en_req |= *state;
@@ -1048,8 +1122,34 @@ static void preserve_enable_5v_state(void)
 {
 	mutex_lock(&pwr_5v_ctl_mtx);
 	system_add_jump_tag(P5_SYSJUMP_TAG, 0, sizeof(pwr_5v_en_req),
-	    &pwr_5v_en_req);
+			    &pwr_5v_en_req);
 	mutex_unlock(&pwr_5v_ctl_mtx);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, preserve_enable_5v_state, HOOK_PRIO_DEFAULT);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
+
+#ifdef CONFIG_POWERSEQ_FAKE_CONTROL
+static int command_power_fake(int argc, const char **argv)
+{
+	if (argc < 2) {
+		ccprints("Error: Argument required");
+		return EC_ERROR_PARAM_COUNT;
+	}
+
+	if (strcasecmp(argv[1], "S0") == 0) {
+		power_fake_s0();
+		if (power_get_state() == POWER_G3)
+			want_g3_exit = 1;
+	} else if (strcasecmp(argv[1], "disable") == 0) {
+		power_fake_disable();
+	} else {
+		ccprints("Error: Unknown param");
+		return EC_ERROR_PARAM1;
+	}
+
+	power_update_signals();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(powerfake, command_power_fake, "S0|disable",
+			"Force power inputs for early board bringup");
+#endif /* defined(CONFIG_POWERSEQ_FAKE_CONTROL) */

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,9 +18,8 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
 #define CONFIG_LOW_POWER_IDLE
-#define CONFIG_LED_POWER_LED
 
-#define CONFIG_HOSTCMD_ESPI
+#define CONFIG_HOST_INTERFACE_ESPI
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
@@ -30,15 +29,13 @@
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
 /* Camera VSYNC */
 #define CONFIG_SYNC
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
+#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 /* BMA253 Lid accel */
 #define CONFIG_ACCEL_BMA255
 #define CONFIG_LID_ANGLE
@@ -48,7 +45,7 @@
 /* BH1730 and TCS3400 ALS */
 #define CONFIG_ALS
 #define ALS_COUNT 2
-#define I2C_PORT_ALS      I2C_PORT_SENSOR
+#define I2C_PORT_ALS I2C_PORT_SENSOR
 #define CONFIG_ALS_BH1730
 #define CONFIG_ALS_TCS3400
 #define CONFIG_ALS_TCS3400_INT_EVENT \
@@ -72,18 +69,18 @@
  * Kohaku will not use both BH1730_LUXTH3_1K condition
  * and BH1730_LUXTH4_1K condition.
  */
-#define BH1730_LUXTH1_1K                270
-#define BH1730_LUXTH1_D0_1K             19200
-#define BH1730_LUXTH1_D1_1K             30528
-#define BH1730_LUXTH2_1K                655360000
-#define BH1730_LUXTH2_D0_1K             11008
-#define BH1730_LUXTH2_D1_1K             10752
-#define BH1730_LUXTH3_1K                1030
-#define BH1730_LUXTH3_D0_1K             11008
-#define BH1730_LUXTH3_D1_1K             10752
-#define BH1730_LUXTH4_1K                3670
-#define BH1730_LUXTH4_D0_1K             11008
-#define BH1730_LUXTH4_D1_1K             10752
+#define BH1730_LUXTH1_1K 270
+#define BH1730_LUXTH1_D0_1K 19200
+#define BH1730_LUXTH1_D1_1K 30528
+#define BH1730_LUXTH2_1K 655360000
+#define BH1730_LUXTH2_D0_1K 11008
+#define BH1730_LUXTH2_D1_1K 10752
+#define BH1730_LUXTH3_1K 1030
+#define BH1730_LUXTH3_D0_1K 11008
+#define BH1730_LUXTH3_D1_1K 10752
+#define BH1730_LUXTH4_1K 3670
+#define BH1730_LUXTH4_D0_1K 11008
+#define BH1730_LUXTH4_D1_1K 10752
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_COMM_LOCKED
@@ -113,6 +110,7 @@
  */
 #define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA 6144
 #define CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
 
 /* Volume Button feature */
 #define CONFIG_VOLUME_BUTTONS
@@ -120,7 +118,7 @@
 #define GPIO_VOLUME_DOWN_L GPIO_EC_VOLDN_BTN_ODL
 
 /* Thermal features */
-#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_A_RAILS
+#define CONFIG_TEMP_SENSOR_POWER
 #define CONFIG_THERMISTOR
 #define CONFIG_THROTTLE_AP
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
@@ -131,15 +129,16 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_PCH_RSMRST_L	GPIO_EC_PCH_RSMRST_L
-#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
-#define GPIO_CPU_PROCHOT	GPIO_EC_PROCHOT_ODL
-#define GPIO_AC_PRESENT		GPIO_ACOK_OD
-#define GPIO_RSMRST_L_PGOOD	GPIO_PG_EC_RSMRST_L
-#define GPIO_PCH_SYS_PWROK	GPIO_EC_PCH_SYS_PWROK
-#define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
-#define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
-#define GPIO_EN_PP5000		GPIO_EN_PP5000_A
+#define GPIO_PCH_RSMRST_L GPIO_EC_PCH_RSMRST_L
+#define GPIO_PCH_SLP_S0_L GPIO_SLP_S0_L
+#define GPIO_CPU_PROCHOT GPIO_EC_PROCHOT_ODL
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_PG_EC_RSMRST_ODL GPIO_PG_EC_RSMRST_L
+#define GPIO_PCH_SYS_PWROK GPIO_EC_PCH_SYS_PWROK
+#define GPIO_PCH_SLP_S3_L GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L GPIO_SLP_S4_L
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_A_RAILS
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 
 #ifndef __ASSEMBLER__
 
@@ -150,10 +149,10 @@
 extern enum gpio_signal gpio_en_pp5000_a;
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,	/* ADC0 */
-	ADC_TEMP_SENSOR_2,	/* ADC1 */
-	ADC_TEMP_SENSOR_3,	/* ADC2 */
-	ADC_TEMP_SENSOR_4,	/* ADC3 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
+	ADC_TEMP_SENSOR_3, /* ADC2 */
+	ADC_TEMP_SENSOR_4, /* ADC3 */
 	ADC_CH_COUNT
 };
 
@@ -168,10 +167,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT, PWM_CH_COUNT };
 
 enum temp_sensor_id {
 	TEMP_SENSOR_1,

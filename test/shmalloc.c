@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -36,14 +36,14 @@ static uint32_t next = 127;
 static uint32_t myrand(void)
 {
 	next = next * 1103515245 + 12345;
-	return ((uint32_t)(next/65536) % 32768);
+	return ((uint32_t)(next / 65536) % 32768);
 }
 
 /* Keep track of buffers allocated by the test function. */
 static struct {
 	void *buf;
 	size_t buffer_size;
-} allocations[12];  /* Up to 12 buffers could be allocated concurrently. */
+} allocations[12]; /* Up to 12 buffers could be allocated concurrently. */
 
 /*
  * Verify that allocated and free buffers do not overlap, and that our and
@@ -77,8 +77,7 @@ static int check_for_overlaps(void)
 		 * multiple times to keep things simple.
 		 */
 		allocated_count = 0;
-		for (allocced_buf = allocced_buf_chain;
-		     allocced_buf;
+		for (allocced_buf = allocced_buf_chain; allocced_buf;
 		     allocced_buf = allocced_buf->next_buffer) {
 			int allocated_size, allocation_size;
 
@@ -112,13 +111,13 @@ static int check_for_overlaps(void)
 			}
 		}
 		if (!allocation_match) {
-			ccprintf("missing match %pP!\n", allocations[i].buf);
+			ccprintf("missing match %p!\n", allocations[i].buf);
 			return 0;
 		}
 	}
 	if (allocations_count != allocated_count) {
-		ccprintf("count mismatch (%d != %d)!\n",
-			 allocations_count, allocated_count);
+		ccprintf("count mismatch (%d != %d)!\n", allocations_count,
+			 allocated_count);
 		return 0;
 	}
 	return 1;
@@ -137,7 +136,7 @@ static int shmem_is_ok(int line)
 	struct shm_buffer *pbuf = free_buf_chain;
 
 	if (pbuf && pbuf->prev_buffer) {
-		ccprintf("Bad free buffer list start %pP\n", pbuf);
+		ccprintf("Bad free buffer list start %p\n", pbuf);
 		goto bailout;
 	}
 
@@ -146,20 +145,20 @@ static int shmem_is_ok(int line)
 
 		running_size += pbuf->buffer_size;
 		if (count++ > 100)
-			goto bailout;  /* Is there a loop? */
+			goto bailout; /* Is there a loop? */
 
 		top = (struct shm_buffer *)((uintptr_t)pbuf +
-					     pbuf->buffer_size);
+					    pbuf->buffer_size);
 		if (pbuf->next_buffer) {
 			if (top >= pbuf->next_buffer) {
 				ccprintf("%s:%d"
-					 " - inconsistent buffer size at %pP\n",
+					 " - inconsistent buffer size at %p\n",
 					 __func__, __LINE__, pbuf);
 				goto bailout;
 			}
 			if (pbuf->next_buffer->prev_buffer != pbuf) {
 				ccprintf("%s:%d"
-					 " - inconsistent next buffer at %pP\n",
+					 " - inconsistent next buffer at %p\n",
 					 __func__, __LINE__, pbuf);
 				goto bailout;
 			}
@@ -193,7 +192,7 @@ static int shmem_is_ok(int line)
 
 	return 1;
 
- bailout:
+bailout:
 	ccprintf("Line %d, counter %d. The list has been corrupted, "
 		 "total size %d, running size %d\n",
 		 line, counter, total_size, running_size);
@@ -207,7 +206,7 @@ static int shmem_is_ok(int line)
  */
 static uint32_t test_map;
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	int index;
 	const int shmem_size = shared_mem_size();
@@ -229,8 +228,7 @@ void run_test(int argc, char **argv)
 			if (test_map & ~ALL_PATHS_MASK) {
 				ccprintf("Unexpected mask bits set: %x"
 					 ", counter %d\n",
-					 test_map & ~ALL_PATHS_MASK,
-					 counter);
+					 test_map & ~ALL_PATHS_MASK, counter);
 				test_fail();
 				return;
 			}
@@ -253,7 +251,7 @@ void run_test(int argc, char **argv)
 				return;
 			}
 		} else {
-			size_t alloc_size = r_data % (shmem_size);
+			size_t alloc_size = r_data % (shmem_size / 2);
 
 			/*
 			 * If the allocation entry is empty - allocate a
@@ -261,7 +259,7 @@ void run_test(int argc, char **argv)
 			 */
 			if (shared_mem_acquire(alloc_size, &shptr) ==
 			    EC_SUCCESS) {
-				allocations[index].buf = (void *) shptr;
+				allocations[index].buf = (void *)shptr;
 				allocations[index].buffer_size = alloc_size;
 
 				/*
@@ -269,8 +267,8 @@ void run_test(int argc, char **argv)
 				 * modified.
 				 */
 				while (alloc_size--)
-					shptr[alloc_size] =
-					shptr[alloc_size] ^ 0xff;
+					shptr[alloc_size] = shptr[alloc_size] ^
+							    0xff;
 
 				if (!shmem_is_ok(__LINE__)) {
 					test_fail();
@@ -294,8 +292,8 @@ void run_test(int argc, char **argv)
 			}
 		}
 
-	ccprintf("Did not pass all paths, map %x != %x\n",
-		 test_map, ALL_PATHS_MASK);
+	ccprintf("Did not pass all paths, map %x != %x\n", test_map,
+		 ALL_PATHS_MASK);
 	test_fail();
 }
 

@@ -1,0 +1,94 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig CROS_SYSTEM_NPCX
+	bool "Nuvoton NPCX cros system driver"
+	depends on SOC_FAMILY_NPCX
+	default y
+	help
+	  This option enables the cros system driver for the NPCX family of
+	  processors. Currently, Zephyr doesn't provide the system related API.
+	  The cros system driver provides the low-level driver related to
+	  chromium ec system functionality.
+
+if CROS_SYSTEM_NPCX
+
+config CROS_SYSTEM_NPCX_INIT_PRIORITY
+	int "cros_system npcx initialization priority"
+	default 10
+	range 10 19
+	help
+	  This sets the npcx cros_system driver initialization priority. The
+	  cros_system driver provides access to the NPCX reset cause and must be
+	  higher priority than CONFIG_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CROS_SYSTEM_NPCX
+
+config CROS_SYSTEM_IT8XXX2
+	bool "ITE IT8XXX2 cros system driver"
+	depends on SOC_FAMILY_RISCV_ITE
+	default y
+	help
+	  This option enables the cros system driver for the it8xxx2 family of
+	  processors.
+
+if CROS_SYSTEM_IT8XXX2
+
+config CROS_SYSTEM_IT8XXX2_INIT_PRIORITY
+	int "cros_system it8xxx2 initialization priority"
+	default 10
+	help
+	  This sets the it8xxx2 cros_system driver initialization priority.
+	  The cros_system driver provides access to the it8xxx2 reset cause
+	  and must be higher priority than
+	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CROS_SYSTEM_IT8XXX2
+
+menuconfig CROS_SYSTEM_XEC
+	bool "Microchip XEC cros system driver"
+	depends on SOC_FAMILY_MEC
+	default y
+	help
+	  This option enables the cros system driver for the MCHP XEC family of
+	  processors. Currently, Zephyr doesn't provide the system related API.
+	  The cros system driver provides the low-level driver related to
+	  chromium ec system functionality.
+
+if CROS_SYSTEM_XEC
+
+config CROS_SYSTEM_XEC_INIT_PRIORITY
+	int "cros_system MEC initialization priority"
+	default 10
+	help
+	  This sets the MEC cros_system driver initialization priority.
+	  The cros_system driver provides access to the MEC reset cause
+	  and must be higher priority than
+	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CONFIG_CROS_SYSTEM_XEC
+
+menuconfig CROS_SYSTEM_NATIVE_POSIX
+	bool "Native POSIX cros system driver (test only)"
+	depends on SOC_POSIX && CROS_EC
+	default y
+	help
+	  This option enables the cros system driver for the native POSIX
+	  testing board. Currently, Zephyr doesn't provide the system related
+	  API.  The cros system driver provides fakable stubs for the low-level
+	  driver related to chromium ec system functionality.
+
+if CROS_SYSTEM_NATIVE_POSIX
+
+config CROS_SYSTEM_NATIVE_POSIX_INIT_PRIORITY
+	int "cros_system native POSIX initialization priority (test only)"
+	default 10
+	range 10 19
+	help
+	  This sets the native POSIX cros_system driver initialization
+	  priority. The cros_system driver provides access to mockable cros
+	  system functions to facillitate testing and must be higher priority
+	  than CONFIG_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CROS_SYSTEM_NATIVE_POSIX

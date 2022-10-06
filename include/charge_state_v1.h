@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,24 +13,22 @@
 #define CHARGER_UPDATE_PERIOD (SECOND * 10)
 
 /* Power state error flags */
-#define F_CHARGER_INIT        BIT(0) /* Charger initialization */
-#define F_CHARGER_VOLTAGE     BIT(1) /* Charger maximum output voltage */
-#define F_CHARGER_CURRENT     BIT(2) /* Charger maximum output current */
-#define F_BATTERY_VOLTAGE     BIT(3) /* Battery voltage */
-#define F_BATTERY_MODE        BIT(8) /* Battery mode */
-#define F_BATTERY_CAPACITY    BIT(9) /* Battery capacity */
+#define F_CHARGER_INIT BIT(0) /* Charger initialization */
+#define F_CHARGER_VOLTAGE BIT(1) /* Charger maximum output voltage */
+#define F_CHARGER_CURRENT BIT(2) /* Charger maximum output current */
+#define F_BATTERY_VOLTAGE BIT(3) /* Battery voltage */
+#define F_BATTERY_MODE BIT(8) /* Battery mode */
+#define F_BATTERY_CAPACITY BIT(9) /* Battery capacity */
 #define F_BATTERY_STATE_OF_CHARGE BIT(10) /* State of charge, percentage */
-#define F_BATTERY_UNRESPONSIVE    BIT(11) /* Battery not responding */
-#define F_BATTERY_NOT_CONNECTED   BIT(12) /* Battery not connected */
-#define F_BATTERY_GET_PARAMS  BIT(13) /* Any battery parameter bad */
+#define F_BATTERY_UNRESPONSIVE BIT(11) /* Battery not responding */
+#define F_BATTERY_NOT_CONNECTED BIT(12) /* Battery not connected */
+#define F_BATTERY_GET_PARAMS BIT(13) /* Any battery parameter bad */
 
-#define F_BATTERY_MASK (F_BATTERY_VOLTAGE | \
-			F_BATTERY_MODE | \
-			F_BATTERY_CAPACITY | F_BATTERY_STATE_OF_CHARGE | \
-			F_BATTERY_UNRESPONSIVE | F_BATTERY_NOT_CONNECTED | \
-			F_BATTERY_GET_PARAMS)
-#define F_CHARGER_MASK (F_CHARGER_VOLTAGE | F_CHARGER_CURRENT | \
-			F_CHARGER_INIT)
+#define F_BATTERY_MASK                                             \
+	(F_BATTERY_VOLTAGE | F_BATTERY_MODE | F_BATTERY_CAPACITY | \
+	 F_BATTERY_STATE_OF_CHARGE | F_BATTERY_UNRESPONSIVE |      \
+	 F_BATTERY_NOT_CONNECTED | F_BATTERY_GET_PARAMS)
+#define F_CHARGER_MASK (F_CHARGER_VOLTAGE | F_CHARGER_CURRENT | F_CHARGER_INIT)
 
 /* Power state data
  * Status collection of charging state machine.
@@ -69,4 +67,3 @@ struct charge_state_context {
 };
 
 #endif /* __CROS_EC_CHARGE_STATE_V1_H */
-

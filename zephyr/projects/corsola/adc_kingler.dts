@@ -1,0 +1,46 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Kingler and Steelix use the same dts, take care of this when modify it.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger_pmon_r {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 0>;
+			/*
+			 * ISL9238C PSYS output is 1.44 uA/W over 33K resistor.
+			 */
+			mul = <21043>;
+		};
+		adc_ec_id0 {
+			enum-name = "ADC_ID_0";
+			io-channels = <&adc0 1>;
+		};
+		adc_ec_id1 {
+			enum-name = "ADC_ID_1";
+			io-channels = <&adc0 2>;
+		};
+		adc_charger_amon_r {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 3>;
+			mul = <1000>;
+			div = <18>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42>;
+	pinctrl-names = "default";
+};

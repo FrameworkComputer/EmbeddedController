@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,11 +8,11 @@
 #ifndef __CROS_EC_LPC_CHIP_H
 #define __CROS_EC_LPC_CHIP_H
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 
 #include "espi.h"
 
-#define MCHP_HOST_IF_LPC  (0)
+#define MCHP_HOST_IF_LPC (0)
 #define MCHP_HOST_IF_ESPI (1)
 
 /* eSPI Initialization functions */
@@ -37,7 +37,7 @@ void lpc_set_init_done(int val);
 
 void lpc_mem_mapped_init(void);
 
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 void lpcrst_interrupt(enum gpio_signal signal);
 #endif
 

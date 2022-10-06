@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,17 +10,22 @@
 
 /* Select Baseboard features */
 #define VARIANT_OCTOPUS_EC_NPCX796FB
-#define VARIANT_OCTOPUS_CHARGER_ISL9238
 #define VARIANT_OCTOPUS_TCPC_0_PS8751
 #define VARIANT_OCTOPUS_NO_SENSORS
+#define CONFIG_CHARGER_RUNTIME_CONFIG
 #include "baseboard.h"
 
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
+
 #define CONFIG_LED_COMMON
-#define CONFIG_LED_POWER_LED
 
 /* USB PD */
 #undef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
-#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+/*
+ * This board configures two chargers, one of which can measure VBUS and one of
+ * which cannot. Leave the default config, which defines
+ * CONFIG_USB_PD_VBUS_MEASURE_CHARGER.
+ */
 
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR
@@ -30,7 +35,6 @@
  * communicate on locked systems (which haven't PD negotiated).
  */
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT 15000
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC 1
 
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15001
 
@@ -50,15 +54,19 @@
 
 /* All casta systems are clamshells */
 #undef CONFIG_TABLET_MODE
-#undef CONFIG_TABLET_SWITCH
 
 /* TODO(b/119872005): Casta: confirm thermistor parts */
 #define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /* Battery W/A */
+#define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA 6144
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_I2C_XFER_BOARD_CALLBACK
+
+/* The board needs 100ms for VBUS_C[0|1]_BC12 to drop to lower VvbusUVLO */
+#undef CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS
+#define CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS 100
 
 #ifndef __ASSEMBLER__
 
@@ -66,8 +74,8 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
-	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
+	ADC_TEMP_SENSOR_AMB, /* ADC0 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC1 */
 	ADC_CH_COUNT
 };
 

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -7,7 +7,7 @@
 #include "common.h"
 #include "test_util.h"
 
-#define	CONFIG_VALUE		TEST_VALUE
+#define CONFIG_VALUE TEST_VALUE
 
 static int test_invalid_value(void)
 {
@@ -17,7 +17,7 @@ static int test_invalid_value(void)
 	return EC_ERROR_UNKNOWN;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

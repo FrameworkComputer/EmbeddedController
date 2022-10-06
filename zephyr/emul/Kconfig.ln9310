@@ -1,0 +1,22 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig EMUL_LN9310
+	bool "LN9310 switchcap emulator"
+	default y
+	depends on DT_HAS_CROS_LN9310_EMUL_ENABLED
+	depends on I2C_EMUL
+	depends on ASSERT
+	help
+	  Enable the LN9310 emulator. This driver uses the emulated I2C bus. It
+	  is used to test the ln9310 driver. Emulator API is available in
+	  zephyr/include/emul/emul_ln9310.h
+
+if EMUL_LN9310
+
+module = LN9310_EMUL
+module-str = ln9310_emul
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # EMUL_LN9310

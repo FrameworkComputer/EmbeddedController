@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -37,6 +37,13 @@ int clock_get_freq(void);
 void clock_enable_module(enum module_id module, int enable);
 
 /**
+ * Query whether clock is enabled for given module.
+ *
+ * @return Non-zero if enabled, zero if disabled.
+ */
+int clock_is_module_enabled(enum module_id module);
+
+/**
  * Enable or disable the PLL.
  *
  * @param enable	Enable PLL if non-zero; disable if zero.
@@ -71,10 +78,10 @@ enum bus_type {
 void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles);
 
 /* Clock gate control modes for clock_enable_peripheral() */
-#define CGC_MODE_RUN    BIT(0)
-#define CGC_MODE_SLEEP  BIT(1)
+#define CGC_MODE_RUN BIT(0)
+#define CGC_MODE_SLEEP BIT(1)
 #define CGC_MODE_DSLEEP BIT(2)
-#define CGC_MODE_ALL    (CGC_MODE_RUN | CGC_MODE_SLEEP | CGC_MODE_DSLEEP)
+#define CGC_MODE_ALL (CGC_MODE_RUN | CGC_MODE_SLEEP | CGC_MODE_DSLEEP)
 
 /**
  * Enable clock to peripheral by setting the CGC register pertaining
@@ -101,4 +108,4 @@ void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode);
  */
 void clock_refresh_console_in_use(void);
 
-#endif  /* __CROS_EC_CLOCK_H */
+#endif /* __CROS_EC_CLOCK_H */

@@ -1,0 +1,48 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_KEYBOARD
+
+menuconfig CROS_KB_RAW_NPCX
+	bool "Nuvoton NPCX raw-keyboard-scan driver for the Zephyr shim"
+	depends on SOC_FAMILY_NPCX
+	default y
+	help
+	  This option enables a driver for providing raw access to the
+	  keyboard-scan peripheral in the chip. This is used instead of the
+	  kscan interface so we can continue to use most of the existing
+	  keyboard-scanning code in ECOS.
+
+if CROS_KB_RAW_NPCX
+
+config CROS_KB_RAW_NPCX_KSO_HIGH_DRIVE
+	bool "Enable quasi-bidirectional buffers for KSO pins"
+	help
+	  This option enables quasi-bidirectional buffers for KSO pins. The
+	  low-impedance high drive is active when ec changes the output data
+	  buffers from 0 to 1, thereby reducing the low-to-high transition time.
+
+endif # CROS_KB_RAW_NPCX
+
+config CROS_KB_RAW_ITE
+	bool "ITE raw-keyboard-scan driver for the Zephyr shim"
+	depends on SOC_FAMILY_RISCV_ITE
+	default y
+	help
+	  This option enables a driver for providing raw access to the
+	  keyboard-scan peripheral in the chip. This is used instead of the
+	  kscan interface so we can continue to use most of the existing
+	  keyboard-scanning code in ECOS.
+
+menuconfig CROS_KB_RAW_XEC
+	bool "Microchip raw-keyboard-scan driver for the Zephyr shim"
+	depends on SOC_FAMILY_MEC
+	default y
+	help
+	  This option enables a driver for providing raw access to the
+	  keyboard-scan peripheral in the chip. This is used instead of the
+	  kscan interface so we can continue to use most of the existing
+	  keyboard-scanning code in ECOS.
+
+endif # PLATFORM_EC_KEYBOARD

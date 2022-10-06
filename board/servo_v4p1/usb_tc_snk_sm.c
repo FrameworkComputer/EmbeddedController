@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,15 +14,15 @@
 #include "usb_sm.h"
 #include "usb_tc_sm.h"
 
-#define EVT_TIMEOUT_NEVER  (-1)
-#define EVT_TIMEOUT_5MS    (5 * MSEC)
+#define EVT_TIMEOUT_NEVER (-1)
+#define EVT_TIMEOUT_5MS (5 * MSEC)
 
 /*
  * USB Type-C Sink
  *   See Figure 4-13 in Release 1.4 of USB Type-C Spec.
  */
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* Type-C Layer Flags */
 
@@ -36,9 +36,9 @@ enum usb_tc_state {
 static const struct usb_state tc_states[];
 
 /* TypeC Power strings */
-static const char * const pwr2_5_str = "5V/0.5A";
-static const char * const pwr7_5_str = "5V/1.5A";
-static const char * const pwr15_str  = "5V/3A";
+static const char *const pwr2_5_str = "5V/0.5A";
+static const char *const pwr7_5_str = "5V/1.5A";
+static const char *const pwr15_str = "5V/3A";
 
 static struct type_c {
 	/* state machine context */
@@ -101,8 +101,8 @@ static void print_alt_power(void)
 	char const *pwr;
 
 	cc = tc.polarity ? tc.cc2 : tc.cc1;
-	if (cc == TYPEC_CC_VOLT_OPEN ||
-		cc == TYPEC_CC_VOLT_RA || cc == TYPEC_CC_VOLT_RD) {
+	if (cc == TYPEC_CC_VOLT_OPEN || cc == TYPEC_CC_VOLT_RA ||
+	    cc == TYPEC_CC_VOLT_RD) {
 		/* Supply removed or not detected */
 		return;
 	}
@@ -288,4 +288,3 @@ void snk_task(void *u)
 		run_state(0, &tc.ctx);
 	}
 }
-

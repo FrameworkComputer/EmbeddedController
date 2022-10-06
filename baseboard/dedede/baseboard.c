@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,15 +8,23 @@
 #include "adc.h"
 #include "board_config.h"
 #include "cbi_fw_config.h"
+#include "charger/isl923x_public.h"
+#include "charger/sm5803.h"
 #include "chipset.h"
 #include "common.h"
+#include "console.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "intel_x86.h"
+#include "power/icelake.h"
+#include "power/intel_x86.h"
 #include "system.h"
 #include "usb_pd.h"
+
+/* Console output macros */
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /******************************************************************************/
 /*
@@ -73,7 +81,6 @@ const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {
 };
 const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_deassert_list);
 
-
 /*
  * Dedede does not use hibernate wake pins, but the super low power "Z-state"
  * instead in which the EC is powered off entirely.  Power will be restored to
@@ -104,7 +111,7 @@ __override void board_after_rsmrst(int rsmrst)
  * can call this function once it detects a VBUS presence change with which we
  * can trigger the HOOK_AC_CHANGE hook.
  */
-__override void board_vbus_present_change(void)
+__override void board_check_extpower(void)
 {
 	static int last_extpower_present;
 	int extpower_present = extpower_is_present();
@@ -115,7 +122,7 @@ __override void board_vbus_present_change(void)
 	last_extpower_present = extpower_present;
 }
 
-uint32_t pp3300_a_pgood;
+atomic_t pp3300_a_pgood;
 __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 {
 	/*
@@ -124,12 +131,25 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 	 * read the ADC values during an interrupt, therefore, this power good
 	 * value is updated via ADC threshold interrupts.
 	 */
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_SUSPEND)) {
+		/*
+		 * The ADC interrupts are disabled in suspend for PP3000_A,
+		 * therefore this value may be stale. Assume that the PGOOD
+		 * follows the enable signal for this case only.
+		 */
+		if (!gpio_get_level(GPIO_EN_PP3300_A)) {
+			CPRINTS("EN_PP3300_A is low, assuming PG is low!");
+			atomic_clear(&pp3300_a_pgood);
+		} else {
+			atomic_or(&pp3300_a_pgood, 1);
+		}
+	}
 	return pp3300_a_pgood;
 }
 
 /* Store away PP300_A good status before sysjumps */
-#define BASEBOARD_SYSJUMP_TAG	0x4242 /* BB */
-#define BASEBOARD_HOOK_VERSION	1
+#define BASEBOARD_SYSJUMP_TAG 0x4242 /* BB */
+#define BASEBOARD_HOOK_VERSION 1
 
 static void pp3300_a_pgood_preserve(void)
 {
@@ -146,13 +166,13 @@ static void baseboard_prepare_power_signals(void)
 	stored = (const int *)system_get_jump_tag(BASEBOARD_SYSJUMP_TAG,
 						  &version, &size);
 	if (stored && (version == BASEBOARD_HOOK_VERSION) &&
-					(size == sizeof(pp3300_a_pgood)))
+	    (size == sizeof(pp3300_a_pgood)))
 		/* Valid PP3300 status found, restore before CHIPSET init */
 		pp3300_a_pgood = *stored;
 
 	/* Restore pull-up on PG_PP1050_ST_OD */
 	if (system_jumped_to_this_image() &&
-					gpio_get_level(GPIO_RSMRST_L_PGOOD))
+	    gpio_get_level(GPIO_PG_EC_RSMRST_ODL))
 		board_after_rsmrst(1);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_prepare_power_signals, HOOK_PRIO_FIRST);
@@ -170,8 +190,8 @@ __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 	 * PGOOD.
 	 */
 	return gpio_get_level(GPIO_PG_PP1050_ST_OD) &&
-		gpio_get_level(GPIO_PG_DRAM_OD) &&
-		gpio_get_level(GPIO_PG_VCCIO_EXT_OD);
+	       gpio_get_level(GPIO_PG_DRAM_OD) &&
+	       gpio_get_level(GPIO_PG_VCCIO_EXT_OD);
 }
 
 __override int power_signal_get_level(enum gpio_signal signal)
@@ -182,13 +202,12 @@ __override int power_signal_get_level(enum gpio_signal signal)
 	if (signal == GPIO_PG_EC_ALL_SYS_PWRGD)
 		return intel_x86_get_pg_ec_all_sys_pwrgd();
 
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_INTERFACE_ESPI)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_get_wire(signal);
+			return espi_vw_get_wire((enum espi_vw_signal)signal);
 	}
 	return gpio_get_level(signal);
-
 }
 
 void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
@@ -199,13 +218,14 @@ void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
 	 * driver to.
 	 * Early protos do not pull VCCST_PWRGD below Vil in hardware logic,
 	 * so we need to do the same for this signal.
-	 * Pull EN_VCCIO_EXT to LOW, which ensures VCCST_PWRGD remains LOW during
-	 * SLP_S3_L assertion.
+	 * Pull EN_VCCIO_EXT to LOW, which ensures VCCST_PWRGD remains LOW
+	 * during SLP_S3_L assertion.
 	 */
 	if (!gpio_get_level(GPIO_SLP_S3_L)) {
 		gpio_set_level(GPIO_ALL_SYS_PWRGD, 0);
 		gpio_set_level(GPIO_EN_VCCIO_EXT, 0);
 		gpio_set_level(GPIO_EC_AP_VCCST_PWRGD_OD, 0);
+		gpio_set_level(GPIO_EC_AP_PCH_PWROK_OD, 0);
 	}
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
@@ -213,31 +233,56 @@ void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
 
 void baseboard_chipset_startup(void)
 {
+#ifdef CONFIG_PWM_KBLIGHT
 	/* Allow keyboard backlight to be enabled */
 	gpio_set_level(GPIO_EN_KB_BL, 1);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_chipset_startup,
 	     HOOK_PRIO_DEFAULT);
 
 void baseboard_chipset_shutdown(void)
 {
+#ifdef CONFIG_PWM_KBLIGHT
 	/* Turn off the keyboard backlight if it's on. */
 	gpio_set_level(GPIO_EN_KB_BL, 0);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
 
 void board_hibernate_late(void)
 {
+	volatile uint32_t busy = 0;
+
 	/* Disable any pull-ups on C0 and C1 interrupt lines */
 	gpio_set_flags(GPIO_USB_C0_INT_ODL, GPIO_INPUT);
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	gpio_set_flags(GPIO_USB_C1_INT_ODL, GPIO_INPUT);
-
+#endif
 	/*
 	 * Turn on the Z state.  This will not return as it will cut power to
 	 * the EC.
 	 */
 	gpio_set_level(GPIO_EN_SLP_Z, 1);
+
+	/*
+	 * Interrupts are disabled at this point, so busy-loop to consume some
+	 * time (something on the order of at least 1 second, depending on EC
+	 * chip being used)
+	 */
+	while (busy < 100000)
+		busy++;
+
+	/*
+	 * Still awake despite turning on zombie state?  Reset with AP off is
+	 * the best we can do in this situation.
+	 */
+	system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
+
+	/* Await our reset */
+	while (1)
+		;
 }
 
 int board_is_i2c_port_powered(int port)
@@ -249,20 +294,25 @@ int board_is_i2c_port_powered(int port)
 	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
 }
 
-int extpower_is_present(void)
+__overridable int extpower_is_present(void)
 {
-	int vbus_present = 0;
 	int port;
+	int rv;
+	bool acok;
+	enum ec_error_list (*check_acok)(int port, bool *acok);
 
-	/*
-	 * Boards define pd_snk_is_vbus_provided() with something appropriate
-	 * for their hardware
-	 */
-	for (port = 0; port < board_get_usb_pd_port_count(); port++)
-		if (pd_get_power_role(port) == PD_ROLE_SINK)
-			vbus_present |= pd_snk_is_vbus_provided(port);
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000))
+		check_acok = raa489000_is_acok;
+	else if (IS_ENABLED(CONFIG_CHARGER_SM5803))
+		check_acok = sm5803_is_acok;
 
-	return vbus_present;
+	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
+		rv = check_acok(port, &acok);
+		if ((rv == EC_SUCCESS) && acok)
+			return 1;
+	}
+
+	return 0;
 }
 
 __override uint32_t board_override_feature_flags0(uint32_t flags0)

@@ -1,0 +1,18 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ISL923X Charger emulator
+
+compatible: "cros,isl923x-emul"
+
+include: base.yaml
+
+properties:
+   reg:
+     required: true
+   battery:
+     type: phandle
+     required: false
+     description:
+       Reference to battery emulator.

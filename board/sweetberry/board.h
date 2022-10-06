@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -48,28 +48,28 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE	0
-#define USB_IFACE_UPDATE	1
-#define USB_IFACE_POWER		2
-#define USB_IFACE_I2C		3
-#define USB_IFACE_COUNT		4
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_UPDATE 1
+#define USB_IFACE_POWER 2
+#define USB_IFACE_I2C 3
+#define USB_IFACE_COUNT 4
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_CONSOLE		1
-#define USB_EP_UPDATE		2
-#define USB_EP_POWER		3
-#define USB_EP_I2C		4
-#define USB_EP_COUNT		5
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
+#define USB_EP_UPDATE 2
+#define USB_EP_POWER 3
+#define USB_EP_I2C 4
+#define USB_EP_COUNT 5
 
 #define CONFIG_USB_I2C
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
-#define I2C_PORT_0	0
-#define I2C_PORT_1	1
-#define I2C_PORT_2	2
-#define FMPI2C_PORT_3	3
-#define I2C_PORT_COUNT	4
+#define CONFIG_I2C_CONTROLLER
+#define I2C_PORT_0 0
+#define I2C_PORT_1 1
+#define I2C_PORT_2 2
+#define FMPI2C_PORT_3 3
+#define I2C_PORT_COUNT 4
 
 /* This is not actually a Chromium EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP

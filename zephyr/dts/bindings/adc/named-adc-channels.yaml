@@ -1,0 +1,117 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ADC parent node
+
+compatible: "named-adc-channels"
+
+child-binding:
+  description: Named ADCs child node
+  properties:
+    io-channels:
+      required: true
+      type: phandle-array
+      description: IO channels specifiers ADC channel used
+    mul:
+      required: false
+      type: int
+      default: 1
+      description: Multiplication factor of ADC measurement
+    div:
+      required: false
+      type: int
+      default: 1
+      description: Division factor of ADC measurement
+    gain:
+      required: false
+      type: string
+      description:
+        Gain selection for the ADC channel. Source of valid gain settings is
+        "enum adc_gain" found in <zephyr-base>/include/drivers/adc.h
+      enum:
+        - ADC_GAIN_1_6
+        - ADC_GAIN_1_5
+        - ADC_GAIN_1_4
+        - ADC_GAIN_1_3
+        - ADC_GAIN_1_2
+        - ADC_GAIN_2_3
+        - ADC_GAIN_1
+        - ADC_GAIN_2
+        - ADC_GAIN_3
+        - ADC_GAIN_4
+        - ADC_GAIN_8
+        - ADC_GAIN_16
+        - ADC_GAIN_32
+        - ADC_GAIN_64
+        - ADC_GAIN_128
+      default: ADC_GAIN_1
+    reference:
+      required: false
+      type: string
+      description:
+        Sets the reference voltage for the ADC channel. Source of valid
+        reference voltages is "enum adc_reference" found in
+        <zephyr-base>/include/drivers/adc.
+      enum:
+        - ADC_REF_VDD_1
+        - ADC_REF_VDD_1_2
+        - ADC_REF_VDD_1_3
+        - ADC_REF_VDD_1_4
+        - ADC_REF_INTERNAL
+        - ADC_REF_EXTERNAL0
+        - ADC_REF_EXTERNAL1
+      default: ADC_REF_INTERNAL
+    acquisition-time:
+      required: false
+      type: int
+      description:
+        Set the acquisition time for ADC conversion. Use the ADC_ACQ_TIME macro
+        to compose this value. If the hardware doesn't support a configurable
+        acquisition time, use ADC_ACQ_TIME_DEFAULT (0).
+      default: 0
+    differential:
+      required: false
+      type: boolean
+      description:
+        Set the ADC acquisition mode to differential. Default mode is
+        single-ended acquisition.
+    enum-name:
+      type: string
+      required: true
+      description:
+        Enum values used in the source code to refer to the ADC channels
+      enum:
+      - ADC_AMON_BMON
+      - ADC_BOARD_ID_0
+      - ADC_BOARD_ID_1
+      - ADC_CORE_IMON1
+      - ADC_ID_0
+      - ADC_ID_1
+      - ADC_PMON
+      - ADC_PP1050_PROC
+      - ADC_PP3300_S5
+      - ADC_PSYS
+      - ADC_SOC_IMON2
+      - ADC_TEMP_SENSOR_1
+      - ADC_TEMP_SENSOR_2
+      - ADC_TEMP_SENSOR_3
+      - ADC_TEMP_SENSOR_4
+      - ADC_TEMP_SENSOR_CHARGER
+      - ADC_TEMP_SENSOR_DDR_SOC
+      - ADC_TEMP_SENSOR_FAN
+      - ADC_TEMP_SENSOR_MEMORY
+      - ADC_TEMP_SENSOR_PP3300_REGULATOR
+      - ADC_TEMP_SENSOR_SOC
+      - ADC_TEMP_SENSOR_1_DDR_SOC
+      - ADC_TEMP_SENSOR_2_AMBIENT
+      - ADC_TEMP_SENSOR_3_CHARGER
+      - ADC_TEMP_SENSOR_4_WWAN
+      - ADC_VBUS
+      - ADC_VBUS_C0
+      - ADC_VBUS_C1
+      - ADC_EVB_CH_0
+      - ADC_EVB_CH_1
+      - ADC_EVB_CH_2
+      - ADC_EVB_CH_3
+      - ADC_EVB_CH_4

@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,6 +11,7 @@
 #include "charge_state.h"
 #include "extpower.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -21,6 +22,7 @@
 #include "lid_switch.h"
 #include "pi3usb9201.h"
 #include "power.h"
+#include "power/qcom.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -29,14 +31,16 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "usbc_ocp.h"
 #include "usbc_ppc.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* Forward declaration */
 static void tcpc_alert_event(enum gpio_signal signal);
 static void usb0_evt(enum gpio_signal signal);
+static void usba_oc_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
 
@@ -60,7 +64,20 @@ static void tcpc_alert_event(enum gpio_signal signal)
 
 static void usb0_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
+}
+
+static void usba_oc_deferred(void)
+{
+	/* Use next number after all USB-C ports to indicate the USB-A port */
+	board_overcurrent_event(CONFIG_USB_PD_PORT_MAX_COUNT,
+				!gpio_get_level(GPIO_USB_A0_OC_ODL));
+}
+DECLARE_DEFERRED(usba_oc_deferred);
+
+static void usba_oc_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
 
 static void ppc_interrupt(enum gpio_signal signal)
@@ -90,7 +107,7 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 }
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/* Use 80 us, because KSO_02 passes through the H1. */
 	.output_settle_us = 80,
 	/*
@@ -98,10 +115,8 @@ struct keyboard_scan_config keyscan_config = {
 	 * as it uses the new location (KSO_00/KSI_03). And T11 key, which maps
 	 * to KSO_01/KSI_00, is not there.
 	 */
-	.actual_key_mask = {
-		0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca
-	},
+	.actual_key_mask = { 0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff, 0xa4,
+			     0xff, 0xfe, 0x55, 0xfa, 0xca },
 	/* Other values should be the same as the default configuration. */
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
@@ -112,14 +127,26 @@ struct keyboard_scan_config keyscan_config = {
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
-	{"power",   I2C_PORT_POWER,  100, GPIO_EC_I2C_POWER_SCL,
-					  GPIO_EC_I2C_POWER_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_EC_I2C_USB_C0_PD_SCL,
-					  GPIO_EC_I2C_USB_C0_PD_SDA},
-	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
-					  GPIO_EC_I2C_EEPROM_SDA},
-	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
-					  GPIO_EC_I2C_SENSOR_SDA},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_POWER_SCL,
+	  .sda = GPIO_EC_I2C_POWER_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C0_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_PD_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA },
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -127,54 +154,37 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Measure VBUS through a 1/10 voltage divider */
-	[ADC_VBUS] = {
-		"VBUS",
-		NPCX_ADC_CH1,
-		ADC_MAX_VOLT * 10,
-		ADC_READ_MAX + 1,
-		0
-	},
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH1, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
 	 */
-	[ADC_AMON_BMON] = {
-		"AMON_BMON",
-		NPCX_ADC_CH2,
-		ADC_MAX_VOLT * 1000 / 18,
-		ADC_READ_MAX + 1,
-		0
-	},
+	[ADC_AMON_BMON] = { "AMON_BMON", NPCX_ADC_CH2, ADC_MAX_VOLT * 1000 / 18,
+			    ADC_READ_MAX + 1, 0 },
 	/*
 	 * ISL9238 PSYS output is 1.44 uA/W over 5.6K resistor, to read
 	 * 0.8V @ 99 W, i.e. 124000 uW/mV. Using ADC_MAX_VOLT*124000 and
 	 * ADC_READ_MAX+1 as multiplier/divider leads to overflows, so we
 	 * only divide by 2 (enough to avoid precision issues).
 	 */
-	[ADC_PSYS] = {
-		"PSYS",
-		NPCX_ADC_CH3,
-		ADC_MAX_VOLT * 124000 * 2 / (ADC_READ_MAX + 1),
-		2,
-		0
-	},
+	[ADC_PSYS] = { "PSYS", NPCX_ADC_CH3,
+		       ADC_MAX_VOLT * 124000 * 2 / (ADC_READ_MAX + 1), 2, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = { .channel = 3, .flags = 0, .freq = 10000 },
 	/* TODO(waihong): Assign a proper frequency. */
-	[PWM_CH_DISPLIGHT] = { .channel = 5, .flags = 0, .freq = 4800 },
+	[PWM_CH_DISPLIGHT] = { .channel = 5, .flags = 0, .freq = 20000 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Power Path Controller */
 struct ppc_config_t ppc_chips[] = {
-	{
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	{ .i2c_port = I2C_PORT_TCPC0,
+	  .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+	  .drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -184,7 +194,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -197,11 +207,14 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
  * to AP. But the TCPC chip is also needed to know the HPD status; otherwise,
  * the mux misbehaves.
  */
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.driver = &tcpci_tcpm_usb_mux_driver,
+				.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+			},
 	},
 };
 
@@ -224,8 +237,20 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 /* Initialize board. */
 static void board_init(void)
 {
+	/*
+	 * The rev-2 hardware doesn't have the external pull-up fix for the bug
+	 * b/164256614. It requires rework to stuff the resistor. For people who
+	 * has difficulty to do the rework, this is a workaround, which makes
+	 * the GPIO push-pull, instead of open-drain.
+	 */
+	if (system_get_board_version() == 2)
+		gpio_set_flags(GPIO_HIBERNATE_L, GPIO_OUTPUT);
+
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
+
+	/* Enable USB-A overcurrent interrupt */
+	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 
 	/* Enable interrupt for BMI160 sensor */
 	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
@@ -242,13 +267,42 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_hibernate(void)
+{
+	int i;
+
+	/*
+	 * Sensors are unpowered in hibernate. Apply PD to the
+	 * interrupt lines such that they don't float.
+	 */
+	gpio_set_flags(GPIO_ACCEL_GYRO_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
+	gpio_set_flags(GPIO_LID_ACCEL_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
+
+	/*
+	 * Board rev 2+ has the hardware fix. Don't need the following
+	 * workaround.
+	 */
+	if (system_get_board_version() >= 2)
+		return;
+
+	/*
+	 * Enable the PPC power sink path before EC enters hibernate;
+	 * otherwise, ACOK won't go High and can't wake EC up. Check the
+	 * bug b/170324206 for details.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		ppc_vbus_sink_enable(i, 1);
+}
+
 __override uint16_t board_get_ps8xxx_product_id(int port)
 {
-	/* Pompom rev 1+ changes TCPC from PS8751 to PS8805 */
+	/* Pompom rev 2+ changes TCPC from PS8805 to PS8755 */
 	if (system_get_board_version() == 0)
 		return PS8751_PRODUCT_ID;
+	else if (system_get_board_version() == 1)
+		return PS8805_PRODUCT_ID;
 
-	return PS8805_PRODUCT_ID;
+	return PS8755_PRODUCT_ID;
 }
 
 void board_tcpc_init(void)
@@ -270,9 +324,10 @@ void board_tcpc_init(void)
 	 * HPD pulse to enable video path
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
-		usb_mux_hpd_update(port, 0, 0);
+		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
@@ -350,8 +405,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
@@ -379,7 +433,6 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_INVAL;
 	}
 
-
 	CPRINTS("New charge port: p%d", port);
 
 	/*
@@ -403,23 +456,22 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
 	 * critical, as we may brownout.
 	 */
-	if (supplier == CHARGE_SUPPLIER_PD &&
-	    charge_ma < 1500 &&
+	if (supplier == CHARGE_SUPPLIER_PD && charge_ma < 1500 &&
 	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
 		CPRINTS("Using max ilim %d", max_ma);
 		charge_ma = max_ma;
 	}
 
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_ma = charge_ma * 95 / 100;
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -439,19 +491,16 @@ static struct mutex g_lid_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
 static struct accelgyro_saved_data_t g_bma255_data;
+static struct stprivate_data g_lis2dwl_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0,  FLOAT_TO_FP(1),  0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, FLOAT_TO_FP(1), 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -487,7 +536,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 */
 	[BASE_ACCEL] = {
 	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
@@ -512,7 +561,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 	[BASE_GYRO] = {
 	 .name = "Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_BASE,
@@ -529,22 +578,53 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-#ifndef TEST_BUILD
-/* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
+struct motion_sensor_t lis2dwl_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LIS2DWL,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &lis2dw12_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_lis2dwl_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = LIS2DWL_ADDR0_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.default_range = 2, /* g */
+	.min_frequency = LIS2DW12_ODR_MIN_VAL,
+	.max_frequency = LIS2DW12_ODR_MAX_VAL,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+		},
+		/* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
 
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
+static void board_detect_motionsensor(void)
+{
+	int val = 0;
+
+	/*
+	 * BMA253 and LIS2DWL have same target address, so we check the
+	 * LIS2DWL WHO AM I register to check the lid accel type
+	 */
+	i2c_read8(I2C_PORT_SENSOR, LIS2DWL_ADDR0_FLAGS, LIS2DW12_WHO_AM_I_REG,
+		  &val);
+
+	if (val == LIS2DW12_WHO_AM_I) {
+		motion_sensors[LID_ACCEL] = lis2dwl_lid_accel;
+		CPRINTS("Lid Accel: LIS2DWL");
 	}
 }
-#endif
+
+static void board_update_sensor_config_from_sku(void)
+{
+	board_detect_motionsensor();
+}
+DECLARE_HOOK(HOOK_INIT, board_update_sensor_config_from_sku,
+	     HOOK_PRIO_INIT_I2C + 2);

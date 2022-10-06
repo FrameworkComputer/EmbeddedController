@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -18,8 +18,8 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_COMMAND, outstr)
-#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
 
 /*
  * Tracks the current state of the MKBP interrupt send from the EC to the AP.
@@ -48,7 +48,7 @@ enum interrupt_state {
 };
 
 struct mkbp_state {
-	struct mutex lock;
+	mutex_t lock;
 	uint32_t events;
 	enum interrupt_state interrupt;
 	/*
@@ -76,10 +76,23 @@ static uint32_t mkbp_event_wake_mask = CONFIG_MKBP_EVENT_WAKEUP_MASK;
 static uint32_t mkbp_host_event_wake_mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
+#ifdef CONFIG_ZEPHYR
+static int init_mkbp_mutex(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	k_mutex_init(&state.lock);
+
+	return 0;
+}
+SYS_INIT(init_mkbp_mutex, POST_KERNEL, 50);
+#endif /* CONFIG_ZEPHYR */
+
 #if defined(CONFIG_MKBP_USE_GPIO) || \
 	defined(CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT)
 static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 {
+	uint32_t lock_key;
 	/*
 	 * If we want to take a timestamp, then disable interrupts temporarily
 	 * to ensure that the timestamp is as close as possible to the setting
@@ -87,14 +100,14 @@ static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 	 * taking the timestamp and setting the gpio)
 	 */
 	if (timestamp) {
-		interrupt_disable();
+		lock_key = irq_lock();
 		*timestamp = __hw_clock_source_read();
 	}
 
 	gpio_set_level(GPIO_EC_INT_L, !active);
 
 	if (timestamp)
-		interrupt_enable();
+		irq_unlock(lock_key);
 
 #ifdef CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
 	/*
@@ -152,7 +165,7 @@ static int mkbp_set_host_active(int active, uint32_t *timestamp)
 	return mkbp_set_host_active_via_custom(active, timestamp);
 #elif defined(CONFIG_MKBP_USE_HOST_EVENT)
 	return mkbp_set_host_active_via_event(active, timestamp);
-#elif defined(CONFIG_MKBP_USE_GPIO) ||\
+#elif defined(CONFIG_MKBP_USE_GPIO) || \
 	defined(CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT)
 	return mkbp_set_host_active_via_gpio(active, timestamp);
 #elif defined(CONFIG_MKBP_USE_HECI)
@@ -172,10 +185,9 @@ static inline int host_is_sleeping(void)
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 	enum host_sleep_event sleep_state = power_get_host_sleep_state();
-	is_sleeping |=
-		(sleep_state == HOST_SLEEP_EVENT_S0IX_SUSPEND ||
-		 sleep_state == HOST_SLEEP_EVENT_S3_SUSPEND ||
-		 sleep_state == HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND);
+	is_sleeping |= (sleep_state == HOST_SLEEP_EVENT_S0IX_SUSPEND ||
+			sleep_state == HOST_SLEEP_EVENT_S3_SUSPEND ||
+			sleep_state == HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND);
 #endif
 	return is_sleeping;
 }
@@ -184,12 +196,12 @@ static inline int host_is_sleeping(void)
 /*
  * This is the deferred function that ensures that we attempt to set the MKBP
  * interrupt again if there was a failure in the system (EC or AP) and the AP
- * never called get_next_event.
+ * never called mkbp_fifo_get_next_event.
  */
 static void force_mkbp_if_events(void);
 DECLARE_DEFERRED(force_mkbp_if_events);
 
-static void activate_mkbp_with_events(uint32_t events_to_add)
+test_export_static void activate_mkbp_with_events(uint32_t events_to_add)
 {
 	int interrupt_id = -1;
 	int skip_interrupt = 0;
@@ -203,16 +215,16 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 	 */
 	if (events_to_add == BIT(EC_MKBP_EVENT_HOST_EVENT) ||
 	    events_to_add == BIT(EC_MKBP_EVENT_HOST_EVENT64))
-		skip_interrupt = host_is_sleeping() &&
-				!(host_get_events() &
-				mkbp_host_event_wake_mask);
+		skip_interrupt =
+			host_is_sleeping() &&
+			!(host_get_events() & mkbp_host_event_wake_mask);
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 #ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
 	/* Check to see if this MKBP event should wake the system. */
 	if (!skip_interrupt)
 		skip_interrupt = host_is_sleeping() &&
-			!(events_to_add & mkbp_event_wake_mask);
+				 !(events_to_add & mkbp_event_wake_mask);
 #endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
 
 	mutex_lock(&state.lock);
@@ -244,8 +256,8 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 	if (state.interrupt == INTERRUPT_INACTIVE_TO_ACTIVE &&
 	    interrupt_id == state.interrupt_id) {
 		schedule_deferred = 1;
-		state.interrupt = rv == EC_SUCCESS ? INTERRUPT_ACTIVE
-						   : INTERRUPT_INACTIVE;
+		state.interrupt = rv == EC_SUCCESS ? INTERRUPT_ACTIVE :
+						     INTERRUPT_INACTIVE;
 	}
 	mutex_unlock(&state.lock);
 
@@ -259,17 +271,60 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 /*
  * This is the deferred function that ensures that we attempt to set the MKBP
  * interrupt again if there was a failure in the system (EC or AP) and the AP
- * never called get_next_event.
+ * never called mkbp_fifo_get_next_event.
  */
 static void force_mkbp_if_events(void)
 {
 	int toggled = 0;
+	int send_mkbp_interrupt = 0;
 
 	mutex_lock(&state.lock);
-	if (state.interrupt == INTERRUPT_ACTIVE) {
+	if (state.interrupt == INTERRUPT_INACTIVE) {
+		/*
+		 * When this function is called with state of interrupt set
+		 * to INACTIVE, it means that EC failed to send MKBP interrupt
+		 * to AP. In this case we are going to send interrupt once
+		 * again (without limits).
+		 */
+		send_mkbp_interrupt = 1;
+	} else if (state.interrupt == INTERRUPT_ACTIVE) {
+		/*
+		 * When this function is called with state of interrupt set
+		 * to ACTIVE, it means that AP failed to respond.
+		 *
+		 * It is safe to mark interrupt state as INACTIVE, because
+		 * force_mkbp_with_events() function can be only scheduled by
+		 * activate_mkbp_with_event() which will set interrupt state
+		 * to ACTIVE (and allow to increment failed_attempts counter).
+		 * After 3 attempts, we are setting interrupt state to INACTIVE
+		 * but we are not going to call activate_mkbp_with_events().
+		 * This was meant to unblock MKBP interrupt mechanism for new
+		 * events.
+		 */
+		state.interrupt = INTERRUPT_INACTIVE;
+		/*
+		 * Failed attempts counter is cleared only when AP pulls all
+		 * of events or we exceed number of attempts, so marking
+		 * interrupt as INACTIVE doesn't affect failed_attempts counter.
+		 * If we need to send interrupt once again
+		 * activate_mkbp_with_events() will set interrupt state to
+		 * ACTIVE before this function will be called.
+		 */
 		if (++state.failed_attempts < 3) {
-			state.interrupt = INTERRUPT_INACTIVE;
+			send_mkbp_interrupt = 1;
 			toggled = 1;
+		} else {
+			/*
+			 * If we exceed maximum number of failed attempts we
+			 * will stop trying to send MKBP interrupt for current
+			 * event (send_mkbp_interrupt == 0), but leaving
+			 * possibility to send MKBP interrupts for future
+			 * events (state of interrupt makred as inactive).
+			 * Future events should have a chance to be sent
+			 * 3 times, so we should clear failed attempts
+			 * counter now
+			 */
+			state.failed_attempts = 0;
 		}
 	}
 	mutex_unlock(&state.lock);
@@ -277,7 +332,8 @@ static void force_mkbp_if_events(void)
 	if (toggled)
 		CPRINTS("MKBP not cleared within threshold, toggling.");
 
-	activate_mkbp_with_events(0);
+	if (send_mkbp_interrupt)
+		activate_mkbp_with_events(0);
 }
 
 test_mockable int mkbp_send_event(uint8_t event_type)
@@ -319,6 +375,24 @@ static int take_event_if_set(uint8_t event_type)
 	return taken;
 }
 
+static const struct mkbp_event_source *find_mkbp_event_source(uint8_t type)
+{
+#ifdef CONFIG_ZEPHYR
+	return zephyr_find_mkbp_event_source(type);
+#else
+	const struct mkbp_event_source *src;
+
+	for (src = __mkbp_evt_srcs; src < __mkbp_evt_srcs_end; ++src)
+		if (src->event_type == type)
+			break;
+
+	if (src == __mkbp_evt_srcs_end)
+		return NULL;
+
+	return src;
+#endif
+}
+
 static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 {
 	static int last;
@@ -349,11 +423,8 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 		evt = (i + last) % EC_MKBP_EVENT_COUNT;
 		last = evt + 1;
 
-		for (src = __mkbp_evt_srcs; src < __mkbp_evt_srcs_end; ++src)
-			if (src->event_type == evt)
-				break;
-
-		if (src == __mkbp_evt_srcs_end)
+		src = find_mkbp_event_source(evt);
+		if (src == NULL)
 			return EC_RES_ERROR;
 
 		resp[0] = evt; /* Event type */
@@ -384,8 +455,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_NEXT_EVENT,
-		     mkbp_get_next_event,
+DECLARE_HOST_COMMAND(EC_CMD_GET_NEXT_EVENT, mkbp_get_next_event,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
 #ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
@@ -401,12 +471,11 @@ mkbp_get_host_event_wake_mask(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
-		     mkbp_get_host_event_wake_mask,
-		     EC_VER_MASK(0));
+		     mkbp_get_host_event_wake_mask, EC_VER_MASK(0));
 #endif /* CONFIG_MKBP_USE_HOST_EVENT */
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
-#if defined(CONFIG_MKBP_EVENT_WAKEUP_MASK) ||	\
+#if defined(CONFIG_MKBP_EVENT_WAKEUP_MASK) || \
 	defined(CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK)
 static enum ec_status hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
 {
@@ -445,8 +514,7 @@ static enum ec_status hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
 		case EC_MKBP_HOST_EVENT_WAKE_MASK:
 			CPRINTF("MKBP hostevent mask updated to: 0x%08x "
 				"(was 0x%08x)\n",
-				p->new_wake_mask,
-				mkbp_host_event_wake_mask);
+				p->new_wake_mask, mkbp_host_event_wake_mask);
 			mkbp_host_event_wake_mask = p->new_wake_mask;
 			break;
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
@@ -471,15 +539,13 @@ static enum ec_status hc_mkbp_wake_mask(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK,
-		     hc_mkbp_wake_mask,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, hc_mkbp_wake_mask, EC_VER_MASK(0));
 
-static int command_mkbp_wake_mask(int argc, char **argv)
+static int command_mkbp_wake_mask(int argc, const char **argv)
 {
 	if (argc == 3) {
 		char *e;
-		uint32_t new_mask = strtoul(argv[2], &e, 0);
+		uint32_t new_mask = strtoull(argv[2], &e, 0);
 
 		if (*e)
 			return EC_ERROR_PARAM2;
@@ -510,3 +576,15 @@ DECLARE_CONSOLE_COMMAND(mkbpwakemask, command_mkbp_wake_mask,
 			"[event | hostevent] [new_mask]",
 			"Show or set MKBP event/hostevent wake mask");
 #endif /* CONFIG_MKBP_(HOST)?EVENT_WAKEUP_MASK */
+
+#ifdef TEST_BUILD
+void mkbp_event_clear_all(void)
+{
+	mutex_lock(&state.lock);
+	state.events = 0;
+	mutex_unlock(&state.lock);
+
+	/* Reset the interrupt line */
+	mkbp_set_host_active(0, NULL);
+}
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,7 @@
 #include "console.h"
 #include "host_command.h"
 
-#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ##args)
 
 static uint8_t i2s_rx_enabled;
 
@@ -128,5 +128,5 @@ static enum ec_status i2s_rx_host_command(struct host_cmd_handler_args *args)
 
 	return EC_RES_INVALID_PARAM;
 }
-DECLARE_HOST_COMMAND(EC_CMD_EC_CODEC_I2S_RX,
-	i2s_rx_host_command, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_EC_CODEC_I2S_RX, i2s_rx_host_command,
+		     EC_VER_MASK(0));

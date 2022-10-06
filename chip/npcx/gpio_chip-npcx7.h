@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -82,7 +82,9 @@
 #define NPCX_WUI_GPIO_F_0 WUI(0, MIWU_GROUP_8, 5)
 #define NPCX_WUI_GPIO_F_3 WUI(0, MIWU_GROUP_8, 6)
 #ifndef NPCX_EXT32K_OSC_SUPPORT
-#define NPCX_WUI_GPIO_E_7 WUI(0, MIWU_GROUP_8, 7) /* Used as CLKIN if support */
+#define NPCX_WUI_GPIO_E_7                                   \
+	WUI(0, MIWU_GROUP_8, 7) /* Used as CLKIN if support \
+				 */
 #endif
 
 /* MIWU1 */
@@ -151,7 +153,9 @@
 #define NPCX_WUI_GPIO_6_3 WUI(1, MIWU_GROUP_7, 3)
 #define NPCX_WUI_GPIO_6_4 WUI(1, MIWU_GROUP_7, 4)
 #ifndef NPCX_EXT32K_OSC_SUPPORT
-#define NPCX_WUI_GPIO_7_1 WUI(1, MIWU_GROUP_7, 7) /* Used as CLKOUT if support*/
+#define NPCX_WUI_GPIO_7_1                            \
+	WUI(1, MIWU_GROUP_7, 7) /* Used as CLKOUT if \
+				   support*/
 #endif
 
 /* Group H: NPCX_IRQ_WKINTH_1 */
@@ -194,7 +198,7 @@
 /* Pin-Mux for PSL/UART2/SMB4_0 */
 #ifdef NPCX_PSL_MODE_SUPPORT
 #if defined(NPCX_SECOND_UART) && (CONFIG_CONSOLE_UART == 1)
-#define NPCX_ALT_GPIO_8_6 ALT(8, 6, NPCX_ALT(A, UART2_SL))  /* CR_SOUT2 */
+#define NPCX_ALT_GPIO_8_6 ALT(8, 6, NPCX_ALT(A, UART2_SL)) /* CR_SOUT2 */
 #define NPCX_ALT_GPIO_8_5 /* Used as PSL_OUT */
 #else
 #define NPCX_ALT_GPIO_8_6 /* No I2CSDA since GPIO85 used as PSL_OUT */
@@ -214,7 +218,7 @@
 /* Pin-Mux for PWM1/SMB6_0 */
 #if NPCX7_PWM1_SEL
 #define NPCX_ALT_GPIO_C_1 /* No I2CSDA since GPIOC2 used as PWM1 */
-#define NPCX_ALT_GPIO_C_2 ALT(C, 2, NPCX_ALT(4, PWM1_SL))   /* PWM1 */
+#define NPCX_ALT_GPIO_C_2 ALT(C, 2, NPCX_ALT(4, PWM1_SL)) /* PWM1 */
 #else
 #define NPCX_ALT_GPIO_C_1 ALT(C, 1, NPCX_ALT(2, I2C6_0_SL)) /* SMB6SDA0 */
 #define NPCX_ALT_GPIO_C_2 ALT(C, 2, NPCX_ALT(2, I2C6_0_SL)) /* SMB6SCL0 */
@@ -230,7 +234,7 @@
 #define NPCX_ALT_GPIO_4_3 ALT(4, 3, NPCX_ALT(6, ADC2_SL)) /* ADC2  */
 #define NPCX_ALT_GPIO_4_2 ALT(4, 2, NPCX_ALT(6, ADC3_SL)) /* ADC3  */
 #define NPCX_ALT_GPIO_4_1 ALT(4, 1, NPCX_ALT(6, ADC4_SL)) /* ADC4  */
-#ifdef CONFIG_PS2
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_2)
 #define NPCX_ALT_GPIO_3_7 ALT(3, 7, NPCX_ALT(3, PS2_2_SL)) /* PS2_CLK2 */
 #define NPCX_ALT_GPIO_3_4 ALT(3, 4, NPCX_ALT(3, PS2_2_SL)) /* PS2_DATA2 */
 #else
@@ -264,7 +268,7 @@
 #define NPCX_ALT_GPIO_4_0 ALT(4, 0, NPCX_ALT(3, TA1_SL1)) /* TA1_SEL1 */
 #define NPCX_ALT_GPIO_7_3 ALT(7, 3, NPCX_ALT(3, TA2_SL1)) /* TA2_SEL1 */
 #define NPCX_ALT_GPIO_9_3 ALT(9, 3, NPCX_ALT(C, TA1_SL2)) /* TA1_SEL2 */
-#ifdef CONFIG_PS2
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_3)
 #define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, PS2_3_SL2)) /* PS2_CLK3 */
 #else
 #define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, TA2_SL2)) /* TA2_SEL2 */
@@ -289,7 +293,7 @@
 #define NPCX_ALT_GPIO_1_2 ALT(1, 2, NPCX_ALT_INV(8, NO_KSO07_SL)) /* KSO07 */
 /* KSO08 & CR_SOUT */
 #define NPCX_ALT_GPIO_1_1 ALT(1, 1, NPCX_ALT_INV(9, NO_KSO08_SL))
- /* KSO09 & CR_SIN */
+/* KSO09 & CR_SIN */
 #define NPCX_ALT_GPIO_1_0 ALT(1, 0, NPCX_ALT_INV(9, NO_KSO09_SL))
 #define NPCX_ALT_GPIO_0_7 ALT(0, 7, NPCX_ALT_INV(9, NO_KSO10_SL)) /* KSO10 */
 #define NPCX_ALT_GPIO_0_6 ALT(0, 6, NPCX_ALT_INV(9, NO_KSO11_SL)) /* KSO11 */
@@ -309,17 +313,21 @@
 
 /* Pin-Mux for UART2/32KHZ_OUT */
 #if defined(NPCX_SECOND_UART) && (CONFIG_CONSOLE_UART == 1)
-#define NPCX_ALT_GPIO_7_5 ALT(7, 5, NPCX_ALT(A, UART2_SL))    /* CR_SIN2 */
+#define NPCX_ALT_GPIO_7_5 ALT(7, 5, NPCX_ALT(A, UART2_SL)) /* CR_SIN2 */
 #else
-#define NPCX_ALT_GPIO_7_5 ALT(7, 5, NPCX_ALT(A, 32K_OUT_SL))  /* 32KHZ_OUT */
+#define NPCX_ALT_GPIO_7_5 ALT(7, 5, NPCX_ALT(A, 32K_OUT_SL)) /* 32KHZ_OUT */
 #endif
 
 /* PSL module (Optional) */
 #ifdef NPCX_PSL_MODE_SUPPORT
-#define NPCX_ALT_GPIO_D_2 ALT(D, 2, NPCX_ALT_INV(D, NPSL_IN1_SL)) /* PSL_IN1 */
-#define NPCX_ALT_GPIO_0_0 ALT(0, 0, NPCX_ALT_INV(D, NPSL_IN2_SL)) /* PSL_IN2 */
-#define NPCX_ALT_GPIO_0_1 ALT(0, 1, NPCX_ALT(D, PSL_IN3_SL))      /* PSL_IN3 */
-#define NPCX_ALT_GPIO_0_2 ALT(0, 2, NPCX_ALT(D, PSL_IN4_SL))      /* PSL_IN4 */
+#define NPCX_ALT_GPIO_D_2                                  \
+	ALT(D, 2, NPCX_ALT_INV(D, NPSL_IN1_SL)) /* PSL_IN1 \
+						 */
+#define NPCX_ALT_GPIO_0_0                                  \
+	ALT(0, 0, NPCX_ALT_INV(D, NPSL_IN2_SL)) /* PSL_IN2 \
+						 */
+#define NPCX_ALT_GPIO_0_1 ALT(0, 1, NPCX_ALT(D, PSL_IN3_SL)) /* PSL_IN3 */
+#define NPCX_ALT_GPIO_0_2 ALT(0, 2, NPCX_ALT(D, PSL_IN4_SL)) /* PSL_IN4 */
 #else
 #define NPCX_ALT_GPIO_D_2 /* NO PSL in NPCX7mnG series */
 #define NPCX_ALT_GPIO_0_0 /* NO PSL in NPCX7mnG series */
@@ -328,8 +336,8 @@
 #endif
 
 /* WOV module (Optional) */
-#if defined(NPCX_WOV_SUPPORT) && \
-	(defined(CONFIG_AUDIO_CODEC_I2S_RX) || defined(CONFIG_AUDIO_CODEC_WOV))
+#if defined(NPCX_WOV_SUPPORT) && (defined(CONFIG_AUDIO_CODEC_I2S_RX) || \
+				  defined(CONFIG_AUDIO_CODEC_WOV))
 #define NPCX_ALT_GPIO_9_5 /* Disable SPIP module if WOV is supported */
 #define NPCX_ALT_GPIO_A_3 /* Disable SPIP module if WOV is supported */
 #define NPCX_ALT_GPIO_A_1 /* Disable SPIP module if WOV is supported */
@@ -346,7 +354,7 @@
 #define NPCX_ALT_GPIO_A_3 ALT(A, 3, NPCX_ALT(0, SPIP_SL)) /* SPIP_MOSI */
 #define NPCX_ALT_GPIO_A_1 ALT(A, 1, NPCX_ALT(0, SPIP_SL)) /* SPIP_SCLK */
 
-#ifdef CONFIG_PS2
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_3)
 #define NPCX_ALT_GPIO_A_7 ALT(A, 7, NPCX_ALT(C, PS2_3_SL2)) /* PS2_DAT3 */
 #else
 #define NPCX_ALT_GPIO_A_7
@@ -356,6 +364,7 @@
 #define NPCX_ALT_GPIO_9_7
 #endif
 
+/* clang-format off */
 #define NPCX_ALT_TABLE { \
 	NPCX_ALT_GPIO_0_0 /* PSL_IN2 */               \
 	NPCX_ALT_GPIO_0_1 /* PSL_IN3 */               \
@@ -447,90 +456,110 @@
 	NPCX_ALT_GPIO_F_4 /* SMB5SDA1 */              \
 	NPCX_ALT_GPIO_F_5 /* SMB5SCL1 */              \
 }
+/* clang-format on */
 
 /*****************************************************************************/
 /* Macro functions for Low-Voltage mapping table */
 
 /* Low-Voltage GPIO Control 0 */
-#define NPCX_LVOL_CTRL_0_0  NPCX_GPIO(B, 5)
-#define NPCX_LVOL_CTRL_0_1  NPCX_GPIO(B, 4)
-#define NPCX_LVOL_CTRL_0_2  NPCX_GPIO(B, 3)
-#define NPCX_LVOL_CTRL_0_3  NPCX_GPIO(B, 2)
-#define NPCX_LVOL_CTRL_0_4  NPCX_GPIO(9, 0)
-#define NPCX_LVOL_CTRL_0_5  NPCX_GPIO(8, 7)
-#define NPCX_LVOL_CTRL_0_6  NPCX_GPIO(0, 0)
-#define NPCX_LVOL_CTRL_0_7  NPCX_GPIO(3, 3)
+#define NPCX_LVOL_CTRL_0_0 NPCX_GPIO(B, 5)
+#define NPCX_LVOL_CTRL_0_1 NPCX_GPIO(B, 4)
+#define NPCX_LVOL_CTRL_0_2 NPCX_GPIO(B, 3)
+#define NPCX_LVOL_CTRL_0_3 NPCX_GPIO(B, 2)
+#define NPCX_LVOL_CTRL_0_4 NPCX_GPIO(9, 0)
+#define NPCX_LVOL_CTRL_0_5 NPCX_GPIO(8, 7)
+#define NPCX_LVOL_CTRL_0_6 NPCX_GPIO(0, 0)
+#define NPCX_LVOL_CTRL_0_7 NPCX_GPIO(3, 3)
 
 /* Low-Voltage GPIO Control 1 */
-#define NPCX_LVOL_CTRL_1_0  NPCX_GPIO(9, 2)
-#define NPCX_LVOL_CTRL_1_1  NPCX_GPIO(9, 1)
-#define NPCX_LVOL_CTRL_1_2  NPCX_GPIO(D, 1)
-#define NPCX_LVOL_CTRL_1_3  NPCX_GPIO(D, 0)
-#define NPCX_LVOL_CTRL_1_4  NPCX_GPIO(3, 6)
-#define NPCX_LVOL_CTRL_1_5  NPCX_GPIO(6, 4)
-#define NPCX_LVOL_CTRL_1_6  NPCX_GPIO_NONE
-#define NPCX_LVOL_CTRL_1_7  NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_1_0 NPCX_GPIO(9, 2)
+#define NPCX_LVOL_CTRL_1_1 NPCX_GPIO(9, 1)
+#define NPCX_LVOL_CTRL_1_2 NPCX_GPIO(D, 1)
+#define NPCX_LVOL_CTRL_1_3 NPCX_GPIO(D, 0)
+#define NPCX_LVOL_CTRL_1_4 NPCX_GPIO(3, 6)
+#define NPCX_LVOL_CTRL_1_5 NPCX_GPIO(6, 4)
+#define NPCX_LVOL_CTRL_1_6 NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_1_7 NPCX_GPIO_NONE
 
 /* Low-Voltage GPIO Control 2 */
-#define NPCX_LVOL_CTRL_2_0  NPCX_GPIO(7, 4)
+#define NPCX_LVOL_CTRL_2_0 NPCX_GPIO(7, 4)
 #ifdef NPCX_PSL_MODE_SUPPORT
-#define NPCX_LVOL_CTRL_2_1  NPCX_GPIO_NONE /* Remove 1.8V support since PSL */
-#define NPCX_LVOL_CTRL_2_2  NPCX_GPIO_NONE /* Remove 1.8V support since PSL */
+#define NPCX_LVOL_CTRL_2_1 NPCX_GPIO_NONE /* Remove 1.8V support since PSL */
+#define NPCX_LVOL_CTRL_2_2 NPCX_GPIO_NONE /* Remove 1.8V support since PSL */
 #else
-#define NPCX_LVOL_CTRL_2_1  NPCX_GPIO(8, 4)
-#define NPCX_LVOL_CTRL_2_2  NPCX_GPIO(8, 5)
+#define NPCX_LVOL_CTRL_2_1 NPCX_GPIO(8, 4)
+#define NPCX_LVOL_CTRL_2_2 NPCX_GPIO(8, 5)
 #endif
 
-#define NPCX_LVOL_CTRL_2_3  NPCX_GPIO(7, 3)
-#define NPCX_LVOL_CTRL_2_4  NPCX_GPIO(C, 1)
-#define NPCX_LVOL_CTRL_2_5  NPCX_GPIO(C, 7)
+#define NPCX_LVOL_CTRL_2_3 NPCX_GPIO(7, 3)
+#define NPCX_LVOL_CTRL_2_4 NPCX_GPIO(C, 1)
+#define NPCX_LVOL_CTRL_2_5 NPCX_GPIO(C, 7)
 #ifdef NPCX_EXT32K_OSC_SUPPORT
-#define NPCX_LVOL_CTRL_2_6  NPCX_GPIO_NONE /* Remove 1.8V support since CLKIN */
+#define NPCX_LVOL_CTRL_2_6                                \
+	NPCX_GPIO_NONE /* Remove 1.8V support since CLKIN \
+			*/
 #else
-#define NPCX_LVOL_CTRL_2_6  NPCX_GPIO(E, 7)
+#define NPCX_LVOL_CTRL_2_6 NPCX_GPIO(E, 7)
 #endif
-#define NPCX_LVOL_CTRL_2_7  NPCX_GPIO(3, 4)
+#define NPCX_LVOL_CTRL_2_7 NPCX_GPIO(3, 4)
 
 /* Low-Voltage GPIO Control 3 */
-#define NPCX_LVOL_CTRL_3_0  NPCX_GPIO(C, 6)
-#define NPCX_LVOL_CTRL_3_1  NPCX_GPIO(3, 7)
-#define NPCX_LVOL_CTRL_3_2  NPCX_GPIO(4, 0)
+#define NPCX_LVOL_CTRL_3_0 NPCX_GPIO(C, 6)
+#define NPCX_LVOL_CTRL_3_1 NPCX_GPIO(3, 7)
+#define NPCX_LVOL_CTRL_3_2 NPCX_GPIO(4, 0)
 #ifdef NPCX_EXT32K_OSC_SUPPORT
-#define NPCX_LVOL_CTRL_3_3  NPCX_GPIO_NONE /* Remove 1.8V support since CLKOUT*/
+#define NPCX_LVOL_CTRL_3_3                          \
+	NPCX_GPIO_NONE /* Remove 1.8V support since \
+			  CLKOUT*/
 #else
-#define NPCX_LVOL_CTRL_3_3  NPCX_GPIO(7, 1)
+#define NPCX_LVOL_CTRL_3_3 NPCX_GPIO(7, 1)
 #endif
-#define NPCX_LVOL_CTRL_3_4  NPCX_GPIO(8, 2)
-#define NPCX_LVOL_CTRL_3_5  NPCX_GPIO(7, 5)
-#define NPCX_LVOL_CTRL_3_6  NPCX_GPIO(8, 0)
-#define NPCX_LVOL_CTRL_3_7  NPCX_GPIO(C, 5)
+#define NPCX_LVOL_CTRL_3_4 NPCX_GPIO(8, 2)
+#define NPCX_LVOL_CTRL_3_5 NPCX_GPIO(7, 5)
+#define NPCX_LVOL_CTRL_3_6 NPCX_GPIO(8, 0)
+#define NPCX_LVOL_CTRL_3_7 NPCX_GPIO(C, 5)
 
 /* Low-Voltage GPIO Control 4 */
-#define NPCX_LVOL_CTRL_4_0  NPCX_GPIO(8, 6)
-#define NPCX_LVOL_CTRL_4_1  NPCX_GPIO(C, 2)
-#define NPCX_LVOL_CTRL_4_2  NPCX_GPIO(F, 3)
-#define NPCX_LVOL_CTRL_4_3  NPCX_GPIO(F, 2)
-#define NPCX_LVOL_CTRL_4_4  NPCX_GPIO(F, 5)
-#define NPCX_LVOL_CTRL_4_5  NPCX_GPIO(F, 4)
-#define NPCX_LVOL_CTRL_4_6  NPCX_GPIO(E, 4)
-#define NPCX_LVOL_CTRL_4_7  NPCX_GPIO(E, 3)
+#define NPCX_LVOL_CTRL_4_0 NPCX_GPIO(8, 6)
+#define NPCX_LVOL_CTRL_4_1 NPCX_GPIO(C, 2)
+#define NPCX_LVOL_CTRL_4_2 NPCX_GPIO(F, 3)
+#define NPCX_LVOL_CTRL_4_3 NPCX_GPIO(F, 2)
+#define NPCX_LVOL_CTRL_4_4 NPCX_GPIO(F, 5)
+#define NPCX_LVOL_CTRL_4_5 NPCX_GPIO(F, 4)
+#define NPCX_LVOL_CTRL_4_6 NPCX_GPIO(E, 4)
+#define NPCX_LVOL_CTRL_4_7 NPCX_GPIO(E, 3)
 
 /* Low-Voltage GPIO Control 5 */
-#define NPCX_LVOL_CTRL_5_0  NPCX_GPIO(7, 2)
-#define NPCX_LVOL_CTRL_5_1  NPCX_GPIO_NONE
-#define NPCX_LVOL_CTRL_5_2  NPCX_GPIO_NONE
-#define NPCX_LVOL_CTRL_5_3  NPCX_GPIO(5, 0)
-#define NPCX_LVOL_CTRL_5_4  NPCX_GPIO_NONE
-#define NPCX_LVOL_CTRL_5_5  NPCX_GPIO_NONE
-#define NPCX_LVOL_CTRL_5_6  NPCX_GPIO_NONE
-#define NPCX_LVOL_CTRL_5_7  NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_5_0 NPCX_GPIO(7, 2)
+#define NPCX_LVOL_CTRL_5_1 NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_5_2 NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_5_3 NPCX_GPIO(5, 0)
+#define NPCX_LVOL_CTRL_5_4 NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_5_5 NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_5_6 NPCX_GPIO_NONE
+#define NPCX_LVOL_CTRL_5_7 NPCX_GPIO_NONE
 
 /* 6 Low-Voltage Control Groups on npcx7 */
-#define NPCX_LVOL_TABLE { { NPCX_LVOL_CTRL_ITEMS(0), }, \
-			  { NPCX_LVOL_CTRL_ITEMS(1), }, \
-			  { NPCX_LVOL_CTRL_ITEMS(2), }, \
-			  { NPCX_LVOL_CTRL_ITEMS(3), }, \
-			  { NPCX_LVOL_CTRL_ITEMS(4), }, \
-			  { NPCX_LVOL_CTRL_ITEMS(5), }, }
+#define NPCX_LVOL_TABLE                                  \
+	{                                                \
+		{                                        \
+			NPCX_LVOL_CTRL_ITEMS(0),         \
+		},                                       \
+			{                                \
+				NPCX_LVOL_CTRL_ITEMS(1), \
+			},                               \
+			{                                \
+				NPCX_LVOL_CTRL_ITEMS(2), \
+			},                               \
+			{                                \
+				NPCX_LVOL_CTRL_ITEMS(3), \
+			},                               \
+			{                                \
+				NPCX_LVOL_CTRL_ITEMS(4), \
+			},                               \
+			{                                \
+				NPCX_LVOL_CTRL_ITEMS(5), \
+			},                               \
+	}
 
 #endif /* __CROS_EC_GPIO_CHIP_NPCX7_H */

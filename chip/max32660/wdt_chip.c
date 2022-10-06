@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -20,7 +20,7 @@
 #define CPUTS(outstr) cputs(CC_COMMAND, outstr)
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
 
-/* For a System clock of 96MHz, 
+/* For a System clock of 96MHz,
  *     Time in seconds = 96000000 / 2 * 2^power
  * Example for MXC_S_WDT_CTRL_INT_PERIOD_WDT2POW29
  *     Time in seconds = 96000000 / 2 * 2^29
@@ -56,7 +56,7 @@ int watchdog_init(void)
 	return EC_SUCCESS;
 }
 
-static int command_watchdog_test(int argc, char **argv)
+static int command_watchdog_test(int argc, const char **argv)
 {
 	starve_dog = 1;
 

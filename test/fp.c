@@ -1,16 +1,17 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /*
  * Explicitly include common.h to populate predefined macros in test_config.h
- * early. e.g. CONFIG_FPU, which is needed in math_util.h
+ * early. e.g. CONFIG_FPU, which is needed in math_util.h.
  */
 #include "common.h"
 
 #include "mat33.h"
 #include "mat44.h"
+#include "math.h"
 #include "math_util.h"
 #include "test_util.h"
 #include "vec3.h"
@@ -24,20 +25,20 @@
 #define LUP_TOLERANCE FLOAT_TO_FP(0.0005f)
 #define SOLVE_TOLERANCE FLOAT_TO_FP(0.0005f)
 #elif defined(TEST_FLOAT) && defined(CONFIG_FPU)
-#define NORM_TOLERANCE FLOAT_TO_FP(0.0f)
+#define NORM_TOLERANCE FLOAT_TO_FP(0.00001f)
 #define NORM_SQUARED_TOLERANCE FLOAT_TO_FP(0.0f)
 #define DOT_TOLERANCE FLOAT_TO_FP(0.0f)
 #define SCALAR_MUL_TOLERANCE FLOAT_TO_FP(0.005f)
 #define EIGENBASIS_TOLERANCE FLOAT_TO_FP(0.02f)
-#define LUP_TOLERANCE FLOAT_TO_FP(0.0f)
-#define SOLVE_TOLERANCE FLOAT_TO_FP(0.0f)
+#define LUP_TOLERANCE FLOAT_TO_FP(0.00001f)
+#define SOLVE_TOLERANCE FLOAT_TO_FP(0.00001f)
 #else
 #error "No such test configuration."
 #endif
 
-#define IS_FPV3_VECTOR_EQUAL(a, b, diff)                                       \
-	(IS_FP_EQUAL((a)[0], (b)[0], (diff)) &&                                \
-	 IS_FP_EQUAL((a)[1], (b)[1], (diff)) &&                                \
+#define IS_FPV3_VECTOR_EQUAL(a, b, diff)        \
+	(IS_FP_EQUAL((a)[0], (b)[0], (diff)) && \
+	 IS_FP_EQUAL((a)[1], (b)[1], (diff)) && \
 	 IS_FP_EQUAL((a)[2], (b)[2], (diff)))
 #define IS_FP_EQUAL(a, b, diff) ((a) >= ((b)-diff) && (a) <= ((b) + diff))
 #define IS_FLOAT_EQUAL(a, b, diff) IS_FP_EQUAL(a, b, diff)
@@ -46,9 +47,9 @@ static int test_fpv3_scalar_mul(void)
 {
 	const int N = 3;
 	const float s = 2.0f;
-	floatv3_t r = {1.0f, 2.0f, 4.0f};
+	floatv3_t r = { 1.0f, 2.0f, 4.0f };
 	/* Golden result g = s * r; */
-	const floatv3_t g = {2.0f, 4.0f, 8.0f};
+	const floatv3_t g = { 2.0f, 4.0f, 8.0f };
 	int i;
 	fpv3_t a;
 
@@ -67,19 +68,20 @@ static int test_fpv3_dot(void)
 {
 	const int N = 3;
 	int i;
-	floatv3_t a = {1.8f, 2.12f, 4.12f};
-	floatv3_t b = {3.1f, 4.3f, 5.8f};
-	/* Golden result g = dot(a, b) */
+	floatv3_t a = { 1.8f, 2.12f, 4.12f };
+	floatv3_t b = { 3.1f, 4.3f, 5.8f };
+	/* Golden result g = dot(a, b). */
 	float g = 38.592f;
 	fpv3_t fpa, fpb;
+	volatile fp_t result;
 
 	for (i = 0; i < N; ++i) {
 		fpa[i] = FLOAT_TO_FP(a[i]);
 		fpb[i] = FLOAT_TO_FP(b[i]);
 	}
 
-	TEST_ASSERT(IS_FP_EQUAL(fpv3_dot(fpa, fpb), FLOAT_TO_FP(g),
-				DOT_TOLERANCE));
+	result = fpv3_dot(fpa, fpb);
+	TEST_ASSERT(IS_FP_EQUAL(result, FLOAT_TO_FP(g), DOT_TOLERANCE));
 
 	return EC_SUCCESS;
 }
@@ -88,8 +90,8 @@ static int test_fpv3_norm_squared(void)
 {
 	const int N = 3;
 	int i;
-	floatv3_t a = {3.0f, 4.0f, 5.0f};
-	/* Golden result g = norm_squared(a) */
+	floatv3_t a = { 3.0f, 4.0f, 5.0f };
+	/* Golden result g = norm_squared(a). */
 	float g = 50.0f;
 	fpv3_t fpa;
 
@@ -105,17 +107,35 @@ static int test_fpv3_norm_squared(void)
 static int test_fpv3_norm(void)
 {
 	const int N = 3;
-	floatv3_t a = {3.1f, 4.2f, 5.3f};
-	/* Golden result g = norm(a) */
-	float g = 7.439085483551025390625f;
+	floatv3_t a = { 3.1f, 4.2f, 5.3f };
+	/* Golden result g = norm(a). */
+	float g = 7.439086f;
 	int i;
 	fpv3_t fpa;
+	volatile fp_t result;
 
 	for (i = 0; i < N; ++i)
 		fpa[i] = FLOAT_TO_FP(a[i]);
 
-	TEST_ASSERT(
-		IS_FP_EQUAL(fpv3_norm(fpa), FLOAT_TO_FP(g), NORM_TOLERANCE));
+	result = fpv3_norm(fpa);
+	TEST_ASSERT(IS_FP_EQUAL(result, FLOAT_TO_FP(g), NORM_TOLERANCE));
+	return EC_SUCCESS;
+}
+
+static int test_int_sqrtf(void)
+{
+#ifndef CONFIG_FPU
+	TEST_ASSERT(int_sqrtf(0) == 0);
+	TEST_ASSERT(int_sqrtf(15) == 3);
+	TEST_ASSERT(int_sqrtf(25) == 5);
+	TEST_ASSERT(int_sqrtf(1111088889) == 33333);
+	TEST_ASSERT(int_sqrtf(123456789) == 11111);
+	TEST_ASSERT(int_sqrtf(1000000000000000005) == 1000000000);
+	/* Return zero for imaginary numbers. */
+	TEST_ASSERT(int_sqrtf(-100) == 0);
+	/* Return INT32_MAX for input greater than INT32_MAX ^ 2. */
+	TEST_ASSERT(int_sqrtf(INT64_MAX) == INT32_MAX);
+#endif
 
 	return EC_SUCCESS;
 }
@@ -167,17 +187,14 @@ static int test_mat33_fp_scalar_mul(void)
 {
 	const int N = 3;
 	float scale = 3.11f;
-	mat33_float_t a = {
-		{1.0f, 2.0f, 3.0f},
-		{1.1f, 2.2f, 3.3f},
-		{0.38f, 13.2f, 88.3f}
-	};
-	/* Golden result g = scalar_mul(a, scale) */
-	mat33_float_t g = {{3.11f, 6.22f, 9.33f},
-			   {3.421f, 6.842f, 10.263f},
-			   {1.18179988861083984375f, 41.051998138427734375f,
-			    274.613006591796875f}
-	};
+	mat33_float_t a = { { 1.0f, 2.0f, 3.0f },
+			    { 1.1f, 2.2f, 3.3f },
+			    { 0.38f, 13.2f, 88.3f } };
+	/* Golden result g = scalar_mul(a, scale). */
+	mat33_float_t g = { { 3.11f, 6.22f, 9.33f },
+			    { 3.421f, 6.842f, 10.263f },
+			    { 1.18179988861083984375f, 41.051998138427734375f,
+			      274.613006591796875f } };
 	int i, j;
 	mat33_fp_t fpa;
 
@@ -198,9 +215,9 @@ static int test_mat33_fp_scalar_mul(void)
 static int test_mat33_fp_get_eigenbasis(void)
 {
 	mat33_fp_t s = {
-		{FLOAT_TO_FP(4.0f), FLOAT_TO_FP(2.0f), FLOAT_TO_FP(2.0f)},
-		{FLOAT_TO_FP(2.0f), FLOAT_TO_FP(4.0f), FLOAT_TO_FP(2.0f)},
-		{FLOAT_TO_FP(2.0f), FLOAT_TO_FP(2.0f), FLOAT_TO_FP(4.0f)}
+		{ FLOAT_TO_FP(4.0f), FLOAT_TO_FP(2.0f), FLOAT_TO_FP(2.0f) },
+		{ FLOAT_TO_FP(2.0f), FLOAT_TO_FP(4.0f), FLOAT_TO_FP(2.0f) },
+		{ FLOAT_TO_FP(2.0f), FLOAT_TO_FP(2.0f), FLOAT_TO_FP(4.0f) }
 	};
 	fpv3_t e_vals;
 	mat33_fp_t e_vecs;
@@ -208,15 +225,15 @@ static int test_mat33_fp_get_eigenbasis(void)
 
 	/* Golden result from float version. */
 	mat33_fp_t gold_vecs = {
-		{FLOAT_TO_FP(0.55735206f), FLOAT_TO_FP(0.55735206f),
-		 FLOAT_TO_FP(0.55735206f)},
-		{FLOAT_TO_FP(0.70710677f), FLOAT_TO_FP(-0.70710677f),
-		 FLOAT_TO_FP(0.0f)},
-		{FLOAT_TO_FP(-0.40824828f), FLOAT_TO_FP(-0.40824828f),
-		 FLOAT_TO_FP(0.81649655f)}
+		{ FLOAT_TO_FP(0.55735206f), FLOAT_TO_FP(0.55735206f),
+		  FLOAT_TO_FP(0.55735206f) },
+		{ FLOAT_TO_FP(0.70710677f), FLOAT_TO_FP(-0.70710677f),
+		  FLOAT_TO_FP(0.0f) },
+		{ FLOAT_TO_FP(-0.40824828f), FLOAT_TO_FP(-0.40824828f),
+		  FLOAT_TO_FP(0.81649655f) }
 	};
-	fpv3_t gold_vals = {FLOAT_TO_FP(8.0f), FLOAT_TO_FP(2.0f),
-			    FLOAT_TO_FP(2.0f)};
+	fpv3_t gold_vals = { FLOAT_TO_FP(8.0f), FLOAT_TO_FP(2.0f),
+			     FLOAT_TO_FP(2.0f) };
 
 	mat33_fp_get_eigenbasis(s, e_vals, e_vecs);
 
@@ -236,28 +253,26 @@ static int test_mat44_fp_decompose_lup(void)
 {
 	int i, j;
 	sizev4_t pivot;
-	mat44_fp_t fpa = {
-		{FLOAT_TO_FP(11.0f), FLOAT_TO_FP(9.0f),
-		 FLOAT_TO_FP(24.0f), FLOAT_TO_FP(2.0f)},
-		{FLOAT_TO_FP(1.0f), FLOAT_TO_FP(5.0f),
-		 FLOAT_TO_FP(2.0f), FLOAT_TO_FP(6.0f)},
-		{FLOAT_TO_FP(3.0f), FLOAT_TO_FP(17.0f),
-		 FLOAT_TO_FP(18.0f), FLOAT_TO_FP(1.0f)},
-		{FLOAT_TO_FP(2.0f), FLOAT_TO_FP(5.0f),
-		 FLOAT_TO_FP(7.0f), FLOAT_TO_FP(1.0f)}
-	};
+	mat44_fp_t fpa = { { FLOAT_TO_FP(11.0f), FLOAT_TO_FP(9.0f),
+			     FLOAT_TO_FP(24.0f), FLOAT_TO_FP(2.0f) },
+			   { FLOAT_TO_FP(1.0f), FLOAT_TO_FP(5.0f),
+			     FLOAT_TO_FP(2.0f), FLOAT_TO_FP(6.0f) },
+			   { FLOAT_TO_FP(3.0f), FLOAT_TO_FP(17.0f),
+			     FLOAT_TO_FP(18.0f), FLOAT_TO_FP(1.0f) },
+			   { FLOAT_TO_FP(2.0f), FLOAT_TO_FP(5.0f),
+			     FLOAT_TO_FP(7.0f), FLOAT_TO_FP(1.0f) } };
 	/* Golden result from float version. */
 	mat44_fp_t gold_lu = {
-		{FLOAT_TO_FP(11.0f), FLOAT_TO_FP(0.8181818f),
-		 FLOAT_TO_FP(2.1818182f), FLOAT_TO_FP(0.18181819f)},
-		{FLOAT_TO_FP(3.0f), FLOAT_TO_FP(14.545454),
-		 FLOAT_TO_FP(0.7875f), FLOAT_TO_FP(0.03125f)},
-		{FLOAT_TO_FP(1.0f), FLOAT_TO_FP(4.181818f),
-		 FLOAT_TO_FP(-3.4750001f), FLOAT_TO_FP(-1.6366906f)},
-		{FLOAT_TO_FP(2.0f), FLOAT_TO_FP(3.3636365f),
-		 FLOAT_TO_FP(-0.012500286f), FLOAT_TO_FP(0.5107909f)}
+		{ FLOAT_TO_FP(11.0f), FLOAT_TO_FP(0.8181818f),
+		  FLOAT_TO_FP(2.1818182f), FLOAT_TO_FP(0.18181819f) },
+		{ FLOAT_TO_FP(3.0f), FLOAT_TO_FP(14.545455f),
+		  FLOAT_TO_FP(0.78749999f), FLOAT_TO_FP(0.031249999f) },
+		{ FLOAT_TO_FP(1.0f), FLOAT_TO_FP(4.181818f),
+		  FLOAT_TO_FP(-3.4749996f), FLOAT_TO_FP(-1.6366909f) },
+		{ FLOAT_TO_FP(2.0f), FLOAT_TO_FP(3.3636365f),
+		  FLOAT_TO_FP(-0.012500112f), FLOAT_TO_FP(0.5107912f) }
 	};
-	sizev4_t gold_pivot = {0, 2, 2, 3};
+	sizev4_t gold_pivot = { 0, 2, 2, 3 };
 
 	mat44_fp_decompose_lup(fpa, pivot);
 
@@ -275,22 +290,21 @@ static int test_mat44_fp_solve(void)
 {
 	int i;
 	fpv4_t x;
-	mat44_fp_t A = {
-		{FLOAT_TO_FP(11.0f), FLOAT_TO_FP(0.8181818f),
-		 FLOAT_TO_FP(2.1818182f), FLOAT_TO_FP(0.18181819f)},
-		{FLOAT_TO_FP(3.0f), FLOAT_TO_FP(14.545454),
-		 FLOAT_TO_FP(0.7875f), FLOAT_TO_FP(0.03125f)},
-		{FLOAT_TO_FP(1.0f), FLOAT_TO_FP(4.181818f),
-		 FLOAT_TO_FP(-3.4750001f), FLOAT_TO_FP(-1.6366906f)},
-		{FLOAT_TO_FP(2.0f), FLOAT_TO_FP(3.3636365f),
-		 FLOAT_TO_FP(-0.012500286f), FLOAT_TO_FP(0.5107909f)}
-	};
-	sizev4_t pivot = {0, 2, 2, 3};
-	fpv4_t b = {FLOAT_TO_FP(1.0f), FLOAT_TO_FP(3.3f), FLOAT_TO_FP(0.8f),
-		    FLOAT_TO_FP(8.9f)};
+	mat44_fp_t A = { { FLOAT_TO_FP(11.0f), FLOAT_TO_FP(0.8181818f),
+			   FLOAT_TO_FP(2.1818182f), FLOAT_TO_FP(0.18181819f) },
+			 { FLOAT_TO_FP(3.0f), FLOAT_TO_FP(14.545454),
+			   FLOAT_TO_FP(0.7875f), FLOAT_TO_FP(0.03125f) },
+			 { FLOAT_TO_FP(1.0f), FLOAT_TO_FP(4.181818f),
+			   FLOAT_TO_FP(-3.4750001f), FLOAT_TO_FP(-1.6366906f) },
+			 { FLOAT_TO_FP(2.0f), FLOAT_TO_FP(3.3636365f),
+			   FLOAT_TO_FP(-0.012500286f),
+			   FLOAT_TO_FP(0.5107909f) } };
+	sizev4_t pivot = { 0, 2, 2, 3 };
+	fpv4_t b = { FLOAT_TO_FP(1.0f), FLOAT_TO_FP(3.3f), FLOAT_TO_FP(0.8f),
+		     FLOAT_TO_FP(8.9f) };
 	/* Golden result from float version. */
-	fpv4_t gold_x = {FLOAT_TO_FP(-43.50743f), FLOAT_TO_FP(-21.459526f),
-			 FLOAT_TO_FP(26.629248f), FLOAT_TO_FP(16.80776f)};
+	fpv4_t gold_x = { FLOAT_TO_FP(-43.507435f), FLOAT_TO_FP(-21.459525f),
+			  FLOAT_TO_FP(26.629248f), FLOAT_TO_FP(16.80776f) };
 
 	mat44_fp_solve(A, x, b, pivot);
 
@@ -300,7 +314,61 @@ static int test_mat44_fp_solve(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+test_static int test_isnan(void)
+{
+	float zero = 0.0f;
+	float smallest = 1.40130e-45f;
+	float highest = 3.40282e38f;
+
+	/* 0.0/0.0 results in NaN. */
+	TEST_ASSERT(isnan(zero / zero));
+	TEST_ASSERT(isnan(-zero / zero));
+	TEST_ASSERT(isnan(zero / -zero));
+	TEST_ASSERT(isnan(-zero / -zero));
+
+	/*
+	 * Make sure the smallest number (which is also denormalized) won't be
+	 * recognized as NaN.
+	 */
+	TEST_ASSERT(!isnan(smallest));
+
+	/* Make sure highest number won't be recognized as NaN. */
+	TEST_ASSERT(!isnan(highest));
+
+	/* Make sure that 0.0 is not recognized as NaN. */
+	TEST_ASSERT(!isnan(zero));
+	TEST_ASSERT(!isnan(-zero));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_isinf(void)
+{
+	float one = 1.0f;
+	float zero = 0.0f;
+	float smallest = 1.40130e-45f;
+	float highest = 3.40282e38f;
+
+	TEST_ASSERT(isinf(one / zero));
+	TEST_ASSERT(isinf(-one / zero));
+
+	/*
+	 * Make sure the smallest number (which is also denormalized) won't be
+	 * recognized as infinity.
+	 */
+	TEST_ASSERT(!isinf(smallest));
+
+	/* Make sure highest number won't be recognized as infinity. */
+	TEST_ASSERT(!isinf(highest));
+
+	/* Make sure that 0.0 is not recognized as infinity. */
+	TEST_ASSERT(!isinf(zero));
+	TEST_ASSERT(!isinf(-zero));
+
+	return EC_SUCCESS;
+}
+
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 
@@ -308,12 +376,15 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_fpv3_dot);
 	RUN_TEST(test_fpv3_norm_squared);
 	RUN_TEST(test_fpv3_norm);
+	RUN_TEST(test_int_sqrtf);
 	RUN_TEST(test_mat33_fp_init_zero);
 	RUN_TEST(test_mat33_fp_init_diagonal);
 	RUN_TEST(test_mat33_fp_scalar_mul);
 	RUN_TEST(test_mat33_fp_get_eigenbasis);
 	RUN_TEST(test_mat44_fp_decompose_lup);
 	RUN_TEST(test_mat44_fp_solve);
+	RUN_TEST(test_isnan);
+	RUN_TEST(test_isinf);
 
 	test_print_result();
 }

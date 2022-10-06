@@ -1,0 +1,60 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config CROS_SHI_NPCX
+	bool
+	depends on SOC_FAMILY_NPCX
+	depends on PLATFORM_EC_HOST_INTERFACE_SHI
+	default y
+	help
+	  This option enables Serial Host Interface driver for the NPCX family
+	  of processors. This is used for host-command communication on the
+	  platform which AP is ARM-based SoC.
+
+if CROS_SHI_NPCX
+config CROS_SHI_MAX_REQUEST
+	hex "Max data size for the version 3 request packet"
+	default 0x220
+	help
+	  This option indicates maximum data size for a version 3 request
+	  packet. This must be big enough to handle a request header of host
+	  command, flash write offset/size, and 512 bytes of flash data.
+
+config CROS_SHI_MAX_RESPONSE
+	hex "Max data size for the version 3 response packet"
+	default 0x220
+	help
+	  This option indicates maximum data size for a version 3 response
+	  packet. This must be big enough to handle a response header of host
+	  command, flash read offset/size, and 512 bytes of flash data.
+
+config CROS_SHI_NPCX_DEBUG
+	bool "Enable SHI debug"
+	help
+	  print the debug messages for SHI module
+
+endif # CROS_SHI_NPCX
+
+config CROS_SHI_IT8XXX2
+	bool
+	depends on SOC_FAMILY_RISCV_ITE
+	depends on PLATFORM_EC_HOST_INTERFACE_SHI
+	default y
+	help
+	  This option enables spi host interface driver which is required to
+	  communicate with the EC when the CPU is the ARM processor.
+
+if CROS_SHI_IT8XXX2
+
+config CROS_SHI_IT8XXX2_INIT_PRIORITY
+	int "cros_shi it8xxx2 initialization priority"
+	default 52
+	help
+	  This sets the it8xxx2 cros_shi driver initialization priority.
+	  In the GPIO shim, the alt function of SHI will be configured
+	  as GPIO input pin. So the priority of cros_shi driver must be
+	  lower than CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY, and
+	  configuration these pins to alt function of SHI.
+
+endif # CROS_SHI_IT8XXX2

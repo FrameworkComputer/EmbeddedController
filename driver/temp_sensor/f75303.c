@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,6 +13,7 @@
 #include "console.h"
 
 static int temps[F75303_IDX_COUNT];
+<<<<<<< HEAD
 static int8_t fake_temp[F75303_IDX_COUNT] = {-1, -1, -1};
 static uint8_t f75303_enabled = 1;
 
@@ -23,14 +24,16 @@ void f75303_set_enabled(uint8_t enabled)
 {
 	f75303_enabled = enabled;
 }
+=======
+static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
+>>>>>>> chromium/main
 
 /**
  * Read 8 bits register from temp sensor.
  */
 static int raw_read8(const int offset, int *data)
 {
-	return i2c_read8(I2C_PORT_THERMAL, F75303_I2C_ADDR_FLAGS,
-			 offset, data);
+	return i2c_read8(I2C_PORT_THERMAL, F75303_I2C_ADDR_FLAGS, offset, data);
 }
 
 static int get_temp(const int offset, int *temp)
@@ -74,7 +77,7 @@ static void f75303_sensor_poll(void)
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
-static int f75303_set_fake_temp(int argc, char **argv)
+static int f75303_set_fake_temp(int argc, const char **argv)
 {
 	int index;
 	int value;
@@ -103,6 +106,5 @@ static int f75303_set_fake_temp(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(f75303, f75303_set_fake_temp,
-		"<index> <value>|off",
-		"Set fake temperature of sensor f75303.");
+DECLARE_CONSOLE_COMMAND(f75303, f75303_set_fake_temp, "<index> <value>|off",
+			"Set fake temperature of sensor f75303.");

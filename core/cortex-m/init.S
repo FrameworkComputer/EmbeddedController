@@ -1,4 +1,4 @@
-/* Copyright 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright 2011 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -117,19 +117,9 @@ _data_end:
 _data_lma_start:
 .long __data_lma_start
 
-/* Mock functions to avoid linker complaints */
-.global __aeabi_unwind_cpp_pr0
-.global __aeabi_unwind_cpp_pr1
-.global __aeabi_unwind_cpp_pr2
-__aeabi_unwind_cpp_pr0:
-__aeabi_unwind_cpp_pr1:
-__aeabi_unwind_cpp_pr2:
-	bx lr
-
 /* Reserve space for system stack */
 .section .bss.system_stack
 stack_start:
 .space CONFIG_STACK_SIZE, 0
 stack_end:
 .global stack_end
-

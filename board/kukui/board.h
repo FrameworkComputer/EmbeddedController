@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,6 +16,7 @@
 #endif
 
 #define VARIANT_KUKUI_CHARGER_MT6370
+#define VARIANT_KUKUI_EC_STM32F098
 #define VARIANT_KUKUI_DP_MUX_GPIO
 #define VARIANT_KUKUI_TABLET_PWRBTN
 
@@ -30,11 +31,15 @@
 #define CONFIG_VOLUME_BUTTONS
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
 
+#ifdef SECTION_IS_RO
+#define CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE
+#endif /* SECTION_IS_RO */
+
 /* Battery */
 #ifdef BOARD_KRANE
-#define BATTERY_DESIRED_CHARGING_CURRENT    3500  /* mA */
+#define BATTERY_DESIRED_CHARGING_CURRENT 3500 /* mA */
 #else
-#define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
+#define BATTERY_DESIRED_CHARGING_CURRENT 2000 /* mA */
 #endif /* BOARD_KRANE */
 
 #ifdef BOARD_KRANE
@@ -54,9 +59,14 @@
 #define CONFIG_MAG_CALIBRATE
 #endif /* !BOARD_KRANE */
 #define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
+#ifdef BOARD_KRANE
+#define CONFIG_I2C_XFER_LARGE_TRANSFER
+#define CONFIG_ACCELGYRO_BMI220
+#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
+#endif /* BOARD_KRANE */
 #define CONFIG_ALS
 
 #define ALS_COUNT 1
@@ -69,30 +79,24 @@
 /* Camera VSYNC */
 #define CONFIG_SYNC
 #define CONFIG_SYNC_COMMAND
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
+#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 #endif /* SECTION_IS_RW */
 
 /* I2C ports */
-#define I2C_PORT_CHARGER  0
-#define I2C_PORT_TCPC0    0
-#define I2C_PORT_USB_MUX  0
-#define I2C_PORT_BATTERY  1
+#define I2C_PORT_CHARGER 0
+#define I2C_PORT_TCPC0 0
+#define I2C_PORT_USB_MUX 0
+#define I2C_PORT_BATTERY 1
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
-#define I2C_PORT_ACCEL    1
-#define I2C_PORT_BC12     1
-#define I2C_PORT_ALS      1
+#define I2C_PORT_ACCEL 1
+#define I2C_PORT_BC12 1
+#define I2C_PORT_ALS 1
 
 /* Route sbs host requests to virtual battery driver */
 #define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
 
-/* Define the host events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
-
 /* MKBP */
+#define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_EVENT_WAKEUP_MASK \
 	(BIT(EC_MKBP_EVENT_SENSOR_FIFO) | BIT(EC_MKBP_EVENT_HOST_EVENT))
@@ -149,20 +153,19 @@ void emmc_cmd_interrupt(enum gpio_signal signal);
 
 void board_reset_pd_mcu(void);
 int board_get_version(void);
-int board_is_sourcing_vbus(int port);
 void pogo_adc_interrupt(enum gpio_signal signal);
 int board_discharge_on_ac(int enable);
 
 /* Enable double tap detection */
 #define CONFIG_GESTURE_DETECTION
 #define CONFIG_GESTURE_HOST_DETECTION
-#define CONFIG_GESTURE_SENSOR_DOUBLE_TAP 0
-#define CONFIG_GESTURE_SENSOR_DOUBLE_TAP_FOR_HOST
+#define CONFIG_GESTURE_SENSOR_DOUBLE_TAP
+#define CONFIG_GESTURE_TAP_FOR_HOST
 #define CONFIG_GESTURE_SAMPLING_INTERVAL_MS 5
 #define CONFIG_GESTURE_TAP_THRES_MG 100
 #define CONFIG_GESTURE_TAP_MAX_INTERSTICE_T 500
-#define CONFIG_GESTURE_DETECTION_MASK \
-	BIT(CONFIG_GESTURE_SENSOR_DOUBLE_TAP)
+#define CONFIG_GESTURE_TAP_SENSOR 0
+#define CONFIG_GESTURE_DETECTION_MASK BIT(CONFIG_GESTURE_TAP_SENSOR)
 
 #endif /* !__ASSEMBLER__ */
 

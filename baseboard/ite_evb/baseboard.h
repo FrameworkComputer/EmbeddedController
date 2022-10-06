@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,10 +13,11 @@
 #define CONFIG_BOARD_VERSION_GPIO
 #define CONFIG_FANS 1
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
 #define CONFIG_IT83XX_SMCLK2_ON_GPC7
-#define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_IT83XX_VCC_3P3V
+
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LOW_POWER_S0
@@ -26,10 +27,10 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_PWM
 /* Use CS0 of SSPI */
-#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_UART_HOST
-#define CONFIG_HOSTCMD_LPC
+#define CONFIG_HOST_INTERFACE_LPC
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH

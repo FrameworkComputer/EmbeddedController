@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,8 +11,8 @@
 #include "util.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -22,8 +22,8 @@
 struct internal_ctx {
 	usb_state_ptr last_entered;
 	uint32_t running : 1;
-	uint32_t enter	 : 1;
-	uint32_t exit	 : 1;
+	uint32_t enter : 1;
+	uint32_t exit : 1;
 };
 BUILD_ASSERT(sizeof(struct internal_ctx) ==
 	     member_size(struct sm_ctx, internal));
@@ -64,9 +64,9 @@ static usb_state_ptr shared_parent_state(usb_state_ptr a, usb_state_ptr b)
  * functions.
  */
 static void call_entry_functions(const int port,
-			       struct internal_ctx *const internal,
-			       const usb_state_ptr stop,
-			       const usb_state_ptr current)
+				 struct internal_ctx *const internal,
+				 const usb_state_ptr stop,
+				 const usb_state_ptr current)
 {
 	if (current == stop)
 		return;
@@ -91,7 +91,7 @@ static void call_entry_functions(const int port,
  * during an exit function.
  */
 static void call_exit_functions(const int port, const usb_state_ptr stop,
-			      const usb_state_ptr current)
+				const usb_state_ptr current)
 {
 	if (current == stop)
 		return;
@@ -105,7 +105,7 @@ static void call_exit_functions(const int port, const usb_state_ptr stop,
 void set_state(const int port, struct sm_ctx *const ctx,
 	       const usb_state_ptr new_state)
 {
-	struct internal_ctx * const internal = (void *) ctx->internal;
+	struct internal_ctx *const internal = (void *)ctx->internal;
 	usb_state_ptr last_state;
 	usb_state_ptr shared_parent;
 
@@ -115,8 +115,8 @@ void set_state(const int port, struct sm_ctx *const ctx,
 	 * intended state to transition into.
 	 */
 	if (internal->exit) {
-		CPRINTF("C%d: Ignoring set state to 0x%pP within 0x%pP",
-			port, new_state, ctx->current);
+		CPRINTF("C%d: Ignoring set state to 0x%p within 0x%p", port,
+			new_state, ctx->current);
 		return;
 	}
 
@@ -167,8 +167,8 @@ void set_state(const int port, struct sm_ctx *const ctx,
  * functions.
  */
 static void call_run_functions(const int port,
-			     const struct internal_ctx *const internal,
-			     const usb_state_ptr current)
+			       const struct internal_ctx *const internal,
+			       const usb_state_ptr current)
 {
 	if (!current)
 		return;
@@ -185,7 +185,7 @@ static void call_run_functions(const int port,
 
 void run_state(const int port, struct sm_ctx *const ctx)
 {
-	struct internal_ctx * const internal = (void *) ctx->internal;
+	struct internal_ctx *const internal = (void *)ctx->internal;
 
 	internal->running = true;
 	call_run_functions(port, internal, ctx->current);

@@ -1,0 +1,58 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ /* Based off of `ec/zephyr/projects/herobrine/led_pins_herobrine.dts`
+  * Modified led-colors to obtain better test coverage.
+  */
+/ {
+	pwm-led-pins {
+		status = "disabled";
+	};
+
+	gpio-led-pins {
+		compatible = "cros-ec,gpio-led-pins";
+
+		color_off_left: color-off-left {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_SYSRQ_DEBUG_LED";
+			led-pins = <&gpio_ec_chg_led_y_c1 0>,
+				   <&gpio_ec_chg_led_w_c1 0>;
+		};
+		color_off_right: color-off-right {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_RIGHT_LED";
+			led-pins = <&gpio_ec_chg_led_y_c0 0>,
+				   <&gpio_ec_chg_led_w_c0 0>;
+		};
+		color_blue_left: color-blue-left {
+			led-color = "LED_BLUE";
+			led-id = "EC_LED_ID_SYSRQ_DEBUG_LED";
+			br-color = "EC_LED_COLOR_BLUE";
+			led-pins = <&gpio_ec_chg_led_y_c1 1>,
+				   <&gpio_ec_chg_led_w_c1 0>;
+		};
+		color_blue_right: color-blue-right {
+			led-color = "LED_BLUE";
+			led-id = "EC_LED_ID_RIGHT_LED";
+			br-color = "EC_LED_COLOR_BLUE";
+			led-pins = <&gpio_ec_chg_led_y_c0 1>,
+				   <&gpio_ec_chg_led_w_c0 0>;
+		};
+		color_white_left: color-white-left {
+			led-color = "LED_WHITE";
+			led-id = "EC_LED_ID_SYSRQ_DEBUG_LED";
+			br-color = "EC_LED_COLOR_WHITE";
+			led-pins = <&gpio_ec_chg_led_y_c1 0>,
+				   <&gpio_ec_chg_led_w_c1 1>;
+		};
+		color_white_right: color-white-right {
+			led-color = "LED_WHITE";
+			led-id = "EC_LED_ID_RIGHT_LED";
+			br-color = "EC_LED_COLOR_WHITE";
+			led-pins = <&gpio_ec_chg_led_y_c0 0>,
+				   <&gpio_ec_chg_led_w_c0 1>;
+		};
+	};
+};

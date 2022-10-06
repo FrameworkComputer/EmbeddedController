@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,32 +8,39 @@
 #ifndef __CROS_EC_POWER_H
 #define __CROS_EC_POWER_H
 
+#include "chipset.h"
 #include "common.h"
-#include "gpio.h"
+#include "compiler.h"
+#include "gpio_signal.h"
 #include "task_id.h"
 
-enum power_state {
+FORWARD_DECLARE_ENUM(power_state){
 	/* Steady states */
-	POWER_G3 = 0,	/*
-			 * System is off (not technically all the way into G3,
-			 * which means totally unpowered...)
-			 */
-	POWER_S5,		/* System is soft-off */
-	POWER_S3,		/* Suspend; RAM on, processor is asleep */
-	POWER_S0,		/* System is on */
+	POWER_G3 = 0, /*
+		       * System is off (not technically all the way into G3,
+		       * which means totally unpowered...)
+		       */
+	POWER_S5, /* System is soft-off */
+	POWER_S4, /* System is suspended to disk */
+	POWER_S3, /* Suspend; RAM on, processor is asleep */
+	POWER_S0, /* System is on */
 #ifdef CONFIG_POWER_S0IX
 	POWER_S0ix,
 #endif
 	/* Transitions */
-	POWER_G3S5,	/* G3 -> S5 (at system init time) */
-	POWER_S5S3,	/* S5 -> S3 */
-	POWER_S3S0,	/* S3 -> S0 */
-	POWER_S0S3,	/* S0 -> S3 */
-	POWER_S3S5,	/* S3 -> S5 */
-	POWER_S5G3,	/* S5 -> G3 */
+	POWER_G3S5, /* G3 -> S5 (at system init time) */
+	POWER_S5S3, /* S5 -> S3 (skips S4 on non-Intel systems) */
+	POWER_S3S0, /* S3 -> S0 */
+	POWER_S0S3, /* S0 -> S3 */
+	POWER_S3S5, /* S3 -> S5 (skips S4 on non-Intel systems) */
+	POWER_S5G3, /* S5 -> G3 */
+	POWER_S3S4, /* S3 -> S4 */
+	POWER_S4S3, /* S4 -> S3 */
+	POWER_S4S5, /* S4 -> S5 */
+	POWER_S5S4, /* S5 -> S4 */
 #ifdef CONFIG_POWER_S0IX
-	POWER_S0ixS0,   /* S0ix -> S0 */
-	POWER_S0S0ix,   /* S0 -> S0ix */
+	POWER_S0ixS0, /* S0ix -> S0 */
+	POWER_S0S0ix, /* S0 -> S0ix */
 #endif
 };
 
@@ -51,18 +58,18 @@ enum power_state {
  * +-----------------+------------------------------------+
  */
 
-#define POWER_SIGNAL_ACTIVE_STATE	BIT(0)
-#define POWER_SIGNAL_ACTIVE_LOW	(0 << 0)
-#define POWER_SIGNAL_ACTIVE_HIGH	BIT(0)
+#define POWER_SIGNAL_ACTIVE_STATE BIT(0)
+#define POWER_SIGNAL_ACTIVE_LOW (0 << 0)
+#define POWER_SIGNAL_ACTIVE_HIGH BIT(0)
 
-#define POWER_SIGNAL_INTR_STATE	BIT(1)
-#define POWER_SIGNAL_DISABLE_AT_BOOT	BIT(1)
+#define POWER_SIGNAL_INTR_STATE BIT(1)
+#define POWER_SIGNAL_DISABLE_AT_BOOT BIT(1)
 
 /* Information on an power signal */
 struct power_signal_info {
-	enum gpio_signal gpio;	/* GPIO for signal */
-	uint32_t flags;		/* See POWER_SIGNAL_* macros */
-	const char *name;	/* Name of signal */
+	enum gpio_signal gpio; /* GPIO for signal */
+	uint32_t flags; /* See POWER_SIGNAL_* macros */
+	const char *name; /* Name of signal */
 };
 
 /*
@@ -95,7 +102,7 @@ int power_signal_is_asserted(const struct power_signal_info *s);
 /**
  * Get the level of provided input signal.
  */
-__overridable int power_signal_get_level(enum gpio_signal signal);
+__override_proto int power_signal_get_level(enum gpio_signal signal);
 
 /**
  * Enable interrupt for provided input signal.
@@ -154,7 +161,6 @@ int power_wait_signals_timeout(uint32_t want, int timeout);
  */
 int power_wait_mask_signals_timeout(uint32_t want, uint32_t mask, int timeout);
 
-
 /**
  * Set the low-level power chipset state.
  *
@@ -167,10 +173,11 @@ void power_set_state(enum power_state new_state);
  *
  * @return Current chipset power state
  */
-#ifdef HAS_TASK_CHIPSET
+#ifdef CONFIG_AP_POWER_CONTROL
 enum power_state power_get_state(void);
 #else
-static inline enum power_state power_get_state(void) {
+static inline enum power_state power_get_state(void)
+{
 	return POWER_G3;
 }
 #endif
@@ -198,11 +205,13 @@ enum power_state power_handle_state(enum power_state state);
 /**
  * Interrupt handler for power signal GPIOs.
  */
-#ifdef HAS_TASK_CHIPSET
+#ifdef CONFIG_AP_POWER_CONTROL
 void power_signal_interrupt(enum gpio_signal signal);
 #else
-static inline void power_signal_interrupt(enum gpio_signal signal) { }
-#endif /* !HAS_TASK_CHIPSET */
+static inline void power_signal_interrupt(enum gpio_signal signal)
+{
+}
+#endif /* !CONFIG_AP_POWER_CONTROL */
 
 /**
  * Interrupt handler for rsmrst signal GPIO. This interrupt handler should be
@@ -247,7 +256,7 @@ void power_set_host_sleep_state(enum host_sleep_event state);
 /* Context to pass to a host sleep command handler. */
 struct host_sleep_event_context {
 	uint32_t sleep_transitions; /* Number of sleep transitions observed */
-	uint16_t sleep_timeout_ms;  /* Timeout in milliseconds */
+	uint16_t sleep_timeout_ms; /* Timeout in milliseconds */
 };
 
 /**
@@ -257,9 +266,9 @@ struct host_sleep_event_context {
  * @param state Current host sleep state updated by the host.
  * @param ctx Possible sleep parameters and return values, depending on state.
  */
-__override_proto void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx);
+__override_proto void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx);
 
 /**
  * Provide callback to allow board to take any action on host sleep event
@@ -267,8 +276,8 @@ __override_proto void power_chipset_handle_host_sleep_event(
  *
  * @param state Current host sleep state updated by the host.
  */
-__override_proto void power_board_handle_host_sleep_event(
-		enum host_sleep_event state);
+__override_proto void
+power_board_handle_host_sleep_event(enum host_sleep_event state);
 
 /*
  * This is the default state of host sleep event. Calls to
@@ -276,7 +285,7 @@ __override_proto void power_board_handle_host_sleep_event(
  * value. EC components listening to host sleep event updates can check for this
  * special value to know if the state was reset.
  */
-#define HOST_SLEEP_EVENT_DEFAULT_RESET		0
+#define HOST_SLEEP_EVENT_DEFAULT_RESET 0
 
 enum sleep_notify_type {
 	SLEEP_NOTIFY_NONE,
@@ -313,16 +322,50 @@ void sleep_suspend_transition(void);
 void sleep_resume_transition(void);
 
 /**
+ * Type of sleep hang detected
+ */
+enum sleep_hang_type {
+	SLEEP_HANG_NONE,
+	SLEEP_HANG_S0IX_SUSPEND,
+	SLEEP_HANG_S0IX_RESUME
+};
+
+/**
+ * Provide callback to allow chipset to take action on host sleep hang
+ * detection.
+ *
+ * power_chipset_handle_sleep_hang will be called first.
+ * power_board_handle_sleep_hang will be called second.
+ *
+ * @param hang_type Host sleep hang type detected.
+ */
+__override_proto void
+power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type);
+
+/**
+ * Provide callback to allow board to take action on host sleep hang
+ * detection.
+ *
+ * power_chipset_handle_sleep_hang will be called first.
+ * power_board_handle_sleep_hang will be called second.
+ *
+ * @param hang_type Host sleep hang type detected.
+ */
+__override_proto void
+power_board_handle_sleep_hang(enum sleep_hang_type hang_type);
+
+/**
  * Start the suspend process.
  *
  * It is called in power_chipset_handle_host_sleep_event(), after it receives
  * a host sleep event to hint that the suspend process starts.
  *
+ * power_chipset_handle_sleep_hang() and power_board_handle_sleep_hang() will
+ * be called when a sleep hang is detected.
+ *
  * @param ctx Possible sleep parameters and return values, depending on state.
- * @param callback Will be called if timed out, i.e. suspend hang.
  */
-void sleep_start_suspend(struct host_sleep_event_context *ctx,
-			 void (*callback)(void));
+void sleep_start_suspend(struct host_sleep_event_context *ctx);
 
 /**
  * Complete the resume process.
@@ -373,4 +416,31 @@ __override_proto void board_power_5v_enable(int enable);
  */
 void power_5v_enable(task_id_t tid, int enable);
 
-#endif  /* __CROS_EC_POWER_H */
+#ifdef CONFIG_ZTEST
+/**
+ * @brief Perform one state transition with power_common_state() as
+ * chipset_task() would.
+ */
+void test_power_common_state(void);
+#endif
+
+#ifdef CONFIG_POWERSEQ_FAKE_CONTROL
+/**
+ * Enable a fake S0 state
+ *
+ * Set whatever GPIOs or other parameters are required to get the system into a
+ * fake S0 state.  This allows for the S0 power state to be tested before an SoC
+ * is available for the board.
+ */
+void power_fake_s0(void);
+
+/**
+ * Disable any fake power state
+ *
+ * Undo any actions which were taken to force another power state and return
+ * GPIOs and other parameters to their default state.
+ */
+void power_fake_disable(void);
+#endif /* defined(CONFIG_POWER_FAKE_CONTROL) */
+
+#endif /* __CROS_EC_POWER_H */

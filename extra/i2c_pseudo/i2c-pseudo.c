@@ -22,55 +22,55 @@
 #include <linux/mutex.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
+#include <linux/stdarg.h>
 #include <linux/string.h>
 #include <linux/time64.h>
 #include <linux/types.h>
 #include <linux/uaccess.h>
 #include <linux/wait.h>
-#include <stdarg.h>
 
 /* Minimum i2cp_limit module parameter value. */
-#define I2CP_ADAPTERS_MIN	0
+#define I2CP_ADAPTERS_MIN 0
 /* Maximum i2cp_limit module parameter value. */
-#define I2CP_ADAPTERS_MAX	256
+#define I2CP_ADAPTERS_MAX 256
 /* Default i2cp_limit module parameter value. */
-#define I2CP_DEFAULT_LIMIT	8
+#define I2CP_DEFAULT_LIMIT 8
 /* Value for alloc_chrdev_region() baseminor arg. */
-#define I2CP_CDEV_BASEMINOR	0
-#define I2CP_TIMEOUT_MS_MIN	0
-#define I2CP_TIMEOUT_MS_MAX	(60 * MSEC_PER_SEC)
-#define I2CP_DEFAULT_TIMEOUT_MS	(3 * MSEC_PER_SEC)
+#define I2CP_CDEV_BASEMINOR 0
+#define I2CP_TIMEOUT_MS_MIN 0
+#define I2CP_TIMEOUT_MS_MAX (60 * MSEC_PER_SEC)
+#define I2CP_DEFAULT_TIMEOUT_MS (3 * MSEC_PER_SEC)
 
 /* Used in struct device.kobj.name field. */
-#define I2CP_DEVICE_NAME	"i2c-pseudo-controller"
+#define I2CP_DEVICE_NAME "i2c-pseudo-controller"
 /* Value for alloc_chrdev_region() name arg. */
-#define I2CP_CHRDEV_NAME	"i2c_pseudo"
+#define I2CP_CHRDEV_NAME "i2c_pseudo"
 /* Value for class_create() name arg. */
-#define I2CP_CLASS_NAME		"i2c-pseudo"
+#define I2CP_CLASS_NAME "i2c-pseudo"
 /* Value for alloc_chrdev_region() count arg.  Should always be 1. */
-#define I2CP_CDEV_COUNT		1
+#define I2CP_CDEV_COUNT 1
 
-#define I2CP_ADAP_START_CMD		"ADAPTER_START"
-#define I2CP_ADAP_SHUTDOWN_CMD		"ADAPTER_SHUTDOWN"
-#define I2CP_GET_NUMBER_CMD		"GET_ADAPTER_NUM"
-#define I2CP_NUMBER_REPLY_CMD		"I2C_ADAPTER_NUM"
-#define I2CP_GET_PSEUDO_ID_CMD		"GET_PSEUDO_ID"
-#define I2CP_PSEUDO_ID_REPLY_CMD	"I2C_PSEUDO_ID"
-#define I2CP_SET_NAME_SUFFIX_CMD	"SET_ADAPTER_NAME_SUFFIX"
-#define I2CP_SET_TIMEOUT_CMD		"SET_ADAPTER_TIMEOUT_MS"
-#define I2CP_BEGIN_MXFER_REQ_CMD	"I2C_BEGIN_XFER"
-#define I2CP_COMMIT_MXFER_REQ_CMD	"I2C_COMMIT_XFER"
-#define I2CP_MXFER_REQ_CMD		"I2C_XFER_REQ"
-#define I2CP_MXFER_REPLY_CMD		"I2C_XFER_REPLY"
+#define I2CP_ADAP_START_CMD "ADAPTER_START"
+#define I2CP_ADAP_SHUTDOWN_CMD "ADAPTER_SHUTDOWN"
+#define I2CP_GET_NUMBER_CMD "GET_ADAPTER_NUM"
+#define I2CP_NUMBER_REPLY_CMD "I2C_ADAPTER_NUM"
+#define I2CP_GET_PSEUDO_ID_CMD "GET_PSEUDO_ID"
+#define I2CP_PSEUDO_ID_REPLY_CMD "I2C_PSEUDO_ID"
+#define I2CP_SET_NAME_SUFFIX_CMD "SET_ADAPTER_NAME_SUFFIX"
+#define I2CP_SET_TIMEOUT_CMD "SET_ADAPTER_TIMEOUT_MS"
+#define I2CP_BEGIN_MXFER_REQ_CMD "I2C_BEGIN_XFER"
+#define I2CP_COMMIT_MXFER_REQ_CMD "I2C_COMMIT_XFER"
+#define I2CP_MXFER_REQ_CMD "I2C_XFER_REQ"
+#define I2CP_MXFER_REPLY_CMD "I2C_XFER_REPLY"
 
 /* Maximum size of a controller command. */
-#define I2CP_CTRLR_CMD_LIMIT		255
+#define I2CP_CTRLR_CMD_LIMIT 255
 /* Maximum number of controller read responses to allow enqueued at once. */
-#define I2CP_CTRLR_RSP_QUEUE_LIMIT	256
+#define I2CP_CTRLR_RSP_QUEUE_LIMIT 256
 /* The maximum size of a single controller read response. */
-#define I2CP_MAX_MSG_BUF_SIZE		16384
+#define I2CP_MAX_MSG_BUF_SIZE 16384
 /* Maximum size of a controller read or write. */
-#define I2CP_RW_SIZE_LIMIT		1048576
+#define I2CP_RW_SIZE_LIMIT 1048576
 
 /*
  * Marks the end of a controller command or read response.
@@ -85,11 +85,11 @@
  * because of an assertion that the copy size (1) must match the size of the
  * string literal (2 with its trailing null).
  */
-static const char i2cp_ctrlr_end_char		= '\n';
+static const char i2cp_ctrlr_end_char = '\n';
 /* Separator between I2C message header fields in the controller bytestream. */
-static const char i2cp_ctrlr_header_sep_char	= ' ';
+static const char i2cp_ctrlr_header_sep_char = ' ';
 /* Separator between I2C message data bytes in the controller bytestream. */
-static const char i2cp_ctrlr_data_sep_char	= ':';
+static const char i2cp_ctrlr_data_sep_char = ':';
 
 /*
  * This used instead of strcmp(in_str, other_str) because in_str may have null
@@ -99,10 +99,10 @@ static const char i2cp_ctrlr_data_sep_char	= ':';
 #define STRING_NEQ(in_str, in_size, other_str) \
 	(in_size != strlen(other_str) || memcmp(other_str, in_str, in_size))
 
-#define STR_HELPER(num)		#num
-#define STR(num)		STR_HELPER(num)
+#define STR_HELPER(num) #num
+#define STR(num) STR_HELPER(num)
 
-#define CONST_STRLEN(str)	(sizeof(str) - 1)
+#define CONST_STRLEN(str) (sizeof(str) - 1)
 
 /*
  * The number of pseudo I2C adapters permitted.  This default value can be
@@ -207,8 +207,8 @@ struct i2cp_cmd {
 	 * behavior with duplicate command names is undefined, subject to
 	 * change, and subject to become either a build-time or runtime error.
 	 */
-	char *cmd_string;  /* Must be non-NULL. */
-	size_t cmd_size;  /* Must be non-zero. */
+	char *cmd_string; /* Must be non-NULL. */
+	size_t cmd_size; /* Must be non-zero. */
 
 	/*
 	 * This is called once for each I2C pseudo controller to initialize
@@ -308,7 +308,7 @@ struct i2cp_cmd {
 	 * This callback MUST NOT be NULL.
 	 */
 	int (*header_receiver)(void *data, char *in, size_t in_size,
-		bool non_blocking);
+			       bool non_blocking);
 	/*
 	 * This is called to process write command data, when requested by the
 	 * header_receiver() return value.
@@ -347,7 +347,7 @@ struct i2cp_cmd {
 	 * should be NULL.  Otherwise, this callback MUST NOT be NULL.
 	 */
 	int (*data_receiver)(void *data, char *in, size_t in_size,
-		bool non_blocking);
+			     bool non_blocking);
 	/*
 	 * This is called to complete processing of a command, after it has been
 	 * received in its entirety.
@@ -394,7 +394,7 @@ struct i2cp_cmd {
 	 * This callback may be NULL.
 	 */
 	int (*cmd_completer)(void *data, struct i2cp_controller *pdata,
-		int receive_status, bool non_blocking);
+			     int receive_status, bool non_blocking);
 };
 
 /*
@@ -749,13 +749,13 @@ struct i2cp_rsp_master_xfer {
 	 * Always initialize fields below here to zero.  They are for internal
 	 * use by i2cp_rsp_master_xfer_formatter().
 	 */
-	int num_msgs_done;  /* type of @num field */
+	int num_msgs_done; /* type of @num field */
 	size_t buf_start_plus_one;
 };
 
 /* vanprintf - See anprintf() documentation. */
 static ssize_t vanprintf(char **out, ssize_t max_size, gfp_t gfp,
-	const char *fmt, va_list ap)
+			 const char *fmt, va_list ap)
 {
 	int ret;
 	ssize_t buf_size;
@@ -790,9 +790,9 @@ static ssize_t vanprintf(char **out, ssize_t max_size, gfp_t gfp,
 	*out = buf;
 	return ret;
 
- fail_before_args1:
+fail_before_args1:
 	va_end(args1);
- fail_after_args1:
+fail_after_args1:
 	kfree(buf);
 	if (ret >= 0)
 		ret = -ENOTRECOVERABLE;
@@ -833,7 +833,7 @@ static ssize_t vanprintf(char **out, ssize_t max_size, gfp_t gfp,
  *        a bug.
  */
 static ssize_t anprintf(char **out, ssize_t max_size, gfp_t gfp,
-	const char *fmt, ...)
+			const char *fmt, ...)
 {
 	ssize_t ret;
 	va_list args;
@@ -905,24 +905,26 @@ static ssize_t i2cp_rsp_master_xfer_formatter(void *data, char **out)
 		 * that no bytes were lost in kernel->userspace transmission.
 		 */
 		ret = anprintf(&buf_start, I2CP_MAX_MSG_BUF_SIZE, GFP_KERNEL,
-			"%*s%c%u%c%d%c0x%04X%c0x%04X%c%u",
-			(int)strlen(I2CP_MXFER_REQ_CMD), I2CP_MXFER_REQ_CMD,
-			i2cp_ctrlr_header_sep_char, mxfer_rsp->id,
-			i2cp_ctrlr_header_sep_char, mxfer_rsp->num_msgs_done,
-			i2cp_ctrlr_header_sep_char, i2c_msg->addr,
-			i2cp_ctrlr_header_sep_char, i2c_msg->flags,
-			i2cp_ctrlr_header_sep_char, i2c_msg->len);
+			       "%*s%c%u%c%d%c0x%04X%c0x%04X%c%u",
+			       (int)strlen(I2CP_MXFER_REQ_CMD),
+			       I2CP_MXFER_REQ_CMD, i2cp_ctrlr_header_sep_char,
+			       mxfer_rsp->id, i2cp_ctrlr_header_sep_char,
+			       mxfer_rsp->num_msgs_done,
+			       i2cp_ctrlr_header_sep_char, i2c_msg->addr,
+			       i2cp_ctrlr_header_sep_char, i2c_msg->flags,
+			       i2cp_ctrlr_header_sep_char, i2c_msg->len);
 		if (ret > 0) {
 			*out = buf_start;
 			mxfer_rsp->buf_start_plus_one = 1;
-		/*
-		 * If we have a zero return value, it means the output buffer
-		 * was allocated as size one, containing only a terminating null
-		 * character.  This would be a bug given the requested format
-		 * string above.  Also, formatter functions must not mutate *out
-		 * when returning zero.  So if this matches, free the useless
-		 * buffer and return an error.
-		 */
+			/*
+			 * If we have a zero return value, it means the output
+			 * buffer was allocated as size one, containing only a
+			 * terminating null character.  This would be a bug
+			 * given the requested format string above.  Also,
+			 * formatter functions must not mutate *out when
+			 * returning zero.  So if this matches, free the useless
+			 * buffer and return an error.
+			 */
 		} else if (ret == 0) {
 			ret = -EINVAL;
 			kfree(buf_start);
@@ -932,7 +934,7 @@ static ssize_t i2cp_rsp_master_xfer_formatter(void *data, char **out)
 
 	byte_start = mxfer_rsp->buf_start_plus_one - 1;
 	byte_limit = min_t(size_t, i2c_msg->len - byte_start,
-		I2CP_MAX_MSG_BUF_SIZE / 3);
+			   I2CP_MAX_MSG_BUF_SIZE / 3);
 	/* 3 chars per byte == 2 chars for hex + 1 char for separator */
 	buf_size = byte_limit * 3;
 
@@ -943,34 +945,34 @@ static ssize_t i2cp_rsp_master_xfer_formatter(void *data, char **out)
 	}
 
 	for (buf_pos = buf_start, i = 0; i < byte_limit; ++i) {
-		*buf_pos++ = (i || byte_start) ?
-			i2cp_ctrlr_data_sep_char : i2cp_ctrlr_header_sep_char;
-		buf_pos = hex_byte_pack_upper(
-			buf_pos, i2c_msg->buf[byte_start + i]);
+		*buf_pos++ = (i || byte_start) ? i2cp_ctrlr_data_sep_char :
+						 i2cp_ctrlr_header_sep_char;
+		buf_pos = hex_byte_pack_upper(buf_pos,
+					      i2c_msg->buf[byte_start + i]);
 	}
 	*out = buf_start;
 	ret = buf_size;
 	mxfer_rsp->buf_start_plus_one += i;
 
- maybe_free:
+maybe_free:
 	if (ret <= 0) {
 		if (mxfer_rsp->num_msgs_done >= mxfer_rsp->num) {
 			kfree(mxfer_rsp->msgs);
 			kfree(mxfer_rsp);
-		/*
-		 * If we are returning an error but have not consumed all of
-		 * mxfer_rsp yet, we must not attempt to output any more I2C
-		 * messages from the same mxfer_rsp.  Setting mxfer_rsp->msgs to
-		 * NULL tells the remaining invocations with this mxfer_rsp to
-		 * output nothing.
-		 *
-		 * There can be more invocations with the same mxfer_rsp even
-		 * after returning an error here because
-		 * i2cp_adapter_master_xfer() reuses a single
-		 * struct i2cp_rsp_master_xfer (mxfer_rsp) across multiple
-		 * struct i2cp_rsp (rsp_wrappers), one for each struct i2c_msg
-		 * within the mxfer_rsp.
-		 */
+			/*
+			 * If we are returning an error but have not consumed
+			 * all of mxfer_rsp yet, we must not attempt to output
+			 * any more I2C messages from the same mxfer_rsp.
+			 * Setting mxfer_rsp->msgs to NULL tells the remaining
+			 * invocations with this mxfer_rsp to output nothing.
+			 *
+			 * There can be more invocations with the same mxfer_rsp
+			 * even after returning an error here because
+			 * i2cp_adapter_master_xfer() reuses a single
+			 * struct i2cp_rsp_master_xfer (mxfer_rsp) across
+			 * multiple struct i2cp_rsp (rsp_wrappers), one for each
+			 * struct i2c_msg within the mxfer_rsp.
+			 */
 		} else if (ret < 0) {
 			kfree(mxfer_rsp->msgs);
 			mxfer_rsp->msgs = NULL;
@@ -980,7 +982,7 @@ static ssize_t i2cp_rsp_master_xfer_formatter(void *data, char **out)
 }
 
 static ssize_t i2cp_id_show(struct device *dev, struct device_attribute *attr,
-	char *buf)
+			    char *buf)
 {
 	int ret;
 	struct i2c_adapter *adap;
@@ -1039,9 +1041,10 @@ static void i2cp_cmd_mxfer_reply_data_shutdown(void *data)
 
 	cmd_data = data;
 	mutex_lock(&cmd_data->reply_queue_lock);
-	list_for_each(list_ptr, &cmd_data->reply_queue_head) {
+	list_for_each(list_ptr, &cmd_data->reply_queue_head)
+	{
 		mxfer_reply = list_entry(list_ptr, struct i2cp_cmd_mxfer_reply,
-			reply_queue_item);
+					 reply_queue_item);
 		mutex_lock(&mxfer_reply->lock);
 		complete_all(&mxfer_reply->data_filled);
 		mutex_unlock(&mxfer_reply->lock);
@@ -1059,29 +1062,30 @@ static void i2cp_cmd_mxfer_reply_data_destroyer(void *data)
 	kfree(data);
 }
 
-static inline bool i2cp_mxfer_reply_is_current(
-	struct i2cp_cmd_mxfer_reply_data *cmd_data,
-	struct i2cp_cmd_mxfer_reply *mxfer_reply)
+static inline bool
+i2cp_mxfer_reply_is_current(struct i2cp_cmd_mxfer_reply_data *cmd_data,
+			    struct i2cp_cmd_mxfer_reply *mxfer_reply)
 {
 	int i;
 
 	i = cmd_data->current_msg_idx;
-	return cmd_data->current_id == mxfer_reply->id &&
-		i >= 0 && i < mxfer_reply->num_msgs &&
-		cmd_data->current_addr == mxfer_reply->msgs[i].addr &&
-		cmd_data->current_flags == mxfer_reply->msgs[i].flags;
+	return cmd_data->current_id == mxfer_reply->id && i >= 0 &&
+	       i < mxfer_reply->num_msgs &&
+	       cmd_data->current_addr == mxfer_reply->msgs[i].addr &&
+	       cmd_data->current_flags == mxfer_reply->msgs[i].flags;
 }
 
 /* cmd_data->reply_queue_lock must be held. */
-static inline struct i2cp_cmd_mxfer_reply *i2cp_mxfer_reply_find_current(
-	struct i2cp_cmd_mxfer_reply_data *cmd_data)
+static inline struct i2cp_cmd_mxfer_reply *
+i2cp_mxfer_reply_find_current(struct i2cp_cmd_mxfer_reply_data *cmd_data)
 {
 	struct list_head *list_ptr;
 	struct i2cp_cmd_mxfer_reply *mxfer_reply;
 
-	list_for_each(list_ptr, &cmd_data->reply_queue_head) {
+	list_for_each(list_ptr, &cmd_data->reply_queue_head)
+	{
 		mxfer_reply = list_entry(list_ptr, struct i2cp_cmd_mxfer_reply,
-			reply_queue_item);
+					 reply_queue_item);
 		if (i2cp_mxfer_reply_is_current(cmd_data, mxfer_reply))
 			return mxfer_reply;
 	}
@@ -1089,17 +1093,18 @@ static inline struct i2cp_cmd_mxfer_reply *i2cp_mxfer_reply_find_current(
 }
 
 /* cmd_data->reply_queue_lock must NOT already be held. */
-static inline void i2cp_mxfer_reply_update_current(
-	struct i2cp_cmd_mxfer_reply_data *cmd_data)
+static inline void
+i2cp_mxfer_reply_update_current(struct i2cp_cmd_mxfer_reply_data *cmd_data)
 {
 	mutex_lock(&cmd_data->reply_queue_lock);
-	cmd_data->reply_queue_current_item = i2cp_mxfer_reply_find_current(
-		cmd_data);
+	cmd_data->reply_queue_current_item =
+		i2cp_mxfer_reply_find_current(cmd_data);
 	mutex_unlock(&cmd_data->reply_queue_lock);
 }
 
 static int i2cp_cmd_mxfer_reply_header_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						size_t in_size,
+						bool non_blocking)
 {
 	int ret, reply_errno = 0;
 	struct i2cp_cmd_mxfer_reply_data *cmd_data;
@@ -1218,10 +1223,10 @@ static int i2cp_cmd_mxfer_reply_header_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_mxfer_reply_data_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+					      size_t in_size, bool non_blocking)
 {
 	int ret;
-	char u8_hex[3] = {0};
+	char u8_hex[3] = { 0 };
 	struct i2cp_cmd_mxfer_reply_data *cmd_data;
 	struct i2cp_cmd_mxfer_reply *mxfer_reply;
 	struct i2c_msg *i2c_msg;
@@ -1333,7 +1338,7 @@ static int i2cp_cmd_mxfer_reply_data_receiver(void *data, char *in,
 		 * I2C_M_DMA_SAFE bit? Do we ever need to use copy_to_user()?
 		 */
 		ret = kstrtou8(u8_hex, 16,
-			&i2c_msg->buf[cmd_data->current_buf_idx]);
+			       &i2c_msg->buf[cmd_data->current_buf_idx]);
 		if (ret < 0)
 			goto unlock;
 		if (i2c_msg->flags & I2C_M_RECV_LEN)
@@ -1346,13 +1351,15 @@ static int i2cp_cmd_mxfer_reply_data_receiver(void *data, char *in,
 	/* Quietly ignore any bytes beyond the buffer size. */
 	ret = 0;
 
- unlock:
+unlock:
 	mutex_unlock(&mxfer_reply->lock);
 	return ret;
 }
 
 static int i2cp_cmd_mxfer_reply_cmd_completer(void *data,
-	struct i2cp_controller *pdata, int receive_status, bool non_blocking)
+					      struct i2cp_controller *pdata,
+					      int receive_status,
+					      bool non_blocking)
 {
 	int ret;
 	struct i2cp_cmd_mxfer_reply_data *cmd_data;
@@ -1399,7 +1406,7 @@ static int i2cp_cmd_mxfer_reply_cmd_completer(void *data,
 	mutex_unlock(&mxfer_reply->lock);
 	ret = 0;
 
- reset_cmd_data:
+reset_cmd_data:
 	cmd_data->state = I2CP_CMD_MXFER_REPLY_STATE_CMD_NEXT;
 	cmd_data->current_id = 0;
 	cmd_data->current_addr = 0;
@@ -1410,7 +1417,8 @@ static int i2cp_cmd_mxfer_reply_cmd_completer(void *data,
 }
 
 static int i2cp_cmd_adap_start_header_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+					       size_t in_size,
+					       bool non_blocking)
 {
 	/*
 	 * No more header fields or data are expected.  This directs any further
@@ -1421,7 +1429,7 @@ static int i2cp_cmd_adap_start_header_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_adap_start_data_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+					     size_t in_size, bool non_blocking)
 {
 	/*
 	 * Reaching here means the controller wrote extra data in the command
@@ -1432,7 +1440,9 @@ static int i2cp_cmd_adap_start_data_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_adap_start_cmd_completer(void *data,
-	struct i2cp_controller *pdata, int receive_status, bool non_blocking)
+					     struct i2cp_controller *pdata,
+					     int receive_status,
+					     bool non_blocking)
 {
 	int ret;
 
@@ -1466,13 +1476,14 @@ static int i2cp_cmd_adap_start_cmd_completer(void *data,
 
 	ret = 0;
 
- unlock:
+unlock:
 	mutex_unlock(&pdata->startstop_lock);
 	return ret;
 }
 
 static int i2cp_cmd_adap_shutdown_header_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						  size_t in_size,
+						  bool non_blocking)
 {
 	/*
 	 * No more header fields or data are expected.  This directs any further
@@ -1483,7 +1494,8 @@ static int i2cp_cmd_adap_shutdown_header_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_adap_shutdown_data_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						size_t in_size,
+						bool non_blocking)
 {
 	/*
 	 * Reaching here means the controller wrote extra data in the command
@@ -1494,7 +1506,9 @@ static int i2cp_cmd_adap_shutdown_data_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_adap_shutdown_cmd_completer(void *data,
-	struct i2cp_controller *pdata, int receive_status, bool non_blocking)
+						struct i2cp_controller *pdata,
+						int receive_status,
+						bool non_blocking)
 {
 	/* Refuse to shutdown if there were errors processing this command. */
 	if (receive_status)
@@ -1512,7 +1526,8 @@ static int i2cp_cmd_adap_shutdown_cmd_completer(void *data,
 }
 
 static int i2cp_cmd_get_number_header_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+					       size_t in_size,
+					       bool non_blocking)
 {
 	/*
 	 * No more header fields or data are expected.  This directs any further
@@ -1523,7 +1538,7 @@ static int i2cp_cmd_get_number_header_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_get_number_data_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+					     size_t in_size, bool non_blocking)
 {
 	/*
 	 * Reaching here means the controller wrote extra data in the command
@@ -1534,7 +1549,9 @@ static int i2cp_cmd_get_number_data_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_get_number_cmd_completer(void *data,
-	struct i2cp_controller *pdata, int receive_status, bool non_blocking)
+					     struct i2cp_controller *pdata,
+					     int receive_status,
+					     bool non_blocking)
 {
 	ssize_t ret;
 	int i2c_adap_nr;
@@ -1572,9 +1589,9 @@ static int i2cp_cmd_get_number_cmd_completer(void *data,
 	}
 
 	ret = anprintf(&rsp_buf->buf, I2CP_MAX_MSG_BUF_SIZE, GFP_KERNEL,
-		"%*s%c%d",
-		(int)strlen(I2CP_NUMBER_REPLY_CMD), I2CP_NUMBER_REPLY_CMD,
-		i2cp_ctrlr_header_sep_char, i2c_adap_nr);
+		       "%*s%c%d", (int)strlen(I2CP_NUMBER_REPLY_CMD),
+		       I2CP_NUMBER_REPLY_CMD, i2cp_ctrlr_header_sep_char,
+		       i2c_adap_nr);
 	if (ret < 0) {
 		goto fail_after_rsp_buf_alloc;
 	} else if (ret == 0) {
@@ -1600,17 +1617,18 @@ static int i2cp_cmd_get_number_cmd_completer(void *data,
 	mutex_unlock(&pdata->read_rsp_queue_lock);
 	return 0;
 
- fail_after_buf_alloc:
+fail_after_buf_alloc:
 	kfree(rsp_buf->buf);
- fail_after_rsp_buf_alloc:
+fail_after_rsp_buf_alloc:
 	kfree(rsp_buf);
- fail_after_rsp_wrapper_alloc:
+fail_after_rsp_wrapper_alloc:
 	kfree(rsp_wrapper);
 	return ret;
 }
 
 static int i2cp_cmd_get_pseudo_id_header_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						  size_t in_size,
+						  bool non_blocking)
 {
 	/*
 	 * No more header fields or data are expected.  This directs any further
@@ -1621,7 +1639,8 @@ static int i2cp_cmd_get_pseudo_id_header_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_get_pseudo_id_data_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						size_t in_size,
+						bool non_blocking)
 {
 	/*
 	 * Reaching here means the controller wrote extra data in the command
@@ -1632,7 +1651,9 @@ static int i2cp_cmd_get_pseudo_id_data_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_get_pseudo_id_cmd_completer(void *data,
-	struct i2cp_controller *pdata, int receive_status, bool non_blocking)
+						struct i2cp_controller *pdata,
+						int receive_status,
+						bool non_blocking)
 {
 	ssize_t ret;
 	struct i2cp_rsp_buffer *rsp_buf;
@@ -1653,9 +1674,9 @@ static int i2cp_cmd_get_pseudo_id_cmd_completer(void *data,
 	}
 
 	ret = anprintf(&rsp_buf->buf, I2CP_MAX_MSG_BUF_SIZE, GFP_KERNEL,
-		"%*s%c%u",
-		(int)strlen(I2CP_PSEUDO_ID_REPLY_CMD), I2CP_PSEUDO_ID_REPLY_CMD,
-		i2cp_ctrlr_header_sep_char, pdata->id);
+		       "%*s%c%u", (int)strlen(I2CP_PSEUDO_ID_REPLY_CMD),
+		       I2CP_PSEUDO_ID_REPLY_CMD, i2cp_ctrlr_header_sep_char,
+		       pdata->id);
 	if (ret < 0) {
 		goto fail_after_rsp_buf_alloc;
 	} else if (ret == 0) {
@@ -1681,11 +1702,11 @@ static int i2cp_cmd_get_pseudo_id_cmd_completer(void *data,
 	mutex_unlock(&pdata->read_rsp_queue_lock);
 	return 0;
 
- fail_after_buf_alloc:
+fail_after_buf_alloc:
 	kfree(rsp_buf->buf);
- fail_after_rsp_buf_alloc:
+fail_after_rsp_buf_alloc:
 	kfree(rsp_buf);
- fail_after_rsp_wrapper_alloc:
+fail_after_rsp_wrapper_alloc:
 	kfree(rsp_wrapper);
 	return ret;
 }
@@ -1707,13 +1728,15 @@ static void i2cp_cmd_set_name_suffix_data_destroyer(void *data)
 }
 
 static int i2cp_cmd_set_name_suffix_header_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						    size_t in_size,
+						    bool non_blocking)
 {
 	return 1;
 }
 
 static int i2cp_cmd_set_name_suffix_data_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						  size_t in_size,
+						  bool non_blocking)
 {
 	size_t remaining;
 	struct i2cp_cmd_set_name_suffix_data *cmd_data;
@@ -1730,7 +1753,9 @@ static int i2cp_cmd_set_name_suffix_data_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_set_name_suffix_cmd_completer(void *data,
-	struct i2cp_controller *pdata, int receive_status, bool non_blocking)
+						  struct i2cp_controller *pdata,
+						  int receive_status,
+						  bool non_blocking)
 {
 	int ret;
 	struct i2cp_cmd_set_name_suffix_data *cmd_data;
@@ -1753,14 +1778,14 @@ static int i2cp_cmd_set_name_suffix_cmd_completer(void *data,
 
 	cmd_data = data;
 	ret = snprintf(pdata->i2c_adapter.name, sizeof(pdata->i2c_adapter.name),
-		"I2C pseudo ID %u %*s", pdata->id,
-		(int)cmd_data->name_suffix_len, cmd_data->name_suffix);
+		       "I2C pseudo ID %u %*s", pdata->id,
+		       (int)cmd_data->name_suffix_len, cmd_data->name_suffix);
 	if (ret < 0)
 		goto unlock;
 
 	ret = 0;
 
- unlock:
+unlock:
 	mutex_unlock(&pdata->startstop_lock);
 	return ret;
 }
@@ -1782,7 +1807,8 @@ static void i2cp_cmd_set_timeout_data_destroyer(void *data)
 }
 
 static int i2cp_cmd_set_timeout_header_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+						size_t in_size,
+						bool non_blocking)
 {
 	int ret;
 	struct i2cp_cmd_set_timeout_data *cmd_data;
@@ -1802,7 +1828,7 @@ static int i2cp_cmd_set_timeout_header_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_set_timeout_data_receiver(void *data, char *in,
-	size_t in_size, bool non_blocking)
+					      size_t in_size, bool non_blocking)
 {
 	/*
 	 * Reaching here means the controller wrote extra data in the command
@@ -1812,7 +1838,9 @@ static int i2cp_cmd_set_timeout_data_receiver(void *data, char *in,
 }
 
 static int i2cp_cmd_set_timeout_cmd_completer(void *data,
-	struct i2cp_controller *pdata, int receive_status, bool non_blocking)
+					      struct i2cp_controller *pdata,
+					      int receive_status,
+					      bool non_blocking)
 {
 	int ret;
 	struct i2cp_cmd_set_timeout_data *cmd_data;
@@ -1835,7 +1863,7 @@ static int i2cp_cmd_set_timeout_cmd_completer(void *data,
 
 	cmd_data = data;
 	if (cmd_data->timeout_ms < I2CP_TIMEOUT_MS_MIN ||
-		cmd_data->timeout_ms > I2CP_TIMEOUT_MS_MAX) {
+	    cmd_data->timeout_ms > I2CP_TIMEOUT_MS_MAX) {
 		ret = -ERANGE;
 		goto unlock;
 	}
@@ -1843,7 +1871,7 @@ static int i2cp_cmd_set_timeout_cmd_completer(void *data,
 	pdata->i2c_adapter.timeout = msecs_to_jiffies(cmd_data->timeout_ms);
 	ret = 0;
 
- unlock:
+unlock:
 	mutex_unlock(&pdata->startstop_lock);
 	return ret;
 }
@@ -1914,11 +1942,12 @@ static const struct i2cp_cmd i2cp_cmds[] = {
 static inline bool i2cp_poll_in(struct i2cp_controller *pdata)
 {
 	return pdata->rsp_invalidated || pdata->rsp_buf_remaining != 0 ||
-		!list_empty(&pdata->read_rsp_queue_head);
+	       !list_empty(&pdata->read_rsp_queue_head);
 }
 
 static inline int i2cp_fill_rsp_buf(struct i2cp_rsp *rsp_wrapper,
-	struct i2cp_rsp_buffer *rsp_buf, char *contents, size_t size)
+				    struct i2cp_rsp_buffer *rsp_buf,
+				    char *contents, size_t size)
 {
 	rsp_buf->buf = kmemdup(contents, size, GFP_KERNEL);
 	if (!rsp_buf->buf)
@@ -1929,19 +1958,19 @@ static inline int i2cp_fill_rsp_buf(struct i2cp_rsp *rsp_wrapper,
 	return 0;
 }
 
-#define I2CP_FILL_RSP_BUF_WITH_LITERAL(rsp_wrapper, rsp_buf, str_literal)\
-	i2cp_fill_rsp_buf(\
-		rsp_wrapper, rsp_buf, str_literal, strlen(str_literal))
+#define I2CP_FILL_RSP_BUF_WITH_LITERAL(rsp_wrapper, rsp_buf, str_literal) \
+	i2cp_fill_rsp_buf(rsp_wrapper, rsp_buf, str_literal,              \
+			  strlen(str_literal))
 
 static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
-	struct i2c_msg *msgs, int num)
+				    struct i2c_msg *msgs, int num)
 {
 	int i, ret = 0;
 	long wait_ret;
 	size_t wrappers_length, wrapper_idx = 0, rsp_bufs_idx = 0;
 	struct i2cp_controller *pdata;
 	struct i2cp_rsp **rsp_wrappers;
-	struct i2cp_rsp_buffer *rsp_bufs[2] = {0};
+	struct i2cp_rsp_buffer *rsp_bufs[2] = { 0 };
 	struct i2cp_rsp_master_xfer *mxfer_rsp;
 	struct i2cp_cmd_mxfer_reply_data *cmd_data;
 	struct i2cp_cmd_mxfer_reply *mxfer_reply;
@@ -1966,8 +1995,8 @@ static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
 	}
 
 	wrappers_length = (size_t)num + ARRAY_SIZE(rsp_bufs);
-	rsp_wrappers = kcalloc(wrappers_length, sizeof(*rsp_wrappers),
-		GFP_KERNEL);
+	rsp_wrappers =
+		kcalloc(wrappers_length, sizeof(*rsp_wrappers), GFP_KERNEL);
 	if (!rsp_wrappers)
 		return -ENOMEM;
 
@@ -1981,15 +2010,15 @@ static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
 	init_completion(&mxfer_reply->data_filled);
 	mutex_init(&mxfer_reply->lock);
 
-	mxfer_reply->msgs = kcalloc(num, sizeof(*mxfer_reply->msgs),
-		GFP_KERNEL);
+	mxfer_reply->msgs =
+		kcalloc(num, sizeof(*mxfer_reply->msgs), GFP_KERNEL);
 	if (!mxfer_reply->msgs) {
 		ret = -ENOMEM;
 		goto return_after_mxfer_reply_alloc;
 	}
 
-	mxfer_reply->completed = kcalloc(num, sizeof(*mxfer_reply->completed),
-		GFP_KERNEL);
+	mxfer_reply->completed =
+		kcalloc(num, sizeof(*mxfer_reply->completed), GFP_KERNEL);
 	if (!mxfer_reply->completed) {
 		ret = -ENOMEM;
 		goto return_after_reply_msgs_alloc;
@@ -2034,8 +2063,8 @@ static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
 		if (msgs[i].flags & I2C_M_RD)
 			continue;
 		/* Copy the data, not the address. */
-		mxfer_rsp->msgs[i].buf = kmemdup(msgs[i].buf, msgs[i].len,
-			GFP_KERNEL);
+		mxfer_rsp->msgs[i].buf =
+			kmemdup(msgs[i].buf, msgs[i].len, GFP_KERNEL);
 		if (!mxfer_rsp->msgs[i].buf) {
 			ret = -ENOMEM;
 			goto fail_after_rsp_msgs_alloc;
@@ -2051,7 +2080,8 @@ static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
 	}
 
 	ret = I2CP_FILL_RSP_BUF_WITH_LITERAL(rsp_wrappers[wrapper_idx++],
-		rsp_bufs[rsp_bufs_idx++], I2CP_BEGIN_MXFER_REQ_CMD);
+					     rsp_bufs[rsp_bufs_idx++],
+					     I2CP_BEGIN_MXFER_REQ_CMD);
 	if (ret < 0)
 		goto fail_after_individual_rsp_wrappers_alloc;
 
@@ -2062,7 +2092,8 @@ static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
 	}
 
 	ret = I2CP_FILL_RSP_BUF_WITH_LITERAL(rsp_wrappers[wrapper_idx++],
-		rsp_bufs[rsp_bufs_idx++], I2CP_COMMIT_MXFER_REQ_CMD);
+					     rsp_bufs[rsp_bufs_idx++],
+					     I2CP_COMMIT_MXFER_REQ_CMD);
 	if (ret < 0)
 		goto fail_after_individual_rsp_wrappers_alloc;
 
@@ -2082,12 +2113,12 @@ static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
 
 	mxfer_reply->id = mxfer_rsp->id;
 	list_add_tail(&mxfer_reply->reply_queue_item,
-		&cmd_data->reply_queue_head);
+		      &cmd_data->reply_queue_head);
 	++cmd_data->reply_queue_length;
 
 	for (i = 0; i < wrappers_length; ++i) {
 		list_add_tail(&rsp_wrappers[i]->queue,
-			&pdata->read_rsp_queue_head);
+			      &pdata->read_rsp_queue_head);
 		complete(&pdata->read_rsp_queued);
 	}
 	pdata->read_rsp_queue_length += wrappers_length;
@@ -2132,31 +2163,31 @@ static int i2cp_adapter_master_xfer(struct i2c_adapter *adap,
 	mutex_unlock(&cmd_data->reply_queue_lock);
 	goto return_after_reply_msgs_alloc;
 
- fail_with_reply_queue_lock:
+fail_with_reply_queue_lock:
 	mutex_unlock(&cmd_data->reply_queue_lock);
- fail_with_read_rsp_queue_lock:
+fail_with_read_rsp_queue_lock:
 	mutex_unlock(&pdata->read_rsp_queue_lock);
- fail_after_individual_rsp_wrappers_alloc:
+fail_after_individual_rsp_wrappers_alloc:
 	for (i = 0; i < wrappers_length; ++i)
 		kfree(rsp_wrappers[i]);
- fail_after_rsp_msgs_alloc:
+fail_after_rsp_msgs_alloc:
 	for (i = 0; i < num; ++i)
 		kfree(mxfer_rsp->msgs[i].buf);
 	kfree(mxfer_rsp->msgs);
- fail_after_mxfer_rsp_alloc:
+fail_after_mxfer_rsp_alloc:
 	kfree(mxfer_rsp);
- fail_after_individual_rsp_bufs_alloc:
+fail_after_individual_rsp_bufs_alloc:
 	for (i = 0; i < ARRAY_SIZE(rsp_bufs); ++i) {
 		kfree(rsp_bufs[i]->buf);
 		kfree(rsp_bufs[i]);
 	}
- return_after_reply_completed_alloc:
+return_after_reply_completed_alloc:
 	kfree(mxfer_reply->completed);
- return_after_reply_msgs_alloc:
+return_after_reply_msgs_alloc:
 	kfree(mxfer_reply->msgs);
- return_after_mxfer_reply_alloc:
+return_after_mxfer_reply_alloc:
 	kfree(mxfer_reply);
- return_after_rsp_wrappers_ptrs_alloc:
+return_after_rsp_wrappers_ptrs_alloc:
 	kfree(rsp_wrappers);
 	return ret;
 }
@@ -2183,9 +2214,8 @@ static const struct i2c_algorithm i2cp_algorithm = {
 
 /* this_pseudo->counters.lock must _not_ be held when calling this. */
 static void i2cp_remove_from_counters(struct i2cp_controller *pdata,
-	struct i2cp_device *this_pseudo)
+				      struct i2cp_device *this_pseudo)
 {
-
 	mutex_lock(&this_pseudo->counters.lock);
 	this_pseudo->counters.all_controllers[pdata->index] = NULL;
 	--this_pseudo->counters.count;
@@ -2290,7 +2320,7 @@ static int i2cp_cdev_open(struct inode *inodep, struct file *filep)
 	pdata->i2c_adapter.timeout = msecs_to_jiffies(i2cp_default_timeout_ms);
 	pdata->i2c_adapter.dev.parent = &this_pseudo->device;
 	ret = snprintf(pdata->i2c_adapter.name, sizeof(pdata->i2c_adapter.name),
-		"I2C pseudo ID %u", pdata->id);
+		       "I2C pseudo ID %u", pdata->id);
 	if (ret < 0)
 		goto fail_after_counters_update;
 
@@ -2298,9 +2328,9 @@ static int i2cp_cdev_open(struct inode *inodep, struct file *filep)
 	filep->private_data = pdata;
 	return 0;
 
- fail_after_counters_update:
+fail_after_counters_update:
 	i2cp_remove_from_counters(pdata, this_pseudo);
- fail_after_cmd_data_created:
+fail_after_cmd_data_created:
 	for (i = 0; i < num_cmd_data_created; ++i)
 		if (i2cp_cmds[i].data_destroyer)
 			i2cp_cmds[i].data_destroyer(pdata->cmd_data[i]);
@@ -2317,7 +2347,7 @@ static int i2cp_cdev_release(struct inode *inodep, struct file *filep)
 
 	pdata = filep->private_data;
 	this_pseudo = container_of(pdata->i2c_adapter.dev.parent,
-		struct i2cp_device, device);
+				   struct i2cp_device, device);
 
 	/*
 	 * The select(2) man page makes it clear that the behavior of pending
@@ -2378,7 +2408,8 @@ static int i2cp_cdev_release(struct inode *inodep, struct file *filep)
 /* The caller must hold pdata->rsp_lock. */
 /* Return value is whether or not to continue in calling loop. */
 static bool i2cp_cdev_read_iteration(char __user **buf, size_t *count,
-	ssize_t *ret, bool non_blocking, struct i2cp_controller *pdata)
+				     ssize_t *ret, bool non_blocking,
+				     struct i2cp_controller *pdata)
 {
 	long wait_ret;
 	ssize_t copy_size;
@@ -2450,9 +2481,9 @@ static bool i2cp_cdev_read_iteration(char __user **buf, size_t *count,
 
 		mutex_lock(&pdata->read_rsp_queue_lock);
 		if (!list_empty(&pdata->read_rsp_queue_head))
-			rsp_wrapper = list_first_entry(
-				&pdata->read_rsp_queue_head,
-				struct i2cp_rsp, queue);
+			rsp_wrapper =
+				list_first_entry(&pdata->read_rsp_queue_head,
+						 struct i2cp_rsp, queue);
 		/*
 		 * Avoid holding pdata->read_rsp_queue_lock while
 		 * executing a formatter, allocating memory, or doing
@@ -2543,7 +2574,7 @@ static bool i2cp_cdev_read_iteration(char __user **buf, size_t *count,
 			return false;
 		}
 
- write_end_char:
+	write_end_char:
 		copy_size = sizeof(i2cp_ctrlr_end_char);
 		/*
 		 * This assertion is just in case someone changes
@@ -2554,8 +2585,7 @@ static bool i2cp_cdev_read_iteration(char __user **buf, size_t *count,
 		 * block, we already know it's greater than zero.
 		 */
 		BUILD_BUG_ON(copy_size != 1);
-		copy_ret = copy_to_user(*buf, &i2cp_ctrlr_end_char,
-			copy_size);
+		copy_ret = copy_to_user(*buf, &i2cp_ctrlr_end_char, copy_size);
 		copy_size -= copy_ret;
 		/*
 		 * After writing to the userspace buffer, we need to
@@ -2571,7 +2601,7 @@ static bool i2cp_cdev_read_iteration(char __user **buf, size_t *count,
 	}
 
 	copy_size = max_t(ssize_t, 0,
-		min_t(ssize_t, *count, pdata->rsp_buf_remaining));
+			  min_t(ssize_t, *count, pdata->rsp_buf_remaining));
 	copy_ret = copy_to_user(*buf, pdata->rsp_buf_pos, copy_size);
 	copy_size -= copy_ret;
 	pdata->rsp_buf_remaining -= copy_size;
@@ -2584,14 +2614,14 @@ static bool i2cp_cdev_read_iteration(char __user **buf, size_t *count,
 		pdata->rsp_buf_pos = NULL;
 	}
 
- /*
-  * When jumping here, the following variables should be set:
-  *   copy_ret: Return value from copy_to_user() (bytes not copied).
-  *   copy_size: The number of bytes successfully copied by copy_to_user().  In
-  *       other words, this should be the size arg to copy_to_user() minus its
-  *       return value (bytes not copied).
-  */
- after_copy_to_user:
+/*
+ * When jumping here, the following variables should be set:
+ *   copy_ret: Return value from copy_to_user() (bytes not copied).
+ *   copy_size: The number of bytes successfully copied by copy_to_user().  In
+ *       other words, this should be the size arg to copy_to_user() minus its
+ *       return value (bytes not copied).
+ */
+after_copy_to_user:
 	*ret += copy_size;
 	*count -= copy_size;
 	*buf += copy_size;
@@ -2600,7 +2630,7 @@ static bool i2cp_cdev_read_iteration(char __user **buf, size_t *count,
 }
 
 static ssize_t i2cp_cdev_read(struct file *filep, char __user *buf,
-		size_t count, loff_t *f_ps)
+			      size_t count, loff_t *f_ps)
 {
 	ssize_t ret = 0;
 	bool non_blocking;
@@ -2638,20 +2668,20 @@ static ssize_t i2cp_cdev_read(struct file *filep, char __user *buf,
 		goto unlock;
 	}
 
-	while (count > 0 && i2cp_cdev_read_iteration(
-		&buf, &count, &ret, non_blocking, pdata))
+	while (count > 0 && i2cp_cdev_read_iteration(&buf, &count, &ret,
+						     non_blocking, pdata))
 		;
 
- unlock:
+unlock:
 	mutex_unlock(&pdata->rsp_lock);
 	return ret;
 }
 
 /* Must be called with pdata->cmd_lock held. */
 /* Must never consume past first i2cp_ctrlr_end_char in @start. */
-static ssize_t i2cp_receive_ctrlr_cmd_header(
-	struct i2cp_controller *pdata, char *start, size_t remaining,
-	bool non_blocking)
+static ssize_t i2cp_receive_ctrlr_cmd_header(struct i2cp_controller *pdata,
+					     char *start, size_t remaining,
+					     bool non_blocking)
 {
 	int found_deliminator_char = 0;
 	int i, cmd_idx;
@@ -2665,7 +2695,7 @@ static ssize_t i2cp_receive_ctrlr_cmd_header(
 		    start[i] == i2cp_ctrlr_header_sep_char) {
 			found_deliminator_char = 1;
 			break;
-	}
+		}
 
 	if (i <= buf_remaining) {
 		copy_size = i;
@@ -2695,7 +2725,7 @@ static ssize_t i2cp_receive_ctrlr_cmd_header(
 		for (i = 0; i < ARRAY_SIZE(i2cp_cmds); ++i)
 			if (i2cp_cmds[i].cmd_size == pdata->cmd_size &&
 			    !memcmp(i2cp_cmds[i].cmd_string, pdata->cmd_buf,
-					pdata->cmd_size))
+				    pdata->cmd_size))
 				break;
 		if (i >= ARRAY_SIZE(i2cp_cmds)) {
 			/* unrecognized command */
@@ -2725,7 +2755,7 @@ static ssize_t i2cp_receive_ctrlr_cmd_header(
 		}
 	}
 
- clear_buffer:
+clear_buffer:
 	pdata->cmd_size = 0;
 	/*
 	 * Ensure a trailing null character for the next header_receiver() or
@@ -2745,7 +2775,8 @@ static ssize_t i2cp_receive_ctrlr_cmd_header(
 /* Must be called with pdata->cmd_lock held. */
 /* Must never consume past first i2cp_ctrlr_end_char in @start. */
 static ssize_t i2cp_receive_ctrlr_cmd_data(struct i2cp_controller *pdata,
-	char *start, size_t remaining, bool non_blocking)
+					   char *start, size_t remaining,
+					   bool non_blocking)
 {
 	ssize_t i, ret, size_holder;
 	int cmd_idx;
@@ -2755,13 +2786,14 @@ static ssize_t i2cp_receive_ctrlr_cmd_data(struct i2cp_controller *pdata,
 	if (cmd_idx < 0)
 		return -EINVAL;
 
-	size_holder = min_t(size_t,
+	size_holder = min_t(
+		size_t,
 		(I2CP_CTRLR_CMD_LIMIT -
 		 (I2CP_CTRLR_CMD_LIMIT % pdata->cmd_data_increment)) -
-		pdata->cmd_size,
-		(((pdata->cmd_size + remaining) /
-		  pdata->cmd_data_increment) *
-		 pdata->cmd_data_increment) - pdata->cmd_size);
+			pdata->cmd_size,
+		(((pdata->cmd_size + remaining) / pdata->cmd_data_increment) *
+		 pdata->cmd_data_increment) -
+			pdata->cmd_size);
 
 	/* Size of current buffer plus all remaining write bytes. */
 	size_holder = pdata->cmd_size + remaining;
@@ -2791,8 +2823,10 @@ static ssize_t i2cp_receive_ctrlr_cmd_data(struct i2cp_controller *pdata,
 	 * buffer to end up with if there were unlimited write bytes
 	 * remaining (computed in-line below).
 	 */
-	size_holder = min_t(ssize_t, size_holder, (I2CP_CTRLR_CMD_LIMIT - (
-		I2CP_CTRLR_CMD_LIMIT % pdata->cmd_data_increment)));
+	size_holder =
+		min_t(ssize_t, size_holder,
+		      (I2CP_CTRLR_CMD_LIMIT -
+		       (I2CP_CTRLR_CMD_LIMIT % pdata->cmd_data_increment)));
 	/*
 	 * Subtract the existing buffer size to get the number of bytes we
 	 * actually want to copy from the remaining write bytes in this loop
@@ -2843,7 +2877,7 @@ static ssize_t i2cp_receive_ctrlr_cmd_data(struct i2cp_controller *pdata,
 
 /* Must be called with pdata->cmd_lock held. */
 static int i2cp_receive_ctrlr_cmd_complete(struct i2cp_controller *pdata,
-	bool non_blocking)
+					   bool non_blocking)
 {
 	int ret = 0, cmd_idx;
 
@@ -2851,8 +2885,9 @@ static int i2cp_receive_ctrlr_cmd_complete(struct i2cp_controller *pdata,
 	cmd_idx = pdata->cmd_idx_plus_one - 1;
 
 	if (cmd_idx >= 0 && i2cp_cmds[cmd_idx].cmd_completer) {
-		ret = i2cp_cmds[cmd_idx].cmd_completer(pdata->cmd_data[cmd_idx],
-			pdata, pdata->cmd_receive_status, non_blocking);
+		ret = i2cp_cmds[cmd_idx].cmd_completer(
+			pdata->cmd_data[cmd_idx], pdata,
+			pdata->cmd_receive_status, non_blocking);
 		if (ret > 0)
 			ret = 0;
 	}
@@ -2872,7 +2907,7 @@ static int i2cp_receive_ctrlr_cmd_complete(struct i2cp_controller *pdata,
 }
 
 static ssize_t i2cp_cdev_write(struct file *filep, const char __user *buf,
-		size_t count, loff_t *f_ps)
+			       size_t count, loff_t *f_ps)
 {
 	ssize_t ret = 0;
 	bool non_blocking;
@@ -2949,8 +2984,8 @@ static ssize_t i2cp_cdev_write(struct file *filep, const char __user *buf,
 		start += ret;
 
 		if (ret > 0 && start[-1] == i2cp_ctrlr_end_char) {
-			ret = i2cp_receive_ctrlr_cmd_complete(
-				pdata, non_blocking);
+			ret = i2cp_receive_ctrlr_cmd_complete(pdata,
+							      non_blocking);
 			if (ret < 0)
 				break;
 		}
@@ -2963,7 +2998,7 @@ static ssize_t i2cp_cdev_write(struct file *filep, const char __user *buf,
 		/* If successful the whole write is always consumed. */
 		ret = count;
 
- free_kbuf:
+free_kbuf:
 	kfree(kbuf);
 	return ret;
 }
@@ -3056,7 +3091,7 @@ static const struct file_operations i2cp_fileops = {
 };
 
 static ssize_t i2cp_limit_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
+			       struct device_attribute *attr, char *buf)
 {
 	int ret;
 
@@ -3075,7 +3110,7 @@ static struct device_attribute i2cp_limit_dev_attr = {
 };
 
 static ssize_t i2cp_count_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
+			       struct device_attribute *attr, char *buf)
 {
 	int count, ret;
 	struct i2cp_device *this_pseudo;
@@ -3138,9 +3173,9 @@ static int __init i2cp_init(void)
 	int ret = -1;
 
 	if (i2cp_limit < I2CP_ADAPTERS_MIN || i2cp_limit > I2CP_ADAPTERS_MAX) {
-		pr_err("%s: i2cp_limit=%u, must be in range ["
-			STR(I2CP_ADAPTERS_MIN) ", " STR(I2CP_ADAPTERS_MAX)
-			"]\n", __func__, i2cp_limit);
+		pr_err("%s: i2cp_limit=%u, must be in range [" STR(
+			       I2CP_ADAPTERS_MIN) ", " STR(I2CP_ADAPTERS_MAX) "]\n",
+		       __func__, i2cp_limit);
 		return -EINVAL;
 	}
 
@@ -3151,7 +3186,7 @@ static int __init i2cp_init(void)
 	i2cp_class->dev_groups = i2cp_device_sysfs_groups;
 
 	ret = alloc_chrdev_region(&i2cp_dev_num, I2CP_CDEV_BASEMINOR,
-		I2CP_CDEV_COUNT, I2CP_CHRDEV_NAME);
+				  I2CP_CDEV_COUNT, I2CP_CHRDEV_NAME);
 	if (ret < 0)
 		goto fail_after_class_create;
 
@@ -3171,8 +3206,9 @@ static int __init i2cp_init(void)
 		goto fail_after_device_init;
 
 	mutex_init(&i2cp_device->counters.lock);
-	i2cp_device->counters.all_controllers = kcalloc(i2cp_limit,
-		sizeof(*i2cp_device->counters.all_controllers), GFP_KERNEL);
+	i2cp_device->counters.all_controllers = kcalloc(
+		i2cp_limit, sizeof(*i2cp_device->counters.all_controllers),
+		GFP_KERNEL);
 	if (!i2cp_device->counters.all_controllers) {
 		ret = -ENOMEM;
 		goto fail_after_device_init;
@@ -3187,11 +3223,11 @@ static int __init i2cp_init(void)
 
 	return 0;
 
- fail_after_device_init:
+fail_after_device_init:
 	put_device(&i2cp_device->device);
- fail_after_chrdev_register:
+fail_after_chrdev_register:
 	unregister_chrdev_region(i2cp_dev_num, I2CP_CDEV_COUNT);
- fail_after_class_create:
+fail_after_class_create:
 	i2c_p_class_destroy();
 	return ret;
 }

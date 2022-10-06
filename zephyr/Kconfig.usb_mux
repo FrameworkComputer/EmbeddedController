@@ -1,0 +1,90 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+menuconfig PLATFORM_EC_USB_MUX
+	bool "USB muxes"
+	default y
+	help
+	  Enables support for USB muxes. These allow multiplexing
+
+if PLATFORM_EC_USB_MUX
+
+config PLATFORM_EC_USB_MUX_TASK
+	bool "Run mux set operations in a dedicated thread"
+	default n
+	help
+	  Run a dedicated task to process USB mux sets and HPD, which avoids
+	  blocking the PD task on mux updates. This is useful if a mux is slow
+	  to update, since blocking PD handling during mux operations can cause
+	  timing violations.
+
+config TASK_USB_MUX_STACK_SIZE
+	int "USB mux task stack size"
+	depends on PLATFORM_EC_USB_MUX_TASK
+	default 1024
+	help
+	  Set the size of the USB mux task stack, in bytes.
+
+config PLATFORM_EC_USB_MUX_AP_CONTROL
+	bool "AP USB mux control"
+	depends on PLATFORM_EC_USB_MUX_TASK
+	help
+	  Allows the AP to send commands in order to control any muxes and
+	  retimers for the board.
+
+config PLATFORM_EC_USB_MUX_AMD_FP6
+	bool "AMD FP6 integrated mux"
+	help
+	  Integrated AMD FP6 mux for USB and DP.  Mux control happens over
+	  an i2c channel.
+
+config PLATFORM_EC_USB_MUX_IT5205
+	bool "ITE IT5205 USB Type-C 3:2 Alternative mode passive mux"
+	help
+	  This is a USB Type-C 3:2 Alternative mode mux, supporting USB 3.1
+	  Gen 2 10Gbps as well as DisplayPort (DP1.4) at 8Gbps. It provides a
+	  cross-point mux for low-speed Side-Band-Use (SBU) pins. The mux can
+	  be controlled via I2C.
+
+config PLATFORM_EC_USB_MUX_PS8743
+	bool "Parade PS8743 USB-C Host Switch with redriver"
+	help
+	  This is a Parade USB 3.1 Gen 1 / DisplayPort (DP) Alt Mode
+	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching
+	  modes through either GPIO or I2C.
+
+choice PLATFORM_EC_USB_MUX_TUSB_TYPE
+	prompt "Select the TUSB USB-C Redriver type"
+	optional
+	help
+	  There are three supported types of TUSB USB-C Redriver: TUSB546,
+	  TUSB1044, and TUSB1064.
+
+config PLATFORM_EC_USB_MUX_TUSB546
+	bool "TI TUSB546 USB-C DP ALT Mode Linear Redriver Crosspoint Switch"
+	help
+	  This is a USB Type-C Alt Mode redriving switch supporting USB 3.1 data
+	  rates up to 5 Gbps and DisplayPort 1.4 up to 8.1 Gbps for downstream
+	  facing port.
+
+config PLATFORM_EC_USB_MUX_TUSB1044
+	bool "TI TUSB1044 USB-C 10 Gbps Linear Redriver"
+	help
+	  This is a USB Type-C Alt Mode redriver. This supports USB 3.1
+	  Gen 2 and DisplayPort 1.4 as Alternate Mode. It Provides GPIO and
+	  I2C Control for Channel Direction and Equalization.
+
+config PLATFORM_EC_USB_MUX_TUSB1064
+	bool "TI TUSB1064 USB-C 10 Gbps Linear Redriver"
+	help
+	  This is a USB Type-C Alt Mode redriver. This supports USB 3.1
+	  Gen 2 and DisplayPort 1.4.
+
+endchoice # PLATFORM_EC_USB_MUX_TUSB_TYPE
+
+endif # PLATFORM_EC_USB_MUX
+
+endif # PLATFORM_EC_USBC

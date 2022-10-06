@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,7 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
-#define CPRINTS(format, args...) cprints(CC_DMA, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_DMA, format, ##args)
 
 dma_chan_t *dma_get_channel(enum dma_channel channel)
 {
@@ -23,7 +23,7 @@ dma_chan_t *dma_get_channel(enum dma_channel channel)
 
 	if (channel < MCHP_DMAC_COUNT) {
 		pd = (dma_chan_t *)(MCHP_DMA_BASE + MCHP_DMA_CH_OFS +
-				(channel << MCHP_DMA_CH_OFS_BITPOS));
+				    (channel << MCHP_DMA_CH_OFS_BITPOS));
 	}
 
 	return pd;
@@ -35,7 +35,7 @@ void dma_disable(enum dma_channel channel)
 		if (MCHP_DMA_CH_CTRL(channel) & MCHP_DMA_RUN)
 			MCHP_DMA_CH_CTRL(channel) &= ~(MCHP_DMA_RUN);
 
-		if (MCHP_DMA_CH_ACT(channel)	& MCHP_DMA_ACT_EN)
+		if (MCHP_DMA_CH_ACT(channel) & MCHP_DMA_ACT_EN)
 			MCHP_DMA_CH_ACT(channel) = 0;
 	}
 }
@@ -74,10 +74,9 @@ void dma_disable_all(void)
  * is the number of bytes to transfer memory start - memory end = count.
  */
 static void prepare_channel(enum dma_channel ch, unsigned int count,
-		void *periph, void *memory, unsigned int flags)
+			    void *periph, void *memory, unsigned int flags)
 {
 	if (ch < MCHP_DMAC_COUNT) {
-
 		MCHP_DMA_CH_CTRL(ch) = 0;
 		MCHP_DMA_CH_MEM_START(ch) = (uint32_t)memory;
 		MCHP_DMA_CH_MEM_END(ch) = (uint32_t)memory + count;
@@ -115,16 +114,14 @@ void dma_prepare_tx(const struct dma_option *option, unsigned count,
 		 * Cast away const for memory pointer; this is ok because
 		 * we know we're preparing the channel for transmit.
 		 */
-		prepare_channel(option->channel, count, option->periph,
-			(void *)memory,
-			MCHP_DMA_INC_MEM |
-			MCHP_DMA_TO_DEV |
-			MCHP_DMA_DEV(option->channel) |
-			option->flags);
+		prepare_channel(
+			option->channel, count, option->periph, (void *)memory,
+			MCHP_DMA_INC_MEM | MCHP_DMA_TO_DEV |
+				MCHP_DMA_DEV(option->channel) | option->flags);
 }
 
 void dma_xfr_prepare_tx(const struct dma_option *option, uint32_t count,
-		const void *memory, uint32_t dma_xfr_units)
+			const void *memory, uint32_t dma_xfr_units)
 {
 	uint32_t nflags;
 
@@ -136,23 +133,19 @@ void dma_xfr_prepare_tx(const struct dma_option *option, uint32_t count,
 		 * we know we're preparing the channel for transmit.
 		 */
 		prepare_channel(option->channel, count, option->periph,
-			(void *)memory,
-			MCHP_DMA_INC_MEM |
-			MCHP_DMA_TO_DEV |
-			MCHP_DMA_DEV(option->channel) |
-			nflags);
+				(void *)memory,
+				MCHP_DMA_INC_MEM | MCHP_DMA_TO_DEV |
+					MCHP_DMA_DEV(option->channel) | nflags);
 	}
 }
 
-void dma_start_rx(const struct dma_option *option, unsigned count,
-		  void *memory)
+void dma_start_rx(const struct dma_option *option, unsigned count, void *memory)
 {
 	if (option != NULL) {
-		prepare_channel(option->channel, count, option->periph,
-				memory,
+		prepare_channel(option->channel, count, option->periph, memory,
 				MCHP_DMA_INC_MEM |
-				MCHP_DMA_DEV(option->channel) |
-				option->flags);
+					MCHP_DMA_DEV(option->channel) |
+					option->flags);
 		dma_go_chan(option->channel);
 	}
 }
@@ -161,26 +154,21 @@ void dma_start_rx(const struct dma_option *option, unsigned count,
  * Configure and start DMA channel for read from device and write to
  * memory. Allow caller to override DMA transfer unit length.
  */
-void dma_xfr_start_rx(const struct dma_option *option,
-		uint32_t dma_xfr_ulen,
-		uint32_t count, void *memory)
+void dma_xfr_start_rx(const struct dma_option *option, uint32_t dma_xfr_ulen,
+		      uint32_t count, void *memory)
 {
 	uint32_t ch, ctrl;
 
 	if (option != NULL) {
 		ch = option->channel;
 		if (ch < MCHP_DMAC_COUNT) {
-
 			MCHP_DMA_CH_CTRL(ch) = 0;
 			MCHP_DMA_CH_MEM_START(ch) = (uint32_t)memory;
-			MCHP_DMA_CH_MEM_END(ch) = (uint32_t)memory +
-					count;
+			MCHP_DMA_CH_MEM_END(ch) = (uint32_t)memory + count;
 
-			MCHP_DMA_CH_DEV_ADDR(ch) =
-					(uint32_t)option->periph;
+			MCHP_DMA_CH_DEV_ADDR(ch) = (uint32_t)option->periph;
 
-			ctrl = option->flags &
-					~(MCHP_DMA_XFER_SIZE_MASK);
+			ctrl = option->flags & ~(MCHP_DMA_XFER_SIZE_MASK);
 			ctrl |= MCHP_DMA_INC_MEM;
 			ctrl |= MCHP_DMA_XFER_SIZE(dma_xfr_ulen);
 			ctrl |= MCHP_DMA_DEV(option->channel);
@@ -228,8 +216,8 @@ int dma_bytes_done_chan(enum dma_channel ch, uint32_t orig_count)
 	if (ch < MCHP_DMAC_COUNT)
 		if (MCHP_DMA_CH_CTRL(ch) & MCHP_DMA_RUN)
 			cnt = (uint32_t)orig_count -
-					(MCHP_DMA_CH_MEM_END(ch) -
-					 MCHP_DMA_CH_MEM_START(ch));
+			      (MCHP_DMA_CH_MEM_END(ch) -
+			       MCHP_DMA_CH_MEM_START(ch));
 
 	return (int)cnt;
 }
@@ -259,9 +247,7 @@ int dma_wait(enum dma_channel channel)
 
 		deadline.val = get_time().val + DMA_TRANSFER_TIMEOUT_US;
 
-		while (!(MCHP_DMA_CH_ISTS(channel) &
-			 MCHP_DMA_STS_DONE)) {
-
+		while (!(MCHP_DMA_CH_ISTS(channel) & MCHP_DMA_STS_DONE)) {
 			if (deadline.val <= get_time().val)
 				return EC_ERROR_TIMEOUT;
 
@@ -282,8 +268,8 @@ void dma_clear_isr(enum dma_channel channel)
 		MCHP_DMA_CH_ISTS(channel) = 0x0f;
 }
 
-void dma_cfg_buffers(enum dma_channel ch, const void *membuf,
-			uint32_t nb, const void *pdev)
+void dma_cfg_buffers(enum dma_channel ch, const void *membuf, uint32_t nb,
+		     const void *pdev)
 {
 	if (ch < MCHP_DMAC_COUNT) {
 		MCHP_DMA_CH_MEM_START(ch) = (uint32_t)membuf;
@@ -301,8 +287,8 @@ void dma_cfg_buffers(enum dma_channel ch, const void *membuf,
  *   b[2] = 1 increment device address
  *   b[3] = disable HW flow control
  */
-void dma_cfg_xfr(enum dma_channel ch, uint8_t unit_len,
-			uint8_t dev_id, uint8_t flags)
+void dma_cfg_xfr(enum dma_channel ch, uint8_t unit_len, uint8_t dev_id,
+		 uint8_t flags)
 {
 	uint32_t ctrl;
 
@@ -378,7 +364,7 @@ int dma_crc32_start(const uint8_t *mstart, const uint32_t nbytes, int ien)
 	MCHP_DMA_CH_IEN(0) = 0;
 	MCHP_DMA_CH_ISTS(0) = 0xff;
 	MCHP_DMA_CH0_CRC32_EN = 1;
-	MCHP_DMA_CH0_CRC32_DATA	= 0xfffffffful;
+	MCHP_DMA_CH0_CRC32_DATA = 0xfffffffful;
 	/* program device address to point to read-only register */
 	MCHP_DMA_CH_DEV_ADDR(0) = (uint32_t)(MCHP_DMA_CH_BASE + 0x1c);
 	MCHP_DMA_CH_MEM_START(0) = (uint32_t)mstart;
@@ -387,7 +373,7 @@ int dma_crc32_start(const uint8_t *mstart, const uint32_t nbytes, int ien)
 		MCHP_DMA_CH_IEN(0) = 0x07;
 	MCHP_DMA_CH_ACT(0) = 1;
 	MCHP_DMA_CH_CTRL(0) = MCHP_DMA_TO_DEV + MCHP_DMA_INC_MEM +
-		MCHP_DMA_DIS_HW_FLOW + MCHP_DMA_XFER_SIZE(4);
+			      MCHP_DMA_DIS_HW_FLOW + MCHP_DMA_XFER_SIZE(4);
 	MCHP_DMA_CH_CTRL(0) |= MCHP_DMA_SW_GO;
 	return EC_SUCCESS;
 }

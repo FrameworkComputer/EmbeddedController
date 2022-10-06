@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 const char *__prog_name;
 
@@ -40,7 +40,7 @@ static int test_main(void)
 
 	register_test_end_hook();
 
-	flash_pre_init();
+	crec_flash_pre_init();
 	system_pre_init();
 	system_common_pre_init();
 
@@ -85,7 +85,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	 * We lose the program name as LLVM fuzzer takes over main function:
 	 * make up one.
 	 */
-	static const char *name = STRINGIFY(PROJECT)".exe";
+	static const char *name = STRINGIFY(PROJECT) ".exe";
 
 	if (!initialized) {
 		__prog_name = name;

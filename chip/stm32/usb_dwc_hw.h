@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,29 +18,27 @@
 #define _EP_RX_HANDLER_TYPECHECK(num) _EP_HANDLER2(num, _rx_typecheck)
 #define _EP_EVENT_HANDLER_TYPECHECK(num) _EP_HANDLER2(num, _evt_typecheck)
 
-#define USB_DECLARE_EP(num, tx_handler, rx_handler, evt_handler)  \
-	void _EP_TX_HANDLER(num)(void)				  \
-		__attribute__ ((alias(STRINGIFY(tx_handler))));	  \
-	void _EP_RX_HANDLER(num)(void)                            \
-		__attribute__ ((alias(STRINGIFY(rx_handler))));	  \
-	void _EP_EVENT_HANDLER(num)(enum usb_ep_event evt)	  \
-		__attribute__ ((alias(STRINGIFY(evt_handler))));  \
-	static __unused void					  \
-	(*_EP_TX_HANDLER_TYPECHECK(num))(void) = tx_handler;	  \
-	static __unused void					  \
-	(*_EP_RX_HANDLER_TYPECHECK(num))(void) = rx_handler;	  \
-	static __unused void					  \
-	(*_EP_EVENT_HANDLER_TYPECHECK(num))(enum usb_ep_event evt)\
-			= evt_handler
+#define USB_DECLARE_EP(num, tx_handler, rx_handler, evt_handler)      \
+	void _EP_TX_HANDLER(num)(void)                                \
+		__attribute__((alias(STRINGIFY(tx_handler))));        \
+	void _EP_RX_HANDLER(num)(void)                                \
+		__attribute__((alias(STRINGIFY(rx_handler))));        \
+	void _EP_EVENT_HANDLER(num)(enum usb_ep_event evt)            \
+		__attribute__((alias(STRINGIFY(evt_handler))));       \
+	static __unused void (*_EP_TX_HANDLER_TYPECHECK(num))(void) = \
+		tx_handler;                                           \
+	static __unused void (*_EP_RX_HANDLER_TYPECHECK(num))(void) = \
+		rx_handler;                                           \
+	static __unused void (*_EP_EVENT_HANDLER_TYPECHECK(num))(     \
+		enum usb_ep_event evt) = evt_handler
 
 /* Endpoint callbacks */
-extern void (*usb_ep_tx[]) (void);
-extern void (*usb_ep_rx[]) (void);
-extern void (*usb_ep_event[]) (enum usb_ep_event evt);
+extern void (*usb_ep_tx[])(void);
+extern void (*usb_ep_rx[])(void);
+extern void (*usb_ep_event[])(enum usb_ep_event evt);
 struct usb_setup_packet;
 /* EP0 Interface handler callbacks */
-extern int (*usb_iface_request[]) (struct usb_setup_packet *req);
-
+extern int (*usb_iface_request[])(struct usb_setup_packet *req);
 
 /* True if the HW Rx/OUT FIFO is currently listening. */
 int rx_ep_is_active(uint32_t ep_num);
@@ -99,8 +97,8 @@ void epN_reset(uint32_t ep_num);
  * (and thus indicate error to the host).
  */
 #define _IFACE_HANDLER(num) CONCAT3(iface_, num, _request)
-#define USB_DECLARE_IFACE(num, handler)				\
-	int _IFACE_HANDLER(num)(struct usb_setup_packet *req)	\
-		__attribute__ ((alias(STRINGIFY(handler))))
+#define USB_DECLARE_IFACE(num, handler)                        \
+	int _IFACE_HANDLER(num)(struct usb_setup_packet * req) \
+		__attribute__((alias(STRINGIFY(handler))))
 
-#endif	/* __CROS_EC_USB_DWC_HW_H */
+#endif /* __CROS_EC_USB_DWC_HW_H */

@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -23,7 +23,7 @@ static struct mpsse_context *mpsse;
 /* enum ec_status meaning */
 static const char *ec_strerr(enum ec_status r)
 {
-	static const char * const strs[] = {
+	static const char *const strs[] = {
 		"SUCCESS",
 		"INVALID_COMMAND",
 		"ERROR",
@@ -48,10 +48,9 @@ static const char *ec_strerr(enum ec_status r)
 	return "<undefined result>";
 };
 
-
-/****************************************************************************
- * Debugging output
- */
+	/****************************************************************************
+	 * Debugging output
+	 */
 
 #define LINELEN 16
 
@@ -65,8 +64,7 @@ static void showline(uint8_t *buf, int len)
 		printf("   ");
 	printf("    ");
 	for (i = 0; i < len; i++)
-		printf("%c",
-		       (buf[i] >= ' ' && buf[i] <= '~') ? buf[i] : '.');
+		printf("%c", (buf[i] >= ' ' && buf[i] <= '~') ? buf[i] : '.');
 	printf("\n");
 }
 
@@ -105,8 +103,8 @@ static uint8_t txbuf[128];
  * Load the output buffer with a proto v3 request (header, then data, with
  * checksum correct in header).
  */
-static size_t prepare_request(int cmd, int version,
-			      const uint8_t *data, size_t data_len)
+static size_t prepare_request(int cmd, int version, const uint8_t *data,
+			      size_t data_len)
 {
 	struct ec_host_request *request;
 	size_t i, total_len;
@@ -114,8 +112,8 @@ static size_t prepare_request(int cmd, int version,
 
 	total_len = sizeof(*request) + data_len;
 	if (total_len > sizeof(txbuf)) {
-		printf("Request too large (%zd > %zd)\n",
-		       total_len, sizeof(txbuf));
+		printf("Request too large (%zd > %zd)\n", total_len,
+		       sizeof(txbuf));
 		return -1;
 	}
 
@@ -139,7 +137,6 @@ static size_t prepare_request(int cmd, int version,
 	return total_len;
 }
 
-
 /* Timeout flag, so we don't wait forever */
 static int timedout;
 static void alarm_handler(int sig)
@@ -151,11 +148,8 @@ static void alarm_handler(int sig)
  * Send command, wait for result. Return zero if communication succeeded; check
  * response to see if the EC liked the command.
  */
-static int send_cmd(int cmd, int version,
-		    void *outbuf,
-		    size_t outsize,
-		    struct ec_host_response *hdr,
-		    void *bodydest,
+static int send_cmd(int cmd, int version, void *outbuf, size_t outsize,
+		    struct ec_host_response *hdr, void *bodydest,
 		    size_t bodylen)
 {
 	uint8_t *tptr, *hptr = 0, *bptr = 0;
@@ -166,15 +160,13 @@ static int send_cmd(int cmd, int version,
 	size_t bytes_left = stop_after;
 	size_t bytes_sent = 0;
 
-
 	/* Load up the txbuf with the stuff to send */
 	len = prepare_request(cmd, version, outbuf, outsize);
 	if (len < 0)
 		return -1;
 
 	if (MPSSE_OK != Start(mpsse)) {
-		fprintf(stderr, "Start failed: %s\n",
-			ErrorString(mpsse));
+		fprintf(stderr, "Start failed: %s\n", ErrorString(mpsse));
 		return -1;
 	}
 
@@ -189,8 +181,7 @@ static int send_cmd(int cmd, int version,
 	bytes_left -= len;
 	bytes_sent += len;
 	if (!tptr) {
-		fprintf(stderr, "Transfer failed: %s\n",
-			ErrorString(mpsse));
+		fprintf(stderr, "Transfer failed: %s\n", ErrorString(mpsse));
 		goto out;
 	}
 
@@ -278,8 +269,7 @@ static int send_cmd(int cmd, int version,
 	bytes_left -= len;
 	bytes_sent += len;
 	if (!hptr) {
-		fprintf(stderr, "Read failed: %s\n",
-			ErrorString(mpsse));
+		fprintf(stderr, "Read failed: %s\n", ErrorString(mpsse));
 		goto out;
 	}
 	show("Header(%d):\n", hptr, sizeof(*hdr));
@@ -288,14 +278,12 @@ static int send_cmd(int cmd, int version,
 	/* Check the header */
 	if (hdr->struct_version != EC_HOST_RESPONSE_VERSION) {
 		printf("HEY: response version %d (should be %d)\n",
-		       hdr->struct_version,
-		       EC_HOST_RESPONSE_VERSION);
+		       hdr->struct_version, EC_HOST_RESPONSE_VERSION);
 		goto out;
 	}
 
 	if (hdr->data_len > bodylen) {
-		printf("HEY: response data_len %d is > %zd\n",
-		       hdr->data_len,
+		printf("HEY: response data_len %d is > %zd\n", hdr->data_len,
 		       bodylen);
 		goto out;
 	}
@@ -341,14 +329,12 @@ out:
 		free(bptr);
 
 	if (MPSSE_OK != Stop(mpsse)) {
-		fprintf(stderr, "Stop failed: %s\n",
-			ErrorString(mpsse));
+		fprintf(stderr, "Stop failed: %s\n", ErrorString(mpsse));
 		return -1;
 	}
 
 	return 0;
 }
-
 
 /****************************************************************************/
 
@@ -372,10 +358,7 @@ static int hello(void)
 	p.in_data = 0xa5a5a5a5;
 	expected = p.in_data + 0x01020304;
 
-	retval = send_cmd(EC_CMD_HELLO, 0,
-			  &p, sizeof(p),
-			  &resp,
-			  &r, sizeof(r));
+	retval = send_cmd(EC_CMD_HELLO, 0, &p, sizeof(p), &resp, &r, sizeof(r));
 
 	if (retval) {
 		printf("Transmission error\n");
@@ -383,14 +366,13 @@ static int hello(void)
 	}
 
 	if (EC_RES_SUCCESS != resp.result) {
-		printf("EC result is %d: %s\n",
-		       resp.result, ec_strerr(resp.result));
+		printf("EC result is %d: %s\n", resp.result,
+		       ec_strerr(resp.result));
 		return -1;
 	}
 
-	printf("sent %08x, expected %08x, got %08x => %s\n",
-	       p.in_data, expected, r.out_data,
-	       expected == r.out_data ? "yay" : "boo");
+	printf("sent %08x, expected %08x, got %08x => %s\n", p.in_data,
+	       expected, r.out_data, expected == r.out_data ? "yay" : "boo");
 
 	return !(expected == r.out_data);
 }

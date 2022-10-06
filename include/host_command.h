@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,9 +8,13 @@
 #ifndef __CROS_EC_HOST_COMMAND_H
 #define __CROS_EC_HOST_COMMAND_H
 
+#include "compiler.h"
 #include "common.h"
 #include "ec_commands.h"
-enum power_state;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Args for host command handler */
 struct host_cmd_handler_args {
@@ -20,11 +24,11 @@ struct host_cmd_handler_args {
 	 * send the response back to the host.
 	 */
 	void (*send_response)(struct host_cmd_handler_args *args);
-	uint16_t command;      /* Command (e.g., EC_CMD_FLASH_GET_INFO) */
-	uint8_t version;       /* Version of command (0-31) */
+	uint16_t command; /* Command (e.g., EC_CMD_FLASH_GET_INFO) */
+	uint8_t version; /* Version of command (0-31) */
 
 	const void *params; /* Input parameters */
-	uint16_t params_size;  /* Size of input parameters in bytes */
+	uint16_t params_size; /* Size of input parameters in bytes */
 
 	/*
 	 * Pointer to output response data buffer.  On input to the handler,
@@ -130,14 +134,13 @@ struct host_command {
 
 #ifdef CONFIG_HOST_EVENT64
 typedef uint64_t host_event_t;
-#define HOST_EVENT_CPRINTS(str, e)	CPRINTS("%s 0x%016" PRIx64, str, e)
-#define HOST_EVENT_CCPRINTF(str, e) \
-	ccprintf("%s 0x%016" PRIx64 "\n", str, e)
+#define HOST_EVENT_CPRINTS(str, e) CPRINTS("%s 0x%016" PRIx64, str, e)
+#define HOST_EVENT_CCPRINTF(str, e) ccprintf("%s 0x%016" PRIx64 "\n", str, e)
 
 #else
 typedef uint32_t host_event_t;
-#define HOST_EVENT_CPRINTS(str, e)	CPRINTS("%s 0x%08x", str, e)
-#define HOST_EVENT_CCPRINTF(str, e)	ccprintf("%s 0x%08x\n", str, e)
+#define HOST_EVENT_CPRINTS(str, e) CPRINTS("%s 0x%08x", str, e)
+#define HOST_EVENT_CCPRINTF(str, e) ccprintf("%s 0x%08x\n", str, e)
 #endif
 
 /**
@@ -196,6 +199,8 @@ int host_is_event_set(enum host_event_code event);
 
 #ifdef CONFIG_HOSTCMD_X86
 
+FORWARD_DECLARE_ENUM(power_state);
+
 /*
  * Get lazy wake masks for the sleep state provided
  *
@@ -248,40 +253,58 @@ int host_request_expected_size(const struct ec_host_request *r);
  */
 void host_packet_receive(struct host_packet *pkt);
 
-#ifdef HAS_TASK_HOSTCMD
+/**
+ * Find the handler for a command in Zephyr OS.
+ *
+ * @command		Command to handle (EC_CMD_...)
+ *
+ * Return: handler for the command, or NULL if not found.
+ */
+#ifndef CONFIG_ZEPHYR
+__error("This function should only be called from Zephyr OS code")
+#endif
+	struct host_command *zephyr_find_host_command(int command);
+
+#if defined(CONFIG_ZEPHYR)
+#include "zephyr_host_command.h"
+#elif defined(HAS_TASK_HOSTCMD)
 #define EXPAND(off, cmd) __host_cmd_(off, cmd)
 #define __host_cmd_(off, cmd) __host_cmd_##off##cmd
-#define EXPANDSTR(off, cmd) "__host_cmd_"#off#cmd
+#define EXPANDSTR(off, cmd) "__host_cmd_" #off #cmd
 
 /*
  * Register a host command handler with
  * commands starting at offset 0x0000
  */
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
-	const struct host_command __keep __no_sanitize_address		\
-	EXPAND(0x0000, command)						\
-	__attribute__((section(".rodata.hcmds."EXPANDSTR(0x0000, command)))) \
-		= {routine, command, version_mask}
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)                   \
+	static enum ec_status(routine)(struct host_cmd_handler_args * args);   \
+	const struct host_command __keep __no_sanitize_address EXPAND(0x0000,  \
+								      command) \
+		__attribute__((section(".rodata.hcmds." EXPANDSTR(             \
+			0x0000, command)))) = { routine, command,              \
+						version_mask }
 
 /*
  * Register a private host command handler with
  * commands starting at offset EC_CMD_BOARD_SPECIFIC_BASE,
  */
-#define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask) \
-	const struct host_command __keep __no_sanitize_address	     \
-	EXPAND(EC_CMD_BOARD_SPECIFIC_BASE, command) \
-	__attribute__((section(".rodata.hcmds."\
-	EXPANDSTR(EC_CMD_BOARD_SPECIFIC_BASE, command)))) \
-		= {routine, EC_PRIVATE_HOST_COMMAND_VALUE(command), \
-		   version_mask}
-#else
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)    \
-	enum ec_status (routine)(struct host_cmd_handler_args *args)       \
+#define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask)         \
+	static enum ec_status(routine)(struct host_cmd_handler_args * args); \
+	const struct host_command __keep __no_sanitize_address EXPAND(       \
+		EC_CMD_BOARD_SPECIFIC_BASE, command)                         \
+		__attribute__((section(".rodata.hcmds." EXPANDSTR(           \
+			EC_CMD_BOARD_SPECIFIC_BASE, command)))) = {          \
+			routine, EC_PRIVATE_HOST_COMMAND_VALUE(command),     \
+			version_mask                                         \
+		}
+#else /* !CONFIG_ZEPHYR && !HAS_TASK_HOSTCMD */
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)                \
+	static enum ec_status(routine)(struct host_cmd_handler_args * args) \
 		__attribute__((unused))
 
-#define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask)	\
+#define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask) \
 	DECLARE_HOST_COMMAND(command, routine, version_mask)
-#endif
+#endif /* CONFIG_ZEPHYR */
 
 /**
  * Politely ask the CPU to enable/disable its own throttling.
@@ -289,7 +312,6 @@ void host_packet_receive(struct host_packet *pkt);
  * @param throttle	Enable (!=0) or disable(0) throttling
  */
 void host_throttle_cpu(int throttle);
-
 
 /**
  * Signal host command task to send status to PD MCU.
@@ -321,8 +343,7 @@ int pd_get_active_charge_port(void);
  * @param indata Pointer to buffer to store response
  * @param insize Size of buffer to store response
  */
-int pd_host_command(int command, int version,
-		    const void *outdata, int outsize,
+int pd_host_command(int command, int version, const void *outdata, int outsize,
 		    void *indata, int insize);
 
 /*
@@ -337,4 +358,40 @@ void host_send_sysrq(uint8_t key);
 uint32_t get_feature_flags0(void);
 uint32_t get_feature_flags1(void);
 
-#endif  /* __CROS_EC_HOST_COMMAND_H */
+#ifdef CONFIG_ZTEST
+static inline void
+stub_send_response_callback(struct host_cmd_handler_args *args)
+{
+	ARG_UNUSED(args);
+}
+
+#define BUILD_HOST_COMMAND(CMD, VERSION, RESPONSE, PARAMS)          \
+	{                                                           \
+		.send_response = stub_send_response_callback,       \
+		.command = (CMD), .version = (VERSION),             \
+		COND_CODE_0(IS_EMPTY(PARAMS),                       \
+			    (.params = &(PARAMS),                   \
+			     .params_size = sizeof(PARAMS)),        \
+			    (.params = NULL, .params_size = 0)),    \
+		COND_CODE_0(IS_EMPTY(RESPONSE),                     \
+			    (.response = &(RESPONSE),               \
+			     .response_max = sizeof(RESPONSE)),     \
+			    (.response = NULL, .response_max = 0)), \
+		.response_size = 0,                                 \
+	}
+
+#define BUILD_HOST_COMMAND_RESPONSE(CMD, VERSION, RESPONSE) \
+	BUILD_HOST_COMMAND(CMD, VERSION, RESPONSE, EMPTY)
+
+#define BUILD_HOST_COMMAND_PARAMS(CMD, VERSION, PARAMS) \
+	BUILD_HOST_COMMAND(CMD, VERSION, EMPTY, PARAMS)
+
+#define BUILD_HOST_COMMAND_SIMPLE(CMD, VERSION) \
+	BUILD_HOST_COMMAND(CMD, VERSION, EMPTY, EMPTY)
+#endif /* CONFIG_ZTEST */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CROS_EC_HOST_COMMAND_H */

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,7 +10,7 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ioexpander/pcal6408.h"
-#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/tcpm/nct38xx.h"
@@ -36,8 +36,8 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
@@ -75,8 +75,6 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-#ifdef HAS_TASK_MOTIONSENSE
-
 /* Motion sensors */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
@@ -86,11 +84,9 @@ static struct stprivate_data g_lis2dwl_data;
 static struct lsm6dsm_data g_lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, FLOAT_TO_FP(-1), 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
@@ -131,11 +127,9 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
 			MOTIONSENSE_TYPE_ACCEL),
-	 .int_signal = GPIO_6AXIS_INT_L,
-	 .flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-	 .default_range = 4, /* g, enough for laptop */
+	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
 	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
 	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
@@ -163,8 +157,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
 			MOTIONSENSE_TYPE_GYRO),
-	.int_signal = GPIO_6AXIS_INT_L,
-	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	 .default_range = 1000 | ROUND_UP_FLAG, /* dps */
@@ -176,11 +168,9 @@ struct motion_sensor_t motion_sensors[] = {
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-#endif /* HAS_TASK_MOTIONSENSE */
-
 /* These IO expander GPIOs vary with DB option. */
-enum gpio_signal IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
-enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
+enum ioex_signal IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
+enum ioex_signal IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
 
 static void pcal6408_handler(void)
 {
@@ -196,7 +186,7 @@ void pcal6408_interrupt(enum gpio_signal signal)
 const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
 	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
-	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.vod_offset = PI3HDX1204_VOD_130_ALL_CHANNELS,
 	.de_offset = PI3HDX1204_DE_DB_MINUS5,
 };
 
@@ -211,9 +201,7 @@ static void board_chipset_resume(void)
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  1);
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 1);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -223,16 +211,13 @@ static void board_chipset_suspend(void)
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  0);
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 0);
 		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 0);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8743_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		/* Enable IN_HPD on the DB */
@@ -244,7 +229,6 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-
 /*****************************************************************************
  * USB-C
  */
@@ -254,8 +238,12 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
  * chip and it need a board specific driver.
  * Overall, it will use chained mux framework.
  */
-static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			      bool *ack_required)
 {
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		ioex_set_level(IOEX_USB_C0_SBU_FLIP, 1);
 	else
@@ -278,33 +266,45 @@ const struct usb_mux_driver usbc0_sbu_mux_driver = {
  * Since FSUSB42UMX is not a i2c device, .i2c_port and
  * .i2c_addr_flags are not required here.
  */
-const struct usb_mux usbc0_sbu_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &usbc0_sbu_mux_driver,
+const struct usb_mux_chain usbc0_sbu_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.driver = &usbc0_sbu_mux_driver,
+		},
 };
 
-struct usb_mux usbc1_amd_fp5_usb_mux = {
+struct usb_mux usbc1_ps8xxx_mux = {
 	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_USB_AP_MUX,
-	.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-	.driver = &amd_fp5_usb_mux_driver,
-	.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
+	.driver = &ps8743_usb_mux_driver,
 };
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usbc1_amd_fp5_usb_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+			.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP,
+		},
+};
+
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.i2c_port = I2C_PORT_USB_AP_MUX,
-		.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-		.driver = &amd_fp5_usb_mux_driver,
-		.next_mux = &usbc0_sbu_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+		},
+		.next = &usbc0_sbu_mux,
 	},
 	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
-		.driver = &ps8743_usb_mux_driver,
-		.next_mux = &usbc1_amd_fp5_usb_mux,
+		.mux = &usbc1_ps8xxx_mux,
+		.next = &usbc1_amd_fp5_usb_mux,
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -347,8 +347,7 @@ void ppc_interrupt(enum gpio_signal signal)
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (port == CHARGE_PORT_NONE) {
@@ -368,7 +367,6 @@ int board_set_active_charge_port(int port)
 	} else if (!is_valid_port) {
 		return EC_ERROR_INVAL;
 	}
-
 
 	/* Check if the port is sourcing VBUS. */
 	if (ppc_is_sourcing_vbus(port)) {
@@ -451,27 +449,33 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
-static void reset_pd_port(int port, enum gpio_signal reset_gpio_l,
-			  int hold_delay, int finish_delay)
+static void reset_nct38xx_port(int port)
 {
+	enum gpio_signal reset_gpio_l;
+
+	if (port == USBC_PORT_C0)
+		reset_gpio_l = GPIO_USB_C0_TCPC_RST_L;
+	else if (port == USBC_PORT_C1)
+		reset_gpio_l = GPIO_USB_C1_TCPC_RST_L;
+	else
+		/* Invalid port: do nothing */
+		return;
+
 	gpio_set_level(reset_gpio_l, 0);
-	msleep(hold_delay);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_set_level(reset_gpio_l, 1);
-	if (finish_delay)
-		msleep(finish_delay);
+	nct38xx_reset_notify(port);
+	if (NCT3807_RESET_POST_DELAY_MS != 0)
+		msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
 void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */
-	reset_pd_port(USBC_PORT_C0, GPIO_USB_C0_TCPC_RST_L,
-		      NCT38XX_RESET_HOLD_DELAY_MS,
-		      NCT38XX_RESET_POST_DELAY_MS);
+	reset_nct38xx_port(USBC_PORT_C0);
 
 	/* Reset TCPC1 */
-	reset_pd_port(USBC_PORT_C1, GPIO_USB_C1_TCPC_RST_L,
-		      NCT38XX_RESET_HOLD_DELAY_MS,
-		      NCT38XX_RESET_POST_DELAY_MS);
+	reset_nct38xx_port(USBC_PORT_C1);
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -517,11 +521,11 @@ void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 		break;
 
 	case GPIO_USB_C1_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+		usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 		break;
 
 	default:
@@ -535,11 +539,9 @@ int board_pd_set_frs_enable(int port, int enable)
 
 	/* Use the TCPC to enable fast switch when FRS included */
 	if (port == USBC_PORT_C0) {
-		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN,
-				    !!enable);
+		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN, !!enable);
 	} else {
-		rv = ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN,
-				    !!enable);
+		rv = ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN, !!enable);
 	}
 
 	return rv;
@@ -549,17 +551,17 @@ static void setup_fw_config(void)
 {
 	uint32_t board_version = 0;
 
-	if (cbi_get_board_version(&board_version) == EC_SUCCESS
-	    && board_version >= 2) {
+	if (cbi_get_board_version(&board_version) == EC_SUCCESS &&
+	    board_version >= 2) {
 		ccprints("PS8743 USB MUX");
-		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8743_I2C_ADDR1_FLAG;
-		usb_muxes[USBC_PORT_C1].driver = &ps8743_usb_mux_driver;
-		usb_muxes[USBC_PORT_C1].board_set = &board_ps8743_mux_set;
+		usbc1_ps8xxx_mux.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG;
+		usbc1_ps8xxx_mux.driver = &ps8743_usb_mux_driver;
+		usbc1_ps8xxx_mux.board_set = &board_ps8743_mux_set;
 	} else {
 		ccprints("PS8740 USB MUX");
-		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8740_I2C_ADDR0_FLAG;
-		usb_muxes[USBC_PORT_C1].driver = &ps8740_usb_mux_driver;
-		usb_muxes[USBC_PORT_C1].board_set = NULL;
+		usbc1_ps8xxx_mux.i2c_addr_flags = PS8740_I2C_ADDR0_FLAG;
+		usbc1_ps8xxx_mux.driver = &ps8740_usb_mux_driver;
+		usbc1_ps8xxx_mux.board_set = NULL;
 	}
 
 	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {
@@ -604,7 +606,7 @@ static void setup_fw_config(void)
 	} else {
 		motion_sensor_count = 0;
 		/* Device is clamshell only */
-		tablet_set_mode(0);
+		tablet_set_mode(0, TABLET_TRIGGER_LID);
 		/* Gyro is not present, don't allow line to float */
 		gpio_set_flags(GPIO_6AXIS_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
@@ -626,20 +628,20 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 struct ioexpander_config_t ioex_config[] = {
 	[IOEX_C0_NCT3807] = {
 		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
 	},
 	[IOEX_C1_NCT3807] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
+		.flags = IOEX_FLAGS_DEFAULT_INIT_DISABLED,
 	},
 	[IOEX_HDMI_PCAL6408] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = PCAL6408_I2C_ADDR0,
+		.i2c_addr_flags = PCAL6408_I2C_ADDR0,
 		.drv = &pcal6408_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
+		.flags = IOEX_FLAGS_DEFAULT_INIT_DISABLED,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);

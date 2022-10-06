@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -16,4 +16,3 @@ int bq27621_state_of_charge(int *percent);
  * Returns EC_SUCCESS on success.
  */
 int bq27621_init(void);
-

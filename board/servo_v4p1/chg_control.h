@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,11 +8,7 @@
 
 #include <stdbool.h>
 
-enum chg_cc_t {
-	CHG_OPEN,
-	CHG_CC1,
-	CHG_CC2
-};
+enum chg_cc_t { CHG_OPEN, CHG_CC1, CHG_CC2 };
 
 enum chg_power_select_t {
 	CHG_POWER_OFF,

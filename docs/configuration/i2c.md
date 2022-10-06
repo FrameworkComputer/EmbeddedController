@@ -6,7 +6,7 @@ The I2C options are prefixed with `CONFIG_I2C*`. Evaluate whether each option is
 appropriate to add to your board.
 
 A typical EC and board should at a minimum set `CONFIG_I2C` and
-`CONFIG_I2C_MASTER`.
+`CONFIG_I2C_CONTROLLER`.
 
 ## Feature Parameters
 
@@ -14,10 +14,10 @@ The following parameters control the behavior of the I2C library. [config.h]
 defines a reasonable default value, but you may need to change the default value
 for your board.
 
-- `CONFIG_I2C_CHIP_MAX_READ_SIZE <bytes>`
-- `CONFIG_I2C_NACK_RETRY_COUNT <count>`
-- `CONFIG_I2C_EXTRA_PACKET_SIZE <bytes>` - Only used on STM32 EC's if
-  `CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS` is defined.
+-   `CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE <bytes>`
+-   `CONFIG_I2C_NACK_RETRY_COUNT <count>`
+-   `CONFIG_I2C_EXTRA_PACKET_SIZE <bytes>` - Only used on STM32 EC's if
+    `CONFIG_HOSTCMD_I2C_ADDR_FLAGS` is defined.
 
 ## GPIOs and Alternate Pins
 
@@ -28,7 +28,7 @@ recovery actions using bit-banging without involvement by the EC-specific I2C
 device driver.
 
 You also need to define the alternate function assignment for all I2C pins using
-the `ALTERNATE()` macro.  This step can be skipped for any pins that default to
+the `ALTERNATE()` macro. This step can be skipped for any pins that default to
 I2C functionality.
 
 Note that many I2C buses only support 1.8V operation. This is determined by I2C
@@ -42,12 +42,12 @@ macros.
 
 ## Data Structures
 
-- `const struct i2c_port_t i2c_ports[]` - This array should be defined in your
-  baseboard.c or board.c file.  This array defines the mapping of internal I2C
-  port numbers used by the I2C library to the physical I2C ports connected to
-  the EC.
-- `const unsigned int i2c_port_used = ARRAY_SIZE(i2c_ports)` - Defines the
-  number of internal I2C ports accessible by the I2C library.
+-   `const struct i2c_port_t i2c_ports[]` - This array should be defined in your
+    baseboard.c or board.c file. This array defines the mapping of internal I2C
+    port numbers used by the I2C library to the physical I2C ports connected to
+    the EC.
+-   `const unsigned int i2c_port_used = ARRAY_SIZE(i2c_ports)` - Defines the
+    number of internal I2C ports accessible by the I2C library.
 
 ## Tasks
 
@@ -57,14 +57,14 @@ None required by this feature.
 
 ### Console Commands
 
-- `i2cscan` - Provides a quick look of all I2C devices found on all configured
-  buses.
-- `i2cxfer` - Allows you to read and write individual registers on an I2C
-  device.
+-   `i2cscan` - Provides a quick look of all I2C devices found on all configured
+    buses.
+-   `i2cxfer` - Allows you to read and write individual registers on an I2C
+    device.
 
-For runtime troubleshooting of an I2C device, enable and the [I2C
-tracing](../i2c-debugging.md) module to log all I2C transactions initiated by
-the EC code.
+For runtime troubleshooting of an I2C device, enable and the
+[I2C tracing](../i2c-debugging.md) module to log all I2C transactions initiated
+by the EC code.
 
 ## Example
 
@@ -72,8 +72,8 @@ The image below shows the I2C bus assignment for the Volteer reference board.
 
 ![I2C Example]
 
-The `gpio.inc` file for Volteer defines both `GPIO()` and `ALTERNATE()` entries for
-all I2C buses used in the design.
+The `gpio.inc` file for Volteer defines both `GPIO()` and `ALTERNATE()` entries
+for all I2C buses used in the design.
 
 ```c
 /* I2C pins - Alternate function below configures I2C module on these pins */
@@ -101,17 +101,17 @@ ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                       
 
 The `i2c_ports[]` array requires the `.port` field to be assigned to an EC
 chipset specific enumeration. For the NPCx7 I2C bus names are defined in
-[./chip/npcx/registers.h]. The Volteer `baseboard.h` file creates a mapping
-from the schematic net name to the NPCx7 I2C bus enumeration.
+[./chip/npcx/registers.h]. The Volteer `baseboard.h` file creates a mapping from
+the schematic net name to the NPCx7 I2C bus enumeration.
 
 ```c
 #define CONFIG_I2C
-#define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
-#define I2C_PORT_USB_C0		NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1		NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_1_MIX	NPCX_I2C_PORT3_0
-#define I2C_PORT_POWER		NPCX_I2C_PORT5_0
-#define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
+#define I2C_PORT_SENSOR     NPCX_I2C_PORT0_0
+#define I2C_PORT_USB_C0     NPCX_I2C_PORT1_0
+#define I2C_PORT_USB_C1     NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_1_MIX  NPCX_I2C_PORT3_0
+#define I2C_PORT_POWER      NPCX_I2C_PORT5_0
+#define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
 ```
 
 The last piece for I2C configuration is to create the `i2c_ports[]` array using
@@ -120,56 +120,56 @@ the macros and enumerations added to `baseboard.h` and `gpio.inc`.
 ```c
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C0_SENSOR_SCL,
-		.sda = GPIO_EC_I2C0_SENSOR_SDA,
-		.flags = 0,
-	},
-	{
-		.name = "usb_c0",
-		.port = I2C_PORT_USB_C0,
-		/*
-		 * I2C buses used for PD communication must be set for 400 kbps
-		 * or greater. Set to the maximum speed supported by all devices.
-		 */
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C1_USB_C0_SCL,
-		.sda = GPIO_EC_I2C1_USB_C0_SDA,
-	},
-	{
-		.name = "usb_c1",
-		.port = I2C_PORT_USB_C1,
-		/*
-		 * I2C buses used for PD communication must be set for 400 kbps
-		 * or greater. Set to the maximum speed supported by all devices.
-		 */
-		.scl = GPIO_EC_I2C2_USB_C1_SCL,
-		.sda = GPIO_EC_I2C2_USB_C1_SDA,
-	},
-	{
-		.name = "usb_1_mix",
-		.port = I2C_PORT_USB_1_MIX,
-		.kbps = 100,
-		.scl = GPIO_EC_I2C3_USB_1_MIX_SCL,
-		.sda = GPIO_EC_I2C3_USB_1_MIX_SDA,
-	},
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 100,
-		.scl = GPIO_EC_I2C5_POWER_SCL,
-		.sda = GPIO_EC_I2C5_POWER_SDA,
-	},
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C7_EEPROM_SCL,
-		.sda = GPIO_EC_I2C7_EEPROM_SDA,
-	},
+    {
+        .name = "sensor",
+        .port = I2C_PORT_SENSOR,
+        .kbps = 400,
+        .scl = GPIO_EC_I2C0_SENSOR_SCL,
+        .sda = GPIO_EC_I2C0_SENSOR_SDA,
+        .flags = 0,
+    },
+    {
+        .name = "usb_c0",
+        .port = I2C_PORT_USB_C0,
+        /*
+         * I2C buses used for PD communication must be set for 400 kbps
+         * or greater. Set to the maximum speed supported by all devices.
+         */
+        .kbps = 1000,
+        .scl = GPIO_EC_I2C1_USB_C0_SCL,
+        .sda = GPIO_EC_I2C1_USB_C0_SDA,
+    },
+    {
+        .name = "usb_c1",
+        .port = I2C_PORT_USB_C1,
+        /*
+         * I2C buses used for PD communication must be set for 400 kbps
+         * or greater. Set to the maximum speed supported by all devices.
+         */
+        .scl = GPIO_EC_I2C2_USB_C1_SCL,
+        .sda = GPIO_EC_I2C2_USB_C1_SDA,
+    },
+    {
+        .name = "usb_1_mix",
+        .port = I2C_PORT_USB_1_MIX,
+        .kbps = 100,
+        .scl = GPIO_EC_I2C3_USB_1_MIX_SCL,
+        .sda = GPIO_EC_I2C3_USB_1_MIX_SDA,
+    },
+    {
+        .name = "power",
+        .port = I2C_PORT_POWER,
+        .kbps = 100,
+        .scl = GPIO_EC_I2C5_POWER_SCL,
+        .sda = GPIO_EC_I2C5_POWER_SDA,
+    },
+    {
+        .name = "eeprom",
+        .port = I2C_PORT_EEPROM,
+        .kbps = 400,
+        .scl = GPIO_EC_I2C7_EEPROM_SCL,
+        .sda = GPIO_EC_I2C7_EEPROM_SDA,
+    },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 ```
@@ -184,21 +184,20 @@ different speeds based on the BOARD_VERSION in [CBI]. For example board version
 operation. `I2C_PORT_FLAG_DYNAMIC_SPEED` is not used to change the I2C bus
 frequency on the fly depending on the addressed slave device.
 
-An example of changing the I2C bus frequency from the [Kodama
-board](../../board/kodama/board.c) is shown below.
+An example of changing the I2C bus frequency from the
+[Kodama board](../../board/kodama/board.c) is shown below.
 
 ```c
 static void board_i2c_init(void)
 {
-	if (board_get_version() < 2)
-		i2c_set_freq(1,  I2C_FREQ_100KHZ);
+    if (board_get_version() < 2)
+        i2c_set_freq(1,  I2C_FREQ_100KHZ);
 }
 DECLARE_HOOK(HOOK_INIT, board_i2c_init, HOOK_PRIO_INIT_I2C);
 ```
-
 
 [config.h]: ../new_board_checklist.md#config_h
 [./chip/npcx/registers.h]: ../../chip/npcx/registers.h
 [./include/i2c.h]: ../../include/i2c.h
 [I2C Example]: ../images/i2c_example.png
-[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
+[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md

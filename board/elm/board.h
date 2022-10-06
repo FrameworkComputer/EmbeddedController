@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,17 +14,20 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* Free up flash space */
+#undef CONFIG_USB_PD_TCPMV1_DEBUG
+#define CONFIG_LTO
+
 /* Accelero meter and gyro sensor */
 #define CONFIG_ACCEL_KX022
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
+#undef CONfFIG_CMD_ACCELSPOOF
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
 
 #define CONFIG_ADC
-#undef  CONFIG_ADC_WATCHDOG
+#undef CONFIG_ADC_WATCHDOG
 
 /* AC adaptor, charger, battery */
 #define CONFIG_BATTERY_CUT_OFF
@@ -57,7 +60,7 @@
 /* Other configs */
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_LED_COMMON
@@ -69,13 +72,13 @@
 #define CONFIG_POWER_COMMON
 #define CONFIG_USB_CHARGER
 #define CONFIG_SPI
-#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_CONTROLLER
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_VBOOT_HASH
-#undef  CONFIG_WATCHDOG_HELP
+#undef CONFIG_WATCHDOG_HELP
 #define CONFIG_SWITCH
 #define CONFIG_BOARD_VERSION_GPIO
-#undef  CONFIG_UART_CONSOLE
+#undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_DPTF
@@ -99,7 +102,7 @@
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_TCPC
-#undef  CONFIG_TCPC_I2C_BASE_ADDR_FLAGS
+#undef CONFIG_TCPC_I2C_BASE_ADDR_FLAGS
 #define CONFIG_TCPC_I2C_BASE_ADDR_FLAGS 0x2C
 #define CONFIG_USB_PD_ANX7688
 
@@ -120,6 +123,8 @@
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 #define CONFIG_CMD_I2C_PROTECT
 #define CONFIG_HOSTCMD_PD_CONTROL
+/* Disable verbose output in EC pd */
+#define CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE
 
 /*
  * Flash layout:
@@ -139,11 +144,11 @@
 #undef CONFIG_EC_WRITABLE_STORAGE_OFF
 #undef CONFIG_EC_WRITABLE_STORAGE_SIZE
 #undef CONFIG_WP_STORAGE_SIZE
-#define CONFIG_RW_MEM_OFF                (128 * 1024)
-#define CONFIG_RW_SIZE                   (128 * 1024)
-#define CONFIG_EC_WRITABLE_STORAGE_OFF   (128 * 1024)
-#define CONFIG_EC_WRITABLE_STORAGE_SIZE  (128 * 1024)
-#define CONFIG_WP_STORAGE_SIZE           (128 * 1024)
+#define CONFIG_RW_MEM_OFF (128 * 1024)
+#define CONFIG_RW_SIZE (128 * 1024)
+#define CONFIG_EC_WRITABLE_STORAGE_OFF (128 * 1024)
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE (128 * 1024)
+#define CONFIG_WP_STORAGE_SIZE (128 * 1024)
 
 /* Drivers */
 #ifndef __ASSEMBLER__
@@ -155,30 +160,30 @@
 #define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C, GPIO_D
 
 /* 2 I2C master ports, connect to battery, charger, pd and USB switches */
-#define I2C_PORT_MASTER  0
-#define I2C_PORT_ACCEL   0
+#define I2C_PORT_MASTER 0
+#define I2C_PORT_ACCEL 0
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
 #define I2C_PORT_PERICOM 0
 #define I2C_PORT_THERMAL 0
-#define I2C_PORT_PD_MCU  1
+#define I2C_PORT_PD_MCU 1
 #define I2C_PORT_USB_MUX 1
-#define I2C_PORT_TCPC    1
+#define I2C_PORT_TCPC 1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* First SPI master port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT 0 /* First SPI controller port (SPI2) */
 
 /* Timer selection */
 #define TIM_CLOCK32 2
 #define TIM_WATCHDOG 4
 
 /* Define the host events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_FASTBOOT))
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK                     \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |          \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |      \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |       \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_FASTBOOT))
 
 #include "gpio_signal.h"
 
@@ -196,9 +201,9 @@ enum pwm_channel {
 };
 
 enum adc_channel {
-	ADC_PSYS = 0,  /* PC1: STM32_AIN(2) */
+	ADC_PSYS = 0, /* PC1: STM32_AIN(2) */
 	ADC_AMON_BMON, /* PC0: STM32_AIN(10) */
-	ADC_VBUS,      /* PA2: STM32_AIN(11) */
+	ADC_VBUS, /* PA2: STM32_AIN(11) */
 	ADC_CH_COUNT
 };
 
@@ -226,17 +231,16 @@ enum sensor_id {
  * delay to turn on the power supply max is ~16ms.
  * delay to turn off the power supply max is about ~180ms.
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* delay to turn on/off vconn */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       45000
-#define PD_MAX_CURRENT_MA     CONFIG_CHARGER_MAX_INPUT_CURRENT
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_POWER_MW 45000
+#define PD_MAX_CURRENT_MA CONFIG_CHARGER_MAX_INPUT_CURRENT
+#define PD_MAX_VOLTAGE_MV 20000
 
 /* The lower the input voltage, the higher the power efficiency. */
 #define PD_PREFER_LOW_VOLTAGE
@@ -246,6 +250,6 @@ void board_reset_pd_mcu(void);
 /* Set AP reset pin according to parameter */
 void board_set_ap_reset(int asserted);
 
-#endif  /* !__ASSEMBLER__ */
+#endif /* !__ASSEMBLER__ */
 
-#endif  /* __CROS_EC_BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

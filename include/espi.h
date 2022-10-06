@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,29 +14,29 @@
 enum espi_vw_signal {
 	/* The first valid VW signal is 0x2000 */
 	VW_SIGNAL_START = IOEX_LIMIT + 1,
-	VW_SLP_S3_L = VW_SIGNAL_START,	/* index 02h (In)  */
+	VW_SLP_S3_L = VW_SIGNAL_START, /* index 02h (In)  */
 	VW_SLP_S4_L,
 	VW_SLP_S5_L,
-	VW_SUS_STAT_L,			/* index 03h (In)  */
+	VW_SUS_STAT_L, /* index 03h (In)  */
 	VW_PLTRST_L,
 	VW_OOB_RST_WARN,
-	VW_OOB_RST_ACK,			/* index 04h (Out) */
+	VW_OOB_RST_ACK, /* index 04h (Out) */
 	VW_WAKE_L,
 	VW_PME_L,
-	VW_ERROR_FATAL,			/* index 05h (Out) */
+	VW_ERROR_FATAL, /* index 05h (Out) */
 	VW_ERROR_NON_FATAL,
 	/* Merge bit 3/0 into one signal. Need to set them simultaneously */
-	VW_SLAVE_BTLD_STATUS_DONE,
-	VW_SCI_L,			/* index 06h (Out) */
+	VW_PERIPHERAL_BTLD_STATUS_DONE,
+	VW_SCI_L, /* index 06h (Out) */
 	VW_SMI_L,
 	VW_RCIN_L,
 	VW_HOST_RST_ACK,
-	VW_HOST_RST_WARN,		/* index 07h (In)  */
-	VW_SUS_ACK,			/* index 40h (Out) */
-	VW_SUS_WARN_L,			/* index 41h (In)  */
+	VW_HOST_RST_WARN, /* index 07h (In)  */
+	VW_SUS_ACK, /* index 40h (Out) */
+	VW_SUS_WARN_L, /* index 41h (In)  */
 	VW_SUS_PWRDN_ACK_L,
 	VW_SLP_A_L,
-	VW_SLP_LAN,                     /* index 42h (In)  */
+	VW_SLP_LAN, /* index 42h (In)  */
 	VW_SLP_WLAN,
 	VW_SIGNAL_END,
 	VW_LIMIT = 0x2FFF
@@ -93,9 +93,20 @@ const char *espi_vw_get_wire_name(enum espi_vw_signal signal);
  */
 int espi_signal_is_vw(int signal);
 
+/**
+ * Wait for the specified VW's DIRTY bit to be cleared.
+ * @param signal VW to poll DIRTY bit for
+ * @param timeout max time in microseconds to poll.
+ */
+void espi_wait_vw_not_dirty(enum espi_vw_signal signal,
+			    unsigned int timeout_us);
 
+<<<<<<< HEAD
 int espi_oob_build_peci_command(uint8_t srcAddr, uint8_t destAddr, uint8_t cmdCode,
 		uint8_t nWrite, uint8_t *writeBuf, uint8_t *readBuf);
 
 
 #endif  /* __CROS_EC_ESPI_H */
+=======
+#endif /* __CROS_EC_ESPI_H */
+>>>>>>> chromium/main

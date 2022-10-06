@@ -1,0 +1,157 @@
+# Copyright 2020 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig CROS_EC
+	bool "Chromium OS EC app"
+	imply PRINTK
+	imply SHELL
+	imply SHELL_MINIMAL
+	imply STACK_SENTINEL
+	help
+	  Enable the common Chromium OS EC application. This prints a message,
+	  starts the EC tasks and sets up any drivers that are needed.
+
+	  This depends on PLATFORM_EC at present, since without the shimmed
+	  tasks, almost nothing can operate.
+
+if CROS_EC
+
+rsource "soc/Kconfig"
+orsource "chip/$(ARCH)/*/Kconfig.*"
+
+#
+# Override the maximum number of preemptive priority levels.
+#
+config NUM_PREEMPT_PRIORITIES
+	default 26
+
+#
+# In Zephyr, the default system workqueue thread priority level is the lowest
+# cooperative priority. Override its priority to the second lowest preempt
+# priority. (i.e. NUM_PREEMPT_PRIORITIES - 1)
+#
+config SYSTEM_WORKQUEUE_PRIORITY
+	default 24
+
+# eSPI is chatty, so default to Error only
+choice ESPI_LOG_LEVEL_CHOICE
+	default ESPI_LOG_LEVEL_ERR
+endchoice
+
+config LTO
+	bool "Link Time Optimization (LTO)"
+	default y if !SOC_POSIX
+	help
+	  Enable the Link Time Optimization (LTO) feature for the toolchain.
+	  LTO expands the scope of optimizations to encompass the whole program,
+	  reducing the image size.
+
+	  At this time, LTO is only enabled for Chromium OS source files and
+	  is not enabled for the Zephyr kernel or drivers due.
+	  https://github.com/zephyrproject-rtos/zephyr/issues/2112
+
+choice CBPRINTF_IMPLEMENTATION
+	default CBPRINTF_NANO
+
+endchoice
+
+choice
+	prompt "Chromium OS EC firmware section"
+
+config CROS_EC_RO
+	bool "This build is will be for the RO copy of the EC"
+	help
+	  This build will be used to produce a copy for the read-only
+	  section of the EC firmware.
+
+config CROS_EC_RW
+	bool "This build is will be for the RW copy of the EC"
+	help
+	  This build will be used to produce a copy for the read-write
+	  section of the EC firmware.
+
+endchoice
+
+config CROS_EC_ACTIVE_COPY
+	string
+	default "RO" if CROS_EC_RO
+	default "RW" if CROS_EC_RW
+	help
+	  When the active copy name is output to a console, this
+	  string will be displayed.
+
+config CROS_EC_HOOK_TICK_INTERVAL
+	int "The interval time for the HOOK_TICK"
+	default 250000
+	help
+	  Specificies the interval time for the HOOK_TICK, specified in
+	  microseconds. Modules register with HOOK_TICK to be called
+	  periodically by the HOOKS task. The interval must be shorter than
+	  1 second and is set according the EC chipset's sleep requirements.
+
+# When building for the host, we still need values for the various memory
+# sizes, though they aren't actually used, so just set some reasonable-looking
+# values and then ignore them.
+config CROS_EC_RAM_SIZE
+	hex "The total available RAM size."
+	default 0x0000f800 if ARCH_POSIX
+	help
+		This value describes the total available RAM size for the chip.
+
+config CROS_EC_DATA_RAM_SIZE
+	hex "The total available RAM size for data."
+	default 0x00010000 if ARCH_POSIX
+	help
+		This value describes the total available RAM size for data on the chip.
+
+config CROS_EC_RAM_BASE
+	hex "Base address of RAM for the chip."
+	default 0x200c0000 if ARCH_POSIX
+	help
+		Base address of RAM for the chip.
+
+config CROS_EC_PROGRAM_MEMORY_BASE
+	hex "The base address of the program memory region."
+	default 0x10090000 if ARCH_POSIX
+	help
+		This will be used (among other things) to calculate the current PC's
+		offset within the program memory.
+
+config CROS_EC_RO_MEM_OFF
+	hex "The RO region's offset."
+	default 0x0 if ARCH_POSIX
+	help
+		This will be used to determine if the current PC is in the RO section.
+
+config CROS_EC_RO_SIZE
+	hex "The size of the RO region."
+	default 0xb000 if ARCH_POSIX
+	help
+		This will be used (along with SYSTEM_RO_MEM_OFF) to determine if the
+		current PC is in the RO section.
+
+config CROS_EC_RW_MEM_OFF
+	hex "The RW region's offset."
+	default 0xb000 if ARCH_POSIX
+	help
+		This will be used to determine if the current PC is in the RW section.
+
+config CROS_EC_RW_SIZE
+	hex "The size of the RW region."
+	default 0x75000 if ARCH_POSIX
+	help
+		This will be used (along with SYSTEM_RW_MEM_OFF) to determine if the
+		current PC is in the RW section.
+
+# By default, a unit test doesn't need shimmed tasks.
+config SHIMMED_TASKS
+	bool "Add support for shimming in platform/ec tasks as Zephyr threads"
+	default n if ARCH_POSIX
+	help
+	  When this option is enabled, a shimmed_tasks.h header with the
+	  CROS_EC_TASK_LIST defined needs to be included for the project to
+	  build. The CROS_EC_TASK_LIST defines a list of CROS_EC_TASK that
+	  should be shimmed in.
+
+endif # CROS_EC

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,11 +16,11 @@
 
 static const struct ec2i_t keyboard_settings[] = {
 	/* Select logical device 06h(keyboard) */
-	{HOST_INDEX_LDN, LDN_KBC_KEYBOARD},
+	{ HOST_INDEX_LDN, LDN_KBC_KEYBOARD },
 	/* Set IRQ=01h for logical device */
-	{HOST_INDEX_IRQNUMX, 0x01},
-	/* Configure IRQTP for KBC. */
-#ifdef CONFIG_HOSTCMD_ESPI
+	{ HOST_INDEX_IRQNUMX, 0x01 },
+/* Configure IRQTP for KBC. */
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	/*
 	 * Interrupt request type select (IRQTP) for KBC.
 	 * bit 1, 0: IRQ request is buffered and applied to SERIRQ
@@ -39,55 +39,55 @@ static const struct ec2i_t keyboard_settings[] = {
 	 * Additionally, this interrupt is configured as edge-triggered on the
 	 * host side. So, match the trigger mode on the EC side as well.
 	 */
-	{HOST_INDEX_IRQTP, 0x02},
+	{ HOST_INDEX_IRQTP, 0x02 },
 #endif
 	/* Enable logical device */
-	{HOST_INDEX_LDA, 0x01},
+	{ HOST_INDEX_LDA, 0x01 },
 };
 
 #ifdef CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
 static const struct ec2i_t mouse_settings[] = {
 	/* Select logical device 05h(mouse) */
-	{HOST_INDEX_LDN, LDN_KBC_MOUSE},
+	{ HOST_INDEX_LDN, LDN_KBC_MOUSE },
 	/* Set IRQ=0Ch for logical device */
-	{HOST_INDEX_IRQNUMX, 0x0C},
+	{ HOST_INDEX_IRQNUMX, 0x0C },
 	/* Enable logical device */
-	{HOST_INDEX_LDA, 0x01},
+	{ HOST_INDEX_LDA, 0x01 },
 };
 #endif
 
 static const struct ec2i_t pm1_settings[] = {
 	/* Select logical device 11h(PM1 ACPI) */
-	{HOST_INDEX_LDN, LDN_PMC1},
+	{ HOST_INDEX_LDN, LDN_PMC1 },
 	/* Set IRQ=00h for logical device */
-	{HOST_INDEX_IRQNUMX, 0x00},
+	{ HOST_INDEX_IRQNUMX, 0x00 },
 	/* Enable logical device */
-	{HOST_INDEX_LDA, 0x01},
+	{ HOST_INDEX_LDA, 0x01 },
 };
 
 static const struct ec2i_t pm2_settings[] = {
 	/* Select logical device 12h(PM2) */
-	{HOST_INDEX_LDN, LDN_PMC2},
+	{ HOST_INDEX_LDN, LDN_PMC2 },
 	/* I/O Port Base Address 200h/204h */
-	{HOST_INDEX_IOBAD0_MSB, 0x02},
-	{HOST_INDEX_IOBAD0_LSB, 0x00},
-	{HOST_INDEX_IOBAD1_MSB, 0x02},
-	{HOST_INDEX_IOBAD1_LSB, 0x04},
+	{ HOST_INDEX_IOBAD0_MSB, 0x02 },
+	{ HOST_INDEX_IOBAD0_LSB, 0x00 },
+	{ HOST_INDEX_IOBAD1_MSB, 0x02 },
+	{ HOST_INDEX_IOBAD1_LSB, 0x04 },
 	/* Set IRQ=00h for logical device */
-	{HOST_INDEX_IRQNUMX, 0x00},
+	{ HOST_INDEX_IRQNUMX, 0x00 },
 	/* Enable logical device */
-	{HOST_INDEX_LDA, 0x01},
+	{ HOST_INDEX_LDA, 0x01 },
 };
 
 static const struct ec2i_t smfi_settings[] = {
 	/* Select logical device 0Fh(SMFI) */
-	{HOST_INDEX_LDN, LDN_SMFI},
+	{ HOST_INDEX_LDN, LDN_SMFI },
 	/* H2RAM LPC I/O cycle Dxxx */
-	{HOST_INDEX_DSLDC6, 0x00},
+	{ HOST_INDEX_DSLDC6, 0x00 },
 	/* Enable H2RAM LPC I/O cycle */
-	{HOST_INDEX_DSLDC7, 0x01},
+	{ HOST_INDEX_DSLDC7, 0x01 },
 	/* Enable logical device */
-	{HOST_INDEX_LDA, 0x01},
+	{ HOST_INDEX_LDA, 0x01 },
 };
 
 /*
@@ -96,16 +96,16 @@ static const struct ec2i_t smfi_settings[] = {
  */
 static const struct ec2i_t pm3_settings[] = {
 	/* Select logical device 17h(PM3) */
-	{HOST_INDEX_LDN, LDN_PMC3},
+	{ HOST_INDEX_LDN, LDN_PMC3 },
 	/* I/O Port Base Address 80h */
-	{HOST_INDEX_IOBAD0_MSB, 0x00},
-	{HOST_INDEX_IOBAD0_LSB, 0x80},
-	{HOST_INDEX_IOBAD1_MSB, 0x00},
-	{HOST_INDEX_IOBAD1_LSB, 0x00},
+	{ HOST_INDEX_IOBAD0_MSB, 0x00 },
+	{ HOST_INDEX_IOBAD0_LSB, 0x80 },
+	{ HOST_INDEX_IOBAD1_MSB, 0x00 },
+	{ HOST_INDEX_IOBAD1_LSB, 0x00 },
 	/* Set IRQ=00h for logical device */
-	{HOST_INDEX_IRQNUMX, 0x00},
+	{ HOST_INDEX_IRQNUMX, 0x00 },
 	/* Enable logical device */
-	{HOST_INDEX_LDA, 0x01},
+	{ HOST_INDEX_LDA, 0x01 },
 };
 
 /*
@@ -115,28 +115,28 @@ static const struct ec2i_t pm3_settings[] = {
  */
 static const struct ec2i_t rtct_settings[] = {
 	/* Select logical device 10h(RTCT) */
-	{HOST_INDEX_LDN, LDN_RTCT},
+	{ HOST_INDEX_LDN, LDN_RTCT },
 	/* P80L Begin Index */
-	{HOST_INDEX_DSLDC4, P80L_P80LB},
+	{ HOST_INDEX_DSLDC4, P80L_P80LB },
 	/* P80L End Index */
-	{HOST_INDEX_DSLDC5, P80L_P80LE},
+	{ HOST_INDEX_DSLDC5, P80L_P80LE },
 	/* P80L Current Index */
-	{HOST_INDEX_DSLDC6, P80L_P80LC},
+	{ HOST_INDEX_DSLDC6, P80L_P80LC },
 };
 
 #ifdef CONFIG_UART_HOST
 static const struct ec2i_t uart2_settings[] = {
 	/* Select logical device 2h(UART2) */
-	{HOST_INDEX_LDN, LDN_UART2},
+	{ HOST_INDEX_LDN, LDN_UART2 },
 	/*
 	 * I/O port base address is 2F8h.
 	 * Host can use LPC I/O port 0x2F8 ~ 0x2FF to access UART2.
 	 * See specification 7.24.4 for more detial.
 	 */
-	{HOST_INDEX_IOBAD0_MSB, 0x02},
-	{HOST_INDEX_IOBAD0_LSB, 0xF8},
+	{ HOST_INDEX_IOBAD0_MSB, 0x02 },
+	{ HOST_INDEX_IOBAD0_LSB, 0xF8 },
 	/* IRQ number is 3 */
-	{HOST_INDEX_IRQNUMX, 0x03},
+	{ HOST_INDEX_IRQNUMX, 0x03 },
 	/*
 	 * Interrupt Request Type Select
 	 * bit1, 0: IRQ request is buffered and applied to SERIRQ.
@@ -144,9 +144,9 @@ static const struct ec2i_t uart2_settings[] = {
 	 * bit0, 0: Edge triggered mode.
 	 *       1: Level triggered mode.
 	 */
-	{HOST_INDEX_IRQTP, 0x02},
+	{ HOST_INDEX_IRQTP, 0x02 },
 	/* Enable logical device */
-	{HOST_INDEX_LDA, 0x01},
+	{ HOST_INDEX_LDA, 0x01 },
 };
 #endif
 
@@ -163,7 +163,7 @@ enum ec2i_status_mask {
 	EC2I_STATUS_CRIB = BIT(1),
 	/* 1: EC write-access is still processing with IHD register. */
 	EC2I_STATUS_CWIB = BIT(2),
-	EC2I_STATUS_ALL  = (EC2I_STATUS_CRIB | EC2I_STATUS_CWIB),
+	EC2I_STATUS_ALL = (EC2I_STATUS_CRIB | EC2I_STATUS_CWIB),
 };
 
 static int ec2i_wait_status_bit_cleared(enum ec2i_status_mask mask)
@@ -288,8 +288,7 @@ static void pnpcfg_configure(const struct ec2i_t *settings, size_t entries)
 	}
 }
 
-#define PNPCFG(_s)						\
-	pnpcfg_configure(_s##_settings, ARRAY_SIZE(_s##_settings))
+#define PNPCFG(_s) pnpcfg_configure(_s##_settings, ARRAY_SIZE(_s##_settings))
 
 static void pnpcfg_init(void)
 {

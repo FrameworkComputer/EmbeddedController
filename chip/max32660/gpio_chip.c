@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,10 +21,10 @@
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
 
 /* 0-terminated list of GPIO base addresses */
-static mxc_gpio_regs_t *gpio_bases[] = {MXC_GPIO0, 0};
+static mxc_gpio_regs_t *gpio_bases[] = { MXC_GPIO0, 0 };
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
-			enum gpio_alternate_func func)
+				 enum gpio_alternate_func func)
 {
 	mxc_gpio_regs_t *gpio = MXC_GPIO_GET_GPIO(port);
 
@@ -42,7 +42,7 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask,
 		gpio->en1_set = mask;
 		break;
 	default:
-	    /* Default as input */
+		/* Default as input */
 		gpio->out_en_clr = mask;
 		gpio->en_set = mask;
 		gpio->en1_clr = mask;
@@ -184,7 +184,7 @@ void gpio_pre_init(void)
 
 		/* Use as GPIO, not alternate function */
 		gpio_set_alternate_function(g->port, g->mask,
-					GPIO_ALT_FUNC_NONE);
+					    GPIO_ALT_FUNC_NONE);
 
 		/* Set up GPIO based on flags */
 		gpio_set_flags_by_mask(g->port, g->mask, flags);
@@ -194,8 +194,8 @@ void gpio_pre_init(void)
 static void gpio_init(void)
 {
 	/*
-	 * Enable global GPIO0 Port interrupt. Note that interrupts still need to be
-	 * enabled at the per pin level.
+	 * Enable global GPIO0 Port interrupt. Note that interrupts still need
+	 * to be enabled at the per pin level.
 	 */
 	task_enable_irq(EC_GPIO0_IRQn);
 }
@@ -227,13 +227,13 @@ static void gpio_interrupt(int port, uint32_t mis)
  * Handlers for each GPIO port. Read the interrupt status, call the common GPIO
  * interrupt handler and clear the GPIO hardware interrupt status.
  */
-#define GPIO_IRQ_FUNC(irqfunc, gpiobase)                                       \
-	void irqfunc(void)                                                     \
-	{                                                                      \
-		mxc_gpio_regs_t *gpio = MXC_GPIO_GET_GPIO(gpiobase);           \
-		uint32_t mis = gpio->int_stat;                                 \
-		gpio_interrupt(gpiobase, mis);                                 \
-		gpio->int_clr = mis;                                           \
+#define GPIO_IRQ_FUNC(irqfunc, gpiobase)                             \
+	static void irqfunc(void)                                    \
+	{                                                            \
+		mxc_gpio_regs_t *gpio = MXC_GPIO_GET_GPIO(gpiobase); \
+		uint32_t mis = gpio->int_stat;                       \
+		gpio_interrupt(gpiobase, mis);                       \
+		gpio->int_clr = mis;                                 \
 	}
 
 GPIO_IRQ_FUNC(__gpio_0_interrupt, PORT_0);

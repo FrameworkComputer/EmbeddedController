@@ -8,13 +8,13 @@ before enabling CBI.
 
 Add the following config options to `baseboard.h` or `board.h`.
 
-- `CONFIG_BOARD_VERSION_CBI`
-- `CONFIG_CROS_BOARD_INFO`
+-   `CONFIG_BOARD_VERSION_CBI`
+-   `CONFIG_CBI_EEPROM`
 
 ## Feature Parameters
 
-- `I2C_ADDR_EEPROM_FLAGS <7-bit addr>` - Defines the 7-bit slave address for the
-  EEPROM containing CBI.
+-   `I2C_ADDR_EEPROM_FLAGS <7-bit addr>` - Defines the 7-bit slave address for
+    the EEPROM containing CBI.
 
 ## GPIOs and Alternate Pins
 
@@ -31,8 +31,9 @@ None required by this feature.
 
 ## Testing and Debugging
 
-Refer to the [I2C debugging information] to verify communication with the CBI EEPROM.
+Refer to the [I2C debugging information] to verify communication with the CBI
+EEPROM.
 
-[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
+[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [I2C buses]: ./i2c.md
 [I2C debugging information]: ./i2c.md#

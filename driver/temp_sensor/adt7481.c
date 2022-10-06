@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,8 +25,8 @@ static uint8_t is_sensor_shutdown;
  */
 static int has_power(void)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return !is_sensor_shutdown;
 #endif
@@ -34,14 +34,14 @@ static int has_power(void)
 
 static int raw_read8(const int offset, int *data_ptr)
 {
-	return i2c_read8(I2C_PORT_THERMAL, ADT7481_I2C_ADDR_FLAGS,
-			 offset, data_ptr);
+	return i2c_read8(I2C_PORT_THERMAL, ADT7481_I2C_ADDR_FLAGS, offset,
+			 data_ptr);
 }
 
 static int raw_write8(const int offset, int data)
 {
-	return i2c_write8(I2C_PORT_THERMAL, ADT7481_I2C_ADDR_FLAGS,
-			  offset, data);
+	return i2c_write8(I2C_PORT_THERMAL, ADT7481_I2C_ADDR_FLAGS, offset,
+			  data);
 }
 
 static int get_temp(const int offset, int *temp_ptr)
@@ -145,7 +145,7 @@ int adt7481_set_therm_limit(int channel, int limit_c, int hysteresis)
 		return EC_ERROR_INVAL;
 
 	if (hysteresis > ADT7481_HYSTERESIS_HIGH_LIMIT ||
-		hysteresis < ADT7481_HYSTERESIS_LOW_LIMIT)
+	    hysteresis < ADT7481_HYSTERESIS_LOW_LIMIT)
 		return EC_ERROR_INVAL;
 
 	/* hysteresis must be less than high limit */
@@ -197,12 +197,10 @@ static void adt7481_temp_sensor_poll(void)
 DECLARE_HOOK(HOOK_SECOND, adt7481_temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
 #ifdef CONFIG_CMD_TEMP_SENSOR
-static void print_temps(
-		const char *name,
-		const int adt7481_temp_reg,
-		const int adt7481_therm_limit_reg,
-		const int adt7481_high_limit_reg,
-		const int adt7481_low_limit_reg)
+static void print_temps(const char *name, const int adt7481_temp_reg,
+			const int adt7481_therm_limit_reg,
+			const int adt7481_high_limit_reg,
+			const int adt7481_low_limit_reg)
 {
 	int value;
 
@@ -230,39 +228,33 @@ static int print_status(void)
 {
 	int value;
 
-	print_temps("Local", ADT7481_LOCAL,
-		    ADT7481_LOCAL_THERM_LIMIT,
-		    ADT7481_LOCAL_HIGH_LIMIT_R,
-		    ADT7481_LOCAL_LOW_LIMIT_R);
+	print_temps("Local", ADT7481_LOCAL, ADT7481_LOCAL_THERM_LIMIT,
+		    ADT7481_LOCAL_HIGH_LIMIT_R, ADT7481_LOCAL_LOW_LIMIT_R);
 
-	print_temps("Remote1", ADT7481_REMOTE1,
-		    ADT7481_REMOTE1_THERM_LIMIT,
-		    ADT7481_REMOTE1_HIGH_LIMIT_R,
-		    ADT7481_REMOTE1_LOW_LIMIT_R);
+	print_temps("Remote1", ADT7481_REMOTE1, ADT7481_REMOTE1_THERM_LIMIT,
+		    ADT7481_REMOTE1_HIGH_LIMIT_R, ADT7481_REMOTE1_LOW_LIMIT_R);
 
-	print_temps("Remote2", ADT7481_REMOTE2,
-		    ADT7481_REMOTE2_THERM_LIMIT,
-		    ADT7481_REMOTE2_HIGH_LIMIT,
-		    ADT7481_REMOTE2_LOW_LIMIT);
+	print_temps("Remote2", ADT7481_REMOTE2, ADT7481_REMOTE2_THERM_LIMIT,
+		    ADT7481_REMOTE2_HIGH_LIMIT, ADT7481_REMOTE2_LOW_LIMIT);
 
 	ccprintf("\n");
 
 	if (raw_read8(ADT7481_STATUS1_R, &value) == EC_SUCCESS)
-		ccprintf("STATUS1:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("STATUS1:  0x%x\n", value);
 
 	if (raw_read8(ADT7481_STATUS2_R, &value) == EC_SUCCESS)
-		ccprintf("STATUS2:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("STATUS2:  0x%x\n", value);
 
 	if (raw_read8(ADT7481_CONFIGURATION1_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG1: %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("CONFIG1: 0x%x\n", value);
 
 	if (raw_read8(ADT7481_CONFIGURATION2, &value) == EC_SUCCESS)
-		ccprintf("CONFIG2: %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("CONFIG2: 0x%x\n", value);
 
 	return EC_SUCCESS;
 }
 
-static int command_adt7481(int argc, char **argv)
+static int command_adt7481(int argc, const char **argv)
 {
 	char *command;
 	char *e;
@@ -307,8 +299,7 @@ static int command_adt7481(int argc, char **argv)
 		rv = raw_read8(offset, &data);
 		if (rv < 0)
 			return rv;
-		ccprintf("Byte at offset 0x%02x is %pb\n",
-			 offset, BINARY_VALUE(data, 8));
+		ccprintf("Byte at offset 0x%02x is 0x%x\n", offset, data);
 		return rv;
 	}
 
@@ -331,7 +322,8 @@ static int command_adt7481(int argc, char **argv)
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(adt7481, command_adt7481,
+DECLARE_CONSOLE_COMMAND(
+	adt7481, command_adt7481,
 	"[settemp|setbyte <offset> <value>] or [getbyte <offset>] or"
 	"[power <on|off>]. "
 	"Temps in Celsius.",
@@ -340,13 +332,12 @@ DECLARE_CONSOLE_COMMAND(adt7481, command_adt7481,
 
 int adt7481_set_power(enum adt7481_power_state power_on)
 {
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 	uint8_t shutdown = (power_on == ADT7481_POWER_OFF) ? 1 : 0;
 
 	return adt7481_shutdown(shutdown);
 #else
-	gpio_set_level(CONFIG_TEMP_SENSOR_POWER_GPIO, power_on);
+	gpio_set_level(GPIO_TEMP_SENSOR_POWER, power_on);
 	return EC_SUCCESS;
 #endif
 }
-

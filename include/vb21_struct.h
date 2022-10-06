@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -28,24 +28,23 @@
  */
 enum vb21_struct_common_magic {
 	/* "Vb2B" = vb21_keyblock.c.magic */
-	VB21_MAGIC_KEYBLOCK		= 0x42326256,
+	VB21_MAGIC_KEYBLOCK = 0x42326256,
 
 	/* "Vb2F" = vb21_fw_preamble.c.magic */
-	VB21_MAGIC_FW_PREAMBLE		= 0x46326256,
+	VB21_MAGIC_FW_PREAMBLE = 0x46326256,
 
 	/* "Vb2I" = vb21_packed_private_key.c.magic */
-	VB21_MAGIC_PACKED_PRIVATE_KEY	= 0x49326256,
+	VB21_MAGIC_PACKED_PRIVATE_KEY = 0x49326256,
 
 	/* "Vb2K" = vb2_kernel_preamble.c.magic */
-	VB21_MAGIC_KERNEL_PREAMBLE	= 0x4b326256,
+	VB21_MAGIC_KERNEL_PREAMBLE = 0x4b326256,
 
 	/* "Vb2P" = vb21_packed_key.c.magic */
-	VB21_MAGIC_PACKED_KEY		= 0x50326256,
+	VB21_MAGIC_PACKED_KEY = 0x50326256,
 
 	/* "Vb2S" = vb21_signature.c.magic */
-	VB21_MAGIC_SIGNATURE		= 0x53326256,
+	VB21_MAGIC_SIGNATURE = 0x53326256,
 };
-
 
 /*
  * Generic struct header for all vboot2.1 structs.  This makes it easy to
@@ -145,7 +144,7 @@ struct vb21_packed_key {
 	struct vb2_id id;
 } __attribute__((packed));
 
-#define EXPECTED_VB21_PACKED_KEY_SIZE					\
+#define EXPECTED_VB21_PACKED_KEY_SIZE \
 	(EXPECTED_VB21_STRUCT_COMMON_SIZE + 16 + EXPECTED_ID_SIZE)
 
 /* Current version of vb21_packed_private_key struct */
@@ -184,7 +183,7 @@ struct vb21_packed_private_key {
 	struct vb2_id id;
 } __attribute__((packed));
 
-#define EXPECTED_VB21_PACKED_PRIVATE_KEY_SIZE				\
+#define EXPECTED_VB21_PACKED_PRIVATE_KEY_SIZE \
 	(EXPECTED_VB21_STRUCT_COMMON_SIZE + 12 + EXPECTED_ID_SIZE)
 
 /* Current version of vb21_signature struct */
@@ -232,9 +231,8 @@ struct vb21_signature {
 	struct vb2_id id;
 } __attribute__((packed));
 
-#define EXPECTED_VB21_SIGNATURE_SIZE					\
+#define EXPECTED_VB21_SIGNATURE_SIZE \
 	(EXPECTED_VB21_STRUCT_COMMON_SIZE + 16 + EXPECTED_ID_SIZE)
-
 
 /* Current version of vb21_keyblock struct */
 #define VB21_KEYBLOCK_VERSION_MAJOR 3
@@ -290,7 +288,6 @@ struct vb21_keyblock {
 
 #define EXPECTED_VB21_KEYBLOCK_SIZE (EXPECTED_VB21_STRUCT_COMMON_SIZE + 16)
 
-
 /* Current version of vb21_fw_preamble struct */
 #define VB21_FW_PREAMBLE_VERSION_MAJOR 3
 #define VB21_FW_PREAMBLE_VERSION_MINOR 0
@@ -343,4 +340,4 @@ struct vb21_fw_preamble {
 
 #define EXPECTED_VB21_FW_PREAMBLE_SIZE (EXPECTED_VB21_STRUCT_COMMON_SIZE + 20)
 
-#endif  /* VBOOT_REFERENCE_VB21_STRUCT_H_ */
+#endif /* VBOOT_REFERENCE_VB21_STRUCT_H_ */

@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -80,4 +80,4 @@ fp_t fpv3_norm_squared(const fpv3_t v);
  */
 fp_t fpv3_norm(const fpv3_t v);
 
-#endif  /* __CROS_EC_VEC_3_H */
+#endif /* __CROS_EC_VEC_3_H */

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -27,10 +27,10 @@ int dptf_get_fan_duty_target(void);
 /**
  * Set/enable the thresholds.
  */
-void dptf_set_temp_threshold(int sensor_id,	/* zero-based sensor index */
-			     int temp,		/* in degrees K */
-			     int idx,		/* which threshold (0 or 1) */
-			     int enable);	/* true = on, false = off */
+void dptf_set_temp_threshold(int sensor_id, /* zero-based sensor index */
+			     int temp, /* in degrees K */
+			     int idx, /* which threshold (0 or 1) */
+			     int enable); /* true = on, false = off */
 
 /**
  * Return the ID of a temp sensor that has crossed its threshold since the last
@@ -48,4 +48,4 @@ void dptf_set_charging_current_limit(int ma);
  */
 int dptf_get_charging_current_limit(void);
 
-#endif	/* __CROS_EC_DPTF_H */
+#endif /* __CROS_EC_DPTF_H */

@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,16 +13,15 @@
 #include "registers.h"
 
 static volatile enum {
-	POWER_STATE_IDLE = 0,    /* Idle */
-	POWER_STATE_DOWN1,       /* Assert output for 1ms */
-	POWER_STATE_UP1,         /* Deassert output for 1ms */
-	POWER_STATE_DOWN10,      /* Assert output for 10ms */
-	POWER_STATE_UP5,         /* Deassert output for 5ms */
-	POWER_STATE_DOWN15,      /* Assert output for 15ms */
-	POWER_STATE_WAIT,        /* Wait for button to be released */
-	POWER_STATE_DOWN2        /* Assert output for 2ms */
+	POWER_STATE_IDLE = 0, /* Idle */
+	POWER_STATE_DOWN1, /* Assert output for 1ms */
+	POWER_STATE_UP1, /* Deassert output for 1ms */
+	POWER_STATE_DOWN10, /* Assert output for 10ms */
+	POWER_STATE_UP5, /* Deassert output for 5ms */
+	POWER_STATE_DOWN15, /* Assert output for 15ms */
+	POWER_STATE_WAIT, /* Wait for button to be released */
+	POWER_STATE_DOWN2 /* Assert output for 2ms */
 } state = POWER_STATE_IDLE;
-
 
 /* Stops the timer. */
 static void __stop_timer(void)
@@ -32,7 +31,6 @@ static void __stop_timer(void)
 	/* Clear any pending interrupts */
 	LM4_TIMER_ICR(7) = LM4_TIMER_RIS(7);
 }
-
 
 /* Starts the timer with the specified delay.  If the timer is already
  * started, resets it. */
@@ -46,7 +44,6 @@ static void __start_timer(int usec)
 	LM4_TIMER_CTL(7) |= 0x01;
 }
 
-
 static void __set_state(int new_state, int pin_value, int timeout)
 {
 	LM4_GPIO_DATA(LM4_GPIO_D, 0x08) = (pin_value ? 0x08 : 0);
@@ -56,7 +53,6 @@ static void __set_state(int new_state, int pin_value, int timeout)
 		__stop_timer();
 	state = new_state;
 }
-
 
 int power_demo_init(void)
 {
@@ -102,7 +98,6 @@ int power_demo_init(void)
 	return EC_SUCCESS;
 }
 
-
 /* GPIO interrupt handler */
 static void __gpio_d_interrupt(void)
 {
@@ -124,7 +119,6 @@ static void __gpio_d_interrupt(void)
 }
 
 DECLARE_IRQ(LM4_IRQ_GPIOD, __gpio_d_interrupt, 1);
-
 
 /* Timer interrupt handler */
 static void __timer_w1_interrupt(void)

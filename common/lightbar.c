@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 The Chromium OS Authors. All rights reserved.
+ * Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -33,11 +33,11 @@
  * optional features in the current version should be marked with flags.
  */
 #define LIGHTBAR_IMPLEMENTATION_VERSION 1
-#define LIGHTBAR_IMPLEMENTATION_FLAGS   0
+#define LIGHTBAR_IMPLEMENTATION_FLAGS 0
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
-#define CPRINTS(format, args...) cprints(CC_LIGHTBAR, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LIGHTBAR, format, ##args)
 
 #define FP_SCALE 10000
 
@@ -61,10 +61,10 @@ static struct p_state {
 	int battery_is_power_on_prevented;
 
 	/* Pattern variables for state S0. */
-	uint16_t w0;				/* primary phase */
-	uint8_t ramp;				/* ramp-in for S3->S0 */
+	uint16_t w0; /* primary phase */
+	uint8_t ramp; /* ramp-in for S3->S0 */
 
-	uint8_t _pad0;				/* next item is __packed */
+	uint8_t _pad0; /* next item is __packed */
 
 	/* Tweakable parameters. */
 	union {
@@ -162,7 +162,7 @@ static const struct lightbar_params_v1 default_params = {
 	},
 };
 
-#define LB_SYSJUMP_TAG 0x4c42			/* "LB" */
+#define LB_SYSJUMP_TAG 0x4c42 /* "LB" */
 static void lightbar_preserve_state(void)
 {
 	system_add_jump_tag(LB_SYSJUMP_TAG, 0, sizeof(st), &st);
@@ -177,10 +177,8 @@ static void lightbar_restore_state(void)
 	old_state = system_get_jump_tag(LB_SYSJUMP_TAG, 0, &size);
 	if (old_state && size == sizeof(st)) {
 		memcpy(&st, old_state, size);
-		CPRINTS("LB state restored: %d %d - %d %d/%d",
-			st.cur_seq, st.prev_seq,
-			st.battery_is_charging,
-			st.battery_percent,
+		CPRINTS("LB state restored: %d %d - %d %d/%d", st.cur_seq,
+			st.prev_seq, st.battery_is_charging, st.battery_percent,
 			st.battery_level);
 	} else {
 		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
@@ -234,7 +232,7 @@ test_export_static int lux_level_to_google_color(const int lux)
 	}
 
 	/* See if we need to decrease brightness */
-	for (i = google_color_id; i < lb_brightness_levels_count ; i++)
+	for (i = google_color_id; i < lb_brightness_levels_count; i++)
 		if (lux >= lb_brightness_levels[i].lux_down)
 			break;
 	if (i > google_color_id) {
@@ -242,7 +240,7 @@ test_export_static int lux_level_to_google_color(const int lux)
 		return 1;
 	}
 	/* See if we need to increase brightness */
-	for (i = google_color_id; i > 0;  i--)
+	for (i = google_color_id; i > 0; i--)
 		if (lux < lb_brightness_levels[i - 1].lux_up)
 			break;
 	if (i < google_color_id) {
@@ -276,8 +274,8 @@ static int get_battery_level(void)
 
 	/* Use some hysteresis to avoid flickering */
 	if (bl < st.battery_level ||
-	    (bl > st.battery_level
-	     && pct >= (st.p.battery_threshold[st.battery_level] + 1))) {
+	    (bl > st.battery_level &&
+	     pct >= (st.p.battery_threshold[st.battery_level] + 1))) {
 		st.battery_level = bl;
 		change = 1;
 	}
@@ -294,7 +292,7 @@ static int get_battery_level(void)
 	 */
 	if (pwm_get_enabled(PWM_CH_KBLIGHT)) {
 		pct = pwm_get_duty(PWM_CH_KBLIGHT);
-		pct = (255 * pct) / 100;  /* 00 - FF */
+		pct = (255 * pct) / 100; /* 00 - FF */
 		if (pct > st.p.bright_bl_on_max[st.battery_is_charging])
 			pct = st.p.bright_bl_on_max[st.battery_is_charging];
 		else if (pct < st.p.bright_bl_on_min[st.battery_is_charging])
@@ -350,8 +348,7 @@ void demo_is_charging(int ischarge)
 		return;
 
 	st.battery_is_charging = ischarge;
-	CPRINTS("LB demo: battery_is_charging=%d",
-		st.battery_is_charging);
+	CPRINTS("LB demo: battery_is_charging=%d", st.battery_is_charging);
 }
 
 /* Bright/Dim keys */
@@ -409,7 +406,7 @@ static inline int cycle_010(uint8_t i)
 	index = i & 0x3;
 
 	return _ramp_table[bucket] +
-		((_ramp_table[bucket + 1] - _ramp_table[bucket]) * index >> 2);
+	       ((_ramp_table[bucket + 1] - _ramp_table[bucket]) * index >> 2);
 }
 
 /******************************************************************************/
@@ -421,12 +418,12 @@ static uint32_t pending_msg;
 #define PENDING_MSG TASK_EVENT_CUSTOM_BIT(0)
 
 /* Interruptible delay. */
-#define WAIT_OR_RET(A)                                                         \
-	do {                                                                   \
-		uint32_t msg = task_wait_event(A);                             \
-		uint32_t p_msg = pending_msg;                                  \
-		if (msg & PENDING_MSG && p_msg != st.cur_seq)                  \
-			return p_msg;                                          \
+#define WAIT_OR_RET(A)                                        \
+	do {                                                  \
+		uint32_t msg = task_wait_event(A);            \
+		uint32_t p_msg = pending_msg;                 \
+		if (msg & PENDING_MSG && p_msg != st.cur_seq) \
+			return p_msg;                         \
 	} while (0)
 
 /******************************************************************************/
@@ -501,7 +498,7 @@ static uint32_t sequence_S3S0(void)
 	}
 
 	/* Initial conditions */
-	st.w0 = -256;				/* start cycle_npn() quietly */
+	st.w0 = -256; /* start cycle_npn() quietly */
 	st.ramp = 0;
 
 	/* Ready for S0 */
@@ -583,7 +580,7 @@ static uint32_t sequence_S0(void)
 	return 0;
 }
 
-#else  /* just simple google colors */
+#else /* just simple google colors */
 
 static uint32_t sequence_S0(void)
 {
@@ -711,7 +708,6 @@ static uint32_t sequence_S3(void)
 	return 0;
 }
 
-
 /* CPU is powering up. We generally boot fast enough that we don't have time
  * to do anything interesting in the S3 state, but go straight on to S0. */
 static uint32_t sequence_S5S3(void)
@@ -817,12 +813,10 @@ static uint32_t sequence_STOP(void)
 	do {
 		msg = task_wait_event(-1);
 		CPRINTS("LB %s() got pending_msg %d", __func__, pending_msg);
-	} while (msg != PENDING_MSG || (
-			 pending_msg != LIGHTBAR_RUN &&
-			 pending_msg != LIGHTBAR_S0S3 &&
-			 pending_msg != LIGHTBAR_S3 &&
-			 pending_msg != LIGHTBAR_S3S5 &&
-			 pending_msg != LIGHTBAR_S5));
+	} while (msg != PENDING_MSG ||
+		 (pending_msg != LIGHTBAR_RUN && pending_msg != LIGHTBAR_S0S3 &&
+		  pending_msg != LIGHTBAR_S3 && pending_msg != LIGHTBAR_S3S5 &&
+		  pending_msg != LIGHTBAR_S5));
 	return 0;
 }
 
@@ -856,73 +850,47 @@ static const struct {
 	unsigned int delay;
 } konami[] = {
 
-	{1, 0xff, 0xff, 0x00, 0},
-	{2, 0xff, 0xff, 0x00, 100000},
-	{1, 0x00, 0x00, 0x00, 0},
-	{2, 0x00, 0x00, 0x00, 100000},
+	{ 1, 0xff, 0xff, 0x00, 0 },	 { 2, 0xff, 0xff, 0x00, 100000 },
+	{ 1, 0x00, 0x00, 0x00, 0 },	 { 2, 0x00, 0x00, 0x00, 100000 },
 
-	{1, 0xff, 0xff, 0x00, 0},
-	{2, 0xff, 0xff, 0x00, 100000},
-	{1, 0x00, 0x00, 0x00, 0},
-	{2, 0x00, 0x00, 0x00, 100000},
+	{ 1, 0xff, 0xff, 0x00, 0 },	 { 2, 0xff, 0xff, 0x00, 100000 },
+	{ 1, 0x00, 0x00, 0x00, 0 },	 { 2, 0x00, 0x00, 0x00, 100000 },
 
-	{0, 0x00, 0x00, 0xff, 0},
-	{3, 0x00, 0x00, 0xff, 100000},
-	{0, 0x00, 0x00, 0x00, 0},
-	{3, 0x00, 0x00, 0x00, 100000},
+	{ 0, 0x00, 0x00, 0xff, 0 },	 { 3, 0x00, 0x00, 0xff, 100000 },
+	{ 0, 0x00, 0x00, 0x00, 0 },	 { 3, 0x00, 0x00, 0x00, 100000 },
 
-	{0, 0x00, 0x00, 0xff, 0},
-	{3, 0x00, 0x00, 0xff, 100000},
-	{0, 0x00, 0x00, 0x00, 0},
-	{3, 0x00, 0x00, 0x00, 100000},
+	{ 0, 0x00, 0x00, 0xff, 0 },	 { 3, 0x00, 0x00, 0xff, 100000 },
+	{ 0, 0x00, 0x00, 0x00, 0 },	 { 3, 0x00, 0x00, 0x00, 100000 },
 
-	{0, 0xff, 0x00, 0x00, 0},
-	{1, 0xff, 0x00, 0x00, 100000},
-	{0, 0x00, 0x00, 0x00, 0},
-	{1, 0x00, 0x00, 0x00, 100000},
+	{ 0, 0xff, 0x00, 0x00, 0 },	 { 1, 0xff, 0x00, 0x00, 100000 },
+	{ 0, 0x00, 0x00, 0x00, 0 },	 { 1, 0x00, 0x00, 0x00, 100000 },
 
-	{2, 0x00, 0xff, 0x00, 0},
-	{3, 0x00, 0xff, 0x00, 100000},
-	{2, 0x00, 0x00, 0x00, 0},
-	{3, 0x00, 0x00, 0x00, 100000},
+	{ 2, 0x00, 0xff, 0x00, 0 },	 { 3, 0x00, 0xff, 0x00, 100000 },
+	{ 2, 0x00, 0x00, 0x00, 0 },	 { 3, 0x00, 0x00, 0x00, 100000 },
 
-	{0, 0xff, 0x00, 0x00, 0},
-	{1, 0xff, 0x00, 0x00, 100000},
-	{0, 0x00, 0x00, 0x00, 0},
-	{1, 0x00, 0x00, 0x00, 100000},
+	{ 0, 0xff, 0x00, 0x00, 0 },	 { 1, 0xff, 0x00, 0x00, 100000 },
+	{ 0, 0x00, 0x00, 0x00, 0 },	 { 1, 0x00, 0x00, 0x00, 100000 },
 
-	{2, 0x00, 0xff, 0x00, 0},
-	{3, 0x00, 0xff, 0x00, 100000},
-	{2, 0x00, 0x00, 0x00, 0},
-	{3, 0x00, 0x00, 0x00, 100000},
+	{ 2, 0x00, 0xff, 0x00, 0 },	 { 3, 0x00, 0xff, 0x00, 100000 },
+	{ 2, 0x00, 0x00, 0x00, 0 },	 { 3, 0x00, 0x00, 0x00, 100000 },
 
-	{0, 0x00, 0xff, 0xff, 0},
-	{2, 0x00, 0xff, 0xff, 100000},
-	{0, 0x00, 0x00, 0x00, 0},
-	{2, 0x00, 0x00, 0x00, 150000},
+	{ 0, 0x00, 0xff, 0xff, 0 },	 { 2, 0x00, 0xff, 0xff, 100000 },
+	{ 0, 0x00, 0x00, 0x00, 0 },	 { 2, 0x00, 0x00, 0x00, 150000 },
 
-	{1, 0xff, 0x00, 0xff, 0},
-	{3, 0xff, 0x00, 0xff, 100000},
-	{1, 0x00, 0x00, 0x00, 0},
-	{3, 0x00, 0x00, 0x00, 250000},
+	{ 1, 0xff, 0x00, 0xff, 0 },	 { 3, 0xff, 0x00, 0xff, 100000 },
+	{ 1, 0x00, 0x00, 0x00, 0 },	 { 3, 0x00, 0x00, 0x00, 250000 },
 
-	{4, 0xff, 0xff, 0xff, 100000},
-	{4, 0x00, 0x00, 0x00, 100000},
+	{ 4, 0xff, 0xff, 0xff, 100000 }, { 4, 0x00, 0x00, 0x00, 100000 },
 
-	{4, 0xff, 0xff, 0xff, 100000},
-	{4, 0x00, 0x00, 0x00, 100000},
+	{ 4, 0xff, 0xff, 0xff, 100000 }, { 4, 0x00, 0x00, 0x00, 100000 },
 
-	{4, 0xff, 0xff, 0xff, 100000},
-	{4, 0x00, 0x00, 0x00, 100000},
+	{ 4, 0xff, 0xff, 0xff, 100000 }, { 4, 0x00, 0x00, 0x00, 100000 },
 
-	{4, 0xff, 0xff, 0xff, 100000},
-	{4, 0x00, 0x00, 0x00, 100000},
+	{ 4, 0xff, 0xff, 0xff, 100000 }, { 4, 0x00, 0x00, 0x00, 100000 },
 
-	{4, 0xff, 0xff, 0xff, 100000},
-	{4, 0x00, 0x00, 0x00, 100000},
+	{ 4, 0xff, 0xff, 0xff, 100000 }, { 4, 0x00, 0x00, 0x00, 100000 },
 
-	{4, 0xff, 0xff, 0xff, 100000},
-	{4, 0x00, 0x00, 0x00, 100000},
+	{ 4, 0xff, 0xff, 0xff, 100000 }, { 4, 0x00, 0x00, 0x00, 100000 },
 };
 
 static uint32_t sequence_KONAMI_inner(void)
@@ -930,8 +898,8 @@ static uint32_t sequence_KONAMI_inner(void)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(konami); i++) {
-		lb_set_rgb(konami[i].led,
-			   konami[i].r, konami[i].g, konami[i].b);
+		lb_set_rgb(konami[i].led, konami[i].r, konami[i].g,
+			   konami[i].b);
 		if (konami[i].delay)
 			WAIT_OR_RET(konami[i].delay);
 	}
@@ -961,7 +929,7 @@ static int range(int val, int min, int ofs)
 {
 	if (val <= min)
 		return 0;
-	if (val >= min+ofs)
+	if (val >= min + ofs)
 		return FP_SCALE;
 	return (val - min) * FP_SCALE / ofs;
 }
@@ -977,7 +945,7 @@ static uint32_t sequence_TAP_inner(int dir)
 	uint32_t elapsed_time = 0;
 	int i, l, ci, max_led;
 	int f_osc, f_mult;
-	int gi, gr, gate[NUM_LEDS] = {0, 0, 0, 0};
+	int gi, gr, gate[NUM_LEDS] = { 0, 0, 0, 0 };
 	uint8_t w = 0;
 #ifdef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
 	int f_min, f_delta, f_power;
@@ -1010,7 +978,6 @@ static uint32_t sequence_TAP_inner(int dir)
 			gate[gi - 1] = FP_SCALE;
 
 		for (i = 0; i < NUM_LEDS; i++) {
-
 #ifdef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
 			if (max_led > i) {
 				f_mult = FP_SCALE;
@@ -1019,7 +986,8 @@ static uint32_t sequence_TAP_inner(int dir)
 			} else {
 				switch (base_color) {
 				case RED:
-					f_power = range(st.battery_percent, 0,
+					f_power = range(
+						st.battery_percent, 0,
 						st.p.battery_threshold[0] - 1);
 					break;
 				case YELLOW:
@@ -1174,9 +1142,9 @@ static inline uint32_t decode_32(uint32_t *dest)
 		CPRINTS("pc 0x%02x near or out of bounds", pc);
 		return EC_RES_INVALID_PARAM;
 	}
-	*dest  = cur_prog.data[pc++] << 24;
+	*dest = cur_prog.data[pc++] << 24;
 	*dest |= cur_prog.data[pc++] << 16;
-	*dest |= cur_prog.data[pc++] <<  8;
+	*dest |= cur_prog.data[pc++] << 8;
 	*dest |= cur_prog.data[pc++];
 	return EC_SUCCESS;
 }
@@ -1307,7 +1275,6 @@ static uint32_t lightbyte_SET_BRIGHTNESS(void)
  */
 static uint32_t lightbyte_SET_COLOR_SINGLE(void)
 {
-
 	uint8_t packed_loc, led, control, color, value;
 	int i;
 	if (decode_8(&packed_loc) != EC_SUCCESS)
@@ -1369,8 +1336,8 @@ static uint32_t lightbyte_GET_COLORS(void)
 	int i;
 	for (i = 0; i < NUM_LEDS; i++)
 		lb_get_rgb(i, &led_desc[i][LB_CONT_COLOR0][LB_COL_RED],
-			      &led_desc[i][LB_CONT_COLOR0][LB_COL_GREEN],
-			      &led_desc[i][LB_CONT_COLOR0][LB_COL_BLUE]);
+			   &led_desc[i][LB_CONT_COLOR0][LB_COL_GREEN],
+			   &led_desc[i][LB_CONT_COLOR0][LB_COL_BLUE]);
 
 	return EC_SUCCESS;
 }
@@ -1481,15 +1448,21 @@ static uint32_t lightbyte_CYCLE(void)
 
 	for (w = 0;; w++) {
 		for (i = 0; i < NUM_LEDS; i++) {
-			r = get_interp_value(i, LB_COL_RED,
+			r = get_interp_value(
+				i, LB_COL_RED,
+				cycle_010(
+					(w & 0xff) +
+					led_desc[i][LB_CONT_PHASE][LB_COL_RED]));
+			g = get_interp_value(
+				i, LB_COL_GREEN,
 				cycle_010((w & 0xff) +
-				led_desc[i][LB_CONT_PHASE][LB_COL_RED]));
-			g = get_interp_value(i, LB_COL_GREEN,
+					  led_desc[i][LB_CONT_PHASE]
+						  [LB_COL_GREEN]));
+			b = get_interp_value(
+				i, LB_COL_BLUE,
 				cycle_010((w & 0xff) +
-				led_desc[i][LB_CONT_PHASE][LB_COL_GREEN]));
-			b = get_interp_value(i, LB_COL_BLUE,
-				cycle_010((w & 0xff) +
-				led_desc[i][LB_CONT_PHASE][LB_COL_BLUE]));
+					  led_desc[i][LB_CONT_PHASE]
+						  [LB_COL_BLUE]));
 			lb_set_rgb(i, r, g, b);
 		}
 		WAIT_OR_RET(lb_ramp_delay);
@@ -1509,24 +1482,17 @@ static uint32_t lightbyte_HALT(void)
 
 #define OP(NAME, BYTES, MNEMONIC) NAME,
 #include "lightbar_opcode_list.h"
-enum lightbyte_opcode {
-	LIGHTBAR_OPCODE_TABLE
-	MAX_OPCODE
-};
+enum lightbyte_opcode { LIGHTBAR_OPCODE_TABLE MAX_OPCODE };
 #undef OP
 
-#define OP(NAME, BYTES, MNEMONIC) lightbyte_ ## NAME,
+#define OP(NAME, BYTES, MNEMONIC) lightbyte_##NAME,
 #include "lightbar_opcode_list.h"
-static uint32_t (*lightbyte_dispatch[])(void) = {
-	LIGHTBAR_OPCODE_TABLE
-};
+static uint32_t (*lightbyte_dispatch[])(void) = { LIGHTBAR_OPCODE_TABLE };
 #undef OP
 
 #define OP(NAME, BYTES, MNEMONIC) MNEMONIC,
 #include "lightbar_opcode_list.h"
-static const char * const lightbyte_names[] = {
-	LIGHTBAR_OPCODE_TABLE
-};
+static const char *const lightbyte_names[] = { LIGHTBAR_OPCODE_TABLE };
 #undef OP
 
 static uint32_t sequence_PROGRAM(void)
@@ -1563,7 +1529,7 @@ static uint32_t sequence_PROGRAM(void)
 			return EC_RES_INVALID_PARAM;
 		} else {
 			CPRINTS("LB PROGRAM pc: 0x%02x, opcode 0x%02x -> %s",
-				 old_pc, next_inst, lightbyte_names[next_inst]);
+				old_pc, next_inst, lightbyte_names[next_inst]);
 			rc = lightbyte_dispatch[next_inst]();
 			if (rc) {
 				lb_set_brightness(saved_brightness);
@@ -1588,15 +1554,16 @@ static inline int is_normal_sequence(enum lightbar_sequence seq)
 
 /* Link each sequence with a command to invoke it. */
 struct lightbar_cmd_t {
-	const char * const string;
+	const char *const string;
 	uint32_t (*sequence)(void);
 };
 
-#define LBMSG(state) { #state, sequence_##state }
+#define LBMSG(state)                     \
+	{                                \
+#state, sequence_##state \
+	}
 #include "lightbar_msg_list.h"
-static struct lightbar_cmd_t lightbar_cmds[] = {
-	LIGHTBAR_MSG_LIST
-};
+static struct lightbar_cmd_t lightbar_cmds[] = { LIGHTBAR_MSG_LIST };
 #undef LBMSG
 
 void lightbar_task(void)
@@ -1608,9 +1575,9 @@ void lightbar_task(void)
 	lightbar_restore_state();
 
 	while (1) {
-		CPRINTS("LB running cur_seq %d %s. prev_seq %d %s",
-			st.cur_seq, lightbar_cmds[st.cur_seq].string,
-			st.prev_seq, lightbar_cmds[st.prev_seq].string);
+		CPRINTS("LB running cur_seq %d %s. prev_seq %d %s", st.cur_seq,
+			lightbar_cmds[st.cur_seq].string, st.prev_seq,
+			lightbar_cmds[st.prev_seq].string);
 		next_seq = lightbar_cmds[st.cur_seq].sequence();
 		if (next_seq) {
 			CPRINTS("LB cur_seq %d %s returned pending msg %d %s",
@@ -1622,8 +1589,8 @@ void lightbar_task(void)
 				st.cur_seq = next_seq;
 			}
 		} else {
-			CPRINTS("LB cur_seq %d %s returned value 0",
-				st.cur_seq, lightbar_cmds[st.cur_seq].string);
+			CPRINTS("LB cur_seq %d %s returned value 0", st.cur_seq,
+				lightbar_cmds[st.cur_seq].string);
 			switch (st.cur_seq) {
 			case LIGHTBAR_S5S3:
 				st.cur_seq = LIGHTBAR_S3;
@@ -1658,7 +1625,7 @@ void lightbar_sequence_f(enum lightbar_sequence num, const char *f)
 		CPRINTS("LB %s() requests %d %s", f, num,
 			lightbar_cmds[num].string);
 		pending_msg = num;
-		task_set_event(TASK_ID_LIGHTBAR, PENDING_MSG, 0);
+		task_set_event(TASK_ID_LIGHTBAR, PENDING_MSG);
 	} else
 		CPRINTS("LB %s() requests %d - ignored", f, num);
 }
@@ -1733,16 +1700,12 @@ static enum ec_status lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		lb_hc_cmd_reg(in);
 		break;
 	case LIGHTBAR_CMD_SET_RGB:
-		lb_set_rgb(in->set_rgb.led,
-			   in->set_rgb.red,
-			   in->set_rgb.green,
+		lb_set_rgb(in->set_rgb.led, in->set_rgb.red, in->set_rgb.green,
 			   in->set_rgb.blue);
 		break;
 	case LIGHTBAR_CMD_GET_RGB:
-		rv = lb_get_rgb(in->get_rgb.led,
-				&out->get_rgb.red,
-				&out->get_rgb.green,
-				&out->get_rgb.blue);
+		rv = lb_get_rgb(in->get_rgb.led, &out->get_rgb.red,
+				&out->get_rgb.green, &out->get_rgb.blue);
 		if (rv == EC_RES_SUCCESS)
 			args->response_size = sizeof(out->get_rgb);
 		return rv;
@@ -1777,8 +1740,7 @@ static enum ec_status lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		break;
 	case LIGHTBAR_CMD_SET_PROGRAM:
 		CPRINTS("LB_set_program");
-		memcpy(&next_prog,
-		       &in->set_program,
+		memcpy(&next_prog, &in->set_program,
 		       sizeof(struct lightbar_program));
 		break;
 	case LIGHTBAR_CMD_VERSION:
@@ -1801,28 +1763,24 @@ static enum ec_status lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		break;
 	case LIGHTBAR_CMD_GET_PARAMS_V2_TIMING:
 		CPRINTS("LB_get_params_v2_timing");
-		memcpy(&out->get_params_v2_timing,
-		       &st.p_v2.timing,
+		memcpy(&out->get_params_v2_timing, &st.p_v2.timing,
 		       sizeof(st.p_v2.timing));
 		args->response_size = sizeof(out->get_params_v2_timing);
 		break;
 	case LIGHTBAR_CMD_SET_PARAMS_V2_TIMING:
 		CPRINTS("LB_set_params_v2_timing");
-		memcpy(&st.p_v2.timing,
-		       &in->set_v2par_timing,
+		memcpy(&st.p_v2.timing, &in->set_v2par_timing,
 		       sizeof(struct lightbar_params_v2_timing));
 		break;
 	case LIGHTBAR_CMD_GET_PARAMS_V2_TAP:
 		CPRINTS("LB_get_params_v2_tap");
-		memcpy(&out->get_params_v2_tap,
-		       &st.p_v2.tap,
+		memcpy(&out->get_params_v2_tap, &st.p_v2.tap,
 		       sizeof(struct lightbar_params_v2_tap));
 		args->response_size = sizeof(out->get_params_v2_tap);
 		break;
 	case LIGHTBAR_CMD_SET_PARAMS_V2_TAP:
 		CPRINTS("LB_set_params_v2_tap");
-		memcpy(&st.p_v2.tap,
-		       &in->set_v2par_tap,
+		memcpy(&st.p_v2.tap, &in->set_v2par_tap,
 		       sizeof(struct lightbar_params_v2_tap));
 		break;
 	case LIGHTBAR_CMD_GET_PARAMS_V2_OSCILLATION:
@@ -1833,47 +1791,40 @@ static enum ec_status lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		break;
 	case LIGHTBAR_CMD_SET_PARAMS_V2_OSCILLATION:
 		CPRINTS("LB_set_params_v2_oscillation");
-		memcpy(&st.p_v2.osc,
-		       &in->set_v2par_osc,
+		memcpy(&st.p_v2.osc, &in->set_v2par_osc,
 		       sizeof(struct lightbar_params_v2_oscillation));
 		break;
 	case LIGHTBAR_CMD_GET_PARAMS_V2_BRIGHTNESS:
 		CPRINTS("LB_get_params_v2_brightness");
-		memcpy(&out->get_params_v2_bright,
-		       &st.p_v2.bright,
+		memcpy(&out->get_params_v2_bright, &st.p_v2.bright,
 		       sizeof(struct lightbar_params_v2_brightness));
 		args->response_size = sizeof(out->get_params_v2_bright);
 		break;
 	case LIGHTBAR_CMD_SET_PARAMS_V2_BRIGHTNESS:
 		CPRINTS("LB_set_params_v2_brightness");
-		memcpy(&st.p_v2.bright,
-		       &in->set_v2par_bright,
+		memcpy(&st.p_v2.bright, &in->set_v2par_bright,
 		       sizeof(struct lightbar_params_v2_brightness));
 		break;
 	case LIGHTBAR_CMD_GET_PARAMS_V2_THRESHOLDS:
 		CPRINTS("LB_get_params_v2_thlds");
-		memcpy(&out->get_params_v2_thlds,
-		       &st.p_v2.thlds,
+		memcpy(&out->get_params_v2_thlds, &st.p_v2.thlds,
 		       sizeof(struct lightbar_params_v2_thresholds));
 		args->response_size = sizeof(out->get_params_v2_thlds);
 		break;
 	case LIGHTBAR_CMD_SET_PARAMS_V2_THRESHOLDS:
 		CPRINTS("LB_set_params_v2_thlds");
-		memcpy(&st.p_v2.thlds,
-		       &in->set_v2par_thlds,
+		memcpy(&st.p_v2.thlds, &in->set_v2par_thlds,
 		       sizeof(struct lightbar_params_v2_thresholds));
 		break;
 	case LIGHTBAR_CMD_GET_PARAMS_V2_COLORS:
 		CPRINTS("LB_get_params_v2_colors");
-		memcpy(&out->get_params_v2_colors,
-		       &st.p_v2.colors,
+		memcpy(&out->get_params_v2_colors, &st.p_v2.colors,
 		       sizeof(struct lightbar_params_v2_colors));
 		args->response_size = sizeof(out->get_params_v2_colors);
 		break;
 	case LIGHTBAR_CMD_SET_PARAMS_V2_COLORS:
 		CPRINTS("LB_set_params_v2_colors");
-		memcpy(&st.p_v2.colors,
-		       &in->set_v2par_colors,
+		memcpy(&st.p_v2.colors, &in->set_v2par_colors,
 		       sizeof(struct lightbar_params_v2_colors));
 		break;
 	default:
@@ -1884,9 +1835,7 @@ static enum ec_status lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-DECLARE_HOST_COMMAND(EC_CMD_LIGHTBAR_CMD,
-		     lpc_cmd_lightbar,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_LIGHTBAR_CMD, lpc_cmd_lightbar, EC_VER_MASK(0));
 
 /****************************************************************************/
 /* EC console commands */
@@ -1902,10 +1851,12 @@ static int help(const char *cmd)
 	ccprintf("  %s init                  - load default vals\n", cmd);
 	ccprintf("  %s brightness [NUM]      - set intensity (0-ff)\n", cmd);
 	ccprintf("  %s seq [NUM|SEQUENCE]    - run given pattern"
-		 " (no arg for list)\n", cmd);
+		 " (no arg for list)\n",
+		 cmd);
 	ccprintf("  %s CTRL REG VAL          - set LED controller regs\n", cmd);
 	ccprintf("  %s LED RED GREEN BLUE    - set color manually"
-		 " (LED=%d for all)\n", cmd, NUM_LEDS);
+		 " (LED=%d for all)\n",
+		 cmd, NUM_LEDS);
 	ccprintf("  %s LED                   - get current LED color\n", cmd);
 	ccprintf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
 #ifdef LIGHTBAR_SIMULATION
@@ -1936,19 +1887,18 @@ static void show_msg_names(void)
 		 lightbar_cmds[st.cur_seq].string);
 }
 
-static int command_lightbar(int argc, char **argv)
+static int command_lightbar(int argc, const char **argv)
 {
 	int i;
 	uint8_t num, led, r = 0, g = 0, b = 0;
 	struct ec_response_lightbar out;
 	char *e;
 
-	if (argc == 1) {			/* no args = dump 'em all */
+	if (argc == 1) { /* no args = dump 'em all */
 		lb_hc_cmd_dump(&out);
 		for (i = 0; i < ARRAY_SIZE(out.dump.vals); i++)
 			ccprintf(" %02x     %02x     %02x\n",
-				 out.dump.vals[i].reg,
-				 out.dump.vals[i].ic0,
+				 out.dump.vals[i].reg, out.dump.vals[i].ic0,
 				 out.dump.vals[i].ic1);
 
 		return EC_SUCCESS;
@@ -1987,8 +1937,7 @@ static int command_lightbar(int argc, char **argv)
 
 	if (!strcasecmp(argv[1], "demo")) {
 		if (argc > 2) {
-			if (!strcasecmp(argv[2], "on") ||
-			    argv[2][0] == '1')
+			if (!strcasecmp(argv[2], "on") || argv[2][0] == '1')
 				demo_mode = 1;
 			else if (!strcasecmp(argv[2], "off") ||
 				 argv[2][0] == '0')
@@ -2010,7 +1959,7 @@ static int command_lightbar(int argc, char **argv)
 			num = find_msg_by_name(argv[2]);
 		if (num >= LIGHTBAR_NUM_SEQUENCES)
 			return EC_ERROR_PARAM2;
-		if (argc > 3)			/* for testing TAP direction */
+		if (argc > 3) /* for testing TAP direction */
 			force_dir = strtoi(argv[3], 0, 0);
 		lightbar_sequence(num);
 		return EC_SUCCESS;
@@ -2056,13 +2005,11 @@ static int command_lightbar(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-
 #ifdef CONFIG_CONSOLE_CMDHELP
 	help(argv[0]);
 #endif
 
 	return EC_ERROR_INVAL;
 }
-DECLARE_CONSOLE_COMMAND(lightbar, command_lightbar,
-			"[help | COMMAND [ARGS]]",
+DECLARE_CONSOLE_COMMAND(lightbar, command_lightbar, "[help | COMMAND [ARGS]]",
 			"Get/set lightbar state");

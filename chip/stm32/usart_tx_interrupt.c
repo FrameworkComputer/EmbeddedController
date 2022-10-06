@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -37,12 +37,11 @@ static void usart_written(struct consumer const *consumer, size_t count)
 		STM32_USART_CR1(config->hw->base) |= STM32_USART_CR1_TXEIE;
 }
 
-static void usart_tx_interrupt_handler_common(
-		struct usart_config const *config,
-		remove_data_t remove_data)
+static void usart_tx_interrupt_handler_common(struct usart_config const *config,
+					      remove_data_t remove_data)
 {
 	intptr_t base = config->hw->base;
-	uint8_t  byte;
+	uint8_t byte;
 
 	if (!(STM32_USART_SR(base) & STM32_USART_SR_TXE))
 		return;
@@ -73,7 +72,7 @@ static void usart_tx_interrupt_handler_common(
 
 static size_t queue_remove(struct usart_config const *config, uint8_t *dest)
 {
-	return queue_remove_unit(config->producer.queue, (void *) dest);
+	return queue_remove_unit(config->consumer.queue, (void *)dest);
 }
 
 static void usart_tx_interrupt_handler(struct usart_config const *config)
@@ -107,11 +106,11 @@ struct usart_tx const usart_tx_interrupt = {
 
 #if defined(CONFIG_USART_HOST_COMMAND)
 
-static void usart_host_command_tx_interrupt_handler(
-		struct usart_config const *config)
+static void
+usart_host_command_tx_interrupt_handler(struct usart_config const *config)
 {
 	usart_tx_interrupt_handler_common(config,
-		&usart_host_command_tx_remove_data);
+					  &usart_host_command_tx_remove_data);
 }
 
 struct usart_tx const usart_host_command_tx_interrupt = {

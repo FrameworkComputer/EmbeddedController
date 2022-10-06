@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -44,7 +44,7 @@ static void dac_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, dac_init, HOOK_PRIO_INIT_DAC);
 
-static int command_dac(int argc, char **argv)
+static int command_dac(int argc, const char **argv)
 {
 	char *e;
 	int ch, mv, rv;
@@ -85,6 +85,5 @@ static int command_dac(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dac, command_dac,
-			"[ch2-5] [0-3300mV]",
+DECLARE_CONSOLE_COMMAND(dac, command_dac, "[ch2-5] [0-3300mV]",
 			"Enable or disable(0mV) DAC output voltage.");

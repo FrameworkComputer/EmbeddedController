@@ -1,0 +1,48 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK
+	bool "Bypass CBI EEPROM Write Protect"
+	help
+	  Bypass the CBI EEPROM write protect checks. This should ONLY be
+	  defined during bringup, and should never be defined on a shipping or
+	  release platform.
+
+	  When defined, ectool can be used to reprogram all CBI fields,
+	  regardless of the state of the hardware write protect.
+
+config PLATFORM_EC_EEPROM_CBI_WP
+	bool "EC can independently set the CBI EEPROM WP signal"
+	help
+	   Define this if the EC can independently set the CBI EEPROM WP
+	   signal. The accompanying hardware must ensure that the CBI WP gets
+	   latched and is only reset when EC_RST_ODL is asserted.
+
+choice PLATFORM_EC_CBI_STORAGE_TYPE
+	prompt "Select CBI storage Type"
+	optional
+	help
+	  CBI is a means for accessing board information, typically set
+	  during the factory process. This allows selection of the physical
+	  storage of CBI source.
+
+	  See here for detailed information on CBI:
+
+	  https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
+
+config PLATFORM_EC_CBI_EEPROM
+	bool "CBI EEPROM support"
+	depends on EEPROM
+	help
+	  Enables full Chromium OS Board Info (CBI) support, with CBI data
+	  stored in an on-board EEPROM.
+
+config PLATFORM_EC_CBI_GPIO
+	bool "CBI GPIO support"
+	help
+	  Enables Chromium OS Board Info (CBI) from strapping pins. EC reads
+	  the BOARD ID and SKU ID from GPIOs and then substantiate in-memory
+	  CBI for AP to query.
+
+endchoice

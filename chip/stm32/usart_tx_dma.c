@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -36,13 +36,13 @@ static void usart_tx_dma_start(struct usart_config const *config,
 			       struct usart_tx_dma const *dma_config)
 {
 	struct usart_tx_dma_state volatile *state = dma_config->state;
-	intptr_t                           base   = config->hw->base;
+	intptr_t base = config->hw->base;
 
 	struct dma_option options = {
 		.channel = dma_config->channel,
-		.periph  = (void *)&STM32_USART_TDR(base),
-		.flags   = (STM32_DMA_CCR_MSIZE_8_BIT |
-			    STM32_DMA_CCR_PSIZE_8_BIT),
+		.periph = (void *)&STM32_USART_TDR(base),
+		.flags =
+			(STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT),
 	};
 
 	/*

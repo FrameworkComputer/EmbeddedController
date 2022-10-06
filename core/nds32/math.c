@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,19 +12,19 @@ union ieee_float_shape_type {
 };
 
 /* Get a 32 bit int from a float.  */
-#define GET_FLOAT_WORD(i, d) \
-	do { \
+#define GET_FLOAT_WORD(i, d)                      \
+	do {                                      \
 		union ieee_float_shape_type gf_u; \
-		gf_u.value = (d); \
-		(i) = gf_u.word; \
+		gf_u.value = (d);                 \
+		(i) = gf_u.word;                  \
 	} while (0)
 
 /* Set a float from a 32 bit int. */
-#define SET_FLOAT_WORD(d, i) \
-	do { \
+#define SET_FLOAT_WORD(d, i)                      \
+	do {                                      \
 		union ieee_float_shape_type sf_u; \
-		sf_u.word = (i); \
-		(d) = sf_u.value; \
+		sf_u.word = (i);                  \
+		(d) = sf_u.value;                 \
 	} while (0)
 
 float fabsf(float x)

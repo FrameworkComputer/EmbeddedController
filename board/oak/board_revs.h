@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,7 +12,7 @@
 #define OAK_REV3 3
 #define OAK_REV4 4
 #define OAK_REV5 5
-#define OAK_REV_LAST    OAK_REV5
+#define OAK_REV_LAST OAK_REV5
 #define OAK_REV_DEFAULT OAK_REV5
 
 #if !defined(BOARD_REV)

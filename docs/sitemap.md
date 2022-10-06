@@ -25,15 +25,18 @@
 
 *   [Fingerprint MCU (FPMCU)](./fingerprint/fingerprint.md)
 *   [FPMCU Development for Partners](./fingerprint/fingerprint-dev-for-partners.md)
+*   [FPMCU Firmware Testing for Partners](./fingerprint/fingerprint-firmware-testing-for-partners.md)
 *   [FPMCU Debugging](./fingerprint/fingerprint-debugging.md)
 *   [Fingerprint Authentication Design Doc](./fingerprint/fingerprint-authentication-design-doc.md)
 *   [Fingerprint Factory Requirements](./fingerprint/fingerprint-factory-requirements.md)
 *   [Fingerprint Quick Factory Guide](./fingerprint/fingerprint-factory-quick-guide.md)
 *   [Dragonclaw Schematics and Layout](./schematics/dragonclaw)
+*   [Fingerprint MCU RAM and Flash](./fingerprint/fingerprint-ram-and-flash.md)
 
 ## Testing
 
 *   [Unit Tests](./unit_tests.md)
+    *   [Porting EC unit tests to Ztest](./zephyr/ztest.md)
 *   [Code Coverage](./code_coverage.md)
 
 ## Updaters
@@ -55,13 +58,24 @@
 *   [EC-3PO overview](./ec-3po.md)
 *   [EC-3PO design doc](./ec-3po-design.md)
 
+## Zephyr
+
+*   [Zephyr New Board Checklist](./zephyr/zephyr_new_board_checklist.md)
+*   [Building Zephyr OS](./zephyr/zephyr_build.md)
+*   [Initialization Order](./zephyr/zephyr_init.md)
+*   [Proof-of-Concept-Device Bringup](./zephyr/zephyr_poc_device_bringup.md)
+*   [Shimming](./zephyr/zephyr_shim.md)
+*   [Porting EC unit tests to Ztest](./zephyr/ztest.md)
+
 ## Miscellaneous
 
 *   [Low Battery Startup](./low_battery_startup.md)
 *   [I2C tracing via console commands](./i2c-debugging.md)
 *   [Application Processor to EC communication](./ap-ec-comm.md)
+*   [Reducing EC Image Size](./reducing_ec_image_size.md)
 *   [Code Reviews](./code_reviews.md)
 *   [IDE Support](./ide-support.md)
+*   [Building with Goma (Googlers only)](./goma.md)
 
 [1]:https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging.md
 [2]:https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md

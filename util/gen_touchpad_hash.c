@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -35,7 +35,7 @@ static int hash_fw_blank(FILE *hashes)
 		CONFIG_TOUCHPAD_VIRTUAL_SIZE / CONFIG_UPDATE_PDU_SIZE,
 		SHA256_DIGEST_LENGTH);
 	for (len = 0; len < CONFIG_TOUCHPAD_VIRTUAL_SIZE;
-				len += CONFIG_UPDATE_PDU_SIZE) {
+	     len += CONFIG_UPDATE_PDU_SIZE) {
 		print_hex(hashes, digest, sizeof(digest), 0);
 	}
 	fputs("};\n", hashes);
@@ -93,7 +93,7 @@ static int hash_fw(FILE *tp_fw, FILE *hashes)
 
 	if (len != CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
 		warnx("Incorrect TP FW size (%d vs %d)", len,
-			CONFIG_TOUCHPAD_VIRTUAL_SIZE);
+		      CONFIG_TOUCHPAD_VIRTUAL_SIZE);
 		return 1;
 	}
 
@@ -109,16 +109,14 @@ int main(int argc, char **argv)
 	FILE *tp_fw = NULL;
 	FILE *hashes;
 	const char short_opt[] = "f:ho:";
-	const struct option long_opts[] = {
-		{ "firmware", 1, NULL, 'f' },
-		{ "help", 0, NULL, 'h' },
-		{ "out", 1, NULL, 'o' },
-		{ NULL }
-	};
+	const struct option long_opts[] = { { "firmware", 1, NULL, 'f' },
+					    { "help", 0, NULL, 'h' },
+					    { "out", 1, NULL, 'o' },
+					    { NULL } };
 	const char usage[] = "USAGE: %s -f <touchpad FW> -o <output file>\n";
 
-	while ((nopt = getopt_long(argc, argv, short_opt,
-						long_opts, NULL)) != -1) {
+	while ((nopt = getopt_long(argc, argv, short_opt, long_opts, NULL)) !=
+	       -1) {
 		switch (nopt) {
 		case 'f': /* -f or --firmware */
 			tp_fw_name = optarg;

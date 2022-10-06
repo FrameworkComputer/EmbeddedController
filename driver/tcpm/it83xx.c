@@ -1,10 +1,11 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* TCPM for MCU also running TCPC */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"
@@ -12,17 +13,18 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "timer.h"
 #include "util.h"
+#include "usb_common.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "hooks.h"
 
 #ifdef CONFIG_USB_PD_TCPMV1
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
-	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) || \
-	defined(CONFIG_USB_PD_TCPC_LOW_POWER) || \
+	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) ||  \
+	defined(CONFIG_USB_PD_TCPC_LOW_POWER) ||    \
 	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
 #error "Unsupported config options of IT83xx PD driver"
 #endif
@@ -35,16 +37,18 @@
 #endif
 #endif
 
-/* Wait time for vconn power switch to turn off. */
-#ifndef PD_IT83XX_VCONN_TURN_OFF_DELAY_US
-#define PD_IT83XX_VCONN_TURN_OFF_DELAY_US 500
-#endif
+int rx_en[IT83XX_USBPD_PHY_PORT_COUNT];
+STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
+bool sop_prime_en[IT83XX_USBPD_PHY_PORT_COUNT];
 
 const struct usbpd_ctrl_t usbpd_ctrl_regs[] = {
-	{&IT83XX_GPIO_GPCRF4, &IT83XX_GPIO_GPCRF5, IT83XX_IRQ_USBPD0},
-	{&IT83XX_GPIO_GPCRH1, &IT83XX_GPIO_GPCRH2, IT83XX_IRQ_USBPD1},
+	{ &IT83XX_GPIO_GPCRF4, &IT83XX_GPIO_GPCRF5, IT83XX_IRQ_USBPD0 },
+	{ &IT83XX_GPIO_GPCRH1, &IT83XX_GPIO_GPCRH2, IT83XX_IRQ_USBPD1 },
 };
 BUILD_ASSERT(ARRAY_SIZE(usbpd_ctrl_regs) == IT83XX_USBPD_PHY_PORT_COUNT);
+
+static int it83xx_tcpm_set_rx_enable(int port, int enable);
+static int it83xx_tcpm_set_vconn(int port, int enable);
 
 /*
  * Disable cc analog and pd digital module, but only left Rd_5.1K (Not
@@ -55,7 +59,7 @@ void it83xx_Rd_5_1K_only_for_hibernate(int port)
 {
 	/* This only apply to active PD port */
 	if (*usbpd_ctrl_regs[port].cc1 == IT83XX_USBPD_CC_PIN_CONFIG &&
-		*usbpd_ctrl_regs[port].cc2 == IT83XX_USBPD_CC_PIN_CONFIG) {
+	    *usbpd_ctrl_regs[port].cc2 == IT83XX_USBPD_CC_PIN_CONFIG) {
 		/* Disable PD PHY */
 		IT83XX_USBPD_GCR(port) &= ~(BIT(0) | BIT(4));
 		/*
@@ -78,9 +82,8 @@ void it83xx_Rd_5_1K_only_for_hibernate(int port)
 	}
 }
 
-static enum tcpc_cc_voltage_status it83xx_get_cc(
-	enum usbpd_port port,
-	enum usbpd_cc_pin cc_pin)
+static enum tcpc_cc_voltage_status it83xx_get_cc(enum usbpd_port port,
+						 enum usbpd_cc_pin cc_pin)
 {
 	enum usbpd_ufp_volt_status ufp_volt;
 	enum usbpd_dfp_volt_status dfp_volt;
@@ -88,8 +91,8 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 	int pull;
 
 	pull = (cc_pin == USBPD_CC_PIN_1) ?
-		USBPD_GET_CC1_PULL_REGISTER_SELECTION(port) :
-		USBPD_GET_CC2_PULL_REGISTER_SELECTION(port);
+		       USBPD_GET_CC1_PULL_REGISTER_SELECTION(port) :
+		       USBPD_GET_CC2_PULL_REGISTER_SELECTION(port);
 
 	/* select Rp */
 	if (pull)
@@ -122,7 +125,7 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 			cc_state = TYPEC_CC_VOLT_OPEN;
 			break;
 		}
-	/* source */
+		/* source */
 	} else {
 		if (cc_pin == USBPD_CC_PIN_1)
 			dfp_volt = IT83XX_USBPD_DFPVDR(port) & 0xf;
@@ -174,11 +177,10 @@ static int it83xx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 	return EC_SUCCESS;
 }
 
-static enum tcpc_transmit_complete it83xx_tx_data(
-	enum usbpd_port port,
-	enum tcpm_transmit_type type,
-	uint16_t header,
-	const uint32_t *buf)
+static enum tcpc_transmit_complete it83xx_tx_data(enum usbpd_port port,
+						  enum tcpci_msg_type type,
+						  uint16_t header,
+						  const uint32_t *buf)
 {
 	int r;
 	uint32_t evt;
@@ -195,10 +197,10 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 	 * on dx version:
 	 * 000b=SOP, 001b=SOP', 010b=SOP", 011b=Debug SOP', 100b=Debug SOP''.
 	 */
-	IT83XX_USBPD_MTSR1(port) =
-		(IT83XX_USBPD_MTSR1(port) & ~0x70) | ((type & 0x7) << 4);
+	IT83XX_USBPD_MTSR1(port) = (IT83XX_USBPD_MTSR1(port) & ~0x70) |
+				   ((type & 0x7) << 4);
 	/* bit7: transmit message is send to cable or not */
-	if (TCPC_TX_SOP == type)
+	if (type == TCPCI_MSG_SOP)
 		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
 	else
 		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
@@ -220,7 +222,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 		/* Start TX */
 		USBPD_KICK_TX_START(port);
 		evt = task_wait_event_mask(TASK_EVENT_PHY_TX_DONE,
-					PD_T_TCPC_TX_TIMEOUT);
+					   PD_T_TCPC_TX_TIMEOUT);
 		/* check TX status */
 		if (USBPD_IS_TX_ERR(port) || (evt & TASK_EVENT_TIMER)) {
 			/*
@@ -244,10 +246,10 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 	return TCPC_TX_COMPLETE_SUCCESS;
 }
 
-static enum tcpc_transmit_complete it83xx_send_hw_reset(enum usbpd_port port,
-				enum tcpm_transmit_type reset_type)
+static enum tcpc_transmit_complete
+it83xx_send_hw_reset(enum usbpd_port port, enum tcpci_msg_type reset_type)
 {
-	if (reset_type == TCPC_TX_CABLE_RESET)
+	if (reset_type == TCPCI_MSG_CABLE_RESET)
 		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
 	else
 		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
@@ -256,10 +258,13 @@ static enum tcpc_transmit_complete it83xx_send_hw_reset(enum usbpd_port port,
 	USBPD_SEND_HARD_RESET(port);
 	usleep(MSEC);
 
-	if (IT83XX_USBPD_MTSR0(port) & USBPD_REG_MASK_SEND_HW_RESET)
-		return TCPC_TX_COMPLETE_FAILED;
+	if (USBPD_IS_HARD_CABLE_RESET_TX_DONE(port)) {
+		IT83XX_USBPD_ISR(port) =
+			USBPD_REG_MASK_HARD_CABLE_RESET_TX_DONE;
+		return TCPC_TX_COMPLETE_SUCCESS;
+	}
 
-	return TCPC_TX_COMPLETE_SUCCESS;
+	return TCPC_TX_COMPLETE_FAILED;
 }
 
 static void it83xx_send_bist_mode2_pattern(enum usbpd_port port)
@@ -282,21 +287,23 @@ static void it83xx_enable_vconn(enum usbpd_port port, int enabled)
 		/* Disable unused CC to become VCONN */
 		if (cc_pin == USBPD_CC_PIN_1) {
 			IT83XX_USBPD_CCCSR(port) = USBPD_CC2_DISCONNECTED(port);
-			IT83XX_USBPD_CCPSR(port) = (IT83XX_USBPD_CCPSR(port)
-				& ~USBPD_REG_MASK_DISCONNECT_POWER_CC2)
-				| USBPD_REG_MASK_DISCONNECT_POWER_CC1;
+			IT83XX_USBPD_CCPSR(port) =
+				(IT83XX_USBPD_CCPSR(port) &
+				 ~USBPD_REG_MASK_DISCONNECT_POWER_CC2) |
+				USBPD_REG_MASK_DISCONNECT_POWER_CC1;
 		} else {
 			IT83XX_USBPD_CCCSR(port) = USBPD_CC1_DISCONNECTED(port);
-			IT83XX_USBPD_CCPSR(port) = (IT83XX_USBPD_CCPSR(port)
-				& ~USBPD_REG_MASK_DISCONNECT_POWER_CC1)
-				| USBPD_REG_MASK_DISCONNECT_POWER_CC2;
+			IT83XX_USBPD_CCPSR(port) =
+				(IT83XX_USBPD_CCPSR(port) &
+				 ~USBPD_REG_MASK_DISCONNECT_POWER_CC1) |
+				USBPD_REG_MASK_DISCONNECT_POWER_CC2;
 		}
 	} else {
 		/* Enable cc1 and cc2 */
 		IT83XX_USBPD_CCCSR(port) &= ~0xaa;
 		IT83XX_USBPD_CCPSR(port) |=
 			(USBPD_REG_MASK_DISCONNECT_POWER_CC1 |
-			USBPD_REG_MASK_DISCONNECT_POWER_CC2);
+			 USBPD_REG_MASK_DISCONNECT_POWER_CC2);
 	}
 }
 
@@ -353,8 +360,8 @@ static void it83xx_set_power_role(enum usbpd_port port, int power_role)
 static void it83xx_set_data_role(enum usbpd_port port, int pd_role)
 {
 	/* 0: PD_ROLE_UFP 1: PD_ROLE_DFP */
-	IT83XX_USBPD_PDMSR(port) =
-		(IT83XX_USBPD_PDMSR(port) & ~0xc) | ((pd_role & 0x1) << 2);
+	IT83XX_USBPD_PDMSR(port) = (IT83XX_USBPD_PDMSR(port) & ~0xc) |
+				   ((pd_role & 0x1) << 2);
 }
 
 #ifdef CONFIG_USB_PD_FRS_TCPC
@@ -372,15 +379,18 @@ static int it83xx_tcpm_set_frs_enable(int port, int enable)
 		/* W/C status */
 		IT83XX_USBPD_PD30IR(port) = 0x3f;
 		/* Enable FRS detection (cc to GND) interrupt */
-		IT83XX_USBPD_MPD30IR(port) &= ~(USBPD_REG_MASK_PD30_ISR |
-					USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
+		IT83XX_USBPD_MPD30IR(port) &=
+			~(USBPD_REG_MASK_PD30_ISR |
+			  USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
 		/* Enable FRS detection (cc to GND) */
-		IT83XX_USBPD_PDQSCR(port) = (IT83XX_USBPD_PDQSCR(port) & ~mask)
-					| USBPD_REG_FAST_SWAP_DETECT_ENABLE;
+		IT83XX_USBPD_PDQSCR(port) =
+			(IT83XX_USBPD_PDQSCR(port) & ~mask) |
+			USBPD_REG_FAST_SWAP_DETECT_ENABLE;
 	} else {
 		/* Disable FRS detection (cc to GND) interrupt */
-		IT83XX_USBPD_MPD30IR(port) |= (USBPD_REG_MASK_PD30_ISR |
-					USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
+		IT83XX_USBPD_MPD30IR(port) |=
+			(USBPD_REG_MASK_PD30_ISR |
+			 USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
 		/* Disable FRS detection and requestion */
 		IT83XX_USBPD_PDQSCR(port) &= ~mask;
 	}
@@ -403,13 +413,25 @@ static void it83xx_init(enum usbpd_port port, int role)
 	 * (= retry count + 1)
 	 */
 	IT83XX_USBPD_BMCSR(port) = (IT83XX_USBPD_BMCSR(port) & ~0x70) |
-					((CONFIG_PD_RETRY_COUNT + 1) << 4);
-	/* set SOP: receive SOP message only.
-	 * bit[7]: SOP" support enable.
-	 * bit[6]: SOP' support enable.
-	 * bit[5]: SOP  support enable.
-	 */
-	IT83XX_USBPD_PDMSR(port) = USBPD_REG_MASK_SOP_ENABLE;
+				   ((CONFIG_PD_RETRY_COUNT + 1) << 4);
+	/* Disable Rx decode */
+	it83xx_tcpm_set_rx_enable(port, 0);
+	if (IS_ENABLED(CONFIG_USB_PD_TCPMV1)) {
+		uint8_t flags = 0;
+		/*
+		 * If explicit contract is set in bbram when EC boot up, then
+		 * TCPMv1 set soft reset as first state instead of
+		 * unattached.SNK, so we need to enable BMC PHY for tx module.
+		 *
+		 * NOTE: If the platform is without battery and connects to
+		 * adapter, then cold reset EC, our Rd is always asserted on cc,
+		 * so adapter keeps providing 5v and data in BBRAM are still
+		 * alive.
+		 */
+		if ((pd_get_saved_port_flags(port, &flags) == EC_SUCCESS) &&
+		    (flags & PD_BBRMFLG_EXPLICIT_CONTRACT))
+			USBPD_ENABLE_BMC_PHY(port);
+	}
 	/* W/C status */
 	IT83XX_USBPD_ISR(port) = 0xff;
 	/* enable cc, select cc1 and Rd. */
@@ -422,7 +444,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 	IT83XX_USBPD_IMR(port) = 0xff;
 	/* enable tx done and reset detect interrupt */
 	IT83XX_USBPD_IMR(port) &= ~(USBPD_REG_MASK_MSG_TX_DONE |
-					USBPD_REG_MASK_HARD_RESET_DETECT);
+				    USBPD_REG_MASK_HARD_RESET_DETECT);
 #ifdef IT83XX_INTC_PLUG_IN_OUT_SUPPORT
 	/*
 	 * when tcpc detect type-c plug in (cc lines voltage change), it will
@@ -436,7 +458,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* cc connect */
 	IT83XX_USBPD_CCCSR(port) = 0;
 	/* disable vconn */
-	it83xx_enable_vconn(port, 0);
+	it83xx_tcpm_set_vconn(port, 0);
 	/* TX start from high */
 	IT83XX_USBPD_CCADCR(port) |= BIT(6);
 	/* enable cc1/cc2 */
@@ -455,7 +477,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 }
 
 static void it83xx_select_polarity(enum usbpd_port port,
-					enum usbpd_cc_pin cc_pin)
+				   enum usbpd_cc_pin cc_pin)
 {
 	/* cc1/cc2 selection */
 	if (cc_pin == USBPD_CC_PIN_1)
@@ -501,7 +523,7 @@ static int it83xx_tcpm_release(int port)
 }
 
 static int it83xx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+			      enum tcpc_cc_voltage_status *cc2)
 {
 	*cc2 = it83xx_get_cc(port, USBPD_CC_PIN_2);
 	*cc1 = it83xx_get_cc(port, USBPD_CC_PIN_1);
@@ -549,9 +571,30 @@ static int it83xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	enum usbpd_cc_pin cc_pin =
 		(polarity == POLARITY_CC1 || polarity == POLARITY_CC1_DTS) ?
-		USBPD_CC_PIN_1 : USBPD_CC_PIN_2;
+			USBPD_CC_PIN_1 :
+			USBPD_CC_PIN_2;
 
 	it83xx_select_polarity(port, cc_pin);
+
+	return EC_SUCCESS;
+}
+
+__maybe_unused static int it83xx_tcpm_decode_sop_prime_enable(int port,
+							      bool enable)
+{
+	/* Save SOP'/SOP'' enable state */
+	sop_prime_en[port] = enable;
+
+	if (rx_en[port]) {
+		if (enable)
+			IT83XX_USBPD_PDMSR(port) |=
+				(USBPD_REG_MASK_SOPP_ENABLE |
+				 USBPD_REG_MASK_SOPPP_ENABLE);
+		else
+			IT83XX_USBPD_PDMSR(port) &=
+				~(USBPD_REG_MASK_SOPP_ENABLE |
+				  USBPD_REG_MASK_SOPPP_ENABLE);
+	}
 
 	return EC_SUCCESS;
 }
@@ -570,27 +613,35 @@ static int it83xx_tcpm_set_vconn(int port, int enable)
 			 */
 			it83xx_enable_vconn(port, enable);
 			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
-				/* Enable tcpc receive SOP' packet */
-				IT83XX_USBPD_PDMSR(port) |=
-					USBPD_REG_MASK_SOPP_ENABLE;
-		}
-
-		/* Turn on/off vconn power switch. */
-		board_pd_vconn_ctrl(port,
-			USBPD_GET_PULL_CC_SELECTION(port) ?
-				USBPD_CC_PIN_2 : USBPD_CC_PIN_1, enable);
-
-		if (!enable) {
-			/* Disable tcpc receive SOP' packet */
-			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
-				IT83XX_USBPD_PDMSR(port) &=
-					~USBPD_REG_MASK_SOPP_ENABLE;
+				/* Enable tcpc receive SOP' and SOP'' packet */
+				it83xx_tcpm_decode_sop_prime_enable(port, true);
+			/* Turn on Vconn power switch. */
+			board_pd_vconn_ctrl(port,
+					    USBPD_GET_PULL_CC_SELECTION(port) ?
+						    USBPD_CC_PIN_2 :
+						    USBPD_CC_PIN_1,
+					    enable);
+		} else {
 			/*
-			 * We need to make sure cc voltage detector is enabled
-			 * after vconn is turned off to avoid the potential risk
-			 * of voltage fed back into Vcore.
+			 * If the pd port has previous connection and supplies
+			 * Vconn, then RO jumping to RW reset the system,
+			 * we never know which cc is the previous Vconn pin,
+			 * so we always turn both cc pins off when disable
+			 * Vconn power switch.
 			 */
-			usleep(PD_IT83XX_VCONN_TURN_OFF_DELAY_US);
+			board_pd_vconn_ctrl(port, USBPD_CC_PIN_1, enable);
+			board_pd_vconn_ctrl(port, USBPD_CC_PIN_2, enable);
+			/* Disable tcpc receive SOP' and SOP'' packet */
+			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+				it83xx_tcpm_decode_sop_prime_enable(port,
+								    false);
+			/*
+			 * Before disabling cc 5v tolerant, we need to make
+			 * sure cc voltage detector is enabled and Vconn is
+			 * dropped below 3.3v (>500us) to avoid the potential
+			 * risk of voltage fed back into Vcore.
+			 */
+			usleep(IT83XX_USBPD_T_VCONN_BELOW_3_3V);
 			/*
 			 * Since our cc are not Vconn SRC, enable cc analog
 			 * module (ex.UP/RD/DET/Tx/Rx) and disable 5v tolerant.
@@ -619,81 +670,46 @@ static int it83xx_tcpm_set_msg_header(int port, int power_role, int data_role)
 
 static int it83xx_tcpm_set_rx_enable(int port, int enable)
 {
-	int i;
-	bool prevent_deep_sleep = false;
+	/* Save rx_on */
+	rx_en[port] = enable;
 
 	if (enable) {
 		IT83XX_USBPD_IMR(port) &= ~USBPD_REG_MASK_MSG_RX_DONE;
-		USBPD_ENABLE_BMC_PHY(port);
+		IT83XX_USBPD_PDMSR(port) |= USBPD_REG_MASK_SOP_ENABLE;
+		IT83XX_USBPD_VDMMCSR(port) |= USBPD_REG_MASK_HARD_RESET_DECODE;
+		if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+			it83xx_tcpm_decode_sop_prime_enable(port,
+							    sop_prime_en[port]);
 	} else {
 		IT83XX_USBPD_IMR(port) |= USBPD_REG_MASK_MSG_RX_DONE;
-		USBPD_DISABLE_BMC_PHY(port);
+		IT83XX_USBPD_PDMSR(port) &= ~(USBPD_REG_MASK_SOP_ENABLE |
+					      USBPD_REG_MASK_SOPP_ENABLE |
+					      USBPD_REG_MASK_SOPPP_ENABLE);
+		IT83XX_USBPD_VDMMCSR(port) &= ~USBPD_REG_MASK_HARD_RESET_DECODE;
 	}
-
-	/*
-	 * TCPMv1/TCPMv2 handle SLEEP_MASK_USB_PD and Rx_enable order for deep
-	 * sleep mode:
-	 * 1.Exit deep sleep mode, Rx enable -> deep sleep disable:
-	 * In deep sleep mode, ITE TCPC clock is turned off, so we should
-	 * disable deep sleep to leave the mode first then enable Rx, otherwise
-	 * we'll miss packet in the mode.
-	 * 2.Enter deep sleep mode, deep sleep enable -> Rx disable:
-	 * This is OK, but before set Rx disable, our Rx is disabled in deep
-	 * sleep mode period.
-	 *
-	 * So now, we set the SLEEP_MASK_USB_PD only by ITE driver. If any ITE
-	 * PD port Rx is enabled, then disable EC deep sleep.
-	 */
-	for (i = 0; i < CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT; ++i) {
-		if (IT83XX_USBPD_GCR(i) & USBPD_REG_MASK_BMC_PHY) {
-			prevent_deep_sleep = true;
-			break;
-		}
-	}
-
-	/*
-	 * Check if any other ports have a PD port partner connected.  Deep
-	 * sleep is forbidden if any PD port partner is connected.  Above, we
-	 * only checked for the ITE ports.
-	 */
-	if (!prevent_deep_sleep) {
-		for (; i < board_get_usb_pd_port_count(); i++)
-			if (pd_capable(i))
-				prevent_deep_sleep = true;
-	}
-
-	if (prevent_deep_sleep)
-		disable_sleep(SLEEP_MASK_USB_PD);
-	else
-		enable_sleep(SLEEP_MASK_USB_PD);
 
 	return EC_SUCCESS;
 }
 
-static int it83xx_tcpm_transmit(int port,
-			enum tcpm_transmit_type type,
-			uint16_t header,
-			const uint32_t *data)
+static int it83xx_tcpm_transmit(int port, enum tcpci_msg_type type,
+				uint16_t header, const uint32_t *data)
 {
 	int status = TCPC_TX_COMPLETE_FAILED;
 
 	switch (type) {
-	case TCPC_TX_SOP:
-	case TCPC_TX_SOP_PRIME:
-	case TCPC_TX_SOP_PRIME_PRIME:
-	case TCPC_TX_SOP_DEBUG_PRIME:
-	case TCPC_TX_SOP_DEBUG_PRIME_PRIME:
-		status = it83xx_tx_data(port,
-					type,
-					header,
-					data);
+	case TCPCI_MSG_SOP:
+	case TCPCI_MSG_SOP_PRIME:
+	case TCPCI_MSG_SOP_PRIME_PRIME:
+	case TCPCI_MSG_SOP_DEBUG_PRIME:
+	case TCPCI_MSG_SOP_DEBUG_PRIME_PRIME:
+		status = it83xx_tx_data(port, type, header, data);
 		break;
-	case TCPC_TX_BIST_MODE_2:
+	case TCPCI_MSG_TX_BIST_MODE_2:
 		it83xx_send_bist_mode2_pattern(port);
 		status = TCPC_TX_COMPLETE_SUCCESS;
 		break;
-	case TCPC_TX_HARD_RESET:
-	case TCPC_TX_CABLE_RESET:
+	case TCPCI_MSG_TX_HARD_RESET:
+	case TCPCI_MSG_CABLE_RESET:
 		status = it83xx_send_hw_reset(port, type);
 		break;
 	default:
@@ -705,12 +721,13 @@ static int it83xx_tcpm_transmit(int port,
 	return EC_SUCCESS;
 }
 
-static int it83xx_tcpm_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 *chip_info)
+static int
+it83xx_tcpm_get_chip_info(int port, int live,
+			  struct ec_response_pd_chip_info_v1 *chip_info)
 {
 	chip_info->vendor_id = USB_VID_ITE;
-	chip_info->product_id = ((IT83XX_GCTRL_CHIPID1 << 8) |
-				 IT83XX_GCTRL_CHIPID2);
+	chip_info->product_id =
+		((IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2);
 	chip_info->device_id = IT83XX_GCTRL_CHIPVER & 0xf;
 	chip_info->fw_version_number = 0xEC;
 
@@ -721,10 +738,12 @@ static int it83xx_tcpm_get_chip_info(int port, int live,
 static int it83xx_tcpm_enter_low_power_mode(int port)
 {
 	/*
-	 * ITE embedded TCPC do low power mode in idle_task(), when all ITE
-	 * ports are Rx disabled (means not in Attach.SRC/SNK state or
-	 * pd_disabled_mask be set). In deep sleep mode, the timer wakeup PD
-	 * task every 5ms, then PD task change the CC lines termination.
+	 * ITE embedded TCPC SLEEP_MASK_USB_PD flag is only controlled by
+	 * it83xx driver in tc_update_pd_sleep_mask(), and do low power
+	 * mode in idle_task().
+	 * In deep sleep mode, ITE TCPC clock is turned off, and the
+	 * timer every 5ms to exit the mode and wakeup PD task to run
+	 * (ex. change the CC lines termination).
 	 */
 	return EC_SUCCESS;
 }
@@ -740,16 +759,18 @@ static void it83xx_tcpm_switch_plug_out_type(int port)
 	if ((cc1 == TYPEC_CC_VOLT_RD && cc2 == TYPEC_CC_VOLT_RD) ||
 	    (cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_RA))
 		/* We're source, switch to detect audio/debug plug out. */
-		IT83XX_USBPD_TCDCR(port) = (IT83XX_USBPD_TCDCR(port) &
-				~USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE) |
-				USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT |
-				USBPD_REG_PLUG_OUT_SELECT;
+		IT83XX_USBPD_TCDCR(port) =
+			(IT83XX_USBPD_TCDCR(port) &
+			 ~USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE) |
+			USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT |
+			USBPD_REG_PLUG_OUT_SELECT;
 	else if (cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD)
 		/* We're source, switch to detect sink plug out. */
-		IT83XX_USBPD_TCDCR(port) = (IT83XX_USBPD_TCDCR(port) &
-				~USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE &
-				~USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT) |
-				USBPD_REG_PLUG_OUT_SELECT;
+		IT83XX_USBPD_TCDCR(port) =
+			(IT83XX_USBPD_TCDCR(port) &
+			 ~USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE &
+			 ~USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT) |
+			USBPD_REG_PLUG_OUT_SELECT;
 	else if (cc1 >= TYPEC_CC_VOLT_RP_DEF || cc2 >= TYPEC_CC_VOLT_RP_DEF)
 		/*
 		 * We're sink, disable detect interrupt, so messages on cc line
@@ -769,11 +790,59 @@ void switch_plug_out_type(enum usbpd_port port)
 	it83xx_tcpm_switch_plug_out_type(port);
 }
 
-#ifdef CONFIG_USB_PD_TCPMV2
+__override void tc_update_pd_sleep_mask(int port)
+{
+	int i;
+	bool prevent_deep_sleep = false;
+
+	/*
+	 * Check ITE embedded pd ports to set SLEEP_MASK_USB_PD:
+	 * In tc_attached_[src, snk]_entry states, calling HOOK_CONNECT
+	 * to enable BMC PHY, and if one of ITE pd ports BMC PHY is enable,
+	 * then EC deep doze mode will be disabled.
+	 * Otherwise, EC deep doze mode will be enabled.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT; ++i) {
+		if (IT83XX_USBPD_GCR(i) & USBPD_REG_MASK_BMC_PHY) {
+			prevent_deep_sleep = true;
+			break;
+		}
+	}
+
+	/*
+	 * Check Other stand alone pd ports to set SLEEP_MASK_USB_PD:
+	 * In [pe_src_send_capabilities_run, pe_snk_select_capability_entry]
+	 * states receive [GoodCRC, SRC_CAP] from port partner, then EC deep
+	 * doze mode will be disabled.
+	 * Otherwise, EC deep doze mode will be enabled.
+	 */
+	if (!prevent_deep_sleep) {
+		for (; i < board_get_usb_pd_port_count(); i++)
+			if (pd_capable(i))
+				prevent_deep_sleep = true;
+	}
+
+	if (prevent_deep_sleep)
+		disable_sleep(SLEEP_MASK_USB_PD);
+	else
+		enable_sleep(SLEEP_MASK_USB_PD);
+}
+
 static void it83xx_tcpm_hook_connect(void)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
+	/*
+	 * If it isn't ITE active port, then return.
+	 *
+	 * NOTE: If we don't use all the ITE pd ports on a board, then we
+	 *       need to start from port0 to use the ITE pd port. If we
+	 *       start from port1, then port1 HOOK function never works.
+	 */
+	if (port > (CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT - 1))
+		return;
+
+#ifdef CONFIG_USB_PD_TCPMV2
 	/*
 	 * There are five cases that hook_connect() be called by TCPMv2:
 	 * 1)AttachWait.SNK -> Attached.SNK: disable detect interrupt.
@@ -789,52 +858,91 @@ static void it83xx_tcpm_hook_connect(void)
 	 * SRC_DISCONNECT and SNK_DISCONNECT in TCPMv1. Every time we go to
 	 * Try.SRC/TryWait.SNK state, the plug in interrupt will be enabled and
 	 * fire for 3), 4), 5) cases, then set correctly for the SRC detect plug
-	 * out or the SNK disable detect, so TCPMv1 needn't hook connection.
+	 * out or the SNK disable detect, so TCPMv1 needn't this.
 	 */
 	it83xx_tcpm_switch_plug_out_type(port);
+#endif
+	/* Enable PD PHY Tx and Rx module since type-c has connected. */
+	USBPD_ENABLE_BMC_PHY(port);
+	/*
+	 * After we're in attached.[SRC, SNK] states and before we receive
+	 * [GoodCRC of SRC_CAP, SRC_CAP] this period time, if EC goes to
+	 * deep doze mode, the pd clock will be gated, then pd can't
+	 * transmit and receive any messages, so we disable deep doze mode
+	 * to make sure that pd won't miss any messages.
+	 */
+	tc_update_pd_sleep_mask(port);
 }
 
 DECLARE_HOOK(HOOK_USB_PD_CONNECT, it83xx_tcpm_hook_connect, HOOK_PRIO_DEFAULT);
-#endif
 
-static void it83xx_tcpm_sw_reset(void)
+static void it83xx_tcpm_hook_disconnect(void)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	/*
+	 * If it isn't ITE active port, then return.
+	 *
+	 * NOTE: If we don't use all the ITE pd ports on a board, then we
+	 *       need to start from port0 to use the ITE pd port. If we
+	 *       start from port1, then port1 HOOK function never works.
+	 */
+	if (port > (CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT - 1))
+		return;
 
 	if (IS_ENABLED(IT83XX_INTC_PLUG_IN_OUT_SUPPORT))
 		/*
 		 * Switch to detect plug in and enable detect plug in interrupt,
 		 * since pd task has detected a type-c physical disconnected.
 		 */
-		IT83XX_USBPD_TCDCR(port) &= ~(USBPD_REG_PLUG_OUT_SELECT |
-			USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE);
+		IT83XX_USBPD_TCDCR(port) &=
+			~(USBPD_REG_PLUG_OUT_SELECT |
+			  USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE);
 
 	/* exit BIST test data mode */
 	USBPD_SW_RESET(port);
+
+	/*
+	 * Init rx status and disable PD PHY Tx and Rx module for better power
+	 * consumption since type-c has disconnected.
+	 */
+	rx_en[port] = 0;
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+		sop_prime_en[port] = 0;
+	USBPD_DISABLE_BMC_PHY(port);
+	/*
+	 * Since PD BMC PHY is off, then EC can go to deep doze mode and
+	 * turn off pd clock.
+	 */
+	tc_update_pd_sleep_mask(port);
 }
 
-DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, it83xx_tcpm_sw_reset, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, it83xx_tcpm_hook_disconnect,
+	     HOOK_PRIO_DEFAULT);
 
 const struct tcpm_drv it83xx_tcpm_drv = {
-	.init			= &it83xx_tcpm_init,
-	.release		= &it83xx_tcpm_release,
-	.get_cc			= &it83xx_tcpm_get_cc,
-	.select_rp_value	= &it83xx_tcpm_select_rp_value,
-	.set_cc			= &it83xx_tcpm_set_cc,
-	.set_polarity		= &it83xx_tcpm_set_polarity,
-	.set_vconn		= &it83xx_tcpm_set_vconn,
-	.set_msg_header		= &it83xx_tcpm_set_msg_header,
-	.set_rx_enable		= &it83xx_tcpm_set_rx_enable,
-	.get_message_raw	= &it83xx_tcpm_get_message_raw,
-	.transmit		= &it83xx_tcpm_transmit,
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= NULL,
+	.init = &it83xx_tcpm_init,
+	.release = &it83xx_tcpm_release,
+	.get_cc = &it83xx_tcpm_get_cc,
+	.select_rp_value = &it83xx_tcpm_select_rp_value,
+	.set_cc = &it83xx_tcpm_set_cc,
+	.set_polarity = &it83xx_tcpm_set_polarity,
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	.sop_prime_enable = &it83xx_tcpm_decode_sop_prime_enable,
 #endif
-	.get_chip_info		= &it83xx_tcpm_get_chip_info,
+	.set_vconn = &it83xx_tcpm_set_vconn,
+	.set_msg_header = &it83xx_tcpm_set_msg_header,
+	.set_rx_enable = &it83xx_tcpm_set_rx_enable,
+	.get_message_raw = &it83xx_tcpm_get_message_raw,
+	.transmit = &it83xx_tcpm_transmit,
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle = NULL,
+#endif
+	.get_chip_info = &it83xx_tcpm_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &it83xx_tcpm_enter_low_power_mode,
+	.enter_low_power_mode = &it83xx_tcpm_enter_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
-	.set_frs_enable		= &it83xx_tcpm_set_frs_enable,
+	.set_frs_enable = &it83xx_tcpm_set_frs_enable,
 #endif
 };

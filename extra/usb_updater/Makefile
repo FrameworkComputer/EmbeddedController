@@ -1,4 +1,4 @@
-# Copyright 2015 The Chromium OS Authors. All rights reserved.
+# Copyright 2015 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -19,10 +19,10 @@ CFLAGS  := -std=gnu99 \
         -Wredundant-decls \
         -Wmissing-declarations
 
-ifeq (DEBUG,)
-CFLAGS += -O3
-else
+ifneq ($(DEBUG),)
 CFLAGS += -O0
+else
+CFLAGS += -O3
 endif
 
 #
@@ -52,4 +52,3 @@ clean:
 
 parser_debug: desc_parser.c
 	gcc -g -O0  -DTEST_PARSER desc_parser.c -o dp
-

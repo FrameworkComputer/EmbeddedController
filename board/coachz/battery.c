@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -33,6 +33,66 @@
  */
 
 const struct board_batt_params board_battery_info[] = {
+	/* COSMX GH02047XL 333-1C-DA-A */
+	[BATTERY_GH02047XL_1C] = {
+		.fuel_gauge = {
+			.manuf_name = "333-1C-DA-A",
+			.device_name = "GH02047XL",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0002,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max            = 8800, /* mV */
+			.voltage_normal         = 7700, /* mV */
+			.voltage_min            = 6000, /* mV */
+			.precharge_current      = 256,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 45,
+			.discharging_min_c      = -10,
+			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
+		},
+	},
+	/* COSMX GH02047XL */
+	[BATTERY_GH02047XL] = {
+		.fuel_gauge = {
+			.manuf_name = "333-AC-DA-A",
+			.device_name = "GH02047XL",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0002,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max            = 8800, /* mV */
+			.voltage_normal         = 7700, /* mV */
+			.voltage_min            = 6000, /* mV */
+			.precharge_current      = 256,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 45,
+			.discharging_min_c      = -10,
+			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
+		},
+	},
 	/* COSMX DS02032XL */
 	[BATTERY_DS02032XL] = {
 		.fuel_gauge = {
@@ -60,6 +120,37 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 45,
 			.discharging_min_c      = -10,
 			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
+		},
+	},
+	/* SMP DS02032XL */
+	[BATTERY_DS02032XL_1C] = {
+		.fuel_gauge = {
+			.manuf_name = "333-1C-13-A",
+			.device_name = "DS02032XL",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0002,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max            = 8800, /* mV */
+			.voltage_normal         = 7700, /* mV */
+			.voltage_min            = 6000, /* mV */
+			.precharge_current      = 256,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 45,
+			.discharging_min_c      = -10,
+			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
 		},
 	},
 };

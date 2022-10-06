@@ -1,0 +1,78 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+cmake_minimum_required(VERSION 3.13.1)
+find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
+project(drivers)
+
+add_subdirectory(common)
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
+
+get_target_property(TEST_SOURCES app SOURCES)
+
+# Support zmake for now
+if("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers")
+  set(CONFIG_LINK_TEST_SUITE_DEFAULT TRUE)
+  set(CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_DEFAULT=1)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-ap_mux_control")
+  set(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-usb_retimer_fw_update")
+  set(CONFIG_LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-chargesplash")
+  set(CONFIG_LINK_TEST_SUITE_CHARGESPLASH TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_CHARGESPLASH=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-isl923x")
+  set(CONFIG_LINK_TEST_SUITE_ISL923X TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_ISL923X=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-led_driver")
+  set(CONFIG_LINK_TEST_SUITE_LED_DRIVER TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_LED_DRIVER=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-dps")
+  set(CONFIG_LINK_TEST_SUITE_USB_PD_DPS TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_USB_PD_DPS=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-usbc_alt_mode")
+  set(CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-usbc_tbt_mode")
+  set(CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE=1)
+endif()
+
+# Add linked suites here
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_DEFAULT default)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ANX7447 anx7447)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL ap_mux_control)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_CHARGESPLASH chargesplash)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ISL923X isl923x)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_I2C_CONTROLLER i2c_controller)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_KEYBOARD_SCAN keyboard_scan)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER led_driver)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_MKBP mkbp)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_RT9490 rt9490)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_TIMER timer)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK usb_malfunction_sink)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USB_PD_DPS dps)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB usb_port_power_dumb)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE usb_retimer_fw_update)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE usbc_alt_mode)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE usbc_tbt_mode)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_OCP usbc_ocp)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_PPC usbc_ppc)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_HOST_COMMANDS host_cmd)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_SYSTEM system)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS locate_chip)
+
+get_target_property(TEST_SOURCES_NEW app SOURCES)
+
+# Check to make sure at least one suite was added
+list(REMOVE_ITEM TEST_SOURCES_NEW ${TEST_SOURCES})
+if(NOT TEST_SOURCES_NEW)
+  message(FATAL_ERROR "Invalid configuration, must add test sources")
+endif()
+
+set_compiler_property(APPEND PROPERTY coverage -O0)

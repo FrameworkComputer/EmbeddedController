@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,7 +24,7 @@ enum try_src_override_t {
  * This is the maximum voltage a sink can request
  * while charging.
  */
-#define TYPE_C_VOLTAGE  5000 /* mV */
+#define TYPE_C_VOLTAGE 5000 /* mV */
 
 /*
  * Type C default sink current (mA)
@@ -32,7 +32,7 @@ enum try_src_override_t {
  * This is the maximum current a sink can draw if charging
  * while in the Audio Accessory State.
  */
-#define TYPE_C_AUDIO_ACC_CURRENT  500 /* mA */
+#define TYPE_C_AUDIO_ACC_CURRENT 500 /* mA */
 
 /**
  * Returns true if TypeC State machine is in attached source state.
@@ -181,20 +181,13 @@ void tc_request_power_swap(int port);
 void tc_pr_swap_complete(int port, bool success);
 
 /**
- * Informs the Type-C State Machine that a Discover Identity is in progress.
- * This function is called from the Policy Engine.
+ * The Type-C state machine updates the SLEEP_MASK_USB_PD mask for the
+ * case that TCPC wants to set/clear SLEEP_MASK_USB_PD mask only by
+ * itself, ex. TCPC embedded in EC.
  *
  * @param port USB_C port number
  */
-void tc_disc_ident_in_progress(int port);
-
-/**
- * Informs the Type-C State Machine that a Discover Identity is complete.
- * This function is called from the Policy Engine.
- *
- * @param port USB_C port number
- */
-void tc_disc_ident_complete(int port);
+__override_proto void tc_update_pd_sleep_mask(int port);
 
 /**
  * Instructs the Attached.SNK to stop drawing power. This function is called
@@ -263,7 +256,7 @@ void pd_request_vconn_swap_off(int port);
  * @return 0 if cc1 is connected, else 1 for cc2
  */
 enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2);
+				       enum tcpc_cc_voltage_status cc2);
 
 /**
  * Called by the state machine framework to initialize the
@@ -332,6 +325,14 @@ void tc_start_event_loop(int port);
 void tc_pause_event_loop(int port);
 
 /**
+ * Determine if the state machine event loop is paused
+ *
+ * @param port USB-C port number
+ * @return true if paused, else false
+ */
+bool tc_event_loop_is_paused(int port);
+
+/**
  * Allow system to override the control of TrySrc
  *
  * @param en	TRY_SRC_OVERRIDE_OFF - Force TrySrc OFF
@@ -365,6 +366,24 @@ const char *tc_get_current_state(int port);
  */
 uint32_t tc_get_flags(int port);
 
+/**
+ * USB retimer firmware update set run flag
+ * Setting this flag indicates firmware update operations can be
+ * processed unconditionally.
+ *
+ * @param port USB-C port number
+ */
+void tc_usb_firmware_fw_update_run(int port);
+
+/**
+ * USB retimer firmware update set limited run flag
+ * Setting this flag indicates firmware update operations can be
+ * processed under limitation: PD task has to be suspended.
+ *
+ * @param port USB-C port number
+ */
+void tc_usb_firmware_fw_update_limited_run(int port);
+
 #ifdef CONFIG_USB_CTVPD
 
 /**
@@ -384,4 +403,3 @@ void tc_reset_support_timer(int port);
 void tc_ctvpd_detected(int port);
 #endif /* CONFIG_USB_CTVPD */
 #endif /* __CROS_EC_USB_TC_H */
-

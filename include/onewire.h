@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,7 +10,7 @@
  * functions are run at low priority, communication may be garbled.  However,
  * these functions are also slow enough (~1ms per call) that it's really not
  * desirable to put them at high priority.  So make sure you check the
- * confirmation code from the slave for any communication, and retry a few
+ * confirmation code from the peripheral for any communication, and retry a few
  * times in case of failure.
  */
 
@@ -40,4 +40,4 @@ int onewire_read(void);
  */
 void onewire_write(int data);
 
-#endif  /* __CROS_EC_ONEWIRE_H */
+#endif /* __CROS_EC_ONEWIRE_H */

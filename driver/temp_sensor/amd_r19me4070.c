@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,14 +13,14 @@
 #include "amd_r19me4070.h"
 #include "power.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* GPU I2C address */
-#define GPU_ADDR_FLAGS                  0x0041
+#define GPU_ADDR_FLAGS 0x0041
 
-#define GPU_INIT_OFFSET                 0x01
-#define GPU_TEMPERATURE_OFFSET          0x03
+#define GPU_INIT_OFFSET 0x01
+#define GPU_TEMPERATURE_OFFSET 0x03
 
 static int initialized;
 /*
@@ -34,8 +34,8 @@ static void gpu_init_temp_sensor(void)
 {
 	int rv;
 	rv = i2c_write_block(I2C_PORT_GPU, GPU_ADDR_FLAGS, GPU_INIT_OFFSET,
-			  gpu_init_write_value,
-			  ARRAY_SIZE(gpu_init_write_value));
+			     gpu_init_write_value,
+			     ARRAY_SIZE(gpu_init_write_value));
 	if (rv == EC_SUCCESS) {
 		initialized = 1;
 		return;
@@ -53,17 +53,21 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 	 * We shouldn't read the GPU temperature when the state
 	 * is not in S0, because GPU is enabled in S0.
 	 */
-	if ((power_get_state()) != POWER_S0)
+	if (!chipset_in_state(CHIPSET_STATE_ON)) {
+		*temp_ptr = C_TO_K(0);
 		return EC_ERROR_BUSY;
+	}
 	/* if no INIT GPU, must init it first and wait 1 sec. */
 	if (!initialized) {
 		gpu_init_temp_sensor();
+		*temp_ptr = C_TO_K(0);
 		return EC_ERROR_BUSY;
 	}
 	rv = i2c_read_block(I2C_PORT_GPU, GPU_ADDR_FLAGS,
-			GPU_TEMPERATURE_OFFSET, reg, ARRAY_SIZE(reg));
+			    GPU_TEMPERATURE_OFFSET, reg, ARRAY_SIZE(reg));
 	if (rv) {
 		CPRINTS("read GPU Temperature fail");
+		*temp_ptr = C_TO_K(0);
 		return rv;
 	}
 	/*
@@ -81,5 +85,6 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 	 * reg[0] = 0x04
 	 */
 	*temp_ptr = C_TO_K(reg[3] >> 1);
+
 	return EC_SUCCESS;
 }

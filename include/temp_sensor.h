@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -33,8 +33,16 @@ struct temp_sensor_t {
 	const char *name;
 	/* Temperature sensor type. */
 	enum temp_sensor_type type;
+	/*
+	 * TODO(b:201081891) Refactor temp_sensor_t references
+	 * to all use OO style sensor argument to get adc idx.
+	 */
+#ifdef CONFIG_ZEPHYR
+	const struct zephyr_temp_sensor *zephyr_info;
+#else
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */
 	int (*read)(int idx, int *temp_ptr);
+#endif
 	/* Index among the same kind of sensors. */
 	int idx;
 };
@@ -57,4 +65,11 @@ extern const struct temp_sensor_t temp_sensors[];
  */
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr);
 
-#endif  /* __CROS_EC_TEMP_SENSOR_H */
+/**
+ * Print all temperature sensor values.
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int print_temps(void);
+
+#endif /* __CROS_EC_TEMP_SENSOR_H */

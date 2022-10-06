@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,7 +13,7 @@
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_get_protect(int block)
+int crec_flash_physical_get_protect(int block)
 {
 	return !(STM32_FLASH_WRPR & BIT(block));
 }
@@ -22,11 +22,11 @@ int flash_physical_get_protect(int block)
  * Note: This does not need to update _NOW flags, as get_protect_flags
  * in common code already does so.
  */
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 	uint32_t wrp01 = REG32(STM32_OPTB_BASE + STM32_OPTB_WRP01);
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 	uint32_t wrp23 = REG32(STM32_OPTB_BASE + STM32_OPTB_WRP23);
 #endif
 
@@ -65,8 +65,7 @@ uint32_t flash_physical_get_protect_flags(void)
 		/* Default: RW. */
 		int region = FLASH_REGION_RW;
 
-		if (i >= WP_BANK_OFFSET &&
-		    i < WP_BANK_OFFSET + WP_BANK_COUNT)
+		if (i >= WP_BANK_OFFSET && i < WP_BANK_OFFSET + WP_BANK_COUNT)
 			region = FLASH_REGION_RO;
 #ifdef CONFIG_ROLLBACK
 		if (i >= ROLLBACK_BANK_OFFSET &&
@@ -76,12 +75,12 @@ uint32_t flash_physical_get_protect_flags(void)
 
 		switch (i) {
 		case 8:
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 		case 24:
 #endif
 			shift += 8;
 			break;
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 		case 16:
 			reg = 1;
 			shift = 0;
@@ -95,18 +94,18 @@ uint32_t flash_physical_get_protect_flags(void)
 
 	for (i = 0; i < FLASH_REGION_COUNT; i++) {
 		if (!(wrp01 & wrp_mask[i][0]) &&
-			(wrp01 & wrp_mask[i][0] << 8) == (wrp_mask[i][0] << 8))
-#if CONFIG_FLASH_SIZE > 64 * 1024
+		    (wrp01 & wrp_mask[i][0] << 8) == (wrp_mask[i][0] << 8))
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 			if (!(wrp23 & wrp_mask[i][1]) &&
-			     (wrp23 & wrp_mask[i][1] << 8) ==
-							 (wrp_mask[i][1] << 8))
+			    (wrp23 & wrp_mask[i][1] << 8) ==
+				    (wrp_mask[i][1] << 8))
 #endif
 				flags |= mask_flags[i];
 	}
 #endif /* CONFIG_FLASH_PROTECT_RW || CONFIG_ROLLBACK */
 
 	if (wrp01 == 0xff00ff00)
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 		if (wrp23 == 0xff00ff00)
 #endif
 			flags |= EC_FLASH_PROTECT_ALL_AT_BOOT;
@@ -114,34 +113,31 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	return EC_ERROR_INVAL;
 }
 
-int flash_physical_restore_state(void)
+int crec_flash_physical_restore_state(void)
 {
 	/* Nothing to restore */
 	return 0;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 #ifdef CONFIG_FLASH_PROTECT_RW
-	       EC_FLASH_PROTECT_RW_AT_BOOT |
-	       EC_FLASH_PROTECT_RW_NOW |
+	       EC_FLASH_PROTECT_RW_AT_BOOT | EC_FLASH_PROTECT_RW_NOW |
 #endif
 #ifdef CONFIG_ROLLBACK
 	       EC_FLASH_PROTECT_ROLLBACK_AT_BOOT |
 	       EC_FLASH_PROTECT_ROLLBACK_NOW |
 #endif
-	       EC_FLASH_PROTECT_ALL_AT_BOOT |
-	       EC_FLASH_PROTECT_ALL_NOW;
+	       EC_FLASH_PROTECT_ALL_AT_BOOT | EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -153,13 +149,13 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	 * ALL/RW at-boot state can be set if WP GPIO is asserted and can always
 	 * be cleared.
 	 */
-	if (cur_flags & (EC_FLASH_PROTECT_ALL_AT_BOOT |
-			 EC_FLASH_PROTECT_GPIO_ASSERTED))
+	if (cur_flags &
+	    (EC_FLASH_PROTECT_ALL_AT_BOOT | EC_FLASH_PROTECT_GPIO_ASSERTED))
 		ret |= EC_FLASH_PROTECT_ALL_AT_BOOT;
 
 #ifdef CONFIG_FLASH_PROTECT_RW
-	if (cur_flags & (EC_FLASH_PROTECT_RW_AT_BOOT |
-			 EC_FLASH_PROTECT_GPIO_ASSERTED))
+	if (cur_flags &
+	    (EC_FLASH_PROTECT_RW_AT_BOOT | EC_FLASH_PROTECT_GPIO_ASSERTED))
 		ret |= EC_FLASH_PROTECT_RW_AT_BOOT;
 #endif
 

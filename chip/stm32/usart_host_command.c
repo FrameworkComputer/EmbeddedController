@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,8 +19,8 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
 
 /*
  * Timeout to wait for complete request packet
@@ -51,7 +51,7 @@
 
 /*
  * Max data size for a version 3 request/response packet.  This is big enough
- * to handle a request/response header, flash write offset/size and 512 bytes 
+ * to handle a request/response header, flash write offset/size and 512 bytes
  * of request payload or 224 bytes of response payload.
  */
 #define USART_MAX_REQUEST_SIZE 0x220
@@ -271,12 +271,12 @@ static struct usart_rx_dma const usart_host_command_rx_dma = {
  * Configure USART structure with hardware, interrupt handlers, baudrate.
  */
 static struct usart_config const tl_usart = {
-	.hw	= &CONFIG_UART_HOST_COMMAND_HW,
-	.rx	= &usart_host_command_rx_dma.usart_rx,
-	.tx	= &usart_host_command_tx_interrupt,
-	.state	= &((struct usart_state){}),
-	.baud	= CONFIG_UART_HOST_COMMAND_BAUD_RATE,
-	.flags	= 0,
+	.hw = &CONFIG_UART_HOST_COMMAND_HW,
+	.rx = &usart_host_command_rx_dma.usart_rx,
+	.tx = &usart_host_command_tx_interrupt,
+	.state = &((struct usart_state){}),
+	.baud = CONFIG_UART_HOST_COMMAND_BAUD_RATE,
+	.flags = 0,
 };
 
 /*
@@ -327,7 +327,7 @@ static void usart_host_command_process_request(void)
 {
 	/* Handle usart_in_buffer as ec_host_request */
 	struct ec_host_request *ec_request =
-			(struct ec_host_request *)usart_in_buffer;
+		(struct ec_host_request *)usart_in_buffer;
 
 	/* Prepare host_packet for host command task */
 	static struct host_packet uart_packet;
@@ -362,16 +362,13 @@ static void usart_host_command_process_request(void)
 	 * Cancel deferred call to timeout handler as request
 	 * received was good.
 	 */
-	hook_call_deferred(
-		&usart_host_command_request_timeout_data,
-		-1);
+	hook_call_deferred(&usart_host_command_request_timeout_data, -1);
 
 	uart_packet.send_response = usart_host_command_process_response;
 	uart_packet.request = usart_in_buffer;
 	uart_packet.request_temp = NULL;
 	uart_packet.request_max = sizeof(usart_in_buffer);
-	uart_packet.request_size =
-			host_request_expected_size(ec_request);
+	uart_packet.request_size = host_request_expected_size(ec_request);
 	uart_packet.response = usart_out_buffer;
 	uart_packet.response_max = sizeof(usart_out_buffer);
 	uart_packet.response_size = 0;
@@ -427,14 +424,10 @@ static void usart_host_command_process_response(struct host_packet *pkt)
 static void usart_host_command_reset(void)
 {
 	/* Cancel deferred call to process_request. */
-	hook_call_deferred(
-		&usart_host_command_process_request_data,
-		-1);
+	hook_call_deferred(&usart_host_command_process_request_data, -1);
 
 	/* Cancel deferred call to timeout handler. */
-	hook_call_deferred(
-		&usart_host_command_request_timeout_data,
-		-1);
+	hook_call_deferred(&usart_host_command_request_timeout_data, -1);
 
 	/*
 	 * Disable interrupts before entering critical region
@@ -491,7 +484,7 @@ size_t usart_host_command_rx_append_data(struct usart_config const *config,
 {
 	/* Define ec_host_request pointer to process in bytes later*/
 	struct ec_host_request *ec_request =
-			(struct ec_host_request *) usart_in_buffer;
+		(struct ec_host_request *)usart_in_buffer;
 
 	/* Once the header is received, store the datalen */
 	static int usart_in_datalen;
@@ -504,8 +497,7 @@ size_t usart_host_command_rx_append_data(struct usart_config const *config,
 	    current_state == USART_HOST_CMD_RECEIVING ||
 	    (usart_in_head + count) < USART_MAX_REQUEST_SIZE) {
 		/* Copy all the bytes from DMA FIFO */
-		memcpy(usart_in_buffer + usart_in_head,
-			src, count);
+		memcpy(usart_in_buffer + usart_in_head, src, count);
 	}
 
 	/*
@@ -519,7 +511,7 @@ size_t usart_host_command_rx_append_data(struct usart_config const *config,
 	if (current_state == USART_HOST_CMD_READY_TO_RX) {
 		/* Kick deferred call to request timeout handler */
 		hook_call_deferred(&usart_host_command_request_timeout_data,
-			USART_REQ_RX_TIMEOUT);
+				   USART_REQ_RX_TIMEOUT);
 
 		/* Move current state to receiving */
 		current_state = USART_HOST_CMD_RECEIVING;
@@ -551,8 +543,7 @@ size_t usart_host_command_rx_append_data(struct usart_config const *config,
 		} else if (usart_in_head > usart_in_datalen) {
 			/* Cancel deferred call to process_request */
 			hook_call_deferred(
-				&usart_host_command_process_request_data,
-				-1);
+				&usart_host_command_process_request_data, -1);
 
 			/* Move state to overrun*/
 			current_state = USART_HOST_CMD_RX_OVERRUN;
@@ -579,13 +570,12 @@ size_t usart_host_command_tx_remove_data(struct usart_config const *config,
 {
 	size_t bytes_remaining = 0;
 
-	if (current_state == USART_HOST_CMD_SENDING &&
-	    usart_out_datalen != 0) {
+	if (current_state == USART_HOST_CMD_SENDING && usart_out_datalen != 0) {
 		/* Calculate byte_remaining in out_buffer */
 		bytes_remaining = usart_out_datalen - usart_out_head;
 
 		/* Get char on the head */
-		*((uint8_t *) dest) = usart_out_buffer[usart_out_head++];
+		*((uint8_t *)dest) = usart_out_buffer[usart_out_head++];
 
 		/* If no bytes remaining, reset layer to accept next
 		 * request.

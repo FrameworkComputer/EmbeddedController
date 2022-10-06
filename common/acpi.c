@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,35 +8,38 @@
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
+#include "ec_commands.h"
+#include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "lpc.h"
-#include "ec_commands.h"
-#include "tablet_mode.h"
+#include "printf.h"
 #include "pwm.h"
 #include "timer.h"
+#include "tablet_mode.h"
 #include "usb_charge.h"
+#include "usb_common.h"
 #include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_LPC, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 
 /* Last received ACPI command */
-static uint8_t __bss_slow acpi_cmd;
+static uint8_t acpi_cmd;
 /* First byte of data after ACPI command */
-static uint8_t __bss_slow acpi_addr;
+static uint8_t acpi_addr;
 /* Number of data writes after command */
-static int __bss_slow acpi_data_count;
+static int acpi_data_count;
 /* Test byte in ACPI memory space */
-static uint8_t __bss_slow acpi_mem_test;
+static uint8_t acpi_mem_test;
 
 #ifdef CONFIG_DPTF
-static int __bss_slow dptf_temp_sensor_id;	/* last sensor ID written */
-static int __bss_slow dptf_temp_threshold;	/* last threshold written */
+static int dptf_temp_sensor_id; /* last sensor ID written */
+static int dptf_temp_threshold; /* last threshold written */
 
 /*
  * Current DPTF profile number.
@@ -60,9 +63,9 @@ static int current_dptf_profile = DPTF_PROFILE_DEFAULT;
 #define ACPI_READ_CACHE_FLUSHED (EC_ACPI_MEM_MAPPED_BEGIN - 1)
 
 /* Calculate size of valid cache based upon end of memmap data. */
-#define ACPI_VALID_CACHE_SIZE(addr) (MIN( \
-	EC_ACPI_MEM_MAPPED_SIZE + EC_ACPI_MEM_MAPPED_BEGIN - (addr), \
-	ACPI_READ_CACHE_SIZE))
+#define ACPI_VALID_CACHE_SIZE(addr)                                       \
+	(MIN(EC_ACPI_MEM_MAPPED_SIZE + EC_ACPI_MEM_MAPPED_BEGIN - (addr), \
+	     ACPI_READ_CACHE_SIZE))
 
 /*
  * In burst mode, read the requested memmap data and the data immediately
@@ -131,23 +134,27 @@ static int acpi_read(uint8_t addr)
 	uint8_t *memmap_addr = (uint8_t *)(lpc_get_memmap_range() + addr -
 					   EC_ACPI_MEM_MAPPED_BEGIN);
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#endif /* __clang__ */
 	/* Check for out-of-range read. */
 	if (addr < EC_ACPI_MEM_MAPPED_BEGIN ||
 	    addr >= EC_ACPI_MEM_MAPPED_BEGIN + EC_ACPI_MEM_MAPPED_SIZE) {
-		CPRINTS("ACPI read 0x%02x (ignored)",
-			acpi_addr);
+		CPRINTS("ACPI read 0x%02x (ignored)", acpi_addr);
 		return 0xff;
 	}
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif /* __clang__ */
 
 	/* Read from cache if enabled (burst mode). */
 	if (acpi_read_cache.enabled) {
 		/* Fetch to cache on miss. */
 		if (acpi_read_cache.start_addr == ACPI_READ_CACHE_FLUSHED ||
 		    acpi_read_cache.start_addr > addr ||
-		    addr - acpi_read_cache.start_addr >=
-		    ACPI_READ_CACHE_SIZE) {
-			memcpy(acpi_read_cache.data,
-			       memmap_addr,
+		    addr - acpi_read_cache.start_addr >= ACPI_READ_CACHE_SIZE) {
+			memcpy(acpi_read_cache.data, memmap_addr,
 			       ACPI_VALID_CACHE_SIZE(addr));
 			acpi_read_cache.start_addr = addr;
 		}
@@ -167,7 +174,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 {
 	int data = 0;
 	int retval = 0;
-	int result = 0xff;			/* value for bogus read */
+	int result = 0xff; /* value for bogus read */
 
 	/* Read command/data; this clears the FRMH status bit. */
 	if (is_cmd) {
@@ -231,7 +238,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 #ifdef CONFIG_DPTF
 			result |= (acpi_dptf_get_profile_num() &
 				   EC_ACPI_MEM_DDPN_MASK)
-				<< EC_ACPI_MEM_DDPN_SHIFT;
+				  << EC_ACPI_MEM_DDPN_SHIFT;
 #endif
 			break;
 
@@ -250,7 +257,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 
 			result = val >> (8 * off);
 			break;
-			}
+		}
 		case EC_ACPI_MEM_DEVICE_FEATURES4:
 		case EC_ACPI_MEM_DEVICE_FEATURES5:
 		case EC_ACPI_MEM_DEVICE_FEATURES6:
@@ -260,7 +267,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 
 			result = val >> (8 * off);
 			break;
-			}
+		}
 
 #ifdef CONFIG_USB_PORT_POWER_DUMB
 		case EC_ACPI_MEM_USB_PORT_POWER: {
@@ -274,13 +281,18 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			 */
 			result = 0;
 			for (i = 0; i < port_count; ++i) {
-				if (gpio_get_level(usb_port_enable[i]) != 0)
+				if ((usb_port_enable[i] >= 0) &&
+				    (gpio_get_level(usb_port_enable[i]) != 0))
 					result |= 1 << i;
 			}
 			break;
-			}
+		}
 #endif
-
+#ifdef CONFIG_USBC_RETIMER_FW_UPDATE
+		case EC_ACPI_MEM_USB_RETIMER_FW_UPDATE:
+			result = usb_retimer_fw_update_get_result();
+			break;
+#endif
 		default:
 			result = acpi_read(acpi_addr);
 			break;
@@ -303,17 +315,19 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #endif
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
-		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
+		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT: {
+			char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 			/*
 			 * Debug output with CR not newline, because the host
 			 * does a lot of keyboard backlights and it scrolls the
 			 * debug console.
 			 */
-			CPRINTF("\r[%pT ACPI kblight %d]",
-				PRINTF_TIMESTAMP_NOW, data);
+			snprintf_timestamp_now(ts_str, sizeof(ts_str));
+			CPRINTF("\r[%s ACPI kblight %d]", ts_str, data);
 			kblight_set(data);
 			kblight_enable(data > 0);
 			break;
+		}
 #endif
 #ifdef CONFIG_FANS
 		case EC_ACPI_MEM_FAN_DUTY:
@@ -327,13 +341,12 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		case EC_ACPI_MEM_TEMP_THRESHOLD:
 			dptf_temp_threshold = data + EC_TEMP_SENSOR_OFFSET;
 			break;
-		case EC_ACPI_MEM_TEMP_COMMIT:
-		{
+		case EC_ACPI_MEM_TEMP_COMMIT: {
 			int idx = data & EC_ACPI_MEM_TEMP_COMMIT_SELECT_MASK;
 			int enable = data & EC_ACPI_MEM_TEMP_COMMIT_ENABLE_MASK;
 			dptf_set_temp_threshold(dptf_temp_sensor_id,
-						dptf_temp_threshold,
-						idx, enable);
+						dptf_temp_threshold, idx,
+						enable);
 			break;
 		}
 #endif
@@ -365,8 +378,9 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 				if (mode_field & 1)
 					mode = USB_CHARGE_MODE_ENABLED;
 
-				if (usb_charge_set_mode(i, mode,
-				    USB_ALLOW_SUSPEND_CHARGE)) {
+				if (usb_charge_set_mode(
+					    i, mode,
+					    USB_ALLOW_SUSPEND_CHARGE)) {
 					CPRINTS("ERROR: could not set charge "
 						"mode of USB port p%d to %d",
 						i, mode);
@@ -374,9 +388,15 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 				mode_field >>= 1;
 			}
 			break;
-			}
+		}
 #endif
-
+#ifdef CONFIG_USBC_RETIMER_FW_UPDATE
+		case EC_ACPI_MEM_USB_RETIMER_FW_UPDATE:
+			usb_retimer_fw_update_process_op(
+				EC_ACPI_MEM_USB_RETIMER_PORT(data),
+				EC_ACPI_MEM_USB_RETIMER_OP(data));
+			break;
+#endif
 		default:
 			CPRINTS("ACPI write 0x%02x = 0x%02x (ignored)",
 				acpi_addr, data);
@@ -406,7 +426,8 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		 * Disable from deferred function in case burst mode is enabled
 		 * for an extremely long time  (ex. kernel bug / crash).
 		 */
-		hook_call_deferred(&acpi_disable_burst_deferred_data, 1*SECOND);
+		hook_call_deferred(&acpi_disable_burst_deferred_data,
+				   1 * SECOND);
 
 		/* ACPI 5.0-12.3.3: Burst ACK */
 		*resultptr = 0x90;

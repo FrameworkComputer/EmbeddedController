@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,8 +19,8 @@ static int gpio_interrupt_enabled[GPIO_COUNT];
 /* Create a dictionary of names for debug console print */
 #define GPIO_INT(name, pin, flags, signal) #name,
 #define GPIO(name, pin, flags) #name,
-const char * gpio_names[GPIO_COUNT] = {
-	#include "gpio.wrap"
+const char *gpio_names[GPIO_COUNT] = {
+#include "gpio.wrap"
 };
 #undef GPIO
 #undef GPIO_INT
@@ -92,7 +92,7 @@ test_mockable void gpio_set_flags_by_mask(uint32_t port, uint32_t mask,
 }
 
 test_mockable void gpio_set_alternate_function(uint32_t port, uint32_t mask,
-						enum gpio_alternate_func func)
+					       enum gpio_alternate_func func)
 {
 	/* Nothing */
 }

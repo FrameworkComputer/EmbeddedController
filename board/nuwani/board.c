@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,6 +10,7 @@
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "extpower.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -28,19 +29,37 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 	GPIO_EC_RST_ODL,
 };
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* I2C port map. */
 const struct i2c_port_t i2c_ports[] = {
-	{"power",   I2C_PORT_POWER,   100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"tcpc1",   I2C_PORT_TCPC1,   400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"thermal", I2C_PORT_THERMAL_AP, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"sensor",  I2C_PORT_SENSOR,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "thermal",
+	  .port = I2C_PORT_THERMAL_AP,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_I2C7_SCL,
+	  .sda = GPIO_I2C7_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-#ifdef HAS_TASK_MOTIONSENSE
 
 /* Motion sensors */
 static struct mutex g_lid_mutex_1;
@@ -51,19 +70,15 @@ static struct stprivate_data g_lis2dwl_data;
 /* Base accel private data */
 static struct lsm6dsm_data g_lsm6dsm_data = LSM6DSM_DATA;
 
-
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t lsm6dsm_base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lsm6dsm_base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+						      { 0, FLOAT_TO_FP(-1), 0 },
+						      { 0, 0,
+							FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t treeya_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t treeya_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+						{ FLOAT_TO_FP(1), 0, 0 },
+						{ 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t lid_accel_1 = {
 	.name = "Lid Accel",
@@ -102,8 +117,6 @@ struct motion_sensor_t base_accel_1 = {
 	.mutex = &g_base_mutex_1,
 	.drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
 			MOTIONSENSE_TYPE_ACCEL),
-	.int_signal = GPIO_6AXIS_INT_L,
-	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 	.port = I2C_PORT_ACCEL,
 	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	.rot_standard_ref = &lsm6dsm_base_standard_ref,
@@ -132,10 +145,7 @@ struct motion_sensor_t base_gyro_1 = {
 	.location = MOTIONSENSE_LOC_BASE,
 	.drv = &lsm6dsm_drv,
 	.mutex = &g_base_mutex_1,
-	.drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
-			MOTIONSENSE_TYPE_GYRO),
-	.int_signal = GPIO_6AXIS_INT_L,
-	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	.drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data, MOTIONSENSE_TYPE_GYRO),
 	.port = I2C_PORT_ACCEL,
 	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	.default_range = 1000 | ROUND_UP_FLAG, /* dps */
@@ -163,10 +173,12 @@ void board_update_sensor_config_from_sku(void)
 			motion_sensors[LID_ACCEL] = lid_accel_1;
 			motion_sensors[BASE_ACCEL] = base_accel_1;
 			motion_sensors[BASE_GYRO] = base_gyro_1;
-		} else{
+		} else {
 			/*Need to change matrix for treeya*/
-			motion_sensors[BASE_ACCEL].rot_standard_ref = &treeya_standard_ref;
-			motion_sensors[BASE_GYRO].rot_standard_ref = &treeya_standard_ref;
+			motion_sensors[BASE_ACCEL].rot_standard_ref =
+				&treeya_standard_ref;
+			motion_sensors[BASE_GYRO].rot_standard_ref =
+				&treeya_standard_ref;
 		}
 
 		/* Enable Gyro interrupts */
@@ -174,10 +186,9 @@ void board_update_sensor_config_from_sku(void)
 	} else {
 		motion_sensor_count = 0;
 		/* Device is clamshell only */
-		tablet_set_mode(0);
+		tablet_set_mode(0, TABLET_TRIGGER_LID);
 		/* Gyro is not present, don't allow line to float */
-		gpio_set_flags(GPIO_6AXIS_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_6AXIS_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 
@@ -189,5 +200,3 @@ void board_bmi160_lsm6dsm_interrupt(enum gpio_signal signal)
 	else
 		bmi160_interrupt(signal);
 }
-
-#endif

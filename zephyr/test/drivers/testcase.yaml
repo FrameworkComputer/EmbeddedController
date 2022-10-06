@@ -1,0 +1,130 @@
+common:
+  platform_allow: native_posix
+tests:
+  drivers.default:
+    timeout: 240
+    extra_args: CONF_FILE="prj.conf;default/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_DEFAULT=y
+      - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
+      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
+      - CONFIG_PLATFORM_EC_CBI_EEPROM=y
+  drivers.default.mock_power:
+    timeout: 240
+    extra_args: CONF_FILE="prj.conf;default/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_DEFAULT=y
+      - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
+      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
+      - CONFIG_PLATFORM_EC_CBI_EEPROM=y
+  drivers.anx7447:
+    extra_args: CONF_FILE="prj.conf;anx7447/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./anx7447/tcpc_policy.dts"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_ANX7447=y
+  drivers.host_cmd:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
+      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_PLATFORM_EC_USB_PD_LOGGING=y
+  drivers.locate_chip:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS=y
+  drivers.ap_mux_control:
+    extra_args: CONF_FILE="prj.conf;ap_mux_control/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL=y
+  drivers.chargesplash:
+    timeout: 240
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
+  drivers.chargesplash.mock_power:
+    timeout: 240
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.dps:
+    extra_args: CONF_FILE="prj.conf;dps/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USB_PD_DPS=y
+  drivers.isl923x:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_ISL923X=y
+  drivers.isl923x.mock_power:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_ISL923X=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.i2c_controller:
+    extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;i2c_controller/i2c.dts"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_I2C_CONTROLLER=y
+      - CONFIG_PLATFORM_EC_CBI_EEPROM=y
+  drivers.keyboard_scan:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_KEYBOARD_SCAN=y
+  drivers.led_driver:
+    extra_args: CONF_FILE="prj.conf;led_driver/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./led_driver/led_pins.dts;./led_driver/led_policy.dts"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_LED_DRIVER=y
+  drivers.mkbp:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_MKBP=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=y
+      - CONFIG_PLATFORM_EC_MKBP_INPUT_DEVICES=y
+      - CONFIG_PLATFORM_EC_MKBP_EVENT=y
+      - CONFIG_PLATFORM_EC_MKBP_USE_GPIO=y
+    tags:
+      common
+      mkbp
+  drivers.rt9490:
+    extra_args: CONF_FILE="prj.conf;rt9490/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./rt9490/charger.dts"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_RT9490=y
+  drivers.system:
+    tags:
+      common
+      system
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.system_board_version_cbi:
+    tags:
+      common
+      system
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+      - CONFIG_PLATFORM_EC_BOARD_VERSION_CBI=y
+      - CONFIG_PLATFORM_EC_CBI_EEPROM=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.timer:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_TIMER=y
+  drivers.usb_port_power_dumb:
+    extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;./usb_port_power_dumb/usba.dts"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB=y
+      - CONFIG_PLATFORM_EC_USBA=y
+      - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB=y
+  drivers.usb_retimer_fw_update:
+    extra_args: CONF_FILE="prj.conf;usb_retimer_fw_update/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE=y
+  drivers.usbc_alt_mode:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
+  drivers.usbc_alt_mode_ec_entry:
+   extra_configs:
+     - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
+     - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
+     - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.usbc_tbt_mode:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE=y
+  drivers.usbc_ocp:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
+  drivers.usbc_ppc:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_PPC=y

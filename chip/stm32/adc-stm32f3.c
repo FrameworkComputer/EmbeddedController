@@ -1,10 +1,9 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -17,9 +16,9 @@
 
 #define ADC_SINGLE_READ_TIMEOUT 3000 /* 3 ms */
 
-#define SMPR1_EXPAND(v) ((v) | ((v) << 3) | ((v) << 6) | ((v) << 9) | \
-			 ((v) << 12) | ((v) << 15) | ((v) << 18) | \
-			 ((v) << 21))
+#define SMPR1_EXPAND(v)                                             \
+	((v) | ((v) << 3) | ((v) << 6) | ((v) << 9) | ((v) << 12) | \
+	 ((v) << 15) | ((v) << 18) | ((v) << 21))
 #define SMPR2_EXPAND(v) (SMPR1_EXPAND(v) | ((v) << 24) | ((v) << 27))
 
 /* Default ADC sample time = 13.5 cycles */
@@ -216,8 +215,9 @@ int adc_read_channel(enum adc_channel ch)
 		adc_enable_watchdog_no_lock();
 
 	mutex_unlock(&adc_lock);
-	return (value == ADC_READ_ERROR) ? ADC_READ_ERROR :
-	       value * adc->factor_mul / adc->factor_div + adc->shift;
+	return (value == ADC_READ_ERROR) ?
+		       ADC_READ_ERROR :
+		       value * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
 static void adc_init(void)

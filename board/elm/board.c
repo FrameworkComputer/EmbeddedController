@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Oak board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "atomic.h"
 #include "battery.h"
 #include "charge_manager.h"
@@ -50,8 +49,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* Dispaly port hardware can connect to port 0, 1 or neither. */
 #define PD_PORT_NONE -1
@@ -67,15 +66,15 @@ DECLARE_DEFERRED(deferred_reset_pd_mcu);
 void usb_evt(enum gpio_signal signal)
 {
 	if (!gpio_get_level(GPIO_BC12_WAKE_L))
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_SOC_POWER_GOOD, POWER_SIGNAL_ACTIVE_HIGH, "POWER_GOOD"},
-	{GPIO_SUSPEND_L, POWER_SIGNAL_ACTIVE_LOW, "SUSPEND#_ASSERTED"},
+	{ GPIO_SOC_POWER_GOOD, POWER_SIGNAL_ACTIVE_HIGH, "POWER_GOOD" },
+	{ GPIO_SUSPEND_L, POWER_SIGNAL_ACTIVE_LOW, "SUSPEND#_ASSERTED" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -85,18 +84,18 @@ const struct adc_t adc_channels[] = {
 	 * PSYS_MONITOR(PA2): ADC_IN2, 1.44 uA/W on 6.05k Ohm
 	 * output in mW
 	 */
-	[ADC_PSYS] = {"PSYS", 379415, 4096, 0, STM32_AIN(2)},
+	[ADC_PSYS] = { "PSYS", 379415, 4096, 0, STM32_AIN(2) },
 	/* AMON_BMON(PC0): ADC_IN10, output in uV */
-	[ADC_AMON_BMON] = {"AMON_BMON", 183333, 4096, 0, STM32_AIN(10)},
+	[ADC_AMON_BMON] = { "AMON_BMON", 183333, 4096, 0, STM32_AIN(10) },
 	/* VDC_BOOSTIN_SENSE(PC1): ADC_IN11, output in mV */
-	[ADC_VBUS] = {"VBUS", 33000, 4096, 0, STM32_AIN(11)},
+	[ADC_VBUS] = { "VBUS", 33000, 4096, 0, STM32_AIN(11) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 int anx7688_passthru_allowed(const struct i2c_port_t *port,
 			     const uint16_t addr_flags)
 {
-	uint16_t addr = I2C_GET_ADDR(addr_flags);
+	uint16_t addr = I2C_STRIP_FLAGS(addr_flags);
 
 	/* Allow access to 0x2c (TCPC) */
 	if (addr == 0x2c)
@@ -108,11 +107,18 @@ int anx7688_passthru_allowed(const struct i2c_port_t *port,
 }
 
 /* I2C ports */
-const struct i2c_port_t i2c_ports[] = {
-	{"battery", I2C_PORT_BATTERY, 100,  GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"pd",      I2C_PORT_PD_MCU,  1000, GPIO_I2C1_SCL, GPIO_I2C1_SDA,
-		anx7688_passthru_allowed}
-};
+const struct i2c_port_t i2c_ports[] = { { .name = "battery",
+					  .port = I2C_PORT_BATTERY,
+					  .kbps = 100,
+					  .scl = GPIO_I2C0_SCL,
+					  .sda = GPIO_I2C0_SDA },
+					{ .name = "pd",
+					  .port = I2C_PORT_PD_MCU,
+					  .kbps = 1000,
+					  .scl = GPIO_I2C1_SCL,
+					  .sda = GPIO_I2C1_SDA,
+					  .passthru_allowed =
+						  anx7688_passthru_allowed } };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -151,22 +157,24 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
  */
 const struct temp_sensor_t temp_sensors[] = {
 #ifdef CONFIG_TEMP_SENSOR_TMP432
-	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_LOCAL},
-	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE1},
-	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE2},
+	{ "TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_LOCAL },
+	{ "TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_REMOTE1 },
+	{ "TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_REMOTE2 },
 #endif
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp,
-		0},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.driver    = &anx7688_usb_mux_driver,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.driver = &anx7688_usb_mux_driver,
+			},
 	},
 };
 
@@ -196,7 +204,7 @@ void deferred_reset_pd_mcu(void)
 		 * and wait for 1ms.
 		 */
 		gpio_set_level(GPIO_USB_C0_PWR_EN_L, 1);
-		hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 1 * MSEC);
 		break;
 	case 1:
 		/*
@@ -204,9 +212,9 @@ void deferred_reset_pd_mcu(void)
 		 * pull PD reset pin and wait for another 1ms
 		 */
 		gpio_set_level(GPIO_USB_C0_RST, 1);
-		hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 1 * MSEC);
 		/* on PD reset, trigger PD task to reset state */
-		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET);
 		break;
 	case 3:
 		/*
@@ -214,7 +222,7 @@ void deferred_reset_pd_mcu(void)
 		 * enable power and wait for 10ms then pull RESET_N
 		 */
 		gpio_set_level(GPIO_USB_C0_PWR_EN_L, 0);
-		hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 10 * MSEC);
 		break;
 	case 2:
 		/*
@@ -233,7 +241,7 @@ static void board_power_on_pd_mcu(void)
 		return;
 
 	gpio_set_level(GPIO_USB_C0_EXTPWR_EN, 1);
-	hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
+	hook_call_deferred(&deferred_reset_pd_mcu_data, 1 * MSEC);
 }
 
 void board_reset_pd_mcu(void)
@@ -242,17 +250,15 @@ void board_reset_pd_mcu(void)
 	anx7688_enable_cable_detection(0);
 
 	/* wait for 10ms, then start port controller's reset sequence */
-	hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
+	hook_call_deferred(&deferred_reset_pd_mcu_data, 10 * MSEC);
 }
 
-int command_pd_reset(int argc, char **argv)
+static int command_pd_reset(int argc, const char **argv)
 {
 	board_reset_pd_mcu();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(resetpd, command_pd_reset,
-			"",
-			"Reset PD IC");
+DECLARE_CONSOLE_COMMAND(resetpd, command_pd_reset, "", "Reset PD IC");
 
 /**
  * There is a level shift for AC_OK & LID_OPEN signal between AP & EC,
@@ -331,13 +337,13 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Limit input current 95% ratio on elm board for safety */
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
@@ -388,7 +394,7 @@ static void board_chipset_pre_init(void)
 	board_extpower_buffer_to_soc();
 
 	/* Enable SPI for KX022 */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 
 	/* Set all four SPI pins to high speed */
 	/* pins D0/D1/D3/D4 */
@@ -403,7 +409,7 @@ static void board_chipset_pre_init(void)
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
 
@@ -413,12 +419,12 @@ static void board_chipset_shutdown(void)
 	/* Disable level shift to SoC when shutting down */
 	gpio_set_level(GPIO_LEVEL_SHIFT_EN_L, 1);
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+	spi_enable(&spi_devices[0], 0);
 
 	/* Disable clocks to SPI2 module */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 
-	gpio_config_module(MODULE_SPI_MASTER, 0);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 0);
 
 	/*
 	 * Calling gpio_config_module sets disabled alternate function pins to
@@ -448,23 +454,18 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-#ifdef HAS_TASK_MOTIONSENSE
 /* Motion sensors */
 /* Mutexes */
 static struct mutex g_kx022_mutex[2];
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0,  FLOAT_TO_FP(1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, FLOAT_TO_FP(1), 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1),  0,  0},
-	{ 0, FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* KX022 private data */
 struct kionix_accel_data g_kx022_data[2];
@@ -479,7 +480,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &kionix_accel_drv,
 		.mutex = &g_kx022_mutex[0],
 		.drv_data = &g_kx022_data[0],
-		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(0),
+		.i2c_spi_addr_flags = ACCEL_MK_SPI_ADDR_FLAGS(0),
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 2, /* g, enough for lid angle calculation. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,
@@ -502,7 +503,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &kionix_accel_drv,
 		.mutex = &g_kx022_mutex[1],
 		.drv_data = &g_kx022_data[1],
-		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(1),
+		.i2c_spi_addr_flags = ACCEL_MK_SPI_ADDR_FLAGS(1),
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,
@@ -519,17 +520,15 @@ struct motion_sensor_t motion_sensors[] = {
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 
 	/* enable/disable touchpad */
 	gpio_set_level(GPIO_EN_TP_INT_L, !enable);
 }
-#endif /* defined(HAS_TASK_MOTIONSENSE) */
 
 uint16_t tcpc_get_alert_status(void)
 {
 	return gpio_get_level(GPIO_PD_MCU_INT) ? PD_STATUS_TCPC_ALERT_0 : 0;
 }
-

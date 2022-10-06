@@ -1,0 +1,30 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_WATCHDOG
+
+config PLATFORM_EC_WATCHDOG_PERIOD_MS
+	int "Watchdog timeout in ms"
+	default 1600
+	help
+	  Set the timeout of the watchdog timer. The watchdog timer reboots
+	  the system if no one reloads the watchdog timer before the timeout.
+
+config PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS
+	int "Leading time of the watchdog warning timer in ms"
+	default 500
+	depends on !WDT_NPCX && !WDT_ITE_IT8XXX2
+	help
+	  Set the leading time of the watchdog warning timer. Chromium EC system
+	  uses an auxiliary timer to handle the system warning event. The
+	  auxiliary timer period (CONFIG_AUX_TIMER_PERIOD_MS) is set to
+	  PLATFORM_EC_WATCHDOG_PERIOD_MS -
+	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS.
+
+	  For the NPCX chip, use WDT_NPCX_DELAY_CYCLES instead of this config.
+	  For the MCHP chip, use WDT_XEC_DELAY_CYCLES instead of this config.
+	  For the ITE chip, use CONFIG_WDT_ITE_WARNING_LEADING_TIME_MS instead
+	  of this config.
+
+endif # PLATFORM_EC_WATCHDOG

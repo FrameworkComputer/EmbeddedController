@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,25 +22,23 @@
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
 /* ISH specific */
-#undef  CONFIG_DEBUG_ASSERT
+#undef CONFIG_DEBUG_ASSERT
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_ISH_UART_0
 /* EC */
-#define CONFIG_FLASH_SIZE 0x80000
+#define CONFIG_FLASH_SIZE_BYTES 0x80000
 #define CONFIG_FPU
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 /* BMA253 Lid accel */
 #define CONFIG_ACCEL_BMA255
 
 /* Host command over HECI */
-#define CONFIG_HOSTCMD_HECI
+#define CONFIG_HOST_INTERFACE_HECI
 
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HECI
-
-#define CONFIG_ACCEL_INTERRUPTS
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
@@ -70,7 +68,7 @@
 #undef CONFIG_CMD_SHMEM
 #undef CONFIG_EXTPOWER
 #undef CONFIG_KEYBOARD_KSO_BASE
-#undef CONFIG_FLASH
+#undef CONFIG_FLASH_CROS
 #undef CONFIG_FMAP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_SWITCH
@@ -88,10 +86,7 @@
 #include "registers.h"
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, SENSOR_COUNT };
 
 #endif /* !__ASSEMBLER__ */
 

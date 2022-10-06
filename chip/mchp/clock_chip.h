@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,6 @@
 #include <stdint.h>
 
 void htimer_init(void);
-void system_set_htimer_alarm(uint32_t seconds,
-		uint32_t microseconds);
+void system_set_htimer_alarm(uint32_t seconds, uint32_t microseconds);
 
 #endif /* __CROS_EC_I2C_CLOCK_H */

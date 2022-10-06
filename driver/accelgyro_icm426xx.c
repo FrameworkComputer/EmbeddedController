@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,11 +22,16 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#ifdef CONFIG_ACCELGYRO_ICM426XX_INT_EVENT
+#define ACCELGYRO_ICM426XX_INT_ENABLE
+#endif
 
-STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
+#define CPUTS(outstr) cputs(CC_ACCEL, outstr)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
+
+STATIC_IF(ACCELGYRO_ICM426XX_INT_ENABLE)
+volatile uint32_t last_interrupt_timestamp;
 
 static int icm426xx_normalize(const struct motion_sensor_t *s, intv3_t v,
 			      const uint8_t *raw)
@@ -40,8 +45,7 @@ static int icm426xx_normalize(const struct motion_sensor_t *s, intv3_t v,
 	v[Z] = (int16_t)UINT16_FROM_BYTE_ARRAY_LE(raw, 4);
 
 	/* check if data is valid */
-	if (v[X] == ICM426XX_INVALID_DATA &&
-	    v[Y] == ICM426XX_INVALID_DATA &&
+	if (v[X] == ICM426XX_INVALID_DATA && v[Y] == ICM426XX_INVALID_DATA &&
 	    v[Z] == ICM426XX_INVALID_DATA) {
 		return EC_ERROR_INVAL;
 	}
@@ -54,9 +58,25 @@ static int icm426xx_normalize(const struct motion_sensor_t *s, intv3_t v,
 	return EC_SUCCESS;
 }
 
+static int icm426xx_check_sensor_stabilized(const struct motion_sensor_t *s,
+					    uint32_t ts)
+{
+	int32_t rem;
+
+	rem = icm_get_sensor_stabilized(s, ts);
+	if (rem == 0)
+		return EC_SUCCESS;
+	if (rem > 0)
+		return EC_ERROR_BUSY;
+
+	/* rem < 0: reset check since ts has passed stabilize_ts */
+	icm_reset_stabilize_ts(s);
+	return EC_SUCCESS;
+}
+
 /* use FIFO threshold interrupt on INT1 */
-#define ICM426XX_FIFO_INT_EN		ICM426XX_FIFO_THS_INT1_EN
-#define ICM426XX_FIFO_INT_STATUS	ICM426XX_FIFO_THS_INT
+#define ICM426XX_FIFO_INT_EN ICM426XX_FIFO_THS_INT1_EN
+#define ICM426XX_FIFO_INT_STATUS ICM426XX_FIFO_THS_INT
 
 static int __maybe_unused icm426xx_enable_fifo(const struct motion_sensor_t *s,
 					       int enable)
@@ -163,23 +183,24 @@ out_unlock:
 }
 
 static void __maybe_unused icm426xx_push_fifo_data(struct motion_sensor_t *s,
-						const uint8_t *raw, uint32_t ts)
+						   const uint8_t *raw,
+						   uint32_t ts)
 {
 	intv3_t v;
 	struct ec_response_motion_sensor_data vect;
-	int ret;
 
-	if (s == NULL)
+	if (icm426xx_normalize(s, v, raw) != EC_SUCCESS)
 		return;
 
-	ret = icm426xx_normalize(s, v, raw);
-	if (ret == EC_SUCCESS) {
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		vect.data[X] = v[X];
 		vect.data[Y] = v[Y];
 		vect.data[Z] = v[Z];
 		vect.flags = 0;
 		vect.sensor_num = s - motion_sensors;
 		motion_sense_fifo_stage_data(&vect, s, 3, ts);
+	} else {
+		motion_sense_push_raw_xyz(s);
 	}
 }
 
@@ -201,10 +222,8 @@ static int __maybe_unused icm426xx_load_fifo(struct motion_sensor_t *s,
 	/* flush FIFO if buffer is not large enough */
 	if (count > ICM_FIFO_BUFFER) {
 		CPRINTS("It should not happen, the EC is too slow for the ODR");
-		ret = icm_write8(s, ICM426XX_REG_SIGNAL_PATH_RESET,
-				 ICM426XX_FIFO_FLUSH);
-		if (ret != EC_SUCCESS)
-			return ret;
+		RETURN_ERROR(icm_write8(s, ICM426XX_REG_SIGNAL_PATH_RESET,
+					ICM426XX_FIFO_FLUSH));
 		return EC_ERROR_OVERFLOW;
 	}
 
@@ -213,21 +232,27 @@ static int __maybe_unused icm426xx_load_fifo(struct motion_sensor_t *s,
 		return ret;
 
 	for (i = 0; i < count; i += size) {
-		size = icm_fifo_decode_packet(&st->fifo_buffer[i],
-				&accel, &gyro);
+		size = icm_fifo_decode_packet(&st->fifo_buffer[i], &accel,
+					      &gyro);
 		/* exit if error or FIFO is empty */
 		if (size <= 0)
 			return -size;
-		if (accel != NULL)
-			icm426xx_push_fifo_data(st->accel, accel, ts);
-		if (gyro != NULL)
-			icm426xx_push_fifo_data(st->gyro, gyro, ts);
+		if (accel != NULL) {
+			ret = icm426xx_check_sensor_stabilized(st->accel, ts);
+			if (ret == EC_SUCCESS)
+				icm426xx_push_fifo_data(st->accel, accel, ts);
+		}
+		if (gyro != NULL) {
+			ret = icm426xx_check_sensor_stabilized(st->gyro, ts);
+			if (ret == EC_SUCCESS)
+				icm426xx_push_fifo_data(st->gyro, gyro, ts);
+		}
 	}
 
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ACCELGYRO_ICM426XX_INT_ENABLE
 
 /**
  * icm426xx_interrupt - called when the sensor activates the interrupt line.
@@ -237,11 +262,10 @@ static int __maybe_unused icm426xx_load_fifo(struct motion_sensor_t *s,
  */
 void icm426xx_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-		last_interrupt_timestamp = __hw_clock_source_read();
+	last_interrupt_timestamp = __hw_clock_source_read();
 
 	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ACCELGYRO_ICM426XX_INT_EVENT, 0);
+		       CONFIG_ACCELGYRO_ICM426XX_INT_EVENT);
 }
 
 /**
@@ -264,12 +288,10 @@ static int icm426xx_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	if (ret != EC_SUCCESS)
 		goto out_unlock;
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-		if (status & ICM426XX_FIFO_INT_STATUS) {
-			ret = icm426xx_load_fifo(s, last_interrupt_timestamp);
-			if (ret == EC_SUCCESS)
-				motion_sense_fifo_commit_data();
-		}
+	if (status & ICM426XX_FIFO_INT_STATUS) {
+		ret = icm426xx_load_fifo(s, last_interrupt_timestamp);
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO) && (ret == EC_SUCCESS))
+			motion_sense_fifo_commit_data();
 	}
 
 out_unlock:
@@ -283,13 +305,8 @@ static int icm426xx_config_interrupt(const struct motion_sensor_t *s)
 	int val, ret;
 
 	/* configure INT1 pin */
-	val = ICM426XX_INT1_PUSH_PULL;
-	if (s->flags & MOTIONSENSE_FLAG_INT_ACTIVE_HIGH)
-		val |= ICM426XX_INT1_ACTIVE_HIGH;
-
-	ret = icm_write8(s, ICM426XX_REG_INT_CONFIG, val);
-	if (ret != EC_SUCCESS)
-		return ret;
+	RETURN_ERROR(icm_write8(s, ICM426XX_REG_INT_CONFIG,
+				ICM426XX_INT1_PUSH_PULL));
 
 	/* deassert async reset for proper INT pin operation */
 	ret = icm_field_update8(s, ICM426XX_REG_INT_CONFIG1,
@@ -297,37 +314,34 @@ static int icm426xx_config_interrupt(const struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-		/*
-		 * configure FIFO:
-		 * - enable FIFO partial read
-		 * - enable continuous watermark interrupt
-		 * - disable all FIFO en bits
-		 */
-		val = ICM426XX_FIFO_PARTIAL_READ | ICM426XX_FIFO_WM_GT_TH;
-		ret = icm_field_update8(s, ICM426XX_REG_FIFO_CONFIG1,
-					GENMASK(6, 5) | ICM426XX_FIFO_EN_MASK,
-					val);
-		if (ret != EC_SUCCESS)
-			return ret;
+	/*
+	 * configure FIFO:
+	 * - enable FIFO partial read
+	 * - enable continuous watermark interrupt
+	 * - disable all FIFO en bits
+	 */
+	val = ICM426XX_FIFO_PARTIAL_READ | ICM426XX_FIFO_WM_GT_TH;
+	ret = icm_field_update8(s, ICM426XX_REG_FIFO_CONFIG1,
+				GENMASK(6, 5) | ICM426XX_FIFO_EN_MASK, val);
+	if (ret != EC_SUCCESS)
+		return ret;
 
-		/* clear internal FIFO enable bits tracking */
-		st->fifo_en = 0;
+	/* clear internal FIFO enable bits tracking */
+	st->fifo_en = 0;
 
-		/* set FIFO watermark to 1 data packet (8 bytes) */
-		ret = icm_write16(s, ICM426XX_REG_FIFO_WATERMARK, 8);
-		if (ret != EC_SUCCESS)
-			return ret;
-	}
-
+	/* set FIFO watermark to 1 data packet (8 bytes) */
+	ret = icm_write16(s, ICM426XX_REG_FIFO_WATERMARK, 8);
+	if (ret != EC_SUCCESS)
+		return ret;
 	return ret;
 }
 
-#endif	/* CONFIG_ACCEL_INTERRUPTS */
+#endif /* ACCELGYRO_ICM426XX_INT_ENABLE */
 
 static int icm426xx_enable_sensor(const struct motion_sensor_t *s, int enable)
 {
-	unsigned int sleep;
+	uint32_t delay, stop_delay;
+	int32_t rem;
 	uint8_t mask, val;
 	int ret;
 
@@ -335,43 +349,50 @@ static int icm426xx_enable_sensor(const struct motion_sensor_t *s, int enable)
 	case MOTIONSENSE_TYPE_ACCEL:
 		mask = ICM426XX_ACCEL_MODE_MASK;
 		if (enable) {
-			sleep = 20;
+			delay = ICM426XX_ACCEL_START_TIME;
+			stop_delay = ICM426XX_ACCEL_STOP_TIME;
 			val = ICM426XX_ACCEL_MODE(ICM426XX_MODE_LOW_POWER);
 		} else {
-			sleep = 0;
+			delay = ICM426XX_ACCEL_STOP_TIME;
 			val = ICM426XX_ACCEL_MODE(ICM426XX_MODE_OFF);
 		}
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		mask = ICM426XX_GYRO_MODE_MASK;
 		if (enable) {
-			sleep = 60;
+			delay = ICM426XX_GYRO_START_TIME;
+			stop_delay = ICM426XX_GYRO_STOP_TIME;
 			val = ICM426XX_GYRO_MODE(ICM426XX_MODE_LOW_NOISE);
 		} else {
-			sleep = 150;
+			delay = ICM426XX_GYRO_STOP_TIME;
 			val = ICM426XX_GYRO_MODE(ICM426XX_MODE_OFF);
 		}
 		break;
 	default:
-		return -EC_ERROR_INVAL;
+		return EC_ERROR_INVAL;
+	}
+
+	/* check stop delay and sleep if required */
+	if (enable) {
+		rem = icm_get_sensor_stabilized(s, __hw_clock_source_read());
+		/* rem > stop_delay means counter rollover */
+		if (rem > 0 && rem <= stop_delay)
+			usleep(rem);
 	}
 
 	mutex_lock(s->mutex);
 
 	ret = icm_field_update8(s, ICM426XX_REG_PWR_MGMT0, mask, val);
-	/* when turning sensor on block any register write for 200 us */
-	if (ret == EC_SUCCESS && enable)
-		usleep(200);
+	if (ret == EC_SUCCESS) {
+		icm_set_stabilize_ts(s, delay);
+		/* when turning sensor on block any register write for 200 us */
+		if (enable)
+			usleep(200);
+	}
 
 	mutex_unlock(s->mutex);
 
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	if (sleep)
-		msleep(sleep);
-
-	return EC_SUCCESS;
+	return ret;
 }
 
 static int icm426xx_set_data_rate(const struct motion_sensor_t *s, int rate,
@@ -409,23 +430,17 @@ static int icm426xx_set_data_rate(const struct motion_sensor_t *s, int rate,
 
 	if (rate > 0) {
 		if ((normalized_rate < min_rate) ||
-			(normalized_rate > max_rate))
+		    (normalized_rate > max_rate))
 			return EC_RES_INVALID_PARAM;
 	}
 
 	if (rate == 0) {
 		/* disable data in FIFO */
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-			icm426xx_config_fifo(s, 0);
+		icm426xx_config_fifo(s, 0);
 		/* disable sensor */
 		ret = icm426xx_enable_sensor(s, 0);
 		data->odr = 0;
 		return ret;
-	} else if (data->odr == 0) {
-		/* enable sensor */
-		ret = icm426xx_enable_sensor(s, 1);
-		if (ret)
-			return ret;
 	}
 
 	mutex_lock(s->mutex);
@@ -435,14 +450,18 @@ static int icm426xx_set_data_rate(const struct motion_sensor_t *s, int rate,
 	if (ret != EC_SUCCESS)
 		goto out_unlock;
 
-	data->odr = normalized_rate;
-
 	mutex_unlock(s->mutex);
 
-	/* enable data in FIFO */
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+	if (data->odr == 0) {
+		/* enable sensor */
+		ret = icm426xx_enable_sensor(s, 1);
+		if (ret)
+			return ret;
+		/* enable data in FIFO */
 		icm426xx_config_fifo(s, 1);
+	}
 
+	data->odr = normalized_rate;
 	return EC_SUCCESS;
 
 out_unlock:
@@ -450,10 +469,8 @@ out_unlock:
 	return ret;
 }
 
-static int icm426xx_set_range(const struct motion_sensor_t *s, int range,
-			      int rnd)
+static int icm426xx_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	int reg, ret, reg_val;
 	int newrange;
 
@@ -501,7 +518,7 @@ static int icm426xx_set_range(const struct motion_sensor_t *s, int range,
 	ret = icm_field_update8(s, reg, ICM426XX_FS_MASK,
 				ICM426XX_FS_SEL(reg_val));
 	if (ret == EC_SUCCESS)
-		data->range = newrange;
+		s->current_range = newrange;
 
 	mutex_unlock(s->mutex);
 
@@ -517,8 +534,8 @@ static int icm426xx_get_hw_offset(const struct motion_sensor_t *s,
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		mutex_lock(s->mutex);
-		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER4,
-				raw, sizeof(raw));
+		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER4, raw,
+				 sizeof(raw));
 		mutex_unlock(s->mutex);
 		if (ret != EC_SUCCESS)
 			return ret;
@@ -535,8 +552,8 @@ static int icm426xx_get_hw_offset(const struct motion_sensor_t *s,
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		mutex_lock(s->mutex);
-		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER0,
-				raw, sizeof(raw));
+		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER0, raw,
+				 sizeof(raw));
 		mutex_unlock(s->mutex);
 		if (ret != EC_SUCCESS)
 			return ret;
@@ -659,28 +676,24 @@ out_unlock:
 static int icm426xx_set_offset(const struct motion_sensor_t *s,
 			       const int16_t *offset, int16_t temp)
 {
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	intv3_t v = { offset[X], offset[Y], offset[Z] };
-	int range, div1, div2;
+	int div1, div2;
 	int i;
 
-	/* unscale values and rotate back to chip frame */
-	for (i = X; i <= Z; ++i)
-		v[i] = SENSOR_APPLY_DIV_SCALE(v[i], data->scale[i]);
+	/* rotate back to chip frame */
 	rotate_inv(v, *s->rot_standard_ref, v);
 
 	/* convert raw data to hardware offset units */
-	range = icm_get_range(s);
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		/* hardware offset is 1/2048g by LSB */
-		div1 = range * 2048;
-		div2 = 32768;
+		/* hardware offset is 1/2048g /LSB, EC offset 1/1024g /LSB. */
+		div1 = 2;
+		div2 = 1;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		/* hardware offset is 1/32dps by LSB */
-		div1 = range * 32;
-		div2 = 32768;
+		/* hardware offset is 1/32dps /LSB, EC offset 1/1024dps /LSB. */
+		div1 = 1;
+		div2 = 32;
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -694,9 +707,8 @@ static int icm426xx_set_offset(const struct motion_sensor_t *s,
 static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 			       int16_t *temp)
 {
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	intv3_t v;
-	int range, div1, div2;
+	int div1, div2;
 	int i, ret;
 
 	ret = icm426xx_get_hw_offset(s, v);
@@ -704,17 +716,16 @@ static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 		return ret;
 
 	/* transform offset to raw data */
-	range = icm_get_range(s);
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		/* hardware offset is 1/2048g by LSB */
-		div1 = 32768;
-		div2 = 2048 * range;
+		/* hardware offset is 1/2048g /LSB, EC offset 1/1024g /LSB. */
+		div1 = 1;
+		div2 = 2;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		/* hardware offset is 1/32dps by LSB */
-		div1 = 32768;
-		div2 = 32 * range;
+		/* hardware offset is 1/32dps /LSB, EC offset 1/1024dps /LSB. */
+		div1 = 32;
+		div2 = 1;
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -723,9 +734,6 @@ static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 		v[i] = round_divide(v[i] * div1, div2);
 
 	rotate(v, *s->rot_standard_ref, v);
-	for (i = X; i <= Z; i++)
-		v[i] = SENSOR_APPLY_SCALE(v[i], data->scale[i]);
-
 	offset[X] = v[X];
 	offset[Y] = v[Y];
 	offset[Z] = v[Z];
@@ -749,9 +757,13 @@ static int icm426xx_read(const struct motion_sensor_t *s, intv3_t v)
 		return EC_ERROR_INVAL;
 	}
 
-	/* read data registers */
+	/* read data registers if sensor is stabilized */
 	mutex_lock(s->mutex);
-	ret = icm_read_n(s, reg, raw, sizeof(raw));
+
+	ret = icm426xx_check_sensor_stabilized(s, __hw_clock_source_read());
+	if (ret == EC_SUCCESS)
+		ret = icm_read_n(s, reg, raw, sizeof(raw));
+
 	mutex_unlock(s->mutex);
 	if (ret != EC_SUCCESS)
 		return ret;
@@ -798,46 +810,32 @@ static int icm426xx_init_config(const struct motion_sensor_t *s)
 	 * interferences on the bus.
 	 */
 
-	ret = 0;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		icm_field_update8(s, ICM426XX_REG_INTF_CONFIG6,
-			ICM426XX_INTF_CONFIG6_MASK,
-			ICM426XX_I3C_EN | ICM426XX_I3C_SDR_EN |
-			ICM426XX_I3C_DDR_EN);
-		ret = icm_field_update8(s, ICM426XX_REG_INTF_CONFIG4,
-			ICM426XX_I3C_BUS_MODE,
-			ICM426XX_I3C_BUS_MODE);
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	icm_field_update8(
+		s, ICM426XX_REG_INTF_CONFIG6, ICM426XX_INTF_CONFIG6_MASK,
+		ICM426XX_I3C_EN | ICM426XX_I3C_SDR_EN | ICM426XX_I3C_DDR_EN);
+	ret = icm_field_update8(s, ICM426XX_REG_INTF_CONFIG4,
+				ICM426XX_I3C_BUS_MODE, ICM426XX_I3C_BUS_MODE);
+#else
+	icm_field_update8(s, ICM426XX_REG_INTF_CONFIG6,
+			  ICM426XX_INTF_CONFIG6_MASK, ICM426XX_I3C_EN);
+	ret = icm_field_update8(s, ICM426XX_REG_INTF_CONFIG4,
+				ICM426XX_I3C_BUS_MODE, 0);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		icm_field_update8(s, ICM426XX_REG_INTF_CONFIG6,
-			ICM426XX_INTF_CONFIG6_MASK,
-			ICM426XX_I3C_EN);
-		ret = icm_field_update8(s, ICM426XX_REG_INTF_CONFIG4,
-			ICM426XX_I3C_BUS_MODE,
-			0);
-#endif
-	}
 	if (ret)
 		return ret;
 
-	ret = 0;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		ret = icm_field_update8(s, ICM426XX_REG_DRIVE_CONFIG,
-			ICM426XX_DRIVE_CONFIG_MASK,
-			ICM426XX_I2C_SLEW_RATE(ICM426XX_SLEW_RATE_20NS_60NS) |
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	ret = icm_field_update8(
+		s, ICM426XX_REG_DRIVE_CONFIG, ICM426XX_DRIVE_CONFIG_MASK,
+		ICM426XX_I2C_SLEW_RATE(ICM426XX_SLEW_RATE_20NS_60NS) |
 			ICM426XX_SPI_SLEW_RATE(ICM426XX_SLEW_RATE_INF_2NS));
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = icm_field_update8(s, ICM426XX_REG_DRIVE_CONFIG,
-			ICM426XX_DRIVE_CONFIG_MASK,
-			ICM426XX_I2C_SLEW_RATE(ICM426XX_SLEW_RATE_12NS_36NS) |
+#else
+	ret = icm_field_update8(
+		s, ICM426XX_REG_DRIVE_CONFIG, ICM426XX_DRIVE_CONFIG_MASK,
+		ICM426XX_I2C_SLEW_RATE(ICM426XX_SLEW_RATE_12NS_36NS) |
 			ICM426XX_SPI_SLEW_RATE(ICM426XX_SLEW_RATE_12NS_36NS));
 #endif
-	}
 	if (ret)
 		return ret;
 
@@ -847,21 +845,23 @@ static int icm426xx_init_config(const struct motion_sensor_t *s)
 	 * Disable unused serial interface.
 	 */
 	mask = ICM426XX_DATA_CONF_MASK | ICM426XX_UI_SIFS_CFG_MASK;
-	val = 0;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		val |= ICM426XX_UI_SIFS_CFG_I2C_DIS;
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	val = ICM426XX_UI_SIFS_CFG_I2C_DIS;
+#else
+	val = ICM426XX_UI_SIFS_CFG_SPI_DIS;
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		val |= ICM426XX_UI_SIFS_CFG_SPI_DIS;
-#endif
-	}
 
-	return icm_field_update8(s, ICM426XX_REG_INTF_CONFIG0, mask, val);
+	ret = icm_field_update8(s, ICM426XX_REG_INTF_CONFIG0, mask, val);
+	if (ret)
+		return ret;
+
+	/* set accel oscillator to RC clock to avoid bad transition with PLL */
+	return icm_field_update8(s, ICM426XX_REG_INTF_CONFIG1,
+				 ICM426XX_ACCEL_LP_CLK_SEL,
+				 ICM426XX_ACCEL_LP_CLK_SEL);
 }
 
-static int icm426xx_init(const struct motion_sensor_t *s)
+static int icm426xx_init(struct motion_sensor_t *s)
 {
 	struct icm_drv_data_t *st = ICM_GET_DATA(s);
 	struct accelgyro_saved_data_t *saved_data = ICM_GET_SAVED_DATA(s);
@@ -909,29 +909,28 @@ static int icm426xx_init(const struct motion_sensor_t *s)
 		if (ret)
 			goto out_unlock;
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-		ret = icm426xx_config_interrupt(s);
+		if (IS_ENABLED(ACCELGYRO_ICM426XX_INT_ENABLE))
+			ret = icm426xx_config_interrupt(s);
 		if (ret)
 			goto out_unlock;
-#endif
 	}
 
 	for (i = X; i <= Z; i++)
 		saved_data->scale[i] = MOTION_SENSE_DEFAULT_SCALE;
+
+	saved_data->odr = 0;
 
 	/* set sensor filter */
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		mask = ICM426XX_ACCEL_UI_FILT_MASK;
 		val = ICM426XX_ACCEL_UI_FILT_BW(ICM426XX_FILTER_BW_AVG_16X);
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-			st->accel = (struct motion_sensor_t *)s;
+		st->accel = (struct motion_sensor_t *)s;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		mask = ICM426XX_GYRO_UI_FILT_MASK;
 		val = ICM426XX_GYRO_UI_FILT_BW(ICM426XX_FILTER_BW_ODR_DIV_2);
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-			st->gyro = (struct motion_sensor_t *)s;
+		st->gyro = (struct motion_sensor_t *)s;
 		break;
 	default:
 		ret = EC_ERROR_INVAL;
@@ -950,12 +949,24 @@ out_unlock:
 	return ret;
 }
 
+static int icm426xx_probe(const struct motion_sensor_t *s)
+{
+	int val;
+
+	if (icm_read8(s, ICM426XX_REG_WHO_AM_I, &val) != EC_SUCCESS)
+		return EC_ERROR_NOT_HANDLED;
+
+	if (val != ICM426XX_CHIP_ICM40608 && val != ICM426XX_CHIP_ICM42605)
+		return EC_ERROR_NOT_HANDLED;
+
+	return EC_SUCCESS;
+}
+
 const struct accelgyro_drv icm426xx_drv = {
 	.init = icm426xx_init,
 	.read = icm426xx_read,
 	.read_temp = icm426xx_read_temp,
 	.set_range = icm426xx_set_range,
-	.get_range = icm_get_range,
 	.get_resolution = icm_get_resolution,
 	.set_data_rate = icm426xx_set_data_rate,
 	.get_data_rate = icm_get_data_rate,
@@ -963,7 +974,9 @@ const struct accelgyro_drv icm426xx_drv = {
 	.get_offset = icm426xx_get_offset,
 	.set_scale = icm_set_scale,
 	.get_scale = icm_get_scale,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+	.probe = icm426xx_probe,
+#ifdef ACCELGYRO_ICM426XX_INT_ENABLE
+	.interrupt = icm426xx_interrupt,
 	.irq_handler = icm426xx_irq_handler,
 #endif
 };

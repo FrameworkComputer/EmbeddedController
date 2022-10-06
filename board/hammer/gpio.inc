@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -126,7 +126,7 @@ ALTERNATE(PIN_MASK(B, 0x0c00), 1, MODULE_I2C, 0) /* I2C CHARGER: PB10/11  GPIO_O
 #endif
 
 #ifdef HAS_SPI_TOUCHPAD
-ALTERNATE(PIN_MASK(B, 0x0038), 0, MODULE_SPI_MASTER, 0) /* SPI MASTER:PB3/4/5 */
+ALTERNATE(PIN_MASK(B, 0x0038), 0, MODULE_SPI_CONTROLLER, 0) /* SPI MASTER:PB3/4/5 */
 #endif
 
 #ifdef CONFIG_I2C

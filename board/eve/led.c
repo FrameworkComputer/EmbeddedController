@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -19,8 +19,8 @@
 #include "task.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_PWM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_PWM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_PWM, format, ##args)
 
 #define LED_TICK_TIME (500 * MSEC)
 #define LED_TICKS_PER_BEAT 1
@@ -37,7 +37,9 @@
  * (120, .5, .33). For the transitions of interest only S and I are changed and
  * they are changed linearly in HSI space.
  */
-static const uint8_t trans_steps[] = {0, 4, 9, 16, 24, 33, 44, 56, 69, 84, 100};
+static const uint8_t trans_steps[] = {
+	0, 4, 9, 16, 24, 33, 44, 56, 69, 84, 100
+};
 
 /* List of LED colors used */
 enum led_color {
@@ -65,11 +67,7 @@ enum led_pattern {
 	LED_NUM_PATTERNS,
 };
 
-enum led_side {
-	LED_LEFT = 0,
-	LED_RIGHT,
-	LED_BOTH
-};
+enum led_side { LED_LEFT = 0, LED_RIGHT, LED_BOTH };
 
 struct led_info {
 	/* LED pattern manage variables */
@@ -101,8 +99,8 @@ static int double_tap;
 static int led_charge_side;
 static struct led_info led[LED_BOTH];
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_LEFT_LED, EC_LED_ID_RIGHT_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_LEFT_LED,
+					     EC_LED_ID_RIGHT_LED };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 /*
@@ -110,16 +108,18 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
  * particular pattern never changes from the first phase.
  */
 static const struct led_phase pattern[LED_NUM_PATTERNS] = {
-	{ {LED_OFF, LED_OFF}, {0, 0}, DOUBLE_TAP_TICK_LEN },
-	{ {LED_GREEN, LED_GREEN}, {0, 0}, DOUBLE_TAP_TICK_LEN },
-	{ {LED_WHITE, LED_GREEN}, {2, 4}, DOUBLE_TAP_TICK_LEN },
-	{ {LED_WHITE, LED_WHITE}, {0, 0}, DOUBLE_TAP_TICK_LEN },
-	{ {LED_WHITE, LED_RED}, {2, 4}, DOUBLE_TAP_TICK_LEN },
-	{ {LED_RED, LED_RED}, {0, 0},  DOUBLE_TAP_TICK_LEN},
-	{ {LED_RED, LED_RED_HALF}, {4, 4}, DOUBLE_TAP_TICK_LEN * 2 +
-	  DOUBLE_TAP_TICK_LEN / 2},
-	{ {LED_RED, LED_OFF}, {1, 5}, DOUBLE_TAP_TICK_LEN * 3 +
-	  DOUBLE_TAP_TICK_LEN / 2},
+	{ { LED_OFF, LED_OFF }, { 0, 0 }, DOUBLE_TAP_TICK_LEN },
+	{ { LED_GREEN, LED_GREEN }, { 0, 0 }, DOUBLE_TAP_TICK_LEN },
+	{ { LED_WHITE, LED_GREEN }, { 2, 4 }, DOUBLE_TAP_TICK_LEN },
+	{ { LED_WHITE, LED_WHITE }, { 0, 0 }, DOUBLE_TAP_TICK_LEN },
+	{ { LED_WHITE, LED_RED }, { 2, 4 }, DOUBLE_TAP_TICK_LEN },
+	{ { LED_RED, LED_RED }, { 0, 0 }, DOUBLE_TAP_TICK_LEN },
+	{ { LED_RED, LED_RED_HALF },
+	  { 4, 4 },
+	  DOUBLE_TAP_TICK_LEN * 2 + DOUBLE_TAP_TICK_LEN / 2 },
+	{ { LED_RED, LED_OFF },
+	  { 1, 5 },
+	  DOUBLE_TAP_TICK_LEN * 3 + DOUBLE_TAP_TICK_LEN / 2 },
 };
 
 /*
@@ -129,12 +129,9 @@ static const struct led_phase pattern[LED_NUM_PATTERNS] = {
 #define PWM_CHAN_PER_LED 3
 static const uint8_t color_brightness[LED_COLOR_COUNT][PWM_CHAN_PER_LED] = {
 	/* {Red, Green, Blue}, */
-	[LED_OFF]   = {0, 0, 0},
-	[LED_RED]   = {80,  0, 0},
-	[LED_GREEN] = {0, 80, 0},
-	[LED_BLUE] = {0, 0, 80},
-	[LED_WHITE]  = {100, 100, 100},
-	[LED_RED_HALF]  = {40, 0, 0},
+	[LED_OFF] = { 0, 0, 0 },	 [LED_RED] = { 80, 0, 0 },
+	[LED_GREEN] = { 0, 80, 0 },	 [LED_BLUE] = { 0, 0, 80 },
+	[LED_WHITE] = { 100, 100, 100 }, [LED_RED_HALF] = { 40, 0, 0 },
 };
 
 /*
@@ -153,13 +150,13 @@ struct range_map {
 #error "LED: PULSE_RED battery level <= BLINK_RED level"
 #endif
 static const struct range_map pattern_tbl[] = {
-	{CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC - 1, BLINK_RED},
-	{5, PULSE_RED},
-	{15, SOLID_RED},
-	{25, WHITE_RED},
-	{75, SOLID_WHITE},
-	{95, WHITE_GREEN},
-	{100, SOLID_GREEN},
+	{ CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC - 1, BLINK_RED },
+	{ 5, PULSE_RED },
+	{ 15, SOLID_RED },
+	{ 25, WHITE_RED },
+	{ 75, SOLID_WHITE },
+	{ 95, WHITE_GREEN },
+	{ 100, SOLID_GREEN },
 };
 
 enum led_state_change {
@@ -323,18 +320,17 @@ static void led_setup_color_change(int old_idx, int new_idx, enum led_side side)
 		 */
 		total_change = ABS(led[side].rgb_current[rgb_index] -
 				   led[side].rgb_target[rgb_index]);
-		delta_per_step = (total_change << LED_FRAC_BITS)
-			/ (ARRAY_SIZE(trans_steps) - 1);
+		delta_per_step = (total_change << LED_FRAC_BITS) /
+				 (ARRAY_SIZE(trans_steps) - 1);
 		step_value = 0;
 		for (i = 0; i < ARRAY_SIZE(trans_steps); i++) {
-			led[side].trans[i] = start_lvl +
-				((step_value +
-				  (1 << (LED_FRAC_BITS - 1)))
-				 >> LED_FRAC_BITS);
+			led[side].trans[i] =
+				start_lvl +
+				((step_value + (1 << (LED_FRAC_BITS - 1))) >>
+				 LED_FRAC_BITS);
 			step_value += delta_per_step;
 		}
 	}
-
 }
 
 static void led_adjust_color_step(int side)
@@ -397,12 +393,10 @@ static void led_change_color(void)
 	/* Will loop here until the color change is complete. */
 	while (led[LED_LEFT].state != LED_STATE_DONE ||
 	       led[LED_RIGHT].state != LED_STATE_DONE) {
-
 		for (i = 0; i < LED_BOTH; i++) {
 			if (led[i].state != LED_STATE_DONE)
 				/* Move one step in the transition table */
 				led_adjust_color_step(i);
-
 		}
 		msleep(LED_STEP_MSEC);
 	}
@@ -427,14 +421,19 @@ static void led_manage_patterns(enum led_pattern *pattern_desired, int tap)
 			 */
 			if (i == led_charge_side || !led[i].tap_tick_count) {
 				led[i].ticks = 0;
-				led[i].tap_tick_count = tap ?
-					pattern[pattern_desired[i]].tap_len : 0;
+				led[i].tap_tick_count =
+					tap ? pattern[pattern_desired[i]]
+							.tap_len :
+					      0;
 				led[i].pattern_sel = pattern_desired[i];
 			}
 		}
 		/* Determine pattern phase and color for current phase */
 		phase = led[i].ticks < LED_TICKS_PER_BEAT *
-			pattern[led[i].pattern_sel].len[0] ? 0 : 1;
+						pattern[led[i].pattern_sel]
+							.len[0] ?
+				0 :
+				1;
 		color = pattern[led[i].pattern_sel].color[phase];
 		/* If color is changing, then setup the transition. */
 		if (led[i].color != color) {
@@ -458,9 +457,10 @@ static void led_manage_patterns(enum led_pattern *pattern_desired, int tap)
 		 * count.
 		 */
 		if (pattern[led[i].pattern_sel].len[0])
-			if (++led[i].ticks == LED_TICKS_PER_BEAT *
-			    (pattern[led[i].pattern_sel].len[0] +
-			     pattern[led[i].pattern_sel].len[1]))
+			if (++led[i].ticks ==
+			    LED_TICKS_PER_BEAT *
+				    (pattern[led[i].pattern_sel].len[0] +
+				     pattern[led[i].pattern_sel].len[1]))
 				led[i].ticks = 0;
 
 		/* If double tap display is active, decrement its counter */
@@ -535,8 +535,8 @@ static void led_select_pattern(enum led_pattern *pattern_desired, int tap)
 		 * charging side LED.
 		 */
 		if (chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
-		    ((chg_state == PWR_STATE_DISCHARGE_FULL)
-		     && extpower_is_present())) {
+		    ((chg_state == PWR_STATE_DISCHARGE_FULL) &&
+		     extpower_is_present())) {
 			new_pattern = SOLID_GREEN;
 		} else if (chg_state == PWR_STATE_CHARGE) {
 			new_pattern = SOLID_WHITE;
@@ -586,7 +586,6 @@ static void led_init(void)
 		led[i].tap_tick_count = 0;
 		led[i].state = LED_STATE_DONE;
 	}
-
 }
 
 void led_task(void *u)
@@ -633,7 +632,7 @@ void led_task(void *u)
 
 /******************************************************************/
 /* Console commands */
-static int command_led(int argc, char **argv)
+static int command_led(int argc, const char **argv)
 {
 	int side = LED_BOTH;
 	char *e;

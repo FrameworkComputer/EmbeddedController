@@ -1,0 +1,54 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Note - CONFIG_ADC is defined in upstream Zephyr
+if ADC
+
+# Chromium EC provides it's own "adc" command.  Disable the Zephyr
+# built-in ADC shell command.
+# TODO(b:188434233) Investigate moving to zephyr adc shell
+config ADC_SHELL
+	default n
+
+config PLATFORM_EC_ADC_CMD
+	bool "ADC host/console command"
+	default y
+	help
+	  Enables support for printing ADC channels state with the "adc"
+	  console command and reading a state of ADC channel with the
+	  EC_CMD_ADC_READ host command. Replaces generic Zephyr "adc"
+	  command.
+
+config PLATFORM_EC_ADC_RESOLUTION
+	int "ADC resolution"
+	default 10
+	help
+	  The resolution, in bits, to use for the ADC conversion. Determines
+	  the sample values range: 0 .. 2^resolution -1. The supported
+	  resolution values depend on specific hardware.
+
+config PLATFORM_EC_ADC_OVERSAMPLING
+	int "ADC oversampling"
+	default 0
+	help
+	  ADC oversampling to use for the ADC conversion. Each sample is
+	  averaged from 2^oversampling conversion results. Oversampling can
+	  help in providing more stable readings. The supported oversampling
+	  values depend on specific hardware.
+
+config PLATFORM_EC_ADC_CHANNELS_RUNTIME_CONFIG
+	bool "ADC runtime config"
+	default n
+	help
+	  Allows the configuration of the ADC channels to be set up at
+	  runtime. This makes the adc_channels[] array writable,
+	  i.e. not const. It should be declared as such in the board
+	  config.
+
+	  This is useful when the board has runtime information that
+	  changes the configuration, such as board revision information.
+	  Without this, multiple EC images would need to be installed
+	  depending on the board.
+
+endif # ADC

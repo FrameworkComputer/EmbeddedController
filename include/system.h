@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,6 +16,22 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "timer.h"
+
+#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_CPU_CORTEX_M
+/*
+ * For cortex-m we cannot use irq_lock() for disabling all the interrupts
+ * because it leaves some (NMI and faults) still enabled.
+ */
+#define interrupt_disable_all() __asm__("cpsid i")
+#elif CONFIG_ZTEST
+#define interrupt_disable_all()
+#else /* !CONFIG_CPU_CORTEX_M */
+#define interrupt_disable_all() irq_lock()
+#endif
+#else /* !CONFIG_ZEPHYR */
+#define interrupt_disable_all() interrupt_disable()
+#endif /* CONFIG_ZEPHYR */
 
 /* Per chip implementation to save/read raw EC_RESET_FLAG_ flags. */
 void chip_save_reset_flags(uint32_t flags);
@@ -48,6 +64,24 @@ void system_common_pre_init(void);
 int system_is_manual_recovery(void);
 
 /**
+ * Set a flag indicating system is in recovery mode.
+ */
+void system_enter_manual_recovery(void);
+
+/**
+ * Set a flag indicating system left recovery mode.
+ *
+ * WARNING: This flag should be cleared right after a shutdown from recovery
+ *          boot. You most likely shouldn't call this elsewhere.
+ */
+void system_exit_manual_recovery(void);
+
+/**
+ * Make sure AP shutdown completely, before call system_hibernate
+ */
+void system_enter_hibernate(uint32_t seconds, uint32_t microseconds);
+
+/**
  * System common re-initialization; called to reset persistent state
  * left by system_common_pre_init().  This is useful for testing
  * scenarios calling system_common_pre_init() multiple times.
@@ -55,12 +89,29 @@ int system_is_manual_recovery(void);
 __test_only void system_common_reset_state(void);
 
 /**
+ * Return the value of reboot_at_shutdown and reset its value, useful for
+ * testing.
+ */
+__test_only enum ec_reboot_cmd system_common_get_reset_reboot_at_shutdown(void);
+
+/**
+ * @brief Allow tests to manually set the jump data address.
+ *
+ * This function allows an override of the location of the jump data (which is
+ * normally set by either a panic or at the end of RAM). This function is used
+ * by the zephyr integration to test the shim layer of the system module.
+ *
+ * @param test_jdata Pointer to the jump data memory allocated by the test.
+ */
+__test_only void system_override_jdata(void *test_jdata);
+
+/**
  * Set up flags that should be saved to battery backed RAM.
  *
- * @param reset_flags - flags passed into system_reset
+ * @param flags - flags passed into system_reset (i.e. SYSTEM_RESET_*)
  * @param *save_flags - flags to be saved in battery backed RAM
  */
-void system_encode_save_flags(int reset_flags, uint32_t *save_flags);
+void system_encode_save_flags(int flags, uint32_t *save_flags);
 
 /**
  * Get the reset flags.
@@ -87,6 +138,11 @@ void system_clear_reset_flags(uint32_t flags);
  * Print a description of the reset flags to the console.
  */
 void system_print_reset_flags(void);
+
+/**
+ * Print a banner at boot, including image type, version, and reset type
+ */
+void system_print_banner(void);
 
 /**
  * Check if system is locked down for normal consumer use.
@@ -134,6 +190,14 @@ uintptr_t get_program_memory_addr(enum ec_image copy);
  * avoid initializing something again in RW.
  */
 int system_jumped_to_this_image(void);
+
+#ifdef CONFIG_ZTEST
+struct system_jumped_late_mock {
+	int ret_val;
+	int call_count;
+};
+extern struct system_jumped_late_mock system_jumped_late_mock;
+#endif
 
 /**
  * Return non-zero if late (legacy) sysjump occurred.
@@ -236,6 +300,15 @@ const struct image_data *system_get_image_data(enum ec_image copy);
 const char *system_get_version(enum ec_image copy);
 
 /**
+ * Get the CrOS fwid string for an image
+ *
+ * @param copy		Image copy to get version from, or SYSTEM_IMAGE_UNKNOWN
+ *			to get the version for the currently running image.
+ * @return The fwid string for the image copy, or an empty string if error.
+ */
+const char *system_get_cros_fwid(enum ec_image copy);
+
+/**
  * Get the SKU ID for a device
  *
  * @return A value that identifies the SKU variant of a model. Its meaning and
@@ -261,17 +334,17 @@ const char *system_get_build_info(void);
  * Hard reset.  Cuts power to the entire system.  If not present, does a soft
  * reset which just resets the core and on-chip peripherals.
  */
-#define SYSTEM_RESET_HARD               BIT(0)
+#define SYSTEM_RESET_HARD BIT(0)
 /*
  * Preserve existing reset flags.  Used by flash pre-init when it discovers it
  * needs to do a hard reset to clear write protect registers.
  */
-#define SYSTEM_RESET_PRESERVE_FLAGS     BIT(1)
+#define SYSTEM_RESET_PRESERVE_FLAGS BIT(1)
 /*
  * Leave AP off on next reboot, instead of powering it on to do EC software
  * sync.
  */
-#define SYSTEM_RESET_LEAVE_AP_OFF       BIT(2)
+#define SYSTEM_RESET_LEAVE_AP_OFF BIT(2)
 /*
  * Indicate that this was a manually triggered reset.
  */
@@ -279,25 +352,37 @@ const char *system_get_build_info(void);
 /*
  * Wait for reset pin to be driven, rather that resetting ourselves.
  */
-#define SYSTEM_RESET_WAIT_EXT           BIT(4)
+#define SYSTEM_RESET_WAIT_EXT BIT(4)
 /*
  * Indicate that this reset was triggered by an AP watchdog
  */
-#define SYSTEM_RESET_AP_WATCHDOG        BIT(5)
+#define SYSTEM_RESET_AP_WATCHDOG BIT(5)
 /*
  * Stay in RO next reboot, instead of potentially selecting RW during EFS.
  */
-#define SYSTEM_RESET_STAY_IN_RO         BIT(6)
+#define SYSTEM_RESET_STAY_IN_RO BIT(6)
+/*
+ * Hibernate reset. Reset EC when wake up from hibernate mode
+ * (the most power saving mode).
+ */
+#define SYSTEM_RESET_HIBERNATE BIT(7)
 
 /**
  * Reset the system.
  *
  * @param flags		Reset flags; see SYSTEM_RESET_* above.
  */
-#ifndef TEST_FUZZ
+#if (defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+test_mockable
+#else
+#if defined(__cplusplus) && !defined(__clang__)
+[[noreturn]]
+#else
 noreturn
 #endif
-void system_reset(int flags);
+#endif
+	void
+	system_reset(int flags);
 
 /**
  * Set a scratchpad register to the specified value.
@@ -311,9 +396,15 @@ void system_reset(int flags);
 int system_set_scratchpad(uint32_t value);
 
 /**
- * Return the current scratchpad register value.
+ * Get the scratchpad register value.
+ *
+ * The scratchpad register maintains its contents across a
+ * software-requested warm reset.
+ *
+ * @param value Where to store the content of the register.
+ * @return      EC_SUCCESS, or non-zero if error.
  */
-uint32_t system_get_scratchpad(void);
+int system_get_scratchpad(uint32_t *value);
 
 /**
  * Return the chip vendor/name/revision string.
@@ -332,6 +423,25 @@ const char *system_get_chip_revision(void);
 int system_get_chip_unique_id(uint8_t **id);
 
 /**
+ * Optional board-level function to read SKU ID.
+ */
+__override_proto uint32_t board_get_sku_id(void);
+
+/**
+ * Optional board-level function to read board version.
+ */
+__override_proto int board_get_version(void);
+
+/**
+ * Optional board-level function to pulse EC_ENTERING_RW.
+ *
+ * This should ONLY be overridden in very rare circumstances! AKA there better
+ * be a good reason why you're overriding this!
+ * The function ***MUST*** assert EC_ENTERING_RW for 1ms and then deassert it.
+ */
+__override_proto void board_pulse_entering_rw(void);
+
+/**
  * Optional board-level callback functions to read a unique serial number per
  * chip. Default implementation reads from flash/otp (flash/otp_read_serial).
  */
@@ -342,7 +452,6 @@ __override_proto const char *board_read_serial(void);
  * chip. Default implementation reads from flash/otp (flash/otp_write_serial).
  */
 __override_proto int board_write_serial(const char *serial);
-
 
 /**
  * Optional board-level callback functions to read a unique MAC address per
@@ -362,13 +471,6 @@ __override_proto int board_write_mac_addr(const char *mac_addr);
  * not implemented.
  */
 enum system_bbram_idx {
-	SYSTEM_BBRAM_IDX_VBNVBLOCK0 = 0,
-	/*
-	 * ...
-	 * 16 total bytes of VB NVRAM.
-	 * ...
-	 */
-	SYSTEM_BBRAM_IDX_VBNVBLOCK15 = 15,
 	/* PD state for CONFIG_USB_PD_DUAL_ROLE uses one byte per port */
 	SYSTEM_BBRAM_IDX_PD0,
 	SYSTEM_BBRAM_IDX_PD1,
@@ -447,7 +549,9 @@ timestamp_t system_get_rtc(void);
 #ifdef CONFIG_RTC
 void print_system_rtc(enum console_channel channel);
 #else
-static inline void print_system_rtc(enum console_channel channel) { }
+static inline void print_system_rtc(enum console_channel channel)
+{
+}
 #endif /* !defined(CONFIG_RTC) */
 
 /**
@@ -460,39 +564,38 @@ enum {
 	/*
 	 * Sleep masks to prevent going in to deep sleep.
 	 */
-	SLEEP_MASK_AP_RUN     = BIT(0), /* the main CPU is running */
-	SLEEP_MASK_UART       = BIT(1), /* UART communication ongoing */
-	SLEEP_MASK_I2C_MASTER = BIT(2), /* I2C master communication ongoing */
-	SLEEP_MASK_CHARGING   = BIT(3), /* Charging loop ongoing */
-	SLEEP_MASK_USB_PWR    = BIT(4), /* USB power loop ongoing */
-	SLEEP_MASK_USB_PD     = BIT(5), /* USB PD device connected */
-	SLEEP_MASK_SPI        = BIT(6), /* SPI communications ongoing */
-	SLEEP_MASK_I2C_SLAVE  = BIT(7), /* I2C slave communication ongoing */
-	SLEEP_MASK_FAN        = BIT(8), /* Fan control loop ongoing */
+	SLEEP_MASK_AP_RUN = BIT(0), /* the main CPU is running */
+	SLEEP_MASK_UART = BIT(1), /* UART communication ongoing */
+	SLEEP_MASK_I2C_CONTROLLER = BIT(2), /* I2C controller comms ongoing */
+	SLEEP_MASK_CHARGING = BIT(3), /* Charging loop ongoing */
+	SLEEP_MASK_USB_PWR = BIT(4), /* USB power loop ongoing */
+	SLEEP_MASK_USB_PD = BIT(5), /* USB PD device connected */
+	SLEEP_MASK_SPI = BIT(6), /* SPI communications ongoing */
+	SLEEP_MASK_I2C_PERIPHERAL = BIT(7), /* I2C peripheral comms ongoing */
+	SLEEP_MASK_FAN = BIT(8), /* Fan control loop ongoing */
 	SLEEP_MASK_USB_DEVICE = BIT(9), /* Generic USB device in use */
-	SLEEP_MASK_PWM        = BIT(10), /* PWM output is enabled */
-	SLEEP_MASK_PHYSICAL_PRESENCE  = BIT(11), /* Physical presence
-						    * detection ongoing */
-	SLEEP_MASK_PLL        = BIT(12), /* High-speed PLL in-use */
-	SLEEP_MASK_ADC        = BIT(13), /* ADC conversion ongoing */
-	SLEEP_MASK_EMMC       = BIT(14), /* eMMC emulation ongoing */
-	SLEEP_MASK_FORCE_NO_DSLEEP    = BIT(15), /* Force disable. */
-
+	SLEEP_MASK_PWM = BIT(10), /* PWM output is enabled */
+	SLEEP_MASK_PHYSICAL_PRESENCE = BIT(11), /* Physical presence
+						 * detection ongoing */
+	SLEEP_MASK_PLL = BIT(12), /* High-speed PLL in-use */
+	SLEEP_MASK_ADC = BIT(13), /* ADC conversion ongoing */
+	SLEEP_MASK_EMMC = BIT(14), /* eMMC emulation ongoing */
+	SLEEP_MASK_FORCE_NO_DSLEEP = BIT(15), /* Force disable. */
 
 	/*
 	 * Sleep masks to prevent using slow speed clock in deep sleep.
 	 */
-	SLEEP_MASK_JTAG     = BIT(16), /* JTAG is in use. */
-	SLEEP_MASK_CONSOLE  = BIT(17), /* Console is in use. */
+	SLEEP_MASK_JTAG = BIT(16), /* JTAG is in use. */
+	SLEEP_MASK_CONSOLE = BIT(17), /* Console is in use. */
 
-	SLEEP_MASK_FORCE_NO_LOW_SPEED = BIT(31)  /* Force disable. */
+	SLEEP_MASK_FORCE_NO_LOW_SPEED = BIT(31) /* Force disable. */
 };
 
 /*
  * Current sleep mask. You may read from this variable, but must NOT
  * modify it; use enable_sleep() or disable_sleep() to do that.
  */
-extern uint32_t sleep_mask;
+extern atomic_t sleep_mask;
 
 /*
  * Macros to use to get whether deep sleep is allowed or whether
@@ -500,10 +603,9 @@ extern uint32_t sleep_mask;
  */
 
 #ifndef CONFIG_LOW_POWER_S0
-#define DEEP_SLEEP_ALLOWED           (!(sleep_mask & 0x0000ffff))
+#define DEEP_SLEEP_ALLOWED (!(sleep_mask & 0x0000ffff))
 #else
-#define DEEP_SLEEP_ALLOWED           (!(sleep_mask & 0x0000ffff & \
-				       (~SLEEP_MASK_AP_RUN)))
+#define DEEP_SLEEP_ALLOWED (!(sleep_mask & 0x0000ffff & (~SLEEP_MASK_AP_RUN)))
 #endif
 #define LOW_SPEED_DEEP_SLEEP_ALLOWED (!(sleep_mask & 0xffff0000))
 
@@ -515,7 +617,7 @@ extern uint32_t sleep_mask;
  */
 static inline void enable_sleep(uint32_t mask)
 {
-	deprecated_atomic_clear_bits(&sleep_mask, mask);
+	atomic_clear_bits(&sleep_mask, mask);
 }
 
 /**
@@ -526,7 +628,7 @@ static inline void enable_sleep(uint32_t mask)
  */
 static inline void disable_sleep(uint32_t mask)
 {
-	deprecated_atomic_or(&sleep_mask, mask);
+	atomic_or(&sleep_mask, mask);
 }
 
 #ifdef CONFIG_LOW_POWER_IDLE_LIMITED
@@ -535,7 +637,7 @@ static inline void disable_sleep(uint32_t mask)
  * Do NOT access it directly. Use idle_is_disabled() to read it and
  * enable_idle()/disable_idle() to write it.
  */
-extern uint32_t idle_disabled;
+extern atomic_t idle_disabled;
 
 static inline uint32_t idle_is_disabled(void)
 {
@@ -544,12 +646,12 @@ static inline uint32_t idle_is_disabled(void)
 
 static inline void disable_idle(void)
 {
-	deprecated_atomic_or(&idle_disabled, 1);
+	atomic_or(&idle_disabled, 1);
 }
 
 static inline void enable_idle(void)
 {
-	deprecated_atomic_clear_bits(&idle_disabled, 1);
+	atomic_clear_bits(&idle_disabled, 1);
 }
 #endif
 
@@ -570,6 +672,13 @@ void delay_sleep_by(uint32_t us);
  */
 void disable_deep_sleep(void);
 void enable_deep_sleep(void);
+
+/**
+ * This function is made visible for tests only, it allows overriding the RTC.
+ *
+ * @param seconds
+ */
+void system_set_rtc(uint32_t seconds);
 
 /**
  * Use hibernate module to set up an RTC interrupt at a given
@@ -678,4 +787,9 @@ int system_set_active_copy(enum ec_image copy);
  */
 uint32_t flash_get_rw_offset(enum ec_image copy);
 
-#endif  /* __CROS_EC_SYSTEM_H */
+/**
+ * Compensate for the RTC after hibernation wake-up.
+ */
+void system_compensate_rtc(void);
+
+#endif /* __CROS_EC_SYSTEM_H */

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,19 +16,23 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
+<<<<<<< HEAD
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #ifndef LID_DEBOUNCE_US
 #define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 #endif
+=======
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
+>>>>>>> chromium/main
 
 /* if no X-macro is defined for LID switch GPIO, use GPIO_LID_OPEN as default */
 #ifndef CONFIG_LID_SWITCH_GPIO_LIST
 #define CONFIG_LID_SWITCH_GPIO_LIST LID_GPIO(GPIO_LID_OPEN)
 #endif
 
-static int debounced_lid_open;		/* Debounced lid state */
-static int forced_lid_open;	/* Forced lid open */
+static int debounced_lid_open; /* Debounced lid state */
+static int forced_lid_open; /* Forced lid open */
 
 /**
  * Get raw lid switch state.
@@ -91,7 +95,7 @@ static void lid_init(void)
 	if (raw_lid_open())
 		debounced_lid_open = 1;
 
-	/* Enable interrupts, now that we've initialized */
+		/* Enable interrupts, now that we've initialized */
 #define LID_GPIO(gpio) gpio_enable_interrupt(gpio);
 	CONFIG_LID_SWITCH_GPIO_LIST
 #undef LID_GPIO
@@ -122,33 +126,42 @@ void lid_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&lid_change_deferred_data, LID_DEBOUNCE_US);
 }
 
-static int command_lidopen(int argc, char **argv)
+void enable_lid_detect(bool enable)
+{
+	CPRINTS("lid detect %sabled", enable ? "en" : "dis");
+	if (enable) {
+#define LID_GPIO(gpio) gpio_enable_interrupt(gpio);
+		CONFIG_LID_SWITCH_GPIO_LIST
+#undef LID_GPIO
+	} else {
+#define LID_GPIO(gpio) gpio_disable_interrupt(gpio);
+		CONFIG_LID_SWITCH_GPIO_LIST
+#undef LID_GPIO
+		lid_switch_open();
+	}
+}
+
+static int command_lidopen(int argc, const char **argv)
 {
 	lid_switch_open();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen,
-			NULL,
-			"Simulate lid open");
+DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen, NULL, "Simulate lid open");
 
-static int command_lidclose(int argc, char **argv)
+static int command_lidclose(int argc, const char **argv)
 {
 	lid_switch_close();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose,
-			NULL,
-			"Simulate lid close");
+DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose, NULL, "Simulate lid close");
 
-static int command_lidstate(int argc, char **argv)
+static int command_lidstate(int argc, const char **argv)
 {
 	ccprintf("lid state: %s\n", debounced_lid_open ? "open" : "closed");
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(lidstate, command_lidstate,
-			NULL,
-			"Get state of lid");
+DECLARE_CONSOLE_COMMAND(lidstate, command_lidstate, NULL, "Get state of lid");
 
 /**
  * Host command to enable/disable lid opened.
@@ -156,14 +169,15 @@ DECLARE_CONSOLE_COMMAND(lidstate, command_lidstate,
 static enum ec_status hc_force_lid_open(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_force_lid_open *p = args->params;
+	int old_state = forced_lid_open;
 
 	/* Override lid open if necessary */
 	forced_lid_open = p->enabled ? 1 : 0;
 
 	/* Make this take effect immediately; no debounce time */
-	hook_call_deferred(&lid_change_deferred_data, 0);
+	if (forced_lid_open != old_state)
+		hook_call_deferred(&lid_change_deferred_data, 0);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FORCE_LID_OPEN, hc_force_lid_open,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_FORCE_LID_OPEN, hc_force_lid_open, EC_VER_MASK(0));

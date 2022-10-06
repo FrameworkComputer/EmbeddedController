@@ -1,16 +1,17 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 /* Servo V4p1 configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "ccd_measure_sbu.h"
 #include "chg_control.h"
 #include "common.h"
 #include "console.h"
 #include "dacs.h"
+#include <driver/gl3590.h>
+#include "driver/ioexpander/tca64xxa.h"
 #include "ec_version.h"
 #include "fusb302b.h"
 #include "gpio.h"
@@ -33,6 +34,7 @@
 #include "usart_rx_dma.h"
 #include "usb_gpio.h"
 #include "usb_i2c.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_spi.h"
 #include "usb-stream.h"
@@ -63,6 +65,43 @@ static void tca_evt(enum gpio_signal signal)
 	irq_ioexpanders();
 }
 
+/*
+ * TUSB1064 set mux board tuning.
+ * Adds in board specific gain and DP lane count configuration
+ */
+static int board_tusb1064_dp_rx_eq_set(const struct usb_mux *me,
+				       mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+
+	/*
+	 * Apply 10dB gain. Note, this value is selected to match the gain that
+	 * would be set by default if the 2 GPIO gain set pins are left
+	 * floating.
+	 */
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		rv = tusb1064_set_dp_rx_eq(me, TUSB1064_DP_EQ_RX_10_0_DB);
+
+	return rv;
+}
+
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[CHG] = {
+		/* CHG port connected directly to USB 3.0 hub, no mux */
+	},
+	[DUT] = {
+		/* DUT port with UFP mux */
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = DUT,
+				.i2c_port = I2C_PORT_MASTER,
+				.i2c_addr_flags = TUSB1064_I2C_ADDR10_FLAGS,
+				.driver = &tusb1064_usb_mux_driver,
+				.board_set = &board_tusb1064_dp_rx_eq_set,
+			},
+	}
+};
+
 static volatile uint64_t hpd_prev_ts;
 static volatile int hpd_prev_level;
 
@@ -90,7 +129,7 @@ static volatile int hpd_prev_level;
 
 void hpd_irq_deferred(void)
 {
-	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int dp_mode = pd_alt_mode(1, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
 	if (dp_mode) {
 		pd_send_hpd(DUT, hpd_irq);
@@ -102,7 +141,7 @@ DECLARE_DEFERRED(hpd_irq_deferred);
 void hpd_lvl_deferred(void)
 {
 	int level = gpio_get_level(GPIO_DP_HPD);
-	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int dp_mode = pd_alt_mode(1, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
 	if (level != hpd_prev_level) {
 		/* It's a glitch while in deferred or canceled action */
@@ -149,21 +188,35 @@ static void tcpc_evt(enum gpio_signal signal)
 	update_status_fusb302b();
 }
 
+#define HOST_HUB 0
+struct uhub_i2c_iface_t uhub_config[] = {
+	{ I2C_PORT_MASTER, GL3590_I2C_ADDR0 },
+};
+
+static void host_hub_evt(void)
+{
+	gl3590_irq_handler(HOST_HUB);
+}
+DECLARE_DEFERRED(host_hub_evt);
+
 static void hub_evt(enum gpio_signal signal)
 {
-	ccprintf("hub event\n");
+	hook_call_deferred(&host_hub_evt_data, 0);
 }
 
-static void bc12_evt(enum gpio_signal signal)
+static void dut_pwr_evt(enum gpio_signal signal)
 {
-	ccprintf("bc12_evt\n");
+	ccprintf("dut_pwr_evt\n");
 }
 
 /* Enable uservo USB. */
 static void init_uservo_port(void)
 {
 	/* Enable USERVO_POWER_EN */
-	uservo_power_en(1);
+	ec_uservo_power_en(1);
+
+	gl3590_enable_ports(0, GL3590_DFP4, 1);
+
 	/* Connect uservo to host hub */
 	uservo_fastboot_mux_sel(0);
 }
@@ -180,34 +233,12 @@ void ext_hpd_detection_enable(int enable)
 		gpio_disable_interrupt(GPIO_DP_HPD);
 	}
 }
-#else
-void snk_task(void *u)
-{
-	/* DO NOTHING */
-}
-
-void pd_task(void *u)
-{
-	/* DO NOTHING */
-}
-__override uint8_t board_get_usb_pd_port_count(void)
-{
-	return CONFIG_USB_PD_PORT_MAX_COUNT;
-}
-
-void pd_set_suspend(int port, int suspend)
-{
-	/*
-	 * Do nothing. This is only here to make the linker happy for this
-	 * old board on ToT.
-	 */
-}
 #endif /* SECTION_IS_RO */
 
 #include "gpio_list.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /******************************************************************************
  * Board pre-init function.
@@ -251,23 +282,22 @@ void board_config_pre_init(void)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_CHG_CC1_PD] = {"CHG_CC1_PD", 3300, 4096, 0, STM32_AIN(2)},
-	[ADC_CHG_CC2_PD] = {"CHG_CC2_PD", 3300, 4096, 0, STM32_AIN(4)},
-	[ADC_DUT_CC1_PD] = {"DUT_CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
-	[ADC_DUT_CC2_PD] = {"DUT_CC2_PD", 3300, 4096, 0, STM32_AIN(5)},
-	[ADC_SBU1_DET] = {"SBU1_DET", 3300, 4096, 0, STM32_AIN(3)},
-	[ADC_SBU2_DET] = {"SBU2_DET", 3300, 4096, 0, STM32_AIN(7)},
-	[ADC_SUB_C_REF] = {"SUB_C_REF", 3300, 4096, 0, STM32_AIN(1)},
+	[ADC_CHG_CC1_PD] = { "CHG_CC1_PD", 3300, 4096, 0, STM32_AIN(2) },
+	[ADC_CHG_CC2_PD] = { "CHG_CC2_PD", 3300, 4096, 0, STM32_AIN(4) },
+	[ADC_DUT_CC1_PD] = { "DUT_CC1_PD", 3300, 4096, 0, STM32_AIN(0) },
+	[ADC_DUT_CC2_PD] = { "DUT_CC2_PD", 3300, 4096, 0, STM32_AIN(5) },
+	[ADC_SBU1_DET] = { "SBU1_DET", 3300, 4096, 0, STM32_AIN(3) },
+	[ADC_SBU2_DET] = { "SBU2_DET", 3300, 4096, 0, STM32_AIN(7) },
+	[ADC_SUB_C_REF] = { "SUB_C_REF", 3300, 4096, 0, STM32_AIN(1) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
 
 /******************************************************************************
  * Forward UARTs as a USB serial interface.
  */
 
-#define USB_STREAM_RX_SIZE	16
-#define USB_STREAM_TX_SIZE	16
+#define USB_STREAM_RX_SIZE 16
+#define USB_STREAM_TX_SIZE 16
 
 /******************************************************************************
  * Forward USART3 as a simple USB serial interface.
@@ -276,29 +306,19 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 static struct usart_config const usart3;
 struct usb_stream_config const usart3_usb;
 
-static struct queue const usart3_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart3.producer, usart3_usb.consumer);
-static struct queue const usb_to_usart3 = QUEUE_DIRECT(64, uint8_t,
-	usart3_usb.producer, usart3.consumer);
+static struct queue const usart3_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart3.producer, usart3_usb.consumer);
+static struct queue const usb_to_usart3 =
+	QUEUE_DIRECT(64, uint8_t, usart3_usb.producer, usart3.consumer);
 
 static struct usart_config const usart3 =
-	USART_CONFIG(usart3_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart3_to_usb,
-		usb_to_usart3);
+	USART_CONFIG(usart3_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart3_to_usb, usb_to_usart3);
 
-USB_STREAM_CONFIG(usart3_usb,
-	USB_IFACE_USART3_STREAM,
-	USB_STR_USART3_STREAM_NAME,
-	USB_EP_USART3_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart3,
-	usart3_to_usb)
-
+USB_STREAM_CONFIG(usart3_usb, USB_IFACE_USART3_STREAM,
+		  USB_STR_USART3_STREAM_NAME, USB_EP_USART3_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart3,
+		  usart3_to_usb)
 
 /******************************************************************************
  * Forward USART4 as a simple USB serial interface.
@@ -307,50 +327,54 @@ USB_STREAM_CONFIG(usart3_usb,
 static struct usart_config const usart4;
 struct usb_stream_config const usart4_usb;
 
-static struct queue const usart4_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart4.producer, usart4_usb.consumer);
-static struct queue const usb_to_usart4 = QUEUE_DIRECT(64, uint8_t,
-	usart4_usb.producer, usart4.consumer);
+static struct queue const usart4_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart4.producer, usart4_usb.consumer);
+static struct queue const usb_to_usart4 =
+	QUEUE_DIRECT(64, uint8_t, usart4_usb.producer, usart4.consumer);
 
 static struct usart_config const usart4 =
-	USART_CONFIG(usart4_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		9600,
-		0,
-		usart4_to_usb,
-		usb_to_usart4);
+	USART_CONFIG(usart4_hw, usart_rx_interrupt, usart_tx_interrupt, 9600, 0,
+		     usart4_to_usb, usb_to_usart4);
 
-USB_STREAM_CONFIG(usart4_usb,
-	USB_IFACE_USART4_STREAM,
-	USB_STR_USART4_STREAM_NAME,
-	USB_EP_USART4_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart4,
-	usart4_to_usb)
+USB_STREAM_CONFIG_USART_IFACE(usart4_usb, USB_IFACE_USART4_STREAM,
+			      USB_STR_USART4_STREAM_NAME, USB_EP_USART4_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart4, usart4_to_usb, usart4)
 
+/*
+ * Define usb interface descriptor for the `EMPTY` usb interface, to satisfy
+ * UEFI and kernel requirements (see b/183857501).
+ */
+const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_EMPTY) = {
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = USB_IFACE_EMPTY,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 0,
+	.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
+	.bInterfaceSubClass = 0,
+	.bInterfaceProtocol = 0,
+	.iInterface = 0,
+};
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("Servo V4p1"),
-	[USB_STR_SERIALNO]     = USB_STRING_DESC("1234-a"),
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
-	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("Servo V4p1"),
+	[USB_STR_SERIALNO] = USB_STRING_DESC("1234-a"),
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Servo EC Shell"),
-	[USB_STR_USART3_STREAM_NAME]  = USB_STRING_DESC("DUT UART"),
-	[USB_STR_USART4_STREAM_NAME]  = USB_STRING_DESC("Atmega UART"),
-	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
+	[USB_STR_USART3_STREAM_NAME] = USB_STRING_DESC("DUT UART"),
+	[USB_STR_USART4_STREAM_NAME] = USB_STRING_DESC("Atmega UART"),
+	[USB_STR_UPDATE_NAME] = USB_STRING_DESC("Firmware update"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
-
-
 
 /******************************************************************************
  * Support I2C bridging over USB.
@@ -358,13 +382,18 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 100,
-		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
+	{ .name = "master",
+	  .port = I2C_PORT_MASTER,
+	  .kbps = 100,
+	  .scl = GPIO_MASTER_I2C_SCL,
+	  .sda = GPIO_MASTER_I2C_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-int usb_i2c_board_is_enabled(void) { return 1; }
-
+int usb_i2c_board_is_enabled(void)
+{
+	return 1;
+}
 
 /******************************************************************************
  * Initialize board.
@@ -374,6 +403,36 @@ int board_get_version(void)
 {
 	return board_id_det();
 }
+
+#ifdef SECTION_IS_RO
+/* Forward declaration */
+static void evaluate_input_power_def(void);
+DECLARE_DEFERRED(evaluate_input_power_def);
+
+static void evaluate_input_power_def(void)
+{
+	int state;
+	static int retry = 3;
+
+	/* Wait until host hub INTR# signal is asserted */
+	state = gpio_get_level(GPIO_USBH_I2C_BUSY_INT);
+	if ((state == 0) && retry--) {
+		hook_call_deferred(&evaluate_input_power_def_data, 100 * MSEC);
+		return;
+	}
+
+	if (retry == 0)
+		CPRINTF("Host hub I2C isn't online, expect issues with its "
+			"behaviour\n");
+
+	gpio_enable_interrupt(GPIO_USBH_I2C_BUSY_INT);
+
+	gl3590_init(HOST_HUB);
+
+	init_uservo_port();
+	init_pathsel();
+}
+#endif
 
 static void board_init(void)
 {
@@ -390,23 +449,33 @@ static void board_init(void)
 	/* Delay DUT hub to avoid brownout. */
 	usleep(MSEC);
 
-	init_ioexpanders();
-	init_dacs();
-	init_tusb1064(1);
 	init_pi3usb9201();
 
 	/* Clear BBRAM, we don't want any PD state carried over on reset. */
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD0, 0);
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD1, 0);
 
-	/* Bring atmel part out of reset */
-	atmel_reset_l(1);
-
 #ifdef SECTION_IS_RO
+	init_ioexpanders();
+	CPRINTS("Board ID is %d", board_id_det());
+
+	init_dacs();
 	init_uservo_port();
 	init_pathsel();
 	init_ina231s();
 	init_fusb302b(1);
+	vbus_dischrg_en(0);
+
+	/* Bring atmel part out of reset */
+	atmel_reset_l(1);
+
+	/*
+	 * Get data about available input power. Defer this check, since we need
+	 * to wait for USB2/USB3 enumeration on host hub as well as I2C
+	 * interface of this hub needs to be initialized. Genesys recommends at
+	 * least 100ms.
+	 */
+	hook_call_deferred(&evaluate_input_power_def_data, 100 * MSEC);
 
 	/* Enable DUT USB2.0 pair. */
 	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);
@@ -417,8 +486,7 @@ static void board_init(void)
 
 	gpio_enable_interrupt(GPIO_STM_FAULT_IRQ_L);
 	gpio_enable_interrupt(GPIO_DP_HPD);
-	gpio_enable_interrupt(GPIO_USBH_I2C_BUSY_INT);
-	gpio_enable_interrupt(GPIO_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_DUT_PWR_IRQ_ODL);
 
 	/* Disable power to DUT by default */
 	chg_power_select(CHG_POWER_OFF);
@@ -431,6 +499,8 @@ static void board_init(void)
 
 	/* Start SuzyQ detection */
 	start_ccd_meas_sbu_cycle();
+#else /* SECTION_IS_RO */
+	CPRINTS("Board ID is %d", board_id_det());
 #endif /* SECTION_IS_RO */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
@@ -456,4 +526,16 @@ void tick_event(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, tick_event, HOOK_PRIO_DEFAULT);
+
+struct ioexpander_config_t ioex_config[] = {
+	[0] = { .drv = &tca64xxa_ioexpander_drv,
+		.i2c_host_port = TCA6416A_PORT,
+		.i2c_addr_flags = TCA6416A_ADDR,
+		.flags = IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A },
+	[1] = { .drv = &tca64xxa_ioexpander_drv,
+		.i2c_host_port = TCA6424A_PORT,
+		.i2c_addr_flags = TCA6424A_ADDR,
+		.flags = IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6424A }
+};
+
 #endif /* SECTION_IS_RO */

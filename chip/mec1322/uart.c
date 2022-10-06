@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -103,7 +103,7 @@ static void uart_clear_rx_fifo(int channel)
 /**
  * Interrupt handler for UART
  */
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();
@@ -163,7 +163,7 @@ void uart_init(void)
 void uart_enter_dsleep(void)
 {
 	/* Disable the UART interrupt. */
-	task_disable_irq(MEC1322_IRQ_UART);  /* NVIC interrupt for UART=13 */
+	task_disable_irq(MEC1322_IRQ_UART); /* NVIC interrupt for UART=13 */
 
 	/*
 	 * Set the UART0 RX pin to be a GPIO-162(fixed pin) interrupt
@@ -175,12 +175,11 @@ void uart_enter_dsleep(void)
 	MEC1322_UART_ACT &= ~BIT(0);
 
 	/* Clear pending interrupts on GPIO_UART0_RX(GPIO162, girq=8, bit=18) */
-	MEC1322_INT_SOURCE(8) = (1<<18);
+	MEC1322_INT_SOURCE(8) = (1 << 18);
 
 	/* Enable GPIO interrupts on the UART0 RX pin. */
 	gpio_enable_interrupt(GPIO_UART0_RX);
 }
-
 
 void uart_exit_dsleep(void)
 {

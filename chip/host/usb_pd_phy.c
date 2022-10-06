@@ -1,8 +1,9 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "crc.h"
@@ -37,9 +38,9 @@ static struct pd_physical {
 	int verified_idx;
 } pd_phy[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-static const uint16_t enc4b5b[] = {
-	0x1E, 0x09, 0x14, 0x15, 0x0A, 0x0B, 0x0E, 0x0F, 0x12, 0x13, 0x16,
-	0x17, 0x1A, 0x1B, 0x1C, 0x1D};
+static const uint16_t enc4b5b[] = { 0x1E, 0x09, 0x14, 0x15, 0x0A, 0x0B,
+				    0x0E, 0x0F, 0x12, 0x13, 0x16, 0x17,
+				    0x1A, 0x1B, 0x1C, 0x1D };
 
 /* Test utilities */
 static void pd_test_reset_phy(int port)
@@ -215,7 +216,6 @@ int pd_test_tx_msg_verify_crc(int port)
 {
 	return pd_test_tx_msg_verify_word(port, crc32_result());
 }
-
 
 /* Mock functions */
 

@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,7 +18,7 @@
 #include "stm32-dma.h"
 
 /* Console USART index */
-#define UARTN      CONFIG_UART_CONSOLE
+#define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
 #ifdef CONFIG_UART_TX_DMA
@@ -33,7 +33,7 @@ static const struct dma_option dma_tx_option = {
 	CONFIG_UART_TX_DMA_CH, (void *)&STM32_USART_TDR(UARTN_BASE),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 #ifdef CHIP_FAMILY_STM32F4
-	| STM32_DMA_CCR_CHANNEL(CONFIG_UART_TX_REQ_CH)
+		| STM32_DMA_CCR_CHANNEL(CONFIG_UART_TX_REQ_CH)
 #endif
 };
 
@@ -51,16 +51,16 @@ static const struct dma_option dma_rx_option = {
 	CONFIG_UART_RX_DMA_CH, (void *)&STM32_USART_RDR(UARTN_BASE),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
 #ifdef CHIP_FAMILY_STM32F4
-	STM32_DMA_CCR_CHANNEL(CONFIG_UART_RX_REQ_CH) |
+		STM32_DMA_CCR_CHANNEL(CONFIG_UART_RX_REQ_CH) |
 #endif
-	STM32_DMA_CCR_CIRC
+		STM32_DMA_CCR_CIRC
 };
 
-static int dma_rx_len;   /* Size of receive DMA circular buffer */
+static int dma_rx_len; /* Size of receive DMA circular buffer */
 #endif
 
-static int init_done;    /* Initialization done? */
-static int should_stop;  /* Last TX control action */
+static int init_done; /* Initialization done? */
+static int should_stop; /* Last TX control action */
 
 int uart_init_done(void)
 {
@@ -161,7 +161,7 @@ int uart_read_char(void)
 }
 
 /* Interrupt handler for console USART */
-void uart_interrupt(void)
+static void uart_interrupt(void)
 {
 #ifndef CONFIG_UART_TX_DMA
 	/*
@@ -176,7 +176,14 @@ void uart_interrupt(void)
 #if defined(CHIP_FAMILY_STM32F4)
 		STM32_USART_SR(UARTN_BASE) &= ~STM32_USART_SR_TC;
 #else
-		STM32_USART_ICR(UARTN_BASE) |= STM32_USART_SR_TC;
+		/*
+		 * ST reference code does blind write to this register, as is
+		 * usual with the "write 1 to clear" convention, despite the
+		 * datasheet listing the bits as "keep at reset value", (which
+		 * we assume is due to copying from the description of
+		 * reserved bits in read/write registers.)
+		 */
+		STM32_USART_ICR(UARTN_BASE) = STM32_USART_SR_TC;
 #endif
 		if (!(STM32_USART_SR(UARTN_BASE) & ~STM32_USART_SR_TC))
 			return;
@@ -234,18 +241,21 @@ static void uart_freq_change(void)
 	freq = 8000000;
 #elif defined(CHIP_FAMILY_STM32H7)
 	freq = 64000000; /* from 64 Mhz HSI */
+#elif defined(CHIP_FAMILY_STM32L4)
+	/* UART clocked from HSI 16 */
+	freq = 16000000;
 #else
 	/* UART clocked from the main clock */
 	freq = clock_get_freq();
 #endif
 
-#if (UARTN == 9)	/* LPUART */
+#if (UARTN == 9) /* LPUART */
 	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE) * 256;
 #else
 	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE);
 #endif
 
-#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) || \
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) ||      \
 	defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4) || \
 	defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32G4)
 	if (div / 16 > 0) {
@@ -267,7 +277,6 @@ static void uart_freq_change(void)
 	/* STM32F only supports x16 oversampling */
 	STM32_USART_BRR(UARTN_BASE) = div;
 #endif
-
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, uart_freq_change, HOOK_PRIO_DEFAULT);
 
@@ -276,7 +285,7 @@ void uart_init(void)
 	/* Select clock source */
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 #if (UARTN == 1)
-	STM32_RCC_CFGR3 |= 0x0003;   /* USART1 clock source from HSI(8MHz) */
+	STM32_RCC_CFGR3 |= 0x0003; /* USART1 clock source from HSI(8MHz) */
 #elif (UARTN == 2)
 	STM32_RCC_CFGR3 |= 0x030000; /* USART2 clock source from HSI(8MHz) */
 #endif /* UARTN */
@@ -289,17 +298,29 @@ void uart_init(void)
 #elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32G4)
 	/* USART1 clock source from SYSCLK */
 	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_USART1SEL_MASK;
+#ifdef CHIP_FAMILY_STM32L4
+	/* For STM32L4, use HSI for UART, to wake up from low power mode */
 	STM32_RCC_CCIPR |=
-		(STM32_RCC_CCIPR_UART_SYSCLK << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+		(STM32_RCC_CCIPR_UART_HSI16 << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+#else
+	STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_UART_SYSCLK
+			    << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+#endif
 	/* LPUART1 clock source from SYSCLK */
 	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_LPUART1SEL_MASK;
-	STM32_RCC_CCIPR |=
-		(STM32_RCC_CCIPR_UART_SYSCLK << STM32_RCC_CCIPR_LPUART1SEL_SHIFT);
+	STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_UART_SYSCLK
+			    << STM32_RCC_CCIPR_LPUART1SEL_SHIFT);
 #endif /* CHIP_FAMILY_STM32F0 || CHIP_FAMILY_STM32F3 */
 
 	/* Enable USART clock */
 #if (UARTN == 1)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_USART1;
+#ifdef CHIP_FAMILY_STM32L4
+#if defined(CONFIG_UART_RX_DMA) || defined(CONFIG_UART_TX_DMA)
+	STM32_RCC_AHB1ENR |= STM32_RCC_HB1_DMA1;
+	STM32_RCC_AHB1ENR |= STM32_RCC_HB1_DMA2;
+#endif
+#endif
 #elif (UARTN == 6)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_USART6;
 #elif (UARTN == 9)
@@ -317,8 +338,8 @@ void uart_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_UART, 1);
 
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) \
-|| defined(CHIP_FAMILY_STM32H7)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
+	defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32L4)
 	/*
 	 * Wake up on start bit detection. WUS can only be written when UE=0,
 	 * so clear UE first.
@@ -330,15 +351,19 @@ void uart_init(void)
 	 * and we don't want to clear an extra flag in the interrupt
 	 */
 	STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUS_START_BIT |
-	                               STM32_USART_CR3_OVRDIS;
+				       STM32_USART_CR3_OVRDIS;
 #endif
 
 	/*
 	 * UART enabled, 8 Data bits, oversampling x16, no parity,
 	 * TX and RX enabled.
 	 */
-	STM32_USART_CR1(UARTN_BASE) =
-		STM32_USART_CR1_UE | STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+#ifdef CHIP_FAMILY_STM32L4
+	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+#else
+	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_UE | STM32_USART_CR1_TE |
+				      STM32_USART_CR1_RE;
+#endif
 
 	/* 1 stop bit, no fancy stuff */
 	STM32_USART_CR2(UARTN_BASE) = 0x0000;
@@ -374,6 +399,10 @@ void uart_init(void)
 
 	/* Enable interrupts */
 	task_enable_irq(STM32_IRQ_USART(UARTN));
+
+#ifdef CHIP_FAMILY_STM32L4
+	STM32_USART_CR1(UARTN_BASE) |= STM32_USART_CR1_UE;
+#endif
 
 	init_done = 1;
 }

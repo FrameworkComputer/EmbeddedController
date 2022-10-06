@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -9,32 +9,32 @@
 #ifndef __CROS_EC_ISL923X_H
 #define __CROS_EC_ISL923X_H
 
-#define ISL923X_ADDR_FLAGS	(0x09)
+#include "driver/charger/isl923x_public.h"
 
 /* Registers */
-#define ISL923X_REG_CHG_CURRENT      0x14
-#define ISL923X_REG_ADAPTER_CURRENT1 0x3f
-#define ISL923X_REG_ADAPTER_CURRENT2 0x3b
-#define ISL923X_REG_SYS_VOLTAGE_MAX  0x15
-#define ISL923X_REG_SYS_VOLTAGE_MIN  0x3e
-#define ISL923X_REG_PROCHOT_AC       0x47
-#define ISL923X_REG_PROCHOT_DC       0x48
-#define ISL923X_REG_T1_T2            0x38
-#define ISL923X_REG_CONTROL0         0x39
-#define ISL923X_REG_CONTROL1         0x3c
-#define ISL923X_REG_CONTROL2         0x3d
-#define ISL9238_REG_CONTROL3         0x4c
-#define ISL9238_REG_CONTROL4         0x4e
-#define ISL9238C_REG_CONTROL6        0x37
-#define ISL923X_REG_INFO             0x3a
-#define ISL9238_REG_INFO2            0x4d
-#define ISL923X_REG_OTG_VOLTAGE      0x49
-#define ISL923X_REG_OTG_CURRENT      0x4a
-#define ISL9238_REG_INPUT_VOLTAGE    0x4b
-#define ISL923X_REG_MANUFACTURER_ID  0xfe
-#define ISL923X_REG_DEVICE_ID        0xff
-#define RAA489000_REG_CONTROL8       0x37
-#define RAA489000_REG_CONTROL10      0x35
+#define ISL923X_REG_CHG_CURRENT 0x14
+#define ISL923X_REG_ADAPTER_CURRENT_LIMIT1 0x3f
+#define ISL923X_REG_ADAPTER_CURRENT_LIMIT2 0x3b
+#define ISL923X_REG_SYS_VOLTAGE_MAX 0x15
+#define ISL923X_REG_SYS_VOLTAGE_MIN 0x3e
+#define ISL923X_REG_PROCHOT_AC 0x47
+#define ISL923X_REG_PROCHOT_DC 0x48
+#define ISL923X_REG_T1_T2 0x38
+#define ISL923X_REG_CONTROL0 0x39
+#define ISL923X_REG_CONTROL1 0x3c
+#define ISL923X_REG_CONTROL2 0x3d
+#define ISL9238_REG_CONTROL3 0x4c
+#define ISL9238_REG_CONTROL4 0x4e
+#define ISL9238C_REG_CONTROL6 0x37
+#define ISL923X_REG_INFO 0x3a
+#define ISL9238_REG_INFO2 0x4d
+#define ISL923X_REG_OTG_VOLTAGE 0x49
+#define ISL923X_REG_OTG_CURRENT 0x4a
+#define ISL9238_REG_INPUT_VOLTAGE 0x4b
+#define ISL923X_REG_MANUFACTURER_ID 0xfe
+#define ISL923X_REG_DEVICE_ID 0xff
+#define RAA489000_REG_CONTROL8 0x37
+#define RAA489000_REG_CONTROL10 0x35
 
 /* Sense resistor default values in mOhm */
 #define ISL923X_DEFAULT_SENSE_RESISTOR_AC 20
@@ -42,24 +42,24 @@
 
 /* Maximum charging current register value */
 #define ISL923X_CURRENT_REG_MAX 0x17c0 /* bit<12:2> 10111110000 */
-#define RAA489000_CURRENT_REG_MAX 0x1ffc
+#define RAA489000_CURRENT_REG_MAX 0x17fc
 
 /* 2-level adpater current limit duration T1 & T2 in micro seconds */
 #define ISL923X_T1_10000 0x00
 #define ISL923X_T1_20000 0x01
 #define ISL923X_T1_15000 0x02
-#define ISL923X_T1_5000  0x03
-#define ISL923X_T1_1000  0x04
-#define ISL923X_T1_500   0x05
-#define ISL923X_T1_100   0x06
-#define ISL923X_T1_0     0x07
-#define ISL923X_T2_10    (0x00 << 8)
-#define ISL923X_T2_100   (0x01 << 8)
-#define ISL923X_T2_500   (0x02 << 8)
-#define ISL923X_T2_1000  (0x03 << 8)
-#define ISL923X_T2_300   (0x04 << 8)
-#define ISL923X_T2_750   (0x05 << 8)
-#define ISL923X_T2_2000  (0x06 << 8)
+#define ISL923X_T1_5000 0x03
+#define ISL923X_T1_1000 0x04
+#define ISL923X_T1_500 0x05
+#define ISL923X_T1_100 0x06
+#define ISL923X_T1_0 0x07
+#define ISL923X_T2_10 (0x00 << 8)
+#define ISL923X_T2_100 (0x01 << 8)
+#define ISL923X_T2_500 (0x02 << 8)
+#define ISL923X_T2_1000 (0x03 << 8)
+#define ISL923X_T2_300 (0x04 << 8)
+#define ISL923X_T2_750 (0x05 << 8)
+#define ISL923X_T2_2000 (0x06 << 8)
 #define ISL923X_T2_10000 (0x07 << 8)
 
 #define ISL9237_SYS_VOLTAGE_REG_MAX 13824
@@ -69,19 +69,19 @@
 #define RAA489000_SYS_VOLTAGE_REG_MIN 64
 
 /* PROCHOT# debounce time and duration time in micro seconds */
-#define ISL923X_PROCHOT_DURATION_10000  (0 << 6)
-#define ISL923X_PROCHOT_DURATION_20000  BIT(6)
-#define ISL923X_PROCHOT_DURATION_15000  (2 << 6)
-#define ISL923X_PROCHOT_DURATION_5000   (3 << 6)
-#define ISL923X_PROCHOT_DURATION_1000   (4 << 6)
-#define ISL923X_PROCHOT_DURATION_500    (5 << 6)
+#define ISL923X_PROCHOT_DURATION_10000 (0 << 6)
+#define ISL923X_PROCHOT_DURATION_20000 BIT(6)
+#define ISL923X_PROCHOT_DURATION_15000 (2 << 6)
+#define ISL923X_PROCHOT_DURATION_5000 (3 << 6)
+#define ISL923X_PROCHOT_DURATION_1000 (4 << 6)
+#define ISL923X_PROCHOT_DURATION_500 (5 << 6)
 #define ISL923X_PROCHOT_DURATION_100000 (6 << 6)
-#define ISL923X_PROCHOT_DURATION_0      (7 << 6)
-#define ISL923X_PROCHOT_DURATION_MASK   (7 << 6)
+#define ISL923X_PROCHOT_DURATION_0 (7 << 6)
+#define ISL923X_PROCHOT_DURATION_MASK (7 << 6)
 
-#define ISL923X_PROCHOT_DEBOUNCE_10   (0 << 9)
-#define ISL923X_PROCHOT_DEBOUNCE_100  BIT(9)
-#define ISL923X_PROCHOT_DEBOUNCE_500  (2 << 9)
+#define ISL923X_PROCHOT_DEBOUNCE_10 (0 << 9)
+#define ISL923X_PROCHOT_DEBOUNCE_100 BIT(9)
+#define ISL923X_PROCHOT_DEBOUNCE_500 (2 << 9)
 #define ISL923X_PROCHOT_DEBOUNCE_1000 (3 << 9)
 #define ISL923X_PROCHOT_DEBOUNCE_MASK (3 << 9)
 
@@ -100,10 +100,10 @@
 #define ISL923X_C0_DISABLE_VREG BIT(2)
 
 /* Control0: battery DCHOT reference for RS2 == 20mOhm */
-#define ISL923X_C0_DCHOT_6A   (0 << 3)
-#define ISL923X_C0_DCHOT_5A   BIT(3)
-#define ISL923X_C0_DCHOT_4A   (2 << 3)
-#define ISL923X_C0_DCHOT_3A   (3 << 3)
+#define ISL923X_C0_DCHOT_6A (0 << 3)
+#define ISL923X_C0_DCHOT_5A BIT(3)
+#define ISL923X_C0_DCHOT_4A (2 << 3)
+#define ISL923X_C0_DCHOT_3A (3 << 3)
 #define ISL923X_C0_DCHOT_MASK (3 << 3)
 
 /* Control0: BGATE force on */
@@ -111,15 +111,15 @@
 #define RAA489000_C0_EN_CHG_PUMPS_TO_100PCT BIT(6)
 
 /* Control1: general purpose comparator debounce time in micro second */
-#define ISL923X_C1_GP_DEBOUNCE_2       (0 << 14)
-#define ISL923X_C1_GP_DEBOUNCE_12      BIT(14)
-#define ISL923X_C1_GP_DEBOUNCE_2000    (2 << 14)
+#define ISL923X_C1_GP_DEBOUNCE_2 (0 << 14)
+#define ISL923X_C1_GP_DEBOUNCE_12 BIT(14)
+#define ISL923X_C1_GP_DEBOUNCE_2000 (2 << 14)
 #define ISL923X_C1_GP_DEBOUNCE_5000000 (3 << 14)
-#define ISL923X_C1_GP_DEBOUNCE_MASK    (3 << 14)
+#define ISL923X_C1_GP_DEBOUNCE_MASK (3 << 14)
 
 /* Control1: learn mode */
 #define ISL923X_C1_LEARN_MODE_AUTOEXIT BIT(13)
-#define ISL923X_C1_LEARN_MODE_ENABLE   BIT(12)
+#define ISL923X_C1_LEARN_MODE_ENABLE BIT(12)
 
 /* Control1: OTG enable */
 #define ISL923X_C1_OTG BIT(11)
@@ -161,15 +161,15 @@
 #define RAA489000_C1_BGATE_FORCE_OFF BIT(6)
 
 /* Control2: trickle charging current in mA */
-#define ISL923X_C2_TRICKLE_256  (0 << 14)
-#define ISL923X_C2_TRICKLE_128  BIT(14)
-#define ISL923X_C2_TRICKLE_64   (2 << 14)
-#define ISL923X_C2_TRICKLE_512  (3 << 14)
+#define ISL923X_C2_TRICKLE_256 (0 << 14)
+#define ISL923X_C2_TRICKLE_128 BIT(14)
+#define ISL923X_C2_TRICKLE_64 (2 << 14)
+#define ISL923X_C2_TRICKLE_512 (3 << 14)
 #define ISL923X_C2_TRICKLE_MASK (3 << 14)
 
 /* Control2: OTGEN debounce time in ms */
 #define ISL923X_C2_OTG_DEBOUNCE_1300 (0 << 13)
-#define ISL923X_C2_OTG_DEBOUNCE_150  BIT(13)
+#define ISL923X_C2_OTG_DEBOUNCE_150 BIT(13)
 #define ISL923X_C2_OTG_DEBOUNCE_MASK BIT(13)
 
 /* Control2: 2-level adapter over current */
@@ -177,14 +177,14 @@
 
 /* Control2: adapter insertion debounce time in ms */
 #define ISL923X_C2_ADAPTER_DEBOUNCE_1300 (0 << 11)
-#define ISL923X_C2_ADAPTER_DEBOUNCE_150  BIT(11)
+#define ISL923X_C2_ADAPTER_DEBOUNCE_150 BIT(11)
 #define ISL923X_C2_ADAPTER_DEBOUNCE_MASK BIT(11)
 
 /* Control2: PROCHOT debounce time in uS */
-#define ISL9238_C2_PROCHOT_DEBOUNCE_7    (0 << 9)
-#define ISL9237_C2_PROCHOT_DEBOUNCE_10   (0 << 9)
-#define ISL923X_C2_PROCHOT_DEBOUNCE_100  BIT(9)
-#define ISL923X_C2_PROCHOT_DEBOUNCE_500  (2 << 9)
+#define ISL9238_C2_PROCHOT_DEBOUNCE_7 (0 << 9)
+#define ISL9237_C2_PROCHOT_DEBOUNCE_10 (0 << 9)
+#define ISL923X_C2_PROCHOT_DEBOUNCE_100 BIT(9)
+#define ISL923X_C2_PROCHOT_DEBOUNCE_500 (2 << 9)
 #define ISL923X_C2_PROCHOT_DEBOUNCE_1000 (3 << 9)
 #define ISL923X_C2_PROCHOT_DEBOUNCE_MASK (3 << 9)
 
@@ -192,12 +192,12 @@
 #define ISL923X_C2_PROCHOT_DURATION_10000 (0 << 6)
 #define ISL923X_C2_PROCHOT_DURATION_20000 BIT(6)
 #define ISL923X_C2_PROCHOT_DURATION_15000 (2 << 6)
-#define ISL923X_C2_PROCHOT_DURATION_5000  (3 << 6)
-#define ISL923X_C2_PROCHOT_DURATION_1000  (4 << 6)
-#define ISL923X_C2_PROCHOT_DURATION_500   (5 << 6)
-#define ISL923X_C2_PROCHOT_DURATION_100   (6 << 6)
-#define ISL923X_C2_PROCHOT_DURATION_0     (7 << 6)
-#define ISL923X_C2_PROCHOT_DURATION_MASK  (7 << 6)
+#define ISL923X_C2_PROCHOT_DURATION_5000 (3 << 6)
+#define ISL923X_C2_PROCHOT_DURATION_1000 (4 << 6)
+#define ISL923X_C2_PROCHOT_DURATION_500 (5 << 6)
+#define ISL923X_C2_PROCHOT_DURATION_100 (6 << 6)
+#define ISL923X_C2_PROCHOT_DURATION_0 (7 << 6)
+#define ISL923X_C2_PROCHOT_DURATION_MASK (7 << 6)
 
 /* Control2: turn off ASGATE in OTG mode */
 #define ISL923X_C2_ASGATE_OFF BIT(5)
@@ -247,6 +247,9 @@
 /* Control3: Enables or disables Battery Ship mode */
 #define ISL9238_C3_BGATE_OFF BIT(10)
 
+/* Control3: Enable or disable DCM/CCM Hysteresis */
+#define RAA489000_C3_DCM_CCM_HYSTERESIS_ENABLE BIT(10)
+
 /* Control3: Don't reload ACLIM on ACIN. */
 #define ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN BIT(14)
 
@@ -259,11 +262,15 @@
 /* Control4: GP comparator control bit */
 #define RAA489000_C4_DISABLE_GP_CMP BIT(12)
 
+/* Control4: Ignores BATGONE input */
+#define RAA489000_C4_BATGONE_DISABLE BIT(15)
+
 /* Control6: charger current and maximum system voltage slew rate control. */
 #define ISL9238C_C6_SLEW_RATE_CONTROL BIT(6)
 
 /* Control8: MCU_LDO - BAT state disable */
 #define RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE BIT(14)
+#define RAA489000_C8_ASGATE_ON_READY BIT(13)
 
 /* OTG voltage limit in mV, current limit in mA */
 #define ISL9237_OTG_VOLTAGE_MIN 4864
@@ -287,6 +294,7 @@
 #define ISL923X_INFO_TRICKLE_ACTIVE_MASK BIT(4)
 #define ISL9237_INFO_PSTATE_SHIFT 5
 #define ISL9237_INFO_PSTATE_MASK 3
+#define RAA489000_INFO2_ACOK BIT(14)
 
 /* ADC registers */
 #define RAA489000_REG_ADC_INPUT_CURRENT 0x83
@@ -336,83 +344,9 @@ enum isl9237_fsm_state {
 #define RAA489000_C10_RP1_SHIFT 10
 #define RAA489000_C10_ENABLE_DVC_MODE BIT(15)
 
-#if defined(CONFIG_CHARGER_ISL9237)
-#define CHARGER_NAME  "isl9237"
-#define CHARGE_V_MAX  ISL9237_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
-#define CHARGE_V_STEP 8
-#elif defined(CONFIG_CHARGER_ISL9238)
-#define CHARGER_NAME  "isl9238"
-#define CHARGE_V_MAX  ISL9238_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
-#define CHARGE_V_STEP 8
-#elif defined(CONFIG_CHARGER_ISL9238C)
-#define CHARGER_NAME  "isl9238c"
-#define CHARGE_V_MAX  ISL9238_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
-#define CHARGE_V_STEP 8
-#elif defined(CONFIG_CHARGER_RAA489000)
-#define CHARGER_NAME  "raa489000"
-#define CHARGE_V_MAX  RAA489000_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  RAA489000_SYS_VOLTAGE_REG_MIN
-#define CHARGE_V_STEP 64
-#endif
-
-#ifdef CONFIG_CHARGER_RAA489000
-#define CHARGE_I_MAX  RAA489000_CURRENT_REG_MAX
-#else
-#define CHARGE_I_MAX  ISL923X_CURRENT_REG_MAX
-#endif /* CONFIG_CHARGER_RAA489000 */
-#define CHARGE_I_MIN  4
-#define CHARGE_I_OFF  0
-#define CHARGE_I_STEP 4
-#ifdef CONFIG_CHARGER_RAA489000
-#define INPUT_I_MAX   RAA489000_CURRENT_REG_MAX
-#else
-#define INPUT_I_MAX   ISL923X_CURRENT_REG_MAX
-#endif /* CONFIG_CHARGER_RAA489000 */
-#define INPUT_I_MIN   4
-#define INPUT_I_STEP  4
-
 #define I2C_ADDR_CHARGER_FLAGS ISL923X_ADDR_FLAGS
 
-extern const struct charger_drv isl923x_drv;
+#define ISL923X_AC_PROCHOT_CURRENT_MAX 6400 /* mA */
+#define ISL923X_DC_PROCHOT_CURRENT_MAX 12800 /* mA */
 
 #endif /* __CROS_EC_ISL923X_H */
-
-/**
- * Initialize AC & DC prochot threshold
- *
- * @param	chgnum: Index into charger chips
- * @param	AC Prochot threshold current in mA:
- *			multiple of 128 up to 6400 mA
- *			DC Prochot threshold current in mA:
- *			multiple of 128 up to 12800 mA
- * 		Bits below 128mA are truncated (ignored).
- * @return enum ec_error_list
- */
-int isl923x_set_ac_prochot(int chgnum, uint16_t ma);
-int isl923x_set_dc_prochot(int chgnum, uint16_t ma);
-
-/**
- * Set the general comparator output polarity when asserted.
- *
- * @param chgnum: Index into charger chips
- * @param invert: Non-zero to invert polarity, zero to non-invert.
- * @return EC_SUCCESS, error otherwise.
- */
-int isl923x_set_comparator_inversion(int chgnum, int invert);
-
-/**
- * Prepare the charger IC for battery ship mode.  Battery ship mode sets the
- * lowest power state for the IC. Battery ship mode can only be entered from
- * battery only mode.
- *
- * @param chgnum index into chg_chips table.
- */
-void raa489000_hibernate(int chgnum);
-enum ec_error_list isl9238c_hibernate(int chgnum);
-enum ec_error_list isl9238c_resume(int chgnum);
-
-#define ISL923X_AC_PROCHOT_CURRENT_MAX	6400	/* mA */
-#define ISL923X_DC_PROCHOT_CURRENT_MAX	12800	/* mA */

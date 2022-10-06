@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,59 +8,81 @@
 #ifndef __CROS_EC_ATOMIC_H
 #define __CROS_EC_ATOMIC_H
 
+#include "atomic_t.h"
 #include "common.h"
 #include "cpu.h"
 #include "task.h"
 
-/*
- * The atomic_* functions are marked as deprecated as a part of the process of
- * transaction to Zephyr compatible atomic functions. These prefixes will be
- * removed in the following patches. Please see b:169151160 for more details.
- */
-
-static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
-						uint32_t bits)
+static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
+	atomic_val_t ret;
+	atomic_t volatile *ptr = addr;
 	uint32_t int_mask = read_clear_int_mask();
 
-	*addr &= ~bits;
+	ret = *ptr;
+	*ptr &= ~bits;
 	set_int_mask(int_mask);
+	return ret;
 }
 
-static inline void deprecated_atomic_or(uint32_t volatile *addr, uint32_t bits)
+static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)
 {
+	atomic_val_t ret;
+	atomic_t volatile *ptr = addr;
 	uint32_t int_mask = read_clear_int_mask();
 
-	*addr |= bits;
+	ret = *ptr;
+	*ptr |= bits;
 	set_int_mask(int_mask);
+	return ret;
 }
 
-static inline void deprecated_atomic_add(uint32_t volatile *addr,
-					 uint32_t value)
+static inline atomic_val_t atomic_add(atomic_t *addr, atomic_val_t value)
 {
+	atomic_val_t ret;
+	atomic_t volatile *ptr = addr;
 	uint32_t int_mask = read_clear_int_mask();
 
-	*addr += value;
+	ret = *ptr;
+	*ptr += value;
 	set_int_mask(int_mask);
+	return ret;
 }
 
-static inline void deprecated_atomic_sub(uint32_t volatile *addr,
-					 uint32_t value)
+static inline atomic_val_t atomic_sub(atomic_t *addr, atomic_val_t value)
 {
+	atomic_val_t ret;
+	atomic_t volatile *ptr = addr;
 	uint32_t int_mask = read_clear_int_mask();
 
-	*addr -= value;
+	ret = *ptr;
+	*ptr -= value;
 	set_int_mask(int_mask);
+	return ret;
 }
 
-static inline uint32_t deprecated_atomic_read_clear(uint32_t volatile *addr)
+static inline atomic_val_t atomic_clear(atomic_t *addr)
 {
-	uint32_t val;
+	atomic_val_t ret;
+	atomic_t volatile *ptr = addr;
 	uint32_t int_mask = read_clear_int_mask();
 
-	val = *addr;
-	*addr = 0;
+	ret = *ptr;
+	*ptr = 0;
 	set_int_mask(int_mask);
-	return val;
+	return ret;
 }
-#endif  /* __CROS_EC_ATOMIC_H */
+
+static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
+{
+	atomic_val_t ret;
+	atomic_t volatile *ptr = addr;
+	uint32_t int_mask = read_clear_int_mask();
+
+	ret = *ptr;
+	*ptr &= bits;
+	set_int_mask(int_mask);
+	return ret;
+}
+
+#endif /* __CROS_EC_ATOMIC_H */

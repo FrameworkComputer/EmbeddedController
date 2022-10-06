@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2014 The Chromium OS Authors. All rights reserved.
+ * Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -34,3 +34,5 @@ GPIO(USB_C0_DISCHARGE,     PIN(0, 15), 0)
 
 GPIO(I2C_SCL,             PIN(0, 16),  GPIO_INPUT)
 GPIO(I2C_SDA,             PIN(0, 17),  GPIO_INPUT)
+
+GPIO(EC_CBI_WP,           PIN(0, 18), GPIO_OUT_LOW)

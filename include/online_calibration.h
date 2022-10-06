@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,10 +22,9 @@ void online_calibration_init(void);
  * @param timestamp The time associated with the sample
  * @return EC_SUCCESS when successful.
  */
-int online_calibration_process_data(
-	struct ec_response_motion_sensor_data *data,
-	struct motion_sensor_t *sensor,
-	uint32_t timestamp);
+int online_calibration_process_data(struct ec_response_motion_sensor_data *data,
+				    struct motion_sensor_t *sensor,
+				    uint32_t timestamp);
 
 /**
  * Check if new calibration values are available since the last read.
@@ -41,6 +40,7 @@ bool online_calibration_has_new_values(void);
  * @param out The target to copy the data into.
  * @return True if a value was written to `out`.
  */
-bool online_calibration_read(int sensor_num, int16_t out[3]);
+bool online_calibration_read(struct motion_sensor_t *sensor,
+			     struct ec_response_online_calibration_data *out);
 
 #endif /* __CROS_EC_ONLINE_CALIBRATION_H */

@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -43,8 +43,8 @@
 
 #include "bootblock_data.h"
 
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SPI, format, ##args)
 
 #if EMMC_SPI_PORT == 1
 #define STM32_SPI_EMMC_REGS STM32_SPI1_REGS
@@ -68,7 +68,7 @@ static timestamp_t boot_deadline;
 
 /* 1024 bytes circular buffer is enough for ~0.6ms @ 13Mhz. */
 #define SPI_RX_BUF_BYTES 1024
-#define SPI_RX_BUF_WORDS (SPI_RX_BUF_BYTES/4)
+#define SPI_RX_BUF_WORDS (SPI_RX_BUF_BYTES / 4)
 static uint32_t in_msg[SPI_RX_BUF_WORDS];
 
 /* Macros to advance in the circular buffer. */
@@ -92,7 +92,7 @@ static const struct dma_option dma_tx_option = {
 static const struct dma_option dma_rx_option = {
 	STM32_DMAC_SPI_EMMC_RX, (void *)&STM32_SPI_EMMC_REGS->dr,
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
-	STM32_DMA_CCR_CIRC
+		STM32_DMA_CCR_CIRC
 };
 
 /* Setup DMA to transfer bootblock. */
@@ -123,7 +123,7 @@ static void bootblock_stop(void)
 	 */
 	start = __hw_clock_source_read();
 	while (STM32_SPI_EMMC_REGS->sr & STM32_SPI_SR_FTLVL &&
-			__hw_clock_source_read() - start < timeout)
+	       __hw_clock_source_read() - start < timeout)
 		;
 
 	/* Then flush SPI FIFO, and make sure DAT line stays idle (high). */
@@ -152,8 +152,8 @@ static enum emmc_cmd emmc_parse_command(int index)
 	/* Number of leading ones. */
 	shift0 = __builtin_clz(~data[0]);
 
-	data[0] = (data[0] << shift0) | (data[1] >> (32-shift0));
-	data[1] = (data[1] << shift0) | (data[2] >> (32-shift0));
+	data[0] = (data[0] << shift0) | (data[1] >> (32 - shift0));
+	data[1] = (data[1] << shift0) | (data[2] >> (32 - shift0));
 
 	if (data[0] == 0x40000000 && data[1] == 0x0095ffff) {
 		/* 400000000095 GO_IDLE_STATE */
@@ -177,7 +177,6 @@ static enum emmc_cmd emmc_parse_command(int index)
 	return EMMC_ERROR;
 }
 
-
 /*
  * Wake the EMMC task when there is a falling edge on the CMD line, so that we
  * can capture the command.
@@ -198,12 +197,21 @@ static void emmc_init_spi(void)
 	/* Enable clocks to SPI module */
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 #elif EMMC_SPI_PORT == 2
+#ifdef CHIP_FAMILY_STM32L4
+	/* Reset SPI */
+	STM32_RCC_APB1RSTR1 |= STM32_RCC_PB1_SPI2;
+	STM32_RCC_APB1RSTR1 &= ~STM32_RCC_PB1_SPI2;
+
+	/* Enable clocks to SPI module */
+	STM32_RCC_APB1ENR1 |= STM32_RCC_PB1_SPI2;
+#else
 	/* Reset SPI */
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
 	/* Enable clocks to SPI module */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+#endif
 #else
 #error "Please define EMMC_SPI_PORT in board.h."
 #endif

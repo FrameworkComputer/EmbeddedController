@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,8 +26,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 #define DEFAULT_POLL_TIMEOUT_US (250 * MSEC)
 #define DEBOUNCE_TIMEOUT_US (20 * MSEC)
@@ -62,7 +62,6 @@
  */
 #define WINDOW_SIZE 5
 
-
 enum base_detect_state {
 	BASE_DETACHED = 0,
 	BASE_ATTACHED_DEBOUNCE,
@@ -82,7 +81,7 @@ static timestamp_t detached_decision_deadline;
 static void enable_base_interrupts(int enable)
 {
 	int (*fn)(enum gpio_signal) = enable ? gpio_enable_interrupt :
-		gpio_disable_interrupt;
+					       gpio_disable_interrupt;
 
 	/* This pin is present on boards newer than rev 0. */
 	if (board_get_version() > 0)
@@ -141,28 +140,26 @@ static void base_detect_changed(void)
 static int base_seems_attached(int attach_pin_mv, int detach_pin_mv)
 {
 	/* We can't tell if we don't have good readings. */
-	if (attach_pin_mv == ADC_READ_ERROR ||
-	    detach_pin_mv == ADC_READ_ERROR)
+	if (attach_pin_mv == ADC_READ_ERROR || detach_pin_mv == ADC_READ_ERROR)
 		return 0;
 
 	if (gpio_get_level(GPIO_BASE_PWR_EN))
 		return (attach_pin_mv >= PWREN_ATTACH_MIN_MV) &&
-			(detach_pin_mv >= DETACH_MIN_MV);
+		       (detach_pin_mv >= DETACH_MIN_MV);
 	else
 		return (attach_pin_mv <= ATTACH_MAX_MV) &&
-			(attach_pin_mv >= ATTACH_MIN_MV) &&
-			(detach_pin_mv <= DETACH_MIN_MV);
+		       (attach_pin_mv >= ATTACH_MIN_MV) &&
+		       (detach_pin_mv <= DETACH_MIN_MV);
 }
 
 static int base_seems_detached(int attach_pin_mv, int detach_pin_mv)
 {
 	/* We can't tell if we don't have good readings. */
-	if (attach_pin_mv == ADC_READ_ERROR ||
-	    detach_pin_mv == ADC_READ_ERROR)
+	if (attach_pin_mv == ADC_READ_ERROR || detach_pin_mv == ADC_READ_ERROR)
 		return 0;
 
 	return (attach_pin_mv >= PWREN_ATTACH_MIN_MV) &&
-		(detach_pin_mv <= DETACH_MIN_MV);
+	       (detach_pin_mv <= DETACH_MIN_MV);
 }
 
 static void set_state(enum base_detect_state new_state)
@@ -194,9 +191,9 @@ static void base_detect_deferred(void)
 
 	if (forced_state != BASE_NO_FORCED_STATE) {
 		if (state != forced_state) {
-			CPRINTS("BD forced  %s",
-				forced_state == BASE_ATTACHED ?
-				"attached" : "detached");
+			CPRINTS("BD forced  %s", forced_state == BASE_ATTACHED ?
+							 "attached" :
+							 "detached");
 			set_state(forced_state);
 			base_detect_changed();
 		}
@@ -212,8 +209,7 @@ static void base_detect_deferred(void)
 	if (debug) {
 		int i;
 
-		CPRINTS("BD st%d: att: %dmV det: %dmV", state,
-			attach_reading,
+		CPRINTS("BD st%d: att: %dmV det: %dmV", state, attach_reading,
 			detach_reading);
 		CPRINTF("det readings = [");
 		for (i = 0; i < WINDOW_SIZE; i++)
@@ -341,7 +337,6 @@ static void check_and_reapply_base_power_deferred(void)
 		hook_call_deferred(&clear_base_power_on_attempts_deferred_data,
 				   SECOND);
 	}
-
 }
 DECLARE_DEFERRED(check_and_reapply_base_power_deferred);
 
@@ -366,25 +361,24 @@ void base_pwr_fault_interrupt(enum gpio_signal s)
 	}
 }
 
-static int command_basedetectdebug(int argc, char **argv)
+static int command_basedetectdebug(int argc, const char **argv)
 {
 	if ((argc > 1) && !parse_bool(argv[1], &debug))
 		return EC_ERROR_PARAM1;
 
-	CPRINTS("BD: %sst%d", forced_state != BASE_NO_FORCED_STATE ?
-						  "forced " : "", state);
+	CPRINTS("BD: %sst%d",
+		forced_state != BASE_NO_FORCED_STATE ? "forced " : "", state);
 	return EC_SUCCESS;
 }
 
 DECLARE_CONSOLE_COMMAND(basedebug, command_basedetectdebug, "[ena|dis]",
 			"En/Disable base detection debug");
 
-
-void base_force_state(int state)
+void base_force_state(enum ec_set_base_state_cmd state)
 {
-	if (state == 1)
+	if (state == EC_SET_BASE_STATE_ATTACH)
 		forced_state = BASE_ATTACHED;
-	else if (state == 0)
+	else if (state == EC_SET_BASE_STATE_DETACH)
 		forced_state = BASE_DETACHED;
 	else
 		forced_state = BASE_NO_FORCED_STATE;

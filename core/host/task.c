@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -28,7 +28,7 @@
 struct emu_task_t {
 	pthread_t thread;
 	pthread_cond_t resume;
-	uint32_t event;
+	atomic_t event;
 	timestamp_t wake_time;
 	uint8_t started;
 };
@@ -47,7 +47,7 @@ static int task_started;
 static sem_t interrupt_sem;
 static pthread_mutex_t interrupt_lock;
 static pthread_t interrupt_thread;
-static int in_interrupt;
+static bool in_interrupt;
 static int interrupt_disabled;
 static void (*pending_isr)(void);
 static int generator_sleeping;
@@ -66,6 +66,7 @@ CONFIG_CTS_TASK_LIST
 #undef TASK
 
 /* usleep that uses OS functions, instead of emulated timer. */
+/* LCOV_EXCL_START */
 void _usleep(int usec)
 {
 	struct timespec req;
@@ -75,6 +76,7 @@ void _usleep(int usec)
 
 	nanosleep(&req, NULL);
 }
+/* LCOV_EXCL_STOP */
 
 /* msleep that uses OS functions, instead of emulated timer. */
 void _msleep(int msec)
@@ -94,22 +96,18 @@ void _run_test(void *d)
 	run_test(0, NULL);
 }
 
-#define TASK(n, r, d, s) {r, d},
+#define TASK(n, r, d, s) { r, d },
 const struct task_args task_info[TASK_ID_COUNT] = {
-	{__idle, NULL},
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-	CONFIG_CTS_TASK_LIST
-	{_run_test, NULL},
+	{ __idle, NULL },
+	CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST{ _run_test,
+								     NULL },
 };
 #undef TASK
 
 #define TASK(n, r, d, s) #n,
-static const char * const task_names[] = {
+static const char *const task_names[] = {
 	"<< idle >>",
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-	CONFIG_CTS_TASK_LIST
+	CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST
 	"<< test runner >>",
 };
 #undef TASK
@@ -119,31 +117,36 @@ void task_pre_init(void)
 	/* Nothing */
 }
 
-int in_interrupt_context(void)
+bool in_interrupt_context(void)
 {
-	return !!in_interrupt;
+	return in_interrupt;
 }
 
-void interrupt_disable(void)
+test_mockable void interrupt_disable(void)
 {
 	pthread_mutex_lock(&interrupt_lock);
 	interrupt_disabled = 1;
 	pthread_mutex_unlock(&interrupt_lock);
 }
 
-void interrupt_enable(void)
+test_mockable void interrupt_enable(void)
 {
 	pthread_mutex_lock(&interrupt_lock);
 	interrupt_disabled = 0;
 	pthread_mutex_unlock(&interrupt_lock);
 }
 
+inline bool is_interrupt_enabled(void)
+{
+	return !interrupt_disabled;
+}
+
 static void _task_execute_isr(int sig)
 {
-	in_interrupt = 1;
+	in_interrupt = true;
 	pending_isr();
 	sem_post(&interrupt_sem);
-	in_interrupt = 0;
+	in_interrupt = false;
 }
 
 void task_register_interrupt(void)
@@ -172,8 +175,10 @@ void task_trigger_test_interrupt(void (*isr)(void))
 
 	/* Wait for ISR to complete */
 	sem_wait(&interrupt_sem);
+	/* LCOV_EXCL_START */
 	while (in_interrupt)
 		_usleep(10);
+	/* LCOV_EXCL_STOP */
 	pending_isr = NULL;
 
 	pthread_mutex_unlock(&interrupt_lock);
@@ -198,15 +203,12 @@ pthread_t task_get_thread(task_id_t tskid)
 	return tasks[tskid].thread;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
+void task_set_event(task_id_t tskid, uint32_t event)
 {
-	deprecated_atomic_or(&tasks[tskid].event, event);
-	if (wait)
-		return task_wait_event(-1);
-	return 0;
+	atomic_or(&tasks[tskid].event, event);
 }
 
-uint32_t *task_get_event_bitmap(task_id_t tskid)
+atomic_t *task_get_event_bitmap(task_id_t tskid)
 {
 	return &tasks[tskid].event;
 }
@@ -224,7 +226,7 @@ uint32_t task_wait_event(int timeout_us)
 	pthread_cond_wait(&tasks[tid].resume, &run_lock);
 
 	/* Resume */
-	ret = deprecated_atomic_read_clear(&tasks[tid].event);
+	ret = atomic_clear(&tasks[tid].event);
 	pthread_mutex_unlock(&interrupt_lock);
 	return ret;
 }
@@ -252,8 +254,8 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 	/* Re-post any other events collected */
 	if (events & ~event_mask)
-		deprecated_atomic_or(&tasks[task_get_current()].event,
-				     events & ~event_mask);
+		atomic_or(&tasks[task_get_current()].event,
+			  events & ~event_mask);
 
 	return events & event_mask;
 }
@@ -286,7 +288,7 @@ void mutex_unlock(struct mutex *mtx)
 	for (v = 31; v >= 0; --v)
 		if ((1ul << v) & mtx->waiters) {
 			mtx->waiters &= ~(1ul << v);
-			task_set_event(v, TASK_EVENT_MUTEX, 0);
+			task_set_event(v, TASK_EVENT_MUTEX);
 			break;
 		}
 }
@@ -313,14 +315,13 @@ void task_print_list(void)
 	}
 }
 
-int command_task_info(int argc, char **argv)
+static int command_task_info(int argc, const char **argv)
 {
 	task_print_list();
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info, NULL,
 			     "Print task info");
 
 static void _wait_for_task_started(int can_sleep)
@@ -513,8 +514,8 @@ int task_start(void)
 	 */
 	pthread_mutex_lock(&interrupt_lock);
 
-	pthread_create(&interrupt_thread, NULL,
-		       _task_int_generator_start, NULL);
+	pthread_create(&interrupt_thread, NULL, _task_int_generator_start,
+		       NULL);
 
 	/*
 	 * Tell the hooks task to continue so that it can call back to enable
@@ -551,7 +552,6 @@ static void task_enable_all_tasks_callback(void)
 		pthread_mutex_unlock(&interrupt_lock);
 		pthread_cond_wait(&scheduler_cond, &run_lock);
 	}
-
 }
 
 void task_enable_all_tasks(void)

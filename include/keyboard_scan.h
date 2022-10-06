@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -32,6 +32,16 @@ struct keyboard_scan_config {
 	uint32_t poll_timeout_us;
 	/* Mask with 1 bits only for keys that actually exist */
 	uint8_t actual_key_mask[KEYBOARD_COLS_MAX];
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+	/* KSI threshold ADC voltage in mV */
+	uint16_t ksi_threshold_mv;
+#endif
+};
+
+/* Boot key list.  Must be in same order as enum boot_key. */
+struct boot_key_entry {
+	uint8_t col;
+	uint8_t row;
 };
 
 /**
@@ -46,7 +56,7 @@ struct keyboard_scan_config *keyboard_scan_get_config(void);
 /*
  * Which is probably this.
  */
-extern struct keyboard_scan_config keyscan_config;
+__override_proto extern struct keyboard_scan_config keyscan_config;
 
 /* Key held down at keyboard-controlled reset boot time. */
 enum boot_key {
@@ -85,10 +95,10 @@ const uint8_t *keyboard_scan_get_state(void);
 
 enum kb_scan_disable_masks {
 	/* Reasons why keyboard scanning should be disabled */
-	KB_SCAN_DISABLE_LID_CLOSED   = (1<<0),
-	KB_SCAN_DISABLE_POWER_BUTTON = (1<<1),
-	KB_SCAN_DISABLE_LID_ANGLE    = (1<<2),
-	KB_SCAN_DISABLE_USB_SUSPENDED = (1<<3),
+	KB_SCAN_DISABLE_LID_CLOSED = (1 << 0),
+	KB_SCAN_DISABLE_POWER_BUTTON = (1 << 1),
+	KB_SCAN_DISABLE_LID_ANGLE = (1 << 2),
+	KB_SCAN_DISABLE_USB_SUSPENDED = (1 << 3),
 };
 
 #ifdef HAS_TASK_KEYSCAN
@@ -107,7 +117,9 @@ void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask);
 void clear_typematic_key(void);
 #else
 static inline void keyboard_scan_enable(int enable,
-		enum kb_scan_disable_masks mask) { }
+					enum kb_scan_disable_masks mask)
+{
+}
 #endif
 
 #ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
@@ -132,7 +144,66 @@ int keyboard_get_keyboard_id(void);
 #ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 void set_vol_up_key(uint8_t row, uint8_t col);
 #else
-static inline void set_vol_up_key(uint8_t row, uint8_t col) {}
+static inline void set_vol_up_key(uint8_t row, uint8_t col)
+{
+}
 #endif
 
-#endif  /* __CROS_EC_KEYBOARD_SCAN_H */
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * Map keyboard connector pins to EC GPIO pins for factory test.
+ * Pins mapped to {-1, -1} are skipped.
+ */
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
+
+#ifdef CONFIG_KEYBOARD_MULTIPLE
+extern struct boot_key_entry boot_key_list[3];
+
+struct keyboard_type {
+	int col_esc;
+	int row_esc;
+	int col_down;
+	int row_down;
+	int col_left_shift;
+	int row_left_shift;
+	int col_refresh;
+	int row_refresh;
+	int col_right_alt;
+	int row_right_alt;
+	int col_left_alt;
+	int row_left_alt;
+	int col_key_r;
+	int row_key_r;
+	int col_key_h;
+	int row_key_h;
+};
+
+extern struct keyboard_type key_typ;
+#endif
+
+#ifdef TEST_BUILD
+/**
+ * @brief Get the value of print_state_changes
+ *
+ * @return non-zero if state change printing is enabled, zero if not.
+ */
+__test_only int keyboard_scan_get_print_state_changes(void);
+
+/**
+ * @brief Forcibly set the value of print_state_changes
+ *
+ * @param val Value to set
+ */
+__test_only void keyboard_scan_set_print_state_changes(int val);
+
+/**
+ * @brief Checks if keyboard scanning is currently enabled.
+ *
+ * @return int non-zero if enabled, zero otherwise.
+ */
+int keyboard_scan_is_enabled(void);
+#endif /* TEST_BUILD */
+
+#endif /* __CROS_EC_KEYBOARD_SCAN_H */

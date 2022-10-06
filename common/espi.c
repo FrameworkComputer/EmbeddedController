@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,6 @@
 #include "espi.h"
 #include "timer.h"
 #include "util.h"
-
 
 const char *espi_vw_names[] = {
 	"VW_SLP_S3_L",
@@ -26,7 +25,7 @@ const char *espi_vw_names[] = {
 	"VW_ERROR_FATAL",
 	"VW_ERROR_NON_FATAL",
 	/* Merge bit 3/0 into one signal. Need to set them simultaneously */
-	"VW_SLAVE_BTLD_STATUS_DONE",
+	"VW_PERIPHERAL_BTLD_STATUS_DONE",
 	"VW_SCI_L",
 	"VW_SMI_L",
 	"VW_RCIN_L",
@@ -41,7 +40,6 @@ const char *espi_vw_names[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(espi_vw_names) == VW_SIGNAL_COUNT);
 
-
 const char *espi_vw_get_wire_name(enum espi_vw_signal signal)
 {
 	if (espi_signal_is_vw(signal))
@@ -49,7 +47,6 @@ const char *espi_vw_get_wire_name(enum espi_vw_signal signal)
 
 	return NULL;
 }
-
 
 int espi_signal_is_vw(int signal)
 {

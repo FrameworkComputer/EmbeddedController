@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -14,9 +14,7 @@
 #include "util.h"
 #include "system.h"
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -27,7 +25,7 @@ enum led_color {
 	BAT_LED_AMBER,
 	PWR_LED_GREEN,
 	PWR_LED_ORANGE,
-	LED_COLOR_COUNT		/* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int bat_led_set(enum led_color color, int on)
@@ -113,7 +111,7 @@ static void oak_led_set_power(int board_version)
 
 	power_second++;
 
-	switch(board_version) {
+	switch (board_version) {
 	case OAK_REV3:
 	case OAK_REV4:
 		/*
@@ -131,8 +129,7 @@ static void oak_led_set_power(int board_version)
 			bat_led_set(PWR_LED_ORANGE, 0);
 		} else if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
 			bat_led_set(PWR_LED_GREEN, 0);
-			bat_led_set(PWR_LED_ORANGE,
-				    (power_second & 3) ? 0 : 1);
+			bat_led_set(PWR_LED_ORANGE, (power_second & 3) ? 0 : 1);
 		}
 		break;
 	default:
@@ -146,7 +143,7 @@ static void oak_led_set_battery(int board_version)
 
 	battery_second++;
 
-	switch(board_version) {
+	switch (board_version) {
 	case OAK_REV3:
 	case OAK_REV4:
 		/*
@@ -169,10 +166,10 @@ static void oak_led_set_battery(int board_version)
 			bat_led_set(BAT_LED_GREEN, 0);
 			if (charge_get_percent() < 3)
 				bat_led_set(BAT_LED_RED,
-					  (battery_second & 1) ? 0 : 1);
+					    (battery_second & 1) ? 0 : 1);
 			else if (charge_get_percent() < 10)
 				bat_led_set(BAT_LED_RED,
-					  (battery_second & 3) ? 0 : 1);
+					    (battery_second & 3) ? 0 : 1);
 			else
 				bat_led_set(BAT_LED_RED, 0);
 			break;
@@ -191,7 +188,8 @@ static void oak_led_set_battery(int board_version)
 	default:
 		/*
 		 * Put power control here since we are using the "battery" LED.
-		 * This allows LED autocontrol to be turned off by cmd during factory test.
+		 * This allows LED autocontrol to be turned off by cmd during
+		 * factory test.
 		 *
 		 * PWR LED behavior:
 		 * Power on: Green
@@ -205,8 +203,8 @@ static void oak_led_set_battery(int board_version)
 		else if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
 			int cycle_time = 4;
 			/* Oak rev5 with GlaDOS ID has a extremely power
-			 * comsuming LED. Increase LED blink cycle time to reduce
-			 * S3 power comsuption. */
+			 * comsuming LED. Increase LED blink cycle time to
+			 * reduce S3 power comsuption. */
 			if (board_version >= OAK_REV5)
 				cycle_time = 10;
 			bat_led_set(BAT_LED_GREEN,
@@ -231,10 +229,10 @@ static void oak_led_set_battery(int board_version)
 		case PWR_STATE_DISCHARGE:
 			if (charge_get_percent() < 3)
 				bat_led_set(BAT_LED_ORANGE,
-					  (battery_second & 1) ? 0 : 1);
+					    (battery_second & 1) ? 0 : 1);
 			else if (charge_get_percent() < 10)
 				bat_led_set(BAT_LED_ORANGE,
-					  (battery_second & 3) ? 0 : 1);
+					    (battery_second & 3) ? 0 : 1);
 			else
 				bat_led_set(BAT_LED_ORANGE, 0);
 			break;

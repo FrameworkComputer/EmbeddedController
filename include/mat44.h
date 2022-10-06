@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,4 +22,4 @@ void mat44_fp_swap_rows(mat44_fp_t A, const size_t i, const size_t j);
 
 void mat44_fp_solve(mat44_fp_t A, fpv4_t x, const fpv4_t b,
 		    const sizev4_t pivot);
-#endif  /* __CROS_EC_MAT_44_H */
+#endif /* __CROS_EC_MAT_44_H */

@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -279,6 +279,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x43,
 				.reg_mask = 0x0001,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {

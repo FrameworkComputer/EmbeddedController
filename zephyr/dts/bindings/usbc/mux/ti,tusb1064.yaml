@@ -1,0 +1,11 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  TI TUSB546, TUSB1044, or TUSB1064 USB-C MUX, device variant depends on
+  CONFIG_PLATFORM_EC_USB_MUX_TUSB_TYPE Kconfig choice
+
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
+
+compatible: "ti,tusb1064"

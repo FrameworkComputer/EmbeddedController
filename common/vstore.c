@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,7 +22,7 @@
 #include "system.h"
 #include "util.h"
 
-#define VSTORE_SYSJUMP_TAG  0x5653 /* "VS" */
+#define VSTORE_SYSJUMP_TAG 0x5653 /* "VS" */
 #define VSTORE_HOOK_VERSION 1
 
 struct vstore_slot {
@@ -32,7 +32,7 @@ struct vstore_slot {
 
 static struct vstore_slot vstore_slots[CONFIG_VSTORE_SLOT_COUNT];
 static const int vstore_size =
-		sizeof(struct vstore_slot) * CONFIG_VSTORE_SLOT_COUNT;
+	sizeof(struct vstore_slot) * CONFIG_VSTORE_SLOT_COUNT;
 BUILD_ASSERT(ARRAY_SIZE(vstore_slots) <= EC_VSTORE_SLOT_MAX);
 
 /*
@@ -97,7 +97,7 @@ static enum ec_status vstore_write(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_VSTORE_WRITE, vstore_write, EC_VER_MASK(0));
 
-static void vstore_clear_lock(void)
+test_export_static void vstore_clear_lock(void)
 {
 	int i;
 

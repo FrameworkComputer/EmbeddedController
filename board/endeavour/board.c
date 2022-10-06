@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Endeavour board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "battery.h"
 #include "bd99992gw.h"
 #include "board_config.h"
@@ -39,8 +38,8 @@
 #include "uart.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static uint8_t board_version;
 static uint32_t oem;
@@ -57,14 +56,15 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing (1/10 voltage divider). */
-	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* TODO: Verify fan control and mft */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = GPIO_FAN_PWR_EN,
 };
@@ -81,15 +81,31 @@ const struct fan_t fans[] = {
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
-const struct i2c_port_t i2c_ports[]  = {
-	{"pse", I2C_PORT_PSE, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"eeprom", I2C_PORT_EEPROM, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"pmic", I2C_PORT_PMIC, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "pse",
+	  .port = I2C_PORT_PSE,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_0_SCL,
+	  .sda = GPIO_I2C0_0_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_1_SCL,
+	  .sda = GPIO_I2C0_1_SDA },
+	{ .name = "pmic",
+	  .port = I2C_PORT_PMIC,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "thermal",
+	  .port = I2C_PORT_THERMAL,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -108,10 +124,10 @@ const int usb_port_enable[USB_PORT_COUNT] = {
  *     src/mainboard/google/${board}/acpi/dptf.asl
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"TMP431_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-			TMP432_IDX_LOCAL},
-	{"TMP431_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-			TMP432_IDX_REMOTE1},
+	{ "TMP431_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_LOCAL },
+	{ "TMP431_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_REMOTE1 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -124,9 +140,11 @@ struct ec_thermal_config thermal_params[] = {
 	 * {Twarn, Thigh, X    }, <off>
 	 * fan_off, fan_max
 	 */
-	{{0, C_TO_K(81), C_TO_K(82)}, {0, C_TO_K(77), 0},
-		C_TO_K(43), C_TO_K(76)},	/* TMP431_Internal */
-	{{0, 0, 0}, {0, 0, 0}, 0, 0},	/* TMP431_Sensor_1 */
+	{ { 0, C_TO_K(81), C_TO_K(82) },
+	  { 0, C_TO_K(77), 0 },
+	  C_TO_K(19),
+	  C_TO_K(74) }, /* TMP431_Internal */
+	{ { 0, 0, 0 }, { 0, 0, 0 }, 0, 0 }, /* TMP431_Sensor_1 */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -295,9 +313,9 @@ int64_t get_time_dsw_pwrok(void)
 }
 
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_RED]  = { 3, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_RED] = { 3, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_WHITE] = { 5, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_FAN] = {4, PWM_CONFIG_OPEN_DRAIN, 25000},
+	[PWM_CH_FAN] = { 4, PWM_CONFIG_OPEN_DRAIN, 25000 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -309,20 +327,19 @@ struct fan_step {
 
 /* Note: Do not make the fan on/off point equal to 0 or 100 */
 static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  3, .rpm = 0},
-	{.on = 15, .off =  3, .rpm = 2500},
-	{.on = 36, .off = 18, .rpm = 3200},
-	{.on = 52, .off = 39, .rpm = 3500},
-	{.on = 61, .off = 55, .rpm = 3900},
-	{.on = 70, .off = 64, .rpm = 4500},
-	{.on = 82, .off = 73, .rpm = 5100},
-	{.on = 97, .off = 85, .rpm = 5400},
+	{ .on = 0, .off = 2, .rpm = 0 },
+	{ .on = 11, .off = 2, .rpm = 2500 },
+	{ .on = 38, .off = 29, .rpm = 3200 },
+	{ .on = 65, .off = 36, .rpm = 3500 },
+	{ .on = 76, .off = 64, .rpm = 3900 },
+	{ .on = 84, .off = 75, .rpm = 4500 },
+	{ .on = 91, .off = 82, .rpm = 5100 },
+	{ .on = 98, .off = 89, .rpm = 5400 },
 };
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
 
 static const struct fan_step *fan_table = fan_table0;
-
 
 static void cbi_init(void)
 {
@@ -380,8 +397,7 @@ int fan_percent_to_rpm(int fan, int pct)
 
 	previous_pct = pct;
 
-	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(FAN_CH(fan)))
+	if (fan_table[current_level].rpm != fan_get_rpm_target(FAN_CH(fan)))
 		cprints(CC_THERMAL, "Setting fan RPM to %d",
 			fan_table[current_level].rpm);
 

@@ -1,0 +1,61 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+compatible: "battery-smart"
+
+include: [ "base.yaml", "battery-info.yaml", "battery-fuel-gauge.yaml" ]
+
+properties:
+   enum-name:
+      description: Unique value used for creating enum of batteries types
+      type: string
+      enum:
+         - "aec,5477109"
+         - "atl,cfd72"
+         - "byd,l22b3pg0"
+         - "byd,wv3k8"
+         - "cdt,c340152"
+         - "celxpert,c235-41"
+         - "celxpert,l22c3pg0"
+         - "cosmx,ap20cbl"
+         - "cosmx,ap20cbl-2"
+         - "cosmx,gh02047xl"
+         - "cosmx,si03058xl"
+         - "cosmx,l22x3pg0"
+         - "cosmx,mvk11"
+         - "dynapack,atl_gh02047xl"
+         - "dynapack,cosmx_gh02047xl"
+         - "dynapack,c140254"
+         - "ganfeng,7c01"
+         - "getac,bq40z50-R3-S3"
+         - "getac,bq40z50-R3-S2"
+         - "lgc,ac17a8m"
+         - "lgc,ap16l8j"
+         - "lgc,ap18c8k"
+         - "lgc,ap19a8k"
+         - "lgc,ap19b8m"
+         - "lgc,l20l3pg2"
+         - "lgc,xphx8"
+         - "murata,ap18c4k"
+         - "panasonic,ap16l5j"
+         - "panasonic,ap16l5j-009"
+         - "panasonic,ap19a5k"
+         - "powertech,batgqa05l22"
+         - "smp,atlxdy9k"
+         - "smp,c31n1915"
+         - "smp,c31n2005"
+         - "smp,l20m3pg0"
+         - "smp,l20m3pg1"
+         - "smp,l20m3pg2"
+         - "smp,l22m3pg0"
+         - "smp,l22m3pg1"
+         - "smp,pc-vp-bp153"
+         - "smp,coslight_gh02047xl"
+         - "smp,cosxdy9k"
+         - "smp,highpower_gh02047xl"
+         - "smp,highpower_si03058xl"
+         - "sunwoda,atl3rr09"
+         - "sunwoda,cos3rr09"
+         - "sunwoda,l22d3pg0"
+         - "sunwoda,l22d3pg1"

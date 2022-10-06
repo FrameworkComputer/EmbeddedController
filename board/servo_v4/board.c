@@ -1,11 +1,10 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 /* Servo V4 configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "ec_version.h"
@@ -34,8 +33,8 @@
 #include "usb-stream.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /******************************************************************************
  * GPIO interrupt handlers.
@@ -78,7 +77,7 @@ static volatile int hpd_prev_level;
 
 void hpd_irq_deferred(void)
 {
-	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int dp_mode = pd_alt_mode(1, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
 	if (dp_mode) {
 		pd_send_hpd(DUT, hpd_irq);
@@ -90,7 +89,7 @@ DECLARE_DEFERRED(hpd_irq_deferred);
 void hpd_lvl_deferred(void)
 {
 	int level = gpio_get_level(GPIO_DP_HPD);
-	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int dp_mode = pd_alt_mode(1, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
 	if (level != hpd_prev_level) {
 		/* It's a glitch while in deferred or canceled action */
@@ -176,23 +175,22 @@ void board_config_pre_init(void)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_CHG_CC1_PD] = {"CHG_CC1_PD", 3300, 4096, 0, STM32_AIN(2)},
-	[ADC_CHG_CC2_PD] = {"CHG_CC2_PD", 3300, 4096, 0, STM32_AIN(4)},
-	[ADC_DUT_CC1_PD] = {"DUT_CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
-	[ADC_DUT_CC2_PD] = {"DUT_CC2_PD", 3300, 4096, 0, STM32_AIN(5)},
-	[ADC_SBU1_DET] = {"SBU1_DET", 3300, 4096, 0, STM32_AIN(3)},
-	[ADC_SBU2_DET] = {"SBU2_DET", 3300, 4096, 0, STM32_AIN(7)},
-	[ADC_SUB_C_REF] = {"SUB_C_REF", 3300, 4096, 0, STM32_AIN(1)},
+	[ADC_CHG_CC1_PD] = { "CHG_CC1_PD", 3300, 4096, 0, STM32_AIN(2) },
+	[ADC_CHG_CC2_PD] = { "CHG_CC2_PD", 3300, 4096, 0, STM32_AIN(4) },
+	[ADC_DUT_CC1_PD] = { "DUT_CC1_PD", 3300, 4096, 0, STM32_AIN(0) },
+	[ADC_DUT_CC2_PD] = { "DUT_CC2_PD", 3300, 4096, 0, STM32_AIN(5) },
+	[ADC_SBU1_DET] = { "SBU1_DET", 3300, 4096, 0, STM32_AIN(3) },
+	[ADC_SBU2_DET] = { "SBU2_DET", 3300, 4096, 0, STM32_AIN(7) },
+	[ADC_SUB_C_REF] = { "SUB_C_REF", 3300, 4096, 0, STM32_AIN(1) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
 
 /******************************************************************************
  * Forward UARTs as a USB serial interface.
  */
 
-#define USB_STREAM_RX_SIZE	16
-#define USB_STREAM_TX_SIZE	16
+#define USB_STREAM_RX_SIZE 16
+#define USB_STREAM_TX_SIZE 16
 
 /******************************************************************************
  * Forward USART3 as a simple USB serial interface.
@@ -201,29 +199,19 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 static struct usart_config const usart3;
 struct usb_stream_config const usart3_usb;
 
-static struct queue const usart3_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart3.producer, usart3_usb.consumer);
-static struct queue const usb_to_usart3 = QUEUE_DIRECT(64, uint8_t,
-	usart3_usb.producer, usart3.consumer);
+static struct queue const usart3_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart3.producer, usart3_usb.consumer);
+static struct queue const usb_to_usart3 =
+	QUEUE_DIRECT(64, uint8_t, usart3_usb.producer, usart3.consumer);
 
 static struct usart_config const usart3 =
-	USART_CONFIG(usart3_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart3_to_usb,
-		usb_to_usart3);
+	USART_CONFIG(usart3_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart3_to_usb, usb_to_usart3);
 
-USB_STREAM_CONFIG(usart3_usb,
-	USB_IFACE_USART3_STREAM,
-	USB_STR_USART3_STREAM_NAME,
-	USB_EP_USART3_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart3,
-	usart3_to_usb)
-
+USB_STREAM_CONFIG(usart3_usb, USB_IFACE_USART3_STREAM,
+		  USB_STR_USART3_STREAM_NAME, USB_EP_USART3_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart3,
+		  usart3_to_usb)
 
 /******************************************************************************
  * Forward USART4 as a simple USB serial interface.
@@ -232,50 +220,54 @@ USB_STREAM_CONFIG(usart3_usb,
 static struct usart_config const usart4;
 struct usb_stream_config const usart4_usb;
 
-static struct queue const usart4_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart4.producer, usart4_usb.consumer);
-static struct queue const usb_to_usart4 = QUEUE_DIRECT(64, uint8_t,
-	usart4_usb.producer, usart4.consumer);
+static struct queue const usart4_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart4.producer, usart4_usb.consumer);
+static struct queue const usb_to_usart4 =
+	QUEUE_DIRECT(64, uint8_t, usart4_usb.producer, usart4.consumer);
 
 static struct usart_config const usart4 =
-	USART_CONFIG(usart4_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		9600,
-		0,
-		usart4_to_usb,
-		usb_to_usart4);
+	USART_CONFIG(usart4_hw, usart_rx_interrupt, usart_tx_interrupt, 9600, 0,
+		     usart4_to_usb, usb_to_usart4);
 
-USB_STREAM_CONFIG(usart4_usb,
-	USB_IFACE_USART4_STREAM,
-	USB_STR_USART4_STREAM_NAME,
-	USB_EP_USART4_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart4,
-	usart4_to_usb)
+USB_STREAM_CONFIG(usart4_usb, USB_IFACE_USART4_STREAM,
+		  USB_STR_USART4_STREAM_NAME, USB_EP_USART4_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart4,
+		  usart4_to_usb)
 
+/*
+ * Define usb interface descriptor for the `EMPTY` usb interface, to satisfy
+ * UEFI and kernel requirements (see b/183857501).
+ */
+const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_EMPTY) = {
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = USB_IFACE_EMPTY,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 0,
+	.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
+	.bInterfaceSubClass = 0,
+	.bInterfaceProtocol = 0,
+	.iInterface = 0,
+};
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("Servo V4"),
-	[USB_STR_SERIALNO]     = USB_STRING_DESC("1234-a"),
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
-	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("Servo V4"),
+	[USB_STR_SERIALNO] = USB_STRING_DESC("1234-a"),
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Servo EC Shell"),
-	[USB_STR_USART3_STREAM_NAME]  = USB_STRING_DESC("DUT UART"),
-	[USB_STR_USART4_STREAM_NAME]  = USB_STRING_DESC("Atmega UART"),
-	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
+	[USB_STR_USART3_STREAM_NAME] = USB_STRING_DESC("DUT UART"),
+	[USB_STR_USART4_STREAM_NAME] = USB_STRING_DESC("Atmega UART"),
+	[USB_STR_UPDATE_NAME] = USB_STRING_DESC("Firmware update"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
-
-
 
 /******************************************************************************
  * Support I2C bridging over USB.
@@ -283,12 +275,18 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 100,
-		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
+	{ .name = "master",
+	  .port = I2C_PORT_MASTER,
+	  .kbps = 100,
+	  .scl = GPIO_MASTER_I2C_SCL,
+	  .sda = GPIO_MASTER_I2C_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-int usb_i2c_board_is_enabled(void) { return 1; }
+int usb_i2c_board_is_enabled(void)
+{
+	return 1;
+}
 
 /******************************************************************************
  * Initialize board.
@@ -297,14 +295,13 @@ int usb_i2c_board_is_enabled(void) { return 1; }
 /*
  * Support tca6416 I2C ioexpander.
  */
-#define GPIOX_I2C_ADDR_FLAGS	0x20
-#define GPIOX_IN_PORT_A		0x0
-#define GPIOX_IN_PORT_B		0x1
-#define GPIOX_OUT_PORT_A	0x2
-#define GPIOX_OUT_PORT_B	0x3
-#define GPIOX_DIR_PORT_A	0x6
-#define GPIOX_DIR_PORT_B	0x7
-
+#define GPIOX_I2C_ADDR_FLAGS 0x20
+#define GPIOX_IN_PORT_A 0x0
+#define GPIOX_IN_PORT_B 0x1
+#define GPIOX_OUT_PORT_A 0x2
+#define GPIOX_OUT_PORT_B 0x3
+#define GPIOX_DIR_PORT_A 0x6
+#define GPIOX_DIR_PORT_B 0x7
 
 /* Write a GPIO output on the tca6416 I2C ioexpander. */
 static void write_ioexpander(int bank, int gpio, int val)
@@ -374,15 +371,15 @@ static void init_ioexpander(void)
  * Max observed USB low across sampled systems: 666mV
  * Min observed USB high across sampled systems: 3026mV
  */
-#define GND_MAX_MV	700
-#define USB_HIGH_MV	2500
-#define SBU_DIRECT	0
-#define SBU_FLIP	1
+#define GND_MAX_MV 700
+#define USB_HIGH_MV 2500
+#define SBU_DIRECT 0
+#define SBU_FLIP 1
 
-#define MODE_SBU_DISCONNECT	0
-#define MODE_SBU_CONNECT	1
-#define MODE_SBU_FLIP		2
-#define MODE_SBU_OTHER		3
+#define MODE_SBU_DISCONNECT 0
+#define MODE_SBU_CONNECT 1
+#define MODE_SBU_FLIP 2
+#define MODE_SBU_OTHER 3
 
 static void ccd_measure_sbu(void);
 DECLARE_DEFERRED(ccd_measure_sbu);
@@ -425,12 +422,12 @@ static void ccd_measure_sbu(void)
 		} else {
 			count++;
 		}
-	/*
-	 * If SuzyQ is enabled, we'll poll for a persistent no-signal for
-	 * 500ms. Since USB is differential, we should never see GND/GND
-	 * while the device is connected.
-	 * If disconnected, electrically remove SuzyQ.
-	 */
+		/*
+		 * If SuzyQ is enabled, we'll poll for a persistent no-signal
+		 * for 500ms. Since USB is differential, we should never see
+		 * GND/GND while the device is connected. If disconnected,
+		 * electrically remove SuzyQ.
+		 */
 	} else if ((mux_en) && (sbu1 < GND_MAX_MV) && (sbu2 < GND_MAX_MV)) {
 		/* Check for SBU disconnect if connected. */
 		if (last != MODE_SBU_DISCONNECT) {

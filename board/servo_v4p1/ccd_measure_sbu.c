@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,8 +11,8 @@
 #include "ioexpanders.h"
 #include "timer.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /*
  * Define voltage thresholds for SBU USB detection.
@@ -20,15 +20,15 @@
  * Max observed USB low across sampled systems: 666mV
  * Min observed USB high across sampled systems: 3026mV
  */
-#define GND_MAX_MV      700
-#define USB_HIGH_MV     2500
-#define SBU_DIRECT      0
-#define SBU_FLIP        1
+#define GND_MAX_MV 700
+#define USB_HIGH_MV 2500
+#define SBU_DIRECT 0
+#define SBU_FLIP 1
 
-#define MODE_SBU_DISCONNECT     0
-#define MODE_SBU_CONNECT        1
-#define MODE_SBU_FLIP           2
-#define MODE_SBU_OTHER          3
+#define MODE_SBU_DISCONNECT 0
+#define MODE_SBU_CONNECT 1
+#define MODE_SBU_FLIP 2
+#define MODE_SBU_OTHER 3
 
 static void ccd_measure_sbu(void);
 DECLARE_DEFERRED(ccd_measure_sbu);

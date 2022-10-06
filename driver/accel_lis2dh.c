@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,8 +21,8 @@
 #include "driver/stm_mems_common.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
 /**
  * set_range - set full scale range
@@ -30,10 +30,9 @@
  * @range: Range
  * @rnd: Round up/down flag
  */
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int err, normalized_range;
-	struct stprivate_data *data = s->drv_data;
 	int val;
 
 	val = LIS2DH_FS_TO_REG(range);
@@ -63,17 +62,10 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 
 	/* Save Gain in range for speed up data path */
 	if (err == EC_SUCCESS)
-		data->base.range = normalized_range;
+		s->current_range = normalized_range;
 
 	mutex_unlock(s->mutex);
 	return EC_SUCCESS;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct stprivate_data *data = s->drv_data;
-
-	return data->base.range;
 }
 
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
@@ -86,9 +78,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 
 	if (rate == 0) {
 		/* Power Off device */
-		ret = st_write_data_with_mask(
-				s, LIS2DH_CTRL1_ADDR,
-				LIS2DH_ACC_ODR_MASK, LIS2DH_ODR_0HZ_VAL);
+		ret = st_write_data_with_mask(s, LIS2DH_CTRL1_ADDR,
+					      LIS2DH_ACC_ODR_MASK,
+					      LIS2DH_ODR_0HZ_VAL);
 		goto unlock_rate;
 	}
 
@@ -109,7 +101,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	 * to write accel parameters until we are done
 	 */
 	ret = st_write_data_with_mask(s, LIS2DH_CTRL1_ADDR, LIS2DH_ACC_ODR_MASK,
-			reg_val);
+				      reg_val);
 	if (ret == EC_SUCCESS)
 		data->base.odr = normalized_rate;
 
@@ -122,8 +114,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LIS2DH_STATUS_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LIS2DH_STATUS_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RS Error", s->name, s->type);
 		return ret;
@@ -155,8 +147,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	}
 
 	/* Read output data bytes starting at LIS2DH_OUT_X_L_ADDR */
-	ret = st_raw_read_n(s->port, s->i2c_spi_addr_flags,
-			    LIS2DH_OUT_X_L_ADDR, raw, OUT_XYZ_SIZE);
+	ret = st_raw_read_n(s->port, s->i2c_spi_addr_flags, LIS2DH_OUT_X_L_ADDR,
+			    raw, OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RD XYZ Error", s->name, s->type);
 		return ret;
@@ -168,7 +160,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 	struct stprivate_data *data = s->drv_data;
@@ -203,34 +195,34 @@ static int init(const struct motion_sensor_t *s)
 	 * register must be restored to it's default.
 	 */
 	/* Enable all accel axes data and clear old settings */
-	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LIS2DH_CTRL1_ADDR, LIS2DH_ENABLE_ALL_AXES);
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LIS2DH_CTRL1_ADDR,
+			    LIS2DH_ENABLE_ALL_AXES);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LIS2DH_CTRL2_ADDR, LIS2DH_CTRL2_RESET_VAL);
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LIS2DH_CTRL2_ADDR,
+			    LIS2DH_CTRL2_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LIS2DH_CTRL3_ADDR, LIS2DH_CTRL3_RESET_VAL);
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LIS2DH_CTRL3_ADDR,
+			    LIS2DH_CTRL3_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
 	/* Enable BDU */
-	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LIS2DH_CTRL4_ADDR, LIS2DH_BDU_MASK);
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LIS2DH_CTRL4_ADDR,
+			    LIS2DH_BDU_MASK);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LIS2DH_CTRL5_ADDR, LIS2DH_CTRL5_RESET_VAL);
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LIS2DH_CTRL5_ADDR,
+			    LIS2DH_CTRL5_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LIS2DH_CTRL6_ADDR, LIS2DH_CTRL6_RESET_VAL);
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LIS2DH_CTRL6_ADDR,
+			    LIS2DH_CTRL6_RESET_VAL);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
@@ -252,7 +244,6 @@ const struct accelgyro_drv lis2dh_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_resolution = st_get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = st_get_data_rate,

@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,9 +11,10 @@ struct mdp_msg_service {
 	unsigned char msg[20];
 };
 
-BUILD_ASSERT(member_size(struct mdp_msg_service, msg) <= CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
+BUILD_ASSERT(member_size(struct mdp_msg_service, msg) <=
+	     CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
 
 void mdp_common_init(void);
 void mdp_ipi_task_handler(void *pvParameters);
 
-#endif  // _MDP_IPI_MESSAGE_H
+#endif // _MDP_IPI_MESSAGE_H

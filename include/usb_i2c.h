@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -53,7 +53,7 @@
  *         counter, the 4 bottom bits are the port address, i2c interface
  *         index.
  *
- *   - addr: slave address, 1 byte, i2c 7-bit bus address.
+ *   - addr: peripheral address, 1 byte, i2c 7-bit bus address.
  *
  *   - wc: write count, 1 byte, zero based count of bytes to write. If the
  *         indicated write count cause the payload + header exceeds 64 bytes,
@@ -99,28 +99,28 @@
  */
 
 enum usb_i2c_error {
-	USB_I2C_SUCCESS             = 0x0000,
-	USB_I2C_TIMEOUT             = 0x0001,
-	USB_I2C_BUSY                = 0x0002,
+	USB_I2C_SUCCESS = 0x0000,
+	USB_I2C_TIMEOUT = 0x0001,
+	USB_I2C_BUSY = 0x0002,
 	USB_I2C_WRITE_COUNT_INVALID = 0x0003,
-	USB_I2C_READ_COUNT_INVALID  = 0x0004,
-	USB_I2C_PORT_INVALID        = 0x0005,
-	USB_I2C_DISABLED            = 0x0006,
-	USB_I2C_MISSING_HANDLER     = 0x0007,
+	USB_I2C_READ_COUNT_INVALID = 0x0004,
+	USB_I2C_PORT_INVALID = 0x0005,
+	USB_I2C_DISABLED = 0x0006,
+	USB_I2C_MISSING_HANDLER = 0x0007,
 	USB_I2C_UNSUPPORTED_COMMAND = 0x0008,
-	USB_I2C_UNKNOWN_ERROR       = 0x8000,
+	USB_I2C_UNKNOWN_ERROR = 0x8000,
 };
-
 
 #define USB_I2C_WRITE_BUFFER (CONFIG_USB_I2C_MAX_WRITE_COUNT + 4)
 /* If read payload is larger or equal to 128 bytes, header contains rc1 */
-#define USB_I2C_READ_BUFFER  ((CONFIG_USB_I2C_MAX_READ_COUNT < 128) ?	\
-	(CONFIG_USB_I2C_MAX_READ_COUNT + 4) :				\
-	(CONFIG_USB_I2C_MAX_READ_COUNT + 6))
+#define USB_I2C_READ_BUFFER                            \
+	((CONFIG_USB_I2C_MAX_READ_COUNT < 128) ?       \
+		 (CONFIG_USB_I2C_MAX_READ_COUNT + 4) : \
+		 (CONFIG_USB_I2C_MAX_READ_COUNT + 6))
 
-#define USB_I2C_BUFFER_SIZE					\
-	(USB_I2C_READ_BUFFER > USB_I2C_WRITE_BUFFER ?	\
-		USB_I2C_READ_BUFFER : USB_I2C_WRITE_BUFFER)
+#define USB_I2C_BUFFER_SIZE                                                 \
+	(USB_I2C_READ_BUFFER > USB_I2C_WRITE_BUFFER ? USB_I2C_READ_BUFFER : \
+						      USB_I2C_WRITE_BUFFER)
 
 BUILD_ASSERT(POWER_OF_TWO(USB_I2C_READ_BUFFER));
 BUILD_ASSERT(POWER_OF_TWO(USB_I2C_WRITE_BUFFER));
@@ -156,28 +156,18 @@ extern struct consumer_ops const usb_i2c_consumer_ops;
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
  * transmitting bytes.
  */
-#define USB_I2C_CONFIG(NAME,						\
-		       INTERFACE,					\
-		       INTERFACE_NAME,					\
-		       ENDPOINT)					\
-	static uint16_t							\
-		CONCAT2(NAME, _buffer_)					\
-			[USB_I2C_BUFFER_SIZE / 2];			\
-	static void CONCAT2(NAME, _deferred_)(void);			\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));			\
-	static struct queue const CONCAT2(NAME, _to_usb_);		\
-	static struct queue const CONCAT3(usb_to_, NAME, _);		\
-	USB_STREAM_CONFIG_FULL(CONCAT2(NAME, _usb_),			\
-			       INTERFACE,				\
-			       USB_CLASS_VENDOR_SPEC,			\
-			       USB_SUBCLASS_GOOGLE_I2C,			\
-			       USB_PROTOCOL_GOOGLE_I2C,			\
-			       INTERFACE_NAME,				\
-			       ENDPOINT,				\
-			       USB_MAX_PACKET_SIZE,			\
-			       USB_MAX_PACKET_SIZE,			\
-			       CONCAT3(usb_to_, NAME, _),		\
-			       CONCAT2(NAME, _to_usb_))			\
+#define USB_I2C_CONFIG(NAME, INTERFACE, INTERFACE_NAME, ENDPOINT)              \
+	static uint16_t CONCAT2(NAME, _buffer_)[USB_I2C_BUFFER_SIZE / 2];      \
+	static void CONCAT2(NAME, _deferred_)(void);                           \
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));                           \
+	static struct queue const CONCAT2(NAME, _to_usb_);                     \
+	static struct queue const CONCAT3(usb_to_, NAME, _);                   \
+	USB_STREAM_CONFIG_FULL(CONCAT2(NAME, _usb_), INTERFACE,                \
+			       USB_CLASS_VENDOR_SPEC, USB_SUBCLASS_GOOGLE_I2C, \
+			       USB_PROTOCOL_GOOGLE_I2C, INTERFACE_NAME,        \
+			       ENDPOINT, USB_MAX_PACKET_SIZE,                  \
+			       USB_MAX_PACKET_SIZE, CONCAT3(usb_to_, NAME, _), \
+			       CONCAT2(NAME, _to_usb_))                        \
 	struct usb_i2c_config const NAME = {				\
 		.buffer    = CONCAT2(NAME, _buffer_),			\
 		.deferred  = &CONCAT2(NAME, _deferred__data),		\
@@ -186,15 +176,17 @@ extern struct consumer_ops const usb_i2c_consumer_ops;
 			.ops   = &usb_i2c_consumer_ops,			\
 		},							\
 		.tx_queue = &CONCAT2(NAME, _to_usb_),			\
-	};								\
-	static struct queue const CONCAT2(NAME, _to_usb_) =		\
-		QUEUE_DIRECT(USB_I2C_READ_BUFFER, uint8_t,	\
-		null_producer, CONCAT2(NAME, _usb_).consumer);		\
-	static struct queue const CONCAT3(usb_to_, NAME, _) =		\
-		QUEUE_DIRECT(USB_I2C_WRITE_BUFFER, uint8_t,	\
-		CONCAT2(NAME, _usb_).producer, NAME.consumer);		\
-	static void CONCAT2(NAME, _deferred_)(void)			\
-	{ usb_i2c_deferred(&NAME); }
+	};                              \
+	static struct queue const CONCAT2(NAME, _to_usb_) =                    \
+		QUEUE_DIRECT(USB_I2C_READ_BUFFER, uint8_t, null_producer,      \
+			     CONCAT2(NAME, _usb_).consumer);                   \
+	static struct queue const CONCAT3(usb_to_, NAME, _) =                  \
+		QUEUE_DIRECT(USB_I2C_WRITE_BUFFER, uint8_t,                    \
+			     CONCAT2(NAME, _usb_).producer, NAME.consumer);    \
+	static void CONCAT2(NAME, _deferred_)(void)                            \
+	{                                                                      \
+		usb_i2c_deferred(&NAME);                                       \
+	}
 
 /*
  * Handle I2C request in a deferred callback.
@@ -216,7 +208,7 @@ int usb_i2c_board_is_enabled(void);
 
 /*
  * Special i2c address to use when the client is required to execute some
- * command which does not directly involve the i2c master driver.
+ * command which does not directly involve the i2c controller driver.
  */
 #define USB_I2C_CMD_ADDR_FLAGS 0x78
 
@@ -224,11 +216,7 @@ int usb_i2c_board_is_enabled(void);
  * Function to call to register a handler for commands sent to the special i2c
  * address above.
  */
-int usb_i2c_register_cros_cmd_handler(int (*cmd_handler)
-				      (void *data_in,
-				       size_t in_size,
-				       void *data_out,
-				       size_t out_size));
+int usb_i2c_register_cros_cmd_handler(int (*cmd_handler)(
+	void *data_in, size_t in_size, void *data_out, size_t out_size));
 
-
-#endif  /* __CROS_USB_I2C_H */
+#endif /* __CROS_USB_I2C_H */

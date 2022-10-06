@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,10 +15,11 @@
 #include "power_button.h"
 #include "switch.h"
 #include "util.h"
+#include "write_protect.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
 
 static uint8_t *memmap_switches;
 
@@ -43,16 +44,20 @@ static void switch_update(void)
 	else
 		*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
 
-#ifdef CONFIG_LID_SWITCH
-	if (lid_is_open())
+	if (!IS_ENABLED(CONFIG_LID_SWITCH) || lid_is_open())
 		*memmap_switches |= EC_SWITCH_LID_OPEN;
 	else
 		*memmap_switches &= ~EC_SWITCH_LID_OPEN;
+<<<<<<< HEAD
 #else
 	/* For lid-less systems, lid looks always open */
 	*memmap_switches |= EC_SWITCH_LID_OPEN;
 #endif
 	if ((flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
+=======
+
+	if ((crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
+>>>>>>> chromium/main
 		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
@@ -92,11 +97,7 @@ static void switch_init(void)
 	 * reading the write protect signal, but we enable the interrupt for it
 	 * here.  Take ownership of WP back, or refactor it to its own module.
 	 */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	gpio_enable_interrupt(GPIO_WP);
-#else
-	gpio_enable_interrupt(GPIO_WP_L);
-#endif
+	write_protect_enable_interrupt();
 }
 DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_INIT_SWITCH);
 
@@ -106,18 +107,14 @@ void switch_interrupt(enum gpio_signal signal)
 }
 
 #ifdef CONFIG_CMD_MMAPINFO
-static int command_mmapinfo(int argc, char **argv)
+static int command_mmapinfo(int argc, const char **argv)
 {
 	uint8_t *memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
 	uint8_t val = *memmap_switches;
 	int i;
 	const char *explanation[] = {
-		"lid_open",
-		"powerbtn",
-		"wp_off",
-		"kbd_rec",
-		"gpio_rec",
-		"fake_dev",
+		"lid_open", "powerbtn", "wp_off",
+		"kbd_rec",  "gpio_rec", "fake_dev",
 	};
 	ccprintf("memmap switches = 0x%x\n", val);
 	for (i = 0; i < ARRAY_SIZE(explanation); i++)
@@ -126,7 +123,6 @@ static int command_mmapinfo(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
-			NULL,
+DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo, NULL,
 			"Print memmap switch state");
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,25 +16,25 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_PS2, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_PS2, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_PS2, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_PS2, format, ##args)
 
 #if !(DEBUG_PS2)
 #define DEBUG_CPRINTS(...)
 #define DEBUG_CPRINTF(...)
 #else
-#define DEBUG_CPRINTS(format, args...) cprints(CC_PS2, format, ## args)
-#define DEBUG_CPRINTF(format, args...) cprintf(CC_PS2, format, ## args)
+#define DEBUG_CPRINTS(format, args...) cprints(CC_PS2, format, ##args)
+#define DEBUG_CPRINTF(format, args...) cprintf(CC_PS2, format, ##args)
 #endif
 
 /*
  * Set WDAT3-0 and clear CLK3-0 in the PSOSIG register to
  * reset the shift mechanism.
  */
-#define PS2_SHIFT_MECH_RESET       0x47
+#define PS2_SHIFT_MECH_RESET 0x47
 
-#define PS2_TRANSACTION_TIMEOUT    (20 * MSEC)
-#define PS2_BUSY_RETRY             10
+#define PS2_TRANSACTION_TIMEOUT (20 * MSEC)
+#define PS2_BUSY_RETRY 10
 
 enum ps2_input_debounce_cycle {
 	PS2_IDB_1_CYCLE,
@@ -60,7 +60,7 @@ struct ps2_data {
 	void (*rx_handler_cb)(uint8_t data);
 };
 static struct ps2_data ps2_ch_data[NPCX_PS2_CH_COUNT] = {
-	 [0 ... (NPCX_PS2_CH_COUNT - 1)] =  { PS2_RX_MODE, NULL }
+	[0 ...(NPCX_PS2_CH_COUNT - 1)] = { PS2_RX_MODE, NULL }
 };
 
 /*
@@ -76,7 +76,7 @@ static void ps2_init(void)
 {
 	/* Disable the power down bit of PS/2 */
 	clock_enable_peripheral(CGC_OFFSET_PS2, CGC_PS2_MASK,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
+				CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Disable shift mechanism and configure PS/2 to received mode. */
 	NPCX_PS2_PSCON = 0x0;
@@ -90,10 +90,9 @@ static void ps2_init(void)
 	 * [4] - : WUE     = 1: Wake-Up Enable
 	 * [7] - : CLK_SEL = 1: Select Free-Run clock as the basic clock
 	 */
-	NPCX_PS2_PSIEN = BIT(NPCX_PS2_PSIEN_SOTIE) |
-				BIT(NPCX_PS2_PSIEN_EOTIE) |
-				BIT(NPCX_PS2_PSIEN_PS2_WUE) |
-				BIT(NPCX_PS2_PSIEN_PS2_CLK_SEL);
+	NPCX_PS2_PSIEN = BIT(NPCX_PS2_PSIEN_SOTIE) | BIT(NPCX_PS2_PSIEN_EOTIE) |
+			 BIT(NPCX_PS2_PSIEN_PS2_WUE) |
+			 BIT(NPCX_PS2_PSIEN_PS2_CLK_SEL);
 
 	/* Enable weak internal pull-up */
 	SET_BIT(NPCX_PS2_PSCON, NPCX_PS2_PSCON_WPUED);
@@ -106,8 +105,7 @@ static void ps2_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, ps2_init, HOOK_PRIO_DEFAULT);
 
-void ps2_enable_channel(int channel, int enable,
-					void (*callback)(uint8_t data))
+void ps2_enable_channel(int channel, int enable, void (*callback)(uint8_t data))
 {
 	if (channel >= NPCX_PS2_CH_COUNT) {
 		CPRINTS("Err:PS/2 CH exceed %d", NPCX_PS2_CH_COUNT);
@@ -125,7 +123,7 @@ void ps2_enable_channel(int channel, int enable,
 		/* Enable the relevant channel clock */
 		SET_BIT(NPCX_PS2_PSOSIG, NPCX_PS2_PSOSIG_CLK(channel));
 	} else {
-		channel_enabled_mask &=  ~BIT(NPCX_PS2_PSOSIG_CLK(channel));
+		channel_enabled_mask &= ~BIT(NPCX_PS2_PSOSIG_CLK(channel));
 		/* Disable the relevant channel clock */
 		CLEAR_BIT(NPCX_PS2_PSOSIG, NPCX_PS2_PSOSIG_CLK(channel));
 		ps2_ch_data[channel].rx_handler_cb = NULL;
@@ -144,7 +142,9 @@ static int ps2_is_busy(void)
 	 * (due to Shift Mechanism is reset)
 	 */
 	return (IS_BIT_SET(NPCX_PS2_PSTAT, NPCX_PS2_PSTAT_SOT) |
-		IS_BIT_SET(NPCX_PS2_PSTAT, NPCX_PS2_PSTAT_EOT)) ? 1 : 0;
+		IS_BIT_SET(NPCX_PS2_PSTAT, NPCX_PS2_PSTAT_EOT)) ?
+		       1 :
+		       0;
 }
 
 int ps2_transmit_byte(int channel, uint8_t data)
@@ -194,7 +194,7 @@ int ps2_transmit_byte(int channel, uint8_t data)
 
 	/* Wait for interrupt */
 	event = task_wait_event_mask(TASK_EVENT_PS2_DONE,
-					PS2_TRANSACTION_TIMEOUT);
+				     PS2_TRANSACTION_TIMEOUT);
 	task_waiting = TASK_ID_INVALID;
 
 	if (event == TASK_EVENT_TIMER) {
@@ -216,7 +216,6 @@ int ps2_transmit_byte(int channel, uint8_t data)
 
 	DEBUG_CPRINTF("Evt:0x%08x\n", event);
 	return (event == TASK_EVENT_PS2_DONE) ? EC_SUCCESS : EC_ERROR_TIMEOUT;
-
 }
 
 static void ps2_stop_inactive_ch_clk(uint8_t active_ch)
@@ -224,20 +223,17 @@ static void ps2_stop_inactive_ch_clk(uint8_t active_ch)
 	uint8_t mask;
 
 	mask = ~NPCX_PS2_PSOSIG_CLK_MASK_ALL |
-					BIT(NPCX_PS2_PSOSIG_CLK(active_ch));
+	       BIT(NPCX_PS2_PSOSIG_CLK(active_ch));
 	NPCX_PS2_PSOSIG &= mask;
-
 }
 
 static int ps2_is_rx_error(uint8_t ch)
 {
-	uint8_t	status;
+	uint8_t status;
 
 	status = NPCX_PS2_PSTAT &
-				(BIT(NPCX_PS2_PSTAT_PERR) |
-				 BIT(NPCX_PS2_PSTAT_RFERR));
+		 (BIT(NPCX_PS2_PSTAT_PERR) | BIT(NPCX_PS2_PSTAT_RFERR));
 	if (status) {
-
 		if (status & BIT(NPCX_PS2_PSTAT_PERR))
 			CPRINTF("PS2 CH %d RX parity error\n", ch);
 		if (status & BIT(NPCX_PS2_PSTAT_RFERR))
@@ -247,7 +243,7 @@ static int ps2_is_rx_error(uint8_t ch)
 		return 0;
 }
 
-void ps2_int_handler(void)
+static void ps2_int_handler(void)
 {
 	uint8_t active_ch;
 
@@ -270,7 +266,7 @@ void ps2_int_handler(void)
 
 	/* PS/2 Start of Transaction */
 	if (IS_BIT_SET(NPCX_PS2_PSTAT, NPCX_PS2_PSTAT_SOT) &&
-			IS_BIT_SET(NPCX_PS2_PSIEN, NPCX_PS2_PSIEN_SOTIE)) {
+	    IS_BIT_SET(NPCX_PS2_PSIEN, NPCX_PS2_PSIEN_SOTIE)) {
 		DEBUG_CPRINTF("SOT-");
 		/*
 		 * Once set, SOT is not cleared until the shift mechanism
@@ -278,7 +274,7 @@ void ps2_int_handler(void)
 		 * first occurrence of an SOT interrupt.
 		 */
 		CLEAR_BIT(NPCX_PS2_PSIEN, NPCX_PS2_PSIEN_SOTIE);
-	/* PS/2 End of Transaction */
+		/* PS/2 End of Transaction */
 	} else if (IS_BIT_SET(NPCX_PS2_PSTAT, NPCX_PS2_PSTAT_EOT)) {
 		DEBUG_CPRINTF("EOT-");
 		CLEAR_BIT(NPCX_PS2_PSIEN, NPCX_PS2_PSIEN_EOTIE);
@@ -293,12 +289,12 @@ void ps2_int_handler(void)
 			/* Change the PS/2 module to receive mode */
 			CLEAR_BIT(NPCX_PS2_PSCON, NPCX_PS2_PSCON_XMT);
 			ps2_ch_data[active_ch].opr_mode = PS2_RX_MODE;
-			task_set_event(task_waiting, TASK_EVENT_PS2_DONE, 0);
+			task_set_event(task_waiting, TASK_EVENT_PS2_DONE);
 		} else {
 			if (!ps2_is_rx_error(active_ch)) {
 				uint8_t data_read = NPCX_PS2_PSDAT;
 				struct ps2_data *ps2_ptr =
-							&ps2_ch_data[active_ch];
+					&ps2_ch_data[active_ch];
 
 				DEBUG_CPRINTF("Recv:0x%02x", data_read);
 				if (ps2_ptr->rx_handler_cb)
@@ -316,12 +312,11 @@ void ps2_int_handler(void)
 		SET_BIT(NPCX_PS2_PSIEN, NPCX_PS2_PSIEN_EOTIE);
 	}
 	DEBUG_CPRINTF("\n");
-
 }
 DECLARE_IRQ(NPCX_IRQ_PS2, ps2_int_handler, 5);
 
 #ifdef CONFIG_CMD_PS2
-static int command_ps2ench(int argc, char **argv)
+static int command_ps2ench(int argc, const char **argv)
 {
 	uint8_t ch;
 	uint8_t enable;
@@ -341,11 +336,10 @@ static int command_ps2ench(int argc, char **argv)
 
 	return 0;
 }
-DECLARE_CONSOLE_COMMAND(ps2ench, command_ps2ench,
-			"ps2_ench channel 1|0",
+DECLARE_CONSOLE_COMMAND(ps2ench, command_ps2ench, "ps2_ench channel 1|0",
 			"Enable/Disable PS/2 channel");
 
-static int command_ps2write(int argc, char **argv)
+static int command_ps2write(int argc, const char **argv)
 {
 	uint8_t ch, data;
 	char *e;
@@ -360,7 +354,6 @@ static int command_ps2write(int argc, char **argv)
 	ps2_transmit_byte(ch, data);
 	return 0;
 }
-DECLARE_CONSOLE_COMMAND(ps2write, command_ps2write,
-		"ps2_write channel data",
-		"Write data byte to PS/2 channel ");
+DECLARE_CONSOLE_COMMAND(ps2write, command_ps2write, "ps2_write channel data",
+			"Write data byte to PS/2 channel ");
 #endif

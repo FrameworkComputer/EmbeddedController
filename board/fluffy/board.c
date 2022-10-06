@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Fluffy configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "ec_version.h"
@@ -20,20 +19,20 @@
 
 #include "gpio_list.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("Fluffy"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("Fluffy"),
 	/* This gets filled in at runtime. */
-	[USB_STR_SERIALNO]     = USB_STRING_DESC(""),
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_SERIALNO] = USB_STRING_DESC(""),
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Fluffy Shell"),
 };
 
@@ -78,7 +77,7 @@ static void print_port_status(void)
 	CPRINTS("USB MUX: %s", gpio_get_level(GPIO_EN_USB_MUX2) ? "ON" : "OFF");
 }
 
-static int command_cc_flip(int argc, char *argv[])
+static int command_cc_flip(int argc, const char *argv[])
 {
 	int enable;
 
@@ -107,20 +106,19 @@ static int command_cc_flip(int argc, char *argv[])
 	print_port_status();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ccflip, command_cc_flip,
-			"<enable/disable>",
+DECLARE_CONSOLE_COMMAND(ccflip, command_cc_flip, "<enable/disable>",
 			"enable or disable flipping CC orientation");
 /*
  * Support tca6416 I2C ioexpander.
  */
-#define GPIOX_I2C_ADDR_FLAGS	0x20
-#define GPIOX_IN_PORT_A		0x0
-#define GPIOX_IN_PORT_B		0x1
-#define GPIOX_OUT_PORT_A	0x2
-#define GPIOX_OUT_PORT_B	0x3
-#define GPIOX_DIR_PORT_A	0x6
-#define GPIOX_DIR_PORT_B	0x7
-#define I2C_PORT_MASTER		1
+#define GPIOX_I2C_ADDR_FLAGS 0x20
+#define GPIOX_IN_PORT_A 0x0
+#define GPIOX_IN_PORT_B 0x1
+#define GPIOX_OUT_PORT_A 0x2
+#define GPIOX_OUT_PORT_B 0x3
+#define GPIOX_DIR_PORT_A 0x6
+#define GPIOX_DIR_PORT_B 0x7
+#define I2C_PORT_MASTER 1
 
 static void i2c_expander_init(void)
 {
@@ -129,12 +127,12 @@ static void i2c_expander_init(void)
 	/*
 	 * Setup P00, P02, P04, P10, and P12 on the I/O expander as an output.
 	 */
-	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS,
-		   GPIOX_DIR_PORT_A, 0xea);
-	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS,
-		   GPIOX_DIR_PORT_B, 0xfa);
+	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS, GPIOX_DIR_PORT_A,
+		   0xea);
+	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS, GPIOX_DIR_PORT_B,
+		   0xfa);
 }
-DECLARE_HOOK(HOOK_INIT, i2c_expander_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, i2c_expander_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Write to a GPIO register on the tca6416 I2C ioexpander. */
 static void write_ioexpander(int bank, int gpio, int reg, int val)
@@ -142,15 +140,13 @@ static void write_ioexpander(int bank, int gpio, int reg, int val)
 	int tmp;
 
 	/* Read output port register */
-	i2c_read8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS,
-		  reg + bank, &tmp);
+	i2c_read8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS, reg + bank, &tmp);
 	if (val)
 		tmp |= BIT(gpio);
 	else
 		tmp &= ~BIT(gpio);
 	/* Write back modified output port register */
-	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS,
-		   reg + bank, tmp);
+	i2c_write8(I2C_PORT_MASTER, GPIOX_I2C_ADDR_FLAGS, reg + bank, tmp);
 }
 
 enum led_ch {
@@ -228,7 +224,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-
 enum usb_mux {
 	USB_MUX0 = 0,
 	USB_MUX1,
@@ -262,7 +257,7 @@ static void set_mux(enum usb_mux mux, uint8_t val)
 		break;
 
 	default:
-		break;
+		return;
 	}
 
 	val &= 0x7;
@@ -273,7 +268,7 @@ static void set_mux(enum usb_mux mux, uint8_t val)
 }
 
 /* This function assumes only 1 port works at a time. */
-static int command_portctl(int argc, char **argv)
+static int command_portctl(int argc, const char **argv)
 {
 	int port;
 	int enable;
@@ -294,7 +289,7 @@ static int command_portctl(int argc, char **argv)
 
 	gpio_set_level(enabled_port, 0);
 	if (enabled_port != GPIO_EN_C0 + port)
-		CPRINTS("Port %d: disabled", enabled_port-GPIO_EN_C0);
+		CPRINTS("Port %d: disabled", enabled_port - GPIO_EN_C0);
 
 	/* Allow time for an "unplug" to allow VBUS and CC to fall. */
 	usleep(1 * SECOND);
@@ -310,17 +305,17 @@ static int command_portctl(int argc, char **argv)
 		gpio_set_level(enabled_port, 1);
 
 		if (port < 8) {
-			set_mux(USB_MUX0, 7-port);
+			set_mux(USB_MUX0, 7 - port);
 			set_mux(USB_MUX2, 3);
 		} else if (port < 16) {
 			if (port < 14)
-				set_mux(USB_MUX1, 5-(port-8));
+				set_mux(USB_MUX1, 5 - (port - 8));
 			else
-				set_mux(USB_MUX1, 7-(port-14));
+				set_mux(USB_MUX1, 7 - (port - 14));
 
 			set_mux(USB_MUX2, 1);
 		} else {
-			set_mux(USB_MUX2, 7-(port-16));
+			set_mux(USB_MUX2, 7 - (port - 16));
 		}
 
 		gpio_set_level(GPIO_EN_USB_MUX2, 1);
@@ -338,11 +333,11 @@ DECLARE_CONSOLE_COMMAND(portctl, command_portctl,
 			"<port# 0-19> <enable/disable>",
 			"enable or disable a port");
 
-static int command_status(int argc, char **argv)
+static int command_status(int argc, const char **argv)
 {
 	int vbus_mv = adc_read_channel(ADC_PPVAR_VBUS_DUT);
 
-	CPRINTS("PPVAR_VBUS_DUT: %dmV (raw: %d)", vbus_mv*7692/1000,
+	CPRINTS("PPVAR_VBUS_DUT: %dmV (raw: %d)", vbus_mv * 7692 / 1000,
 		vbus_mv);
 	print_port_status();
 
@@ -389,7 +384,8 @@ void show_output_voltage_on_leds(void)
 			set_led(i, i < max_on_exclusive);
 
 		act = (vbus_mv * 76667) / 10000;
-		if ((vbus_mv > prev_vbus_mv+2) || (vbus_mv < prev_vbus_mv-2)) {
+		if ((vbus_mv > prev_vbus_mv + 2) ||
+		    (vbus_mv < prev_vbus_mv - 2)) {
 			CPRINTS("PPVAR_VBUS_DUT: %d mV (raw: %d)", act,
 				vbus_mv);
 			prev_vbus_mv = vbus_mv;
@@ -401,6 +397,5 @@ void show_output_voltage_on_leds(void)
 	 * a hook with a HOOK_TICK period is to allow the LED sweep sequence
 	 * when the board boots up.
 	 */
-	hook_call_deferred(&show_output_voltage_on_leds_data,
-			   500 * MSEC);
+	hook_call_deferred(&show_output_voltage_on_leds_data, 500 * MSEC);
 }

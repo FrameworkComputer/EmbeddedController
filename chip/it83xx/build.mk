@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2013 The Chromium OS Authors. All rights reserved.
+# Copyright 2013 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -29,12 +29,12 @@ chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_DAC)+=dac.o
 chip-$(CONFIG_HOSTCMD_X86)+=lpc.o ec2i.o
-chip-$(CONFIG_HOSTCMD_ESPI)+=espi.o
-chip-$(CONFIG_SPI_MASTER)+=spi_master.o
+chip-$(CONFIG_HOST_INTERFACE_ESPI)+=espi.o
+chip-$(CONFIG_SPI_CONTROLLER)+=spi_controller.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_PECI)+=peci.o
-ifndef CONFIG_KEYBOARD_NOT_RAW
+ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
-chip-$(CONFIG_I2C_MASTER)+=i2c.o
-chip-$(CONFIG_I2C_SLAVE)+=i2c_slave.o
+chip-$(CONFIG_I2C_CONTROLLER)+=i2c.o
+chip-$(CONFIG_I2C_PERIPHERAL)+=i2c_peripheral.o

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -32,7 +32,7 @@ enum npcx_mft_module {
 enum npcx_mft_clk_src {
 	TCKC_NOCLK = 0,
 	TCKC_PRESCALE_APB1_CLK = 1,
-	TCKC_LFCLK = 5,
+	TCKC_LFCLK = 4,
 };
 
 /* Data structure to define MFT channels. */

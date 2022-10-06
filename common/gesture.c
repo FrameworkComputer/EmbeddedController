@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,9 +19,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_GESTURE, outstr)
-#define CPRINTS(format, args...) cprints(CC_GESTURE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_GESTURE, format, ## args)
-
+#define CPRINTS(format, args...) cprints(CC_GESTURE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_GESTURE, format, ##args)
 
 /*
  * Double tap detection parameters
@@ -34,16 +33,16 @@
  * which to check for relatively calm periods. In between the two impulses
  * there is a minimum and maximum interstice time allowed.
  */
-#define OUTER_WINDOW \
+#define OUTER_WINDOW                         \
 	(CONFIG_GESTURE_TAP_OUTER_WINDOW_T / \
 	 CONFIG_GESTURE_SAMPLING_INTERVAL_MS)
-#define INNER_WINDOW \
+#define INNER_WINDOW                         \
 	(CONFIG_GESTURE_TAP_INNER_WINDOW_T / \
 	 CONFIG_GESTURE_SAMPLING_INTERVAL_MS)
-#define MIN_INTERSTICE \
+#define MIN_INTERSTICE                         \
 	(CONFIG_GESTURE_TAP_MIN_INTERSTICE_T / \
 	 CONFIG_GESTURE_SAMPLING_INTERVAL_MS)
-#define MAX_INTERSTICE \
+#define MAX_INTERSTICE                         \
 	(CONFIG_GESTURE_TAP_MAX_INTERSTICE_T / \
 	 CONFIG_GESTURE_SAMPLING_INTERVAL_MS)
 #define MAX_WINDOW OUTER_WINDOW
@@ -67,10 +66,10 @@ enum tap_states {
 
 /* Tap sensor to use */
 static struct motion_sensor_t *sensor =
-&motion_sensors[CONFIG_GESTURE_SENSOR_DOUBLE_TAP];
+	&motion_sensors[CONFIG_GESTURE_TAP_SENSOR];
 
 /* Tap state information */
-static int history_z[MAX_WINDOW];  /* Changes in Z */
+static int history_z[MAX_WINDOW]; /* Changes in Z */
 static int history_xy[MAX_WINDOW]; /* Changes in X and Y */
 static int state, history_idx;
 static int history_initialized, history_init_index;
@@ -166,7 +165,7 @@ static int gesture_tap_for_battery(void)
 			(OUTER_WINDOW - INNER_WINDOW);
 	delta_z_inner = sum_z_inner * 1000 / INNER_WINDOW;
 	delta_xy_outer = (sum_xy_outer - sum_xy_inner) * 1000 /
-			(OUTER_WINDOW - INNER_WINDOW);
+			 (OUTER_WINDOW - INNER_WINDOW);
 	delta_xy_inner = sum_xy_inner * 1000 / INNER_WINDOW;
 
 	state_cnt++;
@@ -253,13 +252,11 @@ static int gesture_tap_for_battery(void)
 	}
 
 	/* On state transitions, print debug info */
-	if (tap_debug &&
-	    (state != state_p ||
-	     (state_cnt % 10000 == 9999))) {
+	if (tap_debug && (state != state_p || (state_cnt % 10000 == 9999))) {
 		/* make sure we don't divide by 0 */
 		if (delta_z_outer == 0 || delta_xy_inner == 0)
-			CPRINTS("tap st %d->%d, error div by 0",
-				state_p, state);
+			CPRINTS("tap st %d->%d, error div by 0", state_p,
+				state);
 		else
 			CPRINTS("tap st %d->%d, st_cnt %-3d "
 				"Z_in:Z_out %-3d, Z_in:XY_in %-3d "
@@ -267,10 +264,8 @@ static int gesture_tap_for_battery(void)
 				"dZ_out %-8.3d",
 				state_p, state, state_cnt,
 				delta_z_inner / delta_z_outer,
-				delta_z_inner / delta_xy_inner,
-				delta_z_inner,
-				delta_z_inner_max,
-				delta_z_outer);
+				delta_z_inner / delta_xy_inner, delta_z_inner,
+				delta_z_inner_max, delta_z_outer);
 	}
 
 	return ret;
@@ -281,8 +276,7 @@ static void gesture_chipset_resume(void)
 	/* disable tap detection */
 	tap_detection = 0;
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, gesture_chipset_resume,
-	     GESTURE_HOOK_PRIO);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, gesture_chipset_resume, GESTURE_HOOK_PRIO);
 
 static void gesture_chipset_suspend(void)
 {
@@ -295,8 +289,7 @@ static void gesture_chipset_suspend(void)
 	state = TAP_IDLE;
 	tap_detection = 1;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, gesture_chipset_suspend,
-	     GESTURE_HOOK_PRIO);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, gesture_chipset_suspend, GESTURE_HOOK_PRIO);
 
 void gesture_calc(uint32_t *event)
 {
@@ -306,17 +299,17 @@ void gesture_calc(uint32_t *event)
 
 	if (gesture_tap_for_battery())
 		*event |= TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
-				MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
+			MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
 }
 
 /*****************************************************************************/
 /* Console commands */
-static int command_tap_info(int argc, char **argv)
+static int command_tap_info(int argc, const char **argv)
 {
 	int val;
 
-	ccprintf("tap:   %s\n", (tap_detection && !lid_is_open()) ?
-					"on" : "off");
+	ccprintf("tap:   %s\n",
+		 (tap_detection && !lid_is_open()) ? "on" : "off");
 
 	if (argc > 1) {
 		if (!parse_bool(argv[1], &val))
@@ -329,7 +322,5 @@ static int command_tap_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(tapinfo, command_tap_info,
-			"debug on/off",
+DECLARE_CONSOLE_COMMAND(tapinfo, command_tap_info, "debug on/off",
 			"Print tap information");
-

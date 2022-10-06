@@ -1,0 +1,21 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig EMUL_ISL923X
+	bool "ISL923X switchcap emulator"
+	default y
+	depends on DT_HAS_CROS_ISL923X_EMUL_ENABLED
+	depends on I2C_EMUL
+	help
+	  Enable the ISL923X emulator. This driver uses the emulated I2C bus. It
+	  is used to test the isl923x driver. Emulator API is available in
+	  zephyr/include/emul/emul_isl923x.h
+
+if EMUL_ISL923X
+
+module = ISL923X_EMUL
+module-str = isl923x_emul
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # EMUL_ISL923X

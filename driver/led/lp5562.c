@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -123,7 +123,7 @@ int lp5562_set_pc(int engine, int val)
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_POWERLED
-static int command_lp5562(int argc, char **argv)
+static int command_lp5562(int argc, const char **argv)
 {
 	if (argc == 4) {
 		char *e;

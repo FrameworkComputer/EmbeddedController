@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,12 +8,12 @@
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "intel_x86.h"
+#include "power/intel_x86.h"
 #include "task.h"
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /*
  * force_shutdown is used to maintain chipset shutdown request. This request
@@ -51,7 +51,7 @@ const struct power_signal_info power_signal_list[] = {
 		"ALL_SYS_PGOOD",
 	},
 	[X86_RSMRST_N] = {
-		GPIO_RSMRST_L_PGOOD,
+		GPIO_PG_EC_RSMRST_ODL,
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"RSMRST_L",
 	},
@@ -145,7 +145,6 @@ enum power_state power_handle_state(enum power_state state)
 
 		new_state = POWER_S5G3;
 		goto rsmrst_handle;
-
 	}
 
 	/* If force shutdown is requested, perform that. */
@@ -178,6 +177,6 @@ int chipset_pltrst_is_valid(void)
 	 * Invalid PLTRST# from SOC unless RSMRST#
 	 * from PMIC through EC to soc is deasserted.
 	 */
-	return (gpio_get_level(GPIO_RSMRST_L_PGOOD) &&
+	return (gpio_get_level(GPIO_PG_EC_RSMRST_ODL) &&
 		gpio_get_level(GPIO_PCH_RSMRST_L));
 }

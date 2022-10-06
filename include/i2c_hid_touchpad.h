@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,7 +13,7 @@
 #include "stdint.h"
 
 /* Max fingers to support */
-#define I2C_HID_TOUCHPAD_MAX_FINGERS	5
+#define I2C_HID_TOUCHPAD_MAX_FINGERS 5
 
 /*
  * Struct holding a touchpad event

@@ -1,0 +1,273 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_KEYBOARD
+	bool "Keyboard support"
+	select HAS_TASK_KEYSCAN
+	default n if ARCH_POSIX
+	default y
+	help
+	  Enable compilation of support for scanning a keyboard and providing
+	  the resulting input to the AP over the host interface. This consists
+	  of a keyboard-scanning task which provides key scans via it calling
+	  keyboard_state_changed() (for i8042) or its client calling
+	  keyboard_scan_get_state() (for MKBP).
+
+	  Enabling this automatically enables HAS_TASK_KEYSCAN since keyboard
+	  scanning must run in its own task.
+
+if PLATFORM_EC_KEYBOARD
+
+choice PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
+	prompt "Select the keyboard protocol to use"
+	help
+	  Select the keyboard protocol used to communicate key presses to the
+	  AP. PLATFORM_EC_KEYBOARD_PROTOCOL_8042 is supported by x86-compatible
+	  application processors, and PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP is
+	  used for ARM application processors.
+
+config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+	bool "i8042"
+	select HAS_TASK_KEYPROTO
+	help
+	  Use the i8042 protocol to communicate with the AP. This dates from the
+	  Intel 8042 keyboard controller chip released in 1976. It uses two-way
+	  communication via a few 8-bit registers, allowing key codes to be
+	  sent to the AP when keys are pressed and released.
+
+	  See here for docs: https://wiki.osdev.org/%228042%22_PS/2_Controller
+
+config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
+	bool "mkbp"
+	help
+	  Use the MKBP protocol to communicate with the AP. This protocol is
+	  usually used on ARM-based platforms. It sends the raw scan code, like
+	  (row, col), to the AP and the kernel driver will map this scan code to
+	  a key.
+
+endchoice # PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
+
+config PLATFORM_EC_KEYBOARD_DISCRETE
+	bool "Support discrete Keyboard"
+	help
+	  Enable support for a discrete Keyboard if the platform needs one
+	  or the raw Keyboard support is not built-in in the EC.
+
+config PLATFORM_EC_KEYBOARD_DEBUG
+	bool "Enable keyboard debug prints"
+	depends on PLATFORM_EC_SYSTEM_UNLOCKED
+	help
+	  Enable keyboard debug prints to show up in early bringup, for example
+	  if the board is currently headless and keyboard functionality is being
+	  checked.
+
+config PLATFORM_EC_KEYBOARD_KEYPAD
+	bool "Support a numeric keypad"
+	help
+	  Enable support for a keypad, a palm-sized keyboard section usually
+	  placed on the far right. This contains nuumber keys and also some
+	  commonly used symbols, to help speed up numeric data entry.
+
+config PLATFORM_EC_KEYBOARD_VIVALDI
+	bool "Vivaldi keyboard support"
+	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+	default y
+	help
+	  Enable code for Vivaldi keyboard (standard for new Chromium OS
+	  devices). A Chromium OS device is Vivaldi compatible if the keyboard
+	  matrix complies with: go/vivaldi-matrix.
+
+	  Vivaldi code enables:
+	  - A response to EC_CMD_GET_KEYBD_CONFIG command.
+	  - Boards can specify their custom layout for top keys.
+
+config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	bool "Support keyboard customization"
+	help
+		Enable support for customization keyboard, some boards need to custom matrix
+		because those board keyboard layout doesn't follow a common matrix.
+
+		If define, the board layer
+		needs to implement:
+		1. the scancode_set2 and keycap_label array
+		2. keyboard_customization.h which is similar to keyboard_config.h
+
+		Note that if your board has the standard chromeos keyboard layout other
+		than the top row, and you are looking only for top row customization,
+		then you should be looking at overriding board_vivaldi_keybd_config() instead.
+
+choice PLATFORM_EC_KEYBOARD_PWRBTN_MODE
+	prompt "Select the impact of pressing the power button"
+	help
+	  On some boards one of the keyboard-scan inputs is affected by pressing
+	  the power button. When the power button is pressed, that input needs
+	  to be ignored in that case.
+
+config PLATFORM_EC_KEYBOARD_PWRBTN_INDEPENDENT
+	bool "No impact on keyboard-scan inputs"
+	help
+	  Select this if pressing the power button does not affect any
+	  keyboard-scan inputs.
+
+config PLATFORM_EC_KEYBOARD_PWRBTN_ASSERTS_KSI2
+	bool "Forces KSI2 to be asserted"
+	help
+	  Enable this if KSI2 is stuck 'asserted' for all scan columns if the
+	  power button is held. This applies if the refresh key is on KSI2.
+	  The GSC will assert this row for all columns during a recovery boot.
+
+config PLATFORM_EC_KEYBOARD_PWRBTN_ASSERTS_KSI3
+	bool "Forces KSI3 to be asserted"
+	help
+	  Enable this if KSI3 is stuck 'asserted' for all scan columns if the
+	  power button is held. This applies if the refresh key is on KSI3.
+	  The GSC will assert this row for all columns during a recovery boot.
+
+endchoice # PLATFORM_EC_KEYBOARD_PWRBTN_MODE
+
+config PLATFORM_EC_KEYBOARD_COL2_INVERTED
+	bool "A mechanism for passing KSO2 to H1 which inverts the signal"
+	help
+	  This option enables a mechanism for passing the column 2
+	  to H1 which inverts the signal. The signal passing through H1
+	  adds more delay. Need a larger delay value. Otherwise, pressing
+	  Refresh key will also trigger T key, which is in the next scanning
+	  column line. See http://b/156007029.
+
+	  Your board file must define the node alias "gpio-kbd-kso2" that points
+	  to the GPIO pin used for the column 2 output.
+
+config PLATFORM_EC_KEYBOARD_REFRESH_ROW3
+	bool "Move the refresh key matrix to row 3 instead of row 2"
+	help
+	  The Vivaldi keyboards have the refresh key on row 3 instead of row 2.
+	  The legacy keyboards with the assistant key also move the refresh key
+	  matrix to row 3. This is used by the boot key detection code to
+	  determine if the refresh key is held down at boot.
+
+config PLATFORM_EC_KEYBOARD_SCAN_ADC
+	bool "Keyboard supports antighost feature"
+	help
+	  Enable this to support anti-ghost feature. KSI lines need to be
+	  connected to adc channels to identify key presses by reading adc
+	  voltage.
+
+config PLATFORM_EC_VOLUME_BUTTONS
+	bool "Board has volume-up and volume-down buttons"
+	help
+	  Enable this if the board has physical buttons for the volume controls.
+	  These are buttons controlled by GPIOs and are not part of the keyboard
+	  matrix.
+
+	  Your board must define GPIO_VOLUME_UP_L and GPIO_VOLUME_DOWN_L as
+	  GPIOs names or as aliases in the GPIO devicetree configuration.
+
+config PLATFORM_EC_BUTTONS_RUNTIME_CONFIG
+	bool "Enable buttons runtime configuration"
+	help
+	  This command allow the runtime configuration of the buttons[]
+	  array.
+
+config PLATFORM_EC_CMD_BUTTON
+	bool "Console command: button"
+	help
+	  This command simulates button press. The buttons are like volume-up,
+	  volume-down, and recovery buttons.
+
+config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
+	bool "Console command: ksstate, kbpress, 8042"
+	default y if PLATFORM_EC_KEYBOARD
+	help
+	  Enable keyboard related console commands.
+
+	    ksstate     - Show or toggle printing keyboard scan state
+	    kbpress     - Simulate keypress
+
+	  If PLATFORM_EC_KEYBOARD_PROTOCOL_8042 is enabled, it includes 8042
+	  command which prints the state of the i8042 keyboard protocol and
+	  includes the following subcommands:
+
+	    codeset	- Get/set keyboard codeset
+	    ctrlram	- Get/set keyboard controller RAM
+	    internal    - Show internal information
+	    kbd		- Print or toggle keyboard info
+	    kblog	- Print or toggle keyboard event log (current disabled)
+	    typematic	- Get/set typematic delays
+
+config PLATFORM_EC_PWM_KBLIGHT
+	bool "PWM keyboard backlight"
+	default y
+	depends on DT_HAS_CROS_EC_KBLIGHT_PWM_ENABLED
+	select PLATFORM_EC_PWM_HC
+	help
+	  Enables a PWM-controlled keyboard backlight controlled by a PWM signal
+	  connected directly to the EC chipset. The board devicetree file must
+	  define a "cros-ec,kblight-pwm" compatible device node.
+
+config PLATFORM_EC_KBLIGHT_ENABLE_PIN
+	bool "Keyboard backlight enable pin"
+	help
+	  Enables control of the keyboard backlight through a GPIO enable and
+	  disable pin.  This pin must be defined as GPIO_EN_KEYBOARD_BACKLIGHT.
+
+config PLATFORM_EC_KEYBOARD_STRICT_DEBOUNCE
+	bool "Keyboard strict debouncer"
+	help
+	  Enable strict debouncer. A strict debouncer waits until debounce
+	  is done before registering key up/down while a non-strict debouncer
+	  registers a key up/down as soon as a key is pressed or released.
+	  If a strict debouncer is used, it's recommended to set
+	  debounce_down_us and debounce_up_us to an equal value. This guarantees
+	  key events are registered in the order the keys are pressed.
+
+endif # PLATFORM_EC_KEYBOARD
+
+
+menuconfig PLATFORM_EC_RGB_KEYBOARD
+	bool "RGB keyboard support"
+	select HAS_TASK_RGBKBD
+	help
+	  Enable RGB keyboard backlight control. This consists of a RGB matrix
+	  control task. Note this feature does not include key scanning.
+
+if PLATFORM_EC_RGB_KEYBOARD
+
+config PLATFORM_EC_RGB_KEYBOARD_DEBUG
+	bool "RGB Keyboard Debug"
+	default n
+	help
+	  Enable debug messages from a RGB keyboard task.
+
+choice PLATFORM_EC_RGBKBD_DEMO
+	prompt "RGB Keyboard demo to run on reset"
+	optional
+	help
+	  Enable demo of RGB keyboard to run on reset.
+
+config PLATFORM_EC_RGBKBD_DEMO_FLOW
+	bool "Flow"
+	help
+	  In each iteration, a new color is placed in (0,0) and the rest of
+	  LEDs copy colors from adjacent LEDs.
+
+config PLATFORM_EC_RGBKBD_DEMO_DOT
+	bool "Dot"
+	help
+	  A red dot is placed on (0,0) and traverses the grid from top to buttom
+	  left to right. After the entire matrix is traversed, it's repeated with
+	  a new color.
+
+endchoice # PLATFORM_EC_RGBKBD_DEMO
+
+config PLATFORM_EC_LED_DRIVER_IS31FL3743B
+	bool "Driver for IS31FL3743B LED controller"
+	help
+	  Enable driver for IS31FL3743B LED controller.
+
+config PLATFORM_EC_LED_DRIVER_AW20198
+	bool "Driver for AW20198 LED controller"
+	help
+	  Enable driver for AW20198 LED controller.
+
+endif # PLATFORM_EC_RGB_KEYBOARD

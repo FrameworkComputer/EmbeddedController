@@ -1,17 +1,17 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-#include "chip/mt_scp/ipi_chip.h"
-#include "chip/mt_scp/registers.h"
 #include "console.h"
 #include "dma.h"
 #include "hooks.h"
+#include "ipi_chip.h"
 #include "isp_p1_srv.h"
-#include "task.h"
 #include "queue.h"
 #include "queue_policies.h"
+#include "registers.h"
+#include "task.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
@@ -20,19 +20,21 @@
 static struct consumer const event_isp_consumer;
 static void event_isp_written(struct consumer const *consumer, size_t count);
 
-static struct queue const event_isp_queue = QUEUE_DIRECT(8,
-	struct isp_msg, null_producer, event_isp_consumer);
+static struct queue const event_isp_queue =
+	QUEUE_DIRECT(8, struct isp_msg, null_producer, event_isp_consumer);
 
 static struct consumer const event_isp_consumer = {
 	.queue = &event_isp_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_isp_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
-void isp_msg_handler(void *data) {}
+void isp_msg_handler(void *data)
+{
+}
 #endif
 
 static void event_isp_written(struct consumer const *consumer, size_t count)

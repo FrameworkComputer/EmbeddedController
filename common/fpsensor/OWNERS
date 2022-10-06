@@ -3,5 +3,4 @@
 # Don't inherit owners from elsewhere in the manifest
 set noparent
 
-tomhughes@chromium.org
-adlr@chromium.org
+include chromiumos/platform2:/biod/OWNERS

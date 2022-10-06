@@ -1,104 +1,203 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Power and battery LED control for Volteer
+ * Power and battery LED control for Elemi
  */
 
+#include "battery.h"
 #include "charge_manager.h"
-#include "common.h"
+#include "charge_state.h"
+#include "chipset.h"
 #include "ec_commands.h"
-#include "hooks.h"
+#include "gpio.h"
+#include "host_command.h"
 #include "led_common.h"
-#include "led_pwm.h"
-#include "pwm.h"
+#include "hooks.h"
+
+#define BAT_LED_ON 0
+#define BAT_LED_OFF 1
+
+#define POWER_LED_ON 0
+#define POWER_LED_OFF 1
+
+#define LED_CYCLE_TIME_MS (2 * 1000)
+#define LED_TICKS_PER_CYCLE (LED_CYCLE_TIME_MS / HOOK_TICK_INTERVAL_MS)
+#define LED_ON_TIME_MS (1 * 1000)
+#define LED_ON_TICKS (LED_ON_TIME_MS / HOOK_TICK_INTERVAL_MS)
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_POWER_LED,
+	EC_LED_ID_LEFT_LED,
+	EC_LED_ID_RIGHT_LED,
 };
+
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-struct pwm_led led_color_map[] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED] =    {  100,   0,     0 },
-	[EC_LED_COLOR_GREEN] =  {    0, 100,     0 },
-	[EC_LED_COLOR_BLUE] =   {    0,   0,   100 },
-	/* The green LED seems to be brighter than the others, so turn down
-	 * green from its natural level for these secondary colors.
-	 */
-	[EC_LED_COLOR_YELLOW] = {  100,  70,     0 },
-	[EC_LED_COLOR_WHITE] =  {  100,  70,   100 },
-	[EC_LED_COLOR_AMBER] =  {  100,  20,     0 },
+enum led_color {
+	LED_OFF = 0,
+	LED_AMBER,
+	LED_WHITE,
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
-struct pwm_led pwm_leds[] = {
-	/* 2 RGB diffusers controlled by 1 set of 3 channels. */
-	[PWM_LED0] = {
-		.ch0 = PWM_CH_LED3_RED,
-		.ch1 = PWM_CH_LED2_GREEN,
-		.ch2 = PWM_CH_LED1_BLUE,
-		.enable = &pwm_enable,
-		.set_duty = &pwm_set_duty,
-	},
-};
+enum led_port { RIGHT_PORT = 0, LEFT_PORT };
+
+static void led_set_color_battery(int port, enum led_color color)
+{
+	enum gpio_signal amber_led, white_led;
+
+	amber_led = (port == RIGHT_PORT ? GPIO_C0_CHARGE_LED_AMBER_L :
+					  GPIO_C1_CHARGE_LED_AMBER_L);
+	white_led = (port == RIGHT_PORT ? GPIO_C0_CHARGE_LED_WHITE_L :
+					  GPIO_C1_CHARGE_LED_WHITE_L);
+
+	switch (color) {
+	case LED_WHITE:
+		gpio_set_level(white_led, BAT_LED_ON);
+		gpio_set_level(amber_led, BAT_LED_OFF);
+		break;
+	case LED_AMBER:
+		gpio_set_level(white_led, BAT_LED_OFF);
+		gpio_set_level(amber_led, BAT_LED_ON);
+		break;
+	case LED_OFF:
+		gpio_set_level(white_led, BAT_LED_OFF);
+		gpio_set_level(amber_led, BAT_LED_OFF);
+		break;
+	default:
+		break;
+	}
+}
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_RED] = 255;
-	brightness_range[EC_LED_COLOR_GREEN] = 255;
-	brightness_range[EC_LED_COLOR_BLUE] = 255;
+	switch (led_id) {
+	case EC_LED_ID_LEFT_LED:
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		brightness_range[EC_LED_COLOR_AMBER] = 1;
+		break;
+	case EC_LED_ID_RIGHT_LED:
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		brightness_range[EC_LED_COLOR_AMBER] = 1;
+		break;
+	default:
+		break;
+	}
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	enum pwm_led_id pwm_id;
-
-	/* Convert ec_led_id to pwm_led_id. */
-	if (led_id == EC_LED_ID_POWER_LED)
-		pwm_id = PWM_LED0;
-	else
-		return EC_ERROR_UNKNOWN;
-
-	if (brightness[EC_LED_COLOR_RED])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_RED);
-	else if (brightness[EC_LED_COLOR_GREEN])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_GREEN);
-	else if (brightness[EC_LED_COLOR_BLUE])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_BLUE);
-	else if (brightness[EC_LED_COLOR_YELLOW])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_YELLOW);
-	else if (brightness[EC_LED_COLOR_WHITE])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_WHITE);
-	else if (brightness[EC_LED_COLOR_AMBER])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
-	else
-		/* Otherwise, the "color" is "off". */
-		set_pwm_led_color(pwm_id, -1);
+	switch (led_id) {
+	case EC_LED_ID_LEFT_LED:
+		if (brightness[EC_LED_COLOR_WHITE] != 0)
+			led_set_color_battery(LEFT_PORT, LED_WHITE);
+		else if (brightness[EC_LED_COLOR_AMBER] != 0)
+			led_set_color_battery(LEFT_PORT, LED_AMBER);
+		else
+			led_set_color_battery(LEFT_PORT, LED_OFF);
+		break;
+	case EC_LED_ID_RIGHT_LED:
+		if (brightness[EC_LED_COLOR_WHITE] != 0)
+			led_set_color_battery(RIGHT_PORT, LED_WHITE);
+		else if (brightness[EC_LED_COLOR_AMBER] != 0)
+			led_set_color_battery(RIGHT_PORT, LED_AMBER);
+		else
+			led_set_color_battery(RIGHT_PORT, LED_OFF);
+		break;
+	default:
+		return EC_ERROR_PARAM1;
+	}
 
 	return EC_SUCCESS;
 }
 
-/* Illuminates the LED on the side of the active charging port. If not charging,
- * illuminates both LEDs.
+/*
+ * Set active charge port color to the parameter, turn off all others.
+ * If no port is active (-1), turn off all LEDs.
  */
-static void led_set_charge_port_tick(void)
+static void set_active_port_color(enum led_color color)
 {
-	int port;
-	int side_select_duty;
+	int port = charge_manager_get_active_charge_port();
 
-	port = charge_manager_get_active_charge_port();
-	switch (port) {
-	case 0:
-		side_select_duty = 100;
-		break;
-	case 1:
-		side_select_duty = 0;
-		break;
-	default:
-		side_select_duty = 50;
+	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+		led_set_color_battery(RIGHT_PORT,
+				      (port == RIGHT_PORT) ? color : LED_OFF);
+	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+		led_set_color_battery(LEFT_PORT,
+				      (port == LEFT_PORT) ? color : LED_OFF);
+}
+
+static void led_set_battery(void)
+{
+	static int battery_ticks;
+	static int suspend_ticks;
+
+	battery_ticks++;
+
+	/*
+	 * Override battery LEDs for Elemi, Elemi doesn't have power LED,
+	 * blinking both two side battery white LEDs to indicate
+	 * system suspend without charging state.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+	    charge_get_state() != PWR_STATE_CHARGE) {
+		suspend_ticks++;
+
+		led_set_color_battery(
+			RIGHT_PORT, suspend_ticks & 0x4 ? LED_WHITE : LED_OFF);
+		led_set_color_battery(
+			LEFT_PORT, suspend_ticks & 0x4 ? LED_WHITE : LED_OFF);
+		return;
 	}
 
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
+	suspend_ticks = 0;
+
+	switch (charge_get_state()) {
+	case PWR_STATE_CHARGE:
+		/* Always indicate when charging, even in suspend. */
+		set_active_port_color(LED_AMBER);
+		break;
+	case PWR_STATE_DISCHARGE:
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
+			if (charge_get_percent() < 10)
+				led_set_color_battery(
+					RIGHT_PORT,
+					(battery_ticks % LED_TICKS_PER_CYCLE <
+					 LED_ON_TICKS) ?
+						LED_WHITE :
+						LED_OFF);
+			else
+				led_set_color_battery(RIGHT_PORT, LED_OFF);
+		}
+
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+			led_set_color_battery(LEFT_PORT, LED_OFF);
+		break;
+	case PWR_STATE_ERROR:
+		set_active_port_color((battery_ticks & 0x2) ? LED_WHITE :
+							      LED_OFF);
+		break;
+	case PWR_STATE_CHARGE_NEAR_FULL:
+		set_active_port_color(LED_WHITE);
+		break;
+	case PWR_STATE_IDLE: /* External power connected in IDLE */
+		set_active_port_color(LED_WHITE);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		set_active_port_color(
+			(battery_ticks % LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
+				LED_AMBER :
+				LED_OFF);
+		break;
+	default:
+		/* Other states don't alter LED behavior */
+		break;
+	}
 }
-DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);
+
+/* Called by hook task every TICK */
+static void led_tick(void)
+{
+	led_set_battery();
+}
+DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -32,27 +32,26 @@
 #define CONFIG_USB_CONSOLE
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_STREAM  0
-#define USB_IFACE_GPIO    1
-#define USB_IFACE_SPI     2
+#define USB_IFACE_STREAM 0
+#define USB_IFACE_GPIO 1
+#define USB_IFACE_SPI 2
 #define USB_IFACE_CONSOLE 3
-#define USB_IFACE_COUNT   4
+#define USB_IFACE_COUNT 4
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL 0
-#define USB_EP_STREAM  1
-#define USB_EP_GPIO    2
-#define USB_EP_SPI     3
+#define USB_EP_STREAM 1
+#define USB_EP_GPIO 2
+#define USB_EP_SPI 3
 #define USB_EP_CONSOLE 4
-#define USB_EP_COUNT   5
+#define USB_EP_COUNT 5
 
 /* Enable control of GPIOs over USB */
 #define CONFIG_USB_GPIO
 
 /* Enable control of SPI over USB */
-#define CONFIG_SPI_MASTER
-#define CONFIG_SPI_FLASH_PORT    0  /* First SPI master port */
-
+#define CONFIG_SPI_CONTROLLER
+#define CONFIG_SPI_FLASH_PORT 0 /* First SPI controller port */
 
 #define CONFIG_USB_SPI
 
@@ -80,6 +79,7 @@ enum usb_strings {
 	USB_STR_VERSION,
 	USB_STR_STREAM_NAME,
 	USB_STR_CONSOLE_NAME,
+	USB_STR_SPI_NAME,
 
 	USB_STR_COUNT
 };

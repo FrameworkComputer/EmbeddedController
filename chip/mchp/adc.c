@@ -1,10 +1,9 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -54,7 +53,7 @@ static int start_single_and_wait(int timeout)
 	/* clear GIRQ single status */
 	MCHP_INT_SOURCE(MCHP_ADC_GIRQ) = MCHP_ADC_GIRQ_SINGLE_BIT;
 	/* make sure all writes are issued before starting conversion */
-	asm volatile ("dsb");
+	asm volatile("dsb");
 
 	/* Start conversion */
 	MCHP_ADC_CTRL |= BIT(1);
@@ -78,7 +77,8 @@ int adc_read_channel(enum adc_channel ch)
 
 	if (start_single_and_wait(ADC_SINGLE_READ_TIME))
 		value = (MCHP_ADC_READ(adc->channel) * adc->factor_mul) /
-			adc->factor_div + adc->shift;
+				adc->factor_div +
+			adc->shift;
 	else
 		value = ADC_READ_ERROR;
 
@@ -106,7 +106,8 @@ int adc_read_all_channels(int *data)
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
 		adc = adc_channels + i;
 		data[i] = (MCHP_ADC_READ(adc->channel) * adc->factor_mul) /
-			  adc->factor_div + adc->shift;
+				  adc->factor_div +
+			  adc->shift;
 	}
 
 exit_all_channels:
@@ -140,7 +141,7 @@ static void adc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
 
-void adc_interrupt(void)
+static void adc_interrupt(void)
 {
 	MCHP_INT_DISABLE(MCHP_ADC_GIRQ) = MCHP_ADC_GIRQ_SINGLE_BIT;
 

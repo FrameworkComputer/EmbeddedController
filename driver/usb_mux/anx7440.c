@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -13,17 +13,16 @@
 #include "usb_mux.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-static inline int anx7440_read(const struct usb_mux *me,
-			       uint8_t reg, int *val)
+static inline int anx7440_read(const struct usb_mux *me, uint8_t reg, int *val)
 {
 	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
-static inline int anx7440_write(const struct usb_mux *me,
-				uint8_t reg, uint8_t val)
+static inline int anx7440_write(const struct usb_mux *me, uint8_t reg,
+				uint8_t val)
 {
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
@@ -61,9 +60,17 @@ static int anx7440_init(const struct usb_mux *me)
 }
 
 /* Writes control register to set switch mode */
-static int anx7440_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int anx7440_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int reg, res;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
 
 	res = anx7440_read(me, ANX7440_REG_CHIP_CTRL, &reg);
 	if (res)

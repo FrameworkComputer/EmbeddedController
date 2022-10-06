@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,6 +14,10 @@
 #define cprints(format, args...)
 #endif
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 /* Public API for controlling/inspecting this mock */
 struct mock_usb_mux_ctrl mock_usb_mux;
 
@@ -27,8 +31,12 @@ static int mock_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int mock_set(const struct usb_mux *me, mux_state_t mux_state)
+static int mock_set(const struct usb_mux *me, mux_state_t mux_state,
+		    bool *ack_required)
 {
+	/* Mock does not use host command ACKs */
+	*ack_required = false;
+
 	mock_usb_mux.state = mux_state;
 	++mock_usb_mux.num_set_calls;
 	ccprints("[MUX] Set to 0x%02x", mux_state);

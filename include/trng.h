@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,32 +14,30 @@
  *
  * Not supported by all platforms.
  **/
-void init_trng(void);
+void trng_init(void);
 
 /**
  * Shutdown the true random number generator.
  *
- * The opposite operation of init_trng(), disable the hardware resources
+ * The opposite operation of trng_init(), disable the hardware resources
  * used by the TRNG to save power.
  *
  * Not supported by all platforms.
  **/
-void exit_trng(void);
+void trng_exit(void);
 
 /**
  * Retrieve a 32 bit random value.
  *
  * Not supported on all platforms.
  **/
-#ifndef HIDE_EC_STDLIB
-uint32_t rand(void);
-#endif
+uint32_t trng_rand(void);
 
 /**
  * Output len random bytes into buffer.
  *
  * Not supported on all platforms.
  **/
-void rand_bytes(void *buffer, size_t len);
+void trng_rand_bytes(void *buffer, size_t len);
 
 #endif /* __EC_INCLUDE_TRNG_H */

@@ -1,0 +1,14 @@
+# Copyright 2021 The ChromiumOS Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: Power path chip
+
+include: i2c-device.yaml
+
+properties:
+
+  irq:
+    type: phandles
+    required: false
+    description: |
+      GPIO interrupt from PPC

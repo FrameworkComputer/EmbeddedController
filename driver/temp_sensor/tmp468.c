@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,9 +15,9 @@
 
 #include "tmp468.h"
 
-
-static int fake_temp[TMP468_CHANNEL_COUNT] = {-1, -1, -1, -1, -1, -1, -1 , -1, -1};
-static int temp_val[TMP468_CHANNEL_COUNT]  = {0, 0, 0, 0, 0, 0, 0 , 0, 0};
+static int fake_temp[TMP468_CHANNEL_COUNT] = { -1, -1, -1, -1, -1,
+					       -1, -1, -1, -1 };
+static int temp_val[TMP468_CHANNEL_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static uint8_t is_sensor_shutdown;
 
 static int has_power(void)
@@ -27,14 +27,14 @@ static int has_power(void)
 
 static int raw_read16(const int offset, int *data_ptr)
 {
-	return i2c_read16(I2C_PORT_THERMAL, TMP468_I2C_ADDR_FLAGS,
-			  offset, data_ptr);
+	return i2c_read16(I2C_PORT_THERMAL, TMP468_I2C_ADDR_FLAGS, offset,
+			  data_ptr);
 }
 
 static int raw_write16(const int offset, int data_ptr)
 {
-	return i2c_write16(I2C_PORT_THERMAL, TMP468_I2C_ADDR_FLAGS,
-			   offset, data_ptr);
+	return i2c_write16(I2C_PORT_THERMAL, TMP468_I2C_ADDR_FLAGS, offset,
+			   data_ptr);
 }
 
 static int tmp468_shutdown(uint8_t want_shutdown)
@@ -64,7 +64,7 @@ static int tmp468_shutdown(uint8_t want_shutdown)
 
 int tmp468_get_val(int idx, int *temp_ptr)
 {
-	if(!has_power())
+	if (!has_power())
 		return EC_ERROR_NOT_POWERED;
 
 	if (idx < TMP468_CHANNEL_COUNT) {

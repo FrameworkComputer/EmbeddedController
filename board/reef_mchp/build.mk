@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2018 The Chromium OS Authors. All rights reserved.
+# Copyright 2018 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -7,8 +7,8 @@
 #
 
 CHIP:=mchp
-CHIP_FAMILY:=mec17xx
-CHIP_VARIANT:=mec1701h
+CHIP_FAMILY:=mec170x
+CHIP_VARIANT:=mec1701
 CHIP_SPI_SIZE_KB:=512
 
 board-y=board.o led.o

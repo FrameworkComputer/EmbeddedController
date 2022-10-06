@@ -1,0 +1,25 @@
+# Copyright 2021 The ChromiumOS Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: I2C port base properties
+
+properties:
+  i2c-port:
+    type: phandle
+    required: true
+  remote-port:
+    type: int
+    required: false
+    description:
+      A port number used by remote components like Kernel via the I2C_PASSTHRU
+      Host Command
+  enum-names:
+    type: string-array
+    required: true
+    description:
+      Enum values used in the source code to refer to the i2c port
+  dynamic-speed:
+    type: boolean
+    required: false
+    description:
+      Enables run-time speed configuration.

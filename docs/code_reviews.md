@@ -44,11 +44,11 @@ Add your name to the [list of reviewers][1].
 
 ## Reference
 
-* [Chrome OS firmware review guidelines][2]
-* [Coreboot Gerrit Guidelines][3]
-* [Google small CL guidelines][5]
+*   [Chrome OS firmware review guidelines][2]
+*   [Coreboot Gerrit Guidelines][3]
+*   [Google small CL guidelines][5]
 
 [1]: http://google3/chrome/crosinfra/gwsq/ec_reviewers
-[2]: http://chromium.googlesource.com/chromiumos/docs/+/master/firmware_code_reviews.md
+[2]: http://chromium.googlesource.com/chromiumos/docs/+/HEAD/firmware_code_reviews.md
 [3]: https://doc.coreboot.org/getting_started/gerrit_guidelines.html
 [5]: https://google.github.io/eng-practices/review/developer/small-cls.html

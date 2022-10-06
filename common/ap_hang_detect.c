@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,12 +18,12 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 static struct ec_params_hang_detect hdparams;
 
-static int active;  /* Is hang detect timer active / counting? */
-static int timeout_will_reboot;  /* Will the deferred call reboot the AP? */
+static int active; /* Is hang detect timer active / counting? */
+static int timeout_will_reboot; /* Will the deferred call reboot the AP? */
 
 /**
  * Handle the hang detect timer expiring.
@@ -56,7 +56,8 @@ static void hang_detect_deferred(void)
 		timeout_will_reboot = 1;
 		hook_call_deferred(&hang_detect_deferred_data,
 				   (hdparams.warm_reboot_timeout_msec -
-				    hdparams.host_event_timeout_msec) * MSEC);
+				    hdparams.host_event_timeout_msec) *
+					   MSEC);
 	} else {
 		/* Not rebooting, so go back to idle */
 		active = 0;
@@ -196,19 +197,18 @@ hang_detect_host_command(struct host_cmd_handler_args *args)
 	 */
 	if (hdparams.warm_reboot_timeout_msec &&
 	    hdparams.warm_reboot_timeout_msec <=
-	    hdparams.host_event_timeout_msec)
+		    hdparams.host_event_timeout_msec)
 		hdparams.host_event_timeout_msec = 0;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_HANG_DETECT,
-		     hang_detect_host_command,
+DECLARE_HOST_COMMAND(EC_CMD_HANG_DETECT, hang_detect_host_command,
 		     EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Console command */
 
-static int command_hang_detect(int argc, char **argv)
+static int command_hang_detect(int argc, const char **argv)
 {
 	ccprintf("flags:  0x%x\n", hdparams.flags);
 
@@ -233,6 +233,5 @@ static int command_hang_detect(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hangdet, command_hang_detect,
-			NULL,
+DECLARE_CONSOLE_COMMAND(hangdet, command_hang_detect, NULL,
 			"Print hang detect state");

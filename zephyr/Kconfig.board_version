@@ -1,0 +1,34 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice PLATFORM_EC_BOARD_VERSION_SOURCE
+	prompt "Select the source of the board version number"
+	optional
+	help
+	  This allow selection of the source of the board version number
+	  information. Several options are available, but BOARD_VERSION_CBI is
+	  preferred for new boards, so long as the hardware supports it (i.e.
+	  has an EEPROM).
+
+config PLATFORM_EC_BOARD_VERSION_CBI
+	bool "Chromium OS Board Info (CBI)"
+	depends on PLATFORM_EC_CBI_EEPROM
+	help
+	  Choose this if the board version comes from Chromium Board Info
+	  within the EEPROM. This is the recommended approach and is used on
+	  newer boards. The version information is written into the EEPROM as
+	  part of the factory process.
+
+config PLATFORM_EC_BOARD_VERSION_GPIO
+	bool "Strapping GPIOs"
+	help
+	  Choose this if the board version is encoded with three GPIO signals
+	  (GPIO_BOARD_VERSION1, GPIO_BOARD_VERSION2 and GPIO_BOARD_VERSION3)
+	  forming the 3-digit binary number. GPIO_BOARD_VERSION1 is the LSB.
+	  This provides 8 possible combinations.
+
+	  The GPIOs should have external pull-up/pull-down resistors installed
+	  at the factory to select the correct value.
+
+endchoice

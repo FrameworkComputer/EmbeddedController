@@ -1,0 +1,77 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BUG_249829957
+	bool "Tracking b/249829957"
+
+config LINK_TEST_SUITE_DEFAULT
+	bool "Link and test the default test suite"
+
+config LINK_TEST_SUITE_ANX7447
+	bool "Link and test the anx7447 tests"
+
+config LINK_TEST_SUITE_AP_MUX_CONTROL
+	bool "Link and test the ap_mux_control tests"
+
+config LINK_TEST_SUITE_CHARGESPLASH
+	bool "Link and test the chargesplash tests"
+
+config LINK_TEST_SUITE_HOST_COMMANDS
+	bool "Link and test the host command tests"
+
+config LINK_TEST_SUITE_ISL923X
+	bool "Link and test the isl923x tests"
+
+config LINK_TEST_SUITE_I2C_CONTROLLER
+	bool "Link and test the i2c_controller tests"
+
+config LINK_TEST_SUITE_KEYBOARD_SCAN
+	bool "Link and test the keyboard_scan tests"
+
+config LINK_TEST_SUITE_LED_DRIVER
+	bool "Link and test the led_driver tests"
+
+config LINK_TEST_SUITE_MKBP
+	bool "Link and test the mkbp tests"
+
+config LINK_TEST_SUITE_RT9490
+	bool "Link and test the rt9490 tests"
+
+config LINK_TEST_SUITE_SYSTEM
+	bool "Link tests for common system code"
+
+config LINK_TEST_SUITE_TIMER
+	bool "Link and test the timer tests"
+
+config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
+	bool "Link and test the usb_malfunction_sink tests"
+
+config LINK_TEST_SUITE_USB_PORT_POWER_DUMB
+	bool "Link and test the usb_port_power_dumb tests"
+
+config LINK_TEST_SUITE_USB_PD_DPS
+	bool "Link and test the dps tests"
+
+config LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE
+	bool "Link and test the usb_retimer_fw_update tests"
+
+config LINK_TEST_SUITE_USBC_ALT_MODE
+	bool "Link and test the usbc_alt_mode tests"
+
+config LINK_TEST_SUITE_USBC_TBT_MODE
+	bool "Link and test the usbc_tbt_mode tests"
+
+config LINK_TEST_SUITE_USBC_OCP
+	bool "Link tests for common USBC OCP code"
+
+config LINK_TEST_SUITE_USBC_PPC
+	bool "Link tests for common USBC PPC code"
+
+config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
+	bool "Link tests for alternate operations of the locate chip host cmd"
+	help
+	  Compile a binary that allows the non herobrine paths of the locate
+	  chip command to execute
+
+source "Kconfig.zephyr"

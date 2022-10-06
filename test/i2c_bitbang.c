@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,9 +10,11 @@
 #include "test_util.h"
 #include "util.h"
 
-const struct i2c_port_t i2c_bitbang_ports[] = {
-	{"", 0, 100, GPIO_I2C_SCL, GPIO_I2C_SDA}
-};
+const struct i2c_port_t i2c_bitbang_ports[] = { { .name = "",
+						  .port = 0,
+						  .kbps = 100,
+						  .scl = GPIO_I2C_SCL,
+						  .sda = GPIO_I2C_SDA } };
 const unsigned int i2c_bitbang_ports_used = 1;
 
 struct pin_state {
@@ -23,7 +25,7 @@ int history_count;
 
 void reset_state(void)
 {
-	history[0] = (struct pin_state) {1, 1};
+	history[0] = (struct pin_state){ 1, 1 };
 	history_count = 1;
 	bitbang_set_started(0);
 }
@@ -42,7 +44,7 @@ void gpio_set_level(enum gpio_signal signal, int level)
 		new.scl = level;
 
 	if (new.scl != history[history_count - 1].scl ||
-			new.sda != history[history_count - 1].sda)
+	    new.sda != history[history_count - 1].sda)
 		history[history_count++] = new;
 }
 
@@ -60,12 +62,12 @@ static int test_i2c_start_stop(void)
 {
 	struct pin_state expected[] = {
 		/* start */
-		{1, 1},
-		{1, 0},
-		{0, 0},
+		{ 1, 1 },
+		{ 1, 0 },
+		{ 0, 0 },
 		/* stop */
-		{1, 0},
-		{1, 1},
+		{ 1, 0 },
+		{ 1, 1 },
 	};
 	int i;
 
@@ -88,14 +90,14 @@ static int test_i2c_repeated_start(void)
 {
 	struct pin_state expected[] = {
 		/* start */
-		{1, 1},
-		{1, 0},
-		{0, 0},
+		{ 1, 1 },
+		{ 1, 0 },
+		{ 0, 0 },
 		/* repeated start */
-		{0, 1},
-		{1, 1},
-		{1, 0},
-		{0, 0},
+		{ 0, 1 },
+		{ 1, 1 },
+		{ 1, 0 },
+		{ 0, 0 },
 	};
 	int i;
 
@@ -118,47 +120,47 @@ static int test_i2c_write(void)
 {
 	struct pin_state expected[] = {
 		/* start */
-		{1, 1},
-		{1, 0},
-		{0, 0},
+		{ 1, 1 },
+		{ 1, 0 },
+		{ 0, 0 },
 		/* bit 7: 0 */
-		{1, 0},
-		{0, 0},
+		{ 1, 0 },
+		{ 0, 0 },
 		/* bit 6: 1 */
-		{0, 1},
-		{1, 1},
-		{0, 1},
+		{ 0, 1 },
+		{ 1, 1 },
+		{ 0, 1 },
 		/* bit 5: 0 */
-		{0, 0},
-		{1, 0},
-		{0, 0},
+		{ 0, 0 },
+		{ 1, 0 },
+		{ 0, 0 },
 		/* bit 4: 1 */
-		{0, 1},
-		{1, 1},
-		{0, 1},
+		{ 0, 1 },
+		{ 1, 1 },
+		{ 0, 1 },
 		/* bit 3: 0 */
-		{0, 0},
-		{1, 0},
-		{0, 0},
+		{ 0, 0 },
+		{ 1, 0 },
+		{ 0, 0 },
 		/* bit 2: 1 */
-		{0, 1},
-		{1, 1},
-		{0, 1},
+		{ 0, 1 },
+		{ 1, 1 },
+		{ 0, 1 },
 		/* bit 1: 1 */
-		{1, 1},
-		{0, 1},
+		{ 1, 1 },
+		{ 0, 1 },
 		/* bit 0: 0 */
-		{0, 0},
-		{1, 0},
-		{0, 0},
+		{ 0, 0 },
+		{ 1, 0 },
+		{ 0, 0 },
 		/* read bit */
-		{0, 1},
-		{1, 1},
-		{0, 1},
+		{ 0, 1 },
+		{ 1, 1 },
+		{ 0, 1 },
 		/* stop */
-		{0, 0},
-		{1, 0},
-		{1, 1},
+		{ 0, 0 },
+		{ 1, 0 },
+		{ 1, 1 },
 	};
 	int i, ret;
 
@@ -180,7 +182,7 @@ static int test_i2c_write(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

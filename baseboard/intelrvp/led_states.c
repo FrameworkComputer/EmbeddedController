@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -15,11 +15,11 @@
 #include "led_common.h"
 #include "led_states.h"
 
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
 
 static enum led_states led_get_state(void)
 {
-	int  charge_lvl;
+	int charge_lvl;
 	enum led_states new_state = LED_NUM_STATES;
 
 	switch (charge_get_state()) {
@@ -55,10 +55,10 @@ static enum led_states led_get_state(void)
 		new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
-			new_state = STATE_FACTORY_TEST;
-		else
-			new_state = STATE_DISCHARGE_S0;
+		new_state = STATE_DISCHARGE_S0;
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		new_state = STATE_FACTORY_TEST;
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -88,14 +88,14 @@ static void led_update_battery(void)
 		ticks = 0;
 
 		period = led_bat_state_table[led_state][LED_PHASE_0].time +
-			led_bat_state_table[led_state][LED_PHASE_1].time;
-
+			 led_bat_state_table[led_state][LED_PHASE_1].time;
 	}
 
 	/* If this state is undefined, turn the LED off */
 	if (period == 0) {
 		CPRINTS("Undefined LED behavior for battery state %d,"
-			"turning off LED", led_state);
+			"turning off LED",
+			led_state);
 		led_set_color_battery(LED_OFF);
 		return;
 	}
@@ -104,8 +104,8 @@ static void led_update_battery(void)
 	 * Determine which phase of the state table to use. The phase is
 	 * determined if it falls within first phase time duration.
 	 */
-	phase = ticks < led_bat_state_table[led_state][LED_PHASE_0].time ?
-									0 : 1;
+	phase = ticks < led_bat_state_table[led_state][LED_PHASE_0].time ? 0 :
+									   1;
 	ticks = (ticks + 1) % period;
 
 	/* Set the color for the given state and phase */
@@ -141,14 +141,14 @@ static void led_update_power(void)
 		ticks = 0;
 
 		period = led_pwr_state_table[led_state][LED_PHASE_0].time +
-			led_pwr_state_table[led_state][LED_PHASE_1].time;
-
+			 led_pwr_state_table[led_state][LED_PHASE_1].time;
 	}
 
 	/* If this state is undefined, turn the LED off */
 	if (period == 0) {
 		CPRINTS("Undefined LED behavior for power state %d,"
-			"turning off LED", led_state);
+			"turning off LED",
+			led_state);
 		led_set_color_power(LED_OFF);
 		return;
 	}
@@ -157,8 +157,8 @@ static void led_update_power(void)
 	 * Determine which phase of the state table to use. The phase is
 	 * determined if it falls within first phase time duration.
 	 */
-	phase = ticks < led_pwr_state_table[led_state][LED_PHASE_0].time ?
-									0 : 1;
+	phase = ticks < led_pwr_state_table[led_state][LED_PHASE_0].time ? 0 :
+									   1;
 	ticks = (ticks + 1) % period;
 
 	/* Set the color for the given state and phase */

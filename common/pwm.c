@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,6 +12,9 @@
 #include "util.h"
 
 #ifdef CONFIG_PWM
+
+#define PWM_RAW_TO_PERCENT(v) DIV_ROUND_NEAREST((uint32_t)(v)*100, UINT16_MAX)
+#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v)*UINT16_MAX / 100)
 
 /*
  * Get target channel based on type / index host command parameters.
@@ -45,13 +48,13 @@ __attribute__((weak)) void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 	int percent;
 
 	/* Convert 16 bit duty to percent on [0, 100] */
-	percent = DIV_ROUND_NEAREST((uint32_t)duty * 100, 65535);
+	percent = PWM_RAW_TO_PERCENT(duty);
 	pwm_set_duty(ch, percent);
 }
 
 __attribute__((weak)) uint16_t pwm_get_raw_duty(enum pwm_channel ch)
 {
-	return (pwm_get_duty(ch) * 65535) / 100;
+	return PWM_PERCENT_TO_RAW(pwm_get_duty(ch));
 }
 
 static enum ec_status
@@ -62,14 +65,12 @@ host_command_pwm_set_duty(struct host_cmd_handler_args *args)
 
 	if (get_target_channel(&channel, p->pwm_type, p->index))
 		return EC_RES_INVALID_PARAM;
-
 	pwm_set_raw_duty(channel, p->duty);
 	pwm_enable(channel, p->duty > 0);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY,
-		     host_command_pwm_set_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY, host_command_pwm_set_duty,
 		     EC_VER_MASK(0));
 
 static enum ec_status
@@ -84,12 +85,12 @@ host_command_pwm_get_duty(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	r->duty = pwm_get_raw_duty(channel);
+
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY,
-		     host_command_pwm_get_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY, host_command_pwm_get_duty,
 		     EC_VER_MASK(0));
 
 /**
@@ -108,13 +109,13 @@ static void print_channel(enum pwm_channel ch, int max_duty)
 		ccprintf("  %d: disabled\n", ch);
 }
 
-static int cc_pwm_duty(int argc, char **argv)
+static int cc_pwm_duty(int argc, const char **argv)
 {
 	int value = 0;
 	int max_duty = 100;
 	int ch;
 	char *e;
-	char *raw;
+	const char *raw;
 
 	if (argc < 2) {
 		ccprintf("PWM channels:\n");
@@ -149,7 +150,7 @@ static int cc_pwm_duty(int argc, char **argv)
 			ccprintf("Setting channel %d to %d\n", ch, value);
 			pwm_enable(ch, 1);
 			(max_duty == 100) ? pwm_set_duty(ch, value) :
-				pwm_set_raw_duty(ch, value);
+					    pwm_set_raw_duty(ch, value);
 		}
 	}
 
@@ -162,7 +163,10 @@ DECLARE_CONSOLE_COMMAND(pwmduty, cc_pwm_duty,
 			"Get/set PWM duty cycles ");
 #endif /* CONFIG_PWM */
 
-/* Initialize all PWM pins as functional */
+/*
+ * Initialize all PWM pins as functional.  This is not required under
+ * Zephyr as pin configuration is automatically performed by chip driver
+ */
 static void pwm_pin_init(void)
 {
 	gpio_config_module(MODULE_PWM, 1);

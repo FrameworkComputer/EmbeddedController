@@ -1,0 +1,70 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <it8xxx2_emul.dts>
+
+/ {
+	pinctrl: pinctrl {
+		compatible = "ite,it8xxx2-pinctrl";
+		status = "disabled";
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_charger: charger {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_CHARGER",
+				"I2C_PORT_BATTERY";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			status = "okay";
+			reg = <0>;
+			chg = <&charger>;
+			tcpc = <&tcpci_emul>;
+		};
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+		};
+	};
+};
+
+&i2c_ctrl0 {
+	status="okay";
+
+	charger: rt9490@53 {
+		compatible = "zephyr,rt9490-emul";
+		status = "okay";
+		reg = <0x53>;
+	};
+
+	battery: sb@b {
+		compatible = "zephyr,smart-battery";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
+
+	tcpci_emul: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};

@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,7 +26,7 @@
 	__has_builtin(__builtin_mul_overflow)
 #define COMPILER_HAS_GENERIC_BUILTIN_OVERFLOW 1
 #endif
-#endif  /* __clang__ */
+#endif /* __clang__ */
 
 #include "third_party/linux/overflow.h"
 

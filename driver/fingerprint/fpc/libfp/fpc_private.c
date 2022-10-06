@@ -1,12 +1,12 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include <stddef.h>
+#include <sys/types.h>
 #include "common.h"
 #include "console.h"
-#include "endian.h"
 #include "fpc_bio_algorithm.h"
 #include "fpc_private.h"
 #include "fpsensor.h"
@@ -19,8 +19,8 @@
 
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
 /* Minimum reset duration */
 #define FP_SENSOR_RESET_DURATION_US (10 * MSEC)
@@ -32,7 +32,7 @@
 #define FP_SENSOR_OPEN_DELAY_US (500 * MSEC)
 
 /* Decode internal error codes from FPC's sensor library */
-#define FPC_GET_INTERNAL_CODE(res) (((res) & 0x000fc000) >> 14)
+#define FPC_GET_INTERNAL_CODE(res) (((res)&0x000fc000) >> 14)
 /* There was a finger on the sensor when calibrating finger detect */
 #define FPC_INTERNAL_FINGER_DFD FPC_ERROR_INTERNAL_38
 
@@ -42,7 +42,7 @@
  */
 static uint8_t ctx[FP_SENSOR_CONTEXT_SIZE] __uncached __aligned(4);
 static bio_sensor_t bio_sensor;
-static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE];
+static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4);
 
 /* recorded error flags */
 static uint16_t errors;
@@ -64,14 +64,14 @@ static struct ec_response_fp_info fpc1145_info = {
 
 /* Sensor IC commands */
 enum fpc_cmd {
-	FPC_CMD_STATUS            = 0x14,
-	FPC_CMD_INT_STS           = 0x18,
-	FPC_CMD_INT_CLR           = 0x1C,
-	FPC_CMD_FINGER_QUERY      = 0x20,
-	FPC_CMD_SLEEP             = 0x28,
-	FPC_CMD_DEEPSLEEP         = 0x2C,
-	FPC_CMD_SOFT_RESET        = 0xF8,
-	FPC_CMD_HW_ID             = 0xFC,
+	FPC_CMD_STATUS = 0x14,
+	FPC_CMD_INT_STS = 0x18,
+	FPC_CMD_INT_CLR = 0x1C,
+	FPC_CMD_FINGER_QUERY = 0x20,
+	FPC_CMD_SLEEP = 0x28,
+	FPC_CMD_DEEPSLEEP = 0x2C,
+	FPC_CMD_SOFT_RESET = 0xF8,
+	FPC_CMD_HW_ID = 0xFC,
 };
 
 /* Maximum size of a sensor command SPI transfer */
@@ -97,10 +97,13 @@ void fp_sensor_low_power(void)
 		fpc_send_cmd(FPC_CMD_SLEEP);
 }
 
-static int fpc_check_hwid(void)
+int fpc_get_hwid(uint16_t *id)
 {
-	uint16_t id;
 	int rc;
+	uint16_t sensor_id;
+
+	if (id == NULL)
+		return EC_ERROR_INVAL;
 
 	/* Clear previous occurences of relevant |errors| flags. */
 	errors &= (~FP_ERROR_SPI_COMM & ~FP_ERROR_BAD_HWID);
@@ -109,19 +112,31 @@ static int fpc_check_hwid(void)
 	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
 			     SPI_READBACK_ALL);
 	if (rc) {
-		CPRINTS("FPC ID read failed %d", rc);
+		CPRINTS("FPC HW ID read failed %d", rc);
 		errors |= FP_ERROR_SPI_COMM;
 		return EC_ERROR_HW_INTERNAL;
 	}
-	id = (spi_buf[1] << 8) | spi_buf[2];
+
+	sensor_id = ((spi_buf[1] << 8) | spi_buf[2]);
+	*id = sensor_id;
+
+	return EC_SUCCESS;
+}
+
+int fpc_check_hwid(void)
+{
+	uint16_t id = 0;
+	int status;
+
+	status = fpc_get_hwid(&id);
 	if ((id >> 4) != FP_SENSOR_HWID) {
 		CPRINTS("FPC unknown silicon 0x%04x", id);
 		errors |= FP_ERROR_BAD_HWID;
 		return EC_ERROR_HW_INTERNAL;
 	}
-	CPRINTS(FP_SENSOR_NAME " id 0x%04x", id);
-
-	return EC_SUCCESS;
+	if (status == EC_SUCCESS)
+		CPRINTS(FP_SENSOR_NAME " id 0x%04x", id);
+	return status;
 }
 
 static uint8_t fpc_read_clear_int(void)

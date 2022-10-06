@@ -1,0 +1,8 @@
+[flake8]
+extend-ignore = E203
+exclude =
+    .hypothesis,
+    .pytest_cache,
+    __pycache__,
+    build,
+    dist

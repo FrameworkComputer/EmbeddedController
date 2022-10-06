@@ -1,0 +1,11 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config SYSTEM_FAKE
+	bool "Use a fake system module"
+	help
+	  This provides a fake implementation of some of the hooks used by
+	  common/system.c so that EC reboots can be faked.
+
+	  It should only be included in tests.

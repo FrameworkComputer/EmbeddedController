@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -38,7 +38,7 @@ GPIO(CCD_MODE_ODL,		PIN(E, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(ENTERING_RW,		PIN(E, 1), GPIO_OUT_LOW)			/* EC Entering RW */
 GPIO(EC_BATT_PRES_L,		PIN(E, 5), GPIO_INPUT | GPIO_PULL_UP)		/* Battery Present */
 GPIO(PCH_SYS_PWROK,		PIN(D, 6), GPIO_OUT_LOW)			/* Power OK to SOC */
-GPIO(CPU_PROCHOT,		PIN(3, 4), GPIO_INPUT | GPIO_SEL_1P8V)		/* PROCHOT to SOC */
+GPIO(CPU_PROCHOT,		PIN(3, 4), GPIO_ODR_HIGH | GPIO_SEL_1P8V)	/* PROCHOT to SOC */
 GPIO(APU_ALERT_L,		PIN(A, 2), GPIO_INPUT)				/* Alert to SOC */
 GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
 GPIO(TCPC_ID,			PIN(E, 0), GPIO_INPUT | GPIO_PULL_DOWN)		/* TCPC ID pin */

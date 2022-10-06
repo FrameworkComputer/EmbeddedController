@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -8,7 +8,7 @@
 #include "config.h"
 #include "cpu.h"
 
-.text
+.section .ram_code
 
 /**
  * Task context switching
@@ -73,6 +73,7 @@ __switch_task:
 	/* restore PC and PSW */
 	iret
 
+.text
 /**
  * Start the task scheduling.
  *
@@ -81,6 +82,11 @@ __switch_task:
  */
 .global __task_start
 __task_start:
+	/*
+	 * Disable global interrupt here to ensure below sequence won't be
+	 * broken. The "iret" instruction of ISR will enable GIE again.
+	 */
+	setgie.d
 	/* area used as thread stack for the first switch */
 	la $r3, scratchpad
 
@@ -100,4 +106,3 @@ __task_start:
 	/* we should never return here: set code to EC_ERROR_UNKNOWN */
 	movi55 $r0, 0x1
 	ret5   $lp
-

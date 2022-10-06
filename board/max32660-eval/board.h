@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,7 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands */
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 #define CONFIG_FPU
 
@@ -24,8 +24,8 @@
 #undef CONFIG_HOSTCMD_EVENTS
 #define CONFIG_I2C
 
-#define CONFIG_I2C_SLAVE
-#define CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS (0x51) /* 7 bit right-aligned, bits 6 to 0 */
+#define CONFIG_I2C_PERIPHERAL
+#define CONFIG_HOSTCMD_I2C_ADDR_FLAGS (0x51) /* 7 bit right-aligned */
 
 /* Slave I2C port configuration */
 #define I2C_PORT_SLAVE 1

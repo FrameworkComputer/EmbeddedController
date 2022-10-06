@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,8 +22,10 @@
  */
 
 #include "battery.h"
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -31,6 +33,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 #ifdef CONFIG_BRINGUP
 #define GPIO_SET_LEVEL(signal, value) \
@@ -66,9 +69,6 @@
 /* Maximum time it should for PMIC to turn on after toggling PMIC_EN_ODL. */
 #define PMIC_EN_TIMEOUT (300 * MSEC)
 
-/* Time delay in G3 to deassert EN_PP1800_S5_L */
-#define EN_PP1800_S5_L_DEASSERT_TIME (20 * MSEC)
-
 /*
  * Time delay for AP on/off the AP_EC_WDT when received SYS_RST_ODL.
  * Generally it can be done within 3 ms.
@@ -77,6 +77,18 @@
 
 /* 30 ms for hard reset, we hold it longer to prevent TPM false alarm. */
 #define SYS_RST_PULSE_LENGTH (50 * MSEC)
+
+#ifndef CONFIG_ZEPHYR
+
+/* power signal list.  Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+	{ GPIO_PMIC_EC_PWRGD, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD" },
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3_L" },
+	{ GPIO_AP_EC_WATCHDOG_L, POWER_SIGNAL_ACTIVE_LOW, "AP_WDT_ASSERTED" },
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+#endif /* !CONFIG_ZEPHYR */
 
 static int forcing_shutdown;
 
@@ -160,7 +172,7 @@ void chipset_exit_hard_off_button(void)
 }
 DECLARE_DEFERRED(chipset_exit_hard_off_button);
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s: %d", __func__, reason);
 	report_ap_reset(reason);
@@ -170,25 +182,47 @@ void chipset_reset(enum chipset_reset_reason reason)
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 }
 
+#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+static void power_reset_host_sleep_state(void)
+{
+	power_set_host_sleep_state(HOST_SLEEP_EVENT_DEFAULT_RESET);
+	sleep_reset_tracking();
+	power_chipset_handle_host_sleep_event(HOST_SLEEP_EVENT_DEFAULT_RESET,
+					      NULL);
+}
+
+static void handle_chipset_reset(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+		CPRINTS("Chipset reset: exit s3");
+		power_reset_host_sleep_state();
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
+#endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
+
 enum power_state power_chipset_init(void)
 {
 	int exit_hard_off = 1;
+	uint32_t reset_flags = system_get_reset_flags();
 
 	/* Enable reboot / sleep control inputs from AP */
 	gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
 
-	if (system_get_reset_flags() & EC_RESET_FLAG_SYSJUMP) {
+	if (system_jumped_late()) {
 		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
 			disable_sleep(SLEEP_MASK_AP_RUN);
 			power_signal_enable_interrupt(GPIO_AP_EC_WATCHDOG_L);
 			CPRINTS("already in S0");
 			return POWER_S0;
 		}
-	} else if (system_get_reset_flags() & EC_RESET_FLAG_AP_OFF) {
+	} else if ((reset_flags & EC_RESET_FLAG_AP_OFF) ||
+		   (reset_flags & EC_RESET_FLAG_AP_IDLE)) {
 		exit_hard_off = 0;
-	} else if ((system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE) &&
-			gpio_get_level(GPIO_AC_PRESENT)) {
+	} else if ((reset_flags & EC_RESET_FLAG_HIBERNATE) &&
+		   gpio_get_level(GPIO_AC_PRESENT)) {
 		/*
 		 * If AC present, assume this is a wake-up by AC insert.
 		 * Boot EC only.
@@ -350,10 +384,22 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 
+		/*
+		 * Clearing the sleep failure detection tracking on the path
+		 * to S0 to handle any reset conditions.
+		 */
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+		power_reset_host_sleep_state();
+#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 		/* Power up to next state */
 		return POWER_S3;
 
 	case POWER_S3S0:
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/* Call hooks prior to chipset resume */
+		hook_notify(HOOK_CHIPSET_RESUME_INIT);
+#endif
+
 		if (power_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S0S3;
@@ -361,6 +407,10 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
+
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+		sleep_resume_transition();
+#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
 		/*
 		 * Disable idle task deep sleep. This means that the low
@@ -374,6 +424,14 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/* Call hooks after chipset suspend */
+		hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
+#endif
+
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+		sleep_suspend_transition();
+#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
@@ -425,7 +483,16 @@ enum power_state power_handle_state(enum power_state state)
 		if (forcing_shutdown)
 			GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
 
+		/* If PMIC is not off, go back to S5 and try again. */
+		if (power_get_signals() & IN_PGOOD_PMIC)
+			return POWER_S5;
+
 		return POWER_G3;
+
+	default:
+		CPRINTS("Unexpected power state %d", state);
+		ASSERT(0);
+		break;
 	}
 
 	return state;
@@ -448,6 +515,41 @@ static void power_button_changed(void)
 	}
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
+
+#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+__overridable void
+power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
+{
+	CPRINTS("Warning: Detected sleep hang! Waking host up!");
+	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
+}
+
+__override void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
+{
+	CPRINTS("Handle sleep: %d", state);
+
+	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
+		/*
+		 * Indicate to power state machine that a new host event for
+		 * S3 suspend has been received and so chipset suspend
+		 * notification needs to be sent to listeners.
+		 */
+		sleep_set_notify(SLEEP_NOTIFY_SUSPEND);
+		sleep_start_suspend(ctx);
+
+	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
+		/*
+		 * Wake up chipset task and indicate to power state machine that
+		 * listeners need to be notified of chipset resume.
+		 */
+		sleep_set_notify(SLEEP_NOTIFY_RESUME);
+		task_wake(TASK_ID_CHIPSET);
+		sleep_complete_resume(ctx);
+	}
+}
+#endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
 #ifdef CONFIG_LID_SWITCH
 static void lid_changed(void)

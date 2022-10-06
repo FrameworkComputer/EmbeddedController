@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,11 +11,7 @@
 #include "common.h"
 
 /* Wireless power state for wireless_set_state() */
-enum wireless_power_state {
-	WIRELESS_OFF,
-	WIRELESS_SUSPEND,
-	WIRELESS_ON
-};
+enum wireless_power_state { WIRELESS_OFF, WIRELESS_SUSPEND, WIRELESS_ON };
 
 /**
  * Set wireless power state.
@@ -23,7 +19,9 @@ enum wireless_power_state {
 #ifdef CONFIG_WIRELESS
 void wireless_set_state(enum wireless_power_state state);
 #else
-static inline void wireless_set_state(enum wireless_power_state state) { }
+static inline void wireless_set_state(enum wireless_power_state state)
+{
+}
 #endif
 
-#endif  /* __CROS_EC_WIRELESS_H */
+#endif /* __CROS_EC_WIRELESS_H */

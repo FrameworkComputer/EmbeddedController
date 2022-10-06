@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -9,9 +9,13 @@
 #define __CROS_EC_BATTERY_FUEL_GAUGE_H
 
 #include "battery.h"
+#include <stdbool.h>
 
 /* Number of writes needed to invoke battery cutoff command */
 #define SHIP_MODE_WRITES 2
+
+/* When battery type is not initialized */
+#define BATTERY_TYPE_UNINITIALIZED -1
 
 struct ship_mode_info {
 	/*
@@ -23,6 +27,12 @@ struct ship_mode_info {
 	const uint8_t wb_support;
 	const uint8_t reg_addr;
 	const uint16_t reg_data[SHIP_MODE_WRITES];
+};
+
+struct sleep_mode_info {
+	const bool sleep_supported;
+	const uint8_t reg_addr;
+	const uint16_t reg_data;
 };
 
 struct fet_info {
@@ -39,6 +49,7 @@ struct fuel_gauge_info {
 	const char *device_name;
 	const uint8_t override_nil;
 	const struct ship_mode_info ship_mode;
+	const struct sleep_mode_info sleep_mode;
 	const struct fet_info fet;
 
 #ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
@@ -56,7 +67,6 @@ struct board_batt_params {
 extern const struct board_batt_params board_battery_info[];
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
 
-
 #ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
 /**
  * Report the absolute difference between the highest and lowest cell voltage in
@@ -69,6 +79,22 @@ int battery_bq4050_imbalance_mv(void);
 #endif
 
 #endif
+
+#ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
+/*
+ * Set the battery type, when auto-detection cannot be used.
+ *
+ * @param type	Battery type
+ */
+void battery_set_fixed_battery_type(int type);
+#endif
+
+/**
+ * Return the board-specific default battery type.
+ *
+ * @return a value of `enum battery_type`.
+ */
+__override_proto int board_get_default_battery_type(void);
 
 /**
  * Return 1 if CFET is disabled, 0 if enabled. -1 if an error was encountered.
@@ -91,5 +117,12 @@ int cut_off_battery_block_write(const struct ship_mode_info *ship_mode);
  * @return non-zero if error
  */
 int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode);
+
+/**
+ * Send the fuel gauge sleep command through SMBus.
+ *
+ * @return	0 if successful, non-zero if error occurred
+ */
+enum ec_error_list battery_sleep_fuel_gauge(void);
 
 #endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */

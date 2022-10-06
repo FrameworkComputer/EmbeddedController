@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,18 +13,16 @@
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
-/* I2C bus configuraiton */
-#define I2C_PORT_ACCEL	I2C_PORT_SENSOR
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
 
-/* EC console commands  */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
+/* I2C bus configuraiton */
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 #define CONFIG_LED_COMMON
 
 /* Sensors */
-#define CONFIG_ACCEL_KX022	/* Lid accel */
-#define CONFIG_ACCELGYRO_BMI160	/* Base accel */
+#define CONFIG_ACCEL_KX022 /* Lid accel */
+#define CONFIG_ACCELGYRO_BMI160 /* Base accel */
 
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 /* Sensors without hardware FIFO are in forced mode */
@@ -34,8 +32,7 @@
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
-#define CONFIG_SYNC_INT_EVENT	\
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
+#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -56,23 +53,25 @@
 #define CONFIG_USBC_PPC_DEDICATED_INT
 #undef CONFIG_SYV682X_HV_ILIM
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
+/* SYV682 isn't connected to CC, so TCPC must provide VCONN */
+#define CONFIG_USBC_PPC_SYV682X_NO_CC
 
+/* prevent pd reset when battery soc under 2% */
+#define CONFIG_USB_PD_RESET_MIN_BATT_SOC 2
 
 #ifndef __ASSEMBLER__
 
 /* support factory keyboard test */
 #define CONFIG_KEYBOARD_FACTORY_TEST
-extern const int keyboard_factory_scan_pins[][2];
-extern const int keyboard_factory_scan_pins_used;
 
 #include "gpio_signal.h"
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
-	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
-	ADC_VBUS_C0,			/* ADC9 */
-	ADC_VBUS_C1,			/* ADC4 */
+	ADC_TEMP_SENSOR_AMB, /* ADC0 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC1 */
+	ADC_VBUS_C0, /* ADC9 */
+	ADC_VBUS_C1, /* ADC4 */
 	ADC_CH_COUNT
 };
 
@@ -84,12 +83,7 @@ enum temp_sensor_id {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* List of possible batteries */
 enum battery_type {

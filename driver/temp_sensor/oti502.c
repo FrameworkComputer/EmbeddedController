@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,13 +12,13 @@
 #include "hooks.h"
 #include "util.h"
 
-static int temp_val_ambient;	/* Ambient is chip temperature*/
-static int temp_val_object;		/* Object is IR temperature */
+static int temp_val_ambient; /* Ambient is chip temperature*/
+static int temp_val_object; /* Object is IR temperature */
 
 static int oti502_read_block(const int offset, uint8_t *data, int len)
 {
-	return i2c_read_block(I2C_PORT_THERMAL, OTI502_I2C_ADDR_FLAGS,
-			 offset, data, len);
+	return i2c_read_block(I2C_PORT_THERMAL, OTI502_I2C_ADDR_FLAGS, offset,
+			      data, len);
 }
 
 int oti502_get_val(int idx, int *temp_ptr)
@@ -64,4 +64,3 @@ static void temp_sensor_poll(void)
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
-

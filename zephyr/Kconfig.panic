@@ -1,0 +1,50 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_PANIC
+
+config PLATFORM_EC_SOFTWARE_PANIC
+	bool "Software panic"
+	default y
+	help
+	  Sometimes the EC has bugs that are provoked by unexpected events.
+	  This enables storing a panic log and halt the system for
+	  software-related reasons, such as stack overflow or assertion
+	  failure.
+
+config PLATFORM_EC_CONSOLE_CMD_CRASH
+	bool "Console command: crash"
+	default y
+	help
+	  For testing purposes it is useful to be able to generation exceptions
+	  to check that the panic reporting is working correctly. The enables
+	  the 'crash' command which supports generating various exceptions,
+	  selected by its parameter:
+
+	     assert              - assertion failure (ASSERT() macro)
+	     divzero             - division by zero
+	     udivzero            - division of unsigned value by zero
+	     stack (if enabled)  - stack overflow
+	     unaligned           - unaligned access (e.g. word load from 0x123)
+	     watchdog            - watchdog timer fired
+	     hang                - infinite loop in the EC code
+
+config PLATFORM_EC_STACKOVERFLOW
+	bool "Console command: crash stack"
+	depends on PLATFORM_EC_CONSOLE_CMD_CRASH
+	default y if !ZTEST && !SOC_POSIX
+	help
+	  This enables the 'stack' parameter for the 'crash' command. This
+	  causes a stack overflow by recursing repeatedly while task switching.
+	  This can be used to check that stack-overflow detection is working
+	  as expected.
+
+config PLATFORM_EC_DEBUG_ASSERT_BRIEF
+	bool "Enable brief panic messages"
+	default n
+	help
+	  On assertion failure, prints only the file name and the line number.
+	  Boards typically define this option in order to reduce image size.
+
+endif # PLATFORM_EC_PANIC

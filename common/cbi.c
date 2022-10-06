@@ -1,10 +1,11 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * Cros Board Info
  */
 
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "crc8.h"
@@ -26,12 +27,12 @@
  */
 uint8_t cbi_crc8(const struct cbi_header *h)
 {
-	return crc8((uint8_t *)&h->crc + 1,
-		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
+	return cros_crc8((uint8_t *)&h->crc + 1,
+			 h->total_size - sizeof(h->magic) - sizeof(h->crc));
 }
 
-uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
-		      const void *buf, int size)
+uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag, const void *buf,
+		      int size)
 {
 	struct cbi_data *d = (struct cbi_data *)p;
 
@@ -76,57 +77,41 @@ struct cbi_data *cbi_find_tag(const void *buf, enum cbi_data_tag tag)
  */
 #ifndef HOST_TOOLS_BUILD
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ##args)
 
-/*
- * We allow EEPROMs with page size of 8 or 16. Use 8 to be the most compatible.
- * This causes a little more overhead for writes, but we are not writing to the
- * EEPROM outside of the factory process.
- */
-#define EEPROM_PAGE_WRITE_SIZE	8
-
-#define EEPROM_PAGE_WRITE_MS	5
-#define EC_ERROR_CBI_CACHE_INVALID	EC_ERROR_INTERNAL_FIRST
-
-static int cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
-static uint8_t cbi[CBI_EEPROM_SIZE];
-static struct cbi_header * const head = (struct cbi_header *)cbi;
+static int cache_status = CBI_CACHE_STATUS_INVALID;
+static uint8_t cbi[CBI_IMAGE_SIZE];
+static struct cbi_header *const head = (struct cbi_header *)cbi;
 
 int cbi_create(void)
 {
-	struct cbi_header * const h = (struct cbi_header *)cbi;
-
 	memset(cbi, 0, sizeof(cbi));
-	memcpy(h->magic, cbi_magic, sizeof(cbi_magic));
-	h->total_size = sizeof(*h);
-	h->major_version = CBI_VERSION_MAJOR;
-	h->minor_version = CBI_VERSION_MINOR;
-	h->crc = cbi_crc8(h);
-	cached_read_result = EC_SUCCESS;
+	memcpy(head->magic, cbi_magic, sizeof(cbi_magic));
+	head->total_size = sizeof(*head);
+	head->major_version = CBI_VERSION_MAJOR;
+	head->minor_version = CBI_VERSION_MINOR;
+	head->crc = cbi_crc8(head);
+	cache_status = CBI_CACHE_STATUS_SYNCED;
 
 	return EC_SUCCESS;
 }
 
 void cbi_invalidate_cache(void)
 {
-	cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
+	cache_status = CBI_CACHE_STATUS_INVALID;
 }
 
-static int read_eeprom(uint8_t offset, uint8_t *in, int in_size)
+int cbi_get_cache_status(void)
 {
-	return i2c_read_block(I2C_PORT_EEPROM, I2C_ADDR_EEPROM_FLAGS,
-			      offset, in, in_size);
+	return cache_status;
 }
 
-/*
- * Get board information from EEPROM
- */
-static int do_read_board_info(void)
+static int do_cbi_read(void)
 {
 	CPRINTS("Reading board info");
 
 	/* Read header */
-	if (read_eeprom(0, cbi, sizeof(*head))) {
+	if (cbi_config.drv->load(0, cbi, sizeof(*head))) {
 		CPRINTS("Failed to read header");
 		return EC_ERROR_INVAL;
 	}
@@ -143,23 +128,26 @@ static int do_read_board_info(void)
 		return EC_ERROR_INVAL;
 	}
 
-	/* Check the data size. It's expected to support up to 64k but our
-	 * buffer has practical limitation. */
+	/*
+	 * Check the data size. It's expected to support up to 64k but our
+	 * buffer has practical limitation.
+	 */
 	if (head->total_size < sizeof(*head) ||
-			sizeof(cbi) < head->total_size) {
+	    head->total_size > CBI_IMAGE_SIZE) {
 		CPRINTS("Bad size: %d", head->total_size);
 		return EC_ERROR_OVERFLOW;
 	}
 
 	/* Read the data */
-	if (read_eeprom(sizeof(*head), head->data,
-			head->total_size - sizeof(*head))) {
+	if (cbi_config.drv->load(sizeof(*head), head->data,
+				 head->total_size - sizeof(*head))) {
 		CPRINTS("Failed to read body");
 		return EC_ERROR_INVAL;
 	}
 
 	/* Check CRC. This supports new fields unknown to this parser. */
-	if (cbi_crc8(head) != head->crc) {
+	if (cbi_config.storage_type != CBI_STORAGE_TYPE_GPIO &&
+	    cbi_crc8(head) != head->crc) {
 		CPRINTS("Bad CRC");
 		return EC_ERROR_INVAL;
 	}
@@ -167,21 +155,28 @@ static int do_read_board_info(void)
 	return EC_SUCCESS;
 }
 
-static int read_board_info(void)
+static int cbi_read(void)
 {
-	if (cached_read_result == EC_ERROR_CBI_CACHE_INVALID) {
-		cached_read_result = do_read_board_info();
-		if (cached_read_result)
-			/* On error (I2C or bad contents), retry a read */
-			cached_read_result = do_read_board_info();
+	int i;
+	int rv;
+
+	if (cbi_get_cache_status() == CBI_CACHE_STATUS_SYNCED)
+		return EC_SUCCESS;
+
+	for (i = 0; i < 2; i++) {
+		rv = do_cbi_read();
+		if (rv == EC_SUCCESS) {
+			cache_status = CBI_CACHE_STATUS_SYNCED;
+			return EC_SUCCESS;
+		}
+		/* On error (I2C or bad contents), retry a read */
 	}
-	/* Else, we already tried and know the result. Return the cached
-	 * error code immediately to avoid wasteful reads. */
-	return cached_read_result;
+
+	return rv;
 }
 
-__attribute__((weak))
-int cbi_board_override(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
+__attribute__((weak)) int cbi_board_override(enum cbi_data_tag tag,
+					     uint8_t *buf, uint8_t *size)
 {
 	return EC_SUCCESS;
 }
@@ -190,7 +185,7 @@ int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
 {
 	const struct cbi_data *d;
 
-	if (read_board_info())
+	if (cbi_read())
 		return EC_ERROR_UNKNOWN;
 
 	d = cbi_find_tag(cbi, tag);
@@ -249,49 +244,17 @@ int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
 	return EC_SUCCESS;
 }
 
-static int eeprom_is_write_protected(void)
+int cbi_write(void)
 {
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	return gpio_get_level(GPIO_WP);
-#else
-	return !gpio_get_level(GPIO_WP_L);
-#endif /* CONFIG_WP_ACTIVE_HIGH */
-}
-
-static int write_board_info(void)
-{
-	const uint8_t *p = cbi;
-	int rest = head->total_size;
-
-	if (eeprom_is_write_protected()) {
-		CPRINTS("Failed to write for WP");
+	if (cbi_config.drv->is_protected()) {
+		CPRINTS("Failed to write due to WP");
 		return EC_ERROR_ACCESS_DENIED;
 	}
 
-	while (rest > 0) {
-		int size = MIN(EEPROM_PAGE_WRITE_SIZE, rest);
-		int rv;
-		rv = i2c_write_block(I2C_PORT_EEPROM, I2C_ADDR_EEPROM_FLAGS,
-				     p - cbi, p, size);
-		if (rv) {
-			CPRINTS("Failed to write for %d", rv);
-			return rv;
-		}
-		/* Wait for internal write cycle completion */
-		msleep(EEPROM_PAGE_WRITE_MS);
-		p += size;
-		rest -= size;
-	}
-
-	return EC_SUCCESS;
+	return cbi_config.drv->store(cbi);
 }
 
-int cbi_write(void)
-{
-	return write_board_info();
-}
-
-int cbi_get_board_version(uint32_t *ver)
+test_mockable int cbi_get_board_version(uint32_t *ver)
 {
 	uint8_t size = sizeof(*ver);
 
@@ -331,8 +294,7 @@ int cbi_get_ssfc(uint32_t *ssfc)
 {
 	uint8_t size = sizeof(*ssfc);
 
-	return cbi_get_board_info(CBI_TAG_SSFC, (uint8_t *)ssfc,
-				  &size);
+	return cbi_get_board_info(CBI_TAG_SSFC, (uint8_t *)ssfc, &size);
 }
 
 int cbi_get_pcb_supplier(uint32_t *pcb_supplier)
@@ -340,7 +302,21 @@ int cbi_get_pcb_supplier(uint32_t *pcb_supplier)
 	uint8_t size = sizeof(*pcb_supplier);
 
 	return cbi_get_board_info(CBI_TAG_PCB_SUPPLIER, (uint8_t *)pcb_supplier,
-			&size);
+				  &size);
+}
+
+int cbi_get_rework_id(uint64_t *id)
+{
+	uint8_t size = sizeof(*id);
+	return cbi_get_board_info(CBI_TAG_REWORK_ID, (uint8_t *)id, &size);
+}
+
+int cbi_get_factory_calibration_data(uint32_t *calibration_data)
+{
+	uint8_t size = sizeof(*calibration_data);
+
+	return cbi_get_board_info(CBI_TAG_FACTORY_CALIBRATION_DATA,
+				  (uint8_t *)calibration_data, &size);
 }
 
 static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
@@ -349,7 +325,7 @@ static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 	uint8_t size = MIN(args->response_max, UINT8_MAX);
 
 	if (p->flag & CBI_GET_RELOAD)
-		cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
+		cbi_invalidate_cache();
 
 	if (cbi_get_board_info(p->tag, args->response, &size))
 		return EC_RES_INVALID_PARAM;
@@ -357,26 +333,25 @@ static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 	args->response_size = size;
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO,
-		     hc_cbi_get,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO, hc_cbi_get, EC_VER_MASK(0));
 
-static enum ec_status hc_cbi_set(struct host_cmd_handler_args *args)
+static enum ec_status
+common_cbi_set(const struct __ec_align4 ec_params_set_cbi *p)
 {
-	const struct __ec_align4 ec_params_set_cbi *p = args->params;
-
 	/*
 	 * If we ultimately cannot write to the flash, then fail early unless
 	 * we are explicitly trying to write to the in-memory CBI only
 	 */
-	if (eeprom_is_write_protected() && !(p->flag & CBI_SET_NO_SYNC)) {
-		CPRINTS("Failed to write for WP");
+	if (cbi_config.drv->is_protected() && !(p->flag & CBI_SET_NO_SYNC)) {
+		CPRINTS("Failed to write due to WP");
 		return EC_RES_ACCESS_DENIED;
 	}
 
 #ifndef CONFIG_SYSTEM_UNLOCKED
-	/* These fields are not allowed to be reprogrammed regardless the
-	 * hardware WP state. They're considered as a part of the hardware. */
+	/*
+	 * These fields are not allowed to be reprogrammed regardless the
+	 * hardware WP state. They're considered as a part of the hardware.
+	 */
 	if (p->tag == CBI_TAG_BOARD_VERSION || p->tag == CBI_TAG_OEM_ID)
 		return EC_RES_ACCESS_DENIED;
 #endif
@@ -385,58 +360,63 @@ static enum ec_status hc_cbi_set(struct host_cmd_handler_args *args)
 		memset(cbi, 0, sizeof(cbi));
 		memcpy(head->magic, cbi_magic, sizeof(cbi_magic));
 		head->total_size = sizeof(*head);
-		cached_read_result = EC_SUCCESS;
 	} else {
-		if (read_board_info())
+		if (cbi_read())
 			return EC_RES_ERROR;
 	}
-
-	/* Given data size exceeds the packet size. */
-	if (args->params_size < sizeof(*p) + p->size)
-		return EC_RES_INVALID_PARAM;
 
 	if (cbi_set_board_info(p->tag, p->data, p->size))
 		return EC_RES_INVALID_PARAM;
 
-	/* Whether we're modifying existing data or creating new one,
-	 * we take over the format. */
+	/*
+	 * Whether we're modifying existing data or creating new one,
+	 * we take over the format.
+	 */
 	head->major_version = CBI_VERSION_MAJOR;
 	head->minor_version = CBI_VERSION_MINOR;
 	head->crc = cbi_crc8(head);
+	cache_status = CBI_CACHE_STATUS_SYNCED;
 
 	/* Skip write if client asks so. */
 	if (p->flag & CBI_SET_NO_SYNC)
 		return EC_RES_SUCCESS;
 
 	/* We already checked write protect failure case. */
-	if (write_board_info())
+	if (cbi_write())
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO,
-		     hc_cbi_set,
-		     EC_VER_MASK(0));
+
+static enum ec_status hc_cbi_set(struct host_cmd_handler_args *args)
+{
+	const struct __ec_align4 ec_params_set_cbi *p = args->params;
+
+	/* Given data size exceeds the packet size. */
+	if (args->params_size < sizeof(*p) + p->size)
+		return EC_RES_INVALID_PARAM;
+
+	return common_cbi_set(p);
+}
+DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO, hc_cbi_set, EC_VER_MASK(0));
 
 #ifdef CONFIG_CMD_CBI
-static void dump_flash(void)
+static void print_tag(const char *const tag, int rv, const uint32_t *val)
 {
-	uint8_t buf[16];
-	int i;
-	for (i = 0; i < CBI_EEPROM_SIZE; i += sizeof(buf)) {
-		if (read_eeprom(i, buf, sizeof(buf))) {
-			ccprintf("\nFailed to read EEPROM\n");
-			return;
-		}
-		hexdump(buf, sizeof(buf));
-	}
-}
-
-static void print_tag(const char * const tag, int rv, const uint32_t *val)
-{
-	ccprintf(tag);
+	ccprintf("%s", tag);
 	if (rv == EC_SUCCESS && val)
 		ccprintf(": %u (0x%x)\n", *val, *val);
+	else
+		ccprintf(": (Error %d)\n", rv);
+}
+
+static void print_uint64_tag(const char *const tag, int rv,
+			     const uint64_t *lval)
+{
+	ccprintf("%s", tag);
+	if (rv == EC_SUCCESS && lval)
+		ccprintf(": %llu (0x%llx)\n", *(unsigned long long *)lval,
+			 *(unsigned long long *)lval);
 	else
 		ccprintf(": (Error %d)\n", rv);
 }
@@ -444,13 +424,15 @@ static void print_tag(const char * const tag, int rv, const uint32_t *val)
 static void dump_cbi(void)
 {
 	uint32_t val;
+	uint64_t lval;
 
 	/* Ensure we read the latest data from flash. */
-	cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
-	read_board_info();
+	cbi_invalidate_cache();
+	cbi_read();
 
-	if (cached_read_result != EC_SUCCESS) {
-		ccprintf("Cannot Read CBI (Error %d)\n", cached_read_result);
+	if (cbi_get_cache_status() != CBI_CACHE_STATUS_SYNCED) {
+		ccprintf("Cannot Read CBI (Error %d)\n",
+			 cbi_get_cache_status());
 		return;
 	}
 
@@ -464,15 +446,159 @@ static void dump_cbi(void)
 	print_tag("FW_CONFIG", cbi_get_fw_config(&val), &val);
 	print_tag("PCB_SUPPLIER", cbi_get_pcb_supplier(&val), &val);
 	print_tag("SSFC", cbi_get_ssfc(&val), &val);
+	print_uint64_tag("REWORK_ID", cbi_get_rework_id(&lval), &lval);
 }
 
-static int cc_cbi(int argc, char **argv)
+/*
+ * Space for the set command (does not include data space) plus maximum
+ * possible console input
+ */
+static uint8_t
+	buf[sizeof(struct ec_params_set_cbi) + CONFIG_CONSOLE_INPUT_LINE_SIZE];
+
+static int cc_cbi(int argc, const char **argv)
 {
+	struct __ec_align4 ec_params_set_cbi *setter =
+		(struct __ec_align4 ec_params_set_cbi *)buf;
+	int last_arg;
+	char *e;
+
+	if (argc == 1) {
+		dump_cbi();
+		if (cbi_get_cache_status() == CBI_CACHE_STATUS_SYNCED)
+			hexdump(cbi, CBI_IMAGE_SIZE);
+		return EC_SUCCESS;
+	}
+
+	if (strcasecmp(argv[1], "set") == 0) {
+		if (argc < 5) {
+			ccprintf("Set requires: <tag> <value> <size>\n");
+			return EC_ERROR_PARAM_COUNT;
+		}
+
+		setter->tag = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		if (setter->tag == CBI_TAG_DRAM_PART_NUM ||
+		    setter->tag == CBI_TAG_OEM_NAME) {
+			setter->size = strlen(argv[3]) + 1;
+			memcpy(setter->data, argv[3], setter->size);
+		} else {
+			uint64_t val = strtoull(argv[3], &e, 0);
+
+			if (*e)
+				return EC_ERROR_PARAM3;
+
+			setter->size = strtoi(argv[4], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM4;
+
+			if (setter->size < 1) {
+				ccprintf("Set size too small\n");
+				return EC_ERROR_PARAM4;
+			} else if ((setter->size > 8) ||
+				   (setter->size > 4 &&
+				    setter->tag != CBI_TAG_REWORK_ID)) {
+				ccprintf("Set size too large\n");
+				return EC_ERROR_PARAM4;
+			}
+
+			memcpy(setter->data, &val, setter->size);
+		}
+
+		last_arg = 5;
+	} else if (strcasecmp(argv[1], "remove") == 0) {
+		if (argc < 3) {
+			ccprintf("Remove requires: <tag>\n");
+			return EC_ERROR_PARAM_COUNT;
+		}
+
+		setter->tag = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		setter->size = 0;
+		last_arg = 3;
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	setter->flag = 0;
+
+	if (argc > last_arg) {
+		int i;
+
+		for (i = last_arg; i < argc; i++) {
+			if (strcasecmp(argv[i], "init") == 0) {
+				setter->flag |= CBI_SET_INIT;
+			} else if (strcasecmp(argv[i], "skip_write") == 0) {
+				setter->flag |= CBI_SET_NO_SYNC;
+			} else {
+				ccprintf("Invalid additional option\n");
+				return EC_ERROR_PARAM1 + i - 1;
+			}
+		}
+	}
+
+	if (common_cbi_set(setter) == EC_RES_SUCCESS)
+		return EC_SUCCESS;
+
+	return EC_ERROR_UNKNOWN;
+}
+DECLARE_CONSOLE_COMMAND(cbi, cc_cbi,
+			"[set <tag> <value> <size> | "
+			"remove <tag>] [init | skip_write]",
+			"Print or change Cros Board Info from flash");
+#endif /* CONFIG_CMD_CBI */
+
+#ifndef CONFIG_AP_POWER_CONTROL
+int cbi_set_fw_config(uint32_t fw_config)
+{
+	/* Check write protect status */
+	if (cbi_config.drv->is_protected())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/* Ensure that CBI has been configured */
+	if (cbi_read())
+		cbi_create();
+
+	/* Update the FW_CONFIG field */
+	cbi_set_board_info(CBI_TAG_FW_CONFIG, (uint8_t *)&fw_config,
+			   sizeof(int));
+
+	/* Update CRC calculation and write to the storage */
+	head->crc = cbi_crc8(head);
+	if (cbi_write())
+		return EC_ERROR_UNKNOWN;
+
 	dump_cbi();
-	dump_flash();
+
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, NULL, "Print Cros Board Info from flash");
-#endif /* CONFIG_CMD_CBI */
+
+int cbi_set_ssfc(uint32_t ssfc)
+{
+	/* Check write protect status */
+	if (cbi_config.drv->is_protected())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/* Ensure that CBI has been configured */
+	if (cbi_read())
+		cbi_create();
+
+	/* Update the SSFC field */
+	cbi_set_board_info(CBI_TAG_SSFC, (uint8_t *)&ssfc, sizeof(int));
+
+	/* Update CRC calculation and write to the storage */
+	head->crc = cbi_crc8(head);
+	if (cbi_write())
+		return EC_ERROR_UNKNOWN;
+
+	dump_cbi();
+
+	return EC_SUCCESS;
+}
+#endif
 
 #endif /* !HOST_TOOLS_BUILD */

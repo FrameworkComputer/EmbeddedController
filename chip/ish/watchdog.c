@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -29,8 +29,8 @@
 #include "watchdog.h"
 
 /* Units are hundreds of milliseconds */
-#define WDT_T1_PERIOD		(100) /* 10 seconds */
-#define WDT_T2_PERIOD		(10)  /* 1 second */
+#define WDT_T1_PERIOD (100) /* 10 seconds */
+#define WDT_T2_PERIOD (10) /* 1 second */
 
 int watchdog_init(void)
 {
@@ -45,9 +45,8 @@ int watchdog_init(void)
 	CCU_WDT_CD = WDT_CLOCK_HZ / 10; /* 10 Hz => 100 ms period */
 
 	/* Enable the watchdog timer and set initial T1/T2 values */
-	WDT_CONTROL = WDT_CONTROL_ENABLE_BIT
-		| (WDT_T2_PERIOD << 8)
-		| WDT_T1_PERIOD;
+	WDT_CONTROL = WDT_CONTROL_ENABLE_BIT | (WDT_T2_PERIOD << 8) |
+		      WDT_T1_PERIOD;
 
 	task_enable_irq(ISH_WDT_IRQ);
 

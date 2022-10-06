@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,8 +17,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define LED_BAT_OFF_LVL	0
-#define LED_BAT_ON_LVL	1
+#define LED_BAT_OFF_LVL 0
+#define LED_BAT_ON_LVL 1
 #define LED_BAT_S3_OFF_TIME_MS 3000
 #define LED_BAT_S3_PWM_RESCALE 5
 #define LED_BAT_S3_TICK_MS 50
@@ -34,10 +34,8 @@
 
 static int ticks;
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-	EC_LED_ID_POWER_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -45,21 +43,21 @@ enum led_color {
 	LED_OFF = 0,
 	LED_WHITE,
 	LED_AMBER,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 /* PWM brightness vs. color, in the order of off, white */
 static const uint8_t color_brightness[2] = {
-	[LED_OFF]   = 0,
-	[LED_WHITE]   = 100,
+	[LED_OFF] = 0,
+	[LED_WHITE] = 100,
 };
 
-void led_set_color_power(enum ec_led_colors color)
+void led_set_color_power(enum led_color color)
 {
 	pwm_set_duty(PWM_CH_POWER_LED, color_brightness[color]);
 }
 
-void led_set_color_battery(enum ec_led_colors color)
+void led_set_color_battery(enum led_color color)
 {
 	uint32_t board_ver = 0;
 	int led_batt_on_lvl, led_batt_off_lvl;
@@ -111,10 +109,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	} else if (led_id == EC_LED_ID_POWER_LED) {
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
 			pwm_set_duty(PWM_CH_POWER_LED,
-						color_brightness[LED_WHITE]);
+				     color_brightness[LED_WHITE]);
 		else
 			pwm_set_duty(PWM_CH_POWER_LED,
-						color_brightness[LED_OFF]);
+				     color_brightness[LED_OFF]);
 	}
 
 	return EC_SUCCESS;
@@ -133,8 +131,8 @@ static void suspend_led_update_deferred(void)
 	if (ticks <= TICKS_STEP2_DIMMER) {
 		pwm_set_duty(PWM_CH_POWER_LED, ticks * LED_BAT_S3_PWM_RESCALE);
 	} else if (ticks <= TICKS_STEP3_OFF) {
-		pwm_set_duty(PWM_CH_POWER_LED,
-					(TICKS_STEP3_OFF - ticks) * LED_BAT_S3_PWM_RESCALE);
+		pwm_set_duty(PWM_CH_POWER_LED, (TICKS_STEP3_OFF - ticks) *
+						       LED_BAT_S3_PWM_RESCALE);
 	} else {
 		ticks = TICKS_STEP1_BRIGHTER;
 		delay = LED_BAT_S3_OFF_TIME_MS * MSEC;
@@ -161,7 +159,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, suspend_led_deinit, HOOK_PRIO_DEFAULT);
 static void led_set_battery(void)
 {
 	static int battery_ticks;
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -177,11 +174,11 @@ static void led_set_battery(void)
 		led_set_color_battery(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			led_set_color_battery(
-				(battery_ticks & 0x4) ? LED_AMBER : LED_OFF);
-		else
-			led_set_color_battery(LED_WHITE);
+		led_set_color_battery(LED_WHITE);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		led_set_color_battery((battery_ticks & 0x4) ? LED_AMBER :
+							      LED_OFF);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -204,9 +201,10 @@ static void led_set_power(void)
 			power_ticks = 0;
 
 		while (blink_ticks < LED_PWR_TICKS_PER_CYCLE) {
-			led_set_color_power(
-				(power_ticks % LED_TOTAL_TICKS) < LED_ON_TICKS ?
-				LED_WHITE : LED_OFF);
+			led_set_color_power((power_ticks % LED_TOTAL_TICKS) <
+							    LED_ON_TICKS ?
+						    LED_WHITE :
+						    LED_OFF);
 
 			previous_state_suspend = 1;
 			return;

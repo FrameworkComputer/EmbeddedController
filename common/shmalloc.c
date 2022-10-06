@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -47,8 +47,8 @@ static void shared_mem_init(void)
 	free_buf_chain = (struct shm_buffer *)__shared_mem_buf;
 	free_buf_chain->next_buffer = NULL;
 	free_buf_chain->prev_buffer = NULL;
-	free_buf_chain->buffer_size = system_usable_ram_end() -
-		(uintptr_t)__shared_mem_buf;
+	free_buf_chain->buffer_size =
+		system_usable_ram_end() - (uintptr_t)__shared_mem_buf;
 }
 DECLARE_HOOK(HOOK_INIT, shared_mem_init, HOOK_PRIO_FIRST);
 
@@ -73,8 +73,7 @@ static void do_release(struct shm_buffer *ptr)
 		 * Saninty check: verify that the buffer is in the allocated
 		 * buffers chain.
 		 */
-		for (pfb = allocced_buf_chain->next_buffer;
-		     pfb;
+		for (pfb = allocced_buf_chain->next_buffer; pfb;
 		     pfb = pfb->next_buffer)
 			if (pfb == ptr)
 				break;
@@ -117,10 +116,9 @@ static void do_release(struct shm_buffer *ptr)
 		if (pfb == free_buf_chain) {
 			set_map_bit(BIT(1));
 			/* Merge the two buffers. */
-			ptr->buffer_size = free_buf_chain->buffer_size +
-				released_size;
-			ptr->next_buffer =
-				free_buf_chain->next_buffer;
+			ptr->buffer_size =
+				free_buf_chain->buffer_size + released_size;
+			ptr->next_buffer = free_buf_chain->next_buffer;
 		} else {
 			set_map_bit(BIT(2));
 			ptr->buffer_size = released_size;
@@ -163,8 +161,7 @@ static void do_release(struct shm_buffer *ptr)
 		if (top == pfb->next_buffer) {
 			/* Yes, it is. */
 			pfb->buffer_size += pfb->next_buffer->buffer_size;
-			pfb->next_buffer =
-				pfb->next_buffer->next_buffer;
+			pfb->next_buffer = pfb->next_buffer->next_buffer;
 			if (pfb->next_buffer) {
 				set_map_bit(BIT(5));
 				pfb->next_buffer->prev_buffer = pfb;
@@ -179,8 +176,8 @@ static void do_release(struct shm_buffer *ptr)
 	if (top == pfb->next_buffer) {
 		/* The new buffer is adjacent with the one right above it. */
 		set_map_bit(BIT(7));
-		ptr->buffer_size = released_size +
-			pfb->next_buffer->buffer_size;
+		ptr->buffer_size =
+			released_size + pfb->next_buffer->buffer_size;
 		ptr->next_buffer = pfb->next_buffer->next_buffer;
 	} else {
 		/* Just include the new free buffer into the chain. */
@@ -352,7 +349,7 @@ void shared_mem_release(void *ptr)
 
 #ifdef CONFIG_CMD_SHMEM
 
-static int command_shmem(int argc, char **argv)
+static int command_shmem(int argc, const char **argv)
 {
 	size_t allocated_size;
 	size_t free_size;
@@ -373,8 +370,7 @@ static int command_shmem(int argc, char **argv)
 			max_free = buf_room;
 	}
 
-	for (buf = allocced_buf_chain; buf;
-	     buf = buf->next_buffer)
+	for (buf = allocced_buf_chain; buf; buf = buf->next_buffer)
 		allocated_size += buf->buffer_size;
 
 	mutex_unlock(&shmem_lock);
@@ -386,8 +382,7 @@ static int command_shmem(int argc, char **argv)
 	ccprintf("Max allocated: %6d\n", max_allocated_size);
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(shmem, command_shmem,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(shmem, command_shmem, NULL,
 			     "Print shared memory stats");
 
-#endif  /* CONFIG_CMD_SHMEM  ^^^^^^^ defined */
+#endif /* CONFIG_CMD_SHMEM  ^^^^^^^ defined */

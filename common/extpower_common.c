@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,6 +6,10 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "host_command.h"
+
+__overridable void board_check_extpower(void)
+{
+}
 
 void extpower_handle_update(int is_present)
 {

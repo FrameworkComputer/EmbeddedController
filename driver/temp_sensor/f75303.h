@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,9 +9,9 @@
 #define __CROS_EC_F75303_H
 #ifndef F75303_I2C_ADDR_FLAGS
 #ifdef BOARD_MUSHU
-#define F75303_I2C_ADDR_FLAGS		0x4D
+#define F75303_I2C_ADDR_FLAGS 0x4D
 #else
-#define F75303_I2C_ADDR_FLAGS		0x4C
+#define F75303_I2C_ADDR_FLAGS 0x4C
 #endif
 #endif
 
@@ -23,9 +23,9 @@ enum f75303_index {
 };
 
 /* F75303 register */
-#define F75303_TEMP_LOCAL		0x00
-#define F75303_TEMP_REMOTE1		0x01
-#define F75303_TEMP_REMOTE2		0x23
+#define F75303_TEMP_LOCAL 0x00
+#define F75303_TEMP_REMOTE1 0x01
+#define F75303_TEMP_REMOTE2 0x23
 
 /**
  * Get the last polled value of a sensor.
@@ -38,6 +38,7 @@ enum f75303_index {
  */
 int f75303_get_val(int idx, int *temp);
 
+<<<<<<< HEAD
 /**
  * Set if the underlying polling task will read the sensor
  * or if it will skip, as the rail this sensor is on
@@ -48,3 +49,6 @@ int f75303_get_val(int idx, int *temp);
 void f75303_set_enabled(uint8_t enabled);
 
 #endif  /* __CROS_EC_F75303_H */
+=======
+#endif /* __CROS_EC_F75303_H */
+>>>>>>> chromium/main

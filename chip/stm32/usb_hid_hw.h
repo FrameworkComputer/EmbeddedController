@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -25,10 +25,8 @@ struct usb_hid_config_t {
 	 * @param buffer_size: handler should set it to the size of returned
 	 *     buffer.
 	 */
-	int (*get_report)(uint8_t report_id,
-			  uint8_t report_type,
-			  const uint8_t **buffer_ptr,
-			  int *buffer_size);
+	int (*get_report)(uint8_t report_id, uint8_t report_type,
+			  const uint8_t **buffer_ptr, int *buffer_size);
 };
 
 /* internal callbacks for HID class drivers */

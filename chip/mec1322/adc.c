@@ -1,10 +1,9 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -49,7 +48,8 @@ int adc_read_channel(enum adc_channel ch)
 
 	if (start_single_and_wait(ADC_SINGLE_READ_TIME))
 		value = MEC1322_ADC_READ(adc->channel) * adc->factor_mul /
-			adc->factor_div + adc->shift;
+				adc->factor_div +
+			adc->shift;
 	else
 		value = ADC_READ_ERROR;
 
@@ -70,7 +70,7 @@ static void adc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
 
-void adc_interrupt(void)
+static void adc_interrupt(void)
 {
 	/* Clear interrupt status bit */
 	MEC1322_ADC_CTRL |= BIT(7);

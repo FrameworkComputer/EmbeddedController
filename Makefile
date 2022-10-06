@@ -1,4 +1,4 @@
-# Copyright 2011 The Chromium OS Authors. All rights reserved.
+# Copyright 2011 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -13,7 +13,7 @@
 # This is used to exclude build targets that depend on sanitizers such as
 # fuzzers on architectures that don't support sanitizers yet (e.g. arm).
 ARCH?=amd64
-BOARD ?= bds
+BOARD ?= elm
 
 # Directory where the board is configured (includes /$(BOARD) at the end)
 BDIR:=$(wildcard board/$(BOARD))
@@ -50,6 +50,8 @@ EMPTY=
 ifdef CTS_MODULE
 # CTS builds need different directories per board per suite.
 out?=build/$(BOARD)/cts_$(CTS_MODULE)
+else ifdef TEST_COVERAGE
+out?=build/coverage/initial-$(BOARD)
 else
 out?=build/$(BOARD)
 endif
@@ -113,6 +115,12 @@ CFLAGS_BASEBOARD=
 endif
 include chip/$(CHIP)/build.mk
 
+# The toolchain must be set before referencing any toolchain-related variables
+# (CC, CPP, CXX, etc.) so that the correct toolchain is used. The CORE variable
+# is set in the CHIP build file, so this include must come after including the
+# CHIP build file.
+include core/$(CORE)/toolchain.mk
+
 # Create uppercase config variants, to avoid mixed case constants.
 # Also translate '-' to '_', so 'cortex-m' turns into 'CORTEX_M'.  This must
 # be done before evaluating config.h.
@@ -128,7 +136,7 @@ UC_PROJECT:=$(call uppercase,$(PROJECT))
 # Transform the configuration into make variables.  This must be done after
 # the board/baseboard/project/chip/core variables are defined, since some of
 # the configs are dependent on particular configurations.
-includes=include core/$(CORE)/include $(dirs) $(out) fuzz test
+includes=include core/$(CORE)/include include/driver $(dirs) $(out) fuzz test third_party
 ifdef CTS_MODULE
 includes+=cts/$(CTS_MODULE) cts
 endif
@@ -148,6 +156,7 @@ endif
 _tsk_lst_flags+=-I$(BDIR) -DBOARD_$(UC_BOARD)=$(EMPTY) -I$(BASEDIR) \
 		-DBASEBOARD_$(UC_BASEBOARD)=$(EMPTY) \
 		-D_MAKEFILE=$(EMPTY) -imacros $(_tsk_lst_file)
+-include private/task_list_flags.mk
 
 _tsk_lst_ro:=$(shell $(CPP) -P -DSECTION_IS_RO=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)
@@ -210,13 +219,15 @@ _mock_cfg := $(foreach t,$(_mock_lst) ,HAS_MOCK_$(t))
 CPPFLAGS += $(foreach t,$(_mock_cfg),-D$(t)=$(EMPTY))
 $(foreach c,$(_mock_cfg),$(eval $(c)=y))
 
-ifneq "$(CONFIG_COMMON_RUNTIME)" "y"
+ifneq ($(CONFIG_COMMON_RUNTIME),y)
+ifneq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
 	_irq_list:=$(shell $(CPP) $(CPPFLAGS) -P -Ichip/$(CHIP) -I$(BASEDIR) \
 		-I$(BDIR) -D"ENABLE_IRQ(x)=EN_IRQ x" \
 		-imacros chip/$(CHIP)/registers.h \
 		- < $(BDIR)/ec.irqlist | grep "EN_IRQ .*" | cut -c8-)
 	CPPFLAGS+=$(foreach irq,$(_irq_list),\
 		    -D"irq_$(irq)_handler_optional=irq_$(irq)_handler")
+endif
 endif
 
 # Compute RW firmware size and offset
@@ -254,6 +265,9 @@ endif
 include $(BASEDIR)/build.mk
 ifneq ($(BASEDIR),$(BDIR))
 include $(BDIR)/build.mk
+endif
+ifeq ($(USE_BUILTIN_STDLIB), 1)
+include builtin/build.mk
 endif
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
@@ -294,6 +308,9 @@ ifneq ($(PBDIR),)
 all-obj-$(1)+=$(call objs_from_dir_p,$(PBDIR),board-private,$(1))
 endif
 all-obj-$(1)+=$(call objs_from_dir_p,common,common,$(1))
+ifeq ($(USE_BUILTIN_STDLIB), 1)
+all-obj-$(1)+=$(call objs_from_dir_p,builtin,builtin,$(1))
+endif
 all-obj-$(1)+=$(call objs_from_dir_p,driver,driver,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,power,power,$(1))
 ifdef CTS_MODULE
@@ -310,11 +327,42 @@ endef
 $(eval $(call get_sources,y))
 $(eval $(call get_sources,ro))
 
+# The following variables are meant to be initialized in the baseboard or
+# board's build.mk. They will later be appended to in util/build.mk with
+# utils that should be generated for all boards.
+#
+# build-util-bin-y - Utils for the system doing the "build".
+#                    For example, the 64-bit x86 GNU/Linux running make.
+#                    These are often program that are needed by the build
+#                    system to generate code for use in firmware.
+# host-util-bin-y  - Utils for the target platform on top of the EC.
+#                    For example, the 32-bit x86 Chromebook.
+# build-util-art-y - Build ?artifacts? for the system doing the "build"
+#
+# The util targets added to these variable will pickup extra build objects
+# from their optional <util_name>-objs make variable.
+#
+# See commit bc4c1b4 for more context.
+build-utils := $(call objs_from_dir,$(out)/util,build-util-bin)
+host-utils := $(call objs_from_dir,$(out)/util,host-util-bin)
+host-utils-cxx := $(call objs_from_dir,$(out)/util,host-util-bin-cxx)
+build-art := $(call objs_from_dir,$(out),build-util-art)
+# Use the util_name with an added .c AND the special <util_name>-objs variable.
+build-srcs := $(foreach u,$(build-util-bin-y),$(sort $($(u)-objs:%.o=util/%.c) \
+                $(wildcard util/$(u).c)))
+host-srcs := $(foreach u,$(host-util-bin-y),$(sort $($(u)-objs:%.o=util/%.c) \
+               $(wildcard util/$(u).c)))
+host-srcs-cxx := $(foreach u,$(host-util-bin-cxx-y), \
+	$(sort $($(u)-objs:%.o=util/%.cc) $(wildcard util/$(u).cc)))
+
 dirs=core/$(CORE) chip/$(CHIP) $(BASEDIR) $(BDIR) common fuzz power test \
 	cts/common cts/$(CTS_MODULE) $(out)/gen
 dirs+= private private-kandou $(PDIR) $(PBDIR)
 dirs+=$(shell find common -type d)
 dirs+=$(shell find driver -type d)
+ifeq ($(USE_BUILTIN_STDLIB), 1)
+dirs+=builtin
+endif
 common_dirs=util
 
 ifeq ($(custom-ro_objs-y),)
@@ -352,6 +400,7 @@ def_all_deps+=ro
 endif
 all_deps?=$(def_all_deps)
 all: $(all_deps)
+compile-only: $(ro-objs) $(rw-objs)
 
 ro: override BLD:=RO
 ro: $(libsharedobjs_elf-y) $(out)/RO/$(PROJECT).RO.flat

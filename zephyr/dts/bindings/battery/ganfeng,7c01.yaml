@@ -1,0 +1,54 @@
+description: "Ganfeng 7C01"
+compatible: "ganfeng,7c01"
+
+include: battery-smart.yaml
+
+properties:
+   enum-name:
+      type: string
+      default: "ganfeng,7c01"
+
+   # Fuel gauge
+   manuf_name:
+      default: "Ganfeng"
+   device_name:
+      default: "7C01"
+   ship_mode_reg_addr:
+      default: 0x00
+   ship_mode_reg_data:
+      default: [ 0x0010, 0x0010 ]
+   # Documentation: b/226820234
+   fet_mfgacc_support:
+      default: 0
+   fet_reg_addr:
+      default: 0x43
+   fet_reg_mask:
+      default: 0x0001
+   fet_disconnect_val:
+      default: 0x0000
+   fet_cfet_mask:
+      default: 0x0002
+   fet_cfet_off_val:
+      default: 0x0000
+
+   # Battery info
+   voltage_max:
+      default: 8700
+   voltage_normal:
+      default: 7600
+   voltage_min:
+      default: 6000
+   precharge_current:
+      default: 256
+   start_charging_min_c:
+      default: -20
+   start_charging_max_c:
+      default: 60
+   charging_min_c:
+      default: 0
+   charging_max_c:
+      default: 60
+   discharging_min_c:
+      default: -20
+   discharging_max_c:
+      default: 60

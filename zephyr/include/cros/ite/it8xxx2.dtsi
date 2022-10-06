@@ -1,0 +1,101 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/binman.dtsi>
+#include <ite/it8xxx2.dtsi>
+#include <ite/it8xxx2-pinctrl-map.dtsi>
+
+/ {
+	chosen {
+		cros-ec,bbram = &bbram;
+		cros-ec,espi = &espi0;
+		cros-ec,flash = &flash0;
+		cros-ec,flash-controller = &fiu0;
+		cros-ec,raw-kb = &cros_kb_raw;
+		cros-ec,watchdog = &twd0;
+	};
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x08>;
+			size = <0x04>;
+		};
+		saved-reset-flags {
+			offset = <0x00>;
+			size = <0x04>;
+		};
+		wake {
+			offset = <0x08>;
+			size = <0x04>;
+		};
+		pd0 {
+			offset = <0x04>;
+			size = <0x01>;
+		};
+		pd1 {
+			offset = <0x05>;
+			size = <0x01>;
+		};
+		try_slot {
+			offset = <0x0e>;
+			size = <0x01>;
+		};
+		pd2 {
+			offset = <0x06>;
+			size = <0x01>;
+		};
+	};
+
+	soc {
+		shi: shi@f03a00 {
+			compatible = "ite,it8xxx2-cros-shi";
+			reg = <0x00f03a00 0x30>;
+			interrupts = <171 0>;
+			interrupt-parent = <&intc>;
+			pinctrl-0 = <&shi_mosi_gpm0_default
+				     &shi_miso_gpm1_default
+				     &shi_clk_gpm4_default
+				     &shi_cs_gpm5_default>;
+			pinctrl-names = "default";
+		};
+
+		fiu0: cros-flash@80000000 {
+			compatible = "ite,it8xxx2-cros-flash";
+			reg = <0x80000000 0x100000>;
+		};
+
+		cros_kb_raw: cros-kb-raw@f01d00 {
+			compatible = "ite,it8xxx2-cros-kb-raw";
+			reg = <0x00f01d00 0x29>;
+			interrupt-parent = <&intc>;
+			interrupts = <13 IRQ_TYPE_LEVEL_HIGH>;
+			wucctrl = <&wuc_wu30   /* KSI[0] */
+				   &wuc_wu31   /* KSI[1] */
+				   &wuc_wu32   /* KSI[2] */
+				   &wuc_wu33   /* KSI[3] */
+				   &wuc_wu34   /* KSI[4] */
+				   &wuc_wu35   /* KSI[5] */
+				   &wuc_wu36   /* KSI[6] */
+				   &wuc_wu37>; /* KSI[7] */
+			status = "disabled";
+		};
+	};
+
+	/* it8xxx2 has 1MB of flash. currently, we use 768KB from flash. */
+	binman {
+		wp-ro {
+			offset = <0x0>;
+			size = <0x60000>;
+		};
+		ec-rw {
+			offset = <0x60000>;
+			size = <0x60000>;
+		};
+		pad-byte = <0xff>;
+		pad-after = <0x40000>;
+	};
+};

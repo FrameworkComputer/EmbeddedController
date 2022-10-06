@@ -1,0 +1,168 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <npcx_emul.dts>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+		};
+	};
+
+	/* These are temporary just to get the test to build.
+	 * Should be replaced with the correct accel drivers,
+	 * but we're not testing that code right now anyway.
+	 */
+	motionsense-sensor-data {
+		bmi160_data: bmi160-drv-data {
+			compatible = "cros-ec,drvdata-bmi160";
+			status = "okay";
+		};
+	};
+	motionsense-sensor {
+		base_accel: ms-bmi160-accel {
+			compatible = "cros-ec,bmi160-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			location = "MOTIONSENSE_LOC_BASE";
+			drv-data = <&bmi160_data>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+		};
+		lid_accel: ms-bmi160-accel2 {
+			compatible = "cros-ec,bmi160-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			location = "MOTIONSENSE_LOC_BASE";
+			drv-data = <&bmi160_data>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+		};
+	};
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		sensor-irqs = <&int_base_imu>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel>;
+	};
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_sensor: i2c-sensor {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_eeprom: i2c-eeprom {
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_EEPROM";
+		};
+	};
+	/* TODO(jbettis): Move the i2c ports and pinctrls to npcx_emul.dts,
+	 * and add all of them instead of just these.
+	 */
+	soc-if {
+		i2c0_0: io_i2c_ctrl0_port0 {
+			compatible = "nuvoton,npcx-i2c-port";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			port = <0x00>;
+			controller = <&i2c_ctrl0>;
+			status = "disabled";
+		};
+		i2c3_0: io_i2c_ctrl3_port0 {
+			compatible = "nuvoton,npcx-i2c-port";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			port = <0x30>;
+			controller = <&i2c_ctrl3>;
+			status = "disabled";
+		};
+	};
+	pinctrl: pinctrl {
+		compatible = "nuvoton,npcx-pinctrl";
+		status = "okay";
+		/* I2C peripheral interfaces */
+		/omit-if-no-ref/ i2c0_0_sda_scl_gpb4_b5: periph-i2c0-0 {
+			pinmux = <&alt2_i2c0_0_sl>;
+			periph-pupd = <0x00 0>;
+		};
+		/omit-if-no-ref/ i2c3_0_sda_scl_gpd0_d1: periph-i2c3-0 {
+			pinmux = <&alt2_i2c3_0_sl>;
+			periph-pupd = <0x00 6>;
+		};
+	};
+	npcx-alts-map {
+		compatible = "nuvoton,npcx-pinctrl-conf";
+		/* SCFG DEVALT 2 */
+		alt2_i2c0_0_sl: alt20 {
+			alts = <&scfg 0x02 0x0 0>;
+		};
+		alt2_i2c3_0_sl: alt26 {
+			alts = <&scfg 0x02 0x6 0>;
+		};
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+i2c_pwr_cbi: &i2c3_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
+
+	charger: isl923x@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+
+&i2c_ctrl3 {
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};

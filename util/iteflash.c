@@ -1,9 +1,12 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * ITE83xx SoC in-system programming tool
  */
+
+/* remove when ftdi_usb_purge_buffers has been replaced to follow libftdi */
+#define _FTDI_DISABLE_DEPRECATED
 
 #include <errno.h>
 #include <fcntl.h>
@@ -12,6 +15,7 @@
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +23,7 @@
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "compile_time_macros.h"
 #include "usb_if.h"
@@ -33,72 +38,71 @@
 #define CR50_USB_PID 0x5014
 
 /* Cr50 exposed properties of the USB I2C endpoint. */
-#define CR50_I2C_SUBCLASS  82
-#define CR50_I2C_PROTOCOL  1
+#define CR50_I2C_SUBCLASS 82
+#define CR50_I2C_PROTOCOL 1
 
-#define CROS_CMD_ADDR		0x78	/* USB_I2C_CMD_ADDR 0xF0 >> 1 */
-#define CROS_CMD_ITE_SYNC	0
+#define CROS_CMD_ADDR 0x78 /* USB_I2C_CMD_ADDR 0xF0 >> 1 */
+#define CROS_CMD_ITE_SYNC 0
 
 /* DBGR I2C addresses */
-#define I2C_CMD_ADDR   0x5A
-#define I2C_DATA_ADDR  0x35
+#define I2C_CMD_ADDR 0x5A
+#define I2C_DATA_ADDR 0x35
 #define I2C_BLOCK_ADDR 0x79
 
 #define FTDI_I2C_FREQ 400000
 
 /* I2C pins on the FTDI interface */
-#define SCL_BIT        BIT(0)
-#define SDA_BIT        BIT(1)
+#define SCL_BIT BIT(0)
+#define SDA_BIT BIT(1)
 
 /* Chip ID register value */
 #define CHIP_ID 0x8380
 
 /* Embedded flash page size */
-#define PAGE_SIZE		(1<<8)
+#define PAGE_SIZE (1 << 8)
 
 /* Embedded flash block write size for different programming modes. */
-#define FTDI_BLOCK_WRITE_SIZE	(1<<16)
+#define FTDI_BLOCK_WRITE_SIZE (1 << 16)
 
 /* JEDEC SPI Flash commands */
-#define SPI_CMD_PAGE_PROGRAM	0x02
-#define SPI_CMD_WRITE_DISABLE	0x04
-#define SPI_CMD_READ_STATUS	0x05
-#define SPI_CMD_WRITE_ENABLE	0x06
-#define SPI_CMD_FAST_READ	0x0B
-#define SPI_CMD_CHIP_ERASE	0x60
-#define SPI_CMD_SECTOR_ERASE_1K	0xD7
-#define SPI_CMD_SECTOR_ERASE_4K	0x20
-#define SPI_CMD_WORD_PROGRAM	0xAD
-#define SPI_CMD_EWSR		0x50 /* Enable Write Status Register */
-#define SPI_CMD_WRSR		0x01 /* Write Status Register */
-#define SPI_CMD_RDID		0x9F /* Read Flash ID */
+#define SPI_CMD_PAGE_PROGRAM 0x02
+#define SPI_CMD_WRITE_DISABLE 0x04
+#define SPI_CMD_READ_STATUS 0x05
+#define SPI_CMD_WRITE_ENABLE 0x06
+#define SPI_CMD_FAST_READ 0x0B
+#define SPI_CMD_CHIP_ERASE 0x60
+#define SPI_CMD_SECTOR_ERASE_1K 0xD7
+#define SPI_CMD_SECTOR_ERASE_4K 0x20
+#define SPI_CMD_WORD_PROGRAM 0xAD
+#define SPI_CMD_EWSR 0x50 /* Enable Write Status Register */
+#define SPI_CMD_WRSR 0x01 /* Write Status Register */
+#define SPI_CMD_RDID 0x9F /* Read Flash ID */
 
 /* Size for FTDI outgoing buffer */
-#define FTDI_CMD_BUF_SIZE (1<<12)
+#define FTDI_CMD_BUF_SIZE (1 << 12)
 
 /* Reset Status */
-#define RSTS_VCCDO_PW_ON	0x40
-#define RSTS_VFSPIPG		0x20
-#define RSTS_HGRST		0x08
-#define RSTS_GRST		0x04
+#define RSTS_VCCDO_PW_ON 0x40
+#define RSTS_VFSPIPG 0x20
+#define RSTS_HGRST 0x08
+#define RSTS_GRST 0x04
 
 /* I2C MUX Configuration: TCA9543 or PCA9546 */
-#define I2C_MUX_CMD_ADDR		0x70
-#define I2C_MUX_CMD_NONE		0x00
-#define I2C_MUX_CMD_INAS		0x01
-#define I2C_MUX_CMD_EC			0x02
+#define I2C_MUX_CMD_ADDR 0x70
+#define I2C_MUX_CMD_NONE 0x00
+#define I2C_MUX_CMD_INAS 0x01
+#define I2C_MUX_CMD_EC 0x02
 
 /* Eflash Type*/
-#define EFLASH_TYPE_8315	0x01
-#define EFLASH_TYPE_KGD		0x02
-#define EFLASH_TYPE_NONE	0xFF
+#define EFLASH_TYPE_8315 0x01
+#define EFLASH_TYPE_KGD 0x02
+#define EFLASH_TYPE_NONE 0xFF
 
 uint8_t eflash_type;
 uint8_t spi_cmd_sector_erase;
 
 /* Embedded flash number of pages in a sector erase */
 uint8_t sector_erase_pages;
-
 
 static volatile sig_atomic_t exit_requested;
 
@@ -108,16 +112,17 @@ struct i2c_interface;
 struct iteflash_config {
 	char *input_filename;
 	char *output_filename;
-	int send_waveform;  /* boolean */
-	int erase;  /* boolean */
+	int send_waveform; /* boolean */
+	int erase; /* boolean */
 	int i2c_mux; /* boolean */
-	int debug;  /* boolean */
-	int disable_watchdog;  /* boolean */
-	int disable_protect_path;  /* boolean */
+	int debug; /* boolean */
+	int disable_watchdog; /* boolean */
+	int disable_protect_path; /* boolean */
 	int block_write_size;
 	int usb_interface;
 	int usb_vid;
 	int usb_pid;
+	int verify; /* boolean */
 	char *usb_serial;
 	char *i2c_dev_path;
 	const struct i2c_interface *i2c_if;
@@ -128,8 +133,8 @@ struct iteflash_config {
 struct common_hnd {
 	struct iteflash_config conf;
 	int flash_size;
-	int flash_cmd_v2;      /* boolean */
-	int dbgr_addr_3bytes;  /* boolean */
+	int flash_cmd_v2; /* boolean */
+	int dbgr_addr_3bytes; /* boolean */
 	union {
 		int i2c_dev_fd;
 		struct usb_endpoint uep;
@@ -156,13 +161,13 @@ struct i2c_interface {
 	int (*send_special_waveform)(struct common_hnd *chnd);
 	/* Required, must not be NULL. */
 	int (*byte_transfer)(struct common_hnd *chnd, uint8_t addr,
-		uint8_t *data, int write, int numbytes);
+			     uint8_t *data, int write, int numbytes);
 	/* Required, must be positive. */
 	int default_block_write_size;
 };
 
-static int spi_flash_command_short(struct common_hnd *chnd,
-				   uint8_t cmd, char *desc);
+static int spi_flash_command_short(struct common_hnd *chnd, uint8_t cmd,
+				   char *desc);
 
 static void null_and_free(void **ptr)
 {
@@ -186,7 +191,7 @@ static void config_release(struct iteflash_config *conf)
 }
 
 /* number of bytes to send consecutively before checking for ACKs */
-#define FTDI_TX_BUFFER_LIMIT	32
+#define FTDI_TX_BUFFER_LIMIT 32
 
 static inline int i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 				    uint8_t *data, int write, int numbytes)
@@ -196,7 +201,7 @@ static inline int i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 		return -1;
 
 	return chnd->conf.i2c_if->byte_transfer(chnd, addr, data, write,
-		numbytes);
+						numbytes);
 }
 
 static int linux_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
@@ -219,8 +224,10 @@ static int linux_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 	ret = ioctl(chnd->i2c_dev_fd, I2C_RDWR, &msgset);
 	if (ret < 0) {
 		extra_int = errno;
-		fprintf(stderr, "%s: ioctl() failed with return value %d and "
-			"errno %d\n", __func__, ret, extra_int);
+		fprintf(stderr,
+			"%s: ioctl() failed with return value %d and "
+			"errno %d\n",
+			__func__, ret, extra_int);
 		if (ret == -1 && extra_int)
 			ret = -abs(extra_int);
 	} else if (ret < nmsgs) {
@@ -244,12 +251,17 @@ static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 
 	for (i = 0; i < tcnt; i++) {
 		/* WORKAROUND: force SDA before sending the next byte */
-		*b++ = SET_BITS_LOW; *b++ = SDA_BIT; *b++ = SCL_BIT | SDA_BIT;
+		*b++ = SET_BITS_LOW;
+		*b++ = SDA_BIT;
+		*b++ = SCL_BIT | SDA_BIT;
 		/* write byte */
 		*b++ = MPSSE_DO_WRITE | MPSSE_BITMODE | MPSSE_WRITE_NEG;
-		*b++ = 0x07; *b++ = *tbuf++;
+		*b++ = 0x07;
+		*b++ = *tbuf++;
 		/* prepare for ACK */
-		*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT;
+		*b++ = SET_BITS_LOW;
+		*b++ = 0;
+		*b++ = SCL_BIT;
 		/* read ACK */
 		*b++ = MPSSE_DO_READ | MPSSE_BITMODE | MPSSE_LSB;
 		*b++ = 0;
@@ -261,7 +273,7 @@ static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 		 * On the last byte, or every FTDI_TX_BUFFER_LIMIT bytes, read
 		 * the ACK bits.
 		 */
-		if (i == tcnt-1 || (tx_buffered == FTDI_TX_BUFFER_LIMIT)) {
+		if (i == tcnt - 1 || (tx_buffered == FTDI_TX_BUFFER_LIMIT)) {
 			/* write data */
 			ret = ftdi_write_data(ftdi, buf, b - buf);
 			if (ret < 0) {
@@ -274,7 +286,7 @@ static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 			ack_idx = 0;
 			do {
 				ret = ftdi_read_data(ftdi, &ack[ack_idx],
-					remaining_data);
+						     remaining_data);
 				if (ret < 0) {
 					fprintf(stderr, "read ACK failed\n");
 					return ret;
@@ -293,7 +305,7 @@ static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 					fprintf(stderr,
 						"write ACK fail: %d, 0x%02x\n",
 						ret, failed_ack);
-				return  -ENXIO;
+				return -ENXIO;
 			}
 
 			/* reset for next set of transactions */
@@ -312,20 +324,32 @@ static int i2c_add_recv_bytes(struct ftdi_context *ftdi, uint8_t *buf,
 
 	for (i = 0; i < rcnt; i++) {
 		/* set SCL low */
-		*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT;
+		*b++ = SET_BITS_LOW;
+		*b++ = 0;
+		*b++ = SCL_BIT;
 		/* read the byte on the wire */
-		*b++ = MPSSE_DO_READ; *b++ = 0; *b++ = 0;
+		*b++ = MPSSE_DO_READ;
+		*b++ = 0;
+		*b++ = 0;
 
 		if (i == rcnt - 1) {
 			/* NACK last byte */
-			*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT;
+			*b++ = SET_BITS_LOW;
+			*b++ = 0;
+			*b++ = SCL_BIT;
 			*b++ = MPSSE_DO_WRITE | MPSSE_BITMODE | MPSSE_WRITE_NEG;
-			*b++ = 0; *b++ = 0xff; *b++ = SEND_IMMEDIATE;
+			*b++ = 0;
+			*b++ = 0xff;
+			*b++ = SEND_IMMEDIATE;
 		} else {
 			/* ACK all other bytes */
-			*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT | SDA_BIT;
+			*b++ = SET_BITS_LOW;
+			*b++ = 0;
+			*b++ = SCL_BIT | SDA_BIT;
 			*b++ = MPSSE_DO_WRITE | MPSSE_BITMODE | MPSSE_WRITE_NEG;
-			*b++ = 0; *b++ = 0; *b++ = SEND_IMMEDIATE;
+			*b++ = 0;
+			*b++ = 0;
+			*b++ = SEND_IMMEDIATE;
 		}
 	}
 
@@ -395,7 +419,7 @@ static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 		write ? sizeof(usb_buffer) : USB_I2C_HEADER_SIZE + extra,
 		usb_buffer, sizeof(usb_buffer), 1, &response_size);
 
-	if (response_size < (USB_I2C_HEADER_SIZE  + (write ? 0 : numbytes))) {
+	if (response_size < (USB_I2C_HEADER_SIZE + (write ? 0 : numbytes))) {
 		fprintf(stderr, "%s: got too few bytes (%zd) in response\n",
 			__func__, response_size);
 		return -1;
@@ -411,8 +435,7 @@ static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 		rv = usb_buffer[1];
 		rv = (rv << 8) + usb_buffer[0];
 
-		fprintf(stderr, "%s: usb i2c error %d\n",
-			__func__,
+		fprintf(stderr, "%s: usb i2c error %d\n", __func__,
 			(((uint16_t)usb_buffer[1]) << 8) + usb_buffer[0]);
 
 		return -rv;
@@ -439,14 +462,26 @@ static int ftdi_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 
 	/* START condition */
 	/* SCL & SDA high */
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = 0;
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = 0;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = 0;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = 0;
 	/* SCL high, SDA low */
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SDA_BIT;
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SDA_BIT;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = SDA_BIT;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = SDA_BIT;
 	/* SCL low, SDA low */
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT | SDA_BIT;
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT | SDA_BIT;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = SCL_BIT | SDA_BIT;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = SCL_BIT | SDA_BIT;
 
 	/* send address */
 	slave_addr = (addr << 1) | (write ? 0 : 1);
@@ -461,7 +496,7 @@ static int ftdi_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 	b = buf;
 	if (write) /* write data */
 		ret = i2c_add_send_byte(ftdi, buf, b, data, numbytes,
-			chnd->conf.debug);
+					chnd->conf.debug);
 	else /* read data */
 		ret = i2c_add_recv_bytes(ftdi, buf, b, data, numbytes);
 
@@ -469,11 +504,19 @@ exit_xfer:
 	b = buf;
 	/* STOP condition */
 	/* SCL high, SDA low */
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SDA_BIT;
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SDA_BIT;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = SDA_BIT;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = SDA_BIT;
 	/* SCL high, SDA high */
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = 0;
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = 0;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = 0;
+	*b++ = SET_BITS_LOW;
+	*b++ = 0;
+	*b++ = 0;
 
 	rets = ftdi_write_data(ftdi, buf, b - buf);
 	if (rets < 0)
@@ -543,21 +586,16 @@ static int check_flashid(struct common_hnd *chnd)
 {
 	int ret = 0;
 	uint8_t id[16], i;
-	struct cmds commands[] = {
-		{0x07, 0x7f},
-		{0x06, 0xff},
-		{0x04, 0x00},
-		{0x05, 0xfe},
-		{0x08, 0x00},
-		{0x05, 0xfd},
-		{0x08, 0x9f}
-	};
+	struct cmds commands[] = { { 0x07, 0x7f }, { 0x06, 0xff },
+				   { 0x04, 0x00 }, { 0x05, 0xfe },
+				   { 0x08, 0x00 }, { 0x05, 0xfd },
+				   { 0x08, 0x9f } };
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		ret = i2c_write_byte(chnd, commands[i].addr, commands[i].cmd);
 		if (ret) {
 			fprintf(stderr, "Flash ID Failed : cmd %x ,data %x\n",
-			commands[i].addr, commands[i].cmd);
+				commands[i].addr, commands[i].cmd);
 			return ret;
 		}
 	}
@@ -589,7 +627,7 @@ static int check_chipid(struct common_hnd *chnd)
 	int ret;
 	uint8_t ver = 0xff;
 	uint32_t id = 0xffff;
-	uint16_t v2[7] = {128, 192, 256, 384, 512, 0, 1024};
+	uint16_t v2[7] = { 128, 192, 256, 384, 512, 0, 1024 };
 	/*
 	 * Chip Version is mapping from bit 3-0
 	 * Flash size is mapping from bit 7-4
@@ -631,7 +669,7 @@ static int check_chipid(struct common_hnd *chnd)
 
 	if ((id & 0xff00) != (CHIP_ID & 0xff00)) {
 		id |= 0xff0000;
-		ret = get_3rd_chip_id_byte(chnd, (uint8_t *)&id+2);
+		ret = get_3rd_chip_id_byte(chnd, (uint8_t *)&id + 2);
 		if (ret < 0)
 			return ret;
 
@@ -651,7 +689,7 @@ static int check_chipid(struct common_hnd *chnd)
 	}
 	/* compute embedded flash size from CHIPVER field */
 	if (chnd->flash_cmd_v2)
-		chnd->flash_size = v2[(ver & 0xF0)>>5] * 1024;
+		chnd->flash_size = v2[(ver & 0xF0) >> 5] * 1024;
 	else
 		chnd->flash_size = (128 + (ver & 0xF0)) * 1024;
 
@@ -661,29 +699,7 @@ static int check_chipid(struct common_hnd *chnd)
 	}
 
 	printf("CHIPID %05x, CHIPVER %02x, Flash size %d kB\n", id, ver,
-		chnd->flash_size / 1024);
-
-	return 0;
-}
-
-/* DBGR Reset */
-static int dbgr_reset(struct common_hnd *chnd, unsigned char val)
-{
-	int ret = 0;
-
-	/* Reset CPU only, and we keep power state until flashing is done. */
-	if (chnd->dbgr_addr_3bytes)
-		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
-
-	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
-	ret |= i2c_write_byte(chnd, 0x2e, 0x06);
-
-	/* Enable the Reset Status by val */
-	ret |= i2c_write_byte(chnd, 0x30, val);
-
-	ret |= i2c_write_byte(chnd, 0x27, 0x80);
-	if (ret < 0)
-		fprintf(stderr, "DBGR RESET FAILED\n");
+	       chnd->flash_size / 1024);
 
 	return 0;
 }
@@ -755,7 +771,7 @@ static int dbgr_disable_protect_path(struct common_hnd *chnd)
 
 	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
 	for (i = 0; i < 32; i++) {
-		ret |= i2c_write_byte(chnd, 0x2e, 0xa0+i);
+		ret |= i2c_write_byte(chnd, 0x2e, 0xa0 + i);
 		ret |= i2c_write_byte(chnd, 0x30, 0);
 	}
 
@@ -794,8 +810,8 @@ static int spi_flash_follow_mode_exit(struct common_hnd *chnd, char *desc)
 
 	ret = (ret ? -EIO : 0);
 	if (ret < 0)
-		fprintf(stderr, "Flash %s exit follow mode FAILED (%d)\n",
-			desc, ret);
+		fprintf(stderr, "Flash %s exit follow mode FAILED (%d)\n", desc,
+			ret);
 
 	return ret;
 }
@@ -815,8 +831,8 @@ static int dbgr_stop_ec(struct common_hnd *chnd)
 }
 
 /* SPI Flash generic command, short version */
-static int spi_flash_command_short(struct common_hnd *chnd,
-				   uint8_t cmd, char *desc)
+static int spi_flash_command_short(struct common_hnd *chnd, uint8_t cmd,
+				   char *desc)
 {
 	int ret = 0;
 
@@ -833,8 +849,8 @@ static int spi_flash_command_short(struct common_hnd *chnd,
 }
 
 /* SPI Flash set erase page */
-static int spi_flash_set_erase_page(struct common_hnd *chnd,
-				    int page, char *desc)
+static int spi_flash_set_erase_page(struct common_hnd *chnd, int page,
+				    char *desc)
 {
 	int ret = 0;
 
@@ -856,7 +872,7 @@ static int spi_poll_busy(struct common_hnd *chnd, char *desc)
 	int ret = -EIO;
 
 	if (spi_flash_command_short(chnd, SPI_CMD_READ_STATUS,
-		"read status for busy bit") < 0) {
+				    "read status for busy bit") < 0) {
 		fprintf(stderr, "Flash %s wait busy cleared FAILED\n", desc);
 		goto failed_read_status;
 	}
@@ -883,7 +899,7 @@ static int spi_check_write_enable(struct common_hnd *chnd, char *desc)
 	int ret = -EIO;
 
 	if (spi_flash_command_short(chnd, SPI_CMD_READ_STATUS,
-		"read status for write enable bit") < 0) {
+				    "read status for write enable bit") < 0) {
 		fprintf(stderr, "Flash %s wait WE FAILED\n", desc);
 		goto failed_read_status;
 	}
@@ -909,12 +925,8 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 	int ret;
 	static const uint16_t divisor =
 		60000000 / (2 * FTDI_I2C_FREQ * 3 / 2 /* 3-phase CLK */) - 1;
-	uint8_t clock_buf[] = {
-		EN_3_PHASE,
-		DIS_DIV_5,
-		TCK_DIVISOR,
-		divisor & 0xff,
-		divisor >> 8};
+	uint8_t clock_buf[] = { EN_3_PHASE, DIS_DIV_5, TCK_DIVISOR,
+				divisor & 0xff, divisor >> 8 };
 
 	ret = ftdi_set_latency_timer(ftdi, 16 /* ms */);
 	if (ret < 0)
@@ -945,7 +957,7 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 
 /* Special waveform definition */
 #define SPECIAL_LEN_USEC 50000ULL /* us */
-#define SPECIAL_FREQ    400000ULL
+#define SPECIAL_FREQ 400000ULL
 
 #define SPECIAL_PATTERN 0x0000020301010302ULL
 #define SPECIAL_PATTERN_SDA_L_SCL_L 0x0000000000000000ULL
@@ -954,7 +966,7 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 #define SPECIAL_PATTERN_SDA_H_SCL_H 0x0303030303030303ULL
 #define TICK_COUNT 24
 
-#define MSEC    1000
+#define MSEC 1000
 #define USEC 1000000
 
 #define SPECIAL_BUFFER_SIZE \
@@ -969,8 +981,8 @@ static int connect_to_ccd_i2c_bridge(struct common_hnd *chnd)
 			CR50_I2C_PROTOCOL, &chnd->uep);
 
 	if (rv) {
-		fprintf(stderr, "%s: usb_findit returned error %d\n",
-			__func__, rv);
+		fprintf(stderr, "%s: usb_findit returned error %d\n", __func__,
+			rv);
 	}
 
 	return rv;
@@ -980,13 +992,11 @@ static int ccd_trigger_special_waveform(struct common_hnd *chnd)
 {
 	uint8_t response[20];
 	size_t rsize;
-	uint8_t req[] = {
-		0, /* Port 0. Might be necessary to modify. */
-		CROS_CMD_ADDR, /* Chrome OS dedicated address. */
-		1,	/* Will send a single byte command. */
-		0,	/* No need to read back anything. */
-		CROS_CMD_ITE_SYNC
-	};
+	uint8_t req[] = { 0, /* Port 0. Might be necessary to modify. */
+			  CROS_CMD_ADDR, /* Chrome OS dedicated address. */
+			  1, /* Will send a single byte command. */
+			  0, /* No need to read back anything. */
+			  CROS_CMD_ITE_SYNC };
 
 	usb_trx(&chnd->uep, req, sizeof(req), response, sizeof(response), 1,
 		&rsize);
@@ -1013,7 +1023,7 @@ static int ftdi_send_special_waveform(struct common_hnd *chnd)
 	int i;
 	uint64_t *wave;
 	struct ftdi_context *ftdi = chnd->ftdi_hnd;
-	uint8_t release_lines[] = {SET_BITS_LOW, 0, 0};
+	uint8_t release_lines[] = { SET_BITS_LOW, 0, 0 };
 
 	wave = malloc(SPECIAL_BUFFER_SIZE);
 	if (!wave) {
@@ -1052,7 +1062,7 @@ static int ftdi_send_special_waveform(struct common_hnd *chnd)
 	usleep(5000);
 
 	/* program each special tick */
-	for (i = 0; i < TICK_COUNT; ) {
+	for (i = 0; i < TICK_COUNT;) {
 		wave[i++] = SPECIAL_PATTERN_SDA_L_SCL_L;
 		wave[i++] = SPECIAL_PATTERN_SDA_H_SCL_L;
 		wave[i++] = SPECIAL_PATTERN_SDA_L_SCL_L;
@@ -1076,7 +1086,7 @@ static int ftdi_send_special_waveform(struct common_hnd *chnd)
 	ftdi_config_i2c(ftdi);
 	ftdi_write_data(ftdi, release_lines, sizeof(release_lines));
 
- free_and_return:
+free_and_return:
 	free(wave);
 	return ret;
 }
@@ -1088,7 +1098,8 @@ static int send_special_waveform(struct common_hnd *chnd)
 	int iterations;
 
 	if (!chnd->conf.i2c_if->send_special_waveform) {
-		fprintf(stderr, "This binary does not support sending the ITE "
+		fprintf(stderr,
+			"This binary does not support sending the ITE "
 			"special waveform with the chosen I2C interface.\n");
 		return -1;
 	}
@@ -1114,7 +1125,7 @@ static int send_special_waveform(struct common_hnd *chnd)
 			ret = -1;
 			if (!(iterations % max_iterations))
 				fprintf(stderr, "!please reset EC if flashing"
-					" sequence is not starting!\n");
+						" sequence is not starting!\n");
 		}
 	} while (ret && (iterations++ < max_iterations));
 
@@ -1127,10 +1138,10 @@ static int send_special_waveform(struct common_hnd *chnd)
 }
 
 static int windex;
-static const char wheel[] = {'|', '/', '-', '\\' };
+static const char wheel[] = { '|', '/', '-', '\\' };
 static void draw_spinner(uint32_t remaining, uint32_t size)
 {
-	int percent = (size - remaining)*100/size;
+	int percent = (size - remaining) * 100 / size;
 	fprintf(stderr, "\r%c%3d%%", wheel[windex++], percent);
 	windex %= sizeof(wheel);
 }
@@ -1145,8 +1156,8 @@ static int spi_send_cmd_fast_read(struct common_hnd *chnd, uint32_t addr)
 	ret = spi_flash_command_short(chnd, SPI_CMD_FAST_READ, "fast read");
 	/* Send address */
 	ret |= i2c_write_byte(chnd, 0x08, ((addr >> 16) & 0xff)); /* addr_h */
-	ret |= i2c_write_byte(chnd, 0x08, ((addr >> 8) & 0xff));  /* addr_m */
-	ret |= i2c_write_byte(chnd, 0x08, (addr & 0xff));         /* addr_l */
+	ret |= i2c_write_byte(chnd, 0x08, ((addr >> 8) & 0xff)); /* addr_m */
+	ret |= i2c_write_byte(chnd, 0x08, (addr & 0xff)); /* addr_l */
 	/* fake byte */
 	ret |= i2c_write_byte(chnd, 0x08, 0x00);
 	/* use i2c block read command */
@@ -1165,8 +1176,10 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 	int cnt;
 
 	if (address & 0xFF) {
-		fprintf(stderr, "page read requested at non-page boundary: "
-			"0x%X\n", address);
+		fprintf(stderr,
+			"page read requested at non-page boundary: "
+			"0x%X\n",
+			address);
 		return -EINVAL;
 	}
 
@@ -1206,6 +1219,18 @@ failed_read:
 	return res;
 }
 
+static bool is_empty_page(uint8_t *buffer, int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++) {
+		if (buffer[i] != 0xFF)
+			return false;
+	}
+
+	return true;
+}
+
 static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 			       uint32_t size, uint8_t *buffer)
 {
@@ -1220,8 +1245,8 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 		goto failed_write;
 
 	while (remaining) {
-		cnt = (remaining > block_write_size) ?
-			block_write_size : remaining;
+		cnt = (remaining > block_write_size) ? block_write_size :
+						       remaining;
 		addr_H = (address >> 16) & 0xFF;
 		addr_M = (address >> 8) & 0xFF;
 		addr_L = address & 0xFF;
@@ -1230,7 +1255,7 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 
 		/* Write enable */
 		if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
-			"write enable for AAI write") < 0)
+					    "write enable for AAI write") < 0)
 			goto failed_write;
 
 		/* Check write enable bit */
@@ -1239,7 +1264,7 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 
 		/* Setup write */
 		if (spi_flash_command_short(chnd, SPI_CMD_WORD_PROGRAM,
-			"AAI write") < 0)
+					    "AAI write") < 0)
 			goto failed_write;
 
 		/* Set eflash page address */
@@ -1248,7 +1273,7 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 		res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_L, 1, 1);
 		if (res < 0) {
 			fprintf(stderr, "Flash write set page FAILED (%d)\n",
-					res);
+				res);
 			goto failed_write;
 		}
 
@@ -1271,13 +1296,13 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 		res |= i2c_write_byte(chnd, 0x10, 0x00);
 		if (res < 0) {
 			fprintf(stderr, "Flash end data write FAILED (%d)\n",
-					res);
+				res);
 			goto failed_write;
 		}
 
 		/* Write disable */
 		if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-			"write disable for AAI write") < 0)
+					    "write disable for AAI write") < 0)
 			goto failed_write;
 
 		/* Wait until available */
@@ -1292,7 +1317,7 @@ static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 	res = size;
 failed_write:
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"write disable exit AAI write") < 0)
+				    "write disable exit AAI write") < 0)
 		res = -EIO;
 
 	if (spi_flash_follow_mode_exit(chnd, "AAI write") < 0)
@@ -1312,13 +1337,13 @@ static int command_write_pages3(struct common_hnd *chnd, uint32_t address,
 
 	/* SMB_SPI_Flash_Write_Enable */
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
-		"SPI Command Write Enable") < 0) {
+				    "SPI Command Write Enable") < 0) {
 		ret = -EIO;
 		goto failed_write;
 	}
 
 	if (spi_flash_command_short(chnd, SPI_CMD_PAGE_PROGRAM,
-		"SPI_CMD_PAGE_PROGRAM") < 0) {
+				    "SPI_CMD_PAGE_PROGRAM") < 0) {
 		ret = -EIO;
 		goto failed_write;
 	}
@@ -1343,8 +1368,6 @@ failed_write:
 	return ret;
 }
 
-
-
 static int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
 {
 	int res = -EIO;
@@ -1365,7 +1388,7 @@ static int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
 		draw_spinner(remaining, len);
 
 		if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
-			"write enable for erase") < 0)
+					    "write enable for erase") < 0)
 			goto failed_erase;
 
 		if (spi_check_write_enable(chnd, "erase") < 0)
@@ -1374,28 +1397,28 @@ static int command_erase(struct common_hnd *chnd, uint32_t len, uint32_t off)
 		/* do chip erase */
 		if (remaining == chnd->flash_size) {
 			if (spi_flash_command_short(chnd, SPI_CMD_CHIP_ERASE,
-				"chip erase") < 0)
+						    "chip erase") < 0)
 				goto failed_erase;
 			goto wait_busy_cleared;
 		}
 
 		/* do sector erase */
 		if (spi_flash_command_short(chnd, spi_cmd_sector_erase,
-			"sector erase") < 0)
+					    "sector erase") < 0)
 			goto failed_erase;
 
 		if (spi_flash_set_erase_page(chnd, page, "sector erase") < 0)
 			goto failed_erase;
 
-wait_busy_cleared:
+	wait_busy_cleared:
 		if (spi_poll_busy(chnd, "erase") < 0)
 			goto failed_erase;
 
 		if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-			"write disable for erase") < 0)
+					    "write disable for erase") < 0)
 			goto failed_erase;
 
-		if (remaining == chnd->flash_size)  {
+		if (remaining == chnd->flash_size) {
 			remaining = 0;
 			draw_spinner(remaining, len);
 		} else {
@@ -1410,7 +1433,7 @@ wait_busy_cleared:
 
 failed_erase:
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"write disable exit erase") < 0)
+				    "write disable exit erase") < 0)
 		res = -EIO;
 
 	if (spi_flash_follow_mode_exit(chnd, "erase") < 0)
@@ -1425,8 +1448,8 @@ failed_erase:
  * reset issue while flash.
  * Add such function to prevent the reset issue.
  */
-static int command_erase2(struct common_hnd *chnd, uint32_t len,
-			  uint32_t off, uint32_t reset)
+static int command_erase2(struct common_hnd *chnd, uint32_t len, uint32_t off,
+			  uint32_t reset)
 {
 	int res = -EIO;
 	int page = 0;
@@ -1450,11 +1473,10 @@ static int command_erase2(struct common_hnd *chnd, uint32_t len,
 		goto failed_erase;
 
 	while (remaining) {
-
 		draw_spinner(remaining, len);
 
 		if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
-			"write enable for erase") < 0)
+					    "write enable for erase") < 0)
 			goto failed_erase;
 
 		if (spi_check_write_enable(chnd, "erase") < 0)
@@ -1462,7 +1484,7 @@ static int command_erase2(struct common_hnd *chnd, uint32_t len,
 
 		/* do sector erase */
 		if (spi_flash_command_short(chnd, spi_cmd_sector_erase,
-			"sector erase") < 0)
+					    "sector erase") < 0)
 			goto failed_erase;
 
 		if (spi_flash_set_erase_page(chnd, page, "sector erase") < 0)
@@ -1472,7 +1494,7 @@ static int command_erase2(struct common_hnd *chnd, uint32_t len,
 			goto failed_erase;
 
 		if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-			"write disable for erase") < 0)
+					    "write disable for erase") < 0)
 			goto failed_erase;
 
 		if (reset) {
@@ -1483,7 +1505,6 @@ static int command_erase2(struct common_hnd *chnd, uint32_t len,
 		page += sector_erase_pages;
 		remaining -= sector_erase_pages * PAGE_SIZE;
 		draw_spinner(remaining, len);
-
 	}
 
 	/* No error so far */
@@ -1492,7 +1513,7 @@ static int command_erase2(struct common_hnd *chnd, uint32_t len,
 
 failed_erase:
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"write disable exit erase") < 0)
+				    "write disable exit erase") < 0)
 		res = -EIO;
 
 	if (spi_flash_follow_mode_exit(chnd, "erase") < 0)
@@ -1586,8 +1607,10 @@ static int write_flash(struct common_hnd *chnd, const char *filename,
 	}
 	res = fread(buffer, 1, size, hnd);
 	if (res <= 0) {
-		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
-			"ferror() %d\n", __func__, size, filename, ferror(hnd));
+		fprintf(stderr,
+			"%s: Failed to read %d bytes from %s with "
+			"ferror() %d\n",
+			__func__, size, filename, ferror(hnd));
 		free(buffer);
 		fclose(hnd);
 		return -EIO;
@@ -1640,8 +1663,10 @@ static int write_flash2(struct common_hnd *chnd, const char *filename,
 	}
 	res = fread(buffer, 1, size, hnd);
 	if (res <= 0) {
-		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
-			"ferror() %d\n", __func__, size, filename, ferror(hnd));
+		fprintf(stderr,
+			"%s: Failed to read %d bytes from %s with "
+			"ferror() %d\n",
+			__func__, size, filename, ferror(hnd));
 		fclose(hnd);
 		free(buffer);
 		return -EIO;
@@ -1671,7 +1696,8 @@ __send_aai_cmd:
 	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_l, 1, 1);
 	/* Send first two bytes of buffe */
 	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &buffer[offset], 1, 1);
-	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &buffer[offset+1], 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &buffer[offset + 1], 1,
+				 1);
 	/* we had sent two bytes */
 	offset += 2;
 	res -= 2;
@@ -1693,8 +1719,8 @@ __send_aai_cmd:
 			two_bytes_sent = 0;
 			cnt -= 2;
 		}
-		if (i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, &buffer[offset],
-			1, cnt) < 0) {
+		if (i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, &buffer[offset], 1,
+				      cnt) < 0) {
 			ret = -EIO;
 			goto failed_write;
 		}
@@ -1710,7 +1736,7 @@ __send_aai_cmd:
 			i2c_write_byte(chnd, 0x10, 0x00);
 			/* write disable command */
 			spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-				"SPI write disable");
+						"SPI write disable");
 			goto __send_aai_cmd;
 		}
 	}
@@ -1721,7 +1747,7 @@ failed_write:
 	i2c_write_byte(chnd, 0x10, 0x00);
 	/* write disable command */
 	spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"SPI write disable");
+				"SPI write disable");
 failed_enter_mode:
 	/* exit follow mode */
 	spi_flash_follow_mode_exit(chnd, "AAI write");
@@ -1768,8 +1794,10 @@ static int write_flash3(struct common_hnd *chnd, const char *filename,
 	}
 	res = fread(buf, 1, size, hnd);
 	if (res <= 0) {
-		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
-			"ferror() %d\n", __func__, size, filename, ferror(hnd));
+		fprintf(stderr,
+			"%s: Failed to read %d bytes from %s with "
+			"ferror() %d\n",
+			__func__, size, filename, ferror(hnd));
 		fclose(hnd);
 		free(buf);
 		return -EIO;
@@ -1789,7 +1817,10 @@ static int write_flash3(struct common_hnd *chnd, const char *filename,
 
 	while (res) {
 		cnt = (res > block_write_size) ? block_write_size : res;
-		if (command_write_pages3(chnd, offset, cnt, &buf[offset]) < 0) {
+		if (chnd->conf.erase && is_empty_page(&buf[offset], cnt)) {
+			/* do nothing */
+		} else if (command_write_pages3(chnd, offset, cnt,
+						&buf[offset]) < 0) {
 			ret = -EIO;
 			goto failed_write;
 		}
@@ -1802,7 +1833,7 @@ static int write_flash3(struct common_hnd *chnd, const char *filename,
 failed_write:
 	free(buf);
 	spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"SPI write disable");
+				"SPI write disable");
 	spi_flash_follow_mode_exit(chnd, "Page program");
 	if (ret < 0)
 		fprintf(stderr, "%s: Error writing to flash\n", __func__);
@@ -1812,8 +1843,6 @@ failed_write:
 	return ret;
 }
 
-
-
 /* Return zero on success, a non-zero value on failures. */
 static int verify_flash(struct common_hnd *chnd, const char *filename,
 			uint32_t offset)
@@ -1821,7 +1850,7 @@ static int verify_flash(struct common_hnd *chnd, const char *filename,
 	int res;
 	int file_size;
 	FILE *hnd;
-	uint8_t *buffer  = malloc(chnd->flash_size);
+	uint8_t *buffer = malloc(chnd->flash_size);
 	uint8_t *buffer2 = malloc(chnd->flash_size);
 
 	if (!buffer || !buffer2) {
@@ -1842,9 +1871,10 @@ static int verify_flash(struct common_hnd *chnd, const char *filename,
 
 	file_size = fread(buffer, 1, chnd->flash_size, hnd);
 	if (file_size <= 0) {
-		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
-			"ferror() %d\n", __func__, chnd->flash_size, filename,
-			ferror(hnd));
+		fprintf(stderr,
+			"%s: Failed to read %d bytes from %s with "
+			"ferror() %d\n",
+			__func__, chnd->flash_size, filename, ferror(hnd));
 		fclose(hnd);
 		res = -EIO;
 		goto exit;
@@ -1864,8 +1894,8 @@ exit:
 	return res;
 }
 
-static struct ftdi_context *open_ftdi_device(int vid, int pid,
-					     int interface, const char *serial)
+static struct ftdi_context *open_ftdi_device(int vid, int pid, int interface,
+					     const char *serial)
 {
 	struct ftdi_context *ftdi;
 	int ret;
@@ -1905,17 +1935,19 @@ static int linux_i2c_interface_init(struct common_hnd *chnd)
 		return -1;
 	}
 	printf("Attempting to open Linux i2c-dev path %s\n",
-		chnd->conf.i2c_dev_path);
+	       chnd->conf.i2c_dev_path);
 	chnd->i2c_dev_fd = open(chnd->conf.i2c_dev_path, O_RDWR);
 	if (chnd->i2c_dev_fd < 0) {
 		err = errno;
 		perror("Failed to open Linux i2c-dev file path with error");
-		fprintf(stderr, "Linux i2c-dev file path from --i2c_dev_path "
-			"is: %s\n", chnd->conf.i2c_dev_path);
+		fprintf(stderr,
+			"Linux i2c-dev file path from --i2c_dev_path "
+			"is: %s\n",
+			chnd->conf.i2c_dev_path);
 		return err ? err : -1;
 	}
 	printf("Successfully opened Linux i2c-dev path %s\n",
-		chnd->conf.i2c_dev_path);
+	       chnd->conf.i2c_dev_path);
 	return 0;
 }
 
@@ -1924,15 +1956,15 @@ static int linux_i2c_interface_shutdown(struct common_hnd *chnd)
 	int err;
 
 	printf("Attempting to close Linux i2c-dev file descriptor %d\n",
-		chnd->i2c_dev_fd);
+	       chnd->i2c_dev_fd);
 	if (close(chnd->i2c_dev_fd)) {
 		err = errno;
 		perror("Failed to close Linux i2c-dev file descriptor with "
-			"error");
+		       "error");
 		return err ? err : -1;
 	}
 	printf("Successfully closed Linux i2c-dev file descriptor %d\n",
-		chnd->i2c_dev_fd);
+	       chnd->i2c_dev_fd);
 	return 0;
 }
 
@@ -1952,8 +1984,9 @@ static int ccd_i2c_interface_shutdown(struct common_hnd *chnd)
 static int ftdi_i2c_interface_init(struct common_hnd *chnd)
 {
 	chnd->ftdi_hnd = open_ftdi_device(chnd->conf.usb_vid,
-		chnd->conf.usb_pid, chnd->conf.usb_interface,
-		chnd->conf.usb_serial);
+					  chnd->conf.usb_pid,
+					  chnd->conf.usb_interface,
+					  chnd->conf.usb_serial);
 	if (chnd->ftdi_hnd == NULL)
 		return -1;
 	return 0;
@@ -2046,30 +2079,31 @@ static int strdup_with_errmsg(const char *source, char **dest, const char *name)
 	return ret;
 }
 
-static const struct option longopts[] = {
-	{"block-write-size", 1, 0, 'b'},
-	{"debug", 0, 0, 'd'},
-	{"erase", 0, 0, 'e'},
-	{"help", 0, 0, 'h'},
-	{"i2c-dev-path", 1, 0, 'D'},
-	{"i2c-interface", 1, 0, 'c'},
-	{"i2c-mux", 0, 0, 'm'},
-	{"interface", 1, 0, 'i'},
-	{"nodisable-protect-path", 0, 0, 'Z'},
-	{"nodisable-watchdog", 0, 0, 'z'},
-	{"product", 1, 0, 'p'},
-	{"range", 1, 0, 'R'},
-	{"read", 1, 0, 'r'},
-	{"send-waveform", 1, 0, 'W'},
-	{"serial", 1, 0, 's'},
-	{"vendor", 1, 0, 'v'},
-	{"write", 1, 0, 'w'},
-	{NULL, 0, 0, 0}
-};
+static const struct option longopts[] = { { "block-write-size", 1, 0, 'b' },
+					  { "debug", 0, 0, 'd' },
+					  { "erase", 0, 0, 'e' },
+					  { "help", 0, 0, 'h' },
+					  { "i2c-dev-path", 1, 0, 'D' },
+					  { "i2c-interface", 1, 0, 'c' },
+					  { "i2c-mux", 0, 0, 'm' },
+					  { "interface", 1, 0, 'i' },
+					  { "nodisable-protect-path", 0, 0,
+					    'Z' },
+					  { "nodisable-watchdog", 0, 0, 'z' },
+					  { "noverify", 0, 0, 'n' },
+					  { "product", 1, 0, 'p' },
+					  { "range", 1, 0, 'R' },
+					  { "read", 1, 0, 'r' },
+					  { "send-waveform", 1, 0, 'W' },
+					  { "serial", 1, 0, 's' },
+					  { "vendor", 1, 0, 'v' },
+					  { "write", 1, 0, 'w' },
+					  { NULL, 0, 0, 0 } };
 
 static void display_usage(const char *program)
 {
-	fprintf(stderr, "Usage: %s [-d] [-v <VID>] [-p <PID>] \\\n"
+	fprintf(stderr,
+		"Usage: %s [-d] [-v <VID>] [-p <PID>] \\\n"
 		"\t[-c <linux|ccd|ftdi>] [-D /dev/i2c-<N>] [-i <1|2>] [-S] \\\n"
 		"\t[-s <serial>] [-e] [-r <file>] [-W <0|1|false|true>] \\\n"
 		"\t[-w <file>] [-R base[:size]] [-m] [-b <size>]\n",
@@ -2083,13 +2117,16 @@ static void display_usage(const char *program)
 			"\tonly applicable with --i2c-interface=linux\n");
 	fprintf(stderr, "-i, --interface <1> : FTDI interface: A=1, B=2,"
 			" ...\n");
-	fprintf(stderr, "-m, --i2c-mux : Enable i2c-mux (to EC).\n"
+	fprintf(stderr,
+		"-m, --i2c-mux : Enable i2c-mux (to EC).\n"
 		"\tSpecify this flag only if the board has an I2C MUX and\n"
 		"\tyou are not using servod.\n");
+	fprintf(stderr, "-n, --noverify : Don't auto verify.\n");
 	fprintf(stderr, "-b, --block-write-size <size> : Perform writes in\n"
-		"\tblocks of this many bytes.\n");
+			"\tblocks of this many bytes.\n");
 	fprintf(stderr, "-p, --product <0x1234> : USB product ID\n");
-	fprintf(stderr, "-R, --range base[:size] : Allow to read or write"
+	fprintf(stderr,
+		"-R, --range base[:size] : Allow to read or write"
 		" just a slice\n"
 		"\tof the file, starting at <base>:<size> bytes, or til\n"
 		"\tthe end of the file if <size> is not specified, expressed\n"
@@ -2098,15 +2135,16 @@ static void display_usage(const char *program)
 			" write it into <file>.\n");
 	fprintf(stderr, "-s, --serial <serialname> : USB serial string\n");
 	fprintf(stderr, "-v, --vendor <0x1234> : USB vendor ID\n");
-	fprintf(stderr, "-W, --send-waveform <0|1|false|true> : Send the"
+	fprintf(stderr,
+		"-W, --send-waveform <0|1|false|true> : Send the"
 		" special waveform.\n"
 		"\tDefault is true. Set to false if ITE direct firmware\n"
 		"\tupdate mode has already been enabled.\n");
 	fprintf(stderr, "-w, --write <file> : Write <file> to flash.\n");
 	fprintf(stderr, "-z, --nodisable-watchdog : Do *not* disable EC "
-		"watchdog.\n");
+			"watchdog.\n");
 	fprintf(stderr, "-Z, --nodisable-protect-path : Do *not* disable EC "
-		"protect path.\n");
+			"protect path.\n");
 }
 
 /*
@@ -2118,11 +2156,11 @@ static int parse_range_options(char *str, struct iteflash_config *conf)
 	char *size;
 
 	if (!str) {
-		fprintf(stderr,	"missing range base address specification\n");
+		fprintf(stderr, "missing range base address specification\n");
 		return -1;
 	}
 
-	conf->range_base = strtoul(str, &size, 16);
+	conf->range_base = strtoull(str, &size, 16);
 	if (!size || !*size)
 		return 0;
 
@@ -2136,7 +2174,7 @@ static int parse_range_options(char *str, struct iteflash_config *conf)
 		return -1;
 	}
 
-	conf->range_size = strtoul(size, &size, 16);
+	conf->range_size = strtoull(size, &size, 16);
 	if ((size && *size) || !conf->range_size) {
 		fprintf(stderr, "wrong range size specification\n");
 		return -1;
@@ -2164,14 +2202,16 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 			} else if (!strcasecmp(optarg, "ftdi")) {
 				conf->i2c_if = &ftdi_i2c_interface;
 			} else {
-				fprintf(stderr, "Unexpected -c / "
-					"--i2c-interface value: %s\n", optarg);
+				fprintf(stderr,
+					"Unexpected -c / "
+					"--i2c-interface value: %s\n",
+					optarg);
 				ret = -1;
 			}
 			break;
 		case 'D':
 			ret = strdup_with_errmsg(optarg, &conf->i2c_dev_path,
-				"-D / --i2c-dev-path");
+						 "-D / --i2c-dev-path");
 			break;
 		case 'd':
 			conf->debug = 1;
@@ -2190,6 +2230,9 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 		case 'm':
 			conf->i2c_mux = 1;
 			break;
+		case 'n':
+			conf->verify = 0;
+			break;
 		case 'p':
 			conf->usb_pid = strtol(optarg, NULL, 16);
 			break;
@@ -2198,11 +2241,11 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 			break;
 		case 'r':
 			ret = strdup_with_errmsg(optarg, &conf->input_filename,
-				"-r / --read");
+						 "-r / --read");
 			break;
 		case 's':
 			ret = strdup_with_errmsg(optarg, &conf->usb_serial,
-				"-s / --serial");
+						 "-s / --serial");
 			break;
 		case 'v':
 			conf->usb_vid = strtol(optarg, NULL, 16);
@@ -2218,13 +2261,15 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 				conf->send_waveform = 1;
 				break;
 			}
-			fprintf(stderr, "Unexpected -W / --special-waveform "
-				"value: %s\n", optarg);
+			fprintf(stderr,
+				"Unexpected -W / --special-waveform "
+				"value: %s\n",
+				optarg);
 			ret = -1;
 			break;
 		case 'w':
 			ret = strdup_with_errmsg(optarg, &conf->output_filename,
-				"-w / --write");
+						 "-w / --write");
 			break;
 		case 'z':
 			conf->disable_watchdog = 0;
@@ -2242,15 +2287,18 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 
 static void sighandler(int signum)
 {
-	printf("\nCaught signal %d: %s\nExiting...\n",
-		signum, sys_siglist[signum]);
-	exit_requested = 1;
+	int status;
+	printf("\nCaught signal %d: %s\nExiting...\n", signum,
+	       strsignal(signum));
+	wait(&status);
+	exit_requested = status;
 }
 
 static void register_sigaction(void)
 {
 	struct sigaction sigact;
 
+	memset(&sigact, 0, sizeof(sigact));
 	sigact.sa_handler = sighandler;
 	sigemptyset(&sigact.sa_mask);
 	sigact.sa_flags = 0;
@@ -2271,6 +2319,7 @@ int main(int argc, char **argv)
 			.usb_interface = SERVO_INTERFACE,
 			.usb_vid = SERVO_USB_VID,
 			.usb_pid = SERVO_USB_PID,
+			.verify = 1,
 			.i2c_if = &ftdi_i2c_interface,
 		},
 	};
@@ -2310,7 +2359,8 @@ int main(int argc, char **argv)
 
 		ret = check_chipid(&chnd);
 		if (ret) {
-			fprintf(stderr, "Failed to get ITE chip ID.  This "
+			fprintf(stderr,
+				"Failed to get ITE chip ID.  This "
 				"could be because the ITE direct firmware "
 				"update (DFU) mode is not enabled.\n");
 			goto return_after_init;
@@ -2356,20 +2406,18 @@ int main(int argc, char **argv)
 			command_erase2(&chnd, chnd.flash_size, 0, 0);
 		else
 			command_erase(&chnd, chnd.flash_size, 0);
-		/* Call DBGR Rest to clear the EC lock status after erasing */
-		dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
 	}
 
 	if (chnd.conf.output_filename) {
 		if (chnd.flash_cmd_v2)
 			switch (eflash_type) {
 			case EFLASH_TYPE_8315:
-				ret = write_flash2(&chnd,
-					chnd.conf.output_filename, 0);
+				ret = write_flash2(
+					&chnd, chnd.conf.output_filename, 0);
 				break;
 			case EFLASH_TYPE_KGD:
-				ret = write_flash3(&chnd,
-					chnd.conf.output_filename, 0);
+				ret = write_flash3(
+					&chnd, chnd.conf.output_filename, 0);
 				break;
 			default:
 				printf("Invalid EFLASH TYPE!");
@@ -2380,15 +2428,17 @@ int main(int argc, char **argv)
 			ret = write_flash(&chnd, chnd.conf.output_filename, 0);
 		if (ret)
 			goto return_after_init;
-		ret = verify_flash(&chnd, chnd.conf.output_filename, 0);
-		if (ret)
-			goto return_after_init;
+		if (chnd.conf.verify) {
+			ret = verify_flash(&chnd, chnd.conf.output_filename, 0);
+			if (ret)
+				goto return_after_init;
+		}
 	}
 
 	/* Normal exit */
 	ret = 0;
 
- return_after_init:
+return_after_init:
 	/*
 	 * Exit DBGR mode. This ensures EC won't hold clock/data pins of I2C.
 	 * Avoid resetting EC here because flash_ec will after iteflash exits.
@@ -2407,7 +2457,7 @@ int main(int argc, char **argv)
 			ret = other_ret;
 	}
 
- return_after_parse:
+return_after_parse:
 	config_release(&chnd.conf);
 	return ret;
 }

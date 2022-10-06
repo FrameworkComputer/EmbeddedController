@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,10 +13,9 @@
 #include "usb_hw.h"
 #include "usb_isochronous.h"
 
-
 /* Console output macro */
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
 
 /*
  * Currently, we only support TX direction for USB isochronous transfer.
@@ -65,8 +64,7 @@ static usb_uint *get_app_addr(struct usb_isochronous_config const *config,
  * Sets number of bytes written to application buffer.
  */
 static void set_app_count(struct usb_isochronous_config const *config,
-			  int dtog_value,
-			  usb_uint count)
+			  int dtog_value, usb_uint count)
 {
 	if (dtog_value)
 		btable_ep[config->endpoint].tx_count = count;
@@ -74,13 +72,9 @@ static void set_app_count(struct usb_isochronous_config const *config,
 		btable_ep[config->endpoint].rx_count = count;
 }
 
-int usb_isochronous_write_buffer(
-		struct usb_isochronous_config const *config,
-		const uint8_t *src,
-		size_t n,
-		size_t dst_offset,
-		int *buffer_id,
-		int commit)
+int usb_isochronous_write_buffer(struct usb_isochronous_config const *config,
+				 const uint8_t *src, size_t n,
+				 size_t dst_offset, int *buffer_id, int commit)
 {
 	int dtog_value = get_tx_dtog(config);
 	usb_uint *buffer = get_app_addr(config, dtog_value);
@@ -142,15 +136,13 @@ void usb_isochronous_tx(struct usb_isochronous_config const *config)
 }
 
 int usb_isochronous_iface_handler(struct usb_isochronous_config const *config,
-				  usb_uint *ep0_buf_rx,
-				  usb_uint *ep0_buf_tx)
+				  usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 {
 	int ret = -1;
 
-	if (ep0_buf_rx[0] == (USB_DIR_OUT |
-			      USB_TYPE_STANDARD |
-			      USB_RECIP_INTERFACE |
-			      USB_REQ_SET_INTERFACE << 8)) {
+	if (ep0_buf_rx[0] ==
+	    (USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_INTERFACE |
+	     USB_REQ_SET_INTERFACE << 8)) {
 		ret = config->set_interface(ep0_buf_rx[1], ep0_buf_rx[2]);
 
 		if (ret == 0) {

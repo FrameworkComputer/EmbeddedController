@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,8 +24,7 @@ void pwm_enable(enum pwm_channel ch, int enabled)
 	if (enabled) {
 		MEC1322_PWM_CFG(id) |= 0x1;
 		if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP)
-			pwm_keep_awake_mask |=
-				MEC1322_PCR_EC_SLP_EN_PWM(id);
+			pwm_keep_awake_mask |= MEC1322_PCR_EC_SLP_EN_PWM(id);
 	} else {
 		MEC1322_PWM_CFG(id) &= ~0x1;
 		pwm_keep_awake_mask &= ~MEC1322_PCR_EC_SLP_EN_PWM(id);
@@ -66,9 +65,9 @@ static void pwm_configure(int ch, int active_low, int clock_low)
 	 * clock_low=0 selects the 48MHz Ring Oscillator source
 	 * clock_low=1 selects the 100kHz_Clk source
 	 */
-	MEC1322_PWM_CFG(ch) = (15 << 3) |    /* Pre-divider = 16 */
+	MEC1322_PWM_CFG(ch) = (15 << 3) | /* Pre-divider = 16 */
 			      (active_low ? BIT(2) : 0) |
-			      (clock_low  ? BIT(1) : 0);
+			      (clock_low ? BIT(1) : 0);
 }
 
 static void pwm_init(void)

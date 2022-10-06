@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,12 +10,19 @@
 /* CPU core BFD configuration */
 #include "core/cortex-m0/config_core.h"
 /* IRQ priorities */
-#define STM32_IRQ_EXT0_1_PRIORITY	1
-#define STM32_IRQ_EXT2_3_PRIORITY	1
-#define STM32_IRQ_EXTI4_15_PRIORITY	1
+#define STM32_IRQ_EXT0_1_PRIORITY 1
+#define STM32_IRQ_EXT2_3_PRIORITY 1
+#define STM32_IRQ_EXTI4_15_PRIORITY 1
 #else
 /* CPU core BFD configuration */
 #include "core/cortex-m/config_core.h"
+#define STM32_IRQ_EXTI0_PRIORITY 1
+#define STM32_IRQ_EXTI1_PRIORITY 1
+#define STM32_IRQ_EXTI2_PRIORITY 1
+#define STM32_IRQ_EXTI3_PRIORITY 1
+#define STM32_IRQ_EXTI4_PRIORITY 1
+#define STM32_IRQ_EXTI9_5_PRIORITY 1
+#define STM32_IRQ_EXTI15_10_PRIORITY 1
 #endif
 
 /* Default to UART 1 for EC console */
@@ -38,6 +45,8 @@
 #include "config-stm32l100.h"
 #elif defined(CHIP_VARIANT_STM32L442)
 #include "config-stm32l442.h"
+#elif defined(CHIP_VARIANT_STM32L552XE)
+#include "config-stm32l552xe.h"
 #elif defined(CHIP_VARIANT_STM32F76X)
 #include "config-stm32f76x.h"
 #elif defined(CHIP_FAMILY_STM32F4)
@@ -61,6 +70,10 @@
 #include "config-stm32h7x3.h"
 #elif defined(CHIP_VARIANT_STM32G431XB)
 #include "config-stm32g41xb.h"
+#elif defined(CHIP_VARIANT_STM32G473XC)
+#include "config-stm32g473xc.h"
+#elif defined(CHIP_VARIANT_STM32L431X)
+#include "config-stm32l431.h"
 #else
 #error "Unsupported chip variant"
 #endif
@@ -74,10 +87,9 @@
 /* Program is run directly from storage */
 #define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
-#if !defined(CHIP_FAMILY_STM32F4) && \
-	!defined(CHIP_FAMILY_STM32F7) && \
-	!defined(CHIP_FAMILY_STM32H7) && \
-	!defined(CHIP_VARIANT_STM32F09X)
+#if !defined(CHIP_FAMILY_STM32F4) && !defined(CHIP_FAMILY_STM32F7) &&        \
+	!defined(CHIP_FAMILY_STM32H7) && !defined(CHIP_VARIANT_STM32F09X) && \
+	!defined(CHIP_VARIANT_STM32L431X)
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
 #endif
@@ -118,7 +130,7 @@
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
-#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
+#define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /*
  * Use a timer to print a watchdog warning event before the actual watchdog
@@ -134,7 +146,7 @@
 #define CONFIG_RTC
 
 /* Number of peripheral request signals per DMA channel */
-#define STM32_DMA_PERIPHERALS_PER_CHANNEL	4
+#define STM32_DMA_PERIPHERALS_PER_CHANNEL 4
 
 /*
  * Use DMA for UART transmit for all platforms.  DMA for UART receive is
@@ -151,13 +163,13 @@
 /* Chip needs to do custom pre-init */
 #define CONFIG_CHIP_PRE_INIT
 
-#define GPIO_NAME_BY_PIN(port, index) #port#index
+#define GPIO_NAME_BY_PIN(port, index) #port #index
 #define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
-/* Prescaler values for PLL. Currently used only by STM32L476. */
-#define STM32_PLLM	0
-#define STM32_PLLN	0
-#define STM32_PLLR	0
+/* Prescaler values for PLL. Currently used only by STM32L476 and STM32L431. */
+#define STM32_PLLM 1
+#define STM32_PLLN 1
+#define STM32_PLLR 1
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */

@@ -1,4 +1,4 @@
-/* Copyright 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright 2011 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -46,10 +46,10 @@ int shared_mem_size(void);
  */
 int shared_mem_acquire(int size, char **dest_ptr);
 
-#define SHARED_MEM_ACQUIRE_CHECK(size, dest_ptr) \
-	({ \
-		SHARED_MEM_CHECK_SIZE(size);				\
-		shared_mem_acquire((size), (dest_ptr));			\
+#define SHARED_MEM_ACQUIRE_CHECK(size, dest_ptr)        \
+	({                                              \
+		SHARED_MEM_CHECK_SIZE(size);            \
+		shared_mem_acquire((size), (dest_ptr)); \
 	})
 
 /**
@@ -85,4 +85,4 @@ extern struct shm_buffer *free_buf_chain;
 extern struct shm_buffer *allocced_buf_chain;
 #endif
 
-#endif  /* __CROS_EC_SHARED_MEM_H */
+#endif /* __CROS_EC_SHARED_MEM_H */

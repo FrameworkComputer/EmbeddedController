@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,10 +11,9 @@
 #define VARIANT_KUKUI_JACUZZI
 #define VARIANT_KUKUI_BATTERY_SMART
 #define VARIANT_KUKUI_CHARGER_ISL9238
+#define VARIANT_KUKUI_EC_STM32F098
 
-#ifndef SECTION_IS_RW
 #define VARIANT_KUKUI_NO_SENSORS
-#endif /* SECTION_IS_RW */
 
 #include "baseboard.h"
 
@@ -23,6 +22,8 @@
 
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 #define CONFIG_BATTERY_VENDOR_PARAM
+#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_COUNT 1
 
 #define CONFIG_CHARGER_PSYS
 
@@ -44,45 +45,25 @@
 
 #define CONFIG_USB_MUX_IT5205
 
-/* Motion Sensors */
-#ifdef SECTION_IS_RW
-#define CONFIG_MAG_BMI_BMM150
-#define CONFIG_ACCELGYRO_SEC_ADDR_FLAGS BMM150_ADDR0_FLAGS
-#define CONFIG_MAG_CALIBRATE
-#define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
-#define CONFIG_ALS
-
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-#define CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(CLEAR_ALS)
-
-#endif /* SECTION_IS_RW */
+#undef CONFIG_GMR_TABLET_MODE
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_TABLET_MODE_SWITCH
 
 /* I2C ports */
-#define I2C_PORT_BC12               0
-#define I2C_PORT_TCPC0              0
-#define I2C_PORT_USB_MUX            0
-#define I2C_PORT_BATTERY            2
-#define I2C_PORT_CHARGER            1
-#define I2C_PORT_IO_EXPANDER_IT8801 1
-#define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
+#define I2C_PORT_BC12 0
+#define I2C_PORT_TCPC0 0
+#define I2C_PORT_USB_MUX 0
+#define I2C_PORT_BATTERY 2
+#define I2C_PORT_CHARGER 1
+#define I2C_PORT_KB_DISCRETE 1
+#define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 
-/* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
+/* IT8801 I2C address */
+#define KB_DISCRETE_I2C_ADDR_FLAGS IT8801_I2C_ADDR1
 
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
-/* Define the MKBP events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON))
 
 #ifndef __ASSEMBLER__
 
@@ -118,8 +99,9 @@ enum charge_port {
 };
 
 enum battery_type {
-	BATTERY_DANAPACK_HIGHPOWER,
-	BATTERY_DANAPACK_COS,
+	BATTERY_DYNAPACK_HIGHPOWER,
+	BATTERY_DYNAPACK_COS,
+	BATTERY_LGC,
 	BATTERY_TYPE_COUNT,
 };
 
@@ -134,7 +116,6 @@ void emmc_cmd_interrupt(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void board_reset_pd_mcu(void);
 int board_get_version(void);
-int board_is_sourcing_vbus(int port);
 
 /* returns the i2c port number of charger */
 int board_get_charger_i2c(void);

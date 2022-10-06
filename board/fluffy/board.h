@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -29,26 +29,26 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE	0
-#define USB_IFACE_COUNT		1
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_COUNT 1
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_CONSOLE		1
-#define USB_EP_COUNT		2
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
+#define USB_EP_COUNT 2
 
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 
 #define CONFIG_ADC
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 

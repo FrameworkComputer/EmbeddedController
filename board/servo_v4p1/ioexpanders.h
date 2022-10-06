@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,10 +6,11 @@
 #ifndef __CROS_EC_IOEXPANDERS_H
 #define __CROS_EC_IOEXPANDERS_H
 
-enum uservo_fastboot_mux_sel_t {
-	MUX_SEL_USERVO = 0,
-	MUX_SEL_FASTBOOT = 1
-};
+#define BOARD_ID_DET_MASK 0x7
+#define BOARD_ID_DET_OFFSET 3
+#define BOARD_ID_DET_PORT 1
+
+enum uservo_fastboot_mux_sel_t { MUX_SEL_USERVO = 0, MUX_SEL_FASTBOOT = 1 };
 
 /*
  * Initialize Ioexpanders
@@ -68,13 +69,13 @@ int usb3_a0_mux_sel(int en);
 int usb3_a0_mux_en_l(int en);
 
 /**
- * Controls load switches for 5V to general USB type A
+ * Controls load switches for 5V to general USB type A.
  *
  * @param en	0 - Disable power
  *		1 - Enable power
  * @return EC_SUCCESS or EC_xxx on error
  */
-int usb3_a0_pwr_en(int en);
+int ec_usb3_a0_pwr_en(int en);
 
 /**
  * Controls logic to select 1.8V or 3.3V UART from STM to DUT on SBU lines
@@ -92,7 +93,7 @@ int uart_18_sel(int en);
  *		1 - Enable power
  * @return EC_SUCCESS or EC_xxx on error
  */
-int uservo_power_en(int en);
+int ec_uservo_power_en(int en);
 
 /**
  * USB data path enable from host hub to downstream userv or DUT peripheral
@@ -110,7 +111,7 @@ int uservo_fastboot_mux_sel(enum uservo_fastboot_mux_sel_t sel);
  *		1 - power enabled
  * @return EC_SUCCESS or EC_xxx on error
  */
-int usb3_a1_pwr_en(int en);
+int ec_usb3_a1_pwr_en(int en);
 
 /**
  * USB data path for general USB type A port, second on J2
@@ -129,21 +130,20 @@ int usb3_a1_mux_sel(int en);
 int board_id_det(void);
 
 /**
- * USBC 4:6 redriver enable
- *
- * @param en	0 - TUSB1064 disabled
- *		1 - TUSB1064 enabled
- * @return EC_SUCCESS or EC_xxx on error
- */
-int cmux_en(int en);
-
-/**
  * Reads the TypeA/TypeC DUT cable assembly pigtail
  *
  * @return	0 - for TypeA
  *		1 - for TypeC
  */
 int dongle_det(void);
+
+/**
+ * Reads state of BC1.2 on host connection
+ *
+ * @return	0 - BC1.2 not present
+ * 		1 - BC1.2 present
+ */
+int get_host_chrg_det(void);
 
 /**
  * Enable signal for supplemental power supply. This supply will support higher
@@ -233,14 +233,14 @@ int get_dut_chg_en(void);
  */
 int host_or_chg_ctl(int en);
 
-#define USERVO_FAULT_L		BIT(0)
-#define USB3_A0_FAULT_L		BIT(1)
-#define USB3_A1_FAULT_L		BIT(2)
-#define USB_DUTCHG_FLT_ODL	BIT(3)
-#define PP3300_DP_FAULT_L	BIT(4)
-#define DAC_BUF1_LATCH_FAULT_L	BIT(5)
-#define DAC_BUF2_LATCH_FAULT_L	BIT(6)
-#define PP5000_SRC_SEL		BIT(7)
+#define USERVO_FAULT_L BIT(0)
+#define USB3_A0_FAULT_L BIT(1)
+#define USB3_A1_FAULT_L BIT(2)
+#define USB_DUTCHG_FLT_ODL BIT(3)
+#define PP3300_DP_FAULT_L BIT(4)
+#define DAC_BUF1_LATCH_FAULT_L BIT(5)
+#define DAC_BUF2_LATCH_FAULT_L BIT(6)
+#define PP5000_SRC_SEL BIT(7)
 
 /**
  * Read any faults that may have occurred. A fault has occurred if the
@@ -267,6 +267,23 @@ int host_or_chg_ctl(int en);
  *			  1 - host cable is source
  */
 int read_faults(void);
+
+#define HOST_CHRG_DET BIT(0)
+#define SYS_PWR_IRQ_ODL BIT(6)
+
+/**
+ * Read irqs which indicate some system event.
+ *
+ * BIT
+ * 0 (HOST_CHRG_DET)   - Change of state of BC1.2 on host connection
+ *                       0 - BC1.2 not present
+ *                       1 - BC1.2 present
+ * 6 (SYS_PWR_IRQ_ODL) - IRQ from system full power INA231 monitor. IRQ can be
+ *                       programmed to trip on wattage threshold.
+ *                       0 - IRQ asserted
+ *                       1 - no IRQ
+ */
+int read_irqs(void);
 
 /**
  * Enables active discharge for USB DUT Charger

@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,15 +22,32 @@ static void usart_rx_init(struct usart_config const *config)
 
 static void usart_rx_interrupt_handler(struct usart_config const *config)
 {
-	intptr_t base   = config->hw->base;
-	int32_t  status = STM32_USART_SR(base);
+	intptr_t base = config->hw->base;
+	int32_t status = STM32_USART_SR(base);
 
 	/*
 	 * We have to check and clear the overrun error flag on STM32L because
 	 * we can't disable it.
 	 */
 	if (status & STM32_USART_SR_ORE) {
+#ifdef STM32_USART_ICR_ORECF
 		/*
+		 * Newer series (STM32L4xx and STM32L5xx) have an explicit
+		 * "interrupt clear" register.
+		 *
+		 * ST reference code does blind write to this register, as is
+		 * usual with the "write 1 to clear" convention, despite the
+		 * datasheet listing the bits as "keep at reset value", (which
+		 * we assume is due to copying from the description of
+		 * reserved bits in read/write registers.)
+		 */
+		STM32_USART_ICR(config->hw->base) = STM32_USART_ICR_ORECF;
+#else
+		/*
+		 * On the older series STM32L1xx, the overrun bit is cleared
+		 * by a read of the status register, followed by a read of the
+		 * data register.
+		 *
 		 * In the unlikely event that the overrun error bit was set but
 		 * the RXNE bit was not (possibly because a read was done from
 		 * RDR without first reading the status register) we do a read
@@ -38,15 +55,16 @@ static void usart_rx_interrupt_handler(struct usart_config const *config)
 		 */
 		if (!(status & STM32_USART_SR_RXNE))
 			(void)STM32_USART_RDR(config->hw->base);
+#endif
 
-		deprecated_atomic_add(&config->state->rx_overrun, 1);
+		atomic_add((atomic_t *)&(config->state->rx_overrun), 1);
 	}
 
 	if (status & STM32_USART_SR_RXNE) {
 		uint8_t byte = STM32_USART_RDR(base);
 
 		if (!queue_add_unit(config->producer.queue, &byte))
-			deprecated_atomic_add(&config->state->rx_dropped, 1);
+			atomic_add((atomic_t *)&(config->state->rx_dropped), 1);
 	}
 }
 

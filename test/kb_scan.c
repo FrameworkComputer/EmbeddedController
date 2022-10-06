@@ -1,7 +1,7 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Copyright 2013 Google Inc.
+ * Copyright 2013 Google LLC
  *
  * Tests for keyboard scan deghosting and debouncing.
  */
@@ -20,18 +20,27 @@
 #include "timer.h"
 #include "util.h"
 
-#define KEYDOWN_DELAY_MS     10
-#define KEYDOWN_RETRY        10
-#define NO_KEYDOWN_DELAY_MS  100
+#define KEYDOWN_DELAY_MS 10
+#define KEYDOWN_RETRY 10
+#define NO_KEYDOWN_DELAY_MS 100
 
-#define CHECK_KEY_COUNT(old, expected) \
-	do { \
+#define CHECK_KEY_COUNT(old, expected)                               \
+	do {                                                         \
 		if (verify_key_presses(old, expected) != EC_SUCCESS) \
-			return EC_ERROR_UNKNOWN; \
-		old = fifo_add_count; \
+			return EC_ERROR_UNKNOWN;                     \
+		old = fifo_add_count;                                \
 	} while (0)
 
+/* Emulated physical key state */
 static uint8_t mock_state[KEYBOARD_COLS_MAX];
+
+/* Snapshot of last known key state */
+static uint8_t key_state[KEYBOARD_COLS_MAX];
+
+/* Counters for key state changes (UP/DOWN) */
+static int key_state_change[KEYBOARD_COLS_MAX][KEYBOARD_ROWS];
+static int total_key_state_change;
+
 static int column_driven;
 static int fifo_add_count;
 static int lid_open;
@@ -77,9 +86,26 @@ int keyboard_raw_read_rows(void)
 	}
 }
 
-int keyboard_fifo_add(const uint8_t *buffp)
+int mkbp_keyboard_add(const uint8_t *buffp)
 {
+	int c, r;
+
 	fifo_add_count++;
+
+	for (c = 0; c < KEYBOARD_COLS_MAX; c++) {
+		uint8_t diff = key_state[c] ^ buffp[c];
+
+		for (r = 0; r < KEYBOARD_ROWS; r++) {
+			if (diff & BIT(r)) {
+				key_state_change[c][r]++;
+				total_key_state_change++;
+			}
+		}
+	}
+
+	/* Save a snapshot. */
+	memcpy(key_state, buffp, sizeof(key_state));
+
 	return EC_SUCCESS;
 }
 
@@ -95,17 +121,28 @@ void chipset_reset(void)
 }
 #endif
 
-#define mock_defined_key(k, p) mock_key(KEYBOARD_ROW_ ## k, \
-					KEYBOARD_COL_ ## k, \
-					p)
+#define mock_defined_key(k, p) mock_key(KEYBOARD_ROW_##k, KEYBOARD_COL_##k, p)
+
+#define mock_default_key(k, p) \
+	mock_key(KEYBOARD_DEFAULT_ROW_##k, KEYBOARD_DEFAULT_COL_##k, p)
 
 static void mock_key(int r, int c, int keydown)
 {
-	ccprintf("%s (%d, %d)\n", keydown ? "Pressing" : "Releasing", r, c);
+	ccprintf("  %s (%d, %d)\n", keydown ? "Pressing" : "Releasing", r, c);
 	if (keydown)
 		mock_state[c] |= (1 << r);
 	else
 		mock_state[c] &= ~(1 << r);
+}
+
+static void reset_key_state(void)
+{
+	memset(mock_state, 0, sizeof(mock_state));
+	memset(key_state, 0, sizeof(key_state));
+	memset(key_state_change, 0, sizeof(key_state_change));
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(NO_KEYDOWN_DELAY_MS);
+	total_key_state_change = 0;
 }
 
 static int expect_keychange(void)
@@ -160,6 +197,8 @@ static int verify_key_presses(int old, int expected)
 
 static int deghost_test(void)
 {
+	reset_key_state();
+
 	/* Test we can detect a keypress */
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
@@ -201,10 +240,117 @@ static int deghost_test(void)
 	return EC_SUCCESS;
 }
 
+static int strict_debounce_test(void)
+{
+	reset_key_state();
+
+	ccprintf("Test key press & hold.\n");
+	mock_key(1, 1, 1);
+	TEST_EQ(expect_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 1, "%d");
+	TEST_EQ(total_key_state_change, 1, "%d");
+	ccprintf("Pass.\n");
+
+	reset_key_state();
+
+	ccprintf("Test a short stroke.\n");
+	mock_key(1, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	TEST_EQ(expect_no_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 0, "%d");
+	ccprintf("Pass.\n");
+
+	reset_key_state();
+
+	ccprintf("Test ripples being suppressed.\n");
+	/* DOWN */
+	mock_key(1, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	TEST_EQ(expect_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 1, "%d");
+	TEST_EQ(total_key_state_change, 1, "%d");
+	/* UP */
+	mock_key(1, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	TEST_EQ(expect_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 2, "%d");
+	TEST_EQ(total_key_state_change, 2, "%d");
+	ccprintf("Pass.\n");
+
+	reset_key_state();
+
+	ccprintf("Test simultaneous strokes.\n");
+	mock_key(1, 1, 1);
+	mock_key(2, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	TEST_EQ(expect_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 1, "%d");
+	TEST_EQ(key_state_change[1][2], 1, "%d");
+	TEST_EQ(total_key_state_change, 2, "%d");
+	ccprintf("Pass.\n");
+
+	reset_key_state();
+
+	ccprintf("Test simultaneous strokes in two columns.\n");
+	mock_key(1, 1, 1);
+	mock_key(1, 2, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	TEST_EQ(expect_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 1, "%d");
+	TEST_EQ(key_state_change[2][1], 1, "%d");
+	TEST_EQ(total_key_state_change, 2, "%d");
+	ccprintf("Pass.\n");
+
+	reset_key_state();
+
+	ccprintf("Test normal & short simultaneous strokes.\n");
+	mock_key(1, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(2, 1, 1);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 0);
+	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
+	TEST_EQ(expect_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 0, "%d");
+	TEST_EQ(key_state_change[1][2], 1, "%d");
+	TEST_EQ(total_key_state_change, 1, "%d");
+	ccprintf("Pass.\n");
+
+	reset_key_state();
+
+	ccprintf("Test normal & short simultaneous strokes in two columns.\n");
+	reset_key_state();
+	mock_key(1, 1, 1);
+	task_wake(TASK_ID_KEYSCAN);
+	mock_key(1, 2, 1);
+	task_wake(TASK_ID_KEYSCAN);
+	mock_key(1, 1, 0);
+	task_wake(TASK_ID_KEYSCAN);
+	TEST_EQ(expect_keychange(), EC_SUCCESS, "%d");
+	TEST_EQ(key_state_change[1][1], 0, "%d");
+	TEST_EQ(key_state_change[2][1], 1, "%d");
+	TEST_EQ(total_key_state_change, 1, "%d");
+	ccprintf("Pass.\n");
+
+	return EC_SUCCESS;
+}
+
 static int debounce_test(void)
 {
 	int old_count = fifo_add_count;
 	int i;
+
+	reset_key_state();
 
 	/* One brief keypress is detected. */
 	msleep(40);
@@ -254,7 +400,7 @@ static int debounce_test(void)
 	 * Push down each subsequent key, until all 8 are pressed, each
 	 * time bouncing the former one once.
 	 */
-	for (i = 1 ; i < 8; i++) {
+	for (i = 1; i < 8; i++) {
 		mock_key(i, 1, 1);
 		task_wake(TASK_ID_KEYSCAN);
 		msleep(3);
@@ -288,6 +434,8 @@ static int debounce_test(void)
 static int simulate_key_test(void)
 {
 	int old_count;
+
+	reset_key_state();
 
 	task_wake(TASK_ID_KEYSCAN);
 	msleep(40); /* Wait for debouncing to settle */
@@ -328,23 +476,25 @@ static int verify_variable_not_set(int *var)
 
 static int runtime_key_test(void)
 {
+	reset_key_state();
+
 	/* Alt-VolUp-H triggers system hibernation */
 	mock_defined_key(LEFT_ALT, 1);
-	mock_defined_key(VOL_UP, 1);
+	mock_default_key(VOL_UP, 1);
 	mock_defined_key(KEY_H, 1);
 	TEST_ASSERT(wait_variable_set(&hibernated) == EC_SUCCESS);
 	mock_defined_key(LEFT_ALT, 0);
-	mock_defined_key(VOL_UP, 0);
+	mock_default_key(VOL_UP, 0);
 	mock_defined_key(KEY_H, 0);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
 	/* Alt-VolUp-R triggers chipset reset */
 	mock_defined_key(RIGHT_ALT, 1);
-	mock_defined_key(VOL_UP, 1);
+	mock_default_key(VOL_UP, 1);
 	mock_defined_key(KEY_R, 1);
 	TEST_ASSERT(wait_variable_set(&reset_called) == EC_SUCCESS);
 	mock_defined_key(RIGHT_ALT, 0);
-	mock_defined_key(VOL_UP, 0);
+	mock_default_key(VOL_UP, 0);
 	mock_defined_key(KEY_R, 0);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
@@ -352,10 +502,10 @@ static int runtime_key_test(void)
 	mock_defined_key(LEFT_ALT, 1);
 	mock_defined_key(KEY_H, 1);
 	mock_defined_key(KEY_R, 1);
-	mock_defined_key(VOL_UP, 1);
+	mock_default_key(VOL_UP, 1);
 	TEST_ASSERT(verify_variable_not_set(&hibernated) == EC_SUCCESS);
 	TEST_ASSERT(verify_variable_not_set(&reset_called) == EC_SUCCESS);
-	mock_defined_key(VOL_UP, 0);
+	mock_default_key(VOL_UP, 0);
 	mock_defined_key(KEY_R, 0);
 	mock_defined_key(KEY_H, 0);
 	mock_defined_key(LEFT_ALT, 0);
@@ -368,6 +518,8 @@ static int runtime_key_test(void)
 #ifdef CONFIG_LID_SWITCH
 static int lid_test(void)
 {
+	reset_key_state();
+
 	msleep(40); /* Allow debounce to settle */
 
 	lid_open = 0;
@@ -392,23 +544,27 @@ static int lid_test(void)
 
 static int test_check_boot_esc(void)
 {
-	TEST_CHECK(keyboard_scan_get_boot_keys() == BOOT_KEY_ESC);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == BOOT_KEY_ESC);
+	return EC_SUCCESS;
 }
 
 static int test_check_boot_down(void)
 {
-	TEST_CHECK(keyboard_scan_get_boot_keys() == BOOT_KEY_DOWN_ARROW);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == BOOT_KEY_DOWN_ARROW);
+	return EC_SUCCESS;
 }
 
 void test_init(void)
 {
-	uint32_t state = system_get_scratchpad();
+	uint32_t state;
+
+	system_get_scratchpad(&state);
 
 	if (state & TEST_STATE_MASK(TEST_STATE_STEP_2)) {
 		/* Power-F3-ESC */
 		system_set_reset_flags(system_get_reset_flags() |
 				       EC_RESET_FLAG_RESET_PIN);
-		mock_key(1, 1, 1);
+		mock_key(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, 1);
 	} else if (state & TEST_STATE_MASK(TEST_STATE_STEP_3)) {
 		/* Power-F3-Down */
 		system_set_reset_flags(system_get_reset_flags() |
@@ -424,8 +580,14 @@ static void run_test_step1(void)
 	test_reset();
 
 	RUN_TEST(deghost_test);
-	RUN_TEST(debounce_test);
-	RUN_TEST(simulate_key_test);
+
+	if (IS_ENABLED(CONFIG_KEYBOARD_STRICT_DEBOUNCE))
+		RUN_TEST(strict_debounce_test);
+	else
+		RUN_TEST(debounce_test);
+
+	if (0) /* crbug.com/976974 */
+		RUN_TEST(simulate_key_test);
 #ifdef EMU_BUILD
 	RUN_TEST(runtime_key_test);
 #endif
@@ -483,7 +645,7 @@ int test_task(void *data)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	msleep(30); /* Wait for TASK_ID_TEST to initialize */
 	task_wake(TASK_ID_TEST);

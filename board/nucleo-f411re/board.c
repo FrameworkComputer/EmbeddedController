@@ -1,11 +1,10 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 /* nucleo-f411re development board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -44,17 +43,20 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Arduino connectors analog pins */
-	[ADC1_0] = {"ADC1_0",  3000, 4096, 0, STM32_AIN(0)},
-	[ADC1_1] = {"ADC1_1",  3000, 4096, 0, STM32_AIN(1)},
-	[ADC1_4] = {"ADC1_4",  3000, 4096, 0, STM32_AIN(4)},
-	[ADC1_8] = {"ADC1_8",  3000, 4096, 0, STM32_AIN(8)},
+	[ADC1_0] = { "ADC1_0", 3000, 4096, 0, STM32_AIN(0) },
+	[ADC1_1] = { "ADC1_1", 3000, 4096, 0, STM32_AIN(1) },
+	[ADC1_4] = { "ADC1_4", 3000, 4096, 0, STM32_AIN(4) },
+	[ADC1_8] = { "ADC1_8", 3000, 4096, 0, STM32_AIN(8) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 100,
-	 GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
+	{ .name = "master",
+	  .port = I2C_PORT_MASTER,
+	  .kbps = 100,
+	  .scl = GPIO_MASTER_I2C_SCL,
+	  .sda = GPIO_MASTER_I2C_SDA },
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -113,13 +115,12 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #ifdef CONFIG_DMA_HELP
 #include "dma.h"
-int command_dma_help(int argc, char **argv)
+static int command_dma_help(int argc, const char **argv)
 {
 	dma_dump(STM32_DMA2_STREAM0);
 	dma_test(STM32_DMA2_STREAM0);
 	dma_dump(STM32_DMA2_STREAM0);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dmahelp, command_dma_help,
-			NULL, "Run DMA test");
+DECLARE_CONSOLE_COMMAND(dmahelp, command_dma_help, NULL, "Run DMA test");
 #endif

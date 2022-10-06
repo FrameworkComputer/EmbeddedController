@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,4 +21,4 @@ void ps2_enable_channel(int channel, int enable,
 			void (*callback)(uint8_t data));
 int ps2_transmit_byte(int channel, uint8_t data);
 
-#endif  /* __CROS_EC_PS2_CHIP_H */
+#endif /* __CROS_EC_PS2_CHIP_H */

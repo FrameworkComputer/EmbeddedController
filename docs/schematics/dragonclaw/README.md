@@ -6,5 +6,5 @@ Note that you'll need to download and save the HTML file from
 
 The layout file is in the [`.brd`] file.
 
-[`.brd`]: https://raw.githubusercontent.com/coreboot/chrome-ec/master/docs/schematics/dragonclaw/dragonclaw_v0.2.brd
-[schematic]: https://raw.githubusercontent.com/coreboot/chrome-ec/master/docs/schematics/dragonclaw/dragonclaw_v0.2.html
+[`.brd`]: https://raw.githubusercontent.com/coreboot/chrome-ec/HEAD/docs/schematics/dragonclaw/dragonclaw_v0.2.brd
+[schematic]: https://raw.githubusercontent.com/coreboot/chrome-ec/HEAD/docs/schematics/dragonclaw/dragonclaw_v0.2.html

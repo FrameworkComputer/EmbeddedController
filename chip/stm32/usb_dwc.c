@@ -1,8 +1,9 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "common.h"
 #include "config.h"
@@ -20,19 +21,17 @@
 #include "usb_descriptor.h"
 #include "watchdog.h"
 
-
 /****************************************************************************/
 /* Debug output */
 
 /* Console output macro */
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 /* TODO: Something unexpected happened. Figure out how to report & fix it. */
-#define report_error(val)						\
-	CPRINTS("Unhandled USB event at %s line %d: 0x%x",		\
-		__FILE__, __LINE__, val)
-
+#define report_error(val)                                                      \
+	CPRINTS("Unhandled USB event at %s line %d: 0x%x", __FILE__, __LINE__, \
+		val)
 
 /****************************************************************************/
 /* Standard USB stuff */
@@ -49,7 +48,7 @@
 #endif
 
 #ifndef CONFIG_USB_BCD_DEV
-#define CONFIG_USB_BCD_DEV 0x0100		/* 1.00 */
+#define CONFIG_USB_BCD_DEV 0x0100 /* 1.00 */
 #endif
 
 #ifndef CONFIG_USB_SERIALNO
@@ -57,7 +56,6 @@
 #else
 static int usb_load_serial(void);
 #endif
-
 
 /* USB Standard Device Descriptor */
 static const struct usb_device_descriptor dev_desc = {
@@ -81,25 +79,24 @@ static const struct usb_device_descriptor dev_desc = {
 const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bLength = USB_DT_CONFIG_SIZE,
 	.bDescriptorType = USB_DT_CONFIGURATION,
-	.wTotalLength = 0x0BAD,	 /* number of returned bytes, set at runtime */
+	.wTotalLength = 0x0BAD, /* number of returned bytes, set at runtime */
 	.bNumInterfaces = USB_IFACE_COUNT,
-	.bConfigurationValue = 1,		/* Caution: hard-coded value */
+	.bConfigurationValue = 1, /* Caution: hard-coded value */
 	.iConfiguration = USB_STR_VERSION,
 	.bmAttributes = 0x80 /* Reserved bit */
-#ifdef CONFIG_USB_SELF_POWERED  /* bus or self powered */
-		      | 0x40
+#ifdef CONFIG_USB_SELF_POWERED /* bus or self powered */
+			| 0x40
 #endif
 #ifdef CONFIG_USB_REMOTE_WAKEUP
-		      | 0x20
+			| 0x20
 #endif
 	,
 	.bMaxPower = (CONFIG_USB_MAXPOWER_MA / 2),
 };
 
 const uint8_t usb_string_desc[] = {
-	4,					/* Descriptor size */
-	USB_DT_STRING,
-	0x09, 0x04			    /* LangID = 0x0409: U.S. English */
+	4, /* Descriptor size */
+	USB_DT_STRING, 0x09, 0x04 /* LangID = 0x0409: U.S. English */
 };
 
 /****************************************************************************/
@@ -113,7 +110,7 @@ static enum {
 } what_am_i_doing;
 
 #ifdef DEBUG_ME
-static const char * const wat[3] = {
+static const char *const wat[3] = {
 	[WAITING_FOR_SETUP_PACKET] = "wait_for_setup",
 	[DATA_STAGE_IN] = "data_in",
 	[NO_DATA_STAGE] = "no_data",
@@ -181,7 +178,6 @@ static enum {
 	DS_CONFIGURED,
 } device_state;
 static uint8_t configuration_value;
-
 
 /* True if the HW Rx/OUT FIFO is currently listening. */
 int rx_ep_is_active(uint32_t ep_num)
@@ -326,10 +322,9 @@ void usb_epN_rx(uint32_t ep_num)
 	/* Bytes received decrement DOEPTSIZ XFERSIZE */
 	if (GR_USB_DOEPINT(ep_num) & DOEPINT_XFERCOMPL) {
 		if (ep->out_expected > 0) {
-			ep->out_pending =
-				ep->out_expected -
-				(GR_USB_DOEPTSIZ(ep_num) &
-				 GC_USB_DOEPTSIZ1_XFERSIZE_MASK);
+			ep->out_pending = ep->out_expected -
+					  (GR_USB_DOEPTSIZ(ep_num) &
+					   GC_USB_DOEPTSIZ1_XFERSIZE_MASK);
 		} else {
 			CPRINTF("usb_ep%d_rx: unexpected RX DOEPTSIZ %08x\n",
 				ep_num, GR_USB_DOEPTSIZ(ep_num));
@@ -350,25 +345,22 @@ void usb_epN_rx(uint32_t ep_num)
 void epN_reset(uint32_t ep_num)
 {
 	GR_USB_DOEPCTL(ep_num) = DXEPCTL_MPS(USB_MAX_PACKET_SIZE) |
-		DXEPCTL_USBACTEP | DXEPCTL_EPTYPE_BULK;
+				 DXEPCTL_USBACTEP | DXEPCTL_EPTYPE_BULK;
 	GR_USB_DIEPCTL(ep_num) = DXEPCTL_MPS(USB_MAX_PACKET_SIZE) |
-		DXEPCTL_USBACTEP | DXEPCTL_EPTYPE_BULK |
-		DXEPCTL_TXFNUM(ep_num);
-	GR_USB_DAINTMSK |= DAINT_INEP(ep_num) |
-			   DAINT_OUTEP(ep_num);
+				 DXEPCTL_USBACTEP | DXEPCTL_EPTYPE_BULK |
+				 DXEPCTL_TXFNUM(ep_num);
+	GR_USB_DAINTMSK |= DAINT_INEP(ep_num) | DAINT_OUTEP(ep_num);
 }
-
 
 /******************************************************************************
  * Internal and EP0 functions.
  */
 
-
 static void flush_all_fifos(void)
 {
 	/* Flush all FIFOs according to Section 2.1.1.2 */
-	GR_USB_GRSTCTL = GRSTCTL_TXFNUM(0x10) | GRSTCTL_TXFFLSH
-		| GRSTCTL_RXFFLSH;
+	GR_USB_GRSTCTL = GRSTCTL_TXFNUM(0x10) | GRSTCTL_TXFFLSH |
+			 GRSTCTL_RXFFLSH;
 	while (GR_USB_GRSTCTL & (GRSTCTL_TXFFLSH | GRSTCTL_RXFFLSH))
 		;
 }
@@ -390,7 +382,6 @@ int send_in_packet(uint32_t ep_num)
 	GR_USB_DIEPTSIZ(0) |= DXEPTSIZ_XFERSIZE(len);
 	GR_USB_DIEPDMA(0) = (uint32_t)ep->in_data;
 
-
 	/* We're sending this much. */
 	ep->in_pending -= len;
 	ep->in_packets -= 1;
@@ -399,7 +390,6 @@ int send_in_packet(uint32_t ep_num)
 	/* We are ready to enable this endpoint to start transferring data. */
 	return len;
 }
-
 
 /* Load the EP0 IN FIFO buffer with some data (zero-length works too). Returns
  * len, or negative on error.
@@ -418,7 +408,7 @@ int initialize_in_transfer(const void *source, uint32_t len)
 #else
 	/* HS OTG port requires an external phy to support HS */
 	ASSERT(!((usb->phy_type == USB_PHY_INTERNAL) &&
-		(usb->speed == USB_SPEED_HS)));
+		 (usb->speed == USB_SPEED_HS)));
 	ASSERT(usb->irq == STM32_IRQ_OTG_HS);
 #endif
 
@@ -435,7 +425,7 @@ int initialize_in_transfer(const void *source, uint32_t len)
 	/* We will send as many packets as necessary, including a final
 	 * packet of < USB_MAX_PACKET_SIZE (maybe zero length)
 	 */
-	ep->in_packets = (len + USB_MAX_PACKET_SIZE)/USB_MAX_PACKET_SIZE;
+	ep->in_packets = (len + USB_MAX_PACKET_SIZE) / USB_MAX_PACKET_SIZE;
 	ep->in_pending = len;
 
 	send_in_packet(0);
@@ -495,8 +485,8 @@ static void expect_data_phase_in(enum table_case tc)
 
 	/* Send the reply (data phase in) */
 	if (tc == TABLE_CASE_SETUP)
-		GR_USB_DIEPCTL(0) |= DXEPCTL_USBACTEP |
-					DXEPCTL_CNAK | DXEPCTL_EPENA;
+		GR_USB_DIEPCTL(0) |= DXEPCTL_USBACTEP | DXEPCTL_CNAK |
+				     DXEPCTL_EPENA;
 	else
 		GR_USB_DIEPCTL(0) |= DXEPCTL_EPENA;
 
@@ -508,7 +498,6 @@ static void expect_data_phase_in(enum table_case tc)
 
 	/* Get an interrupt when either IN or OUT arrives */
 	GR_USB_DAINTMSK |= (DAINT_OUTEP(0) | DAINT_INEP(0));
-
 }
 
 static void expect_data_phase_out(enum table_case tc)
@@ -524,12 +513,12 @@ static void expect_status_phase_in(enum table_case tc)
 	what_am_i_doing = NO_DATA_STAGE;
 
 	/* Expect a zero-length IN for the Status phase */
-	(void) initialize_in_transfer(0, 0);
+	(void)initialize_in_transfer(0, 0);
 
 	/* Blindly following instructions here, too. */
 	if (tc == TABLE_CASE_SETUP)
-		GR_USB_DIEPCTL(0) |= DXEPCTL_USBACTEP
-			| DXEPCTL_CNAK | DXEPCTL_EPENA;
+		GR_USB_DIEPCTL(0) |= DXEPCTL_USBACTEP | DXEPCTL_CNAK |
+				     DXEPCTL_EPENA;
 	else
 		GR_USB_DIEPCTL(0) |= DXEPCTL_EPENA;
 
@@ -549,7 +538,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 	const void *data = 0;
 	uint32_t len = 0;
 	int ugly_hack = 0;
-	static const uint16_t zero;		/* == 0 */
+	static const uint16_t zero; /* == 0 */
 
 	switch (req->bRequest) {
 	case USB_REQ_GET_DESCRIPTOR: {
@@ -564,7 +553,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 		case USB_DT_CONFIGURATION:
 			data = __usb_desc;
 			len = USB_DESC_SIZE;
-			ugly_hack = 1;		/* see below */
+			ugly_hack = 1; /* see below */
 			break;
 #ifdef CONFIG_USB_BOS
 		case USB_DT_BOS:
@@ -657,7 +646,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 
 /* Handle a Setup that comes with additional data for us. */
 static int handle_setup_with_out_stage(enum table_case tc,
-					struct usb_setup_packet *req)
+				       struct usb_setup_packet *req)
 {
 	/* TODO: We don't support any of these. We should. */
 	report_error(-1);
@@ -720,7 +709,7 @@ static int handle_setup_with_no_data_stage(enum table_case tc,
 			configuration_value = req->wValue;
 			device_state = DS_ADDRESS;
 			break;
-		case 1:	    /* Caution: Only one config descriptor TODAY */
+		case 1: /* Caution: Only one config descriptor TODAY */
 			/* TODO: All endpoints set to DATA0 toggle state */
 			configuration_value = req->wValue;
 			device_state = DS_CONFIGURED;
@@ -756,7 +745,7 @@ static void handle_setup(enum table_case tc)
 		(struct usb_setup_packet *)ep->out_databuffer;
 	int data_phase_in = req->bmRequestType & USB_DIR_IN;
 	int data_phase_out = !data_phase_in && req->wLength;
-	int bytes = -1;				/* default is to stall */
+	int bytes = -1; /* default is to stall */
 
 	if (0 == (req->bmRequestType & (USB_TYPE_MASK | USB_RECIP_MASK))) {
 		/* Standard Device requests */
@@ -900,20 +889,20 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
  * We support up to 3 control EPs, no periodic IN EPs, up to 16 TX EPs. Max
  * data packet size is 64 bytes. Total SPRAM available is 1024 slots.
  */
-#define MAX_CONTROL_EPS   3
-#define MAX_NORMAL_EPS    16
-#define FIFO_RAM_DEPTH    1024
+#define MAX_CONTROL_EPS 3
+#define MAX_NORMAL_EPS 16
+#define FIFO_RAM_DEPTH 1024
 /*
  * Device RX FIFO size is thus:
  *   (4 * 3 + 6) + 2 * ((64 / 4) + 1) + (2 * 16) + 1 == 85
  */
-#define RXFIFO_SIZE  ((4 * MAX_CONTROL_EPS + 6) + \
-		      2 * ((USB_MAX_PACKET_SIZE / 4) + 1) + \
-		      (2 * MAX_NORMAL_EPS) + 1)
+#define RXFIFO_SIZE                                                        \
+	((4 * MAX_CONTROL_EPS + 6) + 2 * ((USB_MAX_PACKET_SIZE / 4) + 1) + \
+	 (2 * MAX_NORMAL_EPS) + 1)
 /*
  * Device TX FIFO size is 2 * (64 / 4) == 32 for each IN EP (Page 46).
  */
-#define TXFIFO_SIZE  (2 * (USB_MAX_PACKET_SIZE / 4))
+#define TXFIFO_SIZE (2 * (USB_MAX_PACKET_SIZE / 4))
 /*
  * We need 4 slots per endpoint direction for endpoint status stuff (Table 2-1,
  * unconfigurable).
@@ -925,20 +914,19 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 BUILD_ASSERT(RXFIFO_SIZE + TXFIFO_SIZE * MAX_NORMAL_EPS + EP_STATUS_SIZE <
 	     FIFO_RAM_DEPTH);
 
-
 /* Now put those constants into the correct registers */
 static void setup_data_fifos(void)
 {
 	int i;
 
 	/* Programmer's Guide, p31 */
-	GR_USB_GRXFSIZ = RXFIFO_SIZE;			      /* RXFIFO */
+	GR_USB_GRXFSIZ = RXFIFO_SIZE; /* RXFIFO */
 	GR_USB_GNPTXFSIZ = (TXFIFO_SIZE << 16) | RXFIFO_SIZE; /* TXFIFO 0 */
 
 	/* TXFIFO 1..15 */
 	for (i = 1; i < MAX_NORMAL_EPS; i++)
-		GR_USB_DIEPTXF(i) = ((TXFIFO_SIZE << 16) |
-				     (RXFIFO_SIZE + i * TXFIFO_SIZE));
+		GR_USB_DIEPTXF(i) =
+			((TXFIFO_SIZE << 16) | (RXFIFO_SIZE + i * TXFIFO_SIZE));
 
 	/*
 	 * TODO: The Programmer's Guide is confusing about when or whether to
@@ -953,10 +941,10 @@ static void setup_data_fifos(void)
 	 */
 
 	/* Flush all FIFOs according to Section 2.1.1.2 */
-	GR_USB_GRSTCTL = GRSTCTL_TXFNUM(0x10) | GRSTCTL_TXFFLSH
-		| GRSTCTL_RXFFLSH;
+	GR_USB_GRSTCTL = GRSTCTL_TXFNUM(0x10) | GRSTCTL_TXFFLSH |
+			 GRSTCTL_RXFFLSH;
 	while (GR_USB_GRSTCTL & (GRSTCTL_TXFFLSH | GRSTCTL_RXFFLSH))
-		;				/* TODO: timeout 100ms */
+		; /* TODO: timeout 100ms */
 }
 
 static void usb_init_endpoints(void)
@@ -998,8 +986,7 @@ static void usb_enumdone(void)
 	GR_USB_DCTL |= DCTL_CGOUTNAK;
 }
 
-
-void usb_interrupt(void)
+static void usb_interrupt(void)
 {
 	uint32_t status = GR_USB_GINTSTS & GR_USB_GINTMSK;
 	uint32_t oepint = status & GINTSTS(OEPINT);
@@ -1027,10 +1014,10 @@ void usb_interrupt(void)
 		 * let it know which direction(s) had an interrupt.
 		 */
 		if (daint & (DAINT_OUTEP(0) | DAINT_INEP(0))) {
-			uint32_t intr_on_out = (oepint &&
-						(daint & DAINT_OUTEP(0)));
-			uint32_t intr_on_in = (iepint &&
-						(daint & DAINT_INEP(0)));
+			uint32_t intr_on_out =
+				(oepint && (daint & DAINT_OUTEP(0)));
+			uint32_t intr_on_in =
+				(iepint && (daint & DAINT_INEP(0)));
 			ep0_interrupt(intr_on_out, intr_on_in);
 		}
 
@@ -1103,8 +1090,8 @@ void usb_reset_init_phy(void)
 
 	if (usb->phy_type == USB_PHY_ULPI) {
 		GR_USB_GCCFG &= ~GCCFG_PWRDWN;
-		GR_USB_GUSBCFG &= ~(GUSBCFG_TSDPS |
-			GUSBCFG_ULPIFSLS | GUSBCFG_PHYSEL);
+		GR_USB_GUSBCFG &=
+			~(GUSBCFG_TSDPS | GUSBCFG_ULPIFSLS | GUSBCFG_PHYSEL);
 		GR_USB_GUSBCFG &= ~(GUSBCFG_ULPIEVBUSD | GUSBCFG_ULPIEVBUSI);
 		/* No suspend */
 		GR_USB_GUSBCFG |= GUSBCFG_ULPICSM | GUSBCFG_ULPIAR;
@@ -1168,11 +1155,11 @@ void usb_init(void)
 		 * GR_USB_DCFG = (GR_USB_DCFG & ~GC_USB_DCFG_DEVSPD_MASK)
 		 * | DCFG_DEVSPD_HSULPI;
 		 */
-		GR_USB_DCFG = (GR_USB_DCFG & ~GC_USB_DCFG_DEVSPD_MASK)
-			| DCFG_DEVSPD_FSULPI;
+		GR_USB_DCFG = (GR_USB_DCFG & ~GC_USB_DCFG_DEVSPD_MASK) |
+			      DCFG_DEVSPD_FSULPI;
 	} else {
-		GR_USB_DCFG = (GR_USB_DCFG & ~GC_USB_DCFG_DEVSPD_MASK)
-			| DCFG_DEVSPD_FS48;
+		GR_USB_DCFG = (GR_USB_DCFG & ~GC_USB_DCFG_DEVSPD_MASK) |
+			      DCFG_DEVSPD_FS48;
 	}
 
 	GR_USB_DCFG |= DCFG_NZLSOHSK;
@@ -1190,10 +1177,11 @@ void usb_init(void)
 	GR_USB_GAHBCFG |= GAHBCFG_TXFELVL | GAHBCFG_PTXFELVL;
 
 	/* Device only, no SRP */
-	GR_USB_GUSBCFG |= GUSBCFG_FDMOD
-		| GUSBCFG_TOUTCAL(7)
-		/* FIXME: Magic number! 14 is for 15MHz! Use 9 for 30MHz */
-		| GUSBCFG_USBTRDTIM(14);
+	GR_USB_GUSBCFG |= GUSBCFG_FDMOD |
+			  GUSBCFG_TOUTCAL(7)
+			  /* FIXME: Magic number! 14 is for 15MHz! Use 9 for
+			     30MHz */
+			  | GUSBCFG_USBTRDTIM(14);
 
 	/* Be in disconnected state until we are ready */
 	usb_disconnect();
@@ -1225,15 +1213,15 @@ void usb_init(void)
 
 	if (usb->dma_en) {
 		GR_USB_DTHRCTL = DTHRCTL_TXTHRLEN_6 | DTHRCTL_RXTHRLEN_6;
-		GR_USB_DTHRCTL |= DTHRCTL_RXTHREN | DTHRCTL_ISOTHREN
-			| DTHRCTL_NONISOTHREN;
+		GR_USB_DTHRCTL |= DTHRCTL_RXTHREN | DTHRCTL_ISOTHREN |
+				  DTHRCTL_NONISOTHREN;
 		i = GR_USB_DTHRCTL;
 	}
 
 	GR_USB_GINTSTS = 0xFFFFFFFF;
 
-	GR_USB_GAHBCFG |= GAHBCFG_GLB_INTR_EN | GAHBCFG_TXFELVL
-		| GAHBCFG_PTXFELVL;
+	GR_USB_GAHBCFG |= GAHBCFG_GLB_INTR_EN | GAHBCFG_TXFELVL |
+			  GAHBCFG_PTXFELVL;
 
 	if (!(usb->dma_en))
 		GR_USB_GINTMSK |= GINTMSK(RXFLVL);
@@ -1241,7 +1229,7 @@ void usb_init(void)
 	/* Unmask some endpoint interrupt causes */
 	GR_USB_DIEPMSK = DIEPMSK_EPDISBLDMSK | DIEPMSK_XFERCOMPLMSK;
 	GR_USB_DOEPMSK = DOEPMSK_EPDISBLDMSK | DOEPMSK_XFERCOMPLMSK |
-		DOEPMSK_SETUPMSK;
+			 DOEPMSK_SETUPMSK;
 
 	/* Enable interrupt handlers */
 	task_enable_irq(usb->irq);
@@ -1253,7 +1241,7 @@ void usb_init(void)
 		/* Initialization events */
 		GINTMSK(USBRST) | GINTMSK(ENUMDONE) |
 		/* Reset detected while suspended. Need to wake up. */
-		GINTMSK(RESETDET) |		/* TODO: Do we need this? */
+		GINTMSK(RESETDET) | /* TODO: Do we need this? */
 		/* Idle, Suspend detected. Should go to sleep. */
 		GINTMSK(ERLYSUSP) | GINTMSK(USBSUSP);
 
@@ -1314,7 +1302,7 @@ static void usb_info(void)
 	}
 }
 
-static int command_usb(int argc, char **argv)
+static int command_usb(int argc, const char **argv)
 {
 	if (argc > 1) {
 		if (!strcasecmp("on", argv[1]))
@@ -1328,8 +1316,7 @@ static int command_usb(int argc, char **argv)
 
 	return EC_ERROR_PARAM1;
 }
-DECLARE_CONSOLE_COMMAND(usb, command_usb,
-			"[on|off|info]",
+DECLARE_CONSOLE_COMMAND(usb, command_usb, "[on|off|info]",
 			"Get/set the USB connection state and PHY selection");
 
 #ifdef CONFIG_USB_SERIALNO
@@ -1391,7 +1378,7 @@ static int usb_save_serial(const char *serialno)
 	return rv;
 }
 
-static int command_serialno(int argc, char **argv)
+static int command_serialno(int argc, const char **argv)
 {
 	struct usb_string_desc *sd = usb_serialno_desc;
 	char buf[CONFIG_SERIALNO_LEN];
@@ -1399,12 +1386,10 @@ static int command_serialno(int argc, char **argv)
 	int i;
 
 	if (argc != 1) {
-		if ((strcasecmp(argv[1], "set") == 0) &&
-		    (argc == 3)) {
+		if ((strcasecmp(argv[1], "set") == 0) && (argc == 3)) {
 			ccprintf("Saving serial number\n");
 			rv = usb_save_serial(argv[2]);
-		} else if ((strcasecmp(argv[1], "load") == 0) &&
-			   (argc == 2)) {
+		} else if ((strcasecmp(argv[1], "load") == 0) && (argc == 2)) {
 			ccprintf("Loading serial number\n");
 			rv = usb_load_serial();
 		} else
@@ -1417,7 +1402,6 @@ static int command_serialno(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(serialno, command_serialno,
-	"load/set [value]",
-	"Read and write USB serial number");
-#endif  /* CONFIG_USB_SERIALNO */
+DECLARE_CONSOLE_COMMAND(serialno, command_serialno, "load/set [value]",
+			"Read and write USB serial number");
+#endif /* CONFIG_USB_SERIALNO */

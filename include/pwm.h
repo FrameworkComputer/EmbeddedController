@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -39,38 +39,41 @@ void pwm_set_duty(enum pwm_channel ch, int percent);
  */
 int pwm_get_duty(enum pwm_channel ch);
 
+<<<<<<< HEAD
 /**
  * enable breath function.
  */
 void bbled_enable(enum pwm_channel ch, int percent, int on_length, int off_length, uint8_t enable);
 
+=======
+>>>>>>> chromium/main
 /* Flags for PWM config table */
 
 /**
  * PWM output signal is inverted, so 100% duty means always low
  */
-#define PWM_CONFIG_ACTIVE_LOW		BIT(0)
+#define PWM_CONFIG_ACTIVE_LOW BIT(0)
 /**
  * PWM channel has a fan controller with a tach input and can auto-adjust
  * its duty cycle to produce a given fan RPM.
  */
-#define PWM_CONFIG_HAS_RPM_MODE		BIT(1)
+#define PWM_CONFIG_HAS_RPM_MODE BIT(1)
 /**
  * PWM clock select alternate source.  The actual clock and alternate
  * source are chip dependent.
  */
-#define PWM_CONFIG_ALT_CLOCK		BIT(2)
+#define PWM_CONFIG_ALT_CLOCK BIT(2)
 /**
  * PWM channel has a complementary output signal which should be enabled in
  * addition to the primary output.
  */
-#define PWM_CONFIG_COMPLEMENTARY_OUTPUT	BIT(3)
+#define PWM_CONFIG_COMPLEMENTARY_OUTPUT BIT(3)
 /**
  * PWM channel must stay active in low-power idle, if enabled.
  */
-#define PWM_CONFIG_DSLEEP		BIT(4)
+#define PWM_CONFIG_DSLEEP BIT(4)
 /**
  * PWM channel's IO type is open-drain, if enabled. (default IO is push-pull.)
  */
-#define PWM_CONFIG_OPEN_DRAIN		BIT(5)
-#endif  /* __CROS_EC_PWM_H */
+#define PWM_CONFIG_OPEN_DRAIN BIT(5)
+#endif /* __CROS_EC_PWM_H */

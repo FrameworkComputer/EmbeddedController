@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,12 +21,12 @@
 #include "uartn.h"
 #include "util.h"
 
-#define CONSOLE_UART            CONFIG_CONSOLE_UART
+#define CONSOLE_UART CONFIG_CONSOLE_UART
 
 #if CONSOLE_UART
-#define CONSOLE_UART_IRQ        NPCX_IRQ_UART2
+#define CONSOLE_UART_IRQ NPCX_IRQ_UART2
 #else
-#define CONSOLE_UART_IRQ        NPCX_IRQ_UART
+#define CONSOLE_UART_IRQ NPCX_IRQ_UART
 #endif
 
 static int init_done;
@@ -54,7 +54,7 @@ static int altpad_tx_len;
  */
 static timestamp_t last_default_pad_rx_time;
 
-static const uint32_t block_alt_timeout_us = 500*MSEC;
+static const uint32_t block_alt_timeout_us = 500 * MSEC;
 
 #else
 
@@ -197,7 +197,7 @@ int uart_read_char(void)
 }
 
 /* Interrupt handler for Console UART */
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 #ifdef CONFIG_UART_PAD_SWITCH
 	if (pad == UART_ALTERNATE_PAD) {
@@ -209,7 +209,8 @@ void uart_ec_interrupt(void)
 		}
 		if (uartn_tx_ready(NPCX_UART_PORT0)) {
 			if (altpad_tx_pos < altpad_tx_len)
-				uartn_write_char(NPCX_UART_PORT0,
+				uartn_write_char(
+					NPCX_UART_PORT0,
 					altpad_tx_buf[altpad_tx_pos++]);
 			else
 				uart_tx_stop();
@@ -319,8 +320,8 @@ int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
 	uint32_t start = __hw_clock_source_read();
 	int ret = 0;
 
-	if ((get_time().val - last_default_pad_rx_time.val)
-			< block_alt_timeout_us)
+	if ((get_time().val - last_default_pad_rx_time.val) <
+	    block_alt_timeout_us)
 		return -EC_ERROR_BUSY;
 
 	cflush();
@@ -381,7 +382,6 @@ out:
 #endif
 void uart_init(void)
 {
-
 	uartn_init(CONSOLE_UART);
 	init_done = 1;
 }

@@ -1,0 +1,5 @@
+description: USBC TCPC
+
+compatible: "fairchild,fusb302"
+
+include: i2c-device.yaml

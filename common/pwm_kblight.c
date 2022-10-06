@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -38,9 +38,15 @@ static int kblight_pwm_enable(int enable)
 	return EC_SUCCESS;
 }
 
+static int kblight_pwm_get_enabled(void)
+{
+	return pwm_get_enabled(kblight_pwm_ch);
+}
+
 const struct kblight_drv kblight_pwm = {
 	.init = kblight_pwm_init,
 	.set = kblight_pwm_set,
 	.get = kblight_pwm_get,
 	.enable = kblight_pwm_enable,
+	.get_enabled = kblight_pwm_get_enabled,
 };

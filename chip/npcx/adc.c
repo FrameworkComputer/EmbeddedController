@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* NPCX-specific ADC module for Chrome EC */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "atomic.h"
 #include "clock.h"
 #include "clock_chip.h"
@@ -20,27 +19,46 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* Maximum time we allow for an ADC conversion */
-#define ADC_TIMEOUT_US            SECOND
-#define ADC_CLK                   2000000
-#define ADC_REGULAR_DLY           0x11
-#define ADC_REGULAR_ADCCNF2       0x8B07
-#define ADC_REGULAR_GENDLY        0x0100
-#define ADC_REGULAR_MEAST         0x0001
+#define ADC_TIMEOUT_US SECOND
+/*
+ * ADC basic clock is from APB1.
+ * In npcx5, APB1 clock frequency is (15 MHz / 4).
+ * Configure ADC clock divider and speed parameters to set the ADC clock to
+ * ~2 MHz.
+ * In npcx7 and later chips, APB1 clock frequency is 15 MHz.
+ * Configure ADC clock divider and speed parameters to set the ADC clock to
+ * 7.5 MHz.
+ */
+#if defined(CHIP_FAMILY_NPCX5)
+#define ADC_CLK 2000000
+#define ADC_DLY 0x03
+#define ADC_ADCCNF2 0x8B07
+#define ADC_GENDLY 0x0100
+#define ADC_MEAST 0x0001
+#else
+#define ADC_CLK 7500000
+#define ADC_DLY 0x02
+#define ADC_ADCCNF2 0x8901
+#define ADC_GENDLY 0x0100
+#define ADC_MEAST 0x0405
+#endif
 
 /* ADC conversion mode */
 enum npcx_adc_conversion_mode {
-	ADC_CHN_CONVERSION_MODE   = 0,
-	ADC_SCAN_CONVERSION_MODE  = 1
+	ADC_CHN_CONVERSION_MODE = 0,
+	ADC_SCAN_CONVERSION_MODE = 1
 };
 
 /* Global variables */
 static volatile task_id_t task_waiting;
 
 struct mutex adc_lock;
+
+static volatile bool adc_done;
 
 /**
  * Preset ADC operation clock.
@@ -51,7 +69,7 @@ struct mutex adc_lock;
  */
 void adc_freq_changed(void)
 {
-	uint8_t prescaler_divider    = 0;
+	uint8_t prescaler_divider = 0;
 
 	/* Set clock prescaler divider to ADC module*/
 	prescaler_divider = (uint8_t)(clock_get_apb1_freq() / ADC_CLK);
@@ -73,19 +91,23 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, adc_freq_changed, HOOK_PRIO_DEFAULT);
  * @return  TRUE/FALSE  success/fail
  * @notes   set SW-triggered interrupt conversion and one-shot mode in npcx chip
  */
-static int start_single_and_wait(enum npcx_adc_input_channel input_ch
-		, int timeout)
+static int start_single_and_wait(enum npcx_adc_input_channel input_ch,
+				 int timeout)
 {
 	int event;
 
-	task_waiting = task_get_current();
+	if (IS_ENABLED(CONFIG_KEYBOARD_SCAN_ADC)) {
+		if (task_start_called())
+			task_waiting = task_get_current();
+	} else
+		task_waiting = task_get_current();
 
 	/* Stop ADC conversion first */
 	SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_STOP);
 
 	/* Set ADC conversion code to SW conversion mode */
 	SET_FIELD(NPCX_ADCCNF, NPCX_ADCCNF_ADCMD_FIELD,
-			ADC_CHN_CONVERSION_MODE);
+		  ADC_CHN_CONVERSION_MODE);
 
 	/* Set conversion type to one-shot type */
 	CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCRPTC);
@@ -102,13 +124,35 @@ static int start_single_and_wait(enum npcx_adc_input_channel input_ch
 	/* Start conversion */
 	SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_START);
 
-	/* Wait for interrupt */
-	event = task_wait_event_mask(TASK_EVENT_ADC_DONE, timeout);
+	/*
+	 * If tasks have started, we can suspend to the task that called us.
+	 * If not, we need to busy poll for adc to finish before proceeding
+	 */
+	if (IS_ENABLED(CONFIG_KEYBOARD_SCAN_ADC)) {
+		if (!task_start_called()) {
+			/* Wait for the ADC interrupt to set the flag */
+			do {
+				usleep(10);
+			} while (adc_done == false);
 
-	task_waiting = TASK_ID_INVALID;
+			adc_done = false;
+
+			event = TASK_EVENT_ADC_DONE;
+		} else {
+			/* Wait for interrupt */
+			event = task_wait_event_mask(TASK_EVENT_ADC_DONE,
+						     timeout);
+
+			task_waiting = TASK_ID_INVALID;
+		}
+	} else {
+		/* Wait for interrupt */
+		event = task_wait_event_mask(TASK_EVENT_ADC_DONE, timeout);
+
+		task_waiting = TASK_ID_INVALID;
+	}
 
 	return (event == TASK_EVENT_ADC_DONE);
-
 }
 
 static uint16_t repetitive_enabled;
@@ -168,8 +212,9 @@ int adc_read_data(enum npcx_adc_input_channel input_ch)
 	uint16_t chn_data;
 
 	chn_data = NPCX_CHNDAT(adc->input_ch);
-	value = GET_FIELD(chn_data, NPCX_CHNDAT_CHDAT_FIELD) *
-		 adc->factor_mul / adc->factor_div + adc->shift;
+	value = GET_FIELD(chn_data, NPCX_CHNDAT_CHDAT_FIELD) * adc->factor_mul /
+			adc->factor_div +
+		adc->shift;
 	return value;
 }
 
@@ -196,11 +241,11 @@ int adc_read_channel(enum adc_channel ch)
 	if (start_single_and_wait(adc->input_ch, ADC_TIMEOUT_US)) {
 		chn_data = NPCX_CHNDAT(adc->input_ch);
 		if ((adc->input_ch ==
-			GET_FIELD(NPCX_ASCADD, NPCX_ASCADD_SADDR_FIELD))
-			&& (IS_BIT_SET(chn_data,
-					NPCX_CHNDAT_NEW))) {
+		     GET_FIELD(NPCX_ASCADD, NPCX_ASCADD_SADDR_FIELD)) &&
+		    (IS_BIT_SET(chn_data, NPCX_CHNDAT_NEW))) {
 			value = GET_FIELD(chn_data, NPCX_CHNDAT_CHDAT_FIELD) *
-				adc->factor_mul / adc->factor_div + adc->shift;
+					adc->factor_mul / adc->factor_div +
+				adc->shift;
 		} else {
 			value = ADC_READ_ERROR;
 		}
@@ -216,7 +261,7 @@ int adc_read_channel(enum adc_channel ch)
 	} else {
 		/* Set ADC conversion code to SW conversion mode */
 		SET_FIELD(NPCX_ADCCNF, NPCX_ADCCNF_ADCMD_FIELD,
-		  ADC_SCAN_CONVERSION_MODE);
+			  ADC_SCAN_CONVERSION_MODE);
 		/* Set conversion type to repetitive (runs continuously) */
 		SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCRPTC);
 		/* Start conversion */
@@ -238,8 +283,7 @@ void npcx_adc_thresh_int_enable(int threshold_idx, int enable)
 	enable = !!enable;
 
 	if ((threshold_idx < 1) || (threshold_idx > NPCX_ADC_THRESH_CNT)) {
-		CPRINTS("Invalid ADC thresh index! (%d)",
-			threshold_idx);
+		CPRINTS("Invalid ADC thresh index! (%d)", threshold_idx);
 		return;
 	}
 	threshold_idx--; /* convert to 0-based */
@@ -268,24 +312,21 @@ void npcx_adc_register_thresh_irq(int threshold_idx,
 	int shift;
 
 	if ((threshold_idx < 1) || (threshold_idx > NPCX_ADC_THRESH_CNT)) {
-		CPRINTS("Invalid ADC thresh index! (%d)",
-			threshold_idx);
+		CPRINTS("Invalid ADC thresh index! (%d)", threshold_idx);
 		return;
 	}
 	npcx_adc_ch = adc_channels[thresh_cfg->adc_ch].input_ch;
 
 	if (!thresh_cfg->adc_thresh_cb) {
-		CPRINTS("No callback for ADC Threshold %d!",
-			threshold_idx);
+		CPRINTS("No callback for ADC Threshold %d!", threshold_idx);
 		return;
 	}
 
 	/* Fill in the table */
-	adc_thresh_irqs[threshold_idx-1] = thresh_cfg->adc_thresh_cb;
+	adc_thresh_irqs[threshold_idx - 1] = thresh_cfg->adc_thresh_cb;
 
 	/* Select the channel */
-	SET_FIELD(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_CHNSEL,
-		  npcx_adc_ch);
+	SET_FIELD(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_CHNSEL, npcx_adc_ch);
 
 	if (thresh_cfg->lower_or_higher)
 		SET_BIT(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_L_H);
@@ -300,8 +341,7 @@ void npcx_adc_register_thresh_irq(int threshold_idx,
 	raw_val = (thresh_cfg->thresh_assert - shift) * div / mul;
 	CPRINTS("ADC THR%d: Setting THRVAL = %d, L_H: %d", threshold_idx,
 		raw_val, thresh_cfg->lower_or_higher);
-	SET_FIELD(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_THRVAL,
-		  raw_val);
+	SET_FIELD(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_THRVAL, raw_val);
 
 #if NPCX_FAMILY_VERSION <= NPCX_FAMILY_NPCX7
 	/* Disable deassertion threshold function */
@@ -319,7 +359,7 @@ void npcx_adc_register_thresh_irq(int threshold_idx,
  * @return  none
  * @notes   Only handle SW-triggered conversion in npcx chip
  */
-void adc_interrupt(void)
+static void adc_interrupt(void)
 {
 	int i;
 	uint16_t thrcts;
@@ -338,7 +378,12 @@ void adc_interrupt(void)
 
 		/* Wake up the task which was waiting for the interrupt */
 		if (task_waiting != TASK_ID_INVALID)
-			task_set_event(task_waiting, TASK_EVENT_ADC_DONE, 0);
+			task_set_event(task_waiting, TASK_EVENT_ADC_DONE);
+
+		if (IS_ENABLED(CONFIG_KEYBOARD_SCAN_ADC)) {
+			if (!task_start_called())
+				adc_done = true;
+		}
 	}
 
 	for (i = NPCX_THRCTS_THR1_STS; i < NPCX_ADC_THRESH_CNT; i++) {
@@ -346,7 +391,7 @@ void adc_interrupt(void)
 		    IS_BIT_SET(NPCX_THRCTS, i)) {
 			/* avoid clearing other threshold status */
 			thrcts = NPCX_THRCTS &
-					~GENMASK(NPCX_ADC_THRESH_CNT - 1, 0);
+				 ~GENMASK(NPCX_ADC_THRESH_CNT - 1, 0);
 			/* Clear threshold status */
 			SET_BIT(thrcts, i);
 			NPCX_THRCTS = thrcts;
@@ -357,35 +402,47 @@ void adc_interrupt(void)
 }
 DECLARE_IRQ(NPCX_IRQ_ADC, adc_interrupt, 4);
 
+/*
+ * For Antighost keyboard, we need to initialize adc from
+ * main before keyboard_scan_init is called in order to
+ * detect boot keys
+ */
+
 /**
  * ADC initial.
  *
  * @param none
  * @return none
  */
+#ifndef CONFIG_KEYBOARD_SCAN_ADC
 static void adc_init(void)
+#else
+void adc_init(void)
+#endif
 {
 	/* Configure pins from GPIOs to ADCs */
 	gpio_config_module(MODULE_ADC, 1);
 
 	/* Enable ADC clock (bit4 mask = 0x10) */
 	clock_enable_peripheral(CGC_OFFSET_ADC, CGC_ADC_MASK,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
+				CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Set Core Clock Division Factor in order to obtain the ADC clock */
 	adc_freq_changed();
 
 	/* Set regular speed */
-	SET_FIELD(NPCX_ATCTL, NPCX_ATCTL_DLY_FIELD, (ADC_REGULAR_DLY - 1));
+	SET_FIELD(NPCX_ATCTL, NPCX_ATCTL_DLY_FIELD, ADC_DLY);
 
 	/* Set the other ADC settings */
-	NPCX_ADCCNF2 = ADC_REGULAR_ADCCNF2;
-	NPCX_GENDLY = ADC_REGULAR_GENDLY;
-	NPCX_MEAST = ADC_REGULAR_MEAST;
+	NPCX_ADCCNF2 = ADC_ADCCNF2;
+	NPCX_GENDLY = ADC_GENDLY;
+	NPCX_MEAST = ADC_MEAST;
 
 	task_waiting = TASK_ID_INVALID;
 
 	/* Enable IRQs */
 	task_enable_irq(NPCX_IRQ_ADC);
 }
+#ifndef CONFIG_KEYBOARD_SCAN_ADC
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
+#endif

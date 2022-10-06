@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -86,12 +86,12 @@ test_mockable void keyboard_raw_drive_column(int out)
 			}
 		}
 
-	#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
 		if (bsrr & (gpio_list[GPIO_KB_OUT02].mask << 16 |
-				 gpio_list[GPIO_KB_OUT02].mask))
+			    gpio_list[GPIO_KB_OUT02].mask))
 			bsrr ^= (gpio_list[GPIO_KB_OUT02].mask << 16 |
 				 gpio_list[GPIO_KB_OUT02].mask);
-	#endif
+#endif
 
 		if (bsrr)
 			STM32_GPIO_BSRR(kb_out_ports[i]) = bsrr;
@@ -131,9 +131,9 @@ void keyboard_raw_enable_interrupt(int enable)
 		 * Clear them before enable interrupt.
 		 */
 		STM32_EXTI_PR |= irq_mask;
-		STM32_EXTI_IMR |= irq_mask;	/* 1: unmask interrupt */
+		STM32_EXTI_IMR |= irq_mask; /* 1: unmask interrupt */
 	} else {
-		STM32_EXTI_IMR &= ~irq_mask;	/* 0: mask interrupts */
+		STM32_EXTI_IMR &= ~irq_mask; /* 0: mask interrupts */
 	}
 }
 

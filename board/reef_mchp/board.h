@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,24 +12,26 @@
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
+/* EC console on UART 0 */
+#define CONFIG_UART_CONSOLE 0
 
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_BATT_MFG_ACCESS
 #define CONFIG_CMD_CHARGER_ADC_AMON_BMON
-#define CONFIG_CHARGER_SENSE_RESISTOR		10
-#define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
+#define CONFIG_CHARGER_SENSE_RESISTOR 10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define BD9995X_IOUT_GAIN_SELECT \
-		BD9995X_CMD_PMON_IOUT_CTRL_SET_IOUT_GAIN_SET_20V
+	BD9995X_CMD_PMON_IOUT_CTRL_SET_IOUT_GAIN_SET_20V
 
 #define CONFIG_CHARGER_PSYS_READ
 #define BD9995X_PSYS_GAIN_SELECT \
-		BD9995X_CMD_PMON_IOUT_CTRL_SET_PMON_GAIN_SET_02UAW
+	BD9995X_CMD_PMON_IOUT_CTRL_SET_PMON_GAIN_SET_02UAW
 
 #define CONFIG_CMD_I2C_STRESS_TEST
 #define CONFIG_CMD_I2C_STRESS_TEST_ACCEL
@@ -39,7 +41,7 @@
 #define CONFIG_CMD_I2C_STRESS_TEST_TCPC
 
 /* Battery */
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_SMART
@@ -55,11 +57,12 @@
 #define CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT 1
 #define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 18000
 #define CONFIG_CHARGER_MAINTAIN_VBAT
+#undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
 #define CONFIG_USB_CHARGER
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGER_PROFILE_OVERRIDE_COMMON
-#undef  CONFIG_CHARGER_PROFILE_VOLTAGE_RANGES
+#undef CONFIG_CHARGER_PROFILE_VOLTAGE_RANGES
 #define CONFIG_CHARGER_PROFILE_VOLTAGE_RANGES 3
 #define CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
 
@@ -86,7 +89,7 @@
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_TCPC_LOW_POWER
-#define CONFIG_USB_PD_TCPM_MUX  /* for both PS8751 and ANX3429 */
+#define CONFIG_USB_PD_TCPM_MUX /* for both PS8751 and ANX3429 */
 #define CONFIG_USB_PD_TCPM_ANX3429 /* Silicon on Reef is ANX3429 */
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USB_PD_TCPM_TCPCI
@@ -101,7 +104,7 @@
 #define CONFIG_USBC_VCONN_SWAP
 
 /* SoC / PCH */
-#define CONFIG_HOSTCMD_LPC
+#define CONFIG_HOST_INTERFACE_LPC
 #define CONFIG_CHIPSET_APOLLOLAKE
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_POWER_BUTTON
@@ -109,18 +112,18 @@
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_S0IX
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
 
 /* EC */
 #define CONFIG_ADC
-#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_EXTPOWER_GPIO
-#undef   CONFIG_EXTPOWER_DEBOUNCE_MS
-#define  CONFIG_EXTPOWER_DEBOUNCE_MS 1000
+#undef CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 1000
 #define CONFIG_FPU
 #define CONFIG_HOSTCMD_FLASH_SPI_INFO
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
-#define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_I2C_CONTROLLER
+
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
@@ -142,7 +145,7 @@
 #define CONFIG_WIRELESS
 #define CONFIG_WIRELESS_SUSPEND EC_WIRELESS_SWITCH_WLAN_POWER
 #define CONFIG_WLAN_POWER_ACTIVE_LOW
-#define  WIRELESS_GPIO_WLAN_POWER GPIO_WIRELESS_GPIO_WLAN_POWER
+#define WIRELESS_GPIO_WLAN_POWER GPIO_WIRELESS_GPIO_WLAN_POWER
 #define CONFIG_PWR_STATE_DISCHARGE_FULL
 
 /*
@@ -166,9 +169,9 @@
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_SPI_FLASH
 
-#define CONFIG_FLASH_SIZE 524288
+#define CONFIG_FLASH_SIZE_BYTES 524288
 #define CONFIG_SPI_FLASH_REGS
-#define CONFIG_SPI_FLASH_W25Q40	/* FIXME: Should be GD25LQ40? */
+#define CONFIG_SPI_FLASH_W25Q40 /* FIXME: Should be GD25LQ40? */
 
 /*
  * Enable 1 slot of secure temporary storage to support
@@ -183,23 +186,22 @@
 #define CONFIG_BOARD_PRE_INIT
 
 /* I2C ports */
-#define I2C_CONTROLLER_COUNT	4
-#define I2C_PORT_COUNT		5
+#define I2C_CONTROLLER_COUNT 4
+#define I2C_PORT_COUNT 5
 
-#define I2C_PORT_GYRO			MCHP_I2C_PORT6
-#define I2C_PORT_LID_ACCEL		MCHP_I2C_PORT7
-#define I2C_PORT_ALS			MCHP_I2C_PORT7
-#define I2C_PORT_BARO			MCHP_I2C_PORT7
-#define I2C_PORT_BATTERY		MCHP_I2C_PORT3
-#define I2C_PORT_CHARGER		MCHP_I2C_PORT3
+#define I2C_PORT_GYRO MCHP_I2C_PORT6
+#define I2C_PORT_LID_ACCEL MCHP_I2C_PORT7
+#define I2C_PORT_ALS MCHP_I2C_PORT7
+#define I2C_PORT_BARO MCHP_I2C_PORT7
+#define I2C_PORT_BATTERY MCHP_I2C_PORT3
+#define I2C_PORT_CHARGER MCHP_I2C_PORT3
 /* Accelerometer and Gyroscope are the same device. */
-#define I2C_PORT_ACCEL			I2C_PORT_GYRO
+#define I2C_PORT_ACCEL I2C_PORT_GYRO
 
 /* Sensors */
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
 #define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define CONFIG_MAG_BMI_BMM150
@@ -220,7 +222,6 @@
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -228,9 +229,9 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_TEMP_SENSOR_CHARGER,	/* ADC0 */
-	ADC_TEMP_SENSOR_AMB,		/* ADC1 */
-	ADC_BOARD_ID,			/* ADC2 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC0 */
+	ADC_TEMP_SENSOR_AMB, /* ADC1 */
+	ADC_BOARD_ID, /* ADC2 */
 	ADC_CH_COUNT
 };
 
@@ -269,7 +270,7 @@ enum sensor_id {
 	BASE_GYRO,
 	BASE_MAG,
 	BASE_BARO,
-	LID_ALS,	/* firmware-reef-9042.B doesn't have this */
+	LID_ALS, /* firmware-reef-9042.B doesn't have this */
 	SENSOR_COUNT,
 };
 
@@ -292,17 +293,16 @@ enum reef_board_version {
  * delay to turn on the power supply max is ~16ms.
  * delay to turn off the power supply max is about ~180ms.
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* delay to turn on/off vconn */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       45000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_POWER_MW 45000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
@@ -314,14 +314,6 @@ void board_print_tcpc_fw_version(int port);
 
 /* Map I2C port to controller */
 int board_i2c_p2c(int port);
-
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- */
-uint16_t board_i2c_slave_addrs(int controller);
 
 /* MCHP - firwmare-reef-9042.B does have LID_ALS bit
  * because its using TASK_ALS ?

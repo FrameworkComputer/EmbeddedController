@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -20,9 +20,8 @@ static int get_seq(void)
 	/* Get the state */
 	memset(&resp, 0, sizeof(resp));
 	params.cmd = LIGHTBAR_CMD_GET_SEQ;
-	rv = test_send_host_command(EC_CMD_LIGHTBAR_CMD, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_LIGHTBAR_CMD, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	if (rv != EC_RES_SUCCESS) {
 		ccprintf("%s:%s(): rv = %d\n", __FILE__, __func__, rv);
 		return -1;
@@ -41,9 +40,8 @@ static int set_seq(int s)
 	memset(&resp, 0, sizeof(resp));
 	params.cmd = LIGHTBAR_CMD_SEQ;
 	params.seq.num = s;
-	rv = test_send_host_command(EC_CMD_LIGHTBAR_CMD, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_LIGHTBAR_CMD, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	if (rv != EC_RES_SUCCESS) {
 		ccprintf("%s:%s(): rv = %d\n", __FILE__, __func__, rv);
 		return -1;
@@ -169,9 +167,8 @@ test_static int test_stop_timeout(void)
 		TEST_ASSERT(set_seq(i) == EC_RES_SUCCESS);
 		usleep(SECOND);
 		/* What happened? */
-		if (i == LIGHTBAR_RUN ||
-		    i == LIGHTBAR_S0S3 || i ==  LIGHTBAR_S3 ||
-		    i ==  LIGHTBAR_S3S5 || i ==  LIGHTBAR_S5)
+		if (i == LIGHTBAR_RUN || i == LIGHTBAR_S0S3 ||
+		    i == LIGHTBAR_S3 || i == LIGHTBAR_S3S5 || i == LIGHTBAR_S5)
 			/* RUN or shutdown sequences should stop it */
 			TEST_ASSERT(get_seq() == LIGHTBAR_S0);
 		else
@@ -290,7 +287,7 @@ const struct lb_brightness_def lb_brightness_levels[] = {
 	},
 };
 const unsigned int lb_brightness_levels_count =
-		ARRAY_SIZE(lb_brightness_levels);
+	ARRAY_SIZE(lb_brightness_levels);
 
 int lux_level_to_google_color(const int lux);
 extern int google_color_id;
@@ -303,8 +300,8 @@ int lid_is_open(void)
 test_static int test_als_lightbar(void)
 {
 	int lux_data[] = { 500, 100, 35, 15, 30, 35, 55, 70, 55, 100 };
-	int exp_gcid[] = {   0,   0,  1,  2,  2,  2,  1,  0,  0,   0 };
-	int exp_chg[]  = {   0,   0,  1,  1,  0,  0,  1,  1,  0,   0 };
+	int exp_gcid[] = { 0, 0, 1, 2, 2, 2, 1, 0, 0, 0 };
+	int exp_chg[] = { 0, 0, 1, 1, 0, 0, 1, 1, 0, 0 };
 	int i;
 
 	BUILD_ASSERT(ARRAY_SIZE(lux_data) == ARRAY_SIZE(exp_gcid));
@@ -319,7 +316,7 @@ test_static int test_als_lightbar(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	/* Ensure tasks are started before running tests */
 	usleep(SECOND);

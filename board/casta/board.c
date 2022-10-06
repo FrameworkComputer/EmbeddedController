@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,13 +6,15 @@
 /* Casta board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "battery.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
 #include "cros_board_info.h"
 #include "driver/charger/bd9995x.h"
+#include "driver/charger/bq25710.h"
+#include "driver/charger/isl923x.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -28,17 +30,17 @@
 #include "power_button.h"
 #include "switch.h"
 #include "system.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 static uint8_t sku_id;
 
@@ -63,41 +65,50 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* TODO(b/119872005): Casta: confirm thermistor parts */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/* Charger config.  Start i2c address at isl9238, update during runtime */
+struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*
  * I2C callbacks to ensure bus free time for battery I2C transactions is at
  * least 5ms.
  */
-#define BATTERY_FREE_MIN_DELTA_US               (5 * MSEC)
+#define BATTERY_FREE_MIN_DELTA_US (5 * MSEC)
 static timestamp_t battery_last_i2c_time;
 
-static int is_battery_i2c(const int port, const uint16_t slave_addr_flags)
+static int is_battery_i2c(const int port, const uint16_t addr_flags)
 {
-	return (port == I2C_PORT_BATTERY)
-		&& (slave_addr_flags == BATTERY_ADDR_FLAGS);
+	return (port == I2C_PORT_BATTERY) && (addr_flags == BATTERY_ADDR_FLAGS);
 }
 
 static int is_battery_port(int port)
@@ -105,11 +116,11 @@ static int is_battery_port(int port)
 	return (port == I2C_PORT_BATTERY);
 }
 
-void i2c_start_xfer_notify(const int port, const uint16_t slave_addr_flags)
+void i2c_start_xfer_notify(const int port, const uint16_t addr_flags)
 {
 	unsigned int time_delta_us;
 
-	if (!is_battery_i2c(port, slave_addr_flags))
+	if (!is_battery_i2c(port, addr_flags))
 		return;
 
 	time_delta_us = time_since32(battery_last_i2c_time);
@@ -119,7 +130,7 @@ void i2c_start_xfer_notify(const int port, const uint16_t slave_addr_flags)
 	usleep(BATTERY_FREE_MIN_DELTA_US - time_delta_us);
 }
 
-void i2c_end_xfer_notify(const int port, const uint16_t slave_addr_flags)
+void i2c_end_xfer_notify(const int port, const uint16_t addr_flags)
 {
 	/*
 	 * The bus free time needs to be maintained from last transaction
@@ -141,18 +152,29 @@ static void cbi_init(void)
 	sku_id = val;
 	CPRINTS("SKU: %d", sku_id);
 }
-DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C);
 
-/* TODO: Casta: remove this routine after rev0 is not supported */
 static void board_init(void)
 {
-	uint32_t val;
-	if (cbi_get_board_version(&val) == EC_SUCCESS && val > 0)
+	if (get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
 		return;
 
-	gpio_set_flags(GPIO_USB_C0_MUX_INT_ODL, GPIO_INT_FALLING | GPIO_PULL_UP);
+	chg_chips[0].drv = &bq25710_drv;
+	chg_chips[0].i2c_addr_flags = BQ25710_SMBUS_ADDR1_FLAGS;
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_I2C);
+
+static void set_input_limit_on_ac_removal(void)
+{
+	if (extpower_is_present())
+		return;
+
+	if (get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
+		return;
+
+	charger_set_input_current_limit(0, CONFIG_CHARGER_INPUT_CURRENT);
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, set_input_limit_on_ac_removal, HOOK_PRIO_DEFAULT);
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {

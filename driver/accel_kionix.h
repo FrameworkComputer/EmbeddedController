@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -47,49 +47,29 @@ extern const struct accelgyro_drv kionix_accel_drv;
  * |    SPI device ID              | 1 |
  * +-------------------------------+---+
  */
-#define KIONIX_CTRL1_REG(v) (KX022_CNTL1 +	\
-			     (v) * (KXCJ9_CTRL1 - KX022_CNTL1))
-#define KIONIX_CTRL2_REG(v) (KX022_CNTL2 +	\
-			     (v) * (KXCJ9_CTRL2 - KX022_CNTL2))
-#define KIONIX_ODR_REG(v) (KX022_ODCNTL +	\
-			   (v) * (KXCJ9_DATA_CTRL - KX022_ODCNTL))
-#define KIONIX_ODR_FIELD(v) (KX022_OSA_FIELD +		\
-			     (v) * (KXCJ9_OSA_FIELD - KX022_OSA_FIELD))
-#define KIONIX_PC1_FIELD(v) (KX022_CNTL1_PC1 +		\
-			     (v) * (KXCJ9_CTRL1_PC1 - KX022_CNTL1_PC1))
-#define KIONIX_RANGE_FIELD(v) (KX022_GSEL_FIELD +	\
-			       (v) * (KXCJ9_GSEL_ALL - KX022_GSEL_FIELD))
-#define KIONIX_RES_FIELD(v) (KX022_RES_16BIT +		\
-			     (v) * (KXCJ9_RES_12BIT - KX022_RES_16BIT))
-#define KIONIX_RESET_FIELD(v) (KX022_CNTL2_SRST +	\
-			       (v) * (KXCJ9_CTRL2_SRST - KX022_CNTL2_SRST))
-#define KIONIX_XOUT_L(v) (KX022_XOUT_L +	\
-			  (v) * (KXCJ9_XOUT_L - KX022_XOUT_L))
+#define KIONIX_CTRL1_REG(v) (KX022_CNTL1 + (v) * (KXCJ9_CTRL1 - KX022_CNTL1))
+#define KIONIX_CTRL2_REG(v) (KX022_CNTL2 + (v) * (KXCJ9_CTRL2 - KX022_CNTL2))
+#define KIONIX_ODR_REG(v) \
+	(KX022_ODCNTL + (v) * (KXCJ9_DATA_CTRL - KX022_ODCNTL))
+#define KIONIX_ODR_FIELD(v) \
+	(KX022_OSA_FIELD + (v) * (KXCJ9_OSA_FIELD - KX022_OSA_FIELD))
+#define KIONIX_PC1_FIELD(v) \
+	(KX022_CNTL1_PC1 + (v) * (KXCJ9_CTRL1_PC1 - KX022_CNTL1_PC1))
+#define KIONIX_RANGE_FIELD(v) \
+	(KX022_GSEL_FIELD + (v) * (KXCJ9_GSEL_ALL - KX022_GSEL_FIELD))
+#define KIONIX_RES_FIELD(v) \
+	(KX022_RES_16BIT + (v) * (KXCJ9_RES_12BIT - KX022_RES_16BIT))
+#define KIONIX_RESET_FIELD(v) \
+	(KX022_CNTL2_SRST + (v) * (KXCJ9_CTRL2_SRST - KX022_CNTL2_SRST))
+#define KIONIX_XOUT_L(v) (KX022_XOUT_L + (v) * (KXCJ9_XOUT_L - KX022_XOUT_L))
 
-#define KIONIX_WHO_AM_I(v) (KX022_WHOAMI + \
-			    (v) * (KXCJ9_WHOAMI - KX022_WHOAMI))
+#define KIONIX_WHO_AM_I(v) (KX022_WHOAMI + (v) * (KXCJ9_WHOAMI - KX022_WHOAMI))
 
-#define KIONIX_WHO_AM_I_VAL(v) (KX022_WHO_AM_I_VAL + \
-			(v) * (KXCJ9_WHO_AM_I_VAL - KX022_WHO_AM_I_VAL))
+#define KIONIX_WHO_AM_I_VAL(v) \
+	(KX022_WHO_AM_I_VAL + (v) * (KXCJ9_WHO_AM_I_VAL - KX022_WHO_AM_I_VAL))
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
 extern struct i2c_stress_test_dev kionix_i2c_stress_test_dev;
-#endif
-
-#ifdef CONFIG_KX022_ORIENTATION_SENSOR
-#define ORIENTATION_CHANGED(_sensor) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->orientation != \
-	((struct kionix_accel_data *)(_sensor->drv_data))->last_orientation)
-
-#define GET_ORIENTATION(_sensor) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->orientation)
-
-#define SET_ORIENTATION(_sensor, _val) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->orientation = _val)
-
-#define SET_ORIENTATION_UPDATED(_sensor) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->last_orientation = \
-	((struct kionix_accel_data *)(_sensor->drv_data))->orientation)
 #endif
 
 #endif /* __CROS_EC_ACCEL_KIONIX_H */

@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -35,6 +35,7 @@ GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 2), GPIO_INT_FALLING,		usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,		usb1_evt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 6), GPIO_INT_FALLING | GPIO_PULL_UP, bmi160_interrupt)
 GPIO_INT(TABLET_MODE_L,		PIN(7, 2), GPIO_INT_BOTH,		gmr_tablet_switch_isr)
+GPIO_INT(CCD_MODE_ODL,		PIN(6, 3), GPIO_INT_FALLING,		ccd_mode_isr)
 
 GPIO(ENABLE_BACKLIGHT_L,		PIN(6, 7), GPIO_OUT_LOW)	/* LCD backlight */
 GPIO(PP3300_DX_WLAN,		PIN(B, 1), GPIO_OUT_LOW)	/* Enable WLAN 3.3V Power */
@@ -47,7 +48,6 @@ GPIO(EC_PLATFORM_RST,		PIN(4, 5), GPIO_OUT_LOW)	/* EC Reset to LDO_EN */
 GPIO(SYS_RESET_L,		PIN(6, 1), GPIO_ODR_HIGH)	/* Cold Reset to SOC */
 GPIO(PMIC_SLP_SUS_L,		PIN(8, 5), GPIO_OUT_LOW)	/* SLP_SUS# to PMIC */
 GPIO(BATTERY_PRESENT_L,		PIN(3, 4), GPIO_INPUT)		/* Battery Present */
-GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)		/* Case Closed Debug Mode */
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)		/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)		/* PMIC interrupt */
 #ifndef CONFIG_POWER_S0IX

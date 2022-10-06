@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,8 +11,8 @@
 #ifdef CONFIG_BLUETOOTH_HCI_DEBUG
 
 #define CPUTS(outstr) cputs(CC_BLUETOOTH_HCI, outstr)
-#define CPRINTS(format, args...) cprints(CC_BLUETOOTH_HCI, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_BLUETOOTH_HCI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_BLUETOOTH_HCI, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_BLUETOOTH_HCI, format, ##args)
 
 #else /* CONFIG_BLUETOOTH_HCI_DEBUG */
 
@@ -27,7 +27,7 @@ static uint64_t hci_le_event_mask;
 
 #define MAX_MESSAGE 24
 
-#define STATUS  (return_params[0])
+#define STATUS (return_params[0])
 #define RPARAMS (&(return_params[1]))
 
 void hci_cmd(uint8_t *hciCmdbuf)
@@ -56,215 +56,184 @@ void hci_cmd(uint8_t *hciCmdbuf)
 	}
 
 	switch (hdr->opcode) {
-	case CMD_MAKE_OPCODE(HCI_OGF_Controller_and_Baseband,
-				HCI_CMD_Reset):
+	case CMD_MAKE_OPCODE(HCI_OGF_Controller_and_Baseband, HCI_CMD_Reset):
 		STATUS = ll_reset();
-	break;
+		break;
 	case CMD_MAKE_OPCODE(HCI_OGF_Controller_and_Baseband,
-				HCI_CMD_Set_Event_Mask):
+			     HCI_CMD_Set_Event_Mask):
 		if (hdr->paramLen != sizeof(hci_event_mask))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = HCI_SUCCESS;
 		memcpy(&hci_event_mask, params, sizeof(hci_event_mask));
-	break;
+		break;
 	case CMD_MAKE_OPCODE(HCI_OGF_Controller_and_Baseband,
-				HCI_CMD_Read_Transmit_Power_Level):
+			     HCI_CMD_Read_Transmit_Power_Level):
 	case CMD_MAKE_OPCODE(HCI_OGF_Informational,
-				HCI_CMD_Read_Local_Supported_Features):
+			     HCI_CMD_Read_Local_Supported_Features):
 	case CMD_MAKE_OPCODE(HCI_OGF_Informational,
-				HCI_CMD_Read_Local_Supported_Commands):
+			     HCI_CMD_Read_Local_Supported_Commands):
 	case CMD_MAKE_OPCODE(HCI_OGF_Informational,
-				HCI_CMD_Read_Local_Version_Information):
-	case CMD_MAKE_OPCODE(HCI_OGF_Informational,
-				HCI_CMD_Read_BD_ADDR):
+			     HCI_CMD_Read_Local_Version_Information):
+	case CMD_MAKE_OPCODE(HCI_OGF_Informational, HCI_CMD_Read_BD_ADDR):
 	case CMD_MAKE_OPCODE(HCI_OGF_Link_Control,
-				HCI_CMD_Read_Remote_Version_Information):
-	case CMD_MAKE_OPCODE(HCI_OGF_Status,
-				HCI_CMD_Read_RSSI):
+			     HCI_CMD_Read_Remote_Version_Information):
+	case CMD_MAKE_OPCODE(HCI_OGF_Status, HCI_CMD_Read_RSSI):
 		event = 0;
-	break;
+		break;
 
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Event_Mask):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Event_Mask):
 		if (hdr->paramLen != sizeof(hci_le_event_mask))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = HCI_SUCCESS;
 		memcpy(&hci_le_event_mask, params, sizeof(hci_le_event_mask));
-	break;
+		break;
 
 	/* LE Information */
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_Buffer_Size):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Read_Buffer_Size):
 		if (hdr->paramLen != 0)
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_read_buffer_size(RPARAMS);
 		rparam_count = sizeof(struct hciCmplLeReadBufferSize);
-	break;
+		break;
 	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_Local_Supported_Features):
+			     HCI_CMD_LE_Read_Local_Supported_Features):
 		if (hdr->paramLen != 0)
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_read_local_supported_features(RPARAMS);
 		rparam_count =
 			sizeof(struct hciCmplLeReadLocalSupportedFeatures);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_Supported_States):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Read_Supported_States):
 		if (hdr->paramLen != 0)
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_read_supported_states(RPARAMS);
 		rparam_count = sizeof(struct hciCmplLeReadSupportedStates);
-	break;
+		break;
 	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Host_Channel_Classification):
+			     HCI_CMD_LE_Set_Host_Channel_Classification):
 		if (hdr->paramLen !=
 		    sizeof(struct hciLeSetHostChannelClassification))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_set_host_channel_classification(params);
-	break;
+		break;
 
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Random_Address):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Random_Address):
 		if (hdr->paramLen != sizeof(struct hciLeSetRandomAddress))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_set_random_address(params);
-	break;
+		break;
 
 	/* Advertising */
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Advertise_Enable):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Advertise_Enable):
 		STATUS = ll_set_advertising_enable(params);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Advertising_Data):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Advertising_Data):
 		STATUS = ll_set_adv_data(params);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Adv_Params):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Adv_Params):
 		if (hdr->paramLen != sizeof(struct hciLeSetAdvParams))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_set_advertising_params(params);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_Adv_Channel_TX_Power):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Read_Adv_Channel_TX_Power):
 		STATUS = ll_read_tx_power();
 		rparam_count = sizeof(struct hciCmplLeReadAdvChannelTxPower);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Scan_Response_Data):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Scan_Response_Data):
 		STATUS = ll_set_scan_response_data(params);
-	break;
+		break;
 
 	/* Connections */
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_Remote_Used_Features):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Read_Remote_Used_Features):
 		if (hdr->paramLen != sizeof(struct hciLeReadRemoteUsedFeatures))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_read_remote_used_features(params);
 		event = HCI_EVT_Command_Status;
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_Link_Control,
-				HCI_CMD_Disconnect):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Connection_Update):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Create_Connection):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Create_Connection_Cancel):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_Channel_Map):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_Link_Control, HCI_CMD_Disconnect):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Connection_Update):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Create_Connection):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Create_Connection_Cancel):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Read_Channel_Map):
 		event = 0;
-	break;
+		break;
 
 	/* Encryption */
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Encrypt):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_LTK_Request_Reply):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_LTK_Request_Negative_Reply):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Rand):
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Start_Encryption):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Encrypt):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_LTK_Request_Reply):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_LTK_Request_Negative_Reply):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Rand):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Start_Encryption):
 		event = 0;
-	break;
+		break;
 
 	/* Scanning */
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Scan_Enable):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Scan_Enable):
 		if (hdr->paramLen != sizeof(struct hciLeSetScanEnable))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_set_scan_enable(params);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Set_Scan_Parameters):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Scan_Parameters):
 		if (hdr->paramLen != sizeof(struct hciLeSetScanParams))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_set_scan_params(params);
-	break;
+		break;
 
 	/* Allow List */
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Clear_Allow_List):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Clear_Allow_List):
 		if (hdr->paramLen != 0)
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_clear_allow_list();
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_Allow_List_Size):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Read_Allow_List_Size):
 		if (hdr->paramLen != 0)
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_read_allow_list_size(RPARAMS);
 		rparam_count = sizeof(struct hciCmplLeReadAllowListSize);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Add_Device_To_Allow_List):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Add_Device_To_Allow_List):
 		if (hdr->paramLen != sizeof(struct hciLeAddDeviceToAllowList))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_add_device_to_allow_list(params);
-	break;
+		break;
 	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Remove_Device_From_Allow_List):
+			     HCI_CMD_LE_Remove_Device_From_Allow_List):
 		if (hdr->paramLen !=
-				sizeof(struct hciLeRemoveDeviceFromAllowList))
+		    sizeof(struct hciLeRemoveDeviceFromAllowList))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
 			STATUS = ll_remove_device_from_allow_list(params);
-	break;
+		break;
 
 	/* RFPHY Testing Support */
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Receiver_Test):
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Receiver_Test):
 		STATUS = ll_receiver_test(params);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Transmitter_Test):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Transmitter_Test):
 		STATUS = ll_transmitter_test(params);
-	break;
-	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Test_End):
+		break;
+	case CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Test_End):
 		STATUS = ll_test_end(RPARAMS);
 		rparam_count = sizeof(struct hciCmplLeTestEnd);
-	break;
+		break;
 
 	default:
 		STATUS = HCI_ERR_Unknown_HCI_Command;
-	break;
+		break;
 	}
 
 	hci_event(event, rparam_count, return_params);
@@ -275,12 +244,11 @@ void hci_acl_to_host(uint8_t *data, uint16_t hdr, uint16_t len)
 	int i;
 
 	/* Enqueue hdr, len, len bytes of data */
-	CPRINTF("Sending %d bytes of data from handle %d with PB=%x.\n",
-		len, hdr & ACL_HDR_MASK_CONN_ID,
-		hdr & ACL_HDR_MASK_PB);
-		for (i = 0; i < len; i++)
-			CPRINTF("0x%x, ", data[i]);
-		CPRINTF("\n");
+	CPRINTF("Sending %d bytes of data from handle %d with PB=%x.\n", len,
+		hdr & ACL_HDR_MASK_CONN_ID, hdr & ACL_HDR_MASK_PB);
+	for (i = 0; i < len; i++)
+		CPRINTF("0x%x, ", data[i]);
+	CPRINTF("\n");
 }
 
 void hci_acl_from_host(uint8_t *hciAclbuf)
@@ -290,12 +258,11 @@ void hci_acl_from_host(uint8_t *hciAclbuf)
 	int i;
 
 	/* Send the data to the link layer */
-	CPRINTF("Sending %d bytes of data to handle %d with PB=%x.\n",
-		hdr->len, hdr->hdr & ACL_HDR_MASK_CONN_ID,
-		hdr->hdr & ACL_HDR_MASK_PB);
-		for (i = 0; i < hdr->len; i++)
-			CPRINTF("0x%x, ", data[i]);
-		CPRINTF("\n");
+	CPRINTF("Sending %d bytes of data to handle %d with PB=%x.\n", hdr->len,
+		hdr->hdr & ACL_HDR_MASK_CONN_ID, hdr->hdr & ACL_HDR_MASK_PB);
+	for (i = 0; i < hdr->len; i++)
+		CPRINTF("0x%x, ", data[i]);
+	CPRINTF("\n");
 }
 
 /*
@@ -335,52 +302,50 @@ void hci_event(uint8_t event_code, uint8_t len, uint8_t *params)
  * hcitool lcmd 0x2008 18 0x42410906 0x03454443 0x203c119 0x3030501 0x1812
  * hcitool cmd 8 8 6 9 41 42 43 44 45 3 19 c1 3 2 1 5 3 3 12 18
  */
-uint8_t adv0[19] = {0x07, 0x09, 'A', 'B', 'C', 'D', 'E', 'F', /* Name */
-		    0x03, 0x19, 0xc1, 0x03,                   /* Keyboard */
-		    0x02, 0x01, 0x05,                         /* Flags */
-		    0x03, 0x03, 0x12, 0x18};                  /* UUID */
+uint8_t adv0[19] = { 0x07, 0x09, 'A',  'B',  'C', 'D', 'E', 'F', /* Name */
+		     0x03, 0x19, 0xc1, 0x03, /* Keyboard */
+		     0x02, 0x01, 0x05, /* Flags */
+		     0x03, 0x03, 0x12, 0x18 }; /* UUID */
 
-uint8_t adv1[18] = {0x06, 0x09, 'A', 'B', 'C', 'D', 'E',      /* Name */
-		    0x02, 0x01, 0x05,                         /* Flags */
-		    0x03, 0x19, 0xc1, 0x03,                   /* Keyboard */
-		    0x03, 0x03, 0x12, 0x18};                  /* UUID */
+uint8_t adv1[18] = { 0x06, 0x09, 'A',  'B',  'C', 'D', 'E', /* Name */
+		     0x02, 0x01, 0x05, /* Flags */
+		     0x03, 0x19, 0xc1, 0x03, /* Keyboard */
+		     0x03, 0x03, 0x12, 0x18 }; /* UUID */
 
-uint8_t *adverts[] = {adv0, adv1};
-uint8_t adv_lengths[] = {sizeof(adv0), sizeof(adv1)};
+uint8_t *adverts[] = { adv0, adv1 };
+uint8_t adv_lengths[] = { sizeof(adv0), sizeof(adv1) };
 
-uint8_t scan0[4] = {0x03, 0x08, 'A', 'B'}; /* Short Name */
+uint8_t scan0[4] = { 0x03, 0x08, 'A', 'B' }; /* Short Name */
 
-uint8_t scan1[] = {};                         /* Empty */
+uint8_t scan1[] = {}; /* Empty */
 
-uint8_t *scans[] = {scan0, scan1};
-uint8_t scan_lengths[] = {sizeof(scan0), sizeof(scan1)};
+uint8_t *scans[] = { scan0, scan1 };
+uint8_t scan_lengths[] = { sizeof(scan0), sizeof(scan1) };
 
 /*
  * LE_Set_Adv_Params
  * hcitool lcmd 0x2006 15 0x010000f0 0xb0010100 0xb4b3b2b1 0x0007c5
  * hcitool cmd 8 6 f0 0 0 1 0 1 1 b0 b1 b2 b3 b4 c5 7 0
  */
-uint8_t adv_param0[15] = {
-		0xf0, 0x00,                               /* IntervalMin */
-		0x00, 0x01,                               /* IntervalMax */
-		0x00,                                     /* Adv Type */
-		0x01,                                     /* Use Random Addr */
-		0x01,                                     /* Direct Random */
-		0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xc5,       /* Direct Addr */
-		0x07,                                     /* Channel Map */
-		0x00};                                    /* Filter Policy */
+uint8_t adv_param0[15] = { 0xf0, 0x00, /* IntervalMin */
+			   0x00, 0x01, /* IntervalMax */
+			   0x00, /* Adv Type */
+			   0x01, /* Use Random Addr */
+			   0x01, /* Direct Random */
+			   0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xc5, /* Direct Addr */
+			   0x07, /* Channel Map */
+			   0x00 }; /* Filter Policy */
 
-uint8_t adv_param1[15] = {
-		0xf0, 0x00,                               /* IntervalMin */
-		0x00, 0x01,                               /* IntervalMax */
-		0x02,                                     /* Adv Type */
-		0x01,                                     /* Use Random Addr */
-		0x01,                                     /* Direct Random */
-		0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xc5,       /* Direct Addr */
-		0x07,                                     /* Channel Map */
-		0x00};                                    /* Filter Policy */
+uint8_t adv_param1[15] = { 0xf0, 0x00, /* IntervalMin */
+			   0x00, 0x01, /* IntervalMax */
+			   0x02, /* Adv Type */
+			   0x01, /* Use Random Addr */
+			   0x01, /* Direct Random */
+			   0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xc5, /* Direct Addr */
+			   0x07, /* Channel Map */
+			   0x00 }; /* Filter Policy */
 
-uint8_t *adv_params[] = {adv_param0, adv_param1};
+uint8_t *adv_params[] = { adv_param0, adv_param1 };
 
 /*
  * LE Information
@@ -466,7 +431,7 @@ static uint8_t hci_buf[200];
 #define MAX_BLE_HCI_PARAMS 8
 static uint32_t param[MAX_BLE_HCI_PARAMS];
 
-static int command_ble_hci_cmd(int argc, char **argv)
+static int command_ble_hci_cmd(int argc, const char **argv)
 {
 	static struct hciCmdHdr header;
 	int length, opcode, i;
@@ -489,7 +454,7 @@ static int command_ble_hci_cmd(int argc, char **argv)
 	}
 
 	for (i = 3; i < argc; i++) {
-		param[i-3] = strtoi(argv[i], &e, 0);
+		param[i - 3] = strtoi(argv[i], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM3 + i;
 	}
@@ -498,12 +463,11 @@ static int command_ble_hci_cmd(int argc, char **argv)
 	header.paramLen = length;
 
 	memcpy(hci_buf, &header, sizeof(struct hciCmdHdr));
-	memcpy(hci_buf + sizeof(struct hciCmdHdr),
-			param, length);
+	memcpy(hci_buf + sizeof(struct hciCmdHdr), param, length);
 
 	hci_cmd(hci_buf);
 
-	CPRINTS("hci cmd @%pP", hci_buf);
+	CPRINTS("hci cmd @%p", hci_buf);
 
 	return EC_SUCCESS;
 }
@@ -511,7 +475,7 @@ DECLARE_CONSOLE_COMMAND(ble_hci_cmd, command_ble_hci_cmd,
 			"opcode len uint32 uint32 uint32... (little endian)",
 			"Send an hci command of length len");
 
-static int command_hcitool(int argc, char **argv)
+static int command_hcitool(int argc, const char **argv)
 {
 	static struct hciCmdHdr header;
 	int i, ogf, ocf;
@@ -521,7 +485,7 @@ static int command_hcitool(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	if (argv[1][0] == 'l') /* strcmp lcmd */
-		return command_ble_hci_cmd(argc-1, &argv[1]);
+		return command_ble_hci_cmd(argc - 1, &argv[1]);
 
 	ogf = strtoi(argv[2], &e, 16);
 	if (*e)
@@ -532,7 +496,7 @@ static int command_hcitool(int argc, char **argv)
 		return EC_ERROR_PARAM3;
 
 	header.opcode = CMD_MAKE_OPCODE(ogf, ocf);
-	header.paramLen = argc-4;
+	header.paramLen = argc - 4;
 	memcpy(hci_buf, &header, sizeof(struct hciCmdHdr));
 
 	for (i = 4; i < argc; i++) {
@@ -543,15 +507,16 @@ static int command_hcitool(int argc, char **argv)
 
 	hci_cmd(hci_buf);
 
-	CPRINTS("hci cmd @%pP", hci_buf);
+	CPRINTS("hci cmd @%p", hci_buf);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hcitool, command_hcitool,
-			"cmd ogf ocf b0 b1 b2 b3... or lcmd opcode len uint32.. (little endian)",
-			"Send an hci command of length len");
+DECLARE_CONSOLE_COMMAND(
+	hcitool, command_hcitool,
+	"cmd ogf ocf b0 b1 b2 b3... or lcmd opcode len uint32.. (little endian)",
+	"Send an hci command of length len");
 
-static int command_ble_hci_acl(int argc, char **argv)
+static int command_ble_hci_acl(int argc, const char **argv)
 {
 	static struct hciAclHdr header;
 	int length, hdr, i;
@@ -574,7 +539,7 @@ static int command_ble_hci_acl(int argc, char **argv)
 	}
 
 	for (i = 3; i < argc; i++) {
-		param[i-3] = strtoi(argv[i], &e, 0);
+		param[i - 3] = strtoi(argv[i], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM3 + i;
 	}
@@ -583,12 +548,11 @@ static int command_ble_hci_acl(int argc, char **argv)
 	header.len = length;
 
 	memcpy(hci_buf, &header, sizeof(struct hciCmdHdr));
-	memcpy(hci_buf + sizeof(struct hciCmdHdr),
-			param, length);
+	memcpy(hci_buf + sizeof(struct hciCmdHdr), param, length);
 
 	hci_cmd(hci_buf);
 
-	CPRINTS("hci acl @%pP", hci_buf);
+	CPRINTS("hci acl @%p", hci_buf);
 
 	return EC_SUCCESS;
 }
@@ -596,7 +560,7 @@ DECLARE_CONSOLE_COMMAND(ble_hci_acl, command_ble_hci_acl,
 			"hdr len uint32 uint32 uint32... (little endian)",
 			"Send hci acl data of length len");
 
-static int command_ble_hci_adv(int argc, char **argv)
+static int command_ble_hci_adv(int argc, const char **argv)
 {
 	static struct hciCmdHdr header;
 	int adv, p = 0, scan_rsp = 0;
@@ -625,33 +589,33 @@ static int command_ble_hci_adv(int argc, char **argv)
 	header.paramLen = sizeof(struct hciLeSetAdvParams);
 
 	memcpy(hci_buf, &header, sizeof(struct hciCmdHdr));
-	memcpy(hci_buf + sizeof(struct hciCmdHdr),
-			adv_params[p], header.paramLen);
+	memcpy(hci_buf + sizeof(struct hciCmdHdr), adv_params[p],
+	       header.paramLen);
 
 	hci_cmd(hci_buf);
 
-	header.opcode = CMD_MAKE_OPCODE(HCI_OGF_LE,
-					HCI_CMD_LE_Set_Advertising_Data);
+	header.opcode =
+		CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Advertising_Data);
 	header.paramLen = adv_lengths[adv];
 
 	memcpy(hci_buf, &header, sizeof(struct hciCmdHdr));
-	memcpy(hci_buf + sizeof(struct hciCmdHdr),
-			adverts[adv], header.paramLen);
+	memcpy(hci_buf + sizeof(struct hciCmdHdr), adverts[adv],
+	       header.paramLen);
 
 	hci_cmd(hci_buf);
 
-	header.opcode = CMD_MAKE_OPCODE(HCI_OGF_LE,
-					HCI_CMD_LE_Set_Scan_Response_Data);
+	header.opcode =
+		CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Scan_Response_Data);
 	header.paramLen = scan_lengths[scan_rsp];
 
 	memcpy(hci_buf, &header, sizeof(struct hciCmdHdr));
-	memcpy(hci_buf + sizeof(struct hciCmdHdr),
-			scans[scan_rsp], header.paramLen);
+	memcpy(hci_buf + sizeof(struct hciCmdHdr), scans[scan_rsp],
+	       header.paramLen);
 
 	hci_cmd(hci_buf);
 
-	header.opcode = CMD_MAKE_OPCODE(HCI_OGF_LE,
-					HCI_CMD_LE_Set_Advertise_Enable);
+	header.opcode =
+		CMD_MAKE_OPCODE(HCI_OGF_LE, HCI_CMD_LE_Set_Advertise_Enable);
 	header.paramLen = sizeof(struct hciLeSetAdvEnable);
 
 	memcpy(hci_buf, &header, sizeof(struct hciCmdHdr));

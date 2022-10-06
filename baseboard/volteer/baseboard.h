@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,13 +13,13 @@
 /*
  * By default, enable all console messages excepted HC
  */
-#define CC_DEFAULT     (CC_ALL & ~(BIT(CC_HOSTCMD)))
+#define CC_DEFAULT (CC_ALL & ~(BIT(CC_HOSTCMD)))
 
 /* NPCX7 config */
-#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
-#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
+#define NPCX7_PWM1_SEL 1 /* GPIO C2 is used as PWM1. */
+#define NPCX_UART_MODULE2 1 /* GPIO64/65 are used as UART pins. */
 /* Internal SPI flash on NPCX796FC is 512 kB */
-#define CONFIG_FLASH_SIZE (512 * 1024)
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
@@ -30,7 +30,7 @@
 #define CONFIG_LTO
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
-#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CBI_EEPROM
 #define CONFIG_DPTF
 #define CONFIG_FPU
 #define CONFIG_HIBERNATE_PSL
@@ -43,8 +43,9 @@
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 /* Host communication */
-#define CONFIG_HOSTCMD_ESPI
-#define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#define CONFIG_HOST_INTERFACE_ESPI
+#define CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4
+#define CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S5
 
 /* Chipset config */
 #define CONFIG_CHIPSET_TIGERLAKE
@@ -58,13 +59,14 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_S0IX
+#define CONFIG_POWER_S4_RESIDENCY
 #define CONFIG_POWER_SLEEP_FAILURE_DETECTION
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_BOARD_HAS_RTC_RESET
 
 /* Common Keyboard Defines */
 #define CONFIG_CMD_KEYBOARD
-#define CONFIG_KEYBOARD_BOARD_CONFIG
+
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_KEYPAD
 #define CONFIG_KEYBOARD_PROTOCOL_8042
@@ -77,8 +79,8 @@
 
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
+#define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-#define CONFIG_ACCEL_INTERRUPTS
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
@@ -92,9 +94,10 @@
 #define CONFIG_CMD_ACCEL_INFO
 
 /* Thermal features */
-#define CONFIG_FANS			FAN_CH_COUNT
+#define CONFIG_FANS FAN_CH_COUNT
 #define CONFIG_TEMP_SENSOR
-#define CONFIG_TEMP_SENSOR_POWER_GPIO	GPIO_EN_PP3300_A
+#define CONFIG_TEMP_SENSOR_POWER
+#define GPIO_TEMP_SENSOR_POWER GPIO_PG_EC_DSW_PWROK
 #define CONFIG_THERMISTOR
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 #define CONFIG_THROTTLE_AP
@@ -104,13 +107,15 @@
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT		512
+#define CONFIG_CHARGER_INPUT_CURRENT 512
 
 /*
  * Hardware based charge ramp is broken in the ISL9241 (b/169350714).
  */
 #define CONFIG_CHARGE_RAMP_SW
 #define CONFIG_CHARGER_ISL9241
+/* Setting ISL9241 Register Control1 switching frequency to 724kHz. */
+#define CONFIG_ISL9241_SWITCHING_FREQ ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ
 
 #define CONFIG_USB_CHARGER
 #define CONFIG_BC12_DETECT_PI3USB9201
@@ -119,10 +124,8 @@
  * Don't allow the system to boot to S0 when the battery is low and unable to
  * communicate on locked systems (which haven't PD negotiated)
  */
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT	15000
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON			3
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC		1
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		15001
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT 15000
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15001
 
 /* Common battery defines */
 #define CONFIG_BATTERY_SMART
@@ -137,7 +140,7 @@
 
 /* EDP back-light control defines */
 #define CONFIG_BACKLIGHT_LID
-#define GPIO_ENABLE_BACKLIGHT   GPIO_EC_EDP_BL_EN
+#define GPIO_ENABLE_BACKLIGHT GPIO_EC_EDP_BL_EN
 
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
@@ -158,19 +161,19 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_ALT_MODE_UFP
 #define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT		TYPEC_RP_3A0
 #define CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TCPM_RT1715
-#define CONFIG_USB_PD_TCPM_TUSB422	/* USBC port C0 */
-#define CONFIG_USB_PD_TCPM_PS8815	/* USBC port USB3 DB */
+#define CONFIG_USB_PD_TCPM_TUSB422 /* USBC port C0 */
+#define CONFIG_USB_PD_TCPM_PS8815 /* USBC port USB3 DB */
 #define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 #define CONFIG_USB_PD_TCPM_MUX
-#define CONFIG_HOSTCMD_PD_CONTROL		/* Needed for TCPC FW update */
+#define CONFIG_HOSTCMD_PD_CONTROL /* Needed for TCPC FW update */
 #define CONFIG_CMD_USB_PD_PE
 
 /*
@@ -187,14 +190,13 @@
  * with non-PD chargers.  Override the default low-power mode exit delay.
  */
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
-#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE	(50*MSEC)
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (50 * MSEC)
 
 /* Enable USB3.2 DRD */
 #define CONFIG_USB_PD_USB32_DRD
 
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_TCPC
-#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
 
@@ -206,7 +208,6 @@
  */
 #define CONFIG_USBC_PPC_DEDICATED_INT
 
-#define CONFIG_INTEL_VIRTUAL_MUX
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USB_MUX_VIRTUAL
 
@@ -226,15 +227,26 @@
  * http://google3/hardware/standards/usb/
  */
 #define CONFIG_USB_PID 0x503E
+/* Device version of product. */
+#define CONFIG_USB_BCD_DEV 0x0000
 
 /* Retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #define CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
+#define CONFIG_USBC_RETIMER_FW_UPDATE
+
+/* Enable volume button command in EC console */
+#define CONFIG_CMD_BUTTON
+
+/* Enable volume button in ectool */
+#define CONFIG_HOSTCMD_BUTTON
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 #include "common.h"
+#include "baseboard_usbc_config.h"
+#include "cbi.h"
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_CHARGER,
@@ -263,21 +275,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_4_FAN,
 	TEMP_SENSOR_COUNT
 };
-
-/* Common definition for the USB PD interrupt handlers. */
-void ppc_interrupt(enum gpio_signal signal);
-void tcpc_alert_event(enum gpio_signal signal);
-void bc12_interrupt(enum gpio_signal signal);
-
-unsigned char get_board_id(void);
-
-/**
- * Configure run-time data structures and operation based on CBI data. This
- * typically includes customization for changes in the BOARD_VERSION and
- * FW_CONFIG fields in CBI. This routine is called from the baseboard after
- * the CBI data has been initialized.
- */
-__override_proto void board_cbi_init(void);
 
 /*
  * Check battery disconnect state.

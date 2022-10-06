@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -17,8 +17,8 @@
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /* Shutdown mode parameters to write to manufacturer access register */
-#define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
-#define SB_SHUTDOWN_DATA	0x0010
+#define SB_SHIP_MODE_REG SB_MANUFACTURER_ACCESS
+#define SB_SHUTDOWN_DATA 0x0010
 
 static const struct battery_info info = {
 	.voltage_max = 13200,
@@ -63,8 +63,9 @@ static int battery_init(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 /*
@@ -85,13 +86,13 @@ static int battery_check_disconnect(void)
 	uint8_t data[6];
 
 	/* Check if battery charging + discharging is disabled. */
-	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS, SB_ALT_MANUFACTURER_ACCESS,
+			    data, sizeof(data));
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
-			BATTERY_CHARGING_DISABLED)) ==
+	if ((data[3] &
+	     (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED)) ==
 	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
 		return BATTERY_DISCONNECTED;
 
@@ -127,4 +128,3 @@ enum battery_present battery_is_present(void)
 	batt_pres_prev = batt_pres;
 	return batt_pres;
 }
-

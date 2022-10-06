@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,16 +7,18 @@
 
 #include "console.h"
 #include "cpu.h"
+#include "cros_version.h"
 #include "ec2i_chip.h"
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "intc.h"
+#include "link_defs.h"
+#include "panic.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
-#include "version.h"
 #include "watchdog.h"
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
@@ -43,11 +45,47 @@ static int delayed_clear_reset_flags;
 static void clear_reset_flags(void)
 {
 	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
-			delayed_clear_reset_flags) {
+	    delayed_clear_reset_flags) {
 		chip_save_reset_flags(0);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, clear_reset_flags, HOOK_PRIO_LAST);
+
+#if !defined(CONFIG_HOST_INTERFACE_LPC) && !defined(CONFIG_HOST_INTERFACE_ESPI)
+static void system_save_panic_data_to_bram(void)
+{
+	uint8_t *ptr = (uint8_t *)PANIC_DATA_PTR;
+
+	for (int i = 0; i < CONFIG_PANIC_DATA_SIZE; i++)
+		IT83XX_BRAM_BANK0(i + BRAM_PANIC_DATA_START) = ptr[i];
+}
+
+static void system_restore_panic_data_from_bram(void)
+{
+	uint8_t *ptr = (uint8_t *)PANIC_DATA_PTR;
+
+	for (int i = 0; i < CONFIG_PANIC_DATA_SIZE; i++)
+		ptr[i] = IT83XX_BRAM_BANK0(i + BRAM_PANIC_DATA_START);
+}
+BUILD_ASSERT(BRAM_PANIC_LEN >= CONFIG_PANIC_DATA_SIZE);
+#else
+static void system_save_panic_data_to_bram(void)
+{
+}
+static void system_restore_panic_data_from_bram(void)
+{
+}
+#endif
+
+static void system_reset_ec_by_gpg1(void)
+{
+	system_save_panic_data_to_bram();
+	/* Set GPG1 as output high and wait until EC reset. */
+	IT83XX_GPIO_CTRL(GPIO_G, 1) = GPCR_PORT_PIN_MODE_OUTPUT;
+	IT83XX_GPIO_DATA(GPIO_G) |= BIT(1);
+	while (1)
+		;
+}
 
 static void check_reset_cause(void)
 {
@@ -65,6 +103,18 @@ static void check_reset_cause(void)
 	/* Determine if watchdog reset or power on reset. */
 	if (raw_reset_cause & 0x02) {
 		flags |= EC_RESET_FLAG_WATCHDOG;
+		if (IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1)) {
+			/*
+			 * Save watchdog reset flag to BRAM so we can restore
+			 * the flag on next reboot.
+			 */
+			chip_save_reset_flags(EC_RESET_FLAG_WATCHDOG);
+			/*
+			 * Assert GPG1 to reset EC and then EC_RST_ODL will be
+			 * toggled.
+			 */
+			system_reset_ec_by_gpg1();
+		}
 	} else if (raw_reset_cause & 0x01) {
 		flags |= EC_RESET_FLAG_POWER_ON;
 	} else {
@@ -87,7 +137,7 @@ static void check_reset_cause(void)
 	 * we know this is the first reset.
 	 */
 	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
-			(flags & EC_RESET_FLAG_POWER_ON)) {
+	    (flags & EC_RESET_FLAG_POWER_ON)) {
 		if (flags & EC_RESET_FLAG_INITIAL_PWR) {
 			/* Second boot, clear the flag immediately */
 			chip_save_reset_flags(0);
@@ -101,7 +151,7 @@ static void check_reset_cause(void)
 			 * fine because we will have the correct flag anyway.
 			 */
 			chip_save_reset_flags(chip_read_reset_flags() |
-						EC_RESET_FLAG_INITIAL_PWR);
+					      EC_RESET_FLAG_INITIAL_PWR);
 
 			/*
 			 * Schedule chip_save_reset_flags(0) later.
@@ -118,10 +168,14 @@ static void check_reset_cause(void)
 
 	/* Clear PD contract recorded in bram if this is a power-on reset. */
 	if (IS_ENABLED(CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM) &&
-	   (flags == (EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN))) {
+	    (flags == (EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN))) {
 		for (int i = 0; i < MAX_SYSTEM_BBRAM_IDX_PD_PORTS; i++)
 			system_set_bbram((SYSTEM_BBRAM_IDX_PD0 + i), 0);
 	}
+
+	if ((IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1)) &&
+	    (flags & ~(EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN)))
+		system_restore_panic_data_from_bram();
 }
 
 static void system_reset_cause_is_unknown(void)
@@ -134,7 +188,7 @@ static void system_reset_cause_is_unknown(void)
 		 * eg: Andes core (jral5: LP=PC+2, jal: LP=PC+4)
 		 */
 		ccprintf("===Unknown reset! jump from %x or %x===\n",
-				ec_reset_lp - 4, ec_reset_lp - 2);
+			 ec_reset_lp - 4, ec_reset_lp - 2);
 }
 DECLARE_HOOK(HOOK_INIT, system_reset_cause_is_unknown, HOOK_PRIO_FIRST);
 
@@ -161,6 +215,9 @@ int system_is_reboot_warm(void)
 
 void chip_pre_init(void)
 {
+	/* bit1=0: disable pre-defined command */
+	IT83XX_SMB_SFFCTL &= ~IT83XX_SMB_HSAPE;
+
 	/* bit0, EC received the special waveform from iteflash */
 	if (IT83XX_GCTRL_DBGROS & IT83XX_SMB_DBGR) {
 		/*
@@ -187,7 +244,7 @@ void chip_pre_init(void)
 		IT83XX_GCTRL_WMCR |= BIT(7);
 }
 
-#define BRAM_VALID_MAGIC        0x4252414D  /* "BRAM" */
+#define BRAM_VALID_MAGIC 0x4252414D /* "BRAM" */
 #define BRAM_VALID_MAGIC_FIELD0 (BRAM_VALID_MAGIC & 0xff)
 #define BRAM_VALID_MAGIC_FIELD1 ((BRAM_VALID_MAGIC >> 8) & 0xff)
 #define BRAM_VALID_MAGIC_FIELD2 ((BRAM_VALID_MAGIC >> 16) & 0xff)
@@ -212,12 +269,21 @@ void chip_bram_valid(void)
 		BRAM_VALID_FLAGS2 = BRAM_VALID_MAGIC_FIELD2;
 		BRAM_VALID_FLAGS3 = BRAM_VALID_MAGIC_FIELD3;
 	}
+
+#if defined(CONFIG_PRESERVE_LOGS) && defined(CONFIG_IT83XX_HARD_RESET_BY_GPG1)
+	if (BRAM_EC_LOG_STATUS == EC_LOG_SAVED_IN_FLASH) {
+		/* Restore EC logs from flash. */
+		memcpy((void *)__preserved_logs_start,
+		       (const void *)CHIP_FLASH_PRESERVE_LOGS_BASE,
+		       (uintptr_t)__preserved_logs_size);
+	}
+	BRAM_EC_LOG_STATUS = 0;
+#endif
 }
 
 void system_pre_init(void)
 {
 	/* No initialization required */
-
 }
 
 uint32_t chip_read_reset_flags(void)
@@ -248,6 +314,16 @@ void system_reset(int flags)
 		cflush();
 	}
 
+#if defined(CONFIG_PRESERVE_LOGS) && defined(CONFIG_IT83XX_HARD_RESET_BY_GPG1)
+	/* Saving EC logs into flash before reset. */
+	crec_flash_physical_erase(CHIP_FLASH_PRESERVE_LOGS_BASE,
+				  CHIP_FLASH_PRESERVE_LOGS_SIZE);
+	crec_flash_physical_write(CHIP_FLASH_PRESERVE_LOGS_BASE,
+				  (uintptr_t)__preserved_logs_size,
+				  __preserved_logs_start);
+	BRAM_EC_LOG_STATUS = EC_LOG_SAVED_IN_FLASH;
+#endif
+
 	/* Disable interrupts to avoid task swaps during reboot. */
 	interrupt_disable();
 
@@ -276,6 +352,10 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_HARD)
 		IT83XX_GCTRL_ETWDUARTCR |= ETWD_HW_RST_EN;
 #endif
+	/* Set GPG1 as output high and wait until EC reset. */
+	if (IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1))
+		system_reset_ec_by_gpg1();
+
 	/*
 	 * Writing invalid key to watchdog module triggers a soft or hardware
 	 * reset. It depends on the setting of bit0 at ETWDUARTCR register.
@@ -298,23 +378,18 @@ int system_set_scratchpad(uint32_t value)
 	return EC_SUCCESS;
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	uint32_t value = 0;
-
-	value |= BRAM_SCRATCHPAD3 << 24;
-	value |= BRAM_SCRATCHPAD2 << 16;
-	value |= BRAM_SCRATCHPAD1 << 8;
-	value |= BRAM_SCRATCHPAD0;
-
-	return value;
+	*value = (BRAM_SCRATCHPAD3 << 24) | (BRAM_SCRATCHPAD2 << 16) |
+		 (BRAM_SCRATCHPAD1 << 8) | (BRAM_SCRATCHPAD0);
+	return EC_SUCCESS;
 }
 
 static uint32_t system_get_chip_id(void)
 {
 #ifdef IT83XX_CHIP_ID_3BYTES
 	return (IT83XX_GCTRL_CHIPID1 << 16) | (IT83XX_GCTRL_CHIPID2 << 8) |
-		IT83XX_GCTRL_CHIPID3;
+	       IT83XX_GCTRL_CHIPID3;
 #else
 	return (IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2;
 #endif
@@ -340,7 +415,7 @@ const char *system_get_chip_vendor(void)
 
 const char *system_get_chip_name(void)
 {
-	static char buf[8] = {'i', 't'};
+	static char buf[8] = { 'i', 't' };
 	int num = (IS_ENABLED(IT83XX_CHIP_ID_3BYTES) ? 4 : 3);
 	uint32_t chip_id = system_get_chip_id();
 
@@ -363,10 +438,6 @@ const char *system_get_chip_revision(void)
 
 static int bram_idx_lookup(enum system_bbram_idx idx)
 {
-	if (idx >= SYSTEM_BBRAM_IDX_VBNVBLOCK0 &&
-	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
-		return BRAM_IDX_NVCONTEXT +
-		       idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0;
 	if (idx == SYSTEM_BBRAM_IDX_PD0)
 		return BRAM_IDX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
@@ -397,9 +468,6 @@ int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 	IT83XX_BRAM_BANK0(bram_idx) = value;
 	return EC_SUCCESS;
 }
-
-#define BRAM_NVCONTEXT_SIZE (BRAM_IDX_NVCONTEXT_END - BRAM_IDX_NVCONTEXT + 1)
-BUILD_ASSERT(EC_VBNV_BLOCK_SIZE <= BRAM_NVCONTEXT_SIZE);
 
 uintptr_t system_get_fw_reset_vector(uintptr_t base)
 {

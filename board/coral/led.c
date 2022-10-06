@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -28,8 +28,7 @@
 #define LED_POWER_ON_TICKS (LED_POWER_BLINK_ON_MSEC / HOOK_TICK_INTERVAL_MS)
 #define LED_POWER_OFF_TICKS (LED_POWER_BLINK_OFF_MSEC / HOOK_TICK_INTERVAL_MS)
 
-const enum ec_led_id supported_led_ids[] = {
-			EC_LED_ID_BATTERY_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -37,18 +36,14 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 #define GPIO_LED_COLOR_2 GPIO_BAT_LED_BLUE
 #define GPIO_LED_COLOR_3 GPIO_POW_LED
 
-enum led_phase {
-	LED_PHASE_0,
-	LED_PHASE_1,
-	LED_NUM_PHASES
-};
+enum led_phase { LED_PHASE_0, LED_PHASE_1, LED_NUM_PHASES };
 
 enum led_color {
 	LED_OFF,
 	LED_COLOR_1,
 	LED_COLOR_2,
 	LED_COLOR_BOTH,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 enum led_states {
@@ -85,37 +80,37 @@ struct led_info {
 
 /* COLOR_1 = Amber, COLOR_2 = Blue */
 static const struct led_descriptor led_default_state_table[][LED_NUM_PHASES] = {
-	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_COLOR_1, LED_INDEFINITE} },
-	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_1, 1 * LED_ONE_SEC }, {LED_OFF, 3 * LED_ONE_SEC} },
-	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_1, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
-	{ {LED_COLOR_1, 2 * LED_ONE_SEC}, {LED_COLOR_2, 2 * LED_ONE_SEC} },
+	{ { LED_COLOR_1, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_2, LED_INDEFINITE }, { LED_COLOR_1, LED_INDEFINITE } },
+	{ { LED_COLOR_2, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_2, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_1, 1 * LED_ONE_SEC }, { LED_OFF, 3 * LED_ONE_SEC } },
+	{ { LED_OFF, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_1, 1 * LED_ONE_SEC }, { LED_OFF, 1 * LED_ONE_SEC } },
+	{ { LED_COLOR_1, 2 * LED_ONE_SEC }, { LED_COLOR_2, 2 * LED_ONE_SEC } },
 };
 
 /* COLOR_1 = Green, COLOR_2 = Red */
 static const struct led_descriptor led_robo_state_table[][LED_NUM_PHASES] = {
-	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_BOTH, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_2, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
-	{ {LED_COLOR_2, 2 * LED_ONE_SEC}, {LED_COLOR_1, 2 * LED_ONE_SEC} },
+	{ { LED_COLOR_2, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_BOTH, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_1, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_OFF, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_OFF, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_OFF, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_2, 1 * LED_ONE_SEC }, { LED_OFF, 1 * LED_ONE_SEC } },
+	{ { LED_COLOR_2, 2 * LED_ONE_SEC }, { LED_COLOR_1, 2 * LED_ONE_SEC } },
 };
 
 static const struct led_descriptor led_nasher_state_table[][LED_NUM_PHASES] = {
-	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_COLOR_1, LED_INDEFINITE} },
-	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_2, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
-	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_1, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
-	{ {LED_COLOR_1, 2 * LED_ONE_SEC}, {LED_COLOR_2, 2 * LED_ONE_SEC} },
+	{ { LED_COLOR_1, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_2, LED_INDEFINITE }, { LED_COLOR_1, LED_INDEFINITE } },
+	{ { LED_COLOR_2, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_2, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_2, 1 * LED_ONE_SEC }, { LED_OFF, 1 * LED_ONE_SEC } },
+	{ { LED_OFF, LED_INDEFINITE }, { LED_OFF, LED_INDEFINITE } },
+	{ { LED_COLOR_1, 1 * LED_ONE_SEC }, { LED_OFF, 1 * LED_ONE_SEC } },
+	{ { LED_COLOR_1, 2 * LED_ONE_SEC }, { LED_COLOR_2, 2 * LED_ONE_SEC } },
 };
 
 static struct led_info led;
@@ -176,7 +171,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 static enum led_states led_get_state(void)
 {
-	int  charge_lvl;
+	int charge_lvl;
 	enum led_states new_state = LED_NUM_STATES;
 
 	switch (charge_get_state()) {
@@ -185,7 +180,8 @@ static enum led_states led_get_state(void)
 		charge_lvl = charge_get_percent();
 		/* Determine which charge state to use */
 		new_state = charge_lvl <= led.charge_lvl_1 ?
-			STATE_CHARGING_LVL_1 : STATE_CHARGING_LVL_2;
+				    STATE_CHARGING_LVL_1 :
+				    STATE_CHARGING_LVL_2;
 		break;
 	case PWR_STATE_DISCHARGE_FULL:
 		if (extpower_is_present()) {
@@ -208,10 +204,10 @@ static enum led_states led_get_state(void)
 		new_state = STATE_CHARGING_LVL_3;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
-			new_state = STATE_FACTORY_TEST;
-		else
-			new_state = STATE_DISCHARGE_S0;
+		new_state = STATE_DISCHARGE_S0;
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		new_state = STATE_FACTORY_TEST;
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -248,11 +244,13 @@ static void led_update_battery(void)
 		int period;
 
 		period = led.state_table[led.state][LED_PHASE_0].time +
-			led.state_table[led.state][LED_PHASE_1].time;
+			 led.state_table[led.state][LED_PHASE_1].time;
 		if (period)
-			phase = ticks % period <
-				led.state_table[led.state][LED_PHASE_0].time ?
-				0 : 1;
+			phase = ticks % period < led.state_table[led.state]
+								[LED_PHASE_0]
+									.time ?
+					0 :
+					1;
 	}
 
 	/* Set the color for the given state and phase */
@@ -278,8 +276,8 @@ static void led_robo_update_power(void)
 		 * power LED is off for 600 msec, on for 3 seconds.
 		 */
 		period = LED_POWER_ON_TICKS + LED_POWER_OFF_TICKS;
-		level = ticks % period < LED_POWER_OFF_TICKS ?
-			LED_OFF_LVL : LED_ON_LVL;
+		level = ticks % period < LED_POWER_OFF_TICKS ? LED_OFF_LVL :
+							       LED_ON_LVL;
 		ticks++;
 	} else {
 		level = LED_OFF_LVL;

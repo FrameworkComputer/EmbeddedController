@@ -1,6 +1,6 @@
 # -*- makefile -*-
 # vim: set filetype=make :
-# Copyright 2012 The Chromium OS Authors. All rights reserved.
+# Copyright 2012 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -9,12 +9,6 @@
 
 FLATSIZE_FILE ?= .sizes.txt
 BUILD_DIR := $(firstword $(subst /, ,$(out)))
-
-build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
-host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
-build-art := $(foreach u,$(build-util-art),$(out)/$(u))
-build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
-host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
 
 # Don't do a build test on the following boards:
 skip_boards = OWNERS cr50 host
@@ -34,24 +28,29 @@ _dir_create := $(foreach d,$(dirs) $(dirs-y),\
 # Note: if cmd_* includes a $(MAKE) invocation, use the '+' prefix
 # to inherit parallel make execution: "+$(call quiet,...)"
 ifeq ($(V),0)
+# V=0
 Q := @
 echo = echo -n;
 quiet = echo -n; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
 MAKEFLAGS += --no-print-directory
-else
-echo = echo $(1);
-ifeq ($(V),)
+else ifeq ($(V),)
+# V=
 Q := @
-quiet = @echo '  $(2)' $(patsubst $(out)/%,%,$@) ; $(cmd_$(1))
+echo = echo $(1);
+echo-cmd = $(if $(quiet_cmd_$(1)), \
+		$(quiet_cmd_$(1)), \
+		$(2) $(patsubst $(out)/%,%,$@))
+quiet = @echo ' $(echo-cmd)' ; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
 MAKEFLAGS += --no-print-directory
 else
+# V=*
 Q :=
+echo = echo $(1);
 quiet = $(cmd_$(1))
-endif
 endif
 
 # Provide an option to use a consistent ec_version.h file when
@@ -87,15 +86,22 @@ cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
 	--change-addresses $(_program_memory_base) $^ $@
 cmd_smap = $(NM) $< | sort > $@
-cmd_elf = $(CC) $(objs) $(libsharedobjs_elf-y) $(LDFLAGS) \
+cmd_elf = $(COMPILER) $(objs) $(libsharedobjs_elf-y) $(LDFLAGS) \
 	-o $@ -Wl,-T,$< -Wl,-Map,$(patsubst %.elf,%.map,$@)
+ifeq ($(cc-name),gcc)
+cmd_elf+= -flto-partition=one
+endif
+ifneq ($(MEMSIZE_FLAGS),)
+cmd_elf+= $(MEMSIZE_FLAGS) >$@.memsize.txt
+endif
+
 cmd_fuzz_exe = $(CXX) $^ $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
 cmd_run_fuzz = build/host/$*/$*.exe -seed=1 -runs=1 $(silent) \
 	$(silent_err) || (echo "Test $* failed!" && false)
-cmd_exe = $(CC) $(ro-objs) $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
-cmd_c_to_o = $(CC) $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
+cmd_exe = $(COMPILER) $(ro-objs) $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
+cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
-cmd_cxx_to_o = $(CXX) -std=c++11 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
+cmd_cxx_to_o = $(CXX) -std=gnu++17 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
 		      -MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) \
@@ -105,11 +111,12 @@ cmd_c_to_vif = $(BUILDCC) $(BUILD_CFLAGS) $(STANDALONE_FLAGS) \
 		-MMD -MF $@.d -c $< -flto -MT $@ -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d -MT $@ -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) $(HOST_LDFLAGS)
-cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
-	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
+cmd_cxx_to_host = $(HOSTCXX) -std=gnu++17 $(HOST_CXXFLAGS) \
+		-MMD -MF $@.d -MT $@ -o $@ \
+		$(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.cc)) $(wildcard $*.cc)) $(HOST_LDFLAGS)
 cmd_o_to_a = $(AR) rcs $@ $^
 cmd_host_test = $(MAKE) BOARD=host PROJECT=$* \
-	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y CROSS_COMPILE= \
+	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y \
 	$(if $(TEST_SCRIPT),TEST_SCRIPT=$(TEST_SCRIPT)) $(TEST_FLAG) \
 	build/host/$*/$*.exe
 cmd_coverage_test = $(subst build/host,build/coverage,$(cmd_host_test))
@@ -118,12 +125,13 @@ cmd_run_coverage_test = ./util/run_host_test --coverage $* $(silent)
 # generate new version.h, compare if it changed and replace if so
 cmd_version = ./util/getversion.sh > $@.tmp && \
 	cmp -s $@.tmp $@ && rm -f $@.tmp || mv $@.tmp $@
-cmd_vif = $(out)/util/genvif -b $(BOARD) -o $(out)
+cmd_vif = $(out)/util/genvif -b $(BOARD) -o $(out) \
+	  -v board/$(BOARD)/vif_override.xml
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
 	       bs=1 count=$(_rw_size) skip=$(_rw_off) $(silent_err)
 cmd_copyrw-y = cd $(out) && cp RW/$(PROJECT).RW.flat RW/$(PROJECT).RW.bin
-cmd_sharedlib_elf = $(CC) $(libsharedobjs_deps) \
+cmd_sharedlib_elf = $(COMPILER) $(libsharedobjs_deps) \
 	-Wl,-T,common/ec.$(SHOBJLIB).ld $(LDFLAGS) \
 	-o $(out)/$(SHOBJLIB)/$(SHOBJLIB).elf \
 	-Wl,-Map,$(out)/$(SHOBJLIB)/$(SHOBJLIB).map
@@ -142,11 +150,6 @@ cmd_emmc_bootblock = $(out)/util/gen_emmc_transfer_data \
 
 cmd_ipi_table = $(out)/util/gen_ipi_table $@
 cmd_cp_script = cp "$<" "$@" && chmod +x "$@"
-
-cmd_libcryptoc_make = $(MAKE) -C $(CRYPTOCLIB) \
-	obj=$(realpath $(out))/cryptoc \
-	SUPPORT_UNALIGNED=1
-cmd_libcryptoc = $(cmd_libcryptoc_make) -q || $(cmd_libcryptoc_make)
 
 # commands for RSA signature: rwsig does not need to sign the whole image
 # (it signs the RW part separately). usbpd1 type needs to sign the final image.
@@ -230,6 +233,43 @@ print-boards:
 	$(call cmd_pretty_print_list,\
 		$(sort $(boards)))
 
+# The zephyr path can be overridden on invocation, as in the following example:
+# $ make ZEPHYR_BASE=~/zephyr/main BOARD=dartmonkey
+ZEPHYR_BASE ?= $(abspath ../../../src/third_party/zephyr/main)
+export ZEPHYR_BASE
+
+ifeq ($(ALLOW_CONFIG),)
+
+# These are options defined by both ECOS and Zephyr. We need to tolerate this
+# rather than begging the user to drop them from config_allowed since when the
+# Zephyr Kconfig is not available (-I argument below does not point to the right
+# place), they will not be considered a problem.
+# You may add new options here if needed, although this should only occur if
+# Zephyr upstream happens to add the same option, since we are requiring new
+# ECOS options to have a corresponding Kconfig anyway.
+conflicting_options := \
+	ADC \
+	AUDIO_CODEC \
+	DAC \
+	DMA \
+	EEPROM \
+	I2C_BITBANG \
+	INA219 \
+	MPU \
+	PECI \
+	PS2 \
+	SPI \
+	UART_CONSOLE
+
+cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
+	 -a util/config_allowed.txt -p PLATFORM_EC_ -s zephyr/ \
+	 -I "${ZEPHYR_BASE}" \
+	 $(foreach opt,$(conflicting_options),-i $(opt)) check
+else
+cmd_check_allowed = true
+endif
+quiet_cmd_check_allowed = CHECK_ALLOWED ${config}
+
 # Print any important notices at the end of the build.
 .PHONY: notice
 notice: $(config)
@@ -240,6 +280,7 @@ ifeq ($(TEST_BUILD),)
 	@echo "directory!  Otherwise, you won't be able to enter any commands."
 endif # not a TEST_BUILD
 endif # CONFIG_EXPERIMENTAL_CONSOLE=y
+	$(call quiet,check_allowed)
 
 proj-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/$*
@@ -266,7 +307,7 @@ hex: $(hex-y)
 utils-art: $(build-art)
 
 .PHONY: utils-host
-utils-host: $(host-utils)
+utils-host: $(host-utils) $(host-utils-cxx)
 
 .PHONY: utils-build
 utils-build: $(build-utils)
@@ -334,8 +375,7 @@ run-fuzz-test-targets=$(foreach t,$(fuzz-test-list-host),run-$(t))
 
 $(fuzz-test-targets): TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
 	TEST_MSAN=$(TEST_MSAN) TEST_UBSAN=$(TEST_UBSAN) \
-	CROSS_COMPILE=$(shell echo $(HOSTCC) | grep -v ccache | \
-		sed -e 's/[^-]*$$//')
+	CROSS_COMPILE=$(HOST_CROSS_COMPILE)
 $(fuzz-test-targets): host-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/test-$*
 	+$(call quiet,host_test,BUILD  )
@@ -359,7 +399,7 @@ hosttests: $(host-test-targets)
 runhosttests: TEST_FLAG=TEST_HOSTTEST=y
 runhosttests: $(run-test-targets)
 runfuzztests: $(run-fuzz-test-targets)
-runtests: runhosttests runfuzztests
+runtests: runhosttests runfuzztests run-genvif_test
 
 # Automatically enumerate all suites.
 cts_excludes := common
@@ -394,14 +434,21 @@ $(foreach b, $(cts_boards), \
 	) \
 )
 
+cov-boards=lazor volteer
 cov-test-targets=$(foreach t,$(cov-test-list-host),build/coverage/$(t).info)
+cov-initial-targets=$(foreach t,$(cov-boards),build/coverage/initial-$(t).info)
 bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
-# lcov fails when multiple instances run at the same time.
-# We need to run them sequentially by using flock
-cmd_lcov=flock /tmp/ec-lcov-lock -c "lcov -q -o $@ -c -d build/coverage/$*"
-cmd_report_cov=genhtml -q -o build/coverage/coverage_rpt -t \
-	       "EC Unittest "$(bldversion) $^
+cmd_lcov=lcov --rc lcov_branch_coverage=1 --gcov-tool \
+	$(HOSTGCOV) -q -o $@ -c -d build/coverage/$* -t $* \
+	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
+cmd_lcov-initial=lcov --rc lcov_branch_coverage=1 --gcov-tool \
+	$(GCOV) -q -o $@ -c -d build/coverage/initial-$* \
+	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
+cmd_merge_cov=lcov --rc lcov_branch_coverage=1 -o build/coverage/lcov.info \
+	$(foreach info,$^,-a ${info})
+cmd_report_cov=genhtml --branch-coverage -q -o build/coverage/coverage_rpt -t \
+	       "EC Unittest "$(bldversion) -s $^
 
 # Unless V is set to 0 we always want the 'size:' target to report its output,
 # there is no point in generating a short form command trace when calculating
@@ -411,9 +458,9 @@ ifeq ($(V),0)
 cmd_size=
 else
 cmd_size=$(Q)awk '\
-  /__flash_used =/ {flash_used = strtonum($$1)} \
-  /^FLASH/ {flash_size = strtonum($$3)} \
-  /__ram_free =/ {ram_free = strtonum($$1)} \
+  /__flash_used/ {flash_used = strtonum("0x" $$1)} \
+  /__flash_size/ {flash_size = strtonum("0x" $$1)} \
+  /__ram_free/ {ram_free = strtonum("0x" $$1)} \
   END {room_free = flash_size - flash_used; \
        print ram_free > "$(out)/$(1)/space_free_ram.txt"; \
        printf "  *** "; \
@@ -423,7 +470,7 @@ cmd_size=$(Q)awk '\
        } \
        printf ("%s bytes in RAM still available on $(BOARD) $(1) ****\n", \
            ram_free) \
-  }' $(out)/$(1)/$(PROJECT).$(1).map
+  }' $(out)/$(1)/$(PROJECT).$(1).smap
 endif
 
 # List the smallest free flash spaces
@@ -437,12 +484,21 @@ cmd_stats= \
 	printf "%-10s: %6d\n" $$board $$size; \
   done
 
+.DELETE_ON_ERROR: build/coverage/initial-%.info build/coverage/%.info
+build/coverage/initial-%.info:
+	$(MAKE) TEST_COVERAGE=y BOARD=$* compile-only
+	$(call quiet,lcov-initial,COV    )
 build/coverage/%.info: run-coverage-%
 	$(call quiet,lcov,COV    )
 
-.PHONY: coverage
+.PHONY: coverage test-coverage
 coverage: TEST_FLAG=TEST_COVERAGE=y
-coverage: $(cov-test-targets)
+coverage: $(cov-test-targets) $(cov-initial-targets)
+	$(call quiet,merge_cov,MERGE  )
+	$(call quiet,report_cov,REPORT )
+test-coverage: TEST_FLAG=TEST_COVERAGE=y
+test-coverage: $(cov-test-targets)
+	$(call quiet,merge_cov,MERGE  )
 	$(call quiet,report_cov,REPORT )
 
 $(out)/libec.a: $(ro-objs)
@@ -463,7 +519,7 @@ $(out)/%.bin: $(out)/%.obj
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
 
-$(out)/$(BOARD)_vif.txt: $(out)/util/genvif
+$(out)/$(BOARD)_vif.xml: $(out)/util/genvif board/$(BOARD)/vif_override.xml
 	$(call quiet,vif,VIF    )
 
 flat-y := $(out)/RW/$(PROJECT).RW.flat
@@ -616,6 +672,9 @@ $(build-utils): $(out)/%:$(build-srcs)
 $(host-utils): $(out)/%:$(host-srcs)
 	$(call quiet,c_to_host,HOSTCC )
 
+$(host-utils-cxx): $(out)/%:$(host-srcs-cxx)
+	$(call quiet,cxx_to_host,HOSTCXX )
+
 $(out)/cscope.files: $(out)/$(PROJECT).bin
 	$(call quiet,deps_to_list,SH     )
 
@@ -642,14 +701,14 @@ $(npcx-monitor-fw-bin):$(npcx-monitor-fw).c npx-monitor-dir
 	$(Q)$(OBJCOPY) -O binary $(out)/$(npcx-monitor-fw).elf $@
 
 $(out)/$(npcx-monitor-hdr)_ro.o:$(npcx-monitor-hdr).c npx-monitor-dir
-	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $< -MT $@ -o $@
+	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -fno-lto -c $< -MT $@ -o $@
 
 $(npcx-monitor-hdr-ro-bin):$(out)/$(npcx-monitor-hdr)_ro.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 $(out)/$(npcx-monitor-hdr)_rw.o:$(npcx-monitor-hdr).c npx-monitor-dir
-	$(Q)$(CC) $(CFLAGS) -MMD -c $< -MT $@ -o $@
+	$(Q)$(CC) $(CFLAGS) -MMD -fno-lto -c $< -MT $@ -o $@
 
 $(npcx-monitor-hdr-rw-bin):$(out)/$(npcx-monitor-hdr)_rw.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
@@ -732,41 +791,57 @@ endif
 .PHONY: help
 help:
 	@echo "Google Chromium EC build"
+	@echo ""
 	@echo "Common Targets:"
 	@echo "  all   [BOARD=]       - Build a single board (Default target)"
 	@echo "  clean [BOARD=]       - Clean a single board"
-	@echo "  buildall             - Build and test all boards"
+	@echo "  buildall             - Build all boards and build/run host unit tests"
+	@echo "  buildall_only        - Build all boards and host unit tests"
+	@echo "  build_boards         - Build all boards"
 	@echo "  clobber              - Clean all boards"
 	@echo "  proj-<boardname>     - Build a single board (similar to 'all BOARD=boardname')"
 	@echo "  savesizes            - Save the filesizes of currently built boards for comparison"
 	@echo "  newsizes             - Compare previously saved filesizes against new sizes"
-	@echo "  utils                - Build all host utilities"
+	@echo "  utils [BOARD=]       - Build all host side utilities"
+	@echo "  dis   [BOARD=]       - Generate the complete disassembly of the RO and RW images"
+	@echo "  hex   [BOARD=]       - Generate an Intel hex formated output binary"
 	@echo ""
-	@echo "  tests [BOARD=]       - Build all unit tests for a specific board"
+	@echo "  tests [BOARD=]       - Build all on-device unit tests for a specific board"
 	@echo "  hosttests            - Build all host unit tests"
 	@echo "  runhosttests         - Build and run all host unit tests"
 	@echo "  coverage             - Build and run all host unit tests for code coverage"
 	@echo "  buildfuzztests       - Build all host fuzzers"
 	@echo "  runfuzztests         - Build and run all host fuzzers for one round"
+	@echo "  analyzestack [BOARD=]- Run max stack size analysis"
 	@echo ""
 	@echo "  flash     [BOARD=]   - Use OpenOCD to flash the latest image"
 	@echo "  flash_ec  [BOARD=]   - Use flash_ec to flash the latest image"
 	@echo "  flash_dfu [BOARD=]   - Use DFU to flash the latest image"
 	@echo ""
-	@echo "  print-tests          - Prints all device specific test targets"
-	@echo "  print-host-tests     - Prints all host test targets"
-	@echo "  print-host-fuzzers   - Prints all host fuzz targets"
-	@echo "  print-boards         - Prints all boards"
-	@echo "  print-configs  [BOARD=]      - Print CONFIG_* options for the target board"
-	@echo "  print-defines  [BOARD=]      - Print forced defines passed to the compiler"
-	@echo "  print-includes [BOARD=]      - Print include paths passed to the compiler"
+	@echo "  print-tests     [BOARD=]     - Print on-device test targets"
+	@echo "  print-host-tests             - Print all host unit test targets"
+	@echo "  print-host-fuzzers           - Print all host fuzz targets"
+	@echo "  print-boards                 - Print all boards"
+	@echo "  print-configs   [BOARD=]     - Print CONFIG_* options for the target board"
+	@echo "  print-defines   [BOARD=]     - Print forced defines passed to the compiler"
+	@echo "  print-includes  [BOARD=]     - Print include paths passed to the compiler"
+	@echo "  print-baseboard [BOARD=]     - Print include paths passed to the compiler"
+	@echo "  print-make-vars [BOARD=]     - Print chip/core/board make variables for a board"
+	@echo ""
 	@echo "Common Variables:"
 	@echo "  V=1                  - Show make output"
 	@echo "  BOARD=               - Set the board name to build (Default is $(BOARD))"
+	@echo "  STATIC_VERSION=1     - Force a constant version string for reproducable builds"
+	@echo "  BUILDCC_PREFIX=      - Set the compiler prefix for the system doing "
+	@echo "     the build (defaults to 'x86_64-pc-linux-gnu-')."
 	@echo "  CROSS_COMPILE=       - Set the compiler for the board"
 	@echo "  CROSS_COMPILE_arch=  - Set the compiler for arch"
 	@echo "     The board picks its CROSS_COMPILE_arch if CROSS_COMPILE is not set."
 	@echo "     arch may be one of 'arm', 'i386', 'nds32'."
+	@echo "  HOST_CROSS_COMPILE=  - Set the compiler for the target platform on top of"
+	@echo "     the EC. For example, this may be 32-bit x86 linux ('i686-pc-linux-gnu-'),"
+	@echo "     64-bit x86 linux ('x86_64-pc-linux-gnu-'), or maybe 64-bit ARM linux"
+	@echo "     ('aarch64-cros-linux-gnu-')."
 	@echo "Example:"
 	@echo "  make BOARD=reef CROSS_COMPILE_arm='arm-eabi-'"
 
@@ -873,6 +948,12 @@ build_cros_ec_commands: $(out_cros_ec_commands)
 
 $(out_cros_ec_commands): include/ec_commands.h util/make_linux_ec_commands_h.sh
 	util/make_linux_ec_commands_h.sh $< $@
+
+# Include IDE configurations targets.
+include Makefile.ide
+
+# Pull in special rules/targets for third_party software
+-include third_party/rules.mk
 
 .SECONDARY:
 

@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,7 +9,7 @@
 #include "util.h"
 
 #include "console.h"
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 /*
  * This function tries to shove new bytes from the USB host into the queue for
@@ -24,9 +24,8 @@ int rx_stream_handler(struct usb_stream_config const *config)
 
 	/* If we have some, try to shove them into the queue */
 	if (rx_count) {
-		size_t added = QUEUE_ADD_UNITS(
-			config->producer.queue, config->rx_ram,
-			rx_count);
+		size_t added = QUEUE_ADD_UNITS(config->producer.queue,
+					       config->rx_ram, rx_count);
 		if (added != rx_count) {
 			CPRINTF("rx_stream_handler: failed ep%d "
 				"queue %d bytes, accepted %d\n",
@@ -60,7 +59,7 @@ int tx_stream_handler(struct usb_stream_config const *config)
 
 /* Reset stream */
 void usb_stream_event(struct usb_stream_config const *config,
-		enum usb_ep_event evt)
+		      enum usb_ep_event evt)
 {
 	if (evt != USB_EVENT_RESET)
 		return;

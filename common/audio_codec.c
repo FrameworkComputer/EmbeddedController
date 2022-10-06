@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,15 +9,14 @@
 #include "host_command.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ##args)
 
-static const uint32_t capabilities =
-	0
+static const uint32_t capabilities = 0
 #ifdef CONFIG_AUDIO_CODEC_CAP_WOV_AUDIO_SHM
-	| BIT(EC_CODEC_CAP_WOV_AUDIO_SHM)
+				     | BIT(EC_CODEC_CAP_WOV_AUDIO_SHM)
 #endif
 #ifdef CONFIG_AUDIO_CODEC_CAP_WOV_LANG_SHM
-	| BIT(EC_CODEC_CAP_WOV_LANG_SHM)
+				     | BIT(EC_CODEC_CAP_WOV_LANG_SHM)
 #endif
 	;
 
@@ -122,8 +121,8 @@ int audio_codec_capable(uint8_t cap)
 	return capabilities & BIT(cap);
 }
 
-int audio_codec_register_shm(uint8_t shm_id, uint8_t cap,
-		uintptr_t *addr, uint32_t len, uint8_t type)
+int audio_codec_register_shm(uint8_t shm_id, uint8_t cap, uintptr_t *addr,
+			     uint32_t len, uint8_t type)
 {
 	if (shm_id >= EC_CODEC_SHM_ID_LAST)
 		return EC_ERROR_INVAL;
@@ -140,8 +139,8 @@ int audio_codec_register_shm(uint8_t shm_id, uint8_t cap,
 	return EC_SUCCESS;
 }
 
-__attribute__((weak))
-int audio_codec_memmap_ap_to_ec(uintptr_t ap_addr, uintptr_t *ec_addr)
+__attribute__((weak)) int audio_codec_memmap_ap_to_ec(uintptr_t ap_addr,
+						      uintptr_t *ec_addr)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }

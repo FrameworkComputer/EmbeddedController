@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -46,28 +46,27 @@
 /* Do not use a dedicated PSTATE bank */
 #undef CONFIG_FLASH_PSTATE_BANK
 
-#define CONFIG_SHAREDLIB_SIZE	0
+#define CONFIG_SHAREDLIB_SIZE 0
 
-#define CONFIG_RO_MEM_OFF	0
-#define CONFIG_RO_STORAGE_OFF	0
-#define CONFIG_RO_SIZE		(44*1024)
+#define CONFIG_RO_MEM_OFF 0
+#define CONFIG_RO_STORAGE_OFF 0
+#define CONFIG_RO_SIZE (44 * 1024)
 
 /* EC rollback protection block */
 #define CONFIG_ROLLBACK_OFF (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
 #define CONFIG_ROLLBACK_SIZE CONFIG_FLASH_BANK_SIZE
 
-#define CONFIG_RW_MEM_OFF	(CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
-#define CONFIG_RW_STORAGE_OFF	0
-#define CONFIG_RW_SIZE		(CONFIG_FLASH_SIZE - \
-				(CONFIG_RW_MEM_OFF - CONFIG_RO_MEM_OFF))
+#define CONFIG_RW_MEM_OFF (CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
+#define CONFIG_RW_STORAGE_OFF 0
+#define CONFIG_RW_SIZE (CONFIG_FLASH_SIZE_BYTES - CONFIG_RW_MEM_OFF)
 
-#define CONFIG_EC_PROTECTED_STORAGE_OFF		CONFIG_RO_MEM_OFF
-#define CONFIG_EC_PROTECTED_STORAGE_SIZE	CONFIG_RO_SIZE
-#define CONFIG_EC_WRITABLE_STORAGE_OFF		CONFIG_RW_MEM_OFF
-#define CONFIG_EC_WRITABLE_STORAGE_SIZE		CONFIG_RW_SIZE
+#define CONFIG_EC_PROTECTED_STORAGE_OFF CONFIG_RO_MEM_OFF
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE CONFIG_RO_SIZE
+#define CONFIG_EC_WRITABLE_STORAGE_OFF CONFIG_RW_MEM_OFF
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE CONFIG_RW_SIZE
 
-#define CONFIG_WP_STORAGE_OFF		CONFIG_EC_PROTECTED_STORAGE_OFF
-#define CONFIG_WP_STORAGE_SIZE		CONFIG_EC_PROTECTED_STORAGE_SIZE
+#define CONFIG_WP_STORAGE_OFF CONFIG_EC_PROTECTED_STORAGE_OFF
+#define CONFIG_WP_STORAGE_SIZE CONFIG_EC_PROTECTED_STORAGE_SIZE
 
 /* The UART console is on USART1 (PA9/PA10) */
 #undef CONFIG_UART_CONSOLE
@@ -83,6 +82,7 @@
 #endif
 #define CONFIG_LTO
 #define CONFIG_FORCE_CONSOLE_RESUME
+#define CONFIG_MATH_UTIL
 #define CONFIG_STM_HWTIMER32
 
 /* USB Configuration */
@@ -91,8 +91,8 @@
 #define CONFIG_USB_UPDATE
 
 #undef CONFIG_UPDATE_PDU_SIZE
-#ifdef BOARD_WAND
-/* Wand does not have enough space to fit 4k PDU. */
+#if defined(BOARD_WAND) || defined(VARIANT_HAMMER_TP_LARGE_PAGE)
+/* Wand/Zed does not have enough space to fit 4k PDU. */
 #define CONFIG_UPDATE_PDU_SIZE 2048
 #else
 #define CONFIG_UPDATE_PDU_SIZE 4096
@@ -110,48 +110,48 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #ifdef SECTION_IS_RW
-#define USB_IFACE_HID_KEYBOARD	0
-#define USB_IFACE_UPDATE	1
+#define USB_IFACE_HID_KEYBOARD 0
+#define USB_IFACE_UPDATE 1
 #ifdef HAS_NO_TOUCHPAD
-#define USB_IFACE_COUNT		2
+#define USB_IFACE_COUNT 2
 #else /* !HAS_NO_TOUCHPAD */
-#define USB_IFACE_HID_TOUCHPAD	2
+#define USB_IFACE_HID_TOUCHPAD 2
 /* Can be either I2C or SPI passthrough, depending on the board. */
-#define USB_IFACE_I2C_SPI	3
+#define USB_IFACE_I2C_SPI 3
 #if defined(CONFIG_USB_ISOCHRONOUS)
-#define USB_IFACE_ST_TOUCHPAD	4
-#define USB_IFACE_COUNT		5
-#else  /* !CONFIG_USB_ISOCHRONOUS */
-#define USB_IFACE_COUNT		4
-#endif  /* CONFIG_USB_ISOCHRONOUS */
-#endif /* !HAS_NO_TOUCHPAD */
-#else  /* !SECTION_IS_RW */
-#define USB_IFACE_UPDATE	0
-#define USB_IFACE_COUNT		1
-#endif  /* SECTION_IS_RW */
-
-/* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_UPDATE		1
-#ifdef SECTION_IS_RW
-#define USB_EP_HID_KEYBOARD	2
-#ifdef HAS_NO_TOUCHPAD
-#define USB_EP_COUNT		3
-#else /* !HAS_NO_TOUCHPAD */
-#define USB_EP_HID_TOUCHPAD	3
-/* Can be either I2C or SPI passthrough, depending on the board. */
-#define USB_EP_I2C_SPI		4
-#if defined(CONFIG_USB_ISOCHRONOUS)
-#define USB_EP_ST_TOUCHPAD	5
-#define USB_EP_ST_TOUCHPAD_INT	6
-#define USB_EP_COUNT		7
+#define USB_IFACE_ST_TOUCHPAD 4
+#define USB_IFACE_COUNT 5
 #else /* !CONFIG_USB_ISOCHRONOUS */
-#define USB_EP_COUNT		5
+#define USB_IFACE_COUNT 4
 #endif /* CONFIG_USB_ISOCHRONOUS */
 #endif /* !HAS_NO_TOUCHPAD */
-#else  /* !SECTION_IS_RW */
-#define USB_EP_COUNT		2
-#endif  /* SECTION_IS_RW */
+#else /* !SECTION_IS_RW */
+#define USB_IFACE_UPDATE 0
+#define USB_IFACE_COUNT 1
+#endif /* SECTION_IS_RW */
+
+/* USB endpoint indexes (use define rather than enum to expand them) */
+#define USB_EP_CONTROL 0
+#define USB_EP_UPDATE 1
+#ifdef SECTION_IS_RW
+#define USB_EP_HID_KEYBOARD 2
+#ifdef HAS_NO_TOUCHPAD
+#define USB_EP_COUNT 3
+#else /* !HAS_NO_TOUCHPAD */
+#define USB_EP_HID_TOUCHPAD 3
+/* Can be either I2C or SPI passthrough, depending on the board. */
+#define USB_EP_I2C_SPI 4
+#if defined(CONFIG_USB_ISOCHRONOUS)
+#define USB_EP_ST_TOUCHPAD 5
+#define USB_EP_ST_TOUCHPAD_INT 6
+#define USB_EP_COUNT 7
+#else /* !CONFIG_USB_ISOCHRONOUS */
+#define USB_EP_COUNT 5
+#endif /* CONFIG_USB_ISOCHRONOUS */
+#endif /* !HAS_NO_TOUCHPAD */
+#else /* !SECTION_IS_RW */
+#define USB_EP_COUNT 2
+#endif /* SECTION_IS_RW */
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
@@ -175,12 +175,23 @@
  * buffer size have to be power of two.
  */
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT (128 - 4) /* 4 is maximum header size */
+#ifdef VARIANT_HAMMER_TP_LARGE_PAGE
+/* Zed requires 516 byte per packet for touchpad update */
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT         \
+	(1024 - 4) /* 4 is maximum header size \
+		    */
+#else
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT        \
+	(128 - 4) /* 4 is maximum header size \
+		   */
+#endif
 
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
-#define CONFIG_USB_I2C_MAX_READ_COUNT (1024 - 6) /* 6 is maximum header size */
+#define CONFIG_USB_I2C_MAX_READ_COUNT          \
+	(1024 - 6) /* 6 is maximum header size \
+		    */
 
-#define CONFIG_I2C_XFER_LARGE_READ
+#define CONFIG_I2C_XFER_LARGE_TRANSFER
 
 /* No lid switch */
 #undef CONFIG_LID_SWITCH
@@ -196,7 +207,7 @@
 #define CONFIG_USB_HID_TOUCHPAD
 
 /* Virtual address for touchpad FW in USB updater. */
-#define CONFIG_TOUCHPAD_VIRTUAL_OFF	0x80000000
+#define CONFIG_TOUCHPAD_VIRTUAL_OFF 0x80000000
 
 /* Include touchpad FW hashes in image */
 #define CONFIG_TOUCHPAD_HASH_FW
@@ -210,7 +221,7 @@
 
 #if defined(HAS_I2C_TOUCHPAD) || defined(CONFIG_LED_DRIVER_LM3630A)
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_MASTER 0
 #define I2C_PORT_KBLIGHT 0
 #define I2C_PORT_CHARGER 1
@@ -223,19 +234,18 @@
 
 #ifdef CONFIG_GMR_TABLET_MODE
 #define CONFIG_TABLET_MODE
-#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 #define CONFIG_KEYBOARD_TABLET_MODE_SWITCH
 #endif
 
 #ifdef HAS_SPI_TOUCHPAD
 /* Enable control of SPI over USB */
 #define CONFIG_USB_SPI
-#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_HALFDUPLEX
-#define CONFIG_STM32_SPI1_MASTER
+#define CONFIG_STM32_SPI1_CONTROLLER
 #define CONFIG_SPI_TOUCHPAD_PORT 0
 #define SPI_ST_TP_DEVICE_ID 0
-/* Enable SPI master xfer command */
+/* Enable SPI controller xfer command */
 #define CONFIG_CMD_SPI_XFER
 #define CONFIG_TOUCHPAD
 #define CONFIG_TOUCHPAD_ST
@@ -278,7 +288,7 @@
 #define CONFIG_STREAM_USART2
 #define CONFIG_STREAM_USART
 
-#define CONFIG_EC_EC_COMM_SLAVE
+#define CONFIG_EC_EC_COMM_SERVER
 #define CONFIG_EC_EC_COMM_BATTERY
 #define CONFIG_CRC8
 #endif /* BOARD_WAND */
@@ -311,10 +321,10 @@
 #endif
 
 /* Maximum current to draw. */
-#define MAX_CURRENT_MA			2000
+#define MAX_CURRENT_MA 2000
 /* Maximum current/voltage to provide over OTG. */
-#define MAX_OTG_CURRENT_MA		2000
-#define MAX_OTG_VOLTAGE_MV		20000
+#define MAX_OTG_CURRENT_MA 2000
+#define MAX_OTG_VOLTAGE_MV 20000
 
 #ifndef __ASSEMBLER__
 
@@ -332,6 +342,7 @@ enum usb_strings {
 	USB_STR_PRODUCT,
 	USB_STR_SERIALNO,
 	USB_STR_VERSION,
+	USB_STR_SPI_NAME,
 	USB_STR_I2C_NAME,
 	USB_STR_UPDATE_NAME,
 #ifdef CONFIG_USB_ISOCHRONOUS

@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,9 +19,13 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 /*****************************************************************************/
 /* EC-specific thermal controls */
@@ -49,18 +53,36 @@ BUILD_ASSERT(EC_TEMP_THRESH_COUNT == 3);
 /* Keep track of which thresholds have triggered */
 static cond_t cond_hot[EC_TEMP_THRESH_COUNT];
 
+/* thermal sensor read delay */
+#if defined(CONFIG_TEMP_SENSOR_POWER) && \
+	defined(CONFIG_TEMP_SENSOR_FIRST_READ_DELAY_MS)
+static int first_read_delay = CONFIG_TEMP_SENSOR_FIRST_READ_DELAY_MS;
+#endif
+
 static void thermal_control(void)
 {
-	int i, j, t, rv, f;
+	int i, j, t, rv;
 	int count_over[EC_TEMP_THRESH_COUNT];
 	int count_under[EC_TEMP_THRESH_COUNT];
 	int num_valid_limits[EC_TEMP_THRESH_COUNT];
 	int num_sensors_read;
-	int fmax;
-	int temp_fan_configured;
-
-#ifdef CONFIG_CUSTOM_FAN_CONTROL
+#ifdef CONFIG_FANS
+#ifndef CONFIG_CUSTOM_FAN_CONTROL
+	int f = 0;
+	int fmax = 0;
+	int temp_fan_configured = 0;
+#else
 	int temp[TEMP_SENSOR_COUNT];
+#endif
+#endif
+
+	/* add delay to ensure thermal sensor is ready when EC boot */
+#if defined(CONFIG_TEMP_SENSOR_POWER) && \
+	defined(CONFIG_TEMP_SENSOR_FIRST_READ_DELAY_MS)
+	if (first_read_delay != 0) {
+		msleep(first_read_delay);
+		first_read_delay = 0;
+	}
 #endif
 
 	/* Get ready to count things */
@@ -68,16 +90,13 @@ static void thermal_control(void)
 	memset(count_under, 0, sizeof(count_under));
 	memset(num_valid_limits, 0, sizeof(num_valid_limits));
 	num_sensors_read = 0;
-	fmax = 0;
-	temp_fan_configured = 0;
 
 	/* go through all the sensors */
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-
 		/* read one */
 		rv = temp_sensor_read(i, &t);
 
-#ifdef CONFIG_CUSTOM_FAN_CONTROL
+#if defined(CONFIG_FANS) && defined(CONFIG_CUSTOM_FAN_CONTROL)
 		/* Store all sensors value */
 		temp[i] = K_TO_C(t);
 #endif
@@ -104,6 +123,8 @@ static void thermal_control(void)
 			}
 		}
 
+#ifdef CONFIG_FANS
+#ifndef CONFIG_CUSTOM_FAN_CONTROL
 		/* figure out the max fan needed, too */
 		if (thermal_params[i].temp_fan_off &&
 		    thermal_params[i].temp_fan_max) {
@@ -115,6 +136,8 @@ static void thermal_control(void)
 
 			temp_fan_configured = 1;
 		}
+#endif
+#endif
 	}
 
 	if (!num_sensors_read) {
@@ -156,6 +179,13 @@ static void thermal_control(void)
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HALT])) {
 		CPRINTS("thermal SHUTDOWN");
+
+		/* Print temperature sensor values before shutting down AP */
+		if (IS_ENABLED(CONFIG_CMD_TEMP_SENSOR)) {
+			print_temps();
+			cflush();
+		}
+
 		chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HALT])) {
 		/* We don't reboot automatically - the user has to push
@@ -182,16 +212,16 @@ static void thermal_control(void)
 		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	}
 
-	if (temp_fan_configured) {
 #ifdef CONFIG_FANS
 #ifdef CONFIG_CUSTOM_FAN_CONTROL
-		for (i = 0; i < fan_get_count(); i++) {
-			if (!is_thermal_control_enabled(i))
-				continue;
+	for (i = 0; i < fan_get_count(); i++) {
+		if (!is_thermal_control_enabled(i))
+			continue;
 
-			board_override_fan_control(i, temp);
-		}
+		board_override_fan_control(i, temp);
+	}
 #else
+	if (temp_fan_configured) {
 		/* TODO(crosbug.com/p/23797): For now, we just treat all
 		 * fans the same. It would be better if we could assign
 		 * different thermal profiles to each fan - in case one
@@ -200,9 +230,9 @@ static void thermal_control(void)
 		 */
 		for (i = 0; i < fan_get_count(); i++)
 			fan_set_percent_needed(i, fmax);
-#endif
-#endif
 	}
+#endif
+#endif
 }
 
 /* Wait until after the sensors have been read */
@@ -211,30 +241,26 @@ DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR_DONE);
 /*****************************************************************************/
 /* Console commands */
 
-static int command_thermalget(int argc, char **argv)
+static int command_thermalget(int argc, const char **argv)
 {
 	int i;
 
 	ccprintf("sensor  warn  high  halt   fan_off fan_max   name\n");
 	for (i = 0; i < TEMP_SENSOR_COUNT; i++) {
 		ccprintf(" %2d      %3d   %3d    %3d    %3d     %3d     %s\n",
-			 i,
-			 thermal_params[i].temp_host[EC_TEMP_THRESH_WARN],
+			 i, thermal_params[i].temp_host[EC_TEMP_THRESH_WARN],
 			 thermal_params[i].temp_host[EC_TEMP_THRESH_HIGH],
 			 thermal_params[i].temp_host[EC_TEMP_THRESH_HALT],
 			 thermal_params[i].temp_fan_off,
-			 thermal_params[i].temp_fan_max,
-			 temp_sensors[i].name);
+			 thermal_params[i].temp_fan_max, temp_sensors[i].name);
 	}
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(thermalget, command_thermalget,
-			NULL,
+DECLARE_CONSOLE_COMMAND(thermalget, command_thermalget, NULL,
 			"Print thermal parameters (degrees Kelvin)");
 
-
-static int command_thermalset(int argc, char **argv)
+static int command_thermalset(int argc, const char **argv)
 {
 	unsigned int n;
 	int i, val;
@@ -298,8 +324,7 @@ thermal_command_set_threshold(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_SET_THRESHOLD,
-		     thermal_command_set_threshold,
-		     EC_VER_MASK(1));
+		     thermal_command_set_threshold, EC_VER_MASK(1));
 
 static enum ec_status
 thermal_command_get_threshold(struct host_cmd_handler_args *args)
@@ -315,5 +340,4 @@ thermal_command_get_threshold(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_GET_THRESHOLD,
-		     thermal_command_get_threshold,
-		     EC_VER_MASK(1));
+		     thermal_command_get_threshold, EC_VER_MASK(1));

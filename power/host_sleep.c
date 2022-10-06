@@ -1,8 +1,10 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "config.h"
+#include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -10,15 +12,15 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
 /* Track last reported sleep event */
 static enum host_sleep_event host_sleep_state;
 
-__overridable void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx)
+__overridable void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
 {
 	/* Default weak implementation -- no action required. */
 }
@@ -69,8 +71,7 @@ host_command_host_sleep_event(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT,
-		     host_command_host_sleep_event,
+DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, host_command_host_sleep_event,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 enum host_sleep_event power_get_host_sleep_state(void)
@@ -83,7 +84,6 @@ void power_set_host_sleep_state(enum host_sleep_event state)
 	host_sleep_state = state;
 }
 
-#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 /* Flag to notify listeners about suspend/resume events. */
 enum sleep_notify_type sleep_notify = SLEEP_NOTIFY_NONE;
 
@@ -105,12 +105,26 @@ void sleep_notify_transition(int check_state, int hook_id)
 	sleep_set_notify(SLEEP_NOTIFY_NONE);
 }
 
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+
 static uint16_t sleep_signal_timeout;
+static uint16_t host_sleep_timeout_default = CONFIG_SLEEP_TIMEOUT_MS;
 static uint32_t sleep_signal_transitions;
-static void (*sleep_timeout_callback)(void);
+static enum sleep_hang_type timeout_hang_type;
 
 static void sleep_transition_timeout(void);
 DECLARE_DEFERRED(sleep_transition_timeout);
+
+__overridable void power_board_handle_sleep_hang(enum sleep_hang_type hang_type)
+{
+	/* Default empty implementation */
+}
+
+__overridable void
+power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
+{
+	/* Default empty implementation */
+}
 
 static void sleep_increment_transition(void)
 {
@@ -136,9 +150,11 @@ void sleep_resume_transition(void)
 	 * internal periodic housekeeping code might result in a situation
 	 * like this.
 	 */
-	if (sleep_signal_timeout)
+	if (sleep_signal_timeout) {
+		timeout_hang_type = SLEEP_HANG_S0IX_RESUME;
 		hook_call_deferred(&sleep_transition_timeout_data,
 				   (uint32_t)sleep_signal_timeout * 1000);
+	}
 }
 
 static void sleep_transition_timeout(void)
@@ -147,35 +163,43 @@ static void sleep_transition_timeout(void)
 	sleep_signal_transitions |= EC_HOST_RESUME_SLEEP_TIMEOUT;
 	hook_call_deferred(&sleep_transition_timeout_data, -1);
 
-	/* Call the custom callback */
-	if (sleep_timeout_callback)
-		sleep_timeout_callback();
+	if (timeout_hang_type != SLEEP_HANG_NONE) {
+		power_chipset_handle_sleep_hang(timeout_hang_type);
+		power_board_handle_sleep_hang(timeout_hang_type);
+	}
 }
 
-void sleep_start_suspend(struct host_sleep_event_context *ctx,
-			 void (*callback)(void))
+void sleep_start_suspend(struct host_sleep_event_context *ctx)
 {
 	uint16_t timeout = ctx->sleep_timeout_ms;
 
-	sleep_timeout_callback = callback;
 	sleep_signal_transitions = 0;
 
 	/* Use zero internally to indicate no timeout. */
 	if (timeout == EC_HOST_SLEEP_TIMEOUT_DEFAULT) {
-		timeout = CONFIG_SLEEP_TIMEOUT_MS;
+		timeout = host_sleep_timeout_default;
+	}
 
-	} else if (timeout == EC_HOST_SLEEP_TIMEOUT_INFINITE) {
+	/* Use 0xFFFF to disable the timeout */
+	if (timeout == EC_HOST_SLEEP_TIMEOUT_INFINITE) {
 		sleep_signal_timeout = 0;
 		return;
 	}
 
 	sleep_signal_timeout = timeout;
+	timeout_hang_type = SLEEP_HANG_S0IX_SUSPEND;
 	hook_call_deferred(&sleep_transition_timeout_data,
 			   (uint32_t)timeout * 1000);
 }
 
 void sleep_complete_resume(struct host_sleep_event_context *ctx)
 {
+	/*
+	 * Ensure we don't schedule another sleep_transition_timeout
+	 * if the the HOST_SLEEP_EVENT_S0IX_RESUME message arrives before
+	 * the CHIPSET task transitions to the POWER_S0ixS0 state.
+	 */
+	sleep_signal_timeout = 0;
 	hook_call_deferred(&sleep_transition_timeout_data, -1);
 	ctx->sleep_transitions = sleep_signal_transitions;
 }
@@ -184,20 +208,54 @@ void sleep_reset_tracking(void)
 {
 	sleep_signal_transitions = 0;
 	sleep_signal_timeout = 0;
-	sleep_timeout_callback = NULL;
+	timeout_hang_type = SLEEP_HANG_NONE;
 }
+
+static int command_sleep_fail_timeout(int argc, const char **argv)
+{
+	if (argc < 2) {
+		/* no arguments - just print the current timeout */
+	} else if (!strcasecmp(argv[1], "default")) {
+		host_sleep_timeout_default = CONFIG_SLEEP_TIMEOUT_MS;
+	} else if (!strcasecmp(argv[1], "infinite")) {
+		host_sleep_timeout_default = EC_HOST_SLEEP_TIMEOUT_INFINITE;
+	} else {
+		char *e;
+		int val;
+
+		val = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		if (val <= 0 || val >= EC_HOST_SLEEP_TIMEOUT_INFINITE) {
+			ccprintf("Error: timeout range is 1..%d [msec]\n",
+				 EC_HOST_SLEEP_TIMEOUT_INFINITE - 1);
+			return EC_ERROR_PARAM1;
+		}
+
+		host_sleep_timeout_default = val;
+	}
+
+	if (host_sleep_timeout_default == EC_HOST_SLEEP_TIMEOUT_INFINITE)
+		ccprintf("Sleep failure detection timeout is disabled\n");
+	else
+		ccprintf("Sleep failure detection timeout is %d [msec]\n",
+			 host_sleep_timeout_default);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(sleeptimeout, command_sleep_fail_timeout,
+			"[default | infinite | <msec>]",
+			"Display or set host sleep failure detection timeout.\n"
+			"Valid arguments are:\n"
+			" default\n"
+			" infinite - disables the timeout\n"
+			" <msec> - custom length in milliseconds\n"
+			" <none> - prints the current setting");
 
 #else /* !CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
 /* No action */
-void sleep_set_notify(enum sleep_notify_type notify)
-{
-}
-
-void sleep_notify_transition(int check_state, int hook_id)
-{
-}
-
 void sleep_suspend_transition(void)
 {
 }
@@ -206,8 +264,7 @@ void sleep_resume_transition(void)
 {
 }
 
-void sleep_start_suspend(struct host_sleep_event_context *ctx,
-			 void (*callback)(void))
+void sleep_start_suspend(struct host_sleep_event_context *ctx)
 {
 }
 

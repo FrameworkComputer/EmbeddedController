@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,7 +17,7 @@
 #include "util.h"
 
 /* Traces on UART1 */
-#define UART_PORT      0
+#define UART_PORT 0
 #define UART_PORT_HOST 1
 
 static int init_done;

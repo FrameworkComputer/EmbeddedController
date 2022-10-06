@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,6 +7,7 @@
 #include "board.h"
 #include "common.h"
 #include "console.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -17,22 +18,10 @@
 #include "usb_bb.h"
 #include "usb_api.h"
 #include "usb_pd.h"
-#include "version.h"
+#include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-
-#define PDO_FIXED_FLAGS PDO_FIXED_COMM_CAP
-
-/* Source PDOs */
-const uint32_t pd_src_pdo[] = {};
-const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
-
-/* Fake PDOs : we just want our pre-defined voltages */
-const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_FLAGS),
-};
-const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* Holds valid object position (opos) for entered mode */
 static int alt_mode[PD_AMODE_COUNT];
@@ -80,28 +69,22 @@ int pd_check_power_swap(int port)
 	return 0;
 }
 
-int pd_check_data_swap(int port,
-		       enum pd_data_role data_role)
+int pd_check_data_swap(int port, enum pd_data_role data_role)
 {
 	/* Always refuse data swap */
 	return 0;
 }
 
-void pd_execute_data_swap(int port,
-			  enum pd_data_role data_role)
+void pd_execute_data_swap(int port, enum pd_data_role data_role)
 {
 	/* Do nothing */
 }
 
-void pd_check_pr_role(int port,
-		      enum pd_power_role pr_role,
-		      int flags)
+void pd_check_pr_role(int port, enum pd_power_role pr_role, int flags)
 {
 }
 
-void pd_check_dr_role(int port,
-		      enum pd_data_role dr_role,
-		      int flags)
+void pd_check_dr_role(int port, enum pd_data_role dr_role, int flags)
 {
 }
 /* ----------------- Vendor Defined Messages ------------------ */
@@ -114,8 +97,8 @@ const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
 
 const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
-				 CONFIG_USB_PD_IDENTITY_SW_VERS,
-				 0, 0, 0, 0, /* SS[TR][12] */
+				 CONFIG_USB_PD_IDENTITY_SW_VERS, 0, 0, 0,
+				 0, /* SS[TR][12] */
 				 0, /* Vconn power */
 				 0, /* Vconn power required */
 				 1, /* Vbus power required */
@@ -141,18 +124,16 @@ static int svdm_response_svids(int port, uint32_t *payload)
 #define OPOS_DP 1
 #define OPOS_GFU 1
 
-const uint32_t vdo_dp_modes[1] =  {
-	VDO_MODE_DP(0,             /* UFP pin cfg supported : none */
+const uint32_t vdo_dp_modes[1] = {
+	VDO_MODE_DP(0, /* UFP pin cfg supported : none */
 		    MODE_DP_PIN_E, /* DFP pin cfg supported */
-		    1,		   /* no usb2.0 signalling in AMode */
-		    CABLE_PLUG,    /* its a plug */
-		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
-		    MODE_DP_SNK)   /* Its a sink only */
+		    1, /* no usb2.0 signalling in AMode */
+		    CABLE_PLUG, /* its a plug */
+		    MODE_DP_V13, /* DPv1.3 Support, no Gen2 */
+		    MODE_DP_SNK) /* Its a sink only */
 };
 
-const uint32_t vdo_goog_modes[1] =  {
-	VDO_MODE_GOOGLE(MODE_GOOGLE_FU)
-};
+const uint32_t vdo_goog_modes[1] = { VDO_MODE_GOOGLE(MODE_GOOGLE_FU) };
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
@@ -174,13 +155,15 @@ static int dp_status(int port, uint32_t *payload)
 	if (opos != OPOS_DP)
 		return 0; /* nak */
 
-	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
-				   (hpd == 1),       /* HPD_HI|LOW */
-				   0,		     /* request exit DP */
-				   0,		     /* request exit USB */
-				   0,		     /* MF pref */
+	payload[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
+				   (hpd == 1), /* HPD_HI|LOW */
+				   0, /* request exit DP */
+				   0, /* request exit USB */
+				   0, /* MF pref */
 				   gpio_get_level(GPIO_PD_SBU_ENABLE),
-				   0,		     /* power low */
+				   0, /* power
+					 low
+				       */
 				   0x2);
 	return 2;
 }
@@ -219,9 +202,9 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	return rv;
 }
 
-int pd_alt_mode(int port, enum tcpm_transmit_type type, uint16_t svid)
+int pd_alt_mode(int port, enum tcpci_msg_type type, uint16_t svid)
 {
-	if (type != TCPC_TX_SOP)
+	if (type != TCPCI_MSG_SOP)
 		return 0;
 
 	if (svid == USB_SID_DISPLAYPORT)
@@ -260,8 +243,7 @@ const struct svdm_response svdm_rsp = {
 	.exit_mode = &svdm_exit_mode,
 };
 
-int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-		  uint32_t **rpayload)
+int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
 	int rsize;
 

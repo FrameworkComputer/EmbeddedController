@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -27,8 +27,7 @@
 #define LED_ON_1SEC_TICKS 1
 #define LED_ON_2SECS_TICKS 2
 
-const enum ec_led_id supported_led_ids[] = {
-			EC_LED_ID_BATTERY_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -36,7 +35,7 @@ enum led_color {
 	LED_OFF = 0,
 	LED_BLUE,
 	LED_AMBER,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int led_set_color_battery(enum led_color color)
@@ -113,16 +112,19 @@ static void led_set_battery(void)
 		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 			/* Blink once every four seconds. */
 			led_set_color_battery(
-				(suspend_ticks % LED_TOTAL_4SECS_TICKS)
-				< LED_ON_1SEC_TICKS ? LED_AMBER : LED_OFF);
+				(suspend_ticks % LED_TOTAL_4SECS_TICKS) <
+						LED_ON_1SEC_TICKS ?
+					LED_AMBER :
+					LED_OFF);
 		} else {
 			led_set_color_battery(LED_OFF);
 		}
 		break;
 	case PWR_STATE_ERROR:
-		led_set_color_battery(
-			(battery_ticks % LED_TOTAL_2SECS_TICKS <
-			 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
+		led_set_color_battery((battery_ticks % LED_TOTAL_2SECS_TICKS <
+				       LED_ON_1SEC_TICKS) ?
+					      LED_AMBER :
+					      LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		led_set_color_battery(LED_BLUE);
@@ -131,7 +133,9 @@ static void led_set_battery(void)
 		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
 			led_set_color_battery(
 				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_2SECS_TICKS) ? LED_AMBER : LED_BLUE);
+				 LED_ON_2SECS_TICKS) ?
+					LED_AMBER :
+					LED_BLUE);
 		else
 			led_set_color_battery(LED_BLUE);
 		break;

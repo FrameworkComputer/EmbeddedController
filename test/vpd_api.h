@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,6 @@
 #ifndef __CROS_EC_VPD_API_H
 #define __CROS_EC_VPD_API_H
 
-#include "adc.h"
 #include "gpio.h"
 #include "usb_pd.h"
 
@@ -17,39 +16,22 @@
  * voltage (set by selecting the proper Rd resistor). Any voltage below
  * TYPE_C_SRC_DEFAULT_THRESHOLD will not be identified as a type C charger.
  */
-#define TYPE_C_SRC_DEFAULT_THRESHOLD    200  /* mV */
-#define TYPE_C_SRC_1500_THRESHOLD       660  /* mV */
-#define TYPE_C_SRC_3000_THRESHOLD       1230 /* mV */
+#define TYPE_C_SRC_DEFAULT_THRESHOLD 200 /* mV */
+#define TYPE_C_SRC_1500_THRESHOLD 660 /* mV */
+#define TYPE_C_SRC_3000_THRESHOLD 1230 /* mV */
 
+enum vpd_pin { PIN_ADC, PIN_CMP, PIN_GPO };
 
-enum vpd_pin {
-	PIN_ADC,
-	PIN_CMP,
-	PIN_GPO
-};
-
-enum vpd_gpo {
-	GPO_HZ,
-	GPO_HIGH,
-	GPO_LOW
-};
+enum vpd_gpo { GPO_HZ, GPO_HIGH, GPO_LOW };
 
 enum vpd_pwr {
 	PWR_VCONN,
 	PWR_VBUS,
 };
 
-enum vpd_cc {
-	CT_OPEN,
-	CT_CC1,
-	CT_CC2
-};
+enum vpd_cc { CT_OPEN, CT_CC1, CT_CC2 };
 
-enum vpd_billboard {
-	BB_NONE,
-	BB_SRC,
-	BB_SNK
-};
+enum vpd_billboard { BB_NONE, BB_SRC, BB_SNK };
 
 struct mock_pin {
 	enum vpd_pin cfg;

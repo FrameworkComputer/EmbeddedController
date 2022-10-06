@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,7 +22,10 @@ const struct fan_rpm fan_rpm_0 = {
 };
 
 const struct fan_t fans[CONFIG_FANS] = {
-	{ .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
+	{
+		.conf = &fan_conf_0,
+		.rpm = &fan_rpm_0,
+	},
 };
 
 static int mock_enabled;

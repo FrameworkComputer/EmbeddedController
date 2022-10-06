@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -30,7 +30,6 @@
 static int rpm_setting;
 static int duty_setting;
 static int in_rpm_mode = 1;
-
 
 static void clear_status(void)
 {

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -12,6 +12,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "math_util.h"
+#include "power.h"
 #include "task.h"
 #include "test_util.h"
 #include "util.h"
@@ -19,11 +21,15 @@
 #define WAIT_CHARGER_TASK 600
 #define BATTERY_DETACH_DELAY 35000
 
+enum ec_charge_control_mode get_chg_ctrl_mode(void);
+
 static int mock_chipset_state = CHIPSET_STATE_ON;
 static int is_shutdown;
 static int is_force_discharge;
 static int is_hibernated;
 static int override_voltage, override_current, override_usec;
+static int display_soc;
+static int is_full;
 
 /* The simulation doesn't really hibernate, so we must reset this ourselves */
 extern timestamp_t shutdown_target_time;
@@ -34,6 +40,7 @@ static void reset_mocks(void)
 	is_shutdown = is_force_discharge = is_hibernated = 0;
 	override_voltage = override_current = override_usec = 0;
 	shutdown_target_time.val = 0ULL;
+	is_full = 0;
 }
 
 int board_cut_off_battery(void)
@@ -50,6 +57,21 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 int chipset_in_state(int state_mask)
 {
 	return state_mask & mock_chipset_state;
+}
+
+int chipset_in_or_transitioning_to_state(int state_mask)
+{
+	return state_mask & mock_chipset_state;
+}
+
+enum power_state power_get_state(void)
+{
+	if (is_shutdown)
+		return POWER_S5;
+	else if (is_hibernated)
+		return POWER_G3;
+	else
+		return POWER_S0;
 }
 
 int board_discharge_on_ac(int enabled)
@@ -112,10 +134,24 @@ static int wait_charging_state(void)
 
 static int charge_control(enum ec_charge_control_mode mode)
 {
-	struct ec_params_charge_control params;
-	params.mode = mode;
-	return test_send_host_command(EC_CMD_CHARGE_CONTROL, 1, &params,
-				      sizeof(params), NULL, 0);
+	struct ec_params_charge_control p;
+
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = mode;
+	p.sustain_soc.lower = -1;
+	p.sustain_soc.upper = -1;
+	return test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				      NULL, 0);
+}
+
+__override int charge_get_display_charge(void)
+{
+	return display_soc;
+}
+
+__override int calc_is_full(void)
+{
+	return is_full;
 }
 
 /* Setup init condition */
@@ -243,7 +279,7 @@ static int test_charge_state(void)
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
 	charge_control(CHARGE_CONTROL_IDLE);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_IDLE);
+	TEST_ASSERT(state == PWR_STATE_FORCED_IDLE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(flags & CHARGE_FLAG_FORCE_IDLE);
@@ -257,7 +293,7 @@ static int test_charge_state(void)
 	sb_write(SB_CURRENT, 1000);
 	charge_control(CHARGE_CONTROL_DISCHARGE);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_IDLE);
+	TEST_ASSERT(state == PWR_STATE_FORCED_IDLE);
 	TEST_ASSERT(is_force_discharge);
 	charge_control(CHARGE_CONTROL_NORMAL);
 	state = wait_charging_state();
@@ -329,6 +365,35 @@ static int test_low_battery(void)
 	return EC_SUCCESS;
 }
 
+static int test_deep_charge_battery(void)
+{
+	enum charge_state_v2 state_v2;
+	const struct battery_info *bat_info = battery_get_info();
+
+	test_setup(1);
+
+	/* battery pack voltage bellow voltage_min */
+	sb_write(SB_VOLTAGE, (bat_info->voltage_min - 200));
+	wait_charging_state();
+	state_v2 = charge_get_state_v2();
+	TEST_ASSERT(state_v2 == ST_PRECHARGE);
+
+	/*
+	 * Battery voltage keep bellow voltage_min,
+	 * precharge over time CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT
+	 */
+	usleep(CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT);
+	state_v2 = charge_get_state_v2();
+	TEST_ASSERT(state_v2 == ST_IDLE);
+
+	/* recovery from a low voltage. */
+	sb_write(SB_VOLTAGE, (bat_info->voltage_normal));
+	wait_charging_state();
+	state_v2 = charge_get_state_v2();
+	TEST_ASSERT(state_v2 == ST_CHARGE);
+
+	return EC_SUCCESS;
+}
 static int test_high_temp_battery(void)
 {
 	test_setup(1);
@@ -425,7 +490,7 @@ static int test_external_funcs(void)
 	/* Now let's force idle on and off */
 	UART_INJECT("chg idle on\n");
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_IDLE);
+	TEST_ASSERT(state == PWR_STATE_FORCED_IDLE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(flags & CHARGE_FLAG_FORCE_IDLE);
@@ -468,9 +533,8 @@ static int test_hc_charge_state(void)
 	/* Get the state */
 	memset(&resp, 0, sizeof(resp));
 	params.cmd = CHARGE_STATE_CMD_GET_STATE;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(resp.get_state.ac);
 	TEST_ASSERT(resp.get_state.chg_voltage);
@@ -480,14 +544,13 @@ static int test_hc_charge_state(void)
 
 	/* Check all the params */
 	for (i = 0; i < CS_NUM_BASE_PARAMS; i++) {
-
 		/* Read it */
 		memset(&resp, 0, sizeof(resp));
 		params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 		params.get_param.param = i;
-		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-					    &params, sizeof(params),
-					    &resp, sizeof(resp));
+		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+					    sizeof(params), &resp,
+					    sizeof(resp));
 		TEST_ASSERT(rv == EC_RES_SUCCESS);
 		if (i != CS_PARAM_LIMIT_POWER)
 			TEST_ASSERT(resp.get_param.value);
@@ -500,7 +563,7 @@ static int test_hc_charge_state(void)
 		case CS_PARAM_CHG_VOLTAGE:
 		case CS_PARAM_CHG_CURRENT:
 		case CS_PARAM_CHG_INPUT_CURRENT:
-			tmp -= 128;		/* Should be valid delta */
+			tmp -= 128; /* Should be valid delta */
 			break;
 		case CS_PARAM_CHG_STATUS:
 		case CS_PARAM_LIMIT_POWER:
@@ -513,9 +576,9 @@ static int test_hc_charge_state(void)
 		params.cmd = CHARGE_STATE_CMD_SET_PARAM;
 		params.set_param.param = i;
 		params.set_param.value = tmp;
-		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-					    &params, sizeof(params),
-					    &resp, sizeof(resp));
+		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+					    sizeof(params), &resp,
+					    sizeof(resp));
 		if (i == CS_PARAM_CHG_STATUS || i == CS_PARAM_LIMIT_POWER)
 			TEST_ASSERT(rv == EC_RES_ACCESS_DENIED);
 		else
@@ -528,9 +591,9 @@ static int test_hc_charge_state(void)
 		memset(&resp, 0, sizeof(resp));
 		params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 		params.get_param.param = i;
-		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-					    &params, sizeof(params),
-					    &resp, sizeof(resp));
+		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+					    sizeof(params), &resp,
+					    sizeof(resp));
 		TEST_ASSERT(rv == EC_RES_SUCCESS);
 		TEST_ASSERT(resp.get_param.value == tmp);
 	}
@@ -540,17 +603,15 @@ static int test_hc_charge_state(void)
 	memset(&resp, 0, sizeof(resp));
 	params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 	params.get_param.param = CS_PARAM_CUSTOM_PROFILE_MIN;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(resp.get_param.value == meh);
 	params.cmd = CHARGE_STATE_CMD_SET_PARAM;
 	params.set_param.param = CS_PARAM_CUSTOM_PROFILE_MIN;
 	params.set_param.value = 0xc0def00d;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	/* Allow the change to take effect */
 	state = wait_charging_state();
@@ -559,23 +620,20 @@ static int test_hc_charge_state(void)
 	/* param out of range */
 	params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 	params.get_param.param = CS_NUM_BASE_PARAMS;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_INVALID_PARAM);
 	params.cmd = CHARGE_STATE_CMD_SET_PARAM;
 	params.set_param.param = CS_NUM_BASE_PARAMS;
-	params.set_param.value = 0x1000;	/* random value */
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	params.set_param.value = 0x1000; /* random value */
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_INVALID_PARAM);
 
 	/* command out of range */
 	params.cmd = CHARGE_STATE_NUM_CMDS;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_INVALID_PARAM);
 
 	/*
@@ -600,40 +658,38 @@ static int test_hc_current_limit(void)
 
 	/* See what current the charger is delivering */
 	cs_params.cmd = CHARGE_STATE_CMD_GET_STATE;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &cs_params, sizeof(cs_params),
-				    &cs_resp, sizeof(cs_resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &cs_params,
+				    sizeof(cs_params), &cs_resp,
+				    sizeof(cs_resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	norm_current = cs_resp.get_state.chg_current;
 
 	/* Lower it a bit */
 	lower_current = norm_current - 256;
 	cl_params.limit = lower_current;
-	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0,
-				    &cl_params, sizeof(cl_params),
-				    0, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0, &cl_params,
+				    sizeof(cl_params), 0, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	wait_charging_state();
 
 	/* See that it's changed */
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &cs_params, sizeof(cs_params),
-				    &cs_resp, sizeof(cs_resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &cs_params,
+				    sizeof(cs_params), &cs_resp,
+				    sizeof(cs_resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(lower_current == cs_resp.get_state.chg_current);
 
 	/* Remove the limit */
 	cl_params.limit = -1U;
-	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0,
-				    &cl_params, sizeof(cl_params),
-				    0, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0, &cl_params,
+				    sizeof(cl_params), 0, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	wait_charging_state();
 
 	/* See that it's back */
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &cs_params, sizeof(cs_params),
-				    &cs_resp, sizeof(cs_resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &cs_params,
+				    sizeof(cs_params), &cs_resp,
+				    sizeof(cs_resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(norm_current == cs_resp.get_state.chg_current);
 
@@ -669,7 +725,8 @@ static int test_low_battery_hostevents(void)
 	TEST_ASSERT(!is_shutdown);
 
 	/* (Shout) a little bit louder now */
-	sb_write(SB_RELATIVE_STATE_OF_CHARGE, BATTERY_LEVEL_CRITICAL + 1);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE,
+		 CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE + 1);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
@@ -678,7 +735,8 @@ static int test_low_battery_hostevents(void)
 	TEST_ASSERT(!is_shutdown);
 
 	/* (Shout) a little bit louder now */
-	sb_write(SB_RELATIVE_STATE_OF_CHARGE, BATTERY_LEVEL_CRITICAL - 1);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE,
+		 CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE - 1);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
@@ -711,9 +769,182 @@ static int test_low_battery_hostevents(void)
 	return EC_SUCCESS;
 }
 
+static int test_battery_sustainer(void)
+{
+	struct ec_params_charge_control p;
+	struct ec_response_charge_control r;
+	int rv;
 
+	test_setup(1);
 
-void run_test(int argc, char **argv)
+	/* Enable sustainer */
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = CHARGE_CONTROL_NORMAL;
+	p.sustain_soc.lower = 79;
+	p.sustain_soc.upper = 80;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+
+	p.cmd = EC_CHARGE_CONTROL_CMD_GET;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p), &r,
+				    sizeof(r));
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	TEST_ASSERT(r.sustain_soc.lower == 79);
+	TEST_ASSERT(r.sustain_soc.upper == 80);
+
+	/* Check mode transition as the SoC changes. */
+
+	ccprintf("Test SoC < lower < upper.\n");
+	display_soc = 780;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+	ccprintf("Pass.\n");
+
+	ccprintf("Test lower < upper < SoC.\n");
+	display_soc = 810;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
+	ccprintf("Pass.\n");
+
+	ccprintf("Test unplug AC.\n");
+	gpio_set_level(GPIO_AC_PRESENT, 0);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+	ccprintf("Pass.\n");
+
+	ccprintf("Test replug AC.\n");
+	gpio_set_level(GPIO_AC_PRESENT, 1);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
+	ccprintf("Pass.\n");
+
+	ccprintf("Test lower < SoC < upper.\n");
+	display_soc = 799;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
+	ccprintf("Pass.\n");
+
+	ccprintf("Test SoC < lower < upper.\n");
+	display_soc = 789;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+	ccprintf("Pass.\n");
+
+	ccprintf("Test disable sustainer.\n");
+	charge_control(CHARGE_CONTROL_NORMAL);
+	display_soc = 810;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+	ccprintf("Pass.\n");
+
+	ccprintf("Test enable sustainer when battery is full.\n");
+	display_soc = 1000;
+	is_full = 1;
+	wait_charging_state();
+	/* Enable sustainer. */
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = CHARGE_CONTROL_NORMAL;
+	p.sustain_soc.lower = 79;
+	p.sustain_soc.upper = 80;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
+	ccprintf("Pass.\n");
+
+	/* Disable sustainer, unplug AC, upper < SoC < 100. */
+	charge_control(CHARGE_CONTROL_NORMAL);
+	display_soc = 810;
+	is_full = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
+	wait_charging_state();
+
+	ccprintf("Test enable sustainer when AC is present.\n");
+	gpio_set_level(GPIO_AC_PRESENT, 1);
+	wait_charging_state();
+	/* Enable sustainer. */
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = CHARGE_CONTROL_NORMAL;
+	p.sustain_soc.lower = 79;
+	p.sustain_soc.upper = 80;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
+	ccprintf("Pass.\n");
+
+	return EC_SUCCESS;
+}
+
+static int test_battery_sustainer_discharge_idle(void)
+{
+	struct ec_params_charge_control p;
+	int rv;
+
+	test_setup(1);
+
+	/* Enable sustainer */
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = CHARGE_CONTROL_NORMAL;
+	p.sustain_soc.lower = 80;
+	p.sustain_soc.upper = 80;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+
+	/* Check mode transition as the SoC changes. */
+
+	/* SoC < lower (= upper) */
+	display_soc = 780;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	/* (lower =) upper < SoC */
+	display_soc = 810;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE);
+
+	/* Unplug AC. Sustainer gets deactivated. */
+	gpio_set_level(GPIO_AC_PRESENT, 0);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	/* Replug AC. Sustainer gets re-activated. */
+	gpio_set_level(GPIO_AC_PRESENT, 1);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE);
+
+	/* lower = SoC = upper */
+	display_soc = 800;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE);
+
+	/* SoC < lower (= upper) */
+	display_soc = 789;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	/* Disable sustainer */
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = CHARGE_CONTROL_NORMAL;
+	p.sustain_soc.lower = -1;
+	p.sustain_soc.upper = -1;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+
+	/* This time, mode will stay in NORMAL even when upper < SoC. */
+	display_soc = 810;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	return EC_SUCCESS;
+}
+
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_charge_state);
 	RUN_TEST(test_low_battery);
@@ -724,6 +955,9 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_hc_charge_state);
 	RUN_TEST(test_hc_current_limit);
 	RUN_TEST(test_low_battery_hostevents);
+	RUN_TEST(test_battery_sustainer);
+	RUN_TEST(test_battery_sustainer_discharge_idle);
+	RUN_TEST(test_deep_charge_battery);
 
 	test_print_result();
 }

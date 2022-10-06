@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,12 +21,12 @@ static struct mutex measure_lock;
 
 static int tcpc_write(int reg, int val)
 {
-	return i2c_write8(port, FUSB302_I2C_SLAVE_ADDR_FLAGS, reg, val);
+	return i2c_write8(port, FUSB302_I2C_ADDR_FLAGS, reg, val);
 }
 
 static int tcpc_read(int reg, int *val)
 {
-	return i2c_read8(port, FUSB302_I2C_SLAVE_ADDR_FLAGS, reg, val);
+	return i2c_read8(port, FUSB302_I2C_ADDR_FLAGS, reg, val);
 }
 
 int init_fusb302b(int p)
@@ -71,7 +71,6 @@ int init_fusb302b(int p)
 	ret = tcpc_read(TCPC_REG_INTERRUPT, &interrupt);
 	if (ret)
 		return ret;
-
 
 	ret = tcpc_read(TCPC_REG_INTERRUPTA, &interrupta);
 	if (ret)
@@ -158,7 +157,6 @@ int get_cc(int *cc1, int *cc2)
 		orig_meas_cc2 = 1;
 	else
 		orig_meas_cc2 = 0;
-
 
 	/* Disable CC2 measurement switch, enable CC1 measurement switch */
 	reg &= ~TCPC_REG_SWITCHES0_MEAS_CC2;

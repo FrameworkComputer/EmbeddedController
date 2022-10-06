@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -36,4 +36,14 @@ enum ssfc_tcpc_p1 get_cbi_ssfc_tcpc_p1(void)
 enum ssfc_ppc_p1 get_cbi_ssfc_ppc_p1(void)
 {
 	return ((cached_ssfc & SSFC_PPC_P1_MASK) >> SSFC_PPC_P1_OFFSET);
+}
+
+enum ssfc_charger get_cbi_ssfc_charger(void)
+{
+	return ((cached_ssfc & SSFC_CHARGER_MASK) >> SSFC_CHARGER_OFFSET);
+}
+
+enum ssfc_sensor get_cbi_ssfc_sensor(void)
+{
+	return ((cached_ssfc & SSFC_SENSOR_MASK) >> SSFC_SENSOR_OFFSET);
 }

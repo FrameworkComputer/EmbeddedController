@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,39 +8,48 @@
 #ifndef __CROS_EC_ACCELGYRO_ICM_COMMON_H
 #define __CROS_EC_ACCELGYRO_ICM_COMMON_H
 
+#include <sys/types.h>
+
 #include "accelgyro.h"
+#include "hwtimer.h"
+#include "timer.h"
+#include "builtin/stddef.h"
+
+#if !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
+	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)
+#error "ICM must use either SPI or I2C communication"
+#endif
 
 #ifdef CONFIG_ACCEL_FIFO
 /* reserve maximum 4 samples of 16 bytes */
-#define ICM_FIFO_BUFFER	64
+#define ICM_FIFO_BUFFER 64
 #else
-#define ICM_FIFO_BUFFER	0
+#define ICM_FIFO_BUFFER 0
 #endif
 
 struct icm_drv_data_t {
 	struct accelgyro_saved_data_t saved_data[2];
 	struct motion_sensor_t *accel;
 	struct motion_sensor_t *gyro;
+	uint32_t stabilize_ts[2];
 	uint8_t bank;
 	uint8_t fifo_en;
 	uint8_t fifo_buffer[ICM_FIFO_BUFFER] __aligned(sizeof(long));
 };
 
-#define ICM_GET_DATA(_s) \
-	((struct icm_drv_data_t *)(_s)->drv_data)
-#define ICM_GET_SAVED_DATA(_s) \
-	(&ICM_GET_DATA(_s)->saved_data[(_s)->type])
+#define ICM_GET_DATA(_s) ((struct icm_drv_data_t *)(_s)->drv_data)
+#define ICM_GET_SAVED_DATA(_s) (&ICM_GET_DATA(_s)->saved_data[(_s)->type])
 
 /*
  * Virtual register address is 16 bits:
  * - 8 bits MSB coding bank number
  * - 8 bits LSB coding physical address
  */
-#define ICM426XX_REG_GET_BANK(_r)	(((_r) & 0xFF00) >> 8)
-#define ICM426XX_REG_GET_ADDR(_r)	((_r) & 0x00FF)
+#define ICM426XX_REG_GET_BANK(_r) (((_r)&0xFF00) >> 8)
+#define ICM426XX_REG_GET_ADDR(_r) ((_r)&0x00FF)
 
 /* Sensor resolution in number of bits */
-#define ICM_RESOLUTION		16
+#define ICM_RESOLUTION 16
 
 /**
  * sign_extend - sign extend a standard int value using the given sign-bit
@@ -96,6 +105,36 @@ int icm_get_scale(const struct motion_sensor_t *s, uint16_t *scale,
 		  int16_t *temp);
 
 ssize_t icm_fifo_decode_packet(const void *packet, const uint8_t **accel,
-		const uint8_t **gyro);
+			       const uint8_t **gyro);
 
-#endif	/* __CROS_EC_ACCELGYRO_ICM_COMMON_H */
+static inline void icm_set_stabilize_ts(const struct motion_sensor_t *s,
+					uint32_t delay)
+{
+	struct icm_drv_data_t *st = ICM_GET_DATA(s);
+	uint32_t stabilize_ts;
+
+	stabilize_ts = __hw_clock_source_read() + delay;
+	/* prevent 0 value used for disabling time checking */
+	st->stabilize_ts[s->type] = stabilize_ts | 1;
+}
+
+static inline void icm_reset_stabilize_ts(const struct motion_sensor_t *s)
+{
+	struct icm_drv_data_t *st = ICM_GET_DATA(s);
+
+	st->stabilize_ts[s->type] = 0;
+}
+
+static inline int32_t icm_get_sensor_stabilized(const struct motion_sensor_t *s,
+						uint32_t ts)
+{
+	struct icm_drv_data_t *st = ICM_GET_DATA(s);
+	uint32_t stabilize_ts = st->stabilize_ts[s->type];
+
+	if (stabilize_ts == 0)
+		return 0;
+
+	return time_until(ts, stabilize_ts);
+}
+
+#endif /* __CROS_EC_ACCELGYRO_ICM_COMMON_H */

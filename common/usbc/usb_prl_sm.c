@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,11 +6,13 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "board.h"
+#include "builtin/assert.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -18,54 +20,74 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "timer.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "util.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
 #include "usb_emsg.h"
 #include "usb_sm.h"
 #include "vpd_api.h"
-#include "version.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #else
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
 #endif
 
-#define RCH_SET_FLAG(port, flag) deprecated_atomic_or(&rch[port].flags, (flag))
-#define RCH_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&rch[port].flags, (flag))
+/*
+ * Define DEBUG_PRINT_FLAG_NAMES to print flag names when set and cleared.
+ */
+#undef DEBUG_PRINT_FLAG_NAMES
+
+#ifdef DEBUG_PRINT_FLAG_NAMES
+__maybe_unused static void print_flag(const char *group, int set_or_clear,
+				      int flag);
+#define SET_FLAG(group, flags, flag)        \
+	do {                                \
+		print_flag(group, 1, flag); \
+		atomic_or(flags, (flag));   \
+	} while (0)
+#define CLR_FLAG(group, flags, flag)                \
+	do {                                        \
+		int before = *flags;                \
+		atomic_clear_bits(flags, (flag));   \
+		if (*flags != before)               \
+			print_flag(group, 0, flag); \
+	} while (0)
+#else
+#define SET_FLAG(group, flags, flag) atomic_or(flags, (flag))
+#define CLR_FLAG(group, flags, flag) atomic_clear_bits(flags, (flag))
+#endif
+
+#define RCH_SET_FLAG(port, flag) SET_FLAG("RCH", &rch[port].flags, (flag))
+#define RCH_CLR_FLAG(port, flag) CLR_FLAG("RCH", &rch[port].flags, (flag))
 #define RCH_CHK_FLAG(port, flag) (rch[port].flags & (flag))
 
-#define TCH_SET_FLAG(port, flag) deprecated_atomic_or(&tch[port].flags, (flag))
-#define TCH_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&tch[port].flags, (flag))
+#define TCH_SET_FLAG(port, flag) SET_FLAG("TCH", &tch[port].flags, (flag))
+#define TCH_CLR_FLAG(port, flag) CLR_FLAG("TCH", &tch[port].flags, (flag))
 #define TCH_CHK_FLAG(port, flag) (tch[port].flags & (flag))
 
 #define PRL_TX_SET_FLAG(port, flag) \
-	deprecated_atomic_or(&prl_tx[port].flags, (flag))
+	SET_FLAG("PRL_TX", &prl_tx[port].flags, (flag))
 #define PRL_TX_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&prl_tx[port].flags, (flag))
+	CLR_FLAG("PRL_TX", &prl_tx[port].flags, (flag))
 #define PRL_TX_CHK_FLAG(port, flag) (prl_tx[port].flags & (flag))
 
 #define PRL_HR_SET_FLAG(port, flag) \
-	deprecated_atomic_or(&prl_hr[port].flags, (flag))
+	SET_FLAG("PRL_HR", &prl_hr[port].flags, (flag))
 #define PRL_HR_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&prl_hr[port].flags, (flag))
+	CLR_FLAG("PRL_HR", &prl_hr[port].flags, (flag))
 #define PRL_HR_CHK_FLAG(port, flag) (prl_hr[port].flags & (flag))
 
-#define PDMSG_SET_FLAG(port, flag) \
-	deprecated_atomic_or(&pdmsg[port].flags, (flag))
-#define PDMSG_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&pdmsg[port].flags, (flag))
+#define PDMSG_SET_FLAG(port, flag) SET_FLAG("PDMSG", &pdmsg[port].flags, (flag))
+#define PDMSG_CLR_FLAG(port, flag) CLR_FLAG("PDMSG", &pdmsg[port].flags, (flag))
 #define PDMSG_CHK_FLAG(port, flag) (pdmsg[port].flags & (flag))
 
 /* Protocol Layer Flags */
@@ -75,30 +97,74 @@
  *	different meanings in each state machine.
  */
 /* Flag to note message transmission completed */
-#define PRL_FLAGS_TX_COMPLETE             BIT(0)
+#define PRL_FLAGS_TX_COMPLETE BIT(0)
 /* Flag to note that PRL requested to set SINK_NG CC state */
-#define PRL_FLAGS_SINK_NG                 BIT(1)
+#define PRL_FLAGS_SINK_NG BIT(1)
 /* Flag to note PRL waited for SINK_OK CC state before transmitting */
-#define PRL_FLAGS_WAIT_SINK_OK            BIT(2)
+#define PRL_FLAGS_WAIT_SINK_OK BIT(2)
 /* Flag to note transmission error occurred */
-#define PRL_FLAGS_TX_ERROR                BIT(3)
+#define PRL_FLAGS_TX_ERROR BIT(3)
 /* Flag to note PE triggered a hard reset */
-#define PRL_FLAGS_PE_HARD_RESET           BIT(4)
+#define PRL_FLAGS_PE_HARD_RESET BIT(4)
 /* Flag to note hard reset has completed */
-#define PRL_FLAGS_HARD_RESET_COMPLETE     BIT(5)
+#define PRL_FLAGS_HARD_RESET_COMPLETE BIT(5)
 /* Flag to note port partner sent a hard reset */
 #define PRL_FLAGS_PORT_PARTNER_HARD_RESET BIT(6)
 /*
  * Flag to note a message transmission has been requested. It is only cleared
  * when we send the message to the TCPC layer.
  */
-#define PRL_FLAGS_MSG_XMIT                BIT(7)
+#define PRL_FLAGS_MSG_XMIT BIT(7)
 /* Flag to note a message was received */
-#define PRL_FLAGS_MSG_RECEIVED            BIT(8)
+#define PRL_FLAGS_MSG_RECEIVED BIT(8)
 /* Flag to note aborting current TX message, not currently set */
-#define PRL_FLAGS_ABORT                   BIT(9)
+#define PRL_FLAGS_ABORT BIT(9)
 /* Flag to note current TX message uses chunking */
-#define PRL_FLAGS_CHUNKING                BIT(10)
+#define PRL_FLAGS_CHUNKING BIT(10)
+
+struct bit_name {
+	int value;
+	const char *name;
+};
+
+static __const_data const struct bit_name flag_bit_names[] = {
+	{ PRL_FLAGS_TX_COMPLETE, "PRL_FLAGS_TX_COMPLETE" },
+	{ PRL_FLAGS_SINK_NG, "PRL_FLAGS_SINK_NG" },
+	{ PRL_FLAGS_WAIT_SINK_OK, "PRL_FLAGS_WAIT_SINK_OK" },
+	{ PRL_FLAGS_TX_ERROR, "PRL_FLAGS_TX_ERROR" },
+	{ PRL_FLAGS_PE_HARD_RESET, "PRL_FLAGS_PE_HARD_RESET" },
+	{ PRL_FLAGS_HARD_RESET_COMPLETE, "PRL_FLAGS_HARD_RESET_COMPLETE" },
+	{ PRL_FLAGS_PORT_PARTNER_HARD_RESET,
+	  "PRL_FLAGS_PORT_PARTNER_HARD_RESET" },
+	{ PRL_FLAGS_MSG_XMIT, "PRL_FLAGS_MSG_XMIT" },
+	{ PRL_FLAGS_MSG_RECEIVED, "PRL_FLAGS_MSG_RECEIVED" },
+	{ PRL_FLAGS_ABORT, "PRL_FLAGS_ABORT" },
+	{ PRL_FLAGS_CHUNKING, "PRL_FLAGS_CHUNKING" },
+};
+
+__maybe_unused static void print_bits(const char *group, const char *desc,
+				      int value, const struct bit_name *names,
+				      int names_size)
+{
+	int i;
+
+	CPRINTF("%s %s 0x%x : ", group, desc, value);
+	for (i = 0; i < names_size; i++) {
+		if (value & names[i].value)
+			CPRINTF("%s | ", names[i].name);
+		value &= ~names[i].value;
+	}
+	if (value != 0)
+		CPRINTF("0x%x", value);
+	CPRINTF("\n");
+}
+
+__maybe_unused static void print_flag(const char *group, int set_or_clear,
+				      int flag)
+{
+	print_bits(group, set_or_clear ? "Set" : "Clr", flag, flag_bit_names,
+		   ARRAY_SIZE(flag_bit_names));
+}
 
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
@@ -119,6 +185,8 @@
  */
 #ifdef CONFIG_USB_PD_DEBUG_LEVEL
 static const enum debug_level prl_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+#elif defined(CONFIG_USB_PD_INITIAL_DEBUG_LEVEL)
+static enum debug_level prl_debug_level = CONFIG_USB_PD_INITIAL_DEBUG_LEVEL;
 #else
 static enum debug_level prl_debug_level = DEBUG_LEVEL_1;
 #endif
@@ -168,7 +236,7 @@ enum usb_tch_state {
 	TCH_REPORT_ERROR,
 };
 
-static const char * const prl_tx_state_names[] = {
+static const char *const prl_tx_state_names[] = {
 	[PRL_TX_PHY_LAYER_RESET] = "PRL_TX_PHY_LAYER_RESET",
 	[PRL_TX_WAIT_FOR_MESSAGE_REQUEST] = "PRL_TX_WAIT_FOR_MESSAGE_REQUEST",
 	[PRL_TX_LAYER_RESET_FOR_TRANSMIT] = "PRL_TX_LAYER_RESET_FOR_TRANSMIT",
@@ -180,19 +248,18 @@ static const char * const prl_tx_state_names[] = {
 	[PRL_TX_DISCARD_MESSAGE] = "PRL_TX_DISCARD_MESSAGE",
 };
 
-static const char * const prl_hr_state_names[] = {
+static const char *const prl_hr_state_names[] = {
 	[PRL_HR_WAIT_FOR_REQUEST] = "PRL_HR_WAIT_FOR_REQUEST",
 	[PRL_HR_RESET_LAYER] = "PRL_HR_RESET_LAYER",
-	[PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE]
-		= "PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE",
-	[PRL_HR_WAIT_FOR_PE_HARD_RESET_COMPLETE]
-		= "PRL_HR_WAIT_FOR_PE_HARD_RESET_COMPLETE",
+	[PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE] =
+		"PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE",
+	[PRL_HR_WAIT_FOR_PE_HARD_RESET_COMPLETE] =
+		"PRL_HR_WAIT_FOR_PE_HARD_RESET_COMPLETE",
 };
 
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-static const char * const rch_state_names[] = {
-	[RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER]
-		= "RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER",
+__maybe_unused static const char *const rch_state_names[] = {
+	[RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER] =
+		"RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER",
 	[RCH_PASS_UP_MESSAGE] = "RCH_PASS_UP_MESSAGE",
 	[RCH_PROCESSING_EXTENDED_MESSAGE] = "RCH_PROCESSING_EXTENDED_MESSAGE",
 	[RCH_REQUESTING_CHUNK] = "RCH_REQUESTING_CHUNK",
@@ -200,11 +267,11 @@ static const char * const rch_state_names[] = {
 	[RCH_REPORT_ERROR] = "RCH_REPORT_ERROR",
 };
 
-static const char * const tch_state_names[] = {
-	[TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE]
-		= "TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE",
-	[TCH_WAIT_FOR_TRANSMISSION_COMPLETE]
-		= "TCH_WAIT_FOR_TRANSMISSION_COMPLETE",
+__maybe_unused static const char *const tch_state_names[] = {
+	[TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE] =
+		"TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE",
+	[TCH_WAIT_FOR_TRANSMISSION_COMPLETE] =
+		"TCH_WAIT_FOR_TRANSMISSION_COMPLETE",
 	[TCH_CONSTRUCT_CHUNKED_MESSAGE] = "TCH_CONSTRUCT_CHUNKED_MESSAGE",
 	[TCH_SENDING_CHUNKED_MESSAGE] = "TCH_SENDING_CHUNKED_MESSAGE",
 	[TCH_WAIT_CHUNK_REQUEST] = "TCH_WAIT_CHUNK_REQUEST",
@@ -212,25 +279,22 @@ static const char * const tch_state_names[] = {
 	[TCH_MESSAGE_SENT] = "TCH_MESSAGE_SENT",
 	[TCH_REPORT_ERROR] = "TCH_REPORT_ERROR",
 };
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
 /* Forward declare full list of states. Index by above enums. */
 static const struct usb_state prl_tx_states[];
 static const struct usb_state prl_hr_states[];
 
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-static const struct usb_state rch_states[];
-static const struct usb_state tch_states[];
-#endif /* CONFIG_USB_PD_REV30 */
+__maybe_unused static const struct usb_state rch_states[];
+__maybe_unused static const struct usb_state tch_states[];
 
 /* Chunked Rx State Machine Object */
 static struct rx_chunked {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* PRL_FLAGS */
-	uint32_t flags;
-	/* protocol timer */
-	uint64_t chunk_sender_response_timer;
+	atomic_t flags;
+	/* error to report when moving to rch_report_error state */
+	enum pe_error error;
 } rch[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Chunked Tx State Machine Object */
@@ -238,9 +302,7 @@ static struct tx_chunked {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* state machine flags */
-	uint32_t flags;
-	/* protocol timer */
-	uint64_t chunk_sender_request_timer;
+	atomic_t flags;
 	/* error to report when moving to tch_report_error state */
 	enum pe_error error;
 } tch[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -248,7 +310,7 @@ static struct tx_chunked {
 /* Message Reception State Machine Object */
 static struct protocol_layer_rx {
 	/* received message type */
-	enum tcpm_transmit_type sop;
+	enum tcpci_msg_type sop;
 	/* message ids for all valid port partners */
 	int msg_id[NUM_SOP_STAR_TYPES];
 } prl_rx[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -258,13 +320,9 @@ static struct protocol_layer_tx {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* state machine flags */
-	uint32_t flags;
-	/* protocol timer */
-	uint64_t sink_tx_timer;
-	/* timeout to limit waiting on TCPC response (not in spec) */
-	uint64_t tcpc_tx_timeout;
+	atomic_t flags;
 	/* last message type we transmitted */
-	enum tcpm_transmit_type last_xmit_type;
+	enum tcpci_msg_type last_xmit_type;
 	/* message id counters for all 6 port partners */
 	uint32_t msg_id_counter[NUM_SOP_STAR_TYPES];
 	/* transmit status */
@@ -276,17 +334,15 @@ static struct protocol_hard_reset {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* state machine flags */
-	uint32_t flags;
-	/* protocol timer */
-	uint64_t hard_reset_complete_timer;
+	atomic_t flags;
 } prl_hr[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Chunking Message Object */
 static struct pd_message {
 	/* message status flags */
-	uint32_t flags;
+	atomic_t flags;
 	/* SOP* */
-	enum tcpm_transmit_type xmit_type;
+	enum tcpci_msg_type xmit_type;
 	/* type of message */
 	uint8_t msg_type;
 	/* PD revision */
@@ -303,7 +359,7 @@ static struct pd_message {
 	uint8_t ext;
 	uint32_t chunk_number_to_send;
 	uint32_t send_offset;
-#endif /* CONFIG_USB_PD_REV30 */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 } pdmsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -322,12 +378,12 @@ GEN_NOT_SUPPORTED(PRL_TX_SNK_START_AMS);
 
 GEN_NOT_SUPPORTED(RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
 #define RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER \
-		RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER_NOT_SUPPORTED
+	RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(RCH_PASS_UP_MESSAGE);
 #define RCH_PASS_UP_MESSAGE RCH_PASS_UP_MESSAGE_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(RCH_PROCESSING_EXTENDED_MESSAGE);
 #define RCH_PROCESSING_EXTENDED_MESSAGE \
-		RCH_PROCESSING_EXTENDED_MESSAGE_NOT_SUPPORTED
+	RCH_PROCESSING_EXTENDED_MESSAGE_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(RCH_REQUESTING_CHUNK);
 #define RCH_REQUESTING_CHUNK RCH_REQUESTING_CHUNK_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(RCH_WAITING_CHUNK);
@@ -337,13 +393,13 @@ GEN_NOT_SUPPORTED(RCH_REPORT_ERROR);
 
 GEN_NOT_SUPPORTED(TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 #define TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE \
-		TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE_NOT_SUPPORTED
+	TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(TCH_WAIT_FOR_TRANSMISSION_COMPLETE);
 #define TCH_WAIT_FOR_TRANSMISSION_COMPLETE \
-		TCH_WAIT_FOR_TRANSMISSION_COMPLETE_NOT_SUPPORTED
+	TCH_WAIT_FOR_TRANSMISSION_COMPLETE_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(TCH_CONSTRUCT_CHUNKED_MESSAGE);
 #define TCH_CONSTRUCT_CHUNKED_MESSAGE \
-		TCH_CONSTRUCT_CHUNKED_MESSAGE_NOT_SUPPORTED
+	TCH_CONSTRUCT_CHUNKED_MESSAGE_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(TCH_SENDING_CHUNKED_MESSAGE);
 #define TCH_SENDING_CHUNKED_MESSAGE TCH_SENDING_CHUNKED_MESSAGE_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(TCH_WAIT_CHUNK_REQUEST);
@@ -356,6 +412,8 @@ GEN_NOT_SUPPORTED(TCH_REPORT_ERROR);
 #define TCH_REPORT_ERROR TCH_REPORT_ERROR_NOT_SUPPORTED
 #endif /* !CONFIG_USB_PD_REV30 */
 
+/* To store the time stamp when TCPC sets TX Complete Success */
+static timestamp_t tcpc_tx_success_ts[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Set the protocol transmit statemachine to a new state. */
 static void set_state_prl_tx(const int port,
@@ -375,7 +433,7 @@ static void print_current_prl_tx_state(const int port)
 {
 	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
-				prl_tx_state_names[prl_tx_get_state(port)]);
+			prl_tx_state_names[prl_tx_get_state(port)]);
 }
 
 /* Set the hard reset statemachine to a new state. */
@@ -396,15 +454,14 @@ static void print_current_prl_hr_state(const int port)
 {
 	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
-				prl_hr_state_names[prl_hr_get_state(port)]);
+			prl_hr_state_names[prl_hr_get_state(port)]);
 }
 
 /* Set the chunked Rx statemachine to a new state. */
 static void set_state_rch(const int port, const enum usb_rch_state new_state)
 {
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-	set_state(port, &rch[port].ctx, &rch_states[new_state]);
-#endif /* CONFIG_USB_PD_REV30 */
+	if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
+		set_state(port, &rch[port].ctx, &rch_states[new_state]);
 }
 
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -418,27 +475,24 @@ test_export_static enum usb_rch_state rch_get_state(const int port)
 static void print_current_rch_state(const int port)
 {
 	if (prl_debug_level >= DEBUG_LEVEL_3)
-		CPRINTS("C%d: %s", port,
-				rch_state_names[rch_get_state(port)]);
+		CPRINTS("C%d: %s", port, rch_state_names[rch_get_state(port)]);
 }
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
 /* Set the chunked Tx statemachine to a new state. */
 static void set_state_tch(const int port, const enum usb_tch_state new_state)
 {
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-	set_state(port, &tch[port].ctx, &tch_states[new_state]);
-#endif /* CONFIG_USB_PD_REV30 */
+	if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
+		set_state(port, &tch[port].ctx, &tch_states[new_state]);
 }
 
 /* Get the chunked Tx statemachine's current state. */
 test_export_static enum usb_tch_state tch_get_state(const int port)
 {
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-	return tch[port].ctx.current - &tch_states[0];
-#else
-	return 0;
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+	if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
+		return tch[port].ctx.current - &tch_states[0];
+	else
+		return 0;
 }
 
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -446,13 +500,25 @@ test_export_static enum usb_tch_state tch_get_state(const int port)
 static void print_current_tch_state(const int port)
 {
 	if (prl_debug_level >= DEBUG_LEVEL_3)
-		CPRINTS("C%d: %s", port,
-				tch_state_names[tch_get_state(port)]);
+		CPRINTS("C%d: %s", port, tch_state_names[tch_get_state(port)]);
 }
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
+timestamp_t prl_get_tcpc_tx_success_ts(int port)
+{
+	return tcpc_tx_success_ts[port];
+}
+
+/* Sets the time stamp when TCPC reports TX success. */
+static void set_tcpc_tx_success_ts(int port)
+{
+	tcpc_tx_success_ts[port] = get_time();
+}
+
 void pd_transmit_complete(int port, int status)
 {
+	if (status == TCPC_TX_COMPLETE_SUCCESS)
+		set_tcpc_tx_success_ts(port);
 	prl_tx[port].xmit_status = status;
 }
 
@@ -495,34 +561,34 @@ static void prl_init(int port)
 	prl_tx[port].flags = 0;
 	if (IS_ENABLED(CONFIG_USB_PD_REV30))
 		typec_select_src_collision_rp(port, SINK_TX_OK);
-	prl_tx[port].last_xmit_type = TCPC_TX_SOP;
+	prl_tx[port].last_xmit_type = TCPCI_MSG_SOP;
 	prl_tx[port].xmit_status = TCPC_TX_UNSET;
 
-#ifdef CONFIG_USB_PD_REV30
-	tch[port].flags = 0;
-	rch[port].flags = 0;
-#endif /* CONFIG_USB_PD_REV30 */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30)) {
+		tch[port].flags = 0;
+		rch[port].flags = 0;
+	}
 
 	pdmsg[port].flags = 0;
 
 	prl_hr[port].flags = 0;
 
-	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
-		prl_rx[port].msg_id[i] = -1;
-		prl_tx[port].msg_id_counter[i] = 0;
-	}
+	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
+		prl_reset_msg_ids(port, i);
+
+	pd_timer_disable_range(port, PR_TIMER_RANGE);
 
 	/* Clear state machines and set initial states */
 	prl_tx[port].ctx = cleared;
 	set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
 
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-	rch[port].ctx = cleared;
-	set_state_rch(port, RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
+	if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
+		rch[port].ctx = cleared;
+		set_state_rch(port, RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
 
-	tch[port].ctx = cleared;
-	set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+		tch[port].ctx = cleared;
+		set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
+	}
 
 	prl_hr[port].ctx = cleared;
 	set_state_prl_hr(port, PRL_HR_WAIT_FOR_REQUEST);
@@ -532,9 +598,8 @@ bool prl_is_busy(int port)
 {
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	return rch_get_state(port) !=
-			RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER ||
-		tch_get_state(port) !=
-			TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE;
+		       RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER ||
+	       tch_get_state(port) != TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE;
 #else
 	return false;
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
@@ -553,9 +618,8 @@ void prl_hard_reset_complete(int port)
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
-void prl_send_ctrl_msg(int port,
-		      enum tcpm_transmit_type type,
-		      enum pd_ctrl_msg_type msg)
+void prl_send_ctrl_msg(int port, enum tcpci_msg_type type,
+		       enum pd_ctrl_msg_type msg)
 {
 	pdmsg[port].xmit_type = type;
 	pdmsg[port].msg_type = msg;
@@ -568,14 +632,13 @@ void prl_send_ctrl_msg(int port,
 	TCH_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
 #else
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
-#endif /* CONFIG_USB_PD_REV30 */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
-void prl_send_data_msg(int port,
-		      enum tcpm_transmit_type type,
-		      enum pd_data_msg_type msg)
+void prl_send_data_msg(int port, enum tcpci_msg_type type,
+		       enum pd_data_msg_type msg)
 {
 	pdmsg[port].xmit_type = type;
 	pdmsg[port].msg_type = msg;
@@ -587,15 +650,14 @@ void prl_send_data_msg(int port,
 #else
 	prl_copy_msg_to_buffer(port);
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
-#endif /* CONFIG_USB_PD_REV30 */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-void prl_send_ext_data_msg(int port,
-			  enum tcpm_transmit_type type,
-			  enum pd_ext_msg_type msg)
+void prl_send_ext_data_msg(int port, enum tcpci_msg_type type,
+			   enum pd_ext_msg_type msg)
 {
 	pdmsg[port].xmit_type = type;
 	pdmsg[port].msg_type = msg;
@@ -606,31 +668,23 @@ void prl_send_ext_data_msg(int port,
 }
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
-static void prl_set_default_pd_revision(int port) {
+void prl_set_default_pd_revision(int port)
+{
 	/*
 	 * Initialize to highest revision supported. If the port or cable
 	 * partner doesn't support this revision, the Protocol Engine will
 	 * lower this value to the revision supported by the partner.
 	 */
-	pdmsg[port].rev[TCPC_TX_SOP] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_PRIME] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_PRIME_PRIME] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME] = PD_REVISION;
-	pdmsg[port].rev[TCPC_TX_SOP_DEBUG_PRIME_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPCI_MSG_SOP] = PD_REVISION;
+	pdmsg[port].rev[TCPCI_MSG_SOP_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPCI_MSG_SOP_PRIME_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPCI_MSG_SOP_DEBUG_PRIME] = PD_REVISION;
+	pdmsg[port].rev[TCPCI_MSG_SOP_DEBUG_PRIME_PRIME] = PD_REVISION;
 }
 
 void prl_reset_soft(int port)
 {
 	/* Do not change negotiated PD Revision Specification level */
-	local_state[port] = SM_INIT;
-
-	/* Ensure we process the reset quickly */
-	task_wake(PD_PORT_TO_TASK_ID(port));
-}
-
-void prl_reset(int port)
-{
-	prl_set_default_pd_revision(port);
 	local_state[port] = SM_INIT;
 
 	/* Ensure we process the reset quickly */
@@ -643,7 +697,6 @@ void prl_run(int port, int evt, int en)
 	case SM_PAUSED:
 		if (!en)
 			break;
-		prl_set_default_pd_revision(port);
 		/* fall through */
 	case SM_INIT:
 		prl_init(port);
@@ -662,43 +715,51 @@ void prl_run(int port, int evt, int en)
 			break;
 		}
 
-		/* Run Protocol Layer Message Reception */
-		prl_rx_wait_for_phy_message(port, evt);
-
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-		/*
-		 * Run RX Chunked state machine after prl_rx. This is what
-		 * informs the PE of incoming message. Its input is prl_rx
-		 */
-		run_state(port, &rch[port].ctx);
-
-		/*
-		 * Run TX Chunked state machine before prl_tx in case we need
-		 * to split an extended message and prl_tx can send it for us
-		 */
-		run_state(port, &tch[port].ctx);
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
-
-		/* Run Protocol Layer Message Transmission state machine */
-		run_state(port, &prl_tx[port].ctx);
-
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-		/*
-		 * Run TX Chunked state machine again after prl_tx so we can
-		 * handle passing TX_COMPLETE (or failure) up to PE in a single
-		 * iteration.
-		 */
-		run_state(port, &tch[port].ctx);
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
-
 		/* Run Protocol Layer Hard Reset state machine */
 		run_state(port, &prl_hr[port].ctx);
+
+		/*
+		 * If the Hard Reset state machine is active, then there is no
+		 * need to execute any other PRL state machines. When the hard
+		 * reset is complete, all PRL state machines will have been
+		 * reset.
+		 */
+		if (prl_hr_get_state(port) == PRL_HR_WAIT_FOR_REQUEST) {
+			/* Run Protocol Layer Message Reception */
+			prl_rx_wait_for_phy_message(port, evt);
+
+			if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
+				/*
+				 * Run RX Chunked state machine after prl_rx.
+				 * This is what informs the PE of incoming
+				 * message. Its input is prl_rx
+				 */
+				run_state(port, &rch[port].ctx);
+
+				/*
+				 * Run TX Chunked state machine before prl_tx
+				 * in case we need to split an extended message
+				 * and prl_tx can send it for us
+				 */
+				run_state(port, &tch[port].ctx);
+			}
+
+			/* Run Protocol Layer Message Tx state machine */
+			run_state(port, &prl_tx[port].ctx);
+
+			if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
+				/*
+				 * Run TX Chunked state machine again after
+				 * prl_tx so we can handle passing TX_COMPLETE
+				 * (or failure) up to PE in a single iteration.
+				 */
+				run_state(port, &tch[port].ctx);
+		}
 		break;
 	}
 }
 
-void prl_set_rev(int port, enum tcpm_transmit_type type,
-						enum pd_rev_type rev)
+void prl_set_rev(int port, enum tcpci_msg_type type, enum pd_rev_type rev)
 {
 	/* We only store revisions for SOP* types. */
 	ASSERT(type < NUM_SOP_STAR_TYPES);
@@ -706,12 +767,18 @@ void prl_set_rev(int port, enum tcpm_transmit_type type,
 	pdmsg[port].rev[type] = rev;
 }
 
-enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type type)
+enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type type)
 {
 	/* We only store revisions for SOP* types. */
 	ASSERT(type < NUM_SOP_STAR_TYPES);
 
 	return pdmsg[port].rev[type];
+}
+
+void prl_reset_msg_ids(int port, enum tcpci_msg_type type)
+{
+	prl_tx[port].msg_id_counter[type] = 0;
+	prl_rx[port].msg_id[type] = -1;
 }
 
 static void prl_copy_msg_to_buffer(int port)
@@ -739,7 +806,7 @@ static void prl_copy_msg_to_buffer(int port)
 	/* Copy message to chunked buffer */
 	memset((uint8_t *)pdmsg[port].tx_chk_buf, 0, CHK_BUF_SIZE_BYTES);
 	memcpy((uint8_t *)pdmsg[port].tx_chk_buf, (uint8_t *)tx_emsg[port].buf,
-		tx_emsg[port].len);
+	       tx_emsg[port].len);
 	/*
 	 * Pad length to 4-byte boundary and
 	 * convert to number of 32-bit objects.
@@ -753,8 +820,8 @@ static void prl_copy_msg_to_buffer(int port)
 static __maybe_unused int pdmsg_xmit_type_is_rev30(const int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_REV30))
-		return ((pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES)
-		&& (prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30));
+		return ((pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES) &&
+			(prl_get_rev(port, pdmsg[port].xmit_type) == PD_REV30));
 	else
 		return 0;
 }
@@ -763,7 +830,7 @@ static __maybe_unused int pdmsg_xmit_type_is_rev30(const int port)
 static bool is_sop_rev30(const int port)
 {
 	return IS_ENABLED(CONFIG_USB_PD_REV30) &&
-	       prl_get_rev(port, TCPC_TX_SOP) == PD_REV30;
+	       prl_get_rev(port, TCPCI_MSG_SOP) == PD_REV30;
 }
 
 /* Common Protocol Layer Message Transmission */
@@ -771,8 +838,7 @@ static void prl_tx_phy_layer_reset_entry(const int port)
 {
 	print_current_prl_tx_state(port);
 
-	if (IS_ENABLED(CONFIG_USB_CTVPD)
-	 || IS_ENABLED(CONFIG_USB_VPD)) {
+	if (IS_ENABLED(CONFIG_USB_CTVPD) || IS_ENABLED(CONFIG_USB_VPD)) {
 		vpd_rx_enable(pd_is_connected(port));
 	} else {
 		/* Note: can't clear PHY messages due to TCPC architecture */
@@ -784,6 +850,8 @@ static void prl_tx_phy_layer_reset_entry(const int port)
 
 static void prl_tx_wait_for_message_request_entry(const int port)
 {
+	/* No phy layer response is pending */
+	prl_tx[port].xmit_status = TCPC_TX_UNSET;
 	print_current_prl_tx_state(port);
 }
 
@@ -807,7 +875,7 @@ static void prl_tx_wait_for_message_request_run(const int port)
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) && is_sop_rev30(port) &&
 	    pe_in_local_ams(port)) {
 		if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_SINK_NG |
-					  PRL_FLAGS_WAIT_SINK_OK)) {
+						  PRL_FLAGS_WAIT_SINK_OK)) {
 			/*
 			 * If we are already in an AMS then allow the
 			 * multi-message AMS to continue, even if we
@@ -838,7 +906,7 @@ static void prl_tx_wait_for_message_request_run(const int port)
 		 * Soft Reset Message Message pending
 		 */
 		if ((pdmsg[port].msg_type == PD_CTRL_SOFT_RESET) &&
-						(tx_emsg[port].len == 0)) {
+		    (tx_emsg[port].len == 0)) {
 			set_state_prl_tx(port, PRL_TX_LAYER_RESET_FOR_TRANSMIT);
 		}
 		/*
@@ -876,8 +944,17 @@ static void prl_tx_discard_message_entry(const int port)
 	 * Discard queued message
 	 * Note: We differ from spec here, which allows us to not discard on
 	 * incoming SOP' or SOP''.  However this would get the TCH out of sync.
+	 *
+	 * prl_tx will be set to this state following message reception in
+	 * prl_rx. So this path will be entered following each rx message. If
+	 * this state is entered, and there is either a message from the PE
+	 * pending, or if a message was passed to the phy and there is either no
+	 * response yet, or it was discarded in the phy layer, then a tx message
+	 * discard event has been detected.
 	 */
-	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
+	if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT) ||
+	    prl_tx[port].xmit_status == TCPC_TX_WAIT ||
+	    prl_tx[port].xmit_status == TCPC_TX_COMPLETE_DISCARDED) {
 		PRL_TX_CLR_FLAG(port, PRL_FLAGS_MSG_XMIT);
 		increment_msgid_counter(port);
 		pe_report_discard(port);
@@ -935,13 +1012,25 @@ static void prl_tx_snk_start_ams_run(const int port)
  */
 static void prl_tx_layer_reset_for_transmit_entry(const int port)
 {
-	int i;
-
 	print_current_prl_tx_state(port);
 
-	/* Reset MessageIdCounters */
-	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
-		prl_tx[port].msg_id_counter[i] = 0;
+	if (pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES) {
+		/*
+		 * This state is only used during soft resets. Reset only the
+		 * matching message type.
+		 *
+		 * From section 6.3.13 Soft Reset Message in the USB PD 3.0
+		 * v2.0 spec, Soft_Reset Message Shall be targeted at a
+		 * specific entity depending on the type of SOP* Packet used.
+		 *
+		 *
+		 * From section 6.11.2.3.2, the MessageID should be cleared
+		 * from the PRL_Rx_Layer_Reset_for_Receive state. However, we
+		 * don't implement a full state machine for PRL RX states so
+		 * clear the MessageID here.
+		 */
+		prl_reset_msg_ids(port, pdmsg[port].xmit_type);
+	}
 }
 
 static void prl_tx_layer_reset_for_transmit_run(const int port)
@@ -953,7 +1042,7 @@ static void prl_tx_layer_reset_for_transmit_run(const int port)
 
 static uint32_t get_sop_star_header(const int port)
 {
-	const int is_sop_packet = pdmsg[port].xmit_type == TCPC_TX_SOP;
+	const int is_sop_packet = pdmsg[port].xmit_type == TCPCI_MSG_SOP;
 	int ext;
 
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -963,33 +1052,32 @@ static uint32_t get_sop_star_header(const int port)
 #endif
 
 	/* SOP vs SOP'/SOP" headers are different. Replace fields as needed */
-	return PD_HEADER(
-		pdmsg[port].msg_type,
-		is_sop_packet ?
-			pd_get_power_role(port) : tc_get_cable_plug(port),
-		is_sop_packet ?
-			pd_get_data_role(port) : 0,
-		prl_tx[port].msg_id_counter[pdmsg[port].xmit_type],
-		pdmsg[port].data_objs,
-		pdmsg[port].rev[pdmsg[port].xmit_type],
-		ext);
+	return PD_HEADER(pdmsg[port].msg_type,
+			 is_sop_packet ? pd_get_power_role(port) :
+					 tc_get_cable_plug(port),
+			 is_sop_packet ? pd_get_data_role(port) : 0,
+			 prl_tx[port].msg_id_counter[pdmsg[port].xmit_type],
+			 pdmsg[port].data_objs,
+			 pdmsg[port].rev[pdmsg[port].xmit_type], ext);
 }
 
 static void prl_tx_construct_message(const int port)
 {
 	/* The header is unused for hard reset, etc. */
 	const uint32_t header = pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES ?
-		get_sop_star_header(port) : 0;
+					get_sop_star_header(port) :
+					0;
 
 	/* Save SOP* so the correct msg_id_counter can be incremented */
 	prl_tx[port].last_xmit_type = pdmsg[port].xmit_type;
 
+	/* Indicate that a tx message is being passed to the phy layer */
+	prl_tx[port].xmit_status = TCPC_TX_WAIT;
 	/*
-	 * These flags could be set if this function is called before the
-	 * Policy Engine is informed of the previous transmission. Clear the
-	 * flags so that this message can be sent.
+	 * PRL_FLAGS_TX_COMPLETE could be set if this function is called before
+	 * the Policy Engine is informed of the previous transmission. Clear the
+	 * flag so that this message can be sent.
 	 */
-	prl_tx[port].xmit_status = TCPC_TX_UNSET;
 	PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 
 	/*
@@ -1011,18 +1099,11 @@ static void prl_tx_wait_for_phy_response_entry(const int port)
 {
 	print_current_prl_tx_state(port);
 
-	prl_tx[port].tcpc_tx_timeout = get_time().val + PD_T_TCPC_TX_TIMEOUT;
+	pd_timer_enable(port, PR_TIMER_TCPC_TX_TIMEOUT, PD_T_TCPC_TX_TIMEOUT);
 }
 
 static void prl_tx_wait_for_phy_response_run(const int port)
 {
-	/*
-	 * TODO(b/164154200): Revert Change-Id
-	 * If6dce35dfd78ee3a70e6216a7b6bf62d3ded5646 workaround to support
-	 * validation for Delbin build.
-	 */
-	const bool timed_out = get_time().val > prl_tx[port].tcpc_tx_timeout;
-
 	/* Wait until TX is complete */
 
 	/*
@@ -1032,8 +1113,7 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 	 *       requirement.
 	 */
 
-	if ((IS_ENABLED(BOARD_DELBIN) && timed_out) ||
-	    prl_tx[port].xmit_status == TCPC_TX_COMPLETE_SUCCESS) {
+	if (prl_tx[port].xmit_status == TCPC_TX_COMPLETE_SUCCESS) {
 		/* NOTE: PRL_TX_Message_Sent State embedded here. */
 		/* Increment messageId counter */
 		increment_msgid_counter(port);
@@ -1050,9 +1130,8 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 		 */
 		task_wake(PD_PORT_TO_TASK_ID(port));
 		set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
-	} else if ((!IS_ENABLED(BOARD_DELBIN) && timed_out) ||
-		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED ||
-		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_DISCARDED) {
+	} else if (pd_timer_is_expired(port, PR_TIMER_TCPC_TX_TIMEOUT) ||
+		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED) {
 		/*
 		 * NOTE: PRL_Tx_Transmission_Error State embedded
 		 * here.
@@ -1078,7 +1157,7 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 
 static void prl_tx_wait_for_phy_response_exit(const int port)
 {
-	prl_tx[port].xmit_status = TCPC_TX_UNSET;
+	pd_timer_disable(port, PR_TIMER_TCPC_TX_TIMEOUT);
 }
 
 /* Source Protocol Layer Message Transmission */
@@ -1090,12 +1169,12 @@ static void prl_tx_src_pending_entry(const int port)
 	print_current_prl_tx_state(port);
 
 	/* Start SinkTxTimer */
-	prl_tx[port].sink_tx_timer = get_time().val + PD_T_SINK_TX;
+	pd_timer_enable(port, PR_TIMER_SINK_TX, PD_T_SINK_TX);
 }
 
 static void prl_tx_src_pending_run(const int port)
 {
-	if (get_time().val > prl_tx[port].sink_tx_timer) {
+	if (pd_timer_is_expired(port, PR_TIMER_SINK_TX)) {
 		/*
 		 * We clear the pending XMIT flag here right before we send so
 		 * we can detect if we discarded this message or not
@@ -1107,7 +1186,7 @@ static void prl_tx_src_pending_run(const int port)
 		 * SinkTxTimer timeout
 		 */
 		if ((tx_emsg[port].len == 0) &&
-			(pdmsg[port].msg_type == PD_CTRL_SOFT_RESET)) {
+		    (pdmsg[port].msg_type == PD_CTRL_SOFT_RESET)) {
 			set_state_prl_tx(port, PRL_TX_LAYER_RESET_FOR_TRANSMIT);
 		}
 		/* Message pending (except Soft Reset) &
@@ -1122,6 +1201,11 @@ static void prl_tx_src_pending_run(const int port)
 	}
 }
 
+static void prl_tx_src_pending_exit(int port)
+{
+	pd_timer_disable(port, PR_TIMER_SINK_TX);
+}
+
 /*
  * PrlTxSnkPending
  */
@@ -1132,11 +1216,25 @@ static void prl_tx_snk_pending_entry(const int port)
 
 static void prl_tx_snk_pending_run(const int port)
 {
-	enum tcpc_cc_voltage_status cc1, cc2;
+	bool start_tx = false;
 
-	/* Wait unit the SRC applies SINK_TX_OK so we can transmit */
-	tcpm_get_cc(port, &cc1, &cc2);
-	if (cc1 == TYPEC_CC_VOLT_RP_3_0 || cc2 == TYPEC_CC_VOLT_RP_3_0) {
+	/*
+	 * Wait unit the SRC applies SINK_TX_OK so we can transmit. In FRS mode,
+	 * don't wait for SINK_TX_OK since either the source (and Rp) could be
+	 * gone or the TCPC CC_STATUS update time could be too long to meet
+	 * tFRSwapInit.
+	 */
+	if (pe_in_frs_mode(port)) {
+		/* shortcut to save some i2c_xfer calls on the FRS path. */
+		start_tx = true;
+	} else {
+		enum tcpc_cc_voltage_status cc1, cc2;
+
+		tcpm_get_cc(port, &cc1, &cc2);
+		start_tx = (cc1 == TYPEC_CC_VOLT_RP_3_0 ||
+			    cc2 == TYPEC_CC_VOLT_RP_3_0);
+	}
+	if (start_tx) {
 		/*
 		 * We clear the pending XMIT flag here right before we send so
 		 * we can detect if we discarded this message or not
@@ -1148,7 +1246,7 @@ static void prl_tx_snk_pending_run(const int port)
 		 * Rp = SinkTxOk
 		 */
 		if ((pdmsg[port].msg_type == PD_CTRL_SOFT_RESET) &&
-					(tx_emsg[port].len == 0)) {
+		    (tx_emsg[port].len == 0)) {
 			set_state_prl_tx(port, PRL_TX_LAYER_RESET_FOR_TRANSMIT);
 		}
 		/*
@@ -1164,6 +1262,25 @@ static void prl_tx_snk_pending_run(const int port)
 }
 
 /* Hard Reset Operation */
+void prl_hr_send_msg_to_phy(const int port)
+{
+	/* Header is not used for hard reset */
+	const uint32_t header = 0;
+
+	pdmsg[port].xmit_type = TCPCI_MSG_TX_HARD_RESET;
+
+	/*
+	 * These flags could be set if this function is called before the
+	 * Policy Engine is informed of the previous transmission. Clear the
+	 * flags so that this message can be sent.
+	 */
+	prl_tx[port].xmit_status = TCPC_TX_UNSET;
+	PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
+
+	/* Pass message to PHY Layer */
+	tcpm_transmit(port, pdmsg[port].xmit_type, header,
+		      pdmsg[port].tx_chk_buf);
+}
 
 static void prl_hr_wait_for_request_entry(const int port)
 {
@@ -1175,7 +1292,7 @@ static void prl_hr_wait_for_request_entry(const int port)
 static void prl_hr_wait_for_request_run(const int port)
 {
 	if (PRL_HR_CHK_FLAG(port, PRL_FLAGS_PE_HARD_RESET |
-				PRL_FLAGS_PORT_PARTNER_HARD_RESET))
+					  PRL_FLAGS_PORT_PARTNER_HARD_RESET))
 		set_state_prl_hr(port, PRL_HR_RESET_LAYER);
 }
 
@@ -1188,34 +1305,45 @@ static void prl_hr_reset_layer_entry(const int port)
 
 	print_current_prl_hr_state(port);
 
-	/* reset messageIDCounters */
-	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
-		prl_tx[port].msg_id_counter[i] = 0;
+	if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
+		tch[port].flags = 0;
+		rch[port].flags = 0;
+	}
+
+	pdmsg[port].flags = 0;
+
+	/* Hard reset resets messageIDCounters for all TX types */
+	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
+		prl_reset_msg_ids(port, i);
+	}
+
+	/* Disable RX */
+	if (IS_ENABLED(CONFIG_USB_CTVPD) || IS_ENABLED(CONFIG_USB_VPD))
+		vpd_rx_enable(0);
+	else
+		tcpm_set_rx_enable(port, 0);
+
+	/*
+	 * PD r3.0 v2.0, ss6.2.1.1.5:
+	 * After a physical or logical (USB Type-C Error Recovery) Attach, a
+	 * Port discovers the common Specification Revision level between itself
+	 * and its Port Partner and/or the Cable Plug(s), and uses this
+	 * Specification Revision level until a Detach, Hard Reset or Error
+	 * Recovery happens.
+	 *
+	 * This covers the Hard Reset case.
+	 */
+	prl_set_default_pd_revision(port);
+
+	/* Inform the AP of Hard Reset */
+	if (IS_ENABLED(CONFIG_USB_PD_HOST_CMD))
+		pd_notify_event(port, PD_STATUS_EVENT_HARD_RESET);
+
 	/*
 	 * Protocol Layer message transmission transitions to
 	 * PRL_Tx_Wait_For_Message_Request state.
 	 */
 	set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
-
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
-	tch[port].flags = 0;
-	rch[port].flags = 0;
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
-
-	pdmsg[port].flags = 0;
-
-	/* Reset message ids */
-	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
-		prl_rx[port].msg_id[i] = -1;
-		prl_tx[port].msg_id_counter[i] = 0;
-	}
-
-	/* Disable RX */
-	if (IS_ENABLED(CONFIG_USB_CTVPD) ||
-	    IS_ENABLED(CONFIG_USB_VPD))
-		vpd_rx_enable(0);
-	else
-		tcpm_set_rx_enable(port, 0);
 
 	return;
 }
@@ -1227,8 +1355,11 @@ static void prl_hr_reset_layer_run(const int port)
 	 * Hard Reset was initiated by Policy Engine
 	 */
 	if (PRL_HR_CHK_FLAG(port, PRL_FLAGS_PE_HARD_RESET)) {
-		/* Request PHY to perform a Hard Reset */
-		prl_send_ctrl_msg(port, TCPC_TX_HARD_RESET, 0);
+		/*
+		 * Request PHY to perform a Hard Reset. Note
+		 * PRL_HR_Request_Reset state is embedded here.
+		 */
+		prl_hr_send_msg_to_phy(port);
 		set_state_prl_hr(port, PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE);
 	}
 	/*
@@ -1250,8 +1381,7 @@ static void prl_hr_wait_for_phy_hard_reset_complete_entry(const int port)
 	print_current_prl_hr_state(port);
 
 	/* Start HardResetCompleteTimer */
-	prl_hr[port].hard_reset_complete_timer =
-			get_time().val + PD_T_PS_HARD_RESET;
+	pd_timer_enable(port, PR_TIMER_HARD_RESET_COMPLETE, PD_T_PS_HARD_RESET);
 }
 
 static void prl_hr_wait_for_phy_hard_reset_complete_run(const int port)
@@ -1261,7 +1391,7 @@ static void prl_hr_wait_for_phy_hard_reset_complete_run(const int port)
 	 * or timeout
 	 */
 	if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE) ||
-	    (get_time().val > prl_hr[port].hard_reset_complete_timer)) {
+	    pd_timer_is_expired(port, PR_TIMER_HARD_RESET_COMPLETE)) {
 		/* PRL_HR_PHY_Hard_Reset_Requested */
 
 		/* Inform Policy Engine Hard Reset was sent */
@@ -1270,6 +1400,11 @@ static void prl_hr_wait_for_phy_hard_reset_complete_run(const int port)
 
 		return;
 	}
+}
+
+static void prl_hr_wait_for_phy_hard_reset_complete_exit(int port)
+{
+	pd_timer_disable(port, PR_TIMER_HARD_RESET_COMPLETE);
 }
 
 /*
@@ -1304,11 +1439,11 @@ static void copy_chunk_to_ext(int port)
 {
 	/* Calculate number of bytes */
 	pdmsg[port].num_bytes_received =
-				(PD_HEADER_CNT(rx_emsg[port].header) * 4);
+		(PD_HEADER_CNT(rx_emsg[port].header) * 4);
 
 	/* Copy chunk into extended message */
 	memcpy((uint8_t *)rx_emsg[port].buf, (uint8_t *)pdmsg[port].rx_chk_buf,
-		pdmsg[port].num_bytes_received);
+	       pdmsg[port].num_bytes_received);
 
 	/* Set extended message length */
 	rx_emsg[port].len = pdmsg[port].num_bytes_received;
@@ -1340,10 +1475,10 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 		 * Are we communicating with a PD3.0 device and is
 		 * this an extended message?
 		 */
-		if (pdmsg_xmit_type_is_rev30(port)
-		    && PD_HEADER_EXT(rx_emsg[port].header)) {
+		if (pdmsg_xmit_type_is_rev30(port) &&
+		    PD_HEADER_EXT(rx_emsg[port].header)) {
 			uint16_t exhdr =
-					GET_EXT_HEADER(*pdmsg[port].rx_chk_buf);
+				GET_EXT_HEADER(*pdmsg[port].rx_chk_buf);
 			uint8_t chunked = PD_EXT_HEADER_CHUNKED(exhdr);
 
 			/*
@@ -1351,7 +1486,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 			 * (Chunking = 1 & Chunked = 1)
 			 */
 			if ((RCH_CHK_FLAG(port, PRL_FLAGS_CHUNKING)) &&
-								chunked) {
+			    chunked) {
 				/*
 				 * RCH_Processing_Extended_Message first chunk
 				 * entry processing embedded here
@@ -1373,7 +1508,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 			 * (Chunking = 0 & Chunked = 0))
 			 */
 			else if (!RCH_CHK_FLAG(port, PRL_FLAGS_CHUNKING) &&
-								!chunked) {
+				 !chunked) {
 				/* Copy chunk to extended buffer */
 				copy_chunk_to_ext(port);
 				set_state_rch(port, RCH_PASS_UP_MESSAGE);
@@ -1382,6 +1517,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 			 * Chunked != Chunking
 			 */
 			else {
+				rch[port].error = ERR_RCH_CHUNKED;
 				set_state_rch(port, RCH_REPORT_ERROR);
 			}
 		}
@@ -1398,6 +1534,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 		 * revision lower than PD3.0
 		 */
 		else {
+			rch[port].error = ERR_RCH_CHUNKED;
 			set_state_rch(port, RCH_REPORT_ERROR);
 		}
 	}
@@ -1449,8 +1586,9 @@ static void rch_processing_extended_message_run(const int port)
 			byte_num = PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 
 		/* Make sure extended message buffer does not overflow */
-		if (pdmsg[port].num_bytes_received +
-					byte_num > EXTENDED_BUFFER_SIZE) {
+		if (pdmsg[port].num_bytes_received + byte_num >
+		    EXTENDED_BUFFER_SIZE) {
+			rch[port].error = ERR_RCH_CHUNKED;
 			set_state_rch(port, RCH_REPORT_ERROR);
 			return;
 		}
@@ -1458,9 +1596,8 @@ static void rch_processing_extended_message_run(const int port)
 		/* Append data */
 		/* Add 2 to chk_buf to skip over extended message header */
 		memcpy(((uint8_t *)rx_emsg[port].buf +
-				pdmsg[port].num_bytes_received),
-				(uint8_t *)pdmsg[port].rx_chk_buf + 2,
-				byte_num);
+			pdmsg[port].num_bytes_received),
+		       (uint8_t *)pdmsg[port].rx_chk_buf + 2, byte_num);
 		/* increment chunk number expected */
 		pdmsg[port].chunk_number_expected++;
 		/* adjust num bytes received */
@@ -1469,7 +1606,7 @@ static void rch_processing_extended_message_run(const int port)
 		/* Was that the last chunk? */
 		if (pdmsg[port].num_bytes_received >= data_size) {
 			rx_emsg[port].len = pdmsg[port].num_bytes_received;
-			 /* Pass Message to Policy Engine */
+			/* Pass Message to Policy Engine */
 			set_state_rch(port, RCH_PASS_UP_MESSAGE);
 		}
 		/*
@@ -1481,8 +1618,10 @@ static void rch_processing_extended_message_run(const int port)
 	/*
 	 * Unexpected Chunk Number
 	 */
-	else
+	else {
+		rch[port].error = ERR_RCH_CHUNKED;
 		set_state_rch(port, RCH_REPORT_ERROR);
+	}
 }
 
 /*
@@ -1496,16 +1635,17 @@ static void rch_requesting_chunk_entry(const int port)
 	 * Send Chunk Request to Protocol Layer
 	 * with chunk number = Chunk_Number_Expected
 	 */
-	pdmsg[port].tx_chk_buf[0] = PD_EXT_HEADER(
-				pdmsg[port].chunk_number_expected,
-				1, /* Request Chunk */
-				0 /* Data Size */
-				);
+	pdmsg[port].tx_chk_buf[0] =
+		PD_EXT_HEADER(pdmsg[port].chunk_number_expected, 1, /* Request
+								       Chunk */
+			      0 /* Data Size */
+		);
 
 	pdmsg[port].data_objs = 1;
 	pdmsg[port].ext = 1;
+	pdmsg[port].xmit_type = prl_rx[port].sop;
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX);
 }
 
 static void rch_requesting_chunk_run(const int port)
@@ -1516,18 +1656,20 @@ static void rch_requesting_chunk_run(const int port)
 	if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE)) {
 		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 		set_state_rch(port, RCH_WAITING_CHUNK);
-	}
-	/*
-	 * Transmission Error from Protocol Layer or
-	 * Message Received From Protocol Layer
-	 */
-	else if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED) ||
-			PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_ERROR)) {
-		/*
-		 * Leave PRL_FLAGS_MSG_RECEIVED flag set. It'll be
-		 * cleared in rch_report_error state
-		 */
+	} else if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_ERROR)) {
+		/* Transmission Error from Protocol Layer detetected */
+		rch[port].error = ERR_RCH_CHUNKED;
 		set_state_rch(port, RCH_REPORT_ERROR);
+	} else if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
+		/*
+		 * It is possible to have both message received and the chunk
+		 * request transmit complete before a full PRL SM run. But, the
+		 * PRL_RX state machine runs prior to RCH, but before PRL_TX, so
+		 * PRL_FLAGS_MSG_RECEIVED can be set without
+		 * PRL_FLAGS_TX_COMPLETE set at this point (though it will be
+		 * set as soon as PRL_TX is executed next.
+		 */
+		set_state_rch(port, RCH_WAITING_CHUNK);
 	}
 }
 
@@ -1541,13 +1683,23 @@ static void rch_waiting_chunk_entry(const int port)
 	/*
 	 * Start ChunkSenderResponseTimer
 	 */
-	rch[port].chunk_sender_response_timer =
-		get_time().val + PD_T_CHUNK_SENDER_RESPONSE;
+	pd_timer_enable(port, PR_TIMER_CHUNK_SENDER_RESPONSE,
+			PD_T_CHUNK_SENDER_RESPONSE);
 }
 
 static void rch_waiting_chunk_run(const int port)
 {
 	if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
+		/*
+		 * Because of the 5 msec tick time, it is possible to have both
+		 * msg_received and tx_complete flags set for a given PRL sm
+		 * run. Since prl_rx runs prior to the tx state machines, clear
+		 * the tx_complete flag as the next chunk has already been
+		 * received.
+		 */
+		if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE))
+			PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
+
 		/*
 		 * Leave PRL_FLAGS_MSG_RECEIVED flag set just in case an error
 		 * is detected. If an error is detected, PRL_FLAGS_MSG_RECEIVED
@@ -1562,6 +1714,7 @@ static void rch_waiting_chunk_run(const int port)
 			 */
 			if (PD_EXT_HEADER_REQ_CHUNK(exhdr) ||
 			    !PD_EXT_HEADER_CHUNKED(exhdr)) {
+				rch[port].error = ERR_RCH_CHUNKED;
 				set_state_rch(port, RCH_REPORT_ERROR);
 			}
 			/*
@@ -1569,7 +1722,7 @@ static void rch_waiting_chunk_run(const int port)
 			 */
 			else {
 				/*
-				 * No error wad detected, so clear
+				 * No error was detected, so clear
 				 * PRL_FLAGS_MSG_RECEIVED flag.
 				 */
 				RCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
@@ -1581,9 +1734,15 @@ static void rch_waiting_chunk_run(const int port)
 	/*
 	 * ChunkSenderResponseTimer Timeout
 	 */
-	else if (get_time().val > rch[port].chunk_sender_response_timer) {
+	else if (pd_timer_is_expired(port, PR_TIMER_CHUNK_SENDER_RESPONSE)) {
+		rch[port].error = ERR_RCH_CHUNK_WAIT_TIMEOUT;
 		set_state_rch(port, RCH_REPORT_ERROR);
 	}
+}
+
+static void rch_waiting_chunk_exit(int port)
+{
+	pd_timer_disable(port, PR_TIMER_CHUNK_SENDER_RESPONSE);
 }
 
 /*
@@ -1607,8 +1766,7 @@ static void rch_report_error_entry(const int port)
 		/* Report error */
 		pe_report_error(port, ERR_RCH_MSG_REC, prl_rx[port].sop);
 	} else {
-		/* Report error */
-		pe_report_error(port, ERR_RCH_CHUNKED, prl_rx[port].sop);
+		pe_report_error(port, rch[port].error, prl_rx[port].sop);
 	}
 }
 
@@ -1652,16 +1810,15 @@ static void tch_wait_for_message_request_from_pe_run(const int port)
 		 * Discard the Message
 		 */
 		if (rch_get_state(port) !=
-				RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER) {
+		    RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER) {
 			tch[port].error = ERR_TCH_XMIT;
 			set_state_tch(port, TCH_REPORT_ERROR);
 		} else {
 			/*
 			 * Extended Message Request & Chunking
 			 */
-			if (pdmsg_xmit_type_is_rev30(port)
-			    && pdmsg[port].ext
-			    && TCH_CHK_FLAG(port, PRL_FLAGS_CHUNKING)) {
+			if (pdmsg_xmit_type_is_rev30(port) && pdmsg[port].ext &&
+			    TCH_CHK_FLAG(port, PRL_FLAGS_CHUNKING)) {
 				/*
 				 * NOTE: TCH_Prepare_To_Send_Chunked_Message
 				 * embedded here.
@@ -1680,7 +1837,8 @@ static void tch_wait_for_message_request_from_pe_run(const int port)
 
 				/* Pass Message to Protocol Layer */
 				PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
-				set_state_tch(port,
+				set_state_tch(
+					port,
 					TCH_WAIT_FOR_TRANSMISSION_COMPLETE);
 			}
 		}
@@ -1715,13 +1873,17 @@ static void tch_wait_for_transmission_complete_run(const int port)
 		return;
 	}
 	/*
-	 * Any message received and not in state TCH_Wait_Chunk_Request
-	 * MUST be checked after transmission status due to our TCPC
-	 * architecture, and should not be checked if prl_tx is still waiting on
-	 * the TCPC.
+	 * A message was received while TCH is waiting for the phy to complete
+	 * sending a tx message.
+	 *
+	 * Because of our prl_sm architecture and I2C access delays for TCPCs,
+	 * it's possible to have a message received and the prl_tx state not be
+	 * in its default waiting state. To avoid a false protocol error, only
+	 * jump to TCH_MESSAGE_RECEIVED if the phy layer has not indicated that
+	 * the tx message was sent successfully.
 	 */
 	if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED) &&
-	     prl_tx_get_state(port) !=  PRL_TX_WAIT_FOR_PHY_RESPONSE) {
+	    prl_tx[port].xmit_status != TCPC_TX_COMPLETE_SUCCESS) {
 		TCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
 		set_state_tch(port, TCH_MESSAGE_RECEIVED);
 		return;
@@ -1758,8 +1920,9 @@ static void tch_construct_chunked_message_entry(const int port)
 		num = PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 
 	/* Set the chunks extended header */
-	*ext_hdr = PD_EXT_HEADER(pdmsg[port].chunk_number_to_send,
-				 0, /* Chunk Request */
+	*ext_hdr = PD_EXT_HEADER(pdmsg[port].chunk_number_to_send, 0, /* Chunk
+									 Request
+								       */
 				 tx_emsg[port].len);
 
 	/* Copy the message chunk into chk_buf */
@@ -1837,8 +2000,8 @@ static void tch_wait_chunk_request_entry(const int port)
 	/* Increment Chunk Number to Send */
 	pdmsg[port].chunk_number_to_send++;
 	/* Start Chunk Sender Request Timer */
-	tch[port].chunk_sender_request_timer =
-		get_time().val + PD_T_CHUNK_SENDER_REQUEST;
+	pd_timer_enable(port, PR_TIMER_CHUNK_SENDER_REQUEST,
+			PD_T_CHUNK_SENDER_REQUEST);
 }
 
 static void tch_wait_chunk_request_run(const int port)
@@ -1857,7 +2020,8 @@ static void tch_wait_chunk_request_run(const int port)
 				 */
 				if (PD_EXT_HEADER_CHUNK_NUM(exthdr) ==
 				    pdmsg[port].chunk_number_to_send) {
-					set_state_tch(port,
+					set_state_tch(
+						port,
 						TCH_CONSTRUCT_CHUNKED_MESSAGE);
 				}
 				/*
@@ -1880,10 +2044,13 @@ static void tch_wait_chunk_request_run(const int port)
 	/*
 	 * ChunkSenderRequestTimer timeout
 	 */
-	else if (get_time().val >=
-			tch[port].chunk_sender_request_timer) {
+	else if (pd_timer_is_expired(port, PR_TIMER_CHUNK_SENDER_REQUEST))
 		set_state_tch(port, TCH_MESSAGE_SENT);
-	}
+}
+
+static void tch_wait_chunk_request_exit(int port)
+{
+	pd_timer_disable(port, PR_TIMER_CHUNK_SENDER_REQUEST);
 }
 
 /*
@@ -1929,8 +2096,6 @@ static void tch_message_sent_entry(const int port)
 		return;
 	}
 
-
-
 	set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 }
 
@@ -1953,7 +2118,6 @@ static void tch_report_error_entry(const int port)
 		set_state_tch(port, TCH_MESSAGE_RECEIVED);
 		return;
 	}
-
 
 	set_state_tch(port, TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 }
@@ -1994,7 +2158,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 
 	/* dump received packet content (only dump ping at debug level MAX) */
 	if ((prl_debug_level >= DEBUG_LEVEL_2 && type != PD_CTRL_PING) ||
-		prl_debug_level >= DEBUG_LEVEL_3) {
+	    prl_debug_level >= DEBUG_LEVEL_3) {
 		int p;
 
 		ccprintf("C%d: RECV %04x/%d ", port, header, cnt);
@@ -2007,31 +2171,41 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 * Ignore messages sent to the cable from our
 	 * port partner if we aren't Vconn powered device.
 	 */
-	if (!IS_ENABLED(CONFIG_USB_CTVPD) &&
-	    !IS_ENABLED(CONFIG_USB_VPD) &&
-	    PD_HEADER_GET_SOP(header) != PD_MSG_SOP &&
+	if (!IS_ENABLED(CONFIG_USB_CTVPD) && !IS_ENABLED(CONFIG_USB_VPD) &&
+	    PD_HEADER_GET_SOP(header) != TCPCI_MSG_SOP &&
 	    PD_HEADER_PROLE(header) == PD_PLUG_FROM_DFP_UFP)
 		return;
 
+	/*
+	 * From 6.2.1.1.6 Port Data Role in USB PD Rev 3.1, Ver 1.3
+	 * "If a USB Type-C Port receives a Message with the Port Data Role
+	 * field set to the same Data Role as its current Data Role, except
+	 * for the GoodCRC Message, USB Type-C Error Recovery actions as
+	 * defined in [USB Type-C 2.0] Shall be performed."
+	 *
+	 * The spec lists no required state for this check, so centralize it by
+	 * processing this requirement in the PRL RX.
+	 */
+	if (PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
+	    PD_HEADER_DROLE(header) == pd_get_data_role(port)) {
+		CPRINTS("C%d Error: Data role mismatch (0x%08x)", port, header);
+		tc_start_error_recovery(port);
+		return;
+	}
+
 	/* Handle incoming soft reset as special case */
 	if (cnt == 0 && type == PD_CTRL_SOFT_RESET) {
-		int i;
-
-		for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
-			/* Clear MessageIdCounter */
-			prl_tx[port].msg_id_counter[i] = 0;
-			/* Clear stored MessageID value */
-			prl_rx[port].msg_id[i] = -1;
-		}
+		/* Clear MessageIdCounter and stored MessageID value. */
+		prl_reset_msg_ids(port, prl_rx[port].sop);
 
 		/* Soft Reset occurred */
 		set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
 
 		if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
 			set_state_rch(port,
-				RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
+				      RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER);
 			set_state_tch(port,
-				TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
+				      TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE);
 		}
 
 		/*
@@ -2063,7 +2237,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 		 * complete at the same time as a response so only do this if a
 		 * message is pending.
 		 */
-		if (prl_tx_get_state(port) != PRL_TX_WAIT_FOR_PHY_RESPONSE ||
+		if (prl_tx[port].xmit_status != TCPC_TX_COMPLETE_SUCCESS ||
 		    PRL_TX_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT))
 			set_state_prl_tx(port, PRL_TX_DISCARD_MESSAGE);
 	}
@@ -2091,7 +2265,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 		 * tch_wait_for_message_request_from_pe has been run
 		 */
 		else if (tch_get_state(port) !=
-				TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE ||
+				 TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE ||
 			 TCH_CHK_FLAG(port, PRL_FLAGS_MSG_XMIT)) {
 			/* NOTE: RTR_TX_CHUNKS State embedded here. */
 			/*
@@ -2123,7 +2297,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 }
 
 /* All necessary Protocol Transmit States (Section 6.11.2.2) */
-static const struct usb_state prl_tx_states[] = {
+static __const_data const struct usb_state prl_tx_states[] = {
 	[PRL_TX_PHY_LAYER_RESET] = {
 		.entry  = prl_tx_phy_layer_reset_entry,
 	},
@@ -2153,6 +2327,7 @@ static const struct usb_state prl_tx_states[] = {
 	[PRL_TX_SRC_PENDING] = {
 		.entry  = prl_tx_src_pending_entry,
 		.run    = prl_tx_src_pending_run,
+		.exit	= prl_tx_src_pending_exit,
 	},
 	[PRL_TX_SNK_PENDING] = {
 		.entry  = prl_tx_snk_pending_entry,
@@ -2164,7 +2339,7 @@ static const struct usb_state prl_tx_states[] = {
 };
 
 /* All necessary Protocol Hard Reset States (Section 6.11.2.4) */
-static const struct usb_state prl_hr_states[] = {
+static __const_data const struct usb_state prl_hr_states[] = {
 	[PRL_HR_WAIT_FOR_REQUEST] = {
 		.entry  = prl_hr_wait_for_request_entry,
 		.run    = prl_hr_wait_for_request_run,
@@ -2176,6 +2351,7 @@ static const struct usb_state prl_hr_states[] = {
 	[PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE] = {
 		.entry  = prl_hr_wait_for_phy_hard_reset_complete_entry,
 		.run    = prl_hr_wait_for_phy_hard_reset_complete_run,
+		.exit	= prl_hr_wait_for_phy_hard_reset_complete_exit,
 	},
 	[PRL_HR_WAIT_FOR_PE_HARD_RESET_COMPLETE] = {
 		.entry  = prl_hr_wait_for_pe_hard_reset_complete_entry,
@@ -2184,9 +2360,9 @@ static const struct usb_state prl_hr_states[] = {
 	},
 };
 
-#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 /* All necessary Chunked Rx states (Section 6.11.2.1.2) */
-static const struct usb_state rch_states[] = {
+__maybe_unused static const struct usb_state rch_states[] = {
+#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	[RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER] = {
 		.entry  = rch_wait_for_message_from_protocol_layer_entry,
 		.run    = rch_wait_for_message_from_protocol_layer_run,
@@ -2205,15 +2381,18 @@ static const struct usb_state rch_states[] = {
 	[RCH_WAITING_CHUNK] = {
 		.entry  = rch_waiting_chunk_entry,
 		.run    = rch_waiting_chunk_run,
+		.exit	= rch_waiting_chunk_exit,
 	},
 	[RCH_REPORT_ERROR] = {
 		.entry  = rch_report_error_entry,
 		.run    = rch_report_error_run,
 	},
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 };
 
 /* All necessary Chunked Tx states (Section 6.11.2.1.3) */
-static const struct usb_state tch_states[] = {
+__maybe_unused static const struct usb_state tch_states[] = {
+#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	[TCH_WAIT_FOR_MESSAGE_REQUEST_FROM_PE] = {
 		.entry  = tch_wait_for_message_request_from_pe_entry,
 		.run    = tch_wait_for_message_request_from_pe_run,
@@ -2233,6 +2412,7 @@ static const struct usb_state tch_states[] = {
 	[TCH_WAIT_CHUNK_REQUEST] = {
 		.entry  = tch_wait_chunk_request_entry,
 		.run    = tch_wait_chunk_request_run,
+		.exit	= tch_wait_chunk_request_exit,
 	},
 	[TCH_MESSAGE_RECEIVED] = {
 		.entry  = tch_message_received_entry,
@@ -2244,8 +2424,8 @@ static const struct usb_state tch_states[] = {
 	[TCH_REPORT_ERROR] = {
 		.entry  = tch_report_error_entry,
 	},
-};
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+};
 
 #ifdef TEST_BUILD
 
@@ -2285,4 +2465,3 @@ BUILD_ASSERT(ARRAY_SIZE(tch_states) == ARRAY_SIZE(tch_state_names));
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 const int test_prl_sm_data_size = ARRAY_SIZE(test_prl_sm_data);
 #endif
-

@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -59,8 +59,7 @@ void mat33_fp_swap_rows(mat33_fp_t A, const size_t i, const size_t j)
  * The i-th eigenvalue corresponds to the eigenvector in the i-th _row_ of
  * "eigenvecs".
  */
-void mat33_fp_get_eigenbasis(mat33_fp_t S, fpv3_t e_vals,
-			     mat33_fp_t e_vecs)
+void mat33_fp_get_eigenbasis(mat33_fp_t S, fpv3_t e_vals, mat33_fp_t e_vecs)
 {
 	const size_t N = 3;
 	sizev3_t ind;
@@ -176,8 +175,8 @@ size_t mat33_fp_maxind(mat33_fp_t A, size_t k)
 	return m;
 }
 
-void mat33_fp_rotate(mat33_fp_t A, fp_t c, fp_t s,
-		     size_t k, size_t l, size_t i, size_t j)
+void mat33_fp_rotate(mat33_fp_t A, fp_t c, fp_t s, size_t k, size_t l, size_t i,
+		     size_t j)
 {
 	fp_t tmp = fp_mul(c, A[k][l]) - fp_mul(s, A[i][j]);
 	A[i][j] = fp_mul(s, A[k][l]) + fp_mul(c, A[i][j]);

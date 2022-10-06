@@ -1,9 +1,10 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "common.h"
+#include "gpio.h"
 #include "watchdog.h"
 #include "uart.h"
 #include "task.h"
@@ -46,7 +47,7 @@ enum cts_rc read_high_test(void)
 {
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_LOW);
 	gpio_set_level(GPIO_OUTPUT_TEST, 1);
-	msleep(READ_WAIT_TIME_MS*2);
+	msleep(READ_WAIT_TIME_MS * 2);
 	return CTS_RC_SUCCESS;
 }
 
@@ -54,14 +55,14 @@ enum cts_rc read_low_test(void)
 {
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_LOW);
 	gpio_set_level(GPIO_OUTPUT_TEST, 0);
-	msleep(READ_WAIT_TIME_MS*2);
+	msleep(READ_WAIT_TIME_MS * 2);
 	return CTS_RC_SUCCESS;
 }
 
 enum cts_rc od_read_high_test(void)
 {
 	gpio_set_flags(GPIO_INPUT_TEST, GPIO_OUTPUT | GPIO_ODR_LOW);
-	msleep(READ_WAIT_TIME_MS*2);
+	msleep(READ_WAIT_TIME_MS * 2);
 	return CTS_RC_SUCCESS;
 }
 

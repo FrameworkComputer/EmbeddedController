@@ -1,0 +1,9 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC RT1718S BC1.2
+
+compatible: "richtek,rt1718s-bc12"
+
+include: base.yaml

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -37,11 +37,11 @@
 #undef CONFIG_DEBUG_ASSERT
 #undef CONFIG_DEBUG_EXCEPTIONS
 #undef CONFIG_DEBUG_STACK_OVERFLOW
-#undef CONFIG_FLASH
+#undef CONFIG_FLASH_CROS
 #undef CONFIG_FLASH_PHYSICAL
 #undef CONFIG_FMAP
 /* Not using pstate but keep some space for the public key */
-#undef  CONFIG_FW_PSTATE_SIZE
+#undef CONFIG_FW_PSTATE_SIZE
 #define CONFIG_FW_PSTATE_SIZE 544
 #define CONFIG_HIBERNATE
 #define CONFIG_HIBERNATE_WAKEUP_PINS STM32_PWR_CSR_EWUP1
@@ -59,7 +59,7 @@
 #undef CONFIG_USB_PD_DUAL_ROLE
 #undef CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_LOGGING
-#undef  CONFIG_EVENT_LOG_SIZE
+#undef CONFIG_EVENT_LOG_SIZE
 #define CONFIG_EVENT_LOG_SIZE 256
 #define CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
@@ -73,8 +73,8 @@
 #undef CONFIG_WATCHDOG_PERIOD_MS
 #define CONFIG_WATCHDOG_PERIOD_MS 2300
 
-/* debug printf flash footprinf is about 1400 bytes */
-#define CONFIG_DEBUG_PRINTF
+/* debug printf flash footprint is about 1400 bytes */
+#undef CONFIG_DEBUG_PRINTF
 #define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
@@ -90,9 +90,9 @@
 #ifndef __ASSEMBLER__
 
 #include "common.h"
+#include "gpio_signal.h"
 
 /* No GPIO abstraction layer */
-enum gpio_signal;
 
 enum adc_channel {
 	ADC_CH_CC1_PD = 1,
@@ -105,10 +105,11 @@ enum adc_channel {
 #define ADC_CH_CC2_PD ADC_CH_CC1_PD
 
 /* 3.0A Rp */
-#define PD_SRC_VNC (PD_SRC_3_0_VNC_MV * 4096 / 3300/* 12-bit ADC, 3.3V range */)
+#define PD_SRC_VNC \
+	(PD_SRC_3_0_VNC_MV * 4096 / 3300 /* 12-bit ADC, 3.3V range */)
 
 /* delay necessary for the voltage transition on the power supply */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 50000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Initialize all useful registers */

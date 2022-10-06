@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,7 @@
 #include "console.h"
 #include "host_command.h"
 
-#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ##args)
 
 static enum ec_status dmic_get_max_gain(struct host_cmd_handler_args *args)
 {
@@ -25,9 +25,9 @@ static enum ec_status dmic_set_gain_idx(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_dmic *p = args->params;
 
-	if (audio_codec_dmic_set_gain_idx(
-			p->set_gain_idx_param.channel,
-			p->set_gain_idx_param.gain) != EC_SUCCESS)
+	if (audio_codec_dmic_set_gain_idx(p->set_gain_idx_param.channel,
+					  p->set_gain_idx_param.gain) !=
+	    EC_SUCCESS)
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
@@ -38,8 +38,8 @@ static enum ec_status dmic_get_gain_idx(struct host_cmd_handler_args *args)
 	const struct ec_param_ec_codec_dmic *p = args->params;
 	struct ec_response_ec_codec_dmic_get_gain_idx *r = args->response;
 
-	if (audio_codec_dmic_get_gain_idx(
-			p->get_gain_idx_param.channel, &r->gain) != EC_SUCCESS)
+	if (audio_codec_dmic_get_gain_idx(p->get_gain_idx_param.channel,
+					  &r->gain) != EC_SUCCESS)
 		return EC_RES_ERROR;
 
 	args->response_size = sizeof(*r);

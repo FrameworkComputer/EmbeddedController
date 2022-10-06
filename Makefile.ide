@@ -1,0 +1,144 @@
+# -*- makefile -*-
+# vim: set filetype=make :
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Embedded Controller firmware build system - IDE support
+#
+# One caveat with this approach is that we still don't capture modified make
+# variables that are associated with a specific build target, like the following:
+#
+# $(out)/RW/common/blah.o: CFLAGS += -g
+#
+# This is because our compile commands json targets will not match this rule.
+
+# If env EXTERNAL_TRUNK_PATH is defined, we use this to build the
+# absolute path to the ec directory. Otherwise, we just take the abspath of ".".
+ide_ec_path_ext = \
+	$(if $(EXTERNAL_TRUNK_PATH),$(EXTERNAL_TRUNK_PATH)/src/platform/ec)
+ide_ec_path_abs = $(abspath .)
+ide_ec_path = $(or $(ide_ec_path_ext),$(ide_ec_path_abs))
+
+# Clang doesn't support these GCC options.
+ide-filters = -mno-sched-prolog -fconserve-stack
+
+# The complete compile_commands.json targets.
+ide-compile-cmds-y                        = $(out)/RW/compile_commands.json
+ide-compile-cmds-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/compile_commands.json
+ide-compile-cmds-y                       += $(out)/util/compile_commands.json
+
+# All individual <src_file>.compile_cmds.json targets.
+ide-rw-objs = $(rw-objs:.o=.compile_cmd.json)
+ide-ro-objs = $(ro-objs:.o=.compile_cmd.json)
+
+ide-build-utils    = $(build-utils:=.compile_cmd.json)
+ide-host-utils     = $(host-utils:=.compile_cmd.json)
+ide-host-utils-cxx = $(host-utils-cxx:=.compile_cmd.json)
+
+ide-utils = $(ide-build-utils) $(ide-host-utils) $(ide-host-utils-cxx)
+
+# The all-ide-compile-cmds target takes about 2 minutes using 8 cores when all
+# work is replaced by the |true| command. Thus, the build system itself
+# takes 2m independent of the text manipulation.
+.PHONY: all-ide-compile-cmds
+all-ide-compile-cmds: $(foreach b, $(BOARDS), ide-compile-cmds-$(b))
+ide-compile-cmds-%:
+	$(MAKE) BOARD=$* V=$(V) ide-compile-cmds
+
+.PHONY: ide-compile-cmds
+ide-compile-cmds: $(ide-compile-cmds-y)
+
+# All but the last file/json-object need to have a trailing comma.
+#
+# The first sed line prepends 4 spaces to all lines and then adds a
+# comma + implicit-newline to the end of the last line of the file.
+# The second sed line prepends 4 spaces to all lines and then adds an
+# implicit new line.
+cmd_combine_compile_cmd_json =                                                 \
+	printf '[\n'                                                      >$@ ;\
+	echo $^ | xargs -n1 | head -n-1 | xargs -n1 sed 's/^/    /;$$s/$$/,/'  \
+									 >>$@ ;\
+	sed 's/^/    /' $(lastword $^)                                   >>$@ ;\
+	printf ']\n'                                                     >>$@ ;
+
+$(out)/RW/compile_commands.json: override BLD := RW
+$(out)/RW/compile_commands.json: private objs := $(rw-objs)
+$(out)/RW/compile_commands.json: $(ide-rw-objs)
+$(out)/RW/compile_commands.json: $(ide-utils)
+	$(call quiet,combine_compile_cmd_json,COMBINE)
+$(out)/RO/compile_commands.json: override BLD := RO
+$(out)/RO/compile_commands.json: private objs := $(ro-objs)
+$(out)/RO/compile_commands.json: $(ide-ro-objs)
+$(out)/RO/compile_commands.json: $(ide-utils)
+	$(call quiet,combine_compile_cmd_json,COMBINE)
+$(out)/util/compile_commands.json: $(ide-utils)
+	$(call quiet,combine_compile_cmd_json,COMBINE)
+
+# Quote all words and add a comma between words.
+# The quotes are applied as \", so that they will escape shell removal.
+#
+# $(1) - The space separated list of words.
+ide-comma = ,
+ide-space = $() $()
+ide-esc-quoted = $(patsubst %,\"%\",$(1))
+ide-comma-sep = $(subst $(ide-space),$(ide-comma)$(ide-space),$(ide-esc-quoted))
+cmd_json_list = $(ide-comma-sep)
+
+# Replace any ".compile_cmd.json" with ".o" and filter out $(ide-filters) words.
+# The replace is needed because we are invoking build commands from within our
+# make rules that have targets set to files of type .compile_cmd.json.
+# The compile commands will use special variables that pull this name into
+# the command.
+#
+# $(1) - The compilation command.
+# $(2) - The original target extension, like ".o" or "".
+cmd_rep_filter = $(subst .compile_cmd.json,$(2),$(filter-out $(ide-filters),$(1)))
+
+# Form a compile command JSON block.
+#
+# $(1) - Used by quiet function, but it is this command name.
+# $(2) - Used by quiet function, but it is the pretty action label.
+# $(3) - The compilation command to place in the JSON blob.
+# $(4) - The original target extension, like ".o" or "".
+# $(5) - The source file this compile command applies to.
+cmd_to_compile_cmd_json =                                                      \
+	printf '{\n'                                                     >$@  ;\
+	printf '    "arguments": [\n'                                   >>$@  ;\
+	printf '        %s\n'                                                  \
+	  $(call cmd_json_list,$(call cmd_rep_filter,$(3),$(4)))        >>$@  ;\
+	printf '    ],\n'                                               >>$@  ;\
+	printf '    "directory": "$(ide_ec_path)",\n'                   >>$@  ;\
+	printf '    "file": "$(5)"\n'                                   >>$@  ;\
+	printf '}\n'                                                    >>$@  ;
+
+# Disable ccache, since this is only going to control whether the ccache
+# executable shows in the compile_commands.json file.
+%.compile_cmd.json: CCACHE :=
+
+$(out)/RO/%.compile_cmd.json:%.c
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
+$(out)/RW/%.compile_cmd.json:%.c
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
+
+$(out)/RO/%.compile_cmd.json:%.cc
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o),.o,$<)
+$(out)/RW/%.compile_cmd.json: %.cc
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_o),.o,$<)
+
+$(out)/RO/%.compile_cmd.json:%.S
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
+$(out)/RW/%.compile_cmd.json:%.S
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_o),.o,$<)
+
+$(ide-build-utils): $(out)/%.compile_cmd.json:$(build-srcs)
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_build),\
+		$(EMPTY),$*.c)
+
+$(ide-host-utils): $(out)/%.compile_cmd.json:$(host-srcs)
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_c_to_host),\
+		$(EMPTY),$*.c)
+
+$(ide-host-utils-cxx): $(out)/%.compile_cmd.json:$(host-srcs-cxx)
+	$(call quiet,to_compile_cmd_json,JSON   ,$(cmd_cxx_to_host),\
+		$(EMPTY),$*.cc)

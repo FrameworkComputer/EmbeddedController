@@ -1,11 +1,18 @@
 /*
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #ifndef __CROS_EC_IOEXPANDER_H
 #define __CROS_EC_IOEXPANDER_H
+
+#ifdef CONFIG_ZEPHYR
+#define ioex_signal gpio_signal
+#include "gpio.h"
+#else
+enum ioex_signal; /* from gpio_signal.h */
+#endif
 
 /* IO expander signal definition structure */
 struct ioex_info {
@@ -27,8 +34,11 @@ struct ioex_info {
 
 /* Signal information from board.c.  Must match order from enum ioex_signal. */
 extern const struct ioex_info ioex_list[];
-extern void (* const ioex_irq_handlers[])(enum ioex_signal signal);
+extern void (*const ioex_irq_handlers[])(enum ioex_signal signal);
 extern const int ioex_ih_count;
+
+/* Get ioex_info structure for specified signal */
+#define IOEX_GET_INFO(signal) (ioex_list + (signal)-IOEX_SIGNAL_START)
 
 struct ioexpander_drv {
 	/* Initialize IO expander chip/driver */
@@ -43,16 +53,28 @@ struct ioexpander_drv {
 	int (*set_flags_by_mask)(int ioex, int port, int mask, int flags);
 	/* Enable/disable interrupt for the IOEX pin */
 	int (*enable_interrupt)(int ioex, int port, int mask, int enable);
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+	/* Read levels for whole IOEX port */
+	int (*get_port)(int ioex, int port, int *val);
+#endif
 };
 
-/* IO expander chip disabled. No I2C communication will be attempted. */
-#define IOEX_FLAGS_DISABLED	BIT(0)
+/* IO expander default init disabled. No I2C communication will be attempted. */
+#define IOEX_FLAGS_DEFAULT_INIT_DISABLED BIT(0)
+/* IO Expander has been initialized */
+#define IOEX_FLAGS_INITIALIZED BIT(1)
+
+/*
+ * BITS 24 to 31 are used by io-expander drivers that need to control multiple
+ * devices
+ */
+#define IOEX_FLAGS_CUSTOM_BIT(x) BUILD_CHECK_INLINE(BIT(x), BIT(x) & 0xff000000)
 
 struct ioexpander_config_t {
 	/* Physical I2C port connects to the IO expander chip. */
 	int i2c_host_port;
-	/* I2C slave address */
-	int i2c_slave_addr;
+	/* I2C address */
+	int i2c_addr_flags;
 	/*
 	 * Pointer to the specific IO expander chip's ops defined in
 	 * the struct ioexpander_drv.
@@ -63,6 +85,46 @@ struct ioexpander_config_t {
 };
 
 extern struct ioexpander_config_t ioex_config[];
+
+#ifdef CONFIG_ZEPHYR
+
+#define ioex_enable_interrupt gpio_enable_interrupt
+#define ioex_disable_interrupt gpio_disable_interrupt
+
+#ifdef CONFIG_GPIO_GET_EXTENDED
+inline int ioex_get_flags(enum gpio_signal signal, int *flags)
+{
+	*flags = gpio_get_flags(signal);
+	return EC_SUCCESS;
+}
+#endif
+
+inline int ioex_set_flags(enum gpio_signal signal, int flags)
+{
+	gpio_set_flags(signal, flags);
+	return EC_SUCCESS;
+}
+
+inline int ioex_get_level(enum gpio_signal signal, int *val)
+{
+	*val = gpio_get_level(signal);
+	return EC_SUCCESS;
+}
+
+inline int ioex_set_level(enum gpio_signal signal, int val)
+{
+	gpio_set_level(signal, val);
+	return EC_SUCCESS;
+}
+
+int ioex_init(int ioex);
+
+inline const char *ioex_get_name(enum ioex_signal signal)
+{
+	return gpio_get_name(signal);
+}
+
+#else
 
 /*
  * Enable the interrupt for the IOEX signal
@@ -79,6 +141,16 @@ int ioex_enable_interrupt(enum ioex_signal signal);
  * @return			EC_SUCCESS if successful, non-zero if error.
  */
 int ioex_disable_interrupt(enum ioex_signal signal);
+
+/*
+ * Get io expander flags (IOEX_FLAGS_*) for chip that specified IOEX signal
+ * belongs to. They contain information if port was disabled or initialized.
+ *
+ * @param signal IOEX signal that belongs to chip which flags will be returned
+ * @param val	 Pointer to memory where flags will be stored
+ * @return	 EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_get_ioex_flags(enum ioex_signal signal, int *val);
 
 /*
  * Get flags for the IOEX signal
@@ -116,6 +188,18 @@ int ioex_get_level(enum ioex_signal signal, int *val);
  */
 int ioex_set_level(enum ioex_signal signal, int value);
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+/*
+ * Get the current levels on the IOEX port
+ *
+ * @param ioex		Number of I/O expander
+ * @param port		Number of port in ioex
+ * @param val		Pointer to variable where port will be read
+ * @return			EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_get_port(int ioex, int port, int *val);
+#endif
+
 /*
  * Initialize IO expander chip/driver
  *
@@ -139,5 +223,27 @@ const char *ioex_get_name(enum ioex_signal signal);
  * @return		1 if signal is IOEX else return 0
  */
 int signal_is_ioex(int signal);
+
+/*
+ * Save gpio state of IO expander
+ *
+ * @param ioex		IO expander chip's port number
+ * @param state		Buffer to hold gpio state
+ * @param state_len	Length of state buffer, IOEX_COUNT is recommended
+ * @return		EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_save_gpio_state(int ioex, int *state, int state_len);
+
+/*
+ * Restore gpio state of IO expander
+ *
+ * @param ioex		IO expander chip's port number
+ * @param state		Buffer with gpio state saved by ioex_save_gpio_state
+ * @param state_len	Length of state buffer, IOEX_COUNT is recommended
+ * @return		EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_restore_gpio_state(int ioex, const int *state, int state_len);
+
+#endif /* CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_IOEXPANDER_H */

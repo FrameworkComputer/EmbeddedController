@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -16,7 +16,8 @@ void cpu_init(void)
 
 	/* Enable reporting of memory faults, bus faults and usage faults */
 	CPU_NVIC_SHCSR |= CPU_NVIC_SHCSR_MEMFAULTENA |
-		CPU_NVIC_SHCSR_BUSFAULTENA | CPU_NVIC_SHCSR_USGFAULTENA;
+			  CPU_NVIC_SHCSR_BUSFAULTENA |
+			  CPU_NVIC_SHCSR_USGFAULTENA;
 }
 
 #ifdef CONFIG_ARMV7M_CACHE
@@ -50,16 +51,16 @@ void cpu_enable_caches(void)
 	}
 }
 
-static void cpu_sysjump_cache(void)
+void cpu_disable_caches(void)
 {
 	/*
 	 * Disable the I-cache and the D-cache
-	 * The I-cache will be invalidated after the sysjump if needed
+	 * The I-cache will be invalidated after the reboot/sysjump if needed
 	 * (e.g after a flash update).
 	 */
 	cpu_clean_invalidate_dcache();
 	CPU_NVIC_CCR &= ~(CPU_NVIC_CCR_ICACHE | CPU_NVIC_CCR_DCACHE);
 	asm volatile("dsb; isb");
 }
-DECLARE_HOOK(HOOK_SYSJUMP, cpu_sysjump_cache, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_SYSJUMP, cpu_disable_caches, HOOK_PRIO_LAST);
 #endif /* CONFIG_ARMV7M_CACHE */

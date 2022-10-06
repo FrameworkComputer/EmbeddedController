@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,21 +11,21 @@
 
 #include "hooks.h"
 
-#define HECI_MAX_NUM_OF_CLIENTS			2
+#define HECI_MAX_NUM_OF_CLIENTS 2
 
-#define HECI_MAX_MSG_SIZE			4960
-#define HECI_IPC_PAYLOAD_SIZE   (IPC_MAX_PAYLOAD_SIZE - 4)
-#define HECI_MAX_MSGS				3
+#define HECI_MAX_MSG_SIZE 4960
+#define HECI_IPC_PAYLOAD_SIZE (IPC_MAX_PAYLOAD_SIZE - 4)
+#define HECI_MAX_MSGS 3
 
 enum HECI_ERR {
-	HECI_ERR_TOO_MANY_MSG_ITEMS		= EC_ERROR_INTERNAL_FIRST + 0,
-	HECI_ERR_NO_CRED_FROM_CLIENT_IN_HOST	= EC_ERROR_INTERNAL_FIRST + 1,
-	HECI_ERR_CLIENT_IS_NOT_CONNECTED	= EC_ERROR_INTERNAL_FIRST + 2,
+	HECI_ERR_TOO_MANY_MSG_ITEMS = EC_ERROR_INTERNAL_FIRST + 0,
+	HECI_ERR_NO_CRED_FROM_CLIENT_IN_HOST = EC_ERROR_INTERNAL_FIRST + 1,
+	HECI_ERR_CLIENT_IS_NOT_CONNECTED = EC_ERROR_INTERNAL_FIRST + 2,
 };
 
-typedef void *					heci_handle_t;
+typedef void *heci_handle_t;
 
-#define HECI_INVALID_HANDLE			NULL
+#define HECI_INVALID_HANDLE NULL
 
 struct heci_guid {
 	uint32_t data1;
@@ -57,8 +57,8 @@ struct heci_client {
 	uint32_t max_msg_size;
 	uint8_t protocol_ver;
 	uint8_t max_n_of_connections;
-	uint8_t dma_header_length :7;
-	uint8_t dma_enabled :1;
+	uint8_t dma_header_length : 7;
+	uint8_t dma_enabled : 1;
 
 	const struct heci_client_callbacks *cbs;
 };
@@ -91,7 +91,7 @@ void *heci_get_client_data(const heci_handle_t handle);
 int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 		  const size_t buf_size);
 int heci_send_msg_timestamp(const heci_handle_t handle, uint8_t *buf,
-		  const size_t buf_size, uint32_t *timestamp);
+			    const size_t buf_size, uint32_t *timestamp);
 /*
  * send client msgs(using list of buffer&size).
  * heci_msg_item with size == 0 is not acceptable.
@@ -102,11 +102,11 @@ int heci_send_msgs(const heci_handle_t handle,
 int heci_send_fixed_client_msg(const uint8_t fw_addr, uint8_t *buf,
 			       const size_t buf_size);
 
-#define HECI_CLIENT_ENTRY(heci_client) \
-	void _heci_entry_##heci_client(void) \
-	{ \
+#define HECI_CLIENT_ENTRY(heci_client)                \
+	void _heci_entry_##heci_client(void)          \
+	{                                             \
 		heci_register_client(&(heci_client)); \
-	} \
+	}                                             \
 	DECLARE_HOOK(HOOK_INIT, _heci_entry_##heci_client, HOOK_PRIO_LAST - 1)
 
 #endif /* __HECI_CLIENT_H */

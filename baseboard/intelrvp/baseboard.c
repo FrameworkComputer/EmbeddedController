@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,12 +9,13 @@
 #include "charge_state.h"
 #include "espi.h"
 #include "fan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "pca9555.h"
 #include "peci.h"
 #include "power.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "timer.h"
 
 /* Wake-up pins for hibernate */
@@ -24,39 +25,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
-
-/* ADC channels */
-const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SNS_AMBIENT] = {
-		.name = "ADC_TEMP_SNS_AMBIENT",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = ADC_TEMP_SNS_AMBIENT_CHANNEL,
-	},
-	[ADC_TEMP_SNS_DDR] = {
-		.name = "ADC_TEMP_SNS_DDR",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = ADC_TEMP_SNS_DDR_CHANNEL,
-	},
-	[ADC_TEMP_SNS_SKIN] = {
-		.name = "ADC_TEMP_SNS_SKIN",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = ADC_TEMP_SNS_SKIN_CHANNEL,
-	},
-	[ADC_TEMP_SNS_VR] = {
-		.name = "ADC_TEMP_SNS_VR",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = ADC_TEMP_SNS_VR_CHANNEL,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 #ifdef CONFIG_TEMP_SENSOR
 /* Temperature sensors */
@@ -101,6 +69,31 @@ const struct temp_sensor_t temp_sensors[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(15),
+	.temp_fan_max = C_TO_K(50),
+};
+
+struct ec_thermal_config thermal_params[] = {
+	[TEMP_SNS_AMBIENT] = thermal_a, [TEMP_SNS_BATTERY] = thermal_a,
+	[TEMP_SNS_DDR] = thermal_a,
+#ifdef CONFIG_PECI
+	[TEMP_SNS_PECI] = thermal_a,
+#endif
+	[TEMP_SNS_SKIN] = thermal_a,	[TEMP_SNS_VR] = thermal_a,
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 #endif /* CONFIG_TEMP_SENSOR */
 
 #ifdef CONFIG_FANS
@@ -127,33 +120,6 @@ const struct fan_t fans[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
-
-const static struct ec_thermal_config thermal_a = {
-	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-		[EC_TEMP_THRESH_HALT] = 0,
-	},
-	.temp_fan_off = C_TO_K(15),
-	.temp_fan_max = C_TO_K(50),
-};
-
-struct ec_thermal_config thermal_params[] = {
-	[TEMP_SNS_AMBIENT] = thermal_a,
-	[TEMP_SNS_BATTERY] = thermal_a,
-	[TEMP_SNS_DDR] = thermal_a,
-#ifdef CONFIG_PECI
-	[TEMP_SNS_PECI] = thermal_a,
-#endif
-	[TEMP_SNS_SKIN] = thermal_a,
-	[TEMP_SNS_VR] = thermal_a,
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 #endif /* CONFIG_FANS */
 
 static void board_init(void)
@@ -172,14 +138,23 @@ DECLARE_HOOK(HOOK_INIT, board_interrupts_init, HOOK_PRIO_FIRST);
 
 int ioexpander_read_intelrvp_version(int *port0, int *port1)
 {
-	if (pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
-		I2C_ADDR_PCA9555_BOARD_ID_GPIO,
-		PCA9555_CMD_INPUT_PORT_0, port0))
-		return -1;
+	int i, rv;
 
-	return pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
-		I2C_ADDR_PCA9555_BOARD_ID_GPIO,
-		PCA9555_CMD_INPUT_PORT_1, port1);
+	for (i = 0; i < RVP_VERSION_READ_RETRY_CNT; i++) {
+		rv = pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
+				  I2C_ADDR_PCA9555_BOARD_ID_GPIO,
+				  PCA9555_CMD_INPUT_PORT_0, port0);
+
+		if (!rv && !pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
+					 I2C_ADDR_PCA9555_BOARD_ID_GPIO,
+					 PCA9555_CMD_INPUT_PORT_1, port1))
+			return 0;
+
+		msleep(1);
+	}
+
+	/* pca9555 read failed */
+	return -1;
 }
 
 __override void intel_x86_sys_reset_delay(void)
@@ -190,4 +165,3 @@ __override void intel_x86_sys_reset_delay(void)
 	 */
 	udelay(60 * MSEC);
 }
-

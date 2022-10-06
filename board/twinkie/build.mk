@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2014 The Chromium OS Authors. All rights reserved.
+# Copyright 2014 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -10,5 +10,5 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32f0
 CHIP_VARIANT:=stm32f07x
 
-board-y=board.o usb_pd_policy.o injector.o simpletrace.o
+board-y=board.o usb_pd_policy.o injector.o simpletrace.o usb_pd_pdo.o
 board-$(HAS_TASK_SNIFFER)+=sniffer.o

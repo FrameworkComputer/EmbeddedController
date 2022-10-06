@@ -1,0 +1,172 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	model = "Nuvoton NPCX Evaluation Board";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,flash = &flash0;
+		zephyr,flash-controller = &int_flash;
+		cros,rtc = &mtc;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_evb_0_0 {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_EVB_0";
+		};
+		i2c_evb_1_0 {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_EVB_1";
+		};
+		i2c_evb_2_0 {
+			i2c-port = <&i2c2_0>;
+			enum-names = "I2C_PORT_EVB_2";
+		};
+		i2c_evb_3_0 {
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_EVB_3";
+		};
+		i2c_evb_7_0 {
+			i2c-port = <&i2c7_0>;
+			enum-names = "I2C_PORT_EVB_7";
+		};
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_ch_0 {
+			enum-name = "ADC_EVB_CH_0";
+			io-channels = <&adc0 0>;
+		};
+		adc_ch_1 {
+			enum-name = "ADC_EVB_CH_1";
+			io-channels = <&adc0 1>;
+		};
+		adc_ch_2 {
+			enum-name = "ADC_EVB_CH_2";
+			io-channels = <&adc0 2>;
+		};
+		adc_ch_3 {
+			enum-name = "ADC_EVB_CH_3";
+			io-channels = <&adc0 3>;
+		};
+		adc_ch_4 {
+			enum-name = "ADC_EVB_CH_4";
+			io-channels = <&adc0 4>;
+		};
+	};
+
+	/* Override keyboard scanning */
+	soc {
+		/delete-node/ kscan@400a3000;
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c2_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c3_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c7_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl7 {
+	status = "okay";
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42
+		     &adc0_chan4_gp41>;
+	pinctrl-names = "default";
+};
+
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+&cros_kb_raw {
+	status = "okay";
+	pinctrl-0 = <&ksi0_gp31
+		     &ksi1_gp30
+		     &ksi2_gp27
+		     &ksi3_gp26
+		     &ksi4_gp25
+		     &ksi5_gp24
+		     &ksi6_gp23
+		     &ksi7_gp22
+		     &kso00_gp21
+		     &kso01_gp20
+		     &kso02_gp17
+		     &kso03_gp16
+		     &kso04_gp15
+		     &kso05_gp14
+		     &kso06_gp13
+		     &kso07_gp12
+		     &kso08_gp11
+		     &kso09_gp10
+		     &kso10_gp07
+		     &kso11_gp06
+		     &kso12_gp05
+		     >;
+	pinctrl-names = "default";
+};

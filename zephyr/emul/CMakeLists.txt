@@ -1,0 +1,29 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+add_subdirectory("tcpc")
+
+zephyr_library_sources_ifdef(CONFIG_EMUL_COMMON_I2C	emul_common_i2c.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_SMART_BATTERY	emul_smart_battery.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_BMA255		emul_bma255.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_BC12_DETECT_PI3USB9201	emul_pi3usb9201.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_PPC_SYV682X	emul_syv682x.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_BMI		emul_bmi.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_BMI		emul_bmi160.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_BMI		emul_bmi260.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_TCS3400	emul_tcs3400.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_BB_RETIMER	emul_bb_retimer.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_LN9310		emul_ln9310.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_LIS2DW12	emul_lis2dw12.c)
+zephyr_library_sources_ifdef(CONFIG_I2C_MOCK		i2c_mock.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_ISL923X	emul_isl923x.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_CLOCK_CONTROL	emul_clock_control.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_SN5S330	emul_sn5s330.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_KB_RAW		emul_kb_raw.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_CROS_FLASH	emul_flash.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_RTC		emul_rtc.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_RT9490		emul_rt9490.c)
+zephyr_library_sources_ifdef(CONFIG_PWM_MOCK            pwm_mock.c)
+
+cros_ec_library_include_directories_ifdef(CONFIG_EMUL_CROS_FLASH include)

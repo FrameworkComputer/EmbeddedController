@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -29,23 +29,33 @@ struct test_util_tag {
 int __test_error_count;
 
 /* Weak reference function as an entry point for unit test */
-test_mockable void run_test(int argc, char **argv) { }
+test_mockable void run_test(int argc, const char **argv)
+{
+}
 
 /* Default mock test init */
-test_mockable void test_init(void) { }
+test_mockable void test_init(void)
+{
+}
 
 /* Default mock before test */
-test_mockable void before_test(void) { }
+test_mockable void before_test(void)
+{
+}
 
 /* Default mock after test */
-test_mockable void after_test(void) { }
+test_mockable void after_test(void)
+{
+}
 
 #ifdef TEST_COVERAGE
-extern void __gcov_flush(void);
+extern void __gcov_dump(void);
+extern void __gcov_reset(void);
 
 void emulator_flush(void)
 {
-	__gcov_flush();
+	__gcov_dump();
+	__gcov_reset();
 }
 #else
 void emulator_flush(void)
@@ -102,18 +112,26 @@ int test_get_error_count(void)
 
 uint32_t test_get_state(void)
 {
-	return system_get_scratchpad();
+	uint32_t state;
+
+	system_get_scratchpad(&state);
+	return state;
 }
 
 test_mockable void test_clean_up(void)
 {
 }
 
+void test_set_next_step(enum test_state_t step)
+{
+	system_set_scratchpad(TEST_STATE_MASK(step));
+}
+
 void test_reboot_to_next_step(enum test_state_t step)
 {
 	ccprintf("Rebooting to next test step...\n");
 	cflush();
-	system_set_scratchpad(TEST_STATE_MASK(step));
+	test_set_next_step(step);
 	system_reset(SYSTEM_RESET_HARD);
 }
 
@@ -159,7 +177,7 @@ int test_send_host_command(int command, int version, const void *params,
 
 	return host_command_process(&args);
 }
-#endif  /* TASK_HAS_HOSTCMD */
+#endif /* TASK_HAS_HOSTCMD */
 
 /* Linear congruential pseudo random number generator */
 uint32_t prng(uint32_t seed)
@@ -180,8 +198,7 @@ static void restore_state(void)
 
 	tag = (const struct test_util_tag *)system_get_jump_tag(
 		TEST_UTIL_SYSJUMP_TAG, &version, &size);
-	if (tag && version == TEST_UTIL_SYSJUMP_VERSION &&
-	    size == sizeof(*tag))
+	if (tag && version == TEST_UTIL_SYSJUMP_VERSION && size == sizeof(*tag))
 		__test_error_count = tag->error_count;
 	else
 		__test_error_count = 0;
@@ -197,10 +214,30 @@ static void preserve_state(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, preserve_state, HOOK_PRIO_DEFAULT);
 
-static int command_run_test(int argc, char **argv)
+static int command_run_test(int argc, const char **argv)
 {
 	run_test(argc, argv);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL);
+DECLARE_CONSOLE_COMMAND(runtest, command_run_test, NULL, NULL);
+
+#ifndef CONFIG_ZEPHYR
+void z_ztest_run_test_suite(const char *name, struct unit_test *suite)
+{
+	test_reset();
+
+	while (suite->test) {
+		suite->setup();
+		RUN_TEST(suite->test);
+		suite->teardown();
+		suite++;
+	}
+
+	/* Sometimes the console task doesn't start until the test is done. */
+	sleep(1);
+
+	ccprintf("%s: ", name);
+
+	test_print_result();
+}
+#endif /* CONFIG_ZEPHYR */

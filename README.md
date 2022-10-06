@@ -89,13 +89,20 @@ The remainder of this README file is directly from Google's Chromium EC project.
 
 [TOC]
 
+> **Note** - This document covers the legacy Chrome EC implementation. The
+> legacy EC implementation is used by all Chromebook reference designs prior to
+> July 2021. On newer Chromebook designs, the EC implementation is based on the
+> Zephyr RTOS. Refer to the [Zephyr EC Introduction](./docs/zephyr/README.md)
+> for details on the Zephyr EC implementation.
+
 ## Introduction
 
 The Chromium OS project includes open source software for embedded controllers
 (EC) used in recent ARM and x86 based Chromebooks. This software includes a
 lightweight, multitasking OS with modules for power sequencing, keyboard
 control, thermal control, battery charging, and verified boot. The EC software
-is written in C and supports [a variety of micro-controllers](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/chip/).
+is written in C and supports
+[a variety of micro-controllers](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/chip/).
 
 This document is a guide to help make you familiar with the EC code, current
 features, and the process for submitting code patches.
@@ -112,8 +119,8 @@ and [video](http://youtu.be/Ie7LRGgCXC8) from the
     (inclusive). See the
     [Chrome OS devices](http://dev.chromium.org/chromium-os/developer-information-for-chrome-os-devices)
     page for a list.
-1.  A Linux development environment. Ubuntu 14.04 Trusty (x86_64) is well
-    supported. Linux in a VM may work if you have a powerful host machine.
+1.  A Linux development environment. The latest Debian Stable (x86_64) is commonly used.
+    Linux in a VM may work if you have a powerful host machine.
 1.  A [servo debug board](http://dev.chromium.org/chromium-os/servo) (and
     header) is highly recommended for serial console and JTAG access to the EC.
 1.  A sense of adventure!
@@ -127,8 +134,8 @@ documentation due to historical reasons. If you just see the term "EC", it
 probably refers to "the" EC (i.e. the first one that existed). Most Chrome OS
 devices have an MCU, known as "the EC" that controls lots of things (key
 presses, turning the AP on/off). The OS that was written for "the" EC is now
-running on several different MCUs on Chrome OS devices with various tweaks
-(e.g. the FPMCU, the touchpad one that can do palm rejection, etc.). It's quite
+running on several different MCUs on Chrome OS devices with various tweaks (e.g.
+the FPMCU, the touchpad one that can do palm rejection, etc.). It's quite
 confusing, so try to be specific and use terms like FPMCU to distinguish the
 fingerprint MCU from "the EC".
 
@@ -184,21 +191,18 @@ I2C/onewire LED controllers, and I2C temperature sensors.
 **util** - Host utilities and scripts for flashing the EC. Also includes
 “ectool” used to query and send commands to the EC from userspace.
 
-**test** - Unit tests for EC components. These can be run locally in
-           a mock "host" environment or compiled for a target board.
-           If building for a target board, the test must be flashed and
-           run manually on the device.
-           All unit tests and fuzzers are build/run using the local
-           host environment during a `buildall`.
-           To run all unit tests locally, run `make runhosttests -j`.
-           To build a specific unit test for a specific board, run
-           `make test-<test_name> BOARD=<board_name>`.
-           Please contribute new tests if writing new functionality.
-           Please run `make help` for more detail.
+**test** - Unit tests for EC components. These can be run locally in a mock
+"host" environment or compiled for a target board. If building for a target
+board, the test must be flashed and run manually on the device. All unit tests
+and fuzzers are build/run using the local host environment during a `buildall`.
+To run all unit tests locally, run `make runhosttests -j`. To build a specific
+unit test for a specific board, run `make test-<test_name> BOARD=<board_name>`.
+Please contribute new tests if writing new functionality. Please run `make help`
+for more detail.
 
-**fuzz** - Fuzzers for EC components. These fuzzers are expected to
-           run in the mock host environment. They follow the same rules
-           as unit tests, as thus use the same commands to build and run.
+**fuzz** - Fuzzers for EC components. These fuzzers are expected to run in the
+mock host environment. They follow the same rules as unit tests, as thus use the
+same commands to build and run.
 
 ## Firmware Branches
 
@@ -206,7 +210,7 @@ Each Chrome device has a firmware branch created when the read-only firmware is
 locked down prior to launch. This is done so that updates can be made to the
 read-write firmware with a minimal set of changes from the read-only. Some
 Chrome devices only have build targets on firmware branches and not on
-cros/master. Run “`git branch -a | grep firmware`” to locate the firmware branch
+cros/main. Run “`git branch -a | grep firmware`” to locate the firmware branch
 for your board. Note that for devices still under development, the board
 configuration may be on the branch for the platform reference board.
 
@@ -240,11 +244,11 @@ branch1...branch2 as needed):
 git log --left-right --graph --cherry-pick --oneline branch1...branch2
 ```
 
-For example, to see the difference between cros/master and the HEAD of the
-current branch:
+For example, to see the difference between cros/main and the HEAD of the current
+branch:
 
 ```bash
-git log --left-right --graph --cherry-pick --oneline cros/master...HEAD
+git log --left-right --graph --cherry-pick --oneline cros/main...HEAD
 
 # Note: Use three dots “...” or it won’t work!
 ```
@@ -262,7 +266,7 @@ cd ~/trunk/src/platform/ec
 make -j BOARD=<boardname>
 ```
 
-Where **<boardname>** is replaced by the name of the board you want to build an
+Where `<boardname>` is replaced by the name of the board you want to build an
 EC binary for. For example, the boardname for the Chromebook Pixel is “link”.
 The make command will generate an EC binary at `build/<boardname>/ec.bin`. The
 `-j` tells make to build multi-threaded which can be much faster on a multi-core
@@ -293,8 +297,16 @@ The generated EC binary from emerge is found at:
 (chroot) $ /build/<boardname>/firmware/ec.bin
 ```
 
+or
+
+```
+(chroot) $ /build/<boardname>/firmware/<devicename>/ec.bin
+```
+
+The `devicename` is the name of a device (also referred as board or variant) which belongs to a family of baseboard. `boardname` is the baseboard name in this case. Example : `/build/dedede/firmware/madoo/ec.bin`
+
 The ebuild file used by Chromium OS is found
-[here](https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/master/chromeos-base/chromeos-ec/chromeos-ec-9999.ebuild):
+[here](https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/main/chromeos-base/chromeos-ec/chromeos-ec-9999.ebuild):
 
 ```bash
 (chroot) $ ~/trunk/src/third_party/chromiumos-overlay/chromeos-base/chromeos-ec/chromeos-ec-9999.ebuild
@@ -332,6 +344,14 @@ If you build Chrome OS with `build_packages` the firmware image will be at:
 (chroot) $ /build/<boardname>/firmware/ec.bin
 ```
 
+or
+
+```
+(chroot) $ /build/<boardname>/firmware/<devicename>/ec.bin
+```
+
+The `devicename` is the name of a device (also referred as board or variant) which belongs to a family of baseboard. `boardname` is the baseboard name in this case. Example : `/build/dedede/firmware/madoo/ec.bin`
+
 Specifying `--image` is optional. If you leave off the `--image` argument, the
 `flash_ec` script will first look for a locally built `ec.bin` followed by one
 generated by `emerge`.
@@ -361,11 +381,11 @@ and turn on other developer-friendly flags (note that write protect must be
 disabled for this to work):
 
 ```bash
-(chroot) $ /usr/share/vboot/bin/set_gbb_flags.sh 0x239
+# /usr/share/vboot/bin/set_gbb_flags.sh 0x239
 ```
 
 ```bash
-(chroot) $ reboot
+# reboot
 ```
 
 This turns on the following flags:
@@ -377,7 +397,7 @@ This turns on the following flags:
 *   `GBB_FLAG_DISABLE_EC_SOFTWARE_SYNC`
 
 The `GBB` (Google Binary Block) flags are defined in the
-[vboot_reference source](https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/master/firmware/include/gbb_header.h).
+[vboot_reference source](https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/main/firmware/2lib/include/2struct.h).
 A varying subset of these flags are implemented and/or relevant for any
 particular board.
 
@@ -478,7 +498,7 @@ in priority order if more than one callback needs to be run. There are also
 hooks for running functions periodically: `HOOK_TICK` (fires every
 `HOOK_TICK_INVERVAL` ms which varies by EC chip) and `HOOK_SECOND`. See
 hook_type in
-[include/hooks.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/include/hooks.h)
+[include/hooks.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/include/hooks.h)
 for a complete list.
 
 ### Deferred Functions
@@ -519,7 +539,7 @@ void some_interrupt(enum gpio_signal signal)
 While there is no heap, there is a shared memory buffer that can be borrowed
 temporarily (ideally before a context switch). The size of the buffer depends on
 the EC chip being used. The buffer can only be used by one task at a time. See
-[common/shared_mem.c](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/common/shared_mem.c)
+[common/shared_mem.c](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/common/shared_mem.c)
 for more information. At present (May 2014), this buffer is only used by debug
 commands.
 
@@ -550,13 +570,13 @@ Other style notes:
     not use globals to pass information between modules without accessors. For
     module scope, accessors are not needed.
 1.  If you add a new `#define` config option to the code, please document it in
-    [include/config.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/include/config.h)
+    [include/config.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/include/config.h)
     with an `#undef` statement and descriptive comment.
 1.  The Chromium copyright header must be included at the top of new files in
     all contributions to the Chromium project:
 
     ```
-    /* Copyright <year> The Chromium OS Authors. All rights reserved.
+    /* Copyright <year> The ChromiumOS Authors
      * Use of this source code is governed by a BSD-style license that can be
      * found in the LICENSE file.
      */
@@ -695,8 +715,8 @@ If the version is: `rambi_v1.6.68-a6608c8`:
 
 The branch numbers (as of May 2014) are:
 
-*   v1.0.0 cros/master
-*   v1.1.0 cros/master
+*   v1.0.0 cros/main
+*   v1.1.0 cros/main
 *   v1.2.0 cros/firmware-link-2695.2.B
 *   v1.3.0 cros/firmware-snow-2695.90.B
 *   v1.4.0 cros/firmware-skate-3824.129.B
@@ -727,3 +747,20 @@ cheese_v1.1.1755-4da9520
 ```
 
 [Firmware Write Protection]: ./docs/write_protection.md
+
+## CQ builder
+
+To test the cq builder script run these commands:
+
+### firmware-ec-cq
+```
+rm -rf /tmp/artifact_bundles /tmp/artifact_bundle_metadata \
+  ~/chromiumos/src/platform/ec/build
+./firmware_builder.py --metrics /tmp/metrics_build build && \
+./firmware_builder.py --metrics /tmp/metrics_test test && \
+./firmware_builder.py --metrics /tmp/metrics_bundle bundle && \
+echo PASSED
+cat /tmp/artifact_bundle_metadata
+cat /tmp/metrics_build
+ls -l /tmp/artifact_bundles/
+```

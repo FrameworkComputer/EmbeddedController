@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_SCP_FD_H
 #define __CROS_EC_SCP_FD_H
 
-#include "chip/mt_scp/registers.h"
-#include "queue.h"
 #include "compile_time_macros.h"
+#include "queue.h"
+#include "registers.h"
 
 enum fd_msg_type {
 	FD_IPI_MSG,

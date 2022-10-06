@@ -1,17 +1,17 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-#include "isp_p2_srv.h"
-#include "chip/mt_scp/ipi_chip.h"
-#include "chip/mt_scp/registers.h"
-#include "queue_policies.h"
 #include "console.h"
 #include "hooks.h"
+#include "ipi_chip.h"
+#include "isp_p2_srv.h"
+#include "queue.h"
+#include "queue_policies.h"
+#include "registers.h"
 #include "task.h"
 #include "util.h"
-#include "queue.h"
 
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
 
@@ -19,19 +19,21 @@
 static struct consumer const event_dip_consumer;
 static void event_dip_written(struct consumer const *consumer, size_t count);
 
-static struct queue const event_dip_queue = QUEUE_DIRECT(4,
-	struct dip_msg_service, null_producer, event_dip_consumer);
+static struct queue const event_dip_queue = QUEUE_DIRECT(
+	4, struct dip_msg_service, null_producer, event_dip_consumer);
 
 static struct consumer const event_dip_consumer = {
 	.queue = &event_dip_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_dip_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
-void dip_msg_handler(void *data) {}
+void dip_msg_handler(void *data)
+{
+}
 #endif
 
 static void event_dip_written(struct consumer const *consumer, size_t count)

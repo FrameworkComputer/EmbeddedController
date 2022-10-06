@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -29,7 +29,10 @@ struct pwm_t {
 extern const struct pwm_t pwm_channels[];
 
 /* Macro to fill in both timer ID and register base */
-#define STM32_TIM(x) {x, STM32_TIM_BASE(x)}
+#define STM32_TIM(x)                 \
+	{                            \
+		x, STM32_TIM_BASE(x) \
+	}
 
 /* Plain ID mapping for readability */
 #define STM32_TIM_CH(x) (x)

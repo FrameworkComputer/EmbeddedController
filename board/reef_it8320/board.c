@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* reef_it8320 board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
@@ -30,6 +29,7 @@
 #include "math_util.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -40,7 +40,7 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -49,40 +49,40 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define IN_ALL_SYS_PG	POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
-#define IN_PGOOD_PP3300	POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
-#define IN_PGOOD_PP5000	POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
+#define IN_ALL_SYS_PG POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
+#define IN_PGOOD_PP3300 POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
+#define IN_PGOOD_PP5000 POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
 
 #include "gpio_list.h"
 
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"CHARGER",     3000, 1024, 0, CHIP_ADC_CH1}, /* GPI1 */
-	{"AMBIENT",     3000, 1024, 0, CHIP_ADC_CH2}, /* GPI2 */
-	{"BRD_ID",      3000, 1024, 0, CHIP_ADC_CH3}, /* GPI3 */
+	{ "CHARGER", 3000, 1024, 0, CHIP_ADC_CH1 }, /* GPI1 */
+	{ "AMBIENT", 3000, 1024, 0, CHIP_ADC_CH2 }, /* GPI2 */
+	{ "BRD_ID", 3000, 1024, 0, CHIP_ADC_CH3 }, /* GPI3 */
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-const struct i2c_port_t i2c_ports[]  = {
-	{"mux",       IT83XX_I2C_CH_C, 400,
-		GPIO_EC_I2C_C_SCL, GPIO_EC_I2C_C_SDA},
-	{"batt",      IT83XX_I2C_CH_E, 100,
-		GPIO_EC_I2C_E_SCL, GPIO_EC_I2C_E_SDA},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "mux",
+	  .port = IT83XX_I2C_CH_C,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_C_SCL,
+	  .sda = GPIO_EC_I2C_C_SDA },
+	{ .name = "batt",
+	  .port = IT83XX_I2C_CH_E,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_E_SCL,
+	  .sda = GPIO_EC_I2C_E_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		.drv = &it83xx_tcpm_drv
-	},
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		.drv = &it83xx_tcpm_drv
-	},
+	{ .bus_type = EC_BUS_TYPE_EMBEDDED, .drv = &it83xx_tcpm_drv },
+	{ .bus_type = EC_BUS_TYPE_EMBEDDED, .drv = &it83xx_tcpm_drv },
 };
 
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
@@ -112,11 +112,16 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 static void it83xx_tcpc_update_hpd_status(const struct usb_mux *me,
-					  int hpd_lvl, int hpd_irq)
+					  mux_state_t mux_state,
+					  bool *ack_required)
 {
-	enum gpio_signal gpio =
-		me->usb_port ? GPIO_USB_C1_HPD_1P8_ODL
-			     : GPIO_USB_C0_HPD_1P8_ODL;
+	int hpd_lvl = (mux_state & USB_PD_MUX_HPD_LVL) ? 1 : 0;
+	int hpd_irq = (mux_state & USB_PD_MUX_HPD_IRQ) ? 1 : 0;
+	enum gpio_signal gpio = me->usb_port ? GPIO_USB_C1_HPD_1P8_ODL :
+					       GPIO_USB_C0_HPD_1P8_ODL;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	hpd_lvl = !hpd_lvl;
 
@@ -128,20 +133,26 @@ static void it83xx_tcpc_update_hpd_status(const struct usb_mux *me,
 	}
 }
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.hpd_update = &it83xx_tcpc_update_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_MUX,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+				.hpd_update = &it83xx_tcpc_update_hpd_status,
+			},
 	},
 	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = 0x10,
-		.driver = &ps8740_usb_mux_driver,
-		.hpd_update = &it83xx_tcpc_update_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.i2c_port = I2C_PORT_USB_MUX,
+				.i2c_addr_flags = 0x10,
+				.driver = &ps8740_usb_mux_driver,
+				.hpd_update = &it83xx_tcpc_update_hpd_status,
+			},
 	},
 };
 
@@ -150,18 +161,18 @@ const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 };
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -208,7 +219,7 @@ static void board_set_tablet_mode(void)
 	 * Always report device isn't in tablet mode because
 	 * our id is clamshell and no TABLET_MODE_L pin
 	 */
-	tablet_set_mode(0);
+	tablet_set_mode(0, TABLET_TRIGGER_LID);
 }
 
 /* Initialize board. */
@@ -219,11 +230,12 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
 
 	/*
-	* Initialize HPD to low; after sysjump SOC needs to see
-	* HPD pulse to enable video path
-	*/
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
-		usb_mux_hpd_update(port, 0, 0);
+		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -287,8 +299,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Enable charging trigger by BC1.2 detection */
 	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
@@ -300,8 +312,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		return;
 
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**
@@ -380,22 +392,27 @@ void chipset_do_shutdown(void)
 		;
 }
 
+void board_reset_pd_mcu(void)
+{
+	/* do nothing */
+}
+
 void board_hibernate_late(void)
 {
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
+		{ GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN },
 
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
 		 * charge output in hibernate. Charger will assert ACOK_OD
 		 * when VBUS or VCC are plugged in.
 		 */
-		{GPIO_USB_C0_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
-		{GPIO_USB_C1_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
+		{ GPIO_USB_C0_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
+		{ GPIO_USB_C1_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
 	};
 
 	/* Change GPIOs' state in hibernate for better power consumption */
@@ -426,8 +443,8 @@ struct {
 	int thresh_mv;
 } const reef_it8320_board_versions[] = {
 	/* Vin = 3.3V, R1 = 46.4K, R2 values listed below */
-	{ BOARD_VERSION_1, 328 * 1.03 },  /* 5.11 Kohm */
-	{ BOARD_VERSION_2, 670 * 1.03 },  /* 11.8 Kohm */
+	{ BOARD_VERSION_1, 328 * 1.03 }, /* 5.11 Kohm */
+	{ BOARD_VERSION_2, 670 * 1.03 }, /* 11.8 Kohm */
 	{ BOARD_VERSION_3, 1012 * 1.03 }, /* 20.5 Kohm */
 	{ BOARD_VERSION_4, 1357 * 1.03 }, /* 32.4 Kohm */
 	{ BOARD_VERSION_5, 1690 * 1.03 }, /* 48.7 Kohm */
@@ -472,7 +489,7 @@ int board_get_version(void)
 }
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/*
 	 * F3 key scan cycle completed but scan input is not
 	 * charging to logic high when EC start scan next

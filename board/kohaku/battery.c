@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -6,6 +6,7 @@
  */
 
 #include "battery_fuel_gauge.h"
+#include "charge_state.h"
 #include "common.h"
 #include "system.h"
 #include "util.h"
@@ -32,6 +33,10 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
+
+/* charging current is limited to 0.45C */
+#define CHARGING_CURRENT_45C 2804
+
 const struct board_batt_params board_battery_info[] = {
 	/* Dyna Battery Information */
 	[BATTERY_DYNA] = {
@@ -105,4 +110,30 @@ enum battery_present variant_battery_present(void)
 	 * case the battery is not really present.
 	 */
 	return BP_YES;
+}
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return 0;
+
+	if (curr->requested_current > CHARGING_CURRENT_45C)
+		curr->requested_current = CHARGING_CURRENT_45C;
+
+	return 0;
+}
+
+/* Customs options controllable by host command. */
+#define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
 }

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIDANGLE, outstr)
-#define CPRINTS(format, args...) cprints(CC_LIDANGLE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LIDANGLE, format, ##args)
 
 /*
  * Define the number of previous lid angle measurements to keep for determining
@@ -50,7 +50,7 @@ static int wake_large_angle = 180;
 static const int wake_small_angle = 13;
 
 /* Define hysteresis value to add stability to the flags. */
-#define LID_ANGLE_HYSTERESIS_DEG  2
+#define LID_ANGLE_HYSTERESIS_DEG 2
 
 /* Define max and min values for wake_large_angle. */
 #define LID_ANGLE_MIN_LARGE_ANGLE 0
@@ -74,8 +74,8 @@ static int lid_in_range_to_enable_peripherals(int ang)
 	else if (wake_large_angle == LID_ANGLE_MAX_LARGE_ANGLE)
 		return 1;
 
-	return  (ang >= (wake_small_angle + LID_ANGLE_HYSTERESIS_DEG)) &&
-		(ang <= (wake_large_angle - LID_ANGLE_HYSTERESIS_DEG));
+	return (ang >= (wake_small_angle + LID_ANGLE_HYSTERESIS_DEG)) &&
+	       (ang <= (wake_large_angle - LID_ANGLE_HYSTERESIS_DEG));
 }
 
 /**
@@ -96,10 +96,9 @@ static int lid_in_range_to_ignore_peripherals(int ang)
 	else if (wake_large_angle == LID_ANGLE_MAX_LARGE_ANGLE)
 		return 0;
 
-	return  (ang <= (wake_small_angle - LID_ANGLE_HYSTERESIS_DEG)) ||
-		(ang >= (wake_large_angle + LID_ANGLE_HYSTERESIS_DEG));
+	return (ang <= (wake_small_angle - LID_ANGLE_HYSTERESIS_DEG)) ||
+	       (ang >= (wake_large_angle + LID_ANGLE_HYSTERESIS_DEG));
 }
-
 
 int lid_angle_get_wake_angle(void)
 {
@@ -125,7 +124,7 @@ void lid_angle_update(int lid_ang)
 
 	/* Record most recent lid angle in circular buffer. */
 	lidangle_buffer[index] = lid_ang;
-	index = (index == LID_ANGLE_BUFFER_SIZE-1) ? 0 : index+1;
+	index = (index == LID_ANGLE_BUFFER_SIZE - 1) ? 0 : index + 1;
 
 	/*
 	 * Manage whether or not peripherals are enabled based on lid angle
@@ -178,9 +177,25 @@ static void suspend_peripherals(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, suspend_peripherals, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_TABLET_MODE */
 
-/* Board level callback was not linked in test build, implement it here. */
 #ifdef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__overridable void lid_angle_peripheral_enable(int enable)
 {
 }
-#endif
+#else
+__overridable void lid_angle_peripheral_enable(int enable)
+{
+	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
+
+	if (enable) {
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+	} else {
+		/*
+		 * Ensure that the chipset is off before disabling the keyboard.
+		 * When the chipset is on, the EC keeps the keyboard enabled and
+		 * the AP decides whether to ignore input devices or not.
+		 */
+		if (!chipset_in_s0)
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
+	}
+}
+#endif /* TEST_BUILD */

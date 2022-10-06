@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,18 +16,9 @@
 #include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_PWM, outstr)
-#define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_PWM, format, ##args)
 
-/*
- * PWMs that must remain active in low-power idle -
- * PWM 0,1-8 are b[4,20:27] of MCHP_PCR_SLP_EN1
- * PWM 9 is b[31] of MCHP_PCR_SLP_EN3
- * PWM 10 - 11 are b[0:1] of MCHP_PCR_SLP_EN4
- * store 32-bit word with
- * b[0:1] = PWM 10-11
- * b[4,20:27] = PWM 0, 1-8
- * b[31] = PWM 9
- */
+/* Bit map of PWM channels that must remain active during low power idle. */
 static uint32_t pwm_keep_awake_mask;
 static uint32_t bbled_keep_awake_mask;
 
@@ -43,6 +34,7 @@ const uint8_t pwm_slp_bitpos[MCHP_PWM_ID_MAX + MCHP_BBLEN_INSTANCES] = {
 	25
 	#endif
 
+<<<<<<< HEAD
 };
 
 void bbled_set_limit(enum pwm_channel ch, uint8_t max, uint8_t min)
@@ -106,10 +98,20 @@ static uint32_t pwm_get_bb_sleep_mask(int id)
 	return (1ul << bitpos);
 }
 
+=======
+/* Table of PWM PCR sleep enable register index and bit position. */
+static const uint16_t pwm_pcr[] = {
+	MCHP_PCR_PWM0, MCHP_PCR_PWM1, MCHP_PCR_PWM2,
+	MCHP_PCR_PWM3, MCHP_PCR_PWM4, MCHP_PCR_PWM5,
+	MCHP_PCR_PWM6, MCHP_PCR_PWM7, MCHP_PCR_PWM8,
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_pcr) == MCHP_PWM_ID_MAX);
+>>>>>>> chromium/main
 
 void pwm_enable(enum pwm_channel ch, int enabled)
 {
 	int id = pwm_channels[ch].channel;
+<<<<<<< HEAD
 	uint32_t pwm_slp_mask;
 
 	if (id < MCHP_PWM_ID_MAX) {
@@ -136,6 +138,16 @@ void pwm_enable(enum pwm_channel ch, int enabled)
 			MCHP_BBLED_CONFIG(id) &= ~MCHP_BBLED_CTRL_MASK;
 			bbled_keep_awake_mask &= ~pwm_slp_mask;
 		}
+=======
+
+	if (enabled) {
+		MCHP_PWM_CFG(id) |= BIT(0);
+		if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP)
+			pwm_keep_awake_mask |= BIT(id);
+	} else {
+		MCHP_PWM_CFG(id) &= ~BIT(0);
+		pwm_keep_awake_mask &= ~BIT(id);
+>>>>>>> chromium/main
 	}
 }
 
@@ -186,16 +198,11 @@ int pwm_get_duty(enum pwm_channel ch)
 void pwm_keep_awake(void)
 {
 	if (pwm_keep_awake_mask) {
-		/* b[4,20:27] */
-		MCHP_PCR_SLP_EN1 &= ~(pwm_keep_awake_mask &
-					 (MCHP_PCR_SLP_EN1_PWM_ALL));
-		/* b[31] */
-		MCHP_PCR_SLP_EN3 &= ~(pwm_keep_awake_mask &
-					 (MCHP_PCR_SLP_EN3_PWM_ALL));
-		/* b[1:0] */
-		MCHP_PCR_SLP_EN4 &= ~(pwm_keep_awake_mask &
-					 (MCHP_PCR_SLP_EN4_PWM_ALL));
+		for (uint32_t i = 0; i < MCHP_PWM_ID_MAX; i++)
+			if (pwm_keep_awake_mask & BIT(i))
+				MCHP_PCR_SLP_DIS_DEV(pwm_pcr[i]);
 	} else {
+<<<<<<< HEAD
 		/*Disable 100khz clock - this is shared with tach*/
 		MCHP_PCR_SLOW_CLK_CTL &= ~MCHP_PCR_SLOW_CLK_CTL_MASK;
 	}
@@ -259,6 +266,24 @@ static const uint16_t pwm_pcr[MCHP_PWM_ID_MAX + MCHP_BBLEN_INSTANCES] = {
 };
 
 void pwm_slp_en(int pwm_id, int sleep_en)
+=======
+		MCHP_PCR_SLOW_CLK_CTL &= ~(MCHP_PCR_SLOW_CLK_CTL_MASK);
+	}
+}
+
+/*
+ * clock_low=0 selects the 48MHz Ring Oscillator source
+ * clock_low=1 selects the 100kHz_Clk source
+ */
+static void pwm_configure(int ch, int active_low, int clock_low)
+{
+	MCHP_PWM_CFG(ch) = (15 << 3) /* divider = 16 */
+			   | (active_low ? BIT(2) : 0) |
+			   (clock_low ? BIT(1) : 0);
+}
+
+static void pwm_slp_en(int pwm_id, int sleep_en)
+>>>>>>> chromium/main
 {
 	if ((pwm_id < 0) || (pwm_id > (MCHP_PWM_ID_MAX + MCHP_BBLEN_INSTANCES)))
 		return;

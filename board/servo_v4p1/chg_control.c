@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,8 +8,9 @@
 #include "ioexpanders.h"
 #include "registers.h"
 #include "timer.h"
+#include "usb_pd.h"
 
-#define CHG_P5V_POWER  0
+#define CHG_P5V_POWER 0
 #define CHG_VBUS_POWER 1
 
 void chg_reset(void)
@@ -20,7 +21,8 @@ void chg_reset(void)
 	/* Disconnect CHG CC1(Rd) and CC2(Rd) */
 	chg_attach_cc_rds(0);
 
-	msleep(100);
+	/* Give time for CHG to detach, use tErrorRecovery. */
+	msleep(PD_T_ERROR_RECOVERY);
 
 	/* Connect CHG CC1(Rd) and CC2(Rd) to detect charger */
 	chg_attach_cc_rds(1);
@@ -53,9 +55,11 @@ void chg_attach_cc_rds(bool en)
 		 * Configure USB_CHG_CC1_MCU and USB_CHG_CC2_MCU as
 		 * ANALOG input
 		 */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-			| (3 << (2*2)) | /* PA2 in ANALOG mode */
-			  (3 << (2*4))); /* PA4 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) | (3 << (2 * 2)) | /* PA2 in
+									ANALOG
+									mode */
+			 (3 << (2 * 4))); /* PA4 in ANALOG mode */
 	} else {
 		/*
 		 * Configure USB_CHG_CC1_MCU and USB_CHG_CC2_MCU as GPIO and
@@ -69,10 +73,12 @@ void chg_attach_cc_rds(bool en)
 		gpio_set_level(GPIO_USB_CHG_CC2_MCU, 1);
 
 		/* Disable Analog mode and Enable GPO */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-			& ~(3 << (2*2) | /* PA2 disable ADC */
-			    3 << (2*4))) /* PA4 disable ADC */
-			|  (1 << (2*2) | /* Set as GPO */
-			    1 << (2*4)); /* Set as GPO */
+		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A) &
+					    ~(3 << (2 * 2) | /* PA2 disable ADC
+							      */
+					      3 << (2 * 4))) /* PA4 disable ADC
+							      */
+					   | (1 << (2 * 2) | /* Set as GPO */
+					      1 << (2 * 4)); /* Set as GPO */
 	}
 }

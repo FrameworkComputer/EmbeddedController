@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,8 +17,8 @@ extern void clear_fabric_error(void);
 extern void i2c_port_restore(void);
 extern void lapic_restore(void);
 
-#define FABRIC_IDLE_COUNT	50
-#define TRUNK_CLKGATE_COUNT	0xf
+#define FABRIC_IDLE_COUNT 50
+#define TRUNK_CLKGATE_COUNT 0xf
 
 /* power states for ISH */
 enum ish_pm_state {
@@ -58,8 +58,7 @@ static inline void ish_mia_halt(void)
 }
 
 /* reset ISH mintue-ia cpu core  */
-noreturn
-static inline void ish_mia_reset(void)
+noreturn static inline void ish_mia_reset(void)
 {
 	/**
 	 * ISH HW looks at the rising edge of this bit to

@@ -1,0 +1,21 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig I2C_MOCK
+	bool "Mock implementation of an I2C device"
+	default y
+	depends on DT_HAS_CROS_I2C_MOCK_ENABLED
+	depends on I2C_EMUL
+	help
+	  Enable the I2C mock. This driver is a pure mock and does nothing by
+	  default. It is used to test common i2c code. Mock API is available in
+	  zephyr/include/emul/i2c_mock.h
+
+if I2C_MOCK
+
+module = I2C_MOCK
+module-str = i2c_mock
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # I2C_MOCK

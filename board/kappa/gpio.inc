@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,8 +21,6 @@ GPIO_INT(PMIC_EC_RESETB,    PIN(B, 7),  GPIO_INT_BOTH | GPIO_PULL_DOWN,
          power_signal_interrupt)
 GPIO_INT(WARM_RESET_REQ,    PIN(A, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          chipset_reset_request_interrupt)
-GPIO_INT_RW(ACCEL_INT_ODL,  PIN(A, 4), GPIO_INT_FALLING | GPIO_SEL_1P8V | GPIO_PULL_UP,
-         bmi160_interrupt)
 GPIO_INT_RO(EMMC_CMD,       PIN(B, 15), GPIO_INT_FALLING,
          emmc_cmd_interrupt)
 GPIO_INT(SPI1_NSS,          PIN(A, 15), GPIO_INT_BOTH | GPIO_PULL_UP,
@@ -37,8 +35,6 @@ GPIO_INT(IT8801_SMB_INT,    PIN(A, 8),  GPIO_INT_FALLING | GPIO_PULL_UP,
          io_expander_it8801_interrupt) /* KB_INT_ODL */
 GPIO_INT(AP_EC_WATCHDOG_L,  PIN(D, 2),  GPIO_INT_FALLING,
          chipset_watchdog_interrupt)
-GPIO_INT(TABLET_MODE_L,     PIN(B, 11), GPIO_INT_BOTH,
-         gmr_tablet_switch_isr)
 
 /* Unimplemented interrupts */
 GPIO(ALS_RGB_INT_ODL,      PIN(C, 10), GPIO_INPUT)

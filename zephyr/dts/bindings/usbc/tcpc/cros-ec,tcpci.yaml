@@ -1,0 +1,5 @@
+description: USBC TCPC
+
+compatible: "cros-ec,tcpci"
+
+include: i2c-device.yaml

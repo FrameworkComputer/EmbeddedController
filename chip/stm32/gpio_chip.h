@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,4 +19,5 @@ void gpio_enable_clocks(void);
  */
 int gpio_required_clocks(void);
 
-#endif  /* __CROS_EC_CHIP_STM32_GPIO_CHIP_H */
+void __keep gpio_interrupt(void);
+#endif /* __CROS_EC_CHIP_STM32_GPIO_CHIP_H */

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,6 +8,7 @@
  */
 
 #include "console.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "flash.h"
 #include "host_command.h"
@@ -22,38 +23,36 @@
 #include "util.h"
 #include "vb21_struct.h"
 #include "vboot.h"
-#include "version.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 #if !defined(CONFIG_MAPPED_STORAGE)
 #error rwsig implementation assumes mem-mapped storage.
 #endif
 
 /* RW firmware reset vector */
-static uint32_t * const rw_rst =
+static uint32_t *const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);
-
 
 void rwsig_jump_now(void)
 {
 	/* Protect all flash before jumping to RW. */
 
 	/* This may do nothing if WP is not enabled, RO is not protected. */
-	flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
+	crec_flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
 
 	/*
 	 * For chips that does not support EC_FLASH_PROTECT_ALL_NOW, use
 	 * EC_FLASH_PROTECT_ALL_AT_BOOT.
 	 */
 	if (system_is_locked() &&
-	    !(flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)) {
-		flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
+	    !(crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)) {
+		crec_flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
 
-		if (!(flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW) &&
-		    flash_get_protect() & EC_FLASH_PROTECT_ALL_AT_BOOT) {
+		if (!(crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW) &&
+		    crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_AT_BOOT) {
 			/*
 			 * If flash protection is still not enabled (some chips
 			 * may be able to enable it immediately), reboot.
@@ -66,7 +65,7 @@ void rwsig_jump_now(void)
 
 	/* When system is locked, only boot to RW if all flash is protected. */
 	if (!system_is_locked() ||
-	    flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+	    crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		system_run_image_copy(EC_IMAGE_RW);
 }
 
@@ -74,8 +73,8 @@ void rwsig_jump_now(void)
  * Check that memory between rwdata[start] and rwdata[len-1] is filled
  * with ones. data, start and len must be aligned on 4-byte boundary.
  */
-static int check_padding(const uint8_t *data,
-			 unsigned int start, unsigned int len)
+static int check_padding(const uint8_t *data, unsigned int start,
+			 unsigned int len)
 {
 	unsigned int i;
 	const uint32_t *data32 = (const uint32_t *)data;
@@ -83,7 +82,7 @@ static int check_padding(const uint8_t *data,
 	if ((start % 4) != 0 || (len % 4) != 0)
 		return 0;
 
-	for (i = start/4; i < len/4; i++) {
+	for (i = start / 4; i < len / 4; i++) {
 		if (data32[i] != 0xffffffff)
 			return 0;
 	}
@@ -99,8 +98,8 @@ int rwsig_check_signature(void)
 	const uint8_t *sig;
 	uint8_t *hash;
 	uint32_t *rsa_workbuf = NULL;
-	const uint8_t *rwdata = (uint8_t *)CONFIG_PROGRAM_MEMORY_BASE
-					+ CONFIG_RW_MEM_OFF;
+	const uint8_t *rwdata =
+		(uint8_t *)CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF;
 	int good = 0;
 
 	unsigned int rwlen;
@@ -125,8 +124,8 @@ int rwsig_check_signature(void)
 
 	if (rw_rollback_version < 0 || min_rollback_version < 0 ||
 	    rw_rollback_version < min_rollback_version) {
-		CPRINTS("Rollback error (%d < %d)",
-			rw_rollback_version, min_rollback_version);
+		CPRINTS("Rollback error (%d < %d)", rw_rollback_version,
+			min_rollback_version);
 		goto out;
 	}
 #endif
@@ -152,8 +151,8 @@ int rwsig_check_signature(void)
 		goto out;
 	}
 
-	key = (const struct rsa_public_key *)
-		((const uint8_t *)vb21_key + vb21_key->key_offset);
+	key = (const struct rsa_public_key *)((const uint8_t *)vb21_key +
+					      vb21_key->key_offset);
 
 	/*
 	 * TODO(crbug.com/690773): We could verify other parameters such
@@ -179,7 +178,7 @@ int rwsig_check_signature(void)
 	 * Check that unverified RW region is actually filled with ones.
 	 */
 	good = check_padding(rwdata, rwlen,
-			CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE);
+			     CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE);
 	if (!good) {
 		CPRINTS("Invalid padding.");
 		goto out;
@@ -207,10 +206,10 @@ int rwsig_check_signature(void)
 	 */
 	if (rw_rollback_version != min_rollback_version
 #ifdef CONFIG_FLASH_PROTECT_RW
-		&& ((!system_is_locked() ||
-				flash_get_protect() & EC_FLASH_PROTECT_RW_NOW))
+	    && ((!system_is_locked() ||
+		 crec_flash_get_protect() & EC_FLASH_PROTECT_RW_NOW))
 #endif
-			) {
+	) {
 		/*
 		 * This will fail if the rollback block is protected (RW image
 		 * will unprotect that block later on).
@@ -218,8 +217,7 @@ int rwsig_check_signature(void)
 		int ret = rollback_update_version(rw_rollback_version);
 
 		if (ret == 0) {
-			CPRINTS("Rollback updated to %d",
-				rw_rollback_version);
+			CPRINTS("Rollback updated to %d", rw_rollback_version);
 		} else if (ret != EC_ERROR_ACCESS_DENIED) {
 			CPRINTS("Rollback update error %d", ret);
 			good = 0;
@@ -254,12 +252,12 @@ enum rwsig_status rwsig_get_status(void)
 
 void rwsig_abort(void)
 {
-	task_set_event(TASK_ID_RWSIG, TASK_EVENT_ABORT, 0);
+	task_set_event(TASK_ID_RWSIG, TASK_EVENT_ABORT);
 }
 
 void rwsig_continue(void)
 {
-	task_set_event(TASK_ID_RWSIG, TASK_EVENT_CONTINUE, 0);
+	task_set_event(TASK_ID_RWSIG, TASK_EVENT_CONTINUE);
 }
 
 void rwsig_task(void *u)
@@ -297,7 +295,7 @@ exit:
 		task_wait_event(-1);
 }
 
-enum ec_status rwsig_cmd_action(struct host_cmd_handler_args *args)
+static enum ec_status rwsig_cmd_action(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_rwsig_action *p = args->params;
 
@@ -314,12 +312,10 @@ enum ec_status rwsig_cmd_action(struct host_cmd_handler_args *args)
 	args->response_size = 0;
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RWSIG_ACTION,
-		     rwsig_cmd_action,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RWSIG_ACTION, rwsig_cmd_action, EC_VER_MASK(0));
 
 #else /* !HAS_TASK_RWSIG */
-enum ec_status rwsig_cmd_check_status(struct host_cmd_handler_args *args)
+static enum ec_status rwsig_cmd_check_status(struct host_cmd_handler_args *args)
 {
 	struct ec_response_rwsig_check_status *r = args->response;
 
@@ -329,7 +325,6 @@ enum ec_status rwsig_cmd_check_status(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RWSIG_CHECK_STATUS,
-		     rwsig_cmd_check_status,
+DECLARE_HOST_COMMAND(EC_CMD_RWSIG_CHECK_STATUS, rwsig_cmd_check_status,
 		     EC_VER_MASK(0));
 #endif

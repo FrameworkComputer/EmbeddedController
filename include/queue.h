@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -75,9 +75,9 @@ struct queue {
 
 	struct queue_policy const *policy;
 
-	size_t  buffer_units; /* size of buffer (in units) */
-	size_t  buffer_units_mask; /* size of buffer (in units) - 1*/
-	size_t  unit_bytes;   /* size of unit   (in byte) */
+	size_t buffer_units; /* size of buffer (in units) */
+	size_t buffer_units_mask; /* size of buffer (in units) - 1*/
+	size_t unit_bytes; /* size of unit   (in byte) */
 	uint8_t *buffer;
 };
 
@@ -86,14 +86,14 @@ struct queue {
  * and state structure.  This macro creates a compound literal that can be used
  * to statically initialize a queue.
  */
-#define QUEUE(SIZE, TYPE, POLICY)				\
-	((struct queue) {					\
-		.state        = &((struct queue_state){}),	\
-		.policy       = &POLICY,			\
+#define QUEUE(SIZE, TYPE, POLICY)                                             \
+	((struct queue){                                                      \
+		.state = &((struct queue_state){}),                           \
+		.policy = &POLICY,                                            \
 		.buffer_units = BUILD_CHECK_INLINE(SIZE, POWER_OF_TWO(SIZE)), \
-		.buffer_units_mask = SIZE - 1,			\
-		.unit_bytes   = sizeof(TYPE),			\
-		.buffer       = (uint8_t *) &((TYPE[SIZE]){}),	\
+		.buffer_units_mask = SIZE - 1,                                \
+		.unit_bytes = sizeof(TYPE),                                   \
+		.buffer = (uint8_t *)&((TYPE[SIZE]){}),                       \
 	})
 
 /* Initialize the queue to empty state. */
@@ -143,7 +143,7 @@ void queue_next(struct queue const *q, struct queue_iterator *it);
  * buffer units.
  */
 struct queue_chunk {
-	size_t  count;
+	size_t count;
 	void *buffer;
 };
 
@@ -206,12 +206,8 @@ size_t queue_add_unit(struct queue const *q, const void *src);
 size_t queue_add_units(struct queue const *q, const void *src, size_t count);
 
 /* Add multiple units to queue using supplied memcpy. */
-size_t queue_add_memcpy(struct queue const *q,
-			const void *src,
-			size_t count,
-			void *(*memcpy)(void *dest,
-					const void *src,
-					size_t n));
+size_t queue_add_memcpy(struct queue const *q, const void *src, size_t count,
+			void *(*memcpy)(void *dest, const void *src, size_t n));
 
 /* Remove one unit from the begin of the queue. */
 size_t queue_remove_unit(struct queue const *q, void *dest);
@@ -220,27 +216,18 @@ size_t queue_remove_unit(struct queue const *q, void *dest);
 size_t queue_remove_units(struct queue const *q, void *dest, size_t count);
 
 /* Remove multiple units from the begin of the queue using supplied memcpy. */
-size_t queue_remove_memcpy(struct queue const *q,
-			   void *dest,
-			   size_t count,
-			   void *(*memcpy)(void *dest,
-					   const void *src,
+size_t queue_remove_memcpy(struct queue const *q, void *dest, size_t count,
+			   void *(*memcpy)(void *dest, const void *src,
 					   size_t n));
 
 /* Peek (return but don't remove) the count elements starting with the i'th. */
-size_t queue_peek_units(struct queue const *q,
-			void *dest,
-			size_t i,
+size_t queue_peek_units(struct queue const *q, void *dest, size_t i,
 			size_t count);
 
 /* Peek (return but don't remove) the count elements starting with the i'th. */
-size_t queue_peek_memcpy(struct queue const *q,
-			 void *dest,
-			 size_t i,
-			 size_t count,
-			 void *(*memcpy)(void *dest,
-				const void *src,
-				size_t n));
+size_t
+queue_peek_memcpy(struct queue const *q, void *dest, size_t i, size_t count,
+		  void *(*memcpy)(void *dest, const void *src, size_t n));
 
 /*
  * These macros will statically select the queue functions based on the number
@@ -248,28 +235,28 @@ size_t queue_peek_memcpy(struct queue const *q,
  * and remove functions are much faster than calling the equivalent generic
  * version with a count of one.
  */
-#define QUEUE_ADD_UNITS(q, src, count)					\
-	({								\
-		size_t result;						\
-									\
-		if (count == 1)						\
-			result = queue_add_unit(q, src);		\
-		else							\
-			result = queue_add_units(q, src, count);	\
-									\
-		result;							\
+#define QUEUE_ADD_UNITS(q, src, count)                           \
+	({                                                       \
+		size_t result;                                   \
+                                                                 \
+		if (count == 1)                                  \
+			result = queue_add_unit(q, src);         \
+		else                                             \
+			result = queue_add_units(q, src, count); \
+                                                                 \
+		result;                                          \
 	})
 
-#define QUEUE_REMOVE_UNITS(q, dest, count)				\
-	({								\
-		size_t result;						\
-									\
-		if (count == 1)						\
-			result = queue_remove_unit(q, dest);		\
-		else							\
-			result = queue_remove_units(q, dest, count);	\
-									\
-		result;							\
+#define QUEUE_REMOVE_UNITS(q, dest, count)                           \
+	({                                                           \
+		size_t result;                                       \
+                                                                     \
+		if (count == 1)                                      \
+			result = queue_remove_unit(q, dest);         \
+		else                                                 \
+			result = queue_remove_units(q, dest, count); \
+                                                                     \
+		result;                                              \
 	})
 
 #endif /* __CROS_EC_QUEUE_H */

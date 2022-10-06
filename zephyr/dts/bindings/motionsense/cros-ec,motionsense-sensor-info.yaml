@@ -1,0 +1,56 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: The node has the information required by motion sense running
+
+compatible: "cros-ec,motionsense-sensor-info"
+
+properties:
+  als-sensors:
+    type: phandles
+    required: false
+    description: |
+        List of ALS sensors to create motion_als_sensors array.
+        The ALS sensors listed in the motion_als_sensors array
+        are managed by motion sense task. The task reads the sensor
+        data from the sensors and put them into the designated part
+        in the ec mmap. For example, als_clear and als_rgb are aliases
+        of ALS sensor noded defined in motionsense-sensor node.
+        als-sensors = <&als_clear, &als_rgb>;
+        This will automatically generate motion_als_sensors array from it.
+  sensor-irqs:
+    type: phandles
+    required: false
+    description: |
+        List of interrupts from sensors GPIOS to be enabled.
+        Interrupts specified here will be enabled before motion sense task starts.
+        sensor-irqs = <&int_imu &int_als_rgb>;
+  accel-force-mode-sensors:
+    type: phandles
+    required: false
+    description: |
+        List of sensors should be handled in force mode. Sensors listed will be
+        used to define CONFIG_ACCEL_FORCE_MODE_MASK so that motion sense task can
+        manage them in force mode.
+        accel-force-mode-sensors = <&lid_accel &als_clear>;
+
+#
+# examples:
+#
+# motionsense-sensor-info {
+#        compatible = "cros-ec,motionsense-sensor-info";
+#
+#        /* list of entries for motion_als_sensors */
+#        als-sensors = <&als_clear>;
+#
+#        /*
+#         * list of GPIO interrupts that have to
+#         * be enabled at initial stage
+#         */
+#        sensor-irqs = <&gpio_ec_imu_int_l &gpio_ec_als_rgb_int_l>;
+#
+#        /* list of sensors in force mode */
+#        accel-force-mode-sensors = <&lid_accel &als_clear>;
+# };
+#

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -88,8 +88,7 @@ static enum cts_rc test_ticks(void)
 	msleep(1300);
 
 	interval = tick_time[1].val - tick_time[0].val;
-	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 /
-		    HOOK_TICK_INTERVAL;
+	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 / HOOK_TICK_INTERVAL;
 	if (error_pct < -10 || 10 < error_pct) {
 		CPRINTS("tick error=%d%% interval=%lld", error_pct, interval);
 		return CTS_RC_FAILURE;
@@ -142,8 +141,8 @@ static enum cts_rc test_deferred(void)
 
 	/* Invalid deferred function */
 	deferred_call_count = 0;
-	if (hook_call_deferred(&invalid_deferred_func_data, 50 * MSEC)
-			== EC_SUCCESS) {
+	if (hook_call_deferred(&invalid_deferred_func_data, 50 * MSEC) ==
+	    EC_SUCCESS) {
 		CPRINTL("non_deferred_func_data");
 		return CTS_RC_FAILURE;
 	}

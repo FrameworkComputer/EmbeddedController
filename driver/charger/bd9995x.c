@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -15,13 +15,14 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "panic.h"
 #include "task.h"
 #include "time.h"
 #include "util.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 
-#define OTPROM_LOAD_WAIT_RETRY	3
+#define OTPROM_LOAD_WAIT_RETRY 3
 
 #define BD9995X_CHARGE_PORT_COUNT 2
 
@@ -29,11 +30,11 @@
  * BC1.2 detection starts 100ms after VBUS/VCC attach and typically
  * completes 312ms after VBUS/VCC attach.
  */
-#define BC12_DETECT_US (312*MSEC)
+#define BC12_DETECT_US (312 * MSEC)
 #define BD9995X_VSYS_PRECHARGE_OFFSET_MV 200
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 #ifdef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
 /*
@@ -44,18 +45,18 @@
 #define VBUS_DELTA 1000
 
 /* VBUS is debounced if it's stable for this length of time */
-#define VBUS_MSEC (100*MSEC)
+#define VBUS_MSEC (100 * MSEC)
 
 /* VBUS debouncing sample interval */
-#define VBUS_CHECK_MSEC (10*MSEC)
+#define VBUS_CHECK_MSEC (10 * MSEC)
 
 /* Time to wait before VBUS debouncing begins */
-#define STABLE_TIMEOUT (500*MSEC)
+#define STABLE_TIMEOUT (500 * MSEC)
 
 /* Maximum time to wait until VBUS is debounced */
-#define DEBOUNCE_TIMEOUT (500*MSEC)
+#define DEBOUNCE_TIMEOUT (500 * MSEC)
 
-enum vstate {START, STABLE, DEBOUNCE};
+enum vstate { START, STABLE, DEBOUNCE };
 static enum vstate vbus_state;
 
 static int vbus_voltage;
@@ -67,16 +68,29 @@ static int select_input_port_update;
 #endif
 
 /* Charger parameters */
+#define CHARGER_NAME BD9995X_CHARGER_NAME
+#define CHARGE_V_MAX 19200
+#define CHARGE_V_MIN 3072
+#define CHARGE_V_STEP 16
+#define CHARGE_I_MAX 16320
+#define CHARGE_I_MIN 128
+#define CHARGE_I_OFF 0
+#define CHARGE_I_STEP 64
+#define INPUT_I_MAX 16352
+#define INPUT_I_MIN 512
+#define INPUT_I_STEP 32
+
+/* Charger parameters */
 static const struct charger_info bd9995x_charger_info = {
-	.name         = CHARGER_NAME,
-	.voltage_max  = CHARGE_V_MAX,
-	.voltage_min  = CHARGE_V_MIN,
+	.name = CHARGER_NAME,
+	.voltage_max = CHARGE_V_MAX,
+	.voltage_min = CHARGE_V_MIN,
 	.voltage_step = CHARGE_V_STEP,
-	.current_max  = CHARGE_I_MAX,
-	.current_min  = CHARGE_I_MIN,
+	.current_max = CHARGE_I_MAX,
+	.current_min = CHARGE_I_MIN,
 	.current_step = CHARGE_I_STEP,
-	.input_current_max  = INPUT_I_MAX,
-	.input_current_min  = INPUT_I_MIN,
+	.input_current_max = INPUT_I_MAX,
+	.input_current_min = INPUT_I_MIN,
 	.input_current_step = INPUT_I_STEP,
 };
 
@@ -151,8 +165,7 @@ static inline enum ec_error_list ch_raw_read16(int chgnum, int cmd, int *param,
 	}
 
 	rv = i2c_read16(chg_chips[chgnum].i2c_port,
-			chg_chips[chgnum].i2c_addr_flags,
-			cmd, param);
+			chg_chips[chgnum].i2c_addr_flags, cmd, param);
 
 bd9995x_read_cleanup:
 	mutex_unlock(&bd9995x_map_mutex);
@@ -180,8 +193,7 @@ static inline enum ec_error_list ch_raw_write16(int chgnum, int cmd, int param,
 	}
 
 	rv = i2c_write16(chg_chips[chgnum].i2c_port,
-			 chg_chips[chgnum].i2c_addr_flags,
-			 cmd, param);
+			 chg_chips[chgnum].i2c_addr_flags, cmd, param);
 
 bd9995x_write_cleanup:
 	mutex_unlock(&bd9995x_map_mutex);
@@ -193,12 +205,11 @@ bd9995x_write_cleanup:
 
 static int bd9995x_set_vfastchg(int chgnum, int voltage)
 {
-
 	int rv;
 
 	/* Fast Charge Voltage Regulation Settings for fast charging. */
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_VFASTCHG_REG_SET1,
-			voltage & 0x7FF0, BD9995X_EXTENDED_COMMAND);
+			    voltage & 0x7FF0, BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -208,12 +219,12 @@ static int bd9995x_set_vfastchg(int chgnum, int voltage)
 	 * to same voltage.
 	 */
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_VFASTCHG_REG_SET2,
-			voltage & 0x7FF0, BD9995X_EXTENDED_COMMAND);
+			    voltage & 0x7FF0, BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_VFASTCHG_REG_SET3,
-			voltage & 0x7FF0, BD9995X_EXTENDED_COMMAND);
+			    voltage & 0x7FF0, BD9995X_EXTENDED_COMMAND);
 #endif
 
 	return rv;
@@ -233,7 +244,7 @@ static int bd9995x_is_discharging_on_ac(int chgnum)
 	int reg;
 
 	if (ch_raw_read16(chgnum, BD9995X_CMD_CHGOP_SET2, &reg,
-				BD9995X_EXTENDED_COMMAND))
+			  BD9995X_EXTENDED_COMMAND))
 		return 0;
 
 	return !!(reg & BD9995X_CMD_CHGOP_SET2_BATT_LEARN);
@@ -279,8 +290,9 @@ static int bd9995x_charger_enable(int chgnum, int enable)
 		 * Set VSYSREG_SET > VBAT so that the charger is in Pre-Charge
 		 * state when not charging or discharging.
 		 */
-		rv = bd9995x_set_vsysreg(chgnum, bi->voltage_max +
-					 BD9995X_VSYS_PRECHARGE_OFFSET_MV);
+		rv = bd9995x_set_vsysreg(
+			chgnum,
+			bi->voltage_max + BD9995X_VSYS_PRECHARGE_OFFSET_MV);
 
 		/*
 		 * Allow charger in pre-charge state for 50ms before disabling
@@ -293,7 +305,7 @@ static int bd9995x_charger_enable(int chgnum, int enable)
 		return rv;
 
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_CHGOP_SET2, &reg,
-				BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -303,7 +315,7 @@ static int bd9995x_charger_enable(int chgnum, int enable)
 		reg &= ~BD9995X_CMD_CHGOP_SET2_CHG_EN;
 
 	return ch_raw_write16(chgnum, BD9995X_CMD_CHGOP_SET2, reg,
-				BD9995X_EXTENDED_COMMAND);
+			      BD9995X_EXTENDED_COMMAND);
 }
 
 static int bd9995x_por_reset(int chgnum)
@@ -313,9 +325,9 @@ static int bd9995x_por_reset(int chgnum)
 	int i;
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_SYSTEM_CTRL_SET,
-			BD9995X_CMD_SYSTEM_CTRL_SET_OTPLD |
-			BD9995X_CMD_SYSTEM_CTRL_SET_ALLRST,
-			BD9995X_EXTENDED_COMMAND);
+			    BD9995X_CMD_SYSTEM_CTRL_SET_OTPLD |
+				    BD9995X_CMD_SYSTEM_CTRL_SET_ALLRST,
+			    BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -323,10 +335,10 @@ static int bd9995x_por_reset(int chgnum)
 	for (i = 0; i < OTPROM_LOAD_WAIT_RETRY; i++) {
 		msleep(10);
 		rv = ch_raw_read16(chgnum, BD9995X_CMD_SYSTEM_STATUS, &reg,
-				BD9995X_EXTENDED_COMMAND);
+				   BD9995X_EXTENDED_COMMAND);
 
 		if (!rv && (reg & BD9995X_CMD_SYSTEM_STATUS_OTPLD_STATE) &&
-			(reg & BD9995X_CMD_SYSTEM_STATUS_ALLRST_STATE))
+		    (reg & BD9995X_CMD_SYSTEM_STATUS_ALLRST_STATE))
 			break;
 	}
 
@@ -336,7 +348,7 @@ static int bd9995x_por_reset(int chgnum)
 		return EC_ERROR_TIMEOUT;
 
 	return ch_raw_write16(chgnum, BD9995X_CMD_SYSTEM_CTRL_SET, 0,
-				BD9995X_EXTENDED_COMMAND);
+			      BD9995X_EXTENDED_COMMAND);
 }
 
 static int bd9995x_reset_to_zero(int chgnum)
@@ -353,7 +365,7 @@ static int bd9995x_reset_to_zero(int chgnum)
 static int bd9995x_get_charger_op_status(int chgnum, int *status)
 {
 	return ch_raw_read16(chgnum, BD9995X_CMD_CHGOP_STATUS, status,
-				BD9995X_EXTENDED_COMMAND);
+			     BD9995X_EXTENDED_COMMAND);
 }
 
 #ifdef HAS_TASK_USB_CHG
@@ -366,10 +378,11 @@ static int bd9995x_get_bc12_device_type(int chgnum, int port)
 	int rv;
 	int reg;
 
-	rv = ch_raw_read16(chgnum, (port == BD9995X_CHARGE_PORT_VBUS) ?
-				BD9995X_CMD_VBUS_UCD_STATUS :
-				BD9995X_CMD_VCC_UCD_STATUS,
-				&reg, BD9995X_EXTENDED_COMMAND);
+	rv = ch_raw_read16(chgnum,
+			   (port == BD9995X_CHARGE_PORT_VBUS) ?
+				   BD9995X_CMD_VBUS_UCD_STATUS :
+				   BD9995X_CMD_VCC_UCD_STATUS,
+			   &reg, BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return CHARGE_SUPPLIER_NONE;
 
@@ -402,7 +415,8 @@ static int bd9995x_update_ucd_set_reg(int chgnum, int port, uint16_t mask,
 	int rv;
 	int reg;
 	int port_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
-		BD9995X_CMD_VBUS_UCD_SET : BD9995X_CMD_VCC_UCD_SET;
+			       BD9995X_CMD_VBUS_UCD_SET :
+			       BD9995X_CMD_VCC_UCD_SET;
 
 	mutex_lock(&ucd_set_mutex[port]);
 	rv = ch_raw_read16(chgnum, port_reg, &reg, BD9995X_EXTENDED_COMMAND);
@@ -471,32 +485,33 @@ static int bd9995x_enable_vbus_detect_interrupts(int chgnum, int port,
 
 	/* 1st Level Interrupt Setting */
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_INT0_SET, &reg,
-			BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
 	mask_val = ((port == BD9995X_CHARGE_PORT_VBUS) ?
-			BD9995X_CMD_INT0_SET_INT1_EN :
-			BD9995X_CMD_INT0_SET_INT2_EN) |
-			BD9995X_CMD_INT0_SET_INT0_EN;
+			    BD9995X_CMD_INT0_SET_INT1_EN :
+			    BD9995X_CMD_INT0_SET_INT2_EN) |
+		   BD9995X_CMD_INT0_SET_INT0_EN;
 	if (enable)
 		reg |= mask_val;
 	else
 		reg &= ~mask_val;
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_INT0_SET, reg,
-			BD9995X_EXTENDED_COMMAND);
+			    BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
 	/* 2nd Level Interrupt Setting */
-	port_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
-			BD9995X_CMD_INT1_SET : BD9995X_CMD_INT2_SET;
+	port_reg = (port == BD9995X_CHARGE_PORT_VBUS) ? BD9995X_CMD_INT1_SET :
+							BD9995X_CMD_INT2_SET;
 	rv = ch_raw_read16(chgnum, port_reg, &reg, BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
-	/* Enable threshold interrupts if we need to control discharge */
+		/* Enable threshold interrupts if we need to control discharge
+		 */
 #ifdef CONFIG_USB_PD_DISCHARGE
 	mask_val = BD9995X_CMD_INT_VBUS_DET | BD9995X_CMD_INT_VBUS_TH;
 #else
@@ -518,7 +533,8 @@ static int bd9995x_get_interrupts(int chgnum, int port)
 	int port_reg;
 
 	port_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
-			BD9995X_CMD_INT1_STATUS : BD9995X_CMD_INT2_STATUS;
+			   BD9995X_CMD_INT1_STATUS :
+			   BD9995X_CMD_INT2_STATUS;
 
 	rv = ch_raw_read16(chgnum, port_reg, &reg, BD9995X_EXTENDED_COMMAND);
 
@@ -540,8 +556,8 @@ static int bd9995x_bc12_detect(int chgnum, int port, int enable)
 {
 	return bd9995x_update_ucd_set_reg(chgnum, port,
 					  BD9995X_CMD_UCD_SET_BCSRETRY |
-					  BD9995X_CMD_UCD_SET_USBDETEN |
-					  BD9995X_CMD_UCD_SET_USB_SW_EN,
+						  BD9995X_CMD_UCD_SET_USBDETEN |
+						  BD9995X_CMD_UCD_SET_USB_SW_EN,
 					  enable);
 }
 
@@ -601,8 +617,8 @@ static int bd9995x_ramp_max(int supplier, int sup_curr)
 
 /* chip specific interfaces */
 
-static enum ec_error_list bd9995x_set_input_current(int chgnum,
-						    int input_current)
+static enum ec_error_list bd9995x_set_input_current_limit(int chgnum,
+							  int input_current)
 {
 	int rv;
 
@@ -613,16 +629,16 @@ static enum ec_error_list bd9995x_set_input_current(int chgnum,
 		input_current = bd9995x_charger_info.input_current_min;
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_IBUS_LIM_SET, input_current,
-				BD9995X_BAT_CHG_COMMAND);
+			    BD9995X_BAT_CHG_COMMAND);
 	if (rv)
 		return rv;
 
 	return ch_raw_write16(chgnum, BD9995X_CMD_ICC_LIM_SET, input_current,
-				BD9995X_BAT_CHG_COMMAND);
+			      BD9995X_BAT_CHG_COMMAND);
 }
 
-static enum ec_error_list bd9995x_get_input_current(int chgnum,
-						    int *input_current)
+static enum ec_error_list bd9995x_get_input_current_limit(int chgnum,
+							  int *input_current)
 {
 	return ch_raw_read16(chgnum, BD9995X_CMD_CUR_ILIM_VAL, input_current,
 			     BD9995X_EXTENDED_COMMAND);
@@ -645,12 +661,12 @@ static enum ec_error_list bd9995x_get_option(int chgnum, int *option)
 	int reg;
 
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_CHGOP_SET1, option,
-				BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_CHGOP_SET2, &reg,
-				BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -664,7 +680,7 @@ static enum ec_error_list bd9995x_set_option(int chgnum, int option)
 	int rv;
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_CHGOP_SET1, option & 0xFFFF,
-				BD9995X_EXTENDED_COMMAND);
+			    BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -691,7 +707,7 @@ static enum ec_error_list bd9995x_get_status(int chgnum, int *status)
 
 	/* charger enable/inhibit */
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_CHGOP_SET2, &reg,
-				BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -700,15 +716,15 @@ static enum ec_error_list bd9995x_get_status(int chgnum, int *status)
 
 	/* charger alarm enable/inhibit */
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_PROCHOT_CTRL_SET, &reg,
-				BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
 	if (!(reg & (BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN4 |
-			BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN3 |
-			BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN2 |
-			BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN1 |
-			BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN0)))
+		     BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN3 |
+		     BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN2 |
+		     BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN1 |
+		     BD9995X_CMD_PROCHOT_CTRL_SET_PROCHOT_EN0)))
 		*status |= CHARGER_ALARM_INHIBITED;
 
 	rv = bd9995x_get_charger_op_status(chgnum, &reg);
@@ -775,7 +791,7 @@ static enum ec_error_list bd9995x_set_mode(int chgnum, int mode)
 static enum ec_error_list bd9995x_get_current(int chgnum, int *current)
 {
 	return ch_raw_read16(chgnum, BD9995X_CMD_CHG_CURRENT, current,
-				BD9995X_BAT_CHG_COMMAND);
+			     BD9995X_BAT_CHG_COMMAND);
 }
 
 static enum ec_error_list bd9995x_set_current(int chgnum, int current)
@@ -811,7 +827,7 @@ static enum ec_error_list bd9995x_set_current(int chgnum, int current)
 		return rv;
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_CHG_CURRENT, current,
-			      BD9995X_BAT_CHG_COMMAND);
+			    BD9995X_BAT_CHG_COMMAND);
 	if (rv)
 		return rv;
 
@@ -856,7 +872,7 @@ static enum ec_error_list bd9995x_get_voltage(int chgnum, int *voltage)
 	}
 
 	return ch_raw_read16(chgnum, BD9995X_CMD_CHG_VOLTAGE, voltage,
-				BD9995X_BAT_CHG_COMMAND);
+			     BD9995X_BAT_CHG_COMMAND);
 }
 
 static enum ec_error_list bd9995x_set_voltage(int chgnum, int voltage)
@@ -867,11 +883,9 @@ static enum ec_error_list bd9995x_set_voltage(int chgnum, int voltage)
 	 * Regulate the system voltage to battery max if the battery
 	 * is not present or the battery is discharging on AC.
 	 */
-	if (voltage == 0 ||
-		bd9995x_is_discharging_on_ac(chgnum) ||
-		battery_is_present() != BP_YES ||
-		battery_is_cut_off() ||
-		voltage > battery_voltage_max)
+	if (voltage == 0 || bd9995x_is_discharging_on_ac(chgnum) ||
+	    battery_is_present() != BP_YES || battery_is_cut_off() ||
+	    voltage > battery_voltage_max)
 		voltage = battery_voltage_max;
 
 	/* Charge voltage step 16 mV */
@@ -889,7 +903,7 @@ static void bd9995x_battery_charging_profile_settings(int chgnum)
 	const struct battery_info *bi = battery_get_info();
 
 	/* Input Current Limit Setting */
-	bd9995x_set_input_current(chgnum, CONFIG_CHARGER_INPUT_CURRENT);
+	bd9995x_set_input_current_limit(chgnum, CONFIG_CHARGER_INPUT_CURRENT);
 
 	/* Charge Termination Current Setting */
 	ch_raw_write16(chgnum, BD9995X_CMD_ITERM_SET, 0,
@@ -908,8 +922,7 @@ static void bd9995x_battery_charging_profile_settings(int chgnum)
 		       BD9995X_EXTENDED_COMMAND);
 
 	/* Re-charge Battery Voltage Setting */
-	ch_raw_write16(chgnum, BD9995X_CMD_VRECHG_SET,
-		       bi->voltage_max & 0x7FF0,
+	ch_raw_write16(chgnum, BD9995X_CMD_VRECHG_SET, bi->voltage_max & 0x7FF0,
 		       BD9995X_EXTENDED_COMMAND);
 
 	/* Set battery OVP to 500 + maximum battery voltage */
@@ -959,8 +972,9 @@ static void bd9995x_init(void)
 	 * that the charger is in Pre-Charge state and that the input current
 	 * disable setting below will be active.
 	 */
-	bd9995x_set_vsysreg(CHARGER_SOLO, battery_get_info()->voltage_max +
-			    BD9995X_VSYS_PRECHARGE_OFFSET_MV);
+	bd9995x_set_vsysreg(CHARGER_SOLO,
+			    battery_get_info()->voltage_max +
+				    BD9995X_VSYS_PRECHARGE_OFFSET_MV);
 
 	/* Enable BC1.2 USB charging and DC/DC converter @ 1200KHz */
 	if (ch_raw_read16(CHARGER_SOLO, BD9995X_CMD_CHGOP_SET2, &reg,
@@ -1047,7 +1061,7 @@ static enum ec_error_list bd9995x_discharge_on_ac(int chgnum, int enable)
 	int reg;
 
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_CHGOP_SET2, &reg,
-				BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -1059,13 +1073,13 @@ static enum ec_error_list bd9995x_discharge_on_ac(int chgnum, int enable)
 	 */
 	if (enable)
 		reg |= BD9995X_CMD_CHGOP_SET2_BATT_LEARN |
-			BD9995X_CMD_CHGOP_SET2_USB_SUS;
+		       BD9995X_CMD_CHGOP_SET2_USB_SUS;
 	else
 		reg &= ~(BD9995X_CMD_CHGOP_SET2_BATT_LEARN |
-			BD9995X_CMD_CHGOP_SET2_USB_SUS);
+			 BD9995X_CMD_CHGOP_SET2_USB_SUS);
 
 	return ch_raw_write16(chgnum, BD9995X_CMD_CHGOP_SET2, reg,
-				BD9995X_EXTENDED_COMMAND);
+			      BD9995X_EXTENDED_COMMAND);
 }
 
 static enum ec_error_list bd9995x_get_vbus_voltage(int chgnum, int port,
@@ -1130,7 +1144,7 @@ int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
 		} else if (port == BD9995X_CHARGE_PORT_BOTH) {
 			/* Enable both the ports for PG3 */
 			reg |= BD9995X_CMD_VIN_CTRL_SET_VBUS_EN |
-				BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
+			       BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
 		} else {
 			/* Invalid charge port */
 			panic("Invalid charge port");
@@ -1148,7 +1162,7 @@ int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
 	}
 
 	rv = ch_raw_write16(CHARGER_SOLO, BD9995X_CMD_VIN_CTRL_SET, reg,
-			      BD9995X_EXTENDED_COMMAND);
+			    BD9995X_EXTENDED_COMMAND);
 select_input_port_exit:
 	mutex_unlock(&bd9995x_vin_mutex);
 	return rv;
@@ -1179,8 +1193,8 @@ static int bd9995x_vbus_debounce(int chgnum, enum bd9995x_charge_port port)
 	int vbus_reg;
 	int voltage;
 
-	vbus_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
-		BD9995X_CMD_VBUS_VAL : BD9995X_CMD_VCC_VAL;
+	vbus_reg = (port == BD9995X_CHARGE_PORT_VBUS) ? BD9995X_CMD_VBUS_VAL :
+							BD9995X_CMD_VCC_VAL;
 	if (ch_raw_read16(chgnum, vbus_reg, &voltage, BD9995X_EXTENDED_COMMAND))
 		voltage = 0;
 
@@ -1196,14 +1210,13 @@ static int bd9995x_vbus_debounce(int chgnum, enum bd9995x_charge_port port)
 }
 #endif
 
-
 #ifdef CONFIG_CHARGER_BATTERY_TSENSE
 int bd9995x_get_battery_temp(int *temp_ptr)
 {
 	int rv;
 
 	rv = ch_raw_read16(CHARGER_SOLO, BD9995X_CMD_THERM_VAL, temp_ptr,
-			BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -1224,7 +1237,7 @@ int bd9995x_get_battery_voltage(void)
 	int vbat_val, rv;
 
 	rv = ch_raw_read16(CHARGER_SOLO, BD9995X_CMD_VBAT_VAL, &vbat_val,
-			BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 
 	return rv ? 0 : vbat_val;
 }
@@ -1242,15 +1255,15 @@ int bd9995x_bc12_enable_charging(int port, int enable)
 	 * for USB-C.
 	 */
 	rv = ch_raw_read16(CHARGER_SOLO, BD9995X_CMD_CHGOP_SET1, &reg,
-			BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
 	mask_val = (BD9995X_CMD_CHGOP_SET1_SDP_CHG_TRIG_EN |
-		BD9995X_CMD_CHGOP_SET1_SDP_CHG_TRIG |
-		((port == BD9995X_CHARGE_PORT_VBUS) ?
-		BD9995X_CMD_CHGOP_SET1_VBUS_BC_DISEN :
-		BD9995X_CMD_CHGOP_SET1_VCC_BC_DISEN));
+		    BD9995X_CMD_CHGOP_SET1_SDP_CHG_TRIG |
+		    ((port == BD9995X_CHARGE_PORT_VBUS) ?
+			     BD9995X_CMD_CHGOP_SET1_VBUS_BC_DISEN :
+			     BD9995X_CMD_CHGOP_SET1_VCC_BC_DISEN));
 
 	if (enable)
 		reg &= ~mask_val;
@@ -1258,7 +1271,7 @@ int bd9995x_bc12_enable_charging(int port, int enable)
 		reg |= mask_val;
 
 	return ch_raw_write16(CHARGER_SOLO, BD9995X_CMD_CHGOP_SET1, reg,
-			BD9995X_EXTENDED_COMMAND);
+			      BD9995X_EXTENDED_COMMAND);
 }
 
 static void bd9995x_set_switches(int port, enum usb_switch setting)
@@ -1270,17 +1283,18 @@ static void bd9995x_set_switches(int port, enum usb_switch setting)
 	if (setting != USB_SWITCH_RESTORE)
 		usb_switch_state[port] = setting;
 
-	/* ensure we disable power saving when we are using DP/DN */
+		/* ensure we disable power saving when we are using DP/DN */
 #ifdef CONFIG_BD9995X_POWER_SAVE_MODE
 	bd9995x_set_power_save_mode(
 		(usb_switch_state[0] == USB_SWITCH_DISCONNECT &&
-		usb_switch_state[1] == USB_SWITCH_DISCONNECT)
-		? CONFIG_BD9995X_POWER_SAVE_MODE : BD9995X_PWR_SAVE_OFF);
+		 usb_switch_state[1] == USB_SWITCH_DISCONNECT) ?
+			CONFIG_BD9995X_POWER_SAVE_MODE :
+			BD9995X_PWR_SAVE_OFF);
 #endif
 
-	bd9995x_update_ucd_set_reg(CHARGER_SOLO, port,
-				   BD9995X_CMD_UCD_SET_USB_SW,
-				usb_switch_state[port] == USB_SWITCH_CONNECT);
+	bd9995x_update_ucd_set_reg(
+		CHARGER_SOLO, port, BD9995X_CMD_UCD_SET_USB_SW,
+		usb_switch_state[port] == USB_SWITCH_CONNECT);
 }
 
 void bd9995x_vbus_interrupt(enum gpio_signal signal)
@@ -1288,7 +1302,7 @@ void bd9995x_vbus_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_USB_CHG);
 }
 
-static void bd9995x_usb_charger_task(const int unused)
+static void bd9995x_usb_charger_task_init(const int unused)
 {
 	static int initialized;
 	int changed, port, interrupts;
@@ -1324,8 +1338,11 @@ static void bd9995x_usb_charger_task(const int unused)
 				 * provided, then disable wait for this port.
 				 */
 				bc12_det_mark[port] =
-					usb_charger_process(CHARGER_SOLO, port)
-					? get_time().val + BC12_DETECT_US : 0;
+					usb_charger_process(CHARGER_SOLO,
+							    port) ?
+						get_time().val +
+							BC12_DETECT_US :
+						0;
 				changed = 1;
 			}
 #ifdef CONFIG_USB_PD_DISCHARGE
@@ -1333,21 +1350,22 @@ static void bd9995x_usb_charger_task(const int unused)
 			    !initialized) {
 				/* Get VBUS voltage */
 				vbus_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
-					   BD9995X_CMD_VBUS_VAL :
-					   BD9995X_CMD_VCC_VAL;
+						   BD9995X_CMD_VBUS_VAL :
+						   BD9995X_CMD_VCC_VAL;
 				if (ch_raw_read16(CHARGER_SOLO, vbus_reg,
 						  &voltage,
 						  BD9995X_EXTENDED_COMMAND))
 					voltage = 0;
 
 				/* Set discharge accordingly */
-				pd_set_vbus_discharge(port,
+				pd_set_vbus_discharge(
+					port,
 					voltage < BD9995X_VBUS_DISCHARGE_TH);
 				changed = 1;
 			}
 #endif
-			if (bc12_det_mark[port] && (get_time().val >
-						    bc12_det_mark[port])) {
+			if (bc12_det_mark[port] &&
+			    (get_time().val > bc12_det_mark[port])) {
 				/*
 				 * bc12_type result should be available. If not
 				 * available still, then function will return
@@ -1358,7 +1376,8 @@ static void bd9995x_usb_charger_task(const int unused)
 				bc12_det_mark[port] =
 					bd9995x_bc12_check_type(CHARGER_SOLO,
 								port) ?
-					get_time().val + 100 * MSEC : 0;
+						get_time().val + 100 * MSEC :
+						0;
 				/* Reset BC1.2 regs to skip auto-detection. */
 				bd9995x_bc12_detect(CHARGER_SOLO, port, 0);
 			}
@@ -1373,8 +1392,8 @@ static void bd9995x_usb_charger_task(const int unused)
 			if (bc12_det_mark[port]) {
 				int bc12_wait_usec;
 
-				bc12_wait_usec = bc12_det_mark[port]
-					- get_time().val;
+				bc12_wait_usec =
+					bc12_det_mark[port] - get_time().val;
 				if ((sleep_usec < 0) ||
 				    (sleep_usec > bc12_wait_usec))
 					sleep_usec = bc12_wait_usec;
@@ -1383,40 +1402,43 @@ static void bd9995x_usb_charger_task(const int unused)
 
 		initialized = 1;
 #ifdef CONFIG_BD9995X_DELAY_INPUT_PORT_SELECT
-/*
- * When a charge port is selected and VBUS is 5V, the inrush current on some
- * devices causes VBUS to droop, which could signal a sink disconnection.
- *
- * To mitigate the problem, charge port selection is delayed until VBUS
- * is stable or one second has passed. Hopefully PD has negotiated a VBUS
- * voltage of at least 9V before the one second timeout.
- */
-	if (select_input_port_update) {
-		sleep_usec = VBUS_CHECK_MSEC;
-		changed = 0;
+		/*
+		 * When a charge port is selected and VBUS is 5V, the inrush
+		 * current on some devices causes VBUS to droop, which could
+		 * signal a sink disconnection.
+		 *
+		 * To mitigate the problem, charge port selection is delayed
+		 * until VBUS is stable or one second has passed. Hopefully PD
+		 * has negotiated a VBUS voltage of at least 9V before the one
+		 * second timeout.
+		 */
+		if (select_input_port_update) {
+			sleep_usec = VBUS_CHECK_MSEC;
+			changed = 0;
 
-		switch (vbus_state) {
-		case START:
-			vbus_timeout = get_time().val + STABLE_TIMEOUT;
-			vbus_state = STABLE;
-			break;
-		case STABLE:
-			if (get_time().val > vbus_timeout) {
-				vbus_state = DEBOUNCE;
-				vbus_timeout = get_time().val +
-							DEBOUNCE_TIMEOUT;
-			}
-			break;
-		case DEBOUNCE:
-			if (bd9995x_vbus_debounce(CHARGER_SOLO, port_update) ||
-					get_time().val > vbus_timeout) {
-				select_input_port_update = 0;
-				bd9995x_select_input_port_private(
+			switch (vbus_state) {
+			case START:
+				vbus_timeout = get_time().val + STABLE_TIMEOUT;
+				vbus_state = STABLE;
+				break;
+			case STABLE:
+				if (get_time().val > vbus_timeout) {
+					vbus_state = DEBOUNCE;
+					vbus_timeout = get_time().val +
+						       DEBOUNCE_TIMEOUT;
+				}
+				break;
+			case DEBOUNCE:
+				if (bd9995x_vbus_debounce(CHARGER_SOLO,
+							  port_update) ||
+				    get_time().val > vbus_timeout) {
+					select_input_port_update = 0;
+					bd9995x_select_input_port_private(
 						port_update, select_update);
+				}
+				break;
 			}
-			break;
 		}
-	}
 #endif
 
 		/*
@@ -1431,7 +1453,6 @@ static void bd9995x_usb_charger_task(const int unused)
 	}
 }
 #endif /* HAS_TASK_USB_CHG */
-
 
 /*** Console commands ***/
 #ifdef CONFIG_CMD_CHARGER_DUMP
@@ -1452,31 +1473,26 @@ static int read_ext(int chgnum, uint8_t cmd)
 }
 
 /* Dump all readable registers on bd9995x */
-static int console_bd9995x_dump_regs(int argc, char **argv)
+static void console_bd9995x_dump_regs(int chgnum)
 {
 	int i;
 	uint8_t regs[] = { 0x14, 0x15, 0x3c, 0x3d, 0x3e, 0x3f };
 
 	/* Battery group registers */
 	for (i = 0; i < ARRAY_SIZE(regs); ++i)
-		ccprintf("BAT REG %4x:  %4x\n", regs[i], read_bat(CHARGER_SOLO,
-								  regs[i]));
+		ccprintf("BAT REG %4x:  %4x\n", regs[i],
+			 read_bat(CHARGER_SOLO, regs[i]));
 
 	/* Extended group registers */
 	for (i = 0; i < 0x7f; ++i) {
 		ccprintf("EXT REG %4x:  %4x\n", i, read_ext(CHARGER_SOLO, i));
 		cflush();
 	}
-
-	return 0;
 }
-DECLARE_CONSOLE_COMMAND(charger_dump, console_bd9995x_dump_regs,
-			NULL,
-			"Dump all charger registers");
 #endif /* CONFIG_CMD_CHARGER_DUMP */
 
 #ifdef CONFIG_CMD_CHARGER
-static int console_command_bd9995x(int argc, char **argv)
+static int console_command_bd9995x(int argc, const char **argv)
 {
 	int rv, reg, data, val;
 	char rw, *e;
@@ -1530,7 +1546,7 @@ static int bd9995x_psys_charger_adc(int chgnum)
 
 	for (i = 0; i < BD9995X_PMON_IOUT_ADC_READ_COUNT; i++) {
 		if (ch_raw_read16(chgnum, BD9995X_CMD_PMON_DACIN_VAL, &reg,
-				BD9995X_EXTENDED_COMMAND))
+				  BD9995X_EXTENDED_COMMAND))
 			return 0;
 
 		/* Conversion Interval is 200us */
@@ -1542,8 +1558,8 @@ static int bd9995x_psys_charger_adc(int chgnum)
 	 * Calculate power in mW
 	 * PSYS = VACP×IACP+VBAT×IBAT = IPMON / GPMON
 	 */
-	return (int) ((ipmon * 1000) / (BIT(BD9995X_PSYS_GAIN_SELECT) *
-		BD9995X_PMON_IOUT_ADC_READ_COUNT));
+	return (int)((ipmon * 1000) / (BIT(BD9995X_PSYS_GAIN_SELECT) *
+				       BD9995X_PMON_IOUT_ADC_READ_COUNT));
 }
 
 static int bd9995x_enable_psys(int chgnum)
@@ -1552,7 +1568,7 @@ static int bd9995x_enable_psys(int chgnum)
 	int reg;
 
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_PMON_IOUT_CTRL_SET, &reg,
-			BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -1563,7 +1579,7 @@ static int bd9995x_enable_psys(int chgnum)
 		BD9995X_PSYS_GAIN_SELECT);
 
 	return ch_raw_write16(chgnum, BD9995X_CMD_PMON_IOUT_CTRL_SET, reg,
-			BD9995X_EXTENDED_COMMAND);
+			      BD9995X_EXTENDED_COMMAND);
 }
 
 /**
@@ -1574,7 +1590,7 @@ static int bd9995x_enable_psys(int chgnum)
  * update "psys" console command to use charger_get_system_power and move it
  * to some common code.
  */
-static int console_command_psys(int argc, char **argv)
+static int console_command_psys(int argc, const char **argv)
 {
 	int rv;
 
@@ -1583,12 +1599,11 @@ static int console_command_psys(int argc, char **argv)
 		return rv;
 
 	CPRINTS("PSYS from chg_adc: %d mW",
-			bd9995x_psys_charger_adc(CHARGER_SOLO));
+		bd9995x_psys_charger_adc(CHARGER_SOLO));
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
-			NULL,
+DECLARE_CONSOLE_COMMAND(psys, console_command_psys, NULL,
 			"Get the system power in mW");
 #endif /* CONFIG_CHARGER_PSYS_READ */
 
@@ -1601,7 +1616,7 @@ static int bd9995x_amon_bmon_chg_adc(int chgnum)
 
 	for (i = 0; i < BD9995X_PMON_IOUT_ADC_READ_COUNT; i++) {
 		ch_raw_read16(chgnum, BD9995X_CMD_IOUT_DACIN_VAL, &reg,
-				BD9995X_EXTENDED_COMMAND);
+			      BD9995X_EXTENDED_COMMAND);
 		iout += reg;
 
 		/* Conversion Interval is 200us */
@@ -1617,7 +1632,7 @@ static int bd9995x_amon_bmon_chg_adc(int chgnum)
 	 * VIADP = GIADP * (VACP- VACN) = GIADP * IADP / IADP_RES
 	 */
 	return (iout * (5 << BD9995X_IOUT_GAIN_SELECT)) /
-		(10 * BD9995X_PMON_IOUT_ADC_READ_COUNT);
+	       (10 * BD9995X_PMON_IOUT_ADC_READ_COUNT);
 }
 
 static int bd9995x_amon_bmon(int chgnum, int amon_bmon)
@@ -1628,7 +1643,7 @@ static int bd9995x_amon_bmon(int chgnum, int amon_bmon)
 	int sns_res;
 
 	rv = ch_raw_read16(chgnum, BD9995X_CMD_PMON_IOUT_CTRL_SET, &reg,
-			BD9995X_EXTENDED_COMMAND);
+			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
@@ -1647,16 +1662,14 @@ static int bd9995x_amon_bmon(int chgnum, int amon_bmon)
 	}
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_PMON_IOUT_CTRL_SET, reg,
-			BD9995X_EXTENDED_COMMAND);
+			    BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;
 
 	imon = bd9995x_amon_bmon_chg_adc(chgnum);
 
-	CPRINTS("%cMON from chg_adc: %d uV, %d mA]",
-		amon_bmon ? 'A' : 'B',
-		imon * sns_res,
-		imon);
+	CPRINTS("%cMON from chg_adc: %d uV, %d mA]", amon_bmon ? 'A' : 'B',
+		imon * sns_res, imon);
 
 	return EC_SUCCESS;
 }
@@ -1664,7 +1677,7 @@ static int bd9995x_amon_bmon(int chgnum, int amon_bmon)
 /**
  * Get charger AMON and BMON current.
  */
-static int console_command_amon_bmon(int argc, char **argv)
+static int console_command_amon_bmon(int argc, const char **argv)
 {
 	int rv = EC_ERROR_PARAM1;
 
@@ -1678,8 +1691,7 @@ static int console_command_amon_bmon(int argc, char **argv)
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
-			"amonbmon [a|b]",
+DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon, "amonbmon [a|b]",
 			"Get charger AMON/BMON voltage diff, current");
 #endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */
 
@@ -1718,37 +1730,47 @@ const struct charger_drv bd9995x_drv = {
 	.set_voltage = &bd9995x_set_voltage,
 	.discharge_on_ac = &bd9995x_discharge_on_ac,
 	.get_vbus_voltage = &bd9995x_get_vbus_voltage,
-	.set_input_current = &bd9995x_set_input_current,
-	.get_input_current = &bd9995x_get_input_current,
+	.set_input_current_limit = &bd9995x_set_input_current_limit,
+	.get_input_current_limit = &bd9995x_get_input_current_limit,
 	.manufacturer_id = &bd9995x_manufacturer_id,
 	.device_id = &bd9995x_device_id,
 	.get_option = &bd9995x_get_option,
 	.set_option = &bd9995x_set_option,
+#ifdef CONFIG_CMD_CHARGER_DUMP
+	.dump_registers = &console_bd9995x_dump_regs,
+#endif
 };
 
 #ifdef CONFIG_BC12_SINGLE_DRIVER
 /* provide a default bc12_ports[] for backward compatibility */
 struct bc12_config bc12_ports[BD9995X_CHARGE_PORT_COUNT] = {
 	{
-		.drv = &(const struct bc12_drv) {
-			.usb_charger_task = bd9995x_usb_charger_task,
-			.set_switches = bd9995x_set_switches,
+		.drv =
+			&(const struct bc12_drv){
+				.usb_charger_task_init =
+					bd9995x_usb_charger_task_init,
+				/* events handled in init */
+				.usb_charger_task_event = NULL,
+				.set_switches = bd9995x_set_switches,
 #if defined(CONFIG_CHARGE_RAMP_SW)
-			.ramp_allowed = bd9995x_ramp_allowed,
-			.ramp_max = bd9995x_ramp_max,
+				.ramp_allowed = bd9995x_ramp_allowed,
+				.ramp_max = bd9995x_ramp_max,
 #endif /* CONFIG_CHARGE_RAMP_SW */
-		},
+			},
 	},
 	{
-		.drv = &(const struct bc12_drv) {
-			/* bd9995x uses a single task thread for both ports */
-			.usb_charger_task = NULL,
-			.set_switches = bd9995x_set_switches,
+		.drv =
+			&(const struct bc12_drv){
+				/* bd9995x uses a single task thread for both
+				   ports */
+				.usb_charger_task_init = NULL,
+				.usb_charger_task_event = NULL,
+				.set_switches = bd9995x_set_switches,
 #if defined(CONFIG_CHARGE_RAMP_SW)
-			.ramp_allowed = bd9995x_ramp_allowed,
-			.ramp_max = bd9995x_ramp_max,
+				.ramp_allowed = bd9995x_ramp_allowed,
+				.ramp_max = bd9995x_ramp_max,
 #endif /* CONFIG_CHARGE_RAMP_SW */
-		},
+			},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(bc12_ports) == CHARGE_PORT_COUNT);

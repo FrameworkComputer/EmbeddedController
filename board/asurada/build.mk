@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -8,6 +8,10 @@
 # the IC is ITE IT8xxx2
 CHIP:=it83xx
 CHIP_FAMILY:=it8xxx2
-CHIP_VARIANT:=it81202ax_1024
+CHIP_VARIANT:=it81202bx_1024
+BASEBOARD:=asurada
 
-board-y=battery.o board.o board_id.o led.o usb_pd_policy.o
+board-$(BOARD_HAYATO)=led_hayato.o
+board-$(BOARD_ASURADA)=led.o
+board-y+=battery.o board.o
+board-y+=usbc_config.o

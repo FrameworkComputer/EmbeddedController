@@ -1,0 +1,228 @@
+# Copyright 2020 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_USBC
+	bool "USB Type-C"
+	default y if PLATFORM_EC_BATTERY
+	depends on PLATFORM_EC_MATH_UTIL
+	help
+	  Enable this to support various USB Type-C features chosen by the
+	  options below. USB-C is widely used on modern Chromebooks and the EC's
+	  role is to negotiate power contracts (for sourcing or sinking power
+	  over USB). The EC is also responsible for discovering the capabilities
+	  of attached USB-C partners and enabling alternate operational modes,
+	  including Display Port, Thunderbolt, and USB4.
+
+rsource "Kconfig.retimer"
+rsource "Kconfig.pd_int_shared"
+rsource "Kconfig.pd_meas_vbus"
+rsource "Kconfig.pd_frs"
+rsource "Kconfig.pd_discharge"
+rsource "Kconfig.pd_vbus_detection"
+rsource "Kconfig.pd_console_cmd"
+rsource "Kconfig.pd_usbc_device_type"
+rsource "Kconfig.pd"
+rsource "Kconfig.ppc"
+rsource "Kconfig.usb_mux"
+rsource "Kconfig.usbc_ss_mux"
+rsource "Kconfig.tcpm"
+rsource "Kconfig.usb_charger"
+
+if PLATFORM_EC_USBC
+
+config PLATFORM_EC_CHARGER_INPUT_CURRENT
+	int "Charger input current in mA"
+	depends on PLATFORM_EC_CHARGE_MANAGER
+	default 512
+	help
+	  This is the default input current for the board in mA.  Many boards
+	  also use this as the least maximum input current during transients.
+
+	  This value should depend on external power adapter, designed charging
+	  voltage, and the maximum power of the running system. For type-C
+	  chargers, this should be set to 512 mA in order to not brown-out
+	  low-current USB charge ports in accordance with USB-PD r3.0 Sec. 7.3
+
+config PLATFORM_EC_USBC_OCP
+	bool
+	help
+	  USB-C overcurrent protection: Enable this to detect when a connected
+	  USB-C partner draws too much power from the Chromebook and
+	  automatically shut off power to the USB-C partner.
+
+	  This should be enabled by drivers which can detect over-current. It
+	  cannot be set otherwise, even in prj.conf
+
+config PLATFORM_EC_USB_PID
+	hex "USB Product ID"
+	default 0
+	help
+	  Each platform (e.g. baseboard set) should have a single VID/PID
+	  combination. If there is a big enough change within a platform,
+	  then we can differentiate USB topologies by varying the hardware
+	  version field in the Sink and Source Capabilities Extended messages.
+
+	  To reserve a new PID within Google, use go/usb and see
+	  http://google3/hardware/standards/usb
+
+config PLATFORM_EC_USB_BCD_DEV
+	hex "USB Device ID"
+	default 0
+	help
+	  This specifies the USB device version, reported by board when acting
+	  as the upstream facing port (UFP). This is a 16-bit unsigned integer
+	  and should be set to a version number relevant to the release version
+	  of the product.
+
+config PLATFORM_EC_USB_VID
+	hex "USB Vendor ID"
+	default 0x18d1
+	help
+	  This specifies the USB vendor ID used for boards which expose a
+	  USB endpont when the port is in UFP mode. The default value is
+	  set to Google's assigned VID and typically would not need to be
+	  changed. But, in certain cases this may need to be changed to
+	  match an OEM's vendor ID.
+
+config PLATFORM_EC_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+	bool "USB MS Extended Compat ID Feature Descriptor"
+	help
+	  This enables USB-EP to contain a MS Windows USB string descriptor
+	  which is then used by MS Windows to request a Extended Compatible
+	  ID Feature descriptor so that Windows will know to load its WINUSB
+	  driver.
+
+config PLATFORM_EC_USB_PD_TCPC_LOW_POWER
+	bool "Allow Type-C Port Controller to enter low-power mode"
+	default y
+	help
+	  Allows entry to a low power mode when the USB port is idle.
+	  When enabled, an enter_low_power_mode member is present in tcpm_drv
+	  and should be set to a function that selects that mode, such as
+	  tcpci_enter_low_power_mode() for TCPCI-compatible TCPCs.
+
+config PLATFORM_EC_USB_PD_TCPC_LPM_EXIT_DEBOUNCE_US
+	int "Debounce delay when exiting low-power mode (uS)"
+	depends on PLATFORM_EC_USB_PD_TCPC_LOW_POWER
+	default 25000
+	help
+	  Some TCPCs need additional time following a VBUS change to internally
+	  debounce the CC line status and update the CC_STATUS register. This
+	  is the delay in microseconds to allow before checking the CC line
+	  status in the EC.
+
+config PLATFORM_EC_USB_PD_TCPC_VCONN
+	bool "If VCONN is enabled, the TCPC will provide VCONN"
+	default y if !PLATFORM_EC_USBC_PPC_SYV682X
+	default y if PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	default y if PLATFORM_EC_USBC_PPC_SYV682X_NO_CC
+	help
+	  Source USB Type-C connector voltage (VCONN) from the Type-C Port
+	  Controller (TCPC), and also the Power Path Controller (PPC) if
+	  present. Some TCPC/PPC can't handle 5V on its host-side CC pins, so
+          disable this config in those cases.
+
+config PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
+	bool "Console command: ppc_dump"
+	depends on PLATFORM_EC_USBC_PPC
+	default y
+	help
+	  Allows dumping of the Power Path Controller (PPC) state, which is
+	  basically a list of registers and their values. The actual dump
+	  function is driver-specific (the reg_dump member of ppc_drv). By
+	  reference to the datasheet for the part this can help you figure out
+	  what is going on.
+
+config PLATFORM_EC_USBC_PPC_LOGGING
+	bool "Enable PPC Related logging"
+	depends on PLATFORM_EC_USBC_PPC
+	default y
+	help
+	  PPC drivers use two print functions for logging error messages
+	  (ppc_prints and ppc_err_prints). Setting this config adds the
+	  CPRINTS call to both of these function which will enable PPC
+	  related logging but increase EC image size.
+
+config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT83XX
+	bool "Enable IT83XX driver"
+	depends on PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	help
+	  Enable a driver for the ITE IT83XX on-chip UBB Type-C Port Manager.
+	  This supports up to two USB Type-C ports with Dual Role function
+	  (provider and consumer) and Fast Role Swap detection.
+
+config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT8XXX2
+	bool "Enable IT8XXX2 driver"
+	depends on PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	help
+	  Enable a driver for the ITE IT8XXX2 on-chip UBB Type-C Port Manager.
+	  This supports up to two USB Type-C ports with Dual Role function
+	  (provider and consumer) and Fast Role Swap detection.
+
+config PLATFORM_EC_USB_PD_PULLUP
+	int "Default source Rp value"
+	default 1
+	help
+	  Default pull-up value on the USB-C ports when they are used as source.
+	  Valid values are 0 (USB default current), 1 (1.5A), and 2 (3.0A). See
+	  enum tcpc_rp_value.
+
+config PLATFORM_EC_USB_PD_ONLY_FIXED_PDOS
+	bool "Only support FIXED type PDOs"
+	help
+	  Ignore all non-fixed PDOs received from a src_caps message. Enable
+	  this for boards (like servo_v4) which only support FIXED PDO types.
+
+# Define power related settings here for now to allow projects to overwrite
+# them. Ideally they would be defined in the devicetree.
+config PLATFORM_EC_PD_OPERATING_POWER_MW
+	int "PD operating power in milliwatt"
+	default 15000
+	help
+	  Base configuration for PD power operating power value, which is used
+	  in PD negotiation. The final PD parameter used in negotiation is
+	  affected by PLATFORM_EC_PD_MAX_POWER_MW,
+	  PLATFORM_EC_PD_MAX_CURRENT_MA, and PLATFORM_EC_PD_MAX_VOLTAGE_MV.
+	  Increase this value is the system requires more than 15 watts to boot
+	  without a battery.
+
+config PLATFORM_EC_PD_MAX_POWER_MW
+	int "PD maximum power in milliwatt"
+	default 60000
+	help
+	  The maximum PD negotiated power for the system. The value should match
+	  with configured PLATFORM_EC_PD_MAX_CURRENT_MA and
+	  PLATFORM_EC_PD_MAX_VOLTAGE_MV.
+
+config PLATFORM_EC_PD_MAX_CURRENT_MA
+	int "PD maximum current in milliampere"
+	default 3000
+	help
+	  The maximum PD negotiated current for the system. The value should
+	  match with configured PLATFORM_EC_PD_MAX_POWER_MW and
+	  PLATFORM_EC_PD_MAX_VOLTAGE_MV.
+
+config PLATFORM_EC_PD_MAX_VOLTAGE_MV
+	int "PD maximum voltage in millivolt"
+	default 20000
+	help
+	  The maximum PD negotiated voltage for the system. The value should
+	  match with configured PLATFORM_EC_PD_MAX_POWER_MW and
+	  PLATFORM_EC_PD_MAX_CURRENT_MA.
+
+config PLATFORM_EC_PD_POWER_SUPPLY_TURN_ON_DELAY
+	int "Power supply turn on delay in us"
+	default 30000
+	help
+	  Each platform could have different power sequencing and transition
+	  timing for turning on the power on the PD port.
+
+config PLATFORM_EC_PD_POWER_SUPPLY_TURN_OFF_DELAY
+	int "Power supply turn off delay in us"
+	default 30000
+	help
+	  Each platform could have different power sequencing and transition
+	  timing for turning off the power on the PD port.
+
+endif  # PLATFORM_EC_USBC

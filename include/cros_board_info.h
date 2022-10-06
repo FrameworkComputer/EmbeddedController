@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -10,10 +10,22 @@
 #include "common.h"
 #include "ec_commands.h"
 
-#define CBI_VERSION_MAJOR	0
-#define CBI_VERSION_MINOR	0
-#define CBI_EEPROM_SIZE		256
-static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 };  /* 'C' 'B' 'I' */
+#define CBI_VERSION_MAJOR 0
+#define CBI_VERSION_MINOR 0
+
+#ifdef CONFIG_CBI_GPIO
+/*
+ * if CBI is sourced from GPIO, the CBI cache only needs to accomondate
+ * BOARD_VERSION and SKU_ID
+ */
+#define CBI_IMAGE_SIZE               \
+	(sizeof(struct cbi_header) + \
+	 (2 * (sizeof(struct cbi_data) + sizeof(uint32_t))))
+#else
+#define CBI_IMAGE_SIZE 256
+#endif
+
+static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 }; /* 'C' 'B' 'I' */
 
 struct cbi_header {
 	uint8_t magic[3];
@@ -36,16 +48,46 @@ struct cbi_header {
 } __attribute__((packed));
 
 struct cbi_data {
-	uint8_t tag;		/* enum cbi_data_tag */
-	uint8_t size;		/* size of value[] */
-	uint8_t value[];	/* data value */
+	uint8_t tag; /* enum cbi_data_tag */
+	uint8_t size; /* size of value[] */
+	uint8_t value[]; /* data value */
 } __attribute__((packed));
+
+enum cbi_cache_status {
+	CBI_CACHE_STATUS_SYNCED = 0,
+	CBI_CACHE_STATUS_INVALID = 1
+};
+
+enum cbi_storage_type {
+	CBI_STORAGE_TYPE_EEPROM = 0,
+	CBI_STORAGE_TYPE_GPIO = 1
+};
+
+/*
+ * Driver for storage media access
+ */
+struct cbi_storage_driver {
+	/* Write the whole CBI from RAM to storage media (i.e. sync) */
+	int (*store)(uint8_t *cache);
+	/*
+	 * Read blocks from storage media to RAM. Note that the granularity
+	 * of load function is asymmetrical to that of the store function.
+	 */
+	int (*load)(uint8_t offset, uint8_t *data, int len);
+	/* Return write protect status for the storage media */
+	int (*is_protected)(void);
+};
+
+extern const struct cbi_storage_config_t {
+	enum cbi_storage_type storage_type;
+	const struct cbi_storage_driver *drv;
+} cbi_config;
 
 /**
  * Board info accessors
  *
- * @param version/sku_id/oem_id/id/fw_config/pcb_supplier/ssfc [OUT] Data read
- *        from EEPROM
+ * @param version/sku_id/oem_id/id/fw_config/pcb_supplier/ssfc/rework_id [OUT]
+ *        Data_read from EEPROM.
  * @return EC_SUCCESS on success or EC_ERROR_* otherwise.
  *         EC_ERROR_BUSY to indicate data is not ready.
  */
@@ -56,6 +98,8 @@ int cbi_get_model_id(uint32_t *id);
 int cbi_get_fw_config(uint32_t *fw_config);
 int cbi_get_pcb_supplier(uint32_t *pcb_supplier);
 int cbi_get_ssfc(uint32_t *ssfc);
+int cbi_get_rework_id(uint64_t *id);
+int cbi_get_factory_calibration_data(uint32_t *calibration_data);
 
 /**
  * Get data from CBI store
@@ -101,8 +145,8 @@ uint8_t cbi_crc8(const struct cbi_header *h);
  * @return	Address of the byte following the stored data in the
  * 		destination buffer
  */
-uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
-		      const void *buf, int size);
+uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag, const void *buf,
+		      int size);
 
 /**
  * Store string data in memory in CBI data format.
@@ -146,13 +190,65 @@ struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag);
  */
 int cbi_board_override(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size);
 
-#ifdef TEST_BUILD
 /**
- * Test only declarations. Firmware shouldn't need them.
+ * Set and update FW_CONFIG tag field
+ *
+ * This function is only included when CONFIG_AP_POWER_CONTROL is disabled. It
+ * is intended to be used for projects which want CBI functions, but do not
+ * have an AP and ectool host command access.
+ *
+ * @param fw_config	updated value for FW_CONFIG tag
+ * @return EC_SUCCESS to indicate the field was written correctly.
+ *         EC_ERROR_ACCESS_DENIED to indicate WP is active
+ *         EC_ERROR_UNKNOWN to indicate that the write operation failed
+ */
+int cbi_set_fw_config(uint32_t fw_config);
+
+/**
+ * Set and update SSFC tag field
+ *
+ * This function is only included when CONFIG_AP_POWER_CONTROL is disabled. It
+ * is intended to be used for projects which want CBI functions, but do not
+ * have an AP and ectool host command access.
+ *
+ * @param ssfc	updated value for SSFC tag
+ * @return EC_SUCCESS to indicate the field was written correctly.
+ *         EC_ERROR_ACCESS_DENIED to indicate WP is active
+ *         EC_ERROR_UNKNOWN to indicate that the write operation failed
+ */
+int cbi_set_ssfc(uint32_t ssfc);
+
+/**
+ * Initialize CBI cache
  */
 int cbi_create(void);
-int cbi_write(void);
+
+/**
+ * Override CBI cache status to EC_CBI_CACHE_INVALID
+ */
 void cbi_invalidate_cache(void);
+
+/**
+ * Return CBI cache status
+ */
+int cbi_get_cache_status(void);
+
+/**
+ * Latch the CBI EEPROM WP
+ *
+ * This function assumes that the EC has a pin to set the CBI EEPROM WP signal
+ * (GPIO_EC_CBI_WP).  Note that once the WP is set, the EC must be reset via
+ * EC_RST_ODL in order for the WP to become unset since the signal is latched.
+ */
+void cbi_latch_eeprom_wp(void);
+
+#ifdef TEST_BUILD
+/**
+ * Write the locally cached CBI to EEPROM.
+ *
+ * @return EC_RES_SUCCESS on success or EC_RES_* otherwise.
+ */
+int cbi_write(void);
 #endif
 
 #endif /* __CROS_EC_CROS_BOARD_INFO_H */

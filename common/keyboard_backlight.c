@@ -1,25 +1,34 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "chipset.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "lid_switch.h"
+#include "rgb_keyboard.h"
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
 static struct kblight_conf kblight;
 static int current_percent;
+static uint8_t current_enable;
 
-void __attribute__((weak)) board_kblight_init(void)
-{ }
+__overridable void board_kblight_init(void)
+{
+}
+
+__overridable void board_kblight_shutdown(void)
+{
+}
 
 static int kblight_init(void)
 {
@@ -54,11 +63,34 @@ int kblight_get(void)
 	return current_percent;
 }
 
+static void kblight_enable_deferred(void)
+{
+#ifdef CONFIG_KBLIGHT_ENABLE_PIN
+	gpio_set_level(GPIO_EN_KEYBOARD_BACKLIGHT, current_enable);
+#endif
+	if (!kblight.drv || !kblight.drv->enable)
+		return;
+	kblight.drv->enable(current_enable);
+}
+DECLARE_DEFERRED(kblight_enable_deferred);
+
 int kblight_enable(int enable)
 {
-	if (!kblight.drv || !kblight.drv->enable)
-		return -1;
-	return kblight.drv->enable(enable);
+	current_enable = enable;
+	/* Need to defer i2c in case it's called from an interrupt handler. */
+	hook_call_deferred(&kblight_enable_deferred_data, 0);
+	return EC_SUCCESS;
+}
+
+int kblight_get_enabled(void)
+{
+#ifdef CONFIG_KBLIGHT_ENABLE_PIN
+	if (!gpio_get_level(GPIO_EN_KEYBOARD_BACKLIGHT))
+		return 0;
+#endif
+	if (kblight.drv && kblight.drv->get_enabled)
+		return kblight.drv->get_enabled();
+	return -1;
 }
 
 int kblight_register(const struct kblight_drv *drv)
@@ -74,15 +106,26 @@ int kblight_register(const struct kblight_drv *drv)
 static void keyboard_backlight_init(void)
 {
 	/* Uses PWM by default. Can be customized by board_kblight_init */
-#ifdef CONFIG_PWM_KBLIGHT
-	kblight_register(&kblight_pwm);
-#endif
+	if (IS_ENABLED(CONFIG_PWM_KBLIGHT))
+		kblight_register(&kblight_pwm);
+	else if (IS_ENABLED(CONFIG_RGB_KEYBOARD))
+		kblight_register(&kblight_rgbkbd);
+
 	board_kblight_init();
 	if (kblight_init())
 		CPRINTS("kblight init failed");
+	/* Don't leave kblight enable state undetermined */
+	kblight_enable(0);
 }
+#ifdef HAS_TASK_CHIPSET
+/* We're running on a system EC. Initialize kblight once per AP start-up. */
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, keyboard_backlight_init, HOOK_PRIO_DEFAULT);
+#else
+/* We're running on a KBMCU thus powered when AP starts. Do init on reset. */
 DECLARE_HOOK(HOOK_INIT, keyboard_backlight_init, HOOK_PRIO_DEFAULT);
+#endif
 
+#ifdef CONFIG_AP_POWER_CONTROL
 static void kblight_suspend(void)
 {
 	kblight_enable(0);
@@ -97,7 +140,9 @@ static void kblight_resume(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, kblight_resume, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_AP_POWER_CONTROL */
 
+#ifdef CONFIG_LID_SWITCH
 static void kblight_lid_change(void)
 {
 	if (lid_is_open() && current_percent)
@@ -106,11 +151,12 @@ static void kblight_lid_change(void)
 		kblight_enable(0);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, kblight_lid_change, HOOK_PRIO_DEFAULT);
+#endif
 
 /*
  * Console and host commands
  */
-static int cc_kblight(int argc, char **argv)
+static int cc_kblight(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		char *e;
@@ -122,28 +168,29 @@ static int cc_kblight(int argc, char **argv)
 		if (kblight_enable(i > 0))
 			return EC_ERROR_PARAM1;
 	}
-	ccprintf("Keyboard backlight: %d%%\n", kblight_get());
+	ccprintf("Keyboard backlight: %d%% enabled: %d\n", kblight_get(),
+		 kblight_get_enabled());
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(kblight, cc_kblight,
-			"percent",
+DECLARE_CONSOLE_COMMAND(kblight, cc_kblight, "percent",
 			"Get/set keyboard backlight");
 
-enum ec_status hc_get_keyboard_backlight(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_get_keyboard_backlight(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pwm_get_keyboard_backlight *r = args->response;
 
 	r->percent = kblight_get();
-	r->enabled = 1;			/* Deprecated */
+	r->enabled = kblight_get_enabled();
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT,
-		     hc_get_keyboard_backlight,
-		     EC_VER_MASK(0));
+		     hc_get_keyboard_backlight, EC_VER_MASK(0));
 
-enum ec_status hc_set_keyboard_backlight(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_set_keyboard_backlight(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pwm_set_keyboard_backlight *p = args->params;
 
@@ -154,5 +201,11 @@ enum ec_status hc_set_keyboard_backlight(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT,
-		     hc_set_keyboard_backlight,
-		     EC_VER_MASK(0));
+		     hc_set_keyboard_backlight, EC_VER_MASK(0));
+
+#ifdef TEST_BUILD
+uint8_t kblight_get_current_enable(void)
+{
+	return current_enable;
+}
+#endif /* TEST_BUILD */

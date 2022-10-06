@@ -1,10 +1,11 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* mt8183 chipset power control module for Chrome EC */
 
+#include "builtin/assert.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
@@ -30,29 +31,29 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Input state flags */
-#define IN_PGOOD_PMIC		POWER_SIGNAL_MASK(PMIC_PWR_GOOD)
-#define IN_SUSPEND_ASSERTED	POWER_SIGNAL_MASK(AP_IN_S3_L)
+#define IN_PGOOD_PMIC POWER_SIGNAL_MASK(PMIC_PWR_GOOD)
+#define IN_SUSPEND_ASSERTED POWER_SIGNAL_MASK(AP_IN_S3_L)
 
 /* Rails required for S3 and S0 */
-#define IN_PGOOD_S0		(IN_PGOOD_PMIC)
-#define IN_PGOOD_S3		(IN_PGOOD_PMIC)
+#define IN_PGOOD_S0 (IN_PGOOD_PMIC)
+#define IN_PGOOD_S3 (IN_PGOOD_PMIC)
 
 /* All inputs in the right state for S0 */
-#define IN_ALL_S0		(IN_PGOOD_S0 & ~IN_SUSPEND_ASSERTED)
+#define IN_ALL_S0 (IN_PGOOD_S0 & ~IN_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #ifdef VARIANT_KUKUI_JACUZZI
-#define FORCED_SHUTDOWN_DELAY	(8 * SECOND)
+#define FORCED_SHUTDOWN_DELAY (8 * SECOND)
 #else
-#define FORCED_SHUTDOWN_DELAY	(10 * SECOND)
+#define FORCED_SHUTDOWN_DELAY (10 * SECOND)
 #endif
 
 /* Long power key press to boot from S5/G3 state. */
 #ifndef POWERBTN_BOOT_DELAY
-#define POWERBTN_BOOT_DELAY	(1 * SECOND)
+#define POWERBTN_BOOT_DELAY (1 * SECOND)
 #endif
 
 #define CHARGER_INITIALIZED_DELAY_MS 100
@@ -96,12 +97,10 @@ static const struct power_seq_op s5s3_power_seq[] = {
 };
 
 /* The power sequence for POWER_S3S0 */
-static const struct power_seq_op s3s0_power_seq[] = {
-};
+static const struct power_seq_op s3s0_power_seq[] = {};
 
 /* The power sequence for POWER_S0S3 */
-static const struct power_seq_op s0s3_power_seq[] = {
-};
+static const struct power_seq_op s0s3_power_seq[] = {};
 
 /* The power sequence for POWER_S3S5 */
 static const struct power_seq_op s3s5_power_seq[] = {
@@ -109,9 +108,6 @@ static const struct power_seq_op s3s5_power_seq[] = {
 	{ GPIO_AP_SYS_RST_L, 0, 0 },
 	/* Assert watchdog to PMIC (there may be a 1.6ms debounce) */
 	{ GPIO_PMIC_WATCHDOG_L, 0, 3 },
-#ifdef BOARD_KAKADU
-        { GPIO_USB_C0_VCONN_EN_OD, 0, 0 },
-#endif
 };
 
 static int forcing_shutdown;
@@ -168,8 +164,28 @@ void chipset_exit_hard_off_button(void)
 }
 DECLARE_DEFERRED(chipset_exit_hard_off_button);
 
+#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+static void power_reset_host_sleep_state(void)
+{
+	power_set_host_sleep_state(HOST_SLEEP_EVENT_DEFAULT_RESET);
+	sleep_reset_tracking();
+	power_chipset_handle_host_sleep_event(HOST_SLEEP_EVENT_DEFAULT_RESET,
+					      NULL);
+}
+
+static void handle_chipset_reset(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+		CPRINTS("Chipset reset: exit s3");
+		power_reset_host_sleep_state();
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
+#endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
+
 /* If chipset needs to be reset, EC also reboots to RO. */
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	int flags = SYSTEM_RESET_HARD;
 
@@ -244,8 +260,7 @@ static void power_seq_run(const struct power_seq_op *power_seq_ops,
 	int i;
 
 	for (i = 0; i < op_count; i++) {
-		gpio_set_level(power_seq_ops[i].signal,
-			       power_seq_ops[i].level);
+		gpio_set_level(power_seq_ops[i].signal, power_seq_ops[i].level);
 		if (!power_seq_ops[i].delay)
 			continue;
 		msleep(power_seq_ops[i].delay);
@@ -276,6 +291,7 @@ enum power_state power_handle_state(enum power_state state)
 	 * transition to S5, G3.
 	 */
 	static int ap_shutdown;
+	uint16_t tries = 0;
 
 	switch (state) {
 	case POWER_G3:
@@ -333,8 +349,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0:
-		if (!power_has_signals(IN_PGOOD_S0) ||
-		    forcing_shutdown ||
+		if (!power_has_signals(IN_PGOOD_S0) || forcing_shutdown ||
 		    power_get_signals() & IN_SUSPEND_ASSERTED)
 			return POWER_S0S3;
 
@@ -361,6 +376,24 @@ enum power_state power_handle_state(enum power_state state)
 			}
 		}
 #endif
+
+		/*
+		 * Allow time for charger to be initialized, in case we're
+		 * trying to boot the AP with no battery.
+		 */
+		while (charge_prevent_power_on(0) &&
+		       tries++ < CHARGER_INITIALIZED_TRIES) {
+			msleep(CHARGER_INITIALIZED_DELAY_MS);
+		}
+
+		/* Return to G3 if battery level is too low. */
+		if (charge_want_shutdown() ||
+		    tries > CHARGER_INITIALIZED_TRIES) {
+			CPRINTS("power-up inhibited");
+			chipset_force_shutdown(
+				CHIPSET_SHUTDOWN_BATTERY_INHIBIT);
+			return POWER_G3;
+		}
 
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 		hook_call_deferred(&deassert_en_pp1800_s5_l_data, -1);
@@ -426,6 +459,14 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 
+		/*
+		 * Clearing the sleep failure detection tracking on the path
+		 * to S0 to handle any reset conditions.
+		 */
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+		power_reset_host_sleep_state();
+#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
+
 		/* Power up to next state */
 		return POWER_S3;
 
@@ -440,6 +481,10 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+		sleep_resume_transition();
+#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
+
 		/*
 		 * Disable idle task deep sleep. This means that the low
 		 * power idle task will not go into deep sleep while in S0.
@@ -452,6 +497,10 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+		sleep_suspend_transition();
+#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
 		/*
 		 * TODO(b:109850749): Check if we need some delay here to
@@ -473,7 +522,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_button_is_pressed()) {
 			forcing_shutdown = 1;
 			hook_call_deferred(&chipset_force_shutdown_button_data,
-					-1);
+					   -1);
 		}
 
 		return POWER_S3;
@@ -512,16 +561,55 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
 			msleep(5);
 			hook_call_deferred(&release_pmic_force_reset_data,
-				PMIC_FORCE_RESET_TIME);
+					   PMIC_FORCE_RESET_TIME);
 
 			return POWER_S5G3;
 		}
 
 		return POWER_G3;
+
+	default:
+		CPRINTS("Unexpected power state %d", state);
+		ASSERT(0);
+		break;
 	}
 
 	return state;
 }
+
+#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+__override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
+{
+	CPRINTS("Warning: Detected sleep hang! Waking host up!");
+	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
+}
+
+__override void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
+{
+	CPRINTS("Handle sleep: %d", state);
+
+	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
+		/*
+		 * Indicate to power state machine that a new host event for
+		 * S3 suspend has been received and so chipset suspend
+		 * notification needs to be sent to listeners.
+		 */
+		sleep_set_notify(SLEEP_NOTIFY_SUSPEND);
+		sleep_start_suspend(ctx);
+
+	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
+		/*
+		 * Wake up chipset task and indicate to power state machine that
+		 * listeners need to be notified of chipset resume.
+		 */
+		sleep_set_notify(SLEEP_NOTIFY_RESUME);
+		task_wake(TASK_ID_CHIPSET);
+		sleep_complete_resume(ctx);
+	}
+}
+#endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
 static void power_button_changed(void)
 {

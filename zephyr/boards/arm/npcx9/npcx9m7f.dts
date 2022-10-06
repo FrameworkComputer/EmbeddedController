@@ -1,0 +1,24 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/nuvoton/npcx9.dtsi>
+#include <nuvoton/npcx9m7f.dtsi>
+#include "npcx9.dtsi"
+
+/ {
+	/* The NPCX9m7F includes 320 KiB of code RAM, and 1 MiB flash */
+	binman {
+		wp-ro {
+			offset = <0x0>;
+			size = <0x50000>;
+		};
+		ec-rw {
+			offset = <0x50000>;
+			size = <0x50000>;
+		};
+	};
+};

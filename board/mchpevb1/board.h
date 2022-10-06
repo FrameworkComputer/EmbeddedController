@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -39,6 +39,10 @@
  * #define CONFIG_MCHP_LFW_DEBUG
  */
 
+/*
+ * EC UART console on UART 0 or 1
+ */
+#define CONFIG_UART_CONSOLE 0
 
 /*
  * Override Boot-ROM JTAG mode
@@ -84,7 +88,6 @@
  * #define EVB_NO_ESPI_TEST_MODE
  */
 
-
 /*
  * DEBUG
  * Disable ARM Cortex-M4 write buffer so
@@ -93,24 +96,24 @@
  * #define CONFIG_DEBUG_DISABLE_WRITE_BUFFER
  */
 
-/* New eSPI slave configuration items */
+/* New eSPI configuration items */
 
 /*
- * Maximum clock frequence eSPI EC slave advertises
+ * Maximum clock frequence eSPI EC advertises
  * Values in MHz are 20, 25, 33, 50, and 66
  */
 /* KBL + EVB fly-wire hook up only supports 20MHz */
-#define CONFIG_HOSTCMD_ESPI_EC_MAX_FREQ		20
+#define CONFIG_HOST_INTERFACE_ESPI_EC_MAX_FREQ MCHP_ESPI_CAP1_MAX_FREQ_20M
 
 /*
- * EC eSPI slave advertises IO lanes
+ * EC eSPI advertises IO lanes
  * 0 = Single
  * 1 = Single and Dual
  * 2 = Single and Quad
  * 3 = Single, Dual, and Quad
  */
 /* KBL + EVB fly-wire hook up only support Single mode */
-#define CONFIG_HOSTCMD_ESPI_EC_MODE		0
+#define CONFIG_HOST_INTERFACE_ESPI_EC_MODE MCHP_ESPI_CAP1_SINGLE_MODE
 
 /*
  * Bit map of eSPI channels EC advertises
@@ -119,7 +122,7 @@
  * bit[2] = 1 OOB channel
  * bit[3] = 1 Flash channel
  */
-#define CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP	0x0F
+#define CONFIG_HOST_INTERFACE_ESPI_EC_CHAN_BITMAP MCHP_ESPI_CAP0_ALL_CHAN_SUPP
 
 #define CONFIG_MCHP_ESPI_VW_SAVE_ON_SLEEP
 
@@ -142,18 +145,12 @@
 /* #define CONFIG_CHARGE_MANAGER */
 /* #define CONFIG_CHARGE_RAMP_SW */
 
-
 /* #define CONFIG_CHARGER */
 
 /* #define CONFIG_CHARGER_DISCHARGE_ON_AC */
 /* #define CONFIG_CHARGER_ISL9237 */
 /* #define CONFIG_CHARGER_ILIM_PIN_DISABLED */
 /* #define CONFIG_CHARGER_INPUT_CURRENT 512 */
-
-/*
- * MCHP disable this for Kabylake eSPI bring up
- * #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
- */
 
 /* #define CONFIG_CHARGER_NARROW_VDC */
 /* #define CONFIG_CHARGER_PROFILE_OVERRIDE */
@@ -164,16 +161,17 @@
 #define CONFIG_CHIPSET_SKYLAKE
 #define CONFIG_CHIPSET_RESET_HOOK
 
-#define CONFIG_HOSTCMD_ESPI
-#define CONFIG_HOSTCMD_ESPI_VW_SLP_S3
-#define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#define CONFIG_HOST_INTERFACE_ESPI
+#define CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3
+#define CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
 
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_EXTPOWER_GPIO
 /* #define CONFIG_HOSTCMD_PD */
 /* #define CONFIG_HOSTCMD_PD_PANIC */
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
 
@@ -189,7 +187,6 @@
  * and API to power down pins
  * #define CONFIG_LOW_POWER_IDLE
  */
-
 
 /* #define CONFIG_GPIO_POWER_DOWN */
 
@@ -270,10 +267,10 @@
  * Configure for smaller flash is OK for testing except
  * for SPI flash lock bit.
  */
- #define CONFIG_FLASH_SIZE 524288
- #define CONFIG_SPI_FLASH_W25X40
+#define CONFIG_FLASH_SIZE_BYTES 524288
+#define CONFIG_SPI_FLASH_W25X40
 /*
- * #define CONFIG_FLASH_SIZE 0x1000000
+ * #define CONFIG_FLASH_SIZE_BYTES 0x1000000
  * #define CONFIG_SPI_FLASH_W25Q128
  */
 
@@ -321,7 +318,7 @@
  * Make sure to not include GPSPI in little-firmware(LFW)
  */
 #ifndef LFW
-#define CONFIG_MCHP_GPSPI	0x01
+#define CONFIG_MCHP_GPSPI 0x01
 #endif
 
 /* SPI Accelerometer
@@ -360,9 +357,8 @@
 #define GPIO_BAT_LED_GREEN GPIO_CHARGE_LED_2
 
 /* I2C ports */
-#define I2C_CONTROLLER_COUNT	2
-#define I2C_PORT_COUNT		2
-
+#define I2C_CONTROLLER_COUNT 2
+#define I2C_PORT_COUNT 2
 
 /*
  * Map I2C Ports to Controllers for this board.
@@ -377,26 +373,26 @@
  * All other ports set to 0xff (not used)
  */
 
-#define I2C_PORT_PMIC           MCHP_I2C_PORT10
-#define I2C_PORT_USB_CHARGER_1	MCHP_I2C_PORT2
-#define I2C_PORT_USB_MUX        MCHP_I2C_PORT2
-#define I2C_PORT_USB_CHARGER_2	MCHP_I2C_PORT2
-#define I2C_PORT_PD_MCU         MCHP_I2C_PORT3
-#define I2C_PORT_TCPC           MCHP_I2C_PORT3
-#define I2C_PORT_ALS            MCHP_I2C_PORT4
-#define I2C_PORT_ACCEL          MCHP_I2C_PORT4
-#define I2C_PORT_BATTERY        MCHP_I2C_PORT5
-#define I2C_PORT_CHARGER        MCHP_I2C_PORT5
+#define I2C_PORT_PMIC MCHP_I2C_PORT10
+#define I2C_PORT_USB_CHARGER_1 MCHP_I2C_PORT2
+#define I2C_PORT_USB_MUX MCHP_I2C_PORT2
+#define I2C_PORT_USB_CHARGER_2 MCHP_I2C_PORT2
+#define I2C_PORT_PD_MCU MCHP_I2C_PORT3
+#define I2C_PORT_TCPC MCHP_I2C_PORT3
+#define I2C_PORT_ALS MCHP_I2C_PORT4
+#define I2C_PORT_ACCEL MCHP_I2C_PORT4
+#define I2C_PORT_BATTERY MCHP_I2C_PORT5
+#define I2C_PORT_CHARGER MCHP_I2C_PORT5
 
 /* Thermal sensors read through PMIC ADC interface */
 #if 0
-#define I2C_PORT_THERMAL	I2C_PORT_PMIC
+#define I2C_PORT_THERMAL I2C_PORT_PMIC
 #else
-#define I2C_PORT_THERMAL	MCHP_I2C_PORT4
+#define I2C_PORT_THERMAL MCHP_I2C_PORT4
 #endif
 
 /* Ambient Light Sensor address */
-#define OPT3001_I2C_ADDR_FLAGS	OPT3001_I2C_ADDR1_FLAGS
+#define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_HASH
@@ -425,9 +421,9 @@ enum temp_sensor_id {
 	/* These temp sensors are only readable in S0 */
 	TEMP_SENSOR_AMBIENT,
 	TEMP_SENSOR_CASE,
-/*	TEMP_SENSOR_CHARGER, */
-/*	TEMP_SENSOR_DRAM, */
-/*	TEMP_SENSOR_WIFI, */
+	/*	TEMP_SENSOR_CHARGER, */
+	/*	TEMP_SENSOR_DRAM, */
+	/*	TEMP_SENSOR_WIFI, */
 
 	TEMP_SENSOR_COUNT
 };
@@ -453,36 +449,26 @@ enum als_id {
  * delay to turn on the power supply max is ~16ms.
  * delay to turn off the power supply max is about ~180ms.
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* delay to turn on/off vconn */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       45000
-#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_POWER_MW 45000
+#define PD_MAX_CURRENT_MA 3000
 
 /* Try to negotiate to 20V since i2c noise problems should be fixed. */
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /*
  * include TFDP macros from mchp chip level
  */
 #include "tfdp_chip.h"
 
-
 /* Map I2C port to controller */
 int board_i2c_p2c(int port);
-
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- */
-uint16_t board_i2c_slave_addrs(int controller);
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);

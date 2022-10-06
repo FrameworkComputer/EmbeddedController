@@ -1,0 +1,18 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC TCPC USB MUX
+
+# Include base.yaml instead of i2c-device.yaml because the reg property is not
+# required for this node.
+include: ["base.yaml", "cros-ec,usbc-mux.yaml"]
+
+compatible: "cros-ec,usbc-mux-tcpci"
+
+properties:
+  hpd-update:
+    type: string
+    required: false
+    description: |
+      Name of function used as hpd_update callback

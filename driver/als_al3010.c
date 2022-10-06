@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -15,13 +15,13 @@ int al3010_init(void)
 {
 	int ret;
 
-	ret = i2c_write8(I2C_PORT_ALS, AL3010_I2C_ADDR,
-			 AL3010_REG_CONFIG, AL3010_GAIN << 4);
+	ret = i2c_write8(I2C_PORT_ALS, AL3010_I2C_ADDR, AL3010_REG_CONFIG,
+			 AL3010_GAIN << 4);
 	if (ret)
 		return ret;
 
-	return i2c_write8(I2C_PORT_ALS, AL3010_I2C_ADDR,
-			  AL3010_REG_SYSTEM, AL3010_ENABLE);
+	return i2c_write8(I2C_PORT_ALS, AL3010_I2C_ADDR, AL3010_REG_SYSTEM,
+			  AL3010_ENABLE);
 }
 
 /**
@@ -33,8 +33,8 @@ int al3010_read_lux(int *lux, int af)
 	int val;
 	long long val64;
 
-	ret = i2c_read16(I2C_PORT_ALS, AL3010_I2C_ADDR,
-			 AL3010_REG_DATA_LOW, &val);
+	ret = i2c_read16(I2C_PORT_ALS, AL3010_I2C_ADDR, AL3010_REG_DATA_LOW,
+			 &val);
 
 	if (ret)
 		return ret;

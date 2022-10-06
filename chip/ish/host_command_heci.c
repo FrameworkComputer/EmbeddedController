@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,11 +13,16 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_LPC, format, ##args)
 
-#define HECI_CLIENT_CROS_EC_ISH_GUID { 0x7b7154d0, 0x56f4, 0x4bdc,\
-			 { 0xb0, 0xd8, 0x9e, 0x7c, 0xda, 0xe0, 0xd6, 0xa0 } }
+#define HECI_CLIENT_CROS_EC_ISH_GUID                                   \
+	{                                                              \
+		0x7b7154d0, 0x56f4, 0x4bdc,                            \
+		{                                                      \
+			0xb0, 0xd8, 0x9e, 0x7c, 0xda, 0xe0, 0xd6, 0xa0 \
+		}                                                      \
+	}
 
 /* Handle for all heci cros_ec interactions */
 static heci_handle_t heci_cros_ec_handle = HECI_INVALID_HANDLE;
@@ -33,7 +38,7 @@ static heci_handle_t heci_cros_ec_handle = HECI_INVALID_HANDLE;
 struct cros_ec_ishtp_msg_hdr {
 	uint8_t channel;
 	uint8_t status;
-	uint8_t id;	/* Pairs up request and responses */
+	uint8_t id; /* Pairs up request and responses */
 	uint8_t reserved;
 } __ec_align4;
 
@@ -88,10 +93,11 @@ static void heci_send_hostcmd_response(struct host_packet *pkt)
 }
 
 static void cros_ec_ishtp_subsys_new_msg_received(const heci_handle_t handle,
-					uint8_t *msg, const size_t msg_size)
+						  uint8_t *msg,
+						  const size_t msg_size)
 {
-	struct cros_ec_ishtp_msg *in = (void *) msg;
-	struct cros_ec_ishtp_msg *out = (void *) response_buffer;
+	struct cros_ec_ishtp_msg *in = (void *)msg;
+	struct cros_ec_ishtp_msg *out = (void *)response_buffer;
 
 	if (in->hdr.channel != CROS_EC_COMMAND) {
 		CPRINTS("Unknown HECI packet 0x%02x", in->hdr.channel);
@@ -137,10 +143,10 @@ static enum ec_status heci_get_protocol_info(struct host_cmd_handler_args *args)
 
 	args->response_size = sizeof(*r);
 
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, heci_get_protocol_info,
-EC_VER_MASK(0));
+		     EC_VER_MASK(0));
 
 static int cros_ec_ishtp_subsys_initialize(const heci_handle_t heci_handle)
 {

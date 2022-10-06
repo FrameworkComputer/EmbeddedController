@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,7 +16,7 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
 /* For each EXTI bit, record which GPIO entry is using it */
 static uint8_t exti_events[16];
 
@@ -83,8 +83,8 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
-	STM32_GPIO_BSRR(gpio_list[signal].port) =
-			gpio_list[signal].mask << (value ? 0 : 16);
+	STM32_GPIO_BSRR(gpio_list[signal].port) = gpio_list[signal].mask
+						  << (value ? 0 : 16);
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)
@@ -103,8 +103,8 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	g_old += exti_events[bit];
 
 	if ((exti_events[bit]) && (exti_events[bit] != signal)) {
-		CPRINTS("Overriding %s with %s on EXTI%d",
-			g_old->name, g->name, bit);
+		CPRINTS("Overriding %s with %s on EXTI%d", g_old->name, g->name,
+			bit);
 	}
 	exti_events[bit] = signal;
 
@@ -112,8 +112,9 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	shift = (bit % 4) * 4;
 	bank = (g->port - STM32_GPIOA_BASE) / 0x400;
 
-	STM32_SYSCFG_EXTICR(group) = (STM32_SYSCFG_EXTICR(group) &
-				      ~(0xF << shift)) | (bank << shift);
+	STM32_SYSCFG_EXTICR(group) =
+		(STM32_SYSCFG_EXTICR(group) & ~(0xF << shift)) |
+		(bank << shift);
 	STM32_EXTI_IMR |= g->mask;
 
 	return EC_SUCCESS;
@@ -171,7 +172,11 @@ void __keep gpio_interrupt(void)
 	}
 }
 #ifdef CHIP_FAMILY_STM32F0
-DECLARE_IRQ(STM32_IRQ_EXTI0_1, gpio_interrupt, STM32_IRQ_EXT0_1_PRIORITY);
-DECLARE_IRQ(STM32_IRQ_EXTI2_3, gpio_interrupt, STM32_IRQ_EXT2_3_PRIORITY);
-DECLARE_IRQ(STM32_IRQ_EXTI4_15, gpio_interrupt, STM32_IRQ_EXTI4_15_PRIORITY);
+static void _gpio_interrupt(void)
+{
+	gpio_interrupt();
+}
+DECLARE_IRQ(STM32_IRQ_EXTI0_1, _gpio_interrupt, STM32_IRQ_EXT0_1_PRIORITY);
+DECLARE_IRQ(STM32_IRQ_EXTI2_3, _gpio_interrupt, STM32_IRQ_EXT2_3_PRIORITY);
+DECLARE_IRQ(STM32_IRQ_EXTI4_15, _gpio_interrupt, STM32_IRQ_EXTI4_15_PRIORITY);
 #endif

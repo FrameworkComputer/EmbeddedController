@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,6 +15,7 @@
  * results in a breathing effect. It takes about 2sec for a full cycle.
  */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
@@ -28,9 +29,9 @@
 #include "timer.h"
 #include "util.h"
 
-#define LED_STATE_TIMEOUT_MIN	(15 * MSEC)  /* Minimum of 15ms per step */
-#define LED_HOLD_TIME		(330 * MSEC) /* Hold for 330ms at min/max */
-#define LED_STEP_PERCENT	4	/* Incremental value of each step */
+#define LED_STATE_TIMEOUT_MIN (15 * MSEC) /* Minimum of 15ms per step */
+#define LED_HOLD_TIME (330 * MSEC) /* Hold for 330ms at min/max */
+#define LED_STEP_PERCENT 4 /* Incremental value of each step */
 
 static enum powerled_state led_state = POWERLED_STATE_ON;
 static int power_led_percent = 100;
@@ -86,7 +87,8 @@ static int power_led_step(void)
 		 * Decreases timeout as duty cycle percentage approaches
 		 * 0%, increase as it approaches 100%.
 		 */
-		state_timeout = LED_STATE_TIMEOUT_MIN +
+		state_timeout =
+			LED_STATE_TIMEOUT_MIN +
 			LED_STATE_TIMEOUT_MIN * (power_led_percent / 33);
 	}
 
@@ -137,7 +139,7 @@ void power_led_task(void)
 
 #define CONFIG_CMD_POWERLED
 #ifdef CONFIG_CMD_POWERLED
-static int command_powerled(int argc, char **argv)
+static int command_powerled(int argc, const char **argv)
 {
 	enum powerled_state state;
 
@@ -156,7 +158,6 @@ static int command_powerled(int argc, char **argv)
 	powerled_set_state(state);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
-		"[off | on | suspend]",
-		"Change power LED state");
+DECLARE_CONSOLE_COMMAND(powerled, command_powerled, "[off | on | suspend]",
+			"Change power LED state");
 #endif

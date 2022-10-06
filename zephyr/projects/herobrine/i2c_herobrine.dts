@@ -1,0 +1,39 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "i2c_common.dtsi"
+
+&i2c1_0 {
+	ppc_port0: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+
+	ppc_port0_alt: syv682x@41 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x41>;
+		frs_en_gpio = <&gpio_usb_c0_frs_en>;
+	};
+
+	tcpc_port0: ps8xxx@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+	};
+};
+
+&i2c2_0 {
+	ppc_port1: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+
+	tcpc_port1: ps8xxx@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+	};
+};

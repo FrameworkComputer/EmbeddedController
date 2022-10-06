@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -231,7 +231,9 @@ vscode() {
 				echo '"compilerPath": "/usr/bin/arm-none-eabi-gcc",'
 				# echo '"compilerArgs": [],'
 				# The macro __STDC_VERSION__ is 201710L, which corresponds to c18.
-				echo '"cStandard": "c18",'
+				# VSCode doesn't have a C18 option, so go with C17. Since we seem
+				# to use a lot of GNUC features, let's go with gnu17 instead of c17.
+				echo '"cStandard": "gnu17",'
 				# echo '"cppStandard": "c++17",'
 				echo '"intelliSenseMode": "gcc-x64"'
 			} | {

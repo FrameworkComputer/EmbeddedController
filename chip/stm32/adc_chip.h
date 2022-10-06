@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,8 +8,20 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
-#include "stdint.h"
-
+#ifdef CHIP_FAMILY_STM32L4
+enum stm32_adc_smpr {
+	STM32_ADC_SMPR_DEFAULT = 0,
+	STM32_ADC_SMPR_2_5_CY,
+	STM32_ADC_SMPR_6_5_CY,
+	STM32_ADC_SMPR_12_5_CY,
+	STM32_ADC_SMPR_24_5_CY,
+	STM32_ADC_SMPR_47_5_CY,
+	STM32_ADC_SMPR_92_5_CY,
+	STM32_ADC_SMPR_247_5_CY,
+	STM32_ADC_SMPR_640_5_CY,
+	STM32_ADC_SMPR_COUNT,
+};
+#else
 enum stm32_adc_smpr {
 	STM32_ADC_SMPR_DEFAULT = 0,
 	STM32_ADC_SMPR_1_5_CY,
@@ -22,6 +34,7 @@ enum stm32_adc_smpr {
 	STM32_ADC_SMPR_239_5_CY,
 	STM32_ADC_SMPR_COUNT,
 };
+#endif
 
 /* Data structure to define ADC channels. */
 struct adc_t {
@@ -30,17 +43,14 @@ struct adc_t {
 	int factor_div;
 	int shift;
 	int channel;
-#ifdef CHIP_FAMILY_STM32F0
-	enum stm32_adc_smpr sample_rate;  /* Sampling Rate of the channel */
+#ifdef CHIP_FAMILY_STM32L4
+	int rank;
+#endif
+
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
+	enum stm32_adc_smpr sample_rate; /* Sampling Rate of the channel */
 #endif
 };
-
-/*
- * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board. Also, for STM32F0, this
- * must be ordered by AIN ID.
- */
-extern const struct adc_t adc_channels[];
 
 /* Disable ADC module when we don't need it anymore. */
 void adc_disable(void);
@@ -51,5 +61,8 @@ void adc_disable(void);
 
 /* Just plain id mapping for code readability */
 #define STM32_AIN(x) (x)
+
+/* Add for ADCs with RANK */
+#define STM32_RANK(x) (x)
 
 #endif /* __CROS_EC_ADC_CHIP_H */

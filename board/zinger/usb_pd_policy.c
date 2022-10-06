@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,25 +9,27 @@
 #include "debug_printf.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "printf.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
+#include "usb_pd_pdo.h"
 
 /* ------------------------- Power supply control ------------------------ */
 
 /* GPIO level setting helpers through BSRR register */
-#define GPIO_SET(n)   (1 << (n))
+#define GPIO_SET(n) (1 << (n))
 #define GPIO_RESET(n) (1 << ((n) + 16))
 
 /* Output voltage selection */
 enum volt {
-	VO_5V  = GPIO_RESET(13) | GPIO_RESET(14),
-	VO_12V = GPIO_SET(13)   | GPIO_RESET(14),
+	VO_5V = GPIO_RESET(13) | GPIO_RESET(14),
+	VO_12V = GPIO_SET(13) | GPIO_RESET(14),
 	VO_13V = GPIO_RESET(13) | GPIO_SET(14),
-	VO_20V = GPIO_SET(13)   | GPIO_SET(14),
+	VO_20V = GPIO_SET(13) | GPIO_SET(14),
 };
 
 static inline void set_output_voltage(enum volt v)
@@ -72,33 +74,27 @@ static timestamp_t fault_deadline;
 /* ADC in 12-bit mode */
 #define ADC_SCALE BIT(12)
 /* ADC power supply : VDDA = 3.3V */
-#define VDDA_MV   3300
+#define VDDA_MV 3300
 /* Current sense resistor : 5 milliOhm */
-#define R_SENSE   5
+#define R_SENSE 5
 /* VBUS voltage is measured through 10k / 100k voltage divider = /11 */
-#define VOLT_DIV  ((10+100)/10)
+#define VOLT_DIV ((10 + 100) / 10)
 /* The current sensing op-amp has a x100 gain */
 #define CURR_GAIN 100
 /* convert VBUS voltage in raw ADC value */
-#define VBUS_MV(mv) ((mv)*ADC_SCALE/VOLT_DIV/VDDA_MV)
+#define VBUS_MV(mv) ((mv)*ADC_SCALE / VOLT_DIV / VDDA_MV)
 /* convert VBUS current in raw ADC value */
-#define VBUS_MA(ma) ((ma)*ADC_SCALE*R_SENSE/1000*CURR_GAIN/VDDA_MV)
+#define VBUS_MA(ma) ((ma)*ADC_SCALE * R_SENSE / 1000 * CURR_GAIN / VDDA_MV)
 /* convert raw ADC value to mA */
-#define ADC_TO_CURR_MA(vbus) ((vbus)*1000/(ADC_SCALE*R_SENSE)*VDDA_MV/CURR_GAIN)
+#define ADC_TO_CURR_MA(vbus) \
+	((vbus)*1000 / (ADC_SCALE * R_SENSE) * VDDA_MV / CURR_GAIN)
 /* convert raw ADC value to mV */
-#define ADC_TO_VOLT_MV(vbus) ((vbus)*VOLT_DIV*VDDA_MV/ADC_SCALE)
-
-/* Max current */
-#if defined(BOARD_ZINGER)
-#define RATED_CURRENT 3000
-#elif defined(BOARD_MINIMUFFIN)
-#define RATED_CURRENT 2250
-#endif
+#define ADC_TO_VOLT_MV(vbus) ((vbus)*VOLT_DIV * VDDA_MV / ADC_SCALE)
 
 /* Max current : 20% over rated current */
-#define MAX_CURRENT VBUS_MA(RATED_CURRENT * 6/5)
+#define MAX_CURRENT VBUS_MA(RATED_CURRENT * 6 / 5)
 /* Fast short circuit protection : 50% over rated current */
-#define MAX_CURRENT_FAST VBUS_MA(RATED_CURRENT * 3/2)
+#define MAX_CURRENT_FAST VBUS_MA(RATED_CURRENT * 3 / 2)
 /* reset over-current after 1 second */
 #define OCP_TIMEOUT SECOND
 
@@ -106,19 +102,19 @@ static timestamp_t fault_deadline;
 #define SINK_IDLE_CURRENT VBUS_MA(500 /* mA */)
 
 /* Under-voltage limit is 0.8x Vnom */
-#define UVP_MV(mv)  VBUS_MV((mv) * 8 / 10)
+#define UVP_MV(mv) VBUS_MV((mv)*8 / 10)
 /* Over-voltage limit is 1.2x Vnom */
-#define OVP_MV(mv)  VBUS_MV((mv) * 12 / 10)
+#define OVP_MV(mv) VBUS_MV((mv)*12 / 10)
 /* Over-voltage recovery threshold is 1.1x Vnom */
-#define OVP_REC_MV(mv)  VBUS_MV((mv) * 11 / 10)
+#define OVP_REC_MV(mv) VBUS_MV((mv)*11 / 10)
 
 /* Maximum discharging delay */
-#define DISCHARGE_TIMEOUT (275*MSEC)
+#define DISCHARGE_TIMEOUT (275 * MSEC)
 /* Voltage overshoot below the OVP threshold for discharging to avoid OVP */
 #define DISCHARGE_OVERSHOOT_MV VBUS_MV(200)
 
 /* Time to wait after last RX edge interrupt before allowing deep sleep */
-#define PD_RX_SLEEP_TIMEOUT (100*MSEC)
+#define PD_RX_SLEEP_TIMEOUT (100 * MSEC)
 
 /* ----- output voltage discharging ----- */
 
@@ -154,39 +150,18 @@ static void discharge_voltage(int target_volt)
 
 /* ----------------------- USB Power delivery policy ---------------------- */
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_UNCONSTRAINED | PDO_FIXED_DATA_SWAP)
-
-/* Voltage indexes for the PDOs */
-enum volt_idx {
-	PDO_IDX_5V  = 0,
-	PDO_IDX_12V = 1,
-	PDO_IDX_20V = 2,
-
-	PDO_IDX_COUNT
-};
-
-/* Power Delivery Objects */
-const uint32_t pd_src_pdo[] = {
-	[PDO_IDX_5V]  = PDO_FIXED(5000,  RATED_CURRENT, PDO_FIXED_FLAGS),
-	[PDO_IDX_12V] = PDO_FIXED(12000, RATED_CURRENT, PDO_FIXED_FLAGS),
-	[PDO_IDX_20V] = PDO_FIXED(20000, RATED_CURRENT, PDO_FIXED_FLAGS),
-};
-const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
-BUILD_ASSERT(ARRAY_SIZE(pd_src_pdo) == PDO_IDX_COUNT);
-
 /* PDO voltages (should match the table above) */
 static const struct {
 	enum volt select; /* GPIO configuration to select the voltage */
-	int       uvp;    /* under-voltage limit in mV */
-	int       ovp;    /* over-voltage limit in mV */
-	int       ovp_rec;/* over-voltage recovery threshold in mV */
+	int uvp; /* under-voltage limit in mV */
+	int ovp; /* over-voltage limit in mV */
+	int ovp_rec; /* over-voltage recovery threshold in mV */
 } voltages[ARRAY_SIZE(pd_src_pdo)] = {
-	[PDO_IDX_5V]  = {VO_5V,  UVP_MV(5000),  OVP_MV(5000),
-						OVP_REC_MV(5000)},
-	[PDO_IDX_12V] = {VO_12V, UVP_MV(12000), OVP_MV(12000),
-						OVP_REC_MV(12000)},
-	[PDO_IDX_20V] = {VO_20V, UVP_MV(20000), OVP_MV(20000),
-						OVP_REC_MV(20000)},
+	[PDO_IDX_5V] = { VO_5V, UVP_MV(5000), OVP_MV(5000), OVP_REC_MV(5000) },
+	[PDO_IDX_12V] = { VO_12V, UVP_MV(12000), OVP_MV(12000),
+			  OVP_REC_MV(12000) },
+	[PDO_IDX_20V] = { VO_20V, UVP_MV(20000), OVP_MV(20000),
+			  OVP_REC_MV(20000) },
 };
 
 /* current and previous selected PDO entry */
@@ -225,8 +200,8 @@ void pd_transition_voltage(int idx)
 			/* Make sure discharging is disabled */
 			discharge_disable();
 			/* Enable over-current monitoring */
-			adc_enable_watchdog(ADC_CH_A_SENSE,
-					    MAX_CURRENT_FAST, 0);
+			adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST,
+					    0);
 		}
 	}
 	set_output_voltage(voltages[volt_idx].select);
@@ -267,28 +242,22 @@ void pd_power_supply_reset(int port)
 	}
 }
 
-int pd_check_data_swap(int port,
-		       enum pd_data_role data_role)
+int pd_check_data_swap(int port, enum pd_data_role data_role)
 {
 	/* Allow data swap if we are a DFP, otherwise don't allow */
 	return (data_role == PD_ROLE_DFP) ? 1 : 0;
 }
 
-void pd_execute_data_swap(int port,
-			  enum pd_data_role data_role)
+void pd_execute_data_swap(int port, enum pd_data_role data_role)
 {
 	/* Do nothing */
 }
 
-void pd_check_pr_role(int port,
-		      enum pd_power_role pr_role,
-		      int flags)
+void pd_check_pr_role(int port, enum pd_power_role pr_role, int flags)
 {
 }
 
-void pd_check_dr_role(int port,
-		      enum pd_data_role dr_role,
-		      int flags)
+void pd_check_dr_role(int port, enum pd_data_role dr_role, int flags)
 {
 	/* If DFP, try to switch to UFP */
 	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
@@ -315,7 +284,7 @@ int pd_board_checks(void)
 			__enter_hibernate(0, 0);
 		}
 	} else {
-		hib_to.val = get_time().val + 60*SECOND;
+		hib_to.val = get_time().val + 60 * SECOND;
 		hib_to_ready = 1;
 	}
 #endif
@@ -345,8 +314,8 @@ int pd_board_checks(void)
 		/* trigger the slow OCP iff all 4 samples are above the max */
 		if (count == 3) {
 			debug_printf("OCP %d mA\n",
-			  vbus_amp * VDDA_MV / CURR_GAIN * 1000
-				   / R_SENSE / ADC_SCALE);
+				     vbus_amp * VDDA_MV / CURR_GAIN * 1000 /
+					     R_SENSE / ADC_SCALE);
 			pd_log_event(PD_EVENT_PS_FAULT, 0, PS_FAULT_OCP, NULL);
 			fault = FAULT_OCP;
 			/* reset over-current after 1 second */
@@ -375,8 +344,7 @@ int pd_board_checks(void)
 	if ((output_is_enabled() && (vbus_volt > voltages[ovp_idx].ovp)) ||
 	    (fault && (vbus_volt > voltages[ovp_idx].ovp_rec))) {
 		if (!fault) {
-			debug_printf("OVP %d mV\n",
-				     ADC_TO_VOLT_MV(vbus_volt));
+			debug_printf("OVP %d mV\n", ADC_TO_VOLT_MV(vbus_volt));
 			pd_log_event(PD_EVENT_PS_FAULT, 0, PS_FAULT_OVP, NULL);
 		}
 		fault = FAULT_OVP;
@@ -387,7 +355,7 @@ int pd_board_checks(void)
 
 	/* the discharge did not work properly */
 	if (discharge_is_enabled() &&
-		(get_time().val > discharge_deadline.val)) {
+	    (get_time().val > discharge_deadline.val)) {
 		/* ensure we always finish a 2-step discharge */
 		volt_idx = discharge_volt_idx;
 		set_output_voltage(voltages[volt_idx].select);
@@ -395,8 +363,7 @@ int pd_board_checks(void)
 		discharge_disable();
 		/* enable over-current monitoring */
 		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
-		debug_printf("Disch FAIL %d mV\n",
-			     ADC_TO_VOLT_MV(vbus_volt));
+		debug_printf("Disch FAIL %d mV\n", ADC_TO_VOLT_MV(vbus_volt));
 		pd_log_event(PD_EVENT_PS_FAULT, 0, PS_FAULT_DISCH, NULL);
 		fault = FAULT_DISCHARGE;
 		/* reset it after 1 second */
@@ -416,10 +383,9 @@ int pd_board_checks(void)
 	}
 
 	return EC_SUCCESS;
-
 }
 
-void pd_adc_interrupt(void)
+static void pd_adc_interrupt(void)
 {
 	/* Clear flags */
 	STM32_ADC_ISR = 0x8e;
@@ -433,10 +399,10 @@ void pd_adc_interrupt(void)
 		} else { /* discharge complete */
 			discharge_disable();
 			/* enable over-current monitoring */
-			adc_enable_watchdog(ADC_CH_A_SENSE,
-					    MAX_CURRENT_FAST, 0);
+			adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST,
+					    0);
 		}
-	} else {/* Over-current detection */
+	} else { /* Over-current detection */
 		/* cut the power output */
 		pd_power_supply_reset(0);
 		/* record a special fault */
@@ -479,9 +445,7 @@ static int svdm_response_svids(int port, uint32_t *payload)
 #define MODE_CNT 1
 #define OPOS 1
 
-const uint32_t vdo_dp_mode[MODE_CNT] =  {
-	VDO_MODE_GOOGLE(MODE_GOOGLE_FU)
-};
+const uint32_t vdo_dp_mode[MODE_CNT] = { VDO_MODE_GOOGLE(MODE_GOOGLE_FU) };
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
@@ -525,16 +489,17 @@ const struct svdm_response svdm_rsp = {
 };
 
 __override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-		  uint32_t **rpayload)
+			     uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	int rsize;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE || !gfu_mode)
 		return 0;
 
-	debug_printf("%pT] VDM/%d [%d] %08x\n",
-		     PRINTF_TIMESTAMP_NOW, cnt, cmd, payload[0]);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	debug_printf("%s] VDM/%d [%d] %08x\n", ts_str, cnt, cmd, payload[0]);
 	*rpayload = payload;
 
 	rsize = pd_custom_flash_vdm(port, cnt, payload);

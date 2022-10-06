@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -6,24 +6,30 @@
  */
 
 #include "board_config.h"
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+#include "adc.h"
+#endif
 #include "button.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "cros_board_info.h"
 #include "dma.h"
 #include "eeprom.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "i2c_bitbang.h"
 #include "keyboard_scan.h"
 #include "link_defs.h"
 #include "lpc.h"
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
+#include "panic.h"
 #include "rwsig.h"
 #include "system.h"
 #include "task.h"
@@ -35,8 +41,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 test_mockable __keep int main(void)
 {
@@ -109,7 +115,7 @@ test_mockable __keep int main(void)
 	 * Initialize flash and apply write protect if necessary.  Requires
 	 * the reset flags calculated by system initialization.
 	 */
-	flash_pre_init();
+	crec_flash_pre_init();
 #endif
 
 	/* Set the CPU clocks / PLLs.  System is now running at full speed. */
@@ -123,6 +129,10 @@ test_mockable __keep int main(void)
 	 * timer init() must be before uart_init().
 	 */
 	timer_init();
+
+	/* Compensate the elapsed time for the RTC. */
+	if (IS_ENABLED(CONFIG_HIBERNATE_PSL_COMPENSATE_RTC))
+		system_compensate_rtc();
 
 	/* Main initialization stage.  Modules may enable interrupts here. */
 	cpu_init();
@@ -139,20 +149,7 @@ test_mockable __keep int main(void)
 	if (mpu_pre_init_rv != EC_SUCCESS)
 		panic("MPU init failed");
 
-	/* be less verbose if we boot for USB resume to meet spec timings */
-	if (!(system_get_reset_flags() & EC_RESET_FLAG_USB_RESUME)) {
-		CPUTS("\n");
-		if (system_jumped_to_this_image())
-			CPRINTS("UART initialized after sysjump");
-		else
-			CPUTS("\n--- UART initialized after reboot ---\n");
-		CPRINTF("[Image: %s, %s]\n",
-			 system_get_image_copy_string(),
-			 system_get_build_info());
-		CPUTS("[Reset cause: ");
-		system_print_reset_flags();
-		CPUTS("]\n");
-	}
+	system_print_banner();
 
 #ifdef CONFIG_BRINGUP
 	ccprintf("\n\nWARNING: BRINGUP BUILD\n\n\n");
@@ -179,32 +176,62 @@ test_mockable __keep int main(void)
 #endif
 
 	/*
-	 * Keyboard scan init/Button init can set recovery events to
-	 * indicate to host entry into recovery mode. Before this is
-	 * done, lpc always report mask needs to be initialized
-	 * correctly.
+	 * If the EC has exclusive control over the CBI EEPROM WP signal, have
+	 * the EC set the WP if appropriate.  Note that once the WP is set, the
+	 * EC must be reset via EC_RST_ODL in order for the WP to become unset.
 	 */
+	if (IS_ENABLED(CONFIG_EEPROM_CBI_WP) && system_is_locked())
+		cbi_latch_eeprom_wp();
+
+		/*
+		 * Keyboard scan init/Button init can set recovery events to
+		 * indicate to host entry into recovery mode. Before this is
+		 * done, LPC_HOST_EVENT_ALWAYS_REPORT mask needs to be
+		 * initialized correctly.
+		 */
 #ifdef CONFIG_HOSTCMD_X86
 	lpc_init_mask();
 #endif
-	if (IS_ENABLED(CONFIG_I2C_MASTER)) {
+	if (IS_ENABLED(CONFIG_I2C_CONTROLLER)) {
 		/*
 		 * Some devices (like the I2C keyboards, CBI) need I2C access
 		 * pretty early, so let's initialize the controller now.
 		 */
 		i2c_init();
+
+		if (IS_ENABLED(CONFIG_I2C_BITBANG)) {
+			/*
+			 * Enable I2C raw mode for the ports which need
+			 * pre-task i2c transactions.
+			 */
+			enable_i2c_raw_mode(true);
+
+			/* Board level pre-task I2C peripheral initialization */
+			board_pre_task_i2c_peripheral_init();
+		}
 	}
+
 #ifdef HAS_TASK_KEYSCAN
-	keyboard_scan_init();
+
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+	/*
+	 * Initialize adc here as we need to use it during keyboard_scan_init
+	 * to scan boot keys
+	 */
+	adc_init();
 #endif
+
+	keyboard_scan_init();
+#endif /* HAS_TASK_KEYSCAN */
+
 #if defined(CONFIG_DEDICATED_RECOVERY_BUTTON) || defined(CONFIG_VOLUME_BUTTONS)
 	button_init();
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON | CONFIG_VOLUME_BUTTONS) */
 
 	/* Make sure recovery boot won't be paused. */
-	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)
-			&& system_is_manual_recovery()
-			&& (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE)) {
+	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE) &&
+	    system_is_manual_recovery() &&
+	    (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE)) {
 		CPRINTS("Clear AP_IDLE for recovery mode");
 		system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
 	}
@@ -244,7 +271,15 @@ test_mockable __keep int main(void)
 				rwsig_jump_now();
 		}
 	}
-#endif  /* !CONFIG_VBOOT_EFS && CONFIG_RWSIG && !HAS_TASK_RWSIG */
+#endif /* !CONFIG_VBOOT_EFS && CONFIG_RWSIG && !HAS_TASK_RWSIG */
+
+	/*
+	 * Disable I2C raw mode for the ports which needed pre-task i2c
+	 * transactions as the task is about to start and the I2C can resume
+	 * to event based transactions.
+	 */
+	if (IS_ENABLED(CONFIG_I2C_BITBANG) && IS_ENABLED(CONFIG_I2C_CONTROLLER))
+		enable_i2c_raw_mode(false);
 
 	/*
 	 * Print the init time.  Not completely accurate because it can't take

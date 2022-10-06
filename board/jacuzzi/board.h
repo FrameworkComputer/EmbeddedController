@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,6 +11,12 @@
 #define VARIANT_KUKUI_JACUZZI
 #define VARIANT_KUKUI_BATTERY_SMART
 #define VARIANT_KUKUI_CHARGER_ISL9238
+#define VARIANT_KUKUI_EC_STM32F098
+#undef CONFIG_CMD_MFALLOW
+
+/* Free up flash space */
+#define CONFIG_DEBUG_ASSERT_BRIEF
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
 
 #ifndef SECTION_IS_RW
 #define VARIANT_KUKUI_NO_SENSORS
@@ -51,46 +57,54 @@
 
 /* Motion Sensors */
 #ifndef VARIANT_KUKUI_NO_SENSORS
-#define CONFIG_ACCEL_KX022	/* Lid accel */
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+#define CONFIG_ACCEL_KX022 /* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160 /* Base accel */
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
+/* ICM426XX Base accel/gyro */
+#define CONFIG_ACCELGYRO_ICM426XX
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
 #define CONFIG_ALS
 #define CONFIG_CMD_ACCEL_INFO
 
 #define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
+#define CONFIG_GMR_TABLET_MODE_CUSTOM
+
 #endif /* VARIANT_KUKUI_NO_SENSORS */
 
 /* I2C ports */
-#define I2C_PORT_BC12               0
-#define I2C_PORT_TCPC0              0
-#define I2C_PORT_USB_MUX            0
-#define I2C_PORT_CHARGER            board_get_charger_i2c()
-#define I2C_PORT_SENSORS            1
-#define I2C_PORT_IO_EXPANDER_IT8801 1
-#define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
+#define I2C_PORT_BC12 0
+#define I2C_PORT_TCPC0 0
+#define I2C_PORT_USB_MUX 0
+#define I2C_PORT_CHARGER board_get_charger_i2c()
+#define I2C_PORT_SENSORS 1
+#define I2C_PORT_KB_DISCRETE 1
+#define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 #ifdef BOARD_JACUZZI
-#define I2C_PORT_BATTERY            1
+#define I2C_PORT_BATTERY 1
 #else /* Juniper */
-#define I2C_PORT_BATTERY            2
+#define I2C_PORT_BATTERY 2
 #endif
 
+/* IT8801 I2C address */
+#define KB_DISCRETE_I2C_ADDR_FLAGS IT8801_I2C_ADDR1
+
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT 0 /* The first SPI controller port (SPI2) */
 
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
-/* Define the MKBP events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON))
 
 #define CONFIG_LED_ONOFF_STATES
 
@@ -143,11 +157,13 @@ void emmc_cmd_interrupt(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void board_reset_pd_mcu(void);
 int board_get_version(void);
-int board_is_sourcing_vbus(int port);
 
 /* returns the i2c port number of charger/battery */
 int board_get_charger_i2c(void);
 int board_get_battery_i2c(void);
+
+/* Motion sensor interrupt */
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

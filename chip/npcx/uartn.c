@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,60 +17,58 @@
 
 #ifdef NPCX_UART_FIFO_SUPPORT
 /* Enable UART Tx FIFO empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_EN(n)      \
-		(SET_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_TEMPTY_EN))
+#define NPCX_UART_TX_EMPTY_INT_EN(n) \
+	(SET_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_TEMPTY_EN))
 /* True if UART Tx FIFO empty interrupt is enabled */
-#define NPCX_UART_TX_EMPTY_INT_IS_EN(n)   \
-		(IS_BIT_SET(NPCX_UFTCTL(n), NPCX_UFTCTL_TEMPTY_EN))
+#define NPCX_UART_TX_EMPTY_INT_IS_EN(n) \
+	(IS_BIT_SET(NPCX_UFTCTL(n), NPCX_UFTCTL_TEMPTY_EN))
 /* Disable UART Tx FIFO empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_DIS(n)     \
-		(CLEAR_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_TEMPTY_EN))
+#define NPCX_UART_TX_EMPTY_INT_DIS(n) \
+	(CLEAR_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_TEMPTY_EN))
 /* True if the Tx FIFO is not completely full */
-#define NPCX_UART_TX_IS_READY(n)          \
-		(!(GET_FIELD(NPCX_UFTSTS(n), NPCX_UFTSTS_TEMPTY_LVL) == 0))
+#define NPCX_UART_TX_IS_READY(n) \
+	(!(GET_FIELD(NPCX_UFTSTS(n), NPCX_UFTSTS_TEMPTY_LVL) == 0))
 
 /* Enable UART Tx "not" in transmission interrupt */
-#define NPCX_UART_TX_NXMIP_INT_EN(n)      \
-		(SET_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_NXMIPEN))
+#define NPCX_UART_TX_NXMIP_INT_EN(n) \
+	(SET_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_NXMIPEN))
 /* Disable UART Tx "not" in transmission interrupt */
-#define NPCX_UART_TX_NXMIP_INT_DIS(n)      \
-		(CLEAR_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_NXMIPEN))
+#define NPCX_UART_TX_NXMIP_INT_DIS(n) \
+	(CLEAR_BIT(NPCX_UFTCTL(n), NPCX_UFTCTL_NXMIPEN))
 /*
  * True if Tx is in progress
  * (i.e. FIFO is not empty or last byte in TSFT (Transmit Shift register)
  * is not sent)
  */
-#define NPCX_UART_TX_IN_XMIT(n)           \
-		(!IS_BIT_SET(NPCX_UFTSTS(n), NPCX_UFTSTS_NXMIP))
+#define NPCX_UART_TX_IN_XMIT(n) (!IS_BIT_SET(NPCX_UFTSTS(n), NPCX_UFTSTS_NXMIP))
 
 /*
  * Enable to generate interrupt when there is at least one byte
  * in the receive FIFO
  */
-#define NPCX_UART_RX_INT_EN(n)            \
-		(SET_BIT(NPCX_UFRCTL(n), NPCX_UFRCTL_RNEMPTY_EN))
+#define NPCX_UART_RX_INT_EN(n) (SET_BIT(NPCX_UFRCTL(n), NPCX_UFRCTL_RNEMPTY_EN))
 /* True if at least one byte is in the receive FIFO */
-#define NPCX_UART_RX_IS_AVAILABLE(n)      \
-		(IS_BIT_SET(NPCX_UFRSTS(n), NPCX_UFRSTS_RFIFO_NEMPTY_STS))
+#define NPCX_UART_RX_IS_AVAILABLE(n) \
+	(IS_BIT_SET(NPCX_UFRSTS(n), NPCX_UFRSTS_RFIFO_NEMPTY_STS))
 #else
 /* Enable UART Tx buffer empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_EN(n)      (NPCX_UICTRL(n) |= 0x20)
+#define NPCX_UART_TX_EMPTY_INT_EN(n) (NPCX_UICTRL(n) |= 0x20)
 /* True if UART Tx buffer empty interrupt is enabled */
-#define NPCX_UART_TX_EMPTY_INT_IS_EN(n)   (NPCX_UICTRL(n) & 0x20)
+#define NPCX_UART_TX_EMPTY_INT_IS_EN(n) (NPCX_UICTRL(n) & 0x20)
 /* Disable UART Tx buffer empty interrupt */
-#define NPCX_UART_TX_EMPTY_INT_DIS(n)     (NPCX_UICTRL(n) &= ~0x20)
+#define NPCX_UART_TX_EMPTY_INT_DIS(n) (NPCX_UICTRL(n) &= ~0x20)
 /* True if 1-byte Tx buffer is empty */
-#define NPCX_UART_TX_IS_READY(n)          (NPCX_UICTRL(n) & 0x01)
+#define NPCX_UART_TX_IS_READY(n) (NPCX_UICTRL(n) & 0x01)
 /*
  * True if Tx is in progress
  * (i.e. Tx buffer is not empty or last byte in TSFT (Transmit Shift register)
  * is not sent)
  */
-#define NPCX_UART_TX_IN_XMIT(n)           (NPCX_USTAT(n) & 0x40)
- /* Enable to generate interrupt when there is data in the receive buffer */
-#define NPCX_UART_RX_INT_EN(n)            (NPCX_UICTRL(n) = 0x40)
+#define NPCX_UART_TX_IN_XMIT(n) (NPCX_USTAT(n) & 0x40)
+/* Enable to generate interrupt when there is data in the receive buffer */
+#define NPCX_UART_RX_INT_EN(n) (NPCX_UICTRL(n) = 0x40)
 /* True if there is data in the 1-byte Receive buffer */
-#define NPCX_UART_RX_IS_AVAILABLE(n)      (NPCX_UICTRL(n) & 0x02)
+#define NPCX_UART_RX_IS_AVAILABLE(n) (NPCX_UICTRL(n) & 0x02)
 #endif
 
 struct uart_configs {
@@ -79,9 +77,9 @@ struct uart_configs {
 	uint32_t clk_en_msk;
 };
 static const struct uart_configs uart_cfg[] = {
-	{NPCX_IRQ_UART, CGC_OFFSET_UART, CGC_UART_MASK},
+	{ NPCX_IRQ_UART, CGC_OFFSET_UART, CGC_UART_MASK },
 #ifdef NPCX_SECOND_UART
-	{NPCX_IRQ_UART2, CGC_OFFSET_UART2, CGC_UART2_MASK},
+	{ NPCX_IRQ_UART2, CGC_OFFSET_UART2, CGC_UART2_MASK },
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(uart_cfg) == UART_MODULE_COUNT);
@@ -144,7 +142,7 @@ void uartn_tx_start(uint8_t uart_num)
 void uartn_enable_tx_complete_int(uint8_t uart_num, uint8_t enable)
 {
 	enable ? NPCX_UART_TX_NXMIP_INT_EN(uart_num) :
-		NPCX_UART_TX_NXMIP_INT_DIS(uart_num);
+		 NPCX_UART_TX_NXMIP_INT_DIS(uart_num);
 }
 #endif
 
@@ -198,7 +196,7 @@ int uartn_read_char(uint8_t uart_num)
 
 void uartn_clear_rx_fifo(int channel)
 {
-	int scratch __attribute__ ((unused));
+	int scratch __attribute__((unused));
 
 	/* If '1',  that means there is RX data on the FIFO register */
 	while (NPCX_UART_RX_IS_AVAILABLE(channel))
@@ -211,9 +209,9 @@ static void uartn_set_fifo_mode(uint8_t uart_num)
 	/* Enable the UART FIFO mode */
 	SET_BIT(NPCX_UMDSL(uart_num), NPCX_UMDSL_FIFO_MD);
 	/* Disable all Tx interrupts */
-	NPCX_UFTCTL(uart_num) &= ~(BIT(NPCX_UFTCTL_TEMPTY_LVL_EN) |
-					BIT(NPCX_UFTCTL_TEMPTY_EN) |
-					BIT(NPCX_UFTCTL_NXMIPEN));
+	NPCX_UFTCTL(uart_num) &=
+		~(BIT(NPCX_UFTCTL_TEMPTY_LVL_EN) | BIT(NPCX_UFTCTL_TEMPTY_EN) |
+		  BIT(NPCX_UFTCTL_NXMIPEN));
 }
 
 #endif

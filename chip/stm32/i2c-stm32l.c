@@ -1,8 +1,9 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -19,7 +20,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 #define I2C_ERROR_FAILED_START EC_ERROR_INTERNAL_FIRST
 
@@ -35,23 +36,20 @@
  * flips out.  The battery may flip out and hold lines low for up to
  * 25ms.  If we just wait it will eventually let them go.
  */
-#define I2C_TX_TIMEOUT_MASTER	(30 * MSEC)
+#define I2C_TX_TIMEOUT_MASTER (30 * MSEC)
 
 /*
  * Delay 5us in bitbang mode.  That gives us roughly 5us low and 5us high or
  * a frequency of 100kHz.
  */
-#define I2C_BITBANG_HALF_CYCLE_US    5
+#define I2C_BITBANG_HALF_CYCLE_US 5
 
 #ifdef CONFIG_I2C_DEBUG
 static void dump_i2c_reg(int port, const char *what)
 {
 	CPRINTS("i2c CR1=%04x CR2=%04x SR1=%04x SR2=%04x %s",
-		STM32_I2C_CR1(port),
-		STM32_I2C_CR2(port),
-		STM32_I2C_SR1(port),
-		STM32_I2C_SR2(port),
-		what);
+		STM32_I2C_CR1(port), STM32_I2C_CR2(port), STM32_I2C_SR1(port),
+		STM32_I2C_SR2(port), what);
 }
 #else
 static inline void dump_i2c_reg(int port, const char *what)
@@ -164,12 +162,10 @@ static void i2c_init_port(const struct i2c_port_t *p)
 /*****************************************************************************/
 /* Interface */
 
-int chip_i2c_xfer(const int port,
-		  const uint16_t slave_addr_flags,
-		  const uint8_t *out, int out_bytes,
-		  uint8_t *in, int in_bytes, int flags)
+int chip_i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
+		  int out_bytes, uint8_t *in, int in_bytes, int flags)
 {
-	int addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+	int addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 	int started = (flags & I2C_XFER_START) ? 0 : 1;
 	int rv = EC_SUCCESS;
 	int i;
@@ -188,10 +184,8 @@ int chip_i2c_xfer(const int port,
 	STM32_I2C_SR1(port) = 0;
 
 	/* Clear start, stop, POS, ACK bits to get us in a known state */
-	STM32_I2C_CR1(port) &= ~(STM32_I2C_CR1_START |
-				 STM32_I2C_CR1_STOP |
-				 STM32_I2C_CR1_POS |
-				 STM32_I2C_CR1_ACK);
+	STM32_I2C_CR1(port) &= ~(STM32_I2C_CR1_START | STM32_I2C_CR1_STOP |
+				 STM32_I2C_CR1_POS | STM32_I2C_CR1_ACK);
 
 	/* No out bytes and no in bytes means just check for active */
 	if (out_bytes || !in_bytes) {
@@ -291,7 +285,7 @@ int chip_i2c_xfer(const int port,
 		}
 	}
 
- xfer_exit:
+xfer_exit:
 	/* On error, queue a stop condition */
 	if (rv) {
 		flags |= I2C_XFER_STOP;
@@ -305,7 +299,8 @@ int chip_i2c_xfer(const int port,
 		if (rv == I2C_ERROR_FAILED_START) {
 			const struct i2c_port_t *p = i2c_ports;
 			CPRINTS("chip_i2c_xfer start error; "
-				"unwedging and resetting i2c %d", port);
+				"unwedging and resetting i2c %d",
+				port);
 
 			i2c_unwedge(port);
 
@@ -363,7 +358,7 @@ int i2c_raw_get_sda(int port)
 int i2c_get_line_levels(int port)
 {
 	return (i2c_raw_get_sda(port) ? I2C_LINE_SDA_HIGH : 0) |
-		(i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
+	       (i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
 }
 
 /*****************************************************************************/
@@ -414,11 +409,9 @@ void i2c_init(void)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_i2cdump(int argc, char **argv)
+static int command_i2cdump(int argc, const char **argv)
 {
 	dump_i2c_reg(I2C_PORT_MASTER, "dump");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(i2cdump, command_i2cdump,
-			NULL,
-			"Dump I2C regs");
+DECLARE_CONSOLE_COMMAND(i2cdump, command_i2cdump, NULL, "Dump I2C regs");

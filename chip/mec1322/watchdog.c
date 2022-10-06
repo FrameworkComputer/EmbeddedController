@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -96,7 +96,8 @@ void IRQ_HANDLER(MEC1322_IRQ_TIMER16_0)(void)
 		     "b task_resched_if_needed\n");
 }
 const struct irq_priority __keep IRQ_PRIORITY(MEC1322_IRQ_TIMER16_0)
-	__attribute__((section(".rodata.irqprio")))
-		= {MEC1322_IRQ_TIMER16_0, 0}; /* put the watchdog at the
-						 highest priority */
+	__attribute__((section(".rodata.irqprio"))) = { MEC1322_IRQ_TIMER16_0,
+							0 }; /* put the watchdog
+								at the highest
+								priority */
 #endif

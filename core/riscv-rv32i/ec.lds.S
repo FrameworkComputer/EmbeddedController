@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -41,12 +41,16 @@ MEMORY
 	 */
 	ILM (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
 
-#if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
+#if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_PERIPHERAL)
 	H2RAM (rw) : ORIGIN = CONFIG_H2RAM_BASE, LENGTH = CONFIG_H2RAM_SIZE
 #endif
 #else
 	IRAM (rw) : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
 #endif /* CHIP_FAMILY_IT8XXX2 */
+
+#ifdef CONFIG_DRAM_BASE
+	DRAM (rwx) : ORIGIN = CONFIG_DRAM_BASE, LENGTH = CONFIG_DRAM_SIZE
+#endif
 }
 
 SECTIONS
@@ -78,8 +82,13 @@ SECTIONS
 		ASSERT((__flash_dma_size < IT83XX_ILM_BLOCK_SIZE),
 		       "__flash_dma_size < IT83XX_ILM_BLOCK_SIZE");
 		. = ALIGN(IT83XX_ILM_BLOCK_SIZE);
-
-		__flash_text_start = .;
+		__ilm0_ram_code = .;
+		KEEP(*(.ram_code_ilm0))
+		OUTDIR/chip/it83xx/i2c.o (.text*)
+		OUTDIR/chip/it83xx/i2c.o (.rodata)
+		OUTDIR/chip/it83xx/hwtimer.o (.text*)
+		OUTDIR/chip/it83xx/hwtimer.o (.rodata)
+		. = ALIGN(16);
 #endif
 		*(.text*)
 		. = ALIGN(4);
@@ -170,6 +179,10 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_CHIPSET_SHUTDOWN_COMPLETE))
 		__hooks_chipset_shutdown_complete_end = .;
 
+		__hooks_chipset_hard_off = .;
+		KEEP(*(.rodata.HOOK_CHIPSET_HARD_OFF))
+		__hooks_chipset_hard_off_end = .;
+
 		__hooks_chipset_reset = .;
 		KEEP(*(.rodata.HOOK_CHIPSET_RESET))
 		__hooks_chipset_reset_end = .;
@@ -220,6 +233,10 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_USB_PD_CONNECT))
 		__hooks_usb_pd_connect_end = .;
 
+		__hooks_power_supply_change = .;
+		KEEP(*(.rodata.HOOK_POWER_SUPPLY_CHANGE))
+		__hooks_power_supply_change_end = .;
+
 		__deferred_funcs = .;
 		KEEP(*(.rodata.deferred))
 		__deferred_funcs_end = .;
@@ -242,7 +259,7 @@ SECTIONS
 
 		. = ALIGN(4);
 		*(.srodata*)
-#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
+#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS)
 		. = ALIGN(64);
 		KEEP(*(.google))
 #endif
@@ -258,6 +275,25 @@ SECTIONS
 #endif /* CONFIG_FLASH_PHYSICAL */
 
 	__data_lma_start = .;
+
+#ifdef CONFIG_PRESERVE_LOGS
+	.preserve_logs(NOLOAD) : {
+		/*
+		 * The address of the preserved logs is fixed at the beginning
+		 * of memory.
+		 */
+		. = ALIGN(8);
+		__preserved_logs_start = .;
+		*(SORT(.preserved_logs.*))
+		. = ALIGN(8);
+		__preserved_logs_end = .;
+	} > IRAM
+	__preserved_logs_size = __preserved_logs_end - __preserved_logs_start;
+#ifdef CONFIG_IT83XX_HARD_RESET_BY_GPG1
+	ASSERT(__preserved_logs_size <= CHIP_FLASH_PRESERVE_LOGS_SIZE,
+	       "Not enough flash space to save EC logs.")
+#endif
+#endif /* CONFIG_PRESERVE_LOGS */
 
 	.data : {
 		. = ALIGN(4);
@@ -287,7 +323,6 @@ SECTIONS
 		. = ALIGN(4);
 		/* Rest of .bss takes care of its own alignment */
 		*(.bss)
-		*(.bss.slow)
 
 		/*
 		 * Reserve space for deferred function firing times.
@@ -301,6 +336,12 @@ SECTIONS
 
 		. = ALIGN(4);
 		__bss_end = .;
+
+		/*
+		 * _sbrk in newlib expects "end" symbol to point to start of
+		 * free memory.
+		 */
+		end = .;
 
 		/*
 		 * Shared memory buffer must be at the end of preallocated RAM,
@@ -317,9 +358,13 @@ SECTIONS
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
 	/*
-	 * __flash_used is used in flash free calculations by the makefile.
+	 * __flash_used and __flash_size is used in flash free calculations by
+	 * the makefile. Note the difference between __flash_size and
+	 * __config_flash_size. __flash_size is the flash size for the given
+	 * image (RW, RO, etc.), while __config_flash_size is the *total*
+	 * flash size.
 	 * __image_size is stored in the struct image_data header and used
-	 * in hash calcuations.
+	 * in hash calculations.
 	 */
 #if defined(CHIP_FAMILY_IT8XXX2)
 	__flash_used = LOADADDR(.data) + SIZEOF(.data) + \
@@ -327,13 +372,24 @@ SECTIONS
 #else
 	__flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
 #endif
+#if defined(CONFIG_FLASH_PHYSICAL)
+	__flash_size = LENGTH(FLASH);
+#else
+	__flash_size = LENGTH(IROM);
+#endif
 	__image_size = __flash_used;
 
-#ifdef CONFIG_FLASH
+#if defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 0)
+	/* Alignment is needed by flash_command_write() for RW update. */
+	ASSERT(__image_size % CONFIG_FLASH_WRITE_SIZE == 0,
+	       "Error: RW image is not aligned to CONFIG_FLASH_WRITE_SIZE")
+#endif
+
+#ifdef CONFIG_FLASH_CROS
         /*
          * These linker labels are just for analysis and not used in the code.
          */
-	__config_flash_size = CONFIG_FLASH_SIZE;
+	__config_flash_size = CONFIG_FLASH_SIZE_BYTES;
 	__config_ro_size = CONFIG_RO_SIZE;
 	__config_ec_protected_storage_size = CONFIG_EC_PROTECTED_STORAGE_SIZE;
 	__config_rw_size = CONFIG_RW_SIZE;
@@ -341,13 +397,13 @@ SECTIONS
 #endif
 
 #if defined(CHIP_FAMILY_IT8XXX2)
-#if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
+#if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_PERIPHERAL)
 	.h2ram (NOLOAD) : {
 		. += CONFIG_H2RAM_HOST_LPC_IO_BASE;
 		*(.h2ram.pool.hostcmd)
 		. = ALIGN(256);
 		*(.h2ram.pool.acpiec)
-#ifdef CONFIG_I2C_SLAVE
+#ifdef CONFIG_I2C_PERIPHERAL
 		. = ALIGN(256);
 		*(.h2ram.pool.i2cslv)
 #endif
@@ -359,7 +415,67 @@ SECTIONS
 #endif
 #endif /* CHIP_FAMILY_IT8XXX2 */
 
-#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
+#ifdef CONFIG_DRAM_BASE
+	/*
+	 * Sections in DRAM region are constructed as like in non-DRAM regions:
+	 * .dram.data LMA is for preserving initialized data across resets.
+	 * The only difference is that they are all in the DRAM region:
+	 * .dram.text     | LOAD
+	 * .dram.rodata   | LOAD
+	 * .dram.data LMA | LOAD
+	 * .dram.data VMA |
+	 * .dram.bss      | NOLOAD
+	 */
+
+	.dram.text : {
+		. = ALIGN(4);
+		KEEP(*(SORT(.dram.text.keep.*)))
+		*(SORT(.dram.text.*))
+		. = ALIGN(4);
+	} > DRAM
+
+	.dram.rodata : {
+		. = ALIGN(4);
+		KEEP(*(SORT(.dram.rodata.keep.*)))
+		*(SORT(.dram.rodata.*))
+		. = ALIGN(4);
+	} > DRAM
+
+	__dram_data_lma_start = ADDR(.dram.rodata) + SIZEOF(.dram.rodata);
+
+	/* Place .dram.data LMA in between .dram.rodata and .dram.data VMA. */
+	.dram.data __dram_data_lma_start +
+		(__dram_data_end - __dram_data_start) : {
+		. = ALIGN(4);
+		__dram_data_start = .;
+		*(.dram.data*)
+		. = ALIGN(4);
+		__dram_data_end = .;
+
+	/*
+	 * Normally, '> DRAM AT > DRAM' should be the same as '> DRAM',
+	 * and they  will be at the same address. However, if the address
+	 * of VMA specified, LMA and VMA might have different addresses:
+	 * '> DRAM' places VMA at the address where section declaration
+	 * specified.
+	 * 'AT > DRAM' places LMA at the location counter's address.
+	 */
+	} > DRAM AT > DRAM
+
+	/*
+	 * ld assigns correct attribute for .bss, but not for other .*.bss,
+	 * we need an explicltly NOLOAD.
+	 */
+	.dram.bss(NOLOAD) : {
+		. = ALIGN(4);
+		__dram_bss_start = .;
+		*(SORT(.dram.bss*))
+		. = ALIGN(4);
+		__dram_bss_end = .;
+	} > DRAM
+#endif /* CONFIG_DRAM_BASE */
+
+#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS))
 	/DISCARD/ : { *(.google) }
 #endif
 

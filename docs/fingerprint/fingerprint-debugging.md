@@ -1,7 +1,7 @@
 # Fingerprint Debugging
 
 This document describes how to attach a debugger with SWD in order to debug the
-FPMCU.
+FPMCU with [`gdb`](#gdb) or to [flash the FPMCU](#flash).
 
 [TOC]
 
@@ -22,39 +22,72 @@ used for JTAG and SWD for ARM devices.
 *   JTAG/SWD Debugger Probe: Any debug probe that supports SWD will work, but
     this document assumes that you're using a
     [Segger J-Trace PRO for Cortex-M][J-Trace].
-*   [Dragonclaw v0.2 Development board][FPMCU dev board].
+*   [Dragonclaw v0.3 Development board][FPMCU dev board] or
+    [Icetower v0.1 Development board][FPMCU dev board].
 *   [Servo Micro].
 
 ## Software Required
 
-*   [JLink Software] \(when using [J-Trace] or other Segger debug probes).
-*   Any tool that supports connecting `gdbserver`. This document will assume
-    [CLion] and was tested with `JLink_Linux_V684a_x86_64`.
-*   Alternatively, you can use [Ozone] a standalone debugger from Segger.
+*   [JLink Software] \(when using [J-Trace] or other Segger debug probes). This
+    is the only software required for flashing.
+*   In order to perform breakpoint debugging, you will need a tool that supports
+    connecting `gdbserver`. This document will assume [CLion] \(Googlers see
+    [CLion for ChromeOS]) and was tested with `JLink v6.94a`. Alternatively, you
+    can use [Ozone], a standalone debugger from Segger.
 
-## Connecting SWD
+## JLink Software {#software}
 
-The connector for SWD is `J4` on Dragonclaw v0.2.
+Install the JLink software in the chroot with the following command:
 
+```bash
+(chroot) $ sudo emerge jlink
+```
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: The above command will print out a message directing you to manually
+download a tarball. You must follow these instructions for the installation to
+be complete.
+***
+<!-- mdformat on -->
+
+## Connecting SWD {#connect-swd}
+
+### Dragonclaw v0.3
+
+The connector for SWD is `J4` on Dragonclaw v0.3.
+
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: Pay attention to the location of pin 1 (red wire) in the
 photos below so that you connect with the correct orientation.
 
-`SW2` on the bottom of Dragonclaw must be set to `CORESIGHT`.
+`SW2` on the edge of Dragonclaw must be set to `CORESIGHT`.
 
 If you want to connect a 20-Pin ARM Standard JTAG Connector (0.10" / 2.54 mm),
 you can use the following [adapter][JTAG to SWD Adapter] and [cable][SWD Cable].
 ***
+<!-- mdformat on -->
 
-Dragonclaw v0.2 with 20-pin SWD (0.05" / 1.27mm) on J4. Only half the pins are connected. |
+Dragonclaw v0.3 with 20-pin SWD (0.05" / 1.27mm) on J4. Only half the pins are connected. |
 ----------------------------------------------------------------------------------------- |
 ![Dragonclaw with 20-pin SWD]                                                             |
 
-Dragonclaw v0.2 with 10-pin SWD (0.05" / 1.27mm) on J4. |
+Dragonclaw v0.3 with 10-pin SWD (0.05" / 1.27mm) on J4. |
 ------------------------------------------------------- |
 ![Dragonclaw with 10-pin SWD]                           |
 
-## Powering the Board
+### Icetower v0.1
+
+The connector for SWD is `J4` on Icetower v0.1.
+
+`SW2` on Icetower must be set to `CORESIGHT` (not `SERVO`).
+
+Icetower v0.1 with 20-pin SWD (0.05" / 1.27mm) on J4. |
+----------------------------------------------------- |
+![Icetower with 20-pin SWD]                           |
+
+## Powering the Board {#power}
 
 [Servo Micro] can provide both the 3.3V for the MCU and 1.8V for the sensor.
 
@@ -62,29 +95,83 @@ Run the following to start `servod`, which will enable power to these rails by
 default:
 
 ```bash
-(chroot) $ sudo servod --board=dragonclaw
+(chroot) $ sudo servod --board=<BOARD>
 ```
 
-It's also possible to power through J-Trace, though this can only supply the MCU
-with power (3.3V), not a sensor using 1.8V.
+where `<BOARD>` is the board you are working with
+([`dartmonkey` or `bloonchipper`][fingerprint hardware]).
 
-## Using JLink gdbserver
+Theoretically, it's also possible to power through J-Trace, though the
+[power pin] on J-Trace only outputs 5V, whereas the MCU runs at 3.3V and the
+sensor runs at 1.8V. The pin is also not connected on the current designs.
+
+## Flashing the FPMCU with JLink {#flash}
+
+*   Install the [JLink Software](#software).
+*   [Connect SWD](#connect-swd).
+*   [Power the board with servo](#power).
+*   Start the JLink server:
+
+```bash
+(chroot) $ cd ~/trunk/src/platform/ec
+```
+
+```bash
+# JLinkRemoteServerCLExe will listen on port 19020 (among others) by default.
+# This can be overridden with the -Port argument.
+(chroot) $ sudo JLinkRemoteServerCLExe -select USB
+```
+
+You should see the following:
+
+```bash
+SEGGER J-Link Remote Server V6.94a
+Compiled Jan 14 2021 11:52:48
+
+'q' to quit '?' for help
+
+Connected to J-Link with S/N 123456
+
+Waiting for client connections...
+```
+
+*   Build the FPMCU image:
+
+```bash
+(chroot) $ cd ~/trunk/src/platform/ec
+```
+
+```bash
+(chroot) $ make BOARD=<BOARD> -j
+```
+
+replacing `<BOARD>` with [`bloonchipper` or `dartmonkey`][fingerprint hardware].
+
+*   Run the [`flash_jlink.py`] script:
+
+```bash
+(chroot) $ ~/trunk/src/platform/ec/util/flash_jlink.py --board <BOARD> --image ./build/<BOARD>/ec.bin
+```
+
+replacing `<BOARD>` with [`bloonchipper` or `dartmonkey`][fingerprint hardware].
+
+## Using JLink gdbserver {#gdb}
 
 Start the JLink gdbserver for the appropriate MCU type:
 
 *   Dragonclaw / [Nucleo STM32F412ZG]: `STM32F412CG`
-*   Dragontalon / [Nucleo STM32H743ZI]: `STM32H743ZI`
+*   Icetower / [Nucleo STM32H743ZI]: `STM32H743ZI`
 
 ```bash
-(outside) $ ./JLink_Linux_V684a_x86_64/JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
+(chroot) $ JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
 ```
 
-You should see the port that gdbserver is running on in the output:
+You should see the port that `gdbserver` is running on in the output:
 
 ```bash
 Connecting to J-Link...
 J-Link is connected.
-Firmware: J-Trace PRO V2 Cortex-M compiled Dec 13 2019 11:19:22
+Firmware: J-Trace PRO V2 Cortex-M compiled Feb  5 2021 14:50:19
 Hardware: V2.00
 S/N: XXXXX
 Feature(s): RDI, FlashBP, FlashDL, JFlash, GDB
@@ -110,7 +197,7 @@ In your editor, specify the IP address and port for `gdbserver`:
 You will also want to provide the symbol files:
 
 *   RW image: `build/<board>/RW/ec.RW.elf`
-*   RO image: `build/<board>/RO.ec.RO.elf`
+*   RO image: `build/<board>/RO/ec.RO.elf`
 
 Also, since we're compiling the firmware in the chroot, but your editor is
 running outside of the chroot, you'll want to remap the source code path to
@@ -143,7 +230,7 @@ Ozone is a free standalone debugger provided by Segger that works with the
 gdbserver can provide. For example, Ozone has a register mapping for the MCUs we
 use, so you can easily inspect CPU registers. It can also be automated with a
 scripting language and show code coverage when used with a [J-Trace] that is
-connected to the trace pins on a board. Note that the Dragonclaw v0.2 uses an
+connected to the trace pins on a board. Note that the Dragonclaw v0.3 uses an
 STM32F412 package that does not have the synchronous trace pins, but the
 [Nucleo STM32F412ZG] does have the trace pins.
 
@@ -156,14 +243,19 @@ STM32F412 package that does not have the synchronous trace pins, but the
 [SWD Cable]: https://www.adafruit.com/product/1675
 [Ozone]: https://www.segger.com/products/development-tools/ozone-j-link-debugger/
 [CLion]: https://www.jetbrains.com/clion/
+[CLion for ChromeOS]: http://go/clion-for-chromeos
 [GDB Remote Debug Configuration]: https://www.jetbrains.com/help/clion/remote-debug.html#remote-config
 [CLion Start Remote Debug]: https://www.jetbrains.com/help/clion/remote-debug.html#start-remote-debug
 [Nucleo STM32F412ZG]: https://www.st.com/en/evaluation-tools/nucleo-f412zg.html
 [Nucleo STM32H743ZI]: https://www.st.com/en/evaluation-tools/nucleo-h743zi.html
 [`.gdbinit`]: /util/gdbinit
 [configure `~/.gdbinit`]: https://www.jetbrains.com/help/clion/configuring-debugger-options.html#gdbinit-lldbinit
+[power pin]: https://www.segger.com/products/debug-probes/j-link/technology/interface-description/
+[fingerprint hardware]: ./fingerprint.md#hardware
+[`flash_jlink.py`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_jlink.py
 
 <!-- Images -->
 
 [Dragonclaw with 20-pin SWD]: ../images/dragonclaw_with_20_pin_swd.jpg
 [Dragonclaw with 10-pin SWD]: ../images/dragonclaw_with_10_pin_swd.jpg
+[Icetower with 20-pin SWD]: ../images/icetower_with_20_pin_swd.jpg

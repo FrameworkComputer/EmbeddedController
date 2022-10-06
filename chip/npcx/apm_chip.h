@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,31 +9,27 @@
 #include "common.h"
 
 /* MIX indirect registers. */
-#define APM_INDIRECT_MIX_2_REG      0x02
+#define APM_INDIRECT_MIX_2_REG 0x02
 
 /* ADC_AGC indirect registers. */
-#define APM_INDIRECT_ADC_AGC_0_REG  0x00
-#define APM_INDIRECT_ADC_AGC_1_REG  0x01
-#define APM_INDIRECT_ADC_AGC_2_REG  0x02
-#define APM_INDIRECT_ADC_AGC_3_REG  0x03
-#define APM_INDIRECT_ADC_AGC_4_REG  0x04
+#define APM_INDIRECT_ADC_AGC_0_REG 0x00
+#define APM_INDIRECT_ADC_AGC_1_REG 0x01
+#define APM_INDIRECT_ADC_AGC_2_REG 0x02
+#define APM_INDIRECT_ADC_AGC_3_REG 0x03
+#define APM_INDIRECT_ADC_AGC_4_REG 0x04
 
 /* APM_VAD_REG indirect registers. */
-#define APM_INDIRECT_VAD_0_REG       0x00
-#define APM_INDIRECT_VAD_1_REG       0x01
+#define APM_INDIRECT_VAD_0_REG 0x00
+#define APM_INDIRECT_VAD_1_REG 0x01
 
 /* APM macros. */
-#define APM_IS_IRQ_PENDING    IS_BIT_SET(NPCX_APM_SR, NPCX_APM_SR_IRQ_PEND)
+#define APM_IS_IRQ_PENDING IS_BIT_SET(NPCX_APM_SR, NPCX_APM_SR_IRQ_PEND)
 #define APM_IS_VOICE_ACTIVITY_DETECTED \
 	IS_BIT_SET(NPCX_APM_IFR, NPCX_APM_IFR_VAD_DTC)
-#define APM_CLEAR_VAD_INTERRUPT    SET_BIT(NPCX_APM_IFR, NPCX_APM_IFR_VAD_DTC)
+#define APM_CLEAR_VAD_INTERRUPT SET_BIT(NPCX_APM_IFR, NPCX_APM_IFR_VAD_DTC)
 
 /* Indirect registers. */
-enum apm_indirect_reg_offset {
-	APM_MIX_REG = 0,
-	APM_ADC_AGC_REG,
-	APM_VAD_REG
-};
+enum apm_indirect_reg_offset { APM_MIX_REG = 0, APM_ADC_AGC_REG, APM_VAD_REG };
 
 /* ADC wind noise filter modes. */
 enum apm_adc_wind_noise_filter_mode {
@@ -60,22 +56,22 @@ enum apm_adc_frequency {
 /* DMIC source. */
 enum apm_dmic_src {
 	APM_CURRENT_DMIC_CHANNEL = 0x01, /* Current channel, left or rigth. */
-	APM_AVERAGE_DMIC_CHANNEL = 0x02  /* Average between left & right.   */
+	APM_AVERAGE_DMIC_CHANNEL = 0x02 /* Average between left & right.   */
 };
 
 /* ADC digital microphone rate. */
 enum apm_dmic_rate {
 	/* 3.0, 2.4 & 1.0 must be 0, 1 & 2 respectively */
-	APM_DMIC_RATE_3_0 = 0,   /* 3.0 -3.25 MHz (default). */
-	APM_DMIC_RATE_2_4,       /* 2.4 -2.6 MHz.            */
-	APM_DMIC_RATE_1_0,       /* 1.0 -1.08 MHz.           */
-	APM_DMIC_RATE_1_2,       /* 1.2 MHz.                        */
-	APM_DMIC_RATE_0_75       /* 750 KHz.                 */
+	APM_DMIC_RATE_3_0 = 0, /* 3.0 -3.25 MHz (default). */
+	APM_DMIC_RATE_2_4, /* 2.4 -2.6 MHz.            */
+	APM_DMIC_RATE_1_0, /* 1.0 -1.08 MHz.           */
+	APM_DMIC_RATE_1_2, /* 1.2 MHz.                        */
+	APM_DMIC_RATE_0_75 /* 750 KHz.                 */
 };
 
 /* Digitla mixer output. */
 enum apm_dig_mix {
-	APM_OUT_MIX_NORMAL_INPUT = 0,    /* Default. */
+	APM_OUT_MIX_NORMAL_INPUT = 0, /* Default. */
 	APM_OUT_MIX_CROSS_INPUT,
 	APM_OUT_MIX_MIXED_INPUT,
 	APM_OUT_MIX_NO_INPUT
@@ -341,8 +337,8 @@ void apm_adc_set_freq(enum apm_adc_frequency adc_freq);
  * @return  None
  */
 void apm_adc_config(int hpf_enable,
-		enum apm_adc_wind_noise_filter_mode filter_mode,
-		enum apm_adc_frequency adc_freq);
+		    enum apm_adc_wind_noise_filter_mode filter_mode,
+		    enum apm_adc_frequency adc_freq);
 
 /**
  * Enables/Disables Digital Microphone.
@@ -360,7 +356,7 @@ void apm_dmic_enable(int enable);
  * @return  None
  */
 void apm_digital_mixer_config(enum apm_dig_mix mix_left,
-		enum apm_dig_mix mix_right);
+			      enum apm_dig_mix mix_right);
 
 /**
  * Enables/Disables the VAD functionality.
@@ -422,7 +418,8 @@ void apm_vad_restart(void);
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list apm_adc_gain_config(enum apm_adc_gain_coupling gain_coupling,
-			uint8_t left_chan_gain, uint8_t right_chan_gain);
+				       uint8_t left_chan_gain,
+				       uint8_t right_chan_gain);
 
 /**
  * Enables/Disables the automatic gain.
@@ -438,8 +435,8 @@ void apm_auto_gain_cntrl_enable(int enable);
  * @param   gain_cfg - struct of apm auto gain config
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
-enum ec_error_list apm_adc_auto_gain_config(
-				struct apm_auto_gain_config *gain_cfg);
+enum ec_error_list
+apm_adc_auto_gain_config(struct apm_auto_gain_config *gain_cfg);
 
 /**
  * Sets APM mode (enables & disables APN sub modules accordingly

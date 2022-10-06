@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,12 +17,11 @@
 
 #ifdef CONFIG_MCHP_TFDP
 
-
 static uint32_t get_disable_intr(void)
 {
 	uint32_t m;
 
-	__asm__ __volatile__ ("mrs %0, primask;cpsid i" : "=r" (m));
+	__asm__ __volatile__("mrs %0, primask;cpsid i" : "=r"(m));
 
 	return m;
 }
@@ -30,9 +29,8 @@ static uint32_t get_disable_intr(void)
 static void restore_intr(uint32_t m)
 {
 	if (!m)
-		__asm__ __volatile__ ("cpsie i" : : : "memory");
+		__asm__ __volatile__("cpsie i" : : : "memory");
 }
-
 
 /**
  * tfdp_power - Gate clocks On/Off to TFDP block when idle
@@ -48,7 +46,6 @@ void tfdp_power(uint8_t pwr_on)
 		MCHP_PCR_SLP_EN_DEV(MCHP_PCR_TFDP);
 }
 
-
 /**
  * tfdp_enable - Init Trace FIFO Data Port
  * @param uint8_t non-zero=enable TFDP, false=disable TFDP
@@ -57,8 +54,8 @@ void tfdp_power(uint8_t pwr_on)
  * Else GPIO170/171 set to GPIO input, internal pull-up enabled.
  * @note -
  */
-#define MCHP_TFDP_DATA	REG8(MCHP_TFDP_BASE + 0x00)
-#define MCHP_TFDP_CTRL	REG8(MCHP_TFDP_BASE + 0x04)
+#define MCHP_TFDP_DATA REG8(MCHP_TFDP_BASE + 0x00)
+#define MCHP_TFDP_CTRL REG8(MCHP_TFDP_BASE + 0x04)
 
 void tfdp_enable(uint8_t en, uint8_t pin_cfg)
 {
@@ -72,7 +69,6 @@ void tfdp_enable(uint8_t en, uint8_t pin_cfg)
 			gpio_config_module(MODULE_TFDP, 0);
 	}
 } /* end tfdp_enable() */
-
 
 /**
  * TFDPTrace0 - TRACE0: transmit 16-bit trace number lsb first
@@ -105,7 +101,6 @@ void TFDPTrace0(uint16_t nbr)
 	restore_intr(prim);
 #endif
 }
-
 
 /**
  * TRDPTrace1 - TRACE1: transmit 16-bit trace number lsb first
@@ -143,7 +138,6 @@ void TFDPTrace1(uint16_t nbr, uint32_t p1)
 	restore_intr(prim);
 #endif
 }
-
 
 /**
  * TFDPTrace2 - TRACE2: transmit 16-bit trace number lsb first
@@ -187,7 +181,6 @@ void TFDPTrace2(uint16_t nbr, uint32_t p1, uint32_t p2)
 #endif
 }
 
-
 /**
  * TFDPTrace3 - TRACE3: transmit 16-bit trace number lsb first
  * and three 16-bit data parameters lsb first over TFDP.
@@ -203,8 +196,7 @@ void TFDPTrace2(uint16_t nbr, uint32_t p1, uint32_t p2)
  *       interrupts for critical section. These may use
  *       priviledged instructions.
  */
-void TFDPTrace3(uint16_t nbr, uint32_t p1,
-		uint32_t p2, uint32_t p3)
+void TFDPTrace3(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3)
 {
 #ifdef MCHP_TRACE_MASK_IRQ
 	uint32_t prim;
@@ -236,7 +228,6 @@ void TFDPTrace3(uint16_t nbr, uint32_t p1,
 #endif
 }
 
-
 /**
  * TFDPTrace4 - TRACE3: transmit 16-bit trace number lsb first
  * and four 16-bit data parameters lsb first over TFDP.
@@ -253,8 +244,8 @@ void TFDPTrace3(uint16_t nbr, uint32_t p1,
  *       interrupts for critical section. These may use
  *       priviledged instructions.
  */
-void TFDPTrace4(uint16_t nbr, uint32_t p1, uint32_t p2,
-		 uint32_t p3, uint32_t p4)
+void TFDPTrace4(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3,
+		uint32_t p4)
 {
 #ifdef MCHP_TRACE_MASK_IRQ
 	uint32_t prim;
@@ -289,7 +280,6 @@ void TFDPTrace4(uint16_t nbr, uint32_t p1, uint32_t p2,
 	restore_intr(prim);
 #endif
 }
-
 
 /**
  *  TFDPTrace11 - Transmit one 32-bit data item over TFDP
@@ -326,7 +316,6 @@ void TFDPTrace11(uint16_t nbr, uint32_t p1)
 	restore_intr(prim);
 #endif
 }
-
 
 /**
  *  TFDPTrace12 - Transmit two 32-bit data items over TFDP
@@ -383,8 +372,7 @@ void TFDPTrace12(uint16_t nbr, uint32_t p1, uint32_t p2)
  *  @param uint32_t p3 32-bit data3 to be transmitted
  *
  */
-void TFDPTrace13(uint16_t nbr, uint32_t p1,
-		 uint32_t p2, uint32_t p3)
+void TFDPTrace13(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3)
 {
 #ifdef MCHP_TRACE_MASK_IRQ
 	uint32_t prim;
@@ -438,8 +426,8 @@ void TFDPTrace13(uint16_t nbr, uint32_t p1,
  *  @param uint32_t p3 32-bit data3 to be transmitted
  *  @param uint32_t p4 32-bit data4 to be transmitted
  */
-void TFDPTrace14(uint16_t nbr, uint32_t p1, uint32_t p2,
-		 uint32_t p3, uint32_t p4)
+void TFDPTrace14(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3,
+		 uint32_t p4)
 {
 #ifdef MCHP_TRACE_MASK_IRQ
 	uint32_t prim;
@@ -492,7 +480,6 @@ void TFDPTrace14(uint16_t nbr, uint32_t p1, uint32_t p2,
 }
 
 #endif /* #ifdef CONFIG_MCHP_TFDP */
-
 
 /* end tfdp.c */
 /**   @}

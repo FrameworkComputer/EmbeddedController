@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,41 +14,35 @@
 #include "atomic.h"
 #include "common.h"
 #include "console.h"
-#include "driver/ppc/aoz1380.h"
 #include "hooks.h"
+#include "ppc/aoz1380_public.h"
 #include "system.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
 #include "usbc_ppc.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
-static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
-#define AOZ1380_FLAGS_SOURCE_ENABLED    BIT(0)
-#define AOZ1380_FLAGS_SINK_ENABLED      BIT(1)
+#define AOZ1380_FLAGS_SOURCE_ENABLED BIT(0)
+#define AOZ1380_FLAGS_SINK_ENABLED BIT(1)
 #define AOZ1380_FLAGS_INT_ON_DISCONNECT BIT(2)
-static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define AOZ1380_SET_FLAG(port, flag) deprecated_atomic_or(&flags[port], (flag))
-#define AOZ1380_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&flags[port], (flag))
+#define AOZ1380_SET_FLAG(port, flag) atomic_or(&flags[port], (flag))
+#define AOZ1380_CLR_FLAG(port, flag) atomic_clear_bits(&flags[port], (flag))
 
 static int aoz1380_init(int port)
 {
-	int rv;
-	bool is_sinking, is_sourcing;
-
 	flags[port] = 0;
 
-	rv = tcpm_get_snk_ctrl(port, &is_sinking);
-	if (rv == EC_SUCCESS && is_sinking)
+	if (tcpm_get_snk_ctrl(port))
 		AOZ1380_SET_FLAG(port, AOZ1380_FLAGS_SINK_ENABLED);
 
-	rv = tcpm_get_src_ctrl(port, &is_sourcing);
-	if (rv == EC_SUCCESS && is_sourcing)
+	if (tcpm_get_src_ctrl(port))
 		AOZ1380_SET_FLAG(port, AOZ1380_FLAGS_SOURCE_ENABLED);
 
 	return EC_SUCCESS;
@@ -144,7 +138,7 @@ static void aoz1380_handle_interrupt(int port)
 static void aoz1380_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = deprecated_atomic_read_clear(&irq_pending);
+	uint32_t pending = atomic_clear(&irq_pending);
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		if (BIT(i) & pending)
@@ -154,7 +148,7 @@ DECLARE_DEFERRED(aoz1380_irq_deferred);
 
 void aoz1380_interrupt(int port)
 {
-	deprecated_atomic_or(&irq_pending, BIT(port));
+	atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&aoz1380_irq_deferred_data, 0);
 }
 
@@ -163,6 +157,6 @@ const struct ppc_drv aoz1380_drv = {
 	.is_sourcing_vbus = &aoz1380_is_sourcing_vbus,
 	.vbus_sink_enable = &aoz1380_vbus_sink_enable,
 	.vbus_source_enable = &aoz1380_vbus_source_enable,
-	.set_vbus_source_current_limit =
-		&aoz1380_set_vbus_source_current_limit,
+	.set_vbus_source_current_limit = &aoz1380_set_vbus_source_current_limit,
+	.interrupt = &aoz1380_interrupt,
 };

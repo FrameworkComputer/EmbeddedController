@@ -1,0 +1,111 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_TEMP_SENSOR
+	bool "Temperature sensors"
+	help
+	  Support for temperature sensors. Once enabled, "temps" console
+	  command and EC_CMD_TEMP_SENSOR_GET_INFO host command are available.
+
+if PLATFORM_EC_TEMP_SENSOR
+
+config PLATFORM_EC_TEMP_SENSOR_POWER
+	bool "Temperature sensors are not always powered on"
+	help
+	  If enabled, temperature sensors require enabling power rail before
+	  being read. Enabling it requires to define a pin enabling the power
+	  as GPIO_TEMP_SENSOR_POWER.
+
+config PLATFORM_EC_DPTF
+	bool "Dynamic Platform and Thermal Framework"
+	default y if PLATFORM_EC_ACPI
+	help
+	  Enables the Dynamic Platform and Thermal Framework (DPTF). DPTF
+	  exposes the temperature sensors and the fan controls to the
+	  Applicaiton Processor (AP) using Advanced Configuration and Power
+	  Interface (ACPI). This permits the AP to control thermal management
+	  independent of the EC.
+
+	  Even when DPTF is enabled, the EC still monitors temperature sensors
+	  and will take corrective actions for high temperatures such as turning
+	  on the fans or powering down the AP.
+
+config PLATFORM_EC_THERMISTOR
+	bool "Thermistor support"
+	depends on ADC
+	help
+	  Enables support for thermistors (resistor whose resistance is
+	  strongly dependent on temperature) as temperature-sensor type.
+
+config PLATFORM_EC_TEMP_SENSOR_PCT2075
+	bool "PCT2075 support"
+	help
+	  Enables support for the CrosEC PCT2075 sensor, an i2c peripheral
+	  temperature sensor from NXP.
+
+config PLATFORM_EC_TEMP_SENSOR_SB_TSI
+	bool "SB TSI support"
+	help
+	  Enables support for the Side Band Temperature Sensor Interface,
+	  an i2c peripheral available on AMD platforms.
+
+config PLATFORM_EC_TEMP_SENSOR_TMP112
+	bool "TMP112 support"
+	help
+	  Enables support for the CrosEC TMP112 driver, an i2c peripheral
+	  temperature sensor from TI.
+
+endif # PLATFORM_EC_TEMP_SENSOR
+
+
+config PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
+	bool "Enable a delay before reading temperature seensors"
+	help
+	  Enables a delay on the first read of temperature sensors after
+	  the EC powers on. This allows for setting of any power rails that
+	  control the temperature sensors on the platform.
+
+if PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
+
+config PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY_MS
+	int "Temperature sensor read delay time"
+	default 500
+	help
+	  Sets the delay time, in milliseconds, before the first the EC will
+	  read any temperature sensors and perform any thermal management.
+
+endif # PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
+
+config PLATFORM_EC_FAN
+	bool "Fan support"
+	default y
+	depends on DT_HAS_CROS_EC_FANS_ENABLED
+	help
+	  Enables support for fans. Allows periodic thermal task to
+	  automatically set the fan speed (control temperature).
+	  Once enabled fanduty, fanset, faninfo, fanauto consol command and
+	  EC_CMD_PWM_GET_FAN_TARGET_RPM, EC_CMD_PWM_SET_FAN_TARGET_RPM,
+	  EC_CMD_PWM_SET_FAN_DUTY, EC_CMD_THERMAL_AUTO_FAN_CTRL are
+	  available. Also enables a periodic task (1s) to verify fan is
+	  running (is not stalled).
+
+if PLATFORM_EC_FAN
+
+config PLATFORM_EC_NUM_FANS
+	int "Number of fans"
+	default 1
+	help
+	  Declare the number of fans supported on this board and avilable
+	  for control through fan APIs.
+
+endif # PLATFORM_EC_FAN
+
+config PLATFORM_EC_FAN_BYPASS_SLOW_RESPONSE
+	bool "Enable fan slow response control mechanism"
+	default n
+	help
+	  A specific type of fan needs a longer time to output the TACH
+	  signal to EC after EC outputs the PWM signal to the fan.
+	  During this period, the driver will read two consecutive RPM = 0.
+	  In this case, don't step the PWM duty too aggressively.

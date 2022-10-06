@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -62,7 +62,7 @@ GPIO(EC_I2C_POWER_SCL,		PIN(D, 1), GPIO_INPUT)
  * Pin 57 (SER_IRQ) defaults to LPC mode, but we also have EC_PCH_KB_INT_ODL
  * (Pin B0) in case it doesn't work (Set CONFIG_KEYBOARD_IRQ_GPIO in this case).
  *
- * See also the NO_LPC_ESPI bit in DEVALT1 and the CONFIG_HOSTCMD_SPS option.
+ * See also the NO_LPC_ESPI bit in DEVALT1 and the CONFIG_HOST_INTERFACE_SHI option.
  */
 
 GPIO(PCH_SMI_L,			PIN(A, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)	/* EC_SMI_ODL */
@@ -161,7 +161,7 @@ ALTERNATE(PIN_MASK(B, 0x30), 1, MODULE_I2C, 0)	/* GPIOB5-B4 for EC_I2C_USB_C0_PD
 ALTERNATE(PIN_MASK(B, 0x0C), 1, MODULE_I2C, 0)	/* GPOPB3-B2 for EC_I2C_USB_C1_PD_SDA/SCL */
 ALTERNATE(PIN_MASK(D, 0x03), 1, MODULE_I2C, 0)	/* GPIOD1-D0 for EC_I2C_POWER_SDA/SCL */
 
-ALTERNATE(PIN(B, 6), 3, MODULE_PWM, 0)		/* PWM KB Backlight */
+ALTERNATE(PIN_MASK(B, BIT(6)), 3, MODULE_PWM, 0) /* PWM KB Backlight */
 
 /* FIXME: Make UART RX an interrupt? */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)	/* UART from EC to Servo */

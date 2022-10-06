@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -20,8 +20,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /* The IDT  - initialized in init.S */
 extern struct idt_entry __idt[NUM_VECTORS];
@@ -54,7 +54,7 @@ static void set_ioapic_redtbl_raw(const uint32_t irq, const uint32_t val)
  * bitmap for current IRQ's mask status
  * ISH support max 64 IRQs, 64 bit bitmap value is ok
  */
-#define ISH_MAX_IOAPIC_IRQS	(64)
+#define ISH_MAX_IOAPIC_IRQS (64)
 uint64_t ioapic_irq_mask_bitmap;
 
 /**
@@ -70,7 +70,7 @@ uint64_t disable_all_interrupts(void)
 	uint64_t saved_map;
 	int i;
 
-	saved_map =  ioapic_irq_mask_bitmap;
+	saved_map = ioapic_irq_mask_bitmap;
 
 	for (i = 0; i < ISH_MAX_IOAPIC_IRQS; i++) {
 		if (((uint64_t)0x1 << i) & saved_map)
@@ -179,27 +179,27 @@ static const irq_desc_t system_irqs[] = {
  * and go directly to the CPU core, so get_current_interrupt_vector
  * cannot be used.
  */
-#define DEFINE_EXN_HANDLER(vector)			\
+#define DEFINE_EXN_HANDLER(vector) \
 	_DEFINE_EXN_HANDLER(vector, exception_panic_##vector)
-#define _DEFINE_EXN_HANDLER(vector, name)		\
-	void __keep name(void);				\
-	noreturn void name(void)	\
-	{						\
-		__asm__ ("push $0\n"			\
-			 "push $" #vector "\n"		\
-			 "call exception_panic\n");	\
-		__builtin_unreachable();		\
+#define _DEFINE_EXN_HANDLER(vector, name)          \
+	void __keep name(void);                    \
+	noreturn void name(void)                   \
+	{                                          \
+		__asm__("push $0\n"                \
+			"push $" #vector "\n"      \
+			"call exception_panic\n"); \
+		__builtin_unreachable();           \
 	}
 
-#define DEFINE_EXN_HANDLER_W_ERRORCODE(vector)		\
+#define DEFINE_EXN_HANDLER_W_ERRORCODE(vector) \
 	_DEFINE_EXN_HANDLER_W_ERRORCODE(vector, exception_panic_##vector)
-#define _DEFINE_EXN_HANDLER_W_ERRORCODE(vector, name)	\
-	void __keep name(void);				\
-	noreturn void name(void)	\
-	{						\
-		__asm__ ("push $" #vector "\n"		\
-			 "call exception_panic\n");	\
-		__builtin_unreachable();		\
+#define _DEFINE_EXN_HANDLER_W_ERRORCODE(vector, name) \
+	void __keep name(void);                       \
+	noreturn void name(void)                      \
+	{                                             \
+		__asm__("push $" #vector "\n"         \
+			"call exception_panic\n");    \
+		__builtin_unreachable();              \
 	}
 
 DEFINE_EXN_HANDLER(0);
@@ -228,15 +228,10 @@ DEFINE_EXN_HANDLER(20);
  * watchdog timer expiration. However, this time, hardware does not
  * push errorcode, and we must account for that by pushing zero.
  */
-noreturn __keep
-void exception_panic_wdt(uint32_t cs)
+noreturn __keep void exception_panic_wdt(uint32_t cs)
 {
-	exception_panic(
-		CONFIG_MIA_WDT_VEC,
-		0,
-		(uint32_t)__builtin_return_address(0),
-		cs,
-		0);
+	exception_panic(CONFIG_MIA_WDT_VEC, 0,
+			(uint32_t)__builtin_return_address(0), cs, 0);
 }
 
 void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
@@ -244,7 +239,7 @@ void set_interrupt_gate(uint8_t num, isr_handler_t func, uint8_t flags)
 	uint16_t code_segment;
 
 	/* When the flat model is used the CS will never change. */
-	__asm volatile ("mov %%cs, %0":"=r" (code_segment));
+	__asm volatile("mov %%cs, %0" : "=r"(code_segment));
 
 	__idt[num].dword_lo = GEN_IDT_DESC_LO(func, code_segment, flags);
 	__idt[num].dword_up = GEN_IDT_DESC_UP(func, code_segment, flags);
@@ -384,26 +379,28 @@ void handle_lapic_lvt_error(void)
 
 /* LAPIC LVT error is not an IRQ and can not use DECLARE_IRQ() to call. */
 void _lapic_error_handler(void);
-__asm__ (
-	".section .text._lapic_error_handler\n"
+__asm__(".section .text._lapic_error_handler\n"
 	"_lapic_error_handler:\n"
-		"pusha\n"
-		ASM_LOCK_PREFIX "addl $1, __in_isr\n"
-		"movl %esp, %eax\n"
-		"movl $stack_end, %esp\n"
-		"push %eax\n"
+	"pusha\n" ASM_LOCK_PREFIX "addl $1, __in_isr\n"
+	"movl %esp, %eax\n"
+	"movl $stack_end, %esp\n"
+	"push %eax\n"
 #ifdef CONFIG_TASK_PROFILING
-		"push $" STRINGIFY(CONFIG_IRQ_COUNT) "\n"
-		"call task_start_irq_handler\n"
-		"addl $0x04, %esp\n"
+	"push $" STRINGIFY(
+		CONFIG_IRQ_COUNT) "\n"
+				  "call task_start_irq_handler\n"
+				  "addl $0x04, %esp\n"
 #endif
-		"call handle_lapic_lvt_error\n"
-		"pop %esp\n"
-		"movl $0x00, (0xFEE000B0)\n"	/* Set EOI for LAPIC */
-		ASM_LOCK_PREFIX "subl $1, __in_isr\n"
-		"popa\n"
-		"iret\n"
-	);
+				  "call handle_lapic_lvt_error\n"
+				  "pop %esp\n"
+				  "movl $0x00, (0xFEE000B0)\n" /* Set
+								  EOI
+								  for
+								  LAPIC
+								*/
+	ASM_LOCK_PREFIX "subl $1, __in_isr\n"
+				  "popa\n"
+				  "iret\n");
 
 /* Should only be called in interrupt context */
 void unhandled_vector(void)
@@ -411,7 +408,7 @@ void unhandled_vector(void)
 	uint32_t vec = get_current_interrupt_vector();
 	CPRINTF("Ignoring vector 0x%0x!\n", vec);
 	/* Put the vector number in eax so default_int_handler can use it */
-	asm("" : : "a" (vec));
+	asm("" : : "a"(vec));
 }
 
 /**
@@ -454,8 +451,7 @@ void init_interrupts(void)
 
 	/* Setup gates for IRQs declared by drivers using DECLARE_IRQ */
 	for (p = __irq_data; p < __irq_data_end; p++)
-		set_interrupt_gate(IRQ_TO_VEC(p->irq),
-				   p->handler,
+		set_interrupt_gate(IRQ_TO_VEC(p->irq), p->handler,
 				   IDT_DESC_FLAGS);
 
 	/* Software generated IRQ */
@@ -474,11 +470,11 @@ void init_interrupts(void)
 	for (entry = 0; entry < num_system_irqs; entry++)
 		set_ioapic_redtbl_raw(system_irqs[entry].irq,
 				      system_irqs[entry].vector |
-				      IOAPIC_REDTBL_DELMOD_FIXED |
-				      IOAPIC_REDTBL_DESTMOD_PHYS |
-				      IOAPIC_REDTBL_MASK |
-				      system_irqs[entry].polarity |
-				      system_irqs[entry].trigger);
+					      IOAPIC_REDTBL_DELMOD_FIXED |
+					      IOAPIC_REDTBL_DESTMOD_PHYS |
+					      IOAPIC_REDTBL_MASK |
+					      system_irqs[entry].polarity |
+					      system_irqs[entry].trigger);
 
 	set_interrupt_gate(ISH_TS_VECTOR, __switchto, IDT_DESC_FLAGS);
 

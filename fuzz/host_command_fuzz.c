@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -8,10 +8,12 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "host_command.h"
 #include "host_test.h"
+#include "printf.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -34,7 +36,7 @@ static struct ec_host_request *req = (struct ec_host_request *)req_buf;
 
 static void hostcmd_respond(struct host_packet *pkt)
 {
-	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_HOSTCMD_DONE, 0);
+	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_HOSTCMD_DONE);
 }
 
 static char calculate_checksum(const char *buf, int size)
@@ -56,6 +58,9 @@ struct chunk {
 static int hostcmd_fill(const uint8_t *data, size_t size)
 {
 	static int first = 1;
+	int ipos = 0;
+	int i;
+	int req_size = 0;
 
 #ifdef VALID_REQUEST_ONLY
 	const int checksum_offset = offsetof(struct ec_host_request, checksum);
@@ -72,12 +77,8 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	chunks[2].start = chunks[1].start + chunks[1].size + data_len_size;
 	chunks[2].size = sizeof(req_buf) - chunks[2].start;
 #else
-	struct chunk chunks[1] = { {0, sizeof(req_buf)} };
+	struct chunk chunks[1] = { { 0, sizeof(req_buf) } };
 #endif
-
-	int ipos = 0;
-	int i;
-	int req_size = 0;
 
 	/*
 	 * TODO(chromium:854975): We should probably malloc req_buf with the
@@ -90,7 +91,7 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	 * over checksum and data_len.
 	 */
 	for (i = 0; i < ARRAY_SIZE(chunks) && ipos < size; i++) {
-		int cp_size = MIN(chunks[i].size, size-ipos);
+		int cp_size = MIN(chunks[i].size, size - ipos);
 
 		memcpy(req_buf + chunks[i].start, data + ipos, cp_size);
 
@@ -113,8 +114,11 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	 * issues.
 	 */
 	if (first) {
-		ccprintf("Request: cmd=%04x data=%ph\n",
-			req->command, HEX_BUF(req_buf, req_size));
+		char str_buf[hex_str_buf_size(req_size)];
+
+		snprintf_hex_buffer(str_buf, sizeof(str_buf),
+				    HEX_BUF(req_buf, req_size));
+		ccprintf("Request: cmd=%04x data=%s\n", req->command, str_buf);
 		first = 0;
 	}
 
@@ -131,7 +135,7 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 static pthread_cond_t done_cond;
 static pthread_mutex_t lock;
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	ccprints("Fuzzing task started");
 	wait_for_task_started();
@@ -151,7 +155,7 @@ int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 	if (hostcmd_fill(data, size) < 0)
 		return 0;
 
-	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_FUZZ, 0);
+	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_FUZZ);
 	pthread_cond_wait(&done_cond, &lock);
 
 #ifdef VALID_REQUEST_ONLY
@@ -166,4 +170,3 @@ int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 
 	return 0;
 }
-

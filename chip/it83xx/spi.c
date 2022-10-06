@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "intc.h"
 #include "registers.h"
 #include "spi.h"
 #include "system.h"
@@ -19,8 +20,8 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SPI, format, ##args)
 
 #define SPI_RX_MAX_FIFO_SIZE 256
 #define SPI_TX_MAX_FIFO_SIZE 256
@@ -30,8 +31,8 @@
 
 /* Max data size for a version 3 request/response packet. */
 #define SPI_MAX_REQUEST_SIZE SPI_RX_MAX_FIFO_SIZE
-#define SPI_MAX_RESPONSE_SIZE (SPI_TX_MAX_FIFO_SIZE - \
-	EC_SPI_PREAMBLE_LENGTH - EC_SPI_PAST_END_LENGTH)
+#define SPI_MAX_RESPONSE_SIZE \
+	(SPI_TX_MAX_FIFO_SIZE - EC_SPI_PREAMBLE_LENGTH - EC_SPI_PAST_END_LENGTH)
 
 static const uint8_t out_preamble[EC_SPI_PREAMBLE_LENGTH] = {
 	EC_SPI_PROCESSING,
@@ -48,7 +49,7 @@ static uint8_t out_msg[SPI_TX_MAX_FIFO_SIZE] __aligned(4);
 /* Parameters used by host protocols */
 static struct host_packet spi_packet;
 
-enum spi_slave_state_machine {
+enum spi_peripheral_state_machine {
 	/* Ready to receive next request */
 	SPI_STATE_READY_TO_RECV,
 	/* Receiving request */
@@ -59,21 +60,21 @@ enum spi_slave_state_machine {
 	SPI_STATE_RX_BAD,
 
 	SPI_STATE_COUNT,
-} spi_slv_state;
+} spi_peripheral_state;
 
 static const int spi_response_state[] = {
-	[SPI_STATE_READY_TO_RECV] = EC_SPI_OLD_READY,
-	[SPI_STATE_RECEIVING]     = EC_SPI_RECEIVING,
-	[SPI_STATE_PROCESSING]    = EC_SPI_PROCESSING,
-	[SPI_STATE_RX_BAD]        = EC_SPI_RX_BAD_DATA,
+	[SPI_STATE_READY_TO_RECV] = EC_SPI_RX_READY,
+	[SPI_STATE_RECEIVING] = EC_SPI_RECEIVING,
+	[SPI_STATE_PROCESSING] = EC_SPI_PROCESSING,
+	[SPI_STATE_RX_BAD] = EC_SPI_RX_BAD_DATA,
 };
 BUILD_ASSERT(ARRAY_SIZE(spi_response_state) == SPI_STATE_COUNT);
 
 static void spi_set_state(int state)
 {
-	/* SPI slave state machine */
-	spi_slv_state = state;
-	/* Response spi slave state */
+	/* SPI peripheral state machine */
+	spi_peripheral_state = state;
+	/* Response spi peripheral state */
 	IT83XX_SPI_SPISRDR = spi_response_state[state];
 }
 
@@ -117,12 +118,12 @@ static void spi_response_host_data(uint8_t *out_msg_addr, int tx_size)
 
 	/*
 	 * After writing data to Tx FIFO is finished, this bit will
-	 * be to indicate the SPI slave controller.
+	 * be to indicate the SPI peripheral.
 	 */
 	IT83XX_SPI_TXFCR = IT83XX_SPI_TXFS;
 	/* End Tx FIFO access */
 	IT83XX_SPI_TXRXFAR = 0;
-	/* SPI slave read Tx FIFO */
+	/* SPI peripheral read Tx FIFO */
 	IT83XX_SPI_FCR = IT83XX_SPI_SPISRTXF;
 }
 
@@ -137,18 +138,18 @@ static void spi_send_response_packet(struct host_packet *pkt)
 {
 	int i, tx_size;
 
-	if (spi_slv_state != SPI_STATE_PROCESSING) {
+	if (spi_peripheral_state != SPI_STATE_PROCESSING) {
 		CPRINTS("The request data is not processing.");
 		return;
 	}
 
 	/* Append our past-end byte, which we reserved space for. */
 	for (i = 0; i < EC_SPI_PAST_END_LENGTH; i++)
-		((uint8_t *)pkt->response)[pkt->response_size + i]
-			= EC_SPI_PAST_END;
+		((uint8_t *)pkt->response)[pkt->response_size + i] =
+			EC_SPI_PAST_END;
 
 	tx_size = pkt->response_size + EC_SPI_PREAMBLE_LENGTH +
-			EC_SPI_PAST_END_LENGTH;
+		  EC_SPI_PAST_END_LENGTH;
 
 	/* Transmit the reply */
 	spi_response_host_data(out_msg, tx_size);
@@ -169,7 +170,7 @@ static void spi_host_request_data(uint8_t *in_msg_addr, int count)
 	 */
 
 	for (i = 0; i < count; i += 4)
-		/* Get data from master to buffer */
+		/* Get data from controller to buffer */
 		*(uint32_t *)(in_msg_addr + i) = IT83XX_SPI_RXFRDRB0;
 }
 
@@ -193,7 +194,7 @@ static void spi_parse_header(void)
 
 		/* Store request data from Rx FIFO to in_msg buffer */
 		spi_host_request_data(in_msg + sizeof(*r),
-			pkt_size - sizeof(*r));
+				      pkt_size - sizeof(*r));
 
 		/* Set up parameters for host request */
 		spi_packet.send_response = spi_send_response_packet;
@@ -233,8 +234,24 @@ void spi_event(enum gpio_signal signal)
 	}
 }
 
-void spi_slv_int_handler(void)
+void spi_peripheral_int_handler(void)
 {
+	if (IS_ENABLED(CONFIG_BOOTBLOCK) &&
+	    (IT83XX_SPI_ISR & IT83XX_SPI_RX_FIFO_FULL) &&
+	    (IT83XX_SPI_EMMCBMR & IT83XX_SPI_EMMCABM)) {
+		spi_host_request_data(in_msg, 128);
+		/* End CPU access RX FIFO */
+		IT83XX_SPI_TXRXFAR = 0;
+		/* Write to clear interrupt status */
+		IT83XX_SPI_ISR = 0xff;
+		/*
+		 * Handle eMMC CMD0:
+		 * GO_IDLE_STATE, GO_PRE_IDLE_STATE, and BOOT_INITIATION
+		 */
+		spi_emmc_cmd0_isr((uint32_t *)in_msg);
+		return;
+	}
+
 	/*
 	 * The status of SPI end detection interrupt bit is set, it
 	 * means that host command parse has been completed and AP
@@ -242,12 +259,6 @@ void spi_slv_int_handler(void)
 	 * EC responded data, then AP ended the transaction.
 	 */
 	if (IT83XX_SPI_ISR & IT83XX_SPI_ENDDETECTINT) {
-		/* Reset fifo and prepare to receive next transaction */
-		if (!IS_ENABLED(IT83XX_SPI_AUTO_RESET_RX_FIFO))
-			reset_rx_fifo();
-		/* Enable Rx byte reach interrupt */
-		if (!IS_ENABLED(IT83XX_SPI_RX_VALID_INT))
-			IT83XX_SPI_IMR &= ~IT83XX_SPI_RX_REACH;
 		/* Ready to receive */
 		spi_set_state(SPI_STATE_READY_TO_RECV);
 		/*
@@ -255,50 +266,50 @@ void spi_slv_int_handler(void)
 		 * sleep bit of SPI in S3 or lower.
 		 */
 		enable_sleep(SLEEP_MASK_SPI);
-		/* CS# is deasserted, so write clear all slave status */
+		/* CS# is deasserted, so write clear all peripheral status */
 		IT83XX_SPI_ISR = 0xff;
 	}
-
-	if (IS_ENABLED(IT83XX_SPI_RX_VALID_INT)) {
-		/*
-		 * The status of Rx valid length interrupt bit is set that
-		 * indicates reached target count(IT83XX_SPI_FTCB1R,
-		 * IT83XX_SPI_FTCB0R) and the length field of the host
-		 * requested data.
-		 */
-		if (IT83XX_SPI_RX_VLISR & IT83XX_SPI_RVLI) {
-			/* write clear slave status */
-			IT83XX_SPI_RX_VLISR = IT83XX_SPI_RVLI;
-			/* Parse header for version of spi-protocol */
-			spi_parse_header();
-		}
-	} else {
-		/*
-		 * The status of Rx byte reach interrupt bit is set,
-		 * start to parse transaction.
-		 * There is a limitation that Rx FIFO starts dropping
-		 * data when the CPU access the the FIFO. So we will
-		 * wait the data until Rx byte reach then to parse.
-		 * The Rx FIFO to reach is mock data generated by
-		 * generate clock that is not the bytes sent from
-		 * the host.
-		 */
-		if (IT83XX_SPI_ISR & IT83XX_SPI_RX_REACH) {
-			/* Disable Rx byte reach interrupt */
-			IT83XX_SPI_IMR |= IT83XX_SPI_RX_REACH;
-			/* write clear slave status */
-			IT83XX_SPI_ISR = IT83XX_SPI_RX_REACH;
-			/* Parse header for version of spi-protocol */
-			spi_parse_header();
-		}
+	/*
+	 * The status of Rx valid length interrupt bit is set that
+	 * indicates reached target count(IT83XX_SPI_FTCB1R,
+	 * IT83XX_SPI_FTCB0R) and the length field of the host
+	 * requested data.
+	 */
+	if (IT83XX_SPI_RX_VLISR & IT83XX_SPI_RVLI) {
+		/* write clear peripheral status */
+		IT83XX_SPI_RX_VLISR = IT83XX_SPI_RVLI;
+		/* Parse header for version of spi-protocol */
+		spi_parse_header();
 	}
 
 	/* Clear the interrupt status */
-	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
+	task_clear_pending_irq(IT83XX_IRQ_SPI_PERIPHERAL);
 }
 
 static void spi_init(void)
 {
+	/* Set FIFO data target count */
+	struct ec_host_request cmd_head;
+
+	/*
+	 * Target count means the size of host request.
+	 * And plus extra 4 bytes because the CPU accesses FIFO base on
+	 * word. If host requested data length is one byte, we need to
+	 * align the data length to 4 bytes.
+	 */
+	int target_count = sizeof(cmd_head) + 4;
+	/* Offset of data_len member of host request. */
+	int offset = (char *)&cmd_head.data_len - (char *)&cmd_head;
+
+	IT83XX_SPI_FTCB1R = (target_count >> 8) & 0xff;
+	IT83XX_SPI_FTCB0R = target_count & 0xff;
+	/*
+	 * The register setting can capture the length field of host
+	 * request.
+	 */
+	IT83XX_SPI_TCCB1 = (offset >> 8) & 0xff;
+	IT83XX_SPI_TCCB0 = offset & 0xff;
+
 	/* Set SPI pins to alternate function */
 	gpio_config_module(MODULE_SPI, 1);
 	/*
@@ -308,43 +319,16 @@ static void spi_init(void)
 	IT83XX_GCTRL_MCCR3 |= IT83XX_GCTRL_SPISLVPFE;
 	/* Set unused blocked byte */
 	IT83XX_SPI_HPR2 = 0x00;
-	/* Set FIFO data target count */
-	if (IS_ENABLED(IT83XX_SPI_RX_VALID_INT)) {
-		struct ec_host_request cmd_head;
-		/*
-		 * Target count means the size of host request.
-		 * And plus extra 4 bytes because the CPU accesses FIFO base on
-		 * word. If host requested data length is one byte, we need to
-		 * align the data length to 4 bytes.
-		 */
-		int target_count = sizeof(cmd_head) + 4;
-		/* Offset of data_len member of host request. */
-		int offset = (char *)&cmd_head.data_len - (char *)&cmd_head;
-
-		IT83XX_SPI_FTCB1R = (target_count >> 8) & 0xff;
-		IT83XX_SPI_FTCB0R = target_count & 0xff;
-		/*
-		 * The register setting can capture the length field of host
-		 * request.
-		 */
-		IT83XX_SPI_TCCB1 = (offset >> 8) & 0xff;
-		IT83XX_SPI_TCCB0 = offset & 0xff;
-	} else {
-		IT83XX_SPI_FTCB1R = (SPI_RX_MAX_FIFO_SIZE >> 8) & 0xff;
-		IT83XX_SPI_FTCB0R = SPI_RX_MAX_FIFO_SIZE & 0xff;
-	}
 	/* Rx valid length interrupt enabled */
-	if (IS_ENABLED(IT83XX_SPI_RX_VALID_INT))
-		IT83XX_SPI_RX_VLISMR &= ~IT83XX_SPI_RVLIM;
+	IT83XX_SPI_RX_VLISMR &= ~IT83XX_SPI_RVLIM;
 	/*
 	 * General control register2
 	 * bit4 : Rx FIFO2 will not be overwrited once it's full.
 	 * bit3 : Rx FIFO1 will not be overwrited once it's full.
 	 * bit0 : Rx FIFO1/FIFO2 will reset after each CS_N goes high.
 	 */
-	if (IS_ENABLED(IT83XX_SPI_AUTO_RESET_RX_FIFO))
-		IT83XX_SPI_GCR2 = IT83XX_SPI_RXF2OC | IT83XX_SPI_RXF1OC
-					| IT83XX_SPI_RXFAR;
+	IT83XX_SPI_GCR2 = IT83XX_SPI_RXF2OC | IT83XX_SPI_RXF1OC |
+			  IT83XX_SPI_RXFAR;
 	/*
 	 * Interrupt mask register (0b:Enable, 1b:Mask)
 	 * bit5 : Rx byte reach interrupt mask
@@ -353,25 +337,22 @@ static void spi_init(void)
 	IT83XX_SPI_IMR &= ~IT83XX_SPI_EDIM;
 	/* Reset fifo and prepare to for next transaction */
 	reset_rx_fifo();
-	/* Enable Rx byte reach interrupt */
-	if (!IS_ENABLED(IT83XX_SPI_RX_VALID_INT))
-		IT83XX_SPI_IMR &= ~IT83XX_SPI_RX_REACH;
 	/* Ready to receive */
 	spi_set_state(SPI_STATE_READY_TO_RECV);
 	/* Interrupt status register(write one to clear) */
 	IT83XX_SPI_ISR = 0xff;
-	/* SPI slave controller enable (after settings are ready) */
+	/* SPI peripheral enable (after settings are ready) */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
-	/* Enable SPI slave interrupt */
-	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
-	task_enable_irq(IT83XX_IRQ_SPI_SLAVE);
+	/* Enable SPI peripheral interrupt */
+	task_clear_pending_irq(IT83XX_IRQ_SPI_PERIPHERAL);
+	task_enable_irq(IT83XX_IRQ_SPI_PERIPHERAL);
 	/* Enable SPI chip select pin interrupt */
 	gpio_clear_pending_interrupt(GPIO_SPI0_CS);
 	gpio_enable_interrupt(GPIO_SPI0_CS);
 }
 DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 
-/* reset slave SPI module */
+/* reset peripheral SPI module */
 static void spi_reset(void)
 {
 	/*
@@ -382,8 +363,25 @@ static void spi_reset(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, spi_reset, HOOK_PRIO_DEFAULT);
 
+#if defined(SECTION_IS_RO) && defined(CONFIG_BOOTBLOCK)
+/* AP has booted */
+void emmc_ap_jump_to_bl(enum gpio_signal signal)
+{
+	/* Transmission completed. Set SPI pin mux to AP communication mode */
+	IT83XX_GCTRL_PIN_MUX0 &= ~BIT(7);
+	/* Reset and re-initialize SPI module to communication mode */
+	spi_reset();
+	spi_init();
+	/* Disable interrupt of detection of AP's BOOTBLOCK_EN_L */
+	gpio_disable_interrupt(GPIO_BOOTBLOCK_EN_L);
+	enable_sleep(SLEEP_MASK_EMMC);
+
+	CPRINTS("eMMC emulation disabled. AP Jumped to BL");
+}
+#endif
+
 /* Get protocol information */
-enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
+static enum ec_status _spi_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 
@@ -397,6 +395,10 @@ enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		spi_get_protocol_info,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, _spi_get_protocol_info,
+		     EC_VER_MASK(0));
+
+enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
+{
+	return _spi_get_protocol_info(args);
+}

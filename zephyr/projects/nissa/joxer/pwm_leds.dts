@@ -1,0 +1,60 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm1 1 PWM_HZ(1296) PWM_POLARITY_INVERTED>,
+			       <&pwm2 2 PWM_HZ(1296) PWM_POLARITY_INVERTED>,
+			       <&pwm3 3 PWM_HZ(1296) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+
+		leds = <&pwm_led0>;
+
+				/*<red green blue>*/
+		color-map-red    = <100   0    0>;
+		color-map-green  = <  0 100    0>;
+		color-map-blue   = <  0   0  100>;
+		color-map-yellow = <  0  50   50>;
+		color-map-white  = <100 100  100>;
+		color-map-amber  = <100  15    0>;
+
+		brightness-range = <100 100 100 0 0 0>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		};
+	};
+};
+
+&pwm1 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+
+&pwm3 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm3_gpa3_default>;
+	pinctrl-names = "default";
+};

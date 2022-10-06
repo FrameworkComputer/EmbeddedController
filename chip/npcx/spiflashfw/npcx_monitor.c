@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -49,7 +49,7 @@ void sspi_flash_execute_cmd(uint8_t code, uint8_t cts)
 	/* set UMA_CODE */
 	NPCX_UMA_CODE = code;
 	/* execute UMA flash transaction */
-	NPCX_UMA_CTS  = cts;
+	NPCX_UMA_CTS = cts;
 	while (IS_BIT_SET(NPCX_UMA_CTS, NPCX_UMA_CTS_EXEC_DONE))
 		;
 }
@@ -76,7 +76,7 @@ void sspi_flash_wait_ready(void)
 	sspi_flash_execute_cmd(CMD_READ_STATUS_REG, MASK_CMD_ONLY);
 	do {
 		/* Read status register */
-		NPCX_UMA_CTS  = MASK_RD_1BYTE;
+		NPCX_UMA_CTS = MASK_RD_1BYTE;
 		while (IS_BIT_SET(NPCX_UMA_CTS, NPCX_UMA_CTS_EXEC_DONE))
 			;
 	} while (NPCX_UMA_DB0 & mask); /* Wait for Busy clear */
@@ -108,7 +108,7 @@ void sspi_flash_set_address(uint32_t dest_addr)
 }
 
 void sspi_flash_burst_write(unsigned int dest_addr, unsigned int bytes,
-		const char *data)
+			    const char *data)
 {
 	unsigned int i;
 	/* Chip Select down. */
@@ -197,7 +197,7 @@ void sspi_flash_physical_erase(int offset, int size)
 
 	/* Alignment has been checked in upper layer */
 	for (; size > 0; size -= NPCX_MONITOR_FLASH_ERASE_SIZE,
-		offset += NPCX_MONITOR_FLASH_ERASE_SIZE) {
+			 offset += NPCX_MONITOR_FLASH_ERASE_SIZE) {
 		/* Enable write */
 		sspi_flash_write_enable();
 		/* Set erase address */
@@ -221,7 +221,7 @@ int sspi_flash_verify(int offset, int size, const char *data)
 	uint8_t cmp_data;
 
 	ptr_flash = (uint8_t *)(CONFIG_MAPPED_STORAGE_BASE + offset);
-	ptr_mram  = (uint8_t *)data;
+	ptr_mram = (uint8_t *)data;
 	result = 1;
 
 	/* Disable tri-state */
@@ -255,12 +255,11 @@ int sspi_flash_get_image_used(const char *fw_base)
 	for (size--; size > 0 && image[size] != 0xea; size--)
 		;
 
-	return size ? size + 1 : 0;  /* 0xea byte IS part of the image */
-
+	return size ? size + 1 : 0; /* 0xea byte IS part of the image */
 }
 
 /* Entry function of spi upload function */
-uint32_t  __attribute__ ((section(".startup_text")))
+uint32_t __attribute__((section(".startup_text")))
 sspi_flash_upload(int spi_offset, int spi_size)
 {
 	/*
@@ -315,7 +314,7 @@ sspi_flash_upload(int spi_offset, int spi_size)
 		/* Start to write */
 		if (image_base != NULL)
 			sspi_flash_physical_write(spi_offset, sz_image,
-						image_base);
+						  image_base);
 		/* Verify data */
 		if (sspi_flash_verify(spi_offset, sz_image, image_base))
 			*flag_upload |= 0x02;
@@ -335,4 +334,3 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	for (;;)
 		;
 }
-

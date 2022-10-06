@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -22,7 +22,7 @@
 #include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 enum battery_type {
 	BATTERY_SONY_CORP,
@@ -137,7 +137,7 @@ const struct battery_info batt_info_smp_cos4870 = {
 	 * unwanted low VSYS_Prochot# assertion can be avoided.
 	 */
 	.voltage_min = 6100,
-	.precharge_current = 256,	/* mA */
+	.precharge_current = 256, /* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 46,
 	.charging_min_c = 0,
@@ -185,7 +185,7 @@ const struct battery_info batt_info_sonycorp = {
 	 * unwanted low VSYS_Prochot# assertion can be avoided.
 	 */
 	.voltage_min = 6100,
-	.precharge_current = 256,	/* mA */
+	.precharge_current = 256, /* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 50,
 	.charging_min_c = 0,
@@ -242,7 +242,7 @@ const struct battery_info batt_info_panasoic = {
 	 * unwanted low VSYS_Prochot# assertion can be avoided.
 	 */
 	.voltage_min = 6100,
-	.precharge_current = 256,	/* mA */
+	.precharge_current = 256, /* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 50,
 	.charging_min_c = 0,
@@ -386,7 +386,7 @@ const struct battery_info batt_info_c22n1626 = {
 	 * unwanted low VSYS_Prochot# assertion can be avoided.
 	 */
 	.voltage_min = 6100,
-	.precharge_current = 256,	/* mA */
+	.precharge_current = 256, /* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,
 	.charging_min_c = 0,
@@ -400,7 +400,7 @@ static int batt_smp_cos4870_init(void)
 	int batt_status;
 
 	return battery_status(&batt_status) ? 0 :
-		batt_status & STATUS_INITIALIZED;
+					      batt_status & STATUS_INITIALIZED;
 }
 
 static int batt_sony_corp_init(void)
@@ -413,8 +413,9 @@ static int batt_sony_corp_init(void)
 	 *      : 0b - Allowed to Discharge
 	 *      : 1b - Not Allowed to Discharge
 	 */
-	return sb_read(SB_MANUFACTURER_ACCESS, &batt_status) ? 0 :
-		!(batt_status & SONY_DISCHARGE_DISABLE_FET_BIT);
+	return sb_read(SB_MANUFACTURER_ACCESS, &batt_status) ?
+		       0 :
+		       !(batt_status & SONY_DISCHARGE_DISABLE_FET_BIT);
 }
 
 static int batt_panasonic_init(void)
@@ -427,8 +428,9 @@ static int batt_panasonic_init(void)
 	 *      : 0b - Not Allowed to Discharge
 	 *      : 1b - Allowed to Discharge
 	 */
-	return sb_read(SB_MANUFACTURER_ACCESS, &batt_status) ? 0 :
-		!!(batt_status & PANASONIC_DISCHARGE_ENABLE_FET_BIT);
+	return sb_read(SB_MANUFACTURER_ACCESS, &batt_status) ?
+		       0 :
+		       !!(batt_status & PANASONIC_DISCHARGE_ENABLE_FET_BIT);
 }
 
 static int batt_c22n1626_init(void)
@@ -441,8 +443,9 @@ static int batt_c22n1626_init(void)
 	 *      : 0b - Not Allowed to Discharge
 	 *      : 1b - Allowed to Discharge
 	 */
-	return sb_read(SB_PACK_STATUS, &batt_status) ? 0 :
-		!!(batt_status & C22N1626_DISCHARGE_ENABLE_FET_BIT);
+	return sb_read(SB_PACK_STATUS, &batt_status) ?
+		       0 :
+		       !!(batt_status & C22N1626_DISCHARGE_ENABLE_FET_BIT);
 }
 
 static const struct ship_mode_info ship_mode_info_smp_cos4870 = {
@@ -515,7 +518,8 @@ BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);
 static inline const struct board_batt_params *board_get_batt_params(void)
 {
 	return &info[board_battery_type == BATTERY_TYPE_COUNT ?
-			DEFAULT_BATTERY_TYPE : board_battery_type];
+			     DEFAULT_BATTERY_TYPE :
+			     board_battery_type];
 }
 
 enum battery_present battery_hw_present(void)
@@ -545,8 +549,9 @@ static int board_get_battery_type(void)
 
 	/* Initialize fast charging parameters */
 	chg_params = board_get_batt_params()->fast_chg_params;
-	prev_chg_profile_info = &chg_params->chg_profile_info[
-			chg_params->default_temp_range_profile];
+	prev_chg_profile_info =
+		&chg_params->chg_profile_info
+			 [chg_params->default_temp_range_profile];
 
 	return board_battery_type;
 }
@@ -561,8 +566,7 @@ static int board_get_battery_type(void)
 static void board_init_battery_type(void)
 {
 	if (board_get_battery_type() != BATTERY_TYPE_COUNT)
-		CPRINTS("found batt:%s",
-			info[board_battery_type].manuf_name);
+		CPRINTS("found batt:%s", info[board_battery_type].manuf_name);
 	else
 		CPUTS("battery not found");
 }
@@ -577,16 +581,16 @@ int board_cut_off_battery(void)
 {
 	int rv;
 	const struct ship_mode_info *ship_mode_inf =
-				board_get_batt_params()->ship_mode_inf;
+		board_get_batt_params()->ship_mode_inf;
 
 	/* Ship mode command must be sent twice to take effect */
 	rv = sb_write(ship_mode_inf->ship_mode_reg,
-			ship_mode_inf->ship_mode_data);
+		      ship_mode_inf->ship_mode_data);
 	if (rv != EC_SUCCESS)
 		return rv;
 
 	rv = sb_write(ship_mode_inf->ship_mode_reg,
-			ship_mode_inf->ship_mode_data);
+		      ship_mode_inf->ship_mode_data);
 
 	return rv;
 }
@@ -599,7 +603,7 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 
 	/* Do not discharge on AC if the battery is still waking up */
 	if (!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-			!(curr->batt.status & STATUS_FULLY_CHARGED))
+	    !(curr->batt.status & STATUS_FULLY_CHARGED))
 		return 0;
 
 	/*
@@ -616,8 +620,8 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 	 * and suspend USB charging and DC/DC converter.
 	 */
 	if (!battery_is_cut_off() &&
-		!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-			(curr->batt.status & STATUS_FULLY_CHARGED))
+	    !(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+	    (curr->batt.status & STATUS_FULLY_CHARGED))
 		return 1;
 
 	/*
@@ -650,10 +654,10 @@ int charger_profile_override(struct charge_state_data *curr)
 		return 0;
 	}
 
-	return charger_profile_override_common(curr,
-			board_get_batt_params()->fast_chg_params,
-			&prev_chg_profile_info,
-			board_get_batt_params()->batt_info->voltage_max);
+	return charger_profile_override_common(
+		curr, board_get_batt_params()->fast_chg_params,
+		&prev_chg_profile_info,
+		board_get_batt_params()->batt_info->voltage_max);
 }
 
 /*
@@ -679,7 +683,7 @@ enum battery_present battery_is_present(void)
 	 * Battery status will be inactive until it is initialized.
 	 */
 	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
-		!battery_is_cut_off()) {
+	    !battery_is_cut_off()) {
 		/* Re-init board battery if battery presence status changes */
 		if (board_get_battery_type() == BATTERY_TYPE_COUNT) {
 			if (bd9995x_get_battery_voltage() >=

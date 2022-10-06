@@ -1,0 +1,32 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	nissa-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to indicate which keyboard layout
+		 * should be used.
+		 */
+		keyboard {
+			enum-name = "FW_KB_LAYOUT";
+			start = <3>;
+			size = <2>;
+
+			layout-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_DEFAULT";
+				value = <0>;
+				default;
+			};
+			layout-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_US2";
+				value = <1>;
+			};
+		};
+	};
+};

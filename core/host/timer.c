@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "builtin/assert.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -90,6 +91,13 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
 
 void timer_init(void)
 {
-	if (!time_set)
-		boot_time = _get_time();
+	if (!time_set) {
+		/*
+		 * Start the timer just before the 64-bit rollover to try
+		 * and catch 32-bit rollover/truncation bugs.
+		 */
+		timestamp_t ts = { .val = 0xFFFFFFF0 };
+
+		force_time(ts);
+	}
 }

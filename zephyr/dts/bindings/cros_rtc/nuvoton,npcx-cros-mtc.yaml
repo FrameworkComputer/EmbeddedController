@@ -1,0 +1,23 @@
+# Copyright 2021 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Nuvoton, NPCX Monotonic Counter (MTC) node
+
+compatible: "nuvoton,npcx-cros-mtc"
+
+include: base.yaml
+
+properties:
+    reg:
+      required: true
+
+    mtc-alarm:
+      type: phandle
+      required: true
+      description: |
+        Mapping table between Wake-Up Input (WUI) and monotonic counter alarm
+        signal.
+
+        For example, the WUI mapping on NPCX7 monotonic counter alarm would be
+           mtc-alarm = <&wui_mtc>;
+

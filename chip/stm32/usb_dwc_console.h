@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,4 +10,4 @@
 
 extern struct dwc_usb_ep ep_console_ctl;
 
-#endif  /* __CHIP_STM32_USB_DWC_CONSOLE_H */
+#endif /* __CHIP_STM32_USB_DWC_CONSOLE_H */

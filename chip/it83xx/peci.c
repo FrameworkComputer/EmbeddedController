@@ -1,10 +1,11 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* PECI interface for Chrome EC */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "hooks.h"
 #include "peci.h"
@@ -14,22 +15,20 @@
 #include "task.h"
 
 enum peci_status {
-	PECI_STATUS_NO_ERR        = 0x00,
-	PECI_STATUS_HOBY          = 0x01,
-	PECI_STATUS_FINISH        = 0x02,
-	PECI_STATUS_RD_FCS_ERR    = 0x04,
-	PECI_STATUS_WR_FCS_ERR    = 0x08,
-	PECI_STATUS_EXTERR        = 0x20,
-	PECI_STATUS_BUSERR        = 0x40,
-	PECI_STATUS_RCV_ERRCODE   = 0x80,
-	PECI_STATUS_ERR_NEED_RST  = (PECI_STATUS_BUSERR | PECI_STATUS_EXTERR),
-	PECI_STATUS_ANY_ERR       = (PECI_STATUS_RCV_ERRCODE |
-					PECI_STATUS_BUSERR |
-					PECI_STATUS_EXTERR |
-					PECI_STATUS_WR_FCS_ERR |
-					PECI_STATUS_RD_FCS_ERR),
-	PECI_STATUS_ANY_BIT       = 0xFE,
-	PECI_STATUS_TIMEOUT       = 0xFF,
+	PECI_STATUS_NO_ERR = 0x00,
+	PECI_STATUS_HOBY = 0x01,
+	PECI_STATUS_FINISH = 0x02,
+	PECI_STATUS_RD_FCS_ERR = 0x04,
+	PECI_STATUS_WR_FCS_ERR = 0x08,
+	PECI_STATUS_EXTERR = 0x20,
+	PECI_STATUS_BUSERR = 0x40,
+	PECI_STATUS_RCV_ERRCODE = 0x80,
+	PECI_STATUS_ERR_NEED_RST = (PECI_STATUS_BUSERR | PECI_STATUS_EXTERR),
+	PECI_STATUS_ANY_ERR = (PECI_STATUS_RCV_ERRCODE | PECI_STATUS_BUSERR |
+			       PECI_STATUS_EXTERR | PECI_STATUS_WR_FCS_ERR |
+			       PECI_STATUS_RD_FCS_ERR),
+	PECI_STATUS_ANY_BIT = 0xFE,
+	PECI_STATUS_TIMEOUT = 0xFF,
 };
 
 static task_id_t peci_current_task;
@@ -106,10 +105,9 @@ int peci_transaction(struct peci_data *peci)
 		IT83XX_PECI_HOWRLR = 0x00;
 	} else {
 		if ((peci->cmd_code == PECI_CMD_WR_PKG_CFG) ||
-			(peci->cmd_code == PECI_CMD_WR_IAMSR) ||
-			(peci->cmd_code == PECI_CMD_WR_PCI_CFG) ||
-			(peci->cmd_code == PECI_CMD_WR_PCI_CFG_LOCAL)) {
-
+		    (peci->cmd_code == PECI_CMD_WR_IAMSR) ||
+		    (peci->cmd_code == PECI_CMD_WR_PCI_CFG) ||
+		    (peci->cmd_code == PECI_CMD_WR_PCI_CFG_LOCAL)) {
 			/* write length include Cmd Code + AW FCS */
 			IT83XX_PECI_HOWRLR = peci->w_len + 2;
 
@@ -157,17 +155,14 @@ int peci_transaction(struct peci_data *peci)
 	peci_current_task = TASK_ID_INVALID;
 
 	if (index < peci->timeout_us) {
-
 		status = IT83XX_PECI_HOSTAR;
 
 		/* any error */
 		if (IT83XX_PECI_HOSTAR & PECI_STATUS_ANY_ERR) {
-
 			if (IT83XX_PECI_HOSTAR & PECI_STATUS_ERR_NEED_RST)
 				peci_reset();
 
 		} else if (IT83XX_PECI_HOSTAR & PECI_STATUS_FINISH) {
-
 			/* The read data field of the PECI protocol. */
 			for (index = 0x00; index < peci->r_len; index++)
 				peci->r_buf[index] = IT83XX_PECI_HORDDR;

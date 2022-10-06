@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -32,7 +32,7 @@ void i2c_select_port(int port)
 
 	/* Select IO pins for multi-ports I2C controllers */
 	UPDATE_BIT(NPCX_GLUE_SMBSEL, NPCX_SMBSEL_SMB0SEL,
-			(port == NPCX_I2C_PORT0_1));
+		   (port == NPCX_I2C_PORT0_1));
 }
 
 int i2c_is_raw_mode(int port)
@@ -44,4 +44,3 @@ int i2c_is_raw_mode(int port)
 	else
 		return 1;
 }
-

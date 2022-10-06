@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,43 +6,43 @@
 #ifndef __CROS_EC_STDINT_H__
 #define __CROS_EC_STDINT_H__
 
-typedef unsigned char      uint8_t;
-typedef signed char        int8_t;
+typedef unsigned char uint8_t;
+typedef signed char int8_t;
 
-typedef unsigned short     uint16_t;
-typedef signed short       int16_t;
+typedef unsigned short uint16_t;
+typedef signed short int16_t;
 
-typedef unsigned int       uint32_t;
-typedef signed int         int32_t;
+typedef unsigned int uint32_t;
+typedef signed int int32_t;
 
 typedef unsigned long long uint64_t;
-typedef signed long long   int64_t;
+typedef signed long long int64_t;
 
-typedef unsigned int       uintptr_t;
-typedef int                intptr_t;
+typedef unsigned int uintptr_t;
+typedef int intptr_t;
 
 /* uint_leastX_t represents the smallest type available with at least X bits.
  * uint_fastX_t represents the fastest type available with at least X bits.
  */
-typedef uint8_t            uint_least8_t;
-typedef uint16_t           uint_least16_t;
-typedef uint32_t           uint_least32_t;
-typedef uint64_t           uint_least64_t;
+typedef uint8_t uint_least8_t;
+typedef uint16_t uint_least16_t;
+typedef uint32_t uint_least32_t;
+typedef uint64_t uint_least64_t;
 
-typedef int8_t             int_least8_t;
-typedef int16_t            int_least16_t;
-typedef int32_t            int_least32_t;
-typedef int64_t            int_least64_t;
+typedef int8_t int_least8_t;
+typedef int16_t int_least16_t;
+typedef int32_t int_least32_t;
+typedef int64_t int_least64_t;
 
-typedef uint8_t            uint_fast8_t;
-typedef uint16_t           uint_fast16_t;
-typedef uint32_t           uint_fast32_t;
-typedef uint64_t           uint_fast64_t;
+typedef uint8_t uint_fast8_t;
+typedef uint16_t uint_fast16_t;
+typedef uint32_t uint_fast32_t;
+typedef uint64_t uint_fast64_t;
 
-typedef int8_t             int_fast8_t;
-typedef int16_t            int_fast16_t;
-typedef int32_t            int_fast32_t;
-typedef int64_t            int_fast64_t;
+typedef int8_t int_fast8_t;
+typedef int16_t int_fast16_t;
+typedef int32_t int_fast32_t;
+typedef int64_t int_fast64_t;
 
 #ifndef UINT8_MAX
 #define UINT8_MAX (255U)
@@ -67,12 +67,15 @@ typedef int64_t            int_fast64_t;
 #ifndef INT32_MAX
 #define INT32_MAX (2147483647U)
 #endif
+#ifndef INT32_MIN
+#define INT32_MIN (-2147483648)
+#endif
 
 #ifndef UINT64_C
-#define UINT64_C(c)	c ## ULL
+#define UINT64_C(c) c##ULL
 #endif
 #ifndef INT64_C
-#define INT64_C(c)	c ## LL
+#define INT64_C(c) c##LL
 #endif
 
 #ifndef UINT64_MAX
@@ -80,6 +83,9 @@ typedef int64_t            int_fast64_t;
 #endif
 #ifndef INT64_MAX
 #define INT64_MAX INT64_C(9223372036854775807)
+#endif
+#ifndef INT64_MIN
+#define INT64_MIN (INT64_C(-9223372036854775807) - 1)
 #endif
 
 #endif /* __CROS_EC_STDINT_H__ */

@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2017 The Chromium OS Authors. All rights reserved.
+# Copyright 2017 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -14,4 +14,4 @@ CHIP_VARIANT:=stm32f07x
 test-list-y=
 
 board-y=board.o
-board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
+board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o usb_pd_pdo.o

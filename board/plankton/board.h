@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -34,7 +34,7 @@
 #define CONFIG_ADC
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_INA219
 #define CONFIG_IO_EXPANDER_PCA9534
 #undef CONFIG_WATCHDOG_HELP
@@ -58,7 +58,7 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 
@@ -77,18 +77,18 @@ enum board_src_cap {
 };
 
 /* 3.0A Rp */
-#define PD_SRC_VNC            PD_SRC_3_0_VNC_MV
-#define PD_SNK_RD_THRESHOLD   PD_SRC_3_0_RD_THRESH_MV
+#define PD_SRC_VNC PD_SRC_3_0_VNC_MV
+#define PD_SNK_RD_THRESHOLD PD_SRC_3_0_RD_THRESH_MV
 
 /* delay necessary for the voltage transition on the power supply */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 50000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 5000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_POWER_MW 60000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /* Set USB PD source capability */
 void board_set_source_cap(enum board_src_cap cap);

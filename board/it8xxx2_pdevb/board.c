@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,18 +7,19 @@
 #include "adc_chip.h"
 #include "battery.h"
 #include "console.h"
+#include "gpio.h"
 #include "it83xx_pd.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "timer.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
-#define USB_PD_PORT_ITE_0   0
-#define USB_PD_PORT_ITE_1   1
-#define USB_PD_PORT_ITE_2   2
-#define RESISTIVE_DIVIDER   11
+#define USB_PD_PORT_ITE_0 0
+#define USB_PD_PORT_ITE_1 1
+#define USB_PD_PORT_ITE_2 2
+#define RESISTIVE_DIVIDER 11
 
 int board_get_battery_soc(void)
 {
@@ -36,14 +37,14 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so needn't i2c config */
-		.drv = &it83xx_tcpm_drv,
+		.drv = &it8xxx2_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,
 	},
 	[USB_PD_PORT_ITE_1] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so needn't i2c config */
-		.drv = &it83xx_tcpm_drv,
+		.drv = &it8xxx2_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,
 	},
@@ -82,7 +83,7 @@ void board_pd_vbus_ctrl(int port, int enabled)
 		gpio_set_level(GPIO_USBPD_PORTA_VBUS_OUTPUT, enabled);
 		if (!enabled) {
 			gpio_set_level(GPIO_USBPD_PORTA_VBUS_DROP, 1);
-			udelay(10*MSEC); /* 10ms is a try and error value */
+			udelay(10 * MSEC); /* 10ms is a try and error value */
 		}
 		gpio_set_level(GPIO_USBPD_PORTA_VBUS_DROP, 0);
 	} else if (port == USBPD_PORT_B) {
@@ -90,7 +91,7 @@ void board_pd_vbus_ctrl(int port, int enabled)
 		gpio_set_level(GPIO_USBPD_PORTB_VBUS_OUTPUT, enabled);
 		if (!enabled) {
 			gpio_set_level(GPIO_USBPD_PORTB_VBUS_DROP, 1);
-			udelay(10*MSEC); /* 10ms is a try and error value */
+			udelay(10 * MSEC); /* 10ms is a try and error value */
 		}
 		gpio_set_level(GPIO_USBPD_PORTB_VBUS_DROP, 0);
 	} else if (port == USBPD_PORT_C) {
@@ -98,13 +99,13 @@ void board_pd_vbus_ctrl(int port, int enabled)
 		gpio_set_level(GPIO_USBPD_PORTC_VBUS_OUTPUT, enabled);
 		if (!enabled) {
 			gpio_set_level(GPIO_USBPD_PORTC_VBUS_DROP, 1);
-			udelay(10*MSEC); /* 10ms is a try and error value */
+			udelay(10 * MSEC); /* 10ms is a try and error value */
 		}
 		gpio_set_level(GPIO_USBPD_PORTC_VBUS_DROP, 0);
 	}
 
 	if (enabled)
-		udelay(10*MSEC); /* 10ms is a try and error value */
+		udelay(10 * MSEC); /* 10ms is a try and error value */
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
@@ -119,8 +120,7 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
  * so use the same frequency and prescaler register setting is required if
  * number of pwm channel greater than three.
  */
-const struct pwm_t pwm_channels[] = {
-};
+const struct pwm_t pwm_channels[] = {};
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */

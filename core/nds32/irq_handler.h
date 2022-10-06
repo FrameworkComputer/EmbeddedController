@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,11 +15,12 @@
  * Macro to connect the interrupt handler "routine" to the irq number "irq" and
  * ensure it is enabled in the interrupt controller with the right priority.
  */
-#define DECLARE_IRQ(irq, routine, priority)				\
-	void IRQ_HANDLER(CPU_INT(irq))(void)				\
-		__attribute__ ((alias(STRINGIFY(routine))));		\
-	const struct irq_priority __keep IRQ_PRIORITY(CPU_INT(irq))	\
-	__attribute__((section(".rodata.irqprio")))			\
-			= {CPU_INT(irq), priority}
+#define DECLARE_IRQ(irq, routine, priority)                                   \
+	static void __keep routine(void);                                     \
+	void IRQ_HANDLER(CPU_INT(irq))(void)                                  \
+		__attribute__((alias(STRINGIFY(routine))));                   \
+	const struct irq_priority __keep IRQ_PRIORITY(CPU_INT(irq))           \
+		__attribute__((section(".rodata.irqprio"))) = { CPU_INT(irq), \
+								priority }
 
-#endif  /* __CROS_EC_IRQ_HANDLER_H */
+#endif /* __CROS_EC_IRQ_HANDLER_H */

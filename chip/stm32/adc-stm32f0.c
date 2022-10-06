@@ -1,10 +1,9 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -22,7 +21,7 @@ struct adc_profile_t {
 	/* Register values. */
 	uint32_t cfgr1_reg;
 	uint32_t cfgr2_reg;
-	uint32_t smpr_reg;	/* Default Sampling Rate */
+	uint32_t smpr_reg; /* Default Sampling Rate */
 	uint32_t ier_reg;
 	/* DMA config. */
 	const struct dma_option *dma_option;
@@ -32,7 +31,8 @@ struct adc_profile_t {
 
 #ifdef CONFIG_ADC_PROFILE_SINGLE
 static const struct dma_option dma_single = {
-	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
+	STM32_DMAC_ADC,
+	(void *)&STM32_ADC_DR,
 	STM32_DMA_CCR_MSIZE_32_BIT | STM32_DMA_CCR_PSIZE_32_BIT,
 };
 
@@ -42,12 +42,9 @@ static const struct dma_option dma_single = {
 
 static const struct adc_profile_t profile = {
 	/* Sample all channels once using DMA */
-	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD,
-	.cfgr2_reg = 0,
-	.smpr_reg = CONFIG_ADC_SAMPLE_TIME,
-	.ier_reg = 0,
-	.dma_option = &dma_single,
-	.dma_buffer_size = 1,
+	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD, .cfgr2_reg = 0,
+	.smpr_reg = CONFIG_ADC_SAMPLE_TIME,  .ier_reg = 0,
+	.dma_option = &dma_single,	     .dma_buffer_size = 1,
 };
 #endif
 
@@ -58,15 +55,15 @@ static const struct adc_profile_t profile = {
 #endif
 
 static const struct dma_option dma_continuous = {
-	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
+	STM32_DMAC_ADC,
+	(void *)&STM32_ADC_DR,
 	STM32_DMA_CCR_MSIZE_32_BIT | STM32_DMA_CCR_PSIZE_32_BIT |
-	STM32_DMA_CCR_CIRC,
+		STM32_DMA_CCR_CIRC,
 };
 
 static const struct adc_profile_t profile = {
 	/* Sample all channels continuously using DMA */
-	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD |
-		     STM32_ADC_CFGR1_CONT |
+	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD | STM32_ADC_CFGR1_CONT |
 		     STM32_ADC_CFGR1_DMACFG,
 	.cfgr2_reg = 0,
 	.smpr_reg = CONFIG_ADC_SAMPLE_TIME,
@@ -115,7 +112,7 @@ static void adc_configure(int ain_id, enum stm32_adc_smpr sample_rate)
 {
 	/* Sampling time */
 	if (sample_rate == STM32_ADC_SMPR_DEFAULT ||
-			sample_rate >= STM32_ADC_SMPR_COUNT)
+	    sample_rate >= STM32_ADC_SMPR_COUNT)
 		STM32_ADC_SMPR = profile.smpr_reg;
 	else
 		STM32_ADC_SMPR = STM32_ADC_SMPR_SMP(sample_rate);
@@ -161,12 +158,12 @@ static void adc_interval_read(int ain_id, int interval_ms)
 	adc_configure(ain_id, STM32_ADC_SMPR_DEFAULT);
 
 	/* EXTEN=01 -> hardware trigger detection on rising edge */
-	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~STM32_ADC_CFGR1_EXTEN_MASK)
-		| STM32_ADC_CFGR1_EXTEN_RISE;
+	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~STM32_ADC_CFGR1_EXTEN_MASK) |
+			  STM32_ADC_CFGR1_EXTEN_RISE;
 
 	/* EXTSEL=TRG3 -> Trigger on TIM3_TRGO */
 	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~STM32_ADC_CFGR1_TRG_MASK) |
-		STM32_ADC_CFGR1_TRG3;
+			  STM32_ADC_CFGR1_TRG3;
 
 	__hw_timer_enable_clock(TIM_ADC, 1);
 
@@ -294,9 +291,18 @@ int adc_set_watchdog_delay(int delay_ms)
 
 #else /* CONFIG_ADC_WATCHDOG */
 
-static int adc_watchdog_enabled(void) { return 0; }
-static int adc_enable_watchdog_no_lock(void) { return 0; }
-static int adc_disable_watchdog_no_lock(void) { return 0; }
+static int adc_watchdog_enabled(void)
+{
+	return 0;
+}
+static int adc_enable_watchdog_no_lock(void)
+{
+	return 0;
+}
+static int adc_disable_watchdog_no_lock(void)
+{
+	return 0;
+}
 
 #endif /* CONFIG_ADC_WATCHDOG */
 

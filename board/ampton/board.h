@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,8 +13,10 @@
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
+
 /* I2C bus configuraiton */
-#define I2C_PORT_ACCEL	I2C_PORT_SENSOR
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
@@ -26,17 +28,21 @@
 
 #define CONFIG_LED_COMMON
 
+#define CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV 5000
+
 /* Sensors */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 #define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
-#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300
+#define CONFIG_TEMP_SENSOR_POWER
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_PP3300
 
-#define CONFIG_ACCEL_BMA255	/* Lid accel */
-#define CONFIG_ACCEL_KX022	/* Lid accel */
-#define CONFIG_ACCELGYRO_BMI160	/* Base accel */
-#define CONFIG_SYNC		/* Camera VSYNC */
+#define CONFIG_ACCEL_BMA255 /* Lid accel */
+#define CONFIG_ACCEL_KX022 /* Lid accel */
+#define CONFIG_ACCELGYRO_BMI160 /* Base accel */
+#define CONFIG_ACCELGYRO_ICM42607 /* Base accel */
+#define CONFIG_SYNC /* Camera VSYNC */
 
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 /* Sensors without hardware FIFO are in forced mode */
@@ -49,8 +55,9 @@
 
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
+#define CONFIG_ACCELGYRO_ICM42607_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 /* Keyboard backlight is unimplemented in hardware */
 #undef CONFIG_PWM
@@ -82,21 +89,18 @@ enum temp_sensor_id {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	VSYNC,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, VSYNC, SENSOR_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_C214,
 	BATTERY_C204EE,
 	BATTERY_C424,
+	BATTERY_C204_SECOND,
 	BATTERY_TYPE_COUNT,
 };
+
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

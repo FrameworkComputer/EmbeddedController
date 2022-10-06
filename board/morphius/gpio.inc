@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,7 +25,7 @@ GPIO_INT(ACOK_OD,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_inter
 GPIO_INT(EC_WP_L,		PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
-GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	bmi160_interrupt)
+GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	motion_interrupt)
 GPIO_INT(EN_PWR_TOUCHPAD_PS2,	PIN(C, 2), GPIO_INT_RISING,			ps2_pwr_en_interrupt)
 GPIO_INT(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INT_BOTH,			hdmi_hpd_interrupt_v3)
 
@@ -33,7 +33,7 @@ GPIO_INT(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INT_BOTH,			hdmi_hpd_interrupt_v3)
 GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
 
 GPIO(3AXIS_INT_L,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_DOWN)		/* 3 Axis Accel */
-GPIO(CCD_MODE_ODL,		PIN(C, 6), GPIO_INPUT)				/* Case Closed Debug Mode */
+GPIO(CCD_MODE_ODL,		PIN(C, 6), GPIO_ODR_HIGH)			/* Case Closed Debug Mode */
 GPIO(PROCHOT_ODL,		PIN(D, 5), GPIO_ODR_HIGH)			/* PROCHOT to SOC */
 GPIO(EC_BATT_PRES_ODL,		PIN(4, 1), GPIO_INPUT)				/* Battery Present */
 GPIO(EC_AP_INT_ODL,		PIN(A, 3), GPIO_ODR_HIGH)			/* Sensor MKBP event to SOC */
@@ -55,7 +55,7 @@ GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(EC_PS2_RESET_V0,		PIN(3, 2), GPIO_OUT_LOW)			/* Trackpoint reset pin V0*/
 GPIO(EC_PS2_RESET_V1,		PIN(4, 5), GPIO_OUT_LOW)			/* Trackpoint reset pin V1 */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
-GPIO(FAN_ID,			PIN(8, 2), GPIO_INPUT)				/* Fan ID*/
+GPIO(FAN_ID,			PIN(8, 2), GPIO_INPUT | GPIO_PULL_UP)		/* Fan ID*/
 GPIO(USB_C1_HPD_IN_DB_V1,	PIN(B, 1), GPIO_OUT_LOW)			/* C1 HPD V1 */
 
 UNIMPLEMENTED(NO_HPD)

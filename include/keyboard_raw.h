@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -11,14 +11,14 @@
 #ifndef __CROS_EC_KEYBOARD_RAW_H
 #define __CROS_EC_KEYBOARD_RAW_H
 
-#include "assert.h"
+#include "builtin/assert.h"
 #include "common.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "keyboard_config.h"
 
 /* Column values for keyboard_raw_drive_column() */
 enum keyboard_column_index {
-	KEYBOARD_COLUMN_ALL = -2,  /* Drive all columns */
+	KEYBOARD_COLUMN_ALL = -2, /* Drive all columns */
 	KEYBOARD_COLUMN_NONE = -1, /* Drive no columns (tri-state all) */
 	/* 0 ~ KEYBOARD_COLS_MAX-1 for the corresponding column */
 };
@@ -70,7 +70,9 @@ void keyboard_raw_enable_interrupt(int enable);
 void keyboard_raw_gpio_interrupt(enum gpio_signal signal);
 
 #else
-static inline void keyboard_raw_gpio_interrupt(enum gpio_signal signal) { }
+static inline void keyboard_raw_gpio_interrupt(enum gpio_signal signal)
+{
+}
 #endif /* !HAS_TASK_KEYSCAN */
 
 /**
@@ -89,11 +91,13 @@ int keyboard_factory_test_scan(void);
  */
 int keyboard_raw_is_input_low(int port, int id);
 
-static inline int keyboard_raw_get_cols(void) {
+static inline int keyboard_raw_get_cols(void)
+{
 	return keyboard_cols;
 }
 
-static inline void keyboard_raw_set_cols(int cols) {
+static inline void keyboard_raw_set_cols(int cols)
+{
 #ifdef CONFIG_KEYBOARD_LANGUAGE_ID
 	/* Keyboard ID is probably encoded right after the last column. Scanner
 	 * would read keyboard ID if the column size is decreased. */
@@ -118,4 +122,4 @@ static inline void keyboard_raw_set_cols(int cols) {
 void board_keyboard_drive_col(int col);
 #endif
 
-#endif  /* __CROS_EC_KEYBOARD_RAW_H */
+#endif /* __CROS_EC_KEYBOARD_RAW_H */

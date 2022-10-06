@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -32,7 +32,7 @@ GPIO_INT(RSMRST_L_PGOOD, PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)	/* PM
 GPIO_INT(ALL_SYS_PGOOD,	 PIN(F, 0), GPIO_INT_BOTH, power_signal_interrupt)	/* PMIC_EC_PWROK_OD */
 GPIO_INT(AC_PRESENT, 	 PIN(A, 7), GPIO_INT_BOTH, extpower_interrupt)		/* ACOK_OD */
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 /* enable 1.8v input of EC's espi_reset pin, and then this pin takes effect. */
 GPIO_INT(ESPI_RESET_L, 	 PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
 #endif
@@ -41,7 +41,7 @@ GPIO_INT(ESPI_RESET_L, 	 PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset
 GPIO_INT(TABLET_MODE_L,		PIN(H, 4), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(EC_VOLDN_BTN_ODL,	PIN(D, 6), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,	PIN(D, 5), GPIO_INT_BOTH, button_interrupt)
-GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)
+GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, motion_interrupt)
 GPIO(LID_ACCEL_INT_L,		PIN(J, 3), GPIO_INPUT | GPIO_SEL_1P8V)
 
 GPIO(PCH_PLTRST_L,	 PIN(E, 3), GPIO_INPUT)		/* PLT_RST_L: Platform Reset from SoC */

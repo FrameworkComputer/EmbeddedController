@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 The Chromium OS Authors. All rights reserved.
+ * Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -38,13 +38,12 @@ int fake_consolecmd_lightbar(int argc, char *argv[]);
 #define CONFIG_LIGHTBAR_POWER_RAILS
 #endif
 
-
 /* Stuff that's too interleaved with the rest of the EC to just include */
 
 /* Test an important condition at compile time, not run time */
-#define _BA1_(cond, line) \
-	extern int __build_assertion_ ## line[1 - 2*!(cond)]	\
-	__attribute__ ((unused))
+#define _BA1_(cond, line)                                    \
+	extern int __build_assertion_##line[1 - 2 * !(cond)] \
+		__attribute__((unused))
 #define _BA0_(c, x) _BA1_(c, x)
 #define BUILD_ASSERT(cond) _BA0_(cond, __LINE__)
 
@@ -61,14 +60,14 @@ void cprints(int zero, const char *fmt, ...);
 
 /* Task events */
 #define TASK_EVENT_CUSTOM_BIT(x) BUILD_CHECK_INLINE(BIT(x), BIT(x) & 0x0fffffff)
-#define TASK_EVENT_I2C_IDLE      0x10000000
-#define TASK_EVENT_WAKE          0x20000000
-#define TASK_EVENT_MUTEX         0x40000000
-#define TASK_EVENT_TIMER         0x80000000
+#define TASK_EVENT_I2C_IDLE 0x10000000
+#define TASK_EVENT_WAKE 0x20000000
+#define TASK_EVENT_MUTEX 0x40000000
+#define TASK_EVENT_TIMER 0x80000000
 
 /* Time units in usecs */
-#define MSEC         1000
-#define SECOND    1000000
+#define MSEC 1000
+#define SECOND 1000000
 
 #define TASK_ID_LIGHTBAR 0
 #define CC_LIGHTBAR 0
@@ -97,21 +96,28 @@ struct host_cmd_handler_args {
 
 /* EC functions that we have to provide */
 uint32_t task_wait_event(int timeout_us);
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait_for_reply);
+void task_set_event(task_id_t tskid, uint32_t event);
 timestamp_t get_time(void);
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data);
 uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 
 /* Export unused static functions to avoid compiler warnings. */
-#define DECLARE_HOOK(X, fn, Y) \
-	void fake_hook_##fn(void) { fn(); }
+#define DECLARE_HOOK(X, fn, Y)    \
+	void fake_hook_##fn(void) \
+	{                         \
+		fn();             \
+	}
 
-#define DECLARE_HOST_COMMAND(X, fn, Y) \
+#define DECLARE_HOST_COMMAND(X, fn, Y)                                       \
 	enum ec_status fake_hostcmd_##fn(struct host_cmd_handler_args *args) \
-	{ return fn(args); }
+	{                                                                    \
+		return fn(args);                                             \
+	}
 
-#define DECLARE_CONSOLE_COMMAND(X, fn, Y...) \
+#define DECLARE_CONSOLE_COMMAND(X, fn, Y...)            \
 	int fake_consolecmd_##X(int argc, char *argv[]) \
-	{ return fn(argc, argv); }
+	{                                               \
+		return fn(argc, argv);                  \
+	}
 
-#endif	/* __EXTRA_SIMULATION_H */
+#endif /* __EXTRA_SIMULATION_H */

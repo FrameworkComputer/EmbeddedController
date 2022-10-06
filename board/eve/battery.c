@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -18,10 +18,10 @@
 #include "i2c.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHUTDOWN_DATA	0x0010
+#define SB_SHUTDOWN_DATA 0x0010
 
 /* Vendor CTO command parameter */
 #define SB_VENDOR_PARAM_CTO_DISABLE 0
@@ -81,16 +81,16 @@ static int otd_recovery_temp_reg = -1;
  * limits are given by discharging_min/max_c.
  */
 static const struct battery_info batt_info_lg = {
-	.voltage_max		= TARGET_WITH_MARGIN(8800, 5), /* mV */
-	.voltage_normal		= 7700,
-	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
-	.precharge_current	= 256,	/* mA */
-	.start_charging_min_c	= 0,
-	.start_charging_max_c	= 46,
-	.charging_min_c		= 10,
-	.charging_max_c		= 50,
-	.discharging_min_c	= 0,
-	.discharging_max_c	= 60,
+	.voltage_max = TARGET_WITH_MARGIN(8800, 5), /* mV */
+	.voltage_normal = 7700,
+	.voltage_min = 6100, /* Add 100mV for charger accuracy */
+	.precharge_current = 256, /* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 46,
+	.charging_min_c = 10,
+	.charging_max_c = 50,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
 };
 
 /*
@@ -99,16 +99,16 @@ static const struct battery_info batt_info_lg = {
  * limits are given by discharging_min/max_c.
  */
 static const struct battery_info batt_info_lishen = {
-	.voltage_max		= TARGET_WITH_MARGIN(8800, 5), /* mV */
-	.voltage_normal		= 7700,
-	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
-	.precharge_current	= 256,	/* mA */
-	.start_charging_min_c	= 0,
-	.start_charging_max_c	= 46,
-	.charging_min_c		= 10,
-	.charging_max_c		= 50,
-	.discharging_min_c	= 0,
-	.discharging_max_c	= 60,
+	.voltage_max = TARGET_WITH_MARGIN(8800, 5), /* mV */
+	.voltage_normal = 7700,
+	.voltage_min = 6100, /* Add 100mV for charger accuracy */
+	.precharge_current = 256, /* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 46,
+	.charging_min_c = 10,
+	.charging_max_c = 50,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
 };
 
 static const struct board_batt_params info[] = {
@@ -139,7 +139,7 @@ static int board_get_battery_type(void)
 	if (!battery_manufacturer_name(name, sizeof(name))) {
 		for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
 			if (!strncasecmp(name, info[i].manuf_name,
-					 ARRAY_SIZE(name)-1)) {
+					 ARRAY_SIZE(name) - 1)) {
 				board_battery_type = i;
 				break;
 			}
@@ -168,7 +168,9 @@ DECLARE_HOOK(HOOK_INIT, board_init_battery_type, HOOK_PRIO_INIT_I2C + 1);
 const struct battery_info *battery_get_info(void)
 {
 	return info[board_battery_type == BATTERY_TYPE_COUNT ?
-		    DEFAULT_BATTERY_TYPE : board_battery_type].batt_info;
+			    DEFAULT_BATTERY_TYPE :
+			    board_battery_type]
+		.batt_info;
 }
 
 int board_cut_off_battery(void)
@@ -192,7 +194,7 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 
 	/* Do not discharge on AC if the battery is still waking up */
 	if (!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-		!(curr->batt.status & STATUS_FULLY_CHARGED))
+	    !(curr->batt.status & STATUS_FULLY_CHARGED))
 		return 0;
 
 	/*
@@ -209,8 +211,8 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 	 * and suspend USB charging and DC/DC converter.
 	 */
 	if (!battery_is_cut_off() &&
-		!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-		(curr->batt.status & STATUS_FULLY_CHARGED))
+	    !(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+	    (curr->batt.status & STATUS_FULLY_CHARGED))
 		return 1;
 
 	/*
@@ -275,8 +277,9 @@ static int battery_init(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 /* Allow booting now that the battery has woke up */
@@ -305,8 +308,8 @@ static int battery_check_disconnect(void)
 	uint8_t data[6];
 
 	/* Check if battery discharging is disabled. */
-	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS, SB_ALT_MANUFACTURER_ACCESS,
+			    data, sizeof(data));
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
@@ -384,14 +387,13 @@ static int board_battery_sb_write(uint8_t access, int cmd)
 	buf[1] = cmd & 0xff;
 	buf[2] = (cmd >> 8) & 0xff;
 
-	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
-		      buf, 1 + sizeof(uint16_t), NULL, 0);
+	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf,
+		      1 + sizeof(uint16_t), NULL, 0);
 
 	return rv;
 }
 
-int board_battery_read_mfgacc(int offset, int access,
-				      uint8_t *buf, int len)
+int board_battery_read_mfgacc(int offset, int access, uint8_t *buf, int len)
 {
 	int rv;
 	uint8_t block_len, reg;
@@ -408,7 +410,7 @@ int board_battery_read_mfgacc(int offset, int access,
 
 	reg = access;
 	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, &reg, 1,
-	    &block_len, 1, I2C_XFER_START);
+			       &block_len, 1, I2C_XFER_START);
 	if (rv) {
 		i2c_lock(I2C_PORT_BATTERY, 0);
 		return rv;
@@ -419,7 +421,7 @@ int board_battery_read_mfgacc(int offset, int access,
 		block_len = len;
 
 	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, NULL, 0,
-	    buf, block_len, I2C_XFER_STOP);
+			       buf, block_len, I2C_XFER_STOP);
 	i2c_lock(I2C_PORT_BATTERY, 0);
 
 	return rv;
@@ -432,7 +434,8 @@ static int board_battery_unseal(uint32_t param)
 
 	/* Get Operation Status */
 	rv = board_battery_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+				       SB_ALT_MANUFACTURER_ACCESS, data,
+				       sizeof(data));
 
 	if (rv)
 		return EC_ERROR_UNKNOWN;
@@ -457,7 +460,8 @@ static int board_battery_unseal(uint32_t param)
 
 		/* Verify that battery is unsealed */
 		rv = board_battery_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+					       SB_ALT_MANUFACTURER_ACCESS, data,
+					       sizeof(data));
 		if (rv || ((data[3] & 0x3) != 0x2))
 			return EC_ERROR_UNKNOWN;
 	}
@@ -474,7 +478,7 @@ static int board_battery_seal(void)
 	int rv;
 
 	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = board_battery_sb_write(SB_MANUFACTURER_ACCESS,  0x0030);
+	rv = board_battery_sb_write(SB_MANUFACTURER_ACCESS, 0x0030);
 	i2c_lock(I2C_PORT_BATTERY, 0);
 
 	if (rv != EC_SUCCESS)
@@ -507,8 +511,7 @@ static int board_battery_write_flash(int addr, uint32_t data, int len)
 	len += 4;
 
 	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf,
-		      len, NULL, 0);
+	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf, len, NULL, 0);
 	i2c_lock(I2C_PORT_BATTERY, 0);
 
 	return rv;
@@ -522,13 +525,13 @@ static int board_battery_read_flash(int block, int len, uint8_t *buf)
 
 	if (len > 4)
 		len = 4;
-	rv = board_battery_read_mfgacc(block,
-			    SB_ALT_MANUFACTURER_ACCESS, data, len + 2);
+	rv = board_battery_read_mfgacc(block, SB_ALT_MANUFACTURER_ACCESS, data,
+				       len + 2);
 	if (rv)
 		return EC_RES_ERROR;
 
 	for (i = 0; i < len; i++)
-		buf[i] = data[i+2];
+		buf[i] = data[i + 2];
 
 	return EC_SUCCESS;
 }
@@ -594,7 +597,7 @@ static int board_battery_fix_otd_recovery_temp(uint32_t value)
 					      (uint8_t *)&otd_recovery_temp))
 			otd_recovery_temp_reg = otd_recovery_temp;
 	} else {
-			otd_recovery_temp_reg = otd_recovery_temp;
+		otd_recovery_temp_reg = otd_recovery_temp;
 	}
 
 	if (board_battery_seal()) {
@@ -607,7 +610,7 @@ static int board_battery_fix_otd_recovery_temp(uint32_t value)
 	return EC_SUCCESS;
 }
 
-int battery_get_vendor_param(uint32_t param, uint32_t *value)
+__override int battery_get_vendor_param(uint32_t param, uint32_t *value)
 {
 	/*
 	 * These registers can't be read directly because the flash area
@@ -638,7 +641,7 @@ int battery_get_vendor_param(uint32_t param, uint32_t *value)
 	return EC_RES_ERROR;
 }
 
-int battery_set_vendor_param(uint32_t param, uint32_t value)
+__override int battery_set_vendor_param(uint32_t param, uint32_t value)
 {
 	switch (param) {
 	case SB_VENDOR_PARAM_CTO_DISABLE:

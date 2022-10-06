@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -19,7 +19,7 @@
 #include "i2c.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Number of writes needed to invoke battery cutoff command */
 #define SHIP_MODE_WRITES 2
@@ -412,7 +412,8 @@ BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);
 static inline const struct board_batt_params *board_get_batt_params(void)
 {
 	return &info[board_battery_type == BATTERY_TYPE_COUNT ?
-			DEFAULT_BATTERY_TYPE : board_battery_type];
+			     DEFAULT_BATTERY_TYPE :
+			     board_battery_type];
 }
 
 /* Get type of the battery connected on the board */
@@ -424,14 +425,16 @@ static int board_get_battery_type(void)
 	if (!battery_manufacturer_name(manu_name, sizeof(manu_name))) {
 		for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
 			if (!strcasecmp(manu_name,
-				info[i].fuel_gauge.manuf_name)) {
+					info[i].fuel_gauge.manuf_name)) {
 				if (info[i].fuel_gauge.device_name == NULL) {
 					board_battery_type = i;
 					break;
-				} else if (!battery_device_name(device_name,
-					sizeof(device_name))) {
+				} else if (!battery_device_name(
+						   device_name,
+						   sizeof(device_name))) {
 					if (!strcasecmp(device_name,
-					info[i].fuel_gauge.device_name)) {
+							info[i].fuel_gauge
+								.device_name)) {
 						board_battery_type = i;
 						break;
 					}
@@ -496,7 +499,7 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 
 	/* Do not discharge on AC if the battery is still waking up */
 	if (!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-		!(curr->batt.status & STATUS_FULLY_CHARGED))
+	    !(curr->batt.status & STATUS_FULLY_CHARGED))
 		return 0;
 
 	/*
@@ -513,8 +516,8 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 	 * and suspend USB charging and DC/DC converter.
 	 */
 	if (!battery_is_cut_off() &&
-		!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-		(curr->batt.status & STATUS_FULLY_CHARGED))
+	    !(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+	    (curr->batt.status & STATUS_FULLY_CHARGED))
 		return 1;
 
 	/*
@@ -548,13 +551,13 @@ enum battery_present battery_hw_present(void)
 	return gpio_get_level(GPIO_EC_BATT_PRES_L) ? BP_NO : BP_YES;
 }
 
-
 static int battery_init(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 /* Allow booting now that the battery has woke up */
@@ -595,12 +598,13 @@ static int battery_check_disconnect(void)
 	/* Read the status of charge/discharge FETs */
 	if (info[board_battery_type].fuel_gauge.fet.mfgacc_support == 1) {
 		rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-				SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+				    SB_ALT_MANUFACTURER_ACCESS, data,
+				    sizeof(data));
 		/* Get the lowest 16bits of the OperationStatus() data */
 		reg = data[2] | data[3] << 8;
 	} else
 		rv = sb_read(info[board_battery_type].fuel_gauge.fet.reg_addr,
-					&reg);
+			     &reg);
 
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
@@ -650,7 +654,7 @@ enum battery_present battery_is_present(void)
 		 * error due to a failed sb_read.
 		 */
 		battery_report_present_timer_started = 0;
-	}  else if (batt_pres == BP_YES && batt_pres_prev == BP_NO &&
+	} else if (batt_pres == BP_YES && batt_pres_prev == BP_NO &&
 		   !battery_report_present_timer_started) {
 		/*
 		 * Wait 1/2 second before reporting present if it was
@@ -674,11 +678,10 @@ int board_battery_initialized(void)
 	return battery_hw_present() == batt_pres_prev;
 }
 
-
 /* Customs options controllable by host command. */
 #define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
-#define PARAM_LEARN_MODE	0x10001
-#define PARAM_DISCONNECT_STATE	0x10002
+#define PARAM_LEARN_MODE 0x10001
+#define PARAM_DISCONNECT_STATE 0x10002
 
 enum ec_status charger_profile_override_get_param(uint32_t param,
 						  uint32_t *value)
@@ -686,10 +689,10 @@ enum ec_status charger_profile_override_get_param(uint32_t param,
 	switch (param) {
 	case PARAM_LEARN_MODE:
 		*value = disch_on_ac;
-		return EC_SUCCESS;
+		return EC_RES_SUCCESS;
 	case PARAM_DISCONNECT_STATE:
 		*value = battery_check_disconnect();
-		return EC_SUCCESS;
+		return EC_RES_SUCCESS;
 	default:
 		return EC_RES_INVALID_PARAM;
 	}

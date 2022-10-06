@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,8 +26,6 @@ static int debug_txchar(void *context, int c)
 
 	return 0;
 }
-
-
 
 void debug_printf(const char *format, ...)
 {
@@ -102,8 +100,8 @@ void uart_init(void)
 	STM32_USART_BRR(UARTN_BASE) =
 		DIV_ROUND_NEAREST(CPU_CLOCK, CONFIG_UART_BAUD_RATE);
 	/* UART enabled, 8 Data bits, oversampling x16, no parity */
-	STM32_USART_CR1(UARTN_BASE) =
-		STM32_USART_CR1_UE | STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_UE | STM32_USART_CR1_TE |
+				      STM32_USART_CR1_RE;
 	/* 1 stop bit, no fancy stuff */
 	STM32_USART_CR2(UARTN_BASE) = 0x0000;
 	/* DMA disabled, special modes disabled, error interrupt disabled */

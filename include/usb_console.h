@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -80,7 +80,7 @@ int usb_console_tx_blocked(void);
 #define usb_getc(x) (-1)
 #define usb_va_start(x, y)
 #define usb_va_end(x)
-#define usb_console_tx_blocked()	(0)
+#define usb_console_tx_blocked() (0)
 #endif
 
 #endif /* __CROS_EC_USB_CONSOLE_H */

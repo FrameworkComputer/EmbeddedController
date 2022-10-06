@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,6 +7,23 @@
 
 #ifndef __CROS_EC_FAN_H
 #define __CROS_EC_FAN_H
+
+#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_PLATFORM_EC_FAN
+
+#include <zephyr/devicetree.h>
+#define NODE_ID_AND_COMMA(node_id) node_id,
+enum fan_channel {
+#if DT_NODE_EXISTS(DT_INST(0, cros_ec_fans))
+	DT_FOREACH_CHILD(DT_INST(0, cros_ec_fans), NODE_ID_AND_COMMA)
+#endif /* cros_ec_fans */
+		FAN_CH_COUNT
+};
+
+BUILD_ASSERT(FAN_CH_COUNT == CONFIG_PLATFORM_EC_NUM_FANS);
+
+#endif /* CONFIG_PLATFORM_EC_FAN */
+#endif /* CONFIG_ZEPHYR */
 
 struct fan_conf {
 	unsigned int flags;
@@ -33,7 +50,7 @@ struct fan_t {
 
 /* Values for .flags field */
 /*   Enable automatic RPM control using tach input */
-#define FAN_USE_RPM_MODE   BIT(0)
+#define FAN_USE_RPM_MODE BIT(0)
 /*   Require a higher duty cycle to start up than to keep running */
 #define FAN_USE_FAST_START BIT(1)
 
@@ -45,7 +62,7 @@ extern const struct fan_t fans[];
 #endif
 
 /* For convenience */
-#define FAN_CH(fan)	fans[fan].conf->ch
+#define FAN_CH(fan) fans[fan].conf->ch
 
 /**
  * Set the amount of active cooling needed. The thermal control task will call
@@ -66,7 +83,6 @@ void fan_set_percent_needed(int fan, int pct);
  * Return       Target RPM for fan
  */
 int fan_percent_to_rpm(int fan, int pct);
-
 
 /**
  * These functions require chip-specific implementations.
@@ -126,4 +142,4 @@ void fan_set_count(int count);
 
 int is_thermal_control_enabled(int idx);
 
-#endif  /* __CROS_EC_FAN_H */
+#endif /* __CROS_EC_FAN_H */

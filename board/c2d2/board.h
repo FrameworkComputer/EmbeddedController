@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,9 +21,9 @@
 
 /* Enable USART */
 #define CONFIG_STREAM_USART
-#define CONFIG_STREAM_USART1	/* EC USART */
-#define CONFIG_STREAM_USART3	/* AP USART - not connected by default */
-#define CONFIG_STREAM_USART4	/* H1 USART */
+#define CONFIG_STREAM_USART1 /* EC USART */
+#define CONFIG_STREAM_USART3 /* AP USART - not connected by default */
+#define CONFIG_STREAM_USART4 /* H1 USART */
 #define CONFIG_STREAM_USB
 #define CONFIG_CMD_USART_INFO
 
@@ -45,50 +45,49 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 #define CONFIG_USB_UPDATE
 
-
 /* USB interface indexes (use define rather than enum to expand them)
  *
  * Note these values are used in servo_interface.py for the 'interface' value
  */
-#define USB_IFACE_USART4_STREAM	0	/* H1 */
-#define USB_IFACE_UPDATE	1
-#define USB_IFACE_SPI		2
-#define USB_IFACE_CONSOLE	3
-#define USB_IFACE_I2C		4
-#define USB_IFACE_USART3_STREAM	5	/* AP (not connected by default) */
-#define USB_IFACE_USART1_STREAM	6	/* EC */
-#define USB_IFACE_COUNT		7
+#define USB_IFACE_USART4_STREAM 0 /* H1 */
+#define USB_IFACE_UPDATE 1
+#define USB_IFACE_SPI 2
+#define USB_IFACE_CONSOLE 3
+#define USB_IFACE_I2C 4
+#define USB_IFACE_USART3_STREAM 5 /* AP (not connected by default) */
+#define USB_IFACE_USART1_STREAM 6 /* EC */
+#define USB_IFACE_COUNT 7
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_USART4_STREAM	1
-#define USB_EP_UPDATE		2
-#define USB_EP_SPI		3
-#define USB_EP_CONSOLE		4
-#define USB_EP_I2C		5
-#define USB_EP_USART3_STREAM	6
-#define USB_EP_USART1_STREAM	7
-#define USB_EP_COUNT		8
+#define USB_EP_CONTROL 0
+#define USB_EP_USART4_STREAM 1
+#define USB_EP_UPDATE 2
+#define USB_EP_SPI 3
+#define USB_EP_CONSOLE 4
+#define USB_EP_I2C 5
+#define USB_EP_USART3_STREAM 6
+#define USB_EP_USART1_STREAM 7
+#define USB_EP_COUNT 8
 
 /* Enable control of SPI over USB */
 #define CONFIG_USB_SPI
-#define CONFIG_SPI_MASTER
-#define CONFIG_SPI_FLASH_PORT 0  /* SPI2 is 0th in stm's SPI_REGS var */
+#define CONFIG_SPI_CONTROLLER
+#define CONFIG_SPI_FLASH_PORT 0 /* SPI2 is 0th in stm's SPI_REGS var */
 
 /* Enable control of I2C over USB */
 #define CONFIG_USB_I2C
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_EC 0
 #define I2C_PORT_AUX 1
 
 /* See i2c_ite_flash_support.c for more information about these values */
 #define CONFIG_ITE_FLASH_SUPPORT
-#define CONFIG_I2C_XFER_LARGE_READ
+#define CONFIG_I2C_XFER_LARGE_TRANSFER
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1<<9) - 4)
-#define CONFIG_USB_I2C_MAX_READ_COUNT ((1<<9) - 6)
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1 << 9) - 4)
+#define CONFIG_USB_I2C_MAX_READ_COUNT ((1 << 9) - 6)
 
 /*
  * Set all ADC samples to take 239.5 clock cycles. This allows us to measure
@@ -114,7 +113,7 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 
@@ -128,6 +127,7 @@ enum usb_strings {
 	USB_STR_USART4_STREAM_NAME,
 	USB_STR_UPDATE_NAME,
 	USB_STR_CONSOLE_NAME,
+	USB_STR_SPI_NAME,
 	USB_STR_I2C_NAME,
 	USB_STR_USART3_STREAM_NAME,
 	USB_STR_USART1_STREAM_NAME,

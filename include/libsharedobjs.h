@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -17,7 +17,7 @@
  * NOTE: I know that this doesn't cover all possible cases, but it will catch
  *       an obvious case.
  */
-#if (CONFIG_RO_MEM_OFF ==  CONFIG_RW_MEM_OFF)
+#if (CONFIG_RO_MEM_OFF == CONFIG_RW_MEM_OFF)
 #error "The shared library is NOT compatible with this EC."
 #endif
 
@@ -28,12 +28,12 @@
  */
 #undef SHAREDLIB
 #ifdef SHAREDLIB_IMAGE
-#define SHAREDLIB(...) __attribute__ ((section(".roshared"))) __VA_ARGS__
+#define SHAREDLIB(...) __attribute__((section(".roshared"))) __VA_ARGS__
 #else /* !defined(SHAREDLIB_IMAGE) */
 #define SHAREDLIB(...)
 #endif /* defined(SHAREDLIB_IMAGE) */
 #define SHAREDLIB_FUNC(...) \
-	extern __VA_ARGS__ __attribute__ ((section(".roshared.text")))
+	extern __VA_ARGS__ __attribute__((section(".roshared.text")))
 
 #else /* !defined(CONFIG_SHAREDLIB) */
 

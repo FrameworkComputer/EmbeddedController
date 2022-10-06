@@ -1,0 +1,121 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: PWM LED configuration
+
+compatible: "cros-ec,pwm-leds"
+
+include: base.yaml
+
+properties:
+  leds:
+    type: phandles
+    required: true
+    description: |
+      List of pwm-leds nodes. These are expected to have a pwms property
+      pointing to the relevant PWMs, up to three PWM devices. The order is
+      matched against the array order of the color-map- properties.
+
+      For example
+        pwmleds {
+                compatible = "pwm-leds";
+                pwm_led0: pwm_led_0 {
+                        pwms = <&pwm1 0 PWM_HZ(4800) PWM_POLARITY_INVERTED
+                                &pwm0 0 PWM_HZ(4800) PWM_POLARITY_INVERTED
+                                &pwm2 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
+                };
+        };
+        cros-pwmleds {
+                compatible = "cros-ec,pwm-leds";
+                leds = <&pwm_led0>;
+        };
+
+  sidesel:
+    type: phandle
+    required: false
+    description: |
+      A pwm-leds node for the SIDESEL line, if present.
+
+      For example
+        pwmleds {
+                compatible = "pwm-leds";
+                pwm_sidesel: pwm_sidesel {
+                        pwms = <&pwm7 0 PWM_HZ(2400) PWM_POLARITY_INVERTED>;
+                };
+        };
+        cros-pwmleds {
+                compatible = "cros-ec,pwm-leds";
+                sidesel = <&pwm_sidesel>;
+        };
+
+  color-map-red:
+    type: array
+    required: false
+    description: |
+      A map of PWM duty cycles per color, up to three channels. Unset values
+      default to zero.
+
+      For example
+        color-map-red    = <100   0   0>;
+        color-map-green  = <  0 100   0>;
+        color-map-blue   = <  0   0 100>;
+        color-map-yellow = <100  70   0>;
+        color-map-white  = <100  70 100>;
+        color-map-amber  = <100  20   0>;
+
+  color-map-green:
+    type: array
+    required: false
+
+  color-map-blue:
+    type: array
+    required: false
+
+  color-map-yellow:
+    type: array
+    required: false
+
+  color-map-white:
+    type: array
+    required: false
+
+  color-map-amber:
+    type: array
+    required: false
+
+  brightness-range:
+    type: array
+    required: false
+    description: |
+      A list of brigthness range value for all supported channels in order,
+      Red, Green, Blue, Yellow, White, Amber (0 to 255).
+
+child-binding:
+  description: |
+    LED child binding node for mapping a PWM_LED to a EC_LED_ID.
+
+    For example
+
+    pwm_led_0@0 {
+                reg = <0>;
+                ec-led-name = "EC_LED_ID_LEFT_LED";
+    };
+    pwm_led_1@1 {
+                reg = <1>;
+                ec-led-name = "EC_LED_ID_RIGHT_LED";
+    };
+
+  properties:
+    reg:
+      type: int
+      required: true
+      description: LED ID, can be either 0 or 1 for PWM_LED0 and PWM_LED1
+      enum:
+        - 0 # PWM_LED0
+        - 1 # PWM_LED1
+
+    ec-led-name:
+      type: string
+      required: true
+      description: The EC_LED_ID value to map the LED to.

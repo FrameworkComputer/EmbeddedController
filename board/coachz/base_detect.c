@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,8 +6,8 @@
 /* Coachz base detection code */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "board.h"
+#include "base_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -19,11 +19,12 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* Base detection and debouncing */
-#define BASE_DETECT_DEBOUNCE_US (20 * MSEC)
+#define BASE_DETECT_EN_DEBOUNCE_US (350 * MSEC)
+#define BASE_DETECT_DIS_DEBOUNCE_US (20 * MSEC)
 
 /*
  * If the base status is unclear (i.e. not within expected ranges, read
@@ -80,9 +81,9 @@ static void base_detect_change(enum base_status status)
 	if (current_base_status == status)
 		return;
 
-	CPRINTS("Base %sconnected", connected ? "" : "not ");
 	gpio_set_level(GPIO_EN_BASE, connected);
-	tablet_set_mode(!connected);
+	tablet_set_mode(!connected, TABLET_TRIGGER_BASE);
+	base_set_state(connected);
 	current_base_status = status;
 }
 
@@ -92,8 +93,8 @@ static uint32_t pulse_width;
 
 static void print_base_detect_value(int v, int tmp_pulse_width)
 {
-	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name,
-			v, tmp_pulse_width);
+	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name, v,
+		tmp_pulse_width);
 }
 
 static void base_detect_deferred(void)
@@ -142,6 +143,12 @@ static inline int detect_pin_connected(enum gpio_signal det_pin)
 void base_detect_interrupt(enum gpio_signal signal)
 {
 	uint64_t time_now = get_time().val;
+	int debounce_us;
+
+	if (detect_pin_connected(signal))
+		debounce_us = BASE_DETECT_EN_DEBOUNCE_US;
+	else
+		debounce_us = BASE_DETECT_DIS_DEBOUNCE_US;
 
 	if (base_detect_debounce_time <= time_now) {
 		/*
@@ -158,8 +165,7 @@ void base_detect_interrupt(enum gpio_signal signal)
 		}
 		pulse_width = 0;
 
-		hook_call_deferred(&base_detect_deferred_data,
-				   BASE_DETECT_DEBOUNCE_US);
+		hook_call_deferred(&base_detect_deferred_data, debounce_us);
 	} else {
 		if (current_base_status == BASE_CONNECTED &&
 		    detect_pin_connected(signal) && !pulse_width &&
@@ -172,7 +178,7 @@ void base_detect_interrupt(enum gpio_signal signal)
 		}
 	}
 
-	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
+	base_detect_debounce_time = time_now + debounce_us;
 }
 
 static void base_enable(void)
@@ -186,9 +192,13 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, base_enable, HOOK_PRIO_DEFAULT);
 
 static void base_disable(void)
 {
-	/* Disable base detection interrupt and disable power to base. */
+	/*
+	 * Disable base detection interrupt and disable power to base.
+	 * Set the state UNKNOWN so the next startup will initialize a
+	 * correct state and notify AP.
+	 */
 	gpio_disable_interrupt(GPIO_BASE_DET_L);
-	base_detect_change(BASE_DISCONNECTED);
+	base_detect_change(BASE_UNKNOWN);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, base_disable, HOOK_PRIO_DEFAULT);
 
@@ -201,15 +211,15 @@ static void base_init(void)
 	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		base_enable();
 }
-DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT + 1);
 
-void base_force_state(int state)
+void base_force_state(enum ec_set_base_state_cmd state)
 {
-	if (state == 1) {
+	if (state == EC_SET_BASE_STATE_ATTACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_L);
 		base_detect_change(BASE_CONNECTED);
 		CPRINTS("BD forced connected");
-	} else if (state == 0) {
+	} else if (state == EC_SET_BASE_STATE_DETACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_L);
 		base_detect_change(BASE_DISCONNECTED);
 		CPRINTS("BD forced disconnected");

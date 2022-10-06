@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,6 +6,7 @@
 /* Power button module for Chrome EC */
 
 #include "button.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -21,14 +22,14 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
 
 /* By default the power button is active low */
 #ifndef CONFIG_POWER_BUTTON_FLAGS
 #define CONFIG_POWER_BUTTON_FLAGS 0
 #endif
 
-static int debounced_power_pressed;	/* Debounced power button state */
+static int debounced_power_pressed; /* Debounced power button state */
 static int simulate_power_pressed;
 static volatile int power_button_is_stable = 1;
 
@@ -41,8 +42,11 @@ static const struct button_config power_button = {
 
 int power_button_signal_asserted(void)
 {
-	return !!(gpio_get_level(power_button.gpio)
-		== (power_button.flags & BUTTON_FLAG_ACTIVE_HIGH) ? 1 : 0);
+	return !!(
+		gpio_get_level(power_button.gpio) ==
+				(power_button.flags & BUTTON_FLAG_ACTIVE_HIGH) ?
+			1 :
+			0);
 }
 
 /**
@@ -93,8 +97,8 @@ int power_button_wait_for_release(int timeout_us)
 		 * the power button is debounced but not changed, or the power
 		 * button has not been debounced.
 		 */
-		task_wait_event(MIN(power_button.debounce_us,
-				    deadline.val - now.val));
+		task_wait_event(
+			MIN(power_button.debounce_us, deadline.val - now.val));
 	}
 
 	CPRINTS("%s released in time", power_button.name);
@@ -132,6 +136,10 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pb_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void pb_chipset_shutdown(void)
 {
+	/* Don't set AP_IDLE if shutting down due to power failure. */
+	if (chipset_get_shutdown_reason() == CHIPSET_SHUTDOWN_POWERFAIL)
+		return;
+
 	chip_save_reset_flags(chip_read_reset_flags() | EC_RESET_FLAG_AP_IDLE);
 	system_set_reset_flags(EC_RESET_FLAG_AP_IDLE);
 	CPRINTS("Saved AP_IDLE flag");
@@ -141,7 +149,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pb_chipset_shutdown,
 	      * Slightly higher than handle_pending_reboot because
 	      * it may clear AP_IDLE flag.
 	      */
-	     HOOK_PRIO_DEFAULT - 1);
+	     HOOK_PRIO_PRE_DEFAULT);
 #endif
 
 /**
@@ -164,8 +172,8 @@ static void power_button_change_deferred(void)
 	debounced_power_pressed = new_pressed;
 	power_button_is_stable = 1;
 
-	CPRINTS("%s %s",
-		power_button.name, new_pressed ? "pressed" : "released");
+	CPRINTS("%s %s", power_button.name,
+		new_pressed ? "pressed" : "released");
 
 	/* Call hooks */
 	hook_notify(HOOK_POWER_BUTTON_CHANGE);
@@ -192,6 +200,7 @@ void power_button_interrupt(enum gpio_signal signal)
 			   power_button.debounce_us);
 }
 
+<<<<<<< HEAD
 void power_button_set_simulated_state(int level)
 {
 	simulate_power_pressed = level;
@@ -203,32 +212,40 @@ void power_button_set_simulated_state(int level)
 /* Console commands */
 
 static int command_powerbtn(int argc, char **argv)
+=======
+void power_button_simulate_press(unsigned int duration)
+>>>>>>> chromium/main
 {
-	int ms = 200;  /* Press duration in ms */
-	char *e;
-
-	if (argc > 1) {
-		ms = strtoi(argv[1], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM1;
-	}
-
-	ccprintf("Simulating %d ms %s press.\n", ms, power_button.name);
+	ccprintf("Simulating %d ms %s press.\n", duration, power_button.name);
 	simulate_power_pressed = 1;
 	power_button_is_stable = 0;
 	hook_call_deferred(&power_button_change_deferred_data, 0);
 
-	if (ms > 0)
-		msleep(ms);
+	if (duration > 0)
+		msleep(duration);
 
 	ccprintf("Simulating %s release.\n", power_button.name);
 	simulate_power_pressed = 0;
 	power_button_is_stable = 0;
 	hook_call_deferred(&power_button_change_deferred_data, 0);
+}
 
+/*****************************************************************************/
+/* Console commands */
+
+static int command_powerbtn(int argc, const char **argv)
+{
+	int ms = 200; /* Press duration in ms */
+	char *e;
+
+	if (argc > 1) {
+		ms = strtoi(argv[1], &e, 0);
+		if (*e || ms < 0)
+			return EC_ERROR_PARAM1;
+	}
+
+	power_button_simulate_press(ms);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
-			"[msec]",
+DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn, "[msec]",
 			"Simulate power button press");
-

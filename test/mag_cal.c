@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,35 +17,17 @@
  * the high values and [-5,5] (+- 1.53 uT) for the low values.
  */
 static intv3_t samples[] = {
-	{ -522, 5, -5 },
-	{ -528, -3, 1 },
-	{ -531, -2, 0 },
-	{ -525, -1, 3 },
+	{ -522, 5, -5 },  { -528, -3, 1 },  { -531, -2, 0 }, { -525, -1, 3 },
 
-	{ 527, 3, -2 },
-	{ 523, -5, 1 },
-	{ 520, -3, 2 },
-	{ 522, 0, -4 },
+	{ 527, 3, -2 },	  { 523, -5, 1 },   { 520, -3, 2 },  { 522, 0, -4 },
 
-	{ -3, -519, -2 },
-	{ 1, -521, 5 },
-	{ 2, -526, 4 },
-	{ 0, -532, -5 },
+	{ -3, -519, -2 }, { 1, -521, 5 },   { 2, -526, 4 },  { 0, -532, -5 },
 
-	{ -5, 528, 4 },
-	{ -2, 531, -4 },
-	{ 1, 522, 2 },
-	{ 5, 532, 3 },
+	{ -5, 528, 4 },	  { -2, 531, -4 },  { 1, 522, 2 },   { 5, 532, 3 },
 
-	{ -5, 0, -524 },
-	{ -1, -2, -527 },
-	{ -3, 4, -532 },
-	{ 5, 3, -531 },
+	{ -5, 0, -524 },  { -1, -2, -527 }, { -3, 4, -532 }, { 5, 3, -531 },
 
-	{ 4, -2, 524 },
-	{ 1, 3, 520 },
-	{ 5, -5, 528 },
-	{ 0, 2, 521 },
+	{ 4, -2, 524 },	  { 1, 3, 520 },    { 5, -5, 528 },  { 0, 2, 521 },
 };
 
 static int test_mag_cal_computes_bias(void)
@@ -81,7 +63,7 @@ static int test_mag_cal_computes_bias(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

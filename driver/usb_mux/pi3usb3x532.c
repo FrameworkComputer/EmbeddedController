@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -11,13 +11,12 @@
 #include "usb_mux.h"
 #include "util.h"
 
-static int pi3usb3x532_read(const struct usb_mux *me,
-			    uint8_t reg, uint8_t *val)
+static int pi3usb3x532_read(const struct usb_mux *me, uint8_t reg, uint8_t *val)
 {
 	int read, res;
 
 	/*
-	 * First byte read will be slave address (ignored).
+	 * First byte read will be i2c address (ignored).
 	 * Second byte read will be vendor ID.
 	 * Third byte read will be selection control.
 	 */
@@ -33,8 +32,7 @@ static int pi3usb3x532_read(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-static int pi3usb3x532_write(const struct usb_mux *me,
-			     uint8_t reg, uint8_t val)
+static int pi3usb3x532_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 {
 	if (reg != PI3USB3X532_REG_CONTROL)
 		return EC_ERROR_UNKNOWN;
@@ -42,13 +40,26 @@ static int pi3usb3x532_write(const struct usb_mux *me,
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags, 0, val);
 }
 
+int pi3usb3x532_check_vendor(const struct usb_mux *me, int *val)
+{
+	int res;
+	uint8_t read;
+
+	res = pi3usb3x532_read(me, PI3USB3X532_REG_VENDOR, &read);
+	if (res)
+		return res;
+
+	*val = read;
+
+	return EC_SUCCESS;
+}
+
 static int pi3usb3x532_reset(const struct usb_mux *me)
 {
-	return pi3usb3x532_write(
-		me,
-		PI3USB3X532_REG_CONTROL,
-		(PI3USB3X532_MODE_POWERDOWN & PI3USB3X532_CTRL_MASK) |
-		PI3USB3X532_CTRL_RSVD);
+	return pi3usb3x532_write(me, PI3USB3X532_REG_CONTROL,
+				 (PI3USB3X532_MODE_POWERDOWN &
+				  PI3USB3X532_CTRL_MASK) |
+					 PI3USB3X532_CTRL_RSVD);
 }
 
 static int pi3usb3x532_init(const struct usb_mux *me)
@@ -69,10 +80,17 @@ static int pi3usb3x532_init(const struct usb_mux *me)
 }
 
 /* Writes control register to set switch mode */
-static int pi3usb3x532_set_mux(const struct usb_mux *me,
-			       mux_state_t mux_state)
+static int pi3usb3x532_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			       bool *ack_required)
 {
 	uint8_t reg = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= PI3USB3X532_MODE_USB;
@@ -86,8 +104,7 @@ static int pi3usb3x532_set_mux(const struct usb_mux *me,
 }
 
 /* Reads control register and updates mux_state accordingly */
-static int pi3usb3x532_get_mux(const struct usb_mux *me,
-			       mux_state_t *mux_state)
+static int pi3usb3x532_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	uint8_t reg = 0;
 	uint8_t res;

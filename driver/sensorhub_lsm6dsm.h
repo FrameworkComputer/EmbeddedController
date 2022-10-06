@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,8 +25,8 @@
  * @return EC_SUCCESS on success, EC error codes on failure.
  */
 int sensorhub_config_ext_reg(const struct motion_sensor_t *s,
-			     const uint16_t slv_addr_flags,
-			     uint8_t reg, uint8_t val);
+			     const uint16_t slv_addr_flags, uint8_t reg,
+			     uint8_t val);
 
 /**
  * Configure the sensor hub to read data from a specific register of an
@@ -39,8 +39,8 @@ int sensorhub_config_ext_reg(const struct motion_sensor_t *s,
  * @return EC_SUCCESS on success, EC error codes on failure.
  */
 int sensorhub_config_slv0_read(const struct motion_sensor_t *s,
-			       const uint16_t slv_addr_flags,
-			       uint8_t reg, int len);
+			       const uint16_t slv_addr_flags, uint8_t reg,
+			       int len);
 
 /**
  * Reads the data from the register bank that is associated with the slave0
@@ -65,7 +65,7 @@ int sensorhub_slv0_data_read(const struct motion_sensor_t *s, uint8_t *raw);
  * @return EC_SUCCESS on success, EC error codes on failure.
  */
 int sensorhub_check_and_rst(const struct motion_sensor_t *s,
-			    const uint16_t slv_addr_flags,
-			    uint8_t whoami_reg, uint8_t whoami_val,
-			    uint8_t rst_reg, uint8_t rst_val);
+			    const uint16_t slv_addr_flags, uint8_t whoami_reg,
+			    uint8_t whoami_val, uint8_t rst_reg,
+			    uint8_t rst_val);
 #endif /* __CROS_EC_SENSORHUB_LSM6DSM_H */

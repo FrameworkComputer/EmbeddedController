@@ -1,0 +1,85 @@
+# Copyright 2020 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+config PLATFORM_EC_USB_CHARGER
+	bool "Support charging from a USB-C port"
+	default y
+	help
+	  This enables common BC1.2 (Battery-Charging Specification Rev1.2)
+	  charger-detection routines. With this is possible to negotiate a
+	  power contract with an attached battery charger and use this to
+	  charge the device's battery.
+
+if PLATFORM_EC_USB_CHARGER
+
+config PLATFORM_EC_USB_CHARGER_SINGLE_TASK
+	bool
+	default y
+	help
+	  Helper symbol use in the common EC code for Zephyr specific charger
+	  changes.
+
+
+config PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
+	bool
+	help
+	  This is a helper symbol that indicates the BC1.2 chip needs to be
+	  triggered on data role swaps in addition to VBUS changes.
+
+config PLATFORM_EC_BC12_CLIENT_MODE_ONLY_PI3USB9201
+	bool "Run as BC1.2 client while using PI3USB9201"
+	depends on PLATFORM_EC_BC12_DETECT_PI3USB9201
+	default n
+	help
+	  This is a helper symbol that indicates the PI3USB9201 will only
+	  advertise itself as a BC1.2 client, not a BC1.2 host.
+
+config PLATFORM_EC_BC12_DETECT_PI3USB9201
+	bool "Enable support for Pericom PI3USB9201"
+	select PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
+	help
+	  This is a Dual-Role USB Charging-Type Detector. It can operate in
+	  host or client mode. It supports Battery Charging Specification, rev
+	  1.2 (BC1.2) with Standard/Charging/Dedicated downstream port
+	  (SDP/CDP/DCP) advertisement when in host mode. In client mode it
+	  starts BC1.2 detection to detect the attached host type. It provides
+	  an I2C interface to report detection results.
+
+config PLATFORM_EC_BC12_DETECT_MT6360
+	bool "MediaTek MT6360P PMIC"
+	help
+	  This PMIC includes a battery charger with an On-The-Go (OTG) output
+	  range of 4.85 to 5.825V. It provides integrated ADCs for system
+	  monitoring. The MT6360 also supports USB Power Delivery 3.0 with
+	  Dual-Role, with host or client mode. It supports alternate mode as
+	  well as VCONN with programmable over-current protection (OCP).
+
+config PLATFORM_EC_MT6360_BC12_GPIO
+	bool "USB-PHY connection is controlled by a GPIO"
+	depends on PLATFORM_EC_BC12_DETECT_MT6360
+	help
+	  If enabled, the MT6360 USB-PHY connection is controlled by
+	  a GPIO: GPIO_BC12_DET_EN. Assert GPIO_BC12_DET_EN to detect a BC1.2
+	  device, and deassert GPIO_BC12_DET_EN to mux the USB-PHY back.
+
+config PLATFORM_EC_BC12_SINGLE_DRIVER
+	bool "Only support a single BC12 driver"
+	default y
+	help
+	  Enable this if the board only needs one BC12 driver. This includes
+	  the case that has multiple chips that use the same driver.
+
+	  If undefined, the board should define a bc12_ports[] array which
+	  associates each port to its bc12 driver:
+
+	     struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	        { .drv = &xxx_drv },
+	        { .drv = &yyy_drv },
+	     };
+
+endif  # PLATFORM_EC_USB_CHARGER
+
+endif # PLATFORM_EC_USBC

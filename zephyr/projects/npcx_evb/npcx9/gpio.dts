@@ -1,0 +1,72 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		recovery_l {
+			gpios = <&gpio0 3 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_wp: wp_l {
+			gpios = <&gpio9 3 (GPIO_INPUT_PULL_UP |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ac_present: ac_present {
+			gpios = <&gpiod 2 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_power_button_l: power_button_l {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		entering_rw {
+			gpios = <&gpio3 6 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_ec_pch_wake_odl: pch_wake_l {
+			gpios = <&gpio5 0 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_pgood_fan: pgood_fan {
+			gpios = <&gpioc 7 GPIO_INPUT_PULL_UP>;
+		};
+		spi_cs_l {
+			gpios = <&gpioa 5 GPIO_OUTPUT_HIGH>;
+		};
+		board_version1 {
+			gpios = <&gpio6 4 GPIO_INPUT>;
+			enum-name = "GPIO_BOARD_VERSION1";
+		};
+		board_version2 {
+			gpios = <&gpio6 5 GPIO_INPUT>;
+			enum-name = "GPIO_BOARD_VERSION2";
+		};
+		board_version3 {
+			gpios = <&gpio6 6 GPIO_INPUT>;
+			enum-name = "GPIO_BOARD_VERSION3";
+		};
+	};
+};
+
+/* A falling edge detection type for PSL_IN2 */
+&psl_in2_gp00 {
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in2_gp00>;
+};

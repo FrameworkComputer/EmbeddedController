@@ -1,0 +1,231 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+		gpio-wp = &ec_flash_wp_odl;
+		gpio-en-hdmi-pwr = &gpio_ec_x_gpio1;
+		gpio-usb-c1-frs-en = &gpio_ec_x_gpio1;
+		gpio-usb-c1-ppc-int-odl = &gpio_x_ec_gpio2;
+		gpio-ps185-ec-dp-hpd = &gpio_x_ec_gpio2;
+		gpio-usb-c1-dp-in-hpd = &gpio_ec_x_gpio3;
+		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		power_button_l: power_button_l {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		lid_open: lid_open {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		tablet_mode_l: tablet_mode_l {
+			gpios = <&gpioj 7 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		ap_ec_warm_rst_req: ap_ec_warm_rst_req {
+			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_HIGH)>;
+			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
+		};
+		ap_in_sleep_l: ap_in_sleep_l {
+			gpios = <&gpiob 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_AP_IN_SLEEP_L";
+		};
+		base_imu_int_l: base_imu_int_l {
+			gpios = <&gpiom 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		lid_accel_int_l: lid_accel_int_l {
+			gpios = <&gpiom 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		volume_down_l: volume_down_l {
+			gpios = <&gpiod 5 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		volume_up_l: volume_up_l {
+			gpios = <&gpiod 6 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_ap_xhci_init_done: ap_xhci_init_done {
+			gpios = <&gpioj 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ac_present: ac_present {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
+		ec_flash_wp_odl: ec_flash_wp_odl {
+			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		spi0_cs: spi0_cs {
+			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_x_ec_gpio2: x_ec_gpio2 {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+		};
+		usb_c0_ppc_bc12_int_odl: usb_c0_ppc_bc12_int_odl {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		usb_c1_bc12_charger_int_odl: usb_c1_bc12_charger_int_odl {
+			gpios = <&gpioj 4 GPIO_INPUT>;
+		};
+		ec_pmic_en_odl: ec_pmic_en_odl {
+			gpios = <&gpiod 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
+		};
+		en_pp5000_z2: en_pp5000_z2 {
+			gpios = <&gpioc 6 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_en_ulp: en_ulp {
+			gpios = <&gpioe 3 GPIO_OUTPUT_LOW>;
+		};
+		sys_rst_odl: sys_rst_odl {
+			gpios = <&gpiog 1 GPIO_ODR_LOW>;
+			enum-name = "GPIO_SYS_RST_ODL";
+		};
+		gpio_ec_bl_en_od: ec_bl_en_od {
+			gpios = <&gpiob 5 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
+		};
+		ap_sysrst_odl_r: ap_ec_sysrst_odl {
+			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_AP_EC_SYSRST_ODL";
+		};
+		ap_ec_wdtrst_l: ap_ec_wdtrst_l {
+			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_AP_EC_WDTRST_L";
+		};
+		ec_int_l: ec_int_l {
+			gpios = <&gpioe 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		dp_aux_path_sel: dp_aux_path_sel {
+			gpios = <&gpiog 0 GPIO_OUTPUT_HIGH>;
+		};
+		ec_ap_dp_hpd_odl: ec_ap_dp_hpd_odl {
+			gpios = <&gpioj 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+		};
+		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {
+			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
+		};
+		usb_c0_ppc_frsinfo: usb_c0_ppc_frsinfo {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+		};
+		ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		en_ec_id_odl: en_ec_id_odl {
+			gpios = <&gpioh 5 GPIO_ODR_HIGH>;
+		};
+		entering_rw: entering_rw {
+			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_en_5v_usm: en_5v_usm {
+			gpios = <&gpiog 3 GPIO_OUTPUT_LOW>;
+		};
+		usb_a0_fault_odl: usb_a0_fault_odl {
+			gpios = <&gpioj 6 GPIO_INPUT>;
+		};
+		gpio_ec_x_gpio1: ec_x_gpio1 {
+			gpios = <&gpioh 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_x_gpio3: ec_x_gpio3 {
+			gpios = <&gpioj 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
+			gpios = <&gpioj 3 GPIO_INPUT>;
+		};
+		gpio_packet_mode_en: packet_mode_en {
+			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			gpios = <&gpioc 4 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <&int_ac_present
+			       &int_power_button
+			       &int_lid_open>;
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* pg_pp5000_z2_od */
+			<&gpiod 2 GPIO_INPUT>,
+			/* pg_mt6315_proc_b_odl */
+			<&gpioe 1 GPIO_INPUT>,
+			/* ec_pen_chg_dis_odl */
+			<&gpioh 3 GPIO_ODR_HIGH>,
+			/* unnamed nc pins */
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 5 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
+			/* spi_clk_gpg6 */
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
+			/* spi_mosi_gpg4 */
+			<&gpiog 4 GPIO_OUTPUT_LOW>,
+			/* spi_miso_gpg5 */
+			<&gpiog 5 GPIO_OUTPUT_LOW>,
+			/* spi_cs_gpg7 */
+			<&gpiog 7 GPIO_OUTPUT_LOW>;
+	};
+};
+
+&pinctrl {
+	/* I2C property setting */
+	i2c0_clk_gpb3_default: i2c0_clk_gpb3_default {
+		gpio-voltage = "1v8";
+	};
+	i2c0_data_gpb4_default: i2c0_data_gpb4_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_clk_gpf2_default: i2c3_clk_gpf2_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpf3_default: i2c3_data_gpf3_default {
+		gpio-voltage = "1v8";
+	};
+	/* SHI property setting */
+	shi_mosi_gpm0_default: shi_mosi_gpm0_default {
+		gpio-voltage = "1v8";
+	};
+	shi_miso_gpm1_default: shi_miso_gpm1_default {
+		gpio-voltage = "1v8";
+	};
+	shi_clk_gpm4_default: shi_clk_gpm4_default {
+		gpio-voltage = "1v8";
+	};
+	shi_cs_gpm5_default: shi_cs_gpm5_default {
+		gpio-voltage = "1v8";
+	};
+};

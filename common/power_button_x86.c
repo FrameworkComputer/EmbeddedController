@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -23,7 +23,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
 
 /*
  * x86 chipsets have a hardware timer on the power button input which causes
@@ -54,14 +54,14 @@
  *    to host    v                      v
  *     @S0   make code             break code
  */
-#define PWRBTN_DELAY_T0    (32 * MSEC)  /* 32ms (PCH requires >16ms) */
-#define PWRBTN_DELAY_T1    (4 * SECOND - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
+#define PWRBTN_DELAY_T0 (32 * MSEC) /* 32ms (PCH requires >16ms) */
+#define PWRBTN_DELAY_T1 (4 * SECOND - PWRBTN_DELAY_T0) /* 4 secs - t0 */
 /*
  * Length of time to stretch initial power button press to give chipset a
  * chance to wake up (~100ms) and react to the press (~16ms).  Also used as
  * pulse length for simulated power button presses when the system is off.
  */
-#define PWRBTN_INITIAL_US  (200 * MSEC)
+#define PWRBTN_INITIAL_US (200 * MSEC)
 
 enum power_button_state {
 	/* Button up; state machine idle */
@@ -92,18 +92,9 @@ enum power_button_state {
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
 
-static const char * const state_names[] = {
-	"idle",
-	"pressed",
-	"t0",
-	"t1",
-	"held",
-	"lid-open",
-	"released",
-	"eat-release",
-	"init-on",
-	"recovery",
-	"was-off",
+static const char *const state_names[] = {
+	"idle",	    "pressed",	   "t0",      "t1",	  "held",    "lid-open",
+	"released", "eat-release", "init-on", "recovery", "was-off",
 };
 
 /*
@@ -139,7 +130,7 @@ static void set_pwrbtn_to_pch(int high, int init)
 	 */
 #ifdef CONFIG_CHARGER
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !high &&
-	   (charge_want_shutdown() || charge_prevent_power_on(!init))) {
+	    (charge_want_shutdown() || charge_prevent_power_on(!init))) {
 		CPRINTS("PB PCH pwrbtn ignored due to battery level");
 		high = 1;
 	}
@@ -351,8 +342,8 @@ static void state_machine(uint64_t tnow)
 
 		if (!IS_ENABLED(CONFIG_CHARGER) || charge_prevent_power_on(0)) {
 			if (tnow >
-				(tpb_task_start +
-				 CONFIG_POWER_BUTTON_INIT_TIMEOUT * SECOND)) {
+			    (tpb_task_start +
+			     CONFIG_POWER_BUTTON_INIT_TIMEOUT * SECOND)) {
 				pwrbtn_state = PWRBTN_STATE_IDLE;
 				break;
 			}
@@ -371,9 +362,9 @@ static void state_machine(uint64_t tnow)
 #ifdef CONFIG_DELAY_DSW_PWROK_TO_PWRBTN
 		/* Check if power button is ready. If not, we'll come back. */
 		if (get_time().val - get_time_dsw_pwrok() <
-				CONFIG_DSW_PWROK_TO_PWRBTN_US) {
+		    CONFIG_DSW_PWROK_TO_PWRBTN_US) {
 			tnext_state = get_time_dsw_pwrok() +
-					CONFIG_DSW_PWROK_TO_PWRBTN_US;
+				      CONFIG_DSW_PWROK_TO_PWRBTN_US;
 			break;
 		}
 #endif
@@ -449,7 +440,7 @@ void power_button_task(void *u)
 			 * early.)
 			 */
 			CPRINTS("PB task %d = %s, wait %d", pwrbtn_state,
-			state_names[pwrbtn_state], d);
+				state_names[pwrbtn_state], d);
 			task_wait_event(d);
 		}
 	}
@@ -464,6 +455,14 @@ static void powerbtn_x86_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT);
 
+void chipset_power_on(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+	    pwrbtn_state != PWRBTN_STATE_INIT_ON) {
+		power_button_pch_pulse();
+	}
+}
+
 #ifdef CONFIG_LID_SWITCH
 /**
  * Handle switch changes based on lid event.
@@ -471,9 +470,9 @@ DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT);
 static void powerbtn_x86_lid_change(void)
 {
 	/* If chipset is off, pulse the power button on lid open to wake it. */
-	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_OFF)
-	    && pwrbtn_state != PWRBTN_STATE_INIT_ON)
-		power_button_pch_pulse();
+	if (lid_is_open()) {
+		chipset_power_on();
+	}
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, powerbtn_x86_lid_change, HOOK_PRIO_DEFAULT);
 #endif
@@ -525,11 +524,10 @@ static enum ec_status hc_config_powerbtn_x86(struct host_cmd_handler_args *args)
 	power_button_pulse_enabled =
 		!!(p->flags & EC_POWER_BUTTON_ENABLE_PULSE);
 
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CONFIG_POWER_BUTTON, hc_config_powerbtn_x86,
 		     EC_VER_MASK(0));
-
 
 /*
  * Currently, the only reason why we disable power button pulse is to allow
@@ -551,8 +549,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, power_button_pulse_setting_reset,
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, power_button_pulse_setting_reset,
 	     HOOK_PRIO_DEFAULT);
 
-#define POWER_BUTTON_SYSJUMP_TAG		0x5042 /* PB */
-#define POWER_BUTTON_HOOK_VERSION		1
+#define POWER_BUTTON_SYSJUMP_TAG 0x5042 /* PB */
+#define POWER_BUTTON_HOOK_VERSION 1
 
 static void power_button_pulse_setting_restore_state(void)
 {
@@ -567,12 +565,11 @@ static void power_button_pulse_setting_restore_state(void)
 		power_button_pulse_enabled = *state;
 }
 DECLARE_HOOK(HOOK_INIT, power_button_pulse_setting_restore_state,
-	     HOOK_PRIO_INIT_POWER_BUTTON + 1);
+	     HOOK_PRIO_POST_POWER_BUTTON);
 
 static void power_button_pulse_setting_preserve_state(void)
 {
-	system_add_jump_tag(POWER_BUTTON_SYSJUMP_TAG,
-			    POWER_BUTTON_HOOK_VERSION,
+	system_add_jump_tag(POWER_BUTTON_SYSJUMP_TAG, POWER_BUTTON_HOOK_VERSION,
 			    sizeof(power_button_pulse_enabled),
 			    &power_button_pulse_enabled);
 }

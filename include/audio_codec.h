@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Chromium OS Authors. All rights reserved.
+ * Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -41,8 +41,8 @@ int audio_codec_capable(uint8_t cap);
  *   EC_ERROR_INVAL if invalid cap.
  *   EC_ERROR_BUSY if the shm_id has been registered.
  */
-int audio_codec_register_shm(uint8_t shm_id, uint8_t cap,
-		uintptr_t *addr, uint32_t len, uint8_t type);
+int audio_codec_register_shm(uint8_t shm_id, uint8_t cap, uintptr_t *addr,
+			     uint32_t len, uint8_t type);
 
 /*
  * Translates the physical address from AP to EC's memory space.  Required if
@@ -62,7 +62,6 @@ int audio_codec_memmap_ap_to_ec(uintptr_t ap_addr, uintptr_t *ec_addr);
  * Scales a S16_LE sample by multiplying scalar.
  */
 int16_t audio_codec_s16_scale_and_clip(int16_t orig, uint8_t scalar);
-
 
 /*
  * DMIC abstract layer
@@ -119,7 +118,6 @@ int audio_codec_dmic_set_gain_idx(uint8_t channel, uint8_t gain);
  *   EC_ERROR_INVAL if channel does not look good.
  */
 int audio_codec_dmic_get_gain_idx(uint8_t channel, uint8_t *gain);
-
 
 /*
  * I2S RX abstract layer
@@ -180,7 +178,6 @@ int audio_codec_i2s_rx_set_daifmt(uint8_t daifmt);
  *   EC_ERROR_INVAL if bclk does not look good.
  */
 int audio_codec_i2s_rx_set_bclk(uint32_t bclk);
-
 
 /*
  * WoV abstract layer

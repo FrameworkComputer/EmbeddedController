@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,6 +9,7 @@
  * These functions are shared by the STM32F0 and STM32L variants.
  */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "gpio_chip.h"
 #include "registers.h"
@@ -62,7 +63,6 @@ int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
 			flags |= GPIO_LOW;
 	}
 
-
 	if (STM32_EXTI_RTSR & mask)
 		flags |= GPIO_INT_F_RISING;
 	if (STM32_EXTI_RTSR & mask)
@@ -80,9 +80,9 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	/* Set up pullup / pulldown */
 	val = STM32_GPIO_PUPDR(port) & ~mask2;
 	if (flags & GPIO_PULL_UP)
-		val |= 0x55555555 & mask2;	/* Pull Up = 01 */
+		val |= 0x55555555 & mask2; /* Pull Up = 01 */
 	else if (flags & GPIO_PULL_DOWN)
-		val |= 0xaaaaaaaa & mask2;	/* Pull Down = 10 */
+		val |= 0xaaaaaaaa & mask2; /* Pull Down = 10 */
 	STM32_GPIO_PUPDR(port) = val;
 
 	/*
@@ -133,10 +133,10 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 }
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
-				enum gpio_alternate_func func)
+				 enum gpio_alternate_func func)
 {
 	/* Ensure that the func parameter isn't overflowed */
-	BUILD_ASSERT((int) MODULE_COUNT <= (int) GPIO_ALT_FUNC_MAX);
+	BUILD_ASSERT((int)MODULE_COUNT <= (int)GPIO_ALT_FUNC_MAX);
 
 	int bit;
 	uint32_t half;

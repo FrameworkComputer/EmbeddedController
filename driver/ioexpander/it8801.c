@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
 #include "it8801.h"
@@ -16,20 +17,22 @@
 #include "util.h"
 #include "keyboard_backlight.h"
 
-#define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ##args)
 
 static int it8801_ioex_set_level(int ioex, int port, int mask, int value);
+static void it8801_ioex_event_handler(void);
+DECLARE_DEFERRED(it8801_ioex_event_handler);
 
 static int it8801_read(int reg, int *data)
 {
-	return i2c_read8(I2C_PORT_IO_EXPANDER_IT8801, IT8801_I2C_ADDR,
-		reg, data);
+	return i2c_read8(I2C_PORT_KB_DISCRETE, KB_DISCRETE_I2C_ADDR_FLAGS, reg,
+			 data);
 }
 
-static int it8801_write(int reg, int data)
+__maybe_unused static int it8801_write(int reg, int data)
 {
-	return i2c_write8(I2C_PORT_IO_EXPANDER_IT8801, IT8801_I2C_ADDR,
-		reg, data);
+	return i2c_write8(I2C_PORT_KB_DISCRETE, KB_DISCRETE_I2C_ADDR_FLAGS, reg,
+			  data);
 }
 
 struct it8801_vendor_id_t {
@@ -38,8 +41,8 @@ struct it8801_vendor_id_t {
 };
 
 static const struct it8801_vendor_id_t it8801_vendor_id_verify[] = {
-	{ 0x12, IT8801_REG_HBVIDR},
-	{ 0x83, IT8801_REG_LBVIDR},
+	{ 0x12, IT8801_REG_HBVIDR },
+	{ 0x83, IT8801_REG_LBVIDR },
 };
 
 static int it8801_check_vendor_id(void)
@@ -60,6 +63,30 @@ static int it8801_check_vendor_id(void)
 	return EC_SUCCESS;
 }
 
+/*
+ * Keyboard and GPIO interrupts are muxed inside the IT8801 chip.
+ * Interrupt enable register controls the individual pins from
+ * triggering this global interrupt hence it is okay that this
+ * pin is enabled all the time.
+ */
+static void it8801_muxed_kbd_gpio_intr_enable(void)
+{
+	static bool intr_enabled;
+
+	/*
+	 * Allow enabling this pin either by Keyboard enable code or
+	 * IOEX init code whichever gets called first.
+	 */
+	if (!intr_enabled) {
+#ifndef CONFIG_ZEPHYR
+		gpio_clear_pending_interrupt(GPIO_KB_DISCRETE_INT);
+#endif
+		gpio_enable_interrupt(GPIO_KB_DISCRETE_INT);
+		intr_enabled = true;
+	}
+}
+
+#ifdef CONFIG_KEYBOARD_DISCRETE
 void keyboard_raw_init(void)
 {
 	int ret;
@@ -106,13 +133,13 @@ void keyboard_raw_task_start(void)
 	keyboard_raw_enable_interrupt(1);
 }
 
-static const uint8_t kso_mapping[] = {
-	0, 1, 20, 3, 4, 5, 6, 17, 18, 16, 15, 11, 12,
+__overridable const uint8_t it8801_kso_mapping[] = { 0,	 1,  20, 3,  4,	 5,  6,
+						     17, 18, 16, 15, 11, 12,
 #ifdef CONFIG_KEYBOARD_KEYPAD
-	13, 14
+						     13, 14
 #endif
 };
-BUILD_ASSERT(ARRAY_SIZE(kso_mapping) == KEYBOARD_COLS_MAX);
+BUILD_ASSERT(ARRAY_SIZE(it8801_kso_mapping) == KEYBOARD_COLS_MAX);
 
 test_mockable void keyboard_raw_drive_column(int col)
 {
@@ -145,18 +172,18 @@ test_mockable void keyboard_raw_drive_column(int col)
 		 * Selected KSO[20, 18:11, 6:3, 1:0] output low,
 		 * all others KSO output high.
 		 */
-		kso_val = kso_mapping[col];
+		kso_val = it8801_kso_mapping[col];
 
 		if (IS_ENABLED(CONFIG_KEYBOARD_COL2_INVERTED)) {
 			/* GPIO23 is inverted. */
 			if (col == IT8801_REG_MASK_SELKSO2) {
 				/* Output high(so selected). */
 				it8801_ioex_set_level(0, 2,
-						IT8801_REG_GPIO23SOV, 1);
+						      IT8801_REG_GPIO23SOV, 1);
 			} else {
 				/* Output low(so not selected). */
 				it8801_ioex_set_level(0, 2,
-						IT8801_REG_GPIO23SOV, 0);
+						      IT8801_REG_GPIO23SOV, 0);
 			}
 		}
 	}
@@ -182,34 +209,45 @@ test_mockable int keyboard_raw_read_rows(void)
 void keyboard_raw_enable_interrupt(int enable)
 {
 	if (enable) {
+		/* Clear pending iterrupts */
 		it8801_write(IT8801_REG_KSIEER, 0xff);
-		gpio_clear_pending_interrupt(GPIO_IT8801_SMB_INT);
-		gpio_enable_interrupt(GPIO_IT8801_SMB_INT);
-	} else {
-		gpio_disable_interrupt(GPIO_IT8801_SMB_INT);
+
+		/* Enable muxed Keyboard & GPIO interrupt */
+		it8801_muxed_kbd_gpio_intr_enable();
 	}
+
+	it8801_write(IT8801_REG_KSIIER, enable ? 0xff : 0x00);
 }
+#endif /* CONFIG_KEYBOARD_DISCRETE */
 
 void io_expander_it8801_interrupt(enum gpio_signal signal)
 {
-	/* Wake the scan task */
-	task_wake(TASK_ID_KEYSCAN);
+	hook_call_deferred(&it8801_ioex_event_handler_data, 0);
 }
 
 static int it8801_ioex_read(int ioex, int reg, int *data)
 {
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
-	return i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
-			 reg, data);
+	return i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+			 data);
 }
 
 static int it8801_ioex_write(int ioex, int reg, int data)
 {
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
-	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
-			  reg, data);
+	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+			  data);
+}
+
+static int it8801_ioex_update(int ioex, int reg, int data,
+			      enum mask_update_action action)
+{
+	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
+
+	return i2c_update8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+			   data, action);
 }
 
 static const int it8801_valid_gpio_group[] = {
@@ -219,7 +257,7 @@ static const int it8801_valid_gpio_group[] = {
 };
 
 /* Mutexes */
-static struct mutex ioex_mutex;
+K_MUTEX_DEFINE(ioex_mutex);
 
 static uint8_t it8801_gpio_sov[ARRAY_SIZE(it8801_valid_gpio_group)];
 
@@ -246,6 +284,9 @@ static int it8801_ioex_init(int ioex)
 		it8801_ioex_read(ioex, IT8801_REG_GPIO_SOVR(port), &val);
 		it8801_gpio_sov[port] = val;
 	}
+
+	/* Enable muxed Keyboard & GPIO interrupt */
+	it8801_muxed_kbd_gpio_intr_enable();
 
 	return EC_SUCCESS;
 }
@@ -299,15 +340,15 @@ static int it8801_ioex_set_level(int ioex, int port, int mask, int value)
 			it8801_gpio_sov[port] &= ~mask;
 
 		rv = it8801_ioex_write(ioex, IT8801_REG_GPIO_SOVR(port),
-						it8801_gpio_sov[port]);
+				       it8801_gpio_sov[port]);
 	}
 	mutex_unlock(&ioex_mutex);
 
 	return rv;
 }
 
-static int it8801_ioex_get_flags_by_mask(int ioex, int port,
-		int mask, int *flags)
+static int it8801_ioex_get_flags_by_mask(int ioex, int port, int mask,
+					 int *flags)
 {
 	int rv, val;
 
@@ -337,8 +378,8 @@ static int it8801_ioex_get_flags_by_mask(int ioex, int port,
 	return EC_SUCCESS;
 }
 
-static int it8801_ioex_set_flags_by_mask(int ioex, int port,
-		int mask, int flags)
+static int it8801_ioex_set_flags_by_mask(int ioex, int port, int mask,
+					 int flags)
 {
 	int rv, val;
 
@@ -347,20 +388,21 @@ static int it8801_ioex_set_flags_by_mask(int ioex, int port,
 
 	if (flags & ~IT8801_SUPPORT_GPIO_FLAGS) {
 		CPRINTS("Flag 0x%08x is not supported at port %d, mask %d",
-					flags, port, mask);
+			flags, port, mask);
 		return EC_ERROR_INVAL;
 	}
 
 	/* GPIO alternate function switching(GPIO[00, 12:15, 20:23]). */
-	it8801_ioex_write(ioex, IT8801_REG_GPIO_CR(port, mask),
-					IT8801_REG_MASK_GPIOAFS_FUNC1);
+	rv = it8801_ioex_write(ioex, IT8801_REG_GPIO_CR(port, mask),
+			       IT8801_REG_MASK_GPIOAFS_FUNC1);
+	if (rv)
+		return rv;
 
 	mutex_lock(&ioex_mutex);
 	rv = it8801_ioex_read(ioex, IT8801_REG_GPIO_CR(port, mask), &val);
-	if (rv) {
-		mutex_unlock(&ioex_mutex);
-		return rv;
-	}
+	if (rv)
+		goto unlock_mutex;
+
 	/* Select open drain 0:push-pull 1:open-drain */
 	if (flags & GPIO_OPEN_DRAIN)
 		val |= IT8801_GPIOIOT;
@@ -376,27 +418,132 @@ static int it8801_ioex_set_flags_by_mask(int ioex, int port,
 			it8801_gpio_sov[port] &= ~mask;
 
 		rv = it8801_ioex_write(ioex, IT8801_REG_GPIO_SOVR(port),
-						it8801_gpio_sov[port]);
-		if (rv) {
-			mutex_unlock(&ioex_mutex);
-			return rv;
-		}
+				       it8801_gpio_sov[port]);
+		if (rv)
+			goto unlock_mutex;
+
 		val |= IT8801_GPIODIR;
-	} else
+	} else {
 		val &= ~IT8801_GPIODIR;
+	}
+
+	/* Set Interrupt Type */
+	if (flags & GPIO_INT_RISING)
+		val |= IT8801_GPIOIOT_INT_RISING;
+	if (flags & GPIO_INT_FALLING)
+		val |= IT8801_GPIOIOT_INT_FALLING;
 
 	rv = it8801_ioex_write(ioex, IT8801_REG_GPIO_CR(port, mask), val);
+
+unlock_mutex:
 	mutex_unlock(&ioex_mutex);
 
 	return rv;
 }
 
+/* Enable the individual GPIO interrupt pins based on the board requirement. */
+static int it8801_ioex_enable_interrupt(int ioex, int port, int mask,
+					int enable)
+{
+	int rv;
+
+	if (ioex_check_is_not_valid(port, mask))
+		return EC_ERROR_INVAL;
+
+	/* Clear pending interrupt */
+	rv = it8801_ioex_update(ioex, IT8801_REG_GPIO_ISR(port), mask,
+				MASK_SET);
+	if (rv)
+		return rv;
+
+	return it8801_ioex_update(ioex, IT8801_REG_GPIO_IER(port), mask,
+				  enable ? MASK_SET : MASK_CLR);
+}
+
+#ifdef CONFIG_ZEPHYR
+static void it8801_ioex_irq(int ioex, int port)
+{
+	/* TODO (b/230008245): Handle interrupts in Zephyr Shim */
+}
+#else
+static void it8801_ioex_irq(int ioex, int port)
+{
+	int rv, data, i;
+	const struct ioex_info *g;
+
+	rv = it8801_ioex_read(ioex, IT8801_REG_GPIO_ISR(port), &data);
+	if (rv || !data)
+		return;
+
+	/* Trigger the intended interrupt from the IOEX IRQ pins */
+	for (i = 0, g = ioex_list; i < ioex_ih_count; i++, g++) {
+		if (ioex == g->ioex && port == g->port && data & g->mask) {
+			ioex_irq_handlers[i](i + IOEX_SIGNAL_START);
+			data &= ~g->mask;
+
+			/* Clear pending interrupt */
+			it8801_ioex_update(ioex, IT8801_REG_GPIO_ISR(port),
+					   g->mask, MASK_SET);
+
+			if (!data)
+				break;
+		}
+	}
+}
+#endif /* CONFIG_ZEPHYR */
+
+static void it8801_ioex_event_handler(void)
+{
+	int data, i;
+
+	/* Gather KSI interrupt status register */
+	if (it8801_read(IT8801_REG_GISR, &data))
+		return;
+
+	/* Wake the keyboard scan task if KSI interrupts are triggered */
+	if (IS_ENABLED(CONFIG_KEYBOARD_DISCRETE) &&
+	    data & IT8801_REG_MASK_GISR_GKSIIS)
+		task_wake(TASK_ID_KEYSCAN);
+
+	/*
+	 * Trigger the GPIO callback functions if the GPIO interrupts are
+	 * triggered.
+	 */
+	if (data & (IT8801_REG_MASK_GISR_GGPIOGXIS)) {
+		for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; i++) {
+			if (ioex_config[i].drv == &it8801_ioexpander_drv) {
+				/* Interrupt from GPIO port 0 is triggered */
+				if (data & IT8801_REG_MASK_GISR_GGPIOG0IS)
+					it8801_ioex_irq(i, 0);
+				/* Interrupt from GPIO port 1 is triggered */
+				if (data & IT8801_REG_MASK_GISR_GGPIOG1IS)
+					it8801_ioex_irq(i, 1);
+				/* Interrupt from GPIO port 2 is triggered */
+				if (data & IT8801_REG_MASK_GISR_GGPIOG2IS)
+					it8801_ioex_irq(i, 2);
+			}
+		}
+	}
+}
+
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+/* Read levels for whole IO expander port */
+static int it8801_ioex_get_port(int ioex, int port, int *val)
+{
+	return it8801_ioex_read(ioex, IT8801_REG_GPIO_IPSR(port), val);
+}
+#endif
+
 const struct ioexpander_drv it8801_ioexpander_drv = {
-	.init              = &it8801_ioex_init,
-	.get_level         = &it8801_ioex_get_level,
-	.set_level         = &it8801_ioex_set_level,
+	.init = &it8801_ioex_init,
+	.get_level = &it8801_ioex_get_level,
+	.set_level = &it8801_ioex_set_level,
 	.get_flags_by_mask = &it8801_ioex_get_flags_by_mask,
 	.set_flags_by_mask = &it8801_ioex_set_flags_by_mask,
+	.enable_interrupt = &it8801_ioex_enable_interrupt,
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+	.get_port = &it8801_ioex_get_port,
+#endif
 };
 
 static void dump_register(int reg)
@@ -414,7 +561,7 @@ static void dump_register(int reg)
 		ccprintf("ERR (%d)\n", rv);
 }
 
-static int it8801_dump(int argc, char **argv)
+static int it8801_dump(int argc, const char **argv)
 {
 	dump_register(IT8801_REG_KSIIER);
 	dump_register(IT8801_REG_KSIEER);
@@ -435,13 +582,13 @@ struct it8801_pwm_gpio_map {
 };
 
 const static struct it8801_pwm_gpio_map it8801_pwm_gpio_map[] = {
-	[1] = {.port = 1, .mask = BIT(2), .pushpull_en = BIT(0)},
-	[2] = {.port = 1, .mask = BIT(3), .pushpull_en = BIT(1)},
-	[3] = {.port = 1, .mask = BIT(4), .pushpull_en = BIT(2)},
-	[4] = {.port = 1, .mask = BIT(5), .pushpull_en = BIT(3)},
-	[7] = {.port = 2, .mask = BIT(0), .pushpull_en = BIT(4)},
-	[8] = {.port = 2, .mask = BIT(3), .pushpull_en = BIT(5)},
-	[9] = {.port = 2, .mask = BIT(2), .pushpull_en = BIT(6)},
+	[1] = { .port = 1, .mask = BIT(2), .pushpull_en = BIT(0) },
+	[2] = { .port = 1, .mask = BIT(3), .pushpull_en = BIT(1) },
+	[3] = { .port = 1, .mask = BIT(4), .pushpull_en = BIT(2) },
+	[4] = { .port = 1, .mask = BIT(5), .pushpull_en = BIT(3) },
+	[7] = { .port = 2, .mask = BIT(0), .pushpull_en = BIT(4) },
+	[8] = { .port = 2, .mask = BIT(3), .pushpull_en = BIT(5) },
+	[9] = { .port = 2, .mask = BIT(2), .pushpull_en = BIT(6) },
 };
 
 void it8801_pwm_enable(enum pwm_channel ch, int enabled)
@@ -462,10 +609,10 @@ void it8801_pwm_enable(enum pwm_channel ch, int enabled)
 	 */
 	if (it8801_pwm_channels[ch].index <= 7)
 		it8801_write(IT8801_REG_GPIO_CR(port, mask),
-				0x1 << IT8801_GPIOAFS_SHIFT);
+			     0x1 << IT8801_GPIOAFS_SHIFT);
 	else
 		it8801_write(IT8801_REG_GPIO_CR(port, mask),
-				0x2 << IT8801_GPIOAFS_SHIFT);
+			     0x2 << IT8801_GPIOAFS_SHIFT);
 
 	it8801_read(IT8801_REG_PWMMCR(it8801_pwm_channels[ch].index), &val);
 	val &= (~IT8801_PWMMCR_MCR_MASK);
@@ -481,7 +628,6 @@ void it8801_pwm_enable(enum pwm_channel ch, int enabled)
 	if (enabled)
 		val |= it8801_pwm_gpio_map[index].pushpull_en;
 	it8801_write(IT8801_REG_PWMODDSR, val);
-
 }
 
 int it8801_pwm_get_enabled(enum pwm_channel ch)
@@ -528,6 +674,11 @@ static int it8801_kblight_enable(int enable)
 	return EC_SUCCESS;
 }
 
+static int it8801_kblight_get_enabled(void)
+{
+	return it8801_pwm_get_enabled(it8801_kblight_pwm_ch);
+}
+
 static int it8801_kblight_set_brightness(int percent)
 {
 	it8801_pwm_set_duty(it8801_kblight_pwm_ch, percent);
@@ -551,6 +702,7 @@ const struct kblight_drv kblight_it8801 = {
 	.set = it8801_kblight_set_brightness,
 	.get = it8801_kblight_get_brightness,
 	.enable = it8801_kblight_enable,
+	.get_enabled = it8801_kblight_get_enabled,
 };
 #endif
-#endif  /* CONFIG_IO_EXPANDER_IT8801_PWM */
+#endif /* CONFIG_IO_EXPANDER_IT8801_PWM */

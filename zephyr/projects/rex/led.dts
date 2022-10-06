@@ -1,0 +1,138 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-led-pins {
+		compatible = "cros-ec,gpio-led-pins";
+
+		color_off: color-off {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&gpio_led_1_l 1>,
+				   <&gpio_led_2_l 1>;
+		};
+
+		color_white: color-white {
+			led-color = "LED_WHITE";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			br-color = "EC_LED_COLOR_WHITE";
+			led-pins = <&gpio_led_1_l 1>,
+				   <&gpio_led_2_l 0>;
+		};
+
+		color_amber: color-amber {
+			led-color = "LED_AMBER";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			br-color = "EC_LED_COLOR_AMBER";
+			led-pins = <&gpio_led_1_l 0>,
+				   <&gpio_led_2_l 1>;
+		};
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		power-state-charge {
+			charge-state = "PWR_STATE_CHARGE";
+
+			color-0 {
+				led-color = <&color_amber>;
+			};
+		};
+
+		power-state-discharge-s0 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S0";
+
+			color-0 {
+				led-color = <&color_off>;
+			};
+		};
+
+		power-state-discharge-s3 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			/* Blue 1 sec, off 3 sec */
+			color-0 {
+				led-color = <&color_white>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-discharge-s5 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_off>;
+			};
+		};
+
+		power-state-error {
+			charge-state = "PWR_STATE_ERROR";
+
+			/* Red 1 sec, off 1 sec */
+			color-0 {
+				led-color = <&color_white>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+
+			color-0 {
+				led-color = <&color_amber>;
+			};
+		};
+
+		power-state-forced-idle {
+			charge-state = "PWR_STATE_FORCED_IDLE";
+
+			/* White 2 sec, Amber 2 sec */
+			color-0 {
+				led-color = <&color_white>;
+				period-ms = <2000>;
+			};
+			color-1 {
+				led-color = <&color_amber>;
+				period-ms = <2000>;
+			};
+		};
+
+		power-state-idle-default {
+			charge-state = "PWR_STATE_IDLE";
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+	};
+};
+
+&gpio_led_1_l {
+	#led-pin-cells = <1>;
+};
+
+&gpio_led_2_l {
+	#led-pin-cells = <1>;
+};
+
+&gpio_led_3_l {
+	#led-pin-cells = <1>;
+};
+
+&gpio_led_4_l {
+	#led-pin-cells = <1>;
+};

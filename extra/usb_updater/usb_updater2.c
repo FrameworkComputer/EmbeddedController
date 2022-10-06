@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -46,16 +46,16 @@
 #define PROTOCOL USB_PROTOCOL_GOOGLE_UPDATE
 
 enum exit_values {
-	noop = 0,	  /* All up to date, no update needed. */
-	all_updated = 1,  /* Update completed, reboot required. */
-	rw_updated  = 2,  /* RO was not updated, reboot required. */
-	update_error = 3  /* Something went wrong. */
+	noop = 0, /* All up to date, no update needed. */
+	all_updated = 1, /* Update completed, reboot required. */
+	rw_updated = 2, /* RO was not updated, reboot required. */
+	update_error = 3 /* Something went wrong. */
 };
 
 struct usb_endpoint {
 	struct libusb_device_handle *devh;
 	uint8_t ep_num;
-	int     chunk_len;
+	int chunk_len;
 };
 
 struct transfer_descriptor {
@@ -76,22 +76,22 @@ static char *progname;
 static char *short_opts = "bd:efg:hjlnp:rsS:tuw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"binvers",	1,   NULL, 'b'},
-	{"device",	1,   NULL, 'd'},
-	{"entropy",	0,   NULL, 'e'},
-	{"fwver",	0,   NULL, 'f'},
-	{"tp_debug",	1,   NULL, 'g'},
-	{"help",	0,   NULL, 'h'},
-	{"jump_to_rw",	0,   NULL, 'j'},
-	{"follow_log",	0,   NULL, 'l'},
-	{"no_reset",	0,   NULL, 'n'},
-	{"tp_update",	1,   NULL, 'p'},
-	{"reboot",	0,   NULL, 'r'},
-	{"stay_in_ro",	0,   NULL, 's'},
-	{"serial",	1,   NULL, 'S'},
-	{"tp_info",	0,   NULL, 't'},
-	{"unlock_rollback",	0,   NULL, 'u'},
-	{"unlock_rw",	0,   NULL, 'w'},
+	{ "binvers", 1, NULL, 'b' },
+	{ "device", 1, NULL, 'd' },
+	{ "entropy", 0, NULL, 'e' },
+	{ "fwver", 0, NULL, 'f' },
+	{ "tp_debug", 1, NULL, 'g' },
+	{ "help", 0, NULL, 'h' },
+	{ "jump_to_rw", 0, NULL, 'j' },
+	{ "follow_log", 0, NULL, 'l' },
+	{ "no_reset", 0, NULL, 'n' },
+	{ "tp_update", 1, NULL, 'p' },
+	{ "reboot", 0, NULL, 'r' },
+	{ "stay_in_ro", 0, NULL, 's' },
+	{ "serial", 1, NULL, 'S' },
+	{ "tp_info", 0, NULL, 't' },
+	{ "unlock_rollback", 0, NULL, 'u' },
+	{ "unlock_rw", 0, NULL, 'w' },
 	{},
 };
 
@@ -113,7 +113,7 @@ static void usage(int errs)
 	       "Options:\n"
 	       "\n"
 	       "  -b,--binvers             Report versions of image's "
-				"RW and RO, do not update\n"
+	       "RW and RO, do not update\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -e,--entropy             Add entropy to device secret\n"
 	       "  -f,--fwver               Report running firmware versions.\n"
@@ -128,7 +128,8 @@ static void usage(int errs)
 	       "  -t,--tp_info             Get touchpad information\n"
 	       "  -u,--unlock_rollback     Tell EC to unlock the rollback region\n"
 	       "  -w,--unlock_rw           Tell EC to unlock the RW region\n"
-	       "\n", progname, VID, PID);
+	       "\n",
+	       progname, VID, PID);
 
 	exit(errs ? update_error : noop);
 }
@@ -138,7 +139,7 @@ static void str2hex(const char *str, uint8_t *data, int *len)
 	int i;
 	int slen = strlen(str);
 
-	if (slen/2 > *len) {
+	if (slen / 2 > *len) {
 		fprintf(stderr, "Hex string too long.\n");
 		exit(update_error);
 	}
@@ -153,7 +154,7 @@ static void str2hex(const char *str, uint8_t *data, int *len)
 		char tmp[3];
 
 		tmp[0] = str[i];
-		tmp[1] = str[i+1];
+		tmp[1] = str[i + 1];
 		tmp[2] = 0;
 
 		data[*len] = strtol(tmp, &end, 16);
@@ -250,9 +251,9 @@ static uint8_t *get_file_or_die(const char *filename, size_t *len_ptr)
 	return data;
 }
 
-#define USB_ERROR(m, r) \
-	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, \
-		m, r, libusb_strerror(r))
+#define USB_ERROR(m, r)                                                        \
+	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, m, \
+		r, libusb_strerror(r))
 
 /*
  * Actual USB transfer function, the 'allow_less' flag indicates that the
@@ -261,17 +262,14 @@ static uint8_t *get_file_or_die(const char *filename, size_t *len_ptr)
  * bytes were received.
  */
 static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
-		    void *inbuf, int inlen, int allow_less,
-		    size_t *rxed_count)
+		    void *inbuf, int inlen, int allow_less, size_t *rxed_count)
 {
-
 	int r, actual;
 
 	/* Send data out */
 	if (outbuf && outlen) {
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num,
-					 outbuf, outlen,
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num, outbuf, outlen,
 					 &actual, 2000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
@@ -286,11 +284,9 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 
 	/* Read reply back */
 	if (inbuf && inlen) {
-
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
-					 inbuf, inlen,
-					 &actual, 5000);
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80, inbuf,
+					 inlen, &actual, 5000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			exit(update_error);
@@ -307,8 +303,8 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 	}
 }
 
-static void xfer(struct usb_endpoint *uep, void *outbuf,
-		 size_t outlen, void *inbuf, size_t inlen, int allow_less)
+static void xfer(struct usb_endpoint *uep, void *outbuf, size_t outlen,
+		 void *inbuf, size_t inlen, int allow_less)
 {
 	do_xfer(uep, outbuf, outlen, inbuf, inlen, allow_less, NULL);
 }
@@ -321,8 +317,7 @@ static int find_endpoint(const struct libusb_interface_descriptor *iface,
 
 	if (iface->bInterfaceClass == 255 &&
 	    iface->bInterfaceSubClass == SUBCLASS &&
-	    iface->bInterfaceProtocol == PROTOCOL &&
-	    iface->bNumEndpoints) {
+	    iface->bInterfaceProtocol == PROTOCOL && iface->bNumEndpoints) {
 		ep = &iface->endpoint[0];
 		uep->ep_num = ep->bEndpointAddress & 0x7f;
 		uep->chunk_len = ep->wMaxPacketSize;
@@ -354,7 +349,7 @@ static int find_interface(struct usb_endpoint *uep)
 		for (j = 0; j < iface0->num_altsetting; j++) {
 			iface = &iface0->altsetting[j];
 			if (find_endpoint(iface, uep)) {
-				iface_num = i;
+				iface_num = iface->bInterfaceNumber;
 				goto out;
 			}
 		}
@@ -377,19 +372,19 @@ static int parse_vidpid(const char *input, uint16_t *vid_ptr, uint16_t *pid_ptr)
 		return 0;
 	*s++ = '\0';
 
-	*vid_ptr = (uint16_t) strtoul(copy, &e, 16);
+	*vid_ptr = (uint16_t)strtoull(copy, &e, 16);
 	if (!*optarg || (e && *e))
 		return 0;
 
-	*pid_ptr = (uint16_t) strtoul(s, &e, 16);
+	*pid_ptr = (uint16_t)strtoull(s, &e, 16);
 	if (!*optarg || (e && *e))
 		return 0;
 
 	return 1;
 }
 
-static libusb_device_handle *check_device(libusb_device *dev,
-	uint16_t vid, uint16_t pid, char *serialno)
+static libusb_device_handle *check_device(libusb_device *dev, uint16_t vid,
+					  uint16_t pid, char *serialno)
 {
 	struct libusb_device_descriptor desc;
 	libusb_device_handle *handle = NULL;
@@ -409,7 +404,9 @@ static libusb_device_handle *check_device(libusb_device *dev,
 
 	if (desc.iSerialNumber) {
 		ret = libusb_get_string_descriptor_ascii(handle,
-			desc.iSerialNumber, (unsigned char *)sn, sizeof(sn));
+							 desc.iSerialNumber,
+							 (unsigned char *)sn,
+							 sizeof(sn));
 		if (ret > 0)
 			snvalid = 1;
 	}
@@ -428,8 +425,8 @@ static libusb_device_handle *check_device(libusb_device *dev,
 	return NULL;
 }
 
-static void usb_findit(uint16_t vid, uint16_t pid,
-		char *serialno, struct usb_endpoint *uep)
+static void usb_findit(uint16_t vid, uint16_t pid, char *serialno,
+		       struct usb_endpoint *uep)
 {
 	int iface_num, r, i;
 	libusb_device **devs;
@@ -475,8 +472,8 @@ static void usb_findit(uint16_t vid, uint16_t pid,
 		shut_down(uep);
 	}
 
-	printf("found interface %d endpoint %d, chunk_len %d\n",
-	       iface_num, uep->ep_num, uep->chunk_len);
+	printf("found interface %d endpoint %d, chunk_len %d\n", iface_num,
+	       uep->ep_num, uep->chunk_len);
 
 	libusb_set_auto_detach_kernel_driver(uep->devh, 1);
 	r = libusb_claim_interface(uep->devh, iface_num);
@@ -511,9 +508,8 @@ static int transfer_block(struct usb_endpoint *uep,
 	}
 
 	/* Now get the reply. */
-	r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
-				 (void *) &reply, sizeof(reply),
-				 &actual, 5000);
+	r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80, (void *)&reply,
+				 sizeof(reply), &actual, 5000);
 	if (r) {
 		if (r == -7) {
 			fprintf(stderr, "Timeout!\n");
@@ -541,10 +537,8 @@ static int transfer_block(struct usb_endpoint *uep,
  * data_len     - section size
  * smart_update - non-zero to enable the smart trailing of 0xff.
  */
-static void transfer_section(struct transfer_descriptor *td,
-			     uint8_t *data_ptr,
-			     uint32_t section_addr,
-			     size_t data_len,
+static void transfer_section(struct transfer_descriptor *td, uint8_t *data_ptr,
+			     uint32_t section_addr, size_t data_len,
 			     uint8_t smart_update)
 {
 	/*
@@ -571,17 +565,16 @@ static void transfer_section(struct transfer_descriptor *td,
 		struct update_frame_header ufh;
 
 		ufh.block_size = htobe32(payload_size +
-					sizeof(struct update_frame_header));
+					 sizeof(struct update_frame_header));
 		ufh.cmd.block_base = block_base;
 		ufh.cmd.block_digest = 0;
 		for (max_retries = 10; max_retries; max_retries--)
-			if (!transfer_block(&td->uep, &ufh,
-						data_ptr, payload_size))
+			if (!transfer_block(&td->uep, &ufh, data_ptr,
+					    payload_size))
 				break;
 
 		if (!max_retries) {
-			fprintf(stderr,
-				"Failed to transfer block, %zd to go\n",
+			fprintf(stderr, "Failed to transfer block, %zd to go\n",
 				data_len);
 			exit(update_error);
 		}
@@ -596,30 +589,27 @@ static void transfer_section(struct transfer_descriptor *td,
  * states.
  */
 enum upgrade_status {
-	not_needed = 0,  /* Version below or equal that on the target. */
-	not_possible,    /*
-			  * RO is newer, but can't be transferred due to
-			  * target RW shortcomings.
-			  */
-	needed            /*
-			   * This section needs to be transferred to the
-			   * target.
-			   */
+	not_needed = 0, /* Version below or equal that on the target. */
+	not_possible, /*
+		       * RO is newer, but can't be transferred due to
+		       * target RW shortcomings.
+		       */
+	needed /*
+		* This section needs to be transferred to the
+		* target.
+		*/
 };
 
 /* This array describes all sections of the new image. */
 static struct {
 	const char *name;
-	uint32_t    offset;
-	uint32_t    size;
-	enum upgrade_status  ustatus;
+	uint32_t offset;
+	uint32_t size;
+	enum upgrade_status ustatus;
 	char version[32];
 	int32_t rollback;
 	uint32_t key_version;
-} sections[] = {
-	{"RO"},
-	{"RW"}
-};
+} sections[] = { { "RO" }, { "RW" } };
 
 static const struct fmap_area *fmap_find_area_or_die(const struct fmap *fmap,
 						     const char *name)
@@ -650,7 +640,7 @@ static void fetch_header_versions(const uint8_t *image, size_t len)
 		fprintf(stderr, "Cannot find FMAP in image\n");
 		exit(update_error);
 	}
-	fmap = (const struct fmap *)(image+offset);
+	fmap = (const struct fmap *)(image + offset);
 
 	/* FIXME: validate fmap struct more than this? */
 	if (fmap->size != len) {
@@ -693,15 +683,15 @@ static void fetch_header_versions(const uint8_t *image, size_t len)
 			fprintf(stderr, "Invalid fwid size\n");
 			exit(update_error);
 		}
-		memcpy(sections[i].version, image+fmaparea->offset,
-			fmaparea->size);
+		memcpy(sections[i].version, image + fmaparea->offset,
+		       fmaparea->size);
 
 		sections[i].rollback = -1;
 		if (fmap_rollback_name) {
 			fmaparea = fmap_find_area(fmap, fmap_rollback_name);
 			if (fmaparea)
 				memcpy(&sections[i].rollback,
-				       image+fmaparea->offset,
+				       image + fmaparea->offset,
 				       sizeof(sections[i].rollback));
 		}
 
@@ -710,7 +700,8 @@ static void fetch_header_versions(const uint8_t *image, size_t len)
 			fmaparea = fmap_find_area(fmap, fmap_key_name);
 			if (fmaparea) {
 				const struct vb21_packed_key *key =
-					(const void *)(image+fmaparea->offset);
+					(const void *)(image +
+						       fmaparea->offset);
 				sections[i].key_version = key->key_version;
 			}
 		}
@@ -723,9 +714,9 @@ static int show_headers_versions(const void *image)
 
 	for (i = 0; i < ARRAY_SIZE(sections); i++) {
 		printf("%s off=%08x/%08x v=%.32s rb=%d kv=%d\n",
-			sections[i].name, sections[i].offset, sections[i].size,
-			sections[i].version, sections[i].rollback,
-			sections[i].key_version);
+		       sections[i].name, sections[i].offset, sections[i].size,
+		       sections[i].version, sections[i].rollback,
+		       sections[i].key_version);
 	}
 	return 0;
 }
@@ -772,17 +763,16 @@ static void setup_connection(struct transfer_descriptor *td)
 	int actual = 0;
 
 	/* Flush all data from endpoint to recover in case of error. */
-	while (!libusb_bulk_transfer(td->uep.devh,
-					td->uep.ep_num | 0x80,
-					(void *)&inbuf, td->uep.chunk_len,
-					&actual, 10)) {
+	while (!libusb_bulk_transfer(td->uep.devh, td->uep.ep_num | 0x80,
+				     (void *)&inbuf, td->uep.chunk_len, &actual,
+				     10)) {
 		printf("flush\n");
 	}
 
 	memset(&ufh, 0, sizeof(ufh));
 	ufh.block_size = htobe32(sizeof(ufh));
-	do_xfer(&td->uep, &ufh, sizeof(ufh), &start_resp,
-		sizeof(start_resp), 1, &rxed_size);
+	do_xfer(&td->uep, &ufh, sizeof(ufh), &start_resp, sizeof(start_resp), 1,
+		&rxed_size);
 
 	/* We got something. Check for errors in response */
 	if (rxed_size < 8) {
@@ -803,10 +793,9 @@ static void setup_connection(struct transfer_descriptor *td)
 	header_type = be16toh(start_resp.rpdu.header_type);
 
 	printf("target running protocol version %d (type %d)\n",
-		protocol_version, header_type);
+	       protocol_version, header_type);
 	if (header_type != UPDATE_HEADER_TYPE_COMMON) {
-		fprintf(stderr, "Unsupported header type %d\n",
-			header_type);
+		fprintf(stderr, "Unsupported header type %d\n", header_type);
 		exit(update_error);
 	}
 
@@ -820,7 +809,7 @@ static void setup_connection(struct transfer_descriptor *td)
 
 	td->offset = be32toh(start_resp.rpdu.common.offset);
 	memcpy(targ.common.version, start_resp.rpdu.common.version,
-		sizeof(start_resp.rpdu.common.version));
+	       sizeof(start_resp.rpdu.common.version));
 	targ.common.maximum_pdu_size =
 		be32toh(start_resp.rpdu.common.maximum_pdu_size);
 	targ.common.flash_protection =
@@ -845,21 +834,20 @@ static void setup_connection(struct transfer_descriptor *td)
  * if it is - of what maximum size.
  */
 static int ext_cmd_over_usb(struct usb_endpoint *uep, uint16_t subcommand,
-			    void *cmd_body, size_t body_size,
-			    void *resp, size_t *resp_size,
-			    int allow_less)
+			    void *cmd_body, size_t body_size, void *resp,
+			    size_t *resp_size, int allow_less)
 {
 	struct update_frame_header *ufh;
 	uint16_t *frame_ptr;
 	size_t usb_msg_size;
 
-	usb_msg_size = sizeof(struct update_frame_header) +
-		sizeof(subcommand) + body_size;
+	usb_msg_size = sizeof(struct update_frame_header) + sizeof(subcommand) +
+		       body_size;
 
 	ufh = malloc(usb_msg_size);
 	if (!ufh) {
-		printf("%s: failed to allocate %zd bytes\n",
-		       __func__, usb_msg_size);
+		printf("%s: failed to allocate %zd bytes\n", __func__,
+		       usb_msg_size);
 		return -1;
 	}
 
@@ -895,30 +883,28 @@ static void send_done(struct usb_endpoint *uep)
 }
 
 static void send_subcommand(struct transfer_descriptor *td, uint16_t subcommand,
-			    void *cmd_body, size_t body_size,
-			    uint8_t *response, size_t response_size)
+			    void *cmd_body, size_t body_size, uint8_t *response,
+			    size_t response_size)
 {
 	send_done(&td->uep);
 
-	ext_cmd_over_usb(&td->uep, subcommand,
-			cmd_body, body_size,
-			response, &response_size, 0);
+	ext_cmd_over_usb(&td->uep, subcommand, cmd_body, body_size, response,
+			 &response_size, 0);
 	printf("sent command %x, resp %x\n", subcommand, response[0]);
 }
 
 /* Returns number of successfully transmitted image sections. */
-static int transfer_image(struct transfer_descriptor *td,
-			       uint8_t *data, size_t data_len)
+static int transfer_image(struct transfer_descriptor *td, uint8_t *data,
+			  size_t data_len)
 {
 	size_t i;
 	int num_txed_sections = 0;
 
 	for (i = 0; i < ARRAY_SIZE(sections); i++)
 		if (sections[i].ustatus == needed) {
-			transfer_section(td,
-					 data + sections[i].offset,
-					 sections[i].offset,
-					 sections[i].size, 1);
+			transfer_section(td, data + sections[i].offset,
+					 sections[i].offset, sections[i].size,
+					 1);
 			num_txed_sections++;
 		}
 
@@ -968,9 +954,8 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	command_body_size = 0;
 	response_size = 1;
 	subcommand = UPDATE_EXTRA_CMD_IMMEDIATE_RESET;
-	ext_cmd_over_usb(&td->uep, subcommand,
-			command_body, command_body_size,
-			&response, &response_size, 0);
+	ext_cmd_over_usb(&td->uep, subcommand, command_body, command_body_size,
+			 &response, &response_size, 0);
 
 	printf("reboot not triggered\n");
 }
@@ -987,7 +972,7 @@ static void get_random(uint8_t *data, int len)
 	}
 
 	while (i < len) {
-		int ret = fread(data+i, len-i, 1, fp);
+		int ret = fread(data + i, len - i, 1, fp);
 
 		if (ret < 0) {
 			perror("fread");
@@ -1005,7 +990,8 @@ static void read_console(struct transfer_descriptor *td)
 	uint8_t payload[] = { 0x1 };
 	uint8_t response[64];
 	size_t response_size = 64;
-	struct timespec sleep_duration = {  /* 100 ms */
+	struct timespec sleep_duration = {
+		/* 100 ms */
 		.tv_sec = 0,
 		.tv_nsec = 100l * 1000l * 1000l,
 	};
@@ -1015,17 +1001,15 @@ static void read_console(struct transfer_descriptor *td)
 	printf("\n");
 	while (1) {
 		response_size = 1;
-		ext_cmd_over_usb(&td->uep,
-				 UPDATE_EXTRA_CMD_CONSOLE_READ_INIT,
-				 NULL, 0,
-				 response, &response_size, 0);
+		ext_cmd_over_usb(&td->uep, UPDATE_EXTRA_CMD_CONSOLE_READ_INIT,
+				 NULL, 0, response, &response_size, 0);
 
 		while (1) {
 			response_size = 64;
 			ext_cmd_over_usb(&td->uep,
 					 UPDATE_EXTRA_CMD_CONSOLE_READ_NEXT,
-					 payload, sizeof(payload),
-					 response, &response_size, 1);
+					 payload, sizeof(payload), response,
+					 &response_size, 1);
 			if (response[0] == 0)
 				break;
 			/* make sure it's null-terminated. */
@@ -1067,7 +1051,7 @@ int main(int argc, char *argv[])
 	memset(&td, 0, sizeof(td));
 
 	errorcnt = 0;
-	opterr = 0;				/* quiet, you */
+	opterr = 0; /* quiet, you */
 	while ((i = getopt_long(argc, argv, short_opts, long_opts, 0)) != -1) {
 		switch (i) {
 		case 'b':
@@ -1091,8 +1075,8 @@ int main(int argc, char *argv[])
 			extra_command = UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG;
 			/* Maximum length. */
 			extra_command_data_len = 50;
-			str2hex(optarg,
-				extra_command_data, &extra_command_data_len);
+			str2hex(optarg, extra_command_data,
+				&extra_command_data_len);
 			hexdump(extra_command_data, extra_command_data_len);
 			extra_command_answer_len = 64;
 			break;
@@ -1112,8 +1096,8 @@ int main(int argc, char *argv[])
 			touchpad_update = 1;
 
 			data = get_file_or_die(optarg, &data_len);
-			printf("read %zd(%#zx) bytes from %s\n",
-				data_len, data_len, argv[optind]);
+			printf("read %zd(%#zx) bytes from %s\n", data_len,
+			       data_len, argv[optind - 1]);
 
 			break;
 		case 'r':
@@ -1127,8 +1111,7 @@ int main(int argc, char *argv[])
 			break;
 		case 't':
 			extra_command = UPDATE_EXTRA_CMD_TOUCHPAD_INFO;
-			extra_command_answer_len =
-				sizeof(struct touchpad_info);
+			extra_command_answer_len = sizeof(struct touchpad_info);
 			break;
 		case 'u':
 			extra_command = UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK;
@@ -1136,7 +1119,7 @@ int main(int argc, char *argv[])
 		case 'w':
 			extra_command = UPDATE_EXTRA_CMD_UNLOCK_RW;
 			break;
-		case 0:				/* auto-handled option */
+		case 0: /* auto-handled option */
 			break;
 		case '?':
 			if (optopt)
@@ -1167,8 +1150,8 @@ int main(int argc, char *argv[])
 		}
 
 		data = get_file_or_die(argv[optind], &data_len);
-		printf("read %zd(%#zx) bytes from %s\n",
-		       data_len, data_len, argv[optind]);
+		printf("read %zd(%#zx) bytes from %s\n", data_len, data_len,
+		       argv[optind]);
 
 		fetch_header_versions(data, data_len);
 
@@ -1190,16 +1173,13 @@ int main(int argc, char *argv[])
 
 	if (data) {
 		if (touchpad_update) {
-			transfer_section(&td,
-					data,
-					0x80000000,
-					data_len, 0);
+			transfer_section(&td, data, 0x80000000, data_len, 0);
 			free(data);
 
 			send_done(&td.uep);
 		} else {
-			transferred_sections = transfer_image(&td,
-							data, data_len);
+			transferred_sections =
+				transfer_image(&td, data, data_len);
 			free(data);
 
 			if (transferred_sections && !no_reset_request)
@@ -1208,16 +1188,16 @@ int main(int argc, char *argv[])
 	} else if (extra_command == UPDATE_EXTRA_CMD_CONSOLE_READ_INIT) {
 		read_console(&td);
 	} else if (extra_command > -1) {
-		send_subcommand(&td, extra_command,
-				extra_command_data, extra_command_data_len,
-				extra_command_answer, extra_command_answer_len);
+		send_subcommand(&td, extra_command, extra_command_data,
+				extra_command_data_len, extra_command_answer,
+				extra_command_answer_len);
 
 		switch (extra_command) {
 		case UPDATE_EXTRA_CMD_TOUCHPAD_INFO:
 			dump_touchpad_info(extra_command_answer,
 					   extra_command_answer_len);
 			break;
-		case  UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG:
+		case UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG:
 			hexdump(extra_command_answer, extra_command_answer_len);
 			break;
 		}

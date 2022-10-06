@@ -1,0 +1,107 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+rsource "tcpc/Kconfig"
+
+config EMUL_COMMON_I2C
+	bool "Common handler for I2C emulator messages"
+	help
+	  Enable common code that is used by many emulators of devices on I2C
+	  bus. It allows to share code for handling I2C messages, locking and
+	  custom user handlers between these emulators.
+
+config EMUL_SMART_BATTERY
+	bool "Smart Battery emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the Smart Battery emulator. This driver use emulated I2C bus.
+
+config EMUL_BMA255
+	bool "BMA255 emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the BMA255 emulator. This driver use emulated I2C bus.
+	  It is used to test bma2x2 driver. Emulators API is available in
+	  zephyr/include/emul/emul_bma255.h
+
+config EMUL_BC12_DETECT_PI3USB9201
+	bool "PI3USB9201 emulator"
+	help
+	  Enable the PI3USB9201 emulator. PI3USB9201 is a BC1.2 charger
+	  detector/advertiser. The emulator supports reading and writing the
+	  4 I2C registers of the PI3USB9201 using the emulated I2C bus.
+
+config EMUL_PPC_SYV682X
+	bool "Silergy SYV682x PPC emulator"
+	select PLATFORM_EC_USBC_PPC_SYV682X
+	help
+	  Enable the SYV682x emulator. SYV682 is a USB Type-C PPC. This driver
+	  uses the emulated I2C bus.
+
+config EMUL_BMI
+	bool "BMI emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the BMI emulator. This driver use emulated I2C bus.
+	  It is used to test bmi 160 and 260 drivers. Emulators API is
+	  available in zephyr/include/emul/emul_bmi.h
+
+config EMUL_TCS3400
+	bool "TCS3400 emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the TCS3400 light sensor. This driver use emulated I2C bus.
+	  It is used to test als_tcs3400 driver. It supports reading sensor
+	  values which are correctly scaled using current gain and integration
+	  time configuration, switching between IR and clear sensor and
+	  clearing status register using clear interrupt registers. Other
+	  TCS3400 registers support read and write with optional checking
+	  of proper access to reserved bits. Emulators API is available in
+	  zephyr/include/emul/emul_tcs3400.h
+
+config EMUL_BB_RETIMER
+	bool "BB retimer emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the BB (Burnside Bridge) retimer emulator. This driver use
+	  emulated I2C bus. It is used to test bb_retimer driver. It supports
+	  reads and writes to all emulator registers. Emulators API is
+	  available in zephyr/include/emul/emul_bb_retimer.h
+
+config EMUL_KB_RAW
+	bool "Raw keyboard emulator"
+	help
+	  Enable the raw keyboard emulator.
+
+config EMUL_CROS_FLASH
+	bool "Emulated flash driver for the Zephyr shim"
+	select PLATFORM_EC_FLASH_CROS
+	imply SYSTEM_FAKE
+	help
+	  This option enables the flash emulator for testing.
+
+config EMUL_RTC
+	bool "Emulated RTC driver for Zephyr shim"
+	help
+	  This options enables the RTC emulator for testing.
+
+config EMUL_RT9490
+	bool "Rt9490 charger emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the RT9490 light sensor emulator. This driver use emulated I2C
+	  bus. Emulators API is available in zephyr/include/emul/emul_rt9490.h.
+
+config PWM_MOCK
+	bool "Mock implementation of an PWM device"
+	help
+	  Enable the PWM mock. This driver is a pure mock and does nothing by
+	  default.
+
+rsource "Kconfig.ln9310"
+rsource "Kconfig.lis2dw12"
+rsource "Kconfig.i2c_mock"
+rsource "Kconfig.isl923x"
+rsource "Kconfig.clock_control"
+rsource "Kconfig.sn5s330"

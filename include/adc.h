@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,9 +8,31 @@
 #ifndef __CROS_EC_ADC_H
 #define __CROS_EC_ADC_H
 
+#include "adc_chip.h"
 #include "common.h"
 
-#define ADC_READ_ERROR -1  /* Value returned by adc_read_channel() on error */
+#define ADC_READ_ERROR -1 /* Value returned by adc_read_channel() on error */
+
+#ifdef CONFIG_ZEPHYR
+#include <zephyr_adc.h>
+#endif /* CONFIG_ZEPHYR */
+
+/*
+ * Boards must provide this list of ADC channel definitions.  This must match
+ * the enum adc_channel list provided by the board.
+ */
+#ifndef CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
+extern const struct adc_t adc_channels[];
+#else
+extern struct adc_t adc_channels[];
+#endif
+
+/**
+ * ADC initial.
+ */
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+void adc_init(void);
+#endif
 
 /*
  * Boards which use the ADC interface must provide enum adc_channel in the
@@ -58,4 +80,4 @@ int adc_disable_watchdog(void);
  */
 int adc_set_watchdog_delay(int delay_ms);
 
-#endif  /* __CROS_EC_ADC_H */
+#endif /* __CROS_EC_ADC_H */

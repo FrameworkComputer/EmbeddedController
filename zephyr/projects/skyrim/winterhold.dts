@@ -1,0 +1,118 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usbc_mux.h>
+
+#include "i2c_common.dtsi"
+
+/ {
+	named-gpios {
+		/* Winterhold-specific GPIO customizations */
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		soc-pct2075 {
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_host_release_halt = <80>;
+			temp_fan_off = <0>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&soc_pct2075>;
+		};
+		amb-pct2075 {
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&amb_pct2075>;
+		};
+	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the board
+	 * dts files.
+	 */
+	Winterhold-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to enable KB back light or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <1>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+};
+
+&i2c0_0 {
+	anx7483_port0: anx7483@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c0_mux_set";
+	};
+	ppc_port0: nx20p348x@71 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x71>;
+	};
+};
+
+&i2c1_0 {
+	anx7483_port1: anx7483@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c1_mux_set";
+	};
+	ppc_port1: nx20p348x@71 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x71>;
+	};
+};
+
+&usbc_port0 {
+	ppc = <&ppc_port0>;
+	usb-mux-chain-0 {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port0 &anx7483_port0>;
+	};
+};
+
+&usbc_port1 {
+	ppc = <&ppc_port1>;
+	usb-mux-chain-1-anx {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port1 &anx7483_port1>;
+	};
+};

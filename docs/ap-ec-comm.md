@@ -9,11 +9,12 @@ by issuing *host commands*, which are identified by a command ID and version
 number, and then reading a response. When a host command is issued through
 `ectool`, two or three software components are involved:
 
-* `ectool`, the user-space binary,
-* normally the `cros-ec` Kernel driver, and
-* the code on the EC itself. This can be thought of as two parts:
-  * a chip-specific driver for the appropriate transport, and
-  * the generic host command handling code (mostly in the [host command task]).
+*   `ectool`, the user-space binary,
+*   normally the `cros-ec` Kernel driver, and
+*   the code on the EC itself. This can be thought of as two parts:
+    *   a chip-specific driver for the appropriate transport, and
+    *   the generic host command handling code (mostly in the
+        [host command task]).
 
 We'll go into detail of each of these, as well as the traffic on the wire, in
 the following sections.
@@ -23,6 +24,21 @@ the following sections.
 `ectool` contains wrapper functions for the host commands exposed by the EC,
 providing a CLI. They call one of the transport-specific `ec_command`
 implementations in the `util/comm-*.c` files to send and receive from the EC.
+
+#### Stress test
+
+The `ectool stress` command sends a large amount of host commands continuously
+to the EC. This verifies that the EC can respond to all commands received
+without timeouts or communication errors.
+
+It will log the time elapsed for every iteration of sending 10000 host commands
+with the time that it took to send them.
+
+Example output of stress test is:
+`Update: attempt 10000 round 1 | took 205 seconds`
+
+Killing the process will result in displaying the total runtime and failures
+that happened during it.
 
 ### EC kernel driver
 
@@ -39,25 +55,25 @@ to the Linux [Industrial I/O] system.
 
 Now we come to the protocol itself. All transactions take this general form:
 
-* Host writes the request packet, consisting of:
-  * a transport-specific header;
-  * a `struct ec_host_request` containing the command ID, data length, and a
-    checksum; and
-  * zero or more bytes of parameters for the command, the format of which
-    depends on the command.
-* Host reads the response to its request, consisting of:
-  * a transport-specific header;
-  * a `struct ec_host_response` containing the result code, data length, and a
-    checksum; and
-  * zero or more bytes of response from the command, again with a
-    command-specific format.
+*   Host writes the request packet, consisting of:
+    *   a transport-specific header;
+    *   a `struct ec_host_request` containing the command ID, data length, and a
+        checksum; and
+    *   zero or more bytes of parameters for the command, the format of which
+        depends on the command.
+*   Host reads the response to its request, consisting of:
+    *   a transport-specific header;
+    *   a `struct ec_host_response` containing the result code, data length, and
+        a checksum; and
+    *   zero or more bytes of response from the command, again with a
+        command-specific format.
 
 ### On the EC
 
 The host packet is received on the EC by some chip-specific code which checks
-its transport-specific header, then passes it on to the common host command code,
-starting at `host_packet_receive`. The common code validates the packet and
-then sends it on to the handler function (annotated with the
+its transport-specific header, then passes it on to the common host command
+code, starting at `host_packet_receive`. The common code validates the packet
+and then sends it on to the handler function (annotated with the
 `DECLARE_HOST_COMMAND` macro), which runs in the `HOSTCMD` task. The handler can
 set a response by modifying its arguments struct, which is sent back to the host
 via the chip-specific code.
@@ -74,8 +90,8 @@ of the overarching protocol, and versions of individual commands.
 ### Protocol versions
 
 There have been three protocol versions so far, and this document describes
-version 3. Version 1 was superseded by 2 before it shipped, so no devices use
-it anymore. Version 2 is generally deprecated, but you might still encounter it
+version 3. Version 1 was superseded by 2 before it shipped, so no devices use it
+anymore. Version 2 is generally deprecated, but you might still encounter it
 occasionally.
 
 Which version is in use can be determined using the `EC_CMD_GET_PROTOCOL_INFO`
@@ -128,15 +144,14 @@ embedded controllers either aren't fast enough or don't have any support for
 hardware flow-control.
 
 It works like this: When the AP sends a byte to the EC, if the EC doesn't have a
-response queued up in advance, a default byte is returned. The EC
-preconfigures that default response byte to indicate its status (ready, busy,
-waiting for more input, etc.). Once the AP has sent a complete command message,
-it continues clocking bytes to the EC (which the EC ignores) and just looks at
-the response byte that comes back. Once the EC has parsed the AP's command and
-is ready to reply, it sends a "start of frame" byte, followed by the actual
-response. The AP continues to read and ignore bytes from the EC until it sees
-the start of frame byte, and then it knows that the EC's response is starting
-with the next byte.
+response queued up in advance, a default byte is returned. The EC preconfigures
+that default response byte to indicate its status (ready, busy, waiting for more
+input, etc.). Once the AP has sent a complete command message, it continues
+clocking bytes to the EC (which the EC ignores) and just looks at the response
+byte that comes back. Once the EC has parsed the AP's command and is ready to
+reply, it sends a "start of frame" byte, followed by the actual response. The AP
+continues to read and ignore bytes from the EC until it sees the start of frame
+byte, and then it knows that the EC's response is starting with the next byte.
 
 Once the response packet has been read, any additional reads should return
 `EC_SPI_PAST_END`.
@@ -146,8 +161,7 @@ Once the response packet has been read, any additional reads should return
 The EC should set `EC_LPC_STATUS_PROCESSING` in its command status register
 after receiving a host packet and before it has a response ready.
 
-
 [`cros-ec` Kernel driver]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/refs/heads/chromeos-4.19/drivers/mfd/cros_ec_dev.c
 [Industrial I/O]: https://www.kernel.org/doc/html/v4.14/driver-api/iio/index.html
-[host command task]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/common/host_command.c
+[host command task]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/host_command.c
 [Transport-specific details]: #Transport_specific-details

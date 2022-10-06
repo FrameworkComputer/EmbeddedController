@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2014 The Chromium OS Authors. All rights reserved.
+ * Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,7 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 GPIO_INT(POWER_BUTTON_L, PIN(E, 4), GPIO_INT_BOTH | GPIO_PULL_UP,   power_button_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 GPIO_INT(PCH_PLTRST_L,   PIN(E, 3), GPIO_INT_BOTH | GPIO_PULL_UP,   lpcrst_interrupt)
 #endif
 GPIO_INT(LID_OPEN,       PIN(E, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN, lid_interrupt)
@@ -56,10 +56,10 @@ ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, GPIO_PULL_UP) /* UART1 */
 #ifdef CONFIG_UART_HOST
 ALTERNATE(PIN_MASK(H, 0x06), 1, MODULE_UART, 0)            /* UART2 */
 #endif
-ALTERNATE(PIN_MASK(A, 0x40), 3, MODULE_SPI_MASTER, 0)      /* SSCK of SPI */
-ALTERNATE(PIN_MASK(C, 0x28), 3, MODULE_SPI_MASTER, 0)      /* SMOSI/SMISO of SPI */
-ALTERNATE(PIN_MASK(G, 0x01), 3, MODULE_SPI_MASTER, 0)      /* SSCE1# of SPI */
-ALTERNATE(PIN_MASK(G, 0x04), 3, MODULE_SPI_MASTER, 0)      /* SSCE0# of SPI */
+ALTERNATE(PIN_MASK(A, 0x40), 3, MODULE_SPI_CONTROLLER, 0)  /* SSCK of SPI */
+ALTERNATE(PIN_MASK(C, 0x28), 3, MODULE_SPI_CONTROLLER, 0)  /* SMOSI/SMISO of SPI */
+ALTERNATE(PIN_MASK(G, 0x01), 3, MODULE_SPI_CONTROLLER, 0)  /* SSCE1# of SPI */
+ALTERNATE(PIN_MASK(G, 0x04), 3, MODULE_SPI_CONTROLLER, 0)  /* SSCE0# of SPI */
 ALTERNATE(PIN_MASK(A, 0x80), 1, MODULE_PWM, 0)             /* PWM7 for FAN1 */
 ALTERNATE(PIN_MASK(D, 0x40), 3, MODULE_PWM, 0)             /* TACH0A for FAN1 */
 ALTERNATE(PIN_MASK(B, 0x18), 1, MODULE_I2C, 0)             /* I2C A SCL/SDA */

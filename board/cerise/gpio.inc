@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -87,6 +87,8 @@ GPIO(USB_C0_DISCHARGE,     PIN(B, 6),  GPIO_OUT_LOW)
 IOEX(PWR_LED_WHITE_L,      EXPIN(0, 1, 4), GPIO_OUT_HIGH)
 IOEX(BAT_LED_WHITE_L,      EXPIN(0, 1, 3), GPIO_OUT_HIGH)
 IOEX(BAT_LED_AMBER_L,      EXPIN(0, 1, 2), GPIO_OUT_HIGH)
+IOEX(5V_DC_DC_MODE_CTRL,   EXPIN(0, 0, 7), GPIO_OUT_LOW)
+
 /*
  * TODO(b:138352732): On IT88801 expander, To be readded once IT8801 driver and
  * gpio expander framework has landed.
@@ -111,5 +113,5 @@ ALTERNATE(PIN_MASK(A, 0x8000), 0, MODULE_SPI,        0)
 /* EMMC SPI SLAVE: PB13/14/15 */
 ALTERNATE(PIN_MASK(B, 0xE000), 0, MODULE_SPI_FLASH,  0)
 /* SENSORS SPI MASTER: PB10, PB12, PC2, PC3 */
-ALTERNATE(PIN_MASK(B, 0x0400), 5, MODULE_SPI_MASTER, 0)
-ALTERNATE(PIN_MASK(C, 0x000C), 1, MODULE_SPI_MASTER, 0)
+ALTERNATE(PIN_MASK(B, 0x0400), 5, MODULE_SPI_CONTROLLER, 0)
+ALTERNATE(PIN_MASK(C, 0x000C), 1, MODULE_SPI_CONTROLLER, 0)

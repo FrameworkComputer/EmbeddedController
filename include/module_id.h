@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -41,7 +41,7 @@ enum module_id {
 	MODULE_RBOX,
 	MODULE_SPI,
 	MODULE_SPI_FLASH,
-	MODULE_SPI_MASTER,
+	MODULE_SPI_CONTROLLER,
 	MODULE_SWITCH,
 	MODULE_SYSTEM,
 	MODULE_TASK,

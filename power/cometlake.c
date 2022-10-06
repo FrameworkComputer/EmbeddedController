@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,14 +8,14 @@
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "intel_x86.h"
 #include "power.h"
+#include "power/intel_x86.h"
 #include "power_button.h"
 #include "task.h"
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Power signals list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -36,7 +36,7 @@ const struct power_signal_info power_signal_list[] = {
 		.name = "SLP_S4_DEASSERTED",
 	},
 	[X86_RSMRST_L_PGOOD] = {
-		.gpio = GPIO_RSMRST_L_PGOOD,
+		.gpio = GPIO_PG_EC_RSMRST_ODL,
 		.flags = POWER_SIGNAL_ACTIVE_HIGH,
 		.name = "RSMRST_L_PGOOD",
 	},
@@ -53,12 +53,12 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-static int forcing_shutdown;  /* Forced shutdown in progress? */
+static int forcing_shutdown; /* Forced shutdown in progress? */
 
 /* Default no action, overwrite it in board.c if necessary*/
 __overridable void board_chipset_forced_shutdown(void)
 {
-        return;
+	return;
 }
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
@@ -84,7 +84,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 
 	/* For b:143440730, stop checking GPIO_ALL_SYS_PGOOD if system is
 	 * already force to G3.
-         */
+	 */
 	board_chipset_forced_shutdown();
 
 	/* Need to wait a min of 10 msec before check for power good */
@@ -92,7 +92,8 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 
 	/* Now wait for PP5000_A and RSMRST_L to go low */
 	while ((gpio_get_level(GPIO_PP5000_A_PG_OD) ||
-		power_has_signals(IN_PGOOD_ALL_CORE)) && (timeout_ms > 0)) {
+		power_has_signals(IN_PGOOD_ALL_CORE)) &&
+	       (timeout_ms > 0)) {
 		msleep(1);
 		timeout_ms--;
 	};
@@ -155,7 +156,6 @@ void chipset_pre_init_callback(void)
 
 enum power_state power_handle_state(enum power_state state)
 {
-
 	int all_sys_pwrgd_in;
 	int all_sys_pwrgd_out;
 
@@ -176,7 +176,6 @@ enum power_state power_handle_state(enum power_state state)
 		common_intel_x86_handle_rsmrst(state);
 
 	switch (state) {
-
 	case POWER_S5:
 		if (forcing_shutdown) {
 			power_button_pch_release();

@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Reef board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "als.h"
 #include "button.h"
 #include "charge_manager.h"
@@ -36,6 +35,7 @@
 #include "math_util.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -49,7 +49,7 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "tfdp_chip.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -58,17 +58,16 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define IN_ALL_SYS_PG	POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
-#define IN_PGOOD_PP3300	POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
-#define IN_PGOOD_PP5000	POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
+#define IN_ALL_SYS_PG POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
+#define IN_PGOOD_PP3300 POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
+#define IN_PGOOD_PP5000 POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
 
-#define USB_PD_PORT_ANX74XX	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX74XX 0
+#define USB_PD_PORT_PS8751 1
 
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
@@ -132,7 +131,7 @@ static void anx74xx_cable_det_handler(void)
 	 * and if in normal mode, then there is no need to trigger a tcpc reset.
 	 */
 	if (cable_det && !reset_n)
-		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET);
 }
 DECLARE_DEFERRED(anx74xx_cable_det_handler);
 /* from firmware-reef-9042.B */
@@ -153,7 +152,6 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 static void enable_input_devices(void);
 DECLARE_DEFERRED(enable_input_devices);
 
-#define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
@@ -163,7 +161,7 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ QMSPI0_PORT, 4, GPIO_QMSPI_CS0},
+	{ QMSPI0_PORT, 4, GPIO_QMSPI_CS0 },
 #if defined(CONFIG_SPI_ACCEL_PORT)
 	{ GPSPI0_PORT, 2, GPIO_SPI0_CS0 },
 #endif
@@ -177,15 +175,9 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
  */
 const struct adc_t adc_channels[] = {
 	/* Vref = 3.000V, 10-bit unsigned reading */
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"CHARGER", 3000, 1024, 0, 0
-	},
-	[ADC_TEMP_SENSOR_AMB] = {
-		"AMBIENT", 3000, 1024, 0, 1
-	},
-	[ADC_BOARD_ID] = {
-		"BRD_ID", 3000, 1024, 0, 2
-	},
+	[ADC_TEMP_SENSOR_CHARGER] = { "CHARGER", 3000, 1024, 0, 0 },
+	[ADC_TEMP_SENSOR_AMB] = { "AMBIENT", 3000, 1024, 0, 1 },
+	[ADC_BOARD_ID] = { "BRD_ID", 3000, 1024, 0, 2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -194,7 +186,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct pwm_t pwm_channels[] = {
 	/* channel, flags */
 	[PWM_CH_LED_GREEN] = { 4, PWM_CONFIG_DSLEEP },
-	[PWM_CH_LED_RED] =   { 5, PWM_CONFIG_DSLEEP },
+	[PWM_CH_LED_RED] = { 5, PWM_CONFIG_DSLEEP },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 #endif /* #ifdef CONFIG_PWM */
@@ -205,17 +197,32 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
  * Due to added RC of interposer board temporarily reduce
  * 400 to 100 kHz.
  */
-const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc0",     MCHP_I2C_PORT0, 400,
-		GPIO_EC_I2C_USB_C0_PD_SCL, GPIO_EC_I2C_USB_C0_PD_SDA},
-	{"tcpc1",     MCHP_I2C_PORT2, 400,
-		GPIO_EC_I2C_USB_C1_PD_SCL, GPIO_EC_I2C_USB_C1_PD_SDA},
-	{"accelgyro", I2C_PORT_GYRO, 400,
-		GPIO_EC_I2C_GYRO_SCL,      GPIO_EC_I2C_GYRO_SDA},
-	{"sensors",   MCHP_I2C_PORT7, 400,
-		GPIO_EC_I2C_SENSOR_SCL,    GPIO_EC_I2C_SENSOR_SDA},
-	{"batt",      MCHP_I2C_PORT3, 100,
-		GPIO_EC_I2C_POWER_SCL,     GPIO_EC_I2C_POWER_SDA},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "tcpc0",
+	  .port = MCHP_I2C_PORT0,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_USB_C0_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_PD_SDA },
+	{ .name = "tcpc1",
+	  .port = MCHP_I2C_PORT2,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_USB_C1_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C1_PD_SDA },
+	{ .name = "accelgyro",
+	  .port = I2C_PORT_GYRO,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_GYRO_SCL,
+	  .sda = GPIO_EC_I2C_GYRO_SDA },
+	{ .name = "sensors",
+	  .port = MCHP_I2C_PORT7,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
+	{ .name = "batt",
+	  .port = MCHP_I2C_PORT3,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_POWER_SCL,
+	  .sda = GPIO_EC_I2C_POWER_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -232,16 +239,6 @@ const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT7,
 };
 
-/*
- * Used by chip level I2C controller initialization.
- * Board level can specify two unused I2C addresses
- * for each controller. Current chip level disables
- * controller response to address 0(general call).
- */
-const uint32_t i2c_ctrl_slave_addrs[I2C_CONTROLLER_COUNT] = {
-	0, 0, 0, 0,
-};
-
 const struct charger_config_t chg_chips[] = {
 	{
 		.i2c_port = I2C_PORT_CHARGER,
@@ -249,26 +246,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bd9995x_drv,
 	},
 };
-
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- * When not using I2C controllers as slaves we can use
- * the same value for all controllers. The address should
- * not be 0x00 as this is the general call address.
- */
-uint16_t board_i2c_slave_addrs(int controller)
-{
-	int i;
-
-	for (i = 0; i < I2C_CONTROLLER_COUNT; i++)
-		if ((i2c_ctrl_slave_addrs[i] & 0xffff) == controller)
-			return (i2c_ctrl_slave_addrs[i] >> 16);
-
-	return 0; /* general call address */
-}
 
 /*
  * default to I2C0 because callers may not check
@@ -420,19 +397,23 @@ static int ps8751_tune_mux(const struct usb_mux *me)
 /*
  * USB_PD_PORT_ANX74XX and USB_PD_PORT_PS8751 are zero based indices into
  * tcpc_config array. The tcpc_config array contains the actual EC I2C
- * port, device slave address, and a function pointer into the driver code.
+ * port, device address, and a function pointer into the driver code.
  */
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
-		.usb_port = USB_PD_PORT_ANX74XX,
-		.driver = &anx74xx_tcpm_usb_mux_driver,
-		.hpd_update = &anx74xx_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ANX74XX,
+			.driver = &anx74xx_tcpm_usb_mux_driver,
+			.hpd_update = &anx74xx_tcpc_update_hpd_status,
+		},
 	},
 	[USB_PD_PORT_PS8751] = {
-		.usb_port = USB_PD_PORT_PS8751,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-		.board_init = &ps8751_tune_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_PS8751,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+			.board_init = &ps8751_tune_mux,
+		},
 	}
 };
 
@@ -540,9 +521,10 @@ void board_tcpc_init(void)
 	 * HPD pulse to enable video path
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
-		usb_mux_hpd_update(port, 0, 0);
+		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 /*
  * Data derived from Seinhart-Hart equation in a resistor divider circuit with
@@ -579,8 +561,7 @@ int board_get_charger_temp(int idx, int *temp_ptr)
 	if (mv < 0)
 		return -1;
 
-	*temp_ptr = thermistor_linear_interpolate(mv,
-		&charger_thermistor_info);
+	*temp_ptr = thermistor_linear_interpolate(mv, &charger_thermistor_info);
 	*temp_ptr = C_TO_K(*temp_ptr);
 	return 0;
 }
@@ -620,8 +601,7 @@ int board_get_ambient_temp(int idx, int *temp_ptr)
 	if (mv < 0)
 		return -1;
 
-	*temp_ptr = thermistor_linear_interpolate(mv,
-		&amb_thermistor_info);
+	*temp_ptr = thermistor_linear_interpolate(mv, &amb_thermistor_info);
 	*temp_ptr = C_TO_K(*temp_ptr);
 	return 0;
 }
@@ -632,9 +612,9 @@ int board_get_ambient_temp(int idx, int *temp_ptr)
  * delay from read to taking action
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
+	{ "Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0 },
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -669,7 +649,8 @@ void chipset_pre_init_callback(void)
 
 static void board_set_tablet_mode(void)
 {
-	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
+	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L),
+			TABLET_TRIGGER_LID);
 }
 
 /* Initialize board. */
@@ -755,8 +736,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Enable charging trigger by BC1.2 detection */
 	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
@@ -768,8 +749,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		return;
 
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-			CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**
@@ -811,8 +792,7 @@ static void enable_input_devices(void)
 }
 
 /* Enable or disable input devices, based on chipset state and tablet mode */
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	/* If the lid is in 360 position, ignore the lid angle,
 	 * which might be faulty. Disable keyboard.
@@ -821,7 +801,6 @@ void lid_angle_peripheral_enable(int enable)
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
-#endif
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
@@ -897,17 +876,17 @@ void board_hibernate_late(void)
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
+		{ GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN },
 
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
 		 * charge output in hibernate. Charger will assert ACOK_OD
 		 * when VBUS or VCC are plugged in.
 		 */
-		{GPIO_USB_C0_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
-		{GPIO_USB_C1_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
+		{ GPIO_USB_C0_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
+		{ GPIO_USB_C1_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
 	};
 
 	/* Change GPIOs' state in hibernate for better power consumption */
@@ -934,17 +913,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t mag_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t mag_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
@@ -1120,8 +1095,8 @@ struct {
 	int thresh_mv;
 } const reef_board_versions[] = {
 	/* Vin = 3.3V, R1 = 46.4K, R2 values listed below */
-	{ BOARD_VERSION_1, 328 * 1.03 },  /* 5.11 Kohm */
-	{ BOARD_VERSION_2, 670 * 1.03 },  /* 11.8 Kohm */
+	{ BOARD_VERSION_1, 328 * 1.03 }, /* 5.11 Kohm */
+	{ BOARD_VERSION_2, 670 * 1.03 }, /* 11.8 Kohm */
 	{ BOARD_VERSION_3, 1012 * 1.03 }, /* 20.5 Kohm */
 	{ BOARD_VERSION_4, 1357 * 1.03 }, /* 32.4 Kohm */
 	{ BOARD_VERSION_5, 1690 * 1.03 }, /* 48.7 Kohm */
@@ -1183,7 +1158,7 @@ int board_get_version(void)
 }
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/*
 	 * F3 key scan cycle completed but scan input is not
 	 * charging to logic high when EC start scan next

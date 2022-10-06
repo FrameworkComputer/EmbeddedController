@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,7 +9,6 @@
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
-
 
 enum format {
 	FMT_WORD,
@@ -56,7 +55,7 @@ static void show_val(uint32_t address, uint32_t index, enum format fmt)
 	cflush();
 }
 
-static int command_mem_dump(int argc, char **argv)
+static int command_mem_dump(int argc, const char **argv)
 {
 	uint32_t address, i, num = 1;
 	char *e;
@@ -106,15 +105,14 @@ static int command_mem_dump(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND_FLAGS
-	(md, command_mem_dump,
-	 "[.b|.h|.s] addr [count]",
-	 "dump memory values, optionally specifying the format",
-	 CMD_FLAG_RESTRICTED);
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	md, command_mem_dump, "[.b|.h|.s] addr [count]",
+	"dump memory values, optionally specifying the format",
+	CMD_FLAG_RESTRICTED);
 #endif /* CONFIG_CMD_MD */
 
 #ifdef CONFIG_CMD_RW
-static int command_read_word(int argc, char **argv)
+static int command_read_word(int argc, const char **argv)
 {
 	volatile uint32_t *address;
 	uint32_t value;
@@ -149,16 +147,16 @@ static int command_read_word(int argc, char **argv)
 	if ((argc - argc_offs) < 3) {
 		switch (access_size) {
 		case 1:
-			ccprintf("read 0x%pP = 0x%02x\n",
-				 address, *((uint8_t *)address));
+			ccprintf("read 0x%p = 0x%02x\n", address,
+				 *((uint8_t *)address));
 			break;
 		case 2:
-			ccprintf("read 0x%pP = 0x%04x\n",
-				 address, *((uint16_t *)address));
+			ccprintf("read 0x%p = 0x%04x\n", address,
+				 *((uint16_t *)address));
 			break;
 
 		default:
-			ccprintf("read 0x%pP = 0x%08x\n",  address, *address);
+			ccprintf("read 0x%p = 0x%08x\n", address, *address);
 			break;
 		}
 		return EC_SUCCESS;
@@ -171,17 +169,17 @@ static int command_read_word(int argc, char **argv)
 
 	switch (access_size) {
 	case 1:
-		ccprintf("write 0x%pP = 0x%02x\n", address, (uint8_t)value);
-		cflush();  /* Flush before writing in case this crashes */
+		ccprintf("write 0x%p = 0x%02x\n", address, (uint8_t)value);
+		cflush(); /* Flush before writing in case this crashes */
 		*((uint8_t *)address) = (uint8_t)value;
 		break;
 	case 2:
-		ccprintf("write 0x%pP = 0x%04x\n", address, (uint16_t)value);
+		ccprintf("write 0x%p = 0x%04x\n", address, (uint16_t)value);
 		cflush();
 		*((uint16_t *)address) = (uint16_t)value;
 		break;
 	default:
-		ccprintf("write 0x%pP = 0x%02x\n", address, value);
+		ccprintf("write 0x%p = 0x%02x\n", address, value);
 		cflush();
 		*address = value;
 		break;
@@ -190,9 +188,8 @@ static int command_read_word(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND_FLAGS
-	(rw, command_read_word,
-	 "[.b|.h] addr [value]",
-	 "Read or write a word in memory optionally specifying the size",
-	 CMD_FLAG_RESTRICTED);
-#endif	/* CONFIG_CMD_RW */
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	rw, command_read_word, "[.b|.h] addr [value]",
+	"Read or write a word in memory optionally specifying the size",
+	CMD_FLAG_RESTRICTED);
+#endif /* CONFIG_CMD_RW */

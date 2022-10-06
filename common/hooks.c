@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,7 +14,7 @@
 
 #ifdef CONFIG_HOOK_DEBUG
 #define CPUTS(outstr) cputs(CC_HOOK, outstr)
-#define CPRINTS(format, args...) cprints(CC_HOOK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_HOOK, format, ##args)
 #else
 #define CPUTS(outstr)
 #define CPRINTS(format, args...)
@@ -32,40 +32,41 @@ struct hook_ptrs {
  * order as enum hook_type.
  */
 static const struct hook_ptrs hook_list[] = {
-	{__hooks_init, __hooks_init_end},
-	{__hooks_pre_freq_change, __hooks_pre_freq_change_end},
-	{__hooks_freq_change, __hooks_freq_change_end},
-	{__hooks_sysjump, __hooks_sysjump_end},
-	{__hooks_chipset_pre_init, __hooks_chipset_pre_init_end},
-	{__hooks_chipset_startup, __hooks_chipset_startup_end},
-	{__hooks_chipset_resume, __hooks_chipset_resume_end},
-	{__hooks_chipset_suspend, __hooks_chipset_suspend_end},
+	{ __hooks_init, __hooks_init_end },
+	{ __hooks_pre_freq_change, __hooks_pre_freq_change_end },
+	{ __hooks_freq_change, __hooks_freq_change_end },
+	{ __hooks_sysjump, __hooks_sysjump_end },
+	{ __hooks_chipset_pre_init, __hooks_chipset_pre_init_end },
+	{ __hooks_chipset_startup, __hooks_chipset_startup_end },
+	{ __hooks_chipset_resume, __hooks_chipset_resume_end },
+	{ __hooks_chipset_suspend, __hooks_chipset_suspend_end },
 #ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
-	{__hooks_chipset_resume_init, __hooks_chipset_resume_init_end},
-	{__hooks_chipset_suspend_complete,
-	 __hooks_chipset_suspend_complete_end},
+	{ __hooks_chipset_resume_init, __hooks_chipset_resume_init_end },
+	{ __hooks_chipset_suspend_complete,
+	  __hooks_chipset_suspend_complete_end },
 #endif
-	{__hooks_chipset_shutdown, __hooks_chipset_shutdown_end},
-	{__hooks_chipset_shutdown_complete,
-	 __hooks_chipset_shutdown_complete_end},
-	{__hooks_chipset_reset, __hooks_chipset_reset_end},
-	{__hooks_ac_change, __hooks_ac_change_end},
-	{__hooks_lid_change, __hooks_lid_change_end},
-	{__hooks_tablet_mode_change, __hooks_tablet_mode_change_end},
-	{__hooks_base_attached_change, __hooks_base_attached_change_end},
-	{__hooks_pwrbtn_change, __hooks_pwrbtn_change_end},
-	{__hooks_battery_soc_change, __hooks_battery_soc_change_end},
+	{ __hooks_chipset_shutdown, __hooks_chipset_shutdown_end },
+	{ __hooks_chipset_shutdown_complete,
+	  __hooks_chipset_shutdown_complete_end },
+	{ __hooks_chipset_hard_off, __hooks_chipset_hard_off_end },
+	{ __hooks_chipset_reset, __hooks_chipset_reset_end },
+	{ __hooks_ac_change, __hooks_ac_change_end },
+	{ __hooks_lid_change, __hooks_lid_change_end },
+	{ __hooks_tablet_mode_change, __hooks_tablet_mode_change_end },
+	{ __hooks_base_attached_change, __hooks_base_attached_change_end },
+	{ __hooks_pwrbtn_change, __hooks_pwrbtn_change_end },
+	{ __hooks_battery_soc_change, __hooks_battery_soc_change_end },
 #ifdef CONFIG_USB_SUSPEND
-	{__hooks_usb_change, __hooks_usb_change_end},
+	{ __hooks_usb_change, __hooks_usb_change_end },
 #endif
-	{__hooks_tick, __hooks_tick_end},
-	{__hooks_second, __hooks_second_end},
-	{__hooks_usb_pd_disconnect, __hooks_usb_pd_disconnect_end},
-	{__hooks_usb_pd_connect, __hooks_usb_pd_connect_end},
+	{ __hooks_tick, __hooks_tick_end },
+	{ __hooks_second, __hooks_second_end },
+	{ __hooks_usb_pd_disconnect, __hooks_usb_pd_disconnect_end },
+	{ __hooks_usb_pd_connect, __hooks_usb_pd_connect_end },
+	{ __hooks_power_supply_change, __hooks_power_supply_change_end },
 };
 
 /* Times for deferrable functions */
-static int defer_new_call;
 static int hook_task_started;
 
 #ifdef CONFIG_HOOK_DEBUG
@@ -149,7 +150,7 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	int i = data - __deferred_funcs;
 
 	if (data < __deferred_funcs || data >= __deferred_funcs_end)
-		return EC_ERROR_INVAL;  /* Routine not registered */
+		return EC_ERROR_INVAL; /* Routine not registered */
 
 	if (us == -1) {
 		/* Cancel */
@@ -157,12 +158,6 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	} else {
 		/* Set alarm */
 		__deferred_until[i] = get_time().val + us;
-		/*
-		 * Flag that hook_call_deferred() has been called.  If the hook
-		 * task is already active, this will allow it to go through the
-		 * loop one more time before sleeping.
-		 */
-		defer_new_call = 1;
 
 		/* Wake task so it can re-sleep for the proper time */
 		if (hook_task_started)
@@ -191,20 +186,24 @@ void hook_task(void *u)
 		int next = 0;
 		int i;
 
+		interrupt_disable();
 		/* Handle deferred routines */
 		for (i = 0; i < DEFERRED_FUNCS_COUNT; i++) {
 			if (__deferred_until[i] && __deferred_until[i] < t) {
-				CPRINTS("hook call deferred 0x%pP",
-					__deferred_funcs[i].routine);
 				/*
 				 * Call deferred function.  Clear timer first,
 				 * so it can request itself be called later.
 				 */
 				__deferred_until[i] = 0;
+				interrupt_enable();
+				CPRINTS("hook call deferred 0x%p",
+					__deferred_funcs[i].routine);
 				__deferred_funcs[i].routine();
+				interrupt_disable();
 			}
 		}
 
+		interrupt_enable();
 		if (t - last_tick >= HOOK_TICK_INTERVAL) {
 #ifdef CONFIG_HOOK_DEBUG
 			record_hook_delay(t, last_tick, HOOK_TICK_INTERVAL,
@@ -230,9 +229,7 @@ void hook_task(void *u)
 		if (last_tick + HOOK_TICK_INTERVAL > t)
 			next = last_tick + HOOK_TICK_INTERVAL - t;
 
-		/* Wake earlier if needed by a deferred routine */
-		defer_new_call = 0;
-
+		interrupt_disable();
 		for (i = 0; i < DEFERRED_FUNCS_COUNT && next > 0; i++) {
 			if (!__deferred_until[i])
 				continue;
@@ -243,12 +240,13 @@ void hook_task(void *u)
 				next = __deferred_until[i] - t;
 		}
 
+		interrupt_enable();
+
 		/*
-		 * If nothing is immediately pending, and hook_call_deferred()
-		 * hasn't been called since we started calculating next, sleep
-		 * until the next event.
+		 * If nothing is immediately pending, sleep until the next
+		 * event.
 		 */
-		if (next > 0 && !defer_new_call)
+		if (next > 0)
 			task_wait_event(next);
 	}
 }
@@ -267,7 +265,7 @@ static void print_hook_delay(uint32_t interval, uint32_t delay, uint32_t avg)
 	ccprintf("  Average:     %7d us (%d%%)\n\n", avg, percent_avg);
 }
 
-static int command_stats(int argc, char **argv)
+static int command_stats(int argc, const char **argv)
 {
 	int i;
 
@@ -286,7 +284,5 @@ static int command_stats(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hookstats, command_stats,
-			NULL,
-			"Print stats of hooks");
+DECLARE_CONSOLE_COMMAND(hookstats, command_stats, NULL, "Print stats of hooks");
 #endif

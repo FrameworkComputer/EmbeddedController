@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -98,4 +98,3 @@ __task_start:
   /* we should never return here */
   mov r0, #1             @ set to EC_ERROR_UNKNOWN
   bx lr
-

@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,6 +11,8 @@
 /* Include CONFIG definitions for EC sources. */
 #ifndef THIRD_PARTY
 #include "common.h"
+#else
+#define test_mockable_noreturn noreturn
 #endif
 
 #ifdef __cplusplus
@@ -21,33 +23,52 @@ extern "C" {
 #ifdef CONFIG_DEBUG_ASSERT_REBOOTS
 
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
-extern noreturn void panic_assert_fail(const char *fname, int linenum);
+test_mockable_noreturn void panic_assert_fail(const char *fname, int linenum);
 #define ASSERT(cond)                                           \
 	do {                                                   \
 		if (!(cond))                                   \
 			panic_assert_fail(__FILE__, __LINE__); \
 	} while (0)
-#else
-extern noreturn void panic_assert_fail(const char *msg, const char *func,
-			      const char *fname, int linenum);
+
+#else /* !CONFIG_DEBUG_ASSERT_BRIEF */
+
+test_mockable_noreturn void panic_assert_fail(const char *msg, const char *func,
+					      const char *fname, int linenum);
 #define ASSERT(cond)                                                 \
 	do {                                                         \
 		if (!(cond))                                         \
 			panic_assert_fail(#cond, __func__, __FILE__, \
 					  __LINE__);                 \
 	} while (0)
-#endif
+#endif /* CONFIG_DEBUG_ASSERT_BRIEF */
+
+#else /* !CONFIG_DEBUG_ASSERT_REBOOTS */
+
+#if defined(__arm__)
+#define ARCH_SOFTWARE_BREAKPOINT __asm("bkpt")
+#elif defined(__nds32__)
+#define ARCH_SOFTWARE_BREAKPOINT __asm("break 0")
+#elif defined(__riscv)
+#define ARCH_SOFTWARE_BREAKPOINT __asm("ebreak")
+#elif defined(VIF_BUILD)
+/* The genvif utility compiles usb_pd_policy.c and needs an empty definition. */
+#define ARCH_SOFTWARE_BREAKPOINT
 #else
-#define ASSERT(cond)                     \
-	do {                             \
-		if (!(cond))             \
-			__asm("bkpt");   \
-		__builtin_unreachable(); \
+#error "CONFIG_DEBUG_ASSERT_REBOOTS must be defined on this architecture"
+#endif
+
+#define ASSERT(cond)                              \
+	do {                                      \
+		if (!(cond)) {                    \
+			ARCH_SOFTWARE_BREAKPOINT; \
+			__builtin_unreachable();  \
+		}                                 \
 	} while (0)
-#endif
-#else
+#endif /* CONFIG_DEBUG_ASSERT_REBOOTS */
+
+#else /* !CONFIG_DEBUG_ASSERT */
 #define ASSERT(cond)
-#endif
+#endif /* CONFIG_DEBUG_ASSERT */
 
 /* This collides with cstdlib, so exclude it where cstdlib is supported. */
 #ifndef assert

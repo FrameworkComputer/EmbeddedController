@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,4 +12,4 @@ void set_time(timestamp_t now_);
 
 timestamp_t get_time(void);
 
-#endif  /* __MOCK_TIMER_MOCK_H */
+#endif /* __MOCK_TIMER_MOCK_H */

@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,6 +11,7 @@
 #include "hwtimer.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "printf.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -28,11 +29,11 @@
 /* Console output macros */
 #define CC_TOUCHPAD CC_USB
 #define CPUTS(outstr) cputs(CC_TOUCHPAD, outstr)
-#define CPRINTF(format, args...) cprintf(CC_TOUCHPAD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_TOUCHPAD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ##args)
 
-#define TASK_EVENT_POWER  TASK_EVENT_CUSTOM_BIT(0)
-#define TASK_EVENT_TP_UPDATED  TASK_EVENT_CUSTOM_BIT(1)
+#define TASK_EVENT_POWER TASK_EVENT_CUSTOM_BIT(0)
+#define TASK_EVENT_TP_UPDATED TASK_EVENT_CUSTOM_BIT(1)
 
 #define SPI (&(spi_devices[SPI_ST_TP_DEVICE_ID]))
 
@@ -55,26 +56,26 @@ static void touchpad_power_control(void);
  */
 static int system_state;
 
-#define SYSTEM_STATE_DEBUG_MODE		BIT(0)
-#define SYSTEM_STATE_ENABLE_HEAT_MAP	BIT(1)
-#define SYSTEM_STATE_ENABLE_DOME_SWITCH	BIT(2)
-#define SYSTEM_STATE_ACTIVE_MODE	BIT(3)
-#define SYSTEM_STATE_DOME_SWITCH_LEVEL	BIT(4)
-#define SYSTEM_STATE_READY		BIT(5)
+#define SYSTEM_STATE_DEBUG_MODE BIT(0)
+#define SYSTEM_STATE_ENABLE_HEAT_MAP BIT(1)
+#define SYSTEM_STATE_ENABLE_DOME_SWITCH BIT(2)
+#define SYSTEM_STATE_ACTIVE_MODE BIT(3)
+#define SYSTEM_STATE_DOME_SWITCH_LEVEL BIT(4)
+#define SYSTEM_STATE_READY BIT(5)
 
 /*
  * Pending action for touchpad.
  */
 static int tp_control;
 
-#define TP_CONTROL_SHALL_HALT		BIT(0)
-#define TP_CONTROL_SHALL_RESET		BIT(1)
-#define TP_CONTROL_SHALL_INIT		BIT(2)
-#define TP_CONTROL_SHALL_INIT_FULL	BIT(3)
-#define TP_CONTROL_SHALL_DUMP_ERROR	BIT(4)
-#define TP_CONTROL_RESETTING		BIT(5)
-#define TP_CONTROL_INIT			BIT(6)
-#define TP_CONTROL_INIT_FULL		BIT(7)
+#define TP_CONTROL_SHALL_HALT BIT(0)
+#define TP_CONTROL_SHALL_RESET BIT(1)
+#define TP_CONTROL_SHALL_INIT BIT(2)
+#define TP_CONTROL_SHALL_INIT_FULL BIT(3)
+#define TP_CONTROL_SHALL_DUMP_ERROR BIT(4)
+#define TP_CONTROL_RESETTING BIT(5)
+#define TP_CONTROL_INIT BIT(6)
+#define TP_CONTROL_INIT_FULL BIT(7)
 
 /*
  * Number of times we have reset the touchpad because of errors.
@@ -115,7 +116,6 @@ static struct {
 	} /* anonymous */;
 } __packed rx_buf;
 
-
 #ifdef CONFIG_USB_ISOCHRONOUS
 #define USB_ISO_PACKET_SIZE 256
 /*
@@ -124,7 +124,7 @@ static struct {
 struct packet_header_t {
 	uint8_t index;
 
-#define HEADER_FLAGS_NEW_FRAME	BIT(0)
+#define HEADER_FLAGS_NEW_FRAME BIT(0)
 	uint8_t flags;
 } __packed;
 BUILD_ASSERT(sizeof(struct packet_header_t) < USB_ISO_PACKET_SIZE);
@@ -133,7 +133,7 @@ static struct packet_header_t packet_header;
 
 /* What will be sent to USB interface. */
 struct st_tp_usb_packet_t {
-#define USB_FRAME_FLAGS_BUTTON	BIT(0)
+#define USB_FRAME_FLAGS_BUTTON BIT(0)
 	/*
 	 * This will be true if user clicked on touchpad.
 	 * TODO(b/70482333): add corresponding code for button signal.
@@ -165,7 +165,6 @@ static void st_tp_interrupt_send(void);
 DECLARE_DEFERRED(st_tp_interrupt_send);
 #endif
 
-
 /* Function implementations */
 
 static void set_bits(int *lvalue, int rvalue, int mask)
@@ -184,8 +183,7 @@ static void set_bits(int *lvalue, int rvalue, int mask)
  * @return array index of next finger (i.e. (i + 1) if a finger is added).
  */
 static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
-			      struct st_tp_event_t *event,
-			      int i)
+			      struct st_tp_event_t *event, int i)
 {
 	const int id = event->finger.touch_id;
 
@@ -193,9 +191,9 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 	if (event->finger.touch_type == ST_TP_TOUCH_TYPE_INVALID)
 		return i;
 
-	if (event->evt_id ==  ST_TP_EVENT_ID_ENTER_POINTER)
+	if (event->evt_id == ST_TP_EVENT_ID_ENTER_POINTER)
 		touch_slot |= 1 << id;
-	else if (event->evt_id ==  ST_TP_EVENT_ID_LEAVE_POINTER)
+	else if (event->evt_id == ST_TP_EVENT_ID_LEAVE_POINTER)
 		touch_slot &= ~BIT(id);
 
 	/* We cannot report more fingers */
@@ -213,10 +211,10 @@ static int st_tp_parse_finger(struct usb_hid_touchpad_report *report,
 		report->finger[i].inrange = 1;
 		report->finger[i].id = id;
 		report->finger[i].pressure = event->finger.z;
-		report->finger[i].width = (event->finger.minor |
-					   (event->minor_high << 4)) << 5;
-		report->finger[i].height = (event->finger.major |
-					    (event->major_high << 4)) << 5;
+		report->finger[i].width =
+			(event->finger.minor | (event->minor_high << 4)) << 5;
+		report->finger[i].height =
+			(event->finger.major | (event->major_high << 4)) << 5;
 
 		report->finger[i].x = (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X -
 				       event->finger.x);
@@ -253,8 +251,7 @@ static int st_tp_check_domeswitch_state(void)
 	 * Domeswitch level from device is inverted.
 	 * That is, 0 => pressed, 1 => released.
 	 */
-	set_bits(&system_state,
-		 ret ? 0 : SYSTEM_STATE_DOME_SWITCH_LEVEL,
+	set_bits(&system_state, ret ? 0 : SYSTEM_STATE_DOME_SWITCH_LEVEL,
 		 SYSTEM_STATE_DOME_SWITCH_LEVEL);
 	return 0;
 }
@@ -295,7 +292,7 @@ static int st_tp_write_hid_report(void)
 		}
 	}
 
-	if (!num_finger && !domeswitch_changed)  /* nothing changed */
+	if (!num_finger && !domeswitch_changed) /* nothing changed */
 		return 0;
 
 	/* Don't report 0 finger click. */
@@ -343,8 +340,8 @@ static int st_tp_read_host_buffer_header(void)
 	const uint8_t tx_buf[] = { ST_TP_CMD_READ_SPI_HOST_BUFFER, 0x00, 0x00 };
 	int rx_len = ST_TP_EXTRA_BYTE + sizeof(rx_buf.buffer_header);
 
-	return spi_transaction(SPI, tx_buf, sizeof(tx_buf),
-			       (uint8_t *)&rx_buf, rx_len);
+	return spi_transaction(SPI, tx_buf, sizeof(tx_buf), (uint8_t *)&rx_buf,
+			       rx_len);
 }
 
 static int st_tp_send_ack(void)
@@ -368,11 +365,7 @@ static int st_tp_update_system_state(int new_state, int mask)
 
 	mask = SYSTEM_STATE_ENABLE_HEAT_MAP | SYSTEM_STATE_ENABLE_DOME_SWITCH;
 	if ((new_state & mask) != (system_state & mask)) {
-		uint8_t tx_buf[] = {
-			ST_TP_CMD_WRITE_FEATURE_SELECT,
-			0x05,
-			0
-		};
+		uint8_t tx_buf[] = { ST_TP_CMD_WRITE_FEATURE_SELECT, 0x05, 0 };
 		if (new_state & SYSTEM_STATE_ENABLE_HEAT_MAP) {
 			CPRINTS("Heatmap enabled");
 			tx_buf[2] |= BIT(0);
@@ -423,8 +416,8 @@ static int st_tp_update_system_state(int new_state, int mask)
 
 static void st_tp_enable_interrupt(int enable)
 {
-	uint8_t tx_buf[] = {
-		ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x01, enable ? 1 : 0};
+	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x01,
+			     enable ? 1 : 0 };
 	if (enable)
 		gpio_enable_interrupt(GPIO_TOUCHPAD_INT);
 	spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
@@ -434,8 +427,8 @@ static void st_tp_enable_interrupt(int enable)
 
 static int st_tp_start_scan(void)
 {
-	int new_state = (SYSTEM_STATE_ACTIVE_MODE |
-			 SYSTEM_STATE_ENABLE_DOME_SWITCH);
+	int new_state =
+		(SYSTEM_STATE_ACTIVE_MODE | SYSTEM_STATE_ENABLE_DOME_SWITCH);
 	int mask = new_state;
 	int ret;
 
@@ -451,9 +444,8 @@ static int st_tp_start_scan(void)
 
 static int st_tp_read_host_data_memory(uint16_t addr, void *rx_buf, int len)
 {
-	uint8_t tx_buf[] = {
-		ST_TP_CMD_READ_HOST_DATA_MEMORY, addr >> 8, addr & 0xFF
-	};
+	uint8_t tx_buf[] = { ST_TP_CMD_READ_HOST_DATA_MEMORY, addr >> 8,
+			     addr & 0xFF };
 
 	return spi_transaction(SPI, tx_buf, sizeof(tx_buf), rx_buf, len);
 }
@@ -473,9 +465,7 @@ static int st_tp_stop_scan(void)
 
 static int st_tp_load_host_data(uint8_t mem_id)
 {
-	uint8_t tx_buf[] = {
-		ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x06, mem_id
-	};
+	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x06, mem_id };
 	int retry, ret;
 	uint16_t count;
 	struct st_tp_host_data_header_t *header = &rx_buf.data_header;
@@ -559,24 +549,24 @@ static int st_tp_read_system_info(int reload)
  */
 static void enable_deep_sleep(int enable)
 {
-	uint8_t cmd[] = {0xFA, 0x20, 0x00, 0x00, 0x68, enable ? 0x0B : 0x08};
+	uint8_t cmd[] = { 0xFA, 0x20, 0x00, 0x00, 0x68, enable ? 0x0B : 0x08 };
 
 	spi_transaction(SPI, cmd, sizeof(cmd), NULL, 0);
 }
 
 static void dump_error(void)
 {
-	uint8_t tx_buf[] = {0xFB, 0x20, 0x01, 0xEF, 0x80};
+	uint8_t tx_buf[] = { 0xFB, 0x20, 0x01, 0xEF, 0x80 };
 	int rx_len = sizeof(rx_buf.dump_info) + ST_TP_EXTRA_BYTE;
 	int i;
 
-	spi_transaction(SPI, tx_buf, sizeof(tx_buf),
-			(uint8_t *)&rx_buf, rx_len);
+	spi_transaction(SPI, tx_buf, sizeof(tx_buf), (uint8_t *)&rx_buf,
+			rx_len);
 
 	for (i = 0; i < ARRAY_SIZE(rx_buf.dump_info); i += 4)
-		CPRINTS("%08x %08x %08x %08x",
-			rx_buf.dump_info[i + 0], rx_buf.dump_info[i + 1],
-			rx_buf.dump_info[i + 2], rx_buf.dump_info[i + 3]);
+		CPRINTS("%08x %08x %08x %08x", rx_buf.dump_info[i + 0],
+			rx_buf.dump_info[i + 1], rx_buf.dump_info[i + 2],
+			rx_buf.dump_info[i + 3]);
 	msleep(8);
 }
 
@@ -589,8 +579,8 @@ static void dump_error(void)
 static void dump_memory(void)
 {
 	uint32_t size = 0x10000, rx_len = 512 + ST_TP_EXTRA_BYTE;
-	uint32_t offset, i;
-	uint8_t cmd[] = {0xFB, 0x00, 0x10, 0x00, 0x00};
+	uint32_t offset, i, j;
+	uint8_t cmd[] = { 0xFB, 0x00, 0x10, 0x00, 0x00 };
 
 	if (!dump_memory_on_error)
 		return;
@@ -598,20 +588,20 @@ static void dump_memory(void)
 	for (offset = 0; offset < size; offset += 512) {
 		cmd[3] = (offset >> 8) & 0xFF;
 		cmd[4] = (offset >> 0) & 0xFF;
-		spi_transaction(SPI, cmd, sizeof(cmd),
-				(uint8_t *)&rx_buf, rx_len);
+		spi_transaction(SPI, cmd, sizeof(cmd), (uint8_t *)&rx_buf,
+				rx_len);
 
 		for (i = 0; i < rx_len - ST_TP_EXTRA_BYTE; i += 32) {
-			CPRINTF("%ph %ph %ph %ph "
-				"%ph %ph %ph %ph\n",
-				HEX_BUF(rx_buf.bytes + i + 4 * 0, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 1, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 2, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 3, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 4, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 5, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 6, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 7, 4));
+			for (j = 0; j < 8; j++) {
+				char str_buf[hex_str_buf_size(4)];
+
+				snprintf_hex_buffer(
+					str_buf, sizeof(str_buf),
+					HEX_BUF(rx_buf.bytes + i + 4 * j, 4));
+
+				CPRINTF("%s ", str_buf);
+			}
+			CPRINTF("\n");
 			msleep(8);
 		}
 	}
@@ -629,11 +619,8 @@ static void st_tp_handle_error(uint8_t error_type)
 	/*
 	 * Suggest action: memory dump and power cycle.
 	 */
-	if (error_type <= 0x06 ||
-	    error_type == 0xF1 ||
-	    error_type == 0xF2 ||
-	    error_type == 0xF3 ||
-	    (error_type >= 0x47 && error_type <= 0x4E)) {
+	if (error_type <= 0x06 || error_type == 0xF1 || error_type == 0xF2 ||
+	    error_type == 0xF3 || (error_type >= 0x47 && error_type <= 0x4E)) {
 		tp_control |= TP_CONTROL_SHALL_RESET;
 		return;
 	}
@@ -641,8 +628,7 @@ static void st_tp_handle_error(uint8_t error_type)
 	/*
 	 * Suggest action: FW shall halt, consult ST.
 	 */
-	if ((error_type >= 0x20 && error_type <= 0x23) ||
-	    error_type == 0x25 ||
+	if ((error_type >= 0x20 && error_type <= 0x23) || error_type == 0x25 ||
 	    (error_type >= 0x2E && error_type <= 0x46)) {
 		CPRINTS("tp shall halt");
 		tp_control |= TP_CONTROL_SHALL_HALT;
@@ -697,15 +683,13 @@ static void st_tp_handle_error_report(struct st_tp_event_t *e)
 static void st_tp_handle_status_report(struct st_tp_event_t *e)
 {
 	static uint32_t prev_idle_count;
-	uint32_t info = ((e->report.info[0] << 0) |
-			 (e->report.info[1] << 8) |
-			 (e->report.info[2] << 16) |
-			 (e->report.info[3] << 24));
+	uint32_t info = ((e->report.info[0] << 0) | (e->report.info[1] << 8) |
+			 (e->report.info[2] << 16) | (e->report.info[3] << 24));
 
 	if (e->report.report_type == ST_TP_STATUS_FCAL ||
 	    e->report.report_type == ST_TP_STATUS_FRAME_DROP)
-		CPRINTS("TP STATUS REPORT: %02x %08x",
-			e->report.report_type, info);
+		CPRINTS("TP STATUS REPORT: %02x %08x", e->report.report_type,
+			info);
 
 	/*
 	 * Idle count might not change if ST FW is busy (for example, when the
@@ -742,7 +726,7 @@ static void st_tp_handle_status_report(struct st_tp_event_t *e)
  *
  * When there are error events, suggested action will be saved in `tp_control`.
  *
- * @param show_error: weather EC should read and dump error or not.
+ * @param show_error: whether EC should read and dump error or not.
  *   ***If this is true, rx_buf.events[] will be cleared.***
  *
  * @return number of events available
@@ -803,8 +787,8 @@ static int st_tp_reset(void)
 		 * suggest us to reset or halt.
 		 */
 		if (!(tp_control & (TP_CONTROL_INIT | TP_CONTROL_INIT_FULL)) &&
-		    (tp_control & (TP_CONTROL_SHALL_HALT |
-				   TP_CONTROL_SHALL_RESET)))
+		    (tp_control &
+		     (TP_CONTROL_SHALL_HALT | TP_CONTROL_SHALL_RESET)))
 			break;
 
 		for (i = 0; i < num_events; i++) {
@@ -883,14 +867,10 @@ int touchpad_get_info(struct touchpad_info *tp)
 static int write_hwreg_cmd32(uint32_t address, uint32_t data)
 {
 	uint8_t tx_buf[] = {
-		ST_TP_CMD_WRITE_HW_REG,
-		(address >> 24) & 0xFF,
-		(address >> 16) & 0xFF,
-		(address >> 8) & 0xFF,
-		(address >> 0) & 0xFF,
-		(data >> 24) & 0xFF,
-		(data >> 16) & 0xFF,
-		(data >> 8) & 0xFF,
+		ST_TP_CMD_WRITE_HW_REG, (address >> 24) & 0xFF,
+		(address >> 16) & 0xFF, (address >> 8) & 0xFF,
+		(address >> 0) & 0xFF,	(data >> 24) & 0xFF,
+		(data >> 16) & 0xFF,	(data >> 8) & 0xFF,
 		(data >> 0) & 0xFF,
 	};
 
@@ -900,12 +880,9 @@ static int write_hwreg_cmd32(uint32_t address, uint32_t data)
 static int write_hwreg_cmd8(uint32_t address, uint8_t data)
 {
 	uint8_t tx_buf[] = {
-		ST_TP_CMD_WRITE_HW_REG,
-		(address >> 24) & 0xFF,
-		(address >> 16) & 0xFF,
-		(address >> 8) & 0xFF,
-		(address >> 0) & 0xFF,
-		data,
+		ST_TP_CMD_WRITE_HW_REG, (address >> 24) & 0xFF,
+		(address >> 16) & 0xFF, (address >> 8) & 0xFF,
+		(address >> 0) & 0xFF,	data,
 	};
 
 	return spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
@@ -914,8 +891,7 @@ static int write_hwreg_cmd8(uint32_t address, uint8_t data)
 static int wait_for_flash_ready(uint8_t type)
 {
 	uint8_t tx_buf[] = {
-		ST_TP_CMD_READ_HW_REG,
-		0x20, 0x00, 0x00, type,
+		ST_TP_CMD_READ_HW_REG, 0x20, 0x00, 0x00, type,
 	};
 	int ret = EC_SUCCESS, retry = 200;
 
@@ -973,8 +949,8 @@ static int st_tp_start_flash_dma(void)
 	return ret;
 }
 
-static int st_tp_write_one_chunk(const uint8_t *head,
-				 uint32_t addr, uint32_t chunk_size)
+static int st_tp_write_one_chunk(const uint8_t *head, uint32_t addr,
+				 uint32_t chunk_size)
 {
 	uint8_t tx_buf[ST_TP_DMA_CHUNK_SIZE + 5];
 	uint32_t index = 0;
@@ -1000,13 +976,13 @@ static int st_tp_write_one_chunk(const uint8_t *head,
  */
 static int st_tp_write_flash(int offset, int size, const uint8_t *data)
 {
-	uint8_t tx_buf[12] = {0};
+	uint8_t tx_buf[12] = { 0 };
 	const uint8_t *head = data, *tail = data + size;
 	uint32_t addr, index, chunk_size;
 	uint32_t flash_buffer_size;
 	int ret;
 
-	offset >>= 2;  /* offset should be count in words */
+	offset >>= 2; /* offset should be count in words */
 	/*
 	 * To write to flash, the data has to be separated into several chunks.
 	 * Each chunk will be no more than `ST_TP_DMA_CHUNK_SIZE` bytes.
@@ -1039,7 +1015,7 @@ static int st_tp_write_flash(int offset, int size, const uint8_t *data)
 		tx_buf[index++] = 0x20;
 		tx_buf[index++] = 0x00;
 		tx_buf[index++] = 0x00;
-		tx_buf[index++] = 0x72;  /* flash DMA config */
+		tx_buf[index++] = 0x72; /* flash DMA config */
 		tx_buf[index++] = 0x00;
 		tx_buf[index++] = 0x00;
 
@@ -1108,9 +1084,7 @@ static uint8_t get_cx_version(uint8_t tp_version)
  */
 static int st_tp_panel_init(int full)
 {
-	uint8_t tx_buf[] = {
-		ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x02
-	};
+	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x02 };
 	int ret, retry;
 
 	if (tp_control & (TP_CONTROL_INIT | TP_CONTROL_INIT_FULL))
@@ -1149,8 +1123,8 @@ static int st_tp_panel_init(int full)
 			return EC_SUCCESS;
 		} else if (ret == EC_ERROR_BUSY) {
 			CPRINTS("Panel initialization on going...");
-		} else if (tp_control & ~(TP_CONTROL_INIT |
-					  TP_CONTROL_INIT_FULL)) {
+		} else if (tp_control &
+			   ~(TP_CONTROL_INIT | TP_CONTROL_INIT_FULL)) {
 			/* there are other kind of errors. */
 			CPRINTS("Panel initialization failed, tp_control: %x",
 				tp_control);
@@ -1223,7 +1197,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 		CPRINTS("%s: End update, wait for reset.", __func__);
 
 		ret = st_tp_panel_init(full_init_required);
-		task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_TP_UPDATED, 0);
+		task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_TP_UPDATED);
 		return ret;
 	}
 
@@ -1262,21 +1236,25 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		*data_size = 0;
 		st_tp_stop_scan();
 		return EC_SUCCESS;
-	case ST_TP_DEBUG_CMD_READ_BUF_HEADER:
+	case ST_TP_DEBUG_CMD_READ_BUF_HEADER: {
+		char str_buf[hex_str_buf_size(8)];
 		*data = buf;
 		*data_size = 8;
 		st_tp_read_host_buffer_header();
 		memcpy(buf, rx_buf.bytes, *data_size);
-		CPRINTS("header: %ph", HEX_BUF(buf, *data_size));
+		snprintf_hex_buffer(str_buf, sizeof(str_buf),
+				    HEX_BUF(buf, *data_size));
+		CPRINTS("header: %s", str_buf);
 		return EC_SUCCESS;
+	}
 	case ST_TP_DEBUG_CMD_READ_EVENTS:
 		num_events = st_tp_read_all_events(0);
 		if (num_events) {
 			int i;
 
 			for (i = 0; i < num_events; i++) {
-				CPRINTS("event[%d]: id=%d, type=%d",
-					i, rx_buf.events[i].evt_id,
+				CPRINTS("event[%d]: id=%d, type=%d", i,
+					rx_buf.events[i].evt_id,
 					rx_buf.events[i].report.report_type);
 			}
 		}
@@ -1336,9 +1314,7 @@ static void touchpad_read_idle_count(void)
 	uint32_t count;
 	int ret;
 	int rx_len = 2 + ST_TP_EXTRA_BYTE;
-	uint8_t cmd_read_counter[] = {
-		0xFB, 0x00, 0x10, 0xff, 0xff
-	};
+	uint8_t cmd_read_counter[] = { 0xFB, 0x00, 0x10, 0xff, 0xff };
 
 	/* Find address of idle count. */
 	ret = st_tp_load_host_data(ST_TP_MEM_ID_SYSTEM_INFO);
@@ -1373,13 +1349,9 @@ static void touchpad_read_idle_count(void)
  */
 static void touchpad_collect_error(void)
 {
-	const uint8_t tx_dump_error[] = {
-		0xFB, 0x20, 0x01, 0xEF, 0x80
-	};
+	const uint8_t tx_dump_error[] = { 0xFB, 0x20, 0x01, 0xEF, 0x80 };
 	uint32_t dump_info[2];
-	const uint8_t tx_dump_memory[] = {
-		0xFB, 0x00, 0x10, 0x00, 0x00
-	};
+	const uint8_t tx_dump_memory[] = { 0xFB, 0x00, 0x10, 0x00, 0x00 };
 	uint32_t dump_memory[16];
 	int i;
 
@@ -1398,14 +1370,10 @@ static void touchpad_collect_error(void)
 	CPRINTS("check memory dump:");
 	for (i = 0; i < ARRAY_SIZE(dump_memory); i += 8) {
 		CPRINTF("%08x %08x %08x %08x %08x %08x %08x %08x\n",
-			dump_memory[i + 0],
-			dump_memory[i + 1],
-			dump_memory[i + 2],
-			dump_memory[i + 3],
-			dump_memory[i + 4],
-			dump_memory[i + 5],
-			dump_memory[i + 6],
-			dump_memory[i + 7]);
+			dump_memory[i + 0], dump_memory[i + 1],
+			dump_memory[i + 2], dump_memory[i + 3],
+			dump_memory[i + 4], dump_memory[i + 5],
+			dump_memory[i + 6], dump_memory[i + 7]);
 	}
 
 	for (i = 0; i < 3; i++)
@@ -1509,7 +1477,7 @@ void touchpad_task(void *u)
 #if defined(CONFIG_USB_SUSPEND) || defined(CONFIG_TABLET_MODE)
 static void touchpad_power_change(void)
 {
-	task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_POWER, 0);
+	task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_POWER);
 }
 #endif
 #ifdef CONFIG_USB_SUSPEND
@@ -1522,9 +1490,9 @@ DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, touchpad_power_change, HOOK_PRIO_DEFAULT);
 #ifdef CONFIG_USB_ISOCHRONOUS
 static void st_tp_enable_heat_map(void)
 {
-	int new_state = (SYSTEM_STATE_ENABLE_HEAT_MAP |
-			 SYSTEM_STATE_ENABLE_DOME_SWITCH |
-			 SYSTEM_STATE_ACTIVE_MODE);
+	int new_state =
+		(SYSTEM_STATE_ENABLE_HEAT_MAP |
+		 SYSTEM_STATE_ENABLE_DOME_SWITCH | SYSTEM_STATE_ACTIVE_MODE);
 	int mask = new_state;
 
 	st_tp_update_system_state(new_state, mask);
@@ -1619,8 +1587,8 @@ static int st_tp_read_frame(void)
 	 * valid, but the data should always be ready when interrupt pin is low.
 	 * Let's skip this check for now.
 	 */
-	ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf),
-			      (uint8_t *)rx_buf, rx_len);
+	ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf), (uint8_t *)rx_buf,
+			      rx_len);
 	if (ret == EC_SUCCESS) {
 		int i;
 		uint8_t *dest = usb_packet[spi_buffer_index & 1].frame;
@@ -1649,16 +1617,12 @@ static int heatmap_send_packet(struct usb_isochronous_config const *config);
 static void st_tp_usb_tx_callback(struct usb_isochronous_config const *config);
 
 /* USB descriptors */
-USB_ISOCHRONOUS_CONFIG_FULL(usb_st_tp_heatmap_config,
-			    USB_IFACE_ST_TOUCHPAD,
-			    USB_CLASS_VENDOR_SPEC,
-			    USB_SUBCLASS_GOOGLE_HEATMAP,
+USB_ISOCHRONOUS_CONFIG_FULL(usb_st_tp_heatmap_config, USB_IFACE_ST_TOUCHPAD,
+			    USB_CLASS_VENDOR_SPEC, USB_SUBCLASS_GOOGLE_HEATMAP,
 			    USB_PROTOCOL_GOOGLE_HEATMAP,
-			    USB_STR_HEATMAP_NAME,  /* interface name */
-			    USB_EP_ST_TOUCHPAD,
-			    USB_ISO_PACKET_SIZE,
-			    st_tp_usb_tx_callback,
-			    st_tp_usb_set_interface,
+			    USB_STR_HEATMAP_NAME, /* interface name */
+			    USB_EP_ST_TOUCHPAD, USB_ISO_PACKET_SIZE,
+			    st_tp_usb_tx_callback, st_tp_usb_set_interface,
 			    1 /* 1 extra EP for interrupts */)
 
 /* ***This function will be executed in interrupt context*** */
@@ -1703,13 +1667,10 @@ static int heatmap_send_packet(struct usb_isochronous_config const *config)
 	if (num_byte_available > 0) {
 		if (transmit_report_offset == 0)
 			packet_header.flags |= HEADER_FLAGS_NEW_FRAME;
-		ret = usb_isochronous_write_buffer(
-				config,
-				(uint8_t *)&packet_header,
-				sizeof(packet_header),
-				offset,
-				&buffer_id,
-				0);
+		ret = usb_isochronous_write_buffer(config,
+						   (uint8_t *)&packet_header,
+						   sizeof(packet_header),
+						   offset, &buffer_id, 0);
 		/*
 		 * Since USB_ISO_PACKET_SIZE > sizeof(packet_header), this must
 		 * be true.
@@ -1721,12 +1682,8 @@ static int heatmap_send_packet(struct usb_isochronous_config const *config)
 		packet_header.index++;
 
 		ret = usb_isochronous_write_buffer(
-				config,
-				(uint8_t *)packet + transmit_report_offset,
-				num_byte_available,
-				offset,
-				&buffer_id,
-				1);
+			config, (uint8_t *)packet + transmit_report_offset,
+			num_byte_available, offset, &buffer_id, 1);
 		if (ret < 0) {
 			/*
 			 * TODO(b/70482333): handle this error, it might be:
@@ -1766,7 +1723,7 @@ static int st_tp_usb_set_interface(usb_uint alternate_setting,
 	} else if (alternate_setting == 0) {
 		hook_call_deferred(&st_tp_disable_heat_map_data, 0);
 		return 0;
-	} else  /* we only have two settings. */
+	} else /* we only have two settings. */
 		return -1;
 }
 
@@ -1785,12 +1742,12 @@ static int get_heat_map_addr(void)
 }
 
 struct st_tp_interrupt_t {
-#define ST_TP_INT_FRAME_AVAILABLE	BIT(0)
+#define ST_TP_INT_FRAME_AVAILABLE BIT(0)
 	uint8_t flags;
 } __packed;
 
-static usb_uint st_tp_usb_int_buffer[
-	DIV_ROUND_UP(sizeof(struct st_tp_interrupt_t), 2)] __usb_ram;
+static usb_uint st_tp_usb_int_buffer[DIV_ROUND_UP(
+	sizeof(struct st_tp_interrupt_t), 2)] __usb_ram;
 
 const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_ST_TOUCHPAD, 81) = {
 	.bLength = USB_DT_ENDPOINT_SIZE,
@@ -1809,8 +1766,8 @@ static void st_tp_interrupt_send(void)
 
 	if (usb_buffer_index < spi_buffer_index)
 		report.flags |= ST_TP_INT_FRAME_AVAILABLE;
-	memcpy_to_usbram((void *)usb_sram_addr(st_tp_usb_int_buffer),
-			 &report, sizeof(report));
+	memcpy_to_usbram((void *)usb_sram_addr(st_tp_usb_int_buffer), &report,
+			 sizeof(report));
 	/* enable TX */
 	STM32_TOGGLE_EP(USB_EP_ST_TOUCHPAD_INT, EP_TX_MASK, EP_TX_VALID, 0);
 	usb_wake();
@@ -1833,10 +1790,8 @@ static void st_tp_interrupt_event(enum usb_ep_event evt)
 		btable_ep[ep].tx_addr = usb_sram_addr(st_tp_usb_int_buffer);
 		btable_ep[ep].tx_count = sizeof(struct st_tp_interrupt_t);
 
-		STM32_USB_EP(ep) = ((ep << 0) |
-				    EP_TX_VALID |
-				    (3 << 9) /* interrupt EP */ |
-				    EP_RX_DISAB);
+		STM32_USB_EP(ep) = ((ep << 0) | EP_TX_VALID |
+				    (3 << 9) /* interrupt EP */ | EP_RX_DISAB);
 	}
 }
 
@@ -1846,7 +1801,7 @@ USB_DECLARE_EP(USB_EP_ST_TOUCHPAD_INT, st_tp_interrupt_tx, st_tp_interrupt_tx,
 #endif
 
 /* Debugging commands */
-static int command_touchpad_st(int argc, char **argv)
+static int command_touchpad_st(int argc, const char **argv)
 {
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;

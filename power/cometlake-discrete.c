@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,8 +12,8 @@
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "intel_x86.h"
 #include "power.h"
+#include "power/intel_x86.h"
 #include "power_button.h"
 #include "task.h"
 #include "timer.h"
@@ -217,7 +217,9 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	shutdown_s5_rails();
 }
 
-void chipset_handle_espi_reset_assert(void) {}
+void chipset_handle_espi_reset_assert(void)
+{
+}
 
 enum power_state chipset_force_g3(void)
 {
@@ -303,7 +305,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_signals(POWER_SIGNAL_MASK(PP1800_A_PGOOD) |
 				       POWER_SIGNAL_MASK(PP1050_A_PGOOD)))
 			return pgood_timeout(POWER_S5G3);
-		msleep(10);	/* tPCH03: VCCPRIM good -> RSMRST >10ms */
+		msleep(10); /* tPCH03: VCCPRIM good -> RSMRST >10ms */
 		gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 		break;
 
@@ -383,7 +385,9 @@ enum power_state power_handle_state(enum power_state state)
  * implies power sequencing is all-off and we don't have any external
  * PMIC to synchronize state with.
  */
-void chipset_handle_reboot(void) {}
+void chipset_handle_reboot(void)
+{
+}
 #endif /* CONFIG_VBOOT_EFS */
 
 void c10_gate_interrupt(enum gpio_signal signal)
@@ -406,8 +410,8 @@ void c10_gate_interrupt(enum gpio_signal signal)
 
 void slp_s3_interrupt(enum gpio_signal signal)
 {
-	if (!gpio_get_level(GPIO_SLP_S3_L)
-	    && chipset_in_state(CHIPSET_STATE_ON)) {
+	if (!gpio_get_level(GPIO_SLP_S3_L) &&
+	    chipset_in_state(CHIPSET_STATE_ON)) {
 		/* Falling edge on SLP_S3_L means dropping to S3 from S0 */
 		shutdown_s0_rails();
 	}

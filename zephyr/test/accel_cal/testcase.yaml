@@ -1,0 +1,5 @@
+common:
+  platform_allow: native_posix
+tests:
+  accel_cal.default: {}
+

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,7 +19,9 @@
 #ifdef CONFIG_BACKLIGHT_REQ_GPIO
 void backlight_interrupt(enum gpio_signal signal);
 #else
-static inline void backlight_interrupt(enum gpio_signal signal) { }
+static inline void backlight_interrupt(enum gpio_signal signal)
+{
+}
 #endif /* !CONFIG_BACKLIGHT_REQ_GPIO */
 
 /**
@@ -27,4 +29,4 @@ static inline void backlight_interrupt(enum gpio_signal signal) { }
  */
 void enable_backlight(int enabled);
 
-#endif  /* __CROS_EC_BACKLIGHT_H */
+#endif /* __CROS_EC_BACKLIGHT_H */

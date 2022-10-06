@@ -1,0 +1,80 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Common fields for motion sensors
+
+include: base.yaml
+
+properties:
+  status:
+    required: true
+  active-mask:
+    type: string
+    description: indicates system power state for sensor to be active
+    enum:
+      - "SENSOR_ACTIVE_S5"
+      - "SENSOR_ACTIVE_S3"
+      - "SENSOR_ACTIVE_S0"
+      - "SENSOR_ACTIVE_S0_S3"
+      - "SENSOR_ACTIVE_S0_S3_S5"
+    default: "SENSOR_ACTIVE_S0_S3"
+  location:
+    type: string
+    required: true
+    description: location of the motion sensor
+    enum:
+      - "MOTIONSENSE_LOC_BASE"
+      - "MOTIONSENSE_LOC_LID"
+      - "MOTIONSENSE_LOC_CAMERA"
+  mutex:
+    type: phandle
+    required: false
+    description: mutex used by chip driver
+  port:
+    type: phandle
+    required: false
+    description: phandle to the named i2c port
+  rot-standard-ref:
+    type: phandle
+    required: false
+    description: phandle to 3x3 rotation matrix
+  default-range:
+    type: int
+    required: false
+    description: default range of sensor read
+  drv-data:
+    type: phandle
+    required: false
+    description: phandle to driver data to be used for the motion sensor.
+      Some drivers require this to be a global shared datas structure
+      used by all instances of this device, others require separate
+      data structures for each instance.
+  alternate-for:
+    type: phandle
+    description: phandle to another sensor that can be swapped with this one
+      at runtime.
+  alternate-ssfc-indicator:
+    type: phandle
+    description: phandle to CBI SSFC value indicating that the sensor
+      should be used
+  int-signal:
+    type: phandle
+    description: pin which triggers interrupt for sensor
+
+#
+# examples:
+#
+# lid_accel: lid-accel {
+#           compatible = "cros-ec,bma255";
+#           status = "okay";
+#
+#           active-mask = "SENSOR_ACTIVE_S0_S3";
+#           location = "MOTIONSENSE_LOC_LID";
+#           mutex = <&mutex_bma255>;
+#           port = <&i2c_sensor>;
+#           rot-standard-ref = <&lid_rot_ref>;
+#           default-range = <2>;
+#           drv-data = <&bma255_data>;
+# };
+#

@@ -1,0 +1,13 @@
+name: "Zephyr RTOS atomic functions"
+description:
+    "atomic functions for bit manipulating"
+
+third_party {
+  url {
+    type: GIT
+    value: "https://github.com/zephyrproject-rtos/zephyr"
+  }
+  version: "8b4a3e23287f88dc270e1fe9400acd7be2963db2"
+  last_upgrade_date { year: 2022 month: 3 day: 4 }
+  license_type: NOTICE
+}

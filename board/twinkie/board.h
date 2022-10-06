@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -42,7 +42,7 @@
 #define CONFIG_ADC
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_INA231
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
@@ -54,7 +54,7 @@
 /* USB configuration */
 #define CONFIG_USB_PID 0x500A
 /* By default, enable all console messages excepted USB */
-#define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_USB))
+#define CC_DEFAULT (CC_ALL & ~CC_MASK(CC_USB))
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -79,9 +79,9 @@ void trace_packets(void);
 void set_trace_mode(int mode);
 
 /* Timer selection */
-#define TIM_CLOCK_MSB  3
+#define TIM_CLOCK_MSB 3
 #define TIM_CLOCK_LSB 15
-#define TIM_ADC       16
+#define TIM_ADC 16
 
 #include "gpio_signal.h"
 
@@ -106,28 +106,28 @@ enum usb_strings {
 };
 
 /* Standard-current Rp */
-#define PD_SRC_VNC           PD_SRC_DEF_VNC_MV
-#define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV
+#define PD_SRC_VNC PD_SRC_DEF_VNC_MV
+#define PD_SRC_RD_THRESHOLD PD_SRC_DEF_RD_THRESH_MV
 
 /* delay necessary for the voltage transition on the power supply */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 50000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_POWER_MW 60000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE 0
-#define USB_IFACE_VENDOR  1
+#define USB_IFACE_VENDOR 1
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL   0
-#define USB_EP_CONSOLE   1
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
 
 /*
  * Endpoint 2 is missing because the console used to use two bidirectional
@@ -137,13 +137,13 @@ enum usb_strings {
  */
 
 #ifdef HAS_TASK_SNIFFER
-#define USB_EP_SNIFFER   3
-#define USB_EP_COUNT     4
-#define USB_IFACE_COUNT  2
+#define USB_EP_SNIFFER 3
+#define USB_EP_COUNT 4
+#define USB_IFACE_COUNT 2
 #else
-#define USB_EP_COUNT     2
+#define USB_EP_COUNT 2
 /* No IFACE_VENDOR for the sniffer */
-#define USB_IFACE_COUNT  1
+#define USB_IFACE_COUNT 1
 #endif
 
 #endif /* __CROS_EC_BOARD_H */

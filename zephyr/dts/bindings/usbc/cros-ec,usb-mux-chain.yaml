@@ -1,0 +1,47 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USB-C muxes chain
+
+compatible: "cros-ec,usb-mux-chain"
+
+properties:
+  usb-muxes:
+    type: phandles
+    required: true
+    description: |
+      List of USB-C muxes and retimers for the USB-C port. The USB-C subsystem
+      traverses this list in the order specified. The phandles are references to
+      cros-ec,usbc-mux nodes. Link this mux chain with a specific USB-C port by
+      adding the "cros-ec,usb-mux-chain" as a child of the "named-usbc-port"
+      node.
+
+  alternative-chain:
+    type: boolean
+    description: |
+      Set if this is alternative USB-C muxes chain. It can be selected in
+      runtime using USB_MUX_ENABLE_ALTERNATIVE macro.
+
+# Example DTS defining USB-C port 0 with main and alternative usb mux chains.
+# The main chain has two muxes: BB retimer and virtual mux.
+# The alternative chain has three muxes: BB retimer, SOC side BB retimer and
+# virtual mux.
+#
+#       usbc_port0: port0@0 {
+#               compatible = "named-usbc-port";
+#               reg = <0>;
+#               ...
+#               usb-mux-chain-0 {
+#                       compatible = "cros-ec,usb-mux-chain";
+#                       usb-muxes = <&usb_c0_bb_retimer
+#                                    &virtual_mux_c0>;
+#               };
+#               usb-mux-chain-0 {
+#                       compatible = "cros-ec,usb-mux-chain";
+#                       alternative-chain;
+#                       usb-muxes = <&usb_c0_bb_retimer
+#                                    &usb_c0_soc_side_bb_retimer
+#                                    &virtual_mux_c0>;
+#               };
+#       };

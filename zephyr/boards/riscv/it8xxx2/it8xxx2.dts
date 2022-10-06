@@ -1,0 +1,48 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/gpio_defines.h>
+#include <cros/ite/it8xxx2.dtsi>
+#include <ite/it8xxx2.dtsi>
+
+/ {
+	model = "Google IT8XXX2 Baseboard";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,flash = &flash0;
+		zephyr,flash-controller = &flashctrl;
+	};
+
+	/* Override keyboard scanning */
+	soc {
+		/delete-node/ kscan@f01d00;
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	clock-frequency = <1804800>;
+};
+
+&ite_uart1_wrapper {
+	status = "okay";
+	pinctrl-0 = <&uart1_rx_gpb0_default
+		     &uart1_tx_gpb1_default>;
+	pinctrl-names = "default";
+};
+
+&cros_kb_raw {
+	status = "okay";	/* Override in project dts if not required */
+};
+
+&espi0 {
+	status = "okay";
+};

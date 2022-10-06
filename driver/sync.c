@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -17,15 +17,11 @@
 #include "task.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ##args)
 
 #ifndef CONFIG_ACCEL_FIFO
 #error This driver needs CONFIG_ACCEL_FIFO
-#endif
-
-#ifndef CONFIG_ACCEL_INTERRUPTS
-#error This driver needs CONFIG_ACCEL_INTERRUPTS
 #endif
 
 struct sync_event_t {
@@ -37,8 +33,11 @@ static struct queue const sync_event_queue =
 	QUEUE_NULL(CONFIG_SYNC_QUEUE_SIZE, struct sync_event_t);
 
 struct sync_event_t next_event;
-struct ec_response_motion_sensor_data vector =
-	{.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP, .data = {0, 0, 0} };
+struct ec_response_motion_sensor_data vector = {
+	.flags = MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO,
+	.data = { 0, 0, 0 }
+};
+
 int sync_enabled;
 
 static int sync_read(const struct motion_sensor_t *s, intv3_t v)
@@ -52,8 +51,8 @@ static int sync_read(const struct motion_sensor_t *s, intv3_t v)
  * still depends on being able to set this to 0 to disable it, we'll just use
  * non 0 rate values as an enable boolean.
  */
-static int sync_set_data_rate(const struct motion_sensor_t *s,
-				int rate, int roundup)
+static int sync_set_data_rate(const struct motion_sensor_t *s, int rate,
+			      int roundup)
 {
 	sync_enabled = !!rate;
 	CPRINTF("sync event driver enabling=%d\n", sync_enabled);
@@ -76,7 +75,7 @@ void sync_interrupt(enum gpio_signal signal)
 	next_event.counter++;
 	queue_add_unit(&sync_event_queue, &next_event);
 
-	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_SYNC_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_SYNC_INT_EVENT);
 }
 
 /* Bottom half of the irq handler */
@@ -89,15 +88,15 @@ static int motion_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	while (queue_remove_unit(&sync_event_queue, &sync_event)) {
 		vector.data[X] = sync_event.counter;
-		motion_sense_fifo_stage_data(
-			&vector, s, 1, sync_event.timestamp);
+		motion_sense_fifo_stage_data(&vector, s, 1,
+					     sync_event.timestamp);
 	}
 	motion_sense_fifo_commit_data();
 
 	return EC_SUCCESS;
 }
 
-static int sync_init(const struct motion_sensor_t *s)
+static int sync_init(struct motion_sensor_t *s)
 {
 	vector.sensor_num = s - motion_sensors;
 	sync_enabled = 0;
@@ -107,7 +106,7 @@ static int sync_init(const struct motion_sensor_t *s)
 }
 
 #ifdef CONFIG_SYNC_COMMAND
-static int command_sync(int argc, char **argv)
+static int command_sync(int argc, const char **argv)
 {
 	int count = 1, i;
 
@@ -119,9 +118,7 @@ static int command_sync(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sync, command_sync,
-	"[count]",
-	"Simulates sync events");
+DECLARE_CONSOLE_COMMAND(sync, command_sync, "[count]", "Simulates sync events");
 #endif
 
 const struct accelgyro_drv sync_drv = {
@@ -131,4 +128,3 @@ const struct accelgyro_drv sync_drv = {
 	.get_data_rate = sync_get_data_rate,
 	.irq_handler = motion_irq_handler,
 };
-

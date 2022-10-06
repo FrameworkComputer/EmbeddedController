@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -27,7 +27,7 @@
 #define CONFIG_UART_RX_REQ_CH 4
 
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_0 0
 #define FMPI2C_PORT_3 3
 
@@ -43,12 +43,12 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE 0
-#define USB_IFACE_COUNT   1
+#define USB_IFACE_COUNT 1
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL 0
 #define USB_EP_CONSOLE 1
-#define USB_EP_COUNT   2
+#define USB_EP_COUNT 2
 
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
@@ -58,7 +58,7 @@
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_DMA_HELP
-#define CONFIG_FLASH
+#define CONFIG_FLASH_CROS
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

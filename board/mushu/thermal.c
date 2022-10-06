@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -23,8 +23,7 @@ void fan_set_percent(int fan, int pct)
 	new_rpm = fan_percent_to_rpm(fan, pct);
 	actual_rpm = fan_get_rpm_actual(FAN_CH(fan));
 
-	if (new_rpm &&
-	    actual_rpm < min_rpm &&
+	if (new_rpm && actual_rpm < min_rpm &&
 	    new_rpm < fans[fan].rpm->rpm_start)
 		new_rpm = fans[fan].rpm->rpm_start;
 

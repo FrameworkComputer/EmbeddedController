@@ -1,0 +1,181 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_LED_COMMON
+	depends on !PLATFORM_EC_LED_DT
+	bool "LED Support"
+	help
+	  Enable the common LED module supporting automatic control of the
+	  battery and power LEDs.
+
+if PLATFORM_EC_LED_COMMON
+
+# TODO: Add other choices
+#  CONFIG_LED_POLICY_STD
+#  CONFIG_LED_PWM_CHARGE_STATE_ONLY
+#  CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
+#  CONFIG_LED_ONOFF_STATES
+
+config PLATFORM_EC_LED_PWM
+	bool "PWM (Pulse Width Modulation) LEDs"
+	help
+	  Enable PWM (Pulse Width Modulation) controlled LEDs that conform to
+	  the Chromium OS LED behavior specification.
+
+	  Your board files must implement led_set_brightness() function, which
+	  is used by the LED PWM module to set the board LEDs in response to
+	  power and charging events.
+
+if PLATFORM_EC_LED_PWM
+
+config PLATFORM_EC_LED_PWM_TASK_DISABLED
+	bool "Disable common PWM LEDs Task"
+	help
+	  Support common PWM (Pulse Width Modulation) controlled LEDs that do
+	  not conform to the Chromium OS LED behavior specification.
+
+	  Your board code must define and enable it's own task for managing the
+	  LEDs.
+
+config PLATFORM_EC_CONSOLE_CMD_LEDTEST
+	bool "Console command: ledtest"
+	default y
+	help
+	  Enable the "ledtest" command. This command lets you override the
+	  automatic control of the platform LEDs. For example:
+
+	    ledtest 0 enable red
+
+	  disables automatic control of the first PWM LED and forces the LED
+	  color to red.  Set the 2nd parameter to "disable" to return back
+	  to automatic control:
+
+	    ledtest 0 disable
+
+config PLATFORM_EC_LED_PWM_CHARGE_COLOR
+	int "Battery charging LED color"
+	default 5
+	range 0 5
+	help
+	  Configure the color of LED when battery is charging:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_CHARGE_ERROR_COLOR
+	int "Charging error LED color"
+	default 0
+	range 0 5
+	help
+	  Configure the color of LED when Charging error or battery not present:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_NEAR_FULL_COLOR
+	int "Battery almost full LED color"
+	default 1
+	range 0 5
+	help
+	  Configure the color of LED when charge battery is almost full:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_SOC_ON_COLOR
+	int "AP powered on LED color"
+	default 1
+	range 0 5
+	help
+	  Configure the color of LED when AP powered on:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_SOC_SUSPEND_COLOR
+	int "AP suspended LED color"
+	default 1
+	range 0 5
+	help
+	  Configure the color of LED when AP suspended:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_LOW_BATT_COLOR
+	int "Low battery LED color"
+	default 5
+	range 0 5
+	help
+	  Configure the color of LED when battery is low:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+endif # PLATFORM_EC_LED_PWM
+
+config PLATFORM_EC_LED_ONOFF_STATES
+	bool "EC LED On-Off States"
+	help
+	  Enable EC Standard LED On-Off state code that conforms to the
+	  Chromium OS LED On-Off state behavior.
+
+if PLATFORM_EC_LED_ONOFF_STATES
+
+config PLATFORM_EC_LED_ONOFF_STATES_BAT_LOW
+	int "EC LED On-Off State Battery Low Percentage"
+	default 10
+	help
+	  Enable EC Standard LED On-Off bettery low percentage
+	  for standard Chromium OS LED On-Off battery low
+	  state behavior.
+
+endif # PLATFORM_EC_LED_ONOFF_STATES
+
+endif # PLATFORM_EC_LED_COMMON
+
+config PLATFORM_EC_MAX695X_SEVEN_SEGMENT_DISPLAY
+	bool "MAX695X Seven Segment Display"
+	help
+	  Enable this to support MAX6958/MAX6959 7-Segment LED Display.
+	  The MAX6958/MAX6959 is a compact multiplexed common - cathode display
+	  designed to interface microprocessors with seven - segment numerical
+	  LED digits or to discrete LEDs via a 2-wire serial interface
+	  compatible with SMBusTM and I2C.
+
+config PLATFORM_EC_CONSOLE_CMD_SEVEN_SEGMENT_DISPLAY
+	bool "Console command: seg"
+	help
+	  Enable the "seg" console command. This command allow the user to write
+	  on seven segment display.

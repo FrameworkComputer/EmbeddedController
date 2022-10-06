@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,8 +10,8 @@
 
 #ifdef CTS_MODULE
 /* CTS tests are small. We can use smaller size to expedite flash time. */
-#undef  CONFIG_FLASH_SIZE
-#define CONFIG_FLASH_SIZE 0x00040000	/* 256k */
+#undef CONFIG_FLASH_SIZE_BYTES
+#define CONFIG_FLASH_SIZE_BYTES 0x00040000 /* 256k */
 #endif
 
 /* Optional features */
@@ -37,7 +37,7 @@
 
 #ifdef CTS_MODULE_I2C
 #define CONFIG_I2C
-#define CONFIG_I2C_SLAVE
+#define CONFIG_I2C_PERIPHERAL
 #define CONFIG_HOSTCMD_I2C_SLAVE_ADDR 0x3c
 #define I2C_PORT_EC STM32_I2C2_PORT
 #endif
@@ -50,22 +50,22 @@
 
 #ifndef __ASSEMBLER__
 
-#undef CONFIG_FLASH
+#undef CONFIG_FLASH_CROS
 #undef CONFIG_FLASH_PHYSICAL
 
 /* Timer selection */
-#define TIM_CLOCK32	5
+#define TIM_CLOCK32 5
 
 /* External clock speeds (8 MHz) */
 #define STM32_HSE_CLOCK 8000000
 
 /* PLL configuration. Freq = STM32_HSE_CLOCK * n/m/r */
 #undef STM32_PLLM
-#define STM32_PLLM	1
+#define STM32_PLLM 1
 #undef STM32_PLLN
-#define STM32_PLLN	10
+#define STM32_PLLN 10
 #undef STM32_PLLR
-#define STM32_PLLR	2
+#define STM32_PLLR 2
 
 #include "gpio_signal.h"
 

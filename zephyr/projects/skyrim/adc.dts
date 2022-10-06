@@ -1,0 +1,82 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_charger: temp-charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 1>;
+		};
+		adc_temp_memory: temp-memory {
+			enum-name = "ADC_TEMP_SENSOR_MEMORY";
+			io-channels = <&adc0 2>;
+		};
+		adc_core_imon1: core-imon1 {
+			enum-name = "ADC_CORE_IMON1";
+			io-channels = <&adc0 3>;
+		};
+		adc_core_imon2: core-imon2 {
+			enum-name = "ADC_SOC_IMON2";
+			io-channels = <&adc0 4>;
+		};
+	};
+
+	temp_charger_thermistor: charger-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_temp_charger>;
+	};
+
+	temp_memory_thermistor: memory-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_temp_memory>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		charger-thermistor {
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			sensor = <&temp_charger_thermistor>;
+		};
+
+		memory-thermistor {
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&temp_memory_thermistor>;
+		};
+
+		cpu {
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_fan_off = <60>;
+			temp_fan_max = <90>;
+			power-good-pin = <&gpio_s0_pgood>;
+			sensor = <&temp_cpu>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42
+		     &adc0_chan4_gp41>;
+	pinctrl-names = "default";
+};
+
+&thermistor_3V3_30K9_47K_4050B {
+	status = "okay";
+};

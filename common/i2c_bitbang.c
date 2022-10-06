@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,7 +10,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPUTS(str) cputs(CC_I2C, str)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 static int started;
 
@@ -21,8 +22,8 @@ static void i2c_delay(void)
 }
 
 /* Number of attempts to unwedge each pin. */
-#define UNWEDGE_SCL_ATTEMPTS  10
-#define UNWEDGE_SDA_ATTEMPTS  3
+#define UNWEDGE_SCL_ATTEMPTS 10
+#define UNWEDGE_SDA_ATTEMPTS 3
 
 static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 {
@@ -31,17 +32,16 @@ static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 	gpio_set_level(i2c_port->scl, 1);
 	/*
 	 * If clock is low, wait for a while in case of clock stretched
-	 * by a slave.
+	 * by a peripheral.
 	 */
 	if (!gpio_get_level(i2c_port->scl)) {
 		for (i = 0;; i++) {
 			if (i >= UNWEDGE_SCL_ATTEMPTS) {
 				/*
-				 * If we get here, a slave is holding the clock
-				 * low and there is nothing we can do.
+				 * If we get here, a peripheral is holding the
+				 * clock low and there is nothing we can do.
 				 */
-				CPRINTS("I2C%d unwedge failed, "
-					"SCL is held low", i2c_port->port);
+				CPUTS("I2C unwedge failed, SCL is held low\n");
 				return;
 			}
 			i2c_delay();
@@ -53,7 +53,7 @@ static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 	if (gpio_get_level(i2c_port->sda))
 		return;
 
-	CPRINTS("I2C%d unwedge called with SDA held low", i2c_port->port);
+	CPUTS("I2C unwedge called with SDA held low\n");
 
 	/* Keep trying to unwedge the SDA line until we run out of attempts. */
 	for (i = 0; i < UNWEDGE_SDA_ATTEMPTS; i++) {
@@ -62,9 +62,9 @@ static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 		i2c_delay();
 
 		/*
-		 * Clock through the problem by clocking out 9 bits. If slave
-		 * releases the SDA line, then we can stop clocking bits and
-		 * send a STOP.
+		 * Clock through the problem by clocking out 9 bits. If
+		 * peripheral releases the SDA line, then we can stop clocking
+		 * bits and send a STOP.
 		 */
 		for (j = 0; j < 9; j++) {
 			if (gpio_get_level(i2c_port->sda))
@@ -84,14 +84,14 @@ static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 
 		/* Check if the bus is unwedged. */
 		if (gpio_get_level(i2c_port->sda) &&
-				gpio_get_level(i2c_port->scl))
+		    gpio_get_level(i2c_port->scl))
 			break;
 	}
 
 	if (!gpio_get_level(i2c_port->sda))
-		CPRINTS("I2C%d unwedge failed, SDA still low", i2c_port->port);
+		CPUTS("I2C unwedge failed, SDA still low\n");
 	if (!gpio_get_level(i2c_port->scl))
-		CPRINTS("I2C%d unwedge failed, SCL still low", i2c_port->port);
+		CPUTS("I2C unwedge failed, SCL still low\n");
 }
 
 static void i2c_stop_cond(const struct i2c_port_t *i2c_port)
@@ -110,9 +110,9 @@ static void i2c_stop_cond(const struct i2c_port_t *i2c_port)
 	 * SMBus 3.0, 4.2.5
 	 *
 	 *  the recommendation is that if SMBDAT is still low tTIMEOUT,MAX after
-	 *  SMBCLK has gone high at the end of a transaction the master should
-	 *  hold SMBCLK low for at least tTIMEOUT,MAX in an attempt to reset the
-	 *  SMBus interface of all of the devices on the bus.
+	 *  SMBCLK has gone high at the end of a transaction the controller
+	 *  should hold SMBCLK low for at least tTIMEOUT,MAX in an attempt to
+	 *  reset the SMBus interface of all of the devices on the bus.
 	 */
 	for (i = 0; i < 7000; i++) {
 		if (gpio_get_level(i2c_port->scl))
@@ -145,12 +145,12 @@ static int clock_stretching(const struct i2c_port_t *i2c_port)
 	 * Devices participating in a transfer can abort the transfer in
 	 * progress and release the bus when any single clock low interval
 	 * exceeds the value of tTIMEOUT,MIN(=25ms).
-	 * After the master in a transaction detects this condition, it must
+	 * After the controller in a transaction detects this condition, it must
 	 * generate a stop condition within or after the current data byte in
 	 * the transfer process.
 	 */
 	i2c_stop_cond(i2c_port);
-	CPRINTS("clock low timeout");
+	CPUTS("clock low timeout\n");
 
 	return EC_ERROR_TIMEOUT;
 }
@@ -170,7 +170,7 @@ static int i2c_start_cond(const struct i2c_port_t *i2c_port)
 		i2c_delay();
 
 		if (gpio_get_level(i2c_port->sda) == 0) {
-			CPRINTS("%s: arbitration lost", __func__);
+			CPUTS("start_cond: arbitration lost\n");
 			started = 0;
 			return EC_ERROR_UNKNOWN;
 		}
@@ -204,7 +204,7 @@ static int i2c_write_bit(const struct i2c_port_t *i2c_port, int bit)
 	i2c_delay();
 
 	if (bit && gpio_get_level(i2c_port->sda) == 0) {
-		CPRINTS("%s: arbitration lost", __func__);
+		CPUTS("write_bit: arbitration lost\n");
 		started = 0;
 		return EC_ERROR_UNKNOWN;
 	}
@@ -249,10 +249,11 @@ static int i2c_write_byte(const struct i2c_port_t *i2c_port, uint8_t byte)
 
 	if (nack) {
 		/*
-		 * The slave device detects an invalid command or invalid data.
-		 * In this case the slave device must NACK the received byte.
-		 * The master upon detection of this condition must generate a
-		 * STOP condition and retry the transaction
+		 * The peripheral device detects an invalid command or invalid
+		 * data. In this case the peripheral device must NACK the
+		 * received byte. The controller upon detection of this
+		 * condition must generate a STOP condition and retry the
+		 * transaction
 		 */
 		i2c_stop_cond(i2c_port);
 		/* return EC_ERROR_BUSY to indicate i2c_xfer() to retry */
@@ -262,7 +263,7 @@ static int i2c_write_byte(const struct i2c_port_t *i2c_port, uint8_t byte)
 }
 
 static int i2c_read_byte(const struct i2c_port_t *i2c_port, uint8_t *byte,
-		int nack)
+			 int nack)
 {
 	int i;
 
@@ -280,15 +281,14 @@ static int i2c_read_byte(const struct i2c_port_t *i2c_port, uint8_t *byte,
 }
 
 static int i2c_bitbang_xfer(const struct i2c_port_t *i2c_port,
-		const uint16_t slave_addr_flags,
-		const uint8_t *out, int out_size,
-		uint8_t *in, int in_size, int flags)
+			    const uint16_t addr_flags, const uint8_t *out,
+			    int out_size, uint8_t *in, int in_size, int flags)
 {
-	uint16_t addr_8bit = slave_addr_flags << 1, err = EC_SUCCESS;
+	uint16_t addr_8bit = addr_flags << 1, err = EC_SUCCESS;
 	int i = 0;
 
 	if (i2c_port->kbps != 100)
-		CPRINTS("warning: bitbang driver only supports 100kbps");
+		CPUTS("warning: bitbang driver only supports 100kbps\n");
 
 	if (out_size) {
 		if (flags & I2C_XFER_START) {
@@ -319,7 +319,8 @@ static int i2c_bitbang_xfer(const struct i2c_port_t *i2c_port,
 
 		for (i = 0; i < in_size; i++) {
 			err = i2c_read_byte(i2c_port, &in[i],
-				(flags & I2C_XFER_STOP) && (i == in_size - 1));
+					    (flags & I2C_XFER_STOP) &&
+						    (i == in_size - 1));
 			if (err)
 				goto exit;
 		}
@@ -336,9 +337,23 @@ exit:
 	return err;
 }
 
-const struct i2c_drv bitbang_drv = {
-	.xfer = &i2c_bitbang_xfer
-};
+void enable_i2c_raw_mode(bool enable)
+{
+	int i;
+
+	for (i = 0; i < i2c_bitbang_ports_used; i++) {
+		if (i2c_raw_mode(i2c_bitbang_ports[i].port, enable))
+			CPRINTS("I2C p%d: Failed to %s raw mode",
+				i2c_bitbang_ports[i].port,
+				enable ? "enable" : "disable");
+	}
+}
+
+__overridable void board_pre_task_i2c_peripheral_init(void)
+{
+}
+
+const struct i2c_drv bitbang_drv = { .xfer = &i2c_bitbang_xfer };
 
 #ifdef TEST_BUILD
 int bitbang_start_cond(const struct i2c_port_t *i2c_port)

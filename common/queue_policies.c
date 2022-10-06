@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -29,14 +29,14 @@ void queue_remove_direct(struct queue_policy const *policy, size_t count)
 
 struct producer const null_producer = {
 	.queue = NULL,
-	.ops   = &((struct producer_ops const) {
-		 .read = NULL,
+	.ops = &((struct producer_ops const){
+		.read = NULL,
 	}),
 };
 
 struct consumer const null_consumer = {
 	.queue = NULL,
-	.ops   = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = NULL,
 	}),
 };

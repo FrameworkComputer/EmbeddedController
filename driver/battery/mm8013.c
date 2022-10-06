@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -34,8 +34,8 @@ static int mm8013_read_block(int offset, uint8_t *data, int len)
 {
 	int rv;
 
-	rv = i2c_read_block(I2C_PORT_BATTERY, MM8013_ADDR_FLAGS,
-			    offset, data, len);
+	rv = i2c_read_block(I2C_PORT_BATTERY, MM8013_ADDR_FLAGS, offset, data,
+			    len);
 	usleep(I2C_WAIT_TIME);
 	if (rv)
 		return rv;
@@ -52,8 +52,8 @@ static int battery_current(int *current)
 	int16_t tmp;
 	int rv;
 
-	rv = mm8013_read_block(REG_AVERAGE_CURRENT,
-			(uint8_t *)&tmp, sizeof(int16_t));
+	rv = mm8013_read_block(REG_AVERAGE_CURRENT, (uint8_t *)&tmp,
+			       sizeof(int16_t));
 	if (rv)
 		return rv;
 	*current = tmp;
@@ -66,8 +66,8 @@ int battery_device_name(char *device_name, int buf_size)
 	int rv;
 	char out_buf[BATTERY_PACK_INFO_LENGTH + 1];
 
-	rv = mm8013_read_block(REG_PRODUCT_INFORMATION,
-			(uint8_t *)out_buf, BATTERY_PACK_INFO_LENGTH);
+	rv = mm8013_read_block(REG_PRODUCT_INFORMATION, (uint8_t *)out_buf,
+			       BATTERY_PACK_INFO_LENGTH);
 	if (rv)
 		return rv;
 
@@ -181,7 +181,7 @@ enum battery_present battery_is_present(void)
 
 void battery_get_params(struct batt_params *batt)
 {
-	struct batt_params batt_new = {0};
+	struct batt_params batt_new = { 0 };
 	int flag = 0;
 
 	/*

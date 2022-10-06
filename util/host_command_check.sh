@@ -1,8 +1,10 @@
 #!/bin/bash
 #
-# Copyright 2017 The Chromium OS Authors. All rights reserved.
+# Copyright 2017 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
+excludes=( --exclude-dir=build --exclude=TAGS )
 
 #######################################
 # Test if the following conditions hold for the ec host command
@@ -82,7 +84,8 @@ should_check() {
 main() {
 
   # Do not run the check unless an EC_[xxx]CMD change is present.
-  if [[ -z "$(git diff "${PRESUBMIT_COMMIT}~" "${PRESUBMIT_COMMIT}" -U0 |
+  if [[ -z "$(git diff --no-ext-diff "${PRESUBMIT_COMMIT}~" \
+          "${PRESUBMIT_COMMIT}" -U0 |
       egrep 'EC_[^ ]*CMD')" ]]; then
     exit 0
   fi
@@ -91,7 +94,7 @@ main() {
   ei=0
   # Search all file occurrences of "EC_CMD" and store in array
   IFS=$'\n'
-  ec_cmds=($(grep -r "EC_CMD"))
+  ec_cmds=($(grep "${excludes[@]}" -r "EC_CMD"))
 
   # Loop through and find valid occurrences of "EC_CMD" to check
   length=${#ec_cmds[@]}
@@ -106,7 +109,7 @@ main() {
 
   # Search all file occurrances of "EC_PRV_CMD" and store in array
   IFS=$'\n'
-  ec_prv_cmds=($(grep -r "EC_PRV_CMD"))
+  ec_prv_cmds=($(grep "${excludes[@]}" -r "EC_PRV_CMD"))
 
   # Loop through and find valid occurrences of "EC_PRV_CMD" to check
   length=${#ec_prv_cmds[@]}

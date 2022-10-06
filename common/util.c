@@ -1,149 +1,19 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Utility functions for Chrome EC */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "util.h"
 
-__stdlib_compat size_t strlen(const char *s)
+int find_base(int base, int *c, const char **nptr)
 {
-	int len = 0;
-
-	while (*s++)
-		len++;
-
-	return len;
-}
-
-
-__stdlib_compat size_t strnlen(const char *s, size_t maxlen)
-{
-	size_t len = 0;
-
-	while (len < maxlen && *s) {
-		s++;
-		len++;
-	}
-	return len;
-}
-
-
-__stdlib_compat int isspace(int c)
-{
-	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
-}
-
-
-__stdlib_compat int isdigit(int c)
-{
-	return c >= '0' && c <= '9';
-}
-
-
-__stdlib_compat int isalpha(int c)
-{
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-}
-
-__stdlib_compat int isupper(int c)
-{
-	return c >= 'A' && c <= 'Z';
-}
-
-__stdlib_compat int isprint(int c)
-{
-	return c >= ' ' && c <= '~';
-}
-
-__stdlib_compat int tolower(int c)
-{
-	return c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c;
-}
-
-
-__stdlib_compat int strcasecmp(const char *s1, const char *s2)
-{
-	int diff;
-
-	do {
-		diff = tolower(*s1) - tolower(*s2);
-		if (diff)
-			return diff;
-	} while (*(s1++) && *(s2++));
-	return 0;
-}
-
-
-__stdlib_compat int strncasecmp(const char *s1, const char *s2, size_t size)
-{
-	int diff;
-
-	if (!size)
-		return 0;
-
-	do {
-		diff = tolower(*s1) - tolower(*s2);
-		if (diff)
-			return diff;
-	} while (*(s1++) && *(s2++) && --size);
-	return 0;
-}
-
-
-__stdlib_compat char *strstr(const char *s1, const char *s2)
-{
-	const char *p, *q, *r;
-	size_t len1 = strlen(s1);
-	size_t len2 = strlen(s2);
-
-	if (len1 == 0 || len2 == 0 || len1 < len2)
-		return NULL;
-
-	r = s1 + len1 - len2 + 1;
-	for (; s1 < r; s1++) {
-		if (*s1 == *s2) {
-			p = s1 + 1;
-			q = s2 + 1;
-			for (; q < s2 + len2;) {
-				if (*p++ != *q++)
-					break;
-			}
-			if (*q == '\0')
-				return (char *)s1;
-		}
-	}
-	return NULL;
-}
-
-__stdlib_compat int atoi(const char *nptr)
-{
-	int result = 0;
-	int neg = 0;
-	char c = '\0';
-
-	while ((c = *nptr++) && isspace(c))
-		;
-
-	if (c == '-') {
-		neg = 1;
-		c = *nptr++;
-	}
-
-	while (isdigit(c)) {
-		result = result * 10 + (c - '0');
-		c = *nptr++;
-	}
-
-	return neg ? -result : result;
-}
-
-static int find_base(int base, int *c, const char **nptr) {
-	if ((base == 0 || base == 16) && *c == '0'
-	    && (**nptr == 'x' || **nptr == 'X')) {
+	if ((base == 0 || base == 16) && *c == '0' &&
+	    (**nptr == 'x' || **nptr == 'X')) {
 		*c = (*nptr)[1];
 		(*nptr) += 2;
 		base = 16;
@@ -153,9 +23,8 @@ static int find_base(int base, int *c, const char **nptr) {
 	return base;
 }
 
-
 /* Like strtol(), but for integers */
-__stdlib_compat int strtoi(const char *nptr, char **endptr, int base)
+int strtoi(const char *nptr, char **endptr, int base)
 {
 	int result = 0;
 	int neg = 0;
@@ -191,74 +60,25 @@ __stdlib_compat int strtoi(const char *nptr, char **endptr, int base)
 	return neg ? -result : result;
 }
 
-__stdlib_compat uint64_t strtoul(const char *nptr, char **endptr, int base)
-{
-	uint64_t result = 0;
-	int c = '\0';
-
-	while ((c = *nptr++) && isspace(c))
-		;
-
-	if (c == '+') {
-		c = *nptr++;
-	} else if (c == '-') {
-		if (endptr)
-			*endptr = (char *)nptr - 1;
-		return result;
-	}
-	
-	base = find_base(base, &c, &nptr);
-
-	while (c) {
-		if (c >= '0' && c < '0' + MIN(base, 10))
-			result = result * base + (c - '0');
-		else if (c >= 'A' && c < 'A' + base - 10)
-			result = result * base + (c - 'A' + 10);
-		else if (c >= 'a' && c < 'a' + base - 10)
-			result = result * base + (c - 'a' + 10);
-		else
-			break;
-
-		c = *nptr++;
-	}
-
-	if (endptr)
-		*endptr = (char *)nptr - 1;
-	return result;
-}
-
-__stdlib_compat int parse_bool(const char *s, int *dest)
+int parse_bool(const char *s, int *dest)
 {
 	/* off, disable, false, no */
 	if (!strcasecmp(s, "off") || !strncasecmp(s, "dis", 3) ||
-	    tolower(*s) == 'f' || tolower(*s) == 'n') {
+	    tolower((unsigned char)*s) == 'f' ||
+	    tolower((unsigned char)*s) == 'n') {
 		*dest = 0;
 		return 1;
 	}
 
 	/* on, enable, true, yes */
 	if (!strcasecmp(s, "on") || !strncasecmp(s, "ena", 3) ||
-	    tolower(*s) == 't' || tolower(*s) == 'y') {
+	    tolower((unsigned char)*s) == 't' ||
+	    tolower((unsigned char)*s) == 'y') {
 		*dest = 1;
 		return 1;
 	}
 
 	/* dunno */
-	return 0;
-}
-
-__stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
-{
-	const char *sa = s1;
-	const char *sb = s2;
-
-	int diff = 0;
-	while (len-- > 0) {
-		diff = *(sa++) - *(sb++);
-		if (diff)
-			return diff;
-	}
-
 	return 0;
 }
 
@@ -282,160 +102,6 @@ int safe_memcmp(const void *s1, const void *s2, size_t size)
 	return result != 0;
 }
 
-#if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
-{
-	char *d = (char *)dest;
-	const char *s = (const char *)src;
-	uint32_t *dw;
-	const uint32_t *sw;
-	char *head;
-	char * const tail = (char *)dest + len;
-	/* Set 'body' to the last word boundary */
-	uint32_t * const body = (uint32_t *)((uintptr_t)tail & ~3);
-
-	if (((uintptr_t)dest & 3) != ((uintptr_t)src & 3)) {
-		/* Misaligned. no body, no tail. */
-		head = tail;
-	} else {
-		/* Aligned */
-		if ((uintptr_t)tail < (((uintptr_t)d + 3) & ~3))
-			/* len is shorter than the first word boundary */
-			head = tail;
-		else
-			/* Set 'head' to the first word boundary */
-			head = (char *)(((uintptr_t)d + 3) & ~3);
-	}
-
-	/* Copy head */
-	while (d < head)
-		*(d++) = *(s++);
-
-	/* Copy body */
-	dw = (uint32_t *)d;
-	sw = (uint32_t *)s;
-	while (dw < body)
-		*(dw++) = *(sw++);
-
-	/* Copy tail */
-	d = (char *)dw;
-	s = (const char *)sw;
-	while (d < tail)
-		*(d++) = *(s++);
-
-	return dest;
-}
-#endif /* address_sanitizer || memory_sanitizer */
-
-
-#if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__stdlib_compat __visible void *memset(void *dest, int c, size_t len)
-{
-	char *d = (char *)dest;
-	uint32_t cccc;
-	uint32_t *dw;
-	char *head;
-	char * const tail = (char *)dest + len;
-	/* Set 'body' to the last word boundary */
-	uint32_t * const body = (uint32_t *)((uintptr_t)tail & ~3);
-
-	c &= 0xff;	/* Clear upper bits before ORing below */
-	cccc = c | (c << 8) | (c << 16) | (c << 24);
-
-	if ((uintptr_t)tail < (((uintptr_t)d + 3) & ~3))
-		/* len is shorter than the first word boundary */
-		head = tail;
-	else
-		/* Set 'head' to the first word boundary */
-		head = (char *)(((uintptr_t)d + 3) & ~3);
-
-	/* Copy head */
-	while (d < head)
-		*(d++) = c;
-
-	/* Copy body */
-	dw = (uint32_t *)d;
-	while (dw < body)
-		*(dw++) = cccc;
-
-	/* Copy tail */
-	d = (char *)dw;
-	while (d < tail)
-		*(d++) = c;
-
-	return dest;
-}
-#endif /* address_sanitizer || memory_sanitizer */
-
-
-#if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__stdlib_compat void *memmove(void *dest, const void *src, size_t len)
-{
-	if ((uintptr_t)dest <= (uintptr_t)src ||
-	    (uintptr_t)dest >= (uintptr_t)src + len) {
-		/* Start of destination doesn't overlap source, so just use
-		 * memcpy(). */
-		return memcpy(dest, src, len);
-	} else {
-		/* Need to copy from tail because there is overlap. */
-		char *d = (char *)dest + len;
-		const char *s = (const char *)src + len;
-		uint32_t *dw;
-		const uint32_t *sw;
-		char *head;
-		char * const tail = (char *)dest;
-		/* Set 'body' to the last word boundary */
-		uint32_t * const body = (uint32_t *)(((uintptr_t)tail+3) & ~3);
-
-		if (((uintptr_t)dest & 3) != ((uintptr_t)src & 3)) {
-			/* Misaligned. no body, no tail. */
-			head = tail;
-		} else {
-			/* Aligned */
-			if ((uintptr_t)tail > ((uintptr_t)d & ~3))
-				/* Shorter than the first word boundary */
-				head = tail;
-			else
-				/* Set 'head' to the first word boundary */
-				head = (char *)((uintptr_t)d & ~3);
-		}
-
-		/* Copy head */
-		while (d > head)
-			*(--d) = *(--s);
-
-		/* Copy body */
-		dw = (uint32_t *)d;
-		sw = (uint32_t *)s;
-		while (dw > body)
-			*(--dw) = *(--sw);
-
-		/* Copy tail */
-		d = (char *)dw;
-		s = (const char *)sw;
-		while (d > tail)
-			*(--d) = *(--s);
-
-		return dest;
-	}
-}
-#endif /* address_sanitizer || memory_sanitizer */
-
-
-__stdlib_compat void *memchr(const void *buffer, int c, size_t n)
-{
-	char *current = (char *)buffer;
-	char *end = current + n;
-
-	while (current != end) {
-		if (*current == c)
-			return current;
-		current++;
-	}
-	return NULL;
-}
-
-
 void reverse(void *dest, size_t len)
 {
 	int i;
@@ -450,8 +116,7 @@ void reverse(void *dest, size_t len)
 	}
 }
 
-
-__stdlib_compat char *strzcpy(char *dest, const char *src, int len)
+char *strzcpy(char *dest, const char *src, int len)
 {
 	char *d = dest;
 	if (len <= 0)
@@ -463,36 +128,6 @@ __stdlib_compat char *strzcpy(char *dest, const char *src, int len)
 	*d = '\0';
 	return dest;
 }
-
-
-__stdlib_compat char *strncpy(char *dest, const char *src, size_t n)
-{
-	char *d = dest;
-
-	while (n && *src) {
-		*d++ = *src++;
-		n--;
-	}
-	if (n)
-		*d = '\0';
-	return dest;
-}
-
-
-__stdlib_compat int strncmp(const char *s1, const char *s2, size_t n)
-{
-	while (n--) {
-		if (*s1 != *s2)
-			return *s1 - *s2;
-		if (!*s1)
-			break;
-		s1++;
-		s2++;
-
-	}
-	return 0;
-}
-
 
 int uint64divmod(uint64_t *n, int d)
 {
@@ -566,13 +201,19 @@ bool is_aligned(uint32_t addr, uint32_t align)
 	return (addr & (align - 1)) == 0;
 }
 
+int alignment_log2(unsigned int x)
+{
+	ASSERT(x != 0); /* ctz(0) is undefined */
+	return __builtin_ctz(x);
+}
+
 /****************************************************************************/
 /* stateful conditional stuff */
 
 enum cond_internal_bits {
-	COND_CURR_MASK = BIT(0),		/* current value */
-	COND_RISE_MASK = BIT(1),		/* set if 0->1 */
-	COND_FALL_MASK = BIT(2),		/* set if 1->0 */
+	COND_CURR_MASK = BIT(0), /* current value */
+	COND_RISE_MASK = BIT(1), /* set if 0->1 */
+	COND_FALL_MASK = BIT(2), /* set if 1->0 */
 };
 
 void cond_init(cond_t *c, int val)
@@ -591,7 +232,6 @@ int cond_is(cond_t *c, int val)
 		return !(*c & COND_CURR_MASK);
 }
 
-
 void cond_set(cond_t *c, int val)
 {
 	if (val && cond_is(c, 0))
@@ -603,7 +243,6 @@ void cond_set(cond_t *c, int val)
 	else
 		*c &= ~COND_CURR_MASK;
 }
-
 
 int cond_went(cond_t *c, int val)
 {
@@ -630,8 +269,8 @@ int cond_went(cond_t *c, int val)
  * *offset<0.  If argc<shift+1, leaves size unchanged, returning error if
  * *size<0.
  */
-int parse_offset_size(int argc, char **argv, int shift,
-			     int *offset, int *size)
+int parse_offset_size(int argc, const char **argv, int shift, int *offset,
+		      int *size)
 {
 	char *e;
 	int i;
@@ -690,4 +329,81 @@ void wait_for_ready(volatile uint32_t *reg, uint32_t enable, uint32_t ready)
 	/* Wait for ready */
 	while (!(*reg & ready))
 		;
+}
+
+int binary_first_base3_from_bits(int *bits, int nbits)
+{
+	int binary_below = 0;
+	int has_z = 0;
+	int base3 = 0;
+	int i;
+
+	/* Loop through every ternary digit, from MSB to LSB. */
+	for (i = nbits - 1; i >= 0; i--) {
+		/*
+		 * We keep track of the normal ternary result and whether
+		 * we found any bit that was a Z. We also determine the
+		 * amount of numbers that can be represented with only binary
+		 * digits (no Z) whose value in the normal ternary system
+		 * is lower than the one we are parsing. Counting from the left,
+		 * we add 2^i for any '1' digit to account for the binary
+		 * numbers whose values would be below it if all following
+		 * digits we parsed would be '0'. As soon as we find a '2' digit
+		 * we can total the remaining binary numbers below as 2^(i+1)
+		 * because we know that all binary representations counting only
+		 * this and following digits must have values below our number
+		 * (since 1xxx is always smaller than 2xxx).
+		 *
+		 * Example: 1 0 2 1 (counting from the left / most significant)
+		 * '1' at 3^3: Add 2^3 = 8 to account for binaries 0000-0111
+		 * '0' at 3^2: Ignore (not all binaries 1000-1100 are below us)
+		 * '2' at 3^1: Add 2^(1+1) = 4 to account for binaries 1000-1011
+		 * Stop adding for lower digits (3^0), all already accounted
+		 * now. We know that there can be no binary numbers 1020-102X.
+		 */
+		base3 = (base3 * 3) + bits[i];
+
+		if (!has_z) {
+			switch (bits[i]) {
+			case 0: /* Ignore '0' digits. */
+				break;
+			case 1: /* Account for binaries 0 to 2^i - 1. */
+				binary_below += 1 << i;
+				break;
+			case 2: /* Account for binaries 0 to 2^(i+1) - 1. */
+				binary_below += 1 << (i + 1);
+				has_z = 1;
+			}
+		}
+	}
+
+	if (has_z)
+		return base3 + (1 << nbits) - binary_below;
+
+	/* binary_below is normal binary system value if !has_z. */
+	return binary_below;
+}
+
+int binary_from_bits(int *bits, int nbits)
+{
+	int value = 0;
+	int i;
+
+	/* Loop through every binary digit, from MSB to LSB. */
+	for (i = nbits - 1; i >= 0; i--)
+		value = (value << 1) | bits[i];
+
+	return value;
+}
+
+int ternary_from_bits(int *bits, int nbits)
+{
+	int value = 0;
+	int i;
+
+	/* Loop through every ternary digit, from MSB to LSB. */
+	for (i = nbits - 1; i >= 0; i--)
+		value = (value * 3) + bits[i];
+
+	return value;
 }

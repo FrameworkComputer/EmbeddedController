@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -27,7 +27,7 @@ const struct svdm_response svdm_rsp = {
 };
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT];
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 int board_vbus_source_enabled(int port)
 {
@@ -62,7 +62,10 @@ bool pd_alt_mode_capable(int port)
 
 void pd_set_suspend(int port, int suspend)
 {
+}
 
+void pd_set_error_recovery(int port)
+{
 }
 
 test_static void setup_source(void)
@@ -193,8 +196,8 @@ static int test_snk_give_source_cap(void)
 
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_MSG_RECEIVED));
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_TX_COMPLETE));
-	TEST_EQ(fake_prl_get_last_sent_data_msg_type(PORT0),
-		PD_DATA_SOURCE_CAP, "%d");
+	TEST_EQ(fake_prl_get_last_sent_data_msg_type(PORT0), PD_DATA_SOURCE_CAP,
+		"%d");
 	TEST_EQ(get_state_pe(PORT0), PE_DR_SNK_GIVE_SOURCE_CAP, "%d");
 
 	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
@@ -223,9 +226,9 @@ test_static int test_extended_message_not_supported(void)
 	 * Receive an extended, non-chunked message; expect a Not Supported
 	 * response.
 	 */
-	rx_emsg[PORT0].header = PD_HEADER(
-			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
-			PDO_MAX_OBJECTS, PD_REV30, 1);
+	rx_emsg[PORT0].header = PD_HEADER(PD_DATA_BATTERY_STATUS, PD_ROLE_SINK,
+					  PD_ROLE_UFP, 0, PDO_MAX_OBJECTS,
+					  PD_REV30, 1);
 	*(uint16_t *)rx_emsg[PORT0].buf =
 		PD_EXT_HEADER(0, 0, ARRAY_SIZE(rx_emsg[PORT0].buf)) & ~BIT(15);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
@@ -235,16 +238,16 @@ test_static int test_extended_message_not_supported(void)
 	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
 	task_wait_event(10 * MSEC);
 	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
-			"%d");
+		"%d");
 	/* At this point, the PE should again be running in PE_SRC_Ready. */
 
 	/*
 	 * Receive an extended, chunked, single-chunk message; expect a Not
 	 * Supported response.
 	 */
-	rx_emsg[PORT0].header = PD_HEADER(
-			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
-			PDO_MAX_OBJECTS, PD_REV30, 1);
+	rx_emsg[PORT0].header = PD_HEADER(PD_DATA_BATTERY_STATUS, PD_ROLE_SINK,
+					  PD_ROLE_UFP, 0, PDO_MAX_OBJECTS,
+					  PD_REV30, 1);
 	*(uint16_t *)rx_emsg[PORT0].buf =
 		PD_EXT_HEADER(0, 0, PD_MAX_EXTENDED_MSG_CHUNK_LEN);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
@@ -254,16 +257,16 @@ test_static int test_extended_message_not_supported(void)
 	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
 	task_wait_event(10 * MSEC);
 	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
-			"%d");
+		"%d");
 	/* At this point, the PE should again be running in PE_SRC_Ready. */
 
 	/*
 	 * Receive an extended, chunked, multi-chunk message; expect a Not
 	 * Supported response after tChunkingNotSupported (not earlier).
 	 */
-	rx_emsg[PORT0].header = PD_HEADER(
-			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
-			PDO_MAX_OBJECTS, PD_REV30, 1);
+	rx_emsg[PORT0].header = PD_HEADER(PD_DATA_BATTERY_STATUS, PD_ROLE_SINK,
+					  PD_ROLE_UFP, 0, PDO_MAX_OBJECTS,
+					  PD_REV30, 1);
 	*(uint16_t *)rx_emsg[PORT0].buf =
 		PD_EXT_HEADER(0, 0, ARRAY_SIZE(rx_emsg[PORT0].buf));
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
@@ -275,13 +278,13 @@ test_static int test_extended_message_not_supported(void)
 	 */
 	task_wait_event(10 * MSEC);
 	TEST_NE(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
-			"%d");
+		"%d");
 
 	task_wait_event(PD_T_CHUNKING_NOT_SUPPORTED);
 	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
 	task_wait_event(10 * MSEC);
 	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
-			"%d");
+		"%d");
 	/* At this point, the PE should again be running in PE_SRC_Ready. */
 
 	/*
@@ -332,14 +335,14 @@ static int test_send_caps_error(void)
 	pe_set_flag(PORT0, PE_FLAGS_PD_CONNECTION);
 	set_state_pe(PORT0, PE_SRC_SEND_CAPABILITIES);
 	task_wait_event(10 * MSEC);
-	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
-		PD_CTRL_SOFT_RESET, "%d");
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_SOFT_RESET,
+		"%d");
 	TEST_EQ(get_state_pe(PORT0), PE_SEND_SOFT_RESET, "%d");
 
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

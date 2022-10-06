@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,6 +7,8 @@
 
 #ifndef __CROS_EC_USB_SM_H
 #define __CROS_EC_USB_SM_H
+
+#include "compiler.h" /* for typeof() on Zephyr */
 
 /* Function pointer that implements a portion of a usb state */
 typedef void (*state_execution)(const int port);
@@ -99,13 +101,13 @@ struct test_sm_data {
 	/* Size fo the state machine array above */
 	const int size;
 	/* The array of names for states, can be NULL */
-	const char * const * const names;
+	const char *const *const names;
 	/* The size of the above names array */
 	const int names_size;
 };
 #endif
 
 /* Creates a state machine state that will never link. Useful with IS_ENABLED */
-#define GEN_NOT_SUPPORTED(state) extern typeof(state) state ## _NOT_SUPPORTED
+#define GEN_NOT_SUPPORTED(state) extern typeof(state) state##_NOT_SUPPORTED
 
 #endif /* __CROS_EC_USB_SM_H */

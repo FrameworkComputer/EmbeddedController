@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -29,6 +29,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
+#include "panic.h"
 #include "power_button.h"
 #include "power.h"
 #include "pwm_chip.h"
@@ -46,8 +47,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -70,7 +71,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #include "gpio_list.h"
 
 /* Keyboard scan. Increase output_settle_us to 80us from default 50us. */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 80,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
@@ -85,19 +86,19 @@ struct keyboard_scan_config keyscan_config = {
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT]       = { 3, 0, 10000 },
-	[PWM_CH_DB0_LED_BLUE]  = {
-		0, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP, 2400 },
-	[PWM_CH_DB0_LED_RED]   = {
-		2, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP, 2400 },
-	[PWM_CH_DB0_LED_GREEN] = {
-		6, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP, 2400 },
-	[PWM_CH_DB1_LED_BLUE]  = {
-		1, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP, 2400 },
-	[PWM_CH_DB1_LED_RED]   = {
-		7, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP, 2400 },
-	[PWM_CH_DB1_LED_GREEN] = {
-		5, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP, 2400 },
+	[PWM_CH_KBLIGHT] = { 3, 0, 10000 },
+	[PWM_CH_DB0_LED_BLUE] = { 0, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				  2400 },
+	[PWM_CH_DB0_LED_RED] = { 2, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				 2400 },
+	[PWM_CH_DB0_LED_GREEN] = { 6, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
+	[PWM_CH_DB1_LED_BLUE] = { 1, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				  2400 },
+	[PWM_CH_DB1_LED_RED] = { 7, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				 2400 },
+	[PWM_CH_DB1_LED_GREEN] = { 5, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -114,41 +115,46 @@ const struct adc_t adc_channels[] = {
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
 	 */
-	[ADC_AMON_BMON] = {
-		"AMON_BMON",
-		NPCX_ADC_CH2,
-		ADC_MAX_VOLT*1000/18,
-		ADC_READ_MAX+1,
-		0
-	},
+	[ADC_AMON_BMON] = { "AMON_BMON", NPCX_ADC_CH2, ADC_MAX_VOLT * 1000 / 18,
+			    ADC_READ_MAX + 1, 0 },
 	/*
 	 * ISL9238 PSYS output is 1.44 uA/W over 12.4K resistor, to read
 	 * 0.8V @ 45 W, i.e. 56250 uW/mV. Using ADC_MAX_VOLT*56250 and
 	 * ADC_READ_MAX+1 as multiplier/divider leads to overflows, so we
 	 * only divide by 2 (enough to avoid precision issues).
 	 */
-	[ADC_PSYS] = {
-		"PSYS",
-		NPCX_ADC_CH3,
-		ADC_MAX_VOLT*56250*2/(ADC_READ_MAX+1),
-		2,
-		0
-	},
+	[ADC_PSYS] = { "PSYS", NPCX_ADC_CH3,
+		       ADC_MAX_VOLT * 56250 * 2 / (ADC_READ_MAX + 1), 2, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C port map */
-const struct i2c_port_t i2c_ports[]  = {
-	{"power",   I2C_PORT_POWER,   100,
-	 GPIO_EC_I2C0_POWER_SCL,      GPIO_EC_I2C0_POWER_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0,   1000,
-	 GPIO_EC_I2C1_USB_C0_SCL,     GPIO_EC_I2C1_USB_C0_SDA},
-	{"tcpc1",   I2C_PORT_TCPC1,   1000,
-	 GPIO_EC_I2C2_USB_C1_SCL,     GPIO_EC_I2C2_USB_C1_SDA},
-	{"sensor",  I2C_PORT_SENSOR,  100,
-	 GPIO_EC_I2C3_SENSOR_3V3_SCL, GPIO_EC_I2C3_SENSOR_3V3_SDA},
-	{"battery", I2C_PORT_BATTERY, 100,
-	 GPIO_EC_I2C4_BATTERY_SCL,    GPIO_EC_I2C4_BATTERY_SDA},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C0_POWER_SCL,
+	  .sda = GPIO_EC_I2C0_POWER_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C1_USB_C0_SCL,
+	  .sda = GPIO_EC_I2C1_USB_C0_SDA },
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C2_USB_C1_SCL,
+	  .sda = GPIO_EC_I2C2_USB_C1_SDA },
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C3_SENSOR_3V3_SCL,
+	  .sda = GPIO_EC_I2C3_SENSOR_3V3_SDA },
+	{ .name = "battery",
+	  .port = I2C_PORT_BATTERY,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C4_BATTERY_SCL,
+	  .sda = GPIO_EC_I2C4_BATTERY_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -187,16 +193,22 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.driver = &tcpci_tcpm_usb_mux_driver,
+				.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+			},
 	},
 	{
-		.usb_port = 1,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.driver = &tcpci_tcpm_usb_mux_driver,
+				.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+			},
 	},
 };
 
@@ -221,9 +233,10 @@ void board_tcpc_init(void)
 	 * HPD pulse to enable video path
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
-		usb_mux_hpd_update(port, 0, 0);
+		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 uint16_t tcpc_get_alert_status(void)
 {
@@ -243,16 +256,16 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
 	/* BD99992GW temp sensors are only readable in S0 */
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM0},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM1},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM2},
-	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM3},
+	{ "Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM0 },
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM1 },
+	{ "DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM2 },
+	{ "eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -278,12 +291,12 @@ static void board_report_pmic_fault(const char *str)
 	/* VRFAULT has occurred, print VRFAULT status bits. */
 
 	/* PWRSTAT1 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
-		  BD99992GW_REG_PWRSTAT1, &pwrstat1);
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, BD99992GW_REG_PWRSTAT1,
+		  &pwrstat1);
 
 	/* PWRSTAT2 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
-		  BD99992GW_REG_PWRSTAT2, &pwrstat2);
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, BD99992GW_REG_PWRSTAT2,
+		  &pwrstat2);
 
 	CPRINTS("PMIC VRFAULT: %s", str);
 	CPRINTS("PMIC VRFAULT: PWRSTAT1=0x%02x PWRSTAT2=0x%02x", pwrstat1,
@@ -324,8 +337,8 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
-		   BD99992GW_REG_V18ACNT, 0x2a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, BD99992GW_REG_V18ACNT,
+		   0x2a);
 
 	/*
 	 * V085ACNT:
@@ -357,8 +370,8 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10) - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
-		   BD99992GW_REG_V18ACNT, 0x6a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, BD99992GW_REG_V18ACNT,
+		   0x6a);
 
 	/*
 	 * V085ACNT:
@@ -371,8 +384,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 		   BD99992GW_REG_V085ACNT, 0x6a);
 }
 
-__override void power_board_handle_host_sleep_event(
-		enum host_sleep_event state)
+__override void power_board_handle_host_sleep_event(enum host_sleep_event state)
 {
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
 		board_pmic_enable_slp_s0_vr_decay();
@@ -491,8 +503,8 @@ int board_set_active_charge_port(int charge_port)
 	int is_real_port = (charge_port >= 0 &&
 			    charge_port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	/* check if we are sourcing VBUS on the port */
-	int is_source = gpio_get_level(charge_port == 0 ?
-			GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN);
+	int is_source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
+							  GPIO_USB_C1_5V_EN);
 
 	if (is_real_port && is_source) {
 		CPRINTS("No charging from p%d", charge_port);
@@ -508,10 +520,12 @@ int board_set_active_charge_port(int charge_port)
 	} else {
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_EN_USB_C0_CHARGE_L :
-					     GPIO_EN_USB_C1_CHARGE_L, 1);
+					     GPIO_EN_USB_C1_CHARGE_L,
+			       1);
 		/* Enable charging port */
 		gpio_set_level(charge_port ? GPIO_EN_USB_C1_CHARGE_L :
-					     GPIO_EN_USB_C0_CHARGE_L, 0);
+					     GPIO_EN_USB_C0_CHARGE_L,
+			       0);
 	}
 
 	return EC_SUCCESS;
@@ -529,8 +543,8 @@ static int charger_derate(int current)
 
 static void board_charger_init(void)
 {
-	charger_set_input_current(CHARGER_SOLO, charger_derate
-				  (PD_MAX_CURRENT_MA));
+	charger_set_input_current_limit(CHARGER_SOLO,
+					charger_derate(PD_MAX_CURRENT_MA));
 }
 DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);
 
@@ -542,12 +556,12 @@ DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	charge_ma = charger_derate(charge_ma);
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 static void board_chipset_suspend(void)

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,4 +17,4 @@
  */
 void hang_detect_stop_on_host_command(void);
 
-#endif  /* __CROS_EC_AP_HANG_DETECT_H */
+#endif /* __CROS_EC_AP_HANG_DETECT_H */

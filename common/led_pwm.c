@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -31,7 +31,11 @@
 
 #define PULSE_TICK (250 * MSEC)
 
+<<<<<<< HEAD
 #if !defined(CONFIG_LED_PWM_TASK_DISABLED)
+=======
+#ifndef CONFIG_LED_PWM_TASK_DISABLED
+>>>>>>> chromium/main
 static uint8_t led_is_pulsing;
 #endif /* CONFIG_LED_PWM_TASK_DISABLED */
 
@@ -56,7 +60,7 @@ static int get_led_id_color(enum pwm_led_id id, int color)
 
 void set_pwm_led_color(enum pwm_led_id id, int color)
 {
-	struct pwm_led duty = { 0 };
+	struct pwm_led_color_map duty = { 0 };
 	const struct pwm_led *led = &pwm_leds[id];
 
 	if ((id >= CONFIG_LED_PWM_COUNT) || (id < 0) ||
@@ -69,11 +73,11 @@ void set_pwm_led_color(enum pwm_led_id id, int color)
 		duty.ch2 = led_color_map[color].ch2;
 	}
 
-	if (led->ch0 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+	if (led->ch0 != PWM_LED_NO_CHANNEL)
 		led->set_duty(led->ch0, duty.ch0);
-	if (led->ch1 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+	if (led->ch1 != PWM_LED_NO_CHANNEL)
 		led->set_duty(led->ch1, duty.ch1);
-	if (led->ch2 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+	if (led->ch2 != PWM_LED_NO_CHANNEL)
 		led->set_duty(led->ch2, duty.ch2);
 }
 
@@ -100,17 +104,19 @@ static void set_led_color(int color)
 
 static void set_pwm_led_enable(enum pwm_led_id id, int enable)
 {
+#ifndef CONFIG_ZEPHYR
 	const struct pwm_led *led = &pwm_leds[id];
 
 	if ((id >= CONFIG_LED_PWM_COUNT) || (id < 0))
 		return;
 
-	if (led->ch0 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+	if (led->ch0 != PWM_LED_NO_CHANNEL)
 		led->enable(led->ch0, enable);
-	if (led->ch1 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+	if (led->ch1 != PWM_LED_NO_CHANNEL)
 		led->enable(led->ch1, enable);
-	if (led->ch2 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+	if (led->ch2 != PWM_LED_NO_CHANNEL)
 		led->enable(led->ch2, enable);
+#endif
 }
 
 static void init_leds_off(void)
@@ -128,10 +134,14 @@ static void init_leds_off(void)
 	set_pwm_led_enable(PWM_LED2, 1);
 #endif /* CONFIG_LED_PWM_COUNT >= 3 */
 }
-DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_INIT_PWM + 1);
+DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_POST_PWM);
 
+<<<<<<< HEAD
 #if !defined(CONFIG_LED_PWM_TASK_DISABLED)
 
+=======
+#ifndef CONFIG_LED_PWM_TASK_DISABLED
+>>>>>>> chromium/main
 static uint8_t pulse_period;
 static uint8_t pulse_ontime;
 static enum ec_led_colors pulse_color;
@@ -269,10 +279,14 @@ static void update_leds(void)
 }
 DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
 
+<<<<<<< HEAD
 #endif/* CONFIG_LED_PWM_TASK_DISABLED */
+=======
+#endif /* CONFIG_LED_PWM_TASK_DISABLED */
+>>>>>>> chromium/main
 
 #ifdef CONFIG_CMD_LEDTEST
-int command_ledtest(int argc, char **argv)
+static int command_ledtest(int argc, const char **argv)
 {
 	int enable;
 	int pwm_led_id;
@@ -287,9 +301,8 @@ int command_ledtest(int argc, char **argv)
 	led_id = supported_led_ids[pwm_led_id];
 
 	if (argc == 2) {
-		ccprintf("PWM LED %d: led_id=%d, auto_control=%d\n",
-			 pwm_led_id, led_id,
-			 led_auto_control_is_enabled(led_id) != 0);
+		ccprintf("PWM LED %d: led_id=%d, auto_control=%d\n", pwm_led_id,
+			 led_id, led_auto_control_is_enabled(led_id) != 0);
 		return EC_SUCCESS;
 	}
 	if (!parse_bool(argv[2], &enable))

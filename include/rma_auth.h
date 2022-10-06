@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,16 +10,16 @@
 
 #include <stdint.h>
 
-#include "common.h"  /* For __packed. */
+#include "common.h" /* For __packed. */
 
 /* Current challenge protocol version */
 #define RMA_CHALLENGE_VERSION 0
 
 /* Getters and setters for version_key_id byte */
 #define RMA_CHALLENGE_VKID_BYTE(version, keyid) \
-	(((version) << 6) | ((keyid) & 0x3f))
+	(((version) << 6) | ((keyid)&0x3f))
 #define RMA_CHALLENGE_GET_VERSION(vkidbyte) ((vkidbyte) >> 6)
-#define RMA_CHALLENGE_GET_KEY_ID(vkidbyte) ((vkidbyte) & 0x3f)
+#define RMA_CHALLENGE_GET_KEY_ID(vkidbyte) ((vkidbyte)&0x3f)
 
 #define RMA_DEVICE_ID_SIZE 8
 

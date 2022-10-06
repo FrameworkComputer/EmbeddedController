@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -9,7 +9,7 @@
 #include "console.h"
 #include "usart.h"
 
-static int command_usart_info(int argc, char **argv)
+static int command_usart_info(int argc, const char **argv)
 {
 	struct usart_configs configs = usart_get_configs();
 	size_t i;
@@ -24,10 +24,10 @@ static int command_usart_info(int argc, char **argv)
 			 "    dropped %d bytes\n"
 			 "    overran %d times\n",
 			 config->hw->index + 1,
-			 deprecated_atomic_read_clear(
-				 &(config->state->rx_dropped)),
-			 deprecated_atomic_read_clear(
-				 &(config->state->rx_overrun)));
+			 (int)atomic_clear(
+				 (atomic_t *)&(config->state->rx_dropped)),
+			 (int)atomic_clear(
+				 (atomic_t *)&(config->state->rx_overrun)));
 
 		if (config->rx->info)
 			config->rx->info(config);
@@ -39,7 +39,5 @@ static int command_usart_info(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND(usart_info,
-			command_usart_info,
-			NULL,
+DECLARE_CONSOLE_COMMAND(usart_info, command_usart_info, NULL,
 			"Display USART info");

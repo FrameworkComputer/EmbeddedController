@@ -1,0 +1,15 @@
+# Copyright 2021 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+description: Named battery-backed RAM parent node
+
+compatible: "named-bbram-regions"
+
+child-binding:
+    description: Named battery-backed RAM child node
+    properties:
+        offset:
+            type: int
+            required: true
+        size:
+            type: int
+            required: true

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,6 +7,10 @@
 #define __CROS_EC_GPIO_SIGNAL_H
 
 #include "compile_time_macros.h"
+
+#ifdef CONFIG_ZEPHYR
+#include "zephyr_gpio_signal.h"
+#else
 
 /*
  * There are 3 different IO signal types used by the EC.
@@ -23,7 +27,7 @@
 #define GPIO_SIGNAL_START 0 /* The first valid GPIO signal is 0 */
 
 enum gpio_signal {
-	#include "gpio.wrap"
+#include "gpio.wrap"
 	GPIO_COUNT,
 	/* Ensure that sizeof gpio_signal is large enough for ioex_signal */
 	GPIO_LIMIT = 0x0FFF
@@ -38,12 +42,14 @@ enum ioex_signal {
 	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
 	/* Used to ensure that the first IOEX signal is same as start */
 	__IOEX_PLACEHOLDER = GPIO_LIMIT,
-	#include "gpio.wrap"
+#include "gpio.wrap"
 	IOEX_SIGNAL_END,
 	IOEX_LIMIT = 0x1FFF
 };
 BUILD_ASSERT(IOEX_SIGNAL_END < IOEX_LIMIT);
 
 #define IOEX_COUNT (IOEX_SIGNAL_END - IOEX_SIGNAL_START)
+
+#endif /* !CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_GPIO_SIGNAL_H */

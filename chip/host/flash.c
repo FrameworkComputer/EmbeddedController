@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "config_chip.h"
 #include "flash.h"
@@ -14,7 +15,7 @@
 #include "util.h"
 
 /* This needs to be aligned to the erase bank size for NVCTR. */
-__aligned(CONFIG_FLASH_ERASE_SIZE) char __host_flash[CONFIG_FLASH_SIZE];
+__aligned(CONFIG_FLASH_ERASE_SIZE) char __host_flash[CONFIG_FLASH_SIZE_BYTES];
 uint8_t __host_flash_protect[PHYSICAL_BANKS];
 
 /* Override this function to make flash erase/write operation fail */
@@ -26,8 +27,7 @@ test_mockable int flash_pre_op(void)
 static int flash_check_protect(int offset, int size)
 {
 	int first_bank = offset / CONFIG_FLASH_BANK_SIZE;
-	int last_bank = DIV_ROUND_UP(offset + size,
-				     CONFIG_FLASH_BANK_SIZE);
+	int last_bank = DIV_ROUND_UP(offset + size, CONFIG_FLASH_BANK_SIZE);
 	int bank;
 
 	for (bank = first_bank; bank < last_bank; ++bank)
@@ -52,6 +52,7 @@ static void flash_set_persistent(void)
 static void flash_get_persistent(void)
 {
 	FILE *f = get_persistent_storage("flash", "rb");
+	int sz;
 
 	if (f == NULL) {
 		fprintf(stderr,
@@ -60,12 +61,13 @@ static void flash_get_persistent(void)
 		return;
 	}
 
-	fread(__host_flash, sizeof(__host_flash), 1, f);
+	sz = fread(__host_flash, sizeof(__host_flash), 1, f);
+	ASSERT(sz == 1);
 
 	release_persistent_storage(f);
 }
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	ASSERT((size & (CONFIG_FLASH_WRITE_SIZE - 1)) == 0);
 
@@ -81,7 +83,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	return EC_SUCCESS;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	ASSERT((size & (CONFIG_FLASH_ERASE_SIZE - 1)) == 0);
 
@@ -97,12 +99,12 @@ int flash_physical_erase(int offset, int size)
 	return EC_SUCCESS;
 }
 
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	return __host_flash_protect[bank];
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	int i;
 	uint32_t flags = EC_FLASH_PROTECT_ALL_NOW;
@@ -114,20 +116,19 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	memset(__host_flash_protect, 1, all ? PHYSICAL_BANKS : WP_BANK_COUNT);
 	return EC_SUCCESS;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -146,13 +147,13 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t prot_flags;
 
 	flash_get_persistent();
 
-	prot_flags = flash_get_protect();
+	prot_flags = crec_flash_get_protect();
 
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
 		/*
@@ -161,13 +162,14 @@ int flash_pre_init(void)
 		 */
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
-			int rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
-						   EC_FLASH_PROTECT_RO_NOW);
+			int rv =
+				crec_flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
+						       EC_FLASH_PROTECT_RO_NOW);
 			if (rv)
 				return rv;
 
 			/* Re-read flags */
-			prot_flags = flash_get_protect();
+			prot_flags = crec_flash_get_protect();
 		}
 	}
 

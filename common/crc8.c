@@ -1,16 +1,16 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 #include "common.h"
 #include "crc8.h"
 
-inline uint8_t crc8(const uint8_t *data, int len)
+inline uint8_t cros_crc8(const uint8_t *data, int len)
 {
-	return crc8_arg(data, len, 0);
+	return cros_crc8_arg(data, len, 0);
 }
 
-uint8_t crc8_arg(const uint8_t *data, int len, uint8_t previous_crc)
+uint8_t cros_crc8_arg(const uint8_t *data, int len, uint8_t previous_crc)
 {
 	unsigned crc = previous_crc << 8;
 	int i, j;

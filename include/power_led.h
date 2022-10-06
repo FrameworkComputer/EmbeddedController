@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -28,7 +28,9 @@ void powerled_set_state(enum powerled_state state);
 
 #else
 
-static inline void powerled_set_state(enum powerled_state state) {}
+static inline void powerled_set_state(enum powerled_state state)
+{
+}
 
 #endif
 

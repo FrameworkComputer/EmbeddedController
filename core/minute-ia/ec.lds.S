@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -102,6 +102,10 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_CHIPSET_SHUTDOWN_COMPLETE))
 		__hooks_chipset_shutdown_complete_end = .;
 
+		__hooks_chipset_hard_off = .;
+		KEEP(*(.rodata.HOOK_CHIPSET_HARD_OFF))
+		__hooks_chipset_hard_off_end = .;
+
 		__hooks_chipset_reset = .;
 		KEEP(*(.rodata.HOOK_CHIPSET_RESET))
 		__hooks_chipset_reset_end = .;
@@ -151,6 +155,10 @@ SECTIONS
 		__hooks_usb_pd_connect = .;
 		KEEP(*(.rodata.HOOK_USB_PD_CONNECT))
 		__hooks_usb_pd_connect_end = .;
+
+		__hooks_power_supply_change = .;
+		KEEP(*(.rodata.HOOK_POWER_SUPPLY_CHANGE))
+		__hooks_power_supply_change_end = .;
 
 		__deferred_funcs = .;
 		KEEP(*(.rodata.deferred))
@@ -212,6 +220,12 @@ SECTIONS
 		 __bss_end = .;
 		 __bss_size_words = ABSOLUTE((__bss_end - __bss_start) / 4);
 
+		 /*
+		 * _sbrk in newlib expects "end" symbol to point to start of
+		 * free memory.
+		 */
+		end = .;
+
 		/*
 		 * Shared memory buffer must be at the end of
 		 * preallocated RAM, so it can expand to use all the
@@ -230,6 +244,12 @@ SECTIONS
 
 	/* TODO: Adjust __image_size to proper value for core minute-ia later */
 	__image_size = . - CONFIG_ISH_BOOT_START;
+
+#if defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 0)
+	/* Alignment is needed by flash_command_write() for RW update. */
+	ASSERT(__image_size % CONFIG_FLASH_WRITE_SIZE == 0,
+	       "Error: RW image is not aligned to CONFIG_FLASH_WRITE_SIZE")
+#endif
 
 	def_irq_low  = ABSOLUTE(default_int_handler) & 0xFFFF;
 	def_irq_high = ABSOLUTE(default_int_handler) >> 16;

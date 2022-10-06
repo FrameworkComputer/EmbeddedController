@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2016 The Chromium OS Authors. All rights reserved.
+# Copyright 2016 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -20,8 +20,8 @@ endif
 chip-y+=clock.o gpio.o system.o hwtimer.o uart.o flash.o ish_persistent_data.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
-chip-$(CONFIG_HOSTCMD_HECI)+=host_command_heci.o
-chip-$(CONFIG_HOSTCMD_HECI)+=heci.o system_state_subsys.o ipc_heci.o
+chip-$(CONFIG_HOST_INTERFACE_HECI)+=host_command_heci.o
+chip-$(CONFIG_HOST_INTERFACE_HECI)+=heci.o system_state_subsys.o ipc_heci.o
 chip-$(CONFIG_HID_HECI)+=hid_subsys.o
 chip-$(CONFIG_HID_HECI)+=heci.o system_state_subsys.o ipc_heci.o
 chip-$(CONFIG_DMA_PAGING)+=dma.o

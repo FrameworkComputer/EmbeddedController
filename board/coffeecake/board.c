@@ -1,11 +1,10 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 /* Coffeecake dock configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "charger/sy21612.h"
 #include "clock.h"
 #include "common.h"
@@ -32,7 +31,11 @@ void vbus_event(enum gpio_signal signal);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"charger", I2C_PORT_SY21612, 400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+	{ .name = "charger",
+	  .port = I2C_PORT_SY21612,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -148,7 +151,7 @@ void board_config_pre_init(void)
 	/* Set 5Vsafe Vdac */
 	board_set_usb_output_voltage(5000);
 	/* Remap USART DMA to match the USART driver */
-	STM32_SYSCFG_CFGR1 |= BIT(9) | BIT(10);/* Remap USART1 RX/TX DMA */
+	STM32_SYSCFG_CFGR1 |= BIT(9) | BIT(10); /* Remap USART1 RX/TX DMA */
 }
 
 #ifdef CONFIG_SPI_FLASH
@@ -192,10 +195,9 @@ static void factory_validation_deferred(void)
 
 	/* test mcdp via serial to validate function */
 	if (!mcdp_get_info(&info) && (MCDP_FAMILY(info.family) == 0x0010) &&
-	(MCDP_CHIPID(info.chipid) == 0x2850)) {
+	    (MCDP_CHIPID(info.chipid) == 0x2850)) {
 		pd_log_event(PD_EVENT_VIDEO_CODEC,
-			     PD_LOG_PORT_SIZE(0, sizeof(info)),
-			     0, &info);
+			     PD_LOG_PORT_SIZE(0, sizeof(info)), 0, &info);
 	}
 
 	mcdp_disable();
@@ -210,7 +212,8 @@ static void board_post_init(void)
 	 * DUT powered - DRP SINK
 	 */
 	pd_set_dual_role(0, gpio_get_level(GPIO_AC_PRESENT_L) ?
-			 PD_DRP_FORCE_SINK : PD_DRP_FORCE_SOURCE);
+				    PD_DRP_FORCE_SINK :
+				    PD_DRP_FORCE_SOURCE);
 }
 DECLARE_DEFERRED(board_post_init);
 
@@ -228,10 +231,11 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_CHARGER_INT);
 	gpio_enable_interrupt(GPIO_USB_C_VBUS_DET_L);
 	/* Set PD_DISCHARGE initial state */
-	gpio_set_level(GPIO_PD_DISCHARGE, gpio_get_level(GPIO_USB_C_VBUS_DET_L));
+	gpio_set_level(GPIO_PD_DISCHARGE,
+		       gpio_get_level(GPIO_USB_C_VBUS_DET_L));
 
 	/* Delay needed to allow HDMI MCU to boot. */
-	hook_call_deferred(&factory_validation_deferred_data, 200*MSEC);
+	hook_call_deferred(&factory_validation_deferred_data, 200 * MSEC);
 	/* Initialize buck-boost converter */
 	hook_call_deferred(&board_post_init_data, 0);
 }
@@ -241,16 +245,16 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_CH_CC1_PD]    = {"USB_C_CC1_PD", 3300, 4096, 0, STM32_AIN(1)},
-	[ADC_VBUS_MON]     = {"VBUS_MON", 13200, 4096, 0, STM32_AIN(2)},
-	[ADC_DAC_REF_TP28] = {"DAC_REF_TP28", 3300, 4096, 0, STM32_AIN(4)},
-	[ADC_DAC_VOLT]     = {"DAC_VOLT", 3300, 4096, 0, STM32_AIN(5)},
+	[ADC_CH_CC1_PD] = { "USB_C_CC1_PD", 3300, 4096, 0, STM32_AIN(1) },
+	[ADC_VBUS_MON] = { "VBUS_MON", 13200, 4096, 0, STM32_AIN(2) },
+	[ADC_DAC_REF_TP28] = { "DAC_REF_TP28", 3300, 4096, 0, STM32_AIN(4) },
+	[ADC_DAC_VOLT] = { "DAC_VOLT", 3300, 4096, 0, STM32_AIN(5) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-const void * const usb_strings[] = {
+const void *const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
-	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
 	[USB_STR_PRODUCT] = USB_STRING_DESC("Hoho"),
 	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
 	[USB_STR_BB_URL] = USB_STRING_DESC(USB_GOOGLE_TYPEC_URL),

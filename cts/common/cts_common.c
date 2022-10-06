@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,7 @@ __attribute__((weak)) void clean_state(void)
 	/* Each test overrides as needed */
 }
 
-void cts_main_loop(const struct cts_test* tests, const char *name)
+void cts_main_loop(const struct cts_test *tests, const char *name)
 {
 	enum cts_rc rc;
 	int i;

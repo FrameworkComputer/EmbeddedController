@@ -1,0 +1,11 @@
+description: USBC BC1.2
+
+compatible: "pericom,pi3usb9201"
+
+include: base.yaml
+
+properties:
+  irq:
+    type: phandles
+    description: |
+        GPIO interrupt from BC1.2

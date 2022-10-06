@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -10,16 +10,23 @@
 
 static int tusb544_write(const struct usb_mux *me, int offset, int data)
 {
-	return i2c_write8(me->i2c_port,
-			  me->i2c_addr_flags,
-			  offset, data);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, offset, data);
 }
 
 static int tusb544_read(const struct usb_mux *me, int offset, int *data)
 {
-	return i2c_read8(me->i2c_port,
-			 me->i2c_addr_flags,
-			 offset, data);
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags, offset, data);
+}
+
+int tusb544_i2c_field_update8(const struct usb_mux *me, int offset,
+			      uint8_t field_mask, uint8_t set_value)
+{
+	int rv;
+
+	rv = i2c_field_update8(me->i2c_port, me->i2c_addr_flags, offset,
+			       field_mask, set_value);
+
+	return rv;
 }
 
 static int tusb544_enter_low_power_mode(const struct usb_mux *me)
@@ -44,10 +51,18 @@ static int tusb544_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int reg;
 	int rv;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
+	/* This driver treats safe mode as none */
+	if (mux_state == USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
 
 	if (mux_state == USB_PD_MUX_NONE)
 		return tusb544_enter_low_power_mode(me);
@@ -62,6 +77,9 @@ static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 		reg &= ~TUSB544_GEN4_FLIP_SEL;
 
 	reg &= ~TUSB544_GEN4_CTL_SEL;
+
+	if (IS_ENABLED(CONFIG_TUSB544_EQ_BY_REGISTER))
+		reg |= TUSB544_GEN4_EQ_OVRD;
 
 	if ((mux_state & USB_PD_MUX_USB_ENABLED) &&
 	    (mux_state & USB_PD_MUX_DP_ENABLED)) {

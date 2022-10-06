@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,7 +9,7 @@
 #define __CROS_EC_R19ME4070_H
 
 /* GPU features */
-#define R19ME4070_LOCAL                 0
+#define R19ME4070_LOCAL 0
 
 /*
  * get GPU temperature value and move to *tem_ptr

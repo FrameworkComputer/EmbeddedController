@@ -1,0 +1,89 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpc_port0>;
+			chg = <&charger>;
+			usb_mux_chain_0: usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c0_bb_retimer
+					     &virtual_mux_c0>;
+			};
+			usb_mux_alt_chain_0: usb-mux-alt-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&usb_c0_bb_retimer
+					     &usb_c0_soc_side_bb_retimer
+					     &virtual_mux_c0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpc_port1>;
+			usb_mux_chain_1: usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_bb_retimer
+					     &virtual_mux_c1>;
+			};
+			usb_mux_alt_chain_1: usb-mux-alt-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&usb_c1_bb_retimer
+					     &usb_c1_soc_side_bb_retimer
+					     &virtual_mux_c1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_c1: virtual-mux-c1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+			tcpc = <&tcpc_port2>;
+			usb_mux_chain_2: usb-mux-chain-2 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c2_bb_retimer
+					     &virtual_mux_c2>;
+			};
+		};
+		port2-muxes {
+			virtual_mux_c2: virtual-mux-c2 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port3@3 {
+			compatible = "named-usbc-port";
+			reg = <3>;
+			tcpc = <&tcpc_port3>;
+			usb_mux_chain_3: usb-mux-chain-3 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c3_bb_retimer
+					     &virtual_mux_c3>;
+			};
+		};
+		port3-muxes {
+			virtual_mux_c3: virtual-mux-c3 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};

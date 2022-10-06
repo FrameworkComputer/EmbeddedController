@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,9 +10,10 @@
  */
 
 #include "accelgyro.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accel_bma2x2.h"
+#include "accel_bma2x2.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "spi.h"
@@ -20,7 +21,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
 /* Number of times to attempt to enable sensor before giving up. */
 #define SENSOR_ENABLE_ATTEMPTS 5
@@ -43,13 +44,18 @@ static inline int raw_write8(const int port, const uint16_t i2c_addr_flags,
 	return i2c_write8(port, i2c_addr_flags, reg, data);
 }
 
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
-	int ret,  range_val, reg_val, range_reg_val;
-	struct accelgyro_saved_data_t *data = s->drv_data;
+	int ret, range_val, reg_val, range_reg_val;
+
+	/* Range has to be between 2G-16G */
+	if (range < 2)
+		range = 2;
+	else if (range > 16)
+		range = 16;
 
 	range_val = BMA2x2_RANGE_TO_REG(range);
-	if ((BMA2x2_RANGE_TO_REG(range_val) < range) && rnd)
+	if ((BMA2x2_REG_TO_RANGE(range_val) < range) && rnd)
 		range_val = BMA2x2_RANGE_TO_REG(range * 2);
 
 	mutex_lock(s->mutex);
@@ -67,18 +73,11 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS)
-		data->range = BMA2x2_REG_TO_RANGE(range_val);
+		s->current_range = BMA2x2_REG_TO_RANGE(range_val);
 
 	mutex_unlock(s->mutex);
 
 	return ret;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct accelgyro_saved_data_t *data = s->drv_data;
-
-	return data->range;
 }
 
 static int get_resolution(const struct motion_sensor_t *s)
@@ -91,23 +90,32 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	int ret, odr_val, odr_reg_val, reg_val;
 	struct accelgyro_saved_data_t *data = s->drv_data;
 
-	odr_val = BMA2x2_BW_TO_REG(rate);
-	if ((BMA2x2_REG_TO_BW(odr_val) < rate) && rnd)
-		odr_val = BMA2x2_BW_TO_REG(rate * 2);
+	/* Rate has to be between 7.8125Hz - 1000Hz */
+	if (rate < 7813) {
+		rate = 7812;
+		odr_val = BMA2x2_BW_7_81HZ;
+	} else if (rate > 1000000) {
+		rate = 1000000;
+		odr_val = BMA2x2_BW_1000HZ;
+	} else {
+		odr_val = BMA2x2_BW_TO_REG(rate);
+		if ((BMA2x2_REG_TO_BW(odr_val) < rate) && rnd)
+			odr_val = BMA2x2_BW_TO_REG(rate * 2);
+	}
 
 	mutex_lock(s->mutex);
 
 	/* Determine the new value of control reg and attempt to write it. */
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			BMA2x2_BW_SELECT_ADDR, &odr_reg_val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, BMA2x2_BW_SELECT_ADDR,
+			&odr_reg_val);
 	if (ret != EC_SUCCESS) {
 		mutex_unlock(s->mutex);
 		return ret;
 	}
 	reg_val = (odr_reg_val & ~BMA2x2_BW_MSK) | odr_val;
 	/* Set output data rate. */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 BMA2x2_BW_SELECT_ADDR, reg_val);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, BMA2x2_BW_SELECT_ADDR,
+			 reg_val);
 
 	/* If successfully written, then save the new data rate. */
 	if (ret == EC_SUCCESS)
@@ -197,7 +205,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int perform_calib(const struct motion_sensor_t *s, int enable)
+static int perform_calib(struct motion_sensor_t *s, int enable)
 {
 	int ret, val, status, rate, range, i;
 	timestamp_t deadline;
@@ -205,15 +213,15 @@ static int perform_calib(const struct motion_sensor_t *s, int enable)
 	if (!enable)
 		return EC_SUCCESS;
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			BMA2x2_OFFSET_CTRL_ADDR, &val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, BMA2x2_OFFSET_CTRL_ADDR,
+			&val);
 	if (ret)
 		return ret;
 	if (!(val & BMA2x2_OFFSET_CAL_READY))
 		return EC_ERROR_ACCESS_DENIED;
 
 	rate = get_data_rate(s);
-	range = get_range(s);
+	range = s->current_range;
 	/*
 	 * Temporary set frequency to 100Hz to get enough data in a short
 	 * period of time.
@@ -230,8 +238,8 @@ static int perform_calib(const struct motion_sensor_t *s, int enable)
 	val = ((BMA2x2_OFC_TARGET_0G << BMA2x2_OFC_TARGET_AXIS(X)) |
 	       (BMA2x2_OFC_TARGET_0G << BMA2x2_OFC_TARGET_AXIS(Y)) |
 	       (val << BMA2x2_OFC_TARGET_AXIS(Z)));
-	raw_write8(s->port, s->i2c_spi_addr_flags,
-		   BMA2x2_OFC_SETTING_ADDR, val);
+	raw_write8(s->port, s->i2c_spi_addr_flags, BMA2x2_OFC_SETTING_ADDR,
+		   val);
 
 	for (i = X; i <= Z; i++) {
 		val = (i + 1) << BMA2x2_OFFSET_TRIGGER_OFF;
@@ -261,15 +269,15 @@ end_perform_calib:
 	return ret;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tries = 0, val, reg, reset_field;
 
 	/* This driver requires a mutex */
 	ASSERT(s->mutex);
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			BMA2x2_CHIP_ID_ADDR, &val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, BMA2x2_CHIP_ID_ADDR,
+			&val);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
@@ -319,7 +327,6 @@ const struct accelgyro_drv bma2x2_accel_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,

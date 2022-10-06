@@ -1,0 +1,37 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Zephyr Kconfig overrides that applies to all platforms.
+
+# Disable timeslicing, it's compiled in by default and can be enabled at
+# runtime but not used in Zephyr EC.
+config TIMESLICING
+	default n
+
+config LOG
+	default y
+	imply LOG_DEFAULT_MINIMAL
+
+config GPIO_EMUL
+	default y if ARCH_POSIX
+
+config GPIO
+	default y if ARCH_POSIX
+
+config THREAD_MAX_NAME_LEN
+	default 16
+
+config SHELL_PROMPT_UART
+	default "ec:~$ "
+
+config SHELL_THREAD_PRIORITY_OVERRIDE
+	default y
+
+config SHELL_THREAD_PRIORITY
+	default 12  # track EC_SHELL_PRIO
+
+config EXTRA_EXCEPTION_INFO
+	default y if ARCH_HAS_EXTRA_EXCEPTION_INFO
+
+orsource "Kconfig.defaults-$(ARCH)"

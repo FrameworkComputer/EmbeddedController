@@ -3,19 +3,19 @@
 This section details the configuration related to managing the system power
 states (G3, S5, S3, S0, S0iX, etc). This includes the following tasks:
 
-- Selecting the AP chipset type.
-- Configure output GPIOs that enable voltage rails.
-- Configure input GPIOs that monitor the voltage rail status (power good
-  signals).
-- Configure input GPIOs that monitor the AP sleep states.
-- Pass through power sequencing signals from the board to the AP, often with
-  delays or other sequencing control.
+-   Selecting the AP chipset type.
+-   Configure output GPIOs that enable voltage rails.
+-   Configure input GPIOs that monitor the voltage rail status (power good
+    signals).
+-   Configure input GPIOs that monitor the AP sleep states.
+-   Pass through power sequencing signals from the board to the AP, often with
+    delays or other sequencing control.
 
 ## Config options
 
 The AP chipset options are grouped together in [config.h]. Select exactly one of
 the available AP chipset options (e.g. `CONFIG_CHIPSET_APOLLOLAKE`,
-`CONFIG_CHIPSET_BRASWELL`, etc). If the AP chipset support is not available,
+`CONFIG_CHIPSET_COMETLAKE`, etc). If the AP chipset support is not available,
 select `CONFIG_CHIPSET_ECDRIVEN` to enable basic support for handling S3 and S0
 power states.
 
@@ -28,8 +28,8 @@ particular, the `CONFIG_POWER_BUTTON`, and `CONFIG_POWER_COMMON` should be
 defined.
 
 The `CONFIG_BRINGUP` option is especially useful option during the initial power
-up of a new board. This option is discussed in more detail in the [Testing and
-Debugging](#Testing-and-Debugging) section.
+up of a new board. This option is discussed in more detail in the
+[Testing and Debugging](#Testing-and-Debugging) section.
 
 ## Feature Parameters
 
@@ -54,15 +54,16 @@ GPIO(EN_PP5000,   PIN(A, 4), GPIO_OUT_LOW)
 For boards with an x86 AP, the following signals can be connected between the EC
 and AP/PCH. Create `GPIO()` entries for any signals used on your board.
 
-- `GPIO_PCH_PWRBTN_L` - Output from the EC that proxies the status of the EC
-  input `GPIO_POWER_BUTTON_L` (driven by the H1). Only used when
-  `CONFIG_POWER_BUTTON_X86` is defined.
-- `GPIO_PCH_RSMRST_L` - Output from the EC that proxies the status of the EC
-  input `GPIO_RSMRST_L_PGOOD` (driven by the PMIC or voltage regulators on the
-  board).
-- `GPIO_PCH_SYS_PWROK` - Output from the EC that indicates when the system power
-  is good and the AP can power up.
-- `GPIO_PCH_WAKE_L` - Output from the EC, driven low when there is a wake event.
+-   `GPIO_PCH_PWRBTN_L` - Output from the EC that proxies the status of the EC
+    input `GPIO_POWER_BUTTON_L` (driven by the H1). Only used when
+    `CONFIG_POWER_BUTTON_X86` is defined.
+-   `GPIO_PCH_RSMRST_L` - Output from the EC that proxies the status of the EC
+    input `GPIO_RSMRST_L_PGOOD` (driven by the PMIC or voltage regulators on the
+    board).
+-   `GPIO_PCH_SYS_PWROK` - Output from the EC that indicates when the system
+    power is good and the AP can power up.
+-   `GPIO_PCH_WAKE_L` - Output from the EC, driven low when there is a wake
+    event.
 
 ### Power Signal Interrupts
 
@@ -85,15 +86,15 @@ macros.
 
 ## Data structures
 
-- `const struct power_signal_info power_signal_list[]` - This array defines the
-  signals from the AP and from the power subsystem on the board that control the
-  power state. For some Intel chipsets, including Apollo Lake and Ice Lake, this
-  power signal list is already defined by the corresponding chipset file under
-  the `./power` directory.
+-   `const struct power_signal_info power_signal_list[]` - This array defines
+    the signals from the AP and from the power subsystem on the board that
+    control the power state. For some Intel chipsets, including Apollo Lake and
+    Ice Lake, this power signal list is already defined by the corresponding
+    chipset file under the `./power` directory.
 
 ## Tasks
 
-The `CHIPSET` task monitors and handles the power state changes.  This task
+The `CHIPSET` task monitors and handles the power state changes. This task
 should always be enabled with a priority higher than the `CHARGER` task, but
 lower than the `HOSTCMD` and `CONSOLE` tasks.
 
@@ -178,8 +179,8 @@ RTC: 0x000067bf (26559.00 s)
 [9.128640 power state 7 = S3->S0, in 0x003f]
 ```
 
-This example shows successful power on of the AP as the AP transitions from the G3
-state all the way to the S0 state.
+This example shows successful power on of the AP as the AP transitions from the
+G3 state all the way to the S0 state.
 
 The console messages shown in brackets `[]` include a timestamp. This timestamp
 records when the corresponding console message was printed.
@@ -192,7 +193,7 @@ signal changes shown on the console to be out of order with respect to the other
 EC messages.
 
 The power signal changes include a timestamp to help you correlate when the
-actual power signal changed compared to other messages.  From the example above,
+actual power signal changed compared to other messages. From the example above,
 the first power signal change recorded is the `DSW_PWROK` signal transitioning
 from 0 to 1, and this is recorded at timestamp `6.807298`. Using the regular EC
 console timestamp, you can reconstruct the real power sequence to look like the
@@ -245,7 +246,6 @@ RTC: 0x000067bf (26559.00 s)
 RTC: 0x000067bf (26559.00 s)
 [9.128640 power state 7 = S3->S0, in 0x003f]
 ```
-
 
 *TODO ([b/147808790](http://issuetracker.google.com/147808790)) Add
 documentation specific to each x86 processor type.*

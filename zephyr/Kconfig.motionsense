@@ -1,0 +1,177 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_MOTIONSENSE
+    bool "Motion Sense"
+    select HAS_TASK_MOTIONSENSE
+    help
+      Enable motion sense task. The task collects data from available sensors
+      and report them to AP. Besides the task reports the sensor data to AP.
+      Based on the data, it also does other things like calculating lid angle
+      and detect tablet mode.
+
+config PLATFORM_EC_ACCEL_FIFO
+    bool "Sensor FIFO"
+    help
+      Enable this to add the sensor FIFO used by sensor device drivers to fill.
+      Using FIFO reduces power consumption since it reduces the number of
+      AP wake-ups.
+
+if PLATFORM_EC_ACCEL_FIFO
+
+config PLATFORM_EC_ACCEL_FIFO_SIZE
+    int "Motion Sense FIFO Size"
+    default 256
+    help
+      This sets the size of the sensor FIFO, must be a power of 2.
+
+config PLATFORM_EC_ACCEL_FIFO_THRES
+    int "FIFO Threshold"
+    default 85      # (PLATFORM_EC_ACCEL_FIFO_SIZE / 3)
+    help
+      This sets the amount of free entries that trigger an interrupt to the AP.
+
+endif # PLATFORM_EC_ACCEL_FIFO
+
+config PLATFORM_EC_SENSOR_TIGHT_TIMESTAMPS
+    bool "Extra Sensor Timestamp"
+    help
+      If this is defined, motion_sense sends
+      sensor events to the AP in the format
+      +-----------+
+      | Timestamp |
+      |  Payload  |
+      | Timestamp |
+      |  Payload  |
+      |    ...    |
+      +-----------+
+      If this is not defined, the events will be sent in the format
+      +-----------+
+      |  Payload  |
+      |  Payload  |
+      |  Payload  |
+      |    ...    |
+      | Timestamp |
+      +-----------+
+      The former format enables improved filtering of sensor event
+      timestamps on the AP, but comes with stricter jitter requirements.
+
+# TODO(b/173507858) config PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA
+# if PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA
+#endif # PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA
+
+config PLATFORM_EC_MAX_SENSOR_FREQ_MILLIHZ
+    int "Maximal EC sampling rate"
+    default 250000
+    help
+       Lower this limit for slower EC (in mHz).
+
+config PLATFORM_EC_ALS
+    bool "Ambient Light Sensor(ALS)"
+    help
+      Enable this to indicate there's at least one or more ALS devices available.
+      If PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA is set, then motion task updates
+      the designated part of EC memmap with the ALS data. The updating EC memmap
+      can be also done by the dedicated ALS task with HAS_ALS_TASK set.
+      Number of ALS entries reserved in EC memmap are defined by EC_ALS_ENTRIES
+      in ec_commands.h.
+
+config PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT
+    bool "Dynamic Motion Sensor Count"
+    help
+      Enable this to allow changing motion sensor count dynamically.
+
+config PLATFORM_EC_LID_ANGLE
+    bool "Lid Angle"
+    select PLATFORM_EC_MATH_UTIL
+    help
+      Enable this to detect lid angle with two accelerometers. The andgle
+      calculation requires the information about which sensor is on the lid
+      and which one is on the base. The measured lid angle can be used for
+      tablet mode detection(refer "Tablet Mode below") and enabling/disabling
+      peripheral devices(refer "Lid Angle Update" below).
+      # TODO(b/173507858): add more detail after .dts change
+
+if PLATFORM_EC_LID_ANGLE
+
+config PLATFORM_EC_LID_ANGLE_UPDATE
+    bool "Lid Angle Update"
+    help
+      Enable this to allow using the lid angle measurement to determine if
+      peripheral devices should be enabled or disabled, like key scanning,
+      trackpad interrupt.
+
+config PLATFORM_EC_TABLET_MODE
+    bool "Tablet Mode"
+    help
+      Enable this for a device which can be a tablet as well as a clamshell.
+      Tablet mode detection is done either by using the lid angle measurement
+      or by the dedicated GMR sensor.
+
+if PLATFORM_EC_TABLET_MODE
+
+config PLATFORM_EC_TABLET_MODE_SWITCH
+    bool "Tablet Mode Switch"
+    depends on PLATFORM_EC_MKBP_INPUT_DEVICES
+    help
+      Enable a virtual switch to indicate when we are in tablet mode. The tablet
+      mode state is sent to AP via MKBP protocol(switch event).
+
+config PLATFORM_EC_GMR_TABLET_MODE
+    bool "Giant Magnetoresistance(GMR) Tablet Mode"
+    help
+      Enable this to use GMR sensor to detect tablet mode.
+      It requires to set GPIO_TABLET_MODE_L to map the interrupt from
+      the sensor and direct its mapping to gmr_tablet_switch_isr
+      in common/tablet_mode.c.
+
+endif # PLATFORM_EC_TABLET_MODE
+endif # PLATFORM_EC_LID_ANGLE
+
+config PLATFORM_EC_CONSOLE_CMD_ACCELS
+    bool "Console commands: accels, accelrate, accelinit, accelinfo, etc."
+    help
+      Enables console commands:
+
+        accelrange <sensor id> <data> <roundup> - Read or write accelerometer
+        range
+        accelres <sensor id> <data> <roundup> - Read or write accelerometer
+        resolution
+        accelrate <sensor id> <data> <roundup> - Read or write accelerometer
+        ODR
+        accelread <sensor id> [n(iteration)] - Read sensor x/y/z
+        accelinit <sensor id> - Init sensor
+
+if PLATFORM_EC_CONSOLE_CMD_ACCELS
+
+config PLATFORM_EC_CONSOLE_CMD_ACCEL_INFO
+    bool "Console Command: accelinfo"
+    help
+      Enable console command:
+
+        accelinfo on/off [interval] - Print motion sensor info, lid angle
+        calculations and set calculation frequency.
+
+endif # PLATFORM_EC_CONSOLE_CMD_ACCELS
+
+config PLATFORM_EC_ACCEL_SPOOF_MODE
+	bool "Sensor spoof mode"
+	help
+	  Enable this to allow sensors values spoofed to any arbitrary value.
+	  This is useful for testing the motion sense framework if the hardware
+	  sensor or the sensor driver code is not ready.
+
+if PLATFORM_EC_ACCEL_SPOOF_MODE
+
+config PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
+	bool "Console Command: accelspoof"
+	help
+	  Enable console command:
+
+	    accelspoof id [on/off] [X] [Y] [Z] - Enable/Disable spoofing of
+	    sensor readings.
+
+endif # PLATFORM_EC_ACCEL_SPOOF_MODE
+
+rsource "Kconfig.sensor_devices"

@@ -1,0 +1,27 @@
+# Here you can place files of interest to be included in the commit message for
+# merge commits to firmware-brya-14505.B
+#
+# Brya branching strategy is to merge all changes from ToT on a weekly basis.
+# No separate cherry-picks allowed for EC repo in the firmware branch.
+# How to perform a merge:
+# $ cd /path/to/src/platform/ec
+# $ git checkout cros/main
+# $ util/update_release_branch.py --baseboard brya --relevant_paths_file
+#   baseboard/brya/relevant-paths.txt firmware-brya-14505.B-main
+# $ make buildall
+# $ repo upload --cbr . --no-verify
+# Remove the cq-orchestrator line form the commit message
+# Assign one of Brya EC owners as a reviewer
+#
+driver/bc12/pi3usb9201_public.*
+driver/charger/bq25710.*
+driver/ppc/nx20p348x.*
+driver/ppc/syv682x_public.*
+driver/retimer/bb_retimer_public.*
+driver/tcpm/nct38xx.*
+driver/tcpm/ps8xxx_public.*
+driver/tcpm/tcpci.*
+include/power/alderlake*
+include/intel_x86.h
+power/alderlake*
+power/intel_x86.c

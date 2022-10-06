@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,7 +7,6 @@
 
 #include "acpi.h"
 #include "adc.h"
-#include "adc_chip.h"
 #include "board.h"
 #include "chipset.h"
 #include "common.h"
@@ -20,8 +19,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 /* Base detection and debouncing */
 #define BASE_DETECT_DEBOUNCE_US (20 * MSEC)
@@ -95,14 +94,13 @@ static void base_detect_change(enum base_status status)
 
 	CPRINTS("Base %sconnected", connected ? "" : "not ");
 	gpio_set_level(GPIO_PP3300_DX_BASE, connected);
-	tablet_set_mode(!connected);
+	tablet_set_mode(!connected, TABLET_TRIGGER_BASE);
 	current_base_status = status;
 
 	if (connected)
 		acpi_dptf_set_profile_num(DPTF_PROFILE_BASE_ATTACHED);
 	else
 		acpi_dptf_set_profile_num(DPTF_PROFILE_BASE_DETACHED);
-
 }
 
 /* Measure detection pin pulse duration (used to wake AP from deep S3). */
@@ -111,8 +109,8 @@ static uint32_t pulse_width;
 
 static void print_base_detect_value(int v, int tmp_pulse_width)
 {
-	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name,
-			v, tmp_pulse_width);
+	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name, v,
+		tmp_pulse_width);
 }
 
 static void base_detect_deferred(void)
@@ -244,15 +242,15 @@ static void base_init(void)
 	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		base_enable();
 }
-DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT + 1);
 
-void base_force_state(int state)
+void base_force_state(enum ec_set_base_state_cmd state)
 {
-	if (state == 1) {
+	if (state == EC_SET_BASE_STATE_ATTACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_A);
 		base_detect_change(BASE_CONNECTED);
 		CPRINTS("BD forced connected");
-	} else if (state == 0) {
+	} else if (state == EC_SET_BASE_STATE_DETACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_A);
 		base_detect_change(BASE_DISCONNECTED);
 		CPRINTS("BD forced disconnected");

@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2013 The Chromium OS Authors. All rights reserved.
+# Copyright 2013 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -9,28 +9,28 @@
 ifeq ($(CHIP_FAMILY),stm32f0)
 # STM32F0xx sub-family has a Cortex-M0 ARM core
 CORE:=cortex-m0
-# Force ARMv6-M ISA used by the Cortex-M0
-# For historical reasons gcc calls it armv6s-m: ARM used to have ARMv6-M
-# without "svc" instruction, but that was short-lived. ARMv6S-M was the option
-# with "svc". GCC kept that naming scheme even though the distinction is long
-# gone.
-CFLAGS_CPU+=-march=armv6s-m -mcpu=cortex-m0
+CFLAGS_CPU+=-mcpu=cortex-m0
 else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f3 stm32l4 stm32f4 \
 stm32g4))
 # STM32F3xx and STM32L4xx sub-family has a Cortex-M4 ARM core
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
-CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
+CFLAGS_CPU+=-mcpu=cortex-m4
 else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32h7))
 # STM32FH7xx family has a Cortex-M7 ARM core
 CORE:=cortex-m
-# Allow the full Cortex-M4 instruction set (identical to M7)
-CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
+# Allow the full Cortex-M7 instruction set.
+CFLAGS_CPU+=-mcpu=cortex-m7
+else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32l5))
+# STM32FL5xx family has a Cortex-M33 ARM core
+CORE:=cortex-m
+# Allow the full Cortex-M33 instruction set
+CFLAGS_CPU+=-mcpu=cortex-m33
 else
 # other STM32 SoCs have a Cortex-M3 ARM core
 CORE:=cortex-m
 # Force Cortex-M3 subset of instructions
-CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
+CFLAGS_CPU+=-mcpu=cortex-m3
 endif
 
 # Select between 16-bit and 32-bit timer for clock source
@@ -44,8 +44,9 @@ chip-y+=clock-$(CHIP_FAMILY).o
 ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f0 stm32f3 stm32f4))
 chip-y+=clock-f.o
 endif
+chip-$(CONFIG_FPU)+=fpu.o
 chip-$(CONFIG_SPI)+=spi.o
-chip-$(CONFIG_SPI_MASTER)+=spi_master$(SPI_TYPE).o
+chip-$(CONFIG_SPI_CONTROLLER)+=spi_controller$(SPI_TYPE).o
 chip-$(CONFIG_COMMON_GPIO)+=gpio.o gpio-$(CHIP_FAMILY).o
 chip-$(CONFIG_COMMON_TIMER)+=hwtimer$(TIMER_TYPE).o
 chip-$(CONFIG_I2C)+=i2c-$(CHIP_FAMILY).o
@@ -56,15 +57,15 @@ chip-$(CONFIG_STREAM_USART)+=usart_tx_interrupt.o
 chip-$(CONFIG_STREAM_USART)+=usart_rx_dma.o usart_tx_dma.o
 chip-$(CONFIG_USART_HOST_COMMAND)+=usart_host_command.o
 chip-$(CONFIG_CMD_USART_INFO)+=usart_info_command.o
-chip-$(HAS_TASK_CONSOLE)+=host_command_common.o
+chip-$(CONFIG_FINGERPRINT_MCU)+=host_command_common.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
-ifndef CONFIG_KEYBOARD_NOT_RAW
+ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(HAS_TASK_POWERLED)+=power_led.o
-ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32g4 stm32l4))
-# STM32G4 and STM32L4 use the same flash IP block
+ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32g4 stm32l4 stm32l5))
+# STM32G4, STM32L4 and STM32L5 use the same flash IP block
 chip-y+=flash-stm32g4-l4.o
 else
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash-$(CHIP_FAMILY).o
@@ -75,6 +76,9 @@ chip-$(CHIP_FAMILY_STM32F3)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F4)+=flash-f.o
 endif
 chip-$(CONFIG_ADC)+=adc-$(CHIP_FAMILY).o
+chip-$(CONFIG_DFU_BOOTMANAGER_MAIN)+=dfu_bootmanager_main.o
+chip-$(CONFIG_DFU_BOOTMANAGER_SHARED)+=dfu_bootmanager_shared.o
+chip-$(CONFIG_DFU_RUNTIME)+=usb_dfu_runtime.o
 chip-$(CONFIG_STM32_CHARGER_DETECT)+=charger_detect.o
 chip-$(CONFIG_DEBUG_PRINTF)+=debug_printf.o
 chip-$(CONFIG_OTP)+=otp-$(CHIP_FAMILY).o

@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,9 +9,8 @@
 #include "vec3.h"
 #include "util.h"
 
-static fpv3_t zero_initialized_vector = {
-	FLOAT_TO_FP(0.0f), FLOAT_TO_FP(0.0f), FLOAT_TO_FP(0.0f)
-};
+static fpv3_t zero_initialized_vector = { FLOAT_TO_FP(0.0f), FLOAT_TO_FP(0.0f),
+					  FLOAT_TO_FP(0.0f) };
 
 void fpv3_zero(fpv3_t v)
 {

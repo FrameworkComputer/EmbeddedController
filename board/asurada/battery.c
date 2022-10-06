@@ -1,11 +1,17 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "battery.h"
 #include "battery_fuel_gauge.h"
+#include "battery_smart.h"
+#include "charge_manager.h"
+#include "chipset.h"
 #include "gpio.h"
+#include "hooks.h"
+#include "system.h"
+#include "usb_pd.h"
 
 const struct board_batt_params board_battery_info[] = {
 	[BATTERY_C235] = {

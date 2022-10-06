@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -19,10 +19,8 @@
 #define LOW_BATTERY_PERMILLAGE 137
 #define FULL_BATTERY_PERMILLAGE 937
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-	EC_LED_ID_POWER_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -31,7 +29,7 @@ enum led_color {
 	BAT_LED_ORANGE,
 	PWR_LED_BLUE,
 	PWR_LED_ORANGE,
-	LED_COLOR_COUNT		/* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int bat_led_set(enum led_color color, int on)
@@ -111,8 +109,7 @@ static void elm_led_set_power(void)
 		bat_led_set(PWR_LED_ORANGE, 0);
 	} else if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
 		bat_led_set(PWR_LED_BLUE, 0);
-		bat_led_set(PWR_LED_ORANGE,
-			    (blink_second & 3) ? 0 : 1);
+		bat_led_set(PWR_LED_ORANGE, (blink_second & 3) ? 0 : 1);
 	}
 }
 
@@ -135,8 +132,9 @@ static void elm_led_set_battery(void)
 	/* Make the percentage approximate to UI shown */
 	remaining_capacity = *(int *)host_get_memmap(EC_MEMMAP_BATT_CAP);
 	full_charge_capacity = *(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
-	permillage = !full_charge_capacity ? 0 :
-		(1000 * remaining_capacity) / full_charge_capacity;
+	permillage = !full_charge_capacity ?
+			     0 :
+			     (1000 * remaining_capacity) / full_charge_capacity;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
@@ -156,12 +154,10 @@ static void elm_led_set_battery(void)
 		bat_led_set(BAT_LED_BLUE, 0);
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 		    permillage <= CRITICAL_LOW_BATTERY_PERMILLAGE)
-			bat_led_set(BAT_LED_ORANGE,
-				    (blink_second & 1) ? 0 : 1);
+			bat_led_set(BAT_LED_ORANGE, (blink_second & 1) ? 0 : 1);
 		else if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 			 permillage <= LOW_BATTERY_PERMILLAGE)
-			bat_led_set(BAT_LED_ORANGE,
-				    (blink_second & 3) ? 0 : 1);
+			bat_led_set(BAT_LED_ORANGE, (blink_second & 3) ? 0 : 1);
 		else
 			bat_led_set(BAT_LED_ORANGE, 0);
 		break;

@@ -1,0 +1,22 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Intel JHL8040R Thunderbolt 4 Retimer
+
+compatible: "intel,jhl8040r"
+
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
+
+properties:
+    reset-pin:
+      type: phandle
+      required: true
+
+    int-pin:
+      type: phandle
+      required: false
+
+    ls-en-pin:
+      type: phandle
+      required: false

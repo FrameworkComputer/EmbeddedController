@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,8 +15,14 @@
 static int buf_in_use;
 static int max_used;
 
+/* 1 MB buffer for fake shared memory implementation */
+STATIC_IF(CONFIG_FAKE_SHMEM) char fake_shmem_buf[BIT(20)];
+
 int shared_mem_size(void)
 {
+	if (IS_ENABLED(CONFIG_FAKE_SHMEM))
+		return sizeof(fake_shmem_buf);
+
 	/*
 	 * Use all the RAM we can.  The shared memory buffer is the last thing
 	 * allocated from the start of RAM, so we can use everything up to the
@@ -39,7 +45,10 @@ int shared_mem_acquire(int size, char **dest_ptr)
 	 */
 
 	buf_in_use = size;
-	*dest_ptr = __shared_mem_buf;
+	if (IS_ENABLED(CONFIG_FAKE_SHMEM))
+		*dest_ptr = fake_shmem_buf;
+	else
+		*dest_ptr = __shared_mem_buf;
 
 	if (max_used < size)
 		max_used = size;
@@ -53,14 +62,13 @@ void shared_mem_release(void *ptr)
 }
 
 #ifdef CONFIG_CMD_SHMEM
-static int command_shmem(int argc, char **argv)
+static int command_shmem(int argc, const char **argv)
 {
 	ccprintf("Size:%6d\n", shared_mem_size());
 	ccprintf("Used:%6d\n", buf_in_use);
 	ccprintf("Max: %6d\n", max_used);
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(shmem, command_shmem,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(shmem, command_shmem, NULL,
 			     "Print shared memory stats");
 #endif

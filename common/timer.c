@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,6 +6,7 @@
 /* Timer module for Chrome EC operating system */
 
 #include "atomic.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -17,45 +18,44 @@
 #include "watchdog.h"
 
 #ifdef CONFIG_ZEPHYR
-#include <kernel.h> /* For k_usleep() */
+#include <zephyr/kernel.h> /* For k_usleep() */
 #else
-extern __error("k_usleep() should only be called from Zephyr code")
-int32_t k_usleep(int32_t);
+extern __error("k_usleep() should only be called from Zephyr code") int32_t
+	k_usleep(int32_t);
 #endif /* CONFIG_ZEPHYR */
 
-#define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
+#ifdef CONFIG_COMMON_RUNTIME
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#else
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
+#endif
+
+#define TIMER_SYSJUMP_TAG 0x4d54 /* "TM" */
 
 /* High 32-bits of the 64-bit timestamp counter. */
-STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) uint32_t clksrc_high;
+STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) volatile uint32_t clksrc_high;
 
+/* Hardware timer routine IRQ number */
+static int timer_irq;
+
+#ifndef CONFIG_ZEPHYR
 /* Bitmap of currently running timers */
 static uint32_t timer_running;
+
+BUILD_ASSERT((sizeof(timer_running) * 8) > TASK_ID_COUNT);
 
 /* Deadlines of all timers */
 static timestamp_t timer_deadline[TASK_ID_COUNT];
 static uint32_t next_deadline = 0xffffffff;
 
-/* Hardware timer routine IRQ number */
-static int timer_irq;
-
 static void expire_timer(task_id_t tskid)
 {
 	/* we are done with this timer */
-	deprecated_atomic_clear_bits(&timer_running, 1 << tskid);
+	atomic_clear_bits((atomic_t *)&timer_running, 1 << tskid);
 	/* wake up the taks waiting for this timer */
-	task_set_event(tskid, TASK_EVENT_TIMER, 0);
-}
-
-int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
-{
-	timestamp_t now_val;
-
-	if (!now) {
-		now_val = get_time();
-		now = &now_val;
-	}
-
-	return ((int64_t)(now->val - deadline.val) >= 0);
+	task_set_event(tskid, TASK_EVENT_TIMER);
 }
 
 void process_timers(int overflow)
@@ -74,7 +74,6 @@ void process_timers(int overflow)
 			/* read atomically the current state of timer running */
 			check_timer = running_t0 = timer_running;
 			while (check_timer) {
-
 				int tskid = __fls(check_timer);
 				/* timer has expired ? */
 				if (timer_deadline[tskid].val <= now.val)
@@ -87,7 +86,7 @@ void process_timers(int overflow)
 
 				check_timer &= ~BIT(tskid);
 			}
-		/* if there is a new timer, let's retry */
+			/* if there is a new timer, let's retry */
 		} while (timer_running & ~running_t0);
 
 		if (next.le.hi == 0xffffffff) {
@@ -100,6 +99,19 @@ void process_timers(int overflow)
 		__hw_clock_event_set(next.le.lo);
 		next_deadline = next.le.lo;
 	} while (next.val <= get_time().val);
+}
+#endif /* !defined(CONFIG_ZEPHYR) */
+
+int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
+{
+	timestamp_t now_val;
+
+	if (!now) {
+		now_val = get_time();
+		now = &now_val;
+	}
+
+	return ((int64_t)(now->val - deadline.val) >= 0);
 }
 
 #ifndef CONFIG_HW_SPECIFIC_UDELAY
@@ -122,6 +134,8 @@ void udelay(unsigned us)
 }
 #endif
 
+/* Zephyr provides its own implementation in task shim */
+#ifndef CONFIG_ZEPHYR
 int timer_arm(timestamp_t event, task_id_t tskid)
 {
 	timestamp_t now = get_time();
@@ -132,7 +146,7 @@ int timer_arm(timestamp_t event, task_id_t tskid)
 		return EC_ERROR_BUSY;
 
 	timer_deadline[tskid] = event;
-	deprecated_atomic_or(&timer_running, BIT(tskid));
+	atomic_or((atomic_t *)&timer_running, BIT(tskid));
 
 	/* Modify the next event if needed */
 	if ((event.le.hi < now.le.hi) ||
@@ -146,12 +160,13 @@ void timer_cancel(task_id_t tskid)
 {
 	ASSERT(tskid < TASK_ID_COUNT);
 
-	deprecated_atomic_clear_bits(&timer_running, BIT(tskid));
+	atomic_clear_bits((atomic_t *)&timer_running, BIT(tskid));
 	/*
 	 * Don't need to cancel the hardware timer interrupt, instead do
 	 * timer-related housekeeping when the next timer interrupt fires.
 	 */
 }
+#endif
 
 /*
  * For us < (2^31 - task scheduling latency)(~ 2147 sec), this function will
@@ -163,6 +178,10 @@ void usleep(unsigned us)
 {
 	uint32_t evt = 0;
 	uint32_t t0;
+
+	/* If a wait is 0, return immediately. */
+	if (!us)
+		return;
 
 	if (IS_ENABLED(CONFIG_ZEPHYR)) {
 		while (us)
@@ -178,27 +197,47 @@ void usleep(unsigned us)
 		return;
 	}
 
-	ASSERT(us);
+	/* If in interrupt context or interrupts are disabled, use udelay() */
+	if (!is_interrupt_enabled() || in_interrupt_context()) {
+		CPRINTS("Sleeping not allowed");
+		udelay(us);
+		return;
+	}
+
 	do {
 		evt |= task_wait_event(us);
 	} while (!(evt & TASK_EVENT_TIMER) &&
-		((__hw_clock_source_read() - t0) < us));
+		 ((__hw_clock_source_read() - t0) < us));
 
 	/* Re-queue other events which happened in the meanwhile */
 	if (evt)
-		deprecated_atomic_or(task_get_event_bitmap(task_get_current()),
-				     evt & ~TASK_EVENT_TIMER);
+		atomic_or(task_get_event_bitmap(task_get_current()),
+			  evt & ~TASK_EVENT_TIMER);
 }
+
+#ifdef CONFIG_ZTEST
+timestamp_t *get_time_mock;
+#endif /* CONFIG_ZTEST */
 
 timestamp_t get_time(void)
 {
 	timestamp_t ts;
+
+#ifdef CONFIG_ZTEST
+	if (get_time_mock != NULL)
+		return *get_time_mock;
+#endif /* CONFIG_ZTEST */
 
 	if (IS_ENABLED(CONFIG_HWTIMER_64BIT)) {
 		ts.val = __hw_clock_source_read64();
 	} else {
 		ts.le.hi = clksrc_high;
 		ts.le.lo = __hw_clock_source_read();
+		/*
+		 * TODO(b/213342294) If statement below doesn't catch overflows
+		 * when interrupts are disabled or currently processed interrupt
+		 * has higher priority.
+		 */
 		if (ts.le.hi != clksrc_high) {
 			ts.le.hi = clksrc_high;
 			ts.le.lo = __hw_clock_source_read();
@@ -211,7 +250,7 @@ timestamp_t get_time(void)
 clock_t clock(void)
 {
 	/* __hw_clock_source_read() returns a microsecond resolution timer.*/
-	return (clock_t) __hw_clock_source_read() / 1000;
+	return (clock_t)__hw_clock_source_read() / 1000;
 }
 
 void force_time(timestamp_t ts)
@@ -219,8 +258,24 @@ void force_time(timestamp_t ts)
 	if (IS_ENABLED(CONFIG_HWTIMER_64BIT)) {
 		__hw_clock_source_set64(ts.val);
 	} else {
+		/* Save current interrupt state */
+		bool interrupt_enabled = is_interrupt_enabled();
+
+		/*
+		 * Updating timer shouldn't be interrupted (eg. when counter
+		 * overflows) because it could lead to some unintended
+		 * consequences. Please note that this function can be called
+		 * with disabled or enabled interrupts so we need to restore
+		 * the original state later.
+		 */
+		interrupt_disable();
+
 		clksrc_high = ts.le.hi;
 		__hw_clock_source_set(ts.le.lo);
+
+		/* Restore original interrupt state */
+		if (interrupt_enabled)
+			interrupt_enable();
 	}
 
 	/* some timers might be already expired : process them */
@@ -248,9 +303,7 @@ void __hw_clock_source_set(uint32_t ts)
 void timer_print_info(void)
 {
 	timestamp_t t = get_time();
-	uint64_t deadline = (uint64_t)t.le.hi << 32 |
-		__hw_clock_event_get();
-	int tskid;
+	uint64_t deadline = (uint64_t)t.le.hi << 32 | __hw_clock_event_get();
 
 	ccprintf("Time:     0x%016llx us, %11.6lld s\n"
 		 "Deadline: 0x%016llx -> %11.6lld s from now\n"
@@ -258,7 +311,8 @@ void timer_print_info(void)
 		 t.val, t.val, deadline, deadline - t.val);
 	cflush();
 
-	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
+#ifndef CONFIG_ZEPHYR
+	for (int tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
 		if (timer_running & BIT(tskid)) {
 			ccprintf("  Tsk %2d  0x%016llx -> %11.6lld\n", tskid,
 				 timer_deadline[tskid].val,
@@ -266,14 +320,13 @@ void timer_print_info(void)
 			cflush();
 		}
 	}
+#endif /* !defined(CONFIG_ZEPHYR) */
 }
 
 void timer_init(void)
 {
 	const timestamp_t *ts;
 	int size, version;
-
-	BUILD_ASSERT(TASK_ID_COUNT < sizeof(timer_running) * 8);
 
 	/* Restore time from before sysjump */
 	ts = (const timestamp_t *)system_get_jump_tag(TIMER_SYSJUMP_TAG,
@@ -303,7 +356,7 @@ static void timer_sysjump(void)
 DECLARE_HOOK(HOOK_SYSJUMP, timer_sysjump, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_WAITMS
-static int command_wait(int argc, char **argv)
+static int command_wait(int argc, const char **argv)
 {
 	char *e;
 	int i;
@@ -313,6 +366,9 @@ static int command_wait(int argc, char **argv)
 
 	i = strtoi(argv[1], &e, 0);
 	if (*e)
+		return EC_ERROR_PARAM1;
+
+	if (i < 0)
 		return EC_ERROR_PARAM1;
 
 	/*
@@ -333,8 +389,7 @@ static int command_wait(int argc, char **argv)
 	return EC_SUCCESS;
 }
 /* Typically a large delay (e.g. 3s) will cause a reset */
-DECLARE_CONSOLE_COMMAND(waitms, command_wait,
-			"msec",
+DECLARE_CONSOLE_COMMAND(waitms, command_wait, "msec",
 			"Busy-wait for msec (large delays will reset)");
 #endif
 
@@ -344,7 +399,7 @@ DECLARE_CONSOLE_COMMAND(waitms, command_wait,
  * especially when going "backward" in time, because task deadlines are
  * left un-adjusted.
  */
-static int command_force_time(int argc, char **argv)
+static int command_force_time(int argc, const char **argv)
 {
 	char *e;
 	timestamp_t new;
@@ -365,32 +420,29 @@ static int command_force_time(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(forcetime, command_force_time,
-			"hi lo",
+DECLARE_CONSOLE_COMMAND(forcetime, command_force_time, "hi lo",
 			"Force current time");
 #endif
 
 #ifdef CONFIG_CMD_GETTIME
-static int command_get_time(int argc, char **argv)
+static int command_get_time(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 	ccprintf("Time: 0x%016llx = %.6lld s\n", ts.val, ts.val);
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(gettime, command_get_time,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(gettime, command_get_time, NULL,
 			     "Print current time");
 #endif
 
 #ifdef CONFIG_CMD_TIMERINFO
-int command_timer_info(int argc, char **argv)
+static int command_timer_info(int argc, const char **argv)
 {
 	timer_print_info();
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(timerinfo, command_timer_info,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(timerinfo, command_timer_info, NULL,
 			     "Print timer info");
 #endif

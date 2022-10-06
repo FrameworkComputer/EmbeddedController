@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,30 +11,29 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
 
 struct i2c_trace_range {
 	bool enabled;
 	int port;
-	int slave_addr_lo; /* Inclusive */
-	int slave_addr_hi; /* Inclusive */
+	int addr_lo; /* Inclusive */
+	int addr_hi; /* Inclusive */
 };
 
 static struct i2c_trace_range trace_entries[8];
 
-void i2c_trace_notify(int port, uint16_t slave_addr_flags,
-		      const uint8_t *out_data, size_t out_size,
-		      const uint8_t *in_data, size_t in_size)
+void i2c_trace_notify(int port, uint16_t addr_flags, const uint8_t *out_data,
+		      size_t out_size, const uint8_t *in_data, size_t in_size,
+		      int ret)
 {
 	size_t i;
-	uint16_t addr = I2C_GET_ADDR(slave_addr_flags);
+	uint16_t addr = I2C_STRIP_FLAGS(addr_flags);
 
 	for (i = 0; i < ARRAY_SIZE(trace_entries); i++)
-		if (trace_entries[i].enabled
-		    && trace_entries[i].port == port
-		    && trace_entries[i].slave_addr_lo <= addr
-		    && trace_entries[i].slave_addr_hi >= addr)
+		if (trace_entries[i].enabled && trace_entries[i].port == port &&
+		    trace_entries[i].addr_lo <= addr &&
+		    trace_entries[i].addr_hi >= addr)
 			goto trace_enabled;
 	return;
 
@@ -45,7 +44,9 @@ trace_enabled:
 		for (i = 0; i < out_size; i++)
 			CPRINTF("0x%02X ", out_data[i]);
 	}
-	if (in_size) {
+	if (ret != EC_SUCCESS) {
+		CPRINTF(" error: %d", ret);
+	} else if (in_size) {
 		CPRINTF("  rd ");
 		for (i = 0; i < in_size; i++)
 			CPRINTF("0x%02X ", in_data[i]);
@@ -64,15 +65,16 @@ static int command_i2ctrace_list(void)
 	for (i = 0; i < ARRAY_SIZE(trace_entries); i++) {
 		if (trace_entries[i].enabled) {
 			i2c_port = get_i2c_port(trace_entries[i].port);
-			ccprintf("%-2zd %d %-8s 0x%X",
-				 i,
-				 trace_entries[i].port,
+			ccprintf("%-2zd %d %-8s 0x%X", i, trace_entries[i].port,
+#ifndef CONFIG_ZEPHYR
 				 i2c_port->name,
-				 trace_entries[i].slave_addr_lo);
-			if (trace_entries[i].slave_addr_hi
-			    != trace_entries[i].slave_addr_lo)
-				ccprintf(" to 0x%X",
-					 trace_entries[i].slave_addr_hi);
+#else
+				 "",
+#endif /* CONFIG_ZEPHYR */
+				 trace_entries[i].addr_lo);
+			if (trace_entries[i].addr_hi !=
+			    trace_entries[i].addr_lo)
+				ccprintf(" to 0x%X", trace_entries[i].addr_hi);
 			ccprintf("\n");
 		}
 	}
@@ -89,8 +91,7 @@ static int command_i2ctrace_disable(size_t id)
 	return EC_SUCCESS;
 }
 
-static int command_i2ctrace_enable(int port, int slave_addr_lo,
-				   int slave_addr_hi)
+static int command_i2ctrace_enable(int port, int addr_lo, int addr_hi)
 {
 	struct i2c_trace_range *t;
 	struct i2c_trace_range *new_entry = NULL;
@@ -98,48 +99,41 @@ static int command_i2ctrace_enable(int port, int slave_addr_lo,
 	if (!get_i2c_port(port))
 		return EC_ERROR_PARAM2;
 
-	if (slave_addr_lo > slave_addr_hi)
+	if (addr_lo > addr_hi)
 		return EC_ERROR_PARAM3;
 
 	/*
 	 * Scan thru existing entries to see if there is one we can
 	 * extend instead of making a new entry
 	 */
-	for (t = trace_entries;
-	     t < trace_entries + ARRAY_SIZE(trace_entries);
+	for (t = trace_entries; t < trace_entries + ARRAY_SIZE(trace_entries);
 	     t++) {
 		if (t->enabled && t->port == port) {
 			/* Subset of existing range, do nothing */
-			if (t->slave_addr_lo <= slave_addr_lo &&
-			    t->slave_addr_hi >= slave_addr_hi)
+			if (t->addr_lo <= addr_lo && t->addr_hi >= addr_hi)
 				return EC_SUCCESS;
 
 			/* Extends exising range on both directions, replace */
-			if (t->slave_addr_lo >= slave_addr_lo &&
-			    t->slave_addr_hi <= slave_addr_hi) {
+			if (t->addr_lo >= addr_lo && t->addr_hi <= addr_hi) {
 				t->enabled = 0;
-				return command_i2ctrace_enable(
-					port, slave_addr_lo, slave_addr_hi);
+				return command_i2ctrace_enable(port, addr_lo,
+							       addr_hi);
 			}
 
 			/* Extends existing range below */
-			if (t->slave_addr_lo - 1 <= slave_addr_hi &&
-			    t->slave_addr_hi >= slave_addr_hi) {
+			if (t->addr_lo - 1 <= addr_hi &&
+			    t->addr_hi >= addr_hi) {
 				t->enabled = 0;
-				return command_i2ctrace_enable(
-					port,
-					slave_addr_lo,
-					t->slave_addr_hi);
+				return command_i2ctrace_enable(port, addr_lo,
+							       t->addr_hi);
 			}
 
 			/* Extends existing range above */
-			if (t->slave_addr_lo <= slave_addr_lo &&
-			    t->slave_addr_hi + 1 >= slave_addr_lo) {
+			if (t->addr_lo <= addr_lo &&
+			    t->addr_hi + 1 >= addr_lo) {
 				t->enabled = 0;
-				return command_i2ctrace_enable(
-					port,
-					t->slave_addr_lo,
-					slave_addr_hi);
+				return command_i2ctrace_enable(port, t->addr_lo,
+							       addr_hi);
 			}
 		} else if (!t->enabled && !new_entry) {
 			new_entry = t;
@@ -150,8 +144,8 @@ static int command_i2ctrace_enable(int port, int slave_addr_lo,
 	if (new_entry) {
 		new_entry->enabled = 1;
 		new_entry->port = port;
-		new_entry->slave_addr_lo = slave_addr_lo;
-		new_entry->slave_addr_hi = slave_addr_hi;
+		new_entry->addr_lo = addr_lo;
+		new_entry->addr_hi = addr_hi;
 		return EC_SUCCESS;
 	}
 
@@ -159,8 +153,7 @@ static int command_i2ctrace_enable(int port, int slave_addr_lo,
 	return EC_ERROR_MEMORY_ALLOCATION;
 }
 
-
-static int command_i2ctrace(int argc, char **argv)
+static int command_i2ctrace(int argc, const char **argv)
 {
 	int id_or_port;
 	int address_low;
@@ -198,14 +191,13 @@ static int command_i2ctrace(int argc, char **argv)
 			return EC_ERROR_PARAM_COUNT;
 		}
 
-		return command_i2ctrace_enable(
-			id_or_port, address_low, address_high);
+		return command_i2ctrace_enable(id_or_port, address_low,
+					       address_high);
 	}
 
 	return EC_ERROR_PARAM1;
 }
-DECLARE_CONSOLE_COMMAND(i2ctrace,
-			command_i2ctrace,
+DECLARE_CONSOLE_COMMAND(i2ctrace, command_i2ctrace,
 			"[list | disable <id> | enable <port> <address> | "
 			"enable <port> <address-low> <address-high>]",
 			"Trace I2C transactions");

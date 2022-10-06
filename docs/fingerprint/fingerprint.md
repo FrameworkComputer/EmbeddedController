@@ -2,16 +2,20 @@
 
 [TOC]
 
+<!-- mdformat off(b/139308852) -->
 *** note
 NOTE: The build commands assume you are in the `~/trunk/src/platform/ec`
 directory inside the chroot.
 ***
+<!-- mdformat on -->
 
+<!-- mdformat off(b/139308852) -->
 *** note
 WARNING: When switching branches in the EC codebase, you probably want to nuke
 the `build` directory or at least the board you're working on: `rm -rf
 build/<board>` or `make clobber` to prevent compilation errors.
 ***
+<!-- mdformat on -->
 
 ## Software
 
@@ -24,32 +28,44 @@ The main source code for fingerprint sensor functionality lives in the
 The following "boards" (specified by the `BOARD` environment variable when
 building the EC code) are for fingerprint:
 
-MCU                   | Firmware (EC "board")                          | Dev Board
---------------------- | ---------------------------------------------- | ---------
-[STM32H743] (Cortex-M7) | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | Icetower v0.2 <br>(Previously Dragontalon)
-[STM32F412] (Cortex-M4) | `bloonchipper`<br>(aka `hatch_fp`)             | Dragonclaw v0.2
+MCU                      | Sensor     | Firmware (EC "board")                          | Dev Board                                    | Nucleo Board
+------------------------ | ---------- | ---------------------------------------------- | -------------------------------------------- | ------------
+[STM32H743] \(Cortex-M7) | [FPC 1145] | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | [Icetower v0.2] <br>(Previously Dragontalon) | [Nucleo H743ZI2]
+[STM32F412] \(Cortex-M4) | [FPC 1025] | `bloonchipper`<br>(aka `hatch_fp`)             | [Dragonclaw v0.3]                            | [Nucleo F412ZG]
+
+RAM and Flash details for each board are in the [Fingerprint MCU RAM and Flash]
+document.
+
+### Sensor Template Sizes
+
+Sensor     | Fingerprint Template Size
+---------- | --------------------------------
+[FPC 1145] | [~48 KB][FPC 1145 Template Size]
+[FPC 1025] | [~5 KB][FPC 1025 Template Size]
 
 ### Determining Hardware {#chromeos-config-fingerprint}
 
-If you have access to a shell on your Chromebook, you can use [Chrome OS Config]
+If you have access to a shell on your Chromebook, you can use [ChromeOS Config]
 to determine the FPMCU that it contains:
 
 ```bash
 (dut) $ cros_config /fingerprint board
 ```
 
-Alternatively, if you have a Chromium OS build, you can use [Chrome OS Config]
-in the chroot to determine the FPMCU:
+Alternatively, if you have a Chromium OS build, you can use [ChromeOS Config] in
+the chroot to determine the FPMCU:
 
 ```bash
 (chroot) $  cros_config_host -c /build/<BOARD>/usr/share/chromeos-config/yaml/config.yaml -m <MODEL> get /fingerprint board
 ```
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: If you get an empty response when running these commands, the
-[Chrome OS Config] properties for fingerprint may not have been set up yet. See
-the [section on updating Chrome OS Config](#update-chromeos-config).
+[ChromeOS Config] properties for fingerprint may not have been set up yet. See
+the [section on updating ChromeOS Config](#update-chromeos-config).
 ***
+<!-- mdformat on -->
 
 ## Building FPMCU Firmware Locally
 
@@ -82,10 +98,12 @@ Before uploading a change to Gerrit via `repo upload`, you'll need to build
 *all* the boards in the EC codebase to make sure your changes do not break any
 others.
 
+<!-- mdformat off(b/139308852) -->
 *** note
 NOTE: If you forget to do this, do not worry. `repo upload` will warn you and
 prevent you from uploading.
 ***
+<!-- mdformat on -->
 
 ```bash
 (chroot) ~/trunk/src/platform/ec $ make buildall -j
@@ -102,6 +120,12 @@ See the [Unit Tests] documentation for details on how to [run the unit tests].
 ```
 
 ## Build and run the `host_command` fuzz test
+
+<!-- mdformat off(b/139308852) -->
+*** note
+NOTE: For more details on fuzzing, see [Fuzz Testing in ChromeOS].
+***
+<!-- mdformat on -->
 
 ```bash
 (chroot) ~/trunk/src/platform/ec $ make run-host_command_fuzz
@@ -146,11 +170,13 @@ kernel:
 
 ### `fp_updater.sh` and `bio_fw_updater`
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: The auto-update process requires a working version of the firmware
 running on the FPMCU. See [Fingerprint Factory Requirements] for details on
 flashing in the factory.
 ***
+<!-- mdformat on -->
 
 [`fp_updater.sh`] and [`bio_fw_updater`] are wrappers around [`flashrom`] and
 require already-functioning RO firmware running on the FPMCU. It’s meant to be
@@ -168,12 +194,14 @@ user disables [hardware write protection]).
 
 ### `flash_fp_mcu`
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: This tool is really just for us to use during development or during
 the RMA flow (must go through finalization again in that case). We never update
 RO in the field (can’t by design). See [Fingerprint Factory Requirements] for
 details on flashing in the factory.
 ***
+<!-- mdformat on -->
 
 [`flash_fp_mcu`] enables spidev and toggles some GPIOs to put the FPMCU (STM32)
 into bootloader mode. At that point it uses [`stm32mon`] to rewrite the entire
@@ -224,9 +252,8 @@ openssl genrsa -3 -out board/$BOARD/dev_key.pem 3072
 
 ### Resources
 
-*   https://sites.google.com/a/google.com/chromeos/resources/engineering/releng/signer-documentation
-*   https://sites.google.com/a/google.com/chromeos/paygen---payload
-*   https://b.corp.google.com/issues/77882970
+*   http://go/cros-signer-docs
+*   https://issuetracker.google.com/issues/77882970
 
 ## Signing
 
@@ -295,68 +322,121 @@ a lot easier during both development and testing.
 ## Power
 
 See [Measuring Power] for instructions on how to measure power with the
-fingerprint development boards.
+fingerprint development boards. *Make sure that any debuggers are completely
+disconnected.*
 
-### Dragonclaw v0.2
+### Dragonclaw v0.3
 
 ```bash
-(chroot) $  dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
+(chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
-**Firmware Version**: `bloonchipper_v2.0.4277-9f652bb3`
+**Firmware Version**:
+`bloonchipper_v2.0.4277-9f652bb3-RO_v2.0.14348-e5fb0b9-RW.bin`
+
+#### MCU is idle
+
+```
+(chroot) $ dut-control fpmcu_slp_alt:off
+```
 
 ```
 @@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    128   469.05   33.79   641.75   399.90
-@@    pp1800_dx_fp_mv    128  1802.06    3.50  1808.00  1800.00
-@@    pp1800_dx_fp_mw    128     0.00    0.00     0.00     0.00
-@@    pp3300_dx_fp_mv    128  3296.00    0.00  3296.00  3296.00
-@@    pp3300_dx_fp_mw    128     0.00    0.03     0.26     0.00
-@@   pp3300_dx_mcu_mv    128  3288.00    0.00  3288.00  3288.00
-@@   pp3300_dx_mcu_mw    128    24.20    0.00    24.20    24.20
+@@       sample_msecs    478   125.49   26.02   431.96    92.23
+@@    pp1800_dx_fp_mv    478  1800.00    0.00  1800.00  1800.00
+@@    pp1800_dx_fp_mw    478     0.00    0.00     0.00     0.00
+@@    pp3300_dx_fp_mv    478  3280.00    0.00  3280.00  3280.00
+@@    pp3300_dx_fp_mw    478     0.00    0.03     0.26     0.00
+@@   pp3300_dx_mcu_mv    478  3280.00    0.00  3280.00  3280.00
+@@   pp3300_dx_mcu_mw    478    21.78    0.06    23.09    21.78
 ```
 
-### Dragontalon
+#### MCU in low power mode (suspend)
 
+```
+(chroot) $ dut-control fpmcu_slp_alt:on
+```
+
+```
+@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@       sample_msecs    488   122.99   26.37   458.47    92.69
+@@    pp1800_dx_fp_mv    488  1800.00    0.00  1800.00  1800.00
+@@    pp1800_dx_fp_mw    488     0.00    0.00     0.00     0.00
+@@    pp3300_dx_fp_mv    488  3287.79    1.29  3288.00  3280.00
+@@    pp3300_dx_fp_mw    488     0.01    0.04     0.26     0.00
+@@   pp3300_dx_mcu_mv    488  3283.38    3.95  3288.00  3280.00
+@@   pp3300_dx_mcu_mw    488     1.57    0.59     9.73     1.31
+```
+
+### Icetower v0.1
+
+<!-- mdformat off(b/139308852) -->
 *** note
-**NOTE**: The sensor doesn't work on Dragontalon, so the measurements below show
-zero for the sensor.
+**NOTE**: Icetower v0.1 has a hardware bug in the INA connections, so you cannot
+measure the 1.8V fingerprint sensor rail. See http://b/178098140.
+
+Additionally, before https://crrev.com/c/2689101, the sleep GPIOs were not
+configured correctly, so the change needs to be cherry-picked in order to
+measure releases before that point.
 ***
+<!-- mdformat on -->
 
 ```bash
-(chroot) $  dut-control -t 60 pp3300_h7_mv pp3300_h7_mw pp1800_fpc_mv pp1800_fpc_mw
+(chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw
 ```
 
-**Firmware Version**: `dartmonkey_v2.0.4017-9c45fb4b3`
+**Firmware Version**:
+`dartmonkey_v2.0.2887-311310808-RO_v2.0.14340-6c1587ca7-RW.bin`
+
+#### MCU is idle
 
 ```
-@@            NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@    sample_msecs   1502    39.96   13.14   379.43    22.31
-@@   pp1800_fpc_mv   1502     0.00    0.00     0.00     0.00
-@@   pp1800_fpc_mw   1502     0.00    0.00     0.00     0.00
-@@    pp3300_h7_mv   1502  3288.00    0.00  3288.00  3288.00
-@@    pp3300_h7_mw   1502     8.20    0.51    18.08     7.67
+(chroot) $ dut-control fpmcu_slp_alt:off
 ```
 
-## Chrome OS Build (portage / ebuild)
+```
+@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@       sample_msecs    523   114.85   18.33   386.55    88.95
+@@    pp3300_dx_fp_mv    523  3256.00    0.00  3256.00  3256.00
+@@    pp3300_dx_fp_mw    523     0.00    0.00     0.00     0.00
+@@   pp3300_dx_mcu_mv    523  3248.00    0.00  3248.00  3248.00
+@@   pp3300_dx_mcu_mw    523    43.86    0.10    43.91    43.65
+```
 
-In order to use the fingerprint sensor with a given [Chrome OS board], a few
-things need to be configured for the [Chrome OS board].
+#### MCU in low power mode (suspend)
+
+```
+(chroot) $ dut-control fpmcu_slp_alt:on
+```
+
+```
+@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@       sample_msecs    501   119.79   14.72   381.92    89.22
+@@    pp3300_dx_fp_mv    501  3256.00    0.00  3256.00  3256.00
+@@    pp3300_dx_fp_mw    501     0.00    0.00     0.00     0.00
+@@   pp3300_dx_mcu_mv    501  3256.00    0.00  3256.00  3256.00
+@@   pp3300_dx_mcu_mw    501     5.74    0.28    11.98     5.73
+```
+
+## ChromeOS Build (portage / ebuild)
+
+In order to use the fingerprint sensor with a given [ChromeOS board], a few
+things need to be configured for the [ChromeOS board].
 
 ### Enable biod USE flag
 
-The biod [`USE` flag] needs to be enabled for the [Chrome OS board]. This `USE`
+The biod [`USE` flag] needs to be enabled for the [ChromeOS board]. This `USE`
 flag
 [determines whether the `biod` daemon is built and installed][biod chromium-os].
 
-To enable the `USE` flag, update the `make.defaults` for the [Chrome OS board].
+To enable the `USE` flag, update the `make.defaults` for the [ChromeOS board].
 See the [`make.defaults` for the Hatch board][hatch make.defaults] as an
 example.
 
 #### Verifying biod is installed in the rootfs
 
 After enabling the `biod` [`USE` flag] and building the `biod` package for your
-target [Chrome OS board], the `biod` binary should be in the build directory:
+target [ChromeOS board], the `biod` binary should be in the build directory:
 
 ```bash
 (chroot) $ emerge-<BOARD> biod
@@ -370,7 +450,7 @@ target [Chrome OS board], the `biod` binary should be in the build directory:
 ### Update FPMCU_FIRMWARE
 
 `FPMCU_FIRMWARE` should be set to the set of fingerprint firmware that should be
-built and installed for the [Chrome OS board].
+built and installed for the [ChromeOS board].
 
 `FPMCU_FIRMWARE` is a [`USE_EXPAND` variable][`USE` flag],
 [defined in the base `make.defaults`][FPMCU_FIRMWARE make.defaults].
@@ -392,9 +472,11 @@ See the [Hatch baseboard `make.defaults`] for an example.
 Once you have added the `FPMCU_FIRMWARE` flag and rebuilt the
 [`chromeos-firmware-fpmcu` ebuild], the firmware will show up in the the chroot:
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: This requires access to the [internal manifest].
 ***
+<!-- mdformat on -->
 
 ```bash
 (chroot) $ emerge-<BOARD> chromeos-firmware-fpmcu
@@ -410,18 +492,18 @@ firmware by setting `FPMCU_FIRMWARE="bloonchipper dartmonkey"`. The actual
 version numbers displayed will not necessarily match since the firmware is
 constantly updated.
 
-### Update Chrome OS Config {#update-chromeos-config}
+### Update ChromeOS Config {#update-chromeos-config}
 
-With "unibuild", the same OS image (build) for a given [Chrome OS board] is used
+With "unibuild", the same OS image (build) for a given [ChromeOS board] is used
 across multiple devices. Often there will be some devices that have a
 fingerprint sensor, some that do not, and even different sensors for the same
 board.
 
-Determining what fingerprint hardware is on a given [Chrome OS board] is thus
-done at runtime, using [Chrome OS Config].
+Determining what fingerprint hardware is on a given [ChromeOS board] is thus
+done at runtime, using [ChromeOS Config].
 
 The `fingerprint` config needs to be in the `model.yaml` for the given
-[Chrome OS board]. The [Chrome OS Config fingerprint] section describes the
+[ChromeOS board]. The [ChromeOS Config fingerprint] section describes the
 attributes for the `fingerprint` config in more detail.
 
 The [`ec_extras` attribute] needs to be set to the list of fingerprint firmware
@@ -429,54 +511,102 @@ that should be built as part of the build.
 
 See the [`model.yaml` for the Hatch board][hatch model.yaml] as an example.
 
-You can test your changes by
-[running `cros_config`](#chromeos-config-fingerprint). The Chrome OS Config
+Instead of crafting the `model.yaml` by hand, newer boards are moving to the
+[ChromeOS Project Configuration] model, where the config is generated using
+[Starlark]. The common [`create_fingerprint`] function can be used across models
+to configure the fingerprint settings. See the [Morphius `config.star`] for an
+example of how to call `create_fingerprint`. After you modify a `config.star`
+file you will need to [regenerate the config]. If you need to change many
+projects (e.g., modifying [`create_fingerprint`]), you can use the [`CLFactory`]
+tool.
+
+Once you have updated the config, you can test your changes by
+[running `cros_config`](#chromeos-config-fingerprint). The ChromeOS Config
 documentation has a [section on testing properties] that describes this in more
 detail.
 
-[`common/fpsensor`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/common/fpsensor/
-[`driver/fingerprint`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/driver/fingerprint
-[`nocturne_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/nocturne_fp/
-[`nami_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/nami_fp/
-[`hatch_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/hatch_fp/
-[`bloonchipper`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/bloonchipper/
-[`dartmonkey`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/dartmonkey/
+### SKUs
+
+The fingerprint sensor may only be included on certain SKUs for a given device.
+The fingerprint code uses [ChromeOS Config] to determine whether a device has a
+fingerprint sensor or not. For each SKU, there is an associated
+[fingerprint config][ChromeOS Config fingerprint]. [ChromeOS Config] determines
+the [SKU information][ChromeOS Config SKU] (and thus the
+[fingerprint config][ChromeOS Config fingerprint]) from [CBI Info]. The SKU for
+a given device can be found by viewing `chrome://system/#platform_identity_sku`.
+
+## Kernel Driver
+
+The kernel driver responsible for handling communication between the AP and
+FPMCU is called [`cros_ec`] and is enabled with [`CONFIG_CROS_EC`] in the Linux
+kernel. FPMCUs that are connected via SPI use [`cros_ec_spi.c`], while FPMCUs
+that are connected via UART use [`cros_ec_uart.c`].
+
+[`common/fpsensor`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/fpsensor/
+[`driver/fingerprint`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/driver/fingerprint
+[`nocturne_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/nocturne_fp/
+[`nami_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/nami_fp/
+[`hatch_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/hatch_fp/
+[`bloonchipper`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/bloonchipper/
+[`dartmonkey`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/dartmonkey/
 [hardware write protection]: ../write_protection.md
-[`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/util/flash_fp_mcu
+[`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_fp_mcu
 [`stm32mon`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/e1f3f89e7ea7945adddd0c2e6838f5e59856cff2/util/stm32mon.c#14
-[`futility`]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/master/futility/
-[`sign_official_build.sh`]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/master/scripts/image_signing/sign_official_build.sh
+[`futility`]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/HEAD/futility/
+[`sign_official_build.sh`]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/HEAD/scripts/image_signing/sign_official_build.sh
 [vboot_key_id]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/e7db36856ce418552637d1981c173d22dfe5bf39/firmware/2lib/include/2id.h#5
 [vb2_public_key]: https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/e7db36856ce418552637d1981c173d22dfe5bf39/firmware/2lib/include/2rsa.h#14
 [chatty-firmware-q]: https://groups.google.com/a/google.com/d/msg/chromeos-chatty-firmware/ZSg423wsFPg/26UbdGwjFQAJ
 [`fp_updater.sh`]: http://go/cros-fp-updater-nocturne-source
-[`bio_fw_updater`]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/biod/tools
+[`bio_fw_updater`]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/tools
 [`flashrom`]: https://chromium.googlesource.com/chromiumos/third_party/flashrom/
 [STM32F412]: https://www.st.com/resource/en/reference_manual/dm00180369.pdf
 [STM32H743]: https://www.st.com/resource/en/reference_manual/dm00314099.pdf
-[`board/nocturne_fp/dev_key.pem`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/board/nocturne_fp/dev_key.pem
-[`timberslide`]: https://chromium.googlesource.com/chromiumos/platform2/+/master/timberslide
+[`board/nocturne_fp/dev_key.pem`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/nocturne_fp/dev_key.pem
+[`timberslide`]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/timberslide
 [cros_ec_debugfs]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/9db44685934a2e4bc9180ea2de87a6c429672395/drivers/platform/chrome/cros_ec_debugfs.c
 [Fingerprint Factory Requirements]: ./fingerprint-factory-requirements.md
-[Chromium OS test image]: https://chromium.googlesource.com/chromiumos/platform/factory/+/master/README.md#building-test-image
-[Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/master/chromeos-config/README.md
-[Chrome OS Config fingerprint]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/chromeos-config/README.md#fingerprint
-[section on testing properties]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/chromeos-config/README.md#adding-and-testing-new-properties
-[Chrome OS board]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#Select-a-board
+[Chromium OS test image]: https://chromium.googlesource.com/chromiumos/platform/factory/+/HEAD/README.md#building-test-image
+[ChromeOS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
+[ChromeOS Config fingerprint]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#fingerprint
+[section on testing properties]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#adding-and-testing-new-properties
+[ChromeOS board]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Select-a-board
 [biod chromium-os]: https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/4ea72b588af3394cb9fd1c330dcf726472183dfd/virtual/target-chromium-os/target-chromium-os-1.ebuild#154
 [hatch make.defaults]: https://chromium.googlesource.com/chromiumos/overlays/board-overlays/+/2f075f0e7ce09d3eb460f3c529da463a6201276c/overlay-hatch/profiles/base/make.defaults#22
-[Hatch baseboard `make.defaults`]: https://chrome-internal.googlesource.com/chromeos/overlays/baseboard-hatch-private/+/refs/heads/master/profiles/base/make.defaults#17
-[hatch model.yaml]: https://chrome-internal.googlesource.com/chromeos/overlays/overlay-hatch-private/+/master/chromeos-base/chromeos-config-bsp-hatch-private/files/model.yaml
-[`ec_extras` attribute]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/chromeos-config/README.md#build_targets
+[Hatch baseboard `make.defaults`]: https://chrome-internal.googlesource.com/chromeos/overlays/baseboard-hatch-private/+/HEAD/profiles/base/make.defaults#17
+[hatch model.yaml]: https://chrome-internal.googlesource.com/chromeos/overlays/overlay-hatch-private/+/HEAD/chromeos-base/chromeos-config-bsp-hatch-private/files/model.yaml
+[`ec_extras` attribute]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#build_targets
 [FPMCU_FIRMWARE make.defaults]: https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/4ea72b588af3394cb9fd1c330dcf726472183dfd/profiles/base/make.defaults#157
 [`USE` flag]: https://devmanual.gentoo.org/general-concepts/use-flags/index.html
 [`USE` flags]: https://devmanual.gentoo.org/general-concepts/use-flags/index.html
 [biod release firmware]: https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/4ea72b588af3394cb9fd1c330dcf726472183dfd/chromeos-base/biod/biod-9999.ebuild#49
-[`chromeos-firmware-fpmcu` ebuild]: https://chrome-internal.googlesource.com/chromeos/overlays/chromeos-overlay/+/refs/heads/master/chromeos-base/chromeos-firmware-fpmcu/chromeos-firmware-fpmcu-9999.ebuild
-[firmware ebuild]: https://chrome-internal.googlesource.com/chromeos/overlays/chromeos-overlay/+/refs/heads/master/chromeos-base/chromeos-firmware-fpmcu/chromeos-firmware-fpmcu-9999.ebuild#40
-[`chromeos-fpmcu-release*` ebuilds]: https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/master/sys-firmware
-[internal manifest]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#get-the-source-code
+[`chromeos-firmware-fpmcu` ebuild]: https://chrome-internal.googlesource.com/chromeos/overlays/chromeos-overlay/+/HEAD/chromeos-base/chromeos-firmware-fpmcu/chromeos-firmware-fpmcu-9999.ebuild
+[firmware ebuild]: https://chrome-internal.googlesource.com/chromeos/overlays/chromeos-overlay/+/HEAD/chromeos-base/chromeos-firmware-fpmcu/chromeos-firmware-fpmcu-9999.ebuild#40
+[`chromeos-fpmcu-release*` ebuilds]: https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/HEAD/sys-firmware
+[internal manifest]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#get-the-source-code
 [Unit Tests]: ../unit_tests.md
 [run the unit tests]: ../unit_tests.md#running
 [Measuring Power]: ./fingerprint-dev-for-partners.md#measure-power
 [dragonclaw]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board
+[FPC 1145]: ../../driver/fingerprint/fpc/libfp/fpc1145_private.h
+[FPC 1025]: ../../driver/fingerprint/fpc/bep/fpc1025_private.h
+[FPC 1145 Template Size]: https://chromium.googlesource.com/chromiumos/platform/ec/+/127521b109be8aac352e80e319e46ed123360408/driver/fingerprint/fpc/libfp/fpc1145_private.h#46
+[FPC 1025 Template Size]: https://chromium.googlesource.com/chromiumos/platform/ec/+/127521b109be8aac352e80e319e46ed123360408/driver/fingerprint/fpc/bep/fpc1025_private.h#44
+[Dragonclaw v0.3]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board
+[Icetower v0.2]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board
+[Nucleo F412ZG]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-F412ZG/6137573
+[Nucleo H743ZI2]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-H743ZI2/10130892
+[CBI Info]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
+[ChromeOS Config SKU]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#identity
+[ChromeOS Project Configuration]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md
+[Starlark]: https://docs.bazel.build/versions/main/skylark/language.html
+[`create_fingerprint`]: https://chromium.googlesource.com/chromiumos/config/+/e1fa0d7f56eb3dd6e9378e4326de086ada46b7d3/util/hw_topology.star#444
+[Morphius `config.star`]: https://chrome-internal.googlesource.com/chromeos/project/zork/morphius/+/593b657a776ed6b320c826916adc9cd845faf709/config.star#85
+[regenerate the config]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md#making-configuration-changes-for-your-project
+[`CLFactory`]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md#making-bulk-changes-across-repos
+[Fingerprint MCU RAM and Flash]: ./fingerprint-ram-and-flash.md
+[`CONFIG_CROS_EC`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/kernel/upstream/drivers/platform/chrome/Makefile;l=11;drc=a4e493ca59115fc0692151c1818e5aadf0e79ad0
+[`cros_ec`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/kernel/upstream/drivers/platform/chrome/cros_ec.c
+[`cros_ec_spi.c`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/kernel/upstream/drivers/platform/chrome/cros_ec_spi.c
+[`cros_ec_uart.c`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/kernel/upstream/drivers/platform/chrome/cros_ec_uart.c
+[Fuzz Testing in ChromeOS]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/testing/fuzzing.md

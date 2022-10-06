@@ -1,0 +1,61 @@
+# Copyright 2020 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig CROS_FLASH_NPCX
+	bool "Nuvoton NPCX flash driver for the Zephyr shim"
+	depends on SOC_FAMILY_NPCX
+	default y
+	select PLATFORM_EC_FLASH_CROS
+	help
+	  This option enables a flash unit interface (FIU) driver for the NPCX
+	  chip. This is used instead of the flash memory interface so we can
+	  continue to use most of the existing flash memory processing code in
+	  ECOS.
+
+if CROS_FLASH_NPCX
+
+config CROS_FLASH_NPCX_INIT_PRIORITY
+	int "Nuvoton NPCX flash driver priority for the Zephyr shim"
+	default 85
+	help
+	  This sets the priority of the NPCX flash driver for zephyr shim.
+	  This driver depends on the SPI controller and SPI NOR flash drivers.
+	  Its priority must be lower than CONFIG_SPI_INIT_PRIORITY and
+	  CONFIG_SPI_NOR_INIT_PRIORITY.
+
+endif # CROS_FLASH_NPCX
+
+config CROS_FLASH_IT8XXX2
+	bool "ITE IT81202 flash driver for the Zephyr shim"
+	depends on SOC_FAMILY_RISCV_ITE
+	default y
+	select PLATFORM_EC_FLASH_CROS
+	help
+	  This option enables the flash driver for the it8xxx2 chip. We can
+	  access the flash by read, write and erase. The it8xxx2 flash size
+	  is 1M byte.
+
+config CROS_FLASH_XEC
+	bool "Microchip XEC flash driver for the Zephyr shim"
+	depends on SOC_FAMILY_MEC
+	default y
+	select PLATFORM_EC_FLASH_CROS
+	help
+	  This option enables the flash driver for the MEC172x chips. Flash
+	  access is via the QSPI driver to one of three ports: internal 512KB
+	  SPI flash in the MEC1727 or external shared or private ports on
+	  MEC1723, etc.
+
+if CROS_FLASH_XEC
+
+config CROS_FLASH_XEC_INIT_PRIORITY
+	int "Microchip XEC flash driver priority for the Zephyr shim"
+	default 85
+	help
+	  This sets the priority of the MCHP flash driver for zephyr shim.
+	  This driver depends on the SPI controller and SPI NOR flash drivers.
+	  Its priority must be lower than CONFIG_SPI_INIT_PRIORITY and
+	  CONFIG_SPI_NOR_INIT_PRIORITY.
+
+endif # CROS_FLASH_XEC

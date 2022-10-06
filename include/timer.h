@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,15 +8,22 @@
 #ifndef __CROS_EC_TIMER_H
 #define __CROS_EC_TIMER_H
 
+#ifndef CONFIG_ZEPHYR
+#include <sys/types.h>
+#else
+/* Data type for POSIX style clock() implementation */
+typedef long clock_t;
+#endif
+
 #include "common.h"
 #include "task_id.h"
 
 /* Time units in microseconds */
-#define MSEC         1000
-#define SECOND    1000000
-#define SEC_UL    1000000ul
-#define MINUTE   60000000
-#define HOUR   3600000000ull  /* Too big to fit in a signed int */
+#define MSEC 1000
+#define SECOND 1000000
+#define SEC_UL 1000000ul
+#define MINUTE 60000000
+#define HOUR 3600000000ull /* Too big to fit in a signed int */
 
 /* Microsecond timestamp. */
 typedef union {
@@ -26,9 +33,6 @@ typedef union {
 		uint32_t hi;
 	} le /* little endian words */;
 } timestamp_t;
-
-/* Data type for POSIX style clock() implementation */
-typedef long clock_t;
 
 /**
  * Initialize the timer module.
@@ -177,4 +181,17 @@ static inline int time_after(uint32_t a, uint32_t b)
 	return time_until(a, b) < 0;
 }
 
-#endif  /* __CROS_EC_TIMER_H */
+/**
+ * @brief Mock get_time() function.
+ *
+ * Setting to non-NULL makes subsequent calls to get_time() return
+ * its set value.
+ *
+ * When set to NULL, subsequent calls to get_time() return
+ * unmocked values.
+ */
+#ifdef CONFIG_ZTEST
+extern timestamp_t *get_time_mock;
+#endif /* CONFIG_ZTEST */
+
+#endif /* __CROS_EC_TIMER_H */

@@ -1,0 +1,11 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config POWER_SEQUENCE_MOCK
+	bool "Use a mocked power sequence driver."
+	help
+	  A simplified power sequence driver that invokes startup/shutdown
+	  and suspend/resume hooks in appropriate state transitions. Any
+	  request that comes in mid sequence is pended and ran after final
+	  state is reached.

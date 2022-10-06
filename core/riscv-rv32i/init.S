@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -29,6 +29,26 @@ __startup:
 __irq:
         j __irq_isr     /* interrupts / exceptions */
 
+.align 2
+__ec_intc:
+        vector irq_0    /* INT GROUP  0 */
+        vector irq_1    /* INT GROUP  1 */
+        vector irq_2    /* INT GROUP  2 */
+        vector irq_3    /* INT GROUP  3 */
+        vector irq_4    /* INT GROUP  4 */
+        vector irq_5    /* INT GROUP  5 */
+        vector irq_6    /* INT GROUP  6 */
+        vector irq_7    /* INT GROUP  7 */
+        vector irq_8    /* INT GROUP  8 */
+        vector irq_9    /* INT GROUP  9 */
+        vector irq_10   /* INT GROUP 10 */
+        vector irq_11   /* INT GROUP 11 */
+        vector irq_12   /* INT GROUP 12 */
+        vector irq_13   /* INT GROUP 13 */
+        vector irq_14   /* INT GROUP 14 */
+        vector irq_15   /* INT GROUP 15 */
+        vector syscall  /* system call (emulate INT GROUP 16) */
+
 #ifdef CHIP_FAMILY_IT8XXX2
 /*
  * E-flash signature used to enable specific function after power-on reset.
@@ -55,7 +75,7 @@ __irq:
 .global eflash_sig
 eflash_sig:
 .byte 0xA5, 0xA5, 0xA5, 0xA5, 0xA5, 0xA5
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 .byte 0xA4 /* eSPI */
 #else
 .byte 0xA5 /* LPC */
@@ -65,27 +85,9 @@ eflash_sig:
 /* flags: internal oscillator + implicit location */
 #endif /* CHIP_FAMILY_IT8XXX2 */
 
-.align 2
-__ec_intc:
-        vector irq_0    /* INT GROUP  0 */
-        vector irq_1    /* INT GROUP  1 */
-        vector irq_2    /* INT GROUP  2 */
-        vector irq_3    /* INT GROUP  3 */
-        vector irq_4    /* INT GROUP  4 */
-        vector irq_5    /* INT GROUP  5 */
-        vector irq_6    /* INT GROUP  6 */
-        vector irq_7    /* INT GROUP  7 */
-        vector irq_8    /* INT GROUP  8 */
-        vector irq_9    /* INT GROUP  9 */
-        vector irq_10   /* INT GROUP 10 */
-        vector irq_11   /* INT GROUP 11 */
-        vector irq_12   /* INT GROUP 12 */
-        vector irq_13   /* INT GROUP 13 */
-        vector irq_14   /* INT GROUP 14 */
-        vector irq_15   /* INT GROUP 15 */
-        vector syscall  /* system call (emulate INT GROUP 16) */
 
 .align 2
+.section .text.vectirq
 __irq_isr:
         /* save t2 to scratch register */
         csrw mscratch, t2
@@ -165,6 +167,10 @@ __irq_isr:
         bltu sp, t0, __sp_16byte_aligned
         mv sp, t0
 __sp_16byte_aligned:
+	/* in_interrupt = 1 */
+	li t0, 1
+	la t1, in_interrupt
+        sb t0, 0(t1)
         /*
          * This ensures sp is 16-byte aligned. This only applies to when there
          * is an interrupt before tasks start. Otherwise stack_end is already
@@ -183,9 +189,19 @@ __sp_16byte_aligned:
         /* This interrupt is unhandled */
         j unhandled_interrupt
 __irq_handler:
+        /* save a0, a1, and a2 for syscall */
+        addi sp, sp, -4*3
+        sw a0, 0(sp)
+        sw a1, 1*4(sp)
+        sw a2, 2*4(sp)
         jal start_irq_handler
-        /* t0 = -1 if it cannot find the corresponding interrupt source */
-        bltz t0, unhandled_interrupt
+        /* a0 = -1 if it cannot find the corresponding interrupt source */
+        bltz a0, unhandled_interrupt
+        /* restore a0, a1, and a2 */
+        lw a0, 0(sp)
+        lw a1, 1*4(sp)
+        lw a2, 2*4(sp)
+        addi sp, sp, 4*3
         /* get EC interrupt group 0-15 or 16:ecall */
         la t0, ec_int_group
         /* get corresponding isr */
@@ -202,6 +218,9 @@ __irq_handler:
 .global __irq_exit
 __irq_exit:
         jal end_irq_handler
+	/* in_interrupt = 0 */
+	la t0, in_interrupt
+	sb zero, 0(t0)
         /* restore sp from scratch register */
         csrr sp, mscratch
 #ifdef CONFIG_FPU
@@ -332,10 +351,11 @@ unhandled_ec_irq:
 unhandled_interrupt:
         li tp, 0xBAD0
 __unhandled_irq:
-        slli tp, tp, 8
-        csrr t0, mcause
+        slli tp, tp, 16
+        la t0, ec_int
+        lw t0, 0(t0)
         add tp, tp, t0
-        j excep_handler /* display exception with TP 80bad[0|1]<irq> */
+        j excep_handler /* display exception with TP bad[0|1]<ec_int> */
 
 .global excep_handler
 excep_handler:

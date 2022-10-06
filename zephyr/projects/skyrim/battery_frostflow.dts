@@ -1,0 +1,12 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: cdt_c340152 {
+			compatible = "cdt,c340152", "battery-smart";
+		};
+	};
+};

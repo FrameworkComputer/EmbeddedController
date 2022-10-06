@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,19 +24,20 @@ host_command_get_uptime_info(struct host_cmd_handler_args *args)
 	struct ec_response_uptime_info *r = args->response;
 	timestamp_t now = get_time();
 	uint32_t now_ms = (uint32_t)(now.val / MSEC);
+	void *recent_ap_reset = r->recent_ap_reset;
+	uint32_t ap_resets_since_ec_boot = 0;
 	enum ec_error_list rc;
 
 	r->time_since_ec_boot_ms = now_ms;
 	r->ec_reset_flags = system_get_reset_flags();
 
 	memset(r->recent_ap_reset, 0, sizeof(r->recent_ap_reset));
-	rc = get_ap_reset_stats(r->recent_ap_reset,
-				ARRAY_SIZE(r->recent_ap_reset),
-				&r->ap_resets_since_ec_boot);
+	rc = get_ap_reset_stats(recent_ap_reset, ARRAY_SIZE(r->recent_ap_reset),
+				&ap_resets_since_ec_boot);
 
+	r->ap_resets_since_ec_boot = ap_resets_since_ec_boot;
 	args->response_size = sizeof(*r);
 	return rc == EC_SUCCESS ? EC_RES_SUCCESS : EC_RES_ERROR;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_UPTIME_INFO,
-	host_command_get_uptime_info,
-	EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_UPTIME_INFO, host_command_get_uptime_info,
+		     EC_VER_MASK(0));

@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,11 +9,12 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "keyboard_protocol.h"
+#include "printf.h"
 #include "timer.h"
 
 /* Console output macro */
-#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
 #define CAPSENSE_I2C_ADDR 0x08
 #define CAPSENSE_MASK_BITS 8
@@ -24,8 +25,7 @@ static int capsense_read_bitmask(void)
 	int rv;
 	uint8_t val = 0;
 
-	rv = i2c_xfer(I2C_PORT_CAPSENSE, CAPSENSE_I2C_ADDR,
-		      0, 0, &val, 1);
+	rv = i2c_xfer(I2C_PORT_CAPSENSE, CAPSENSE_I2C_ADDR, 0, 0, &val, 1);
 
 	if (rv)
 		CPRINTS("%s failed: error %d", __func__, rv);
@@ -49,11 +49,12 @@ static void capsense_change_deferred(void)
 	static uint8_t cur_val;
 	uint8_t new_val;
 	int i, n, c;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	new_val = capsense_read_bitmask();
 	if (new_val != cur_val) {
-		CPRINTF("[%pT capsense 0x%02x: ",
-			PRINTF_TIMESTAMP_NOW, new_val);
+		snprintf_timestamp_now(ts_str, sizeof(ts_str));
+		CPRINTF("[%s capsense 0x%02x: ", ts_str, new_val);
 		for (i = 0; i < CAPSENSE_MASK_BITS; i++) {
 			/* See what changed */
 			n = (new_val >> i) & 0x01;

@@ -1,9 +1,12 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Chipset module for emulator */
+
+/* Does not run a chipset task, but does emulate an AP chipset */
+#define CONFIG_AP_POWER_CONTROL
 
 #include <stdio.h>
 #include "chipset.h"
@@ -16,7 +19,7 @@ static int chipset_state = CHIPSET_STATE_SOFT_OFF;
 static int power_on_req;
 static int power_off_req;
 
-test_mockable void chipset_reset(enum chipset_reset_reason reason)
+test_mockable void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	fprintf(stderr, "Chipset reset: %d!\n", reason);
 }

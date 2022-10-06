@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -34,4 +34,4 @@ void task_register_interrupt(void);
  */
 pid_t getpid(void);
 
-#endif  /* __CROS_EC_HOST_TASK_H */
+#endif /* __CROS_EC_HOST_TASK_H */

@@ -1,7 +1,24 @@
 # EC Implementation of USB-C Power Delivery and Alternate Modes
 
-USB-C PD requires a complex state machine as USB-C PD can operate in many
-different modes. This includes but isn't limited to:
+USB-C is intended to be a flexible connector supporting multiple data rates,
+protocols, and power in either direction. For one connector to support varying
+states of power delivery, the system and what it is connected to
+must decide who will act as the source (drives power) and sink (consumes power).
+Additionally, they need to decide the correct voltage and current for the source
+to drive by taking into account not only the source's and sink's capabilities,
+but also what the cable can support. Resistance of pull-up and pull-down resistors
+on the configuration channel (CC) ports of the USB-C connector are used to
+negotiate who is source and who is sink when a new USB-C connection is established.
+This allows for setting power characteristics to default USB2 (500mA) default
+USB3 (900mA) 1.5A and 3.0A at 5V. Additional power requirements using USB-PD must
+then be negotiated by the source and sink over the CC pins of the USB-C connectors.
+Beyond power contract negotiations, USB PD messages can be used to enable alternate
+modes (Example: DisplayPort) and send a class of messages called Structured Vendor
+Defined Message (SVDMs), which are not related to power delivery. The additional
+flexiblity and functionality in USB-C requires support from the OS.
+
+From the system, USB PD requires a complex state machine as USB PD can
+operate in many different modes. This includes but isn't limited to:
 
 *   Negotiated power contracts. Either side of the cable can source or sink
     power up to 100W (if supported by device).
@@ -12,7 +29,9 @@ different modes. This includes but isn't limited to:
     *   USB SuperSpeed mode (up to 4 lanes for USB data)
     *   DisplayPort Alternate Mode (up to 4 lanes for DisplayPort data)
     *   Dock Mode (2 lanes for USB data, and 2 lanes for DisplayPort)
+    *   Thunderbolt 3 (TBT3) Alternate Mode (4 lanes for TBT3 data)
     *   Audio Accessory mode. (1 lane is used for L and R analog audio signal)
+    *   USB4 (4 lanes for USB data, but using different signaling than USB 3.2)
 
 For a more complete list of USB-C Power Delivery features, see the
 [USB-C PD spec][USB PD Spec Id].
@@ -71,18 +90,26 @@ Modes in the EC codebase.
     *   Upstream Facing Port. The USB data role that is typical for a peripheral
         (e.g. HID keyboard).
 *   DFP {#dfp}
+
     *   Downstream Facing Port. The USB Data role that is typical for a host
         machine (e.g. device running ChromeOS).
 
 *   E-Mark {#emark}
+
     *   Electronically marked cable. A USB-C cable that contains an embedded
         chip in the cable, used to identify the capabilities of the cable.
 
 *   VCONN {#vconn}
+
     *   Connector Voltage. A dedicated power supply rail for [E-Mark](#emark)
         cables and other accessory functions (such as display dongles, and
         docks). VCONN re-uses one of the CC1/CC2 signals to provide 5 volt, 1
         watt, of power.
+*   VDM
+    * Vendor-Defined Message: A type of PD data message whose contents can be
+      specific to a particular vendor or subordinate specification. The TCPM
+      primarily uses VDMs to discover support for alternate modes and enter
+      them.
 
 ## Different PD stacks
 
@@ -93,6 +120,8 @@ Right now platform/ec has two different implementations of USB-C PD stack.
     [`usb_pd_policy.c`](../common/usb_pd_policy.c)
 2.  The newer implementation is found under [`common/usbc`](../common/usbc) and
     is broken up into multiple different files and state machines
+    *   Device policy manager files, `usb_pd_dpm.c`, `usb_mode.c`,
+        `*_alt_mode.c`.
     *   Policy engine state machine files, `usb_pe_*_sm.c`.
     *   Protocol engine state machine file, `usb_prl_*_sm.c`.
     *   State machine framework file, `usb_sm.c`.
@@ -205,8 +234,8 @@ TODO(https://crbug.com/974302): mention `USB_CHG_P#` and `CHARGER`
 
 ## Upgrading FW for TCPCs
 
-TODO(https://crbug.com/974302): Mention how this works even though it is in depthcharge.
-Probing now. Need new driver in depthcharge
+TODO(https://crbug.com/974302): Mention how this works even though it is in
+depthcharge. Probing now. Need new driver in depthcharge
 
 [Case Closed Debugging (CCD)]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md
 [Introduction to USB Power Delivery]: https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en575003

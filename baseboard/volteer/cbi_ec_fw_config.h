@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -43,17 +43,20 @@ enum ec_cfg_numeric_pad_type {
 	NUMERIC_PAD_ENABLED = 1
 };
 
+enum ec_cfg_keyboard_layout { KB_LAYOUT_DEFAULT = 0, KB_LAYOUT_1 = 1 };
+
 union volteer_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type			usb_db : 4;
-		uint32_t				thermal : 4;
-		uint32_t				audio : 3;
-		enum ec_cfg_tabletmode_type		tabletmode : 1;
-		uint32_t				lte_db : 2;
-		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
-		enum ec_cfg_numeric_pad_type		num_pad : 1;
-		uint32_t				sd_db : 4;
-		uint32_t				reserved_2 : 12;
+		enum ec_cfg_usb_db_type usb_db : 4;
+		uint32_t thermal : 4;
+		uint32_t audio : 3;
+		enum ec_cfg_tabletmode_type tabletmode : 1;
+		uint32_t lte_db : 2;
+		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
+		enum ec_cfg_numeric_pad_type num_pad : 1;
+		uint32_t sd_db : 4;
+		enum ec_cfg_keyboard_layout kb_layout : 2;
+		uint32_t reserved_2 : 10;
 	};
 	uint32_t raw_value;
 };
@@ -107,5 +110,12 @@ bool ec_cfg_has_keyboard_backlight(void);
  * doesn't support it.
  */
 bool ec_cfg_has_numeric_pad(void);
+
+/**
+ * Get keyboard type from FW_CONFIG.
+ *
+ * @return the keyboard type.
+ */
+enum ec_cfg_keyboard_layout ec_cfg_keyboard_layout(void);
 
 #endif /* __VOLTEER_CBI_EC_FW_CONFIG_H_ */

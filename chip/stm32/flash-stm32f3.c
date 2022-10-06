@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,6 +9,7 @@
 #include "common.h"
 #include "flash.h"
 #include "flash-f.h"
+#include "flash-regs.h"
 #include "hooks.h"
 #include "registers.h"
 #include "system.h"
@@ -36,7 +37,7 @@ struct ec_flash_bank const flash_bank_array[] = {
 		.protect_size_exp = __fls(SIZE_128KB),
 	},
 	{
-		.count = (CONFIG_FLASH_SIZE - SIZE_256KB) / SIZE_256KB,
+		.count = (CONFIG_FLASH_SIZE_BYTES - SIZE_256KB) / SIZE_256KB,
 		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
 		.size_exp = __fls(SIZE_256KB),
 		.erase_size_exp = __fls(SIZE_256KB),
@@ -70,7 +71,7 @@ struct ec_flash_bank const flash_bank_array[] = {
 		.protect_size_exp = __fls(SIZE_64KB),
 	},
 	{
-		.count = (CONFIG_FLASH_SIZE - SIZE_128KB) / SIZE_128KB,
+		.count = (CONFIG_FLASH_SIZE_BYTES - SIZE_128KB) / SIZE_128KB,
 		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
 		.size_exp = __fls(SIZE_128KB),
 		.erase_size_exp = __fls(SIZE_128KB),
@@ -93,7 +94,7 @@ struct flash_wp_state {
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_get_protect(int block)
+int crec_flash_physical_get_protect(int block)
 {
 	return (entire_flash_locked ||
 #if defined(CHIP_FAMILY_STM32F3)
@@ -101,10 +102,10 @@ int flash_physical_get_protect(int block)
 #elif defined(CHIP_FAMILY_STM32F4)
 		!(STM32_OPTB_WP & STM32_OPTB_nWRP(block))
 #endif
-	       );
+	);
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -120,7 +121,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		disable_flash_control_register();
@@ -134,14 +135,13 @@ int flash_physical_protect_now(int all)
 	return EC_SUCCESS;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -160,7 +160,7 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_physical_restore_state(void)
+int crec_flash_physical_restore_state(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
 	int version, size;
@@ -172,7 +172,7 @@ int flash_physical_restore_state(void)
 	 */
 	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
 		prev = (const struct flash_wp_state *)system_get_jump_tag(
-				FLASH_SYSJUMP_TAG, &version, &size);
+			FLASH_SYSJUMP_TAG, &version, &size);
 		if (prev && version == FLASH_HOOK_VERSION &&
 		    size == sizeof(*prev))
 			entire_flash_locked = prev->entire_flash_locked;

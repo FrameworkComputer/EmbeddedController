@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -13,7 +13,7 @@
  * The task will read the vectors at that interval
  */
 #define TEST_LID_EC_RATE (1 * MSEC)
-#define TEST_LID_FREQUENCY (1e9 / TEST_LID_EC_RATE)   /* mHz */
+#define TEST_LID_FREQUENCY (1e9 / TEST_LID_EC_RATE) /* mHz */
 
 /*
  * Time in ms to wait for the task to read the vectors.
@@ -30,7 +30,8 @@ extern const unsigned int motion_sensor_count;
 
 void wait_for_valid_sample(void);
 void feed_accel_data(const float *array, int *idx,
-		int (filler)(const struct motion_sensor_t *s, const float f));
+		     int(filler)(const struct motion_sensor_t *s,
+				 const float f));
 
 /*
  * External data - from
@@ -65,4 +66,4 @@ extern const float kAccelerometerVerticalHingeTestData[];
 extern const size_t kAccelerometerVerticalHingeTestDataLength;
 extern const float kAccelerometerVerticalHingeUnstableTestData[];
 extern const size_t kAccelerometerVerticalHingeUnstableTestDataLength;
-#endif  /* __CROS_EC_MOTION_COMMON_H */
+#endif /* __CROS_EC_MOTION_COMMON_H */

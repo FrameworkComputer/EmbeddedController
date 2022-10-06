@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,13 +19,11 @@
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
-
 /* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 
 /* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
-static const uint32_t pstack_addr = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE
-				     - sizeof(struct panic_data)) & ~7;
+static const uint32_t pstack_addr = ((uint32_t)pdata_ptr) & ~7;
 
 /**
  * Print the name and value of a register
@@ -82,8 +80,8 @@ void panic_data_print(const struct panic_data *pdata)
 {
 	const uint32_t *lregs = pdata->cm.regs;
 	const uint32_t *sregs = NULL;
-	const int32_t in_handler =
-		is_frame_in_handler_stack(pdata->cm.regs[11]);
+	const int32_t in_handler = is_frame_in_handler_stack(
+		pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]);
 	int i;
 
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
@@ -91,17 +89,20 @@ void panic_data_print(const struct panic_data *pdata)
 
 	panic_printf("\n=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
 		     in_handler ? "HANDLER" : "PROCESS",
-		     lregs[1] & 0xff, sregs ? sregs[7] : -1);
+		     lregs[CORTEX_PANIC_REGISTER_IPSR] & 0xff,
+		     sregs ? sregs[CORTEX_PANIC_FRAME_REGISTER_PSR] : -1);
 	for (i = 0; i < 4; i++)
 		print_reg(i, sregs, i);
 	for (i = 4; i < 10; i++)
 		print_reg(i, lregs, i - 1);
-	print_reg(10, lregs, 9);
-	print_reg(11, lregs, 10);
-	print_reg(12, sregs, 4);
-	print_reg(13, lregs, in_handler ? 2 : 0);
-	print_reg(14, sregs, 5);
-	print_reg(15, sregs, 6);
+	print_reg(10, lregs, CORTEX_PANIC_REGISTER_R10);
+	print_reg(11, lregs, CORTEX_PANIC_REGISTER_R11);
+	print_reg(12, sregs, CORTEX_PANIC_FRAME_REGISTER_R12);
+	print_reg(13, lregs,
+		  in_handler ? CORTEX_PANIC_REGISTER_MSP :
+			       CORTEX_PANIC_REGISTER_PSP);
+	print_reg(14, sregs, CORTEX_PANIC_FRAME_REGISTER_LR);
+	print_reg(15, sregs, CORTEX_PANIC_FRAME_REGISTER_PC);
 }
 
 void __keep report_panic(void)
@@ -121,11 +122,12 @@ void __keep report_panic(void)
 	pdata->reserved = 0;
 
 	/* Choose the right sp (psp or msp) based on EXC_RETURN value */
-	sp = is_frame_in_handler_stack(pdata->cm.regs[11])
-		? pdata->cm.regs[2] : pdata->cm.regs[0];
+	sp = is_frame_in_handler_stack(
+		     pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) ?
+		     pdata->cm.regs[CORTEX_PANIC_REGISTER_MSP] :
+		     pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
 	/* If stack is valid, copy exception frame to pdata */
-	if ((sp & 3) == 0 &&
-	    sp >= CONFIG_RAM_BASE &&
+	if ((sp & 3) == 0 && sp >= CONFIG_RAM_BASE &&
 	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE - 8 * sizeof(uint32_t)) {
 		const uint32_t *sregs = (const uint32_t *)sp;
 		int i;
@@ -147,41 +149,52 @@ void exception_panic(void)
 {
 	/* Save registers and branch directly to panic handler */
 	asm volatile(
-		"mov r0, %[pregs]\n"
 		"mrs r1, psp\n"
 		"mrs r2, ipsr\n"
 		"mov r3, sp\n"
-		"stmia r0!, {r1-r7}\n"
+		"stmia %[pregs]!, {r1-r7}\n"
 		"mov r1, r8\n"
 		"mov r2, r9\n"
 		"mov r3, r10\n"
 		"mov r4, r11\n"
 		"mov r5, lr\n"
-		"stmia r0!, {r1-r5}\n"
+		"stmia %[pregs]!, {r1-r5}\n"
 		"mov sp, %[pstack]\n"
-		"bl report_panic\n" : :
-			[pregs] "r" (pdata_ptr->cm.regs),
-			[pstack] "r" (pstack_addr) :
-			/* Constraints protecting these from being clobbered.
-			 * Gcc should be using r0 & r12 for pregs and pstack. */
-			"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
-			"r10", "r11", "cc", "memory"
-		);
+		"bl report_panic\n"
+		:
+		: [pregs] "r"(pdata_ptr->cm.regs), [pstack] "r"(pstack_addr)
+		:
+		/* Constraints protecting these from being clobbered.
+		 * Gcc should be using r0 & r12 for pregs and pstack. */
+		"r1", "r2", "r3", "r4", "r5", "r6",
+	/* clang warns that we're clobbering a reserved register:
+	 * inline asm clobber list contains reserved registers: R7
+	 * [-Werror,-Winline-asm]. The intent of the clobber list is
+	 * to force pregs and pstack to be in R0 and R12, which
+	 * still holds.
+	 */
+#ifndef __clang__
+		"r7",
+#endif
+		"r8", "r9", "r10", "r11", "cc", "memory");
 }
 
 #ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
-	__asm__("mov " STRINGIFY(SOFTWARE_PANIC_INFO_REG) ", %0\n"
-		"mov " STRINGIFY(SOFTWARE_PANIC_REASON_REG) ", %1\n"
-		"bl exception_panic\n"
-		: : "r"(info), "r"(reason));
+	__asm__("mov " STRINGIFY(
+			SOFTWARE_PANIC_INFO_REG) ", %0\n"
+						 "mov " STRINGIFY(
+							 SOFTWARE_PANIC_REASON_REG) ", %1\n"
+										    "bl exception_panic\n"
+		:
+		: "r"(info), "r"(reason));
 	__builtin_unreachable();
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
-	struct panic_data * const pdata = get_panic_data_write();
+	struct panic_data *const pdata = get_panic_data_write();
 	uint32_t *lregs;
 
 	lregs = pdata->cm.regs;
@@ -194,21 +207,21 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 	pdata->arch = PANIC_ARCH_CORTEX_M;
 
 	/* Log panic cause */
-	lregs[1] = exception;
-	lregs[3] = reason;
-	lregs[4] = info;
+	lregs[CORTEX_PANIC_REGISTER_IPSR] = exception;
+	lregs[CORTEX_PANIC_REGISTER_R4] = reason;
+	lregs[CORTEX_PANIC_REGISTER_R5] = info;
 }
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	struct panic_data * const pdata = panic_get_data();
+	struct panic_data *const pdata = panic_get_data();
 	uint32_t *lregs;
 
 	if (pdata && pdata->struct_version == 2) {
 		lregs = pdata->cm.regs;
-		*exception = lregs[1];
-		*reason = lregs[3];
-		*info = lregs[4];
+		*exception = lregs[CORTEX_PANIC_REGISTER_IPSR];
+		*reason = lregs[CORTEX_PANIC_REGISTER_R4];
+		*info = lregs[CORTEX_PANIC_REGISTER_R5];
 	} else {
 		*exception = *reason = *info = 0;
 	}

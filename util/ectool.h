@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -40,3 +40,12 @@ struct command {
  * The key matrix is read from the fdt.
  */
 int cmd_keyscan(int argc, char *argv[]);
+
+/* ASCII mode for printing, default off */
+extern int ascii_mode;
+
+int cmd_i2c_protect(int argc, char *argv[]);
+int cmd_i2c_read(int argc, char *argv[]);
+int cmd_i2c_speed(int argc, char *argv[]);
+int cmd_i2c_write(int argc, char *argv[]);
+int cmd_i2c_xfer(int argc, char *argv[]);

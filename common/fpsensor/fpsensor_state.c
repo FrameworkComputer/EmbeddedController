@@ -1,8 +1,9 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "common.h"
 #include "cryptoc/util.h"
 #include "ec_commands.h"
@@ -18,25 +19,25 @@
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
 /* Fingers templates for the current user */
-uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE]
-	FP_TEMPLATE_SECTION;
+uint8_t fp_template[FP_MAX_FINGER_COUNT]
+		   [FP_ALGORITHM_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 /* Encryption/decryption buffer */
 /* TODO: On-the-fly encryption/decryption without a dedicated buffer */
 /*
  * Store the encryption metadata at the beginning of the buffer containing the
  * ciphered data.
  */
-uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE]
-	FP_TEMPLATE_SECTION;
+uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 /* Salt used in derivation of positive match secret. */
-uint8_t fp_positive_match_salt
-	[FP_MAX_FINGER_COUNT][FP_POSITIVE_MATCH_SALT_BYTES];
+uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
+			      [FP_POSITIVE_MATCH_SALT_BYTES];
 
-struct positive_match_secret_state positive_match_secret_state = {
-	.template_matched = FP_NO_SUCH_TEMPLATE,
-	.readable = false,
-	.deadline.val = 0,
-};
+struct positive_match_secret_state
+	positive_match_secret_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
+					.readable = false,
+					.deadline = {
+						.val = 0,
+					} };
 
 /* Index of the last enrolled but not retrieved template. */
 int8_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
@@ -51,7 +52,7 @@ uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 /* Status of the FP encryption engine. */
 static uint32_t fp_encryption_status;
 
-uint32_t fp_events;
+atomic_t fp_events;
 
 uint32_t sensor_mode;
 
@@ -100,7 +101,7 @@ void fp_reset_and_clear_context(void)
 
 int fp_get_next_event(uint8_t *out)
 {
-	uint32_t event_out = deprecated_atomic_read_clear(&fp_events);
+	uint32_t event_out = atomic_clear(&fp_events);
 
 	memcpy(out, &event_out, sizeof(event_out));
 
@@ -177,7 +178,7 @@ static int validate_fp_mode(const uint32_t mode)
 	return EC_SUCCESS;
 }
 
-int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
+enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 {
 	int ret;
 
@@ -192,7 +193,7 @@ int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 
 	if (!(mode & FP_MODE_DONT_CHANGE)) {
 		sensor_mode = mode;
-		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG, 0);
+		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG);
 	}
 
 	*mode_output = sensor_mode;
@@ -204,7 +205,7 @@ static enum ec_status fp_command_mode(struct host_cmd_handler_args *args)
 	const struct ec_params_fp_mode *p = args->params;
 	struct ec_response_fp_mode *r = args->response;
 
-	int ret = fp_set_sensor_mode(p->mode, &r->mode);
+	enum ec_status ret = fp_set_sensor_mode(p->mode, &r->mode);
 
 	if (ret == EC_RES_SUCCESS)
 		args->response_size = sizeof(*r);
@@ -261,23 +262,22 @@ int fp_enable_positive_match_secret(uint32_t fgr,
 	return EC_SUCCESS;
 }
 
-void fp_disable_positive_match_secret(
-	struct positive_match_secret_state *state)
+void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
 {
 	state->template_matched = FP_NO_SUCH_TEMPLATE;
 	state->readable = false;
 	state->deadline.val = 0;
 }
 
-static enum ec_status fp_command_read_match_secret(
-	struct host_cmd_handler_args *args)
+static enum ec_status
+fp_command_read_match_secret(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_read_match_secret *params = args->params;
 	struct ec_response_fp_read_match_secret *response = args->response;
 	int8_t fgr = params->fgr;
 	timestamp_t now = get_time();
-	struct positive_match_secret_state state_copy
-		= positive_match_secret_state;
+	struct positive_match_secret_state state_copy =
+		positive_match_secret_state;
 
 	fp_disable_positive_match_secret(&positive_match_secret_state);
 
@@ -292,13 +292,14 @@ static enum ec_status fp_command_read_match_secret(
 	}
 	if (fgr != state_copy.template_matched || !state_copy.readable) {
 		CPRINTS("Positive match secret for finger %d is not meant to "
-			"be read now.", fgr);
+			"be read now.",
+			fgr);
 		return EC_RES_ACCESS_DENIED;
 	}
 
 	if (derive_positive_match_secret(response->positive_match_secret,
-					 fp_positive_match_salt[fgr])
-		!= EC_SUCCESS) {
+					 fp_positive_match_salt[fgr]) !=
+	    EC_SUCCESS) {
 		CPRINTS("Failed to derive positive match secret for finger %d",
 			fgr);
 		/* Keep the template and encryption salt. */

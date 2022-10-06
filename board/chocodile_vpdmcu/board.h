@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -27,14 +27,14 @@
 #define CONFIG_RO_SIZE 0
 /* Fake full size if we had a RO partition */
 #undef CONFIG_RW_SIZE
-#define CONFIG_RW_SIZE CONFIG_FLASH_SIZE
+#define CONFIG_RW_SIZE CONFIG_FLASH_SIZE_BYTES
 #endif /* HAS_TASK_CONSOLE */
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
 /* the UART console is on USART1 (PA9/PA10) */
-#undef  CONFIG_UART_CONSOLE
+#undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 
 /* Optional features */
@@ -43,23 +43,23 @@
 #undef CONFIG_CMD_PD
 #undef CONFIG_USBC_VCONN
 #define CONFIG_ADC
-#undef  CONFIG_ADC_WATCHDOG
+#undef CONFIG_ADC_WATCHDOG
 #define CONFIG_ADC_SAMPLE_TIME STM32_ADC_SMPR_41_5_CY
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_COMMON_GPIO_SHORTNAMES
-#undef  CONFIG_DEBUG_ASSERT
+#undef CONFIG_DEBUG_ASSERT
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_HIBERNATE
-#undef  CONFIG_HOSTCMD_EVENTS
+#undef CONFIG_HOSTCMD_EVENTS
 #define CONFIG_HW_CRC
-#undef  CONFIG_LID_SWITCH
+#undef CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LTO
 #define CONFIG_STM_HWTIMER32
-#undef  CONFIG_TASK_PROFILING
-#undef  CONFIG_UART_TX_BUF_SIZE
-#undef  CONFIG_UART_TX_DMA
-#undef  CONFIG_UART_RX_DMA
+#undef CONFIG_TASK_PROFILING
+#undef CONFIG_UART_TX_BUF_SIZE
+#undef CONFIG_UART_TX_DMA
+#undef CONFIG_UART_RX_DMA
 #define CONFIG_UART_TX_BUF_SIZE 128
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
@@ -74,7 +74,7 @@
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_VBOOT_HASH
 #define CONFIG_WATCHDOG
-#undef  CONFIG_WATCHDOG_HELP
+#undef CONFIG_WATCHDOG_HELP
 
 #define CONFIG_USB_PID 0x5036
 #define VPD_HW_VERSION 0x0001
@@ -83,16 +83,19 @@
 /* USB bcdDevice */
 #define USB_BCD_DEVICE 0
 
+/* Charge Through Current */
+#define VPD_CT_CURRENT VPD_CT_CURRENT_3A
+
 /* Vbus impedance in milliohms */
 #define VPD_VBUS_IMPEDANCE 65
 
 /* GND impedance in milliohms */
 #define VPD_GND_IMPEDANCE 33
 
-#define PD_OPERATING_POWER_MW           15000
-#define PD_MAX_POWER_MW                 45000
-#define PD_MAX_CURRENT_MA               3000
-#define PD_MAX_VOLTAGE_MV               20000
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW 45000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 /*
  * TODO(crosbug.com/p/50519): Remove CONFIG_SYSTEM_UNLOCKED prior to building
  * MP FW.
@@ -100,26 +103,29 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 #ifdef HAS_TASK_CONSOLE
-#undef  CONFIG_CONSOLE_HISTORY
+#undef CONFIG_CONSOLE_HISTORY
 #define CONFIG_CONSOLE_HISTORY 2
 
 #else
-#undef  CONFIG_CONSOLE_CMDHELP
+#undef CONFIG_CONSOLE_CMDHELP
 #define CONFIG_DEBUG_PRINTF
 #define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 #endif /* HAS_TASK_CONSOLE */
 
 /* Use PSTATE embedded in the RO image, not in its own erase block */
-#undef  CONFIG_FLASH_PSTATE_BANK
-#undef  CONFIG_FW_PSTATE_SIZE
+#undef CONFIG_FLASH_PSTATE_BANK
+#undef CONFIG_FW_PSTATE_SIZE
 #define CONFIG_FW_PSTATE_SIZE 0
+
+/* Include math_util for bitmask_uint64 used in pd_timers */
+#define CONFIG_MATH_UTIL
 
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 
@@ -140,8 +146,8 @@ enum adc_channel {
 };
 
 /* 1.5A Rp */
-#define PD_SRC_VNC            PD_SRC_1_5_VNC_MV
-#define PD_SRC_RD_THRESHOLD   PD_SRC_1_5_RD_THRESH_MV
+#define PD_SRC_VNC PD_SRC_1_5_VNC_MV
+#define PD_SRC_RD_THRESHOLD PD_SRC_1_5_RD_THRESH_MV
 
 #endif /* !__ASSEMBLER__ */
 

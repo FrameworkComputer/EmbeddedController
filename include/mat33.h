@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,6 +26,6 @@ void mat33_fp_get_eigenbasis(mat33_fp_t S, fpv3_t eigenvals,
 
 size_t mat33_fp_maxind(mat33_fp_t A, size_t k);
 
-void mat33_fp_rotate(mat33_fp_t A, fp_t c, fp_t s,
-		     size_t k, size_t l, size_t i, size_t j);
-#endif  /* __CROS_EC_MAT_33_H */
+void mat33_fp_rotate(mat33_fp_t A, fp_t c, fp_t s, size_t k, size_t l, size_t i,
+		     size_t j);
+#endif /* __CROS_EC_MAT_33_H */

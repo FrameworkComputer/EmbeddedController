@@ -1,10 +1,11 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Rollback protection logic. */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #ifdef CONFIG_LIBCRYPTOC
@@ -25,7 +26,7 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /* Number of rollback regions */
 #define ROLLBACK_REGIONS 2
@@ -34,9 +35,9 @@ static int get_rollback_offset(int region)
 {
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 	int rv;
-	int rollback_start_bank = flash_bank_index(CONFIG_ROLLBACK_OFF);
+	int rollback_start_bank = crec_flash_bank_index(CONFIG_ROLLBACK_OFF);
 
-	rv = flash_bank_start_offset(rollback_start_bank + region);
+	rv = crec_flash_bank_start_offset(rollback_start_bank + region);
 	ASSERT(rv >= 0);
 	return rv;
 #else
@@ -52,9 +53,9 @@ static int get_rollback_erase_size_bytes(int region)
 #ifndef CONFIG_FLASH_MULTIPLE_REGION
 	erase_size = CONFIG_FLASH_ERASE_SIZE;
 #else
-	int rollback_start_bank = flash_bank_index(CONFIG_ROLLBACK_OFF);
+	int rollback_start_bank = crec_flash_bank_index(CONFIG_ROLLBACK_OFF);
 
-	erase_size = flash_bank_erase_size(rollback_start_bank + region);
+	erase_size = crec_flash_bank_erase_size(rollback_start_bank + region);
 #endif
 	ASSERT(erase_size > 0);
 	ASSERT(ROLLBACK_REGIONS * erase_size <= CONFIG_ROLLBACK_SIZE);
@@ -98,7 +99,7 @@ int read_rollback(int region, struct rollback_data *data)
 	offset = get_rollback_offset(region);
 
 	unlock_rollback();
-	if (flash_read(offset, sizeof(*data), (char *)data))
+	if (crec_flash_read(offset, sizeof(*data), (char *)data))
 		ret = EC_ERROR_UNKNOWN;
 	lock_rollback();
 
@@ -114,7 +115,7 @@ int read_rollback(int region, struct rollback_data *data)
  * Return most recent region index on success (>= 0, or 0 if no rollback
  * region is valid), negative value on error.
  */
-static int get_latest_rollback(struct rollback_data *data)
+test_mockable_static int get_latest_rollback(struct rollback_data *data)
 {
 	int ret = -1;
 	int region;
@@ -188,12 +189,12 @@ failed:
 #ifdef CONFIG_ROLLBACK_UPDATE
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-static int add_entropy(uint8_t *dst, const uint8_t *src,
-		       const uint8_t *add, unsigned int add_len)
+static int add_entropy(uint8_t *dst, const uint8_t *src, const uint8_t *add,
+		       unsigned int add_len)
 {
 	int ret = 0;
 #ifdef CONFIG_SHA256
-BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
+	BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
 	struct sha256_ctx ctx;
 	uint8_t *hash;
 #ifdef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
@@ -240,27 +241,27 @@ failed:
  *
  * @return EC_SUCCESS on success, EC_ERROR_* on error.
  */
-static int rollback_update(int32_t next_min_version,
-			   const uint8_t *entropy, unsigned int length)
+static int rollback_update(int32_t next_min_version, const uint8_t *entropy,
+			   unsigned int length)
 {
 	/*
 	 * When doing flash_write operation, the data needs to be in blocks
 	 * of CONFIG_FLASH_WRITE_SIZE, pad rollback_data as required.
 	 */
 	uint8_t block[CONFIG_FLASH_WRITE_SIZE *
-		DIV_ROUND_UP(sizeof(struct rollback_data),
-			CONFIG_FLASH_WRITE_SIZE)];
+		      DIV_ROUND_UP(sizeof(struct rollback_data),
+				   CONFIG_FLASH_WRITE_SIZE)];
 	struct rollback_data *data = (struct rollback_data *)block;
 	BUILD_ASSERT(sizeof(block) >= sizeof(*data));
 	int erase_size, offset, region, ret;
 
-	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW) {
+	if (crec_flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW) {
 		ret = EC_ERROR_ACCESS_DENIED;
 		goto out;
 	}
 
 	/* Initialize the rest of the block. */
-	memset(&block[sizeof(*data)], 0xff, sizeof(block)-sizeof(*data));
+	memset(&block[sizeof(*data)], 0xff, sizeof(block) - sizeof(*data));
 
 	region = get_latest_rollback(data);
 
@@ -325,13 +326,13 @@ static int rollback_update(int32_t next_min_version,
 	}
 
 	unlock_rollback();
-	if (flash_erase(offset, erase_size)) {
+	if (crec_flash_erase(offset, erase_size)) {
 		ret = EC_ERROR_UNKNOWN;
 		lock_rollback();
 		goto out;
 	}
 
-	ret = flash_write(offset, sizeof(block), block);
+	ret = crec_flash_write(offset, sizeof(block), block);
 	lock_rollback();
 
 out:
@@ -349,7 +350,7 @@ int rollback_add_entropy(const uint8_t *data, unsigned int len)
 	return rollback_update(-1, data, len);
 }
 
-static int command_rollback_update(int argc, char **argv)
+static int command_rollback_update(int argc, const char **argv)
 {
 	int32_t min_version;
 	char *e;
@@ -364,12 +365,11 @@ static int command_rollback_update(int argc, char **argv)
 
 	return rollback_update_version(min_version);
 }
-DECLARE_CONSOLE_COMMAND(rollbackupdate, command_rollback_update,
-			"min_version",
+DECLARE_CONSOLE_COMMAND(rollbackupdate, command_rollback_update, "min_version",
 			"Update rollback info");
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-static int command_rollback_add_entropy(int argc, char **argv)
+static int command_rollback_add_entropy(int argc, const char **argv)
 {
 	int len;
 
@@ -380,8 +380,7 @@ static int command_rollback_add_entropy(int argc, char **argv)
 
 	return rollback_add_entropy(argv[1], len);
 }
-DECLARE_CONSOLE_COMMAND(rollbackaddent, command_rollback_add_entropy,
-			"data",
+DECLARE_CONSOLE_COMMAND(rollbackaddent, command_rollback_add_entropy, "data",
 			"Add entropy to rollback block");
 
 #ifdef CONFIG_RNG
@@ -400,9 +399,9 @@ static void add_entropy_deferred(void)
 	if (add_entropy_action == ADD_ENTROPY_RESET_ASYNC)
 		repeat = ROLLBACK_REGIONS;
 
-	init_trng();
+	trng_init();
 	do {
-		rand_bytes(rand, sizeof(rand));
+		trng_rand_bytes(rand, sizeof(rand));
 		if (rollback_add_entropy(rand, sizeof(rand)) != EC_SUCCESS) {
 			add_entropy_rv = EC_RES_ERROR;
 			goto out;
@@ -411,7 +410,7 @@ static void add_entropy_deferred(void)
 
 	add_entropy_rv = EC_RES_SUCCESS;
 out:
-	exit_trng();
+	trng_exit();
 }
 DECLARE_DEFERRED(add_entropy_deferred);
 
@@ -438,14 +437,13 @@ hc_rollback_add_entropy(struct host_cmd_handler_args *args)
 
 	return EC_RES_INVALID_PARAM;
 }
-DECLARE_HOST_COMMAND(EC_CMD_ADD_ENTROPY,
-		     hc_rollback_add_entropy,
+DECLARE_HOST_COMMAND(EC_CMD_ADD_ENTROPY, hc_rollback_add_entropy,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_RNG */
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 #endif /* CONFIG_ROLLBACK_UPDATE */
 
-static int command_rollback_info(int argc, char **argv)
+static int command_rollback_info(int argc, const char **argv)
 {
 	int ret = EC_ERROR_UNKNOWN;
 	int region, min_region;
@@ -467,14 +465,13 @@ static int command_rollback_info(int argc, char **argv)
 		if (ret)
 			goto failed;
 
-		ccprintf("rollback %d: %08x %08x %08x",
-			region, data.id, data.rollback_min_version,
-			data.cookie);
+		ccprintf("rollback %d: %08x %08x %08x", region, data.id,
+			 data.rollback_min_version, data.cookie);
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
 		if (!system_is_locked()) {
 			/* If system is unlocked, show some of the secret. */
 			ccprintf(" [%02x..%02x]", data.secret[0],
-				data.secret[CONFIG_ROLLBACK_SECRET_SIZE-1]);
+				 data.secret[CONFIG_ROLLBACK_SECRET_SIZE - 1]);
 		}
 #endif
 		if (min_region == region)
@@ -487,8 +484,7 @@ failed:
 	clear_rollback(&data);
 	return ret;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(rollbackinfo, command_rollback_info,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(rollbackinfo, command_rollback_info, NULL,
 			     "Print rollback info");
 
 static enum ec_status
@@ -515,6 +511,5 @@ failed:
 	clear_rollback(&data);
 	return ret;
 }
-DECLARE_HOST_COMMAND(EC_CMD_ROLLBACK_INFO,
-		     host_command_rollback_info,
+DECLARE_HOST_COMMAND(EC_CMD_ROLLBACK_INFO, host_command_rollback_info,
 		     EC_VER_MASK(0));

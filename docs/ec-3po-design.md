@@ -32,21 +32,22 @@ while trying to parse strings from the EC console. This method can be fairly
 fragile as debug output can be interleaved with the console input. A lot of
 items could be improved by switching to this host command packet interface.
 
-* Communicating in packets makes testing easier and more robust.
-  * When FAFT is running, the EC could be in a binary mode where it only
-    communicates in host command packets. These packets are easier to parse,
-    create, and filter on.
-  * With filtering, you get the added bonus of not having unwanted debug output.
-  * It allows us to really test the host command interface which is how the EC
-    talks to the AP anyways.
-* Better testing of existing host command handlers.
-  * By speaking in host command packets, we can reuse the existing host command
-    handlers which is nice since we'll be using the same handlers that are used
-    to respond to the AP.
-* FAFT would no longer have to worry about the console dropping characters.
-  * We can add error checking to the interpreter which would automatically retry
-    errors. This alleviates FAFT from trying to check if the EC had properly
-    received a line of input. (Ctrl+L)
+*   Communicating in packets makes testing easier and more robust.
+    *   When FAFT is running, the EC could be in a binary mode where it only
+        communicates in host command packets. These packets are easier to parse,
+        create, and filter on.
+    *   With filtering, you get the added bonus of not having unwanted debug
+        output.
+    *   It allows us to really test the host command interface which is how the
+        EC talks to the AP anyways.
+*   Better testing of existing host command handlers.
+    *   By speaking in host command packets, we can reuse the existing host
+        command handlers which is nice since we'll be using the same handlers
+        that are used to respond to the AP.
+*   FAFT would no longer have to worry about the console dropping characters.
+    *   We can add error checking to the interpreter which would automatically
+        retry errors. This alleviates FAFT from trying to check if the EC had
+        properly received a line of input. (Ctrl+L)
 
 With better and more reliable tests, we can improve the quality of our EC
 codebase.
@@ -63,15 +64,15 @@ be restricted by the type of chip.
 
 ### A richer EC console
 
-* We could do things like on-the-fly console channel filtering.
-* Coloring specific channels such as "mark all USB PD messages in green".
-* Adding colors in general.
-* Adding temporary console commands.
-* Longer command history which survives EC reboot
-* Searching command history
-* Redirecting debug output to log files (which causes no interleaving of command
-  and debug output)
-* Bang commands (`!foo`)
+*   We could do things like on-the-fly console channel filtering.
+*   Coloring specific channels such as "mark all USB PD messages in green".
+*   Adding colors in general.
+*   Adding temporary console commands.
+*   Longer command history which survives EC reboot
+*   Searching command history
+*   Redirecting debug output to log files (which causes no interleaving of
+    command and debug output)
+*   Bang commands (`!foo`)
 
 ### Better debuggability
 
@@ -80,9 +81,9 @@ such as the keyboard locking up on certain keys or rows. At times like that, it
 would be nice to have an EC console to see what's going on. Other times maybe
 having a servo connected might make the issue not present itself.
 
-* We could do cool things like having an EC console without having to hook up
-  servo.
-* Run `ectool` from the chroot using a PTY interface.
+*   We could do cool things like having an EC console without having to hook up
+    servo.
+*   Run `ectool` from the chroot using a PTY interface.
 
 ## Deployment Strategy
 
@@ -99,28 +100,28 @@ Phase 1 will most likely consist of getting EC-3PO in place in between servo and
 the EC while not modifying the behavior of the console too much. In this phase,
 we can replicate the console interface and achieve the following things.
 
-* Replicate command editing.
-* Save command history.
-* Add error checking to the console commands.
+*   Replicate command editing.
+*   Save command history.
+*   Add error checking to the console commands.
 
 ### Phase 2: Assimilation
 
 Phase 2 will start to introduce the host command packet communication.
 
-* Printing will be done via packets and assembled in EC-3PO.
-* Console commands now are sent using the host command packets.
-  * This will be incremental as console commands are converted.
-* Add debug output filtering and redirection/logging.
+*   Printing will be done via packets and assembled in EC-3PO.
+*   Console commands now are sent using the host command packets.
+    *   This will be incremental as console commands are converted.
+*   Add debug output filtering and redirection/logging.
 
 ### Phase 3: Expansion
 
 Phase 3 will expand the feature set of EC-3PO.
 
-* Add PTY interface to `ectool`.
-* Add on-device console without `servod`.
-* Colored output.
-* Command history search.
-* Bang commands (`!foo`)
+*   Add PTY interface to `ectool`.
+*   Add on-device console without `servod`.
+*   Colored output.
+*   Command history search.
+*   Bang commands (`!foo`)
 
 ## High Level Design & Highlights
 
@@ -132,7 +133,7 @@ UART.](./images/ec-3po-high-level-design.png)
 
 Each host command is a 16-bit command value. Commands which take parameters or
 return response data specify `struct`s for that data. See
-[`include/ec_commands.h`](https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/include/ec_commands.h)
+[`include/ec_commands.h`](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/include/ec_commands.h)
 for the current format of request and replies. Currently, there are no changes
 made to the format of the host request and response structures.
 
@@ -170,12 +171,12 @@ EC-3PO and the EC can perform error checking when sending the commands to the
 EC. This feature would be implemented prior to switching to the binary format.
 The interpreter can package the command in the following manner.
 
-* 2 Ampersands
-* 2 hex digits representing the length of the command
-* 2 hex digits representing the CRC-8 of the command
-* 1 Ampersand
-* The command itself
-* 2 newline characters.
+*   2 Ampersands
+*   2 hex digits representing the length of the command
+*   2 hex digits representing the CRC-8 of the command
+*   1 Ampersand
+*   The command itself
+*   2 newline characters.
 
 This is robust because no commands currently start with `&`. If the EC does not
 see ‘`&&`', then one of the ampersands has been dropped. If the EC doesn't see
@@ -295,10 +296,10 @@ prompt by pressing ‘%' . These were originally added for debug purposes.
 
 ##### Supported Commands
 
-* `loglevel <integer>`
-  * Allows setting the effective loglevel of the console and interpreter.
-* `interrogate <never | always | auto> [enhanced]`
-  * Allows control of when and how often interrogation occurs.
+*   `loglevel <integer>`
+    *   Allows setting the effective loglevel of the console and interpreter.
+*   `interrogate <never | always | auto> [enhanced]`
+    *   Allows control of when and how often interrogation occurs.
 
 ### Interpreter module
 
@@ -323,4 +324,3 @@ Since the interpreter communicates using pipes, it's not necessary that the user
 use the console module. For example, FAFT could directly connect to the
 interpreter and send down commands and receive command responses instead of
 having to deal with the PTY and instead just deal with python objects.
-

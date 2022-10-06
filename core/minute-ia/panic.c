@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -57,13 +57,12 @@ void panic_data_print(const struct panic_data *pdata)
 	else if (pdata->x86.vector <= 20)
 		panic_printf("Reason: %s\n", panic_reason[pdata->x86.vector]);
 	else if (panic_sw_reason_is_valid(pdata->x86.vector)) {
-		panic_printf("Software panic reason %s\n",
-			     panic_sw_reasons[pdata->x86.vector -
-					      PANIC_SW_BASE]);
+		panic_printf(
+			"Software panic reason %s\n",
+			panic_sw_reasons[pdata->x86.vector - PANIC_SW_BASE]);
 		panic_printf("Software panic info 0x%x\n",
 			     pdata->x86.error_code);
-	}
-	else
+	} else
 		panic_printf("Interrupt vector number: 0x%08X (unknown)\n",
 			     pdata->x86.vector);
 	panic_printf("\n");
@@ -91,12 +90,8 @@ void panic_data_print(const struct panic_data *pdata)
  * order pushed to the stack by hardware: see "Intel 64 and IA-32
  * Architectures Software Developer's Manual", Volume 3A, Figure 6-4.
  */
-void exception_panic(
-	uint32_t vector,
-	uint32_t error_code,
-	uint32_t eip,
-	uint32_t cs,
-	uint32_t eflags)
+void exception_panic(uint32_t vector, uint32_t error_code, uint32_t eip,
+		     uint32_t cs, uint32_t eflags)
 {
 	/*
 	 * If a panic were to occur during the reset procedure, we want
@@ -105,6 +100,7 @@ void exception_panic(
 	 * already.
 	 */
 	static int panic_once;
+	struct panic_data *pdata;
 
 	register uint32_t eax asm("eax");
 	register uint32_t ebx asm("ebx");
@@ -112,8 +108,10 @@ void exception_panic(
 	register uint32_t edx asm("edx");
 	register uint32_t esi asm("esi");
 	register uint32_t edi asm("edi");
+	asm(""
+	    : "=r"(eax), "=r"(ebx), "=r"(ecx), "=r"(edx), "=r"(esi), "=r"(edi));
 
-	struct panic_data * const pdata = get_panic_data_write();
+	pdata = get_panic_data_write();
 
 	/* Save registers to global panic structure */
 	pdata->x86.eax = eax;
@@ -173,26 +171,22 @@ void exception_panic(
 	__builtin_unreachable();
 }
 
-noreturn
-void software_panic(uint32_t reason, uint32_t info)
+noreturn void software_panic(uint32_t reason, uint32_t info)
 {
 	uint16_t code_segment;
 
 	/* Get the current code segment */
-	__asm__ volatile ("movw  %%cs, %0":"=m" (code_segment));
+	__asm__ volatile("movw  %%cs, %0" : "=m"(code_segment));
 
-	exception_panic(reason,
-			info,
-			(uint32_t)__builtin_return_address(0),
-			code_segment,
-			0);
+	exception_panic(reason, info, (uint32_t)__builtin_return_address(0),
+			code_segment, 0);
 
 	__builtin_unreachable();
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
-	struct panic_data * const pdata = get_panic_data_write();
+	struct panic_data *const pdata = get_panic_data_write();
 
 	/* Setup panic data structure */
 	memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
@@ -209,7 +203,7 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	struct panic_data * const pdata = panic_get_data();
+	struct panic_data *const pdata = panic_get_data();
 
 	if (pdata && pdata->struct_version == 2) {
 		*reason = pdata->x86.vector;

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,7 +25,7 @@
 #define MXC_FLASH_PAGE_MASK ~(MXC_FLASH_PAGE_SIZE - 1)
 
 /// Calculate the address of a page in flash from the page number
-#define MXC_FLASH_PAGE_ADDR(page)                                              \
+#define MXC_FLASH_PAGE_ADDR(page) \
 	(MXC_FLASH_MEM_BASE + ((unsigned long)page * MXC_FLASH_PAGE_SIZE))
 
 void flash_operation(void)
@@ -108,7 +108,7 @@ static int flash_device_page_erase(uint32_t address)
 	return EC_SUCCESS;
 }
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	int err;
 	uint32_t bytes_written;
@@ -123,7 +123,6 @@ int flash_physical_write(int offset, int size, const char *data)
 
 	// Align the address and read/write if we have to
 	if (offset & 0x3) {
-
 		// Figure out how many bytes we have to write to round up the
 		// address
 		bytes_written = 4 - (offset & 0x3);
@@ -163,7 +162,6 @@ int flash_physical_write(int offset, int size, const char *data)
 	}
 
 	if (size >= 16) {
-
 		// write in 128-bit bursts while we can
 		MXC_FLC->cn &= ~MXC_F_FLC_CN_WDTH;
 
@@ -232,7 +230,7 @@ int flash_physical_write(int offset, int size, const char *data)
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int i;
 	int pages;
@@ -255,38 +253,38 @@ int flash_physical_erase(int offset, int size)
 	return EC_SUCCESS;
 }
 
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	/* Not protected */
 	return 0;
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	/* no flags set */
 	return 0;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	/* These are the flags we're going to pay attention to */
 	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	/* no flags writable */
 	return 0;
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	/* nothing to do here */
 	return EC_SUCCESS;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	/* nothing to do here */
 	return EC_SUCCESS;
@@ -295,7 +293,7 @@ int flash_physical_protect_now(int all)
 /*****************************************************************************/
 /* High-level APIs */
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	return EC_SUCCESS;
 }
@@ -308,7 +306,7 @@ int flash_pre_init(void)
  * NOTE: This is a DESTRUCTIVE test for the range of flash pages tested
  *       make sure that PAGE_START is beyond your flash code.
  */
-static int command_flash_test1(int argc, char **argv)
+static int command_flash_test1(int argc, const char **argv)
 {
 	int i;
 	uint8_t *ptr;
@@ -330,10 +328,10 @@ static int command_flash_test1(int argc, char **argv)
 		/*
 		 * erase page
 		 */
-		error_status = flash_physical_erase(flash_address,
-						    CONFIG_FLASH_ERASE_SIZE);
+		error_status = crec_flash_physical_erase(
+			flash_address, CONFIG_FLASH_ERASE_SIZE);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with flash_physical_erase\n");
+			CPRINTS("Error with crec_flash_physical_erase\n");
 			return EC_ERROR_UNKNOWN;
 		}
 
@@ -356,10 +354,10 @@ static int command_flash_test1(int argc, char **argv)
 		for (i = 0; i < BUFFER_SIZE; i++) {
 			buffer[i] = i + page;
 		}
-		error_status = flash_physical_write(flash_address, BUFFER_SIZE,
-						    buffer);
+		error_status = crec_flash_physical_write(flash_address,
+							 BUFFER_SIZE, buffer);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with flash_physical_write\n");
+			CPRINTS("Error with crec_flash_physical_write\n");
 			return EC_ERROR_UNKNOWN;
 		}
 	}
@@ -389,10 +387,10 @@ static int command_flash_test1(int argc, char **argv)
 	 */
 	for (page = PAGE_START; page <= PAGE_END; page++) {
 		flash_address = page * CONFIG_FLASH_ERASE_SIZE;
-		error_status = flash_physical_erase(flash_address,
-						    CONFIG_FLASH_ERASE_SIZE);
+		error_status = crec_flash_physical_erase(
+			flash_address, CONFIG_FLASH_ERASE_SIZE);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with flash_physical_erase\n");
+			CPRINTS("Error with crec_flash_physical_erase\n");
 			return EC_ERROR_UNKNOWN;
 		}
 	}

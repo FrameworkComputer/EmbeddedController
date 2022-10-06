@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -20,27 +20,24 @@
 #include "usb-stream.h"
 #include "usb_i2c.h"
 
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+USB_I2C_CONFIG(i2c, USB_IFACE_I2C, USB_STR_I2C_NAME, USB_EP_I2C)
 
-
-USB_I2C_CONFIG(i2c,
-	       USB_IFACE_I2C,
-	       USB_STR_I2C_NAME,
-	       USB_EP_I2C)
-
-static int (*cros_cmd_handler)(void *data_in,
-			       size_t in_size,
-			       void *data_out,
+static int (*cros_cmd_handler)(void *data_in, size_t in_size, void *data_out,
 			       size_t out_size);
 
 static int16_t usb_i2c_map_error(int error)
 {
 	switch (error) {
-	case EC_SUCCESS:       return USB_I2C_SUCCESS;
-	case EC_ERROR_TIMEOUT: return USB_I2C_TIMEOUT;
-	case EC_ERROR_BUSY:    return USB_I2C_BUSY;
-	default:               return USB_I2C_UNKNOWN_ERROR | (error & 0x7fff);
+	case EC_SUCCESS:
+		return USB_I2C_SUCCESS;
+	case EC_ERROR_TIMEOUT:
+		return USB_I2C_TIMEOUT;
+	case EC_ERROR_BUSY:
+		return USB_I2C_BUSY;
+	default:
+		return USB_I2C_UNKNOWN_ERROR | (error & 0x7fff);
 	}
 }
 
@@ -52,7 +49,7 @@ static int16_t usb_i2c_map_error(int error)
 static uint32_t usb_i2c_read_packet(struct usb_i2c_config const *config)
 {
 	return QUEUE_REMOVE_UNITS(config->consumer.queue, config->buffer,
-		queue_count(config->consumer.queue));
+				  queue_count(config->consumer.queue));
 }
 
 static void usb_i2c_write_packet(struct usb_i2c_config const *config,
@@ -72,9 +69,8 @@ static uint8_t usb_i2c_executable(struct usb_i2c_config const *config)
 		 * In order to support larger write payload, we need to peek
 		 * the queue to see if we need to wait for more data.
 		 */
-		if (queue_peek_units(config->consumer.queue,
-				     peek, 0, sizeof(peek))
-		    != sizeof(peek)) {
+		if (queue_peek_units(config->consumer.queue, peek, 0,
+				     sizeof(peek)) != sizeof(peek)) {
 			/* Not enough data to calculate expected_size. */
 			return 0;
 		}
@@ -92,7 +88,6 @@ static uint8_t usb_i2c_executable(struct usb_i2c_config const *config)
 		expected_size += (((size_t)peek[0] & 0xf0) << 4) | peek[2];
 	}
 
-
 	if (queue_count(config->consumer.queue) >= expected_size) {
 		expected_size = 0;
 		return 1;
@@ -104,20 +99,20 @@ static uint8_t usb_i2c_executable(struct usb_i2c_config const *config)
 static void usb_i2c_execute(struct usb_i2c_config const *config)
 {
 	/* Payload is ready to execute. */
-	uint32_t count      = usb_i2c_read_packet(config);
-	int portindex       = (config->buffer[0] >> 0) & 0xf;
+	uint32_t count = usb_i2c_read_packet(config);
+	int portindex = (config->buffer[0] >> 0) & 0xf;
 	uint16_t addr_flags = (config->buffer[0] >> 8) & 0x7f;
-	int write_count     = ((config->buffer[0] << 4) & 0xf00) |
-		((config->buffer[1] >> 0) & 0xff);
-	int read_count      = (config->buffer[1] >> 8) & 0xff;
-	int offset          = 0;    /* Offset for extended reading header. */
+	int write_count = ((config->buffer[0] << 4) & 0xf00) |
+			  ((config->buffer[1] >> 0) & 0xff);
+	int read_count = (config->buffer[1] >> 8) & 0xff;
+	int offset = 0; /* Offset for extended reading header. */
 
 	config->buffer[0] = 0;
 	config->buffer[1] = 0;
 
 	if (read_count & 0x80) {
 		read_count = ((config->buffer[2] & 0xff) << 7) |
-			(read_count & 0x7f);
+			     (read_count & 0x7f);
 		offset = 2;
 	}
 
@@ -127,7 +122,7 @@ static void usb_i2c_execute(struct usb_i2c_config const *config)
 	if (!usb_i2c_board_is_enabled()) {
 		config->buffer[0] = USB_I2C_DISABLED;
 	} else if (write_count > CONFIG_USB_I2C_MAX_WRITE_COUNT ||
-		write_count != (count - 4 - offset)) {
+		   write_count != (count - 4 - offset)) {
 		config->buffer[0] = USB_I2C_WRITE_COUNT_INVALID;
 	} else if (read_count > CONFIG_USB_I2C_MAX_READ_COUNT) {
 		config->buffer[0] = USB_I2C_READ_COUNT_INVALID;
@@ -156,8 +151,7 @@ static void usb_i2c_execute(struct usb_i2c_config const *config)
 		 */
 		ret = i2c_xfer(i2c_ports[portindex].port, addr_flags,
 			       (uint8_t *)(config->buffer + 2) + offset,
-			       write_count,
-			       (uint8_t *)(config->buffer + 2),
+			       write_count, (uint8_t *)(config->buffer + 2),
 			       read_count);
 		config->buffer[0] = usb_i2c_map_error(ret);
 	}
@@ -183,11 +177,8 @@ struct consumer_ops const usb_i2c_consumer_ops = {
 	.written = usb_i2c_written,
 };
 
-int usb_i2c_register_cros_cmd_handler(int (*cmd_handler)
-				      (void *data_in,
-				       size_t in_size,
-				       void *data_out,
-				       size_t out_size))
+int usb_i2c_register_cros_cmd_handler(int (*cmd_handler)(
+	void *data_in, size_t in_size, void *data_out, size_t out_size))
 {
 	if (cros_cmd_handler)
 		return -1;

@@ -1,0 +1,185 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usbc_mux.h>
+
+#include "i2c_common.dtsi"
+
+/ {
+	named-gpios {
+		/* Frostflow-specific GPIO customizations */
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		soc-pct2075 {
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_host_release_halt = <80>;
+			temp_fan_off = <35>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&soc_pct2075>;
+		};
+		amb-pct2075 {
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&amb_pct2075>;
+		};
+	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the board
+	 * dts files.
+	 */
+	frostflow-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <0>;
+			size = <1>;
+
+			ff-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CLAMSHELL";
+				value = <0>;
+			};
+			ff-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CONVERTIBLE";
+				value = <1>;
+				default;
+			};
+		};
+		io-db {
+			enum-name = "FW_IO_DB";
+			start = <6>;
+			size = <2>;
+
+			io-db-ps8811-ps8818 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_PS8811_PS8818";
+				value = <0>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		fan {
+			enum-name = "FW_FAN";
+			start = <10>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+
+		charger-option {
+			enum-name = "FW_CHARGER";
+			start = <11>;
+			size = <2>;
+
+			charger-option-isl9241 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_CHARGER_ISL9241";
+				value = <0>;
+				default;
+			};
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 1 0 0
+				 0 0 (-1)>;
+		};
+	};
+
+	ppc_port0: aoz1380 {
+		compatible = "aoz,aoz1380";
+		status = "okay";
+	};
+};
+
+&i2c0_0 {
+	anx7483_port0: anx7483@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c0_mux_set";
+	};
+};
+
+&i2c1_0 {
+	anx7483_port1: anx7483@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c1_mux_set";
+	};
+	ppc_port1: nx20p348x@71 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x71>;
+	};
+	ps8818_port1: ps8818@28 {
+		compatible = "parade,ps8818";
+		reg = <0x28>;
+		flags = <(USB_MUX_FLAG_RESETS_IN_G3)>;
+		board-set = "board_c1_ps8818_mux_set";
+	};
+};
+
+&i2c4_1 {
+	alt_charger: isl9538@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+&usbc_port0 {
+	chg_alt = <&alt_charger>;
+	ppc = <&ppc_port0>;
+	usb-mux-chain-0 {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port0 &anx7483_port0>;
+	};
+};
+
+&usbc_port1 {
+	ppc = <&ppc_port1>;
+	usb-mux-chain-1-anx {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port1 &anx7483_port1>;
+	};
+	usb_mux_chain_ps8818_port1: usb-mux-chain-1-ps {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port1 &ps8818_port1>;
+		alternative-chain;
+	};
+};

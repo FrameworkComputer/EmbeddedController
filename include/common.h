@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,8 +14,24 @@
 #include "compile_time_macros.h"
 
 #ifdef CONFIG_ZEPHYR
-#include <sys/util.h>
-#include <toolchain.h>
+#include <fpu.h>
+#include <zephyr/sys/util.h>
+#include <zephyr/toolchain.h>
+#ifdef CONFIG_ZTEST
+#define TEST_BUILD
+#endif /* CONFIG_ZTEST */
+#endif /* CONFIG_ZEPHYR */
+
+/*
+ * Define a new macro (FIXED_SECTION) to abstract away the linker details
+ * between platform/ec builds and Zephyr. Each build has a slightly different
+ * way of ensuring that the given section is in the same relative location in
+ * both the RO/RW images.
+ */
+#ifdef CONFIG_ZEPHYR
+#define FIXED_SECTION(name) __attribute__((section(".fixed." name)))
+#else
+#define FIXED_SECTION(name) __attribute__((section(".rodata." name)))
 #endif
 
 /*
@@ -30,7 +46,7 @@
  *     #define BAZ CONCAT2(BAR, FOO)
  * Will evaluate to BAR1, which then evaluates to 42.
  */
-#define CONCAT_STAGE_1(w, x, y, z) w ## x ## y ## z
+#define CONCAT_STAGE_1(w, x, y, z) w##x##y##z
 #define CONCAT2(w, x) CONCAT_STAGE_1(w, x, , )
 #define CONCAT3(w, x, y) CONCAT_STAGE_1(w, x, y, )
 #define CONCAT4(w, x, y, z) CONCAT_STAGE_1(w, x, y, z)
@@ -42,20 +58,20 @@
  * is safe with regards to using nested macros and defined arguments.
  */
 #ifndef CONFIG_ZEPHYR
-#define STRINGIFY0(name)  #name
-#define STRINGIFY(name)  STRINGIFY0(name)
-#endif   /* CONFIG_ZEPHYR */
+#define STRINGIFY0(name) #name
+#define STRINGIFY(name) STRINGIFY0(name)
+#endif /* CONFIG_ZEPHYR */
 
 /* Macros to access registers */
 #define REG64_ADDR(addr) ((volatile uint64_t *)(addr))
 #define REG32_ADDR(addr) ((volatile uint32_t *)(addr))
 #define REG16_ADDR(addr) ((volatile uint16_t *)(addr))
-#define REG8_ADDR(addr)  ((volatile uint8_t  *)(addr))
+#define REG8_ADDR(addr) ((volatile uint8_t *)(addr))
 
 #define REG64(addr) (*REG64_ADDR(addr))
 #define REG32(addr) (*REG32_ADDR(addr))
 #define REG16(addr) (*REG16_ADDR(addr))
-#define REG8(addr)  (*REG8_ADDR(addr))
+#define REG8(addr) (*REG8_ADDR(addr))
 
 /*
  * Define __aligned(n) and __packed if someone hasn't beat us to it.  Linux
@@ -106,17 +122,7 @@
  * Useful for C functions called only from assembly or through special sections.
  */
 #ifndef __keep
-#define __keep __attribute__((used)) __visible
-#endif
-
-/*
- * Place the object in the .bss.slow region.
- *
- * On boards with unoptimized RAM there is no penalty and it simply is appended
- * to the .bss section.
- */
-#ifndef __bss_slow
-#define __bss_slow __attribute__((section(".bss.slow")))
+#define __keep __attribute__((used))
 #endif
 
 /*
@@ -129,7 +135,11 @@
  * linked into the .rodata section.
  */
 #ifndef __init_rom
+#ifndef CONFIG_ZEPHYR
 #define __init_rom __attribute__((section(".init.rom")))
+#else
+#define __init_rom
+#endif
 #endif
 
 /* gcc does not support __has_feature */
@@ -174,7 +184,13 @@
  */
 #define __override_proto
 #define __override
-#define __overridable	__attribute__((weak))
+#define __overridable __attribute__((weak))
+
+/*
+ * Attribute that will generate a compiler warning if the return value is not
+ * used.
+ */
+#define __warn_unused_result __attribute__((warn_unused_result))
 
 /*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
@@ -188,34 +204,83 @@
 
 #define UINT32_FROM_BYTES(lsb, byte1, byte2, msb) \
 	((lsb) | (byte1) << 8 | (byte2) << 16 | (msb) << 24)
-#define UINT32_FROM_BYTE_ARRAY_LE(data, lsb_index) \
+#define UINT32_FROM_BYTE_ARRAY_LE(data, lsb_index)                      \
 	UINT32_FROM_BYTES((data)[(lsb_index)], (data)[(lsb_index) + 1], \
 			  (data)[(lsb_index) + 2], (data)[(lsb_index) + 3])
-#define UINT32_FROM_BYTE_ARRAY_BE(data, msb_index) \
+#define UINT32_FROM_BYTE_ARRAY_BE(data, msb_index)                          \
 	UINT32_FROM_BYTES((data)[(msb_index) + 3], (data)[(msb_index) + 2], \
 			  (data)[(msb_index) + 1], (data)[(msb_index)])
 
 /* There isn't really a better place for this */
 #define C_TO_K(temp_c) ((temp_c) + 273)
-#define K_TO_C(temp_c) ((temp_c) - 273)
-#define CELSIUS_TO_DECI_KELVIN(temp_c) ((temp_c) * 10 + 2731)
-#define DECI_KELVIN_TO_CELSIUS(temp_dk) ((temp_dk - 2731) / 10)
+#define K_TO_C(temp_c) ((temp_c)-273)
+/*
+ * round_divide is part of math_utils, so you may need to import math_utils.h
+ * and link math_utils.o if you use the following macros.
+ */
+#define CELSIUS_TO_DECI_KELVIN(temp_c) \
+	(round_divide(CELSIUS_TO_MILLI_KELVIN(temp_c), 100))
+#define DECI_KELVIN_TO_CELSIUS(temp_dk) (MILLI_KELVIN_TO_CELSIUS((temp_dk)*100))
+#define MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk) ((temp_mk)-273150)
+#define MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc) ((temp_mc) + 273150)
+#define MILLI_KELVIN_TO_KELVIN(temp_mk) (round_divide((temp_mk), 1000))
+#define KELVIN_TO_MILLI_KELVIN(temp_k) ((temp_k)*1000)
+#define CELSIUS_TO_MILLI_KELVIN(temp_c) \
+	(MILLI_CELSIUS_TO_MILLI_KELVIN((temp_c)*1000))
+#define MILLI_KELVIN_TO_CELSIUS(temp_mk) \
+	(round_divide(MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk), 1000))
 
 /* Calculate a value with error margin considered. For example,
  * TARGET_WITH_MARGIN(X, 5) returns X' where X' * 100.5% is almost equal to
  * but does not exceed X. */
 #define TARGET_WITH_MARGIN(target, tenths_percent) \
-	(((target) * 1000) / (1000 + (tenths_percent)))
+	(((target)*1000) / (1000 + (tenths_percent)))
 
 /* Call a function, and return the error value unless it returns EC_SUCCESS. */
-#define RETURN_ERROR(fn) do { \
-	int error = (fn); \
-	if (error != EC_SUCCESS) \
-		return error; \
-} while (0)
+#define RETURN_ERROR(fn)                 \
+	do {                             \
+		int error = (fn);        \
+		if (error != EC_SUCCESS) \
+			return error;    \
+	} while (0)
+
+/*
+ * Define test_mockable and test_mockable_static for mocking
+ * functions.
+ */
+#ifdef TEST_BUILD
+#define test_mockable __attribute__((weak))
+#define test_mockable_static __attribute__((weak))
+#define test_mockable_static_inline __attribute__((weak))
+#define test_mockable_noreturn __attribute__((weak))
+#define test_mockable_static_noreturn __attribute__((weak))
+#define test_export_static
+#else
+#define test_mockable
+#define test_mockable_static static
+#define test_mockable_static_inline static inline
+#define test_mockable_noreturn noreturn
+#define test_mockable_static_noreturn static noreturn
+#define test_export_static static
+#endif
 
 /* Include top-level configuration file */
 #include "config.h"
+
+/*
+ * When CONFIG_CHIP_DATA_IN_INIT_ROM is enabled the .data section is linked
+ * into an unused are of flash and excluded from the executable portion of
+ * the RO and RW images to save space.
+ *
+ * The __const_data attribute can be used to force constant data objects
+ * into the .data section instead of the .rodata section for additional
+ * savings.
+ */
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+#define __const_data __attribute__((section(".data#")))
+#else
+#define __const_data
+#endif
 
 /* Canonical list of module IDs */
 #include "module_id.h"
@@ -270,6 +335,9 @@ enum ec_error_list {
 	/* Sometimes operation is expected to have to be repeated. */
 	EC_ERROR_TRY_AGAIN = 26,
 
+	/* Operation was successful but completion is pending. */
+	EC_SUCCESS_IN_PROGRESS = 27,
+
 	/* Verified boot errors */
 	EC_ERROR_VBOOT_SIGNATURE = 0x1000, /* 4096 */
 	EC_ERROR_VBOOT_SIG_MAGIC = 0x1001,
@@ -294,22 +362,6 @@ enum ec_error_list {
 };
 
 /*
- * Define test_mockable and test_mockable_static for mocking
- * functions.
- */
-#ifdef TEST_BUILD
-#define test_mockable __attribute__((weak))
-#define test_mockable_static __attribute__((weak))
-#define test_mockable_static_inline __attribute__((weak))
-#define test_export_static
-#else
-#define test_mockable
-#define test_mockable_static static
-#define test_mockable_static_inline static inline
-#define test_export_static static
-#endif
-
-/*
  * Attribute to define functions to only be used in test code, causing
  * a compiler error if used without TEST_BUILD defined.
  *
@@ -324,8 +376,7 @@ enum ec_error_list {
 
 /*
  * Mark functions that collide with stdlib so they can be hidden when linking
- * against libraries that require stdlib. HIDE_EC_STDLIB should be defined
- * before including common.h from code that links to cstdlib.
+ * against libraries that require stdlib.
  */
 #ifdef TEST_FUZZ
 #define __stdlib_compat __attribute__((visibility("hidden")))
@@ -349,12 +400,12 @@ enum ec_error_list {
  * undefined, rather than defined to something else. This usually
  * involves tricks with __builtin_strcmp.
  */
-#define __cfg_select(cfg, empty, otherwise)     \
+#define __cfg_select(cfg, empty, otherwise) \
 	__cfg_select_1(cfg, empty, otherwise)
 #define __cfg_select_placeholder_ _,
-#define __cfg_select_1(value, empty, otherwise)			  \
+#define __cfg_select_1(value, empty, otherwise) \
 	__cfg_select_2(__cfg_select_placeholder_##value, empty, otherwise)
-#define __cfg_select_2(arg1_or_junk, empty, otherwise)		\
+#define __cfg_select_2(arg1_or_junk, empty, otherwise) \
 	__cfg_select_3(arg1_or_junk _, empty, otherwise)
 #define __cfg_select_3(_ignore1, _ignore2, select, ...) select
 
@@ -363,13 +414,10 @@ enum ec_error_list {
  * handling the __builtin_strcmp trickery where a BUILD_ASSERT is
  * appropriate in the context.
  */
-#define __cfg_select_build_assert(cfg, value, empty, undef)	\
-	__cfg_select(						\
-		value,						\
-		empty,						\
-		BUILD_ASSERT(					\
-			__builtin_strcmp(cfg, #value) == 0);	\
-		undef)
+#define __cfg_select_build_assert(cfg, value, empty, undef)            \
+	__cfg_select(value, empty,                                     \
+		     BUILD_ASSERT(__builtin_strcmp(cfg, #value) == 0); \
+		     undef)
 
 /*
  * Attribute for generating an error if a function is used.
@@ -394,16 +442,16 @@ enum ec_error_list {
  * technique requires that the optimizer be enabled so it can remove
  * the undefined function call.
  */
-#define __config_enabled(cfg, value)					      \
-	__cfg_select(							      \
-		value, 1, ({						      \
-			int __undefined = __builtin_strcmp(cfg, #value) == 0; \
-			extern int IS_ENABLED_BAD_ARGS(void) __error(	      \
-				cfg " must be <blank>, or not defined.");     \
-			if (!__undefined)				      \
-				IS_ENABLED_BAD_ARGS();			      \
-			0;						      \
-		}))
+#define __config_enabled(cfg, value)                                           \
+	__cfg_select(value, 1, ({                                              \
+			     int __undefined =                                 \
+				     __builtin_strcmp(cfg, #value) == 0;       \
+			     extern int IS_ENABLED_BAD_ARGS(void) __error(     \
+				     cfg " must be <blank>, or not defined."); \
+			     if (!__undefined)                                 \
+				     IS_ENABLED_BAD_ARGS();                    \
+			     0;                                                \
+		     }))
 
 /**
  * Checks if a config option is enabled or disabled
@@ -436,7 +484,7 @@ enum ec_error_list {
  * if the config option is enabled by Zephyr's definition.
  */
 #define IS_ENABLED(option) __cfg_select(option, 1, Z_IS_ENABLED1(option))
-#endif  /* CONFIG_ZEPHYR */
+#endif /* CONFIG_ZEPHYR */
 
 /**
  * Makes a global variable static when a config option is enabled,
@@ -447,8 +495,19 @@ enum ec_error_list {
  * This follows the same constraints as IS_ENABLED, the config option
  * should be defined to nothing or undefined.
  */
-#define STATIC_IF(option)						\
+#ifndef CONFIG_ZEPHYR
+#define STATIC_IF(option) \
 	__cfg_select_build_assert(#option, option, static, extern)
+#else
+/*
+ * Version of STATIC_IF for Zephyr, with similar considerations to IS_ENABLED.
+ *
+ * Note, if __cfg_select fails, then we check using Zephyr's COND_CODE_1 macro
+ * to determine if the config option is enabled by Zephyr's definition.
+ */
+#define STATIC_IF(option) \
+	__cfg_select(option, static, COND_CODE_1(option, (static), (extern)))
+#endif /* CONFIG_ZEPHYR */
 
 /**
  * STATIC_IF_NOT is just like STATIC_IF, but makes the variable static
@@ -457,7 +516,16 @@ enum ec_error_list {
  * This is to assert that a variable will go unused with a certain
  * config option.
  */
-#define STATIC_IF_NOT(option)						\
+#ifndef CONFIG_ZEPHYR
+#define STATIC_IF_NOT(option) \
 	__cfg_select_build_assert(#option, option, extern, static)
+#else
+/*
+ * Version of STATIC_IF_NOT for Zephyr, with similar considerations to STATIC_IF
+ * and IS_ENABLED.
+ */
+#define STATIC_IF_NOT(option) \
+	__cfg_select(option, extern, COND_CODE_1(option, (extern), (static)))
+#endif /* CONFIG_ZEPHYR */
 
-#endif  /* __CROS_EC_COMMON_H */
+#endif /* __CROS_EC_COMMON_H */

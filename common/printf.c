@@ -1,10 +1,11 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Printf-like functionality for Chrome EC */
 
+#include "builtin/assert.h"
 #include "console.h"
 #include "printf.h"
 #include "timer.h"
@@ -12,24 +13,7 @@
 
 static const char error_str[] = "ERROR";
 
-#define MAX_FORMAT 1024  /* Maximum chars in a single format field */
-
-#ifndef CONFIG_DEBUG_PRINTF
-static inline int divmod(uint64_t *n, int d)
-{
-	return uint64divmod(n, d);
-}
-
-#else /* CONFIG_DEBUG_PRINTF */
-/* if we are optimizing for size, remove the 64-bit support */
-#define NO_UINT64_SUPPORT
-static inline int divmod(uint32_t *n, int d)
-{
-	int r = *n % d;
-	*n /= d;
-	return r;
-}
-#endif
+#define MAX_FORMAT 1024 /* Maximum chars in a single format field */
 
 /**
  * Convert the lowest nibble of a number to hex
@@ -47,27 +31,118 @@ static int hexdigit(int c)
 }
 
 /* Flags for vfnprintf() flags */
-#define PF_LEFT		BIT(0)  /* Left-justify */
-#define PF_PADZERO	BIT(1)  /* Pad with 0's not spaces */
-#define PF_SIGN		BIT(2)  /* Add sign (+) for a positive number */
+#define PF_LEFT BIT(0) /* Left-justify */
+#define PF_PADZERO BIT(1) /* Pad with 0's not spaces */
+#define PF_SIGN BIT(2) /* Add sign (+) for a positive number */
+#define PF_64BIT BIT(3) /* Number is 64-bit */
 
-/* Deactivate the PF_64BIT flag is 64-bit support is disabled. */
-#ifdef NO_UINT64_SUPPORT
-#define PF_64BIT	0
-#else
-#define PF_64BIT	BIT(3)  /* Number is 64-bit */
-#endif
+test_export_static char *uint64_to_str(char *buf, int buf_len, uint64_t val,
+				       int precision, int base, bool uppercase)
+{
+	int i;
+	char *str;
+
+	if (buf_len <= 1)
+		return NULL;
+
+	if (base <= 1)
+		return NULL;
+
+	/*
+	 * Convert integer to string, starting at end of
+	 * buffer and working backwards.
+	 */
+	str = buf + buf_len - 1;
+	*(str) = '\0';
+
+	/*
+	 * Fixed-point precision must fit in our buffer.
+	 * Leave space for "0." and the terminating null.
+	 */
+	if (precision > buf_len - 3) {
+		precision = buf_len - 3;
+		if (precision < 0)
+			return NULL;
+	}
+
+	/*
+	 * Handle digits to right of decimal for fixed point numbers.
+	 */
+	for (i = 0; i < precision; i++)
+		*(--str) = '0' + uint64divmod(&val, 10);
+	if (precision >= 0)
+		*(--str) = '.';
+
+	if (!val)
+		*(--str) = '0';
+
+	while (val) {
+		int digit;
+
+		if (str <= buf)
+			return NULL;
+
+		digit = uint64divmod(&val, base);
+		if (digit < 10)
+			*(--str) = '0' + digit;
+		else if (uppercase)
+			*(--str) = 'A' + digit - 10;
+		else
+			*(--str) = 'a' + digit - 10;
+	}
+
+	return str;
+}
+
+int snprintf_timestamp_now(char *str, size_t size)
+{
+	return snprintf_timestamp(str, size, get_time().val);
+}
+
+int snprintf_timestamp(char *str, size_t size, uint64_t timestamp)
+{
+	int len;
+	int precision;
+	char *tmp_str;
+	char tmp_buf[PRINTF_TIMESTAMP_BUF_SIZE];
+	int base = 10;
+
+	if (size == 0)
+		return -EC_ERROR_INVAL;
+
+	/* Ensure string has terminating '\0' in error cases. */
+	str[0] = '\0';
+
+	if (IS_ENABLED(CONFIG_CONSOLE_VERBOSE)) {
+		precision = 6;
+	} else {
+		precision = 3;
+		timestamp /= 1000;
+	}
+
+	tmp_str = uint64_to_str(tmp_buf, sizeof(tmp_buf), timestamp, precision,
+				base, false);
+	if (!tmp_str)
+		return -EC_ERROR_OVERFLOW;
+
+	len = strlen(tmp_str);
+	if (len + 1 > size)
+		return -EC_ERROR_OVERFLOW;
+
+	memcpy(str, tmp_str, len + 1);
+
+	return len;
+}
 
 /*
  * Print the buffer as a string of bytes in hex.
  * Returns 0 on success or an error on failure.
  */
-static int print_hex_buffer(int (*addchar)(void *context, int c),
-			    void *context, const char *vstr, int precision,
-			    int pad_width, int flags)
+static int print_hex_buffer(int (*addchar)(void *context, int c), void *context,
+			    const char *vstr, int precision, int pad_width,
+			    int flags)
 
 {
-
 	/*
 	 * Divide pad_width instead of multiplying precision to avoid overflow
 	 * error in the condition. The "/2" and "2*" can be optimized by
@@ -98,6 +173,54 @@ static int print_hex_buffer(int (*addchar)(void *context, int c),
 	}
 
 	return EC_SUCCESS;
+}
+
+struct hex_char_context {
+	struct hex_buffer_params hex_buf_params;
+	char *str;
+	size_t size;
+};
+
+int add_hex_char(void *context, int c)
+{
+	struct hex_char_context *ctx = context;
+
+	if (ctx->size == 0)
+		return EC_ERROR_OVERFLOW;
+
+	*(ctx->str++) = c;
+	ctx->size--;
+
+	return EC_SUCCESS;
+}
+
+size_t hex_str_buf_size(size_t num_bytes)
+{
+	return 2 * num_bytes + 1;
+}
+
+int snprintf_hex_buffer(char *str, size_t size,
+			const struct hex_buffer_params *params)
+{
+	int rv;
+	struct hex_char_context context = {
+		.hex_buf_params = *params,
+		.str = str,
+		/*
+		 * Reserve space for terminating '\0'.
+		 */
+		.size = size - 1,
+	};
+
+	if (size == 0)
+		return -EC_ERROR_INVAL;
+
+	rv = print_hex_buffer(add_hex_char, &context, params->buffer,
+			      params->size, 0, 0);
+
+	*context.str = '\0';
+
+	return (rv == EC_SUCCESS) ? (context.str - str) : -rv;
 }
 
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
@@ -215,17 +338,15 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 		} else {
 			int base = 10;
-#ifdef NO_UINT64_SUPPORT
-			uint32_t v;
-#else
 			uint64_t v;
-#endif
-			int ptrspec;
+
 			void *ptrval;
 
 			/*
 			 * Handle length:
-			 * %l - DEPRECATED (see below)
+			 * %l - supports 64-bit longs, 32-bit longs are
+			 *      supported with a config flag, see comment
+			 *      below for more details
 			 * %ll - long long
 			 * %z - size_t
 			 */
@@ -240,18 +361,23 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				}
 
 				/*
-				 * %l on 32-bit systems is deliberately
-				 * deprecated. It was originally used as
-				 * shorthand for 64-bit values. When
+				 * The CONFIG_PRINTF_LONG_IS_32BITS flag is
+				 * required to enable the %l flag on systems
+				 * where it would signify a 32-bit value.
+				 * Otherwise, %l on 32-bit systems is
+				 * deliberately deprecated. %l was originally
+				 * used as shorthand for 64-bit values. When
 				 * compile-time printf format checking was
 				 * enabled, it had to be cleaned up to be
 				 * sizeof(long), which is 32 bits on today's
 				 * ECs. This presents a mismatch which can be
 				 * dangerous if a new-style printf call is
 				 * cherry-picked into an old firmware branch.
-				 * See crbug.com/984041 for more context.
+				 * For more context, see
+				 * https://issuetracker.google.com/issues/172210614
 				 */
-				if (!(flags & PF_64BIT)) {
+				if (!IS_ENABLED(CONFIG_PRINTF_LONG_IS_32BITS) &&
+				    !(flags & PF_64BIT)) {
 					format = error_str;
 					continue;
 				}
@@ -264,72 +390,11 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 			if (c == 'p') {
 				c = -1;
-				ptrspec = *format++;
 				ptrval = va_arg(args, void *);
-				/*
-				 * Avoid null pointer dereference for %ph and
-				 * %pb. %pT and %pP can accept null.
-				 */
-				if (ptrval == NULL
-				    && ptrspec != 'T' && ptrspec != 'P')
-					continue;
-				/* %pT - print a timestamp. */
-				if (ptrspec == 'T' &&
-				    !IS_ENABLED(NO_UINT64_SUPPORT)) {
+				v = (unsigned long)ptrval;
+				base = 16;
+				if (sizeof(unsigned long) == sizeof(uint64_t))
 					flags |= PF_64BIT;
-					if (ptrval == PRINTF_TIMESTAMP_NOW)
-						v = get_time().val;
-					else
-						v = *(uint64_t *)ptrval;
-
-					if (IS_ENABLED(
-						CONFIG_CONSOLE_VERBOSE)) {
-						precision = 6;
-					} else {
-						precision = 3;
-						v /= 1000;
-					}
-
-				} else if (ptrspec == 'h') {
-					/* %ph - Print a hex byte buffer. */
-					struct hex_buffer_params *hexbuf =
-						ptrval;
-					int rc;
-
-					rc = print_hex_buffer(addchar,
-							      context,
-							      hexbuf->buffer,
-							      hexbuf->size,
-							      0,
-							      0);
-
-					if (rc != EC_SUCCESS)
-						return rc;
-
-					continue;
-
-				} else if (ptrspec == 'P') {
-					/* %pP - Print a raw pointer. */
-					v = (unsigned long)ptrval;
-					base = 16;
-					if (sizeof(unsigned long) ==
-					    sizeof(uint64_t))
-						flags |= PF_64BIT;
-
-				} else if (ptrspec == 'b') {
-					/* %pb - Print a binary integer */
-					struct binary_print_params *binary =
-						ptrval;
-
-					v = binary->value;
-					pad_width = binary->count;
-					flags |= PF_PADZERO;
-					base = 2;
-
-				} else {
-					return EC_ERROR_INVAL;
-				}
-
 			} else if (flags & PF_64BIT) {
 				v = va_arg(args, uint64_t);
 			} else {
@@ -337,12 +402,9 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			}
 
 			switch (c) {
-#ifdef CONFIG_PRINTF_LEGACY_LI_FORMAT
+#ifdef CONFIG_PRINTF_LONG_IS_32BITS
 			case 'i':
-				/* force 32-bit for compatibility */
-				flags &= ~PF_64BIT;
-				/* fall-through */
-#endif /* CONFIG_PRINTF_LEGACY_LI_FORMAT */
+#endif /* CONFIG_PRINTF_LONG_IS_32BITS */
 			case 'd':
 				if (flags & PF_64BIT) {
 					if ((int64_t)v < 0) {
@@ -379,41 +441,9 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			if (format == error_str)
 				continue; /* Bad format specifier */
 
-			/*
-			 * Convert integer to string, starting at end of
-			 * buffer and working backwards.
-			 */
-			vstr = intbuf + sizeof(intbuf) - 1;
-			*(vstr) = '\0';
-
-			/*
-			 * Fixed-point precision must fit in our buffer.
-			 * Leave space for "0." and the terminating null.
-			 */
-			if (precision > (int)(sizeof(intbuf) - 3))
-				precision = sizeof(intbuf) - 3;
-
-			/*
-			 * Handle digits to right of decimal for fixed point
-			 * numbers.
-			 */
-			for (vlen = 0; vlen < precision; vlen++)
-				*(--vstr) = '0' + divmod(&v, 10);
-			if (precision >= 0)
-				*(--vstr) = '.';
-
-			if (!v)
-				*(--vstr) = '0';
-
-			while (v) {
-				int digit = divmod(&v, base);
-				if (digit < 10)
-					*(--vstr) = '0' + digit;
-				else if (c == 'X')
-					*(--vstr) = 'A' + digit - 10;
-				else
-					*(--vstr) = 'a' + digit - 10;
-			}
+			vstr = uint64_to_str(intbuf, sizeof(intbuf), v,
+					     precision, base, c == 'X');
+			ASSERT(vstr);
 
 			if (sign)
 				*(--vstr) = sign;
@@ -441,7 +471,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			vlen = strnlen(vstr, precision);
 		}
 
-
 		while (vlen < pad_width && !(flags & PF_LEFT)) {
 			if (addchar(context, flags & PF_PADZERO ? '0' : ' '))
 				return EC_ERROR_OVERFLOW;
@@ -459,60 +488,4 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 	/* If we're still here, we consumed all output */
 	return EC_SUCCESS;
-}
-
-/* Context for snprintf() */
-struct snprintf_context {
-	char *str;
-	int size;
-};
-
-/**
- * Add a character to the string context.
- *
- * @param context	Context receiving character
- * @param c		Character to add
- * @return 0 if character added, 1 if character dropped because no space.
- */
-static int snprintf_addchar(void *context, int c)
-{
-	struct snprintf_context *ctx = (struct snprintf_context *)context;
-
-	if (!ctx->size)
-		return 1;
-
-	*(ctx->str++) = c;
-	ctx->size--;
-	return 0;
-}
-
-int snprintf(char *str, int size, const char *format, ...)
-{
-	va_list args;
-	int rv;
-
-	va_start(args, format);
-	rv = vsnprintf(str, size, format, args);
-	va_end(args);
-
-	return rv;
-}
-
-int vsnprintf(char *str, int size, const char *format, va_list args)
-{
-	struct snprintf_context ctx;
-	int rv;
-
-	if (!str || !format || size <= 0)
-		return -EC_ERROR_INVAL;
-
-	ctx.str = str;
-	ctx.size = size - 1;  /* Reserve space for terminating '\0' */
-
-	rv = vfnprintf(snprintf_addchar, &ctx, format, args);
-
-	/* Terminate string */
-	*ctx.str = '\0';
-
-	return (rv == EC_SUCCESS) ? (ctx.str - str) : -rv;
 }

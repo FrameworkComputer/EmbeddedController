@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2016 The Chromium OS Authors. All rights reserved.
+# Copyright 2016 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -13,7 +13,7 @@ ifeq "$(CTS_MODULE)" "i2c"
 CFLAGS_CTS+=-DCTS_MODULE_I2C=$(EMPTY)
 CONFIG_I2C=y
 ifneq ($(BOARD),stm32l476g-eval)
-CONFIG_I2C_MASTER=y
+CONFIG_I2C_CONTROLLER=y
 endif
 endif
 

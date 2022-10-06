@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 The Chromium OS Authors. All rights reserved.
+ * Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -32,7 +32,7 @@ char *get_input(const char *prompt)
 	return line;
 }
 
-#else  /* no readline */
+#else /* no readline */
 
 char *get_input(const char *prompt)
 {

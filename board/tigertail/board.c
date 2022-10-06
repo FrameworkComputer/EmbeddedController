@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Tigertail board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "ec_version.h"
@@ -28,16 +27,14 @@
 
 #include "gpio_list.h"
 
-
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /******************************************************************************
  * Forward UARTs as a USB serial interface.
  */
 
-#define USB_STREAM_RX_SIZE	16
-#define USB_STREAM_TX_SIZE	16
+#define USB_STREAM_RX_SIZE 16
+#define USB_STREAM_TX_SIZE 16
 
 /******************************************************************************
  * Forward USART1 as a simple USB serial interface.
@@ -45,43 +42,33 @@
 static struct usart_config const usart1;
 struct usb_stream_config const usart1_usb;
 
-static struct queue const usart1_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart1.producer, usart1_usb.consumer);
-static struct queue const usb_to_usart1 = QUEUE_DIRECT(64, uint8_t,
-	usart1_usb.producer, usart1.consumer);
+static struct queue const usart1_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart1.producer, usart1_usb.consumer);
+static struct queue const usb_to_usart1 =
+	QUEUE_DIRECT(64, uint8_t, usart1_usb.producer, usart1.consumer);
 
 static struct usart_config const usart1 =
-	USART_CONFIG(usart1_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart1_to_usb,
-		usb_to_usart1);
+	USART_CONFIG(usart1_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart1_to_usb, usb_to_usart1);
 
-USB_STREAM_CONFIG(usart1_usb,
-	USB_IFACE_USART1_STREAM,
-	USB_STR_USART1_STREAM_NAME,
-	USB_EP_USART1_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart1,
-	usart1_to_usb)
-
+USB_STREAM_CONFIG(usart1_usb, USB_IFACE_USART1_STREAM,
+		  USB_STR_USART1_STREAM_NAME, USB_EP_USART1_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart1,
+		  usart1_to_usb)
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("Tigertail"),
-	[USB_STR_SERIALNO]     = 0,
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
-	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
-	[USB_STR_USART1_STREAM_NAME]  = USB_STRING_DESC("DUT UART"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("Tigertail"),
+	[USB_STR_SERIALNO] = 0,
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
+	[USB_STR_USART1_STREAM_NAME] = USB_STRING_DESC("DUT UART"),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Tigertail Console"),
-	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
+	[USB_STR_UPDATE_NAME] = USB_STRING_DESC("Firmware update"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
@@ -91,12 +78,10 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  */
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_SBU1] = {"SBU1", 3300, 4096, 0, STM32_AIN(6)},
-	[ADC_SBU2] = {"SBU2", 3300, 4096, 0, STM32_AIN(7)},
+	[ADC_SBU1] = { "SBU1", 3300, 4096, 0, STM32_AIN(6) },
+	[ADC_SBU2] = { "SBU2", 3300, 4096, 0, STM32_AIN(7) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
-
 
 /******************************************************************************
  * Support I2C bridging over USB.
@@ -104,12 +89,18 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 100,
-		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
+	{ .name = "master",
+	  .port = I2C_PORT_MASTER,
+	  .kbps = 100,
+	  .scl = GPIO_MASTER_I2C_SCL,
+	  .sda = GPIO_MASTER_I2C_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-int usb_i2c_board_is_enabled(void) { return 1; }
+int usb_i2c_board_is_enabled(void)
+{
+	return 1;
+}
 
 /******************************************************************************
  * Console commands.
@@ -134,7 +125,7 @@ static void set_uart_gpios(int state)
 {
 	int uart = GPIO_INPUT;
 	int dir = 0;
-	int voltage = 1;  /* 1: 1.8v, 0: 3.3v */
+	int voltage = 1; /* 1: 1.8v, 0: 3.3v */
 	int enabled = 0;
 
 	gpio_set_level(GPIO_ST_UART_LVL_DIS, 1);
@@ -283,7 +274,7 @@ void set_uart_state(int state)
  */
 void uart_sbu_tick(void)
 {
-	static int debounce;  /* = 0 */
+	static int debounce; /* = 0 */
 
 	if (uart_detect != UART_DETECT_AUTO)
 		return;
@@ -320,7 +311,7 @@ void uart_sbu_tick(void)
 }
 DECLARE_HOOK(HOOK_TICK, uart_sbu_tick, HOOK_PRIO_DEFAULT);
 
-static int command_uart(int argc, char **argv)
+static int command_uart(int argc, const char **argv)
 {
 	const char *uart_state_str = "off";
 	const char *uart_detect_str = "manual";
@@ -345,15 +336,15 @@ static int command_uart(int argc, char **argv)
 	uart_state_str = uart_state_names[uart_state];
 	if (uart_detect == UART_DETECT_AUTO)
 		uart_detect_str = "auto";
-	ccprintf("UART mux is: %s, setting: %s\n",
-		uart_state_str, uart_detect_str);
+	ccprintf("UART mux is: %s, setting: %s\n", uart_state_str,
+		 uart_detect_str);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(uart, command_uart,
-	"[off|on18|on33|flip18|flip33|auto]",
-	"Set the sbu uart state\n"
-	"WARNING: 3.3v may damage 1.8v devices.\n");
+			"[off|on18|on33|flip18|flip33|auto]",
+			"Set the sbu uart state\n"
+			"WARNING: 3.3v may damage 1.8v devices.\n");
 
 static void set_led_a(int r, int g, int b)
 {
@@ -418,7 +409,6 @@ void set_mux_state(int state)
 		set_led_b(1, 0, 0);
 }
 
-
 /* On button press, toggle between mux A, B, off. */
 static int button_ready = 1;
 void button_interrupt_deferred(void)
@@ -457,7 +447,7 @@ void button_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&button_interrupt_deferred_data, 0);
 }
 
-static int command_mux(int argc, char **argv)
+static int command_mux(int argc, const char **argv)
 {
 	char *mux_state_str = "off";
 
@@ -480,9 +470,8 @@ static int command_mux(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(mux, command_mux,
-	"[off|A|B]",
-	"Get/set the mux and enable state of the TYPE-C mux");
+DECLARE_CONSOLE_COMMAND(mux, command_mux, "[off|A|B]",
+			"Get/set the mux and enable state of the TYPE-C mux");
 
 /******************************************************************************
  * Initialize board.

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,7 +10,7 @@
  * pit:
  *
  * #define CONFIG_CMD_I2CWEDGE
- * #define I2C_PORT_HOST I2C_PORT_MASTER
+ * #define I2C_PORT_HOST I2C_PORT_CONTROLLER
  *
  */
 
@@ -117,7 +117,7 @@ static int i2c_bang_in_bit(void)
 {
 	int bit;
 
-	/* Let the slave drive data */
+	/* Let the peripheral drive data */
 	i2c_raw_set_sda(I2C_PORT_HOST, 1);
 	i2c_bang_delay();
 
@@ -134,7 +134,7 @@ static int i2c_bang_in_bit(void)
 	return bit;
 }
 
-/* Write a byte to I2C bus. Return 0 if ack by the slave. */
+/* Write a byte to I2C bus. Return 0 if ack by the peripheral. */
 static int i2c_bang_out_byte(int send_start, int send_stop, unsigned char byte)
 {
 	unsigned bit;
@@ -178,19 +178,19 @@ static void i2c_bang_init(void)
 	i2c_raw_mode(I2C_PORT_HOST, 1);
 }
 
-static void i2c_bang_xfer(int slave_addr, int reg)
+static void i2c_bang_xfer(int addr, int reg)
 {
 	int byte;
 
 	i2c_bang_init();
 
-	/* State a write command to 'slave_addr' */
-	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, slave_addr);
+	/* State a write command to 'addr' */
+	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, addr);
 	/* Write 'reg' */
 	i2c_bang_out_byte(0 /*start*/, 0 /*stop*/, reg);
 
 	/* Start a read command */
-	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, slave_addr | 1);
+	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, addr | 1);
 
 	/* Read two bytes */
 	byte = i2c_bang_in_byte(0, 0); /* ack and no stop */
@@ -199,15 +199,14 @@ static void i2c_bang_xfer(int slave_addr, int reg)
 	ccprintf("  read byte: %d\n", byte);
 }
 
-static void i2c_bang_wedge_write(int slave_addr, int byte, int bit_count,
-	int reboot)
+static void i2c_bang_wedge_write(int addr, int byte, int bit_count, int reboot)
 {
 	int i;
 
 	i2c_bang_init();
 
-	/* State a write command to 'slave_addr' */
-	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, slave_addr);
+	/* State a write command to 'addr' */
+	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, addr);
 	/* Send a few bits and stop */
 	for (i = 0; i < bit_count; ++i) {
 		i2c_bang_out_bit((byte & 0x80) != 0);
@@ -219,20 +218,19 @@ static void i2c_bang_wedge_write(int slave_addr, int byte, int bit_count,
 		system_reset(0);
 }
 
-static void i2c_bang_wedge_read(int slave_addr, int reg, int bit_count,
-	int reboot)
+static void i2c_bang_wedge_read(int addr, int reg, int bit_count, int reboot)
 {
 	int i;
 
 	i2c_bang_init();
 
-	/* State a write command to 'slave_addr' */
-	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, slave_addr);
+	/* State a write command to 'addr' */
+	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, addr);
 	/* Write 'reg' */
 	i2c_bang_out_byte(0 /*start*/, 0 /*stop*/, reg);
 
 	/* Start a read command */
-	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, slave_addr | 1);
+	i2c_bang_out_byte(1 /*start*/, 0 /*stop*/, addr | 1);
 
 	/* Read bit_count bits and stop */
 	for (i = 0; i < bit_count; ++i)
@@ -244,36 +242,36 @@ static void i2c_bang_wedge_read(int slave_addr, int reg, int bit_count,
 		system_reset(0);
 }
 
-#define WEDGE_WRITE	1
-#define WEDGE_READ	2
-#define WEDGE_REBOOT	4
+#define WEDGE_WRITE 1
+#define WEDGE_READ 2
+#define WEDGE_REBOOT 4
 
-static int command_i2c_wedge(int argc, char **argv)
+static int command_i2c_wedge(int argc, const char **argv)
 {
-	int slave_addr, reg, wedge_flag = 0, wedge_bit_count = -1;
+	int addr, reg, wedge_flag = 0, wedge_bit_count = -1;
 	char *e;
 	enum gpio_signal tmp;
 
 	/* Verify that the I2C_PORT_HOST has SDA and SCL pins defined. */
 	if (get_sda_from_i2c_port(I2C_PORT_HOST, &tmp) != EC_SUCCESS ||
-		get_scl_from_i2c_port(I2C_PORT_HOST, &tmp) != EC_SUCCESS) {
+	    get_scl_from_i2c_port(I2C_PORT_HOST, &tmp) != EC_SUCCESS) {
 		ccprintf("Cannot wedge bus because no SCL and SDA pins are"
-			"defined for this port. Check i2c_ports[].\n");
+			 "defined for this port. Check i2c_ports[].\n");
 		return EC_SUCCESS;
 	}
 
 	if (argc < 3) {
-		ccputs("Usage: i2cwedge slave_addr out_byte "
-			"[wedge_flag [wedge_bit_count]]\n");
+		ccputs("Usage: i2cwedge addr out_byte "
+		       "[wedge_flag [wedge_bit_count]]\n");
 		ccputs("  wedge_flag - (1: wedge out; 2: wedge in;"
-			" 5: wedge out+reboot; 6: wedge in+reboot)]\n");
+		       " 5: wedge out+reboot; 6: wedge in+reboot)]\n");
 		ccputs("  wedge_bit_count - 0 to 8\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	slave_addr = strtoi(argv[1], &e, 0);
+	addr = strtoi(argv[1], &e, 0);
 	if (*e) {
-		ccprintf("Invalid slave_addr %s\n", argv[1]);
+		ccprintf("Invalid addr %s\n", argv[1]);
 		return EC_ERROR_INVAL;
 	}
 	reg = strtoi(argv[2], &e, 0);
@@ -301,15 +299,15 @@ static int command_i2c_wedge(int argc, char **argv)
 	if (wedge_flag & WEDGE_WRITE) {
 		if (wedge_bit_count < 0)
 			wedge_bit_count = 8;
-		i2c_bang_wedge_write(slave_addr, reg, wedge_bit_count,
-			(wedge_flag & WEDGE_REBOOT));
+		i2c_bang_wedge_write(addr, reg, wedge_bit_count,
+				     (wedge_flag & WEDGE_REBOOT));
 	} else if (wedge_flag & WEDGE_READ) {
 		if (wedge_bit_count < 0)
 			wedge_bit_count = 2;
-		i2c_bang_wedge_read(slave_addr, reg, wedge_bit_count,
-			(wedge_flag & WEDGE_REBOOT));
+		i2c_bang_wedge_read(addr, reg, wedge_bit_count,
+				    (wedge_flag & WEDGE_REBOOT));
 	} else {
-		i2c_bang_xfer(slave_addr, reg);
+		i2c_bang_xfer(addr, reg);
 	}
 
 	/* Put it back into normal mode */
@@ -325,17 +323,15 @@ static int command_i2c_wedge(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(i2cwedge, command_i2c_wedge,
-			"i2cwedge slave_addr out_byte "
-				"[wedge_flag [wedge_bit_count]]",
+			"i2cwedge addr out_byte "
+			"[wedge_flag [wedge_bit_count]]",
 			"Wedge host I2C bus");
 
-static int command_i2c_unwedge(int argc, char **argv)
+static int command_i2c_unwedge(int argc, const char **argv)
 {
 	i2c_unwedge(I2C_PORT_HOST);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(i2cunwedge, command_i2c_unwedge,
-	"",
-	"Unwedge host I2C bus");
-
+DECLARE_CONSOLE_COMMAND(i2cunwedge, command_i2c_unwedge, "",
+			"Unwedge host I2C bus");

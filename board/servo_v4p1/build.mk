@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -14,10 +14,9 @@ CHIP_VARIANT:=stm32f07x
 test-list-y=
 
 # These files are compiled into RO and RW
-board-y=board.o tca6416a.o tca6424a.o
+board-y=board.o
 board-y+=ioexpanders.o
 board-y+=dacs.o
-board-y+=tusb1064.o
 board-y+=pi3usb9201.o
 
 # These files are compiled into RO only

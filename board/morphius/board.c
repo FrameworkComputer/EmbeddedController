@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,15 +6,17 @@
 /* Morphius board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "battery_smart.h"
 #include "button.h"
+#include "cbi_ssfc.h"
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
-#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/pi3hdx1204.h"
@@ -28,6 +30,7 @@
 #include "hooks.h"
 #include "keyboard_8042.h"
 #include "lid_switch.h"
+#include "mkbp_event.h"
 #include "power.h"
 #include "power_button.h"
 #include "ps2_chip.h"
@@ -38,7 +41,7 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_mux.h"
 #include "usb_charge.h"
 #include "usbc_ppc.h"
@@ -50,27 +53,26 @@ static void board_gmr_tablet_switch_isr(enum gpio_signal signal);
 #include "gpio_list.h"
 
 static bool support_aoz_ppc;
-
-#ifdef HAS_TASK_MOTIONSENSE
+static bool ignore_c1_dp;
 
 /* Motion sensors */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
-mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				 { FLOAT_TO_FP(1), 0, 0 },
+				 { 0, 0, FLOAT_TO_FP(-1) } };
+const mat33_fp_t base_standard_ref_1 = { { FLOAT_TO_FP(-1), 0, 0 },
+					 { 0, FLOAT_TO_FP(1), 0 },
+					 { 0, 0, FLOAT_TO_FP(-1) } };
+mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				{ FLOAT_TO_FP(-1), 0, 0 },
+				{ 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm426xx_data;
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
@@ -113,7 +115,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 2, /* g, enough for laptop */
+	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
 	 .rot_standard_ref = (const mat33_fp_t *)&base_standard_ref,
 	 .min_frequency = BMI_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI_ACCEL_MAX_FREQ,
@@ -150,7 +152,49 @@ struct motion_sensor_t motion_sensors[] = {
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-#endif /* HAS_TASK_MOTIONSENSE */
+struct motion_sensor_t icm426xx_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
+	.rot_standard_ref = &base_standard_ref_1,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+struct motion_sensor_t icm426xx_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref_1,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
 
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
@@ -189,13 +233,64 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
 	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
-	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.vod_offset = PI3HDX1204_VOD_130_ALL_CHANNELS,
 	.de_offset = PI3HDX1204_DE_DB_MINUS7,
 };
 
 /*****************************************************************************
+ * Base Gyro Sensor dynamic configuration
+ */
+static enum ec_ssfc_base_gyro_sensor base_gyro_config = SSFC_BASE_GYRO_NONE;
+
+enum ec_ssfc_base_gyro_sensor get_base_gyro_sensor(void)
+{
+	switch (get_cbi_ssfc_base_sensor()) {
+	case SSFC_BASE_GYRO_NONE:
+		return ec_config_has_base_gyro_sensor();
+	default:
+		return get_cbi_ssfc_base_sensor();
+	}
+}
+
+static void setup_base_gyro_config(void)
+{
+	base_gyro_config = get_base_gyro_sensor();
+
+	switch (base_gyro_config) {
+	case SSFC_BASE_GYRO_BMI160:
+		ccprints("BASE GYRO is BMI160");
+		break;
+	case SSFC_BASE_GYRO_ICM426XX:
+		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
+		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
+		ccprints("BASE GYRO is ICM426XX");
+		break;
+	default:
+		break;
+	}
+}
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	switch (base_gyro_config) {
+	case SSFC_BASE_GYRO_BMI160:
+		bmi160_interrupt(signal);
+		break;
+	case SSFC_BASE_GYRO_ICM426XX:
+		icm426xx_interrupt(signal);
+		break;
+	default:
+		break;
+	}
+}
+
+/*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
  */
+
+/* Place holder for second mux in USBC1 chain */
+struct usb_mux_chain usbc1_mux1;
+
 static void setup_mux(void)
 {
 	if (ec_config_has_usbc1_retimer_ps8802()) {
@@ -207,12 +302,10 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the PS8802
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_ps8802,
-		       sizeof(struct usb_mux));
+		usb_muxes[USBC_PORT_C1].mux = &usbc1_ps8802;
 
 		/* Set the AMD FP5 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
+		usbc1_mux1.mux = &usbc1_amd_fp5_usb_mux;
 
 		/* Don't have the AMD FP5 flip */
 		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
@@ -226,12 +319,10 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_amd_fp5_usb_mux,
-		       sizeof(struct usb_mux));
+		usb_muxes[USBC_PORT_C1].mux = &usbc1_amd_fp5_usb_mux;
 
 		/* Set the PS8818 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
+		usbc1_mux1.mux = &usbc1_ps8818;
 	}
 }
 
@@ -245,23 +336,29 @@ const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == USBC_PORT_COUNT);
 
-const struct usb_mux usbc0_pi3dpx1207_usb_retimer = {
-	.usb_port = USBC_PORT_C0,
-	.i2c_port = I2C_PORT_TCPC0,
-	.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
-	.driver = &pi3dpx1207_usb_retimer,
+const struct usb_mux_chain usbc0_pi3dpx1207_usb_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_TCPC0,
+			.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
+			.driver = &pi3dpx1207_usb_retimer,
+		},
 };
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.i2c_port = I2C_PORT_USB_AP_MUX,
-		.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-		.driver = &amd_fp5_usb_mux_driver,
-		.next_mux = &usbc0_pi3dpx1207_usb_retimer,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+		},
+		.next = &usbc0_pi3dpx1207_usb_retimer,
 	},
 	[USBC_PORT_C1] = {
 		/* Filled in dynamically at startup */
+		.next = &usbc1_mux1,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -286,7 +383,7 @@ static void setup_v0_charger(void)
  */
 DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
 
-enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
+int board_usbc_port_to_hpd_gpio_or_ioex(int port)
 {
 	/* USB-C0 always uses USB_C0_HPD (= DP3_HPD). */
 	if (port == 0)
@@ -303,11 +400,9 @@ enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
 	 * this will be removed when version_2 hardware is retired.
 	 */
 	else if (ec_config_has_mst_hub_rtd2141b())
-		return (board_ver >= 4)
-				? GPIO_USB_C1_HPD_IN_DB_V1
-				: (board_ver == 3)
-					? IOEX_USB_C1_HPD_IN_DB
-					: GPIO_EC_DP1_HPD;
+		return (board_ver >= 4) ? GPIO_USB_C1_HPD_IN_DB_V1 :
+		       (board_ver == 3) ? IOEX_USB_C1_HPD_IN_DB :
+					  GPIO_EC_DP1_HPD;
 
 	/* USB-C1 OPT1 DB uses DP2_HPD. */
 	return GPIO_DP2_HPD;
@@ -376,6 +471,8 @@ static void setup_fw_config(void)
 	setup_mux();
 
 	board_remap_gpio();
+
+	setup_base_gyro_config();
 }
 /* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
@@ -387,7 +484,7 @@ DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -482,17 +579,20 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const static struct ec_thermal_config thermal_cpu = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-	},
-	.temp_fan_off = C_TO_K(98),
-	.temp_fan_max = C_TO_K(99),
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_CPU              \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(105), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+		}, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
@@ -503,11 +603,11 @@ static void setup_fans(void)
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 
 /* Battery functions */
-#define SB_OPTIONALMFG_FUNCTION2        0x26
-#define SMART_CHARGE_SUPPORT            0x01
-#define SMART_CHARGE_ENABLE             0x02
-#define SB_SMART_CHARGE_ENABLE          1
-#define SB_SMART_CHARGE_DISABLE         0
+#define SB_OPTIONALMFG_FUNCTION2 0x26
+#define SMART_CHARGE_SUPPORT 0x01
+#define SMART_CHARGE_ENABLE 0x02
+#define SB_SMART_CHARGE_ENABLE 1
+#define SB_SMART_CHARGE_DISABLE 0
 
 static void sb_smart_charge_mode(int enable)
 {
@@ -549,18 +649,18 @@ __override void ppc_interrupt(enum gpio_signal signal)
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
  * current limits.
  */
-__override int board_aoz1380_set_vbus_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+__override int
+board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv;
 
 	/* Use the TCPC to set the current limit */
 	if (port == 0) {
 		rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
-			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+				    (rp == TYPEC_RP_3A0) ? 1 : 0);
 	} else if (board_ver >= 3) {
 		rv = ioex_set_level(IOEX_USB_C1_PPC_ILIM_3A_EN,
-			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+				    (rp == TYPEC_RP_3A0) ? 1 : 0);
 	} else {
 		rv = 1;
 	}
@@ -614,12 +714,17 @@ static void board_chipset_resume(void)
 			ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 			msleep(PI3HDX1204_POWER_ON_DELAY_MS);
 		}
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
 				  check_hdmi_hpd_status());
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend_delay(void)
+{
+	ignore_c1_dp = false;
+}
+DECLARE_DEFERRED(board_chipset_suspend_delay);
 
 static void board_chipset_suspend(void)
 {
@@ -627,11 +732,17 @@ static void board_chipset_suspend(void)
 	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  0);
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 0);
 		if (board_ver >= 3)
 			ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
+
+	/* Wait 500ms before allowing DP event to cause resume. */
+	if (ec_config_has_mst_hub_rtd2141b() &&
+	    (dp_flags[USBC_PORT_C1] & DP_FLAGS_DP_ON)) {
+		ignore_c1_dp = true;
+		hook_call_deferred(&board_chipset_suspend_delay_data,
+				   500 * MSEC);
 	}
 
 	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
@@ -673,15 +784,14 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{3, 0}, {2, 2}, {2, 3}, {1, 2}, {2, 5},
-		{2, 4}, {2, 1}, {2, 7}, {2, 6}, {1, 5},
-		{2, 0}, {3, 1}, {1, 7}, {1, 6}, {-1, -1},
-		{1, 3}, {1, 4}, {-1, -1}, {-1, -1}, {0, 7},
-		{0, 6}, {1, 0}, {1, 1}, {0, 5},
+	{ 3, 0 },   { 2, 2 }, { 2, 3 },	  { 1, 2 }, { 2, 5 }, { 2, 4 },
+	{ 2, 1 },   { 2, 7 }, { 2, 6 },	  { 1, 5 }, { 2, 0 }, { 3, 1 },
+	{ 1, 7 },   { 1, 6 }, { -1, -1 }, { 1, 3 }, { 1, 4 }, { -1, -1 },
+	{ -1, -1 }, { 0, 7 }, { 0, 6 },	  { 1, 0 }, { 1, 1 }, { 0, 5 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
 /*****************************************************************************
@@ -724,10 +834,9 @@ static void hdmi_hpd_handler(void)
 
 	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-			  PI3HDX1204_I2C_ADDR_FLAGS,
-			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
-			  && hpd);
+	pi3hdx1204_enable(
+		I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
@@ -758,7 +867,20 @@ int board_sensor_at_360(void)
 	 * mode.
 	 */
 	if (board_ver >= 3)
-		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+		return !gpio_get_level(GPIO_TABLET_MODE_L);
 
 	return 0;
+}
+
+/*
+ * b/167949458: Suppress setting the host event for 500ms after entering S3.
+ * Otherwise turning off the MST hub in S3 (via IOEX_HDMI_DATA_EN_DB) causes
+ * a VDM:Attention that immediately wakes us back up from S3.
+ */
+__override void pd_notify_dp_alt_mode_entry(int port)
+{
+	if (port == USBC_PORT_C1 && ignore_c1_dp)
+		return;
+	cprints(CC_USBPD, "Notifying AP of DP Alt Mode Entry...");
+	mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
 }

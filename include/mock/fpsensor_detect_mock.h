@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,12 +11,16 @@
 struct mock_ctrl_fpsensor_detect {
 	enum fp_sensor_type get_fp_sensor_type_return;
 	enum fp_transport_type get_fp_transport_type_return;
+	enum fp_sensor_spi_select get_fp_sensor_spi_select_return;
 };
 
-#define MOCK_CTRL_DEFAULT_FPSENSOR_DETECT {				\
-	.get_fp_sensor_type_return = FP_SENSOR_TYPE_UNKNOWN,		\
-	.get_fp_transport_type_return = FP_TRANSPORT_TYPE_UNKNOWN,	\
-}
+#define MOCK_CTRL_DEFAULT_FPSENSOR_DETECT                                  \
+	{                                                                  \
+		.get_fp_sensor_type_return = FP_SENSOR_TYPE_UNKNOWN,       \
+		.get_fp_transport_type_return = FP_TRANSPORT_TYPE_UNKNOWN, \
+		.get_fp_sensor_spi_select_return =                         \
+			FP_SENSOR_SPI_SELECT_UNKNOWN                       \
+	}
 
 extern struct mock_ctrl_fpsensor_detect mock_ctrl_fpsensor_detect;
 

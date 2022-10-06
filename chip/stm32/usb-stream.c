@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -28,19 +28,16 @@ static size_t rx_read(struct usb_stream_config const *config)
 	if (count > queue_space(config->producer.queue))
 		return 0;
 
-	return queue_add_memcpy(config->producer.queue,
-				(void *) address,
-				count,
+	return queue_add_memcpy(config->producer.queue, (void *)address, count,
 				memcpy_from_usbram);
 }
 
 static size_t tx_write(struct usb_stream_config const *config)
 {
 	uintptr_t address = btable_ep[config->endpoint].tx_addr;
-	size_t    count   = queue_remove_memcpy(config->consumer.queue,
-						(void *) address,
-						config->tx_size,
-						memcpy_to_usbram);
+	size_t count = queue_remove_memcpy(config->consumer.queue,
+					   (void *)address, config->tx_size,
+					   memcpy_to_usbram);
 
 	btable_ep[config->endpoint].tx_count = count;
 
@@ -127,36 +124,33 @@ void usb_stream_event(struct usb_stream_config const *config,
 
 	i = config->endpoint;
 
-	btable_ep[i].tx_addr  = usb_sram_addr(config->tx_ram);
+	btable_ep[i].tx_addr = usb_sram_addr(config->tx_ram);
 	btable_ep[i].tx_count = 0;
 
-	btable_ep[i].rx_addr  = usb_sram_addr(config->rx_ram);
+	btable_ep[i].rx_addr = usb_sram_addr(config->rx_ram);
 	btable_ep[i].rx_count = usb_ep_rx_size(config->rx_size);
 
 	config->state->rx_waiting = 0;
 
-	STM32_USB_EP(i) = ((i <<  0) | /* Endpoint Addr*/
-			   (2 <<  4) | /* TX NAK */
-			   (0 <<  9) | /* Bulk EP */
+	STM32_USB_EP(i) = ((i << 0) | /* Endpoint Addr*/
+			   (2 << 4) | /* TX NAK */
+			   (0 << 9) | /* Bulk EP */
 			   (rx_disabled(config) ? EP_RX_NAK : EP_RX_VALID));
 }
 
 int usb_usart_interface(struct usb_stream_config const *config,
-			struct usart_config const *usart,
-			int interface,
+			struct usart_config const *usart, int interface,
 			usb_uint *rx_buf, usb_uint *tx_buf)
 {
 	struct usb_setup_packet req;
 
 	usb_read_setup_packet(rx_buf, &req);
 
-	if (req.bmRequestType != (USB_DIR_OUT |
-				  USB_TYPE_VENDOR |
-				  USB_RECIP_INTERFACE))
+	if (req.bmRequestType !=
+	    (USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_INTERFACE))
 		return -1;
 
-	if (req.wIndex  != interface ||
-	    req.wLength != 0)
+	if (req.wIndex != interface || req.wLength != 0)
 		return -1;
 
 	switch (req.bRequest) {

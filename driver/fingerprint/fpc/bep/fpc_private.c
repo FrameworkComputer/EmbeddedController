@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,10 +16,10 @@
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
-static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] = {0};
+static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4) = { 0 };
 
 /* Recorded error flags */
 static uint16_t errors;
@@ -91,8 +91,8 @@ const fpc_bio_info_t fpc_bio_info = {
 
 /* Sensor IC commands */
 enum fpc_cmd {
-	FPC_CMD_DEEPSLEEP         = 0x2C,
-	FPC_CMD_HW_ID             = 0xFC,
+	FPC_CMD_DEEPSLEEP = 0x2C,
+	FPC_CMD_HW_ID = 0xFC,
 };
 
 /* Maximum size of a sensor command SPI transfer */
@@ -114,10 +114,13 @@ void fp_sensor_low_power(void)
 	fpc_send_cmd(FPC_CMD_DEEPSLEEP);
 }
 
-static int fpc_check_hwid(void)
+int fpc_get_hwid(uint16_t *id)
 {
-	uint16_t id;
 	int rc;
+	uint16_t sensor_id;
+
+	if (id == NULL)
+		return EC_ERROR_INVAL;
 
 	spi_buf[0] = FPC_CMD_HW_ID;
 
@@ -128,26 +131,32 @@ static int fpc_check_hwid(void)
 		return FP_ERROR_SPI_COMM;
 	}
 
-	id = (spi_buf[1] << 8) | spi_buf[2];
+	sensor_id = ((spi_buf[1] << 8) | spi_buf[2]);
+	*id = sensor_id;
+
+	return EC_SUCCESS;
+}
+
+int fpc_check_hwid(void)
+{
+	uint16_t id = 0;
+	int status;
+
+	status = fpc_get_hwid(&id);
 	if ((id >> 4) != FP_SENSOR_HWID) {
 		CPRINTS("FPC unknown silicon 0x%04x", id);
 		return FP_ERROR_BAD_HWID;
 	}
-	CPRINTS(FP_SENSOR_NAME " id 0x%04x", id);
+	if (status == EC_SUCCESS)
+		CPRINTS(FP_SENSOR_NAME " id 0x%04x", id);
 
-	return EC_SUCCESS;
+	return status;
 }
 
 /* Reset and initialize the sensor IC */
 int fp_sensor_init(void)
 {
 	int rc;
-
-	/* The dragonclaw development board needs this enabled to enable the
-	 * AND gate (U10) to CS. Production boards could disable this to save
-	 * power since it's only needed for initial detection on those boards.
-	 */
-	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 1);
 
 	/* Print the binary libfpbep.a library version */
 	CPRINTS("FPC libfpbep.a %s", fp_sensor_get_version());

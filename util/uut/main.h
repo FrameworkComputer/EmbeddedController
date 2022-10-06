@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,11 +21,11 @@
 #define BASE_HEXADECIMAL 16
 
 /* Verbose control messages display */
-#define DISPLAY_MSG(msg) \
-{                        \
-	if (verbose)         \
-		printf msg;      \
-}
+#define DISPLAY_MSG(msg)            \
+	{                           \
+		if (verbose)        \
+			printf msg; \
+	}
 
 #define SUCCESS true
 #define FAIL false
@@ -65,7 +65,7 @@ extern bool console;
  *		black background.
  *--------------------------------------------------------------------------
  */
-void display_color_msg(bool success, char *fmt, ...);
+void display_color_msg(bool success, const char *fmt, ...);
 
 #ifdef __cplusplus
 }

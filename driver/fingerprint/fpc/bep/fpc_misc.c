@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -43,9 +43,4 @@ void __unused fpc_log_var(const char *source, uint8_t level, const char *format,
 	va_start(args, format);
 	uart_vprintf(format, args);
 	va_end(args);
-}
-
-uint32_t abs(int32_t a)
-{
-	return (a < 0) ? (uint32_t)(-a) : (uint32_t)a;
 }

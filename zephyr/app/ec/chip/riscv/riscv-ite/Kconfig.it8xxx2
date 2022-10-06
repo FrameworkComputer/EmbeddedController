@@ -1,0 +1,41 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if SOC_FAMILY_RISCV_ITE
+
+# Code RAM base for IT8XXX2
+config CROS_EC_PROGRAM_MEMORY_BASE
+	default 0x80000000
+
+# The total RAM size of IT8xxx2 is 60 KB.
+# The first 4KB block be always reserved for ram code functions,
+# so the total available RAM size will be 56KB.
+config CROS_EC_RAM_BASE
+	default 0x80101000
+
+config CROS_EC_DATA_RAM_SIZE
+	default 0x0000e000
+
+config CROS_EC_RAM_SIZE
+	default 0x0000e000
+
+# The 768KB flash space layout are as the below:
+# - RO image starts at the first 384k of flash.
+# - RW image starts at the second 384k of flash.
+config CROS_EC_RO_MEM_OFF
+	default 0x0
+
+config CROS_EC_RO_SIZE
+	default 0x60000
+
+config CROS_EC_RW_MEM_OFF
+	default 0x60000
+
+config CROS_EC_RW_SIZE
+	default 0x60000
+
+config FLASH_LOAD_OFFSET
+	default CROS_EC_RW_MEM_OFF if CROS_EC_RW
+
+endif # SOC_FAMILY_RISCV_ITE

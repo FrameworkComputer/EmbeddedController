@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -33,10 +33,10 @@ enum pd_drp_next_states {
  *			us of a connection.
  *
  */
-enum pd_drp_next_states drp_auto_toggle_next_state(uint64_t *drp_sink_time,
-	enum pd_power_role power_role, enum pd_dual_role_states drp_state,
-	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2,
-	bool auto_toggle_supported);
+enum pd_drp_next_states drp_auto_toggle_next_state(
+	uint64_t *drp_sink_time, enum pd_power_role power_role,
+	enum pd_dual_role_states drp_state, enum tcpc_cc_voltage_status cc1,
+	enum tcpc_cc_voltage_status cc2, bool auto_toggle_supported);
 
 enum pd_pref_type {
 	/* prefer voltage larger than or equal to pd_pref_config.mv */
@@ -67,19 +67,15 @@ struct pd_pref_config_t {
 int hex8tou32(char *str, uint32_t *val);
 
 /*
- * Flash a USB PD device using the ChromeOS Vendor Defined Command.
- *
- * @param argc number arguments in argv. Must be greater than 3.
- * @param argv [1] is the usb port
- *             [2] unused
- *             [3] is the command {"erase", "rebooot", "signature",
- *                                 "info", "version", "write"}
- *             [4] if command was "write", then this will be the
- *                 start of the data that will be written.
- * @return EC_SUCCESS on success, else EC_ERROR_PARAM_COUNT or EC_ERROR_PARAM2
- *         on failure.
+ * When AP requests to suspend PD traffic on the EC so it can do
+ * firmware upgrade (retimer firmware, or TCPC chips firmware),
+ * it calls this function to check if power is ready for performing
+ * the upgrade.
+ * @param port USB-C port number
+ * @dreturn true  - power is ready
+ *          false - power is not ready
  */
-int remote_flashing(int argc, char **argv);
+bool pd_firmware_upgrade_check_power_readiness(int port);
 
 /* Returns the battery percentage [0-100] of the system. */
 int usb_get_battery_soc(void);
@@ -94,7 +90,8 @@ int usb_get_battery_soc(void);
  * @return current limit (mA) with DTS flag set if appropriate
  */
 typec_current_t usb_get_typec_current_limit(enum tcpc_cc_polarity polarity,
-	enum tcpc_cc_voltage_status cc1, enum tcpc_cc_voltage_status cc2);
+					    enum tcpc_cc_voltage_status cc1,
+					    enum tcpc_cc_voltage_status cc2);
 
 /**
  * Returns the polarity of a Sink.
@@ -104,7 +101,7 @@ typec_current_t usb_get_typec_current_limit(enum tcpc_cc_polarity polarity,
  * @return polarity
  */
 enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2);
+				       enum tcpc_cc_voltage_status cc2);
 
 /**
  * Returns the polarity of a Source.
@@ -114,7 +111,7 @@ enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
  * @return polarity
  */
 enum tcpc_cc_polarity get_src_polarity(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2);
+				       enum tcpc_cc_voltage_status cc2);
 
 /**
  * Find PDO index that offers the most amount of power and stays within
@@ -126,17 +123,19 @@ enum tcpc_cc_polarity get_src_polarity(enum tcpc_cc_voltage_status cc1,
  * @param pdo raw pdo corresponding to index, or index 0 on error (output)
  * @return index of PDO within source cap packet
  */
-int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t * const src_caps,
-	int max_mv, uint32_t *selected_pdo);
+int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
+		      int max_mv, uint32_t *selected_pdo);
 
 /**
  * Extract power information out of a Power Data Object (PDO)
  *
  * @param pdo raw pdo to extract
  * @param ma current of the PDO (output)
- * @param mv voltage of the PDO (output)
+ * @param max_mv maximum voltage of the PDO (output)
+ * @param min_mv minimum voltage of the PDO (output)
  */
-void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv);
+void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
+			  uint32_t *min_mv);
 
 /**
  * Decide which PDO to choose from the source capabilities.
@@ -148,7 +147,7 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv);
  * @param port USB-C port number
  */
 void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
-			uint32_t *mv, int port);
+		      uint32_t *mv, int port);
 
 /**
  * Notifies a task that is waiting on a system jump, that it's complete.
@@ -163,6 +162,16 @@ void notify_sysjump_ready(void);
 void set_usb_mux_with_current_data_role(int port);
 
 /**
+ * Check if the mux should be set to enable USB3.1 mode based only on being in a
+ * UFP data role. This is mode is required when attached to a port partner that
+ * is type-c only, but still needs to enable USB3.1 mode.
+ *
+ * @param port USB-C port number
+ * @return true if USB3 mode should be enabled, false otherwise
+ */
+__override_proto bool usb_ufp_check_usb3_enable(int port);
+
+/**
  * Configure the USB MUX in safe mode.
  * Before entering into alternate mode, state of the USB-C MUX needs to be in
  * safe mode.
@@ -172,6 +181,17 @@ void set_usb_mux_with_current_data_role(int port);
  * @param port The PD port number
  */
 void usb_mux_set_safe_mode(int port);
+
+/**
+ * Configure the USB MUX in safe mode while exiting an alternate mode.
+ * Although the TCSS (virtual mux) has a distinct safe mode state, it
+ * needs to be in a disconnected state to properly exit an alternate
+ * mode. Therefore, do not treat the virtual mux as a special case, as
+ * usb_mux_set_safe_mode does.
+ *
+ * @param port The PD port number
+ */
+void usb_mux_set_safe_mode_exit(int port);
 
 /**
  * Get the PD flags stored in BB Ram
@@ -192,12 +212,74 @@ int pd_get_saved_port_flags(int port, uint8_t *flags);
 void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t do_set);
 
 /**
- * Build PD alert message
+ * Sets up and sends PD alert message with given ADO on all ports.
  *
- * @param msg pointer where message is stored
- * @param len pointer where length of message is stored in bytes
- * @param pr  current PD power role
+ * @param ado - Alert Data Object defining alert sent to the PD partner
  * @return EC_SUCCESS on success else EC_ERROR_INVAL
  */
-int pd_build_alert_msg(uint32_t *msg, uint32_t *len, enum pd_power_role pr);
+int pd_broadcast_alert_msg(uint32_t ado);
+
+/**
+ * Sets up and sends PD alert message with given ADO on one port.
+ *
+ * @param port - the port to send the alert message on
+ * @param ado - Alert Data Object defining alert sent to the PD partner
+ * @return EC_SUCCESS on success else EC_ERROR_INVAL
+ */
+int pd_send_alert_msg(int port, uint32_t ado);
+
+/**
+ * Sets up a hard reset to send on the port
+ *
+ * @param port - the port to send the hard reset on
+ */
+void pd_send_hard_reset(int port);
+
+/**
+ * During USB retimer firmware update, process operation
+ * requested by AP
+ *
+ * @param port USB-C port number
+ * @param op
+ *       0 - USB_RETIMER_FW_UPDATE_QUERY_PORT
+ *       1 - USB_RETIMER_FW_UPDATE_SUSPEND_PD
+ *       2 - USB_RETIMER_FW_UPDATE_RESUME_PD
+ *       3 - USB_RETIMER_FW_UPDATE_GET_MUX
+ *       4 - USB_RETIMER_FW_UPDATE_SET_USB
+ *       5 - USB_RETIMER_FW_UPDATE_SET_SAFE
+ *       6 - USB_RETIMER_FW_UPDATE_SET_TBT
+ *       7 - USB_RETIMER_FW_UPDATE_DISCONNECT
+ */
+void usb_retimer_fw_update_process_op(int port, int op);
+
+/**
+ * Get result of last USB retimer firmware update operation requested
+ * by AP. Result is passed to AP via EC_CMD_ACPI_READ.
+ *
+ * @return Result of last operation. It's
+ *         which port has retimer if last operation is
+ *         USB_RETIMER_FW_UPDATE_QUERY_PORT;
+ *         PD task is enabled or not if last operations are
+ *         USB_RETIMER_FW_UPDATE_SUSPEND_PD or
+ *         USB_RETIMER_FW_UPDATE_QUERY_PORT;
+ *         current mux if last operations are
+ *         USB_RETIMER_FW_UPDATE_GET_MUX, USB_RETIMER_FW_UPDATE_SET_USB,
+ *         USB_RETIMER_FW_UPDATE_SET_SAFE, USB_RETIMER_FW_UPDATE_SET_TBT,
+ *         or USB_RETIMER_FW_UPDATE_DISCONNECT.
+ */
+int usb_retimer_fw_update_get_result(void);
+
+/**
+ * Process deferred retimer firmware update operations.
+ *
+ * @param port USB-C port number
+ */
+void usb_retimer_fw_update_process_op_cb(int port);
+
+/**
+ * Dump SourceCap information.
+ *
+ * @param port USB-C port number
+ */
+void pd_srccaps_dump(int port);
 #endif /* __CROS_EC_USB_COMMON_H */

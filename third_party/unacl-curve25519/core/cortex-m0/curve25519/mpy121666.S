@@ -178,4 +178,3 @@ fe25519_mpyWith121666_asm:
     pop {r4,r5,r6,r7,r15}
 
 	.size	fe25519_mpyWith121666_asm, .-fe25519_mpyWith121666_asm
-

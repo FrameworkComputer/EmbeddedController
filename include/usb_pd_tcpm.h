@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,11 +9,13 @@
 #define __CROS_EC_USB_PD_TCPM_H
 
 #include <stdbool.h>
+#include "common.h"
+#include "compiler.h"
 #include "ec_commands.h"
 #include "i2c.h"
 
 /* Time to wait for TCPC to complete transmit */
-#define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
+#define PD_T_TCPC_TX_TIMEOUT (100 * MSEC)
 
 enum usbpd_cc_pin {
 	USBPD_CC_PIN_1,
@@ -23,8 +25,8 @@ enum usbpd_cc_pin {
 /* Detected resistor values of port partner */
 enum tcpc_cc_voltage_status {
 	TYPEC_CC_VOLT_OPEN = 0,
-	TYPEC_CC_VOLT_RA = 1,	  /* Port partner is applying Ra */
-	TYPEC_CC_VOLT_RD = 2,	  /* Port partner is applying Rd */
+	TYPEC_CC_VOLT_RA = 1, /* Port partner is applying Ra */
+	TYPEC_CC_VOLT_RD = 2, /* Port partner is applying Rd */
 	TYPEC_CC_VOLT_RP_DEF = 5, /* Port partner is applying Rp (0.5A) */
 	TYPEC_CC_VOLT_RP_1_5 = 6, /* Port partner is applying Rp (1.5A) */
 	TYPEC_CC_VOLT_RP_3_0 = 7, /* Port partner is applying Rp (3.0A) */
@@ -40,43 +42,58 @@ enum tcpc_cc_pull {
 };
 
 /* Pull-up values we apply as a SRC to advertise different current limits */
-enum tcpc_rp_value {
+FORWARD_DECLARE_ENUM(tcpc_rp_value){
 	TYPEC_RP_USB = 0,
 	TYPEC_RP_1A5 = 1,
 	TYPEC_RP_3A0 = 2,
 	TYPEC_RP_RESERVED = 3,
 };
 
+/* DRP (dual-role-power) setting */
+enum tcpc_drp {
+	TYPEC_NO_DRP = 0,
+	TYPEC_DRP = 1,
+};
+
 /**
  * Returns whether the polarity without the DTS extension
  */
-static inline enum tcpc_cc_polarity polarity_rm_dts(
-	enum tcpc_cc_polarity polarity)
+static inline enum tcpc_cc_polarity
+polarity_rm_dts(enum tcpc_cc_polarity polarity)
 {
 	BUILD_ASSERT(POLARITY_COUNT == 4);
-	return polarity & BIT(0);
+	return (enum tcpc_cc_polarity)(polarity & BIT(0));
 }
 
-enum tcpm_transmit_type {
-	TCPC_TX_SOP = 0,
-	TCPC_TX_SOP_PRIME = 1,
-	TCPC_TX_SOP_PRIME_PRIME = 2,
-	TCPC_TX_SOP_DEBUG_PRIME = 3,
-	TCPC_TX_SOP_DEBUG_PRIME_PRIME = 4,
-	TCPC_TX_HARD_RESET = 5,
-	TCPC_TX_CABLE_RESET = 6,
-	TCPC_TX_BIST_MODE_2 = 7,
-	TCPC_TX_INVALID = 0xf,
+/*
+ * Types of PD data that can be sent or received. The values match the TCPCI bit
+ * field values TRANSMIT[Transmit SOP* Message] (TCPCI r2.0 v1.2, table 4-38)
+ * and RX_BUF_FRAME_TYPE[Received SOP* message] (table 4-37). Note that Hard
+ * Reset, Cable Reset, and BIST Carrier Mode 2 are not really messages.
+ */
+enum tcpci_msg_type {
+	TCPCI_MSG_SOP = 0,
+	TCPCI_MSG_SOP_PRIME = 1,
+	TCPCI_MSG_SOP_PRIME_PRIME = 2,
+	TCPCI_MSG_SOP_DEBUG_PRIME = 3,
+	TCPCI_MSG_SOP_DEBUG_PRIME_PRIME = 4,
+	/* Only a valid register setting for TRANSMIT */
+	TCPCI_MSG_TX_HARD_RESET = 5,
+	TCPCI_MSG_CABLE_RESET = 6,
+	/* Only a valid register setting for TRANSMIT */
+	TCPCI_MSG_TX_BIST_MODE_2 = 7,
+	TCPCI_MSG_INVALID = 0xf,
 };
 
 /* Number of valid Transmit Types */
-#define NUM_SOP_STAR_TYPES (TCPC_TX_SOP_DEBUG_PRIME_PRIME + 1)
+#define NUM_SOP_STAR_TYPES (TCPCI_MSG_SOP_DEBUG_PRIME_PRIME + 1)
 
 enum tcpc_transmit_complete {
 	TCPC_TX_UNSET = -1,
-	TCPC_TX_COMPLETE_SUCCESS =   0,
-	TCPC_TX_COMPLETE_DISCARDED = 1,
-	TCPC_TX_COMPLETE_FAILED =    2,
+	TCPC_TX_WAIT = 0,
+	TCPC_TX_COMPLETE_SUCCESS = 1,
+	TCPC_TX_COMPLETE_DISCARDED = 2,
+	TCPC_TX_COMPLETE_FAILED = 3,
 };
 
 /*
@@ -85,9 +102,9 @@ enum tcpc_transmit_complete {
  * Return true on Vbus check if Vbus is...
  */
 enum vbus_level {
-	VBUS_SAFE0V,	/* less than vSafe0V max */
-	VBUS_PRESENT,	/* at least vSafe5V min */
-	VBUS_REMOVED,	/* less than vSinkDisconnect max */
+	VBUS_SAFE0V, /* less than vSafe0V max */
+	VBUS_PRESENT, /* at least vSafe5V min */
+	VBUS_REMOVED, /* less than vSinkDisconnect max */
 };
 
 /**
@@ -103,7 +120,7 @@ static inline int cc_is_rp(enum tcpc_cc_voltage_status cc)
  * Returns true if both CC lines are completely open.
  */
 static inline int cc_is_open(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+			     enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_OPEN && cc2 == TYPEC_CC_VOLT_OPEN;
 }
@@ -112,7 +129,7 @@ static inline int cc_is_open(enum tcpc_cc_voltage_status cc1,
  * Returns true if we detect the port partner is a snk debug accessory.
  */
 static inline int cc_is_snk_dbg_acc(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				    enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RD && cc2 == TYPEC_CC_VOLT_RD;
 }
@@ -121,7 +138,7 @@ static inline int cc_is_snk_dbg_acc(enum tcpc_cc_voltage_status cc1,
  * Returns true if we detect the port partner is a src debug accessory.
  */
 static inline int cc_is_src_dbg_acc(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				    enum tcpc_cc_voltage_status cc2)
 {
 	return cc_is_rp(cc1) && cc_is_rp(cc2);
 }
@@ -130,7 +147,7 @@ static inline int cc_is_src_dbg_acc(enum tcpc_cc_voltage_status cc1,
  * Returns true if the port partner is an audio accessory.
  */
 static inline int cc_is_audio_acc(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				  enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_RA;
 }
@@ -139,7 +156,7 @@ static inline int cc_is_audio_acc(enum tcpc_cc_voltage_status cc1,
  * Returns true if the port partner is presenting at least one Rd
  */
 static inline int cc_is_at_least_one_rd(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+					enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD;
 }
@@ -148,7 +165,7 @@ static inline int cc_is_at_least_one_rd(enum tcpc_cc_voltage_status cc1,
  * Returns true if the port partner is presenting Rd on only one CC line.
  */
 static inline int cc_is_only_one_rd(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				    enum tcpc_cc_voltage_status cc2)
 {
 	return cc_is_at_least_one_rd(cc1, cc2) && cc1 != cc2;
 }
@@ -183,7 +200,7 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*get_cc)(int port, enum tcpc_cc_voltage_status *cc1,
-		enum tcpc_cc_voltage_status *cc2);
+		      enum tcpc_cc_voltage_status *cc2);
 
 	/**
 	 * Check VBUS level
@@ -196,6 +213,16 @@ struct tcpm_drv {
 	bool (*check_vbus_level)(int port, enum vbus_level level);
 
 	/**
+	 * Get VBUS voltage
+	 *
+	 * @param port Type-C port number
+	 * @param vbus read VBUS voltage in mV
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*get_vbus_voltage)(int port, int *vbus);
+
+	/**
 	 * Set the value of the CC pull-up used when we are a source.
 	 *
 	 * @param port Type-C port number
@@ -206,7 +233,8 @@ struct tcpm_drv {
 	int (*select_rp_value)(int port, int rp);
 
 	/**
-	 * Set the CC pull resistor. This sets our role as either source or sink.
+	 * Set the CC pull resistor. This sets our role as either source or
+	 * sink.
 	 *
 	 * @param port Type-C port number
 	 * @param pull One of enum tcpc_cc_pull
@@ -227,15 +255,17 @@ struct tcpm_drv {
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	/**
-	 * Disable receive of SOP' and SOP'' messages. This is provided
+	 * Control receive of SOP' and SOP'' messages. This is provided
 	 * separately from set_vconn so that we can preemptively disable
-	 * receipt of SOP' messages during a VCONN swap.
+	 * receipt of SOP' messages during a VCONN swap, or disable during spans
+	 * when port partners may erroneously be sending cable messages.
 	 *
 	 * @param port Type-C port number
+	 * @param enable Enable SOP' and SOP'' messages
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*sop_prime_disable)(int port);
+	int (*sop_prime_enable)(int port, bool enable);
 #endif
 
 	/**
@@ -291,8 +321,8 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*transmit)(int port, enum tcpm_transmit_type type, uint16_t header,
-					const uint32_t *data);
+	int (*transmit)(int port, enum tcpci_msg_type type, uint16_t header,
+			const uint32_t *data);
 
 	/**
 	 * TCPC is asserting alert
@@ -315,8 +345,7 @@ struct tcpm_drv {
 	 * @param port Type-C port number
 	 * @param enable Auto Discharge enable or disable
 	 */
-	void (*tcpc_enable_auto_discharge_disconnect)(int port,
-						      int enable);
+	void (*tcpc_enable_auto_discharge_disconnect)(int port, int enable);
 
 	/**
 	 * Manual control of TCPC DebugAccessory enable
@@ -325,6 +354,14 @@ struct tcpm_drv {
 	 * @param enable Debug Accessory enable or disable
 	 */
 	int (*debug_accessory)(int port, bool enable);
+
+	/**
+	 * Break debug connection, if TCPC requires specific commands to be run
+	 * in order to correctly exit a debug connection.
+	 *
+	 * @param port Type-C port number
+	 */
+	int (*debug_detach)(int port);
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
@@ -347,19 +384,17 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*get_chip_info)(int port, int live,
-			struct ec_response_pd_chip_info_v1 *info);
+			     struct ec_response_pd_chip_info_v1 *info);
 
-#ifdef CONFIG_USBC_PPC
 	/**
 	 * Request current sinking state of the TCPC
 	 * NOTE: this is most useful for PPCs that can not tell on their own
 	 *
 	 * @param port Type-C port number
-	 * @param is_sinking true for sinking, false for not
 	 *
-	 * @return EC_SUCCESS, EC_ERROR_UNIMPLEMENTED or error
+	 * @return true if sinking else false
 	 */
-	int (*get_snk_ctrl)(int port, bool *sinking);
+	bool (*get_snk_ctrl)(int port);
 
 	/**
 	 * Send SinkVBUS or DisableSinkVBUS command
@@ -376,11 +411,10 @@ struct tcpm_drv {
 	 * NOTE: this is most useful for PPCs that can not tell on their own
 	 *
 	 * @param port Type-C port number
-	 * @param is_sourcing true for sourcing, false for not
 	 *
-	 * @return EC_SUCCESS, EC_ERROR_UNIMPLEMENTED or error
+	 * @return true if sourcing else false
 	 */
-	int (*get_src_ctrl)(int port, bool *sourcing);
+	bool (*get_src_ctrl)(int port);
 
 	/**
 	 * Send SourceVBUS or DisableSourceVBUS command
@@ -391,7 +425,25 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*set_src_ctrl)(int port, int enable);
-#endif
+
+#ifdef CONFIG_USB_PD_TCPM_SBU
+	/*
+	 * Enable SBU lines.
+	 *
+	 * Some PD chips have integrated port protection for SBU lines and the
+	 * switches to enable the SBU lines coming out of the PD chips are
+	 * controlled by vendor specific registers. Hence, this function has to
+	 * be written in vendor specific driver code and the board specific
+	 * tcpc_config[] has to initialize the function with vendor specific
+	 * function at board level.
+	 *
+	 * @param port Type-C port number
+	 * @enable true for enable, false for disable
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*set_sbu)(int port, bool enable);
+#endif /* CONFIG_USB_PD_TCPM_SBU */
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	/**
@@ -405,9 +457,19 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*enter_low_power_mode)(int port);
+
+	/**
+	 * Starts I2C wake sequence for TCPC
+	 *
+	 * NOTE: Do no use tcpc_(read|write) style helper methods in this
+	 * function. You must use i2c_(read|write) directly.
+	 *
+	 * @param port Type-C port number
+	 */
+	void (*wake_low_power_mode)(int port);
 #endif
 
-#ifdef CONFIG_USB_PD_FRS_TCPC
+#ifdef CONFIG_USB_PD_FRS
 	/**
 	 * Enable/Disable TCPC FRS detection
 	 *
@@ -416,7 +478,7 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	 int (*set_frs_enable)(int port, int enable);
+	int (*set_frs_enable)(int port, int enable);
 #endif
 
 	/**
@@ -427,17 +489,59 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	 int (*handle_fault)(int port, int fault);
+	int (*handle_fault)(int port, int fault);
 
+	/**
+	 * Re-initialize registers during hard reset
+	 *
+	 * NOTE: If the function alters the alert mask and power status mask,
+	 * this indicates the chip does not require a full TCPCI re-init after
+	 * a hard reset.
+	 *
+	 * @param port Type-C port number
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*hard_reset_reinit)(int port);
+
+	/**
+	 * Controls BIST Test Mode (or analogous functionality) in the TCPC and
+	 * associated behavior changes. Disables message Rx alerts while the
+	 * port is in Test Mode.
+	 *
+	 * @param port   USB-C port number
+	 * @param enable true to enter BIST Test Mode; false to exit
+	 * @return EC_SUCCESS or error code
+	 */
+	enum ec_error_list (*set_bist_test_mode)(int port, bool enable);
+
+	/**
+	 * Get control of BIST Test Mode (or analogous functionality) in the
+	 * TCPC.
+	 *
+	 * @param port   USB-C port number
+	 * @param enable true for BIST Test Mode enabled; false for error
+	 *               occurred or BIST Test Mode disabled.
+	 * @return EC_SUCCESS or error code
+	 */
+	enum ec_error_list (*get_bist_test_mode)(int port, bool *enable);
 #ifdef CONFIG_CMD_TCPC_DUMP
 	/**
 	 * Dump TCPC registers
 	 *
 	 * @param port Type-C port number
 	 */
-	 void (*dump_registers)(int port);
+	void (*dump_registers)(int port);
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
+
+	int (*reset_bist_type_2)(int port);
 };
+
+#ifdef CONFIG_ZEPHYR
+
+#include "dt-bindings/usb_pd_tcpm.h"
+
+#else /* !CONFIG_ZEPHYR */
 
 /*
  * Macros for tcpc_config_t flags field.
@@ -448,28 +552,32 @@ struct tcpm_drv {
  * Bit 3 --> Set to 1 if TCPC is using TCPCI Revision 2.0
  * Bit 4 --> Set to 1 if TCPC is using TCPCI Revision 2.0 but does not support
  *           the vSafe0V bit in the EXTENDED_STATUS_REGISTER
+ * Bit 5 --> Set to 1 to prevent TCPC setting debug accessory control
+ * Bit 6 --> TCPC controls VCONN (even when CONFIG_USB_PD_TCPC_VCONN is off)
+ * Bit 7 --> TCPC controls FRS (even when CONFIG_USB_PD_FRS_TCPC is off)
+ * Bit 8 --> TCPC enable VBUS monitoring
  */
-#define TCPC_FLAGS_ALERT_ACTIVE_HIGH	BIT(0)
-#define TCPC_FLAGS_ALERT_OD		BIT(1)
-#define TCPC_FLAGS_RESET_ACTIVE_HIGH	BIT(2)
-#define TCPC_FLAGS_TCPCI_REV2_0		BIT(3)
-#define TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V	BIT(4)
+#define TCPC_FLAGS_ALERT_ACTIVE_HIGH BIT(0)
+#define TCPC_FLAGS_ALERT_OD BIT(1)
+#define TCPC_FLAGS_RESET_ACTIVE_HIGH BIT(2)
+#define TCPC_FLAGS_TCPCI_REV2_0 BIT(3)
+#define TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V BIT(4)
+#define TCPC_FLAGS_NO_DEBUG_ACC_CONTROL BIT(5)
+#define TCPC_FLAGS_CONTROL_VCONN BIT(6)
+#define TCPC_FLAGS_CONTROL_FRS BIT(7)
+#define TCPC_FLAGS_VBUS_MONITOR BIT(8)
+
+#endif /* !CONFIG_ZEPHYR */
 
 struct tcpc_config_t {
-	enum ec_bus_type bus_type;	/* enum ec_bus_type */
+	enum ec_bus_type bus_type; /* enum ec_bus_type */
 	union {
 		struct i2c_info_t i2c_info;
 	};
 	const struct tcpm_drv *drv;
 	/* See TCPC_FLAGS_* above */
 	uint32_t flags;
-#ifdef CONFIG_INTEL_VIRTUAL_MUX
-	/*
-	 * 0-3: Corresponding USB2 port number (1 ~ 15)
-	 * 4-7: Corresponding USB3 port number (1 ~ 15)
-	 */
-	uint8_t usb23;
-#endif
+	enum gpio_signal alert_signal;
 };
 
 #ifndef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
@@ -547,9 +655,9 @@ int tcpc_get_vbus_voltage(int port);
 
 #ifdef CONFIG_CMD_TCPC_DUMP
 struct tcpc_reg_dump_map {
-	uint8_t		addr;
-	uint8_t		size;
-	const char	*name;
+	uint8_t addr;
+	uint8_t size;
+	const char *name;
 };
 
 /**
@@ -569,6 +677,6 @@ void tcpc_dump_std_registers(int port);
  *
  */
 void tcpc_dump_registers(int port, const struct tcpc_reg_dump_map *reg,
-			  int count);
+			 int count);
 #endif
 #endif /* __CROS_EC_USB_PD_TCPM_H */

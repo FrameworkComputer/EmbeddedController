@@ -1,7 +1,9 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
+#include "ec_commands.h"
 
 /**
  * Return 1 if base attached, 0 otherwise.
@@ -19,4 +21,4 @@ void base_set_state(int state);
  * Force the current state of the base, with 0 meaning detached,
  * 1 meaning attached and 2 meaning reset to the original state.
  */
-void base_force_state(int state);
+void base_force_state(enum ec_set_base_state_cmd state);

@@ -1,10 +1,11 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* System module for emulator */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "host_test.h"
@@ -43,14 +44,11 @@ static void ramdata_get_persistent(void)
 {
 	FILE *f = get_persistent_storage("ramdata", "rb");
 
-	if (f == NULL) {
-		fprintf(stderr,
-			"No RAM data found. Initializing to 0x00.\n");
+	if ((f == NULL) || (fread(__ram_data, RAM_DATA_SIZE, 1, f) != 1)) {
+		fprintf(stderr, "No RAM data found. Initializing to 0x00.\n");
 		memset(__ram_data, 0, RAM_DATA_SIZE);
 		return;
 	}
-
-	fread(__ram_data, RAM_DATA_SIZE, 1, f);
 
 	release_persistent_storage(f);
 
@@ -76,9 +74,8 @@ static uint32_t get_image_copy(void)
 	FILE *f = get_persistent_storage("image_copy", "rb");
 	uint32_t ret;
 
-	if (f == NULL)
+	if ((f == NULL) || (fread(&ret, sizeof(ret), 1, f) != 1))
 		return EC_IMAGE_UNKNOWN;
-	fread(&ret, sizeof(ret), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("image_copy");
 
@@ -100,9 +97,8 @@ static uint32_t load_reset_flags(void)
 	FILE *f = get_persistent_storage("reset_flags", "rb");
 	uint32_t ret;
 
-	if (f == NULL)
+	if ((f == NULL) || (fread(&ret, sizeof(ret), 1, f) != 1))
 		return EC_RESET_FLAG_POWER_ON;
-	fread(&ret, sizeof(ret), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("reset_flags");
 
@@ -123,9 +119,8 @@ static int load_time(timestamp_t *t)
 {
 	FILE *f = get_persistent_storage("time", "rb");
 
-	if (f == NULL)
+	if ((f == NULL) || (fread(t, sizeof(*t), 1, f) != 1))
 		return 0;
-	fread(t, sizeof(*t), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("time");
 
@@ -134,14 +129,14 @@ static int load_time(timestamp_t *t)
 
 test_mockable struct panic_data *panic_get_data(void)
 {
-	return (struct panic_data *)
-		(__ram_data + RAM_DATA_SIZE - sizeof(struct panic_data));
+	return (struct panic_data *)(__ram_data + RAM_DATA_SIZE -
+				     sizeof(struct panic_data));
 }
 
-test_mockable uintptr_t get_panic_data_start()
+test_mockable uintptr_t get_panic_data_start(void)
 {
-	return (uintptr_t)
-		(__ram_data + RAM_DATA_SIZE - sizeof(struct panic_data));
+	return (uintptr_t)(__ram_data + RAM_DATA_SIZE -
+			   sizeof(struct panic_data));
 }
 
 test_mockable void system_reset(int flags)
@@ -224,28 +219,27 @@ int system_set_scratchpad(uint32_t value)
 {
 	FILE *f = get_persistent_storage("scratchpad", "w");
 
-	fprintf(f, "%lu", value);
+	fprintf(f, "%u", value);
 	release_persistent_storage(f);
 
 	return EC_SUCCESS;
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
 	FILE *f = get_persistent_storage("scratchpad", "r");
-	uint32_t value;
 	int success;
 
 	if (f == NULL)
-		return 0;
+		return EC_ERROR_UNKNOWN;
 
-	success = fscanf(f, "%u", &value);
+	success = fscanf(f, "%u", value);
 	release_persistent_storage(f);
 
 	if (success)
-		return value;
+		return EC_SUCCESS;
 	else
-		return 0;
+		return EC_ERROR_UNKNOWN;
 }
 
 static void __jump_resetvec(void)

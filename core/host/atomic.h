@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,39 +8,36 @@
 #ifndef __CROS_EC_ATOMIC_H
 #define __CROS_EC_ATOMIC_H
 
+#include "atomic_t.h"
 #include "common.h"
 
-/*
- * The atomic_* functions are marked as deprecated as a part of the process of
- * transaction to Zephyr compatible atomic functions. These prefixes will be
- * removed in the following patches. Please see b:169151160 for more details.
- */
-
-static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
-						uint32_t bits)
+static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
-	__sync_and_and_fetch(addr, ~bits);
+	return __atomic_fetch_and(addr, ~bits, __ATOMIC_SEQ_CST);
 }
 
-static inline void deprecated_atomic_or(uint32_t volatile *addr, uint32_t bits)
+static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)
 {
-	__sync_or_and_fetch(addr, bits);
+	return __atomic_fetch_or(addr, bits, __ATOMIC_SEQ_CST);
 }
 
-static inline void deprecated_atomic_add(uint32_t volatile *addr,
-					 uint32_t value)
+static inline atomic_val_t atomic_add(atomic_t *addr, atomic_val_t value)
 {
-	__sync_add_and_fetch(addr, value);
+	return __atomic_fetch_add(addr, value, __ATOMIC_SEQ_CST);
 }
 
-static inline void deprecated_atomic_sub(uint32_t volatile *addr,
-					 uint32_t value)
+static inline atomic_val_t atomic_sub(atomic_t *addr, atomic_val_t value)
 {
-	__sync_sub_and_fetch(addr, value);
+	return __atomic_fetch_sub(addr, value, __ATOMIC_SEQ_CST);
 }
 
-static inline uint32_t deprecated_atomic_read_clear(uint32_t volatile *addr)
+static inline atomic_val_t atomic_clear(atomic_t *addr)
 {
-	return __sync_fetch_and_and(addr, 0);
+	return __atomic_exchange_n(addr, 0, __ATOMIC_SEQ_CST);
 }
-#endif  /* __CROS_EC_ATOMIC_H */
+
+static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
+{
+	return __atomic_fetch_and(addr, bits, __ATOMIC_SEQ_CST);
+}
+#endif /* __CROS_EC_ATOMIC_H */

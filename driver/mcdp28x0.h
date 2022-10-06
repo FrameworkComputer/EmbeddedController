@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -11,11 +11,11 @@
 #define MCDP_OUTBUF_MAX 16
 #define MCDP_INBUF_MAX 16
 
-#define MCDP_CMD_GETINFO       0x40
-#define MCDP_CMD_GETDEVID      0x30
-#define MCDP_CMD_APPSTEST      0x12
+#define MCDP_CMD_GETINFO 0x40
+#define MCDP_CMD_GETDEVID 0x30
+#define MCDP_CMD_APPSTEST 0x12
 #define MCDP_CMD_APPSTESTPARAM 0x11
-#define MCDP_CMD_ACK           0x0c
+#define MCDP_CMD_ACK 0x0c
 
 /* packet header (2 bytes: length + cmd) + data + footer (1byte: checksum) */
 #define MCDP_RSP_LEN(len) (len + 3)
@@ -48,6 +48,6 @@ void mcdp_disable(void);
  * @info pointer to mcdp_info structure
  * @return zero if success, error code otherwise.
  */
-int mcdp_get_info(struct mcdp_info  *info);
+int mcdp_get_info(struct mcdp_info *info);
 
 #endif

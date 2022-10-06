@@ -1,11 +1,11 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
- /* Mock for the TCPM interface */
+/* Mock for the TCPM interface */
 
 #include "common.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 
 /* Copied from usb_prl_sm.c, line 99. */
 #define MOCK_CHK_BUF_SIZE 7

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,8 +12,8 @@
 enum motion_sense_async_event {
 	ASYNC_EVENT_FLUSH = MOTIONSENSE_SENSOR_FLAG_FLUSH |
 			    MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
-	ASYNC_EVENT_ODR =   MOTIONSENSE_SENSOR_FLAG_ODR |
-			    MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
+	ASYNC_EVENT_ODR = MOTIONSENSE_SENSOR_FLAG_ODR |
+			  MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
 };
 
 /**
@@ -22,16 +22,34 @@ enum motion_sense_async_event {
 void motion_sense_fifo_init(void);
 
 /**
+ * Set the expected period between samples. Must be call under
+ * g_mutex_lock each time the sensor ODR changes.
+ *
+ * @param sensor_num Affected sensor
+ * @param data_period expected milliseconds between samples.
+ */
+void motion_sense_set_data_period(int sensor_num, uint32_t data_period);
+
+/**
+ * Whether or not we need to bypass the FIFO to send an important message.
+ *
+ * @return Non zero when a bypass is needed.
+ */
+int motion_sense_fifo_bypass_needed(void);
+
+/**
  * Whether or not we need to wake up the AP.
+ *
+ * When the wakeup flag is set, the bypass flag must be set to.
  *
  * @return Non zero when a wake-up is needed.
  */
 int motion_sense_fifo_wake_up_needed(void);
 
 /**
- * Resets the flag for wake up needed.
+ * Resets the flag for wake up and bypass needed.
  */
-void motion_sense_fifo_reset_wake_up_needed(void);
+void motion_sense_fifo_reset_needed_flags(void);
 
 /**
  * Insert an async event into the fifo.
@@ -39,9 +57,8 @@ void motion_sense_fifo_reset_wake_up_needed(void);
  * @param sensor The sensor that generated the async event.
  * @param event The event to insert.
  */
-void motion_sense_fifo_insert_async_event(
-	struct motion_sensor_t *sensor,
-	enum motion_sense_async_event event);
+void motion_sense_fifo_insert_async_event(struct motion_sensor_t *sensor,
+					  enum motion_sense_async_event event);
 
 /**
  * Insert a timestamp into the fifo.
@@ -60,11 +77,9 @@ void motion_sense_fifo_add_timestamp(uint32_t timestamp);
  * @param time accurate time (ideally measured in an interrupt) the sample
  *             was taken at
  */
-void motion_sense_fifo_stage_data(
-	struct ec_response_motion_sensor_data *data,
-	struct motion_sensor_t *sensor,
-	int valid_data,
-	uint32_t time);
+void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
+				  struct motion_sensor_t *sensor,
+				  int valid_data, uint32_t time);
 
 /**
  * Commit all the currently staged data to the fifo. Doing so makes it readable
@@ -76,12 +91,12 @@ void motion_sense_fifo_commit_data(void);
  * Get information about the fifo.
  *
  * @param fifo_info The struct to modify with the current information about the
- *	  fifo.
+ *	  fifo. WARNING: This must point to a buffer big enough for the struct
+ *	  and also sizeof(uint16_t) * MAX_MOTION_SENSORS of extra space.
  * @param reset Whether or not to reset statistics after reading them.
  */
 void motion_sense_fifo_get_info(
-	struct ec_response_motion_sense_fifo_info *fifo_info,
-	int reset);
+	struct ec_response_motion_sense_fifo_info *fifo_info, int reset);
 
 /**
  * Check whether or not the fifo has gone over its threshold.

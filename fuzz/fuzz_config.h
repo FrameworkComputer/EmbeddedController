@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -57,9 +57,10 @@
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
-#define PD_VCONN_SWAP_DELAY 5000
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000
 #define CONFIG_SHA256
 #define CONFIG_SW_CRC
+#define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif /* TEST_USB_TCPM_V2_REV30_FUZZ */
 
 #ifdef TEST_USB_TCPM_V2_REV20_FUZZ
@@ -77,10 +78,23 @@
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
-#define PD_VCONN_SWAP_DELAY 5000
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000
 #define CONFIG_SHA256
 #define CONFIG_SW_CRC
+#define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif /* TEST_USB_TCPM_V2_REV20_FUZZ */
 
-#endif  /* TEST_FUZZ */
-#endif  /* __FUZZ_FUZZ_CONFIG_H */
+#ifdef TEST_PCHG_FUZZ
+#define CONFIG_CTN730
+#define CONFIG_DEVICE_EVENT
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_GPIO
+#define CONFIG_PERIPHERAL_CHARGER
+#define I2C_PORT_WLC 0
+#define GPIO_WLC_IRQ_CONN 1
+#define GPIO_WLC_NRST_CONN 2
+#define GPIO_PCHG_P0 GPIO_WLC_IRQ_CONN
+#endif /* TEST_PCHG_FUZZ */
+
+#endif /* TEST_FUZZ */
+#endif /* __FUZZ_FUZZ_CONFIG_H */

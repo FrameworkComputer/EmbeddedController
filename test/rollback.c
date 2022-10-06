@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -46,7 +46,8 @@ test_static int read_rollback_region(const struct rollback_info *info,
 				   info->region_1_offset;
 
 	for (i = 0; i < info->region_size_bytes; i++) {
-		if (flash_read(offset + i, sizeof(data), &data) == EC_SUCCESS)
+		if (crec_flash_read(offset + i, sizeof(data), &data) ==
+		    EC_SUCCESS)
 			bytes_read++;
 	}
 
@@ -104,7 +105,7 @@ test_static int test_lock_rollback_region_1(void)
 	return _test_lock_rollback(&rollback_info, 1);
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	if (argc < 2) {
 		ccprintf("usage: runtest [region0|region1]\n");

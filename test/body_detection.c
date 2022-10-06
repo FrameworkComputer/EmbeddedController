@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -20,8 +20,7 @@ static const int window_size = 50; /* sensor data rate (Hz) */
 static int filler(const struct motion_sensor_t *s, const float v)
 {
 	int resolution = s->drv->get_resolution(s);
-	int range = s->drv->get_range(s);
-	int data_1g = BIT(resolution - 1) / range;
+	int data_1g = BIT(resolution - 1) / s->current_range;
 
 	return (int)(v * data_1g / 9.8);
 }
@@ -46,7 +45,7 @@ static int get_trigger_time(const struct body_detect_test_data *data,
 	 * that we do not need to wait for 15 second if the testcase
 	 * is in off-body initially.
 	 */
-	body_detect_change_state(BODY_DETECTION_OFF_BODY);
+	body_detect_change_state(BODY_DETECTION_OFF_BODY, false);
 	for (i = 0; i < size; ++i) {
 		enum body_detect_states motion_state;
 
@@ -106,8 +105,7 @@ static int test_body_detect(void)
 	return EC_SUCCESS;
 }
 
-
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

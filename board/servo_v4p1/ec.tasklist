@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,8 +7,8 @@
  * See CONFIG_TASK_LIST in config.h for details.
  */
 #define CONFIG_TASK_LIST \
-	TASK_ALWAYS(HOOKS,   hook_task,    NULL, VENTI_TASK_STACK_SIZE) \
-	TASK_ALWAYS(CONSOLE, console_task, NULL, VENTI_TASK_STACK_SIZE) \
-	TASK_ALWAYS(PD_C0,   pd_task,      NULL, ULTRA_TASK_STACK_SIZE) \
-	TASK_ALWAYS(PD_C1,   pd_task,      NULL, ULTRA_TASK_STACK_SIZE) \
-	TASK_ALWAYS(PD_C2,   snk_task,     NULL, VENTI_TASK_STACK_SIZE)
+	TASK_ALWAYS(HOOKS,    hook_task,    NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS(CONSOLE,  console_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS_RO(PD_C0, pd_task,      NULL, ULTRA_TASK_STACK_SIZE) \
+	TASK_ALWAYS_RO(PD_C1, pd_task,      NULL, ULTRA_TASK_STACK_SIZE) \
+	TASK_ALWAYS_RO(PD_C2, snk_task,     NULL, VENTI_TASK_STACK_SIZE)

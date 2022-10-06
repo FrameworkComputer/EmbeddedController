@@ -1,59 +1,789 @@
-# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+rsource "app/Kconfig"
+rsource "drivers/Kconfig"
+rsource "emul/Kconfig"
+rsource "fake/Kconfig"
+rsource "mock/Kconfig"
+rsource "subsys/Kconfig"
+
+if ZTEST
+
+config HAS_TEST_TASKS
+	bool "Whether or not this test includes custom tasks"
+	help
+	  This enables custom tasks for tests. When set to 'y', the file
+	  "shimmed_test_tasks.h" will be included and is expected to set
+	  CROS_EC_TASK_LIST.
+
+endif # ZTEST
+
 menuconfig PLATFORM_EC
-	bool "Enable building code from the platform/ec Zephyr module"
+	bool "Chromium OS EC shim"
 	imply PRINTK
 	imply SHELL
 	help
 	  The platform/ec Zephyr module allows some code from the
-	  existing Chrome OS EC project to be "shimmed" into Zephyr.
+	  existing Chromium OS EC project to be "shimmed" into Zephyr. With
+	  this it is possible to use the existing code base within Zephyr.
+
+	  Once we manage to get a platform fully running with Zephyr we will
+	  progressively upstream components and turn off the shim for each
+	  one until eventually all code is on the Zephyr side.
 
 if PLATFORM_EC
 
-# Below is a hack to use CONFIG_ZEPHYR in platform/ec code before
-# config.h has been included.  There is some tricky ordering in some
-# header files that we cannot use config.h (e.g., common.h and
-# compile_time_macros.h), as many board.h and config_chip.h files
-# use these macros, and thus would be included by an include of
-# config.h.  We work around this by initially defining CONFIG_ZEPHYR
-# in Kconfig as an invisible symbol (it should always be enabled).
-# Then, once config.h gets included, it subsequently gets undef'ed by
-# config.h, and then redefined by config_chip.h in the Zephyr shim.
-config ZEPHYR
+rsource "shim/chip/npcx/Kconfig.npcx"
+rsource "shim/chip/mchp/Kconfig.xec"
+rsource "Kconfig.adc"
+rsource "Kconfig.ap_power"
+rsource "Kconfig.battery"
+rsource "Kconfig.charger"
+rsource "Kconfig.chargesplash"
+rsource "Kconfig.board_version"
+rsource "Kconfig.cbi"
+rsource "Kconfig.console"
+rsource "Kconfig.console_cmd_mem"
+rsource "Kconfig.debug_assert"
+rsource "Kconfig.defaults"
+rsource "Kconfig.espi"
+rsource "Kconfig.flash"
+rsource "Kconfig.header"
+rsource "Kconfig.host_interface"
+rsource "Kconfig.i2c"
+rsource "Kconfig.init_priority"
+rsource "Kconfig.ioex"
+rsource "Kconfig.keyboard"
+rsource "Kconfig.led"
+rsource "Kconfig.led_dt"
+rsource "Kconfig.panic"
+rsource "Kconfig.port80"
+rsource "Kconfig.powerseq"
+rsource "Kconfig.pmic"
+rsource "Kconfig.mkbp_event"
+rsource "Kconfig.motionsense"
+rsource "Kconfig.rtc"
+rsource "Kconfig.stacks"
+rsource "Kconfig.system"
+rsource "Kconfig.tasks"
+rsource "Kconfig.temperature"
+rsource "Kconfig.timer"
+rsource "Kconfig.throttle_ap"
+rsource "Kconfig.usba"
+rsource "Kconfig.usbc"
+rsource "Kconfig.watchdog"
+rsource "Kconfig.wireless_charger"
+
+# Define PLATFORM_EC_... options to enable EC features. Each Kconfig should be
+# matched by a line in zephyr/shim/include/config_chip.h which #defines the
+# corresponding EC CONFIG if this Kconfig is enabled.
+#
+# Please keep these in alphabetical order
+
+config PLATFORM_EC_ACPI
+	bool "Advanced Confiugration and Power Interface (ACPI)"
+	default y if AP_X86 && PLATFORM_EC_HOST_INTERFACE_ESPI
+	help
+	  Enable the Advanced Configuration and Power Interface (ACPI) in the
+	  EC. ACPI is a standard interface to the Application Processor (AP)
+	  that abstracts the hardware specific details for controlling and
+	  managing the board.
+
+	  This includes interfaces for monitoring or controlling features,
+	  including:
+	    keyboard backlight
+	    fan speed
+	    temperature sensors
+	    charging properties
+	    device orientation (tablet or laptop mode)
+
+	  https://uefi.org/sites/default/files/resources/ACPI_Spec_6_4_Jan22.pdf
+
+config PLATFORM_EC_AP_RESET_LOG
+	bool "Enable the Application Processor reset log"
+	depends on PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
+	default y if PLATFORM_EC_POWERSEQ
+	help
+	  Enable logging of AP reset events. This information is provided in
+	  response to the EC_CMD_GET_UPTIME_INFO host command.
+
+config PLATFORM_EC_BACKLIGHT_LID
+	bool "Control the display backlight based on the lid switch"
+	depends on PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Support controlling the display backlight based on the state of the
+	  lid switch. The EC will disable the backlight when the lid is closed.
+
+	  This option enables the EC_CMD_SWITCH_ENABLE_BKLIGHT host command,
+	  which allows the AP to override the backlight setting until the next
+	  change in the lid state.
+
+config PLATFORM_EC_BACKLIGHT_LID_ACTIVE_LOW
+	bool "Control for the display backlight is active low"
+	depends on PLATFORM_EC_BACKLIGHT_LID
+	help
+	  Support controlling the backlight with an active low GPIO signal.
+          This config option expects a GPIO_ENABLE_BACKLIGHT_L defined.
+
+config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
+	bool "Work around H1 reset issue"
+	help
+	  Enable this if H1 resets the EC after power-on. This is needed so the EC
+	  can delay its start-up until the reset happens. Without this option
+	  the EC starts up, performs some amount of processing and then gets a
+	  reset that it is not expecting.
+
+config PLATFORM_EC_WAIT_RESET_CYCLES_PER_ITERATION
+	int "CPU execution cycle per iteration for waiting the H1 reset"
+	default 4
+	depends on PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
+	help
+	  This options specifies the number of CPU execution cycles per delay
+	  loop iteration, while waiting for the H1 to reset.
+
+config PLATFORM_EC_PREINIT_HW_CYCLES_PER_SEC
+	int "CPU power up clock cycle per second"
+	default 100000000
+	depends on PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
+	help
+	  This option specifies the frequency (in Hz) of the CPU core when
+	  coming out of a power on reset.
+
+config PLATFORM_EC_BRINGUP
+	bool "Enable early bringup debugging features"
+	help
+	  Enable the CONFIG_BRINGUP platform/ec configuration option,
+	  turning on a variety of miscellaneous early bringup
+	  debugging features.
+
+	  These features include:
+	  - The device will not power on when the EC starts.  The
+	    power button will need to be pressed, or the "powerbtn"
+	    command issued.
+	  - Enable power signal logging, showing relative timestamps
+	    for each power signal change.
+	  - And more!  You can search the codebase for CONFIG_BRINGUP
+            to see all of the features this flag will toggle.
+
+config PLATFORM_EC_CHIPSET_RESET_HOOK
+	bool "Provide a hook for when the AP resets"
+	default y
+	help
+	  Enables support for the legacy HOOK_CHIPSET_RESET hook.
+	  This can be used by code that needs to run before a programmatic
+	  reset actually happens.  Note that these hooks don't run with a
+	  cold reset, only when the AP decides to reset itself.
+
+	  The hook is shimmed into the AP callback API, so you can
+	  set up a ap_power_ev_callback with the AP_POWER_RESET
+	  event to call a handler when the AP is about to be reset.
+
+config PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
+	bool "Enable chipset resume-init and suspend-complete hooks"
+	help
+	  Enables support for the HOOK_CHIPSET_RESUME_INIT and
+	  HOOK_CHIPSET_SUSPEND_COMPLETE hooks. These hooks are usually used to
+	  initialize/disable the SPI driver, which goes to sleep on suspend.
+	  Require to initialize it first such that it can receive a host resume
+	  event, that notifies the normal resume hook.
+	  The legacy hooks are shimmed into the AP callback API, so
+	  a ap_power_ev_callback can be set up with the events
+	  AP_POWER_RESUME_INIT and AP_POWER_SUSPEND_COMPLETE to
+	  call a handler when these events are triggered.
+
+config PLATFORM_EC_CHIP_INIT_ROM_REGION
+	bool "Enables the use of a dedicated init ROM region"
+	help
+	  Enable this flag if the board has a `.init_rom` region. This will
+	  activate routines in `init_rom.h` to access objects in this region.
+
+config PLATFORM_EC_CONSOLE_CMD_HCDEBUG
+	bool "Console command: hcdebug"
+	default y
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Enable the 'hcdebug' console command. This comamnd is used to change,
+	  at runtime, the amount of debug generated by the host command
+	  processing.
+
+	    hcdebug [off | normal | every | params]
+
+	  See PLATFORM_EC_HOSTCMD_DEBUG_MODE for more detail.
+
+config PLATFORM_EC_CONSOLE_CMD_IRQ
+	bool "Console command: irq"
+	depends on TRACING_ISR && TRACING_USER
+	help
+	  Enable the "irq" console command. This command lists the number of
+	  IRQ calls.
+
+config PLATFORM_EC_CONSOLE_CMD_MEM
+	bool "Console command: md, rw"
+	default y
+	help
+	  Enable memory related console commands.
+
+	     md - dump memory values
+	     rw - read or write in memory
+
+config PLATFORM_EC_CONSOLE_CMD_SLEEPMASK
+	bool "Console command: sleepmask read"
+	default y if PM
+	help
+	  Enable the 'sleepmask' console command. This command is used to
+	  display the state of the sleep mask, which controls whether the EC
+	  chip is allowed to enter deep sleep states to save power.
+
+config PLATFORM_EC_CONSOLE_CMD_SLEEPMASK_SET
+	bool "Console command: sleepmask set"
+	depends on PLATFORM_EC_CONSOLE_CMD_SLEEPMASK
+	default y
+	help
+	  Enable changing the state of the current sleep mask.
+
+	    sleepmask on     -  Sets the SLEEP_MASK_FORCE_NO_DSLEEP bit in the
+	                        sleep mask, preventing the system from entering
+	                        sleep.
+	    sleepmask off    -  Clears the SLEEP_MASK_FORCE_NO_DSLEEP bit in the
+	                        sleep mask. The system may enter deep sleep
+	                        depending on the state of other mask bits.
+	    sleepmask <value> - Sets the sleepmask to <value>, overriding all
+	                        bits with the specified value.
+
+config PLATFORM_EC_CONSOLE_CMD_S5_TIMEOUT
+	bool "Console command: s5_timeout"
+	default n
+	help
+	  This command allows the user to specify a time to remain in S5 before
+	  dropping to G3, in order to help power testing.
+
+config PLATFORM_EC_CONSOLE_CMD_SHMEM
+	bool "Console command: shmem"
+	default y
+	help
+	  This command prints basic information about the EC shared memory,
+	  located at the top of RAM, above all RAM symbols: total size, bytes
+	  used and the maximum number of bytes that have been used since
+	  the EC started running.
+
+config PLATFORM_EC_CROS_FWID_VERSION
+	bool "Include CrOS FWID version"
+	default n
+	help
+	  Include Chrome OS FWID in version output. The CrOS FWID will be common
+	  across OS, AP firmware and EC firmware when built together.
+
+config PLATFORM_EC_DEBUG_ASSERT
+	bool "Enable assertion failures"
+	default y
+	help
+	  Assertion failures are used to flag conditions which should not occur
+	  and thus indicate the software is unable to continue execution. This
+	  option can be disabled so that the assert() macro becomes a NOP. In
+	  this case, execution will continue but the results are unpredictable.
+
+	  Messages are of the form:
+
+	     ASSERTION FAILURE '<expr>' in function() at file:line
+
+	  Note: There is also ASSERT() which is an alias of assert(), used in
+	  host code where cstdlib is used.
+
+config PLATFORM_EC_DP_REDRIVER_TDP142
+	bool "Include TDP142 DisplayPort redriver driver"
+	default n
+	help
+	  Include a driver for the Texas Instruments TDP142 DisplayPort linear
+	  redriver chip.
+
+config PLATFORM_EC_EMULATED_SYSRQ
+	bool "Emulate sysrq events to AP"
+	help
+	  The magic SysRq key is a key combo which allows the user to perform
+	  various low-level commands regardless of the system's state.
+
+	  See here for the key combos:
+
+	  https://www.kernel.org/doc/html/latest/admin-guide/sysrq.html
+
+	  This option enables support for sending emulated SysRq events to AP
+	  (on designs with a keyboard, SysRq is passed as normal key presses).
+
+config PLATFORM_EC_EXTPOWER
+	bool "Support external power detection"
+	depends on PLATFORM_EC_HOOKS && PLATFORM_EC_HOSTCMD
+	help
+	  Enable code for handling the detection of external power.
+	  If PLATFORM_EC_EXTPOWER_GPIO is not set, then the board
+	  must supply the function board_check_extpower in order
+	  to check for external power, and update the state via
+	  extpower_handle_update().
+
+config PLATFORM_EC_EXTPOWER_GPIO
+	bool "GPIO-based external power detection"
+	select PLATFORM_EC_EXTPOWER
+	depends on PLATFORM_EC_HOOKS && PLATFORM_EC_HOSTCMD
+	help
+	  Enable shimming the extpower_gpio module, which provides
+	  GPIO-based external power presence detection features.  The
+	  project should define a GPIO pin named GPIO_AC_PRESENT, with
+	  extpower_interrupt configured as the handler.
+
+config PLATFORM_EC_FLASH_CROS
+	bool
+	help
+	  Enables access to the device's flash through a simple API. With
+	  this is it possible for the EC to update its flash while running,
+	  e.g. to support auto-update. Various write-protection features are
+	  also provided.
+
+config PLATFORM_EC_FPU
+	bool "Support floating point"
+	depends on FPU && (CPU_CORTEX_M || RISCV) && !NEWLIB_LIBC
+	default y
+	help
+	  This enables support for floating point. This is generally already
+	  provided in Zephyr, but the EC side expects a few functions to be
+	  available which are not available with Zephyr's minimal lib: sqrtf()
+	  and fabsf(). Enabling this options defines them.
+
+config PLATFORM_EC_HOOKS
+	bool "Hooks and deferred compatibility shim"
+	default y
+	help
+	  Enable translation of DECLARE_DEFERRED() and hook_call_deferred()
+	  to Zephyr's work queues, along with a compatible DECLARE_HOOK
+	  implementation.
+
+	  This option is needed by many features in the EC. Disabling it will
+	  likely cause build errors.
+
+menuconfig PLATFORM_EC_HOSTCMD
+	bool "Host commands"
+	default n if ARCH_POSIX
+	default y if AP
+	select HAS_TASK_HOSTCMD
+	help
+	  Enable the host commands shim in platform/ec. This handles
+	  communication with the AP. The AP sends a command to the EC and it
+	  responds when able. An interrupt can be used to indicate to the AP
+	  that the EC has something for it.
+
+	  The host interface type is selected based on the AP type, but can be
+	  changed though the CONFIG_PLATFORM_EC_HOST_INTERFACE_TYPE choice.
+
+config PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
+	bool "Host command: EC_CMD_GET_UPTIME_INFO"
+	default PLATFORM_EC_HOSTCMD
+	help
+	  Enable the EC_CMD_GET_UPTIME_INFO host command which reports the time
+	  the EC has been powered up, the number of AP resets, an optional log
+	  of AP-reset events and some flags.
+
+config PLATFORM_EC_HOSTCMD_REGULATOR
+	bool "Host command of voltage regulator control"
+	help
+	  Enable host commands (EC_CMD_REGULATOR_) for controlling voltage
+	  regulator. The board should also implement board functions defined in
+	  include/regulator.h.
+
+choice PLATFORM_EC_HOSTCMD_DEBUG_MODE
+	prompt "Select method to use for HostCmd Debug Mode"
+	depends on PLATFORM_EC_HOSTCMD
+	default HCDEBUG_NORMAL
+	help
+	  Sets the value of the host command debug mode to use on
+	  startup.
+
+config HCDEBUG_OFF
+	bool "Host command debug mode OFF"
+	help
+	  No host command debug messages are shown.  Host
+	  command error messages will still output.
+
+config HCDEBUG_NORMAL
+	bool "Host command debug mode NORMAL"
+	help
+	  Display host commands receieved from the AP. Repeated
+	  commands are shown with a "+" and "++" symbol.
+
+config HCDEBUG_EVERY
+	bool "Host command debug mode EVERY"
+	help
+	  Display all host commands received from the AP,
+	  including repeated commands.
+
+config HCDEBUG_PARAMS
+	bool "Host command debug mode PARAMS"
+	help
+	  Display all host commands and the parameters received
+	  from the AP.
+
+endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE
+
+config PLATFORM_EC_LID_SWITCH
+	bool "Lid switch"
+	help
+	  Enable shimming the lid switch implementation and related
+	  commands in platform/ec. The lid switch can affect power-on
+	  behaviour. For example, when the lid is opened, the device may
+	  automatically power on.
+
+	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
+
+config PLATFORM_EC_MKBP_INPUT_DEVICES
+	bool "Input devices via MKBP"
+	help
+	  Enable passing events from various input sources to AP via MKBP.
+	  This include buttons (power, volume); switches (lid, tablet mode)
+	  and sysrq.
+
+config PLATFORM_EC_LOW_POWER_IDLE
+	bool
+	default y if PM
+	help
+	  Enable low power idle modes in the EC chipset. This is automatically
+	  enabled when the Zephyr power management options are enabled with the
+	  PM option.
+
+config PLATFORM_EC_POWER_COMMON
 	bool
 	default y
+	depends on PLATFORM_EC_POWERSEQ
 	help
-	  This should always be enabled.  It's a workaround for
-	  config.h not being available in some headers.
+	  Compile common code for AP power state machine.
+
+config PLATFORM_EC_MKBP_EVENT
+    bool "MKBP event"
+    help
+      Enable this to support MKBP event. MKBP event is used not only
+      for matrix keyboard but also for other many events like button,
+      switch, fingerprint, and etc.
+
+      This requires a MKBP event delivery method(GPIO, HOST_EVENT, and etc)
+
+config PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
+    bool
+    depends on PLATFORM_EC_MKBP_EVENT
+    default $(dt_node_has_prop,/ec-mkbp-event-wakeup-mask,wakeup-mask)
+    help
+      Enable which MKBP events should wakeup the system in suspend.
+      For example:
+        The MKBP events are enabled in the devicetree by the wakeup-mask
+        property of the ec-mkbp-event-wakeup-mask node as follows:
+        wakeup-mask = <(MKBP_EVENT_KEY_MATRIX | \
+                          MKBP_EVENT_HOST_EVENT | \
+                          MKBP_EVENT_SENSOR_FIFO)>;
+      The mkbp events are defined in dt-bindings/wake_mask_event_defines.h
+
+config PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
+    bool
+    depends on PLATFORM_EC_MKBP_EVENT
+    default $(dt_node_has_prop,/ec-mkbp-host-event-wakeup-mask,wakeup-mask)
+    help
+      Enable which host events should wakeup the system in suspend.
+      For example:
+        The host events are enabled in the devicetree by the wakeup-mask
+        property of the ec-mkbp-host-event-wakeup-mask node as follows:
+          wakeup-mask = <(HOST_EVENT_LID_OPEN | \
+                          HOST_EVENT_POWER_BUTTON | \
+                          HOST_EVENT_AC_CONNECTED)>;
+      The host events are defined in dt-bindings/wake_mask_event_defines.h
+
+config PLATFORM_EC_PANIC
+	bool "Panic output"
+	default y
+	help
+	  Enable support for collecting and reporting panic information,
+	  caused by exceptions in the EC. This can be the result of a watchdog
+	  firing, a division by zero, unaligned access, stack overflow or
+	  assertion failure.
+
+	  The panic information is made available to the AP via the
+	  EC_CMD_GET_PANIC_INFO host command and a 'panicinfo' console command
+
+config PLATFORM_EC_PORT80
+	bool "Port 80 support"
+	default y if AP_X86 && PLATFORM_EC_POWERSEQ
+	help
+	  Enable the port80 module, a way to report progress of the AP's boot
+	  sequence, assuming that the EC can detect these writes on the I/O
+	  bus. The EC buffers calls to port_80_write() and occasionally prints
+	  a message when there are new writes.
+
+	  See here for more information:
+
+	  https://en.wikipedia.org/wiki/Power-on_self-test#Progress_and_error_reporting
+
+config PLATFORM_EC_POWER_BUTTON
+	bool "Power-button support"
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Enable shimming the power button implementation and related
+	  commands in platform/ec.  This is used to implement the Chromium OS
+	  shutdown sequence.
+
+	  This requires a GPIO named GPIO_POWER_BUTTON_L.
+
+config PLATFORM_EC_PWM_HC
+	bool
+	help
+	  Enable the PWM (Pulse Width Modulation) host command support. This
+	  implements EC_CMD_PWM_SET_DUTY and EC_CMD_PWM_GET_DUTY.
+
+config PLATFORM_EC_PWM_DISPLIGHT
+	bool "PWM display backlight"
+	default y
+	depends on DT_HAS_CROS_EC_DISPLIGHT_ENABLED
+	select PLATFORM_EC_PWM_HC
+	help
+	  Enables display backlight controlled by a PWM signal connected
+	  directly to the EC chipset. The board devicetree file must define a
+	  "cros-ec,displight" compatible device node.
+
+config PLATFORM_EC_RTC
+	bool "Real-time clock (RTC)"
+	help
+	  Enable support for a real-time clock. Typically this is available
+	  on-chip in the EC. It provides a way to track the passage of time
+	  in terms of second and minutes. Once set, and provided that it has a
+	  suitable power source, it should be able to keep reasonably accurate
+	  time over a period of days and weeks.
+
+	  The starting EC clock is typically set by the AP, since it has access
+	  to the outside world and can often obtain the current time when
+	  desired.
+
+choice PLATFORM_EC_SHA256_MODE
+	prompt "Select method to use for computing SHA256 hashes"
+	help
+	  The verified boot mechanism requests the hash of the entire read-write
+	  portion of the EC image. This is typically done using a hashing block
+	  in the EC, so that it is as fast as possible. A fallback software
+	  algorithm is available if needed.
+
+config PLATFORM_EC_SHA256_SW
+	bool "Compute SHA256 in software"
+	help
+	  Enable this if your EC chip does not support hardware-accelerated
+	  SHA256 computation. This enables the software algorithm which is
+	  quite slow but will work in a pinch.
+
+config PLATFORM_EC_SHA256_HW_ACCELERATE
+	bool "Compute SHA256 in hardware"
+	help
+	  Enable this if your EC chip supports hardware-accelerated SHA256
+	  computation. This is faster than running the algorithm in software,
+	  so is desirable.
+
+	  The chip support must implement the functions in sha256.h
+
+endchoice # PLATFORM_EC_SHA256_MODE
+
+config PLATFORM_EC_SWITCH
+	bool "Memory mapped switches"
+	depends on PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Enable the reporting of the platform switches state to the AP using
+	  memory mapped storage provided by the host command interface.
+
+	  The platform switches include:
+	    LID open
+	    power button pressed
+	    write protect disabled
+	    recovery switch
+
+          This also enables the "mmapinfo" console command to report the current
+          state of all switches.
+
+choice PLATFORM_EC_SWITCHCAP_TYPE
+	prompt "Enable switchcap support"
+	optional
+	help
+	  Enable support for switchcap used to power on the AP.
+	  If enabled, type of switchcap must be selected and node in device
+	  tree must be added that describes the driver and pins used to control
+	  the switchcap.
+
+config PLATFORM_EC_SWITCHCAP_GPIO
+	bool "GPIO controlled switchcap"
+	help
+	  Enable support for the GPIO controlled switchcap.
+	  Pins used for controlling the switchcap must be defined in board's
+	  device tree.
+
+config PLATFORM_EC_SWITCHCAP_LN9310
+	bool "LN9310 switchcap driver"
+	depends on PLATFORM_EC_I2C
+	help
+	  Enable support for the LION Semiconductor LN9310 switched
+	  capacitor converter.  This will export definitions for
+	  ln9310_init, ln9310_interrupt, and ln9310_power_good, which
+	  project-specific code should call appropriately if there's
+	  no switchcap node in device tree.
+
+endchoice
+
+config PLATFORM_EC_SYSTEM_UNLOCKED
+	bool "System unlocked: allow dangerous commands while in development"
+	default y if PLATFORM_EC_BRINGUP
+	help
+	  System should remain unlocked even if write protect is enabled.
+
+	  NOTE: This should ONLY be defined during bringup, and should never be
+	  defined on a shipping / released platform.
+
+	  When defined, CBI allows ectool to reprogram all the fields.
+	  Normally, it refuses to change certain fields. (e.g. board version,
+	  OEM ID)
+
+	  Also, this enables PD in RO for TCPMv2.
+
+config PLATFORM_EC_THROTTLE_AP
+	bool "CPU throttling"
+	depends on PLATFORM_EC_TEMP_SENSOR
+	help
+	  Enable throttling the CPU based on the temperature sensors. When they
+	  detect that the CPU is getting too hot, the CPU is throttled to
+	  a lower speed. This reduce the CPU's power output and eventually
+	  results in a lower temperature.
 
 menuconfig PLATFORM_EC_TIMER
-	bool "Enable the EC timer module"
+	bool "Timer module"
 	default y
 	help
-	  Enable compilation of the EC timer module
+	  Enable compilation of the EC timer module. This provides support for
+	  delays, getting the current time and setting alarms.
 
-if PLATFORM_EC_TIMER
+	  This option is needed by many features in the EC. Disabling it will
+	  likely cause build errors.
 
-config PLATFORM_EC_TIMER_CMD_GETTIME
-	bool "Enable the gettime command"
+config PLATFORM_EC_VBOOT_EFS2
+	bool "EFS2 verified EC boot"
+	default y if !SOC_POSIX
+	help
+	  Enables Early Firmware Selection v2 (EFS2) verified boot. When booting
+	  a Chromium OS image we're actually packing both an RO image and an RW
+	  image into flash. The RO image is loaded first. EFS2 runs at boot and
+	  verifies the integrity of the RW image by sending a hash of the image
+	  to the Google Security Chip (GSC). Once the GSC verifies the hash,
+	  EFS2 calls sysjump and reboot the EC using the RW image.
+
+config PLATFORM_EC_VBOOT_HASH
+	bool "Host command: EC_CMD_VBOOT_HASH"
+	depends on PLATFORM_EC_HOSTCMD
 	default y
 	help
-	  Enable the "gettime" command
+	  Allows the AP to request hashing functions from the EC.
 
-config PLATFORM_EC_TIMER_CMD_TIMERINFO
-	bool "Enable the timerinfo command"
+	  Verified boot can update the EC's read/write code when it detects
+	  that it is an incorrect version. It detects this by asking the EC to
+	  hash itself. If the hash is incorrect, new code is write to the EC's
+	  read/write area.
+
+config PLATFORM_EC_VSTORE
+	bool "Secure temporary storage for verified boot"
 	default y
 	help
-	  Enable the "timerinfo" command
+	  Enable support for storing a block of data received from the AP so it
+	  can be read back later by the AP. This is helpful since the AP may
+	  reboot or resume and want the data early in its start-up before it
+	  has access to SDRAM.
 
-config PLATFORM_EC_TIMER_CMD_WAITMS
-	bool "Enable the waitms command"
+	  There are a fixed number of slots and each can hold a fixed amount of
+	  data (EC_VSTORE_SLOT_SIZE bytes). Once a slot is written it is locked
+	  and cannot be written again unless explicitly unlocked.
+
+	  Stored data is preserved when the EC moved from RO to RW.
+
+config PLATFORM_EC_VSTORE_SLOT_COUNT
+	int "Number of slots"
+	depends on PLATFORM_EC_VSTORE
+	default 1
+	help
+	  Set the number of slots available in the verified-boot store. The
+	  number required depends on the AP firmware. Typically the vstore is
+	  used only for recording a hash of the read-write AP firmware for
+	  checking on resume. For this, one slot is enough.
+
+menuconfig PLATFORM_EC_WATCHDOG
+	bool "Watchdog"
+	depends on WATCHDOG
 	default y
 	help
-	  Enable the "waitms" command
+	  Enable the watchdog functionality. The watchdog timer will reboot the
+	  system if the hook task (which is the lowest-priority task on the
+	  system) gets starved for CPU time and isn't able to fire its
+	  HOOK_TICK event.
 
-endif # PLATFORM_EC_TIMER
+	  Chromium EC system uses an auxiliary timer to handle the system
+	  warning event. This leaves some time to the system for preparing &
+	  printing the debug information. The interval between reloads of the
+	  watchdog timer should be less than half of the auxiliary timer
+	  (PLATFORM_EC_WATCHDOG_PERIOD_MS -
+	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS).
+
+config PLATFORM_EC_WORKAROUND_FLASH_DOWNLOAD_API
+	bool "Workaround needed for npcx9 ES1 chip"
+	depends on SOC_SERIES_NPCX9
+	help
+	  There's a bug in the flash download API on the ES1 version of the
+	  npcx9 chips that requires some workarounds. This is needed for sysjump
+	  to work properly.
+
+config PLATFORM_EC_ASSERT_CCD_MODE_ON_DTS_CONNECT
+	bool "Assert CCD Mode"
+	help
+	  Assert CCD_MODE_ODL when a DTS debug accessory is connected to the
+	  CCD USBC port. GPIO_CCD_MODE_ODL should be configured with
+	  GPIO_ODR_HIGH flag.
+
+config PLATFORM_EC_CCD_USBC_PORT_NUMBER
+	int "CCD USB Port Number"
+	default 0
+	help
+	  USB port number of the CCD enabled USBC port.
+
+config PLATFORM_EC_HOST_COMMAND_STATUS
+	bool "Return in-progress status for slow host commands"
+	default y if PLATFORM_EC_HOST_INTERFACE_SHI
+	help
+	  When the AP is attached to the EC via a serialized bus such as I2C or
+	  SPI, it needs a way to minimize the length of time an EC command will
+	  tie up the bus (and the kernel driver on the AP). If this config is
+	  defined, the EC may return an in-progress result code for slow
+	  commands such as flash erase/write instead of stalling until the
+	  command finishes processing, and the AP may then inquire the status
+	  of the current command and/or the result of the previous command.
+
+config PLATFORM_EC_AMD_SB_RMI
+	bool "Enable driver for AMD SB-RMI interface"
+	help
+	  AMD platforms provide the Side-Band Remote Management Interface.
+	  SB-RMI provides an interface for an external SMBus controller to
+	  perform tasks such as managing power consumption and power limits of
+	  the CPU socket.
+
+config PLATFORM_EC_AMD_STT
+	bool "Enable driver for AMD STT interface"
+	depends on PLATFORM_EC_AMD_SB_RMI
+	help
+	  AMD platforms provide the Skin Temperature Tracking (STT) interface.
+	  Skin temperature management can be used to maximize the system
+	  performance while keeping the skin temperature within its
+	  specification. It makes use of the thermal capacitance of the system
+	  to temporarily boost above the sustainable power limit, while the
+	  chassis skin temperatures are below limits.
+
+config PLATFORM_EC_MATH_UTIL
+	bool "Math utility"
+	default y
+	help
+	  Math utilities including bitmask manipulation, division rounding,
+	  trigonometric function, etc.
 
 endif # PLATFORM_EC

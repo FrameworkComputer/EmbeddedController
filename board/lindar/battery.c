@@ -1,11 +1,13 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * Battery pack vendor provided charging profile
  */
 
+#include "battery.h"
 #include "battery_fuel_gauge.h"
+#include "battery_smart.h"
 #include "common.h"
 #include "util.h"
 
@@ -121,3 +123,15 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SMP;
+
+__override bool board_battery_is_initialized(void)
+{
+	bool batt_initialization_state;
+	int batt_status;
+
+	batt_initialization_state =
+		(battery_status(&batt_status) ?
+			 false :
+			 !!(batt_status & STATUS_INITIALIZED));
+	return batt_initialization_state;
+}

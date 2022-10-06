@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -25,8 +25,23 @@ struct vb2_id {
 #define EXPECTED_ID_SIZE VB2_ID_NUM_BYTES
 
 /* IDs to use for "keys" with sig_alg==VB2_SIG_NONE */
-#define VB2_ID_NONE_SHA1   {{0x00, 0x01,}}
-#define VB2_ID_NONE_SHA256 {{0x02, 0x56,}}
-#define VB2_ID_NONE_SHA512 {{0x05, 0x12,}}
+#define VB2_ID_NONE_SHA1            \
+	{                           \
+		{                   \
+			0x00, 0x01, \
+		}                   \
+	}
+#define VB2_ID_NONE_SHA256          \
+	{                           \
+		{                   \
+			0x02, 0x56, \
+		}                   \
+	}
+#define VB2_ID_NONE_SHA512          \
+	{                           \
+		{                   \
+			0x05, 0x12, \
+		}                   \
+	}
 
-#endif  /* VBOOT_REFERENCE_VBOOT_2ID_H_ */
+#endif /* VBOOT_REFERENCE_VBOOT_2ID_H_ */

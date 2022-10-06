@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,6 @@
 /* 84 MHz CPU/AHB/APB2 clock frequency (APB1 = 42 Mhz) */
 #define CPU_CLOCK 84000000
 #define CONFIG_FLASH_WRITE_SIZE STM32_FLASH_WRITE_SIZE_3300
-
 
 /* the UART console is on USART2 (PA2/PA3) */
 #undef CONFIG_UART_CONSOLE
@@ -40,10 +39,10 @@
 #define CONFIG_CMD_FLASH
 
 /* I2C ports configuration */
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_I2C_DEBUG
 #define I2C_PORT_MASTER 1
-#define I2C_PORT_SLAVE 0        /* needed for DMAC macros (ugh) */
+#define I2C_PORT_SLAVE 0 /* needed for DMAC macros (ugh) */
 #define I2C_PORT_ACCEL I2C_PORT_MASTER
 
 #ifndef __ASSEMBLER__

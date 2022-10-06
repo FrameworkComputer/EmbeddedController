@@ -1,0 +1,51 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_IOEX_CROS_DRV
+	bool "IO expander support"
+	depends on I2C
+	help
+	  Enable support for CrOS EC ioex drivers.
+
+if PLATFORM_EC_IOEX_CROS_DRV
+
+config PLATFORM_EC_IOEX_INIT_PRIORITY
+	int "IO expander init priority"
+	range 0 99
+	default 50
+	help
+	  Sets the priority of function that initializes
+	  the IO expander subsystem
+
+config PLATFORM_EC_IOEX_CCGXXF
+	bool "Cypress CCGXXF"
+	help
+	  Enables driver for Cypress CCGXXF IO expander (built inside PD chip)
+
+config PLATFORM_EC_IOEX_IT8801
+	bool "IT8801"
+	help
+	  Enables support for IT8801 IO expander with keyboard matrix controller
+
+config PLATFORM_EC_IOEX_NCT38XX
+	bool "Nuvoton NCT38xx"
+	help
+	  Enables support for IO expander built inside Nuvoton NCT38xx TCPC
+
+config PLATFORM_EC_IOEX_PCA9675
+	bool "NXP PCA9675PW"
+	help
+	  Enables support for NXP PCA9675PW IO expander
+
+config PLATFORM_EC_IOEX_PCAL6408
+	bool "NXP PCA(L)6408"
+	help
+	  Enables support for NXP PCA(L)6408 IO expander
+
+config PLATFORM_EC_IOEX_TCA64XXA
+	bool "TI TCA64xA"
+	help
+	  Enables support for Texas Instruments TCA64xxA IO expanders family
+
+endif

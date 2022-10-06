@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,6 +12,9 @@
  * (4K bytes static code cache) for ram code section.
  */
 extern const char __flash_dma_start;
+
+/* This symbol is the begin address of the __ilm0_ram_code section. */
+extern const char __ilm0_ram_code;
 
 /* This symbol is the begin address of the text section. */
 extern const char __flash_text_start;

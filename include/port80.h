@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,9 +11,9 @@
 #include "common.h"
 
 enum port_80_event {
-	PORT_80_EVENT_RESUME = 0x1001,  /* S3->S0 transition */
-	PORT_80_EVENT_RESET = 0x1002,   /* RESET transition */
-	PORT_80_IGNORE = 0xffff,	/* Invalid POST CODE */
+	PORT_80_EVENT_RESUME = 0x1001, /* S3->S0 transition */
+	PORT_80_EVENT_RESET = 0x1002, /* RESET transition */
+	PORT_80_IGNORE = 0xffff, /* Invalid POST CODE */
 };
 
 /**
@@ -31,6 +31,7 @@ void port_80_write(int data);
  */
 int port_80_read(void);
 
+<<<<<<< HEAD
 /**
  * Get last boot code
  *
@@ -39,3 +40,6 @@ int port_80_read(void);
 int port_80_last(void);
 
 #endif  /* __CROS_EC_PORT80_H */
+=======
+#endif /* __CROS_EC_PORT80_H */
+>>>>>>> chromium/main

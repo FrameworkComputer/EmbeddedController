@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -13,7 +13,7 @@
 
 uint32_t difftime(timestamp_t t0, timestamp_t t1)
 {
-	return (uint32_t)(t1.val-t0.val);
+	return (uint32_t)(t1.val - t0.val);
 }
 
 int timer_calib_task(void *data)
@@ -56,7 +56,7 @@ int timer_calib_task(void *data)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	task_wake(TASK_ID_TESTTMR);
 }

@@ -1,10 +1,9 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 /* C2D2 debug device board configuration */
 
-#include "adc_chip.h"
 #include "adc.h"
 #include "common.h"
 #include "console.h"
@@ -31,8 +30,8 @@
 
 #include "gpio_list.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* Forward declarations */
 static void update_vrefs_and_shifters(void);
@@ -42,19 +41,19 @@ static bool is_ec_i2c_enabled(void);
 /* Global state tracking current pin configuration and operations */
 static struct mutex vref_bus_state_mutex;
 static int vref_monitor_disable;
-#define VREF_MON_DIS_H1_RST_HELD	BIT(0)
-#define VREF_MON_DIS_EC_PWR_HELD	BIT(1)
-#define VREF_MON_DIS_SPI_MODE		BIT(2)
+#define VREF_MON_DIS_H1_RST_HELD BIT(0)
+#define VREF_MON_DIS_EC_PWR_HELD BIT(1)
+#define VREF_MON_DIS_SPI_MODE BIT(2)
 
 /*
  * Tracks if bus pins are locked by a function like UART holding, I2C,
  * or SPI.
  */
 enum bus_lock {
-	BUS_UNLOCKED,	/* Normal UART; pins available for other functions */
-	BUS_UART_HELD,	/* UART locked to pins while holding RX low */
-	BUS_SPI,	/* SPI locked to pins */
-	BUS_I2C,	/* I2C bus locked to pins */
+	BUS_UNLOCKED, /* Normal UART; pins available for other functions */
+	BUS_UART_HELD, /* UART locked to pins while holding RX low */
+	BUS_SPI, /* SPI locked to pins */
+	BUS_I2C, /* I2C bus locked to pins */
 };
 /* A0/A1 (H1 UART or SPI) */
 enum bus_lock h1_pins;
@@ -78,7 +77,7 @@ static const char *lock_to_string(const enum bus_lock val)
 	return names[val];
 }
 
-static int command_bus_status(int argc, char **argv)
+static int command_bus_status(int argc, const char **argv)
 {
 	if (argc > 1)
 		return EC_ERROR_PARAM_COUNT;
@@ -89,10 +88,8 @@ static int command_bus_status(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(bus_status, command_bus_status,
-			"",
+DECLARE_CONSOLE_COMMAND(bus_status, command_bus_status, "",
 			"Gets the bus state for swappable pins");
-
 
 /******************************************************************************
  ** Chip-specific board configuration
@@ -115,11 +112,10 @@ void board_config_pre_init(void)
 	 *  i2c : no dma
 	 *  tim16/17: no dma
 	 */
-	STM32_SYSCFG_CFGR1 |= BIT(24);	/* Remap SPI2_RX to channel 6 */
-	STM32_SYSCFG_CFGR1 |= BIT(26);  /* Remap USART3 RX/TX DMA */
-	STM32_SYSCFG_CFGR1 |= BIT(10);  /* Remap USART1 RX/TX DMA */
+	STM32_SYSCFG_CFGR1 |= BIT(24); /* Remap SPI2_RX to channel 6 */
+	STM32_SYSCFG_CFGR1 |= BIT(26); /* Remap USART3 RX/TX DMA */
+	STM32_SYSCFG_CFGR1 |= BIT(10); /* Remap USART1 RX/TX DMA */
 }
-
 
 /******************************************************************************
  ** ADC channels
@@ -148,17 +144,18 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * Define the strings used in our USB descriptors.
  */
 const void *const usb_strings[] = {
-	[USB_STR_DESC]			= usb_string_desc,
-	[USB_STR_VENDOR]		= USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]		= USB_STRING_DESC("C2D2"),
-	[USB_STR_SERIALNO]		= 0,
-	[USB_STR_VERSION]		= USB_STRING_DESC(CROS_EC_VERSION32),
-	[USB_STR_USART4_STREAM_NAME]	= USB_STRING_DESC("CR50"),
-	[USB_STR_UPDATE_NAME]		= USB_STRING_DESC("Firmware update"),
-	[USB_STR_CONSOLE_NAME]		= USB_STRING_DESC("C2D2 Shell"),
-	[USB_STR_I2C_NAME]		= USB_STRING_DESC("I2C"),
-	[USB_STR_USART3_STREAM_NAME]	= USB_STRING_DESC("CPU"),
-	[USB_STR_USART1_STREAM_NAME]	= USB_STRING_DESC("EC"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google LLC"),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("C2D2"),
+	[USB_STR_SERIALNO] = 0,
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_USART4_STREAM_NAME] = USB_STRING_DESC("CR50"),
+	[USB_STR_UPDATE_NAME] = USB_STRING_DESC("Firmware update"),
+	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("C2D2 Shell"),
+	[USB_STR_SPI_NAME] = USB_STRING_DESC("SPI"),
+	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
+	[USB_STR_USART3_STREAM_NAME] = USB_STRING_DESC("CPU"),
+	[USB_STR_USART1_STREAM_NAME] = USB_STRING_DESC("EC"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
@@ -174,7 +171,7 @@ const struct i2c_port_t i2c_ports[] = {
 		.port = I2C_PORT_EC,
 		.kbps = 100,
 		.scl = GPIO_UART_DBG_TX_EC_RX_SCL,
-		.sda =  GPIO_UART_EC_TX_DBG_RX_SDA,
+		.sda = GPIO_UART_EC_TX_DBG_RX_SDA,
 		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED,
 	},
 	{
@@ -182,7 +179,7 @@ const struct i2c_port_t i2c_ports[] = {
 		.port = I2C_PORT_AUX,
 		.kbps = 100,
 		.scl = GPIO_UART_DBG_TX_AP_RX_INA_SCL,
-		.sda =  GPIO_UART_AP_TX_DBG_RX_INA_SDA,
+		.sda = GPIO_UART_AP_TX_DBG_RX_INA_SDA,
 		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED,
 	},
 };
@@ -203,14 +200,19 @@ const struct ite_dfu_config_t ite_dfu_config = {
  * let the i2c transactions fail instead of using the USB endpoint disable
  * status.
  */
-int usb_i2c_board_is_enabled(void) { return 1; }
+int usb_i2c_board_is_enabled(void)
+{
+	return 1;
+}
 
 /******************************************************************************
  * Forward UARTs as a USB serial interface.
  */
 
-#define USB_STREAM_RX_SIZE	32
-#define USB_STREAM_TX_SIZE	64
+#define USB_STREAM_RX_SIZE 32
+#define USB_STREAM_TX_SIZE 64
+#define USART_TO_USB_SIZE 1024
+#define USB_TO_USART_SIZE 64
 
 /******************************************************************************
  * Forward USART1 (EC) as a simple USB serial interface.
@@ -219,33 +221,22 @@ int usb_i2c_board_is_enabled(void) { return 1; }
 static struct usart_config const usart1;
 struct usb_stream_config const usart1_usb;
 
-static struct queue const usart1_to_usb = QUEUE_DIRECT(128, uint8_t,
-	usart1.producer, usart1_usb.consumer);
-static struct queue const usb_to_usart1 = QUEUE_DIRECT(64, uint8_t,
-	usart1_usb.producer, usart1.consumer);
+static struct queue const usart1_to_usb = QUEUE_DIRECT(
+	USART_TO_USB_SIZE, uint8_t, usart1.producer, usart1_usb.consumer);
+static struct queue const usb_to_usart1 = QUEUE_DIRECT(
+	USB_TO_USART_SIZE, uint8_t, usart1_usb.producer, usart1.consumer);
 
 static struct usart_rx_dma const usart1_rx_dma =
 	USART_RX_DMA(STM32_DMAC_CH5, 32);
 
 static struct usart_config const usart1 =
-	USART_CONFIG(usart1_hw,
-		usart1_rx_dma.usart_rx,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart1_to_usb,
-		usb_to_usart1);
+	USART_CONFIG(usart1_hw, usart1_rx_dma.usart_rx, usart_tx_interrupt,
+		     115200, 0, usart1_to_usb, usb_to_usart1);
 
-USB_STREAM_CONFIG_USART_IFACE(usart1_usb,
-	USB_IFACE_USART1_STREAM,
-	USB_STR_USART1_STREAM_NAME,
-	USB_EP_USART1_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart1,
-	usart1_to_usb,
-	usart1)
-
+USB_STREAM_CONFIG_USART_IFACE(usart1_usb, USB_IFACE_USART1_STREAM,
+			      USB_STR_USART1_STREAM_NAME, USB_EP_USART1_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart1, usart1_to_usb, usart1)
 
 /******************************************************************************
  * Forward USART3 (CPU) as a simple USB serial interface.
@@ -254,33 +245,22 @@ USB_STREAM_CONFIG_USART_IFACE(usart1_usb,
 static struct usart_config const usart3;
 struct usb_stream_config const usart3_usb;
 
-static struct queue const usart3_to_usb = QUEUE_DIRECT(1024, uint8_t,
-	usart3.producer, usart3_usb.consumer);
-static struct queue const usb_to_usart3 = QUEUE_DIRECT(64, uint8_t,
-	usart3_usb.producer, usart3.consumer);
+static struct queue const usart3_to_usb = QUEUE_DIRECT(
+	USART_TO_USB_SIZE, uint8_t, usart3.producer, usart3_usb.consumer);
+static struct queue const usb_to_usart3 = QUEUE_DIRECT(
+	USB_TO_USART_SIZE, uint8_t, usart3_usb.producer, usart3.consumer);
 
 static struct usart_rx_dma const usart3_rx_dma =
 	USART_RX_DMA(STM32_DMAC_CH3, 32);
 
 static struct usart_config const usart3 =
-	USART_CONFIG(usart3_hw,
-		usart3_rx_dma.usart_rx,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart3_to_usb,
-		usb_to_usart3);
+	USART_CONFIG(usart3_hw, usart3_rx_dma.usart_rx, usart_tx_interrupt,
+		     115200, 0, usart3_to_usb, usb_to_usart3);
 
-USB_STREAM_CONFIG_USART_IFACE(usart3_usb,
-	USB_IFACE_USART3_STREAM,
-	USB_STR_USART3_STREAM_NAME,
-	USB_EP_USART3_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart3,
-	usart3_to_usb,
-	usart3)
-
+USB_STREAM_CONFIG_USART_IFACE(usart3_usb, USB_IFACE_USART3_STREAM,
+			      USB_STR_USART3_STREAM_NAME, USB_EP_USART3_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart3, usart3_to_usb, usart3)
 
 /******************************************************************************
  * Forward USART4 (cr50) as a simple USB serial interface.
@@ -291,29 +271,19 @@ USB_STREAM_CONFIG_USART_IFACE(usart3_usb,
 static struct usart_config const usart4;
 struct usb_stream_config const usart4_usb;
 
-static struct queue const usart4_to_usb = QUEUE_DIRECT(1024, uint8_t,
-	usart4.producer, usart4_usb.consumer);
-static struct queue const usb_to_usart4 = QUEUE_DIRECT(64, uint8_t,
-	usart4_usb.producer, usart4.consumer);
+static struct queue const usart4_to_usb = QUEUE_DIRECT(
+	USART_TO_USB_SIZE, uint8_t, usart4.producer, usart4_usb.consumer);
+static struct queue const usb_to_usart4 = QUEUE_DIRECT(
+	USB_TO_USART_SIZE, uint8_t, usart4_usb.producer, usart4.consumer);
 
 static struct usart_config const usart4 =
-	USART_CONFIG(usart4_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart4_to_usb,
-		usb_to_usart4);
+	USART_CONFIG(usart4_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart4_to_usb, usb_to_usart4);
 
-USB_STREAM_CONFIG_USART_IFACE(usart4_usb,
-	USB_IFACE_USART4_STREAM,
-	USB_STR_USART4_STREAM_NAME,
-	USB_EP_USART4_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart4,
-	usart4_to_usb,
-	usart4)
+USB_STREAM_CONFIG_USART_IFACE(usart4_usb, USB_IFACE_USART4_STREAM,
+			      USB_STR_USART4_STREAM_NAME, USB_EP_USART4_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart4, usart4_to_usb, usart4)
 
 /******************************************************************************
  * Set up SPI over USB
@@ -322,7 +292,7 @@ USB_STREAM_CONFIG_USART_IFACE(usart4_usb,
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_FLASH_PORT, 1, GPIO_SPI_CSN},
+	{ CONFIG_SPI_FLASH_PORT, 1, GPIO_SPI_CSN },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
@@ -341,12 +311,12 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 }
 
 void usb_spi_board_disable(struct usb_spi_config const *config)
 {
-	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
+	spi_enable(&spi_devices[0], 0);
 
 	/* Disable clocks to SPI2 module */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
@@ -364,7 +334,7 @@ USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI,
 /******************************************************************************
  * Check parity setting on usarts.
  */
-static int command_uart_parity(int argc, char **argv)
+static int command_uart_parity(int argc, const char **argv)
 {
 	int parity = 0, newparity;
 	struct usart_config const *usart;
@@ -398,14 +368,13 @@ static int command_uart_parity(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(parity, command_uart_parity,
-			"usart[2|3|4] [0|1|2]",
+DECLARE_CONSOLE_COMMAND(parity, command_uart_parity, "usart[2|3|4] [0|1|2]",
 			"Set parity on uart");
 
 /******************************************************************************
  * Set baud rate setting on usarts.
  */
-static int command_uart_baud(int argc, char **argv)
+static int command_uart_baud(int argc, const char **argv)
 {
 	int baud = 0;
 	struct usart_config const *usart;
@@ -431,14 +400,13 @@ static int command_uart_baud(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(baud, command_uart_baud,
-			"usart[2|3|4] rate",
+DECLARE_CONSOLE_COMMAND(baud, command_uart_baud, "usart[2|3|4] rate",
 			"Set baud rate on uart");
 
 /******************************************************************************
  * Hold the usart pins low while disabling it, or return it to normal.
  */
-static int command_hold_usart_low(int argc, char **argv)
+static int command_hold_usart_low(int argc, const char **argv)
 {
 	enum bus_lock *bus;
 	enum gpio_signal rx;
@@ -501,7 +469,7 @@ static int command_hold_usart_low(int argc, char **argv)
 
 	/* Print status for get and set case. */
 	ccprintf("USART status: %s\n",
-			*bus == BUS_UART_HELD ? "held low" : "normal");
+		 *bus == BUS_UART_HELD ? "held low" : "normal");
 
 	return EC_SUCCESS;
 
@@ -513,7 +481,6 @@ DECLARE_CONSOLE_COMMAND(hold_usart_low, command_hold_usart_low,
 			"usart[1|3|4] [0|1]?",
 			"Get/set the hold-low state for usart port");
 
-
 /******************************************************************************
  * Console commands SPI programming
  */
@@ -523,7 +490,7 @@ enum vref {
 	PP3300 = 3300,
 };
 
-static int command_enable_spi(int argc, char **argv)
+static int command_enable_spi(int argc, const char **argv)
 {
 	static enum vref current_spi_vref_state;
 
@@ -650,8 +617,7 @@ busy_error_unlock:
 	mutex_unlock(&vref_bus_state_mutex);
 	return EC_ERROR_BUSY;
 }
-DECLARE_CONSOLE_COMMAND(enable_spi, command_enable_spi,
-			"[0|1800|3300]?",
+DECLARE_CONSOLE_COMMAND(enable_spi, command_enable_spi, "[0|1800|3300]?",
 			"Get/set the SPI Vref");
 
 /******************************************************************************
@@ -686,7 +652,7 @@ static inline int to_kbps(enum i2c_freq freq)
 	}
 }
 
-static int command_enable_i2c(int argc, char **argv)
+static int command_enable_i2c(int argc, const char **argv)
 {
 	int i2c_index;
 	enum bus_lock *bus;
@@ -770,7 +736,7 @@ DECLARE_CONSOLE_COMMAND(enable_i2c, command_enable_i2c,
  * Console commands for asserting H1 reset and EC Power button
  */
 
-static int command_vref_alternate(int argc, char **argv,
+static int command_vref_alternate(int argc, const char **argv,
 				  const enum gpio_signal vref_signal,
 				  const enum gpio_signal en_signal,
 				  const int state_flag,
@@ -819,7 +785,6 @@ static int command_vref_alternate(int argc, char **argv,
 	ccprintf("%s held: %s\n", print_name,
 		 vref_monitor_disable & state_flag ? "yes" : "no");
 
-
 	return EC_SUCCESS;
 
 busy_error_unlock:
@@ -827,28 +792,46 @@ busy_error_unlock:
 	return EC_ERROR_BUSY;
 }
 
-static int command_pwr_button(int argc, char **argv)
+static int command_pwr_button(int argc, const char **argv)
 {
 	return command_vref_alternate(argc, argv,
 				      GPIO_SPIVREF_HOLDN_ECVREF_H1_PWRBTN_ODL,
 				      GPIO_EN_SPIVREF_HOLDN_ECVREF_H1_PWRBTN,
 				      VREF_MON_DIS_EC_PWR_HELD, "Power button");
 }
-DECLARE_CONSOLE_COMMAND(pwr_button, command_pwr_button,
-			"[0|1]?",
+DECLARE_CONSOLE_COMMAND(pwr_button, command_pwr_button, "[0|1]?",
 			"Get/set the power button state");
 
-static int command_h1_reset(int argc, char **argv)
+static int command_h1_reset(int argc, const char **argv)
 {
+	if ((argc == 2) && !strncasecmp("pulse", argv[1], strlen(argv[1]))) {
+		int rv;
+		int c = 2;
+		const char *cmd_on[] = { "", "1", "" };
+		const char *cmd_off[] = { "", "0", "" };
+
+		rv = command_vref_alternate(c, cmd_on,
+					    GPIO_SPIVREF_RSVD_H1VREF_H1_RST_ODL,
+					    GPIO_EN_SPIVREF_RSVD_H1VREF_H1_RST,
+					    VREF_MON_DIS_H1_RST_HELD,
+					    "H1 reset");
+		if (rv == EC_SUCCESS) {
+			msleep(100);
+			rv = command_vref_alternate(
+				c, cmd_off, GPIO_SPIVREF_RSVD_H1VREF_H1_RST_ODL,
+				GPIO_EN_SPIVREF_RSVD_H1VREF_H1_RST,
+				VREF_MON_DIS_H1_RST_HELD, "H1 reset");
+		}
+		return rv;
+	}
+
 	return command_vref_alternate(argc, argv,
 				      GPIO_SPIVREF_RSVD_H1VREF_H1_RST_ODL,
 				      GPIO_EN_SPIVREF_RSVD_H1VREF_H1_RST,
 				      VREF_MON_DIS_H1_RST_HELD, "H1 reset");
 }
-DECLARE_CONSOLE_COMMAND(h1_reset, command_h1_reset,
-			"[0|1]?",
+DECLARE_CONSOLE_COMMAND(h1_reset, command_h1_reset, "[0|1|pulse]?",
 			"Get/set the h1 reset state");
-
 
 /******************************************************************************
  * Vref detection logic
@@ -858,14 +841,13 @@ DECLARE_CONSOLE_COMMAND(h1_reset, command_h1_reset,
 static enum vref h1_vref;
 static enum vref ec_vref;
 
-static int command_h1_vref_present(int argc, char **argv)
+static int command_h1_vref_present(int argc, const char **argv)
 {
 	ccprintf("H1 Vref: %s\n", h1_vref ? "on" : "off");
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(h1_vref, command_h1_vref_present,
-			"",
+DECLARE_CONSOLE_COMMAND(h1_vref, command_h1_vref_present, "",
 			"Get if the h1 vref is present");
 
 /* Voltage thresholds for rail detection */
@@ -1011,11 +993,9 @@ static void update_vrefs_and_shifters(void)
 void set_up_comparator(void)
 {
 	/* Overwrite any previous values. This is the only comparator usage */
-	STM32_COMP_CSR = STM32_COMP_CMP2HYST_HI |
-			 STM32_COMP_CMP2OUTSEL_NONE |
+	STM32_COMP_CSR = STM32_COMP_CMP2HYST_HI | STM32_COMP_CMP2OUTSEL_NONE |
 			 STM32_COMP_CMP2INSEL_INM5 | /* Watch DAC_OUT2 (PA5) */
-			 STM32_COMP_CMP2MODE_LSPEED |
-			 STM32_COMP_CMP2EN;
+			 STM32_COMP_CMP2MODE_LSPEED | STM32_COMP_CMP2EN;
 
 	/* Set Falling and Rising interrupts for COMP2 */
 	STM32_EXTI_FTSR |= EXTI_COMP2_EVENT;

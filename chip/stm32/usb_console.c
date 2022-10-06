@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,11 +18,11 @@
 #include "usb_hw.h"
 
 /* Console output macro */
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 #define USB_CONSOLE_TIMEOUT_US (30 * MSEC)
 
-static struct queue const tx_q = QUEUE_NULL(CONFIG_USB_CONSOLE_TX_BUF_SIZE,
-					    uint8_t);
+static struct queue const tx_q =
+	QUEUE_NULL(CONFIG_USB_CONSOLE_TX_BUF_SIZE, uint8_t);
 static struct queue const rx_q = QUEUE_NULL(USB_MAX_PACKET_SIZE, uint8_t);
 
 static int last_tx_ok = 1;
@@ -33,31 +33,31 @@ static int is_readonly;
 
 /* USB-Serial descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) = {
-	.bLength            = USB_DT_INTERFACE_SIZE,
-	.bDescriptorType    = USB_DT_INTERFACE,
-	.bInterfaceNumber   = USB_IFACE_CONSOLE,
-	.bAlternateSetting  = 0,
-	.bNumEndpoints      = 2,
-	.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = USB_IFACE_CONSOLE,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 2,
+	.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
 	.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,
 	.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,
-	.iInterface         = USB_STR_CONSOLE_NAME,
+	.iInterface = USB_STR_CONSOLE_NAME,
 };
 const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 0) = {
-	.bLength            = USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType    = USB_DT_ENDPOINT,
-	.bEndpointAddress   = 0x80 | USB_EP_CONSOLE,
-	.bmAttributes       = 0x02 /* Bulk IN */,
-	.wMaxPacketSize     = USB_MAX_PACKET_SIZE,
-	.bInterval          = 10
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = 0x80 | USB_EP_CONSOLE,
+	.bmAttributes = 0x02 /* Bulk IN */,
+	.wMaxPacketSize = USB_MAX_PACKET_SIZE,
+	.bInterval = 10
 };
 const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 1) = {
-	.bLength            = USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType    = USB_DT_ENDPOINT,
-	.bEndpointAddress   = USB_EP_CONSOLE,
-	.bmAttributes       = 0x02 /* Bulk OUT */,
-	.wMaxPacketSize     = USB_MAX_PACKET_SIZE,
-	.bInterval          = 0
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = USB_EP_CONSOLE,
+	.bmAttributes = 0x02 /* Bulk OUT */,
+	.wMaxPacketSize = USB_MAX_PACKET_SIZE,
+	.bInterval = 0
 };
 
 static usb_uint ep_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
@@ -81,9 +81,8 @@ static void con_ep_rx(void)
 
 	for (i = 0; i < (btable_ep[USB_EP_CONSOLE].rx_count & RX_COUNT_MASK);
 	     i++) {
-		int val = ((i & 1) ?
-			   (ep_buf_rx[i >> 1] >> 8) :
-			   (ep_buf_rx[i >> 1] & 0xff));
+		int val = ((i & 1) ? (ep_buf_rx[i >> 1] >> 8) :
+				     (ep_buf_rx[i >> 1] & 0xff));
 
 		QUEUE_ADD_UNITS(&rx_q, &val, 1);
 	}
@@ -100,18 +99,18 @@ static void ep_event(enum usb_ep_event evt)
 	if (evt != USB_EVENT_RESET)
 		return;
 
-	btable_ep[USB_EP_CONSOLE].tx_addr  = usb_sram_addr(ep_buf_tx);
+	btable_ep[USB_EP_CONSOLE].tx_addr = usb_sram_addr(ep_buf_tx);
 	btable_ep[USB_EP_CONSOLE].tx_count = 0;
 
-	btable_ep[USB_EP_CONSOLE].rx_addr  = usb_sram_addr(ep_buf_rx);
+	btable_ep[USB_EP_CONSOLE].rx_addr = usb_sram_addr(ep_buf_rx);
 	btable_ep[USB_EP_CONSOLE].rx_count =
 		0x8000 | ((USB_MAX_PACKET_SIZE / 32 - 1) << 10);
 
-	STM32_USB_EP(USB_EP_CONSOLE) = (USB_EP_CONSOLE | /* Endpoint Addr */
-					(2 << 4)       | /* TX NAK        */
-					(0 << 9)       | /* Bulk EP       */
-					(is_readonly ? EP_RX_NAK
-						     : EP_RX_VALID));
+	STM32_USB_EP(USB_EP_CONSOLE) =
+		(USB_EP_CONSOLE | /* Endpoint Addr */
+		 (2 << 4) | /* TX NAK        */
+		 (0 << 9) | /* Bulk EP       */
+		 (is_readonly ? EP_RX_NAK : EP_RX_VALID));
 
 	is_reset = 1;
 }
@@ -201,9 +200,9 @@ static void tx_fifo_handler(void)
 			break;
 
 		if (!(count & 1))
-			buf[count/2] = val;
+			buf[count / 2] = val;
 		else
-			buf[count/2] |= val << 8;
+			buf[count / 2] |= val << 8;
 		count++;
 	}
 

@@ -1,0 +1,36 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* magikarp-specific fw_config fields. */
+	magikarp-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to describe mainboard orientation in chassis.
+		 */
+		base-gyro {
+			enum-name = "FW_BASE_GYRO";
+			start = <0>;
+			size = <2>;
+
+			None {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_NONE";
+				value = <0>;
+			};
+			icm42607 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_ICM42607";
+				value = <1>;
+				default;
+			};
+			bmi323 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_BMI323";
+				value = <2>;
+			};
+		};
+	};
+};

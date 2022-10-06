@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Lux base detection code */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "board.h"
 #include "chipset.h"
 #include "common.h"
@@ -21,8 +20,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 /* Base detection and debouncing */
 #define BASE_DETECT_DEBOUNCE_US (20 * MSEC)
@@ -45,7 +44,7 @@
 #define BASE_DISCONNECTED_CONNECT_MAX_MV 600
 
 #define BASE_DISCONNECTED_MIN_MV 2800
-#define BASE_DISCONNECTED_MAX_MV (ADC_MAX_VOLT+1)
+#define BASE_DISCONNECTED_MAX_MV (ADC_MAX_VOLT + 1)
 
 /*
  * When base is connected, then gets disconnected:
@@ -94,7 +93,7 @@ int board_is_base_connected(void)
 void board_enable_base_power(int enable)
 {
 	gpio_set_level(GPIO_PPVAR_VAR_BASE,
-		enable && current_base_status == BASE_CONNECTED);
+		       enable && current_base_status == BASE_CONNECTED);
 }
 
 /*
@@ -128,7 +127,7 @@ static void base_detect_change(enum base_status status)
 	 */
 	task_wake(TASK_ID_CHARGER);
 
-	tablet_set_mode(!connected);
+	tablet_set_mode(!connected, TABLET_TRIGGER_BASE);
 }
 
 static void print_base_detect_value(const char *str, int v)
@@ -182,8 +181,7 @@ static void base_detect_deferred(void)
 retry:
 	print_base_detect_value("status unclear", v);
 	/* Unclear base status, schedule again in a while. */
-	hook_call_deferred(&base_detect_deferred_data,
-				   BASE_DETECT_RETRY_US);
+	hook_call_deferred(&base_detect_deferred_data, BASE_DETECT_RETRY_US);
 }
 
 void base_detect_interrupt(enum gpio_signal signal)
@@ -217,21 +215,21 @@ static void base_init(void)
 	hook_call_deferred(&base_detect_deferred_data, BASE_DETECT_DEBOUNCE_US);
 	gpio_enable_interrupt(GPIO_BASE_DET_A);
 }
-DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT + 1);
 
-void base_force_state(int state)
+void base_force_state(enum ec_set_base_state_cmd state)
 {
-	if (state == 1) {
+	if (state == EC_SET_BASE_STATE_ATTACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_A);
 		base_detect_change(BASE_CONNECTED);
 		CPRINTS("BD forced connected");
-	} else if (state == 0) {
+	} else if (state == EC_SET_BASE_STATE_DETACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_A);
 		base_detect_change(BASE_DISCONNECTED);
 		CPRINTS("BD forced disconnected");
 	} else {
 		hook_call_deferred(&base_detect_deferred_data,
-			BASE_DETECT_DEBOUNCE_US);
+				   BASE_DETECT_DEBOUNCE_US);
 		gpio_enable_interrupt(GPIO_BASE_DET_A);
 		CPRINTS("BD forced reset");
 	}

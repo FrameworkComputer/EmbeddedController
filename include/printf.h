@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,8 +8,17 @@
 #ifndef __CROS_EC_PRINTF_H
 #define __CROS_EC_PRINTF_H
 
-#include <stdarg.h>  /* For va_list */
+#include <stdarg.h> /* For va_list */
+#include <stdbool.h>
+#include <stddef.h> /* For size_t */
+#include "console.h"
+#include <stdio.h>
 #include "common.h"
+
+/**
+ * Buffer size in bytes large enough to hold the largest possible timestamp.
+ */
+#define PRINTF_TIMESTAMP_BUF_SIZE 22
 
 /*
  * Printf formatting: % [flags] [width] [.precision] [length] [type]
@@ -43,22 +52,13 @@
  *   - 'c' - character
  *   - 's' - null-terminated ASCII string
  *   - 'd' - signed integer
- *   - 'i' - signed integer if CONFIG_PRINTF_LEGACY_LI_FORMAT is set (ignore l)
+ *   - 'i' - signed integer (if CONFIG_PRINTF_LONG_IS_32BITS is enabled)
  *   - 'u' - unsigned integer
  *   - 'x' - unsigned integer, print as lower-case hexadecimal
  *   - 'X' - unsigned integer, print as upper-case hexadecimal
  *   - 'b' - unsigned integer, print as binary
- *
- * Special format codes:
- *   - '%ph' - binary data, print as hex; Use HEX_BUF(buffer, size) to encode
- *             parameters.
- *   - '%pP' - raw pointer.
- *   - "%pT" - current time in seconds - interpreted as "%.6T" for precision.
- *           Supply PRINTF_TIMESTAMP_NOW to use the current time, or supply a
- *           pointer to a 64-bit timestamp to print.
+ *   - 'p' - pointer
  */
-
-#ifndef HIDE_EC_STDLIB
 
 /**
  * Print formatted output to a function, like vfprintf()
@@ -76,34 +76,78 @@
 __stdlib_compat int vfnprintf(int (*addchar)(void *context, int c),
 			      void *context, const char *format, va_list args);
 
+#ifdef TEST_BUILD
 /**
- * Print formatted outut to a string.
+ * Converts @val to a string written in @buf. The value is converted from
+ * least-significant digit to most-significant digit, so the pointer returned
+ * does not necessarily point to the start of @buf.
  *
- * Guarantees null-termination if size!=0.
+ * This function shouldn't be used directly; it's a helper function for other
+ * printf functions and only exposed for testing.
  *
- * @param str		Destination string
- * @param size		Size of destination in bytes
- * @param format	Format string
- * @return EC_SUCCESS, or EC_ERROR_OVERFLOW if the output was truncated.
+ * @param[out] buf Destination buffer
+ * @param[in] buf_len Length of @buf in bytes
+ * @param[in] val Value to convert
+ * @param[in] precision Fixed point precision; -1 disables fixed point
+ * @param[in] base Base
+ * @param[in] uppercase true to print hex characters uppercase
+ * @return pointer to start of string on success (not necessarily the start of
+ * @buf).
+ * @return NULL on error
  */
-__attribute__((__format__(__printf__, 3, 4)))
-__stdlib_compat int snprintf(char *str, int size, const char *format, ...);
+char *uint64_to_str(char *buf, int buf_len, uint64_t val, int precision,
+		    int base, bool uppercase);
+#endif /* TEST_BUILD */
 
 /**
- * Print formatted output to a string.
+ * Print timestamp as string to the provided buffer.
  *
- * Guarantees null-termination if size!=0.
+ * Guarantees NUL-termination if size != 0.
  *
- * @param str		Destination string
- * @param size		Size of destination in bytes
- * @param format	Format string
- * @param args		Parameters
- * @return The string length written to str, or a negative value on error.
- *         The negative values can be -EC_ERROR_INVAL or -EC_ERROR_OVERFLOW.
+ * @param[out] str Destination string
+ * @param[in] size Size of @str in bytes
+ * @param[in] timestamp Timestamp
+ * @return Length of string written to @str, not including terminating NUL.
+ * @return -EC_ERROR_OVERFLOW when @str buffer is not large enough. @str[0]
+ * is set to '\0'.
+ * @return -EC_ERROR_INVAL when @size is 0.
  */
-__stdlib_compat int vsnprintf(char *str, int size, const char *format,
-			      va_list args);
+int snprintf_timestamp(char *str, size_t size, uint64_t timestamp);
 
-#endif  /* !HIDE_EC_STDLIB */
+/**
+ * Print the current time as a string to the provided buffer.
+ *
+ * Guarantees NUL-termination if size != 0.
+ *
+ * @param[out] str Destination string
+ * @param[in] size Size of @str in bytes
+ * @return Length of string written to @str, not including terminating NUL.
+ * @return -EC_ERROR_OVERFLOW when @str buffer is not large enough. @str[0]
+ * is set to '\0'.
+ * @return -EC_ERROR_INVAL when @size is 0.
+ */
+int snprintf_timestamp_now(char *str, size_t size);
 
-#endif  /* __CROS_EC_PRINTF_H */
+/**
+ * Prints bytes as a hex string in the provided buffer.
+ *
+ * Guarantees NUL-termination if size != 0.
+ *
+ * @param[out] str Destination string
+ * @param[in] size Size of @str in bytes
+ * @param[in] params Data to print
+ * @return Length of string written to @str, not including terminating NUL.
+ * @return -EC_ERROR_OVERFLOW when @str buffer is not large enough.
+ * @return -EC_ERROR_INVAL when @size is 0.
+ */
+int snprintf_hex_buffer(char *str, size_t size,
+			const struct hex_buffer_params *params);
+
+/**
+ * @param[in] num_bytes
+ * @return number of bytes needed to store @num_bytes as a string (including
+ * terminating '\0').
+ */
+size_t hex_str_buf_size(size_t num_bytes);
+
+#endif /* __CROS_EC_PRINTF_H */

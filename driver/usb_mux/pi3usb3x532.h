@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -13,6 +13,7 @@
 #define __CROS_EC_PI3USB3X532_H
 
 #include "usb_pd.h"
+#include "usb_mux.h"
 
 /* I2C Addresses */
 #define PI3USB3X532_I2C_ADDR0 0x54
@@ -69,7 +70,9 @@
  * dp0-1 : rx1, tx1
  * hpd+/-: rfu2, rfu1
  */
-#define PI3USB3X532_MODE_DP_USB_SWAP (PI3USB3X532_MODE_DP_USB | \
-				      PI3USB3X532_BIT_SWAP)
+#define PI3USB3X532_MODE_DP_USB_SWAP \
+	(PI3USB3X532_MODE_DP_USB | PI3USB3X532_BIT_SWAP)
 
+/* Get Vendor ID */
+int pi3usb3x532_check_vendor(const struct usb_mux *me, int *val);
 #endif /* __CROS_EC_PI3USB3X532_H */

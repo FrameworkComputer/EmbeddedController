@@ -1,0 +1,20 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Microchip, xec-cros-kb-raw node
+
+compatible: "microchip,xec-cros-kb-raw"
+
+include: [base.yaml, pinctrl-device.yaml]
+
+properties:
+    reg:
+        required: true
+
+    pinctrl-0:
+      required: true
+
+    pinctrl-names:
+      required: true
+

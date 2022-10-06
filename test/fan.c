@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -10,14 +10,13 @@
 #include "fan.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "printf.h"
 #include "temp_sensor.h"
 #include "test_util.h"
 #include "thermal.h"
 #include "timer.h"
 #include "util.h"
 
-#define FAN_RPM(fan)	fans[fan].rpm
+#define FAN_RPM(fan) fans[fan].rpm
 
 /*****************************************************************************/
 /* Tests */
@@ -105,9 +104,16 @@ static int test_fan(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fan);
 
 	test_print_result();
+}
+
+/* Doesn't do anything, but it makes this test stop intermittently covering
+ * some code in core/host/task.c:fast_forward().
+ */
+void interrupt_generator(void)
+{
 }

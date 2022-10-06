@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -9,15 +9,15 @@
 #include "hooks.h"
 #include "mt6370.h"
 #include "task.h"
-#include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpci.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static int mt6370_polarity;
 
@@ -36,7 +36,6 @@ static int mt6370_init(int port)
 
 	/* Only do soft-reset in shipping mode. (b:122017882) */
 	if (!(val & MT6370_REG_SHIPPING_OFF)) {
-
 		/* Software reset. */
 		rv = tcpc_write(port, MT6370_REG_SWRESET, 1);
 		if (rv)
@@ -91,7 +90,7 @@ static inline int mt6370_init_cc_params(int port, int cc_res)
 }
 
 static int mt6370_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+			 enum tcpc_cc_voltage_status *cc2)
 {
 	int status;
 	int rv;
@@ -186,36 +185,36 @@ int mt6370_vconn_discharge(int port)
 
 /* MT6370 is a TCPCI compatible port controller */
 const struct tcpm_drv mt6370_tcpm_drv = {
-	.init			= &mt6370_init,
-	.release		= &tcpci_tcpm_release,
-	.get_cc			= &mt6370_get_cc,
+	.init = &mt6370_init,
+	.release = &tcpci_tcpm_release,
+	.get_cc = &mt6370_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &mt6370_set_cc,
-	.set_polarity		= &mt6370_set_polarity,
+	.select_rp_value = &tcpci_tcpm_select_rp_value,
+	.set_cc = &mt6370_set_cc,
+	.set_polarity = &mt6370_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_disable	= &tcpci_tcpm_sop_prime_disable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &tcpci_tcpm_set_vconn,
-	.set_msg_header		= &tcpci_tcpm_set_msg_header,
-	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_tcpm_get_message_raw,
-	.transmit		= &tcpci_tcpm_transmit,
-	.tcpc_alert		= &tcpci_tcpc_alert,
+	.set_vconn = &tcpci_tcpm_set_vconn,
+	.set_msg_header = &tcpci_tcpm_set_msg_header,
+	.set_rx_enable = &tcpci_tcpm_set_rx_enable,
+	.get_message_raw = &tcpci_tcpm_get_message_raw,
+	.transmit = &tcpci_tcpm_transmit,
+	.tcpc_alert = &tcpci_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus = &tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.drp_toggle = &tcpci_tcpc_drp_toggle,
 #endif
-	.get_chip_info		= &tcpci_get_chip_info,
-#ifdef CONFIG_USBC_PPC
-	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
-	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
-#endif
+	.get_chip_info = &tcpci_get_chip_info,
+	.set_snk_ctrl = &tcpci_tcpm_set_snk_ctrl,
+	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &mt6370_enter_low_power_mode,
+	.enter_low_power_mode = &mt6370_enter_low_power_mode,
 #endif
+	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 };

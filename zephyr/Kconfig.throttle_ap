@@ -1,0 +1,71 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_THROTTLE_AP
+
+config PLATFORM_EC_CHIPSET_CAN_THROTTLE
+	bool "CPU can support throttling"
+	default y
+	help
+	  Indicates that the SoC supports throttling. This means that a
+	  chipset_throttle_cpu() function is provided by the chipset, to be
+	  called to set the throttle state. The typical implementation asserts
+	  GPIO_CPU_PROCHOT, to make the CPU slow down.
+
+config PLATFORM_EC_CONSOLE_CMD_APTHROTTLE
+	bool "Console command: apthrottle"
+	default y
+	help
+	  This command shows the current status of AP throttling. Both soft
+	  (type 0) and hard (type 1) throttling are supported. Soft throttling
+	  is typically controlled by the AP via a host event. Hard throttling
+	  typically uses the PROCHOT (Processor Hot) signal on x86 CPUs.
+
+	  Example output:
+
+	     AP throttling type 0 is off (0x00000000)
+	     AP throttling type 1 is off (0x00000000)
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+	bool "Throttle AP based on battery discharge current"
+	default n
+	help
+	  Throttle the CPU when battery discharge current is too high. When
+	  this feature is enabled, the threshold value must be set in
+	  PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT_LIMIT.
+
+if PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT_LIMIT
+	int "Discharge current limit in milliamperes"
+	default 0
+endif
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE
+	bool "Throttle AP based on battery voltage"
+	default n
+	help
+	  Throttle the CPU when battery voltage drops below a defined threshold
+	  where the board still boots but some components don't function
+	  perfectly. When this feature is enabled, the threshold value must be
+	  set in PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE_THRESH.
+
+if PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE_THRESH
+	int "Low voltage threshold in millivolts"
+	default 0
+endif
+
+config PLATFORM_EC_GPU_NVIDIA
+	bool "Nvidia GPU supports throttling"
+	default n
+	help
+	  Enable GPU throttling. When the GPU is throttled, a software (D-Notify)
+	  and a hardware throttle (GPIO_NVIDIA_GPU_ACOFF_ODL) are enabled. A
+	  hardware throttle will be automatically disabled after a fixed period
+	  of time but a software throttle may remain and keep changing as the
+	  situation changes.
+
+endif # PLATFORM_EC_THROTTLE_AP

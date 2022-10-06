@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -19,11 +19,12 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.driver = &mock_usb_mux_driver,
-	}
-};
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
+	.mux =
+		&(const struct usb_mux){
+			.driver = &mock_usb_mux_driver,
+		},
+} };
 
 void board_reset_pd_mcu(void)
 {
@@ -32,71 +33,74 @@ void board_reset_pd_mcu(void)
 static int deferred_resume_called;
 void pd_deferred_resume(int port)
 {
-		deferred_resume_called = 1;
+	deferred_resume_called = 1;
 }
 
 static int num_events;
 uint16_t tcpc_get_alert_status(void)
 {
-		if (--num_events > 0)
-			return PD_STATUS_TCPC_ALERT_0;
-		else
-			return 0;
+	if (--num_events > 0)
+		return PD_STATUS_TCPC_ALERT_0;
+	else
+		return 0;
 }
 
 test_static int test_storm_not_triggered(void)
 {
-		num_events = 100;
-		deferred_resume_called = 0;
-		schedule_deferred_pd_interrupt(PORT0);
-		task_wait_event(SECOND);
-		TEST_EQ(deferred_resume_called, 0, "%d");
+	num_events = 100;
+	deferred_resume_called = 0;
+	schedule_deferred_pd_interrupt(PORT0);
+	task_wait_event(SECOND);
+	TEST_EQ(deferred_resume_called, 0, "%d");
 
-		return EC_SUCCESS;
+	return EC_SUCCESS;
 }
 
 test_static int test_storm_triggered(void)
 {
-		num_events = 1000;
-		deferred_resume_called = 0;
-		schedule_deferred_pd_interrupt(PORT0);
-		task_wait_event(SECOND);
-		TEST_EQ(deferred_resume_called, 1, "%d");
+	num_events = 1000;
+	deferred_resume_called = 0;
+	schedule_deferred_pd_interrupt(PORT0);
+	task_wait_event(SECOND);
+	TEST_EQ(deferred_resume_called, 1, "%d");
 
-		return EC_SUCCESS;
+	return EC_SUCCESS;
 }
 
 test_static int test_storm_not_triggered_for_32bit_overflow(void)
 {
-		int i;
-		timestamp_t time;
+	int i;
+	timestamp_t time;
 
-		/* Ensure the MSB is 1 for overflow comparison tests */
-		time.val = 0xff000000;
-		force_time(time);
+	/*
+	 * Ensure the MSB is 1 for overflow comparison tests.
+	 * But make sure not to move time backwards.
+	 */
+	time.val = (get_time().val + 0x100000000) | 0xff000000;
+	force_time(time);
 
-		/*
-		 * 100 events every second for 10 seconds should never trigger
-		 * a shutdown call.
-		 */
-		for (i = 0; i < 10; ++i) {
-			num_events = 100;
-			deferred_resume_called = 0;
-			schedule_deferred_pd_interrupt(PORT0);
-			task_wait_event(SECOND);
+	/*
+	 * 100 events every second for 10 seconds should never trigger
+	 * a shutdown call.
+	 */
+	for (i = 0; i < 10; ++i) {
+		num_events = 100;
+		deferred_resume_called = 0;
+		schedule_deferred_pd_interrupt(PORT0);
+		task_wait_event(SECOND);
 
-			TEST_EQ(deferred_resume_called, 0, "%d");
-		}
+		TEST_EQ(deferred_resume_called, 0, "%d");
+	}
 
-		return EC_SUCCESS;
+	return EC_SUCCESS;
 }
 
 void before_test(void)
 {
-		pd_set_suspend(PORT0, 0);
+	pd_set_suspend(PORT0, 0);
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	/* Let tasks settle down */
 	task_wait_event(MINUTE);

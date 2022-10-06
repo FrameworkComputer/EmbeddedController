@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -29,4 +29,4 @@ int otp_write_serial(const char *serialno);
  */
 const char *otp_read_serial(void);
 
-#endif  /* __CROS_EC_OTP_H */
+#endif /* __CROS_EC_OTP_H */

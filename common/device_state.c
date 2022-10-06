@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,7 +7,7 @@
 #include "device_state.h"
 #include "hooks.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /**
  * Return text description for a state
@@ -17,8 +17,9 @@
  */
 static const char *state_desc(enum device_state state)
 {
-	return state == DEVICE_STATE_ON ? "on" :
-			state == DEVICE_STATE_OFF ? "off" : "unknown";
+	return state == DEVICE_STATE_ON	 ? "on" :
+	       state == DEVICE_STATE_OFF ? "off" :
+					   "unknown";
 }
 
 enum device_state device_get_state(enum device_type device)
@@ -65,7 +66,7 @@ static void check_device_state(void)
 }
 DECLARE_HOOK(HOOK_SECOND, check_device_state, HOOK_PRIO_DEFAULT);
 
-static int command_devices(int argc, char **argv)
+static int command_devices(int argc, const char **argv)
 {
 	const struct device_config *dc = device_states;
 	int i;
@@ -78,6 +79,5 @@ static int command_devices(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(devices, command_devices,
-			     "",
+DECLARE_SAFE_CONSOLE_COMMAND(devices, command_devices, "",
 			     "Get the device states");

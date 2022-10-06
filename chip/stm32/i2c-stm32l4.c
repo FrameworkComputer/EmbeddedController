@@ -1,8 +1,9 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "printf.h"
 #include "chipset.h"
 #include "clock.h"
@@ -21,13 +22,13 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 /* Transmit timeout in microseconds */
-#define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
+#define I2C_TX_TIMEOUT_MASTER (10 * MSEC)
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
-#define I2C_SLAVE_ERROR_CODE	0xec
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
+#define I2C_SLAVE_ERROR_CODE 0xec
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_SLAVE STM32_IRQ_I2C1
 #else
@@ -37,8 +38,8 @@
 
 /* I2C port state data */
 struct i2c_port_data {
-	uint32_t timeout_us;    /* Transaction timeout, or 0 to use default */
-	enum i2c_freq freq;	/* Port clock speed */
+	uint32_t timeout_us; /* Transaction timeout, or 0 to use default */
+	enum i2c_freq freq; /* Port clock speed */
 };
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
@@ -50,8 +51,8 @@ void i2c_set_timeout(int port, uint32_t timeout)
 /* timing register values for supported input clks / i2c clk rates */
 static const uint32_t busyloop_us[I2C_FREQ_COUNT] = {
 	[I2C_FREQ_1000KHZ] = 16, /* Enough for 2 bytes */
-	[I2C_FREQ_400KHZ] = 40,  /* Enough for 2 bytes */
-	[I2C_FREQ_100KHZ] = 0,   /* No busy looping at 100kHz (bus is slow) */
+	[I2C_FREQ_400KHZ] = 40, /* Enough for 2 bytes */
+	[I2C_FREQ_100KHZ] = 0, /* No busy looping at 100kHz (bus is slow) */
 };
 
 /**
@@ -70,7 +71,7 @@ static int wait_isr(int port, int mask)
 
 		/* Check for errors */
 		if (isr & (STM32_I2C_ISR_ARLO | STM32_I2C_ISR_BERR |
-			STM32_I2C_ISR_NACK))
+			   STM32_I2C_ISR_NACK))
 			return EC_ERROR_UNKNOWN;
 
 		/* Check for desired mask */
@@ -90,9 +91,10 @@ static int wait_isr(int port, int mask)
 	return EC_ERROR_TIMEOUT;
 }
 
-/* We are only using sysclk, which is 40MHZ */
+/* Supported i2c input clocks */
 enum stm32_i2c_clk_src {
-	I2C_CLK_SRC_40MHZ = 0,
+	I2C_CLK_SRC_48MHZ = 0,
+	I2C_CLK_SRC_16MHZ = 1,
 	I2C_CLK_SRC_COUNT,
 };
 
@@ -101,25 +103,28 @@ enum stm32_i2c_clk_src {
  * These values are calculated using ST's STM32cubeMX tool
  */
 static const uint32_t timingr_regs[I2C_CLK_SRC_COUNT][I2C_FREQ_COUNT] = {
-	[I2C_CLK_SRC_40MHZ] = {
-		[I2C_FREQ_1000KHZ] = 0x00100618,
-		[I2C_FREQ_400KHZ] = 0x00301347,
-		[I2C_FREQ_100KHZ] = 0x003087FF,
+	[I2C_CLK_SRC_48MHZ] = {
+		[I2C_FREQ_1000KHZ] = 0x20000209,
+		[I2C_FREQ_400KHZ] = 0x2010091A,
+		[I2C_FREQ_100KHZ] = 0x20303E5D,
+	},
+	[I2C_CLK_SRC_16MHZ] = {
+		[I2C_FREQ_1000KHZ] = 0x00000107,
+		[I2C_FREQ_400KHZ] = 0x00100B15,
+		[I2C_FREQ_100KHZ] = 0x00303D5B,
 	},
 };
 
 static void i2c_set_freq_port(const struct i2c_port_t *p,
-			      enum stm32_i2c_clk_src src,
-			      enum i2c_freq freq)
+			      enum stm32_i2c_clk_src src, enum i2c_freq freq)
 {
 	int port = p->port;
-	const uint32_t *regs = timingr_regs[src];
 
 	/* Disable port */
 	STM32_I2C_CR1(port) = 0;
 	STM32_I2C_CR2(port) = 0;
 	/* Set clock frequency */
-	STM32_I2C_TIMINGR(port) = regs[freq];
+	STM32_I2C_TIMINGR(port) = timingr_regs[src][freq];
 	/* Enable port */
 	STM32_I2C_CR1(port) = STM32_I2C_CR1_PE;
 
@@ -134,20 +139,20 @@ static void i2c_set_freq_port(const struct i2c_port_t *p,
 static void i2c_init_port(const struct i2c_port_t *p)
 {
 	int port = p->port;
-	uint32_t mask;
-	uint8_t shift;
-	enum stm32_i2c_clk_src src = I2C_CLK_SRC_40MHZ;
+	uint32_t val;
 	enum i2c_freq freq;
+	enum stm32_i2c_clk_src src = I2C_CLK_SRC_16MHZ;
 
-	/* Enable clocks to I2C modules if necessary */
-	if (!(STM32_RCC_APB1ENR & (1 << (21 + port))))
-		STM32_RCC_APB1ENR |= 1 << (21 + port);
+	/* Enable I2C clock */
+	if (!(STM32_RCC_APB1ENR1 & (1 << (21 + port))))
+		STM32_RCC_APB1ENR1 |= 1 << (21 + port);
 
-	/* Select sysclk as source */
-	mask = STM32_RCC_CCIPR_I2C1SEL_MASK << (port * 2);
-	shift = STM32_RCC_CCIPR_I2C1SEL_SHIFT + (port * 2);
-	STM32_RCC_CCIPR &= ~mask;
-	STM32_RCC_CCIPR |= STM32_RCC_CCIPR_I2C_SYSCLK << shift;
+	/*	Select HSI 16MHz as I2C clock source	*/
+	val = STM32_RCC_CCIPR;
+	val &= ~(STM32_RCC_CCIPR_I2C1SEL_MASK << (port * 2));
+	val |= STM32_RCC_CCIPR_I2C_HSI16
+	       << (STM32_RCC_CCIPR_I2C1SEL_SHIFT + port * 2);
+	STM32_RCC_CCIPR = val;
 
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
@@ -155,6 +160,7 @@ static void i2c_init_port(const struct i2c_port_t *p)
 	/* Set clock frequency */
 	switch (p->kbps) {
 	case 1000:
+		STM32_SYSCFG_CFGR1 |= STM32_SYSCFG_I2CFMP(port);
 		freq = I2C_FREQ_1000KHZ;
 		break;
 	case 400:
@@ -177,7 +183,7 @@ static void i2c_init_port(const struct i2c_port_t *p)
 
 /*****************************************************************************/
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 
 static void i2c_event_handler(int port)
 {
@@ -203,8 +209,8 @@ static void i2c_event_handler(int port)
 		STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
 
 		/* Clear error status bits */
-		STM32_I2C_ICR(port) |= STM32_I2C_ICR_BERRCF
-				| STM32_I2C_ICR_ARLOCF;
+		STM32_I2C_ICR(port) |= STM32_I2C_ICR_BERRCF |
+				       STM32_I2C_ICR_ARLOCF;
 	}
 
 	/* Transfer matched our slave address */
@@ -234,7 +240,7 @@ static void i2c_event_handler(int port)
 		/* Clear ADDR bit by writing to ADDRCF bit */
 		STM32_I2C_ICR(port) |= STM32_I2C_ICR_ADDRCF;
 		/* Inhibit stop mode when addressed until STOPF flag is set */
-		disable_sleep(SLEEP_MASK_I2C_SLAVE);
+		disable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	/*
@@ -262,7 +268,7 @@ static void i2c_event_handler(int port)
 		STM32_I2C_ICR(port) |= STM32_I2C_ICR_STOPCF;
 
 		/* No longer inhibit deep sleep after stop condition */
-		enable_sleep(SLEEP_MASK_I2C_SLAVE);
+		enable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	if (isr & STM32_I2C_ISR_NACK) {
@@ -280,8 +286,8 @@ static void i2c_event_handler(int port)
 					STM32_I2C_TXDR(port) =
 						slave_buffer[tx_idx++];
 				} else {
-					STM32_I2C_TXDR(port)
-						= I2C_SLAVE_ERROR_CODE;
+					STM32_I2C_TXDR(port) =
+						I2C_SLAVE_ERROR_CODE;
 					tx_idx = 0;
 					tx_end = 0;
 					tx_pending = 0;
@@ -293,7 +299,7 @@ static void i2c_event_handler(int port)
 	}
 }
 
-void i2c_event_interrupt(void)
+static void i2c_event_interrupt(void)
 {
 	i2c_event_handler(I2C_PORT_EC);
 }
@@ -303,11 +309,10 @@ DECLARE_IRQ(IRQ_SLAVE, i2c_event_interrupt, 2);
 /*****************************************************************************/
 /* Interface */
 
-int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
-		  const uint8_t *out, int out_bytes,
-		  uint8_t *in, int in_bytes, int flags)
+int chip_i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
+		  int out_bytes, uint8_t *in, int in_bytes, int flags)
 {
-	int addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+	int addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 	int rv = EC_SUCCESS;
 	int i;
 	int xfer_start = flags & I2C_XFER_START;
@@ -329,13 +334,13 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		 * if we are not stopping, set RELOAD bit so that we can load
 		 * NBYTES again. if we are starting, then set START bit.
 		 */
-		STM32_I2C_CR2(port) =  ((out_bytes & 0xFF) << 16)
-			| addr_8bit
-			| ((in_bytes == 0 && xfer_stop) ?
-				STM32_I2C_CR2_AUTOEND : 0)
-			| ((in_bytes == 0 && !xfer_stop) ?
-				STM32_I2C_CR2_RELOAD : 0)
-			| (xfer_start ? STM32_I2C_CR2_START : 0);
+		STM32_I2C_CR2(port) =
+			((out_bytes & 0xFF) << 16) | addr_8bit |
+			((in_bytes == 0 && xfer_stop) ? STM32_I2C_CR2_AUTOEND :
+							0) |
+			((in_bytes == 0 && !xfer_stop) ? STM32_I2C_CR2_RELOAD :
+							 0) |
+			(xfer_start ? STM32_I2C_CR2_START : 0);
 
 		for (i = 0; i < out_bytes; i++) {
 			rv = wait_isr(port, STM32_I2C_ISR_TXIS);
@@ -358,11 +363,11 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		 * NBYTES again. if we were just transmitting, we need to
 		 * set START bit to send (re)start and begin read transaction.
 		 */
-		STM32_I2C_CR2(port) = ((in_bytes & 0xFF) << 16)
-			| STM32_I2C_CR2_RD_WRN | addr_8bit
-			| (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0)
-			| (!xfer_stop ? STM32_I2C_CR2_RELOAD : 0)
-			| (out_bytes || xfer_start ? STM32_I2C_CR2_START : 0);
+		STM32_I2C_CR2(port) =
+			((in_bytes & 0xFF) << 16) | STM32_I2C_CR2_RD_WRN |
+			addr_8bit | (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0) |
+			(!xfer_stop ? STM32_I2C_CR2_RELOAD : 0) |
+			(out_bytes || xfer_start ? STM32_I2C_CR2_START : 0);
 
 		for (i = 0; i < in_bytes; i++) {
 			/* Wait for receive buffer not empty */
@@ -442,7 +447,7 @@ int i2c_raw_get_sda(int port)
 int i2c_get_line_levels(int port)
 {
 	return (i2c_raw_get_sda(port) ? I2C_LINE_SDA_HIGH : 0) |
-		(i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
+	       (i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
 }
 
 void i2c_init(void)
@@ -453,12 +458,13 @@ void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
-	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
-			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE
-			| STM32_I2C_CR1_NACKIE;
-	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000
-		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) << 1);
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
+	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE |
+				      STM32_I2C_CR1_ADDRIE |
+				      STM32_I2C_CR1_STOPIE |
+				      STM32_I2C_CR1_NACKIE;
+	STM32_I2C_OAR1(I2C_PORT_EC) =
+		0x8000 | (I2C_STRIP_FLAGS(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
 	task_enable_irq(IRQ_SLAVE);
 #endif
 }

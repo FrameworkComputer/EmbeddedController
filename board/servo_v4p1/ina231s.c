@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,9 +7,9 @@
 #include "ina2xx.h"
 #include "util.h"
 
-#define PP_DUT_IDX	0
-#define PP_CHG_IDX	1
-#define SR_CHG_IDX	2
+#define PP_DUT_IDX 0
+#define PP_CHG_IDX 1
+#define SR_CHG_IDX 2
 
 void init_ina231s(void)
 {

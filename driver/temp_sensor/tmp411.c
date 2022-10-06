@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,8 +24,8 @@ static uint8_t is_sensor_shutdown;
  */
 static int has_power(void)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return !is_sensor_shutdown;
 #endif
@@ -139,7 +139,7 @@ int tmp411_set_therm_limit(int channel, int limit_c, int hysteresis)
 		return EC_ERROR_INVAL;
 
 	if (hysteresis > TMP411_HYSTERESIS_HIGH_LIMIT ||
-		hysteresis < TMP411_HYSTERESIS_LOW_LIMIT)
+	    hysteresis < TMP411_HYSTERESIS_LOW_LIMIT)
 		return EC_ERROR_INVAL;
 
 	/* hysteresis must be less than high limit */
@@ -181,17 +181,14 @@ static void tmp411_temp_sensor_poll(void)
 
 	if (get_temp(TMP411_REMOTE1, &temp_c) == EC_SUCCESS)
 		temp_val_remote1 = C_TO_K(temp_c);
-
 }
 DECLARE_HOOK(HOOK_SECOND, tmp411_temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
 #ifdef CONFIG_CMD_TEMP_SENSOR
-static void print_temps(
-		const char *name,
-		const int tmp411_temp_reg,
-		const int tmp411_therm_limit_reg,
-		const int tmp411_high_limit_reg,
-		const int tmp411_low_limit_reg)
+static void print_temps(const char *name, const int tmp411_temp_reg,
+			const int tmp411_therm_limit_reg,
+			const int tmp411_high_limit_reg,
+			const int tmp411_low_limit_reg)
 {
 	int value;
 
@@ -219,28 +216,24 @@ static int print_status(void)
 {
 	int value;
 
-	print_temps("Local", TMP411_LOCAL,
-		    TMP411_LOCAL_THERM_LIMIT,
-		    TMP411_LOCAL_HIGH_LIMIT_R,
-		    TMP411_LOCAL_LOW_LIMIT_R);
+	print_temps("Local", TMP411_LOCAL, TMP411_LOCAL_THERM_LIMIT,
+		    TMP411_LOCAL_HIGH_LIMIT_R, TMP411_LOCAL_LOW_LIMIT_R);
 
-	print_temps("Remote1", TMP411_REMOTE1,
-		    TMP411_REMOTE1_THERM_LIMIT,
-		    TMP411_REMOTE1_HIGH_LIMIT_R,
-		    TMP411_REMOTE1_LOW_LIMIT_R);
+	print_temps("Remote1", TMP411_REMOTE1, TMP411_REMOTE1_THERM_LIMIT,
+		    TMP411_REMOTE1_HIGH_LIMIT_R, TMP411_REMOTE1_LOW_LIMIT_R);
 
 	ccprintf("\n");
 
 	if (raw_read8(TMP411_STATUS_R, &value) == EC_SUCCESS)
-		ccprintf("STATUS:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("STATUS:  0x%x\n", value);
 
 	if (raw_read8(TMP411_CONFIGURATION1_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG1: %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("CONFIG1: 0x%x\n", value);
 
 	return EC_SUCCESS;
 }
 
-static int command_tmp411(int argc, char **argv)
+static int command_tmp411(int argc, const char **argv)
 {
 	char *command;
 	char *e;
@@ -285,8 +278,7 @@ static int command_tmp411(int argc, char **argv)
 		rv = raw_read8(offset, &data);
 		if (rv < 0)
 			return rv;
-		ccprintf("Byte at offset 0x%02x is %pb\n",
-			 offset, BINARY_VALUE(data, 8));
+		ccprintf("Byte at offset 0x%02x is 0x%x\n", offset, data);
 		return rv;
 	}
 
@@ -309,7 +301,8 @@ static int command_tmp411(int argc, char **argv)
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(tmp411, command_tmp411,
+DECLARE_CONSOLE_COMMAND(
+	tmp411, command_tmp411,
 	"[settemp|setbyte <offset> <value>] or [getbyte <offset>] or"
 	"[power <on|off>]. "
 	"Temps in Celsius.",
@@ -318,13 +311,12 @@ DECLARE_CONSOLE_COMMAND(tmp411, command_tmp411,
 
 int tmp411_set_power(enum tmp411_power_state power_on)
 {
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 	uint8_t shutdown = (power_on == TMP411_POWER_OFF) ? 1 : 0;
 
 	return tmp411_shutdown(shutdown);
 #else
-	gpio_set_level(CONFIG_TEMP_SENSOR_POWER_GPIO, power_on);
+	gpio_set_level(GPIO_TEMP_SENSOR_POWER, power_on);
 	return EC_SUCCESS;
 #endif
 }
-

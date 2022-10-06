@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,6 +15,10 @@
 
 #ifndef CONFIG_COMMON_RUNTIME
 #define cprints(format, args...)
+#endif
+
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
 #endif
 
 /* Public API for controlling/inspecting this mock */
@@ -121,8 +125,7 @@ static int mock_set_msg_header(int port, int power_role, int data_role)
 		return EC_SUCCESS;
 
 	ccprints("[TCPC] Setting TCPM-side header to %s %s",
-		 from_pd_power_role(power_role),
-		 from_pd_data_role(data_role));
+		 from_pd_power_role(power_role), from_pd_data_role(data_role));
 
 	return EC_SUCCESS;
 }
@@ -137,8 +140,8 @@ static int mock_get_message_raw(int port, uint32_t *payload, int *head)
 	return EC_SUCCESS;
 }
 
-static int mock_transmit(int port, enum tcpm_transmit_type type,
-			 uint16_t header, const uint32_t *data)
+static int mock_transmit(int port, enum tcpci_msg_type type, uint16_t header,
+			 const uint32_t *data)
 {
 	return EC_SUCCESS;
 }
@@ -183,7 +186,13 @@ __maybe_unused static int mock_set_src_ctrl(int port, int enable)
 
 __maybe_unused static int mock_enter_low_power_mode(int port)
 {
+	mock_tcpc.lpm_wake_requested = false;
 	return EC_SUCCESS;
+}
+
+__maybe_unused static void mock_wake_low_power_mode(int port)
+{
+	mock_tcpc.lpm_wake_requested = true;
 }
 
 int mock_set_frs_enable(int port, int enable)
@@ -210,12 +219,11 @@ const struct tcpm_drv mock_tcpc_driver = {
 	.drp_toggle = &mock_drp_toggle,
 #endif
 	.get_chip_info = &mock_get_chip_info,
-#ifdef CONFIG_USBC_PPC
 	.set_snk_ctrl = &mock_set_snk_ctrl,
 	.set_src_ctrl = &mock_set_src_ctrl,
-#endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &mock_enter_low_power_mode,
+	.wake_low_power_mode = &mock_wake_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable = &mock_set_frs_enable,

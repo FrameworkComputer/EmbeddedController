@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,12 +19,12 @@ enum led_color {
 	LED_RED,
 	LED_YELLOW,
 	LED_GREEN,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
-static const uint8_t led_masks[LED_COLOR_COUNT] = {0xff, 0xfe, 0xfc, 0xfd};
-static const char * const color_names[LED_COLOR_COUNT] = {
-	"off", "red", "yellow", "green"};
+static const uint8_t led_masks[LED_COLOR_COUNT] = { 0xff, 0xfe, 0xfc, 0xfd };
+static const char *const color_names[LED_COLOR_COUNT] = { "off", "red",
+							  "yellow", "green" };
 
 /**
  * Set the onewire LED GPIO controller outputs
@@ -48,9 +48,9 @@ static int led_set_mask(int mask)
 	/* Write and turn on the LEDs */
 	onewire_write(0x5a);
 	onewire_write(mask);
-	onewire_write(~mask);  /* Repeat inverted */
+	onewire_write(~mask); /* Repeat inverted */
 
-	rv = onewire_read();   /* Confirmation byte */
+	rv = onewire_read(); /* Confirmation byte */
 	if (rv != 0xaa)
 		return EC_ERROR_UNKNOWN;
 
@@ -109,10 +109,10 @@ static void onewire_led_tick(void)
 	/* Translate charge state to LED color */
 	switch (charge_get_state()) {
 	case PWR_STATE_IDLE:
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			new_color = (tick_count & 1) ? LED_GREEN : LED_OFF;
-		else
-			new_color = LED_GREEN;
+		new_color = LED_GREEN;
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		new_color = (tick_count & 1) ? LED_GREEN : LED_OFF;
 		break;
 	case PWR_STATE_CHARGE:
 		new_color = LED_YELLOW;
@@ -149,7 +149,7 @@ DECLARE_HOOK(HOOK_SECOND, onewire_led_tick, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Console commands */
 #define CONFIG_CMD_POWERLED
-static int command_powerled(int argc, char **argv)
+static int command_powerled(int argc, const char **argv)
 {
 	int i;
 
@@ -161,6 +161,5 @@ static int command_powerled(int argc, char **argv)
 	return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
-			"<off | red | yellow | green>",
-			"Set power LED color");
+			"<off | red | yellow | green>", "Set power LED color");
 #endif

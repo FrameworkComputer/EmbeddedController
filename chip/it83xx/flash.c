@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,45 +17,45 @@
 #include "shared_mem.h"
 #include "uart.h"
 
-#define FLASH_DMA_START ((uint32_t) &__flash_dma_start)
+#define FLASH_DMA_START ((uint32_t)&__flash_dma_start)
 #define FLASH_DMA_CODE __attribute__((section(".flash_direct_map")))
+#define FLASH_ILM0_ADDR ((uint32_t)&__ilm0_ram_code)
 
 /* erase size of sector is 1KB or 4KB */
 #define FLASH_SECTOR_ERASE_SIZE CONFIG_FLASH_ERASE_SIZE
 
 #ifdef IT83XX_CHIP_FLASH_IS_KGD
 /* page program command  */
-#define FLASH_CMD_PAGE_WRITE    0x2
+#define FLASH_CMD_PAGE_WRITE 0x2
 /* ector erase command (erase size is 4KB) */
-#define FLASH_CMD_SECTOR_ERASE  0x20
+#define FLASH_CMD_SECTOR_ERASE 0x20
 /* command for flash write */
-#define FLASH_CMD_WRITE         FLASH_CMD_PAGE_WRITE
+#define FLASH_CMD_WRITE FLASH_CMD_PAGE_WRITE
 #else
 /* Auto address increment programming */
-#define FLASH_CMD_AAI_WORD      0xAD
+#define FLASH_CMD_AAI_WORD 0xAD
 /* Flash sector erase (1K bytes) command */
-#define FLASH_CMD_SECTOR_ERASE  0xD7
+#define FLASH_CMD_SECTOR_ERASE 0xD7
 /* command for flash write */
-#define FLASH_CMD_WRITE         FLASH_CMD_AAI_WORD
+#define FLASH_CMD_WRITE FLASH_CMD_AAI_WORD
 #endif
 /* Write status register */
-#define FLASH_CMD_WRSR         0x01
+#define FLASH_CMD_WRSR 0x01
 /* Write disable */
-#define FLASH_CMD_WRDI         0x04
+#define FLASH_CMD_WRDI 0x04
 /* Write enable */
-#define FLASH_CMD_WREN         0x06
+#define FLASH_CMD_WREN 0x06
 /* Read status register */
-#define FLASH_CMD_RS           0x05
+#define FLASH_CMD_RS 0x05
 
-#define FLASH_TEXT_START ((uint32_t) &__flash_text_start)
+#if (CONFIG_FLASH_SIZE_BYTES == 0x80000) && defined(CHIP_CORE_NDS32)
+#define FLASH_TEXT_START ((uint32_t)&__flash_text_start)
+/* Apply workaround of the issue (b:111808417) */
+#define IMMU_CACHE_TAG_INVALID
 /* The default tag index of immu. */
 #define IMMU_TAG_INDEX_BY_DEFAULT 0x7E000
 /* immu cache size is 8K bytes. */
-#define IMMU_SIZE                 0x2000
-
-#if (CONFIG_FLASH_SIZE == 0x80000) && defined(CHIP_CORE_NDS32)
-/* Apply workaround of the issue (b:111808417) */
-#define IMMU_CACHE_TAG_INVALID
+#define IMMU_SIZE 0x2000
 #endif
 
 static int stuck_locked;
@@ -88,18 +88,18 @@ enum flash_status_mask {
 };
 
 enum dlm_address_view {
-	SCAR0_ILM0_DLM13   = 0x8D000, /* DLM ~ 0x8DFFF H2RAM map LPC I/O */
-	SCAR1_ILM1_DLM11   = 0x8B000, /* DLM ~ 0x8BFFF ram 44K ~ 48K */
-	SCAR2_ILM2_DLM14   = 0x8E000, /* DLM ~ 0x8EFFF RO/RW flash code DMA */
-	SCAR3_ILM3_DLM6    = 0x86000, /* DLM ~ 0x86FFF ram 24K ~ 28K */
-	SCAR4_ILM4_DLM7    = 0x87000, /* DLM ~ 0x87FFF ram 28K ~ 32K */
-	SCAR5_ILM5_DLM8    = 0x88000, /* DLM ~ 0x88FFF ram 32K ~ 36K */
-	SCAR6_ILM6_DLM9    = 0x89000, /* DLM ~ 0x89FFF ram 36K ~ 40K */
-	SCAR7_ILM7_DLM10   = 0x8A000, /* DLM ~ 0x8AFFF ram 40K ~ 44K */
-	SCAR8_ILM8_DLM4    = 0x84000, /* DLM ~ 0x84FFF ram 16K ~ 20K */
-	SCAR9_ILM9_DLM5    = 0x85000, /* DLM ~ 0x85FFF ram 20K ~ 24K */
-	SCAR10_ILM10_DLM2  = 0x82000, /* DLM ~ 0x82FFF ram 8K ~ 12K */
-	SCAR11_ILM11_DLM3  = 0x83000, /* DLM ~ 0x83FFF ram 12K ~ 16K */
+	SCAR0_ILM0_DLM13 = 0x8D000, /* DLM ~ 0x8DFFF H2RAM map LPC I/O */
+	SCAR1_ILM1_DLM11 = 0x8B000, /* DLM ~ 0x8BFFF ram 44K ~ 48K */
+	SCAR2_ILM2_DLM14 = 0x8E000, /* DLM ~ 0x8EFFF RO/RW flash code DMA */
+	SCAR3_ILM3_DLM6 = 0x86000, /* DLM ~ 0x86FFF ram 24K ~ 28K */
+	SCAR4_ILM4_DLM7 = 0x87000, /* DLM ~ 0x87FFF ram 28K ~ 32K */
+	SCAR5_ILM5_DLM8 = 0x88000, /* DLM ~ 0x88FFF ram 32K ~ 36K */
+	SCAR6_ILM6_DLM9 = 0x89000, /* DLM ~ 0x89FFF ram 36K ~ 40K */
+	SCAR7_ILM7_DLM10 = 0x8A000, /* DLM ~ 0x8AFFF ram 40K ~ 44K */
+	SCAR8_ILM8_DLM4 = 0x84000, /* DLM ~ 0x84FFF ram 16K ~ 20K */
+	SCAR9_ILM9_DLM5 = 0x85000, /* DLM ~ 0x85FFF ram 20K ~ 24K */
+	SCAR10_ILM10_DLM2 = 0x82000, /* DLM ~ 0x82FFF ram 8K ~ 12K */
+	SCAR11_ILM11_DLM3 = 0x83000, /* DLM ~ 0x83FFF ram 12K ~ 16K */
 	SCAR12_ILM12_DLM12 = 0x8C000, /* DLM ~ 0x8CFFF immu cache */
 };
 
@@ -177,8 +177,8 @@ void FLASH_DMA_CODE dma_flash_write_dat(uint8_t wdata)
 	IT83XX_SMFI_ECINDDR = wdata;
 }
 
-void FLASH_DMA_CODE dma_flash_transaction(int wlen, uint8_t *wbuf,
-					int rlen, uint8_t *rbuf, int cmd_end)
+void FLASH_DMA_CODE dma_flash_transaction(int wlen, uint8_t *wbuf, int rlen,
+					  uint8_t *rbuf, int cmd_end)
 {
 	int i;
 
@@ -197,10 +197,10 @@ void FLASH_DMA_CODE dma_flash_transaction(int wlen, uint8_t *wbuf,
 }
 
 void FLASH_DMA_CODE dma_flash_cmd_read_status(enum flash_status_mask mask,
-						enum flash_status_mask target)
+					      enum flash_status_mask target)
 {
 	uint8_t status[1];
-	uint8_t cmd_rs[] = {FLASH_CMD_RS};
+	uint8_t cmd_rs[] = { FLASH_CMD_RS };
 
 	/*
 	 * We prefer no timeout here. We can always get the status
@@ -220,7 +220,7 @@ void FLASH_DMA_CODE dma_flash_cmd_read_status(enum flash_status_mask mask,
 
 void FLASH_DMA_CODE dma_flash_cmd_write_enable(void)
 {
-	uint8_t cmd_we[] = {FLASH_CMD_WREN};
+	uint8_t cmd_we[] = { FLASH_CMD_WREN };
 
 	/* enter EC-indirect follow mode */
 	dma_flash_follow_mode();
@@ -234,7 +234,7 @@ void FLASH_DMA_CODE dma_flash_cmd_write_enable(void)
 
 void FLASH_DMA_CODE dma_flash_cmd_write_disable(void)
 {
-	uint8_t cmd_wd[] = {FLASH_CMD_WRDI};
+	uint8_t cmd_wd[] = { FLASH_CMD_WRDI };
 
 	/* enter EC-indirect follow mode */
 	dma_flash_follow_mode();
@@ -248,8 +248,8 @@ void FLASH_DMA_CODE dma_flash_cmd_write_disable(void)
 
 void FLASH_DMA_CODE dma_flash_cmd_erase(int addr, int cmd)
 {
-	uint8_t cmd_erase[] = {cmd, ((addr >> 16) & 0xFF),
-				((addr >> 8) & 0xFF), (addr & 0xFF)};
+	uint8_t cmd_erase[] = { cmd, ((addr >> 16) & 0xFF),
+				((addr >> 8) & 0xFF), (addr & 0xFF) };
 
 	/* enter EC-indirect follow mode */
 	dma_flash_follow_mode();
@@ -264,8 +264,8 @@ void FLASH_DMA_CODE dma_flash_cmd_erase(int addr, int cmd)
 void FLASH_DMA_CODE dma_flash_cmd_write(int addr, int wlen, uint8_t *wbuf)
 {
 	int i;
-	uint8_t flash_write[] = {FLASH_CMD_WRITE, ((addr >> 16) & 0xFF),
-				((addr >> 8) & 0xFF), (addr & 0xFF)};
+	uint8_t flash_write[] = { FLASH_CMD_WRITE, ((addr >> 16) & 0xFF),
+				  ((addr >> 8) & 0xFF), (addr & 0xFF) };
 
 	/* enter EC-indirect follow mode */
 	dma_flash_follow_mode();
@@ -281,12 +281,12 @@ void FLASH_DMA_CODE dma_flash_cmd_write(int addr, int wlen, uint8_t *wbuf)
 		 * chunk worth of data.
 		 */
 		if (!(++addr % CONFIG_FLASH_WRITE_IDEAL_SIZE)) {
-			uint8_t w_en[] = {FLASH_CMD_WREN};
+			uint8_t w_en[] = { FLASH_CMD_WREN };
 
 			dma_flash_fsce_high();
 			/* make sure busy bit cleared. */
 			dma_flash_cmd_read_status(FLASH_SR_BUSY,
-							FLASH_SR_NO_BUSY);
+						  FLASH_SR_NO_BUSY);
 			/* send write enable command */
 			dma_flash_transaction(sizeof(w_en), w_en, 0, NULL, 1);
 			/* make sure busy bit cleared and write enabled. */
@@ -296,7 +296,7 @@ void FLASH_DMA_CODE dma_flash_cmd_write(int addr, int wlen, uint8_t *wbuf)
 			flash_write[2] = (addr >> 8) & 0xff;
 			flash_write[3] = addr & 0xff;
 			dma_flash_transaction(sizeof(flash_write), flash_write,
-				0, NULL, 0);
+					      0, NULL, 0);
 		}
 	}
 	dma_flash_fsce_high();
@@ -340,7 +340,7 @@ int FLASH_DMA_CODE dma_flash_verify(int addr, int size, const char *data)
 			if (flash[i] != 0xFF)
 				return EC_ERROR_UNKNOWN;
 		}
-	/* verify for write */
+		/* verify for write */
 	} else {
 		for (i = 0; i < size; i++) {
 			if (flash[i] != wbuf[i])
@@ -370,7 +370,7 @@ static enum flash_wp_status flash_check_wp(void)
 	enum flash_wp_status wp_status;
 	int all_bank_count, bank;
 
-	all_bank_count = CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE;
+	all_bank_count = CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE;
 
 	for (bank = 0; bank < all_bank_count; bank++) {
 		if (!(IT83XX_GCTRL_EWPR0PFEC(FWP_REG(bank)) & FWP_MASK(bank)))
@@ -395,8 +395,7 @@ static enum flash_wp_status flash_check_wp(void)
  * @param start_bank    Start bank to protect
  * @param bank_count    Number of banks to protect
  */
-static void flash_protect_banks(int start_bank,
-				int bank_count,
+static void flash_protect_banks(int start_bank, int bank_count,
 				enum flash_wp_interface wp_if)
 {
 	int bank;
@@ -411,7 +410,7 @@ static void flash_protect_banks(int start_bank,
 	}
 }
 
-int FLASH_DMA_CODE flash_physical_read(int offset, int size, char *data)
+int FLASH_DMA_CODE crec_flash_physical_read(int offset, int size, char *data)
 {
 	int i;
 
@@ -432,7 +431,8 @@ int FLASH_DMA_CODE flash_physical_read(int offset, int size, char *data)
  * @param size          Number of bytes to write.
  * @param data          Data to write to flash.  Must be 32-bit aligned.
  */
-int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
+int FLASH_DMA_CODE crec_flash_physical_write(int offset, int size,
+					     const char *data)
 {
 	int ret = EC_ERROR_UNKNOWN;
 
@@ -452,7 +452,11 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 	interrupt_disable();
 
 	dma_flash_write(offset, size, data);
+#ifdef IMMU_CACHE_TAG_INVALID
 	dma_reset_immu((offset + size) >= IMMU_TAG_INDEX_BY_DEFAULT);
+#else
+	dma_reset_immu(0);
+#endif
 	/*
 	 * Internal flash of N8 or RISC-V core is ILM(Instruction Local Memory)
 	 * mapped, but RISC-V's ILM base address is 0x80000000.
@@ -475,7 +479,7 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
  * @param offset        Flash offset to erase.
  * @param size          Number of bytes to erase.
  */
-int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
+int FLASH_DMA_CODE crec_flash_physical_erase(int offset, int size)
 {
 	int v_size = size, v_addr = offset, ret = EC_ERROR_UNKNOWN;
 
@@ -496,8 +500,29 @@ int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
 	for (; size > 0; size -= FLASH_SECTOR_ERASE_SIZE) {
 		dma_flash_erase(offset, FLASH_CMD_SECTOR_ERASE);
 		offset += FLASH_SECTOR_ERASE_SIZE;
+		/*
+		 * If requested erase size is too large at one time on KGD
+		 * flash, we need to reload watchdog to prevent the reset.
+		 */
+		if (IS_ENABLED(IT83XX_CHIP_FLASH_IS_KGD) && (size > 0x10000))
+			watchdog_reload();
+			/*
+			 * EC still need to handle AP's EC_CMD_GET_COMMS_STATUS
+			 * command during erasing.
+			 */
+#ifdef IT83XX_IRQ_SPI_PERIPHERAL
+		if (IS_ENABLED(CONFIG_SPI) && IS_ENABLED(HAS_TASK_HOSTCMD) &&
+		    IS_ENABLED(CONFIG_HOST_COMMAND_STATUS)) {
+			if (IT83XX_SPI_RX_VLISR & IT83XX_SPI_RVLI)
+				task_trigger_irq(IT83XX_IRQ_SPI_PERIPHERAL);
+		}
+#endif
 	}
+#ifdef IMMU_CACHE_TAG_INVALID
 	dma_reset_immu((v_addr + v_size) >= IMMU_TAG_INDEX_BY_DEFAULT);
+#else
+	dma_reset_immu(0);
+#endif
 	/* get the ILM address of a flash offset. */
 	v_addr |= CONFIG_MAPPED_STORAGE_BASE;
 	ret = dma_flash_verify(v_addr, v_size, NULL);
@@ -513,7 +538,7 @@ int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
  * @param bank    Bank index to check.
  * @return        non-zero if bank is protected until reboot.
  */
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	return IT83XX_GCTRL_EWPR0PFEC(FWP_REG(bank)) & FWP_MASK(bank);
 }
@@ -524,21 +549,20 @@ int flash_physical_get_protect(int bank)
  * @param all      Protect all (=1) or just read-only and pstate (=0).
  * @return         non-zero if error.
  */
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		/* Protect the entire flash */
-		flash_protect_banks(0,
-			CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
+		flash_protect_banks(
+			0, CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
 			FLASH_WP_EC);
 		all_protected = 1;
 	} else {
 		/* Protect the read-only section and persistent state */
-		flash_protect_banks(WP_BANK_OFFSET,
-			WP_BANK_COUNT, FLASH_WP_EC);
+		flash_protect_banks(WP_BANK_OFFSET, WP_BANK_COUNT, FLASH_WP_EC);
 #ifdef PSTATE_BANK
-		flash_protect_banks(PSTATE_BANK,
-			PSTATE_BANK_COUNT, FLASH_WP_EC);
+		flash_protect_banks(PSTATE_BANK, PSTATE_BANK_COUNT,
+				    FLASH_WP_EC);
 #endif
 	}
 
@@ -558,7 +582,7 @@ int flash_physical_protect_now(int all)
  *
  * Uses the EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -583,10 +607,9 @@ uint32_t flash_physical_get_protect_flags(void)
  *
  * @return   A combination of EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
@@ -596,7 +619,7 @@ uint32_t flash_physical_get_valid_flags(void)
  * @param    cur_flags The current flash protect flags.
  * @return   A combination of EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -615,9 +638,38 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
+static void flash_enable_second_ilm(void)
+{
+#ifdef CHIP_CORE_RISCV
+	/* Make sure no interrupt while enable static cache */
+	interrupt_disable();
+
+	/* Invalid ILM0 */
+	IT83XX_GCTRL_RVILMCR0 &= ~ILMCR_ILM0_ENABLE;
+	IT83XX_SMFI_SCAR0H = BIT(3);
+	/* copy code to ram */
+	memcpy((void *)CHIP_RAMCODE_ILM0, (const void *)FLASH_ILM0_ADDR,
+	       IT83XX_ILM_BLOCK_SIZE);
+	/*
+	 * Set the logic memory address(flash code of RO/RW) in flash
+	 * by programming the register SCAR0x bit19-bit0.
+	 */
+	IT83XX_SMFI_SCAR0L = FLASH_ILM0_ADDR & GENMASK(7, 0);
+	IT83XX_SMFI_SCAR0M = (FLASH_ILM0_ADDR >> 8) & GENMASK(7, 0);
+	IT83XX_SMFI_SCAR0H = (FLASH_ILM0_ADDR >> 16) & GENMASK(2, 0);
+	if (FLASH_ILM0_ADDR & BIT(19))
+		IT83XX_SMFI_SCAR0H |= BIT(7);
+	else
+		IT83XX_SMFI_SCAR0H &= ~BIT(7);
+	/* Enable ILM 0 */
+	IT83XX_GCTRL_RVILMCR0 |= ILMCR_ILM0_ENABLE;
+
+	interrupt_enable();
+#endif
+}
+
 static void flash_code_static_dma(void)
 {
-
 	/* Make sure no interrupt while enable static DMA */
 	interrupt_disable();
 
@@ -630,7 +682,7 @@ static void flash_code_static_dma(void)
 	if (IS_ENABLED(CHIP_CORE_NDS32))
 		IT83XX_GCTRL_MCCR2 |= IT83XX_DLM14_ENABLE;
 	memcpy((void *)CHIP_RAMCODE_BASE, (const void *)FLASH_DMA_START,
-		IT83XX_ILM_BLOCK_SIZE);
+	       IT83XX_ILM_BLOCK_SIZE);
 	if (IS_ENABLED(CHIP_CORE_RISCV))
 		IT83XX_GCTRL_RVILMCR0 |= ILMCR_ILM2_ENABLE;
 	/* Disable DLM 56k~60k region and be the ram code section */
@@ -669,7 +721,7 @@ static void flash_code_static_dma(void)
  *
  * Applies at-boot protection settings if necessary.
  */
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	int32_t reset_flags, prot_flags, unwanted_prot_flags;
 
@@ -678,11 +730,16 @@ int flash_pre_init(void)
 	if (IS_ENABLED(IT83XX_CHIP_FLASH_IS_KGD))
 		IT83XX_SMFI_FLHCTRL6R |= IT83XX_SMFI_MASK_ECINDPP;
 	flash_code_static_dma();
+	/*
+	 * Enable second ilm (ILM0 of it8xxx2 series), so we can pull more code
+	 * (4kB) into static cache to save latency of fetching code from flash.
+	 */
+	flash_enable_second_ilm();
 
 	reset_flags = system_get_reset_flags();
-	prot_flags = flash_get_protect();
+	prot_flags = crec_flash_get_protect();
 	unwanted_prot_flags = EC_FLASH_PROTECT_ALL_NOW |
-		EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+			      EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 
 	/*
 	 * If we have already jumped between images, an earlier image could
@@ -693,12 +750,12 @@ int flash_pre_init(void)
 
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
 		/* Protect the entire flash of host interface */
-		flash_protect_banks(0,
-			CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
+		flash_protect_banks(
+			0, CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
 			FLASH_WP_HOST);
 		/* Protect the entire flash of DBGR interface */
-		flash_protect_banks(0,
-			CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
+		flash_protect_banks(
+			0, CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
 			FLASH_WP_DBGR);
 		/*
 		 * Write protect is asserted.  If we want RO flash protected,
@@ -706,13 +763,14 @@ int flash_pre_init(void)
 		 */
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
-			int rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
-						   EC_FLASH_PROTECT_RO_NOW);
+			int rv =
+				crec_flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
+						       EC_FLASH_PROTECT_RO_NOW);
 			if (rv)
 				return rv;
 
 			/* Re-read flags */
-			prot_flags = flash_get_protect();
+			prot_flags = crec_flash_get_protect();
 		}
 	} else {
 		/* Don't want RO flash protected */

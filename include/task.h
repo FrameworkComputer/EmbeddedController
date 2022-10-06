@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,8 +8,10 @@
 #ifndef __CROS_EC_TASK_H
 #define __CROS_EC_TASK_H
 
+#include "atomic_t.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include <stdbool.h>
 #include "task_id.h"
 
 /* Task event bitmasks */
@@ -20,48 +22,47 @@
 #define TASK_EVENT_SYSJUMP_READY BIT(16)
 
 /* Used to signal that IPC layer is available for sending new data */
-#define TASK_EVENT_IPC_READY	BIT(17)
+#define TASK_EVENT_IPC_READY BIT(17)
 
-#define TASK_EVENT_PD_AWAKE	BIT(18)
+#define TASK_EVENT_PD_AWAKE BIT(18)
 
 /* npcx peci event */
-#define TASK_EVENT_PECI_DONE	BIT(19)
+#define TASK_EVENT_PECI_DONE BIT(19)
 
 /* I2C tx/rx interrupt handler completion event. */
 #ifdef CHIP_STM32
-#define TASK_EVENT_I2C_COMPLETION(port) \
-				(1 << ((port) + 20))
-#define TASK_EVENT_I2C_IDLE	(TASK_EVENT_I2C_COMPLETION(0))
-#define TASK_EVENT_MAX_I2C	6
+#define TASK_EVENT_I2C_COMPLETION(port) (1 << ((port) + 20))
+#define TASK_EVENT_I2C_IDLE (TASK_EVENT_I2C_COMPLETION(0))
+#define TASK_EVENT_MAX_I2C 6
 #ifdef I2C_PORT_COUNT
 #if (I2C_PORT_COUNT > TASK_EVENT_MAX_I2C)
 #error "Too many i2c ports for i2c events"
 #endif
 #endif
 #else
-#define TASK_EVENT_I2C_IDLE	BIT(20)
-#define TASK_EVENT_PS2_DONE	BIT(21)
+#define TASK_EVENT_I2C_IDLE BIT(20)
+#define TASK_EVENT_PS2_DONE BIT(21)
 #endif
 
 /* DMA transmit complete event */
-#define TASK_EVENT_DMA_TC       BIT(26)
+#define TASK_EVENT_DMA_TC BIT(26)
 /* ADC interrupt handler event */
-#define TASK_EVENT_ADC_DONE	BIT(27)
+#define TASK_EVENT_ADC_DONE BIT(27)
 /*
  * task_reset() that was requested has been completed
  *
  * For test-only builds, may be used by some tasks to restart themselves.
  */
-#define TASK_EVENT_RESET_DONE   BIT(28)
+#define TASK_EVENT_RESET_DONE BIT(28)
 /* task_wake() called on task */
-#define TASK_EVENT_WAKE		BIT(29)
+#define TASK_EVENT_WAKE BIT(29)
 /* Mutex unlocking */
-#define TASK_EVENT_MUTEX	BIT(30)
+#define TASK_EVENT_MUTEX BIT(30)
 /*
  * Timer expired.  For example, task_wait_event() timed out before receiving
  * another event.
  */
-#define TASK_EVENT_TIMER	(1U << 31)
+#define TASK_EVENT_TIMER (1U << 31)
 
 /* Maximum time for task_wait_event() */
 #define TASK_MAX_WAIT_US 0x7fffffff
@@ -80,14 +81,50 @@ void interrupt_disable(void);
 void interrupt_enable(void);
 
 /**
+ * Check if interrupts are enabled
+ */
+bool is_interrupt_enabled(void);
+
+/*
+ * Define irq_lock and irq_unlock that match the function signatures to Zephyr's
+ * functions. In reality, these simply call the current implementation of
+ * interrupt_disable() and interrupt_enable().
+ */
+#ifndef CONFIG_ZEPHYR
+/**
+ * Perform the same operation as interrupt_disable but allow nesting. The
+ * return value from this function should be used as the argument to
+ * irq_unlock. Do not attempt to parse the value, it is a representation
+ * of the state and not an indication of any form of count.
+ *
+ * For more information see:
+ * https://docs.zephyrproject.org/latest/reference/kernel/other/interrupts.html#c.irq_lock
+ *
+ * @return Lock key to use for restoring the state via irq_unlock.
+ */
+uint32_t irq_lock(void);
+
+/**
+ * Perform the same operation as interrupt_enable but allow nesting. The key
+ * should be the unchanged value returned by irq_lock.
+ *
+ * For more information see:
+ * https://docs.zephyrproject.org/latest/reference/kernel/other/interrupts.html#c.irq_unlock
+ *
+ * @param key The lock-out key used to restore the interrupt state.
+ */
+void irq_unlock(uint32_t key);
+#endif /* CONFIG_ZEPHYR */
+
+/**
  * Return true if we are in interrupt context.
  */
-int in_interrupt_context(void);
+bool in_interrupt_context(void);
 
 /**
  * Return true if we are in software interrupt context.
  */
-int in_soft_interrupt_context(void);
+bool in_soft_interrupt_context(void);
 
 /**
  * Return current interrupt mask with disabling interrupt. Meaning is
@@ -111,12 +148,8 @@ void set_int_mask(uint32_t val);
  *
  * @param tskid		Task to set event for
  * @param event		Event bitmap to set (TASK_EVENT_*)
- * @param wait		If non-zero, after setting the event, de-schedule the
- *			calling task to wait for a response event.  Ignored in
- *			interrupt context.
- * @return		The bitmap of events which occurred if wait!=0, else 0.
  */
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait);
+void task_set_event(task_id_t tskid, uint32_t event);
 
 /**
  * Wake a task.  This sends it the TASK_EVENT_WAKE event.
@@ -125,7 +158,7 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait);
  */
 static inline void task_wake(task_id_t tskid)
 {
-	task_set_event(tskid, TASK_EVENT_WAKE, 0);
+	task_set_event(tskid, TASK_EVENT_WAKE);
 }
 
 /**
@@ -133,10 +166,27 @@ static inline void task_wake(task_id_t tskid)
  */
 task_id_t task_get_current(void);
 
+#ifdef CONFIG_ZEPHYR
+/**
+ * Check if this current task is running in deferred context
+ */
+bool in_deferred_context(void);
+#else
+/* All ECOS deferred calls run from the HOOKS task */
+static inline bool in_deferred_context(void)
+{
+#ifdef HAS_TASK_HOOKS
+	return (task_get_current() == TASK_ID_HOOKS);
+#else
+	return false;
+#endif /* HAS_TASK_HOOKS */
+}
+#endif /* CONFIG_ZEPHYR */
+
 /**
  * Return a pointer to the bitmap of events of the task.
  */
-uint32_t *task_get_event_bitmap(task_id_t tskid);
+atomic_t *task_get_event_bitmap(task_id_t tskid);
 
 /**
  * Wait for the next event.
@@ -325,10 +375,33 @@ int task_reset(task_id_t id, int wait);
  */
 void task_clear_pending_irq(int irq);
 
+/**
+ * Check if irq is pending.
+ *
+ * Returns true if interrupt with given number is pending, false otherwise.
+ */
+bool task_is_irq_pending(int irq);
+
+#ifdef CONFIG_ZEPHYR
+typedef struct k_mutex mutex_t;
+
+#define mutex_lock(mtx) (k_mutex_lock(mtx, K_FOREVER))
+#define mutex_unlock(mtx) (k_mutex_unlock(mtx))
+#else
 struct mutex {
 	uint32_t lock;
-	uint32_t waiters;
+	atomic_t waiters;
 };
+
+typedef struct mutex mutex_t;
+
+/**
+ * K_MUTEX_DEFINE is a macro normally provided by the Zephyr kernel,
+ * and allows creation of a static mutex without the need to
+ * initialize it.  We provide the same macro for CrOS EC OS so that we
+ * can use it in shared code.
+ */
+#define K_MUTEX_DEFINE(name) static mutex_t name = {}
 
 /**
  * Lock a mutex.
@@ -338,12 +411,16 @@ struct mutex {
  *
  * Must not be used in interrupt context!
  */
-void mutex_lock(struct mutex *mtx);
+void mutex_lock(mutex_t *mtx);
 
 /**
  * Release a mutex previously locked by the same task.
  */
-void mutex_unlock(struct mutex *mtx);
+void mutex_unlock(mutex_t *mtx);
+
+/** Zephyr will try to init the mutex using `k_mutex_init()`. */
+#define k_mutex_init(mutex) 0
+#endif /* CONFIG_ZEPHYR */
 
 struct irq_priority {
 	uint8_t irq;
@@ -371,6 +448,7 @@ struct irq_def {
  * Implement the DECLARE_IRQ(irq, routine, priority) macro which is
  * a core specific helper macro to declare an interrupt handler "routine".
  */
+#ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_COMMON_RUNTIME
 #include "irq_handler.h"
 #else
@@ -378,11 +456,15 @@ struct irq_def {
 #define IRQ_HANDLER_OPT(irqname) CONCAT3(irq_, irqname, _handler_optional)
 #define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
 #define DECLARE_IRQ_(irq, routine, priority) \
-	void IRQ_HANDLER_OPT(irq)(void) __attribute__((alias(#routine)));
+	static void __keep routine(void);    \
+	void IRQ_HANDLER_OPT(irq)(void) __attribute__((alias(#routine)))
 
 /* Include ec.irqlist here for compilation dependency */
 #define ENABLE_IRQ(x)
+#if !defined(CONFIG_DFU_BOOTMANAGER_MAIN)
 #include "ec.irqlist"
-#endif
+#endif /* !defined(CONFIG_DFU_BOOTMANAGER_MAIN) */
+#endif /* CONFIG_COMMON_RUNTIME */
+#endif /* !CONFIG_ZEPHYR */
 
-#endif  /* __CROS_EC_TASK_H */
+#endif /* __CROS_EC_TASK_H */

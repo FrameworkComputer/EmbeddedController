@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,7 +9,8 @@
 /*
  * Only defined for C: https://en.cppreference.com/w/c/language/_Noreturn
  *
- * C++ uses [[noreturn]]: https://en.cppreference.com/w/cpp/language/attributes/noreturn
+ * C++ uses [[noreturn]]:
+ * https://en.cppreference.com/w/cpp/language/attributes/noreturn
  */
 #ifndef __cplusplus
 #ifndef noreturn

@@ -1,11 +1,10 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 /* Hardware initialization and common functions */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "cpu.h"
 #include "registers.h"
@@ -40,16 +39,16 @@ static void power_init(void)
 	/* enable TIM2, TIM3, TIM14, PWR */
 	STM32_RCC_APB1ENR = 0x10000103;
 	/* enable DMA, SRAM, CRC, GPA, GPB, GPF */
-	STM32_RCC_AHBENR  = 0x460045;
+	STM32_RCC_AHBENR = 0x460045;
 }
 
 /* GPIO setting helpers */
-#define OUT(n) (1 << ((n) * 2))
-#define AF(n) (2 << ((n) * 2))
-#define ANALOG(n) (3 << ((n) * 2))
+#define OUT(n) (1 << ((n)*2))
+#define AF(n) (2 << ((n)*2))
+#define ANALOG(n) (3 << ((n)*2))
 #define HIGH(n) (1 << (n))
 #define ODR(n) (1 << (n))
-#define HISPEED(n) (3 << ((n) * 2))
+#define HISPEED(n) (3 << ((n)*2))
 #define AFx(n, x) (x << (((n) % 8) * 4))
 
 static void pins_init(void)
@@ -84,9 +83,9 @@ static void pins_init(void)
 	STM32_GPIO_AFRH(GPIO_A) = AFx(9, 1) | AFx(10, 1);
 	STM32_GPIO_OTYPER(GPIO_A) = ODR(4);
 	STM32_GPIO_OSPEEDR(GPIO_A) = HISPEED(5) | HISPEED(6) | HISPEED(7);
-	STM32_GPIO_MODER(GPIO_A) = OUT(0) | ANALOG(1) | ANALOG(2) | ANALOG(3)
-				 | OUT(4) | AF(5) /*| AF(6)*/ | AF(7) | AF(9)
-				 | AF(10) | OUT(13) | OUT(14);
+	STM32_GPIO_MODER(GPIO_A) = OUT(0) | ANALOG(1) | ANALOG(2) | ANALOG(3) |
+				   OUT(4) | AF(5) /*| AF(6)*/ | AF(7) | AF(9) |
+				   AF(10) | OUT(13) | OUT(14);
 	/* set PF0 / PF1 as output */
 	STM32_GPIO_ODR(GPIO_F) = 0;
 	STM32_GPIO_MODER(GPIO_F) = OUT(0) | OUT(1);
@@ -108,7 +107,8 @@ static void adc_init(void)
 			;
 	}
 	/* Single conversion, right aligned, 12-bit */
-	STM32_ADC_CFGR1 = BIT(12); /* BIT(15) => AUTOOFF */;
+	STM32_ADC_CFGR1 = BIT(12); /* BIT(15) => AUTOOFF */
+	;
 	/* clock is ADCCLK (ADEN must be off when writing this reg) */
 	STM32_ADC_CFGR2 = 0;
 	/* Sampling time : 71.5 ADC clock cycles, about 5us */
@@ -133,8 +133,8 @@ static void uart_init(void)
 	STM32_USART_BRR(UARTN_BASE) =
 		DIV_ROUND_NEAREST(CPU_CLOCK, CONFIG_UART_BAUD_RATE);
 	/* UART enabled, 8 Data bits, oversampling x16, no parity */
-	STM32_USART_CR1(UARTN_BASE) =
-		STM32_USART_CR1_UE | STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_UE | STM32_USART_CR1_TE |
+				      STM32_USART_CR1_RE;
 	/* 1 stop bit, no fancy stuff */
 	STM32_USART_CR2(UARTN_BASE) = 0x0000;
 	/* DMA disabled, special modes disabled, error interrupt disabled */
@@ -201,7 +201,7 @@ static int watchdog_ain_id, watchdog_ain_high, watchdog_ain_low;
 static int adc_enable_last_watchdog(void)
 {
 	return adc_enable_watchdog(watchdog_ain_id, watchdog_ain_high,
-			    watchdog_ain_low);
+				   watchdog_ain_low);
 }
 
 static inline int adc_watchdog_enabled(void)
@@ -249,8 +249,7 @@ int adc_enable_watchdog(int ch, int high, int low)
 	/* Clear flags */
 	STM32_ADC_ISR = 0x8e;
 	/* Set Watchdog enable bit on a single channel / continuous mode */
-	STM32_ADC_CFGR1 = (ch << 26) | BIT(23) | BIT(22)
-			|  BIT(13) | BIT(12);
+	STM32_ADC_CFGR1 = (ch << 26) | BIT(23) | BIT(22) | BIT(13) | BIT(12);
 	/* Enable watchdog interrupt */
 	STM32_ADC_IER = BIT(7);
 	/* Start continuous conversion */
@@ -290,25 +289,26 @@ int adc_disable_watchdog(void)
 	(FLASH_TIMEOUT_US * (CPU_CLOCK / SECOND) / CYCLE_PER_FLASH_LOOP)
 
 /* Flash unlocking keys */
-#define KEY1    0x45670123
-#define KEY2    0xCDEF89AB
+#define KEY1 0x45670123
+#define KEY2 0xCDEF89AB
 
 /* Lock bits for FLASH_CR register */
-#define PG       BIT(0)
-#define PER      BIT(1)
-#define OPTPG    BIT(4)
-#define OPTER    BIT(5)
-#define STRT     BIT(6)
-#define CR_LOCK  BIT(7)
-#define OPTWRE   BIT(9)
+#define PG BIT(0)
+#define PER BIT(1)
+#define OPTPG BIT(4)
+#define OPTER BIT(5)
+#define STRT BIT(6)
+#define CR_LOCK BIT(7)
+#define OPTWRE BIT(9)
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	uint16_t *address = (uint16_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	int res = EC_SUCCESS;
 	int i;
 
-	if ((uint32_t)address > CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE)
+	if ((uint32_t)address >
+	    CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* unlock CR if needed */
@@ -353,7 +353,7 @@ exit_wr:
 	return res;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
 
@@ -369,13 +369,12 @@ int flash_physical_erase(int offset, int size)
 	STM32_FLASH_CR |= PER;
 
 	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
-	     offset += CONFIG_FLASH_ERASE_SIZE) {
+			 offset += CONFIG_FLASH_ERASE_SIZE) {
 		int i;
 		/* select page to erase */
 		STM32_FLASH_AR = CONFIG_PROGRAM_MEMORY_BASE + offset;
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR |= STRT;
-
 
 		/* Wait for erase to complete */
 		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP);
@@ -434,7 +433,6 @@ static void unlock_erase_optb(void)
 	STM32_FLASH_CR = OPTWRE;
 }
 
-
 static void write_optb(int byte, uint8_t value)
 {
 	volatile int16_t *hword = (uint16_t *)(STM32_OPTB_BASE + byte);
@@ -464,7 +462,7 @@ void flash_physical_permanent_protect(void)
 	/* Set RDP to level 1 to prevent disabling the protection */
 	write_optb(0, 0x11);
 	/* Reset by using OBL_LAUNCH to take changes into account */
-	asm volatile("cpsid i");
+	interrupt_disable();
 	STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
 	/* Spin and wait for reboot; should never return */
 	while (1)
@@ -475,6 +473,6 @@ int flash_physical_is_permanently_protected(void)
 {
 	/* if RDP is still at level 0, the flash protection is not in place */
 	return (STM32_FLASH_OBR & STM32_FLASH_OBR_RDP_MASK) &&
-		/* the low 16KB (RO partition) are write-protected */
-		!(STM32_FLASH_WRPR & 0xF);
+	       /* the low 16KB (RO partition) are write-protected */
+	       !(STM32_FLASH_WRPR & 0xF);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -20,6 +20,7 @@
 #include "temp_sensor.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 /*
@@ -27,9 +28,13 @@
  * GPIO ports.  This maps back to 0, which is then ignored by the host GPIO mock
  * code.
  */
-#define GPIO_0  0
+#define GPIO_0 0
 
 #include "gpio_list.h"
+
+test_mockable const struct tcpc_config_t tcpc_config[] = {
+	[0] = {},
+};
 
 test_mockable enum battery_present battery_is_present(void)
 {
@@ -43,10 +48,10 @@ test_mockable_static int mock_temp_get_val(int idx, int *temp_ptr)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"CPU", TEMP_SENSOR_TYPE_CPU, mock_temp_get_val, 0},
-	{"Board", TEMP_SENSOR_TYPE_BOARD, mock_temp_get_val, 1},
-	{"Case", TEMP_SENSOR_TYPE_CASE, mock_temp_get_val, 2},
-	{"Battery", TEMP_SENSOR_TYPE_BOARD, mock_temp_get_val, 3},
+	{ "CPU", TEMP_SENSOR_TYPE_CPU, mock_temp_get_val, 0 },
+	{ "Board", TEMP_SENSOR_TYPE_BOARD, mock_temp_get_val, 1 },
+	{ "Case", TEMP_SENSOR_TYPE_CASE, mock_temp_get_val, 2 },
+	{ "Battery", TEMP_SENSOR_TYPE_BOARD, mock_temp_get_val, 3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -62,20 +67,38 @@ test_mockable void fps_event(enum gpio_signal signal)
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
 #ifdef I2C_PORT_BATTERY
-	{"battery", I2C_PORT_BATTERY, 100,  0, 0},
+	{ .name = "battery",
+	  .port = I2C_PORT_BATTERY,
+	  .kbps = 100,
+	  .scl = 0,
+	  .sda = 0 },
 #elif defined I2C_PORT_LIGHTBAR
-	{"lightbar", I2C_PORT_LIGHTBAR, 100,  0, 0},
+	{ .name = "lightbar",
+	  .port = I2C_PORT_LIGHTBAR,
+	  .kbps = 100,
+	  .scl = 0,
+	  .sda = 0 },
 #elif defined I2C_PORT_HOST_TCPC
-	{"tcpc", I2C_PORT_HOST_TCPC, 100,  0, 0},
+	{ .name = "tcpc",
+	  .port = I2C_PORT_HOST_TCPC,
+	  .kbps = 100,
+	  .scl = 0,
+	  .sda = 0 },
 #elif defined I2C_PORT_EEPROM
-	{"eeprom", I2C_PORT_EEPROM, 100, 0, 0},
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 100,
+	  .scl = 0,
+	  .sda = 0 },
+#elif defined I2C_PORT_WLC
+	{ .name = "wlc", .port = I2C_PORT_WLC, .kbps = 100, .scl = 0, .sda = 0 },
 #endif
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 #endif
 
-#ifdef CONFIG_SPI_MASTER
+#ifdef CONFIG_SPI_CONTROLLER
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	/* Fingerprint sensor (SCLK at 4Mhz) */
@@ -102,11 +125,10 @@ int board_get_entropy(void *buffer, int len)
 }
 #endif
 
-static uint8_t eeprom[CBI_EEPROM_SIZE];
+static uint8_t eeprom[CBI_IMAGE_SIZE];
 
-int eeprom_i2c_xfer(int port, uint16_t addr_flags,
-		    const uint8_t *out, int out_size,
-		    uint8_t *in, int in_size, int flags)
+int eeprom_i2c_xfer(int port, uint16_t addr_flags, const uint8_t *out,
+		    int out_size, uint8_t *in, int in_size, int flags)
 {
 	static int offset;
 

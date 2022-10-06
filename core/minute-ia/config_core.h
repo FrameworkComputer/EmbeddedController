@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -29,6 +29,6 @@
 /*
  * Flag indicates the task uses FPU H/W
  */
-#define MIA_TASK_FLAG_USE_FPU                   0x00000001
+#define MIA_TASK_FLAG_USE_FPU 0x00000001
 
 #endif /* __CROS_EC_CONFIG_CORE_H */

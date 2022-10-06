@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -31,8 +31,8 @@
 #define POWER_LED_OFF 0
 #endif
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED, EC_LED_ID_POWER_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -42,7 +42,7 @@ enum led_color {
 	LED_AMBER,
 	LED_GREEN,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int bat_led_set_color(enum led_color color)
@@ -108,15 +108,18 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	case EC_LED_ID_BATTERY_LED:
 		gpio_set_level(GPIO_BAT_LED_RED,
 			       (brightness[EC_LED_COLOR_RED] != 0) ?
-					BAT_LED_ON : BAT_LED_OFF);
+				       BAT_LED_ON :
+				       BAT_LED_OFF);
 		gpio_set_level(GPIO_BAT_LED_GREEN,
 			       (brightness[EC_LED_COLOR_GREEN] != 0) ?
-					BAT_LED_ON : BAT_LED_OFF);
+				       BAT_LED_ON :
+				       BAT_LED_OFF);
 		break;
 	case EC_LED_ID_POWER_LED:
 		gpio_set_level(GPIO_POWER_LED,
 			       (brightness[EC_LED_COLOR_WHITE] != 0) ?
-					POWER_LED_ON : POWER_LED_OFF);
+				       POWER_LED_ON :
+				       POWER_LED_OFF);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -124,7 +127,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
-#ifdef HAS_TASK_CHIPSET
+#ifdef CONFIG_AP_POWER_CONTROL
 static void std_led_shutdown(void)
 {
 	pwr_led_set_color(LED_OFF);
@@ -149,7 +152,6 @@ static void std_led_set_power(void)
 static void std_led_set_battery(void)
 {
 	static int battery_second;
-	uint32_t chflags = charge_get_flags();
 
 	battery_second++;
 
@@ -163,11 +165,11 @@ static void std_led_set_battery(void)
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (charge_get_percent() < 3)
-			bat_led_set_color((battery_second & 1)
-					? LED_OFF : LED_AMBER);
+			bat_led_set_color((battery_second & 1) ? LED_OFF :
+								 LED_AMBER);
 		else if (charge_get_percent() < 10)
-			bat_led_set_color((battery_second & 3)
-					? LED_OFF : LED_AMBER);
+			bat_led_set_color((battery_second & 3) ? LED_OFF :
+								 LED_AMBER);
 		else
 			bat_led_set_color(LED_OFF);
 		break;
@@ -178,11 +180,11 @@ static void std_led_set_battery(void)
 		bat_led_set_color(LED_GREEN);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			bat_led_set_color(
-				(battery_second & 0x2) ? LED_GREEN : LED_AMBER);
-		else
-			bat_led_set_color(LED_GREEN);
+		bat_led_set_color(LED_GREEN);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		bat_led_set_color((battery_second & 0x2) ? LED_GREEN :
+							   LED_AMBER);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -199,4 +201,3 @@ static void led_second(void)
 		std_led_set_battery();
 }
 DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
-

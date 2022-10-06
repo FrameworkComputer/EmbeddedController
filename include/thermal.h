@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -27,4 +27,4 @@ int thermal_fan_percent(int low, int high, int cur);
  */
 void board_override_fan_control(int fan, int *tmp);
 
-#endif  /* __CROS_EC_THERMAL_H */
+#endif /* __CROS_EC_THERMAL_H */

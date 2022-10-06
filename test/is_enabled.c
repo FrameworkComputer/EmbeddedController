@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -7,8 +7,8 @@
 #include "common.h"
 #include "test_util.h"
 
-#undef	CONFIG_UNDEFINED
-#define	CONFIG_BLANK
+#undef CONFIG_UNDEFINED
+#define CONFIG_BLANK
 
 static int test_undef(void)
 {
@@ -24,7 +24,7 @@ static int test_blank(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

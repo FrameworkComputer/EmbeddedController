@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,24 +10,23 @@
 
 #ifdef SS_SUBSYSTEM_DEBUG
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_LPC, format, ##args)
 #else
 #define CPUTS(outstr)
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
 #endif
 
-
 /* the following "define"s and structures are from host driver
  * and they are slightly modified for look&feel purpose.
  */
-#define SYSTEM_STATE_SUBSCRIBE		0x1
-#define SYSTEM_STATE_STATUS		0x2
-#define SYSTEM_STATE_QUERY_SUBSCRIBERS	0x3
-#define SYSTEM_STATE_STATE_CHANGE_REQ	0x4
+#define SYSTEM_STATE_SUBSCRIBE 0x1
+#define SYSTEM_STATE_STATUS 0x2
+#define SYSTEM_STATE_QUERY_SUBSCRIBERS 0x3
+#define SYSTEM_STATE_STATE_CHANGE_REQ 0x4
 
-#define SUSPEND_STATE_BIT		BIT(1) /* suspend/resume */
+#define SUSPEND_STATE_BIT BIT(1) /* suspend/resume */
 
 /* Cached state of ISH's requested power rails when AP suspends */
 static uint32_t cached_vnn_request;
@@ -67,7 +66,7 @@ struct ss_state_change_req {
  * "struct ss_subsys_device" in it and calls ss_subsys_register_client() like
  * HECI client.
  */
-#define MAX_SS_CLIENTS				HECI_MAX_NUM_OF_CLIENTS
+#define MAX_SS_CLIENTS HECI_MAX_NUM_OF_CLIENTS
 
 struct ss_subsystem_context {
 	uint32_t registered_state;
@@ -103,7 +102,7 @@ static int ss_subsys_suspend(void)
 	for (i = ss_subsys_ctx.num_of_ss_client - 1; i >= 0; i--) {
 		if (ss_subsys_ctx.clients[i]->cbs->suspend)
 			ss_subsys_ctx.clients[i]->cbs->suspend(
-						ss_subsys_ctx.clients[i]);
+				ss_subsys_ctx.clients[i]);
 	}
 
 	/*
@@ -126,8 +125,7 @@ static int ss_subsys_resume(void)
 	/*
 	 * Restore VNN power request from before suspend.
 	 */
-	if (IS_ENABLED(CHIP_FAMILY_ISH5) &&
-	    cached_vnn_request) {
+	if (IS_ENABLED(CHIP_FAMILY_ISH5) && cached_vnn_request) {
 		/* Request all cached power rails that are not already on. */
 		PMU_VNN_REQ = cached_vnn_request & ~PMU_VNN_REQ;
 		/* Wait for power request to get acknowledged */
@@ -138,7 +136,7 @@ static int ss_subsys_resume(void)
 	for (i = 0; i < ss_subsys_ctx.num_of_ss_client; i++) {
 		if (ss_subsys_ctx.clients[i]->cbs->resume)
 			ss_subsys_ctx.clients[i]->cbs->resume(
-						ss_subsys_ctx.clients[i]);
+				ss_subsys_ctx.clients[i]);
 	}
 
 	return EC_SUCCESS;

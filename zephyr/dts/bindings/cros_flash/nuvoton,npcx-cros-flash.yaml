@@ -1,0 +1,8 @@
+# Copyright 2020 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Nuvoton, NPCX-cros-flash node
+
+compatible: "nuvoton,npcx-cros-flash"
+
+include: cros-flash-controller.yaml

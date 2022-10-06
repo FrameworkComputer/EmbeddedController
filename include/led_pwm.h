@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,22 @@
 
 #include "ec_commands.h"
 
-#define PWM_LED_NO_CHANNEL -1
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/drivers/pwm.h>
+#endif
+
+#ifdef CONFIG_ZEPHYR
+#define PWM_LED_NO_CHANNEL NULL
+
+struct pwm_led {
+	const struct pwm_dt_spec *ch0;
+	const struct pwm_dt_spec *ch1;
+	const struct pwm_dt_spec *ch2;
+
+	void (*set_duty)(const struct pwm_dt_spec *pwm, int percent);
+};
+#else
+#define PWM_LED_NO_CHANNEL ((enum pwm_channel)(-1))
 
 struct pwm_led {
 	enum pwm_channel ch0;
@@ -17,6 +32,13 @@ struct pwm_led {
 
 	void (*enable)(enum pwm_channel ch, int enabled);
 	void (*set_duty)(enum pwm_channel ch, int percent);
+};
+#endif
+
+struct pwm_led_color_map {
+	uint8_t ch0;
+	uint8_t ch1;
+	uint8_t ch2;
 };
 
 enum pwm_led_id {
@@ -38,7 +60,7 @@ enum pwm_led_id {
  * all applicable channels.  (e.g. A bi-color LED which has a red and green
  * channel should define all 0s for EC_LED_COLOR_BLUE and EC_LED_COLOR_WHITE.)
  */
-extern struct pwm_led led_color_map[EC_LED_COLOR_COUNT];
+extern struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT];
 
 /*
  * A map of the PWM channels to logical PWM LEDs.

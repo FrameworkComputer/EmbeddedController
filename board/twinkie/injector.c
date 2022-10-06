@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -48,26 +48,31 @@ static const struct res_cfg {
 		uint32_t flags;
 	} cfgs[2];
 } res_cfg[] = {
-	[INJ_RES_NONE]  = {"NONE"},
-	[INJ_RES_RA]    = {"RA", {{GPIO_CC1_RA, GPIO_ODR_LOW},
-				  {GPIO_CC2_RA, GPIO_ODR_LOW} } },
-	[INJ_RES_RD]    = {"RD", {{GPIO_CC1_RD, GPIO_ODR_LOW},
-				  {GPIO_CC2_RD, GPIO_ODR_LOW} } },
-	[INJ_RES_RPUSB] = {"RPUSB", {{GPIO_CC1_RPUSB, GPIO_OUT_HIGH},
-				     {GPIO_CC2_RPUSB, GPIO_OUT_HIGH} } },
-	[INJ_RES_RP1A5] = {"RP1A5", {{GPIO_CC1_RP1A5, GPIO_OUT_HIGH},
-				     {GPIO_CC2_RP1A5, GPIO_OUT_HIGH} } },
-	[INJ_RES_RP3A0] = {"RP3A0", {{GPIO_CC1_RP3A0, GPIO_OUT_HIGH},
-				     {GPIO_CC2_RP3A0, GPIO_OUT_HIGH} } },
+	[INJ_RES_NONE] = { "NONE" },
+	[INJ_RES_RA] = { "RA",
+			 { { GPIO_CC1_RA, GPIO_ODR_LOW },
+			   { GPIO_CC2_RA, GPIO_ODR_LOW } } },
+	[INJ_RES_RD] = { "RD",
+			 { { GPIO_CC1_RD, GPIO_ODR_LOW },
+			   { GPIO_CC2_RD, GPIO_ODR_LOW } } },
+	[INJ_RES_RPUSB] = { "RPUSB",
+			    { { GPIO_CC1_RPUSB, GPIO_OUT_HIGH },
+			      { GPIO_CC2_RPUSB, GPIO_OUT_HIGH } } },
+	[INJ_RES_RP1A5] = { "RP1A5",
+			    { { GPIO_CC1_RP1A5, GPIO_OUT_HIGH },
+			      { GPIO_CC2_RP1A5, GPIO_OUT_HIGH } } },
+	[INJ_RES_RP3A0] = { "RP3A0",
+			    { { GPIO_CC1_RP3A0, GPIO_OUT_HIGH },
+			      { GPIO_CC2_RP3A0, GPIO_OUT_HIGH } } },
 };
 
-#define CC_RA(cc)  (cc < PD_SRC_RD_THRESHOLD)
+#define CC_RA(cc) (cc < PD_SRC_RD_THRESHOLD)
 #define CC_RD(cc) ((cc > PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
 #define GET_POLARITY(cc1, cc2) (CC_RD(cc2) || CC_RA(cc1))
 
 #ifdef HAS_TASK_SNIFFER
 /* we don't have the default DMA handlers */
-void dma_event_interrupt_channel_3(void)
+static void dma_event_interrupt_channel_3(void)
 {
 	if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(STM32_DMAC_CH3)) {
 		dma_clear_isr(STM32_DMAC_CH3);
@@ -103,8 +108,8 @@ static inline void enable_tracing_ifneeded(int flag)
 		pd_rx_enable_monitoring(0);
 }
 
-static int send_message(int polarity, uint16_t header,
-			uint8_t cnt, const uint32_t *data)
+static int send_message(int polarity, uint16_t header, uint8_t cnt,
+			const uint32_t *data)
 {
 	int bit_len;
 
@@ -215,7 +220,7 @@ static void fsm_wait(uint32_t w)
 	uint32_t timeout_ms = INJ_ARG0(w);
 	uint32_t min_edges = INJ_ARG12(w);
 
-	wait_packet(inj_polarity,  min_edges, timeout_ms * 1000);
+	wait_packet(inj_polarity, min_edges, timeout_ms * 1000);
 #endif
 }
 
@@ -224,7 +229,7 @@ static void fsm_expect(uint32_t w)
 	uint32_t timeout_ms = INJ_ARG0(w);
 	uint8_t cmd = INJ_ARG2(w);
 
-	expect_packet(inj_polarity,  cmd, timeout_ms * 1000);
+	expect_packet(inj_polarity, cmd, timeout_ms * 1000);
 }
 static void fsm_get(uint32_t w)
 {
@@ -242,11 +247,11 @@ static void fsm_get(uint32_t w)
 		break;
 	case INJ_GET_VBUS:
 		*store_ptr = (ina2xx_get_voltage(0) & 0xffff) |
-			 ((ina2xx_get_current(0) & 0xffff) << 16);
+			     ((ina2xx_get_current(0) & 0xffff) << 16);
 		break;
 	case INJ_GET_VCONN:
 		*store_ptr = (ina2xx_get_voltage(1) & 0xffff) |
-			 ((ina2xx_get_current(1) & 0xffff) << 16);
+			     ((ina2xx_get_current(1) & 0xffff) << 16);
 		break;
 	case INJ_GET_POLARITY:
 		*store_ptr = inj_polarity;
@@ -336,9 +341,9 @@ static int fsm_run(int index)
 
 /* ------ Console commands ------ */
 
-static int hex8tou32(char *str, uint32_t *val)
+static int hex8tou32(const char *str, uint32_t *val)
 {
-	char *ptr = str;
+	const char *ptr = str;
 	uint32_t tmp = 0;
 
 	while (*ptr) {
@@ -358,7 +363,7 @@ static int hex8tou32(char *str, uint32_t *val)
 	return EC_SUCCESS;
 }
 
-static int cmd_fsm(int argc, char **argv)
+static int cmd_fsm(int argc, const char **argv)
 {
 	int index;
 	char *e;
@@ -375,8 +380,7 @@ static int cmd_fsm(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-
-static int cmd_send(int argc, char **argv)
+static int cmd_send(int argc, const char **argv)
 {
 	int pol, cnt, i;
 	uint16_t header;
@@ -396,7 +400,7 @@ static int cmd_send(int argc, char **argv)
 		return EC_ERROR_PARAM3;
 
 	for (i = 0; i < cnt; i++)
-		if (hex8tou32(argv[i+2], data + i))
+		if (hex8tou32(argv[i + 2], data + i))
 			return EC_ERROR_INVAL;
 
 	bit_len = send_message(pol, header, cnt, data);
@@ -405,15 +409,15 @@ static int cmd_send(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_cc_level(int argc, char **argv)
+static int cmd_cc_level(int argc, const char **argv)
 {
-	ccprintf("CC1 = %d mV ; CC2 = %d mV\n",
-		pd_adc_read(0, 0), pd_adc_read(0, 1));
+	ccprintf("CC1 = %d mV ; CC2 = %d mV\n", pd_adc_read(0, 0),
+		 pd_adc_read(0, 1));
 
 	return EC_SUCCESS;
 }
 
-static int cmd_resistor(int argc, char **argv)
+static int cmd_resistor(int argc, const char **argv)
 {
 	int p, r;
 
@@ -435,7 +439,7 @@ static int cmd_resistor(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_tx_clock(int argc, char **argv)
+static int cmd_tx_clock(int argc, const char **argv)
 {
 	int freq;
 	char *e;
@@ -452,7 +456,7 @@ static int cmd_tx_clock(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_rx_threshold(int argc, char **argv)
+static int cmd_rx_threshold(int argc, const char **argv)
 {
 	int mv;
 	char *e;
@@ -471,7 +475,7 @@ static int cmd_rx_threshold(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_ina_dump(int argc, char **argv, int index)
+static int cmd_ina_dump(int argc, const char **argv, int index)
 {
 	if (index == 1) { /* VCONN INA is off by default, switch it on */
 		ina2xx_write(index, INA2XX_REG_CONFIG, 0x4123);
@@ -483,7 +487,7 @@ static int cmd_ina_dump(int argc, char **argv, int index)
 	}
 
 	ccprintf("%s = %d mV ; %d mA\n", index == 0 ? "VBUS" : "VCONN",
-		ina2xx_get_voltage(index), ina2xx_get_current(index));
+		 ina2xx_get_voltage(index), ina2xx_get_current(index));
 
 	if (index == 1) /* power off VCONN INA */
 		ina2xx_write(index, INA2XX_REG_CONFIG, 0);
@@ -491,7 +495,7 @@ static int cmd_ina_dump(int argc, char **argv, int index)
 	return EC_SUCCESS;
 }
 
-static int cmd_bufwr(int argc, char **argv)
+static int cmd_bufwr(int argc, const char **argv)
 {
 	int idx, cnt, i;
 	char *e;
@@ -505,13 +509,13 @@ static int cmd_bufwr(int argc, char **argv)
 		return EC_ERROR_PARAM2;
 
 	for (i = 0; i < cnt; i++)
-		if (hex8tou32(argv[i+1], inj_cmds + idx + i))
+		if (hex8tou32(argv[i + 1], inj_cmds + idx + i))
 			return EC_ERROR_INVAL;
 
 	return EC_SUCCESS;
 }
 
-static int cmd_bufrd(int argc, char **argv)
+static int cmd_bufrd(int argc, const char **argv)
 {
 	int idx, i;
 	int cnt = 1;
@@ -537,7 +541,7 @@ static int cmd_bufrd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_sink(int argc, char **argv)
+static int cmd_sink(int argc, const char **argv)
 {
 	/*
 	 * Jump to the RW section which should contain a firmware acting
@@ -548,18 +552,16 @@ static int cmd_sink(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_trace(int argc, char **argv)
+static int cmd_trace(int argc, const char **argv)
 {
 	if (argc < 1)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!strcasecmp(argv[0], "on") ||
-	    !strcasecmp(argv[0], "1"))
+	if (!strcasecmp(argv[0], "on") || !strcasecmp(argv[0], "1"))
 		set_trace_mode(TRACE_MODE_ON);
 	else if (!strcasecmp(argv[0], "raw"))
 		set_trace_mode(TRACE_MODE_RAW);
-	else if (!strcasecmp(argv[0], "off") ||
-		 !strcasecmp(argv[0], "0"))
+	else if (!strcasecmp(argv[0], "off") || !strcasecmp(argv[0], "0"))
 		set_trace_mode(TRACE_MODE_OFF);
 	else
 		return EC_ERROR_PARAM2;
@@ -567,7 +569,7 @@ static int cmd_trace(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int command_tw(int argc, char **argv)
+static int command_tw(int argc, const char **argv)
 {
 	if (!strcasecmp(argv[1], "send"))
 		return cmd_send(argc - 2, argv + 2);

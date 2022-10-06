@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,12 +16,12 @@
 #include "driver/accelgyro_icm426xx.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
-#ifdef CONFIG_SPI_ACCEL_PORT
-static int icm_spi_raw_read(const int addr, const uint8_t reg,
-			    uint8_t *data, const int len)
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+static int icm_spi_raw_read(const int addr, const uint8_t reg, uint8_t *data,
+			    const int len)
 {
 	uint8_t cmd = 0x80 | reg;
 
@@ -54,19 +54,13 @@ static int icm_bank_sel(const struct motion_sensor_t *s, const int reg)
 	if (bank == st->bank)
 		return EC_SUCCESS;
 
-	ret = EC_ERROR_UNIMPLEMENTED;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		ret = icm_spi_raw_write(
-				SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	ret = icm_spi_raw_write(ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags),
 				ICM426XX_REG_BANK_SEL, &bank, 1);
+#else
+	ret = i2c_write8(s->port, s->i2c_spi_addr_flags, ICM426XX_REG_BANK_SEL,
+			 bank);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = i2c_write8(s->port, s->i2c_spi_addr_flags,
-				 ICM426XX_REG_BANK_SEL, bank);
-#endif
-	}
 
 	if (ret == EC_SUCCESS)
 		st->bank = bank;
@@ -86,22 +80,19 @@ int icm_read8(const struct motion_sensor_t *s, const int reg, int *data_ptr)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = EC_ERROR_UNIMPLEMENTED;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	{
 		uint8_t val;
 
 		ret = icm_spi_raw_read(
-				SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
-				addr, &val, sizeof(val));
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			sizeof(val));
 		if (ret == EC_SUCCESS)
 			*data_ptr = val;
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = i2c_read8(s->port, s->i2c_spi_addr_flags, addr, data_ptr);
-#endif
 	}
+#else
+	ret = i2c_read8(s->port, s->i2c_spi_addr_flags, addr, data_ptr);
+#endif
 
 	return ret;
 }
@@ -118,20 +109,17 @@ int icm_write8(const struct motion_sensor_t *s, const int reg, int data)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = EC_ERROR_UNIMPLEMENTED;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	{
 		uint8_t val = data;
 
 		ret = icm_spi_raw_write(
-				LAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
-				addr, &val, sizeof(val));
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = i2c_write8(s->port, s->i2c_spi_addr_flags, addr, data);
-#endif
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			sizeof(val));
 	}
+#else
+	ret = i2c_write8(s->port, s->i2c_spi_addr_flags, addr, data);
+#endif
 
 	return ret;
 }
@@ -148,27 +136,23 @@ int icm_read16(const struct motion_sensor_t *s, const int reg, int *data_ptr)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = EC_ERROR_UNIMPLEMENTED;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	{
 		uint8_t val[2];
 
 		ret = icm_spi_raw_read(
-				LAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
-				addr, val, sizeof(val));
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, val,
+			sizeof(val));
 		if (ret == EC_SUCCESS) {
 			if (I2C_IS_BIG_ENDIAN(s->i2c_spi_addr_flags))
 				*data_ptr = ((int)val[0] << 8) | val[1];
 			else
 				*data_ptr = ((int)val[1] << 8) | val[0];
 		}
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = i2c_read16(s->port, s->i2c_spi_addr_flags,
-				addr, data_ptr);
-#endif
 	}
+#else
+	ret = i2c_read16(s->port, s->i2c_spi_addr_flags, addr, data_ptr);
+#endif
 
 	return ret;
 }
@@ -185,9 +169,8 @@ int icm_write16(const struct motion_sensor_t *s, const int reg, int data)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = EC_ERROR_UNIMPLEMENTED;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	{
 		uint8_t val[2];
 
 		if (I2C_IS_BIG_ENDIAN(s->i2c_spi_addr_flags)) {
@@ -198,14 +181,12 @@ int icm_write16(const struct motion_sensor_t *s, const int reg, int data)
 			val[1] = (data >> 8) & 0xFF;
 		}
 		ret = icm_spi_raw_write(
-				LAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
-				addr, val, sizeof(val));
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = i2c_write16(s->port, s->i2c_spi_addr_flags, addr, data);
-#endif
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, val,
+			sizeof(val));
 	}
+#else
+	ret = i2c_write16(s->port, s->i2c_spi_addr_flags, addr, data);
+#endif
 
 	return ret;
 }
@@ -223,19 +204,13 @@ int icm_read_n(const struct motion_sensor_t *s, const int reg,
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = EC_ERROR_UNIMPLEMENTED;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		ret = icm_spi_raw_read(
-				SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
-				addr, data_ptr, len);
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	ret = icm_spi_raw_read(ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr,
+			       data_ptr, len);
+#else
+	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags, addr, data_ptr,
+			     len);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = i2c_read_block(s->port, s->i2c_spi_addr_flags, addr,
-				     data_ptr, len);
-#endif
-	}
 
 	return ret;
 }
@@ -251,28 +226,26 @@ int icm_field_update8(const struct motion_sensor_t *s, const int reg,
 		return ret;
 
 	ret = EC_ERROR_UNIMPLEMENTED;
-	if (SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	{
 		uint8_t val;
 
 		ret = icm_spi_raw_read(
-				SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
-				addr, &val, sizeof(val));
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			sizeof(val));
 		if (ret != EC_SUCCESS)
 			return ret;
 
 		val = (val & (~field_mask)) | set_value;
 
 		ret = icm_spi_raw_write(
-				SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
-				addr, &val, sizeof(val));
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		ret = i2c_field_update8(s->port, s->i2c_spi_addr_flags, addr,
-					field_mask, set_value);
-#endif
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			sizeof(val));
 	}
+#else
+	ret = i2c_field_update8(s->port, s->i2c_spi_addr_flags, addr,
+				field_mask, set_value);
+#endif
 
 	return ret;
 }
@@ -280,13 +253,6 @@ int icm_field_update8(const struct motion_sensor_t *s, const int reg,
 int icm_get_resolution(const struct motion_sensor_t *s)
 {
 	return ICM_RESOLUTION;
-}
-
-int icm_get_range(const struct motion_sensor_t *s)
-{
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
-
-	return data->range;
 }
 
 int icm_get_data_rate(const struct motion_sensor_t *s)
@@ -320,12 +286,12 @@ int icm_get_scale(const struct motion_sensor_t *s, uint16_t *scale,
 }
 
 /* FIFO header: 1 byte */
-#define ICM_FIFO_HEADER_MSG		BIT(7)
-#define ICM_FIFO_HEADER_ACCEL		BIT(6)
-#define ICM_FIFO_HEADER_GYRO		BIT(5)
-#define ICM_FIFO_HEADER_TMST_FSYNC	GENMASK(3, 2)
-#define ICM_FIFO_HEADER_ODR_ACCEL	BIT(1)
-#define ICM_FIFO_HEADER_ODR_GYRO	BIT(0)
+#define ICM_FIFO_HEADER_MSG BIT(7)
+#define ICM_FIFO_HEADER_ACCEL BIT(6)
+#define ICM_FIFO_HEADER_GYRO BIT(5)
+#define ICM_FIFO_HEADER_TMST_FSYNC GENMASK(3, 2)
+#define ICM_FIFO_HEADER_ODR_ACCEL BIT(1)
+#define ICM_FIFO_HEADER_ODR_GYRO BIT(0)
 
 /* FIFO data packet */
 struct icm_fifo_sensor_data {
@@ -339,7 +305,7 @@ struct icm_fifo_1sensor_packet {
 	struct icm_fifo_sensor_data data;
 	int8_t temp;
 } __packed;
-#define ICM_FIFO_1SENSOR_PACKET_SIZE	8
+#define ICM_FIFO_1SENSOR_PACKET_SIZE 8
 
 struct icm_fifo_2sensors_packet {
 	uint8_t header;
@@ -348,10 +314,10 @@ struct icm_fifo_2sensors_packet {
 	int8_t temp;
 	uint16_t timestamp;
 } __packed;
-#define ICM_FIFO_2SENSORS_PACKET_SIZE	16
+#define ICM_FIFO_2SENSORS_PACKET_SIZE 16
 
 ssize_t icm_fifo_decode_packet(const void *packet, const uint8_t **accel,
-		const uint8_t **gyro)
+			       const uint8_t **gyro)
 {
 	const struct icm_fifo_1sensor_packet *pack1 = packet;
 	const struct icm_fifo_2sensors_packet *pack2 = packet;

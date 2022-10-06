@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -17,19 +17,19 @@
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /* Shutdown mode parameters to write to manufacturer access register */
-#define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
-#define SB_SHUTDOWN_DATA	0x0010
+#define SB_SHIP_MODE_REG SB_MANUFACTURER_ACCESS
+#define SB_SHUTDOWN_DATA 0x0010
 
 /*
  * Unlike other smart batteries, Nautilus battery uses different bit fields
  * in manufacturer access register for the conditions of the CHG/DSG FETs.
  */
-#define BATFETS_SHIFT		(14)
-#define BATFETS_MASK		(0x3)
-#define BATFETS_DISABLED	(0x2)
+#define BATFETS_SHIFT (14)
+#define BATFETS_MASK (0x3)
+#define BATFETS_DISABLED (0x2)
 
-#define CHARGING_VOLTAGE_MV_SAFE	8400
-#define CHARGING_CURRENT_MA_SAFE	1500
+#define CHARGING_VOLTAGE_MV_SAFE 8400
+#define CHARGING_CURRENT_MA_SAFE 1500
 
 static const struct battery_info info = {
 	.voltage_max = 8700,
@@ -160,8 +160,9 @@ static int battery_init(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 /*
@@ -185,8 +186,7 @@ static int battery_check_disconnect(void)
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	if (((batt_mfgacc >> BATFETS_SHIFT) & BATFETS_MASK) ==
-	    BATFETS_DISABLED)
+	if (((batt_mfgacc >> BATFETS_SHIFT) & BATFETS_MASK) == BATFETS_DISABLED)
 		return BATTERY_DISCONNECTED;
 
 	return BATTERY_NOT_DISCONNECTED;
@@ -221,4 +221,3 @@ enum battery_present battery_is_present(void)
 	batt_pres_prev = batt_pres;
 	return batt_pres;
 }
-

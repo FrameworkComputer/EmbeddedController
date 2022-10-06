@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -32,7 +32,6 @@ static uint16_t detect_type(uint16_t det_type)
 	STM32_USB_BCDR &= ~(STM32_USB_BCDR_BCDEN | det_type);
 	return STM32_USB_BCDR;
 }
-
 
 int charger_detect_get_device_type(void)
 {

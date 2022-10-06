@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "config.h"
+#include "cros_version.h"
 #include "gpio.h"
 #include "spi.h"
 #include "spi_flash.h"
@@ -19,7 +20,6 @@
 #include "cpu.h"
 #include "clock.h"
 #include "system.h"
-#include "version.h"
 #include "hwtimer.h"
 #include "gpio_list.h"
 #include "tfdp_chip.h"
@@ -35,21 +35,22 @@
  * used for EC firmware SPI flash access.
  */
 #ifdef CONFIG_MCHP_GPSPI
-#error "FORCED BUILD ERROR: CONFIG_MCHP_CMX_GPSPI is defined"
+#error "FORCED BUILD ERROR: CONFIG_MCHP_GPSPI is defined"
 #endif
 
 #define LFW_SPI_BYTE_TRANSFER_TIMEOUT_US (1 * MSEC)
 #define LFW_SPI_BYTE_TRANSFER_POLL_INTERVAL_US 100
 
-__attribute__ ((section(".intvector")))
+__attribute__((section(".intvector")))
 const struct int_vector_t hdr_int_vect = {
 	/* init sp, unused. set by MEC ROM loader */
-	(void *)lfw_stack_top,  /* preserve ROM log. was (void *)0x11FA00, */
-	&lfw_main,	/* was &lfw_main, */	  /* reset vector */
-	&fault_handler,   /* NMI handler */
-	&fault_handler,   /* HardFault handler */
-	&fault_handler,   /* MPU fault handler */
-	&fault_handler    /* Bus fault handler */
+	(void *)lfw_stack_top, /* preserve ROM log. was (void *)0x11FA00, */
+	&lfw_main,
+	/* was &lfw_main, */ /* reset vector */
+	&fault_handler, /* NMI handler */
+	&fault_handler, /* HardFault handler */
+	&fault_handler, /* MPU fault handler */
+	&fault_handler /* Bus fault handler */
 };
 
 /* SPI devices - from board.c */
@@ -62,7 +63,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
  * At POR or EC reset MCHP Boot-ROM should only load LFW and jumps
  * into LFW entry point located at offset 0x04 of LFW.
  * Entry point is programmed into SPI Header by Python SPI image
- * builder at chip/mec1701/util/pack_ec.py
+ * builder in chip/mchp/util.
  *
  * EC_RO/RW calling LFW should enter through this routine if you
  * want the vector table updated. The stack should be set to
@@ -107,7 +108,7 @@ void timer_init(void)
 
 	val = MCHP_TMR32_CTL(0);
 
-	/* Pre-scale = 48 -> 1MHz -> Period = 1us */
+	/* Prescale = 48 -> 1MHz -> Period = 1 us */
 	val = (val & 0xffff) | (47 << 16);
 
 	MCHP_TMR32_CTL(0) = val;
@@ -123,7 +124,6 @@ void timer_init(void)
 
 	/* Start counting in timer 0 */
 	MCHP_TMR32_CTL(0) |= BIT(5);
-
 }
 
 /*
@@ -132,16 +132,13 @@ void timer_init(void)
  * before starting SPI read to minimize probability of
  * timer wrap.
  */
-static int spi_flash_readloc(uint8_t *buf_usr,
-				unsigned int offset,
-				unsigned int bytes)
+static int spi_flash_readloc(uint8_t *buf_usr, unsigned int offset,
+			     unsigned int bytes)
 {
-	uint8_t cmd[4] = {SPI_FLASH_READ,
-				(offset >> 16) & 0xFF,
-				(offset >> 8) & 0xFF,
-				offset & 0xFF};
+	uint8_t cmd[4] = { SPI_FLASH_READ, (offset >> 16) & 0xFF,
+			   (offset >> 8) & 0xFF, offset & 0xFF };
 
-	if (offset + bytes > CONFIG_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	__hw_clock_source_set(0); /* restart free run timer */
@@ -156,8 +153,8 @@ static int spi_flash_readloc(uint8_t *buf_usr,
  */
 int spi_image_load(uint32_t offset)
 {
-	uint8_t *buf = (uint8_t *) (CONFIG_RW_MEM_OFF +
-				    CONFIG_PROGRAM_MEMORY_BASE);
+	uint8_t *buf =
+		(uint8_t *)(CONFIG_RW_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE);
 	uint32_t i;
 #ifdef CONFIG_MCHP_LFW_DEBUG
 	uint32_t crc_calc, crc_exp;
@@ -172,13 +169,11 @@ int spi_image_load(uint32_t offset)
 	for (i = 0; i < CONFIG_RO_SIZE; i += SPI_CHUNK_SIZE)
 #ifdef CONFIG_MCHP_LFW_DEBUG
 		rc = spi_flash_readloc(&buf[i], offset + i, SPI_CHUNK_SIZE);
-		if (rc != EC_SUCCESS) {
-			trace2(0, LFW, 0,
-				"spi_flash_readloc block %d ret = %d",
-				i, rc);
-			while (MCHP_PCR_PROC_CLK_CTL)
-				MCHP_PCR_CHIP_OSC_ID &= 0x1FE;
-		}
+	if (rc != EC_SUCCESS) {
+		trace2(0, LFW, 0, "spi_flash_readloc block %d ret = %d", i, rc);
+		while (MCHP_PCR_PROC_CLK_CTL)
+			MCHP_PCR_CHIP_OSC_ID &= 0x1FE;
+	}
 #else
 		spi_flash_readloc(&buf[i], offset + i, SPI_CHUNK_SIZE);
 #endif
@@ -234,10 +229,14 @@ timestamp_t get_time(void)
 {
 	timestamp_t ts;
 
-	ts.le.hi = 0;	/* clksrc_high; */
+	ts.le.hi = 0; /* clksrc_high; */
 	ts.le.lo = __hw_clock_source_read();
 	return ts;
 }
+
+#ifdef CONFIG_UART_CONSOLE
+
+BUILD_ASSERT(CONFIG_UART_CONSOLE < MCHP_UART_INSTANCES);
 
 void uart_write_c(char c)
 {
@@ -246,9 +245,9 @@ void uart_write_c(char c)
 		uart_write_c('\r');
 
 	/* Wait for space in transmit FIFO. */
-	while (!(MCHP_UART_LSR(0) & BIT(5)))
+	while (!(MCHP_UART_LSR(CONFIG_UART_CONSOLE) & BIT(5)))
 		;
-	MCHP_UART_TB(0) = c;
+	MCHP_UART_TB(CONFIG_UART_CONSOLE) = c;
 }
 
 void uart_puts(const char *str)
@@ -261,6 +260,7 @@ void uart_puts(const char *str)
 	} while (*str);
 }
 
+<<<<<<< HEAD
 int uart_getc(void)
 {
 	int ret = -1; 
@@ -297,36 +297,68 @@ void jump_to_image(uintptr_t init_addr)
 	resetvec();
 }
 
+=======
+>>>>>>> chromium/main
 void uart_init(void)
 {
-	/* Set UART to reset on VCC1_RESET instaed of nSIO_RESET */
-	MCHP_UART_CFG(0) &= ~BIT(1);
+	/* Set UART to reset on VCC1_RESET instead of nSIO_RESET */
+	MCHP_UART_CFG(CONFIG_UART_CONSOLE) &= ~BIT(1);
 
 	/* Baud rate = 115200. 1.8432MHz clock. Divisor = 1 */
 
 	/* Set CLK_SRC = 0 */
-	MCHP_UART_CFG(0) &= ~BIT(0);
+	MCHP_UART_CFG(CONFIG_UART_CONSOLE) &= ~BIT(0);
 
 	/* Set DLAB = 1 */
-	MCHP_UART_LCR(0) |= BIT(7);
+	MCHP_UART_LCR(CONFIG_UART_CONSOLE) |= BIT(7);
 
 	/* PBRG0/PBRG1 */
-	MCHP_UART_PBRG0(0) = 1;
-	MCHP_UART_PBRG1(0) = 0;
+	MCHP_UART_PBRG0(CONFIG_UART_CONSOLE) = 1;
+	MCHP_UART_PBRG1(CONFIG_UART_CONSOLE) = 0;
 
 	/* Set DLAB = 0 */
-	MCHP_UART_LCR(0) &= ~BIT(7);
+	MCHP_UART_LCR(CONFIG_UART_CONSOLE) &= ~BIT(7);
 
 	/* Set word length to 8-bit */
-	MCHP_UART_LCR(0) |= BIT(0) | BIT(1);
+	MCHP_UART_LCR(CONFIG_UART_CONSOLE) |= BIT(0) | BIT(1);
 
 	/* Enable FIFO */
-	MCHP_UART_FCR(0) = BIT(0);
+	MCHP_UART_FCR(CONFIG_UART_CONSOLE) = BIT(0);
 
 	/* Activate UART */
-	MCHP_UART_ACT(0) |= BIT(0);
+	MCHP_UART_ACT(CONFIG_UART_CONSOLE) |= BIT(0);
 
 	gpio_config_module(MODULE_UART, 1);
+}
+#else
+void uart_write_c(char c __attribute__((unused)))
+{
+}
+
+void uart_puts(const char *str __attribute__((unused)))
+{
+}
+
+void uart_init(void)
+{
+}
+#endif /* #ifdef CONFIG_UART_CONSOLE */
+
+void fault_handler(void)
+{
+	uart_puts("EXCEPTION!\nTriggering watchdog reset\n");
+	/* trigger reset in 1 ms */
+	usleep(1000);
+	MCHP_PCR_SYS_RST = MCHP_PCR_SYS_SOFT_RESET;
+	while (1)
+		;
+}
+
+void jump_to_image(uintptr_t init_addr)
+{
+	void (*resetvec)(void) = (void (*)(void))init_addr;
+
+	resetvec();
 }
 
 /*
@@ -336,23 +368,19 @@ void uart_init(void)
 void system_init(void)
 {
 	uint32_t wdt_sts = MCHP_VBAT_STS & MCHP_VBAT_STS_ANY_RST;
-	uint32_t rst_sts = MCHP_PCR_PWR_RST_STS &
-				MCHP_PWR_RST_STS_VTR;
+	uint32_t rst_sts = MCHP_PCR_PWR_RST_STS & MCHP_PWR_RST_STS_SYS;
 
-	trace12(0, LFW, 0,
-		"VBAT_STS = 0x%08x  PCR_PWR_RST_STS = 0x%08x",
+	trace12(0, LFW, 0, "VBAT_STS = 0x%08x  PCR_PWR_RST_STS = 0x%08x",
 		wdt_sts, rst_sts);
 
 	if (rst_sts || wdt_sts)
-		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX)
-					= EC_IMAGE_UNKNOWN;
+		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) = EC_IMAGE_UNKNOWN;
 }
 
 enum ec_image system_get_image_copy(void)
 {
 	return MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX);
 }
-
 
 /*
  * lfw_main is entered by MEC BootROM or EC_RO/RW calling it directly.
@@ -367,7 +395,6 @@ enum ec_image system_get_image_copy(void)
  */
 void lfw_main(void)
 {
-
 	uintptr_t init_addr;
 
 #ifdef CONFIG_LFW_STARTUP_DEBUG
@@ -377,7 +404,7 @@ void lfw_main(void)
 #endif 
 
 	/* install vector table */
-	*((uintptr_t *) 0xe000ed08) = (uintptr_t) &hdr_int_vect;
+	*((uintptr_t *)0xe000ed08) = (uintptr_t)&hdr_int_vect;
 
 	/* Use 48 MHz processor clock to power through boot */
 	MCHP_PCR_PROC_CLK_CTL = 1;
@@ -410,7 +437,7 @@ void lfw_main(void)
 	uart_init();
 	system_init();
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	uart_puts("littlefw ");
 	uart_puts(current_image_data.version);

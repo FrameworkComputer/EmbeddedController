@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,22 +7,22 @@
 
 #include "common.h"
 #include "console.h"
-#include "driver/ppc/nx20p348x.h"
+#include "nx20p348x.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
-static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
 #define NX20P348X_DB_EXIT_FAIL_THRESHOLD 10
 static int db_exit_fail_count[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -37,17 +37,13 @@ static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
-			 ppc_chips[port].i2c_addr_flags,
-			 reg,
-			 regval);
+			 ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int write_reg(uint8_t port, int reg, int regval)
 {
 	return i2c_write8(ppc_chips[port].i2c_port,
-			  ppc_chips[port].i2c_addr_flags,
-			  reg,
-			  regval);
+			  ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int nx20p348x_set_ovp_limit(int port)
@@ -76,7 +72,7 @@ static int nx20p348x_is_sourcing_vbus(int port)
 }
 
 static int nx20p348x_set_vbus_source_current_limit(int port,
-						 enum tcpc_rp_value rp)
+						   enum tcpc_rp_value rp)
 {
 	int regval;
 	int status;
@@ -103,13 +99,13 @@ static int nx20p348x_set_vbus_source_current_limit(int port,
 		break;
 	};
 
-
 	return write_reg(port, NX20P348X_5V_SRC_OCP_THRESHOLD_REG, regval);
 }
 
 static int nx20p348x_discharge_vbus(int port, int enable)
 {
 	int regval;
+	int newval;
 	int status;
 
 	status = read_reg(port, NX20P348X_DEVICE_CONTROL_REG, &regval);
@@ -117,13 +113,16 @@ static int nx20p348x_discharge_vbus(int port, int enable)
 		return status;
 
 	if (enable)
-		regval |= NX20P348X_CTRL_VBUSDIS_EN;
+		newval = regval | NX20P348X_CTRL_VBUSDIS_EN;
 	else
-		regval &= ~NX20P348X_CTRL_VBUSDIS_EN;
+		newval = regval & ~NX20P348X_CTRL_VBUSDIS_EN;
 
-	status = write_reg(port, NX20P348X_DEVICE_CONTROL_REG, regval);
+	if (newval == regval)
+		return EC_SUCCESS;
+
+	status = write_reg(port, NX20P348X_DEVICE_CONTROL_REG, newval);
 	if (status) {
-		CPRINTS("Failed to %s vbus discharge",
+		CPRINTS("Failed to %s VBUS discharge",
 			enable ? "enable" : "disable");
 		return status;
 	}
@@ -131,23 +130,22 @@ static int nx20p348x_discharge_vbus(int port, int enable)
 	return EC_SUCCESS;
 }
 
-static int nx20p348x_vbus_sink_enable(int port, int enable)
+__maybe_unused static int nx20p3481_vbus_sink_enable(int port, int enable)
 {
 	int status;
 	int rv;
-	int control = enable ? NX20P348X_SWITCH_CONTROL_HVSNK : 0;
+	int control = enable ? NX20P3481_SWITCH_CONTROL_HVSNK : 0;
 
-	enable = !!enable;
-
-	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481))
-		rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
-	else if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3483))
+	if (enable) {
 		/*
-		 * We cannot use an EC GPIO for EN_SNK since an EC reset
-		 * will float the GPIO thus browning out the board (without
-		 * a battery).
+		 * VBUS Discharge must be off in sink mode.
 		 */
-		rv = tcpm_set_snk_ctrl(port, enable);
+		rv = nx20p348x_discharge_vbus(port, 0);
+		if (rv)
+			return rv;
+	}
+
+	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
 	if (rv)
 		return rv;
 
@@ -162,28 +160,19 @@ static int nx20p348x_vbus_sink_enable(int port, int enable)
 	if (rv)
 		return rv;
 
-	return (status & NX20P348X_SWITCH_STATUS_MASK) == control ?
-		EC_SUCCESS : EC_ERROR_UNKNOWN;
+	return (status & NX20P348X_SWITCH_STATUS_HVSNK) == control ?
+		       EC_SUCCESS :
+		       EC_ERROR_UNKNOWN;
 }
 
-static int nx20p348x_vbus_source_enable(int port, int enable)
+__maybe_unused static int nx20p3481_vbus_source_enable(int port, int enable)
 {
 	int status;
 	int rv;
 	uint8_t previous_flags = flags[port];
-	int control = enable ? NX20P348X_SWITCH_CONTROL_5VSRC : 0;
+	int control = enable ? NX20P3481_SWITCH_CONTROL_5VSRC : 0;
 
-	enable = !!enable;
-
-	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481))
-		rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
-	else if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3483))
-		/*
-		 * For parity's sake, we should not use an EC GPIO for
-		 * EN_SRC since we cannot use it for EN_SNK (for brown
-		 * out reason listed above).
-		 */
-		rv = tcpm_set_src_ctrl(port, enable);
+	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
 	if (rv)
 		return rv;
 
@@ -216,6 +205,95 @@ static int nx20p348x_vbus_source_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
+__maybe_unused static int nx20p3483_vbus_sink_enable(int port, int enable)
+{
+	int rv;
+
+	enable = !!enable;
+
+	if (enable) {
+		/*
+		 * VBUS Discharge must be off in sink mode.
+		 */
+		rv = nx20p348x_discharge_vbus(port, 0);
+		if (rv)
+			return rv;
+	}
+
+	/*
+	 * We cannot use an EC GPIO for EN_SNK since an EC reset
+	 * will float the GPIO thus browning out the board (without
+	 * a battery).
+	 */
+	rv = tcpm_set_snk_ctrl(port, enable);
+	if (rv)
+		return rv;
+
+	for (int i = 0; i < NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC; ++i) {
+		int ds;
+		bool is_sink;
+
+		rv = read_reg(port, NX20P348X_DEVICE_STATUS_REG, &ds);
+		if (rv != EC_SUCCESS)
+			return rv;
+
+		is_sink = (ds & NX20P3483_DEVICE_MODE_MASK) ==
+			  NX20P3483_MODE_HV_SNK;
+		if (enable == is_sink)
+			return EC_SUCCESS;
+
+		msleep(1);
+	}
+
+	return EC_ERROR_TIMEOUT;
+}
+
+__maybe_unused static int nx20p3483_vbus_source_enable(int port, int enable)
+{
+	int rv;
+
+	enable = !!enable;
+
+	/*
+	 * For parity's sake, we should not use an EC GPIO for
+	 * EN_SRC since we cannot use it for EN_SNK (for brown
+	 * out reason listed above).
+	 */
+	rv = tcpm_set_src_ctrl(port, enable);
+	if (rv)
+		return rv;
+
+	/*
+	 * Wait up to NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC for the status
+	 * to reflect the control command.
+	 */
+
+	for (int i = 0; i < NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC; ++i) {
+		int s;
+
+		rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &s);
+		if (rv != EC_SUCCESS)
+			return rv;
+
+		if (!!(s & (NX20P348X_SWITCH_STATUS_5VSRC |
+			    NX20P348X_SWITCH_STATUS_HVSRC)) == enable) {
+			if (enable)
+				flags[port] |= NX20P348X_FLAGS_SOURCE_ENABLED;
+			else
+				flags[port] &= ~NX20P348X_FLAGS_SOURCE_ENABLED;
+			return EC_SUCCESS;
+		}
+		msleep(1);
+	}
+
+	return EC_ERROR_TIMEOUT;
+}
+
+__overridable int board_nx20p348x_init(int port)
+{
+	return EC_SUCCESS;
+}
+
 static int nx20p348x_init(int port)
 {
 	int reg;
@@ -233,10 +311,14 @@ static int nx20p348x_init(int port)
 	/* Mask interrupts for interrupt 1 register */
 	mask = ~(NX20P348X_INT1_OC_5VSRC | NX20P348X_INT1_SC_5VSRC |
 		 NX20P348X_INT1_RCP_5VSRC | NX20P348X_INT1_DBEXIT_ERR);
-#if defined(CONFIG_USBC_PPC_NX20P3481) || defined(CONFIG_USBC_PPC_NX20P3483)
-	/* Unmask Fast Role Swap detect interrupt */
-	mask &= ~NX20P348X_INT1_FRS_DET;
-#endif
+	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481)) {
+		/* Unmask Fast Role Swap detect interrupt */
+		mask &= ~NX20P3481_INT1_FRS_DET;
+	}
+	if (IS_ENABLED(CONFIG_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE)) {
+		/* Mask RCP 5V SRC */
+		mask |= NX20P348X_INT1_RCP_5VSRC;
+	}
 	rv = write_reg(port, NX20P348X_INTERRUPT1_MASK_REG, mask);
 	if (rv)
 		return rv;
@@ -249,7 +331,11 @@ static int nx20p348x_init(int port)
 	rv = read_reg(port, NX20P348X_DEVICE_STATUS_REG, &mode);
 	if (rv)
 		return rv;
-	mode &= NX20P348X_DEVICE_MODE_MASK;
+
+	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481))
+		mode &= NX20P3481_DEVICE_MODE_MASK;
+	else if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3483))
+		mode &= NX20P3483_DEVICE_MODE_MASK;
 
 	/* Check if dead battery mode is active. */
 	if (mode == NX20P348X_MODE_DEAD_BATTERY) {
@@ -260,7 +346,7 @@ static int nx20p348x_init(int port)
 		 * mode will not reflect the correct value and therefore the
 		 * return value isn't useful here.
 		 */
-		nx20p348x_vbus_sink_enable(port, 1);
+		nx20p348x_drv.vbus_sink_enable(port, 1);
 
 		/* Exit dead battery mode. */
 		rv = read_reg(port, NX20P348X_DEVICE_CONTROL_REG, &reg);
@@ -286,6 +372,15 @@ static int nx20p348x_init(int port)
 	initial_current_limit = TYPEC_RP_1A5;
 #endif
 	nx20p348x_set_vbus_source_current_limit(port, initial_current_limit);
+
+	/* Restore power-on reset value */
+	rv = write_reg(port, NX20P348X_DEVICE_CONTROL_REG, 0);
+	if (rv)
+		return rv;
+
+	rv = board_nx20p348x_init(port);
+	if (rv)
+		return rv;
 
 	return EC_SUCCESS;
 }
@@ -314,14 +409,14 @@ static void nx20p348x_handle_interrupt(int port)
 		    NX20P348X_DB_EXIT_FAIL_THRESHOLD) {
 			ppc_prints("failed to exit DB mode", port);
 			if (read_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
-				    &mask_reg)) {
+				     &mask_reg)) {
 				mask_reg |= NX20P348X_INT1_DBEXIT_ERR;
 				write_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
 					  mask_reg);
 			}
 		}
 		read_reg(port, NX20P348X_DEVICE_CONTROL_REG, &control_reg);
-		reg |= NX20P348X_CTRL_DB_EXIT;
+		control_reg |= NX20P348X_CTRL_DB_EXIT;
 		write_reg(port, NX20P348X_DEVICE_CONTROL_REG, control_reg);
 		/*
 		 * If DB exit mode failed, then the OVP limit setting done in
@@ -338,16 +433,18 @@ static void nx20p348x_handle_interrupt(int port)
 	}
 
 	/* Check for Vbus reverse current protection */
-	if (reg & NX20P348X_INT1_RCP_5VSRC)
+	if (reg & NX20P348X_INT1_RCP_5VSRC) {
 		ppc_prints("detected Vbus reverse current!", port);
+		pd_handle_overcurrent(port);
+	}
 
 	/* Check for Vbus short protection */
 	if (reg & NX20P348X_INT1_SC_5VSRC)
 		ppc_prints("Vbus short detected!", port);
 
-#ifdef CONFIG_USBC_PPC_NX20P3481
 	/* Check for FRS detection */
-	if (reg & NX20P348X_INT1_FRS_DET) {
+	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481) &&
+	    (reg & NX20P3481_INT1_FRS_DET)) {
 		/*
 		 * TODO(b/113069469): Need to check for CC status and verifiy
 		 * that a sink is attached to continue with FRS. If a sink is
@@ -363,9 +460,8 @@ static void nx20p348x_handle_interrupt(int port)
 		 * NX20P3481.
 		 */
 		ppc_prints("FRS false detect, disabling SRC mode!", port);
-		nx20p348x_vbus_source_enable(port, 0);
+		nx20p3481_vbus_source_enable(port, 0);
 	}
-#endif
 
 	/*
 	 * Read interrupt 2 status register. Note, interrupt register is
@@ -384,7 +480,7 @@ static void nx20p348x_handle_interrupt(int port)
 static void nx20p348x_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = deprecated_atomic_read_clear(&irq_pending);
+	uint32_t pending = atomic_clear(&irq_pending);
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		if (BIT(i) & pending)
@@ -394,7 +490,7 @@ DECLARE_DEFERRED(nx20p348x_irq_deferred);
 
 void nx20p348x_interrupt(int port)
 {
-	deprecated_atomic_or(&irq_pending, BIT(port));
+	atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&nx20p348x_irq_deferred_data, 0);
 }
 
@@ -406,8 +502,8 @@ static int nx20p348x_dump(int port)
 	int rv;
 
 	ccprintf("Port %d NX20P348X registers\n", port);
-	for (reg_addr = NX20P348X_DEVICE_ID_REG; reg_addr <=
-		     NX20P348X_DEVICE_CONTROL_REG; reg_addr++) {
+	for (reg_addr = NX20P348X_DEVICE_ID_REG;
+	     reg_addr <= NX20P348X_DEVICE_CONTROL_REG; reg_addr++) {
 		rv = read_reg(port, reg_addr, &reg);
 		if (rv) {
 			ccprintf("nx20p: Failed to read register 0x%x\n",
@@ -455,8 +551,14 @@ static int nx20p348x_set_vconn(int port, int enable)
 const struct ppc_drv nx20p348x_drv = {
 	.init = &nx20p348x_init,
 	.is_sourcing_vbus = &nx20p348x_is_sourcing_vbus,
-	.vbus_sink_enable = &nx20p348x_vbus_sink_enable,
-	.vbus_source_enable = &nx20p348x_vbus_source_enable,
+#ifdef CONFIG_USBC_PPC_NX20P3481
+	.vbus_sink_enable = &nx20p3481_vbus_sink_enable,
+	.vbus_source_enable = &nx20p3481_vbus_source_enable,
+#endif /* CONFIG_USBC_PPC_NX20P3481 */
+#ifdef CONFIG_USBC_PPC_NX20P3483
+	.vbus_sink_enable = &nx20p3483_vbus_sink_enable,
+	.vbus_source_enable = &nx20p3483_vbus_source_enable,
+#endif /* CONFIG_USBC_PPC_NX20P3483 */
 #ifdef CONFIG_CMD_PPC_DUMP
 	.reg_dump = &nx20p348x_dump,
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
@@ -472,4 +574,5 @@ const struct ppc_drv nx20p348x_drv = {
 #ifdef CONFIG_USBC_PPC_VCONN
 	.set_vconn = &nx20p348x_set_vconn,
 #endif /* defined(CONFIG_USBC_PPC_VCONN) */
+	.interrupt = &nx20p348x_interrupt,
 };

@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,8 +13,8 @@
 #include "util.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
-#define SB_SHUTDOWN_DATA        0x0010
+#define SB_SHIP_MODE_REG SB_MANUFACTURER_ACCESS
+#define SB_SHUTDOWN_DATA 0x0010
 
 static const struct battery_info info = {
 	.voltage_max = 8800,

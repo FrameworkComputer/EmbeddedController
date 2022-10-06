@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -16,48 +16,46 @@
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10
 #define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
-#define R_AC  CONFIG_CHARGER_SENSE_RESISTOR_AC
-#define REG_TO_CURRENT(REG, RS) ((REG) * DEFAULT_SENSE_RESISTOR / (RS))
+#define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
+#define REG_TO_CURRENT(REG, RS) ((REG)*DEFAULT_SENSE_RESISTOR / (RS))
 #define CURRENT_TO_REG(CUR, RS) ((CUR) * (RS) / DEFAULT_SENSE_RESISTOR)
 
 /* Note: it is assumed that the sense resistors are 10mOhm. */
 
 static const struct charger_info bq24715_charger_info = {
-	.name         = "bq24715",
-	.voltage_max  = CHARGE_V_MAX,
-	.voltage_min  = CHARGE_V_MIN,
+	.name = "bq24715",
+	.voltage_max = CHARGE_V_MAX,
+	.voltage_min = CHARGE_V_MIN,
 	.voltage_step = CHARGE_V_STEP,
-	.current_max  = REG_TO_CURRENT(CHARGE_I_MAX, R_SNS),
-	.current_min  = REG_TO_CURRENT(CHARGE_I_MIN, R_SNS),
+	.current_max = REG_TO_CURRENT(CHARGE_I_MAX, R_SNS),
+	.current_min = REG_TO_CURRENT(CHARGE_I_MIN, R_SNS),
 	.current_step = REG_TO_CURRENT(CHARGE_I_STEP, R_SNS),
-	.input_current_max  = REG_TO_CURRENT(INPUT_I_MAX, R_AC),
-	.input_current_min  = REG_TO_CURRENT(INPUT_I_MIN, R_AC),
+	.input_current_max = REG_TO_CURRENT(INPUT_I_MAX, R_AC),
+	.input_current_min = REG_TO_CURRENT(INPUT_I_MIN, R_AC),
 	.input_current_step = REG_TO_CURRENT(INPUT_I_STEP, R_AC),
 };
 
 static inline enum ec_error_list sbc_read(int chgnum, int cmd, int *param)
 {
 	return i2c_read16(chg_chips[chgnum].i2c_port,
-			  chg_chips[chgnum].i2c_addr_flags,
-			  cmd, param);
+			  chg_chips[chgnum].i2c_addr_flags, cmd, param);
 }
 
 static inline enum ec_error_list sbc_write(int chgnum, int cmd, int param)
 {
 	return i2c_write16(chg_chips[chgnum].i2c_port,
-			   chg_chips[chgnum].i2c_addr_flags,
-			   cmd, param);
+			   chg_chips[chgnum].i2c_addr_flags, cmd, param);
 }
 
-static enum ec_error_list bq24715_set_input_current(int chgnum,
-						    int input_current)
+static enum ec_error_list bq24715_set_input_current_limit(int chgnum,
+							  int input_current)
 {
 	return sbc_write(chgnum, BQ24715_INPUT_CURRENT,
 			 CURRENT_TO_REG(input_current, R_AC));
 }
 
-static enum ec_error_list bq24715_get_input_current(int chgnum,
-						    int *input_current)
+static enum ec_error_list bq24715_get_input_current_limit(int chgnum,
+							  int *input_current)
 {
 	int rv;
 	int reg;
@@ -209,7 +207,8 @@ static enum ec_error_list bq24715_post_init(int chgnum)
 	if (rv)
 		return rv;
 
-	rv = bq24715_set_input_current(chgnum, CONFIG_CHARGER_INPUT_CURRENT);
+	rv = bq24715_set_input_current_limit(chgnum,
+					     CONFIG_CHARGER_INPUT_CURRENT);
 	return rv;
 }
 
@@ -242,8 +241,8 @@ const struct charger_drv bq24715_drv = {
 	.get_voltage = &bq24715_get_voltage,
 	.set_voltage = &bq24715_set_voltage,
 	.discharge_on_ac = &bq24715_discharge_on_ac,
-	.set_input_current = &bq24715_set_input_current,
-	.get_input_current = &bq24715_get_input_current,
+	.set_input_current_limit = &bq24715_set_input_current_limit,
+	.get_input_current_limit = &bq24715_get_input_current_limit,
 	.manufacturer_id = &bq24715_manufacturer_id,
 	.device_id = &bq24715_device_id,
 	.get_option = &bq24715_get_option,

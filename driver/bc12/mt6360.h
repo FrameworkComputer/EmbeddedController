@@ -1,16 +1,16 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #ifndef __CROS_EC_MT6360_H
 
-#define MT6360_PMU_SLAVE_ADDR_FLAGS 0x34
-#define MT6360_PMIC_SLAVE_ADDR_FLAGS 0x1A
-#define MT6360_LDO_SLAVE_ADDR_FLAGS 0x64
-#define MT6360_PD_SLAVE_ADDR_FLAGS 0x4E
+#include "bc12/mt6360_public.h"
 
 #define MT6360_IRQ_MASK 0x0C
+
+#define MT6360_REG_CHG_CTRL1 0x11
+#define MT6360_MASK_HZ BIT(2)
 
 #define MT6360_REG_DEVICE_TYPE 0x22
 #define MT6360_MASK_USBCHGEN BIT(7)
@@ -90,52 +90,5 @@
 #define MT6360_BUCK_VOSEL_MAX    \
 	(MT6360_BUCK_VOSEL_MIN + \
 	 MT6360_BUCK_VOSEL_STEP_MV * MT6360_BUCK_VOSEL_MAX_STEP)
-
-enum mt6360_regulator_id {
-	MT6360_LDO3,
-	MT6360_LDO5,
-	MT6360_LDO6,
-	MT6360_LDO7,
-	MT6360_BUCK1,
-	MT6360_BUCK2,
-
-	MT6360_REGULATOR_COUNT,
-};
-
-int mt6360_regulator_get_info(enum mt6360_regulator_id id, char *name,
-			      uint16_t *voltage_count, uint16_t *voltages_mv);
-
-int mt6360_regulator_enable(enum mt6360_regulator_id id, uint8_t enable);
-
-int mt6360_regulator_is_enabled(enum mt6360_regulator_id id, uint8_t *enabled);
-
-int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
-				 int max_mv);
-
-int mt6360_regulator_get_voltage(enum mt6360_regulator_id id, int *voltage_mv);
-
-enum mt6360_led_id {
-	MT6360_LED_RGB1,
-	MT6360_LED_RGB2,
-	MT6360_LED_RGB3,
-	MT6360_LED_RGB_ML,
-
-	MT6360_LED_COUNT,
-};
-
-#define MT6360_LED_BRIGHTNESS_MAX 15
-
-struct mt6360_config_t {
-	int i2c_port;
-	int i2c_addr_flags;
-};
-
-int mt6360_led_enable(enum mt6360_led_id led_id, int enable);
-
-int mt6360_led_set_brightness(enum mt6360_led_id led_id, int brightness);
-
-extern const struct mt6360_config_t mt6360_config;
-
-extern const struct bc12_drv mt6360_drv;
 
 #endif /* __CROS_EC_MT6360_H */

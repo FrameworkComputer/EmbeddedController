@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 The Chromium OS Authors. All rights reserved.
+ * Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -38,4 +38,4 @@ void lb_hc_cmd_reg(const struct ec_params_lightbar *in);
  */
 int lb_power(int enabled);
 
-#endif  /* __CROS_EC_LB_COMMON_H */
+#endif /* __CROS_EC_LB_COMMON_H */

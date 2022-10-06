@@ -1,4 +1,4 @@
-# Fingerprint Authentication on Chrome OS
+# Fingerprint Authentication on ChromeOS
 
 Authors: norvez@google.com, vpalatin@google.com
 
@@ -31,17 +31,17 @@ Last Updated: 2019-01-14
 
 To unlock their Chromebook users have to enter their password or a PIN.
 [Windows] and [macOS] let the user authenticate with their fingerprint for
-faster unlocking, we want to bring that capability to Chrome OS.
+faster unlocking, we want to bring that capability to ChromeOS.
 
 ### Fingerprint matching basics
 
 #### Fingerprint enrollment
 
 When a user wants to register their finger for fingerprint authentication, they
-go through the _enrollment_ operation. They are asked to touch the sensor
+go through the *enrollment* operation. They are asked to touch the sensor
 multiple times with different parts of their fingerprint. The
 [matching algorithm] uses the images captured during enrollment to build a model
-of that fingerprint (known as a _template_).
+of that fingerprint (known as a *template*).
 
 #### Fingerprint matching
 
@@ -78,7 +78,7 @@ There are two main objectives for potential attackers:
 ### Privacy and security
 
 *   Biometric data is particularly sensitive, so all operations on fingerprint
-    data must happen in a _Secure Biometric Processor_ (**SBP**). Attackers must
+    data must happen in a *Secure Biometric Processor* (**SBP**). Attackers must
     not gain access to the user’s fingerprints even if they have exploited the
     software running on the AP.
 *   To protect the user’s privacy, fingerprint data must not be accessible
@@ -101,7 +101,7 @@ attack surface again.
 ## Overview {#overview}
 
 Devices have a dedicated microcontroller (MCU) running a firmware based on the
-[Chromium OS EC] codebase that is used as the _Secure Biometric Processor_
+[Chromium OS EC] codebase that is used as the *Secure Biometric Processor*
 (**SBP**), where all enrollment and matching operations take place. Even if
 attackers gained control of the AP, they still would not be able to access the
 fingerprint (FP) data since it never leaves the SBP unencrypted.
@@ -184,7 +184,7 @@ replace this post-launch with a mechanism similar to
 FP templates are AES-encrypted with `HW_Key`. `HW_Key` is bound to this specific
 SBP so encrypted templates can only be deciphered by this specific SBP. To
 ensure that a powerwash/recovery/WP toggle/.../ makes the encryption key
-impossible to recover, `HW_Key` also depends on a secret held by the TPM.
+impossible to recover, `HW_Key` also depends on a secret held by the [TPM].
 
 We use an AEAD cipher (AES-GCM) to detect if the encrypted templates have been
 tampered with by an attacker controlling the AP.
@@ -208,7 +208,7 @@ every time the TPM is cleared, for example if someone attempts to do a
 "[ccd open]" to disable the hardware WP.
 
 The following is a summary of the mechanism, see the specific design doc
-[“TPM-seed for Fingerprint MCU”] for details.
+[TPM Seed for Fingerprint MCU] for details.
 
 The TPM already holds a "[system key]" `Cros_Sys_Key` in NVRAM space that is
 used to derive the encryption key of the stateful partition. That "system key"
@@ -322,7 +322,7 @@ Encrypted templates are stored in a “[cryptohome daemon store folder]” that 
 only mounted/decrypted when the user has logged in. The templates are stored as
 JSON files with the following fields:
 
-```JSON
+```json
 {
   "biomanager": “CrosFpBiometricsManager” string
   "version": integer describing the version of the file format. Set to 1 at launch
@@ -379,7 +379,7 @@ used to protect the EC in detachable keyboards as described in
 
 The SBP has a minimalistic RO firmware that contains the public part of an
 RSA-3072 exponent 3 key pair. The corresponding private key is only accessible
-by the Chrome OS signers and is used to sign SBP firmwares. On boot the RO
+by the ChromeOS signers and is used to sign SBP firmwares. On boot the RO
 firmware verifies the signature of the RW firmware. If the RW signature is
 valid, the RO firmware protects itself by setting the WP bit of the Flash then
 jumps to RW.
@@ -714,45 +714,46 @@ The log file is `/var/log/cros_fp.log`.
 [Arm TrustZone]: https://www.arm.com/products/security-on-arm/trustzone
 [Authentication-Time User Secrets]: http://go/authentication-time-user-secrets
 [AuthSession]: https://chromium.googlesource.com/chromiumos/platform2/+/eae39a9ad1239f8fbfa8164255578b306ff6ba5c/biod/biometrics_manager.h#96
-[biod D-Bus API]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/system_api/dbus/biod/
-[biod upstart script]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/init/biod.conf
+[biod D-Bus API]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/system_api/dbus/biod/
+[biod upstart script]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/init/biod.conf
 [ccd open]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Open-CCD
 [CDD]: https://source.android.com/compatibility/android-cdd#7_3_10_fingerprint_sensor
-[Chromium OS EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/README.md
+[Chromium OS EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/README.md
 [clobber-state]: https://chromium.googlesource.com/chromiumos/platform2/+/962ab1bc481db0cf504b5449eb3a3d5008ea7601/init/clobber_state.cc#475
-[cryptohome daemon store folder]: https://chromium.googlesource.com/chromiumos/docs/+/master/sandboxing.md#securely-mounting-cryptohome-daemon-store-folders
+[cryptohome daemon store folder]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/sandboxing.md#securely-mounting-cryptohome-daemon-store-folders
 [cryptohome]: https://www.chromium.org/chromium-os/chromiumos-design-docs/protecting-cached-user-data
 [Detachable Base Swap Detection]: https://docs.google.com/document/d/1WYdkkSAL_RHVc5mUXnAvBBfAeM7Wj3ABa1dbeTdvm74/edit#heading=h.g74ijelumqop
 [Detachable Base Verified Boot Anti-Rollback]: http://go/detachable-base-vboot#heading=h.fimcm174ok3
 [Detachable Base Verified Boot]: http://go/detachable-base-vboot#heading=h.dolfbdpggye6
-[EC primitives]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/README.md#Software-Features
+[EC primitives]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/README.md#Software-Features
 [EnrollSession]: https://chromium.googlesource.com/chromiumos/platform2/+/eae39a9ad1239f8fbfa8164255578b306ff6ba5c/biod/biometrics_manager.h#92
 [fingerprint authentication framework]: https://developer.android.com/about/versions/marshmallow/android-6.0.html#fingerprint-authentication
-[fuzzed]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/biod_storage_fuzzer.cc
+[fuzzed]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/biod_storage_fuzzer.cc
 [Global Read-out Protection (RDP) mode Level 1]: https://www.st.com/content/ccc/resource/technical/document/application_note/b4/14/62/81/18/57/48/05/DM00075930.pdf/files/DM00075930.pdf/jcr:content/translations/en.DM00075930.pdf
 [HKDF]: https://tools.ietf.org/html/rfc5869
 [Input Key Material (IKM)]: https://en.wikipedia.org/wiki/HKDF
 [Intel SGX]: https://software.intel.com/en-us/sgx
 [macOS]: https://support.apple.com/en-us/HT207054
-[malloc/free memory module for Chrome EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/common/shmalloc.c
+[malloc/free memory module for Chrome EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/shmalloc.c
 [matching algorithm]: https://en.wikipedia.org/wiki/Fingerprint#Algorithms
-[mount_encrypted]: https://chromium.googlesource.com/chromiumos/platform2/+/master/cryptohome/mount_encrypted
+[mount_encrypted]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/cryptohome/mount_encrypted
 [New UKM collection review - CrOS FP Unlock]: https://docs.google.com/document/d/1qjDCMcBcrhSeg_uwyEIRsXHKmzUTJahcg6a4YVhkuLo
 [Old Design Doc]: https://docs.google.com/document/d/1MdPRmCDkVg1HO9DdbvPT5fDZS2ICg5ys9_ok_K95EEU
 [PDD is here]: http://go/cros-fingerprint-pdd
 [Privacy fields for Fingerprints]: https://docs.google.com/spreadsheets/d/1jLfnuhfbrImpoxuj92OkAxS_GGrm7QkpQhsUQCkO9ec
 [Privacy fields for Fingerprints]: https://docs.google.com/spreadsheets/d/1jLfnuhfbrImpoxuj92OkAxS_GGrm7QkpQhsUQCkO9ec/
 [RM0433]: https://www.st.com/content/ccc/resource/technical/document/reference_manual/group0/c9/a3/76/fa/55/46/45/fa/DM00314099/files/DM00314099.pdf/jcr:content/translations/en.DM00314099.pdf
-[sandboxing]: https://chromium.googlesource.com/chromiumos/docs/+/master/sandboxing.md
-[seccomp filter]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/init/seccomp/biod-seccomp-amd64.policy
-[Security Audit Report]: https://drive.google.com/a/google.com/file/d/0B1HHKpeDpzYnMDdocGxwWUhpckpWM0hMU0tPa2ZjdEFnLU53/
+[sandboxing]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/sandboxing.md
+[seccomp filter]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/init/seccomp/biod-seccomp-amd64.policy
+[Security Audit Report]: https://drive.google.com/file/d/0B1HHKpeDpzYnMDdocGxwWUhpckpWM0hMU0tPa2ZjdEFnLU53/view?usp=sharing&resourcekey=0-utAJosm8Lwvx9TOz7F4i7w
 [state machine]: https://chromium.googlesource.com/chromiumos/platform/ec/+/90d177e3f0ae729bea7e24934a3c6ef9f2520d45/common/fpsensor.c#252
 [statically allocated]: https://chromium.googlesource.com/chromiumos/platform/ec/+/90d177e3f0ae729bea7e24934a3c6ef9f2520d45/common/fpsensor.c#57
 [system key]: https://chromium.googlesource.com/chromiumos/platform2/+/23b79133514ac2cd986bce21c398fb6658bda248/cryptohome/mount_encrypted/encryption_key.h#125
 [UMA]: http://go/uma
 [Windows]: https://www.microsoft.com/en-us/windows/windows-hello
 [wrappers functions]: https://chrome-internal.googlesource.com/chromeos/platform/ec-private/+/9ebb3f10c611afff695f679aaeed1a35551a116b/fpc_sensor_pal.c#52
-[“TPM-seed for Fingerprint MCU”]: http://go/bio_tpm_seed
+[TPM Seed for Fingerprint MCU]: ../fingerprint/fingerprint-tpm-seed.md
+[TPM]: https://www.chromium.org/developers/design-documents/tpm-usage/
 
 <!-- Images -->
 
@@ -760,10 +761,13 @@ The log file is `/var/log/cros_fp.log`.
      appending "export/png" to the Google Drive link. -->
 
 <!-- https://docs.google.com/drawings/d/1-JUWTF7sUTND29BfhDvIudzX_S6g-iwoxG1InPedmVw -->
+
 [Decryption Flowchart]: ../images/cros_fingerprint_decryption_flowchart.png
 
 <!-- https://drive.google.com/open?id=1uUprgLsTUZZ2G2QWRYcRn6zBAh6ejvJagVRD7eZQv-k -->
+
 [Encryption Flowchart]: ../images/cros_fingerprint_encryption_flowchart.png
 
 <!-- https://docs.google.com/drawings/d/1DFEdxfDXEtYY3LNOOJFAxVw2A7rKouH98tnb1yiXLAA -->
+
 [Fingerprint Architecture]: ../images/cros_fingerprint_architecture_diagram.png

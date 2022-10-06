@@ -1,17 +1,20 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
+#include "cbi_ssfc.h"
 #include "charge_state_v2.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
-#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/tusb544.h"
@@ -31,7 +34,7 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
@@ -39,9 +42,24 @@
 
 #include "gpio_list.h"
 
-#ifdef HAS_TASK_MOTIONSENSE
-
 static int board_ver;
+
+/*
+ * We have total 30 pins for keyboard connecter {-1, -1} mean
+ * the N/A pin that don't consider it and reserve index 0 area
+ * that we don't have pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 }, { 1, 0 },   { 0, 6 },	  { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 }, { 1, 3 },   { -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 }, { 1, 5 },   { 2, 6 },	  { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 }, { 1, 2 },   { 2, 3 },	  { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { 0, 4 }, { -1, -1 }, { 8, 2 },	  { -1, -1 },
+	{ -1, -1 },
+};
+
+const int keyboard_factory_scan_pins_used =
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 /* Motion sensors */
 static struct mutex g_lid_mutex;
@@ -50,18 +68,18 @@ static struct mutex g_base_mutex;
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm426xx_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(-1)}
-};
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
+const mat33_fp_t base_standard_ref_1 = { { FLOAT_TO_FP(1), 0, 0 },
+					 { 0, FLOAT_TO_FP(-1), 0 },
+					 { 0, 0, FLOAT_TO_FP(-1) } };
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
@@ -104,7 +122,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 2, /* g, enough for laptop */
+	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
 	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = BMI_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI_ACCEL_MAX_FREQ,
@@ -141,7 +159,95 @@ struct motion_sensor_t motion_sensors[] = {
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-#endif /* HAS_TASK_MOTIONSENSE */
+struct motion_sensor_t icm426xx_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
+	.rot_standard_ref = &base_standard_ref_1,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t icm426xx_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref_1,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
+
+struct motion_sensor_t icm42607_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM42607,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm42607_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	.default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
+	.rot_standard_ref = &base_standard_ref_1,
+	.min_frequency = ICM42607_ACCEL_MIN_FREQ,
+	.max_frequency = ICM42607_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t icm42607_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM42607,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm42607_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref_1,
+	.min_frequency = ICM42607_GYRO_MIN_FREQ,
+	.max_frequency = ICM42607_GYRO_MAX_FREQ,
+};
 
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S3_N] = {
@@ -199,7 +305,7 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
 	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
-	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.vod_offset = PI3HDX1204_VOD_130_ALL_CHANNELS,
 	.de_offset = PI3HDX1204_DE_DB_MINUS5,
 };
 
@@ -208,8 +314,12 @@ const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
  * chip and it need a board specific driver.
  * Overall, it will use chained mux framework.
  */
-static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			      bool *ack_required)
 {
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		ioex_set_level(IOEX_USB_C0_SBU_FLIP, 1);
 	else
@@ -229,18 +339,80 @@ const struct usb_mux_driver usbc0_sbu_mux_driver = {
  * Since FSUSB42UMX is not a i2c device, .i2c_port and
  * .i2c_addr_flags are not required here.
  */
-const struct usb_mux usbc0_sbu_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &usbc0_sbu_mux_driver,
+const struct usb_mux_chain usbc0_sbu_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.driver = &usbc0_sbu_mux_driver,
+		},
 };
+
+/*****************************************************************************
+ * Base Gyro Sensor dynamic configuration
+ */
+
+static enum ec_ssfc_base_gyro_sensor base_gyro_config = SSFC_BASE_GYRO_NONE;
+
+static void setup_base_gyro_config(void)
+{
+	base_gyro_config = ec_config_has_base_gyro_sensor();
+
+	if (base_gyro_config == SSFC_BASE_GYRO_ICM426XX) {
+		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
+		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
+		ccprints("BASE GYRO is ICM426XX");
+	} else if (base_gyro_config == SSFC_BASE_GYRO_ICM42607) {
+		motion_sensors[BASE_ACCEL] = icm42607_base_accel;
+		motion_sensors[BASE_GYRO] = icm42607_base_gyro;
+		ccprints("BASE GYRO is ICM42607");
+	} else if (base_gyro_config == SSFC_BASE_GYRO_BMI160)
+		ccprints("BASE GYRO is BMI160");
+}
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	switch (base_gyro_config) {
+	case SSFC_BASE_GYRO_ICM426XX:
+		icm426xx_interrupt(signal);
+		break;
+	case SSFC_BASE_GYRO_ICM42607:
+		icm42607_interrupt(signal);
+		break;
+	case SSFC_BASE_GYRO_BMI160:
+	default:
+		bmi160_interrupt(signal);
+		break;
+	}
+}
 
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
  */
 
+/* Place holder for second mux in USBC1 chain */
+struct usb_mux_chain usbc1_mux1;
+
+int board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
+
 static void setup_mux(void)
 {
-	if (ec_config_has_usbc1_retimer_tusb544()) {
+	enum ec_ssfc_c1_mux mux = get_cbi_ssfc_c1_mux();
+
+	if (mux == SSFC_C1_MUX_NONE && ec_config_has_usbc1_retimer_tusb544())
+		mux = SSFC_C1_MUX_TUSB544;
+
+	if (mux == SSFC_C1_MUX_PS8818) {
+		ccprints("C1 PS8818 detected");
+		/*
+		 * Main MUX is FP5, secondary MUX is PS8818
+		 *
+		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
+		 * table entry.
+		 */
+		usb_muxes[USBC_PORT_C1].mux = &usbc1_amd_fp5_usb_mux;
+		/* Set the PS8818 as the secondary MUX */
+		usbc1_mux1.mux = &usbc1_ps8818;
+	} else if (mux == SSFC_C1_MUX_TUSB544) {
 		ccprints("C1 TUSB544 detected");
 		/*
 		 * Main MUX is FP5, secondary MUX is TUSB544
@@ -248,11 +420,9 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_amd_fp5_usb_mux,
-		       sizeof(struct usb_mux));
+		usb_muxes[USBC_PORT_C1].mux = &usbc1_amd_fp5_usb_mux;
 		/* Set the TUSB544 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_tusb544;
+		usbc1_mux1.mux = &usbc1_tusb544;
 	} else if (ec_config_has_usbc1_retimer_ps8743()) {
 		ccprints("C1 PS8743 detected");
 		/*
@@ -261,32 +431,33 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the PS8743
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_ps8743,
-		       sizeof(struct usb_mux));
+		usb_muxes[USBC_PORT_C1].mux = &usbc1_ps8743;
 		/* Set the AMD FP5 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
+		usbc1_mux1.mux = &usbc1_amd_fp5_usb_mux;
 		/* Don't have the AMD FP5 flip */
 		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
 	}
 }
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.i2c_port = I2C_PORT_USB_AP_MUX,
-		.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-		.driver = &amd_fp5_usb_mux_driver,
-		.next_mux = &usbc0_sbu_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+		},
+		.next = &usbc0_sbu_mux,
 	},
 	[USBC_PORT_C1] = {
 		/* Filled in dynamically at startup */
+		.next = &usbc1_mux1,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
 static int board_tusb544_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+				 mux_state_t mux_state)
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Enable IN_HPD on the DB */
@@ -298,8 +469,7 @@ static int board_tusb544_mux_set(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8743_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		/* Enable IN_HPD on the DB */
@@ -367,15 +537,15 @@ __override void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
-__override int board_aoz1380_set_vbus_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+__override int
+board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv;
 
 	/* Use the TCPC to set the current limit */
-	rv = ioex_set_level(port ? IOEX_USB_C1_PPC_ILIM_3A_EN
-				: IOEX_USB_C0_PPC_ILIM_3A_EN,
-				(rp == TYPEC_RP_3A0) ? 1 : 0);
+	rv = ioex_set_level(port ? IOEX_USB_C1_PPC_ILIM_3A_EN :
+				   IOEX_USB_C0_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
 
 	return rv;
 }
@@ -420,6 +590,8 @@ static void setup_fw_config(void)
 		else
 			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
 	}
+
+	setup_base_gyro_config();
 }
 /* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
@@ -443,10 +615,9 @@ static void hdmi_hpd_handler(void)
 
 	gpio_set_level(GPIO_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-			  PI3HDX1204_I2C_ADDR_FLAGS,
-			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
-			  && hpd);
+	pi3hdx1204_enable(
+		I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
@@ -474,8 +645,7 @@ static void board_chipset_resume(void)
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
 				  check_hdmi_hpd_status());
 	}
 }
@@ -486,9 +656,7 @@ static void board_chipset_suspend(void)
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  0);
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 0);
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 	}
 
@@ -503,13 +671,13 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2800,
-	.rpm_start = 2800,
+	.rpm_min = 3200,
+	.rpm_start = 3200,
 	.rpm_max = 6000,
 };
 const struct fan_t fans[] = {
@@ -591,41 +759,40 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const static struct ec_thermal_config thermal_thermistor = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-	},
-	.temp_fan_off = 0,
-	.temp_fan_max = 0,
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_THERMISTOR       \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+		}, \
+		.temp_fan_off = 0, \
+		.temp_fan_max = 0, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_thermistor =
+	THERMAL_THERMISTOR;
 
-const static struct ec_thermal_config thermal_soc = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-	.temp_fan_off = 0,
-	.temp_fan_max = 0,
-};
-
-const static struct ec_thermal_config thermal_cpu = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-	},
-	.temp_fan_off = C_TO_K(37),
-	.temp_fan_max = C_TO_K(90),
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_SOC              \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+		}, \
+		.temp_fan_off = C_TO_K(32), \
+		.temp_fan_max = C_TO_K(75), \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_soc = THERMAL_SOC;
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
@@ -637,14 +804,14 @@ struct fan_step {
 
 /* Note: Do not make the fan on/off point equal to 0 or 100 */
 static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  2, .rpm = 0},
-	{.on = 15, .off =  2, .rpm = 2800},
-	{.on = 23, .off = 13, .rpm = 3200},
-	{.on = 30, .off = 21, .rpm = 3400},
-	{.on = 38, .off = 28, .rpm = 3700},
-	{.on = 45, .off = 36, .rpm = 4200},
-	{.on = 55, .off = 43, .rpm = 4500},
-	{.on = 66, .off = 53, .rpm = 5300},
+	{ .on = 0, .off = 1, .rpm = 0 },
+	{ .on = 9, .off = 1, .rpm = 3200 },
+	{ .on = 21, .off = 7, .rpm = 3500 },
+	{ .on = 28, .off = 16, .rpm = 3900 },
+	{ .on = 37, .off = 26, .rpm = 4200 },
+	{ .on = 47, .off = 35, .rpm = 4600 },
+	{ .on = 56, .off = 44, .rpm = 5100 },
+	{ .on = 72, .off = 60, .rpm = 5500 },
 };
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
@@ -655,7 +822,6 @@ static void setup_fans(void)
 {
 	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor;
 	thermal_params[TEMP_SENSOR_SOC] = thermal_soc;
-	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 
@@ -691,8 +857,7 @@ int fan_percent_to_rpm(int fan, int pct)
 
 	previous_pct = pct;
 
-	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(FAN_CH(fan))) {
+	if (fan_table[current_level].rpm != fan_get_rpm_target(FAN_CH(fan))) {
 		cprints(CC_THERMAL, "Setting fan RPM to %d",
 			fan_table[current_level].rpm);
 		board_print_temps();
@@ -702,7 +867,7 @@ int fan_percent_to_rpm(int fan, int pct)
 }
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
-			int max_ma, int charge_mv)
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Limit the input current to 95% negotiated limit,
@@ -710,7 +875,6 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 */
 	charge_ma = charge_ma * 95 / 100;
 
-	charge_set_input_current_limit(MAX(charge_ma,
-				CONFIG_CHARGER_INPUT_CURRENT),
-				charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }

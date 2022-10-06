@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,8 +15,8 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpci.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
@@ -24,8 +24,8 @@
 #include "usb_pd_tcpm.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /*
  * Debug log level - higher number == more log
@@ -45,93 +45,93 @@ static const int debug_level;
 #endif
 
 /* Encode 5 bits using Biphase Mark Coding */
-#define BMC(x)   ((x &  1 ? 0x001 : 0x3FF) \
-		^ (x &  2 ? 0x004 : 0x3FC) \
-		^ (x &  4 ? 0x010 : 0x3F0) \
-		^ (x &  8 ? 0x040 : 0x3C0) \
-		^ (x & 16 ? 0x100 : 0x300))
+#define BMC(x)                                               \
+	((x & 1 ? 0x001 : 0x3FF) ^ (x & 2 ? 0x004 : 0x3FC) ^ \
+	 (x & 4 ? 0x010 : 0x3F0) ^ (x & 8 ? 0x040 : 0x3C0) ^ \
+	 (x & 16 ? 0x100 : 0x300))
 
 /* 4b/5b + Bimark Phase encoding */
 static const uint16_t bmc4b5b[] = {
-/* 0 = 0000 */ BMC(0x1E) /* 11110 */,
-/* 1 = 0001 */ BMC(0x09) /* 01001 */,
-/* 2 = 0010 */ BMC(0x14) /* 10100 */,
-/* 3 = 0011 */ BMC(0x15) /* 10101 */,
-/* 4 = 0100 */ BMC(0x0A) /* 01010 */,
-/* 5 = 0101 */ BMC(0x0B) /* 01011 */,
-/* 6 = 0110 */ BMC(0x0E) /* 01110 */,
-/* 7 = 0111 */ BMC(0x0F) /* 01111 */,
-/* 8 = 1000 */ BMC(0x12) /* 10010 */,
-/* 9 = 1001 */ BMC(0x13) /* 10011 */,
-/* A = 1010 */ BMC(0x16) /* 10110 */,
-/* B = 1011 */ BMC(0x17) /* 10111 */,
-/* C = 1100 */ BMC(0x1A) /* 11010 */,
-/* D = 1101 */ BMC(0x1B) /* 11011 */,
-/* E = 1110 */ BMC(0x1C) /* 11100 */,
-/* F = 1111 */ BMC(0x1D) /* 11101 */,
-/* Sync-1      K-code       11000 Startsynch #1 */
-/* Sync-2      K-code       10001 Startsynch #2 */
-/* RST-1       K-code       00111 Hard Reset #1 */
-/* RST-2       K-code       11001 Hard Reset #2 */
-/* EOP         K-code       01101 EOP End Of Packet */
-/* Reserved    Error        00000 */
-/* Reserved    Error        00001 */
-/* Reserved    Error        00010 */
-/* Reserved    Error        00011 */
-/* Reserved    Error        00100 */
-/* Reserved    Error        00101 */
-/* Reserved    Error        00110 */
-/* Reserved    Error        01000 */
-/* Reserved    Error        01100 */
-/* Reserved    Error        10000 */
-/* Reserved    Error        11111 */
+	/* 0 = 0000 */ BMC(0x1E) /* 11110 */,
+	/* 1 = 0001 */ BMC(0x09) /* 01001 */,
+	/* 2 = 0010 */ BMC(0x14) /* 10100 */,
+	/* 3 = 0011 */ BMC(0x15) /* 10101 */,
+	/* 4 = 0100 */ BMC(0x0A) /* 01010 */,
+	/* 5 = 0101 */ BMC(0x0B) /* 01011 */,
+	/* 6 = 0110 */ BMC(0x0E) /* 01110 */,
+	/* 7 = 0111 */ BMC(0x0F) /* 01111 */,
+	/* 8 = 1000 */ BMC(0x12) /* 10010 */,
+	/* 9 = 1001 */ BMC(0x13) /* 10011 */,
+	/* A = 1010 */ BMC(0x16) /* 10110 */,
+	/* B = 1011 */ BMC(0x17) /* 10111 */,
+	/* C = 1100 */ BMC(0x1A) /* 11010 */,
+	/* D = 1101 */ BMC(0x1B) /* 11011 */,
+	/* E = 1110 */ BMC(0x1C) /* 11100 */,
+	/* F = 1111 */ BMC(0x1D) /* 11101 */,
+	/* Sync-1      K-code       11000 Startsynch #1 */
+	/* Sync-2      K-code       10001 Startsynch #2 */
+	/* RST-1       K-code       00111 Hard Reset #1 */
+	/* RST-2       K-code       11001 Hard Reset #2 */
+	/* EOP         K-code       01101 EOP End Of Packet */
+	/* Reserved    Error        00000 */
+	/* Reserved    Error        00001 */
+	/* Reserved    Error        00010 */
+	/* Reserved    Error        00011 */
+	/* Reserved    Error        00100 */
+	/* Reserved    Error        00101 */
+	/* Reserved    Error        00110 */
+	/* Reserved    Error        01000 */
+	/* Reserved    Error        01100 */
+	/* Reserved    Error        10000 */
+	/* Reserved    Error        11111 */
 };
 
 static const uint8_t dec4b5b[] = {
-/* Error    */ 0x10 /* 00000 */,
-/* Error    */ 0x10 /* 00001 */,
-/* Error    */ 0x10 /* 00010 */,
-/* Error    */ 0x10 /* 00011 */,
-/* Error    */ 0x10 /* 00100 */,
-/* Error    */ 0x10 /* 00101 */,
-/* Error    */ 0x10 /* 00110 */,
-/* RST-1    */ 0x13 /* 00111 K-code: Hard Reset #1 */,
-/* Error    */ 0x10 /* 01000 */,
-/* 1 = 0001 */ 0x01 /* 01001 */,
-/* 4 = 0100 */ 0x04 /* 01010 */,
-/* 5 = 0101 */ 0x05 /* 01011 */,
-/* Error    */ 0x10 /* 01100 */,
-/* EOP      */ 0x15 /* 01101 K-code: EOP End Of Packet */,
-/* 6 = 0110 */ 0x06 /* 01110 */,
-/* 7 = 0111 */ 0x07 /* 01111 */,
-/* Error    */ 0x10 /* 10000 */,
-/* Sync-2   */ 0x12 /* 10001 K-code: Startsynch #2 */,
-/* 8 = 1000 */ 0x08 /* 10010 */,
-/* 9 = 1001 */ 0x09 /* 10011 */,
-/* 2 = 0010 */ 0x02 /* 10100 */,
-/* 3 = 0011 */ 0x03 /* 10101 */,
-/* A = 1010 */ 0x0A /* 10110 */,
-/* B = 1011 */ 0x0B /* 10111 */,
-/* Sync-1   */ 0x11 /* 11000 K-code: Startsynch #1 */,
-/* RST-2    */ 0x14 /* 11001 K-code: Hard Reset #2 */,
-/* C = 1100 */ 0x0C /* 11010 */,
-/* D = 1101 */ 0x0D /* 11011 */,
-/* E = 1110 */ 0x0E /* 11100 */,
-/* F = 1111 */ 0x0F /* 11101 */,
-/* 0 = 0000 */ 0x00 /* 11110 */,
-/* Error    */ 0x10 /* 11111 */,
+	/* Error    */ 0x10 /* 00000 */,
+	/* Error    */ 0x10 /* 00001 */,
+	/* Error    */ 0x10 /* 00010 */,
+	/* Error    */ 0x10 /* 00011 */,
+	/* Error    */ 0x10 /* 00100 */,
+	/* Error    */ 0x10 /* 00101 */,
+	/* Error    */ 0x10 /* 00110 */,
+	/* RST-1    */ 0x13 /* 00111 K-code: Hard Reset #1 */,
+	/* Error    */ 0x10 /* 01000 */,
+	/* 1 = 0001 */ 0x01 /* 01001 */,
+	/* 4 = 0100 */ 0x04 /* 01010 */,
+	/* 5 = 0101 */ 0x05 /* 01011 */,
+	/* Error    */ 0x10 /* 01100 */,
+	/* EOP      */ 0x15 /* 01101 K-code: EOP End Of Packet */,
+	/* 6 = 0110 */ 0x06 /* 01110 */,
+	/* 7 = 0111 */ 0x07 /* 01111 */,
+	/* Error    */ 0x10 /* 10000 */,
+	/* Sync-2   */ 0x12 /* 10001 K-code: Startsynch #2 */,
+	/* 8 = 1000 */ 0x08 /* 10010 */,
+	/* 9 = 1001 */ 0x09 /* 10011 */,
+	/* 2 = 0010 */ 0x02 /* 10100 */,
+	/* 3 = 0011 */ 0x03 /* 10101 */,
+	/* A = 1010 */ 0x0A /* 10110 */,
+	/* B = 1011 */ 0x0B /* 10111 */,
+	/* Sync-1   */ 0x11 /* 11000 K-code: Startsynch #1 */,
+	/* RST-2    */ 0x14 /* 11001 K-code: Hard Reset #2 */,
+	/* C = 1100 */ 0x0C /* 11010 */,
+	/* D = 1101 */ 0x0D /* 11011 */,
+	/* E = 1110 */ 0x0E /* 11100 */,
+	/* F = 1111 */ 0x0F /* 11101 */,
+	/* 0 = 0000 */ 0x00 /* 11110 */,
+	/* Error    */ 0x10 /* 11111 */,
 };
 
 /* Start of Packet sequence : three Sync-1 K-codes, then one Sync-2 K-code */
-#define PD_SOP (PD_SYNC1 | (PD_SYNC1<<5) | (PD_SYNC1<<10) | (PD_SYNC2<<15))
-#define PD_SOP_PRIME	(PD_SYNC1 | (PD_SYNC1<<5) | \
-			(PD_SYNC3<<10) | (PD_SYNC3<<15))
-#define PD_SOP_PRIME_PRIME	(PD_SYNC1 | (PD_SYNC3<<5) | \
-				(PD_SYNC1<<10) | (PD_SYNC3<<15))
+#define PD_SOP \
+	(PD_SYNC1 | (PD_SYNC1 << 5) | (PD_SYNC1 << 10) | (PD_SYNC2 << 15))
+#define PD_SOP_PRIME \
+	(PD_SYNC1 | (PD_SYNC1 << 5) | (PD_SYNC3 << 10) | (PD_SYNC3 << 15))
+#define PD_SOP_PRIME_PRIME \
+	(PD_SYNC1 | (PD_SYNC3 << 5) | (PD_SYNC1 << 10) | (PD_SYNC3 << 15))
 
 /* Hard Reset sequence : three RST-1 K-codes, then one RST-2 K-code */
-#define PD_HARD_RESET (PD_RST1 | (PD_RST1 << 5) |\
-		      (PD_RST1 << 10) | (PD_RST2 << 15))
+#define PD_HARD_RESET \
+	(PD_RST1 | (PD_RST1 << 5) | (PD_RST1 << 10) | (PD_RST2 << 15))
 
 /*
  * Polarity based on 'DFP Perspective' (see table USB Type-C Cable and Connector
@@ -159,11 +159,11 @@ static const uint8_t dec4b5b[] = {
 #endif
 
 #ifndef CC_RA
-#define CC_RA(port, cc, sel)  (cc < PD_SRC_RD_THRESHOLD)
+#define CC_RA(port, cc, sel) (cc < PD_SRC_RD_THRESHOLD)
 #endif
 #define CC_RD(cc) ((cc >= PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
 #ifndef CC_NC
-#define CC_NC(port, cc, sel)  (cc >= PD_SRC_VNC)
+#define CC_NC(port, cc, sel) (cc >= PD_SRC_VNC)
 #endif
 
 /*
@@ -180,16 +180,16 @@ static const uint8_t dec4b5b[] = {
 #define PD_SNK_VA PD_SNK_VA_MV
 #endif
 
-#define CC_RP(cc)  (cc >= PD_SNK_VA)
+#define CC_RP(cc) (cc >= PD_SNK_VA)
 
 /*
  * Type C power source charge current limits are identified by their cc
  * voltage (set by selecting the proper Rd resistor). Any voltage below
  * TYPE_C_SRC_500_THRESHOLD will not be identified as a type C charger.
  */
-#define TYPE_C_SRC_500_THRESHOLD	PD_SRC_RD_THRESHOLD
-#define TYPE_C_SRC_1500_THRESHOLD	660  /* mV */
-#define TYPE_C_SRC_3000_THRESHOLD	1230 /* mV */
+#define TYPE_C_SRC_500_THRESHOLD PD_SRC_RD_THRESHOLD
+#define TYPE_C_SRC_1500_THRESHOLD 660 /* mV */
+#define TYPE_C_SRC_3000_THRESHOLD 1230 /* mV */
 
 /* Convert TCPC Alert register to index into pd.alert[] */
 #define ALERT_REG_TO_INDEX(reg) (reg - TCPC_REG_ALERT)
@@ -254,12 +254,12 @@ static struct pd_port_controller {
 #endif
 
 	/* Last received */
-	int rx_head[RX_BUFFER_SIZE+1];
-	uint32_t rx_payload[RX_BUFFER_SIZE+1][7];
+	int rx_head[RX_BUFFER_SIZE + 1];
+	uint32_t rx_payload[RX_BUFFER_SIZE + 1][7];
 	int rx_buf_head, rx_buf_tail;
 
 	/* Next transmit */
-	enum tcpm_transmit_type tx_type;
+	enum tcpci_msg_type tx_type;
 	uint16_t tx_head;
 	uint32_t tx_payload[7];
 	const uint32_t *tx_data;
@@ -309,7 +309,7 @@ int encode_word(int port, int off, uint32_t val32)
 
 /* prepare a 4b/5b-encoded PD message to send */
 int prepare_message(int port, uint16_t header, uint8_t cnt,
-		   const uint32_t *data)
+		    const uint32_t *data)
 {
 	int off, i;
 	/* 64-bit preamble */
@@ -387,8 +387,8 @@ static int send_validate_message(int port, uint16_t header,
 	uint8_t expected_msg_id = PD_HEADER_ID(header);
 	uint8_t cnt = PD_HEADER_CNT(header);
 	int retries = PD_HEADER_TYPE(header) == PD_DATA_SOURCE_CAP ?
-				    0 :
-				    CONFIG_PD_RETRY_COUNT;
+			      0 :
+			      CONFIG_PD_RETRY_COUNT;
 
 	/* retry 3 times if we are not getting a valid answer */
 	for (r = 0; r <= retries; r++) {
@@ -464,7 +464,7 @@ static int send_validate_message(int port, uint16_t header,
 static void send_goodcrc(int port, int id)
 {
 	uint16_t header = PD_HEADER(PD_CTRL_GOOD_CRC, pd[port].power_role,
-			pd[port].data_role, id, 0, 0, 0);
+				    pd[port].data_role, id, 0, 0, 0);
 	int bit_len = prepare_message(port, header, 0, NULL);
 
 	if (pd_start_tx(port, pd[port].polarity, bit_len) < 0)
@@ -536,7 +536,7 @@ static void bist_mode_2_tx(int port)
 	 * build context buffer with 5 bytes, where the data is
 	 * alternating 1's and 0's.
 	 */
-	bit = pd_write_sym(port, 0,   BMC(0x15));
+	bit = pd_write_sym(port, 0, BMC(0x15));
 	bit = pd_write_sym(port, bit, BMC(0x0a));
 	bit = pd_write_sym(port, bit, BMC(0x15));
 	bit = pd_write_sym(port, bit, BMC(0x0a));
@@ -566,10 +566,9 @@ static inline int decode_short(int port, int off, uint16_t *val16)
 		dec4b5b[(w >> 15) & 0x1f], dec4b5b[(w >> 10) & 0x1f],
 		dec4b5b[(w >>  5) & 0x1f], dec4b5b[(w >>  0) & 0x1f]);
 #endif
-	*val16 = dec4b5b[w & 0x1f] |
-		(dec4b5b[(w >>  5) & 0x1f] << 4) |
-		(dec4b5b[(w >> 10) & 0x1f] << 8) |
-		(dec4b5b[(w >> 15) & 0x1f] << 12);
+	*val16 = dec4b5b[w & 0x1f] | (dec4b5b[(w >> 5) & 0x1f] << 4) |
+		 (dec4b5b[(w >> 10) & 0x1f] << 8) |
+		 (dec4b5b[(w >> 15) & 0x1f] << 12);
 	return end;
 }
 
@@ -674,7 +673,7 @@ int pd_analyze_rx(int port, uint32_t *payload)
 #else /* CONFIG_USB_VPD || CONFIG_USB_CTVPD */
 #ifdef CONFIG_USB_PD_DECODE_SOP
 		if (val == PD_SOP || val == PD_SOP_PRIME ||
-						val == PD_SOP_PRIME_PRIME)
+		    val == PD_SOP_PRIME_PRIME)
 			break;
 #else
 		if (val == PD_SOP) {
@@ -721,11 +720,11 @@ int pd_analyze_rx(int port, uint32_t *payload)
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	/* Encode message address */
 	if (val == PD_SOP) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOP);
+		phs.head |= PD_HEADER_SOP(TCPCI_MSG_SOP);
 	} else if (val == PD_SOP_PRIME) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME);
+		phs.head |= PD_HEADER_SOP(TCPCI_MSG_SOP_PRIME);
 	} else if (val == PD_SOP_PRIME_PRIME) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME_PRIME);
+		phs.head |= PD_HEADER_SOP(TCPCI_MSG_SOP_PRIME_PRIME);
 	} else {
 		msg = "SOP*";
 		goto packet_err;
@@ -734,7 +733,7 @@ int pd_analyze_rx(int port, uint32_t *payload)
 
 	/* read payload data */
 	for (p = 0; p < cnt && bit > 0; p++) {
-		bit = decode_word(port, bit, payload+p);
+		bit = decode_word(port, bit, payload + p);
 		crc32_hash32(payload[p]);
 	}
 	ccrc = crc32_result();
@@ -801,7 +800,7 @@ static int cc_voltage_to_status(int port, int cc_volt, int cc_sel)
 			return TYPEC_CC_VOLT_RA;
 		else
 			return TYPEC_CC_VOLT_RD;
-	/* If we have a pull-down, then we are sink, check for Rp. */
+		/* If we have a pull-down, then we are sink, check for Rp. */
 	}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	else if (pd[port].cc_pull == TYPEC_CC_RD) {
@@ -843,9 +842,8 @@ int tcpc_run(int port, int evt)
 	/* incoming packet ? */
 	if (pd_rx_started(port) && pd[port].rx_enabled) {
 		/* Get message and place at RX buffer head */
-		res = pd[port].rx_head[pd[port].rx_buf_head] =
-			pd_analyze_rx(port,
-				pd[port].rx_payload[pd[port].rx_buf_head]);
+		res = pd[port].rx_head[pd[port].rx_buf_head] = pd_analyze_rx(
+			port, pd[port].rx_payload[pd[port].rx_buf_head]);
 		pd_rx_complete(port);
 
 		/*
@@ -868,19 +866,18 @@ int tcpc_run(int port, int evt)
 	if ((evt & PD_EVENT_TX) && pd[port].rx_enabled) {
 		switch (pd[port].tx_type) {
 #if defined(CONFIG_USB_VPD) || defined(CONFIG_USB_CTVPD)
-		case TCPC_TX_SOP_PRIME:
+		case TCPCI_MSG_SOP_PRIME:
 #else
-		case TCPC_TX_SOP:
+		case TCPCI_MSG_SOP:
 #endif
-			res = send_validate_message(port,
-					pd[port].tx_head,
-					pd[port].tx_data);
+			res = send_validate_message(port, pd[port].tx_head,
+						    pd[port].tx_data);
 			break;
-		case TCPC_TX_BIST_MODE_2:
+		case TCPCI_MSG_TX_BIST_MODE_2:
 			bist_mode_2_tx(port);
 			res = 0;
 			break;
-		case TCPC_TX_HARD_RESET:
+		case TCPCI_MSG_TX_HARD_RESET:
 			res = send_hard_reset(port);
 			break;
 		default:
@@ -929,11 +926,11 @@ int tcpc_run(int port, int evt)
 	 */
 	return (get_time().val >= pd[port].low_power_ts.val &&
 		pd[port].cc_pull == TYPEC_CC_RD &&
-		cc_is_open(pd[port].cc_status[0], pd[port].cc_status[1]))
-		       ? 200 * MSEC
-		       : 10 * MSEC;
+		cc_is_open(pd[port].cc_status[0], pd[port].cc_status[1])) ?
+		       200 * MSEC :
+		       10 * MSEC;
 #else
-	return 10*MSEC;
+	return 10 * MSEC;
 #endif
 }
 
@@ -941,7 +938,7 @@ int tcpc_run(int port, int evt)
 void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
-	int timeout = 10*MSEC;
+	int timeout = 10 * MSEC;
 	int evt;
 
 	/* initialize phy task */
@@ -962,7 +959,7 @@ void pd_task(void *u)
 
 void pd_rx_event(int port)
 {
-	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE);
 }
 
 int tcpc_alert_status(int port, int *alert)
@@ -1024,8 +1021,8 @@ int tcpc_set_cc(int port, int pull)
 	 * because we only want to go into low power mode when we are not
 	 * dual-role toggling.
 	 */
-	pd[port].low_power_ts.val = get_time().val +
-					2*(PD_T_DRP_SRC + PD_T_DRP_SNK);
+	pd[port].low_power_ts.val =
+		get_time().val + 2 * (PD_T_DRP_SRC + PD_T_DRP_SNK);
 #endif
 
 	/*
@@ -1041,13 +1038,13 @@ int tcpc_set_cc(int port, int pull)
 #ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_CC);
 #else
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 #endif
 	return EC_SUCCESS;
 }
 
 int tcpc_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+		enum tcpc_cc_voltage_status *cc2)
 {
 	*cc2 = pd[port].cc_status[1];
 	*cc1 = pd[port].cc_status[0];
@@ -1128,7 +1125,7 @@ int tcpc_set_rx_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
-int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
+int tcpc_transmit(int port, enum tcpci_msg_type type, uint16_t header,
 		  const uint32_t *data)
 {
 	/* Store data to transmit and wake task to send it */
@@ -1139,7 +1136,7 @@ int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 #ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_TX);
 #else
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX);
 #endif
 	return EC_SUCCESS;
 }
@@ -1184,8 +1181,9 @@ void tcpc_init(int port)
 
 	/* Initialize physical layer */
 	pd_hw_init(port, PD_ROLE_DEFAULT(port));
-	pd[port].cc_pull = PD_ROLE_DEFAULT(port) ==
-		PD_ROLE_SOURCE ? TYPEC_CC_RP : TYPEC_CC_RD;
+	pd[port].cc_pull = PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE ?
+				   TYPEC_CC_RP :
+				   TYPEC_CC_RD;
 #ifdef TCPC_LOW_POWER
 	/* Don't use low power immediately after boot */
 	pd[port].low_power_ts.val = get_time().val + SECOND;
@@ -1196,16 +1194,15 @@ void tcpc_init(int port)
 
 	/* make initial readings of CC voltages */
 	for (i = 0; i < 2; i++) {
-		pd[port].cc_status[i] = cc_voltage_to_status(port,
-							     pd_adc_read(port, i),
-							     i);
+		pd[port].cc_status[i] =
+			cc_voltage_to_status(port, pd_adc_read(port, i), i);
 	}
 
 #ifdef CONFIG_USB_PD_TCPC_TRACK_VBUS
 #if CONFIG_USB_PD_PORT_MAX_COUNT >= 2
-	tcpc_set_power_status(port, !gpio_get_level(port ?
-			      GPIO_USB_C1_VBUS_WAKE_L :
-			      GPIO_USB_C0_VBUS_WAKE_L));
+	tcpc_set_power_status(port,
+			      !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
+						     GPIO_USB_C0_VBUS_WAKE_L));
 #else
 	tcpc_set_power_status(port, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT >= 2 */
@@ -1223,7 +1220,7 @@ void tcpc_init(int port)
 void pd_vbus_evt_p0(enum gpio_signal signal)
 {
 	tcpc_set_power_status(TASK_ID_TO_PD_PORT(TASK_ID_PD_C0),
-				 !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+			      !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
 	task_wake(TASK_ID_PD_C0);
 }
 
@@ -1234,7 +1231,7 @@ void pd_vbus_evt_p1(enum gpio_signal signal)
 		return;
 
 	tcpc_set_power_status(TASK_ID_TO_PD_PORT(TASK_ID_PD_C1),
-				 !gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
+			      !gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
 	task_wake(TASK_ID_PD_C1);
 }
 #endif /* PD_PORT_COUNT >= 2 */
@@ -1277,8 +1274,8 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 		tcpc_alert_mask_set(port, alert);
 		break;
 	case TCPC_REG_RX_DETECT:
-		tcpc_set_rx_enable(port, payload[1] &
-					 TCPC_REG_RX_DETECT_SOP_HRST_MASK);
+		tcpc_set_rx_enable(
+			port, payload[1] & TCPC_REG_RX_DETECT_SOP_HRST_MASK);
 		break;
 	case TCPC_REG_POWER_STATUS_MASK:
 		tcpc_set_power_status_mask(port, payload[1]);
@@ -1308,12 +1305,11 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 	case TCPC_REG_CC_STATUS:
 		tcpc_get_cc(port, &cc1, &cc2);
 		payload[0] = TCPC_REG_CC_STATUS_SET(
-				pd[port].cc_pull == TYPEC_CC_RD,
-				pd[port].cc_status[0], pd[port].cc_status[1]);
+			pd[port].cc_pull == TYPEC_CC_RD, pd[port].cc_status[0],
+			pd[port].cc_status[1]);
 		return 1;
 	case TCPC_REG_ROLE_CTRL:
-		payload[0] = TCPC_REG_ROLE_CTRL_SET(0, 0,
-						    pd[port].cc_pull,
+		payload[0] = TCPC_REG_ROLE_CTRL_SET(0, 0, pd[port].cc_pull,
 						    pd[port].cc_pull);
 		return 1;
 	case TCPC_REG_TCPC_CTRL:
@@ -1325,7 +1321,8 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 		return 1;
 	case TCPC_REG_RX_DETECT:
 		payload[0] = pd[port].rx_enabled ?
-				TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0;
+				     TCPC_REG_RX_DETECT_SOP_HRST_MASK :
+				     0;
 		return 1;
 	case TCPC_REG_ALERT:
 		tcpc_alert_status(port, &alert);
@@ -1337,13 +1334,14 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 		payload[1] = (pd[port].alert_mask >> 8) & 0xff;
 		return 2;
 	case TCPC_REG_RX_BYTE_CNT:
-		payload[0] = 3 + 4 *
-			PD_HEADER_CNT(pd[port].rx_head[pd[port].rx_buf_tail]);
+		payload[0] =
+			3 + 4 * PD_HEADER_CNT(
+					pd[port].rx_head[pd[port].rx_buf_tail]);
 		return 1;
 	case TCPC_REG_RX_HDR:
 		payload[0] = pd[port].rx_head[pd[port].rx_buf_tail] & 0xff;
-		payload[1] =
-			(pd[port].rx_head[pd[port].rx_buf_tail] >> 8) & 0xff;
+		payload[1] = (pd[port].rx_head[pd[port].rx_buf_tail] >> 8) &
+			     0xff;
 		return 2;
 	case TCPC_REG_RX_DATA:
 		memcpy(payload, pd[port].rx_payload[pd[port].rx_buf_tail],
@@ -1408,7 +1406,7 @@ void tcpc_i2c_process(int read, int port, int len, uint8_t *payload,
 #endif
 
 #ifdef CONFIG_COMMON_RUNTIME
-static int command_tcpc(int argc, char **argv)
+static int command_tcpc(int argc, const char **argv)
 {
 	int port;
 	char *e;
@@ -1452,12 +1450,12 @@ static int command_tcpc(int argc, char **argv)
 	} else if (!strncasecmp(argv[2], "state", 5)) {
 		ccprintf("Port C%d, %s - CC:%d, CC0:%d, CC1:%d\n"
 			 "Alert: 0x%02x Mask: 0x%04x\n"
-			 "Power Status: 0x%02x Mask: 0x%02x\n", port,
-			 pd[port].rx_enabled ? "Ena" : "Dis",
-			 pd[port].cc_pull,
-			 pd[port].cc_status[0], pd[port].cc_status[1],
-			 pd[port].alert, pd[port].alert_mask,
-			 pd[port].power_status, pd[port].power_status_mask);
+			 "Power Status: 0x%02x Mask: 0x%02x\n",
+			 port, pd[port].rx_enabled ? "Ena" : "Dis",
+			 pd[port].cc_pull, pd[port].cc_status[0],
+			 pd[port].cc_status[1], pd[port].alert,
+			 pd[port].alert_mask, pd[port].power_status,
+			 pd[port].power_status_mask);
 	}
 
 	return EC_SUCCESS;

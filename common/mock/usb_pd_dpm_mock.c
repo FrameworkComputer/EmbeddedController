@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,6 +11,11 @@
 #include "usb_pd.h"
 #include "mock/usb_pd_dpm_mock.h"
 #include "memory.h"
+#include "usb_pd_tcpm.h"
+
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
 
 struct mock_dpm_port_t dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -26,17 +31,17 @@ void dpm_init(int port)
 	dpm[port].mode_exit_request = false;
 }
 
-void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
-		uint32_t *vdm)
+void dpm_mode_exit_complete(int port)
 {
 }
 
-void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
-		uint8_t vdm_cmd)
+void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
+		   uint32_t *vdm)
 {
 }
 
-void dpm_set_mode_entry_done(int port)
+void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
+		   uint8_t vdm_cmd)
 {
 }
 
@@ -45,5 +50,48 @@ void dpm_set_mode_exit_request(int port)
 }
 
 void dpm_run(int port)
+{
+}
+
+void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
+{
+}
+
+void dpm_add_non_pd_sink(int port)
+{
+}
+
+void dpm_evaluate_request_rdo(int port, uint32_t rdo)
+{
+}
+
+void dpm_remove_sink(int port)
+{
+}
+
+void dpm_remove_source(int port)
+{
+}
+
+void dpm_bist_shared_mode_enter(int port)
+{
+}
+
+void dpm_bist_shared_mode_exit(int port)
+{
+}
+
+int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
+{
+	*src_pdo = pd_src_pdo;
+	return pd_src_pdo_cnt;
+}
+
+int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
+{
+	return EC_SUCCESS;
+}
+
+void dpm_handle_alert(int port, uint32_t ado)
 {
 }

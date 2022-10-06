@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -42,8 +42,10 @@ const struct fan_rpm fan_rpm_0 = {
 };
 
 const struct fan_t fans[] = {
-	{ .conf = &fan_conf_0,
-	  .rpm = &fan_rpm_0, },
+	{
+		.conf = &fan_conf_0,
+		.rpm = &fan_rpm_0,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
 
@@ -106,9 +108,8 @@ const struct fan_tach_t fan_tach[] = {
 BUILD_ASSERT(ARRAY_SIZE(fan_tach) == PWM_HW_CH_TOTAL);
 #endif /* defined(CONFIG_FANS) || defined(CONFIG_PWM) */
 
-#if defined(CONFIG_KEYBOARD_BOARD_CONFIG)
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 35,
 	.debounce_down_us = 5 * MSEC,
 	.debounce_up_us = 40 * MSEC,
@@ -120,16 +121,13 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
-#endif
 
 #if defined(CONFIG_SPI_FLASH_PORT)
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	[CONFIG_SPI_FLASH_PORT] = {
-		.port = CONFIG_SPI_FLASH_PORT,
-		.div = 0,
-		.gpio_cs = -1
-	},
+	[CONFIG_SPI_FLASH_PORT] = { .port = CONFIG_SPI_FLASH_PORT,
+				    .div = 0,
+				    .gpio_cs = -1 },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 #endif
@@ -141,9 +139,8 @@ static void board_init(void)
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Wake-up pins for hibernate */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_POWER_BUTTON_L, GPIO_LID_OPEN
-};
+const enum gpio_signal hibernate_wake_pins[] = { GPIO_POWER_BUTTON_L,
+						 GPIO_LID_OPEN };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /*

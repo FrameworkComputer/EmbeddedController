@@ -1,0 +1,17 @@
+# Metadata information for this directory.
+#
+# For more information on DIR_METADATA files, see:
+#   https://source.chromium.org/chromium/infra/infra/+/main:go/src/infra/tools/dirmd/README.md
+#
+# For the schema of this file, see Metadata message:
+#   https://source.chromium.org/chromium/infra/infra/+/main:go/src/infra/tools/dirmd/proto/dir_metadata.proto
+
+buganizer {
+  component_id: 167114  # ChromeOS > Platform > Enablement > Firmware > EC
+}
+
+buganizer_public {
+  component_id: 960650  # ChromeOS Public Tracker > Core Systems > Firmware > EC
+}
+
+team_email: "cros-ec@google.com"

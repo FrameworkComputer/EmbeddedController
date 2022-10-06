@@ -1,4 +1,4 @@
-/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -44,7 +44,7 @@
  * reasonable stress test the "DMA RX max_bytes" value will be a reasonable
  * size for the FIFO (perhaps +10% for safety).
  */
-#define USART_RX_DMA(CHANNEL, FIFO_SIZE)				\
+#define USART_RX_DMA(CHANNEL, FIFO_SIZE) \
 	((struct usart_rx_dma const) {					\
 		.usart_rx = {						\
 			.producer_ops = {				\
@@ -88,7 +88,7 @@ struct usart_rx_dma {
 	struct usart_rx_dma_state volatile *state;
 
 	uint8_t *fifo_buffer;
-	size_t  fifo_size;
+	size_t fifo_size;
 
 	enum dma_channel channel;
 };

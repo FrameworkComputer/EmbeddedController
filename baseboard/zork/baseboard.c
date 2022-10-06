@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,7 +6,6 @@
 /* Zork family-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "charge_manager.h"
@@ -32,15 +31,16 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "printf.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -60,15 +60,15 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 	GPIO_EC_RST_ODL,
 };
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /*
  * In the AOZ1380 PPC, there are no programmable features.  We use
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
  * current limits.
  */
-__overridable int board_aoz1380_set_vbus_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+__overridable int
+board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv;
 
@@ -97,15 +97,14 @@ static void baseboard_chipset_resume(void)
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
 __overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+					  int max_ma, int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/*
 	 * F3 key scan cycle completed but scan input is not
 	 * charging to logic high when EC start scan next
@@ -135,19 +134,19 @@ struct keyboard_scan_config keyscan_config = {
  * Murata page for part NCP15WB473F03RC. Vdd=3.3V, R=30.9Kohm.
  */
 const struct thermistor_data_pair thermistor_data[] = {
-	{ 2761 / THERMISTOR_SCALING_FACTOR, 0},
-	{ 2492 / THERMISTOR_SCALING_FACTOR, 10},
-	{ 2167 / THERMISTOR_SCALING_FACTOR, 20},
-	{ 1812 / THERMISTOR_SCALING_FACTOR, 30},
-	{ 1462 / THERMISTOR_SCALING_FACTOR, 40},
-	{ 1146 / THERMISTOR_SCALING_FACTOR, 50},
-	{ 878 / THERMISTOR_SCALING_FACTOR, 60},
-	{ 665 / THERMISTOR_SCALING_FACTOR, 70},
-	{ 500 / THERMISTOR_SCALING_FACTOR, 80},
-	{ 434 / THERMISTOR_SCALING_FACTOR, 85},
-	{ 376 / THERMISTOR_SCALING_FACTOR, 90},
-	{ 326 / THERMISTOR_SCALING_FACTOR, 95},
-	{ 283 / THERMISTOR_SCALING_FACTOR, 100}
+	{ 2761 / THERMISTOR_SCALING_FACTOR, 0 },
+	{ 2492 / THERMISTOR_SCALING_FACTOR, 10 },
+	{ 2167 / THERMISTOR_SCALING_FACTOR, 20 },
+	{ 1812 / THERMISTOR_SCALING_FACTOR, 30 },
+	{ 1462 / THERMISTOR_SCALING_FACTOR, 40 },
+	{ 1146 / THERMISTOR_SCALING_FACTOR, 50 },
+	{ 878 / THERMISTOR_SCALING_FACTOR, 60 },
+	{ 665 / THERMISTOR_SCALING_FACTOR, 70 },
+	{ 500 / THERMISTOR_SCALING_FACTOR, 80 },
+	{ 434 / THERMISTOR_SCALING_FACTOR, 85 },
+	{ 376 / THERMISTOR_SCALING_FACTOR, 90 },
+	{ 326 / THERMISTOR_SCALING_FACTOR, 95 },
+	{ 283 / THERMISTOR_SCALING_FACTOR, 100 }
 };
 
 const struct thermistor_info thermistor_info = {
@@ -156,8 +155,7 @@ const struct thermistor_info thermistor_info = {
 	.data = thermistor_data,
 };
 
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	if (ec_config_has_lid_angle_tablet_mode()) {
 		int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
@@ -177,7 +175,6 @@ void lid_angle_peripheral_enable(int enable)
 		}
 	}
 }
-#endif
 
 static void cbi_init(void)
 {
@@ -236,7 +233,7 @@ void board_hibernate(void)
 		pd_request_source_voltage(port, SAFE_RESET_VBUS_MV);
 
 		/* Give PD task and PPC chip time to get to 5V */
-		msleep(300);
+		msleep(900);
 	}
 }
 
@@ -266,8 +263,10 @@ void board_print_temps(void)
 {
 	int t, i;
 	int rv;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
-	cprintf(CC_THERMAL, "[%pT ", PRINTF_TIMESTAMP_NOW);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	cprintf(CC_THERMAL, "[%s ", ts_str);
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		rv = temp_sensor_read(i, &t);
 		if (rv == EC_SUCCESS)
@@ -281,7 +280,7 @@ void board_print_temps(void)
 				   temps_interval * SECOND);
 }
 
-static int command_temps_log(int argc, char **argv)
+static int command_temps_log(int argc, const char **argv)
 {
 	char *e = NULL;
 
@@ -296,8 +295,7 @@ static int command_temps_log(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(tempslog, command_temps_log,
-			"seconds",
+DECLARE_CONSOLE_COMMAND(tempslog, command_temps_log, "seconds",
 			"Print temp sensors periodically");
 
 /*

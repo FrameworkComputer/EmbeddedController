@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,9 +13,9 @@
  * but at least yields predictable behavior.
  */
 
-
 #include <stdbool.h>
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -31,7 +31,7 @@
 
 /* Check chip family and variant for compatibility */
 #ifndef CHIP_FAMILY_STM32H7
-#error  Source clock-stm32h7.c does not support this chip family.
+#error Source clock-stm32h7.c does not support this chip family.
 #endif
 #ifndef CHIP_VARIANT_STM32H7X3
 #error Unsupported chip variant.
@@ -39,13 +39,13 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
 
 enum clock_osc {
-	OSC_HSI = 0,	/* High-speed internal oscillator */
-	OSC_CSI,	/* Multi-speed internal oscillator: NOT IMPLEMENTED */
-	OSC_HSE,	/* High-speed external oscillator: NOT IMPLEMENTED */
-	OSC_PLL,	/* PLL */
+	OSC_HSI = 0, /* High-speed internal oscillator */
+	OSC_CSI, /* Multi-speed internal oscillator: NOT IMPLEMENTED */
+	OSC_HSE, /* High-speed external oscillator: NOT IMPLEMENTED */
+	OSC_PLL, /* PLL */
 };
 
 enum voltage_scale {
@@ -57,12 +57,12 @@ enum voltage_scale {
 };
 
 enum freq {
-	FREQ_1KHZ   = 1000,
-	FREQ_32KHZ  = 32  * FREQ_1KHZ,
-	FREQ_1MHZ   = 1000000,
-	FREQ_2MHZ   = 2   * FREQ_1MHZ,
-	FREQ_16MHZ  = 16  * FREQ_1MHZ,
-	FREQ_64MHZ  = 64  * FREQ_1MHZ,
+	FREQ_1KHZ = 1000,
+	FREQ_32KHZ = 32 * FREQ_1KHZ,
+	FREQ_1MHZ = 1000000,
+	FREQ_2MHZ = 2 * FREQ_1MHZ,
+	FREQ_16MHZ = 16 * FREQ_1MHZ,
+	FREQ_64MHZ = 64 * FREQ_1MHZ,
 	FREQ_140MHZ = 140 * FREQ_1MHZ,
 	FREQ_200MHZ = 200 * FREQ_1MHZ,
 	FREQ_280MHZ = 280 * FREQ_1MHZ,
@@ -144,13 +144,13 @@ static void clock_flash_latency(enum freq axi_freq, enum voltage_scale vos)
  *
  * @param output_freq The target output frequency.
  */
-static void clock_pll1_configure(enum freq output_freq) {
+static void clock_pll1_configure(enum freq output_freq)
+{
 	uint32_t divm = 4; // Input prescaler (16MHz max for PLL -- 64/4 ==> 16)
-	uint32_t divn;     // Pll multiplier
-	uint32_t divp;     // Output 1 prescaler
+	uint32_t divn; // Pll multiplier
+	uint32_t divp; // Output 1 prescaler
 
-	switch (output_freq)
-	{
+	switch (output_freq) {
 	case FREQ_400MHZ:
 		/*
 		 * PLL1 configuration:
@@ -190,8 +190,8 @@ static void clock_pll1_configure(enum freq output_freq) {
 	 * Using VCO wide-range setting, STM32_RCC_PLLCFG_PLL1VCOSEL_WIDE,
 	 * requires input frequency to be between 2MHz and 16MHz.
 	 */
-	ASSERT(FREQ_2MHZ <= (STM32_HSI_CLOCK/divm));
-	ASSERT((STM32_HSI_CLOCK/divm) <= FREQ_16MHZ);
+	ASSERT(FREQ_2MHZ <= (STM32_HSI_CLOCK / divm));
+	ASSERT((STM32_HSI_CLOCK / divm) <= FREQ_16MHZ);
 
 	/*
 	 * Ensure that we actually reach the target frequency.
@@ -199,14 +199,14 @@ static void clock_pll1_configure(enum freq output_freq) {
 	ASSERT((STM32_HSI_CLOCK / divm * divn / divp) == output_freq);
 
 	/* Configure PLL1 using 64 Mhz HSI as input */
-	STM32_RCC_PLLCKSELR = STM32_RCC_PLLCKSEL_PLLSRC_HSI
-			    | STM32_RCC_PLLCKSEL_DIVM1(divm);
+	STM32_RCC_PLLCKSELR = STM32_RCC_PLLCKSEL_PLLSRC_HSI |
+			      STM32_RCC_PLLCKSEL_DIVM1(divm);
 	/* in integer mode, wide range VCO with 16Mhz input, use divP */
-	STM32_RCC_PLLCFGR = STM32_RCC_PLLCFG_PLL1VCOSEL_WIDE
-			  | STM32_RCC_PLLCFG_PLL1RGE_8M_16M
-			  | STM32_RCC_PLLCFG_DIVP1EN;
-	STM32_RCC_PLL1DIVR = STM32_RCC_PLLDIV_DIVP(divp)
-			   | STM32_RCC_PLLDIV_DIVN(divn);
+	STM32_RCC_PLLCFGR = STM32_RCC_PLLCFG_PLL1VCOSEL_WIDE |
+			    STM32_RCC_PLLCFG_PLL1RGE_8M_16M |
+			    STM32_RCC_PLLCFG_DIVP1EN;
+	STM32_RCC_PLL1DIVR = STM32_RCC_PLLDIV_DIVP(divp) |
+			     STM32_RCC_PLLDIV_DIVN(divn);
 }
 
 /**
@@ -215,22 +215,22 @@ static void clock_pll1_configure(enum freq output_freq) {
  * @param sysclk The input system clock, after the system clock prescaler.
  * @return The bus clock speed selected and configured
  */
-static enum freq clock_peripheral_configure(enum freq sysclk) {
-	switch (sysclk)
-	{
+static enum freq clock_peripheral_configure(enum freq sysclk)
+{
+	switch (sysclk) {
 	case FREQ_64MHZ:
 		/* Restore /1 HPRE (AHB prescaler) */
 		/* Disable downstream prescalers */
-		STM32_RCC_D1CFGR = STM32_RCC_D1CFGR_HPRE_DIV1
-				 | STM32_RCC_D1CFGR_D1PPRE_DIV1
-				 | STM32_RCC_D1CFGR_D1CPRE_DIV1;
+		STM32_RCC_D1CFGR = STM32_RCC_D1CFGR_HPRE_DIV1 |
+				   STM32_RCC_D1CFGR_D1PPRE_DIV1 |
+				   STM32_RCC_D1CFGR_D1CPRE_DIV1;
 		/* TODO(b/149512910): Adjust more peripheral prescalers */
 		return FREQ_64MHZ;
 	case FREQ_400MHZ:
 		/* Put /2 on HPRE (AHB prescaler) to keep at the 200MHz max */
-		STM32_RCC_D1CFGR = STM32_RCC_D1CFGR_HPRE_DIV2
-				 | STM32_RCC_D1CFGR_D1PPRE_DIV1
-				 | STM32_RCC_D1CFGR_D1CPRE_DIV1;
+		STM32_RCC_D1CFGR = STM32_RCC_D1CFGR_HPRE_DIV2 |
+				   STM32_RCC_D1CFGR_D1PPRE_DIV1 |
+				   STM32_RCC_D1CFGR_D1CPRE_DIV1;
 		/* TODO(b/149512910): Adjust more peripheral prescalers */
 		return FREQ_200MHZ;
 	default:
@@ -293,16 +293,16 @@ static void clock_switch_osc(enum clock_osc osc)
 
 static void switch_voltage_scale(enum voltage_scale vos)
 {
-	volatile uint32_t *const vos_reg   = &STM32_PWR_D3CR;
-	const uint32_t           vos_ready = STM32_PWR_D3CR_VOSRDY;
-	const uint32_t           vos_mask  = STM32_PWR_D3CR_VOSMASK;
-	const uint32_t           vos_values[] = {
-						/* See note below about VOS0. */
-						STM32_PWR_D3CR_VOS1,
-						STM32_PWR_D3CR_VOS1,
-						STM32_PWR_D3CR_VOS2,
-						STM32_PWR_D3CR_VOS3,
-						};
+	volatile uint32_t *const vos_reg = &STM32_PWR_D3CR;
+	const uint32_t vos_ready = STM32_PWR_D3CR_VOSRDY;
+	const uint32_t vos_mask = STM32_PWR_D3CR_VOSMASK;
+	const uint32_t vos_values[] = {
+		/* See note below about VOS0. */
+		STM32_PWR_D3CR_VOS1,
+		STM32_PWR_D3CR_VOS1,
+		STM32_PWR_D3CR_VOS2,
+		STM32_PWR_D3CR_VOS3,
+	};
 	BUILD_ASSERT(ARRAY_SIZE(vos_values) == VOLTAGE_SCALE_COUNT);
 
 	/*
@@ -344,7 +344,8 @@ static void clock_set_osc(enum clock_osc osc)
 	case OSC_HSI:
 		/* Switch to HSI */
 		clock_switch_osc(osc);
-		current_bus_freq = clock_peripheral_configure(target_sysclk_freq);
+		current_bus_freq =
+			clock_peripheral_configure(target_sysclk_freq);
 		/* Use more optimized flash latency settings for 64-MHz ACLK */
 		clock_flash_latency(current_bus_freq, target_voltage_scale);
 		/* Turn off the PLL1 to save power */
@@ -368,7 +369,8 @@ static void clock_set_osc(enum clock_osc osc)
 		clock_pll1_configure(target_sysclk_freq);
 		/* turn on PLL1 and wait until it's ready */
 		clock_enable_osc(OSC_PLL, true);
-		current_bus_freq = clock_peripheral_configure(target_sysclk_freq);
+		current_bus_freq =
+			clock_peripheral_configure(target_sysclk_freq);
 		/* Increase flash latency before transition the clock */
 		clock_flash_latency(current_bus_freq, target_voltage_scale);
 
@@ -399,6 +401,7 @@ void clock_enable_module(enum module_id module, int enable)
 static int idle_sleep_cnt;
 static int idle_dsleep_cnt;
 static uint64_t idle_dsleep_time_us;
+static int idle_sleep_prevented_cnt;
 static int dsleep_recovery_margin_us = 1000000;
 
 /* STOP_MODE_LATENCY: delay to wake up from STOP mode with flash off in SVOS5 */
@@ -407,9 +410,9 @@ static int dsleep_recovery_margin_us = 1000000;
 static void low_power_init(void)
 {
 	/* Clock LPTIM1 on the 32-kHz LSI for STOP mode time keeping */
-	STM32_RCC_D2CCIP2R = (STM32_RCC_D2CCIP2R &
-		~STM32_RCC_D2CCIP2_LPTIM1SEL_MASK)
-		| STM32_RCC_D2CCIP2_LPTIM1SEL_LSI;
+	STM32_RCC_D2CCIP2R =
+		(STM32_RCC_D2CCIP2R & ~STM32_RCC_D2CCIP2_LPTIM1SEL_MASK) |
+		STM32_RCC_D2CCIP2_LPTIM1SEL_LSI;
 
 	/* configure LPTIM1 as our 1-Khz low power timer in STOP mode */
 	STM32_RCC_APB1LENR |= STM32_RCC_PB1_LPTIM1;
@@ -427,16 +430,15 @@ static void low_power_init(void)
 	STM32_EXTI_CPUIMR2 |= BIT(15); /* [15] wkup47: LPTIM1 wake-up */
 
 	/* optimize power vs latency in STOP mode */
-	STM32_PWR_CR = (STM32_PWR_CR & ~STM32_PWR_CR_SVOS_MASK)
-		     | STM32_PWR_CR_SVOS5
-		     | STM32_PWR_CR_FLPS;
+	STM32_PWR_CR = (STM32_PWR_CR & ~STM32_PWR_CR_SVOS_MASK) |
+		       STM32_PWR_CR_SVOS5 | STM32_PWR_CR_FLPS;
 }
 
 void clock_refresh_console_in_use(void)
 {
 }
 
-void lptim_interrupt(void)
+static void lptim_interrupt(void)
 {
 	STM32_LPTIM_ICR(1) = STM32_LPTIM_INT_CMPM;
 }
@@ -463,6 +465,11 @@ static void set_lptim_event(int delay_us, uint16_t *lptim_cnt)
 	*lptim_cnt = cnt;
 }
 
+static bool timer_interrupt_pending(void)
+{
+	return task_is_irq_pending(IRQ_TIM(TIM_CLOCK32));
+}
+
 void __idle(void)
 {
 	timestamp_t t0;
@@ -471,13 +478,59 @@ void __idle(void)
 	uint16_t lptim0;
 
 	while (1) {
-		asm volatile("cpsid i");
+		interrupt_disable();
 
+		/*
+		 * Get timestamp with interrupts disabled.
+		 * This value is used as a base to calculate timestamp after
+		 * wake from deep sleep. In combination with next_delay it gives
+		 * information how long the CPU can sleep. The timestamp can
+		 * point to the previous "epoch" when timer overflowed after
+		 * interrupts were disabled, since clksrc_high (which keeps
+		 * higher 32 bits of the timestamp) will not be updated.
+		 */
 		t0 = get_time();
+
+		/*
+		 * Get time to next event.
+		 * After disabling interrupts, event timestamp
+		 * (__hw_clock_event_get()) is frozen, because
+		 * process_timers(), responsible for updating the
+		 * next event value with __hw_clock_event_set(),
+		 * can't be called. There is a risk that timer overflow
+		 * occurred after interrupts were disabled and obtained
+		 * event timestamp points to previous "epoch". We will
+		 * check that later.
+		 */
 		next_delay = __hw_clock_event_get() - t0.le.lo;
+
+		/*
+		 * Repeat idle enter procedure when timer interrupt is pending
+		 * (eg. overflow occurred after disabling interrupts). To work
+		 * properly, this code assumes that timer interrupt is enabled
+		 * in NVIC and interrupt is generated on timer overflow.
+		 */
+		if (timer_interrupt_pending()) {
+			idle_sleep_prevented_cnt++;
+
+			/* Enable interrupts to handle detected overflow. */
+			interrupt_enable();
+
+			/* Repeat idle enter procedure. */
+			continue;
+		}
 
 		if (DEEP_SLEEP_ALLOWED &&
 		    next_delay > LPTIM_PERIOD_US + STOP_MODE_LATENCY) {
+			/*
+			 * Sleep time MUST be smaller than watchdog period.
+			 * Otherwise watchdog will wake us from deep sleep
+			 * which is not what we want. Please note that this
+			 * assert won't fire if we are already part way through
+			 * the watchdog period.
+			 */
+			ASSERT(next_delay < CONFIG_WATCHDOG_PERIOD_MS * MSEC);
+
 			/* deep-sleep in STOP mode */
 			idle_dsleep_cnt++;
 
@@ -492,7 +545,7 @@ void __idle(void)
 			/* ensure outstanding memory transactions complete */
 			asm volatile("dsb");
 
-			asm("wfi");
+			cpu_enter_suspend_mode();
 
 			CPU_SCB_SYSCTRL &= ~0x4;
 
@@ -527,9 +580,9 @@ void __idle(void)
 			idle_sleep_cnt++;
 
 			/* normal idle : only CPU clock stopped */
-			asm("wfi");
+			cpu_enter_suspend_mode();
 		}
-		asm volatile("cpsie i");
+		interrupt_enable();
 	}
 }
 
@@ -537,22 +590,23 @@ void __idle(void)
 /**
  * Print low power idle statistics
  */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 	ccprintf("Time spent in deep-sleep:            %.6llds\n",
-			idle_dsleep_time_us);
+		 idle_dsleep_time_us);
+	ccprintf("Num of prevented sleep:              %d\n",
+		 idle_sleep_prevented_cnt);
 	ccprintf("Total time on:                       %.6llds\n", ts.val);
 	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
-			dsleep_recovery_margin_us);
+		 dsleep_recovery_margin_us);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
-			"",
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print last idle stats");
 #endif /* CONFIG_CMD_IDLE_STATS */
 #endif /* CONFIG_LOW_POWER_IDLE */
@@ -584,11 +638,11 @@ void clock_init(void)
 	 * by putting it on the fixed 64-Mhz HSI clock.
 	 * per_ck is clocked directly by the HSI (as per the default settings).
 	 */
-	STM32_RCC_D2CCIP1R = (STM32_RCC_D2CCIP1R &
-		~(STM32_RCC_D2CCIP1R_SPI123SEL_MASK |
-		  STM32_RCC_D2CCIP1R_SPI45SEL_MASK))
-		| STM32_RCC_D2CCIP1R_SPI123SEL_PERCK
-		| STM32_RCC_D2CCIP1R_SPI45SEL_HSI;
+	STM32_RCC_D2CCIP1R =
+		(STM32_RCC_D2CCIP1R & ~(STM32_RCC_D2CCIP1R_SPI123SEL_MASK |
+					STM32_RCC_D2CCIP1R_SPI45SEL_MASK)) |
+		STM32_RCC_D2CCIP1R_SPI123SEL_PERCK |
+		STM32_RCC_D2CCIP1R_SPI45SEL_HSI;
 
 	/* Use more optimized flash latency settings for ACLK = HSI = 64 Mhz */
 	clock_flash_latency(FREQ_64MHZ, VOLTAGE_SCALE3);
@@ -603,7 +657,7 @@ void clock_init(void)
 #endif
 }
 
-static int command_clock(int argc, char **argv)
+static int command_clock(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "hsi"))
@@ -616,5 +670,5 @@ static int command_clock(int argc, char **argv)
 	ccprintf("Clock frequency is now %d Hz\n", clock_get_freq());
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(clock, command_clock,
-			"hsi | pll", "Set clock frequency");
+DECLARE_CONSOLE_COMMAND(clock, command_clock, "hsi | pll",
+			"Set clock frequency");

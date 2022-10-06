@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,7 +16,7 @@ GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, ex
 
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3
 GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(SLP_SUS_L,            PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
@@ -84,21 +84,16 @@ GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 /* USB and USBC Signals */
 GPIO(EN_PP5000_USBA,		PIN(C, 6), GPIO_OUT_LOW)	/* Enable USB-A charging - all ports */
 GPIO(USB_A_LOW_PWR_OD,		PIN(6, 6), GPIO_ODR_LOW)	/* Don't limit USB-A charging by default - all ports */
-
-/*
- * USB_C1 moved from GPIO32 to GPIO83 on boards with board ID >=1.
- * GPIO83/EN_PP1800_A is DNS on board ID 0 and GPIO32 is N/C on board ID >=1
- * so it's safe to define GPIOs compatible with both designs.
- * TODO (b/149858568): remove board ID=0 support.
- */
-GPIO(USB_C1_RT_RST_ODL_BOARDID_0,	PIN(3, 2), GPIO_ODR_LOW) /* USB_C1 Reset on boards without board ID */
-GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
-GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
-GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
+GPIO(USB_C0_RT_RST_ODL,		PIN(4, 1), GPIO_ODR_LOW)	/* RST to Burnside bridge */
+GPIO(USB_C1_RT_RST_ODL,		PIN(8, 3), GPIO_ODR_LOW)
+GPIO(USB_C0_OC_ODL,		PIN(B, 1), GPIO_ODR_HIGH)
+GPIO(USB_C1_OC_ODL,		PIN(5, 0), GPIO_ODR_HIGH)
 /* There is currently no need to service this interrupt. */
-GPIO(USB_C1_RT_INT_ODL,			PIN(F, 3), GPIO_INPUT)
+GPIO(USB_C0_RT_INT_ODL,		PIN(F, 2), GPIO_INPUT)
+GPIO(USB_C1_RT_INT_ODL,		PIN(F, 3), GPIO_INPUT)
 
 /* Don't have a load switch for retimer */
+UNIMPLEMENTED(USB_C0_LS_EN)
 UNIMPLEMENTED(USB_C1_LS_EN)
 
 /* Misc Signals */
@@ -113,11 +108,8 @@ GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknowledgment */
 GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
 GPIO(EC_SLP_S0IX,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 
-/* Unused signals */
-GPIO(UNUSED_GPIO41,		PIN(4, 1), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(CATERR_L,			PIN(3, 4), GPIO_INPUT)		/* Catastrophic error */
+GPIO(EC_ESPI_ALERT_L,		PIN(5, 7), GPIO_INPUT | GPIO_SEL_1P8V)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
@@ -125,6 +117,9 @@ GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
  * off during sleep states.
  */
 GPIO(EC_EDP_BL_EN,             PIN(D, 3), GPIO_OUT_HIGH)
+
+/* Unused signals */
+GPIO(UNUSED_GPIO96,             PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(EC_I2C0_SENSOR_SCL,       PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)
@@ -182,3 +177,6 @@ ALTERNATE(PIN_MASK(0, BIT(0) | BIT(1) | BIT(2)), 0, MODULE_PMU, 0)  /* GPIO00 = 
                                                                        GPIO01 = H1_EC_PWR_BTN_ODL
                                                                        GPIO02 = EC_RST_ODL */
 
+/* Temperature sensors */
+ALTERNATE(PIN_MASK(4, BIT(2) | BIT(4) | BIT(5)), 0, MODULE_ADC, 0) /* TEMP_SENSOR1,2,4 */
+ALTERNATE(PIN_MASK(F, BIT(1)), 0, MODULE_ADC, 0) /* TEMP_SENSOR3 */

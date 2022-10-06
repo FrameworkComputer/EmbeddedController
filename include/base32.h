@@ -1,4 +1,4 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -41,9 +41,8 @@ uint8_t crc5_sym(uint8_t sym, uint8_t previous_crc);
  *				must be a multiple of add_crc_every.
  * @return EC_SUCCESS, or non-zero error code.
  */
-int base32_encode(char *dest, int destlen_chars,
-		  const void *srcbits, int srclen_bits,
-		  int add_crc_every);
+int base32_encode(char *dest, int destlen_chars, const void *srcbits,
+		  int srclen_bits, int add_crc_every);
 
 /**
  * base32-decode data from a null-terminated string

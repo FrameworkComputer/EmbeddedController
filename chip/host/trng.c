@@ -1,5 +1,5 @@
 
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -21,20 +21,20 @@
 
 static unsigned int seed;
 
-test_mockable void init_trng(void)
+test_mockable void trng_init(void)
 {
 	seed = 0;
 	srand(seed);
 }
 
-test_mockable void exit_trng(void)
+test_mockable void trng_exit(void)
 {
 }
 
-test_mockable void rand_bytes(void *buffer, size_t len)
+test_mockable void trng_rand_bytes(void *buffer, size_t len)
 {
 	uint8_t *b, *end;
 
-	for (b = buffer, end = b+len; b != end; b++)
+	for (b = buffer, end = b + len; b != end; b++)
 		*b = (uint8_t)rand_r(&seed);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -23,8 +23,8 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 int system_is_reboot_warm(void)
 {
@@ -57,8 +57,7 @@ uint32_t chip_read_reset_flags(void)
  * Used when the watchdog timer exceeds max retries and we want to
  * disable ISH completely.
  */
-noreturn
-static void system_halt(void)
+noreturn static void system_halt(void)
 {
 	cflush();
 
@@ -66,9 +65,8 @@ static void system_halt(void)
 		disable_all_interrupts();
 		WDT_CONTROL = 0;
 		CCU_TCG_EN = 1;
-		__asm__ volatile (
-			"cli\n"
-			"hlt\n");
+		__asm__ volatile("cli\n"
+				 "hlt\n");
 	}
 }
 
@@ -90,8 +88,8 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_AP_WATCHDOG) {
 		save_flags |= EC_RESET_FLAG_WATCHDOG;
 		ish_persistent_data.watchdog_counter += 1;
-		if (ish_persistent_data.watchdog_counter
-		    >= CONFIG_WATCHDOG_MAX_RETRIES) {
+		if (ish_persistent_data.watchdog_counter >=
+		    CONFIG_WATCHDOG_MAX_RETRIES) {
 			CPRINTS("Halting ISH due to max watchdog resets");
 			system_halt();
 		}
@@ -147,9 +145,9 @@ int system_set_scratchpad(uint32_t value)
 	return EC_SUCCESS;
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *unused)
 {
-	return 0;
+	return EC_ERROR_UNIMPLEMENTED;
 }
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
@@ -175,19 +173,13 @@ void system_set_image_copy(enum ec_image copy)
 {
 }
 
-#define HBW_FABRIC_BASE		0x10000000
-#define PER0_FABRIC_BASE	0x04000000
-#define AGENT_STS		0x28
-#define ERROR_LOG		0x58
+#define HBW_FABRIC_BASE 0x10000000
+#define PER0_FABRIC_BASE 0x04000000
+#define AGENT_STS 0x28
+#define ERROR_LOG 0x58
 
-static uint16_t hbw_ia_offset[] = {
-	0x1000,
-	0x3400,
-	0x3800,
-	0x5000,
-	0x5800,
-	0x6000
-};
+static uint16_t hbw_ia_offset[] = { 0x1000, 0x3400, 0x3800,
+				    0x5000, 0x5800, 0x6000 };
 
 static inline void clear_register(uint32_t reg)
 {

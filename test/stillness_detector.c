@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -35,8 +35,8 @@ static int test_not_still_short_window(void)
 	int i;
 
 	for (i = 0; i < 6; ++i)
-		TEST_ASSERT(!still_det_update(&det, i * 100 * MSEC,
-					      0.0f, 0.0f, 0.0f));
+		TEST_ASSERT(!still_det_update(&det, i * 100 * MSEC, 0.0f, 0.0f,
+					      0.0f));
 
 	return EC_SUCCESS;
 }
@@ -47,8 +47,8 @@ static int test_not_still_long_window(void)
 	int i;
 
 	for (i = 0; i < 5; ++i)
-		TEST_ASSERT(!still_det_update(&det, i * 300 * MSEC,
-					      0.0f, 0.0f, 0.0f));
+		TEST_ASSERT(!still_det_update(&det, i * 300 * MSEC, 0.0f, 0.0f,
+					      0.0f));
 
 	return EC_SUCCESS;
 }
@@ -59,8 +59,8 @@ static int test_not_still_not_enough_samples(void)
 	int i;
 
 	for (i = 0; i < 4; ++i)
-		TEST_ASSERT(!still_det_update(&det, i * 200 * MSEC,
-					      0.0f, 0.0f, 0.0f));
+		TEST_ASSERT(!still_det_update(&det, i * 200 * MSEC, 0.0f, 0.0f,
+					      0.0f));
 
 	return EC_SUCCESS;
 }
@@ -71,9 +71,8 @@ static int test_is_still_all_axes(void)
 	int i;
 
 	for (i = 0; i < 9; ++i) {
-		int result = still_det_update(&det, i * 100 * MSEC,
-					      i * 0.001f, i * 0.001f,
-					      i * 0.001f);
+		int result = still_det_update(&det, i * 100 * MSEC, i * 0.001f,
+					      i * 0.001f, i * 0.001f);
 
 		TEST_EQ(result, i == 8 ? 1 : 0, "%d");
 	}
@@ -90,9 +89,8 @@ static int test_not_still_one_axis(void)
 	int i;
 
 	for (i = 0; i < 9; ++i) {
-		TEST_ASSERT(!still_det_update(&det, i * 100 * MSEC,
-					      i * 0.001f, i * 0.001f,
-					      i * 0.01f));
+		TEST_ASSERT(!still_det_update(&det, i * 100 * MSEC, i * 0.001f,
+					      i * 0.001f, i * 0.01f));
 	}
 
 	return EC_SUCCESS;
@@ -104,15 +102,13 @@ static int test_resets(void)
 	int i;
 
 	for (i = 0; i < 9; ++i) {
-		TEST_ASSERT(!still_det_update(&det, i * 100 * MSEC,
-					      i * 0.001f, i * 0.001f,
-					      i * 0.01f));
+		TEST_ASSERT(!still_det_update(&det, i * 100 * MSEC, i * 0.001f,
+					      i * 0.001f, i * 0.01f));
 	}
 
 	for (i = 0; i < 9; ++i) {
-		int result = still_det_update(&det, i * 100 * MSEC,
-					      i * 0.001f, i * 0.001f,
-					      i * 0.001f);
+		int result = still_det_update(&det, i * 100 * MSEC, i * 0.001f,
+					      i * 0.001f, i * 0.001f);
 
 		TEST_EQ(result, i == 8 ? 1 : 0, "%d");
 	}
@@ -123,7 +119,7 @@ static int test_resets(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 
@@ -135,5 +131,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_not_still_one_axis);
 	RUN_TEST(test_resets);
 
+	/* Wait for all background tasks to start. */
+	sleep(4);
 	test_print_result();
 }

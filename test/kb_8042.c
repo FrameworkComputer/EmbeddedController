@@ -1,10 +1,12 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * Tests for keyboard MKBP protocol
  */
 
+#include <stdbool.h>
+#include "atkbd_protocol.h"
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -15,16 +17,28 @@
 #include "keyboard_scan.h"
 #include "lpc.h"
 #include "power_button.h"
+#include "queue.h"
 #include "system.h"
+#include "task.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
-static const char *action[2] = {"release", "press"};
+static const char *action[2] = { "release", "press" };
 
-#define BUF_SIZE 16
-static char lpc_char_buf[BUF_SIZE];
-static unsigned int lpc_char_cnt;
+/*
+ * This simulates the hardware output buffer. The x86 will read the output
+ * buffer from IOx60. Since we don't have actual hardware, we emulate the
+ * output buffer.
+ */
+static volatile struct {
+	bool full;
+	uint8_t data;
+	bool irq;
+	bool from_aux;
+} output_buffer;
+
+static struct queue const aux_to_device = QUEUE_NULL(16, uint8_t);
 
 /*****************************************************************************/
 /* Mock functions */
@@ -34,13 +48,123 @@ int lid_is_open(void)
 	return 1;
 }
 
-void lpc_keyboard_put_char(uint8_t chr, int send_irq)
+int lpc_keyboard_has_char(void)
 {
-	lpc_char_buf[lpc_char_cnt++] = chr;
+	return output_buffer.full;
 }
 
+void lpc_keyboard_put_char(uint8_t chr, int send_irq)
+{
+	if (lpc_keyboard_has_char()) {
+		ccprintf("%s:%s ERROR: output buffer is full!\n", __FILE__,
+			 __func__);
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
+	}
+
+	output_buffer.data = chr;
+	output_buffer.irq = send_irq;
+	output_buffer.from_aux = false;
+	output_buffer.full = true;
+}
+
+void send_aux_data_to_device(uint8_t data)
+{
+	if (queue_add_unit(&aux_to_device, &data) == 0) {
+		ccprintf("%s: ERROR: aux_to_device queue is full!\n", __FILE__);
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
+	}
+}
+
+void lpc_aux_put_char(uint8_t chr, int send_irq)
+{
+	if (lpc_keyboard_has_char()) {
+		ccprintf("%s:%s ERROR: output buffer is full!\n", __FILE__,
+			 __func__);
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
+	}
+
+	output_buffer.data = chr;
+	output_buffer.irq = send_irq;
+	output_buffer.from_aux = true;
+	output_buffer.full = true;
+}
 /*****************************************************************************/
 /* Test utilities */
+
+/*
+ * This is a bit tricky, the second parameter to _Static_assert must be a string
+ * literal, so we use that property to assert x is a string literal.
+ */
+#define ASSERT_IS_STRING_LITERAL(x) _Static_assert(true, x)
+
+int _wait_for_data(int delay_ms)
+{
+	while (!output_buffer.full) {
+		if (delay_ms <= 0)
+			break;
+		delay_ms -= 1;
+
+		msleep(1);
+	}
+	TEST_ASSERT(output_buffer.full);
+
+	return EC_SUCCESS;
+}
+
+#define WAIT_FOR_DATA(d) TEST_EQ(_wait_for_data(d), EC_SUCCESS, "%d")
+
+#define VERIFY_LPC_CHAR_ALL(s, d, aux, _irq)                               \
+	do {                                                               \
+		const uint8_t *expected = s;                               \
+		ASSERT_IS_STRING_LITERAL(s);                               \
+		for (int _i = 0; _i < sizeof(s) - 1; ++_i) {               \
+			WAIT_FOR_DATA(d);                                  \
+			TEST_EQ(output_buffer.from_aux, aux, "%d");        \
+			if (_irq >= 0)                                     \
+				TEST_EQ(output_buffer.irq,                 \
+					_irq > 0 ? true : false, "%d");    \
+			TEST_EQ(output_buffer.data, expected[_i], "0x%x"); \
+			output_buffer.full = false;                        \
+			task_wake(TASK_ID_KEYPROTO);                       \
+		}                                                          \
+	} while (0)
+
+#define VERIFY_LPC_CHAR_DELAY(s, d)                    \
+	do {                                           \
+		msleep(d);                             \
+		VERIFY_LPC_CHAR_ALL(s, 10, false, -1); \
+	} while (0)
+#define VERIFY_LPC_CHAR(s) VERIFY_LPC_CHAR_ALL(s, 30, false, -1)
+#define VERIFY_ATKBD_ACK(s) VERIFY_LPC_CHAR("\xfa") /* ATKBD_RET_ACK */
+
+#define VERIFY_NO_CHAR()                              \
+	do {                                          \
+		msleep(30);                           \
+		TEST_EQ(output_buffer.full, 0, "%d"); \
+	} while (0)
+
+#define VERIFY_AUX_TO_HOST(expected_data, expected_irq) \
+	VERIFY_LPC_CHAR_ALL(expected_data, 30, true, expected_irq)
+
+#define VERIFY_AUX_TO_HOST_EMPTY VERIFY_NO_CHAR
+
+#define VERIFY_AUX_TO_DEVICE(expected_data)                                   \
+	do {                                                                  \
+		uint8_t _data;                                                \
+		msleep(30);                                                   \
+		TEST_EQ(queue_remove_unit(&aux_to_device, &_data), (size_t)1, \
+			"%zd");                                               \
+		TEST_EQ(_data, expected_data, "%#x");                         \
+	} while (0)
+
+#define VERIFY_AUX_TO_DEVICE_EMPTY()                         \
+	do {                                                 \
+		msleep(30);                                  \
+		TEST_ASSERT(queue_is_empty(&aux_to_device)); \
+	} while (0)
 
 static void press_key(int c, int r, int pressed)
 {
@@ -48,83 +172,393 @@ static void press_key(int c, int r, int pressed)
 	keyboard_state_changed(r, c, pressed);
 }
 
-static void enable_keystroke(int enabled)
+static int _enable_keystroke(int enabled)
 {
-	uint8_t data = enabled ? I8042_CMD_ENABLE : I8042_CMD_RESET_DIS;
+	uint8_t data = enabled ? ATKBD_CMD_ENABLE : ATKBD_CMD_RESET_DIS;
 	keyboard_host_write(data, 0);
-	msleep(30);
-}
+	VERIFY_ATKBD_ACK();
 
-static void reset_8042(void)
-{
-	keyboard_host_write(I8042_CMD_RESET_DEF, 0);
-	msleep(30);
-}
-
-static void set_typematic(uint8_t val)
-{
-	keyboard_host_write(I8042_CMD_SETREP, 0);
-	msleep(30);
-	keyboard_host_write(val, 0);
-	msleep(30);
-}
-
-static void set_scancode(uint8_t s)
-{
-	keyboard_host_write(I8042_CMD_SSCANSET, 0);
-	msleep(30);
-	keyboard_host_write(s, 0);
-	msleep(30);
-}
-
-static void write_cmd_byte(uint8_t val)
-{
-	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
-	msleep(30);
-	keyboard_host_write(val, 0);
-	msleep(30);
-}
-
-static uint8_t read_cmd_byte(void)
-{
-	lpc_char_cnt = 0;
-	keyboard_host_write(I8042_READ_CMD_BYTE, 1);
-	msleep(30);
-	return lpc_char_buf[0];
-}
-
-static int __verify_lpc_char(char *arr, unsigned int sz, int delay_ms)
-{
-	int i;
-
-	lpc_char_cnt = 0;
-	for (i = 0; i < sz; ++i)
-		lpc_char_buf[i] = 0;
-	msleep(delay_ms);
-	TEST_ASSERT_ARRAY_EQ(arr, lpc_char_buf, sz);
 	return EC_SUCCESS;
 }
+#define ENABLE_KEYSTROKE(enabled) \
+	TEST_EQ(_enable_keystroke(enabled), EC_SUCCESS, "%d")
 
-#define VERIFY_LPC_CHAR(s) \
-	TEST_ASSERT(__verify_lpc_char(s, strlen(s), 30) == EC_SUCCESS)
-#define VERIFY_LPC_CHAR_DELAY(s, t) \
-	TEST_ASSERT(__verify_lpc_char(s, strlen(s), t) == EC_SUCCESS)
-
-static int __verify_no_char(void)
+static int _reset_8042(void)
 {
-	lpc_char_cnt = 0;
-	msleep(30);
-	TEST_CHECK(lpc_char_cnt == 0);
-}
+	keyboard_host_write(ATKBD_CMD_RESET_DEF, 0);
+	VERIFY_ATKBD_ACK();
 
-#define VERIFY_NO_CHAR() TEST_ASSERT(__verify_no_char() == EC_SUCCESS)
+	return EC_SUCCESS;
+}
+#define RESET_8042() TEST_EQ(_reset_8042(), EC_SUCCESS, "%d")
+
+static int _set_typematic(uint8_t val)
+{
+	keyboard_host_write(ATKBD_CMD_SETREP, 0);
+	VERIFY_ATKBD_ACK();
+
+	keyboard_host_write(val, 0);
+	VERIFY_ATKBD_ACK();
+
+	return EC_SUCCESS;
+}
+#define SET_TYPEMATIC(val) TEST_EQ(_set_typematic(val), EC_SUCCESS, "%d")
+
+static int _set_scancode(uint8_t s)
+{
+	keyboard_host_write(ATKBD_CMD_SSCANSET, 0);
+	VERIFY_ATKBD_ACK();
+
+	keyboard_host_write(s, 0);
+	VERIFY_ATKBD_ACK();
+
+	return EC_SUCCESS;
+}
+#define SET_SCANCODE(s) TEST_EQ(_set_scancode(s), EC_SUCCESS, "%d")
+
+static int _write_cmd_byte(uint8_t val)
+{
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	VERIFY_NO_CHAR();
+
+	keyboard_host_write(val, 0);
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+#define WRITE_CMD_BYTE(val) TEST_EQ(_write_cmd_byte(val), EC_SUCCESS, "%d")
+
+static int _read_cmd_byte(uint8_t *cmd)
+{
+	keyboard_host_write(I8042_READ_CMD_BYTE, 1);
+	WAIT_FOR_DATA(30);
+	TEST_EQ(output_buffer.from_aux, 0, "%d");
+
+	*cmd = output_buffer.data;
+	output_buffer.full = false;
+	task_wake(TASK_ID_KEYPROTO);
+
+	return EC_SUCCESS;
+}
+#define READ_CMD_BYTE()                                          \
+	({                                                       \
+		uint8_t cmd;                                     \
+		TEST_EQ(_read_cmd_byte(&cmd), EC_SUCCESS, "%d"); \
+		cmd;                                             \
+	})
+
+/*
+ * We unfortunately don't have an Input Buffer Full (IBF). Instead we
+ * directly write to the task's input queue. Ideally we would have an
+ * emulator that emulates the 8042 input/output buffers.
+ */
+#define i8042_write_cmd(cmd) keyboard_host_write(cmd, 1)
+#define i8042_write_data(data) keyboard_host_write(data, 0)
 
 /*****************************************************************************/
 /* Tests */
 
+void before_test(void)
+{
+	/* Make sure all tests start with the controller in the same state */
+	_write_cmd_byte(I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS);
+}
+
+void after_test(void)
+{
+	if (output_buffer.full) {
+		ccprintf("%s:%s ERROR: output buffer is not empty!\n", __FILE__,
+			 __func__);
+		/* We can't fail the test, but we can abort!. */
+		exit(1);
+	}
+}
+
+static int test_8042_aux_loopback(void)
+{
+	/* Disable all IRQs */
+	WRITE_CMD_BYTE(0);
+
+	i8042_write_cmd(I8042_ECHO_MOUSE);
+	i8042_write_data(0x01);
+	VERIFY_AUX_TO_HOST("\x01", 0);
+
+	/* Enable AUX IRQ */
+	WRITE_CMD_BYTE(I8042_ENIRQ12);
+
+	i8042_write_cmd(I8042_ECHO_MOUSE);
+	i8042_write_data(0x02);
+	VERIFY_AUX_TO_HOST("\x02", 1);
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_two_way_communication(void)
+{
+	/* Enable AUX IRQ */
+	WRITE_CMD_BYTE(I8042_ENIRQ12);
+
+	i8042_write_cmd(I8042_SEND_TO_MOUSE);
+	i8042_write_data(0x01);
+	/* No response expected from the 8042 controller*/
+	VERIFY_AUX_TO_HOST_EMPTY();
+	VERIFY_AUX_TO_DEVICE(0x01);
+
+	/* Simulate the AUX device sending a response to the host */
+	send_aux_data_to_host_interrupt(0x02);
+	VERIFY_AUX_TO_HOST("\x02", 1);
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_inhibit(void)
+{
+	/* Enable AUX IRQ, but inhibit the AUX device from sending data. */
+	WRITE_CMD_BYTE(I8042_ENIRQ12 | I8042_AUX_DIS);
+
+	/* Simulate the AUX device sending a response to the host */
+	send_aux_data_to_host_interrupt(0x02);
+	VERIFY_AUX_TO_HOST_EMPTY();
+
+	/* Stop inhibiting the AUX device */
+	WRITE_CMD_BYTE(I8042_ENIRQ12);
+	/*
+	 * This is wrong. When the CLK is inhibited the device will queue up
+	 * events/scan codes in it's internal buffer. Once the inhibit is
+	 * released, the device will start clocking out the data. So in this
+	 * test we should be receiving a 0x02 byte, but we don't.
+	 *
+	 * In order to fix this we either need to plumb an inhibit function
+	 * to the AUX PS/2 controller so it can hold the CLK line low, and thus
+	 * tell the AUX device to buffer. Or, we can have the 8042 controller
+	 * buffer the data internally and start replying it when the device is
+	 * no longer inhibited.
+	 */
+	VERIFY_AUX_TO_HOST_EMPTY();
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_controller_commands(void)
+{
+	uint8_t ctrl;
+
+	/* Start with empty controller flags. i.e., AUX Enabled */
+	WRITE_CMD_BYTE(0);
+
+	/* Send the AUX DISABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_DIS_MOUSE);
+	ctrl = READ_CMD_BYTE();
+	TEST_ASSERT(ctrl & I8042_AUX_DIS);
+
+	/* Send the AUX ENABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_ENA_MOUSE);
+	ctrl = READ_CMD_BYTE();
+	TEST_ASSERT(!(ctrl & I8042_AUX_DIS));
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_aux_test_command(void)
+{
+	i8042_write_cmd(I8042_TEST_MOUSE);
+
+	VERIFY_LPC_CHAR("\x00");
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_self_test(void)
+{
+	i8042_write_cmd(I8042_RESET_SELF_TEST);
+	VERIFY_LPC_CHAR("\x55");
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_keyboard_test_command(void)
+{
+	i8042_write_cmd(I8042_TEST_KB_PORT);
+	VERIFY_LPC_CHAR("\x00"); /* Data and Clock are not stuck */
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_keyboard_controller_commands(void)
+{
+	uint8_t ctrl;
+
+	/* Start with empty controller flags. i.e., Keyboard Enabled */
+	WRITE_CMD_BYTE(0);
+
+	/* Send the Keyboard DISABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_DIS_KB);
+	ctrl = READ_CMD_BYTE();
+	TEST_ASSERT(ctrl & I8042_KBD_DIS);
+
+	/* Send the Keyboard ENABLE command and verify the ctrl got updated */
+	i8042_write_cmd(I8042_ENA_KB);
+	ctrl = READ_CMD_BYTE();
+	TEST_ASSERT(!(ctrl & I8042_KBD_DIS));
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_keyboard_key_pressed_while_inhibited(void)
+{
+	ENABLE_KEYSTROKE(1);
+
+	/* Inhibit the keyboard device from sending data. */
+	WRITE_CMD_BYTE(I8042_XLATE | I8042_KBD_DIS);
+
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+
+	/*
+	 * FIXME: This is wrong! We shouldn't be sending scan codes to the
+	 * host while the keyboard channel is inhibited. This should be
+	 * VERIFY_NO_CHAR();
+	 */
+	VERIFY_LPC_CHAR("\x01");
+
+	/* FIXME: This is also wrong for the same reason as above! */
+	press_key(1, 1, 0);
+	VERIFY_LPC_CHAR("\x81");
+
+	/* Stop inhibiting the keyboard */
+	WRITE_CMD_BYTE(0);
+
+	/*
+	 * FIXME: This is wrong. When the CLK is inhibited the device will queue
+	 * up events/scan codes in it's internal buffer. Once the inhibit is
+	 * released, the device will start clocking out the data. So in this
+	 * test we should be receiving the 0x01, and x81 here, but we received
+	 * them above.
+	 */
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte(void)
+{
+	ENABLE_KEYSTROKE(1);
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/*
+	 * We should have a press scan code in the output buffer, and a
+	 * release scan code queued up in the keyboard queue.
+	 */
+	WAIT_FOR_DATA(30);
+
+	/* Inhibit the keyboard device from sending data. */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE | I8042_KBD_DIS, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Stop inhibiting the keyboard */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Verify the scan codes from above */
+	VERIFY_LPC_CHAR("\x01");
+	VERIFY_LPC_CHAR("\x81");
+
+	return EC_SUCCESS;
+}
+
+static int
+test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte_with_read(void)
+{
+	uint8_t cmd;
+
+	ENABLE_KEYSTROKE(1);
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/*
+	 * We should have a press scan code in the output buffer, and a
+	 * release scan code queued up in the keyboard queue.
+	 */
+	WAIT_FOR_DATA(30);
+
+	/* Inhibit the keyboard device from sending data. */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE | I8042_KBD_DIS, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Read the key press scan code from the output buffer. */
+	VERIFY_LPC_CHAR("\x01");
+
+	/*
+	 * With the keyboard output suppressed, we should be able to read from
+	 * the 8042 controller.
+	 */
+	cmd = READ_CMD_BYTE();
+
+	/* Verify we got the cmd byte we set above */
+	TEST_EQ(cmd, I8042_XLATE | I8042_KBD_DIS, "%d");
+
+	/* Stop inhibiting the keyboard */
+	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
+	keyboard_host_write(I8042_XLATE, 0);
+	/* Wait for controller to processes the command */
+	msleep(10);
+
+	/* Verify the key release scan code from above */
+	/*
+	 * FIXME: This is wrong. We should receive the key release scan code
+	 * 0x81. Instead the `I8042_READ_CMD_BYTE` above cleared the keyboard's
+	 * output queue. It did this because the 8042 and keyboard output queues
+	 * are implemented as the same thing.
+	 */
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+
+static int test_8042_keyboard_key_pressed_before_inhibit_using_cmd(void)
+{
+	ENABLE_KEYSTROKE(1);
+	/* Simulate a keypress on the keyboard */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/*
+	 * We should have a press scan code in the output buffer, and a
+	 * release scan code queued up in the keyboard queue.
+	 */
+	WAIT_FOR_DATA(30);
+
+	/* Inhibit the keyboard device from sending data. */
+	keyboard_host_write(I8042_DIS_KB, 1);
+
+	/* Stop inhibiting the keyboard */
+	keyboard_host_write(I8042_ENA_KB, 1);
+
+	/* Verify the scan codes from above */
+	VERIFY_LPC_CHAR("\x01");
+	/*
+	 * FIXME: This is wrong. When the keyboard CLK is inhibited the keyboard
+	 * will queue up events/scan codes in it's internal buffer. Once the
+	 * inhibit is released, the keyboard will start clocking out the data.
+	 * So in this test we should be receiving 0x81, but the keyboard buffer
+	 * was cleared by the I8042_DIS_KB above.
+	 */
+	VERIFY_NO_CHAR();
+	return EC_SUCCESS;
+}
+
 static int test_single_key_press(void)
 {
-	enable_keystroke(1);
+	ENABLE_KEYSTROKE(1);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
@@ -140,7 +574,7 @@ static int test_single_key_press(void)
 
 static int test_disable_keystroke(void)
 {
-	enable_keystroke(0);
+	ENABLE_KEYSTROKE(0);
 	press_key(1, 1, 1);
 	VERIFY_NO_CHAR();
 	press_key(1, 1, 0);
@@ -151,12 +585,12 @@ static int test_disable_keystroke(void)
 
 static int test_typematic(void)
 {
-	enable_keystroke(1);
+	ENABLE_KEYSTROKE(1);
 
 	/*
 	 * 250ms delay, 8 chars / sec.
 	 */
-	set_typematic(0xf);
+	SET_TYPEMATIC(0xf);
 
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR_DELAY("\x01\x01\x01\x01\x01", 650);
@@ -166,7 +600,7 @@ static int test_typematic(void)
 	/*
 	 * 500ms delay, 10.9 chars / sec.
 	 */
-	reset_8042();
+	RESET_8042();
 
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR_DELAY("\x01\x01\x01", 650);
@@ -176,17 +610,208 @@ static int test_typematic(void)
 	return EC_SUCCESS;
 }
 
+static int test_atkbd_get_scancode(void)
+{
+	SET_SCANCODE(1);
+
+	keyboard_host_write(ATKBD_CMD_GSCANSET, 0);
+	VERIFY_ATKBD_ACK();
+
+	/* Writing a 0 scan code will return the current scan code. */
+	keyboard_host_write(0, 0);
+	VERIFY_ATKBD_ACK();
+	VERIFY_LPC_CHAR("\x01");
+
+	SET_SCANCODE(2);
+
+	keyboard_host_write(ATKBD_CMD_GSCANSET, 0);
+	VERIFY_ATKBD_ACK();
+
+	/* Writing a 0 scan code will return the current scan code. */
+	keyboard_host_write(0, 0);
+	VERIFY_ATKBD_ACK();
+	VERIFY_LPC_CHAR("\x02");
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_set_scancode_with_keystroke_disabled(void)
+{
+	ENABLE_KEYSTROKE(0);
+
+	SET_SCANCODE(1);
+
+	press_key(1, 1, 1);
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_set_scancode_with_key_press_before_set(void)
+{
+	ENABLE_KEYSTROKE(0);
+	ENABLE_KEYSTROKE(1);
+
+	/* Push data into the output buffer and keyboard queue */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/*
+	 * ATKBD_CMD_SSCANSET should cause the keyboard to stop scanning, flush
+	 * the keyboards output queue, and reset the typematic key.
+	 */
+	keyboard_host_write(ATKBD_CMD_SSCANSET, 0);
+	/* Read out the scan code that got pushed into the output buffer before
+	 * the command was sent.
+	 */
+	VERIFY_LPC_CHAR("\x01");
+
+	/*
+	 * FIXME: This is wrong. The keyboard's output queue should have been
+	 * flushed when it received the `ATKBD_CMD_SSCANSET` command.
+	 */
+	VERIFY_LPC_CHAR("\x81");
+
+	/* This is the ACK for `ATKBD_CMD_SSCANSET`. */
+	VERIFY_ATKBD_ACK();
+
+	/* The keyboard has flushed the buffer so no more keys. */
+	VERIFY_NO_CHAR();
+
+	/* Finish setting scan code 1 */
+	keyboard_host_write(1, 0);
+	VERIFY_ATKBD_ACK();
+
+	/* Key scanning should be restored. */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+	VERIFY_LPC_CHAR("\x01\x81");
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_set_scancode_with_key_press_during_set(void)
+{
+	ENABLE_KEYSTROKE(1);
+
+	/*
+	 * ATKBD_CMD_SSCANSET should cause the keyboard to stop scanning, flush
+	 * the keyboards output queue, and reset the typematic key.
+	 */
+	keyboard_host_write(ATKBD_CMD_SSCANSET, 0);
+	VERIFY_ATKBD_ACK();
+
+	/* These keypresses should be dropped. */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+	/*
+	 * FIXME: So this is wrong. scanning should be stopped while waiting
+	 * for the scan code to be sent.
+	 */
+	VERIFY_LPC_CHAR("\x01\x81");
+
+	/* Finish setting scan code 1 */
+	keyboard_host_write(1, 0);
+	VERIFY_ATKBD_ACK();
+
+	/* Key scanning should be restored. */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+	VERIFY_LPC_CHAR("\x01\x81");
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_echo(void)
+{
+	i8042_write_data(ATKBD_CMD_DIAG_ECHO);
+	VERIFY_ATKBD_ACK();
+
+	VERIFY_LPC_CHAR("\xee");
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_get_id(void)
+{
+	i8042_write_data(ATKBD_CMD_GETID);
+	VERIFY_ATKBD_ACK();
+
+	VERIFY_LPC_CHAR("\xab\x83");
+
+	i8042_write_data(ATKBD_CMD_OK_GETID);
+	VERIFY_ATKBD_ACK();
+
+	VERIFY_LPC_CHAR("\xab\x83");
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_set_leds_keypress_during(void)
+{
+	/* This should pause scanning. */
+	i8042_write_data(ATKBD_CMD_SETLEDS);
+	VERIFY_ATKBD_ACK();
+
+	/* Simulate keypress while keyboard is waiting for option byte */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+	/* FIXME: This is wrong, we shouldn't have any key strokes */
+	VERIFY_LPC_CHAR("\x01\x81");
+
+	i8042_write_data(0x01);
+	VERIFY_ATKBD_ACK();
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_set_leds_abort_set(void)
+{
+	i8042_write_data(ATKBD_CMD_SETLEDS);
+	VERIFY_ATKBD_ACK();
+
+	/*
+	 * The spec says if we send a command instead of the option byte, the
+	 * keyboard will abort the SETLEDS command and processes the new
+	 * command. The way we can differentiate between a command and the
+	 * option byte is the option byte must have the top 5 bits set to 0.
+	 */
+	i8042_write_data(ATKBD_CMD_DIAG_ECHO);
+	VERIFY_ATKBD_ACK();
+
+	/* FIXME: This is wrong. We are expecting the 0xee echo byte. */
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+
+static int test_atkbd_set_ex_leds(void)
+{
+	i8042_write_data(ATKBD_CMD_EX_SETLEDS);
+	VERIFY_ATKBD_ACK();
+
+	/* The extra set led command expects two option bytes. */
+
+	i8042_write_data(0x1);
+	VERIFY_ATKBD_ACK();
+
+	i8042_write_data(0x2);
+	VERIFY_ATKBD_ACK();
+
+	return EC_SUCCESS;
+}
+
 static int test_scancode_set2(void)
 {
-	set_scancode(2);
+	SET_SCANCODE(2);
 
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
 	VERIFY_LPC_CHAR("\x81");
 
-	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() & ~I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x76");
 	press_key(1, 1, 0);
@@ -197,8 +822,13 @@ static int test_scancode_set2(void)
 
 static int test_power_button(void)
 {
+	ENABLE_KEYSTROKE(0);
+
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
-	set_scancode(1);
+	msleep(100);
+
+	SET_SCANCODE(1);
+	ENABLE_KEYSTROKE(1);
 	test_chipset_on();
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
@@ -207,8 +837,8 @@ static int test_power_button(void)
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 	VERIFY_LPC_CHAR_DELAY("\xe0\xde", 100);
 
-	set_scancode(2);
-	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+	SET_SCANCODE(2);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() & ~I8042_XLATE);
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
 	VERIFY_LPC_CHAR_DELAY("\xe0\x37", 100);
@@ -229,8 +859,8 @@ static int test_power_button(void)
 
 static int test_sysjump(void)
 {
-	set_scancode(2);
-	enable_keystroke(1);
+	SET_SCANCODE(2);
+	ENABLE_KEYSTROKE(1);
 
 	system_run_image_copy(EC_IMAGE_RW);
 
@@ -240,13 +870,13 @@ static int test_sysjump(void)
 
 static int test_sysjump_cont(void)
 {
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x01");
 	press_key(1, 1, 0);
 	VERIFY_LPC_CHAR("\x81");
 
-	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+	WRITE_CMD_BYTE(READ_CMD_BYTE() & ~I8042_XLATE);
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR("\x76");
 	press_key(1, 1, 0);
@@ -274,8 +904,8 @@ static const struct ec_response_keybd_config keybd_config = {
 	},
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &keybd_config;
 }
@@ -285,8 +915,8 @@ static int test_ec_cmd_get_keybd_config(void)
 	struct ec_response_keybd_config resp;
 	int rv;
 
-	rv = test_send_host_command(EC_CMD_GET_KEYBD_CONFIG, 0, NULL, 0,
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_GET_KEYBD_CONFIG, 0, NULL, 0, &resp,
+				    sizeof(resp));
 	if (rv != EC_RES_SUCCESS) {
 		ccprintf("Error: EC_CMD_GET_KEYBD_CONFIG cmd returns %d\n", rv);
 		return EC_ERROR_INVAL;
@@ -303,32 +933,56 @@ static int test_ec_cmd_get_keybd_config(void)
 
 static int test_vivaldi_top_keys(void)
 {
-	set_scancode(2);
+	SET_SCANCODE(2);
 
 	/* Test REFRESH key */
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
-	press_key(2, 3, 1);		/* Press T2 */
-	VERIFY_LPC_CHAR("\xe0\x67");	/* Check REFRESH scancode in set-1 */
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
+	press_key(2, 3, 1); /* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x67"); /* Check REFRESH scancode in set-1 */
 
 	/* Test SNAPSHOT key */
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
-	press_key(4, 3, 1);		/* Press T2 */
-	VERIFY_LPC_CHAR("\xe0\x13");	/* Check SNAPSHOT scancode in set-1 */
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
+	press_key(4, 3, 1); /* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x13"); /* Check SNAPSHOT scancode in set-1 */
 
 	/* Test VOL_UP key */
-	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
-	press_key(5, 3, 1);		/* Press T2 */
-	VERIFY_LPC_CHAR("\xe0\x30");	/* Check VOL_UP scancode in set-1 */
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
+	press_key(5, 3, 1); /* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x30"); /* Check VOL_UP scancode in set-1 */
 
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 	wait_for_task_started();
 
 	if (system_get_image_copy() == EC_IMAGE_RO) {
+		RUN_TEST(test_8042_aux_loopback);
+		RUN_TEST(test_8042_aux_two_way_communication);
+		RUN_TEST(test_8042_aux_inhibit);
+		RUN_TEST(test_8042_aux_controller_commands);
+		RUN_TEST(test_8042_aux_test_command);
+		RUN_TEST(test_8042_self_test);
+		RUN_TEST(test_8042_keyboard_test_command);
+		RUN_TEST(test_8042_keyboard_controller_commands);
+		RUN_TEST(test_8042_keyboard_key_pressed_while_inhibited);
+		RUN_TEST(
+			test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte);
+		RUN_TEST(
+			test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte_with_read);
+		RUN_TEST(
+			test_8042_keyboard_key_pressed_before_inhibit_using_cmd);
+		RUN_TEST(test_atkbd_get_scancode);
+		RUN_TEST(test_atkbd_set_scancode_with_keystroke_disabled);
+		RUN_TEST(test_atkbd_set_scancode_with_key_press_before_set);
+		RUN_TEST(test_atkbd_set_scancode_with_key_press_during_set);
+		RUN_TEST(test_atkbd_echo);
+		RUN_TEST(test_atkbd_get_id);
+		RUN_TEST(test_atkbd_set_leds_keypress_during);
+		RUN_TEST(test_atkbd_set_leds_abort_set);
+		RUN_TEST(test_atkbd_set_ex_leds);
 		RUN_TEST(test_single_key_press);
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);

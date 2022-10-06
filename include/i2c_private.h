@@ -1,11 +1,11 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /*
  * Private chipset-specific implementations that only accessible by
- * i2c_master.c. Don't include this directly unless you are implementing
+ * i2c_controller.c. Don't include this directly unless you are implementing
  * these functions.
  */
 #ifndef __CROS_EC_I2C_PRIVATE_H
@@ -21,7 +21,7 @@
  * i2c_xfer().
  *
  * @param port		Port to access
- * @param slave_addr	Slave device address
+ * @param addr_flags	Peripheral device address
  * @param out		Data to send
  * @param out_size	Number of bytes to send
  * @param in		Destination buffer for received data
@@ -29,10 +29,8 @@
  * @param flags		Flags (see I2C_XFER_* above)
  * @return EC_SUCCESS, or non-zero if error.
  */
-int chip_i2c_xfer(const int port,
-		  const uint16_t slave_addr_flags,
-		  const uint8_t *out, int out_size,
-		  uint8_t *in, int in_size, int flags);
+int chip_i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
+		  int out_size, uint8_t *in, int in_size, int flags);
 
 /**
  * Chip level function to set bus speed.

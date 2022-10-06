@@ -1,0 +1,36 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan_0 {
+			pwms = <&pwm3 0 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
+			rpm_min = <3200>;
+			rpm_start = <2200>;
+			rpm_max = <6600>;
+			tach = <&tach2>;
+			pgood_gpio = <&all_sys_pwrgd>;
+			enable_gpio = <&gpio_fan_control>;
+		};
+	};
+};
+
+/* Tachemeter for fan speed measurement */
+&tach2 {
+	status = "okay";
+	pinctrl-0 = <&ta2_1_in_gp73>; /* TA2 input on GPIO73 */
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
+};
+
+&pwm3 {
+	status = "okay";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
+};

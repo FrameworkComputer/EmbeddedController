@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,9 +19,14 @@
 #include "task.h"
 #include "timer.h"
 
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#ifdef CONFIG_ACCEL_LSM6DSO_INT_EVENT
+#define ACCEL_LSM6DSO_INT_ENABLE
+#endif
 
-STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
+
+STATIC_IF(ACCEL_LSM6DSO_INT_ENABLE)
+volatile uint32_t last_interrupt_timestamp;
 
 /*
  * When ODR change, the sensor filters need settling time;
@@ -39,7 +44,7 @@ static inline int get_xyz_reg(enum motionsensor_type type)
 	       (LSM6DSO_ACCEL_OUT_X_L_ADDR - LSM6DSO_GYRO_OUT_X_L_ADDR) * type;
 }
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ACCEL_LSM6DSO_INT_ENABLE
 /**
  * Configure interrupt int 1 to fire handler for:
  *
@@ -51,9 +56,6 @@ static int config_interrupt(const struct motion_sensor_t *s)
 {
 	int ret = EC_SUCCESS;
 	int int1_ctrl_val;
-
-	if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
-		return ret;
 
 	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSO_INT1_CTRL,
 			   &int1_ctrl_val);
@@ -73,7 +75,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		return ret;
 
 	int1_ctrl_val |= LSM6DSO_INT_FIFO_TH | LSM6DSO_INT_FIFO_OVR |
-		LSM6DSO_INT_FIFO_FULL;
+			 LSM6DSO_INT_FIFO_FULL;
 
 	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LSM6DSO_INT1_CTRL,
 			    int1_ctrl_val);
@@ -111,7 +113,6 @@ static int fifo_enable(const struct motion_sensor_t *s)
 static void push_fifo_data(struct motion_sensor_t *main_s, uint8_t *fifo,
 			   uint32_t saved_ts)
 {
-	struct ec_response_motion_sensor_data vect;
 	struct motion_sensor_t *sensor;
 	uint8_t tag;
 	int id;
@@ -148,41 +149,36 @@ static void push_fifo_data(struct motion_sensor_t *main_s, uint8_t *fifo,
 
 	/* Apply precision, sensitivity and rotation. */
 	st_normalize(sensor, axis, ptr);
-	vect.data[X] = axis[X];
-	vect.data[Y] = axis[Y];
-	vect.data[Z] = axis[Z];
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		struct ec_response_motion_sensor_data vect;
 
-	vect.flags = 0;
-	vect.sensor_num = sensor - motion_sensors;
-	motion_sense_fifo_stage_data(&vect, sensor, 3, saved_ts);
+		vect.data[X] = axis[X];
+		vect.data[Y] = axis[Y];
+		vect.data[Z] = axis[Z];
+
+		vect.flags = 0;
+		vect.sensor_num = sensor - motion_sensors;
+		motion_sense_fifo_stage_data(&vect, sensor, 3, saved_ts);
+	} else {
+		motion_sense_push_raw_xyz(sensor);
+	}
 }
 
-static inline int load_fifo(struct motion_sensor_t *s,
-			    const struct lsm6dso_fstatus *fsts,
-			    uint32_t saved_ts)
+static inline int load_fifo(struct motion_sensor_t *main_s,
+			    const uint16_t fifo_len)
 {
-	uint8_t fifo[FIFO_READ_LEN], *ptr;
-	int i, err, read_len = 0, word_len, fifo_len;
-	uint16_t fifo_depth;
+	uint8_t fifo[LSM6DSO_FIFO_SAMPLE_SIZE];
+	int i;
 
-	fifo_depth = fsts->len & LSM6DSO_FIFO_DIFF_MASK;
-	fifo_len = fifo_depth * LSM6DSO_FIFO_SAMPLE_SIZE;
-	while (read_len < fifo_len) {
-		word_len = GENERIC_MIN(fifo_len - read_len, sizeof(fifo));
-		err = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-					  LSM6DSO_FIFO_DATA_ADDR_TAG,
-					  fifo, word_len);
-		if (err != EC_SUCCESS)
-			return err;
+	for (i = 0; i < fifo_len; i++) {
+		RETURN_ERROR(st_raw_read_n_noinc(
+			main_s->port, main_s->i2c_spi_addr_flags,
+			LSM6DSO_FIFO_DATA_ADDR_TAG, fifo, sizeof(fifo)));
 
-		for (i = 0; i < word_len; i += LSM6DSO_FIFO_SAMPLE_SIZE) {
-			ptr = &fifo[i];
-			push_fifo_data(LSM6DSO_MAIN_SENSOR(s), ptr, saved_ts);
-		}
-		read_len += word_len;
+		push_fifo_data(main_s, fifo, last_interrupt_timestamp);
 	}
 
-	return read_len;
+	return EC_SUCCESS;
 }
 
 /**
@@ -191,7 +187,7 @@ static inline int load_fifo(struct motion_sensor_t *s,
 static int accelgyro_config_fifo(const struct motion_sensor_t *s)
 {
 	int err;
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
+	struct stprivate_data *data = s->drv_data;
 	uint8_t reg_val;
 	uint8_t fifo_odr_mask;
 
@@ -206,10 +202,10 @@ static int accelgyro_config_fifo(const struct motion_sensor_t *s)
 	 */
 	samples_to_discard[s->type] = LSM6DSO_DISCARD_SAMPLES;
 
-	fifo_odr_mask = LSM6DSO_FIFO_ODR_TO_REG(s);
+	fifo_odr_mask = LSM6DSO_FIFO_ODR_MASK(s);
 	reg_val = LSM6DSO_ODR_TO_REG(data->base.odr);
-	err = st_write_data_with_mask(s, LSM6DSO_FIFO_CTRL3_ADDR,
-				      fifo_odr_mask, reg_val);
+	err = st_write_data_with_mask(s, LSM6DSO_FIFO_CTRL3_ADDR, fifo_odr_mask,
+				      reg_val);
 	if (err != EC_SUCCESS)
 		return err;
 
@@ -221,11 +217,9 @@ static int accelgyro_config_fifo(const struct motion_sensor_t *s)
  */
 void lsm6dso_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-		last_interrupt_timestamp = __hw_clock_source_read();
+	last_interrupt_timestamp = __hw_clock_source_read();
 
-	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ACCEL_LSM6DSO_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LSM6DSO_INT_EVENT);
 }
 
 /**
@@ -233,35 +227,35 @@ void lsm6dso_interrupt(enum gpio_signal signal)
  */
 static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
-	int ret = EC_SUCCESS;
+	int fifo_len = 0;
 	struct lsm6dso_fstatus fsts;
+	bool has_read_fifo = false;
 
-	if (((s->type != MOTIONSENSE_TYPE_ACCEL) &&
-	     (s->type != MOTIONSENSE_TYPE_GYRO)) ||
+	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCEL_LSM6DSO_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+	do {
 		/* Read how many data patterns on FIFO to read. */
-		ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-					  LSM6DSO_FIFO_STS1_ADDR,
-					  (uint8_t *)&fsts, sizeof(fsts));
-		if (ret != EC_SUCCESS)
-			return ret;
-
+		RETURN_ERROR(st_raw_read_n_noinc(
+			s->port, s->i2c_spi_addr_flags, LSM6DSO_FIFO_STS1_ADDR,
+			(uint8_t *)&fsts, sizeof(fsts)));
 		if (fsts.len & (LSM6DSO_FIFO_DATA_OVR | LSM6DSO_FIFO_FULL))
 			CPRINTS("%s FIFO Overrun: %04x", s->name, fsts.len);
 
-		if (fsts.len & LSM6DSO_FIFO_DIFF_MASK)
-			ret = load_fifo(s, &fsts, last_interrupt_timestamp);
+		fifo_len = fsts.len & LSM6DSO_FIFO_DIFF_MASK;
+		if (fifo_len) {
+			RETURN_ERROR(load_fifo(s, fifo_len));
+			has_read_fifo = true;
+		}
+	} while (fifo_len != 0);
 
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO) && ret > 0)
-			motion_sense_fifo_commit_data();
-	}
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO) && has_read_fifo)
+		motion_sense_fifo_commit_data();
 
-	return ret;
+	return EC_SUCCESS;
 }
-#endif /* CONFIG_ACCEL_INTERRUPTS */
+#endif /* ACCEL_LSM6DSO_INT_ENABLE */
 
 /**
  * set_range - set full scale range
@@ -270,11 +264,10 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
  * @rnd: Round up/down flag
  * Note: Range is sensitivity/gain for speed purpose
  */
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int err;
 	uint8_t ctrl_reg, reg_val;
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
 	int newrange = range;
 
 	ctrl_reg = LSM6DSO_RANGE_REG(s->type);
@@ -300,25 +293,13 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 	}
 
 	mutex_lock(s->mutex);
-	err = st_write_data_with_mask(s, ctrl_reg, LSM6DSO_RANGE_MASK,
-				      reg_val);
+	err = st_write_data_with_mask(s, ctrl_reg, LSM6DSO_RANGE_MASK, reg_val);
 	if (err == EC_SUCCESS)
-		data->base.range = newrange;
+		s->current_range = newrange;
 
 	mutex_unlock(s->mutex);
 
 	return EC_SUCCESS;
-}
-
-/**
- * get_range - get full scale range
- * @s: Motion sensor pointer
- */
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
-
-	return data->base.range;
 }
 
 /**
@@ -330,7 +311,7 @@ static int get_range(const struct motion_sensor_t *s)
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	int ret, normalized_rate = 0;
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
+	struct stprivate_data *data = s->drv_data;
 	uint8_t ctrl_reg, reg_val = 0;
 
 	ctrl_reg = LSM6DSO_ODR_REG(s->type);
@@ -344,8 +325,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		}
 
 		if (normalized_rate < LSM6DSO_ODR_MIN_VAL ||
-		    normalized_rate > MIN(LSM6DSO_ODR_MAX_VAL,
-					  CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ))
+		    normalized_rate > LSM6DSO_ODR_MAX_VAL)
 			return EC_RES_INVALID_PARAM;
 	}
 
@@ -353,7 +333,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	ret = st_write_data_with_mask(s, ctrl_reg, LSM6DSO_ODR_MASK, reg_val);
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		if (IS_ENABLED(ACCEL_LSM6DSO_INT_ENABLE))
 			accelgyro_config_fifo(s);
 	}
 
@@ -366,8 +346,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LSM6DSO_STATUS_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSO_STATUS_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RS Error", s->name, s->type);
 
@@ -412,8 +392,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	xyz_reg = get_xyz_reg(s->type);
 
 	/* Read data bytes starting at xyz_reg. */
-	ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-				  xyz_reg, raw, OUT_XYZ_SIZE);
+	ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags, xyz_reg, raw,
+				  OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -423,13 +403,13 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int init(const struct motion_sensor_t *s)
+static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
-	struct stprivate_data *data = LSM6DSO_GET_DATA(s);
+	struct stprivate_data *data = s->drv_data;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LSM6DSO_WHO_AM_I_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSO_WHO_AM_I_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 
@@ -454,25 +434,24 @@ static int init(const struct motion_sensor_t *s)
 
 		/*
 		 * Output data not updated until have been read.
-		 * Prefer interrupt to be active low.
+		 * Require interrupt to be active low.
 		 */
-		ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				    LSM6DSO_CTRL3_ADDR,
-				    LSM6DSO_BDU | LSM6DSO_IF_INC);
+		ret = st_raw_write8(
+			s->port, s->i2c_spi_addr_flags, LSM6DSO_CTRL3_ADDR,
+			LSM6DSO_BDU | LSM6DSO_IF_INC | LSM6DSO_H_L_ACTIVE);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		if (IS_ENABLED(ACCEL_LSM6DSO_INT_ENABLE)) {
 			ret = fifo_disable(s);
 			if (ret != EC_SUCCESS)
 				goto err_unlock;
 		}
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-		ret = config_interrupt(s);
+		if (IS_ENABLED(ACCEL_LSM6DSO_INT_ENABLE))
+			ret = config_interrupt(s);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
-#endif /* CONFIG_ACCEL_INTERRUPTS */
 
 		mutex_unlock(s->mutex);
 	}
@@ -488,17 +467,33 @@ err_unlock:
 	return ret;
 }
 
+#ifdef CONFIG_BODY_DETECTION
+static int get_rms_noise(const struct motion_sensor_t *s)
+{
+	/*
+	 * RMS | Acceleration RMS noise in normal/low-power mode
+	 * FS = ±4 g | 2.0 mg(RMS)
+	 */
+	return 2000;
+}
+#endif
+
 const struct accelgyro_drv lsm6dso_drv = {
 	.init = init,
 	.read = read,
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_resolution = st_get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = st_get_data_rate,
 	.set_offset = st_set_offset,
 	.get_offset = st_get_offset,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ACCEL_LSM6DSO_INT_ENABLE
 	.irq_handler = irq_handler,
-#endif /* CONFIG_ACCEL_INTERRUPTS */
+#ifdef CONFIG_BODY_DETECTION
+	.get_rms_noise = get_rms_noise,
+#endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	.list_activities = st_list_activities,
+#endif
+#endif /* ACCEL_LSM6DSO_INT_ENABLE */
 };

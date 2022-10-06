@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -103,60 +103,59 @@ static int verify_erase(int offset, int size)
 	return EC_SUCCESS;
 }
 
-
-#define VERIFY_NO_WRITE(off, sz, d) \
-	do { \
-		record_flash(off, sz); \
+#define VERIFY_NO_WRITE(off, sz, d)                                        \
+	do {                                                               \
+		record_flash(off, sz);                                     \
 		TEST_ASSERT(host_command_write(off, sz, d) != EC_SUCCESS); \
-		TEST_ASSERT(verify_flash(off, sz) == EC_SUCCESS); \
+		TEST_ASSERT(verify_flash(off, sz) == EC_SUCCESS);          \
 	} while (0)
 
-#define VERIFY_NO_ERASE(off, sz) \
-	do { \
-		record_flash(off, sz); \
+#define VERIFY_NO_ERASE(off, sz)                                        \
+	do {                                                            \
+		record_flash(off, sz);                                  \
 		TEST_ASSERT(host_command_erase(off, sz) != EC_SUCCESS); \
-		TEST_ASSERT(verify_flash(off, sz) == EC_SUCCESS); \
+		TEST_ASSERT(verify_flash(off, sz) == EC_SUCCESS);       \
 	} while (0)
 
-#define VERIFY_WRITE(off, sz, d) \
-	do { \
+#define VERIFY_WRITE(off, sz, d)                                           \
+	do {                                                               \
 		TEST_ASSERT(host_command_write(off, sz, d) == EC_SUCCESS); \
-		TEST_ASSERT(verify_write(off, sz, d) == EC_SUCCESS); \
+		TEST_ASSERT(verify_write(off, sz, d) == EC_SUCCESS);       \
 	} while (0)
 
-#define VERIFY_ERASE(off, sz) \
-	do { \
+#define VERIFY_ERASE(off, sz)                                           \
+	do {                                                            \
 		TEST_ASSERT(host_command_erase(off, sz) == EC_SUCCESS); \
-		TEST_ASSERT(verify_erase(off, sz) == EC_SUCCESS); \
+		TEST_ASSERT(verify_erase(off, sz) == EC_SUCCESS);       \
 	} while (0)
 
-#define SET_WP_FLAGS(m, f) \
-	TEST_ASSERT(host_command_protect(m, ((f) ? m : 0), \
-				NULL, NULL, NULL) == EC_RES_SUCCESS)
+#define SET_WP_FLAGS(m, f)                                             \
+	TEST_ASSERT(host_command_protect(m, ((f) ? m : 0), NULL, NULL, \
+					 NULL) == EC_RES_SUCCESS)
 
-#define ASSERT_WP_FLAGS(f) \
-	do { \
-		uint32_t flags; \
+#define ASSERT_WP_FLAGS(f)                                                    \
+	do {                                                                  \
+		uint32_t flags;                                               \
 		TEST_ASSERT(host_command_protect(0, 0, &flags, NULL, NULL) == \
-			    EC_RES_SUCCESS); \
-		TEST_ASSERT(flags & (f)); \
+			    EC_RES_SUCCESS);                                  \
+		TEST_ASSERT(flags &(f));                                      \
 	} while (0)
 
-#define ASSERT_WP_NO_FLAGS(f) \
-	do { \
-		uint32_t flags; \
+#define ASSERT_WP_NO_FLAGS(f)                                                 \
+	do {                                                                  \
+		uint32_t flags;                                               \
 		TEST_ASSERT(host_command_protect(0, 0, &flags, NULL, NULL) == \
-			    EC_RES_SUCCESS); \
-		TEST_ASSERT((flags & (f)) == 0); \
+			    EC_RES_SUCCESS);                                  \
+		TEST_ASSERT((flags & (f)) == 0);                              \
 	} while (0)
 
-#define VERIFY_REGION_INFO(r, o, s) \
-	do { \
-		uint32_t offset, size; \
+#define VERIFY_REGION_INFO(r, o, s)                                        \
+	do {                                                               \
+		uint32_t offset, size;                                     \
 		TEST_ASSERT(host_command_region_info(r, &offset, &size) == \
-			    EC_RES_SUCCESS); \
-		TEST_ASSERT(offset == (o)); \
-		TEST_ASSERT(size == (s)); \
+			    EC_RES_SUCCESS);                               \
+		TEST_ASSERT(offset == (o));                                \
+		TEST_ASSERT(size == (s));                                  \
 	} while (0)
 
 int host_command_read(int offset, int size, char *out)
@@ -195,9 +194,8 @@ int host_command_erase(int offset, int size)
 				      sizeof(params), NULL, 0);
 }
 
-int host_command_protect(uint32_t mask, uint32_t flags,
-			 uint32_t *flags_out, uint32_t *valid_out,
-			 uint32_t *writable_out)
+int host_command_protect(uint32_t mask, uint32_t flags, uint32_t *flags_out,
+			 uint32_t *valid_out, uint32_t *writable_out)
 {
 	struct ec_params_flash_protect params;
 	struct ec_response_flash_protect resp;
@@ -222,7 +220,7 @@ int host_command_protect(uint32_t mask, uint32_t flags,
 }
 
 int host_command_region_info(enum ec_flash_region reg, uint32_t *offset,
-				 uint32_t *size)
+			     uint32_t *size)
 {
 	struct ec_params_flash_region_info params;
 	struct ec_response_flash_region_info resp;
@@ -253,7 +251,7 @@ static int test_read(void)
 #endif
 
 	/* The first few bytes in the flash should always contain some code */
-	TEST_ASSERT(!flash_is_erased(0, sizeof(buf)));
+	TEST_ASSERT(!crec_flash_is_erased(0, sizeof(buf)));
 
 	TEST_ASSERT(host_command_read(0, sizeof(buf), buf) == EC_RES_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(buf, (char *)CONFIG_PROGRAM_MEMORY_BASE,
@@ -268,11 +266,11 @@ static int test_is_erased(void)
 
 #ifdef EMU_BUILD
 	memset(__host_flash, 0xff, 1024);
-	TEST_ASSERT(flash_is_erased(0, 1024));
+	TEST_ASSERT(crec_flash_is_erased(0, 1024));
 
 	for (i = 0; i < 1024; ++i) {
 		__host_flash[i] = 0xec;
-		TEST_ASSERT(!flash_is_erased(0, 1024));
+		TEST_ASSERT(!crec_flash_is_erased(0, 1024));
 		__host_flash[i] = 0xff;
 	}
 #else
@@ -350,29 +348,31 @@ static int test_flash_info(void)
 {
 	struct ec_response_flash_info_1 resp;
 
-	TEST_ASSERT(test_send_host_command(EC_CMD_FLASH_INFO, 1, NULL, 0,
-		    &resp, sizeof(resp)) == EC_RES_SUCCESS);
+	TEST_ASSERT(test_send_host_command(EC_CMD_FLASH_INFO, 1, NULL, 0, &resp,
+					   sizeof(resp)) == EC_RES_SUCCESS);
 
-	TEST_CHECK((resp.flash_size == CONFIG_FLASH_SIZE) &&
-		   (resp.write_block_size == CONFIG_FLASH_WRITE_SIZE) &&
-		   (resp.erase_block_size == CONFIG_FLASH_ERASE_SIZE) &&
-		   (resp.protect_block_size == CONFIG_FLASH_BANK_SIZE));
+	TEST_ASSERT(resp.flash_size == CONFIG_FLASH_SIZE_BYTES);
+	TEST_ASSERT(resp.write_block_size == CONFIG_FLASH_WRITE_SIZE);
+	TEST_ASSERT(resp.erase_block_size == CONFIG_FLASH_ERASE_SIZE);
+	TEST_ASSERT(resp.protect_block_size == CONFIG_FLASH_BANK_SIZE);
+	return EC_SUCCESS;
 }
 
 static int test_region_info(void)
 {
 	VERIFY_REGION_INFO(EC_FLASH_REGION_RO,
 			   CONFIG_EC_PROTECTED_STORAGE_OFF +
-			   CONFIG_RO_STORAGE_OFF, EC_FLASH_REGION_RO_SIZE);
+				   CONFIG_RO_STORAGE_OFF,
+			   EC_FLASH_REGION_RO_SIZE);
 	VERIFY_REGION_INFO(EC_FLASH_REGION_ACTIVE,
 			   CONFIG_EC_WRITABLE_STORAGE_OFF +
-			   CONFIG_RW_STORAGE_OFF,
+				   CONFIG_RW_STORAGE_OFF,
 			   CONFIG_EC_WRITABLE_STORAGE_SIZE);
-	VERIFY_REGION_INFO(EC_FLASH_REGION_WP_RO,
-			   CONFIG_WP_STORAGE_OFF, CONFIG_WP_STORAGE_SIZE);
+	VERIFY_REGION_INFO(EC_FLASH_REGION_WP_RO, CONFIG_WP_STORAGE_OFF,
+			   CONFIG_WP_STORAGE_SIZE);
 	VERIFY_REGION_INFO(EC_FLASH_REGION_UPDATE,
 			   CONFIG_EC_WRITABLE_STORAGE_OFF +
-			   CONFIG_RW_STORAGE_OFF,
+				   CONFIG_RW_STORAGE_OFF,
 			   CONFIG_EC_WRITABLE_STORAGE_SIZE);
 
 	return EC_SUCCESS;
@@ -400,10 +400,12 @@ static int test_write_protect(void)
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
 
 	/* Check we cannot erase anything */
-	TEST_ASSERT(flash_physical_erase(CONFIG_RO_STORAGE_OFF,
-			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
-	TEST_ASSERT(flash_physical_erase(CONFIG_RW_STORAGE_OFF,
-			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
+	TEST_ASSERT(crec_flash_physical_erase(CONFIG_RO_STORAGE_OFF,
+					      CONFIG_FLASH_ERASE_SIZE) !=
+		    EC_SUCCESS);
+	TEST_ASSERT(crec_flash_physical_erase(CONFIG_RW_STORAGE_OFF,
+					      CONFIG_FLASH_ERASE_SIZE) !=
+		    EC_SUCCESS);
 
 	/* We should not even try to write/erase */
 	VERIFY_NO_ERASE(CONFIG_RO_STORAGE_OFF, CONFIG_FLASH_ERASE_SIZE);
@@ -418,8 +420,9 @@ static int test_boot_write_protect(void)
 {
 	/* Check write protect state persists through reboot */
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_RO_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
-	TEST_ASSERT(flash_physical_erase(CONFIG_RO_STORAGE_OFF,
-			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
+	TEST_ASSERT(crec_flash_physical_erase(CONFIG_RO_STORAGE_OFF,
+					      CONFIG_FLASH_ERASE_SIZE) !=
+		    EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
@@ -500,7 +503,7 @@ int task_test(void *data)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	msleep(30); /* Wait for TASK_ID_TEST to initialize */
 	task_wake(TASK_ID_TEST);

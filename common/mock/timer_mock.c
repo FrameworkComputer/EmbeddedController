@@ -1,9 +1,13 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "mock/timer_mock.h"
+
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
 
 static timestamp_t now;
 

@@ -1,0 +1,16 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+description: Zephyr ANX7447 emulator
+
+compatible: "cros,anx7447-emul"
+
+include: i2c-device.yaml
+
+properties:
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags

@@ -1,12 +1,14 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Flash memory module for Chrome EC - common functions */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -17,6 +19,7 @@
 #include "system.h"
 #include "util.h"
 #include "vboot_hash.h"
+#include "write_protect.h"
 
 /*
  * Contents of erased flash, as a 32-bit value.  Most platforms erase flash
@@ -40,35 +43,37 @@
 /* Persistent protection state - emulates a SPI status register for flashrom */
 /* NOTE: It's not expected that RO and RW will support
  * differing PSTATE versions. */
-#define PERSIST_STATE_VERSION 3  /* Expected persist_state.version */
+#define PERSIST_STATE_VERSION 3 /* Expected persist_state.version */
 
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
-#define PSTATE_VALID_FLAGS      BIT(0)
-#define PSTATE_VALID_SERIALNO   BIT(1)
-#define PSTATE_VALID_MAC_ADDR   BIT(2)
+#define PSTATE_VALID_FLAGS BIT(0)
+#define PSTATE_VALID_SERIALNO BIT(1)
+#define PSTATE_VALID_MAC_ADDR BIT(2)
 
+/*
+ * Error correction code operates on blocks equal to CONFIG_FLASH_WRITE_SIZE
+ * bytes so the persist_state must be a multiple of that length. To ensure this
+ * occurs, the aligned attribute has been set. Alignment has a side effect
+ * in that pointer arithmetic can't break alignment so it adds padding to the
+ * size of the structure to ensure that it is also a multiple of the alignment.
+ */
 struct persist_state {
-	uint8_t version;            /* Version of this struct */
-	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
-	uint8_t valid_fields;       /* Flags for valid data. */
-	uint8_t reserved;           /* Reserved; set 0 */
+	uint8_t version; /* Version of this struct */
+	uint8_t flags; /* Lock flags (PERSIST_FLAG_*) */
+	uint8_t valid_fields; /* Flags for valid data. */
+	uint8_t reserved; /* Reserved; set 0 */
 #ifdef CONFIG_SERIALNO_LEN
 	uint8_t serialno[CONFIG_SERIALNO_LEN]; /* Serial number. */
 #endif /* CONFIG_SERIALNO_LEN */
 #ifdef CONFIG_MAC_ADDR_LEN
 	uint8_t mac_addr[CONFIG_MAC_ADDR_LEN];
 #endif /* CONFIG_MAC_ADDR_LEN */
-#if !defined(CONFIG_SERIALNO_LEN) && !defined(CONFIG_MAC_ADDR_LEN)
-	uint8_t padding[4 % CONFIG_FLASH_WRITE_SIZE];
-#endif
-};
+} __aligned(CONFIG_FLASH_WRITE_SIZE);
 
 /* written with flash_physical_write, need to respect alignment constraints */
-#ifndef CHIP_FAMILY_STM32L /* STM32L1xx is somewhat lying to us */
 BUILD_ASSERT(sizeof(struct persist_state) % CONFIG_FLASH_WRITE_SIZE == 0);
-#endif
 
 BUILD_ASSERT(sizeof(struct persist_state) <= CONFIG_FW_PSTATE_SIZE);
 
@@ -87,11 +92,11 @@ BUILD_ASSERT(sizeof(struct persist_state) <= CONFIG_FW_PSTATE_SIZE);
  * lock the flash at boot.
  */
 #if (CONFIG_FLASH_ERASED_VALUE32 == -1U)
-#define PSTATE_MAGIC_UNLOCKED 0x4f4e5057  /* "WPNO" */
-#define PSTATE_MAGIC_LOCKED   0x00000000  /* ""     */
+#define PSTATE_MAGIC_UNLOCKED 0x4f4e5057 /* "WPNO" */
+#define PSTATE_MAGIC_LOCKED 0x00000000 /* ""     */
 #elif (CONFIG_FLASH_ERASED_VALUE32 == 0)
-#define PSTATE_MAGIC_UNLOCKED 0x4f4e5057  /* "WPNO" */
-#define PSTATE_MAGIC_LOCKED   0x5f5f5057  /* "WP__" */
+#define PSTATE_MAGIC_UNLOCKED 0x4f4e5057 /* "WPNO" */
+#define PSTATE_MAGIC_LOCKED 0x5f5f5057 /* "WP__" */
 #else
 /* What kind of wacky flash doesn't erase all bits to 1 or 0? */
 #error "PSTATE needs magic values for this flash architecture."
@@ -133,7 +138,7 @@ const struct ec_flash_bank *flash_bank_info(int bank)
 	return NULL;
 }
 
-int flash_bank_size(int bank)
+int crec_flash_bank_size(int bank)
 {
 	int rv;
 	const struct ec_flash_bank *info = flash_bank_info(bank);
@@ -146,7 +151,7 @@ int flash_bank_size(int bank)
 	return rv;
 }
 
-int flash_bank_erase_size(int bank)
+int crec_flash_bank_erase_size(int bank)
 {
 	int rv;
 	const struct ec_flash_bank *info = flash_bank_info(bank);
@@ -159,7 +164,7 @@ int flash_bank_erase_size(int bank)
 	return rv;
 }
 
-int flash_bank_index(int offset)
+int crec_flash_bank_index(int offset)
 {
 	int bank_offset = 0, i;
 
@@ -167,8 +172,8 @@ int flash_bank_index(int offset)
 		return bank_offset;
 
 	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
-		int all_sector_size = flash_bank_array[i].count <<
-			flash_bank_array[i].size_exp;
+		int all_sector_size = flash_bank_array[i].count
+				      << flash_bank_array[i].size_exp;
 		if (offset >= all_sector_size) {
 			offset -= all_sector_size;
 			bank_offset += flash_bank_array[i].count;
@@ -183,17 +188,17 @@ int flash_bank_index(int offset)
 	return bank_offset;
 }
 
-int flash_bank_count(int offset, int size)
+int crec_flash_bank_count(int offset, int size)
 {
-	int begin = flash_bank_index(offset);
-	int end = flash_bank_index(offset + size);
+	int begin = crec_flash_bank_index(offset);
+	int end = crec_flash_bank_index(offset + size);
 
 	if (begin == -1 || end == -1)
 		return -1;
 	return end - begin;
 }
 
-int flash_bank_start_offset(int bank)
+int crec_flash_bank_start_offset(int bank)
 {
 	int i;
 	int offset;
@@ -204,7 +209,7 @@ int flash_bank_start_offset(int bank)
 
 	offset = 0;
 	for (i = 0; i < bank; i++) {
-		bank_size = flash_bank_size(i);
+		bank_size = crec_flash_bank_size(i);
 		if (bank_size < 0)
 			return -1;
 		offset += bank_size;
@@ -213,16 +218,15 @@ int flash_bank_start_offset(int bank)
 	return offset;
 }
 
-#endif  /* CONFIG_FLASH_MULTIPLE_REGION */
+#endif /* CONFIG_FLASH_MULTIPLE_REGION */
 
 static int flash_range_ok(int offset, int size_req, int align)
 {
-	if (offset < 0 || size_req < 0 ||
-	    offset > CONFIG_FLASH_SIZE ||
-	    size_req > CONFIG_FLASH_SIZE ||
-	    offset + size_req > CONFIG_FLASH_SIZE ||
+	if (offset < 0 || size_req < 0 || offset > CONFIG_FLASH_SIZE_BYTES ||
+	    size_req > CONFIG_FLASH_SIZE_BYTES ||
+	    offset + size_req > CONFIG_FLASH_SIZE_BYTES ||
 	    (offset | size_req) & (align - 1))
-		return 0;  /* Invalid range */
+		return 0; /* Invalid range */
 
 	return 1;
 }
@@ -244,14 +248,14 @@ static const char *flash_physical_dataptr(int offset)
 	return (char *)((uintptr_t)CONFIG_MAPPED_STORAGE_BASE + offset);
 }
 
-int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
+int crec_flash_dataptr(int offset, int size_req, int align, const char **ptrp)
 {
 	if (!flash_range_ok(offset, size_req, align))
-		return -1;  /* Invalid range */
+		return -1; /* Invalid range */
 	if (ptrp)
 		*ptrp = flash_physical_dataptr(offset);
 
-	return CONFIG_FLASH_SIZE - offset;
+	return CONFIG_FLASH_SIZE_BYTES - offset;
 }
 #endif
 
@@ -264,8 +268,8 @@ int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
 static uint32_t flash_read_pstate(void)
 {
 	const struct persist_state *pstate =
-		(const struct persist_state *)
-		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
 
 	if ((pstate->version == PERSIST_STATE_VERSION) &&
 	    (pstate->valid_fields & PSTATE_VALID_FLAGS) &&
@@ -293,8 +297,8 @@ static int flash_write_pstate_data(struct persist_state *newpstate)
 	int rv;
 
 	/* Erase pstate */
-	rv = flash_physical_erase(CONFIG_FW_PSTATE_OFF,
-				  CONFIG_FW_PSTATE_SIZE);
+	rv = crec_flash_physical_erase(CONFIG_FW_PSTATE_OFF,
+				       CONFIG_FW_PSTATE_SIZE);
 	if (rv)
 		return rv;
 
@@ -305,11 +309,10 @@ static int flash_write_pstate_data(struct persist_state *newpstate)
 	 */
 
 	/* Write the updated pstate */
-	return flash_physical_write(CONFIG_FW_PSTATE_OFF, sizeof(*newpstate),
-				    (const char *)newpstate);
+	return crec_flash_physical_write(CONFIG_FW_PSTATE_OFF,
+					 sizeof(*newpstate),
+					 (const char *)newpstate);
 }
-
-
 
 /**
  * Validate and Init persistent state datastructure.
@@ -337,8 +340,8 @@ static int flash_write_pstate(uint32_t flags)
 {
 	struct persist_state newpstate;
 	const struct persist_state *pstate =
-		(const struct persist_state *)
-		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
 
 	/* Only check the flags we write to pstate */
 	flags &= EC_FLASH_PROTECT_RO_AT_BOOT;
@@ -364,11 +367,11 @@ static int flash_write_pstate(uint32_t flags)
 /**
  * Read and return persistent serial number.
  */
-const char *flash_read_pstate_serial(void)
+const char *crec_flash_read_pstate_serial(void)
 {
 	const struct persist_state *pstate =
-		(const struct persist_state *)
-		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
 
 	if ((pstate->version == PERSIST_STATE_VERSION) &&
 	    (pstate->valid_fields & PSTATE_VALID_SERIALNO)) {
@@ -384,13 +387,13 @@ const char *flash_read_pstate_serial(void)
  * @param serialno		New ascii serial number to set in pstate.
  * @return EC_SUCCESS, or nonzero if error.
  */
-int flash_write_pstate_serial(const char *serialno)
+int crec_flash_write_pstate_serial(const char *serialno)
 {
 	int length;
 	struct persist_state newpstate;
 	const struct persist_state *pstate =
-		(const struct persist_state *)
-		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
 
 	/* Check that this is OK */
 	if (!serialno)
@@ -424,11 +427,11 @@ int flash_write_pstate_serial(const char *serialno)
 /**
  * Read and return persistent MAC address.
  */
-const char *flash_read_pstate_mac_addr(void)
+const char *crec_flash_read_pstate_mac_addr(void)
 {
 	const struct persist_state *pstate =
-		(const struct persist_state *)
-		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
 
 	if ((pstate->version == PERSIST_STATE_VERSION) &&
 	    (pstate->valid_fields & PSTATE_VALID_MAC_ADDR)) {
@@ -444,13 +447,13 @@ const char *flash_read_pstate_mac_addr(void)
  * @param mac_addr		New ascii MAC address to set in pstate.
  * @return EC_SUCCESS, or nonzero if error.
  */
-int flash_write_pstate_mac_addr(const char *mac_addr)
+int crec_flash_write_pstate_mac_addr(const char *mac_addr)
 {
 	int length;
 	struct persist_state newpstate;
 	const struct persist_state *pstate =
-		(const struct persist_state *)
-		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
 
 	/* Check that this is OK, data is valid and fits in the region. */
 	if (!mac_addr) {
@@ -554,33 +557,32 @@ static int flash_write_pstate(uint32_t flags)
 	 * Write a new pstate.  We can overwrite the existing value, because
 	 * we're only moving bits from the erased state to the unerased state.
 	 */
-	return flash_physical_write(get_pstate_addr() -
-				    CONFIG_PROGRAM_MEMORY_BASE,
-				    sizeof(new_pstate),
-				    (const char *)&new_pstate);
+	return crec_flash_physical_write(
+		get_pstate_addr() - CONFIG_PROGRAM_MEMORY_BASE,
+		sizeof(new_pstate), (const char *)&new_pstate);
 }
 
 #endif /* !CONFIG_FLASH_PSTATE_BANK */
 #endif /* CONFIG_FLASH_PSTATE */
 
-int flash_is_erased(uint32_t offset, int size)
+int crec_flash_is_erased(uint32_t offset, int size)
 {
 	const uint32_t *ptr;
 
 #ifdef CONFIG_MAPPED_STORAGE
 	/* Use pointer directly to flash */
-	if (flash_dataptr(offset, size, sizeof(uint32_t),
-			  (const char **)&ptr) < 0)
+	if (crec_flash_dataptr(offset, size, sizeof(uint32_t),
+			       (const char **)&ptr) < 0)
 		return 0;
 
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 	for (size /= sizeof(uint32_t); size > 0; size--, ptr++)
 		if (*ptr != CONFIG_FLASH_ERASED_VALUE32) {
-			flash_lock_mapped_storage(0);
+			crec_flash_lock_mapped_storage(0);
 			return 0;
-	}
+		}
 
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 #else
 	/* Read flash a chunk at a time */
 	uint32_t buf[8];
@@ -589,7 +591,7 @@ int flash_is_erased(uint32_t offset, int size)
 	while (size) {
 		bsize = MIN(size, sizeof(buf));
 
-		if (flash_read(offset, bsize, (char *)buf))
+		if (crec_flash_read(offset, bsize, (char *)buf))
 			return 0;
 
 		size -= bsize;
@@ -599,27 +601,26 @@ int flash_is_erased(uint32_t offset, int size)
 		for (bsize /= sizeof(uint32_t); bsize > 0; bsize--, ptr++)
 			if (*ptr != CONFIG_FLASH_ERASED_VALUE32)
 				return 0;
-
 	}
 #endif
 
 	return 1;
 }
 
-int flash_read(int offset, int size, char *data)
+int crec_flash_read(int offset, int size, char *data)
 {
 #ifdef CONFIG_MAPPED_STORAGE
 	const char *src;
 
-	if (flash_dataptr(offset, size, 1, &src) < 0)
+	if (crec_flash_dataptr(offset, size, 1, &src) < 0)
 		return EC_ERROR_INVAL;
 
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 	memcpy(data, src, size);
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 	return EC_SUCCESS;
 #else
-	return flash_physical_read(offset, size, data);
+	return crec_flash_physical_read(offset, size, data);
 #endif
 }
 
@@ -652,38 +653,38 @@ static void flash_abort_or_invalidate_hash(int offset, int size)
 	 * jump to RW after the timeout.
 	 */
 	if ((offset >= CONFIG_RW_MEM_OFF &&
-		    offset < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
+	     offset < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
 	    ((offset + size) > CONFIG_RW_MEM_OFF &&
-		    (offset + size) <= (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
+	     (offset + size) <= (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
 	    (offset < CONFIG_RW_MEM_OFF &&
-		    (offset + size) > (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)))
+	     (offset + size) > (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)))
 		rwsig_abort();
 #endif
 }
 
-int flash_write(int offset, int size, const char *data)
+int crec_flash_write(int offset, int size, const char *data)
 {
 	if (!flash_range_ok(offset, size, CONFIG_FLASH_WRITE_SIZE))
-		return EC_ERROR_INVAL;  /* Invalid range */
+		return EC_ERROR_INVAL; /* Invalid range */
 
 	flash_abort_or_invalidate_hash(offset, size);
 
-	return flash_physical_write(offset, size, data);
+	return crec_flash_physical_write(offset, size, data);
 }
 
-int flash_erase(int offset, int size)
+int crec_flash_erase(int offset, int size)
 {
 #ifndef CONFIG_FLASH_MULTIPLE_REGION
 	if (!flash_range_ok(offset, size, CONFIG_FLASH_ERASE_SIZE))
-		return EC_ERROR_INVAL;  /* Invalid range */
+		return EC_ERROR_INVAL; /* Invalid range */
 #endif
 
 	flash_abort_or_invalidate_hash(offset, size);
 
-	return flash_physical_erase(offset, size);
+	return crec_flash_physical_erase(offset, size);
 }
 
-int flash_protect_at_boot(uint32_t new_flags)
+int crec_flash_protect_at_boot(uint32_t new_flags)
 {
 #ifdef CONFIG_FLASH_PSTATE
 	uint32_t new_pstate_flags = new_flags & EC_FLASH_PROTECT_RO_AT_BOOT;
@@ -695,7 +696,7 @@ int flash_protect_at_boot(uint32_t new_flags)
 
 #ifdef CONFIG_FLASH_PSTATE_BANK
 		/* Fail if write protect block is already locked */
-		if (flash_physical_get_protect(PSTATE_BANK))
+		if (crec_flash_physical_get_protect(PSTATE_BANK))
 			return EC_ERROR_ACCESS_DENIED;
 #endif
 
@@ -717,21 +718,21 @@ int flash_protect_at_boot(uint32_t new_flags)
 	 * This assumes PSTATE immediately follows RO, which it does on
 	 * all STM32 platforms (which are the only ones with this config).
 	 */
-	flash_physical_protect_at_boot(new_flags);
+	crec_flash_physical_protect_at_boot(new_flags);
 #endif
 
 	return EC_SUCCESS;
 #else
-	return flash_physical_protect_at_boot(new_flags);
+	return crec_flash_physical_protect_at_boot(new_flags);
 #endif
 }
 
-uint32_t flash_get_protect(void)
+uint32_t crec_flash_get_protect(void)
 {
 	uint32_t flags = 0;
 	int i;
 	/* Region protection status */
-	int not_protected[FLASH_REGION_COUNT] = {0};
+	int not_protected[FLASH_REGION_COUNT] = { 0 };
 #ifdef CONFIG_ROLLBACK
 	/* Flags that must be set to set ALL_NOW flag. */
 	const uint32_t all_flags = EC_FLASH_PROTECT_RO_NOW |
@@ -743,15 +744,8 @@ uint32_t flash_get_protect(void)
 #endif
 
 	/* Read write protect GPIO */
-#ifdef CONFIG_WP_ALWAYS
-	flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-#elif defined(CONFIG_WP_ACTIVE_HIGH)
-	if (gpio_get_level(GPIO_WP))
+	if (write_protect_is_asserted())
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-#else
-	if (!gpio_get_level(GPIO_WP_L))
-		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-#endif
 
 #ifdef CONFIG_FLASH_PSTATE
 	/* Read persistent state of RO-at-boot flag */
@@ -761,11 +755,11 @@ uint32_t flash_get_protect(void)
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
 		int is_ro = (i >= WP_BANK_OFFSET &&
-			i < WP_BANK_OFFSET + WP_BANK_COUNT);
+			     i < WP_BANK_OFFSET + WP_BANK_COUNT);
 		enum flash_region region = is_ro ? FLASH_REGION_RO :
-			FLASH_REGION_RW;
+						   FLASH_REGION_RW;
 		int bank_flag = is_ro ? EC_FLASH_PROTECT_RO_NOW :
-			EC_FLASH_PROTECT_RW_NOW;
+					EC_FLASH_PROTECT_RW_NOW;
 
 #ifdef CONFIG_ROLLBACK
 		if (i >= ROLLBACK_BANK_OFFSET &&
@@ -775,7 +769,7 @@ uint32_t flash_get_protect(void)
 		}
 #endif
 
-		if (flash_physical_get_protect(i)) {
+		if (crec_flash_physical_get_protect(i)) {
 			/* At least one bank in the region is protected */
 			flags |= bank_flag;
 			if (not_protected[region])
@@ -808,7 +802,7 @@ uint32_t flash_get_protect(void)
 #endif
 
 	/* Add in flags from physical layer */
-	return flags | flash_physical_get_protect_flags();
+	return flags | crec_flash_physical_get_protect_flags();
 }
 
 /*
@@ -822,14 +816,15 @@ uint32_t flash_get_protect(void)
  * 4. Commit RO_NOW.
  * 5. Commit ALL_NOW.
  */
-int flash_set_protect(uint32_t mask, uint32_t flags)
+int crec_flash_set_protect(uint32_t mask, uint32_t flags)
 {
 	int retval = EC_SUCCESS;
 	int rv;
-	int old_flags_at_boot = flash_get_protect() &
+	int old_flags_at_boot =
+		crec_flash_get_protect() &
 		(EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RW_AT_BOOT |
-			EC_FLASH_PROTECT_ROLLBACK_AT_BOOT |
-			EC_FLASH_PROTECT_ALL_AT_BOOT);
+		 EC_FLASH_PROTECT_ROLLBACK_AT_BOOT |
+		 EC_FLASH_PROTECT_ALL_AT_BOOT);
 	int new_flags_at_boot = old_flags_at_boot;
 
 	/* Sanitize input flags */
@@ -899,7 +894,7 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 
 	/* 1.f - Commit *_AT_BOOT "clears" (and RO "set" 1.b). */
 	if (new_flags_at_boot != old_flags_at_boot) {
-		rv = flash_protect_at_boot(new_flags_at_boot);
+		rv = crec_flash_protect_at_boot(new_flags_at_boot);
 		if (rv)
 			retval = rv;
 		old_flags_at_boot = new_flags_at_boot;
@@ -910,8 +905,8 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 * All subsequent flags only work if write protect is enabled (that is,
 	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
 	 */
-	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
-				      EC_FLASH_PROTECT_RO_AT_BOOT))
+	if ((~crec_flash_get_protect()) &
+	    (EC_FLASH_PROTECT_GPIO_ASSERTED | EC_FLASH_PROTECT_RO_AT_BOOT))
 		return retval;
 
 	/*
@@ -934,21 +929,29 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 
 	/* 3.d - Commit *_AT_BOOT "sets". */
 	if (new_flags_at_boot != old_flags_at_boot) {
-		rv = flash_protect_at_boot(new_flags_at_boot);
+		rv = crec_flash_protect_at_boot(new_flags_at_boot);
 		if (rv)
 			retval = rv;
 	}
 
 	/* 4 - Commit RO_NOW. */
 	if (flags & EC_FLASH_PROTECT_RO_NOW) {
-		rv = flash_physical_protect_now(0);
+		rv = crec_flash_physical_protect_now(0);
 		if (rv)
 			retval = rv;
+
+		/*
+		 * Latch the CBI EEPROM WP immediately if HW WP is asserted and
+		 * we're now protecting the RO region with SW WP.
+		 */
+		if (IS_ENABLED(CONFIG_EEPROM_CBI_WP) &&
+		    (EC_FLASH_PROTECT_GPIO_ASSERTED & crec_flash_get_protect()))
+			cbi_latch_eeprom_wp();
 	}
 
 	/* 5 - Commit ALL_NOW. */
 	if (flags & EC_FLASH_PROTECT_ALL_NOW) {
-		rv = flash_physical_protect_now(1);
+		rv = crec_flash_physical_protect_now(1);
 		if (rv)
 			retval = rv;
 	}
@@ -963,7 +966,7 @@ static struct ec_params_flash_erase_v1 erase_info;
 static void flash_erase_deferred(void)
 {
 	erase_rc = EC_RES_BUSY;
-	if (flash_erase(erase_info.params.offset, erase_info.params.size))
+	if (crec_flash_erase(erase_info.params.offset, erase_info.params.size))
 		erase_rc = EC_RES_ERROR;
 	else
 		erase_rc = EC_RES_SUCCESS;
@@ -975,18 +978,17 @@ DECLARE_DEFERRED(flash_erase_deferred);
 /* Console commands */
 
 #ifdef CONFIG_CMD_FLASHINFO
-static int command_flash_info(int argc, char **argv)
+static int command_flash_info(int argc, const char **argv)
 {
 	int i, flags;
 
-	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE / 1024);
+	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE_BYTES / 1024);
 	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
 		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 	ccprintf("Regions:\n");
 	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
-		ccprintf(" %d region%s:\n",
-			 flash_bank_array[i].count,
+		ccprintf(" %d region%s:\n", flash_bank_array[i].count,
 			 (flash_bank_array[i].count == 1 ? "" : "s"));
 		ccprintf("  Erase:   %4d B (to %d-bits)\n",
 			 1 << flash_bank_array[i].erase_size_exp,
@@ -999,7 +1001,7 @@ static int command_flash_info(int argc, char **argv)
 		 CONFIG_FLASH_ERASED_VALUE32 ? 1 : 0);
 	ccprintf("Protect: %4d B\n", CONFIG_FLASH_BANK_SIZE);
 #endif
-	flags = flash_get_protect();
+	flags = crec_flash_get_protect();
 	ccprintf("Flags:  ");
 	if (flags & EC_FLASH_PROTECT_GPIO_ASSERTED)
 		ccputs(" wp_gpio_asserted");
@@ -1021,6 +1023,8 @@ static int command_flash_info(int argc, char **argv)
 		ccputs(" STUCK");
 	if (flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
 		ccputs(" INCONSISTENT");
+	if (flags & EC_FLASH_PROTECT_ERROR_UNKNOWN)
+		ccputs(" UNKNOWN_ERROR");
 #ifdef CONFIG_ROLLBACK
 	if (flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT)
 		ccputs(" rollback_at_boot");
@@ -1035,24 +1039,23 @@ static int command_flash_info(int argc, char **argv)
 			ccputs("\n    ");
 		else if (!(i & 7))
 			ccputs(" ");
-		ccputs(flash_physical_get_protect(i) ? "Y" : ".");
+		ccputs(crec_flash_physical_get_protect(i) ? "Y" : ".");
 	}
 	ccputs("\n");
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(flashinfo, command_flash_info,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(flashinfo, command_flash_info, NULL,
 			     "Print flash info");
 #endif /* CONFIG_CMD_FLASHINFO */
 
 #ifdef CONFIG_CMD_FLASH
-static int command_flash_erase(int argc, char **argv)
+static int command_flash_erase(int argc, const char **argv)
 {
 	int offset = -1;
 	int size = -1;
 	int rv;
 
-	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+	if (crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_ERROR_ACCESS_DENIED;
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
@@ -1060,13 +1063,12 @@ static int command_flash_erase(int argc, char **argv)
 		return rv;
 
 	ccprintf("Erasing %d bytes at 0x%x...\n", size, offset);
-	return flash_erase(offset, size);
+	return crec_flash_erase(offset, size);
 }
-DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase,
-			"offset size",
+DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase, "offset size",
 			"Erase flash");
 
-static int command_flash_write(int argc, char **argv)
+static int command_flash_write(int argc, const char **argv)
 {
 	int offset = -1;
 	int size = -1;
@@ -1074,7 +1076,7 @@ static int command_flash_write(int argc, char **argv)
 	char *data;
 	int i;
 
-	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+	if (crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_ERROR_ACCESS_DENIED;
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
@@ -1096,18 +1098,17 @@ static int command_flash_write(int argc, char **argv)
 		data[i] = i;
 
 	ccprintf("Writing %d bytes to 0x%x...\n", size, offset);
-	rv = flash_write(offset, size, data);
+	rv = crec_flash_write(offset, size, data);
 
 	/* Free the buffer */
 	shared_mem_release(data);
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write,
-			"offset size",
+DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write, "offset size",
 			"Write pattern to flash");
 
-static int command_flash_read(int argc, char **argv)
+static int command_flash_read(int argc, const char **argv)
 {
 	int offset = -1;
 	int size = 256;
@@ -1130,7 +1131,7 @@ static int command_flash_read(int argc, char **argv)
 	}
 
 	/* Read the data */
-	if (flash_read(offset, size, data)) {
+	if (crec_flash_read(offset, size, data)) {
 		shared_mem_release(data);
 		return EC_ERROR_INVAL;
 	}
@@ -1151,12 +1152,12 @@ static int command_flash_read(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(flashread, command_flash_read,
-			"offset [size]",
+DECLARE_CONSOLE_COMMAND(flashread, command_flash_read, "offset [size]",
 			"Read flash");
 #endif
 
-static int command_flash_wp(int argc, char **argv)
+#ifdef CONFIG_CMD_FLASH_WP
+static int command_flash_wp(int argc, const char **argv)
 {
 	int val;
 
@@ -1164,34 +1165,36 @@ static int command_flash_wp(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	if (!strcasecmp(argv[1], "now"))
-		return flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
 
 	if (!strcasecmp(argv[1], "all"))
-		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
 
 	if (!strcasecmp(argv[1], "noall"))
-		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, 0);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, 0);
 
 #ifdef CONFIG_FLASH_PROTECT_RW
 	if (!strcasecmp(argv[1], "rw"))
-		return flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, -1);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, -1);
 
 	if (!strcasecmp(argv[1], "norw"))
-		return flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, 0);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, 0);
 #endif
 
 #ifdef CONFIG_ROLLBACK
 	if (!strcasecmp(argv[1], "rb"))
-		return flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT, -1);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT,
+					      -1);
 
 	if (!strcasecmp(argv[1], "norb"))
-		return flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT, 0);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT,
+					      0);
 #endif
 
 	/* Do this last, since anything starting with 'n' means "no" */
 	if (parse_bool(argv[1], &val))
-		return flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT,
-					 val ? -1 : 0);
+		return crec_flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT,
+					      val ? -1 : 0);
 
 	return EC_ERROR_PARAM1;
 }
@@ -1203,7 +1206,9 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 #ifdef CONFIG_ROLLBACK
 			" | rb | norb"
 #endif
-			, "Modify flash write protect");
+			,
+			"Modify flash write protect");
+#endif /* CONFIG_CMD_FLASH_WP */
 
 /*****************************************************************************/
 /* Host commands */
@@ -1218,8 +1223,8 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
  * region belonging to the EC. TODO(crbug.com/529365): Handle fmap_base
  * correctly in flashrom, dump_fmap, etc. and remove EC_FLASH_REGION_START.
  */
-#define EC_FLASH_REGION_START MIN(CONFIG_EC_PROTECTED_STORAGE_OFF, \
-				  CONFIG_EC_WRITABLE_STORAGE_OFF)
+#define EC_FLASH_REGION_START \
+	MIN(CONFIG_EC_PROTECTED_STORAGE_OFF, CONFIG_EC_WRITABLE_STORAGE_OFF)
 
 static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 {
@@ -1234,7 +1239,7 @@ static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 #error "Flash: Bank size expected bigger or equal to erase size."
 #endif
 	struct ec_flash_bank single_bank = {
-		.count = CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
+		.count = CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
 		.size_exp = __fls(CONFIG_FLASH_BANK_SIZE),
 		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
 		.erase_size_exp = __fls(CONFIG_FLASH_ERASE_SIZE),
@@ -1250,8 +1255,8 @@ static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 	 * Compute the ideal amount of data for the host to send us,
 	 * based on the maximum response size and the ideal write size.
 	 */
-	ideal_size = (args->response_max -
-		 sizeof(struct ec_params_flash_write)) &
+	ideal_size =
+		(args->response_max - sizeof(struct ec_params_flash_write)) &
 		~(CONFIG_FLASH_WRITE_IDEAL_SIZE - 1);
 	/*
 	 * If we can't get at least one ideal block, then just want
@@ -1259,13 +1264,13 @@ static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 	 */
 	if (!ideal_size)
 		ideal_size = (args->response_max -
-				sizeof(struct ec_params_flash_write)) &
-				~(CONFIG_FLASH_WRITE_SIZE - 1);
-
+			      sizeof(struct ec_params_flash_write)) &
+			     ~(CONFIG_FLASH_WRITE_SIZE - 1);
 
 	if (args->version >= 2) {
 		args->response_size = sizeof(struct ec_response_flash_info_2);
-		r_2->flash_size = CONFIG_FLASH_SIZE - EC_FLASH_REGION_START;
+		r_2->flash_size =
+			CONFIG_FLASH_SIZE_BYTES - EC_FLASH_REGION_START;
 #if (CONFIG_FLASH_ERASED_VALUE32 == 0)
 		r_2->flags = EC_FLASH_INFO_ERASE_TO_0;
 #else
@@ -1285,7 +1290,7 @@ static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 	return EC_RES_INVALID_PARAM;
 #else
-	r_1->flash_size = CONFIG_FLASH_SIZE - EC_FLASH_REGION_START;
+	r_1->flash_size = CONFIG_FLASH_SIZE_BYTES - EC_FLASH_REGION_START;
 	r_1->flags = 0;
 	r_1->write_block_size = CONFIG_FLASH_WRITE_SIZE;
 	r_1->erase_block_size = CONFIG_FLASH_ERASE_SIZE;
@@ -1305,16 +1310,14 @@ static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 #endif
 	}
 	return EC_RES_SUCCESS;
-#endif  /* CONFIG_FLASH_MULTIPLE_REGION */
+#endif /* CONFIG_FLASH_MULTIPLE_REGION */
 }
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 #define FLASH_INFO_VER EC_VER_MASK(2)
 #else
 #define FLASH_INFO_VER (EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2))
 #endif
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
-		     flash_command_get_info, FLASH_INFO_VER);
-
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO, flash_command_get_info, FLASH_INFO_VER);
 
 static enum ec_status flash_command_read(struct host_cmd_handler_args *args)
 {
@@ -1324,16 +1327,14 @@ static enum ec_status flash_command_read(struct host_cmd_handler_args *args)
 	if (p->size > args->response_max)
 		return EC_RES_OVERFLOW;
 
-	if (flash_read(offset, p->size, args->response))
+	if (crec_flash_read(offset, p->size, args->response))
 		return EC_RES_ERROR;
 
 	args->response_size = p->size;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ,
-		     flash_command_read,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ, flash_command_read, EC_VER_MASK(0));
 
 /**
  * Flash write command
@@ -1346,7 +1347,7 @@ static enum ec_status flash_command_write(struct host_cmd_handler_args *args)
 	const struct ec_params_flash_write *p = args->params;
 	uint32_t offset = p->offset + EC_FLASH_REGION_START;
 
-	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+	if (crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_RES_ACCESS_DENIED;
 
 	if (p->size + sizeof(*p) > args->params_size)
@@ -1357,23 +1358,22 @@ static enum ec_status flash_command_write(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	if (flash_write(offset, p->size, (const uint8_t *)(p + 1)))
+	if (crec_flash_write(offset, p->size, (const uint8_t *)(p + 1)))
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
-		     flash_command_write,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE, flash_command_write,
 		     EC_VER_MASK(0) | EC_VER_MASK(EC_VER_FLASH_WRITE));
 
 #ifndef CONFIG_FLASH_MULTIPLE_REGION
 /*
  * Make sure our image sizes are a multiple of flash block erase size so that
  * the host can erase the entire image.
+ * Note that host (flashrom/depthcharge) does not erase/program the
+ * EC_FLASH_REGION_RO region, it only queries this region.
  */
-BUILD_ASSERT(CONFIG_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
-BUILD_ASSERT(CONFIG_RW_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
-BUILD_ASSERT(EC_FLASH_REGION_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+BUILD_ASSERT(CONFIG_WP_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 BUILD_ASSERT(CONFIG_EC_WRITABLE_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 
 #endif
@@ -1393,7 +1393,7 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 #endif
 	offset = p->offset + EC_FLASH_REGION_START;
 
-	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+	if (crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_RES_ACCESS_DENIED;
 
 #ifdef CONFIG_INTERNAL_STORAGE
@@ -1407,7 +1407,7 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 		args->result = EC_RES_IN_PROGRESS;
 		host_send_response(args);
 #endif
-		if (flash_erase(offset, p->size))
+		if (crec_flash_erase(offset, p->size))
 			return EC_RES_ERROR;
 
 		break;
@@ -1439,13 +1439,12 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 	return rc;
 }
 
-
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE, flash_command_erase,
-		EC_VER_MASK(0)
+		     EC_VER_MASK(0)
 #ifdef CONFIG_FLASH_DEFERRED_ERASE
-		| EC_VER_MASK(1)
+			     | EC_VER_MASK(1)
 #endif
-		);
+);
 
 static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
 {
@@ -1459,7 +1458,7 @@ static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
 	 * wouldn't get the response.)
 	 */
 	if (p->mask)
-		flash_set_protect(p->mask, p->flags);
+		crec_flash_set_protect(p->mask, p->flags);
 
 	/*
 	 * Retrieve the current flags.  The caller can use this to determine
@@ -1467,15 +1466,15 @@ static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
 	 * simply returning error, because it provides information to the
 	 * caller about the actual result.
 	 */
-	r->flags = flash_get_protect();
+	r->flags = crec_flash_get_protect();
 
 	/* Indicate which flags are valid on this platform */
-	r->valid_flags =
-		EC_FLASH_PROTECT_GPIO_ASSERTED |
-		EC_FLASH_PROTECT_ERROR_STUCK |
-		EC_FLASH_PROTECT_ERROR_INCONSISTENT |
-		flash_physical_get_valid_flags();
-	r->writable_flags = flash_physical_get_writable_flags(r->flags);
+	r->valid_flags = EC_FLASH_PROTECT_GPIO_ASSERTED |
+			 EC_FLASH_PROTECT_ERROR_STUCK |
+			 EC_FLASH_PROTECT_ERROR_INCONSISTENT |
+			 EC_FLASH_PROTECT_ERROR_UNKNOWN |
+			 crec_flash_physical_get_valid_flags();
+	r->writable_flags = crec_flash_physical_get_writable_flags(r->flags);
 
 	args->response_size = sizeof(*r);
 
@@ -1487,8 +1486,7 @@ static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
  * temporary workaround for a problem in the cros_ec driver. Drop
  * EC_VER_MASK(0) once cros_ec driver can send the correct version.
  */
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_PROTECT,
-		     flash_command_protect,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_PROTECT, flash_command_protect,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static enum ec_status
@@ -1500,23 +1498,21 @@ flash_command_region_info(struct host_cmd_handler_args *args)
 	switch (p->region) {
 	case EC_FLASH_REGION_RO:
 		r->offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
-			    CONFIG_RO_STORAGE_OFF -
-			    EC_FLASH_REGION_START;
+			    CONFIG_RO_STORAGE_OFF - EC_FLASH_REGION_START;
 		r->size = EC_FLASH_REGION_RO_SIZE;
 		break;
 	case EC_FLASH_REGION_ACTIVE:
 		r->offset = flash_get_rw_offset(system_get_active_copy()) -
-				EC_FLASH_REGION_START;
+			    EC_FLASH_REGION_START;
 		r->size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
 		break;
 	case EC_FLASH_REGION_WP_RO:
-		r->offset = CONFIG_WP_STORAGE_OFF -
-			    EC_FLASH_REGION_START;
+		r->offset = CONFIG_WP_STORAGE_OFF - EC_FLASH_REGION_START;
 		r->size = CONFIG_WP_STORAGE_SIZE;
 		break;
 	case EC_FLASH_REGION_UPDATE:
 		r->offset = flash_get_rw_offset(system_get_update_copy()) -
-				EC_FLASH_REGION_START;
+			    EC_FLASH_REGION_START;
 		r->size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
 		break;
 	default:
@@ -1526,10 +1522,8 @@ flash_command_region_info(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_REGION_INFO,
-		     flash_command_region_info,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_REGION_INFO, flash_command_region_info,
 		     EC_VER_MASK(EC_VER_FLASH_REGION_INFO));
-
 
 #ifdef CONFIG_FLASH_SELECT_REQUIRED
 
@@ -1537,10 +1531,8 @@ static enum ec_status flash_command_select(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_select *p = args->params;
 
-	return board_flash_select(p->select);
+	return crec_board_flash_select(p->select);
 }
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_SELECT,
-		     flash_command_select,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_SELECT, flash_command_select, EC_VER_MASK(0));
 
 #endif /* CONFIG_FLASH_SELECT_REQUIRED */

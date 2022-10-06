@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,7 +9,7 @@
 #include "battery_smart.h"
 #include "charger.h"
 #include "chipset.h"
-#include "ec_ec_comm_master.h"
+#include "ec_ec_comm_client.h"
 #include "ocpc.h"
 #include "timer.h"
 
@@ -43,12 +43,17 @@ struct charge_state_data {
 #ifdef CONFIG_CHARGER_OTG
 	int output_current;
 #endif
-#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	int input_voltage;
 #endif
 #ifdef CONFIG_OCPC
 	struct ocpc_data ocpc;
 #endif
+};
+
+struct sustain_soc {
+	int8_t lower;
+	int8_t upper;
 };
 
 /**
@@ -71,17 +76,6 @@ int charge_set_output_current_limit(int chgnum, int ma, int mv);
  * @return EC_SUCCESS or error
  */
 int charge_set_input_current_limit(int ma, int mv);
-
-/*
- * Expose charge/battery related state
- *
- * @param param command to get corresponding data
- * @param value the corresponding data
- * @return EC_SUCCESS or error
- */
-#ifdef CONFIG_CHARGE_STATE_DEBUG
-int charge_get_charge_state_debug(int param, uint32_t *value);
-#endif /* CONFIG_CHARGE_STATE_DEBUG */
 
 /**
  * Set the desired manual charge current when in idle mode.
@@ -123,8 +117,8 @@ void board_base_reset(void);
  * @param curr Pointer to struct charge_state_data
  * @return Action to take.
  */
-enum critical_shutdown board_critical_shutdown_check(
-		struct charge_state_data *curr);
+enum critical_shutdown
+board_critical_shutdown_check(struct charge_state_data *curr);
 
 /**
  * Callback to set battery level for shutdown
@@ -191,6 +185,53 @@ void charge_reset_stable_current_us(uint64_t us);
  */
 bool charge_is_current_stable(void);
 
+<<<<<<< HEAD
 int set_chg_ctrl_mode(enum ec_charge_control_mode mode);
+=======
+/**
+ * Reset the OCPC internal state data and set the target VSYS to the current
+ * battery voltage for the auxiliary chargers.
+ */
+void trigger_ocpc_reset(void);
+
+/* Track problems in communicating with the battery or charger */
+enum problem_type {
+	PR_STATIC_UPDATE,
+	PR_SET_VOLTAGE,
+	PR_SET_CURRENT,
+	PR_SET_MODE,
+	PR_SET_INPUT_CURR,
+	PR_POST_INIT,
+	PR_CHG_FLAGS,
+	PR_BATT_FLAGS,
+	PR_CUSTOM,
+	PR_CFG_SEC_CHG,
+
+	NUM_PROBLEM_TYPES
+};
+
+void charge_problem(enum problem_type p, int v);
+
+struct charge_state_data *charge_get_status(void);
+
+enum ec_charge_control_mode get_chg_ctrl_mode(void);
+
+__test_only void reset_prev_disp_charge(void);
+
+/**
+ * Whether or not the charging progress was shown. Note, calling this function
+ * will reset the value to false.
+ *
+ * @return Whether or not the charging progress was printed to the console
+ */
+__test_only bool charging_progress_displayed(void);
+
+/**
+ * Callback for boards to request charger to enable bypass mode on/off.
+ *
+ * @return True for requesting bypass on. False for requesting bypass off.
+ */
+int board_should_charger_bypass(void);
+>>>>>>> chromium/main
 
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */

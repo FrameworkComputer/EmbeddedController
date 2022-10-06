@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -12,8 +12,8 @@
 #include "common.h"
 #include "util.h"
 
-#define CHARGING_VOLTAGE_MV_SAFE        8400
-#define CHARGING_CURRENT_MA_SAFE        1500
+#define CHARGING_VOLTAGE_MV_SAFE 8400
+#define CHARGING_CURRENT_MA_SAFE 1500
 
 /*
  * Battery info for all casta battery types. Note that the fields
@@ -95,12 +95,12 @@ int charger_profile_override(struct charge_state_data *curr)
 		TEMP_OUT_OF_RANGE = TEMP_ZONE_COUNT
 	} temp_zone;
 
-        /*
-         * Precharge must be executed when communication is failed on
+	/*
+	 * Precharge must be executed when communication is failed on
 	 * dead battery.
-         */
-        if(!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
-                return 0;
+	 */
+	if (!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
+		return 0;
 
 	current = curr->requested_current;
 	voltage = curr->requested_voltage;
@@ -146,7 +146,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		break;
 	}
 
-	if(voltage > batt_info->voltage_max)
+	if (voltage > batt_info->voltage_max)
 		voltage = batt_info->voltage_max;
 
 	curr->requested_voltage = MIN(curr->requested_voltage, voltage);

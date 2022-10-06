@@ -1,0 +1,15 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC ANX7447 USB MUX
+
+include: cros-ec,usbc-mux.yaml
+
+compatible: "analogix,usbc-mux-anx7447"
+
+properties:
+  hpd-update-enable:
+    type: boolean
+    description: |
+      Enable anx7447 hpd update callback

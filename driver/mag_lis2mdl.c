@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,11 +24,9 @@
 #endif
 #endif
 
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
-void lis2mdl_normalize(const struct motion_sensor_t *s,
-		       intv3_t v,
-		       uint8_t *raw)
+void lis2mdl_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *raw)
 {
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
 	int i;
@@ -66,23 +64,14 @@ void lis2mdl_normalize(const struct motion_sensor_t *s,
 	v[Z] += cal->bias[Z];
 }
 
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
-	struct stprivate_data *data = s->drv_data;
-
 	/* Range is fixed by hardware */
 	if (range != s->default_range)
 		return EC_ERROR_INVAL;
 
-	data->base.range = range;
+	s->current_range = range;
 	return EC_SUCCESS;
-}
-
-static int get_range(const struct motion_sensor_t *s)
-{
-	struct stprivate_data *data = s->drv_data;
-
-	return data->base.range;
 }
 
 /**
@@ -91,8 +80,8 @@ static int get_range(const struct motion_sensor_t *s)
  * @offset: offset vector
  * @temp: Temp
  */
-static int set_offset(const struct motion_sensor_t *s,
-		      const int16_t *offset, int16_t temp)
+static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
+		      int16_t temp)
 {
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
 
@@ -109,8 +98,8 @@ static int set_offset(const struct motion_sensor_t *s,
  * @offset: offset vector
  * @temp: Temp
  */
-static int get_offset(const struct motion_sensor_t *s,
-		      int16_t *offset, int16_t *temp)
+static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
+		      int16_t *temp)
 {
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
 	intv3_t offset_int;
@@ -140,7 +129,7 @@ int lis2mdl_thru_lsm6dsm_read(const struct motion_sensor_t *s, intv3_t v)
 	return ret;
 }
 
-int lis2mdl_thru_lsm6dsm_init(const struct motion_sensor_t *s)
+int lis2mdl_thru_lsm6dsm_init(struct motion_sensor_t *s)
 {
 	int ret = EC_ERROR_UNIMPLEMENTED;
 	struct mag_cal_t *cal = LIS2MDL_CAL(s);
@@ -148,26 +137,24 @@ int lis2mdl_thru_lsm6dsm_init(const struct motion_sensor_t *s)
 
 	mutex_lock(s->mutex);
 	/* Magnetometer in cascade mode */
-	ret = sensorhub_check_and_rst(
-			LSM6DSM_MAIN_SENSOR(s),
-			CONFIG_ACCELGYRO_SEC_ADDR_FLAGS,
-			LIS2MDL_WHO_AM_I_REG, LIS2MDL_WHO_AM_I,
-			LIS2MDL_CFG_REG_A_ADDR, LIS2MDL_FLAG_SW_RESET);
+	ret = sensorhub_check_and_rst(LSM6DSM_MAIN_SENSOR(s),
+				      CONFIG_ACCELGYRO_SEC_ADDR_FLAGS,
+				      LIS2MDL_WHO_AM_I_REG, LIS2MDL_WHO_AM_I,
+				      LIS2MDL_CFG_REG_A_ADDR,
+				      LIS2MDL_FLAG_SW_RESET);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = sensorhub_config_ext_reg(
-			LSM6DSM_MAIN_SENSOR(s),
-			CONFIG_ACCELGYRO_SEC_ADDR_FLAGS,
-			LIS2MDL_CFG_REG_A_ADDR,
-			LIS2MDL_ODR_50HZ | LIS2MDL_MODE_CONT);
+	ret = sensorhub_config_ext_reg(LSM6DSM_MAIN_SENSOR(s),
+				       CONFIG_ACCELGYRO_SEC_ADDR_FLAGS,
+				       LIS2MDL_CFG_REG_A_ADDR,
+				       LIS2MDL_ODR_50HZ | LIS2MDL_MODE_CONT);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	ret = sensorhub_config_slv0_read(
-			LSM6DSM_MAIN_SENSOR(s),
-			CONFIG_ACCELGYRO_SEC_ADDR_FLAGS,
-			LIS2MDL_OUT_REG, OUT_XYZ_SIZE);
+	ret = sensorhub_config_slv0_read(LSM6DSM_MAIN_SENSOR(s),
+					 CONFIG_ACCELGYRO_SEC_ADDR_FLAGS,
+					 LIS2MDL_OUT_REG, OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
@@ -206,8 +193,8 @@ static int lis2mdl_is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LIS2MDL_STATUS_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LIS2MDL_STATUS_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS) {
 		*ready = 0;
 		return ret;
@@ -215,7 +202,6 @@ static int lis2mdl_is_data_ready(const struct motion_sensor_t *s, int *ready)
 
 	*ready = tmp & LIS2MDL_XYZ_DIRTY_MASK;
 	return EC_SUCCESS;
-
 }
 
 /**
@@ -248,8 +234,8 @@ int lis2mdl_read(const struct motion_sensor_t *s, intv3_t v)
 	}
 
 	mutex_lock(s->mutex);
-	ret = st_raw_read_n(s->port, s->i2c_spi_addr_flags,
-			    LIS2MDL_OUT_REG, raw, OUT_XYZ_SIZE);
+	ret = st_raw_read_n(s->port, s->i2c_spi_addr_flags, LIS2MDL_OUT_REG,
+			    raw, OUT_XYZ_SIZE);
 	mutex_unlock(s->mutex);
 	if (ret == EC_SUCCESS) {
 		lis2mdl_normalize(s, v, raw);
@@ -261,7 +247,7 @@ int lis2mdl_read(const struct motion_sensor_t *s, intv3_t v)
 /**
  * Initialize the sensor. This function will verify the who-am-I register
  */
-int lis2mdl_init(const struct motion_sensor_t *s)
+int lis2mdl_init(struct motion_sensor_t *s)
 {
 	int ret = EC_ERROR_UNKNOWN, who_am_i, count = LIS2MDL_STARTUP_MS;
 	struct stprivate_data *data = s->drv_data;
@@ -289,8 +275,7 @@ int lis2mdl_init(const struct motion_sensor_t *s)
 	mutex_lock(s->mutex);
 
 	/* Reset the sensor */
-	ret = st_raw_write8(s->port, LIS2MDL_ADDR_FLAGS,
-			    LIS2MDL_CFG_REG_A_ADDR,
+	ret = st_raw_write8(s->port, LIS2MDL_ADDR_FLAGS, LIS2MDL_CFG_REG_A_ADDR,
 			    LIS2MDL_FLAG_SW_RESET);
 	if (ret != EC_SUCCESS)
 		goto lis2mdl_init_error;
@@ -339,20 +324,20 @@ int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (rate > 0) {
 		if (rnd)
 			/* Round up */
-			reg_val = rate <= 10000 ? LIS2MDL_ODR_10HZ
-				: rate <= 20000 ? LIS2MDL_ODR_20HZ
-				: LIS2MDL_ODR_50HZ;
+			reg_val = rate <= 10000 ? LIS2MDL_ODR_10HZ :
+				  rate <= 20000 ? LIS2MDL_ODR_20HZ :
+						  LIS2MDL_ODR_50HZ;
 		else
 			/* Round down */
-			reg_val = rate < 20000 ? LIS2MDL_ODR_10HZ
-				: rate < 50000 ? LIS2MDL_ODR_20HZ
-				: LIS2MDL_ODR_50HZ;
+			reg_val = rate < 20000 ? LIS2MDL_ODR_10HZ :
+				  rate < 50000 ? LIS2MDL_ODR_20HZ :
+						 LIS2MDL_ODR_50HZ;
 	}
 
-	normalized_rate = rate <= 0 ? 0
-		: reg_val == LIS2MDL_ODR_10HZ ? 10000
-		: reg_val == LIS2MDL_ODR_20HZ ? 20000
-		: 50000;
+	normalized_rate = rate <= 0 ? 0 :
+			  reg_val == LIS2MDL_ODR_10HZ ? 10000 :
+			  reg_val == LIS2MDL_ODR_20HZ ? 20000 :
+							50000;
 
 	/*
 	 * If no change is needed just bail. Not doing so will require a reset
@@ -365,10 +350,9 @@ int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		init_mag_cal(cal);
 
 	if (normalized_rate > 0)
-		cal->batch_size = MAX(
-				MAG_CAL_MIN_BATCH_SIZE,
-				(normalized_rate * 1000) /
-					MAG_CAL_MIN_BATCH_WINDOW_US);
+		cal->batch_size = MAX(MAG_CAL_MIN_BATCH_SIZE,
+				      (normalized_rate * 1000) /
+					      MAG_CAL_MIN_BATCH_WINDOW_US);
 	else
 		cal->batch_size = 0;
 
@@ -405,7 +389,6 @@ const struct accelgyro_drv lis2mdl_drv = {
 	.set_data_rate = lis2mdl_set_data_rate,
 #endif /* !CONFIG_MAG_LSM6DSM_LIS2MDL */
 	.set_range = set_range,
-	.get_range = get_range,
 	.get_data_rate = st_get_data_rate,
 	.get_resolution = st_get_resolution,
 	.set_offset = set_offset,

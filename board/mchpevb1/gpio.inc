@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Copyright 2017 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -22,10 +22,13 @@
  * GPIO_0150 is JTAG_TMS
  */
 
+/* include common gpio.inc under chip/mchp/lfw/... */
+#include "chip/mchp/lfw/gpio.inc"
+
 #define GPIO_BOTH_EDGES_PU (GPIO_INT_BOTH | GPIO_PULL_UP)
 
-/* Only needed if CONFIG_HOSTCMD_ESPI is not set, using LPC interface to PCH */
-#ifndef CONFIG_HOSTCMD_ESPI
+/* Only needed if CONFIG_HOST_INTERFACE_ESPI is not set, using LPC interface to PCH */
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 GPIO_INT(PCH_PLTRST_L, PIN(064), GPIO_BOTH_EDGES_PU, lpcrst_interrupt)
 #endif
 
@@ -294,23 +297,6 @@ GPIO(BOARD_VERSION1,        PIN(0114),  GPIO_INPUT)
 GPIO(BOARD_VERSION2,        PIN(0207),  GPIO_INPUT)
 GPIO(BOARD_VERSION3,        PIN(0011),  GPIO_INPUT)
 
-
-/* SPI
- * Chip select must be open drain and driven high before SPI controller
- * configuration.
- */
-/*
- * MEC1701H
- * GPIO_0055/PWM2/SHD_CS0#/RSMRST#
- * GPIO_0124/GPTP-OUT6/PVT_CS#/KSO11
- * QMSPI controller drives chip select, must be
- * configured to alternative function. See below.
- * Always use the name QMSPI_CS0 for chip select.
- * Actual GPIO could be GPIO_0055 QMSPI shared chip select or
- * GPIO_0124 private chip select.
- */
-GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
-
 /*
  * MEC1701H GP-SPI0 chip select is GPIO_0003
  * It is used as GPIO output. GPSPI chip level
@@ -340,14 +326,6 @@ GPIO(TFDP_DATA,		PIN(0171), GPIO_INPUT)
 /* KB pins */
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
 #define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
-
-
-/*
- * GPIO_0104(UART0_TX) Func1
- * GPIO_0105(UART0_RX) Func1
- * Bank 2 bits[4:5]
- */
-ALTERNATE(PIN_MASK(2, 0x30), 1, MODULE_UART, 0)
 
 /* KB pins */
 /*
@@ -413,25 +391,6 @@ ALTERNATE(PIN_MASK(1, 0xf000000), 2, MODULE_LPC, 0)
  * Function 1, Bank 1 bit[20] */
 ALTERNATE(PIN_MASK(1, 0x100000), 1, MODULE_LPC, GPIO_PULL_UP)
 
-/* MECC card SPI flash is connected to QMSPI Shared Port
- * Also, MEC1701H Private SPI Port (Port 1) has pins multiplexed
- * with KSO pins used in key scan!
- * QMSPI Shared SPI Port (Port 0)
- * NOTE: QMSPI Shared SPI Port pins are on VTR2
- */
-/*
- * MEC1701H SHD SPI is connected to QMSPI controller.
- * QMSPI drives chip select. SHD_CS0#(GPIO_0055) must be set
- * to alternate function 2 and GPIO_ODR_HIGH.
- * GPIO_0055 Function 2, Bank 1 bit[13]
- */
-ALTERNATE(PIN_MASK(1, 0x2000), 2, MODULE_SPI_FLASH, GPIO_ODR_HIGH)
-/* SHD_CLK - GPIO_0056 Function 2, Bank 1 bit[14] */
-ALTERNATE(PIN_MASK(1, 0x4000), 2, MODULE_SPI_FLASH, 0)
-/* MOSI(SHD_IO0) - GPIO_0223 Function 2, Bank 4 bit[19] */
-/* MISO(SHD_IO1) - GPIO_0224 Function 2, Bank 4 bit[20] */
-ALTERNATE(PIN_MASK(4, 0x180000), 2, MODULE_SPI_FLASH, 0)
-
 /*
  * MEC1701H GP-SPI0 Master
  * SPI0_CS# = GPIO_0003 Func 0(GPIO) Bank 0, bit 3
@@ -439,8 +398,8 @@ ALTERNATE(PIN_MASK(4, 0x180000), 2, MODULE_SPI_FLASH, 0)
  * SPI0_MISO = GPIO_0036 Func 2	Bank 0, bit 30
  * SPI0_MOSI = GPIO_0004 Func 2	Bank 0, bit 4
  */
-ALTERNATE(PIN_MASK(0,  0x00000008), 0, MODULE_SPI_MASTER, GPIO_ODR_HIGH)
-ALTERNATE(PIN_MASK(0,  0x50000010), 2, MODULE_SPI_MASTER, 0)
+ALTERNATE(PIN_MASK(0,  0x00000008), 0, MODULE_SPI_CONTROLLER, GPIO_ODR_HIGH)
+ALTERNATE(PIN_MASK(0,  0x50000010), 2, MODULE_SPI_CONTROLLER, 0)
 
 /* I2C pins */
 /* Using SMB00 as function 2 GP-SPI0

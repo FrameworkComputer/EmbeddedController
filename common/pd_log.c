@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,8 +21,7 @@ BUILD_ASSERT(PD_LOG_SIZE_MASK == EVENT_LOG_SIZE_MASK);
 BUILD_ASSERT(PD_LOG_TIMESTAMP_SHIFT == EVENT_LOG_TIMESTAMP_SHIFT);
 BUILD_ASSERT(PD_EVENT_NO_ENTRY == EVENT_LOG_NO_ENTRY);
 
-void pd_log_event(uint8_t type, uint8_t size_port,
-		  uint16_t data, void *payload)
+void pd_log_event(uint8_t type, uint8_t size_port, uint16_t data, void *payload)
 {
 	uint32_t timestamp = get_time().val >> PD_LOG_TIMESTAMP_SHIFT;
 
@@ -48,8 +47,8 @@ void pd_log_recv_vdm(int port, int cnt, uint32_t *payload)
 		return;
 
 	if (r->type != PD_EVENT_NO_ENTRY) {
-		timestamp = (get_time().val >> PD_LOG_TIMESTAMP_SHIFT)
-			  - r->timestamp;
+		timestamp = (get_time().val >> PD_LOG_TIMESTAMP_SHIFT) -
+			    r->timestamp;
 		log_add_event(r->type, size_port, r->data, r->payload,
 			      timestamp);
 		/* record that we have enqueued new content */
@@ -84,8 +83,7 @@ dequeue_retry:
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PD_GET_LOG_ENTRY,
-		     hc_pd_get_log_entry,
+DECLARE_HOST_COMMAND(EC_CMD_PD_GET_LOG_ENTRY, hc_pd_get_log_entry,
 		     EC_VER_MASK(0));
 
 static enum ec_status hc_pd_write_log_entry(struct host_cmd_handler_args *args)
@@ -117,8 +115,7 @@ static enum ec_status hc_pd_write_log_entry(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PD_WRITE_LOG_ENTRY,
-		     hc_pd_write_log_entry,
+DECLARE_HOST_COMMAND(EC_CMD_PD_WRITE_LOG_ENTRY, hc_pd_write_log_entry,
 		     EC_VER_MASK(0));
 #else /* !HAS_TASK_HOSTCMD */
 /* we are a PD accessory, send back the events as a VDM (VDO_CMD_GET_LOG) */

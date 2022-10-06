@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,7 @@
 #include "cbi_ec_fw_config.h"
 #include "cros_board_info.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 static union volteer_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
@@ -49,3 +49,7 @@ bool ec_cfg_has_numeric_pad(void)
 	return (fw_config.num_pad == NUMERIC_PAD_ENABLED);
 }
 
+enum ec_cfg_keyboard_layout ec_cfg_keyboard_layout(void)
+{
+	return fw_config.kb_layout;
+}

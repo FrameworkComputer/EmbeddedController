@@ -1,4 +1,4 @@
-/* Copyright 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright 2012 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -20,6 +20,9 @@
 	STRINGIFY(FW_FILE(FINAL_OUTDIR,PROJECT,sect,suffix,.dram))
 #define FW_IMAGE_SIGN(sect,suffix) \
 	STRINGIFY(FW_FILE(FINAL_OUTDIR,PROJECT,sect,suffix,.sig))
+
+.global _start
+_start:
 
 /* Read Only firmware */
 #ifdef CONFIG_FW_INCLUDE_RO
@@ -56,6 +59,11 @@
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 .section .image.RW.sign, "a"
 .incbin FW_IMAGE_SIGN(RW,)
+#endif
+
+#ifdef CONFIG_IPI
+.section .ipi_buffer, "aw"
+.space (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 8) * 2, 0
 #endif
 
 #ifdef CONFIG_DRAM_BASE

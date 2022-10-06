@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,12 +9,17 @@
  * section 5.2
  */
 
+#include "console.h"
 #include "usb_dp_alt_mode.h"
 #include "mock/dp_alt_mode_mock.h"
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #else
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -29,9 +34,3 @@ void dp_init(int port)
 {
 	CPRINTS("C%d: DP init", port);
 }
-
-void dp_teardown(int port)
-{
-	CPRINTS("C%d: DP teardown", port);
-}
-

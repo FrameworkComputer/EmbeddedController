@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2020 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -20,7 +20,9 @@
 #define POWER_LED_OFF 1
 
 #define LED_TICKS_PER_CYCLE 10
+#define LED_TICKS_PER_CYCLE_S3 35
 #define LED_ON_TICKS 5
+#define POWER_LED_ON_S3_TICKS 5
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
@@ -33,22 +35,19 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
-enum led_port {
-	RIGHT_PORT = 0,
-	LEFT_PORT
-};
+enum led_port { RIGHT_PORT = 0, LEFT_PORT };
 
 static void led_set_color_battery(int port, enum led_color color)
 {
 	enum gpio_signal amber_led, white_led;
 
 	amber_led = (port == RIGHT_PORT ? GPIO_LED_CHRG_L :
-				 GPIO_C1_CHARGE_LED_AMBER_DB_L);
+					  GPIO_C1_CHARGE_LED_AMBER_DB_L);
 	white_led = (port == RIGHT_PORT ? GPIO_LED_FULL_L :
-				 GPIO_C1_CHARGE_LED_WHITE_DB_L);
+					  GPIO_C1_CHARGE_LED_WHITE_DB_L);
 
 	switch (color) {
 	case LED_WHITE:
@@ -120,17 +119,16 @@ static void set_active_port_color(enum led_color color)
 
 	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
 		led_set_color_battery(RIGHT_PORT,
-				(port == RIGHT_PORT) ? color : LED_OFF);
+				      (port == RIGHT_PORT) ? color : LED_OFF);
 	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
 		led_set_color_battery(LEFT_PORT,
-				(port == LEFT_PORT) ? color : LED_OFF);
+				      (port == LEFT_PORT) ? color : LED_OFF);
 }
 
 static void led_set_battery(void)
 {
 	static int battery_ticks;
 	static int power_ticks;
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -139,16 +137,20 @@ static void led_set_battery(void)
 	 * design, blinking both two side battery white LEDs to indicate
 	 * system suspend with non-charging state.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND |
-				 CHIPSET_STATE_STANDBY) &&
-		charge_get_state() != PWR_STATE_CHARGE) {
-
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_STANDBY) &&
+	    charge_get_state() != PWR_STATE_CHARGE) {
 		power_ticks++;
 
-		led_set_color_battery(RIGHT_PORT, power_ticks & 0x4 ?
-					  LED_WHITE : LED_OFF);
-		led_set_color_battery(LEFT_PORT, power_ticks & 0x4 ?
-					  LED_WHITE : LED_OFF);
+		led_set_color_battery(RIGHT_PORT,
+				      power_ticks % LED_TICKS_PER_CYCLE_S3 <
+						      POWER_LED_ON_S3_TICKS ?
+					      LED_WHITE :
+					      LED_OFF);
+		led_set_color_battery(LEFT_PORT,
+				      power_ticks % LED_TICKS_PER_CYCLE_S3 <
+						      POWER_LED_ON_S3_TICKS ?
+					      LED_WHITE :
+					      LED_OFF);
 		return;
 	}
 
@@ -162,9 +164,12 @@ static void led_set_battery(void)
 	case PWR_STATE_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
 			if (charge_get_percent() < 10)
-				led_set_color_battery(RIGHT_PORT,
-					(battery_ticks % LED_TICKS_PER_CYCLE
-					 < LED_ON_TICKS) ? LED_WHITE : LED_OFF);
+				led_set_color_battery(
+					RIGHT_PORT,
+					(battery_ticks % LED_TICKS_PER_CYCLE <
+					 LED_ON_TICKS) ?
+						LED_WHITE :
+						LED_OFF);
 			else
 				led_set_color_battery(RIGHT_PORT, LED_OFF);
 		}
@@ -173,19 +178,20 @@ static void led_set_battery(void)
 			led_set_color_battery(LEFT_PORT, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				LED_WHITE : LED_OFF);
+		set_active_port_color((battery_ticks & 0x2) ? LED_WHITE :
+							      LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color((battery_ticks %
-				LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-				LED_AMBER : LED_OFF);
-		else
-			set_active_port_color(LED_WHITE);
+		set_active_port_color(LED_WHITE);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		set_active_port_color(
+			(battery_ticks % LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
+				LED_AMBER :
+				LED_OFF);
 		break;
 	default:
 		/* Other states don't alter LED behavior */

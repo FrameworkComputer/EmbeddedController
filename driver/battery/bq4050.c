@@ -1,4 +1,4 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -18,9 +18,8 @@ int battery_bq4050_imbalance_mv(void)
 	 * returns a voltage for each cell, regardless of the number of cells
 	 * actually installed in the pack.  Unpopulated cells read exactly zero.
 	 */
-	static const uint8_t cell_voltage_address[4] = {
-		0x3c, 0x3d, 0x3e, 0x3f
-	};
+	static const uint8_t cell_voltage_address[4] = { 0x3c, 0x3d, 0x3e,
+							 0x3f };
 	int i, res, cell_voltage;
 	int n_cells = 0;
 	int max_voltage = 0;
@@ -36,4 +35,3 @@ int battery_bq4050_imbalance_mv(void)
 	}
 	return (n_cells == 0) ? 0 : max_voltage - min_voltage;
 }
-

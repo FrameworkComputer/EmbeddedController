@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,8 +7,14 @@
 #define __UTIL_MISC_UTIL_H
 
 /* Don't use a macro where an inline will do... */
-static inline int MIN(int a, int b) { return a < b ? a : b; }
-static inline int MAX(int a, int b) { return a > b ? a : b; }
+static inline int MIN(int a, int b)
+{
+	return a < b ? a : b;
+}
+static inline int MAX(int a, int b)
+{
+	return a > b ? a : b;
+}
 
 /**
  * Write a buffer to the file.

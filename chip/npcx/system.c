@@ -1,10 +1,11 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* System module for Chrome EC : NPCX hardware specific implementation */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "clock_chip.h"
 #include "common.h"
@@ -15,6 +16,7 @@
 #include "host_command.h"
 #include "hwtimer_chip.h"
 #include "lct_chip.h"
+#include "panic.h"
 #include "registers.h"
 #include "rom_chip.h"
 #include "sib_chip.h"
@@ -27,23 +29,32 @@
 
 /* Delay after writing TTC for value to latch */
 #define MTC_TTC_LOAD_DELAY_US 250
-#define MTC_ALARM_MASK     (BIT(25) - 1)
-#define MTC_WUI_GROUP      MIWU_GROUP_4
-#define MTC_WUI_MASK       MASK_PIN7
+#define MTC_ALARM_MASK (BIT(25) - 1)
+#define MTC_WUI_GROUP MIWU_GROUP_4
+#define MTC_WUI_MASK MASK_PIN7
 
 /* ROM address of chip revision */
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
-#define CHIP_REV_ADDR        0x0000FFFC
-#define CHIP_REV_STR_SIZE    12
+#define CHIP_REV_ADDR 0x0000FFFC
+#define CHIP_REV_STR_SIZE 12
+#define PWDWN_8_RESERVED_SET_MASK 0x30
 #else
-#define CHIP_REV_ADDR        0x00007FFC
-#define CHIP_REV_STR_SIZE    6
+#define CHIP_REV_ADDR 0x00007FFC
+#define CHIP_REV_STR_SIZE 6
 #endif
+
+/*  Legacy SuperI/O Configuration D register offset */
+#define SIOCFD_REG_OFFSET 0x2D
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+
+#if defined(NPCX_LCT_SUPPORT)
+/* A flag for waking up from hibernate mode by RTC overflow event */
+static int is_rtc_overflow_event;
+#endif
 
 /*****************************************************************************/
 /* Internal functions */
@@ -82,13 +93,9 @@ void system_watchdog_reset(void)
 /* Return true if index is stored as a single byte in bbram */
 static int bbram_is_byte_access(enum bbram_data_index index)
 {
-	return (index >= BBRM_DATA_INDEX_VBNVCNTXT &&
-		index <  BBRM_DATA_INDEX_RAMLOG)
-		|| index == BBRM_DATA_INDEX_PD0
-		|| index == BBRM_DATA_INDEX_PD1
-		|| index == BBRM_DATA_INDEX_PD2
-		|| index == BBRM_DATA_INDEX_PANIC_FLAGS
-	;
+	return index == BBRM_DATA_INDEX_PD0 || index == BBRM_DATA_INDEX_PD1 ||
+	       index == BBRM_DATA_INDEX_PD2 ||
+	       index == BBRM_DATA_INDEX_PANIC_FLAGS;
 }
 
 /* Check and clear BBRAM status on any reset */
@@ -100,7 +107,7 @@ void system_check_bbram_on_reset(void)
 		 * dropped, print a warning message.
 		 */
 		if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH) ||
-			IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))
+		    IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))
 			CPRINTF("VBAT drop!\n");
 
 		/*
@@ -171,7 +178,7 @@ static int bbram_data_write(enum bbram_data_index index, uint32_t value)
 	/* Write BBRAM */
 	NPCX_BBRAM(index) = value & 0xFF;
 	if (bytes == 4) {
-		NPCX_BBRAM(index + 1) = (value >> 8)  & 0xFF;
+		NPCX_BBRAM(index + 1) = (value >> 8) & 0xFF;
 		NPCX_BBRAM(index + 2) = (value >> 16) & 0xFF;
 		NPCX_BBRAM(index + 3) = (value >> 24) & 0xFF;
 	}
@@ -183,10 +190,6 @@ static int bbram_data_write(enum bbram_data_index index, uint32_t value)
 /* Map idx to a returned BBRM_DATA_INDEX_*, or return -1 on invalid idx */
 static int bbram_idx_lookup(enum system_bbram_idx idx)
 {
-	if (idx >= SYSTEM_BBRAM_IDX_VBNVBLOCK0 &&
-	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
-		return BBRM_DATA_INDEX_VBNVCNTXT +
-		       idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0;
 	if (idx == SYSTEM_BBRAM_IDX_PD0)
 		return BBRM_DATA_INDEX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
@@ -258,14 +261,14 @@ void system_set_rtc(uint32_t seconds)
  * 2. LREG1, LREG3 and LREG4 store exception, reason and info in case of
  * software panic.
  */
-#define BKUP_CFSR		(BBRM_DATA_INDEX_PANIC_BKUP + 0)
-#define BKUP_HFSR		(BBRM_DATA_INDEX_PANIC_BKUP + 4)
-#define BKUP_BFAR		(BBRM_DATA_INDEX_PANIC_BKUP + 8)
-#define BKUP_LREG1		(BBRM_DATA_INDEX_PANIC_BKUP + 12)
-#define BKUP_LREG3		(BBRM_DATA_INDEX_PANIC_BKUP + 16)
-#define BKUP_LREG4		(BBRM_DATA_INDEX_PANIC_BKUP + 20)
+#define BKUP_CFSR (BBRM_DATA_INDEX_PANIC_BKUP + 0)
+#define BKUP_HFSR (BBRM_DATA_INDEX_PANIC_BKUP + 4)
+#define BKUP_BFAR (BBRM_DATA_INDEX_PANIC_BKUP + 8)
+#define BKUP_LREG1 (BBRM_DATA_INDEX_PANIC_BKUP + 12)
+#define BKUP_LREG3 (BBRM_DATA_INDEX_PANIC_BKUP + 16)
+#define BKUP_LREG4 (BBRM_DATA_INDEX_PANIC_BKUP + 20)
 
-#define BKUP_PANIC_DATA_VALID	BIT(0)
+#define BKUP_PANIC_DATA_VALID BIT(0)
 
 void chip_panic_data_backup(void)
 {
@@ -334,27 +337,35 @@ static void chip_set_hib_flag(uint32_t *flags, uint32_t hib_wake_flags)
 #ifdef NPCX_LCT_SUPPORT
 		if (npcx_lct_is_event_set()) {
 			*flags |= EC_RESET_FLAG_RTC_ALARM |
-					  EC_RESET_FLAG_HIBERNATE;
+				  EC_RESET_FLAG_HIBERNATE;
+			/* Is RTC overflow event? */
+			if (bbram_data_read(BBRM_DATA_INDEX_LCT_TIME) ==
+			    NPCX_LCT_MAX) {
+				/*
+				 * Mark it as RTC overflow event and handle it
+				 * in hook init function later for logging info.
+				 */
+				is_rtc_overflow_event = 1;
+			}
 			npcx_lct_clear_event();
 			return;
 		}
 #endif
-		*flags |= EC_RESET_FLAG_WAKE_PIN |
-				  EC_RESET_FLAG_HIBERNATE;
+		*flags |= EC_RESET_FLAG_WAKE_PIN | EC_RESET_FLAG_HIBERNATE;
 	} else { /* Hibernate via non-PSL */
 #ifdef NPCX_LCT_SUPPORT
 		if (hib_wake_flags & HIBERNATE_WAKE_LCT) {
 			*flags |= EC_RESET_FLAG_RTC_ALARM |
-					  EC_RESET_FLAG_HIBERNATE;
+				  EC_RESET_FLAG_HIBERNATE;
 			return;
 		}
 #endif
 		if (hib_wake_flags & HIBERNATE_WAKE_PIN) {
 			*flags |= EC_RESET_FLAG_WAKE_PIN |
-					  EC_RESET_FLAG_HIBERNATE;
+				  EC_RESET_FLAG_HIBERNATE;
 		} else if (hib_wake_flags & HIBERNATE_WAKE_MTC) {
 			*flags |= EC_RESET_FLAG_RTC_ALARM |
-					  EC_RESET_FLAG_HIBERNATE;
+				  EC_RESET_FLAG_HIBERNATE;
 		}
 	}
 }
@@ -377,6 +388,8 @@ static void check_reset_cause(void)
 #endif
 	/* Clear saved hibernate wake flag in bbram , too */
 	bbram_data_write(BBRM_DATA_INDEX_WAKE, 0);
+
+	chip_set_hib_flag(&flags, hib_wake_flags);
 
 	/* Use scratch bit to check power on reset or VCC1_RST reset */
 	if (!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) {
@@ -407,9 +420,9 @@ static void check_reset_cause(void)
 					 * clear the flag so later code will
 					 * not wait for the second reset.
 					 */
-					flags =
-					  (flags & ~EC_RESET_FLAG_INITIAL_PWR)
-					   | EC_RESET_FLAG_POWER_ON;
+					flags = (flags &
+						 ~EC_RESET_FLAG_INITIAL_PWR) |
+						EC_RESET_FLAG_POWER_ON;
 				else
 					/*
 					 * No previous power-on flag,
@@ -419,23 +432,28 @@ static void check_reset_cause(void)
 					 */
 					flags |= EC_RESET_FLAG_RESET_PIN;
 			} else {
+				flags |= EC_RESET_FLAG_POWER_ON;
+
 				/*
 				 * Power-on restart, so set a flag and save it
 				 * for the next imminent reset. Later code
 				 * will check for this flag and wait for the
-				 * second reset.
+				 * second reset. Waking from PSL hibernate is
+				 * power-on for EC but not for H1, so do not
+				 * wait for the second reset.
 				 */
-				flags |= EC_RESET_FLAG_POWER_ON
-				      | EC_RESET_FLAG_INITIAL_PWR;
-				chip_flags |= EC_RESET_FLAG_INITIAL_PWR;
+				if (!(flags & EC_RESET_FLAG_HIBERNATE)) {
+					flags |= EC_RESET_FLAG_INITIAL_PWR;
+					chip_flags |= EC_RESET_FLAG_INITIAL_PWR;
+				}
 			}
 		} else
 			/*
 			 * No second reset after power-on, so
 			 * set the flags according to the restart reason.
 			 */
-			flags |= reset ? EC_RESET_FLAG_RESET_PIN
-				       : EC_RESET_FLAG_POWER_ON;
+			flags |= reset ? EC_RESET_FLAG_RESET_PIN :
+					 EC_RESET_FLAG_POWER_ON;
 #endif
 	}
 	chip_save_reset_flags(chip_flags);
@@ -454,8 +472,6 @@ static void check_reset_cause(void)
 		SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS);
 	}
 
-	chip_set_hib_flag(&flags, hib_wake_flags);
-
 	/* Watchdog Reset */
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS)) {
 		/*
@@ -464,7 +480,7 @@ static void check_reset_cause(void)
 		 * cause is panic reason or not.
 		 */
 		if (!(flags & (EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD |
-				EC_RESET_FLAG_HIBERNATE)))
+			       EC_RESET_FLAG_HIBERNATE)))
 			flags |= EC_RESET_FLAG_WATCHDOG;
 
 		/* Clear watchdog reset status initially*/
@@ -483,10 +499,10 @@ static void system_set_gpios_and_wakeup_inputs_hibernate(void)
 	int table, i;
 
 	/* Disable all MIWU inputs before entering hibernate */
-	for (table = MIWU_TABLE_0 ; table < MIWU_TABLE_2 ; table++) {
-		for (i = 0 ; i < 8 ; i++) {
+	for (table = MIWU_TABLE_0; table < MIWU_TABLE_2; table++) {
+		for (i = 0; i < 8; i++) {
 			/* Disable all wake-ups */
-			NPCX_WKEN(table, i)  = 0x00;
+			NPCX_WKEN(table, i) = 0x00;
 			/* Clear all pending bits of wake-ups */
 			NPCX_WKPCL(table, i) = 0xFF;
 			/*
@@ -499,7 +515,7 @@ static void system_set_gpios_and_wakeup_inputs_hibernate(void)
 
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 	/* Disable MIWU 2 group 6 inputs which used for the additional GPIOs */
-	NPCX_WKEN(MIWU_TABLE_2, MIWU_GROUP_6)  = 0x00;
+	NPCX_WKEN(MIWU_TABLE_2, MIWU_GROUP_6) = 0x00;
 	NPCX_WKPCL(MIWU_TABLE_2, MIWU_GROUP_6) = 0xFF;
 	NPCX_WKINEN(MIWU_TABLE_2, MIWU_GROUP_6) = 0x00;
 #endif
@@ -529,14 +545,17 @@ static void system_set_lct_alarm(uint32_t seconds, uint32_t microseconds)
 #ifdef CONFIG_HIBERNATE_PSL
 	/* Enable LCT event to PSL */
 	npcx_lct_config(seconds, 1, 0);
+	/* save the start time of LCT */
+	if (IS_ENABLED(CONFIG_HOSTCMD_RTC) || IS_ENABLED(CONFIG_CMD_RTC))
+		bbram_data_write(BBRM_DATA_INDEX_LCT_TIME, seconds);
 #else
 	/* Enable LCT event interrupt and MIWU */
 	npcx_lct_config(seconds, 0, 1);
 	task_disable_irq(NPCX_IRQ_LCT_WKINTF_2);
 	/* Enable wake-up input sources & clear pending bit */
-	NPCX_WKPCL(MIWU_TABLE_2, LCT_WUI_GROUP)  |= LCT_WUI_MASK;
+	NPCX_WKPCL(MIWU_TABLE_2, LCT_WUI_GROUP) |= LCT_WUI_MASK;
 	NPCX_WKINEN(MIWU_TABLE_2, LCT_WUI_GROUP) |= LCT_WUI_MASK;
-	NPCX_WKEN(MIWU_TABLE_2, LCT_WUI_GROUP)   |= LCT_WUI_MASK;
+	NPCX_WKEN(MIWU_TABLE_2, LCT_WUI_GROUP) |= LCT_WUI_MASK;
 	task_enable_irq(NPCX_IRQ_LCT_WKINTF_2);
 #endif
 	npcx_lct_enable(1);
@@ -609,24 +628,51 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 		board_hibernate_late();
 
 	/* Clear all pending IRQ otherwise wfi will have no affect */
-	for (i = NPCX_IRQ_0 ; i < NPCX_IRQ_COUNT ; i++)
+	for (i = NPCX_IRQ_0; i < NPCX_IRQ_COUNT; i++)
 		task_clear_pending_irq(i);
 
-	/*
-	 * Set RTC interrupt in time to wake up before
-	 * next event.
-	 */
-	if (seconds || microseconds)
+		/* Set the timer interrupt for wake up.  */
 #ifdef NPCX_LCT_SUPPORT
+	if (seconds || microseconds) {
 		system_set_lct_alarm(seconds, microseconds);
+	} else if (IS_ENABLED(CONFIG_HIBERNATE_PSL_COMPENSATE_RTC)) {
+		system_set_lct_alarm(NPCX_LCT_MAX, 0);
+	}
 #else
+	if (seconds || microseconds)
 		system_set_rtc_alarm(seconds, microseconds);
 #endif
 
 	/* execute hibernate func depend on chip series */
 	__hibernate_npcx_series();
-
 }
+
+#ifdef CONFIG_HIBERNATE_PSL_COMPENSATE_RTC
+#ifndef NPCX_LCT_SUPPORT
+#error "Do not enable CONFIG_HIBERNATE_PSL_COMPENSATE_RTC if npcx ec doesn't \
+support LCT!"
+#endif
+/*
+ * The function uses the LCT counter value to compensate for RTC after hibernate
+ * wake-up. Because system_set_rtc() will invoke udelay(), the function should
+ * execute after timer_init(). The function also should execute before
+ * npcx_lct_init() which will clear all LCT register.
+ */
+void system_compensate_rtc(void)
+{
+	uint32_t rtc_time, ltc_start_time;
+
+	ltc_start_time = bbram_data_read(BBRM_DATA_INDEX_LCT_TIME);
+	if (ltc_start_time == 0)
+		return;
+
+	rtc_time = system_get_rtc_sec();
+	rtc_time += ltc_start_time - npcx_lct_get_time();
+	system_set_rtc(rtc_time);
+	/* Clear BBRAM data to avoid compensating again. */
+	bbram_data_write(BBRM_DATA_INDEX_LCT_TIME, 0);
+}
+#endif
 #endif /* CONFIG_SUPPORT_CHIP_HIBERNATION */
 
 static char system_to_hex(uint8_t val)
@@ -680,9 +726,9 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 	task_enable_irq(NPCX_IRQ_MTC);
 
 	/* Enable wake-up input sources & clear pending bit */
-	NPCX_WKPCL(MIWU_TABLE_0, MTC_WUI_GROUP)  |= MTC_WUI_MASK;
+	NPCX_WKPCL(MIWU_TABLE_0, MTC_WUI_GROUP) |= MTC_WUI_MASK;
 	NPCX_WKINEN(MIWU_TABLE_0, MTC_WUI_GROUP) |= MTC_WUI_MASK;
-	NPCX_WKEN(MIWU_TABLE_0, MTC_WUI_GROUP)   |= MTC_WUI_MASK;
+	NPCX_WKEN(MIWU_TABLE_0, MTC_WUI_GROUP) |= MTC_WUI_MASK;
 }
 
 void system_reset_rtc_alarm(void)
@@ -739,6 +785,22 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 #endif
 }
 
+#ifndef CONFIG_ENABLE_JTAG_SELECTION
+static void system_disable_host_sel_jtag(void)
+{
+	int data;
+
+	/* Enable Core-to-Host Modules Access */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+	/* Clear SIOCFD.JEN0_HSL to disable JTAG0 */
+	data = sib_read_reg(SIO_OFFSET, SIOCFD_REG_OFFSET);
+	data &= ~0x80;
+	sib_write_reg(SIO_OFFSET, SIOCFD_REG_OFFSET, data);
+	/* Disable Core-to-Host Modules Access */
+	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+}
+#endif
+
 void chip_pre_init(void)
 {
 	/* Setting for fixing JTAG issue */
@@ -765,21 +827,21 @@ void chip_pre_init(void)
 	 * This is the workaround to disable the JTAG0 which is enabled
 	 * accidentally by a special key combination.
 	 */
+#if NPCX_FAMILY_VERSION < NPCX_FAMILY_NPCX9
 	if (!IS_BIT_SET(NPCX_DEVALT(5), NPCX_DEVALT5_NJEN0_EN)) {
-		int data;
 		/* Set DEVALT5.nJEN0_EN to disable JTAG0 */
 		SET_BIT(NPCX_DEVALT(5), NPCX_DEVALT5_NJEN0_EN);
-		/* Enable Core-to-Host Modules Access */
-		SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
-		/* Clear SIOCFD.JEN0_HSL to disable JTAG0 */
-		data = sib_read_reg(SIO_OFFSET, 0x2D);
-		data &= ~0x80;
-		sib_write_reg(SIO_OFFSET, 0x2D, data);
-		/* Disable Core-to-Host Modules Access */
-		CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+		system_disable_host_sel_jtag();
+	}
+#else
+	if (GET_FIELD(NPCX_JEN_CTL1, NPCX_JEN_CTL1_JEN_EN_FIELD) ==
+	    NPCX_JEN_CTL1_JEN_EN_ENA) {
+		SET_FIELD(NPCX_JEN_CTL1, NPCX_JEN_CTL1_JEN_EN_FIELD,
+			  NPCX_JEN_CTL1_JEN_EN_DIS);
+		system_disable_host_sel_jtag();
 	}
 #endif
-
+#endif
 }
 
 void system_pre_init(void)
@@ -791,42 +853,52 @@ void system_pre_init(void)
 	 * EC should be initialized in Booter
 	 */
 
-	/* Power-down the modules we don't need */
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_1) = 0xF9; /* Skip SDP_PD FIU_PD */
+	/* Power down KBS, SDP, PS2, UART1, and MFT1-3 */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_1) = 0xFB;
+	/* Power down PWM0-7 */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_2) = 0xFF;
 #if defined(CHIP_FAMILY_NPCX5)
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F; /* Skip GDMA */
+	/* Power down SMB0-3 */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F;
 #elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x3F; /* Skip GDMA */
+	/* Power down SMB0-4 */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x3F;
 #endif
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4; /* Skip ITIM2/1_PD */
+	/* Power down ITIM3, ADC, PECI, SPIP */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4;
+	/* Power down C2HACC, SHM_REG, SHM, Port80, and MSWC */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
 
 	pwdwn6 = 0x70 |
 #if NPCX_FAMILY_VERSION <= NPCX_FAMILY_NPCX7
-		/*
-		 * Don't set PD of ITIM6 for NPCX9 and later chips because
-		 * they use it as the system timer.
-		 */
-		BIT(NPCX_PWDWN_CTL6_ITIM6_PD) |
+		 /*
+		  * Don't set PD of ITIM6 for NPCX9 and later chips because
+		  * they use it as the system timer.
+		  */
+		 BIT(NPCX_PWDWN_CTL6_ITIM6_PD) |
 #endif
-		BIT(NPCX_PWDWN_CTL6_ITIM4_PD); /* Skip ITIM5_PD */
-#if !defined(CONFIG_HOSTCMD_ESPI)
+		 BIT(NPCX_PWDWN_CTL6_ITIM4_PD);
+#if !defined(CONFIG_HOST_INTERFACE_ESPI)
 	pwdwn6 |= 1 << NPCX_PWDWN_CTL6_ESPI_PD;
 #endif
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = pwdwn6;
 
 #if defined(CHIP_FAMILY_NPCX7)
-#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M6FC) || \
+#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M6FC) ||     \
 	defined(CHIP_VARIANT_NPCX7M7FC) || defined(CHIP_VARIANT_NPCX7M7WB) || \
 	defined(CHIP_VARIANT_NPCX7M7WC)
+	/* Power down UART2, SMB5-7, ITIM64, and WoV */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xE7;
 #else
+	/* Power down SMB5-7 */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
 #endif
 #endif
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	/* Power down UART2-4, SMB5-7, and ITIM64 */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xFF;
+	/* Power down I3C */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_8) = PWDWN_8_RESERVED_SET_MASK | 0x01;
 #endif
 
 	/* Following modules can be powered down automatically in npcx7 */
@@ -877,34 +949,34 @@ void system_pre_init(void)
 			 * hibernation.
 			 */
 			SET_BIT(NPCX_GLUE_PSL_MCTL1,
-					NPCX_GLUE_PSL_MCTL1_VCC1_RST_PSL);
+				NPCX_GLUE_PSL_MCTL1_VCC1_RST_PSL);
 			/* Disable VCC_RST Pull-Up */
 			SET_BIT(NPCX_DEVALT(ALT_GROUP_G),
-					NPCX_DEVALTG_VCC1_RST_PUD);
+				NPCX_DEVALTG_VCC1_RST_PUD);
 			/*
 			 * Lock this bit itself and VCC1_RST_PSL in the
 			 * PSL_MCTL1 register to read-only.
 			 */
 			SET_BIT(NPCX_GLUE_PSL_MCTL2,
-					NPCX_GLUE_PSL_MCTL2_VCC1_RST_PSL_LK);
+				NPCX_GLUE_PSL_MCTL2_VCC1_RST_PSL_LK);
 		}
 
 		/* Don't set PSL_OUT to open-drain if it is the level mode */
 		ASSERT((opt_flag & NPCX_PSL_CFG_PSL_OUT_PULSE) ||
-			 !(opt_flag & NPCX_PSL_CFG_PSL_OUT_OD));
+		       !(opt_flag & NPCX_PSL_CFG_PSL_OUT_OD));
 
 		if (opt_flag & NPCX_PSL_CFG_PSL_OUT_OD)
 			SET_BIT(NPCX_GLUE_PSL_MCTL1, NPCX_GLUE_PSL_MCTL1_OD_EN);
 		else
 			CLEAR_BIT(NPCX_GLUE_PSL_MCTL1,
-					NPCX_GLUE_PSL_MCTL1_OD_EN);
+				  NPCX_GLUE_PSL_MCTL1_OD_EN);
 
 		if (opt_flag & NPCX_PSL_CFG_PSL_OUT_PULSE)
 			SET_BIT(NPCX_GLUE_PSL_MCTL1,
-					NPCX_GLUE_PSL_MCTL1_PLS_EN);
+				NPCX_GLUE_PSL_MCTL1_PLS_EN);
 		else
 			CLEAR_BIT(NPCX_GLUE_PSL_MCTL1,
-					NPCX_GLUE_PSL_MCTL1_PLS_EN);
+				  NPCX_GLUE_PSL_MCTL1_PLS_EN);
 	}
 #endif
 }
@@ -955,7 +1027,7 @@ const char *system_get_chip_vendor(void)
 	case 0x20:
 		return "Nuvoton";
 	default:
-		*p       = system_to_hex(fam_id >> 4);
+		*p = system_to_hex(fam_id >> 4);
 		*(p + 1) = system_to_hex(fam_id);
 		*(p + 2) = '\0';
 		return str;
@@ -998,7 +1070,7 @@ const char *system_get_chip_name(void)
 		return "NPCX993F";
 #endif
 	default:
-		*p       = system_to_hex(chip_id >> 4);
+		*p = system_to_hex(chip_id >> 4);
 		*(p + 1) = system_to_hex(chip_id);
 		*(p + 2) = '\0';
 		return str;
@@ -1021,6 +1093,7 @@ const char *system_get_chip_revision(void)
 #ifdef CHIP_FAMILY_NPCX7
 	uint8_t chip_id = NPCX_DEVICE_ID_CR;
 #endif
+	int s;
 
 	switch (chip_gen) {
 #if defined(CHIP_FAMILY_NPCX5)
@@ -1033,7 +1106,7 @@ const char *system_get_chip_revision(void)
 		break;
 	case 0x07:
 		if (chip_id == NPCX796F_A_B_CHIP_ID ||
-			chip_id == NPCX797W_B_CHIP_ID)
+		    chip_id == NPCX797W_B_CHIP_ID)
 			*p++ = 'B';
 		else
 			*p++ = 'C';
@@ -1054,7 +1127,7 @@ const char *system_get_chip_revision(void)
 	 * For npcx5/npcx7, the revision number is 1 byte.
 	 * For NPCX9 and later chips, the revision number is 4 bytes.
 	 */
-	for (int s = sizeof(rev_num) - 1; s >= 0; s--) {
+	for (s = sizeof(rev_num) - 1; s >= 0; s--) {
 		uint8_t r = rev_num >> (s * 8);
 
 		*p++ = system_to_hex(r >> 4);
@@ -1064,8 +1137,6 @@ const char *system_get_chip_revision(void)
 
 	return rev;
 }
-
-BUILD_ASSERT(BBRM_DATA_INDEX_VBNVCNTXT + EC_VBNV_BLOCK_SIZE <= NPCX_BBRAM_SIZE);
 
 /**
  * Set a scratchpad register to the specified value.
@@ -1081,9 +1152,10 @@ int system_set_scratchpad(uint32_t value)
 	return bbram_data_write(BBRM_DATA_INDEX_SCRATCHPAD, value);
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	return bbram_data_read(BBRM_DATA_INDEX_SCRATCHPAD);
+	*value = bbram_data_read(BBRM_DATA_INDEX_SCRATCHPAD);
+	return EC_SUCCESS;
 }
 
 int system_is_reboot_warm(void)
@@ -1108,6 +1180,23 @@ int system_is_reboot_warm(void)
 		return 1;
 }
 
+#if defined(CONFIG_HIBERNATE_PSL) && defined(NPCX_LCT_SUPPORT)
+static void system_init_check_rtc_wakeup_event(void)
+{
+	/*
+	 * If platform uses PSL (Power Switch Logic) for hibernating and RTC is
+	 * also supported, determine whether ec is woken up by RTC with overflow
+	 * event (16 weeks). If so, let it go to hibernate mode immediately.
+	 */
+	if (is_rtc_overflow_event) {
+		CPRINTS("Hibernate due to RTC overflow event");
+		system_hibernate(0, 0);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, system_init_check_rtc_wakeup_event,
+	     HOOK_PRIO_DEFAULT - 1);
+#endif
+
 /*****************************************************************************/
 /* Console commands */
 void print_system_rtc(enum console_channel ch)
@@ -1118,7 +1207,7 @@ void print_system_rtc(enum console_channel ch)
 }
 
 #ifdef CONFIG_CMD_RTC
-static int command_system_rtc(int argc, char **argv)
+static int command_system_rtc(int argc, const char **argv)
 {
 	if (argc == 3 && !strcasecmp(argv[1], "set")) {
 		char *e;
@@ -1135,15 +1224,14 @@ static int command_system_rtc(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc,
-		"[set <seconds>]",
-		"Get/set real-time clock");
+DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc, "[set <seconds>]",
+			"Get/set real-time clock");
 
 #ifdef CONFIG_CMD_RTC_ALARM
 /**
  * Test the RTC alarm by setting an interrupt on RTC match.
  */
-static int command_rtc_alarm_test(int argc, char **argv)
+static int command_rtc_alarm_test(int argc, const char **argv)
 {
 	int s = 1, us = 0;
 	char *e;
@@ -1155,13 +1243,11 @@ static int command_rtc_alarm_test(int argc, char **argv)
 		s = strtoi(argv[1], &e, 10);
 		if (*e)
 			return EC_ERROR_PARAM1;
-
 	}
 	if (argc > 2) {
 		us = strtoi(argv[2], &e, 10);
 		if (*e)
 			return EC_ERROR_PARAM2;
-
 	}
 
 	system_set_rtc_alarm(s, us);
@@ -1169,8 +1255,7 @@ static int command_rtc_alarm_test(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
-		"[seconds [microseconds]]",
-		"Test alarm");
+			"[seconds [microseconds]]", "Test alarm");
 #endif /* CONFIG_CMD_RTC_ALARM */
 #endif /* CONFIG_CMD_RTC */
 
@@ -1187,9 +1272,8 @@ static enum ec_status system_rtc_get_value(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_VALUE,
-		system_rtc_get_value,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_VALUE, system_rtc_get_value,
+		     EC_VER_MASK(0));
 
 static enum ec_status system_rtc_set_value(struct host_cmd_handler_args *args)
 {
@@ -1198,9 +1282,8 @@ static enum ec_status system_rtc_set_value(struct host_cmd_handler_args *args)
 	system_set_rtc(p->time);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
-		system_rtc_set_value,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE, system_rtc_set_value,
+		     EC_VER_MASK(0));
 
 static enum ec_status system_rtc_set_alarm(struct host_cmd_handler_args *args)
 {
@@ -1209,9 +1292,8 @@ static enum ec_status system_rtc_set_alarm(struct host_cmd_handler_args *args)
 	system_set_rtc_alarm(p->time, 0);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM,
-		system_rtc_set_alarm,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM, system_rtc_set_alarm,
+		     EC_VER_MASK(0));
 
 static enum ec_status system_rtc_get_alarm(struct host_cmd_handler_args *args)
 {
@@ -1222,9 +1304,8 @@ static enum ec_status system_rtc_get_alarm(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM,
-		system_rtc_get_alarm,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM, system_rtc_get_alarm,
+		     EC_VER_MASK(0));
 
 #endif /* CONFIG_HOSTCMD_RTC */
 #ifdef CONFIG_EXTERNAL_STORAGE
@@ -1241,28 +1322,28 @@ void system_jump_to_booter(void)
 	 */
 	switch (system_get_shrspi_image_copy()) {
 	case EC_IMAGE_RW:
-		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_STORAGE_OFF;
+		flash_offset =
+			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
 		flash_used = CONFIG_RW_SIZE;
 		break;
 #ifdef CONFIG_RW_B
 	case EC_IMAGE_RW_B:
 		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_B_STORAGE_OFF;
+			       CONFIG_RW_B_STORAGE_OFF;
 		flash_used = CONFIG_RW_SIZE;
 		break;
 #endif
 	case EC_IMAGE_RO:
 	default: /* Jump to RO by default */
-		flash_offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
-				CONFIG_RO_STORAGE_OFF;
+		flash_offset =
+			CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
 		flash_used = CONFIG_RO_SIZE;
 		break;
 	}
 
 	/* Make sure the reset vector is inside the destination image */
-	addr_entry = *(uintptr_t *)(flash_offset +
-				    CONFIG_MAPPED_STORAGE_BASE + 4);
+	addr_entry =
+		*(uintptr_t *)(flash_offset + CONFIG_MAPPED_STORAGE_BASE + 4);
 
 	/*
 	 * Speed up FW download time by increasing clock freq of EC. It will
@@ -1270,33 +1351,32 @@ void system_jump_to_booter(void)
 	 */
 	clock_turbo();
 
-/*
- * npcx9 Rev.1 has the problem for download_from_flash API.
- * Workwaroud it by executing the system_download_from_flash function
- * in the suspend RAM like npcx5.
- * TODO: Removing npcx9 when Rev.2 is available.
- */
 	/* Bypass for GMDA issue of ROM api utilities */
-#if defined(CHIP_FAMILY_NPCX5) || defined(CONFIG_WORKAROUND_FLASH_DOWNLOAD_API)
-	system_download_from_flash(
-		flash_offset,      /* The offset of the data in spi flash */
-		CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of downloaded data */
-		flash_used,        /* Number of bytes to download      */
-		addr_entry         /* jump to this address after download */
+#if defined(CHIP_FAMILY_NPCX5)
+	system_download_from_flash(flash_offset, /* The offset of the data in
+						    spi flash */
+				   CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of
+								  downloaded
+								  data */
+				   flash_used, /* Number of bytes to download */
+				   addr_entry /* jump to this address after
+						 download */
 	);
 #else
-	download_from_flash(
-		flash_offset,      /* The offset of the data in spi flash */
-		CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of downloaded data */
-		flash_used,        /* Number of bytes to download      */
-		SIGN_NO_CHECK,     /* Need CRC check or not               */
-		addr_entry,        /* jump to this address after download */
-		&status            /* Status fo download */
+	download_from_flash(flash_offset, /* The offset of the data in spi flash
+					   */
+			    CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of
+							   downloaded data */
+			    flash_used, /* Number of bytes to download      */
+			    SIGN_NO_CHECK, /* Need CRC check or not */
+			    addr_entry, /* jump to this address after download
+					 */
+			    &status /* Status fo download */
 	);
 #endif
 }
 
-uint32_t system_get_lfw_address()
+uint32_t system_get_lfw_address(void)
 {
 	/*
 	 * In A3 version, we don't use little FW anymore
@@ -1327,7 +1407,8 @@ void system_set_image_copy(enum ec_image copy)
 #endif
 	default:
 		CPRINTS("Invalid copy (%d) is requested as a jump destination. "
-			"Change it to %d.", copy, EC_IMAGE_RO);
+			"Change it to %d.",
+			copy, EC_IMAGE_RO);
 		/* Fall through to EC_IMAGE_RO */
 	case EC_IMAGE_RO:
 		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);

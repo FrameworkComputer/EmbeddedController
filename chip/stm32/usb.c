@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,7 +21,7 @@
 #include "usb_hw.h"
 
 /* Console output macro */
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 #ifdef CONFIG_USB_BOS
 /* v2.10 (vs 2.00) BOS Descriptor provided */
@@ -55,7 +55,7 @@ static const struct usb_device_descriptor dev_desc = {
 	.bDeviceSubClass = 0x00,
 	.bDeviceProtocol = 0x00,
 	.bMaxPacketSize0 = USB_MAX_PACKET_SIZE,
-	.idVendor = USB_VID_GOOGLE,
+	.idVendor = CONFIG_USB_VID,
 	.idProduct = CONFIG_USB_PID,
 	.bcdDevice = CONFIG_USB_BCD_DEV,
 	.iManufacturer = USB_STR_VENDOR,
@@ -73,11 +73,11 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bConfigurationValue = 1,
 	.iConfiguration = USB_STR_VERSION,
 	.bmAttributes = 0x80 /* Reserved bit */
-#ifdef CONFIG_USB_SELF_POWERED  /* bus or self powered */
-		      | 0x40
+#ifdef CONFIG_USB_SELF_POWERED /* bus or self powered */
+			| 0x40
 #endif
 #ifdef CONFIG_USB_REMOTE_WAKEUP
-		      | 0x20
+			| 0x20
 #endif
 	,
 	.bMaxPower = (CONFIG_USB_MAXPOWER_MA / 2),
@@ -85,9 +85,39 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 
 const uint8_t usb_string_desc[] = {
 	4, /* Descriptor size */
-	USB_DT_STRING,
-	0x09, 0x04 /* LangID = 0x0409: U.S. English */
+	USB_DT_STRING, 0x09, 0x04 /* LangID = 0x0409: U.S. English */
 };
+
+#ifdef CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+/*
+ * String descriptor for Windows Compatible ID OS Descriptor. This string
+ * descriptor is used by Windows OS to know to request a Windows Compatible ID
+ * OS Descriptor so that Windows will load the proper WINUSB driver.
+ */
+const void *const usb_ms_os_string_descriptor = { USB_MS_STRING_DESC(
+	"MSFT100") };
+
+/*
+ * Extended Compat ID OS Feature descriptor. This descriptor is used by Windows
+ * OS to know which type of driver is required so the USB-EP device gets
+ * registered properly. This type of descriptor may contain more than one
+ * function interface, but this instantiation only uses one function interface
+ * to communicate the WINUSB compatible ID.
+ */
+const struct usb_ms_ext_compat_id_desc winusb_desc = {
+	.dwLength = sizeof(struct usb_ms_ext_compat_id_desc),
+	.bcdVersion = 0x100, /* Windows Compat ID Desc v1.0 */
+	.wIndex = USB_MS_EXT_COMPATIBLE_ID_INDEX,
+	.bCount = USB_MS_COMPAT_ID_FUNCTION,
+	.function = {
+		[0] = {
+			.bFirstInterfaceNumber = 0,
+			.reserved_1 = 1,
+			.compatible_id = {USB_MS_COMPAT_ID}, /* WINUSB */
+		},
+	},
+};
+#endif
 
 /* Endpoint table in USB controller RAM */
 struct stm32_endpoint btable_ep[USB_EP_COUNT] __aligned(8) __usb_btable;
@@ -95,7 +125,7 @@ struct stm32_endpoint btable_ep[USB_EP_COUNT] __aligned(8) __usb_btable;
 static usb_uint ep0_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 static usb_uint ep0_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 
-#define EP0_BUF_TX_SRAM_ADDR ((void *) usb_sram_addr(ep0_buf_tx))
+#define EP0_BUF_TX_SRAM_ADDR ((void *)usb_sram_addr(ep0_buf_tx))
 
 static int set_addr;
 /* remaining size of descriptor data to transfer */
@@ -112,10 +142,10 @@ static int remote_wakeup_enabled;
 void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet)
 {
 	packet->bmRequestType = buffer[0] & 0xff;
-	packet->bRequest      = buffer[0] >> 8;
-	packet->wValue        = buffer[1];
-	packet->wIndex        = buffer[2];
-	packet->wLength       = buffer[3];
+	packet->bRequest = buffer[0] >> 8;
+	packet->wValue = buffer[1];
+	packet->wIndex = buffer[2];
+	packet->wLength = buffer[3];
 }
 
 struct usb_descriptor_patch {
@@ -125,8 +155,8 @@ struct usb_descriptor_patch {
 
 static struct usb_descriptor_patch desc_patches[USB_DESC_PATCH_COUNT];
 
-void set_descriptor_patch(enum usb_desc_patch_type type,
-			  const void *address, uint16_t data)
+void set_descriptor_patch(enum usb_desc_patch_type type, const void *address,
+			  uint16_t data)
 {
 	desc_patches[type].address = address;
 	desc_patches[type].data = data;
@@ -146,7 +176,8 @@ void *memcpy_to_usbram_ep0_patch(const void *src, size_t n)
 			continue;
 
 		memcpy_to_usbram((void *)(usb_sram_addr(ep0_buf_tx) + offset),
-			&desc_patches[i].data, sizeof(desc_patches[i].data));
+				 &desc_patches[i].data,
+				 sizeof(desc_patches[i].data));
 	}
 
 	return ret;
@@ -200,17 +231,30 @@ static void ep0_rx(void)
 	}
 	/* vendor specific request */
 	if ((req & USB_TYPE_MASK) == USB_TYPE_VENDOR) {
-#ifdef CONFIG_WEBUSB_URL
+#if defined(CONFIG_WEBUSB_URL) || \
+	defined(CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR)
 		uint8_t b_req = req >> 8; /* bRequest in the transfer */
-		uint16_t idx = ep0_buf_rx[2]; /* wIndex in the transfer */
+		uint16_t w_index = ep0_buf_rx[2]; /* wIndex in the transfer */
 
-		if (b_req == 0x01 && idx == WEBUSB_REQ_GET_URL) {
+#ifdef CONFIG_WEBUSB_URL
+		if (b_req == 0x01 && w_index == WEBUSB_REQ_GET_URL) {
 			int len = *(uint8_t *)webusb_url;
 
 			ep0_send_descriptor(webusb_url, len, 0);
 			return;
 		}
-#endif
+#endif /* CONFIG_WEBUSB_URL */
+
+#ifdef CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+		if (b_req == USB_MS_STRING_DESC_VENDOR_CODE &&
+		    w_index == USB_MS_EXT_COMPATIBLE_ID_INDEX) {
+			ep0_send_descriptor((uint8_t *)&winusb_desc,
+					    winusb_desc.dwLength, 0);
+			return;
+		}
+#endif /* CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR */
+
+#endif /* CONFIG_WEBUSB_URL || CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR */
 		goto unknown_req;
 	}
 
@@ -237,6 +281,19 @@ static void ep0_rx(void)
 			break;
 #endif
 		case USB_DT_STRING: /* Setup : Get string descriptor */
+
+#ifdef CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+			/*
+			 * String descriptor request at index == 0xEE is used by
+			 * Windows OS to know how to retrieve an Extended Compat
+			 * ID OS Feature descriptor.
+			 */
+			if (idx == USB_GET_MS_DESCRIPTOR) {
+				desc = (uint8_t *)usb_ms_os_string_descriptor;
+				len = desc[0];
+				break;
+			}
+#endif
 			if (idx >= USB_STR_COUNT)
 				/* The string does not exist : STALL */
 				goto unknown_req;
@@ -254,8 +311,9 @@ static void ep0_rx(void)
 		default: /* unhandled descriptor */
 			goto unknown_req;
 		}
-		ep0_send_descriptor(desc, len, type == USB_DT_CONFIGURATION ?
-						USB_DESC_SIZE : 0);
+		ep0_send_descriptor(
+			desc, len,
+			type == USB_DT_CONFIGURATION ? USB_DESC_SIZE : 0);
 	} else if (req == (USB_DIR_IN | (USB_REQ_GET_STATUS << 8))) {
 		uint16_t data = 0;
 		/* Get status */
@@ -269,14 +327,14 @@ static void ep0_rx(void)
 		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, (void *)&data, 2);
 		btable_ep[0].tx_count = 2;
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
-			  EP_STATUS_OUT /*null OUT transaction */);
+				EP_STATUS_OUT /*null OUT transaction */);
 	} else if ((req & 0xff) == USB_DIR_OUT) {
 		switch (req >> 8) {
 		case USB_REQ_SET_FEATURE:
 		case USB_REQ_CLEAR_FEATURE:
 #ifdef CONFIG_USB_REMOTE_WAKEUP
 			if (ep0_buf_rx[1] ==
-					USB_REQ_FEATURE_DEVICE_REMOTE_WAKEUP) {
+			    USB_REQ_FEATURE_DEVICE_REMOTE_WAKEUP) {
 				remote_wakeup_enabled =
 					((req >> 8) == USB_REQ_SET_FEATURE);
 				btable_ep[0].tx_count = 0;
@@ -351,13 +409,12 @@ static void ep0_event(enum usb_ep_event evt)
 	if (evt != USB_EVENT_RESET)
 		return;
 
-	STM32_USB_EP(0) = BIT(9) /* control EP */ |
-			  (2 << 4) /* TX NAK */ |
+	STM32_USB_EP(0) = BIT(9) /* control EP */ | (2 << 4) /* TX NAK */ |
 			  (3 << 12) /* RX VALID */;
 
 	btable_ep[0].tx_addr = usb_sram_addr(ep0_buf_tx);
 	btable_ep[0].rx_addr = usb_sram_addr(ep0_buf_rx);
-	btable_ep[0].rx_count = 0x8000 | ((USB_MAX_PACKET_SIZE/32-1) << 10);
+	btable_ep[0].rx_count = 0x8000 | ((USB_MAX_PACKET_SIZE / 32 - 1) << 10);
 	btable_ep[0].tx_count = 0;
 }
 USB_DECLARE_EP(0, ep0_tx, ep0_rx, ep0_event);
@@ -417,8 +474,8 @@ static volatile int sof_received;
 
 static void usb_resume_deferred(void)
 {
-	uint32_t state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
-		>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
+	uint32_t state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK) >>
+			 STM32_USB_FNR_RXDP_RXDM_SHIFT;
 
 	CPRINTF("RSMd %d %04x %d\n", state, STM32_USB_CNTR, sof_received);
 	if (sof_received == 0 && (state == 2 || state == 3))
@@ -440,8 +497,8 @@ static void usb_resume(void)
 	/* USB is in use again */
 	disable_sleep(SLEEP_MASK_USB_DEVICE);
 
-	state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
-		>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
+	state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK) >>
+		STM32_USB_FNR_RXDP_RXDM_SHIFT;
 
 	CPRINTF("RSM %d %04x\n", state, STM32_USB_CNTR);
 
@@ -478,8 +535,7 @@ static volatile int usb_wake_done = 1;
  */
 static volatile int esof_count;
 
-__attribute__((weak))
-void board_usb_wake(void)
+__attribute__((weak)) void board_usb_wake(void)
 {
 	/* Side-band USB wake, do nothing by default. */
 }
@@ -498,8 +554,13 @@ static void usb_wake_deferred(void)
 		 * interface.
 		 */
 		CPRINTF("USB stuck\n");
+#if defined(STM32_RCC_APB1RSTR2_USBFSRST)
+		STM32_RCC_APB1RSTR2 |= STM32_RCC_APB1RSTR2_USBFSRST;
+		STM32_RCC_APB1RSTR2 &= STM32_RCC_APB1RSTR2_USBFSRST;
+#else
 		STM32_RCC_APB1RSTR |= STM32_RCC_PB1_USB;
 		STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_USB;
+#endif
 		usb_init();
 	}
 }
@@ -517,7 +578,7 @@ void usb_wake(void)
 	}
 
 	/* Only allow one caller at a time. */
-	if (!deprecated_atomic_read_clear(&usb_wake_done))
+	if (!atomic_clear((atomic_t *)&usb_wake_done))
 		return;
 
 	CPRINTF("WAKE\n");
@@ -537,8 +598,8 @@ void usb_wake(void)
 
 	/* STM32_USB_CNTR can also be updated from interrupt context. */
 	interrupt_disable();
-	STM32_USB_CNTR |= STM32_USB_CNTR_RESUME |
-		STM32_USB_CNTR_ESOFM | STM32_USB_CNTR_SOFM;
+	STM32_USB_CNTR |= STM32_USB_CNTR_RESUME | STM32_USB_CNTR_ESOFM |
+			  STM32_USB_CNTR_SOFM;
 	interrupt_enable();
 
 	/* Try side-band wake as well. */
@@ -593,8 +654,8 @@ static void usb_interrupt_handle_wake(uint16_t status)
 		STM32_USB_CNTR &= ~STM32_USB_CNTR_RESUME;
 
 	/* Then count down until state is resumed. */
-	state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
-				>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
+	state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK) >>
+		STM32_USB_FNR_RXDP_RXDM_SHIFT;
 
 	/*
 	 * state 2, or receiving an SOF, means resume
@@ -609,13 +670,13 @@ static void usb_interrupt_handle_wake(uint16_t status)
 		STM32_USB_CNTR &= ~STM32_USB_CNTR_ESOFM;
 		usb_wake_done = 1;
 		if (!good) {
-			CPRINTF("wake error: cnt=%d state=%d\n",
-				esof_count, state);
+			CPRINTF("wake error: cnt=%d state=%d\n", esof_count,
+				state);
 			usb_suspend();
 			return;
 		}
 
-		CPRINTF("RSMOK%d %d\n",	-esof_count, state);
+		CPRINTF("RSMOK%d %d\n", -esof_count, state);
 
 		for (ep = 1; ep < USB_EP_COUNT; ep++)
 			usb_ep_event[ep](USB_EVENT_DEVICE_RESUME);
@@ -623,7 +684,7 @@ static void usb_interrupt_handle_wake(uint16_t status)
 }
 #endif /* CONFIG_USB_SUSPEND && CONFIG_USB_REMOTE_WAKEUP */
 
-void usb_interrupt(void)
+static void usb_interrupt(void)
 {
 	uint16_t status = STM32_USB_ISTR;
 
@@ -642,7 +703,7 @@ void usb_interrupt(void)
 
 #ifdef CONFIG_USB_REMOTE_WAKEUP
 	if (status & (STM32_USB_ISTR_ESOF | STM32_USB_ISTR_SOF) &&
-			!usb_wake_done)
+	    !usb_wake_done)
 		usb_interrupt_handle_wake(status);
 #endif
 
@@ -672,10 +733,7 @@ DECLARE_IRQ(STM32_IRQ_USB_LP, usb_interrupt, 1);
 
 void usb_init(void)
 {
-	/* Enable USB device clock. */
-	STM32_RCC_APB1ENR |= STM32_RCC_PB1_USB;
-
-	/* we need a proper 48MHz clock */
+	/* Enable USB device clock, possibly increasing system clock to 48MHz */
 	clock_enable_module(MODULE_USB, 1);
 
 	/* configure the pinmux */
@@ -701,12 +759,10 @@ void usb_init(void)
 	/* Enable interrupt handlers */
 	task_enable_irq(STM32_IRQ_USB_LP);
 	/* set interrupts mask : reset/correct transfer/errors */
-	STM32_USB_CNTR = STM32_USB_CNTR_CTRM |
-			 STM32_USB_CNTR_PMAOVRM |
+	STM32_USB_CNTR = STM32_USB_CNTR_CTRM | STM32_USB_CNTR_PMAOVRM |
 			 STM32_USB_CNTR_ERRM |
 #ifdef CONFIG_USB_SUSPEND
-			 STM32_USB_CNTR_WKUPM |
-			 STM32_USB_CNTR_SUSPM |
+			 STM32_USB_CNTR_WKUPM | STM32_USB_CNTR_SUSPM |
 #endif
 			 STM32_USB_CNTR_RESETM;
 
@@ -738,26 +794,23 @@ void usb_release(void)
 	/* unset pinmux */
 	gpio_config_module(MODULE_USB, 0);
 
-	/* disable 48MHz clock */
+	/* disable USB device clock, possibly slowing down system clock */
 	clock_enable_module(MODULE_USB, 0);
-
-	/* disable USB device clock */
-	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
 }
 /* ensure the host disconnects and reconnects over a sysjump */
 DECLARE_HOOK(HOOK_SYSJUMP, usb_release, HOOK_PRIO_DEFAULT);
 
 int usb_is_enabled(void)
 {
-	return (STM32_RCC_APB1ENR & STM32_RCC_PB1_USB) ? 1 : 0;
+	return clock_is_module_enabled(MODULE_USB);
 }
 
 void *memcpy_to_usbram(void *dest, const void *src, size_t n)
 {
-	int       unaligned =                 (((uintptr_t) dest) & 1);
-	usb_uint *d         = &__usb_ram_start[((uintptr_t) dest) / 2];
-	uint8_t  *s         = (uint8_t *) src;
-	int       i;
+	int unaligned = (((uintptr_t)dest) & 1);
+	usb_uint *d = &__usb_ram_start[((uintptr_t)dest) / 2];
+	uint8_t *s = (uint8_t *)src;
+	int i;
 
 	/*
 	 * Handle unaligned leading byte via read/modify/write.
@@ -784,10 +837,10 @@ void *memcpy_to_usbram(void *dest, const void *src, size_t n)
 
 void *memcpy_from_usbram(void *dest, const void *src, size_t n)
 {
-	int             unaligned =                 (((uintptr_t) src) & 1);
-	usb_uint const *s         = &__usb_ram_start[((uintptr_t) src) / 2];
-	uint8_t        *d         = (uint8_t *) dest;
-	int             i;
+	int unaligned = (((uintptr_t)src) & 1);
+	usb_uint const *s = &__usb_ram_start[((uintptr_t)src) / 2];
+	uint8_t *d = (uint8_t *)dest;
+	int i;
 
 	if (unaligned && n) {
 		*d = *s >> 8;
@@ -868,7 +921,7 @@ static int usb_save_serial(const char *serialno)
 	return rv;
 }
 
-static int command_serialno(int argc, char **argv)
+static int command_serialno(int argc, const char **argv)
 {
 	struct usb_string_desc *sd = usb_serialno_desc;
 	char buf[CONFIG_SERIALNO_LEN];
@@ -876,12 +929,10 @@ static int command_serialno(int argc, char **argv)
 	int i;
 
 	if (argc != 1) {
-		if ((strcasecmp(argv[1], "set") == 0) &&
-		    (argc == 3)) {
+		if ((strcasecmp(argv[1], "set") == 0) && (argc == 3)) {
 			ccprintf("Saving serial number\n");
 			rv = usb_save_serial(argv[2]);
-		} else if ((strcasecmp(argv[1], "load") == 0) &&
-			   (argc == 2)) {
+		} else if ((strcasecmp(argv[1], "load") == 0) && (argc == 2)) {
 			ccprintf("Loading serial number\n");
 			rv = usb_load_serial();
 		} else
@@ -894,11 +945,10 @@ static int command_serialno(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(serialno, command_serialno,
-	"load/set [value]",
-	"Read and write USB serial number");
+DECLARE_CONSOLE_COMMAND(serialno, command_serialno, "load/set [value]",
+			"Read and write USB serial number");
 
-#endif  /* CONFIG_USB_SERIALNO */
+#endif /* CONFIG_USB_SERIALNO */
 
 #ifdef CONFIG_MAC_ADDR
 
@@ -925,18 +975,16 @@ static int usb_save_mac_addr(const char *mac_addr)
 	}
 }
 
-static int command_macaddr(int argc, char **argv)
+static int command_macaddr(int argc, const char **argv)
 {
-	const char* buf;
+	const char *buf;
 	int rv = EC_SUCCESS;
 
 	if (argc != 1) {
-		if ((strcasecmp(argv[1], "set") == 0) &&
-		    (argc == 3)) {
+		if ((strcasecmp(argv[1], "set") == 0) && (argc == 3)) {
 			ccprintf("Saving MAC address\n");
 			rv = usb_save_mac_addr(argv[2]);
-		} else if ((strcasecmp(argv[1], "load") == 0) &&
-			   (argc == 2)) {
+		} else if ((strcasecmp(argv[1], "load") == 0) && (argc == 2)) {
 			ccprintf("Loading MAC address\n");
 		} else {
 			return EC_ERROR_INVAL;
@@ -951,8 +999,7 @@ static int command_macaddr(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(macaddr, command_macaddr,
-	"load/set [value]",
-	"Read and write MAC address");
+DECLARE_CONSOLE_COMMAND(macaddr, command_macaddr, "load/set [value]",
+			"Read and write MAC address");
 
-#endif  /* CONFIG_MAC_ADDR */
+#endif /* CONFIG_MAC_ADDR */

@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -31,8 +31,8 @@ static void ap_deferred(void)
 	 * in S0:   SLP_S3_L is 1 and SLP_S0_L is 1.
 	 * in S5/G3, the FP MCU should not be running.
 	 */
-	int running = gpio_get_level(GPIO_PCH_SLP_S3_L)
-			&& gpio_get_level(GPIO_PCH_SLP_S0_L);
+	int running = gpio_get_level(GPIO_PCH_SLP_S3_L) &&
+		      gpio_get_level(GPIO_PCH_SLP_S0_L);
 
 	if (running) { /* S0 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
@@ -58,7 +58,12 @@ static void board_init(void)
 	/* Enable interrupt on PCH power signals */
 	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
 	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
-	/* enable the SPI slave interface if the PCH is up */
-	hook_call_deferred(&ap_deferred_data, 0);
+
+	/*
+	 * Enable the SPI peripheral interface if the PCH is up.
+	 * Do not use hook_call_deferred(), because ap_deferred() will be
+	 * called after tasks with priority higher than HOOK task (very late).
+	 */
+	ap_deferred();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

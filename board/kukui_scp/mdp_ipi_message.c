@@ -1,16 +1,15 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include "console.h"
+#include "ipi_chip.h"
+#include "mdp_ipi_message.h"
 #include "queue_policies.h"
+#include "registers.h"
 #include "task.h"
 #include "util.h"
-
-#include "chip/mt_scp/ipi_chip.h"
-#include "chip/mt_scp/registers.h"
-#include "mdp_ipi_message.h"
 
 #define CPRINTF(format, args...) cprintf(CC_IPI, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
@@ -19,19 +18,25 @@
 static struct consumer const event_mdp_consumer;
 static void event_mdp_written(struct consumer const *consumer, size_t count);
 
-static struct queue const event_mdp_queue = QUEUE_DIRECT(4,
-	struct mdp_msg_service, null_producer, event_mdp_consumer);
+static struct queue const event_mdp_queue = QUEUE_DIRECT(
+	4, struct mdp_msg_service, null_producer, event_mdp_consumer);
 static struct consumer const event_mdp_consumer = {
 	.queue = &event_mdp_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_mdp_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
-void mdp_common_init(void) {}
-void mdp_ipi_task_handler(void *pvParameters) {}
+#ifndef HAVE_PRIVATE_MT8186
+void mdp_common_init(void)
+{
+}
+void mdp_ipi_task_handler(void *pvParameters)
+{
+}
+#endif
 #endif
 
 static void event_mdp_written(struct consumer const *consumer, size_t count)

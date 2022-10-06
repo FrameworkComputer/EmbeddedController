@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"
 #include "intc.h"
@@ -23,11 +24,11 @@
 
 /* Console output macros. */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 #ifdef CONFIG_LOW_POWER_IDLE
 #define SLEEP_SET_HTIMER_DELAY_USEC 250
-#define SLEEP_FTIMER_SKIP_USEC      (HOOK_TICK_INTERVAL * 2)
+#define SLEEP_FTIMER_SKIP_USEC (HOOK_TICK_INTERVAL * 2)
 
 static timestamp_t sleep_mode_t0;
 static timestamp_t sleep_mode_t1;
@@ -39,13 +40,13 @@ static uint32_t ec_sleep;
  * Fixed amount of time to keep the console in use flag true after boot in
  * order to give a permanent window in which the heavy sleep mode is not used.
  */
-#define CONSOLE_IN_USE_ON_BOOT_TIME (15*SECOND)
+#define CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
 static int console_in_use_timeout_sec = 5;
 static timestamp_t console_expire_time;
 
 /* clock source is 32.768KHz */
-#define TIMER_32P768K_CNT_TO_US(cnt) ((uint64_t)(cnt) * 1000000 / 32768)
-#define TIMER_CNT_8M_32P768K(cnt)    (((cnt) / (8000000 / 32768)) + 1)
+#define TIMER_32P768K_CNT_TO_US(cnt) ((uint64_t)(cnt)*1000000 / 32768)
+#define TIMER_CNT_8M_32P768K(cnt) (((cnt) / (8000000 / 32768)) + 1)
 #endif /*CONFIG_LOW_POWER_IDLE */
 
 static int freq;
@@ -65,10 +66,11 @@ static void clock_module_disable(void)
 	IT83XX_GCTRL_MCCR &= ~BIT(7);
 	clock_disable_peripheral((CGC_OFFSET_EGPC | CGC_OFFSET_CIR), 0, 0);
 	clock_disable_peripheral((CGC_OFFSET_SMBA | CGC_OFFSET_SMBB |
-		CGC_OFFSET_SMBC | CGC_OFFSET_SMBD | CGC_OFFSET_SMBE |
-		CGC_OFFSET_SMBF), 0, 0);
-	clock_disable_peripheral((CGC_OFFSET_SSPI | CGC_OFFSET_PECI |
-		CGC_OFFSET_USB), 0, 0);
+				  CGC_OFFSET_SMBC | CGC_OFFSET_SMBD |
+				  CGC_OFFSET_SMBE | CGC_OFFSET_SMBF),
+				 0, 0);
+	clock_disable_peripheral(
+		(CGC_OFFSET_SSPI | CGC_OFFSET_PECI | CGC_OFFSET_USB), 0, 0);
 }
 
 enum pll_freq_idx {
@@ -77,19 +79,11 @@ enum pll_freq_idx {
 	PLL_96_MHZ = 4,
 };
 
-static const uint8_t pll_to_idx[8] = {
-	0,
-	0,
-	PLL_24_MHZ,
-	0,
-	PLL_48_MHZ,
-	0,
-	0,
-	PLL_96_MHZ
-};
+static const uint8_t pll_to_idx[8] = { 0,	   0, PLL_24_MHZ, 0,
+				       PLL_48_MHZ, 0, 0,	  PLL_96_MHZ };
 
 struct clock_pll_t {
-	int     pll_freq;
+	int pll_freq;
 	uint8_t pll_setting;
 	uint8_t div_fnd;
 	uint8_t div_uart;
@@ -113,17 +107,17 @@ const struct clock_pll_t clock_pll_ctrl[] = {
 	 * SSPI:  48MHz(24MHz if PLL=24MHz)
 	 */
 	/* PLL:24MHz, MCU:24MHz, Fnd(e-flash):24MHz */
-	[PLL_24_MHZ] = {24000000, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0x2},
+	[PLL_24_MHZ] = { 24000000, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0x2 },
 #ifdef CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 	/* PLL:48MHz, MCU:48MHz, Fnd:48MHz */
-	[PLL_48_MHZ] = {48000000, 4, 0, 1, 0, 1, 0, 6, 1, 0, 0x5},
+	[PLL_48_MHZ] = { 48000000, 4, 0, 1, 0, 1, 0, 6, 1, 0, 0x5 },
 	/* PLL:96MHz, MCU:96MHz, Fnd:48MHz */
-	[PLL_96_MHZ] = {96000000, 7, 1, 3, 1, 3, 1, 6, 3, 1, 0xb},
+	[PLL_96_MHZ] = { 96000000, 7, 1, 3, 1, 3, 1, 6, 3, 1, 0xb },
 #else
 	/* PLL:48MHz, MCU:48MHz, Fnd:24MHz */
-	[PLL_48_MHZ] = {48000000, 4, 1, 1, 0, 1, 0, 2, 1, 0, 0x5},
+	[PLL_48_MHZ] = { 48000000, 4, 1, 1, 0, 1, 0, 2, 1, 0, 0x5 },
 	/* PLL:96MHz, MCU:96MHz, Fnd:32MHz */
-	[PLL_96_MHZ] = {96000000, 7, 2, 3, 1, 3, 1, 4, 3, 1, 0xb},
+	[PLL_96_MHZ] = { 96000000, 7, 2, 3, 1, 3, 1, 4, 3, 1, 0xb },
 #endif
 };
 
@@ -134,9 +128,15 @@ static uint8_t pll_setting;
 
 void __ram_code clock_ec_pll_ctrl(enum ec_pll_ctrl mode)
 {
+	volatile uint8_t _pll_ctrl __unused;
+
 	IT83XX_ECPM_PLLCTRL = mode;
-	/* for deep doze / sleep mode */
-	IT83XX_ECPM_PLLCTRL = mode;
+	/*
+	 * for deep doze / sleep mode
+	 * This load operation will ensure PLL setting is taken into
+	 * control register before wait for interrupt instruction.
+	 */
+	_pll_ctrl = IT83XX_ECPM_PLLCTRL;
 
 #ifdef IT83XX_CHIP_FLASH_NO_DEEP_POWER_DOWN
 	/*
@@ -189,18 +189,18 @@ void __ram_code clock_pll_changed(void)
 	clock_ec_pll_ctrl(EC_PLL_SLEEP);
 	if (IS_ENABLED(CHIP_CORE_NDS32)) {
 		/* Global interrupt enable */
-		asm volatile ("setgie.e");
+		asm volatile("setgie.e");
 		/* EC sleep */
 		asm("standby wake_grant");
 		/* Global interrupt disable */
-		asm volatile ("setgie.d");
+		asm volatile("setgie.d");
 	} else if (IS_ENABLED(CHIP_CORE_RISCV)) {
 		/* Global interrupt enable */
-		asm volatile ("csrsi mstatus, 0x8");
+		asm volatile("csrsi mstatus, 0x8");
 		/* EC sleep */
 		asm("wfi");
 		/* Global interrupt disable */
-		asm volatile ("csrci mstatus, 0x8");
+		asm volatile("csrci mstatus, 0x8");
 	}
 	/* New FND clock frequency */
 	IT83XX_ECPM_SCDCR0 = (pll_div_fnd << 4);
@@ -213,20 +213,20 @@ static void clock_set_pll(enum pll_freq_idx idx)
 {
 	int pll;
 
-	pll_div_fnd  = clock_pll_ctrl[idx].div_fnd;
-	pll_div_ec   = clock_pll_ctrl[idx].div_ec;
+	pll_div_fnd = clock_pll_ctrl[idx].div_fnd;
+	pll_div_ec = clock_pll_ctrl[idx].div_ec;
 	pll_div_jtag = clock_pll_ctrl[idx].div_jtag;
-	pll_setting  = clock_pll_ctrl[idx].pll_setting;
+	pll_setting = clock_pll_ctrl[idx].pll_setting;
 
 	/* Update PLL settings or not */
 	if (((IT83XX_ECPM_PLLFREQR & 0xf) != pll_setting) ||
-		((IT83XX_ECPM_SCDCR0 & 0xf0) != (pll_div_fnd << 4)) ||
-		((IT83XX_ECPM_SCDCR3 & 0xf) != pll_div_ec)) {
+	    ((IT83XX_ECPM_SCDCR0 & 0xf0) != (pll_div_fnd << 4)) ||
+	    ((IT83XX_ECPM_SCDCR3 & 0xf) != pll_div_ec)) {
 		/* Enable hw timer to wakeup EC from the sleep mode */
-		ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ,
-				1, 1, 5, 1, 0);
+		ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 1, 5,
+			     1, 0);
 		task_clear_pending_irq(et_ctrl_regs[LOW_POWER_EXT_TIMER].irq);
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 		/*
 		 * Workaround for (b:70537592):
 		 * We have to set chip select pin as input mode in order to
@@ -243,7 +243,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 #endif
 		/* Update PLL settings. */
 		clock_pll_changed();
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 #ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
 		/* Enable eSPI pad after changing PLL sequence. */
 		espi_enable_pad(1);
@@ -257,13 +257,13 @@ static void clock_set_pll(enum pll_freq_idx idx)
 	pll = pll_to_idx[IT83XX_ECPM_PLLFREQR & 0xf];
 	/* USB and UART */
 	IT83XX_ECPM_SCDCR1 = (clock_pll_ctrl[pll].div_usb << 4) |
-				clock_pll_ctrl[pll].div_uart;
+			     clock_pll_ctrl[pll].div_uart;
 	/* SSPI and SMB */
 	IT83XX_ECPM_SCDCR2 = (clock_pll_ctrl[pll].div_sspi << 4) |
-				clock_pll_ctrl[pll].div_smb;
+			     clock_pll_ctrl[pll].div_smb;
 	/* USBPD and PWM */
 	IT83XX_ECPM_SCDCR4 = (clock_pll_ctrl[pll].div_usbpd << 4) |
-				clock_pll_ctrl[pll].div_pwm;
+			     clock_pll_ctrl[pll].div_pwm;
 	/* Current PLL frequency  */
 	freq = clock_pll_ctrl[pll].pll_freq;
 }
@@ -277,8 +277,7 @@ void clock_init(void)
 		/* Interrupt Vector Table Base Address, in 64k Byte unit */
 		IT83XX_GCTRL_IVTBAR = (CONFIG_RW_MEM_OFF >> 16) & 0xFF;
 
-#if (PLL_CLOCK == 24000000)     || \
-	(PLL_CLOCK == 48000000) || \
+#if (PLL_CLOCK == 24000000) || (PLL_CLOCK == 48000000) || \
 	(PLL_CLOCK == 96000000)
 	/* Set PLL frequency */
 	clock_set_pll(PLL_CLOCK / 24000000);
@@ -295,7 +294,8 @@ void clock_init(void)
 	 */
 	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & 0x3F) + 0x40;
 
-#if defined(IT83XX_ESPI_RESET_MODULE_BY_FW) && defined(CONFIG_HOSTCMD_ESPI)
+#if defined(IT83XX_ESPI_RESET_MODULE_BY_FW) && \
+	defined(CONFIG_HOST_INTERFACE_ESPI)
 	/*
 	 * Because we don't support eSPI HW reset function (b/111480168) on DX
 	 * version, so we have to reset eSPI configurations during init to
@@ -337,8 +337,8 @@ int clock_get_freq(void)
  */
 void clock_enable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
 {
-	volatile uint8_t *reg = (volatile uint8_t *)
-			(IT83XX_ECPM_BASE + (offset >> 8));
+	volatile uint8_t *reg =
+		(volatile uint8_t *)(IT83XX_ECPM_BASE + (offset >> 8));
 	uint8_t reg_mask = offset & 0xff;
 
 	/*
@@ -360,8 +360,8 @@ void clock_enable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
  */
 void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
 {
-	volatile uint8_t *reg = (volatile uint8_t *)
-			(IT83XX_ECPM_BASE + (offset >> 8));
+	volatile uint8_t *reg =
+		(volatile uint8_t *)(IT83XX_ECPM_BASE + (offset >> 8));
 	uint8_t reg_mask = offset & 0xff;
 	uint8_t tmp_mask = 0;
 
@@ -380,7 +380,7 @@ void clock_refresh_console_in_use(void)
 }
 
 static void clock_event_timer_clock_change(enum ext_timer_clock_source clock,
-					uint32_t count)
+					   uint32_t count)
 {
 	IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) &= ~BIT(0);
 	IT83XX_ETWD_ETXPSR(EVENT_EXT_TIMER) = clock;
@@ -412,19 +412,19 @@ static int clock_allow_low_power_idle(void)
 
 	/* If timer interrupt status is set, don't go to sleep mode. */
 	if (*et_ctrl_regs[EVENT_EXT_TIMER].isr &
-		et_ctrl_regs[EVENT_EXT_TIMER].mask)
+	    et_ctrl_regs[EVENT_EXT_TIMER].mask)
 		return 0;
 
-	/*
-	 * If timer is less than 250us to expire, then we don't go to sleep
-	 * mode.
-	 */
+		/*
+		 * If timer is less than 250us to expire, then we don't go to
+		 * sleep mode.
+		 */
 #ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 	if (EVENT_TIMER_COUNT_TO_US(ext_observation_reg_read(EVENT_EXT_TIMER)) <
 #else
 	if (EVENT_TIMER_COUNT_TO_US(IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER)) <
 #endif
-		SLEEP_SET_HTIMER_DELAY_USEC)
+	    SLEEP_SET_HTIMER_DELAY_USEC)
 		return 0;
 
 	/*
@@ -434,7 +434,7 @@ static int clock_allow_low_power_idle(void)
 	 */
 	sleep_mode_t0 = get_time();
 	if ((sleep_mode_t0.le.lo > (0xffffffff - SLEEP_FTIMER_SKIP_USEC)) ||
-		(sleep_mode_t0.le.lo < SLEEP_FTIMER_SKIP_USEC))
+	    (sleep_mode_t0.le.lo < SLEEP_FTIMER_SKIP_USEC))
 		return 0;
 
 	/* If we are waked up by console, then keep awake at least 5s. */
@@ -449,7 +449,7 @@ int clock_ec_wake_from_sleep(void)
 	return ec_sleep;
 }
 
-void clock_cpu_standby(void)
+void __ram_code clock_cpu_standby(void)
 {
 	/* standby instruction */
 	if (IS_ENABLED(CHIP_CORE_NDS32)) {
@@ -533,7 +533,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	/* EC sleep */
 	ec_sleep = 1;
 #if defined(IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED) && \
-defined(CONFIG_HOSTCMD_ESPI)
+	defined(CONFIG_HOST_INTERFACE_ESPI)
 	/* Disable eSPI pad. */
 	espi_enable_pad(0);
 #endif
@@ -546,14 +546,20 @@ defined(CONFIG_HOSTCMD_ESPI)
 	__builtin_unreachable();
 }
 
+/* use data type int here not bool to get better instruction number. */
+static volatile int wait_interrupt_fired;
 void clock_sleep_mode_wakeup_isr(void)
 {
 	uint32_t st_us, c;
 
+	/* Clear flag on each interrupt. */
+	if (IS_ENABLED(CHIP_CORE_RISCV))
+		wait_interrupt_fired = 0;
+
 	/* trigger a reboot if wake up EC from sleep mode (system hibernate) */
 	if (clock_ec_wake_from_sleep()) {
 #if defined(IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED) && \
-defined(CONFIG_HOSTCMD_ESPI)
+	defined(CONFIG_HOST_INTERFACE_ESPI)
 		/*
 		 * Enable eSPI pad.
 		 * We will not need to enable eSPI pad here if Dx is able to
@@ -571,9 +577,9 @@ defined(CONFIG_HOSTCMD_ESPI)
 
 	if (IT83XX_ECPM_PLLCTRL == EC_PLL_DEEP_DOZE) {
 		clock_ec_pll_ctrl(EC_PLL_DOZE);
-
 		/* update free running timer */
-		c = 0xffffffff - IT83XX_ETWD_ETXCNTOR(LOW_POWER_EXT_TIMER);
+		c = LOW_POWER_TIMER_MASK -
+		    IT83XX_ETWD_ETXCNTOR(LOW_POWER_EXT_TIMER);
 		st_us = TIMER_32P768K_CNT_TO_US(c);
 		sleep_mode_t1.val = sleep_mode_t0.val + st_us;
 		__hw_clock_source_set(sleep_mode_t1.le.lo);
@@ -595,15 +601,12 @@ defined(CONFIG_HOSTCMD_ESPI)
 	}
 }
 
-/**
- * Low power idle task. Executed when no tasks are ready to be scheduled.
- */
-void __idle(void)
+void __keep __idle_init(void)
 {
 	console_expire_time.val = get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
 	/* init hw timer and clock source is 32.768 KHz */
-	ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 0,
-		0xffffffff, 1, 1);
+	ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 0, 0xffffffff,
+		     1, 1);
 
 	/*
 	 * Print when the idle task starts.  This is the lowest priority task,
@@ -611,10 +614,28 @@ void __idle(void)
 	 * their task inits and have gone to sleep.
 	 */
 	CPRINTS("low power idle task started");
+}
+
+/**
+ * Low power idle task. Executed when no tasks are ready to be scheduled.
+ */
+void __ram_code __idle(void)
+{
+	/*
+	 * There is not enough space from ram code section to cache entire idle
+	 * function, hence pull initialization function out of the section.
+	 */
+	__idle_init();
 
 	while (1) {
 		/* Disable interrupts */
 		interrupt_disable();
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+		if (i2c_idle_not_allowed()) {
+			interrupt_enable();
+			continue;
+		}
+#endif
 		/* Check if the EC can enter deep doze mode or not */
 		if (DEEP_SLEEP_ALLOWED && clock_allow_low_power_idle()) {
 			/* reset low power mode hw timer */
@@ -636,8 +657,21 @@ void __idle(void)
 			clock_ec_pll_ctrl(EC_PLL_DOZE);
 			idle_doze_cnt++;
 		}
+		/* Set flag before entering low power mode. */
+		if (IS_ENABLED(CHIP_CORE_RISCV))
+			wait_interrupt_fired = 1;
 		clock_cpu_standby();
 		interrupt_enable();
+		/*
+		 * Sometimes wfi instruction may fail due to CPU's MTIP@mip
+		 * register is non-zero.
+		 * If the wait_interrupt_fired flag is true at this point,
+		 * it means that EC waked-up by the above issue not an
+		 * interrupt. Hence we loop running wfi instruction here until
+		 * wfi success.
+		 */
+		while (IS_ENABLED(CHIP_CORE_RISCV) && wait_interrupt_fired)
+			clock_cpu_standby();
 	}
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
@@ -647,7 +681,7 @@ void __idle(void)
 /**
  * Print low power idle statistics
  */
-static int command_idle_stats(int argc, char **argv)
+static int command_idle_stats(int argc, const char **argv)
 {
 	timestamp_t ts = get_time();
 
@@ -655,12 +689,11 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 
 	ccprintf("Total Time spent in sleep(sec):      %.6lld(s)\n",
-						total_idle_sleep_time_us);
+		 total_idle_sleep_time_us);
 	ccprintf("Total time on:                       %.6llds\n\n", ts.val);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
-			"",
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print last idle stats");
 
 #endif /* CONFIG_CMD_IDLE_STATS */

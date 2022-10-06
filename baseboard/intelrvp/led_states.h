@@ -1,4 +1,4 @@
-/* Copyright 2019 The Chromium OS Authors. All rights reserved.
+/* Copyright 2019 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -10,19 +10,15 @@
 
 #include "ec_commands.h"
 
-#define LED_INDEFINITE	UINT8_MAX
-#define LED_ONE_SEC	(1000 / HOOK_TICK_INTERVAL_MS)
-#define LED_OFF         EC_LED_COLOR_COUNT
+#define LED_INDEFINITE UINT8_MAX
+#define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
+#define LED_OFF EC_LED_COLOR_COUNT
 
 /*
  * All LED states should have one phase defined,
  * and an additional phase can be defined for blinking
  */
-enum led_phase {
-	LED_PHASE_0,
-	LED_PHASE_1,
-	LED_NUM_PHASES
-};
+enum led_phase { LED_PHASE_0, LED_PHASE_1, LED_NUM_PHASES };
 
 /*
  * STATE_CHARGING_LVL_1 is when 0 <= charge_percentage < led_charge_level_1
@@ -51,10 +47,8 @@ struct led_descriptor {
 	uint8_t time;
 };
 
-
 /* Charging LED state table - defined in board's led.c */
-extern struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES];
+extern struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES];
 
 /* Charging LED state level 1 - defined in board's led.c */
 extern const int led_charge_lvl_1;
@@ -71,8 +65,8 @@ enum pwr_led_states {
 };
 
 /* Power LED state table - defined in board's led.c */
-extern const struct led_descriptor
-		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES];
+extern const struct led_descriptor led_pwr_state_table[PWR_LED_NUM_STATES]
+						      [LED_NUM_PHASES];
 
 /**
  * Set battery LED color - defined in board's led.c

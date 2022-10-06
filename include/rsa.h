@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -45,23 +45,21 @@
 /* RSA public key definition, VBoot2 packing */
 struct rsa_public_key {
 	uint32_t size;
-	uint32_t n0inv;           /* -1 / n[0] mod 2^32 */
-	uint32_t n[RSANUMWORDS];  /* modulus as little endian array */
+	uint32_t n0inv; /* -1 / n[0] mod 2^32 */
+	uint32_t n[RSANUMWORDS]; /* modulus as little endian array */
 	uint32_t rr[RSANUMWORDS]; /* R^2 as little endian array */
 };
 #else
 /* RSA public key definition */
 struct rsa_public_key {
-	uint32_t n[RSANUMWORDS];  /* modulus as little endian array */
+	uint32_t n[RSANUMWORDS]; /* modulus as little endian array */
 	uint32_t rr[RSANUMWORDS]; /* R^2 as little endian array */
-	uint32_t n0inv;           /* -1 / n[0] mod 2^32 */
+	uint32_t n0inv; /* -1 / n[0] mod 2^32 */
 };
 #endif
 
-int rsa_verify(const struct rsa_public_key *key,
-	       const uint8_t *signature,
-	       const uint8_t *sha,
-	       uint32_t *workbuf32);
+int rsa_verify(const struct rsa_public_key *key, const uint8_t *signature,
+	       const uint8_t *sha, uint32_t *workbuf32);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -84,4 +84,4 @@ int device_set_state(enum device_type device, enum device_state state);
  */
 void board_update_device_state(enum device_type device);
 
-#endif  /* __CROS_DEVICE_STATE_H */
+#endif /* __CROS_DEVICE_STATE_H */

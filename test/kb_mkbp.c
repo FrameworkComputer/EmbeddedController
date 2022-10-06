@@ -1,4 +1,4 @@
-/* Copyright 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright 2013 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -19,7 +19,7 @@
 static uint8_t state[KEYBOARD_COLS_MAX];
 static int ec_int_level;
 
-static const char *action[2] = {"release", "press"};
+static const char *action[2] = { "release", "press" };
 
 /*****************************************************************************/
 /* Mock functions */
@@ -43,7 +43,7 @@ int lid_is_open(void)
 /*****************************************************************************/
 /* Test utilities */
 
-#define FIFO_EMPTY()     (ec_int_level == 1)
+#define FIFO_EMPTY() (ec_int_level == 1)
 #define FIFO_NOT_EMPTY() (ec_int_level == 0)
 
 void clear_state(void)
@@ -65,13 +65,13 @@ int press_key(int c, int r, int pressed)
 {
 	ccprintf("Input %s (%d, %d)\n", action[pressed], c, r);
 	set_state(c, r, pressed);
-	return keyboard_fifo_add(state);
+	return mkbp_keyboard_add(state);
 }
 
 int verify_key(int c, int r, int pressed)
 {
 	struct host_cmd_handler_args args;
-	struct  ec_response_get_next_event event;
+	struct ec_response_get_next_event event;
 	int i;
 
 	args.version = 0;
@@ -104,7 +104,7 @@ int verify_key(int c, int r, int pressed)
 int verify_key_v2(int c, int r, int pressed, int expect_more)
 {
 	struct host_cmd_handler_args args;
-	struct  ec_response_get_next_event_v1 event;
+	struct ec_response_get_next_event_v1 event;
 	int i;
 
 	args.version = 2;
@@ -286,7 +286,7 @@ int fifo_underrun(void)
 	return EC_SUCCESS;
 }
 
-void run_test(int argc, char **argv)
+void run_test(int argc, const char **argv)
 {
 	ec_int_level = 1;
 	test_reset();

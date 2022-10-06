@@ -1,0 +1,32 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr PS8xxx emulator
+
+compatible: "cros,ps8xxx-emul"
+
+include: tcpci.yaml
+
+properties:
+    p0-i2c-addr:
+      type: int
+      required: true
+      description:
+        First hidden I2C address (PS8xxx emulator will register device with
+        that address)
+
+    p1-i2c-addr:
+      type: int
+      required: true
+      description:
+        Second hidden I2C address (PS8xxx emulator will register device with
+        that address)
+
+    gpio-i2c-addr:
+      type: int
+      required: false
+      default: 0
+      description:
+        GPIO I2C address. When set to zero GPIO I2C device is not registered
+        by PS8xxx emulator.

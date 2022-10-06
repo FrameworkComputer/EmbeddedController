@@ -1,4 +1,4 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -25,7 +25,7 @@
 #if !(DEBUG_FAN)
 #define CPRINTS(...)
 #else
-#define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_PWM, format, ##args)
 #endif
 
 /* Tacho measurement state */
@@ -92,7 +92,7 @@ static int rpm_pre[FAN_CH_COUNT];
 #define TACHO_MAX_CNT (BIT(16) - 1)
 
 /* Margin of target rpm */
-#define RPM_MARGIN(rpm_target) (((rpm_target) * RPM_DEVIATION) / 100)
+#define RPM_MARGIN(rpm_target) (((rpm_target)*RPM_DEVIATION) / 100)
 
 /**
  * MFT get fan rpm value
@@ -144,7 +144,7 @@ static int mft_fan_rpm(int ch)
 /**
  * Set fan prescaler based on apb1 clock
  *
- * @param   none
+ * @param   ch      operation channel
  * @return  none
  * @notes   changed when initial or HOOK_FREQ_CHANGE command
  */
@@ -154,14 +154,14 @@ void mft_set_apb1_prescaler(int ch)
 	uint16_t prescaler_divider = 0;
 
 	/* Set clock prescaler divider to MFT module*/
-	prescaler_divider = (uint16_t)(clock_get_apb1_freq()
-			/ fan_status[ch].mft_freq);
+	prescaler_divider =
+		(uint16_t)(clock_get_apb1_freq() / fan_status[ch].mft_freq);
 	if (prescaler_divider >= 1)
 		prescaler_divider = prescaler_divider - 1;
 	if (prescaler_divider > 0xFF)
 		prescaler_divider = 0xFF;
 
-	NPCX_TPRSC(mdl) = (uint8_t) prescaler_divider;
+	NPCX_TPRSC(mdl) = (uint8_t)prescaler_divider;
 }
 
 /**
@@ -184,7 +184,6 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 
 	/* Need to initialize MFT or not */
 	if (enable_mft_read_rpm) {
-
 		/* Initialize tacho sampling rate */
 		if (clk_src == TCKC_LFCLK)
 			p_status->mft_freq = INT_32K_CLOCK;
@@ -195,7 +194,7 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 
 		/* Set mode 5 to MFT module */
 		SET_FIELD(NPCX_TMCTRL(mdl), NPCX_TMCTRL_MDSEL_FIELD,
-				NPCX_MFT_MDSEL_5);
+			  NPCX_MFT_MDSEL_5);
 
 		/* Set MFT operation frequency */
 		if (clk_src == TCKC_PRESCALE_APB1_CLK)
@@ -203,11 +202,11 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 
 		/* Set the low power mode or not. */
 		UPDATE_BIT(NPCX_TCKC(mdl), NPCX_TCKC_LOW_PWR,
-				clk_src == TCKC_LFCLK);
+			   clk_src == TCKC_LFCLK);
 
 		/* Set the default count-down timer. */
 		NPCX_TCNT1(mdl) = TACHO_MAX_CNT;
-		NPCX_TCRA(mdl)  = TACHO_MAX_CNT;
+		NPCX_TCRA(mdl) = TACHO_MAX_CNT;
 
 		/* Set the edge polarity to rising. */
 		SET_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEDG);
@@ -293,11 +292,22 @@ enum fan_status fan_smart_control(int ch, int rpm_actual, int rpm_target)
 		return FAN_STATUS_CHANGING;
 	}
 
+	/*
+	 * A specific type of fan needs a longer time to output the TACH
+	 * signal to EC after EC outputs the PWM signal to the fan.
+	 * During this period, the driver will read two consecutive RPM = 0.
+	 * In this case, don't step the PWM duty too aggressively.
+	 * See b:225208265 for more detail.
+	 */
+	if (rpm_pre[ch] == 0 && rpm_actual == 0 &&
+	    IS_ENABLED(CONFIG_FAN_BYPASS_SLOW_RESPONSE)) {
+		rpm_diff = RPM_MARGIN(rpm_target) + 1;
+	} else {
+		rpm_diff = rpm_target - rpm_actual;
+	}
+
 	/* Record previous rpm */
 	rpm_pre[ch] = rpm_actual;
-
-	/* Adjust PWM duty */
-	rpm_diff = rpm_target - rpm_actual;
 	duty = fan_get_duty(ch);
 	if (duty == 0 && rpm_target == 0)
 		return FAN_STATUS_STOPPED;
@@ -309,7 +319,7 @@ enum fan_status fan_smart_control(int ch, int rpm_actual, int rpm_target)
 
 		fan_adjust_duty(ch, rpm_diff, duty);
 		return FAN_STATUS_CHANGING;
-	/* Decrease PWM duty */
+		/* Decrease PWM duty */
 	} else if (rpm_diff < -RPM_MARGIN(rpm_target)) {
 		if (duty == 1 && rpm_target != 0)
 			return FAN_STATUS_FRUSTRATED;
@@ -330,11 +340,12 @@ void fan_tick_func(void)
 {
 	int ch;
 
-	for (ch = 0; ch < FAN_CH_COUNT ; ch++) {
+	for (ch = 0; ch < FAN_CH_COUNT; ch++) {
 		volatile struct fan_status_t *p_status = fan_status + ch;
 		/* Make sure rpm mode is enabled */
 		if (p_status->fan_mode != TACHO_FAN_RPM) {
-		/* Fan in duty mode still want rpm_actual being updated. */
+			/* Fan in duty mode still want rpm_actual being updated.
+			 */
 			p_status->rpm_actual = mft_fan_rpm(ch);
 			if (p_status->rpm_actual > 0)
 				p_status->auto_status = FAN_STATUS_LOCKED;
@@ -347,8 +358,8 @@ void fan_tick_func(void)
 		/* Get actual rpm */
 		p_status->rpm_actual = mft_fan_rpm(ch);
 		/* Do smart fan stuff */
-		p_status->auto_status = fan_smart_control(ch,
-				p_status->rpm_actual, p_status->rpm_target);
+		p_status->auto_status = fan_smart_control(
+			ch, p_status->rpm_actual, p_status->rpm_target);
 	}
 }
 DECLARE_HOOK(HOOK_TICK, fan_tick_func, HOOK_PRIO_DEFAULT);
@@ -520,7 +531,7 @@ enum fan_status fan_get_status(int ch)
 int fan_is_stalled(int ch)
 {
 	return fan_get_enabled(ch) && fan_get_duty(ch) &&
-			fan_status[ch].cur_state == TACHO_UNDERFLOW;
+	       fan_status[ch].cur_state == TACHO_UNDERFLOW;
 }
 
 /**
