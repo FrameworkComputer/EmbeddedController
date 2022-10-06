@@ -22,8 +22,9 @@
 #define CPRINTS(format, args...) cprints(CC_ALS, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_ALS, format, ## args)
 
-
+#ifndef ALS_POLL_PERIOD
 #define ALS_POLL_PERIOD SECOND
+#endif
 
 static int task_timeout = -1;
 
