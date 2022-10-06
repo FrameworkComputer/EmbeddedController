@@ -151,38 +151,11 @@ Other useful flags:
 
 ## Using assumptions
 
-The `zassume_*` API is used to minimize failures while allowing us to find out
-exactly what's going wrong. When writing a test, only assert on code you're
-testing. Any dependencies should use the `zassume_*` API. If the assumption
-fails, your test will be marked as skipped and Twister will report an error.
-Generally speaking, if an assumption fails, either the test wasn't set up
-correctly, or there should be another test that's testing the dependency.
-
-### Example: when to use an assumption
-
-In a given project layout we might have several components (A, B, C, and D). In
-this scenario, components B, C, and D all depend on A to function. In each test
-for B, C, and D we'll include the following:
-
-```c
-static void test_suite_before(void *f)
-{
-  struct my_suite_fixture *fixture = f;
-
-  zassume_ok(f->a->init(), "Failed to initialize A, see test suite 'a_init'");
-}
-```
-
-The above will call A's init function and assume that it returned 0 (status OK).
-If this assumption fails, then B, C, and D will all be marked as skipped along
-with a log message telling us to look at the test suite 'a_init'.
-
-Key takeaways:
-1. If it's code that you depend on (module/library/logic), use assume. It's not
-   what you're testing, you shouldn't raise false failures.
-2. Document why/where you believe that the logic should have been tested. If we
-   end up skipping this test, we should know where the tests that should have
-   caught the error belong.
+The `zassume*` API is used to skip tests when certain preconditions are not
+met. Please don't use it. In our tests we shouldn't ever need to skip tests
+since we control all dependencies. If for some reason you actually need to skip
+a test use `ztest_test_skip()` since that will indicate that you intended to
+skip and didn't use assume by mistake when you meant to use assert.
 
 ## Debugging
 

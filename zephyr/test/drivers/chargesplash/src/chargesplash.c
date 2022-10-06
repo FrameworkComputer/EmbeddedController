@@ -85,7 +85,7 @@ static void set_lid(bool open, bool inhibit_boot)
 			 "inhibit_boot should not be used with a lid close");
 	}
 
-	zassume_ok(gpio_emul_input_set(lid_switch_dev, GPIO_LID_OPEN_EC_PORT,
+	zassert_ok(gpio_emul_input_set(lid_switch_dev, GPIO_LID_OPEN_EC_PORT,
 				       open),
 		   "Failed to set lid switch GPIO");
 
@@ -123,7 +123,7 @@ static void reset_state(void *unused)
 		set_ac_enabled(false);
 	}
 
-	zassume_ok(shell_execute_cmd(get_ec_shell(), "chargesplash reset"),
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chargesplash reset"),
 		   "'chargesplash reset' shell command failed");
 }
 

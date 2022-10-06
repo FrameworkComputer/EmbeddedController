@@ -52,7 +52,7 @@ static int console_cmd_hostevent(const char *subcommand, host_event_t mask)
 		      "hostevent %s 0x%" HOSTEVENT_PRINT_FORMAT, subcommand,
 		      mask);
 
-	zassume_between_inclusive(rv, 0, CONFIG_SHELL_CMD_BUFF_SIZE,
+	zassert_between_inclusive(rv, 0, CONFIG_SHELL_CMD_BUFF_SIZE,
 				  "hostevent console command too long");
 
 	return shell_execute_cmd(get_ec_shell(), cmd_buf);

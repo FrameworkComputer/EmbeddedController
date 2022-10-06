@@ -81,7 +81,7 @@ ZTEST_USER(console_cmd_charger, test_good_input_current)
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "charger input 1000"),
 		   "Failed to set input current");
-	zassume_ok(charger_get_input_current_limit(0, &input_current),
+	zassert_ok(charger_get_input_current_limit(0, &input_current),
 		   "Failed to get input current");
 	zassert_equal(input_current, 1000,
 		      "Input current not set in charger: %d", input_current);
@@ -117,7 +117,7 @@ static void *console_cmd_charger_setup(void)
 	static struct console_cmd_charger_fixture fixture;
 
 	/* Assume we have one charger at index 0 */
-	zassume_true(board_get_charger_chip_count() > 0,
+	zassert_true(board_get_charger_chip_count() > 0,
 		     "Insufficient chargers found");
 
 	/* Get references for the emulators */
@@ -158,7 +158,7 @@ ZTEST_USER_F(console_cmd_charger, test_good_current)
 	/* Give the charger task time to pick up the manual current */
 	k_sleep(K_SECONDS(1));
 
-	zassume_ok(charger_get_current(0, &current), "Failed to get current");
+	zassert_ok(charger_get_current(0, &current), "Failed to get current");
 	zassert_equal(current, 1000, "Current not set in charger: %d", current);
 }
 
@@ -176,7 +176,7 @@ ZTEST_USER_F(console_cmd_charger, test_good_voltage)
 	/* Give the charger task time to pick up the manual voltage */
 	k_sleep(K_SECONDS(1));
 
-	zassume_ok(charger_get_voltage(0, &voltage), "Failed to get voltage");
+	zassert_ok(charger_get_voltage(0, &voltage), "Failed to get voltage");
 	zassert_equal(voltage, 3000, "Voltage not set in charger: %d", voltage);
 }
 

@@ -99,7 +99,7 @@ ZTEST_F(usb_pd_bist_shared, verify_bist_shared_mode)
 
 	/* Start up BIST shared test mode */
 	bist_data = BDO(BDO_MODE_SHARED_ENTER, 0);
-	zassume_ok(tcpci_partner_send_data_msg(&fixture->sink_5v_500ma,
+	zassert_ok(tcpci_partner_send_data_msg(&fixture->sink_5v_500ma,
 					       PD_DATA_BIST, &bist_data, 1, 0),
 		   "Failed to send BIST enter message");
 
@@ -116,7 +116,7 @@ ZTEST_F(usb_pd_bist_shared, verify_bist_shared_mode)
 
 	/* Leave BIST shared test mode */
 	bist_data = BDO(BDO_MODE_SHARED_EXIT, 0);
-	zassume_ok(tcpci_partner_send_data_msg(&fixture->sink_5v_500ma,
+	zassert_ok(tcpci_partner_send_data_msg(&fixture->sink_5v_500ma,
 					       PD_DATA_BIST, &bist_data, 1, 0),
 		   "Failed to send BIST exit message");
 
@@ -152,7 +152,7 @@ ZTEST_F(usb_pd_bist_shared, verify_bist_shared_no_snk_entry)
 
 	/* Have the source send the BIST Enter Mode */
 	bist_data = BDO(BDO_MODE_SHARED_ENTER, 0);
-	zassume_ok(tcpci_partner_send_data_msg(&fixture->src, PD_DATA_BIST,
+	zassert_ok(tcpci_partner_send_data_msg(&fixture->src, PD_DATA_BIST,
 					       &bist_data, 1, 0),
 		   "Failed to send BIST enter message");
 
@@ -181,7 +181,7 @@ ZTEST_F(usb_pd_bist_shared, verify_bist_shared_exit_no_action)
 	tcpci_snk_emul_clear_last_5v_cap(&fixture->snk_ext_500ma);
 
 	bist_data = BDO(BDO_MODE_SHARED_EXIT, 0);
-	zassume_ok(tcpci_partner_send_data_msg(&fixture->sink_5v_500ma,
+	zassert_ok(tcpci_partner_send_data_msg(&fixture->sink_5v_500ma,
 					       PD_DATA_BIST, &bist_data, 1, 0),
 		   "Failed to send BIST exit message");
 
@@ -198,7 +198,7 @@ ZTEST_F(usb_pd_bist_shared, verify_control_bist_shared_mode)
 	uint32_t f5v_cap;
 
 	host_cmd_typec_control_bist_share_mode(USBC_PORT_C0, 1);
-	zassume_ok(tcpci_partner_send_control_msg(&fixture->sink_5v_500ma,
+	zassert_ok(tcpci_partner_send_control_msg(&fixture->sink_5v_500ma,
 						  PD_CTRL_GET_SOURCE_CAP, 0),
 		   "Failed to send get src cap");
 	/* wait tSenderResponse (26 ms) */

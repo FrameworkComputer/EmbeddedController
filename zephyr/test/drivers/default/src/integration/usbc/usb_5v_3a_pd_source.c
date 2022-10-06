@@ -70,7 +70,7 @@ static void control_battery_present(bool present)
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
 
 	/* 0 means battery present */
-	zassume_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, !present));
+	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, !present));
 }
 
 ZTEST_SUITE(usb_attach_5v_3a_pd_source, drivers_predicate_post_main,
@@ -82,7 +82,7 @@ ZTEST(usb_attach_5v_3a_pd_source, test_battery_is_charging)
 	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	uint16_t battery_status;
 
-	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
+	zassert_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status));
 	zassert_equal(battery_status & STATUS_DISCHARGING, 0,
 		      "Battery is discharging: %d", battery_status);

@@ -41,7 +41,7 @@ ZTEST_USER(host_cmd_pd_chip_info, test_bad_index)
 {
 	struct ec_response_pd_chip_info_v1 response;
 
-	zassume_true(board_get_usb_pd_port_count() < BAD_PORT,
+	zassert_true(board_get_usb_pd_port_count() < BAD_PORT,
 		     "Intended bad port exists");
 	zassert_equal(run_pd_chip_info(BAD_PORT, &response),
 		      EC_RES_INVALID_PARAM,
@@ -53,7 +53,7 @@ static void host_cmd_pd_chip_info_begin(void *data)
 	ARG_UNUSED(data);
 
 	/* Assume we have at least one USB-C port */
-	zassume_true(board_get_usb_pd_port_count() > 0,
+	zassert_true(board_get_usb_pd_port_count() > 0,
 		     "Insufficient TCPCs found");
 
 	/* Set the system into S0, since the AP would drive these commands */

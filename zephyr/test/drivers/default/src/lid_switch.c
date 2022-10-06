@@ -49,8 +49,8 @@ static void *lid_switch_setup(void)
 static void lid_switch_before(void *unused)
 {
 	/* Make sure that interrupt fire at the next lid open/close */
-	zassume_ok(emul_lid_close());
-	zassume_ok(emul_lid_open());
+	zassert_ok(emul_lid_close());
+	zassert_ok(emul_lid_open());
 	k_sleep(K_MSEC(100));
 }
 

@@ -23,7 +23,7 @@ static void ap_mux_control_before(void *data)
 	k_sleep(K_SECONDS(1));
 
 	/* And test the assumption that setting NONE worked */
-	zassume_equal(usb_mux_get(USBC_PORT_C0), USB_PD_MUX_NONE,
+	zassert_equal(usb_mux_get(USBC_PORT_C0), USB_PD_MUX_NONE,
 		      "Failed to set mux to initial state");
 }
 

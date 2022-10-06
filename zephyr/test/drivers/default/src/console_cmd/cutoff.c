@@ -58,7 +58,7 @@ ZTEST_USER(console_cmd_cutoff, test_clear_pending_shutdown)
 {
 	int rv = shell_execute_cmd(get_ec_shell(), "cutoff at-shutdown");
 
-	zassume_true(extpower_is_present(), NULL);
+	zassert_true(extpower_is_present(), NULL);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected %d, but got %d",
 		      EC_RES_SUCCESS, rv);
 

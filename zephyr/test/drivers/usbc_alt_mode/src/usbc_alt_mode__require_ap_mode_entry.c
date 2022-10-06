@@ -97,9 +97,9 @@ ZTEST_F(usbc_alt_mode, verify_mode_exit_via_pd_host_cmd)
 	 * entering an alternate most (DisplayPort specifically) has already
 	 * been verified in another test
 	 */
-	zassume_equal(response_size, sizeof(get_mode_response));
-	zassume_equal(get_mode_response.svid, USB_SID_DISPLAYPORT);
-	zassume_equal(get_mode_response.vdo[0],
+	zassert_equal(response_size, sizeof(get_mode_response));
+	zassert_equal(get_mode_response.svid, USB_SID_DISPLAYPORT);
+	zassert_equal(get_mode_response.vdo[0],
 		      fixture->partner.modes_vdm[get_mode_response.opos]);
 
 	struct ec_params_usb_pd_set_mode_request set_mode_params = {

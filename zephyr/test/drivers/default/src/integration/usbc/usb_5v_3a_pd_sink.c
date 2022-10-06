@@ -85,7 +85,7 @@ ZTEST(usb_attach_5v_3a_pd_sink, test_battery_is_discharging)
 	const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(battery));
 	uint16_t battery_status;
 
-	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
+	zassert_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status));
 	zassert_equal(battery_status & STATUS_DISCHARGING, STATUS_DISCHARGING,
 		      "Battery is not discharging: %d", battery_status);

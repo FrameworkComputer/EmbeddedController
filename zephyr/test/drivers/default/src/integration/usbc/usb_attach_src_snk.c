@@ -117,21 +117,21 @@ static void attach_src_snk_common_before(struct emul_state *my_emul_state)
 	/* TODO(b/217737667): Remove driver specific code. */
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 
-	zassume_ok(tcpc_config[SNK_PORT].drv->init(SNK_PORT));
+	zassert_ok(tcpc_config[SNK_PORT].drv->init(SNK_PORT));
 	/*
 	 * Arbitrary FW ver. The emulator should really be setting this
 	 * during its init.
 	 */
 	tcpci_emul_set_reg(tcpci_emul_snk, PS8XXX_REG_FW_REV, 0x31);
 
-	zassume_ok(tcpc_config[SRC_PORT].drv->init(SRC_PORT));
+	zassert_ok(tcpc_config[SRC_PORT].drv->init(SRC_PORT));
 
 	pd_set_suspend(SNK_PORT, false);
 	pd_set_suspend(SRC_PORT, false);
 
 	/* Reset to disconnected state. */
-	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_src));
-	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_snk));
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul_src));
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul_snk));
 
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
@@ -177,7 +177,7 @@ static void attach_emulated_snk(struct emul_state *my_emul_state)
 	tcpci_emul_set_reg(tcpci_emul_snk, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 
-	zassume_ok(tcpci_partner_connect_to_tcpci(my_snk, tcpci_emul_snk),
+	zassert_ok(tcpci_partner_connect_to_tcpci(my_snk, tcpci_emul_snk),
 		   NULL);
 
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
@@ -207,7 +207,7 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 	tcpci_emul_set_reg(tcpci_emul_src, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 
-	zassume_ok(tcpci_partner_connect_to_tcpci(my_src, tcpci_emul_src),
+	zassert_ok(tcpci_partner_connect_to_tcpci(my_src, tcpci_emul_src),
 		   NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, DEFAULT_VBUS_MV);
 }
@@ -542,7 +542,7 @@ struct usb_detach_test_fixture {
 
 static void integration_usb_test_detach(const struct emul *e)
 {
-	zassume_ok(tcpci_emul_disconnect_partner(e));
+	zassert_ok(tcpci_emul_disconnect_partner(e));
 }
 
 static void integration_usb_test_sink_detach(struct emul_state *fixture)

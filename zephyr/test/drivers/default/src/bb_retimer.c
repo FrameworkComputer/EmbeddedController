@@ -66,7 +66,7 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_state)
 
 	/* Set UFP role for whole test */
 	tc_set_data_role(USBC_PORT_C1, PD_ROLE_UFP);
-	zassume_equal(PD_ROLE_UFP, pd_get_data_role(USBC_PORT_C1));
+	zassert_equal(PD_ROLE_UFP, pd_get_data_role(USBC_PORT_C1));
 
 	/* Test none mode */
 	bb_emul_set_reg(emul, BB_RETIMER_REG_CONNECTION_STATE, 0x12144678);
@@ -251,7 +251,7 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
 	set_test_runner_tid();
 
 	tc_set_data_role(USBC_PORT_C1, PD_ROLE_DFP);
-	zassume_equal(PD_ROLE_DFP, pd_get_data_role(USBC_PORT_C1));
+	zassert_equal(PD_ROLE_DFP, pd_get_data_role(USBC_PORT_C1));
 
 	/* Test PD mux none mode with DFP should clear all bits in state */
 	bb_emul_set_reg(emul, BB_RETIMER_REG_CONNECTION_STATE, 0x12144678);

@@ -214,7 +214,7 @@ ZTEST_USER(espi, test_host_command_gpio_set)
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_GPIO_SET, 0, p);
 
 	/* Force value to 1 to see change */
-	zassume_ok(gpio_pin_set_dt(gp, 1), NULL);
+	zassert_ok(gpio_pin_set_dt(gp, 1), NULL);
 
 	zassert_ok(host_command_process(&args), NULL);
 	zassert_equal(gpio_pin_get_dt(gp), p.val, NULL);

@@ -59,13 +59,13 @@ tcpci_drp_emul_connect_partner(struct tcpci_partner_data *partner_emul,
 
 	tcpci_tcpc_alert(TEST_USB_PORT);
 
-	zassume_ok(tcpci_partner_connect_to_tcpci(partner_emul, tcpci_emul),
+	zassert_ok(tcpci_partner_connect_to_tcpci(partner_emul, tcpci_emul),
 		   NULL);
 }
 
 static void disconnect_partner(struct usb_pd_ctrl_msg_test_fixture *fixture)
 {
-	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul));
+	zassert_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul));
 	k_sleep(K_SECONDS(1));
 }
 

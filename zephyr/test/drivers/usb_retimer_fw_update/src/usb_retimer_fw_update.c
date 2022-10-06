@@ -40,7 +40,7 @@ static void usb_retimer_fw_update_suspend_port(void)
 	/* Give PD task time to suspend port */
 	k_sleep(K_SECONDS(1));
 
-	zassume_true(acpi_read_and_verify() == 0,
+	zassert_true(acpi_read_and_verify() == 0,
 		     "Failed to see successful suspend");
 }
 
@@ -50,7 +50,7 @@ static void usb_retimer_fw_update_before(void *data)
 	ARG_UNUSED(data);
 
 	/* Assume our common setup of a BB retimer on C1 */
-	zassume_true(EMUL_DT_GET(BB_RETIMER_NODE) != NULL,
+	zassert_true(EMUL_DT_GET(BB_RETIMER_NODE) != NULL,
 		     "No BB retimer found on C1");
 
 	/* Set chipset to ON, since AP would drive this process */

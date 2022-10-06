@@ -50,7 +50,7 @@ static void host_cmd_get_pd_port_caps_begin(void *data)
 	ARG_UNUSED(data);
 
 	/* Assume we have at least one USB-C port */
-	zassume_true(board_get_usb_pd_port_count() > 0,
+	zassert_true(board_get_usb_pd_port_count() > 0,
 		     "Insufficient TCPCs found");
 }
 

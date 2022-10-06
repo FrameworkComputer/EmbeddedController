@@ -31,10 +31,6 @@
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
-/*
- * TODO(b/251281997): Switch zasserts back to zassumes when they loudly fail
- */
-
 void test_set_battery_level(int percentage)
 {
 	struct sbat_emul_bat_data *bat;
@@ -592,7 +588,7 @@ void host_cmd_typec_control_bist_share_mode(int port, int enable)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassume_ok(host_command_process(&args),
+	zassert_ok(host_command_process(&args),
 		   "Failed to send Type-C control for port %d", port);
 }
 

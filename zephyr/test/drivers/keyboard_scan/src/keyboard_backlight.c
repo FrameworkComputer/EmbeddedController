@@ -56,7 +56,7 @@ ZTEST(keyboard_backlight, host_command_get_backlight__normal)
 	uint8_t expected_percentage = 50;
 	int ret;
 
-	zassume_ok(set_backlight_percent_helper(expected_percentage), NULL);
+	zassert_ok(set_backlight_percent_helper(expected_percentage), NULL);
 
 	/* Brief delay to allow a deferred function to enable the backlight */
 	k_sleep(K_MSEC(50));
@@ -78,7 +78,7 @@ ZTEST(keyboard_backlight, console_command__noargs)
 	const char *outbuffer;
 	size_t buffer_size;
 
-	zassume_ok(set_backlight_percent_helper(70), NULL);
+	zassert_ok(set_backlight_percent_helper(70), NULL);
 	k_sleep(K_MSEC(50));
 
 	/* With no args, print current state */
@@ -102,7 +102,7 @@ ZTEST(keyboard_backlight, console_command__set_on)
 
 ZTEST(keyboard_backlight, console_command__set_off)
 {
-	zassume_ok(set_backlight_percent_helper(40), NULL);
+	zassert_ok(set_backlight_percent_helper(40), NULL);
 	k_sleep(K_MSEC(50));
 
 	/* Turn back off */

@@ -1020,7 +1020,7 @@ void test_tcpci_hard_reset_reinit(const struct emul *emul,
 	uint16_t power_status_mask;
 	uint16_t alert_mask;
 
-	zassume_equal(EC_SUCCESS, drv->init(port), NULL);
+	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
 	tcpci_emul_get_reg(emul, TCPC_REG_POWER_STATUS_MASK,
 			   &power_status_mask);
 	tcpci_emul_get_reg(emul, TCPC_REG_ALERT_MASK, &alert_mask);

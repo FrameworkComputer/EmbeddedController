@@ -153,7 +153,7 @@ static void *setup(void)
 		.handler = interrupt_gpio_monitor,
 	};
 
-	zassume_ok(gpio_add_callback(interrupt_pin->port,
+	zassert_ok(gpio_add_callback(interrupt_pin->port,
 				     &fixture.callback_config),
 		   "Could not configure GPIO callback.");
 

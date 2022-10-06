@@ -141,7 +141,7 @@ static void reset(void *data)
 	ARG_UNUSED(data);
 
 	/* Turn the port off */
-	zassume_ok(usb_charge_set_mode(PORT_ID, USB_CHARGE_MODE_DISABLED,
+	zassert_ok(usb_charge_set_mode(PORT_ID, USB_CHARGE_MODE_DISABLED,
 				       USB_DISALLOW_SUSPEND_CHARGE),
 		   NULL);
 }

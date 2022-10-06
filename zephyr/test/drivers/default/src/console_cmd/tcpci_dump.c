@@ -38,7 +38,7 @@ static void console_cmd_tcpci_dump_begin(void *data)
 	ARG_UNUSED(data);
 
 	/* Assume we have at least one TCPC */
-	zassume_true(board_get_charger_chip_count() > 0,
+	zassert_true(board_get_charger_chip_count() > 0,
 		     "Insufficient TCPCs found");
 }
 

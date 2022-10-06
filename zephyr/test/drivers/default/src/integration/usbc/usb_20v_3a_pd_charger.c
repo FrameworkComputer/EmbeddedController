@@ -26,7 +26,7 @@ static inline void
 connect_charger_to_port(struct usb_attach_20v_3a_pd_charger_fixture *fixture)
 {
 	set_ac_enabled(true);
-	zassume_ok(tcpci_partner_connect_to_tcpci(&fixture->charger_20v,
+	zassert_ok(tcpci_partner_connect_to_tcpci(&fixture->charger_20v,
 						  fixture->tcpci_emul),
 		   NULL);
 
@@ -43,7 +43,7 @@ static inline void disconnect_charger_from_port(
 	struct usb_attach_20v_3a_pd_charger_fixture *fixture)
 {
 	set_ac_enabled(false);
-	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul));
+	zassert_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul));
 	isl923x_emul_set_adc_vbus(fixture->charger_emul, 0);
 	k_sleep(K_SECONDS(1));
 }
@@ -88,7 +88,7 @@ ZTEST(usb_attach_20v_3a_pd_charger, test_battery_is_charging)
 	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	uint16_t battery_status;
 
-	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
+	zassert_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
 	zassert_equal(battery_status & STATUS_DISCHARGING, 0,

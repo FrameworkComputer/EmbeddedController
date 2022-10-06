@@ -46,10 +46,10 @@ static void *syv682x_test_setup(void)
 	fixture.ppc_emul = EMUL_DT_GET(SYV682X_NODE);
 	fixture.common_data =
 		emul_syv682x_get_i2c_common_data(fixture.ppc_emul);
-	zassume_not_null(fixture.ppc_emul, NULL);
+	zassert_not_null(fixture.ppc_emul, NULL);
 	fixture.frs_en_gpio_port =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_FRS_EN_PATH, gpios));
-	zassume_not_null(fixture.frs_en_gpio_port, NULL);
+	zassert_not_null(fixture.frs_en_gpio_port, NULL);
 	fixture.frs_en_gpio_pin = DT_GPIO_PIN(GPIO_USB_C1_FRS_EN_PATH, gpios);
 
 	return &fixture;
@@ -62,7 +62,7 @@ static void syv682x_test_after(void *data)
 	struct i2c_common_emul_data *common_data = fixture->common_data;
 
 	/* Disable the power path and clear interrupt conditions. */
-	zassume_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
+	zassert_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
 					SYV682X_CONTROL_1_PWR_ENB),
 		   NULL);
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
@@ -120,14 +120,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_init_dead_battery)
 	 * With a dead battery, the device powers up sinking VBUS, and the
 	 * driver should keep that going.
 	 */
-	zassume_ok(syv682x_emul_set_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_set_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG,
 					SYV682X_CONTROL_1_CH_SEL),
 		   NULL);
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_VSAFE_5V,
 				   SYV682X_CONTROL_4_NONE);
 	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   NULL);
 	zassert_true(reg & SYV682X_CONTROL_1_CH_SEL,
@@ -144,14 +144,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_init_vsafe0v)
 	uint8_t reg;
 
 	/* With VBUS at vSafe0V, init should set the default configuration. */
-	zassume_ok(syv682x_emul_set_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_set_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG,
 					SYV682X_CONTROL_1_PWR_ENB),
 		   NULL);
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_VSAFE_0V,
 				   SYV682X_CONTROL_4_NONE);
 	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   NULL);
 	check_control_1_default_init(reg);
@@ -162,14 +162,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_init_sink_disabled)
 	uint8_t reg;
 
 	/* With sink disabled, init should do the same thing. */
-	zassume_ok(syv682x_emul_set_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_set_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG,
 					SYV682X_CONTROL_1_CH_SEL),
 		   NULL);
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_VSAFE_0V,
 				   SYV682X_CONTROL_4_NONE);
 	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   NULL);
 	check_control_1_default_init(reg);
@@ -181,7 +181,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_init_common)
 	int ilim;
 
 	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   NULL);
 
@@ -196,7 +196,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_init_common)
 	ilim = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
 	zassert_equal(ilim, CONFIG_PLATFORM_EC_USB_PD_PULLUP,
 		      "Default init, but 5V current limit set to %d", ilim);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_2_REG, &reg),
 		   NULL);
 	zassert_equal(reg,
@@ -205,14 +205,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_init_common)
 			       << SYV682X_DSG_RON_SHIFT) |
 			      (SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT),
 		      "Default init, but CONTROL_2 is 0x%x", reg);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_3_REG, &reg),
 		   NULL);
 	zassert_equal(reg,
 		      (SYV682X_OVP_23_7 << SYV682X_OVP_BIT_SHIFT) |
 			      SYV682X_RVS_MASK,
 		      "Default init, but CONTROL_3 is 0x%x", reg);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   NULL);
 	zassert_equal(reg & ~SYV682X_CONTROL_4_INT_MASK,
@@ -226,7 +226,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_source_enable)
 
 	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "VBUS enable failed");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB, 0,
@@ -245,7 +245,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_source_disable)
 
 ZTEST_F(ppc_syv682x, test_syv682x_interrupt_source_oc)
 {
-	zassume_ok(ppc_vbus_source_enable(syv682x_port, true),
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "VBUS enable failed");
 	/* An OC event less than 100 ms should not cause VBUS to turn off. */
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OC_5V,
@@ -266,7 +266,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_tsd)
 	 * (The device will have already physically disabled them.) The state of
 	 * the sink path is not part of the driver's API.
 	 */
-	zassume_ok(ppc_vbus_source_enable(syv682x_port, true),
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "Source enable failed");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_TSD,
 				   SYV682X_CONTROL_4_NONE);
@@ -278,7 +278,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_tsd)
 ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_ovp)
 {
 	/* An OVP event should cause the driver to disable the source path. */
-	zassume_ok(ppc_vbus_source_enable(syv682x_port, true),
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "Source enable failed");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OVP,
 				   SYV682X_CONTROL_4_NONE);
@@ -296,12 +296,12 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_hv_oc)
 	 * re-enable the sink path until the OC count limit is reached, at which
 	 * point the driver should leave it disabled.
 	 */
-	zassume_ok(ppc_vbus_sink_enable(syv682x_port, true),
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
 		   "Sink enable failed");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OC_HV,
 				   SYV682X_CONTROL_4_NONE);
 	msleep(1);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB, 0,
@@ -310,7 +310,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_hv_oc)
 				   SYV682X_CONTROL_4_NONE);
 	/* Alert GPIO doesn't change so wait for delayed syv682x interrupt */
 	msleep(15);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB, 0,
@@ -319,7 +319,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_hv_oc)
 				   SYV682X_CONTROL_4_NONE);
 	/* Alert GPIO doesn't change so wait for delayed syv682x interrupt */
 	msleep(15);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB,
@@ -339,14 +339,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_oc)
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_NONE,
 				   SYV682X_CONTROL_4_VCONN_OCP);
 	msleep(1);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
 	zassert_true(reg & (SYV682X_CONTROL_4_VCONN1 |
 			    SYV682X_CONTROL_4_VCONN2),
 		     "VCONN disabled after initial VCONN OC");
 	msleep(50);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
 	zassert_true(reg & (SYV682X_CONTROL_4_VCONN1 |
@@ -357,7 +357,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_oc)
 	 * should turn VCONN off.
 	 */
 	msleep(60);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
 	zassert_false(reg & (SYV682X_CONTROL_4_VCONN1 |
@@ -379,7 +379,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_ov)
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_NONE,
 				   SYV682X_CONTROL_4_VBAT_OVP);
 	msleep(1);
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
 	zassert_true(reg & SYV682X_CONTROL_4_CC1_BPS,
@@ -402,7 +402,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_frs_enable)
 	 * polarity. Disabling FRS should enable both CC lines.
 	 */
 	ppc_vbus_sink_enable(syv682x_port, true);
-	zassume_false(ppc_is_sourcing_vbus(syv682x_port),
+	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing VBUS after sink enabled");
 	ppc_set_polarity(syv682x_port, 0 /* CC1 */);
 	ppc_set_frs_enable(syv682x_port, true);
@@ -424,14 +424,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_frs_disable)
 	uint8_t reg;
 
 	ppc_vbus_sink_enable(syv682x_port, true);
-	zassume_false(ppc_is_sourcing_vbus(syv682x_port),
+	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing VBUS after sink enabled");
 	ppc_set_polarity(syv682x_port, 0 /* CC1 */);
 
 	ppc_set_frs_enable(syv682x_port, false);
 	zassert_equal(gpio_emul_output_get(gpio_dev, fixture->frs_en_gpio_pin),
 		      0, "FRS disabled, but FRS GPIO not deasserted");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
 	zassert_equal(
@@ -463,7 +463,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit_usb_default)
 	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
 						     TYPEC_RP_USB),
 		   "Could not set source current limit");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
 	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
@@ -479,7 +479,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit_1500ma)
 	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
 						     TYPEC_RP_1A5),
 		   "Could not set source current limit");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
 	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
@@ -495,7 +495,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit_3000ma)
 	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
 						     TYPEC_RP_3A0),
 		   "Could not set source current limit");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
 	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
@@ -561,7 +561,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable_trivial)
 	 * If VBUS source is already enabled, disabling VBUS sink should
 	 * trivially succeed.
 	 */
-	zassume_ok(ppc_vbus_source_enable(syv682x_port, true),
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "VBUS enable failed");
 	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
 		   "Sink disable failed");
@@ -576,11 +576,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable_power_path)
 	 * After enabling VBUS sink, the HV power path should be enabled in sink
 	 * mode with the configured current limit.
 	 */
-	zassume_ok(ppc_vbus_source_enable(syv682x_port, false),
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, false),
 		   "VBUS enable failed");
 	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
 		   "Sink disable failed");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   NULL);
 	zassert_true(reg & SYV682X_CONTROL_1_CH_SEL,
@@ -598,14 +598,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_disable)
 {
 	uint8_t reg;
 
-	zassume_ok(ppc_vbus_source_enable(syv682x_port, false),
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, false),
 		   "VBUS enable failed");
 	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
 		   "Sink disable failed");
 
 	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
 		   "Sink disable failed");
-	zassume_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   NULL);
 	zassert_true(reg & SYV682X_CONTROL_1_PWR_ENB,

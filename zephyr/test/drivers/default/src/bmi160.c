@@ -2139,9 +2139,9 @@ static void bmi160_before(void *fixture)
 	gyr_ms->rot_standard_ref = NULL;
 	acc_ms->rot_standard_ref = NULL;
 
-	zassume_equal(EC_SUCCESS, acc_ms->drv->set_data_rate(acc_ms, 50000, 0),
+	zassert_equal(EC_SUCCESS, acc_ms->drv->set_data_rate(acc_ms, 50000, 0),
 		      NULL);
-	zassume_equal(EC_SUCCESS, gyr_ms->drv->set_data_rate(gyr_ms, 50000, 0),
+	zassert_equal(EC_SUCCESS, gyr_ms->drv->set_data_rate(gyr_ms, 50000, 0),
 		      NULL);
 }
 

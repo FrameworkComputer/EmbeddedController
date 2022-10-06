@@ -130,7 +130,7 @@ ZTEST(keyboard_scan, console_command_ksstate__force)
 	 */
 
 	keyboard_scan_enable(false, -1);
-	zassume_false(keyboard_scan_is_enabled());
+	zassert_false(keyboard_scan_is_enabled());
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "ksstate force"));
 
@@ -142,7 +142,7 @@ ZTEST(keyboard_scan, console_command_ksstate__on_off)
 {
 	/* This command turns state change printing on/off */
 
-	zassume_false(keyboard_scan_get_print_state_changes());
+	zassert_false(keyboard_scan_get_print_state_changes());
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "ksstate on"));
 	zassert_true(keyboard_scan_get_print_state_changes());
@@ -235,7 +235,7 @@ ZTEST(keyboard_scan, host_command_simulate_key__locked)
 {
 	uint16_t ret;
 
-	zassume_true(system_is_locked(), "Expecting locked system.");
+	zassert_true(system_is_locked(), "Expecting locked system.");
 
 	struct ec_response_keyboard_factory_test response;
 	struct ec_params_mkbp_simulate_key params;
@@ -251,7 +251,7 @@ ZTEST(keyboard_scan, host_command_simulate_key__bad_params)
 	uint16_t ret;
 
 	system_is_locked_fake.return_val = 0;
-	zassume_false(system_is_locked(), "Expecting unlocked system.");
+	zassert_false(system_is_locked(), "Expecting unlocked system.");
 
 	struct ec_response_keyboard_factory_test response;
 	struct ec_params_mkbp_simulate_key params = {
@@ -293,7 +293,7 @@ ZTEST(keyboard_scan, host_command_simulate__key_press)
 	uint16_t ret;
 
 	system_is_locked_fake.return_val = 0;
-	zassume_false(system_is_locked(), "Expecting unlocked system.");
+	zassert_false(system_is_locked(), "Expecting unlocked system.");
 
 	ret = send_keypress_host_command(1, 2, 1);
 	zassert_equal(EC_RES_SUCCESS, ret, "Command returned %u", ret);
@@ -323,7 +323,7 @@ FAKE_VOID_FUNC(chipset_reset, int);
 ZTEST(keyboard_scan, special_key_combos)
 {
 	system_is_locked_fake.return_val = 0;
-	zassume_false(system_is_locked(), "Expecting unlocked system.");
+	zassert_false(system_is_locked(), "Expecting unlocked system.");
 
 	/* Set the volume up key coordinates to something arbitrary */
 	int vol_up_col = 1;
@@ -332,7 +332,7 @@ ZTEST(keyboard_scan, special_key_combos)
 	set_vol_up_key(vol_up_row, vol_up_col);
 
 	/* Vol up and the alt keys must be in different columns */
-	zassume_false(vol_up_col == KEYBOARD_COL_LEFT_ALT, NULL);
+	zassert_false(vol_up_col == KEYBOARD_COL_LEFT_ALT, NULL);
 
 	/* Hold down volume up, left alt (either alt key works), and R */
 	zassert_ok(send_keypress_host_command(vol_up_col, vol_up_row, 1));

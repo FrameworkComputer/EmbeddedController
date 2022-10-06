@@ -226,11 +226,11 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	word = virtual_battery_read16(SB_SPECIFICATION_INFO);
 	zassert_equal(expected, word, "%d != %d", expected, word);
 
-	zassume_ok(battery_status(&expected));
+	zassert_ok(battery_status(&expected));
 	word = virtual_battery_read16(SB_BATTERY_STATUS);
 	zassert_equal(expected, word, "%d != %d", expected, word);
 
-	zassume_ok(battery_design_voltage(&expected));
+	zassert_ok(battery_design_voltage(&expected));
 	word = virtual_battery_read16(SB_DESIGN_VOLTAGE);
 	zassert_equal(expected, word, "%d != %d", expected, word);
 

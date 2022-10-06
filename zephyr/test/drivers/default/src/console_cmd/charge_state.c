@@ -116,7 +116,7 @@ ZTEST_USER(console_cmd_charge_state, test_debug_on_show_charging_progress)
 	charging_progress_displayed();
 
 	/* Enable debug printing */
-	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate debug on"),
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate debug on"),
 		   NULL);
 
 	/* Sleep at least 1 full iteration of the charge state loop */
@@ -206,7 +206,7 @@ ZTEST_USER_F(console_cmd_charge_state, test_idle_on_from_normal)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Move to idle */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"));
@@ -220,11 +220,11 @@ ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Move to idle */
-	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"));
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_IDLE);
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"));
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_IDLE);
 
 	/* Move back to normal */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle off"),
@@ -239,7 +239,7 @@ ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Enable discharge */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"),
@@ -254,12 +254,12 @@ ZTEST_USER_F(console_cmd_charge_state, test_discharge_off)
 			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL);
 
 	/* Enable discharge */
-	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"),
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"),
 		   NULL);
-	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE);
 
 	/* Disable discharge */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge off"),

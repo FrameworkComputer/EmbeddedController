@@ -255,7 +255,7 @@ ZTEST_F(usbc_tbt_mode, verify_tbt_entry_fail)
 			     fixture->charger_emul);
 
 	status = host_cmd_typec_status(TEST_PORT);
-	zassume_equal((status.mux_state & USB_MUX_CHECK_MASK),
+	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
 		      USB_PD_MUX_USB_ENABLED, "Unexpected starting mux: 0x%02x",
 		      status.mux_state);
 
@@ -295,7 +295,7 @@ ZTEST_F(usbc_tbt_mode, verify_tbt_passive_entry_exit)
 	verify_cable_found(fixture->partner.cable);
 
 	status = host_cmd_typec_status(TEST_PORT);
-	zassume_equal((status.mux_state & USB_MUX_CHECK_MASK),
+	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
 		      USB_PD_MUX_USB_ENABLED, "Unexpected starting mux: 0x%02x",
 		      status.mux_state);
 

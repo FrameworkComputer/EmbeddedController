@@ -89,7 +89,7 @@ ZTEST(dps, console_cmd__enable)
 ZTEST(dps, console_cmd__disable)
 {
 	/* Should already by enabled due to before() function */
-	zassume_true(dps_is_enabled(), NULL);
+	zassert_true(dps_is_enabled(), NULL);
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "dps dis"), NULL);
 
@@ -104,7 +104,7 @@ ZTEST(dps, console_cmd__fakepwr_print)
 
 ZTEST(dps, console_cmd__fakepwr_enable_disable)
 {
-	zassume_false(dps_is_fake_enabled(),
+	zassert_false(dps_is_fake_enabled(),
 		      "fakepwr shouldn't be enabled by default");
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "dps fakepwr 100 200"),

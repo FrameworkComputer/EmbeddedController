@@ -414,7 +414,7 @@ static void setup_flash_region_helper(uint32_t offset, uint32_t size,
 	int rv;
 
 	rv = host_command_process(&erase_args);
-	zassume_ok(rv, "Got %d", rv);
+	zassert_ok(rv, "Got %d", rv);
 
 	if (make_write) {
 		/* Sized for flash_write header plus one byte of data */
@@ -434,7 +434,7 @@ static void setup_flash_region_helper(uint32_t offset, uint32_t size,
 		/* Write one byte at start of region */
 		out_buf[sizeof(*write_params)] = 0xec;
 
-		zassume_ok(host_command_process(&write_args), NULL);
+		zassert_ok(host_command_process(&write_args), NULL);
 	}
 }
 

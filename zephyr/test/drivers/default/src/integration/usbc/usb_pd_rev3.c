@@ -62,11 +62,11 @@ static void usb_attach_5v_3a_pd_source_before(void *data)
 	/* Clear Alert and Status receive checks */
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
 	tcpci_src_emul_clear_status_received(&fixture->src_ext);
-	zassume_false(fixture->src_ext.alert_received);
-	zassume_false(fixture->src_ext.status_received);
+	zassert_false(fixture->src_ext.alert_received);
+	zassert_false(fixture->src_ext.status_received);
 
 	/* Initial check on power state */
-	zassume_true(chipset_in_state(CHIPSET_STATE_ON));
+	zassert_true(chipset_in_state(CHIPSET_STATE_ON));
 }
 
 static void usb_attach_5v_3a_pd_source_after(void *data)
@@ -112,8 +112,8 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_batt_cap)
 
 	/* See pe_give_battery_cap_entry() in common/usbc/usb_pe_drp_sm.c */
 
-	zassume_true(battery_is_present(), "Battery must be present");
-	zassume_true(IS_ENABLED(HAS_TASK_HOSTCMD) &&
+	zassert_true(battery_is_present(), "Battery must be present");
+	zassert_true(IS_ENABLED(HAS_TASK_HOSTCMD) &&
 			     *host_get_memmap(EC_MEMMAP_BATTERY_VERSION) != 0,
 		     "Cannot access battery data");
 
@@ -171,7 +171,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_batt_cap_invalid)
 
 ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_msg)
 {
-	zassume_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS);
+	zassert_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS);
 
 	k_sleep(K_SECONDS(2));
 	zassert_true(fixture->src_ext.alert_received);
@@ -186,8 +186,8 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_on_power_state_change)
 	zassert_true(fixture->src_ext.status_received);
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
 	tcpci_src_emul_clear_status_received(&fixture->src_ext);
-	zassume_false(fixture->src_ext.alert_received);
-	zassume_false(fixture->src_ext.status_received);
+	zassert_false(fixture->src_ext.alert_received);
+	zassert_false(fixture->src_ext.status_received);
 
 	/* Shutdown and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
@@ -196,8 +196,8 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_on_power_state_change)
 	zassert_true(fixture->src_ext.status_received);
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
 	tcpci_src_emul_clear_status_received(&fixture->src_ext);
-	zassume_false(fixture->src_ext.alert_received);
-	zassume_false(fixture->src_ext.status_received);
+	zassert_false(fixture->src_ext.alert_received);
+	zassert_false(fixture->src_ext.status_received);
 
 	/* Startup and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_STARTUP);
@@ -206,8 +206,8 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_on_power_state_change)
 	zassert_true(fixture->src_ext.status_received);
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
 	tcpci_src_emul_clear_status_received(&fixture->src_ext);
-	zassume_false(fixture->src_ext.alert_received);
-	zassume_false(fixture->src_ext.status_received);
+	zassert_false(fixture->src_ext.alert_received);
+	zassert_false(fixture->src_ext.status_received);
 
 	/* Resume and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_RESUME);
@@ -247,9 +247,9 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
 	/* Clear alert and status flags set during shutdown */
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
 	tcpci_src_emul_clear_status_received(&fixture->src_ext);
-	zassume_false(fixture->src_ext.alert_received);
-	zassume_false(fixture->src_ext.status_received);
-	zassume_true(chipset_in_state(CHIPSET_STATE_ANY_OFF));
+	zassert_false(fixture->src_ext.alert_received);
+	zassert_false(fixture->src_ext.status_received);
+	zassert_true(chipset_in_state(CHIPSET_STATE_ANY_OFF));
 
 	/* While in S5/G3 expect nothing on invalid (too long) press */
 	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_PRESS;
@@ -283,9 +283,9 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_startup_on_pd_button_press)
 	/* Clear alert and status flags set during shutdown */
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
 	tcpci_src_emul_clear_status_received(&fixture->src_ext);
-	zassume_false(fixture->src_ext.alert_received);
-	zassume_false(fixture->src_ext.status_received);
-	zassume_true(chipset_in_state(CHIPSET_STATE_ANY_OFF));
+	zassert_false(fixture->src_ext.alert_received);
+	zassert_false(fixture->src_ext.status_received);
+	zassert_true(chipset_in_state(CHIPSET_STATE_ANY_OFF));
 
 	/* While in S5/G3 expect Alert->Get_Status->Status on valid press */
 	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_PRESS;
