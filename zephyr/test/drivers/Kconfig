@@ -38,6 +38,9 @@ config LINK_TEST_SUITE_MKBP
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
 
+config LINK_TEST_SUITE_SHIM_RTC
+	bool "Link and run the shim rtc tests"
+
 config LINK_TEST_SUITE_SYSTEM
 	bool "Link tests for common system code"
 

@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+/* This is not a chip emulator, it's a fake driver. */
+
 #define DT_DRV_COMPAT cros_ec_rtc_emul
 
 #include <zephyr/logging/log.h>

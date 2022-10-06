@@ -82,6 +82,13 @@ tests:
     extra_args: CONF_FILE="prj.conf;rt9490/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./rt9490/charger.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_RT9490=y
+  drivers.shim_rtc:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_SHIM_RTC=y
+      - CONFIG_PLATFORM_EC_RTC=y
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_HOSTCMD_RTC=y
+      - CONFIG_EMUL_RTC=y
   drivers.system:
     tags:
       common

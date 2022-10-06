@@ -2,8 +2,5 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: Emulator for Chromiumos EC real-time-clock (RTC).
-
-compatible: "cros-ec,rtc-emul"
-
-include: base.yaml
+# Add source files
+target_sources(app PRIVATE src/test_shim_rtc.c)
