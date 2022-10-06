@@ -16,8 +16,8 @@ The Framework Laptop EC code can be built easily outside the Chromium developmen
 
 On Ubuntu you can install the development tools easily.
 
-```
-sudo apt install gcc-arm-none-eabi libftdi1-dev
+```sh
+sudo apt install gcc-arm-none-eabi libftdi1-dev build-essential pkg-config
 ```
 
 ## Framework Laptop EC for Intel 11th Gen Core Processors
