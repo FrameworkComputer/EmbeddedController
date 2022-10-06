@@ -685,6 +685,7 @@ static void espi_peripheral_handler(const struct device *dev,
 
 static int zephyr_shim_setup_espi(const struct device *unused)
 {
+	uint32_t enable = 1;
 	static const struct {
 		espi_callback_handler_t handler;
 		enum espi_bus_event event_type;
@@ -732,6 +733,9 @@ static int zephyr_shim_setup_espi(const struct device *unused)
 		return -1;
 	}
 
+	/* Enable host interface interrupts */
+	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
+			       &enable);
 	return 0;
 }
 
