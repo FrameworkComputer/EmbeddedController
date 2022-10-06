@@ -11,10 +11,10 @@
 
 /* Number of IRQ vectors on the NVIC */
 <<<<<<< HEAD
-#ifdef CHIP_FAMILY_MEC17XX
+#ifdef CHIP_FAMILY_MEC17XX // Kieran added this // We can remove this and let MEC170X and MEC172X handle it
 #define CONFIG_IRQ_COUNT	157
-#elif defined(CHIP_FAMILY_MEC152X)
-#define CONFIG_IRQ_COUNT	172
+#elif defined(CHIP_FAMILY_MEC152X) // and this
+#define CONFIG_IRQ_COUNT	172 // And this
 =======
 #ifdef CHIP_FAMILY_MEC152X
 #define CONFIG_IRQ_COUNT 174
