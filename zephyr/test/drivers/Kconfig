@@ -71,6 +71,11 @@ config LINK_TEST_SUITE_USBC_SVDM_DFP_ONLY
 config LINK_TEST_SUITE_USBC_TBT_MODE
 	bool "Link and test the usbc_tbt_mode tests"
 
+config LINK_TEST_SUITE_USBC_VCONN_SWAP
+	bool "Link and test the usbc_vconn_swap tests"
+	help
+	  Include the test suite exercising VCONN Swap behaviors in the binary.
+
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"
 
