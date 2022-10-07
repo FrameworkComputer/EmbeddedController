@@ -13,9 +13,6 @@
 
 #ifdef CONFIG_PWM
 
-#define PWM_RAW_TO_PERCENT(v) DIV_ROUND_NEAREST((uint32_t)(v)*100, UINT16_MAX)
-#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v)*UINT16_MAX / 100)
-
 /*
  * Get target channel based on type / index host command parameters.
  * Returns 0 if a valid channel is selected, -1 on error.
