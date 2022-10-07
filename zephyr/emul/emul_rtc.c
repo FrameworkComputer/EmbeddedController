@@ -63,6 +63,10 @@ static int cros_rtc_emul_set_value(const struct device *dev, uint32_t value)
 
 	data->value = value;
 
+	if (data->value >= data->alarm_time && data->alarm_time) {
+		data->alarm_callback(dev);
+	}
+
 	return EC_SUCCESS;
 }
 
