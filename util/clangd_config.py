@@ -65,7 +65,38 @@ def ec_build(ec_root: Path, board: str, image: str) -> Optional[Path]:
 def zephyr_build(ec_root: Path, board: str, image: str) -> Optional[Path]:
     """Build the correct compile_commands.json for Zephyr board/image"""
 
-    raise NotImplementedError("Zephyr is currently unsupported.")
+    target = Path(
+        f"build/zephyr/{board}/build-{image.lower()}/compile_commands.json"
+    )
+    cmd = ["zmake", "configure", board]
+
+    print(" ".join(cmd))
+    status = subprocess.run(cmd, check=False, cwd=ec_root)
+
+    if status.returncode != 0:
+        return None
+
+    # Replace /mnt/host/source with path of chromiumos outside chroot
+    default_chromiumos_path_outside_chroot = os.path.join(
+        Path.home(), "chromiumos"
+    )
+    chromiumos_path_outside_chroot = os.environ.get(
+        "EXTERNAL_TRUNK_PATH", default_chromiumos_path_outside_chroot
+    )
+    chromiumos_path_inside_chroot = "/mnt/host/source"
+
+    print(
+        f"Replacing '{chromiumos_path_inside_chroot}' with "
+        + f"'{chromiumos_path_outside_chroot}' in file {target}"
+    )
+
+    target.write_text(
+        target.read_text().replace(
+            chromiumos_path_inside_chroot, chromiumos_path_outside_chroot
+        )
+    )
+
+    return target
 
 
 def copy(ec_root: Path, target: Path) -> None:
