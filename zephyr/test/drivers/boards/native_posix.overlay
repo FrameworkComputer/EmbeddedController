@@ -855,6 +855,12 @@
 			#pwm-cells = <3>;
 			status = "okay";
 		};
+		pwm_displight: pwm@5 {
+			compatible = "cros,pwm-mock";
+			reg = <5 1>;
+			#pwm-cells = <3>;
+			status = "okay";
+		};
 	};
 
 	pwmleds {
@@ -931,6 +937,12 @@
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm_kblight 0 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
 		generic-pwm-channel = <0>;
+	};
+
+	displight {
+		compatible = "cros-ec,displight";
+		pwms = <&pwm_kblight 0 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
+		generic-pwm-channel = <1>;
 	};
 };
 

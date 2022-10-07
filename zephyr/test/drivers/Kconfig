@@ -35,6 +35,9 @@ config LINK_TEST_SUITE_LED_DRIVER
 config LINK_TEST_SUITE_MKBP
 	bool "Link and test the mkbp tests"
 
+config LINK_TEST_SUITE_SHIM_PWM_HC
+	bool "Link and run the shim pwm_hc tests"
+
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
 
