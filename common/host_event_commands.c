@@ -307,11 +307,7 @@ host_event_t host_get_events(void)
 void host_set_events(host_event_t mask)
 {
 	/* ignore host events the rest of board doesn't care about */
-#ifdef CONFIG_HOST_EVENT64
-	mask &= CONFIG_HOST_EVENT64_REPORT_MASK;
-#else
 	mask &= CONFIG_HOST_EVENT_REPORT_MASK;
-#endif
 
 #ifdef CONFIG_HOSTCMD_X86
 	/*
@@ -370,11 +366,7 @@ int host_is_event_set(enum host_event_code event)
 void host_clear_events(host_event_t mask)
 {
 	/* ignore host events the rest of board doesn't care about */
-#ifdef CONFIG_HOST_EVENT64
-	mask &= CONFIG_HOST_EVENT64_REPORT_MASK;
-#else
 	mask &= CONFIG_HOST_EVENT_REPORT_MASK;
-#endif
 
 	/* return early if nothing changed */
 	if (!(events & mask))
