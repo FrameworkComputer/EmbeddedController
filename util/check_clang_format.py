@@ -14,6 +14,7 @@ import logging
 import pathlib
 import subprocess
 import sys
+from typing import List
 
 from chromite.lib import commandline
 
@@ -21,7 +22,12 @@ from chromite.lib import commandline
 def main(argv=None):
     """Find all C files and runs clang-format on them."""
     parser = commandline.ArgumentParser()
-    parser.parse_args(argv)
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Fix any formatting errors automatically.",
+    )
+    opts = parser.parse_args(argv)
 
     logging.info("Validating all code is formatted with clang-format.")
     ec_dir = pathlib.Path(__file__).resolve().parent.parent
@@ -37,17 +43,21 @@ def main(argv=None):
         if path
     ]
 
-    clang_format_files = []
+    cmd: List[str | pathlib.Path] = ["clang-format"]
+    if opts.fix:
+        cmd.append("-i")
+    else:
+        cmd.append("--dry-run")
     for path in all_files:
         if not path.is_file() or path.is_symlink():
             continue
         if "third_party" in path.parts:
             continue
         if path.name.endswith(".c") or path.name.endswith(".h"):
-            clang_format_files.append(path)
+            cmd.append(path)
 
     result = subprocess.run(
-        ["clang-format", "--dry-run", *clang_format_files],
+        cmd,
         check=False,
         cwd=ec_dir,
         stderr=subprocess.PIPE,
