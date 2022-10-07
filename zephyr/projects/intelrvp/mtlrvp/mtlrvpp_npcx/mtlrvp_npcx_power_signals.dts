@@ -13,6 +13,7 @@
 
 		sys-pwrok-delay = <3>;
 		all-sys-pwrgd-timeout = <20>;
+		sys-reset-delay = <60>;
 	};
 
 	pwr-en-pp3300-s5 {
