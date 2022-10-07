@@ -373,8 +373,10 @@ static void setup_flash_region_helper(uint32_t offset, uint32_t size,
 	};
 	struct host_cmd_handler_args erase_args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FLASH_ERASE, 0, erase_params);
+	int rv;
 
-	zassume_ok(host_command_process(&erase_args), NULL);
+	rv = host_command_process(&erase_args);
+	zassume_ok(rv, "Got %d", rv);
 
 	if (make_write) {
 		/* Sized for flash_write header plus one byte of data */
@@ -398,26 +400,24 @@ static void setup_flash_region_helper(uint32_t offset, uint32_t size,
 	}
 }
 
-/* TODO(b/251471020) */
-ZTEST_EXPECT_SKIP(flash, test_crec_flash_is_erased__happy);
 ZTEST_USER(flash, test_crec_flash_is_erased__happy)
 {
 	uint32_t offset = 0x10000;
 
-	setup_flash_region_helper(offset, TEST_BUF_SIZE, false);
+	setup_flash_region_helper(offset, CONFIG_FLASH_ERASE_SIZE, false);
 
-	zassert_true(crec_flash_is_erased(offset, TEST_BUF_SIZE), NULL);
+	zassert_true(crec_flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE),
+		     NULL);
 }
 
-/* TODO(b/251471020) */
-ZTEST_EXPECT_SKIP(flash, test_crec_flash_is_erased__not_erased);
 ZTEST_USER(flash, test_crec_flash_is_erased__not_erased)
 {
 	uint32_t offset = 0x10000;
 
-	setup_flash_region_helper(offset, TEST_BUF_SIZE, true);
+	setup_flash_region_helper(offset, CONFIG_FLASH_ERASE_SIZE, true);
 
-	zassert_true(!crec_flash_is_erased(offset, TEST_BUF_SIZE), NULL);
+	zassert_true(!crec_flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE),
+		     NULL);
 }
 
 static void flash_reset(void)
