@@ -779,3 +779,13 @@ uint32_t get_8042_data(uint32_t data)
 
 	return kbc->data;
 }
+
+static void espi_sysjump(void)
+{
+	uint32_t enable = 0;
+
+	/* Disable host interface interrupts during the sysjump */
+	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
+			       &enable);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, espi_sysjump, HOOK_PRIO_DEFAULT);
