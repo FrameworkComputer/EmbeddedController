@@ -277,6 +277,7 @@
 		i2c_ec_i2c_usb_c1_tcp: ec_i2c_usb_c1_tcp {
 			i2c-port = <&i2c4_1>;
 			enum-names = "I2C_PORT_USB_C1_TCPC";
+			dynamic-speed;
 		};
 		i2c_ec_i2c_bat: ec_i2c_bat {
 			i2c-port = <&i2c5_0>;
