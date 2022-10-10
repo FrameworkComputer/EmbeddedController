@@ -224,6 +224,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "bloonchipper_zephyr",
+        board = "bloonchipper",
+        extra_modules = ["hal_stm32", "cmsis"],
+    )
+    ec_target(
         name = "bobba",
         baseboard = "octopus",
         board = "bobba",
