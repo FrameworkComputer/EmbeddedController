@@ -72,11 +72,10 @@ static struct {
 #define DPM_FLAG_ENTER_ANY \
 	(DPM_FLAG_ENTER_DP | DPM_FLAG_ENTER_TBT | DPM_FLAG_ENTER_USB4)
 #define DPM_FLAG_SEND_VDM_REQ BIT(5)
-#define DPM_FLAG_DATA_RESET_REQUESTED BIT(6)
-#define DPM_FLAG_DATA_RESET_DONE BIT(7)
-#define DPM_FLAG_PD_BUTTON_PRESSED BIT(8)
-#define DPM_FLAG_PD_BUTTON_RELEASED BIT(9)
-#define DPM_FLAG_PE_READY BIT(10)
+#define DPM_FLAG_DATA_RESET_DONE BIT(6)
+#define DPM_FLAG_PD_BUTTON_PRESSED BIT(7)
+#define DPM_FLAG_PD_BUTTON_RELEASED BIT(8)
+#define DPM_FLAG_PE_READY BIT(9)
 
 /* List of all Device Policy Manager level states */
 enum usb_dpm_state {
@@ -84,6 +83,7 @@ enum usb_dpm_state {
 	DPM_WAITING,
 	DPM_DFP_READY,
 	DPM_UFP_READY,
+	DPM_DATA_RESET,
 };
 
 /* Forward declare the full list of states. This is indexed by usb_pd_state */
@@ -95,6 +95,7 @@ __maybe_unused static __const_data const char *const dpm_state_names[] = {
 	[DPM_WAITING] = "DPM Waiting",
 	[DPM_DFP_READY] = "DPM DFP Ready",
 	[DPM_UFP_READY] = "DPM UFP Ready",
+	[DPM_DATA_RESET] = "DPM Data Reset",
 };
 
 static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -249,7 +250,6 @@ void dpm_set_mode_exit_request(int port)
 
 void dpm_data_reset_complete(int port)
 {
-	DPM_CLR_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
 	DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_DONE);
 	DPM_CLR_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE);
 }
@@ -1054,20 +1054,16 @@ static bool dpm_dfp_enter_mode_msg(int port)
 		return false;
 	}
 
+	/*
+	 * If AP mode entry is enabled, and a Data Reset has not been done, then
+	 * first request Data Reset prior to attempting to enter any modes.
+	 */
 	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) &&
 	    IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
 	    DPM_CHK_FLAG(port, DPM_FLAG_ENTER_ANY) &&
-	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED) &&
 	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-		pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
-		DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
-		return false;
-	}
-
-	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) &&
-	    IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
-	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-		return false;
+		set_state_dpm(port, DPM_DATA_RESET);
+		return true;
 	}
 
 	/* Check if port, port partner and cable support USB4. */
@@ -1174,15 +1170,10 @@ static bool dpm_dfp_exit_mode_msg(int port)
 	 * state checked below will reset to its inactive state. If Data Reset
 	 * is not supported, exit active modes individually.
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG)) {
-		if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED) &&
-		    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-			pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
-			DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
-			return false;
-		} else if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-			return false;
-		}
+	if (IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
+	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
+		set_state_dpm(port, DPM_DATA_RESET);
+		return true;
 	}
 
 	/* TODO(b/209625351): Data Reset is the only real way to exit from USB4
@@ -1352,6 +1343,25 @@ static void dpm_ufp_ready_run(const int port)
 	}
 }
 
+/*
+ * DPM_DATA_RESET
+ */
+static void dpm_data_reset_entry(const int port)
+{
+	print_current_state(port);
+
+	pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
+}
+
+static void dpm_data_reset_run(const int port)
+{
+	/* Wait for Data Reset to Complete */
+	if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE))
+		return;
+
+	set_state_dpm(port, DPM_DFP_READY);
+}
+
 static __const_data const struct usb_state dpm_states[] = {
 	/* Normal States */
 	[DPM_WAITING] = {
@@ -1365,5 +1375,9 @@ static __const_data const struct usb_state dpm_states[] = {
 	[DPM_UFP_READY] = {
 		.entry = dpm_ufp_ready_entry,
 		.run   = dpm_ufp_ready_run,
+	},
+	[DPM_DATA_RESET] = {
+		.entry = dpm_data_reset_entry,
+		.run   = dpm_data_reset_run,
 	},
 };
