@@ -344,8 +344,10 @@ $(eval $(call get_sources,ro))
 #
 # See commit bc4c1b4 for more context.
 build-utils := $(call objs_from_dir,$(out)/util,build-util-bin)
+ifeq ($(BOARD),host)
 host-utils := $(call objs_from_dir,$(out)/util,host-util-bin)
 host-utils-cxx := $(call objs_from_dir,$(out)/util,host-util-bin-cxx)
+endif
 build-art := $(call objs_from_dir,$(out),build-util-art)
 # Use the util_name with an added .c AND the special <util_name>-objs variable.
 build-srcs := $(foreach u,$(build-util-bin-y),$(sort $($(u)-objs:%.o=util/%.c) \
