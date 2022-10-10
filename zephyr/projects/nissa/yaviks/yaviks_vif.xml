@@ -174,7 +174,7 @@
     <vif:Data_Capable_As_USB_Host_SOP value="true" />
     <vif:Data_Capable_As_USB_Device_SOP value="false" />
     <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
-    <vif:Product_Type_DFP_SOP value="0">Undefined</vif:Product_Type_DFP_SOP>
+    <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
     <vif:DFP_VDO_Port_Number value="0" />
     <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
@@ -340,7 +340,7 @@
     <vif:Data_Capable_As_USB_Host_SOP value="true" />
     <vif:Data_Capable_As_USB_Device_SOP value="false" />
     <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
-    <vif:Product_Type_DFP_SOP value="0">Undefined</vif:Product_Type_DFP_SOP>
+    <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
     <vif:DFP_VDO_Port_Number value="1" />
     <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
