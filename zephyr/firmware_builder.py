@@ -440,16 +440,31 @@ def test(opts):
                 check=True,
                 stdin=subprocess.DEVNULL,
             )
+            # Filter to only code in the baseline board coverage
+            cmd = [
+                platform_ec / "util/lcov_stencil.py",
+                "-o",
+                build_dir / (board + "_stenciled.info"),
+                build_dir / board / "output/zephyr.info",
+                build_dir / (board + "_merged.info"),
+            ]
+            log_cmd(cmd)
+            subprocess.run(
+                cmd,
+                cwd=zephyr_dir,
+                check=True,
+                stdin=subprocess.DEVNULL,
+            )
             # Exclude file patterns we don't want
             cmd = (
                 [
                     "/usr/bin/lcov",
                     "-o",
-                    build_dir / (board + "_filtered.info"),
+                    build_dir / (board + "_final.info"),
                     "--rc",
                     "lcov_branch_coverage=1",
                     "-r",
-                    build_dir / (board + "_merged.info"),
+                    build_dir / (board + "_stenciled.info"),
                     # Exclude third_party code (specifically zephyr)
                     third_party / "**",
                     # These are questionable, but they are essentially untestable
@@ -470,26 +485,12 @@ def test(opts):
                 check=True,
                 stdin=subprocess.DEVNULL,
             )
-            # Then keep only files present in the board build
-            filenames = set()
-            with open(
-                build_dir / board / "output/zephyr.info", "r"
-            ) as board_cov:
-                for line in board_cov.readlines():
-                    if line.startswith("SF:"):
-                        filenames.add(line[3:-1])
-            cmd = [
-                "/usr/bin/lcov",
-                "-o",
-                build_dir / (board + "_final.info"),
-                "--rc",
-                "lcov_branch_coverage=1",
-                "-e",
-                build_dir / (board + "_filtered.info"),
-            ] + list(filenames)
-            log_cmd(cmd)
             output = subprocess.run(
-                cmd,
+                [
+                    "/usr/bin/lcov",
+                    "--summary",
+                    build_dir / (board + "_final.info"),
+                ],
                 cwd=zephyr_dir,
                 check=True,
                 stdout=subprocess.PIPE,
