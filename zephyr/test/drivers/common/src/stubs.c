@@ -216,7 +216,7 @@ void pd_power_supply_reset(int port)
 
 int pd_check_vconn_swap(int port)
 {
-	return 0;
+	return !chipset_in_state(CHIPSET_STATE_HARD_OFF);
 }
 
 int pd_set_power_supply_ready(int port)
