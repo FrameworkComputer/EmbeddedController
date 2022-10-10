@@ -125,5 +125,14 @@ static void usbc_vconn_swap_after(void *data)
 	common_after(&outer->common);
 }
 
+ZTEST_F(usbc_vconn_swap, vconn_swap_before_discovery)
+{
+	struct ec_response_typec_status status =
+		host_cmd_typec_status(TEST_PORT);
+
+	zassert_equal(status.vconn_role, PD_ROLE_VCONN_SRC,
+		      "TCPM did not initiate VCONN Swap after attach");
+}
+
 ZTEST_SUITE(usbc_vconn_swap, drivers_predicate_post_main, usbc_vconn_swap_setup,
 	    usbc_vconn_swap_before, usbc_vconn_swap_after, NULL);
