@@ -50,6 +50,12 @@ static void usb_attach_5v_3a_pd_source_before(void *data)
 {
 	struct usb_attach_5v_3a_pd_source_rev3_fixture *fixture = data;
 
+	/* Set chipset to ON, this will set TCPM to DRP */
+	test_set_chipset_to_s0();
+
+	/* TODO(b/214401892): Check why need to give time TCPM to spin */
+	k_sleep(K_SECONDS(1));
+
 	connect_source_to_port(&fixture->source_5v_3a, &fixture->src_ext, 1,
 			       fixture->tcpci_emul, fixture->charger_emul);
 
@@ -267,9 +273,12 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_startup_on_pd_button_press)
 {
 	uint32_t ado;
 
-	/* Shutdown device to test wake from USB PD power button */
+	/* Shutdown device to test wake from USB PD power button. Shutting down
+	 * the device may involve a Hard Reset upon entry to G3 (10 seconds
+	 * after S5). Wait long enough for that process to complete.
+	 */
 	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
-	k_sleep(K_SECONDS(10));
+	k_sleep(K_SECONDS(15));
 
 	/* Clear alert and status flags set during shutdown */
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
