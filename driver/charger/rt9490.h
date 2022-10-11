@@ -160,6 +160,7 @@ struct rt9490_init_setting {
 
 /* CHG_CTRL2 */
 #define RT9490_BC12_EN BIT(6)
+#define RT9490_DIS_EOC_FCCM BIT(3)
 
 /* CHG_CTRL3 */
 #define RT9490_EN_OTG BIT(6)

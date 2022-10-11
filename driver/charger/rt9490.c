@@ -64,7 +64,11 @@ static const struct charger_info rt9490_charger_info = {
 };
 
 static const struct rt9490_init_setting default_init_setting = {
-	.eoc_current = 200,
+	/* b/230442545#comment28
+	 * With EOC-Force-CCM disabled, the real IEOC would be
+	 * 30~50mA lower than expected, so move eoc_current one step up
+	 */
+	.eoc_current = 240,
 	.mivr = 4000,
 	.boost_voltage = 5050,
 	.boost_current = 1500,
@@ -341,6 +345,13 @@ static int rt9490_init_setting(int chgnum)
 	 * for 10% higher current rating b/215294785
 	 */
 	RETURN_ERROR(rt9490_enable_pwm_1mhz(CHARGER_SOLO, true));
+
+	/* b/230442545#comment28
+	 * Disable EOC-Force-CCM which would potentially
+	 * cause Vsys drop problem for all silicon version(ES1~ES4)
+	 */
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_CTRL2,
+				    RT9490_DIS_EOC_FCCM));
 
 	return EC_SUCCESS;
 }
