@@ -23,6 +23,7 @@ target_sources(app PRIVATE
     src/console_cmd/button.c
     src/console_cmd/crash.c
     src/console_cmd/cutoff.c
+    src/console_cmd/ec_features.c
     src/console_cmd/gpio.c
     src/console_cmd/i2c_portmap.c
     src/console_cmd/md.c
