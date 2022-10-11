@@ -62,6 +62,13 @@ config PLATFORM_EC_KEYBOARD_DEBUG
 	  if the board is currently headless and keyboard functionality is being
 	  checked.
 
+config PLATFORM_EC_KEYBOARD_FACTORY_TEST
+	bool "Support keyboard factory test"
+	help
+	  Enable support "ectool kbfactorytest" command.
+	  Need to map keyboard connector pins to EC GPIO pins in
+	  keyboard_factory_scan_pins table.
+
 config PLATFORM_EC_KEYBOARD_KEYPAD
 	bool "Support a numeric keypad"
 	help

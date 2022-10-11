@@ -1078,6 +1078,10 @@ int keyboard_factory_test_scan(void)
 	keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_CLOSED);
 	flags = gpio_get_default_flags(GPIO_KBD_KSO2);
 
+	if (IS_ENABLED(CONFIG_ZEPHYR))
+		/* set all KSI/KSO pins to GPIO_ALT_FUNC_NONE */
+		keybaord_raw_config_alt(0);
+
 	/* Set all of KSO/KSI pins to internal pull-up and input */
 	for (i = 0; i < keyboard_factory_scan_pins_used; i++) {
 		if (keyboard_factory_scan_pins[i][0] < 0)
@@ -1086,7 +1090,9 @@ int keyboard_factory_test_scan(void)
 		port = keyboard_factory_scan_pins[i][0];
 		id = keyboard_factory_scan_pins[i][1];
 
-		gpio_set_alternate_function(port, 1 << id, GPIO_ALT_FUNC_NONE);
+		if (!IS_ENABLED(CONFIG_ZEPHYR))
+			gpio_set_alternate_function(port, 1 << id,
+						    GPIO_ALT_FUNC_NONE);
 		gpio_set_flags_by_mask(port, 1 << id,
 				       GPIO_INPUT | GPIO_PULL_UP);
 	}
@@ -1119,7 +1125,10 @@ int keyboard_factory_test_scan(void)
 				       GPIO_INPUT | GPIO_PULL_UP);
 	}
 done:
-	gpio_config_module(MODULE_KEYBOARD_SCAN, 1);
+	if (IS_ENABLED(CONFIG_ZEPHYR))
+		keybaord_raw_config_alt(1);
+	else
+		gpio_config_module(MODULE_KEYBOARD_SCAN, 1);
 	gpio_set_flags(GPIO_KBD_KSO2, flags);
 	keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_CLOSED);
 
