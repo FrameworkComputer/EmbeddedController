@@ -40,9 +40,6 @@
 #error Must select only one shell backend
 #endif
 
-BUILD_ASSERT(EC_TASK_PRIORITY(EC_SHELL_PRIO) == CONFIG_SHELL_THREAD_PRIORITY,
-	     "EC_SHELL_PRIO does not match CONFIG_SHELL_THREAD_PRIORITY.");
-
 LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
 
 static const struct device *uart_shell_dev =
@@ -168,13 +165,6 @@ static void shell_init_from_work(struct k_work *work)
 	/* Initialize the shell and re-enable both RX and TX */
 	shell_init(shell_zephyr, uart_shell_dev, shell_cfg_flags, log_backend,
 		   level);
-
-	/*
-	 * shell_init() always resets the priority back to the default.
-	 * Update the priority as setup by the shimmed task code.
-	 */
-	k_thread_priority_set(shell_zephyr->ctx->tid,
-			      EC_TASK_PRIORITY(EC_SHELL_PRIO));
 
 #if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	uart_irq_rx_enable(uart_shell_dev);
