@@ -397,7 +397,7 @@ static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 			val = STM32_FLASH_ACR;
 			val &= ~STM32_FLASH_ACR_LATENCY_MASK;
 			if (freq <= 16000000U) {
-				val = val;
+				/* nothing */
 			} else if (freq <= 32000000U) {
 				val |= 1;
 			} else if (freq <= 48000000U) {
@@ -416,7 +416,7 @@ static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 			val &= ~STM32_FLASH_ACR_LATENCY_MASK;
 
 			if (freq <= 6000000U) {
-				val = val;
+				/* nothing */
 			} else if (freq <= 12000000U) {
 				val |= 1;
 			} else if (freq <= 18000000U) {
