@@ -12,13 +12,12 @@ File format reverse engineered from
 https://github.com/linux-test-project/lcov/blob/master/bin/geninfo
 """
 
+import argparse
 import logging
 import re
 import sys
 from collections import defaultdict
 from typing import Dict, Set
-
-from chromite.lib import commandline
 
 EXTRACT_LINE = re.compile(r"^(FN|DA|BRDA):(\d+),")
 EXTRACT_FN = re.compile(r"^(FN):(\d+),(\S+)")
@@ -30,7 +29,19 @@ EXTRACT_COUNT = re.compile(r"^([A-Z]+):(\d+)")
 
 def parse_args(argv=None):
     """Parses command line args"""
-    parser = commandline.ArgumentParser()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--log-level",
+        choices=[
+            "CRITICAL",
+            "ERROR",
+            "WARNING",
+            "INFO",
+            "DEBUG",
+        ],
+        default="INFO",
+        help="Set logging level to report at.",
+    )
     parser.add_argument(
         "--output-file",
         "-o",
@@ -200,6 +211,7 @@ def filter_coverage_file(filename, output_file, data_by_path):
 def main(argv=None):
     """Merges lcov files."""
     opts = parse_args(argv)
+    logging.basicConfig(level=opts.log_level)
 
     output_file = sys.stdout
     if opts.output_file:
