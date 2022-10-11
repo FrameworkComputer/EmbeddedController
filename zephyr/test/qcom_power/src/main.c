@@ -8,6 +8,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/shell/shell_dummy.h>
 
 #include "gpio_signal.h"
@@ -23,6 +24,7 @@
 #define POWER_GOOD_NODE DT_PATH(named_gpios, mb_power_good)
 #define AP_SUSPEND_NODE DT_PATH(named_gpios, ap_suspend)
 #define SWITCHCAP_PG_NODE DT_PATH(named_gpios, switchcap_pg_int_l)
+#define PMIC_RESIN_L_NODE DT_PATH(named_gpios, pmic_resin_l)
 
 static int chipset_reset_count;
 
@@ -231,7 +233,97 @@ ZTEST(qcom_power, test_chipset_reset_timeout)
 	zassert_equal(power_get_state(), POWER_S0);
 }
 
-ZTEST_SUITE(qcom_power, NULL, NULL, NULL, NULL, NULL);
+static struct gpio_callback gpio_callback;
+
+/* warm_reset_seq pulses PMIC_RESIN_L, at the end of that pulse set AP_RST_L. */
+void warm_reset_callback(const struct device *gpio_dev,
+			 struct gpio_callback *callback_struct,
+			 gpio_port_pins_t pins)
+{
+	if ((pins & BIT(DT_GPIO_PIN(PMIC_RESIN_L_NODE, gpios))) == 0) {
+		return;
+	}
+	if (gpio_emul_output_get(gpio_dev,
+				 DT_GPIO_PIN(PMIC_RESIN_L_NODE, gpios))) {
+		static const struct device *ap_rst_dev =
+			DEVICE_DT_GET(DT_GPIO_CTLR(AP_RST_L_NODE, gpios));
+
+		gpio_emul_input_set(ap_rst_dev,
+				    DT_GPIO_PIN(AP_RST_L_NODE, gpios), 0);
+	}
+}
+
+/* Call chipset_reset, wait for PMIC_RESIN_L, pulse ap_rsl_l. */
+ZTEST(qcom_power, test_chipset_reset_success)
+{
+	static const struct device *ap_rst_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(AP_RST_L_NODE, gpios));
+	static const struct device *power_good_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(POWER_GOOD_NODE, gpios));
+	static const struct device *ap_suspend_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(AP_SUSPEND_NODE, gpios));
+	static const struct device *switchcap_pg_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(SWITCHCAP_PG_NODE, gpios));
+	static const struct device *pmic_resin_l_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(PMIC_RESIN_L_NODE, gpios));
+	const char *buffer;
+	size_t buffer_size;
+
+	/* Preconditions */
+	power_signal_disable_interrupt(GPIO_AP_SUSPEND);
+	power_signal_enable_interrupt(GPIO_AP_RST_L);
+	zassert_ok(gpio_emul_input_set(power_good_dev,
+				       DT_GPIO_PIN(POWER_GOOD_NODE, gpios), 1));
+	zassert_ok(gpio_emul_input_set(ap_suspend_dev,
+				       DT_GPIO_PIN(AP_SUSPEND_NODE, gpios), 0));
+	zassert_ok(gpio_emul_input_set(ap_rst_dev,
+				       DT_GPIO_PIN(AP_RST_L_NODE, gpios), 1));
+	zassert_ok(gpio_emul_input_set(
+		switchcap_pg_dev, DT_GPIO_PIN(SWITCHCAP_PG_NODE, gpios), 1));
+	zassert_ok(gpio_pin_set(pmic_resin_l_dev,
+				DT_GPIO_PIN(PMIC_RESIN_L_NODE, gpios), 1));
+	power_set_state(POWER_S0);
+	task_wake(TASK_ID_CHIPSET);
+	/* Wait for timeout AP_RST_TRANSITION_TIMEOUT. */
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S0);
+	zassert_equal(power_has_signals(POWER_SIGNAL_MASK(0)), 0);
+
+	/* Setup callback. */
+	gpio_init_callback(&gpio_callback, warm_reset_callback,
+			   BIT(DT_GPIO_PIN(PMIC_RESIN_L_NODE, gpios)));
+	zassert_ok(gpio_add_callback(pmic_resin_l_dev, &gpio_callback));
+
+	/* Reset. The reason doesn't really matter. */
+	shell_backend_dummy_clear_output(get_ec_shell());
+	chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
+	k_sleep(K_MSEC(100));
+	gpio_emul_input_set(ap_rst_dev, DT_GPIO_PIN(AP_RST_L_NODE, gpios), 1);
+	/* Long enough for a cold reset, although we don't expect one. */
+	k_sleep(K_MSEC(1000));
+
+	/* Verify logged messages. */
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_false(strstr(buffer,
+			     "AP refuses to warm reset. Cold resetting") !=
+			      NULL,
+		      "Invalid console output %s", buffer);
+	zassert_false(strstr(buffer, "power state 1 = S5") != NULL,
+		      "Invalid console output %s", buffer);
+	zassert_equal(power_get_state(), POWER_S0);
+}
+
+void qcom_cleanup(void *fixture)
+{
+	if (gpio_callback.handler != NULL) {
+		static const struct device *pmic_resin_l_dev =
+			DEVICE_DT_GET(DT_GPIO_CTLR(PMIC_RESIN_L_NODE, gpios));
+		gpio_remove_callback(pmic_resin_l_dev, &gpio_callback);
+		gpio_callback.handler = NULL;
+	}
+}
+
+ZTEST_SUITE(qcom_power, NULL, NULL, NULL, qcom_cleanup, NULL);
 
 /* Wait until battery is totally stable */
 int battery_wait_for_stable(void)
