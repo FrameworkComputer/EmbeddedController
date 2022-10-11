@@ -22,6 +22,7 @@
 #define AP_RST_L_NODE DT_PATH(named_gpios, ap_rst_l)
 #define POWER_GOOD_NODE DT_PATH(named_gpios, mb_power_good)
 #define AP_SUSPEND_NODE DT_PATH(named_gpios, ap_suspend)
+#define SWITCHCAP_PG_NODE DT_PATH(named_gpios, switchcap_pg_int_l)
 
 static int chipset_reset_count;
 
@@ -65,9 +66,9 @@ static void do_chipset_ap_rst_interrupt_in_s3(int times)
 	/* Pulse gpio_ap_rst_l `times` */
 	for (int i = 0; i < times; ++i) {
 		zassert_ok(gpio_emul_input_set(
-			ap_rst_dev, DT_GPIO_PIN(AP_RST_L_NODE, gpios), 1));
-		zassert_ok(gpio_emul_input_set(
 			ap_rst_dev, DT_GPIO_PIN(AP_RST_L_NODE, gpios), 0));
+		zassert_ok(gpio_emul_input_set(
+			ap_rst_dev, DT_GPIO_PIN(AP_RST_L_NODE, gpios), 1));
 	}
 
 	/* Wait for timeout AP_RST_TRANSITION_TIMEOUT. */
@@ -142,9 +143,9 @@ static void do_chipset_ap_rst_interrupt_in_s0(int times)
 	/* Pulse gpio_ap_rst_l `times` */
 	for (int i = 0; i < times; ++i) {
 		zassert_ok(gpio_emul_input_set(
-			ap_rst_dev, DT_GPIO_PIN(AP_RST_L_NODE, gpios), 1));
-		zassert_ok(gpio_emul_input_set(
 			ap_rst_dev, DT_GPIO_PIN(AP_RST_L_NODE, gpios), 0));
+		zassert_ok(gpio_emul_input_set(
+			ap_rst_dev, DT_GPIO_PIN(AP_RST_L_NODE, gpios), 1));
 	}
 
 	/* Wait for timeout AP_RST_TRANSITION_TIMEOUT. */
@@ -180,6 +181,54 @@ ZTEST(qcom_power, test_notify_chipset_reset_s0)
 		      "Invalid console output %s", buffer);
 	zassert_false(strstr(buffer, "Chipset reset: exit s3") != NULL,
 		      "Invalid console output %s", buffer);
+}
+
+/* Call chipset_reset, don't provide signals from AP. Verify logs. */
+ZTEST(qcom_power, test_chipset_reset_timeout)
+{
+	static const struct device *ap_rst_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(AP_RST_L_NODE, gpios));
+	static const struct device *power_good_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(POWER_GOOD_NODE, gpios));
+	static const struct device *ap_suspend_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(AP_SUSPEND_NODE, gpios));
+	static const struct device *switchcap_pg_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(SWITCHCAP_PG_NODE, gpios));
+	const char *buffer;
+	size_t buffer_size;
+
+	/* Preconditions */
+	power_signal_disable_interrupt(GPIO_AP_SUSPEND);
+	power_signal_enable_interrupt(GPIO_AP_RST_L);
+	zassert_ok(gpio_emul_input_set(power_good_dev,
+				       DT_GPIO_PIN(POWER_GOOD_NODE, gpios), 1));
+	zassert_ok(gpio_emul_input_set(ap_suspend_dev,
+				       DT_GPIO_PIN(AP_SUSPEND_NODE, gpios), 0));
+	zassert_ok(gpio_emul_input_set(ap_rst_dev,
+				       DT_GPIO_PIN(AP_RST_L_NODE, gpios), 1));
+	zassert_ok(gpio_emul_input_set(
+		switchcap_pg_dev, DT_GPIO_PIN(SWITCHCAP_PG_NODE, gpios), 1));
+	power_set_state(POWER_S0);
+	task_wake(TASK_ID_CHIPSET);
+	/* Wait for timeout AP_RST_TRANSITION_TIMEOUT. */
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S0);
+	zassert_equal(power_has_signals(POWER_SIGNAL_MASK(0)), 0);
+
+	/* Reset. The reason doesn't really matter. */
+	shell_backend_dummy_clear_output(get_ec_shell());
+	chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
+	/* Long enough for the cold reset. */
+	k_sleep(K_MSEC(1000));
+
+	/* Verify logged messages. */
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(strstr(buffer,
+			    "AP refuses to warm reset. Cold resetting") != NULL,
+		     "Invalid console output %s", buffer);
+	zassert_true(strstr(buffer, "power state 1 = S5") != NULL,
+		     "Invalid console output %s", buffer);
+	zassert_equal(power_get_state(), POWER_S0);
 }
 
 ZTEST_SUITE(qcom_power, NULL, NULL, NULL, NULL, NULL);
