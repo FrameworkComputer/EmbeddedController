@@ -332,6 +332,16 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 			      convert_to_zephyr_flags(flags));
 }
 
+void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
+{
+	int pin;
+
+	for (pin = 0; pin < 8; pin++)
+		if (mask & BIT(pin))
+			gpio_configure_port_pin(port, pin,
+						convert_to_zephyr_flags(flags));
+}
+
 int signal_is_gpio(int signal)
 {
 	return true;

@@ -57,6 +57,13 @@ int gpio_config_unused_pins(void)
 	return 0;
 }
 
+int gpio_configure_port_pin(int port, int id, int flags)
+{
+	const struct device *dev = npcx_get_gpio_dev(port);
+
+	return gpio_pin_configure(dev, id, flags);
+}
+
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_GPIODBG
 /*
  * IO information about each GPIO that is configured in the `named_gpios` and
@@ -194,4 +201,5 @@ SHELL_CMD_ARG_REGISTER(gpiodbg, &sub_gpiodbg,
 		       "Commands for power consumption "
 		       "investigation",
 		       NULL, 2, 0);
+
 #endif /* CONFIG_PLATFORM_EC_CONSOLE_CMD_GPIODBG */

@@ -48,6 +48,23 @@ struct unused_pin_config {
  */
 int gpio_config_unused_pins(void) __attribute__((weak));
 
+/**
+ * @brief Set configuration by port and pin of gpio
+ *
+ * @param port GPIO device index
+ * @param pin Pin number.
+ * @param flags Flags for pin configuration: 'GPIO input/output configuration
+ *        flags', 'GPIO pin drive flags', 'GPIO pin bias flags'.
+ *
+ * @return 0 If successful.
+ * @retval -ENOTSUP if any of the configuration options is not supported
+ *                  (unless otherwise directed by flag documentation).
+ * @retval -EINVAL Invalid argument.
+ * @retval -EIO I/O error when accessing an external GPIO chip.
+ * @retval -EWOULDBLOCK if operation would block.
+ */
+int gpio_configure_port_pin(int port, int id, int flags) __attribute__((weak));
+
 #if DT_NODE_EXISTS(DT_PATH(unused_pins))
 /**
  * @brief Get a node from path '/unused-pins' which has a prop 'unused-gpios'.
@@ -107,4 +124,5 @@ int gpio_config_unused_pins(void) __attribute__((weak));
 #else
 #define UNUSED_GPIO_CONFIG_LIST /* Nothing if no 'unused-pins' node */
 #endif /* unused_pins */
+
 #endif /* ZEPHYR_SHIM_INCLUDE_GPIO_GPIO_H_ */
