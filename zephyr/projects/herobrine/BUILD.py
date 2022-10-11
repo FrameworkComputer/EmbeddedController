@@ -107,3 +107,18 @@ register_variant(
     ],
     extra_kconfig_files=[here / "prj_zoglin.conf"],
 )
+
+register_variant(
+    project_name="zombie",
+    extra_dts_overlays=[
+        here / "battery_zombie.dts",
+        here / "gpio_zombie.dts",
+        here / "i2c_zombie.dts",
+        here / "led_pins_zombie.dts",
+        here / "led_policy_zombie.dts",
+        here / "motionsense_zombie.dts",
+        here / "switchcap.dts",
+        here / "usbc_zombie.dts",
+    ],
+    extra_kconfig_files=[here / "prj_zombie.conf"],
+)

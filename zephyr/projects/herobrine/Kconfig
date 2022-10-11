@@ -32,4 +32,10 @@ config BOARD_ZOGLIN
 	  Build Qualcomm Zoglin reference board.  The board uses Nuvoton
 	  NPCX9 chip as the EC.
 
+config BOARD_ZOMBIE
+	bool "Zombie Board"
+	help
+	  Build the Zombie board. The board is based on the Herobrine
+	  reference design.
+
 source "Kconfig.zephyr"
