@@ -36,7 +36,7 @@
 ## Testing
 
 *   [Unit Tests](./unit_tests.md)
-    *   [Porting EC unit tests to Ztest](./zephyr/ztest.md)
+    *   [Zephyr Testing](./zephyr/ztest.md)
 *   [Code Coverage](./code_coverage.md)
 
 ## Updaters
@@ -65,7 +65,7 @@
 *   [Initialization Order](./zephyr/zephyr_init.md)
 *   [Proof-of-Concept-Device Bringup](./zephyr/zephyr_poc_device_bringup.md)
 *   [Shimming](./zephyr/zephyr_shim.md)
-*   [Porting EC unit tests to Ztest](./zephyr/ztest.md)
+*   [Zephyr Testing](./zephyr/ztest.md)
 
 ## Miscellaneous
 

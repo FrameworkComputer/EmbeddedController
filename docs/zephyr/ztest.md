@@ -1,199 +1,213 @@
-# Porting EC unit tests to Ztest
+# Zephyr Testing
 
 [TOC]
 
-This HOWTO shows the process for porting the EC's `base32` unit test to Zephyr's
-Ztest framework. All of the work is done in `src/platform/ec`.
+Before starting, developers should read the following:
+- [Zephyr Test Framework](https://docs.zephyrproject.org/latest/develop/test/ztest.html)
+- [Zephyr Test Runner (Twister)](https://docs.zephyrproject.org/latest/develop/test/twister.html)
 
-See
-[Test Framework - Zephyr Project Documentation](https://docs.zephyrproject.org/1.12.0/subsystems/test/ztest.html#quick-start-unit-testing)
-for details about Zephyr's Ztest framework.
+## Getting help
 
-For examples of porting an EC unit test to the Ztest API, see: *
-[base32](https://crrev.com/c/2492527) and
-[improvements](https://crrev.com/c/2634401) *
-[accel_cal](https://crrev.com/c/2645198)
+Get your tests reviewed by adding [zephyr-test-eng@google.com](mailto:zephyr-test-eng@google.com)
+as a reviewer on your CL.
 
-## Porting Considerations
+Ask a question:
+- If you're a googler, please post using our YAQS label [zephyr-rtos-test](http://yaqs/eng/t/zephyr-rtos-test)
+- External contributors should email to [zephyr-test-eng@google.com](mailto:zephyr-test-eng@google.com)
+  or ask on the public Zephyr discord [#testing](https://discord.com/channels/720317445772017664/733037944922964069)
+  channel for generic Zephyr questions.
 
-Not every EC unit test can be ported to Ztest. This section describes cases that
-are not supported and cases where caveats apply.
+## Where to add tests?
 
-### EC Mocks Are Not Supported
+Tests currently reside in [zephyr/test](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/test/).
+When adding a new test it's possible to either create a new directory which
+includes a `testcase.yaml` or add a new entry to an existing `testcase.yaml` if
+the test is a slight variation of an existing test.
 
-If a test has a `$TEST.mocklist` file associated with the unit test, it is using
-the EC mocking framework, which is unsupported in the Ztest framework. Ztest has
-its own mocking framework which the EC does not support.
+### How to decide where your tests should go?
 
-### Multiple Task Caveats
+If you're adding a new compilational unit, check your dependencies. Is this unit
+tied to an existing Kconfig? If so, it's possible that another test is already
+enabling it and linking your `.c` file. It's probably worth your time to simply
+add a new test suite to that existing test binary, or at the very least,
+creating a variant of the binary by adding a new entry in the `testcase.yaml`
+file.
 
-The EC unit test framework starts a single task to call `run_test`, and this
-task will then call the functions for the various test cases. Some unit tests
-have multiple threads of execution, which is enabled by a `$TEST.tasklist` file
-associated with the unit test. The test runner task has a task ID of
-`TASK_ID_TEST_RUNNER`, which can be used as an argument to any of the task
-functions. See for example the
-[`charge_ramp` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/test/charge_ramp.c#81)
-and the
-[`host_command` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/test/host_command.c#32)
+If this doesn't work, it's possible that you might need to create a new test
+from scratch. First, decide if this will be an integration test or a unit test.
+Integration tests will build the full system (see below) and thus are sometimes
+easier to set up (since they look and feel like an application). For the same
+reason that makes them easier to set up, the lack of mocks can make things more
+difficult when trying to force execution down a specific code path.
 
-When a unit test is ported to Ztest, `test_main` doesn't have a thread ID, so
-`TASK_ID_TEST_RUNNER` is undefined. `charge_ramp` and `host_command` cannot be
-ported at this time. `test_main` also cannot call any of the task functions that
-must be called from a task, such as `task_wake`; these functions can pend the
-calling task, but since `test_main` doesn't have a thread ID, the pend will
-fail. See the
-[`mutex` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/test/mutex.c#116)
-for an example.
+In the case of integration tests, any test under `zephyr/test` will serve as a
+good example. Alternatively, an example of a unit test can be found under
+[common/spi/flash_reg](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/common/spi/flash_reg/).
 
-## Determine source files being tested
+## The structure of the `testcase.yaml`
 
-Determine which C files the unit test requires by finding the test in
-`test/test_config.h`:
+The top level `testcase.yaml` uses the `test:` block to define the attributes
+for each test case. The optional `common:` block uses the same attributes as the
+test cases, but the attributes are applied to all test cases in the file. See
+[here](https://docs.zephyrproject.org/latest/develop/test/twister.html#test-cases)
+for more details.
 
+Some common attributes include:
+- `extra_configs` which is a list of Kconfigs to add to the test.
+- `extra_args` which is a string containing additional arguments to pass to
+  CMake
+
+## Integration tests
+
+Integration tests build the full EC. They require devicetree and all Kconfigs to
+be set appropriately. To build an integration test, simply use the following
+CMakeLists.txt template:
+
+```cmake
+cmake_minimum_required(VERSION 3.20.0)
+find_package(Zephyr REQUIRED HITS $ENV{ZEPHYR_BASE})
+project(<your_test_project_name>)
+target_sources(app
+  PRIVATE
+    src/...
+)
+
+# Add global FFF declaration
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 ```
-#ifdef TEST_BASE32
-#define CONFIG_BASE32
-#endif
-```
 
-Locate the `CONFIG` item(s) in `common/build.mk`:
-
-```
-common-$(CONFIG_BASE32)+=base32.o
-```
-
-So for the `base32` test, we only need to shim `common/base32.c`.
-
-Add the C files to `zephyr/shim/CMakeLists.txt`, in the "Shimmed modules"
-section:
-
-```
-# Shimmed modules
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/base32.c")
-```
-
-Refer to [zephyr: shim in base32.c](https://crrev.com/c/2468631).
-
-## Create test directory
-
-Create a new directory for the unit test in `zephyr/test/base32`.
-
-Create `zephyr/test/base32/prj.conf` with these contents:
+Then, you'll need a default `prj.conf` file to set the default configs. Keep in
+mind that this file will be automatically included in all the tests unless it is
+overridden by the test's `extra_args` so you only want to put things that will
+apply to all tests here. It will look like:
 
 ```
 CONFIG_ZTEST=y
+CONFIG_ZTEST_NEW_API=y
+
+# Enable the shim of the legacy CrosEC (You’ll need both)
+CONFIG_CROS_EC=y
 CONFIG_PLATFORM_EC=y
 ```
 
-Create `zephyr/test/base32/CMakeLists.txt` with these contents:
+## Mocking
 
+We're using [FFF](http://github.com/meekrosoft/fff) for our mocking framework.
+For most use cases these are the things to remember:
+1. Reset your fakes in your test suite's `before` function using `RESET_FAKE()`.
+   If multiple suites need to reset fakes, consider using a
+   [test rule](https://docs.zephyrproject.org/latest/develop/test/ztest.html#test-rules).
+2. You'll need *1* instance of `DEFINE_FFF_GLOBALS;` in your binary. This is
+   done in the sample above via including `test_utils` into your binary as a
+   subdirectory.
+3. Use C++ for better `custom_fake` handling by setting the following before
+    including `fff.h`:
+    ```c
+    #define CUSTOM_FFF_FUNCTION_TEMPLATE(RETURN, FUNCNAME, ...) \
+        std::function<RETURN(__VA_ARGS__)> FUNCNAME
+    ```
+    This will enable the following:
+    ```c
+    ZTEST_F(suite, test_x)
+    {
+      my_function_fake.custom_fake = [fixture]() {
+        /* Capturing lambda has access to 'fixture' */
+      };
+      ...
+    }
+    ```
+
+
+## Running twister
+
+Run all tests under a specific directory:
+
+```shell
+platform/ec$ ./twister -T path/to/my/tests
 ```
-target_sources(app PRIVATE ${PLATFORM_EC}/test/base32.c)
+
+Run a specific test:
+```shell
+platform/ec$ ./twister -s path/to/my/tests/my.test.case
 ```
 
-## Modify test source code
+Run all tests with coverage (get more info on code coverage at
+[Zephyr ztest code coverage](../code_coverage.md#Zephyr_ztest_code_coverage):
+```shell
+platform/ec$ ./twister -p native_posix -p unit_testing --coverage
+```
 
-### Test cases
+Get more info on twister:
+```shell
+platform/ec$ ./twister --help
+```
 
-In the unit test, replace `run_test` with `TEST_MAIN()`. This will allow both
-platform/ec tests and Ztests to share the same entry point.
+Other useful flags:
+- `-i` Print inline logs to STDOUT on error (as well as log file)
+- `-n` No clean (incremental builds)
+- `-c` Clobber, don't create a new `twister-out/` directory
+- `-v` Verbose logging (can use `-vv` or `-vvv` for more logging)
+- `-b` Build only
 
-Change `RUN_TEST` to `ztest_unit_test` and add the `ztest_test_suite` wrapper
-plus the call to `ztest_run_test_suite`.
+## Using assumptions
+
+The `zassume_*` API is used to minimize failures while allowing us to find out
+exactly what's going wrong. When writing a test, only assert on code you're
+testing. Any dependencies should use the `zassume_*` API. If the assumption
+fails, your test will be marked as skipped and Twister will report an error.
+Generally speaking, if an assumption fails, either the test wasn't set up
+correctly, or there should be another test that's testing the dependency.
+
+### Example: when to use an assumption
+
+In a given project layout we might have several components (A, B, C, and D). In
+this scenario, components B, C, and D all depend on A to function. In each test
+for B, C, and D we'll include the following:
 
 ```c
-/*
- * Define the test cases to run. We need to do this twice, once in the format
- * that Ztest uses, and again in the format the the EC test framework uses.
- * If you add a test to one of them, make sure to add it to the other.
- */
-TEST_MAIN()
+static void test_suite_before(void *f)
 {
-    ztest_test_suite(test_base32_lib,
-                     ztest_unit_test(test_crc5),
-                     ztest_unit_test(test_encode),
-                     ztest_unit_test(test_decode));
-    ztest_run_test_suite(test_base32_lib);
+  struct my_suite_fixture *fixture = f;
+
+  zassume_ok(f->a->init(), "Failed to initialize A, see test suite 'a_init'");
 }
 ```
 
-Each function that is called by `ztest_unit_test` needs to be declared using
-`DECLARE_EC_TEST`. Keep the `return EC_SUCCESS;` at the end of the test
-function. Note that for the EC build, `TEST_MAIN` will call `test_reset` before
-running the test cases, and `test_print_result` after.
+The above will call A's init function and assume that it returned 0 (status OK).
+If this assumption fails, then B, C, and D will all be marked as skipped along
+with a log message telling us to look at the test suite 'a_init'.
 
-### Assert macros
+Key takeaways:
+1. If it's code that you depend on (module/library/logic), use assume. It's not
+   what you're testing, you shouldn't raise false failures.
+2. Document why/where you believe that the logic should have been tested. If we
+   end up skipping this test, we should know where the tests that should have
+   caught the error belong.
 
-Change the `TEST_ASSERT` macros to `zassert` macros. There are plans to automate
-this process, but for now, it's a manual process involving some intelligent
-find-and-replace.
+## Debugging
 
-*   `TEST_ASSERT(n)` to `zassert_true(n, NULL)`
-*   `TEST_EQ(a, b, fmt)` to `zassert_equal(a, b, fmt ## ", " ## fmt, a, b)`
-    *   e.g. `TEST_EQ(a, b, "%d")` becomes `zassert_equal(a, b, "%d, %d", a, b)`
-*   `TEST_NE(a, b, fmt)` to `zassert_not_equal(a, b, fmt ## ", " ## fmt, a, b)`
-*   `TEST_LT(a, b, fmt)` to `zassert_true(a < b, fmt ## ", " ## fmt, a, b)`
-*   `TEST_LE(a, b, fmt)` to `zassert_true(a <= b, fmt ## ", " ## fmt, a, b)`
-*   `TEST_GT(a, b, fmt)` to `zassert_true(a > b, fmt ## ", " ## fmt, a, b)`
-*   `TEST_GE(a, b, fmt)` tp `zassert_true(a >= b, fmt ## ", " ## fmt, a, b)`
-*   `TEST_BITS_SET(a, bits)` to `zassert_true(a & (int)bits == (int)bits, "%u,
-    %u", a & (int)bits, (int)bits)`
-*   `TEST_BITS_CLEARED(a, bits)` to `zassert_true(a & (int)bits == 0, "%u, 0", a
-    & (int)bits)`
-*   `TEST_ASSERT_ARRAY_EQ(s, d, n)` to `zassert_mem_equal(s, d, b, NULL)`
-*   `TEST_NEAR(a, b, epsilon, fmt)` to `zassert_within(a, b, epsilon, fmt, a)`
-    *   Currently, every usage of `TEST_NEAR` involves floating point values
-*   `TEST_ASSERT_ABS_LESS(n, t)` to `zassert_true(abs(n) < t, "%d, %d", n, t)`
-    *   Currently, every usage of `TEST_ASSERT_ANS_LESS` involves signed
-        integers.
+If the test targets `native_posix` or `unit_testins` platforms, you can run it
+through your choice of debugger (lldb is provided in the chroot). Additionally,
+it's possible to run only a subset of the tests via:
 
-There isn't a good replacement for `TEST_ASSERT_MEMSET(d, c, n)`, but it is only
-used in two tests, `printf.c` and `utils.c`. If you need this test, you'll need
-to code up a loop over the `n` bytes starting at `d`, and `zassert_equal` that
-each byte is equal to `c`.
-
-Also note that some tests use constructs like `TEST_ASSERT(var == const)`, which
-would have been better write as `TEST_EQ(var, const)`. These should be rewritten
-to use `zassert_equal`.
-
-Refer to
-[test: Allow EC unit test to use Ztest API](https://crrev.com/c/2492527) for the
-changes to the base32.c source code.
-
-### Tasklist
-
-For any test that has a corresponding `${TESTNAME}.tasklist`, add the file
-`shimmed_test_tasks.h` in the zephyr test directory, and in that file,
-`#include` the tasklist file. See [accel_cal](https://crrev.com/c/2645198) for
-an example.
-
-Add `CONFIG_HAS_TEST_TASKS=y` to the `prj.conf` file, as well as the appropriate
-`CONFIG_PLATFORM_EC` defines to include or exclude code that the unit under test
-uses.
-
-## Build and run
-
-Use `zmake` to build and run the test:
-
+```shell
+$ ./twister-out/native_posix/zephyr/test/.../zephyr/zephyr.exe -list
+# List of all tests in the binary in the format of <suite_name:test_name>
+$ ./twister-out/native_posix/zephyr/test/.../zephyr/zephyr.exe -test=suite0:*,suite1:test0
+# Runs all tests under suite0 and test0 from suite1
+$ lldb ./twister-out/unit_testing/.../testbinary
+# Starts lldb for the test binary
 ```
-(cr) $ zmake -l DEBUG test test-base32
-...
-UART_0 connected to pseudotty: /dev/pts/1
-*** Booting Zephyr OS build zephyr-v2.4.0-1-g63b2330a85cd  ***
-Running test suite test_base32_lib
-===================================================================
-START - test_crc5
- PASS - test_crc5
-===================================================================
-START - test_encode
- PASS - test_encode
-===================================================================
-START - test_decode
- PASS - test_decode
-===================================================================
-Test suite test_base32_lib succeeded
-===================================================================
-PROJECT EXECUTION SUCCESSFUL
-(cr) $
-```
+
+## Deflaking
+
+zTest allows deflaking tests via shuffling. To enable this feature, simply turn
+on `CONFIG_ZTEST_SHUFFLE=y`. Your test binary's test suites and test order will
+be random as well as run multiple times. To fine-tune the execution:
+- Set `CONFIG_ZTEST_SHUFFLE_SUITE_REPEAT_COUNT` to an `int` controlling how many
+  times the test suites will be shuffled and run.
+- Set `CONFIG_ZTEST_SHUFFLE_TEST_REPEAT_COUNT` to an `int` controlling how many
+  times the individual tests will be shuffled and run (per suite run).
+
+Note that the total number of times that tests will run is the result of
+multiplying those two Kconfig values.
