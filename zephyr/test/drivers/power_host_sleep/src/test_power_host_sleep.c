@@ -74,5 +74,33 @@ ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__bad_event)
 	zassert_equal(r.resume_response.sleep_transitions, 0);
 }
 
+ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__s3_suspend)
+{
+	struct ec_params_host_sleep_event_v1 p = {
+		.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND,
+	};
+	struct ec_response_host_sleep_event_v1 r;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, 1, r, p);
+
+	/* Set m/lsb of uint16_t to check for type coercion errors */
+	p.suspend_params.sleep_timeout_ms = BIT(15) + 1;
+
+	power_chipset_handle_host_sleep_event_fake.custom_fake =
+		_test_power_chipset_handle_host_sleep_event;
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, 0);
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 1);
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
+		      p.sleep_event);
+
+	/*
+	 * Verify sleep timeout propagated to chip-specific handler to use.
+	 */
+	zassert_equal(test_saved_context.sleep_timeout_ms,
+		      p.suspend_params.sleep_timeout_ms);
+}
+
 ZTEST_SUITE(power_host_sleep, drivers_predicate_post_main, NULL,
 	    power_host_sleep_before_after, power_host_sleep_before_after, NULL);
