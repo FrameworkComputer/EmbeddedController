@@ -154,6 +154,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_USB_MUX_AP_CONTROL
 		| EC_FEATURE_MASK_1(EC_FEATURE_TYPEC_AP_MUX_SET)
 #endif
+#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
+		| EC_FEATURE_MASK_1(EC_FEATURE_TYPEC_AP_VDM_SEND)
+#endif
 		;
 	return board_override_feature_flags1(result);
 }

@@ -1579,6 +1579,10 @@ enum ec_feature_code {
 	 * The EC supports the AP directing mux sets for the board.
 	 */
 	EC_FEATURE_TYPEC_AP_MUX_SET = 45,
+	/*
+	 * The EC supports the AP composing VDMs for us to send.
+	 */
+	EC_FEATURE_TYPEC_AP_VDM_SEND = 46,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
