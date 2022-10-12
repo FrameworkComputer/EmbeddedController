@@ -134,5 +134,21 @@ ZTEST_F(usbc_vconn_swap, vconn_swap_before_discovery)
 		      "TCPM did not initiate VCONN Swap after attach");
 }
 
+ZTEST_F(usbc_vconn_swap, vconn_swap_via_host_command)
+{
+	struct ec_response_typec_status status =
+		host_cmd_typec_status(TEST_PORT);
+
+	zassume_equal(status.vconn_role, PD_ROLE_VCONN_SRC,
+		      "TCPM did not initiate VCONN Swap after attach");
+
+	host_cmd_usb_pd_control(TEST_PORT, USB_PD_CTRL_SWAP_VCONN);
+	k_sleep(K_SECONDS(1));
+
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal(status.vconn_role, PD_ROLE_VCONN_OFF,
+		      "TCPM did not initiate VCONN Swap after host command");
+}
+
 ZTEST_SUITE(usbc_vconn_swap, drivers_predicate_post_main, usbc_vconn_swap_setup,
 	    usbc_vconn_swap_before, usbc_vconn_swap_after, NULL);
