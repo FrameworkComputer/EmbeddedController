@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_TASK_H
 #define __CROS_EC_TASK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "atomic_t.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -466,5 +470,9 @@ struct irq_def {
 #endif /* !defined(CONFIG_DFU_BOOTMANAGER_MAIN) */
 #endif /* CONFIG_COMMON_RUNTIME */
 #endif /* !CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TASK_H */
