@@ -40,6 +40,15 @@ static void ap_mux_control_after(void *data)
 ZTEST_SUITE(ap_mux_control, drivers_predicate_post_main, NULL,
 	    ap_mux_control_before, ap_mux_control_after, NULL);
 
+ZTEST(ap_mux_control, test_feature_present)
+{
+	struct ec_response_get_features feat = host_cmd_get_features();
+
+	zassert_true(feat.flags[1] &
+			     EC_FEATURE_MASK_1(EC_FEATURE_TYPEC_AP_MUX_SET),
+		     "Failed to see feature present");
+}
+
 ZTEST(ap_mux_control, test_set_muxes)
 {
 	struct ec_response_typec_status status;
