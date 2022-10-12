@@ -46,6 +46,16 @@ enum ps8xxx_emul_port {
 	PS8XXX_EMUL_PORT_INVAL,
 };
 
+/**
+ * Register ID to distinguish between the PS8815-A2 and PS8745-A2
+ * 0: Indicates this is an 8815-A2 chip
+ * 1: Indicates this is an 8745-A2 chip
+ */
+enum ps8xxx_regid {
+	PS8815_REG_ID,
+	PS8745_REG_ID,
+};
+
 /* For now all devices supported by this emulator has the same FW rev reg */
 #define PS8XXX_REG_FW_REV 0x82
 
@@ -78,6 +88,15 @@ const struct emul *ps8xxx_emul_get_tcpci(const struct emul *emul);
  * @param chip_rev Value to be set
  */
 void ps8xxx_emul_set_chip_rev(const struct emul *emul, uint8_t chip_rev);
+
+/**
+ * @brief Set value of REG_ID used to distinguish between the
+ *	  PS8815-A2 and PS8745-A2
+ *
+ * @param emul Pointer to PS8xxx emulator
+ * @param reg_id Value to be set
+ */
+void ps8xxx_emul_set_reg_id(const struct emul *emul, enum ps8xxx_regid reg_id);
 
 /**
  * @brief Set value of HW revision register on PS8815
