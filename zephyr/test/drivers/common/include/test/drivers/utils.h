@@ -104,6 +104,24 @@ uint8_t acpi_read(uint8_t acpi_addr);
 void acpi_write(uint8_t acpi_addr, uint8_t write_byte);
 
 /**
+ * Run the host command to gather our EC feature flags.
+ *
+ * This function assumes a successful host command processing and will make a
+ * call to the zassume_* API.  A failure here will abort the calling test.
+ *
+ * @return The result of the host command
+ */
+static inline struct ec_response_get_features host_cmd_get_features(void)
+{
+	struct ec_response_get_features response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_FEATURES, 0, response);
+
+	zassume_ok(host_command_process(&args), "Failed to get features");
+	return response;
+}
+
+/**
  * Run the host command to get the charge state for a given charger number.
  *
  * This function assumes a successful host command processing and will make a
