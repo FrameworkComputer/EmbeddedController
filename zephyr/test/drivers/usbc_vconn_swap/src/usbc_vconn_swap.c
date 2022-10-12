@@ -37,6 +37,10 @@ struct usbc_vconn_swap_fixture {
 	struct common_fixture common;
 };
 
+struct usbc_vconn_swap_not_supported_fixture {
+	struct common_fixture common;
+};
+
 static void connect_partner_to_port(const struct emul *tcpc_emul,
 				    const struct emul *charger_emul,
 				    struct tcpci_partner_data *partner_emul,
@@ -92,6 +96,15 @@ static void *usbc_vconn_swap_setup(void)
 	return common_setup();
 }
 
+static void *usbc_vconn_swap_not_supported_setup(void)
+{
+	struct usbc_vconn_swap_fixture *fixture = common_setup();
+
+	/* The partner will respond to VCONN_Swap with Not_Supported. */
+	tcpci_partner_set_vconn_support(&fixture->common.partner, false);
+	return fixture;
+}
+
 static void common_before(struct common_fixture *fixture)
 {
 	/* Set chipset to ON, this will set TCPM to DRP */
@@ -112,6 +125,13 @@ static void usbc_vconn_swap_before(void *data)
 	common_before(&outer->common);
 }
 
+static void usbc_vconn_swap_not_supported_before(void *data)
+{
+	struct usbc_vconn_swap_not_supported_fixture *outer = data;
+
+	common_before(&outer->common);
+}
+
 static void common_after(struct common_fixture *fixture)
 {
 	disconnect_partner_from_port(fixture->tcpci_emul,
@@ -121,6 +141,13 @@ static void common_after(struct common_fixture *fixture)
 static void usbc_vconn_swap_after(void *data)
 {
 	struct usbc_vconn_swap_fixture *outer = data;
+
+	common_after(&outer->common);
+}
+
+static void usbc_vconn_swap_not_supported_after(void *data)
+{
+	struct usbc_vconn_swap_not_supported_fixture *outer = data;
 
 	common_after(&outer->common);
 }
@@ -152,3 +179,17 @@ ZTEST_F(usbc_vconn_swap, vconn_swap_via_host_command)
 
 ZTEST_SUITE(usbc_vconn_swap, drivers_predicate_post_main, usbc_vconn_swap_setup,
 	    usbc_vconn_swap_before, usbc_vconn_swap_after, NULL);
+
+ZTEST_F(usbc_vconn_swap_not_supported, vconn_swap_force_vconn)
+{
+	struct ec_response_typec_status status =
+		host_cmd_typec_status(TEST_PORT);
+
+	zassert_equal(status.vconn_role, PD_ROLE_VCONN_SRC,
+		      "TCPM did not initiate VCONN Swap after attach");
+}
+
+ZTEST_SUITE(usbc_vconn_swap_not_supported, drivers_predicate_post_main,
+	    usbc_vconn_swap_not_supported_setup,
+	    usbc_vconn_swap_not_supported_before,
+	    usbc_vconn_swap_not_supported_after, NULL);
