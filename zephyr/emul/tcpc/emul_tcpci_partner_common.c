@@ -876,6 +876,12 @@ tcpci_partner_common_vconn_swap_handler(struct tcpci_partner_data *data)
 {
 	tcpci_partner_common_set_ams_ctrl_msg(data, PD_CTRL_VCONN_SWAP);
 
+	if (!data->vconn_supported) {
+		tcpci_partner_send_control_msg(data, PD_CTRL_NOT_SUPPORTED, 0);
+		tcpci_partner_common_clear_ams_ctrl_msg(data);
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	}
+
 	tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
 
 	if (data->vconn_role == PD_ROLE_VCONN_OFF) {
@@ -1521,6 +1527,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->send_goodcrc = true;
 
 	data->rev = rev;
+	data->vconn_supported = true;
 
 	data->ops.transmit = tcpci_partner_transmit_op;
 	data->ops.rx_consumed = tcpci_partner_rx_consumed_op;
@@ -1535,4 +1542,10 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	tcpci_partner_reset_battery_capability_state(data);
 
 	data->cable = NULL;
+}
+
+void tcpci_partner_set_vconn_support(struct tcpci_partner_data *data,
+				     bool vconn_supported)
+{
+	data->vconn_supported = vconn_supported;
 }
