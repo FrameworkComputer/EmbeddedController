@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/sys/atomic.h>
 #include <zephyr/fff.h>
 #include "task_id.h"
 
