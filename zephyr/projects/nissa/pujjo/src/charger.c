@@ -8,10 +8,13 @@
 #include "battery.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
+#include "driver/tcpm/raa489000.h"
+#include "driver/charger/isl923x.h"
 #include "console.h"
 #include "extpower.h"
 #include "usb_pd.h"
 #include "nissa_common.h"
+#include "hooks.h"
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
@@ -52,3 +55,10 @@ __override void board_hibernate(void)
 	LOG_INF("Charger(s) hibernated");
 	cflush();
 }
+
+static void charger_prochot_init(void)
+{
+	isl923x_set_ac_prochot(CHARGER_SOLO, 3500);
+	isl923x_set_dc_prochot(CHARGER_SOLO, 6528);
+}
+DECLARE_HOOK(HOOK_INIT, charger_prochot_init, HOOK_PRIO_POST_FIRST);
