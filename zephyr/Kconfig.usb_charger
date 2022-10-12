@@ -39,9 +39,9 @@ config PLATFORM_EC_BC12_CLIENT_MODE_ONLY_PI3USB9201
 
 config PLATFORM_EC_BC12_DETECT_PI3USB9201
 	bool "Enable support for Pericom PI3USB9201"
-	select PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	default y
-	depends on DT_HAS_PERICOM_PI3USB9201_ENABLED
+	depends on DT_HAS_PERICOM_PI3USB9201_ENABLED || DT_HAS_ZEPHYR_PI3USB9201_EMUL_ENABLED
+	select PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	help
 	  This is a Dual-Role USB Charging-Type Detector. It can operate in
 	  host or client mode. It supports Battery Charging Specification, rev
