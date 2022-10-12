@@ -25,6 +25,8 @@ const struct power_signal_info power_signal_list[] = {};
 
 FAKE_VOID_FUNC(power_chipset_handle_host_sleep_event, enum host_sleep_event,
 	       struct host_sleep_event_context *);
+FAKE_VOID_FUNC(power_chipset_handle_sleep_hang, enum sleep_hang_type);
+FAKE_VOID_FUNC(power_board_handle_sleep_hang, enum sleep_hang_type);
 
 /* Per-Test storage of host_sleep_event_context to validate argument values */
 static struct host_sleep_event_context test_saved_context;
@@ -54,6 +56,8 @@ static void power_host_sleep_before_after(void *test_data)
 	ARG_UNUSED(test_data);
 
 	RESET_FAKE(power_chipset_handle_host_sleep_event);
+	RESET_FAKE(power_chipset_handle_sleep_hang);
+	RESET_FAKE(power_board_handle_sleep_hang);
 	memset(&test_saved_context, 0, sizeof(struct host_sleep_event_context));
 }
 
@@ -139,6 +143,39 @@ ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__s3_resume)
 	 */
 	zassert_equal(r.resume_response.sleep_transitions,
 		      ARBITRARY_SLEEP_TRANSITIONS);
+}
+
+ZTEST(power_host_sleep, test_sleep_start_suspend_custom_timeout)
+{
+	struct host_sleep_event_context context = {
+		/* Arbitrary 5ms timeout */
+		.sleep_timeout_ms = 5,
+	};
+
+	sleep_start_suspend(&context);
+	/*
+	 * Validate that function idempotent wrt calling chip-specific handlers
+	 */
+	sleep_start_suspend(&context);
+
+	/* Verify handlers not called because timeout didn't occur yet */
+	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 0);
+	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 0);
+
+	/* Allow timeout to occur */
+	/*
+	 * TODO(b/253284635): Why can't we just wait 5ms?
+	 */
+	k_sleep(K_SECONDS(1));
+
+	/* Check timeout handlers fired only *once* after multiple calls */
+	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 1);
+	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 1);
+
+	zassert_equal(power_chipset_handle_sleep_hang_fake.arg0_val,
+		      SLEEP_HANG_S0IX_SUSPEND);
+	zassert_equal(power_board_handle_sleep_hang_fake.arg0_val,
+		      SLEEP_HANG_S0IX_SUSPEND);
 }
 
 ZTEST_SUITE(power_host_sleep, drivers_predicate_post_main, NULL,
