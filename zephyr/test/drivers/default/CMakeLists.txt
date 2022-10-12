@@ -36,6 +36,7 @@ target_sources(app PRIVATE
     src/console_cmd/power_button.c
     src/console_cmd/rtc.c
     src/console_cmd/rw.c
+    src/console_cmd/shared_mem.c
     src/console_cmd/sleepmask.c
     src/console_cmd/sleeptimeout.c
     src/console_cmd/sysinfo.c
