@@ -321,6 +321,7 @@ static int si114x_set_chlist(const struct motion_sensor_t *s)
 		reg |= SI114X_PARAM_CHLIST_EN_PS2;
 	case 1:
 		reg |= SI114X_PARAM_CHLIST_EN_PS1;
+	case 0:
 		break;
 	}
 
@@ -416,6 +417,8 @@ static int si114x_initialize(const struct motion_sensor_t *s)
 	case 1:
 		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 				 SI114X_PS_LED21, 0x0f);
+		break;
+	case 0:
 		break;
 	}
 	if (ret != EC_SUCCESS)
