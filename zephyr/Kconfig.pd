@@ -185,6 +185,16 @@ config PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY
 	  the AP to direct the EC to enter a mode. This requires AP software
 	  support.
 
+config PLATFORM_EC_USB_PD_VDM_AP_CONTROL
+	bool "USB Power Delivery VDMs may be sent by the AP"
+	depends on PLATFORM_EC_USB_MUX_AP_CONTROL
+	select PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY
+	help
+	  Allow the AP an interface to send any VDM REQ message it would like
+	  to.  This allows the AP to fully drive the alternate mode entry
+	  process, and requires that the AP also be able to control the USB
+	  muxes in order to sequence that mode entry.
+
 config PLATFORM_EC_USB_PD_ALT_MODE_DFP
 	bool "Downward Facing Port support"
 	default y

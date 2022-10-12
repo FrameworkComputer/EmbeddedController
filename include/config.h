@@ -4490,6 +4490,9 @@
  */
 #undef CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
 
+/* Allow the AP to compose VDMs for us to send */
+#undef CONFIG_USB_PD_VDM_AP_CONTROL
+
 /* Supports DP as UFP-D and requires HPD to DP_ATTEN converter */
 #undef CONFIG_USB_PD_ALT_MODE_UFP_DP
 
