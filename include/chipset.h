@@ -28,6 +28,7 @@
  * approximating this state?" and not "Tell me what state the chipset is in and
  * I'll compare it myself with the state(s) I want."
  */
+#line 31 /* The comment above some how confuses the preprocessor. */
 enum chipset_state_mask {
 	CHIPSET_STATE_HARD_OFF = 0x01, /* Hard off (G3) */
 	CHIPSET_STATE_SOFT_OFF = 0x02, /* Soft off (S5, S4) */
