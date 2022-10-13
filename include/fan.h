@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_FAN_H
 #define __CROS_EC_FAN_H
 
+#include <stdint.h>
+
 #ifdef CONFIG_ZEPHYR
 #ifdef CONFIG_PLATFORM_EC_FAN
 
@@ -40,6 +42,7 @@ struct fan_rpm {
 	int rpm_min;
 	int rpm_start;
 	int rpm_max;
+	uint8_t rpm_deviation;
 };
 
 /* Characteristic of each physical fan */
