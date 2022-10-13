@@ -217,7 +217,6 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 		}, \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
@@ -235,8 +234,6 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 		}, \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
 
 /*
  * TODO(b/203839956): update for vell WWAN module
@@ -254,8 +251,6 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 		}, \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_wwan =
-	THERMAL_WWAN;
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
@@ -274,7 +269,6 @@ __maybe_unused static const struct ec_thermal_config thermal_wwan =
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 		}, \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_ddr = THERMAL_DDR;
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
@@ -293,13 +287,11 @@ __maybe_unused static const struct ec_thermal_config thermal_ddr = THERMAL_DDR;
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 		}, \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_regulator =
-	THERMAL_REGULATOR;
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_SOC] = thermal_cpu,
-	[TEMP_SENSOR_2_CHARGER] = thermal_charger,
-	[TEMP_SENSOR_3_WWAN] = thermal_wwan,
-	[TEMP_SENSOR_4_DDR] = thermal_ddr,
-	[TEMP_SENSOR_5_REGULATOR] = thermal_regulator,
+	[TEMP_SENSOR_1_SOC] = THERMAL_CPU,
+	[TEMP_SENSOR_2_CHARGER] = THERMAL_CHARGER,
+	[TEMP_SENSOR_3_WWAN] = THERMAL_WWAN,
+	[TEMP_SENSOR_4_DDR] = THERMAL_DDR,
+	[TEMP_SENSOR_5_REGULATOR] = THERMAL_REGULATOR,
 };
