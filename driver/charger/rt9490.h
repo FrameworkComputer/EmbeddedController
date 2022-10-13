@@ -248,6 +248,9 @@ struct rt9490_init_setting {
 /* ADD CTRL1 */
 #define RT9490_PWM_1MHZ_EN BIT(4)
 
+/* ADD CTRL2 */
+#define RT9490_SPEC_TA_EN BIT(2)
+
 /* HD_ADD_CTRL 2 */
 #define RT9490_EN_FON_PP_BAT_TRACK BIT(5)
 

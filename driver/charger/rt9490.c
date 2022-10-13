@@ -359,6 +359,10 @@ static int rt9490_init_setting(int chgnum)
 		       RT9490_EN_FON_PP_BAT_TRACK);
 	RETURN_ERROR(rt9490_enable_hidden_mode(chgnum, false));
 
+	/* Disable non-standard TA detection */
+	RETURN_ERROR(rt9490_clr_bit(chgnum, RT9490_REG_ADD_CTRL2,
+				    RT9490_SPEC_TA_EN));
+
 	return EC_SUCCESS;
 }
 
