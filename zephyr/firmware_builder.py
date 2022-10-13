@@ -346,13 +346,32 @@ def test(opts):
         )
 
         test_patterns = [
+            # Exclude tests
             platform_ec / "test/**",
+            platform_ec / "include/tests/**",
+            platform_ec / "private/test/**",
             platform_ec / "private/fingerprint/google-fpalg/mcutest/**",
             zephyr_dir / "test/**",
+            third_party / "zephyr/main/subsys/testsuite/**",
+            # Exclude mocks & emulators
+            platform_ec / "include/mock/**",
+            platform_ec / "common/mock/**",
+            platform_ec / "board/host/**",
+            platform_ec / "chip/host/**",
+            platform_ec / "core/host/**",
             zephyr_dir / "emul/**",
             zephyr_dir / "mock/**",
             third_party / "zephyr/main/subsys/emul/**",
-            third_party / "zephyr/main/subsys/testsuite/**",
+            # Exclude all files ending in _test.[ch] or _emul.[ch]
+            "**/*_test.c",
+            "**/*_test.h",
+            "**/*_emul.c",
+            "**/*_emul.h",
+            # Exclude some special cases that don't match the other patterns
+            platform_ec / "include/test_util.h",
+            platform_ec / "common/test_util.c",
+            zephyr_dir / "shim/src/test_util.c",
+            zephyr_dir / "shim/src/ztest_system.c",
         ]
 
         generated_and_system_patterns = [
