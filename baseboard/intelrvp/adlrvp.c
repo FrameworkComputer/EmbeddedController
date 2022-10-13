@@ -215,25 +215,33 @@ struct usb_mux_chain soc_side_bb_retimer1_usb_mux = {
 
 const struct bb_usb_control bb_controls[] = {
 	[TYPE_C_PORT_0] = {
-		.retimer_rst_gpio = IOEX_USB_C0_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C0_BB_RETIMER_LS_EN,
+		.retimer_rst_gpio = (enum gpio_signal)
+			IOEX_USB_C0_BB_RETIMER_RST,
+		.usb_ls_en_gpio = (enum gpio_signal)
+			IOEX_USB_C0_BB_RETIMER_LS_EN,
 	},
 #if defined(HAS_TASK_PD_C1)
 	[TYPE_C_PORT_1] = {
-		.retimer_rst_gpio = IOEX_USB_C1_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C1_BB_RETIMER_LS_EN,
+		.retimer_rst_gpio = (enum gpio_signal)
+			IOEX_USB_C1_BB_RETIMER_RST,
+		.usb_ls_en_gpio = (enum gpio_signal)
+			IOEX_USB_C1_BB_RETIMER_LS_EN,
 	},
 #endif
 #if defined(HAS_TASK_PD_C2)
 	[TYPE_C_PORT_2] = {
-		.retimer_rst_gpio = IOEX_USB_C2_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C2_BB_RETIMER_LS_EN,
+		.retimer_rst_gpio = (enum gpio_signal)
+			IOEX_USB_C2_BB_RETIMER_RST,
+		.usb_ls_en_gpio = (enum gpio_signal)
+			IOEX_USB_C2_BB_RETIMER_LS_EN,
 	},
 #endif
 #if defined(HAS_TASK_PD_C3)
 	[TYPE_C_PORT_3] = {
-		.retimer_rst_gpio = IOEX_USB_C3_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C3_BB_RETIMER_LS_EN,
+		.retimer_rst_gpio = (enum gpio_signal)
+			IOEX_USB_C3_BB_RETIMER_RST,
+		.usb_ls_en_gpio = (enum gpio_signal)
+			IOEX_USB_C3_BB_RETIMER_LS_EN,
 	},
 #endif
 };
@@ -307,7 +315,9 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 
 	/* Handle retimer's power domain.*/
 	if (enable) {
-		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 1);
+		ioex_set_level((enum ioex_signal)bb_controls[me->usb_port]
+				       .usb_ls_en_gpio,
+			       1);
 
 		/*
 		 * minimum time from VCC to RESET_N de-assertion is 100us
@@ -316,7 +326,9 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * this function.
 		 */
 		msleep(1);
-		ioex_set_level(bb_controls[me->usb_port].retimer_rst_gpio, 1);
+		ioex_set_level((enum ioex_signal)bb_controls[me->usb_port]
+				       .retimer_rst_gpio,
+			       1);
 
 		/*
 		 * Allow 1ms time for the retimer to power up lc_domain
@@ -325,9 +337,13 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		msleep(1);
 
 	} else {
-		ioex_set_level(bb_controls[me->usb_port].retimer_rst_gpio, 0);
+		ioex_set_level((enum ioex_signal)bb_controls[me->usb_port]
+				       .retimer_rst_gpio,
+			       0);
 		msleep(1);
-		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 0);
+		ioex_set_level((enum ioex_signal)bb_controls[me->usb_port]
+				       .usb_ls_en_gpio,
+			       0);
 	}
 	return EC_SUCCESS;
 }
