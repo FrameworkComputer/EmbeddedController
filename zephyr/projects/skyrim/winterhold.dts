@@ -15,16 +15,22 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		soc-pct2075 {
-			temp_host_high = <100>;
-			temp_host_halt = <105>;
-			temp_host_release_high = <80>;
-			temp_host_release_halt = <80>;
-			temp_fan_off = <0>;
-			temp_fan_max = <70>;
+			temp_host_high = <105>;
+			temp_host_halt = <110>;
+			temp_host_release_high = <95>;
+			temp_host_release_halt = <100>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&soc_pct2075>;
 		};
 		amb-pct2075 {
+			temp_host_warn = <50>;
+			temp_host_high = <105>;
+			temp_host_halt = <110>;
+			temp_host_release_warn = <45>;
+			temp_host_release_high = <95>;
+			temp_host_release_halt = <100>;
+			temp_fan_off = <43>;
+			temp_fan_max = <53>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&amb_pct2075>;
 		};
@@ -123,4 +129,33 @@
 		compatible = "cros-ec,usb-mux-chain";
 		usb-muxes = <&amd_fp6_port1 &anx7483_port1>;
 	};
+};
+
+&fan0 {
+	pwms = <&pwm0 0 PWM_KHZ(2) PWM_POLARITY_NORMAL>;
+	rpm_min = <2100>;
+	rpm_start = <2600>;
+	rpm_max = <4800>;
+};
+
+&temp_sensor_charger {
+	temp_host_high = <100>;
+	temp_host_halt = <110>;
+	temp_host_release_high = <90>;
+	temp_host_release_halt = <100>;
+};
+
+&temp_sensor_memory {
+	temp_host_high = <91>;
+	temp_host_halt = <96>;
+	temp_host_release_high = <81>;
+	temp_host_release_halt = <86>;
+};
+
+&temp_sensor_cpu {
+	/delete-property/ temp_host_high;
+	/delete-property/ temp_host_halt;
+	/delete-property/ temp_host_release_high;
+	/delete-property/ temp_fan_off;
+	/delete-property/ temp_fan_max;
 };

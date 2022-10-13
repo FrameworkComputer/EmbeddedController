@@ -41,14 +41,14 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		charger-thermistor {
+		temp_sensor_charger: charger-thermistor {
 			temp_host_high = <100>;
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
 			sensor = <&temp_charger_thermistor>;
 		};
 
-		memory-thermistor {
+		temp_sensor_memory: memory-thermistor {
 			temp_host_high = <100>;
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
@@ -56,7 +56,7 @@
 			sensor = <&temp_memory_thermistor>;
 		};
 
-		cpu {
+		temp_sensor_cpu: cpu {
 			temp_host_high = <100>;
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
