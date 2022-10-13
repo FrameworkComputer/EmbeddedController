@@ -13,6 +13,7 @@
 #include "power.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #define ARBITRARY_SLEEP_TRANSITIONS 1
 
@@ -296,6 +297,16 @@ ZTEST(power_host_sleep, test_sleep_set_notify)
 	k_sleep(K_SECONDS(1));
 
 	zassert_true(_test_host_sleep_hook_called);
+}
+
+ZTEST(power_host_sleep, test_set_get_host_sleep_state)
+{
+	power_set_host_sleep_state(HOST_SLEEP_EVENT_S3_RESUME);
+	zassert_equal(power_get_host_sleep_state(), HOST_SLEEP_EVENT_S3_RESUME);
+
+	power_set_host_sleep_state(HOST_SLEEP_EVENT_S0IX_RESUME);
+	zassert_equal(power_get_host_sleep_state(),
+		      HOST_SLEEP_EVENT_S0IX_RESUME);
 }
 
 ZTEST_SUITE(power_host_sleep, drivers_predicate_post_main, NULL,
