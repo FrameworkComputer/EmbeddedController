@@ -1154,7 +1154,7 @@ static int fusb302_compare_mdac(int port, int mdac)
 	return status0 & TCPC_REG_STATUS0_COMP;
 }
 
-int tcpc_get_vbus_voltage(int port)
+int fusb302_get_vbus_voltage(int port, int *vbus)
 {
 	int mdac = 0, i;
 
@@ -1170,7 +1170,9 @@ int tcpc_get_vbus_voltage(int port)
 			mdac |= BIT(i);
 	}
 
-	return (mdac + 1) * 420;
+	*vbus = (mdac + 1) * 420;
+
+	return EC_SUCCESS;
 }
 
 const struct tcpm_drv fusb302_tcpm_drv = {
@@ -1180,6 +1182,7 @@ const struct tcpm_drv fusb302_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.check_vbus_level = &fusb302_tcpm_check_vbus_level,
 #endif
+	.get_vbus_voltage = &fusb302_get_vbus_voltage,
 	.select_rp_value = &fusb302_tcpm_select_rp_value,
 	.set_cc = &fusb302_tcpm_set_cc,
 	.set_polarity = &fusb302_tcpm_set_polarity,

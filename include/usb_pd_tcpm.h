@@ -644,15 +644,6 @@ int board_tcpc_post_init(int port) __attribute__((weak));
  */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled);
 
-/**
- * Get the VBUS voltage from TCPC
- *
- * @param port Type-C port number
- *
- * @return VBUS voltage in mV.
- */
-int tcpc_get_vbus_voltage(int port);
-
 #ifdef CONFIG_CMD_TCPC_DUMP
 struct tcpc_reg_dump_map {
 	uint8_t addr;

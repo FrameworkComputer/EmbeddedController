@@ -300,6 +300,17 @@ static inline int tcpm_set_src_ctrl(int port, int enable)
 		return EC_ERROR_UNIMPLEMENTED;
 }
 
+static inline int tcpc_get_vbus_voltage(int port)
+{
+	int vbus;
+
+	if (tcpc_config[port].drv->get_vbus_voltage != NULL)
+		tcpc_config[port].drv->get_vbus_voltage(port, &vbus);
+	else
+		return 0;
+	return vbus;
+}
+
 static inline void tcpc_alert(int port)
 {
 	tcpc_config[port].drv->tcpc_alert(port);
