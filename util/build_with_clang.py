@@ -70,7 +70,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "careena",
     "casta",
     "chronicler",
-    # "coachz",
+    "coachz",
     "collis",
     "copano",
     "coral",
