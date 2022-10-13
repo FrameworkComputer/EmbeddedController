@@ -119,7 +119,7 @@ int fan_is_stalled(int ch);
  * even when duty is already in upper/lower bound. Then this action won't work,
  * and fan_status will be marked as FRUSTRATED.
  *
- * For other implementations in chip layer (mchp and mec1322), there is no
+ * For other implementations in chip layer (mchp), there is no
  * changing period. So they don't have CHANGING status.
  * Just return status as LOCKED in normal spinning case, return STOPPED when
  * not spinning, return FRUSTRATED when the related flags (which is read from

@@ -1612,10 +1612,6 @@ function flash_npcx_int_spi() {
 	flash_flashrom
 }
 
-function flash_mec1322() {
-	flash_flashrom
-}
-
 info "Using ${SERVO_TYPE}."
 
 # Only if it is a flash program request, call ec_image.

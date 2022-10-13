@@ -22,7 +22,6 @@
 # * ish       - "
 # * it83xx    - "
 # * lm4       - "
-# * mec1322   - "
 # * max32660  - "
 # * mt_scp    - "
 #
@@ -133,7 +132,6 @@ parse-boards() {
     [ish]="$(boards-with 'CHIP[[:space:]:=]*ish')"
     [it83xx]="$(boards-with 'CHIP[[:space:]:=]*it83xx')"
     [lm4]="$(boards-with 'CHIP[[:space:]:=]*lm4')"
-    [mec1322]="$(boards-with 'CHIP[[:space:]:=]*mec1322')"
     [max32660]="$(boards-with 'CHIP[[:space:]:=]*max32660')"
     [mt_scp]="$(boards-with 'CHIP[[:space:]:=]*mt_scp')"
   )
