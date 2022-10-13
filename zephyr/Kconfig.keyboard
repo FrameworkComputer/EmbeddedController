@@ -2,11 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+CHOSEN_CROS_EC_RAW_KB := cros-ec,raw-kb
+
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Keyboard support"
-	select HAS_TASK_KEYSCAN
-	default n if ARCH_POSIX
 	default y
+	depends on DT_HAS_CROS_KEYSCAN_ENABLED || $(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB))
+	select HAS_TASK_KEYSCAN
 	help
 	  Enable compilation of support for scanning a keyboard and providing
 	  the resulting input to the AP over the host interface. This consists
