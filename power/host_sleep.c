@@ -18,12 +18,15 @@
 /* Track last reported sleep event */
 static enum host_sleep_event host_sleep_state;
 
+/* LCOV_EXCL_START */
+/* Function stub that has no behavior, so ignoring for coverage */
 __overridable void
 power_chipset_handle_host_sleep_event(enum host_sleep_event state,
 				      struct host_sleep_event_context *ctx)
 {
 	/* Default weak implementation -- no action required. */
 }
+/* LCOV_EXCL_STOP */
 
 static enum ec_status
 host_command_host_sleep_event(struct host_cmd_handler_args *args)
@@ -116,16 +119,22 @@ static enum sleep_hang_type timeout_hang_type;
 static void sleep_transition_timeout(void);
 DECLARE_DEFERRED(sleep_transition_timeout);
 
+/* LCOV_EXCL_START */
+/* Function stub that has no behavior, so ignoring for coverage */
 __overridable void power_board_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 	/* Default empty implementation */
 }
+/* LCOV_EXCL_STOP */
 
+/* LCOV_EXCL_START */
+/* Function stub that has no behavior, so ignoring for coverage */
 __overridable void
 power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 	/* Default empty implementation */
 }
+/* LCOV_EXCL_STOP */
 
 static void sleep_increment_transition(void)
 {
