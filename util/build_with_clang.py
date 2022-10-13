@@ -40,6 +40,42 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "stm32f446e-eval",
     "stm32l476g-eval",
     "sweetberry",
+    # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
+    # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    # "burnet",  # overflows flash
+    "c2d2",
+    # "cerise",  # overflows flash
+    # "chocodile_vpdmcu",  # compilation error: b/254710459
+    "coffeecake",
+    # "damu",  # overflows flash
+    "dingdong",
+    "discovery-stm32f072",
+    # "fennel",  # overflows flash
+    "fluffy",
+    "fusb307bgevb",
+    "hammer",
+    "hoho",
+    # "jacuzzi",  # overflows flash
+    # "kakadu",  # overflows flash
+    # "kappa",  # overflows flash
+    # "katsu",  # overflows flash
+    # "kodama",  # overflows flash
+    # "kukui",  # overflows flash
+    # "makomo",  # overflows flash
+    "nucleo-f072rb",
+    "pdeval-stm32f072",
+    "plankton",
+    "prism",
+    "rainier",
+    "scarlet",
+    "servo_micro",
+    # "servo_v4",  # overflows flash
+    "servo_v4p1",
+    # "stern",  # overflows flash
+    "tigertail",
+    "twinkie",
+    # "willow",  # overflows flash
+    "zinger",
     # Boards that use CHIP:=mchp
     # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
     # "adlrvpp_mchp1521",
