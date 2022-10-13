@@ -221,6 +221,7 @@ def main() -> int:
                 failed_boards.append(board)
 
     if len(failed_boards) > 0:
+        failed_boards.sort()
         logging.error(
             "The following boards failed to compile:\n%s",
             "\n".join(failed_boards),
