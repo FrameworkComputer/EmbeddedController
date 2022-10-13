@@ -40,7 +40,7 @@ const struct power_signal_info power_signal_list[] = {
 		.name = "SLP_S0_DEASSERTED",
 	},
 	[X86_SLP_S3_DEASSERTED] = {
-		.gpio = SLP_S3_SIGNAL_L,
+		.gpio = (enum gpio_signal)SLP_S3_SIGNAL_L,
 		.flags = POWER_SIGNAL_ACTIVE_HIGH,
 		.name = "SLP_S3_DEASSERTED",
 	},
@@ -178,8 +178,8 @@ static void dsw_pwrok_pass_thru(void)
 
 	/* Pass-through DSW_PWROK to ICL. */
 	if (dswpwrok_in != gpio_get_level(GPIO_PCH_DSW_PWROK)) {
-		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE) &&
-		    dswpwrok_in) {
+#if defined(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
+		if (dswpwrok_in) {
 			/*
 			 * Once DSW_PWROK is high, reconfigure SLP_S3_L back to
 			 * an input after a short delay.
@@ -189,6 +189,7 @@ static void dsw_pwrok_pass_thru(void)
 			gpio_reset(SLP_S3_SIGNAL_L);
 			power_signal_enable_interrupt(SLP_S3_SIGNAL_L);
 		}
+#endif
 
 		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
 		/*
@@ -256,16 +257,16 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3S5:
-		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)) {
-			/*
-			 * Prevent glitches on the SLP_S3_L and PCH_PWROK
-			 * signals while when the PP3300_A rail is turned on.
-			 * Drive SLP_S3_L from the EC until DSW_PWROK is high.
-			 */
-			CPRINTS("Drive SLP_S3_L low during PP3300_A rampup");
-			power_signal_disable_interrupt(SLP_S3_SIGNAL_L);
-			gpio_set_flags(SLP_S3_SIGNAL_L, GPIO_ODR_LOW);
-		}
+#if defined(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
+		/*
+		 * Prevent glitches on the SLP_S3_L and PCH_PWROK
+		 * signals while when the PP3300_A rail is turned on.
+		 * Drive SLP_S3_L from the EC until DSW_PWROK is high.
+		 */
+		CPRINTS("Drive SLP_S3_L low during PP3300_A rampup");
+		power_signal_disable_interrupt(SLP_S3_SIGNAL_L);
+		gpio_set_flags(SLP_S3_SIGNAL_L, GPIO_ODR_LOW);
+#endif
 
 		/* Default behavior - turn on PP5000 rail first */
 		if (!IS_ENABLED(CONFIG_CHIPSET_PP3300_RAIL_FIRST))
