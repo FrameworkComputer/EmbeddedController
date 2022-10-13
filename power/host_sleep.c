@@ -85,7 +85,7 @@ void power_set_host_sleep_state(enum host_sleep_event state)
 }
 
 /* Flag to notify listeners about suspend/resume events. */
-enum sleep_notify_type sleep_notify = SLEEP_NOTIFY_NONE;
+static enum sleep_notify_type sleep_notify = SLEEP_NOTIFY_NONE;
 
 /*
  * Note: the following sleep_ functions do not get called in the S3 path on
@@ -96,7 +96,7 @@ void sleep_set_notify(enum sleep_notify_type notify)
 	sleep_notify = notify;
 }
 
-void sleep_notify_transition(int check_state, int hook_id)
+void sleep_notify_transition(enum sleep_notify_type check_state, int hook_id)
 {
 	if (sleep_notify != check_state)
 		return;

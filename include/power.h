@@ -304,12 +304,12 @@ enum sleep_notify_type {
 void sleep_set_notify(enum sleep_notify_type notify);
 
 /**
- * Notify the given hook is the sleep notify is matched.
+ * Notify the given hook if the sleep notify is matched.
  *
  * @param check_state: The sleep notify to check.
  * @param hook_id: The hook to notify.
  */
-void sleep_notify_transition(int check_state, int hook_id);
+void sleep_notify_transition(enum sleep_notify_type check_state, int hook_id);
 
 /**
  * Called during the suspend transition, to increase the transition counter.
