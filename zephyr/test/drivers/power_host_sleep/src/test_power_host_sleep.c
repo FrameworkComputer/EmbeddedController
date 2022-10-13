@@ -200,5 +200,20 @@ ZTEST(power_host_sleep, test_sleep_start_suspend_default_timeout)
 		      SLEEP_HANG_S0IX_SUSPEND);
 }
 
+ZTEST(power_host_sleep, test_sleep_start_suspend_infinite_timeout)
+{
+	struct host_sleep_event_context context = {
+		.sleep_timeout_ms = EC_HOST_SLEEP_TIMEOUT_INFINITE,
+	};
+
+	sleep_start_suspend(&context);
+
+	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
+
+	/* Verify that default handlers were never called */
+	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 0);
+	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 0);
+}
+
 ZTEST_SUITE(power_host_sleep, drivers_predicate_post_main, NULL,
 	    power_host_sleep_before_after, power_host_sleep_before_after, NULL);
