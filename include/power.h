@@ -363,6 +363,10 @@ power_board_handle_sleep_hang(enum sleep_hang_type hang_type);
  * power_chipset_handle_sleep_hang() and power_board_handle_sleep_hang() will
  * be called when a sleep hang is detected.
  *
+ * If called with a sleep_timeout_ms of EC_HOST_SLEEP_TIMEOUT_DEFAULT, the
+ * timeout will be picked based on CONFIG_SLEEP_TIMEOUT_MS or whatever is set as
+ * the default timeout by the sleeptimeout console command.
+ *
  * @param ctx Possible sleep parameters and return values, depending on state.
  */
 void sleep_start_suspend(struct host_sleep_event_context *ctx);

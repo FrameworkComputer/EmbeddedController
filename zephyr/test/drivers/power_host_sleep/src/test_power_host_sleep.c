@@ -178,5 +178,27 @@ ZTEST(power_host_sleep, test_sleep_start_suspend_custom_timeout)
 		      SLEEP_HANG_S0IX_SUSPEND);
 }
 
+ZTEST(power_host_sleep, test_sleep_start_suspend_default_timeout)
+{
+	struct host_sleep_event_context context = {
+		.sleep_timeout_ms = EC_HOST_SLEEP_TIMEOUT_DEFAULT,
+	};
+
+	sleep_start_suspend(&context);
+
+	/*
+	 * TODO(b/253284635): Why can't we just wait CONFIG_SLEEP_TIMEOUT_MS?
+	 */
+	k_msleep(CONFIG_SLEEP_TIMEOUT_MS * 2);
+
+	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 1);
+	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 1);
+
+	zassert_equal(power_chipset_handle_sleep_hang_fake.arg0_val,
+		      SLEEP_HANG_S0IX_SUSPEND);
+	zassert_equal(power_board_handle_sleep_hang_fake.arg0_val,
+		      SLEEP_HANG_S0IX_SUSPEND);
+}
+
 ZTEST_SUITE(power_host_sleep, drivers_predicate_post_main, NULL,
 	    power_host_sleep_before_after, power_host_sleep_before_after, NULL);

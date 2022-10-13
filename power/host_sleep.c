@@ -108,6 +108,7 @@ void sleep_notify_transition(int check_state, int hook_id)
 #ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
 static uint16_t sleep_signal_timeout;
+/* Non-const because it may be set by sleeptimeout console cmd */
 static uint16_t host_sleep_timeout_default = CONFIG_SLEEP_TIMEOUT_MS;
 static uint32_t sleep_signal_transitions;
 static enum sleep_hang_type timeout_hang_type;
@@ -175,7 +176,7 @@ void sleep_start_suspend(struct host_sleep_event_context *ctx)
 
 	sleep_signal_transitions = 0;
 
-	/* Use zero internally to indicate no timeout. */
+	/* Use default to indicate no timeout given. */
 	if (timeout == EC_HOST_SLEEP_TIMEOUT_DEFAULT) {
 		timeout = host_sleep_timeout_default;
 	}
