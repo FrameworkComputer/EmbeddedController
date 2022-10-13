@@ -112,7 +112,8 @@ HOSTGCOV=$(CURDIR)/util/llvm-gcov.sh
 endif
 
 C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
-COMMON_WARN = -Wall -Wundef -Werror-implicit-function-declaration \
+C_WARN += -Werror-implicit-function-declaration
+COMMON_WARN = -Wall -Wundef \
 	-Wno-trigraphs -Wno-format-security -Wno-address-of-packed-member \
 	-fno-common -fno-strict-aliasing -fno-strict-overflow
 # See https://www.chromium.org/chromium-os/build/c-exception-support
