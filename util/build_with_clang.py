@@ -161,7 +161,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "treeya",
     "trembyle",
     "trogdor",
-    # "vell",
+    "vell",
     "vilboz",
     "voema",
     "volet",
