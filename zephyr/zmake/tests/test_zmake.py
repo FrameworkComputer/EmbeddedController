@@ -25,8 +25,6 @@ OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 class FakeProject:
     """A fake project which requests two builds and does no packing"""
 
-    # pylint: disable=too-few-public-methods
-
     def __init__(self):
         self.packer = unittest.mock.Mock()
         self.packer.pack_firmware = unittest.mock.Mock(return_value=[])

@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 
-class Line(object):
+class Line:
     """Class for each changed line in diff output.
 
     Attributes:
@@ -34,7 +34,7 @@ class Line(object):
         self.line_type = line_type
 
 
-class Hunk(object):
+class Hunk:
     """Class for a git diff hunk.
 
     Attributes:
@@ -106,29 +106,29 @@ def obtain_config_options_in_use():
                 or dirnames[i].startswith("twister-out")
             ):
                 del dirnames[i]
-        for f in filenames:
+        for file in filenames:
             # Ignore hidden files.
-            if f.startswith("."):
+            if file.startswith("."):
                 continue
             # Only consider C source, assembler, and Make-style files.
             if (
-                os.path.splitext(f)[1] in (".c", ".h", ".inc", ".S", ".mk")
-                or "Makefile" in f
+                os.path.splitext(file)[1] in (".c", ".h", ".inc", ".S", ".mk")
+                or "Makefile" in file
             ):
-                file_list.append(os.path.join(dirpath, f))
+                file_list.append(os.path.join(dirpath, file))
 
     # Search through each file and build a set of the CONFIG_* options being
     # used.
 
-    for f in file_list:
-        if CONFIG_FILE in f:
+    for file in file_list:
+        if CONFIG_FILE in file:
             continue
-        with open(f, "r") as cur_file:
+        with open(file, "r") as cur_file:
             for line in cur_file:
                 match = config_option_re.findall(line)
                 if match:
                     for option in match:
-                        if not in_comment(f, line, option):
+                        if not in_comment(file, line, option):
                             if option not in options_in_use:
                                 options_in_use.add(option)
 
@@ -171,12 +171,12 @@ def print_missing_config_options(hunks, config_options):
     options_in_use = obtain_config_options_in_use()
 
     # Check each hunk's line for a missing config option.
-    for h in hunks:
-        for l in h.lines:
+    for hunk in hunks:
+        for line in hunk.lines:
             # Check for the existence of a CONFIG_* in the line.
             match = filter(
                 lambda opt: opt in ALLOWLIST_CONFIGS,
-                config_option_re.findall(l.string),
+                config_option_re.findall(line.string),
             )
             if not match:
                 continue
@@ -186,13 +186,13 @@ def print_missing_config_options(hunks, config_options):
             violations = set()
 
             for option in match:
-                if not in_comment(h.filename, l.string, option):
+                if not in_comment(hunk.filename, line.string, option):
                     # Since the CONFIG_* option is not within a comment, we've found a
                     # violation.  We now need to determine if this line is a deletion or
                     # not.  For deletions, we will need to verify if this CONFIG_* option
                     # is no longer being used in the entire repo.
 
-                    if l.line_type == "-":
+                    if line.line_type == "-":
                         if (
                             option not in options_in_use
                             and option in config_options
@@ -218,7 +218,12 @@ def print_missing_config_options(hunks, config_options):
                     # Print the misssing config option.
                     print(
                         "> %-*s %s:%s"
-                        % (max_option_length, option, h.filename, l.line_num)
+                        % (
+                            max_option_length,
+                            option,
+                            hunk.filename,
+                            line.line_num,
+                        )
                     )
 
     if deprecated_options:
@@ -367,7 +372,7 @@ def get_hunks():
                 current_state = state.HUNK
                 hunks.append(Hunk(filename, hunk_lines))
                 continue
-            elif new_file:
+            if new_file:
                 current_state = state.NEW_FILE
                 hunks.append(Hunk(filename, hunk_lines))
                 continue
