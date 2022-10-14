@@ -99,10 +99,13 @@ def obtain_config_options_in_use():
     options_in_use = set()
     for (dirpath, dirnames, filenames) in os.walk(cwd, topdown=True):
         # Ignore the build and private directories (taken from .gitignore)
-        if "build" in dirnames:
-            dirnames.remove("build")
-        if "private" in dirnames:
-            dirnames.remove("private")
+        for i in range(len(dirnames) - 1, -1, -1):
+            if (
+                dirnames[i] == "build"
+                or dirnames[i] == "private"
+                or dirnames[i].startswith("twister-out")
+            ):
+                del dirnames[i]
         for f in filenames:
             # Ignore hidden files.
             if f.startswith("."):
