@@ -154,8 +154,15 @@ static void nereid_subboard_config(void)
 	 * if this port is not present. VBUS enable must be configured if
 	 * needed and is controlled by the usba-port-enable-pins driver.
 	 */
-	if (sb == NISSA_SB_C_A || sb == NISSA_SB_HDMI_A) {
-		/* Configure VBUS enable, default off */
+	if (sb == NISSA_SB_C_A || sb == NISSA_SB_HDMI_A ||
+	    sb == NISSA_SB_NONE) {
+		/*
+		 * Configure VBUS enable, default off.
+		 * SB_NONE indicates missing fw_config; it's safe to enable VBUS
+		 * control in this case since all that will happen is we turn
+		 * off power to LTE, and it's useful to allow USB-A to work in
+		 * such a configuration.
+		 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 				      GPIO_OUTPUT_LOW);
 	} else {
