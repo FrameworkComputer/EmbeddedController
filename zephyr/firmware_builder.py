@@ -350,7 +350,7 @@ def test(opts):
             platform_ec / "test/**",
             platform_ec / "include/tests/**",
             platform_ec / "private/test/**",
-            platform_ec / "private/fingerprint/google-fpalg/mcutest/**",
+            platform_ec / "private/fingerprint/*/mcutest/**",
             zephyr_dir / "test/**",
             third_party / "zephyr/main/subsys/testsuite/**",
             # Exclude mocks & emulators

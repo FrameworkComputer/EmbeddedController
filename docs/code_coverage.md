@@ -35,7 +35,7 @@ lcov -o build/coverage/${BOARD}_merged.info --rc lcov_branch_coverage=1 \
 lcov -o build/coverage/${BOARD}_filtered.info --rc lcov_branch_coverage=1 \
   -r build/coverage/${BOARD}_merged.info ${PWD}'/third_party/**' \
   ${PWD}'/build/**' '/usr/include/**' '/usr/lib/**' '${PWD}/test/**' \
-  ${PWD}'/private/fingerprint/google-fpalg/mcutest/**'
+  ${PWD}'/private/fingerprint/*/mcutest/**'
 # Restrict to only files used by the board
 grep "SF:" "build/coverage/initial-${BOARD}.info" | sort -u | \
       sed -e 's|^SF:||' | xargs lcov --rc lcov_branch_coverage=1 \
