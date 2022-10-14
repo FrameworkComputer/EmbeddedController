@@ -334,25 +334,35 @@ flash_fp_mcu_stm32() {
 
   if [[ "${transport}" == "UART" ]]; then
     if ! deviceid="$(get_uartid)"; then
+      # Failure to get Device ID when transport is UART is not critical.
+      # Cros-ec-uart driver was built on top of serial bus. Serial bus is
+      # created on top of UART driver (in our case it's dw-apb-uart).
+      # To get /dev/ttyS1 device, we need to unbind cros-ec-uart and rebind
+      # dw-apb-uart driver which creates ttyS1, but destroyes the serial bus.
+      # If we can't get the Device ID, it means that dw-apb-uart was rebound
+      # previously.
       echo "Unable to find FP sensor UART device: ${CROS_EC_UART_MODALIAS_STR}"
-      return "${EXIT_PRECONDITION}"
     fi
   else
-
     if ! deviceid="$(get_spiid)"; then
+      # Failure to get Device ID when transport is SPI is critical.
+      # It means that the FPMCU is missing on the device or it's not defined
+      # in ACPI properly.
       echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
       return "${EXIT_PRECONDITION}"
     fi
   fi
 
-  echo "Flashing ${transport} device ID: ${deviceid}"
+  # Unbind cros-ec driver
+  if [[ ! -z "${deviceid}" ]]; then
+    klog "Unbinding cros-ec driver"
+    if [[ "${transport}" == "UART" ]]; then
+      echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
+    else
+      echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/unbind
+    fi
 
-  # Remove cros_fp if present
-  klog "Unbinding cros-ec driver"
-  if [[ "${transport}" == "UART" ]]; then
-    echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
-  else
-    echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/unbind
+    echo "Flashing ${transport} device ID: ${deviceid}"
   fi
 
   # Configure the MCU Boot0 and NRST GPIOs
