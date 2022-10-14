@@ -715,6 +715,17 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 	}
 
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		if (raw_read16(chgnum, ISL923X_REG_CONTROL2, &reg))
+			goto init_fail;
+		/* Set trickle charge current bits. */
+		reg &= ~GENMASK(13, 15);
+		reg |= ((CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT - 64) / 32)
+		       << 13;
+		if (raw_write16(chgnum, ISL923X_REG_CONTROL2, reg))
+			goto init_fail;
+	}
+
 	/* Revert all changes done by isl9238c_hibernate(). */
 	if (IS_ENABLED(CONFIG_CHARGER_ISL9238C) && isl9238c_resume(chgnum))
 		goto init_fail;
