@@ -52,21 +52,21 @@ static const struct fan_step fan_table[] = {
 	},
 	{
 		/* level 3 */
-		.on = { -1, 70, -1 },
-		.off = { -1, 67, -1 },
-		.rpm = { 3500 },
+		.on = { -1, 64, -1 },
+		.off = { -1, 61, -1 },
+		.rpm = { 3700 },
 	},
 	{
 		/* level 4 */
-		.on = { -1, 80, -1 },
-		.off = { -1, 77, -1 },
-		.rpm = { 4000 },
+		.on = { -1, 67, -1 },
+		.off = { -1, 64, -1 },
+		.rpm = { 4400 },
 	},
 	{
 		/* level 5 */
-		.on = { -1, 90, -1 },
-		.off = { -1, 87, -1 },
-		.rpm = { 4500 },
+		.on = { -1, 70, -1 },
+		.off = { -1, 67, -1 },
+		.rpm = { 5000 },
 	},
 };
 const int num_fan_levels = ARRAY_SIZE(fan_table);
