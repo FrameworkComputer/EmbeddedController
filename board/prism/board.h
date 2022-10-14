@@ -131,13 +131,9 @@
 /* USB interface indexes (use define rather than enum to expand them) */
 #undef CONFIG_HOSTCMD_EVENTS
 #define USB_IFACE_UPDATE 0
-#ifdef SECTION_IS_RW
 #define CONFIG_HOST_INTERFACE_USB
 #define USB_IFACE_HOSTCMD 1
 #define USB_IFACE_COUNT 2
-#else
-#define USB_IFACE_COUNT 1
-#endif
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL 0
@@ -162,13 +158,13 @@
 
 #undef CONFIG_LID_SWITCH
 
+#define CONFIG_USB_CONSOLE_READ
+
 #ifdef SECTION_IS_RW
 
 #define CONFIG_CURVE25519
 
 #define CONFIG_USB_PAIRING
-
-#define CONFIG_USB_CONSOLE_READ
 
 #else /* SECTION_IS_RO */
 /* Sign and switch to RW partition on boot. */
