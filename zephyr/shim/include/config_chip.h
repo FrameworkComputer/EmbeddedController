@@ -1220,7 +1220,8 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #endif
 
 #undef CONFIG_USB_PD_DISCHARGE
-#ifdef CONFIG_PLATFORM_EC_USB_PD_DISCHARGE
+#if defined(CONFIG_PLATFORM_EC_USB_PD_DISCHARGE) || \
+	defined(CONFIG_TEST_ENABLE_USB_PD_DISCHARGE)
 #define CONFIG_USB_PD_DISCHARGE
 #endif
 
@@ -1255,7 +1256,8 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #endif
 
 #undef CONFIG_USB_PD_HOST_CMD
-#ifdef CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
+#if defined(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD) || \
+	defined(CONFIG_TEST_ENABLE_USB_PD_HOST_CMD)
 #define CONFIG_USB_PD_HOST_CMD
 #endif
 

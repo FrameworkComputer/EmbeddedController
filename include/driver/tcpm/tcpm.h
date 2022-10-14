@@ -286,12 +286,13 @@ static inline int tcpm_set_snk_ctrl(int port, int enable)
 		return EC_ERROR_UNIMPLEMENTED;
 }
 
-static inline bool tcpm_get_src_ctrl(int port)
+test_mockable_static_inline bool tcpm_get_src_ctrl(int port)
 {
 	return tcpc_config[port].drv->get_src_ctrl ?
 		       tcpc_config[port].drv->get_src_ctrl(port) :
 		       false;
 }
+
 static inline int tcpm_set_src_ctrl(int port, int enable)
 {
 	if (tcpc_config[port].drv->set_src_ctrl != NULL)
