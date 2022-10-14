@@ -119,6 +119,7 @@ yaviks = register_nissa_project(
     project_name="yaviks",
     chip="it81302bx",
     extra_dts_overlays=[
+        "cbi.dts",
         "gpio.dts",
         "overlay.dts",
         "keyboard.dts",
