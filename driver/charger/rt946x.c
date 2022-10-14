@@ -1233,7 +1233,7 @@ static int rt946x_get_bc12_ilim(int charge_supplier)
 		    IS_ENABLED(CONFIG_CHARGE_RAMP_HW))
 			/* A conservative value to prevent a bad charger. */
 			return RT946X_AICR_TYP2MAX(USB_CHARGER_MAX_CURR_MA);
-		/* fallback */
+		__fallthrough;
 	case CHARGE_SUPPLIER_BC12_CDP:
 		return USB_CHARGER_MAX_CURR_MA;
 	case CHARGE_SUPPLIER_BC12_SDP:

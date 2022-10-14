@@ -1076,7 +1076,7 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 
 		tcpci_partner_common_clear_ams_ctrl_msg(data);
 
-		/* Fall through */
+		__fallthrough;
 	case PD_CTRL_ACCEPT:
 		if (data->wait_for_response) {
 			if (data->in_soft_reset) {

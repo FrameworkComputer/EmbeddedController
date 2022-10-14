@@ -1020,7 +1020,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 			chip_save_reset_flags(chip_read_reset_flags() &
 					      ~EC_RESET_FLAG_AP_IDLE);
 		}
-		/* Intentional fall-through */
+		__fallthrough;
 	case EC_REBOOT_HIBERNATE:
 		if (!IS_ENABLED(CONFIG_HIBERNATE))
 			return EC_ERROR_INVAL;

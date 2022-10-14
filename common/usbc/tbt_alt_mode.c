@@ -514,7 +514,7 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		 * done with any retires.
 		 */
 		TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
-		/* Fall through */
+		__fallthrough;
 	case TBT_PREPARE_EXIT_MODE:
 		/*
 		 * Called to exit Thunderbolt alt mode, either when the mode is

@@ -1410,6 +1410,7 @@ void system_set_image_copy(enum ec_image copy)
 			"Change it to %d.",
 			copy, EC_IMAGE_RO);
 		/* Fall through to EC_IMAGE_RO */
+		__fallthrough;
 	case EC_IMAGE_RO:
 		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
 		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_FW_SLOT);

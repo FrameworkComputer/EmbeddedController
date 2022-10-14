@@ -192,6 +192,15 @@
  */
 #define __warn_unused_result __attribute__((warn_unused_result))
 
+/**
+ * @brief Attribute used to annotate intentional fallthrough between switch
+ * labels.
+ *
+ * See https://clang.llvm.org/docs/AttributeReference.html#fallthrough and
+ * https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html.
+ */
+#define __fallthrough __attribute__((fallthrough))
+
 /*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
  * and big endian versions respectively.

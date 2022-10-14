@@ -227,15 +227,15 @@ static int sn5s330_emul_write_byte(const struct emul *emul, int reg,
 	/* Specially check for read-only reg */
 	switch (reg) {
 	case SN5S330_INT_TRIP_RISE_REG1:
-		/* fallthrough */
+		__fallthrough;
 	case SN5S330_INT_TRIP_RISE_REG2:
-		/* fallthrough */
+		__fallthrough;
 	case SN5S330_INT_TRIP_RISE_REG3:
-		/* fallthrough */
+		__fallthrough;
 	case SN5S330_INT_TRIP_FALL_REG1:
-		/* fallthrough */
+		__fallthrough;
 	case SN5S330_INT_TRIP_FALL_REG2:
-		/* fallthrough */
+		__fallthrough;
 	case SN5S330_INT_TRIP_FALL_REG3:
 		reg_to_write = sn5s330_emul_get_reg_ptr(data, reg);
 		/* Clearing any bit deasserts /INT interrupt signal */
@@ -245,15 +245,15 @@ static int sn5s330_emul_write_byte(const struct emul *emul, int reg,
 		*reg_to_write = val;
 		break;
 	case SN5S330_INT_STATUS_REG1:
-		/* fallthrough */
+		__fallthrough;
 	case SN5S330_INT_STATUS_REG2:
-		/* fallthrough */
+		__fallthrough;
 	case SN5S330_INT_STATUS_REG3:
 		__ASSERT(false,
 			 "Write to an unverified-as-safe read-only register on "
 			 "0x%x",
 			 reg);
-		/* fallthrough for checkpath */
+		__fallthrough;
 	default:
 		reg_to_write = sn5s330_emul_get_reg_ptr(data, reg);
 		*reg_to_write = val;

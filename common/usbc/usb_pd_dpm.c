@@ -243,6 +243,7 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 			intel_vdm_acked(port, type, vdo_count, vdm);
 			break;
 		}
+		__fallthrough;
 	default:
 		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
 			svid);
@@ -261,6 +262,7 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 			intel_vdm_naked(port, type, vdm_cmd);
 			break;
 		}
+		__fallthrough;
 	default:
 		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
 			svid);

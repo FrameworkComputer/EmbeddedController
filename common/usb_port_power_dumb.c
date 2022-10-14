@@ -104,7 +104,7 @@ static int command_set_mode(int argc, const char **argv)
 			return EC_ERROR_PARAM2;
 
 		usb_port_set_enabled(port_id, mode);
-		/* fallthrough */
+		__fallthrough;
 	case 1:
 		for (i = 0; i < USB_PORT_COUNT; i++)
 			ccprintf("Port %d: %s\n", i,

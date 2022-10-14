@@ -214,6 +214,7 @@ void chg_ramp_task(void *u)
 			ramp_st_new = CHG_RAMP_OVERCURRENT_DETECT;
 			/* notify host of power info change */
 			pd_send_host_event(PD_EVENT_POWER_CHANGE);
+			__fallthrough;
 		case CHG_RAMP_OVERCURRENT_DETECT:
 			/* Check if we should ramp or go straight to stable */
 			task_wait_time = SECOND;

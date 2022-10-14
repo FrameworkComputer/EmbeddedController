@@ -39,7 +39,7 @@ static enum led_states led_get_state(void)
 			new_state = STATE_CHARGING_FULL_CHARGE;
 			break;
 		}
-		/* Intentional fall-through */
+		__fallthrough;
 	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
 		if (chipset_in_state(CHIPSET_STATE_ON))
 			new_state = STATE_DISCHARGE_S0;

@@ -507,6 +507,7 @@ static void console_handle_char(int c)
 		move_cursor_right();
 
 		/* Drop through to backspace handling */
+		__fallthrough;
 	case '\b':
 	case 0x7f:
 		handle_backspace();

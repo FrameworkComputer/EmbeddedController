@@ -817,11 +817,11 @@ void pe_run(int port, int evt, int en)
 	case SM_PAUSED:
 		if (!en)
 			break;
-		/* fall through */
+		__fallthrough;
 	case SM_INIT:
 		pe_init(port);
 		local_state[port] = SM_RUN;
-		/* fall through */
+		__fallthrough;
 	case SM_RUN:
 		if (!en) {
 			local_state[port] = SM_PAUSED;
@@ -5997,8 +5997,8 @@ static void pe_init_vdm_modes_request_run(int port)
 			dfp_consume_modes(port, sop, cnt, payload);
 			break;
 		}
+		__fallthrough;
 	}
-		/* Fall Through */
 	case VDM_RESULT_NAK:
 		/* PE_INIT_VDM_Modes_NAKed embedded here */
 		pd_set_modes_discovery(port, pe[port].tx_type, requested_svid,

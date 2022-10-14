@@ -317,10 +317,13 @@ static int si114x_set_chlist(const struct motion_sensor_t *s)
 	switch (SI114X_NUM_LEDS) {
 	case 3:
 		reg |= SI114X_PARAM_CHLIST_EN_PS3;
+		__fallthrough;
 	case 2:
 		reg |= SI114X_PARAM_CHLIST_EN_PS2;
+		__fallthrough;
 	case 1:
 		reg |= SI114X_PARAM_CHLIST_EN_PS1;
+		__fallthrough;
 	case 0:
 		break;
 	}

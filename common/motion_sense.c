@@ -1320,7 +1320,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		task_set_event(TASK_ID_MOTIONSENSE,
 			       TASK_EVENT_MOTION_FLUSH_PENDING);
-		/* pass-through */
+		__fallthrough;
 	case MOTIONSENSE_CMD_FIFO_INFO:
 		if (!IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 			/*
@@ -1352,7 +1352,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		case 0:
 		case 1:
 			fifo_int_enabled = in->fifo_int_enable.enable;
-			/* fallthrough */
+			__fallthrough;
 		case EC_MOTION_SENSE_NO_VALUE:
 			out->fifo_int_enable.ret = fifo_int_enabled;
 			args->response_size = sizeof(out->fifo_int_enable);

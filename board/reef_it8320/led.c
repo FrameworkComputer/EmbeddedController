@@ -105,7 +105,7 @@ static void led_set_battery(void)
 			led_set_color_battery(LED_BLUE);
 			break;
 		}
-		/* Intentional fall-through */
+		__fallthrough;
 	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
 		if (chipset_in_state(CHIPSET_STATE_ON)) {
 			led_set_color_battery(LED_BLUE);

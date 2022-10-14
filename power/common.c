@@ -521,12 +521,12 @@ static enum power_state power_common_state(void)
 		break;
 
 	case POWER_S4:
-		/* fallthrough */
+		__fallthrough;
 	case POWER_S3:
-		/* fallthrough */
+		__fallthrough;
 	case POWER_S0:
 #ifdef CONFIG_POWER_S0IX
-		/* fallthrough */
+		__fallthrough;
 	case POWER_S0ix:
 #endif
 		/* Wait for a message */

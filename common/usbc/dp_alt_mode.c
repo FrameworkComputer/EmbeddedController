@@ -283,6 +283,7 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 			return MSG_SETUP_MUX_WAIT;
 		}
 		/* Fall through if no mux set is needed */
+		__fallthrough;
 	case DP_PREPARE_CONFIG:
 		vdo_count_ret = modep->fx->config(port, vdm);
 		if (vdo_count_ret == 0)
@@ -293,6 +294,7 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 	case DP_ENTER_NAKED:
 		DP_SET_FLAG(port, DP_FLAG_RETRY);
 		/* Fall through to send exit mode */
+		__fallthrough;
 	case DP_ACTIVE:
 		/*
 		 * Called to exit DP alt mode, either when the mode

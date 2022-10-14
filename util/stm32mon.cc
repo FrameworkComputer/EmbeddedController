@@ -633,6 +633,7 @@ int wait_for_ack(int fd)
 			}
 
 			/* Do not break so that it can be handled as junk */
+			__attribute__((fallthrough));
 		default:
 			stat_resp[JUNK_IDX].event_count++;
 			if (mode == MODE_SERIAL)

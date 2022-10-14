@@ -758,6 +758,7 @@ static enum ec_error_list bd9995x_get_status(int chgnum, int *status)
 		break;
 	case BD9995X_CMD_CHGOP_STATUS_BATTEMP_BATOPEN:
 		*status &= ~CHARGER_BATTERY_PRESENT;
+		break;
 	default:
 		break;
 	}

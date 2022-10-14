@@ -199,7 +199,7 @@ static void led_set_battery(void)
 			set_active_port_color(LED_WHITE);
 			break;
 		}
-		/* Intentional fall-through */
+		__fallthrough;
 	case PWR_STATE_DISCHARGE:
 		/*
 		 * Blink white/amber light (1 sec on, 1 sec off)

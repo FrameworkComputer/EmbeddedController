@@ -1211,7 +1211,7 @@ static int tcpci_emul_handle_transmit(const struct emul *emul)
 	case TCPCI_MSG_TX_HARD_RESET:
 		tcpci_emul_disable_pd_msg_delivery(emul);
 		tcpci_emul_reset_mask_regs(ctx);
-		/* fallthrough */
+		__fallthrough;
 	case TCPCI_MSG_CABLE_RESET:
 		/*
 		 * Cable and Hard reset are special and set success and fail
@@ -1259,13 +1259,13 @@ int tcpci_emul_handle_write(const struct emul *emul, int reg, int msg_len)
 				ctx->write_data &= ~TCPC_REG_ALERT_RX_STATUS;
 			}
 		}
-	/* fallthrough */
+		__fallthrough;
 	case TCPC_REG_FAULT_STATUS:
 	case TCPC_REG_ALERT_EXT:
 		/* Clear bits where TCPM set 1 */
 		get_reg(ctx, reg, &alert_val);
 		ctx->write_data = alert_val & (~ctx->write_data);
-	/* fallthrough */
+		__fallthrough;
 	case TCPC_REG_ALERT_MASK:
 	case TCPC_REG_POWER_STATUS_MASK:
 	case TCPC_REG_FAULT_STATUS_MASK:
@@ -1344,6 +1344,7 @@ int tcpci_emul_handle_write(const struct emul *emul, int reg, int msg_len)
 	switch (reg_bytes) {
 	case 2:
 		rsvd_mask = tcpci_emul_rsvd_mask[reg + 1];
+		__fallthrough;
 	case 1:
 		rsvd_mask <<= 8;
 		rsvd_mask |= tcpci_emul_rsvd_mask[reg];

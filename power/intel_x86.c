@@ -381,7 +381,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		return POWER_S4; /* Power down to the next state */
 
 	case POWER_S5S3:
-		/* fallthrough */
+		__fallthrough;
 	case POWER_S4S3:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away */

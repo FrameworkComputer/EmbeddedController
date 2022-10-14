@@ -142,7 +142,7 @@ static void led_set_battery(void)
 			led_set_color_battery(LED_WHITE);
 			break;
 		}
-		/* Intentional fall-through */
+		__fallthrough;
 	case PWR_STATE_DISCHARGE:
 		/*
 		 * Blink white light (1 sec on, 1 sec off)

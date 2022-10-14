@@ -836,6 +836,7 @@ enum ec_error_list wov_set_mode(enum wov_modes wov_mode)
 	case WOV_MODE_RAM_AND_I2S:
 		if ((wov_conf.bit_depth != 16) && (wov_conf.bit_depth != 24))
 			return EC_ERROR_INVAL;
+		__fallthrough;
 	case WOV_MODE_I2S:
 		if (apm_get_adc_i2s_dmic_rate() == APM_DMIC_RATE_0_75)
 			wov_dmic_clk_config(1, WOV_DMIC_DIV_BY_4);

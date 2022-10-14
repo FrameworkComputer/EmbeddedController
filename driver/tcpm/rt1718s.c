@@ -196,7 +196,7 @@ static int rt1718s_workaround(int port)
 		RETURN_ERROR(rt1718s_update_bits8(
 			port, RT1718S_VCONN_CONTROL_3,
 			RT1718S_VCONN_CONTROL_3_VCONN_OVP_DEG, 0xFF));
-		/* fallthrough */
+		__fallthrough;
 	case RT1718S_DEVICE_ID_ES2:
 		RETURN_ERROR(rt1718s_update_bits8(
 			port, TCPC_REG_FAULT_CTRL,
