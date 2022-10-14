@@ -98,10 +98,18 @@ class UartSerial(object):
             ],
             "end_of_input": LF,
         },
-        # EC
+        # EC legacy
         {
-            "prompt": "> ",
-            "device_type": "EC",
+            "prompt": ">",
+            "device_type": "EC(legacy)",
+            "prepare_cmd": ["chan save", "chan 0"],  # Disable console message
+            "cleanup_cmd": ["", "chan restore"],
+            "end_of_input": CRLF,
+        },
+        # EC Zephyr
+        {
+            "prompt": "ec:~$",
+            "device_type": "EC(Zephyr)",
             "prepare_cmd": ["chan save", "chan 0"],  # Disable console message
             "cleanup_cmd": ["", "chan restore"],
             "end_of_input": CRLF,
@@ -318,10 +326,16 @@ class UartSerial(object):
             ch_cap = (
                 "z"  # any character value is ok for loop initial condition.
             )
+
             while self.num_ch_cap < total_num_ch:
                 captured = self.get_output()
 
                 if captured:
+                    if self.num_ch_cap == 0:
+                        # Strip prompt on first read (if it's there)
+                        prefixstr = self.dev_prof["prompt"] + " "
+                        if captured.startswith(prefixstr):
+                            captured = captured[len(prefixstr) :]
                     # There is some output data. Reset the data starvation count.
                     data_starve_count = 0
                 else:
