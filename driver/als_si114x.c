@@ -318,9 +318,9 @@ static int si114x_set_chlist(const struct motion_sensor_t *s)
 	case 3:
 		reg |= SI114X_PARAM_CHLIST_EN_PS3;
 	case 2:
-		reg |= SI114X_PARAM_CHLIST_EN_PS3;
+		reg |= SI114X_PARAM_CHLIST_EN_PS2;
 	case 1:
-		reg |= SI114X_PARAM_CHLIST_EN_PS3;
+		reg |= SI114X_PARAM_CHLIST_EN_PS1;
 		break;
 	}
 
