@@ -90,6 +90,13 @@ config PLATFORM_EC_FAN
 	  available. Also enables a periodic task (1s) to verify fan is
 	  running (is not stalled).
 
+config PLATFORM_EC_CUSTOM_FAN_CONTROL
+	bool "Fan custom control support"
+	default n
+	help
+	  Enable fan custom control to let projects define
+	  their own fan control mechanism by EC.
+
 if PLATFORM_EC_FAN
 
 config PLATFORM_EC_NUM_FANS
