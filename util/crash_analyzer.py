@@ -14,13 +14,13 @@ import sys
 # This Regex has only been tested in Cortex-M0+ crash reporter.
 # TODO(b/253492108): Add regexp for missing architectures.
 _REGEX_CORTEX_M0 = (
-    r"^Saved.*$\n=== PROCESS EXCEPTION: (.*) ====== xPSR: (.*) ===$\n"
+    r"^Saved.*$\n=== .* EXCEPTION: (.*) ====== xPSR: (.*) ===$\n"
     r"r0 :(.*) r1 :(.*) r2 :(.*) r3 :(.*)$\n"
     r"r4 :(.*) r5 :(.*) r6 :(.*) r7 :(.*)$\n"
     r"r8 :(.*) r9 :(.*) r10:(.*) r11:(.*)$\n"
     r"r12:(.*) sp :(.*) lr :(.*) pc :(.*)$\n"
     r"\n"
-    r"^cfsr=(.*), shcsr=(.*), hfsr=(.*), dfsr=(.*), ipsr=(.*)$"
+    r"^.*cfsr=(.*), shcsr=(.*), hfsr=(.*), dfsr=(.*), ipsr=(.*)$"
 )
 _symbols = []
 _entries = []
