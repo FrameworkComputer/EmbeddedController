@@ -201,6 +201,19 @@ ZTEST_F(usbc_alt_mode, verify_discovery)
 		      "DP mode VDOs did not match");
 }
 
+ZTEST_F(usbc_alt_mode, verify_discovery_params_too_small)
+{
+	struct ec_response_typec_discovery discovery;
+
+	/* The expected size of the response buffer is larger than struct
+	 * ec_response_typec_discovery. With only that amount of space, the
+	 * command should succeed but not return any of the discovered SVIDs.
+	 */
+	host_cmd_typec_discovery(TEST_PORT, TYPEC_PARTNER_SOP, &discovery,
+				 sizeof(discovery));
+	zassert_equal(discovery.svid_count, 0);
+}
+
 ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 {
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
