@@ -9,6 +9,7 @@
 #include "driver/usb_mux/tusb1064.h"
 
 #define TUSB1064_USB_MUX_COMPAT ti_tusb1064
+#define TUSB1064_EMUL_COMPAT zephyr_tusb1064_emul
 
 #if defined(CONFIG_USB_MUX_TUSB1044)
 #define USB_MUX_CONFIG_TUSB1064(mux_id)                        \
