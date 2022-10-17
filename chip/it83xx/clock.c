@@ -301,7 +301,10 @@ void clock_init(void)
 	 * version, so we have to reset eSPI configurations during init to
 	 * ensure Host and EC are synchronized (especially for the field of
 	 * I/O mode)
+	 * Since bit4 of VWCTRL2 register is enabled, the below reset routine
+	 * will be able to reset pltrst# signal.
 	 */
+	IT83XX_ESPI_VWCTRL2 |= ESPI_PLTRST_ESPI_RESET;
 	if (!system_jumped_to_this_image())
 		espi_fw_reset_module();
 #endif
