@@ -94,4 +94,7 @@ config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 	  Compile a binary that allows the non herobrine paths of the locate
 	  chip command to execute
 
+config LINK_TEST_SUITE_BUTTON
+	bool "Link tests for common/button.c"
+
 source "Kconfig.zephyr"

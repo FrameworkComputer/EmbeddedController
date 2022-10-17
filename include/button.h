@@ -102,4 +102,20 @@ int button_is_adc_detected(enum gpio_signal gpio);
  */
 int adc_to_physical_value(enum gpio_signal gpio);
 
+/* Public for testing purposes only, undocumented. */
+enum debug_state {
+	STATE_DEBUG_NONE,
+	STATE_DEBUG_CHECK,
+	STATE_STAGING,
+	STATE_DEBUG_MODE_ACTIVE,
+	STATE_SYSRQ_PATH,
+	STATE_WARM_RESET_PATH,
+	STATE_SYSRQ_EXEC,
+	STATE_WARM_RESET_EXEC,
+};
+
+__test_only void reset_button_debug_state(void);
+
+__test_only enum debug_state get_button_debug_state(void);
+
 #endif /* __CROS_EC_BUTTON_H */

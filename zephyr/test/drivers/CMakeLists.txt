@@ -40,6 +40,7 @@ add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_PPC usbc_ppc)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_HOST_COMMANDS host_cmd)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_SYSTEM system)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS locate_chip)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_BUTTON button)
 
 get_target_property(TEST_SOURCES_NEW app SOURCES)
 

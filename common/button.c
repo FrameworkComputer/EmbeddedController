@@ -532,17 +532,6 @@ static void debug_mode_handle(void)
 
 #else /* CONFIG_DEDICATED_RECOVERY_BUTTON */
 
-enum debug_state {
-	STATE_DEBUG_NONE,
-	STATE_DEBUG_CHECK,
-	STATE_STAGING,
-	STATE_DEBUG_MODE_ACTIVE,
-	STATE_SYSRQ_PATH,
-	STATE_WARM_RESET_PATH,
-	STATE_SYSRQ_EXEC,
-	STATE_WARM_RESET_EXEC,
-};
-
 #define DEBUG_BTN_POWER BIT(0)
 #define DEBUG_BTN_VOL_UP BIT(1)
 #define DEBUG_BTN_VOL_DN BIT(2)
@@ -667,6 +656,16 @@ static void debug_mode_transition(enum debug_state next_state)
 	if (curr_blink_state)
 		led_control(EC_LED_ID_SYSRQ_DEBUG_LED, LED_STATE_RESET);
 #endif
+}
+
+__test_only void reset_button_debug_state(void)
+{
+	debug_mode_transition(STATE_DEBUG_NONE);
+}
+
+__test_only enum debug_state get_button_debug_state(void)
+{
+	return curr_debug_state;
 }
 
 static void debug_mode_handle(void)
