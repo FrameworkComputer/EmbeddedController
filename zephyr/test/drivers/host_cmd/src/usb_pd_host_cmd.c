@@ -159,5 +159,22 @@ ZTEST_USER(usb_pd_host_cmd, test_typec_control_invalid_args)
 	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
 }
 
+ZTEST_USER(usb_pd_host_cmd, test_typec_status_invalid_args)
+{
+	struct ec_params_typec_status params = {
+		.port = 100,
+	};
+	struct ec_response_typec_status response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_TYPEC_STATUS, 0, response, params);
+
+	/* An invalid port should result in an error. */
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+
+	params.port = 0;
+	args.response_max = sizeof(struct ec_response_typec_status) - 1;
+	zassert_equal(host_command_process(&args), EC_RES_RESPONSE_TOO_BIG);
+}
+
 ZTEST_SUITE(usb_pd_host_cmd, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);
