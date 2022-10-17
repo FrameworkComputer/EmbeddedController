@@ -609,8 +609,11 @@ config PLATFORM_EC_PWM_DISPLIGHT
 	  directly to the EC chipset. The board devicetree file must define a
 	  "cros-ec,displight" compatible device node.
 
+CHOSEN_CROS_RTC := cros,rtc
+
 config PLATFORM_EC_RTC
 	bool "Real-time clock (RTC)"
+	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_RTC))
 	help
 	  Enable support for a real-time clock. Typically this is available
 	  on-chip in the EC. It provides a way to track the passage of time
