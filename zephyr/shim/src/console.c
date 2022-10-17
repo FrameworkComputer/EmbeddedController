@@ -53,9 +53,10 @@ static struct k_poll_signal shell_init_signal;
  * (which requires locking the shell).
  */
 static bool shell_stopped;
+static bool rx_bypass_enabled;
+RING_BUF_DECLARE(rx_buffer, CONFIG_UART_RX_BUF_SIZE);
 
 #if defined(CONFIG_UART_INTERRUPT_DRIVEN)
-RING_BUF_DECLARE(rx_buffer, CONFIG_UART_RX_BUF_SIZE);
 
 static void uart_rx_handle(const struct device *dev)
 {
@@ -112,6 +113,19 @@ static void shell_uninit_callback(const struct shell *shell, int res)
 
 	/* Notify the uninit signal that we finished */
 	k_poll_signal_raise(&shell_uninit_signal, res);
+}
+
+void bypass_cb(const struct shell *shell, uint8_t *data, size_t len)
+{
+	if (!ring_buf_put(&rx_buffer, data, len)) {
+		printk("Failed to write to uart ring buf\n");
+	}
+}
+
+void uart_shell_rx_bypass(bool enable)
+{
+	shell_set_bypass(shell_zephyr, enable ? bypass_cb : NULL);
+	rx_bypass_enabled = enable;
 }
 
 int uart_shell_stop(void)
@@ -325,23 +339,29 @@ void uart_tx_flush(void)
 
 int uart_getc(void)
 {
-#if defined(CONFIG_UART_INTERRUPT_DRIVEN)
 	uint8_t c;
+	int rv = -1;
 
-	if (ring_buf_get(&rx_buffer, &c, 1)) {
-		return c;
+	/*
+	 * Don't try to read from the uart when the console
+	 * owns it.
+	 */
+	if (!shell_stopped && !rx_bypass_enabled) {
+		LOG_ERR("Shell must be stopped or rx bypass enabled");
+		return -1;
 	}
-	return -1;
-#else
-	uint8_t c;
-	int rv;
 
-	rv = uart_poll_in(uart_shell_dev, &c);
-	if (rv) {
-		return rv;
+	if (IS_ENABLED(CONFIG_UART_INTERRUPT_DRIVEN) || rx_bypass_enabled) {
+		if (ring_buf_get(&rx_buffer, &c, 1)) {
+			rv = c;
+		}
+	} else {
+		rv = uart_poll_in(uart_shell_dev, &c);
+		if (!rv) {
+			rv = c;
+		}
 	}
-	return c;
-#endif
+	return rv;
 }
 
 void uart_clear_input(void)

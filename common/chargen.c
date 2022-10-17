@@ -11,6 +11,8 @@
 #include "usb_console.h"
 #include "util.h"
 #include "watchdog.h"
+#include "hooks.h"
+#include "task.h"
 
 #ifndef SECTION_IS_RO
 /*
@@ -20,57 +22,57 @@
 #define BUFFER_DRAIN_TIME_US \
 	(1000000UL * 10 * CONFIG_UART_TX_BUF_SIZE / CONFIG_UART_BAUD_RATE)
 
-/*
- * Generate a stream of characters on the UART (and USB) console.
- *
- * The stream is an ever incrementing pattern of characters from the following
- * set: 0..9A..Za..z.
- *
- * The two optional integer command line arguments work as follows:
- *
- * argv[1] - reset the pattern after this many characters have been printed.
- *           Setting this value to the width of the terminal window results
- *           in a very regular stream showing on the terminal, where it is
- *           easy to observe disruptions.
- * argv[2] - limit number of printed characters to this amount. If not
- *           specified - keep printing indefinitely.
- *
- * Hitting 'x' on the keyboard stops the generator.
- */
-static int command_chargen(int argc, const char **argv)
-{
-	int wrap_value = 0;
-	int wrap_counter = 0;
-	uint8_t c;
-	uint32_t seq_counter = 0;
-	uint32_t seq_number = 0;
-	timestamp_t prev_watchdog_time;
+struct deferred_chargen_ctx {
+	int wrap_value;
+	uint32_t seq_number;
+	int (*putc)(int c);
+	int (*tx_is_blocked)(void);
+};
+static struct deferred_chargen_ctx chargen_ctx;
 
-	int (*putc_)(int c) = uart_putc;
-	int (*tx_is_blocked_)(void) = uart_buffer_full;
+static void acquire_console(void)
+{
+#if !defined(CONFIG_USB_CONSOLE) && !defined(CONFIG_USB_CONSOLE_STREAM)
+	uart_shell_rx_bypass(true);
+#endif
+#if !defined(CONFIG_ZEPHYR) && !defined(BOARD_HOST)
+	/* The legacy fw console does not have an rx bypass feature (it is
+	 * stubbed out).  Disable the console task so that it does not
+	 * steal character reads from chargen.
+	 */
+	if (task_start_called())
+		task_disable_task(TASK_ID_CONSOLE);
+#endif /* !CONFIG_ZEPHYR  && !BOARD_HOST */
+}
+
+static void release_console(void)
+{
+#if !defined(CONFIG_USB_CONSOLE) && !defined(CONFIG_USB_CONSOLE_STREAM)
+	uart_shell_rx_bypass(false);
+#endif
+#if !defined(CONFIG_ZEPHYR) && !defined(BOARD_HOST)
+	if (task_start_called())
+		task_enable_task(TASK_ID_CONSOLE);
+#endif /* !CONFIG_ZEPHYR  && !BOARD_HOST */
+}
+
+static void run_chargen(void)
+{
+	int wrap_value = chargen_ctx.wrap_value;
+	uint32_t seq_number = chargen_ctx.seq_number;
+	int (*putc_)(int c) = chargen_ctx.putc;
+	int (*tx_is_blocked_)(void) = chargen_ctx.tx_is_blocked;
+
+	timestamp_t prev_watchdog_time;
+	uint8_t c = '0';
+	uint32_t seq_counter = 0;
+	int wrap_counter = 0;
+
+	acquire_console();
 
 	while (uart_getc() != -1 || usb_getc() != -1)
 		; /* Drain received characters, if any. */
 
-	if (argc > 1)
-		wrap_value = atoi(argv[1]);
-
-	if (argc > 2)
-		seq_number = atoi(argv[2]);
-
-#if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
-	if (argc > 3) {
-		if (memcmp(argv[3], "usb", 3))
-			return EC_ERROR_PARAM3;
-
-		putc_ = usb_putc;
-		tx_is_blocked_ = usb_console_tx_blocked;
-	}
-#endif
-
-	uart_shell_stop();
-
-	c = '0';
 	prev_watchdog_time = get_time();
 	while (uart_getc() != 'x' && usb_getc() != 'x') {
 		timestamp_t current_time;
@@ -116,9 +118,57 @@ static int command_chargen(int argc, const char **argv)
 
 	putc_('\n');
 
-	uart_shell_start();
+	release_console();
+}
+DECLARE_DEFERRED(run_chargen);
 
-	return EC_SUCCESS;
+/*
+ * Generate a stream of characters on the UART (and USB) console.
+ *
+ * The stream is an ever incrementing pattern of characters from the following
+ * set: 0..9A..Za..z.
+ *
+ * The two optional integer command line arguments work as follows:
+ *
+ * argv[1] - reset the pattern after this many characters have been printed.
+ *           Setting this value to the width of the terminal window results
+ *           in a very regular stream showing on the terminal, where it is
+ *           easy to observe disruptions.
+ * argv[2] - limit number of printed characters to this amount. If not
+ *           specified - keep printing indefinitely.
+ *
+ * Hitting 'x' on the keyboard stops the generator.
+ */
+static int command_chargen(int argc, const char **argv)
+{
+	int wrap_value = 0;
+	uint32_t seq_number = 0;
+
+	int (*putc_)(int c) = uart_putc;
+	int (*tx_is_blocked_)(void) = uart_buffer_full;
+
+	if (argc > 1)
+		wrap_value = atoi(argv[1]);
+
+	if (argc > 2)
+		seq_number = atoi(argv[2]);
+
+#if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
+	if (argc > 3) {
+		if (memcmp(argv[3], "usb", 3))
+			return EC_ERROR_PARAM3;
+
+		putc_ = usb_putc;
+		tx_is_blocked_ = usb_console_tx_blocked;
+	}
+#endif
+
+	chargen_ctx.wrap_value = wrap_value;
+	chargen_ctx.seq_number = seq_number;
+	chargen_ctx.putc = putc_;
+	chargen_ctx.tx_is_blocked = tx_is_blocked_;
+
+	return hook_call_deferred(&run_chargen_data, 0);
 }
 DECLARE_SAFE_CONSOLE_COMMAND(chargen, command_chargen,
 #if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)

@@ -21,15 +21,17 @@ extern "C" {
 #endif
 
 /*
- * Define uart_shell_stop() and uart_shell_start() functions to start/stop the
- * running shell. To avoid having a guard on the build type, non-Zephyr builds
- * will have a stubbed function for these which is safe to call. These functions
- * will stop/start the Zephyr shell from processing, they should be used for
- * briefly taking control of the uart.
+ * Define uart_shell_stop(), uart_shell_start(), and
+ * uart_shell_rx_bypass(enable) functions to start/stop/bypass the running
+ * shell. To avoid having a guard on the build type, non-Zephyr builds will
+ * have a stubbed function for these which is safe to call. These functions
+ * will stop/start/stop the Zephyr shell from processing, they should be used
+ * for briefly taking control of the uart.
  */
 #ifdef CONFIG_ZEPHYR
 int uart_shell_stop(void);
 void uart_shell_start(void);
+void uart_shell_rx_bypass(bool enable);
 
 #ifdef TEST_BUILD
 /* Gets the pointer to the zephyr shell, since it might not always be
@@ -43,6 +45,9 @@ static inline int uart_shell_stop(void)
 	return 0;
 }
 static inline void uart_shell_start(void)
+{
+}
+static inline void uart_shell_rx_bypass(bool enable)
 {
 }
 #endif
