@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
+#include "usbc_ppc.h"
 #include "charge_ramp.h"
 #include "charge_state.h"
 
@@ -27,3 +29,42 @@ const struct batt_params *charger_current_battery_params(void)
 
 	return &params;
 }
+
+int board_get_battery_soc(void)
+{
+	return 0;
+}
+
+void pd_power_supply_reset(void)
+{
+}
+
+int pd_check_vconn_swap(int port)
+{
+	return 0;
+}
+
+void pd_set_input_current_limit(int port, uint32_t max_ma,
+				uint32_t supply_voltage)
+{
+}
+
+int pd_set_power_supply_ready(int port)
+{
+	return 0;
+}
+
+void usb_charger_vbus_change(int port, int vbus_level)
+{
+}
+
+int charge_manager_get_active_charge_port(void)
+{
+	return 0;
+}
+
+struct ppc_config_t ppc_chips[] = {};
+
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+const struct adc_t adc_channels[] = {};

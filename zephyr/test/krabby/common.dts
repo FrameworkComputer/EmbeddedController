@@ -32,6 +32,16 @@
 			chg = <&charger>;
 			tcpc = <&tcpci_emul>;
 		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			status = "okay";
+			reg = <1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tusb1064_mux_1>;
+			};
+		};
 	};
 
 	batteries {
@@ -66,5 +76,15 @@
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
 		reg = <0x82>;
+	};
+};
+
+&i2c_ctrl4 {
+	status="okay";
+
+	tusb1064_mux_1: tusb1064-mux-1@44 {
+		compatible = "zephyr,tusb1064-emul";
+		reg = <0x44>;
+		board-init = "tusb1064_mux_1_board_init";
 	};
 };
