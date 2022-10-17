@@ -165,17 +165,14 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 		k_work_cancel_delayable(work);
 	} else if (us >= 0) {
 		rv = k_work_reschedule(work, K_USEC(us));
-		if (rv == -EINVAL) {
-			/* Already processing or completed. */
-			return 0;
-		} else if (rv < 0) {
+		if (rv < 0) {
 			work_queue_error(data, rv);
 		}
 	} else {
 		return EC_ERROR_PARAM2;
 	}
 
-	return rv;
+	return rv >= 0 ? EC_SUCCESS : rv;
 }
 
 /*
