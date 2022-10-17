@@ -9,6 +9,7 @@
 #include <zephyr/ztest.h>
 
 #include "console.h"
+#include "flash.h"
 #include "printf.h"
 #include "sha256.h"
 #include "system.h"
