@@ -1739,7 +1739,7 @@ static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_REBOOT_EC, host_command_reboot, EC_VER_MASK(0));
 
-int system_can_boot_ap(void)
+test_mockable int system_can_boot_ap(void)
 {
 	int soc = -1;
 	int pow = -1;
