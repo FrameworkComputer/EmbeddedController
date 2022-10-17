@@ -51,8 +51,8 @@ def get_symbol_bisec(addr: int, low: int, high: int) -> str:
 
     if _symbols[mid][0] <= addr < _symbols[mid + 1][0]:
         symbol = _symbols[mid][1]
-        # Start of a sequence of Thumb instructions. When this happens, query
-        # for the next address.
+        # Start of a sequence of Thumb instructions. When this happens, return
+        # the next address.
         if symbol == "$t":
             symbol = _symbols[mid + 1][1]
         return symbol
@@ -73,8 +73,10 @@ def get_symbol(addr: int) -> str:
     return symbol
 
 
-def process_log_file(file_name: str) -> str:
-    """Reads a .log file and extracts the FW version"""
+def process_log_file(file_name: str) -> tuple:
+    """Reads a .log file and extracts the EC and BIOS versions"""
+    ec_ver = None
+    bios_ver = None
     try:
         with open(file_name, "r") as log_file:
             lines = log_file.readlines()
@@ -84,12 +86,34 @@ def process_log_file(file_name: str) -> str:
                 # vendor               | Nuvoton
                 # name                 | NPCX586G
                 # fw_version           | rammus_v2.0.460-d1d2aeb01f
-                if line.startswith("fw_version"):
-                    _, value = line.split("|")
-                    return value.strip()
+                # ...
+                # ===bios_info===
+                # fwid       =   Google_Rammus.11275.193.0    #   [RO/str] ...
+                # ro_fwid    =   Google_Rammus.11275.28.0     #   [RO/str] ...
+
+                # Get EC version.
+                # There could be more than one "fw_version". Only the first one
+                # corresponds to the EC version.
+                if line.startswith("fw_version") and ec_ver is None:
+                    _, ec_ver = line.split("|")
+                    ec_ver = ec_ver.strip(" \n")
+
+                # Get BIOS version.
+                if line.startswith("fwid"):
+                    _, value = line.split("=")
+                    # Only get the first element.
+                    bios_ver, _ = value.split("#")
+                    bios_ver = bios_ver.strip()
+
+                if ec_ver is not None and bios_ver is not None:
+                    return ec_ver, bios_ver
+
     except FileNotFoundError:
-        return ".log file not found"
-    return "unknown fw version"
+        return ".log file not found", "not found"
+    return (
+        "unknown fw version" if ec_ver is None else ec_ver,
+        "unknown BIOS version" if bios_ver is None else bios_ver,
+    )
 
 
 def process_crash_file(file_name: str) -> dict:
@@ -150,8 +174,11 @@ def process_crash_files(crash_folder):
             continue
         entry = process_crash_file(file)
         if len(entry) != 0:
-            fw_ver = process_log_file(file.parent.joinpath(file.stem + ".log"))
-            entry["fw_version"] = fw_ver
+            ec_ver, bios_ver = process_log_file(
+                file.parent.joinpath(file.stem + ".log")
+            )
+            entry["ec_version"] = ec_ver
+            entry["bios_version"] = bios_ver
 
         if len(entry) != 0:
             _entries.append(entry)
@@ -168,7 +195,8 @@ def cmd_report_lite(crash_folder):
             f"Task: {format(entry['exp'],'#04x')} - "
             f"cause: {format(entry['regs'][4], '#x')} - "
             f"PC: {entry['symbol']} - "
-            f"EC ver:{entry['fw_version']}"
+            f"{entry['ec_version']} - "
+            f"{entry['bios_version']}"
         )
 
 
@@ -179,7 +207,7 @@ def cmd_report_full(crash_folder):
     # Print header
     print(
         "Task,xPSR,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,"
-        "sp,lr,pc,cfsr,chcsr,hfsr,dfsr,ipsr,symbol,fw_version"
+        "sp,lr,pc,cfsr,chcsr,hfsr,dfsr,ipsr,symbol,fw_version,bios_version"
     )
     for entry in _entries:
         print(
@@ -197,18 +225,22 @@ def cmd_report_full(crash_folder):
             f",{format(entry['dfsr'],'#x')}"
             f",{format(entry['ipsr'],'#x')}"
             f",\"{(entry['symbol'])}\""
-            f",\"{(entry['fw_version'])}\""
+            f",\"{(entry['ec_version'])}\""
+            f",\"{(entry['bios_version'])}\""
         )
 
 
 def main(argv):
     """Main entry point"""
     example_text = """Example:
+# For further details see: go/cros-ec-crash-analyzer
+#
+# Summary:
 # 1st:
 # Collect the crash reports using this script:
-# https://source.corp.google.com/piper///depot/google3/experimental/users/ricardoq/crashpad/main.py
+# https://source.corp.google.com/piper///depot/google3/experimental/users/ricardoq/ec_crash_report_fetcher
 # MUST be run within a Google3 Workspace. E.g:
-(google3) blaze run //experimental/users/ricardoq/crashpad:main -- --outdir=/tmp/dumps/ --limit=3000 --offset=15000 --hwclass=shyvana --milestone=105
+(google3) blaze run //experimental/users/ricardoq/ec_crash_report_fetcher:main -- --outdir=/tmp/dumps/ --limit=3000 --offset=15000 --hwclass=shyvana --milestone=105
 
 # 2nd:
 # Assuming that you don't have the .map file of the EC image,  you can download the EC image from LUCI
