@@ -32,6 +32,13 @@ config BOARD_INPUT_CURRENT_SCALE_FACTOR
 	help
 	  Limit input current to fraction of negotiated limit.
 
+config BOARD_USB_HUB_RESET
+	bool "Support USB hub reset or not"
+	default y
+	help
+	  Enable this if your board has a USB hub reset GPIO connect to EC to
+	  reset the USB hub.
+
 module = SKYRIM
 module-str = Skyrim board-specific code
 source "subsys/logging/Kconfig.template.log_config"
