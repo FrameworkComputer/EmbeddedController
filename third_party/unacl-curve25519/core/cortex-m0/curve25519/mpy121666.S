@@ -10,7 +10,7 @@
 // ATTENTION:
 // Not yet tested on target hardware.
 
-
+	.syntax unified
 	.code	16
 	.text
 	.align	2
@@ -24,156 +24,156 @@ fe25519_mpyWith121666_asm:
     push {r4,r5,r6,r7,r14}
     ldr r7,=56130
     ldr r2,[r1,#28]
-    lsl r5,r2,#16
-    lsr r6,r2,#16
-    lsr r3,r2,#16
+    lsls r5,r2,#16
+    lsrs r6,r2,#16
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r5,r2
-    mov r2,#0
-    adc r6,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r5,r2
-    adc r6,r3
-    lsl r2,r5,#1
-    lsr r2,r2,#1
+    muls r2,r7
+    muls r3,r7
+    adds r5,r5,r2
+    movs r2,#0
+    adcs r6,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r5,r5,r2
+    adcs r6,r3
+    lsls r2,r5,#1
+    lsrs r2,r2,#1
     str r2,[r0,#28]
-    lsr r5,r5,#31
-    lsl r6,r6,#1
-    orr r5,r6
-    mov r6,#19
-    mul r5,r6
-    mov r6,#0
+    lsrs r5,r5,#31
+    lsls r6,r6,#1
+    orrs r5,r6
+    movs r6,#19
+    muls r5,r6
+    movs r6,#0
     ldr r2,[r1,#0]
-    lsl r3,r2,#16
-    lsr r4,r2,#16
-    add r5,r3
-    adc r6,r4
-    lsr r3,r2,#16
+    lsls r3,r2,#16
+    lsrs r4,r2,#16
+    adds r5,r5,r3
+    adcs r6,r4
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r5,r2
-    mov r2,#0
-    adc r6,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r5,r2
-    adc r6,r3
+    muls r2,r7
+    muls r3,r7
+    adds r5,r5,r2
+    movs r2,#0
+    adcs r6,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r5,r5,r2
+    adcs r6,r3
     str r5,[r0,#0]
-    mov r5,#0
+    movs r5,#0
     ldr r2,[r1,#4]
-    lsl r3,r2,#16
-    lsr r4,r2,#16
-    add r6,r3
-    adc r5,r4
-    lsr r3,r2,#16
+    lsls r3,r2,#16
+    lsrs r4,r2,#16
+    adds r6,r6,r3
+    adcs r5,r4
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r6,r2
-    mov r2,#0
-    adc r5,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r6,r2
-    adc r5,r3
+    muls r2,r7
+    muls r3,r7
+    adds r6,r6,r2
+    movs r2,#0
+    adcs r5,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r6,r6,r2
+    adcs r5,r3
     str r6,[r0,#4]
-    mov r6,#0
+    movs r6,#0
     ldr r2,[r1,#8]
-    lsl r3,r2,#16
-    lsr r4,r2,#16
-    add r5,r3
-    adc r6,r4
-    lsr r3,r2,#16
+    lsls r3,r2,#16
+    lsrs r4,r2,#16
+    adds r5,r5,r3
+    adcs r6,r4
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r5,r2
-    mov r2,#0
-    adc r6,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r5,r2
-    adc r6,r3
+    muls r2,r7
+    muls r3,r7
+    adds r5,r5,r2
+    movs r2,#0
+    adcs r6,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r5,r5,r2
+    adcs r6,r3
     str r5,[r0,#8]
-    mov r5,#0
+    movs r5,#0
     ldr r2,[r1,#12]
-    lsl r3,r2,#16
-    lsr r4,r2,#16
-    add r6,r3
-    adc r5,r4
-    lsr r3,r2,#16
+    lsls r3,r2,#16
+    lsrs r4,r2,#16
+    adds r6,r6,r3
+    adcs r5,r4
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r6,r2
-    mov r2,#0
-    adc r5,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r6,r2
-    adc r5,r3
+    muls r2,r7
+    muls r3,r7
+    adds r6,r6,r2
+    movs r2,#0
+    adcs r5,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r6,r6,r2
+    adcs r5,r3
     str r6,[r0,#12]
-    mov r6,#0
+    movs r6,#0
     ldr r2,[r1,#16]
-    lsl r3,r2,#16
-    lsr r4,r2,#16
-    add r5,r3
-    adc r6,r4
-    lsr r3,r2,#16
+    lsls r3,r2,#16
+    lsrs r4,r2,#16
+    adds r5,r5,r3
+    adcs r6,r4
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r5,r2
-    mov r2,#0
-    adc r6,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r5,r2
-    adc r6,r3
+    muls r2,r7
+    muls r3,r7
+    adds r5,r5,r2
+    movs r2,#0
+    adcs r6,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r5,r5,r2
+    adcs r6,r3
     str r5,[r0,#16]
-    mov r5,#0
+    movs r5,#0
     ldr r2,[r1,#20]
-    lsl r3,r2,#16
-    lsr r4,r2,#16
-    add r6,r3
-    adc r5,r4
-    lsr r3,r2,#16
+    lsls r3,r2,#16
+    lsrs r4,r2,#16
+    adds r6,r6,r3
+    adcs r5,r4
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r6,r2
-    mov r2,#0
-    adc r5,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r6,r2
-    adc r5,r3
+    muls r2,r7
+    muls r3,r7
+    adds r6,r6,r2
+    movs r2,#0
+    adcs r5,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r6,r6,r2
+    adcs r5,r3
     str r6,[r0,#20]
-    mov r6,#0
+    movs r6,#0
     ldr r2,[r1,#24]
-    lsl r3,r2,#16
-    lsr r4,r2,#16
-    add r5,r3
-    adc r6,r4
-    lsr r3,r2,#16
+    lsls r3,r2,#16
+    lsrs r4,r2,#16
+    adds r5,r5,r3
+    adcs r6,r4
+    lsrs r3,r2,#16
     uxth r2,r2
-    mul r2,r7
-    mul r3,r7
-    add r5,r2
-    mov r2,#0
-    adc r6,r2
-    lsl r2,r3,#16
-    lsr r3,r3,#16
-    add r5,r2
-    adc r6,r3
+    muls r2,r7
+    muls r3,r7
+    adds r5,r5,r2
+    movs r2,#0
+    adcs r6,r2
+    lsls r2,r3,#16
+    lsrs r3,r3,#16
+    adds r5,r5,r2
+    adcs r6,r3
     str r5,[r0,#24]
-    mov r5,#0
+    movs r5,#0
     ldr r2,[r0,#28]
-    add r6,r2
+    adds r6,r6,r2
     str r6,[r0,#28]
     pop {r4,r5,r6,r7,r15}
 
