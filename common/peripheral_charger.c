@@ -92,6 +92,28 @@ static const char *_text_event(enum pchg_event event)
 	return event_names[event];
 }
 
+static const char *_text_error(uint32_t error)
+{
+	static const char *const error_names[] = {
+		[PCHG_ERROR_COMMUNICATION] = "COMMUNICATION",
+		[PCHG_ERROR_OVER_TEMPERATURE] = "OVER_TEMPERATURE",
+		[PCHG_ERROR_OVER_CURRENT] = "OVER_CURRENT",
+		[PCHG_ERROR_FOREIGN_OBJECT] = "FOREIGN_OBJECT",
+		[PCHG_ERROR_RESPONSE] = "RESPONSE",
+		[PCHG_ERROR_FW_VERSION] = "FW_VERSION",
+		[PCHG_ERROR_INVALID_FW] = "INVALID_FW",
+		[PCHG_ERROR_WRITE_FLASH] = "WRITE_FLASH",
+		[PCHG_ERROR_OTHER] = "OTHER",
+	};
+	BUILD_ASSERT(ARRAY_SIZE(error_names) == PCHG_ERROR_COUNT);
+	int ffs = __builtin_ffs(error) - 1;
+
+	if (0 <= ffs && ffs < PCHG_ERROR_COUNT)
+		return error_names[ffs];
+
+	return "UNDEF";
+}
+
 static void pchg_queue_event(struct pchg *ctx, enum pchg_event event)
 {
 	mutex_lock(&ctx->mtx);
@@ -551,6 +573,14 @@ static int pchg_run(struct pchg *ctx)
 
 	if (ctx->battery_percent != previous_battery)
 		CPRINTS("Battery %u%%", ctx->battery_percent);
+
+	if (ctx->event == PCHG_EVENT_ERROR) {
+		/* Print (only one) new error. */
+		uint32_t err = (ctx->error ^ previous_error) & ctx->error;
+
+		if (err)
+			CPRINTS("ERROR_%s", _text_error(err));
+	}
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		/* Chipset off */
