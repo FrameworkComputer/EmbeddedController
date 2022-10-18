@@ -5,6 +5,7 @@
 target_sources(app PRIVATE
     src/adc.c
     src/battery_cut_off.c
+    src/battery_display_soc.c
     src/get_panic_info.c
     src/get_pd_port_caps.c
     src/host_event_commands.c
