@@ -10,6 +10,7 @@
 #include "button.h"
 #include "console.h"
 #include "hooks.h"
+#include "mkbp_fifo.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
 
@@ -48,6 +49,9 @@ static void button_before(void *f)
 	((struct button_fixture *)f)->fake_time.val = 0;
 	reset_button_debug_state();
 	button_init();
+	/* Sleep for 30s to flush any pending tasks */
+	k_sleep(K_SECONDS(30));
+	mkbp_clear_fifo();
 }
 
 ZTEST_SUITE(button, drivers_predicate_post_main, button_setup, button_before,
@@ -105,4 +109,150 @@ ZTEST(button, test_fail_check_button_released_too_soon)
 	/* Wait for the deadline to pass, putting us back in NONE */
 	pass_time(11000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
+}
+
+ZTEST(button, test_fail_check_button_stuck)
+{
+	/* Press both volume-up and volume-down for 0.9 seconds */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 30000"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 30000"));
+
+	/* Let the deferred calls get run (800ms) */
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
+
+	/* Wait for the timeout, should put us in staging */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Do a plain sleep to force the error condition of waking up the
+	 * handler too early (since the time isn't moving forward).
+	 */
+	k_msleep(11000);
+
+	/* Now sleep and move the clock forward to timeout the debug process */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
+}
+
+ZTEST(button, test_activate_sysrq_path_then_timeout)
+{
+	/* Press both volume-up and volume-down for 1/2 second */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 10500"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 10500"));
+
+	/* Let the deferred calls get run (800ms) */
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
+
+	/* Wait for the buttons to be released */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait a bit and check that we activated debug mode */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
+
+	/* Press volume up button to put in sysrq_path */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait for timeout and go into sysrq_path */
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_SYSRQ_PATH);
+
+	/* Now sleep and move the clock forward to timeout the debug process */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
+}
+
+ZTEST(button, test_activate_sysrq_path_4_times)
+{
+	/* Press both volume-up and volume-down for 1/2 second */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 10500"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 10500"));
+
+	/* Let the deferred calls get run (800ms) */
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
+
+	/* Wait for the buttons to be released */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait a bit and check that we activated debug mode */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
+
+	/* Press volume up button to put in sysrq_path */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait for timeout and go into sysrq_path */
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_SYSRQ_PATH);
+
+	/* Press vup again (#2) */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
+	pass_time(800);
+	pass_time(500);
+
+	/* Press vup again (#3) */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
+	pass_time(800);
+	pass_time(500);
+
+	/* Press vup again (#4) */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
+	pass_time(800);
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
+}
+
+ZTEST(button, test_activate_sysrq_exec)
+{
+	uint32_t event_data = 0;
+
+	/* Press both volume-up and volume-down for 1/2 second */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 10500"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 10500"));
+
+	/* Let the deferred calls get run (800ms) */
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
+
+	/* Wait for the buttons to be released */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait a bit and check that we activated debug mode */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
+
+	/* Press volume up button to put in sysrq_path */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait for timeout and go into sysrq_path */
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_SYSRQ_PATH);
+
+	/* Now sleep and move the clock forward to timeout the debug process */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 500"));
+	pass_time(800);
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
+
+	/* Flush all the button events */
+	while (mkbp_fifo_get_next_event((uint8_t *)&event_data,
+					EC_MKBP_EVENT_BUTTON) > 0)
+		;
+
+	/* Check for sysrq event */
+	zassert_equal(4, mkbp_fifo_get_next_event((uint8_t *)&event_data,
+						  EC_MKBP_EVENT_SYSRQ));
+	zassert_equal((uint32_t)'x', event_data);
 }
