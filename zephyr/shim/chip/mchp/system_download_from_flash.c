@@ -17,7 +17,7 @@
 #define STRUCT_PCR_REG_BASE_ADDR \
 	((struct pcr_regs *)DT_REG_ADDR_BY_IDX(PCR_NODE, 0))
 
-#define QSPI_NODE DT_INST(0, microchip_xec_qmspi_ldma)
+#define QSPI_NODE DT_INST(0, microchip_xec_qmspi_full_duplex)
 #define STRUCT_QSPI_REG_BASE_ADDR \
 	((struct qmspi_regs *)(DT_REG_ADDR(QSPI_NODE)))
 

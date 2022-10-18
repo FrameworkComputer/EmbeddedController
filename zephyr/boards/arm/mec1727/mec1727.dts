@@ -133,6 +133,7 @@
 
 &spi0 {
 	status = "okay";
+	compatible = "microchip,xec-qmspi-full-duplex";
 	clock-frequency = <12000000>;
 	lines = <2>;
 	port-sel = <2>;
