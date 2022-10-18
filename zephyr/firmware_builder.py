@@ -326,25 +326,6 @@ def test(opts):
         ).stdout
         _extract_lcov_summary("EC_ZEPHYR_MERGED", metrics, output)
 
-        cmd = [
-            "/usr/bin/lcov",
-            "-o",
-            build_dir / "lcov_unfiltered.info",
-            "--rc",
-            "lcov_branch_coverage=1",
-            "-a",
-            build_dir / "zephyr_merged.info",
-            "-a",
-            platform_ec / "build/coverage/lcov.info",
-        ]
-        log_cmd(cmd)
-        subprocess.run(
-            cmd,
-            cwd=zephyr_dir,
-            check=True,
-            stdin=subprocess.DEVNULL,
-        )
-
         test_patterns = [
             # Exclude tests
             platform_ec / "test/**",
@@ -388,7 +369,7 @@ def test(opts):
             "--rc",
             "lcov_branch_coverage=1",
             "-r",
-            build_dir / "lcov_unfiltered.info",
+            build_dir / "zephyr_merged.info",
         ] + generated_and_system_patterns
         log_cmd(cmd)
         output = subprocess.run(
