@@ -1,18 +1,18 @@
-description: "SUNWODA SWD-COS4.264"
-compatible: "sunwoda,cos3rr09"
+description: "SUNWODA SWD-ATL3.660"
+compatible: "sunwoda,atlvkyjx"
 
 include: battery-smart.yaml
 
 properties:
    enum-name:
       type: string
-      default: "sunwoda,cos3rr09"
+      default: "sunwoda,atlvkyjx"
 
    # Fuel Gauge
    manuf_name:
-      default: "SWD-COS4.264"
+      default: "SWD-ATL3.660"
    device_name:
-      default: "DELL 3RR09YMD"
+      default: "DELL VKYJX"
    ship_mode_reg_addr:
       default: 0x00
    ship_mode_reg_data:
@@ -32,9 +32,9 @@ properties:
 
    # Battery info
    voltage_max:
-      default: 17800
+      default: 17600
    voltage_normal:
-      default: 15200
+      default: 15000
    voltage_min:
       default: 12000
    precharge_current:

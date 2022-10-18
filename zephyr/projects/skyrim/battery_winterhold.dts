@@ -20,11 +20,11 @@
 		cosmx_mvk11{
 			compatible = "cosmx,mvk11", "battery-smart";
 		};
-		sunwoda_atl3rr09{
-			compatible = "sunwoda,atl3rr09", "battery-smart";
+		sunwoda_atlvkyjx{
+			compatible = "sunwoda,atlvkyjx", "battery-smart";
 		};
-		sunwoda_cos3rr09{
-			compatible = "sunwoda,cos3rr09", "battery-smart";
+		sunwoda_cosvkyjx{
+			compatible = "sunwoda,cosvkyjx", "battery-smart";
 		};
 		atl_cfd72{
 			compatible = "atl,cfd72", "battery-smart";
