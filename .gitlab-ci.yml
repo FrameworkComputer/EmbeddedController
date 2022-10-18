@@ -134,8 +134,14 @@ before_script:
       --modules-dir "${MODULES_DIR}" -l DEBUG build --coverage
       -B "${BUILD_DIR}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/merged_twister.info" -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info" -a "${BUILD_DIR}/zephyr_codecov/fixed.info"
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/merged_twister_no_ec.info" -e "${BUILD_DIR}/${PROJECT}/output/merged_twister.info" "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
+    - lcov --rc lcov_branch_coverage=1
+      -o "${BUILD_DIR}/${PROJECT}/output/merged_twister.info"
+      -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info"
+      -a "${BUILD_DIR}/zephyr_codecov/fixed.info"
+    - lcov --rc lcov_branch_coverage=1
+      -o "${BUILD_DIR}/${PROJECT}/output/merged_twister_no_ec.info"
+      -e "${BUILD_DIR}/${PROJECT}/output/merged_twister.info"
+      "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
     - grep "SF:" "${BUILD_DIR}/${PROJECT}/output/zephyr.info" | sort -u |
       sed -e 's|^SF:||' | xargs lcov --rc lcov_branch_coverage=1
       -o "${BUILD_DIR}/${PROJECT}/output/filtered_twister.info"
@@ -145,14 +151,17 @@ before_script:
       -t "${PROJECT} coverage of twister tests"
       -s "${BUILD_DIR}/${PROJECT}/output/filtered_twister.info"
     - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/merged.info"
-      -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info" -a build/merged.info
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info"
+      -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info"
+      -a "${BUILD_DIR}/merged.info"
+    - lcov --rc lcov_branch_coverage=1
+      -o "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/output/zephyr.info" "${ZEPHYR_BASE}/**"
-      "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
+      "${MODULES_DIR}/**"
       "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
       "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
-      "${EC_DIR}/zephyr/projects/**" "/usr/include/x86_64-linux-gnu/**"
-      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**" "${EC_DIR}/test/**"
+      "${EC_DIR}/zephyr/projects/**" ""/usr/include/**"
+      "${EC_DIR}/build/**" "${EC_DIR}/twister-out*/**"
+      "${EC_DIR}/test/**"
       "${EC_DIR}/zephyr/shim/chip/npcx/npcx_monitor/**"
       "${EC_DIR}/zephyr/emul/**" "${EC_DIR}/zephyr/test/**"
       "**/testsuite/**" "**/subsys/emul/**"
@@ -165,8 +174,8 @@ before_script:
       "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
       "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
       "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
-      "${EC_DIR}/zephyr/projects/**" "/usr/include/x86_64-linux-gnu/**"
-      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**"
+      "${EC_DIR}/zephyr/projects/**" "/usr/include/**"
+      "${EC_DIR}/build/**" "${EC_DIR}/twister-out*/**"
       "${EC_DIR}/zephyr/shim/chip/npcx/npcx_monitor/**"
       "${EC_DIR}/test/**"
       "${EC_DIR}/include/tests/**"
@@ -319,33 +328,23 @@ merged_coverage:
   stage: test
   needs: ["ec_coverage", "zephyr_coverage", "zephyr_boards_coverage"]
   script:
-    - lcov --rc lcov_branch_coverage=1 -o ${BUILD_DIR}/merged.info
-      -a ${BUILD_DIR}/coverage/lcov.info -a "${TWISTER_OUT_DIR}/coverage.info"
-    - lcov --rc lcov_branch_coverage=1 -o ${BUILD_DIR}/merged_no_zephyr.info
-      -r ${BUILD_DIR}/merged.info
-      "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
-      "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
-      "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
-      "${EC_DIR}/zephyr/projects/**" "/usr/include/x86_64-linux-gnu/**"
-      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**" "${EC_DIR}/test/**"
-      "${EC_DIR}/zephyr/shim/chip/npcx/npcx_monitor/**"
-      "${EC_DIR}/zephyr/emul/**" "${EC_DIR}/zephyr/test/**"
-      "**/testsuite/**" "**/subsys/emul/**"
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/all_builds_merged.info"
-      -a ${BUILD_DIR}/merged.info $(printf ' -a %s' ${BUILD_DIR}/zephyr/all_builds[0-9]*.info)
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/all_builds_no_zephyr.info"
-      -r "${BUILD_DIR}/all_builds_merged.info" "${ZEPHYR_BASE}/**"
-      "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
-      "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
-      "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
-      "${EC_DIR}/zephyr/projects/**" "/usr/include/x86_64-linux-gnu/**"
-      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**"
-      "${EC_DIR}/zephyr/shim/chip/npcx/npcx_monitor/**"
+    # build_dir / "all_tests.info" -> "${BUILD_DIR}/merged.info"
+    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/merged.info"
+      -a "${BUILD_DIR}/coverage/lcov.info" -a "${TWISTER_OUT_DIR}/coverage.info"
+    - printf ' -a %s' ${BUILD_DIR}/zephyr/all_builds[0-9]*.info | xargs -x
+      lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/zephyr/zephyr_merged.info"
+      -a "${BUILD_DIR}/merged.info"
+    - lcov --rc lcov_branch_coverage=1
+      -o "${BUILD_DIR}/all_builds_filtered.info"
+      -r "${BUILD_DIR}/zephyr/zephyr_merged.info"
+      "${EC_DIR}/build/**" "${EC_DIR}/twister-out*/**" "/usr/include/**"
+      "/usr/lib/**"
       "${EC_DIR}/test/**"
       "${EC_DIR}/include/tests/**"
       "${EC_DIR}/private/test/**"
       "${EC_DIR}/private/fingerprint/*/mcutest/**"
       "${EC_DIR}/zephyr/test/**"
+      "${ZEPHYR_BASE}/main/subsys/testsuite/**"
       "${EC_DIR}/include/mock/**"
       "${EC_DIR}/common/mock/**"
       "${EC_DIR}/board/host/**"
@@ -353,6 +352,7 @@ merged_coverage:
       "${EC_DIR}/core/host/**"
       "${EC_DIR}/zephyr/emul/**"
       "${EC_DIR}/zephyr/mock/**"
+      "${ZEPHYR_BASE}/main/subsys/emul/**"
       "**/*_test.c"
       "**/*_test.h"
       "**/*_emul.c"
@@ -361,16 +361,12 @@ merged_coverage:
       "${EC_DIR}/common/test_util.c"
       "${EC_DIR}/zephyr/shim/src/test_util.c"
       "${EC_DIR}/zephyr/shim/src/ztest_system.c"
-    - grep -h "SF:" ${BUILD_DIR}/zephyr/all_builds[0-9]*.info | sort -u |
-      sed -e 's|^SF:||' | xargs lcov --rc lcov_branch_coverage=1
-      -o "${BUILD_DIR}/all_builds_filtered.info"
-      -e "${BUILD_DIR}/all_builds_no_zephyr.info"
     - /usr/bin/genhtml --branch-coverage -q
       -o "${BUILD_DIR}/all_builds_filtered_rpt"
-      -t "All boards coverage w/o zephyr"
+      -t "All boards and tests merged"
       -p ${EC_DIR}
       -s "${BUILD_DIR}/all_builds_filtered.info"
-  artifacts:
+    artifacts:
     paths:
       - ec_dir/build/*.info
       - ec_dir/build/*_rpt
