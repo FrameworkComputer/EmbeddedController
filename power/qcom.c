@@ -896,46 +896,10 @@ test_mockable void chipset_reset(enum chipset_shutdown_reason reason)
 	task_wake(TASK_ID_CHIPSET);
 }
 
-/*
- * Flag to fake the suspend signal to 1 or 0, or -1 means not fake it.
- *
- * TODO(waihong): Remove this flag and debug command when the AP_SUSPEND
- * signal is working.
- */
-static int fake_suspend = -1;
-
-static int command_fake_suspend(int argc, const char **argv)
-{
-	int v;
-
-	if (argc < 2) {
-		ccprintf("fake_suspend: %s\n",
-			 fake_suspend == -1 ? "reset" :
-					      (fake_suspend ? "on" : "off"));
-		return EC_SUCCESS;
-	}
-
-	if (!strcasecmp(argv[1], "reset"))
-		fake_suspend = -1;
-	else if (parse_bool(argv[1], &v))
-		fake_suspend = v;
-	else
-		return EC_ERROR_PARAM1;
-
-	task_wake(TASK_ID_CHIPSET);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(fakesuspend, command_fake_suspend, "on/off/reset",
-			"Fake the AP_SUSPEND signal");
-
 /* Get system sleep state through GPIOs */
 static inline int chipset_get_sleep_signal(void)
 {
-	if (fake_suspend == -1)
-		return (power_get_signals() & IN_SUSPEND) == IN_SUSPEND;
-	else
-		return fake_suspend;
+	return (power_get_signals() & IN_SUSPEND) == IN_SUSPEND;
 }
 
 __override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
