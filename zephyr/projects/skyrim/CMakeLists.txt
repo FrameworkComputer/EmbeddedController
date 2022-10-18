@@ -44,6 +44,7 @@ if(DEFINED CONFIG_BOARD_WINTERHOLD)
 		"src/winterhold/usb_mux_config.c"
 		"src/winterhold/ppc_config.c"
 		"src/winterhold/kb_backlight.c"
+		"src/winterhold/keyboard.c"
     )
 endif()
 
