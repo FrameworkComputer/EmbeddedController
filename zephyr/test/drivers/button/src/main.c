@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
@@ -11,8 +12,17 @@
 #include "console.h"
 #include "hooks.h"
 #include "mkbp_fifo.h"
+#include "power.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
+
+/*
+ * TODO (b/b/253284635) Timeouts here don't quite align with the button press
+ *   duration. This is caused by an issue with the Zephyr scheduling for delayed
+ *   work that's causing us to need to sleep longer than "reasonable".
+ */
+
+FAKE_VOID_FUNC(chipset_reset, enum chipset_shutdown_reason);
 
 static char *button_debug_state_strings[] = {
 	"STATE_DEBUG_NONE", "STATE_DEBUG_CHECK",
@@ -52,6 +62,8 @@ static void button_before(void *f)
 	/* Sleep for 30s to flush any pending tasks */
 	k_sleep(K_SECONDS(30));
 	mkbp_clear_fifo();
+
+	RESET_FAKE(chipset_reset);
 }
 
 ZTEST_SUITE(button, drivers_predicate_post_main, button_setup, button_before,
@@ -255,4 +267,83 @@ ZTEST(button, test_activate_sysrq_exec)
 	zassert_equal(4, mkbp_fifo_get_next_event((uint8_t *)&event_data,
 						  EC_MKBP_EVENT_SYSRQ));
 	zassert_equal((uint32_t)'x', event_data);
+}
+
+ZTEST(button, test_activate_warm_reset_then_timeout)
+{
+	/* Press both volume-up and volume-down for 1/2 second */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 10500"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 10500"));
+
+	/* Let the deferred calls get run (800ms) */
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
+
+	/* Wait for the buttons to be released */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait a bit and check that we activated debug mode */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
+
+	/* Press volume down button to put in warm_reset_path */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 500"));
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait for timeout and go into warm_reset_path */
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_WARM_RESET_PATH);
+
+	/* Now sleep and move the clock forward to timeout the debug process */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
+}
+
+ZTEST(button, test_activate_warm_reset_exec)
+{
+	/* Press both volume-up and volume-down for 1/2 second */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 10500"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 10500"));
+
+	/* Let the deferred calls get run (800ms) */
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
+
+	/* Wait for the buttons to be released */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait a bit and check that we activated debug mode */
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
+
+	/* Press volume down button to put in warm_reset_path */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 500"));
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	/* Wait for timeout and go into warm_reset_path */
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_WARM_RESET_PATH);
+
+	/* Now sleep and move the clock forward to timeout the debug process.
+	 * Doing this in two steps verifies that even after the handler executes
+	 * "too early" we can still recover via the vup button that's coming
+	 * next. This is caused by effectively, sleeping so the scheduler runs,
+	 * but not ticking the clock forward yet until the next sleep.
+	 */
+	k_msleep(11000);
+	pass_time(11000);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
+	pass_time(800);
+	ASSERT_DEBUG_STATE(STATE_STAGING);
+
+	pass_time(11000);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
+	zassert_equal(1, chipset_reset_fake.call_count);
+	zassert_equal(CHIPSET_RESET_DBG_WARM_REBOOT,
+		      chipset_reset_fake.arg0_val);
 }
