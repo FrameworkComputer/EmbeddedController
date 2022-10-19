@@ -150,7 +150,13 @@ const struct battery_info *battery_get_info(void)
 	return &get_batt_params()->batt_info;
 }
 
-int cut_off_battery_block_write(const struct ship_mode_info *ship_mode)
+/**
+ * Battery cut off command via SMBus write block.
+ *
+ * @param ship_mode		Battery ship mode information
+ * @return non-zero if error
+ */
+static int cut_off_battery_block_write(const struct ship_mode_info *ship_mode)
 {
 	int rv;
 
@@ -177,7 +183,13 @@ int cut_off_battery_block_write(const struct ship_mode_info *ship_mode)
 	return sb_write_block(ship_mode->reg_addr, cutdata, sizeof(cutdata));
 }
 
-int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode)
+/**
+ * Battery cut off command via SMBus write word.
+ *
+ * @param ship_mode		Battery ship mode information
+ * @return non-zero if error
+ */
+static int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode)
 {
 	int rv;
 

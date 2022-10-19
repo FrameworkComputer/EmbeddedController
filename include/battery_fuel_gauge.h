@@ -103,22 +103,6 @@ __override_proto int board_get_default_battery_type(void);
 int battery_is_charge_fet_disabled(void);
 
 /**
- * Battery cut off command via SMBus write block.
- *
- * @param ship_mode		Battery ship mode information
- * @return non-zero if error
- */
-int cut_off_battery_block_write(const struct ship_mode_info *ship_mode);
-
-/**
- * Battery cut off command via SMBus write word.
- *
- * @param ship_mode		Battery ship mode information
- * @return non-zero if error
- */
-int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode);
-
-/**
  * Send the fuel gauge sleep command through SMBus.
  *
  * @return	0 if successful, non-zero if error occurred
