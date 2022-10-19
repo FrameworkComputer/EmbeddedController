@@ -158,6 +158,23 @@ config CROS_EC_RW_SIZE
 config SHIMMED_TASKS
 	bool "Add support for shimming in platform/ec tasks as Zephyr threads"
 	default n if ARCH_POSIX
+	default y if PLATFORM_EC_USB_CHARGER
+	default y if HAS_TASK_CHARGER
+	default y if HAS_TASK_CHG_RAMP
+	default y if HAS_TASK_CHIPSET
+	default y if HAS_TASK_DPS
+	default y if HAS_TASK_HOSTCMD
+	default y if HAS_TASK_KEYSCAN
+	default y if HAS_TASK_KEYPROTO
+	default y if HAS_TASK_MOTIONSENSE
+	default y if HAS_TASK_PD_INT_SHARED
+	default y if HAS_TASK_POWERBTN
+	default y if HAS_TASK_USB_MUX
+	default y if TASK_HOSTCMD_THREAD_DEDICATED
+	default y if HAS_TASK_MAIN
+	default y if HAS_TASK_TOUCHPAD
+	default y if HAS_TASK_PD_C0
+	default y if HAS_TASK_PD_INT_C0
 	help
 	  When this option is enabled, a shimmed_tasks.h header with the
 	  CROS_EC_TASK_LIST defined needs to be included for the project to
