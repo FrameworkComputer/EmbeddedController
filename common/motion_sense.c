@@ -81,6 +81,13 @@ static int init_sensor_mutex(const struct device *dev)
 SYS_INIT(init_sensor_mutex, POST_KERNEL, 50);
 #endif /* CONFIG_ZEPHYR */
 
+#ifdef CONFIG_LID_ANGLE
+__attribute__((weak)) int sensor_board_is_lid_angle_available(void)
+{
+	return 1;
+}
+#endif
+
 static inline int
 motion_sensor_in_forced_mode(const struct motion_sensor_t *sensor)
 {
@@ -1422,7 +1429,8 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	default:
 		/* Call other users of the motion task */
 		if (IS_ENABLED(CONFIG_LID_ANGLE) &&
-		    (ret == EC_RES_INVALID_PARAM))
+		    (ret == EC_RES_INVALID_PARAM) &&
+		    sensor_board_is_lid_angle_available())
 			ret = host_cmd_motion_lid(args);
 		return ret;
 	}
