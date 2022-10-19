@@ -366,7 +366,7 @@ merged_coverage:
       -t "All boards and tests merged"
       -p ${EC_DIR}
       -s "${BUILD_DIR}/all_builds_filtered.info"
-    artifacts:
+  artifacts:
     paths:
       - ec_dir/build/*.info
       - ec_dir/build/*_rpt
