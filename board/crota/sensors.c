@@ -10,9 +10,11 @@
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_lsm6dso.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
+#include "tablet_mode.h"
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "temp_sensor/thermistor.h"
@@ -209,9 +211,28 @@ static void board_update_motion_sensor_config(void)
 	} else {
 		ccprints("BASE IMU is LSM6DSO");
 	}
+
+	if (!board_is_convertible()) {
+		tablet_set_mode(0, TABLET_TRIGGER_LID);
+		gmr_tablet_switch_disable();
+		/* Make sure tablet mode detection is not trigger by mistake. */
+		gpio_set_flags(GPIO_TABLET_MODE_L, GPIO_INPUT | GPIO_PULL_UP);
+		/*
+		 * Make sure we don't even try to initialize the lid accel, it
+		 * is not present.
+		 */
+		motion_sensors[LID_ACCEL].active_mask = 0;
+		gpio_set_flags(GPIO_EC_ACCEL_INT_R_L,
+			       GPIO_INPUT | GPIO_PULL_UP);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_update_motion_sensor_config,
 	     HOOK_PRIO_INIT_I2C + 1);
+
+__override int sensor_board_is_lid_angle_available(void)
+{
+	return board_is_convertible();
+}
 
 static void baseboard_sensors_init(void)
 {

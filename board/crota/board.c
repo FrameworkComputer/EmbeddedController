@@ -51,7 +51,7 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-static bool board_is_convertible(void)
+bool board_is_convertible(void)
 {
 	/*
 	 * convertible = 0

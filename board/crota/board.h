@@ -288,6 +288,8 @@ enum thermal_cfg_table { LAPTOP_MODE, TABLET_MODE, THERMAL_CFG_TABLE_COUNT };
 
 void motion_interrupt(enum gpio_signal signal);
 
+bool board_is_convertible(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
