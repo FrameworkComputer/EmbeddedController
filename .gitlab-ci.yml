@@ -159,7 +159,7 @@ before_script:
       "${MODULES_DIR}/**"
       "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
       "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
-      "${EC_DIR}/zephyr/projects/**" ""/usr/include/**"
+      "${EC_DIR}/zephyr/projects/**" "/usr/include/**"
       "${EC_DIR}/build/**" "${EC_DIR}/twister-out*/**"
       "${EC_DIR}/test/**"
       "${EC_DIR}/zephyr/shim/chip/npcx/npcx_monitor/**"
