@@ -22,26 +22,10 @@ tests:
       - CONFIG_POWER_SEQUENCE_MOCK=y
       - CONFIG_PLATFORM_EC_CBI_EEPROM=y
       - CONFIG_PLATFORM_EC_USB_PD_DPS=y
-  drivers.button:
-    timeout: 240
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_BUTTON=y
-      - CONFIG_PLATFORM_EC_CMD_BUTTON=y
-      - CONFIG_PLATFORM_EC_VOLUME_BUTTONS=y
-      - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
   drivers.anx7447:
     extra_args: CONF_FILE="prj.conf;anx7447/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./anx7447/tcpc_policy.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_ANX7447=y
-  drivers.host_cmd:
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
-      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
-      - CONFIG_PLATFORM_EC_USB_PD_LOGGING=y
-      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
-  drivers.locate_chip:
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS=y
   drivers.ap_mux_control:
     extra_args: CONF_FILE="prj.conf;ap_mux_control/prj.conf"
     extra_configs:
@@ -50,6 +34,13 @@ tests:
     extra_args: CONF_FILE="prj.conf;ap_vdm_control/prj.conf"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_AP_VDM_CONTROL=y
+  drivers.button:
+    timeout: 240
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_BUTTON=y
+      - CONFIG_PLATFORM_EC_CMD_BUTTON=y
+      - CONFIG_PLATFORM_EC_VOLUME_BUTTONS=y
+      - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
   drivers.chargesplash:
     timeout: 240
     extra_configs:
@@ -63,6 +54,12 @@ tests:
     extra_args: CONF_FILE="prj.conf;dps/prj.conf"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USB_PD_DPS=y
+  drivers.host_cmd:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
+      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_PLATFORM_EC_USB_PD_LOGGING=y
+      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
   drivers.isl923x:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_ISL923X=y
@@ -82,6 +79,9 @@ tests:
     extra_args: CONF_FILE="prj.conf;led_driver/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./led_driver/led_pins.dts;./led_driver/led_policy.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_LED_DRIVER=y
+  drivers.locate_chip:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS=y
   drivers.mkbp:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_MKBP=y
@@ -92,9 +92,6 @@ tests:
     tags:
       common
       mkbp
-  drivers.shim_pwm_hc:
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_SHIM_PWM_HC=y
   drivers.power_host_sleep:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_POWER_HOST_SLEEP=y
@@ -108,6 +105,9 @@ tests:
     extra_args: CONF_FILE="prj.conf;rt9490/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./rt9490/charger.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_RT9490=y
+  drivers.shim_pwm_hc:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_SHIM_PWM_HC=y
   drivers.shim_rtc:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_SHIM_RTC=y
@@ -153,6 +153,12 @@ tests:
      - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
      - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
      - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.usbc_ocp:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
+  drivers.usbc_ppc:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
   drivers.usbc_svdm_dfp_only:
     extra_args: CONF_FILE="prj.conf;usbc_svdm_dfp_only/prj.conf"
     extra_configs:
@@ -163,9 +169,3 @@ tests:
   drivers.usbc_vconn_swap:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_VCONN_SWAP=y
-  drivers.usbc_ocp:
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
-  drivers.usbc_ppc:
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
