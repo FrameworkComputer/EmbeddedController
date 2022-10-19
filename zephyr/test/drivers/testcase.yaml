@@ -154,6 +154,9 @@ tests:
      - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
      - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
      - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.usbc_console_pd:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
   drivers.usbc_ocp:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
