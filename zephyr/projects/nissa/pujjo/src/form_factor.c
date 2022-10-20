@@ -7,6 +7,7 @@
 #include <zephyr/logging/log.h>
 
 #include "accelgyro.h"
+#include "button.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "driver/accelgyro_bmi323.h"
@@ -54,6 +55,10 @@ static void sensor_init(void)
 		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
 		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_imu_int_l),
 				      GPIO_DISCONNECTED);
+
+		LOG_INF("Clamshell: disable volume button function.");
+		button_disable_gpio(BUTTON_VOLUME_UP);
+		button_disable_gpio(BUTTON_VOLUME_DOWN);
 	} else {
 		LOG_INF("Tablet: Enable motionsense function.");
 	}
