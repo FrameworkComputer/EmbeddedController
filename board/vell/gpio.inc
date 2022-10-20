@@ -14,7 +14,7 @@ GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_p
 GPIO_INT(EC_WP_ODL,                      PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(GSC_EC_PWR_BTN_ODL,             PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW, power_button_interrupt)
 GPIO_INT(LID_OPEN,                       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
-GPIO_INT(SEQ_EC_ALL_SYS_PG,              PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(SEQ_EC_ALL_SYS_PG,              PIN(9, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SEQ_EC_DSW_PWROK,               PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SEQ_EC_RSMRST_ODL,              PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_S3_L,                       PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
@@ -72,6 +72,7 @@ GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
 GPIO(EN_S5_RAILS,                    PIN(B, 6), GPIO_OUT_LOW)
 GPIO(IMVP9_VRRDY_OD,                 PIN(4, 3), GPIO_INPUT)
 GPIO(PCH_PWROK,                      PIN(7, 2), GPIO_OUT_LOW)
+GPIO(ID_5_SEQ_EC_ALL_SYS_PG,         PIN(D, 7), GPIO_INPUT)
 GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(USB_C0_C1_TCPC_RST_ODL,         PIN(A, 7), GPIO_ODR_LOW)
 GPIO(USB_C2_C3_TCPC_RST_ODL,         PIN(9, 6), GPIO_ODR_LOW)
@@ -127,7 +128,6 @@ UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(F, 4))       /* GPIOF4/I2C5_SDA1 */
 UNUSED(PIN(F, 5))       /* GPIOF5/I2C5_SCL1 */
 UNUSED(PIN(8, 6))       /* GPO86/TXD/CR_SOUT2 */
-UNUSED(PIN(9, 7))       /* GPIO97 */
 
 /* Pre-configured PSL balls:  J8  K6 */
 

@@ -20,6 +20,7 @@
 #include "panic.h"
 #include "power_button.h"
 #include "power.h"
+#include "power/intel_x86.h"
 #include "registers.h"
 #include "switch.h"
 #include "throttle_ap.h"
@@ -46,3 +47,20 @@ static void board_chipset_shutdown(void)
 	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+static void set_board_id_5_gpios(void)
+{
+	if (get_board_id() < 6) {
+		power_signal_list[X86_ALL_SYS_PGOOD].gpio =
+			GPIO_ID_5_SEQ_EC_ALL_SYS_PG;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, set_board_id_5_gpios, HOOK_PRIO_FIRST);
+
+__override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
+{
+	if (get_board_id() < 6)
+		return gpio_get_level(GPIO_ID_5_SEQ_EC_ALL_SYS_PG);
+
+	return gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
+}
