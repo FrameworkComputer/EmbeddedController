@@ -74,11 +74,11 @@ void pe_run(int port, int evt, int en)
 	case SM_PAUSED:
 		if (!en)
 			break;
-		/* fall through */
+		__fallthrough;
 	case SM_INIT:
 		pe_init(port);
 		local_state[port] = SM_RUN;
-		/* fall through */
+		__fallthrough;
 	case SM_RUN:
 		if (en)
 			run_state(port, &pe[port].ctx);
