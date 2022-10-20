@@ -23,7 +23,10 @@ app PRIVATE ${PLATFORM_EC}/zephyr/projects/corsola/src/variant_db_detection.c)
 target_sources_ifdef(CONFIG_TEST_DB_DETECT_TYPEC
 			app PRIVATE src/db_detect_typec.c)
 target_sources_ifdef(CONFIG_TEST_DB_DETECT_HDMI
-			app PRIVATE src/db_detect_hdmi.c)
+			app PRIVATE src/db_detect_hdmi.c
+			${PLATFORM_EC}/zephyr/shim/src/usb_muxes.c
+			${PLATFORM_EC}/driver/usb_mux/usb_mux.c
+			${PLATFORM_EC}/driver/usb_mux/virtual.c)
 target_sources_ifdef(CONFIG_TEST_DB_DETECT_NONE
 			app PRIVATE src/db_detect_none.c)
 target_sources_ifdef(CONFIG_TEST_ALT_SENSOR_PROBE

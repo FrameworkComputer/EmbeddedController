@@ -18,6 +18,9 @@
 
 void ppc_interrupt(enum gpio_signal signal);
 void ccd_interrupt(enum gpio_signal signal);
+void hdmi_hpd_interrupt(enum gpio_signal signal);
+void ps185_hdmi_hpd_mux_set(void);
+int corsola_is_dp_muxable(int port);
 
 /* USB-A ports */
 enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_COUNT };

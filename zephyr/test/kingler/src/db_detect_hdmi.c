@@ -5,11 +5,41 @@
 
 #include "zephyr/kernel.h"
 #include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
+#include "baseboard_usbc_config.h"
+#include "ec_commands.h"
 #include "gpio_signal.h"
 #include "hooks.h"
+#include "usb_mux.h"
 #include "variant_db_detection.h"
+
+FAKE_VALUE_FUNC(int, corsola_is_dp_muxable, int);
+FAKE_VOID_FUNC(svdm_set_hpd_gpio, int, int);
+
+#define FFF_FAKES_LIST(FAKE)        \
+	FAKE(corsola_is_dp_muxable) \
+	FAKE(svdm_set_hpd_gpio)
+
+static void db_hdmi_rule_before(const struct ztest_unit_test *test, void *data)
+{
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+	FFF_FAKES_LIST(RESET_FAKE);
+	FFF_RESET_HISTORY();
+}
+ZTEST_RULE(db_hdmi_rule, db_hdmi_rule_before, NULL);
+
+uint8_t board_get_usb_pd_port_count(void)
+{
+	return 2;
+}
+
+enum tcpc_cc_polarity pd_get_polarity(int port)
+{
+	return 0;
+}
 
 static void *db_detection_setup(void)
 {
@@ -73,11 +103,31 @@ ZTEST(db_detection, test_db_detect_hdmi)
 		      gpio_emul_output_get(ps185_pwrdn_gpio, ps185_pwrdn_pin),
 		      NULL);
 
-	/* Verify x_ec_interrupt is enabled */
+	/* Verify x_ec_interrupt is enabled, and plug */
 	interrupt_count = 0;
 	zassert_ok(gpio_emul_input_set(int_x_ec_gpio, int_x_ec_pin, 1), NULL);
 	k_sleep(K_MSEC(100));
 
+	corsola_is_dp_muxable_fake.return_val = 1;
+
 	zassert_equal(interrupt_count, 1, "interrupt_count=%d",
 		      interrupt_count);
+
+	zassert_false(usb_mux_get(USBC_PORT_C1) & USB_PD_MUX_DP_ENABLED, NULL);
+
+	/* invoke hdmi interrupt, the argument doesn't care, just pass 0 */
+	hdmi_hpd_interrupt(0);
+
+	k_sleep(K_MSEC(500));
+
+	zassert_equal(svdm_set_hpd_gpio_fake.call_count, 1);
+	zassert_true(usb_mux_get(USBC_PORT_C1) & USB_PD_MUX_DP_ENABLED, NULL);
+
+	/* unplug */
+	zassert_ok(gpio_emul_input_set(int_x_ec_gpio, int_x_ec_pin, 0), NULL);
+
+	hdmi_hpd_interrupt(0);
+	k_sleep(K_MSEC(500));
+
+	zassert_false(usb_mux_get(USBC_PORT_C1) & USB_PD_MUX_DP_ENABLED, NULL);
 }
