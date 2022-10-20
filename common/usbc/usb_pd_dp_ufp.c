@@ -117,7 +117,7 @@ static void hpd_to_dp_attention(void)
 			       0x2);
 
 	/* Send request to DPM to send an attention VDM */
-	pd_request_vdm_attention(port, vdm, ARRAY_SIZE(vdm));
+	pd_request_vdm(port, vdm, ARRAY_SIZE(vdm), TCPCI_MSG_SOP);
 
 	/* If there are still events, need to shift the buffer */
 	if (--hpd.count) {
