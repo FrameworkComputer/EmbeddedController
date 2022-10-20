@@ -53,7 +53,11 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static bool board_is_convertible(void)
 {
-	return !!get_fw_config().form_factor;
+	/*
+	 * convertible = 0
+	 * clamshell = 1
+	 */
+	return !get_fw_config().form_factor;
 }
 
 int board_sensor_at_360(void)
