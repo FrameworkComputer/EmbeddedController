@@ -76,7 +76,7 @@ Possible enums to use in these nodes are specified in file: [MKBP event mask enu
 
 ## Examples
 
-[Lazor wake-up masks](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/projects/trogdor/lazor/gpio.dts?q=ec-mkbp-host-event-wakeup-mask)
+[Lazor wake-up masks](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/trogdor/lazor/gpio.dts?q=ec-mkbp-host-event-wakeup-mask)
 
 For detailed descriptions of the MKBP and host event types, please see
 [ec_commands.h](/include/ec_commands.h) header file.

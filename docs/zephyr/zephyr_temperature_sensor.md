@@ -76,7 +76,7 @@ on Zephyr-based boards.
 
 Temperature sensors are declared as separate nodes and additional properties are
 defined by the `cros-ec,temp-sensors` node in the device tree. This example is
-from [zephyr/projects/brya/temp_sensors.dts](../../zephyr/projects/brya/temp_sensors.dts):
+from [zephyr/program/brya/temp_sensors.dts](../../zephyr/program/brya/temp_sensors.dts):
 
 ```
 	temp_ddr_soc: ddr_soc {

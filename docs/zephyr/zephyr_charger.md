@@ -20,7 +20,9 @@ charging configuration found in [Kconfig.usb_charger].
 
 ### Example of enabled configs
 
-In `ec/zephyr/projects/{project}/{board}/prj.conf`, one may add:
+Enable and disable charger configs in either the [`program.conf`] or
+[`project.conf`] file for your project.
+
 
 ```
 # Charger
@@ -289,3 +291,5 @@ The [chargestate] command may also be invoked.
 [ectool]: ../docs/ap-ec-comm.md
 [mapping legacy I2C port numbers to Zephyr devicetree nodes]: ./zephyr_i2c.md#mapping-legacy-i2c-port-numbers-to-zephyr-devicetree-nodes
 [pwr_avg]: ./zephyr_battery.md#pwr_avg
+[`program.conf`]: ./project_config.md#program_conf
+[`project.conf`]: ./project_config.md#project_conf

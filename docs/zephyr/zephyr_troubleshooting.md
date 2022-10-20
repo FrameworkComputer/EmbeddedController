@@ -12,10 +12,10 @@ The build system lists the various overlay files specified by `BUILD.py`, for
 example:
 
 ```
--- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/projects/brya/adc.dts
--- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/projects/brya/battery.dts
--- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/projects/brya/cbi_eeprom.dts
--- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/projects/brya/fan.dts
+-- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/program/brya/adc.dts
+-- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/program/brya/battery.dts
+-- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/program/brya/cbi_eeprom.dts
+-- Found devicetree overlay: /mnt/host/source/src/platform/ec/zephyr/program/brya/fan.dts
 ...
 ```
 

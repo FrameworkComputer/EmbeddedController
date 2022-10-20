@@ -215,9 +215,9 @@ TODO: Enable support for ledtest
 [cros-ec,gpio_led_pins.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,gpio-led-pins.yaml
 [cros-ec,pwm_led_pins.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,pwm-led-pins.yaml
 [cros-ec,pwm_led_pin_config.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,pwm-led-pin-config.yaml
-[led_policy_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/projects/skyrim/led_policy_skyrim.dts
-[led_pins_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/projects/skyrim/led_pins_skyrim.dts
-[led_policy_herobrine.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/projects/herobrine/led_policy_herobrine.dts
-[led_pins_herobrine.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/projects/herobrine/led_pins_herobrine.dts
+[led_policy_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/skyrim/led_policy_skyrim.dts
+[led_pins_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/skyrim/led_pins_skyrim.dts
+[led_policy_herobrine.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/herobrine/led_policy_herobrine.dts
+[led_pins_herobrine.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/herobrine/led_pins_herobrine.dts
 [Example CL enabling single port pwm based LEDs]: https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/3651490
 [Example CL enabling dual port gpio based LEDs]: https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/3635067

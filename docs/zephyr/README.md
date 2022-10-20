@@ -110,7 +110,7 @@ The following provides an overview of the sub-directories found under
   sub-directory.
 * `zephyr/linker/` - Linker directive files used to construct the Zephyr EC
   binaries.
-* `zephyr/projects/` - Program-specific configurations for each program
+* `zephyr/program/` - Program-specific configurations for each program
   supported by Zephyr.
 * `zephyr/shim/` - Source code that adapts the legacy EC APIs to the equivalent
   Zephyr OS API.

@@ -37,7 +37,7 @@ Each feature includes the following sub-tasks:
 - **Example** - This section walks through a complete example for configuring an
   EC feature based on existing board implementation.
 
-## Adding a new board to zmake
+## Adding a new project to zmake
 
 Refer the [project configuration](project_config.md) documentation to add a new
 board project to zmake.

@@ -17,7 +17,8 @@ Refer to [Kconfig.battery] for all sub-options controlling battery behavior.
 
 #### Enable battery feature configs
 
-Add battery configs to `ec/zephyr/projects/{project}/{board}/prj.conf`.
+Add battery configs to either the [`program.conf`] or [`project.conf`] file for
+your project.
 
 Example:
 
@@ -271,3 +272,5 @@ Usage:
 [ectool]: ../ap-ec-comm.md
 [task]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/shim/include/shimmed_task_id.h
 [*node label*]: https://docs.zephyrproject.org/latest/build/dts/intro.html#dt-node-labels
+[`program.conf`]: ./project_config.md#program_conf
+[`project.conf`]: ./project_config.md#project_conf
