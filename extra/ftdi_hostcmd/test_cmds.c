@@ -378,7 +378,6 @@ static struct lookup cmd_table[] = {
 	{ 0x00, "EC_CMD_PROTO_VERSION" },
 	{ 0x01, "EC_CMD_HELLO" },
 	{ 0x02, "EC_CMD_GET_VERSION" },
-	{ 0x03, "EC_CMD_READ_TEST" },
 	{ 0x04, "EC_CMD_GET_BUILD_INFO" },
 	{ 0x05, "EC_CMD_GET_CHIP_INFO" },
 	{ 0x06, "EC_CMD_GET_BOARD_VERSION" },

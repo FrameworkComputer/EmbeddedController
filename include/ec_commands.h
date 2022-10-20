@@ -1253,26 +1253,8 @@ struct ec_response_get_version_v1 {
 	char cros_fwid_rw[32]; /* Added in version 1 */
 } __ec_align4;
 
-/* Read test */
+/* Read test - DEPRECATED */
 #define EC_CMD_READ_TEST 0x0003
-
-/**
- * struct ec_params_read_test - Parameters for the read test command.
- * @offset: Starting value for read buffer.
- * @size: Size to read in bytes.
- */
-struct ec_params_read_test {
-	uint32_t offset;
-	uint32_t size;
-} __ec_align4;
-
-/**
- * struct ec_response_read_test - Response to the read test command.
- * @data: Data returned by the read test command.
- */
-struct ec_response_read_test {
-	uint32_t data[32];
-} __ec_align4;
 
 /*
  * Get build information

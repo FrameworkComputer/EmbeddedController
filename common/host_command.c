@@ -492,27 +492,6 @@ static enum ec_status host_command_hello(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_HELLO, host_command_hello, EC_VER_MASK(0));
 
-static enum ec_status host_command_read_test(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_read_test *p = args->params;
-	struct ec_response_read_test *r = args->response;
-
-	int offset = p->offset;
-	int size = p->size / sizeof(uint32_t);
-	int i;
-
-	if (size > ARRAY_SIZE(r->data) || p->size > args->response_size)
-		return EC_RES_ERROR;
-
-	for (i = 0; i < size; i++)
-		r->data[i] = offset + i;
-
-	args->response_size = size * sizeof(uint32_t);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_READ_TEST, host_command_read_test, EC_VER_MASK(0));
-
 #ifndef CONFIG_HOSTCMD_X86
 /*
  * Host command to read memory map is not needed on LPC, because LPC can

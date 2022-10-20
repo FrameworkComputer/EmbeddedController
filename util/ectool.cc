@@ -273,8 +273,6 @@ const char help_str[] =
 	"      Set 16 bit duty cycle of given PWM\n"
 	"  rand <num_bytes>\n"
 	"      generate <num_bytes> of random numbers\n"
-	"  readtest <patternoffset> <size>\n"
-	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|RW|cold|hibernate|hibernate-clear-ap-off|disable-jump|cold-ap-off>"
 	" [at-shutdown|switch-slot]\n"
 	"      Reboot EC to RO or RW\n"
@@ -1226,70 +1224,6 @@ exit:
 	printf("Tool version:  %s %s %s\n", CROS_ECTOOL_VERSION, DATE, BUILDER);
 
 	return rv;
-}
-
-int cmd_read_test(int argc, char *argv[])
-{
-	struct ec_params_read_test p;
-	struct ec_response_read_test r;
-	int offset, size;
-	int errors = 0;
-	int rv;
-	int i;
-	char *e;
-	char *buf;
-	uint32_t *b;
-
-	if (argc < 3) {
-		fprintf(stderr, "Usage: %s <pattern_offset> <size>\n", argv[0]);
-		return -1;
-	}
-	offset = strtol(argv[1], &e, 0);
-	size = strtol(argv[2], &e, 0);
-	if ((e && *e) || size <= 0 || size > MAX_FLASH_SIZE) {
-		fprintf(stderr, "Bad size.\n");
-		return -1;
-	}
-	printf("Reading %d bytes with pattern offset 0x%x...\n", size, offset);
-
-	buf = (char *)malloc(size);
-	if (!buf) {
-		fprintf(stderr, "Unable to allocate buffer.\n");
-		return -1;
-	}
-
-	/* Read data in chunks */
-	for (i = 0; i < size; i += sizeof(r.data)) {
-		p.offset = offset + i / sizeof(uint32_t);
-		p.size = MIN(size - i, sizeof(r.data));
-		rv = ec_command(EC_CMD_READ_TEST, 0, &p, sizeof(p), &r,
-				sizeof(r));
-		if (rv < 0) {
-			fprintf(stderr, "Read error at offset %d\n", i);
-			free(buf);
-			return rv;
-		}
-		memcpy(buf + i, r.data, p.size);
-	}
-
-	/* Check data */
-	for (i = 0, b = (uint32_t *)buf; i < size / 4; i++, b++) {
-		if (*b != i + offset) {
-			printf("Mismatch at byte offset 0x%x: "
-			       "expected 0x%08x, got 0x%08x\n",
-			       (int)(i * sizeof(uint32_t)), i + offset, *b);
-			errors++;
-		}
-	}
-
-	free(buf);
-	if (errors) {
-		printf("Found %d errors\n", errors);
-		return -1;
-	}
-
-	printf("done.\n");
-	return 0;
 }
 
 int cmd_reboot_ec(int argc, char *argv[])
@@ -11002,7 +10936,6 @@ const struct command commands[] = {
 	{ "pwmsetkblight", cmd_pwm_set_keyboard_backlight },
 	{ "pwmsetduty", cmd_pwm_set_duty },
 	{ "rand", cmd_rand },
-	{ "readtest", cmd_read_test },
 	{ "reboot_ec", cmd_reboot_ec },
 	{ "rgbkbd", cmd_rgbkbd },
 	{ "rollbackinfo", cmd_rollback_info },
