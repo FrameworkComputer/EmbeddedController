@@ -22,6 +22,16 @@ _REGEX_CORTEX_M0 = (
     r"^.*cfsr=(.*), shcsr=(.*), hfsr=(.*), dfsr=(.*), ipsr=(.*)$"
 )
 
+# Regex tested here: https://regex101.com/r/FL7T0n/1
+_REGEX_NDS32 = (
+    r"^Saved.*$\n===.*ITYPE=(.*) ===$\n"
+    r"R0  (.*) R1  (.*) R2  (.*) R3  (.*)$\n"
+    r"R4  (.*) R5  (.*) R6  (.*) R7  (.*)$\n"
+    r"R8  (.*) R9  (.*) R10 (.*) R15 (.*)$\n"
+    r"FP  (.*) GP  (.*) LP  (.*) SP  (.*)$\n"
+    r"IPC (.*) IPSW (.*)$\n"
+)
+
 
 # List of symbols. Each entry is tuple: address, name
 _symbols = []
@@ -50,7 +60,12 @@ def get_architectures() -> list:
                 "dfsr",
                 "ipsr",
             ],
-        }
+        },
+        "nds32": {
+            "regex": _REGEX_NDS32,
+            "parser": nds32_parse,
+            "extra_regs": ["fp", "gp", "lp", "sp", "ipc", "ipsw"],
+        },
     }
     return archs
 
@@ -111,6 +126,44 @@ def cm0_parse(match) -> dict:
     regs["cause"] = get_crash_cause(values[6])  # r4
     regs["symbol"] = get_symbol(values[7])  # r5
 
+    return regs
+
+
+def nds32_parse(match) -> dict:
+    """Regex parser for Andes (NDS32) architecture"""
+
+    # Expecting something like:
+    # Saved panic data: (NEW)
+    # === EXCEP: ITYPE=0 ===
+    # R0  00000000 R1  00000000 R2  00000000 R3  00000000
+    # R4  00000000 R5  00000000 R6  dead6664 R7  00000000
+    # R8  00000000 R9  00000000 R10 00000000 R15 00000000
+    # FP  00000000 GP  00000000 LP  00000000 SP  00000000
+    # IPC 00050d5e IPSW   00000
+    # SWID of ITYPE: 0
+    regs = {}
+    values = []
+
+    for i in match.groups():
+        try:
+            val = int(i, 16)
+        except ValueError:
+            # Value might be empty, so we must handle the exception
+            val = -1
+        values.append(val)
+
+    # NDS32 is not reporting task info.
+    regs["task"] = -1
+    regs["regs"] = values[1:13]
+    regs["fp"] = values[13]
+    regs["gp"] = values[14]
+    regs["lp"] = values[15]
+    regs["sp"] = values[16]
+    regs["ipc"] = values[17]
+    regs["ipsw"] = values[18]
+
+    regs["cause"] = get_crash_cause(values[7])  # r6
+    regs["symbol"] = get_symbol(regs["ipc"])
     return regs
 
 
