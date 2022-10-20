@@ -48,8 +48,11 @@
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_USEC (250 * MSEC)
 
+#ifndef CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
+const
+#endif /* !CONFIG_POWER_SIGNAL_RUNTIME_CONFIG */
 /* Power signals list. Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {
+struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S0_DEASSERTED] = {
 		.gpio = GPIO_PCH_SLP_S0_L,
 		.flags = POWER_SIGNAL_ACTIVE_HIGH |
@@ -92,6 +95,7 @@ const struct power_signal_info power_signal_list[] = {
 		.name = "ALL_SYS_PWRGD",
 	},
 };
+
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 __overridable int intel_x86_get_pg_ec_dsw_pwrok(void)
