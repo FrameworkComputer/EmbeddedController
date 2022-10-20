@@ -52,10 +52,6 @@ enum {
 	PE_FLAGS_VDM_SETUP_DONE_FN,
 	/* Flag to note PR Swap just completed for Startup entry */
 	PE_FLAGS_PR_SWAP_COMPLETE_FN,
-	/* Flag to note Port Discovery port partner replied with BUSY */
-	PE_FLAGS_VDM_REQUEST_BUSY_FN,
-	/* Flag to note Port Discovery port partner replied with NAK */
-	PE_FLAGS_VDM_REQUEST_NAKED_FN,
 	/* Flag to note FRS/PRS context in shared state machine path */
 	PE_FLAGS_FAST_ROLE_SWAP_PATH_FN,
 	/* Flag to note if FRS listening is enabled */
