@@ -124,6 +124,14 @@ enum pd_rx_errors {
 	(PDO_BATT_MIN_VOLT(min_mv) | PDO_BATT_MAX_VOLT(max_mv) | \
 	 PDO_BATT_OP_POWER(op_mw) | PDO_TYPE_BATTERY)
 
+#define PDO_AUG_MAX_VOLT(mv) ((((mv) / 100) & 0xFF) << 17)
+#define PDO_AUG_MIN_VOLT(mv) ((((mv) / 100) & 0xFF) << 8)
+#define PDO_AUG_MAX_CURR(ma) ((((ma) / 50) & 0x7F) << 0)
+
+#define PDO_AUG(min_mv, max_mv, max_ma)                        \
+	(PDO_AUG_MIN_VOLT(min_mv) | PDO_AUG_MAX_VOLT(max_mv) | \
+	 PDO_AUG_MAX_CURR(max_ma) | PDO_TYPE_AUGMENTED)
+
 /* RDO : Request Data Object */
 #define RDO_OBJ_POS(n) (((n)&0x7) << 28)
 #define RDO_POS(rdo) (((rdo) >> 28) & 0x7)
