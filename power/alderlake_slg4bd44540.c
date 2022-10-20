@@ -196,7 +196,7 @@ static void all_sys_pwrgd_pass_thru(void)
 	int pch_pok;
 	int sys_pok;
 
-	sys_pg = gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
+	sys_pg = intel_x86_get_pg_ec_all_sys_pwrgd();
 
 	if (IS_ENABLED(CONFIG_BRINGUP))
 		CPRINTS("PG_EC_ALL_SYS_PWRGD is %d", sys_pg);
@@ -234,7 +234,7 @@ static void all_sys_pwrgd_pass_thru(void)
 	if (sys_pok == 0) {
 		msleep(SYS_PWROK_DELAY_MS);
 		/* Check if we lost power while waiting. */
-		sys_pg = gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
+		sys_pg = intel_x86_get_pg_ec_all_sys_pwrgd();
 		if (sys_pg == 0) {
 			CPRINTS("PG_EC_ALL_SYS_PWRGD deasserted, "
 				"shutting AP off!");
