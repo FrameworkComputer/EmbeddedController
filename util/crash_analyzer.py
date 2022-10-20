@@ -10,9 +10,8 @@ import pathlib
 import re
 import sys
 
-# Regex tested here: https://regex101.com/r/K5S8cB/1
-# This Regex has only been tested in Cortex-M0+ crash reporter.
 # TODO(b/253492108): Add regexp for missing architectures.
+# Regex tested here: https://regex101.com/r/K5S8cB/1
 _REGEX_CORTEX_M0 = (
     r"^Saved.*$\n=== .* EXCEPTION: (.*) ====== xPSR: (.*) ===$\n"
     r"r0 :(.*) r1 :(.*) r2 :(.*) r3 :(.*)$\n"
@@ -22,8 +21,97 @@ _REGEX_CORTEX_M0 = (
     r"\n"
     r"^.*cfsr=(.*), shcsr=(.*), hfsr=(.*), dfsr=(.*), ipsr=(.*)$"
 )
+
+
+# List of symbols. Each entry is tuple: address, name
 _symbols = []
+# List of crashes. Each entry is dictionary.
+# Contains all crashes found.
 _entries = []
+
+
+# This is function, and not a global dictionary, so that
+# we can reference the different functions without placing
+# the functions above the dictionary.
+def get_architectures() -> list:
+    """Returns a dictionary with the supported architectures"""
+
+    archs = {
+        "cm0": {
+            "regex": _REGEX_CORTEX_M0,
+            "parser": cm0_parse,
+            "extra_regs": [
+                "sp",
+                "lr",
+                "pc",
+                "cfsr",
+                "chcsr",
+                "hfsr",
+                "dfsr",
+                "ipsr",
+            ],
+        }
+    }
+    return archs
+
+
+def get_crash_cause(cause: int) -> str:
+    """Returns the cause of crash in human-readable format"""
+    causes = {
+        0xDEAD6660: "div-by-0",
+        0xDEAD6661: "stack-overflow",
+        0xDEAD6662: "pd-crash",
+        0xDEAD6663: "assert",
+        0xDEAD6664: "watchdog",
+        0xDEAD6665: "bad-rng",
+        0xDEAD6666: "pmic-fault",
+        0xDEAD6667: "exit",
+    }
+
+    if cause in causes:
+        return causes[cause]
+    return f"unknown-cause-{format(cause, '#x')}"
+
+
+def cm0_parse(match) -> dict:
+    """Regex parser for Cortex-M0+ architecture"""
+
+    # Expecting something like:
+    # Saved panic data: (NEW)
+    # === PROCESS EXCEPTION: ff ====== xPSR: ffffffff ===
+    # r0 :         r1 :         r2 :         r3 :
+    # r4 :dead6664 r5 :10092632 r6 :00000000 r7 :00000000
+    # r8 :00000000 r9 :00000000 r10:00000000 r11:00000000
+    # r12:         sp :00000000 lr :         pc :
+    #
+    # cfsr=00000000, shcsr=00000000, hfsr=00000000, dfsr=00000000, ipsr=000000ff
+    regs = {}
+    values = []
+
+    for i in match.groups():
+        try:
+            val = int(i, 16)
+        except ValueError:
+            # Value might be empty, so we must handle the exception
+            val = -1
+        values.append(val)
+
+    regs["task"] = values[0]
+    regs["xPSR"] = values[1]
+    regs["regs"] = values[3:15]
+    regs["sp"] = values[15]
+    regs["lr"] = values[16]
+    regs["pc"] = values[17]
+    regs["cfsr"] = values[18]
+    regs["chcsr"] = values[19]
+    regs["hfsr"] = values[20]
+    regs["dfsr"] = values[21]
+    regs["ipsr"] = values[22]
+
+    regs["cause"] = get_crash_cause(values[6])  # r4
+    regs["symbol"] = get_symbol(values[7])  # r5
+
+    return regs
 
 
 def read_map_file(map_file):
@@ -116,56 +204,32 @@ def process_log_file(file_name: str) -> tuple:
     )
 
 
-def process_crash_file(file_name: str) -> dict:
+def process_crash_file(filename: str) -> dict:
     """Process a single crash report, and convert it to a dictionary"""
-    regs = {}
-    with open(file_name, "r") as crash_file:
+
+    with open(filename, "r") as crash_file:
         content = crash_file.read()
-        # TODO(b/253492108): This is hardcoded to Cortex-M0+ crash reports.
-        # New ones (Risc-V, NDS32, etc.) will be added on demand.
-        #
-        # Expecting something like:
-        # Saved panic data: (NEW)
-        # === PROCESS EXCEPTION: ff ====== xPSR: ffffffff ===
-        # r0 :         r1 :         r2 :         r3 :
-        # r4 :dead6664 r5 :10092632 r6 :00000000 r7 :00000000
-        # r8 :00000000 r9 :00000000 r10:00000000 r11:00000000
-        # r12:         sp :00000000 lr :         pc :
-        #
-        # cfsr=00000000, shcsr=00000000, hfsr=00000000, dfsr=00000000, ipsr=000000ff
 
-        match = re.match(_REGEX_CORTEX_M0, content, re.MULTILINE)
-        values = []
-        # Convert the values to numbers, invalid the invalid ones.
-        # Cannot use list comprehension due to possible invalid values
-        if match is not None:
-            for i in match.groups():
-                try:
-                    val = int(i, 16)
-                except ValueError:
-                    # Value might be empty, so we must handle the exception
-                    val = -1
-                values.append(val)
+        for key, arch in get_architectures().items():
+            regex = arch["regex"]
+            match = re.match(regex, content, re.MULTILINE)
+            if match is None:
+                continue
+            entry = arch["parser"](match)
 
-            regs["exp"] = values[0]
-            regs["xPSR"] = values[1]
-            regs["regs"] = values[2:15]
-            regs["sp"] = values[15]
-            regs["lr"] = values[16]
-            regs["pc"] = values[17]
-            regs["cfsr"] = values[18]
-            regs["chcsr"] = values[19]
-            regs["hfsr"] = values[20]
-            regs["dfsr"] = values[21]
-            regs["ipsr"] = values[22]
-            regs["symbol"] = get_symbol(regs["regs"][5])
-    return regs
+            # Add "arch" entry since it is needed to process
+            # the "extra_regs", among other things.
+            entry["arch"] = key
+            return entry
+    return {}
 
 
-def process_crash_files(crash_folder):
+def process_crash_files(crash_folder: pathlib.Path) -> None:
     """Process the crash reports that are in the crash_folder"""
 
-    processed = 0
+    total = 0
+    failed = 0
+    good = 0
     for file in crash_folder.iterdir():
         # .log and .upload_file_eccrash might not be in order.
         # To avoid processing it more than once, only process the
@@ -179,55 +243,69 @@ def process_crash_files(crash_folder):
             )
             entry["ec_version"] = ec_ver
             entry["bios_version"] = bios_ver
+            entry["filename"] = file.stem
 
         if len(entry) != 0:
             _entries.append(entry)
-        processed += 1
-    print(f"Processed: {processed}", file=sys.stderr)
+            good += 1
+        else:
+            failed += 1
+        total += 1
+    print(f"Total: {total}, OK: {good}, Failed: {failed}", file=sys.stderr)
 
 
-def cmd_report_lite(crash_folder):
+def cmd_report_lite(crash_folder: pathlib.Path, with_filename: bool) -> None:
     """Generates a 'lite' report that only contains a few fields"""
 
     process_crash_files(crash_folder)
     for entry in _entries:
         print(
-            f"Task: {format(entry['exp'],'#04x')} - "
-            f"cause: {format(entry['regs'][4], '#x')} - "
+            f"Task: {format(entry['task'],'#04x')} - "
+            f"cause: {entry['cause']} - "
             f"PC: {entry['symbol']} - "
             f"{entry['ec_version']} - "
-            f"{entry['bios_version']}"
+            f"{entry['bios_version']}",
+            end="",
         )
 
+        if with_filename:
+            print(f" - {entry['filename']}", end="")
 
-def cmd_report_full(crash_folder):
+        print()
+
+
+def cmd_report_full(crash_folder: pathlib.Path, with_filename: bool) -> None:
     """Generates a full report in .cvs format"""
 
     process_crash_files(crash_folder)
     # Print header
-    print(
-        "Task,xPSR,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,"
-        "sp,lr,pc,cfsr,chcsr,hfsr,dfsr,ipsr,symbol,fw_version,bios_version"
-    )
     for entry in _entries:
         print(
-            f"{format(entry['exp'],'#04x')},{format(entry['xPSR'],'#x')}",
+            f"Task: {format(entry['task'],'#04x')} - "
+            f"cause: {entry['cause']} - "
+            f"PC: {entry['symbol']} - ",
             end="",
         )
-        for i in range(12):
-            print(f",{format(entry['regs'][i],'#x')}", end="")
+        # Print registers
+        hex_regs = [hex(x) for x in entry["regs"]]
+        print(f"{hex_regs} - ", end="")
+
+        # Print extra registers. Varies from architecture to architecture.
+        arch = get_architectures()[entry["arch"]]
+        for reg in arch["extra_regs"]:
+            print(f"{reg}: {format(entry[reg], '#x')} ", end="")
+
+        # Print EC & BIOS info
         print(
-            f",{format(entry['sp'],'#x')}"
-            f",{format(entry['lr'],'#x')}"
-            f",{format(entry['pc'],'#x')}"
-            f",{format(entry['cfsr'],'#x')}"
-            f",{format(entry['hfsr'],'#x')}"
-            f",{format(entry['dfsr'],'#x')}"
-            f",{format(entry['ipsr'],'#x')}"
-            f",\"{(entry['symbol'])}\""
-            f",\"{(entry['ec_version'])}\""
-            f",\"{(entry['bios_version'])}\""
+            f"{entry['ec_version']} - {entry['bios_version']}",
+            end="",
         )
+
+        # Finally the filename. Useful for debugging.
+        if with_filename:
+            print(f" - {entry['filename']}", end="")
+
+        print()
 
 
 def main(argv):
@@ -276,10 +354,16 @@ crash_analyzer.py lite -m /tmp/rammus_193.map -f /tmp/dumps | sort | uniq -c | l
     )
     parser.add_argument(
         "-f",
-        "--crash_folder",
+        "--crash-folder",
         type=pathlib.Path,
         required=True,
         help="Folder with the EC crash report files",
+    )
+    parser.add_argument(
+        "-n",
+        "--with-filename",
+        action="store_true",
+        help="Includes the filename in the report. Useful for debugging.",
     )
     parser.add_argument(
         "command", choices=["lite", "full"], help="Command to run."
@@ -290,9 +374,9 @@ crash_analyzer.py lite -m /tmp/rammus_193.map -f /tmp/dumps | sort | uniq -c | l
     read_map_file(args.map_file)
 
     if args.command == "lite":
-        cmd_report_lite(args.crash_folder)
+        cmd_report_lite(args.crash_folder, args.with_filename)
     elif args.command == "full":
-        cmd_report_full(args.crash_folder)
+        cmd_report_full(args.crash_folder, args.with_filename)
     else:
         print(f"Unsupported command: {args.command}")
 
