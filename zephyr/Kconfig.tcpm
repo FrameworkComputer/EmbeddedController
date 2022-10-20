@@ -241,7 +241,6 @@ config PLATFORM_EC_USB_PD_TCPM_RT1715
 
 config PLATFORM_EC_USB_PD_TCPM_RT1718S
 	bool "Richtek RT1718S Type-C Port Controller"
-	select PLATFORM_EC_USBC_PPC_RT17182S
 	help
 	  The RT1718S is an integrated USB Type-C TCPC controller which
 	  includes IEC-61000-4-2 ESD protection cell for CC/SBU/DP/DM.
