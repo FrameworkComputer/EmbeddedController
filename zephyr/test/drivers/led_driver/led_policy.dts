@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Based off of `ec/zephyr/projects/herobrine/led_policy_herobrine.dts`
+/* Based off of `ec/zephyr/program/herobrine/led_policy_herobrine.dts`
  * Modified led-colors to obtain better test coverage.
  */
 

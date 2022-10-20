@@ -12,7 +12,7 @@
 #include "gpio_signal.h"
 #include "hooks.h"
 
-/* SSFC field defined in zephyr/projects/corsola/cbi_steelix.dts */
+/* SSFC field defined in zephyr/program/corsola/cbi_steelix.dts */
 #define SSFC_BASE_MAIN_SENSOR (0x1)
 #define SSFC_BASE_ALT_SENSOR (0x1 << 1)
 

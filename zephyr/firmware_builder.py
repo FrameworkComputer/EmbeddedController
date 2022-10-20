@@ -534,7 +534,7 @@ def test(opts):
                     # These are questionable, but they are essentially untestable
                     zephyr_dir / "drivers/**",
                     zephyr_dir / "include/drivers/**",
-                    zephyr_dir / "projects/**",
+                    zephyr_dir / "program/**",
                     zephyr_dir / "shim/chip/**",
                     zephyr_dir / "shim/chip/npcx/npcx_monitor/**",
                     zephyr_dir / "shim/core/**",
