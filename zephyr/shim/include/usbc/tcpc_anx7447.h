@@ -6,7 +6,7 @@
 #include <zephyr/devicetree.h>
 #include "tcpm/anx7447_public.h"
 
-#define ANX7447_TCPC_COMPAT anologix_anx7447_tcpc
+#define ANX7447_TCPC_COMPAT analogix_anx7447_tcpc
 
 #define TCPC_CONFIG_ANX7447(id) \
 	{                                              \

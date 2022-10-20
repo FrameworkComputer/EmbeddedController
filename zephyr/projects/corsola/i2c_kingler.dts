@@ -69,7 +69,7 @@
 	};
 
 	tcpc_port0: anx7447-tcpc@2c {
-		compatible = "anologix,anx7447-tcpc";
+		compatible = "analogix,anx7447-tcpc";
 		status = "okay";
 		reg = <0x2c>;
 		tcpc-flags = <(
