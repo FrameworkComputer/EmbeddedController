@@ -6716,6 +6716,7 @@ struct ec_response_regulator_get_voltage {
 enum typec_partner_type {
 	TYPEC_PARTNER_SOP = 0,
 	TYPEC_PARTNER_SOP_PRIME = 1,
+	TYPEC_PARTNER_SOP_PRIME_PRIME = 2,
 };
 
 struct ec_params_typec_discovery {
@@ -6747,6 +6748,7 @@ enum typec_control_command {
 	TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY,
 	TYPEC_CONTROL_COMMAND_USB_MUX_SET,
 	TYPEC_CONTROL_COMMAND_BIST_SHARE_MODE,
+	TYPEC_CONTROL_COMMAND_SEND_VDM_REQ,
 };
 
 /* Modes (USB or alternate) that a type-C port may enter. */
@@ -6772,6 +6774,17 @@ struct typec_usb_mux_set {
 	uint8_t mux_flags;
 } __ec_align1;
 
+#define VDO_MAX_SIZE 7
+
+struct typec_vdm_req {
+	/* VDM data, including VDM header */
+	uint32_t vdm_data[VDO_MAX_SIZE];
+	/* Number of 32-bit fields filled in */
+	uint8_t vdm_data_objects;
+	/* Partner to address - see enum typec_partner_type */
+	uint8_t partner_type;
+} __ec_align1;
+
 struct ec_params_typec_control {
 	uint8_t port;
 	uint8_t command; /* enum typec_control_command */
@@ -6793,6 +6806,8 @@ struct ec_params_typec_control {
 		struct typec_usb_mux_set mux_params;
 		/* Used for BIST_SHARE_MODE */
 		uint8_t bist_share_mode;
+		/* Used for VMD_REQ */
+		struct typec_vdm_req vdm_req_params;
 		uint8_t placeholder[128];
 	};
 } __ec_align1;

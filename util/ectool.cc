@@ -10149,7 +10149,10 @@ int cmd_typec_control(int argc, char *argv[])
 			"        <mux_mode> is one of: dp, dock, usb, tbt,\n"
 			"                              usb4, none, safe\n"
 			"    5: Enable bist share mode\n"
-			"        args: <0: DISABLE, 1: ENABLE>\n",
+			"        args: <0: DISABLE, 1: ENABLE>\n"
+			"    6: Send VDM REQ\n"
+			"        args: <tx_type vdm_hdr [vdo...]>\n"
+			"        <tx_type> is 0 - SOP, 1 - SOP', 2 - SOP''\n",
 			argv[0]);
 		return -1;
 	}
@@ -10253,6 +10256,35 @@ int cmd_typec_control(int argc, char *argv[])
 		}
 		p.bist_share_mode = conversion_result;
 		break;
+	case TYPEC_CONTROL_COMMAND_SEND_VDM_REQ:
+		if (argc < 5) {
+			fprintf(stderr, "Missing VDM header and type\n");
+			return -1;
+		}
+		if (argc > 4 + VDO_MAX_SIZE) {
+			fprintf(stderr, "Too many VDOs\n");
+			return -1;
+		}
+
+		conversion_result = strtol(argv[3], &endptr, 0);
+		if ((endptr && *endptr) || conversion_result > UINT8_MAX ||
+		    conversion_result < 0) {
+			fprintf(stderr, "Bad SOP* type\n");
+			return -1;
+		}
+		p.vdm_req_params.partner_type = conversion_result;
+
+		int vdm_index;
+		for (vdm_index = 0; vdm_index < argc - 4; vdm_index++) {
+			uint32_t vdm_entry =
+				strtoul(argv[vdm_index + 4], &endptr, 0);
+			if (endptr && *endptr) {
+				fprintf(stderr, "Bad VDO\n");
+				return -1;
+			}
+			p.vdm_req_params.vdm_data[vdm_index] = vdm_entry;
+		}
+		p.vdm_req_params.vdm_data_objects = vdm_index;
 	}
 
 	rv = ec_command(EC_CMD_TYPEC_CONTROL, 0, &p, sizeof(p), ec_inbuf,

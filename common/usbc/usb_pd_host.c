@@ -112,6 +112,8 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_typec_control *p = args->params;
 	mux_state_t mode;
+	uint32_t data[VDO_MAX_SIZE];
+	enum tcpci_msg_type tx_type;
 
 	if (p->port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
@@ -140,6 +142,34 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 	case TYPEC_CONTROL_COMMAND_BIST_SHARE_MODE:
 		return pd_set_bist_share_mode(p->bist_share_mode);
+	case TYPEC_CONTROL_COMMAND_SEND_VDM_REQ:
+		if (!IS_ENABLED(CONFIG_USB_PD_VDM_AP_CONTROL))
+			return EC_RES_INVALID_PARAM;
+
+		if (p->vdm_req_params.vdm_data_objects <= 0 ||
+		    p->vdm_req_params.vdm_data_objects > VDO_MAX_SIZE)
+			return EC_RES_INVALID_PARAM;
+
+		memcpy(data, p->vdm_req_params.vdm_data,
+		       sizeof(uint32_t) * p->vdm_req_params.vdm_data_objects);
+
+		switch (p->vdm_req_params.partner_type) {
+		case TYPEC_PARTNER_SOP:
+			tx_type = TCPCI_MSG_SOP;
+			break;
+		case TYPEC_PARTNER_SOP_PRIME:
+			tx_type = TCPCI_MSG_SOP_PRIME;
+			break;
+		case TYPEC_PARTNER_SOP_PRIME_PRIME:
+			tx_type = TCPCI_MSG_SOP_PRIME_PRIME;
+			break;
+		default:
+			return EC_RES_INVALID_PARAM;
+		}
+
+		return pd_request_vdm(p->port, data,
+				      p->vdm_req_params.vdm_data_objects,
+				      tx_type);
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
