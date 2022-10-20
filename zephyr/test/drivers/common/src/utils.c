@@ -596,6 +596,20 @@ void host_cmd_typec_control_bist_share_mode(int port, int enable)
 		   "Failed to send Type-C control for port %d", port);
 }
 
+void host_cmd_typec_control_vdm_req(int port, struct typec_vdm_req vdm_req)
+{
+	struct ec_params_typec_control params = {
+		.port = port,
+		.command = TYPEC_CONTROL_COMMAND_SEND_VDM_REQ,
+		.vdm_req_params = vdm_req,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
+
+	zassert_ok(host_command_process(&args),
+		   "Failed to send Type-C control for port %d", port);
+}
+
 void host_cmd_usb_pd_get_amode(
 	uint8_t port, uint16_t svid_idx,
 	struct ec_params_usb_pd_get_mode_response *response, int *response_size)

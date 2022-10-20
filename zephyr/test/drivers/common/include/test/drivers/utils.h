@@ -549,6 +549,15 @@ void host_cmd_typec_control_clear_events(int port, uint32_t events);
  */
 void host_cmd_typec_control_bist_share_mode(int port, int enable);
 
+/**
+ * Run the host command to control PD port behavior, with the sub-command of
+ * TYPEC_CONTROL_COMMAND_SEND_VDM_REQ
+ *
+ * @param port		The USB-C port number
+ * @param vdm_req	VDM request data
+ */
+void host_cmd_typec_control_vdm_req(int port, struct typec_vdm_req vdm_req);
+
 struct host_events_ctx {
 	host_event_t lpc_host_events;
 	host_event_t lpc_host_event_mask[LPC_HOST_EVENT_COUNT];
