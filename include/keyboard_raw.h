@@ -11,6 +11,8 @@
 #ifndef __CROS_EC_KEYBOARD_RAW_H
 #define __CROS_EC_KEYBOARD_RAW_H
 
+#include <stdbool.h>
+
 #include "builtin/assert.h"
 #include "common.h"
 #include "gpio_signal.h"
@@ -61,6 +63,14 @@ int keyboard_raw_read_rows(void);
  * interrupts and go back to polling mode instead of waiting for an interrupt.
  */
 void keyboard_raw_enable_interrupt(int enable);
+
+/**
+ * Enable or disable keyboard alternative function.
+ *
+ * @param enable 1 enable KSI/KSO alternative function,
+ *               0 set all KSI/KSO pins to normal GPIO.
+ */
+void keybaord_raw_config_alt(bool enable);
 
 #ifdef HAS_TASK_KEYSCAN
 

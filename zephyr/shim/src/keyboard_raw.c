@@ -63,3 +63,11 @@ void keyboard_raw_enable_interrupt(int enable)
 {
 	cros_kb_raw_enable_interrupt(cros_kb_raw_dev, enable);
 }
+
+/**
+ * Enable or disable keyboard alternative function.
+ */
+void keybaord_raw_config_alt(bool enable)
+{
+	cros_kb_raw_config_alt(cros_kb_raw_dev, enable);
+}
