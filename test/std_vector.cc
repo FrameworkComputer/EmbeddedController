@@ -72,6 +72,35 @@ test_static int fill_multiple_vectors()
 	return EC_SUCCESS;
 }
 
+test_static int create_and_destroy_two_vectors()
+{
+	// This allocates 64kB of memory twice.
+	// The first vector is declared in a local scope and the memory is
+	// free'd at the end of the block.
+	constexpr int num_elements = 16 * 1024;
+	{
+		std::vector<int32_t> vec;
+		for (int i = 0; i < num_elements; ++i)
+			vec.push_back(i);
+
+		TEST_EQ(static_cast<int>(vec.size()), num_elements, "%d");
+		for (int i = 0; i < num_elements; ++i) {
+			TEST_ASSERT(vec[i] == i);
+		}
+	}
+
+	std::vector<int32_t> vec;
+	for (int i = 0; i < num_elements; ++i)
+		vec.push_back(i);
+
+	TEST_EQ(static_cast<int>(vec.size()), num_elements, "%d");
+	for (int i = 0; i < num_elements; ++i) {
+		TEST_ASSERT(vec[i] == i);
+	}
+
+	return EC_SUCCESS;
+}
+
 extern "C" void run_test(int argc, const char **argv)
 {
 	test_reset();
@@ -79,6 +108,7 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(push_back_elements);
 	RUN_TEST(fill_one_vector);
 	RUN_TEST(fill_multiple_vectors);
+	RUN_TEST(create_and_destroy_two_vectors);
 
 	test_print_result();
 }
