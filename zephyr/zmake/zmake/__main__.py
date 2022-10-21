@@ -10,6 +10,7 @@ import os
 import pathlib
 import sys
 
+import zmake.jobserver as jobserver
 import zmake.multiproc as multiproc
 import zmake.zmake as zm
 
@@ -63,7 +64,7 @@ def maybe_reexec(argv):
     os.execve(sys.executable, [sys.executable, "-m", "zmake", *argv], env)
 
 
-def call_with_namespace(func, namespace):
+def call_with_namespace(func, namespace, **kwds):
     """Call a function with arguments applied from a Namespace.
 
     Args:
@@ -73,7 +74,6 @@ def call_with_namespace(func, namespace):
     Returns:
         The result of calling the callable.
     """
-    kwds = {}
     sig = inspect.signature(func)
     names = [p.name for p in sig.parameters.values()]
     for name, value in vars(namespace).items():
@@ -392,8 +392,11 @@ def main(argv=None):
         multiproc.LOG_JOB_NAMES = False
 
     logging.basicConfig(format=log_format, level=opts.log_level)
+    # Create the jobserver client BEFORE any pipes get opened in LogWriter
+    jobserver_client = jobserver.GNUMakeJobClient.from_environ(jobs=opts.jobs)
+    multiproc.LogWriter.reset()
 
-    zmake = call_with_namespace(zm.Zmake, opts)
+    zmake = call_with_namespace(zm.Zmake, opts, jobserver=jobserver_client)
     try:
         subcommand_method = getattr(zmake, opts.subcommand.replace("-", "_"))
         result = call_with_namespace(subcommand_method, opts)
