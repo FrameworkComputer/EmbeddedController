@@ -21,6 +21,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "cypress5525.h"
+#include "diagnostics.h"
 #include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -53,6 +54,7 @@
 #include "pwm_chip.h"
 #include "spi.h"
 #include "spi_chip.h"
+#include "spi_flash.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -71,6 +73,7 @@
 #include "keyboard_8042.h"
 #include "keyboard_8042_sharedlib.h"
 #include "host_command_customization.h"
+#include "flash_storage.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -360,6 +363,21 @@ void board_reset_pd_mcu(void)
 
 }
 
+void spi_mux_control(int enable)
+{
+	if (enable) {
+		/* Disable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 2);
+	} else {
+		/* Enable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 1);
+	}
+}
+
 static int power_button_pressed_on_boot;
 int poweron_reason_powerbtn(void)
 {
@@ -583,15 +601,15 @@ void charger_psys_enable(uint8_t enable)
 static void board_init(void)
 {
 	int version = board_get_version();
-	uint8_t memcap;
 
 	if (version > 6)
 		gpio_set_flags(GPIO_EN_INVPWR, GPIO_OUT_LOW);
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+	if (flash_storage_get(FLASH_FLAGS_ACPOWERON) && !ac_boot_status())
+		*host_get_customer_memmap(0x48) = flash_storage_get(FLASH_FLAGS_ACPOWERON);
 
-	if (memcap && !ac_boot_status())
-		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
+	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
+		set_standalone_mode(1);
 
 	check_chassis_open(1);
 
@@ -1135,17 +1153,7 @@ static int cmd_spimux(int argc, char **argv)
 		if (!parse_bool(argv[1], &enable))
 			return EC_ERROR_PARAM1;
 
-		if (enable){
-			/* Disable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 2);
-		} else {
-			/* Enable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 1);
-		}
+		spi_mux_control(enable);
 	}
 	return EC_SUCCESS;
 }
