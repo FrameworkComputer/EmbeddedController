@@ -7,6 +7,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 #include "ec_commands.h"
@@ -277,6 +278,43 @@ ZTEST_USER(flash, test_hostcmd_flash_info)
 		(args.response_max - sizeof(struct ec_params_flash_write)) &
 			~(CONFIG_FLASH_WRITE_SIZE - 1),
 		"response.write_ideal_size = %d", response.write_ideal_size);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_info)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+	const char *outbuffer;
+	size_t buffer_size;
+	/* Arbitrary array size for sprintf should not need this amount */
+	char format_buffer[100];
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "flashinfo"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+
+	zassert_true(buffer_size > 0, NULL);
+
+	sprintf(format_buffer, "Usable:  %4d KB",
+		CONFIG_FLASH_SIZE_BYTES / 1024);
+	zassert_not_null(strstr(outbuffer, format_buffer));
+
+	sprintf(format_buffer, "Write:   %4d B (ideal %d B)",
+		CONFIG_FLASH_WRITE_SIZE, CONFIG_FLASH_WRITE_IDEAL_SIZE);
+	zassert_not_null(strstr(outbuffer, format_buffer));
+
+	sprintf(format_buffer, "Erase:   %4d B", CONFIG_FLASH_ERASE_SIZE);
+	zassert_not_null(strstr(outbuffer, format_buffer));
+
+	sprintf(format_buffer, "Protect: %4d B", CONFIG_FLASH_BANK_SIZE);
+	zassert_not_null(strstr(outbuffer, format_buffer));
+
+	zassert_not_null(strstr(outbuffer, "wp_gpio_asserted"));
+	zassert_not_null(strstr(outbuffer, "Protected now"));
+	/*
+	 * TODO(b/254926324): Fake crec_flash_get_protect() to get more
+	 * flag messages.
+	 */
 }
 
 ZTEST_USER(flash, test_console_cmd_flashwp__invalid)
