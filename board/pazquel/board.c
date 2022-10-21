@@ -569,15 +569,15 @@ static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
-				       { 0, FLOAT_TO_FP(-1), 0 },
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, FLOAT_TO_FP(1), 0 },
 				       { 0, 0, FLOAT_TO_FP(-1) } };
 
 static struct kionix_accel_data g_kx022_data;
 
 static const mat33_fp_t lid_standard_ref_kx022 = { { FLOAT_TO_FP(1), 0, 0 },
 						   { 0, FLOAT_TO_FP(1), 0 },
-						   { 0, 0, FLOAT_TO_FP(-1) } };
+						   { 0, 0, FLOAT_TO_FP(1) } };
 
 static struct bmi_drv_data_t g_bmi_data;
 struct motion_sensor_t motion_sensors[] = {
