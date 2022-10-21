@@ -65,10 +65,16 @@ config PLATFORM_EC_USB_MUX_PS8743
 
 choice PLATFORM_EC_USB_MUX_TUSB_TYPE
 	prompt "Select the TUSB USB-C Redriver type"
-	optional
+	default PLATFORM_EC_USB_MUX_TUSB1064 if DT_HAS_TI_TUSB1064_ENABLED
+	default PLATFORM_EC_USB_MUX_TUSB1064 if DT_HAS_ZEPHYR_TUSB1064_EMUL_ENABLED
 	help
 	  There are three supported types of TUSB USB-C Redriver: TUSB546,
 	  TUSB1044, and TUSB1064.
+
+config PLATFORM_EC_USB_MUX_TUSB_NONE
+	bool "None"
+	help
+	  Default option if the board doesn't contain any model of TUSB family.
 
 config PLATFORM_EC_USB_MUX_TUSB546
 	bool "TI TUSB546 USB-C DP ALT Mode Linear Redriver Crosspoint Switch"
