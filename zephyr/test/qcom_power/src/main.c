@@ -23,6 +23,7 @@
 #include "task.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lid_switch.h"
 
 #define AP_RST_L_NODE DT_PATH(named_gpios, ap_rst_l)
 #define POWER_GOOD_NODE DT_PATH(named_gpios, mb_power_good)
@@ -30,14 +31,28 @@
 #define SWITCHCAP_PG_NODE DT_PATH(named_gpios, switchcap_pg_int_l)
 #define PMIC_RESIN_L_NODE DT_PATH(named_gpios, pmic_resin_l)
 #define EC_PWR_BTN_ODL_NODE DT_PATH(named_gpios, ec_pwr_btn_odl)
+#define LID_OPEN_EC_NODE DT_PATH(named_gpios, lid_open_ec)
 
 static int chipset_reset_count;
+static bool set_power_good_on_reset;
 
 static void do_chipset_reset(void)
 {
 	chipset_reset_count++;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, do_chipset_reset, HOOK_PRIO_DEFAULT);
+
+static void do_chipset_shutdown(void)
+{
+	if (set_power_good_on_reset) {
+		static const struct device *power_good_dev =
+			DEVICE_DT_GET(DT_GPIO_CTLR(POWER_GOOD_NODE, gpios));
+
+		gpio_emul_input_set(power_good_dev,
+				    DT_GPIO_PIN(POWER_GOOD_NODE, gpios), 1);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, do_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 DEFINE_FFF_GLOBALS;
 
@@ -184,7 +199,7 @@ ZTEST(qcom_power, test_chipset_reset_timeout)
 	shell_backend_dummy_clear_output(get_ec_shell());
 	chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
 	/* Long enough for the cold reset. */
-	k_sleep(K_MSEC(1000));
+	k_sleep(K_SECONDS(10));
 
 	/* Verify logged messages. */
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
@@ -337,7 +352,7 @@ ZTEST(qcom_power, test_power_button_no_power_good)
 	zassert_ok(gpio_emul_input_set(ec_pwr_btn_odl_dev,
 				       DT_GPIO_PIN(EC_PWR_BTN_ODL_NODE, gpios),
 				       1));
-	k_sleep(K_MSEC(900));
+	k_sleep(K_MSEC(1500));
 	zassert_equal(power_get_state(), POWER_S5, "power_state=%d",
 		      power_get_state());
 }
@@ -405,6 +420,109 @@ ZTEST(qcom_power, test_host_sleep_event_resume)
 	zassert_equal(power_get_state(), POWER_S0);
 }
 
+ZTEST(qcom_power, test_power_button_off)
+{
+	static const struct device *ec_pwr_btn_odl_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(EC_PWR_BTN_ODL_NODE, gpios));
+
+	zassert_ok(gpio_emul_input_set(ec_pwr_btn_odl_dev,
+				       DT_GPIO_PIN(EC_PWR_BTN_ODL_NODE, gpios),
+				       0));
+	k_sleep(K_SECONDS(9));
+	zassert_ok(gpio_emul_input_set(ec_pwr_btn_odl_dev,
+				       DT_GPIO_PIN(EC_PWR_BTN_ODL_NODE, gpios),
+				       1));
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S5);
+}
+
+ZTEST(qcom_power, test_power_button_off_cancel)
+{
+	static const struct device *ec_pwr_btn_odl_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(EC_PWR_BTN_ODL_NODE, gpios));
+
+	zassert_ok(gpio_emul_input_set(ec_pwr_btn_odl_dev,
+				       DT_GPIO_PIN(EC_PWR_BTN_ODL_NODE, gpios),
+				       0));
+	k_sleep(K_SECONDS(4));
+	zassert_ok(gpio_emul_input_set(ec_pwr_btn_odl_dev,
+				       DT_GPIO_PIN(EC_PWR_BTN_ODL_NODE, gpios),
+				       1));
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S0);
+}
+
+ZTEST(qcom_power, test_no_power_good)
+{
+	const char *buffer;
+	size_t buffer_size;
+	static const struct device *power_good_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(POWER_GOOD_NODE, gpios));
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(gpio_emul_input_set(power_good_dev,
+				       DT_GPIO_PIN(POWER_GOOD_NODE, gpios), 0));
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S5, "power_state=%d",
+		      power_get_state());
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(strstr(buffer, "POWER_GOOD is lost") != NULL,
+		     "Invalid console output %s", buffer);
+}
+
+ZTEST(qcom_power, test_no_power_good_then_good)
+{
+	const char *buffer;
+	size_t buffer_size;
+	static const struct device *power_good_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(POWER_GOOD_NODE, gpios));
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(gpio_emul_input_set(power_good_dev,
+				       DT_GPIO_PIN(POWER_GOOD_NODE, gpios), 0));
+	set_power_good_on_reset = true;
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S5, "power_state=%d",
+		      power_get_state());
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(strstr(buffer, "POWER_GOOD is lost") != NULL,
+		     "Invalid console output %s", buffer);
+	zassert_true(strstr(buffer, "POWER_GOOD up again after lost") != NULL,
+		     "Invalid console output %s", buffer);
+}
+
+ZTEST(qcom_power, test_lid_open_power_on)
+{
+	static const struct device *lid_open_ec_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(LID_OPEN_EC_NODE, gpios));
+
+	zassert_ok(gpio_emul_input_set(
+		lid_open_ec_dev, DT_GPIO_PIN(LID_OPEN_EC_NODE, gpios), 0));
+	power_set_state(POWER_G3);
+	k_sleep(K_MSEC(100));
+	zassert_equal(power_get_state(), POWER_G3);
+	zassert_false(lid_is_open());
+
+	zassert_ok(gpio_emul_input_set(
+		lid_open_ec_dev, DT_GPIO_PIN(LID_OPEN_EC_NODE, gpios), 1));
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S0, "power_state=%d",
+		      power_get_state());
+}
+
+/* chipset_power_on is called by USB code on dock power button release. */
+ZTEST(qcom_power, test_chipset_power_on)
+{
+	power_set_state(POWER_G3);
+	k_sleep(K_MSEC(100));
+	zassert_equal(power_get_state(), POWER_G3);
+
+	chipset_power_on();
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S0, "power_state=%d",
+		      power_get_state());
+}
+
 static jmp_buf assert_jumpdata;
 static int num_asserts;
 
@@ -423,6 +541,48 @@ ZTEST(qcom_power, test_invalid_power_state)
 	zassert_equal(num_asserts, 1);
 }
 
+ZTEST(qcom_power, test_power_chipset_init_sysjump_power_good)
+{
+	system_set_reset_flags(EC_RESET_FLAG_SYSJUMP);
+	zassert_equal(power_chipset_init(), POWER_S0);
+	power_set_state(POWER_S0);
+
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S0, "power_state=%d",
+		      power_get_state());
+	zassert_equal(power_has_signals(POWER_SIGNAL_MASK(0)), 0);
+}
+
+ZTEST(qcom_power, test_power_chipset_init_sysjump_power_off)
+{
+	static const struct device *power_good_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(POWER_GOOD_NODE, gpios));
+
+	zassert_ok(gpio_emul_input_set(power_good_dev,
+				       DT_GPIO_PIN(POWER_GOOD_NODE, gpios), 0));
+	system_set_reset_flags(EC_RESET_FLAG_SYSJUMP);
+	zassert_equal(power_chipset_init(), POWER_G3);
+	power_set_state(POWER_G3);
+
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_G3, "power_state=%d",
+		      power_get_state());
+}
+
+ZTEST(qcom_power, test_power_chipset_init_ap_off)
+{
+	system_set_reset_flags(EC_RESET_FLAG_AP_OFF);
+	zassert_equal(power_chipset_init(), POWER_G3);
+	power_set_state(POWER_G3);
+
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_G3, "power_state=%d",
+		      power_get_state());
+}
+
 void start_in_s0(void *fixture)
 {
 	static const struct device *ap_rst_dev =
@@ -435,9 +595,12 @@ void start_in_s0(void *fixture)
 		DEVICE_DT_GET(DT_GPIO_CTLR(SWITCHCAP_PG_NODE, gpios));
 	static const struct device *pmic_resin_l_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(PMIC_RESIN_L_NODE, gpios));
+	static const struct device *lid_open_ec_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(LID_OPEN_EC_NODE, gpios));
 
 	RESET_FAKE(system_can_boot_ap);
 	system_can_boot_ap_fake.return_val = 1;
+	set_power_good_on_reset = false;
 
 	power_signal_disable_interrupt(GPIO_AP_SUSPEND);
 	power_signal_enable_interrupt(GPIO_AP_RST_L);
@@ -451,6 +614,8 @@ void start_in_s0(void *fixture)
 		switchcap_pg_dev, DT_GPIO_PIN(SWITCHCAP_PG_NODE, gpios), 1));
 	zassert_ok(gpio_pin_set(pmic_resin_l_dev,
 				DT_GPIO_PIN(PMIC_RESIN_L_NODE, gpios), 1));
+	zassert_ok(gpio_emul_input_set(
+		lid_open_ec_dev, DT_GPIO_PIN(LID_OPEN_EC_NODE, gpios), 1));
 	power_set_state(POWER_S0);
 	power_signal_interrupt(GPIO_AP_SUSPEND);
 	task_wake(TASK_ID_CHIPSET);
@@ -470,6 +635,7 @@ void qcom_cleanup(void *fixture)
 		gpio_callback.handler = NULL;
 	}
 	host_clear_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_HANG_DETECT));
+	system_clear_reset_flags(EC_RESET_FLAG_SYSJUMP | EC_RESET_FLAG_AP_OFF);
 }
 
 ZTEST_SUITE(qcom_power, NULL, NULL, start_in_s0, qcom_cleanup, NULL);

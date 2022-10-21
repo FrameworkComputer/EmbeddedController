@@ -53,8 +53,7 @@
 			enum-name = "GPIO_PS_HOLD";
 		};
 		gpio_mb_power_good: mb_power_good {
-			gpios = <&gpio0 18 (GPIO_OUTPUT | GPIO_INPUT |
-				GPIO_PULL_DOWN)>;
+			gpios = <&gpio0 18 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_POWER_GOOD";
 		};
 		gpio_ap_suspend: ap_suspend {
