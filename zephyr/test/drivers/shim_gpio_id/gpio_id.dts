@@ -1,0 +1,24 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Required to compile board_get_sku_id() from shim/gpio_id.c */
+	sku {
+		compatible = "cros-ec,gpio-id";
+
+		bits  = <&gpio_sku_id0>;
+
+		system = "ternary";
+	};
+
+	/* Required to compile board_get_version() from shim/gpio_id.c */
+	board {
+		compatible = "cros-ec,gpio-id";
+
+		bits  = <&gpio_brd_id0>;
+
+		system = "ternary";
+	};
+};

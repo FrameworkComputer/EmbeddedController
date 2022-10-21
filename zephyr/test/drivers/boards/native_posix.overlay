@@ -215,6 +215,12 @@
 		gpio_ec_pg_pin_temp: ec_pg_pin_temp {
 			gpios = <&gpio1 6 GPIO_INPUT>;
 		};
+		gpio_sku_id0: sku_id0 {
+			gpios = <&gpio1 7 GPIO_INPUT>;
+		};
+		gpio_brd_id0: brd_id0 {
+			gpios = <&gpio1 8 GPIO_INPUT>;
+		};
 	};
 
 	gpio1: gpio@101 {
@@ -227,7 +233,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <7>;
+		ngpios = <9>;
 	};
 
 	gpio-interrupts {
