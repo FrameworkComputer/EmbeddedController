@@ -347,6 +347,13 @@ SECTIONS
 		. = ALIGN(64);
 		KEEP(*(.google))
 #endif
+
+		/*
+		 * https://developer.arm.com/documentation/dui0475/c/the-arm-c-and-c---libraries/c---initialization--construction-and-destruction
+		 */
+		. = ALIGN(4);
+		*(.init_array*)
+
 		/*
 		 * Empty C++ exception index table. The exception index
 		 * table is described in more detail in "Exception Handling
