@@ -55,6 +55,7 @@ test-list-y=\
        sha256_unrolled \
        static_if \
        stdlib \
+       std_vector \
        system_is_locked \
        timer_dos \
        utils \

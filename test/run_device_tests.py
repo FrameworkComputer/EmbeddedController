@@ -268,6 +268,7 @@ class AllTests:
             TestConfig(test_name="sha256_unrolled"),
             TestConfig(test_name="static_if"),
             TestConfig(test_name="stdlib"),
+            TestConfig(test_name="std_vector"),
             TestConfig(
                 config_name="system_is_locked_wp_on",
                 test_name="system_is_locked",

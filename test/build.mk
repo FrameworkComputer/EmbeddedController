@@ -98,6 +98,7 @@ test-list-host += static_if_error
 # toolchain's C standard library, so these tests are actually testing the
 # toolchain's C standard library.
 test-list-host += stdlib
+test-list-host += std_vector
 test-list-host += system
 test-list-host += thermal
 test-list-host += timer_dos
@@ -244,6 +245,7 @@ sha256_unrolled-y=sha256.o
 shmalloc-y=shmalloc.o
 static_if-y=static_if.o
 stdlib-y=stdlib.o
+std_vector-y=std_vector.o
 stm32f_rtc-y=stm32f_rtc.o
 stress-y=stress.o
 system-y=system.o
