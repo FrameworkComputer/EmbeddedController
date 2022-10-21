@@ -196,6 +196,7 @@ class AllTests:
             TestConfig(test_name="abort"),
             TestConfig(test_name="aes"),
             TestConfig(test_name="always_memset"),
+            TestConfig(test_name="benchmark"),
             TestConfig(test_name="cec"),
             TestConfig(test_name="cortexm_fpu"),
             TestConfig(test_name="crc"),

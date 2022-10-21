@@ -29,6 +29,7 @@ test-list-y=\
        abort \
        aes \
        always_memset \
+       benchmark \
        cec \
        compile_time_macros \
        cortexm_fpu \
