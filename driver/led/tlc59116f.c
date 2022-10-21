@@ -70,6 +70,15 @@ static int tlc59116f_enable(struct rgbkbd *ctx, bool enable)
 		return rv;
 	}
 
+	if (!enable) {
+		for (int i = TLC59116F_LEDOUT0; i <= TLC59116F_LEDOUT3; i++) {
+			rv = tlc59116f_write(ctx, i, TLC59116_LEDOUT_OFF);
+			if (rv) {
+				return rv;
+			}
+		}
+	}
+
 	WRITE_BIT(cfg, TLC59116_MODE_BIT_SLEEP, !enable);
 	return tlc59116f_write(ctx, TLC59116F_MODE1, cfg);
 }
