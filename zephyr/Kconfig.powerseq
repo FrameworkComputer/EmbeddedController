@@ -24,6 +24,13 @@ config PLATFORM_EC_POWERSEQ_S0IX
 	  option, Intel's low-power idle sleep state, also known as
 	  "modern sleep".
 
+config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
+	bool "The CPU_PROCHOT signal is an active low signal"
+	default y
+	help
+	  If CPU_PROCHOT should be treated as active-low, enable this
+	  configuration option.
+
 config PLATFORM_EC_POWERSEQ_HOST_SLEEP
 	bool "Track host sleep states"
 	help
@@ -105,13 +112,6 @@ menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	  Intel.
 
 if PLATFORM_EC_POWERSEQ_INTEL
-
-config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
-	bool "The CPU_PROCHOT signal is an active low signal"
-	default y
-	help
-	  If CPU_PROCHOT should be treated as active-low, enable this
-	  configuration option.
 
 config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_GATE_ON_C10
 	bool "Gate PROCHOT detection based on the AP C10 state"

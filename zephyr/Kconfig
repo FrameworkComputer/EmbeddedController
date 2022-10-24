@@ -666,12 +666,31 @@ config PLATFORM_EC_SYSTEM_UNLOCKED
 
 config PLATFORM_EC_THROTTLE_AP
 	bool "CPU throttling"
-	depends on PLATFORM_EC_TEMP_SENSOR
 	help
-	  Enable throttling the CPU based on the temperature sensors. When they
-	  detect that the CPU is getting too hot, the CPU is throttled to
-	  a lower speed. This reduce the CPU's power output and eventually
-	  results in a lower temperature.
+	  Enable throttling the CPU. When triggered this reduces the CPU's
+	  power output and eventually results in a lower temperature.
+
+if PLATFORM_EC_THROTTLE_AP
+
+config PLATFORM_EC_THROTTLE_AP_SINGLE_PIN
+	bool "CPU throttling and interrupt detection on a single pin"
+	help
+	  Enable detection of throttling interrupts on the same pin used to
+	  trigger throttling. The GPIO should be configured as an output by
+	  default. throttle_ap_config_prochot will configure the GPIO as
+	  an interrupt. Chipset specific functions are responsible for
+	  handling any subsequent changes.
+
+config PLATFORM_EC_THROTTLE_AP_NO_FAN
+	bool "No automatic fan control for AP throttling"
+	help
+	  Disable automatic fan control when an AP throttling interrupt occurs
+
+config PLATFORM_EC_CONSOLE_CMD_APTHROTTLE
+	bool "Enable apthrottle command to disable throttling state"
+	default n
+
+endif #PLATFORM_EC_THROTTLE_AP
 
 menuconfig PLATFORM_EC_TIMER
 	bool "Timer module"
