@@ -1023,7 +1023,7 @@ test_mockable_static int isl923x_ramp_is_stable(int chgnum)
 	return 0;
 }
 
-static int isl923x_ramp_is_detected(int chgnum)
+test_mockable_static int isl923x_ramp_is_detected(int chgnum)
 {
 	return 1;
 }

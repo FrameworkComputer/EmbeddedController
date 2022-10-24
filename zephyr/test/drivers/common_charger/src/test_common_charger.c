@@ -23,6 +23,7 @@
  * register reading and thus no emulator reading.
  */
 FAKE_VALUE_FUNC(int, isl923x_ramp_is_stable, int);
+FAKE_VALUE_FUNC(int, isl923x_ramp_is_detected, int);
 
 ZTEST(common_charger, test_chg_ramp_is_stable)
 {
@@ -34,11 +35,24 @@ ZTEST(common_charger, test_chg_ramp_is_stable)
 	zassert_equal(isl923x_ramp_is_stable_fake.arg0_val, CHG_NUM);
 }
 
+ZTEST(common_charger, test_chg_ramp_is_detected)
+{
+	isl923x_ramp_is_stable_fake.return_val = 0;
+
+	zassert_equal(chg_ramp_is_detected(),
+		      isl923x_ramp_is_detected_fake.return_val);
+	zassert_equal(isl923x_ramp_is_detected_fake.call_count, 1);
+	zassert_equal(isl923x_ramp_is_detected_fake.arg0_val, CHG_NUM);
+}
+
 static void suite_common_charger_before_after(void *test_data)
 {
 	ARG_UNUSED(test_data);
 
 	RESET_FAKE(isl923x_ramp_is_stable);
+	RESET_FAKE(isl923x_ramp_is_detected);
+	/* Driver's default hard-coded value */
+	isl923x_ramp_is_detected_fake.return_val = 1;
 }
 
 ZTEST_SUITE(common_charger, drivers_predicate_post_main, NULL,
