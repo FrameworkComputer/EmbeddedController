@@ -18,3 +18,12 @@ ZTEST_USER(usb_pd_flags, test_usb_pd_charger_otg)
 	set_usb_pd_charger_otg(USB_PD_CHARGER_OTG_DISABLED);
 	zassert_equal(get_usb_pd_charger_otg(), USB_PD_CHARGER_OTG_DISABLED);
 }
+
+ZTEST_USER(usb_pd_flags, test_usb_pd_vbus_detect)
+{
+	set_usb_pd_vbus_detect(USB_PD_VBUS_DETECT_TCPC);
+	zassert_equal(get_usb_pd_vbus_detect(), USB_PD_VBUS_DETECT_TCPC);
+
+	set_usb_pd_vbus_detect(USB_PD_VBUS_DETECT_CHARGER);
+	zassert_equal(get_usb_pd_vbus_detect(), USB_PD_VBUS_DETECT_CHARGER);
+}
