@@ -23,6 +23,9 @@ config LINK_TEST_SUITE_BUTTON
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
 
+config LINK_TEST_SUITE_COMMON_CHARGER
+	bool "Link and execute the common/charger.c tests"
+
 config LINK_TEST_SUITE_HOST_COMMANDS
 	bool "Link and test the host command tests"
 

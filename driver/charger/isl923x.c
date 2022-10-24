@@ -1013,7 +1013,7 @@ enum ec_error_list isl9238c_resume(int chgnum)
 /* Hardware current ramping */
 
 #ifdef CONFIG_CHARGE_RAMP_HW
-static int isl923x_ramp_is_stable(int chgnum)
+test_mockable_static int isl923x_ramp_is_stable(int chgnum)
 {
 	/*
 	 * Since ISL cannot read the current limit that the ramp has settled
