@@ -20,6 +20,8 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Fingerprint boards
     "dartmonkey",
     "bloonchipper",
+    "nami_fp",
+    "nucleo-dartmonkey",
     "nucleo-f412zg",
     "nucleo-h743zi",
     # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
@@ -42,6 +44,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "sweetberry",
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    "bland",
     # "burnet",  # overflows flash
     "c2d2",
     # "cerise",  # overflows flash
@@ -50,19 +53,31 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # "damu",  # overflows flash
     "dingdong",
     "discovery-stm32f072",
+    "don",
+    "duck",
+    "eel",
+    "elm",
     # "fennel",  # overflows flash
     "fluffy",
     "fusb307bgevb",
+    "gelatin",
     "hammer",
     "hoho",
     # "jacuzzi",  # overflows flash
+    # "juniper",  # overflows flash
     # "kakadu",  # overflows flash
     # "kappa",  # overflows flash
     # "katsu",  # overflows flash
     # "kodama",  # overflows flash
+    # "krane",  # overflows flash
     # "kukui",  # overflows flash
+    "magnemite",
     # "makomo",  # overflows flash
+    "masterball",
+    "minimuffin",
+    "moonball",
     "nucleo-f072rb",
+    # "oak",  # overflows flash
     "pdeval-stm32f072",
     "plankton",
     "prism",
@@ -71,10 +86,14 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "servo_micro",
     # "servo_v4",  # overflows flash
     "servo_v4p1",
+    "staff",
+    "star",
     # "stern",  # overflows flash
     "tigertail",
     "twinkie",
+    "wand",
     # "willow",  # overflows flash
+    "zed",
     "zinger",
     # Boards that use CHIP:=mchp
     # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
@@ -116,12 +135,14 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "crota",
     "dalboz",
     "delbin",
+    "dewatt",
     "dirinboz",
     "dood",
     "dooly",
     "dratini",
     "driblee",
     "drobit",
+    "drobit_ecmodeentry",
     "eldrid",
     "elemi",
     "endeavour",
@@ -138,6 +159,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "gimble",
     "grunt",
     "gumboz",
+    "guybrush",
     "hatch",
     "helios",
     "herobrine",
@@ -155,6 +177,8 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "liara",
     "lick",
     "lindar",
+    "lisbon",
+    "lux",
     "madoo",
     "magolor",
     "marzipan",
@@ -169,6 +193,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "nami",
     "nautilus",
     "nightfury",
+    "nipperkin",
     # "nocturne",
     "npcx7_evb",
     "npcx9_evb",
@@ -190,6 +215,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "sasuke",
     "scout",
     "shuboz",
+    "soraka",
     "stryke",
     "taeko",
     "taniks",
@@ -205,11 +231,17 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # "volteer",
     "volteer_npcx797fc",
     "voxel",
+    "voxel_ecmodeentry",
+    "voxel_npcx797fc",
     # "waddledoo",
     "waddledoo2",
     "woomax",
     "wormdingler",
     "yorp",
+    # CHIP=mt_scp *and* CHIP_VARIANT=mt818x
+    # git grep --name-only 'CHIP:=mt_scp' | xargs grep -L 'CHIP_VARIANT:=mt818' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    "corsola_scp",
+    "kukui_scp",
 ]
 
 
