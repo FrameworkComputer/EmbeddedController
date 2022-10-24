@@ -305,7 +305,7 @@ void uart_init(void)
 }
 #endif /* #ifdef CONFIG_UART_CONSOLE */
 
-void fault_handler(void)
+noreturn void watchdog_reset(void)
 {
 	uart_puts("EXCEPTION!\nTriggering watchdog reset\n");
 	/* trigger reset in 1 ms */
@@ -313,6 +313,11 @@ void fault_handler(void)
 	MCHP_PCR_SYS_RST = MCHP_PCR_SYS_SOFT_RESET;
 	while (1)
 		;
+}
+
+void fault_handler(void)
+{
+	asm("b watchdog_reset");
 }
 
 void jump_to_image(uintptr_t init_addr)

@@ -75,6 +75,11 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "wand",
     "zed",
     "zinger",
+    # Boards that use CHIP:=mchp
+    # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    "adlrvpp_mchp1727",
+    "mchpevb1",
+    "reef_mchp",
     # Boards that use CHIP:=max32660
     # git grep --name-only 'CHIP:=max32660' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "max32660-eval",
@@ -285,10 +290,7 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "willow",  # overflows flash
     # Boards that use CHIP:=mchp
     # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
-    "adlrvpp_mchp1521",  # compilation errors
-    "adlrvpp_mchp1727",  # compilation errors
-    "mchpevb1",  # compilation errors
-    "reef_mchp",  # compilation errors
+    "adlrvpp_mchp1521",  # overflows flash
     # Boards that use CHIP:=npcx
     "garg",  # overflows flash
     "gelarshie",  # overflows flash
