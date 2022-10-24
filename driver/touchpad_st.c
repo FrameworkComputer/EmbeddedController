@@ -113,7 +113,7 @@ static struct {
 		struct st_tp_host_data_header_t data_header;
 		struct st_tp_event_t events[32];
 		uint32_t dump_info[32];
-	} /* anonymous */;
+	} __packed /* anonymous */;
 } __packed rx_buf;
 
 #ifdef CONFIG_USB_ISOCHRONOUS
