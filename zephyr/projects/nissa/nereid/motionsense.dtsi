@@ -12,6 +12,7 @@
 		 * Interrupt bindings for sensor devices.
 		 */
 		bmi3xx-int = &base_accel;
+		bma4xx-int = &lid_accel;
 	};
 
 	/*
@@ -141,8 +142,6 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu>;
-		/* list of sensors in force mode */
-		accel-force-mode-sensors = <&lid_accel>;
+		sensor-irqs = <&int_imu &int_lid_imu>;
 	};
 };
