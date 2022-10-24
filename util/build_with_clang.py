@@ -12,10 +12,10 @@ import multiprocessing
 import os
 import subprocess
 import sys
+import typing
 from concurrent.futures import ThreadPoolExecutor
 
-# Add to this list as compilation errors are fixed for boards. Boards that are
-# commented out need fixes in order to compile; uncomment once fixed.
+# Add to this list as compilation errors are fixed for boards.
 BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Fingerprint boards
     "dartmonkey",
@@ -27,12 +27,10 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "baklava",
-    # "bellis",
     "discovery",
     "gingerbread",
     "hatch_fp",
     "hyperdebug",
-    # "munna",
     "nocturne_fp",
     "nucleo-f411re",
     "nucleo-g431rb",
@@ -45,62 +43,38 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
-    # "burnet",  # overflows flash
     "c2d2",
-    # "cerise",  # overflows flash
-    # "chocodile_vpdmcu",  # compilation error: b/254710459
     "coffeecake",
-    # "damu",  # overflows flash
     "dingdong",
     "discovery-stm32f072",
     "don",
     "duck",
     "eel",
     "elm",
-    # "fennel",  # overflows flash
     "fluffy",
     "fusb307bgevb",
     "gelatin",
     "hammer",
     "hoho",
-    # "jacuzzi",  # overflows flash
-    # "juniper",  # overflows flash
-    # "kakadu",  # overflows flash
-    # "kappa",  # overflows flash
-    # "katsu",  # overflows flash
-    # "kodama",  # overflows flash
-    # "krane",  # overflows flash
-    # "kukui",  # overflows flash
     "magnemite",
-    # "makomo",  # overflows flash
     "masterball",
     "minimuffin",
     "moonball",
     "nucleo-f072rb",
-    # "oak",  # overflows flash
     "pdeval-stm32f072",
     "plankton",
     "prism",
     "rainier",
     "scarlet",
     "servo_micro",
-    # "servo_v4",  # overflows flash
     "servo_v4p1",
     "staff",
     "star",
-    # "stern",  # overflows flash
     "tigertail",
     "twinkie",
     "wand",
-    # "willow",  # overflows flash
     "zed",
     "zinger",
-    # Boards that use CHIP:=mchp
-    # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
-    # "adlrvpp_mchp1521",
-    # "adlrvpp_mchp1727",
-    # "mchpevb1",
-    # "reef_mchp",
     # Boards that use CHIP:=max32660
     # git grep --name-only 'CHIP:=max32660' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "max32660-eval",
@@ -153,8 +127,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "fleex",
     "foob",
     "gaelin",
-    # "garg",
-    # "gelarshie",
     "genesis",
     "gimble",
     "grunt",
@@ -189,12 +161,10 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "moonbuggy",
     "morphius",
     "mrbland",
-    # "mushu",
     "nami",
     "nautilus",
     "nightfury",
     "nipperkin",
-    # "nocturne",
     "npcx7_evb",
     "npcx9_evb",
     "npcx_evb",
@@ -211,7 +181,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "quackingstick",
     "rammus",
     "redrix",
-    # "reef",
     "sasuke",
     "scout",
     "shuboz",
@@ -219,7 +188,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "stryke",
     "taeko",
     "taniks",
-    # "terrador",
     "treeya",
     "trembyle",
     "trogdor",
@@ -228,12 +196,10 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "voema",
     "volet",
     "volmar",
-    # "volteer",
     "volteer_npcx797fc",
     "voxel",
     "voxel_ecmodeentry",
     "voxel_npcx797fc",
-    # "waddledoo",
     "waddledoo2",
     "whiskers",
     "woomax",
@@ -244,6 +210,99 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "corsola_scp",
     "kukui_scp",
 ]
+
+NDS32_BOARDS = [
+    "adlrvpm_ite",
+    "adlrvpp_ite",
+    "ampton",
+    "beadrix",
+    "beetley",
+    "blipper",
+    "boten",
+    "drawcia",
+    "galtic",
+    "gooey",
+    "haboki",
+    "it83xx_evb",
+    "kracko",
+    "lantis",
+    "pirika",
+    "reef_it8320",
+    "sasukette",
+    "shotzo",
+    "storo",
+    "waddledee",
+    "wheelie",
+]
+
+RISCV_BOARDS = [
+    "asurada",
+    "asurada_scp",
+    "cherry",
+    "cherry_scp",
+    "cozmo",
+    "dojo",
+    "drawcia_riscv",
+    "goroh",
+    "hayato",
+    "icarus",
+    "it8xxx2_evb",
+    "it8xxx2_pdevb",
+    "pico",
+    "spherion",
+    "tomato",
+]
+
+BOARDS_THAT_FAIL_WITH_CLANG = [
+    # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
+    "bellis",  # overflows flash
+    "munna",  # overflows flash
+    # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
+    "burnet",  # overflows flash
+    "cerise",  # overflows flash
+    "chocodile_vpdmcu",  # compilation error: b/254710459
+    "damu",  # overflows flash
+    "fennel",  # overflows flash
+    "jacuzzi",  # overflows flash
+    "juniper",  # overflows flash
+    "kakadu",  # overflows flash
+    "kappa",  # overflows flash
+    "katsu",  # overflows flash
+    "kodama",  # overflows flash
+    "krane",  # overflows flash
+    "kukui",  # overflows flash
+    "makomo",  # overflows flash
+    "oak",  # overflows flash
+    "reef",  # compilation error
+    "servo_v4",  # overflows flash
+    "stern",  # overflows flash
+    "willow",  # overflows flash
+    # Boards that use CHIP:=mchp
+    # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    "adlrvpp_mchp1521",  # compilation errors
+    "adlrvpp_mchp1727",  # compilation errors
+    "mchpevb1",  # compilation errors
+    "reef_mchp",  # compilation errors
+    # Boards that use CHIP:=npcx
+    "garg",  # overflows flash
+    "gelarshie",  # overflows flash
+    "mushu",  # overflows flash
+    "nocturne",  # overflows flash
+    "terrador",  # overflows flash
+    "volteer",  # overflows flash
+    "waddledoo",  # overflows flash
+    # Boards that use CORE:=minute-ia
+    "adl_ish_lite",
+    "arcada_ish",
+    "drallion_ish",
+    "tglrvp_ish",
+    "volteer_ish",
+]
+
+# TODO(b/201311714): NDS32 is not supported by LLVM.
+BOARDS_THAT_FAIL_WITH_CLANG += NDS32_BOARDS
+# TODO(b/201310017): RISC-V is not supported in our LLVM toolchain.
+BOARDS_THAT_FAIL_WITH_CLANG += RISCV_BOARDS
 
 
 def build(board_name: str) -> None:
@@ -260,6 +319,35 @@ def build(board_name: str) -> None:
     subprocess.run(cmd, env=dict(os.environ, CC="clang"), check=True)
 
 
+def get_all_boards() -> typing.List[str]:
+    cmd = [
+        "make",
+        "print-boards",
+    ]
+
+    logging.debug('Running command: "%s"', " ".join(cmd))
+    ret = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
+    all_boards = ret.stdout.decode("utf-8").splitlines()
+    return all_boards
+
+
+def check_boards() -> None:
+    all_boards = get_all_boards()
+    diff = set(all_boards) ^ set(
+        BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG
+        + BOARDS_THAT_FAIL_WITH_CLANG
+    )
+    if len(diff) > 0:
+        print(
+            "The following boards are missing and must be added to "
+            "BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG or "
+            "BOARDS_THAT_FAIL_WITH_CLANG:"
+        )
+        for i in sorted(diff):
+            print(i)
+        sys.exit(1)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
 
@@ -274,6 +362,8 @@ def main() -> int:
 
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
+
+    check_boards()
 
     logging.debug("Building with %d threads", args.num_threads)
 
