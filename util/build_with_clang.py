@@ -210,6 +210,12 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # git grep --name-only 'CHIP:=mt_scp' | xargs grep -L 'CHIP_VARIANT:=mt818' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "corsola_scp",
     "kukui_scp",
+    # Boards that use CORE:=minute-ia
+    "adl_ish_lite",
+    "arcada_ish",
+    "drallion_ish",
+    "tglrvp_ish",
+    "volteer_ish",
 ]
 
 NDS32_BOARDS = [
@@ -291,12 +297,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "terrador",  # overflows flash
     "volteer",  # overflows flash
     "waddledoo",  # overflows flash
-    # Boards that use CORE:=minute-ia
-    "adl_ish_lite",
-    "arcada_ish",
-    "drallion_ish",
-    "tglrvp_ish",
-    "volteer_ish",
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.

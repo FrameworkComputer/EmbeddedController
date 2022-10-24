@@ -174,45 +174,43 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 		      (decimators[FIFO_DEV_GYRO] << LSM6DSM_FIFO_DEC_G_OFF) |
 			      (decimators[FIFO_DEV_ACCEL]
 			       << LSM6DSM_FIFO_DEC_XL_OFF));
-	if (IS_ENABLED(CONFIG_LSM6DSM_SEC_I2C)) {
-		ASSERT(ARRAY_SIZE(decimators) > FIFO_DEV_MAG);
-		st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
-			      LSM6DSM_FIFO_CTRL4_ADDR,
-			      decimators[FIFO_DEV_MAG]);
+	/* b/255967867: Cannot use IS_ENABLED here with clang. */
+#ifdef CONFIG_LSM6DSM_SEC_I2C
+	ASSERT(ARRAY_SIZE(decimators) > FIFO_DEV_MAG);
+	st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
+		      LSM6DSM_FIFO_CTRL4_ADDR, decimators[FIFO_DEV_MAG]);
 
-		/*
-		 * FIFO ODR is limited by odr of gyro or accel.
-		 * If we are sampling magnetometer faster than gyro or accel,
-		 * bump up ODR of accel. Thanks to decimation we will still
-		 * measure at the specified ODR.
-		 * Contrary to gyroscope, sampling faster will not affect
-		 * measurements.
-		 * Set the ODR behind the back of set/get_data_rate.
-		 *
-		 * First samples after ODR changes must be thrown out [See
-		 * AN4987, section 3.9].
-		 * When increasing accel ODR, the FIFO is going to drop samples,
-		 * - except the first one after ODR change.
-		 * When decreasing accel ODR, we don't need to drop sample if
-		 * frequency is less than 52Hz.
-		 * At most, we need to drop one sample, but Android requirement
-		 * specify that changing one sensor ODR should not affect other
-		 * sensors.
-		 * Leave the bad sample alone, it will be a single glitch in the
-		 * accelerometer data stream.
-		 */
-		if (max_odr > MAX(odrs[FIFO_DEV_ACCEL], odrs[FIFO_DEV_GYRO])) {
-			st_write_data_with_mask(accel,
-						LSM6DSM_ODR_REG(accel->type),
-						LSM6DSM_ODR_MASK,
-						LSM6DSM_ODR_TO_REG(max_odr));
-		} else {
-			st_write_data_with_mask(
-				accel, LSM6DSM_ODR_REG(accel->type),
-				LSM6DSM_ODR_MASK,
-				LSM6DSM_ODR_TO_REG(odrs[FIFO_DEV_ACCEL]));
-		}
+	/*
+	 * FIFO ODR is limited by odr of gyro or accel.
+	 * If we are sampling magnetometer faster than gyro or accel,
+	 * bump up ODR of accel. Thanks to decimation we will still
+	 * measure at the specified ODR.
+	 * Contrary to gyroscope, sampling faster will not affect
+	 * measurements.
+	 * Set the ODR behind the back of set/get_data_rate.
+	 *
+	 * First samples after ODR changes must be thrown out [See
+	 * AN4987, section 3.9].
+	 * When increasing accel ODR, the FIFO is going to drop samples,
+	 * - except the first one after ODR change.
+	 * When decreasing accel ODR, we don't need to drop sample if
+	 * frequency is less than 52Hz.
+	 * At most, we need to drop one sample, but Android requirement
+	 * specify that changing one sensor ODR should not affect other
+	 * sensors.
+	 * Leave the bad sample alone, it will be a single glitch in the
+	 * accelerometer data stream.
+	 */
+	if (max_odr > MAX(odrs[FIFO_DEV_ACCEL], odrs[FIFO_DEV_GYRO])) {
+		st_write_data_with_mask(accel, LSM6DSM_ODR_REG(accel->type),
+					LSM6DSM_ODR_MASK,
+					LSM6DSM_ODR_TO_REG(max_odr));
+	} else {
+		st_write_data_with_mask(
+			accel, LSM6DSM_ODR_REG(accel->type), LSM6DSM_ODR_MASK,
+			LSM6DSM_ODR_TO_REG(odrs[FIFO_DEV_ACCEL]));
 	}
+#endif
 	/*
 	 * After ODR and decimation values are set, continuous mode can be
 	 * enabled
