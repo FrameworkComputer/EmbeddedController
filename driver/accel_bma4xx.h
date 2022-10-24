@@ -42,6 +42,11 @@
 #define BMA4_HIGH_G_OUT_ADDR 0x1F
 #define BMA4_TEMPERATURE_ADDR 0x22
 
+#define BMA4_INT_STATUS_1 0x1D
+#define BMA4_FFULL_INT BIT(0)
+#define BMA4_FWM_INT BIT(1)
+#define BMA4_ACC_DRDY_INT BIT(7)
+
 #define BMA4_FIFO_LENGTH_0_ADDR 0x24
 #define BMA4_FIFO_DATA_ADDR 0x26
 #define BMA4_ACTIVITY_OUT_ADDR 0x27
@@ -87,6 +92,31 @@
 #define BMA4_ACCEL_RANGE_4G 1
 #define BMA4_ACCEL_RANGE_8G 2
 #define BMA4_ACCEL_RANGE_16G 3
+
+#define BMA4_FIFO_CONFIG_0_ADDR 0x48
+#define BMA4_FIFO_STOP_ON_FULL BIT(0)
+#define BMA4_FIFO_TIME_EN BIT(1)
+
+#define BMA4_FIFO_CONFIG_1_ADDR 0x49
+#define BMA4_FIFO_TAG_INT2_EN BIT(2)
+#define BMA4_FIFO_TAG_INT1_EN BIT(3)
+#define BMA4_FIFO_HEADER_EN BIT(4)
+#define BMA4_FIFO_AUX_EN BIT(5)
+#define BMA4_FIFO_ACC_EN BIT(6)
+
+#define BMA4_INT1_IO_CTRL_ADDR 0x53
+#define BMA4_INT1_OUTPUT_EN BIT(3)
+
+#define BMA4_INT_LATCH_ADDR 0x55
+#define BMA4_INT_LATCH BIT(0)
+
+#define BMA4_INT_MAP_DATA_ADDR 0x58
+#define BMA4_INT2_DRDY BIT(6)
+#define BMA4_INT2_FWM BIT(5)
+#define BMA4_INT2_FFULL BIT(4)
+#define BMA4_INT1_DRDY BIT(2)
+#define BMA4_INT1_FWM BIT(1)
+#define BMA4_INT1_FFULL BIT(0)
 
 #define BMA4_RESERVED_REG_5B_ADDR 0x5B
 #define BMA4_RESERVED_REG_5C_ADDR 0x5C
@@ -162,5 +192,24 @@
 		 25000 << ((_reg)-BMA4_OUTPUT_DATA_RATE_25HZ))
 
 extern const struct accelgyro_drv bma4_accel_drv;
+
+#if defined(CONFIG_ZEPHYR)
+#if DT_NODE_EXISTS(DT_ALIAS(bma4xx_int))
+/*
+ * Get the motion sensor ID of the BMA4xx sensor that generates the interrupt.
+ * The interrupt is converted to the event and transferred to motion
+ * sense task that actually handles the interrupt.
+ *
+ * Here, we use alias to get the motion sensor ID
+ *
+ * e.g) base_accel is the label of a child node in /motionsense-sensors
+ * aliases {
+ *     bma4xx-int = &base_accel;
+ * };
+ */
+#define CONFIG_ACCEL_BMA4XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bma4xx_int)))
+#endif /* DT_NODE_EXISTS */
+#endif /* CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_ACCEL_BMA4XX_H */

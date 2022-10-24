@@ -15,14 +15,26 @@
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
+#include "hwtimer.h"
 #include "math_util.h"
 #include "spi.h"
 #include "task.h"
 #include "util.h"
+#include <motion_sense_fifo.h>
+
+#ifdef CONFIG_ACCEL_BMA4XX_INT_EVENT
+#define BMA4XX_USE_INTERRUPTS
+#endif
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
+#define GOTO_ON_ERROR(label, expr)  \
+	do {                        \
+		ret = expr;         \
+		if (ret)            \
+			goto label; \
+	} while (0)
 /**
  * Read 8bit register from accelerometer.
  */
@@ -32,8 +44,14 @@ static inline int bma4_read8(const struct motion_sensor_t *s, const int reg,
 	return i2c_read8(s->port, s->i2c_spi_addr_flags, reg, data_ptr);
 }
 
+static inline int bma4_read16(const struct motion_sensor_t *s, const int reg,
+			      int *data_ptr)
+{
+	return i2c_read16(s->port, s->i2c_spi_addr_flags, reg, data_ptr);
+}
+
 /**
- * Write 8bit register from accelerometer.
+ * Write 8bit register to accelerometer.
  */
 static inline int bma4_write8(const struct motion_sensor_t *s, const int reg,
 			      int data)
@@ -96,6 +114,9 @@ static int set_foc_config(struct motion_sensor_t *s)
 	RETURN_ERROR(bma4_set_reg8(s, BMA4_NV_CONFIG_ADDR,
 				   (BMA4_DISABLE << BMA4_NV_ACCEL_OFFSET_POS),
 				   BMA4_NV_ACCEL_OFFSET_MSK));
+
+	/* Disable FIFO */
+	RETURN_ERROR(bma4_write8(s, BMA4_FIFO_CONFIG_1_ADDR, 0));
 
 	/* Set accelerometer configurations to 50Hz,CIC, continuous mode */
 	RETURN_ERROR(
@@ -200,7 +221,7 @@ static int8_t perform_accel_foc(struct motion_sensor_t *s, int *target,
 static int perform_calib(struct motion_sensor_t *s, int enable)
 {
 	uint8_t config[2];
-	int pwr_ctrl, pwr_conf;
+	int pwr_ctrl, pwr_conf, fifo_conf;
 	intv3_t target = { 0, 0, 0 };
 	int sens_range = s->current_range;
 
@@ -210,6 +231,8 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	/* Read accelerometer configurations */
 	RETURN_ERROR(i2c_read_block(s->port, s->i2c_spi_addr_flags,
 				    BMA4_ACCEL_CONFIG_ADDR, config, 2));
+
+	RETURN_ERROR(bma4_read8(s, BMA4_FIFO_CONFIG_1_ADDR, &fifo_conf));
 
 	/* Get accelerometer enable status to be saved */
 	RETURN_ERROR(bma4_read8(s, BMA4_POWER_CTRL_ADDR, &pwr_ctrl));
@@ -228,6 +251,8 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	/* Set the saved sensor configuration */
 	RETURN_ERROR(i2c_write_block(s->port, s->i2c_spi_addr_flags,
 				     BMA4_ACCEL_CONFIG_ADDR, config, 2));
+
+	RETURN_ERROR(bma4_write8(s, BMA4_FIFO_CONFIG_1_ADDR, fifo_conf));
 
 	RETURN_ERROR(bma4_write8(s, BMA4_POWER_CTRL_ADDR, pwr_ctrl));
 
@@ -272,25 +297,43 @@ static int get_resolution(const struct motion_sensor_t *s)
 
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int round)
 {
-	int ret, odr_reg_val;
+	int ret;
 	struct accelgyro_saved_data_t *data = s->drv_data;
-
-	odr_reg_val = BMA4_ODR_TO_REG(rate);
-
-	if ((BMA4_REG_TO_ODR(odr_reg_val) < rate) && round)
-		odr_reg_val = BMA4_ODR_TO_REG(rate * 2);
 
 	mutex_lock(s->mutex);
 
-	/* Determine the new value of control reg and attempt to write it. */
-	ret = bma4_set_reg8(s, BMA4_ACCEL_CONFIG_ADDR,
-			    odr_reg_val << BMA4_ACCEL_ODR_POS,
-			    BMA4_ACCEL_ODR_MSK);
+	if (rate == 0) {
+		/* Disable accel */
+		GOTO_ON_ERROR(out, bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR, 0,
+						 BMA4_ACCEL_ENABLE_MSK));
+		data->odr = 0;
+	} else {
+		int odr_reg_val = BMA4_ODR_TO_REG(rate);
 
-	/* If successfully written, then save the new data rate. */
-	if (ret == EC_SUCCESS)
+		if (data->odr == 0) {
+			/* Accel was disabled; enable it */
+			GOTO_ON_ERROR(
+				out,
+				bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR,
+					      BMA4_ENABLE
+						      << BMA4_ACCEL_ENABLE_POS,
+					      BMA4_ACCEL_ENABLE_MSK));
+		}
+
+		if ((BMA4_REG_TO_ODR(odr_reg_val) < rate) && round)
+			odr_reg_val = BMA4_ODR_TO_REG(rate * 2);
+
+		/* Determine the new value of control reg and write it. */
+		GOTO_ON_ERROR(out,
+			      bma4_set_reg8(s, BMA4_ACCEL_CONFIG_ADDR,
+					    odr_reg_val << BMA4_ACCEL_ODR_POS,
+					    BMA4_ACCEL_ODR_MSK));
+
+		/* If successfully written, then save the new data rate. */
 		data->odr = BMA4_REG_TO_ODR(odr_reg_val);
+	}
 
+out:
 	mutex_unlock(s->mutex);
 
 	return ret;
@@ -360,10 +403,34 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 	return EC_SUCCESS;
 }
 
+/*
+ * Convert raw sensor register values in acc to 3d vector v, applying the
+ * sensor's standard rotation to the result.
+ */
+static void swizzle_sample_data(const struct motion_sensor_t *s,
+				const uint8_t acc[6], intv3_t v)
+{
+	/*
+	 * Convert acceleration to a signed 16-bit number. Note, based on
+	 * the order of the registers:
+	 *
+	 * acc[0] = X_AXIS_LSB -> bit 7~4 for value, bit 0 for new data bit
+	 * acc[1] = X_AXIS_MSB
+	 * acc[2] = Y_AXIS_LSB -> bit 7~4 for value, bit 0 for new data bit
+	 * acc[3] = Y_AXIS_MSB
+	 * acc[4] = Z_AXIS_LSB -> bit 7~4 for value, bit 0 for new data bit
+	 * acc[5] = Z_AXIS_MSB
+	 */
+	for (int i = X; i <= Z; i++)
+		v[i] = (((int8_t)acc[i * 2 + 1]) << 8) | (acc[i * 2] & 0xf0);
+
+	rotate(v, *s->rot_standard_ref, v);
+}
+
 static int read(const struct motion_sensor_t *s, intv3_t v)
 {
 	uint8_t acc[6];
-	int ret, i;
+	int ret;
 
 	mutex_lock(s->mutex);
 
@@ -376,21 +443,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	if (ret)
 		return ret;
 
-	/*
-	 * Convert acceleration to a signed 16-bit number. Note, based on
-	 * the order of the registers:
-	 *
-	 * acc[0] = X_AXIS_LSB -> bit 7~4 for value, bit 0 for new data bit
-	 * acc[1] = X_AXIS_MSB
-	 * acc[2] = Y_AXIS_LSB -> bit 7~4 for value, bit 0 for new data bit
-	 * acc[3] = Y_AXIS_MSB
-	 * acc[4] = Z_AXIS_LSB -> bit 7~4 for value, bit 0 for new data bit
-	 * acc[5] = Z_AXIS_MSB
-	 */
-	for (i = X; i <= Z; i++)
-		v[i] = (((int8_t)acc[i * 2 + 1]) << 8) | (acc[i * 2] & 0xf0);
-
-	rotate(v, *s->rot_standard_ref, v);
+	swizzle_sample_data(s, acc, v);
 
 	return EC_SUCCESS;
 }
@@ -398,6 +451,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, reg_val;
+	struct accelgyro_saved_data_t *data = s->drv_data;
 
 	/* This driver requires a mutex. Assert if mutex is not supplied. */
 	ASSERT(s->mutex);
@@ -410,11 +464,35 @@ static int init(struct motion_sensor_t *s)
 
 	mutex_lock(s->mutex);
 
-	/* Enable accelerometer */
-	ret = bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR,
-			    BMA4_ENABLE << BMA4_ACCEL_ENABLE_POS,
-			    BMA4_ACCEL_ENABLE_MSK);
+	/*
+	 * Disable accelerometer by default, set ODR to match. This avoids
+	 * generating FIFO interrupts until we actually care about the data.
+	 */
+	GOTO_ON_ERROR(out, bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR, 0,
+					 BMA4_ACCEL_ENABLE_MSK));
+	data->odr = 0;
 
+	/* Configure interrupt-driven acquisition if desired */
+	if (IS_ENABLED(BMA4XX_USE_INTERRUPTS)) {
+		GOTO_ON_ERROR(out,
+			      bma4_write8(s, BMA4_CMD_ADDR, BMA4_FIFO_FLUSH));
+		/*
+		 * Enable all interrupts on INT1 pin, active-low push-pull
+		 * output, latched until status register read.
+		 */
+		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT_LATCH_ADDR,
+					       BMA4_INT_LATCH));
+		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT1_IO_CTRL_ADDR,
+					       BMA4_INT1_OUTPUT_EN));
+		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT_MAP_DATA_ADDR,
+					       BMA4_INT1_DRDY | BMA4_INT1_FWM |
+						       BMA4_INT1_FFULL));
+		/* Enable FIFO in headerless mode, accel data only */
+		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_FIFO_CONFIG_1_ADDR,
+					       BMA4_FIFO_ACC_EN));
+	}
+
+out:
 	mutex_unlock(s->mutex);
 
 	if (ret)
@@ -422,6 +500,91 @@ static int init(struct motion_sensor_t *s)
 
 	return sensor_init_done(s);
 }
+
+#ifdef BMA4XX_USE_INTERRUPTS
+static uint32_t last_irq_timestamp;
+
+/* Handle IRQ from sensor: schedule read from task context */
+void bma4xx_interrupt(enum gpio_signal signal)
+{
+	__atomic_store_n(&last_irq_timestamp, __hw_clock_source_read(),
+			 __ATOMIC_RELAXED);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_BMA4XX_INT_EVENT);
+}
+
+/* Process FIFO data read from accel and push data to host */
+static void process_fifo_data(struct motion_sensor_t *s, uint8_t *data,
+			      size_t data_bytes, uint32_t timestamp)
+{
+	ASSERT(data_bytes % 6 == 0);
+
+	for (int i = 0; i < data_bytes; i += 6) {
+		intv3_t v;
+
+		if (data[i + 1] == 0x80 && data[i] == 0) {
+			/* 0x8000 means read overrun; out of data */
+			break;
+		}
+		swizzle_sample_data(s, &data[i], v);
+
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			struct ec_response_motion_sensor_data response = {
+				.sensor_num = s - motion_sensors,
+				.data = {
+					[X] = v[X],
+					[Y] = v[Y],
+					[Z] = v[Z],
+				},
+			};
+			motion_sense_fifo_stage_data(&response, s, 3,
+						     timestamp);
+		} else {
+			motion_sense_push_raw_xyz(s);
+		}
+	}
+}
+
+/* Handle interrupt in task context */
+static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
+{
+	uint32_t irq_timestamp =
+		__atomic_load_n(&last_irq_timestamp, __ATOMIC_RELAXED);
+	bool read_any_data = false;
+	int interrupt_status_reg, fifo_depth;
+
+	/* Read interrupt status, also clears pending IRQs */
+	RETURN_ERROR(bma4_read16(s, BMA4_INT_STATUS_1, &interrupt_status_reg));
+	if ((interrupt_status_reg &
+	     (BMA4_FFULL_INT | BMA4_FWM_INT | BMA4_ACC_DRDY_INT)) == 0) {
+		return EC_ERROR_NOT_HANDLED;
+	}
+
+	RETURN_ERROR(bma4_read16(s, BMA4_FIFO_LENGTH_0_ADDR, &fifo_depth));
+	while (fifo_depth > 0) {
+		/* large enough buffer for 4 samples */
+		uint8_t fifo_data[24];
+		int fifo_read = MIN(ARRAY_SIZE(fifo_data), fifo_depth);
+		int ret;
+
+		mutex_lock(s->mutex);
+		ret = i2c_read_block(s->port, s->i2c_spi_addr_flags,
+				     BMA4_FIFO_DATA_ADDR, fifo_data, fifo_read);
+		fifo_depth -= fifo_read;
+		mutex_unlock(s->mutex);
+		if (ret)
+			return ret;
+
+		process_fifo_data(s, fifo_data, fifo_read, irq_timestamp);
+		read_any_data = true;
+	}
+
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO) && read_any_data) {
+		motion_sense_fifo_commit_data();
+	}
+
+	return EC_SUCCESS;
+}
+#endif /* BMA4XX_USE_INTERRUPTS */
 
 const struct accelgyro_drv bma4_accel_drv = {
 	.init = init,
@@ -433,4 +596,7 @@ const struct accelgyro_drv bma4_accel_drv = {
 	.set_offset = set_offset,
 	.get_offset = get_offset,
 	.perform_calib = perform_calib,
+#ifdef BMA4XX_USE_INTERRUPTS
+	.irq_handler = irq_handler,
+#endif
 };
