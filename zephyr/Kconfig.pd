@@ -86,6 +86,28 @@ config PLATFORM_EC_USB_PD_INITIAL_DEBUG_LEVEL
 	  through to 3 will increase the level of debug logging.
 	  If this config is not set, the default level will be set to 1.
 
+config PLATFORM_EC_USB_PD_FLAGS
+	bool "Whether to build USB PD flag support"
+	default 1
+	help
+	  Enable this to support checking the USB PD configuration via flags.
+	  The usb_pd_flags modules provides functions such as
+	  get_usb_pd_vbus_detect to get the type of VBUS detection performed on
+	  this platform.
+
+if PLATFORM_EC_USB_PD_FLAGS
+
+config PLATFORM_EC_USB_PD_RUNTIME_FLAGS
+	bool "Whether to set PD flags at runtime"
+	default false
+	help
+	  Sets PD flag values at runtime instead of based on static CONFIG_*
+	  settings. The usb_pd_flags module provides functions such as
+	  set_usb_pd_vbus_detect to set how VBUS detection will be performed on
+	  this platform.
+
+endif # PLATFORM_EC_USB_PD_FLAGS
+
 config USB_PD_XID
 	int "USB XID"
 	default 0
