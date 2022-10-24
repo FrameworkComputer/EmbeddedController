@@ -149,29 +149,29 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		cpu {
-			temp_fan_off = <35>;
+			temp_fan_off = <45>;
 			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <75>;
+			temp_host_halt = <85>;
+			temp_host_release_high = <65>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_cpu>;
 		};
 		5v_regulator {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_fan_off = <50>;
+			temp_fan_max = <65>;
+			temp_host_high = <75>;
+			temp_host_halt = <85>;
+			temp_host_release_high = <65>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_5v_regulator>;
 		};
 		charger {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_fan_off = <50>;
+			temp_fan_max = <65>;
+			temp_host_high = <80>;
+			temp_host_halt = <85>;
+			temp_host_release_high = <75>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_charger>;
 		};
@@ -241,8 +241,8 @@
 		fan_0 {
 			pwms = <&pwm2 PWM_CHANNEL_2 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
 			tach = <&tach1>;
-			rpm_min = <2500>;
-			rpm_start = <2500>;
+			rpm_min = <2600>;
+			rpm_start = <2600>;
 			rpm_max = <4100>;
 			enable_gpio = <&gpio_fan_enable>;
 		};
