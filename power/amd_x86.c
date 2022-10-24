@@ -89,8 +89,29 @@ void chipset_throttle_cpu(int throttle)
 	if (IS_ENABLED(CONFIG_CPU_PROCHOT_ACTIVE_LOW))
 		throttle = !throttle;
 
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return;
+
+	if (IS_ENABLED(CONFIG_THROTTLE_AP_INTERRUPT_SINGLE)) {
+		if (throttle == IS_ENABLED(CONFIG_CPU_PROCHOT_ACTIVE_LOW)) {
+			/* Enable interrupt if we're not throttling the AP */
+			gpio_set_flags(GPIO_CPU_PROCHOT, GPIO_INPUT);
+			gpio_enable_interrupt(GPIO_CPU_PROCHOT);
+
+			if ((!gpio_get_level(GPIO_CPU_PROCHOT)) ==
+			    IS_ENABLED(CONFIG_CPU_PROCHOT_ACTIVE_LOW)) {
+				CPRINTS("External prochot during throttling");
+			}
+			return;
+		}
+
+		/* Otherwise restore our original GPIO settings */
+		gpio_disable_interrupt(GPIO_CPU_PROCHOT);
+		gpio_set_flags(GPIO_CPU_PROCHOT,
+			       gpio_get_default_flags(GPIO_CPU_PROCHOT));
+	}
+
+	gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
 
 void chipset_handle_espi_reset_assert(void)
