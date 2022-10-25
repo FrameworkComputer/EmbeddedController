@@ -15,6 +15,8 @@
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 
+/* Tested wrt isl923x */
+
 /* Only single charger-chip configured for the drivers overlay */
 #define CHG_NUM get_charger_num(&isl923x_drv)
 
@@ -49,6 +51,23 @@ ZTEST(common_charger, test_chg_ramp_get_current_limit)
 {
 	zassert_equal(chg_ramp_get_current_limit(),
 		      CONFIG_CHARGER_INPUT_CURRENT);
+}
+
+ZTEST(common_charger, test_charger_is_icl_reached__bad_arg)
+{
+	bool unused = false;
+
+	zassert_equal(charger_is_icl_reached(INT_MAX, &unused), EC_ERROR_INVAL);
+	zassert_equal(charger_is_icl_reached(INT_MIN, &unused), EC_ERROR_INVAL);
+}
+
+ZTEST(common_charger, test_charger_is_icl_reached__unsupported)
+{
+	/* Not supported by isl923x */
+	bool unused;
+
+	zassert_equal(charger_is_icl_reached(CHG_NUM, &unused),
+		      EC_ERROR_UNIMPLEMENTED);
 }
 
 static void suite_common_charger_before_after(void *test_data)
