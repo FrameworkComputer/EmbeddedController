@@ -88,6 +88,22 @@ ZTEST(common_charger, test_charger_is_icl_reached__unsupported)
 		      EC_ERROR_UNIMPLEMENTED);
 }
 
+ZTEST(common_charger, test_charger_enable_linear_charge__bad_arg)
+{
+	/* Not supported without RAA489000 */
+	/* All arguments but 0th are unused. */
+	zassert_equal(charger_enable_linear_charge(INT_MAX, false),
+		      EC_ERROR_INVAL);
+}
+
+ZTEST(common_charger, test_charger_enable_linear_charge__unsupported)
+{
+	/* Not supported without RAA489000 */
+	/* All arguments but 0th are unused. */
+	zassert_equal(charger_enable_linear_charge(CHG_NUM, false),
+		      EC_ERROR_UNIMPLEMENTED);
+}
+
 static void suite_common_charger_before_after(void *test_data)
 {
 	ARG_UNUSED(test_data);
