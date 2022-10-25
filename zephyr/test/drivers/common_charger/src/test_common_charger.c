@@ -53,6 +53,12 @@ ZTEST(common_charger, test_chg_ramp_get_current_limit)
 		      CONFIG_CHARGER_INPUT_CURRENT);
 }
 
+ZTEST(common_charger, test_charger_get_min_bat_pct_for_power_on)
+{
+	zassert_equal(charger_get_min_bat_pct_for_power_on(),
+		      CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON);
+}
+
 ZTEST(common_charger, test_charger_set_vsys_compensation__bad_arg)
 {
 	/* Not supported without RAA489000 */
