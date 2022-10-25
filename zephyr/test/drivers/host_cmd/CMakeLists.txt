@@ -7,6 +7,7 @@ target_sources(app PRIVATE
     src/battery_cut_off.c
     src/battery_display_soc.c
     src/battery_v2.c
+    src/charge_manager.c
     src/get_cmd_versions.c
     src/get_panic_info.c
     src/get_pd_port_caps.c
