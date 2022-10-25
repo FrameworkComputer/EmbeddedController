@@ -18,6 +18,7 @@
 		cros-ec,flash = &flash0;
 		cros-ec,flash-controller = &cros_flash;
 		cros,rtc = &cros_rtc;
+		zephyr,shell-uart = &test_uart;
 	};
 
 	aliases {
@@ -950,6 +951,13 @@
 		pwms = <&pwm_kblight 0 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
 		generic-pwm-channel = <1>;
 	};
+	test_uart: uart@55556666 {
+	   compatible = "vnd,serial";
+	   reg = <0x55556666 0x1000>;
+	   status = "okay";
+	   buffer-size = <200>;
+   };
+
 };
 
 &espi0 {

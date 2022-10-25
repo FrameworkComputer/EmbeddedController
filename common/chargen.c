@@ -15,6 +15,17 @@
 #include "task.h"
 
 #ifndef SECTION_IS_RO
+
+/**
+ * Some unit tests do not have a watchdog enabled and the watchdog
+ * functions are stubbed. Define a default watchdog period in this case.
+ */
+#ifdef CONFIG_WATCHDOG_PERIOD_MS
+#define CHARGEN_WATCHDOG_PERIOD_MS CONFIG_WATCHDOG_PERIOD_MS
+#else
+#define CHARGEN_WATCHDOG_PERIOD_MS 1600
+#endif
+
 /*
  * Microseconds time to drain entire UART_TX console buffer at 115200 b/s, 10
  * bits per character.
@@ -87,7 +98,7 @@ static void run_chargen(void)
 			current_time = get_time();
 
 			if ((current_time.val - prev_watchdog_time.val) <
-			    (CONFIG_WATCHDOG_PERIOD_MS * 1000 / 2))
+			    (CHARGEN_WATCHDOG_PERIOD_MS * 1000 / 2))
 				continue;
 
 			watchdog_reload();

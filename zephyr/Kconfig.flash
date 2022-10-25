@@ -6,7 +6,6 @@ if PLATFORM_EC_FLASH_CROS
 
 config PLATFORM_EC_CONSOLE_CMD_CHARGEN
 	bool "Console command: chargen"
-	depends on UART_INTERRUPT_DRIVEN
 	default y
 	help
 	  Enables the "chargen" console command, which sends a continuous
