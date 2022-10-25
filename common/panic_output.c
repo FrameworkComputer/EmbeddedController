@@ -418,14 +418,21 @@ host_command_panic_info(struct host_cmd_handler_args *args)
 {
 	uint32_t pdata_size = get_panic_data_size();
 	uintptr_t pdata_start = get_panic_data_start();
-	struct panic_data *pdata;
+	struct panic_data *pdata = panic_get_data();
 
 	if (pdata_start && pdata_size > 0) {
-		ASSERT(pdata_size <= args->response_max);
+		if (pdata_size > args->response_max) {
+			panic_printf("Panic data size %d is too "
+				     "large, truncating to %d\n",
+				     pdata_size, args->response_max);
+			pdata_size = args->response_max;
+			if (pdata) {
+				pdata->flags |= PANIC_DATA_FLAG_TRUNCATED;
+			}
+		}
 		memcpy(args->response, (void *)pdata_start, pdata_size);
 		args->response_size = pdata_size;
 
-		pdata = panic_get_data();
 		if (pdata) {
 			/* Data has now been returned */
 			pdata->flags |= PANIC_DATA_FLAG_OLD_HOSTCMD;

@@ -152,6 +152,8 @@ enum panic_arch {
 #define PANIC_DATA_FLAG_OLD_HOSTCMD BIT(2)
 /* Already reported via host event */
 #define PANIC_DATA_FLAG_OLD_HOSTEVENT BIT(3)
+/* The data was truncated to fit panic info host cmd */
+#define PANIC_DATA_FLAG_TRUNCATED BIT(4)
 
 /**
  * Write a string to the panic reporting device

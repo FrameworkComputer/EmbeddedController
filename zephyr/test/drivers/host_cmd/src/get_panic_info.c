@@ -96,3 +96,25 @@ ZTEST_USER(host_cmd_get_panic_info, test_get_panic_info_size_is_zero)
 	zassert_mem_equal(&response, &expected, sizeof(struct panic_data),
 			  NULL);
 }
+
+ZTEST_USER(host_cmd_get_panic_info, test_get_panic_info_truncate)
+{
+	struct panic_data *pdata = get_panic_data_write();
+	struct panic_data response = { 0 };
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_GET_PANIC_INFO, UINT8_C(0), response);
+
+	/* Panic data is bigger than max response size, should be truncated */
+	args.response_max = sizeof(struct panic_data) - 2;
+
+	pdata->flags = 0;
+	pdata->magic = PANIC_DATA_MAGIC;
+	pdata->struct_size = sizeof(struct panic_data);
+
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(sizeof(struct panic_data) - 2, args.response_size, NULL);
+	/* Truncation flag must be set */
+	zassert_equal(response.flags & PANIC_DATA_FLAG_TRUNCATED,
+		      PANIC_DATA_FLAG_TRUNCATED, NULL);
+	zassert_equal(sizeof(struct panic_data), response.struct_size, NULL);
+}
