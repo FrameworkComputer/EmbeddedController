@@ -110,6 +110,26 @@ ZTEST(common_charger, test_charger_enable_linear_charge__unsupported)
 		      EC_ERROR_UNIMPLEMENTED);
 }
 
+ZTEST(common_charger, test_charger_get_battery_cells__bad_arg)
+{
+	/* Not supported by isl923x */
+	/* All arguments but 0th are unused. */
+	int unused;
+
+	zassert_equal(charger_get_battery_cells(INT_MAX, &unused),
+		      EC_ERROR_INVAL);
+}
+
+ZTEST(common_charger, test_charger_get_battery_cells__unsupported)
+{
+	/* Not supported by isl923x */
+	/* All arguments but 0th are unused. */
+	int unused;
+
+	zassert_equal(charger_get_battery_cells(CHG_NUM, &unused),
+		      EC_ERROR_UNIMPLEMENTED);
+}
+
 static void suite_common_charger_before_after(void *test_data)
 {
 	ARG_UNUSED(test_data);
