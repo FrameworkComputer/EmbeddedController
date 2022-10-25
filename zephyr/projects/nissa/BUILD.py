@@ -25,9 +25,9 @@ def register_nissa_project(
         dts_overlays=["cbi.dts"]
         + [here / project_name / filename for filename in extra_dts_overlays],
         kconfig_files=[
-            here / "prj.conf",
-            here / f"prj_{chip_kconfig}.conf",
-            here / project_name / "prj.conf",
+            here / "program.conf",
+            here / f"{chip_kconfig}_program.conf",
+            here / project_name / "project.conf",
         ],
     )
 
