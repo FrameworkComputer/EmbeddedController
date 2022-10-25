@@ -10,7 +10,6 @@
 def register_nissa_project(
     project_name,
     chip="it81302bx",
-    extra_dts_overlays=(),
 ):
     """Register a variant of nissa."""
     register_func = register_binman_project
@@ -22,8 +21,7 @@ def register_nissa_project(
     return register_func(
         project_name=project_name,
         zephyr_board=chip,
-        dts_overlays=["cbi.dts"]
-        + [here / project_name / filename for filename in extra_dts_overlays],
+        dts_overlays=[here / project_name / "project.overlay"],
         kconfig_files=[
             here / "program.conf",
             here / f"{chip_kconfig}_program.conf",
@@ -35,94 +33,34 @@ def register_nissa_project(
 nivviks = register_nissa_project(
     project_name="nivviks",
     chip="npcx9m3f",
-    extra_dts_overlays=[
-        "generated.dts",
-        "cbi.dts",
-        "overlay.dts",
-        "motionsense.dts",
-        "keyboard.dts",
-        "power_signals.dts",
-        "pwm_leds.dts",
-    ],
 )
 
 nereid = register_nissa_project(
     project_name="nereid",
     chip="it81302bx",
-    extra_dts_overlays=[
-        "generated.dts",
-        "overlay.dts",
-        "motionsense.dts",
-        "keyboard.dts",
-        "power_signals.dts",
-        "pwm_leds.dts",
-    ],
 )
 
 craask = register_nissa_project(
     project_name="craask",
     chip="npcx9m3f",
-    extra_dts_overlays=[
-        "generated.dts",
-        "cbi.dts",
-        "overlay.dts",
-        "motionsense.dts",
-        "keyboard.dts",
-        "power_signals.dts",
-        "pwm_leds.dts",
-    ],
 )
 
 pujjo = register_nissa_project(
     project_name="pujjo",
     chip="npcx9m3f",
-    extra_dts_overlays=[
-        "generated.dts",
-        "cbi.dts",
-        "overlay.dts",
-        "motionsense.dts",
-        "keyboard.dts",
-        "power_signals.dts",
-    ],
 )
 
 xivu = register_nissa_project(
     project_name="xivu",
     chip="npcx9m3f",
-    extra_dts_overlays=[
-        "generated.dts",
-        "cbi.dts",
-        "overlay.dts",
-        "motionsense.dts",
-        "keyboard.dts",
-        "power_signals.dts",
-        "led_pins.dts",
-        "led_policy.dts",
-    ],
 )
 
 joxer = register_nissa_project(
     project_name="joxer",
     chip="it81302bx",
-    extra_dts_overlays=[
-        "generated.dts",
-        "cbi.dts",
-        "overlay.dts",
-        "motionsense.dts",
-        "keyboard.dts",
-        "power_signals.dts",
-        "pwm_leds.dts",
-    ],
 )
 
 yaviks = register_nissa_project(
     project_name="yaviks",
     chip="it81302bx",
-    extra_dts_overlays=[
-        "cbi.dts",
-        "gpio.dts",
-        "overlay.dts",
-        "keyboard.dts",
-        "power_signals.dts",
-    ],
 )
