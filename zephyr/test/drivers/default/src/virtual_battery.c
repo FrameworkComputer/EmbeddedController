@@ -13,6 +13,8 @@
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 
+void copy_memmap_string(uint8_t *dest, int offset, int len);
+
 /* The param buffer has at most 2 msg's (write + read) and 1 byte write len. */
 static uint8_t param_buf[sizeof(struct ec_params_i2c_passthru) +
 			 sizeof(struct ec_params_i2c_passthru_msg) * 2 + 1];
@@ -253,6 +255,32 @@ ZTEST_USER(virtual_battery, test_write_mfgacc)
 	/* Write the command to the SB_MANUFACTURER_ACCESS and check */
 	virtual_battery_write16(SB_MANUFACTURER_ACCESS, cmd);
 	zassert_equal(bat->mf_access, cmd, "%d != %d", bat->mf_access, cmd);
+}
+
+ZTEST(virtual_battery, test_read_nothing_from_host_memmap)
+{
+	const uint8_t expected[EC_MEMMAP_TEXT_MAX] = { 0 };
+	uint8_t buffer[EC_MEMMAP_TEXT_MAX] = { 0 };
+	uint8_t *memmap_ptr = host_get_memmap(EC_MEMMAP_BATT_MFGR);
+
+	zassert_not_null(memmap_ptr);
+	memcpy(memmap_ptr, "TEST", 5);
+	copy_memmap_string(buffer, EC_MEMMAP_BATT_MFGR, 0);
+
+	zassert_mem_equal(expected, buffer, EC_MEMMAP_TEXT_MAX);
+}
+
+ZTEST(virtual_battery, test_read_data_from_host_memmap)
+{
+	uint8_t buffer[EC_MEMMAP_TEXT_MAX] = { 0 };
+	uint8_t *memmap_ptr = host_get_memmap(EC_MEMMAP_BATT_MFGR);
+
+	zassert_not_null(memmap_ptr);
+	memcpy(memmap_ptr, "TEST\0\0\0\0", 8);
+	copy_memmap_string(buffer, EC_MEMMAP_BATT_MFGR, 5);
+
+	zassert_equal(4, buffer[0]);
+	zassert_mem_equal("TEST", buffer + 1, 4);
 }
 
 ZTEST_SUITE(virtual_battery, drivers_predicate_post_main, NULL, NULL, NULL,
