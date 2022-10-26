@@ -199,7 +199,9 @@
  * See https://clang.llvm.org/docs/AttributeReference.html#fallthrough and
  * https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html.
  */
+#ifndef __fallthrough
 #define __fallthrough __attribute__((fallthrough))
+#endif
 
 /*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
