@@ -108,6 +108,52 @@ ZTEST_USER(tcs3400, test_tcs_read)
 	zassert_true(enable & TCS_I2C_ENABLE_POWER_ON);
 	zassert_true(enable & TCS_I2C_ENABLE_ADC_ENABLE);
 	zassert_true(enable & TCS_I2C_ENABLE_INT_ENABLE);
+
+	ms = &motion_sensors[TCS_RGB_SENSOR_ID];
+
+	zassert_ok(ms->drv->read(ms, NULL));
+}
+
+ZTEST_USER(tcs3400, test_tcs_get_set_offset)
+{
+	struct motion_sensor_t *ms;
+	int16_t offset[3] = { 0, 5, 10 };
+	int16_t new_offset[3] = { 5, -1, 17 };
+	int16_t temperature = 0;
+
+	ms = &motion_sensors[TCS_CLR_SENSOR_ID];
+	zassert_ok(ms->drv->get_offset(ms, offset, &temperature));
+	zassert_equal(TCS3400_DRV_DATA(ms)->als_cal.offset, offset[0]);
+	zassert_equal(0, offset[1]);
+	zassert_equal(0, offset[2]);
+	zassert_equal(EC_MOTION_SENSE_INVALID_CALIB_TEMP, temperature);
+
+	/* Try to change the offset and make sure it doesn't change
+	 * (tcs3400's offset cannot be configured at runtime)
+	 */
+	zassert_ok(ms->drv->set_offset(ms, new_offset, 20));
+	zassert_ok(ms->drv->get_offset(ms, new_offset, &temperature));
+	zassert_mem_equal(offset, new_offset, sizeof(offset));
+	zassert_equal(EC_MOTION_SENSE_INVALID_CALIB_TEMP, temperature);
+
+	ms = &motion_sensors[TCS_RGB_SENSOR_ID];
+	zassert_ok(ms->drv->get_offset(ms, offset, &temperature));
+	zassert_equal(TCS3400_RGB_DRV_DATA(ms)->calibration.rgb_cal[0].offset,
+		      offset[0]);
+	zassert_equal(TCS3400_RGB_DRV_DATA(ms)->calibration.rgb_cal[1].offset,
+		      offset[1]);
+	zassert_equal(TCS3400_RGB_DRV_DATA(ms)->calibration.rgb_cal[2].offset,
+		      offset[2]);
+	zassert_equal(EC_MOTION_SENSE_INVALID_CALIB_TEMP, temperature);
+
+	/* Try to change the offset and make sure it didn't change */
+	new_offset[0] = 5;
+	new_offset[1] = -1;
+	new_offset[2] = 17;
+	zassert_ok(ms->drv->set_offset(ms, new_offset, 20));
+	zassert_ok(ms->drv->get_offset(ms, new_offset, &temperature));
+	zassert_mem_equal(offset, new_offset, sizeof(offset));
+	zassert_equal(EC_MOTION_SENSE_INVALID_CALIB_TEMP, temperature);
 }
 
 /** Check if FIFO for RGB and clear sensor is empty */
