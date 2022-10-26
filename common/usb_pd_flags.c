@@ -8,7 +8,6 @@
  */
 
 #include "common.h"
-#include "config.h"
 #include "usb_pd_flags.h"
 
 static union usb_pd_runtime_flags usb_pd_flags;
