@@ -82,6 +82,11 @@ ZTEST_USER(console, test_console_read_buffer_size_zero)
 		      NULL);
 }
 
+ZTEST_USER(console, test_uart_buffer_full)
+{
+	zassert_false(uart_buffer_full(), NULL);
+}
+
 static const char *large_string =
 	"This is a very long string, it will cause a buffer flush at "
 	"some point while printing to the shell. Long long text. Blah "
