@@ -258,9 +258,15 @@ static enum ec_error_list battery_get_fet_status_regval(int type, int *regval)
 
 	/* Read the status of charge/discharge FETs */
 	if (board_battery_info[type].fuel_gauge.fet.mfgacc_support == 1) {
-		rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-				    SB_ALT_MANUFACTURER_ACCESS, data,
-				    sizeof(data));
+		if (board_battery_info[type].fuel_gauge.fet.mfgacc_smb_block ==
+		    1)
+			rv = sb_read_mfgacc_block(PARAM_OPERATION_STATUS,
+						  SB_ALT_MANUFACTURER_ACCESS,
+						  data, sizeof(data));
+		else
+			rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
+					    SB_ALT_MANUFACTURER_ACCESS, data,
+					    sizeof(data));
 		/* Get the lowest 16bits of the OperationStatus() data */
 		*regval = data[2] | data[3] << 8;
 	} else

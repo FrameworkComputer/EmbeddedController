@@ -145,6 +145,42 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
 	return EC_SUCCESS;
 }
 
+int sb_read_mfgacc_block(int cmd, int block, uint8_t *data, int len)
+{
+	int rv;
+
+	uint8_t operation_status[3] = {
+		0x02,
+		cmd & 0xFF,
+		cmd >> 8,
+	};
+
+	/*
+	 * First two bytes returned from read are command sent hence read
+	 * doesn't yield anything if the length is less than 3 bytes.
+	 */
+	if (len < 3)
+		return EC_ERROR_INVAL;
+
+	/* Send manufacturer access command by the SMB block protocol */
+	rv = sb_write_block(block, operation_status, sizeof(operation_status));
+	if (rv)
+		return rv;
+
+	/*
+	 * Read data on the register block.
+	 * First two bytes returned are command sent,
+	 * rest are actual data LSB to MSB.
+	 */
+	rv = sb_read_sized_block(block, data, len);
+	if (rv)
+		return rv;
+	if ((data[0] | data[1] << 8) != cmd)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
 int sb_write_block(int reg, const uint8_t *val, int len)
 {
 	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
