@@ -25,6 +25,7 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "test/usb_pe.h"
+#include "usb_tc_sm.h"
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 
