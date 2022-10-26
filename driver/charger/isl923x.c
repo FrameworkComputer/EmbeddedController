@@ -724,7 +724,7 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 		/* Set trickle charge current bits. */
 		reg &= ~GENMASK(13, 15);
-		reg |= ((CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT - 64) / 32)
+		reg |= ((CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT - 32) / 32)
 		       << 13;
 		if (raw_write16(chgnum, ISL923X_REG_CONTROL2, reg))
 			goto init_fail;
