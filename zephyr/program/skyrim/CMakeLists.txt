@@ -46,6 +46,7 @@ if(DEFINED CONFIG_BOARD_WINTERHOLD)
 		"src/winterhold/kb_backlight.c"
 		"src/winterhold/keyboard.c"
 		"src/winterhold/sensor.c"
+		"src/winterhold/battery_present.c"
     )
 endif()
 
