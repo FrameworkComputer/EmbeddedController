@@ -29,10 +29,7 @@
 #ifdef CONFIG_CHIP_INIT_ROM_REGION
 const void *init_rom_map(const void *addr, int size);
 #else
-static inline const void *init_rom_map(const void *addr, int size)
-{
-	return addr;
-}
+#define init_rom_map(addr, size) (addr)
 #endif
 
 /**
@@ -45,9 +42,7 @@ static inline const void *init_rom_map(const void *addr, int size)
 #ifdef CONFIG_CHIP_INIT_ROM_REGION
 void init_rom_unmap(const void *addr, int size);
 #else
-static inline void init_rom_unmap(const void *addr, int size)
-{
-}
+#define init_rom_unmap(addr, size) (void)0
 #endif
 
 /**
@@ -64,10 +59,7 @@ static inline void init_rom_unmap(const void *addr, int size)
 #ifdef CONFIG_CHIP_INIT_ROM_REGION
 int init_rom_copy(int offset, int size, char *data);
 #else
-static inline int init_rom_copy(int offset, int size, char *data)
-{
-	return 0;
-}
+#define init_rom_copy(offset, size, data) 0
 #endif
 
 #endif /* __CROS_EC_INIT_ROM_H */
