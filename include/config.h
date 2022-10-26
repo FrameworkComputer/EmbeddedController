@@ -3425,6 +3425,11 @@
  */
 #undef CONFIG_ISL9241_SWITCHING_FREQ
 
+/*
+ * ISL9238C disable the CMOUT latch function.
+ */
+#undef CONFIG_ISL9238C_DISABLE_CMOUT_LATCH
+
 /* Support MKBP event */
 #undef CONFIG_MKBP_EVENT
 

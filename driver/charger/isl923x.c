@@ -699,6 +699,10 @@ static void isl923x_init(int chgnum)
 
 		reg |= ISL9238C_C6_SLEW_RATE_CONTROL;
 
+		if (IS_ENABLED(CONFIG_ISL9238C_DISABLE_CMOUT_LATCH)) {
+			reg |= ISL9238C_C6_CMOUT_LATCH;
+		}
+
 		if (raw_write16(chgnum, ISL9238C_REG_CONTROL6, reg))
 			goto init_fail;
 	}

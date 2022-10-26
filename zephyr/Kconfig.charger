@@ -729,4 +729,10 @@ config RAA489000_TRICKLE_CHARGE_CURRENT
 
 endif # PLATFORM_EC_CHARGER_RAA489000
 
+config PLATFORM_EC_ISL9238C_DISABLE_CMOUT_LATCH
+	bool "Disable the CMOUT latch function"
+	depends on PLATFORM_EC_CHARGER_ISL9238C
+	help
+	  Disable the CMOUT latch function for ISL9238C.
+
 endif # PLATFORM_EC_CHARGER

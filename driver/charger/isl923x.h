@@ -265,6 +265,9 @@
 /* Control4: Ignores BATGONE input */
 #define RAA489000_C4_BATGONE_DISABLE BIT(15)
 
+/* Control6: enables the CMOUT latch function. */
+#define ISL9238C_C6_CMOUT_LATCH BIT(3)
+
 /* Control6: charger current and maximum system voltage slew rate control. */
 #define ISL9238C_C6_SLEW_RATE_CONTROL BIT(6)
 
