@@ -11,7 +11,11 @@
 #define CONFIG_FLASH_WRITE_SIZE 0x1 /* minimum write size */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 256 /* one page size for write */
 #define CONFIG_FLASH_ERASE_SIZE 0x10000
-#define CONFIG_FLASH_BANK_SIZE CONFIG_FLASH_ERASE_SIZE
+/*
+ * The smallest protection bank size is 1/8 of 512 KB or 1/16 of 1M flash,
+ * i.e. 64KB.
+ */
+#define CONFIG_FLASH_BANK_SIZE 0x10000
 
 /* RO image resides at start of protected region, right after header */
 #define CONFIG_RO_STORAGE_OFF CONFIG_RO_HDR_SIZE
