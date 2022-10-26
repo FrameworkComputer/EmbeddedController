@@ -1139,7 +1139,6 @@ test_mockable enum power_state power_handle_state(enum power_state state)
 	default:
 		CPRINTS("Unexpected power state %d", state);
 		ASSERT(0);
-		break;
 	}
 
 	return state;

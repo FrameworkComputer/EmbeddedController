@@ -220,7 +220,7 @@ enum battery_present battery_is_present(void);
  * If battery support is not enabled and the board does not specifically
  * provide its own implementation, assume a battery is never present.
  */
-static inline enum battery_present battery_is_present(void)
+test_mockable_static_inline enum battery_present battery_is_present(void)
 {
 	return BP_NO;
 }

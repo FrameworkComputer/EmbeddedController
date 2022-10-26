@@ -65,7 +65,10 @@
 			enum-name = "GPIO_PMIC_KPD_PWR_ODL";
 		};
 		gpio_pmic_resin_l: pmic_resin_l {
-			gpios = <&gpio0 21 GPIO_OUTPUT_HIGH>;
+			/* Real hardware will allow reading even if GPIO_INPUT
+			 * is not set, but the gpio_emul will not.
+			 */
+			gpios = <&gpio0 21 (GPIO_INPUT | GPIO_OUTPUT_HIGH)>;
 			enum-name = "GPIO_PMIC_RESIN_L";
 		};
 		gpio_warm_reset_l: warm_reset_l {
@@ -86,6 +89,10 @@
 			 */
 			gpios = <&gpio0 25 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_switchcap_pg: src_vph_pwr_pg {
+			gpios = <&gpio0 26 GPIO_INPUT_PULL_DOWN>;
+			enum-name = "GPIO_SWITCHCAP_PG";
 		};
 	};
 
@@ -135,7 +142,7 @@
 	switchcap {
 		compatible = "switchcap-gpio";
 		enable-pin = <&gpio_switchcap_on>;
-		power-good-pin = <&gpio_switchcap_pg_int_l>;
+		power-good-pin = <&gpio_switchcap_pg>;
 	};
 };
 
