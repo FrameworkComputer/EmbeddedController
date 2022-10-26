@@ -728,7 +728,6 @@ void board_reset_pd_mcu(void);
 /* P sensor */
 void psensor_interrupt(enum gpio_signal signal);
 
-
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);
 
@@ -769,6 +768,8 @@ int ac_boot_status(void);
 void update_me_change(int change);
 
 int poweron_reason_powerbtn(void);
+
+void spi_mux_control(int enable);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
