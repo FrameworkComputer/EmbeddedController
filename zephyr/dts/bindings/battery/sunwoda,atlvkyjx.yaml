@@ -18,7 +18,9 @@ properties:
    ship_mode_reg_data:
       default: [ 0x0010, 0x0010 ]
    fet_mfgacc_support:
-      default: 0
+      default: 1
+   fet_mfgacc_smb_block:
+      default: 1
    fet_reg_addr:
       default: 0x54
    fet_reg_mask:
