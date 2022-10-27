@@ -72,6 +72,9 @@
 #define ANX7483_DRX1_PORT_CFG2_REG 0x5E
 #define ANX7483_DRX2_PORT_CFG2_REG 0x22
 
+#define ANX7483_CFG2_FG_SHIFT 4
+#define ANX7483_CFG2_FG_MASK GENMASK(5, 4)
+
 /*
  * Default CFG2 value to apply: 0.3 dB with optimized fine tuning
  */

@@ -38,6 +38,14 @@ enum anx7483_eq_setting {
 	ANX7483_EQ_SETTING_12_5DB = 15,
 };
 
+/* Flat gain tuning */
+enum anx7483_fg_setting {
+	ANX7483_FG_SETTING_NEG_1_5DB = 0,
+	ANX7483_FG_SETTING_0_5DB = 1,
+	ANX7483_FG_SETTING_0_3DB = 2,
+	ANX7483_FG_SETTING_1_2DB = 3,
+};
+
 enum anx7483_tune_pin {
 	ANX7483_PIN_UTX1,
 	ANX7483_PIN_UTX2,
@@ -51,6 +59,11 @@ enum anx7483_tune_pin {
 enum ec_error_list anx7483_set_eq(const struct usb_mux *me,
 				  enum anx7483_tune_pin pin,
 				  enum anx7483_eq_setting eq);
+
+/* Adjust the flat gain for a pin */
+enum ec_error_list anx7483_set_fg(const struct usb_mux *me,
+				  enum anx7483_tune_pin pin,
+				  enum anx7483_fg_setting fg);
 
 /*
  * Configure datasheet defaults for tuning registers at this mux setting.
