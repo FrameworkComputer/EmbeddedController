@@ -148,6 +148,12 @@ tests:
       - CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB=y
       - CONFIG_PLATFORM_EC_USBA=y
       - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB=y
+  drivers.usb_pd_discharge:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USB_PD_FLAGS=y
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=y
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
+      - CONFIG_PLATFORM_EC_USB_PD_FLAGS=y
   drivers.usb_pd_flags:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USB_PD_FLAGS=y

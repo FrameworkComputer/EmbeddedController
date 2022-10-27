@@ -9,8 +9,6 @@
 #include "usb_pd.h"
 #include "usb_pd_flags.h"
 
-ZTEST_SUITE(usb_pd_flags, NULL, NULL, NULL, NULL, NULL);
-
 ZTEST_USER(usb_pd_flags, test_usb_pd_charger_otg)
 {
 	set_usb_pd_charger_otg(USB_PD_CHARGER_OTG_ENABLED);
