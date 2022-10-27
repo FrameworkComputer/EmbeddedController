@@ -6,6 +6,7 @@
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
 
+#include "usb_pd.h"
 #include "usb_pd_flags.h"
 
 ZTEST_SUITE(usb_pd_flags, NULL, NULL, NULL, NULL, NULL);
@@ -26,4 +27,13 @@ ZTEST_USER(usb_pd_flags, test_usb_pd_vbus_detect)
 
 	set_usb_pd_vbus_detect(USB_PD_VBUS_DETECT_CHARGER);
 	zassert_equal(get_usb_pd_vbus_detect(), USB_PD_VBUS_DETECT_CHARGER);
+}
+
+ZTEST_USER(usb_pd_flags, test_usb_pd_discharge)
+{
+	set_usb_pd_discharge(USB_PD_DISCHARGE_PPC);
+	zassert_equal(get_usb_pd_discharge(), USB_PD_DISCHARGE_PPC);
+
+	set_usb_pd_discharge(USB_PD_DISCHARGE_GPIO);
+	zassert_equal(get_usb_pd_discharge(), USB_PD_DISCHARGE_GPIO);
 }
