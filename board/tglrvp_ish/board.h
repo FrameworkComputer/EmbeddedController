@@ -79,8 +79,11 @@
 #define CONFIG_ISH_IPAPG
 
 #define CONFIG_ISH_D0I2_MIN_USEC (15 * MSEC)
+#ifdef BOARD_ADL_ISH_LITE
+#define CONFIG_ISH_D0I3_MIN_USEC (3000 * MSEC)
+#else
 #define CONFIG_ISH_D0I3_MIN_USEC (50 * MSEC)
-
+#endif
 #define CONFIG_ISH_NEW_PM
 
 #ifndef __ASSEMBLER__
