@@ -25,6 +25,10 @@ parameters that may be used, please consult the Twister documentation.
 #   version: "version:0.6.2"
 # >
 # wheel: <
+#   name: "infra/python/wheels/packaging-py2_py3"
+#   version: "version:16.8"
+# >
+# wheel: <
 #   name: "infra/python/wheels/ply-py2_py3"
 #   version: "version:3.11"
 # >
@@ -35,6 +39,10 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/pykwalify-py2_py3"
 #   version: "version:1.8.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pyparsing-py3"
+#   version: "version:3.0.7"
 # >
 # wheel: <
 #   name: "infra/python/wheels/pyserial-py2_py3"
@@ -59,6 +67,10 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/six-py2_py3"
 #   version: "version:1.16.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/west-py3"
+#   version: "version:0.14.0"
 # >
 # [VPYTHON:END]
 
