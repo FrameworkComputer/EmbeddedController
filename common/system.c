@@ -849,7 +849,7 @@ __overridable int board_get_version(void)
  * value is a negative version of an EC return code. Without this optimization
  * multiple boards run out of flash size.
  */
-int system_get_board_version(void)
+test_mockable int system_get_board_version(void)
 {
 	int board_id;
 

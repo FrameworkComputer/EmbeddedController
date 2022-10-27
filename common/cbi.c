@@ -216,7 +216,8 @@ static void cbi_remove_tag(void *const cbi, struct cbi_data *const d)
 	h->total_size -= size;
 }
 
-int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
+test_mockable int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf,
+				     uint8_t size)
 {
 	struct cbi_data *d;
 
