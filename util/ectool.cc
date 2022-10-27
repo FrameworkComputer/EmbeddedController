@@ -956,6 +956,7 @@ static const char *const ec_feature_names[] = {
 		"AP ack for Type-C mux configuration",
 	[EC_FEATURE_S4_RESIDENCY] = "S4 residency",
 	[EC_FEATURE_TYPEC_AP_MUX_SET] = "AP directed mux sets",
+	[EC_FEATURE_TYPEC_AP_VDM_SEND] = "AP directed VDM Request messages",
 };
 
 int cmd_inventory(int argc, char *argv[])
