@@ -200,8 +200,12 @@ int ppc_err_prints(const char *string, int port, int error);
  * @param port: The Type-C port number.
  * @param enable: 1 -> discharge vbus, 0 -> stop discharging vbus
  * @return EC_SUCCESS on success, error otherwise.
+ *
+ * TODO(b/255413715): Remove test_mockable when it is practical to convert the
+ * usb_pd_flags test to use the unit-testing framework and not require weak
+ * functions for mocking.
  */
-int ppc_discharge_vbus(int port, int enable);
+test_mockable int ppc_discharge_vbus(int port, int enable);
 
 /**
  * Initializes the PPC for the specified port.
