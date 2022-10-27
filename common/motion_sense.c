@@ -1169,8 +1169,12 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		break;
 
 	case MOTIONSENSE_CMD_FIFO_FLUSH:
-		if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
-			return EC_RES_INVALID_PARAM;
+/* TODO (http://b/255967867) Can't use the IS_ENABLED macro here because
+ *   __fallthrough fails in clang as unreachable code.
+ */
+#ifndef CONFIG_ACCEL_FIFO
+		return EC_RES_INVALID_PARAM;
+#else
 		sensor = host_sensor_id_to_real_sensor(
 			in->sensor_odr.sensor_num);
 		if (sensor == NULL)
@@ -1181,6 +1185,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		task_set_event(TASK_ID_MOTIONSENSE,
 			       TASK_EVENT_MOTION_FLUSH_PENDING);
 		__fallthrough;
+#endif
 	case MOTIONSENSE_CMD_FIFO_INFO:
 		if (!IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 			/*

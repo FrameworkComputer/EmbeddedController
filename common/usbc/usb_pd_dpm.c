@@ -248,11 +248,15 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		dp_vdm_acked(port, type, vdo_count, vdm);
 		break;
 	case USB_VID_INTEL:
-		if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
-			intel_vdm_acked(port, type, vdo_count, vdm);
-			break;
-		}
+/* TODO (http://b/255967867) Can't use the IS_ENABLED macro here because
+ *   __fallthrough fails in clang as unreachable code.
+ */
+#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
+		intel_vdm_acked(port, type, vdo_count, vdm);
+		break;
+#else
 		__fallthrough;
+#endif
 	default:
 		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
 			svid);
@@ -267,11 +271,15 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		dp_vdm_naked(port, type, vdm_cmd);
 		break;
 	case USB_VID_INTEL:
-		if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
-			intel_vdm_naked(port, type, vdm_cmd);
-			break;
-		}
+/* TODO (http://b/255967867) Can't use the IS_ENABLED macro here because
+ *   __fallthrough fails in clang as unreachable code.
+ */
+#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
+		intel_vdm_naked(port, type, vdm_cmd);
+		break;
+#else
 		__fallthrough;
+#endif
 	default:
 		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
 			svid);
