@@ -8,10 +8,20 @@ config MUX_INIT_ADC
 	  Include stubs.c with const struct adc_t adc_channels[] function
 	  into the binary to test.
 
+choice
+	prompt "select the test suite"
+
+config TEST_KRABBY
+	bool "Run the tests intended for krabby"
+	help
+	  Run the tests for krabby common code.
+
 config TEST_TENTACRUEL
 	bool "Run the tests intended for tentacruel"
 	help
-	  Include temp_tentacruel test into the binary to test temperature threshold
-	  trigger current control.
+	  Include temp_tentacruel test into the binary to test temperature
+	  threshold trigger current control.
+
+endchoice
 
 source "Kconfig.zephyr"

@@ -11,11 +11,15 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 zephyr_include_directories("${PLATFORM_EC}/zephyr/projects/corsola/include")
 
 target_sources(app PRIVATE
-	src/charger_workaround.c
 	src/stubs.c
-	src/usb_mux_init.c
-	${PLATFORM_EC}/zephyr/projects/corsola/src/krabby/charger_workaround.c
 	${PLATFORM_EC}/zephyr/projects/corsola/src/krabby/usbc_config.c)
+
+target_sources_ifdef(CONFIG_TEST_KRABBY
+	app PRIVATE
+	src/charger_workaround.c
+	src/usb_mux_init.c
+	${PLATFORM_EC}/zephyr/projects/corsola/src/krabby/charger_workaround.c)
+
 target_sources_ifdef(CONFIG_TEST_TENTACRUEL
 	app PRIVATE
 	src/temp_tentacruel.c
