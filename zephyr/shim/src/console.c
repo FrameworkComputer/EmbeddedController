@@ -83,7 +83,8 @@ static void uart_rx_handle(const struct device *dev)
 	} while (rd_len != 0 && rd_len == len);
 }
 
-static void uart_callback(const struct device *dev, void *user_data)
+test_mockable_static void uart_callback(const struct device *dev,
+					void *user_data)
 {
 	uart_irq_update(dev);
 

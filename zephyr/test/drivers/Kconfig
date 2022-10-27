@@ -109,4 +109,8 @@ config LINK_TEST_SUITE_USBC_VCONN_SWAP
 	help
 	  Include the test suite exercising VCONN Swap behaviors in the binary.
 
+config LINK_TEST_SUITE_CONSOLE
+	bool "Link and test the console tests"
+	select UART_INTERRUPT_DRIVEN
+
 source "Kconfig.zephyr"

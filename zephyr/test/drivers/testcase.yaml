@@ -56,6 +56,9 @@ tests:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
       - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.console:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CONSOLE=y
   drivers.dps:
     extra_args: CONF_FILE="prj.conf;dps/prj.conf"
     extra_configs:
