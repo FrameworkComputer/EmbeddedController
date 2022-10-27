@@ -53,6 +53,35 @@ ZTEST_USER(console, test_buf_notify_null)
 	zassert_equal(write_count, 4, "got %d", write_count);
 }
 
+ZTEST_USER(console, test_console_read_buffer_invalid_type)
+{
+	char buffer[100];
+	uint16_t write_count;
+	uint8_t invalid_type = CONSOLE_READ_RECENT + 1;
+
+	/* Flush the console buffer before we start. */
+	zassert_ok(uart_console_read_buffer_init(), NULL);
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      uart_console_read_buffer(invalid_type, buffer,
+					       sizeof(buffer), &write_count),
+		      NULL);
+}
+
+ZTEST_USER(console, test_console_read_buffer_size_zero)
+{
+	char buffer[100];
+	uint16_t write_count;
+
+	/* Flush the console buffer before we start. */
+	zassert_ok(uart_console_read_buffer_init(), NULL);
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      uart_console_read_buffer(CONSOLE_READ_RECENT, buffer, 0,
+					       &write_count),
+		      NULL);
+}
+
 static const char *large_string =
 	"This is a very long string, it will cause a buffer flush at "
 	"some point while printing to the shell. Long long text. Blah "
