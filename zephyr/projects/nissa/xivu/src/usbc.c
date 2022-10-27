@@ -14,7 +14,7 @@
 #include "driver/retimer/anx7483_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/raa489000.h"
-
+#include "temp_sensor/temp_sensor.h"
 #include "nissa_common.h"
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
@@ -282,4 +282,81 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	charge_ma = (charge_ma * 90) / 100;
 	charge_set_input_current_limit(
 		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+}
+
+struct chg_curr_step {
+	int on;
+	int off;
+	int curr_ma;
+};
+
+static const struct chg_curr_step chg_curr_table[] = {
+	{ .on = 0, .off = 36, .curr_ma = 2800 },
+	{ .on = 46, .off = 36, .curr_ma = 1500 },
+	{ .on = 48, .off = 38, .curr_ma = 1000 },
+};
+
+/* All charge current tables must have the same number of levels */
+#define NUM_CHG_CURRENT_LEVELS ARRAY_SIZE(chg_curr_table)
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int rv;
+	int chg_temp_c;
+	int current;
+	int thermal_sensor0;
+	static int current_level;
+	static int prev_tmp;
+
+	/*
+	 * Precharge must be executed when communication is failed on
+	 * dead battery.
+	 */
+	if (!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
+		return 0;
+
+	current = curr->requested_current;
+
+	rv = temp_sensor_read(
+		TEMP_SENSOR_ID_BY_DEV(DT_NODELABEL(temp_charger1)),
+		&thermal_sensor0);
+	chg_temp_c = K_TO_C(thermal_sensor0);
+
+	if (rv != EC_SUCCESS)
+		return 0;
+
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		if (chg_temp_c < prev_tmp) {
+			if (chg_temp_c <= chg_curr_table[current_level].off)
+				current_level = current_level - 1;
+		} else if (chg_temp_c > prev_tmp) {
+			if (chg_temp_c >= chg_curr_table[current_level + 1].on)
+				current_level = current_level + 1;
+		}
+		/*
+		 * Prevent level always minus 0 or over table steps.
+		 */
+		if (current_level < 0)
+			current_level = 0;
+		else if (current_level >= NUM_CHG_CURRENT_LEVELS)
+			current_level = NUM_CHG_CURRENT_LEVELS - 1;
+
+		prev_tmp = chg_temp_c;
+		current = chg_curr_table[current_level].curr_ma;
+
+		curr->requested_current = MIN(curr->requested_current, current);
+	}
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
 }
