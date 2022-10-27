@@ -76,6 +76,9 @@
 #define RT9490_REG_ADD_CTRL2 0x4C
 #define RT9490_REG_ADD_IRQ_FLAG 0x4D
 #define RT9490_REG_ADD_IRQ_MASK6 0x4E
+#define RT9490_REG_HD_ADD_CTRL2 0x6F
+#define RT9490_REG_TM_PAS_CODE1 0xF1
+#define RT9490_REG_TM_PAS_CODE2 0xF2
 
 struct rt9490_init_setting {
 	int eoc_current;
@@ -245,6 +248,9 @@ struct rt9490_init_setting {
 /* ADD CTRL1 */
 #define RT9490_PWM_1MHZ_EN BIT(4)
 
+/* HD_ADD_CTRL 2 */
+#define RT9490_EN_FON_PP_BAT_TRACK BIT(5)
+
 extern const struct charger_drv rt9490_drv;
 extern const struct bc12_drv rt9490_bc12_drv;
 
@@ -253,6 +259,8 @@ void rt9490_interrupt(int port);
 int rt9490_enable_adc(int chgnum, bool en);
 /* enable pwm frequency 1MHz mode */
 int rt9490_enable_pwm_1mhz(int chgnum, bool en);
+
+int rt9490_enable_hidden_mode(int chgnum, bool en);
 
 #endif /* __CROS_EC_RT9490_H */
 

@@ -19,14 +19,6 @@
 BUILD_ASSERT(IS_ENABLED(CONFIG_BOARD_KRABBY) ||
 	     IS_ENABLED(CONFIG_BOARD_TENTACRUEL) || IS_ENABLED(CONFIG_TEST));
 
-static void enter_hidden_mode(void)
-{
-	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
-		   chg_chips[CHARGER_SOLO].i2c_addr_flags, 0xF1, 0x69);
-	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
-		   chg_chips[CHARGER_SOLO].i2c_addr_flags, 0xF2, 0x96);
-}
-
 /* b/194967754#comment5: work around for IBUS ADC unstable issue */
 static void ibus_adc_workaround(void)
 {
@@ -38,8 +30,7 @@ static void ibus_adc_workaround(void)
 		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
 		    RT9490_REG_ADC_CHANNEL0, RT9490_VSYS_ADC_DIS, MASK_SET);
 
-	enter_hidden_mode();
-
+	rt9490_enable_hidden_mode(CHARGER_SOLO, true);
 	/* undocumented registers... */
 	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
 		   chg_chips[CHARGER_SOLO].i2c_addr_flags, 0x52, 0xC4);
@@ -47,6 +38,7 @@ static void ibus_adc_workaround(void)
 	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
 		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
 		    RT9490_REG_ADC_CHANNEL0, RT9490_VSYS_ADC_DIS, MASK_CLR);
+	rt9490_enable_hidden_mode(CHARGER_SOLO, false);
 }
 
 /* b/214880220#comment44: lock i2c at 400khz */
@@ -56,13 +48,14 @@ static void i2c_speed_workaround(void)
 		return;
 	}
 
-	enter_hidden_mode();
+	rt9490_enable_hidden_mode(CHARGER_SOLO, true);
 	/* Set to Auto mode, default run at 400kHz */
 	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
 		   chg_chips[CHARGER_SOLO].i2c_addr_flags, 0x71, 0x22);
 	/* Manually select for 400kHz, valid only when 0x71[7] == 1 */
 	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
 		   chg_chips[CHARGER_SOLO].i2c_addr_flags, 0xF7, 0x14);
+	rt9490_enable_hidden_mode(CHARGER_SOLO, false);
 }
 
 static void eoc_deglitch_workaround(void)
