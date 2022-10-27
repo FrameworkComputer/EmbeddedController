@@ -27,6 +27,8 @@ __pycache__
 *.egg-info
 .hypothesis/
 zephyr/zmake/.coverage
+zephyr/zmake/htmlcov/
+zephyr/zmake/coverage.json
 
 # Clangd language server
 .cache/clangd/index/*
