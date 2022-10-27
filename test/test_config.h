@@ -206,13 +206,17 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
+#if defined(TEST_MOTION_ANGLE) || defined(TEST_MOTION_ANGLE_TABLET) || \
+	defined(TEST_MOTION_LID)
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE
 #define CONFIG_LID_ANGLE_SENSOR_LID LID
 #define CONFIG_TABLET_MODE
+#endif /* LID ANGLE needed */
+
 #define CONFIG_MOTION_FILL_LPC_SENSE_DATA
 
-#endif
+#endif /* sensor_id needed */
 
 #if defined(TEST_MOTION_ANGLE)
 #define CONFIG_ACCEL_FORCE_MODE_MASK           \
