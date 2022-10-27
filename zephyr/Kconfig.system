@@ -18,15 +18,49 @@ config PLATFORM_EC_CONSOLE_CMD_SYSINFO
 	  Enable the sysinfo console command, which shows statistics
 	  about the current image copy running, reset flags, etc.
 
+config PLATFORM_EC_HIBERNATE
+	bool
+	help
+	  Enable system hibernation.
+	  The type of hibernation supported must be selected.
+
+choice PLATFORM_EC_HIBERNATE_TYPE
+	prompt "Choose a hibernate type"
+	default PLATFORM_EC_HIBERNATE_PSL if DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED && SOC_FAMILY_NPCX
+	default PLATFORM_EC_HIBERNATE_WAKE_PINS if !DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED || !SOC_FAMILY_NPCX
+	help
+	  Select the type of hibernation supported. Either
+	  PLATFORM_EC_HIBERNATE_PSL (for power switch logic support) or
+	  PLATFORM_EC_HIBERNATE_WAKE_PINS (using wake pins) are
+	  supported.
+
 config PLATFORM_EC_HIBERNATE_PSL
 	bool "System hibernating with PSL (Power Switch Logic) mechanism"
-	default y
 	depends on DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED
 	depends on SOC_FAMILY_NPCX
+	select PLATFORM_EC_HIBERNATE
 	help
 	  Use PSL (Power Switch Logic) for hibernating. It turns off VCC power
 	  rail for ultra-low power consumption and uses PSL inputs rely on VSBY
 	  power rail to wake up ec and the whole system.
+
+config PLATFORM_EC_HIBERNATE_WAKE_PINS
+	bool "System hibernating with wake-source pins"
+	select PLATFORM_EC_HIBERNATE
+	help
+	  Use wake source pins for hibernating. It turns off VCC power
+	  rail for ultra-low power consumption and uses a low power
+	  power rail. Changes on wake source pins will wake up the EC.
+
+endchoice # PLATFORM_EC_HIBERNATE_TYPE
+
+config PLATFORM_EC_HIBERNATE_DELAY_SEC
+	int "Delay in seconds from AP power off to hibernate"
+	depends on PLATFORM_EC_HIBERNATE
+	default 3600
+	help
+	  This value is the delay in seconds from when the AP enters G3
+	  to when the system is hibernated.
 
 config PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 	int "System pre-initialization priority"
