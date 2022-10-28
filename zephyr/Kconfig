@@ -528,6 +528,12 @@ config PLATFORM_EC_POWER_BUTTON
 
 	  This requires a GPIO named GPIO_POWER_BUTTON_L.
 
+config PLATFORM_EC_BUTTON_DEBOUNCE
+	int "button debounce in us"
+	default 30000
+	help
+	  Configure the button debounce time in us per project requirement.
+
 config PLATFORM_EC_PWM_HC
 	bool
 	help
