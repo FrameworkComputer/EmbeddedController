@@ -23,6 +23,7 @@ static void shell_before(void *f)
 	ARG_UNUSED(f);
 	uart_shell_start();
 	k_msleep(500);
+	uart_clear_input();
 }
 
 ZTEST_SUITE(shell, drivers_predicate_post_main, NULL, shell_before, NULL, NULL);
@@ -50,6 +51,9 @@ ZTEST(shell, test_shell_stop_read_raw_data)
 			  (uint8_t *)&uart_data[i % ARRAY_SIZE(uart_data)], 1);
 	}
 
+	/* Push 1 extra character that should be dropped */
+	bypass_cb(get_ec_shell(), (uint8_t *)uart_data, 1);
+
 	/* Run the callback again to make sure we didn't lose any data */
 	uart_callback(uart_shell_dev, NULL);
 
@@ -61,4 +65,24 @@ ZTEST(shell, test_shell_stop_read_raw_data)
 			"Expected %uth character to be %c, but uart_getc() returned %c",
 			i, uart_data[i % ARRAY_SIZE(uart_data)], (char)c);
 	}
+
+	zassert_equal(-1, uart_getc());
+}
+
+ZTEST(shell, test_help_command)
+{
+	/* Verify that the `help` subcommand works for a random command */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinfo help"));
+}
+
+ZTEST(shell, test_rx_bypass)
+{
+	const char uart_data = 'T';
+
+	bypass_cb(get_ec_shell(), (uint8_t *)&uart_data, 1);
+
+	/* Check that with the shell running and rx bypass disabled (default),
+	 * we cannot pull values from the uart buffer directly.
+	 */
+	zassert_equal(-1, uart_getc());
 }
