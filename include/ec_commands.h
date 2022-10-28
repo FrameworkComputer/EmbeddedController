@@ -6920,6 +6920,8 @@ enum tcpc_cc_polarity {
 #define PD_STATUS_EVENT_DISCONNECTED BIT(3)
 #define PD_STATUS_EVENT_MUX_0_SET_DONE BIT(4)
 #define PD_STATUS_EVENT_MUX_1_SET_DONE BIT(5)
+#define PD_STATUS_EVENT_VDM_REQ_REPLY BIT(6)
+#define PD_STATUS_EVENT_VDM_REQ_FAILED BIT(7)
 
 /*
  * Encode and decode for BCD revision response
@@ -7334,6 +7336,26 @@ struct ec_params_rgbkbd_set_color {
 	uint8_t length;
 	/* RGB color data array of length up to MAX_KEY_COUNT. */
 	struct rgb_s color[];
+} __ec_align1;
+
+/*
+ * Gather the response to the most recent VDM REQ from the AP
+ */
+#define EC_CMD_TYPEC_VDM_RESPONSE 0x013C
+
+struct ec_params_typec_vdm_response {
+	uint8_t port;
+} __ec_align1;
+
+struct ec_response_typec_vdm_response {
+	/* Number of 32-bit fields filled in */
+	uint8_t vdm_data_objects;
+	/* Partner to address - see enum typec_partner_type */
+	uint8_t partner_type;
+	/* Reserved */
+	uint16_t reserved;
+	/* VDM data, including VDM header */
+	uint32_t vdm_response[VDO_MAX_SIZE];
 } __ec_align1;
 
 /*****************************************************************************/
