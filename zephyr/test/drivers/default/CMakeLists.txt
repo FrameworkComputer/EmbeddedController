@@ -41,6 +41,7 @@ target_sources(app PRIVATE
     src/console_cmd/shared_mem.c
     src/console_cmd/sleepmask.c
     src/console_cmd/sleeptimeout.c
+    src/console_cmd/switch.c
     src/console_cmd/sysinfo.c
     src/console_cmd/tcpci_dump.c
     src/console_cmd/usb_pd_console.c
