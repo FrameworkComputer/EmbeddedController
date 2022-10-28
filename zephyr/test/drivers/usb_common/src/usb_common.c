@@ -57,3 +57,31 @@ ZTEST_USER(usb_common, test_get_typec_current_limit_rp_dts)
 	zassert_equal(current & TYPEC_CURRENT_ILIM_MASK, 500);
 	zassert_equal(current & TYPEC_CURRENT_DTS_MASK, TYPEC_CURRENT_DTS_MASK);
 }
+
+ZTEST_USER(usb_common, test_get_snk_polarity)
+{
+	zassert_equal(get_snk_polarity(TYPEC_CC_VOLT_RP_3_0,
+				       TYPEC_CC_VOLT_OPEN),
+		      POLARITY_CC1);
+	zassert_equal(get_snk_polarity(TYPEC_CC_VOLT_OPEN,
+				       TYPEC_CC_VOLT_RP_3_0),
+		      POLARITY_CC2);
+}
+
+ZTEST_USER(usb_common, test_get_snk_polarity_dts)
+{
+	zassert_equal(get_snk_polarity(TYPEC_CC_VOLT_RP_3_0,
+				       TYPEC_CC_VOLT_RP_DEF),
+		      POLARITY_CC1_DTS);
+	zassert_equal(get_snk_polarity(TYPEC_CC_VOLT_RP_DEF,
+				       TYPEC_CC_VOLT_RP_3_0),
+		      POLARITY_CC2_DTS);
+}
+
+ZTEST_USER(usb_common, test_get_src_polarity)
+{
+	zassert_equal(get_src_polarity(TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_OPEN),
+		      POLARITY_CC1);
+	zassert_equal(get_src_polarity(TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RD),
+		      POLARITY_CC2);
+}
