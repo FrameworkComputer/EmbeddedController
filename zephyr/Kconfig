@@ -332,6 +332,14 @@ config PLATFORM_EC_EXTPOWER_GPIO
 	  project should define a GPIO pin named GPIO_AC_PRESENT, with
 	  extpower_interrupt configured as the handler.
 
+config PLATFORM_EC_EXTPOWER_DEBOUNCE_MS
+	int "Debounce time for external power signal"
+	default 30
+	help
+	  Enable external power signal debounce time. Extend the
+	  debounce time to ensure that the external power signal can
+	  supply stable power.
+
 config PLATFORM_EC_FLASH_CROS
 	bool
 	help
