@@ -208,6 +208,13 @@ void request_start_from_g3(void)
 	const struct device *dev = ap_pwrseq_get_instance();
 
 	LOG_INF("Request start from G3");
+
+	if (!board_ap_power_is_startup_ok()) {
+		LOG_INF("Start from G3 inhibited"
+			" by !is_startup_ok");
+		return;
+	}
+
 	/*
 	 * If in S5, restart the timer to give the CPU more time
 	 * to respond to a power button press (which is presumably
@@ -758,6 +765,56 @@ static int pwrseq_init(void)
  * the signals depend upon, such as GPIO, ADC etc.
  */
 SYS_INIT(pwrseq_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+#else
+static int x86_non_dsx_g3_entry(void *data)
+{
+	if (!atomic_test_bit(flags, START_FROM_G3)) {
+		return 0;
+	}
+
+	if (start_from_g3_delay_ms) {
+		k_timer_start(&x86_non_dsx_timer,
+			      K_MSEC(start_from_g3_delay_ms), K_NO_WAIT);
+		start_from_g3_delay_ms = 0;
+	} else {
+		ap_pwrseq_post_event(ap_pwrseq_get_instance(),
+				     AP_PWRSEQ_EVENT_POWER_STARTUP);
+	}
+
+	return 0;
+}
+
+static int x86_non_dsx_g3_run(void *data)
+{
+	/*
+	 * If the START_FROM_G3 flag is set, begin starting
+	 * the AP. There may be a delay set, so only start
+	 * after that delay.
+	 */
+	if (!atomic_test_bit(flags, START_FROM_G3)) {
+		return 0;
+	}
+
+	if (k_timer_remaining_get(&x86_non_dsx_timer)) {
+		return 0;
+	}
+	/*
+	 * At this point all power rails and power signals are already checked
+	 * by application and chipset state action handlers, it is safe to move
+	 * forward to S5.
+	 */
+	return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S5);
+}
+
+static int x86_non_dsx_g3_exit(void *data)
+{
+	atomic_clear_bit(flags, START_FROM_G3);
+
+	return 0;
+}
+
+AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_G3, x86_non_dsx_g3_entry,
+			   x86_non_dsx_g3_run, x86_non_dsx_g3_exit);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 #ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
