@@ -6070,7 +6070,7 @@ static void pe_vdm_request_dpm_entry(int port)
 		 */
 		dpm_vdm_naked(port, pe[port].tx_type,
 			      PD_VDO_VID(pe[port].vdm_data[0]),
-			      PD_VDO_CMD(pe[port].vdm_data[0]));
+			      PD_VDO_CMD(pe[port].vdm_data[0]), 0);
 		set_state_pe(port, get_last_state_pe(port));
 		return;
 	}
@@ -6151,7 +6151,9 @@ static void pe_vdm_request_dpm_run(int port)
 		}
 		break;
 	}
-	case VDM_RESULT_NAK:
+	case VDM_RESULT_NAK: {
+		uint32_t vdm_header = 0;
+
 		/*
 		 * PE initiator VDM-NAKed state for requested VDM, like
 		 * PE_INIT_VDM_FOO_NAKed, embedded here.
@@ -6161,12 +6163,19 @@ static void pe_vdm_request_dpm_run(int port)
 		/*
 		 * Because Not Supported messages or response timeouts are
 		 * treated as NAKs, there may not be a NAK message to parse.
-		 * Extract the needed information from the sent VDM.
+		 * Extract the needed information from the sent VDM, and send
+		 * the NAK if present.
 		 */
+		if (PD_HEADER_TYPE(rx_emsg[port].header) ==
+			    PD_DATA_VENDOR_DEF &&
+		    PD_HEADER_CNT(rx_emsg[port].header) > 0)
+			vdm_header = ((uint32_t *)rx_emsg[port].buf)[0];
+
 		dpm_vdm_naked(port, pe[port].tx_type,
 			      PD_VDO_VID(pe[port].vdm_data[0]),
-			      PD_VDO_CMD(pe[port].vdm_data[0]));
+			      PD_VDO_CMD(pe[port].vdm_data[0]), vdm_header);
 		break;
+	}
 	}
 
 	/* Return to calling state (PE_{SRC,SNK}_Ready) */
@@ -6190,7 +6199,7 @@ static void pe_vdm_request_dpm_exit(int port)
 		 */
 		dpm_vdm_naked(port, pe[port].tx_type,
 			      PD_VDO_VID(pe[port].vdm_data[0]),
-			      PD_VDO_CMD(pe[port].vdm_data[0]));
+			      PD_VDO_CMD(pe[port].vdm_data[0]), 0);
 	}
 
 	/*

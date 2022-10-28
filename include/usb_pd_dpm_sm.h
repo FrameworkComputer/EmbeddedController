@@ -74,13 +74,14 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
  * Informs the DPM that a VDM NAK was received. Also applies when a VDM request
  * received a Not Supported response or timed out waiting for a response.
  *
- * @param port    USB-C port number
- * @param type    Transmit type (SOP, SOP') for request
- * @param svid    The SVID of the request
- * @param vdm_cmd The VDM command of the request
+ * @param port		USB-C port number
+ * @param type		Transmit type (SOP, SOP') for request
+ * @param svid		The SVID of the request
+ * @param vdm_cmd	The VDM command of the request
+ * @param vdm_header    VDM header reply (0 if a NAK wasn't actually received)
  */
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		   uint8_t vdm_cmd);
+		   uint8_t vdm_cmd, uint32_t vdm_header);
 
 /*
  * Determines the current allocation for the connection, past the basic
