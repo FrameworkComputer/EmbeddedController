@@ -14,7 +14,7 @@
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
 #include "gpio.h"
-#include <gpio/gpio_utils.h>
+#include <zephyr/drivers/gpio/gpio_utils.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
