@@ -110,3 +110,27 @@ ZTEST_USER(usb_common, test_pd_board_check_request_default)
 	/* The default implementation accepts any RDO. Just use a basic one. */
 	zassert_ok(pd_board_check_request(RDO_FIXED(0, 3000, 3000, 0), 1));
 }
+
+ZTEST_USER(usb_common, test_pd_check_requested_voltage)
+{
+	uint32_t rdo;
+
+	rdo = RDO_FIXED(1, 1000, 1500, 0);
+	zassert_ok(pd_check_requested_voltage(rdo, 0));
+
+	/* An index of 0 is invalid. */
+	rdo = RDO_FIXED(0, 1000, 1500, 0);
+	zassert_equal(pd_check_requested_voltage(rdo, 0), EC_ERROR_INVAL);
+	/* So is an index larger than the number of source PDOs, which is 1 by
+	 * default.
+	 */
+	rdo = RDO_FIXED(5, 1000, 1500, 0);
+	zassert_equal(pd_check_requested_voltage(rdo, 0), EC_ERROR_INVAL);
+
+	/* So is operating current too high. (This RDO doesn't make sense.) */
+	rdo = RDO_FIXED(1, 1800, 1500, 0);
+	zassert_equal(pd_check_requested_voltage(rdo, 0), EC_ERROR_INVAL);
+	/* So is maximum current too high. */
+	rdo = RDO_FIXED(1, 1000, 1800, 0);
+	zassert_equal(pd_check_requested_voltage(rdo, 0), EC_ERROR_INVAL);
+}
