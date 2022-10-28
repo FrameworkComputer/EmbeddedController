@@ -9,7 +9,7 @@
 #include "usb_pd.h"
 #include "usb_pd_flags.h"
 
-ZTEST_USER(usb_pd_flags, test_usb_pd_charger_otg)
+ZTEST_USER(usb_common, test_usb_pd_charger_otg)
 {
 	set_usb_pd_charger_otg(USB_PD_CHARGER_OTG_ENABLED);
 	zassert_equal(get_usb_pd_charger_otg(), USB_PD_CHARGER_OTG_ENABLED);
@@ -18,7 +18,7 @@ ZTEST_USER(usb_pd_flags, test_usb_pd_charger_otg)
 	zassert_equal(get_usb_pd_charger_otg(), USB_PD_CHARGER_OTG_DISABLED);
 }
 
-ZTEST_USER(usb_pd_flags, test_usb_pd_vbus_detect)
+ZTEST_USER(usb_common, test_usb_pd_vbus_detect)
 {
 	set_usb_pd_vbus_detect(USB_PD_VBUS_DETECT_TCPC);
 	zassert_equal(get_usb_pd_vbus_detect(), USB_PD_VBUS_DETECT_TCPC);
@@ -27,7 +27,7 @@ ZTEST_USER(usb_pd_flags, test_usb_pd_vbus_detect)
 	zassert_equal(get_usb_pd_vbus_detect(), USB_PD_VBUS_DETECT_CHARGER);
 }
 
-ZTEST_USER(usb_pd_flags, test_usb_pd_discharge)
+ZTEST_USER(usb_common, test_usb_pd_discharge)
 {
 	set_usb_pd_discharge(USB_PD_DISCHARGE_PPC);
 	zassert_equal(get_usb_pd_discharge(), USB_PD_DISCHARGE_PPC);

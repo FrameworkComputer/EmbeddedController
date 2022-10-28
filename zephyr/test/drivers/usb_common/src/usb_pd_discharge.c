@@ -13,7 +13,7 @@
 
 #define TEST_PORT 0
 
-ZTEST_USER(usb_pd_flags, test_pd_set_vbus_discharge)
+ZTEST_USER(usb_common, test_pd_set_vbus_discharge)
 {
 	board_vbus_source_enabled_fake.return_val = 0;
 
@@ -22,7 +22,7 @@ ZTEST_USER(usb_pd_flags, test_pd_set_vbus_discharge)
 	zassert_equal(ppc_discharge_vbus_fake.arg1_history[0], 1);
 }
 
-ZTEST_USER(usb_pd_flags, test_pd_set_vbus_discharge_wrong_args)
+ZTEST_USER(usb_common, test_pd_set_vbus_discharge_wrong_args)
 {
 	pd_set_vbus_discharge(100, true);
 	zassert_equal(ppc_discharge_vbus_fake.call_count, 0);

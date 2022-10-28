@@ -20,4 +20,4 @@ static void usb_pd_flags_after(void *fixture)
 /* TODO(b/255413715): Convert this suite to use the unit testing framework when
  * practical.
  */
-ZTEST_SUITE(usb_pd_flags, NULL, NULL, usb_pd_flags_after, NULL, NULL);
+ZTEST_SUITE(usb_common, NULL, NULL, usb_pd_flags_after, NULL, NULL);
