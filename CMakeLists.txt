@@ -17,6 +17,9 @@ endif()
 set(PLATFORM_EC "${ZEPHYR_CURRENT_MODULE_DIR}" CACHE PATH
     "Path to the platform/ec repo.")
 
+set(PLATFORM_EC_PROGRAM_DIR "${PLATFORM_EC}/zephyr/projects" CACHE PATH
+  "Path to the root directory containing all Zephyr EC programs and projects.")
+
 if(NOT EXISTS "${PLATFORM_EC}/zephyr/module.yml")
   message(FATAL_ERROR "Failed to resolve PLATFORM_EC at
           ${PLATFORM_EC}/zephyr/module.yml")

@@ -8,18 +8,18 @@ project(kingler)
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
-zephyr_include_directories("${PLATFORM_EC}/zephyr/projects/corsola/include")
+zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/corsola/include")
 
 target_sources(app PRIVATE src/fakes.c)
 
 target_sources_ifdef(CONFIG_TEST_STEELIX_RUSTY
-app PRIVATE ${PLATFORM_EC}/zephyr/projects/corsola/src/kingler/board_steelix.c)
+app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/kingler/board_steelix.c)
 target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CONVERTIBLE
 			app PRIVATE src/tablet.c)
 target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CLAMSHELL
 			app PRIVATE src/clamshell.c)
 target_sources_ifdef(CONFIG_VARIANT_CORSOLA_DB_DETECTION
-app PRIVATE ${PLATFORM_EC}/zephyr/projects/corsola/src/variant_db_detection.c)
+app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/variant_db_detection.c)
 target_sources_ifdef(CONFIG_TEST_DB_DETECT_TYPEC
 			app PRIVATE src/db_detect_typec.c)
 target_sources_ifdef(CONFIG_TEST_DB_DETECT_HDMI
@@ -32,4 +32,4 @@ target_sources_ifdef(CONFIG_TEST_DB_DETECT_NONE
 target_sources_ifdef(CONFIG_TEST_ALT_SENSOR_PROBE
 			app PRIVATE src/alt_sensor.c)
 target_sources_ifdef(CONFIG_TEST_KINGLER_CCD
-app PRIVATE src/ccd.c ${PLATFORM_EC}/zephyr/projects/corsola/src/board.c)
+app PRIVATE src/ccd.c ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/board.c)
