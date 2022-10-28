@@ -104,3 +104,9 @@ ZTEST_USER(usb_common, test_pd_get_cc_state)
 	zassert_equal(pd_get_cc_state(TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN),
 		      PD_CC_NONE);
 }
+
+ZTEST_USER(usb_common, test_pd_board_check_request_default)
+{
+	/* The default implementation accepts any RDO. Just use a basic one. */
+	zassert_ok(pd_board_check_request(RDO_FIXED(0, 3000, 3000, 0), 1));
+}
