@@ -3,12 +3,24 @@
  * found in the LICENSE file.
  */
 
-#include "host_command.h"
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/ztest.h>
 
 #include "cros_board_info.h"
+#include "host_command.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#define WP_L_GPIO_PATH DT_PATH(named_gpios, wp_l)
+
+static int gpio_wp_l_set(int value)
+{
+	const struct device *wp_l_gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(WP_L_GPIO_PATH, gpios));
+
+	return gpio_emul_input_set(wp_l_gpio_dev,
+				   DT_GPIO_PIN(WP_L_GPIO_PATH, gpios), value);
+}
 
 ZTEST(common_cbi, test_cbi_set_string__null_str)
 {
@@ -50,6 +62,133 @@ ZTEST(common_cbi, test_cbi_set_string)
 	/* Validate that next address for write was set appropriately */
 	zassert_equal_ptr(addr_byte_after_store - expected_added_memory,
 			  &cbi_data.data);
+}
+
+ZTEST_USER(common_cbi, test_hc_cbi_set_then_get)
+{
+	const uint8_t data[] = "I love test coverage! <3";
+
+	struct actual_set_params {
+		struct ec_params_set_cbi params;
+		uint8_t actual_data[ARRAY_SIZE(data)];
+	};
+
+	struct actual_set_params hc_set_params = {
+		.params = {
+		.tag = CBI_TAG_SKU_ID,
+		/* Force a reload */
+		.flag = CBI_SET_INIT,
+		.size = ARRAY_SIZE(data),
+		},
+	};
+	struct host_cmd_handler_args set_args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_SET_CROS_BOARD_INFO, 0, hc_set_params);
+
+	memcpy(hc_set_params.params.data, data, ARRAY_SIZE(data));
+
+	/* Zero out cbi */
+	cbi_create();
+
+	/* Turn off write-protect so we can actually write */
+	gpio_wp_l_set(1);
+
+	zassert_ok(host_command_process(&set_args));
+
+	/* Now verify our write by invoking a get host command */
+
+	struct ec_params_get_cbi hc_get_params = {
+		.flag = CBI_GET_RELOAD,
+		.tag = hc_set_params.params.tag,
+	};
+
+	struct test_ec_params_get_cbi_response {
+		uint8_t data[ARRAY_SIZE(data)];
+	};
+	struct test_ec_params_get_cbi_response hc_get_response;
+	struct host_cmd_handler_args get_args = BUILD_HOST_COMMAND(
+		EC_CMD_GET_CROS_BOARD_INFO, 0, hc_get_response, hc_get_params);
+
+	zassert_ok(host_command_process(&get_args));
+	zassert_mem_equal(hc_get_response.data, hc_set_params.actual_data,
+			  hc_set_params.params.size);
+}
+
+ZTEST_USER(common_cbi, test_hc_cbi_set__bad_size)
+{
+	const char data[] = "hello";
+
+	struct actual_set_params {
+		struct ec_params_set_cbi params;
+		/* We want less data than we need for our size */
+		uint8_t actual_data[0];
+	};
+	struct actual_set_params hc_set_params = {
+		.params = {
+		.tag = CBI_TAG_SKU_ID,
+		/* Force a reload */
+		.flag = CBI_SET_INIT,
+		.size = ARRAY_SIZE(data),
+		},
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_SET_CROS_BOARD_INFO, 0, hc_set_params);
+
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+}
+
+ZTEST_USER(common_cbi, test_hc_cbi_set_then_get__with_too_small_response)
+{
+	const uint8_t data[] = "I'm way too big of a payload for you!";
+
+	struct actual_set_params {
+		struct ec_params_set_cbi params;
+		uint8_t actual_data[ARRAY_SIZE(data)];
+	};
+
+	struct actual_set_params hc_set_params = {
+		.params = {
+		.tag = CBI_TAG_SKU_ID,
+		/* Force a reload */
+		.flag = CBI_SET_INIT,
+		.size = ARRAY_SIZE(data),
+		},
+	};
+	struct host_cmd_handler_args set_args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_SET_CROS_BOARD_INFO, 0, hc_set_params);
+
+	memcpy(hc_set_params.params.data, data, ARRAY_SIZE(data));
+
+	/* Zero out cbi */
+	cbi_create();
+
+	/* Turn off write-protect so we can actually write */
+	gpio_wp_l_set(1);
+
+	zassert_ok(host_command_process(&set_args));
+
+	/* Now verify our write by invoking a get host command */
+
+	struct ec_params_get_cbi hc_get_params = {
+		.flag = CBI_GET_RELOAD,
+		.tag = hc_set_params.params.tag,
+	};
+
+	struct test_ec_params_get_cbi_response {
+		/*
+		 * Want want less space than we need to retrieve cbi data, by
+		 * allocating an array of size zero, we're implicitly setting
+		 * the response_max value of the host command to be zero. So the
+		 * host command will fail because it the EC knows it doesn't
+		 * have enough response space to actually fetch the data for the
+		 * host.
+		 */
+		uint8_t data[0];
+	};
+	struct test_ec_params_get_cbi_response hc_get_response;
+	struct host_cmd_handler_args get_args = BUILD_HOST_COMMAND(
+		EC_CMD_GET_CROS_BOARD_INFO, 0, hc_get_response, hc_get_params);
+
+	zassert_equal(host_command_process(&get_args), EC_RES_INVALID_PARAM);
 }
 
 ZTEST_SUITE(common_cbi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
