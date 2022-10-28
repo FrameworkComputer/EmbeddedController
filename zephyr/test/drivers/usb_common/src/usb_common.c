@@ -85,3 +85,22 @@ ZTEST_USER(usb_common, test_get_src_polarity)
 	zassert_equal(get_src_polarity(TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RD),
 		      POLARITY_CC2);
 }
+
+ZTEST_USER(usb_common, test_pd_get_cc_state)
+{
+	zassert_equal(pd_get_cc_state(TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_RD),
+		      PD_CC_UFP_DEBUG_ACC);
+	zassert_equal(pd_get_cc_state(TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_OPEN),
+		      PD_CC_UFP_ATTACHED);
+	zassert_equal(pd_get_cc_state(TYPEC_CC_VOLT_RA, TYPEC_CC_VOLT_RA),
+		      PD_CC_UFP_AUDIO_ACC);
+
+	zassert_equal(pd_get_cc_state(TYPEC_CC_VOLT_RP_3_0,
+				      TYPEC_CC_VOLT_RP_DEF),
+		      PD_CC_DFP_DEBUG_ACC);
+	zassert_equal(pd_get_cc_state(TYPEC_CC_VOLT_RP_3_0, TYPEC_CC_VOLT_OPEN),
+		      PD_CC_DFP_ATTACHED);
+
+	zassert_equal(pd_get_cc_state(TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN),
+		      PD_CC_NONE);
+}
