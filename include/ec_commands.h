@@ -769,8 +769,7 @@ enum host_event_code {
 	 * raw event status via EC_MEMMAP_HOST_EVENTS but the LPC interface is
 	 * not initialized on the EC, or improperly configured on the host.
 	 */
-<<<<<<< HEAD
-	EC_HOST_EVENT_INVALID = 32
+	EC_HOST_EVENT_INVALID = 32,
 
 #else
 
@@ -787,13 +786,10 @@ enum host_event_code {
 	EC_HOST_EVENT_PB_RELEASE = 51,
 
 	/* high bit as invalid bit */
-	EC_HOST_EVENT_INVALID = 64
+	EC_HOST_EVENT_INVALID = 64,
 
 #endif /* CONFIG_HOST_EVENT64 */
 
-=======
-	EC_HOST_EVENT_INVALID = 32,
->>>>>>> chromium/main
 };
 /* Host event mask */
 #define EC_HOST_EVENT_MASK(event_code) BIT_ULL((event_code)-1)
@@ -2797,15 +2793,11 @@ enum motionsensor_chip {
 	MOTIONSENSE_CHIP_LIS2DS = 23,
 	MOTIONSENSE_CHIP_BMI260 = 24,
 	MOTIONSENSE_CHIP_ICM426XX = 25,
-<<<<<<< HEAD
-	MOTIONSENSE_CHIP_CM32183 = 26,
-=======
 	MOTIONSENSE_CHIP_ICM42607 = 26,
 	MOTIONSENSE_CHIP_BMA422 = 27,
 	MOTIONSENSE_CHIP_BMI323 = 28,
 	MOTIONSENSE_CHIP_BMI220 = 29,
 	MOTIONSENSE_CHIP_CM32183 = 30,
->>>>>>> chromium/main
 	MOTIONSENSE_CHIP_MAX,
 };
 
@@ -6536,22 +6528,6 @@ struct ec_params_button {
 enum keyboard_button_type {
 	KEYBOARD_BUTTON_POWER = 0,
 	KEYBOARD_BUTTON_VOLUME_DOWN = 1,
-<<<<<<< HEAD
-	KEYBOARD_BUTTON_VOLUME_UP   = 2,
-	KEYBOARD_BUTTON_RECOVERY    = 3,
-	KEYBOARD_BUTTON_CAPSENSE_1  = 4,
-	KEYBOARD_BUTTON_CAPSENSE_2  = 5,
-	KEYBOARD_BUTTON_CAPSENSE_3  = 6,
-	KEYBOARD_BUTTON_CAPSENSE_4  = 7,
-	KEYBOARD_BUTTON_CAPSENSE_5  = 8,
-	KEYBOARD_BUTTON_CAPSENSE_6  = 9,
-	KEYBOARD_BUTTON_CAPSENSE_7  = 10,
-	KEYBOARD_BUTTON_CAPSENSE_8  = 11,
-#ifdef CONFIG_FACTORY_SUPPORT
-	KEYBOARD_BUTTON_POWER_FAKE  = 12,
-#endif
-	KEYBOARD_BUTTON_COUNT
-=======
 	KEYBOARD_BUTTON_VOLUME_UP = 2,
 	KEYBOARD_BUTTON_RECOVERY = 3,
 	KEYBOARD_BUTTON_CAPSENSE_1 = 4,
@@ -6562,9 +6538,11 @@ enum keyboard_button_type {
 	KEYBOARD_BUTTON_CAPSENSE_6 = 9,
 	KEYBOARD_BUTTON_CAPSENSE_7 = 10,
 	KEYBOARD_BUTTON_CAPSENSE_8 = 11,
+#ifdef CONFIG_FACTORY_SUPPORT
+	KEYBOARD_BUTTON_POWER_FAKE  = 12,
+#endif
 
 	KEYBOARD_BUTTON_COUNT,
->>>>>>> chromium/main
 };
 
 /*****************************************************************************/

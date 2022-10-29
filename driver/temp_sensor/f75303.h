@@ -38,7 +38,6 @@ enum f75303_index {
  */
 int f75303_get_val(int idx, int *temp);
 
-<<<<<<< HEAD
 /**
  * Set if the underlying polling task will read the sensor
  * or if it will skip, as the rail this sensor is on
@@ -48,7 +47,4 @@ int f75303_get_val(int idx, int *temp);
  */
 void f75303_set_enabled(uint8_t enabled);
 
-#endif  /* __CROS_EC_F75303_H */
-=======
 #endif /* __CROS_EC_F75303_H */
->>>>>>> chromium/main

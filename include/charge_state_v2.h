@@ -185,9 +185,8 @@ void charge_reset_stable_current_us(uint64_t us);
  */
 bool charge_is_current_stable(void);
 
-<<<<<<< HEAD
 int set_chg_ctrl_mode(enum ec_charge_control_mode mode);
-=======
+
 /**
  * Reset the OCPC internal state data and set the target VSYS to the current
  * battery voltage for the auxiliary chargers.
@@ -232,6 +231,5 @@ __test_only bool charging_progress_displayed(void);
  * @return True for requesting bypass on. False for requesting bypass off.
  */
 int board_should_charger_bypass(void);
->>>>>>> chromium/main
 
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */

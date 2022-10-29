@@ -1333,20 +1333,13 @@
 #undef CONFIG_TRICKLE_CHARGING
 
 /* Wireless chargers */
-<<<<<<< HEAD
-#undef CONFIG_WIRELESS_CHARGER_P9221_R7
-
-/* For customer initial use */
-#undef CONFIG_CHARGER_CUSTOMER_SETTING
-
 /*
  * Workaround npcx9 A1 chip's bug for download_from_flash API in th booter.
  * This can be removed when A2 chip is available.
  */
 #undef CONFIG_WORKAROUND_FLASH_DOWNLOAD_API
-=======
+
 #undef CONFIG_CPS8100
->>>>>>> chromium/main
 
 /*****************************************************************************/
 
@@ -3030,15 +3023,14 @@
 #undef CONFIG_KEYBOARD_CUSTOMIZATION
 
 /*
-<<<<<<< HEAD
  * implement the Combination key for the actual Fn key
  */
 #undef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
-=======
+
+/*
  * Allow support multiple keyboard matrix for speical key.
  */
 #undef CONFIG_KEYBOARD_MULTIPLE
->>>>>>> chromium/main
 
 /*
  * Allow board-specific 8042 keyboard callback when a key state is changed.

@@ -13,7 +13,7 @@
 #include "console.h"
 
 static int temps[F75303_IDX_COUNT];
-<<<<<<< HEAD
+
 static int8_t fake_temp[F75303_IDX_COUNT] = {-1, -1, -1};
 static uint8_t f75303_enabled = 1;
 
@@ -24,9 +24,8 @@ void f75303_set_enabled(uint8_t enabled)
 {
 	f75303_enabled = enabled;
 }
-=======
+
 static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
->>>>>>> chromium/main
 
 /**
  * Read 8 bits register from temp sensor.

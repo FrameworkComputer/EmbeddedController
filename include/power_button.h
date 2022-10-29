@@ -81,13 +81,12 @@ int64_t get_time_dsw_pwrok(void);
 void board_pwrbtn_to_pch(int level);
 
 /**
-<<<<<<< HEAD
  * This allows an external function to set/get the power button level
+ * TODO: Here we should use the newly introduced upstream function below.
  */
 void power_button_set_simulated_state(int level);
 
-#endif  /* __CROS_EC_POWER_BUTTON_H */
-=======
+/**
  * Simulates a power button press.
  *
  * @param duration	Simulated power button press duration in ms.
@@ -95,4 +94,3 @@ void power_button_set_simulated_state(int level);
 void power_button_simulate_press(unsigned int duration);
 
 #endif /* __CROS_EC_POWER_BUTTON_H */
->>>>>>> chromium/main

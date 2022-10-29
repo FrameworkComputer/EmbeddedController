@@ -528,12 +528,12 @@ void battery_compensate_params(struct batt_params *batt);
  */
 __override_proto void board_battery_compensate_params(struct batt_params *batt);
 
-<<<<<<< HEAD
+
 /*
  * custom notify function
  */
 __override_proto void battery_charger_notify(uint8_t flag);
-=======
+
 void battery_validate_params(struct batt_params *batt);
 
 /**
@@ -547,6 +547,5 @@ int update_static_battery_info(void);
  * Read dynamic battery info from a main battery and store it in a cache.
  */
 void update_dynamic_battery_info(void);
->>>>>>> chromium/main
 
 #endif /* __CROS_EC_BATTERY_H */

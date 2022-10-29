@@ -34,29 +34,21 @@
  * used here and in motion_sense to give specific meaning to the
  * address that is pertinent to its use.
  */
-<<<<<<< HEAD
-#define I2C_ADDR_MASK		0x03FF
-#define I2C_FLAG_ADDR16_LITTLE_ENDIAN BIT(12)
-#define I2C_FLAG_PEC		BIT(13)
-#define I2C_FLAG_BIG_ENDIAN	BIT(14)
-=======
 #define I2C_ADDR_MASK 0x03FF
+#define I2C_FLAG_ADDR16_LITTLE_ENDIAN BIT(12)
 #define I2C_FLAG_PEC BIT(13)
 #define I2C_FLAG_BIG_ENDIAN BIT(14)
->>>>>>> chromium/main
 /* BIT(15) SPI_FLAG - used in motion_sense to overload address */
 #define I2C_FLAG_ADDR_IS_SPI BIT(15)
 
-<<<<<<< HEAD
+// TODO: Why did upstream remove those two?
 #define I2C_GET_ADDR(addr_flags)	((addr_flags) & I2C_ADDR_MASK)
-#define I2C_IS_ADDR16_LITTLE_ENDIAN(addr_flags)	((addr_flags) & I2C_FLAG_ADDR16_LITTLE_ENDIAN)
 #define I2C_USE_PEC(addr_flags)		((addr_flags) & I2C_FLAG_PEC)
-#define I2C_IS_BIG_ENDIAN(addr_flags)	((addr_flags) & I2C_FLAG_BIG_ENDIAN)
-=======
+
+#define I2C_IS_ADDR16_LITTLE_ENDIAN(addr_flags)	((addr_flags) & I2C_FLAG_ADDR16_LITTLE_ENDIAN)
 #define I2C_STRIP_FLAGS(addr_flags) ((addr_flags)&I2C_ADDR_MASK)
 #define I2C_USE_PEC(addr_flags) ((addr_flags)&I2C_FLAG_PEC)
 #define I2C_IS_BIG_ENDIAN(addr_flags) ((addr_flags)&I2C_FLAG_BIG_ENDIAN)
->>>>>>> chromium/main
 
 /*
  * All 7-bit addresses in the following formats

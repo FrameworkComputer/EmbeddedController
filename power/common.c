@@ -86,11 +86,12 @@ host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
 	/* Store request for processing at g3 */
 	want_reboot_ap_at_g3 = true;
 
-<<<<<<< HEAD
+// TODO: Is it correct here?
+// Introduced by Framework in 2a8ced4ca779bdf851792d317516c17764d2ffc3
 #ifdef CONFIG_CUSTOM_BOOT_G3
 	boot_ap_on_g3();
 #endif
-=======
+
 	switch (args->version) {
 	case 0:
 		break;
@@ -101,7 +102,7 @@ host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
->>>>>>> chromium/main
+
 
 	return EC_RES_SUCCESS;
 }

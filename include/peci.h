@@ -62,7 +62,6 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr);
  */
 int peci_transaction(struct peci_data *peci);
 
-<<<<<<< HEAD
 /**
  * calculate the Assured Write value based on the number of bytes in input
  * buffer
@@ -78,7 +77,4 @@ uint8_t calc_AWFCS(uint8_t *data_blk_ptr, unsigned int length);
  */
 __override_proto int stop_read_peci_temp(void);
 
-#endif  /* __CROS_EC_PECI_H */
-=======
 #endif /* __CROS_EC_PECI_H */
->>>>>>> chromium/main

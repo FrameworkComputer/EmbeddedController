@@ -39,14 +39,11 @@ void pwm_set_duty(enum pwm_channel ch, int percent);
  */
 int pwm_get_duty(enum pwm_channel ch);
 
-<<<<<<< HEAD
 /**
  * enable breath function.
  */
 void bbled_enable(enum pwm_channel ch, int percent, int on_length, int off_length, uint8_t enable);
 
-=======
->>>>>>> chromium/main
 /* Flags for PWM config table */
 
 /**

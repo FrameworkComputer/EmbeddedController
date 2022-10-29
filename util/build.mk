@@ -6,19 +6,6 @@
 # Host tools build
 #
 
-<<<<<<< HEAD
-host-util-bin=ectool lbplay stm32mon ec_sb_firmware_update lbcc \
-	ec_parse_panicinfo cbi-util
-build-util-bin=ec_uartd
-build-util-art+=util/export_taskinfo.so
-ifeq ($(CHIP),npcx)
-build-util-bin+=ecst
-endif
-ifeq ($(CHIP_FAMILY),it8xxx2)
-build-util-bin+=iteflash
-endif
-host-util-bin+=uartupdatetool
-=======
 # See Makefile for description.
 host-util-bin-y += cbi-util iteflash
 host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay ec_sb_firmware_update \
@@ -28,8 +15,12 @@ build-util-art-y += util/export_taskinfo.so
 build-util-bin-$(CHIP_NPCX) += ecst
 host-util-bin-cxx-$(BOARD_NOCTURNE_FP) += ectool_servo
 
+# TODO: Use CHIP_IT8XXX2 macro like above with CHIP_NPCX
+ifeq ($(CHIP_FAMILY),it8xxx2)
+build-util-bin+=iteflash
+endif
+
 host-util-bin-cxx-y += uartupdatetool
->>>>>>> chromium/main
 uartupdatetool-objs=uut/main.o uut/cmd.o uut/opr.o uut/l_com_port.o \
 	uut/lib_crc.o
 $(out)/util/uartupdatetool: HOST_CFLAGS+=-Iutil/

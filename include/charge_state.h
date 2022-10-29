@@ -193,12 +193,8 @@ const struct batt_params *charger_current_battery_params(void);
 /* Config Charger */
 #include "charge_state_v2.h"
 
-<<<<<<< HEAD
 #ifdef CONFIG_EMI_REGION1
 void battery_customize(struct charge_state_data *emi_info);
 #endif
 
-#endif	/* __CROS_EC_CHARGE_STATE_H */
-=======
 #endif /* __CROS_EC_CHARGE_STATE_H */
->>>>>>> chromium/main
