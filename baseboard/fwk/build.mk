@@ -6,4 +6,7 @@
 # Baseboard specific files build
 #
 
-baseboard-y=baseboard.o
+baseboard-y=baseboard.o diagnostics.o flash_storage.o
+baseboard-$(CONFIG_BATTERY_SMART)+=battery.o
+baseboard-$(CONFIG_FANS)+=fan.o
+baseboard-$(CONFIG_SYSTEMSERIAL_DEBUG) += system_serial.o
