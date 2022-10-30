@@ -162,27 +162,10 @@ uint8_t scancode_translate_set2_to_1(uint8_t code)
  * Must be in the same order as defined in keyboard_button_type.
  */
 SHAREDLIB(const struct button_8042_t buttons_8042[] = {
-<<<<<<< HEAD
-	{SCANCODE_POWER, 0},
-	{SCANCODE_VOLUME_DOWN, 1},
-	{SCANCODE_VOLUME_UP, 1},
-	{SCANCODE_RECOVERY, 1},
-	{SCANCODE_1, 1},
-	{SCANCODE_2, 1},
-	{SCANCODE_3, 1},
-	{SCANCODE_4, 1},
-	{SCANCODE_5, 1},
-	{SCANCODE_6, 1},
-	{SCANCODE_7, 1},
-	{SCANCODE_8, 1},
-#ifdef CONFIG_FACTORY_SUPPORT
-	{SCANCODE_FAKE_POWER, 0},
-#endif
-});
-=======
 		  { SCANCODE_POWER, 0 },
 		  { SCANCODE_VOLUME_DOWN, 1 },
 		  { SCANCODE_VOLUME_UP, 1 },
+		  { SCANCODE_RECOVERY, 1},
 		  { SCANCODE_1, 1 },
 		  { SCANCODE_2, 1 },
 		  { SCANCODE_3, 1 },
@@ -191,6 +174,8 @@ SHAREDLIB(const struct button_8042_t buttons_8042[] = {
 		  { SCANCODE_6, 1 },
 		  { SCANCODE_7, 1 },
 		  { SCANCODE_8, 1 },
+#ifdef CONFIG_FACTORY_SUPPORT
+		  {SCANCODE_FAKE_POWER, 0},
+#endif
 	  });
->>>>>>> chromium/main
 BUILD_ASSERT(ARRAY_SIZE(buttons_8042) == KEYBOARD_BUTTON_COUNT);

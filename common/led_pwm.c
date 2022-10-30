@@ -31,11 +31,7 @@
 
 #define PULSE_TICK (250 * MSEC)
 
-<<<<<<< HEAD
-#if !defined(CONFIG_LED_PWM_TASK_DISABLED)
-=======
 #ifndef CONFIG_LED_PWM_TASK_DISABLED
->>>>>>> chromium/main
 static uint8_t led_is_pulsing;
 #endif /* CONFIG_LED_PWM_TASK_DISABLED */
 
@@ -136,12 +132,7 @@ static void init_leds_off(void)
 }
 DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_POST_PWM);
 
-<<<<<<< HEAD
-#if !defined(CONFIG_LED_PWM_TASK_DISABLED)
-
-=======
 #ifndef CONFIG_LED_PWM_TASK_DISABLED
->>>>>>> chromium/main
 static uint8_t pulse_period;
 static uint8_t pulse_ontime;
 static enum ec_led_colors pulse_color;
@@ -279,11 +270,7 @@ static void update_leds(void)
 }
 DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
 
-<<<<<<< HEAD
-#endif/* CONFIG_LED_PWM_TASK_DISABLED */
-=======
 #endif /* CONFIG_LED_PWM_TASK_DISABLED */
->>>>>>> chromium/main
 
 #ifdef CONFIG_CMD_LEDTEST
 static int command_ledtest(int argc, const char **argv)

@@ -165,12 +165,8 @@ static int typematic_inter_delay;
 static int typematic_len; /* length of typematic_scan_code */
 static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
 static timestamp_t typematic_deadline;
-<<<<<<< HEAD
-#define KB_SYSJUMP_TAG 0x4b42  /* "KB" */
-=======
 
 #define KB_SYSJUMP_TAG 0x4b42 /* "KB" */
->>>>>>> chromium/main
 #define KB_HOOK_VERSION 2
 /* the previous keyboard state before reboot_ec. */
 struct kb_state {
@@ -626,20 +622,13 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		data_port_state = STATE_ATKBD_CMD;
 		break;
 
-<<<<<<< HEAD
-	case STATE_SETLEDS:
-		CPRINTS5("KB eaten by STATE_SETLEDS");
+	case STATE_ATKBD_SETLEDS:
+		CPRINTS5("KB eaten by STATE_ATKBD_SETLEDS");
 #ifdef CONFIG_CAPSLED_SUPPORT
 		hx20_8042_led_control(data);
 #endif
-		output[out_len++] = I8042_RET_ACK;
-		data_port_state = STATE_NORMAL;
-=======
-	case STATE_ATKBD_SETLEDS:
-		CPRINTS5("KB eaten by STATE_ATKBD_SETLEDS");
 		output[out_len++] = ATKBD_RET_ACK;
 		data_port_state = STATE_ATKBD_CMD;
->>>>>>> chromium/main
 		break;
 
 	case STATE_ATKBD_EX_SETLEDS_1:
@@ -738,12 +727,8 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case ATKBD_CMD_RESET:
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
-<<<<<<< HEAD
-			output[out_len++] = I8042_RET_ACK;
-			output[out_len++] = 0xaa; /* keyboard BAT test success */
-=======
 			output[out_len++] = ATKBD_RET_ACK;
->>>>>>> chromium/main
+			output[out_len++] = 0xaa; /* keyboard BAT test success */
 			break;
 
 		case ATKBD_CMD_RESEND:
@@ -1407,9 +1392,5 @@ static void keyboard_power_button(void)
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 	     HOOK_PRIO_DEFAULT);
-<<<<<<< HEAD
-#endif
-=======
 
 #endif /* CONFIG_POWER_BUTTON && !CONFIG_MKBP_INPUT_DEVICES */
->>>>>>> chromium/main

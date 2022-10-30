@@ -13,11 +13,8 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
-<<<<<<< HEAD
 #include "lpc_chip.h"
-=======
 #include "printf.h"
->>>>>>> chromium/main
 #include "shared_mem.h"
 #include "system.h"
 #include "task.h"

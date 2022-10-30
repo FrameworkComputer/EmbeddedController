@@ -48,16 +48,12 @@ static void switch_update(void)
 		*memmap_switches |= EC_SWITCH_LID_OPEN;
 	else
 		*memmap_switches &= ~EC_SWITCH_LID_OPEN;
-<<<<<<< HEAD
 #else
 	/* For lid-less systems, lid looks always open */
 	*memmap_switches |= EC_SWITCH_LID_OPEN;
 #endif
-	if ((flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
-=======
 
 	if ((crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
->>>>>>> chromium/main
 		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;

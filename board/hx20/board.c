@@ -516,11 +516,11 @@ void charge_gate_onoff(uint8_t enable)
 	}
 
 	if (enable) {
-		control0 &= ~ISL9241_CONTROL0_NGATE;
+		control0 &= ~ISL9241_CONTROL0_NGATE_OFF;
 		control1 &= ~ISL9241_CONTROL1_BGATE;
 		CPRINTS("B&N Gate off");
 	} else {
-		control0 |= ISL9241_CONTROL0_NGATE;
+		control0 |= ISL9241_CONTROL0_NGATE_OFF;
 		control1 |= ISL9241_CONTROL1_BGATE;
 		CPRINTS("B&N Gate on");
 	}

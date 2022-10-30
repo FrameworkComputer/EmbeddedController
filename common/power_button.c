@@ -200,7 +200,6 @@ void power_button_interrupt(enum gpio_signal signal)
 			   power_button.debounce_us);
 }
 
-<<<<<<< HEAD
 void power_button_set_simulated_state(int level)
 {
 	simulate_power_pressed = level;
@@ -208,13 +207,7 @@ void power_button_set_simulated_state(int level)
 	hook_call_deferred(&power_button_change_deferred_data, 0);
 }
 
-/*****************************************************************************/
-/* Console commands */
-
-static int command_powerbtn(int argc, char **argv)
-=======
 void power_button_simulate_press(unsigned int duration)
->>>>>>> chromium/main
 {
 	ccprintf("Simulating %d ms %s press.\n", duration, power_button.name);
 	simulate_power_pressed = 1;

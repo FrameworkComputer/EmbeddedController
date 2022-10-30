@@ -19,16 +19,11 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ALS, outstr)
-<<<<<<< HEAD
-#define CPRINTS(format, args...) cprints(CC_ALS, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_ALS, format, ## args)
 
-#ifndef ALS_POLL_PERIOD
-=======
 #define CPRINTS(format, args...) cprints(CC_ALS, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_ALS, format, ##args)
 
->>>>>>> chromium/main
+#ifndef ALS_POLL_PERIOD
 #define ALS_POLL_PERIOD SECOND
 #endif
 

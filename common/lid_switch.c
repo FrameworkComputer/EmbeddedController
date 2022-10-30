@@ -16,15 +16,11 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-<<<<<<< HEAD
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
 
 #ifndef LID_DEBOUNCE_US
 #define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 #endif
-=======
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
->>>>>>> chromium/main
 
 /* if no X-macro is defined for LID switch GPIO, use GPIO_LID_OPEN as default */
 #ifndef CONFIG_LID_SWITCH_GPIO_LIST

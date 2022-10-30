@@ -42,34 +42,21 @@
 /* Configures various charger options */
 #define ISL9241_REG_CONTROL0 0x39
 /* 2: Input Voltage Regulation (0 = Enable (default), 1 = Disable) */
-<<<<<<< HEAD
-#define ISL9241_CONTROL0_INPUT_VTG_REGULATION	BIT(2)
-#define ISL9241_CONTROL0_NGATE	        BIT(12)
-=======
 #define ISL9241_CONTROL0_INPUT_VTG_REGULATION BIT(2)
 #define ISL9241_CONTROL0_EN_VIN_VOUT_COMP BIT(5)
 #define ISL9241_CONTROL0_EN_CHARGE_PUMPS BIT(6)
 #define ISL9241_CONTROL0_EN_BYPASS_GATE BIT(11)
 #define ISL9241_CONTROL0_NGATE_OFF BIT(12)
->>>>>>> chromium/main
 
 #define ISL9241_REG_INFORMATION1 0x3A
 #define ISL9241_REG_ADAPTER_CUR_LIMIT2 0x3B
 
 /* Configures various charger options */
-<<<<<<< HEAD
-#define ISL9241_REG_CONTROL1		0x3C
-#define ISL9241_CONTROL1_LEARN_MODE	    BIT(12)
-#define ISL9241_CONTROL1_PROCHOT_REF_6800   (7 << 0)
-#define ISL9241_CONTROL1_SWITCH_FREQ        (5 << 7)
-#define ISL9241_CONTROL1_PSYS           BIT(3)
-#define ISL9241_CONTROL1_IMON           BIT(5)
-#define ISL9241_CONTROL1_BGATE          BIT(6)
-#define ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE  BIT(10)
-=======
 #define ISL9241_REG_CONTROL1 0x3C
 #define ISL9241_CONTROL1_PSYS BIT(3)
 #define ISL9241_CONTROL1_BGATE_OFF BIT(6)
+#define ISL9241_CONTROL1_IMON BIT(5)
+#define ISL9241_CONTROL1_BGATE BIT(6)
 #define ISL9241_CONTROL1_LEARN_MODE BIT(12)
 /*
  * 9:7 - Switching Frequency
@@ -83,7 +70,6 @@
 #define ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ 5
 #define ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ 6
 #define ISL9241_CONTROL1_SWITCHING_FREQ_600KHZ 7
->>>>>>> chromium/main
 
 /* Configures various charger options */
 #define ISL9241_REG_CONTROL2 0x3D
@@ -102,16 +88,12 @@
 /* 12 - Two-Level Adapter Current Limit */
 #define ISL9241_CONTROL2_TWO_LEVEL_ADP_CURR BIT(12)
 /* 10:9 PROCHOT# debounce time in uS */
-<<<<<<< HEAD
-#define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000	(3 << 9)
-#define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100   (1 << 9)
-#define ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR BIT(3)
-#define ISL9241_CONTROL2_TRICKLE_CHG_CURR_128   (3 << 13)
-=======
 #define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_MASK GENMASK(10, 9)
+#define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100 (1 << 9)
 #define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_500 (2 << 9)
 #define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000 (3 << 9)
->>>>>>> chromium/main
+#define ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR BIT(3)
+#define ISL9241_CONTROL2_TRICKLE_CHG_CURR_128   (3 << 13)
 
 /* MinSystemVoltage [13:6] 8-bit (0x0000h = disables all battery charging) */
 #define ISL9241_REG_MIN_SYSTEM_VOLTAGE 0x3E
@@ -138,13 +120,9 @@
 /* 2: Digital Reset (0 - Idle, 1 - Reset */
 #define ISL9241_CONTROL3_DIGITAL_RESET BIT(2)
 /* 0: Enable ADC (0 - Active when charging, 1 - Active always) */
-<<<<<<< HEAD
-#define ISL9241_CONTROL3_ENABLE_ADC	BIT(0)
+#define ISL9241_CONTROL3_ENABLE_ADC BIT(0)
 #define ISL9241_CONTROL3_PSYS_GAIN  (3 << 8)
 #define ISL9241_CONTROL3_ACLIM_RELOAD   BIT(14)
-=======
-#define ISL9241_CONTROL3_ENABLE_ADC BIT(0)
->>>>>>> chromium/main
 
 /* Indicates various charger status */
 #define ISL9241_REG_INFORMATION2 0x4D
@@ -158,14 +136,10 @@
 /* 11: Rsense (Rs1:Rs2) ratio for PSYS (0 - 2:1, 1 - 1:1) */
 #define ISL9241_CONTROL4_PSYS_RSENSE_RATIO BIT(11)
 /* 13: Enable VSYS slew rate control (0 - disable, 1 - enable) */
-<<<<<<< HEAD
 #define ISL9241_CONTROL4_ACOK_PROCHOT       BIT(5)
 #define ISL9241_CONTROL4_OTG_CURR_PROCHOT   BIT(7)
 #define ISL9241_CONTROL4_GP_COMPARATOR      BIT(12)
 #define ISL9241_CONTROL4_SLEW_RATE_CTRL     BIT(13)
-=======
-#define ISL9241_CONTROL4_SLEW_RATE_CTRL BIT(13)
->>>>>>> chromium/main
 
 #define ISL9241_REG_CONTROL5 0x4F
 #define ISL9241_REG_NTC_ADC_RESULTS 0x80

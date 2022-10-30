@@ -56,28 +56,20 @@ void port_80_write(int data)
 	 * dump the current port80 buffer to EC console. This is to allow
 	 * developers to help debug BIOS progress by tracing port80 messages.
 	 */
-<<<<<<< HEAD
 #ifndef CONFIG_CUSTOMER_PORT80
-	if (print_in_int)
-		CPRINTF("%c[%pT Port 80: 0x%02x]",
-			scroll ? '\n' : '\r', PRINTF_TIMESTAMP_NOW, data);
-	else if (data < 0x100)
-		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
-#else
-	/* this is for customer design to show port80 on 7-segment display */
-	CPRINTF("PORT80: 00%02X\n", data);
-#endif
-=======
 	if (print_in_int) {
 		snprintf_timestamp_now(ts_str, sizeof(ts_str));
 		CPRINTF("%c[%s Port 80: 0x%02x]", scroll ? '\n' : '\r', ts_str,
 			data);
 	}
+#else
+	/* this is for customer design to show port80 on 7-segment display */
+	CPRINTF("PORT80: 00%02X\n", data);
+#endif
 
 	if (!IS_ENABLED(CONFIG_PORT80_QUIET)) {
 		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
 	}
->>>>>>> chromium/main
 
 	/* Save current port80 code if system is resetting */
 	if (data == PORT_80_EVENT_RESET && writes) {
