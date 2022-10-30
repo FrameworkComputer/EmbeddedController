@@ -6,8 +6,12 @@ hx20:
   - board/hx20/*
   - board/hx20/**/*
 
+hx30:
+  - board/hx30/*
+  - board/hx30/**/*
+
 board-mistake:
-  - any: ['board/**/*', '!board/hx20/*']
+  - any: ['board/**/*', '!board/hx20/*', '!board/hx30/*']
 
 mchp:
   - chip/mchp/**/*
