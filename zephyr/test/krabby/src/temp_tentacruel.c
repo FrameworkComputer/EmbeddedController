@@ -40,10 +40,11 @@ static uint16_t current_table[] = {
 int setup_faketemp(int fake_voltage)
 {
 	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
+	const uint8_t channel_id =
+		DT_IO_CHANNELS_INPUT(DT_NODELABEL(adc_charger));
 	int emul_temp;
 
-	emul_temp = adc_emul_const_value_set(
-		adc_dev, temp_sensors[CHARGER_TEMP].idx, fake_voltage);
+	emul_temp = adc_emul_const_value_set(adc_dev, channel_id, fake_voltage);
 	return emul_temp;
 }
 
