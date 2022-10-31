@@ -14,6 +14,7 @@
 		 * its own <>_INT_EVENT.
 		 */
 		bmi3xx-int = &base_accel;
+		lis2dw12-int = &base_accel;
 	};
 
 	/*
@@ -25,6 +26,8 @@
 	 */
 	motionsense-mutex {
 		mutex_bmi3xx: bmi3xx-mutex {
+		};
+		mutex_lis2dw12: lis2dw12-mutex {
 		};
 	};
 
@@ -42,6 +45,10 @@
 			compatible = "cros-ec,drvdata-bmi3xx";
 			status = "okay";
 		};
+		lis2dw12_data: lis2dw12-drv-data {
+			compatible = "cros-ec,drvdata-lis2dw12";
+			status = "okay";
+		};
 	};
 
 	/*
@@ -51,6 +58,33 @@
 	 */
 	motionsense-sensor {
 		base_accel: base-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_lis2dw12>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lis2dw12_data>;
+			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
+
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_base_accel: alt-base-accel {
 			compatible = "cros-ec,bmi3xx-accel";
 			status = "okay";
 
@@ -60,7 +94,7 @@
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			drv-data = <&bmi3xx_data>;
-
+			alternate-for = <&base_accel>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";

@@ -159,3 +159,8 @@
 	/delete-property/ temp_fan_off;
 	/delete-property/ temp_fan_max;
 };
+
+/* Override handler */
+&int_accel_gyro {
+	handler = "base_accel_interrupt";
+};
