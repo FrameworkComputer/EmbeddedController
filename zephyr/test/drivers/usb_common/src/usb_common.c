@@ -134,3 +134,10 @@ ZTEST_USER(usb_common, test_pd_check_requested_voltage)
 	rdo = RDO_FIXED(1, 1000, 1800, 0);
 	zassert_equal(pd_check_requested_voltage(rdo, 0), EC_ERROR_INVAL);
 }
+
+ZTEST_USER(usb_common, test_board_is_usb_pd_port_present)
+{
+	zassert_true(board_is_usb_pd_port_present(TEST_PORT));
+	zassert_false(board_is_usb_pd_port_present(-1));
+	zassert_false(board_is_usb_pd_port_present(100));
+}
