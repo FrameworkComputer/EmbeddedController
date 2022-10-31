@@ -33,6 +33,7 @@
 #include "lock/gec_lock.h"
 #include "misc_util.h"
 #include "panic.h"
+#include "tablet_mode.h"
 #include "usb_pd.h"
 
 /* Maximum flash size (16 MB, conservative) */
@@ -313,6 +314,8 @@ const char help_str[] =
 	"      Display system info.\n"
 	"  switches\n"
 	"      Prints current EC switch positions\n"
+	"  tabletmode [on | off | reset]\n"
+	"      Manually force tablet mode to on, off or reset.\n"
 	"  temps <sensorid>\n"
 	"      Print temperature and temperature ratio between fan_off and\n"
 	"      fan_max values, which could be a fan speed if it's controlled\n"
@@ -7271,6 +7274,37 @@ int cmd_switches(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_tabletmode(int argc, char *argv[])
+{
+	struct ec_params_set_tablet_mode p;
+
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	memset(&p, 0, sizeof(p));
+	if (argv[1][0] == 'o' && argv[1][1] == 'n') {
+		p.tablet_mode = TABLET_MODE_FORCE_TABLET;
+	} else if (argv[1][0] == 'o' && argv[1][1] == 'f') {
+		p.tablet_mode = TABLET_MODE_FORCE_CLAMSHELL;
+	} else if (argv[1][0] == 'r') {
+		// Match tablet mode to the current HW orientation.
+		p.tablet_mode = TABLET_MODE_DEFAULT;
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	int rv = ec_command(EC_CMD_SET_TABLET_MODE, 0, &p, sizeof(p), NULL, 0);
+	rv = (rv < 0 ? rv : 0);
+
+	if (rv < 0) {
+		fprintf(stderr, "Failed to set tablet mode, rv=%d\n", rv);
+	} else {
+		printf("\n");
+		printf("SUCCESS. The tablet mode has been set.\n");
+	}
+	return rv;
+}
+
 int cmd_wireless(int argc, char *argv[])
 {
 	char *e;
@@ -11023,6 +11057,7 @@ const struct command commands[] = {
 	{ "sysinfo", cmd_sysinfo },
 	{ "port80flood", cmd_port_80_flood },
 	{ "switches", cmd_switches },
+	{ "tabletmode", cmd_tabletmode },
 	{ "temps", cmd_temperature },
 	{ "tempsinfo", cmd_temp_sensor_info },
 	{ "test", cmd_test },
