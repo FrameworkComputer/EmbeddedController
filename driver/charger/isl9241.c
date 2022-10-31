@@ -457,6 +457,187 @@ int isl9241_set_dc_prochot(int chgnum, int ma)
 	return rv;
 }
 
+#ifdef CONFIG_CHARGER_DUMP_PROCHOT
+static int isl9241_get_ac_prochot(int chgnum, int *out_ma)
+{
+	return isl9241_read(chgnum, ISL9241_REG_AC_PROCHOT, out_ma);
+}
+
+static int isl9241_get_dc_prochot(int chgnum, int *out_ma)
+{
+	return isl9241_read(chgnum, ISL9241_REG_DC_PROCHOT, out_ma);
+}
+
+static int isl9241_get_prochot_status(int chgnum, bool *out_low_vsys,
+				      bool *out_dcprochot, bool *out_acprochot,
+				      int *out_input_current,
+				      int *out_charge_current,
+				      int *out_discharge_current, int *out_vsys,
+				      int *out_vbus)
+{
+	int rv;
+	int val;
+	bool restore_adc = false;
+
+	/* Get prochot statuses. */
+	rv = isl9241_read(chgnum, ISL9241_REG_INFORMATION1, &val);
+	if (rv) {
+		CPRINTS("%s: failed to read prochot status (%d)", __func__, rv);
+		return rv;
+	}
+
+	*out_low_vsys = val & ISL9241_REG_INFORMATION1_LOW_VSYS_PROCHOT;
+	*out_dcprochot = val & ISL9241_REG_INFORMATION1_DC_PROCHOT;
+	*out_acprochot = val & ISL9241_REG_INFORMATION1_AC_PROCHOT;
+
+	/* Get current Control3 value */
+	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL3, &val);
+	if (rv) {
+		CPRINTS("%s: failed to read control3 (%d)", __func__, rv);
+		return rv;
+	}
+
+	/* Enable ADC */
+	if (!(val & ISL9241_CONTROL3_ENABLE_ADC)) {
+		rv = isl9241_write(chgnum, ISL9241_REG_CONTROL3,
+				   val | ISL9241_CONTROL3_ENABLE_ADC);
+		if (rv) {
+			CPRINTS("%s: failed to enable ADC (%d)", __func__, rv);
+			return rv;
+		}
+
+		/*
+		 * Since this function will generally run in an interrupt
+		 * handler using a mutex for control3 could cause a deadlock.
+		 * Instead we keep track of if the ADC was enabled and restore
+		 * it accordingly.
+		 */
+		restore_adc = true;
+	}
+
+	usleep(ISL9241_ADC_POLLING_TIME_US);
+
+	/* Get input current */
+	rv = isl9241_read(chgnum, ISL9241_REG_IADP_ADC_RESULTS,
+			  out_input_current);
+	if (rv) {
+		CPRINTS("%s: failed to get input current (%d)", __func__, rv);
+		goto restore_control3;
+	}
+
+	/* Input current is in steps of 22.2 mA, occupies bits 0-7 */
+	*out_input_current &= 0xff;
+	*out_input_current = (*out_input_current * 222) / 10;
+
+	/* Get battery discharge current */
+	rv = isl9241_read(chgnum, ISL9241_REG_DC_ADC_RESULTS,
+			  out_discharge_current);
+	if (rv) {
+		CPRINTS("%s: failed to get battery discharge current (%d)",
+			__func__, rv);
+		goto restore_control3;
+	}
+
+	/* Discharge current is in steps of 44.4 mA, occupies bits 0-7 */
+	*out_discharge_current &= 0xff;
+	*out_discharge_current = (*out_discharge_current * 444) / 10;
+
+	/* Get battery charge current */
+	rv = isl9241_read(chgnum, ISL9241_REG_CC_ADC_RESULTS,
+			  out_charge_current);
+	if (rv) {
+		CPRINTS("%s: failed to get battery charge current (%d)",
+			__func__, rv);
+		goto restore_control3;
+	}
+
+	/* Discharge current is in steps of 22.2 mA, occupies bits 0-7 */
+	*out_charge_current &= 0xff;
+	*out_charge_current = (*out_charge_current * 222) / 10;
+
+	/* Get Vsys */
+	rv = isl9241_read(chgnum, ISL9241_REG_VSYS_ADC_RESULTS, out_vsys);
+	if (rv) {
+		CPRINTS("%s: failed to get vsys (%d)", __func__, rv);
+		goto restore_control3;
+	}
+
+	/* Bits [13:6] hold the value in steps of 96 mV, same as Vbus */
+	*out_vsys >>= ISL9241_VIN_ADC_BIT_OFFSET;
+	*out_vsys *= ISL9241_VIN_ADC_STEP_MV;
+
+	/* Get Vbus */
+	rv = isl9241_read(chgnum, ISL9241_REG_VIN_ADC_RESULTS, out_vbus);
+	if (rv) {
+		CPRINTS("%s: failed to get vbus (%d)", __func__, rv);
+		goto restore_control3;
+	}
+
+	/* Bits [13:6] hold the value in steps of 96 mV */
+	*out_vbus >>= ISL9241_VIN_ADC_BIT_OFFSET;
+	*out_vbus *= ISL9241_VIN_ADC_STEP_MV;
+
+restore_control3:
+	if (restore_adc) {
+		/* Disable ADC measurements */
+		rv = isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+				    ISL9241_CONTROL3_ENABLE_ADC, MASK_CLR);
+		if (rv)
+			CPRINTS("%s: failed to disable ADC (%d)", __func__, rv);
+	}
+
+	return rv;
+}
+
+static void isl9241_dump_prochot_status(int chgnum)
+{
+	int input_current = 0;
+	int battery_charge = 0;
+	int battery_discharge = 0;
+	int vsys = 0;
+	int vin = 0;
+	int dc_prochot_limit = 0;
+	int ac_prochot_limit = 0;
+	bool low_vsys_prochot = false;
+	bool dc_prochot = false;
+	bool ac_prochot = false;
+	int rv = 0;
+
+	rv = isl9241_get_ac_prochot(chgnum, &ac_prochot_limit);
+	if (rv) {
+		CPRINTS("Failed to get prochot AC limit (%d)", rv);
+		return;
+	}
+
+	rv = isl9241_get_dc_prochot(chgnum, &dc_prochot_limit);
+	if (rv) {
+		CPRINTS("Failed to get prochot DC limit (%d)", rv);
+		return;
+	}
+
+	rv = isl9241_get_prochot_status(chgnum, &low_vsys_prochot, &dc_prochot,
+					&ac_prochot, &input_current,
+					&battery_charge, &battery_discharge,
+					&vsys, &vin);
+	if (rv) {
+		CPRINTS("Failed to get prochot status (%d)", rv);
+		return;
+	}
+
+	CPRINTS("prochot status for charger %d", chgnum);
+	CPRINTS("\tProchot status: %s %s %s", low_vsys_prochot ? "LOWVSYS" : "",
+		dc_prochot ? "DC" : "", ac_prochot ? "AC" : "");
+
+	CPRINTS("\tDC prochot limit: %d mA", dc_prochot_limit);
+	CPRINTS("\tAC prochot limit: %d mA", ac_prochot_limit);
+	CPRINTS("\tInput current: %d mA", input_current);
+	CPRINTS("\tBattery charge current: %d mA", battery_charge);
+	CPRINTS("\tBattery discharge current: %d mA", battery_discharge);
+	CPRINTS("\tVsys: %d mV", vsys);
+	CPRINTS("\tVin: %d mV", vin);
+}
+#endif
+
 static bool isl9241_is_ac_present(int chgnum)
 {
 	static bool ac_is_present;
@@ -1026,5 +1207,8 @@ const struct charger_drv isl9241_drv = {
 	.enable_bypass_mode = isl9241_enable_bypass_mode,
 #ifdef CONFIG_CMD_CHARGER_DUMP
 	.dump_registers = &command_isl9241_dump,
+#endif
+#ifdef CONFIG_CHARGER_DUMP_PROCHOT
+	.dump_prochot = &isl9241_dump_prochot_status,
 #endif
 };
