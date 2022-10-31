@@ -3306,6 +3306,22 @@ struct ec_params_usb_charge_set_mode {
 } __ec_align1;
 
 /*****************************************************************************/
+/* Tablet mode commands */
+
+/* Set tablet mode */
+#define EC_CMD_SET_TABLET_MODE 0x0031
+
+enum tablet_mode_override {
+	TABLET_MODE_DEFAULT,
+	TABLET_MODE_FORCE_TABLET,
+	TABLET_MODE_FORCE_CLAMSHELL,
+};
+
+struct ec_params_set_tablet_mode {
+	uint8_t tablet_mode; /* enum tablet_mode_override */
+} __ec_align1;
+
+/*****************************************************************************/
 /* Persistent storage for host */
 
 /* Maximum bytes that can be read/written in a single command */
