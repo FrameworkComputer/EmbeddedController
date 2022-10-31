@@ -13,6 +13,7 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/tcpm/tcpci.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
@@ -116,34 +117,6 @@ static uint8_t usbc_overcurrent;
  * only do that if the system is off since it might still brown out.
  */
 
-/*
- * Barrel-jack power adapter ratings.
- */
-static const struct {
-	int voltage;
-	int current;
-} bj_power[] = {
-	{ /* 0 - 90W (also default) */
-	  .voltage = 19000,
-	  .current = 4740 },
-	{ /* 1 - 135W */
-	  .voltage = 19500,
-	  .current = 6920 },
-};
-
-static unsigned int ec_config_get_bj_power(void)
-{
-	uint32_t fw_config;
-	unsigned int bj;
-
-	cbi_get_fw_config(&fw_config);
-	bj = (fw_config & EC_CFG_BJ_POWER_MASK) >> EC_CFG_BJ_POWER_L;
-	/* Out of range value defaults to 0 */
-	if (bj >= ARRAY_SIZE(bj_power))
-		bj = 0;
-	return bj;
-}
-
 #define ADP_DEBOUNCE_MS 1000 /* Debounce time for BJ plug/unplug */
 /* Debounced connection state of the barrel jack */
 static int8_t adp_connected = -1;
@@ -155,12 +128,9 @@ static void adp_connect_deferred(void)
 	/* Debounce */
 	if (connected == adp_connected)
 		return;
-	if (connected) {
-		unsigned int bj = ec_config_get_bj_power();
+	if (connected)
+		ec_bj_power(&pi.voltage, &pi.current);
 
-		pi.voltage = bj_power[bj].voltage;
-		pi.current = bj_power[bj].current;
-	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
 	adp_connected = connected;
