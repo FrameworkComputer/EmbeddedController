@@ -20,7 +20,7 @@ static enum ec_status run_pd_chip_info(int port,
 {
 	struct ec_params_pd_chip_info params = { .port = port, .live = true };
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_PD_CHIP_INFO, 1, resp, params);
+		BUILD_HOST_COMMAND(EC_CMD_PD_CHIP_INFO, 1, *resp, params);
 
 	return host_command_process(&args);
 }
