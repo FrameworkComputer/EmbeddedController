@@ -25,7 +25,7 @@ void cbi_latch_eeprom_wp(void)
 }
 #endif /* CONFIG_PLATFORM_EC_EEPROM_CBI_WP */
 
-static int eeprom_load(uint8_t offset, uint8_t *data, int len)
+test_mockable_static int eeprom_load(uint8_t offset, uint8_t *data, int len)
 {
 	return eeprom_read(CBI_EEPROM_DEV, offset, data, len);
 }

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/drivers/eeprom.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/ztest.h>
 
@@ -12,6 +13,9 @@
 #include "test/drivers/test_state.h"
 
 #define WP_L_GPIO_PATH DT_PATH(named_gpios, wp_l)
+#define CBI_EEPROM_DEV DEVICE_DT_GET(DT_NODELABEL(cbi_eeprom))
+
+FAKE_VALUE_FUNC(int, eeprom_load, uint8_t, uint8_t *, int);
 
 static int gpio_wp_l_set(int value)
 {
@@ -20,6 +24,33 @@ static int gpio_wp_l_set(int value)
 
 	return gpio_emul_input_set(wp_l_gpio_dev,
 				   DT_GPIO_PIN(WP_L_GPIO_PATH, gpios), value);
+}
+
+static int __test_eeprom_load_default_impl(uint8_t offset, uint8_t *data,
+					   int len)
+{
+	int ret = eeprom_read(CBI_EEPROM_DEV, offset, data, len);
+
+	return ret;
+}
+
+ZTEST(common_cbi, test_do_cbi_read__cant_load_head)
+{
+	enum cbi_data_tag arbitrary_unused_tag = CBI_TAG_SKU_ID;
+	uint8_t arbitrary_unused_byte_buffer[100];
+	uint8_t unused_data_size;
+
+	/* Force a do_cbi_read() to eeprom */
+	cbi_invalidate_cache();
+
+	/* Return arbitrary nonzero value */
+	eeprom_load_fake.return_val = 1;
+	eeprom_load_fake.custom_fake = NULL;
+
+	zassert_equal(cbi_get_board_info(arbitrary_unused_tag,
+					 arbitrary_unused_byte_buffer,
+					 &unused_data_size),
+		      EC_ERROR_UNKNOWN);
 }
 
 ZTEST(common_cbi, test_cbi_set_string__null_str)
@@ -85,9 +116,6 @@ ZTEST_USER(common_cbi, test_hc_cbi_set_then_get)
 		EC_CMD_SET_CROS_BOARD_INFO, 0, hc_set_params);
 
 	memcpy(hc_set_params.params.data, data, ARRAY_SIZE(data));
-
-	/* Zero out cbi */
-	cbi_create();
 
 	/* Turn off write-protect so we can actually write */
 	gpio_wp_l_set(1);
@@ -158,9 +186,6 @@ ZTEST_USER(common_cbi, test_hc_cbi_set_then_get__with_too_small_response)
 
 	memcpy(hc_set_params.params.data, data, ARRAY_SIZE(data));
 
-	/* Zero out cbi */
-	cbi_create();
-
 	/* Turn off write-protect so we can actually write */
 	gpio_wp_l_set(1);
 
@@ -191,4 +216,13 @@ ZTEST_USER(common_cbi, test_hc_cbi_set_then_get__with_too_small_response)
 	zassert_equal(host_command_process(&get_args), EC_RES_INVALID_PARAM);
 }
 
-ZTEST_SUITE(common_cbi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+static void test_common_cbi_before_after(void *test_data)
+{
+	RESET_FAKE(eeprom_load);
+	eeprom_load_fake.custom_fake = __test_eeprom_load_default_impl;
+
+	cbi_create();
+}
+
+ZTEST_SUITE(common_cbi, drivers_predicate_post_main, NULL,
+	    test_common_cbi_before_after, test_common_cbi_before_after, NULL);
