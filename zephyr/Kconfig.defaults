@@ -25,6 +25,9 @@ config THREAD_MAX_NAME_LEN
 config SHELL_PROMPT_UART
 	default "ec:~$ "
 
+config SHELL_VT100_COLORS
+	default n
+
 config SHELL_THREAD_PRIORITY_OVERRIDE
 	default y
 
