@@ -325,4 +325,20 @@ void chip_panic_data_backup(void);
 }
 #endif
 
+#ifdef TEST_BUILD
+/**
+ * @brief Wrapper for accessing the command_crash() console command
+ * implementation directly in unit tests. It cannot be called normally through
+ * the shell interface because it upsets the shell's internal state when the
+ * command doesn't return after a crash. command_crash() cannot be marked
+ * test_export_static directly due to an implementation detail in
+ * DECLARE_CONSOLE_COMMAND().
+ *
+ * @param argc Number of CLI args in `argv`
+ * @param argv CLI arguments
+ * @return int Return value
+ */
+int test_command_crash(int argc, const char **argv);
+#endif /* TEST_BUILD*/
+
 #endif /* __CROS_EC_PANIC_H */
