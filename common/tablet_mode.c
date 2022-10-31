@@ -28,6 +28,12 @@ static uint32_t tablet_mode;
  */
 static bool tablet_mode_forced;
 
+/*
+ * Console command can force the value of tablet_mode. If tablet_mode_force is
+ * false, use stored tablet mode value before it was (possibly) overridden.
+ */
+static uint32_t tablet_mode_store;
+
 /* True if GMR sensor is reporting 360 degrees. */
 static bool gmr_sensor_at_360;
 
@@ -173,11 +179,42 @@ void gmr_tablet_switch_disable(void)
 }
 #endif
 
+static enum ec_status tablet_mode_command(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_set_tablet_mode *p = args->params;
+
+	if (tablet_mode_forced == false)
+		tablet_mode_store = tablet_mode;
+
+	switch (p->tablet_mode) {
+	case TABLET_MODE_DEFAULT:
+		tablet_mode = tablet_mode_store;
+		tablet_mode_forced = false;
+		break;
+	case TABLET_MODE_FORCE_TABLET:
+		tablet_mode = TABLET_TRIGGER_LID;
+		tablet_mode_forced = true;
+		break;
+	case TABLET_MODE_FORCE_CLAMSHELL:
+		tablet_mode = 0;
+		tablet_mode_forced = true;
+		break;
+	default:
+		CPRINTS("Invalid EC_CMD_SET_TABLET_MODE parameter: %d",
+			p->tablet_mode);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	notify_tablet_mode_change();
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SET_TABLET_MODE, tablet_mode_command,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
+
 #ifdef CONFIG_TABLET_MODE
 static int command_settabletmode(int argc, const char **argv)
 {
-	static uint32_t tablet_mode_store;
-
 	if (argc == 1) {
 		print_tablet_mode();
 		return EC_SUCCESS;

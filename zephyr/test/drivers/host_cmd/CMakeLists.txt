@@ -21,6 +21,7 @@ target_sources(app PRIVATE
     src/pd_chip_info.c
     src/pd_control.c
     src/pd_log.c
+    src/tablet_mode.c
     src/usb_pd_control.c
     src/usb_pd_host_cmd.c
 )
