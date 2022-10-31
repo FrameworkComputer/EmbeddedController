@@ -290,6 +290,14 @@ enum power_state power_chipset_init(void)
 		 * the only way is to ask GPIO_AC_PRESENT directly.
 		 */
 		exit_hard_off = 0;
+	} else if (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE) {
+		if (init_state == POWER_S0) {
+			gpio_enable_interrupt(GPIO_AP_EC_WDTRST_L);
+			gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
+			disable_sleep(SLEEP_MASK_AP_RUN);
+		}
+
+		return init_state;
 	}
 
 	if (battery_is_present() == BP_YES)
