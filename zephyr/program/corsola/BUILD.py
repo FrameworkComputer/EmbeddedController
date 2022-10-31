@@ -45,3 +45,8 @@ register_corsola_project(
 register_corsola_project("tentacruel")
 
 register_corsola_project("magikarp")
+
+register_corsola_project(
+    project_name="voltorb",
+    chip="npcx9m3f",
+)

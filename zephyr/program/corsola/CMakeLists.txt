@@ -77,5 +77,12 @@ elseif(DEFINED CONFIG_BOARD_MAGIKARP)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 				     "src/krabby/usbc_config.c")
 
-endif()
+elseif(DEFINED CONFIG_BOARD_VOLTORB)
+	project(voltorb)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C "src/kingler/i2c.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+				     "src/kingler/usb_pd_policy.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+				     "src/kingler/usbc_config.c")
 
+endif()
