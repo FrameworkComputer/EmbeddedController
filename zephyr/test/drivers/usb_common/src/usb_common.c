@@ -141,3 +141,8 @@ ZTEST_USER(usb_common, test_board_is_usb_pd_port_present)
 	zassert_false(board_is_usb_pd_port_present(-1));
 	zassert_false(board_is_usb_pd_port_present(100));
 }
+
+ZTEST_USER(usb_common, test_board_is_dts_port)
+{
+	zassert_true(board_is_dts_port(TEST_PORT));
+}
