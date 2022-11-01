@@ -21,7 +21,6 @@
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 #define CHARGER_TEMP TEMP_SENSOR_ID(DT_NODELABEL(temp_charger))
 #define ORIGINAL_CURRENT 5000
-#define TEMP_THRESHOLD 55
 
 struct charge_state_data curr;
 static int fake_voltage;
@@ -34,7 +33,7 @@ static uint16_t current_table[] = {
 	3600,
 	3000,
 	2400,
-	1800,
+	1600,
 };
 
 int setup_faketemp(int fake_voltage)
@@ -57,7 +56,7 @@ static void ignore_first_minute(void)
 
 ZTEST(temp_tentacruel, test_decrease_current)
 {
-	fake_voltage = 376;
+	fake_voltage = 411;
 	curr.batt.flags |= BATT_FLAG_RESPONSIVE;
 	count = 0;
 
@@ -81,7 +80,7 @@ ZTEST(temp_tentacruel, test_decrease_current)
 
 ZTEST(temp_tentacruel, test_increase_current)
 {
-	fake_voltage = 380;
+	fake_voltage = 446;
 	curr.batt.flags |= BATT_FLAG_RESPONSIVE;
 	count = 3;
 

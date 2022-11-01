@@ -15,7 +15,7 @@
 #include "util.h"
 
 #define NUM_CURRENT_LEVELS ARRAY_SIZE(current_table)
-#define TEMP_THRESHOLD 55
+#define TEMP_THRESHOLD 50
 #define TEMP_BUFF_SIZE 60
 #define KEEP_TIME 5
 
@@ -55,7 +55,7 @@ static uint16_t current_table[] = {
 	3600,
 	3000,
 	2400,
-	1800,
+	1600,
 };
 
 /* Called by hook task every hook second (1 sec) */
