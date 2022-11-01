@@ -78,6 +78,11 @@ def build(opts):
         stdin=subprocess.DEVNULL,
     )
 
+    # Start with a clean build environment
+    cmd = ["make", "clobber"]
+    log_cmd(cmd)
+    subprocess.run(cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL)
+
     cmd = ["zmake", "-D", "build", "-a"]
     if opts.code_coverage:
         cmd.append("--coverage")

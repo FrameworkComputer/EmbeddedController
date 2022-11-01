@@ -74,9 +74,14 @@ def build(opts):
     ec_dir = pathlib.Path(__file__).parent
     subprocess.run([ec_dir / "util" / "check_clang_format.py"], check=True)
 
+    cmd = ["make", "clobber"]
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+
     cmd = ["make", "buildall_only", f"-j{opts.cpus}"]
     print(f"# Running {' '.join(cmd)}.")
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+
     ec_dir = os.path.dirname(__file__)
     build_dir = os.path.join(ec_dir, "build")
     for build_target in sorted(os.listdir(build_dir)):
