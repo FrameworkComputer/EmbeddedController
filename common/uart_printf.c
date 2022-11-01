@@ -44,30 +44,32 @@ int uart_puts(const char *outstr)
 
 int uart_put(const char *out, int len)
 {
+	int written;
+
 	/* Put all characters in the output buffer */
-	while (len--) {
+	for (written = 0; written < len; written++) {
 		if (__tx_char(NULL, *out++) != 0)
 			break;
 	}
 
 	uart_tx_start();
 
-	/* Successful if we consumed all output */
-	return len ? EC_ERROR_OVERFLOW : EC_SUCCESS;
+	return written;
 }
 
 int uart_put_raw(const char *out, int len)
 {
+	int written;
+
 	/* Put all characters in the output buffer */
-	while (len--) {
+	for (written = 0; written < len; written++) {
 		if (uart_tx_char_raw(NULL, *out++) != 0)
 			break;
 	}
 
 	uart_tx_start();
 
-	/* Successful if we consumed all output */
-	return len ? EC_ERROR_OVERFLOW : EC_SUCCESS;
+	return written;
 }
 
 int uart_vprintf(const char *format, va_list args)

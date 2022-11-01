@@ -52,7 +52,7 @@ int uart_puts(const char *outstr);
  *
  * @param out		Pointer to data to send
  * @param len		Length of transfer in bytes
- * @return EC_SUCCESS, or non-zero if output was truncated.
+ * @return number of characters successfully written.
  */
 int uart_put(const char *out, int len);
 
@@ -61,7 +61,7 @@ int uart_put(const char *out, int len);
  *
  * @param out		Pointer to data to send
  * @param len		Length of transfer in bytes
- * @return EC_SUCCESS, or non-zero if output was truncated.
+ * @return number of characters successfully written.
  */
 int uart_put_raw(const char *out, int len);
 
