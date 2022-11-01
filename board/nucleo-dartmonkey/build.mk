@@ -22,6 +22,7 @@ test-list-y=\
        flash_write_protect \
        fpsensor \
        fpsensor_hw \
+       libc_printf \
        mpu \
        mutex \
        pingpong \

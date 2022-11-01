@@ -223,6 +223,9 @@ online_calibration-y=online_calibration.o
 online_calibration_spoof-y=online_calibration_spoof.o gyro_cal_init_for_test.o
 rgb_keyboard-y=rgb_keyboard.o
 kasa-y=kasa.o
+ifeq ($(USE_BUILTIN_STDLIB), 0)
+libc_printf-y=libc_printf.o
+endif
 mpu-y=mpu.o
 mutex-y=mutex.o
 newton_fit-y=newton_fit.o

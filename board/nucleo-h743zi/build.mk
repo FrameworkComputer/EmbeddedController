@@ -19,6 +19,7 @@ test-list-y=\
        exception \
        flash_physical \
        flash_write_protect \
+       libc_printf \
        mpu \
        mutex \
        pingpong \

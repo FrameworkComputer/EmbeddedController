@@ -91,6 +91,7 @@ DATA_ACCESS_VIOLATION_20000000_REGEX = re.compile(
 DATA_ACCESS_VIOLATION_24000000_REGEX = re.compile(
     r"Data access violation, mfar = 24000000\r\n"
 )
+PRINTF_CALLED_REGEX = re.compile(r"printf called\r\n")
 
 BLOONCHIPPER = "bloonchipper"
 DARTMONKEY = "dartmonkey"
@@ -234,6 +235,10 @@ class AllTests:
                 config_name="fpsensor_uart_rw",
                 test_name="fpsensor",
                 test_args=["uart"],
+            ),
+            TestConfig(
+                test_name="libc_printf",
+                finish_regexes=[PRINTF_CALLED_REGEX],
             ),
             TestConfig(
                 config_name="mpu_ro",
