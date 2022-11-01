@@ -188,7 +188,8 @@ tests:
       - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
     timeout: 120
   drivers.usbc_alt_mode_ec_entry:
-   extra_configs:
+    timeout: 120
+    extra_configs:
      - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
      - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
      - CONFIG_POWER_SEQUENCE_MOCK=y
