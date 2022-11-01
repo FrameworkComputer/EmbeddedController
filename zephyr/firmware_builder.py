@@ -46,6 +46,8 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
         "-p",
         "unit_testing",
         "--no-upload-cros-rdb",
+        "-x=CMAKE_C_COMPILER=/usr/bin/x86_64-pc-linux-gnu-gcc",
+        "-x=CMAKE_CXX_COMPILER=/usr/bin/x86_64-pc-linux-gnu-g++",
     ]
 
     if extra_args:
