@@ -3,11 +3,14 @@
  * found in the LICENSE file.
  */
 
+#include <stdint.h>
+#include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
 
 #include "ec_commands.h"
 #include "suite.h"
+#include "timer.h"
 #include "usb_common.h"
 #include "usb_pd.h"
 
@@ -145,4 +148,150 @@ ZTEST_USER(usb_common, test_board_is_usb_pd_port_present)
 ZTEST_USER(usb_common, test_board_is_dts_port)
 {
 	zassert_true(board_is_dts_port(TEST_PORT));
+}
+
+ZTEST_USER(usb_common, test_drp_auto_toggle_next_state_detached)
+{
+	uint64_t drp_sink_time = 0;
+
+	/* If the port is detached and toggle is disabled, the next state should
+	 * be the configured default state.
+	 */
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_OFF,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_DEFAULT);
+
+	/* If toggle is frozen, the next state should be the current state. */
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_FREEZE,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_UNATTACHED_SNK);
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SOURCE, PD_DRP_FREEZE,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_UNATTACHED_SRC);
+
+	/* If role is forced, the next state should be the forced state. */
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_FORCE_SINK,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_UNATTACHED_SNK);
+	zassert_equal(drp_auto_toggle_next_state(&drp_sink_time, PD_ROLE_SOURCE,
+						 PD_DRP_FORCE_SOURCE,
+						 TYPEC_CC_VOLT_OPEN,
+						 TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_UNATTACHED_SRC);
+
+	/* If toggle is enabled but auto-toggle is not supported, the next state
+	 * should be based on the power role. If auto-toggle is supported, the
+	 * next state should be auto-toggle.
+	 */
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN, false),
+		      DRP_TC_UNATTACHED_SNK);
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SOURCE, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN, false),
+		      DRP_TC_UNATTACHED_SRC);
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SOURCE, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_DRP_AUTO_TOGGLE);
+}
+
+ZTEST_USER(usb_common, test_drp_auto_toggle_next_state_attached_to_source)
+{
+	uint64_t drp_sink_time = 0;
+
+	/* If the CC lines show a source attached, then the next state should be
+	 * a sink state. If auto-toggle is enabled, then the next state should
+	 * assume that the TCPC is already in AttachWait.SNK.
+	 */
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_RP_3_0, TYPEC_CC_VOLT_OPEN, false),
+		      DRP_TC_UNATTACHED_SNK);
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RP_3_0, false),
+		      DRP_TC_UNATTACHED_SNK);
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_RP_3_0, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_ATTACHED_WAIT_SNK);
+
+	/* If the DRP state is force-source, keep toggling. */
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_FORCE_SOURCE,
+			      TYPEC_CC_VOLT_RP_3_0, TYPEC_CC_VOLT_OPEN, false),
+		      DRP_TC_UNATTACHED_SNK);
+	zassert_equal(drp_auto_toggle_next_state(&drp_sink_time, PD_ROLE_SOURCE,
+						 PD_DRP_FORCE_SOURCE,
+						 TYPEC_CC_VOLT_RP_3_0,
+						 TYPEC_CC_VOLT_OPEN, false),
+		      DRP_TC_UNATTACHED_SRC);
+	zassert_equal(drp_auto_toggle_next_state(&drp_sink_time, PD_ROLE_SOURCE,
+						 PD_DRP_FORCE_SOURCE,
+						 TYPEC_CC_VOLT_RP_3_0,
+						 TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_DRP_AUTO_TOGGLE);
+}
+
+ZTEST_USER(usb_common, test_drp_auto_toggle_next_state_attached_to_sink)
+{
+	uint64_t drp_sink_time = 0;
+	timestamp_t fake_time;
+
+	/* If the CC lines show a sink, then the next state should be a source
+	 * state. If auto-toggle is enabled, then the next state should assume
+	 * that the TCPC is already in AttachWait.SRC.
+	 */
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SOURCE, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_OPEN, false),
+		      DRP_TC_UNATTACHED_SRC);
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SOURCE, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_RA, TYPEC_CC_VOLT_OPEN, false),
+		      DRP_TC_UNATTACHED_SRC);
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_ON,
+			      TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_ATTACHED_WAIT_SRC);
+
+	/* If the DRP state is off or force-sink, the TCPC might be in
+	 * auto-toggle anyway. If the CC lines have been in this state for less
+	 * than 100 ms, the TCPM should stay in Unattached.SNK and wait for the
+	 * partner to toggle.
+	 */
+	drp_sink_time = 0;
+	fake_time.val = drp_sink_time;
+	get_time_mock = &fake_time;
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_OFF,
+			      TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_UNATTACHED_SNK);
+	/* After 100 ms, the next state should be auto-toggle. */
+	drp_sink_time = 0;
+	fake_time.val = drp_sink_time + 105 * MSEC;
+	get_time_mock = &fake_time;
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_OFF,
+			      TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_DRP_AUTO_TOGGLE);
+	/* After 200 ms, the next state should be Unattached.SNK, and
+	 * drp_sink_time should be updated.
+	 */
+	drp_sink_time = 0;
+	fake_time.val = drp_sink_time + 205 * MSEC;
+	get_time_mock = &fake_time;
+	zassert_equal(drp_auto_toggle_next_state(
+			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_OFF,
+			      TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_OPEN, true),
+		      DRP_TC_UNATTACHED_SNK);
+	zassert_equal(drp_sink_time, fake_time.val);
+
+	get_time_mock = NULL;
 }
