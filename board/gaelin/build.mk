@@ -19,4 +19,5 @@ board-y+=i2c.o
 board-y+=led.o
 board-y+=pwm.o
 board-y+=sensors.o
+board-y+=thermal.o
 board-y+=usbc_config.o
