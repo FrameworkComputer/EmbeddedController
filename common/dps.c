@@ -231,7 +231,7 @@ static int get_battery_target_voltage(int *target_mv)
  *
  * @return 0 if error occurs, else battery efficient voltage in mV
  */
-int get_efficient_voltage(void)
+static int get_efficient_voltage(void)
 {
 	int eff_mv = 0;
 	int batt_mv;
