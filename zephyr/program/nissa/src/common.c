@@ -152,3 +152,14 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
 	}
 	return sb;
 }
+
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
+{
+	*kp = 1;
+	*kp_div = 32;
+	*ki = 0;
+	*ki_div = 1;
+	*kd = 0;
+	*kd_div = 1;
+}

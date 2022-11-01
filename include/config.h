@@ -1333,6 +1333,9 @@
  */
 #undef CONFIG_OCPC_DEF_RBATT_MOHMS
 
+/* Set a default OCPC drive limit for legacy boards */
+#define CONFIG_OCPC_DEF_DRIVELIMIT_MILLIVOLTS 10
+
 /* Enable trickle charging */
 #undef CONFIG_TRICKLE_CHARGING
 

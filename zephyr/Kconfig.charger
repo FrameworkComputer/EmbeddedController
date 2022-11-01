@@ -214,6 +214,13 @@ config PLATFORM_EC_OCPC_DEF_RBATT_MOHMS
 	  This should be at a minimum the Rds(on) resistance of the BFET plus
 	  the series sense resistor.
 
+config PLATFORM_EC_OCPC_DEF_DRIVELIMIT_MILLIVOLTS
+	int "Drive Limit for the OCPC PID control loop"
+	default 10
+	help
+	  Sets how agressively the OCPC PID control loop can adjust VSYS to drive
+	  the battery with the correct current.
+
 endif  # PLATFORM_EC_OCPC
 
 config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC

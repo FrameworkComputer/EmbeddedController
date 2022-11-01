@@ -42,15 +42,16 @@ struct ocpc_data {
 
 /** Set the VSYS target for the secondary charger IC.
  *
- * @param curr: Pointer to desired_input_current
+ * @param desired_charger_input_current: Pointer to desired_input_current
  * @param ocpc: Pointer to OCPC data
- * @param voltage_mv: The desired voltage
- * @param current_ma: The desired current
+ * @param desired_batt_current_ma: The desired voltage
+ * @param desired_batt_voltage_mv: The desired current
  * @return EC_SUCCESS on success, error otherwise.
  */
-int ocpc_config_secondary_charger(int *desired_input_current,
-				  struct ocpc_data *ocpc, int voltage_mv,
-				  int current_ma);
+int ocpc_config_secondary_charger(int *desired_charger_input_current,
+				  struct ocpc_data *ocpc,
+				  int desired_batt_voltage_mv,
+				  int desired_batt_current_ma);
 
 /** Get the runtime data from the various ADCs.
  *
@@ -59,8 +60,8 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 void ocpc_get_adcs(struct ocpc_data *ocpc);
 
 /* Set the PID constants for the charging loop */
-__overridable void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
-					  int *ki_div, int *kd, int *kd_div);
+__override_proto void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+					     int *ki_div, int *kd, int *kd_div);
 
 /*
  ** Set up some initial values for the OCPC data structure.  This will call off
