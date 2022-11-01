@@ -634,15 +634,17 @@ void pd_set_vbus_discharge(int port, int enable)
 	static mutex_t discharge_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
 #ifdef CONFIG_ZEPHYR
 	static bool inited[CONFIG_USB_PD_PORT_MAX_COUNT];
+#endif
 
+	if (port >= board_get_usb_pd_port_count())
+		return;
+
+#ifdef CONFIG_ZEPHYR
 	if (!inited[port]) {
 		(void)k_mutex_init(&discharge_lock[port]);
 		inited[port] = true;
 	}
 #endif
-	if (port >= board_get_usb_pd_port_count())
-		return;
-
 	mutex_lock(&discharge_lock[port]);
 	enable &= !board_vbus_source_enabled(port);
 
