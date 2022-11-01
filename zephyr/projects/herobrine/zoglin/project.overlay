@@ -1,0 +1,21 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Herobrine program common DTS includes */
+#include "../adc.dtsi"
+#include "../common.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../default_gpio_pinctrl.dtsi"
+
+/* Zoglin project DTS includes*/
+#include "../hoglin/battery.dtsi"
+#include "../hoglin/gpio.dtsi"
+#include "../hoglin/i2c.dtsi"
+#include "../hoglin/led_pins.dtsi"
+#include "../hoglin/led_policy.dtsi"
+#include "../hoglin/motionsense.dtsi"
+#include "../hoglin/switchcap.dtsi"
+#include "../hoglin/usbc.dtsi"

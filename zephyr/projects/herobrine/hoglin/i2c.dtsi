@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "i2c_common.dtsi"
+#include "../i2c.dtsi"
 
 &i2c1_0 {
 	ppc_port0: syv682x@41 {
@@ -13,9 +13,9 @@
 		frs_en_gpio = <&gpio_usb_c0_frs_en>;
 	};
 
-	tcpc_port0: ps8xxx@b {
+	tcpc_port0: ps8xxx@1b {
 		compatible = "parade,ps8xxx";
-		reg = <0xb>;
+		reg = <0x1b>;
 	};
 };
 
@@ -27,8 +27,8 @@
 		frs_en_gpio = <&gpio_usb_c1_frs_en>;
 	};
 
-	tcpc_port1: ps8xxx@b {
+	tcpc_port1: ps8xxx@1b {
 		compatible = "parade,ps8xxx";
-		reg = <0xb>;
+		reg = <0x1b>;
 	};
 };
