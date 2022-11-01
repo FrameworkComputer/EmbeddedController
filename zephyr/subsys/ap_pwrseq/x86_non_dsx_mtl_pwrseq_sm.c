@@ -4,9 +4,13 @@
  */
 
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include "ap_power/ap_pwrseq_sm.h"
+#endif
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 static void ap_off(void)
 {
 	power_signal_set(PWR_PCH_PWROK, 0);
@@ -57,3 +61,22 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state)
 	}
 	return curr_state;
 }
+#else
+static int x86_non_dsx_mtl_g3_run(void *data)
+{
+	/*
+	 * Power rail must be enabled by application, now check if chipset is
+	 * ready.
+	 */
+	if (power_wait_signals_timeout(
+		    POWER_SIGNAL_MASK(PWR_RSMRST),
+		    AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
+		return 1;
+	}
+
+	return 0;
+}
+
+AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_G3, NULL, x86_non_dsx_mtl_g3_run,
+			      NULL);
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
