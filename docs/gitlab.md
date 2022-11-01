@@ -45,7 +45,7 @@ sudo dpkg -i gitlab-runner_amd64.deb
 ### Running a Job
 
 Once Docker and the Gitlab Runner are installed, invoke it as follows. This
-takes place outside of the
+takes place outside of the chroot environment.
 
 ```
 (outside)
