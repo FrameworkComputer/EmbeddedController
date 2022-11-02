@@ -63,6 +63,14 @@ config PLATFORM_EC_CHARGE_MANAGER
 	  source is available on the hardware, so cannot be built without
 	  PLATFORM_EC_USBC.
 
+config PLATFORM_EC_CHARGE_STATE_DEBUG
+	bool "Debug information about the charge state"
+	depends on PLATFORM_EC_CHARGE_MANAGER
+	help
+	  Enables debug information regarding the current charge state. Enabling
+	  this config will allow the EC_CMD_CHARGE_STATE host command to use the
+	  CHARGE_STATE_CMD_GET_PARAM command to query the current charge state.
+
 config PLATFORM_EC_CHARGESPLASH
 	bool "Charging splashscreen support"
 	help

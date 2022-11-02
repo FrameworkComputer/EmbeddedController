@@ -1029,6 +1029,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 
 #endif
 
+#undef CONFIG_CHARGE_STATE_DEBUG
+#ifdef CONFIG_PLATFORM_EC_CHARGE_STATE_DEBUG
+#define CONFIG_CHARGE_STATE_DEBUG
+#endif
+
 #undef CONFIG_CHARGESPLASH
 #ifdef CONFIG_PLATFORM_EC_CHARGESPLASH
 #define CONFIG_CHARGESPLASH

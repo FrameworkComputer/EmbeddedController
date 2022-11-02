@@ -36,6 +36,7 @@ config LINK_TEST_SUITE_COMMON_CHARGER
 	bool "Link and execute the common/charger.c tests"
 
 config LINK_TEST_SUITE_HOST_COMMANDS
+	select PLATFORM_EC_CHARGE_STATE_DEBUG
 	bool "Link and test the host command tests"
 
 config LINK_TEST_SUITE_ISL923X
