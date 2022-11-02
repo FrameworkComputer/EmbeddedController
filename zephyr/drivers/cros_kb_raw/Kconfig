@@ -27,8 +27,8 @@ endif # CROS_KB_RAW_NPCX
 
 config CROS_KB_RAW_ITE
 	bool "ITE raw-keyboard-scan driver for the Zephyr shim"
-	depends on SOC_FAMILY_RISCV_ITE
 	default y
+	depends on DT_HAS_ITE_IT8XXX2_CROS_KB_RAW_ENABLED
 	help
 	  This option enables a driver for providing raw access to the
 	  keyboard-scan peripheral in the chip. This is used instead of the
