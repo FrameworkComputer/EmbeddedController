@@ -1382,7 +1382,7 @@ struct charge_state_data *charge_get_status(void)
 }
 
 /* Determine if the battery is outside of allowable temperature range */
-static int battery_outside_charging_temperature(void)
+int battery_outside_charging_temperature(void)
 {
 	const struct battery_info *batt_info = battery_get_info();
 	int batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
