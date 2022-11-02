@@ -27,6 +27,7 @@ FAKE_VALUE_FUNC(enum ec_error_list, enable_otg_power, int, int);
 FAKE_VALUE_FUNC(enum ec_error_list, set_otg_current_voltage, int, int, int);
 FAKE_VALUE_FUNC(int, is_sourcing_otg_power, int, int);
 FAKE_VALUE_FUNC(enum ec_error_list, get_actual_current, int, int *);
+FAKE_VALUE_FUNC(enum ec_error_list, get_actual_voltage, int, int *);
 
 struct common_charger_mocked_driver_fixture {
 	/* The original driver pointer that gets restored after the tests */
@@ -154,6 +155,49 @@ ZTEST_F(common_charger_mocked_driver, test_charger_get_actual_current)
 	zassert_equal(1000, current);
 }
 
+ZTEST(common_charger_mocked_driver, test_charger_get_actual_voltage__invalid)
+{
+	/* charger number out of bounds */
+	zassert_equal(EC_ERROR_INVAL, charger_get_actual_voltage(-1, NULL));
+	zassert_equal(EC_ERROR_INVAL,
+		      charger_get_actual_voltage(INT_MAX, NULL));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_get_actual_voltage__unimpl)
+{
+	/* get_actual_voltage is NULL */
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      charger_get_actual_voltage(CHG_NUM, NULL));
+}
+
+/**
+ * @brief Custom fake for get_actual_voltage that can write to the output param
+ */
+static enum ec_error_list get_actual_voltage_custom_fake(int chgnum,
+							 int *voltage)
+{
+	ARG_UNUSED(chgnum);
+
+	*voltage = 2000;
+
+	return EC_SUCCESS;
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_get_actual_voltage)
+{
+	int voltage;
+
+	fixture->mock_driver.get_actual_voltage = get_actual_voltage;
+	get_actual_voltage_fake.custom_fake = get_actual_voltage_custom_fake;
+
+	zassert_equal(EC_SUCCESS,
+		      charger_get_actual_voltage(CHG_NUM, &voltage));
+
+	zassert_equal(1, get_actual_voltage_fake.call_count);
+	zassert_equal(CHG_NUM, get_actual_voltage_fake.arg0_history[0]);
+	zassert_equal(2000, voltage);
+}
+
 static void *setup(void)
 {
 	static struct common_charger_mocked_driver_fixture f;
@@ -182,6 +226,7 @@ static void reset(void *data)
 	RESET_FAKE(set_otg_current_voltage);
 	RESET_FAKE(is_sourcing_otg_power);
 	RESET_FAKE(get_actual_current);
+	RESET_FAKE(get_actual_voltage);
 }
 
 static void teardown(void *data)
