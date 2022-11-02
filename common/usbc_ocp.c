@@ -15,13 +15,8 @@
 #include "usbc_ocp.h"
 #include "util.h"
 
-#ifndef TEST_BUILD
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
-#else
-#define CPRINTF(args...)
-#define CPRINTS(args...)
-#endif
 
 /*
  * Number of seconds until a latched-off port is re-enabled for sourcing after
