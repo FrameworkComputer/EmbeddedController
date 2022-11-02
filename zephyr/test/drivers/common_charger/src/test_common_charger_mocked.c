@@ -26,6 +26,7 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG),
 FAKE_VALUE_FUNC(enum ec_error_list, enable_otg_power, int, int);
 FAKE_VALUE_FUNC(enum ec_error_list, set_otg_current_voltage, int, int, int);
 FAKE_VALUE_FUNC(int, is_sourcing_otg_power, int, int);
+FAKE_VALUE_FUNC(enum ec_error_list, get_actual_current, int, int *);
 
 struct common_charger_mocked_driver_fixture {
 	/* The original driver pointer that gets restored after the tests */
@@ -110,6 +111,49 @@ ZTEST_F(common_charger_mocked_driver, test_charger_is_sourcing_otg_power)
 	zassert_equal(1, is_sourcing_otg_power_fake.call_count);
 }
 
+ZTEST(common_charger_mocked_driver, test_charger_get_actual_current__invalid)
+{
+	/* charger number out of bounds */
+	zassert_equal(EC_ERROR_INVAL, charger_get_actual_current(-1, NULL));
+	zassert_equal(EC_ERROR_INVAL,
+		      charger_get_actual_current(INT_MAX, NULL));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_get_actual_current__unimpl)
+{
+	/* get_actual_current is NULL */
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      charger_get_actual_current(CHG_NUM, NULL));
+}
+
+/**
+ * @brief Custom fake for get_actual_current that can write to the output param
+ */
+static enum ec_error_list get_actual_current_custom_fake(int chgnum,
+							 int *current)
+{
+	ARG_UNUSED(chgnum);
+
+	*current = 1000;
+
+	return EC_SUCCESS;
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_get_actual_current)
+{
+	int current;
+
+	fixture->mock_driver.get_actual_current = get_actual_current;
+	get_actual_current_fake.custom_fake = get_actual_current_custom_fake;
+
+	zassert_equal(EC_SUCCESS,
+		      charger_get_actual_current(CHG_NUM, &current));
+
+	zassert_equal(1, get_actual_current_fake.call_count);
+	zassert_equal(CHG_NUM, get_actual_current_fake.arg0_history[0]);
+	zassert_equal(1000, current);
+}
+
 static void *setup(void)
 {
 	static struct common_charger_mocked_driver_fixture f;
@@ -137,6 +181,7 @@ static void reset(void *data)
 	RESET_FAKE(enable_otg_power);
 	RESET_FAKE(set_otg_current_voltage);
 	RESET_FAKE(is_sourcing_otg_power);
+	RESET_FAKE(get_actual_current);
 }
 
 static void teardown(void *data)
