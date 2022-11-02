@@ -162,7 +162,7 @@
 		reg = <0x73>;
 		label = "NCT38XX_C0";
 
-		ioex_c0:gpio@0 {
+		ioex_c0: gpio@0 {
 			compatible = "nuvoton,nct38xx-gpio-port";
 			reg = <0x0>;
 			label = "NCT38XX_C0_GPIO0";
@@ -188,7 +188,7 @@
 		reg = <0x77>;
 		label = "NCT38XX_C1";
 
-		ioex_c1:gpio@0 {
+		ioex_c1: gpio@0 {
 			compatible = "nuvoton,nct38xx-gpio-port";
 			reg = <0x0>;
 			label = "NCT38XX_C1_GPIO0";

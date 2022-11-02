@@ -117,14 +117,14 @@
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
 	};
 
-	nct3807_C0:nct3807_C0@70 {
+	nct3807_C0: nct3807_C0@70 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		compatible = "nuvoton,nct38xx-gpio";
 		reg = <0x70>;
 		label = "NCT3807_C0";
 
-		ioex_c0_port0:gpio@0 {
+		ioex_c0_port0: gpio@0 {
 			compatible = "nuvoton,nct38xx-gpio-port";
 			reg = <0x0>;
 			label = "NCT3807_C0_GPIO0";
@@ -134,7 +134,7 @@
 			pin_mask = <0xff>;
 			pinmux_mask = <0xf7>;
 		};
-		ioex_c0_port1:gpio@1 {
+		ioex_c0_port1: gpio@1 {
 			compatible = "nuvoton,nct38xx-gpio-port";
 			reg = <0x1>;
 			label = "NCT3807_C0_GPIO1";

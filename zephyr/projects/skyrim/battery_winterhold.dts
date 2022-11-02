@@ -11,22 +11,22 @@
 		smp_atlxdy9k {
 			compatible = "smp,atlxdy9k", "battery-smart";
 		};
-		smp_cosxdy9k{
+		smp_cosxdy9k {
 			compatible = "smp,cosxdy9k", "battery-smart";
 		};
-		byd_wv3k8{
+		byd_wv3k8 {
 			compatible = "byd,wv3k8", "battery-smart";
 		};
-		cosmx_mvk11{
+		cosmx_mvk11 {
 			compatible = "cosmx,mvk11", "battery-smart";
 		};
-		sunwoda_atlvkyjx{
+		sunwoda_atlvkyjx {
 			compatible = "sunwoda,atlvkyjx", "battery-smart";
 		};
-		sunwoda_cosvkyjx{
+		sunwoda_cosvkyjx {
 			compatible = "sunwoda,cosvkyjx", "battery-smart";
 		};
-		atl_cfd72{
+		atl_cfd72 {
 			compatible = "atl,cfd72", "battery-smart";
 		};
 	};

@@ -111,42 +111,42 @@
 };
 
 /* pwr-pg-ec-rsmrst-od */
-&gpio_seq_ec_rsmrst_odl{
+&gpio_seq_ec_rsmrst_odl {
 	no-auto-init;
 };
 
 /* pwr-ec-pch-rsmrst-odl */
-&gpio_ec_soc_rsmrst_l{
+&gpio_ec_soc_rsmrst_l {
 	no-auto-init;
 };
 
 /* pwr-pch-pwrok */
-&gpio_soc_pwrok{
+&gpio_soc_pwrok {
 	no-auto-init;
 };
 
 /* pwr-ec-pch-sys-pwrok */
-&gpio_sys_pwrok{
+&gpio_sys_pwrok {
 	no-auto-init;
 };
 
 /* pwr-sys-rst-l */
-&gpio_sys_rst_odl{
+&gpio_sys_rst_odl {
 	no-auto-init;
 };
 
 /* pwr-slp-s0-l */
-&gpio_sys_slp_s0ix_3v3_l{
+&gpio_sys_slp_s0ix_3v3_l {
 	no-auto-init;
 };
 
 /* pwr-slp-s3-l */
-&gpio_slp_s3_ls_l{
+&gpio_slp_s3_ls_l {
 	no-auto-init;
 };
 
 /* pwr-all-sys-pwrgd */
-&gpio_seq_ec_all_sys_pg{
+&gpio_seq_ec_all_sys_pg {
 	no-auto-init;
 };
 
