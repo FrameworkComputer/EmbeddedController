@@ -19,9 +19,9 @@ config PLATFORM_EC_EEPROM_CBI_WP
 	   signal. The accompanying hardware must ensure that the CBI WP gets
 	   latched and is only reset when EC_RST_ODL is asserted.
 
-choice PLATFORM_EC_CBI_STORAGE_TYPE
-	prompt "Select CBI storage Type"
-	optional
+config PLATFORM_EC_CBI
+	bool "CBI support"
+	default y
 	help
 	  CBI is a means for accessing board information, typically set
 	  during the factory process. This allows selection of the physical
@@ -30,6 +30,13 @@ choice PLATFORM_EC_CBI_STORAGE_TYPE
 	  See here for detailed information on CBI:
 
 	  https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
+
+if PLATFORM_EC_CBI
+
+choice PLATFORM_EC_CBI_STORAGE_TYPE
+	prompt "CBI storage type"
+	help
+	  Select the backing storage type for CBI data.
 
 config PLATFORM_EC_CBI_EEPROM
 	bool "CBI EEPROM support"
@@ -46,3 +53,5 @@ config PLATFORM_EC_CBI_GPIO
 	  CBI for AP to query.
 
 endchoice
+
+endif # PLATFORM_EC_CBI
