@@ -4,8 +4,8 @@
 
 menuconfig CROS_FLASH_NPCX
 	bool "Nuvoton NPCX flash driver for the Zephyr shim"
-	depends on SOC_FAMILY_NPCX
 	default y
+	depends on DT_HAS_NUVOTON_NPCX_CROS_FLASH_ENABLED
 	select PLATFORM_EC_FLASH_CROS
 	select PLATFORM_EC_SPI_FLASH_REGS
 	help
