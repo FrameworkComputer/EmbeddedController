@@ -24,6 +24,7 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG),
  * charger_drv struct
  */
 FAKE_VALUE_FUNC(enum ec_error_list, enable_otg_power, int, int);
+FAKE_VALUE_FUNC(enum ec_error_list, set_otg_current_voltage, int, int, int);
 
 struct common_charger_mocked_driver_fixture {
 	/* The original driver pointer that gets restored after the tests */
@@ -59,6 +60,38 @@ ZTEST_F(common_charger_mocked_driver, test_charger_enable_otg_power)
 	zassert_equal(1, enable_otg_power_fake.arg1_history[0]);
 }
 
+ZTEST(common_charger_mocked_driver,
+      test_charger_set_otg_current_voltage__invalid)
+{
+	/* charger number out of bounds */
+	zassert_equal(EC_ERROR_INVAL,
+		      charger_set_otg_current_voltage(-1, 0, 0));
+	zassert_equal(EC_ERROR_INVAL,
+		      charger_set_otg_current_voltage(INT_MAX, 0, 0));
+}
+
+ZTEST(common_charger_mocked_driver,
+      test_charger_set_otg_current_voltage__unimpl)
+{
+	/* set_otg_current_voltage is NULL */
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      charger_set_otg_current_voltage(CHG_NUM, 0, 0));
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_set_otg_current_voltage)
+{
+	fixture->mock_driver.set_otg_current_voltage = set_otg_current_voltage;
+	set_otg_current_voltage_fake.return_val = 123;
+
+	zassert_equal(set_otg_current_voltage_fake.return_val,
+		      charger_set_otg_current_voltage(CHG_NUM, 10, 20));
+
+	zassert_equal(1, set_otg_current_voltage_fake.call_count);
+	zassert_equal(CHG_NUM, set_otg_current_voltage_fake.arg0_history[0]);
+	zassert_equal(10, set_otg_current_voltage_fake.arg1_history[0]);
+	zassert_equal(20, set_otg_current_voltage_fake.arg2_history[0]);
+}
+
 static void *setup(void)
 {
 	static struct common_charger_mocked_driver_fixture f;
@@ -84,6 +117,7 @@ static void reset(void *data)
 
 	/* Reset fakes */
 	RESET_FAKE(enable_otg_power);
+	RESET_FAKE(set_otg_current_voltage);
 }
 
 static void teardown(void *data)
