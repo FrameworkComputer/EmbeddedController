@@ -28,6 +28,7 @@ FAKE_VALUE_FUNC(enum ec_error_list, set_otg_current_voltage, int, int, int);
 FAKE_VALUE_FUNC(int, is_sourcing_otg_power, int, int);
 FAKE_VALUE_FUNC(enum ec_error_list, get_actual_current, int, int *);
 FAKE_VALUE_FUNC(enum ec_error_list, get_actual_voltage, int, int *);
+FAKE_VALUE_FUNC(enum ec_error_list, set_voltage, int, int);
 
 struct common_charger_mocked_driver_fixture {
 	/* The original driver pointer that gets restored after the tests */
@@ -198,6 +199,32 @@ ZTEST_F(common_charger_mocked_driver, test_charger_get_actual_voltage)
 	zassert_equal(2000, voltage);
 }
 
+ZTEST(common_charger_mocked_driver, test_charger_set_voltage__invalid)
+{
+	/* charger number out of bounds */
+	zassert_equal(EC_ERROR_INVAL, charger_set_voltage(-1, 0));
+	zassert_equal(EC_ERROR_INVAL, charger_set_voltage(INT_MAX, 0));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_set_voltage__unimpl)
+{
+	/* set_voltage is NULL */
+	zassert_equal(EC_ERROR_UNIMPLEMENTED, charger_set_voltage(CHG_NUM, 0));
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_set_voltage)
+{
+	fixture->mock_driver.set_voltage = set_voltage;
+	set_voltage_fake.return_val = 123;
+
+	zassert_equal(set_voltage_fake.return_val,
+		      charger_set_voltage(CHG_NUM, 2000));
+
+	zassert_equal(1, set_voltage_fake.call_count);
+	zassert_equal(CHG_NUM, set_voltage_fake.arg0_history[0]);
+	zassert_equal(2000, set_voltage_fake.arg1_history[0]);
+}
+
 static void *setup(void)
 {
 	static struct common_charger_mocked_driver_fixture f;
@@ -227,6 +254,7 @@ static void reset(void *data)
 	RESET_FAKE(is_sourcing_otg_power);
 	RESET_FAKE(get_actual_current);
 	RESET_FAKE(get_actual_voltage);
+	RESET_FAKE(set_voltage);
 }
 
 static void teardown(void *data)
