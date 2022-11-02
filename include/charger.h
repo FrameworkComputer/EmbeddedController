@@ -393,7 +393,7 @@ enum ec_error_list charger_enable_linear_charge(int chgnum, bool enable);
  * @param enable: Whether to enable or disable bypass mode.
  * @return EC_SUCCESS on success, error otherwise.
  */
-enum ec_error_list charger_enable_bypass_mode(int chgnum, int enable);
+enum ec_error_list charger_enable_bypass_mode(int chgnum, bool enable);
 
 /**
  * Get the charger configuration for the number of battery cells
