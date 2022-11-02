@@ -35,6 +35,7 @@ if PLATFORM_EC_CBI
 
 choice PLATFORM_EC_CBI_STORAGE_TYPE
 	prompt "CBI storage type"
+	default PLATFORM_EC_CBI_EEPROM if $(dt_nodelabel_enabled,cbi_eeprom)
 	help
 	  Select the backing storage type for CBI data.
 
