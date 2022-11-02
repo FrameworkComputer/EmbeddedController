@@ -10,9 +10,6 @@ CONFIG_SOC_IT81302_BX=y
 # Platform Configuration
 CONFIG_BOARD_IT8XXX2=y
 
-# ADC
-CONFIG_ADC_SHELL=n
-
 # Power Management
 CONFIG_PM=y
 CONFIG_PM_DEVICE=y
