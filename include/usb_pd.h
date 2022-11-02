@@ -3188,13 +3188,6 @@ __override_proto void board_process_pd_alert(int port);
  */
 void board_reset_pd_mcu(void);
 
-/**
- * Return true if specified PD port is debug accessory.
- *
- * @param port USB-C port number
- */
-bool pd_is_debug_acc(int port);
-
 /*
  * Notify the AP that we have entered into DisplayPort Alternate Mode.  This
  * sets a DP_ALT_MODE_ENTERED MKBP event which may wake the AP.
