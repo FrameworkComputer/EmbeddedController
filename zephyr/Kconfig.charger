@@ -71,6 +71,13 @@ config PLATFORM_EC_CHARGE_STATE_DEBUG
 	  this config will allow the EC_CMD_CHARGE_STATE host command to use the
 	  CHARGE_STATE_CMD_GET_PARAM command to query the current charge state.
 
+config PLATFORM_EC_CMD_PWR_AVG
+	bool "Enable the console command to print power average"
+	depends on PLATFORM_EC_CHARGE_MANAGER
+	help
+	  Enables the console command which prints out the current (past 1
+	  minute) power average.
+
 config PLATFORM_EC_CHARGESPLASH
 	bool "Charging splashscreen support"
 	help
