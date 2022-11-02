@@ -93,6 +93,20 @@ ZTEST_USER(host_cmd_pd_control, test_suspend_resume)
 	zassert_true(pd_is_port_enabled(TEST_PORT), "Port failed to resume");
 }
 
+ZTEST_USER(host_cmd_pd_control, test_suspend_low_battery)
+{
+	struct ec_params_pd_control params = { .chip = TEST_PORT,
+					       .subcmd = PD_SUSPEND };
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PD_CONTROL, 0, params);
+
+	/* Suspending the port for firmware update should fail at critical low
+	 * battery.
+	 */
+	test_set_battery_level(1);
+	zassert_equal(host_command_process(&args), EC_RES_BUSY);
+}
+
 ZTEST_USER(host_cmd_pd_control, test_control_disable)
 {
 	struct ec_params_pd_control params = { .chip = TEST_PORT,
