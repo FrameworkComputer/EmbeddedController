@@ -58,6 +58,7 @@ tests:
       # Set to focus testing for Herobrine
       # Config is y only in nissa
       - CONFIG_PLATFORM_EC_CHARGER_RAA489000=n
+      - CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG=y
   drivers.chargesplash:
     timeout: 240
     extra_configs:

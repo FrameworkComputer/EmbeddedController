@@ -7,4 +7,5 @@ target_sources(app
   PRIVATE
     src/test_charge_state_v2.c
     src/test_common_charger.c
+    src/test_common_charger_mocked.c
 )
