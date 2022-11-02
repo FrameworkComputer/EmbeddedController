@@ -11,6 +11,9 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 #include <zephyr/toolchain.h>
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include <ap_power/ap_pwrseq.h>
+#endif
 
 #include <ap_power/ap_pwrseq.h>
 #include <power_signals.h>
@@ -133,13 +136,23 @@ power_signal_mask_t power_get_signals(void)
 	return mask | atomic_get(&power_signals);
 }
 
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 void power_signal_interrupt(enum power_signal signal, int value)
 {
 	atomic_set_bit_to(&power_signals, signal, value);
 	check_debug(signal);
 	ap_pwrseq_wake();
 }
+#else
+void power_signal_interrupt(enum power_signal signal, int value)
+{
+	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
 
+	atomic_set_bit_to(&power_signals, signal, value);
+	check_debug(signal);
+	ap_pwrseq_post_event(ap_pwrseq_dev, AP_PWRSEQ_EVENT_POWER_SIGNAL);
+}
+#endif
 int power_wait_mask_signals_timeout(power_signal_mask_t mask,
 				    power_signal_mask_t want, int timeout)
 {

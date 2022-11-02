@@ -8,10 +8,9 @@
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 
-/** Starts the AP power sequence thread */
-void ap_pwrseq_task_start(void);
-
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 void ap_pwrseq_wake(void);
+#else
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +30,13 @@ extern "C" {
 				     AP_POWER_SUB_STATE_ENUM_DEF_WITH_COMMA)),  \
 			     ())))
 
-/** @brief AP power sequence valid power states. */
+/**
+ * @brief AP power sequence valid power states.
+ *
+ * Note: States enum list MUST remain arranged from the lowest to the highest
+ * power state.
+ *
+ **/
 /* clang-format off */
 enum ap_pwrseq_state {
 	AP_POWER_STATE_UNINIT, /* EC and AP are Uninitialized */
@@ -203,4 +208,5 @@ int ap_pwrseq_register_state_exit_callback(
 #ifdef __cplusplus
 }
 #endif
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
 #endif /* _AP_PWRSEQ_H_ */

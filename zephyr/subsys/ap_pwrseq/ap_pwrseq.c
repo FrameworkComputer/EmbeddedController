@@ -9,7 +9,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 
-LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
+LOG_MODULE_REGISTER(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 #define AP_PWRSEQ_EVENT_MASK GENMASK(AP_PWRSEQ_EVENT_COUNT - 1, 0)
 #define AP_PWRSEQ_STATES_MASK GENMASK(AP_POWER_STATE_COUNT - 1, 0)

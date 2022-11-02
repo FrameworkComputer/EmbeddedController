@@ -34,6 +34,7 @@ void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 	 * wake mask to pretend it did, so that the hang detect event wakes the
 	 * system.
 	 */
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 	if (pwr_sm_get_state() == SYS_POWER_STATE_S0) {
 		host_event_t sleep_wake_mask;
 
@@ -41,6 +42,17 @@ void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 					    &sleep_wake_mask);
 		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, sleep_wake_mask);
 	}
+#else
+	const struct device *dev = ap_pwrseq_get_instance();
+
+	if (ap_pwrseq_get_current_state(dev) == AP_POWER_STATE_S0) {
+		host_event_t sleep_wake_mask;
+
+		ap_power_get_lazy_wake_mask(AP_POWER_STATE_S0IX,
+					    &sleep_wake_mask);
+		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, sleep_wake_mask);
+	}
+#endif
 
 	ccprintf("Warning: Detected sleep hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);

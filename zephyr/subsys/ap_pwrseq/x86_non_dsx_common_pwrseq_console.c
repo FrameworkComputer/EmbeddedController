@@ -15,7 +15,12 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 static int powerinfo_handler(const struct shell *shell, size_t argc,
 			     char **argv)
 {
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 	enum power_states_ndsx state = pwr_sm_get_state();
+#else
+	const struct device *dev = ap_pwrseq_get_instance();
+	enum ap_pwrseq_state state = ap_pwrseq_get_current_state(dev);
+#endif
 
 	shell_fprintf(shell, SHELL_INFO, "power state %d = %s, in 0x%04x\n",
 		      state, pwr_sm_get_state_name(state), power_get_signals());

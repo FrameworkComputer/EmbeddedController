@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "ap_power/ap_pwrseq.h"
+#include "ap_power/ap_power_interface.h"
 #include "button.h"
 #include "chipset.h"
 #include "cros_board_info.h"

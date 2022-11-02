@@ -9,6 +9,10 @@
 #include <ap_power/ap_power_interface.h>
 #include <power_host_sleep.h>
 
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include "ap_power/ap_pwrseq.h"
+#endif
+
 /*
  * Deferred call to set active mask according to current power state
  */
@@ -22,8 +26,12 @@ void ap_power_set_active_wake_mask(void);
  *
  * @return 0 for success; -EINVAL if power state is not S3/S5/S0ix
  */
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 int ap_power_get_lazy_wake_mask(enum power_states_ndsx state,
 				host_event_t *mask);
+#else
+int ap_power_get_lazy_wake_mask(enum ap_pwrseq_state state, host_event_t *mask);
+#endif
 
 #if CONFIG_AP_PWRSEQ_S0IX
 /* For S0ix path, flag to notify sleep change */
