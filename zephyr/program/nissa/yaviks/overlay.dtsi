@@ -130,17 +130,17 @@
 		};
 	};
 
-	temp_cpu: cpu {
+	temp_cpu_thermistor: cpu {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_1>;
 	};
-	temp_5v_regulator: 5v_regulator {
+	temp_5v_regulator_thermistor: 5v-regulator {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_2>;
 	};
-	temp_charger: charger {
+	temp_charger_thermistor: charger {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_3>;
@@ -148,32 +148,32 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		cpu {
+		temp_cpu: cpu {
 			temp_fan_off = <45>;
 			temp_fan_max = <60>;
 			temp_host_high = <75>;
 			temp_host_halt = <85>;
 			temp_host_release_high = <65>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_cpu>;
+			sensor = <&temp_cpu_thermistor>;
 		};
-		5v_regulator {
+		temp_5v_regulator: 5v-regulator {
 			temp_fan_off = <50>;
 			temp_fan_max = <65>;
 			temp_host_high = <75>;
 			temp_host_halt = <85>;
 			temp_host_release_high = <65>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_5v_regulator>;
+			sensor = <&temp_5v_regulator_thermistor>;
 		};
-		charger {
+		temp_charger: charger {
 			temp_fan_off = <50>;
 			temp_fan_max = <65>;
 			temp_host_high = <80>;
 			temp_host_halt = <85>;
 			temp_host_release_high = <75>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_charger>;
+			sensor = <&temp_charger_thermistor>;
 		};
 	};
 
@@ -233,18 +233,6 @@
 			tcpci_mux_1: tcpci-mux-1 {
 				compatible = "parade,usbc-mux-ps8xxx";
 			};
-		};
-	};
-
-	fans {
-		compatible = "cros-ec,fans";
-		fan_0 {
-			pwms = <&pwm2 PWM_CHANNEL_2 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
-			tach = <&tach1>;
-			rpm_min = <2600>;
-			rpm_start = <2600>;
-			rpm_max = <4100>;
-			enable_gpio = <&gpio_fan_enable>;
 		};
 	};
 };
@@ -383,20 +371,4 @@
 
 &usbpd0 {
 	status = "okay";
-};
-
-/* pwm for fan */
-&pwm2 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C6>;
-	pinctrl-0 = <&pwm2_gpa2_default>;
-	pinctrl-names = "default";
-};
-/* fan tachometer sensor */
-&tach1 {
-	status = "okay";
-	channel = <IT8XXX2_TACH_CHANNEL_A>;
-	pulses-per-round = <2>;
-	pinctrl-0 = <&tach1a_gpd7_default>;
-	pinctrl-names = "default";
 };
