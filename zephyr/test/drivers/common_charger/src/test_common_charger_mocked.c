@@ -29,6 +29,7 @@ FAKE_VALUE_FUNC(int, is_sourcing_otg_power, int, int);
 FAKE_VALUE_FUNC(enum ec_error_list, get_actual_current, int, int *);
 FAKE_VALUE_FUNC(enum ec_error_list, get_actual_voltage, int, int *);
 FAKE_VALUE_FUNC(enum ec_error_list, set_voltage, int, int);
+FAKE_VALUE_FUNC(enum ec_error_list, get_vsys_voltage, int, int, int *);
 
 struct common_charger_mocked_driver_fixture {
 	/* The original driver pointer that gets restored after the tests */
@@ -225,6 +226,48 @@ ZTEST_F(common_charger_mocked_driver, test_charger_set_voltage)
 	zassert_equal(2000, set_voltage_fake.arg1_history[0]);
 }
 
+ZTEST(common_charger_mocked_driver, test_charger_get_vsys_voltage__invalid)
+{
+	/* Cannot do chgnum bounds checking because
+	 * charger_get_valid_chgnum() will convert chgnum to 0 unless
+	 * CONFIG_CHARGER_SINGLE_CHIP is turned off.
+	 */
+
+	/* get_vsys_voltage is NULL */
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      charger_get_vsys_voltage(CHG_NUM, NULL));
+}
+
+/**
+ * @brief Custom fake for get_vsys_voltage that can write to the output param
+ */
+static enum ec_error_list get_vsys_voltage_custom_fake(int chgnum, int port,
+						       int *voltage)
+{
+	ARG_UNUSED(chgnum);
+	ARG_UNUSED(port);
+
+	*voltage = 2000;
+
+	return EC_SUCCESS;
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_get_vsys_voltage)
+{
+	int vsys_voltage;
+
+	fixture->mock_driver.get_vsys_voltage = get_vsys_voltage;
+	get_vsys_voltage_fake.custom_fake = get_vsys_voltage_custom_fake;
+
+	zassert_equal(EC_SUCCESS,
+		      charger_get_vsys_voltage(CHG_NUM, &vsys_voltage));
+
+	zassert_equal(1, get_vsys_voltage_fake.call_count);
+	zassert_equal(CHG_NUM, get_vsys_voltage_fake.arg0_history[0]);
+	zassert_equal(CHG_NUM, get_vsys_voltage_fake.arg1_history[0]);
+	zassert_equal(2000, vsys_voltage);
+}
+
 static void *setup(void)
 {
 	static struct common_charger_mocked_driver_fixture f;
@@ -255,6 +298,7 @@ static void reset(void *data)
 	RESET_FAKE(get_actual_current);
 	RESET_FAKE(get_actual_voltage);
 	RESET_FAKE(set_voltage);
+	RESET_FAKE(get_vsys_voltage);
 }
 
 static void teardown(void *data)
