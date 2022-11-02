@@ -10,8 +10,9 @@
 #include "cros_board_info.h"
 #include "write_protect.h"
 
-#if DT_NODE_EXISTS(DT_NODELABEL(cbi_eeprom))
-#define CBI_EEPROM_DEV DEVICE_DT_GET(DT_NODELABEL(cbi_eeprom))
+#define CBI_EEPROM_NODE DT_NODELABEL(cbi_eeprom)
+
+BUILD_ASSERT(DT_NODE_EXISTS(CBI_EEPROM_NODE), "cbi_eeprom node not defined");
 
 #ifdef CONFIG_PLATFORM_EC_EEPROM_CBI_WP
 #if !DT_NODE_EXISTS(DT_ALIAS(gpio_cbi_wp))
@@ -27,20 +28,37 @@ void cbi_latch_eeprom_wp(void)
 
 test_mockable_static int eeprom_load(uint8_t offset, uint8_t *data, int len)
 {
-	return eeprom_read(CBI_EEPROM_DEV, offset, data, len);
+	const struct device *dev;
+
+	dev = DEVICE_DT_GET(CBI_EEPROM_NODE);
+
+	if (!device_is_ready(dev)) {
+		return -ENODEV;
+	}
+
+	return eeprom_read(dev, offset, data, len);
 }
 
 static int eeprom_is_write_protected(void)
 {
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK))
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK)) {
 		return 0;
+	}
 
 	return write_protect_is_asserted();
 }
 
 static int eeprom_store(uint8_t *cbi)
 {
-	return eeprom_write(CBI_EEPROM_DEV, 0, cbi,
+	const struct device *dev;
+
+	dev = DEVICE_DT_GET(CBI_EEPROM_NODE);
+
+	if (!device_is_ready(dev)) {
+		return -ENODEV;
+	}
+
+	return eeprom_write(dev, 0, cbi,
 			    ((struct cbi_header *)cbi)->total_size);
 }
 
@@ -54,4 +72,3 @@ const struct cbi_storage_config_t cbi_config = {
 	.storage_type = CBI_STORAGE_TYPE_EEPROM,
 	.drv = &eeprom_drv,
 };
-#endif

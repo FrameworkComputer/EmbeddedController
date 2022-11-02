@@ -34,6 +34,17 @@ static int __test_eeprom_load_default_impl(uint8_t offset, uint8_t *data,
 	return ret;
 }
 
+ZTEST(common_cbi, test_cbi_latch_eeprom_wp)
+{
+	const struct gpio_dt_spec *wp = GPIO_DT_FROM_ALIAS(gpio_cbi_wp);
+
+	zassert_equal(gpio_emul_output_get(wp->port, wp->pin), 0);
+
+	cbi_latch_eeprom_wp();
+
+	zassert_equal(gpio_emul_output_get(wp->port, wp->pin), 1);
+}
+
 ZTEST(common_cbi, test_do_cbi_read__cant_load_head)
 {
 	enum cbi_data_tag arbitrary_unused_tag = CBI_TAG_SKU_ID;

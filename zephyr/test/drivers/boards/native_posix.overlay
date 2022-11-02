@@ -27,6 +27,7 @@
 		bmi160-int = &ms_bmi160_accel;
 		tcs3400-int = &tcs3400_clear;
 		gpio-wp = &gpio_wp_l;
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 
@@ -236,6 +237,9 @@
 		gpio_brd_id0: brd_id0 {
 			gpios = <&gpio1 8 GPIO_INPUT>;
 		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpio1 9 GPIO_OUTPUT>;
+		};
 	};
 
 	gpio1: gpio@101 {
@@ -248,7 +252,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <9>;
+		ngpios = <10>;
 	};
 
 	gpio-interrupts {
