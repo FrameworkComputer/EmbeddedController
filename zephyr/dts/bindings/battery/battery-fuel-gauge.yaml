@@ -5,8 +5,6 @@
 description: |
    Battery fuel gauge parameters
 
-compatible: "battery-fuel-gauge"
-
 properties:
    manuf_name:
       description: |

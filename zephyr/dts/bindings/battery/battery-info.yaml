@@ -8,8 +8,6 @@ description:
    Current is in milliamperes
    Temperature is in Celsius degrees
 
-compatible: "battery-info"
-
 properties:
    voltage_max:
       description: |
