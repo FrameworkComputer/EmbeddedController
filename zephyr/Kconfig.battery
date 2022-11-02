@@ -4,6 +4,8 @@
 
 menuconfig PLATFORM_EC_BATTERY
 	bool "Battery support"
+	default y
+	depends on DT_HAS_BATTERY_SMART_ENABLED
 	help
 	  Enables battery support on the board. Requires selection of a battery
 	  and a charger IC.
