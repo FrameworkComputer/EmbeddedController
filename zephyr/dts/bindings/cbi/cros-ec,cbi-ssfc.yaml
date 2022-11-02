@@ -4,7 +4,7 @@
 
 description: CBI Second Source Factory Cache (SSFC)
 
-compatible: "named-cbi-ssfc"
+compatible: "cros-ec,cbi-ssfc"
 
 child-binding:
     description:
@@ -33,20 +33,20 @@ child-binding:
 # Example:
 #
 # cbi-ssfc {
-#     compatible = "named-cbi-ssfc";
+#     compatible = "cros-ec,cbi-ssfc";
 #
 #     base_sensor {
 #         enum-name = "BASE_SENSOR";
 #         size = <3>;
 #         bmi160 {
-#             compatible = "named-cbi-ssfc-value";
+#             compatible = "cros-ec,cbi-ssfc-value";
 #             status = "okay";
 #
 #             value = <1>;
 #             devices = <&alt_base_accel &alt_base_gyro>;
 #         };
 #         kx022 {
-#             compatible = "named-cbi-ssfc-value";
+#             compatible = "cros-ec,cbi-ssfc-value";
 #             status = "okay";
 #
 #             value = <3>;

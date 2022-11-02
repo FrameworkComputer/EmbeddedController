@@ -25,11 +25,11 @@ Device tree is used to define and specify the field sizes and values.
 
 ## Devicetree Nodes
 
-The [`SSFC`] device tree nodes are defined via the [`named-cbi-ssfc`] and
-[`named-cbi-ssfc-value`] YAML bindings.
+The [`SSFC`] device tree nodes are defined via the [`cros-ec,cbi-ssfc`] and
+[`cros-ec,cbi-ssfc-value`] YAML bindings.
 
-The [`named-cbi-ssfc`] bindings define the name and size of each field.
-The [`named-cbi-ssfc-value`] bindings allow names/values to be defined for each
+The [`cros-ec,cbi-ssfc`] bindings define the name and size of each field.
+The [`cros-ec,cbi-ssfc-value`] bindings allow names/values to be defined for each
 value that may be stored in the field.
 One of the values may be designated as the default, which is used if
 the [`CBI`] data cannot be accessed.
@@ -41,12 +41,12 @@ value is used as a default, indicating the default field.
 An example definition is:
 ```
 cbi-ssfc {
-    compatible = "named-cbi-ssfc";
+    compatible = "cros-ec,cbi-ssfc";
     base_sensor {
         enum-name = "BASE_SENSOR";
         size = <3>;
         base_sensor_0: bmi160 {
-            compatible = "named-cbi-ssfc-value";
+            compatible = "cros-ec,cbi-ssfc-value";
             status = "okay";
             value = <1>;
         };
@@ -55,7 +55,7 @@ cbi-ssfc {
         enum-name = "LID_SENSOR";
         size = <3>;
         lid_sensor_0: bma255 {
-            compatible = "named-cbi-ssfc-value";
+            compatible = "cros-ec,cbi-ssfc-value";
             status = "okay";
             value = <1>;
         };
@@ -64,7 +64,7 @@ cbi-ssfc {
         enum-name = "LIGHTBAR";
         size = <2>;
         lightbar_0: 10_led {
-            compatible = "named-cbi-ssfc-value";
+            compatible = "cros-ec,cbi-ssfc-value";
             status = "okay";
             value = <1>;
         };
@@ -99,6 +99,6 @@ The [`ectool cbi`] command can be used to read and set the [`SSFC`].
 [`CBI`]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [`CBI Configuration`]: ./zephyr_cbi.md
 [`ectool cbi`]: ./zephyr_cbi.md#testing-and-debugging
-[`named-cbi-ssfc`]: ../../zephyr/dts/bindings/cbi/named-cbi-fw-config.yaml
-[`named-cbi-ssfc-value`]: ../../zephyr/dts/bindings/cbi/named-cbi-fw-config-value.yaml
+[`cros-ec,cbi-ssfc`]: ../../zephyr/dts/bindings/cbi/cros-ec,cbi-fw-config.yaml
+[`cros-ec,cbi-ssfc-value`]: ../../zephyr/dts/bindings/cbi/cros-ec,cbi-fw-config-value.yaml
 [`SSFC`]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/firmware_config.md

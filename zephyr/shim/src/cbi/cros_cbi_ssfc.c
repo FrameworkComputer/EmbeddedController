@@ -10,18 +10,17 @@
 
 LOG_MODULE_REGISTER(cros_cbi_ssfc, LOG_LEVEL_ERR);
 
-/* Actually, two "compatible" values are handle here -
- * named_cbi_ssfc_value and named_cbi_ssfc. named_cbi_ssfc_value nodes are
- * grandchildren of the named_cbi_ssfc node. named_cbi_ssfc_value is introduced
- * to iterate over grandchildren of the named_cbi_ssfc(macro
- * DT_FOREACH_CHILD can not be nested) and it can be pointed by a sensor dts to
- * indicate alternative usage.
+/* Actually, two "compatible" values are handle here - cros_ec_cbi_ssfc_value
+ * and cros_ec_cbi_ssfc. cros_ec_cbi_ssfc_value nodes are grandchildren of the
+ * cros_ec_cbi_ssfc node. cros_ec_cbi_ssfc_value is introduced to iterate over
+ * grandchildren of the cros_ec_cbi_ssfc (macro DT_FOREACH_CHILD can not be
+ * nested) and it can be pointed by a sensor dts to indicate alternative usage.
  */
-#define DT_DRV_COMPAT named_cbi_ssfc_value
+#define DT_DRV_COMPAT cros_ec_cbi_ssfc_value
 
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_cbi_ssfc) < 2,
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(cros_ec_cbi_ssfc) < 2,
 	     "More than 1 CBI SSFS node");
-#define CBI_SSFC_NODE DT_INST(0, named_cbi_ssfc)
+#define CBI_SSFC_NODE DT_INST(0, cros_ec_cbi_ssfc)
 
 #define CBI_SSFC_INIT_DEFAULT_ID(id, ssfc)                              \
 	do {                                                            \
@@ -73,13 +72,13 @@ BUILD_ASSERT(CBI_SSFC_FIELDS_SIZE <= 32, "CBI SSFS is bigger than 32 bits");
 /*
  * Define union bit fields based on the device tree entries. Example:
  * cbi-ssfc {
- *	compatible = "named-cbi-ssfc";
+ *	compatible = "cros-ec,cbi-ssfc";
  *
  *	base_sensor {
  *		enum-name = "BASE_SENSOR";
  *		size = <3>;
  *		bmi160 {
- *			compatible = "named-cbi-ssfc-value";
+ *			compatible = "cros-ec,cbi-ssfc-value";
  *			status = "okay";
  *			value = <1>;
  *		};
@@ -88,7 +87,7 @@ BUILD_ASSERT(CBI_SSFC_FIELDS_SIZE <= 32, "CBI SSFS is bigger than 32 bits");
  *		enum-name = "LID_SENSOR";
  *		size = <3>;
  *		bma255 {
- *			compatible = "named-cbi-ssfc-value";
+ *			compatible = "cros-ec,cbi-ssfc-value";
  *			status = "okay";
  *			value = <1>;
  *		};
@@ -97,7 +96,7 @@ BUILD_ASSERT(CBI_SSFC_FIELDS_SIZE <= 32, "CBI SSFS is bigger than 32 bits");
  *		enum-name = "LIGHTBAR";
  *		size = <2>;
  *		10_led {
- *			compatible = "named-cbi-ssfc-value";
+ *			compatible = "cros-ec,cbi-ssfc-value";
  *			status = "okay";
  *			value = <1>;
  *		};

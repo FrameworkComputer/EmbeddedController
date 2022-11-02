@@ -47,13 +47,13 @@ LOG_MODULE_REGISTER(cros_cbi_fw_config, LOG_LEVEL_ERR);
 #define FW_SHIFT_MASK(id) (FW_MASK(id) << FW_START(id))
 
 /*
- * For a child "named-cbi-fw-config-value" node, retrieve the
+ * For a child "cros-ec,cbi-fw-config-value" node, retrieve the
  * size of the parent field this value is associated with.
  */
 #define FW_PARENT_SIZE(id) DT_PROP(DT_PARENT(id), size)
 
 /*
- * For a child "named-cbi-fw-config-value" node, retrieve the
+ * For a child "cros-ec,cbi-fw-config-value" node, retrieve the
  * start of the parent field this value is associated with.
  */
 #define FW_PARENT_START(id) DT_PROP(DT_PARENT(id), start)
@@ -115,7 +115,7 @@ DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT, FW_VALUE_BUILD_ASSERT)
 /*
  * Define bit fields based on the device tree entries. Example:
  * cbi-fw-config {
- *	compatible = "named-cbi-fw-config";
+ *	compatible = "cros-ec,cbi-fw-config";
  *
  *	fan {
  *		enum-name = "FW_CONFIG_FAN";
@@ -123,7 +123,7 @@ DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT, FW_VALUE_BUILD_ASSERT)
  *		size = <1>;
  *		fan_present {
  *			enum-name = "FW_FAN_PRESENT"
- *			compatible = "named-cbi-fw-config-value";
+ *			compatible = "cros-ec,cbi-fw-config-value";
  *			value = <1>;
  *		};
  *	};
@@ -148,7 +148,7 @@ DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT, FW_VALUE_BUILD_ASSERT)
 		break;
 
 /*
- * Create a case for every child of this "named-cbi-fw-config" node.
+ * Create a case for every child of this "cros-ec,cbi-fw-config" node.
  */
 #define FW_FIELD_NODES(inst, cached, value) \
 	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, FW_FIELD_CASE, cached, value)
@@ -177,7 +177,7 @@ static int cros_cbi_fw_config_get_field(uint32_t cached_fw_config,
 {
 	switch (field_id) {
 		/*
-		 * Iterate through all the the "named-cbi-fw-config" nodes,
+		 * Iterate through all the the "cros-ec,cbi-fw-config" nodes,
 		 * and create cases for all of their child nodes.
 		 */
 		DT_FOREACH_STATUS_OKAY_VARGS(CBI_FW_CONFIG_COMPAT,

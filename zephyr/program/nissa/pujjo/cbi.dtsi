@@ -146,7 +146,7 @@
 
 	/* Pujjo-specific ssfc fields. */
 	cbi-ssfc {
-		compatible = "named-cbi-ssfc";
+		compatible = "cros-ec,cbi-ssfc";
 		/*
 		 * SSFC field to identify BASE motion sensor.
 		 */
@@ -155,13 +155,13 @@
 			size = <2>;
 
 			base_sensor_0: bmi323 {
-				compatible = "named-cbi-ssfc-value";
+				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <0>;
 				default;
 			};
 			base_sensor_1: lsm6dsm {
-				compatible = "named-cbi-ssfc-value";
+				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <1>;
 			};
@@ -175,13 +175,13 @@
 			size = <2>;
 
 			lid_sensor_0: bma422 {
-				compatible = "named-cbi-ssfc-value";
+				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <0>;
 				default;
 			};
 			lid_sensor_1: lis2dw12 {
-				compatible = "named-cbi-ssfc-value";
+				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <1>;
 			};
