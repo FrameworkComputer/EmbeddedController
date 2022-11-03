@@ -465,6 +465,14 @@ config PLATFORM_EC_POWER_COMMON
 	help
 	  Compile common code for AP power state machine.
 
+config CROS_EC_POWER_SIGNAL_LIST
+	bool "Define the power signal list from the devicetree"
+	default y
+	depends on $(dt_nodelabel_enabled,power_signal_list)
+	help
+	  Define the global power_signal_list[] from the devicetree. Requires a
+	  node with nodelabel power_signal_list.
+
 config PLATFORM_EC_MKBP_EVENT
     bool "MKBP event"
     help
