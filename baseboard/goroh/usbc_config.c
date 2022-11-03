@@ -81,7 +81,7 @@ static const struct usb_mux_chain goroh_usb_c1_ps8818_retimer = {
 		&(const struct usb_mux){
 			.usb_port = USBC_PORT_C1,
 			.i2c_port = I2C_PORT_USB_C1,
-			.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+			.i2c_addr_flags = PS8818_I2C_ADDR0_FLAGS,
 			.driver = &ps8818_usb_retimer_driver,
 		},
 	.next = NULL,
