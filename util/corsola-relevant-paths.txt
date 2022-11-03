@@ -1,0 +1,32 @@
+# Here you can place files of interest to be included in the commit message for
+# merge commits to cros/firmware-corsola-15194.B
+common/charge_state_v2.c
+common/dps.c
+common/mkbp_*
+common/usb_charger.c
+common/usb_common.c
+common/usbc/*_pd_*
+common/usbc/dp_alt_mode.c
+common/usbc/usb_pe_drp_sm.c
+common/usbc/usb_prl_sm.c
+common/usbc/usb_sm.c
+common/usbc/usb_tc_drp_acc_trysrc_sm.c
+driver/battery/smart.c
+driver/bc12/pi3usb9201.*
+driver/charger/isl923x.*
+driver/charger/rt949*
+driver/ppc/nx20p348x.*
+driver/ppc/rt1718s.*
+driver/ppc/syv682x.*
+driver/tcpm/anx7447.*
+driver/tcpm/rt1718s.*
+driver/tcpm/tcpci.*
+driver/usb_mux/it5205.*
+driver/usb_mux/ps8743.*
+power/mt8186.c
+zephyr/boards/arm/npcx9/*
+zephyr/boards/riscv/it8xxx2/*
+zephyr/drivers/*
+zephyr/projects/corsola/*
+zephyr/projects/corsola/*
+zephyr/shim/*
