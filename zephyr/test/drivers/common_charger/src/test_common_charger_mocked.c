@@ -30,6 +30,7 @@ FAKE_VALUE_FUNC(enum ec_error_list, get_actual_current, int, int *);
 FAKE_VALUE_FUNC(enum ec_error_list, get_actual_voltage, int, int *);
 FAKE_VALUE_FUNC(enum ec_error_list, set_voltage, int, int);
 FAKE_VALUE_FUNC(enum ec_error_list, get_vsys_voltage, int, int, int *);
+FAKE_VALUE_FUNC(enum ec_error_list, enable_bypass_mode, int, bool);
 
 struct common_charger_mocked_driver_fixture {
 	/* The original driver pointer that gets restored after the tests */
@@ -268,6 +269,24 @@ ZTEST_F(common_charger_mocked_driver, test_charger_get_vsys_voltage)
 	zassert_equal(2000, vsys_voltage);
 }
 
+ZTEST(common_charger_mocked_driver, test_charger_enable_bypass_mode__invalid)
+{
+	/* enable_bypass_mode is NULL */
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      charger_enable_bypass_mode(CHG_NUM, false));
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_enable_bypass_mode)
+{
+	fixture->mock_driver.enable_bypass_mode = enable_bypass_mode;
+	enable_bypass_mode_fake.return_val = 123;
+
+	zassert_equal(123, charger_enable_bypass_mode(CHG_NUM, true));
+
+	zassert_equal(1, enable_bypass_mode_fake.call_count);
+	zassert_true(enable_bypass_mode_fake.arg1_history[0]);
+}
+
 static void *setup(void)
 {
 	static struct common_charger_mocked_driver_fixture f;
@@ -299,6 +318,7 @@ static void reset(void *data)
 	RESET_FAKE(get_actual_voltage);
 	RESET_FAKE(set_voltage);
 	RESET_FAKE(get_vsys_voltage);
+	RESET_FAKE(enable_bypass_mode);
 }
 
 static void teardown(void *data)
