@@ -77,6 +77,7 @@ parameters that may be used, please consult the Twister documentation.
 import argparse
 import json
 import os
+import pathlib
 import re
 import shlex
 import subprocess
@@ -167,12 +168,12 @@ def is_rdb_login():
     return ret.returncode == 0
 
 
-def upload_results(ec_base):
+def upload_results(ec_base, outdir):
     """Uploads Zephyr Test results to ResultDB"""
     flag = False
 
     if is_rdb_login():
-        json_path = ec_base / "twister-out" / "twister.json"
+        json_path = pathlib.Path(outdir) / "twister.json"
         cmd = [
             "rdb",
             "stream",
@@ -201,10 +202,10 @@ def upload_results(ec_base):
     return flag
 
 
-def check_for_skipped_tests(ec_base):
+def check_for_skipped_tests(outdir):
     """Checks Twister json test report for skipped tests"""
     found_skipped = False
-    json_path = ec_base / "twister-out" / "twister.json"
+    json_path = pathlib.Path(outdir) / "twister.json"
     with open(json_path) as file:
         data = json.load(file)
 
@@ -282,6 +283,11 @@ def main():
     parser.add_argument(
         "--no-upload-cros-rdb", dest="upload_cros_rdb", action="store_false"
     )
+    parser.add_argument(
+        "-O",
+        "--outdir",
+        default=os.path.join(os.getcwd(), "twister-out"),
+    )
 
     intercepted_args, other_args = parser.parse_known_args()
 
@@ -316,6 +322,8 @@ def main():
         twister_cli.extend(["-p", "native_posix"])
         twister_cli.extend(["-p", "unit_testing"])
 
+    twister_cli.extend(["--outdir", intercepted_args.outdir])
+
     # Append additional user-supplied args
     twister_cli.extend(other_args)
 
@@ -334,7 +342,7 @@ def main():
     # Invoke Twister and wait for it to exit.
     result = subprocess.run(twister_cli, env=twister_env, check=False)
 
-    if check_for_skipped_tests(ec_base):
+    if check_for_skipped_tests(intercepted_args.outdir):
         result.returncode = 1
 
     if result.returncode == 0:
@@ -343,7 +351,7 @@ def main():
         print("TEST EXECUTION FAILED")
 
     if is_tool("rdb") and intercepted_args.upload_cros_rdb:
-        upload_results(ec_base)
+        upload_results(ec_base, intercepted_args.outdir)
 
     sys.exit(result.returncode)
 
