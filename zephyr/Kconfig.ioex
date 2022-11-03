@@ -4,7 +4,8 @@
 
 menuconfig PLATFORM_EC_IOEX_CROS_DRV
 	bool "IO expander support"
-	depends on I2C
+	default y
+	depends on I2C && DT_HAS_CROS_IOEX_CHIP_ENABLED
 	help
 	  Enable support for CrOS EC ioex drivers.
 
