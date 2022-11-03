@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "ec_commands.h"
 #include "usb_pd.h"
+#include "usb_charge.h"
 #include "usbc_ppc.h"
 
 DECLARE_FAKE_VALUE_FUNC(int, chipset_in_state, int);
