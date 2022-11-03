@@ -63,4 +63,8 @@ int tmp112_get_val_mk(int idx, int *temp_mk_ptr);
  */
 void tmp112_init(void);
 
+#ifdef CONFIG_ZEPHYR
+void tmp112_update_temperature(int idx);
+#endif /* CONFIG_ZEPHYR */
+
 #endif /* __CROS_EC_TMP112_H */

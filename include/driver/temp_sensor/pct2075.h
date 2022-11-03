@@ -68,4 +68,8 @@ int pct2075_get_val_mk(int idx, int *temp_mk_ptr);
  */
 void pct2075_init(void);
 
+#ifdef CONFIG_ZEPHYR
+void pct2075_update_temperature(int idx);
+#endif /* CONFIG_ZEPHYR */
+
 #endif /* __CROS_EC_PCT2075_H */

@@ -143,6 +143,7 @@ enum tmp112_sensor {
 struct zephyr_temp_sensor {
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */
 	int (*read)(const struct temp_sensor_t *sensor, int *temp_ptr);
+	void (*update_temperature)(int idx);
 	const struct thermistor_info *thermistor;
 #if ANY_INST_HAS_POWER_GOOD_PIN
 	const struct device *power_good_dev;

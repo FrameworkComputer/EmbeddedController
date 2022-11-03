@@ -92,6 +92,7 @@ int tmp112_get_val_mk(int idx, int *temp_mk_ptr)
 	return EC_SUCCESS;
 }
 
+#ifndef CONFIG_ZEPHYR
 static void tmp112_poll(void)
 {
 	int s;
@@ -103,6 +104,18 @@ static void tmp112_poll(void)
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, tmp112_poll, HOOK_PRIO_TEMP_SENSOR);
+#else
+static void tmp112_update_temperature(int idx)
+{
+	int temp_reg = 0;
+
+	if (idx >= TMP112_COUNT)
+		return;
+
+	if (get_reg_temp(idx, &temp_reg) == EC_SUCCESS)
+		temp_mk_local[idx] = tmp112_reg_to_mk(temp_reg);
+}
+#endif /* CONFIG_ZEPHYR */
 
 void tmp112_init(void)
 {
