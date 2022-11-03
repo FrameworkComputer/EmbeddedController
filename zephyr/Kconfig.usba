@@ -4,6 +4,8 @@
 
 menuconfig PLATFORM_EC_USBA
 	bool "USB Type-A support"
+	default y
+	depends on DT_HAS_CROS_EC_USBA_PORT_ENABLE_PINS_ENABLED
 	help
 	  Enable USB Type A ports
 

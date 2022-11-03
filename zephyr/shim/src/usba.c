@@ -8,8 +8,6 @@
 #include <zephyr/devicetree.h>
 #include "hooks.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
-
 #define PIN(node_id, prop, idx) \
 	GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, idx)),
 
@@ -23,5 +21,3 @@ const
 #endif
 	int usb_port_enable[] = { DT_INST_FOREACH_STATUS_OKAY(
 		USBA_ENABLE_PINS) };
-
-#endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */

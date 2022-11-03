@@ -163,7 +163,6 @@ tests:
     extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;./usb_port_power_dumb/usba.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB=y
-      - CONFIG_PLATFORM_EC_USBA=y
       - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB=y
   drivers.usb_pd_discharge:
     extra_configs:
