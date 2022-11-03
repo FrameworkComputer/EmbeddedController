@@ -243,27 +243,23 @@
 		enable-pins = <&gpio_en_usb_a_5v>;
 	};
 
-	sku {
+	gpio_id_sku: sku {
 		compatible = "cros-ec,gpio-id";
-
 		bits  = <
 			&gpio_sku_id0
 			&gpio_sku_id1
 			&gpio_sku_id2
 		>;
-
 		system = "ternary";
 	};
 
-	board {
+	gpio_id_board: board {
 		compatible = "cros-ec,gpio-id";
-
 		bits  = <
 			&gpio_brd_id0
 			&gpio_brd_id1
 			&gpio_brd_id2
 		>;
-
 		system = "ternary";
 	};
 

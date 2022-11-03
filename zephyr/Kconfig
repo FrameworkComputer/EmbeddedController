@@ -809,4 +809,14 @@ config PLATFORM_EC_MATH_UTIL
 	  Math utilities including bitmask manipulation, division rounding,
 	  trigonometric function, etc.
 
+config PLATFORM_EC_GPIO_ID
+        bool "Enable GPIO ID handling for board and sku ids"
+	default y
+	depends on DT_HAS_CROS_EC_GPIO_ID_ENABLED
+	help
+	  Enable setting board and sku IDs using GPIOs. Defines the
+	  board_get_sku_id and board_get_version functions based on the
+	  devicetree node using the known nodelabels gpio_id_sku and
+	  gpio_id_board.
+
 endif # PLATFORM_EC

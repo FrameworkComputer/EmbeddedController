@@ -6,7 +6,6 @@ zephyr_library_sources(button_config.c)
 zephyr_library_sources(console.c)
 zephyr_library_sources(crc.c)
 zephyr_library_sources(gpio.c)
-zephyr_library_sources(gpio_id.c)
 zephyr_library_sources(gpio_int.c)
 zephyr_library_sources(power.c)
 
@@ -32,6 +31,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
                                                             espi.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN         fan.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FLASH_CROS  flash.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_GPIO_ID
+							    gpio_id.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOOKS       hooks.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD     host_command.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE

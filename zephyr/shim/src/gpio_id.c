@@ -11,9 +11,6 @@
 #include "gpio.h"
 #include "util.h"
 
-#define IS_BOARD_COMPATIBLE DT_NODE_HAS_COMPAT(DT_PATH(board), cros_ec_gpio_id)
-#define IS_SKU_COMPATIBLE DT_NODE_HAS_COMPAT(DT_PATH(sku), cros_ec_gpio_id)
-
 #define CONVERT_NUMERAL_SYSTEM_EVAL(system, bits, nbits) \
 	system##_from_bits(bits, nbits)
 #define CONVERT_NUMERAL_SYSTEM(system, bits, nbits) \
@@ -23,14 +20,15 @@
 #define READ_PIN_FROM_PHANDLE(node_id, prop, idx) \
 	gpio_get_ternary(GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, idx))),
 
-#if DT_NODE_EXISTS(DT_PATH(sku)) && IS_SKU_COMPATIBLE
+#define SKU_GPIO_ID_NODE DT_NODELABEL(gpio_id_sku)
+#if DT_NODE_HAS_STATUS(SKU_GPIO_ID_NODE, okay)
 
 __override uint32_t board_get_sku_id(void)
 {
 	static uint32_t sku_id = (uint32_t)-1;
 
 	if (sku_id == (uint32_t)-1) {
-		int bits[] = { DT_FOREACH_PROP_ELEM(DT_PATH(sku), bits,
+		int bits[] = { DT_FOREACH_PROP_ELEM(SKU_GPIO_ID_NODE, bits,
 						    READ_PIN_FROM_PHANDLE) };
 
 		if (sizeof(bits) == 0)
@@ -46,14 +44,15 @@ __override uint32_t board_get_sku_id(void)
 
 #endif
 
-#if DT_NODE_EXISTS(DT_PATH(board)) && IS_BOARD_COMPATIBLE
+#define BOARD_GPIO_ID_NODE DT_NODELABEL(gpio_id_board)
+#if DT_NODE_HAS_STATUS(SKU_GPIO_ID_NODE, okay)
 
 __override int board_get_version(void)
 {
 	static int board_version = -1;
 
 	if (board_version == -1) {
-		int bits[] = { DT_FOREACH_PROP_ELEM(DT_PATH(board), bits,
+		int bits[] = { DT_FOREACH_PROP_ELEM(BOARD_GPIO_ID_NODE, bits,
 						    READ_PIN_FROM_PHANDLE) };
 
 		if (sizeof(bits) == 0)
@@ -68,3 +67,7 @@ __override int board_get_version(void)
 }
 
 #endif
+
+BUILD_ASSERT(DT_NODE_HAS_STATUS(SKU_GPIO_ID_NODE, okay) ||
+		     DT_NODE_HAS_STATUS(BOARD_GPIO_ID_NODE, okay),
+	     "neither sku or board id nodelabels found");
