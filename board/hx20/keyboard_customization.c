@@ -488,12 +488,17 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	if (factory_status())
 		return EC_SUCCESS;
 
-	if (pressed_key == SCANCODE_FN && pressed) {
-		Fn_key |= FN_PRESSED;
-		return EC_ERROR_UNIMPLEMENTED;
-	} else if (pressed_key == SCANCODE_FN && !pressed) {
-		Fn_key &= ~FN_PRESSED;
-		return EC_ERROR_UNIMPLEMENTED;
+	/*
+	 * Record Fn button press in the Fn_key mask and return
+	 * scancode to OS
+	 */
+	if (pressed_key == SCANCODE_FN) {
+		if (pressed) {
+			Fn_key |= FN_PRESSED;
+		} else {
+			Fn_key &= ~FN_PRESSED;
+		}
+		return EC_SUCCESS;
 	}
 
 	/*
