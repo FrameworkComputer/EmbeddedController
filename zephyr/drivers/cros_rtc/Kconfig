@@ -6,7 +6,12 @@ if PLATFORM_EC_RTC && !ARCH_POSIX
 
 choice CROS_RTC_TYPE
 	prompt "Select the RTC to use"
-	default CROS_RTC_NPCX if SOC_FAMILY_NPCX
+	# List standalone controllers before embedded once so that they get
+	# higher priority.
+	default CROS_RTC_NXP_PCF85063A if DT_HAS_NXP_RTC_PCF85063A_ENABLED
+	default CROS_RTC_RENESAS_IDT1337AG if DT_HAS_RENESAS_RTC_IDT1337AG_ENABLED
+	default CROS_RTC_NPCX if DT_HAS_NUVOTON_NPCX_CROS_MTC_ENABLED
+	default CROS_RTC_XEC if DT_HAS_MICROCHIP_XEC_CROS_RTC_ENABLED
 	help
 	  Select the RTC used on the board.
 
