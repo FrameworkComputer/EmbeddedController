@@ -29,8 +29,8 @@
 			temp_host_release_warn = <45>;
 			temp_host_release_high = <95>;
 			temp_host_release_halt = <100>;
-			temp_fan_off = <43>;
-			temp_fan_max = <53>;
+			temp_fan_off = <35>;
+			temp_fan_max = <40>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&amb_pct2075>;
 		};
