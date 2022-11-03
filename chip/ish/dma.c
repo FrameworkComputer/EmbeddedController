@@ -13,28 +13,6 @@
 
 static int dma_init_called; /* If ish_dma_init is called */
 
-static int dma_poll(uint32_t addr, uint32_t expected, uint32_t mask)
-{
-	int retval = -1;
-	uint32_t counter = 0;
-
-	/*
-	 * The timeout is approximately 2.2 seconds according to
-	 * value of UINT32_MAX, 120MHZ ISH clock frequency and
-	 * instruction count which is around 4.
-	 */
-	while (counter < (UINT32_MAX / 64)) {
-		/* test condition */
-		if ((REG32(addr) & mask) == expected) {
-			retval = DMA_RC_OK;
-			break;
-		}
-		counter++;
-	}
-
-	return retval;
-}
-
 void ish_dma_ocp_timeout_disable(void)
 {
 	if (!IS_ENABLED(CONFIG_ISH_NEW_PM)) {
@@ -42,24 +20,6 @@ void ish_dma_ocp_timeout_disable(void)
 
 		OCP_AGENT_CONTROL = ctrl & OCP_RESPONSE_TO_DISABLE;
 	}
-}
-
-static inline uint32_t interrupt_lock(void)
-{
-	uint32_t eflags = 0;
-	__asm__ volatile("pushfl;" /* save eflag value */
-			 "popl  %0;"
-			 "cli;"
-			 : "=r"(eflags)); /* shut off interrupts */
-	return eflags;
-}
-
-static inline void interrupt_unlock(uint32_t eflags)
-{
-	__asm__ volatile("pushl  %0;" /* restore elfag values */
-			 "popfl;"
-			 :
-			 : "r"(eflags));
 }
 
 void dma_configure_psize(void)

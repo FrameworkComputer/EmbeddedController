@@ -91,6 +91,56 @@
 
 static void handle_reset(enum ish_pm_state pm_state);
 
+#if defined(CHIP_VARIANT_ISH5P4)
+static void sb_upstream_write_raw_base(uint32_t addr, uint32_t attr,
+				       uint32_t data, uint32_t sairs,
+				       uint8_t addr48, uint16_t addr_hi)
+{
+	uint32_t eflags;
+	uint32_t addr_hi_32;
+
+	addr_hi_32 = addr_hi | (1 << 31);
+
+	eflags = interrupt_lock();
+
+	PMU_VNN_REQ = (1 << VNN_ID_SIDEBAND);
+	while (!(PMU_VNN_REQ_ACK & PMU_VNN_REQ_ACK_STATUS))
+		continue;
+
+	if (dma_poll(SBEP_REG_UP_MSG_STATUS_ADDR, 0, UP_STATUS_BUSY_MASK) ==
+	    DMA_RC_OK) {
+		SBEP_REG_UP_MSG_REQ_ADDR_LOW = addr;
+
+		if (addr48) {
+			SBEP_REG_UP_MSG_REQ_ADDR_HIGH = addr_hi_32;
+		} else {
+			SBEP_REG_UP_MSG_REQ_ADDR_HIGH = 0;
+		}
+
+		SBEP_REG_UP_MSG_REQ_ATTR = attr;
+		SBEP_REG_UP_MSG_REQ_DATA = data;
+		SBEP_REG_UP_MSG_REQ_EH = sairs;
+		SBEP_REG_UP_MSG_COMMAND = SBEP_CMD_WRITE;
+
+		dma_poll(SBEP_REG_UP_MSG_STATUS_ADDR, 0, UP_STATUS_BUSY_MASK);
+		dma_poll(SBEP_REG_UP_MSG_STATUS_ADDR, UP_STATUS_MSG_SENT_MASK,
+			 UP_STATUS_MSG_SENT_MASK);
+		SBEP_REG_UP_MSG_STATUS = UP_STATUS_MSG_SENT_CLR;
+	}
+
+	PMU_VNN_REQ = (1 << VNN_ID_SIDEBAND);
+	interrupt_unlock(eflags);
+}
+
+static void sb_upstream_write_raw(uint32_t addr, uint32_t attr, uint32_t data,
+				  uint32_t sairs)
+{
+	addr = addr & 0x0000FFFF;
+
+	sb_upstream_write_raw_base(addr, attr, data, sairs, 0, 0);
+}
+#endif
+
 /* ISR for PMU wakeup interrupt */
 static void pmu_wakeup_isr(void)
 {
@@ -670,6 +720,13 @@ static void handle_d0i3(void)
 		aon_share.pg_exit = 0;
 	}
 
+#if defined(CHIP_VARIANT_ISH5P4)
+	/* Set PMC LTR to 2ms before DMA copy */
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM))
+		sb_upstream_write_raw(0, LTR_CMD_ATTR, LTR_CMD_DATA_2MS,
+				      SBEP_PMC_SAIRS_VAL);
+#endif
+
 	/* store main FW 's context to IMR DDR from main SRAM */
 	ret = store_main_fw();
 
@@ -679,6 +736,13 @@ static void handle_d0i3(void)
 
 	/* power off main SRAM */
 	sram_power(0);
+
+#if defined(CHIP_VARIANT_ISH5P4)
+	/* Set LTR to a large number after DMA copy done */
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM))
+		sb_upstream_write_raw(0, LTR_CMD_ATTR, LTR_CMD_DATA_INFINITE,
+				      SBEP_PMC_SAIRS_VAL);
+#endif
 
 	set_vnnred_aoncg();
 
@@ -711,6 +775,13 @@ static void handle_d0i3(void)
 			ish_dma_set_msb(PAGING_CHAN, aon_share.uma_msb,
 					aon_share.uma_msb);
 	}
+
+#if defined(CHIP_VARIANT_ISH5P4)
+	/* Set PMC LTR to 2ms before DMA copy */
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM))
+		sb_upstream_write_raw(0, LTR_CMD_ATTR, LTR_CMD_DATA_2MS,
+				      SBEP_PMC_SAIRS_VAL);
+#endif
 
 	/* restore main FW 's context to main SRAM from IMR DDR */
 	ret = restore_main_fw();
