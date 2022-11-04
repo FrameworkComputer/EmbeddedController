@@ -79,7 +79,7 @@ def build(opts):
     )
 
     # Start with a clean build environment
-    cmd = ["make", "clobber"]
+    cmd = ["make", "clobber", "V=1"]
     log_cmd(cmd)
     subprocess.run(cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL)
 
@@ -269,7 +269,7 @@ def test(opts):
         ).stdout
         _extract_lcov_summary("EC_ZEPHYR_TESTS", metrics, output)
 
-        cmd = ["make", "test-coverage", f"-j{opts.cpus}"]
+        cmd = ["make", "test-coverage", f"-j{opts.cpus}", "V=1"]
         log_cmd(cmd)
         subprocess.run(
             cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL

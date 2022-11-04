@@ -74,11 +74,11 @@ def build(opts):
     ec_dir = pathlib.Path(__file__).parent
     subprocess.run([ec_dir / "util" / "check_clang_format.py"], check=True)
 
-    cmd = ["make", "clobber"]
+    cmd = ["make", "clobber", "V=1"]
     print(f"# Running {' '.join(cmd)}.")
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
-    cmd = ["make", "buildall_only", f"-j{opts.cpus}"]
+    cmd = ["make", "buildall_only", f"-j{opts.cpus}", "V=1"]
     print(f"# Running {' '.join(cmd)}.")
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
@@ -239,7 +239,7 @@ def test(opts):
     # Otherwise, build the 'runtests' target, which verifies all
     # posix-based unit tests build and pass.
     target = "coverage" if opts.code_coverage else "runtests"
-    cmd = ["make", target, f"-j{opts.cpus}"]
+    cmd = ["make", target, f"-j{opts.cpus}", "V=1"]
     print(f"# Running {' '.join(cmd)}.")
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
@@ -247,13 +247,13 @@ def test(opts):
         # Verify compilation of the on-device unit test binaries.
         # TODO(b/172501728) These should build  for all boards, but they've bit
         # rotted, so we only build the ones that compile.
-        cmd = ["make", f"-j{opts.cpus}"]
+        cmd = ["make", f"-j{opts.cpus}", "V=1"]
         cmd.extend(["tests-" + b for b in BOARDS_UNIT_TEST])
         print(f"# Running {' '.join(cmd)}.")
         subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
         # Verify the tests pass with ASan also
-        cmd = ["make", "TEST_ASAN=y", target, f"-j{opts.cpus}"]
+        cmd = ["make", "TEST_ASAN=y", target, f"-j{opts.cpus}", "V=1"]
         print(f"# Running {' '.join(cmd)}.")
         subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
