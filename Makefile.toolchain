@@ -229,6 +229,9 @@ LIBFTDIUSB_HOST_LDLIBS:=$(shell $(HOST_PKG_CONFIG) --libs   lib${LIBFTDI_NAME} l
 LIBFTDIUSB_BUILD_CFLAGS:=$(shell $(BUILD_PKG_CONFIG) --cflags lib${LIBFTDI_NAME} libusb-1.0)
 LIBFTDIUSB_BUILD_LDLIBS:=$(shell $(BUILD_PKG_CONFIG) --libs   lib${LIBFTDI_NAME} libusb-1.0)
 
+LIBEC_HOST_CFLAGS:=$(shell $(HOST_PKG_CONFIG) --cflags libec)
+LIBEC_HOST_LDLIBS:=$(shell $(HOST_PKG_CONFIG) --libs libec)
+
 ifeq ($(TEST_FUZZ),y)
 LIBPROTOBUF_CFLAGS:=$(shell $(PKG_CONFIG) --cflags protobuf)
 LIBPROTOBUF_LDLIBS:=$(shell $(PKG_CONFIG) --libs   protobuf)
@@ -247,6 +250,7 @@ HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) \
 HOST_CFLAGS+=$(LIBFTDIUSB_HOST_CFLAGS)
 HOST_CFLAGS+=-DCHROMIUM_EC=$(EMPTY)
 HOST_CXXFLAGS=$(HOST_CFLAGS) -Wno-c99-designator
+HOST_CXXFLAGS+=$(LIBEC_HOST_CFLAGS)
 ifneq (${SYSROOT},)
   LDFLAGS_EXTRA+=--sysroot=${SYSROOT}
 endif
@@ -266,6 +270,7 @@ HOST_LDFLAGS=$(LIBFTDIUSB_HOST_LDLIBS)
 ifneq (${HOST_SYSROOT},)
   HOST_LDFLAGS+=--sysroot=${HOST_SYSROOT}
 endif
+HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  -fuse-ld=bfd -no-pie \
 		  $(if $(TEST_COVERAGE), --coverage,) \

@@ -53,6 +53,14 @@ int comm_init_alt(int interfaces, const char *device_name, int i2c_bus);
 int comm_init_dev(const char *device_name);
 
 /**
+ * Get the file descriptor associated with the dev interface. comm_init_dev
+ * must be called first in order for the file descriptor to be valid.
+ *
+ * @return file descriptor
+ */
+int comm_get_fd(void);
+
+/**
  * Initialize input & output buffers
  *
  * @return 0 in case of success, or error code.
