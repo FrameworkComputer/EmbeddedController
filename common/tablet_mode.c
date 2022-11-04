@@ -68,27 +68,51 @@ static void notify_tablet_mode_change(void)
 
 void tablet_set_mode(int mode, uint32_t trigger)
 {
-	uint32_t old_mode = tablet_mode;
-
-	/* If tablet_mode is forced via a console command, ignore set. */
-	if (tablet_mode_forced)
-		return;
+	uint32_t new_mode = tablet_mode_forced ? tablet_mode_store :
+						 tablet_mode;
+	uint32_t old_mode = 0;
 
 	if (disabled) {
-		CPRINTS("Tablet mode set while disabled (ignoring)!");
+		/*
+		 * If tablet mode is being forced by the user, then this logging
+		 * would be misleading since the mode wouldn't change anyway, so
+		 * skip it.
+		 */
+		if (!tablet_mode_forced)
+			CPRINTS("Tablet mode set while disabled (ignoring)!");
 		return;
 	}
 
 	if (gmr_sensor_at_360 && !mode) {
-		CPRINTS("Ignoring tablet mode exit while gmr sensor "
-			"reports 360-degree tablet mode.");
+		/*
+		 * If tablet mode is being forced by the user, then this logging
+		 * would be misleading since the mode wouldn't change anyway, so
+		 * skip it.
+		 */
+		if (!tablet_mode_forced)
+			CPRINTS("Ignoring tablet mode exit while gmr sensor "
+				"reports 360-degree tablet mode.");
 		return;
 	}
 
 	if (mode)
-		tablet_mode |= trigger;
+		new_mode |= trigger;
 	else
-		tablet_mode &= ~trigger;
+		new_mode &= ~trigger;
+
+	if (tablet_mode_forced) {
+		/*
+		 * Save the current mode based on the HW orientation, so we
+		 * apply the correct mode if tablet mode no longer forced in the
+		 * future. Don't notify of the tablet mode change yet, since
+		 * that will be done as part of handling 'tabletmode reset'.
+		 */
+		tablet_mode_store = new_mode;
+		return;
+	}
+
+	old_mode = tablet_mode;
+	tablet_mode = new_mode;
 
 	/* Boolean comparison */
 	if (!tablet_mode == !old_mode)

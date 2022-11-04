@@ -34,27 +34,31 @@ ZTEST_USER(tabletmode, test_tablet_set_mode)
 	int ret;
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet initial mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet initial mode: %d", ret);
 
 	tablet_set_mode(1, TABLET_TRIGGER_LID);
-
 	ret = tablet_get_mode();
-	zassert_equal(ret, 1, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 1, "unexpected tablet mode: %d", ret);
 
 	tablet_set_mode(1, TABLET_TRIGGER_BASE);
-
 	ret = tablet_get_mode();
-	zassert_equal(ret, 1, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 1, "unexpected tablet mode: %d", ret);
 
+	/**
+	 * Tablet mode should remain enabled, since both _LID and _BASE were set
+	 * previously, and this only clears _LID.
+	 */
 	tablet_set_mode(0, TABLET_TRIGGER_LID);
-
 	ret = tablet_get_mode();
-	zassert_equal(ret, 1, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 1, "unexpected tablet mode: %d", ret);
 
+	/**
+	 * Both _LID and _BASE are now cleared, so DUT is no longer in tablet
+	 * mode.
+	 */
 	tablet_set_mode(0, TABLET_TRIGGER_BASE);
-
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet mode: %d", ret);
 }
 
 /**
@@ -65,13 +69,13 @@ ZTEST_USER(tabletmode, test_tablet_disable)
 	int ret;
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet initial mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet initial mode: %d", ret);
 
 	tablet_disable();
 	tablet_set_mode(1, TABLET_TRIGGER_LID);
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet mode: %d", ret);
 }
 
 /**
@@ -82,28 +86,28 @@ ZTEST_USER(tabletmode, test_settabletmode_on_off)
 	int ret;
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet initial mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet initial mode: %d", ret);
 
 	ret = shell_execute_cmd(get_ec_shell(), "tabletmode");
-	zassert_equal(ret, EC_SUCCESS, "unexepcted command return status: %d",
+	zassert_equal(ret, EC_SUCCESS, "unexpected command return status: %d",
 		      ret);
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet mode: %d", ret);
 
 	ret = shell_execute_cmd(get_ec_shell(), "tabletmode on");
-	zassert_equal(ret, EC_SUCCESS, "unexepcted command return status: %d",
+	zassert_equal(ret, EC_SUCCESS, "unexpected command return status: %d",
 		      ret);
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 1, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 1, "unexpected tablet mode: %d", ret);
 
 	ret = shell_execute_cmd(get_ec_shell(), "tabletmode off");
-	zassert_equal(ret, EC_SUCCESS, "unexepcted command return status: %d",
+	zassert_equal(ret, EC_SUCCESS, "unexpected command return status: %d",
 		      ret);
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet mode: %d", ret);
 }
 
 /**
@@ -115,28 +119,28 @@ ZTEST_USER(tabletmode, test_settabletmode_forced)
 	int ret;
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet initial mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet initial mode: %d", ret);
 
 	ret = shell_execute_cmd(get_ec_shell(), "tabletmode on");
-	zassert_equal(ret, EC_SUCCESS, "unexepcted command return status: %d",
+	zassert_equal(ret, EC_SUCCESS, "unexpected command return status: %d",
 		      ret);
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 1, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 1, "unexpected tablet mode: %d", ret);
 
 	tablet_set_mode(0, TABLET_TRIGGER_LID);
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 1, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 1, "unexpected tablet mode: %d", ret);
 
 	ret = shell_execute_cmd(get_ec_shell(), "tabletmode reset");
-	zassert_equal(ret, EC_SUCCESS, "unexepcted command return status: %d",
+	zassert_equal(ret, EC_SUCCESS, "unexpected command return status: %d",
 		      ret);
 
 	tablet_set_mode(0, TABLET_TRIGGER_LID);
 
 	ret = tablet_get_mode();
-	zassert_equal(ret, 0, "unexepcted tablet mode: %d", ret);
+	zassert_equal(ret, 0, "unexpected tablet mode: %d", ret);
 }
 
 /**
@@ -149,7 +153,7 @@ ZTEST_USER(tabletmode, test_settabletmode_too_many_args)
 	ret = shell_execute_cmd(get_ec_shell(),
 				"tabletmode too many arguments");
 	zassert_equal(ret, EC_ERROR_PARAM_COUNT,
-		      "unexepcted command return status: %d", ret);
+		      "unexpected command return status: %d", ret);
 }
 
 /**
@@ -161,7 +165,7 @@ ZTEST_USER(tabletmode, test_settabletmode_unknown_arg)
 
 	ret = shell_execute_cmd(get_ec_shell(), "tabletmode X");
 	zassert_equal(ret, EC_ERROR_PARAM1,
-		      "unexepcted command return status: %d", ret);
+		      "unexpected command return status: %d", ret);
 }
 
 ZTEST_SUITE(tabletmode, drivers_predicate_post_main, NULL, tabletmode_before,
