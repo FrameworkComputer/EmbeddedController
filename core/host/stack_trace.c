@@ -40,6 +40,11 @@ static void __attribute__((noinline)) _task_dump_trace_impl(int offset)
 	int i, nb;
 
 	sz = backtrace(trace, MAX_TRACE);
+	if (sz < offset) {
+		fprintf(stderr, "Can't print backtrace: %ld < %d\n", sz,
+			offset);
+		return;
+	}
 	messages = backtrace_symbols(trace + offset, sz - offset);
 
 	for (i = 0; i < sz - offset; ++i) {
