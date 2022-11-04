@@ -198,6 +198,7 @@ fpsensor-y=fpsensor.o
 fpsensor_crypto-y=fpsensor_crypto.o
 fpsensor_hw-y=fpsensor_hw.o
 fpsensor_state-y=fpsensor_state.o
+ftrapv-y=ftrapv.o
 gyro_cal-y=gyro_cal.o gyro_cal_init_for_test.o
 hooks-y=hooks.o
 host_command-y=host_command.o

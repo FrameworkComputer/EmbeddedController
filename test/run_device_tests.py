@@ -236,6 +236,7 @@ class AllTests:
                 test_name="fpsensor",
                 test_args=["uart"],
             ),
+            TestConfig(test_name="ftrapv"),
             TestConfig(
                 test_name="libc_printf",
                 finish_regexes=[PRINTF_CALLED_REGEX],

@@ -40,6 +40,7 @@ test-list-y=\
        flash_write_protect \
        fpsensor \
        fpsensor_hw \
+       ftrapv \
        libc_printf \
        mpu \
        mutex \
