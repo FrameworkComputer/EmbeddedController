@@ -1731,6 +1731,9 @@ struct ec_params_flash_read {
  * struct ec_params_flash_write - Parameters for the flash write command.
  * @offset: Byte offset to write.
  * @size: Size to write in bytes.
+ * @data: Data to write.
+ * @data.words32: uint32_t data to write.
+ * @data.bytes: uint8_t data to write.
  */
 struct ec_params_flash_write {
 	uint32_t offset;
