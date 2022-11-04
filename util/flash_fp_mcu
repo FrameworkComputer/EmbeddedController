@@ -702,6 +702,26 @@ config_ghost() {
   config_brya
 }
 
+config_rex() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev0.0"
+
+  # See kernel/v5.15/drivers/pinctrl/intel/pinctrl-meteorlake.c
+  # for pin name and pin number.
+  # Examine `cat /sys/kernel/debug/pinctrl/INTC1083:00/gpio-ranges` on a
+  # rex device to determine gpio number from pin number.
+  # For example: GPP_B11, the pin number is 215 from the pinctrl-meteorlake.c.
+  # From the gpio-ranges, the gpio value is 925 + (215-204) = 936
+
+  readonly GPIO_CHIP="gpiochip573"
+  # FPMCU RST_ODL is on GPP_C23 = 637 + (52 - 29) = 660
+  readonly GPIO_NRST=660
+  # FPMCU BOOT0 is on GPP_C22 = 637 + (51 - 29) = 659
+  readonly GPIO_BOOT0=659
+  # FP_PWR_EN is on GPP_B11 = 925 + (215-204) = 936
+  readonly GPIO_PWREN=936
+}
+
 config_zork() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
