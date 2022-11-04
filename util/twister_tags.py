@@ -29,6 +29,7 @@ TAG_TO_DESCRIPTION = {
     "mkbp": "Testing the MKBP (Matrix Keyboard Protocol) stack",
     "system": "Directly test functions in common/system.c or shim/src/system.c",
     "spi": "SPI related tests",
+    "uart": "UART related tests",
 }
 
 SCRIPT_PATH = os.path.realpath(__file__)
