@@ -97,11 +97,11 @@ build-util-bin-y += gen_touchpad_hash
 # Assume RW section (touchpad FW must be identical for both RO+RW)
 $(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += -DSECTION_IS_RW=$(EMPTY)
 
-HOST_OPENSSL_CFLAGS := $(shell $(HOST_PKG_CONFIG) --cflags openssl)
-HOST_OPENSSL_LDFLAGS := $(shell $(HOST_PKG_CONFIG) --libs openssl)
+BUILD_OPENSSL_CFLAGS := $(shell $(BUILD_PKG_CONFIG) --cflags openssl)
+BUILD_OPENSSL_LDFLAGS := $(shell $(BUILD_PKG_CONFIG) --libs openssl)
 
-$(out)/util/gen_touchpad_hash: BUILD_CFLAGS += $(HOST_OPENSSL_CFLAGS)
-$(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += $(HOST_OPENSSL_LDFLAGS)
+$(out)/util/gen_touchpad_hash: BUILD_CFLAGS += $(BUILD_OPENSSL_CFLAGS)
+$(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += $(BUILD_OPENSSL_LDFLAGS)
 
 deps-y += $(out)/util/gen_touchpad_hash.d
 endif # CONFIG_TOUCHPAD_VIRTUAL_OFF
