@@ -10,6 +10,8 @@
 #include "button.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
+#include "driver/accel_bma4xx.h"
+#include "driver/accel_lis2dw12_public.h"
 #include "driver/accelgyro_bmi323.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "gpio/gpio_int.h"
@@ -23,6 +25,7 @@
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 static bool use_alt_sensor;
+static bool use_alt_lid_accel;
 
 void motion_interrupt(enum gpio_signal signal)
 {
@@ -32,13 +35,23 @@ void motion_interrupt(enum gpio_signal signal)
 		bmi3xx_interrupt(signal);
 }
 
+void lid_accel_interrupt(enum gpio_signal signal)
+{
+	if (use_alt_lid_accel)
+		lis2dw12_interrupt(signal);
+	else
+		bma4xx_interrupt(signal);
+}
+
 static void sensor_init(void)
 {
 	int ret;
 	uint32_t val;
-	/* check which base sensor is used for motion_interrupt */
+	/* check which sensors are installed */
 	use_alt_sensor = cros_cbi_ssfc_check_match(
 		CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_1)));
+	use_alt_lid_accel = cros_cbi_ssfc_check_match(
+		CBI_SSFC_VALUE_ID(DT_NODELABEL(lid_sensor_1)));
 
 	motion_sensors_check_ssfc();
 

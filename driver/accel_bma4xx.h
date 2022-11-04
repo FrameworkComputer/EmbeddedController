@@ -209,6 +209,8 @@ extern const struct accelgyro_drv bma4_accel_drv;
  */
 #define CONFIG_ACCEL_BMA4XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bma4xx_int)))
+
+void bma4xx_interrupt(enum gpio_signal signal);
 #endif /* DT_NODE_EXISTS */
 #endif /* CONFIG_ZEPHYR */
 
