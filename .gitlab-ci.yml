@@ -83,10 +83,6 @@ before_script:
   # Build directory
   - export BUILD_DIR=${EC_DIR}/build
   - export TWISTER_OUT_DIR=${EC_DIR}/twister-out
-  # Set up Twister to use the "host" toolchain, as defined in upstream Zephyr
-  # repo, ultimately including ${ZEPHYR_BASE}/cmake/toolchain/host/generic.cmake
-  - export TOOLCHAIN_ROOT=${ZEPHYR_BASE}
-  - export ZEPHYR_TOOLCHAIN_VARIANT=host
 
 # Users of this template must set:
 # $PROJECT to the project to build. E.g., "lazor"
@@ -295,7 +291,7 @@ zephyr_coverage:
   needs: []
   script:
     - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
-      -v -i --gcov-tool gcov -x=ALLOW_WARNINGS=ON
+      -v -i -x=ALLOW_WARNINGS=ON
   artifacts:
     paths:
       - ec_dir/twister-out/coverage.info
