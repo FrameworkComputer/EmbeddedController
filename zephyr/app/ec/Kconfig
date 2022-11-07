@@ -154,4 +154,22 @@ config SHIMMED_TASKS
 	  build. The CROS_EC_TASK_LIST defines a list of CROS_EC_TASK that
 	  should be shimmed in.
 
+#
+# These shell options are turned off by MINIMAL_SHELL, but are important to us;
+# override Zephyr's default to keep them on.
+#
+config SHELL_HISTORY
+  default y
+
+config SHELL_TAB
+  default y
+
+config SHELL_TAB_AUTOCOMPLETION
+  default y if SHELL_TAB
+
+config SHELL_HELP
+  default y
+
+config KERNEL_SHELL
+  default y
 endif # CROS_EC
