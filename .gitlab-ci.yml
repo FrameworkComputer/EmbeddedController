@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: jbettis/ubuntu-07sep22
+image: jbettis/ubuntu-07nov22
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -78,7 +78,6 @@ before_script:
   # Install Python and packages
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install "${EC_DIR}/zephyr/zmake[tests]" --user
-  - python3 -m pip install pyyaml packaging ply psutil 'pyelftools>=0.28'
   - export PATH="$PATH:$HOME/.local/bin"
   - export PYTHONIOENCODING=utf-8
   # Build directory
