@@ -66,6 +66,8 @@ static const char *_text_instruction(uint8_t instruction)
 		return "CHARGING_STATE";
 	case WLC_CHG_CTRL_CHARGING_INFO:
 		return "CHARGING_INFO";
+	case WLC_CHG_CTRL_OPTIONAL_NDEF:
+		return "OPTIONAL_NDEF";
 	default:
 		return "UNDEF";
 	}
@@ -483,6 +485,10 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 			return EC_ERROR_INVAL;
 		ctx->event = PCHG_EVENT_CHARGE_UPDATE;
 		ctx->battery_percent = buf[0];
+		break;
+	case WLC_CHG_CTRL_OPTIONAL_NDEF:
+		if (len == 0)
+			return EC_ERROR_INVAL;
 		break;
 	default:
 		CPRINTS("Received unknown event (%d)", res->instruction);
