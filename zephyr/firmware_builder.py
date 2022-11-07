@@ -10,7 +10,6 @@ This is the entry point for the custom firmware builder workflow recipe.
 
 import argparse
 import multiprocessing
-import os
 import pathlib
 import re
 import shlex
@@ -48,34 +47,21 @@ def run_twister(
     Returns the path to the twister-out dir.
     """
 
-    third_party_zephyr = platform_ec.parent.parent / "third_party/zephyr/main"
     if use_gcc:
-        c_compiler = "/usr/bin/x86_64-pc-linux-gnu-gcc"
-        cxx_compiler = "/usr/bin/x86_64-pc-linux-gnu-g++"
         outdir = "twister-out-gcc"
-        env = {
-            "ZEPHYR_TOOLCHAIN_VARIANT": "host",
-            "TOOLCHAIN_ROOT": third_party_zephyr,
-        }
+        toolchain = "host"
     else:
-        c_compiler = "/usr/bin/x86_64-pc-linux-gnu-clang"
-        cxx_compiler = "/usr/bin/x86_64-pc-linux-gnu-clang++"
         outdir = "twister-out-llvm"
-        env = {}
-
+        toolchain = "llvm"
     cmd = [
         platform_ec / "twister",
         "--outdir",
         platform_ec / outdir,
         "-v",
         "-i",
-        "-p",
-        "native_posix",
-        "-p",
-        "unit_testing",
         "--no-upload-cros-rdb",
-        "-x=CMAKE_C_COMPILER=" + c_compiler,
-        "-x=CMAKE_CXX_COMPILER=" + cxx_compiler,
+        "--toolchain",
+        toolchain,
     ]
 
     if extra_args:
@@ -89,16 +75,13 @@ def run_twister(
                 "--coverage",
             ]
         )
-    log_cmd(cmd, env=env)
-    my_env = os.environ.copy()
-    my_env.update(env)
+    log_cmd(cmd)
 
     subprocess.run(
         cmd,
         check=True,
         cwd=platform_ec,
         stdin=subprocess.DEVNULL,
-        env=my_env,
     )
     return platform_ec / outdir
 
