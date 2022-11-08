@@ -6,17 +6,47 @@
 /* Herobrine program common DTS includes */
 #include "../adc.dtsi"
 #include "../common.dtsi"
+#include "../i2c.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
 #include "../default_gpio_pinctrl.dtsi"
 #include "../display.dtsi"
 #include "../switchcap.dtsi"
+#include "../usbc.dtsi"
 
 /* Evoker project DTS includes*/
-#include "battery.dtsi"
 #include "gpio.dtsi"
-#include "i2c.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "motionsense.dtsi"
-#include "usbc.dtsi"
+
+/* evoker overrides follow... */
+/* battery overrides */
+/ {
+	batteries {
+		default_battery: pc_vp_bp153 {
+			compatible = "smp,pc-vp-bp153", "battery-smart";
+		};
+		ap16l5j {
+			compatible = "panasonic,ap16l5j", "battery-smart";
+		};
+	};
+
+};
+
+/* i2c overrides */
+&i2c1_0 {
+	ppc_port0_alt: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+};
+
+&i2c2_0 {
+	ppc_port1_alt: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+};

@@ -6,16 +6,49 @@
 /* Herobrine program common DTS includes */
 #include "../adc.dtsi"
 #include "../common.dtsi"
+#include "../i2c.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
 #include "../default_gpio_pinctrl.dtsi"
+#include "../usbc.dtsi"
+#include "../switchcap.dtsi"
 
 /* Hoglin project DTS includes*/
-#include "battery.dtsi"
 #include "gpio.dtsi"
-#include "i2c.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "motionsense.dtsi"
-#include "switchcap.dtsi"
-#include "usbc.dtsi"
+
+/* hoglin overrides follow... */
+/* battery overrides */
+/ {
+	batteries {
+		default_battery: 7c01 {
+			compatible = "ganfeng,7c01", "battery-smart";
+		};
+	};
+
+};
+
+/* switchcap overrides */
+&{/switchcap} {
+	/delete-property/ power-good-pin;
+	poff-delay-ms = <550>;
+};
+
+/* i2c overrides */
+&i2c1_0 {
+	/delete-node/ ps8xxx@b;
+	tcpc_port0: ps8xxx@1b {
+		compatible = "parade,ps8xxx";
+		reg = <0x1b>;
+	};
+};
+
+&i2c2_0 {
+	/delete-node/ ps8xxx@b;
+	tcpc_port1: ps8xxx@1b {
+		compatible = "parade,ps8xxx";
+		reg = <0x1b>;
+	};
+};

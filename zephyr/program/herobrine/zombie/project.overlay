@@ -6,16 +6,28 @@
 /* Herobrine program common DTS includes */
 #include "../adc.dtsi"
 #include "../common.dtsi"
+#include "../i2c.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
 #include "../default_gpio_pinctrl.dtsi"
 #include "../switchcap.dtsi"
+#include "../usbc.dtsi"
 
 /* Zombie project DTS includes*/
-#include "battery.dtsi"
 #include "gpio.dtsi"
-#include "i2c.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "motionsense.dtsi"
-#include "usbc.dtsi"
+
+/* zombie overrides follow... */
+/* battery overrides */
+/ {
+	batteries {
+		default_battery: ap19a5k {
+			compatible = "panasonic,ap19a5k", "battery-smart";
+		};
+		ap19a8k {
+			compatible = "lgc,ap19a8k", "battery-smart";
+		};
+	};
+};
