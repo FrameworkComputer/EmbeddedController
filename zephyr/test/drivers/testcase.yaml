@@ -208,6 +208,9 @@ tests:
   drivers.usbc_console_pd:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
+  drivers.usbc_ctvpd:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_CTVPD=y
   drivers.usbc_ocp:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
