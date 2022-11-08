@@ -578,6 +578,7 @@ static void run_test_step1(void)
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
+	msleep(1);
 
 	RUN_TEST(deghost_test);
 
@@ -606,6 +607,7 @@ static void run_test_step2(void)
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
+	msleep(1);
 
 	RUN_TEST(test_check_boot_esc);
 
@@ -620,6 +622,7 @@ static void run_test_step3(void)
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
+	msleep(1);
 
 	RUN_TEST(test_check_boot_down);
 
