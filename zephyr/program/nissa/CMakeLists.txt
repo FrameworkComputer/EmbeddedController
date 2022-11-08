@@ -80,6 +80,7 @@ if(DEFINED CONFIG_BOARD_YAVIKS)
 	zephyr_library_sources(
 			"yaviks/src/led.c"
 			"yaviks/src/keyboard.c"
+			"yaviks/src/board.c"
 			"yaviks/src/thermal.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "yaviks/src/usbc.c")

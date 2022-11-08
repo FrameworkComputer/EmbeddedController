@@ -121,6 +121,9 @@
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			gpios = <&gpiol 6 GPIO_OUTPUT>;
 		};
+		gpio_en_usb_a1_vbus: en_usb_a1_vbus {
+			gpios = <&gpiof 0 GPIO_OUTPUT>;
+		};
 		gpio_en_usb_c0_cc1_vconn: en_usb_c0_cc1_vconn {
 			gpios = <&gpioh 4 GPIO_OUTPUT>;
 		};
@@ -184,6 +187,9 @@
 		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			gpios = <&gpiok 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_usb_c1_int_odl: usb_c1_int_odl {
+			gpios = <&gpioe 6 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
 			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
