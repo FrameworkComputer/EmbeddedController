@@ -159,6 +159,16 @@ ZTEST_USER(console_cmd_charge_state, test_sustain_invalid_params)
 	zassert_equal(shell_execute_cmd(get_ec_shell(),
 					"chgstate sustain 50 101"),
 		      EC_ERROR_INVAL, NULL);
+
+	/* Verify invalid lower bound (not a number) */
+	zassert_equal(shell_execute_cmd(get_ec_shell(),
+					"chgstate sustain a 50"),
+		      EC_ERROR_PARAM2);
+
+	/* Verify invalid uppoer bound (not a number) */
+	zassert_equal(shell_execute_cmd(get_ec_shell(),
+					"chgstate sustain 30 a"),
+		      EC_ERROR_PARAM3);
 }
 
 struct console_cmd_charge_state_fixture {
