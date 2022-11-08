@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "i2c_krabby_tentacruel.dtsi"
+#include "ite_i2c.dtsi"
 
 &i2c0 {
 	charger: rt9490@53 {
