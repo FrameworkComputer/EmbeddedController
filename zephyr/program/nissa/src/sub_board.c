@@ -157,14 +157,14 @@ static void nereid_subboard_config(void)
 	if (sb == NISSA_SB_C_A || sb == NISSA_SB_HDMI_A ||
 	    sb == NISSA_SB_NONE) {
 		/*
-		 * Configure VBUS enable, default off.
+		 * Configure VBUS enable, retaining current value.
 		 * SB_NONE indicates missing fw_config; it's safe to enable VBUS
 		 * control in this case since all that will happen is we turn
 		 * off power to LTE, and it's useful to allow USB-A to work in
 		 * such a configuration.
 		 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
-				      GPIO_OUTPUT_LOW);
+				      GPIO_OUTPUT);
 	} else {
 		/* Turn off unused pins */
 		gpio_pin_configure_dt(
