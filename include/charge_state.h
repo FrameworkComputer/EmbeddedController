@@ -158,18 +158,19 @@ static inline int battery_is_below_threshold(enum batt_threshold_type type,
 #endif
 
 /**
- * Return non-zero if the battery level is too low to allow power on, even if
- * a charger is attached.
+ * @brief whether or not the charge state will prevent power-on
  *
  * @param power_button_pressed	True if the power-up attempt is caused by a
  *				power button press.
+ * @return True if the battery level is too low to allow power on, even if a
+ *         charger is attached.
  */
 #ifdef CONFIG_BATTERY
-int charge_prevent_power_on(int power_button_pressed);
+bool charge_prevent_power_on(bool power_button_pressed);
 #else
-static inline int charge_prevent_power_on(int power_button_pressed)
+static inline bool charge_prevent_power_on(bool power_button_pressed)
 {
-	return 0;
+	return false;
 }
 #endif
 

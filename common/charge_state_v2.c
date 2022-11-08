@@ -2082,14 +2082,15 @@ int charge_want_shutdown(void)
 	       (curr.batt.state_of_charge < battery_level_shutdown);
 }
 
-int charge_prevent_power_on(int power_button_pressed)
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+test_export_static int charge_prevent_power_on_automatic_power_on = 1;
+#endif
+
+bool charge_prevent_power_on(bool power_button_pressed)
 {
 	int prevent_power_on = 0;
 	struct batt_params params;
 	struct batt_params *current_batt_params = &curr.batt;
-#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
-	static int automatic_power_on = 1;
-#endif
 
 	/* If battery params seem uninitialized then retrieve them */
 	if (current_batt_params->is_present == BP_NOT_SURE) {
@@ -2104,7 +2105,7 @@ int charge_prevent_power_on(int power_button_pressed)
 	 * power-ups are user-requested and non-automatic.
 	 */
 	if (power_button_pressed)
-		automatic_power_on = 0;
+		charge_prevent_power_on_automatic_power_on = 0;
 	/*
 	 * Require a minimum battery level to power on and ensure that the
 	 * battery can provide power to the system.
@@ -2150,12 +2151,13 @@ int charge_prevent_power_on(int power_button_pressed)
 	 * except when auto-power-on at EC startup and the battery
 	 * is physically present.
 	 */
-	prevent_power_on &=
-		(system_is_locked() || (automatic_power_on
+	prevent_power_on &= (system_is_locked() ||
+			     (charge_prevent_power_on_automatic_power_on
 #ifdef CONFIG_BATTERY_HW_PRESENT_CUSTOM
-					&& battery_hw_present() == BP_YES
+
+			      && battery_hw_present() == BP_YES
 #endif
-					));
+			      ));
 #endif /* CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON */
 
 #ifdef CONFIG_CHARGE_MANAGER
@@ -2189,7 +2191,7 @@ int charge_prevent_power_on(int power_button_pressed)
 		prevent_power_on = 1;
 #endif /* CONFIG_SYSTEM_UNLOCKED */
 
-	return prevent_power_on;
+	return prevent_power_on != 0;
 }
 
 static int battery_near_full(void)
