@@ -1,0 +1,21 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../npcx_adc.dtsi"
+#include "../battery_kingler.dtsi"
+#include "../npcx_host_interface.dtsi"
+#include "../npcx_i2c.dtsi"
+#include "../npcx_interrupts.dtsi"
+#include "../npcx_gpio.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../led_kingler.dtsi"
+#include "../npcx_motionsense.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"

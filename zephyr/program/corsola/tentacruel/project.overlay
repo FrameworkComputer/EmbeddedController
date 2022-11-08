@@ -1,0 +1,21 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../adc_tentacruel.dtsi"
+#include "../battery_tentacruel.dtsi"
+#include "../cbi_tentacruel.dtsi"
+#include "../gpio_tentacruel.dtsi"
+#include "../ite_keyboard.dtsi"
+#include "../i2c_tentacruel.dtsi"
+#include "../interrupts_tentacruel.dtsi"
+#include "../led_tentacruel.dtsi"
+#include "../motionsense_tentacruel.dtsi"
+#include "../usbc_tentacruel.dtsi"
+#include "../thermistor_tentacruel.dtsi"

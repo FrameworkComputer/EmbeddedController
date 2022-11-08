@@ -1,0 +1,26 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../npcx_adc.dtsi"
+#include "../battery_steelix.dtsi"
+#include "../npcx_host_interface.dtsi"
+#include "../npcx_i2c.dtsi"
+#include "../npcx_interrupts.dtsi"
+#include "../interrupts_steelix.dtsi"
+#include "../cbi_steelix.dtsi"
+#include "../gpio_steelix.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../keyboard_steelix.dtsi"
+#include "../led_steelix.dtsi"
+#include "../npcx_motionsense.dtsi"
+#include "../motionsense_steelix.dtsi"
+#include "../usba_steelix.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"
