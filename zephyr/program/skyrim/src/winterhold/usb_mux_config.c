@@ -56,6 +56,20 @@ int board_anx7483_c0_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 	return anx7483_set_default_tuning(me, mux_state);
 }
 
+int board_anx7483_c1_fg_defalut_tuning(const struct usb_mux *me)
+{
+	RETURN_ERROR(
+		anx7483_set_fg(me, ANX7483_PIN_URX1, ANX7483_FG_SETTING_1_2DB));
+	RETURN_ERROR(
+		anx7483_set_fg(me, ANX7483_PIN_URX2, ANX7483_FG_SETTING_1_2DB));
+	RETURN_ERROR(
+		anx7483_set_fg(me, ANX7483_PIN_UTX1, ANX7483_FG_SETTING_1_2DB));
+	RETURN_ERROR(
+		anx7483_set_fg(me, ANX7483_PIN_UTX2, ANX7483_FG_SETTING_1_2DB));
+
+	return EC_SUCCESS;
+}
+
 int board_anx7483_c1_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	bool flipped = mux_state & USB_PD_MUX_POLARITY_INVERTED;
@@ -68,40 +82,65 @@ int board_anx7483_c1_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 
 	RETURN_ERROR(anx7483_set_default_tuning(me, mux_state));
 
-	if (mux_state == USB_PD_MUX_USB_ENABLED) {
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-	} else if (mux_state == USB_PD_MUX_DOCK && !flipped) {
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-	} else if (mux_state == USB_PD_MUX_DOCK && flipped) {
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-	}
-
 	/*
-	 * Those registers all need to be set no matter what state the mux is
-	 * in it needs to be set.
+	 * Set the Flat Gain to default every time, to prevent DP only mode's
+	 * Flat Gain change in the last plug.
 	 */
-	RETURN_ERROR(
-		anx7483_set_eq(me, ANX7483_PIN_URX1, ANX7483_EQ_SETTING_8_4DB));
-	RETURN_ERROR(
-		anx7483_set_eq(me, ANX7483_PIN_URX2, ANX7483_EQ_SETTING_8_4DB));
-	RETURN_ERROR(
-		anx7483_set_eq(me, ANX7483_PIN_UTX1, ANX7483_EQ_SETTING_8_4DB));
-	RETURN_ERROR(
-		anx7483_set_eq(me, ANX7483_PIN_UTX2, ANX7483_EQ_SETTING_8_4DB));
+	RETURN_ERROR(board_anx7483_c1_fg_defalut_tuning(me));
 
-	RETURN_ERROR(
-		anx7483_set_fg(me, ANX7483_PIN_URX1, ANX7483_FG_SETTING_0_5DB));
-	RETURN_ERROR(
-		anx7483_set_fg(me, ANX7483_PIN_URX2, ANX7483_FG_SETTING_0_5DB));
-	RETURN_ERROR(
-		anx7483_set_fg(me, ANX7483_PIN_UTX1, ANX7483_FG_SETTING_0_5DB));
-	RETURN_ERROR(
-		anx7483_set_fg(me, ANX7483_PIN_UTX2, ANX7483_FG_SETTING_0_5DB));
+	if (mux_state == USB_PD_MUX_USB_ENABLED) {
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
+					    ANX7483_EQ_SETTING_12_5DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
+					    ANX7483_EQ_SETTING_12_5DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX1,
+					    ANX7483_EQ_SETTING_12_5DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX2,
+					    ANX7483_EQ_SETTING_12_5DB));
+	} else if (mux_state == USB_PD_MUX_DP_ENABLED) {
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX1,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX2,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_URX1,
+					    ANX7483_FG_SETTING_0_5DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_URX2,
+					    ANX7483_FG_SETTING_0_5DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_UTX1,
+					    ANX7483_FG_SETTING_0_5DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_UTX2,
+					    ANX7483_FG_SETTING_0_5DB));
+	} else if (mux_state == USB_PD_MUX_DOCK && !flipped) {
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
+					    ANX7483_EQ_SETTING_12_5DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX1,
+					    ANX7483_EQ_SETTING_12_5DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX2,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_URX2,
+					    ANX7483_FG_SETTING_0_5DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_UTX2,
+					    ANX7483_FG_SETTING_0_5DB));
+	} else if (mux_state == USB_PD_MUX_DOCK && flipped) {
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
+					    ANX7483_EQ_SETTING_12_5DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX1,
+					    ANX7483_EQ_SETTING_8_4DB));
+		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX2,
+					    ANX7483_EQ_SETTING_12_5DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_URX1,
+					    ANX7483_FG_SETTING_0_5DB));
+		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_UTX1,
+					    ANX7483_FG_SETTING_0_5DB));
+	}
 
 	return EC_SUCCESS;
 }
