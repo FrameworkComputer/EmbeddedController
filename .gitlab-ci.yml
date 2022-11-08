@@ -270,6 +270,16 @@ skyrim_coverage:
     PROJECT: "skyrim"
   <<: *coverage_template
 
+rex:
+  variables:
+    PROJECT: "rex"
+  <<: *build_template
+
+rex_coverage:
+  variables:
+    PROJECT: "rex"
+  <<: *coverage_template
+
 ec_coverage:
   stage: test
   needs: []
