@@ -62,13 +62,6 @@
 		address-width = <8>;
 		timeout = <5>;
 	};
-
-	bc12_port1: rt9490-bc12@53 {
-		compatible = "richtek,rt9490-bc12";
-		status = "okay";
-		reg = <0x53>;
-		irq = <&int_usb_c1_bc12_charger>;
-	};
 };
 
 &i2c1 {

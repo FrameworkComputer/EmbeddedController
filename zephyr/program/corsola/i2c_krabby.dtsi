@@ -6,10 +6,11 @@
 #include "ite_i2c.dtsi"
 
 &i2c0 {
-	charger: rt9490@53 {
+	charger_bc12_port1: rt9490@53 {
 		compatible = "richtek,rt9490";
 		status = "okay";
 		reg = <0x53>;
+		irq = <&int_usb_c1_bc12_charger>;
 	};
 };
 
