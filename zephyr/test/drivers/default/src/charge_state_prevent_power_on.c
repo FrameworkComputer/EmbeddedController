@@ -75,3 +75,17 @@ ZTEST(charge_state_prevent_power_on, test_low_charge)
 	/* Verify that we cannot power on during an automatic power-on */
 	zassert_true(charge_prevent_power_on(false));
 }
+
+ZTEST(charge_state_prevent_power_on, test_consuming_full_input_current)
+{
+	struct batt_params *params = &charge_get_status()->batt;
+
+	params->state_of_charge = 50;
+	zassert_true(charge_is_consuming_full_input_current());
+
+	params->state_of_charge = 0;
+	zassert_false(charge_is_consuming_full_input_current());
+
+	params->state_of_charge = 100;
+	zassert_false(charge_is_consuming_full_input_current());
+}
