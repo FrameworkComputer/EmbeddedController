@@ -887,7 +887,7 @@ int cmd_test(int argc, char *argv[])
 int cmd_s5(int argc, char *argv[])
 {
 	struct ec_params_get_set_value p;
-	struct ec_params_get_set_value r;
+	struct ec_response_get_set_value r;
 	int rv, param;
 
 	p.flags = 0;
