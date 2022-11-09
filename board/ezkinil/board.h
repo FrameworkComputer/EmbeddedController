@@ -15,6 +15,9 @@
 
 #define CONFIG_KEYBOARD_FACTORY_TEST
 
+/* charger margin */
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
+
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_ICM426XX
 #define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \

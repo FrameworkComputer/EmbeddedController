@@ -28,6 +28,11 @@
 #undef CONFIG_CMD_CHARGER_DUMP
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
+/*
+ * b/147463641: The charger IC seems to overdraw ~4%, therefore we
+ * reduce our target accordingly.
+ */
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 4
 
 /* LED defines */
 #define CONFIG_LED_COMMON

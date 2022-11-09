@@ -97,3 +97,20 @@ ZTEST(charge_state_v2, test_battery_temperature_range)
 		(batt_info->charging_max_c + batt_info->charging_min_c) / 2);
 	zassert_ok(battery_outside_charging_temperature());
 }
+
+ZTEST(charge_state_v2, test_current_limit_derating)
+{
+	int charger_current_limit;
+
+	charge_set_input_current_limit(1000, 5000);
+	zassert_ok(charger_get_input_current_limit(0, &charger_current_limit));
+	/*
+	 * ISL923x sets ICL in multiples of 20 mA, so 950 mA gets rounded down
+	 * to the nearest multiple of 20.
+	 */
+	zassert_equal(
+		charger_current_limit, 944,
+		"%d%% derating of 1A should be 944 mA, but charger is set for %d mA",
+		CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT,
+		charger_current_limit);
+}

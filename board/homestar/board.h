@@ -27,6 +27,9 @@
 #define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_VENDOR_PARAM
 
+/* charger margin */
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
+
 /* Enable PD3.0 */
 #define CONFIG_USB_PD_REV30
 

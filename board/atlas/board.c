@@ -531,20 +531,12 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-/*
- * Limit the input current to 95% negotiated limit,
- * to account for the charger chip margin.
- */
-
-static int charger_derate(int current)
-{
-	return current * 95 / 100;
-}
-
 static void board_charger_init(void)
 {
-	charger_set_input_current_limit(CHARGER_SOLO,
-					charger_derate(PD_MAX_CURRENT_MA));
+	charger_set_input_current_limit(
+		CHARGER_SOLO,
+		PD_MAX_CURRENT_MA *
+			(100 - CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT) / 100);
 }
 DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);
 
@@ -559,7 +551,6 @@ DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
-	charge_ma = charger_derate(charge_ma);
 	charge_set_input_current_limit(
 		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }

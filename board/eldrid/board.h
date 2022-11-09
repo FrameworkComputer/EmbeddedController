@@ -93,6 +93,8 @@
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+/* OEM requested 10% derating */
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 10
 
 /* Retimer */
 #undef CONFIG_USBC_RETIMER_INTEL_BB

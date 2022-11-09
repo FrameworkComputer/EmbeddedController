@@ -248,12 +248,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * b/147463641: The charger IC seems to overdraw ~4%, therefore we
-	 * reduce our target accordingly.
-	 */
-	icl = icl * 96 / 100;
 	charge_set_input_current_limit(icl, charge_mv);
 }
 

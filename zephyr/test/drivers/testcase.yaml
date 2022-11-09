@@ -51,6 +51,7 @@ tests:
       - CONFIG_PLATFORM_EC_CBI_GPIO=y
   drivers.common_charger:
     extra_configs:
+      - CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT=5
       - CONFIG_LINK_TEST_SUITE_COMMON_CHARGER=y
       # Set to focus testing for Herobrine
       # Config is y only in nissa

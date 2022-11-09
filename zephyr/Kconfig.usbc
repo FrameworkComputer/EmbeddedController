@@ -44,6 +44,22 @@ config PLATFORM_EC_CHARGER_INPUT_CURRENT
 	  chargers, this should be set to 512 mA in order to not brown-out
 	  low-current USB charge ports in accordance with USB-PD r3.0 Sec. 7.3
 
+config PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT
+	int "Charger input current derating percentage"
+	default 0
+	depends on PLATFORM_EC_CHARGE_MANAGER
+	help
+	  Setting this to a nonzero value causes actual charger current limits
+	  to be adjusted by the given percentage. For example, setting this to
+	  4 and requesting a current limit of 1000 mA causes the charge manager
+	  to program an actual current limit of 960 mA.
+
+	  This is useful if a charger consistently draws more current than the
+	  programmed limit, or if it is desired to derate for other
+	  safety-related reasons. If a more complex (non-linear) adjustment is
+	  required, boards should override the board_set_charge_limit()
+	  function instead of configuring this option.
+
 config PLATFORM_EC_USBC_OCP
 	bool
 	help
