@@ -10,6 +10,7 @@
 #include <zephyr/ztest_assert.h>
 
 #include "charger.h"
+#include "charge_ramp.h"
 #include "test/drivers/charger_utils.h"
 #include "test/drivers/test_state.h"
 
@@ -285,6 +286,90 @@ ZTEST_F(common_charger_mocked_driver, test_charger_enable_bypass_mode)
 
 	zassert_equal(1, enable_bypass_mode_fake.call_count);
 	zassert_true(enable_bypass_mode_fake.arg1_history[0]);
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_get_params__error_flags)
+{
+	/* When one of the parameters cannot be retrieved, a corresponding flag
+	 * is set. Since all of the driver functions are unimplemented by
+	 * default, this should cause all error flags to be set.
+	 */
+
+	struct charger_params params;
+
+	charger_get_params(&params);
+
+	zassert_true(params.flags & CHG_FLAG_BAD_CURRENT);
+	zassert_true(params.flags & CHG_FLAG_BAD_VOLTAGE);
+	zassert_true(params.flags & CHG_FLAG_BAD_INPUT_CURRENT);
+	zassert_true(params.flags & CHG_FLAG_BAD_STATUS);
+	zassert_true(params.flags & CHG_FLAG_BAD_OPTION);
+}
+
+ZTEST(common_charger_mocked_driver,
+      test_charger_get_input_current_limit__invalid)
+{
+	zassert_equal(EC_ERROR_INVAL,
+		      charger_get_input_current_limit(-1, false));
+	zassert_equal(EC_ERROR_INVAL,
+		      charger_get_input_current_limit(INT_MAX, false));
+}
+
+ZTEST(common_charger_mocked_driver,
+      test_charger_get_input_current_limit__unimpl)
+{
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      charger_get_input_current_limit(CHG_NUM, false));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_get_input_current__invalid)
+{
+	zassert_equal(EC_ERROR_INVAL, charger_get_input_current(-1, NULL));
+	zassert_equal(EC_ERROR_INVAL, charger_get_input_current(INT_MAX, NULL));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_get_input_current__unimpl)
+{
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      charger_get_input_current(CHG_NUM, NULL));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_manufacturer_id__unimpl)
+{
+	zassert_equal(EC_ERROR_UNIMPLEMENTED, charger_manufacturer_id(NULL));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_device_id__unimpl)
+{
+	zassert_equal(EC_ERROR_UNIMPLEMENTED, charger_device_id(NULL));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_get_option__unimpl)
+{
+	zassert_equal(EC_ERROR_UNIMPLEMENTED, charger_get_option(NULL));
+}
+
+ZTEST(common_charger_mocked_driver, test_charger_set_option__unimpl)
+{
+	zassert_equal(EC_ERROR_UNIMPLEMENTED, charger_set_option(0));
+}
+
+ZTEST(common_charger_mocked_driver, test_chg_ramp_is_stable__unimpl)
+{
+	/* Returns 0 if ramp_is_stable not implemented */
+	zassert_false(chg_ramp_is_stable());
+}
+
+ZTEST(common_charger_mocked_driver, test_chg_ramp_is_detected__unimpl)
+{
+	/* Returns 0 if ramp_is_detected not implemented */
+	zassert_false(chg_ramp_is_detected());
+}
+
+ZTEST(common_charger_mocked_driver, test_chg_ramp_get_current_limit__unimpl)
+{
+	/* Returns 0 if ramp_get_current_limit not implemented */
+	zassert_false(chg_ramp_get_current_limit());
 }
 
 static void *setup(void)
