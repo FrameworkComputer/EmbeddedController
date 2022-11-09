@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include "battery_smart.h"
+#include "battery_smart.h" /* TODO(b/257377326) remove */
 #include "charge_manager.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/charger/sm5803.h"
+#include "driver/charger/sm5803.h" /* TODO(b/257377326) remove */
 #include "driver/tcpm/tcpci.h"
 #include "usb_pd.h"
 

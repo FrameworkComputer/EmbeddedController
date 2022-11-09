@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledee board configuration */
+/* Dibbi board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -24,23 +24,11 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Charger */
-#define CONFIG_CHARGER_SM5803 /* C0 and C1: Charger */
+#define CONFIG_CHARGER_SM5803 /* C0: Charger */
 #define PD_MAX_VOLTAGE_MV 15000
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
-#undef CONFIG_CHARGER_SINGLE_CHIP
-#define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS               \
-	21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr \
-	    */
-
-/*
- * GPIO for C1 interrupts, for baseboard use
- *
- * Note this will only be valid for board revision 1
- */
-#define GPIO_USB_C1_INT_ODL GPIO_USB_C1_INT_V1_ODL
 
 /* LED */
 #define CONFIG_LED_PWM
@@ -49,34 +37,15 @@
 /* PWM */
 #define CONFIG_PWM
 
-/* Sensors */
-#define CONFIG_ACCEL_KX022 /* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
-#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-
-/* Enable sensor fifo, must also define the _SIZE and _THRES */
-#define CONFIG_ACCEL_FIFO
-/* Power of 2 - Too large of a fifo causes too much timestamp jitter */
-#define CONFIG_ACCEL_FIFO_SIZE 256
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
-
-#define CONFIG_TABLET_MODE
-#define CONFIG_TABLET_MODE_SWITCH
-#define CONFIG_GMR_TABLET_MODE
-
 /* TCPC */
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0: ITE EC TCPC */
-#define CONFIG_USB_PD_TCPM_ANX7447 /* C1: ANX TCPC + Mux */
 #define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
+
+/* Power: Dedicated barreljack charger port */
+#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
+#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
+#define DEDICATED_CHARGE_PORT 1
 
 /* Thermistors */
 #define CONFIG_TEMP_SENSOR
@@ -84,21 +53,43 @@
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205 /* C1: ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C0: ITE Mux */
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
-#define CONFIG_USBC_RETIMER_TUSB544 /* C1 Redriver: TUSB544 */
+/* No Keyboard */
+#undef CONFIG_MKBP_EVENT
+#undef CONFIG_MKBP_EVENT_WAKEUP_MASK
+#undef CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
+#undef CONFIG_KEYBOARD_COL2_INVERTED
+#undef CONFIG_KEYBOARD_PROTOCOL_8042
+#undef CONFIG_MKBP_INPUT_DEVICES
+#undef CONFIG_CMD_KEYBOARD
+#undef CONFIG_KEYBOARD_BOOT_KEYS
+#undef CONFIG_KEYBOARD_RUNTIME_KEYS
+
+/* No backlight */
+#undef CONFIG_BACKLIGHT_LID
+#undef GPIO_ENABLE_BACKLIGHT
+
+/* Buttons */
+#define CONFIG_POWER_BUTTON_IGNORE_LID
+
+/* Unused features - Misc */
+#undef CONFIG_VOLUME_BUTTONS
+#undef CONFIG_LID_SWITCH
+
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_TABLET_MODE_SWITCH
+#undef CONFIG_GMR_TABLET_MODE
+#undef GPIO_TABLET_MODE_L
+
+/* Unused GPIOs */
+#undef GPIO_USB_C1_DP_HPD
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 #include "registers.h"
-
-enum chg_id {
-	CHARGER_PRIMARY,
-	CHARGER_SECONDARY,
-	CHARGER_NUM,
-};
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
@@ -107,9 +98,6 @@ enum pwm_channel {
 	PWM_CH_LED_BLUE,
 	PWM_CH_COUNT,
 };
-
-/* Motion sensors */
-enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
@@ -136,6 +124,10 @@ enum battery_type {
 	BATTERY_LGC_G023,
 	BATTERY_TYPE_COUNT,
 };
+
+/* Board specific handlers */
+/* TODO(b/257377326) Update this with power re-work */
+#define PORT_TO_HPD(port) (GPIO_USB_C0_DP_HPD)
 
 #endif /* !__ASSEMBLER__ */
 
