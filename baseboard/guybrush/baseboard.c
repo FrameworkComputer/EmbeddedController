@@ -581,7 +581,7 @@ static void reset_nct38xx_port(int port)
 						GPIO_USB_C0_TCPC_RST_L :
 						GPIO_USB_C1_TCPC_RST_L;
 
-	if (port < 0 || port > USBC_PORT_COUNT) {
+	if (port < 0 || port >= USBC_PORT_COUNT) {
 		CPRINTSUSB("%s invalid port %d", __func__, port);
 		return;
 	}
