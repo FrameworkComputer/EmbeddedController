@@ -821,7 +821,7 @@ int get_hardware_id(enum adc_channel channel)
 	int mv;
 	int i;
 
-	mv = adc_read_channel(ADC_AD_BID);
+	mv = adc_read_channel(channel);
 
 	if (mv == ADC_READ_ERROR)
 		return BOARD_VERSION_UNKNOWN;
