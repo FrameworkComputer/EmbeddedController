@@ -102,3 +102,8 @@ bool board_ap_power_check_power_rails_enabled(void)
 {
 	return true;
 }
+
+int extpower_is_present(void)
+{
+	return 0;
+}

@@ -28,25 +28,6 @@ config PLATFORM_EC_HIBERNATE_PSL
 	  rail for ultra-low power consumption and uses PSL inputs rely on VSBY
 	  power rail to wake up ec and the whole system.
 
-config PLATFORM_EC_HIBERNATE
-	bool "System hibernating with wake-source pins"
-	default y
-	depends on !PLATFORM_EC_HIBERNATE_PSL
-	help
-	  Use wake source pins for hibernating. It turns off VCC power
-	  rail for ultra-low power consumption and uses a low power
-	  power rail. Changes on wake source pins will wake up the EC.
-	  By default this is enabled if PLATFORM_EC_HIBERNATE_PSL is not
-	  enabled.
-
-config PLATFORM_EC_HIBERNATE_DELAY_SEC
-	int "Delay in seconds from AP power off to hibernate"
-	depends on PLATFORM_EC_HIBERNATE
-	default 3600
-	help
-	  This value is the delay in seconds from when the AP enters G3
-	  to when the system is hibernated.
-
 config PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 	int "System pre-initialization priority"
 	default 20

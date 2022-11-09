@@ -361,9 +361,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_SC7180
                                                 "${PLATFORM_EC}/power/qcom.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_SC7280
                                                 "${PLATFORM_EC}/power/qcom.c")
-if (CONFIG_PLATFORM_EC_HIBERNATE AND CONFIG_AP_PWRSEQ)
-	zephyr_library_sources(			"${PLATFORM_EC}/power/hibernate.c")
-endif ()
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PANIC
                                                 "${PLATFORM_EC}/common/panic_output.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
