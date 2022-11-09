@@ -137,6 +137,8 @@ def get_relevant_commits(head, merge_head, fmt, relevant_paths):
         A tuple containing the arguments passed to the git log command and
         stdout.
     """
+    if not relevant_paths:
+        return "", ""
     if fmt:
         cmd = [
             "git",
@@ -159,107 +161,28 @@ def get_relevant_commits(head, merge_head, fmt, relevant_paths):
     return "".join(proc.args), proc.stdout
 
 
-def main(argv):
-    """Generates a merge commit from ToT to a desired release branch.
+def merge_repo(
+    base, cros_main, cmd_checkout, strategy, cmd, prunelist, relevant_paths
+):
+    """Merge changes from ToT into this repo's branch.
 
-    For the commit message, it finds all the commits that have modified a
-    relevant path. By default this is the baseboard or board directory.  The
-    user may optionally specify a path to a text file which contains a longer
-    list of relevant files.  The format should be in the glob syntax that git
-    log expects.
+    For this repo, merge the changes from ToT to the branch set
+    in the merge command.
 
     Args:
-        argv: A list of the command line arguments passed to this script.
+        base: String indicating the Source directory of repo.
+        cros_main: String indicating the origin branch name
+        cmd_checkout: String list containing the checkout command to use.
+        strategy: String list containing the merge strategy,
+        cmd: String containing the command line
+        prunelist: String list containing the files to remove.
+        relevant_paths: String containing all the relevant paths for this
+                        particular baseboard or board.
     """
-    # Set up argument parser.
-    parser = argparse.ArgumentParser(
-        description=(
-            "A script that generates a "
-            "merge commit from cros/main"
-            " to a desired release "
-            "branch.  By default, the "
-            '"recursive" merge strategy '
-            'with the "theirs" strategy '
-            "option is used."
-        )
-    )
-    parser.add_argument("--baseboard")
-    parser.add_argument("--board")
-    parser.add_argument(
-        "release_branch", help=("The name of the target release" " branch")
-    )
-    parser.add_argument(
-        "--remote_prefix",
-        help=(
-            "The name of the remote branch prefix (default cros). "
-            "Private repos typically use cros-internal instead."
-        ),
-        default="cros",
-    )
-    parser.add_argument(
-        "--relevant_paths_file",
-        help=(
-            "A path to a text file which includes other "
-            "relevant paths of interest for this board "
-            "or baseboard"
-        ),
-    )
-    parser.add_argument(
-        "--merge_strategy",
-        "-s",
-        default="recursive",
-        help="The merge strategy to pass to `git merge -s`",
-    )
-    parser.add_argument(
-        "--strategy_option",
-        "-X",
-        help=("The strategy option for the chosen merge " "strategy"),
-    )
-    parser.add_argument(
-        "--remove_owners",
-        "-r",
-        action=("store_true"),
-        help=("Remove non-root OWNERS level files if present"),
-    )
-
-    opts = parser.parse_args(argv[1:])
-
-    baseboard_dir = ""
-    board_dir = ""
-
-    if opts.baseboard:
-        # Dereference symlinks so "git log" works as expected.
-        baseboard_dir = os.path.relpath("baseboard/" + opts.baseboard)
-        baseboard_dir = os.path.relpath(os.path.realpath(baseboard_dir))
-
-        boards = get_relevant_boards(opts.baseboard)
-    elif opts.board:
-        board_dir = os.path.relpath("board/" + opts.board)
-        board_dir = os.path.relpath(os.path.realpath(board_dir))
-        boards = [opts.board]
-    else:
-        boards = []
-
-    print("Gathering relevant paths...")
-    relevant_paths = []
-    if opts.baseboard:
-        relevant_paths.append(baseboard_dir)
-    elif opts.board:
-        relevant_paths.append(board_dir)
-
-    for board in boards:
-        relevant_paths.append("board/" + board)
-
-    # Check for the existence of a file that has other paths of interest.
-    if opts.relevant_paths_file and os.path.exists(opts.relevant_paths_file):
-        with open(opts.relevant_paths_file, "r") as relevant_paths_file:
-            for line in relevant_paths_file:
-                if not line.startswith("#"):
-                    relevant_paths.append(line.rstrip())
-    if os.path.exists("util/getversion.sh"):
-        relevant_paths.append("util/getversion.sh")
-    relevant_paths = " ".join(relevant_paths)
-
+    # Change directory to the repo being merged
+    print('Starting merge in "%s"' % base)
+    print('Checkout command: "%s"' % " ".join(cmd_checkout))
+    os.chdir(base)
     # Check if we are already in merge process
     result = subprocess.run(
         ["git", "rev-parse", "--quiet", "--verify", "MERGE_HEAD"],
@@ -268,72 +191,27 @@ def main(argv):
         check=False,
     )
 
-    # Prune OWNERS files if desired
-    if opts.remove_owners:
-        prunelist = []
-        for root, dirs, files in os.walk("."):
-            for name in dirs:
-                if "build" in name:
-                    continue
-            for name in files:
-                if "OWNERS" in name:
-                    path = os.path.join(root, name)
-                    prunelist.append(path[2:])  # Strip the "./"
-
-        # Remove the top level OWNERS file from the prunelist.
-        try:
-            prunelist.remove("OWNERS")
-        except ValueError:
-            pass
-
-        if prunelist:
-            print("Not merging the following OWNERS files:")
-            for path in prunelist:
-                print("  " + path)
-
     if result.returncode:
         # Let's perform the merge
         print("Updating remote...")
         subprocess.run(["git", "remote", "update"], check=True)
-        subprocess.run(
-            [
-                "git",
-                "checkout",
-                "-B",
-                opts.release_branch,
-                opts.remote_prefix + "/" + opts.release_branch,
-            ],
-            check=True,
-        )
-        print("Attempting git merge...")
-        if opts.merge_strategy == "recursive" and not opts.strategy_option:
-            opts.strategy_option = "theirs"
-        print(
-            'Using "%s" merge strategy' % opts.merge_strategy,
-            (
-                "with strategy option '%s'" % opts.strategy_option
-                if opts.strategy_option
-                else ""
-            ),
-        )
-        cros_main = opts.remote_prefix + "/" + "main"
-        arglist = [
+        subprocess.run(cmd_checkout, check=True)
+        cmd_merge = [
             "git",
             "merge",
             "--no-ff",
             "--no-commit",
             cros_main,
             "-s",
-            opts.merge_strategy,
         ]
-        if opts.strategy_option:
-            arglist.append("-X" + opts.strategy_option)
+        cmd_merge.extend(strategy)
+        print('Merge command: "%s"' % " ".join(cmd_merge))
         try:
-            subprocess.run(arglist, check=True)
+            subprocess.run(cmd_merge, check=True)
         except:
             # We've likely encountered a merge conflict due to new OWNERS file
             # modifications. If we're removing the owners, we'll delete them.
-            if opts.remove_owners and prunelist:
+            if prunelist:
                 # Find the unmerged files
                 unmerged = (
                     subprocess.run(
@@ -366,6 +244,16 @@ def main(argv):
             "We have already started merge process.",
             "Attempt to generate commit.",
         )
+    # Check whether any commit is needed.
+    changes = subprocess.run(
+        ["git", "status", "--porcelain"],
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        check=True,
+    ).stdout.rstrip()
+    if not changes:
+        print("No changes have been found, skipping commit.")
+        return
 
     print("Generating commit message...")
     branch = subprocess.run(
@@ -387,16 +275,234 @@ def main(argv):
         check=True,
     ).stdout.rstrip()
 
-    cmd = " ".join(argv)
     print("Typing as fast as I can...")
     commit_msg = git_commit_msg(
         cros_main, branch, head, merge_head, relevant_paths, cmd
     )
     subprocess.run(["git", "commit", "--signoff", "-m", commit_msg], check=True)
     subprocess.run(["git", "commit", "--amend"], check=True)
+
+
+def main(argv):
+    """Generates a merge commit from ToT to a desired release branch.
+
+    For the commit message, it finds all the commits that have modified a
+    relevant path. By default this is the baseboard or board directory.  The
+    user may optionally specify a path to a text file which contains a longer
+    list of relevant files.  The format should be in the glob syntax that git
+    log expects.
+
+    Args:
+        argv: A list of the command line arguments passed to this script.
+    """
+    # Set up argument parser.
+    parser = argparse.ArgumentParser(
+        description=(
+            "A script that generates a "
+            "merge commit from cros/main"
+            " to a desired release "
+            "branch.  By default, the "
+            '"recursive" merge strategy '
+            'with the "theirs" strategy '
+            "option is used."
+        )
+    )
+    parser.add_argument("--baseboard")
+    parser.add_argument("--board")
+    parser.add_argument(
+        "release_branch",
+        help=(
+            "The name of the target release branch, "
+            "without the trailing '-main'."
+        ),
+    )
+    parser.add_argument(
+        "--remote_prefix",
+        help=(
+            "The name of the remote branch prefix (default cros). "
+            "Private repos typically use cros-internal instead."
+        ),
+        default="cros",
+    )
+    parser.add_argument(
+        "--srcbase",
+        help=("The base directory where the src tree exists."),
+        default="/mnt/host/source/",
+    )
+    parser.add_argument(
+        "--relevant_paths_file",
+        help=(
+            "A path to a text file which includes other "
+            "relevant paths of interest for this board "
+            "or baseboard"
+        ),
+    )
+    parser.add_argument(
+        "--merge_strategy",
+        "-s",
+        default="recursive",
+        help="The merge strategy to pass to `git merge -s`",
+    )
+    parser.add_argument(
+        "--strategy_option",
+        "-X",
+        help=("The strategy option for the chosen merge strategy"),
+    )
+    parser.add_argument(
+        "--remove_owners",
+        "-r",
+        action=("store_true"),
+        help=("Remove non-root OWNERS level files if present"),
+    )
+    parser.add_argument(
+        "--zephyr",
+        "-z",
+        action=("store_true"),
+        help=("If set, treat the board as a Zephyr based program"),
+    )
+
+    opts = parser.parse_args(argv[1:])
+
+    baseboard_dir = ""
+    board_dir = ""
+
+    if opts.baseboard:
+        # If a zephyr board, no baseboard allowed
+        if opts.zephyr:
+            raise Exception("--baseboard not allowed for Zephyr boards")
+        # Dereference symlinks so "git log" works as expected.
+        baseboard_dir = os.path.relpath("baseboard/" + opts.baseboard)
+        baseboard_dir = os.path.relpath(os.path.realpath(baseboard_dir))
+
+        boards = get_relevant_boards(opts.baseboard)
+    elif opts.board:
+        if opts.zephyr:
+            board_dir = os.path.relpath("zephyr/program/" + opts.board)
+        else:
+            board_dir = os.path.relpath("board/" + opts.board)
+        board_dir = os.path.relpath(os.path.realpath(board_dir))
+        boards = [opts.board]
+    else:
+        # With no board or baseboard, not sure whether this should proceed
+        raise Exception("no board or baseboard specified")
+
+    print("Gathering relevant paths...")
+    relevant_paths = []
+    if opts.baseboard:
+        relevant_paths.append(baseboard_dir)
+    elif opts.board:
+        relevant_paths.append(board_dir)
+
+    if not opts.zephyr:
+        for board in boards:
+            relevant_paths.append("board/" + board)
+
+    # Check for the existence of a file that has other paths of interest.
+    # Also check for 'relevant-paths.txt' in the board directory
+    if opts.relevant_paths_file and os.path.exists(opts.relevant_paths_file):
+        with open(opts.relevant_paths_file, "r") as relevant_paths_file:
+            for line in relevant_paths_file:
+                if not line.startswith("#"):
+                    relevant_paths.append(line.rstrip())
+    if os.path.exists("util/getversion.sh"):
+        relevant_paths.append("util/getversion.sh")
+    relevant_paths = " ".join(relevant_paths)
+
+    # Prune OWNERS files if desired
+    prunelist = []
+    if opts.remove_owners:
+        for root, dirs, files in os.walk("."):
+            for name in dirs:
+                if "build" in name:
+                    continue
+            for name in files:
+                if "OWNERS" in name:
+                    path = os.path.join(root, name)
+                    prunelist.append(path[2:])  # Strip the "./"
+
+        # Remove the top level OWNERS file from the prunelist.
+        try:
+            prunelist.remove("OWNERS")
+        except ValueError:
+            pass
+
+        if prunelist:
+            print("Not merging the following OWNERS files:")
+            for path in prunelist:
+                print("  " + path)
+
+    # Create the merge and checkout commands to use.
+    cmd_checkout = [
+        "git",
+        "checkout",
+        "-B",
+        opts.release_branch,
+        opts.remote_prefix + "/" + opts.release_branch,
+    ]
+    if opts.merge_strategy == "recursive" and not opts.strategy_option:
+        opts.strategy_option = "theirs"
+    print(
+        'Using "%s" merge strategy' % opts.merge_strategy,
+        (
+            "with strategy option '%s'" % opts.strategy_option
+            if opts.strategy_option
+            else ""
+        ),
+    )
+    cros_main = opts.remote_prefix + "/" + "main"
+    strategy = [
+        opts.merge_strategy,
+    ]
+    if opts.strategy_option:
+        strategy.append("-X" + opts.strategy_option)
+    cmd = " ".join(argv)
+
+    # Merge each of the repos
+    merge_repo(
+        os.path.join(opts.srcbase, "src/platform/ec"),
+        cros_main,
+        cmd_checkout,
+        strategy,
+        cmd,
+        prunelist,
+        relevant_paths,
+    )
+    if opts.zephyr:
+        # Strip off any trailing -main or -master from branch name
+        if opts.release_branch.endswith("-main"):
+            opts.release_branch = opts.release_branch[:-5]
+        if opts.release_branch.endswith("-master"):
+            opts.release_branch = opts.release_branch[:-7]
+        cmd_checkout = [
+            "git",
+            "checkout",
+            "-B",
+            opts.release_branch,
+            opts.remote_prefix + "/" + opts.release_branch,
+        ]
+        merge_repo(
+            os.path.join(opts.srcbase, "src/third_party/zephyr/main"),
+            cros_main,
+            cmd_checkout,
+            strategy,
+            cmd,
+            [],
+            [],
+        )
+        # cmsis repo has different remote
+        cros_main = opts.remote_prefix + "/" + "chromeos-main"
+        merge_repo(
+            os.path.join(opts.srcbase, "src/third_party/zephyr/cmsis"),
+            cros_main,
+            cmd_checkout,
+            strategy,
+            cmd,
+            [],
+            [],
+        )
     print(
         (
-            "Finished! **Please review the commit to see if it's to your "
+            "Finished! **Please review the commit(s) to see if they're to your "
             "liking.**"
         )
     )
