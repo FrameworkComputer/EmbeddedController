@@ -22,8 +22,15 @@ extern bool wdt_warning_triggered;
 
 static void wdt_warning_handler(const struct device *wdt_dev, int channel_id)
 {
+	const char *thread_name = k_thread_name_get(k_current_get());
+
+#ifdef CONFIG_RISCV
+	printk("WDT pre-warning MEPC:%p THREAD_NAME:%s\n",
+	       (void *)csr_read(mepc), thread_name);
+#else
 	/* TODO(b/176523207): watchdog warning message */
-	printk("Watchdog deadline is close!\n");
+	printk("Watchdog deadline is close! THREAD_NAME:%s\n", thread_name);
+#endif
 #ifdef TEST_BUILD
 	wdt_warning_triggered = true;
 #endif
