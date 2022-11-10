@@ -12,16 +12,17 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-static union brask_cbi_fw_config fw_config;
+static union lisbon_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
 
 /*
- * FW_CONFIG defaults for brask if the CBI.FW_CONFIG data is not
+ * FW_CONFIG defaults for lisbon if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union brask_cbi_fw_config fw_config_defaults = {
-	.audio = DB_NAU88L25B_I2S,
-	.bj_power = BJ_135W,
+static const union lisbon_cbi_fw_config fw_config_defaults = {
+	.bj_power = BJ_65W,
+	.storage = EMMC,
+	.fvm_support = FVM_NO,
 };
 
 /*
@@ -31,18 +32,18 @@ static const struct {
 	int voltage;
 	int current;
 } bj_power[] = {
-	[BJ_135W] = { /* 0 - 135W (also default) */
-			.voltage = 19500,
-			.current = 6920
+	[BJ_65W] = { /* 0 - 65W (also default) */
+			.voltage = 19000,
+			.current = 3420
 	},
-	[BJ_230W] = { /* 1 - 230W */
-			.voltage = 19500,
-			.current = 11800
+	[BJ_90W] = { /* 1 - 90W */
+			.voltage = 19000,
+			.current = 4740
 	}
 };
 
 /****************************************************************************
- * Brask FW_CONFIG access
+ * Lisbon FW_CONFIG access
  */
 void board_init_fw_config(void)
 {
