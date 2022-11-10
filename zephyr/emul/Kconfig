@@ -106,6 +106,13 @@ config PWM_MOCK
 	  Enable the PWM mock. This driver is a pure mock and does nothing by
 	  default.
 
+config EMUL_PCT2075
+	bool "PCT2075 emulator"
+	select EMUL_COMMON_I2C
+	help
+	  Enable the PCT2075 temperature sensor emulator. It uses emulated I2C bus.
+	  Emulator API is available in zephyr/include/emul/emul_pct2075.h.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"

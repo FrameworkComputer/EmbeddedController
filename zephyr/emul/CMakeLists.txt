@@ -26,5 +26,6 @@ zephyr_library_sources_ifdef(CONFIG_EMUL_CROS_FLASH	emul_flash.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_RTC		emul_rtc.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_RT9490		emul_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PWM_MOCK            pwm_mock.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_PCT2075	emul_pct2075.c)
 
 cros_ec_library_include_directories_ifdef(CONFIG_EMUL_CROS_FLASH include)

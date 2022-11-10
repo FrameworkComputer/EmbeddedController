@@ -522,6 +522,11 @@
 			power-good-pin = <&gpio_ec_pg_pin_temp>;
 			sensor = <&temp_fan>;
 		};
+		named_pct2075: soc {
+			status = "okay";
+			power-good-pin = <&gpio_ec_pg_pin_temp>;
+			sensor = <&pct2075_emul>;
+		};
 	};
 
 	/*
@@ -855,6 +860,11 @@
 			p0-i2c-addr = <0x8>;
 			p1-i2c-addr = <0x9>;
 			gpio-i2c-addr = <0x1a>;
+		};
+
+		pct2075_emul: pct2075@48 {
+			compatible = "nxp,pct2075";
+			reg = <0x48>;
 		};
 	};
 

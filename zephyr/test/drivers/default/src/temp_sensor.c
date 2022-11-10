@@ -9,13 +9,18 @@
 #include <zephyr/drivers/adc/adc_emul.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/emul.h>
 
 #include <math.h>
 
 #include "common.h"
+#include "driver/temp_sensor/pct2075.h"
+#include "emul/emul_pct2075.h"
+#include "math_util.h"
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
 #include "test/drivers/test_state.h"
+#include "timer.h"
 
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
@@ -110,6 +115,11 @@ ZTEST_USER(temp_sensor, test_temp_sensor_pg_pin)
 					       named_temp_pp3300_regulator)),
 				       &temp),
 		      NULL);
+	zassert_equal(
+		EC_ERROR_NOT_POWERED,
+		temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(named_pct2075)),
+				 &temp),
+		NULL);
 
 	/* power ADC */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_EC_PG_PIN_TEMP_PORT, 1),
@@ -179,12 +189,92 @@ ZTEST_USER(temp_sensor, test_temp_sensor_read)
 	}
 }
 
+/** Test if temp_sensor_read() returns temperature on success for PCT2075 */
+ZTEST_USER(temp_sensor, test_temp_sensor_pct2075)
+{
+	int temp;
+	const struct emul *dev = EMUL_DT_GET(DT_NODELABEL(pct2075_emul));
+	int mk[] = {
+		MILLI_CELSIUS_TO_MILLI_KELVIN(127000),
+		MILLI_CELSIUS_TO_MILLI_KELVIN(126850),
+		MILLI_CELSIUS_TO_MILLI_KELVIN(125),
+		MILLI_CELSIUS_TO_MILLI_KELVIN(0),
+		MILLI_CELSIUS_TO_MILLI_KELVIN(-125),
+		MILLI_CELSIUS_TO_MILLI_KELVIN(-54875),
+		MILLI_CELSIUS_TO_MILLI_KELVIN(-55000),
+	};
+
+	for (int i = 0; i < ARRAY_SIZE(mk); i++) {
+		pct2075_emul_set_temp(dev, mk[i]);
+		/* Highly dependent on current implementation. The sensor
+		 * update temperature in the 1 second periodic hook, so
+		 * we need to wait for it.
+		 */
+		msleep(1100);
+		zassert_equal(EC_SUCCESS,
+			      temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
+						       named_pct2075)),
+					       &temp));
+		zassert_equal(MILLI_KELVIN_TO_KELVIN(mk[i]), temp);
+	}
+}
+
+/** Test if temperature is not updated on I2C read fail.
+ *  The test highly dependent on current implementation - temp_sensor_read
+ *  doesn't return an error on the i2c read fail, which can/should be changed
+ *  in the future.
+ */
+ZTEST_USER(temp_sensor, test_temp_sensor_pct2075_fail)
+{
+	const struct emul *dev = EMUL_DT_GET(DT_NODELABEL(pct2075_emul));
+	struct pct2075_data *data = (struct pct2075_data *)dev->data;
+	int mk1 = 373000, mk2 = 273000;
+	int temp;
+
+	/* Set initial temperature */
+	pct2075_emul_set_temp(dev, mk1);
+	msleep(1100);
+
+	zassert_equal(EC_SUCCESS, temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
+							   named_pct2075)),
+						   &temp));
+	/* Make sure the temperature is read correctly */
+	zassert_equal(MILLI_KELVIN_TO_KELVIN(mk1), temp);
+
+	/* Set I2C fail on the temperature register */
+	i2c_common_emul_set_read_fail_reg(&data->common, PCT2075_REG_TEMP);
+	pct2075_emul_set_temp(dev, mk2);
+	/* Wait for potential update */
+	msleep(1100);
+
+	/* Make sure the temperature is not changed */
+	zassert_equal(EC_SUCCESS, temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
+							   named_pct2075)),
+						   &temp));
+	zassert_equal(MILLI_KELVIN_TO_KELVIN(mk1), temp);
+
+	/* Restore I2C */
+	i2c_common_emul_set_read_fail_reg(&data->common,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	/* Wait for update */
+	msleep(1100);
+	/* Make sure the temperature is updated */
+	zassert_equal(EC_SUCCESS, temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
+							   named_pct2075)),
+						   &temp));
+	zassert_equal(MILLI_KELVIN_TO_KELVIN(mk2), temp);
+}
+
 static void *temp_sensor_setup(void)
 {
 	const struct device *dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
 	const struct device *dev_pin =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_EC_PG_PIN_TEMP_PATH, gpios));
+	const struct emul *pct2075_dev =
+		EMUL_DT_GET(DT_NODELABEL(pct2075_emul));
+	struct pct2075_data *pct2075_data =
+		(struct pct2075_data *)pct2075_dev->data;
 
 	zassert_not_null(dev, NULL);
 	/* Before tests make sure that power pins are set. */
@@ -192,6 +282,9 @@ static void *temp_sensor_setup(void)
 		   NULL);
 	zassert_ok(gpio_emul_input_set(dev_pin, GPIO_EC_PG_PIN_TEMP_PORT, 1),
 		   NULL);
+
+	i2c_common_emul_set_read_fail_reg(&pct2075_data->common,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	return NULL;
 }

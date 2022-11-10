@@ -235,6 +235,8 @@ const struct tmp112_sensor_t tmp112_sensors[TMP112_COUNT] = {
 const struct temp_sensor_t temp_sensors[] = { DT_FOREACH_CHILD_SEP(
 	TEMP_SENSORS_NODEID, TEMP_SENSOR_ENTRY, (, )) };
 
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
 	const struct temp_sensor_t *sensor;
