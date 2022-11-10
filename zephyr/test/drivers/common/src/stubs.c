@@ -148,68 +148,6 @@ int board_is_sourcing_vbus(int port)
 	return ppc_is_sourcing_vbus(port);
 }
 
-/* TODO(b/239457738): Move to dts */
-struct usb_mux_chain usbc0_virtual_usb_mux_chain = {
-	.mux =
-		&(const struct usb_mux){
-			.usb_port = USBC_PORT_C0,
-			.driver = &virtual_usb_mux_driver,
-			.hpd_update = &virtual_hpd_update,
-		},
-};
-
-struct usb_mux usbc1_virtual_usb_mux = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-
-struct usb_mux_chain usbc1_virtual_usb_mux_chain = {
-	.mux = &usbc1_virtual_usb_mux,
-};
-
-struct usb_mux usbc0_mux0 = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &tcpci_tcpm_usb_mux_driver,
-	.i2c_port = I2C_PORT_USB_C0,
-	.i2c_addr_flags = DT_REG_ADDR(DT_NODELABEL(tcpci_emul)),
-};
-
-struct usb_mux_chain usb_muxes[] = {
-	[USBC_PORT_C0] = {
-		.mux = &usbc0_mux0,
-		.next = &usbc0_virtual_usb_mux_chain,
-	},
-	[USBC_PORT_C1] = {
-#ifdef CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
-		.mux = &(const struct usb_mux){
-			.usb_port = USBC_PORT_C1,
-			.driver = &bb_usb_retimer,
-			.hpd_update = bb_retimer_hpd_update,
-			.i2c_port = I2C_PORT_USB_C1,
-			.i2c_addr_flags = DT_REG_ADDR(DT_NODELABEL(
-						usb_c1_bb_retimer_emul)),
-		},
-		.next = &usbc1_virtual_usb_mux_chain,
-#endif
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
-
-#ifdef CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
-struct bb_usb_control bb_controls[] = {
-	[USBC_PORT_C0] = {
-		/* USB-C port 0 doesn't have a retimer */
-	},
-	[USBC_PORT_C1] = {
-		.usb_ls_en_gpio = GPIO_SIGNAL(DT_NODELABEL(usb_c1_ls_en)),
-		.retimer_rst_gpio =
-			 GPIO_SIGNAL(DT_NODELABEL(usb_c1_rt_rst_odl)),
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
-#endif
-
 void pd_power_supply_reset(int port)
 {
 }

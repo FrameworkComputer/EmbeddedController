@@ -29,7 +29,8 @@
 #include "test/drivers/utils.h"
 
 /** Copy of original usb_muxes[USB_PORT_C1] */
-struct usb_mux_chain usb_mux_c1;
+static struct usb_mux_chain usb_mux_c1;
+static struct usb_mux *usbc1_virtual_usb_mux;
 
 /** Number of usb mux proxies in chain */
 #define NUM_OF_PROXY 3
@@ -343,6 +344,26 @@ struct usb_mux_chain proxy_chain_0 = {
 	.mux = &proxy_mux_0,
 	.next = &proxy_chain_1,
 };
+
+static void find_virtual_mux(void)
+{
+	const struct usb_mux_chain *mux_chain;
+
+	mux_chain = &usb_muxes[1];
+	usbc1_virtual_usb_mux = NULL;
+	while (mux_chain) {
+		if (mux_chain->mux &&
+		    mux_chain->mux->driver == &virtual_usb_mux_driver) {
+			usbc1_virtual_usb_mux =
+				(struct usb_mux *)mux_chain->mux;
+			break;
+		}
+		mux_chain = mux_chain->next;
+	}
+
+	__ASSERT(usbc1_virtual_usb_mux,
+		 "USB-C port 1 must contain a virtual mux");
+}
 
 /** Setup first 3 usb muxes of port 1 with proxy */
 static void setup_usb_mux_proxy_chain(void)
@@ -693,13 +714,13 @@ ZTEST(usb_uninit_mux, test_usb_mux_hpd_update)
 	mux_state_t exp_mode, mode, virt_mode;
 
 	/* Get current state of virtual usb mux and set mock */
-	usbc1_virtual_usb_mux.driver->get(&usbc1_virtual_usb_mux, &virt_mode);
+	usbc1_virtual_usb_mux->driver->get(usbc1_virtual_usb_mux, &virt_mode);
 
 	/* Test no hpd level and no irq */
 	exp_mode = virt_mode;
 	usb_mux_hpd_update(USBC_PORT_C1, exp_mode);
 	/* Check if virtual usb mux mode is updated correctly */
-	usbc1_virtual_usb_mux.driver->get(&usbc1_virtual_usb_mux, &mode);
+	usbc1_virtual_usb_mux->driver->get(usbc1_virtual_usb_mux, &mode);
 	zassert_equal(exp_mode, mode, "virtual mux mode is 0x%x (!= 0x%x)",
 		      mode, exp_mode);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, NUM_OF_PROXY);
@@ -711,7 +732,7 @@ ZTEST(usb_uninit_mux, test_usb_mux_hpd_update)
 	exp_mode = virt_mode | USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ;
 	usb_mux_hpd_update(USBC_PORT_C1, exp_mode);
 	/* Check if virtual usb mux mode is updated correctly */
-	usbc1_virtual_usb_mux.driver->get(&usbc1_virtual_usb_mux, &mode);
+	usbc1_virtual_usb_mux->driver->get(usbc1_virtual_usb_mux, &mode);
 	zassert_equal(exp_mode, mode, "virtual mux mode is 0x%x (!= 0x%x)",
 		      mode, exp_mode);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, 0);
@@ -723,7 +744,7 @@ ZTEST(usb_uninit_mux, test_usb_mux_hpd_update)
 	exp_mode = virt_mode | USB_PD_MUX_HPD_IRQ;
 	usb_mux_hpd_update(USBC_PORT_C1, exp_mode);
 	/* Check if virtual usb mux mode is updated correctly */
-	usbc1_virtual_usb_mux.driver->get(&usbc1_virtual_usb_mux, &mode);
+	usbc1_virtual_usb_mux->driver->get(usbc1_virtual_usb_mux, &mode);
 	zassert_equal(exp_mode, mode, "virtual mux mode is 0x%x (!= 0x%x)",
 		      mode, exp_mode);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, 0);
@@ -735,7 +756,7 @@ ZTEST(usb_uninit_mux, test_usb_mux_hpd_update)
 	exp_mode = virt_mode | USB_PD_MUX_HPD_LVL;
 	usb_mux_hpd_update(USBC_PORT_C1, exp_mode);
 	/* Check if virtual usb mux mode is updated correctly */
-	usbc1_virtual_usb_mux.driver->get(&usbc1_virtual_usb_mux, &mode);
+	usbc1_virtual_usb_mux->driver->get(usbc1_virtual_usb_mux, &mode);
 	zassert_equal(exp_mode, mode, "virtual mux mode is 0x%x (!= 0x%x)",
 		      mode, exp_mode);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, 0);
@@ -916,6 +937,7 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 void usb_uninit_mux_before(void *state)
 {
 	ARG_UNUSED(state);
+	find_virtual_mux();
 	setup_usb_mux_proxy_chain();
 	set_test_runner_tid();
 
@@ -935,6 +957,7 @@ void usb_uninit_mux_after(void *state)
 void usb_init_mux_before(void *state)
 {
 	ARG_UNUSED(state);
+	find_virtual_mux();
 	setup_usb_mux_proxy_chain();
 	set_test_runner_tid();
 

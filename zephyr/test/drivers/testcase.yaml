@@ -4,6 +4,7 @@ tests:
   drivers.default:
     timeout: 240
     extra_args: CONF_FILE="prj.conf;default/prj.conf"
+                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_DEFAULT=y
       - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
@@ -13,6 +14,7 @@ tests:
   drivers.default.mock_power:
     timeout: 240
     extra_args: CONF_FILE="prj.conf;default/prj.conf"
+                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_DEFAULT=y
       - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
@@ -198,6 +200,7 @@ tests:
       - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
   drivers.usbc_svdm_dfp_only:
     extra_args: CONF_FILE="prj.conf;usbc_svdm_dfp_only/prj.conf"
+                DTC_OVERLAY_FILE="usbc_svdm_dfp_only/boards/native_posix.overlay"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_SVDM_DFP_ONLY=y
   drivers.usbc_tbt_mode:

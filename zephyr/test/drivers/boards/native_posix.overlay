@@ -60,6 +60,19 @@
 			chg = <&isl923x_emul>;
 			tcpc = <&tcpci_emul>;
 			ppc = <&sn5s330_emul>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tcpci_mux_c0
+					     &virtual_mux_c0>;
+			};
+		};
+		port0-muxes {
+			tcpci_mux_c0: tcpci-mux-c0 {
+				compatible = "cros-ec,usbc-mux-tcpci";
+			};
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 
 		port1@1 {
@@ -67,6 +80,16 @@
 			reg = <1>;
 			tcpc = <&ps8xxx_emul>;
 			ppc = <&syv682x_emul>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_bb_retimer_emul
+					     &virtual_mux_c1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_c1: virtual-mux-c1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 	};
 
@@ -815,6 +838,7 @@
 			compatible = "intel,jhl8040r";
 			reg = <0x42>;
 			reset-pin = <&usb_c1_rt_rst_odl>;
+			ls-en-pin = <&usb_c1_ls_en>;
 		};
 
 		ps8xxx_emul: ps8xxx_emul@b {
