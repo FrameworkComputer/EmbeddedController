@@ -835,8 +835,12 @@ static void charge_manager_refresh(void)
 		override_port = OVERRIDE_OFF;
 
 	if (new_supplier == CHARGE_SUPPLIER_NONE) {
+#ifdef CONFIG_CHARGER_INPUT_CURRENT
+		new_charge_current = CONFIG_CHARGER_INPUT_CURRENT;
+#else
 		new_charge_current = 0;
-		new_charge_current_uncapped = 0;
+#endif
+		new_charge_current_uncapped = new_charge_current;
 		new_charge_voltage = 0;
 	} else {
 		new_charge_current_uncapped =

@@ -2336,6 +2336,11 @@ int charge_set_input_current_limit(int ma, int mv)
 		     100;
 	}
 #endif
+#ifdef CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT
+	if (CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT > 0) {
+		ma = MAX(ma, CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT);
+	}
+#endif
 
 	if (IS_ENABLED(CONFIG_OCPC))
 		chgnum = charge_get_active_chg_chip();

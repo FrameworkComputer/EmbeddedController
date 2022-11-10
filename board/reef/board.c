@@ -555,8 +555,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 	if (bd9995x_bc12_enable_charging(port, bc12_enable))
 		return;
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 /**

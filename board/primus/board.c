@@ -137,8 +137,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	else
 		charge_ma = charge_ma * 93 / 100;
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 static void configure_input_current_limit(void)
@@ -159,9 +158,7 @@ static void configure_input_current_limit(void)
 	else
 		adapter_current_ma = adapter_current_ma * 97 / 100;
 
-	charge_set_input_current_limit(MAX(adapter_current_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       adapter_current_mv);
+	charge_set_input_current_limit(adapter_current_ma, adapter_current_mv);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, configure_input_current_limit,
 	     HOOK_PRIO_DEFAULT);

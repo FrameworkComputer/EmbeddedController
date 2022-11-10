@@ -44,6 +44,26 @@ config PLATFORM_EC_CHARGER_INPUT_CURRENT
 	  chargers, this should be set to 512 mA in order to not brown-out
 	  low-current USB charge ports in accordance with USB-PD r3.0 Sec. 7.3
 
+config PLATFORM_EC_CHARGER_MIN_INPUT_CURRENT_LIMIT
+	int "Minimum charger input current limit in mA"
+	default 0
+	depends on PLATFORM_EC_CHARGE_MANAGER
+	help
+	  Minimum current limit in mA that will ever be set for chargers, even if a
+	  lower limit is requested.
+
+	  If set, this should usually be set to no more than 2.5W divided by the
+	  maximum supported input voltage in order to satisfy USB-PD pSnkStdby
+	  requirements. Higher values may help devices stay alive under low-battery
+	  conditions at the cost of violating standby power limits.
+
+	  Many boards set this to large values, since historically this number was
+	  usually equal to the default current limit. New boards should avoid doing
+	  so if possible, and usually leave this unset: customization of
+	  board_set_charge_limit() should be considered instead if a device sometimes
+	  requires amounts of power in violation of specs, to limit those violations
+	  only to situations where they are necessary.
+
 config PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT
 	int "Charger input current derating percentage"
 	default 0

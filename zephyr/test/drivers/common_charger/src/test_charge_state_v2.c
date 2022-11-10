@@ -114,3 +114,16 @@ ZTEST(charge_state_v2, test_current_limit_derating)
 		CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT,
 		charger_current_limit);
 }
+
+ZTEST(charge_state_v2, test_minimum_current_limit)
+{
+	int charger_current_limit;
+
+	charge_set_input_current_limit(50, 5000);
+	zassert_ok(charger_get_input_current_limit(0, &charger_current_limit));
+	zassert_equal(charger_current_limit, 96,
+		      "Minimum input current limit should be %d mA,"
+		      " but current limit is %d (capped to %d)",
+		      96, charger_current_limit,
+		      CONFIG_PLATFORM_EC_CHARGER_MIN_INPUT_CURRENT_LIMIT);
+}

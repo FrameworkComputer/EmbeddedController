@@ -73,7 +73,9 @@ static const struct bc12_status bc12_chg_limits[] = {
 	[CHG_1_0A] = { .supplier = CHARGE_SUPPLIER_PROPRIETARY,
 		       .current_limit = 1000 },
 	[CHG_RESERVED] = { .supplier = CHARGE_SUPPLIER_NONE,
-			   .current_limit = 0 },
+			   /* Not charging, limit is set to default */
+			   .current_limit =
+				   CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT },
 	[CHG_CDP] = { .supplier = CHARGE_SUPPLIER_BC12_CDP,
 		      .current_limit = USB_CHARGER_MAX_CURR_MA },
 	[CHG_SDP] = { .supplier = CHARGE_SUPPLIER_BC12_SDP,
@@ -209,7 +211,8 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 		      NULL);
 	zassert_equal(charge_manager_get_supplier(), CHARGE_SUPPLIER_NONE,
 		      NULL);
-	zassert_equal(charge_manager_get_charger_current(), 0);
+	zassert_equal(charge_manager_get_charger_current(),
+		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT);
 	zassert_equal(charge_manager_get_charger_voltage(), 0);
 }
 
@@ -258,6 +261,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	test_bc12_pi3usb9201_host_mode();
 
 	for (int c = CHG_OTHER; c <= CHG_DCP; c++) {
+		LOG_INF("Test client mode supplier %d", c);
 		test_bc12_pi3usb9201_client_mode(
 			c, bc12_chg_limits[c].supplier,
 			bc12_chg_limits[c].current_limit);

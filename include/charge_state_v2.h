@@ -72,7 +72,8 @@ int charge_set_output_current_limit(int chgnum, int ma, int mv);
  * time AC is applied.
  *
  * The input current limit is automatically derated by
- * CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT, if configured.
+ * CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT (if configured), and is clamped to
+ * no less than CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT mA (if configured).
  *
  * @param ma New input current limit in mA
  * @param mv Negotiated charge voltage in mV.

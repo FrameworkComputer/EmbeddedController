@@ -473,8 +473,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 	/* Limit input current lower than 2944 mA for safety */
 	charge_ma = MIN(charge_ma, 2944);
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 /* NVME */

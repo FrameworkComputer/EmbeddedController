@@ -58,9 +58,6 @@
 
 #define USB_PD_PORT_ANX74XX 0
 
-/* Minimum input current limit. */
-#define ILIM_MIN_MA 472
-
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C0_PD_INT_ODL) &&
@@ -688,7 +685,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 	if (charge_mv > 5000)
 		charge_ma -= 52;
 
-	charge_set_input_current_limit(MAX(charge_ma, ILIM_MIN_MA), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 void board_hibernate(void)

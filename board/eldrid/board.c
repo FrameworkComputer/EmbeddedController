@@ -182,8 +182,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	else
 		isl9241_set_ac_prochot(0, 3328);
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 /******************************************************************************/
