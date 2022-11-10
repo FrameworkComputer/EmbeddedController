@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_bb_retimer_emul
+#define DT_DRV_COMPAT intel_jhl8040r
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 #include <zephyr/logging/log.h>
@@ -309,10 +309,9 @@ static int bb_emul_init(const struct emul *emul, const struct device *parent)
 
 #define BB_RETIMER_EMUL(n)                                          \
 	static struct bb_emul_data bb_emul_data_##n = {			\
-		.vendor_id = DT_STRING_TOKEN(DT_DRV_INST(n), vendor),	\
-		.error_on_ro_write = DT_INST_PROP(n, error_on_ro_write),\
-		.error_on_rsvd_write = DT_INST_PROP(n,			\
-					error_on_reserved_bit_write),	\
+		.vendor_id = BB_RETIMER_VENDOR_ID_1,	\
+		.error_on_ro_write = true, \
+		.error_on_rsvd_write = true,	\
 		.common = {						\
 			.start_write = NULL,				\
 			.write_byte = bb_emul_write_byte,		\

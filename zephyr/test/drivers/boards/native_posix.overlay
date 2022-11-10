@@ -812,11 +812,9 @@
 		};
 
 		usb_c1_bb_retimer_emul: bbretimer@42 {
-			compatible = "cros,bb-retimer-emul";
+			compatible = "intel,jhl8040r";
 			reg = <0x42>;
-			vendor = "BB_RETIMER_VENDOR_ID_1";
-			error-on-ro-write;
-			error-on-reserved-bit-write;
+			reset-pin = <&usb_c1_rt_rst_odl>;
 		};
 
 		ps8xxx_emul: ps8xxx_emul@b {
