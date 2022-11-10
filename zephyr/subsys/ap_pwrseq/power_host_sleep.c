@@ -174,10 +174,11 @@ void ap_power_sleep_notify_transition(enum ap_power_sleep_type check_state)
 		ap_power_ev_send_callbacks(AP_POWER_SUSPEND);
 	} else if (check_state == AP_POWER_SLEEP_RESUME) {
 		ap_power_ev_send_callbacks(AP_POWER_RESUME);
+		/*
+		 * Transition is done; reset sleep state after resume.
+		 */
+		ap_power_sleep_set_notify(AP_POWER_SLEEP_NONE);
 	}
-
-	/* Transition is done; reset sleep state. */
-	ap_power_sleep_set_notify(AP_POWER_SLEEP_NONE);
 }
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
 
