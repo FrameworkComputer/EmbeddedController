@@ -177,14 +177,14 @@
  * @brief Set struct usb_mux fields common for all USB muxes and alter flags
  *
  * @param mux_id USB mux node ID
- * @param flags_mask Mask for bits that should be igonred in flags property
+ * @param flags_mask Mask for bits that should be ignored in flags property
  * @param flags_val Value that should be used instead for masked bits
  */
 #define USB_MUX_COMMON_FIELDS_WITH_FLAGS(mux_id, flags_mask, flags_val) \
 	.usb_port = USB_MUX_PORT(mux_id),                               \
 	.board_init = USB_MUX_CALLBACK_OR_NULL(mux_id, board_init),     \
 	.board_set = USB_MUX_CALLBACK_OR_NULL(mux_id, board_set),       \
-	.flags = (DT_PROP(mux_id, flags) & ~(flags_mask)) | (flags_val)
+	.flags = (DT_PROP_OR(mux_id, flags, 0) & ~(flags_mask)) | (flags_val)
 
 /**
  * @brief Set struct usb_mux fields common for all USB muxes
