@@ -25,6 +25,7 @@ test-list-y=\
        pingpong \
        printf \
        queue \
+       rng_benchmark \
        rollback \
        rollback_entropy \
        rsa3 \

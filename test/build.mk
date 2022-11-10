@@ -237,6 +237,7 @@ power_button-y=power_button.o
 powerdemo-y=powerdemo.o
 printf-y=printf.o
 queue-y=queue.o
+rng_benchmark-y=rng_benchmark.o
 rollback-y=rollback.o
 rollback_entropy-y=rollback_entropy.o
 rollback_secret-y=rollback_secret.o
