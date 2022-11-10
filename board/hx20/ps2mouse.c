@@ -510,6 +510,7 @@ void mouse_interrupt_handler_task(void *p)
 			}
 			if (evt & PS2MOUSE_EVT_REENABLE) {
 				CPRINTS("PS2M renabling");
+				setup_touchpad();
 				gpio_enable_interrupt(GPIO_SOC_TP_INT_L);
 				gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
 			}
