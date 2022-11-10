@@ -32,6 +32,11 @@ FAKE_VALUE_FUNC(enum ec_error_list, get_actual_voltage, int, int *);
 FAKE_VALUE_FUNC(enum ec_error_list, set_voltage, int, int);
 FAKE_VALUE_FUNC(enum ec_error_list, get_vsys_voltage, int, int, int *);
 FAKE_VALUE_FUNC(enum ec_error_list, enable_bypass_mode, int, bool);
+FAKE_VALUE_FUNC(enum ec_error_list, set_vsys_compensation, int,
+		struct ocpc_data *, int, int);
+FAKE_VALUE_FUNC(enum ec_error_list, is_icl_reached, int, bool *);
+FAKE_VALUE_FUNC(enum ec_error_list, enable_linear_charge, int, bool);
+FAKE_VALUE_FUNC(enum ec_error_list, get_battery_cells, int, int *);
 
 /**
  * @brief If non-NULL, board_get_charger_chip_count returns the value this
@@ -500,6 +505,46 @@ ZTEST(common_charger_mocked_driver, test_charger_set_mode__unimpl)
 	zassert_equal(EC_ERROR_UNIMPLEMENTED, charger_set_mode(0));
 }
 
+ZTEST_F(common_charger_mocked_driver, test_charger_set_vsys_compensation)
+{
+	fixture->mock_driver.set_vsys_compensation = set_vsys_compensation;
+	set_vsys_compensation_fake.return_val = 123;
+
+	zassert_equal(123, charger_set_vsys_compensation(CHG_NUM, NULL, 0, 0));
+
+	zassert_equal(1, set_vsys_compensation_fake.call_count);
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_is_icl_reached)
+{
+	fixture->mock_driver.is_icl_reached = is_icl_reached;
+	is_icl_reached_fake.return_val = 123;
+
+	zassert_equal(123, charger_is_icl_reached(CHG_NUM, NULL));
+
+	zassert_equal(1, is_icl_reached_fake.call_count);
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_enable_linear_charge)
+{
+	fixture->mock_driver.enable_linear_charge = enable_linear_charge;
+	enable_linear_charge_fake.return_val = 123;
+
+	zassert_equal(123, charger_enable_linear_charge(CHG_NUM, 0));
+
+	zassert_equal(1, enable_linear_charge_fake.call_count);
+}
+
+ZTEST_F(common_charger_mocked_driver, test_charger_get_battery_cells)
+{
+	fixture->mock_driver.get_battery_cells = get_battery_cells;
+	get_battery_cells_fake.return_val = 123;
+
+	zassert_equal(123, charger_get_battery_cells(CHG_NUM, NULL));
+
+	zassert_equal(1, get_battery_cells_fake.call_count);
+}
+
 static void *setup(void)
 {
 	static struct common_charger_mocked_driver_fixture f;
@@ -532,6 +577,10 @@ static void reset(void *data)
 	RESET_FAKE(set_voltage);
 	RESET_FAKE(get_vsys_voltage);
 	RESET_FAKE(enable_bypass_mode);
+	RESET_FAKE(set_vsys_compensation);
+	RESET_FAKE(is_icl_reached);
+	RESET_FAKE(enable_linear_charge);
+	RESET_FAKE(get_battery_cells);
 
 	fake_charger_count = NULL;
 }
