@@ -513,6 +513,7 @@ void board_tcpc_init(void)
 
 	/* Enable PPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL);
 
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
