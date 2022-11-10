@@ -913,6 +913,7 @@ void keyboard_scan_task(void *u)
 	uint32_t local_disable_scanning = 0;
 
 	print_state(debounced_state, "init state");
+	poll_deadline.val = 0;
 
 	keyboard_raw_task_start();
 
