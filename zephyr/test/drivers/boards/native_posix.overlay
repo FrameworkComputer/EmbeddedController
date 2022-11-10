@@ -178,7 +178,7 @@
 			/* GPIO_PULL_UP will cause this start asserted,
 			 * i.e. not pressed.
 			 */
-			gpios = <&gpio0 25 (GPIO_INPUT_PULL_UP)>;
+			gpios = <&gpio0 25 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_src_vph_pwr_pg: src_vph_pwr_pg {
@@ -303,11 +303,6 @@
 			irq-pin = <&gpio_mb_power_good>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
-		};
-		int_power_button: power_button {
-			irq-pin = <&gpio_ec_pwr_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_button_interrupt";
 		};
 		int_wp_l: wp_l {
 			irq-pin = <&gpio_wp_l>;
@@ -987,26 +982,6 @@
 	   buffer-size = <200>;
 	};
 
-	button-cfg {
-		compatible = "cros-ec,button-cfg";
-
-		btn_power_button_cfg: power_button_cfg {
-			button_name = "POWER_BUTTON";
-			button_type = <0>;
-			spec = <&gpio_ec_pwr_btn_odl>;
-			gpio_int = <&int_power_button>;
-			debounce_us = <30000>;
-			flags = <0>;
-		};
-		btn_test_button_cfg: test_button_cfg {
-			button_name = "TEST_BUTTON";
-			button_type = <0>;
-			spec = <&gpio_test>;
-			gpio_int = <&int_gpio_test>;
-			debounce_us = <30000>;
-			flags = <0>;
-		};
-	};
 };
 
 &espi0 {

@@ -10,20 +10,6 @@
 #include <zephyr/devicetree.h>
 
 /*
- * dt_flags is a uint8_t type.  However, for platform/ec
- * the GPIO flags in the devicetree are expanded past 8 bits
- * to support the INPUT/OUTPUT and PULLUP/PULLDOWN properties.
- * Cast back to a gpio_dt_flags to compile, discarding the bits
- * that are not supported by the Zephyr GPIO API.
- */
-#define CROS_EC_GPIO_DT_SPEC_GET(node_id, prop)                            \
-	{                                                                  \
-		.port = DEVICE_DT_GET(DT_GPIO_CTLR(node_id, prop)),        \
-		.pin = DT_GPIO_PIN(node_id, prop),                         \
-		.dt_flags = (gpio_dt_flags_t)DT_GPIO_FLAGS(node_id, prop), \
-	}
-
-/*
  * Validate interrupt flags are valid for the Zephyr GPIO driver.
  */
 #define IS_GPIO_INTERRUPT_FLAG(flag, mask) ((flag & mask) == mask)
