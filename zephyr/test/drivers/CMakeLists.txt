@@ -48,6 +48,7 @@ add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_SYSTEM system)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS locate_chip)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_BUTTON button)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_CONSOLE console)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_HOST_CMD_THREAD host_command_thread)
 
 get_target_property(TEST_SOURCES_NEW app SOURCES)
 

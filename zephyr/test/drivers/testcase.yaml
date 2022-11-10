@@ -206,3 +206,6 @@ tests:
   drivers.usbc_vconn_swap:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_VCONN_SWAP=y
+  drivers.host_cmd_thread:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_HOST_CMD_THREAD=y

@@ -120,4 +120,7 @@ config LINK_TEST_SUITE_CONSOLE
 	bool "Link and test the console tests"
 	select UART_INTERRUPT_DRIVEN
 
+config LINK_TEST_SUITE_HOST_CMD_THREAD
+	bool "Link and test the host command thread override tests"
+
 source "Kconfig.zephyr"
