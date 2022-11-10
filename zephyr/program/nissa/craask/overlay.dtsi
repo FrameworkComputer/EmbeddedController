@@ -251,6 +251,31 @@
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm6 6 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
 	};
+
+	 /*
+	  * Declare unused GPIOs so that they are shut down
+	  * and use minimal power
+	  */
+	  unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio3 2 0>,
+			<&gpio3 3 0>,
+			<&gpio3 5 0>,
+			<&gpio3 6 0>,
+			<&gpio5 7 0>,
+			<&gpio6 0 0>,
+			<&gpio6 3 0>,
+			<&gpio6 6 0>,
+			<&gpio7 3 0>,
+			<&gpio8 3 0>,
+			<&gpio8 6 0>,
+			<&gpiob 1 0>,
+			<&gpiob 7 0>,
+			<&gpioc 7 0>,
+			<&gpiof 2 0>,
+			<&gpiof 3 0>;
+	 };
 };
 
 &thermistor_3V3_51K1_47K_4050B {
@@ -351,4 +376,14 @@
 	status = "okay";
 	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
 	pinctrl-names = "default";
+};
+
+/*
+ * Declare GPIOs that have leakage current caused by board issues here. NPCX ec
+ * will disable their input buffers before entering deep sleep and restore them
+ * after waking up automatically for better power consumption.
+ */
+&power_leakage_io {
+	leak-gpios = <&gpioa 4 0
+		      &gpiof 1 0>;
 };
