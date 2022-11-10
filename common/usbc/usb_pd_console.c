@@ -146,8 +146,8 @@ static
 				case PD_DRP_FORCE_SOURCE:
 					ccprintf("force source\n");
 					break;
-					cflush();
 				}
+				cflush();
 			} else {
 				if (!strcasecmp(argv[3], "on"))
 					pd_set_dual_role(port,
