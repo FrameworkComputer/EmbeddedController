@@ -5,22 +5,14 @@
 
 /* Frostflow board-specific USB-C mux configuration */
 
-#include <zephyr/drivers/gpio.h>
-
-#include "console.h"
-#include "cros_board_info.h"
-#include "cros_cbi.h"
-#include "driver/retimer/anx7483_public.h"
-#include "hooks.h"
 #include "ioexpander.h"
-#include "usb_mux.h"
 #include "usbc/usb_muxes.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /*
- * USB C0 (general) and C1 (just ANX DB) use IOEX pins to
+ * USB C0 (general) and C1 (just ps8815 DB) use IOEX pins to
  * indicate flipped polarity to a protection switch.
  */
 static int ioex_set_flip(int port, mux_state_t mux_state)
@@ -48,12 +40,12 @@ static int ioex_set_flip(int port, mux_state_t mux_state)
 	return EC_SUCCESS;
 }
 
-int board_anx7483_c0_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+int board_c0_amd_fp6_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	/* Set the SBU polarity mux */
 	RETURN_ERROR(ioex_set_flip(me->usb_port, mux_state));
 
-	return anx7483_set_default_tuning(me, mux_state);
+	return EC_SUCCESS;
 }
 
 int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
