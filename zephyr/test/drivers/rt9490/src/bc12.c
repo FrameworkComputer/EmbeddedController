@@ -17,11 +17,13 @@
 #include "timer.h"
 #include "usb_charge.h"
 
+FAKE_VALUE_FUNC(int, board_tcpc_post_init, int);
+
 static const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(rt9490));
 static const struct emul *tcpci_emul = EMUL_DT_GET(DT_NODELABEL(tcpci_emul));
 static const int chgnum = CHARGER_SOLO;
 
-void run_bc12_test(int reg_value, enum charge_supplier expected_result)
+static void run_bc12_test(int reg_value, enum charge_supplier expected_result)
 {
 	int port = 0;
 
@@ -29,7 +31,19 @@ void run_bc12_test(int reg_value, enum charge_supplier expected_result)
 	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
 			   TCPC_REG_POWER_STATUS_VBUS_PRES |
 				   TCPC_REG_POWER_STATUS_VBUS_DET);
-	zassert_ok(tcpc_config[port].drv->init(port), NULL);
+
+	/* This is the same as calling tcpc_config[port].drv->init(port) but
+	 * also calls our board_tcpc_post_init_fake stub. During the init, the
+	 * other tasks are also running and will at times also call the same
+	 * function. So the verification just checks that the call count
+	 * increased and that the first history element matches the port we
+	 * provided.
+	 */
+	RESET_FAKE(board_tcpc_post_init);
+	zassert_ok(tcpm_init(port));
+	zassert_true(board_tcpc_post_init_fake.call_count > 0);
+	zassert_equal(port, board_tcpc_post_init_fake.arg0_history[0]);
+
 	zassert_true(tcpc_config[port].drv->check_vbus_level(port,
 							     VBUS_PRESENT),
 		     NULL);
