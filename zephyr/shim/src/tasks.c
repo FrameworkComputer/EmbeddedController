@@ -105,7 +105,7 @@ atomic_t *task_get_event_bitmap(task_id_t cros_task_id)
 
 	data = task_get_base_data(cros_task_id);
 
-	return &data->event_mask;
+	return data == NULL ? NULL : &data->event_mask;
 }
 
 void task_set_event(task_id_t cros_task_id, uint32_t event)
@@ -114,8 +114,10 @@ void task_set_event(task_id_t cros_task_id, uint32_t event)
 
 	data = task_get_base_data(cros_task_id);
 
-	atomic_or(&data->event_mask, event);
-	k_poll_signal_raise(&data->new_event, 0);
+	if (data != NULL) {
+		atomic_or(&data->event_mask, event);
+		k_poll_signal_raise(&data->new_event, 0);
+	}
 }
 
 uint32_t task_wait_event(int timeout_us)
@@ -123,6 +125,8 @@ uint32_t task_wait_event(int timeout_us)
 	struct task_ctx_base_data *data;
 
 	data = task_get_base_data(task_get_current());
+
+	__ASSERT_NO_MSG(data != NULL);
 
 	const k_timeout_t timeout = (timeout_us == -1) ? K_FOREVER :
 							 K_USEC(timeout_us);
