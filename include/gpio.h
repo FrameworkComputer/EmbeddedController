@@ -21,6 +21,9 @@
  */
 #ifdef CONFIG_ZEPHYR
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/dt-bindings/gpio/nuvoton-npcx-gpio.h>
+#include <zephyr/dt-bindings/gpio/ite-it8xxx2-gpio.h>
+#include <dt-bindings/native-posix-gpio.h>
 
 /*
  * Some flag definitions are duplicated by our private devicetree binding
@@ -79,7 +82,16 @@
 /* GPIO_INT_DSLEEP         not supported by Zephyr */
 /* GPIO_INT_SHARED         not supported by Zephyr */
 
+#if DT_HAS_COMPAT_STATUS_OKAY(nuvoton_npcx_gpio)
+#define GPIO_VOLTAGE_1P8 NPCX_GPIO_VOLTAGE_1P8
 #define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
+#elif DT_HAS_COMPAT_STATUS_OKAY(ite_it8xxx2_gpio)
+#define GPIO_VOLTAGE_1P8 IT8XXX2_GPIO_VOLTAGE_1P8
+#define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
+#elif DT_HAS_COMPAT_STATUS_OKAY(zephyr_gpio_emul)
+#define GPIO_VOLTAGE_1P8 NATIVE_POSIX_GPIO_VOLTAGE_1P8
+#define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
+#endif
 /* GPIO_ALTERNATE          not supported by Zephyr */
 /* GPIO_LOCKED             not supported by Zephyr */
 /* GPIO_HIB_WAKE_HIGH      not supported by Zephyr */

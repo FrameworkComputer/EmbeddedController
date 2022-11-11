@@ -8,6 +8,9 @@
  */
 
 #include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/native-posix-gpio.h>
+
+#define GPIO_VOLTAGE_1P8 NATIVE_POSIX_GPIO_VOLTAGE_1P8
 
 / {
 	gpioa: gpio@f01601 {

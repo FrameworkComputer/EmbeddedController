@@ -7,8 +7,11 @@
 
 #include <cros/nuvoton/npcx7.dtsi>
 #include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/gpio/nuvoton-npcx-gpio.h>
 #include <nuvoton/npcx7m7fc.dtsi>
 #include <nuvoton/npcx/npcx7/npcx7-pinctrl.dtsi>
+
+#define GPIO_VOLTAGE_1P8 NPCX_GPIO_VOLTAGE_1P8
 
 / {
 	model = "NPCX7";

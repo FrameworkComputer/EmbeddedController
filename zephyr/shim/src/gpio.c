@@ -166,6 +166,11 @@ int gpio_or_ioex_get_level(int signal, int *value)
 	return EC_SUCCESS;
 }
 
+/* Don't define any 1.8V bit if not supported. */
+#ifndef GPIO_VOLTAGE_1P8
+#define GPIO_VOLTAGE_1P8 0
+#endif
+
 /* GPIO flags which are the same in Zephyr and this codebase */
 #define GPIO_CONVERSION_SAME_BITS                                             \
 	(GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | GPIO_VOLTAGE_1P8 | \

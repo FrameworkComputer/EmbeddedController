@@ -91,7 +91,10 @@ __maybe_unused static const struct gpio_flag_description gpio_descriptions[] = {
 	{ GPIO_INPUT, "I" },	    { GPIO_OUTPUT, "O" },
 	{ GPIO_LOW, "L" },	    { GPIO_HIGH, "H" },
 	{ GPIO_OPEN_DRAIN, "ODR" }, { GPIO_PULL_UP, "PU" },
-	{ GPIO_PULL_DOWN, "PD" },   { GPIO_SEL_1P8V, "1P8" },
+	{ GPIO_PULL_DOWN, "PD" },
+#ifdef GPIO_SEL_1P8V
+	{ GPIO_SEL_1P8V, "1P8" },
+#endif
 #ifndef CONFIG_ZEPHYR
 	{ GPIO_ANALOG, "A" },	    { GPIO_ALTERNATE, "ALT" },
 	{ GPIO_LOCKED, "LCK" }
