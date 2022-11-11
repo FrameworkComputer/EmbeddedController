@@ -32,6 +32,12 @@ config BOARD_XIVU
           Build Google Xivu board. Xivu has Intel ADL-N SoC
           with NPCX993FA0BX EC.
 
+config BOARD_XIVUR
+        bool "Google Xivur Board"
+        help
+          Build Google Xivur board. Xivur has Intel ADL-N SoC
+          with NPCX993FA0BX EC.
+
 config BOARD_JOXER
 	bool "Google Joxer Board"
 	help

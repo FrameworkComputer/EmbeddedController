@@ -4,7 +4,7 @@
 
 """Define zmake projects for nissa."""
 
-# Nivviks and Craask, Pujjo, Xivu has NPCX993F, Nereid and Joxer, Yaviks has ITE81302
+# Nivviks and Craask, Pujjo, Xivu, Xivur has NPCX993F, Nereid and Joxer, Yaviks has ITE81302
 
 
 def register_nissa_project(
@@ -52,6 +52,11 @@ pujjo = register_nissa_project(
 
 xivu = register_nissa_project(
     project_name="xivu",
+    chip="npcx9m3f",
+)
+
+xivur = register_nissa_project(
+    project_name="xivur",
     chip="npcx9m3f",
 )
 
