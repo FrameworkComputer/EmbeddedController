@@ -67,6 +67,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "rainier",
     "scarlet",
     "servo_micro",
+    "servo_v4",
     "servo_v4p1",
     "staff",
     "star",
@@ -287,7 +288,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "kukui",  # overflows flash
     "makomo",  # overflows flash
     "oak",  # overflows flash
-    "servo_v4",  # overflows flash
     "stern",  # overflows flash
     "willow",  # overflows flash
     # Boards that use CHIP:=mchp
