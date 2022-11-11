@@ -175,6 +175,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "nautilus",
     "nightfury",
     "nipperkin",
+    "nocturne",
     "npcx7_evb",
     "npcx9_evb",
     "npcx_evb",
@@ -296,7 +297,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=npcx
     "garg",  # overflows flash
     "mushu",  # overflows flash
-    "nocturne",  # overflows flash
     "terrador",  # overflows flash
     "volteer",  # overflows flash
 ]
