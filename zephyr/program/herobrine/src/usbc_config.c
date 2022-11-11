@@ -50,6 +50,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+#ifdef CONFIG_PLATFORM_EC_USBA
 static void usba_oc_deferred(void)
 {
 	/* Use next number after all USB-C ports to indicate the USB-A port */
@@ -63,6 +64,7 @@ void usba_oc_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
+#endif
 
 void ppc_interrupt(enum gpio_signal signal)
 {
@@ -118,6 +120,7 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 	return EC_RES_INVALID_PARAM;
 }
 
+#ifdef CONFIG_PLATFORM_EC_USBA
 /* Initialize board USC-C things */
 static void board_init_usbc(void)
 {
@@ -125,6 +128,7 @@ static void board_init_usbc(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_a0_oc));
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
+#endif
 
 void board_tcpc_init(void)
 {
