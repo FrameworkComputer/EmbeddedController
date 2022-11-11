@@ -23,11 +23,8 @@
 /* battery overrides */
 / {
 	batteries {
-		default_battery: ap19a5k {
-			compatible = "panasonic,ap19a5k", "battery-smart";
-		};
-		ap19a8k {
-			compatible = "lgc,ap19a8k", "battery-smart";
+		default_battery: sg20 {
+			compatible = "ganfeng,sg20", "battery-smart";
 		};
 	};
 };
