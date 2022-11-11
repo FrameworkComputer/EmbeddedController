@@ -37,4 +37,7 @@ config SHELL_THREAD_PRIORITY
 config EXTRA_EXCEPTION_INFO
 	default y if ARCH_HAS_EXTRA_EXCEPTION_INFO
 
+config EEPROM_SHELL
+	default n
+
 orsource "Kconfig.defaults-$(ARCH)"
