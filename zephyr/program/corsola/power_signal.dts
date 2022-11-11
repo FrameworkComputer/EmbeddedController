@@ -5,7 +5,7 @@
 
 / {
 	power_signal_list: power-signal-list {
-		compatible = "mt8186,power-signal-list";
+		compatible = "mediatek,mt8186-power-signal-list";
 		ap_in_rst {
 			power-enum-name = "AP_IN_RST";
 			power-gpio-pin = <&ap_sysrst_odl_r>;
