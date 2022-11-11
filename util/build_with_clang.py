@@ -144,6 +144,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "fleex",
     "foob",
     "gaelin",
+    "garg",
     "genesis",
     "gimble",
     "gladios",
@@ -298,7 +299,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "bobba",  # overflows flash
     "coachz",  # overflows flash
     "corori2",  # overflows flash
-    "garg",  # overflows flash
     "gelarshie",  # overflows flash
     "lazor",  # overflows flash
     "mushu",  # overflows flash
