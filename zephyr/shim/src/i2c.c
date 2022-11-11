@@ -11,13 +11,6 @@
 #include "i2c/i2c.h"
 
 /*
- * The named-i2c-ports node is required by the I2C shim
- */
-#if !DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
-#error I2C shim requires the named-i2c-ports node to be defined.
-#endif
-
-/*
  * Initialize device bindings in i2c_devices.
  * This macro should be called from within DT_FOREACH_CHILD.
  */

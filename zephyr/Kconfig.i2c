@@ -3,7 +3,10 @@
 # found in the LICENSE file.
 
 config PLATFORM_EC_I2C
-	def_bool I2C
+	bool "EC I2C Support"
+	default y
+	depends on DT_HAS_NAMED_I2C_PORTS_ENABLED
+	select I2C
 	help
 	  Enable compilation of the EC i2c module. Once enabled, it will be
 	  possible to make calls using the old platform/ec i2c APIs defined
