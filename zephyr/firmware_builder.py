@@ -390,6 +390,7 @@ def test(opts):
             zephyr_dir / "emul/**",
             zephyr_dir / "mock/**",
             third_party / "zephyr/main/subsys/emul/**",
+            third_party / "zephyr/main/arch/posix/**",
             # Exclude all files ending in _test.[ch] or _emul.[ch]
             "**/*_test.c",
             "**/*_test.h",
