@@ -28,10 +28,12 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "baklava",
+    "bellis",
     "discovery",
     "gingerbread",
     "hatch_fp",
     "hyperdebug",
+    "munna",
     "nocturne_fp",
     "nucleo-f411re",
     "nucleo-g431rb",
@@ -45,19 +47,30 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
     "c2d2",
+    "cerise",
     "coffeecake",
+    "damu",
     "dingdong",
     "discovery-stm32f072",
     "don",
     "duck",
     "eel",
     "elm",
+    "fennel",
     "fluffy",
     "fusb307bgevb",
     "gelatin",
     "hammer",
     "hoho",
+    "jacuzzi",
+    "juniper",
+    "kakadu",
+    "kappa",
+    "katsu",
+    "krane",
+    "kukui",
     "magnemite",
+    "makomo",
     "masterball",
     "minimuffin",
     "moonball",
@@ -73,9 +86,11 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "servo_v4p1",
     "staff",
     "star",
+    "stern",
     "tigertail",
     "twinkie",
     "wand",
+    "willow",
     "zed",
     "zinger",
     # Boards that use CHIP:=mchp
@@ -274,26 +289,10 @@ RISCV_BOARDS = [
 ]
 
 BOARDS_THAT_FAIL_WITH_CLANG = [
-    # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
-    "bellis",  # overflows flash
-    "munna",  # overflows flash
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     "burnet",  # overflows flash
-    "cerise",  # overflows flash
     "chocodile_vpdmcu",  # compilation error: b/254710459
-    "damu",  # overflows flash
-    "fennel",  # overflows flash
-    "jacuzzi",  # overflows flash
-    "juniper",  # overflows flash
-    "kakadu",  # overflows flash
-    "kappa",  # overflows flash
-    "katsu",  # overflows flash
     "kodama",  # overflows flash
-    "krane",  # overflows flash
-    "kukui",  # overflows flash
-    "makomo",  # overflows flash
-    "stern",  # overflows flash
-    "willow",  # overflows flash
     # Boards that use CHIP:=npcx
     "garg",  # overflows flash
     "mushu",  # overflows flash
