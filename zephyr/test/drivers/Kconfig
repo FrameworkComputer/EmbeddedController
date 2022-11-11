@@ -123,4 +123,7 @@ config LINK_TEST_SUITE_CONSOLE
 config LINK_TEST_SUITE_HOST_CMD_THREAD
 	bool "Link and test the host command thread override tests"
 
+config LINK_TEST_SUITE_PI3USB9201
+	bool "Link and test the pi3usb9201 tests"
+
 source "Kconfig.zephyr"

@@ -266,6 +266,12 @@
 		gpio_ec_cbi_wp: ec_cbi_wp {
 			gpios = <&gpio1 9 GPIO_OUTPUT>;
 		};
+		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
+			gpios = <&gpio1 10 GPIO_INPUT>;
+		};
+		gpio_usb_c1_bc12_int_l: usb_c1_bc12_int_l {
+			gpios = <&gpio1 11 GPIO_INPUT>;
+		};
 	};
 
 	gpio1: gpio@101 {
@@ -278,7 +284,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <10>;
+		ngpios = <12>;
 	};
 
 	gpio-interrupts {
@@ -333,6 +339,16 @@
 			irq-pin = <&gpio_wp_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "switch_interrupt";
+		};
+		int_usb_c0_bc12: usb_c0_bc12 {
+			irq-pin = <&gpio_usb_c0_bc12_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb0_evt";
+		};
+		int_usb_c1_bc12: usb_c1_bc12 {
+			irq-pin = <&gpio_usb_c1_bc12_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb1_evt";
 		};
 	};
 
@@ -810,6 +826,7 @@
 		pi3usb9201_emul0: pi3usb9201@5f {
 			compatible = "pericom,pi3usb9201";
 			reg = <0x5f>;
+			irq = <&int_usb_c0_bc12>;
 		};
 
 		sn5s330_emul: sn5s330@40 {
@@ -837,6 +854,7 @@
 		pi3usb9201_emul1: pi3usb9201@5d {
 			compatible = "pericom,pi3usb9201";
 			reg = <0x5d>;
+			irq = <&int_usb_c1_bc12>;
 		};
 
 		syv682x_emul: syv682x@41 {
