@@ -46,6 +46,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
+    "burnet",
     "c2d2",
     "cerise",
     "coffeecake",
@@ -282,7 +283,6 @@ RISCV_BOARDS = [
 
 BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
-    "burnet",  # overflows flash
     "chocodile_vpdmcu",  # compilation error: b/254710459
     "fennel",  # overflows flash
     "jacuzzi",  # overflows flash
