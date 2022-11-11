@@ -239,24 +239,6 @@ static void charger_prochot_init_isl9238(void)
 DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9238, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_CHARGER_ISL9238 */
 
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port;
-
-	switch (signal) {
-	case GPIO_USB_C0_TCPC_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
 static void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;

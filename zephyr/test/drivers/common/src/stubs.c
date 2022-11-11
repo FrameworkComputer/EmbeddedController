@@ -169,24 +169,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port;
-
-	switch (signal) {
-	case GPIO_SIGNAL(DT_NODELABEL(usb_c0_tcpc_int_odl)):
-		port = 0;
-		break;
-	case GPIO_SIGNAL(DT_NODELABEL(usb_c1_tcpc_int_odl)):
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
 void ppc_alert(enum gpio_signal signal)
 {
 	switch (signal) {

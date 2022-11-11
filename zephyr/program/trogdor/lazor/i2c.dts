@@ -76,6 +76,7 @@
 		compatible = "parade,ps8xxx";
 		status = "okay";
 		reg = <0xb>;
+		int-pin = <&gpio_usb_c0_pd_int_odl>;
 	};
 };
 
@@ -99,6 +100,7 @@
 		compatible = "parade,ps8xxx";
 		status = "okay";
 		reg = <0xb>;
+		int-pin = <&gpio_usb_c1_pd_int_odl>;
 	};
 };
 

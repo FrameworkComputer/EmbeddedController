@@ -84,6 +84,7 @@
 		reg = <0x70>;
 		gpio-dev = <&nct3807_C0>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+		int-pin = <&gpio_usb_c0_tcpc_int_odl>;
 	};
 
 	nct3807_C0: nct3807_C0@70 {
@@ -158,6 +159,7 @@
 		reg = <0x70>;
 		gpio-dev = <&nct3807_C1>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+		int-pin = <&gpio_usb_c1_tcpc_int_odl>;
 	};
 
 	nct3807_C1: nct3807_C1@70 {

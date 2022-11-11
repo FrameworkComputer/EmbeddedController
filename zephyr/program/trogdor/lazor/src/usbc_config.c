@@ -111,25 +111,6 @@ void board_connect_c0_sbu(enum gpio_signal s)
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
-/* GPIO Interrupt Handlers */
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_PD_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
 /*
  * Port-0/1 USB mux driver.
  *

@@ -10,3 +10,7 @@ properties:
     default: 0
     description: |
       TCPC configuration flags
+  int-pin:
+    type: phandle
+    required: false
+    description: Interrupt from TCPC

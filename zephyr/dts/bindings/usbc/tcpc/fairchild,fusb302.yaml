@@ -3,3 +3,14 @@ description: USBC TCPC
 compatible: "fairchild,fusb302"
 
 include: i2c-device.yaml
+
+properties:
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
+  int-pin:
+    type: phandle
+    required: false
+    description: Interrupt from TCPC

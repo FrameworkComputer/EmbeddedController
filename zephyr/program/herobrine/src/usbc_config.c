@@ -31,25 +31,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-/* GPIO Interrupt Handlers */
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_PD_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
 #ifdef CONFIG_PLATFORM_EC_USBA
 static void usba_oc_deferred(void)
 {

@@ -429,6 +429,7 @@ int ppc_get_alert_status(int port)
 	return 0;
 }
 
+#ifndef CONFIG_ZEPHYR
 void tcpc_alert_event(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -444,6 +445,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 		break;
 	}
 }
+#endif
 
 void bc12_interrupt(enum gpio_signal signal)
 {

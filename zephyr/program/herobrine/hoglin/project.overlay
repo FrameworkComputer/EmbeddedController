@@ -42,6 +42,7 @@
 	tcpc_port0: ps8xxx@1b {
 		compatible = "parade,ps8xxx";
 		reg = <0x1b>;
+		int-pin = <&gpio_usb_c0_pd_int_odl>;
 	};
 };
 
@@ -50,5 +51,6 @@
 	tcpc_port1: ps8xxx@1b {
 		compatible = "parade,ps8xxx";
 		reg = <0x1b>;
+		int-pin = <&gpio_usb_c1_pd_int_odl>;
 	};
 };

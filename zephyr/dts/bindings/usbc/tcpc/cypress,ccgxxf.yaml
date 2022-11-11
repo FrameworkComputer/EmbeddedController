@@ -7,3 +7,14 @@ description: USBC TCPC
 compatible: "cypress,ccgxxf"
 
 include: i2c-device.yaml
+
+properties:
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
+  int-pin:
+    type: phandle
+    required: false
+    description: Interrupt from TCPC

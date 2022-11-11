@@ -77,6 +77,7 @@
 			TCPC_FLAGS_ALERT_OD |
 			TCPC_FLAGS_CONTROL_VCONN |
 			TCPC_FLAGS_CONTROL_FRS)>;
+		int-pin = <&gpio_usb_c0_tcpc_int_odl>;
 	};
 
 	ppc_port0: nx20p348x@72 {
@@ -110,6 +111,7 @@
 			TCPC_FLAGS_ALERT_OD |
 			TCPC_FLAGS_CONTROL_VCONN |
 			TCPC_FLAGS_CONTROL_FRS)>;
+		int-pin = <&gpio_usb_c1_tcpc_int_odl>;
 	};
 
 	ppc_port1: nx20p348x@72 {
