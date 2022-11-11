@@ -21,5 +21,6 @@ int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 		      uint16_t attr, uint8_t enable);
 struct mpu_rw_regions mpu_get_rw_regions(void);
+uint32_t align_down_to_bits(uint32_t addr, uint8_t addr_bits);
 
 #endif /* __CROS_EC_MPU_PRIVATE_H */

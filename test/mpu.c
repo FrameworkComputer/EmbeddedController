@@ -3,6 +3,14 @@
  * found in the LICENSE file.
  */
 
+/* This test file meant to be executed on a real device. Example:
+ * 1. make tests BOARD=bloonchipper
+ * 2. servod --board=bloonchipper
+ * 3. flash_ec --board bloonchipper --image build/bloonchipper/test-mpu.bin
+ * 4. Open console via dut-control raw_fpmcu_console_uart_pty
+ * 5. runtest on console
+ */
+
 #include <stdbool.h>
 #include "mpu.h"
 #include "mpu_private.h"
@@ -172,6 +180,19 @@ test_static int test_mpu_get_rw_regions(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_align_down_to_bits(void)
+{
+	uint32_t addr = 0x87654321;
+
+	TEST_EQ(align_down_to_bits(addr, 0), addr, "%d");
+	TEST_EQ(align_down_to_bits(addr, 1), 0x87654320, "%d");
+	TEST_EQ(align_down_to_bits(addr, 30), 0x80000000, "%d");
+	TEST_EQ(align_down_to_bits(addr, 31), 0x80000000, "%d");
+	TEST_EQ(align_down_to_bits(addr, 32), addr, "%d");
+	TEST_EQ(align_down_to_bits(addr, 33), addr, "%d");
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	enum ec_image cur_image = system_get_image_copy();
@@ -210,6 +231,8 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_mpu_protect_data_ram);
 	RUN_TEST(reset_mpu);
 	RUN_TEST(test_mpu_get_rw_regions);
+	RUN_TEST(reset_mpu);
+	RUN_TEST(test_align_down_to_bits);
 	RUN_TEST(reset_mpu);
 	/* This test must be last because it generates a panic */
 	RUN_TEST(test_mpu_update_region_valid_region);

@@ -95,6 +95,17 @@ int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 }
 
 /*
+ * Align address to a maximum of 31 bits
+ */
+uint32_t align_down_to_bits(uint32_t addr, uint8_t addr_bits)
+{
+	if (addr_bits < 32)
+		return addr & ~((1u << addr_bits) - 1);
+	else
+		return addr;
+}
+
+/*
  * Greedily configure the largest possible part of the given region from the
  * base address.
  *
@@ -140,7 +151,7 @@ static int mpu_config_region_greedy(uint8_t region, uint32_t addr,
 		 * disabling if it is not completely contained in the requested
 		 * range.
 		 */
-		subregion_base = addr & ~((1 << natural_alignment) - 1);
+		subregion_base = align_down_to_bits(addr, natural_alignment);
 		subregion_size = 1 << (natural_alignment - 3);
 		*consumed = 0;
 		for (sr_idx = 0; sr_idx < 8; sr_idx++) {
@@ -159,7 +170,8 @@ static int mpu_config_region_greedy(uint8_t region, uint32_t addr,
 		*consumed = 1 << natural_alignment;
 	}
 
-	return mpu_update_region(region, addr & ~((1 << natural_alignment) - 1),
+	return mpu_update_region(region,
+				 align_down_to_bits(addr, natural_alignment),
 				 natural_alignment, attr, enable,
 				 subregion_disable);
 }
