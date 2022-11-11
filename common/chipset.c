@@ -134,3 +134,21 @@ enum chipset_shutdown_reason chipset_get_shutdown_reason(void)
 }
 
 #endif /* !CONFIG_AP_RESET_LOG */
+
+#ifdef TEST_BUILD
+uint32_t test_chipset_get_ap_resets_since_ec_boot(void)
+{
+	uint32_t count;
+
+	mutex_lock(&reset_log_mutex);
+	count = ap_resets_since_ec_boot;
+	mutex_unlock(&reset_log_mutex);
+
+	return count;
+}
+
+void test_chipset_corrupt_reset_log_checksum(void)
+{
+	reset_log_checksum = ~reset_log_checksum;
+}
+#endif /* TEST_BUILD */
