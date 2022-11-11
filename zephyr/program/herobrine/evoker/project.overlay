@@ -50,3 +50,10 @@
 		reg = <0x40>;
 	};
 };
+
+/* interrupts overrides */
+/ {
+	gpio-interrupts {
+		/delete-node/ usb_a0_oc;
+	};
+};
