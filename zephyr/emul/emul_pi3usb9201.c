@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT zephyr_pi3usb9201_emul
+#define DT_DRV_COMPAT pericom_pi3usb9201
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>

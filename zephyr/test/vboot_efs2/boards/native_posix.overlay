@@ -59,6 +59,7 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
+			bc12 = <&pi3usb9201_emul>;
 			chg = <&isl923x_emul>;
 			tcpc = <&tcpci_emul>;
 			usb-mux-chain-1 {
@@ -80,6 +81,10 @@
 		#size-cells = <0>;
 		reg = <0x500 4>;
 
+		pi3usb9201_emul: pi3usb9201@5f {
+			compatible = "pericom,pi3usb9201";
+			reg = <0x5f>;
+		};
 		tcpci_emul: tcpci_emul@82 {
 			compatible = "cros,tcpci-generic-emul";
 			status = "okay";

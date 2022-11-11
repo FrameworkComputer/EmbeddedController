@@ -40,19 +40,6 @@ LOG_MODULE_REGISTER(stubs);
  * device tree.
  */
 
-/* BC1.2 charger detect configuration */
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_1_FLAGS,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
-
 int board_set_active_charge_port(int port)
 {
 	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);

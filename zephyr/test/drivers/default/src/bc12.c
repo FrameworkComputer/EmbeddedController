@@ -21,7 +21,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test_drivers_bc12, LOG_LEVEL_DBG);
 
-#define EMUL_NODE DT_NODELABEL(pi3usb9201_emul)
+#define EMUL_NODE DT_NODELABEL(pi3usb9201_emul0)
 
 /* Control_1 register bit definitions */
 #define PI3USB9201_REG_CTRL_1_INT_MASK BIT(0)

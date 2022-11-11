@@ -57,6 +57,7 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
+			bc12 = <&pi3usb9201_emul0>;
 			chg = <&isl923x_emul>;
 			tcpc = <&tcpci_emul>;
 			ppc = <&sn5s330_emul>;
@@ -78,6 +79,7 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
+			bc12 = <&pi3usb9201_emul1>;
 			tcpc = <&ps8xxx_emul>;
 			ppc = <&syv682x_emul>;
 			usb-mux-chain-1 {
@@ -800,8 +802,8 @@
 		#size-cells = <0>;
 		reg = <0x500 4>;
 
-		pi3usb9201_emul: pi3usb9201@5f {
-			compatible = "zephyr,pi3usb9201-emul";
+		pi3usb9201_emul0: pi3usb9201@5f {
+			compatible = "pericom,pi3usb9201";
 			reg = <0x5f>;
 		};
 
@@ -826,6 +828,11 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x600 4>;
+
+		pi3usb9201_emul1: pi3usb9201@5d {
+			compatible = "pericom,pi3usb9201";
+			reg = <0x5d>;
+		};
 
 		syv682x_emul: syv682x@41 {
 			compatible = "zephyr,syv682x-emul";
