@@ -71,6 +71,12 @@
 
 #define PD_OPERATING_POWER_MW 15000
 
+/* Free up flash in RO. */
+#ifdef SECTION_IS_RO
+#undef CONFIG_USB_PD_HOST_CMD
+#undef CONFIG_USB_PD_CONSOLE_CMD
+#endif
+
 #ifndef __ASSEMBLER__
 
 enum adc_channel {

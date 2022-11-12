@@ -69,6 +69,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "kakadu",
     "kappa",
     "katsu",
+    "kodama",
     "krane",
     "kukui",
     "magnemite",
@@ -302,7 +303,6 @@ RISCV_BOARDS = [
 BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     "chocodile_vpdmcu",  # compilation error: b/254710459
-    "kodama",  # overflows flash
     # Boards that use CHIP:=npcx
     "bobba",  # overflows flash
     "coachz",  # overflows flash
