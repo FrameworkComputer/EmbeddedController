@@ -140,6 +140,9 @@
 /* Use internal silicon 32KHz oscillator */
 #undef CONFIG_CLOCK_SRC_EXTERNAL
 
+/* Free up flash space. */
+#undef CONFIG_CONSOLE_CMDHELP
+
 #ifndef __ASSEMBLER__
 
 enum adlrvp_i2c_channel {

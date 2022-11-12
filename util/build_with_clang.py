@@ -78,6 +78,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "zinger",
     # Boards that use CHIP:=mchp
     # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    "adlrvpp_mchp1521",
     "adlrvpp_mchp1727",
     "mchpevb1",
     "reef_mchp",
@@ -290,9 +291,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "oak",  # overflows flash
     "stern",  # overflows flash
     "willow",  # overflows flash
-    # Boards that use CHIP:=mchp
-    # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
-    "adlrvpp_mchp1521",  # overflows flash
     # Boards that use CHIP:=npcx
     "garg",  # overflows flash
     "gelarshie",  # overflows flash
