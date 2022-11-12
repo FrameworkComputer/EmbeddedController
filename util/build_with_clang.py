@@ -61,6 +61,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "minimuffin",
     "moonball",
     "nucleo-f072rb",
+    "oak",
     "pdeval-stm32f072",
     "plankton",
     "prism",
@@ -288,7 +289,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "krane",  # overflows flash
     "kukui",  # overflows flash
     "makomo",  # overflows flash
-    "oak",  # overflows flash
     "stern",  # overflows flash
     "willow",  # overflows flash
     # Boards that use CHIP:=npcx
