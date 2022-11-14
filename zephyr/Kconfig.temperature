@@ -4,6 +4,8 @@
 
 menuconfig PLATFORM_EC_TEMP_SENSOR
 	bool "Temperature sensors"
+	default y
+	depends on DT_HAS_CROS_EC_TEMP_SENSORS_ENABLED
 	help
 	  Support for temperature sensors. Once enabled, "temps" console
 	  command and EC_CMD_TEMP_SENSOR_GET_INFO host command are available.
@@ -33,6 +35,8 @@ config PLATFORM_EC_DPTF
 
 config PLATFORM_EC_THERMISTOR
 	bool "Thermistor support"
+	default y
+	depends on DT_HAS_CROS_EC_THERMISTOR_ENABLED
 	depends on ADC
 	help
 	  Enables support for thermistors (resistor whose resistance is
@@ -40,18 +44,24 @@ config PLATFORM_EC_THERMISTOR
 
 config PLATFORM_EC_TEMP_SENSOR_PCT2075
 	bool "PCT2075 support"
+	default y
+	depends on DT_HAS_NXP_PCT2075_ENABLED
 	help
 	  Enables support for the CrosEC PCT2075 sensor, an i2c peripheral
 	  temperature sensor from NXP.
 
 config PLATFORM_EC_TEMP_SENSOR_SB_TSI
 	bool "SB TSI support"
+	default y
+	depends on DT_HAS_AMD_SB_TSI_ENABLED
 	help
 	  Enables support for the Side Band Temperature Sensor Interface,
 	  an i2c peripheral available on AMD platforms.
 
 config PLATFORM_EC_TEMP_SENSOR_TMP112
 	bool "TMP112 support"
+	default y
+	depends on DT_HAS_CROS_EC_TEMP_SENSOR_TMP112_ENABLED
 	help
 	  Enables support for the CrosEC TMP112 driver, an i2c peripheral
 	  temperature sensor from TI.
