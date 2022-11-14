@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <setjmp.h>
-
 #include "system.h"
 #include "system_fake.h"
+
+#include <setjmp.h>
 
 static enum ec_image shrspi_image_copy = EC_IMAGE_RO;
 
