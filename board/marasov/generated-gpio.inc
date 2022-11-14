@@ -70,6 +70,8 @@ GPIO(USB_C1_RST_ODL,                 PIN(9, 6), GPIO_ODR_LOW)
 GPIO(USB_C1_RT_INT_ODL,              PIN(A, 0), GPIO_INPUT)
 GPIO(USB_C1_RT_RST_R_ODL,            PIN(0, 2), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
+GPIO(PWR_LED_W_ODL,                  PIN(6, 0), GPIO_OUT_HIGH)
+GPIO(PWR_LED_A_ODL,                  PIN(C, 2), GPIO_OUT_HIGH)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -86,10 +88,8 @@ ALTERNATE(PIN_MASK(F, 0x0c), 0, MODULE_I2C, 0)               /* GPIOF3/I2C4_SCL1
 
 /* PWM alternate functions */
 ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)               /* GPIO40/TA1 */
-ALTERNATE(PIN_MASK(6, 0x01), 0, MODULE_PWM, 0)               /* GPIO60/PWM7 */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)               /* GPIO80/PWM3 */
 ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)               /* GPIOB7/PWM5 */
-ALTERNATE(PIN_MASK(C, 0x1c), 0, MODULE_PWM, 0)               /* GPIOC4/PWM2, GPIOC3/PWM0, GPIOC2/PWM1/I2C6_SCL0 */
 
 /* ADC alternate functions */
 ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/ADC6 */
@@ -121,5 +121,7 @@ UNUSED(PIN(5, 6))	/* GPIO56 */
 UNUSED(PIN(D, 4))	/* GPIOD4 */
 UNUSED(PIN(9, 3))	/* GPIO93 */
 UNUSED(PIN(9, 7))	/* GPIO97 */
+UNUSED(PIN(C, 3))	/* GPIOC3 */
+UNUSED(PIN(C, 4))	/* GPIOC4 */
 
 /* Pre-configured PSL balls:  J8  K6 */
