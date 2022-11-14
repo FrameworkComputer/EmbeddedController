@@ -50,6 +50,8 @@ endchoice # PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 
 config PLATFORM_EC_KEYBOARD_DISCRETE
 	bool "Support discrete Keyboard"
+	default y
+	depends on $(dt_nodelabel_enabled,kb_discrete)
 	help
 	  Enable support for a discrete Keyboard if the platform needs one
 	  or the raw Keyboard support is not built-in in the EC.
