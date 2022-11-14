@@ -77,7 +77,8 @@ int board_cut_off_battery(void)
 static void board_set_charge_limit_throttle(int charge_ma, int charge_mv)
 {
 	charge_set_input_current_limit(
-		MIN(throttled_ma, MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT)),
+		MIN(throttled_ma,
+		    MAX(charge_ma, CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT)),
 		charge_mv);
 }
 

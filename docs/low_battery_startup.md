@@ -168,7 +168,7 @@ is robust enough to support the device during brief intervals of PD negotiation
 without browning out.
 
 ```
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
 ```
 
@@ -205,7 +205,7 @@ the kernel and get to the login screen.
 
 ```
 /* Limit battery impact during PD voltage changes. */
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
 
 /* Distrust the battery SOC measurement a bit. */
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 3
@@ -256,7 +256,7 @@ less. Very briefly drawing current out of the battery does not cause a brownout.
 Example configuration:
 
 ```
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 3
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15000
 #define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 27000
@@ -300,7 +300,7 @@ performing a no-battery boot. Nami is an exemplar.
 Example configuration:
 
 ```
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
 
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC 1
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT 15000
@@ -336,7 +336,7 @@ Example configuration:
 
 ## Configuration Option Details
 
-### `CONFIG_CHARGER_INPUT_CURRENT`
+### `CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT`
 
 Required.
 
@@ -350,13 +350,13 @@ in order to improve compatibility with marginal BC1.2 chargers.
 Optional.
 
 If set, charger input current limits will never be set lower than this value.
-Historically most boards used the same value as `CONFIG_CHARGER_INPUT_CURRENT`,
-but doing so violates USB-PD standby power requirements when voltages greater
-than 5V are used with the default 512 mA value. Configuring this option to a
-nonzero value may be useful if a board needs extra headroom (possibly at the
-cost of drawing excess standby power), but boards should prefer to
-override `board_set_charge_limit()` instead to limit situations with excess
-power draw to only occur when that extra power is needed.
+Historically most boards used the same value
+as `CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT`, but doing so violates USB-PD standby
+power requirements when voltages greater than 5V are used with the default 512
+mA value. Configuring this option to a nonzero value may be useful if a board
+needs extra headroom (possibly at the cost of drawing excess standby power), but
+boards should prefer to override `board_set_charge_limit()` instead to limit
+situations with excess power draw to only occur when that extra power is needed.
 
 ### `CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON`
 

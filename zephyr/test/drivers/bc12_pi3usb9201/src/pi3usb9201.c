@@ -75,7 +75,7 @@ static const struct bc12_status bc12_chg_limits[] = {
 	[CHG_RESERVED] = { .supplier = CHARGE_SUPPLIER_NONE,
 			   /* Not charging, limit is set to default */
 			   .current_limit =
-				   CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT },
+				   CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT },
 	[CHG_CDP] = { .supplier = CHARGE_SUPPLIER_BC12_CDP,
 		      .current_limit = USB_CHARGER_MAX_CURR_MA },
 	[CHG_SDP] = { .supplier = CHARGE_SUPPLIER_BC12_SDP,
@@ -212,7 +212,7 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	zassert_equal(charge_manager_get_supplier(), CHARGE_SUPPLIER_NONE,
 		      NULL);
 	zassert_equal(charge_manager_get_charger_current(),
-		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT);
+		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT);
 	zassert_equal(charge_manager_get_charger_voltage(), 0);
 }
 

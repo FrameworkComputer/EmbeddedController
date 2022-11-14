@@ -50,7 +50,7 @@ ZTEST(common_charger, test_chg_ramp_is_detected)
 ZTEST(common_charger, test_chg_ramp_get_current_limit)
 {
 	zassert_equal(chg_ramp_get_current_limit(),
-		      CONFIG_CHARGER_INPUT_CURRENT);
+		      CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT);
 }
 
 ZTEST(common_charger, test_charger_get_min_bat_pct_for_power_on)

@@ -31,18 +31,18 @@ rsource "Kconfig.usb_charger"
 
 if PLATFORM_EC_USBC
 
-config PLATFORM_EC_CHARGER_INPUT_CURRENT
+config PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT
 	int "Charger input current in mA"
 	depends on PLATFORM_EC_CHARGE_MANAGER
 	default 512
 	help
-	  This is the default input current for the board in mA.  Many boards
-	  also use this as the least maximum input current during transients.
+	  Default input current limit for the board in mA.
 
 	  This value should depend on external power adapter, designed charging
 	  voltage, and the maximum power of the running system. For type-C
-	  chargers, this should be set to 512 mA in order to not brown-out
-	  low-current USB charge ports in accordance with USB-PD r3.0 Sec. 7.3
+	  chargers, this should be set to no more than 512 mA in order to not
+	  brown-out low-current USB charge ports in accordance with USB-PD r3.0
+	  Sec. 7.3.
 
 config PLATFORM_EC_CHARGER_MIN_INPUT_CURRENT_LIMIT
 	int "Minimum charger input current limit in mA"

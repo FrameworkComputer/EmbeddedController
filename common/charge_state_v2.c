@@ -1507,9 +1507,9 @@ static int get_desired_input_current(enum battery_present batt_present,
 		int ilim = charge_manager_get_charger_current();
 		return ilim == CHARGE_CURRENT_UNINITIALIZED ?
 			       CHARGE_CURRENT_UNINITIALIZED :
-			       MAX(CONFIG_CHARGER_INPUT_CURRENT, ilim);
+			       MAX(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, ilim);
 #else
-		return CONFIG_CHARGER_INPUT_CURRENT;
+		return CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT;
 #endif
 	} else {
 #ifdef CONFIG_USB_POWER_DELIVERY

@@ -159,9 +159,9 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_charge_state)
 		      "Max charge current expected 0mA, but was %dmA",
 		      charge_state.get_state.chg_current);
 	zassert_equal(charge_state.get_state.chg_input_current,
-		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
+		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
 		      "Charge input current limit expected %dmA, but was %dmA",
-		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
+		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
 		      charge_state.get_state.chg_input_current);
 }
 

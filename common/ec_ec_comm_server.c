@@ -169,8 +169,9 @@ handle_cmd_charger_control(const struct ec_params_charger_control *params,
 			goto out;
 		}
 
-		/* Reset input current to minimum. */
-		charge_set_input_current_limit(CONFIG_CHARGER_INPUT_CURRENT, 0);
+		/* Reset input current to default. */
+		charge_set_input_current_limit(
+			CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, 0);
 		/* Setup and enable "OTG". */
 		charge_set_output_current_limit(CHARGER_SOLO,
 						-params->max_current,
