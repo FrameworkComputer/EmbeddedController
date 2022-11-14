@@ -17,7 +17,7 @@
 		.reg_data = DT_PROP(node, ship_mode_reg_data), \
 	}, \
 	.sleep_mode = { \
-		.sleep_supported = DT_PROP_OR(node, sleep_mode_supported, 0), \
+		.sleep_supported = DT_PROP_OR(node, sleep_mode_support, 0), \
 		.reg_addr = DT_PROP_OR(node, sleep_mode_reg_addr, 0), \
 		.reg_data = DT_PROP_OR(node, sleep_mode_reg_data, 0), \
 	}, \

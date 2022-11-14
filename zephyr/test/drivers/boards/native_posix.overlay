@@ -385,6 +385,19 @@
 		default_battery: lgc_ac17a8m {
 			compatible = "lgc,ac17a8m", "battery-smart";
 		};
+		ap16l5j {
+			compatible = "panasonic,ap16l5j", "battery-smart";
+			ship_mode_wb_support = <1>;
+			sleep_mode_support = <1>;
+			fet_mfgacc_support = <1>;
+		};
+		ap16l8j {
+			compatible = "lgc,ap16l8j", "battery-smart";
+			ship_mode_wb_support = <1>;
+			sleep_mode_support = <1>;
+			fet_cfet_mask = <0>;
+			fet_mfgacc_support = <1>;
+		};
 	};
 
 	cbi-ssfc {
@@ -1074,6 +1087,18 @@
 		desired-charg-cur = <1000>;
 		mf-name = "LGC";
 		dev-name = "AC17A8M";
+	};
+
+	battery2: sb@3a {
+		compatible = "zephyr,smart-battery";
+		reg = <0x3a>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "PANASONIC";
+		dev-name = "AP16L5J";
 	};
 
 	bma_emul: bma@18 {

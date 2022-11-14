@@ -7,6 +7,7 @@
 
 #include "battery_fuel_gauge.h"
 #include "battery_smart.h"
+#include "builtin/assert.h"
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -22,7 +23,8 @@
  * a device name has been specified in the board_battery_info table,
  * then both the manufacturer and device name must match.
  */
-static bool authenticate_battery_type(int index, char *manuf_name)
+test_export_static bool authenticate_battery_type(int index,
+						  const char *manuf_name)
 {
 	char device_name[32];
 
@@ -84,12 +86,22 @@ void battery_set_fixed_battery_type(int type)
 }
 #endif /* CONFIG_BATTERY_TYPE_NO_AUTO_DETECT */
 
+/**
+ * Allows us to override the battery in order to select the battery which has
+ * the right configuration for the test.
+ */
+test_export_static int battery_fuel_gauge_type_override = -1;
+
 /* Get type of the battery connected on the board */
 static int get_battery_type(void)
 {
 	char manuf_name[32];
 	int i;
 	static enum battery_type battery_type = BATTERY_TYPE_COUNT;
+
+	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0) {
+		return battery_fuel_gauge_type_override;
+	}
 
 	/*
 	 * If battery_type is not the default value, then can return here

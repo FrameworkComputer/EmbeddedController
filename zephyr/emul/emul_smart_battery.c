@@ -788,8 +788,10 @@ static int sbat_emul_access_reg(const struct emul *emul, int reg, int bytes,
 static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 {
 	struct sbat_emul_data *data = emul->data;
+	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 
 	data->common.i2c = parent;
+	data->common.cfg = cfg;
 
 	i2c_common_emul_init(&data->common);
 
@@ -901,14 +903,14 @@ static void emul_smart_battery_reset_capacity(const struct emul *emul)
 }
 
 #define SBAT_EMUL_RESET_RULE_AFTER(n) \
-	emul_smart_battery_reset_capacity(EMUL_DT_GET(DT_DRV_INST(n)))
+	emul_smart_battery_reset_capacity(EMUL_DT_GET(DT_DRV_INST(n)));
 
 static void emul_sbat_reset(const struct ztest_unit_test *test, void *data)
 {
 	ARG_UNUSED(test);
 	ARG_UNUSED(data);
 
-	DT_INST_FOREACH_STATUS_OKAY(SBAT_EMUL_RESET_RULE_AFTER);
+	DT_INST_FOREACH_STATUS_OKAY(SBAT_EMUL_RESET_RULE_AFTER)
 }
 
 ZTEST_RULE(emul_smart_battery_reset, NULL, emul_sbat_reset);
