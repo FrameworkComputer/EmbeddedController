@@ -52,6 +52,13 @@
 #define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 #define CONFIG_USBC_RETIMER_INTEL_BB
 
+/* Battery Configuration */
+#define CONFIG_SMBUS_PEC
+#undef CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE
+#define CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE 3
+#undef CONFIG_BATT_HOST_FULL_FACTOR
+#define CONFIG_BATT_HOST_FULL_FACTOR 99
+
 /* I2C speed console command */
 #define CONFIG_CMD_I2C_SPEED
 
@@ -199,7 +206,7 @@ enum temp_sensor_id {
 
 enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C2_NCT38XX, IOEX_PORT_COUNT };
 
-enum battery_type { BATTERY_POWER_TECH, BATTERY_LGC011, BATTERY_TYPE_COUNT };
+enum battery_type { BATTERY_C490, BATTERY_TYPE_COUNT };
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT, /* PWM3 */
