@@ -27,6 +27,11 @@ def main(argv=None):
         action="store_true",
         help="Fix any formatting errors automatically.",
     )
+    parser.add_argument(
+        "file",
+        nargs="*",
+        help="File or directory to clang-format.",
+    )
     opts = parser.parse_args(argv)
 
     logging.info("Validating all code is formatted with clang-format.")
@@ -34,7 +39,7 @@ def main(argv=None):
     all_files = [
         ec_dir / path
         for path in subprocess.run(
-            ["git", "ls-files", "-z"],
+            ["git", "ls-files", "-z"] + opts.file,
             check=True,
             cwd=ec_dir,
             stdout=subprocess.PIPE,
