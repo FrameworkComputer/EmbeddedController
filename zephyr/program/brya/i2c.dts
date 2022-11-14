@@ -258,10 +258,9 @@
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
 	pinctrl-names = "default";
 
-	pmic_mp2964: pmic_mp2964@20 {
+	pmic_mp2964@20 {
 		compatible = "mps,mp2964";
 		reg = <0x20>;
-		label = "I2C_ADDR_MP2964_FLAGS";
 	};
 
 	charger: bq25710@9 {

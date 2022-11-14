@@ -15,8 +15,8 @@ if PLATFORM_EC_PMIC
 
 config PLATFORM_EC_MP2964
 	bool "Enable MP2964 PMIC support"
-	depends on AP_X86_INTEL
-	depends on PLATFORM_EC_I2C
+	default y
+	depends on DT_HAS_MPS_MP2964_ENABLED
 	help
 	  Enables support for the MPS MP2964 PMIC (Power Management IC).
 	  This is a dual rail IMVP8 - IMVP9.1 compatible Digital
