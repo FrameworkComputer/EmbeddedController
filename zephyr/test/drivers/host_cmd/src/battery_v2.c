@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST(host_cmd_battery_v2, test_get_static__invalid_index)
 {

@@ -3,22 +3,21 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
 #include "common.h"
 #include "ec_tasks.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "tcpm/tcpci.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/tcpci_test_common.h"
-
-#include "tcpm/tcpci.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define TCPCI_EMUL_NODE DT_NODELABEL(tcpci_emul)
 

@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "usb_common.h"
 #include "usb_pd.h"
+
+#include <zephyr/ztest.h>
 
 #define BB_RETIMER_NODE DT_NODELABEL(usb_c1_bb_retimer_emul)
 #define TEST_PORT USBC_PORT_C1

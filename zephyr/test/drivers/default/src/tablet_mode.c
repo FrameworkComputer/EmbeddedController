@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "tablet_mode.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 static void tabletmode_before(void *state)
 {

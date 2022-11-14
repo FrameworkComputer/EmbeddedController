@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
-
 #include "usb_pd.h"
 #include "usb_pd_flags.h"
+
+#include <zephyr/ztest_assert.h>
+#include <zephyr/ztest_test_new.h>
 
 ZTEST_USER(usb_common, test_usb_pd_charger_otg)
 {

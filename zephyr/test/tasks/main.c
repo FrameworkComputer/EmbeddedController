@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <stdbool.h>
-#include <zephyr/ztest.h>
-
 #include "ec_tasks.h"
 #include "task.h"
 #include "timer.h"
+
+#include <stdbool.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /* Second for platform/ec task API (in microseconds). */
 #define TASK_SEC(s) (s * 1000 * 1000)

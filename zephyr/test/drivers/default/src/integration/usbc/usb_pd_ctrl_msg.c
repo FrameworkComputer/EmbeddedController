@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
 #include "ec_tasks.h"
 #include "emul/emul_isl923x.h"
@@ -16,6 +13,10 @@
 #include "test/drivers/utils.h"
 #include "test/usb_pe.h"
 #include "usb_pd.h"
+
+#include <stdint.h>
+
+#include <zephyr/ztest.h>
 
 #define TEST_USB_PORT 0
 BUILD_ASSERT(TEST_USB_PORT == USBC_PORT_C0);

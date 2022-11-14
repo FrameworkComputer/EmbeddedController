@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "panic.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 /* Test panicinfo when a panic hasn't occurred */
 ZTEST_USER(console_cmd_panic_output, test_panicinfo)

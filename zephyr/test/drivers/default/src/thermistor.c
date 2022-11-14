@@ -3,18 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
+#include "../driver/temp_sensor/thermistor.h"
+#include "common.h"
+#include "temp_sensor/temp_sensor.h"
+#include "test/drivers/test_state.h"
+
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/adc/adc_emul.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
-#include <temp_sensor.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
-#include "common.h"
-#include "../driver/temp_sensor/thermistor.h"
-#include "temp_sensor/temp_sensor.h"
-#include "test/drivers/test_state.h"
+#include <temp_sensor.h>
 
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)

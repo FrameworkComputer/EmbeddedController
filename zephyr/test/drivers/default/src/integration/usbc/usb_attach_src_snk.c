@@ -3,24 +3,24 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
+#include "driver/tcpm/ps8xxx_public.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
-#include "driver/tcpm/ps8xxx_public.h"
 #include "emul/emul_isl923x.h"
 #include "emul/tcpc/emul_ps8xxx.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "host_command.h"
-#include "test/drivers/stubs.h"
 #include "tcpm/tcpci.h"
-#include "test/usb_pe.h"
-#include "test/drivers/utils.h"
+#include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+#include "test/usb_pe.h"
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define SNK_PORT USBC_PORT_C0
 #define SRC_PORT USBC_PORT_C1

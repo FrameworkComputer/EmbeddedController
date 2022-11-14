@@ -5,10 +5,11 @@
 
 /* Tests for deprecated EC_CMD_HOST_EVENT_* commands */
 
-#include <zephyr/ztest.h>
 #include "include/lpc.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/ztest.h>
 
 #define HOST_EVENT_TEST_MASK_VAL EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)
 

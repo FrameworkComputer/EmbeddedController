@@ -3,25 +3,24 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
+#include "chipset.h"
 #include "common.h"
+#include "driver/retimer/bb_retimer.h"
 #include "ec_tasks.h"
 #include "emul/emul_bb_retimer.h"
 #include "emul/emul_common_i2c.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "test/drivers/stubs.h"
-#include "usb_prl_sm.h"
-#include "usb_tc_sm.h"
-#include "chipset.h"
-
-#include "driver/retimer/bb_retimer.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "usb_prl_sm.h"
+#include "usb_tc_sm.h"
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define GPIO_USB_C1_LS_EN_PATH DT_PATH(named_gpios, usb_c1_ls_en)
 #define GPIO_USB_C1_LS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_LS_EN_PATH, gpios)

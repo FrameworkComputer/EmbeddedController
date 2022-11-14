@@ -4,9 +4,9 @@
  */
 
 #include "adc.h"
-#include "usbc_ppc.h"
 #include "charge_ramp.h"
 #include "charge_state.h"
+#include "usbc_ppc.h"
 
 int board_set_active_charge_port(int port)
 {

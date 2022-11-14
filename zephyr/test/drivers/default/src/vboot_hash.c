@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <sha256.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+
+#include <sha256.h>
 
 ZTEST_USER(vboot_hash, test_hostcmd_abort)
 {

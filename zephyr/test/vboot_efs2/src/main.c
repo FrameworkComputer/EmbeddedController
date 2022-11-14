@@ -14,8 +14,8 @@
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "vboot.h"
-
 #include "zephyr/devicetree.h"
+
 #include <stdint.h>
 
 #include <zephyr/drivers/gpio/gpio_emul.h>

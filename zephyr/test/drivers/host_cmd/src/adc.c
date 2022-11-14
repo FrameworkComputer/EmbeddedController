@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/fff.h>
-#include <zephyr/ztest.h>
-
 #include "adc.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, adc_read_channel, enum adc_channel);
 

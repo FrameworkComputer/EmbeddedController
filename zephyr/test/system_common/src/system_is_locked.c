@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
+#include "system.h"
+
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
-
-#include "system.h"
 
 ZTEST_USER(system_is_locked, test_syslock_console_cmd)
 {

@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/drivers/i2c_emul.h>
-
 #include "drivers/cros_displight.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "pwm.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 ZTEST(shim_pwm_hc, test_pwm_set_duty_hc__kblight)
 {

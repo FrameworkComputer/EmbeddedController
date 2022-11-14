@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "host_command.h"
+#include "system.h"
+
 #include <zephyr/device.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
-
-#include "host_command.h"
-#include "system.h"
 
 ZTEST_SUITE(host_cmd_get_version, NULL, NULL, NULL, NULL, NULL);
 

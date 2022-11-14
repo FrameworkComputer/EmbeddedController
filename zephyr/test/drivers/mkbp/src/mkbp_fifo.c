@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/drivers/i2c_emul.h>
-
 #include "keyboard_config.h"
 #include "mkbp_fifo.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /* Tests for Matrix Keyboard Protocol (MKBP) */
 

@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "driver/ln9310.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "i2c.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 ZTEST_USER(i2c_passthru, test_read_without_write)
 {

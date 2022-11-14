@@ -3,31 +3,30 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
+#include "battery_smart.h"
+#include "chipset.h"
+#include "common.h"
+#include "ec_tasks.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_smart_battery.h"
+#include "extpower.h"
+#include "hooks.h"
+#include "host_command.h"
+#include "power.h"
+#include "task.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+
 #include <string.h>
-#include <zephyr/ztest.h>
+
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/shell/shell_uart.h>
-
-#include "chipset.h"
-#include "common.h"
-#include "extpower.h"
-#include "hooks.h"
-#include "host_command.h"
-#include "power.h"
-#include "test/drivers/stubs.h"
-#include "task.h"
-#include "ec_tasks.h"
-#include "test/drivers/test_state.h"
-
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_smart_battery.h"
-
-#include "battery.h"
-#include "battery_smart.h"
-#include "test/drivers/utils.h"
+#include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 

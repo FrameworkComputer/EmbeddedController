@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "test/drivers/utils.h"
 #include "test_usbc_alt_mode.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /* Tests that require CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY enabled */
 

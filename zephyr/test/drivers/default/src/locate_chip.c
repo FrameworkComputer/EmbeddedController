@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
+#include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
-#include "host_command.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 /**
  * @brief TestPurpose: test the TCPC locate valid case.

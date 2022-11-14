@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "host_command.h"
+#include "system.h"
+
 #include <zephyr/device.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
-
-#include "host_command.h"
-#include "system.h"
 
 FAKE_VOID_FUNC(system_reset, int);
 FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);

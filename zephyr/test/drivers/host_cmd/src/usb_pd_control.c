@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "emul/emul_isl923x.h"
@@ -15,6 +12,9 @@
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 #define TEST_PORT USBC_PORT_C0
 #define BAD_PORT 42

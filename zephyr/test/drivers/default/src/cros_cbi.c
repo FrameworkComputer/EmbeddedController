@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/ztest.h>
-
 #include "cros_cbi.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/device.h>
+#include <zephyr/ztest.h>
 
 ZTEST(cros_cbi, test_check_match)
 {

@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
+#include "builtin/stdio.h"
 #include "common.h"
 #include "math.h"
 #include "math_util.h"
-#include "builtin/stdio.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_USER(math, arc_cos__x_below_range)
 {

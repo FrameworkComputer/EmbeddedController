@@ -2,14 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "basic_i2c_device_emul.h"
+#include "i2c.h"
+#include "test/drivers/test_state.h"
+
 #include <zephyr/device.h>
 #include <zephyr/fff.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
-
-#include "basic_i2c_device_emul.h"
-#include "i2c.h"
-#include "test/drivers/test_state.h"
 
 struct i2c_controller_fixture {
 	int port;

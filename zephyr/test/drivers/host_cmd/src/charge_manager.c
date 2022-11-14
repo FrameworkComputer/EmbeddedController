@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "charge_manager.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_USER(charge_manager, test_port_count)
 {

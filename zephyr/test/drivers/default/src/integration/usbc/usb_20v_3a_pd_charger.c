@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery_smart.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
@@ -12,6 +10,8 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "usb_pd.h"
+
+#include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 

@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "lid_angle.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 #define LID_ANGLE_MIN_LARGE_ANGLE 0
 #define LID_ANGLE_MAX_LARGE_ANGLE 360

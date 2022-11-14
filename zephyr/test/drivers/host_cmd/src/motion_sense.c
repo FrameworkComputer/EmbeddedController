@@ -3,10 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "atomic.h"
 #include "console.h"
 #include "driver/accel_bma2x2.h"
@@ -16,6 +12,10 @@
 #include "motion_sense_fifo.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, mock_set_range, struct motion_sensor_t *, int, int);
 FAKE_VALUE_FUNC(int, mock_set_offset, const struct motion_sensor_t *,

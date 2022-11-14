@@ -3,19 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <setjmp.h>
-
-#include <console.h>
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
 #include "system.h"
 #include "system_fake.h"
-#include "vstore.h"
 #include "test/drivers/test_state.h"
+#include "vstore.h"
+
+#include <setjmp.h>
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
+
+#include <console.h>
 
 ZTEST_SUITE(vstore, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 

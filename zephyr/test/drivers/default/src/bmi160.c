@@ -3,19 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
-#include "i2c.h"
-#include "emul/emul_bmi.h"
-#include "emul/emul_common_i2c.h"
-#include "test/drivers/test_mocks.h"
-
-#include "motion_sense_fifo.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "emul/emul_bmi.h"
+#include "emul/emul_common_i2c.h"
+#include "i2c.h"
+#include "motion_sense_fifo.h"
+#include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define BMI_NODE DT_NODELABEL(accel_bmi160)
 #define BMI_ACC_SENSOR_ID SENSOR_ID(DT_NODELABEL(ms_bmi160_accel))

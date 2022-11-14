@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
+#include "system.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+
 #include <zephyr/drivers/emul.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
-
-#include "console.h"
-#include "test/drivers/test_state.h"
-#include "test/drivers/utils.h"
-#include "system.h"
 
 ZTEST_USER(console_cmd_version, test_no_args)
 {

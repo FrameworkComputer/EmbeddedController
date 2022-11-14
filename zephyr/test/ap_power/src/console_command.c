@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "test_state.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 ZTEST_USER(console_cmd_debug_mode, test_debug_mode_default)
 {

@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "host_command.h"
-#include "uart.h"
 #include "test/drivers/test_state.h"
+#include "uart.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /** Messages used in test */
 static const char msg1[] = "test";

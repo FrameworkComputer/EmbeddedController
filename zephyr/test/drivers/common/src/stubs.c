@@ -7,11 +7,11 @@
 #include "battery_fuel_gauge.h"
 #include "bc12/pi3usb9201_public.h"
 #include "charge_ramp.h"
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
 #include "charger/isl9241_public.h"
 #include "config.h"
-#include <zephyr/fff.h>
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c/i2c.h"
@@ -19,14 +19,14 @@
 #include "ppc/sn5s330_public.h"
 #include "ppc/syv682x_public.h"
 #include "retimer/bb_retimer_public.h"
-#include "test/drivers/stubs.h"
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
+#include "test/drivers/stubs.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
-#include "charge_state_v2.h"
 
+#include <zephyr/fff.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(stubs);
 

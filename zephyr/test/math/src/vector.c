@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "math.h"
 #include "math_util.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_USER(math, cosine_of_angle_diff__zero_magnitude_vector)
 {

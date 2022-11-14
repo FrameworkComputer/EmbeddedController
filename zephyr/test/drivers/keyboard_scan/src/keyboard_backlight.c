@@ -3,17 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <string.h>
-#include <zephyr/ztest.h>
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest_assert.h>
-
 #include "console.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "test/drivers/test_state.h"
+
+#include <stdint.h>
+#include <string.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /**
  * @brief Send host command to set the backlight percentage

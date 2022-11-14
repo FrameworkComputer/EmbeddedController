@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
-
 #include "ec_commands.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "mock/power.h"
 #include "test/drivers/utils.h"
 #include "test_usbc_alt_mode.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
+#include <zephyr/ztest_test_new.h>
 
 /* Tests that require CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY disabled
  */

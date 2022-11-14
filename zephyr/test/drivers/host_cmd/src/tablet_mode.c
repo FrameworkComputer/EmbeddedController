@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/ztest.h>
-
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_smart_battery.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "tablet_mode.h"
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_smart_battery.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 struct host_cmd_tablet_mode_fixture {
 	const struct emul *emul;

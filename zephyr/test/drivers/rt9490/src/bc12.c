@@ -3,11 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-
-#include "charger.h"
 #include "charge_manager.h"
+#include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "driver/tcpm/tcpci.h"
 #include "emul/emul_rt9490.h"
@@ -16,6 +13,9 @@
 #include "test/drivers/test_state.h"
 #include "timer.h"
 #include "usb_charge.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, board_tcpc_post_init, int);
 

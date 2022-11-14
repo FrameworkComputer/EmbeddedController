@@ -2,19 +2,20 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/fff.h>
-#include <emul/emul_kb_raw.h>
-
 #include "console.h"
 #include "host_command.h"
 #include "mkbp_event.h"
 #include "mkbp_fifo.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
+
+#include <emul/emul_kb_raw.h>
 
 /**
  * @brief FFF fake that will be registered as a callback to monitor the EC->AP

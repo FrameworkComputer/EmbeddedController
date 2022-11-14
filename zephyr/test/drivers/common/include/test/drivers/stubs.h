@@ -6,8 +6,9 @@
 #ifndef __TEST_DRIVERS_STUBS_H
 #define __TEST_DRIVERS_STUBS_H
 
-#include <zephyr/fff.h>
 #include "power.h"
+
+#include <zephyr/fff.h>
 
 enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
 

@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "ec_commands.h"
 #include "emul/emul_smart_battery.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 void copy_memmap_string(uint8_t *dest, int offset, int len);
 

@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "charge_state.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_USER(battery_display_soc, happy_path)
 {

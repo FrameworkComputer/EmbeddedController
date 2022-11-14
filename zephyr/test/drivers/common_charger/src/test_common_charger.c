@@ -3,10 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/ztest_assert.h>
-
 #include "charge_ramp.h"
 #include "driver/charger/isl923x_public.h"
 #include "ec_commands.h"
@@ -14,6 +10,10 @@
 #include "test/drivers/charger_utils.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /* Tested wrt isl923x without RAA489000 */
 

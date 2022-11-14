@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery_smart.h"
 #include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "emul/emul_rt9490.h"
 #include "i2c.h"
+
+#include <zephyr/ztest.h>
 
 static const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(rt9490));
 static const int chgnum = CHARGER_SOLO;

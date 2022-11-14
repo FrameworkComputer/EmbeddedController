@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "test_mocks.h"
+
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
-
-#include "test_mocks.h"
 
 /* Mocks for common/extpower_gpio.c */
 DEFINE_FAKE_VALUE_FUNC(int, extpower_is_present);

@@ -3,27 +3,27 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/fff.h>
-
-#include <setjmp.h>
-
-#include "gpio_signal.h"
-#include "power/qcom.h"
-#include "ec_app_main.h"
-#include "power.h"
 #include "console.h"
-#include "task.h"
+#include "ec_app_main.h"
+#include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
-#include "gpio.h"
+#include "power.h"
+#include "power/qcom.h"
+#include "task.h"
+
+#include <setjmp.h>
+
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 /* For simplicity, enforce that all the gpios are on the same controller. */
 #define GPIO_DEVICE \

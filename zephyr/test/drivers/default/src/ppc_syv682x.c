@@ -3,23 +3,23 @@
  * found in the LICENSE file.
  */
 
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_syv682x.h"
+#include "syv682x.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+#include "timer.h"
+#include "usbc_ppc.h"
+
 #include <zephyr/device.h>
 #include <zephyr/devicetree/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
-
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_syv682x.h"
-#include "test/drivers/stubs.h"
-#include "syv682x.h"
-#include "timer.h"
-#include "test/drivers/test_state.h"
-#include "test/drivers/utils.h"
-#include "usbc_ppc.h"
 
 #define SYV682X_NODE DT_NODELABEL(syv682x_emul)
 #define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)

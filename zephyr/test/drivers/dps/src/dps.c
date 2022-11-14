@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "builtin/stdio.h"
 #include "console.h"
 #include "dps.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
+
+#include <zephyr/ztest.h>
 
 struct dps_fixture {
 	struct dps_config_t saved_config;

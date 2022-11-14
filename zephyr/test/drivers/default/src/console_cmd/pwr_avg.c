@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
+#include "console.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+
 #include <stdio.h>
 
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_dummy.h> /* nocheck */
 #include <zephyr/ztest.h>
-
-#include "battery.h"
-#include "console.h"
-#include "test/drivers/test_state.h"
-#include "test/drivers/utils.h"
 
 ZTEST_SUITE(console_cmd_pwr_avg, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);

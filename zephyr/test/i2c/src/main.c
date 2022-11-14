@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
+#include "i2c.h"
+#include "i2c/i2c.h"
+
 #include <zephyr/devicetree.h>
 #include <zephyr/ztest.h>
-
-#include "common.h"
-#include "i2c/i2c.h"
-#include "i2c.h"
 
 /* Unused: required for shimming i2c. */
 void watchdog_reload(void)

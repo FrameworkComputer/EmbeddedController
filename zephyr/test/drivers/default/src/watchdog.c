@@ -8,20 +8,19 @@
  * @brief Unit Tests for watchdog.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/watchdog.h>
-
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
 #include "ec_tasks.h"
-#include <zephyr/fff.h>
 #include "hooks.h"
 #include "test/drivers/stubs.h"
-#include "watchdog.h"
 #include "test/drivers/test_state.h"
+#include "watchdog.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/fff.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
 
 #define wdt DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog))
 

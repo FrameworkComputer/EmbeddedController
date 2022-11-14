@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "accelgyro.h"
 #include "console.h"
 #include "motion_sense.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, mock_init, struct motion_sensor_t *);
 

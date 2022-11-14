@@ -3,14 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
 #include "battery_smart.h"
+#include "driver/tcpm/ps8xxx_public.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
-#include "driver/tcpm/ps8xxx_public.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_ps8xxx.h"
@@ -26,6 +22,10 @@
 #include "test/drivers/utils.h"
 #include "test/usb_pe.h"
 #include "usb_tc_sm.h"
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 

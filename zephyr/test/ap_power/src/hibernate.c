@@ -3,20 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
+#include "hooks.h"
+#include "test_mocks.h"
+#include "test_state.h"
 
-#include <zephyr/logging/log.h>
+#include <zephyr/device.h>
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
 #include <ap_power/ap_power_interface.h>
-
-#include "hooks.h"
-
-#include "test_mocks.h"
-#include "test_state.h"
 
 ZTEST(hibernate, test_g3_hibernate)
 {

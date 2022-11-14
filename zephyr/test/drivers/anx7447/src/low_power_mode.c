@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/ztest.h>
-
 #include "emul/tcpc/emul_tcpci.h"
 #include "tcpm/anx7447_public.h"
 #include "tcpm/tcpci.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "usb_pd.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 #define ANX7447_NODE DT_NODELABEL(anx7447_emul)
 

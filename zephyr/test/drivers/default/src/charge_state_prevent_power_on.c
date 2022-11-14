@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "charge_state.h"
 #include "charge_state_v2.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 /* Test external variable defined in charge_state_v2 */
 extern int charge_prevent_power_on_automatic_power_on;

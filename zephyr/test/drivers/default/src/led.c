@@ -3,18 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/ztest_assert.h>
-
-#include <zephyr/device.h>
-#include <zephyr/drivers/pwm.h>
-
 #include "ec_commands.h"
 #include "led.h"
 #include "led_common.h"
 #include "pwm_mock.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 ZTEST_SUITE(pwm_led_driver, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);

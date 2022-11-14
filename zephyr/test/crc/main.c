@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "crc8.h"
+
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
-
-#include "crc8.h"
 
 ZTEST_SUITE(crc_driver, NULL, NULL, NULL, NULL, NULL);
 

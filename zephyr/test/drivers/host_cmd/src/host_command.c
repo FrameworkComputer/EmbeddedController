@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST(host_cmd_host_commands, get_command_versions__v1)
 {

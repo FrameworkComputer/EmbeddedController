@@ -3,17 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <zephyr/kernel.h>
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
-#include "usb_mux.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "usb_mux.h"
 #include "usb_pd_vdo.h"
+
+#include <stdint.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/ztest.h>
 
 #define TEST_PORT USBC_PORT_C0
 

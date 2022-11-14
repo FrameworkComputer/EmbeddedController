@@ -3,29 +3,29 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_dummy.h> /* nocheck */
-#include <zephyr/shell/shell_uart.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "acpi.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "charge_state.h"
 #include "chipset.h"
-#include "lpc.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/emul_stub_device.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
+#include "lpc.h"
 #include "power.h"
 #include "task.h"
 #include "tcpm/tcpci.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_dummy.h> /* nocheck */
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)

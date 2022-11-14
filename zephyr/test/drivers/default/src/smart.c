@@ -3,20 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_uart.h>
-
-#include "common.h"
-#include "console.h"
-#include "i2c.h"
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_smart_battery.h"
-
 #include "battery.h"
 #include "battery_smart.h"
+#include "common.h"
+#include "console.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_smart_battery.h"
+#include "i2c.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 

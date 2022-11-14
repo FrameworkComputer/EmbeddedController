@@ -8,19 +8,17 @@
  * @brief Unit Tests for AP power events
  */
 
-#include <zephyr/device.h>
-
-#include <zephyr/drivers/espi.h>
-#include <zephyr/drivers/espi_emul.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "ap_power/ap_power.h"
 #include "ap_power/ap_power_events.h"
-
 #include "hooks.h"
 #include "test_state.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/espi_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
 
 /*
  * Structure passed to event listeners.

@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "charge_state_v2.h"
 #include "math_util.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 int battery_outside_charging_temperature(void);
 

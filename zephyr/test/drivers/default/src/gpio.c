@@ -8,22 +8,21 @@
  * @brief Unit Tests for GPIO.
  */
 
-#include <zephyr/device.h>
-
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
 #include "ec_tasks.h"
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "gpio/gpio_int.h"
 #include "test/drivers/stubs.h"
-#include "util.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+#include "util.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
 
 extern bool gpio_test_interrupt_triggered;
 

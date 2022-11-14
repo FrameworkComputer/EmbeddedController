@@ -3,11 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/sys/slist.h>
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "dps.h"
@@ -19,6 +14,11 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "usb_pd.h"
+
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/slist.h>
+#include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 

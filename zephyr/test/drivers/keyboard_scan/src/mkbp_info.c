@@ -2,10 +2,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-#include <emul/emul_kb_raw.h>
-
 #include "console.h"
 #include "host_command.h"
 #include "keyboard_scan.h"
@@ -13,6 +9,11 @@
 #include "mkbp_info.h"
 #include "mkbp_input_devices.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
+
+#include <emul/emul_kb_raw.h>
 
 ZTEST(mkbp_info, host_command_mkbp_info__keyboard_info)
 {

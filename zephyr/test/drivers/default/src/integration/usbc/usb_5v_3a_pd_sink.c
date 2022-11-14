@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <zephyr/ztest.h>
-
 #include "battery_smart.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
@@ -15,6 +12,10 @@
 #include "test/drivers/utils.h"
 #include "timer.h"
 #include "usb_pd.h"
+
+#include <stdint.h>
+
+#include <zephyr/ztest.h>
 
 struct usb_attach_5v_3a_pd_sink_fixture {
 	struct tcpci_partner_data sink_5v_3a;

@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
@@ -14,6 +12,8 @@
 #include "usb_common.h"
 #include "usb_pd.h"
 #include "util.h"
+
+#include <zephyr/ztest.h>
 
 struct usb_pd_bist_shared_fixture {
 	struct tcpci_partner_data sink_5v_500ma;

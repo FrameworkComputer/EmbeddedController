@@ -3,19 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "emul/emul_flash.h"
 #include "flash.h"
 #include "host_command.h"
 #include "system.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 #define WP_L_GPIO_PATH DT_PATH(named_gpios, wp_l)
 

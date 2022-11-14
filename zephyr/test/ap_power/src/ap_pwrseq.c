@@ -3,19 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/espi.h>
-#include <zephyr/drivers/espi_emul.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "ap_power/ap_power.h"
-#include <ap_power/ap_pwrseq.h>
 #include "ap_power/ap_power_interface.h"
 #include "chipset.h"
 #include "emul/emul_power_signals.h"
 #include "test_state.h"
+
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/espi_emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
+
+#include <ap_power/ap_pwrseq.h>
 
 static struct ap_power_ev_callback test_cb;
 static int power_resume_count;

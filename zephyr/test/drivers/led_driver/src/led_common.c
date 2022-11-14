@@ -2,12 +2,12 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-
 #include "host_command.h"
 #include "led_common.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 ZTEST(led_common, host_command__query)
 {

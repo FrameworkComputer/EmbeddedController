@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "charge_manager.h"
 #include "ec_commands.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_SUITE(charge_manager, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);

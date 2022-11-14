@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
+#include "test/drivers/test_state.h"
+#include "uart.h"
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
-
-#include "console.h"
-#include "uart.h"
-#include "test/drivers/test_state.h"
 
 void uart_callback(const struct device *dev, void *user_data);
 void bypass_cb(const struct shell *shell, uint8_t *data, size_t len);

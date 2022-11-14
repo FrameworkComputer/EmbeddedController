@@ -6,19 +6,20 @@
 #ifndef ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 #define ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/ztest.h>
-#include <stddef.h>
-#include <string.h>
-
 #include "charger.h"
-#include "lpc.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "extpower.h"
 #include "host_command.h"
+#include "lpc.h"
 #include "power.h"
 #include "usbc/utils.h"
+
+#include <stddef.h>
+#include <string.h>
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/ztest.h>
 
 /**
  * @brief Helper macro for EMUL_GET_USBC_BINDING. If @p usbc_id has the same

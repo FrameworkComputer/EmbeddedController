@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 #define LIS2DW12_NODELABEL DT_NODELABEL(ms_lis2dw12_accel)
 #define LIS2DW12_SENSOR_ID SENSOR_ID(LIS2DW12_NODELABEL)

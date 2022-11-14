@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "task.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "timer.h"
+
+#include <zephyr/ztest.h>
 
 struct tasks_fixture {
 	timestamp_t fake_time;

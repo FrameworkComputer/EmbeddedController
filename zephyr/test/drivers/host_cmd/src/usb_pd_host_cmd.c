@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "usb_pd.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 ZTEST_USER(usb_pd_host_cmd, test_hc_pd_host_event_status)
 {

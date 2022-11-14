@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/ztest.h>
-
 #include "charge_manager.h"
 #include "chipset.h"
 #include "ec_commands.h"
-#include "usb_pd.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 DECLARE_FAKE_VALUE_FUNC(int, chipset_in_state, int);
 DEFINE_FAKE_VALUE_FUNC(int, chipset_in_state, int);

@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "system.h"
+
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
-
-#include "system.h"
 
 /* Tests for !CONFIG_HOST_CMD_AP_SET_SKUID */
 

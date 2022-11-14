@@ -3,30 +3,29 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_uart.h>
-
 #include "common.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
-#include <zephyr/fff.h>
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "test/drivers/stubs.h"
 #include "task.h"
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+#include "usb_mux.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
 
-#include "usb_mux.h"
-#include "test/drivers/test_state.h"
-#include "test/drivers/utils.h"
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/ztest.h>
 
 /** Copy of original usb_muxes[USB_PORT_C1] */
 static struct usb_mux_chain usb_mux_c1;

@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "test/drivers/test_state.h"
@@ -13,6 +10,9 @@
 #include "usb_pd.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_prl_sm.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 static void console_cmd_usb_pd_after(void *fixture)
 {

@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "accelgyro.h"
 #include "console.h"
 #include "driver/accel_bma2x2.h"
 #include "ec_commands.h"
 #include "motion_sense.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, set_resolution, const struct motion_sensor_t *, int, int);
 

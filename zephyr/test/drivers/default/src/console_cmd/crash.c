@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "builtin/assert.h"
 #include "console.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 ZTEST_SUITE(console_cmd_crash, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);

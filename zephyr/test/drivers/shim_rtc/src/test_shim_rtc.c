@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/i2c_emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/ztest_assert.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
 #include "lpc.h"
 #include "system.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 ZTEST_USER(rtc_shim, test_hc_rtc_set_get_value)
 {

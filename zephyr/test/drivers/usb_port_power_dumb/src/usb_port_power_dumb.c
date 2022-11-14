@@ -3,18 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <string.h>
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "usb_charge.h"
+
+#include <stdint.h>
+#include <string.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /* Expecting at least one port */
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) >= 1);

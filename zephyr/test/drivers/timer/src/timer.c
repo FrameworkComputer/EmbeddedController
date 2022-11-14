@@ -2,14 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell_dummy.h>
-
 #include "console.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 BUILD_ASSERT(IS_ENABLED(CONFIG_HWTIMER_64BIT),
 	     "Tests expect the 64-bit HW timer");

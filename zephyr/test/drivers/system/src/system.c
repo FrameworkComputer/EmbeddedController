@@ -3,19 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
+#include "mock/power.h"
 #include "panic.h"
 #include "system.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
-#include "mock/power.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, system_run_image_copy_with_flags, enum ec_image, int);
 FAKE_VOID_FUNC(system_disable_jump);

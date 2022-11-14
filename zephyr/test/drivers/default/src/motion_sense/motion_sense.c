@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "motion_sense.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_SUITE(motion_sense, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 

@@ -8,18 +8,17 @@
  * @brief Unit Tests for ESPI port 80 writes
  */
 
-#include <zephyr/logging/log.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "port80.h"
-
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 /*
  * Flush any existing writes.

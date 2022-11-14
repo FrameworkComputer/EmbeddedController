@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include "zephyr/kernel.h"
+#include "gpio/gpio_int.h"
+#include "gpio_signal.h"
+#include "hooks.h"
+
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
+#include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
-
-#include "gpio_signal.h"
-#include "gpio/gpio_int.h"
-#include "hooks.h"
 
 FAKE_VOID_FUNC(typec_set_sbu, int, bool);
 /* fake definitions to pass build */

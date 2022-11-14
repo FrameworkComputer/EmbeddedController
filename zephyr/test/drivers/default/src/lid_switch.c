@@ -3,18 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
+#include "ec_commands.h"
+#include "host_command.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
-#include <lid_switch.h>
 #include <zephyr/shell/shell_dummy.h>
-#include <console.h>
+#include <zephyr/ztest.h>
 
-#include "test/drivers/test_state.h"
-#include "test/drivers/utils.h"
-#include "ec_commands.h"
-#include "host_command.h"
+#include <console.h>
+#include <lid_switch.h>
 
 #define LID_GPIO_PATH DT_PATH(named_gpios, lid_open_ec)
 #define LID_GPIO_PIN DT_GPIO_PIN(LID_GPIO_PATH, gpios)

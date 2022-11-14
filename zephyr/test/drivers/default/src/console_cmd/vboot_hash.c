@@ -2,12 +2,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <string.h>
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/sys/util.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "flash.h"
 #include "printf.h"
@@ -15,6 +9,13 @@
 #include "system.h"
 #include "test/drivers/test_state.h"
 #include "vboot_hash.h"
+
+#include <string.h>
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/sys/util.h>
+#include <zephyr/ztest.h>
 
 #define CUSTOM_HASH_LENGTH (32)
 

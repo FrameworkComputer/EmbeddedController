@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 ZTEST_USER(host_cmd_get_pd_port_caps, test_good_index)
 {

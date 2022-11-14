@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 static void set_wp(bool value)
 {
