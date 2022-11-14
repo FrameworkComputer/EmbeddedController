@@ -14,17 +14,21 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		soc-pct2075 {
-			temp_host_high = <100>;
-			temp_host_halt = <105>;
-			temp_host_release_high = <80>;
-			temp_host_release_halt = <80>;
-			temp_fan_off = <35>;
-			temp_fan_max = <70>;
+		temp_soc: soc-pct2075 {
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			temp_host_release_halt = <70>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&soc_pct2075>;
 		};
-		amb-pct2075 {
+		temp_amb: amb-pct2075 {
+			temp_host_high = <65>;
+			temp_host_halt = <70>;
+			temp_host_release_high = <55>;
+			temp_host_release_halt = <60>;
+			temp_fan_off = <32>;
+			temp_fan_max = <45>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&amb_pct2075>;
 		};
@@ -49,6 +53,74 @@
 	ppc_port0: aoz1380 {
 		compatible = "aoz,aoz1380";
 		status = "okay";
+	};
+
+	fan_steps_clamshell: fan-steps-clamshell {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <(-1) (-1) (-1) (-1) 31>;
+			temp_off = <(-1) (-1) (-1) (-1) 99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <(-1) (-1) (-1) (-1) 32>;
+			temp_off = <(-1) (-1) (-1) (-1) 30>;
+			rpm_target = <2600>;
+		};
+		level_2 {
+			temp_on = <(-1) (-1) (-1) (-1) 34>;
+			temp_off = <(-1) (-1) (-1) (-1) 31>;
+			rpm_target = <2900>;
+		};
+		level_3 {
+			temp_on = <(-1) (-1) (-1) (-1) 36>;
+			temp_off = <(-1) (-1) (-1) (-1) 33>;
+			rpm_target = <3600>;
+		};
+		level_4 {
+			temp_on = <(-1) (-1) (-1) (-1) 38>;
+			temp_off = <(-1) (-1) (-1) (-1) 35>;
+			rpm_target = <4200>;
+		};
+		level_5 {
+			temp_on = <(-1) (-1) (-1) (-1) 45>;
+			temp_off = <(-1) (-1) (-1) (-1) 37>;
+			rpm_target = <4600>;
+		};
+	};
+
+	fan_steps_tablet: fan-steps-tablet {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <(-1) (-1) (-1) (-1) 31>;
+			temp_off = <(-1) (-1) (-1) (-1) 99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <(-1) (-1) (-1) (-1) 32>;
+			temp_off = <(-1) (-1) (-1) (-1) 30>;
+			rpm_target = <2600>;
+		};
+		level_2 {
+			temp_on = <(-1) (-1) (-1) (-1) 34>;
+			temp_off = <(-1) (-1) (-1) (-1) 31>;
+			rpm_target = <2900>;
+		};
+		level_3 {
+			temp_on = <(-1) (-1) (-1) (-1) 36>;
+			temp_off = <(-1) (-1) (-1) (-1) 33>;
+			rpm_target = <3600>;
+		};
+		level_4 {
+			temp_on = <(-1) (-1) (-1) (-1) 38>;
+			temp_off = <(-1) (-1) (-1) (-1) 35>;
+			rpm_target = <4200>;
+		};
+		level_5 {
+			temp_on = <(-1) (-1) (-1) (-1) 45>;
+			temp_off = <(-1) (-1) (-1) (-1) 37>;
+			rpm_target = <4600>;
+		};
 	};
 };
 
@@ -119,4 +191,33 @@
 		&kso13_gp04
 		&kso14_gp82
 	>;
+};
+
+&temp_sensor_charger {
+	temp_host_high = <75>;
+	temp_host_halt = <80>;
+	temp_host_release_high = <65>;
+	temp_host_release_halt = <70>;
+};
+
+&temp_sensor_memory {
+	temp_host_high = <75>;
+	temp_host_halt = <80>;
+	temp_host_release_high = <65>;
+	temp_host_release_halt = <70>;
+};
+
+&temp_sensor_cpu {
+	/delete-property/ temp_host_high;
+	/delete-property/ temp_host_halt;
+	/delete-property/ temp_host_release_high;
+	/delete-property/ temp_fan_off;
+	/delete-property/ temp_fan_max;
+};
+
+&fan0 {
+	pwms = <&pwm0 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <2400>;
+	rpm_start = <2600>;
+	rpm_max = <4600>;
 };

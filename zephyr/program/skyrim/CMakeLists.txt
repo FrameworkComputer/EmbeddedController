@@ -57,6 +57,7 @@ if(DEFINED CONFIG_BOARD_FROSTFLOW)
 	zephyr_library_sources(
 			"src/frostflow/usb_mux_config.c"
 			"src/frostflow/ppc_config.c"
+			"src/frostflow/thermal.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 		"src/frostflow/keyboard.c"
