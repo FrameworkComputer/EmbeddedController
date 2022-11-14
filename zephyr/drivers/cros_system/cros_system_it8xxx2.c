@@ -5,16 +5,17 @@
 
 #define DT_DRV_COMPAT ite_it8xxx2_gctrl
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-#include <soc/ite_it8xxx2/reg_def_cros.h>
-
 #include "drivers/cros_system.h"
 #include "gpio/gpio_int.h"
 #include "system.h"
 #include "util.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
+
+#include <soc.h>
+#include <soc/ite_it8xxx2/reg_def_cros.h>
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 

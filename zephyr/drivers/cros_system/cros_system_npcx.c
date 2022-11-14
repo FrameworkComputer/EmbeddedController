@@ -3,21 +3,22 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <zephyr/drivers/watchdog.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-#include <soc/nuvoton_npcx/reg_def_cros.h>
-#include <zephyr/sys/util.h>
-
 #include "drivers/cros_system.h"
 #include "gpio/gpio_int.h"
 #include "rom_chip.h"
 #include "soc_gpio.h"
 #include "soc_miwu.h"
 #include "system.h"
+
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
+
+#include <soc.h>
+#include <soc/nuvoton_npcx/reg_def_cros.h>
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 

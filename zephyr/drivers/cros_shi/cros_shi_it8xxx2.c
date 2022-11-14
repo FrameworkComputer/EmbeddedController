@@ -5,20 +5,22 @@
 
 #define DT_DRV_COMPAT ite_it8xxx2_cros_shi
 
-#include <zephyr/device.h>
-#include <errno.h>
-#include <zephyr/init.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-#include <soc_dt.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <zephyr/dt-bindings/pinctrl/it8xxx2-pinctrl.h>
-
 #include "chipset.h"
 #include "console.h"
 #include "gpio/gpio_int.h"
 #include "host_command.h"
+
+#include <errno.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/dt-bindings/pinctrl/it8xxx2-pinctrl.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <soc.h>
+#include <soc_dt.h>
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)

@@ -5,21 +5,23 @@
 
 #define DT_DRV_COMPAT nuvoton_npcx_cros_shi
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
-#include <assert.h>
-#include <zephyr/dt-bindings/clock/npcx_clock.h>
-#include <zephyr/drivers/clock_control.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <drivers/cros_shi.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <soc.h>
-#include <soc/nuvoton_npcx/reg_def_cros.h>
-
 #include "host_command.h"
 #include "soc_miwu.h"
 #include "system.h"
+
+#include <assert.h>
+
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <drivers/cros_shi.h>
+#include <soc.h>
+#include <soc/nuvoton_npcx/reg_def_cros.h>
 
 #ifdef CONFIG_CROS_SHI_NPCX_DEBUG
 #define DEBUG_CPRINTS(format, args...) cprints(CC_SPI, format, ##args)

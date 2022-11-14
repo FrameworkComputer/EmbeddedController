@@ -6,18 +6,19 @@
 
 #define DT_DRV_COMPAT nuvoton_npcx_cros_mtc
 
-#include <assert.h>
-#include <drivers/cros_rtc.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/kernel.h>
-#include <soc.h>
-#include <soc/nuvoton_npcx/reg_def_cros.h>
-
 #include "ec_tasks.h"
 #include "soc_miwu.h"
 #include "task.h"
 
+#include <assert.h>
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+
+#include <drivers/cros_rtc.h>
+#include <soc.h>
+#include <soc/nuvoton_npcx/reg_def_cros.h>
 LOG_MODULE_REGISTER(cros_rtc, LOG_LEVEL_ERR);
 
 #define NPCX_MTC_TTC_LOAD_DELAY_US 250 /* Delay after writing TTC */

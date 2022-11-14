@@ -5,13 +5,14 @@
 
 #define DT_DRV_COMPAT cros_ec_displight
 
+#include "common.h"
+#include "util.h"
+
 #include <zephyr/devicetree.h>
-#include <drivers/cros_displight.h>
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/logging/log.h>
 
-#include "common.h"
-#include "util.h"
+#include <drivers/cros_displight.h>
 
 LOG_MODULE_REGISTER(displight, LOG_LEVEL_ERR);
 

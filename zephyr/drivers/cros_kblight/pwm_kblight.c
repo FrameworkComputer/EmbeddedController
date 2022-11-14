@@ -5,13 +5,13 @@
 
 #define DT_DRV_COMPAT cros_ec_kblight_pwm
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/pwm.h>
-#include <zephyr/logging/log.h>
-
 #include "common.h"
 #include "keyboard_backlight.h"
 #include "util.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(kblight, LOG_LEVEL_ERR);
 

@@ -5,16 +5,17 @@
 
 #define DT_DRV_COMPAT ite_it8xxx2_cros_flash
 
-#include <drivers/cros_flash.h>
-#include <zephyr/drivers/flash.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-
 #include "flash.h"
 #include "host_command.h"
 #include "system.h"
 #include "watchdog.h"
+
+#include <zephyr/drivers/flash.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <drivers/cros_flash.h>
+#include <soc.h>
 
 LOG_MODULE_REGISTER(cros_flash, LOG_LEVEL_ERR);
 

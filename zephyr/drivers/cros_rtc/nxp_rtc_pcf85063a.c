@@ -5,18 +5,19 @@
 
 #define DT_DRV_COMPAT nxp_rtc_pcf85063a
 
+#include "nxp_rtc_pcf85063a.h"
+
 #include <assert.h>
+
 #include <zephyr/device.h>
-#include <drivers/cros_rtc.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <drivers/cros_rtc.h>
 #include <rtc.h>
 #include <soc.h>
-
-#include "nxp_rtc_pcf85063a.h"
-
-#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(cros_rtc, LOG_LEVEL_ERR);
 
 /* Driver config */
