@@ -540,20 +540,6 @@ static void board_charger_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);
 
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(charge_ma, charge_mv);
-}
-
 static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_KBD_BL_EN, 0);

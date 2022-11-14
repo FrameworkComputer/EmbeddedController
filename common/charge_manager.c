@@ -1711,3 +1711,11 @@ board_fill_source_power_info(int port, struct ec_response_usb_pd_power_info *r)
 	r->meas.current_lim = 0;
 	r->max_power = 0;
 }
+
+__overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
+					  int max_ma, int charge_mv)
+{
+#if defined(CONFIG_CHARGER) && defined(CONFIG_BATTERY)
+	charge_set_input_current_limit(charge_ma, charge_mv);
+#endif
+}

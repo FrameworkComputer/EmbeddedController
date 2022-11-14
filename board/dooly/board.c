@@ -323,8 +323,8 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 /* Called when the charge manager has switched to a new port. */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/* Blink alert if insufficient power per system_can_boot_ap(). */
 	int insufficient_power =

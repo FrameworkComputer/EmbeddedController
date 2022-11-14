@@ -355,8 +355,8 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, board_charge_termination,
 	     HOOK_PRIO_DEFAULT);
 #endif
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	prev_charge_limit = charge_ma;
 	prev_charge_mv = charge_mv;

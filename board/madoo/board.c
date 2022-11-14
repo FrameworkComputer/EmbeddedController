@@ -312,12 +312,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(charge_ma, charge_mv);
-}
-
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	if (port < 0 || port > board_get_usb_pd_port_count())

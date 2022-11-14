@@ -81,12 +81,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(charge_ma, charge_mv);
-}
-
 static void set_ac_prochot(void)
 {
 	isl9241_set_ac_prochot(CHARGER_SOLO, PD_MAX_CURRENT_MA);

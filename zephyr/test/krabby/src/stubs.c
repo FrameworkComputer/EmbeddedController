@@ -8,8 +8,8 @@
 #include "charge_state.h"
 #include "usbc_ppc.h"
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 }
 

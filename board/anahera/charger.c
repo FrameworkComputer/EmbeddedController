@@ -81,9 +81,3 @@ int board_set_active_charge_port(int port)
 
 	return EC_SUCCESS;
 }
-
-__override void board_set_charge_limit(int port, int supplier, int charge_ma,
-				       int max_ma, int charge_mv)
-{
-	charge_set_input_current_limit(charge_ma, charge_mv);
-}

@@ -391,8 +391,8 @@ int board_set_active_charge_port(int charge_port)
 	return 0;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	if (port != CHG)
 		return;

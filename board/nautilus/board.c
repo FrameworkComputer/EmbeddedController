@@ -528,20 +528,6 @@ int board_set_active_charge_port(int charge_port)
 }
 
 /**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(charge_ma, charge_mv);
-}
-
-/**
  * Return the maximum allowed input current
  */
 int board_get_ramp_current_limit(int supplier, int sup_curr)

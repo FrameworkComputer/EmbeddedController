@@ -526,8 +526,8 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/* Limit C1 on board version 0 to 2.0 A */
 	if ((board_version == 0) && (port == 1))

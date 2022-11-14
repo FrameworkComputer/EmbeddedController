@@ -348,12 +348,6 @@ int ppc_get_alert_status(int port)
 #endif
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(charge_ma, charge_mv);
-}
-
 #ifdef USB_PD_PORT_TCPC_MST
 void baseboard_mst_enable_control(enum mst_source src, int level)
 {

@@ -512,8 +512,8 @@ static void set_charge_limit(int charge_ma)
 	}
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	int p87w = 0, p65w = 0, p60w = 0;
 
