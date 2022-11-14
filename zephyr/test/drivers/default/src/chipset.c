@@ -4,11 +4,17 @@
  */
 
 #include "chipset.h"
+#include "console.h"
 #include "test/drivers/test_state.h"
 
 #include <stdint.h>
 
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
+
+#include <ap_power/ap_power.h>
+#include <ap_power/ap_power_events.h>
 
 ZTEST(chipset, test_get_ap_reset_stats__bad_pointers)
 {
@@ -46,6 +52,42 @@ ZTEST(chipset, test_get_ap_reset_stats__happy_path)
 	zassert_equal(actual_reset_count, reset_count,
 		      "Found %d resets, expected %d", reset_count,
 		      actual_reset_count);
+}
+
+ZTEST(chipset, test_console_cmd_apreset)
+{
+	struct ap_reset_log_entry reset_log_entries[4];
+	uint32_t reset_count;
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "apreset"));
+
+	/* Make sure an AP reset happened. The expected reset log entry is at
+	 * index 3 because we read out 3 empty slots first.
+	 */
+	zassert_ok(get_ap_reset_stats(reset_log_entries,
+				      ARRAY_SIZE(reset_log_entries),
+				      &reset_count));
+
+	zassert_equal(CHIPSET_RESET_CONSOLE_CMD,
+		      reset_log_entries[3].reset_cause);
+}
+
+ZTEST(chipset, test_console_cmd_apshutdown)
+{
+	struct ap_reset_log_entry reset_log_entries[4];
+	uint32_t reset_count;
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "apshutdown"));
+
+	/* Make sure an AP reset happened. The expected reset log entry is at
+	 * index 3 because we read out 3 empty slots first.
+	 */
+	zassert_ok(get_ap_reset_stats(reset_log_entries,
+				      ARRAY_SIZE(reset_log_entries),
+				      &reset_count));
+
+	zassert_equal(CHIPSET_SHUTDOWN_CONSOLE_CMD,
+		      reset_log_entries[3].reset_cause);
 }
 
 static void reset(void *arg)
