@@ -5,7 +5,7 @@
 #include "led_it81202_base.dtsi"
 
 / {
-	led_colors: led-colors {
+	led-colors {
 		compatible = "cros-ec,led-policy";
 
 		/* Tentacruel LED bat charge */

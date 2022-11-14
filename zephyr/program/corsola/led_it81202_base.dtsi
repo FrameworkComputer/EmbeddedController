@@ -5,7 +5,7 @@
 #include <dt-bindings/battery.h>
 
 / {
-	led_colors: led-colors {
+	led-colors {
 		compatible = "cros-ec,led-policy";
 
 		bat-power-state-charge {
