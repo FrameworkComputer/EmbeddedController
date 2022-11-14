@@ -4,7 +4,7 @@
 
 description: Keyboard scanning properties
 
-compatible: "cros-keyscan"
+compatible: "cros-ec,keyscan"
 
 properties:
     output-settle:

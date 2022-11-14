@@ -5,7 +5,7 @@
 
 / {
 	cros-keyscan {
-		compatible = "cros-keyscan";
+		compatible = "cros-ec,keyscan";
 
 		output-settle = <35>;
 		debounce-down = <5000>;
