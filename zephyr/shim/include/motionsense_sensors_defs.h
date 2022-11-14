@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_MOTIONSENSE_SENSORS_DEFS_H
 #define __CROS_EC_MOTIONSENSE_SENSORS_DEFS_H
 
-#include <zephyr/devicetree.h>
-
 #include "common.h"
+
+#include <zephyr/devicetree.h>
 
 #define SENSOR_ID(id) DT_CAT(SENSOR_, id)
 

@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
 #include "tcpm/anx7447_public.h"
+
+#include <zephyr/devicetree.h>
 
 #define ANX7447_TCPC_COMPAT analogix_anx7447_tcpc
 

@@ -2,12 +2,13 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/dt-bindings/clock/npcx_clock.h>
-#include <stdnoreturn.h>
-
 #include "common.h"
 #include "soc.h"
 #include "system_chip.h"
+
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+
+#include <stdnoreturn.h>
 
 /* Modules Map */
 #define WDT_NODE DT_INST(0, microchip_xec_watchdog)

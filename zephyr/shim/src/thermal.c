@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "ec_commands.h"
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
-#include "ec_commands.h"
 
 #define THERMAL_CONFIG(node_id) \
 	[TEMP_SENSOR_ID(node_id)] = {				\

@@ -11,11 +11,11 @@
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
+#include "cros_version.h"
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "ioexpander.h"
 #include "system.h"
-#include "cros_version.h"
 
 LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
 

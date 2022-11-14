@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_CROS_CBI_H
 #define __CROS_EC_CROS_CBI_H
 
-#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/kernel.h>
 
 /*
  * Macros are _INST_ types, so require DT_DRV_COMPAT to be defined.

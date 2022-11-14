@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
+#include "hwtimer.h"
+
 #include <stdint.h>
 
-#include "hwtimer.h"
+#include <zephyr/kernel.h>
 
 uint64_t __hw_clock_source_read64(void)
 {

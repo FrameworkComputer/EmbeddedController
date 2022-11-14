@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/sys/crc.h>
-
 #include "crc8.h"
+
+#include <zephyr/sys/crc.h>
 
 /* Polynomial representation for x^8 + x^2 + x + 1 is 0x07 */
 #define SMBUS_POLYNOMIAL 0x07

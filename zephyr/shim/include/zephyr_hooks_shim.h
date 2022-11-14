@@ -8,11 +8,11 @@
 #endif
 #define __CROS_EC_ZEPHYR_HOOKS_SHIM_H
 
-#include <zephyr/init.h>
-#include <zephyr/kernel.h>
-
 #include "common.h"
 #include "cros_version.h"
+
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
 
 /**
  * The internal data structure stored for a deferred function.

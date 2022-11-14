@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log_backend.h>
-#include <zephyr/logging/log_output.h>
-#include <zephyr/logging/log_backend_std.h>
-
 #include "console.h"
+
+#include <zephyr/logging/log_backend.h>
+#include <zephyr/logging/log_backend_std.h>
+#include <zephyr/logging/log_output.h>
 
 static uint8_t
 	char_out_buf[CONFIG_PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER_TMP_BUF_SIZE];

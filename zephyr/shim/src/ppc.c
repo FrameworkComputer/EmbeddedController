@@ -3,14 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include "usbc_ppc.h"
+#include "usbc/ppc.h"
 #include "usbc/ppc_aoz1380.h"
 #include "usbc/ppc_nx20p348x.h"
 #include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"
-#include "usbc/ppc.h"
+#include "usbc_ppc.h"
+
+#include <zephyr/devicetree.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(AOZ1380_COMPAT) ||          \
 	DT_HAS_COMPAT_STATUS_OKAY(NX20P348X_COMPAT) ||    \

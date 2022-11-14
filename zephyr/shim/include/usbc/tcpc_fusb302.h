@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
 #include "driver/tcpm/fusb302.h"
+
+#include <zephyr/devicetree.h>
 
 #define FUSB302_TCPC_COMPAT fairchild_fusb302
 

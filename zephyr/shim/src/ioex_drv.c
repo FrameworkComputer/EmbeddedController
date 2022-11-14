@@ -6,24 +6,26 @@
 #define DT_DRV_COMPAT cros_ioex_port
 #define DT_DRV_COMPAT_CHIP cros_ioex_chip
 
+#include <errno.h>
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
-#include <errno.h>
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
+#include "common.h"
+#include "config.h"
 #include "gpio.h"
+#include "i2c.h"
+#include "ioexpander.h"
+
 #include <zephyr/drivers/gpio/gpio_utils.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/sys/util.h>
-#include "common.h"
-#include "config.h"
-#include "i2c.h"
-#include "ioexpander.h"
 
 /* Include drivers if enabled */
 #ifdef CONFIG_PLATFORM_EC_IOEX_CCGXXF

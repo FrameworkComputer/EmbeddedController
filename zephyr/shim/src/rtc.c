@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-
 #include "console.h"
 #include "drivers/cros_rtc.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
 #include "util.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(shim_cros_rtc, LOG_LEVEL_ERR);
 

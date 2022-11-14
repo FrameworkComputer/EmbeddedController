@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/bbram.h>
-#include <drivers/cros_system.h>
-#include <zephyr/logging/log.h>
-
 #include "common.h"
 #include "console.h"
 #include "cros_version.h"
 #include "system.h"
 #include "watchdog.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/bbram.h>
+#include <zephyr/logging/log.h>
+
+#include <drivers/cros_system.h>
 
 #define BBRAM_REGION_PD0 DT_PATH(named_bbram_regions, pd0)
 #define BBRAM_REGION_PD1 DT_PATH(named_bbram_regions, pd1)

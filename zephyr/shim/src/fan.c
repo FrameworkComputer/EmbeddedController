@@ -5,18 +5,18 @@
 
 #define DT_DRV_COMPAT cros_ec_fans
 
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pwm.h>
-#include <zephyr/drivers/sensor.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/sys/util_macro.h>
-
 #include "fan.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "math_util.h"
 #include "system.h"
 #include "util.h"
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/drivers/sensor.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util_macro.h>
 
 LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
 

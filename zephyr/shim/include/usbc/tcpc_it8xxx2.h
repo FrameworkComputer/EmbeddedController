@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
 #include "driver/tcpm/it8xxx2_pd_public.h"
+
+#include <zephyr/devicetree.h>
 
 #define IT8XXX2_TCPC_COMPAT ite_it8xxx2_usbpd
 

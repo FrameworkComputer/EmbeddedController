@@ -6,8 +6,6 @@
 #ifndef ZEPHYR_CHROME_USBC_USB_MUXES_H
 #define ZEPHYR_CHROME_USBC_USB_MUXES_H
 
-#include <zephyr/devicetree.h>
-#include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
 #include "usbc/amd_fp6_usb_mux.h"
 #include "usbc/anx7447_usb_mux.h"
@@ -20,6 +18,9 @@
 #include "usbc/tusb1064_usb_mux.h"
 #include "usbc/utils.h"
 #include "usbc/virtual_usb_mux.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/sys/util_macro.h>
 
 /**
  * @brief List of USB mux drivers compatibles and their configurations. Each

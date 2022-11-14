@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-
 #include "driver/tcpm/tcpci.h"
+
+#include <zephyr/devicetree.h>
 
 #define TCPCI_COMPAT cros_ec_tcpci
 

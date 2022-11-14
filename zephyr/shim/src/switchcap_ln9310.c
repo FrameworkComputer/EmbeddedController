@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
 #include "common.h"
 #include "ln9310.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 
 /* TODO(b/218600962): Consolidate switchcap code. */
 

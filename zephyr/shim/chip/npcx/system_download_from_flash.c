@@ -2,13 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/dt-bindings/clock/npcx_clock.h>
-#include <stdnoreturn.h>
-#include <zephyr/sys/__assert.h>
-
 #include "common.h"
 #include "soc.h"
 #include "system_chip.h"
+
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+#include <zephyr/sys/__assert.h>
+
+#include <stdnoreturn.h>
 
 /* Modules Map */
 #define NPCX_PMC_BASE_ADDR 0x4000D000

@@ -3,17 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <atomic.h>
-#include <zephyr/device.h>
-#include <zephyr/drivers/espi.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <stdint.h>
-
-#include <ap_power/ap_power.h>
-#include <ap_power/ap_power_events.h>
-#include <ap_power/ap_power_espi.h>
 #include "acpi.h"
 #include "chipset.h"
 #include "common.h"
@@ -27,6 +16,19 @@
 #include "task.h"
 #include "timer.h"
 #include "zephyr_espi_shim.h"
+
+#include <stdint.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
+#include <ap_power/ap_power_espi.h>
+#include <ap_power/ap_power_events.h>
+#include <atomic.h>
 
 #define VWIRE_PULSE_TRIGGER_TIME \
 	CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US

@@ -5,8 +5,9 @@
 
 #define DT_DRV_COMPAT cros_ec_usba_port_enable_pins
 
-#include <zephyr/devicetree.h>
 #include "hooks.h"
+
+#include <zephyr/devicetree.h>
 
 #define PIN(node_id, prop, idx) \
 	GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, idx)),

@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/syscon.h>
-
 #include "clock_chip.h"
 #include "common.h"
 #include "rom_chip.h"
 #include "system.h"
 #include "system_chip.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/syscon.h>
 
 /* TODO (b:179900857) Make this implementation not npcx specific. */
 

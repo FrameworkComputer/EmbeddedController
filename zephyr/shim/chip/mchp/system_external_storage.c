@@ -3,15 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/bbram.h>
-#include <soc.h>
-
 #include "clock_chip.h"
 #include "common.h"
+#include "config_chip.h"
 #include "system.h"
 #include "system_chip.h"
-#include "config_chip.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/bbram.h>
+
+#include <soc.h>
 
 #define MCHP_ECRO_WORD 0x4F524345u /* ASCII ECRO */
 #define MCHP_ECRW_WORD 0x57524345u /* ASCII ECRW */

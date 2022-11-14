@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/bbram.h>
-#include <zephyr/logging/log.h>
-
 #include "system.h"
 #include "system_chip.h"
+
+#include <zephyr/drivers/bbram.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(shim_xec_system, LOG_LEVEL_ERR);
 

@@ -6,8 +6,9 @@
 #ifndef __CROS_EC_TCPC_NCT38XX_H
 #define __CROS_EC_TCPC_NCT38XX_H
 
-#include <zephyr/devicetree.h>
 #include "driver/tcpm/nct38xx.h"
+
+#include <zephyr/devicetree.h>
 
 #define NCT38XX_TCPC_COMPAT nuvoton_nct38xx
 

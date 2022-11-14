@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
 #include "driver/tcpm/ps8xxx_public.h"
+
+#include <zephyr/devicetree.h>
 
 #define PS8XXX_EMUL_COMPAT cros_ps8xxx_emul
 

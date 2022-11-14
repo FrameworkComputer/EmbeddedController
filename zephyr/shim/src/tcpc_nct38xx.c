@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-
 #include "config.h"
 #include "usbc/tcpc_nct38xx.h"
 #include "usbc/utils.h"
+
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 
 #define GPIO_DEV_WITH_COMMA(id) DEVICE_DT_GET(DT_PHANDLE(id, gpio_dev)),
 

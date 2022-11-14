@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-
 #include "cros_board_info.h"
 #include "cros_cbi.h"
+
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(cros_cbi_fw_config, LOG_LEVEL_ERR);
 

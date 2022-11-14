@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/arch/cpu.h>
-#include <zephyr/fatal.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/logging/log_ctrl.h>
-#include <zephyr/kernel.h>
-
 #include "common.h"
 #include "panic.h"
+
+#include <zephyr/arch/cpu.h>
+#include <zephyr/fatal.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/logging/log_ctrl.h>
 
 /*
  * Arch-specific configuration

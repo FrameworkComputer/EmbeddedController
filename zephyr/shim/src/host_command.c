@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-
 #include "host_command.h"
 #include "task.h"
+
+#include <zephyr/kernel.h>
 
 struct host_command *zephyr_find_host_command(int command)
 {

@@ -6,14 +6,15 @@
 #ifndef ZEPHYR_CHROME_USBC_PPC_H
 #define ZEPHYR_CHROME_USBC_PPC_H
 
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_nx20p348x.h"
+#include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"
 #include "usbc/utils.h"
 #include "usbc_ppc.h"
+
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 
 extern struct ppc_config_t ppc_chips_alt[];
 

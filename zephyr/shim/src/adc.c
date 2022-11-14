@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
+#include "zephyr_adc.h"
+
 #include <zephyr/devicetree/io-channels.h>
 #include <zephyr/drivers/adc.h>
 #include <zephyr/logging/log.h>
-#include "adc.h"
-#include "zephyr_adc.h"
 
 LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 

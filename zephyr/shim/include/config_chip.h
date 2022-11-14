@@ -15,6 +15,7 @@
 #line 16
 
 #include <zephyr/devicetree.h>
+
 #include <autoconf.h>
 
 #define SENSOR_NODE DT_PATH(motionsense_sensor)

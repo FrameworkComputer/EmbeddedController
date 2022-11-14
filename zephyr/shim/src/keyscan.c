@@ -5,11 +5,13 @@
 
 #define DT_DRV_COMPAT cros_keyscan
 
-#include <assert.h>
-#include <zephyr/kernel.h>
-#include <soc.h>
-
 #include "keyboard_scan.h"
+
+#include <assert.h>
+
+#include <zephyr/kernel.h>
+
+#include <soc.h>
 
 #if DT_NODE_EXISTS(DT_INST(0, cros_keyscan))
 

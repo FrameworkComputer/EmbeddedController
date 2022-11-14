@@ -9,13 +9,14 @@
 #ifdef CONFIG_SHELL_BACKEND_DUMMY /* nocheck */
 #include <zephyr/shell/shell_dummy.h> /* nocheck */
 #endif
-#include <zephyr/shell/shell_uart.h>
 #include <stdbool.h>
 #include <string.h>
-#include <zephyr/sys/printk.h>
-#include <zephyr/sys/ring_buffer.h>
+
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/ring_buffer.h>
 
 /*
  * TODO(b/238433667): Include EC printf functions

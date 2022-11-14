@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/init.h>
-#include <zephyr/sys/atomic.h>
-#include <zephyr/shell/shell.h>
-
 #include "common.h"
 #include "host_command.h"
-#include "timer.h"
 #include "task.h"
+#include "timer.h"
+
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/sys/atomic.h>
 
 /* Ensure that the idle task is at lower priority than lowest priority task. */
 BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,

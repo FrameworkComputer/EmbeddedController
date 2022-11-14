@@ -3,17 +3,18 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
+#include "console.h"
+#include "ec_tasks.h"
+#include "hook_types.h"
+#include "hooks.h"
+#include "task.h"
+#include "timer.h"
+
 #include <zephyr/kernel.h>
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
-#include "common.h"
-#include "console.h"
-#include "ec_tasks.h"
-#include "hooks.h"
-#include "hook_types.h"
-#include "task.h"
-#include "timer.h"
 
 /*
  * hook_registry maps each hook_type to the list of handlers for that hook type.

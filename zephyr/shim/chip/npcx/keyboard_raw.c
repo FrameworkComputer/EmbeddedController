@@ -5,15 +5,16 @@
 
 /* Functions needed by keyboard scanner module for Chrome EC */
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-#include <soc_gpio.h>
-#include <zephyr/kernel.h>
-
 #include "drivers/cros_kb_raw.h"
 #include "keyboard_raw.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <soc.h>
+#include <soc_gpio.h>
 
 /**
  * Return true if the current value of the given input GPIO port is zero

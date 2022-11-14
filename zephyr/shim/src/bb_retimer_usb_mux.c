@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
 #include "usbc/usb_muxes.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/sys/util_macro.h>
 
 /**
  * This prevents creating struct usb_mux bb_controls[] for platforms that didn't

@@ -5,8 +5,6 @@
  * Power and battery LED control.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -21,6 +19,7 @@
 #include "util.h"
 
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 

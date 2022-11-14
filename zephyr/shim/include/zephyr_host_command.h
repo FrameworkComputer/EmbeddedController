@@ -10,8 +10,9 @@
 #endif
 #define __CROS_EC_ZEPHYR_HOST_COMMAND_H
 
-#include <zephyr/init.h>
 #include <stdbool.h>
+
+#include <zephyr/init.h>
 
 /* Initializes and runs the host command handler loop.  */
 void host_command_task(void *u);

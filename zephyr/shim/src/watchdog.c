@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/watchdog.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-
 #include "config.h"
 #include "hooks.h"
 #include "watchdog.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(watchdog_shim, LOG_LEVEL_ERR);
 

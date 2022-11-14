@@ -5,11 +5,13 @@
  * NPCX SoC spi flash update tool - monitor firmware
  */
 
-#include <stdint.h>
-#include <zephyr/sys/util.h>
 #include "config_chip.h"
 #include "npcx_monitor.h"
 #include "registers.h"
+
+#include <stdint.h>
+
+#include <zephyr/sys/util.h>
 
 /*
  * TODO(b/197162681): This was copied from chip/npcx/spiflashfw but this

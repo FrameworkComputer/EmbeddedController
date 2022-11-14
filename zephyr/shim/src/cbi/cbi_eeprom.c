@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/eeprom.h>
-#include <zephyr/drivers/gpio.h>
-
 #include "console.h"
 #include "cros_board_info.h"
 #include "write_protect.h"
+
+#include <zephyr/drivers/eeprom.h>
+#include <zephyr/drivers/gpio.h>
 
 #define CBI_EEPROM_NODE DT_NODELABEL(cbi_eeprom)
 

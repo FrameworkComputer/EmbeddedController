@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <flash.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/drivers/flash.h>
-
 #include "console.h"
 #include "drivers/cros_flash.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
+
+#include <zephyr/drivers/flash.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <flash.h>
 
 LOG_MODULE_REGISTER(shim_flash, LOG_LEVEL_ERR);
 
