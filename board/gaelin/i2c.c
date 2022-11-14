@@ -43,6 +43,14 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
 	},
 	{
+		/* I2C5 */
+		.name = "scaler",
+		.port = I2C_PORT_SCALER,
+		.kbps = 400,
+		.scl = GPIO_SMSCALER_CLK,
+		.sda = GPIO_SMSCALER_DATA,
+	},
+	{
 		/* I2C7 */
 		.name = "eeprom",
 		.port = I2C_PORT_EEPROM,
