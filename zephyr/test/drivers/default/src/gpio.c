@@ -22,9 +22,14 @@
 #include "gpio/gpio_int.h"
 #include "test/drivers/stubs.h"
 #include "util.h"
+#include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 
 extern bool gpio_test_interrupt_triggered;
+
+/* Function signature for shim/src/gpio.c test_export_static */
+int init_gpios(const struct device *unused);
+
 /**
  * @brief TestPurpose: Verify Zephyr to EC GPIO bitmask conversion.
  *
@@ -135,14 +140,22 @@ ZTEST(gpio, test_legacy_gpio_get_set_level)
 {
 	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_test));
 	int level;
+
 	/* Test invalid signal */
 	gpio_set_level(GPIO_COUNT, 0);
 	zassert_equal(0, gpio_get_level(GPIO_COUNT), "Expected level==0");
+
 	/* Test valid signal */
 	gpio_set_level(signal, 0);
+	zassert_ok(gpio_or_ioex_get_level(signal, &level));
 	zassert_equal(0, gpio_get_level(signal), "Expected level==0");
+	zassert_equal(0, level);
+
 	gpio_set_level(signal, 1);
+	zassert_ok(gpio_or_ioex_get_level(signal, &level));
 	zassert_equal(1, gpio_get_level(signal), "Expected level==1");
+	zassert_equal(1, level);
+
 	level = gpio_get_ternary(signal);
 	gpio_set_level_verbose(CC_CHIPSET, signal, 0);
 	zassert_equal(0, gpio_get_level(signal), "Expected level==0");
@@ -369,6 +382,62 @@ ZTEST(gpio, test_gpio_reset)
 		      flags);
 }
 
+ZTEST(gpio, test_gpio_reset_port)
+{
+	const struct device *port =
+		DEVICE_DT_GET(DT_GPIO_CTLR(DT_NODELABEL(gpio_test), gpios));
+	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_test));
+	gpio_flags_t flags;
+	gpio_flags_t flags_at_start[GPIO_COUNT];
+
+	/* Snapshot of GPIO flags before testing */
+	for (int i = 0; i < GPIO_COUNT; i++)
+		flags_at_start[i] = gpio_helper_get_flags(i);
+
+	/* Test reset on invalid signal */
+	gpio_reset_port(NULL);
+
+	/* Verify flags didn't change */
+	for (int i = 0; i < GPIO_COUNT; i++) {
+		flags = gpio_helper_get_flags(i);
+		zassert_equal(flags_at_start[i], flags,
+			      "%s[%d] flags_at_start=0x%x, flags=0x%x",
+			      gpio_get_name(i), i, flags_at_start[i], flags);
+	}
+
+	/* Test reset on valid signal */
+	gpio_set_flags(signal, GPIO_OUTPUT);
+	flags = gpio_helper_get_flags(signal);
+	zassert_equal(flags, GPIO_OUTPUT, "Flags set 0x%x", flags);
+
+	gpio_reset_port(port);
+
+	flags = gpio_helper_get_flags(signal);
+	zassert_equal(flags, gpio_get_default_flags(signal), "Flags set 0x%x",
+		      flags);
+
+	for (int i = 0; i < GPIO_COUNT; ++i) {
+		gpio_set_flags(i, flags_at_start[i]);
+	}
+}
+
+ZTEST(gpio, test_gpio_set_flags_by_mask)
+{
+	gpio_set_flags_by_mask(0, BIT(27), GPIO_OUTPUT);
+	zassert_equal(gpio_configure_port_pin_fake.call_count, 1);
+	zassert_equal(gpio_configure_port_pin_fake.arg0_val, 0);
+	zassert_equal(gpio_configure_port_pin_fake.arg1_val, 27);
+	zassert_equal(gpio_configure_port_pin_fake.arg2_val,
+		      convert_to_zephyr_flags(GPIO_OUTPUT));
+}
+
+ZTEST(gpio, test_init_gpios_fail_on_unused_pins_custom_func)
+{
+	gpio_config_unused_pins_fake.return_val = -1;
+
+	zassert_equal(-1, init_gpios(NULL));
+}
+
 /**
  * @brief TestPurpose: Verify GPIO enable/disable interrupt.
  *
@@ -418,4 +487,4 @@ static void gpio_before(void *state)
 /**
  * @brief Test Suite: Verifies GPIO functionality.
  */
-ZTEST_SUITE(gpio, drivers_predicate_post_main, NULL, gpio_before, NULL, NULL);
+ZTEST_SUITE(gpio, drivers_predicate_pre_main, NULL, gpio_before, NULL, NULL);

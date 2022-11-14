@@ -255,7 +255,10 @@ const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal)
 	return &configs[signal].spec;
 }
 
-static int init_gpios(const struct device *unused)
+/* Allow access to this function in tests so we can run it multiple times
+ * without having to create a new binary for each run.
+ */
+test_export_static int init_gpios(const struct device *unused)
 {
 	gpio_flags_t flags;
 	bool is_sys_jumped = system_jumped_to_this_image();
@@ -322,9 +325,10 @@ void gpio_reset(enum gpio_signal signal)
 void gpio_reset_port(const struct device *port)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
-		if (port == configs[i].spec.port)
+		if (port == configs[i].spec.port) {
 			gpio_pin_configure_dt(&configs[i].spec,
 					      configs[i].init_flags);
+		}
 	}
 }
 

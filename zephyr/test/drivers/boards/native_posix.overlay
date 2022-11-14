@@ -212,6 +212,7 @@
 		};
 		gpio_test: test {
 			gpios = <&gpio0 27 (GPIO_INPUT | GPIO_OUTPUT)>;
+			enum-name = "GPIO_TEST";
 		};
 		ec_batt_pres_odl {
 			gpios = <&gpio0 28 GPIO_INPUT>;
