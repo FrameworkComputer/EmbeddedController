@@ -3,22 +3,23 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_lis2dw12_emul
-
-#include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/i2c_emul.h>
-#include <zephyr/drivers/emul.h>
-#include <errno.h>
-#include <zephyr/sys/__assert.h>
-
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"
-#include "i2c.h"
 #include "emul/emul_stub_device.h"
+#include "i2c.h"
 
+#include <errno.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/__assert.h>
+
+#define DT_DRV_COMPAT cros_lis2dw12_emul
+
 LOG_MODULE_REGISTER(lis2dw12_emul, CONFIG_LIS2DW12_EMUL_LOG_LEVEL);
 
 struct lis2dw12_emul_data {

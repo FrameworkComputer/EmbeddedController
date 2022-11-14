@@ -3,15 +3,16 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_ec_kb_raw_emul
-
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_kb_raw);
-
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/logging/log.h>
+
 #include <drivers/cros_kb_raw.h>
 #include <keyboard_raw.h>
+
+#define DT_DRV_COMPAT cros_ec_kb_raw_emul
+
+LOG_MODULE_REGISTER(emul_kb_raw);
 
 struct kb_raw_emul_data {
 	int active_column;

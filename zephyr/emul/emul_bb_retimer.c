@@ -3,22 +3,21 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT intel_jhl8040r
-
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_bb_retimer);
+#include "driver/retimer/bb_retimer.h"
+#include "emul/emul_bb_retimer.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_bb_retimer.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT intel_jhl8040r
 
-#include "driver/retimer/bb_retimer.h"
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(emul_bb_retimer);
 
 /** Run-time data used by the emulator */
 struct bb_emul_data {

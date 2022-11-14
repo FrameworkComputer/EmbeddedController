@@ -3,24 +3,23 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT zephyr_smart_battery
-
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(smart_battery);
+#include "battery_smart.h"
+#include "crc8.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_smart_battery.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_smart_battery.h"
+#define DT_DRV_COMPAT zephyr_smart_battery
 
-#include "crc8.h"
-#include "battery_smart.h"
-#include "emul/emul_stub_device.h"
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(smart_battery);
 
 /** Run-time data used by the emulator */
 struct sbat_emul_data {

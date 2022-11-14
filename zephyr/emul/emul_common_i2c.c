@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_common_i2c);
+#include "emul/emul_common_i2c.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 
-#include "emul/emul_common_i2c.h"
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(emul_common_i2c);
 
 /** Check description in emul_common_i2c.h */
 int i2c_common_emul_lock_data(struct i2c_common_emul_data *common_data,

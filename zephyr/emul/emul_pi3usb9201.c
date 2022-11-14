@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT pericom_pi3usb9201
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_pi3usb9201.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-
-#include "emul/emul_pi3usb9201.h"
-#include "emul/emul_stub_device.h"
-#include "emul/emul_common_i2c.h"
-
 #include <zephyr/logging/log.h>
+
+#define DT_DRV_COMPAT pericom_pi3usb9201
+
 LOG_MODULE_REGISTER(emul_pi3usb9201, LOG_LEVEL_DBG);
 
 #define EMUL_REG_COUNT (PI3USB9201_REG_HOST_STS + 1)

@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-
 #include "driver/charger/rt9490.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_rt9490.h"
 #include "emul/emul_stub_device.h"
 #include "util.h"
+
+#include <zephyr/device.h>
 
 #define DT_DRV_COMPAT zephyr_rt9490_emul
 

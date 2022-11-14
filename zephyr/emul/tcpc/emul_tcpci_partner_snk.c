@@ -6,14 +6,14 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(tcpci_snk_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
-
 #include "common.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "usb_pd.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/sys/byteorder.h>
 
 /** Length of PDO, RDO and BIST request object in SOP message in bytes */
 #define TCPCI_MSG_DO_LEN 4

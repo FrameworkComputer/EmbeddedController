@@ -8,20 +8,18 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
+#include "driver/tcpm/ps8xxx.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
+#include "emul/tcpc/emul_ps8xxx.h"
+#include "emul/tcpc/emul_tcpci.h"
+#include "tcpm/tcpci.h"
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/ztest.h>
-
-#include "tcpm/tcpci.h"
-
-#include "emul/emul_common_i2c.h"
-#include "emul/tcpc/emul_ps8xxx.h"
-#include "emul/tcpc/emul_tcpci.h"
-#include "emul/emul_stub_device.h"
-
-#include "driver/tcpm/ps8xxx.h"
 
 #define PS8XXX_REG_MUX_IN_HPD_ASSERTION MUX_IN_HPD_ASSERTION_REG
 

@@ -3,25 +3,26 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT zephyr_syv682x_emul
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
+#include "emul/emul_syv682x.h"
+
+#include <stdint.h>
+#include <string.h>
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(syv682x);
-#include <stdint.h>
-#include <string.h>
 #include <zephyr/ztest.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_syv682x.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT zephyr_syv682x_emul
 
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(syv682x);
 #define EMUL_REG_COUNT (SYV682X_CONTROL_4_REG + 1)
 #define EMUL_REG_IS_VALID(reg) (reg >= 0 && reg < EMUL_REG_COUNT)
 

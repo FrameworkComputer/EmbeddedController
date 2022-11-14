@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-
 #include "driver/temp_sensor/pct2075.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
 #include "emul/emul_pct2075.h"
+#include "emul/emul_stub_device.h"
 #include "util.h"
+
+#include <zephyr/device.h>
 
 /* NOTE: The emulator doesn't support OS pin */
 

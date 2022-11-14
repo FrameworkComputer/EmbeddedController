@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_i2c_mock
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT cros_i2c_mock
 
 LOG_MODULE_REGISTER(i2c_mock, CONFIG_I2C_MOCK_LOG_LEVEL);
 
