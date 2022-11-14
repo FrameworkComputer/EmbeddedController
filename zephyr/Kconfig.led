@@ -19,6 +19,8 @@ if PLATFORM_EC_LED_COMMON
 
 config PLATFORM_EC_LED_PWM
 	bool "PWM (Pulse Width Modulation) LEDs"
+	default y
+	depends on DT_HAS_CROS_EC_PWM_LEDS_ENABLED
 	help
 	  Enable PWM (Pulse Width Modulation) controlled LEDs that conform to
 	  the Chromium OS LED behavior specification.
