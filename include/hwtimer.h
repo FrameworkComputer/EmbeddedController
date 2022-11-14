@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_HWTIMER_H
 #define __CROS_EC_HWTIMER_H
 
+#include <stdint.h>
+
 /**
  * Programs when the next timer should fire an interrupt.
  *

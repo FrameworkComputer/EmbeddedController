@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_FAN_H
 #define __CROS_EC_FAN_H
 
+#include "config.h"
+
 #include <stdint.h>
 
 #ifdef CONFIG_ZEPHYR
