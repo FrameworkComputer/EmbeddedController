@@ -167,6 +167,8 @@ endif # PLATFORM_EC_LED_COMMON
 
 config PLATFORM_EC_MAX695X_SEVEN_SEGMENT_DISPLAY
 	bool "MAX695X Seven Segment Display"
+	default y
+	depends on DT_HAS_MAXIM_MAX695X_ENABLED
 	help
 	  Enable this to support MAX6958/MAX6959 7-Segment LED Display.
 	  The MAX6958/MAX6959 is a compact multiplexed common - cathode display
