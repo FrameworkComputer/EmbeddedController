@@ -6,6 +6,8 @@
 #ifndef __TEST_DRIVERS_TEST_MOCKS_H
 #define __TEST_DRIVERS_TEST_MOCKS_H
 
+#include <stdint.h>
+
 #include <zephyr/fff.h>
 
 /*

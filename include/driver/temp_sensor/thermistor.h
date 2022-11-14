@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_TEMP_SENSOR_THERMISTOR_H
 #define __CROS_EC_TEMP_SENSOR_THERMISTOR_H
 
+#include <stdint.h>
+
 struct thermistor_data_pair {
 	uint8_t mv; /* Scaled voltage level at ADC (in mV) */
 	uint8_t temp; /* Temperature in Celsius */

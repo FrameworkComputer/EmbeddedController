@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_EVENT_LOG_H
 #define __CROS_EC_EVENT_LOG_H
 
+#include <stdint.h>
+
 struct event_log_entry {
 	uint32_t timestamp; /* relative timestamp in milliseconds */
 	uint8_t type; /* event type, caller-defined */

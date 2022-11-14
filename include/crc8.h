@@ -7,6 +7,8 @@
 #ifndef __CROS_EC_CRC8_H
 #define __CROS_EC_CRC8_H
 
+#include <stdint.h>
+
 /**
  * crc8
  * Return CRC-8 of the data, using x^8 + x^2 + x + 1 polynomial.  A table-based

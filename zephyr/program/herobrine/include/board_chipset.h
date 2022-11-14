@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_HEROBRINE_BOARD_CHIPSET_H
 #define __CROS_EC_HEROBRINE_BOARD_CHIPSET_H
 
+#include "common.h"
+
 __test_only void reset_pp5000_inited(void);
 
 #endif /* __CROS_EC_HEROBRINE_BOARD_CHIPSET_H */
