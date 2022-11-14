@@ -26,8 +26,26 @@
 #define PARAM_CUT_OFF_LOW  0x10
 #define PARAM_CUT_OFF_HIGH 0x00
 
+enum battery_type {
+	BATTERY_ADL,
+	BATTERY_RPL,
+	BATTERY_TYPE_COUNT,
+};
+
+struct board_batt_params {
+	int design_voltage;
+	const char *batt_name;
+	const struct battery_info *batt_info;
+};
+
+/*
+ * Set ADL Battery as default
+ */
+#define DEFAULT_BATTERY_TYPE BATTERY_ADL
+static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
+
 /* Battery info for BQ40Z50 4-cell */
-static const struct battery_info info = {
+static const struct battery_info adl_info = {
 	.voltage_max = 17600,        /* mV */
 	.voltage_normal = 15400,
 	.voltage_min = 12000,
@@ -40,14 +58,69 @@ static const struct battery_info info = {
 	.discharging_max_c = 62,
 };
 
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
-static uint8_t charging_maximum_level = NEED_RESTORE;
-static int old_btp;
+static const struct battery_info rpl_info = {
+	.voltage_max = 17800,        /* mV */
+	.voltage_normal = 15480,
+	.voltage_min = 12000,
+	.precharge_current = 80,   /* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 47,
+	.charging_min_c = 0,
+	.charging_max_c = 52,
+	.discharging_min_c = 0,
+	.discharging_max_c = 62,
+};
+
+static struct board_batt_params info[] = {
+	[BATTERY_ADL] = {
+		.design_voltage = 15400,
+		.batt_name = "ADL-55W",
+		.batt_info = &adl_info,
+	},
+
+	[BATTERY_RPL] = {
+		.design_voltage = 15480,
+		.batt_name = "RPL-61W",
+		.batt_info = &rpl_info,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);
+
+/* Get type of the battery connected on the board */
+static int board_get_battery_type(void)
+{
+	int i;
+	int vol;
+
+	if (!battery_design_voltage(&vol)) {
+		for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
+			if (vol == info[i].design_voltage) {
+				board_battery_type = i;
+				break;
+			}
+		}
+	}
+	return board_battery_type;
+}
+
+static void board_init_battery_type(void)
+{
+	if (board_get_battery_type() != BATTERY_TYPE_COUNT)
+		ccprintf("found batt: %s\n", info[board_battery_type].batt_name);
+	else
+		ccprintf("battery not found\n");
+}
+DECLARE_HOOK(HOOK_INIT, board_init_battery_type, HOOK_PRIO_INIT_ADC + 1);
 
 const struct battery_info *battery_get_info(void)
 {
-	return &info;
+	return info[board_battery_type == BATTERY_TYPE_COUNT ?
+		    DEFAULT_BATTERY_TYPE : board_battery_type].batt_info;
 }
+
+static enum battery_present batt_pres_prev = BP_NOT_SURE;
+static uint8_t charging_maximum_level = NEED_RESTORE;
+static int old_btp;
 
 int board_cut_off_battery(void)
 {
@@ -95,6 +168,8 @@ static int battery_check_disconnect(void)
 	if (data[3] & BATTERY_DISCHARGING_DISABLED)
 		return BATTERY_DISCONNECTED;
 
+	/* reinit battery type */
+	board_init_battery_type();
 
 	return BATTERY_NOT_DISCONNECTED;
 }
