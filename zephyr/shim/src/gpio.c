@@ -339,12 +339,17 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
-	int pin;
+	const gpio_flags_t zephyr_flags = convert_to_zephyr_flags(flags);
 
-	for (pin = 0; pin < 8; pin++)
-		if (mask & BIT(pin))
-			gpio_configure_port_pin(port, pin,
-						convert_to_zephyr_flags(flags));
+	/* Using __builtin_ctz here will guarantee that this loop is as
+	 * performant as the underlying architecture allows it to be.
+	 */
+	while (mask != 0) {
+		int pin = __builtin_ctz(mask);
+
+		gpio_configure_port_pin(port, pin, zephyr_flags);
+		mask &= ~BIT(pin);
+	}
 }
 
 int signal_is_gpio(int signal)
