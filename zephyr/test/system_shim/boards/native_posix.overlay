@@ -6,9 +6,6 @@
 #include <board-overlays/native_posix.dts>
 
 / {
-	chosen {
-		cros-ec,bbram = &bbram;
-	};
 
 	bbram: test-bbram-dev {
 		compatible = "zephyr,bbram-emul";
@@ -33,7 +30,7 @@
 			offset = <0x07>;
 			size = <0x05>;
 		};
-		scratchpad {
+		scratchpad: scratchpad {
 			offset = <0x0c>;
 			size = <0x04>;
 		};

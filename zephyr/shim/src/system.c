@@ -342,7 +342,7 @@ static int check_reset_cause(void)
 	return 0;
 }
 
-static int system_preinitialize(const struct device *unused)
+test_export_static int system_preinitialize(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
