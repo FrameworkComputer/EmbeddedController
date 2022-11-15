@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_dummy.h> /* nocheck */
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 ZTEST_SUITE(console_cmd_pwr_avg, drivers_predicate_post_main, NULL, NULL, NULL,

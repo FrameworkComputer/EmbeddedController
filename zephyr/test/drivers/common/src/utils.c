@@ -23,7 +23,7 @@
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_dummy.h> /* nocheck */
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/ztest.h>
 
