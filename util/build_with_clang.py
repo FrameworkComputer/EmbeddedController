@@ -10,6 +10,7 @@ import concurrent
 import logging
 import multiprocessing
 import os
+import shutil
 import subprocess
 import sys
 import typing
@@ -212,7 +213,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "voxel",
     "voxel_ecmodeentry",
     "voxel_npcx797fc",
-    "waddledoo",
     "waddledoo2",
     "whiskers",
     "woomax",
@@ -299,6 +299,7 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "mushu",  # overflows flash
     "terrador",  # overflows flash
     "volteer",  # overflows flash
+    "waddledoo",  # overflows flash
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.
@@ -362,8 +363,26 @@ def main() -> int:
         "--num_threads", "-j", type=int, default=multiprocessing.cpu_count()
     )
 
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument(
+        "--clean",
+        action="store_true",
+        help="Remove build directory before compiling",
+    )
+    group.add_argument(
+        "--no-clean",
+        dest="clean",
+        action="store_false",
+        help="Do not remove build directory before compiling",
+    )
+    parser.set_defaults(clean=True)
+
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
+
+    if args.clean:
+        logging.debug("Removing build directory")
+        shutil.rmtree("./build", ignore_errors=True)
 
     check_boards()
 
