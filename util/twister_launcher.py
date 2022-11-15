@@ -176,28 +176,32 @@ def upload_results(ec_base, outdir):
 
     if is_rdb_login():
         json_path = pathlib.Path(outdir) / "twister.json"
-        cmd = [
-            "rdb",
-            "stream",
-            "-new",
-            "-realm",
-            "chromium:public",
-            "--",
-            str(ec_base / "util/zephyr_to_resultdb.py"),
-            "--result=" + str(json_path),
-            "--upload=True",
-        ]
 
-        start_time = time.time()
-        ret = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        end_time = time.time()
+        if json_path.exists():
+            cmd = [
+                "rdb",
+                "stream",
+                "-new",
+                "-realm",
+                "chromium:public",
+                "--",
+                str(ec_base / "util/zephyr_to_resultdb.py"),
+                "--result=" + str(json_path),
+                "--upload=True",
+            ]
 
-        # Extract URL to test report from captured output
-        rdb_url = re.search(
-            r"(?P<url>https?://[^\s]+)", ret.stderr.split("\n")[0]
-        ).group("url")
-        print(f"\nTEST RESULTS ({end_time - start_time:.3f}s): {rdb_url}\n")
-        flag = ret.returncode == 0
+            start_time = time.time()
+            ret = subprocess.run(
+                cmd, capture_output=True, text=True, check=True
+            )
+            end_time = time.time()
+
+            # Extract URL to test report from captured output
+            rdb_url = re.search(
+                r"(?P<url>https?://[^\s]+)", ret.stderr.split("\n")[0]
+            ).group("url")
+            print(f"\nTEST RESULTS ({end_time - start_time:.3f}s): {rdb_url}\n")
+            flag = ret.returncode == 0
     else:
         print("Unable to upload test results, please run 'rdb auth-login'\n")
 
@@ -208,17 +212,18 @@ def check_for_skipped_tests(outdir):
     """Checks Twister json test report for skipped tests"""
     found_skipped = False
     json_path = pathlib.Path(outdir) / "twister.json"
-    with open(json_path) as file:
-        data = json.load(file)
+    if json_path.exists():
+        with open(json_path) as file:
+            data = json.load(file)
 
-        for testsuite in data["testsuites"]:
-            for testcase in testsuite["testcases"]:
-                if testcase["status"] == "skipped":
-                    tc_name = testcase["identifier"]
-                    print(f"TEST SKIPPED: {tc_name}")
-                    found_skipped = True
+            for testsuite in data["testsuites"]:
+                for testcase in testsuite["testcases"]:
+                    if testcase["status"] == "skipped":
+                        tc_name = testcase["identifier"]
+                        print(f"TEST SKIPPED: {tc_name}")
+                        found_skipped = True
 
-        file.close()
+            file.close()
 
     return found_skipped
 
