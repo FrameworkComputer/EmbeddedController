@@ -140,7 +140,7 @@
 	};
 
 	switchcap {
-		compatible = "switchcap-gpio";
+		compatible = "cros-ec,switchcap-gpio";
 		enable-pin = <&gpio_switchcap_on>;
 		power-good-pin = <&gpio_switchcap_pg>;
 		poff-delay-ms = <1>;

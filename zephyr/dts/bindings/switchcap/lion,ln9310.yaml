@@ -1,6 +1,6 @@
-description: SwitchCap controlled by LN9310
+description: SwitchCap controlled by Lion Semiconductor LN9310
 
-compatible: "switchcap-ln9310"
+compatible: "lion,ln9310"
 
 properties:
   enable-pin:

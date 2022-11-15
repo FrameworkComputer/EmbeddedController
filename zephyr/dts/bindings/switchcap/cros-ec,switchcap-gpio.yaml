@@ -1,6 +1,6 @@
 description: SwitchCap controlled by gpios
 
-compatible: "switchcap-gpio"
+compatible: "cros-ec,switchcap-gpio"
 
 properties:
   enable-pin:
