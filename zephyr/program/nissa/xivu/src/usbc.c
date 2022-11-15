@@ -163,12 +163,26 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
+/* VBUS_CURRENT_TARGET */
+#define RAA489000_VBUS_CURRENT_TARGET_3_3A 0x68 /* 3.3A */
+
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
+	int rv;
+
 	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return;
 
-	raa489000_set_output_current(port, rp);
+	int selected_cur = rp == TYPEC_RP_3A0 ?
+				   RAA489000_VBUS_CURRENT_TARGET_3_3A :
+				   RAA489000_VBUS_CURRENT_TARGET_1_5A;
+
+	rv = tcpc_write16(port, RAA489000_VBUS_CURRENT_TARGET, selected_cur);
+
+	if (rv != EC_SUCCESS) {
+		LOG_WRN("Failed to set source ilimit on port %d to %d: %d",
+			port, selected_cur, rv);
+	}
 }
 
 int pd_set_power_supply_ready(int port)
