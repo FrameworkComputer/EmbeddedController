@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
+
 #include "gpio.h"
 #include "util.h"
+
+#include <zephyr/devicetree.h>
 
 #define CONVERT_NUMERAL_SYSTEM_EVAL(system, bits, nbits) \
 	system##_from_bits(bits, nbits)

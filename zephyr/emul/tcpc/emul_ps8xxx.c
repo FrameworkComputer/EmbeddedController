@@ -3,11 +3,7 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_ps8xxx_emul
-
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
-
 #include "driver/tcpm/ps8xxx.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
@@ -21,7 +17,10 @@ LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/ztest.h>
 
+#define DT_DRV_COMPAT cros_ps8xxx_emul
 #define PS8XXX_REG_MUX_IN_HPD_ASSERTION MUX_IN_HPD_ASSERTION_REG
+
+LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /** Run-time data used by the emulator */
 struct ps8xxx_emul_data {

@@ -3,11 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/init.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
@@ -16,6 +11,11 @@
 #include "gpio/gpio.h"
 #include "ioexpander.h"
 #include "system.h"
+
+#include <zephyr/device.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
 

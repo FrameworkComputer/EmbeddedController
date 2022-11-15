@@ -4,7 +4,6 @@
  */
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 #include "common.h"
 #include "emul/tcpc/emul_tcpci.h"
@@ -14,6 +13,8 @@ LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
+
+LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**
  * @brief Start source capability timer. Capability message will be send after

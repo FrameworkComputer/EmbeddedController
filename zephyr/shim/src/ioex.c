@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
+#ifdef __REQUIRE_ZEPHYR_GPIOS__
+#undef __REQUIRE_ZEPHYR_GPIOS__
+#endif
 #include "common.h"
+#include "ioexpander.h"
 
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#ifdef __REQUIRE_ZEPHYR_GPIOS__
-#undef __REQUIRE_ZEPHYR_GPIOS__
-#endif
-#include "ioexpander.h"
 
 LOG_MODULE_REGISTER(ioex_shim, LOG_LEVEL_ERR);
 

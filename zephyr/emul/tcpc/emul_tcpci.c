@@ -4,7 +4,6 @@
  */
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
@@ -17,6 +16,8 @@ LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
+
+LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**
  * @brief Returns number of bytes in specific register
