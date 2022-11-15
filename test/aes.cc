@@ -14,6 +14,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include "benchmark.h"
 #include "common.h"
 #include "test_util.h"
 
@@ -424,7 +425,7 @@ static int test_aes_gcm(void)
 
 static void test_aes_gcm_speed(void)
 {
-	int i;
+	Benchmark benchmark({ .num_iterations = 1000 });
 	static const uint8_t key[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -443,21 +444,18 @@ static void test_aes_gcm_speed(void)
 	uint8_t *out = tmp;
 	static AES_KEY aes_key;
 	static GCM128_CONTEXT ctx;
-	timestamp_t t0, t1;
 
 	assert(plaintext_size <= sizeof(tmp));
 
-	t0 = get_time();
-	for (i = 0; i < 1000; i++) {
+	benchmark.run("AES-GCM", [&]() {
 		AES_set_encrypt_key(key, 8 * key_size, &aes_key);
 		CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
 		CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
 		CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, out,
 				      plaintext_size);
 		CRYPTO_gcm128_tag(&ctx, tag, tag_size);
-	}
-	t1 = get_time();
-	ccprintf("AES-GCM duration %lld us\n", (long long)(t1.val - t0.val));
+	});
+	benchmark.print_results();
 }
 
 static int test_aes_raw(const uint8_t *key, int key_size,
@@ -547,7 +545,7 @@ static int test_aes(void)
 
 static void test_aes_speed(void)
 {
-	int i;
+	Benchmark benchmark({ .num_iterations = 1000 });
 	/* Test vectors from FIPS-197, Appendix C. */
 	static const uint8_t key[] __aligned(4) = {
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -561,15 +559,13 @@ static void test_aes_speed(void)
 
 	AES_KEY aes_key;
 	uint8_t block[AES_BLOCK_SIZE];
-	timestamp_t t0, t1;
 
 	AES_set_encrypt_key(key, 8 * key_size, &aes_key);
 	AES_encrypt(plaintext, block, &aes_key);
-	t0 = get_time();
-	for (i = 0; i < 1000; i++)
+	benchmark.run("AES", [&block, &aes_key]() {
 		AES_encrypt(block, block, &aes_key);
-	t1 = get_time();
-	ccprintf("AES duration %lld us\n", (long long)(t1.val - t0.val));
+	});
+	benchmark.print_results();
 }
 
 void run_test(int argc, const char **argv)
