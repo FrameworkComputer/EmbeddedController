@@ -188,6 +188,10 @@ ZTEST_USER(console_cmd_usb_pd, test_bistsharemode)
 	rv = shell_execute_cmd(get_ec_shell(), "pd bistsharemode disable");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pd bistsharemode foo");
+	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",
+		      EC_ERROR_PARAM2, rv);
 }
 
 ZTEST_USER(console_cmd_usb_pd, test_hard)
