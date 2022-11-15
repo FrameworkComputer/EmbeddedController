@@ -187,6 +187,8 @@ struct tcpci_partner_data {
 		 */
 		bool have_response[PD_BATT_MAX];
 	} battery_capabilities;
+	/* Used to control accept/reject for partner port of Enter_USB msg */
+	bool enter_usb_accept;
 
 	/*
 	 * Cable which is "plugged in" to this port partner

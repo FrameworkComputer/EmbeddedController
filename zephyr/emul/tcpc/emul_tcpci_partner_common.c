@@ -759,6 +759,27 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 }
 
 static enum tcpci_partner_handler_res
+tcpci_partner_enter_usb_handler(struct tcpci_partner_data *data,
+				const struct tcpci_emul_msg *message)
+{
+	/*
+	 * Validate received Enter_USB message against EUDO contents in
+	 * tcpci_partner_data.
+	 *
+	 * TODO(b/260095516): This support needs to be expanded to validate the
+	 * message contents, in a bit field basis. Currently, using this field
+	 * as simple ACCEPT/REJECT criteria. If this value is 0 (default case),
+	 * then ACCEPT this message, else reject it.
+	 */
+	if (data->enter_usb_accept)
+		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
+	else
+		tcpci_partner_send_control_msg(data, PD_CTRL_REJECT, 0);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
 tcpci_partner_common_cable_handler(struct tcpci_partner_data *data,
 				   const struct tcpci_emul_msg *message,
 				   enum tcpci_msg_type sop_type)
@@ -1081,6 +1102,8 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_VENDOR_DEF:
 			return tcpci_partner_common_vdm_handler(data, tx_msg);
+		case PD_DATA_ENTER_USB:
+			return tcpci_partner_enter_usb_handler(data, tx_msg);
 		default:
 			/* No other common handlers for data messages */
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -1159,6 +1182,18 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 		/* Unexpected message - trigger soft reset */
 		tcpci_partner_common_send_soft_reset(data);
 
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case PD_CTRL_DATA_RESET:
+		/*
+		 * Send Accept/Reject message
+		 * TODO(b/260095516): To fully exercise this code path, there
+		 * needs to be a mechanism (trigger) to either accept or reject
+		 * this message.
+		 */
+		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case PD_CTRL_DATA_RESET_COMPLETE:
+		/* There is no expected reply message from the port parter */
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	}
 
@@ -1599,6 +1634,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->identity_vdos = 0;
 	data->svids_vdos = 0;
 	data->modes_vdos = 0;
+	data->enter_usb_accept = false;
 
 	tcpci_partner_common_clear_ams_ctrl_msg(data);
 
