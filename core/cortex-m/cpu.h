@@ -127,6 +127,11 @@ void cpu_invalidate_dcache_range(uintptr_t base, unsigned int length);
 /* Clean and Invalidate a single range of the D-cache */
 void cpu_clean_invalidate_dcache_range(uintptr_t base, unsigned int length);
 
+/* Return to specified function from exception handler using main stack. */
+void cpu_return_from_exception_msp(void (*func)(void));
+/* Return to specified function from exception handler using process stack. */
+void cpu_return_from_exception_psp(void (*func)(void));
+
 /* Set the priority of the given IRQ in the NVIC (0 is highest). */
 static inline void cpu_set_interrupt_priority(uint8_t irq, uint8_t priority)
 {

@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "panic.h"
+#include "system_safe_mode.h"
 
 #include <zephyr/arch/cpu.h>
 #include <zephyr/fatal.h>
@@ -131,6 +132,7 @@ static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 
 void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 {
+	struct panic_data *pdata = get_panic_data_write();
 	/*
 	 * If CONFIG_LOG is on, the exception details
 	 * have already been logged to the console.
@@ -140,19 +142,36 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 	}
 
 	if (PANIC_ARCH && esf) {
-		copy_esf_to_panic_data(esf, get_panic_data_write());
+		copy_esf_to_panic_data(esf, pdata);
 		if (!IS_ENABLED(CONFIG_LOG)) {
 			panic_data_print(panic_get_data());
 		}
 	}
 
 	LOG_PANIC();
+
+	/* Start system safe mode if possible */
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE)) {
+		if (reason != K_ERR_KERNEL_PANIC &&
+		    start_system_safe_mode() == EC_SUCCESS) {
+			/* Returning from k_sys_fatal_error_handler will cause
+			 * the faulting thread to be aborted and resume the
+			 * kernel
+			 */
+			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
+			return;
+		}
+		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;
+	}
+
 	/*
 	 * Reboot immediately, don't wait for watchdog, otherwise
 	 * the watchdog will overwrite this panic.
 	 */
 	panic_reboot();
+#ifndef TEST_BUILD
 	CODE_UNREACHABLE;
+#endif
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)

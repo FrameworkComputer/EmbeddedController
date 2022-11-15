@@ -82,4 +82,20 @@ config PLATFORM_EC_FW_RESET_VECTOR
 	  needs to be provided is system_get_fw_reset_vector that
 	  will return the address of the reset vector.
 
+config PLATFORM_EC_SYSTEM_SAFE_MODE
+	bool "Enable System Safe Mode"
+	default n
+	depends on (CPU_CORTEX_M || ARCH_POSIX) && !TASK_HOSTCMD_THREAD_MAIN
+	help
+	  This enables system safe mode for retrieving system state after
+	  a panic occurs. System safe mode only runs briefly after a panic.
+
+config PLATFORM_EC_SYSTEM_SAFE_MODE_TIMEOUT_MSEC
+	int "System safe mode timeout"
+	default 2000
+	depends on PLATFORM_EC_SYSTEM_SAFE_MODE
+	help
+	  Safe mode will force a system reset after this timeout. The system may
+	  reset sooner if all safe mode tasks are completed before the timeout.
+
 endif # PLATFORM_EC

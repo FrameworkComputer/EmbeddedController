@@ -155,6 +155,10 @@ enum panic_arch {
 #define PANIC_DATA_FLAG_OLD_HOSTEVENT BIT(3)
 /* The data was truncated to fit panic info host cmd */
 #define PANIC_DATA_FLAG_TRUNCATED BIT(4)
+/* System safe mode was started after a panic */
+#define PANIC_DATA_FLAG_SAFE_MODE_STARTED BIT(5)
+/* System safe mode failed to start */
+#define PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS BIT(6)
 
 /**
  * Write a string to the panic reporting device
