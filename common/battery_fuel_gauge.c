@@ -237,17 +237,12 @@ enum ec_error_list battery_sleep_fuel_gauge(void)
 	return sb_write(sleep_command->reg_addr, sleep_command->reg_data);
 }
 
-static enum ec_error_list battery_get_fet_status_regval(int *regval)
+static enum ec_error_list battery_get_fet_status_regval(int type, int *regval)
 {
 	int rv;
 	uint8_t data[6];
-	int type = get_battery_type();
 
-	/* If battery type is not known, can't check CHG/DCHG FETs */
-	if (type == BATTERY_TYPE_COUNT) {
-		/* Still don't know, so return here */
-		return EC_ERROR_BUSY;
-	}
+	ASSERT(type < BATTERY_TYPE_COUNT);
 
 	/* Read the status of charge/discharge FETs */
 	if (board_battery_info[type].fuel_gauge.fet.mfgacc_support == 1) {
@@ -270,7 +265,7 @@ int battery_is_charge_fet_disabled(void)
 	int type = get_battery_type();
 
 	/* If battery type is not known, can't check CHG/DCHG FETs */
-	if (type == BATTERY_TYPE_COUNT) {
+	if (type >= BATTERY_TYPE_COUNT) {
 		/* Still don't know, so return here */
 		return -1;
 	}
@@ -281,7 +276,7 @@ int battery_is_charge_fet_disabled(void)
 	if (!board_battery_info[type].fuel_gauge.fet.cfet_mask)
 		return 0;
 
-	rv = battery_get_fet_status_regval(&reg);
+	rv = battery_get_fet_status_regval(type, &reg);
 	if (rv)
 		return -1;
 
@@ -307,12 +302,12 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	int type = get_battery_type();
 
 	/* If battery type is not known, can't check CHG/DCHG FETs */
-	if (type == BATTERY_TYPE_COUNT) {
+	if (type >= BATTERY_TYPE_COUNT) {
 		/* Still don't know, so return here */
 		return BATTERY_DISCONNECT_ERROR;
 	}
 
-	if (battery_get_fet_status_regval(&reg))
+	if (battery_get_fet_status_regval(type, &reg))
 		return BATTERY_DISCONNECT_ERROR;
 
 	if ((reg & board_battery_info[type].fuel_gauge.fet.reg_mask) ==
