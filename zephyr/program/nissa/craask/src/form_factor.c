@@ -50,9 +50,9 @@ void motion_interrupt(enum gpio_signal signal)
 void lid_accel_interrupt(enum gpio_signal signal)
 {
 	if (use_alt_lid_accel)
-		lis2dw12_interrupt(signal);
-	else
 		bma4xx_interrupt(signal);
+	else
+		lis2dw12_interrupt(signal);
 }
 
 static void form_factor_init(void)
