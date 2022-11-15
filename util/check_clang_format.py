@@ -12,6 +12,7 @@ the pre-upload checks.
 
 import logging
 import pathlib
+import shlex
 import subprocess
 import sys
 from typing import List
@@ -61,6 +62,7 @@ def main(argv=None):
         if path.name.endswith(".c") or path.name.endswith(".h"):
             cmd.append(path)
 
+    logging.debug("Running %s", " ".join(shlex.quote(str(x)) for x in cmd))
     result = subprocess.run(
         cmd,
         check=False,
