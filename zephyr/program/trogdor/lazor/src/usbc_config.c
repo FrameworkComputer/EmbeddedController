@@ -197,7 +197,7 @@ void board_tcpc_init(void)
 
 	/* Enable TCPC interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
@@ -326,7 +326,7 @@ uint16_t tcpc_get_alert_status(void)
 		if (gpio_pin_get_dt(
 			    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_int_odl)))
 		if (gpio_pin_get_dt(
 			    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_1;
