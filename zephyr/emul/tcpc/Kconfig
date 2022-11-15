@@ -76,4 +76,14 @@ config EMUL_TCPCI_PARTNER_FAULTY_EXT
 	  to TCPCI emulator. API of malfunctioning device emulator is
 	  available in zephyr/include/emul/tcpc/emul_tcpci_partner_faulty_ext.h
 
+config EMUL_TCPCI_PARTNER_VPD
+	bool "USB-C VCONN-powered device emulator"
+	select EMUL_TCPCI_PARTNER_COMMON
+	# select EMUL_TCPCI_PARTNER_SRC
+	help
+	  Enable USB-C VCONN-powered device (VPD) emulator, which may be
+	  attached to TCPCI emulator. API of VPD is available in
+	  zephyr/include/emul/tcpc/emul_tcpci_partner_vpd.h. This emulation is
+	  specifically for the host port side of the VPD.
+
 endif # EMUL_TCPCI
