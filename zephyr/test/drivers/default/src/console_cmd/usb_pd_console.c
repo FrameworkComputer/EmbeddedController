@@ -268,6 +268,22 @@ ZTEST_USER(console_cmd_usb_pd, test_dualrole)
 	rv = shell_execute_cmd(get_ec_shell(), "pd 0 dualrole x");
 	zassert_equal(rv, EC_ERROR_PARAM4, "Expected %d, but got %d",
 		      EC_ERROR_PARAM4, rv);
+
+	pd_set_dual_role(0, PD_DRP_TOGGLE_OFF);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: off",
+			  EC_SUCCESS);
+
+	pd_set_dual_role(0, PD_DRP_FREEZE);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: freeze",
+			  EC_SUCCESS);
+
+	pd_set_dual_role(0, PD_DRP_FORCE_SINK);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: force sink",
+			  EC_SUCCESS);
+
+	pd_set_dual_role(0, PD_DRP_FORCE_SOURCE);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: force source",
+			  EC_SUCCESS);
 }
 
 ZTEST_USER(console_cmd_usb_pd, test_state)
