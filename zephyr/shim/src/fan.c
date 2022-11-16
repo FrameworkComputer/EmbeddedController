@@ -125,9 +125,9 @@ static void fan_pwm_update(int ch)
 	LOG_DBG("FAN PWM %s set percent (%d), pulse %d", pwm_dev->name,
 		data->pwm_percent, pulse_ns);
 
-	ret = pwm_set_dt(&cfg->pwm, cfg->pwm.period, pulse_ns);
+	ret = pwm_set_pulse_dt(&cfg->pwm, pulse_ns);
 	if (ret) {
-		LOG_ERR("pwm_set() failed %s (%d)", pwm_dev->name, ret);
+		LOG_ERR("pwm_set_pulse_dt failed %s (%d)", pwm_dev->name, ret);
 	}
 }
 

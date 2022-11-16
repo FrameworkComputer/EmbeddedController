@@ -18,17 +18,14 @@ LOG_MODULE_REGISTER(kblight, LOG_LEVEL_ERR);
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 	     "Exactly one instance of cros-ec,kblight-pwm should be defined.");
 
-#define KBLIGHT_PWM_NODE DT_INST_PWMS_CTLR(0)
-#define KBLIGHT_PWM_CHANNEL DT_INST_PWMS_CHANNEL(0)
-#define KBLIGHT_PWM_FLAGS DT_INST_PWMS_FLAGS(0)
-#define KBLIGHT_PWM_PERIOD_NS DT_INST_PWMS_PERIOD(0)
+static const struct pwm_dt_spec kblight_pwm_dt = PWM_DT_SPEC_INST_GET(0);
 
 static bool kblight_enabled;
 static int kblight_percent;
 
 static void kblight_pwm_set_duty(int percent)
 {
-	const struct device *pwm_dev = DEVICE_DT_GET(KBLIGHT_PWM_NODE);
+	const struct device *pwm_dev = kblight_pwm_dt.dev;
 	uint32_t pulse_ns;
 	int rv;
 
@@ -37,15 +34,14 @@ static void kblight_pwm_set_duty(int percent)
 		return;
 	}
 
-	pulse_ns = DIV_ROUND_NEAREST(KBLIGHT_PWM_PERIOD_NS * percent, 100);
+	pulse_ns = DIV_ROUND_NEAREST(kblight_pwm_dt.period * percent, 100);
 
 	LOG_DBG("kblight PWM %s set percent (%d), pulse %d", pwm_dev->name,
 		percent, pulse_ns);
 
-	rv = pwm_set(pwm_dev, KBLIGHT_PWM_CHANNEL, KBLIGHT_PWM_PERIOD_NS,
-		     pulse_ns, KBLIGHT_PWM_FLAGS);
+	rv = pwm_set_pulse_dt(&kblight_pwm_dt, pulse_ns);
 	if (rv) {
-		LOG_ERR("pwm_set() failed %s (%d)", pwm_dev->name, rv);
+		LOG_ERR("pwm_set_pulse_dt failed %s (%d)", pwm_dev->name, rv);
 	}
 }
 
