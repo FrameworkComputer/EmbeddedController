@@ -5,6 +5,8 @@
  * PWM LED control.
  */
 
+#define DT_DRV_COMPAT cros_ec_pwm_led_pins
+
 #include "ec_commands.h"
 #include "led.h"
 #include "util.h"
@@ -12,8 +14,6 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/logging/log.h>
-
-#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
 
 LOG_MODULE_REGISTER(pwm_led, LOG_LEVEL_ERR);
 
@@ -147,4 +147,3 @@ __override int led_is_supported(enum ec_led_id led_id)
 
 	return ((1 << (int)led_id) & supported_leds);
 }
-#endif /* DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED) */

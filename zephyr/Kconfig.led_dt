@@ -3,7 +3,26 @@
 # found in the LICENSE file.
 
 menuconfig PLATFORM_EC_LED_DT
-	bool "LED Support"
+	bool "DT LED Support"
 	help
 	  Enable devicetree based LED module supporting automatic control of the
 	  battery and power LEDs.
+
+if PLATFORM_EC_LED_DT
+
+config PLATFORM_EC_LED_DT_GPIO
+	bool "DT LED Support (GPIO)"
+	default y
+	depends on DT_HAS_CROS_EC_GPIO_LED_PINS_ENABLED
+	help
+	  Enable support for devicetree GPIO LEDs, requires a node using the
+	  cros-ec,gpio-led-pins compatible.
+
+config PLATFORM_EC_LED_DT_PWM
+	bool "DT LED Support (PWM)"
+	default y
+	depends on DT_HAS_CROS_EC_PWM_LED_PINS_ENABLED
+	help
+	  Enable support for devicetree PWM LEDs, requires a node using the
+          cros-ec,pwm-led-pins compatible.
+endif

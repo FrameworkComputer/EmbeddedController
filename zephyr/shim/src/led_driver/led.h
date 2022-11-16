@@ -10,9 +10,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pwm.h>
 
-#define COMPAT_GPIO_LED cros_ec_gpio_led_pins
-#define COMPAT_PWM_LED cros_ec_pwm_led_pins
-
 #define PINS_NODE(id) DT_CAT(PIN_NODE_, id)
 #define PINS_ARRAY(id) DT_CAT(PINS_ARRAY_, id)
 
@@ -85,12 +82,12 @@ struct led_pins_node_t {
 	/* Brightness Range color, only used to support ectool functionality */
 	enum ec_led_colors br_color;
 
-#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED)
+#if CONFIG_PLATFORM_EC_LED_DT_GPIO
 	/* Array of GPIO pins to set to enable particular color */
 	struct gpio_pin_t *gpio_pins;
 #endif
 
-#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
+#if CONFIG_PLATFORM_EC_LED_DT_PWM
 	/* Array of PWM pins to set to enable particular color */
 	struct pwm_pin_t *pwm_pins;
 #endif
