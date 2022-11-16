@@ -135,6 +135,17 @@ ZTEST_USER(flash, test_hostcmd_flash_protect_wp_deasserted)
 		      response.flags);
 }
 
+ZTEST_USER(flash, test_hostcmd_flash_read__overflow)
+{
+	struct ec_params_flash_read params = {
+		.size = 32,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FLASH_READ, 0, params);
+
+	zassert_equal(EC_RES_OVERFLOW, host_command_process(&args));
+}
+
 #define TEST_BUF_SIZE 0x100
 
 ZTEST_USER(flash, test_hostcmd_flash_write_and_erase)
