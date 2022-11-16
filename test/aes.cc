@@ -14,15 +14,18 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+#include "common.h"
+#include "test_util.h"
+
+extern "C" {
 #include "aes.h"
 #include "aes-gcm.h"
 #include "builtin/assert.h"
 #include "console.h"
-#include "common.h"
-#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
+}
 
 /* Temporary buffer, to avoid using too much stack space. */
 static uint8_t tmp[512];
@@ -127,8 +130,9 @@ static int test_aes_gcm_raw_non_inplace(const uint8_t *key, int key_size,
 
 static int test_aes_gcm_raw(const uint8_t *key, int key_size,
 			    const uint8_t *plaintext, const uint8_t *ciphertext,
-			    int plaintext_size, const uint8_t *nonce,
-			    int nonce_size, const uint8_t *tag, int tag_size)
+			    std::size_t plaintext_size, const uint8_t *nonce,
+			    std::size_t nonce_size, const uint8_t *tag,
+			    std::size_t tag_size)
 {
 	TEST_ASSERT(plaintext_size <= sizeof(tmp));
 
@@ -427,7 +431,7 @@ static void test_aes_gcm_speed(void)
 	};
 	const int key_size = sizeof(key);
 	static const uint8_t plaintext[512] = { 0 };
-	const int plaintext_size = sizeof(plaintext);
+	const auto plaintext_size = sizeof(plaintext);
 	static const uint8_t nonce[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
