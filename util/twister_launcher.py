@@ -319,9 +319,12 @@ def main():
         for arg in intercepted_args.testsuite_root:
             twister_cli.extend(["-T", arg])
     else:
-        # Use EC base dir when no -T args specified. This will cause all
-        # Twister-compatible EC tests to run.
-        twister_cli.extend(["-T", str(ec_base)])
+        # Use this set of test suite roots when no -T args are present. This
+        # should encompass all current Zephyr EC tests. The paths are meant to
+        # be as specific as possible to limit Twister's search scope. This saves
+        # significant time when starting Twister.
+        twister_cli.extend(["-T", str(ec_base / "common")])
+        twister_cli.extend(["-T", str(ec_base / "zephyr/test")])
         twister_cli.extend(["-T", str(zephyr_base / "tests/subsys/shell")])
 
     if intercepted_args.platform:
