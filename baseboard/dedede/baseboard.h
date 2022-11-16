@@ -10,6 +10,10 @@
 
 #define CONFIG_LTO
 
+/* Free up additional flash space. */
+#undef CONFIG_CMD_I2C_SCAN
+#undef CONFIG_CMD_I2C_XFER
+
 /*
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.

@@ -222,6 +222,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "voxel",
     "voxel_ecmodeentry",
     "voxel_npcx797fc",
+    "waddledoo",
     "waddledoo2",
     "whiskers",
     "woomax",
@@ -303,7 +304,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "mushu",  # overflows flash
     "terrador",  # overflows flash
     "volteer",  # overflows flash
-    "waddledoo",  # overflows flash
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.
