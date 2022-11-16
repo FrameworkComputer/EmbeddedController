@@ -216,3 +216,6 @@ tests:
   drivers.pi3usb9201:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_PI3USB9201=y
+  drivers.memmap:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_MEMMAP=y

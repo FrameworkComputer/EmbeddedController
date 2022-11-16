@@ -232,6 +232,13 @@ static int flash_range_ok(int offset, int size_req, int align)
 }
 
 #ifdef CONFIG_MAPPED_STORAGE
+
+/**
+ * A test public variable allowing us to override the base address of
+ * flash_physical_dataptr().
+ */
+test_export_static const char *flash_physical_dataptr_override;
+
 /**
  * Get the physical memory address of a flash offset
  *
@@ -245,6 +252,9 @@ static int flash_range_ok(int offset, int size_req, int align)
  */
 static const char *flash_physical_dataptr(int offset)
 {
+	if (IS_ENABLED(TEST_BUILD) && flash_physical_dataptr_override != NULL) {
+		return flash_physical_dataptr_override + offset;
+	}
 	return (char *)((uintptr_t)CONFIG_MAPPED_STORAGE_BASE + offset);
 }
 

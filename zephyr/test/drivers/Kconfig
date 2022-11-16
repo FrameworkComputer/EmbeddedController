@@ -126,4 +126,8 @@ config LINK_TEST_SUITE_HOST_CMD_THREAD
 config LINK_TEST_SUITE_PI3USB9201
 	bool "Link and test the pi3usb9201 tests"
 
+config LINK_TEST_SUITE_MEMMAP
+	bool "Link and test memory mapped tests for common/flash.c"
+	select PLATFORM_EC_MAPPED_STORAGE
+
 source "Kconfig.zephyr"
