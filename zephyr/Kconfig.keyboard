@@ -19,6 +19,15 @@ menuconfig PLATFORM_EC_KEYBOARD
 
 if PLATFORM_EC_KEYBOARD
 
+config CROS_EC_KEYSCAN
+	bool "Devicetree based keyscan map"
+	default y
+	depends on DT_HAS_CROS_EC_KEYSCAN_ENABLED
+	help
+	  Define a keyscan_config data structure based on a the keyscan
+	  configuration found in devicetree. Requires a cros-ec,keyscan node to
+	  be defined.
+
 choice PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 	prompt "Select the keyboard protocol to use"
 	help

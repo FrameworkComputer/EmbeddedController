@@ -13,7 +13,8 @@
 
 #include <soc.h>
 
-#if DT_NODE_EXISTS(DT_INST(0, cros_ec_keyscan))
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
+	     "Exactly one instance of cros-ec,keyscan should be defined.");
 
 /* The keyboard matrix should have at least enough columns for the
  * standard keyboard with no keypad.
@@ -33,4 +34,3 @@ __override struct keyboard_scan_config keyscan_config = {
 	.poll_timeout_us = DT_INST_PROP(0, poll_timeout),
 	.actual_key_mask = DT_INST_PROP(0, actual_key_mask),
 };
-#endif
