@@ -22,6 +22,7 @@ config PLATFORM_EC_LED_DT_PWM
 	bool "DT LED Support (PWM)"
 	default y
 	depends on DT_HAS_CROS_EC_PWM_LED_PINS_ENABLED
+	select PWM
 	help
 	  Enable support for devicetree PWM LEDs, requires a node using the
           cros-ec,pwm-led-pins compatible.

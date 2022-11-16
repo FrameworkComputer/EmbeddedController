@@ -37,9 +37,6 @@ CONFIG_CLOCK_CONTROL=y
 # WATCHDOG configuration
 CONFIG_WATCHDOG=y
 
-# PWM
-CONFIG_PWM=y
-
 # Power Management
 CONFIG_PM=y
 CONFIG_PM_DEVICE=y

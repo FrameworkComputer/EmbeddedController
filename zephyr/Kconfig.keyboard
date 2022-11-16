@@ -217,6 +217,7 @@ config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
 	default y
 	depends on DT_HAS_CROS_EC_KBLIGHT_PWM_ENABLED
+	select PWM
 	select PLATFORM_EC_PWM_HC
 	help
 	  Enables a PWM-controlled keyboard backlight controlled by a PWM signal

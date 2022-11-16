@@ -561,6 +561,7 @@ config PLATFORM_EC_PWM_DISPLIGHT
 	bool "PWM display backlight"
 	default y
 	depends on DT_HAS_CROS_EC_DISPLIGHT_ENABLED
+	select PWM
 	select PLATFORM_EC_PWM_HC
 	help
 	  Enables display backlight controlled by a PWM signal connected
