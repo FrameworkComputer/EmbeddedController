@@ -252,7 +252,7 @@ ZTEST_USER(flash, test_hostcmd_flash_region_info_active_invalid)
 	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM, NULL);
 }
 
-ZTEST_USER(flash, test_hostcmd_flash_info)
+ZTEST_USER(flash, test_hostcmd_flash_info_1)
 {
 	struct ec_response_flash_info_1 response;
 	struct host_cmd_handler_args args =
@@ -278,6 +278,50 @@ ZTEST_USER(flash, test_hostcmd_flash_info)
 		(args.response_max - sizeof(struct ec_params_flash_write)) &
 			~(CONFIG_FLASH_WRITE_SIZE - 1),
 		"response.write_ideal_size = %d", response.write_ideal_size);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_info_2)
+{
+	uint8_t response_buffer[sizeof(struct ec_response_flash_info_2) +
+				sizeof(struct ec_flash_bank)];
+	struct ec_response_flash_info_2 *response =
+		(struct ec_response_flash_info_2 *)response_buffer;
+	struct ec_params_flash_info_2 params = {
+		.num_banks_desc = 1,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_FLASH_INFO, 2, *response, params);
+
+	/* Get the flash info. */
+	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(response->flash_size,
+		      CONFIG_FLASH_SIZE_BYTES - EC_FLASH_REGION_START, "got %d",
+		      response->flash_size);
+	zassert_equal(response->flags, 0, "got %d", response->flags);
+	zassert_equal(
+		response->write_ideal_size,
+		(args.response_max - sizeof(struct ec_params_flash_write)) &
+			~(CONFIG_FLASH_WRITE_SIZE - 1),
+		"got %d", response->write_ideal_size);
+	zassert_equal(response->num_banks_total, 1, "got %d",
+		      response->num_banks_total);
+	zassert_equal(response->num_banks_desc, 1, "got %d",
+		      response->num_banks_desc);
+	zassert_equal(response->banks[0].count,
+		      CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
+		      "got %d", response->banks[0].count);
+	zassert_equal(response->banks[0].size_exp,
+		      __fls(CONFIG_FLASH_BANK_SIZE), "got %d",
+		      response->banks[0].size_exp);
+	zassert_equal(response->banks[0].write_size_exp,
+		      __fls(CONFIG_FLASH_WRITE_SIZE), "got %d",
+		      response->banks[0].write_size_exp);
+	zassert_equal(response->banks[0].erase_size_exp,
+		      __fls(CONFIG_FLASH_ERASE_SIZE), "got %d",
+		      response->banks[0].erase_size_exp);
+	zassert_equal(response->banks[0].protect_size_exp,
+		      __fls(CONFIG_FLASH_BANK_SIZE), "got %d",
+		      response->banks[0].protect_size_exp);
 }
 
 ZTEST_USER(flash, test_console_cmd_flash_info)
