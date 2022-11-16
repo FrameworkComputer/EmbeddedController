@@ -11,6 +11,7 @@
 
 import argparse
 import base64
+import datetime
 import json
 import os
 
@@ -82,7 +83,7 @@ def testcase_artifact(testcase):
     return base64.b64encode(artifact.encode())
 
 
-def testcase_to_result(testsuite, testcase):
+def testcase_to_result(testsuite, testcase, base_tags):
     """Translates ZTEST testcase to ResultDB format"""
     result = {
         "testId": testcase["identifier"],
@@ -103,7 +104,28 @@ def testcase_to_result(testsuite, testcase):
         "testMetadata": {"name": testcase["identifier"]},
     }
 
+    for (key, value) in base_tags:
+        result["tags"].append({"key": key, "value": value})
+
     return result
+
+
+def create_base_tags(data):
+    """Creates base tags needed for Testhaus"""
+    base_tags = []
+
+    queued_time = datetime.datetime.fromisoformat(
+        data["environment"]["run_date"]
+    )
+    base_tags.append(
+        ("queued_time", queued_time.strftime("%Y-%m-%d %H:%M:%S.%f UTC"))
+    )
+
+    base_tags.append(("zephyr_version", data["environment"]["zephyr_version"]))
+    base_tags.append(("board", data["environment"]["os"]))
+    base_tags.append(("toolchain", data["environment"]["toolchain"]))
+
+    return base_tags
 
 
 def json_to_resultdb(result_file):
@@ -111,11 +133,14 @@ def json_to_resultdb(result_file):
     with open(result_file) as file:
         data = json.load(file)
         results = []
+        base_tags = create_base_tags(data)
 
         for testsuite in data["testsuites"]:
             for testcase in testsuite["testcases"]:
                 if testcase["status"]:
-                    results.append(testcase_to_result(testsuite, testcase))
+                    results.append(
+                        testcase_to_result(testsuite, testcase, base_tags)
+                    )
 
         file.close()
 

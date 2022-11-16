@@ -185,6 +185,7 @@ def upload_results(ec_base, outdir):
                 "-realm",
                 "chromium:public",
                 "--",
+                "vpython3",
                 str(ec_base / "util/zephyr_to_resultdb.py"),
                 "--result=" + str(json_path),
                 "--upload=True",
