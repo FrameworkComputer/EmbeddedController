@@ -40,4 +40,7 @@ config EXTRA_EXCEPTION_INFO
 config EEPROM_SHELL
 	default n
 
+config PWM_SHELL
+	default n
+
 orsource "Kconfig.defaults-$(ARCH)"
