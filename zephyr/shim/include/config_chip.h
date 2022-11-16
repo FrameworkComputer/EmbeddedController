@@ -2108,7 +2108,10 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #undef CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
 #ifdef CONFIG_PLATFORM_EC_MAX695X_SEVEN_SEGMENT_DISPLAY
 #define CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
-#define PORT80_I2C_ADDR DT_REG_ADDR(DT_INST(0, maxim_max695x))
+#define PORT80_I2C_ADDR \
+	DT_REG_ADDR(DT_COMPAT_GET_ANY_STATUS_OKAY(maxim_max695x))
+BUILD_ASSERT((DT_NUM_INST_STATUS_OKAY(maxim_max695x)) == 1,
+	     "Only one instance of maxim,max695x should be defined");
 #endif
 
 #undef CONFIG_CMD_SEVEN_SEG_DISPLAY
