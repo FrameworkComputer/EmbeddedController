@@ -130,4 +130,9 @@ config LINK_TEST_SUITE_MEMMAP
 	bool "Link and test memory mapped tests for common/flash.c"
 	select PLATFORM_EC_MAPPED_STORAGE
 
+config LINK_TEST_SUITE_LED_COMMON
+	bool "Link and test the led_common.c file"
+	depends on !PLATFORM_EC_LED_DT
+	select PLATFORM_EC_LED_COMMON
+
 source "Kconfig.zephyr"

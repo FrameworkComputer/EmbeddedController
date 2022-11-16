@@ -51,6 +51,7 @@ add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_CONSOLE console)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_HOST_CMD_THREAD host_command_thread)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_PI3USB9201 bc12_pi3usb9201)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_MEMMAP memmap)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_LED_COMMON led_common)
 
 get_target_property(TEST_SOURCES_NEW app SOURCES)
 
