@@ -20,6 +20,8 @@
 #include "usb-stream.h"
 #include "gpio_list.h"
 
+#include <stdio.h>
+
 void board_config_pre_init(void)
 {
 	/* enable SYSCFG clock */
@@ -235,6 +237,26 @@ static void board_init(void)
 	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0xF0000000;
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+const char *board_read_serial(void)
+{
+	const uint32_t *stm32_unique_id =
+		(const uint32_t *)STM32_UNIQUE_ID_BASE;
+	static char serial[13];
+
+	// Compute 12 hex digits from three factory programmed 32-bit "Unique
+	// ID" words in a manner that has been observed to be consistent with
+	// how the STM DFU ROM bootloader presents its serial number.  This
+	// means that the serial number of any particular HyperDebug board will
+	// remain the same as it enters and leaves DFU mode for software
+	// upgrade.
+	int rc = snprintf(serial, sizeof(serial), "%08X%04X",
+			  stm32_unique_id[0] + stm32_unique_id[2],
+			  stm32_unique_id[1] >> 16);
+	if (12 != rc)
+		return NULL;
+	return serial;
+}
 
 /**
  * Find a GPIO signal by name.
