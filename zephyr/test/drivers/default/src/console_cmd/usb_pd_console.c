@@ -313,6 +313,15 @@ ZTEST_USER(console_cmd_usb_pd, test_timer)
 		      rv);
 }
 
+ZTEST_USER(console_cmd_usb_pd, test_cc)
+{
+	char expected_output[10];
+
+	snprintf(expected_output, sizeof(expected_output), "C0 CC%d",
+		 pd_get_task_cc_state(0));
+	CHECK_CONSOLE_CMD("pd 0 cc", expected_output, EC_SUCCESS);
+}
+
 static void set_device_vdo(int port, enum tcpci_msg_type type)
 {
 	union tbt_mode_resp_device device_resp;
