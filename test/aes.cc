@@ -431,7 +431,7 @@ static void test_aes_gcm_speed(void)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	};
 	const int key_size = sizeof(key);
-	static const uint8_t plaintext[512] = { 0 };
+	static uint8_t plaintext[512] = { 0 };
 	const auto plaintext_size = sizeof(plaintext);
 	static const uint8_t nonce[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -441,19 +441,32 @@ static void test_aes_gcm_speed(void)
 	uint8_t tag[16] = { 0 };
 	const int tag_size = sizeof(tag);
 
-	uint8_t *out = tmp;
+	uint8_t *encrypted_data = tmp;
 	static AES_KEY aes_key;
 	static GCM128_CONTEXT ctx;
 
 	assert(plaintext_size <= sizeof(tmp));
 
-	benchmark.run("AES-GCM", [&]() {
+	benchmark.run("AES-GCM encrypt", [&]() {
 		AES_set_encrypt_key(key, 8 * key_size, &aes_key);
 		CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
 		CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
-		CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, out,
+		CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, encrypted_data,
 				      plaintext_size);
 		CRYPTO_gcm128_tag(&ctx, tag, tag_size);
+	});
+
+	benchmark.run("AES-GCM decrypt", [&]() {
+		AES_set_encrypt_key(key, 8 * key_size, &aes_key);
+		CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
+		CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
+		auto decrypt_res =
+			CRYPTO_gcm128_decrypt(&ctx, &aes_key, encrypted_data,
+					      plaintext, plaintext_size);
+
+		auto finish_res = CRYPTO_gcm128_finish(&ctx, tag, tag_size);
+		assert(decrypt_res);
+		assert(finish_res);
 	});
 	benchmark.print_results();
 }
