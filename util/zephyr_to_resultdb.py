@@ -14,6 +14,8 @@ import base64
 import datetime
 import json
 import os
+import pathlib
+import re
 
 import requests  # pylint: disable=import-error
 
@@ -83,8 +85,11 @@ def testcase_artifact(testcase):
     return base64.b64encode(artifact.encode())
 
 
-def testcase_to_result(testsuite, testcase, base_tags):
-    """Translates ZTEST testcase to ResultDB format"""
+def testcase_to_result(testsuite, testcase, base_tags, config_tags):
+    """Translates ZTEST testcase to ResultDB format
+    See TestResult type in
+    https://crsrc.org/i/go/src/go.chromium.org/luci/resultdb/sink/proto/v1/test_result.proto
+    """
     result = {
         "testId": testcase["identifier"],
         "status": translate_status(testcase["status"]),
@@ -95,9 +100,7 @@ def testcase_to_result(testsuite, testcase, base_tags):
                 "contents": testcase_artifact(testcase),
             }
         },
-        # TODO(b/239952573) Add all test configs as tags
         "tags": [
-            {"key": "category", "value": "ChromeOS/EC"},
             {"key": "platform", "value": testsuite["platform"]},
         ],
         "duration": translate_duration(testcase),
@@ -107,7 +110,29 @@ def testcase_to_result(testsuite, testcase, base_tags):
     for (key, value) in base_tags:
         result["tags"].append({"key": key, "value": value})
 
+    for (key, value) in config_tags:
+        result["tags"].append({"key": key.lower(), "value": value})
+
     return result
+
+
+def get_testsuite_config_tags(twister_dir, testsuite):
+    """Creates config tags from the testsuite"""
+    config_tags = []
+    suite_path = f"{twister_dir}/{testsuite['platform']}/{testsuite['name']}"
+    autoconf_h = f"{suite_path}/zephyr/include/generated/autoconf.h"
+
+    if pathlib.Path(autoconf_h).exists():
+        with open(autoconf_h) as file:
+            lines = file.readlines()
+
+            for line in lines:
+                result = re.search(r"#define\s*(\w+)\s*(.+$)", line)
+                config_tags.append((result.group(1), result.group(2)))
+    else:
+        print(f"Can't find config file for {testsuite['name']}")
+
+    return config_tags
 
 
 def create_base_tags(data):
@@ -136,10 +161,15 @@ def json_to_resultdb(result_file):
         base_tags = create_base_tags(data)
 
         for testsuite in data["testsuites"]:
+            config_tags = get_testsuite_config_tags(
+                os.path.dirname(result_file), testsuite
+            )
             for testcase in testsuite["testcases"]:
                 if testcase["status"]:
                     results.append(
-                        testcase_to_result(testsuite, testcase, base_tags)
+                        testcase_to_result(
+                            testsuite, testcase, base_tags, config_tags
+                        )
                     )
 
         file.close()
