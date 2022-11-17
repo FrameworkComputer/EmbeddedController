@@ -56,26 +56,22 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "duck",
     "eel",
     "elm",
-    "fennel",
     "fluffy",
     "fusb307bgevb",
     "gelatin",
     "hammer",
     "hoho",
     "jacuzzi",
-    "juniper",
     "kakadu",
     "kappa",
     "katsu",
     "krane",
     "kukui",
     "magnemite",
-    "makomo",
     "masterball",
     "minimuffin",
     "moonball",
     "nucleo-f072rb",
-    "oak",
     "pdeval-stm32f072",
     "plankton",
     "prism",
@@ -114,7 +110,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "banshee",
     "berknip",
     "bloog",
-    "bobba",
     "boldar",
     "brask",
     "brya",
@@ -123,7 +118,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "careena",
     "casta",
     "chronicler",
-    "coachz",
     "collis",
     "copano",
     "coral",
@@ -292,8 +286,14 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     "burnet",  # overflows flash
     "chocodile_vpdmcu",  # compilation error: b/254710459
+    "fennel",  # overflows flash
+    "juniper",  # overflows flash
     "kodama",  # overflows flash
+    "makomo",  # overflows flash
+    "oak",  # overflows flash
     # Boards that use CHIP:=npcx
+    "bobba",  # overflows flash
+    "coachz",  # overflows flash
     "garg",  # overflows flash
     "mushu",  # overflows flash
     "terrador",  # overflows flash
