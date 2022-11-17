@@ -593,7 +593,11 @@ static inline void set_ac_enabled(bool enabled)
 
 	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, enabled),
 		   NULL);
-	k_sleep(K_MSEC(CONFIG_EXTPOWER_DEBOUNCE_MS + 1));
+	/*
+	 * b/253284635 - Sleep for a full second past the debounce time
+	 * to ensure the power button debounce logic runs.
+	 */
+	k_sleep(K_MSEC(CONFIG_EXTPOWER_DEBOUNCE_MS + 1000));
 	zassert_equal(enabled, extpower_is_present(), NULL);
 }
 
