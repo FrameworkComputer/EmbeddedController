@@ -32,7 +32,7 @@ enum ncl_sha_type {
  * The base address of the table that holds the function pointer for each
  * SHA256 API in ROM.
  */
-#define NCL_SHA_BASE_ADDR 0x00000100UL
+#define NCL_SHA_BASE_ADDR 0x0000013CUL
 struct ncl_sha {
 	/* Get the SHA context size required by SHA APIs. */
 	uint32_t (*get_context_size)(void);
