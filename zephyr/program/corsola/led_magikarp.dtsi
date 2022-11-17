@@ -130,7 +130,8 @@
 		color_power_white: color-power-white {
 			led-color = "LED_WHITE";
 			led-id = "EC_LED_ID_POWER_LED";
-			led-pins = <&led_power_white 0>;
+			led-pwms = <&led_power_white>;
+			led-values = <0>;
 		};
 	};
 };

@@ -14,8 +14,8 @@ child-binding:
       looks like this where 100 is PWM duty cycle in percentage.
       color-amber {
                    led-color = "LED_AMBER";
-                   led-pins = <&pwm_led_y 100>,
-                              <&pwm_led_b 0>;
+                   led-pwms = <&pwm_led_y &pwm_led_b>;
+                   led-values = <100 0>;
                   };
     properties:
         led-color:
@@ -59,11 +59,16 @@ child-binding:
                 - EC_LED_COLOR_YELLOW
                 - EC_LED_COLOR_WHITE
                 - EC_LED_COLOR_AMBER
-        led-pins:
-            type: phandle-array
+        led-pwms:
+            type: phandles
             required: true
             description: |
-              This property is used to specify an array of PWM pins and
-              corresponding values to enable a particular color.
-              e.g. Amber color - led-pins = <&pwm_led_y 100>,
-                                            <&pwm_led_b 0>;
+              This property is used to specify an array of pwms to set a
+              particular color.
+
+        led-values:
+            type: array
+            required: true
+            description: |
+              This property is used to specify an array of values to set on the
+              corresponding pwm-pins to set a particular color.

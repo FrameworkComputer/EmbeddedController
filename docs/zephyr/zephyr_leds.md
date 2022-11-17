@@ -77,7 +77,7 @@ GPIO LED Pins dts file example: [led_pins_herobrine.dts]
 
 #### PWM based LEDs
 Configure PWM based LEDs with two separate nodes.
-The `cros-ec,pwm-pin-config` node, described in [cros-ec,pwm_led_pin_config.yaml], configures the PWM channel and frequency.
+The `pwm-leds` node, described in [pwm-leds.yaml], configures the PWM channel and frequency.
 The `cros-ec,pwm-led-pins` node, described in [cros-ec,pwm_led_pins.yaml], configures the LED colors.
 PWM LEDs can vary duty-cycle percentage, providing finer color control over GPIO LEDs.
 
@@ -86,16 +86,14 @@ Example:
 For this example, the board contains dual-channel LED, one channel controls white color intensity, and one channel controls the amber color intensity.
 To set the LED color to amber, the yellow channel duty-cycle is set to 100 percentage and white channel duty-cycle is set to 0.
 ```
-pwm_pins {
-	compatible = "cros-ec,pwm-pin-config";
+pwmleds {
+	compatible = "pwm-leds";
 
 	pwm_y: pwm_y {
-		#led-pin-cells = <1>;
 		pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 	};
 
 	pwm_w: pwm_w {
-		#led-pin-cells = <1>;
 		pwms = <&pwm3 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 	};
 };
@@ -105,18 +103,18 @@ pwm-led-pins {
 	pwm-frequency = <100>;
 	/* Amber - turn on yellow LED */
 	color_amber: color-amber {
-		led-pins = <&pwm_y 100>,
-			   <&pwm_w 0>;
+		led-pwms = <&pwm_y &pwm_w>;
+		pwm-values = <100 0>;
 	};
 	/* White - turn on white LED */
 	color_white: color-white {
-		led-pins = <&pwm_y 0>,
-			   <&pwm_w 100>;
+		led-pwms = <&pwm_y &pwm_w>;
+		pwm-values = <0 100>;
 	};
 	/* Off - turn off both LEDs */
 	color_off: color-off {
-		led-pins = <&pwm_y 0>,
-			   <&pwm_w 0>;
+		led-pwms = <&pwm_y &pwm_w>;
+		pwm-values = <0 0>;
 	};
 };
 ```
@@ -198,7 +196,7 @@ TODO: Enable support for ledtest
 
 -   Look for the gpio/pwm pins in the schematic with which the LEDs are attached to.
 -   In the above snippet, LEDs are configured to use PWM pins and attached to PWM2 and PWM3.
--   Add PWM config nodes as shown in [cros-ec,pwm_led_pin_config.yaml] and [led_pins_skyrim.dts].
+-   Add PWM config nodes as shown in [pwm-leds.yaml] and [led_pins_skyrim.dts].
 -   Add pin nodes based on the color of the LEDs attached as shown in [cros-ec,pwm_led_pins.yaml] and [led_pins_skyrim.dts]. Name the nodes according to the LED color for readability. e.g. `color-amber`
 -   Based on the device LED policy, create led_policy nodes as shown in [cros-ec,led_policy.yaml] and [led_policy_skyrim.dts].
 
@@ -214,7 +212,7 @@ TODO: Enable support for ledtest
 [cros-ec,led_policy.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,led-colors.yaml
 [cros-ec,gpio_led_pins.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,gpio-led-pins.yaml
 [cros-ec,pwm_led_pins.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,pwm-led-pins.yaml
-[cros-ec,pwm_led_pin_config.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,pwm-led-pin-config.yaml
+[pwm-leds.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyr/main/dts/bindings/led/pwm-leds.yaml
 [led_policy_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/skyrim/led_policy_skyrim.dts
 [led_pins_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/skyrim/led_pins_skyrim.dts
 [led_policy_herobrine.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/herobrine/led_policy_herobrine.dts
