@@ -85,6 +85,7 @@ target_sources(app PRIVATE
     src/task.c
     src/tcpci.c
     src/tcpci_test_common.c
+    src/tcpm_header.c
     src/tcs3400.c
     src/temp_sensor.c
     src/thermistor.c
