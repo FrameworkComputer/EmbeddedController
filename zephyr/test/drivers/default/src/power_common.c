@@ -487,6 +487,19 @@ ZTEST(power_common, power_console_cmd)
 }
 
 /**
+ * Test powerinfo console command
+ */
+ZTEST_USER(power_common, powerinfo_console_cmd)
+{
+	char expected_buffer[32];
+
+	snprintf(expected_buffer, sizeof(expected_buffer), "power state %d",
+		 power_get_state());
+
+	CHECK_CONSOLE_CMD("powerinfo", expected_buffer, EC_SUCCESS);
+}
+
+/**
  * Common setup for hibernation delay tests. Smart discharge zone is setup,
  * battery is set in safe zone (which trigger hibernation), power state is
  * set to G3 and AC is disabled. system_hibernate mock is reset.
