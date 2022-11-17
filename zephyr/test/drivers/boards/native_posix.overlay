@@ -231,20 +231,16 @@
 			no-auto-init;
 		};
 		gpio_ec_chg_led_y_c0: ec_chg_led_y_c0 {
-			#led-pin-cells = <1>;
 			gpios = <&gpio0 30 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
 		};
 		gpio_ec_chg_led_w_c0: ec_chg_led_w_c0 {
-			#led-pin-cells = <1>;
 			gpios = <&gpio0 31 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
 		};
 		/* gpio1 */
 		gpio_ec_chg_led_y_c1: ec_chg_led_y_c1 {
-			#led-pin-cells = <1>;
 			gpios = <&gpio1 0 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
 		};
 		gpio_ec_chg_led_w_c1: ec_chg_led_w_c1 {
-			#led-pin-cells = <1>;
 			gpios = <&gpio1 1 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
 		};
 		gpio_ap_ec_int_l: ap_ec_int_l {

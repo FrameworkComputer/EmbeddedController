@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 
 #define SET_PIN(node_id, prop, i)                                     \
 	{ .signal = GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, i)), \
-	  .val = DT_PHA_BY_IDX(node_id, prop, i, value) },
+	  .val = DT_PROP_BY_IDX(node_id, led_values, i) },
 
 #define SET_GPIO_PIN(node_id) \
 	{ DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN) };

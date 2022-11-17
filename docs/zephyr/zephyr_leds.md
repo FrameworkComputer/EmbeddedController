@@ -53,23 +53,23 @@ gpio-led-pins {
 	compatible = "cros-ec,gpio-led-pins";
         /* Amber - turn on yellow LED */
 	color_amber: color-amber {
-		led-pins = <&gpio_ec_chg_led_y_c1 1>,
-			   <&gpio_ec_chg_led_b_c1 0>;
+		led-pins = <&gpio_ec_chg_led_y_c1 &gpio_ec_chg_led_b_c1>;
+		led-values = <1 0>;
 	};
 	/* Blue - turn on blue LED */
 	color_blue: color-blue {
-		led-pins = <&gpio_ec_chg_led_y_c1 0>,
-			   <&gpio_ec_chg_led_b_c1 1>;
+		led-pins = <&gpio_ec_chg_led_y_c1 &gpio_ec_chg_led_b_c1>;
+		led-values = <0 1>;
 	};
 	/* White - turn on both LEDs */
 	color_white: color-white {
-		led-pins = <&gpio_ec_chg_led_y_c1 1>,
-			   <&gpio_ec_chg_led_b_c1 1>;
+		led-pins = <&gpio_ec_chg_led_y_c1 &gpio_ec_chg_led_b_c1>;
+		led-values = <1 1>;
 	};
 	/* Off - turn off both LEDs */
 	color_off: color-off {
-		led-pins = <&gpio_ec_chg_led_y_c1 0>,
-			   <&gpio_ec_chg_led_b_c1 0>;
+		led-pins = <&gpio_ec_chg_led_y_c1 &gpio_ec_chg_led_b_c1>;
+		led-values = <0 0>;
 	};
 };
 ```
