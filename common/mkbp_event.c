@@ -586,5 +586,12 @@ void mkbp_event_clear_all(void)
 
 	/* Reset the interrupt line */
 	mkbp_set_host_active(0, NULL);
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+	mkbp_event_wake_mask = CONFIG_MKBP_EVENT_WAKEUP_MASK;
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
+
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+	mkbp_host_event_wake_mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 }
 #endif

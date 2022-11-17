@@ -2,12 +2,15 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
+#include "chipset.h"
 #include "console.h"
 #include "host_command.h"
 #include "mkbp_event.h"
 #include "mkbp_fifo.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/gpio.h>
@@ -34,7 +37,7 @@ struct event_fixture {
 
 static struct event_fixture fixture;
 
-ZTEST(mkbp_event, host_command_get_events__empty)
+ZTEST(mkbp_event, test_host_command_get_events__empty)
 {
 	/* Issue a host command to get the next event (from any source) */
 	uint16_t ret;
@@ -47,7 +50,102 @@ ZTEST(mkbp_event, host_command_get_events__empty)
 		      "Expected EC_RES_UNAVAILABLE but got %d", ret);
 }
 
-ZTEST(mkbp_event, host_command_get_events__get_event)
+ZTEST(mkbp_event, test_activate_with_events)
+{
+	const struct device *gpio_dev = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_ap_ec_int_l), gpios));
+	const int gpio_pin = DT_GPIO_PIN(DT_NODELABEL(gpio_ap_ec_int_l), gpios);
+
+	/* Put the chipset to sleep */
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
+	k_sleep(K_SECONDS(15));
+
+	/* Activate with no events, should not trigger an interrupt */
+	activate_mkbp_with_events(0);
+
+	/* Check that GPIO is still 1 */
+	zassert_equal(1, gpio_emul_output_get(gpio_dev, gpio_pin));
+}
+
+ZTEST(mkbp_event, test_host_command_host_event_wake_mask)
+{
+	struct ec_response_mkbp_event_wake_mask response = { 0 };
+	struct ec_params_mkbp_event_wake_mask params = { 0 };
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, 0, response, params);
+
+	/* Set the wake mask to 0x12345678 */
+	params.action = SET_WAKE_MASK;
+	params.mask_type = EC_MKBP_HOST_EVENT_WAKE_MASK;
+	params.new_wake_mask = 0x12345678;
+
+	zassert_ok(host_command_process(&args));
+
+	/* Get the wake mask */
+	params.action = GET_WAKE_MASK;
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(0x12345678, response.wake_mask);
+}
+
+ZTEST(mkbp_event, test_host_command_event_wake_mask)
+{
+	struct ec_response_mkbp_event_wake_mask response = { 0 };
+	struct ec_params_mkbp_event_wake_mask params = { 0 };
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, 0, response, params);
+
+	/* Set the wake mask to 0x87654321 */
+	params.action = SET_WAKE_MASK;
+	params.mask_type = EC_MKBP_EVENT_WAKE_MASK;
+	params.new_wake_mask = 0x87654321;
+
+	zassert_ok(host_command_process(&args));
+
+	/* Get the wake mask */
+	params.action = GET_WAKE_MASK;
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(0x87654321, response.wake_mask);
+}
+
+ZTEST(mkbp_event, test_host_command_wake_mask__invalid_args)
+{
+	struct ec_response_mkbp_event_wake_mask response = { 0 };
+	struct ec_params_mkbp_event_wake_mask params = {
+		.action = -1,
+		.mask_type = -1,
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, 0, response, params);
+
+	/* Check invalid action */
+	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+
+	/* Check invalid mask type in getter */
+	params.action = GET_WAKE_MASK;
+	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+
+	/* Check invalid mask type in setter */
+	params.action = SET_WAKE_MASK;
+	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+}
+
+ZTEST(mkbp_event, test_console_command_wake_mask_event)
+{
+	check_console_cmd("mkbpwakemask event 500",
+			  "MKBP event wake mask: 0x000001f4", 0, __FILE__,
+			  __LINE__);
+	check_console_cmd("mkbpwakemask hostevent 7934",
+			  "MKBP host event wake mask: 0x00001efe", 0, __FILE__,
+			  __LINE__);
+	check_console_cmd("mkbpwakemask event f", NULL, EC_ERROR_PARAM2,
+			  __FILE__, __LINE__);
+	check_console_cmd("mkbpwakemask event", NULL, EC_ERROR_PARAM_COUNT,
+			  __FILE__, __LINE__);
+}
+
+ZTEST(mkbp_event, test_host_command_get_events__get_event)
 {
 	/* Dispatch a fake keyboard event and ensure it gets returned by the
 	 * host command.
@@ -99,7 +197,7 @@ ZTEST(mkbp_event, host_command_get_events__get_event)
 		      interrupt_gpio_monitor_fake.call_count);
 }
 
-ZTEST(mkbp_event, no_ap_response)
+ZTEST(mkbp_event, test_no_ap_response)
 {
 	/* Cause an event but do not send any host commands. This should cause
 	 * the EC to send the interrupt to the AP 3 times before giving up.
@@ -184,6 +282,8 @@ static void reset_events(void *data)
 	RESET_FAKE(interrupt_gpio_monitor);
 	RESET_FAKE(mkbp_send_event);
 	mkbp_send_event_fake.return_val = 1;
+
+	test_set_chipset_to_s0();
 }
 
 ZTEST_SUITE(mkbp_event, drivers_predicate_post_main, setup, reset_events,
