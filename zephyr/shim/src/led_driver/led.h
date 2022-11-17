@@ -32,9 +32,6 @@
 	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), \
 		    (LED_ENUM(id, enum_name), ), ())
 
-#define GPIO_LED_PINS_NODE DT_PATH(gpio_led_pins)
-#define PWM_LED_PINS_NODE DT_PATH(pwm_led_pins)
-
 enum led_color {
 	LED_OFF,
 	LED_RED,
