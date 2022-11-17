@@ -865,7 +865,7 @@ enum ec_error_list raa489000_is_acok(int chgnum, bool *acok)
 {
 	int regval, rv;
 
-	if ((chgnum < 0) || (chgnum > board_get_charger_chip_count())) {
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
 		return EC_ERROR_INVAL;
 	}
@@ -890,7 +890,7 @@ void raa489000_hibernate(int chgnum, bool disable_adc)
 {
 	int rv, regval;
 
-	if ((chgnum < 0) || (chgnum > board_get_charger_chip_count())) {
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
 		return;
 	}
