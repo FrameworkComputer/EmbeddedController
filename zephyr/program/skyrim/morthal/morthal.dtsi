@@ -1,15 +1,15 @@
-/* Copyright 2021 The ChromiumOS Authors
+/* Copyright 2022 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include <dt-bindings/usbc_mux.h>
 
-#include "i2c_common.dtsi"
+#include "../i2c.dtsi"
 
 / {
 	named-gpios {
-		/* Skyrim-specific GPIO customizations */
+		/* Morthal-specific GPIO customizations */
 	};
 
 	named-temp-sensors {
@@ -19,7 +19,7 @@
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
 			temp_host_release_halt = <80>;
-			temp_fan_off = <35>;
+			temp_fan_off = <0>;
 			temp_fan_max = <70>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&soc_pct2075>;
@@ -34,7 +34,7 @@
 	 * Note this is expected to vary per-board, so we keep it in the board
 	 * dts files.
 	 */
-	skyrim-fw-config {
+	morthal-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
 		form-factor {
@@ -94,24 +94,6 @@
 				 * configs will run the fan regardless.
 				 */
 				default;
-			};
-		};
-
-		charger-option {
-			enum-name = "FW_CHARGER";
-			start = <11>;
-			size = <2>;
-
-			charger-option-isl9241 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_CHARGER_ISL9241";
-				value = <0>;
-				default;
-			};
-			charger-option-isl9538 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_CHARGER_ISL9538";
-				value = <1>;
 			};
 		};
 	};
@@ -179,15 +161,9 @@
 		status = "okay";
 		reg = <0x9>;
 	};
-	alt_charger: isl9538@9 {
-		compatible = "intersil,isl923x";
-		status = "okay";
-		reg = <0x9>;
-	};
 };
 
 &usbc_port0 {
-	chg_alt = <&alt_charger>;
 	ppc = <&ppc_port0>;
 	usb-mux-chain-0 {
 		compatible = "cros-ec,usb-mux-chain";

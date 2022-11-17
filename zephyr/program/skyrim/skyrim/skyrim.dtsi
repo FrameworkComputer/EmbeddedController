@@ -1,15 +1,15 @@
-/* Copyright 2022 The ChromiumOS Authors
+/* Copyright 2021 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include <dt-bindings/usbc_mux.h>
 
-#include "i2c_common.dtsi"
+#include "../i2c.dtsi"
 
 / {
 	named-gpios {
-		/* Crystaldrift-specific GPIO customizations */
+		/* Skyrim-specific GPIO customizations */
 	};
 
 	named-temp-sensors {
@@ -34,7 +34,7 @@
 	 * Note this is expected to vary per-board, so we keep it in the board
 	 * dts files.
 	 */
-	crystaldrift-fw-config {
+	skyrim-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
 		form-factor {

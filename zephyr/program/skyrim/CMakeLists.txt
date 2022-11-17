@@ -19,59 +19,25 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 
 if(DEFINED CONFIG_BOARD_MORTHAL)
 	project(morthal)
-	zephyr_library_sources(
-		"src/morthal/ppc_config.c"
-		"src/morthal/usb_mux_config.c"
-)
+	add_subdirectory(morthal)
 endif()
 
 if(DEFINED CONFIG_BOARD_SKYRIM)
 	project(skyrim)
-	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SKYRIM include)
-	zephyr_library_sources(
-			"src/skyrim/usb_mux_config.c"
-			"src/skyrim/ppc_config.c"
-			"src/skyrim/form_factor.c"
-			"src/skyrim/alt_charger.c"
-			"src/skyrim/keyboard.c"
-	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/skyrim/fan.c")
+	add_subdirectory(skyrim)
 endif()
 
 if(DEFINED CONFIG_BOARD_WINTERHOLD)
 	project(winterhold)
-	zephyr_library_sources(
-		"src/winterhold/usb_mux_config.c"
-		"src/winterhold/ppc_config.c"
-		"src/winterhold/kb_backlight.c"
-		"src/winterhold/keyboard.c"
-		"src/winterhold/sensor.c"
-		"src/winterhold/battery_present.c"
-    )
+	add_subdirectory(winterhold)
 endif()
 
 if(DEFINED CONFIG_BOARD_FROSTFLOW)
 	project(frostflow)
-	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_FROSTFLOW include)
-	zephyr_include_directories("include/frostflow")
-	zephyr_library_sources(
-			"src/frostflow/usb_mux_config.c"
-			"src/frostflow/ppc_config.c"
-			"src/frostflow/thermal.c"
-	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
-		"src/frostflow/keyboard.c"
-		"src/frostflow/keyboard_customization.c")
+	add_subdirectory(frostflow)
 endif()
 
 if(DEFINED CONFIG_BOARD_CRYSTALDRIFT)
 	project(crystaldrift)
-	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_CRYSTALDRIFT include)
-	zephyr_library_sources(
-			"src/crystaldrift/usb_mux_config.c"
-			"src/crystaldrift/ppc_config.c"
-			"src/crystaldrift/form_factor.c"
-			"src/crystaldrift/alt_charger.c"
-	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/crystaldrift/fan.c")
+	add_subdirectory(crystaldrift)
 endif()
