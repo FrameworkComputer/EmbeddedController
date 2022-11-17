@@ -118,7 +118,8 @@ motion_sensor_time_to_read(const timestamp_t *ts,
 			  sensor->next_collection - motion_min_interval);
 }
 
-static enum sensor_config motion_sense_get_ec_config(void)
+STATIC_IF_NOT(CONFIG_ZTEST)
+enum sensor_config motion_sense_get_ec_config(void)
 {
 	switch (sensor_active) {
 	case SENSOR_ACTIVE_S0:
@@ -130,7 +131,7 @@ static enum sensor_config motion_sense_get_ec_config(void)
 	default:
 		CPRINTS("get_ec_config: Invalid active state: %x",
 			sensor_active);
-		return SENSOR_CONFIG_MAX;
+		return SENSOR_CONFIG_EC_S5;
 	}
 }
 /* motion_sense_set_data_rate
