@@ -86,7 +86,7 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 	const struct ec_params_battery_static_info *p = args->params;
 	const struct battery_static_info *bs;
 
-	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
+	if (p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
 	bs = &battery_static[p->index];
 
@@ -144,7 +144,7 @@ host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
 	const struct ec_params_battery_dynamic_info *p = args->params;
 	struct ec_response_battery_dynamic_info *r = args->response;
 
-	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
+	if (p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	args->response_size = sizeof(*r);
