@@ -87,3 +87,17 @@ register_skyrim_project(
         here / "prj_frostflow.conf",
     ],
 )
+
+register_skyrim_project(
+    project_name="crystaldrift",
+    extra_dts_overlays=[
+        here / "crystaldrift.dts",
+        here / "battery_crystaldrift.dts",
+        here / "led_pins_crystaldrift.dts",
+        here / "led_policy_crystaldrift.dts",
+        here / "motionsense_crystaldrift.dts",
+    ],
+    extra_kconfig_files=[
+        here / "prj_crystaldrift.conf",
+    ],
+)

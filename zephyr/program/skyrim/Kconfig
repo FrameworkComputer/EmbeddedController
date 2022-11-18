@@ -26,6 +26,12 @@ config BOARD_FROSTFLOW
 	  Build Google Frostflow reference board.  This board uses an AMD SoC
 	  and NPCX9 EC
 
+config BOARD_CRYSTALDRIFT
+	bool "Google Crystaldrift Board"
+	help
+	  Build Google Crystaldrift reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
+
 config BOARD_USB_HUB_RESET
 	bool "Support USB hub reset or not"
 	default y

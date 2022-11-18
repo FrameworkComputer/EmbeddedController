@@ -62,3 +62,15 @@ if(DEFINED CONFIG_BOARD_FROSTFLOW)
 		"src/frostflow/keyboard.c"
 		"src/frostflow/keyboard_customization.c")
 endif()
+
+if(DEFINED CONFIG_BOARD_CRYSTALDRIFT)
+	project(crystaldrift)
+	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_CRYSTALDRIFT include)
+	zephyr_library_sources(
+			"src/crystaldrift/usb_mux_config.c"
+			"src/crystaldrift/ppc_config.c"
+			"src/crystaldrift/form_factor.c"
+			"src/crystaldrift/alt_charger.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/crystaldrift/fan.c")
+endif()
