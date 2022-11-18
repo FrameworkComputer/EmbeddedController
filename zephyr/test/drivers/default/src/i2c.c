@@ -52,12 +52,29 @@ ZTEST_USER(i2c, test_i2c_set_speed_success)
 		      "response.cmd_response.speed_khz = %d",
 		      response.cmd_response.speed_khz);
 
+	/* Set the speed to 1000. */
+	set_params.cmd_params.speed_khz = 1000;
+	zassert_ok(host_command_process(&set_args), NULL);
+	zassert_ok(set_args.result, NULL);
+	zassert_equal(set_args.response_size, sizeof(response), NULL);
+	zassert_equal(response.cmd_response.speed_khz, 400,
+		      "response.cmd_response.speed_khz = %d",
+		      response.cmd_response.speed_khz);
+
+	/* Get the speed to verify. */
+	zassert_ok(host_command_process(&get_args), NULL);
+	zassert_ok(get_args.result, NULL);
+	zassert_equal(get_args.response_size, sizeof(response), NULL);
+	zassert_equal(response.cmd_response.speed_khz, 1000,
+		      "response.cmd_response.speed_khz = %d",
+		      response.cmd_response.speed_khz);
+
 	/* Set the speed back to 100. */
 	set_params.cmd_params.speed_khz = 100;
 	zassert_ok(host_command_process(&set_args), NULL);
 	zassert_ok(set_args.result, NULL);
 	zassert_equal(set_args.response_size, sizeof(response), NULL);
-	zassert_equal(response.cmd_response.speed_khz, 400,
+	zassert_equal(response.cmd_response.speed_khz, 1000,
 		      "response.cmd_response.speed_khz = %d",
 		      response.cmd_response.speed_khz);
 }
