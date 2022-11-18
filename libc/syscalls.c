@@ -11,6 +11,7 @@
  * https://sourceware.org/git/?p=newlib-cygwin.git;a=tree;f=libgloss/libnosys.
  */
 
+#include "gettimeofday.h"
 #include "panic.h"
 #include "software_panic.h"
 #include "task.h"
@@ -65,4 +66,29 @@ int mkdir(const char *pathname, mode_t mode)
 {
 	errno = ENOSYS;
 	return -1;
+}
+
+/**
+ * Get the time.
+ *
+ * This function is called from the libc gettimeofday() function.
+ *
+ * @warning This does not match gettimeofday() exactly; it does not return the
+ * time since the Unix Epoch.
+ *
+ * @param[out] tv time
+ * @param[in] tz ignored
+ * @return 0 on success
+ * @return -1 on error (errno is set to indicate error)
+ */
+int _gettimeofday(struct timeval *restrict tv, void *restrict tz)
+{
+	enum ec_error_list ret = ec_gettimeofday(tv, tz);
+
+	if (ret == EC_ERROR_INVAL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	return 0;
 }
