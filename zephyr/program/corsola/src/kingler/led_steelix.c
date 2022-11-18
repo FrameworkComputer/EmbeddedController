@@ -5,15 +5,15 @@
  * Battery LED control for Steelix
  */
 
-#include <zephyr/drivers/pwm.h>
-#include <zephyr/logging/log.h>
-
 #include "board_led.h"
 #include "common.h"
 #include "cros_cbi.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
 #include "util.h"
+
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(board_led, LOG_LEVEL_ERR);
 

@@ -3,21 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <ap_power/ap_power.h>
-
 #include "battery.h"
-#include "charger.h"
 #include "charge_state_v2.h"
+#include "charger.h"
 #include "chipset.h"
 #include "cros_cbi.h"
 #include "hooks.h"
-#include "usb_mux.h"
-#include "system.h"
-
 #include "nissa_common.h"
+#include "system.h"
+#include "usb_mux.h"
 
+#include <zephyr/device.h>
 #include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
 LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 static uint8_t cached_usb_pd_port_count;

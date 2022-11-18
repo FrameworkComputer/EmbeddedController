@@ -5,16 +5,15 @@
 
 /* Herobrine chipset-specific configuration */
 
+#include "battery.h"
+#include "board_chipset.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
-#include "battery.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "timer.h"
 #include "usb_pd.h"
-
-#include "board_chipset.h"
 
 #define CPRINTS(format, args...) cprints(CC_HOOK, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_HOOK, format, ##args)

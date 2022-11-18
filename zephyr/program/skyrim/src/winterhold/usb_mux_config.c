@@ -5,8 +5,6 @@
 
 /* Winterhold board-specific USB-C mux configuration */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "console.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
@@ -15,6 +13,8 @@
 #include "ioexpander.h"
 #include "usb_mux.h"
 #include "usbc/usb_muxes.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)

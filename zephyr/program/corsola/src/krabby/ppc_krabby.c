@@ -6,9 +6,9 @@
 /* Krabby PPC/BC12 (RT1739) configuration */
 
 #include "baseboard_usbc_config.h"
-#include "gpio/gpio_int.h"
 #include "driver/ppc/rt1739.h"
 #include "driver/ppc/syv682x.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "variant_db_detection.h"
 

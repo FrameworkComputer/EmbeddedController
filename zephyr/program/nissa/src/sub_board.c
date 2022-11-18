@@ -5,24 +5,24 @@
 
 /* Nissa sub-board hardware configuration */
 
-#include <ap_power/ap_power.h>
+#include "cros_board_info.h"
+#include "driver/tcpm/tcpci.h"
+#include "gpio/gpio_int.h"
+#include "hooks.h"
+#include "nissa_common.h"
+#include "nissa_hdmi.h"
+#include "task.h"
+#include "usb_charge.h"
+#include "usb_pd.h"
+#include "usbc/usb_muxes.h"
+
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
-#include "cros_board_info.h"
-#include "driver/tcpm/tcpci.h"
-#include "gpio/gpio_int.h"
-#include "hooks.h"
-#include "usb_charge.h"
-#include "usb_pd.h"
-#include "usbc/usb_muxes.h"
-#include "task.h"
-
-#include "nissa_common.h"
-#include "nissa_hdmi.h"
+#include <ap_power/ap_power.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 

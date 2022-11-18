@@ -2,11 +2,11 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/drivers/gpio.h>
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "common.h"
+
+#include <zephyr/drivers/gpio.h>
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 

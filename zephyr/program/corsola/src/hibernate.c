@@ -2,11 +2,11 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/drivers/gpio.h>
-
 #include "charger.h"
 #include "driver/charger/isl923x_public.h"
 #include "system.h"
+
+#include <zephyr/drivers/gpio.h>
 
 /* Corsola board specific hibernate implementation */
 __override void board_hibernate(void)

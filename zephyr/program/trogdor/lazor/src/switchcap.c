@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "common.h"
 #include "config.h"
 #include "console.h"
@@ -13,8 +11,10 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "power/qcom.h"
-#include "system.h"
 #include "sku.h"
+#include "system.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)

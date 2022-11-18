@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "common.h"
 #include "gpio.h"
 #include "keyboard_customization.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
+
+#include <zephyr/drivers/gpio.h>
 
 static uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{ 0x0000, 0x0000, 0x0014, 0xe01f, 0xe014, 0x0000, 0x0000, 0x0000 },

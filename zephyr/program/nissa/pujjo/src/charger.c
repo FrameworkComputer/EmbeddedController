@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-
 #include "battery.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
-#include "driver/tcpm/raa489000.h"
-#include "driver/charger/isl923x.h"
 #include "console.h"
+#include "driver/charger/isl923x.h"
+#include "driver/tcpm/raa489000.h"
 #include "extpower.h"
-#include "usb_pd.h"
-#include "nissa_common.h"
 #include "hooks.h"
+#include "nissa_common.h"
+#include "usb_pd.h"
+
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 

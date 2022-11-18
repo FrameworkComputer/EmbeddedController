@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/init.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pinctrl.h>
-
-#include <ap_power/ap_power.h>
 #include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/init.h>
+
+#include <ap_power/ap_power.h>
 
 #define I2C3_NODE DT_NODELABEL(i2c3)
 PINCTRL_DT_DEFINE(I2C3_NODE);

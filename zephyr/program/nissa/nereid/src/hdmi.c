@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <cros_board_info.h>
 #include "nissa_hdmi.h"
+
+#include <cros_board_info.h>
 
 __override void nissa_configure_hdmi_power_gpios(void)
 {

@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/logging/log.h>
-
 #include "charger_chips.h"
 #include "common.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "hooks.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(skyrim, CONFIG_SKYRIM_LOG_LEVEL);
 

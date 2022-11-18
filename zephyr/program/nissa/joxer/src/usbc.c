@@ -3,20 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-#include <ap_power/ap_power.h>
-
 #include "charge_state_v2.h"
 #include "chipset.h"
-#include "hooks.h"
-#include "usb_mux.h"
-#include "system.h"
 #include "driver/charger/sm5803.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
-
+#include "hooks.h"
 #include "nissa_common.h"
+#include "system.h"
+#include "usb_mux.h"
+
+#include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 

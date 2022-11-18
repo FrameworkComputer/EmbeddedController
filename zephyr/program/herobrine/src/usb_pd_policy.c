@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "charge_manager.h"
 #include "chipset.h"
 #include "console.h"
@@ -12,6 +10,8 @@
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)

@@ -5,10 +5,12 @@
 
 /* Corsola baseboard-chipset specific configuration */
 
-#include <zephyr/init.h>
-#include <ap_power/ap_power.h>
-#include <zephyr/drivers/gpio.h>
 #include "gpio.h"
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/init.h>
+
+#include <ap_power/ap_power.h>
 
 static void board_backlight_handler(struct ap_power_ev_callback *cb,
 				    struct ap_power_ev_data data)

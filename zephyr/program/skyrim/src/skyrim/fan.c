@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "fan.h"
 #include "gpio/gpio.h"
 #include "hooks.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(skyrim, CONFIG_SKYRIM_LOG_LEVEL);
 

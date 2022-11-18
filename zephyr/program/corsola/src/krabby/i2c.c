@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "i2c/i2c.h"
 #include "i2c.h"
+#include "i2c/i2c.h"
 
 /* Krabby board specific i2c implementation */
 

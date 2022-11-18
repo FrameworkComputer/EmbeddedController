@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
-#include "hooks.h"
+
+#include <stdint.h>
 
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1

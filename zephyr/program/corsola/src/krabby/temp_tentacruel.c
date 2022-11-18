@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "charger.h"
 #include "charge_state.h"
+#include "charger.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"

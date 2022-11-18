@@ -3,12 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-#include <stdbool.h>
-
-#include <ap_power/ap_power.h>
 #include "cbi.h"
 #include "hooks.h"
+
+#include <stdbool.h>
+
+#include <zephyr/drivers/gpio.h>
+
+#include <ap_power/ap_power.h>
 
 /* Enable/Disable keyboard backlight gpio */
 static inline void kbd_backlight_enable(bool enable)

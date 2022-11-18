@@ -3,19 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-
 #include "charge_state_v2.h"
 #include "chipset.h"
-#include "hooks.h"
-#include "usb_mux.h"
-#include "system.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/retimer/anx7483_public.h"
-#include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/raa489000.h"
-
+#include "driver/tcpm/tcpci.h"
+#include "hooks.h"
 #include "nissa_common.h"
+#include "system.h"
+#include "usb_mux.h"
+
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 

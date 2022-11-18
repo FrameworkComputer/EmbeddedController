@@ -5,14 +5,11 @@
 
 /* Corsola baseboard-specific USB-C configuration */
 
-#include <zephyr/drivers/gpio.h>
-#include <ap_power/ap_power.h>
-
 #include "adc.h"
 #include "baseboard_usbc_config.h"
 #include "button.h"
-#include "charger.h"
 #include "charge_state_v2.h"
+#include "charger.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -20,13 +17,13 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "lid_switch.h"
-#include "task.h"
-#include "ppc/syv682x_public.h"
 #include "power.h"
 #include "power_button.h"
+#include "ppc/syv682x_public.h"
 #include "spi.h"
 #include "switch.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
@@ -34,8 +31,11 @@
 #include "usb_tc_sm.h"
 #include "usbc/usb_muxes.h"
 #include "usbc_ppc.h"
-
 #include "variant_db_detection.h"
+
+#include <zephyr/drivers/gpio.h>
+
+#include <ap_power/ap_power.h>
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)

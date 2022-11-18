@@ -5,11 +5,11 @@
 
 /* Frostflow board-specific PPC code */
 
-#include <zephyr/drivers/gpio.h>
-
-#include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/aoz1380_public.h"
+#include "driver/ppc/nx20p348x.h"
 #include "usbc_ppc.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)

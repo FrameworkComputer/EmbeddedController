@@ -5,8 +5,6 @@
 
 /* Shared USB-C policy for Rex boards */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
@@ -19,6 +17,8 @@
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
+
+#include <zephyr/drivers/gpio.h>
 
 int pd_check_vconn_swap(int port)
 {

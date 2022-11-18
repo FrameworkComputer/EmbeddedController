@@ -2,14 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/logging/log.h>
-
 #include "cros_cbi.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_scan.h"
 #include "timer.h"
+
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 

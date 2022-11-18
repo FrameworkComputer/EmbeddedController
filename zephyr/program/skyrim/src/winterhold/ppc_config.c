@@ -5,10 +5,10 @@
 
 /* Winterhold board-specific PPC code */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "driver/ppc/nx20p348x.h"
 #include "usbc_ppc.h"
+
+#include <zephyr/drivers/gpio.h>
 
 void ppc_interrupt(enum gpio_signal signal)
 {

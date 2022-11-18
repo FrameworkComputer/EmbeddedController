@@ -3,16 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "battery_fuel_gauge.h"
-#include "charger.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
 #include "charge_state.h"
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "driver/charger/isl9241.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/tcpm/ps8xxx_public.h"
@@ -21,12 +19,13 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
-#include "driver/ppc/nx20p348x.h"
 #include "ppc/syv682x_public.h"
 #include "system.h"
 #include "task.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)

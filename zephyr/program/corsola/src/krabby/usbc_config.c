@@ -14,7 +14,6 @@
 #include "i2c.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
-
 #include "variant_db_detection.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)

@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/sys/util.h>
-
 #include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"
+
+#include <zephyr/sys/util.h>
 
 /*
  * This workaround and the board id checks only apply to krabby and early
