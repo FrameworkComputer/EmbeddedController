@@ -130,6 +130,40 @@ static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
 	partner->dp_config_vdos = VDO_INDEX_HDR + 1;
 }
 
+static void add_displayport_mode_responses__minus_configure_responses(
+	struct tcpci_partner_data *partner)
+{
+	/*
+	 * This is the same function as add_displayport_mode_responses() but
+	 * does not include the configure response so as to induce a failure to
+	 * enter dp alt mode
+	 */
+
+	/* Add DisplayPort EnterMode response */
+	partner->enter_mode_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_ENTER_MODE);
+	partner->enter_mode_vdos = VDO_INDEX_HDR + 1;
+
+	/* Add DisplayPort StatusUpdate response */
+	partner->dp_status_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_STATUS);
+	partner->dp_status_vdm[VDO_INDEX_HDR + 1] =
+		/* Mainly copied from hoho */
+		VDO_DP_STATUS(0, /* IRQ_HPD */
+			      false, /* HPD_HI|LOW - Changed*/
+			      0, /* request exit DP */
+			      0, /* request exit USB */
+			      0, /* MF pref */
+			      true, /* DP Enabled */
+			      0, /* power low e.g. normal */
+			      0x2 /* Connected as Sink */);
+	partner->dp_status_vdos = VDO_INDEX_HDR + 2;
+
+	/* NO DisplayPort Configure Response */
+}
+
 static void *usbc_alt_mode_setup(void)
 {
 	static struct usbc_alt_mode_fixture fixture;
@@ -395,3 +429,79 @@ ZTEST_SUITE(usbc_alt_mode_dp_unsupported, drivers_predicate_post_main,
 	    usbc_alt_mode_dp_unsupported_setup,
 	    usbc_alt_mode_dp_unsupported_before,
 	    usbc_alt_mode_dp_unsupported_after, NULL);
+
+static void *usbc_alt_mode_minus_dp_configure_setup(void)
+{
+	static struct usbc_alt_mode_minus_dp_configure_fixture fixture;
+	struct tcpci_partner_data *partner = &fixture.partner;
+	struct tcpci_src_emul_data *src_ext = &fixture.src_ext;
+
+	tcpci_partner_init(partner, PD_REV20);
+	partner->extensions = tcpci_src_emul_init(src_ext, partner, NULL);
+
+	/* Get references for the emulators */
+	fixture.tcpci_emul = EMUL_GET_USBC_BINDING(TEST_PORT, tcpc);
+	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
+
+	add_discovery_responses(partner);
+	add_displayport_mode_responses__minus_configure_responses(partner);
+
+	return &fixture;
+}
+
+static void usbc_alt_mode_minus_dp_configure_before(void *data)
+{
+	/* Set chipset to ON, this will set TCPM to DRP */
+	test_set_chipset_to_s0();
+
+	/* TODO(b/214401892): Check why need to give time TCPM to spin */
+	k_sleep(K_SECONDS(1));
+
+	struct usbc_alt_mode_minus_dp_configure_fixture *fixture = data;
+
+	connect_partner_to_port(fixture->tcpci_emul, fixture->charger_emul,
+				&fixture->partner, &fixture->src_ext);
+}
+
+static void usbc_alt_mode_minus_dp_configure_after(void *data)
+{
+	struct usbc_alt_mode_fixture *fixture = data;
+
+	disconnect_partner_from_port(fixture->tcpci_emul,
+				     fixture->charger_emul);
+}
+
+ZTEST_F(usbc_alt_mode_minus_dp_configure, test_dp_mode_entry_minus_config)
+{
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+		k_sleep(K_SECONDS(1));
+	}
+
+	/* Verify host command when VDOs are present. */
+	struct ec_response_typec_status status;
+	struct ec_params_usb_pd_get_mode_response response;
+	int response_size;
+
+	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &response, &response_size);
+
+	/* Response should be populated with a DisplayPort VDO */
+	zassert_equal(response_size, sizeof(response));
+	zassert_equal(response.svid, USB_SID_DISPLAYPORT);
+	zassert_equal(response.vdo[0],
+		      fixture->partner.modes_vdm[response.opos], NULL);
+
+	/* DPM configures the partner on DP mode entry */
+	/* Verify port partner thinks it's *NOT* configured for DisplayPort */
+	zassert_false(fixture->partner.displayport_configured);
+	/* Also verify DP config is missing from mux */
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_not_equal((status.mux_state & USB_PD_MUX_DP_ENABLED),
+			  USB_PD_MUX_DP_ENABLED,
+			  "Failed to *NOT* see DP set in mux");
+}
+
+ZTEST_SUITE(usbc_alt_mode_minus_dp_configure, drivers_predicate_post_main,
+	    usbc_alt_mode_minus_dp_configure_setup,
+	    usbc_alt_mode_minus_dp_configure_before,
+	    usbc_alt_mode_minus_dp_configure_after, NULL);
