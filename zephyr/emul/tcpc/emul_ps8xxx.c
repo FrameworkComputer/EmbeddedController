@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
 #include "driver/tcpm/ps8xxx.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
@@ -15,6 +14,7 @@
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
 #define DT_DRV_COMPAT cros_ps8xxx_emul

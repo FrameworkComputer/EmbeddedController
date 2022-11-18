@@ -12,15 +12,16 @@
 #ifndef __EMUL_TCPCI_PARTNER_COMMON_H
 #define __EMUL_TCPCI_PARTNER_COMMON_H
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/sys/atomic.h>
-#include <stdbool.h>
-#include <stdint.h>
-
 #include "ec_commands.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
 
 /**
  * @brief Common code used by TCPCI partner device emulators

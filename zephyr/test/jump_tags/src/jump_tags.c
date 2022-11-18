@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <setjmp.h>
-
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "sysjump.h"
-#include "system_fake.h"
 #include "system.h"
+#include "system_fake.h"
+
+#include <setjmp.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define TEST_BASIC_JUMP_TAG 0x9901
 #define TEST_MISSING_JUMP_TAG 0x9902

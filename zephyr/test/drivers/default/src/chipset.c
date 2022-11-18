@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <zephyr/ztest.h>
-
 #include "chipset.h"
-
 #include "test/drivers/test_state.h"
+
+#include <stdint.h>
+
+#include <zephyr/ztest.h>
 
 ZTEST(chipset, test_get_ap_reset_stats__bad_pointers)
 {

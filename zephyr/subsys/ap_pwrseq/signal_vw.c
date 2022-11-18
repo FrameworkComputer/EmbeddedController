@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <atomic.h>
-#include <zephyr/drivers/espi.h>
-#include <x86_non_dsx_common_pwrseq_sm_handler.h>
-
 #include "signal_vw.h"
+
+#include <zephyr/drivers/espi.h>
+
+#include <atomic.h>
+#include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
 #define MY_COMPAT intel_ap_pwrseq_vw
 

@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "system.h"
+
+#include <zephyr/drivers/gpio.h>
+
 #include <power_signals.h>
 #include <signal_gpio.h>
-#include <zephyr/drivers/gpio.h>
-#include "system.h"
 
 #define MY_COMPAT intel_ap_pwrseq_gpio
 

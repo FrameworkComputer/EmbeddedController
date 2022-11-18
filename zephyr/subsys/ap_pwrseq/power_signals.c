@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
+#include "signal_adc.h"
+#include "signal_gpio.h"
+#include "signal_vw.h"
+
 #include <zephyr/kernel.h>
-#include <zephyr/toolchain.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
+#include <zephyr/toolchain.h>
 
 #include <ap_power/ap_pwrseq.h>
 #include <power_signals.h>
-
-#include "signal_gpio.h"
-#include "signal_vw.h"
-#include "signal_adc.h"
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 

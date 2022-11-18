@@ -11,8 +11,9 @@
 #ifndef __EMUL_SYV682X_H
 #define __EMUL_SYV682X_H
 
-#include <zephyr/drivers/i2c_emul.h>
 #include <stdint.h>
+
+#include <zephyr/drivers/i2c_emul.h>
 
 /* Register info copied from syv682.h */
 

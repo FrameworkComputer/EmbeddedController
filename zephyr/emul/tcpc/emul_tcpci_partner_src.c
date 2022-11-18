@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-
 #include "common.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
@@ -12,6 +10,7 @@
 #include "usb_pd.h"
 
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
 
 LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);

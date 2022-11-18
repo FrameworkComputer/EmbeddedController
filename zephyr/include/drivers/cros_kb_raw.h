@@ -22,11 +22,11 @@
 #ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 #define ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 
-#include <zephyr/kernel.h>
+#include "gpio_signal.h"
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
-
-#include "gpio_signal.h"
+#include <zephyr/kernel.h>
 
 /*
  * When CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED is enabled, the keyboard

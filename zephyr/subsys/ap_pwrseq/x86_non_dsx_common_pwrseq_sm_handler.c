@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <atomic.h>
+#include "zephyr_console_shim.h"
+
 #include <zephyr/init.h>
 
+#include <atomic.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
-#include "zephyr_console_shim.h"
 
 static K_KERNEL_STACK_DEFINE(pwrseq_thread_stack, CONFIG_AP_PWRSEQ_STACK_SIZE);
 static struct k_thread pwrseq_thread_data;

@@ -12,12 +12,13 @@
 #ifndef __EMUL_SMART_BATTERY_H
 #define __EMUL_SMART_BATTERY_H
 
+#include "emul/emul_common_i2c.h"
+
+#include <stdint.h>
+
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-#include <stdint.h>
-
-#include "emul/emul_common_i2c.h"
 
 /**
  * @brief Smart Battery emulator backend API

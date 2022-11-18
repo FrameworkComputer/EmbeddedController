@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "tcpm/tcpci.h"
@@ -14,6 +12,7 @@
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
 

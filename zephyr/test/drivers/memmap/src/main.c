@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <zephyr/ztest.h>
-
 #include "flash.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <stdio.h>
+#include <string.h>
+
+#include <zephyr/ztest.h>
 
 extern const char *flash_physical_dataptr_override;
 

@@ -12,12 +12,13 @@
 #ifndef __EMUL_TCPCI_H
 #define __EMUL_TCPCI_H
 
+#include "emul/emul_common_i2c.h"
+
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-#include <usb_pd_tcpm.h>
 
-#include "emul/emul_common_i2c.h"
+#include <usb_pd_tcpm.h>
 
 /**
  * Number of emulated register. This include vendor registers defined in TCPCI

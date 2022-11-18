@@ -3,20 +3,20 @@
  * found in the LICENSE file.
  */
 
+#include "ap_power/ap_power.h"
+#include "ap_power/ap_power_events.h"
+#include "chipset.h"
+#include "emul/emul_power_signals.h"
+#include "power_signals.h"
+#include "test_state.h"
+
+#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/espi.h>
 #include <zephyr/drivers/espi_emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
-
-#include "ap_power/ap_power.h"
-#include "ap_power/ap_power_events.h"
-#include <zephyr/drivers/adc.h>
-#include "chipset.h"
-#include "emul/emul_power_signals.h"
-#include "power_signals.h"
-#include "test_state.h"
 
 LOG_MODULE_REGISTER(emul_power_signal, CONFIG_EMUL_POWER_SIGNALS_LOG_LEVEL);
 

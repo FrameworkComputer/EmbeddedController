@@ -7,6 +7,7 @@
 #define __X86_COMMON_PWRSEQ_H__
 
 #include <zephyr/logging/log.h>
+
 #include <ap_power/ap_power_interface.h>
 #include <ap_power_override_functions.h>
 #include <power_signals.h>

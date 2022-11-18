@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/fff.h>
-#include <zephyr/ztest.h>
-
 #include "gpio_signal.h"
 #include "task.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "usb_charge.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 /* Get reference to externally linked handlers (defined in DTS) */
 #define USBC0_GPIO_PATH DT_PATH(named_gpios, usb_c0_bc12_int_l)
