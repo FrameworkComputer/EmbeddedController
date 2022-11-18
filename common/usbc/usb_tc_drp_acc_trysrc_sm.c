@@ -1561,6 +1561,9 @@ void tc_state_init(int port)
 {
 	enum usb_tc_state first_state;
 
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+		return;
+
 	/* For test builds, replicate static initialization */
 	if (IS_ENABLED(TEST_BUILD)) {
 		memset(&tc[port], 0, sizeof(tc[port]));
