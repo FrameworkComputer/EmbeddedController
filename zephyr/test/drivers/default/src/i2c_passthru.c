@@ -41,6 +41,55 @@ ZTEST_USER(i2c_passthru, test_read_without_write)
 		      sizeof(struct ec_response_i2c_passthru), NULL);
 }
 
+ZTEST_USER(i2c_passthru, test_passthru_invalid_params)
+{
+	uint16_t tcpc_addr = DT_REG_ADDR(DT_NODELABEL(tcpci_emul));
+	uint8_t *out_data;
+	uint8_t param_buf[sizeof(struct ec_params_i2c_passthru) +
+			  2 * sizeof(struct ec_params_i2c_passthru_msg) + 1];
+	uint8_t response_buf[sizeof(struct ec_response_i2c_passthru) + 2];
+	struct ec_params_i2c_passthru *passthru_params =
+		(struct ec_params_i2c_passthru *)&param_buf;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_I2C_PASSTHRU, 0);
+
+	passthru_params->port = I2C_PORT_USB_C0;
+	passthru_params->num_msgs = 2;
+	passthru_params->msg[0].addr_flags = tcpc_addr;
+	passthru_params->msg[0].len = 1;
+	passthru_params->msg[1].addr_flags = tcpc_addr | EC_I2C_FLAG_READ;
+	passthru_params->msg[1].len = 2; /* 2 byte vendor ID */
+
+	/* Write data follows the passthru messages */
+	out_data = (uint8_t *)&passthru_params->msg[2];
+	out_data[0] = 0; /* TCPC_REG_VENDOR_ID 0x0 */
+
+	args.params = &param_buf;
+	args.params_size = sizeof(param_buf);
+	args.response = &response_buf;
+	args.response_max = sizeof(response_buf);
+
+	/* Set the params_size to smaller than struct ec_params_i2c_passthru */
+	args.params_size = 1;
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+
+	/* Set the params_size so it truncates the 2nd I2C message */
+	args.params_size = sizeof(struct ec_params_i2c_passthru) +
+			   sizeof(struct ec_params_i2c_passthru_msg);
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+
+	/* Don't provide enough room for the response */
+	args.params_size = sizeof(param_buf);
+	args.response_max = sizeof(struct ec_response_i2c_passthru) + 1;
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+
+	/* Don't provide the write data */
+	args.response_max = sizeof(response_buf);
+	args.params_size = sizeof(struct ec_params_i2c_passthru) +
+			   2 * sizeof(struct ec_params_i2c_passthru_msg);
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+}
+
 ZTEST_USER(i2c_passthru, test_passthru_protect)
 {
 	struct ec_response_i2c_passthru_protect response;
