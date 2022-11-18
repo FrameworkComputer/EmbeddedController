@@ -1020,6 +1020,12 @@ void cec_task(void *unused)
 	while (1) {
 		events = task_wait_event(-1);
 		if (events & TASK_EVENT_RECEIVED_DATA) {
+			if (cec_process_offline_message(
+				    &cec_rx_queue, cec_rx.transfer.buf,
+				    cec_rx.transfer.byte) == EC_SUCCESS) {
+				CPRINTS("Message consumed offline");
+				/* Continue to queue message and notify AP. */
+			}
 			rv = cec_rx_queue_push(&cec_rx_queue,
 					       cec_rx.transfer.buf,
 					       cec_rx.transfer.byte);

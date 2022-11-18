@@ -4,7 +4,11 @@
  */
 
 #include "cec.h"
+#include "chipset.h"
 #include "console.h"
+#include "mkbp_event.h"
+#include "power_button.h"
+#include "printf.h"
 #include "task.h"
 
 #define CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
@@ -59,6 +63,63 @@ void cec_rx_queue_flush(struct cec_rx_queue *queue)
 	queue->read_offset = 0;
 	mutex_unlock(&rx_queue_readoffset_mutex);
 	queue->write_offset = 0;
+}
+
+struct cec_offline_policy cec_default_policy[] = {
+	{
+		.command = CEC_MSG_IMAGE_VIEW_ON,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	{
+		.command = CEC_MSG_TEXT_VIEW_ON,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	/* Terminator */
+	{ 0 },
+};
+
+__overridable const struct cec_config_t cec_config = {};
+
+static enum cec_action cec_find_action(const struct cec_offline_policy *policy,
+				       uint8_t command)
+{
+	if (policy == NULL)
+		return CEC_ACTION_NONE;
+
+	while (policy->command != 0 && policy->action != 0) {
+		if (policy->command == command)
+			return policy->action;
+		policy++;
+	}
+
+	return CEC_ACTION_NONE;
+}
+
+int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
+				uint8_t msg_len)
+{
+	uint8_t command;
+	char str_buf[hex_str_buf_size(msg_len)];
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		/* Forward to the AP */
+		return EC_ERROR_NOT_HANDLED;
+
+	if (msg_len < 1)
+		return EC_ERROR_INVAL;
+
+	snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(msg, msg_len));
+	CPRINTS("MSG: %s", str_buf);
+
+	command = msg[1];
+
+	if (cec_find_action(cec_config.offline_policy, command) ==
+	    CEC_ACTION_POWER_BUTTON)
+		/* Equal to PWRBTN_INITIAL_US (for x86). */
+		power_button_simulate_press(200);
+
+	/* Consumed */
+	return EC_SUCCESS;
 }
 
 int cec_rx_queue_push(struct cec_rx_queue *queue, const uint8_t *msg,
