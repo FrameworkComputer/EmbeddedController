@@ -7,6 +7,7 @@
 #include "ec_commands.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 
 #include <zephyr/kernel.h>
@@ -107,10 +108,56 @@ ZTEST_USER(i2c_passthru, test_passthru_protect_tcpcs)
 	};
 	struct host_cmd_handler_args enable_args = BUILD_HOST_COMMAND_PARAMS(
 		EC_CMD_I2C_PASSTHRU_PROTECT, 0, enable_params);
+	uint16_t tcpc_addr = DT_REG_ADDR(DT_NODELABEL(tcpci_emul));
+	uint8_t *out_data;
+	uint8_t param_buf[sizeof(struct ec_params_i2c_passthru) +
+			  2 * sizeof(struct ec_params_i2c_passthru_msg) + 1];
+	uint8_t response_buf[sizeof(struct ec_response_i2c_passthru) + 2];
+	struct ec_params_i2c_passthru *passthru_params =
+		(struct ec_params_i2c_passthru *)&param_buf;
+	struct ec_response_i2c_passthru *passthru_response =
+		(struct ec_response_i2c_passthru *)&response_buf;
+	struct host_cmd_handler_args passthru_args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_I2C_PASSTHRU, 0);
+
+	/* If the system is unlocked, TCPC protection is disabled */
+	system_is_locked_fake.return_val = false;
 
 	/* Protect the all TCPC buses */
 	zassert_ok(host_command_process(&enable_args), NULL);
 	zassert_ok(enable_args.result, NULL);
+
+	passthru_params->port = I2C_PORT_USB_C0;
+	passthru_params->num_msgs = 2;
+	passthru_params->msg[0].addr_flags = tcpc_addr;
+	passthru_params->msg[0].len = 1;
+	passthru_params->msg[1].addr_flags = tcpc_addr | EC_I2C_FLAG_READ;
+	passthru_params->msg[1].len = 2; /* 2 byte vendor ID */
+
+	/* Write data follows the passthru messages */
+	out_data = (uint8_t *)&passthru_params->msg[2];
+	out_data[0] = 0; /* TCPC_REG_VENDOR_ID 0x0 */
+
+	passthru_args.params = &param_buf;
+	passthru_args.params_size = sizeof(param_buf);
+	passthru_args.response = &response_buf;
+	passthru_args.response_max = sizeof(response_buf);
+
+	zassert_ok(host_command_process(&passthru_args));
+	zassert_ok(passthru_args.result);
+	zassert_ok(passthru_response->i2c_status);
+	zassert_equal(passthru_args.response_size,
+		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);
+
+	/* Now attempt TCPC protection while the system is locked */
+	system_is_locked_fake.return_val = true;
+
+	/* Protect the all TCPC buses */
+	zassert_ok(host_command_process(&enable_args), NULL);
+	zassert_ok(enable_args.result, NULL);
+
+	zassert_equal(host_command_process(&passthru_args),
+		      EC_RES_ACCESS_DENIED);
 }
 
 static void i2c_passthru_after(void *state)
