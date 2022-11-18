@@ -50,7 +50,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 		.batt_info = {
 			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11550, /* mV */
+			.voltage_normal		= 11880, /* mV */
 			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
