@@ -7,9 +7,13 @@
 #include "battery_smart.h"
 #include "ec_commands.h"
 #include "emul/emul_smart_battery.h"
+#include "gpio.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+#include "virtual_battery.h"
 
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
@@ -285,3 +289,144 @@ ZTEST(virtual_battery, test_read_data_from_host_memmap)
 
 ZTEST_SUITE(virtual_battery, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);
+
+ZTEST(virtual_battery_direct, test_bad_reg_write)
+{
+	struct ec_response_i2c_passthru resp;
+
+	/* Start with a zero-length write. The state machine is expecting a
+	 * register address to be written, so this will fail.
+	 */
+	zassert_equal(EC_ERROR_INVAL,
+		      virtual_battery_handler(&resp, 0, NULL, 0, 0,
+					      /* write_len = */ 0, NULL));
+
+	zassert_equal(EC_I2C_STATUS_NAK, resp.i2c_status);
+}
+
+ZTEST(virtual_battery_direct, test_aborted_write)
+{
+	struct ec_response_i2c_passthru resp;
+	int error_code;
+
+	/* Arbitrary packet of bytes */
+	const uint8_t packet[] = { 0xAA, 0xBB, 0xCC };
+
+	/* Start with a length 1 write to set a register address. */
+	zassert_ok(virtual_battery_handler(&resp, 0, &error_code, 0, 0,
+					   /* write_len = */ 1, &packet[0]));
+
+	/* Now write two more bytes successfully... */
+	zassert_ok(virtual_battery_handler(&resp, 0, &error_code, 0, 0,
+					   /* write_len = */ 1, &packet[1]));
+	zassert_ok(error_code);
+
+	zassert_ok(virtual_battery_handler(&resp, 0, &error_code, 0, 0,
+					   /* write_len = */ 1, &packet[2]));
+	zassert_ok(error_code);
+
+	/* ...and abruptly write 0 bytes. This will cause an error */
+	zassert_equal(EC_ERROR_INVAL,
+		      virtual_battery_handler(&resp, 0, &error_code, 0, 0,
+					      /* write_len = */ 0, NULL));
+
+	zassert_equal(EC_I2C_STATUS_NAK, resp.i2c_status);
+}
+
+ZTEST(virtual_battery_direct, test_aborted_read)
+{
+	struct ec_response_i2c_passthru resp;
+	int error_code;
+
+	/* Arbitrary packet to set a register plus a buffer to read to */
+	const uint8_t write_packet[] = { SB_MANUFACTURER_NAME };
+	uint8_t read_packet[3] = { 0 };
+
+	/* Start with a length 1 write to set a register address. */
+	zassert_ok(virtual_battery_handler(&resp, 0, &error_code, 0, 0,
+					   /* write_len = */ 1,
+					   &write_packet[0]));
+
+	/* Now read two bytes successfully... */
+	zassert_ok(virtual_battery_handler(&resp, 0, &error_code, 0,
+					   /* read_len = */ 1, 0,
+					   &read_packet[0]));
+	zassert_ok(error_code);
+
+	zassert_ok(virtual_battery_handler(&resp, 0, &error_code, 0,
+					   /* read_len = */ 1, 0,
+					   &read_packet[1]));
+	zassert_ok(error_code);
+
+	/* ...and abruptly read 0 bytes. This will cause an error */
+	zassert_equal(EC_ERROR_INVAL,
+		      virtual_battery_handler(&resp, 0, &error_code, 0,
+					      /* read_len = */ 0, 0,
+					      &read_packet[2]));
+
+	zassert_equal(EC_I2C_STATUS_NAK, resp.i2c_status);
+}
+
+ZTEST(virtual_battery_direct, test_read_bad_reg)
+{
+	struct ec_response_i2c_passthru resp;
+	int error_code;
+
+	/* Try to read from an invalid register */
+	const uint8_t write_packet[] = { 0xFF };
+	uint8_t read_packet[3] = { 0 };
+
+	/* Start with a length 1 write to set a register address. */
+	zassert_ok(virtual_battery_handler(&resp, 0, &error_code, 0, 0,
+					   /* write_len = */ 1,
+					   &write_packet[0]));
+
+	/* Now try to read */
+	zassert_equal(EC_ERROR_INVAL,
+		      virtual_battery_handler(&resp, 0, &error_code, 0,
+					      /* read_len = */ 1, 0,
+					      &read_packet[0]));
+	zassert_equal(EC_ERROR_INVAL, error_code);
+}
+
+#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
+
+static int set_battery_present(bool batt_present)
+{
+	const struct device *batt_pres_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
+
+	return gpio_emul_input_set(batt_pres_dev, GPIO_BATT_PRES_ODL_PORT,
+				   !batt_present);
+}
+
+ZTEST(virtual_battery_direct, test_no_battery)
+{
+	struct ec_response_i2c_passthru resp;
+
+	set_battery_present(false);
+
+	/* Arbitrary packet of bytes */
+	const uint8_t packet[] = { 0xAA, 0xBB, 0xCC };
+
+	/* Attempt a valid write operation, which will fail due to no battery */
+	zassert_equal(EC_ERROR_INVAL,
+		      virtual_battery_handler(&resp, 0, NULL, 0, 0,
+					      /* write_len = */ 1, &packet[0]));
+
+	zassert_equal(EC_I2C_STATUS_NAK, resp.i2c_status);
+}
+
+static void virtual_battery_direct_reset(void *arg)
+{
+	reset_parse_state();
+
+	set_battery_present(true);
+}
+
+/* The virtual_battery_direct suite tests the virtual battery handler directly
+ * without performing I2C ops. This makes it easier to test certain corner-cases
+ */
+ZTEST_SUITE(virtual_battery_direct, drivers_predicate_post_main, NULL,
+	    virtual_battery_direct_reset, virtual_battery_direct_reset, NULL);
