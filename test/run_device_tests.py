@@ -242,6 +242,7 @@ class AllTests:
                 finish_regexes=[PRINTF_CALLED_REGEX],
             ),
             TestConfig(test_name="global_initialization"),
+            TestConfig(test_name="libcxx"),
             TestConfig(
                 config_name="mpu_ro",
                 test_name="mpu",

@@ -231,6 +231,7 @@ kasa-y=kasa.o
 ifeq ($(USE_BUILTIN_STDLIB), 0)
 libc_printf-y=libc_printf.o
 endif
+libcxx-y=libcxx.o
 mpu-y=mpu.o
 mutex-y=mutex.o
 newton_fit-y=newton_fit.o

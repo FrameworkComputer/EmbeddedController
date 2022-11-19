@@ -43,6 +43,7 @@ test-list-y=\
        ftrapv \
        global_initialization \
        libc_printf \
+       libcxx \
        mpu \
        mutex \
        panic \
