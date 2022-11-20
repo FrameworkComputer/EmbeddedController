@@ -7686,8 +7686,7 @@ static void pe_ddr_perform_data_reset_run(int port)
 		 * interpretations are mutually exclusive. Resolve that
 		 * ambiguity and update this implementation.
 		 */
-		usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_DISCONNECT,
-			    polarity_rm_dts(pd_get_polarity(port)));
+		set_usb_mux_with_current_data_role(port);
 	} else if (IS_ENABLED(CONFIG_USBC_VCONN) &&
 		   PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE) &&
 		   tc_is_vconn_src(port)) {
