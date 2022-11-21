@@ -240,6 +240,7 @@ class Zmake:
         delete_intermediates=False,
         static_version=False,
         save_temps=False,
+        wait_for_executor=True,
     ):
         """Locate and configure the specified projects."""
         # Resolve build_dir if needed.
@@ -275,11 +276,11 @@ class Zmake:
                 result = self.executor.wait()
                 if result:
                     return result
-        result = self.executor.wait()
-        if result:
-            return result
         non_test_projects = [p for p in projects if not p.config.is_test]
         if len(non_test_projects) > 1 and coverage and build_after_configure:
+            result = self.executor.wait()
+            if result:
+                return result
             result = self._merge_lcov_files(
                 projects=non_test_projects,
                 build_dir=build_dir,
@@ -288,6 +289,11 @@ class Zmake:
             if result:
                 self.failed_projects.append(str(build_dir / "all_builds.info"))
                 return result
+        elif wait_for_executor:
+            result = self.executor.wait()
+            if result:
+                return result
+
         return 0
 
     def build(
@@ -381,8 +387,10 @@ class Zmake:
                 delete_intermediates=False,
                 static_version=True,
                 save_temps=False,
+                wait_for_executor=False,
             )
-
+            if not result:
+                result = self.executor.wait()
             if result:
                 self.logger.error(
                     "compare-builds failed to build all projects at %s",
