@@ -22,6 +22,17 @@ ZTEST_USER(i2c, test_i2c_port_count)
 		      I2C_PORT_COUNT);
 }
 
+ZTEST_USER(i2c, test_i2c_lock_invalid_port)
+{
+	i2c_lock(-1, 1);
+	zassert_equal(i2c_port_is_locked(-1), 0,
+		      "Negative I2C port locked, but should have failed");
+
+	i2c_lock(INT_MAX, 1);
+	zassert_equal(i2c_port_is_locked(INT_MAX), 0,
+		      "MAX_INT I2C port locked, but should have failed");
+}
+
 ZTEST_USER(i2c, test_i2c_lock)
 {
 	i2c_lock(I2C_PORT_ACCEL, 1);
