@@ -69,6 +69,7 @@ def main(argv=None):
         cwd=ec_dir,
         stderr=subprocess.PIPE,
         encoding="utf-8",
+        stdin=subprocess.DEVNULL,
     )
     if result.stderr:
         logging.error("All C source must be formatted with clang-format!")
