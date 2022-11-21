@@ -6,6 +6,8 @@
 #ifndef ZEPHYR_TEST_SYSTEM_SHIM_INCLUDE_FAKES_H_
 #define ZEPHYR_TEST_SYSTEM_SHIM_INCLUDE_FAKES_H_
 
+#include <stdint.h>
+
 #include <zephyr/fff.h>
 
 DECLARE_FAKE_VALUE_FUNC(int, cros_system_native_posix_get_reset_cause,
