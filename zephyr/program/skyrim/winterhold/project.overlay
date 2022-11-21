@@ -101,6 +101,24 @@
 				value = <1>;
 			};
 		};
+
+		charger-option {
+			enum-name = "FW_CHARGER";
+			start = <2>;
+			size = <1>;
+
+			charger-option-isl9238 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_CHARGER_ISL9238";
+				value = <0>;
+				default;
+			};
+			charger-option-isl9538 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_CHARGER_ISL9538";
+				value = <1>;
+			};
+		};
 	};
 
 	/* Rotation matrices for motion sensors. */
@@ -133,11 +151,17 @@
 		status = "okay";
 		reg = <0x9>;
 	};
+	alt_charger: isl9538@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
 
 /* usbc overrides */
 &usbc_port0 {
 	/delete-property/ chg_alt;
+	chg_alt = <&alt_charger>;
 };
 
 &usbc_port1 {
