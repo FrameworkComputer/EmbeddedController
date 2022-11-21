@@ -137,15 +137,17 @@ def get_testsuite_config_tags(twister_dir, testsuite):
     """Creates config tags from the testsuite"""
     config_tags = []
     suite_path = f"{twister_dir}/{testsuite['platform']}/{testsuite['name']}"
-    autoconf_h = f"{suite_path}/zephyr/include/generated/autoconf.h"
+    dot_config = f"{suite_path}/zephyr/.config"
 
-    if pathlib.Path(autoconf_h).exists():
-        with open(autoconf_h) as file:
+    if pathlib.Path(dot_config).exists():
+        with open(dot_config) as file:
             lines = file.readlines()
 
             for line in lines:
-                result = re.search(r"#define\s*(\w+)\s*(.+$)", line)
-                config_tags.append((result.group(1), result.group(2)))
+                # Ignore empty lines and comments
+                if line.strip() and not line.startswith("#"):
+                    result = re.search(r"(\w+)=(.+$)", line)
+                    config_tags.append((result.group(1), result.group(2)))
     else:
         print(f"Can't find config file for {testsuite['name']}")
 
