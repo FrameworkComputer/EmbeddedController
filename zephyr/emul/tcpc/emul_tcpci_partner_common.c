@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "driver/tcpm/tcpci.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "usb_pd.h"
@@ -1193,6 +1194,16 @@ void tcpci_partner_set_discovery_info(struct tcpci_partner_data *data,
 	memcpy(data->modes_vdm, modes_vdm, modes_vdos * sizeof(*modes_vdm));
 }
 
+static void tcpci_partner_common_control_change(struct tcpci_partner_data *data)
+{
+	const struct emul *tcpci_emul = data->tcpci_emul;
+	uint16_t role_control;
+
+	tcpci_emul_get_reg(tcpci_emul, TCPC_REG_ROLE_CTRL, &role_control);
+	data->tcpm_cc1 = TCPC_REG_ROLE_CTRL_CC1(role_control);
+	data->tcpm_cc1 = TCPC_REG_ROLE_CTRL_CC2(role_control);
+}
+
 void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
 {
 	tcpci_partner_clear_msg_queue(data);
@@ -1491,6 +1502,22 @@ tcpci_partner_rx_consumed_op(const struct emul *emul,
 	tcpci_partner_free_msg(msg);
 }
 
+static void
+tcpci_partner_control_change_op(const struct emul *emul,
+				const struct tcpci_emul_partner_ops *ops)
+{
+	struct tcpci_partner_data *data =
+		CONTAINER_OF(ops, struct tcpci_partner_data, ops);
+	struct tcpci_partner_extension *ext;
+
+	tcpci_partner_common_control_change(data);
+	for (ext = data->extensions; ext != NULL; ext = ext->next) {
+		if (ext->ops->control_change) {
+			ext->ops->control_change(ext, data);
+		}
+	}
+}
+
 /**
  * @brief Function called when emulator is disconnected from TCPCI
  *
@@ -1582,7 +1609,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 
 	data->ops.transmit = tcpci_partner_transmit_op;
 	data->ops.rx_consumed = tcpci_partner_rx_consumed_op;
-	data->ops.control_change = NULL;
+	data->ops.control_change = tcpci_partner_control_change_op;
 	data->ops.disconnect = tcpci_partner_disconnect_op;
 	data->displayport_configured = false;
 	data->entered_svid = 0;

@@ -148,6 +148,9 @@ struct tcpci_partner_data {
 	/* SVID of entered mode (0 if no mode is entered) */
 	uint16_t entered_svid;
 
+	enum tcpc_cc_voltage_status tcpm_cc1;
+	enum tcpc_cc_voltage_status tcpm_cc2;
+
 	/* VDMs with which the partner responds to discovery REQs. The VDM
 	 * buffers include the VDM header, and the VDO counts include 1 for the
 	 * VDM header. This structure has space for the mode response for a
@@ -311,6 +314,9 @@ struct tcpci_partner_extension_ops {
 	 */
 	void (*soft_reset)(struct tcpci_partner_extension *ext,
 			   struct tcpci_partner_data *common_data);
+
+	void (*control_change)(struct tcpci_partner_extension *ext,
+			       struct tcpci_partner_data *common_data);
 
 	/**
 	 * @brief Function called when partner emulator is disconnected from
