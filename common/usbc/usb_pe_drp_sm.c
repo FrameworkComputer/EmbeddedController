@@ -6514,7 +6514,7 @@ static void pe_vcs_evaluate_swap_entry(int port)
 	 */
 
 	/* DPM rejects a VCONN Swap and port is not a VCONN source*/
-	if (!tc_check_vconn_swap(port) && tc_is_vconn_src(port) < 1) {
+	if (!tc_check_vconn_swap(port) || tc_is_vconn_src(port) < 1) {
 		/* NOTE: PE_VCS_Reject_Swap State embedded here */
 		send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_REJECT);
 	}
