@@ -85,6 +85,7 @@ import pathlib
 import re
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -182,12 +183,15 @@ def upload_results(ec_base, outdir):
         json_path = pathlib.Path(outdir) / "twister.json"
 
         if json_path.exists():
+            hostname = socket.gethostname().split(".")[0]
             cmd = [
                 "rdb",
                 "stream",
                 "-new",
                 "-realm",
                 "chromium:public",
+                "-var",
+                "builder_name:" + hostname,
                 "--",
                 "vpython3",
                 str(ec_base / "util/zephyr_to_resultdb.py"),

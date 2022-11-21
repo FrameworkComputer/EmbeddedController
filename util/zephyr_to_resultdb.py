@@ -5,8 +5,9 @@
 """ Upload twister results to ResultDB
 
     Usage:
-    $ rdb stream -new -realm chromium:public -- ./util/zephyr_to_resultdb.py
-      --results=twister-out/twister.json --upload=True
+    $ rdb stream -new -realm chromium:public -var builder_name:${HOSTNAME%%.*}
+      -- ./util/zephyr_to_resultdb.py --results=twister-out/twister.json
+      --upload=True
 """
 
 import argparse
@@ -114,6 +115,9 @@ def testcase_to_result(testsuite, testcase, base_tags, config_tags):
         "tags": [
             {"key": "platform", "value": testsuite["platform"]},
         ],
+        "variant": {
+            "def": {"suite": testsuite["name"]},
+        },
         "duration": translate_duration(testcase),
         "testMetadata": {"name": testcase["identifier"]},
     }
@@ -235,7 +239,7 @@ def main():
     args = parser.parse_args()
 
     if args.results:
-        print("Converting:", args.results)
+        print(f"Converting: {args.results}")
         rdb_results = json_to_resultdb(args.results)
         if args.upload:
             upload_results(rdb_results)
