@@ -6,6 +6,8 @@
 #ifndef __AP_PWRSEQ_SIGNAL_ADC_H__
 #define __AP_PWRSEQ_SIGNAL_ADC_H__
 
+#include <power_signals.h>
+
 #define PWR_SIG_TAG_ADC PWR_ADC_
 
 /*
