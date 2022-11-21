@@ -122,7 +122,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "copano",
     "coral",
     "corori",
-    "corori2",
     "cret",
     "crota",
     "dalboz",
@@ -294,6 +293,7 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=npcx
     "bobba",  # overflows flash
     "coachz",  # overflows flash
+    "corori2",  # overflows flash
     "garg",  # overflows flash
     "mushu",  # overflows flash
     "terrador",  # overflows flash
