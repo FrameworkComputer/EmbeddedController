@@ -685,11 +685,6 @@ static int it8801_kblight_set_brightness(int percent)
 	return EC_SUCCESS;
 }
 
-static int it8801_kblight_get_brightness(void)
-{
-	return it8801_pwm_get_duty(it8801_kblight_pwm_ch);
-}
-
 static int it8801_kblight_init(void)
 {
 	it8801_pwm_set_duty(it8801_kblight_pwm_ch, 0);
@@ -700,7 +695,6 @@ static int it8801_kblight_init(void)
 const struct kblight_drv kblight_it8801 = {
 	.init = it8801_kblight_init,
 	.set = it8801_kblight_set_brightness,
-	.get = it8801_kblight_get_brightness,
 	.enable = it8801_kblight_enable,
 	.get_enabled = it8801_kblight_get_enabled,
 };

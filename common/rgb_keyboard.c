@@ -476,7 +476,6 @@ static void rgbkbd_reset(void)
 const struct kblight_drv kblight_rgbkbd = {
 	.init = rgbkbd_init,
 	.set = rgbkbd_kblight_set,
-	.get = NULL,
 	.enable = rgbkbd_enable,
 	.get_enabled = rgbkbd_get_enabled,
 };
