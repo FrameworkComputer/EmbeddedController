@@ -1848,7 +1848,7 @@ static const struct tcpc_reg_dump_map tcpc_regs[] = {
 /*
  * Dump standard TCPC registers.
  */
-void tcpc_dump_std_registers(int port)
+test_mockable void tcpc_dump_std_registers(int port)
 {
 	tcpc_dump_registers(port, tcpc_regs, ARRAY_SIZE(tcpc_regs));
 }

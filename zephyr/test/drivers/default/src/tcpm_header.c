@@ -18,6 +18,7 @@ FAKE_VALUE_FUNC(int, debug_accessory, int, bool);
 FAKE_VALUE_FUNC(int, debug_detach, int);
 FAKE_VALUE_FUNC(int, hard_reset_reinit, int);
 FAKE_VALUE_FUNC(int, set_frs_enable, int, int);
+FAKE_VOID_FUNC(tcpc_dump_std_registers, int);
 
 struct tcpm_header_fixture {
 	/* The original driver pointer that gets restored after the tests */
@@ -167,6 +168,21 @@ ZTEST_F(tcpm_header, test_tcpm_header_get_chip_info__unimplemented)
 		      tcpm_get_chip_info(TCPM_TEST_PORT, 0, NULL));
 }
 
+ZTEST_F(tcpm_header, test_tcpm_header_dump_registers__std)
+{
+	Z_TEST_SKIP_IFNDEF(CONFIG_PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP);
+
+	/*
+	 * The driver does not implement dump_registers, so the
+	 * standard ones should be dumped instead.
+	 */
+	tcpm_dump_registers(TCPM_TEST_PORT);
+
+	zassert_equal(1, tcpc_dump_std_registers_fake.call_count);
+	zassert_equal(TCPM_TEST_PORT,
+		      tcpc_dump_std_registers_fake.arg0_history[0]);
+}
+
 static void *tcpm_header_setup(void)
 {
 	static struct tcpm_header_fixture fixture;
@@ -184,6 +200,7 @@ static void tcpm_header_before(void *state)
 	RESET_FAKE(debug_detach);
 	RESET_FAKE(hard_reset_reinit);
 	RESET_FAKE(set_frs_enable);
+	RESET_FAKE(tcpc_dump_std_registers);
 
 	fixture->mock_driver = (struct tcpm_drv){ 0 };
 	fixture->saved_driver_ptr = tcpc_config[TCPM_TEST_PORT].drv;

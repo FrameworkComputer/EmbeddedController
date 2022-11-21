@@ -12,6 +12,7 @@ tests:
       - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
       - CONFIG_PLATFORM_EC_USB_PD_DPS=y
       - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+      - CONFIG_PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP=y
   drivers.default.bring_up:
     timeout: 240
     extra_args: CONF_FILE="prj.conf;default/prj.conf"
