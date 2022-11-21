@@ -5,20 +5,21 @@
  * Cros Board Info utility
  */
 
-#include <compile_time_macros.h>
+#include "crc8.h"
+#include "cros_board_info.h"
+
 #include <errno.h>
-#include <dirent.h>
-#include <getopt.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 
-#include "cros_board_info.h"
-#include "crc8.h"
+#include <compile_time_macros.h>
+#include <dirent.h>
+#include <getopt.h>
+#include <unistd.h>
 
 #define ARGS_MASK_BOARD_VERSION BIT(0)
 #define ARGS_MASK_FILENAME BIT(1)

@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "config.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <err.h>
 #include <getopt.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-
 #include <openssl/sha.h>
-
-#include "config.h"
+#include <unistd.h>
 
 static void print_hex(FILE *out, uint8_t *digest, int len, int last)
 {
