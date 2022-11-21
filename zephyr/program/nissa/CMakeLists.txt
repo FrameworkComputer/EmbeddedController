@@ -57,6 +57,7 @@ endif()
 if(DEFINED CONFIG_BOARD_XIVU)
 	project(xivu)
 	zephyr_library_sources(
+			"xivu/src/form_factor.c"
 			"xivu/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "xivu/src/usbc.c")
