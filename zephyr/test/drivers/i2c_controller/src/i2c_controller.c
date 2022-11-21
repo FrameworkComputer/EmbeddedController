@@ -273,6 +273,47 @@ ZTEST_F(i2c_controller, write_offset16_block)
 		      expected);
 }
 
+ZTEST_F(i2c_controller, i2c_xfer_unlocked__error_paths)
+{
+	uint8_t out_buffer[1];
+	int out_size;
+	uint8_t in_buffer[1];
+	int in_size;
+	int flags;
+
+	/* First confirm i2c_xfer_unlocked() works with a lock. */
+	out_buffer[0] = 0;
+	out_size = 1;
+	in_size = 1;
+	flags = I2C_XFER_STOP;
+
+	i2c_lock(fixture->port, 1);
+	zassert_equal(i2c_port_is_locked(fixture->port), 1,
+		      "Port %d not locked", fixture->port);
+	zassert_ok(i2c_xfer_unlocked(fixture->port, fixture->addr, out_buffer,
+				     out_size, in_buffer, in_size, flags));
+	i2c_lock(fixture->port, 0);
+	zassert_equal(i2c_port_is_locked(fixture->port), 0, "Port %d is locked",
+		      fixture->port);
+
+	/* Try the transfer without a lock. */
+	zassert_equal(i2c_xfer_unlocked(fixture->port, fixture->addr,
+					out_buffer, out_size, in_buffer,
+					in_size, flags),
+		      EC_ERROR_INVAL);
+
+	/* Set an invalid flag on the transfer, expected to still pass */
+	i2c_lock(fixture->port, 1);
+	zassert_equal(i2c_port_is_locked(fixture->port), 1,
+		      "Port %d not locked", fixture->port);
+	zassert_ok(i2c_xfer_unlocked(
+		fixture->port, fixture->addr | I2C_FLAG_ADDR_IS_SPI, out_buffer,
+		out_size, in_buffer, in_size, flags));
+	i2c_lock(fixture->port, 0);
+	zassert_equal(i2c_port_is_locked(fixture->port), 0, "Port %d is locked",
+		      fixture->port);
+}
+
 static struct i2c_controller_fixture i2c_controller_fixture;
 
 static void *setup(void)
