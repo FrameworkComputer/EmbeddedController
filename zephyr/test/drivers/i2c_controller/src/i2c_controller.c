@@ -121,6 +121,14 @@ ZTEST_F(i2c_controller, field_update16)
 
 	zassert_equal(set_value, actual, "got %04x, expected %04x", actual,
 		      set_value);
+
+	/* Force a failure */
+	set_value = 0x0001;
+	mask = 0x0001;
+	i2c_common_emul_set_read_fail_reg(&fixture->emul_data->common, 0);
+	zassert_equal(i2c_field_update16(fixture->port, fixture->addr, 0, mask,
+					 set_value),
+		      EC_ERROR_INVAL);
 }
 
 ZTEST_F(i2c_controller, read_offset16__one_byte)
