@@ -83,6 +83,7 @@ child-binding:
         Enum values used in the source code to refer to the ADC channels
       enum:
       - ADC_AMON_BMON
+      - ADC_BASE_DET
       - ADC_BOARD_ID_0
       - ADC_BOARD_ID_1
       - ADC_CORE_IMON1
