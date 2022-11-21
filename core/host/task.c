@@ -5,15 +5,6 @@
 
 /* Task scheduling / events module for Chrome EC operating system */
 
-#include <malloc.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <signal.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "atomic.h"
 #include "common.h"
 #include "console.h"
@@ -22,6 +13,16 @@
 #include "task_id.h"
 #include "test_util.h"
 #include "timer.h"
+
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <malloc.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 #define SIGNAL_INTERRUPT SIGUSR1
 

@@ -7,13 +7,13 @@
 
 #ifndef ___INIT
 #define ___INIT
-#include <stddef.h>
-#include <stdint.h>
-
 #include "compiler.h"
 #include "config.h"
 #include "panic-internal.h"
 #include "task.h"
+
+#include <stddef.h>
+#include <stdint.h>
 #endif /* __INIT */
 
 typedef void (*func)(void);

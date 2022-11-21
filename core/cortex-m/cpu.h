@@ -8,9 +8,10 @@
 #ifndef __CROS_EC_CPU_H
 #define __CROS_EC_CPU_H
 
-#include <stdint.h>
 #include "compile_time_macros.h"
 #include "debug.h"
+
+#include <stdint.h>
 
 /* Macro to access 32-bit registers */
 #define CPUREG(addr) (*(volatile uint32_t *)(addr))

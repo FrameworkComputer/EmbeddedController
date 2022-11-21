@@ -5,14 +5,14 @@
 
 /* Timer module */
 
-#include <stdint.h>
-#include <stdio.h>
-
 #include "builtin/assert.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdint.h>
+#include <stdio.h>
 
 static timestamp_t boot_time;
 static int time_set;

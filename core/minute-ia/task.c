@@ -16,14 +16,14 @@
 #include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
+#include "hpet.h"
+#include "interrupts.h"
 #include "link_defs.h"
 #include "panic.h"
 #include "task.h"
+#include "task_defs.h"
 #include "timer.h"
 #include "util.h"
-#include "task_defs.h"
-#include "interrupts.h"
-#include "hpet.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
