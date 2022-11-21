@@ -15,14 +15,14 @@ void watchdog_reload(void)
 {
 }
 
-static void test_i2c_port_count(void)
+ZTEST_USER(i2c, test_i2c_port_count)
 {
 	zassert_equal(I2C_PORT_COUNT, 2,
 		      "I2C_PORT_COUNT expected to be 2 but was %d",
 		      I2C_PORT_COUNT);
 }
 
-static void test_i2c_lock(void)
+ZTEST_USER(i2c, test_i2c_lock)
 {
 	i2c_lock(I2C_PORT_ACCEL, 1);
 	zassert_equal(i2c_port_is_locked(I2C_PORT_EEPROM), 1,
@@ -54,10 +54,4 @@ static void test_i2c_lock(void)
 	i2c_lock(I2C_PORT_EEPROM, 0);
 }
 
-/* Test case main entry. */
-void test_main(void)
-{
-	ztest_test_suite(test_i2c, ztest_user_unit_test(test_i2c_port_count),
-			 ztest_user_unit_test(test_i2c_lock));
-	ztest_run_test_suite(test_i2c);
-}
+ZTEST_SUITE(i2c, NULL, NULL, NULL, NULL, NULL);
