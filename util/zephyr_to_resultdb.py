@@ -50,7 +50,7 @@ def translate_duration(testcase):
     if not time:
         return None
 
-    return f"{time}ms"
+    return f"{float(time)/1000:.9f}s"
 
 
 def testcase_summary(testcase):
