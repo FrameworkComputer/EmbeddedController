@@ -61,6 +61,29 @@ ZTEST_F(i2c_controller, write_read32_be)
 		      expected);
 }
 
+ZTEST_F(i2c_controller, write_read16_be)
+{
+	uint16_t expected = 0x1122;
+	int actual;
+
+	zassert_ok(i2c_write16(fixture->port,
+			       fixture->addr | I2C_FLAG_BIG_ENDIAN, 0,
+			       expected));
+
+	/* Get the first two bytes of the register space as a uint16_t */
+	actual = __bswap_16(*((uint16_t *)&fixture->emul_data->regs[0]));
+
+	zassert_equal(expected, actual, "got %04x, expected %08x", actual,
+		      expected);
+
+	/* Now read back through I2C API */
+	zassert_ok(i2c_read16(fixture->port,
+			      fixture->addr | I2C_FLAG_BIG_ENDIAN, 0, &actual));
+
+	zassert_equal(expected, actual, "got %04x, expected %04x",
+		      (uint16_t)actual, expected);
+}
+
 ZTEST_F(i2c_controller, read32_fail)
 {
 	int ret;
