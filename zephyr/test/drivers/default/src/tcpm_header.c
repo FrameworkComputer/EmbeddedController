@@ -150,6 +150,17 @@ ZTEST_F(tcpm_header, test_tcpm_header_set_frs_enable__implemented)
 	zassert_equal(driver_return_code, res);
 }
 
+ZTEST_F(tcpm_header, test_tcpm_header_tcpc_get_bist_test_mode__unimplemented)
+{
+	int res;
+	bool enabled = true; /* Should be overwritten to false */
+
+	res = tcpc_get_bist_test_mode(TCPM_TEST_PORT, &enabled);
+
+	zassert_equal(EC_ERROR_UNIMPLEMENTED, res);
+	zassert_false(enabled);
+}
+
 static void *tcpm_header_setup(void)
 {
 	static struct tcpm_header_fixture fixture;
