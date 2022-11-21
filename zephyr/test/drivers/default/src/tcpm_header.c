@@ -161,6 +161,12 @@ ZTEST_F(tcpm_header, test_tcpm_header_tcpc_get_bist_test_mode__unimplemented)
 	zassert_false(enabled);
 }
 
+ZTEST_F(tcpm_header, test_tcpm_header_get_chip_info__unimplemented)
+{
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      tcpm_get_chip_info(TCPM_TEST_PORT, 0, NULL));
+}
+
 static void *tcpm_header_setup(void)
 {
 	static struct tcpm_header_fixture fixture;
