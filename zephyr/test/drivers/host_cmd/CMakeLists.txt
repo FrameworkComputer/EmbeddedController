@@ -25,3 +25,8 @@ target_sources(app PRIVATE
     src/usb_pd_control.c
     src/usb_pd_host_cmd.c
 )
+
+add_subdirectory(
+    ${PLATFORM_EC}/zephyr/test/drivers/mock_panic_output
+    mock_panic_output
+)

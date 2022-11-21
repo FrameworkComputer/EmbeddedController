@@ -292,6 +292,15 @@ struct panic_data *panic_get_data(void);
  */
 uintptr_t get_panic_data_start(void);
 
+#ifdef CONFIG_BOARD_NATIVE_POSIX
+/**
+ * @brief Test-only function for accessing the pdata_ptr object.
+ *
+ * @return struct panic_data* pdata_ptr
+ */
+struct panic_data *test_get_panic_data_pointer(void);
+#endif
+
 /*
  * Return a pointer to panic_data structure that can be safely written.
  * Please note that this function can move jump data and jump tags.

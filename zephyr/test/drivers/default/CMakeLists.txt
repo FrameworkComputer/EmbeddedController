@@ -97,6 +97,11 @@ target_sources(app PRIVATE
     src/watchdog.c
 )
 
+add_subdirectory(
+    ${PLATFORM_EC}/zephyr/test/drivers/mock_panic_output
+    mock_panic_output
+)
+
 # This test does not work when power functions are mocked, so only run it for
 # the plain `drivers.default` test case.
 zephyr_library_sources_ifndef(CONFIG_POWER_SEQUENCE_MOCK src/chipset.c)

@@ -196,13 +196,13 @@ static uint32_t get_panic_data_size(void)
  * should be used when we are sure that we don't need it.
  */
 #ifdef CONFIG_BOARD_NATIVE_POSIX
-struct panic_data *get_panic_data_write(void)
+struct panic_data *test_get_panic_data_pointer(void)
 {
 	return pdata_ptr;
 }
-#else
-/* LCOV_EXCL_START - Can't cover non posix lines (yet) */
-struct panic_data *get_panic_data_write(void)
+#endif
+
+test_mockable struct panic_data *get_panic_data_write(void)
 {
 	/*
 	 * Pointer to panic_data structure. It may not point to
@@ -295,8 +295,6 @@ struct panic_data *get_panic_data_write(void)
 
 	return pdata_ptr;
 }
-/* LCOV_EXCL_STOP */
-#endif /* CONFIG_BOARD_NATIVE_POSIX */
 
 static void panic_init(void)
 {
