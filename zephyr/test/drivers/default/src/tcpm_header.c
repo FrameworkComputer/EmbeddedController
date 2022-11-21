@@ -126,6 +126,20 @@ ZTEST_F(tcpm_header, test_tcpm_header_hard_reset_reinit__implemented)
 	zassert_equal(driver_return_code, res);
 }
 
+ZTEST_F(tcpm_header, test_tcpm_header_tcpc_has_frs_control__flag)
+{
+	Z_TEST_SKIP_IFNDEF(CONFIG_PLATFORM_EC_USB_PD_FRS);
+	Z_TEST_SKIP_IFDEF(CONFIG_PLATFORM_EC_USB_PD_FRS_TCPC);
+
+	/* Determined by tcpc flag when USB_PD_FRS_TCPC is not set. */
+
+	tcpc_config[TCPM_TEST_PORT].flags = 0;
+	zassert_equal(0, tcpm_tcpc_has_frs_control(TCPM_TEST_PORT));
+
+	tcpc_config[TCPM_TEST_PORT].flags = TCPC_FLAGS_CONTROL_FRS;
+	zassert_equal(1, tcpm_tcpc_has_frs_control(TCPM_TEST_PORT));
+}
+
 ZTEST_F(tcpm_header, test_tcpm_header_set_frs_enable__unimplemented)
 {
 	Z_TEST_SKIP_IFNDEF(CONFIG_PLATFORM_EC_USB_PD_FRS);
