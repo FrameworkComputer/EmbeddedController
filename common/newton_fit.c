@@ -5,9 +5,10 @@
 
 #include "common.h"
 #include "console.h"
-#include "newton_fit.h"
 #include "math.h"
 #include "math_util.h"
+#include "newton_fit.h"
+
 #include <string.h>
 
 #define CPRINTS(fmt, args...) cprints(CC_MOTION_SENSE, fmt, ##args)

@@ -12,9 +12,9 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "system.h"
-#include "util.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 #include "watchdog.h"
 
 #ifdef CONFIG_ZEPHYR

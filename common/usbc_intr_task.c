@@ -5,8 +5,6 @@
 
 /* High-priority interrupt tasks implementations */
 
-#include <stdint.h>
-
 #include "builtin/assert.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -17,6 +15,8 @@
 #include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+
+#include <stdint.h>
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)

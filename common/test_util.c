@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #endif
 
-#include <assert.h>
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -19,6 +18,8 @@
 #include "task.h"
 #include "test_util.h"
 #include "util.h"
+
+#include <assert.h>
 
 struct test_util_tag {
 	uint8_t error_count;

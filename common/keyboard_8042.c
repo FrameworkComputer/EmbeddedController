@@ -5,8 +5,9 @@
  * 8042 keyboard protocol
  */
 
-#include "button.h"
+#include "atkbd_protocol.h"
 #include "builtin/assert.h"
+#include "button.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -14,7 +15,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i8042_protocol.h"
-#include "atkbd_protocol.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"

@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include "builtin/assert.h"
 #include "bluetooth_le.h"
-#include "util.h"
+#include "builtin/assert.h"
 #include "console.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_BLUETOOTH_LE, format, ##args)
 

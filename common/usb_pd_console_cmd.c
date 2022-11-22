@@ -7,8 +7,8 @@
 
 #include "console.h"
 #include "usb_pd.h"
-#include "util.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 #ifdef CONFIG_CMD_USB_PD_PE

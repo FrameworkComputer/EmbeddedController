@@ -9,8 +9,6 @@
  * section 5.2
  */
 
-#include <stdbool.h>
-#include <stdint.h>
 #include "atomic.h"
 #include "builtin/assert.h"
 #include "console.h"
@@ -18,6 +16,9 @@
 #include "usb_dp_alt_mode.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)

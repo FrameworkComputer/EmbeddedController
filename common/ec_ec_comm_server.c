@@ -5,16 +5,16 @@
  * EC-EC communication, task and functions for server.
  */
 
-#include "common.h"
 #include "battery.h"
 #include "charge_state_v2.h"
+#include "common.h"
 #include "console.h"
 #include "crc8.h"
 #include "ec_commands.h"
 #include "ec_ec_comm_server.h"
 #include "extpower.h"
-#include "hwtimer.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "queue.h"
 #include "queue_policies.h"
 #include "system.h"

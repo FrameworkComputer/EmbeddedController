@@ -10,8 +10,8 @@
  */
 
 #include "console.h"
-#include "usb_dp_alt_mode.h"
 #include "mock/dp_alt_mode_mock.h"
+#include "usb_dp_alt_mode.h"
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."

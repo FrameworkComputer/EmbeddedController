@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include "btle_hci_int.h"
-#include "btle_hci2.h"
 #include "bluetooth_le_ll.h"
+#include "btle_hci2.h"
+#include "btle_hci_int.h"
 #include "console.h"
 
 #ifdef CONFIG_BLUETOOTH_HCI_DEBUG

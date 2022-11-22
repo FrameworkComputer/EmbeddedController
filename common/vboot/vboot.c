@@ -17,13 +17,13 @@
 #include "host_command.h"
 #include "rsa.h"
 #include "rwsig.h"
-#include "stdbool.h"
 #include "sha256.h"
 #include "shared_mem.h"
+#include "stdbool.h"
 #include "system.h"
 #include "usb_pd.h"
-#include "vboot.h"
 #include "vb21_struct.h"
+#include "vboot.h"
 
 #define CPRINTS(format, args...) cprints(CC_VBOOT, "VB " format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_VBOOT, "VB " format, ##args)

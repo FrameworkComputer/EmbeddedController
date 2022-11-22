@@ -7,13 +7,13 @@
 #include "console.h"
 #include "consumer.h"
 #include "ec_commands.h"
-#include "queue_policies.h"
 #include "host_command.h"
 #include "printf.h"
+#include "queue_policies.h"
 #include "system.h"
+#include "usb-stream.h"
 #include "usb_api.h"
 #include "usb_hw.h"
-#include "usb-stream.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_USB, outstr)

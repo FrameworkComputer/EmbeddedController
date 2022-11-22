@@ -26,16 +26,16 @@
 #include "tcpm/tcpm.h"
 #include "timer.h"
 #include "typec_control.h"
-#include "util.h"
 #include "usb_charge.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_flags.h"
-#include "usb_pd_tcpm.h"
 #include "usb_pd_tcpc.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
+#include "util.h"
 #include "vboot.h"
 
 /* Flags to clear on a disconnect */

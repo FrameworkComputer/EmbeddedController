@@ -11,10 +11,10 @@
 #include "host_command.h"
 #include "host_command_heci.h"
 #include "hwtimer.h"
-#include "timer.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
 #include "power.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_COMMAND, outstr)

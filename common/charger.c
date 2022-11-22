@@ -12,10 +12,10 @@
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "printf.h"
 #include "util.h"
-#include "hooks.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)

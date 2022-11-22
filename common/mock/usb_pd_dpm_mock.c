@@ -8,9 +8,9 @@
  * Refer to USB PD 3.0 spec, version 2.0, sections 8.2 and 8.3
  */
 
-#include "usb_pd.h"
-#include "mock/usb_pd_dpm_mock.h"
 #include "memory.h"
+#include "mock/usb_pd_dpm_mock.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
 #ifndef TEST_BUILD

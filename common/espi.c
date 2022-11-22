@@ -6,9 +6,9 @@
 /* eSPI common functionality for Chrome EC */
 
 #include "common.h"
+#include "espi.h"
 #include "gpio.h"
 #include "registers.h"
-#include "espi.h"
 #include "timer.h"
 #include "util.h"
 

@@ -7,12 +7,12 @@
 
 #include "battery.h"
 #include "builtin/assert.h"
-#include "clock.h"
 #include "charge_state.h"
+#include "clock.h"
 #include "console.h"
 #include "crc8.h"
-#include "host_command.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "i2c_bitbang.h"
 #include "i2c_private.h"
@@ -22,12 +22,13 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "watchdog.h"
 #include "virtual_battery.h"
+#include "watchdog.h"
 
 #ifdef CONFIG_ZEPHYR
-#include <zephyr/drivers/i2c.h>
 #include "i2c/i2c.h"
+
+#include <zephyr/drivers/i2c.h>
 #endif /* CONFIG_ZEPHYR */
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)

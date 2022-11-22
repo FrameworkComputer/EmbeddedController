@@ -7,13 +7,13 @@
 
 #include "common.h"
 #include "console.h"
-#include "spi_nor.h"
-#include "shared_mem.h"
-#include "util.h"
-#include "task.h"
-#include "spi.h"
 #include "sfdp.h"
+#include "shared_mem.h"
+#include "spi.h"
+#include "spi_nor.h"
+#include "task.h"
 #include "timer.h"
+#include "util.h"
 #include "watchdog.h"
 
 #ifdef CONFIG_SPI_NOR_DEBUG

@@ -25,13 +25,13 @@
 #include "usb_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_dpm_sm.h"
 #include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
-#include "usb_pd_dpm_sm.h"
-#include "usb_tc_sm.h"
 #include "usb_tbt_alt_mode.h"
+#include "usb_tc_sm.h"
 
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"

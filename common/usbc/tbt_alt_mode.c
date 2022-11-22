@@ -9,8 +9,6 @@
  */
 
 #include "atomic.h"
-#include <stdbool.h>
-#include <stdint.h>
 #include "compile_time_macros.h"
 #include "console.h"
 #include "tcpm/tcpm.h"
@@ -22,6 +20,9 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 /*
  * Enter/Exit TBT mode with active cable

@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <stddef.h>
-
 #include "common.h"
 #include "printf.h"
 #include "uart.h"
+
+#include <stddef.h>
 
 static int __tx_char(void *context, int c)
 {

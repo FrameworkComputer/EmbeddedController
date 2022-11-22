@@ -6,14 +6,14 @@
 #include "accelgyro.h"
 #include "console.h"
 #include "hwtimer.h"
+#include "math_util.h"
 #include "mkbp_event.h"
 #include "motion_sense_fifo.h"
+#include "online_calibration.h"
+#include "stdbool.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "util.h"
-#include "math_util.h"
-#include "online_calibration.h"
-#include "stdbool.h"
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 

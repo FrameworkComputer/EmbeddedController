@@ -6,9 +6,9 @@
 
 #include "common.h"
 #include "console.h"
-#include "usb_mux.h"
-#include "mock/usb_mux_mock.h"
 #include "memory.h"
+#include "mock/usb_mux_mock.h"
+#include "usb_mux.h"
 
 #ifndef CONFIG_COMMON_RUNTIME
 #define cprints(format, args...)

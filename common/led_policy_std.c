@@ -6,14 +6,14 @@
  * This assumes a red/green battery led and a single power led.
  */
 
-#include "gpio.h"
-#include "hooks.h"
 #include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "gpio.h"
+#include "hooks.h"
 #include "led_common.h"
-#include "util.h"
 #include "lid_switch.h"
+#include "util.h"
 
 #ifdef CONFIG_LED_BAT_ACTIVE_LOW
 #define BAT_LED_ON 0

@@ -27,6 +27,7 @@
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
+#include "cros_version.h"
 #include "panic.h"
 #include "sysjump.h"
 #include "system.h"
@@ -36,7 +37,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "cros_version.h"
 #include "watchdog.h"
 
 /* Console output macros */

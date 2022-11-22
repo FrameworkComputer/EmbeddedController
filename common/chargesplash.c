@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-#include <string.h>
-
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -17,6 +14,9 @@
 #include "power_button.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdbool.h>
+#include <string.h>
 
 #define CPRINTS(format, args...) \
 	cprints(CC_USBCHARGE, "chargesplash: " format, ##args)

@@ -8,11 +8,11 @@
  * @brief Mock fpsensor private driver
  */
 
-#include <stdlib.h>
-
 #include "common.h"
 #include "fpsensor.h"
 #include "mock/fp_sensor_mock.h"
+
+#include <stdlib.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."

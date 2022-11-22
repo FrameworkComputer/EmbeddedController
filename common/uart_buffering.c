@@ -5,8 +5,6 @@
 
 /* Common code to do UART buffering and printing */
 
-#include <stdarg.h>
-
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -18,6 +16,8 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
+
+#include <stdarg.h>
 
 /* Macros to advance in the circular buffers */
 #define TX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_TX_BUF_SIZE - 1))

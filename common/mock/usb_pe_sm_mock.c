@@ -7,11 +7,11 @@
 
 #include "common.h"
 #include "console.h"
-#include "usb_pd.h"
-#include "usb_pe_sm.h"
-#include "mock/usb_pe_sm_mock.h"
 #include "memory.h"
+#include "mock/usb_pe_sm_mock.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pe_sm.h"
 
 #ifndef CONFIG_COMMON_RUNTIME
 #define cprints(format, args...)

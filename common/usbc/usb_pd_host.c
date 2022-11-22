@@ -5,8 +5,6 @@
  * Host commands for TCPMv2 USB PD module
  */
 
-#include <string.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
@@ -15,6 +13,8 @@
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
+
+#include <string.h>
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)

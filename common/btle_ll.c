@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include "bluetooth_le_ll.h"
 #include "bluetooth_le.h"
+#include "bluetooth_le_ll.h"
 #include "btle_hci_int.h"
-#include "util.h"
 #include "console.h"
 #include "radio.h"
 #include "radio_test.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 #ifdef CONFIG_BLUETOOTH_LL_DEBUG
 

@@ -4,16 +4,17 @@
  *
  * Mock Protocol Layer module.
  */
-#include <string.h>
 #include "common.h"
-#include "usb_emsg.h"
-#include "usb_pe_sm.h"
-#include "usb_prl_sm.h"
 #include "mock/usb_prl_mock.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_emsg.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pe_sm.h"
+#include "usb_prl_sm.h"
+
+#include <string.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."
