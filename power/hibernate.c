@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/init.h>
-#include <zephyr/logging/log.h>
-
-#include <ap_power/ap_power.h>
-#include <ap_power/ap_power_interface.h>
-
 #include "console.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
 #include "util.h"
+
+#include <zephyr/init.h>
+#include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
+#include <ap_power/ap_power_interface.h>
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 

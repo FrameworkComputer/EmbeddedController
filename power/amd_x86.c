@@ -13,15 +13,15 @@
 #include "hooks.h"
 #include "lid_switch.h"
 #include "lpc.h"
-#include "power/amd_x86.h"
 #include "power.h"
+#include "power/amd_x86.h"
 #include "power_button.h"
+#include "registers.h"
 #include "system.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "util.h"
 #include "wireless.h"
-#include "registers.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
