@@ -46,7 +46,11 @@ GPIO(ANALOG_PPVAR_PWR_IN_IMON_EC,    PIN(4, 2), GPIO_INPUT)
 
 /* Display */
 GPIO(EC_OVERRIDE_SCLR_EN,            PIN(D, 4), GPIO_OUT_HIGH)
-GPIO(EC_12VSC_EN,                    PIN(D, 2), GPIO_OUT_LOW)
+
+/* TODO(b/260063632): the gpio pin control is wip, setting to level high
+                      to enable the backlight by default */
+GPIO(EC_12VSC_EN,                    PIN(D, 2), GPIO_OUT_HIGH)
+
 GPIO(OSD_STS,                        PIN(4, 1), GPIO_INPUT)
 GPIO(DISP_MODE,                      PIN(A, 0), GPIO_INPUT)
 GPIO(PANEL_PWR_STS,                  PIN(9, 5), GPIO_INPUT)
@@ -57,7 +61,9 @@ GPIO(WP_EC,                          PIN(C, 3), GPIO_INPUT)
 GPIO(OSD_INT,                        PIN(0, 5), GPIO_INPUT)
 
 /* Audio */
-GPIO(EC_AMP_SD,                      PIN(5, 6), GPIO_OUT_LOW)
+/* TODO(b/260063632): the gpio pin control is wip, setting to level high
+                      to enable the speaker by default */
+GPIO(EC_AMP_SD,                      PIN(5, 6), GPIO_OUT_HIGH)
 
 /* BarrelJack */
 GPIO(EN_PPVAR_BJ_ADP_L,              PIN(0, 7), GPIO_OUT_LOW)
