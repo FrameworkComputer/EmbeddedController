@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/logging/log.h>
-#include "common.h"
 #include "accelgyro.h"
+#include "common.h"
 #include "cros_board_info.h"
 #include "hooks.h"
 #include "motionsense_sensors.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(crystaldrift, CONFIG_SKYRIM_LOG_LEVEL);
 
