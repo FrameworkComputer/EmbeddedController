@@ -606,6 +606,18 @@ void host_cmd_typec_control_vdm_req(int port, struct typec_vdm_req vdm_req)
 		   "Failed to send Type-C control for port %d", port);
 }
 
+struct ec_response_typec_vdm_response host_cmd_typec_vdm_response(int port)
+{
+	struct ec_params_typec_status params = { .port = port };
+	struct ec_response_typec_vdm_response response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_TYPEC_VDM_RESPONSE, 0, response, params);
+
+	zassert_ok(host_command_process(&args),
+		   "Failed to get Type-C state for port %d", port);
+	return response;
+}
+
 void host_cmd_usb_pd_get_amode(
 	uint8_t port, uint16_t svid_idx,
 	struct ec_params_usb_pd_get_mode_response *response, int *response_size)

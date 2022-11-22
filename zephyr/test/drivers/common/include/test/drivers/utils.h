@@ -178,6 +178,17 @@ static inline struct ec_response_typec_status host_cmd_typec_status(int port)
 	return response;
 }
 
+/**
+ * Run the host command to get the most recent VDM response for the AP
+ *
+ * This function asserts a successful host command processing and will make a
+ * call to the zassert_* API. A failure here will fail the calling test.
+ *
+ * @param port The USB port to get info from.
+ * @return The result of the query.
+ */
+struct ec_response_typec_vdm_response host_cmd_typec_vdm_response(int port);
+
 static inline struct ec_response_usb_pd_control
 host_cmd_usb_pd_control(int port, enum usb_pd_control_swap swap)
 {
