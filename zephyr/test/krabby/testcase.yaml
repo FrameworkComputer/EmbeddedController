@@ -15,4 +15,3 @@ tests:
     extra_configs:
       - CONFIG_TEST_TENTACRUEL=y
       - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
-      - CONFIG_ADC_EMUL=y

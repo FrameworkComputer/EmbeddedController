@@ -154,7 +154,6 @@ tests:
       - CONFIG_PLATFORM_EC_RTC=y
       - CONFIG_PLATFORM_EC_HOSTCMD=y
       - CONFIG_PLATFORM_EC_HOSTCMD_RTC=y
-      - CONFIG_EMUL_RTC=y
   drivers.system:
     tags:
       common

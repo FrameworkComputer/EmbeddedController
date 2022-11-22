@@ -13,9 +13,6 @@ config LOG
 	default y
 	imply LOG_DEFAULT_MINIMAL
 
-config GPIO_EMUL
-	default y if ARCH_POSIX
-
 config GPIO
 	default y if ARCH_POSIX
 
