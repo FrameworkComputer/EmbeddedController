@@ -55,6 +55,8 @@ static inline float fabsf(float v)
 	__asm__("fabs.s %0, %1" : "=f"(abs) : "f"(v));
 	return abs;
 }
+#elif CONFIG_BOARD_NATIVE_POSIX
+#include <math.h>
 #else
 #error "Unsupported core: please add an implementation"
 #endif
