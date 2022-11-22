@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <string.h>
 #include "common.h"
 #include "cts_common.h"
 #include "cts_i2c.h"
@@ -13,6 +12,8 @@
 #include "timer.h"
 #include "uart.h"
 #include "watchdog.h"
+
+#include <string.h>
 
 static uint8_t inbox[I2C_MAX_HOST_PACKET_SIZE + 2];
 static char data_received;

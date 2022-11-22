@@ -4,13 +4,12 @@
  */
 
 #include "common.h"
+#include "cts_common.h"
 #include "gpio.h"
-#include "watchdog.h"
-#include "uart.h"
 #include "task.h"
 #include "timer.h"
+#include "uart.h"
 #include "watchdog.h"
-#include "cts_common.h"
 
 enum cts_rc sync_test(void)
 {
