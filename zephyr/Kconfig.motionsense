@@ -93,10 +93,9 @@ config PLATFORM_EC_LID_ANGLE
       peripheral devices(refer "Lid Angle Update" below).
       # TODO(b/173507858): add more detail after .dts change
 
-if PLATFORM_EC_LID_ANGLE
-
 config PLATFORM_EC_LID_ANGLE_UPDATE
     bool "Lid Angle Update"
+    depends on PLATFORM_EC_LID_ANGLE
     help
       Enable this to allow using the lid angle measurement to determine if
       peripheral devices should be enabled or disabled, like key scanning,
@@ -127,7 +126,6 @@ config PLATFORM_EC_GMR_TABLET_MODE
       in common/tablet_mode.c.
 
 endif # PLATFORM_EC_TABLET_MODE
-endif # PLATFORM_EC_LID_ANGLE
 
 config PLATFORM_EC_CONSOLE_CMD_ACCELS
     bool "Console commands: accels, accelrate, accelinit, accelinfo, etc."
