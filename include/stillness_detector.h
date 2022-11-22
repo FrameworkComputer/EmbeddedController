@@ -9,6 +9,7 @@
 #include "common.h"
 #include "math_util.h"
 #include "stdbool.h"
+
 #include <stdint.h>
 
 struct still_det {

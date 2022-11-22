@@ -4,8 +4,8 @@
  */
 /* Mock for the TCPC interface */
 
-#include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 
 /* Controller for TCPC state */
 struct mock_tcpc_ctrl {

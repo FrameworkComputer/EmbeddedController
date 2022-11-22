@@ -8,13 +8,14 @@
 #ifndef __CROS_EC_USB_PD_H
 #define __CROS_EC_USB_PD_H
 
-#include <stdbool.h>
-#include <stdint.h>
 #include "common.h"
 #include "ec_commands.h"
 #include "usb_pd_tbt.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_vdo.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 /* PD Host command timeout */
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND

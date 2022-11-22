@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_EVENT_LOG_H
 #define __CROS_EC_EVENT_LOG_H
 
-#include "config.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include "config.h"
 #include "stddef.h"
 
 enum flash_event_type {

@@ -11,12 +11,12 @@
 #ifndef __CROS_EC_KEYBOARD_RAW_H
 #define __CROS_EC_KEYBOARD_RAW_H
 
-#include <stdbool.h>
-
 #include "builtin/assert.h"
 #include "common.h"
 #include "gpio_signal.h"
 #include "keyboard_config.h"
+
+#include <stdbool.h>
 
 /* Column values for keyboard_raw_drive_column() */
 enum keyboard_column_index {

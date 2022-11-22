@@ -8,14 +8,14 @@
 #ifndef __CROS_EC_SYSTEM_H
 #define __CROS_EC_SYSTEM_H
 
-#include <stdnoreturn.h>
-
 #include "atomic.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "timer.h"
+
+#include <stdnoreturn.h>
 
 #ifdef CONFIG_ZEPHYR
 #ifdef CONFIG_CPU_CORTEX_M

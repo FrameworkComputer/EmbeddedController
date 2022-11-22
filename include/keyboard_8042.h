@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_KEYBOARD_8042_H
 #define __CROS_EC_KEYBOARD_8042_H
 
-#include "common.h"
 #include "button.h"
+#include "common.h"
 
 /**
  * Called by power button handler and button interrupt handler.

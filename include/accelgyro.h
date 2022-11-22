@@ -6,8 +6,8 @@
 #ifndef __CROS_EC_ACCELGYRO_H
 #define __CROS_EC_ACCELGYRO_H
 
-#include "motion_sense.h"
 #include "math_util.h"
+#include "motion_sense.h"
 
 /* Header file for accelerometer / gyro drivers. */
 

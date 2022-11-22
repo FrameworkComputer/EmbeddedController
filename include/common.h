@@ -8,13 +8,14 @@
 #ifndef __CROS_EC_COMMON_H
 #define __CROS_EC_COMMON_H
 
-#include <stdint.h>
-#include <inttypes.h>
-
 #include "compile_time_macros.h"
+
+#include <inttypes.h>
+#include <stdint.h>
 
 #ifdef CONFIG_ZEPHYR
 #include "fpu.h"
+
 #include <zephyr/sys/util.h>
 #include <zephyr/toolchain.h>
 #ifdef CONFIG_ZTEST

@@ -8,9 +8,10 @@
 #ifndef __CROS_EC_FPSENSOR_H
 #define __CROS_EC_FPSENSOR_H
 
-#include <stdint.h>
 #include "common.h"
 #include "ec_commands.h"
+
+#include <stdint.h>
 
 #ifndef SPI_FP_DEVICE
 #define SPI_FP_DEVICE (&spi_devices[0])

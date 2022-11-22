@@ -19,8 +19,9 @@ extern "C" {
 #include "stack_trace.h"
 
 #ifdef CONFIG_ZTEST
-#include <zephyr/ztest.h>
 #include "ec_tasks.h"
+
+#include <zephyr/ztest.h>
 #endif /* CONFIG_ZTEST */
 
 /* This allows tests to be easily commented out in run_test for debugging */

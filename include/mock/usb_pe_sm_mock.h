@@ -8,8 +8,8 @@
 #define __MOCK_USB_PE_SM_MOCK_H
 
 #include "common.h"
-#include "usb_pe_sm.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pe_sm.h"
 
 struct mock_pe_port_t {
 	enum tcpci_msg_type sop;

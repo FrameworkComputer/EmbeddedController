@@ -8,11 +8,10 @@
 #ifndef __CROS_EC_USB_PRL_H
 #define __CROS_EC_USB_PRL_H
 #include "common.h"
+#include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
-#include "timer.h"
-#include "usb_pd_tcpm.h"
 
 /**
  * Returns TX success time stamp.

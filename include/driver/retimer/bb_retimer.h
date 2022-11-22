@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_BB_RETIMER_H
 #define __CROS_EC_BB_RETIMER_H
 
-#include "usb_mux.h"
 #include "driver/retimer/bb_retimer_public.h"
+#include "usb_mux.h"
 
 /* Burnside Bridge I2C Configuration Space */
 #define BB_RETIMER_REG_VENDOR_ID 0

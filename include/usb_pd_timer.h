@@ -8,10 +8,10 @@
 #ifndef __CROS_EC_USB_PD_TIMER_H
 #define __CROS_EC_USB_PD_TIMER_H
 
-#include <stdbool.h>
-
 #include "atomic.h"
 #include "atomic_bit.h"
+
+#include <stdbool.h>
 
 /*
  * List of all timers that will be managed by usb_pd_timer

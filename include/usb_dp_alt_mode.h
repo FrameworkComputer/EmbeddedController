@@ -12,10 +12,10 @@
 #ifndef __CROS_EC_USB_DP_ALT_MODE_H
 #define __CROS_EC_USB_DP_ALT_MODE_H
 
-#include <stdint.h>
-
 #include "tcpm/tcpm.h"
 #include "usb_pd_dpm_sm.h"
+
+#include <stdint.h>
 
 /*
  * Initialize DP state for the specified port.

@@ -67,9 +67,9 @@ const int gpio_ih_count = ARRAY_SIZE(gpio_irq_handlers);
 #define PIN(a, b...)                    \
 	static const int _pin_##a##_##b \
 		__attribute__((unused, section(".unused"))) = __LINE__;
-#include "gpio.wrap"
-
 #include "ioexpander.h"
+
+#include "gpio.wrap"
 #define IOEX_EXPIN(ioex, port, index) (ioex), (port), BIT(index)
 
 /*

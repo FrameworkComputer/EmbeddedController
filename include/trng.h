@@ -5,9 +5,10 @@
 #ifndef __EC_INCLUDE_TRNG_H
 #define __EC_INCLUDE_TRNG_H
 
-#include <common.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <common.h>
 
 /**
  * Initialize the true random number generator.

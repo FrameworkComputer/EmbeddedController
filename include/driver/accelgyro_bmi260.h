@@ -10,8 +10,8 @@
 
 #include "accelgyro.h"
 #include "common.h"
-#include "mag_bmm150.h"
 #include "driver/accelgyro_bmi260_public.h"
+#include "mag_bmm150.h"
 
 #define BMI260_CHIP_ID 0x00
 /* BMI260 chip identifier */

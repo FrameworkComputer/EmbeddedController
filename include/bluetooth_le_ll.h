@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "btle_hci_int.h"
+#include "common.h"
 
 enum ll_state_t {
 	UNINITIALIZED,

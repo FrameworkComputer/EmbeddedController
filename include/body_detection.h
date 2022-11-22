@@ -6,8 +6,8 @@
 #ifndef __CROS_EC_BODY_DETECTION_H
 #define __CROS_EC_BODY_DETECTION_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 enum body_detect_states { BODY_DETECTION_OFF_BODY, BODY_DETECTION_ON_BODY };
 

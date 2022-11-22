@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
@@ -12,6 +10,8 @@
 #include "ec_ec_comm_client.h"
 #include "ocpc.h"
 #include "timer.h"
+
+#include <stdbool.h>
 
 #ifndef __CROS_EC_CHARGE_STATE_V2_H
 #define __CROS_EC_CHARGE_STATE_V2_H

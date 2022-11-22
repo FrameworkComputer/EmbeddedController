@@ -8,11 +8,11 @@
 #ifndef __CROS_EC_KEYBOARD_8042_SHAREDLIB_H
 #define __CROS_EC_KEYBOARD_8042_SHAREDLIB_H
 
-#include <stddef.h>
-
 #include "button.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
+
+#include <stddef.h>
 
 struct button_8042_t {
 	uint16_t scancode;

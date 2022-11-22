@@ -21,8 +21,9 @@
  */
 #ifdef CONFIG_ZEPHYR
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/dt-bindings/gpio/nuvoton-npcx-gpio.h>
 #include <zephyr/dt-bindings/gpio/ite-it8xxx2-gpio.h>
+#include <zephyr/dt-bindings/gpio/nuvoton-npcx-gpio.h>
+
 #include <dt-bindings/native-posix-gpio.h>
 
 /*

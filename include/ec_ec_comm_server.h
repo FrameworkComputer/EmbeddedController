@@ -8,9 +8,10 @@
 #ifndef EC_EC_COMM_SERVER_H_
 #define EC_EC_COMM_SERVER_H_
 
-#include <stdint.h>
 #include "consumer.h"
 #include "queue.h"
+
+#include <stdint.h>
 
 extern struct queue const ec_ec_comm_server_input;
 extern struct queue const ec_ec_comm_server_output;

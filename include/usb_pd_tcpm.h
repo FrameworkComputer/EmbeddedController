@@ -8,11 +8,12 @@
 #ifndef __CROS_EC_USB_PD_TCPM_H
 #define __CROS_EC_USB_PD_TCPM_H
 
-#include <stdbool.h>
 #include "common.h"
 #include "compiler.h"
 #include "ec_commands.h"
 #include "i2c.h"
+
+#include <stdbool.h>
 
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT (100 * MSEC)

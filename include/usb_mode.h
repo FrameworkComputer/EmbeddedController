@@ -12,10 +12,10 @@
 #ifndef __CROS_EC_USB_MODE_H
 #define __CROS_EC_USB_MODE_H
 
-#include <stdint.h>
-
 #include "tcpm/tcpm.h"
 #include "usb_pd_tcpm.h"
+
+#include <stdint.h>
 
 /*
  * Initialize USB4 state for the specified port.

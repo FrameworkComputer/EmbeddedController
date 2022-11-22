@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_DPS__H
 #define __CROS_EC_DPS__H
 
-#include <stdbool.h>
-
 #include "common.h"
+
+#include <stdbool.h>
 
 #define DPS_FLAG_DISABLED BIT(0)
 #define DPS_FLAG_NO_SRCCAP BIT(1)

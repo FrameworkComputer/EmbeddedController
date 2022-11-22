@@ -8,10 +8,10 @@
 #ifndef __CROS_EC_MAG_CAL_H
 #define __CROS_EC_MAG_CAL_H
 
-#include "math_util.h"
-#include "mat44.h"
-#include "vec4.h"
 #include "kasa.h"
+#include "mat44.h"
+#include "math_util.h"
+#include "vec4.h"
 
 #define MAG_CAL_MAX_SAMPLES 0xffff
 #define MAG_CAL_MIN_BATCH_WINDOW_US (2 * SECOND)

@@ -8,8 +8,9 @@
 #ifndef __CROS_EC_USB_PD_TCPC_H
 #define __CROS_EC_USB_PD_TCPC_H
 
-#include <stdint.h>
 #include "usb_pd_tcpm.h"
+
+#include <stdint.h>
 
 /* If we are a TCPC but not a TCPM, then we implement the peripheral TCPCI */
 #if defined(CONFIG_USB_PD_TCPC) && !defined(CONFIG_USB_PD_TCPM_STUB)

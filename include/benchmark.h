@@ -8,17 +8,18 @@
 #ifndef __CROS_EC_BENCHMARK_H
 #define __CROS_EC_BENCHMARK_H
 
-#include <array>
-#include <optional>
-#include <functional>
 #include <stdint.h>
+
+#include <array>
+#include <functional>
+#include <optional>
 #include <string_view>
 
 extern "C" {
+#include "clock.h"
 #include "console.h"
 #include "timer.h"
 #include "util.h"
-#include "clock.h"
 #include "watchdog.h"
 }
 
