@@ -82,6 +82,15 @@ def build(opts):
     print(f"# Running {' '.join(cmd)}.")
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
+    # extra/rma_reset is used in chromeos-base/ec-utils-test
+    cmd = ["make", "-C", "extra/rma_reset", "clean"]
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+
+    cmd = ["make", "-C", "extra/rma_reset", f"-j{opts.cpus}"]
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+
     ec_dir = os.path.dirname(__file__)
     build_dir = os.path.join(ec_dir, "build")
     for build_target in sorted(os.listdir(build_dir)):
