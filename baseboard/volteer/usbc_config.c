@@ -9,17 +9,18 @@
 #include "charge_ramp.h"
 #include "charge_state.h"
 #include "common.h"
+#include "driver/charger/isl9241_public.h"
 #include "gpio.h"
 #include "task.h"
-#ifdef CONFIG_ZEPHYR
-#include "baseboard_usbc_config.h"
-#include "usbc_config.h"
-#endif
-#include "driver/charger/isl9241_public.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
+
+#ifdef CONFIG_ZEPHYR
+#include "baseboard_usbc_config.h"
+#include "usbc_config.h"
+#endif
 
 /******************************************************************************/
 void tcpc_alert_event(enum gpio_signal signal)
