@@ -61,7 +61,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "gelatin",
     "hammer",
     "hoho",
-    "jacuzzi",
     "kakadu",
     "kappa",
     "katsu",
@@ -286,6 +285,7 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "burnet",  # overflows flash
     "chocodile_vpdmcu",  # compilation error: b/254710459
     "fennel",  # overflows flash
+    "jacuzzi",  # overflows flash
     "juniper",  # overflows flash
     "kodama",  # overflows flash
     "makomo",  # overflows flash
