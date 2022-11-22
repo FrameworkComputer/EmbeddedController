@@ -833,7 +833,7 @@ int i2c_write_block(const int port, const uint16_t addr_flags, int offset,
 		if (rv)
 			continue;
 
-		if (I2C_USE_PEC(addr_flags)) {
+		if (IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(addr_flags)) {
 			rv = i2c_xfer_unlocked(port, addr_flags, data, len,
 					       NULL, 0, 0);
 			if (rv)
