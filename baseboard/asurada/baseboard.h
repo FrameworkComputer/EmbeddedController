@@ -183,8 +183,8 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
-#include "registers.h"
 #include "power/mt8192.h"
+#include "registers.h"
 
 void board_reset_pd_mcu(void);
 enum board_sub_board board_get_sub_board(void);

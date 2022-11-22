@@ -4,10 +4,10 @@
  */
 
 /* Volteer family-specific configuration */
-#include "common.h"
-#include "charger.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "charger.h"
+#include "common.h"
 #include "driver/charger/isl9241_public.h"
 #include "gpio.h"
 #ifdef CONFIG_ZEPHYR

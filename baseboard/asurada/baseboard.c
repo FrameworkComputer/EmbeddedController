@@ -8,15 +8,14 @@
 #include "adc.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charger.h"
-#include "charger.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
+#include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_lis2dw12.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/als_tcs3400.h"
 #include "driver/bc12/mt6360.h"
 #include "driver/charger/isl923x.h"
@@ -31,8 +30,8 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "regulator.h"
 #include "spi.h"
 #include "switch.h"
@@ -42,6 +41,7 @@
 #include "timer.h"
 #include "uart.h"
 
+/* This must be last. */
 #include "gpio_list.h"
 
 /* Wake-up pins for hibernate */

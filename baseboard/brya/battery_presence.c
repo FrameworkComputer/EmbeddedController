@@ -6,11 +6,11 @@
  * Each board should implement board_battery_info[] to define the specific
  * battery packs supported.
  */
-#include <stdbool.h>
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "common.h"
+
+#include <stdbool.h>
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 

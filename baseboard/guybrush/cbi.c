@@ -6,8 +6,8 @@
 /* Guybrush CrOS Board Info(CBI) utilities */
 
 #include "base_fw_config.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "cros_board_info.h"
 #include "hooks.h"
 

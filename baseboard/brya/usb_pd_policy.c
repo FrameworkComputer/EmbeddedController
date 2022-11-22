@@ -5,9 +5,6 @@
 
 /* Shared USB-C policy for Brya boards */
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
@@ -16,14 +13,16 @@
 #include "ec_commands.h"
 #include "gpio.h"
 #include "timer.h"
-#include "usbc_ppc.h"
 #include "usb_mux.h"
-#include "usb_pd.h"
 #include "usb_pd.h"
 #include "usb_pd_tbt.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_vdo.h"
+#include "usbc_ppc.h"
 #include "util.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)

@@ -4,22 +4,22 @@
  */
 
 /* Goroh family-specific USB-C configuration */
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "common.h"
 #include "compile_time_macros.h"
 #include "config.h"
 #include "console.h"
-#include "hooks.h"
-#include "driver/tcpm/it8xxx2_pd_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/ps8818_public.h"
+#include "driver/tcpm/it8xxx2_pd_public.h"
 #include "driver/tcpm/tcpci.h"
-#include "usb_pd.h"
-#include "usbc_ppc.h"
 #include "gpio.h"
 #include "gpio_signal.h"
+#include "hooks.h"
+#include "usb_pd.h"
+#include "usbc_ppc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 

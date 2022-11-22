@@ -240,13 +240,13 @@
 
 #ifndef __ASSEMBLER__
 
-#include <stdbool.h>
-#include <stdint.h>
-
+#include "baseboard_usbc_config.h"
 #include "cbi.h"
 #include "common.h"
-#include "baseboard_usbc_config.h"
 #include "extpower.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 /*
  * Check battery disconnect state.

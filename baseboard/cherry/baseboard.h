@@ -212,8 +212,8 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
-#include "registers.h"
 #include "power/mt8192.h"
+#include "registers.h"
 
 enum adc_channel {
 	ADC_VBUS, /* ADC 0 */

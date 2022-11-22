@@ -11,8 +11,8 @@
 #include "driver/ppc/sn5s330.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "tcpm/tcpci.h"
 #include "system.h"
+#include "tcpm/tcpci.h"
 #include "usbc_ppc.h"
 
 #ifdef CONFIG_ZEPHYR

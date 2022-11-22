@@ -243,10 +243,10 @@
 
 #ifndef __ASSEMBLER__
 
-#include "gpio_signal.h"
-#include "common.h"
 #include "baseboard_usbc_config.h"
 #include "cbi.h"
+#include "common.h"
+#include "gpio_signal.h"
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_CHARGER,

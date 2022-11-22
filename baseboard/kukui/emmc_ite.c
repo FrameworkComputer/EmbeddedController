@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "bootblock_data.h"
 #include "chipset.h"
 #include "console.h"
 #include "endian.h"
@@ -14,8 +15,6 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-
-#include "bootblock_data.h"
 
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 

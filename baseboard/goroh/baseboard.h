@@ -185,8 +185,8 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
-#include "registers.h"
 #include "power/falconlite.h"
+#include "registers.h"
 
 int board_get_version(void);
 void board_reset_pd_mcu(void);

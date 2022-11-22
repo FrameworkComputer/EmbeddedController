@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "cbi_ec_fw_config.h"
+#include "common.h"
 #include "cros_board_info.h"
 
 /****************************************************************************

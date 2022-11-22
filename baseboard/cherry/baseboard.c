@@ -8,9 +8,9 @@
 #include "adc.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charger.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
+#include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -29,8 +29,8 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "regulator.h"
 #include "spi.h"
 #include "switch.h"
@@ -41,10 +41,10 @@
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
-#include "usbc_ppc.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_tc_sm.h"
+#include "usbc_ppc.h"
 
 static void bc12_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
