@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "ec_commands.h"
+#include "mpsse.h"
+
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <unistd.h>
-
-#include "mpsse.h"
-
-#include "ec_commands.h"
 
 static int opt_verbose;
 

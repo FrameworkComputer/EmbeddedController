@@ -3,18 +3,19 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "simulation.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <pthread.h>
+#include <stdarg.h>
 #include <stdint.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
+#include <string.h>
 #include <time.h>
 
-#include "simulation.h"
+#include <pthread.h>
 
 static void *(*thread_fns[])(void *) = {
 	entry_windows,
