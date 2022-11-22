@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BASE32_H
 #define __CROS_EC_BASE32_H
 
+#include <stdint.h>
+
 /* Symbol map for base32 encoding */
 extern const char base32_map[33];
 
