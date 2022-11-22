@@ -275,6 +275,9 @@ static void board_int_init(void)
 
 	/* Enable CCD Mode interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ccd_mode));
+
+	/* Enable DC jack interrupt */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_dc_jack_present));
 }
 
 static int board_pre_task_peripheral_init(const struct device *unused)
