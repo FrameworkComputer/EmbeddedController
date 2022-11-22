@@ -244,7 +244,7 @@ int board_set_active_charge_port(int port)
 	}
 
 	/* Check if the port is sourcing VBUS. */
-	if (tcpm_get_src_ctrl(port)) {
+	if (ppc_is_sourcing_vbus(port)) {
 		CPRINTSUSB("Skip enable C%d", port);
 		return EC_ERROR_INVAL;
 	}

@@ -76,7 +76,7 @@ int ppc_init(int port)
 	return rv;
 }
 
-int ppc_is_sourcing_vbus(int port)
+test_mockable int ppc_is_sourcing_vbus(int port)
 {
 	int rv = 0;
 	const struct ppc_config_t *ppc;

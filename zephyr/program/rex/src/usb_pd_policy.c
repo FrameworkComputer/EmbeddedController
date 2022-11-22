@@ -67,7 +67,7 @@ int pd_set_power_supply_ready(int port)
 /* Used by Vbus discharge common code with CONFIG_USB_PD_DISCHARGE */
 int board_vbus_source_enabled(int port)
 {
-	return tcpm_get_src_ctrl(port);
+	return ppc_is_sourcing_vbus(port);
 }
 
 /* Used by USB charger task with CONFIG_USB_PD_5V_EN_CUSTOM */

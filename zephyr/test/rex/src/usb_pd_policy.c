@@ -21,10 +21,10 @@ DECLARE_FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
 DEFINE_FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
 DECLARE_FAKE_VOID_FUNC(pd_send_host_event, int);
 DEFINE_FAKE_VOID_FUNC(pd_send_host_event, int);
-DECLARE_FAKE_VALUE_FUNC(bool, tcpm_get_src_ctrl, int);
-DEFINE_FAKE_VALUE_FUNC(bool, tcpm_get_src_ctrl, int);
 DECLARE_FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
 DEFINE_FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
+DECLARE_FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
+DEFINE_FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
 
 int chipset_in_state_mock(int state_mask)
 {
@@ -84,7 +84,7 @@ void pd_send_host_event_mock(int mask)
 	zassert_equal(PD_EVENT_POWER_CHANGE, mask, NULL);
 }
 
-bool tcpm_get_src_ctrl_mock(int port)
+int ppc_is_sourcing_vbus_mock(int port)
 {
 	return port == 0;
 }
@@ -114,7 +114,7 @@ static void usb_pd_policy_before(void *fixture)
 	RESET_FAKE(ppc_vbus_source_enable);
 	RESET_FAKE(pd_set_vbus_discharge);
 	RESET_FAKE(pd_send_host_event);
-	RESET_FAKE(tcpm_get_src_ctrl);
+	RESET_FAKE(ppc_is_sourcing_vbus);
 	RESET_FAKE(ppc_vbus_sink_enable);
 }
 
@@ -211,16 +211,16 @@ ZTEST_USER(usb_pd_policy, test_pd_set_power_supply_ready_case_4)
 
 ZTEST_USER(usb_pd_policy, test_board_vbus_source_enabled)
 {
-	tcpm_get_src_ctrl_fake.custom_fake = tcpm_get_src_ctrl_mock;
+	ppc_is_sourcing_vbus_fake.custom_fake = ppc_is_sourcing_vbus_mock;
 	zassert_true(board_vbus_source_enabled(0), NULL, NULL);
-	zassert_equal(1, tcpm_get_src_ctrl_fake.call_count);
+	zassert_equal(1, ppc_is_sourcing_vbus_fake.call_count);
 }
 
 ZTEST_USER(usb_pd_policy, test_board_is_sourcing_vbus)
 {
-	tcpm_get_src_ctrl_fake.custom_fake = tcpm_get_src_ctrl_mock;
+	ppc_is_sourcing_vbus_fake.custom_fake = ppc_is_sourcing_vbus_mock;
 	zassert_true(board_is_sourcing_vbus(0), NULL, NULL);
-	zassert_equal(1, tcpm_get_src_ctrl_fake.call_count);
+	zassert_equal(1, ppc_is_sourcing_vbus_fake.call_count);
 }
 
 ZTEST_SUITE(usb_pd_policy, NULL, NULL, usb_pd_policy_before, NULL, NULL);
