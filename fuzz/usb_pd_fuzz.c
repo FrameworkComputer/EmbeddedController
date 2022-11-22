@@ -13,9 +13,10 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <pthread.h>
 
 #define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM_BIT(0)
 
