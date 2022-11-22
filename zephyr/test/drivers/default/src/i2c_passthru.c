@@ -13,6 +13,15 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
+FAKE_VALUE_FUNC(int, board_allow_i2c_passthru, const struct i2c_cmd_desc_t *);
+
+int board_allow_i2c_passthru_custom_fake(const struct i2c_cmd_desc_t *cmd_desc)
+{
+	/* Only allow passthru on I2C_PORT_USB_C0 */
+	return i2c_get_device_for_port(cmd_desc->port) ==
+	       i2c_get_device_for_port(I2C_PORT_USB_C0);
+}
+
 ZTEST_USER(i2c_passthru, test_read_without_write)
 {
 	uint8_t param_buf[sizeof(struct ec_params_i2c_passthru) +
@@ -209,11 +218,121 @@ ZTEST_USER(i2c_passthru, test_passthru_protect_tcpcs)
 		      EC_RES_ACCESS_DENIED);
 }
 
+ZTEST_USER(i2c_passthru, test_passthru_restricted)
+{
+	uint16_t tcpc_addr = DT_REG_ADDR(DT_NODELABEL(tcpci_emul));
+	uint16_t ps8xxx_addr = DT_REG_ADDR(DT_NODELABEL(ps8xxx_emul));
+	uint8_t *out_data;
+	uint8_t tcpc_param_buf[sizeof(struct ec_params_i2c_passthru) +
+			       2 * sizeof(struct ec_params_i2c_passthru_msg) +
+			       1];
+	uint8_t tcpc_rsp_buf[sizeof(struct ec_response_i2c_passthru) + 2];
+	struct ec_params_i2c_passthru *tcpc_params =
+		(struct ec_params_i2c_passthru *)&tcpc_param_buf;
+	struct ec_response_i2c_passthru *tcpc_response =
+		(struct ec_response_i2c_passthru *)&tcpc_rsp_buf;
+	struct host_cmd_handler_args tcpc_args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_I2C_PASSTHRU, 0);
+
+	uint8_t ps8xxx_param_buf[sizeof(struct ec_params_i2c_passthru) +
+				 2 * sizeof(struct ec_params_i2c_passthru_msg) +
+				 1];
+	uint8_t ps8xxx_rsp_buf[sizeof(struct ec_response_i2c_passthru) + 2];
+	struct ec_params_i2c_passthru *ps8xxx_params =
+		(struct ec_params_i2c_passthru *)&ps8xxx_param_buf;
+	struct ec_response_i2c_passthru *ps8xxx_response =
+		(struct ec_response_i2c_passthru *)&ps8xxx_rsp_buf;
+	struct host_cmd_handler_args ps8xxx_args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_I2C_PASSTHRU, 0);
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED)) {
+		ztest_test_skip();
+		return;
+	}
+
+	/*
+	 * Setup passthru command to the TCPCI emulator - which is always
+	 * permitted by our board_allow_i2c_passthru() fake.
+	 */
+	tcpc_params->port = I2C_PORT_USB_C0;
+	tcpc_params->num_msgs = 2;
+	tcpc_params->msg[0].addr_flags = tcpc_addr;
+	tcpc_params->msg[0].len = 1;
+	tcpc_params->msg[1].addr_flags = tcpc_addr | EC_I2C_FLAG_READ;
+	tcpc_params->msg[1].len = 2; /* 2 byte vendor ID */
+
+	/* Write data follows the passthru messages */
+	out_data = (uint8_t *)&tcpc_params->msg[2];
+	out_data[0] = 0; /* TCPC_REG_VENDOR_ID 0x0 */
+
+	tcpc_args.params = &tcpc_param_buf;
+	tcpc_args.params_size = sizeof(tcpc_param_buf);
+	tcpc_args.response = &tcpc_rsp_buf;
+	tcpc_args.response_max = sizeof(tcpc_rsp_buf);
+
+	/*
+	 * Setup passthru command to the PS8xxx emulator, which should be
+	 * rejected when the system is locked.
+	 */
+	ps8xxx_params->port = I2C_PORT_USB_C1;
+	ps8xxx_params->num_msgs = 2;
+	ps8xxx_params->msg[0].addr_flags = ps8xxx_addr;
+	ps8xxx_params->msg[0].len = 1;
+	ps8xxx_params->msg[1].addr_flags = ps8xxx_addr | EC_I2C_FLAG_READ;
+	ps8xxx_params->msg[1].len = 2; /* 2-byte vendor ID */
+
+	/* Write data follows the passthru messages */
+	out_data = (uint8_t *)&ps8xxx_params->msg[2];
+	out_data[0] = 0; /* TCPC_REG_VENDOR_ID 0x0 */
+
+	ps8xxx_args.params = &ps8xxx_param_buf;
+	ps8xxx_args.params_size = sizeof(ps8xxx_param_buf);
+	ps8xxx_args.response = &ps8xxx_rsp_buf;
+	ps8xxx_args.response_max = sizeof(ps8xxx_rsp_buf);
+
+	/* Install our board_allow_i2c_passthru() handler */
+	board_allow_i2c_passthru_fake.custom_fake =
+		board_allow_i2c_passthru_custom_fake;
+
+	/* When the system is unlocked, no restrictions apply */
+	system_is_locked_fake.return_val = false;
+
+	zassert_ok(host_command_process(&tcpc_args));
+	zassert_ok(tcpc_args.result);
+	zassert_ok(tcpc_response->i2c_status);
+	zassert_equal(tcpc_args.response_size,
+		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);
+
+	zassert_ok(host_command_process(&ps8xxx_args));
+	zassert_ok(ps8xxx_args.result);
+	zassert_ok(ps8xxx_response->i2c_status);
+	zassert_equal(ps8xxx_args.response_size,
+		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);
+
+	/* Lock the system which enables board_allow_i2c_passthru() */
+	system_is_locked_fake.return_val = true;
+
+	zassert_ok(host_command_process(&tcpc_args));
+	zassert_ok(tcpc_args.result);
+	zassert_ok(tcpc_response->i2c_status);
+	zassert_equal(tcpc_args.response_size,
+		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);
+
+	zassert_equal(host_command_process(&ps8xxx_args), EC_RES_ACCESS_DENIED);
+}
+
+static void i2c_passthru_before(void *state)
+{
+	ARG_UNUSED(state);
+	RESET_FAKE(board_allow_i2c_passthru);
+	board_allow_i2c_passthru_fake.return_val = 1;
+}
+
 static void i2c_passthru_after(void *state)
 {
 	ARG_UNUSED(state);
 	i2c_passthru_protect_reset();
 }
 
-ZTEST_SUITE(i2c_passthru, drivers_predicate_post_main, NULL, NULL,
-	    i2c_passthru_after, NULL);
+ZTEST_SUITE(i2c_passthru, drivers_predicate_post_main, NULL,
+	    i2c_passthru_before, i2c_passthru_after, NULL);
