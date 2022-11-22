@@ -815,7 +815,7 @@
 		reg = <0x400 4>;
 
 		tcs_emul: tcs@39 {
-			compatible = "zephyr,tcs3400";
+			compatible = "zephyr,tcs3400-emul";
 			reg = <0x39>;
 			error-on-ro-write;
 			error-on-reserved-bit-write;
@@ -823,7 +823,7 @@
 		};
 
 		accel_bmi160: bmi160@68 {
-			compatible = "zephyr,bmi";
+			compatible = "zephyr,bmi-emul";
 			reg = <0x68>;
 			device-model = "BMI_EMUL_160";
 			error-on-ro-write;
@@ -1078,7 +1078,7 @@
 	};
 
 	battery: sb@b {
-		compatible = "zephyr,smart-battery";
+		compatible = "zephyr,smart-battery-emul";
 		reg = <0xb>;
 		cycle-count = <99>;
 		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
@@ -1090,7 +1090,7 @@
 	};
 
 	battery2: sb@3a {
-		compatible = "zephyr,smart-battery";
+		compatible = "zephyr,smart-battery-emul";
 		reg = <0x3a>;
 		cycle-count = <99>;
 		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
@@ -1102,7 +1102,7 @@
 	};
 
 	bma_emul: bma@18 {
-		compatible = "zephyr,bma255";
+		compatible = "zephyr,bma255-emul";
 		reg = <0x18>;
 		error-on-compensation-not-ready;
 		error-on-ro-write;
@@ -1111,7 +1111,7 @@
 	};
 
 	accel_bmi260: bmi260@68 {
-		compatible = "zephyr,bmi";
+		compatible = "zephyr,bmi-emul";
 		reg = <0x68>;
 		device-model = "BMI_EMUL_260";
 		error-on-ro-write;

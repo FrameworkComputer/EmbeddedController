@@ -4,7 +4,7 @@
 #
 description: Zephyr ANX7447 emulator
 
-compatible: "cros,anx7447-emul"
+compatible: "cros,anx7447-tcpc-emul"
 
 include: i2c-device.yaml
 

@@ -16,7 +16,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
-#define DT_DRV_COMPAT zephyr_smart_battery
+#define DT_DRV_COMPAT zephyr_smart_battery_emul
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(smart_battery);

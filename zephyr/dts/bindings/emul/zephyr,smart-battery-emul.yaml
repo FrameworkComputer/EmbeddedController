@@ -4,7 +4,7 @@
 
 description: Zephyr Smart Battery Emulator
 
-compatible: "zephyr,smart-battery"
+compatible: "zephyr,smart-battery-emul"
 
 include: base.yaml
 

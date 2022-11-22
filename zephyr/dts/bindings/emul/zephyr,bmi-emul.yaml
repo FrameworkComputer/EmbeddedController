@@ -4,7 +4,7 @@
 
 description: Zephyr BMI Emulator
 
-compatible: "zephyr,bmi"
+compatible: "zephyr,bmi-emul"
 
 include: base.yaml
 

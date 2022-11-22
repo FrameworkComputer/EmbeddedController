@@ -15,7 +15,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
-#define DT_DRV_COMPAT zephyr_tcs3400
+#define DT_DRV_COMPAT zephyr_tcs3400_emul
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(emul_tcs);

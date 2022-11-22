@@ -126,7 +126,7 @@
 
 &i2c0 {
 	battery: sb@b {
-		compatible = "zephyr,smart-battery";
+		compatible = "zephyr,smart-battery-emul";
 		reg = <0xb>;
 		cycle-count = <99>;
 		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";

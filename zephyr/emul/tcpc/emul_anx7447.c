@@ -15,7 +15,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
-#define DT_DRV_COMPAT cros_anx7447_emul
+#define DT_DRV_COMPAT cros_anx7447_tcpc_emul
 
 LOG_MODULE_REGISTER(anx7447_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 

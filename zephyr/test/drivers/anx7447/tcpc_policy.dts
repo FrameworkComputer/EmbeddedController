@@ -18,7 +18,7 @@
 	status="okay";
 
 	anx7447_emul: anx7447_emul@2c {
-		compatible = "cros,anx7447-emul";
+		compatible = "cros,anx7447-tcpc-emul";
 		reg = <0x2c>;
 		tcpc-flags = <(
 			TCPC_FLAGS_VBUS_MONITOR |

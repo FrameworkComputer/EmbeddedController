@@ -4,7 +4,7 @@
 
 description: Zephyr ALS TCS3400 light sensor i2c emulator
 
-compatible: "zephyr,tcs3400"
+compatible: "zephyr,tcs3400-emul"
 
 include: base.yaml
 

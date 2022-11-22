@@ -4,7 +4,7 @@
 
 description: Zephyr BMA255 Emulator
 
-compatible: "zephyr,bma255"
+compatible: "zephyr,bma255-emul"
 
 include: base.yaml
 

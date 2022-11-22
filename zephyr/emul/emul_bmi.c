@@ -17,7 +17,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/__assert.h>
 
-#define DT_DRV_COMPAT zephyr_bmi
+#define DT_DRV_COMPAT zephyr_bmi_emul
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(emul_bmi);
