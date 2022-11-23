@@ -169,7 +169,7 @@ bool is_more_efficient(int curr_mv, int prev_mv, int batt_mv, int batt_mw,
  *
  * @return input_power of the result of vbus * input_curr in mW
  */
-static int get_desired_input_power(int *vbus, int *input_current)
+test_mockable_static int get_desired_input_power(int *vbus, int *input_current)
 {
 	int active_port;
 	int charger_id;
@@ -197,7 +197,7 @@ static int get_desired_input_power(int *vbus, int *input_current)
 	return (*vbus) * (*input_current) / 1000;
 }
 
-static int get_battery_target_voltage(int *target_mv)
+test_mockable_static int get_battery_target_voltage(int *target_mv)
 {
 	int charger_id = charge_get_active_chg_chip();
 	int error = charger_get_voltage(charger_id, target_mv);
@@ -231,7 +231,7 @@ static int get_battery_target_voltage(int *target_mv)
  *
  * @return 0 if error occurs, else battery efficient voltage in mV
  */
-static int get_efficient_voltage(void)
+test_mockable_static int get_efficient_voltage(void)
 {
 	int eff_mv = 0;
 	int batt_mv;
@@ -290,13 +290,20 @@ struct pdo_candidate {
 		return false;         \
 	} while (0)
 
+test_mockable_static int get_batt_charge_power(void)
+{
+	const struct batt_params *batt = charger_current_battery_params();
+
+	return batt->current * batt->voltage / 1000;
+}
+
 /*
  * Evaluate the system power if a new PD power request is needed.
  *
  * @param struct pdo_candidate: The candidate PDO. (Return value)
  * @return true if a new power request, or false otherwise.
  */
-__maybe_unused static bool has_new_power_request(struct pdo_candidate *cand)
+test_mockable_static bool has_new_power_request(struct pdo_candidate *cand)
 {
 	int vbus, input_curr, input_pwr;
 	int input_pwr_avg = 0, input_curr_avg = 0;
@@ -311,7 +318,6 @@ __maybe_unused static bool has_new_power_request(struct pdo_candidate *cand)
 	static int prev_active_port = CHARGE_PORT_NONE;
 	static int prev_req_mv;
 	static int moving_avg_count;
-	const struct batt_params *batt = charger_current_battery_params();
 
 	/* set a default value in case it early returns. */
 	UPDATE_CANDIDATE(CHARGE_PORT_NONE, INT32_MAX, 0);
@@ -335,7 +341,7 @@ __maybe_unused static bool has_new_power_request(struct pdo_candidate *cand)
 	prev_req_mv = req_mv;
 
 	req_pwr = req_mv * req_ma / 1000;
-	batt_pwr = batt->current * batt->voltage / 1000;
+	batt_pwr = get_batt_charge_power();
 	input_pwr = get_desired_input_power(&vbus, &input_curr);
 
 	if (!input_pwr)
