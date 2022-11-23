@@ -46,7 +46,7 @@ ZTEST(ec_app_tests, test_setup_espi)
 }
 #endif
 
-#ifdef CONFIG_WATCHDOG
+#ifdef CONFIG_PLATFORM_EC_WATCHDOG
 ZTEST(ec_app_tests, test_watchdog_init)
 {
 	zassert_unreachable("TODO: Implement this test.");
