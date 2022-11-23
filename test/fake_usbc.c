@@ -5,9 +5,9 @@
  * Test USB Type-C module.
  */
 #include "common.h"
-#include "usb_tc_sm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_tc_sm.h"
 
 __overridable int pd_is_vbus_present(int port)
 {

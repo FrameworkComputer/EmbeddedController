@@ -10,11 +10,11 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "usb_pe_sm.h"
+#include "test_util.h"
 #include "usb_pd.h"
+#include "usb_pe_sm.h"
 #include "usb_tc_sm.h"
 #include "util.h"
-#include "test_util.h"
 
 /* Defined in implementation */
 int command_pd(int argc, const char **argv);

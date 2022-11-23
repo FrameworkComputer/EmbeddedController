@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor_state.h"
 #include "mock/fpsensor_state_mock.h"
 #include "test_util.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 test_static int test_fp_enc_status_valid_flags(void)
 {

@@ -5,8 +5,8 @@
  * Test compile_time_macros.h
  */
 
-#include "stdbool.h"
 #include "common.h"
+#include "stdbool.h"
 #include "test_util.h"
 
 static int test_BIT(void)

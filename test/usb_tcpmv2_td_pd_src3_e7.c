@@ -4,13 +4,13 @@
  */
 
 #include "battery.h"
+#include "driver/tcpm/tcpci.h"
 #include "mock/tcpci_i2c_mock.h"
 #include "task.h"
-#include "driver/tcpm/tcpci.h"
 #include "test_util.h"
 #include "timer.h"
-#include "usb_tcpmv2_compliance.h"
 #include "usb_tc_sm.h"
+#include "usb_tcpmv2_compliance.h"
 
 #define BUFFER_SIZE 100
 

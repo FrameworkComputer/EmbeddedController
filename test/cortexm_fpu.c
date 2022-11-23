@@ -3,12 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include "test_util.h"
-
 #include "cpu.h"
 #include "math.h"
 #include "registers.h"
 #include "task.h"
+#include "test_util.h"
 #include "time.h"
 
 static volatile uint32_t fpscr;

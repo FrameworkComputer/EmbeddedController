@@ -5,8 +5,9 @@
 
 #include "common.h"
 #include "kasa.h"
-#include "test_util.h"
 #include "motion_sense.h"
+#include "test_util.h"
+
 #include <stdio.h>
 
 struct motion_sensor_t motion_sensors[] = {};

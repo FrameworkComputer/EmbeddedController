@@ -7,11 +7,11 @@
 
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "test_util.h"
 #include "timer.h"
-#include "util.h"
 #include "uart.h"
-#include "ec_commands.h"
+#include "util.h"
 
 static int cmd_1_call_cnt;
 static int cmd_2_call_cnt;

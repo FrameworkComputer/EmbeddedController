@@ -5,10 +5,10 @@
  * Test the buffer handling of HDMI CEC
  */
 
-#include <string.h>
-
 #include "cec.h"
 #include "test_util.h"
+
+#include <string.h>
 
 struct overflow_msg {
 	struct cec_msg_transfer transfer;

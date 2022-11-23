@@ -8,8 +8,8 @@
 #include "tcpm/tcpci.h"
 #include "test_util.h"
 #include "timer.h"
-#include "usb_tcpmv2_compliance.h"
 #include "usb_tc_sm.h"
+#include "usb_tcpmv2_compliance.h"
 
 uint32_t vdo =
 	VDO(USB_SID_PD, 1, VDO_SVDM_VERS(VDM_VER20) | CMD_DISCOVER_IDENT);

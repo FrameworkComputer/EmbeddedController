@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-
 #include "builtin/assert.h"
 #include "common.h"
 #include "ec_commands.h"
@@ -16,6 +14,8 @@
 #include "mock/timer_mock.h"
 #include "test_util.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 extern int get_ikm(uint8_t *ikm);
 

@@ -12,6 +12,9 @@
 #ifndef __CROS_EC_MPU_PRIVATE_H
 #define __CROS_EC_MPU_PRIVATE_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 int mpu_num_regions(void);
 bool has_mpu(void);
 bool mpu_is_unified(void);

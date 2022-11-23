@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-
 #include "common.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 static bool get_ap_reset_stats_should_succeed = true;
 

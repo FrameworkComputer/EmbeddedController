@@ -9,10 +9,10 @@
 #include "test_util.h"
 #include "timer.h"
 #include "usb_pd.h"
+#include "usb_pd_test_util.h"
 #include "usb_sm.h"
 #include "usb_tc_sm.h"
 #include "util.h"
-#include "usb_pd_test_util.h"
 #include "vpd_api.h"
 
 /*

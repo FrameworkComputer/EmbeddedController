@@ -5,7 +5,6 @@
  * Tests for keyboard MKBP protocol
  */
 
-#include <stdbool.h>
 #include "atkbd_protocol.h"
 #include "common.h"
 #include "console.h"
@@ -23,6 +22,8 @@
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 static const char *action[2] = { "release", "press" };
 

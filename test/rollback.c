@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
 #include "flash.h"
 #include "mpu.h"
 #include "string.h"
 #include "test_util.h"
+
+#include <stdbool.h>
 
 struct rollback_info {
 	int region_0_offset;

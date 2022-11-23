@@ -5,8 +5,8 @@
 
 #include "console.h"
 #include "ec_commands.h"
-#include "lightbar.h"
 #include "host_command.h"
+#include "lightbar.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"

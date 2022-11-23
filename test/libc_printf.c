@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <stdio.h>
-
 #include "test_util.h"
+
+#include <stdio.h>
 
 test_static int test_printf(void)
 {

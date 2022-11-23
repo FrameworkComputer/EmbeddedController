@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
+#include "driver/tcpm/tcpm.h"
 #include "registers.h"
 #include "vpd_api.h"
-#include "driver/tcpm/tcpm.h"
-#include "console.h"
 /*
  * Polarity based on 'DFP Perspective' (see table USB Type-C Cable and Connector
  * Specification)
