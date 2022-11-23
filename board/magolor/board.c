@@ -415,6 +415,8 @@ void board_hibernate(void)
 	if (board_get_charger_chip_count() > 1)
 		raa489000_hibernate(1, true);
 	raa489000_hibernate(0, true);
+
+	msleep(1000); /* Wait for charger to enter low power mode */
 }
 
 void board_reset_pd_mcu(void)
