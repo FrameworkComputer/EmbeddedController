@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_ACCEL_BMA4XX_H
 #define __CROS_EC_ACCEL_BMA4XX_H
 
+#include "config.h"
+
 #define BMA4_I2C_ADDR_PRIMARY 0x18
 #define BMA4_I2C_ADDR_SECONDARY 0x19
 #define BMA4_I2C_BMM150_ADDR 0x10
@@ -194,6 +196,8 @@
 extern const struct accelgyro_drv bma4_accel_drv;
 
 #if defined(CONFIG_ZEPHYR)
+#include <zephyr/devicetree.h>
+
 #if DT_NODE_EXISTS(DT_ALIAS(bma4xx_int))
 /*
  * Get the motion sensor ID of the BMA4xx sensor that generates the interrupt.
@@ -210,6 +214,7 @@ extern const struct accelgyro_drv bma4_accel_drv;
 #define CONFIG_ACCEL_BMA4XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bma4xx_int)))
 
+#include "gpio_signal.h"
 void bma4xx_interrupt(enum gpio_signal signal);
 #endif /* DT_NODE_EXISTS */
 #endif /* CONFIG_ZEPHYR */
