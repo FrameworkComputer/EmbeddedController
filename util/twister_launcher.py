@@ -350,26 +350,8 @@ def main():
     }
     gcov_tool = None
     if intercepted_args.toolchain == "host":
-        append_cmake_compiler(
-            twister_cli, "CMAKE_C_COMPILER", ["x86_64-pc-linux-gnu-gcc", "gcc"]
-        )
-        append_cmake_compiler(
-            twister_cli,
-            "CMAKE_CXX_COMPILER",
-            ["x86_64-pc-linux-gnu-g++", "g++"],
-        )
         gcov_tool = "gcov"
     elif intercepted_args.toolchain == "llvm":
-        append_cmake_compiler(
-            twister_cli,
-            "CMAKE_C_COMPILER",
-            ["x86_64-pc-linux-gnu-clang", "clang"],
-        )
-        append_cmake_compiler(
-            twister_cli,
-            "CMAKE_CXX_COMPILER",
-            ["x86_64-pc-linux-gnu-clang++", "clang++"],
-        )
         gcov_tool = str(ec_base / "util" / "llvm-gcov.sh")
     else:
         print("Unknown toolchain specified:", intercepted_args.toolchain)
