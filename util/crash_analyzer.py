@@ -124,18 +124,23 @@ def cm0_parse(match) -> dict:
     regs["ipsr"] = values[22]
 
     regs["cause"] = get_crash_cause(values[6])  # r4
-    # Heuristics: try link register, then PC, then what is believed to be PC.
-    # When analyzing watchdogs, we try to be as close as possible to the caller
-    # function that caused the watchdog.
-    # That's why we prioritize LR (return address) over PC.
-    if regs["lr"] != -1:
-        regs["symbol"] = get_symbol(regs["lr"])
-    elif regs["pc"] != -1:
-        regs["symbol"] = get_symbol(regs["pc"])
+
+    # based on crash reports in case of asserrt the PC is in R3
+    if regs["cause"] == "assert":
+        regs["symbol"] = get_symbol(values[5])  # r3
     else:
-        # Otherwise, if both LR and PC are empty, most probably
-        # PC is in R5.
-        regs["symbol"] = get_symbol(values[7])  # r5
+        # Heuristics: try link register, then PC, then what is believed to be PC.
+        # When analyzing watchdogs, we try to be as close as possible to the caller
+        # function that caused the watchdog.
+        # That's why we prioritize LR (return address) over PC.
+        if regs["lr"] != -1:
+            regs["symbol"] = get_symbol(regs["lr"])
+        elif regs["pc"] != -1:
+            regs["symbol"] = get_symbol(regs["pc"])
+        else:
+            # Otherwise, if both LR and PC are empty, most probably
+            # PC is in R5.
+            regs["symbol"] = get_symbol(values[7])  # r5
 
     return regs
 
