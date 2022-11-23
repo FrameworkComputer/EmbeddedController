@@ -13,13 +13,13 @@
  */
 
 #include "builtin/assert.h"
-#include "max14637.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "max14637.h"
 #include "power.h"
 #include "power/cannonlake.h"
 #include "task.h"

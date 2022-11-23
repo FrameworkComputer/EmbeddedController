@@ -5,10 +5,10 @@
 
 /* FPC Platform Abstraction Layer */
 
-#include <stdint.h>
-
 #include "fpc_timebase.h"
 #include "timer.h"
+
+#include <stdint.h>
 
 uint32_t __unused fpc_timebase_get_tick(void)
 {

@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "usb_mux.h"
 #include "driver/tcpm/anx7447_public.h"
+#include "usb_mux.h"
 
 /* USB Power delivery port management */
 

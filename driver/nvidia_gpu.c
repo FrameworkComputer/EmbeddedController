@@ -5,8 +5,6 @@
  * Nvidia GPU D-Notify driver
  */
 
-#include <stddef.h>
-
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "compile_time_macros.h"
@@ -18,6 +16,8 @@
 #include "nvidia_gpu.h"
 #include "throttle_ap.h"
 #include "timer.h"
+
+#include <stddef.h>
 
 #define CPRINTS(fmt, args...) cprints(CC_GPU, "GPU: " fmt, ##args)
 #define CPRINTF(fmt, args...) cprintf(CC_GPU, "GPU: " fmt, ##args)

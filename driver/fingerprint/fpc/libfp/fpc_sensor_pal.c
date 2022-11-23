@@ -6,8 +6,8 @@
 
 #include "common.h"
 #include "console.h"
-#include "fpsensor.h"
 #include "fpc_sensor_pal.h"
+#include "fpsensor.h"
 #include "shared_mem.h"
 #include "spi.h"
 #include "timer.h"

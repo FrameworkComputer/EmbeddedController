@@ -7,14 +7,14 @@
 
 #include "common.h"
 #include "console.h"
-#include "ktu1125.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ktu1125.h"
 #include "system.h"
 #include "timer.h"
 #include "usb_charge.h"
-#include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 

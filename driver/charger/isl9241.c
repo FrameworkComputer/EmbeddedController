@@ -11,11 +11,11 @@
 #endif
 #include "battery.h"
 #include "battery_smart.h"
-#include "charger.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "console.h"
+#include "charger.h"
 #include "common.h"
+#include "console.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "isl9241.h"

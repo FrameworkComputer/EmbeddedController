@@ -6,9 +6,9 @@
 #define __CROS_EC_USB_PD_TCPM_RT1718S_H
 
 #include "tcpm/rt1718s_public.h"
-#include "util.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 /* RT1718S Private RegMap */
 #define RT1718S_PHYCTRL1 0x80

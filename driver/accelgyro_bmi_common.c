@@ -9,11 +9,11 @@
  */
 
 #include "accelgyro.h"
-#include "console.h"
 #include "accelgyro_bmi_common.h"
+#include "console.h"
+#include "i2c.h"
 #include "mag_bmm150.h"
 #include "mag_lis2mdl.h"
-#include "i2c.h"
 #include "math_util.h"
 #include "motion_sense_fifo.h"
 #include "spi.h"

@@ -7,10 +7,10 @@
  * LIS2DW12 accelerometer module for Chrome EC 3D digital accelerometer.
  * For more details on LIS2DW12 device please refers to www.st.com.
  */
+#include "accel_lis2dw12.h"
 #include "accelgyro.h"
 #include "common.h"
 #include "console.h"
-#include "accel_lis2dw12.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "math_util.h"

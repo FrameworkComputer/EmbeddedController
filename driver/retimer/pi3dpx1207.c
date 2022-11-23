@@ -5,12 +5,12 @@
  * PI3DPX1207 retimer.
  */
 
-#include "pi3dpx1207.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "ioexpander.h"
+#include "pi3dpx1207.h"
 #include "usb_mux.h"
 
 #define I2C_MAX_RETRIES 2

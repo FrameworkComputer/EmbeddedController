@@ -9,8 +9,8 @@
 #include "battery_smart.h"
 #include "builtin/assert.h"
 #include "builtin/endian.h"
-#include "charger.h"
 #include "charge_manager.h"
+#include "charger.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"
@@ -18,11 +18,11 @@
 #include "i2c.h"
 #include "rt9490.h"
 #include "task.h"
+#include "temp_sensor/temp_sensor.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "util.h"
-#include "temp_sensor/temp_sensor.h"
-#include "temp_sensor/thermistor.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)

@@ -5,9 +5,9 @@
  * AMS TCS3400 light sensor driver
  */
 #include "accelgyro.h"
+#include "als_tcs3400.h"
 #include "common.h"
 #include "console.h"
-#include "als_tcs3400.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "i2c.h"

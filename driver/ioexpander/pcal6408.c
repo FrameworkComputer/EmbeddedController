@@ -6,10 +6,10 @@
  */
 #include "common.h"
 #include "console.h"
-#include "math_util.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "ioexpander.h"
+#include "math_util.h"
 #include "pcal6408.h"
 
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ##args)

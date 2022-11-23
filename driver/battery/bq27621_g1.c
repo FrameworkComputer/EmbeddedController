@@ -11,8 +11,8 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "util.h"
 #include "timer.h"
+#include "util.h"
 
 #define BQ27621_ADDR_FLAGS 0x55
 #define BQ27621_TYPE_ID 0x0621

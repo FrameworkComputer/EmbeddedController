@@ -10,12 +10,12 @@
 #include "i2c.h"
 #include "ioexpander.h"
 #include "it8801.h"
+#include "keyboard_backlight.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
-#include "keyboard_backlight.h"
 
 #define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ##args)
 

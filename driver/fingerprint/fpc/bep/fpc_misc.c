@@ -5,11 +5,11 @@
 
 /* FPC Platform Abstraction Layer */
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include "shared_mem.h"
 #include "uart.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 void __unused *fpc_malloc(uint32_t size)
 {

@@ -4,24 +4,24 @@
  */
 /* ELAN Platform Abstraction Layer callbacks */
 
-#include <stddef.h>
 #include "common.h"
 #include "console.h"
+#include "cryptoc/util.h"
+#include "elan_sensor.h"
+#include "elan_sensor_pal.h"
+#include "elan_setting.h"
 #include "endian.h"
 #include "fpsensor.h"
 #include "gpio.h"
 #include "link_defs.h"
+#include "math_util.h"
+#include "shared_mem.h"
 #include "spi.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
-#include "shared_mem.h"
-#include "math_util.h"
-#include "cryptoc/util.h"
 
-#include "elan_setting.h"
-#include "elan_sensor.h"
-#include "elan_sensor_pal.h"
+#include <stddef.h>
 
 static uint8_t tx_buf[CONFIG_SPI_TX_BUF_SIZE] __uncached;
 static uint8_t rx_buf[CONFIG_SPI_RX_BUF_SIZE] __uncached;

@@ -9,17 +9,17 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "hooks.h"
 #include "it83xx_pd.h"
 #include "ite_pd_intc.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_common.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
-#include "hooks.h"
+#include "util.h"
 
 #ifdef CONFIG_USB_PD_TCPMV1
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \

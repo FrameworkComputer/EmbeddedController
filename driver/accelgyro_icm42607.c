@@ -10,8 +10,8 @@
 
 #include "accelgyro.h"
 #include "console.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm_common.h"
 #include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"

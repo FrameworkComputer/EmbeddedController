@@ -3,9 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include "driver/fingerprint/fpc/fpc_sensor.h"
 #include "fpc_bio_algorithm.h"
 #include "fpsensor.h"
 #include "gpio.h"
@@ -13,7 +11,8 @@
 #include "system.h"
 #include "util.h"
 
-#include "driver/fingerprint/fpc/fpc_sensor.h"
+#include <stddef.h>
+#include <stdint.h>
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)

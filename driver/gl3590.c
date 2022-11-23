@@ -4,13 +4,12 @@
  */
 
 #include "console.h"
+#include "gl3590.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "pwr_defs.h"
 #include "system.h"
 #include "util.h"
-#include "pwr_defs.h"
-
-#include "gl3590.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)

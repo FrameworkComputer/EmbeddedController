@@ -5,18 +5,17 @@
 
 /* FPC Platform Abstraction Layer */
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-
 #include "console.h"
-#include "fpsensor.h"
+#include "driver/fingerprint/fpc/fpc_sensor.h"
 #include "fpc_sensor_spi.h"
+#include "fpsensor.h"
 #include "gpio.h"
 #include "spi.h"
 #include "util.h"
 
-#include "driver/fingerprint/fpc/fpc_sensor.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)

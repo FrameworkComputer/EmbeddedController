@@ -4,13 +4,14 @@
  *
  * ON Semiconductor NB7V904M USB Type-C DisplayPort Alt Mode Redriver
  */
-#include <stdbool.h>
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "i2c.h"
 #include "nb7v904m.h"
 #include "usb_mux.h"
+
+#include <stdbool.h>
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)

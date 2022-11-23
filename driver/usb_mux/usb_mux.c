@@ -7,9 +7,9 @@
 
 #include "atomic.h"
 #include "builtin/assert.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "chipset.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"

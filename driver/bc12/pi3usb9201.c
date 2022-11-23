@@ -5,12 +5,12 @@
 
 /* PI3USB9201 USB BC 1.2 Charger Detector driver. */
 
-#include "pi3usb9201.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "pi3usb9201.h"
 #include "power.h"
 #include "task.h"
 #include "timer.h"

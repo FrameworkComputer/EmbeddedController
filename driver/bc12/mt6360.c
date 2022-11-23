@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include "charger.h"
 #include "charge_manager.h"
+#include "charger.h"
 #include "console.h"
 #include "crc8.h"
-#include "mt6360.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "mt6360.h"
 #include "task.h"
 #include "timer.h"
 #include "usb_charge.h"

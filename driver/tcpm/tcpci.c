@@ -5,8 +5,8 @@
 
 /* Type-C port manager */
 
-#include "atomic.h"
 #include "anx74xx.h"
+#include "atomic.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"

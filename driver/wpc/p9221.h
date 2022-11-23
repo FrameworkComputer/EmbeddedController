@@ -10,9 +10,9 @@
 #ifndef __P9221_R7_H
 #define __P9221_R7_H
 
+#include "charge_manager.h"
 #include "common.h"
 #include "gpio.h"
-#include "charge_manager.h"
 #include "task.h"
 
 /* ========== Variant-specific configuration ============ */

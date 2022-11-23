@@ -8,10 +8,10 @@
 #ifndef __CROS_EC_ACCELGYRO_LSM6DSM_H
 #define __CROS_EC_ACCELGYRO_LSM6DSM_H
 
-#include "stm_mems_common.h"
-#include "mag_cal.h"
 #include "mag_bmm150.h"
+#include "mag_cal.h"
 #include "mag_lis2mdl.h"
+#include "stm_mems_common.h"
 
 /*
  * 7-bit address is 110101xb. Where 'x' is determined

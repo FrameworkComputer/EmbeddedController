@@ -9,16 +9,16 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "hooks.h"
 #include "registers.h"
 #include "stm32gx.h"
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpci.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
-#include "hooks.h"
+#include "util.h"
 
 /*
  * STM32G4 UCPD peripheral does not have the ability to detect VBUS, but

@@ -4,9 +4,9 @@
  */
 
 #include "chipset.h"
-#include "ctn730.h"
 #include "common.h"
 #include "console.h"
+#include "ctn730.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "peripheral_charger.h"

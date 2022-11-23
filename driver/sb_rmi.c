@@ -5,8 +5,8 @@
 
 /* AMD SB-RMI (Side-band Remote Management Interface) Driver */
 
-#include "common.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "i2c.h"
 #include "sb_rmi.h"

@@ -11,14 +11,14 @@
 #include "accelgyro.h"
 #include "common.h"
 #include "console.h"
+#include "driver/accel_lis2dh.h"
+#include "driver/stm_mems_common.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "task.h"
 #include "util.h"
-#include "driver/accel_lis2dh.h"
-#include "driver/stm_mems_common.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)

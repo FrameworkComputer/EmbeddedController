@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_TOUCHPAD_ST_H
 #define __CROS_EC_TOUCHPAD_ST_H
 
-#include <stdint.h>
-
 #include "common.h"
+
+#include <stdint.h>
 
 #define ST_VENDOR_ID 0x0483
 

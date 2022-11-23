@@ -4,8 +4,8 @@
  */
 
 #include "amd_stt.h"
-#include "common.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "driver/sb_rmi.h"
 #include "hooks.h"

@@ -6,11 +6,11 @@
  */
 
 #include "anx7483.h"
-#include "retimer/anx7483_public.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
+#include "retimer/anx7483_public.h"
 #include "timer.h"
 #include "usb_mux.h"
 #include "util.h"

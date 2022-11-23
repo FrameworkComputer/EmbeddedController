@@ -2,14 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <string.h>
-
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
 #include "rgb_keyboard.h"
 #include "stddef.h"
 #include "tlc59116f.h"
+
+#include <string.h>
 
 #define CPRINTF(fmt, args...) cprintf(CC_RGBKBD, "TLC59116F: " fmt, ##args)
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "TLC59116F: " fmt, ##args)

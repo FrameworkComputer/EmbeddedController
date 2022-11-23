@@ -4,9 +4,10 @@
  */
 
 #include <stddef.h>
+
+#include <common/fpsensor/fpsensor_private.h>
 #include <include/fpsensor.h>
 #include <include/fpsensor_state.h>
-#include <common/fpsensor/fpsensor_private.h>
 #if defined(CONFIG_FP_SENSOR_FPC1025) || defined(CONFIG_FP_SENSOR_FPC1035)
 #include "bep/fpc_private.h"
 #elif defined(CONFIG_FP_SENSOR_FPC1145)

@@ -8,8 +8,8 @@
 #include "battery_smart.h"
 #include "bq24715.h"
 #include "charger.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "i2c.h"
 #include "util.h"
 

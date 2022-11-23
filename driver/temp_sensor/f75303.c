@@ -6,11 +6,11 @@
 /* F75303 temperature sensor module for Chrome EC */
 
 #include "common.h"
-#include "f75303.h"
-#include "i2c.h"
-#include "hooks.h"
-#include "util.h"
 #include "console.h"
+#include "f75303.h"
+#include "hooks.h"
+#include "i2c.h"
+#include "util.h"
 
 static int temps[F75303_IDX_COUNT];
 static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };

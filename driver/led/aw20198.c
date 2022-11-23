@@ -2,8 +2,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <string.h>
-
 #include "aw20198.h"
 #include "common.h"
 #include "console.h"
@@ -12,6 +10,8 @@
 #include "rgb_keyboard.h"
 #include "stddef.h"
 #include "timer.h"
+
+#include <string.h>
 
 #define CPRINTF(fmt, args...) cprintf(CC_RGBKBD, "AW20198: " fmt, ##args)
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "AW20198: " fmt, ##args)

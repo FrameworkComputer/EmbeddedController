@@ -5,8 +5,6 @@
  * TI bq25710 battery charger driver.
  */
 
-#include <stdbool.h>
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "bq257x0_regs.h"
@@ -17,10 +15,12 @@
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "task.h"
 #include "system.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 #if !defined(CONFIG_CHARGER_BQ25710) && !defined(CONFIG_CHARGER_BQ25720)
 #error Only the BQ25720 and BQ25710 are supported by bq25710 driver.

@@ -18,9 +18,9 @@
 #include "panic.h"
 #include "task.h"
 #include "time.h"
-#include "util.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "util.h"
 
 #define OTPROM_LOAD_WAIT_RETRY 3
 
