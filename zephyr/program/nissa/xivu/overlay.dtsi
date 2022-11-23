@@ -4,6 +4,7 @@
  */
 
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usbc_mux.h>
 
 / {
 	aliases {
@@ -340,6 +341,7 @@
 		compatible = "analogix,anx7483";
 		reg = <0x3e>;
 		board-set = "anx7483_set_default_tuning";
+		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
 	};
 };
 
