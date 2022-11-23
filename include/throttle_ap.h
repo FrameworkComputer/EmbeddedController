@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_THROTTLE_AP_H
 #define __CROS_EC_THROTTLE_AP_H
 
+#define PROCHOT_IN_DEBOUNCE_US (100 * MSEC)
+
 /**
  * Level of throttling desired.
  */

@@ -27,7 +27,6 @@
  * power rail is turned back on. Recheck PROCHOT directly from the C10 exit
  * using a shorter debounce than the PROCHOT interrupt.
  */
-#define PROCHOT_IN_DEBOUNCE_US (100 * MSEC)
 #define C10_IN_DEBOUNCE_US (10 * MSEC)
 
 /*****************************************************************************/
