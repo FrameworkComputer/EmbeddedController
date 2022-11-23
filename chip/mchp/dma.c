@@ -9,9 +9,9 @@
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "tfdp_chip.h"
 #include "timer.h"
 #include "util.h"
-#include "tfdp_chip.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)

@@ -7,8 +7,8 @@
 
 #include "clock.h"
 #include "common.h"
-#include "util.h"
 #include "power_mgt.h"
+#include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)

@@ -5,12 +5,6 @@
 
 /* UART driver for emulator */
 
-#include <pthread.h>
-#include <signal.h>
-#include <stdio.h>
-#include <termio.h>
-#include <unistd.h>
-
 #include "builtin/assert.h"
 #include "common.h"
 #include "queue.h"
@@ -18,6 +12,13 @@
 #include "test_util.h"
 #include "uart.h"
 #include "util.h"
+
+#include <signal.h>
+#include <stdio.h>
+
+#include <pthread.h>
+#include <termio.h>
+#include <unistd.h>
 
 static int stopped = 1;
 static int init_done;

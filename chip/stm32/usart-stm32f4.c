@@ -3,14 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include "usart-stm32f4.h"
-
 #include "clock.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "usart-stm32f4.h"
 #include "util.h"
 
 /*

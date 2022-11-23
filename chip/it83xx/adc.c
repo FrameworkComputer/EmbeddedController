@@ -7,8 +7,8 @@
 
 #include "adc.h"
 #include "clock.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"

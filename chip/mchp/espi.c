@@ -5,29 +5,26 @@
 
 /* ESPI module for Chrome EC */
 
-#include "common.h"
 #include "acpi.h"
+#include "chipset.h"
+#include "common.h"
 #include "console.h"
+#include "espi.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_protocol.h"
-#include "port80.h"
-#include "util.h"
-#include "chipset.h"
-
-#include "registers.h"
-#include "espi.h"
 #include "lpc.h"
 #include "lpc_chip.h"
+#include "port80.h"
+#include "power.h"
+#include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "console.h"
+#include "tfdp_chip.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
-#include "power.h"
-#include "timer.h"
-#include "tfdp_chip.h"
 
 /* Console output macros */
 #ifdef CONFIG_MCHP_ESPI_DEBUG

@@ -11,8 +11,8 @@
 #include "hooks.h"
 #include "memmap.h"
 #include "registers.h"
-#include "util.h"
 #include "task.h"
+#include "util.h"
 
 /*
  * Map SCP address (bits 31~28) to AP address

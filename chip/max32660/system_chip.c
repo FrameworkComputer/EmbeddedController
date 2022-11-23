@@ -9,14 +9,14 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "gcr_regs.h"
 #include "host_command.h"
 #include "panic.h"
+#include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "registers.h"
-#include "gcr_regs.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)

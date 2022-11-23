@@ -13,8 +13,6 @@
  * but at least yields predictable behavior.
  */
 
-#include <stdbool.h>
-
 #include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
@@ -28,6 +26,8 @@
 #include "task.h"
 #include "uart.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 /* Check chip family and variant for compatibility */
 #ifndef CHIP_FAMILY_STM32H7

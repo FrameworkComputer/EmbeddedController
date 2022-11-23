@@ -12,9 +12,10 @@
 #include "i2c_peripheral.h"
 #include "printf.h"
 #include "registers.h"
+#include "task.h"
+
 #include <stddef.h>
 #include <string.h>
-#include "task.h"
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)

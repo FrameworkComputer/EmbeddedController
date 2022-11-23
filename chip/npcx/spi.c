@@ -5,11 +5,11 @@
 
 /* SPI module for Chrome EC */
 
+#include "clock.h"
+#include "clock_chip.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "clock.h"
-#include "clock_chip.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"

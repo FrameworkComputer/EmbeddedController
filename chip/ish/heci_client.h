@@ -6,10 +6,10 @@
 #ifndef __HECI_CLIENT_H
 #define __HECI_CLIENT_H
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include "hooks.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 #define HECI_MAX_NUM_OF_CLIENTS 2
 

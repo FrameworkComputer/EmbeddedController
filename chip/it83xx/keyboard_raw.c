@@ -4,11 +4,11 @@
  */
 
 #include "common.h"
+#include "irq_chip.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "registers.h"
 #include "task.h"
-#include "irq_chip.h"
 
 #define KSOH_PIN_MASK (((1 << (KEYBOARD_COLS_MAX - 8)) - 1) & 0xff)
 

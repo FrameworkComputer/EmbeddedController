@@ -20,12 +20,12 @@
 #include "lpc_chip.h"
 #include "port80.h"
 #include "registers.h"
-#include "system.h"
 #include "sib_chip.h"
+#include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"
-#include "system_chip.h"
 
 /* Console output macros */
 #if !(DEBUG_LPC)

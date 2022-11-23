@@ -5,15 +5,16 @@
 
 /* Flash memory module for stm32f3 and stm32f4 */
 
-#include <stdbool.h>
 #include "common.h"
-#include "flash.h"
 #include "flash-f.h"
 #include "flash-regs.h"
+#include "flash.h"
 #include "hooks.h"
+#include "panic.h"
 #include "registers.h"
 #include "system.h"
-#include "panic.h"
+
+#include <stdbool.h>
 
 /*****************************************************************************/
 /* Physical layer APIs */

@@ -14,10 +14,10 @@
 #error "This fake trng driver must not be used in non-test builds."
 #endif
 
+#include "common.h"
+
 #include <stdint.h>
 #include <stdlib.h> /* Only valid for host */
-
-#include "common.h"
 
 static unsigned int seed;
 

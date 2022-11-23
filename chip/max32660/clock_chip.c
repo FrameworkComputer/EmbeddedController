@@ -9,16 +9,16 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "gcr_regs.h"
 #include "hooks.h"
 #include "hwtimer.h"
+#include "pwrseq_regs.h"
 #include "registers.h"
 #include "system.h"
 #include "timer.h"
+#include "tmr_regs.h"
 #include "util.h"
 #include "watchdog.h"
-#include "tmr_regs.h"
-#include "gcr_regs.h"
-#include "pwrseq_regs.h"
 
 #define MAX32660_SYSTEMCLOCK SYS_CLOCK_HIRC
 

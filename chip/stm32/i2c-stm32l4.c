@@ -4,7 +4,6 @@
  */
 
 #include "builtin/assert.h"
-#include "printf.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -13,8 +12,8 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "i2c.h"
+#include "printf.h"
 #include "registers.h"
-
 #include "system.h"
 #include "task.h"
 #include "timer.h"

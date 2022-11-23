@@ -2,13 +2,12 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "usart-stm32f3.h"
-
 #include "common.h"
 #include "compile_time_macros.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "usart-stm32f3.h"
 #include "util.h"
 
 /*

@@ -9,15 +9,15 @@
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
+#include "gpspi_chip.h"
+#include "hooks.h"
 #include "registers.h"
 #include "spi.h"
+#include "spi_chip.h"
+#include "task.h"
+#include "tfdp_chip.h"
 #include "timer.h"
 #include "util.h"
-#include "hooks.h"
-#include "task.h"
-#include "spi_chip.h"
-#include "gpspi_chip.h"
-#include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)

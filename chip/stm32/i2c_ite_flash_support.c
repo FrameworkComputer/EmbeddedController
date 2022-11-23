@@ -4,8 +4,8 @@
  */
 /* STM implementation for flashing ITE-based ECs over i2c */
 
-#include "i2c_ite_flash_support.h"
 #include "i2c.h"
+#include "i2c_ite_flash_support.h"
 #include "registers.h"
 #include "time.h"
 

@@ -17,10 +17,10 @@
 #include "shared_mem.h"
 #include "system.h"
 #include "task.h"
+#include "tfdp_chip.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
-#include "tfdp_chip.h"
 #include "vboot_hash.h"
 
 /* Console output macros */

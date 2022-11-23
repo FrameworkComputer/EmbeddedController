@@ -5,13 +5,14 @@
 
 /* Emulator self-reboot procedure */
 
-#include <string.h>
-#include <unistd.h>
-
 #include "console.h"
 #include "host_test.h"
 #include "reboot.h"
 #include "test_util.h"
+
+#include <string.h>
+
+#include <unistd.h>
 
 #ifdef TEST_FUZZ
 /* reboot breaks fuzzing, let's just not do it. */

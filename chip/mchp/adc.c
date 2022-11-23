@@ -10,9 +10,9 @@
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "tfdp_chip.h"
 #include "timer.h"
 #include "util.h"
-#include "tfdp_chip.h"
 
 /*
  * Conversion on a single channel takes less than 12 ms. Set timeout to

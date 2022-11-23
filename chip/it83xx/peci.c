@@ -10,9 +10,9 @@
 #include "hooks.h"
 #include "peci.h"
 #include "registers.h"
-#include "util.h"
-#include "timer.h"
 #include "task.h"
+#include "timer.h"
+#include "util.h"
 
 enum peci_status {
 	PECI_STATUS_NO_ERR = 0x00,

@@ -5,18 +5,19 @@
 
 /* MAX32660 I2C port module for Chrome EC. */
 
-#include <stdint.h>
-#include <stddef.h>
 #include "common.h"
 #include "config_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "i2c_regs.h"
+#include "registers.h"
 #include "stdbool.h"
 #include "system.h"
 #include "task.h"
-#include "registers.h"
-#include "i2c_regs.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 /**
  * Byte to use if the EC HOST requested more data

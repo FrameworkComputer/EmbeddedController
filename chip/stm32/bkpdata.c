@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <assert.h>
-
 #include "bkpdata.h"
 #include "registers.h"
 #include "system.h" /* enum system_bbram_idx */
 #include "task.h"
+
+#include <assert.h>
 
 uint16_t bkpdata_read(enum bkpdata_index index)
 {

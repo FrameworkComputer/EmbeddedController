@@ -4,14 +4,14 @@
  */
 /* Flash memory module for STM32H7 family */
 
-#include "common.h"
 #include "clock.h"
+#include "common.h"
 #include "cpu.h"
-#include "flash.h"
 #include "flash-regs.h"
+#include "flash.h"
 #include "hooks.h"
-#include "registers.h"
 #include "panic.h"
+#include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"

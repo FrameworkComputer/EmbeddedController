@@ -7,8 +7,8 @@
 #ifndef __CROS_EC_USART_RX_DMA_H
 #define __CROS_EC_USART_RX_DMA_H
 
-#include "producer.h"
 #include "dma.h"
+#include "producer.h"
 #include "queue.h"
 #include "usart.h"
 

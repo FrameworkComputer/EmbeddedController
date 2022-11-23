@@ -11,15 +11,15 @@
 #include "crc.h"
 #include "dma.h"
 #include "gpio.h"
-#include "hwtimer.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
+#include "util.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)

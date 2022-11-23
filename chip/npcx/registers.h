@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_REGISTERS_H
 #define __CROS_EC_REGISTERS_H
 
+#include "clock_chip.h"
 #include "common.h"
 #include "compile_time_macros.h"
-#include "clock_chip.h"
 
 /******************************************************************************/
 /*

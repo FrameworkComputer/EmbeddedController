@@ -5,12 +5,11 @@
 
 /* Interrupt based USART TX driver for STM32 */
 
-#include "usart.h"
-
 #include "common.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "usart.h"
 #include "usart_host_command.h"
 #include "util.h"
 

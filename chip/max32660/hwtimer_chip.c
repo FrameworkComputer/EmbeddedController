@@ -6,15 +6,15 @@
 /* MAX32660 HW Timer module for Chrome EC */
 
 #include "clock.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
+#include "gcr_regs.h"
 #include "hooks.h"
 #include "hwtimer.h"
+#include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "registers.h"
 #include "tmr_regs.h"
-#include "gcr_regs.h"
 
 /* Define the rollover timer */
 #define TMR_ROLLOVER MXC_TMR0

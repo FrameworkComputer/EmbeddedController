@@ -5,8 +5,8 @@
 
 /* Hardware timers driver */
 
-#include "cpu.h"
 #include "common.h"
+#include "cpu.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"

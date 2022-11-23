@@ -9,8 +9,8 @@
 
 #include "fan.h"
 #include "registers.h"
-#include "util.h"
 #include "tfdp_chip.h"
+#include "util.h"
 
 /* Maximum fan driver setting value */
 #define MAX_FAN_DRIVER_SETTING 0x3ff

@@ -10,10 +10,10 @@
  * This header is used by Nuvoton EC Booter.
  */
 
-#include <stdint.h>
-
 #include "config.h"
 #include "registers.h"
+
+#include <stdint.h>
 
 /* Signature used by fw header */
 #define SIG_FW_EC 0x2A3B4D5E

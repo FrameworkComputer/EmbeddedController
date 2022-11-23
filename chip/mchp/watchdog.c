@@ -8,8 +8,8 @@
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
-#include "watchdog.h"
 #include "tfdp_chip.h"
+#include "watchdog.h"
 
 void watchdog_reload(void)
 {

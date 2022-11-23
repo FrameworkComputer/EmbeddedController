@@ -5,12 +5,11 @@
  * Mock SPI Controller driver for unit test.
  */
 
-#include <stdint.h>
-
 #include "common.h"
 #include "gpio.h"
-
 #include "spi.h"
+
+#include <stdint.h>
 
 test_mockable int spi_enable(const struct spi_device_t *spi_device, int enable)
 {

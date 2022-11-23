@@ -5,18 +5,18 @@
 
 /* ESPI module for Chrome EC */
 
+#include "chipset.h"
+#include "console.h"
+#include "espi.h"
+#include "hooks.h"
+#include "lpc_chip.h"
+#include "power.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "chipset.h"
-#include "console.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
-#include "power.h"
-#include "espi.h"
-#include "lpc_chip.h"
-#include "hooks.h"
-#include "timer.h"
 
 /* Console output macros */
 #if !(DEBUG_ESPI)

@@ -5,9 +5,6 @@
 
 /* Clocks, PLL and power settings */
 
-#include <assert.h>
-#include <string.h>
-
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -16,6 +13,9 @@
 #include "power.h"
 #include "registers.h"
 #include "timer.h"
+
+#include <assert.h>
+#include <string.h>
 
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)

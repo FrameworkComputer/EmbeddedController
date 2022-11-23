@@ -6,16 +6,16 @@
 /* I2C port module for ISH */
 
 #include "common.h"
-#include "console.h"
 #include "config_chip.h"
+#include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "i2c.h"
-#include "registers.h"
 #include "ish_i2c.h"
+#include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "hwtimer.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)

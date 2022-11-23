@@ -15,12 +15,12 @@
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
-#include "task.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
 #include "spi.h"
 #include "system.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
