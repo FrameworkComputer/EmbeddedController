@@ -256,16 +256,13 @@ test_mockable struct panic_data *get_panic_data_write(void)
 		return pdata_ptr;
 	}
 
+	move_size = 0;
 	if (jdata_ptr->version == 1)
 		move_size = JUMP_DATA_SIZE_V1;
 	else if (jdata_ptr->version == 2)
 		move_size = JUMP_DATA_SIZE_V2 + jdata_ptr->jump_tag_total;
 	else if (jdata_ptr->version == 3)
 		move_size = jdata_ptr->struct_size + jdata_ptr->jump_tag_total;
-	else {
-		/* Unknown jump data version - set move size to 0 */
-		move_size = 0;
-	}
 
 	/* Check if there's enough space for jump tags after move */
 	if (data_begin - move_size < JUMP_DATA_MIN_ADDRESS) {
@@ -273,8 +270,12 @@ test_mockable struct panic_data *get_panic_data_write(void)
 		 * TODO(b/251190975): This failure should be reported
 		 * in the panic data structure for more visibility.
 		 */
+		/* LCOV_EXCL_START - JUMP_DATA_MIN_ADDRESS is 0 in test builds
+		 * and we cannot go negative by subtracting unsigned ints.
+		 */
 		move_size -= jdata_ptr->jump_tag_total;
 		jdata_ptr->jump_tag_total = 0;
+		/* LCOV_EXCL_STOP */
 	}
 
 	data_begin -= move_size;

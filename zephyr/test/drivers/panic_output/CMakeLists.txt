@@ -5,4 +5,5 @@
 # Add source files
 target_sources(app PRIVATE
   src/panic_output_crash_cmd.c
+  src/panic_output_get_panic_data_write.c
 )
