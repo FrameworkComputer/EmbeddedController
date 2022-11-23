@@ -731,23 +731,6 @@ config PLATFORM_EC_VSTORE_SLOT_COUNT
 	  used only for recording a hash of the read-write AP firmware for
 	  checking on resume. For this, one slot is enough.
 
-menuconfig PLATFORM_EC_WATCHDOG
-	bool "Watchdog"
-	depends on WATCHDOG
-	default y
-	help
-	  Enable the watchdog functionality. The watchdog timer will reboot the
-	  system if the hook task (which is the lowest-priority task on the
-	  system) gets starved for CPU time and isn't able to fire its
-	  HOOK_TICK event.
-
-	  Chromium EC system uses an auxiliary timer to handle the system
-	  warning event. This leaves some time to the system for preparing &
-	  printing the debug information. The interval between reloads of the
-	  watchdog timer should be less than half of the auxiliary timer
-	  (PLATFORM_EC_WATCHDOG_PERIOD_MS -
-	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS).
-
 config PLATFORM_EC_WORKAROUND_FLASH_DOWNLOAD_API
 	bool "Workaround needed for npcx9 ES1 chip"
 	depends on SOC_SERIES_NPCX9

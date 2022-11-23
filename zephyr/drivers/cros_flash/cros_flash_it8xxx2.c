@@ -180,7 +180,7 @@ static int cros_flash_it8xxx2_write(const struct device *dev, int offset,
 	 * chance to go back to hook task to touch watchdog. Reload watchdog
 	 * on each flash write to prevent the reset.
 	 */
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG))
+	if (IS_ENABLED(CONFIG_WATCHDOG))
 		watchdog_reload();
 
 	return flash_write(flash_controller, offset, src_data, size);
@@ -223,7 +223,7 @@ static int cros_flash_it8xxx2_erase(const struct device *dev, int offset,
 		 * If requested erase size is too large at one time on KGD
 		 * flash, we need to reload watchdog to prevent the reset.
 		 */
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG) && (size > 0x10000))
+		if (IS_ENABLED(CONFIG_WATCHDOG) && (size > 0x10000))
 			watchdog_reload();
 	}
 	/* Restore interrupts */

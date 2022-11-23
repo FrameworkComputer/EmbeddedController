@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_WATCHDOG
+if WATCHDOG
 
 config PLATFORM_EC_WATCHDOG_PERIOD_MS
 	int "Watchdog timeout in ms"
@@ -27,4 +27,4 @@ config PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS
 	  For the ITE chip, use CONFIG_WDT_ITE_WARNING_LEADING_TIME_MS instead
 	  of this config.
 
-endif # PLATFORM_EC_WATCHDOG
+endif # WATCHDOG
