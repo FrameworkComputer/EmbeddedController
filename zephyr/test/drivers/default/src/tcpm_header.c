@@ -137,6 +137,9 @@ static void tcpm_header_before(void *state)
 
 	RESET_FAKE(set_vconn);
 	RESET_FAKE(reset_bist_type_2);
+	RESET_FAKE(debug_accessory);
+	RESET_FAKE(debug_detach);
+	RESET_FAKE(hard_reset_reinit);
 
 	fixture->mock_driver = (struct tcpm_drv){ 0 };
 	fixture->saved_driver_ptr = tcpc_config[TCPM_TEST_PORT].drv;
