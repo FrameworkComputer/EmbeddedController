@@ -83,7 +83,7 @@
 &power_ctrl_psl {
 	status = "okay";
 	pinctrl-names = "sleep";
-	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in3_gp01 &psl_in4_gp02>;
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in4_gp02>;
 };
 
 /* ADC and GPIO alt-function specifications */
