@@ -240,6 +240,35 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_idle_mode)
 		      usb3_conn, conn);
 }
 
+/** Test retimer dp connection setting. */
+ZTEST_USER(bb_retimer_no_tasks, test_bb_retimer_set_dp_connection)
+{
+	const uint32_t enable_dp_conn = BB_RETIMER_DP_CONNECTION;
+	const uint32_t disable_dp_conn = 0;
+	const struct emul *emul = EMUL_DT_GET(BB_RETIMER_NODE);
+	struct usb_mux usb_mux_c1;
+	uint32_t conn;
+
+	set_test_runner_tid();
+
+	usb_mux_c1 = *usb_muxes[USBC_PORT_C1].mux;
+
+	/* Check if DP is enabled */
+	zassert_equal(EC_SUCCESS,
+		      bb_retimer_set_dp_connection(&usb_mux_c1, true), NULL);
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	zassert_equal(conn, enable_dp_conn, "Expected state 0x%02x, got 0x%02x",
+		      enable_dp_conn, conn);
+
+	/* Check if DP is disabled */
+	zassert_equal(EC_SUCCESS,
+		      bb_retimer_set_dp_connection(&usb_mux_c1, false), NULL);
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	zassert_equal(conn, disable_dp_conn,
+		      "Expected state 0x%02x, got 0x%02x", disable_dp_conn,
+		      conn);
+}
+
 /** Test setting different options for DFP role */
 ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
 {

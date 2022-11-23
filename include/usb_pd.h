@@ -855,6 +855,10 @@ struct pd_cable {
 
 #define USB_VID_INTEL 0x8087
 
+#define USB_VID_FRAMEWORK 0X32ac
+#define USB_PID_FRAMEWORK_HDMI_CARD 0X2
+#define USB_PID_FRAMEWORK_DP_CARD 0X3
+
 /* Timeout for message receive in microseconds */
 #define USB_PD_RX_TMOUT_US 1800
 

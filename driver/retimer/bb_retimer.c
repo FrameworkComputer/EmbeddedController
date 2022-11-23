@@ -523,6 +523,28 @@ static int bb_set_idle_mode(const struct usb_mux *me, bool idle)
 	return rv;
 }
 
+int bb_retimer_set_dp_connection(const struct usb_mux *me, bool enable)
+{
+	int rv;
+	uint32_t reg_val;
+	int port = me->usb_port;
+
+	mutex_lock(&bb_retimer_lock[port]);
+
+	rv = bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE, &reg_val);
+	if (rv != EC_SUCCESS) {
+		mutex_unlock(&bb_retimer_lock[port]);
+		return rv;
+	}
+	/* Bit 8: BB_RETIMER_DP_CONNECTION */
+	WRITE_BIT(reg_val, 8, enable);
+	rv = bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE, reg_val);
+
+	mutex_unlock(&bb_retimer_lock[port]);
+
+	return rv;
+}
+
 void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
 			   bool *ack_required)
 {
