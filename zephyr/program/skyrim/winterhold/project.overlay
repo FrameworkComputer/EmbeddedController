@@ -53,7 +53,7 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		soc-pct2075 {
+		temp_sensor_soc: soc-pct2075 {
 			temp_host_high = <105>;
 			temp_host_halt = <110>;
 			temp_host_release_high = <95>;
@@ -61,7 +61,7 @@
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&soc_pct2075>;
 		};
-		amb-pct2075 {
+		temp_sensor_amb: amb-pct2075 {
 			temp_host_warn = <50>;
 			temp_host_high = <105>;
 			temp_host_halt = <110>;
