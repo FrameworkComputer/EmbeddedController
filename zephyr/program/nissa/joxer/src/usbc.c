@@ -20,30 +20,6 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it8xxx2_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
-	},
-	{
-		/*
-		 * Sub-board: optional PS8745 TCPC+redriver. Behaves the same
-		 * as PS8815.
-		 */
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1_TCPC,
-			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-		/* PS8745 implements TCPCI 2.0 */
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-	},
-};
-
 /* Vconn control for integrated ITE TCPC */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {

@@ -18,31 +18,6 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C0_TCPC,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.drv = &raa489000_tcpm_drv,
-		/* RAA489000 implements TCPCI 2.0 */
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_VBUS_MONITOR,
-	},
-	{ /* sub-board */
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1_TCPC,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.drv = &raa489000_tcpm_drv,
-		/* RAA489000 implements TCPCI 2.0 */
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_VBUS_MONITOR,
-	},
-};
-
 int board_is_sourcing_vbus(int port)
 {
 	int regval;

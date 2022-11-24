@@ -4,6 +4,7 @@
  */
 
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usb_pd_tcpm.h>
 
 / {
 	aliases {
@@ -213,6 +214,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
+			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -308,6 +310,14 @@
 		compatible = "intersil,isl923x";
 		status = "okay";
 		reg = <0x9>;
+	};
+
+	tcpc_port0: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
 	};
 };
 

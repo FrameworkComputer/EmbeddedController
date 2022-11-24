@@ -5,6 +5,7 @@
 
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/usbc_mux.h>
+#include <dt-bindings/usb_pd_tcpm.h>
 
 / {
 	aliases {
@@ -215,6 +216,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
+			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -234,6 +236,7 @@
 			reg = <1>;
 			bc12 = <&bc12_port1>;
 			chg = <&chg_port1>;
+			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
@@ -319,6 +322,14 @@
 		status = "okay";
 		reg = <0x9>;
 	};
+
+	tcpc_port0: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
 };
 
 &i2c5_1 {
@@ -335,6 +346,14 @@
 		compatible = "intersil,isl923x";
 		status = "okay";
 		reg = <0x9>;
+	};
+
+	tcpc_port1: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
 	};
 
 	anx7483_mux_1: anx7483-mux-1@3e {
