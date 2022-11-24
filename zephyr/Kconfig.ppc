@@ -52,6 +52,8 @@ config PLATFORM_EC_USBC_PPC_VCONN
 
 config PLATFORM_EC_USBC_PPC_AOZ1380
 	bool "Alpha & Omega USB Type-C PD Sink and Source Protection Switch"
+	default y
+	depends on DT_HAS_AOZ_AOZ1380_ENABLED
 	select PLATFORM_EC_USBC_OCP
 	help
 	  AOZ1380DI integrates two power switches and control circuitry to
@@ -65,6 +67,8 @@ config PLATFORM_EC_USBC_PPC_RT1718S
 	select PLATFORM_EC_USBC_PPC_POLARITY
 	select PLATFORM_EC_USBC_PPC_SBU
 	select PLATFORM_EC_USBC_PPC_VCONN if PLATFORM_EC_USBC_VCONN
+	default y
+	depends on DT_HAS_RICHTEK_RT1718S_TCPC_ENABLED
 	help
 	  RT1718S integrates several high voltage protection switch of
 	  SBU1/SBU2/DP/DM from high voltage VBUS touching the adjacent pins. The
@@ -84,6 +88,8 @@ config PLATFORM_EC_USBC_PPC_KTU1125
 
 config PLATFORM_EC_USBC_PPC_NX20P3483
 	bool "NX20P3483 High Voltage Sink/Source Combo Switch"
+	default y
+	depends on DT_HAS_NXP_NX20P348X_ENABLED
 	select PLATFORM_EC_USBC_OCP
 	help
 	  The NX20P3483 is a product with combined multiple power switches
@@ -98,6 +104,8 @@ config PLATFORM_EC_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE
 
 config PLATFORM_EC_USBC_PPC_RT1739
 	bool "Richtek RT1739 Type-C Power Path Controller"
+	default y
+	depends on DT_HAS_RICHTEK_RT1739_PPC_ENABLED
 	help
 	  RT1739 is a highly integrated USB-C Bi-Directional Power Mux and
 	  Protection IC which includes IEC-61000-4-2 ESD protection cell for
@@ -109,6 +117,7 @@ config PLATFORM_EC_USBC_PPC_SN5S330
 	select PLATFORM_EC_USBC_PPC_POLARITY
 	select PLATFORM_EC_USBC_PPC_SBU
 	select PLATFORM_EC_USBC_PPC_VCONN if PLATFORM_EC_USBC_VCONN
+	default y if DT_HAS_TI_SN5S330_ENABLED || DT_HAS_CROS_SN5S330_EMUL_ENABLED
 	help
 	  This is a USB Type-C Power Delivery 3.0 Bidirectional Power Mux with
 	  CC and SBU short-to-VBUS Protection and Integrated Dead Battery
@@ -122,6 +131,7 @@ config PLATFORM_EC_USBC_PPC_SYV682X
 	select PLATFORM_EC_USBC_OCP
 	select PLATFORM_EC_USBC_PPC_POLARITY
 	select PLATFORM_EC_USBC_PPC_VCONN if PLATFORM_EC_USBC_VCONN
+	default y if DT_HAS_SILERGY_SYV682X_ENABLED
 	help
 	  The SYV682A is a 2 to 1 power mux switch for USB PD applications. The
 	  SYV682A supports dead battery wake up function and Fast Role Swap

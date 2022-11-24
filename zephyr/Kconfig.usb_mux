@@ -38,12 +38,16 @@ config PLATFORM_EC_USB_MUX_AP_CONTROL
 
 config PLATFORM_EC_USB_MUX_AMD_FP6
 	bool "AMD FP6 integrated mux"
+	default y
+	depends on DT_HAS_AMD_USBC_MUX_AMD_FP6_ENABLED
 	help
 	  Integrated AMD FP6 mux for USB and DP.  Mux control happens over
 	  an i2c channel.
 
 config PLATFORM_EC_USB_MUX_IT5205
 	bool "ITE IT5205 USB Type-C 3:2 Alternative mode passive mux"
+	default y
+	depends on DT_HAS_ITE_IT5205_ENABLED
 	help
 	  This is a USB Type-C 3:2 Alternative mode mux, supporting USB 3.1
 	  Gen 2 10Gbps as well as DisplayPort (DP1.4) at 8Gbps. It provides a
@@ -52,6 +56,8 @@ config PLATFORM_EC_USB_MUX_IT5205
 
 config PLATFORM_EC_USB_MUX_PS8743
 	bool "Parade PS8743 USB-C Host Switch with redriver"
+	default y
+	depends on DT_HAS_PARADE_PS8743_ENABLED
 	help
 	  This is a Parade USB 3.1 Gen 1 / DisplayPort (DP) Alt Mode
 	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching

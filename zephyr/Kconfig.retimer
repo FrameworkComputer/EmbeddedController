@@ -86,6 +86,8 @@ config PLATFORM_EC_USBC_RETIMER_ANX7451
 
 config PLATFORM_EC_USBC_RETIMER_ANX7483
 	bool "Support Analogix ANX7483 10G Active Retimer"
+	default y
+	depends on DT_HAS_ANALOGIX_ANX7483_ENABLED
 	help
 	  ANX7483 is a 4x4 re-driver capable of switching DisplayPort and
 	  USB3.2 Gen 2 10Gbps signals to support type-C (USB-C) ports with
@@ -101,6 +103,8 @@ config PLATFORM_EC_USBC_RETIMER_PS8811
 
 config PLATFORM_EC_USBC_RETIMER_PS8818
 	bool "Parade PS8818 USB Type-C Retimer for USB and DP Alternate Mode"
+	default y
+	depends on DT_HAS_PARADE_PS8818_ENABLED
 	help
 	  PS8818 is a 10Gbps retimer for Type-C applications with the
 	  integrated USB3.1 and DisplayPort alternate mode port.

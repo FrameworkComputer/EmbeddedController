@@ -391,14 +391,10 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
+enum usbc_port { USBC_PORT_COUNT };
 
 /* USBC PPC configuration */
 struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv,
-	},
+	/* not needed for the test */
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
