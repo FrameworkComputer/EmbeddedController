@@ -12,8 +12,6 @@
 
 #include <zephyr/devicetree.h>
 
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
-
 static void rt9490_bc12_enable_irqs(void)
 {
 	DT_INST_FOREACH_STATUS_OKAY(BC12_GPIO_ENABLE_INTERRUPT);
@@ -43,5 +41,3 @@ void rt9490_bc12_dt_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
-
-#endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */

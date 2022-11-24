@@ -15,7 +15,7 @@
 };
 
 &i2c0 {
-	status="okay";
+	status = "okay";
 
 	rt9490: rt9490@53 {
 		compatible = "zephyr,rt9490-emul", "richtek,rt9490";
