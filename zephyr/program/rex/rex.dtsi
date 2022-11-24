@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
- #include <dt-bindings/usb_pd_tcpm.h>
+#include <dt-bindings/usb_pd_tcpm.h>
 
 / {
 	aliases {
