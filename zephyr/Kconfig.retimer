@@ -6,6 +6,8 @@ if PLATFORM_EC_USBC
 
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 	bool "Support Intel Burnside Bridge retimer"
+	depends on PLATFORM_EC_USB_MUX
+	depends on DT_HAS_INTEL_JHL8040R_ENABLED
 	select PLATFORM_EC_USB_PD_USB4
 	select PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
 	help
@@ -29,6 +31,8 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 
 config PLATFORM_EC_USBC_RETIMER_INTEL_HB
 	bool "Support Intel Hayden Bridge retimer"
+	depends on PLATFORM_EC_USB_MUX
+	depends on DT_HAS_INTEL_JHL8040R_ENABLED
 	select PLATFORM_EC_USB_PD_USB4
 	select PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
 	help
