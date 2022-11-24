@@ -204,6 +204,12 @@ config PLATFORM_EC_CHARGER_SM5803
 	  Enables the driver for the SM5803.
 	  The SM5803 is the Silicon Mitus SM5803 Buck-Boost Charger.
 
+	  This charger is known to be very inefficient when operating in buck-boost
+	  mode (when input voltage is close to output voltage), such that permanent
+	  damage may be done to the charger. Users should exercise caution around
+	  choice of supported configurations: see b:260271871, b:258754576, and
+	  b:230712704 for more information.
+
 
 if PLATFORM_EC_OCPC
 

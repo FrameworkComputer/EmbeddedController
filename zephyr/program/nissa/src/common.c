@@ -148,3 +148,42 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
 	*kd = 0;
 	*kd_div = 1;
 }
+
+#ifdef CONFIG_PLATFORM_EC_CHARGER_SM5803
+/*
+ * Called by USB-PD code to determine whether a given input voltage is
+ * acceptable.
+ */
+__override int pd_is_valid_input_voltage(int mv)
+{
+	int battery_voltage, rv;
+
+	rv = battery_design_voltage(&battery_voltage);
+	if (rv) {
+		LOG_ERR("Unable to get battery design voltage: %d", rv);
+		return true;
+	}
+
+	/*
+	 * SM5803 is extremely inefficient in buck-boost mode, when
+	 * VBUS ~= VSYS: very high temperatures on the chip and associated
+	 * inductor have been observed when sinking normal charge current in
+	 * buck-boost mode (but not in buck or boost mode) so we choose to
+	 * completely exclude some voltages that are likely to be problematic.
+	 *
+	 * Nissa devices use either 2S or 3S batteries, for which VBUS will
+	 * usually only be near VSYS with a 3S battery and 12V input (picked
+	 * from among common supported PD voltages)- 2S can get close to
+	 * 9V, but we expect charge current to be low when a 2S battery is
+	 * charged to that voltage (because it will be nearly full).
+	 *
+	 * We assume that any battery with a design voltage above 9V is 3S, and
+	 * that other problematic PD voltages (near to, but not exactly 12V)
+	 * will rarely occur.
+	 */
+	if (battery_voltage > 9000 && mv == 12000) {
+		return false;
+	}
+	return true;
+}
+#endif
