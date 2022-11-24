@@ -28,7 +28,6 @@ Example:
 ```
 # LED
 CONFIG_PLATFORM_EC_LED_COMMON=n
-CONFIG_PLATFORM_EC_LED_DT=y
 ```
 
 Enable other [config options](../configuration/leds.md) supported in the legacy code.
