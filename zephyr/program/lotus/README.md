@@ -13,20 +13,8 @@ documentation] for instructions on adding a new variant.
 
 # Building
 
-To build the `native_posix` example, run:
-
-``` shellsession
-(chroot) $ zmake build minimal-posix
-```
-
 To build the NPCX9 example, run:
 
 ``` shellsession
-(chroot) $ zmake build minimal-npcx9
-```
-
-For the IT8XXX2 example, run:
-
-``` shellsession
-(chroot) $ zmake build minimal-it8xxx2
+(chroot) $ zmake build lotus
 ```
