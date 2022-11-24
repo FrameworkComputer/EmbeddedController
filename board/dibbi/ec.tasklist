@@ -9,17 +9,8 @@
 
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, VENTI_TASK_STACK_SIZE) \
-	TASK_ALWAYS(USB_CHG_P0, usb_charger_task, 0, LARGER_TASK_STACK_SIZE) \
-	TASK_ALWAYS(CHARGER, charger_task, NULL, TRENTA_TASK_STACK_SIZE) \
 	TASK_NOTEST(CHIPSET, chipset_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(CONSOLE, console_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(POWERBTN, power_button_task, NULL, ULTRA_TASK_STACK_SIZE) \
-        TASK_ALWAYS(PD_C0, pd_task, NULL, ULTRA_TASK_STACK_SIZE)
-
-/*
- * TODO(b/257377326):
- *		determine what tasks are required for PD power
- *		determine whether there should be a PD_INT_C0 (waddledee only had
- *		PD_INT_C1)
- */
+	TASK_ALWAYS(PD_C0, pd_task, NULL, ULTRA_TASK_STACK_SIZE)
