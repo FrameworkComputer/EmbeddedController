@@ -14,6 +14,7 @@
 #include "usbc/tcpc_nct38xx.h"
 #include "usbc/tcpc_ps8xxx.h"
 #include "usbc/tcpc_ps8xxx_emul.h"
+#include "usbc/tcpc_raa489000.h"
 #include "usbc/tcpc_rt1718s.h"
 #include "usbc/tcpci.h"
 #include "usbc/utils.h"
@@ -58,6 +59,8 @@
 	CHECK_COMPAT(PS8XXX_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_PS8XXX)      \
 	CHECK_COMPAT(NCT38XX_TCPC_COMPAT, usbc_id, tcpc_id,                    \
 		     TCPC_CONFIG_NCT38XX)                                      \
+	CHECK_COMPAT(RAA489000_TCPC_COMPAT, usbc_id, tcpc_id,                  \
+		     TCPC_CONFIG_RAA489000)                                    \
 	CHECK_COMPAT(RT1718S_TCPC_COMPAT, usbc_id, tcpc_id,                    \
 		     TCPC_CONFIG_RT1718S)                                      \
 	CHECK_COMPAT(TCPCI_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_TCPCI)        \
