@@ -83,6 +83,8 @@ config EMUL_TUSB1064
 
 config EMUL_BB_RETIMER
 	bool "BB retimer emulator"
+	default y
+	depends on ZTEST && DT_HAS_INTEL_JHL8040R_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the BB (Burnside Bridge) retimer emulator. This driver use
@@ -132,6 +134,8 @@ config PWM_MOCK
 
 config EMUL_PCT2075
 	bool "PCT2075 emulator"
+	default y
+	depends on ZTEST && DT_HAS_NXP_PCT2075_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the PCT2075 temperature sensor emulator. It uses emulated I2C bus.
