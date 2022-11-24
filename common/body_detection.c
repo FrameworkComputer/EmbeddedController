@@ -6,6 +6,7 @@
 #include "accelgyro.h"
 #include "body_detection.h"
 #include "console.h"
+#include "hooks.h"
 #include "hwtimer.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -117,6 +118,8 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 #ifdef CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE
 	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
 #endif
+
+	hook_notify(HOOK_BODY_DETECT_CHANGE);
 
 	/* state changing log */
 	CPRINTS("body_detect changed state to: %s body",

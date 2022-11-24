@@ -197,6 +197,15 @@ enum hook_type {
 	 */
 	HOOK_TABLET_MODE_CHANGE,
 
+#ifdef CONFIG_BODY_DETECTION
+	/*
+	 * Body dectection mode change.
+	 *
+	 * Hook routines are called from the HOOKS task.
+	 */
+	HOOK_BODY_DETECT_CHANGE,
+#endif
+
 	/*
 	 * Detachable device connected to a base.
 	 *
