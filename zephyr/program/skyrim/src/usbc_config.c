@@ -14,6 +14,7 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "driver/bc12/pi3usb9201.h"
+#include "driver/charger/isl923x_public.h"
 #include "driver/charger/isl9241.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/anx7483_public.h"
@@ -222,12 +223,21 @@ void usb_pd_soc_interrupt(enum gpio_signal signal)
 
 #ifdef CONFIG_CHARGER_ISL9241
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
-static void set_ac_prochot(void)
+static void charger_prochot_init_isl9241(void)
 {
 	isl9241_set_ac_prochot(CHARGER_SOLO, CONFIG_AC_PROCHOT_CURRENT_MA);
 }
-DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9241, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_CHARGER_ISL9241 */
+
+#ifdef CONFIG_CHARGER_ISL9238
+static void charger_prochot_init_isl9238(void)
+{
+	isl923x_set_ac_prochot(CHARGER_SOLO, CONFIG_AC_PROCHOT_CURRENT_MA);
+	isl923x_set_dc_prochot(CHARGER_SOLO, CONFIG_DC_PROCHOT_CURRENT_MA);
+}
+DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9238, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_CHARGER_ISL9238 */
 
 void tcpc_alert_event(enum gpio_signal signal)
 {
