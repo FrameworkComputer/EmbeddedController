@@ -380,6 +380,35 @@ unlock_rate:
 	return ret;
 }
 
+#ifdef CONFIG_BODY_DETECTION
+static int get_rms_noise(const struct motion_sensor_t *s)
+{
+	fp_t rate, noise_density_ug;
+
+	/* change unit of ODR to Hz to prevent INT_TO_FP() overflow */
+	rate = INT_TO_FP(st_get_data_rate(s) / 1000);
+
+	/*
+	 * LIS2DW12: 90ug/sqrt(Hz) when ODR is over 200Hz
+	 * When lower, we are in power mode 2, so the noise density does not
+	 * depend on frequency and the RMS at +/-2g is 2.4mg.
+	 *
+	 * LIS12DWL: 110uq/sqr(Hz) for all frequencies, since low power mode
+	 * is not used.
+	 */
+
+	if (!IS_ENABLED(CONFIG_ACCEL_LIS2DWL)) {
+		if (rate < INT_TO_FP(200))
+			return 2400;
+		noise_density_ug = INT_TO_FP(90);
+	} else {
+		noise_density_ug = INT_TO_FP(110);
+	}
+
+	return FP_TO_INT(fp_mul(fp_sqrtf(rate), noise_density_ug));
+}
+#endif
+
 static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
@@ -527,4 +556,7 @@ const struct accelgyro_drv lis2dw12_drv = {
 #ifdef ACCEL_LIS2DW12_INT_ENABLE
 	.irq_handler = lis2dw12_irq_handler,
 #endif /* ACCEL_LIS2DW12_INT_ENABLE */
+#ifdef CONFIG_BODY_DETECTION
+	.get_rms_noise = get_rms_noise,
+#endif
 };
