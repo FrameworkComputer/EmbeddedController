@@ -21,3 +21,6 @@ check_set_compiler_property(APPEND PROPERTY warning_extended -Wunused-variable
 	-Werror=unused-variable -Werror=missing-braces
 	-Werror=sometimes-uninitialized -Werror=unused-function
 	-Werror=array-bounds)
+
+# clang flags for coverage generation
+set_property(TARGET compiler PROPERTY coverage --coverage -fno-inline)

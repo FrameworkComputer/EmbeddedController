@@ -37,6 +37,10 @@ parameters that may be used, please consult the Twister documentation.
 #   version: "version:5.8.0.chromium.3"
 # >
 # wheel: <
+#   name: "infra/python/wheels/pyelftools-py2_py3"
+#   version: "version:0.29"
+# >
+# wheel: <
 #   name: "infra/python/wheels/pykwalify-py2_py3"
 #   version: "version:1.8.0"
 # >
