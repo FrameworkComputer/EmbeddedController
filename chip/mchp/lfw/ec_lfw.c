@@ -12,7 +12,6 @@
 #include "cros_version.h"
 #include "dma.h"
 #include "gpio.h"
-#include "gpio_list.h"
 #include "hwtimer.h"
 #include "registers.h"
 #include "spi.h"
@@ -29,6 +28,9 @@
 #endif
 
 #include "ec_lfw.h"
+
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /*
  * Check if LFW build is pulling in GPSPI which is not

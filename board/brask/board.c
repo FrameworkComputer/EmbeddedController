@@ -2,8 +2,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <stdbool.h>
-
 #include "adc.h"
 #include "builtin/assert.h"
 #include "button.h"
@@ -13,18 +11,20 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/tcpm/tcpci.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
-#include "power_button.h"
 #include "hooks.h"
 #include "peripheral_charger.h"
 #include "power.h"
+#include "power_button.h"
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 #include "usbc_ppc.h"
-#include "driver/tcpm/tcpci.h"
-#include "fw_config.h"
+
+#include <stdbool.h>
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -219,7 +219,8 @@ static void port_ocp_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&update_5v_usage_data, 0);
 }
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /*

@@ -188,7 +188,6 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
 #include "usbc_config.h"
 
 enum battery_type {

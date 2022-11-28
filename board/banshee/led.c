@@ -10,20 +10,20 @@
  * amber while charging the battery and white when the battery is charged.
  */
 
-#include <stdint.h>
-
-#include "common.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "common.h"
 #include "compile_time_macros.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "lid_switch.h"
 #include "led_common.h"
 #include "led_pwm.h"
+#include "lid_switch.h"
 #include "pwm.h"
 #include "util.h"
+
+#include <stdint.h>
 
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5

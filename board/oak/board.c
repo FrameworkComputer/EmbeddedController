@@ -72,6 +72,7 @@ void usb_evt(enum gpio_signal signal)
 }
 #endif /* BOARD_REV >= OAK_REV4 */
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */

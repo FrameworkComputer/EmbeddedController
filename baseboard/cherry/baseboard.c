@@ -50,6 +50,7 @@ static void bc12_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void xhci_init_done_interrupt(enum gpio_signal signal);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

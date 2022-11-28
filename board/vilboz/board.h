@@ -10,8 +10,9 @@
 
 #define VARIANT_ZORK_DALBOZ
 
-#include <stdbool.h>
 #include "baseboard.h"
+
+#include <stdbool.h>
 
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 

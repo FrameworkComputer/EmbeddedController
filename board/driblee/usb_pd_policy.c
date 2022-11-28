@@ -7,8 +7,8 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/tcpm/tcpci.h"
 #include "driver/charger/isl923x_public.h"
+#include "driver/tcpm/tcpci.h"
 #include "usb_pd.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)

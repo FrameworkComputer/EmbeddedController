@@ -10,9 +10,9 @@
 #include "cros_board_info.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
-#include "hooks.h"
 
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5

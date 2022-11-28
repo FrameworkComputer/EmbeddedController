@@ -61,6 +61,7 @@ static void gauge_interrupt(enum gpio_signal signal)
 static void motion_interrupt(enum gpio_signal signal);
 #endif /* SECTION_IS_RW */
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/

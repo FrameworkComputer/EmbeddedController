@@ -9,8 +9,8 @@
 #include "common.h"
 #include "driver/charger/isl923x.h"
 #include "driver/led/lm3630a.h"
-#include "ec_version.h"
 #include "ec_ec_comm_server.h"
+#include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -28,18 +28,19 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
-#include "touchpad.h"
 #include "timer.h"
+#include "touchpad.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
-#include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usart_tx_dma.h"
 #include "usb_api.h"
 #include "usb_descriptor.h"
 #include "usb_i2c.h"
 #include "usb_spi.h"
 #include "util.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #ifdef SECTION_IS_RW

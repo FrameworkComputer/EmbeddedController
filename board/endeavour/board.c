@@ -45,6 +45,7 @@ static uint8_t board_version;
 static uint32_t oem;
 static uint32_t sku;
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Hibernate wake configuration */

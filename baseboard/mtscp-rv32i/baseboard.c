@@ -35,6 +35,7 @@ struct mpu_entry mpu_entries[NR_MPU_ENTRIES] = {
 #endif
 };
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #ifdef CONFIG_PANIC_CONSOLE_OUTPUT

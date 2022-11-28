@@ -10,13 +10,13 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
 #include "system.h"
 #include "util.h"
-#include "extpower.h"
 
 #define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
 /* Battery LED blinks every per 400ms */

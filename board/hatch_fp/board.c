@@ -24,6 +24,7 @@ int console_is_restricted(void)
 	return system_is_locked();
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /*

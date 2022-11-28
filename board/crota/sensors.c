@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
-#include "console.h"
 #include "accelgyro.h"
 #include "adc.h"
+#include "common.h"
+#include "console.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_lsm6dso.h"
@@ -16,8 +16,8 @@
 #include "motion_sense.h"
 #include "tablet_mode.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {

@@ -9,13 +9,13 @@
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "charge_manager.h"
-#include "charger.h"
 #include "charge_state.h"
+#include "charger.h"
 #include "chipset.h"
 #include "console.h"
 #include "driver/als_opt3001.h"
-#include "driver/pmic_bd99992gw.h"
 #include "driver/charger/isl923x.h"
+#include "driver/pmic_bd99992gw.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
@@ -30,10 +30,10 @@
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "panic.h"
-#include "power_button.h"
 #include "power.h"
-#include "pwm_chip.h"
+#include "power_button.h"
 #include "pwm.h"
+#include "pwm_chip.h"
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
@@ -68,6 +68,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Keyboard scan. Increase output_settle_us to 80us from default 50us. */

@@ -29,8 +29,8 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "usb_charge.h"
-#include "usb_pd_tcpm.h"
 #include "usb_mux.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
@@ -44,6 +44,7 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 	gpio_set_level(GPIO_DP1_HPD, gpio_get_level(signal));
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Motion sensors */

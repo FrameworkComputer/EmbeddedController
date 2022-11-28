@@ -33,12 +33,11 @@
  *    bypass mode.
  */
 
-#include "common.h"
-
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
 #include "charger.h"
+#include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "driver/charger/isl9241.h"
@@ -46,8 +45,8 @@
 #include "hooks.h"
 #include "stdbool.h"
 #include "throttle_ap.h"
-#include "usbc_ppc.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)

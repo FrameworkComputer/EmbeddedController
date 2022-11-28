@@ -11,8 +11,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
-#include "util.h"
 #include "system.h"
+#include "util.h"
 
 const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 

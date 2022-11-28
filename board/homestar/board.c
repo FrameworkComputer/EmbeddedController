@@ -10,15 +10,15 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
-#include "extpower.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/ln9310.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_mkbp.h"
@@ -32,9 +32,9 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "queue.h"
-#include "system.h"
 #include "shi_chip.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "usbc_ppc.h"
@@ -52,6 +52,7 @@ static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
 static void switchcap_interrupt(enum gpio_signal signal);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* GPIO Interrupt Handlers */

@@ -73,6 +73,7 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Motion sensors */

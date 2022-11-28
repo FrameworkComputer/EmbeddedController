@@ -11,20 +11,19 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "driver/charger/bq25710.h"
-#include "gpio.h"
-#include "gpio_signal.h"
-#include "hooks.h"
 #include "driver/accel_bma2x2_public.h"
 #include "driver/accel_bma422.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accelgyro_lsm6dsm.h"
+#include "driver/charger/bq25710.h"
 #include "fw_config.h"
+#include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "ps8xxx.h"
 #include "registers.h"
 #include "switch.h"
@@ -32,7 +31,8 @@
 #include "throttle_ap.h"
 #include "usbc_config.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)

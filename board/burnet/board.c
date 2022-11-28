@@ -16,8 +16,8 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -57,6 +57,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(0 /* port */);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/

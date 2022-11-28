@@ -89,6 +89,7 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 
 /* Keyboard scan setting */
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */

@@ -5,8 +5,6 @@
  * Battery LED control for Agah
  */
 
-#include <stdint.h>
-
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -16,6 +14,8 @@
 #include "host_command.h"
 #include "led_common.h"
 #include "task.h"
+
+#include <stdint.h>
 
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1

@@ -125,6 +125,7 @@ static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
 	gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, !hdmi_hpd_odl);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */

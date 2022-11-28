@@ -6,8 +6,8 @@
 #include "adc.h"
 #include "chip/stm32/registers.h"
 #include "console.h"
-#include "gpio.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "usb_pd_tcpm.h"
 
 /* USB Power delivery board configuration */

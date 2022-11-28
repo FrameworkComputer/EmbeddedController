@@ -14,8 +14,8 @@
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
@@ -57,6 +57,7 @@ static void gauge_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_CHARGER);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/

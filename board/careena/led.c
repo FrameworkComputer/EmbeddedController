@@ -14,8 +14,8 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
-#include "util.h"
 #include "system.h"
+#include "util.h"
 
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1

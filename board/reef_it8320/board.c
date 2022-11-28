@@ -27,8 +27,8 @@
 #include "lid_angle.h"
 #include "lid_switch.h"
 #include "math_util.h"
-#include "motion_sense.h"
 #include "motion_lid.h"
+#include "motion_sense.h"
 #include "panic.h"
 #include "power.h"
 #include "power_button.h"
@@ -56,6 +56,7 @@
 #define IN_PGOOD_PP3300 POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
 #define IN_PGOOD_PP5000 POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 const struct adc_t adc_channels[] = {

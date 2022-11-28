@@ -281,7 +281,8 @@ void board_overcurrent_event(int port, int is_overcurrented)
 #define POWER_DELAY_MS 2
 #define POWER_READINGS (10 / POWER_DELAY_MS)
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 static void power_monitor(void)
 {

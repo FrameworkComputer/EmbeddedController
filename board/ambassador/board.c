@@ -36,8 +36,8 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_common.h"
@@ -237,7 +237,8 @@ static void adp_state_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */

@@ -4,22 +4,22 @@
  */
 
 /* Volteer family-specific sensor configuration */
-#include "common.h"
 #include "accelgyro.h"
 #include "cbi_ssfc.h"
+#include "common.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_icm426xx.h"
 #include "driver/accelgyro_icm_common.h"
-#include "driver/accel_kionix.h"
 #include "driver/als_tcs3400.h"
 #include "driver/sync.h"
-#include "keyboard_scan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "system.h"
-#include "task.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "util.h"
 
 /******************************************************************************/

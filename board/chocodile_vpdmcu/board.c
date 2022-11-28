@@ -28,6 +28,7 @@ void board_config_pre_init(void)
 	STM32_RCC_APB2ENR |= 1 << 0;
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Initialize board. */

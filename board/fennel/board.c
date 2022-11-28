@@ -15,8 +15,8 @@
 #include "console.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -30,8 +30,8 @@
 #include "i2c.h"
 #include "i2c_bitbang.h"
 #include "it8801.h"
-#include "keyboard_scan.h"
 #include "keyboard_backlight.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "panic.h"
 #include "power.h"
@@ -56,6 +56,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(0 /* port */);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/

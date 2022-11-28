@@ -13,10 +13,10 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
-#include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/als_opt3001.h"
 #include "driver/baro_bmp280.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/tcpm/anx74xx.h"
@@ -32,8 +32,8 @@
 #include "lid_angle.h"
 #include "lid_switch.h"
 #include "math_util.h"
-#include "motion_sense.h"
 #include "motion_lid.h"
+#include "motion_sense.h"
 #include "panic.h"
 #include "power.h"
 #include "power_button.h"
@@ -122,6 +122,7 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */

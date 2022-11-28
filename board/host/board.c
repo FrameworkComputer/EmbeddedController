@@ -13,8 +13,8 @@
 #include "i2c.h"
 #include "inductive_charging.h"
 #include "lid_switch.h"
-#include "motion_sense.h"
 #include "motion_lid.h"
+#include "motion_sense.h"
 #include "power_button.h"
 #include "spi.h"
 #include "temp_sensor.h"
@@ -30,6 +30,7 @@
  */
 #define GPIO_0 0
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 test_mockable const struct tcpc_config_t tcpc_config[] = {

@@ -12,8 +12,8 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
-#include "util.h"
 #include "system.h"
+#include "util.h"
 
 #define CRITICAL_LOW_BATTERY_PERMILLAGE 71
 #define LOW_BATTERY_PERMILLAGE 137

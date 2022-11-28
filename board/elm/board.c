@@ -69,6 +69,7 @@ void usb_evt(enum gpio_signal signal)
 		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */

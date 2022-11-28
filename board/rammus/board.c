@@ -12,23 +12,24 @@
 #include "button.h"
 #include "cbi_ssfc.h"
 #include "charge_manager.h"
-#include "charge_state.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "driver/temp_sensor/bd99992gw.h"
+#include "espi.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -58,7 +59,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "espi.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
@@ -118,6 +118,7 @@ void usb1_evt(enum gpio_signal signal)
 	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Hibernate wake configuration */

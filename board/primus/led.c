@@ -5,15 +5,12 @@
 
 /* Primus specific PWM LED settings. */
 
-#include <stdint.h>
-
-#include "common.h"
-#include "compile_time_macros.h"
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -24,6 +21,8 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdint.h>
 #define CPRINTS(format, args...) cprints(CC_LOGOLED, format, ##args)
 
 #define LED_ON_LVL 100

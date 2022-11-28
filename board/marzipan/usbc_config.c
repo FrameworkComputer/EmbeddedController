@@ -5,9 +5,9 @@
 
 /* Marzipan board-specific USB-C configuration */
 
+#include "charge_state.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
-#include "charge_state.h"
 #include "usb_pd.h"
 #include "usbc_config.h"
 

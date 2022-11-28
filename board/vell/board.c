@@ -10,23 +10,23 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "driver/als_tcs3400.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
-#include "driver/als_tcs3400.h"
-#include "fw_config.h"
-#include "hooks.h"
 #include "lid_switch.h"
 #include "panic.h"
-#include "power_button.h"
 #include "power.h"
 #include "power/intel_x86.h"
+#include "power_button.h"
 #include "registers.h"
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)

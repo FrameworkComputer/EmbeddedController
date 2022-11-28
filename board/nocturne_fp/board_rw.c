@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "board_rw.h"
 #include "common.h"
 #include "console.h"
 #include "fpsensor_detect.h"
@@ -13,7 +14,6 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
-#include "board_rw.h"
 
 #ifndef SECTION_IS_RW
 #error "This file should only be built for RW."
@@ -29,6 +29,7 @@ int console_is_restricted(void)
 	return system_is_locked();
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* SPI devices */

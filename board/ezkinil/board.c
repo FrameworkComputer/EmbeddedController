@@ -8,12 +8,12 @@
 #include "cbi_ssfc.h"
 #include "charge_state_v2.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm42607.h"
-#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3hdx1204.h"
@@ -34,12 +34,13 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
-#include "temp_sensor/thermistor.h"
 #include "temp_sensor.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 static int board_ver;

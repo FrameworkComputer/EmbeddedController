@@ -7,14 +7,14 @@
 
 #include "adc_chip.h"
 #include "button.h"
-#include "extpower.h"
 #include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/ln9310.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -24,10 +24,10 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
-#include "system.h"
 #include "shi_chip.h"
 #include "sku.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "usbc_config.h"
@@ -37,6 +37,7 @@
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Keyboard scan setting */

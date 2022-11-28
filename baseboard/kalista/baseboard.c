@@ -87,6 +87,7 @@ void vbus0_evt(enum gpio_signal signal)
 	task_wake(TASK_ID_PD_C0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Hibernate wake configuration */

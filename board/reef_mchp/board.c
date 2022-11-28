@@ -14,10 +14,10 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
-#include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/als_opt3001.h"
 #include "driver/baro_bmp280.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/tcpm/anx74xx.h"
@@ -32,15 +32,15 @@
 #include "keyboard_scan.h"
 #include "lid_angle.h"
 #include "lid_switch.h"
+#include "lpc_chip.h"
 #include "math_util.h"
-#include "motion_sense.h"
 #include "motion_lid.h"
+#include "motion_sense.h"
 #include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
-#include "lpc_chip.h"
 #include "spi.h"
 #include "spi_chip.h"
 #include "switch.h"
@@ -48,8 +48,8 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "tfdp_chip.h"
 #include "temp_sensor/thermistor.h"
+#include "tfdp_chip.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -157,6 +157,7 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* SPI devices */

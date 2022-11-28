@@ -8,8 +8,9 @@
 
 #define VARIANT_ZORK_TREMBYLE
 
-#include <stdbool.h>
 #include "baseboard.h"
+
+#include <stdbool.h>
 
 #define CONFIG_FAN_RPM_CUSTOM
 

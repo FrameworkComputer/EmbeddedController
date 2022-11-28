@@ -13,11 +13,11 @@
 #include "spi.h"
 #include "task.h"
 #include "usart-stm32f0.h"
-#include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usart_tx_dma.h"
+#include "usb-stream.h"
 #include "usb_gpio.h"
 #include "usb_spi.h"
-#include "usb-stream.h"
 #include "util.h"
 
 /******************************************************************************
@@ -25,6 +25,7 @@
  */
 void button_event(enum gpio_signal signal);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 static enum gpio_signal const usb_gpio_list[] = {

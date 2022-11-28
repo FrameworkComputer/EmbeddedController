@@ -18,13 +18,12 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/pmic_tps650x30.h"
-#include "driver/temp_sensor/tmp432.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
+#include "driver/temp_sensor/tmp432.h"
 #include "espi.h"
 #include "extpower.h"
-#include "espi.h"
 #include "fan.h"
 #include "fan_chip.h"
 #include "gpio.h"
@@ -114,6 +113,7 @@ void vbus0_evt(enum gpio_signal signal)
 	task_wake(TASK_ID_PD_C0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Hibernate wake configuration */

@@ -5,15 +5,17 @@
 
 /* MAX32660 EvalKit Board Specific Configuration */
 
-#include "i2c.h"
-#include "board.h"
+#include "config.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "timer.h"
+#include "i2c.h"
 #include "registers.h"
+#include "timer.h"
 #include "util.h"
+
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

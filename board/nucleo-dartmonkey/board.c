@@ -63,6 +63,7 @@ void fps_event(enum gpio_signal signal)
 }
 #endif
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* SPI devices */

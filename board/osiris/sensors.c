@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "accelgyro.h"
 #include "adc.h"
+#include "common.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {

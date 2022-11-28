@@ -5,8 +5,6 @@
 
 /* Crota specific PWM LED settings. */
 
-#include <stdint.h>
-
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
@@ -17,6 +15,8 @@
 #include "led_onoff_states.h"
 #include "pwm.h"
 #include "util.h"
+
+#include <stdint.h>
 
 #define BAT_LED_ON_LVL 100
 #define BAT_LED_OFF_LVL 0

@@ -11,8 +11,8 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "power/qcom.h"
-#include "system.h"
 #include "sku.h"
+#include "system.h"
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)

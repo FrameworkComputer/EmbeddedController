@@ -254,8 +254,8 @@
 #define TIM_CLOCK32 2
 #define TIM_WATCHDOG 9
 
-#include "gpio_signal.h"
 #include "board_rw.h"
+#include "gpio_signal.h"
 
 void slp_event(enum gpio_signal signal);
 

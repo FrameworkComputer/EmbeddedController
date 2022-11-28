@@ -12,8 +12,8 @@
 #include "charge_state_v2.h"
 #include "chipset.h"
 #include "common.h"
-#include "console.h"
 #include "compile_time_macros.h"
+#include "console.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/als_opt3001.h"
 #include "driver/charger/isl923x.h"
@@ -36,9 +36,9 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
+#include "switch.h"
 #include "system.h"
 #include "system_chip.h"
-#include "switch.h"
 #include "task.h"
 #include "tcpm/tcpci.h"
 #include "temp_sensor.h"
@@ -95,6 +95,7 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {

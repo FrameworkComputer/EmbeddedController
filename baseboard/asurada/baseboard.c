@@ -41,7 +41,7 @@
 #include "timer.h"
 #include "uart.h"
 
-/* This must be last. */
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Wake-up pins for hibernate */

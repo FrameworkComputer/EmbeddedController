@@ -4,9 +4,9 @@
  */
 
 /* Features common to ECOS and Zephyr */
-#include "common.h"
 #include "cbi.h"
 #include "cbi_ec_fw_config.h"
+#include "common.h"
 #include "keyboard_raw.h"
 #include "usbc_config.h"
 

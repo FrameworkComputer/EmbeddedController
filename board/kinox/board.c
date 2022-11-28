@@ -11,18 +11,19 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
-#include "power_button.h"
 #include "hooks.h"
 #include "power.h"
+#include "power_button.h"
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 #include "usbc_ppc.h"
-#include "fw_config.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)

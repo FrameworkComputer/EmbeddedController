@@ -7,8 +7,8 @@
 
 #include "battery_smart.h"
 #include "charger.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "util.h"
 
 static const struct charger_info mock_charger_info = {

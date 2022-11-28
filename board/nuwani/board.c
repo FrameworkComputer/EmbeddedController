@@ -16,11 +16,12 @@
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
-#include "system.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {

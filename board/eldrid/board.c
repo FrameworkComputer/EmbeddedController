@@ -4,11 +4,11 @@
  */
 
 /* Volteer board-specific configuration */
-#include "button.h"
-#include "common.h"
 #include "accelgyro.h"
+#include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "charge_state_v2.h"
+#include "common.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -27,16 +27,16 @@
 #include "isl9241.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
-#include "lid_switch.h"
 #include "keyboard_scan.h"
+#include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "switch.h"
 #include "system.h"
-#include "task.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "throttle_ap.h"
 #include "uart.h"
 #include "usb_mux.h"
@@ -46,7 +46,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 

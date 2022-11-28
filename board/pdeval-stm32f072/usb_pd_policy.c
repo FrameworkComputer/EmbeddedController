@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "anx7447.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -12,10 +12,10 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_pdo.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)

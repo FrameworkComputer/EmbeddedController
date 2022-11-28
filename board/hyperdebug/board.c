@@ -15,12 +15,14 @@
 #include "task.h"
 #include "timer.h"
 #include "usart-stm32l5.h"
+#include "usb-stream.h"
 #include "usb_hw.h"
 #include "usb_spi.h"
-#include "usb-stream.h"
-#include "gpio_list.h"
 
 #include <stdio.h>
+
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 void board_config_pre_init(void)
 {

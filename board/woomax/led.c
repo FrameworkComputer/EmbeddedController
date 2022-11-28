@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
+#include "chipset.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
-#include "chipset.h"
 
 #define LED_ON_LVL 0
 #define LED_OFF_LVL 1

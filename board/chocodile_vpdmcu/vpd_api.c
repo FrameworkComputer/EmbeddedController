@@ -4,10 +4,10 @@
  */
 
 #include "adc.h"
+#include "driver/tcpm/tcpm.h"
 #include "gpio.h"
 #include "registers.h"
 #include "vpd_api.h"
-#include "driver/tcpm/tcpm.h"
 
 /*
  * Polarity based on 'DFP Perspective' (see table 4-10 USB Type-C Cable and

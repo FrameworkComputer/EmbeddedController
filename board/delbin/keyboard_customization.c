@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "cbi_ssfc.h"
+#include "common.h"
 #include "gpio.h"
-#include "keyboard_customization.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
+#include "keyboard_customization.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"

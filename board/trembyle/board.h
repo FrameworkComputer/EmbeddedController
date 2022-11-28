@@ -10,8 +10,9 @@
 
 #define VARIANT_ZORK_TREMBYLE
 
-#include <stdbool.h>
 #include "baseboard.h"
+
+#include <stdbool.h>
 
 #define CONFIG_USBC_RETIMER_PI3DPX1207
 

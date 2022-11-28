@@ -6,8 +6,8 @@
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "registers.h"
 #include "i2c.h"
+#include "registers.h"
 
 #ifdef CTS_MODULE
 /*
@@ -19,6 +19,7 @@ __attribute__((weak)) void cts_irq(enum gpio_signal signal)
 }
 #endif
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 void tick_event(void)

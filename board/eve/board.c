@@ -10,8 +10,8 @@
 #include "board_config.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "compiler.h"
@@ -26,14 +26,15 @@
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "driver/temp_sensor/bd99992gw.h"
+#include "espi.h"
 #include "extpower.h"
 #include "gesture.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "keyboard_scan.h"
 #include "keyboard_8042_sharedlib.h"
+#include "keyboard_scan.h"
 #include "lid_angle.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -57,7 +58,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "espi.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -155,6 +155,7 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 }
 #endif
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Keyboard scan. Increase output_settle_us to 80us from default 50us. */

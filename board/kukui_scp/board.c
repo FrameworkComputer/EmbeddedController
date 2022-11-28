@@ -16,5 +16,5 @@
 #include "timer.h"
 #include "util.h"
 
-/* Build GPIO tables */
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"

@@ -10,9 +10,9 @@
 #include "cros_board_info.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
-#include "hooks.h"
 
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1

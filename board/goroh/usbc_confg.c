@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -19,6 +16,9 @@
 #include "ec_commands.h"
 #include "fw_config.h"
 #include "gpio.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 static void board_tcpc_init(void)
 {

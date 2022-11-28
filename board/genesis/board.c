@@ -30,8 +30,8 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_common.h"
 #include "util.h"
@@ -108,7 +108,8 @@ static void port_ocp_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */

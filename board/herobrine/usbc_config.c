@@ -17,9 +17,9 @@
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 #include "timer.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_config.h"
-#include "usb_mux.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 

@@ -36,8 +36,8 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
@@ -110,7 +110,8 @@ static void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */

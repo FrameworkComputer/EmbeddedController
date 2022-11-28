@@ -6,6 +6,9 @@
 #ifndef __CROS_EC_BOARD_NOCTURNE_FP_BOARD_RW_H
 #define __CROS_EC_BOARD_NOCTURNE_FP_BOARD_RW_H
 
+#include "config.h"
+#include "gpio_signal.h"
+
 void fps_event(enum gpio_signal signal);
 
 /* Defined in ro_workarounds.c */

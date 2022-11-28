@@ -12,8 +12,8 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
@@ -31,15 +31,15 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
-#include "stdbool.h"
 #include "spi.h"
+#include "stdbool.h"
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
@@ -132,7 +132,8 @@ static void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */

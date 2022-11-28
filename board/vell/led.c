@@ -5,10 +5,8 @@
  * Power and battery LED control for Vell
  */
 
-#include <stdint.h>
-
-#include "cbi.h"
 #include "battery.h"
+#include "cbi.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "ec_commands.h"
@@ -18,6 +16,8 @@
 #include "led_common.h"
 #include "task.h"
 #include "util.h"
+
+#include <stdint.h>
 
 #define BATT_LOW_BCT 10
 

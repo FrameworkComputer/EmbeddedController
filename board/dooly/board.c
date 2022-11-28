@@ -17,8 +17,8 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/als_tcs3400.h"
 #include "driver/ina3221.h"
-#include "driver/led/oz554.h"
 #include "driver/led/mp3385.h"
+#include "driver/led/oz554.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -41,8 +41,8 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_common.h"
@@ -463,7 +463,8 @@ static void adp_state_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */

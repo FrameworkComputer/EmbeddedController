@@ -28,8 +28,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "keyboard_scan.h"
 #include "keyboard_8042_sharedlib.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power.h"
@@ -129,6 +129,7 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */

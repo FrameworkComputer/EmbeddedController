@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stddef.h>
-#include <string.h>
-
 #include "cbi_ssfc.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -14,6 +11,9 @@
 #include "ps2_chip.h"
 #include "registers.h"
 #include "time.h"
+
+#include <stddef.h>
+#include <string.h>
 
 #define PS2_TRANSMIT_DELAY_MS 10
 

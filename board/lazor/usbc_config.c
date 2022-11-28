@@ -7,10 +7,10 @@
 
 #include "battery_fuel_gauge.h"
 #include "bc12/pi3usb9201_public.h"
-#include "charger.h"
-#include "charger/isl923x_public.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "charger.h"
+#include "charger/isl923x_public.h"
 #include "common.h"
 #include "config.h"
 #include "driver/ln9310.h"
@@ -21,9 +21,9 @@
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 #include "timer.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_config.h"
-#include "usb_mux.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 

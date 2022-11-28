@@ -7,11 +7,11 @@
 #include "config.h"
 #include "console.h"
 #include "driver/ln9310.h"
-#include "tcpm/ps8xxx_public.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "sku.h"
 #include "system.h"
+#include "tcpm/ps8xxx_public.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)

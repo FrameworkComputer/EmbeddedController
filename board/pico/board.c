@@ -47,6 +47,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #ifndef VARIANT_KUKUI_NO_SENSORS

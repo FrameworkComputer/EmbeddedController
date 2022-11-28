@@ -4,8 +4,8 @@
  */
 
 #include "atomic.h"
-#include "charger.h"
 #include "charge_manager.h"
+#include "charger.h"
 #include "common.h"
 #include "console.h"
 #include "driver/charger/rt946x.h"
@@ -16,10 +16,10 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)

@@ -4,8 +4,8 @@
  */
 
 #include "battery.h"
-#include "battery_smart.h"
 #include "battery_fuel_gauge.h"
+#include "battery_smart.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "gpio.h"

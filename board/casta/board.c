@@ -60,7 +60,7 @@ static void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
-/* Must come after other header files and GPIO interrupts*/
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */

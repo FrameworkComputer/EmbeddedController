@@ -25,10 +25,10 @@
  * connected to a regular GPIO pin.
  */
 
-#include "cros_board_info.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"

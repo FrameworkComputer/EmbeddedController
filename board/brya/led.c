@@ -9,14 +9,14 @@
  * amber while charging the battery and white when the battery is charged.
  */
 
-#include <stdint.h>
-
 #include "common.h"
 #include "compile_time_macros.h"
 #include "ec_commands.h"
 #include "led_pwm.h"
 #include "pwm.h"
 #include "util.h"
+
+#include <stdint.h>
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,

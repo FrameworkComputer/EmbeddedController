@@ -101,6 +101,7 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */

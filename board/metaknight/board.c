@@ -18,16 +18,15 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_lsm6dsm.h"
-#include "driver/temp_sensor/thermistor.h"
-#include "temp_sensor.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/pi3usb3x532.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -45,6 +44,7 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -142,6 +142,7 @@ static void pen_charge_check(void)
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pen_charge_check, HOOK_PRIO_LAST);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pen_charge_check, HOOK_PRIO_LAST);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */

@@ -5,9 +5,6 @@
 
 /* A place to organize workarounds for legacy RO */
 
-#include <assert.h>
-#include <stdbool.h>
-
 #include "bkpdata.h"
 #include "common.h"
 #include "console.h"
@@ -17,6 +14,9 @@
 #include "system.h"
 #include "task.h"
 #include "watchdog.h"
+
+#include <assert.h>
+#include <stdbool.h>
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

@@ -6,24 +6,25 @@
 /* Poppy board-specific configuration */
 
 #include "adc.h"
+#include "battery_smart.h"
 #include "bd99992gw.h"
 #include "board_config.h"
-#include "battery_smart.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
-#include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/baro_bmp280.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "driver/temp_sensor/bd99992gw.h"
+#include "espi.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -34,8 +35,8 @@
 #include "math_util.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
-#include "pi3usb9281.h"
 #include "panic.h"
+#include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
 #include "spi.h"
@@ -51,7 +52,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "espi.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -111,6 +111,7 @@ void usb1_evt(enum gpio_signal signal)
 	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Hibernate wake configuration */
