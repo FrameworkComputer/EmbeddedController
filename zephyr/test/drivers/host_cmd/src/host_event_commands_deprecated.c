@@ -13,32 +13,22 @@
 
 #define HOST_EVENT_TEST_MASK_VAL EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)
 
-static void
+static enum ec_status
 host_event_get_wake_mask_helper(struct ec_response_host_event_mask *r)
 {
-	enum ec_status ret_val;
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
 		EC_CMD_HOST_EVENT_GET_WAKE_MASK, 0, *r);
 
-	ret_val = host_command_process(&args);
-
-	/* EC_CMD_HOST_EVENT_GET_WAKE_MASK always returns success */
-	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
-		      EC_RES_SUCCESS, ret_val);
+	return host_command_process(&args);
 }
 
-static void host_event_set_wake_mask_helper(uint32_t mask)
+static enum ec_status host_event_set_wake_mask_helper(uint32_t mask)
 {
-	enum ec_status ret_val;
 	struct ec_params_host_event_mask params = { .mask = mask };
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
 		EC_CMD_HOST_EVENT_SET_WAKE_MASK, 0, params);
 
-	ret_val = host_command_process(&args);
-
-	/* EC_CMD_HOST_EVENT_SET_WAKE_MASK always returns success */
-	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
-		      EC_RES_SUCCESS, ret_val);
+	return host_command_process(&args);
 }
 
 /**
@@ -46,13 +36,17 @@ static void host_event_set_wake_mask_helper(uint32_t mask)
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_wake_mask)
 {
-#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status rv;
 	struct ec_response_host_event_mask result = { 0 };
 
-	host_event_get_wake_mask_helper(&result);
-#else
-	ztest_test_skip();
-#endif
+	rv = host_event_get_wake_mask_helper(&result);
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		zassert_ok(rv, "Expected %d, returned %d", EC_RES_SUCCESS, rv);
+	} else {
+		zassert_equal(EC_RES_INVALID_COMMAND, rv,
+			      "Expected %d, returned %d",
+			      EC_RES_INVALID_COMMAND, rv);
+	}
 }
 
 /**
@@ -60,16 +54,24 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_wake_mask)
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_set_wake_mask)
 {
-#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status rv;
 	struct ec_response_host_event_mask result = { 0 };
 
 	/* Read the current mask */
-	host_event_get_wake_mask_helper(&result);
+	rv = host_event_get_wake_mask_helper(&result);
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		zassert_ok(rv, "Expected %d, returned %d", EC_RES_SUCCESS, rv);
+	} else {
+		zassert_equal(EC_RES_INVALID_COMMAND, rv,
+			      "Expected %d, returned %d",
+			      EC_RES_INVALID_COMMAND, rv);
+		return;
+	}
 
 	/* Default mask is expected to be clear */
 	zassert_false(result.mask, "Default host event wake mask is not clear");
 
-	host_event_set_wake_mask_helper(HOST_EVENT_TEST_MASK_VAL);
+	zassert_ok(host_event_set_wake_mask_helper(HOST_EVENT_TEST_MASK_VAL));
 
 	/* Verify the mask changed */
 	host_event_get_wake_mask_helper(&result);
@@ -79,38 +81,25 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_set_wake_mask)
 		      HOST_EVENT_TEST_MASK_VAL, result.mask);
 
 	/* Clean up the mask */
-	host_event_set_wake_mask_helper(0);
-#else
-	ztest_test_skip();
-#endif
+	zassert_ok(host_event_set_wake_mask_helper(0));
 }
 
-static void
+static enum ec_status
 host_event_get_smi_mask_helper(struct ec_response_host_event_mask *r)
 {
-	enum ec_status ret_val;
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
 		EC_CMD_HOST_EVENT_GET_SMI_MASK, 0, *r);
 
-	ret_val = host_command_process(&args);
-
-	/* EC_CMD_HOST_EVENT_GET_SMI_MASK always returns success */
-	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
-		      EC_RES_SUCCESS, ret_val);
+	return host_command_process(&args);
 }
 
-static void host_event_set_smi_mask_helper(uint32_t mask)
+static enum ec_status host_event_set_smi_mask_helper(uint32_t mask)
 {
-	enum ec_status ret_val;
 	struct ec_params_host_event_mask params = { .mask = mask };
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
 		EC_CMD_HOST_EVENT_SET_SMI_MASK, 0, params);
 
-	ret_val = host_command_process(&args);
-
-	/* EC_CMD_HOST_EVENT_SET_SMI_MASK always returns success */
-	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
-		      EC_RES_SUCCESS, ret_val);
+	return host_command_process(&args);
 }
 
 /**
@@ -118,13 +107,18 @@ static void host_event_set_smi_mask_helper(uint32_t mask)
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_smi_mask)
 {
-#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status rv;
 	struct ec_response_host_event_mask result = { 0 };
 
-	host_event_get_smi_mask_helper(&result);
-#else
-	ztest_test_skip();
-#endif
+	rv = host_event_get_smi_mask_helper(&result);
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		zassert_ok(rv, "Expected %d, returned %d", EC_RES_SUCCESS, rv);
+	} else {
+		zassert_equal(EC_RES_INVALID_COMMAND, rv,
+			      "Expected %d, returned %d",
+			      EC_RES_INVALID_COMMAND, rv);
+		return;
+	}
 }
 
 /**
@@ -132,42 +126,43 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_smi_mask)
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_set_smi_mask)
 {
-#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status rv;
 	struct ec_response_host_event_mask result = { 0 };
 
 	/* Read the current mask */
-	host_event_get_smi_mask_helper(&result);
+	rv = host_event_get_smi_mask_helper(&result);
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		zassert_ok(rv, "Expected %d, returned %d", EC_RES_SUCCESS, rv);
+	} else {
+		zassert_equal(EC_RES_INVALID_COMMAND, rv,
+			      "Expected %d, returned %d",
+			      EC_RES_INVALID_COMMAND, rv);
+		return;
+	}
 
 	/* Default mask is expected to be clear */
 	zassert_false(result.mask, "Default host event SMI mask is not clear");
 
-	host_event_set_smi_mask_helper(HOST_EVENT_TEST_MASK_VAL);
+	zassert_ok(host_event_set_smi_mask_helper(HOST_EVENT_TEST_MASK_VAL));
 
 	/* Verify the mask changed */
-	host_event_get_smi_mask_helper(&result);
+	zassert_ok(host_event_get_smi_mask_helper(&result));
 
 	zassert_equal(result.mask, HOST_EVENT_TEST_MASK_VAL,
 		      "Expected SMI mask 0x%08x, returned mask 0x%08x",
 		      HOST_EVENT_TEST_MASK_VAL, result.mask);
 
 	/* Clean up the mask */
-	host_event_set_smi_mask_helper(0);
-#else
-	ztest_test_skip();
-#endif
+	zassert_ok(host_event_set_smi_mask_helper(0));
 }
 
-static void host_event_get_b_helper(struct ec_response_host_event_mask *r)
+static enum ec_status
+host_event_get_b_helper(struct ec_response_host_event_mask *r)
 {
-	enum ec_status ret_val;
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_HOST_EVENT_GET_B, 0, *r);
 
-	ret_val = host_command_process(&args);
-
-	/* EC_CMD_HOST_EVENT_GET_B always returns success */
-	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
-		      EC_RES_SUCCESS, ret_val);
+	return host_command_process(&args);
 }
 
 /**
@@ -175,41 +170,36 @@ static void host_event_get_b_helper(struct ec_response_host_event_mask *r)
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_b)
 {
-#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status rv;
 	struct ec_response_host_event_mask result = { 0 };
 
-	host_event_get_b_helper(&result);
-#else
-	ztest_test_skip();
-#endif
+	rv = host_event_get_b_helper(&result);
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		zassert_ok(rv, "Expected %d, returned %d", EC_RES_SUCCESS, rv);
+	} else {
+		zassert_equal(EC_RES_INVALID_COMMAND, rv,
+			      "Expected %d, returned %d",
+			      EC_RES_INVALID_COMMAND, rv);
+		return;
+	}
 }
 
-static void
+static enum ec_status
 host_event_get_sci_mask_helper(struct ec_response_host_event_mask *r)
 {
-	enum ec_status ret_val;
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
 		EC_CMD_HOST_EVENT_GET_SCI_MASK, 0, *r);
 
-	ret_val = host_command_process(&args);
-
-	/* EC_CMD_HOST_EVENT_GET_SCI_MASK always returns success */
-	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
-		      EC_RES_SUCCESS, ret_val);
+	return host_command_process(&args);
 }
 
-static void host_event_set_sci_mask_helper(uint32_t mask)
+static enum ec_status host_event_set_sci_mask_helper(uint32_t mask)
 {
-	enum ec_status ret_val;
 	struct ec_params_host_event_mask params = { .mask = mask };
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
 		EC_CMD_HOST_EVENT_SET_SCI_MASK, 0, params);
 
-	ret_val = host_command_process(&args);
-
-	/* EC_CMD_HOST_EVENT_SET_SCI_MASK always returns success */
-	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
-		      EC_RES_SUCCESS, ret_val);
+	return host_command_process(&args);
 }
 
 /**
@@ -217,13 +207,18 @@ static void host_event_set_sci_mask_helper(uint32_t mask)
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_sci_mask)
 {
-#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status rv;
 	struct ec_response_host_event_mask result = { 0 };
 
-	host_event_get_sci_mask_helper(&result);
-#else
-	ztest_test_skip();
-#endif
+	rv = host_event_get_sci_mask_helper(&result);
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		zassert_ok(rv, "Expected %d, returned %d", EC_RES_SUCCESS, rv);
+	} else {
+		zassert_equal(EC_RES_INVALID_COMMAND, rv,
+			      "Expected %d, returned %d",
+			      EC_RES_INVALID_COMMAND, rv);
+		return;
+	}
 }
 
 /**
@@ -231,27 +226,32 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_get_sci_mask)
  */
 ZTEST_USER(host_cmd_host_event_commands, test_host_event_set_sci_mask)
 {
-#ifdef CONFIG_HOSTCMD_X86
+	enum ec_status rv;
 	struct ec_response_host_event_mask result = { 0 };
 
 	/* Read the current mask */
-	host_event_get_sci_mask_helper(&result);
+	rv = host_event_get_sci_mask_helper(&result);
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		zassert_ok(rv, "Expected %d, returned %d", EC_RES_SUCCESS, rv);
+	} else {
+		zassert_equal(EC_RES_INVALID_COMMAND, rv,
+			      "Expected %d, returned %d",
+			      EC_RES_INVALID_COMMAND, rv);
+		return;
+	}
 
 	/* Default mask is expected to be clear */
 	zassert_false(result.mask, "Default host event SCI mask is not clear");
 
-	host_event_set_sci_mask_helper(HOST_EVENT_TEST_MASK_VAL);
+	zassert_ok(host_event_set_sci_mask_helper(HOST_EVENT_TEST_MASK_VAL));
 
 	/* Verify the mask changed */
-	host_event_get_sci_mask_helper(&result);
+	zassert_ok(host_event_get_sci_mask_helper(&result));
 
 	zassert_equal(result.mask, HOST_EVENT_TEST_MASK_VAL,
 		      "Expected SCI mask 0x%08x, returned mask 0x%08x",
 		      HOST_EVENT_TEST_MASK_VAL, result.mask);
 
 	/* Clean up the mask */
-	host_event_set_sci_mask_helper(0);
-#else
-	ztest_test_skip();
-#endif
+	zassert_ok(host_event_set_sci_mask_helper(0));
 }
