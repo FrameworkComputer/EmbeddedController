@@ -34,6 +34,7 @@ if(DEFINED CONFIG_BOARD_NEREID)
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
+			"craask/src/fan.c"
 			"craask/src/form_factor.c"
 			"craask/src/keyboard.c"
 			"craask/src/kb_backlight.c"
