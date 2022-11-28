@@ -675,6 +675,9 @@ enum host_event_code {
 	/* BTP fundtion: update battery capacity */
 	EC_HOST_EVENT_BATT_BTP = 34,
 
+	/* Thermal Qevent fundtion: send Qevent to notice host read acpi temp */
+	EC_HOST_EVENT_THERMAL_QEVENT = 35,
+
 	/* For modern satndby */
 	EC_HOST_EVENT_PB_RELEASE = 51,
 
@@ -2608,6 +2611,7 @@ enum motionsensor_chip {
 	MOTIONSENSE_CHIP_LIS2DS = 23,
 	MOTIONSENSE_CHIP_BMI260 = 24,
 	MOTIONSENSE_CHIP_ICM426XX = 25,
+	MOTIONSENSE_CHIP_CM32183 = 26,
 	MOTIONSENSE_CHIP_MAX,
 };
 

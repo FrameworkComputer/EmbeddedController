@@ -114,6 +114,8 @@
  */
 #define I2C_WAIT_BLOCKING_TIMEOUT_US 25
 
+#define I2C_MAX_HOST_PACKET_SIZE_EXTEND 350
+
 enum i2c_transaction_state {
 	/* Stop condition was sent in previous transaction */
 	I2C_TRANSACTION_STOPPED,
@@ -158,7 +160,7 @@ static struct {
 	int count;
 	int length;
 	uint8_t addr;
-	uint8_t buffer[I2C_MAX_HOST_PACKET_SIZE];
+	uint8_t buffer[I2C_MAX_HOST_PACKET_SIZE_EXTEND];
 } slavedata[I2C_SLAVE_CONTROLLER_COUNT];
 
 static const uint16_t i2c_controller_pcr[MCHP_I2C_CTRL_MAX] = {
@@ -176,24 +178,24 @@ static int chip_i2c_is_controller_valid(int controller)
 	return 1;
 }
 
-static int chip_i2c_get_slave_addresses(int port)
+static int chip_i2c_get_slave_addresses(int controller)
 {
 #ifdef CONFIG_I2C_SLAVE
 	int i;
 	for (i = 0; i < i2c_slvs_used; i++) {
-		if (i2c_slv_ports[i].port == port)
+		if (i2c_slv_ports[i].port == controller)
 			/*return two addresses, one for read, one for write*/
 			return i2c_slv_ports[i].slave_adr;
 	}
 #endif
 	return 0;
 }
-static int chip_i2c_get_slave_data_idx(int port)
+static int chip_i2c_get_slave_data_idx(int controller)
 {
 #ifdef CONFIG_I2C_SLAVE
 	int i;
 	for (i = 0; i < i2c_slvs_used; i++) {
-		if (i2c_slv_ports[i].port == port)
+		if (i2c_slv_ports[i].port == controller)
 			/*return two addresses, one for read, one for write*/
 			return i;
 	}
@@ -369,7 +371,7 @@ static void restart_slave(int controller)
  */
 static void configure_controller(int controller, int port, int kbps)
 {
-	uint32_t slave = chip_i2c_get_slave_addresses(port);
+	uint32_t slave = chip_i2c_get_slave_addresses(controller);
 	if (!chip_i2c_is_controller_valid(controller))
 		return;
 
@@ -1044,9 +1046,15 @@ static void handle_interrupt(int controller)
 	uint32_t r;
 	int slave_idx;
 	int id = cdata[controller].task_waiting;
+
 #ifdef CONFIG_I2C_SLAVE
 	if (cdata[controller].slave_mode) {
 		slave_idx = chip_i2c_get_slave_data_idx(controller);
+
+		/* we don't need to process wrong slave idx */
+		if (slave_idx < 0)
+			return;
+
 		r = MCHP_I2C_STATUS(controller);
 		if (r & STS_BER) {
 			/*stop and restart*/
@@ -1089,8 +1097,8 @@ static void handle_interrupt(int controller)
 		} else {
 			slavedata[slave_idx].buffer[slavedata[slave_idx].count++] = MCHP_I2C_DATA(controller);
 		}
-		if (slavedata[slave_idx].count >= I2C_MAX_HOST_PACKET_SIZE) {
-			slavedata[slave_idx].count = I2C_MAX_HOST_PACKET_SIZE - 1;
+		if (slavedata[slave_idx].count >= I2C_MAX_HOST_PACKET_SIZE_EXTEND) {
+			slavedata[slave_idx].count = I2C_MAX_HOST_PACKET_SIZE_EXTEND - 1;
 		}
 		MCHP_INT_SOURCE(MCHP_I2C_GIRQ) = MCHP_I2C_GIRQ_BIT(controller);
 		return;
