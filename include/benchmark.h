@@ -115,7 +115,7 @@ template <int MAX_NUM_RESULTS = 5> class Benchmark {
 		return result;
 	}
 
-	void print_results()
+	void print_results() const
 	{
 		print_header();
 		for (int i = 0; i < num_results_; ++i)
@@ -128,7 +128,7 @@ template <int MAX_NUM_RESULTS = 5> class Benchmark {
 	int num_results_ = 0;
 
 	/* Print table header with column names */
-	void print_header()
+	void print_header() const
 	{
 		constexpr char kSeparator[] = "--------------------------";
 
@@ -142,7 +142,7 @@ template <int MAX_NUM_RESULTS = 5> class Benchmark {
 	}
 
 	/* Print a single benchmark result */
-	int print_result(const BenchmarkResult &result)
+	int print_result(const BenchmarkResult &result) const
 	{
 		ccprintf("%16s | %15u | %13u | %13u | %13u | %13u\n",
 			 result.name.data(), options_.num_iterations,
