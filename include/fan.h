@@ -68,6 +68,18 @@ extern const struct fan_t fans[];
 
 /* For convenience */
 #define FAN_CH(fan) fans[fan].conf->ch
+/* Calculate temp_ratio as a macro. common/thermal.c defines the same
+ * function, but it cannot be used at file scope.
+ */
+#define THERMAL_FAN_PERCENT(low, high, cur)                   \
+	(((low) < (cur) && (cur) < (high)) ?                  \
+		 (100 * ((cur) - (low)) / ((high) - (low))) : \
+		 ((cur) <= (low) ? 0 : 100))
+/* Convert a temperature in centigrade to a temp_ratio, assuming constants
+ * temp_fan_off, temp_fan_max, already in Kelvin.  Helpful for fan tables.
+ */
+#define TEMP_TO_RATIO(temp_c) \
+	(THERMAL_FAN_PERCENT((temp_fan_off), (temp_fan_max), (C_TO_K(temp_c))))
 
 /**
  * Set the amount of active cooling needed. The thermal control task will call
@@ -79,15 +91,57 @@ extern const struct fan_t fans[];
 void fan_set_percent_needed(int fan, int pct);
 
 /**
- * This function translates the percentage of cooling needed into a target RPM.
+ * Convert temp_ratio (temperature as a percentage of the ec_thermal_config
+ * .temp_fan_off to .temp_fan_max range, also cooling effort needed) into a
+ * target fan RPM.
  * The default implementation should be sufficient for most needs, but
  * individual boards may provide a custom version if needed (see config.h).
  *
- * @param fan   Fan number (index into fans[])
- * @param pct   Percentage of cooling effort needed (always in [0,100])
- * Return       Target RPM for fan
+ * @param fan          Fan number (index into fans[])
+ * @param temp_ratio   Temperature as fraction of temp_fan_off to
+ *                     temp_fan_max range, expressed as a percent ([0,100]).
+ * Return              Target RPM for fan
  */
-int fan_percent_to_rpm(int fan, int pct);
+int fan_percent_to_rpm(int fan, int temp_ratio);
+/* Data structure to hold a tuple of parameters for one sensor and one fan. */
+struct fan_step_1_1 {
+	/* lowest temp_ratio (exclusive) to apply this rpm when decreasing.
+	 * Use this rpm until temp_ratio falls to or below this threshold.
+	 */
+	int decreasing_temp_ratio_threshold;
+	/* lowest temp_ratio (inclusive) to apply this rpm when increasing.
+	 * Use this rpm when temp_ratio exceeds this threshold.
+	 */
+	int increasing_temp_ratio_threshold;
+	int rpm;
+};
+/**
+ * Convert temp_ratio (temperature as a percentage of the ec_thermal_config
+ * .temp_fan_off to .temp_fan_max range) into a target fan RPM.
+ *
+ * This function adapts the most popular custom version of fan_percent_to_rpm,
+ * which provides hysteresis to reduce temperature/fan speed oscillations.
+ *
+ * To refactor to this, convert the fan_step-based fan_table to fan_step_1_1 by
+ * removing the first (.rpm = 0) element and using
+ * decreasing/increasing_temp_ratio_threshold for off/on respectively.
+ * See example in ../test/fan.c.
+ *
+ * @param fan_table        Pointer to ordered array of fan_step_1_1 structs.
+ *                         There is no need to have any element with .rpm = 0.
+ *                         Function assumes 0 when temp_ratio is below the
+ *                         thresholds in the index-0 element.
+ * @param num_fan_levels   Size of fan_table
+ * @param fan_index        Fan number (index into fans[])
+ * @param temp_ratio       Temperature as fraction of temp_fan_off to
+ *                         temp_fan_max range, expressed as a percent ([0,100]).
+ * @param on_change        Pointer to function to be run when the target fan
+ *                         rpm changes, such as ezkinil board_print_temps().
+ * Return                  Target RPM for fan
+ */
+int temp_ratio_to_rpm_hysteresis(const struct fan_step_1_1 *fan_table,
+				 int num_fan_levels, int fan_index,
+				 int temp_ratio, void (*on_change)(void));
 
 /**
  * These functions require chip-specific implementations.
