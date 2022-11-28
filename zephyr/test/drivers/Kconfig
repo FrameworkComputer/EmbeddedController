@@ -112,6 +112,11 @@ config LINK_TEST_SUITE_USBC_CTVPD
 	select EMUL_TCPCI_PARTNER_VPD
 	select LOG
 
+config LINK_TEST_SUITE_USBC_FRS
+	bool "Link tests for fast role swap support"
+	select LOG
+	select PLATFORM_EC_USB_PD_FRS
+
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"
 
