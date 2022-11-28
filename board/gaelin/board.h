@@ -27,6 +27,7 @@
 /* USB Type A Features */
 #define USB_PORT_COUNT 4
 #define CONFIG_USB_PORT_POWER_DUMB
+#define CONFIG_USBC_RETIMER_PS8811
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
@@ -92,6 +93,8 @@
 
 #define I2C_PORT_USB_C0_BC12 NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_BC12 NPCX_I2C_PORT3_0
+
+#define I2C_PORT_USB_A0_A1_MIX NPCX_I2C_PORT6_1
 
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 #define I2C_PORT_MP2964 NPCX_I2C_PORT7_0
@@ -160,6 +163,8 @@ enum pwm_channel {
 enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
+
+enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_A1, USBA_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
 

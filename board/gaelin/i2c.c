@@ -50,6 +50,14 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_SMSCALER_DATA,
 	},
 	{
+		/* I2C6 */
+		.name = "usba0_retimer,usba1_retimer",
+		.port = I2C_PORT_USB_A0_A1_MIX,
+		.kbps = 1000,
+		.scl = GPIO_EC_I2C_USB_A0_A1_MIX_SCL,
+		.sda = GPIO_EC_I2C_USB_A0_A1_MIX_SDA,
+	},
+	{
 		/* I2C7 */
 		.name = "eeprom",
 		.port = I2C_PORT_EEPROM,
