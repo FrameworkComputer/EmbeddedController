@@ -397,7 +397,7 @@ def read_file_gsutil(path: str) -> bytes:
     return gsutil.stdout
 
 
-def find_section_offset_size(section: str, image: bytes) -> Tuple(int, int):
+def find_section_offset_size(section: str, image: bytes) -> Tuple[int, int]:
     """Get offset and size of the section in image"""
     areas = fmap.fmap_decode(image)["areas"]
     area = next(area for area in areas if area["name"] == section)
