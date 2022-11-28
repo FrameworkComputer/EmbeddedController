@@ -136,6 +136,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * Thermal limits for each temp sensor.  All temps are in degrees K.  Must be in
  * same order as enum temp_sensor_id.  To always ignore any temp, use 0.
  */
+static const int temp_fan_off = C_TO_K(35);
+static const int temp_fan_max = C_TO_K(55);
 struct ec_thermal_config thermal_params[] = {
 	/* {Twarn, Thigh, Thalt}, <on>
 	 * {Twarn, Thigh, X    }, <off>
@@ -143,8 +145,8 @@ struct ec_thermal_config thermal_params[] = {
 	 */
 	{ { 0, C_TO_K(81), C_TO_K(82) },
 	  { 0, C_TO_K(77), 0 },
-	  C_TO_K(19),
-	  C_TO_K(74) }, /* TMP431_Internal */
+	  temp_fan_off,
+	  temp_fan_max }, /* TMP431_Internal */
 	{ { 0, 0, 0 }, { 0, 0, 0 }, 0, 0 }, /* TMP431_Sensor_1 */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
@@ -320,27 +322,32 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-struct fan_step {
-	int on;
-	int off;
-	int rpm;
+static const struct fan_step_1_1 fan_table0[] = {
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(35),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(41),
+	  .rpm = 2500 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(40),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(44),
+	  .rpm = 2900 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(42),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(46),
+	  .rpm = 3400 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(44),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(48),
+	  .rpm = 3900 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(46),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(50),
+	  .rpm = 4400 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(48),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(52),
+	  .rpm = 4900 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(50),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(55),
+	  .rpm = 5400 },
 };
-
-/* Note: Do not make the fan on/off point equal to 0 or 100 */
-static const struct fan_step fan_table0[] = {
-	{ .on = 0, .off = 2, .rpm = 0 },
-	{ .on = 11, .off = 2, .rpm = 2500 },
-	{ .on = 38, .off = 29, .rpm = 3200 },
-	{ .on = 65, .off = 36, .rpm = 3500 },
-	{ .on = 76, .off = 64, .rpm = 3900 },
-	{ .on = 84, .off = 75, .rpm = 4500 },
-	{ .on = 91, .off = 82, .rpm = 5100 },
-	{ .on = 98, .off = 89, .rpm = 5400 },
-};
-/* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
 
-static const struct fan_step *fan_table = fan_table0;
+static const struct fan_step_1_1 *fan_table = fan_table0;
 
 static void cbi_init(void)
 {
@@ -365,42 +372,8 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-int fan_percent_to_rpm(int fan, int pct)
+int fan_percent_to_rpm(int fan, int temp_ratio)
 {
-	static int current_level;
-	static int previous_pct;
-	int i;
-
-	/*
-	 * Compare the pct and previous pct, we have the three paths :
-	 *  1. decreasing path. (check the off point)
-	 *  2. increasing path. (check the on point)
-	 *  3. invariant path. (return the current RPM)
-	 */
-	if (pct < previous_pct) {
-		for (i = current_level; i >= 0; i--) {
-			if (pct <= fan_table[i].off)
-				current_level = i - 1;
-			else
-				break;
-		}
-	} else if (pct > previous_pct) {
-		for (i = current_level + 1; i < NUM_FAN_LEVELS; i++) {
-			if (pct >= fan_table[i].on)
-				current_level = i;
-			else
-				break;
-		}
-	}
-
-	if (current_level < 0)
-		current_level = 0;
-
-	previous_pct = pct;
-
-	if (fan_table[current_level].rpm != fan_get_rpm_target(FAN_CH(fan)))
-		cprints(CC_THERMAL, "Setting fan RPM to %d",
-			fan_table[current_level].rpm);
-
-	return fan_table[current_level].rpm;
+	return temp_ratio_to_rpm_hysteresis(fan_table, NUM_FAN_LEVELS, fan,
+					    temp_ratio, NULL);
 }
