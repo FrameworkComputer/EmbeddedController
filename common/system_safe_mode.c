@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "panic.h"
 #include "stddef.h"
 #include "system.h"
@@ -88,6 +89,13 @@ bool command_is_allowed_in_safe_mode(int command)
 	return false;
 }
 
+static void system_safe_mode_start(void)
+{
+	if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS))
+		host_set_single_event(EC_HOST_EVENT_PANIC);
+}
+DECLARE_DEFERRED(system_safe_mode_start);
+
 int start_system_safe_mode(void)
 {
 	if (!system_is_in_rw()) {
@@ -110,6 +118,13 @@ int start_system_safe_mode(void)
 	disable_non_safe_mode_critical_tasks();
 
 	schedule_system_safe_mode_timeout();
+
+	/*
+	 * Schedule a deferred function to run immediately
+	 * after returning from fault handler. Defer operations that
+	 * must not run in an ISR to this function.
+	 */
+	hook_call_deferred(&system_safe_mode_start_data, 0);
 
 	in_safe_mode = true;
 

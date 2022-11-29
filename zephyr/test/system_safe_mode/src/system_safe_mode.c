@@ -140,4 +140,22 @@ ZTEST_USER(system_safe_mode, test_blocked_command_in_safe_mode)
 	zassert_true(host_command_process(&args));
 }
 
+ZTEST_USER(system_safe_mode, test_panic_event_notify)
+{
+#ifdef CONFIG_HOSTCMD_X86
+	/* Enable the EC_HOST_EVENT_PANIC event in the lpc mask */
+	host_event_t lpc_event_mask;
+	host_event_t mask = EC_HOST_EVENT_MASK(EC_HOST_EVENT_PANIC);
+
+	lpc_event_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, lpc_event_mask | mask);
+#endif
+
+	zassert_false(host_is_event_set(EC_HOST_EVENT_PANIC));
+	k_sys_fatal_error_handler(K_ERR_CPU_EXCEPTION, NULL);
+	/* Short sleep to allow hook task to run */
+	k_msleep(1);
+	zassert_true(host_is_event_set(EC_HOST_EVENT_PANIC));
+}
+
 ZTEST_SUITE(system_safe_mode, NULL, NULL, system_before, NULL, NULL);
