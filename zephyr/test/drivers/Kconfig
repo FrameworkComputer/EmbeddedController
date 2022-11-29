@@ -62,6 +62,9 @@ config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 config LINK_TEST_SUITE_MKBP
 	bool "Link and test the mkbp tests"
 
+config LINK_TEST_SUITE_PANIC_EVENT
+	bool "Link and test the panic_event tests"
+
 config LINK_TEST_SUITE_PANIC_OUTPUT
 	bool "Link and test the panic_output tests"
 
