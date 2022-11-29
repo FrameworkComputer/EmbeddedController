@@ -766,4 +766,18 @@ config PLATFORM_EC_ISL9238C_DISABLE_CMOUT_LATCH
 	help
 	  Disable the CMOUT latch function for ISL9238C.
 
+config PLATFORM_EC_AC_PROCHOT_CURRENT_MA
+	int "Value of the prochot threshold current in mA"
+	default 3328
+	help
+	  To set the PROCHOT# assertion threshold for adapter overcurrent
+	  conditions.
+
+config PLATFORM_EC_DC_PROCHOT_CURRENT_MA
+	int "Value of the prochot threshold current in mA"
+	default 6570
+	help
+	  To set the PROCHOT# signal assertion threshold for battery over
+	  discharging current conditions.
+
 endif # PLATFORM_EC_CHARGER
