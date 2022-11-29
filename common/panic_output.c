@@ -175,8 +175,10 @@ uintptr_t get_panic_data_start(void)
 	if (IS_ENABLED(CONFIG_BOARD_NATIVE_POSIX))
 		return (uintptr_t)pdata_ptr;
 
+	/* LCOV_EXCL_START - Can't cover non posix lines (yet) */
 	return ((uintptr_t)CONFIG_PANIC_DATA_BASE + CONFIG_PANIC_DATA_SIZE -
 		pdata_ptr->struct_size);
+	/* LCOV_EXCL_STOP */
 }
 
 static uint32_t get_panic_data_size(void)
@@ -199,6 +201,7 @@ struct panic_data *get_panic_data_write(void)
 	return pdata_ptr;
 }
 #else
+/* LCOV_EXCL_START - Can't cover non posix lines (yet) */
 struct panic_data *get_panic_data_write(void)
 {
 	/*
@@ -292,6 +295,7 @@ struct panic_data *get_panic_data_write(void)
 
 	return pdata_ptr;
 }
+/* LCOV_EXCL_STOP */
 #endif /* CONFIG_BOARD_NATIVE_POSIX */
 
 static void panic_init(void)
