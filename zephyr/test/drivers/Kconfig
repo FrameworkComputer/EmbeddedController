@@ -36,6 +36,9 @@ config LINK_TEST_SUITE_HOST_COMMANDS
 	select PLATFORM_EC_CHARGE_STATE_DEBUG
 	bool "Link and test the host command tests"
 
+config LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP
+	bool "Link and test the host command read memmap tests"
+
 config LINK_TEST_SUITE_ISL923X
 	bool "Link and test the isl923x tests"
 
