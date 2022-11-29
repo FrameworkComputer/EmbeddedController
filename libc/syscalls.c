@@ -16,6 +16,10 @@
 #include "task.h"
 #include "uart.h"
 
+#include <errno.h>
+
+#include <sys/stat.h>
+
 /**
  * Reboot the system.
  *
@@ -42,4 +46,23 @@ void _exit(int rc)
 int _write(int fd, char *buf, int len)
 {
 	return uart_put(buf, len);
+}
+
+/**
+ * Create a directory.
+ *
+ * @warning Not implemented.
+ *
+ * @note Unlike the other functions in this file, this is not overriding a
+ * stub version in libnosys. There's no "_mkdir" stub in libnosys, so this
+ * provides the actual "mkdir" function.
+ *
+ * @param pathname directory to create
+ * @param mode mode for the new directory
+ * @return -1 (error) always
+ */
+int mkdir(const char *pathname, mode_t mode)
+{
+	errno = ENOSYS;
+	return -1;
 }
