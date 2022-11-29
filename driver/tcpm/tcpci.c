@@ -1890,6 +1890,9 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
+#ifdef CONFIG_USB_PD_FRS_TCPC
+	.set_frs_enable = &tcpci_tcpc_fast_role_swap_enable,
+#endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
