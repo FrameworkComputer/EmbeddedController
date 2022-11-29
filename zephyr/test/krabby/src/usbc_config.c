@@ -3,10 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/ztest.h>
-
 #include "adc.h"
 #include "charge_manager.h"
 #include "driver/ppc/syv682x.h"
@@ -16,6 +12,10 @@
 #include "i2c/i2c.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 bool ppc_sink_enabled(int port)
 {

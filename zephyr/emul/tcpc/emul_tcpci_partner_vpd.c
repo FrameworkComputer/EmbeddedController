@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-#include <zephyr/sys/byteorder.h>
-
 #include "driver/tcpm/tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_faulty_ext.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "emul/tcpc/emul_tcpci_partner_vpd.h"
+
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
 
 LOG_MODULE_REGISTER(tcpci_vpd_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 

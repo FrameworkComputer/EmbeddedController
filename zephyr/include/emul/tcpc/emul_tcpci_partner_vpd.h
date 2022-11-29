@@ -12,12 +12,12 @@
 #ifndef __EMUL_TCPCI_PARTNER_VPD_H
 #define __EMUL_TCPCI_PARTNER_VPD_H
 
-#include <zephyr/drivers/emul.h>
-
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_faulty_ext.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
+
+#include <zephyr/drivers/emul.h>
 
 /**
  * @brief USB-C VCONN-powered device extension backend API
