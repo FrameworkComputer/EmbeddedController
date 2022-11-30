@@ -1,0 +1,36 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_posix
+tests:
+  # Baseboard tests
+  skyrim.baseboard:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+
+  # Crystaldrift tests
+  skyrim.crystaldrift:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+
+  # Frostflow tests
+  skyrim.frostflow:
+    extra_configs:
+    - CONFIG_TEST_BOARD_FROSTFLOW=y
+
+  # Markarth tests
+  skyrim.markarth:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+
+  # Skyrim tests
+  skyrim.skyrim:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+
+  # Winterhold tests
+  skyrim.winterhold:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y

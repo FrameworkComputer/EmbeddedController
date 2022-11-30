@@ -1,0 +1,14 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	/* GPIOs shared by all boards */
+	named-gpios {
+		compatible = "named-gpios";
+	};
+};

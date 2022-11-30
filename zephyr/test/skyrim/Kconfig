@@ -1,0 +1,51 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_BOARD_VARIANT
+	prompt "Select board variant for tests"
+	help
+	  Board variant to use for tests
+
+	config TEST_BOARD_BASEBOARD
+		bool "Enable baseboard-specific tests"
+		help
+		Enable baseboard tests.
+
+	config TEST_BOARD_CRYSTALDRIFT
+		bool "Enable crystaldrift-specific tests"
+		help
+		Enable tests for crystaldrift variant.
+
+	config TEST_BOARD_FROSTFLOW
+		bool "Enable frostflow-specific tests"
+		help
+		Enable tests for frostflow variant.
+
+	config TEST_BOARD_MARKARTH
+		bool "Enable markarth-specific tests"
+		help
+		Enable tests for markarth variant.
+
+	config TEST_BOARD_SKYRIM
+		bool "Enable skyrim-specific tests"
+		help
+		Enable tests for skyrim variant.
+
+	config TEST_BOARD_WINTERHOLD
+		bool "Enable winterhold-specific tests"
+		help
+		Enable tests for winterhold variant.
+
+endchoice # TEST_BOARD_VARIANT
+
+config TEST_BOARD_NAME
+	string "Board name"
+	default "baseboard" if TEST_BOARD_BASEBOARD
+	default "crystaldrift" if TEST_BOARD_CRYSTALDRIFT
+	default "frostflow" if TEST_BOARD_FROSTFLOW
+	default "markarth" if TEST_BOARD_MARKARTH
+	default "skyrim" if TEST_BOARD_SKYRIM
+	default "winterhold" if TEST_BOARD_WINTERHOLD
+
+source "Kconfig.zephyr"
