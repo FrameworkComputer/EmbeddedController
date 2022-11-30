@@ -61,6 +61,7 @@ test-list-y=\
        stdlib \
        std_vector \
        system_is_locked \
+       timer \
        timer_dos \
        utils \
        utils_str \

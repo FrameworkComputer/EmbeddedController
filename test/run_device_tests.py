@@ -291,6 +291,7 @@ class AllTests:
                 toggle_power=True,
                 enable_hw_write_protect=False,
             ),
+            TestConfig(test_name="timer"),
             TestConfig(test_name="timer_dos"),
             TestConfig(test_name="utils", timeout_secs=20),
             TestConfig(test_name="utils_str"),

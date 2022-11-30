@@ -62,6 +62,7 @@ test-list-y=\
        std_vector \
        stm32f_rtc \
        system_is_locked \
+       timer \
        timer_dos \
        utils \
        utils_str \
