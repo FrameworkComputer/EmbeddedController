@@ -9,7 +9,6 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "driver/ppc/syv682x_public.h"
-#include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
@@ -129,11 +128,8 @@ const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USBC_PORT_C0,
-			.flags = USB_MUX_FLAG_CAN_IDLE,
-			.driver = &bb_usb_retimer,
-			.hpd_update = bb_retimer_hpd_update,
-			.i2c_port = I2C_PORT_USB_C0_MUX,
-			.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
 		},
 		.next = &usbc0_tcss_usb_mux,
 	},
@@ -319,30 +315,7 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
-void retimer_interrupt(enum gpio_signal signal)
-{
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
-}
-
 __override bool board_is_dts_port(int port)
 {
 	return port == USBC_PORT_C0;
-}
-
-__override bool board_is_tbt_usb4_port(int port)
-{
-	if (port == USBC_PORT_C0)
-		return true;
-
-	return false;
-}
-
-__override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
-{
-	if (!board_is_tbt_usb4_port(port))
-		return TBT_SS_RES_0;
-
-	return TBT_SS_TBT_GEN3;
 }
