@@ -27,6 +27,8 @@
 		&kso10_gp07
 		&kso11_gp06
 		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
 	>;
 	pinctrl-1 = <
 		&ksi0_gpio_gp31
@@ -49,6 +51,8 @@
 		&kso10_gpio_gp07
 		&kso11_gpio_gp06
 		&kso12_gpio_gp05
+		&kso13_gpio_gp04
+		&kso14_gpio_gp82
 	>;
 	pinctrl-names = "default", "sleep";
 };
