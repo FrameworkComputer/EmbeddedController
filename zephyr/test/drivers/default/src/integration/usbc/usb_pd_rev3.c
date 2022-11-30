@@ -217,6 +217,60 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_on_power_state_change)
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
+	verify_simultaneous_alert_status_resolution)
+{
+	zassert_false(fixture->src_ext.alert_received);
+	zassert_false(fixture->src_ext.status_received);
+
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, true);
+	zassert_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS);
+	tcpci_partner_send_control_msg(&fixture->source_5v_3a,
+				       PD_CTRL_GET_STATUS, 0);
+	k_sleep(K_SECONDS(2));
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, false);
+
+	/*
+	 * The initial Alert message will be discarded, so the expected message
+	 * order is Get_Status->Status->Alert. This will be followed by another
+	 * Get_Status->Status transaction, but that is covered in other tests.
+	 * This test only checks the first 3 messages.
+	 */
+	int i = 0;
+	bool header_mismatch = false;
+	enum tcpci_partner_msg_sender expected_senders[3] = {
+		TCPCI_PARTNER_SENDER_PARTNER, TCPCI_PARTNER_SENDER_TCPM,
+		TCPCI_PARTNER_SENDER_TCPM
+	};
+	uint16_t expected_headers[3] = { 0x0012, 0xb002, 0x1006 };
+	struct tcpci_partner_log_msg *msg;
+
+	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->source_5v_3a.msg_log, msg, node)
+	{
+		uint16_t header = sys_get_le16(msg->buf);
+
+		if (i >= 3)
+			break;
+
+		if (msg->sender != expected_senders[i] ||
+		    PD_HEADER_EXT(header) !=
+			    PD_HEADER_EXT(expected_headers[i]) ||
+		    PD_HEADER_CNT(header) !=
+			    PD_HEADER_CNT(expected_headers[i]) ||
+		    PD_HEADER_TYPE(header) !=
+			    PD_HEADER_TYPE(expected_headers[i])) {
+			header_mismatch = true;
+			break;
+		}
+
+		i++;
+	}
+
+	zassert_false(header_mismatch);
+	zassert_true(fixture->src_ext.alert_received);
+	zassert_true(fixture->src_ext.status_received);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
 	verify_inaction_on_pd_button_press_while_awake)
 {
 	uint32_t ado;
