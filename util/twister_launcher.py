@@ -382,7 +382,12 @@ def main():
         sys.stdout.flush()
 
     # Invoke Twister and wait for it to exit.
-    result = subprocess.run(twister_cli, env=twister_env, check=False)
+    result = subprocess.run(
+        twister_cli,
+        env=twister_env,
+        check=False,
+        close_fds=False,  # For GNUMakefile jobserver
+    )
 
     if check_for_skipped_tests(intercepted_args.outdir):
         result.returncode = 1
