@@ -39,53 +39,6 @@ def log_cmd(cmd, env=None):
     sys.stdout.flush()
 
 
-def run_twister(
-    platform_ec, code_coverage=False, extra_args=None, use_gcc=False
-):
-    """Build the tests using twister.
-
-    Returns the path to the twister-out dir.
-    """
-
-    if use_gcc:
-        outdir = "twister-out-gcc"
-        toolchain = "host"
-    else:
-        outdir = "twister-out-llvm"
-        toolchain = "llvm"
-    cmd = [
-        platform_ec / "twister",
-        "--outdir",
-        platform_ec / outdir,
-        "-v",
-        "-i",
-        "--no-upload-cros-rdb",
-        "--toolchain",
-        toolchain,
-    ]
-
-    if extra_args:
-        cmd.extend(extra_args)
-
-    if code_coverage:
-        # Tell Twister to collect coverage data. We must specify an explicit platform
-        # type in this case, as well.
-        cmd.extend(
-            [
-                "--coverage",
-            ]
-        )
-    log_cmd(cmd)
-
-    subprocess.run(
-        cmd,
-        check=True,
-        cwd=platform_ec,
-        stdin=subprocess.DEVNULL,
-    )
-    return platform_ec / outdir
-
-
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()
@@ -259,10 +212,16 @@ def test(opts):
 
     zephyr_dir = pathlib.Path(__file__).parent.resolve()
 
-    # Run zmake tests to ensure we have a fully working zmake before
-    # proceeding.
+    # Run tests from Makefile.cq because make knows how to run things
+    # in parallel.
+    cmd = ["make", "-f", "Makefile.cq", f"-j{opts.cpus}", "test"]
+    if opts.code_coverage:
+        cmd.append("COVERAGE=1")
+    if SPECIAL_BOARDS:
+        cmd.append(f"SPECIAL_BOARDS={' '.join(SPECIAL_BOARDS)}")
+    log_cmd(cmd)
     subprocess.run(
-        [zephyr_dir / "zmake" / "run_tests.sh"],
+        cmd,
         check=True,
         cwd=zephyr_dir,
         stdin=subprocess.DEVNULL,
@@ -270,297 +229,38 @@ def test(opts):
 
     # Twister-based tests
     platform_ec = zephyr_dir.parent
-    third_party = platform_ec.parent.parent / "third_party"
-    twister_out_dir = run_twister(platform_ec, opts.code_coverage)
-    twister_out_dir_gcc = run_twister(
-        platform_ec, opts.code_coverage, use_gcc=True
-    )
+    twister_out_dir = platform_ec / "twister-out-llvm"
+    twister_out_dir_gcc = platform_ec / "twister-out-host"
 
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
-        # Merge lcov files here because bundle failures are "infra" failures.
-        output = subprocess.run(
-            [
-                "/usr/bin/lcov",
-                "--summary",
-                twister_out_dir / "coverage.info",
-            ],
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-            stdin=subprocess.DEVNULL,
-        ).stdout
-        _extract_lcov_summary("EC_ZEPHYR_TESTS", metrics, output)
-
-        output = subprocess.run(
-            [
-                "/usr/bin/lcov",
-                "--summary",
-                twister_out_dir_gcc / "coverage.info",
-            ],
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-            stdin=subprocess.DEVNULL,
-        ).stdout
-        _extract_lcov_summary("EC_ZEPHYR_TESTS_GCC", metrics, output)
-
-        cmd = ["make", "test-coverage", f"-j{opts.cpus}"]
-        log_cmd(cmd)
-        subprocess.run(
-            cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL
+        _extract_lcov_summary(
+            "EC_ZEPHYR_TESTS", metrics, twister_out_dir / "coverage.info"
         )
-
-        output = subprocess.run(
-            [
-                "/usr/bin/lcov",
-                "--summary",
-                platform_ec / "build/coverage/lcov.info",
-            ],
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-            stdin=subprocess.DEVNULL,
-        ).stdout
-        _extract_lcov_summary("EC_LEGACY_TESTS", metrics, output)
-
-        cmd = [
-            "/usr/bin/lcov",
-            "-o",
-            build_dir / "all_tests.info",
-            "--rc",
-            "lcov_branch_coverage=1",
-            "-a",
-            platform_ec / "build/coverage/lcov.info",
-            "-a",
-            twister_out_dir / "coverage.info",
-            "-a",
+        _extract_lcov_summary(
+            "EC_ZEPHYR_TESTS_GCC",
+            metrics,
             twister_out_dir_gcc / "coverage.info",
-        ]
-        log_cmd(cmd)
-        output = subprocess.run(
-            cmd,
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-            stdin=subprocess.DEVNULL,
-        ).stdout
-        _extract_lcov_summary("ALL_TESTS", metrics, output)
-
-        cmd = [
-            "/usr/bin/lcov",
-            "-o",
-            build_dir / "zephyr_merged.info",
-            "--rc",
-            "lcov_branch_coverage=1",
-            "-a",
-            build_dir / "all_builds.info",
-            "-a",
-            build_dir / "all_tests.info",
-        ]
-        log_cmd(cmd)
-        output = subprocess.run(
-            cmd,
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-            stdin=subprocess.DEVNULL,
-        ).stdout
-        _extract_lcov_summary("EC_ZEPHYR_MERGED", metrics, output)
-
-        test_patterns = [
-            # Exclude tests
-            platform_ec / "test/**",
-            platform_ec / "include/tests/**",
-            platform_ec / "private/test/**",
-            platform_ec / "private/fingerprint/*/mcutest/**",
-            zephyr_dir / "test/**",
-            third_party / "zephyr/main/subsys/testsuite/**",
-            # Exclude mocks & emulators
-            platform_ec / "include/mock/**",
-            platform_ec / "common/mock/**",
-            platform_ec / "board/host/**",
-            platform_ec / "chip/host/**",
-            platform_ec / "core/host/**",
-            zephyr_dir / "emul/**",
-            zephyr_dir / "mock/**",
-            third_party / "zephyr/main/subsys/emul/**",
-            third_party / "zephyr/main/arch/posix/**",
-            # Exclude all files ending in _test.[ch] or _emul.[ch]
-            "**/*_test.c",
-            "**/*_test.h",
-            "**/*_emul.c",
-            "**/*_emul.h",
-            # Exclude some special cases that don't match the other patterns
-            platform_ec / "include/test_util.h",
-            platform_ec / "common/test_util.c",
-            zephyr_dir / "shim/src/test_util.c",
-            zephyr_dir / "shim/src/ztest_system.c",
-        ]
-
-        generated_and_system_patterns = [
-            platform_ec / "build/**",
-            platform_ec / "twister-out*/**",
-            "/usr/include/**",
-            "/usr/lib/**",
-        ]
-
-        cmd = [
-            "/usr/bin/lcov",
-            "-o",
-            build_dir / "lcov.info",
-            "--rc",
-            "lcov_branch_coverage=1",
-            "-r",
-            build_dir / "zephyr_merged.info",
-        ] + generated_and_system_patterns
-        log_cmd(cmd)
-        output = subprocess.run(
-            cmd,
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-            stdin=subprocess.DEVNULL,
-        ).stdout
-        _extract_lcov_summary("ALL_MERGED", metrics, output)
-
-        # Create an info file without any test code, just for the metric.
-        cmd = [
-            "/usr/bin/lcov",
-            "-o",
-            build_dir / "lcov_no_tests.info",
-            "--rc",
-            "lcov_branch_coverage=1",
-            "-r",
-            build_dir / "lcov.info",
-        ] + test_patterns
-        log_cmd(cmd)
-        output = subprocess.run(
-            cmd,
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-            stdin=subprocess.DEVNULL,
-        ).stdout
-        _extract_lcov_summary("ALL_FILTERED", metrics, output)
-
-        subprocess.run(
-            [
-                "/usr/bin/genhtml",
-                "--branch-coverage",
-                "-q",
-                "-o",
-                build_dir / "lcov_rpt",
-                "-t",
-                "All boards and tests merged",
-                "-s",
-                build_dir / "lcov.info",
-            ],
-            cwd=zephyr_dir,
-            check=True,
-            stdin=subprocess.DEVNULL,
+        )
+        _extract_lcov_summary(
+            "EC_LEGACY_TESTS", metrics, platform_ec / "build/coverage/lcov.info"
+        )
+        _extract_lcov_summary(
+            "ALL_TESTS", metrics, build_dir / "all_tests.info"
+        )
+        _extract_lcov_summary(
+            "EC_ZEPHYR_MERGED", metrics, build_dir / "zephyr_merged.info"
+        )
+        _extract_lcov_summary("ALL_MERGED", metrics, build_dir / "lcov.info")
+        _extract_lcov_summary(
+            "ALL_FILTERED", metrics, build_dir / "lcov_no_tests.info"
         )
 
         for board in SPECIAL_BOARDS:
-            # Merge board coverage with tests
-            cmd = [
-                "/usr/bin/lcov",
-                "-o",
-                build_dir / (board + "_merged.info"),
-                "--rc",
-                "lcov_branch_coverage=1",
-                "-a",
-                build_dir / "all_tests.info",
-                "-a",
-                build_dir / board / "output/zephyr.info",
-            ]
-            log_cmd(cmd)
-            subprocess.run(
-                cmd,
-                cwd=zephyr_dir,
-                check=True,
-                stdin=subprocess.DEVNULL,
-            )
-            # Filter to only code in the baseline board coverage
-            cmd = [
-                platform_ec / "util/lcov_stencil.py",
-                "-o",
-                build_dir / (board + "_stenciled.info"),
-                build_dir / board / "output/zephyr.info",
-                build_dir / (board + "_merged.info"),
-            ]
-            log_cmd(cmd)
-            subprocess.run(
-                cmd,
-                cwd=zephyr_dir,
-                check=True,
-                stdin=subprocess.DEVNULL,
-            )
-            # Exclude file patterns we don't want
-            cmd = (
-                [
-                    "/usr/bin/lcov",
-                    "-o",
-                    build_dir / (board + "_final.info"),
-                    "--rc",
-                    "lcov_branch_coverage=1",
-                    "-r",
-                    build_dir / (board + "_stenciled.info"),
-                    # Exclude third_party code (specifically zephyr)
-                    third_party / "**",
-                    # These are questionable, but they are essentially untestable
-                    zephyr_dir / "drivers/**",
-                    zephyr_dir / "include/drivers/**",
-                    zephyr_dir / "program/**",
-                    zephyr_dir / "shim/chip/**",
-                    zephyr_dir / "shim/chip/npcx/npcx_monitor/**",
-                    zephyr_dir / "shim/core/**",
-                ]
-                + generated_and_system_patterns
-                + test_patterns
-            )
-            log_cmd(cmd)
-            subprocess.run(
-                cmd,
-                cwd=zephyr_dir,
-                check=True,
-                stdin=subprocess.DEVNULL,
-            )
-            output = subprocess.run(
-                [
-                    "/usr/bin/lcov",
-                    "--summary",
-                    build_dir / (board + "_final.info"),
-                ],
-                cwd=zephyr_dir,
-                check=True,
-                stdout=subprocess.PIPE,
-                universal_newlines=True,
-                stdin=subprocess.DEVNULL,
-            ).stdout
-            _extract_lcov_summary(f"BOARD_{board}".upper(), metrics, output)
-            subprocess.run(
-                [
-                    "/usr/bin/genhtml",
-                    "--branch-coverage",
-                    "-q",
-                    "-o",
-                    build_dir / (board + "_rpt"),
-                    "-t",
-                    f"{board} ec code only",
-                    "-s",
-                    build_dir / (board + "_final.info"),
-                ],
-                cwd=zephyr_dir,
-                check=True,
-                stdin=subprocess.DEVNULL,
+            _extract_lcov_summary(
+                f"BOARD_{board}".upper(),
+                metrics,
+                build_dir / (board + "_final.info"),
             )
 
     with open(opts.metrics, "w") as file:
@@ -572,7 +272,22 @@ COVERAGE_RE = re.compile(
 )
 
 
-def _extract_lcov_summary(name, metrics, output):
+def _extract_lcov_summary(name, metrics, filename):
+    zephyr_dir = pathlib.Path(__file__).parent.resolve()
+    cmd = [
+        "/usr/bin/lcov",
+        "--summary",
+        filename,
+    ]
+    log_cmd(cmd)
+    output = subprocess.run(
+        cmd,
+        cwd=zephyr_dir,
+        check=True,
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+        stdin=subprocess.DEVNULL,
+    ).stdout
     re_match = COVERAGE_RE.search(output)
     if re_match:
         metric = metrics.value.add()
