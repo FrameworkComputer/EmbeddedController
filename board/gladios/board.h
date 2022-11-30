@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Brask board configuration */
+/* Gladios board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -13,34 +13,24 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-#define CONFIG_MP2964
-
 /* Barrel Jack */
-#define DEDICATED_CHARGE_PORT 3
+#define DEDICATED_CHARGE_PORT 1
 
 /* HDMI CEC */
 #define CONFIG_CEC
-#define CEC_GPIO_OUT GPIO_HDMI_CEC_OUT
-#define CEC_GPIO_IN GPIO_HDMI_CEC_IN
-#define CEC_GPIO_PULL_UP GPIO_HDMI_CEC_PULL_UP
+#define CEC_GPIO_OUT GPIO_HDMIB_CEC_OUT
+#define CEC_GPIO_IN GPIO_HDMIB_CEC_IN
+#define CEC_GPIO_PULL_UP GPIO_HDMIB_CEC_PULL_UP
 
 /* USB Type A Features */
 #define USB_PORT_COUNT 4
 #define CONFIG_USB_PORT_POWER_DUMB
+#define CONFIG_USBC_RETIMER_PS8811
 
 /* USB Type C and USB PD defines */
-#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
-
-#define CONFIG_IO_EXPANDER
-#define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT 2
-
 #define CONFIG_USB_PD_PPC
 #define CONFIG_USB_PD_TCPM_RT1715
-#define CONFIG_USBC_RETIMER_INTEL_BB
-
-#define CONFIG_USBC_RETIMER_KB800X
-#define CONFIG_KB800X_CUSTOM_XBAR
+#define CONFIG_USBC_RETIMER_PS8818
 #define CONFIG_USBC_PPC_SYV682X
 #undef CONFIG_SYV682X_HV_ILIM
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
@@ -92,41 +82,17 @@
 #define GPIO_RECOVERY_L_2 GPIO_GSC_EC_RECOVERY_BTN_OD
 
 /* I2C Bus Configuration */
+#define I2C_PORT_USB_C0_TCPC NPCX_I2C_PORT1_0
 
-#define I2C_PORT_DP_REDRIVER NPCX_I2C_PORT0_0
+#define I2C_PORT_USB_C0_PPC_BC12 NPCX_I2C_PORT2_0
 
-#define I2C_PORT_USB_C0_C2_TCPC NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1_TCPC NPCX_I2C_PORT4_1
+#define I2C_PORT_USB_C0_MUX NPCX_I2C_PORT3_0
 
-#define I2C_PORT_USB_C0_C2_PPC NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_PPC NPCX_I2C_PORT6_1
+#define I2C_PORT_USB_A2_A3_RT NPCX_I2C_PORT6_1
 
-#define I2C_PORT_USB_C0_C2_BC12 NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_BC12 NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_MUX NPCX_I2C_PORT3_0
-#define I2C_PORT_USB_C1_MUX NPCX_I2C_PORT6_1
-
-#define I2C_PORT_QI NPCX_I2C_PORT5_0
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
-#define I2C_PORT_MP2964 NPCX_I2C_PORT7_0
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50
-
-#define I2C_ADDR_MP2964_FLAGS 0x20
-
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x58
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR 0x59
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-#define CONFIG_USB_PD_DATA_RESET_MSG
-
-/* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
@@ -146,12 +112,6 @@
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
 
-/* WPC/Qi charger */
-#ifdef SECTION_IS_RW
-#define CONFIG_PERIPHERAL_CHARGER
-#define CONFIG_CPS8100
-#endif
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
@@ -160,8 +120,6 @@
 
 enum charge_port {
 	CHARGE_PORT_TYPEC0,
-	CHARGE_PORT_TYPEC1,
-	CHARGE_PORT_TYPEC2,
 	CHARGE_PORT_BARRELJACK,
 	CHARGE_PORT_ENUM_COUNT
 };
@@ -183,8 +141,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_4_DIMM,
 	TEMP_SENSOR_COUNT
 };
-
-enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C2_NCT38XX, IOEX_PORT_COUNT };
 
 enum pwm_channel {
 	PWM_CH_LED_GREEN, /* PWM0 */
