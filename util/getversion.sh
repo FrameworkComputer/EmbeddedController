@@ -128,6 +128,11 @@ main() {
         dir_list+=( ./private/fingerprint/fpc )
       fi
       ;;
+    (*_scp)
+      if [[ -d ./private-mt-scp ]]; then
+        dir_list+=( ./private-mt-scp )
+      fi
+      ;;
   esac
 
   # Create a combined version string for all component directories.
