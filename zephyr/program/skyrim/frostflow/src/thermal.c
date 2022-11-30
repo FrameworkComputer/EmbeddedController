@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "chipset.h"
+#include "common.h"
+#include "console.h"
 #include "fan.h"
 #include "tablet_mode.h"
 #include "temp_sensor/temp_sensor.h"
 #include "thermal.h"
 #include "util.h"
-#include "console.h"
 
 #define TEMP_AMB TEMP_SENSOR_ID(DT_NODELABEL(temp_amb))
 

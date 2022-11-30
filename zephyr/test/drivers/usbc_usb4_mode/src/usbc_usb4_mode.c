@@ -8,17 +8,17 @@
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "host_command.h"
-#include "test/drivers/stubs.h"
 #include "tcpm/tcpci.h"
-#include "test/drivers/utils.h"
+#include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "usb_pd_vdo.h"
+
+#include <stdint.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
-
-#include <stdint.h>
 
 #define TEST_PORT USBC_PORT_C0
 /* Remove polarity for any mux checks */
