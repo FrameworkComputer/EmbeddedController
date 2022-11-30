@@ -286,13 +286,3 @@ static void board_init(void)
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-/* Trigger shutdown by enabling the Z-sleep circuit */
-__override void board_hibernate_late(void)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_slp_z), 1);
-	/*
-	 * The system should hibernate, but there may be
-	 * a small delay, so return.
-	 */
-}

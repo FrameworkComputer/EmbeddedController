@@ -8,7 +8,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 zephyr_include_directories(include)
 zephyr_library_sources("src/common.c")
-zephyr_library_sources("src/sub_board.c")
+zephyr_library_sources_ifdef(CONFIG_NISSA_SUB_BOARD "src/sub_board.c")
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 
 if(DEFINED CONFIG_BOARD_NIVVIKS)

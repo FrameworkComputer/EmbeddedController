@@ -2,6 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config NISSA_SUB_BOARD
+	bool "Nissa sub-board support"
+	default y
+	help
+	  Enable the sub-board support for Nissa boards.
+	  This uses a common fw_config bitfield to select
+	  one of a number of option sub-boards with different
+	  hardware configurations.
+
 config BOARD_NIVVIKS
 	bool "Google Nivviks Board"
 	help
