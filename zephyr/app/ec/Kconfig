@@ -27,6 +27,14 @@ config NUM_PREEMPT_PRIORITIES
 	default 26
 
 #
+# Override the LOG_PRINTK to be no as it currently makes multiple
+# tests timeout and a few others fail in console assertions
+# TODO(b/http://b/260772137) Fix LOG_PRINTK issue and remove override
+#
+config LOG_PRINTK
+       default n
+
+#
 # In Zephyr, the default system workqueue thread priority level is the lowest
 # cooperative priority. Override its priority to the second lowest preempt
 # priority. (i.e. NUM_PREEMPT_PRIORITIES - 1)
