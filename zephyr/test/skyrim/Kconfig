@@ -48,4 +48,17 @@ config TEST_BOARD_NAME
 	default "skyrim" if TEST_BOARD_SKYRIM
 	default "winterhold" if TEST_BOARD_WINTERHOLD
 
+config TEST_BOARD_USB_PD_POLICY
+	bool "Enable USB PD policy specific tests"
+	select TEST_ENABLE_USB_PD_HOST_CMD
+	default n
+
+config TEST_ENABLE_USB_PD_HOST_CMD
+	bool "Fake config to enable this feature"
+	default n
+
+config USB_PD_DISCHARGE
+	bool "Fake config to enable this feature"
+	default n
+
 source "Kconfig.zephyr"

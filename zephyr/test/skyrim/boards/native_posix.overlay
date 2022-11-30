@@ -10,5 +10,24 @@
 	/* GPIOs shared by all boards */
 	named-gpios {
 		compatible = "named-gpios";
+
+		gpio_pg_pwr_s5: pg_pwr_s5 {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_S5_PGOOD";
+		};
+
+		gpio_usb_c0_tcpc_fastsw_ctl_en: usb_c0_tcpc_fastsw_ctl_en {
+			gpios = <&gpio0 1 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_TCPC_FASTSW_CTL_EN";
+		};
+
+		gpio_usb_c1_tcpc_fastsw_ctl_en: usb_c1_tcpc_fastsw_ctl_en {
+			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_TCPC_FASTSW_CTL_EN";
+		};
 	};
+};
+
+&gpio0 {
+	ngpios = <23>;
 };

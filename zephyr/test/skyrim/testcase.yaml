@@ -10,6 +10,17 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
 
+  skyrim.baseboard.usb_pd_policy:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_USB_PD_POLICY=y
+
+  skyrim.baseboard.usb_pd_policy.discharge:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_USB_PD_POLICY=y
+    - CONFIG_USB_PD_DISCHARGE=y
+
   # Crystaldrift tests
   skyrim.crystaldrift:
     extra_configs:

@@ -11,3 +11,5 @@ zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/skyrim/include")
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
 target_sources(app PRIVATE src/${CONFIG_TEST_BOARD_NAME}/common.c)
+
+target_sources_ifdef(CONFIG_TEST_BOARD_USB_PD_POLICY app PRIVATE src/baseboard/usb_pd_policy.c ${PLATFORM_EC_PROGRAM_DIR}/skyrim/src/usb_pd_policy.c)
