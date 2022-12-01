@@ -3,15 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include <zephyr/ztest.h>
-#include <zephyr/ztest_assert.h>
-
 #include "panic.h"
 #include "sysjump.h"
 #include "test/drivers/test_state.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /**
  * @brief Returns a pointer to an object (such as a struct jump_data) of type

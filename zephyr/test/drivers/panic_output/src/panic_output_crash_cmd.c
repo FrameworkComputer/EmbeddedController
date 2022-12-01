@@ -3,17 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <signal.h>
-#include <stdio.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest_assert.h>
-
 #include "console.h"
 #include "panic.h"
 #include "test/drivers/test_state.h"
+
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /* Special return codes for run_crash_command() */
 #define RETURN_CODE_CRASHED (-1)
