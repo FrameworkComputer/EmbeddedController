@@ -256,6 +256,11 @@ static int common_pwr_sm_run(int state)
 			k_msleep(start_from_g3_delay_ms);
 			start_from_g3_delay_ms = 0;
 
+			if (!board_ap_power_is_startup_ok()) {
+				LOG_INF("Start from G3 inhibited"
+					" by !is_startup_ok");
+				break;
+			}
 			return SYS_POWER_STATE_G3S5;
 		}
 

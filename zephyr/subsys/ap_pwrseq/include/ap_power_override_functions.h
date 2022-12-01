@@ -23,6 +23,17 @@
 #include <zephyr/devicetree.h>
 
 /**
+ * @brief Evaluate whether system state is OK to start the AP.
+ *
+ * This is most often used to block startup when there is insufficient power
+ * available to reliably run the AP, such as if an attached battery's state of
+ * charge is very low.
+ *
+ * @return true if the system may proceed out of hard-off.
+ */
+bool board_ap_power_is_startup_ok(void);
+
+/**
  * @brief Force AP shutdown
  *
  * Immediately shut down the AP.
