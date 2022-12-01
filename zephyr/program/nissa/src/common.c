@@ -150,20 +150,26 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
 }
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_SM5803
+
+static int battery_cells;
+
+void board_get_battery_cells(void)
+{
+	if (charger_get_battery_cells(CHARGER_PRIMARY, &battery_cells) ==
+	    EC_SUCCESS) {
+		LOG_INF("battery_cells:%d", battery_cells);
+	} else {
+		LOG_ERR("Failed to get default battery type");
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_get_battery_cells, HOOK_PRIO_DEFAULT);
+
 /*
  * Called by USB-PD code to determine whether a given input voltage is
  * acceptable.
  */
 __override int pd_is_valid_input_voltage(int mv)
 {
-	int battery_voltage, rv;
-
-	rv = battery_design_voltage(&battery_voltage);
-	if (rv) {
-		LOG_ERR("Unable to get battery design voltage: %d", rv);
-		return true;
-	}
-
 	/*
 	 * SM5803 is extremely inefficient in buck-boost mode, when
 	 * VBUS ~= VSYS: very high temperatures on the chip and associated
@@ -177,11 +183,11 @@ __override int pd_is_valid_input_voltage(int mv)
 	 * 9V, but we expect charge current to be low when a 2S battery is
 	 * charged to that voltage (because it will be nearly full).
 	 *
-	 * We assume that any battery with a design voltage above 9V is 3S, and
+	 * We assume that any battery with a design 3S, and
 	 * that other problematic PD voltages (near to, but not exactly 12V)
 	 * will rarely occur.
 	 */
-	if (battery_voltage > 9000 && mv == 12000) {
+	if (battery_cells == 3 && mv == 12000) {
 		return false;
 	}
 	return true;
