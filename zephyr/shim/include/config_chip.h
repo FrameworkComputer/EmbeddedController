@@ -6,14 +6,6 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
-/*
- * I don't know why but gcc's preprocessor doesn't like the autoconf.h file,
- * sometimes. It seems to happen to brya RO. Adding a #line directive anywhere
- * in this file seems to fix the problem. #line marks the *next* line, so it is
- * off by one.
- */
-#line 16
-
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
 

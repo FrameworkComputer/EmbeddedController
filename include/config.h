@@ -19,6 +19,13 @@
 #define __CROS_EC_CONFIG_H
 
 /*
+ * I don't know why but gcc's preprocessor doesn't like the autoconf.h file,
+ * sometimes. Adding a #line directive anywhere in this file seems to fix the
+ * problem. #line marks the *next* line, so it is off by one.
+ */
+#line 27
+
+/*
  * When building for Zephyr tests, a shimmed_tasks.h header is defined
  * to create all the HAS_TASK_* definitions.  Since those are used in
  * config.h, we need to include that header first.
