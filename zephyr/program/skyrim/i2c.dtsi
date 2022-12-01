@@ -4,6 +4,7 @@
  */
 
  #include <dt-bindings/usb_pd_tcpm.h>
+ #include <dt-bindings/usbc_mux.h>
 
 / {
 	aliases {
@@ -119,6 +120,19 @@
 		nct38xx-dev = <&nct3807_C0>;
 		label = "NCT3807_ALERT_0";
 	};
+
+	anx7483_port0: anx7483@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c0_mux_set";
+		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
+	};
+
+	ppc_port0: nx20p348x@71 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x71>;
+	};
 };
 
 &i2c_ctrl0 {
@@ -180,6 +194,26 @@
 		nct38xx-dev = <&nct3807_C1>;
 		label = "NCT3807_ALERT_1";
 	};
+
+	anx7483_port1: anx7483@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c1_mux_set";
+		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
+	};
+
+	ppc_port1: nx20p348x@71 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x71>;
+	};
+
+	ps8818_port1: ps8818@28 {
+		compatible = "parade,ps8818";
+		reg = <0x28>;
+		flags = <(USB_MUX_FLAG_RESETS_IN_G3)>;
+		board-set = "board_c1_ps8818_mux_set";
+	};
 };
 
 &i2c_ctrl1 {
@@ -227,6 +261,18 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
 	pinctrl-names = "default";
+
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+
+	alt_charger: isl9538@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
 
 &i2c_ctrl4 {

@@ -14,6 +14,12 @@
 			bc12 = <&bc12_port0>;
 			tcpc = <&tcpc_port0>;
 			chg = <&charger>;
+			chg_alt = <&alt_charger>;
+			ppc = <&ppc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&amd_fp6_port0 &anx7483_port0>;
+			};
 		};
 
 		usbc_port1: port1@1 {
@@ -21,6 +27,16 @@
 			reg = <1>;
 			bc12 = <&bc12_port1>;
 			tcpc = <&tcpc_port1>;
+			ppc = <&ppc_port1>;
+			usb-mux-chain-1-anx {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&amd_fp6_port1 &anx7483_port1>;
+			};
+			usb_mux_chain_ps8818_port1: usb-mux-chain-1-ps {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&amd_fp6_port1 &ps8818_port1>;
+				alternative-chain;
+			};
 		};
 	};
 };
