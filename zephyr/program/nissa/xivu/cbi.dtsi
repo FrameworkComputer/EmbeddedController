@@ -71,6 +71,26 @@
 			};
 		};
 
+		/*
+		 * FW_CONFIG field to defined for AUDIO CODEC.
+		 */
+		audio {
+			enum-name = "FW_AUDIO";
+			start = <8>;
+			size = <1>;
+
+			alc5682_vs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_ALC5682_VS";
+				value = <0>;
+			};
+			alc5682_vd {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_ALC5682_VD";
+				value = <1>;
+			};
+		};
+
 /delete-node/ fan;
 	};
 
