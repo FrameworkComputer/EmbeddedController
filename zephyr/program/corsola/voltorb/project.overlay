@@ -42,6 +42,15 @@
 		cosmx_ap20cbl-2 {
 			compatible = "cosmx,ap20cbl-2", "battery-smart";
 		};
+		lgc_ap19b8k {
+			compatible = "lgc,ap19b8k", "battery-smart";
+		};
+		panasonic_ap19b5k {
+			compatible = "panasonic,ap19b5k", "battery-smart";
+		};
+		smp_ap18c7k {
+			compatible = "smp,ap18c7k", "battery-smart";
+		};
 	};
 
 	cros-keyscan {
