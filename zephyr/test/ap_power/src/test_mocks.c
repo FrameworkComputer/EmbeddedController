@@ -13,6 +13,7 @@ DEFINE_FAKE_VALUE_FUNC(int, extpower_is_present);
 
 /* Mocks for common/system.c */
 DEFINE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
+DEFINE_FAKE_VALUE_FUNC(int, system_can_boot_ap);
 
 /**
  * @brief Reset all the fakes before each test.
@@ -25,6 +26,8 @@ static void fff_reset_rule_before(const struct ztest_unit_test *test,
 
 	RESET_FAKE(extpower_is_present);
 	RESET_FAKE(system_hibernate);
+	RESET_FAKE(system_can_boot_ap);
+	system_can_boot_ap_fake.return_val = 1;
 }
 
 ZTEST_RULE(fff_reset_rule, fff_reset_rule_before, NULL);

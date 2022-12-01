@@ -7,6 +7,7 @@
 #include "ap_power/ap_power_interface.h"
 #include "chipset.h"
 #include "emul/emul_power_signals.h"
+#include "test_mocks.h"
 #include "test_state.h"
 
 #include <zephyr/drivers/espi.h>
@@ -112,6 +113,22 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_2)
 		      "AP_POWER_SUSPEND event generated");
 	zassert_equal(1, power_hard_off_count,
 		      "AP_POWER_HARD_OFF event generated");
+}
+
+ZTEST(ap_pwrseq, test_insufficient_power_blocks_s5)
+{
+	zassert_equal(0,
+		      power_signal_emul_load(
+			      EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_g3_to_s0)),
+		      "Unable to load test platfform `tp_sys_g3_to_s0`");
+	system_can_boot_ap_fake.return_val = 0;
+
+	ap_power_exit_hardoff();
+	k_msleep(5000);
+
+	zassert_equal(40, system_can_boot_ap_fake.call_count);
+	zassert_true(
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_HARD_OFF));
 }
 
 void ap_pwrseq_after_test(void *data)
