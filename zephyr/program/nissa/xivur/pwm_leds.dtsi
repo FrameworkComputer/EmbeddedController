@@ -18,15 +18,14 @@
 
 		leds = <&pwm_led0>;
 
-				/*<red green blue>*/
-		color-map-red    = <100   0    0>;
-		color-map-green  = <  0 100    0>;
-		color-map-blue   = <  0   0  100>;
-		color-map-yellow = <  0  50   50>;
-		color-map-white  = <100 100  100>;
-		color-map-amber  = <100   0    0>;
+		color-map-red    = <  0   0    0>;
+		color-map-green  = <  0   0    0>;
+		color-map-blue   = <  0   0    0>;
+		color-map-yellow = <  0   0    0>;
+		color-map-white  = <  0   0  100>;
+		color-map-amber  = <  0 100    0>;
 
-		brightness-range = <0 0 100 0 0 100>;
+		brightness-range = <0 0 0 0 100 100>;
 
 		#address-cells = <1>;
 		#size-cells = <0>;
