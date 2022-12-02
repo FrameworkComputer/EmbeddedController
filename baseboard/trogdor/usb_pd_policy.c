@@ -117,8 +117,6 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 
 __override void svdm_dp_post_config(int port)
 {
-	dp_flags[port] |= DP_FLAGS_DP_ON;
-
 	/*
 	 * Connect the SBU lines in PPC chip such that the AUX termination
 	 * can be passed through.
@@ -135,6 +133,19 @@ __override void svdm_dp_post_config(int port)
 	 */
 	usb_mux_set(port, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT,
 		    polarity_rm_dts(pd_get_polarity(port)));
+
+	dp_flags[port] |= DP_FLAGS_DP_ON;
+	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
+		return;
+
+	CPRINTS("C%d: Pending HPD. HPD->1", port);
+	gpio_set_level(GPIO_DP_HOT_PLUG_DET, 1);
+
+	/* set the minimum time delay (2ms) for the next HPD IRQ */
+	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+
+	usb_mux_hpd_update(port,
+			   USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 /**
@@ -225,6 +236,13 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 */
 		pd_notify_dp_alt_mode_entry(port);
 
+	/* Its initial DP status message prior to config */
+	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
+		if (lvl)
+			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
+		return 1;
+	}
+
 	/* Configure TCPC for the HPD event, for proper muxing */
 	mux_state = (lvl ? USB_PD_MUX_HPD_LVL : USB_PD_MUX_HPD_LVL_DEASSERTED) |
 		    (irq ? USB_PD_MUX_HPD_IRQ : USB_PD_MUX_HPD_IRQ_DEASSERTED);
@@ -264,6 +282,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 __override void svdm_exit_dp_mode(int port)
 {
 	CPRINTS("%s(%d)", __func__, port);
+	dp_flags[port] = 0;
+	dp_status[port] = 0;
 	if (is_dp_muxable(port)) {
 		/* Disconnect the DP port selection mux. */
 		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
