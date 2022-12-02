@@ -23,10 +23,6 @@ add_compile_options(-Oz)
 add_compile_options(-flto)
 add_link_options(-flto)
 
-# TODO(b/234507656): Remove this include when clang is fixed.
-add_compile_options(-I/usr/armv7m-cros-eabi/usr/include/c++/v1)
-# TODO(b/254916723): Remove this define when clang is fixed.
-add_compile_options(-D_GNU_SOURCE)
 add_link_options(-lclang_rt.builtins-armv7m)
 add_link_options(-lnosys)
 
