@@ -352,7 +352,9 @@ SECTIONS
 		 * https://developer.arm.com/documentation/dui0475/c/the-arm-c-and-c---libraries/c---initialization--construction-and-destruction
 		 */
 		. = ALIGN(4);
+		__init_array_start = .;
 		*(.init_array*)
+		__init_array_end = .;
 
 		/*
 		 * Empty C++ exception index table. The exception index
