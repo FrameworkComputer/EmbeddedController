@@ -7,3 +7,13 @@
 /delete-node/ &pinctrl;
 
 /delete-node/ &{/hibernate-wake-pins};
+
+/ {
+	gpio-interrupts {
+		int_base_imu: base_imu {
+			handler = "motion_interrupt";
+		};
+
+		/delete-node/ usb_c0_ppc_bc12;
+	};
+};

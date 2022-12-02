@@ -11,7 +11,7 @@ tests:
       - CONFIG_TEST_KRABBY=y
       - CONFIG_MUX_INIT_ADC=y
   krabby.tentacruel:
-    extra_args: DTC_OVERLAY_FILE="common.dts;adc_temp.dts;../program/corsola/interrupts_tentacruel.dtsi;../program/corsola/gpio_tentacruel.dtsi;../program/corsola/thermistor_tentacruel.dtsi;pinctrl.dts"
+    extra_args: DTC_OVERLAY_FILE="common.dts;adc_temp.dts;../program/corsola/ite_interrupts.dtsi;../program/corsola/gpio_tentacruel.dtsi;../program/corsola/thermistor_tentacruel.dtsi;pinctrl.dts"
     extra_configs:
       - CONFIG_TEST_TENTACRUEL=y
       - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
