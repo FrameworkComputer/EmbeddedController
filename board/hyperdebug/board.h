@@ -97,13 +97,14 @@
 #define CONFIG_USB_SPI
 #define CONFIG_USB_SPI_BUFFER_SIZE 2048
 #define CONFIG_SPI_CONTROLLER
+#define CONFIG_STM32_SPI1_CONTROLLER
+#define CONFIG_SPI_MUTABLE_DEVICE_LIST
 
 /* Enable control of I2C over USB */
 #define CONFIG_USB_I2C
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_CONTROLLER 0
-#define CONFIG_STM32_SPI1_CONTROLLER
 
 /* See i2c_ite_flash_support.c for more information about these values */
 /*#define CONFIG_ITE_FLASH_SUPPORT */
