@@ -287,6 +287,9 @@
 /* Is the USB host allowed to operate on SPI device. */
 #define USB_SPI_ENABLED (BIT(0))
 
+/* Use board specific SPI driver when forwarding to this device. */
+#define USB_SPI_CUSTOM_SPI_DEVICE (BIT(1))
+
 enum packet_id_type {
 	/* Request USB SPI configuration data from device. */
 	USB_SPI_PKT_ID_CMD_GET_USB_SPI_CONFIG = 0,
@@ -663,5 +666,16 @@ int usb_spi_interface(struct usb_spi_config const *config, usb_uint *rx_buf,
  */
 void usb_spi_board_enable(struct usb_spi_config const *config);
 void usb_spi_board_disable(struct usb_spi_config const *config);
+
+/*
+ * In order to facilitate odd cases of e.g. a SPI bus sitting behind a second
+ * microcontroller, or otherwise needing a non-standard driver, setting the
+ * USB_SPI_CUSTOM_SPI_DEVICE_MASK bit of spi_device->port will cause the
+ * USB->SPI forwarding logic to invoke this method rather than the standard
+ * spi_transaction().
+ */
+int usb_spi_board_transaction(const struct spi_device_t *spi_device,
+			      const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			      int rxlen);
 
 #endif /* __CROS_EC_USB_SPI_H */
