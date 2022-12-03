@@ -293,7 +293,7 @@ USB_STREAM_CONFIG_USART_IFACE(usart4_usb, USB_IFACE_USART4_STREAM,
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_FLASH_PORT, 1, GPIO_SPI_CSN },
+	{ CONFIG_SPI_FLASH_PORT, 1, GPIO_SPI_CSN, USB_SPI_ENABLED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 

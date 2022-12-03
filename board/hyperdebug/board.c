@@ -128,7 +128,7 @@ USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ 1 /* SPI2 */, 7, GPIO_SPI2_CS },
+	{ 1 /* SPI2 */, 7, GPIO_SPI2_CS, USB_SPI_ENABLED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 

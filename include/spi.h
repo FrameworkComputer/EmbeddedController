@@ -45,6 +45,13 @@ struct spi_device_t {
 
 	/* gpio used for chip selection. */
 	enum gpio_signal gpio_cs;
+
+#ifdef CONFIG_USB_SPI
+	/*
+	 * Flags used by usb_spi.c
+	 */
+	uint8_t usb_flags;
+#endif
 };
 
 extern

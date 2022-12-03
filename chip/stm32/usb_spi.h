@@ -280,6 +280,13 @@
 
 #define USB_SPI_MIN_PACKET_SIZE (2)
 
+/*
+ * Values used in spi_device_t.usb_flags
+ */
+
+/* Is the USB host allowed to operate on SPI device. */
+#define USB_SPI_ENABLED (BIT(0))
+
 enum packet_id_type {
 	/* Request USB SPI configuration data from device. */
 	USB_SPI_PKT_ID_CMD_GET_USB_SPI_CONFIG = 0,
@@ -457,8 +464,8 @@ struct usb_spi_state {
 	 * control endpoint.  The enabled_device flag is set by calling
 	 * usb_spi_enable.
 	 */
-	int enabled_host;
-	int enabled_device;
+	uint8_t enabled_host;
+	uint8_t enabled_device;
 
 	/*
 	 * The current enabled state.  This is only updated in the deferred
@@ -470,7 +477,13 @@ struct usb_spi_state {
 	 * specific state update routines are only called from the deferred
 	 * callback.
 	 */
-	int enabled;
+	uint8_t enabled;
+
+	/*
+	 * The index of the SPI port currently receiving forwarded transactions,
+	 * default is zero.
+	 */
+	uint8_t current_spi_device_idx;
 
 	/* Mark the current operating mode. */
 	enum usb_spi_mode mode;
@@ -554,6 +567,7 @@ struct usb_spi_config {
 		.enabled_host = 0,                                          \
 		.enabled_device = 0,                                        \
 		.enabled = 0,                                               \
+		.current_spi_device_idx = 0,                                \
 		.spi_write_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_), \
 		.spi_read_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_),  \
 	};                                                                  \
