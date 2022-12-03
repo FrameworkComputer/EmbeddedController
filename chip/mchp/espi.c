@@ -20,7 +20,6 @@
 #include "power.h"
 #include "registers.h"
 #include "system.h"
-#include "system_boot_time.h"
 #include "task.h"
 #include "tfdp_chip.h"
 #include "timer.h"
@@ -834,7 +833,6 @@ int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 static void espi_chipset_reset(void)
 {
 	hook_notify(HOOK_CHIPSET_RESET);
-	update_ap_boot_time(ESPIRST);
 }
 DECLARE_DEFERRED(espi_chipset_reset);
 #endif
@@ -869,15 +867,12 @@ void espi_vw_evt_pltrst_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW PLTRST#: %d", wire_state);
 
-	if (wire_state) { /* Platform Reset de-assertion */
+	if (wire_state) /* Platform Reset de-assertion */
 		espi_host_init();
-		update_ap_boot_time(PLTRST_HIGH);
-	} else { /* assertion */
+	else /* assertion */
 #ifdef CONFIG_CHIPSET_RESET_HOOK
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
 #endif
-		update_ap_boot_time(PLTRST_LOW);
-	}
 }
 
 /* OOB Reset Warn event handler */
