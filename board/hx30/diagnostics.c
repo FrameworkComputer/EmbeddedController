@@ -194,6 +194,25 @@ void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error)
 		hw_diagnostics &= ~(1 << idx);
 }
 
+// Returns 0 if diagnostic failed
+// Returns 1 if diagnositic succeded
+// Returns -1 if diagnostic hasn't run yet
+int get_hw_diagnostic(enum diagnostics_device_idx idx)
+{
+	// TODO: I am not confident this assumption holds true
+	//if (hw_diagnostics_ctr < idx) {
+	//	return -1;
+	//}
+
+	// I think only this way we can be sure that the diag has been run
+	// Either that or we count it as failed anyways
+	if (hw_diagnostics_ctr < DIAGNOSTICS_MAX) {
+		return -1;
+	}
+
+	return hw_diagnostics & 1 << idx;
+}
+
 void set_bios_diagnostic(uint8_t code)
 {
 	bios_hc = code;

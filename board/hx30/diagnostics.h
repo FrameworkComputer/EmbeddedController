@@ -42,6 +42,7 @@ enum diagnostics_device_idx {
  */
 void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error);
 void set_bios_diagnostic(uint8_t code);
+int get_hw_diagnostic(enum diagnostics_device_idx idx);
 
 void reset_diagnostics(void);
 

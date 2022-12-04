@@ -339,3 +339,22 @@ static enum ec_status thermal_qevent(struct host_cmd_handler_args *args)
 	return EC_ERROR_INVAL;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_QEVENT, thermal_qevent, EC_VER_MASK(0));
+
+static enum ec_status get_hw_diagnostic_cmd(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_get_hw_diag *p = args->params;
+	struct ec_response_get_hw_diag *r = args->response;
+
+	if (p->id < DIAGNOSTICS_MAX) {
+		int res = get_hw_diagnostic(p->id);
+		r->run_yet = res >= 0;
+		if (r->run_yet) {
+			r->value = res;
+		}
+
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+	return EC_ERROR_INVAL;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_HW_DIAG, get_hw_diagnostic_cmd, EC_VER_MASK(0));

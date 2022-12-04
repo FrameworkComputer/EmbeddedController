@@ -216,4 +216,15 @@ struct ec_params_thermal_qevent_control {
 	uint8_t send_event;
 } __ec_align1;
 
+#define EC_CMD_GET_HW_DIAG 0x3E13
+
+struct ec_params_get_hw_diag {
+	uint8_t id;
+} __ec_align1;
+
+struct ec_response_get_hw_diag {
+	uint8_t value; // Only has meaning if run_yet is true
+	uint8_t run_yet; // Boolean, 0 if false, 1 if true, indicating whether the diagnostic has run yet
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
