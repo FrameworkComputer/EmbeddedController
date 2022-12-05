@@ -5,10 +5,11 @@
 
 /* Corsola program common DTS includes */
 
+#include <cros/thermistor/thermistor.dtsi>
 #include "../common.dtsi"
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
-#include "../adc_magikarp.dtsi"
+#include "../ite_adc.dtsi"
 #include "../battery_magikarp.dtsi"
 #include "../cbi_magikarp.dtsi"
 #include "../gpio_magikarp.dtsi"
@@ -39,4 +40,40 @@
 			handler = "bc12_interrupt";
 		};
 	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+		adc_ambient: ambient {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 5>;
+		};
+	};
+
+
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
+		adc = <&adc_ambient>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		ambient {
+			sensor = <&temp_ambient>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch1_gpi1_default
+		     &adc0_ch2_gpi2_default
+		     &adc0_ch5_gpi5_default
+		     &adc0_ch7_gpi7_default>;
+	pinctrl-names = "default";
+};
+
+&thermistor_3V3_30K9_47K_NCP15WB {
+	status = "okay";
 };
