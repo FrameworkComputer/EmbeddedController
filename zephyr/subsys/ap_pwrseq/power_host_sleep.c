@@ -113,8 +113,17 @@ enum ap_power_sleep_type sleep_state = AP_POWER_SLEEP_NONE;
  */
 static void power_s0ix_suspend_clear_masks(void)
 {
-	backup_sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
-	backup_smi_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+	host_event_t sci_mask, smi_mask;
+
+	sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+	smi_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+
+	/* Do not backup already-cleared SCI/SMI masks. */
+	if (!sci_mask && !smi_mask)
+		return;
+
+	backup_sci_mask = sci_mask;
+	backup_smi_mask = smi_mask;
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
 }
