@@ -76,7 +76,8 @@ common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
 common-$(CONFIG_COMMON_GPIO)+=gpio.o gpio_commands.o
 common-$(CONFIG_IO_EXPANDER)+=ioexpander.o ioexpander_commands.o
 common-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic_output.o
-common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o
+common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o \
+	system_boot_time.o
 common-$(CONFIG_COMMON_TIMER)+=timer.o
 common-$(CONFIG_CRC8)+= crc8.o
 common-$(CONFIG_CURVE25519)+=curve25519.o

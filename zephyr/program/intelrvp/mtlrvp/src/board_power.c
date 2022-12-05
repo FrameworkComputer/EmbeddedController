@@ -5,6 +5,7 @@
 
 #include "gpio/gpio.h"
 #include "gpio_signal.h"
+#include "system_boot_time.h"
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
@@ -47,6 +48,7 @@ void board_ap_power_action_g3_s5(void)
 	/* Turn on the PP3300_PRIM rail. */
 	power_signal_set(PWR_EN_PP3300_A, 1);
 
+	update_ap_boot_time(ARAIL);
 	if (!power_wait_signals_timeout(
 		    IN_PGOOD_ALL_CORE,
 		    AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
