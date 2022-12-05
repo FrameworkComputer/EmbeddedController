@@ -4719,6 +4719,17 @@
 /* Record main PD events in a circular buffer */
 #undef CONFIG_USB_PD_LOGGING
 
+/*
+ * Record PRL state transitions in a ring buffer, readable via the `prllog`
+ * console command.
+ */
+#undef CONFIG_USB_PD_PRL_EVENT_LOG
+/*
+ * Number of events that can be stored in the PRL log (after this many, the
+ * oldest entries will be replaced with new ones).
+ */
+#define CONFIG_USB_PD_PRL_EVENT_LOG_CAPACITY 128
+
 /* The size in bytes of the FIFO used for event logging */
 #define CONFIG_EVENT_LOG_SIZE 512
 

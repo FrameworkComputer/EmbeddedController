@@ -344,6 +344,28 @@ config PLATFORM_EC_USB_PD_LOGGING
 	  The log events are stored in a circular buffer, each one being a
 	  struct event_log_entry.
 
+config PLATFORM_EC_USB_PD_PRL_EVENT_LOG
+	bool "Log PRL state changes to a ring buffer"
+	help
+	  Logs every PRL layer state change to a ring buffer, allowing those
+	  events to be inspected at a later time with the `prllog` console
+	  command.
+
+	  Logging to a ring buffer instead of increasing the overall PD log
+	  verbosity has a much smaller effect on overall performance than
+	  synchronous prints, making it easier to debug timing-sensitive
+	  behavior.
+
+config PLATFORM_EC_USB_PD_PRL_EVENT_LOG_CAPACITY
+	int "PRL state log buffer capacity"
+	depends on PLATFORM_EC_USB_PD_PRL_EVENT_LOG
+	default 128
+	help
+	  Sets the number of entries stored in the PRL event log. Larger values
+	  store a longer history but require more RAM. When the buffer is
+	  filled, the oldest entries are replaced with new ones as they are
+	  logged.
+
 config PLATFORM_EC_USB_PD_TRY_SRC
 	bool "Enable Try.SRC mode"
 	depends on PLATFORM_EC_USB_DRP_ACC_TRYSRC
