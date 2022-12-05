@@ -61,6 +61,22 @@ child-binding:
                 - POWER_S3
                 - POWER_S5
 
+        batt-state-mask:
+            description: |
+              If the LED color depends on battery state, this property is used
+              to describe the kind of battery state.
+              Use the macros defined in dt-bindings/battery.h.
+              e.g. SB_STATUS_DISCHARGING - Battery is discharging.
+            type: int
+            required: false
+
+        batt-state:
+            description: |
+              If the LED color depends on battery state, this property is used
+              to select the battery state value base on batt-state-mask.
+            type: int
+            required: false
+
         batt-lvl:
             description: |
               If the LED color depends on current battery level, this property

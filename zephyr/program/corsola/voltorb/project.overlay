@@ -80,30 +80,48 @@
 		compatible = "cros-ec,led-policy";
 
 		/* Voltorb LED bat charge */
-		bat-power-state-charge-lvl-1 {
+		bat-power-state-charge {
 			charge-state = "PWR_STATE_CHARGE";
-			/* Battery percent range (>= Empty, <= 94%) */
+			/* Battery is charging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <0>;
+			/* Battery percent range (>= Empty, <= 96%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY
-					(BATTERY_LEVEL_NEAR_FULL - 3)>;
-
-			color-0 {
-				led-color = <&color_amber>;
-			};
-		};
-		bat-power-state-charge-lvl-2 {
-			charge-state = "PWR_STATE_CHARGE";
-			/* Battery percent range (>= 95%, <= 96%) */
-			batt-lvl = <(BATTERY_LEVEL_NEAR_FULL - 2)
 					(BATTERY_LEVEL_NEAR_FULL - 1)>;
 
 			color-0 {
-				led-color = <&color_blue>;
+				led-color = <&color_amber>;
 			};
 		};
 
 		/* Voltorb LED bat charge near full */
 		bat-power-state-charge-near-full {
 			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			/* Battery is charging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <0>;
+
+			color-0 {
+				led-color = <&color_amber>;
+			};
+		};
+
+		/* Voltorb LED bat charge idle */
+		bat-power-state-charge-idle {
+			charge-state = "PWR_STATE_CHARGE";
+			/* Battery is discharging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <SB_STATUS_DISCHARGING>;
+
+			color-0 {
+				led-color = <&color_blue>;
+			};
+		};
+		bat-power-state-charge-near-full-idle {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			/* Battery is discharging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <SB_STATUS_DISCHARGING>;
 
 			color-0 {
 				led-color = <&color_blue>;
@@ -221,7 +239,7 @@
 		};
 
 		/* Voltorb LED power forced idle */
-		power-state-forced-idle-right {
+		power-state-forced-idle {
 			charge-state = "PWR_STATE_FORCED_IDLE";
 
 			color-0 {

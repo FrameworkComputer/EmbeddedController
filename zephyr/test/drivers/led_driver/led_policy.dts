@@ -30,6 +30,9 @@
 		power-state-charge-right {
 			charge-state = "PWR_STATE_CHARGE";
 			charge-port = <0>; /* Right port */
+			/* Battery is charging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <0>;
 
 			/* Turn off the left LED */
 			color-0 {
@@ -38,6 +41,23 @@
 			/* Right LED to Blue */
 			color-1 {
 				led-color = <&color_blue_right>;
+			};
+		};
+
+		power-state-charge-idle-right {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <0>; /* Right port */
+			/* Battery is discharging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <SB_STATUS_DISCHARGING>;
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Turn off the right LED */
+			color-1 {
+				led-color = <&color_off_right>;
 			};
 		};
 
