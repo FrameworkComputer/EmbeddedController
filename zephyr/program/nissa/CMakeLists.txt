@@ -39,6 +39,7 @@ if(DEFINED CONFIG_BOARD_CRAASK)
 			"craask/src/keyboard.c"
 			"craask/src/kb_backlight.c"
 			"craask/src/led.c"
+			"craask/src/thermal.c"
 	)
 	project(craask)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "craask/src/usbc.c")

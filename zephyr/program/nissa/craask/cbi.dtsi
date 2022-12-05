@@ -54,6 +54,27 @@
 		};
 
 		/*
+		 * FW_CONFIG field to select thermal solution.
+		 */
+		thermal_solution {
+			enum-name = "FW_THERMAL";
+			start = <10>;
+			size = <3>;
+
+			6w-thermal {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_6W";
+				value = <1>;
+				default;
+			};
+			15w-thermal {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_15W";
+				value = <2>;
+			};
+		};
+
+		/*
 		 * FW_CONFIG field to indicate which keyboard numeric
 		 * pad should be used.
 		 */
