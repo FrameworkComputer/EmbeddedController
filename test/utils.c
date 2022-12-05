@@ -14,6 +14,10 @@
 #include "util.h"
 #include "watchdog.h"
 
+#ifndef USE_BUILTIN_STDLIB
+#include <malloc.h>
+#endif
+
 static int test_uint64divmod_0(void)
 {
 	uint64_t n = 8567106442584750ULL;
@@ -63,6 +67,17 @@ static int test_shared_mem(void)
 	int i;
 	int sz = shared_mem_size();
 	char *mem1, *mem2;
+
+#ifndef USE_BUILTIN_STDLIB
+	/* Trim to make sure that other tests haven't fragmented the heap. */
+	malloc_trim(0);
+
+	/*
+	 * When using malloc() we can't allocate the full shared_mem_size() due
+	 * to the overhead of malloc's memory tracking. See test/malloc.c.
+	 */
+	sz *= 0.8;
+#endif
 
 	TEST_ASSERT(shared_mem_acquire(sz, &mem1) == EC_SUCCESS);
 	TEST_ASSERT(shared_mem_acquire(sz, &mem2) == EC_ERROR_BUSY);
