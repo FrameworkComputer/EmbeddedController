@@ -40,6 +40,7 @@ bool board_ap_power_is_startup_ok(void);
  */
 void board_ap_power_force_shutdown(void);
 
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 /**
  * @brief Called to transition from G3 to S5
  *
@@ -82,6 +83,7 @@ int board_ap_power_assert_pch_power_ok(void);
  * @return false Not enabled
  */
 bool board_ap_power_check_power_rails_enabled(void);
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 /**
  * @brief macro to access configuration properties from DTS
