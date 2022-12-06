@@ -43,7 +43,7 @@ static int get_temp(const int offset, int *temp)
 		*temp = 0;
 		return rv;
 	}
-
+	temp_raw = (int8_t)(uint8_t)temp_raw;
 	*temp = C_TO_K(temp_raw);
 	return EC_SUCCESS;
 }
