@@ -203,10 +203,10 @@ def json_to_resultdb(result_file):
 class BytesEncoder(json.JSONEncoder):
     """Encoder for ResultDB format"""
 
-    def default(self, obj):
-        if isinstance(obj, bytes):
-            return obj.decode("utf-8")
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, bytes):
+            return o.decode("utf-8")
+        return json.JSONEncoder.default(self, o)
 
 
 def upload_results(results):
