@@ -112,6 +112,46 @@ BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
+int is_framework_dp_hdmi_card(int port)
+{
+	uint16_t USB_VID = pd_get_identity_vid(port);
+	uint16_t USB_PID = pd_get_identity_pid(port);
+
+	if (((USB_PID == USB_PID_FRAMEWORK_HDMI_CARD) ||
+	     (USB_PID == USB_PID_FRAMEWORK_DP_CARD)) &&
+	    (USB_VID == USB_VID_FRAMEWORK))
+		return 1;
+
+	return 0;
+}
+
+void board_prefix(const struct usb_mux *me, mux_state_t hpd_state,
+		  bool *ack_required)
+{
+	int port = me->usb_port;
+
+	bb_retimer_hpd_update(me, hpd_state, ack_required);
+
+	if (!is_framework_dp_hdmi_card(port))
+		return;
+
+	if (hpd_state & USB_PD_MUX_HPD_LVL)
+		bb_retimer_set_dp_connection(me, true);
+	else
+		bb_retimer_set_dp_connection(me, false);
+}
+
+int board_virtual_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+{
+	int rv = 0;
+	int port = me->usb_port;
+
+	if (is_framework_dp_hdmi_card(port))
+		rv = bb_retimer_set_dp_connection(me, false);
+
+	return rv;
+}
+
 /* USBC mux configuration - Alder Lake includes internal mux */
 static const struct usb_mux_chain usbc0_tcss_usb_mux = {
 	.mux =
@@ -159,9 +199,10 @@ const struct usb_mux_chain usb_muxes[] = {
 			 */
 			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
-			.hpd_update = bb_retimer_hpd_update,
+			.hpd_update = board_prefix,
 			.i2c_port = I2C_PORT_USB_C0_C1_MUX,
 			.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+			.board_set = &board_virtual_mux_set,
 		},
 		.next = &usbc0_tcss_usb_mux,
 	},
@@ -170,9 +211,10 @@ const struct usb_mux_chain usb_muxes[] = {
 			.usb_port = USBC_PORT_C1,
 			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
-			.hpd_update = bb_retimer_hpd_update,
+			.hpd_update = board_prefix,
 			.i2c_port = I2C_PORT_USB_C0_C1_MUX,
 			.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+			.board_set = &board_virtual_mux_set,
 		},
 		.next = &usbc1_tcss_usb_mux,
 	},
@@ -181,9 +223,10 @@ const struct usb_mux_chain usb_muxes[] = {
 			.usb_port = USBC_PORT_C2,
 			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
-			.hpd_update = bb_retimer_hpd_update,
+			.hpd_update = board_prefix,
 			.i2c_port = I2C_PORT_USB_C2_C3_MUX,
 			.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
+			.board_set = &board_virtual_mux_set,
 		},
 		.next = &usbc2_tcss_usb_mux,
 	},
@@ -192,9 +235,10 @@ const struct usb_mux_chain usb_muxes[] = {
 			.usb_port = USBC_PORT_C3,
 			.flags = USB_MUX_FLAG_CAN_IDLE,
 			.driver = &bb_usb_retimer,
-			.hpd_update = bb_retimer_hpd_update,
+			.hpd_update = board_prefix,
 			.i2c_port = I2C_PORT_USB_C2_C3_MUX,
 			.i2c_addr_flags = USBC_PORT_C3_BB_RETIMER_I2C_ADDR,
+			.board_set = &board_virtual_mux_set,
 		},
 		.next = &usbc3_tcss_usb_mux,
 	},
