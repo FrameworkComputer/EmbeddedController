@@ -241,6 +241,7 @@ class AllTests:
                 test_name="libc_printf",
                 finish_regexes=[PRINTF_CALLED_REGEX],
             ),
+            TestConfig(test_name="global_initialization"),
             TestConfig(
                 config_name="mpu_ro",
                 test_name="mpu",

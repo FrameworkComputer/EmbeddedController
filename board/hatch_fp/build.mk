@@ -41,6 +41,7 @@ test-list-y=\
        fpsensor \
        fpsensor_hw \
        ftrapv \
+       global_initialization \
        libc_printf \
        mpu \
        mutex \
