@@ -36,6 +36,7 @@ FLAGS "${@}" || exit "${EXIT_ARGUMENT}"
 eval set -- "${FLAGS_ARGV}"
 
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
+readonly CROS_EC_FP_SPI_MODALIAS_STR="spi:cros-ec-fp"
 
 readonly CROS_EC_UART_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-uart"
 
@@ -77,17 +78,13 @@ get_sysfs_gpiochip_base() {
 # Get the spiid for the fingerprint sensor based on the modalias
 # string: https://crbug.com/955117
 get_spiid() {
-  # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
-  if [[ -n "${DEVICEID}" ]]; then
-    echo "${DEVICEID}"
-    return 0
-  fi
-
   for dev in /sys/bus/spi/devices/*; do
-    if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_SPI_MODALIAS_STR}" ]]; then
-      basename "${dev}"
-      return 0
-    fi
+    case "$(cat "${dev}/modalias")" in
+      "${CROS_EC_SPI_MODALIAS_STR}"|"${CROS_EC_FP_SPI_MODALIAS_STR}")
+        basename "${dev}"
+        return 0
+        ;;
+    esac
   done
 
   return 1
@@ -545,8 +542,6 @@ config_hatch() {
 config_herobrine() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev9.0"
-  # TODO(b/179533783): Fix this script to look for non-ACPI modalias
-  readonly DEVICEID="spi9.0"
 
   local dev_path="*/platform/soc@0/f100000.pinctrl/gpio/*"
   local gpiobase
@@ -602,8 +597,6 @@ config_nocturne() {
 config_strongbad() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev10.0"
-  # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
-  readonly DEVICEID="spi10.0"
 
   local dev_path="*/platform/soc@0/3500000.pinctrl/gpio/*"
   local gpiobase
