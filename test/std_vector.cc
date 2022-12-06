@@ -42,6 +42,19 @@ test_static int static_init_elements()
 	return EC_SUCCESS;
 }
 
+std::vector<int32_t> global_vec{ 30, 31, 32, 33, 34 };
+test_static int global_init_elements()
+{
+	TEST_EQ(static_cast<int32_t>(global_vec.size()), 5, "%d");
+	TEST_EQ(global_vec[0], 30, "%d");
+	TEST_EQ(global_vec[1], 31, "%d");
+	TEST_EQ(global_vec[2], 32, "%d");
+	TEST_EQ(global_vec[3], 33, "%d");
+	TEST_EQ(global_vec[4], 34, "%d");
+
+	return EC_SUCCESS;
+}
+
 test_static int push_back_elements()
 {
 	std::vector<int32_t> vec;
@@ -135,6 +148,7 @@ extern "C" void run_test(int argc, const char **argv)
 
 	RUN_TEST(stack_init_elements);
 	RUN_TEST(static_init_elements);
+	RUN_TEST(global_init_elements);
 	RUN_TEST(push_back_elements);
 	RUN_TEST(fill_one_vector);
 	RUN_TEST(fill_multiple_vectors);
