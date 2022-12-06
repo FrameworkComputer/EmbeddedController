@@ -257,4 +257,11 @@ config PLATFORM_EC_SMART_BATTERY_OPTIONAL_MFG_FUNC
 
 endif # PLATFORM_EC_I2C_VIRTUAL_BATTERY
 
+config PLATFORM_EC_BATT_HOST_FULL_FACTOR
+	int "This value is used by the host to calculate the ETA for full charge"
+	default 97
+	help
+	  Today, EC's PLATFORM_EC_BATT_HOST_FULL_FACTOR is the source of truth.
+	  Powerd gets the value from the EC over EC_CMD_DISPLAY_SOC.
+
 endif # PLATFORM_EC_BATTERY
