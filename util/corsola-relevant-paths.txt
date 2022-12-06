@@ -27,6 +27,5 @@ power/mt8186.c
 zephyr/boards/arm/npcx9/*
 zephyr/boards/riscv/it8xxx2/*
 zephyr/drivers/*
-zephyr/projects/corsola/*
-zephyr/projects/corsola/*
+zephyr/program/corsola/*
 zephyr/shim/*
