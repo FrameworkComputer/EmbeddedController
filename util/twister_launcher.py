@@ -88,6 +88,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from shutil import which
@@ -349,62 +350,66 @@ def main():
     # Prepare environment variables for export to Twister. Inherit the parent
     # process's environment, but set some default values if not already set.
     twister_env = dict(os.environ)
-    extra_env_vars = {
-        "TOOLCHAIN_ROOT": os.environ.get(
-            "TOOLCHAIN_ROOT",
-            str(ec_base / "zephyr") if is_in_chroot else str(zephyr_base),
-        ),
-        "ZEPHYR_TOOLCHAIN_VARIANT": intercepted_args.toolchain,
-    }
-    gcov_tool = None
-    if intercepted_args.toolchain == "host":
-        gcov_tool = "gcov"
-    elif intercepted_args.toolchain == "llvm":
-        gcov_tool = str(ec_base / "util" / "llvm-gcov.sh")
-    else:
-        print("Unknown toolchain specified:", intercepted_args.toolchain)
-    if intercepted_args.gcov_tool:
-        gcov_tool = intercepted_args.gcov_tool
-    if gcov_tool:
-        twister_cli.extend(["--gcov-tool", gcov_tool])
-
-    twister_env.update(extra_env_vars)
-
-    # Append additional user-supplied args
-    twister_cli.extend(other_args)
-
-    # Print exact CLI args and environment variables depending on verbosity.
-    if intercepted_args.verbose > 0:
-        print("Calling:", " ".join(shlex.quote(str(x)) for x in twister_cli))
-        print(
-            "With environment overrides:",
-            " ".join(
-                f"{name}={shlex.quote(val)}"
-                for name, val in extra_env_vars.items()
+    with tempfile.TemporaryDirectory() as parsetab_dir:
+        extra_env_vars = {
+            "TOOLCHAIN_ROOT": os.environ.get(
+                "TOOLCHAIN_ROOT",
+                str(ec_base / "zephyr") if is_in_chroot else str(zephyr_base),
             ),
+            "ZEPHYR_TOOLCHAIN_VARIANT": intercepted_args.toolchain,
+            "PARSETAB_DIR": parsetab_dir,
+        }
+        gcov_tool = None
+        if intercepted_args.toolchain == "host":
+            gcov_tool = "gcov"
+        elif intercepted_args.toolchain == "llvm":
+            gcov_tool = str(ec_base / "util" / "llvm-gcov.sh")
+        else:
+            print("Unknown toolchain specified:", intercepted_args.toolchain)
+        if intercepted_args.gcov_tool:
+            gcov_tool = intercepted_args.gcov_tool
+        if gcov_tool:
+            twister_cli.extend(["--gcov-tool", gcov_tool])
+
+        twister_env.update(extra_env_vars)
+
+        # Append additional user-supplied args
+        twister_cli.extend(other_args)
+
+        # Print exact CLI args and environment variables depending on verbosity.
+        if intercepted_args.verbose > 0:
+            print(
+                "Calling:", " ".join(shlex.quote(str(x)) for x in twister_cli)
+            )
+            print(
+                "With environment overrides:",
+                " ".join(
+                    f"{name}={shlex.quote(val)}"
+                    for name, val in extra_env_vars.items()
+                ),
+            )
+            sys.stdout.flush()
+
+        # Invoke Twister and wait for it to exit.
+        result = subprocess.run(
+            twister_cli,
+            env=twister_env,
+            check=False,
+            close_fds=False,  # For GNUMakefile jobserver
         )
-        sys.stdout.flush()
 
-    # Invoke Twister and wait for it to exit.
-    result = subprocess.run(
-        twister_cli,
-        env=twister_env,
-        check=False,
-        close_fds=False,  # For GNUMakefile jobserver
-    )
+        if check_for_skipped_tests(intercepted_args.outdir):
+            result.returncode = 1
 
-    if check_for_skipped_tests(intercepted_args.outdir):
-        result.returncode = 1
+        if result.returncode == 0:
+            print("TEST EXECUTION SUCCESSFUL")
+        else:
+            print("TEST EXECUTION FAILED")
 
-    if result.returncode == 0:
-        print("TEST EXECUTION SUCCESSFUL")
-    else:
-        print("TEST EXECUTION FAILED")
+        if is_tool("rdb") and intercepted_args.upload_cros_rdb:
+            upload_results(ec_base, intercepted_args.outdir)
 
-    if is_tool("rdb") and intercepted_args.upload_cros_rdb:
-        upload_results(ec_base, intercepted_args.outdir)
-
-    sys.exit(result.returncode)
+        sys.exit(result.returncode)
 
 
 if __name__ == "__main__":
