@@ -18,7 +18,7 @@
 #include "../ite_interrupts.dtsi"
 #include "../led_tentacruel.dtsi"
 #include "../motionsense_tentacruel.dtsi"
-#include "../usbc_tentacruel.dtsi"
+#include "../ite_usbc.dtsi"
 
 / {
 	gpio-interrupts {
@@ -38,6 +38,21 @@
 			irq-pin = <&usb_c0_bc12_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bc12_interrupt";
+		};
+	};
+
+	usbc {
+
+		port0@0 {
+			bc12 = <&bc12_port0>;
+			ppc_alt = <&ppc_port0>;
+		};
+
+
+		port1@1 {
+			usb-mux-chain-1 {
+				usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+			};
 		};
 	};
 
