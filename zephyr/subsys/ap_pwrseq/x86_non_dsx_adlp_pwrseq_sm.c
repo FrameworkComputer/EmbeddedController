@@ -4,15 +4,14 @@
  */
 
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include <ap_power/ap_pwrseq_sm.h>
+#endif
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
-static void ap_off(void)
-{
-	power_signal_set(PWR_VCCST_PWRGD, 0);
-	power_signal_set(PWR_PCH_PWROK, 0);
-	power_signal_set(PWR_EC_PCH_SYS_PWROK, 0);
-}
+/* The wait time is ~150 msec, allow for safety margin. */
+#define IN_PCH_SLP_SUS_WAIT_TIME_MS 250
 
 static int check_pch_out_of_suspend(void)
 {
@@ -30,6 +29,14 @@ static int check_pch_out_of_suspend(void)
 	return 0; /* timeout */
 }
 
+static void ap_off(void)
+{
+	power_signal_set(PWR_VCCST_PWRGD, 0);
+	power_signal_set(PWR_PCH_PWROK, 0);
+	power_signal_set(PWR_EC_PCH_SYS_PWROK, 0);
+}
+
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 /* Handle ALL_SYS_PWRGD signal
  * This will be overridden if the custom signal handler is needed
  */
@@ -174,3 +181,22 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state)
 	}
 	return curr_state;
 }
+#else
+
+/* Chipset specific power state machine handler */
+static int x86_non_dsx_adlp_g3_run(void *data)
+{
+	/*
+	 * Now wait for SLP_SUS_L to go high based on tPCH32. If this
+	 * signal doesn't go high within 250 msec then go back to G3.
+	 */
+	if (check_pch_out_of_suspend()) {
+		return 0;
+	}
+
+	return 1;
+}
+
+AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_G3, NULL, x86_non_dsx_adlp_g3_run,
+			      NULL);
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
