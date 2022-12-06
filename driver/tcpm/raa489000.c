@@ -139,7 +139,7 @@ int raa489000_init(int port)
 	    !pd_is_battery_capable()) {
 		chg.current = 500;
 		chg.voltage = 5000;
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, port, &chg);
+		charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &chg);
 		board_set_active_charge_port(port);
 	}
 
