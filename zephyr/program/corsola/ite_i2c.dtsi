@@ -62,6 +62,13 @@
 		address-width = <8>;
 		timeout = <5>;
 	};
+
+	charger_bc12_port1: rt9490@53 {
+		compatible = "richtek,rt9490";
+		status = "okay";
+		reg = <0x53>;
+		irq = <&int_usb_c1_bc12_charger>;
+	};
 };
 
 &i2c1 {
@@ -127,5 +134,11 @@
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&gpio_ec_x_gpio1>;
+	};
+
+	tusb1064_mux_1: tusb1064-mux-1@44 {
+		compatible = "ti,tusb1064";
+		reg = <0x44>;
+		board-init = "tusb1064_mux_1_board_init";
 	};
 };

@@ -14,7 +14,7 @@
 #include "../cbi_tentacruel.dtsi"
 #include "../gpio_tentacruel.dtsi"
 #include "../ite_keyboard.dtsi"
-#include "../i2c_tentacruel.dtsi"
+#include "../ite_i2c.dtsi"
 #include "../ite_interrupts.dtsi"
 #include "../led_tentacruel.dtsi"
 #include "../motionsense_tentacruel.dtsi"
@@ -217,4 +217,37 @@
 
 &thermistor_3V3_30K9_47K_NCP15WB {
 	status = "okay";
+};
+
+
+&i2c0 {
+	charger_bc12_port1: rt9490@53 {
+		thermistor = <&thermistor_rt9490>;
+	};
+};
+
+&i2c2 {
+	bc12_port0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
+
+	ppc_port0: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+	};
+};
+
+&i2c4 {
+	/delete-node/ tusb1064-mux-1@44;
+
+	ps8743_mux_1: ps8743-mux-1@10 {
+		compatible = "parade,ps8743";
+		reg = <0x10>;
+		board-init = "ps8743_eq_c1_setting";
+	};
 };

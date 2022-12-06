@@ -12,7 +12,7 @@
 #include "../battery_krabby.dtsi"
 #include "../ite_gpio.dtsi"
 #include "../ite_keyboard.dtsi"
-#include "../i2c_krabby.dtsi"
+#include "../ite_i2c.dtsi"
 #include "../ite_interrupts.dtsi"
 #include "../led_krabby.dtsi"
 #include "../ite_motionsense.dtsi"
