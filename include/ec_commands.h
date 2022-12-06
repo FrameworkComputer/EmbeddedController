@@ -7129,6 +7129,8 @@ enum pchg_state {
 	PCHG_STATE_DOWNLOADING,
 	/* Device is ready for data communication. */
 	PCHG_STATE_CONNECTED,
+	/* Charger is in Built-In Self Test mode. */
+	PCHG_STATE_BIST,
 	/* Put no more entry below */
 	PCHG_STATE_COUNT,
 };
@@ -7145,6 +7147,7 @@ enum pchg_state {
 		[PCHG_STATE_DOWNLOAD] = "DOWNLOAD",       \
 		[PCHG_STATE_DOWNLOADING] = "DOWNLOADING", \
 		[PCHG_STATE_CONNECTED] = "CONNECTED",     \
+		[PCHG_STATE_BIST] = "BIST",               \
 	}
 /* clang-format on */
 

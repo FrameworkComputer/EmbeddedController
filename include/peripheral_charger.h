@@ -86,6 +86,45 @@
  *              UPDATE_WRITE
  */
 
+/*
+ * BIST Mode
+ *
+ * BIST mode is implemented as follows. Note == means comparison (i.e. mode
+ * check) and = means assignment (i.e. mode change).
+ *
+ *
+ *                  +---------------+
+ *   +------------->|     RESET     |<-----------------------+
+ *   |              +-------+-------+                        |
+ *   |                      |                                |
+ *   |                      | INITIALIZED                    |
+ *   |                      v                                |
+ *   |              +---------------+  mode==BIST            |
+ *   |              |  INITIALIZED  |---------------+        |
+ *   |              +-------+-------+               |        |
+ *   |                      |                       |        |
+ *   |                      | mode==NORMAL          |        | mode=NORMAL
+ *   |                      |                       |        | bist_cmd=NONE
+ *   | DEVICE_DETECTED      |                       |        |
+ *   | && bist_cmd!=NONE    V                       V        |
+ *   | mode=BIST    +---------------+         +-----------+  |
+ *   +--------------|   ENABLED(*1) |         |    BIST   |--+
+ *   +------------->+------+--------+         +-----------+
+ *   |                     |
+ *   |                     | DEVICE_DETECTED
+ *   |                     |
+ *   | DEVICE_LOST         |
+ *   | bist_cmd=RF_CHARGE  V
+ *   | (*2)          +----------+
+ *   +---------------+ DETECTED |
+ *                   +----------+
+ *
+ * *1 BIST mode is entered on device detection when a BIST command is already
+ *    requested (bist_cmd!=NONE).
+ * *2 Whenever a device is lost, we reset bist_cmd to RF_CHARGE. This makes next
+ *    device detection trigger BIST mode.
+ */
+
 /* Size of event queue. Use it to initialize struct pchg.events. */
 #define PCHG_EVENT_QUEUE_SIZE 8
 
@@ -119,6 +158,8 @@ enum pchg_event {
 	/* Internal (a.k.a. Host) Events */
 	PCHG_EVENT_ENABLE,
 	PCHG_EVENT_DISABLE,
+	PCHG_EVENT_BIST_RUN,
+	PCHG_EVENT_BIST_DONE,
 	PCHG_EVENT_UPDATE_OPEN,
 	PCHG_EVENT_UPDATE_WRITE,
 	PCHG_EVENT_UPDATE_CLOSE,
@@ -157,8 +198,18 @@ enum pchg_mode {
 	PCHG_MODE_NORMAL = 0,
 	PCHG_MODE_DOWNLOAD,
 	PCHG_MODE_PASSTHRU,
+	PCHG_MODE_BIST,
 	/* Add no more entries below here. */
 	PCHG_MODE_COUNT
+};
+
+enum pchg_bist_cmd {
+	PCHG_BIST_CMD_ANTENNA = 0x00,
+	PCHG_BIST_CMD_RF_CHARGE_ON = 0x01,
+	PCHG_BIST_CMD_RF_CHARGE_OFF = 0x02,
+
+	/* Add no more entries below here. */
+	PCHG_BIST_CMD_NONE = 0xff
 };
 
 enum pchg_chipset_state {
@@ -182,6 +233,8 @@ struct pchg_config {
 	const uint8_t full_percent;
 	/* Update block size */
 	const uint32_t block_size;
+	/* RF charge duration in msec. Set it to 0 to disable RF charge. */
+	const uint16_t rf_charge_msec;
 };
 
 struct pchg_update {
@@ -236,6 +289,8 @@ struct pchg {
 	uint32_t dropped_host_event_count;
 	/* enum pchg_mode */
 	uint8_t mode;
+	/* enum pchg_bist_cmd */
+	uint8_t bist_cmd;
 	/* FW version */
 	uint32_t fw_version;
 	/* Context related to FW update */
@@ -279,6 +334,8 @@ struct pchg_drv {
 	int (*update_close)(struct pchg *ctx);
 	/* Toggle pass-through mode. */
 	int (*passthru)(struct pchg *ctx, bool enable);
+	/* Control BIST commands. */
+	int (*bist)(struct pchg *ctx, uint8_t test_id);
 };
 
 /**
