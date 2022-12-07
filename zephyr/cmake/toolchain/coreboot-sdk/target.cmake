@@ -20,8 +20,12 @@ elseif("${ARCH}" STREQUAL "x86" AND CONFIG_X86_64)
   set(CROSS_COMPILE_TARGET      x86_64-elf)
 endif()
 
+if(NOT DEFINED COREBOOT_SDK_ROOT)
+  set(COREBOOT_SDK_ROOT "/opt/coreboot-sdk")
+endif()
+
 set(CC gcc)
-set(CROSS_COMPILE "/opt/coreboot-sdk/bin/${CROSS_COMPILE_TARGET}-")
+set(CROSS_COMPILE "${COREBOOT_SDK_ROOT}/bin/${CROSS_COMPILE_TARGET}-")
 
 set(CMAKE_AR         "${CROSS_COMPILE}ar")
 set(CMAKE_NM         "${CROSS_COMPILE}nm")
