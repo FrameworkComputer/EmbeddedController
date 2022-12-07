@@ -17,10 +17,19 @@
 #include "../ite_i2c.dtsi"
 #include "../ite_interrupts.dtsi"
 #include "../led_tentacruel.dtsi"
-#include "../motionsense_tentacruel.dtsi"
+#include "../ite_motionsense.dtsi"
 #include "../ite_usbc.dtsi"
 
 / {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &base_accel;
+	};
+
 	named-gpios {
 		/delete-node/ usb_c0_ppc_bc12_int_odl;
 
@@ -111,7 +120,6 @@
 			io-channels = <&adc0 5>;
 		};
 	};
-
 
 	temp_ambient: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
@@ -266,6 +274,81 @@
 			milivolt = <(152 / 3)>;
 			temp = <100>;
 			sample-index = <20>;
+		};
+	};
+
+	/*
+	 * Declare mutexes used by sensor drivers.
+	 * A mutex node is used to create an instance of mutex_t.
+	 * A mutex node is referenced by a sensor node if the
+	 * corresponding sensor driver needs to use the
+	 * instance of the mutex.
+	 */
+	motionsense-mutex {
+		base_mutex_bmi323: bmi323-mutex {
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		base_rot_ref_bmi: base-rotation-ref-bmi {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_base_accel: alt-base-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex_bmi323>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref_bmi>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_accel>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_base_gyro: alt-base-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex_bmi323>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref_bmi>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_gyro>;
 		};
 	};
 };
