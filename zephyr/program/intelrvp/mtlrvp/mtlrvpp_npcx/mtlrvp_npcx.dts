@@ -16,6 +16,9 @@
 			&int_ac_present
 			&int_lid_open
 			&int_power_button
+			&int_usb_c0_c1_tcpc
+			&int_usb_c2_tcpc
+			&int_usb_c3_tcpc
 		>;
 	};
 
