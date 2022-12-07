@@ -90,6 +90,17 @@ get_spiid() {
   return 1
 }
 
+get_spidev() {
+  local deviceid
+
+  if ! deviceid="$(get_spiid)"; then
+    return 1
+  fi
+
+  echo "/dev/spidev${deviceid#spi}"
+  return 0
+}
+
 # Get the uartid for the fingerprint sensor based on the modalias
 get_uartid() {
   for dev in /sys/bus/serial/devices/*; do
@@ -512,7 +523,6 @@ flash_fp_mcu_stm32() {
 
 config_hatch() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev1.1"
   # See
   # third_party/coreboot/src/soc/intel/cannonlake/include/soc/gpio_soc_defs.h
   # for pin name to number mapping.
@@ -541,7 +551,6 @@ config_hatch() {
 
 config_herobrine() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev9.0"
 
   local dev_path="*/platform/soc@0/f100000.pinctrl/gpio/*"
   local gpiobase
@@ -561,12 +570,7 @@ config_herobrine() {
 }
 
 config_nami() {
-  local device="/dev/spidev1.0"
-  # Support kernel version 4.4 during transition to 5.4
-  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
-
   readonly TRANSPORT="SPI"
-  readonly DEVICE="${device}"
 
   readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
@@ -578,12 +582,7 @@ config_nami() {
 }
 
 config_nocturne() {
-  local device="/dev/spidev1.0"
-  # Support kernel version 4.4 during transition to 5.10
-  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
-
   readonly TRANSPORT="SPI"
-  readonly DEVICE="${device}"
 
   readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
@@ -596,7 +595,6 @@ config_nocturne() {
 
 config_strongbad() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev10.0"
 
   local dev_path="*/platform/soc@0/3500000.pinctrl/gpio/*"
   local gpiobase
@@ -622,7 +620,6 @@ config_strongbad() {
 
 config_volteer() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev1.0"
 
   # See kernel/v5.4/drivers/pinctrl/intel/pinctrl-tigerlake.c
   # for pin name and pin number.
@@ -654,7 +651,6 @@ config_volteer() {
 
 config_brya() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev0.0"
 
   # See kernel/v5.10/drivers/pinctrl/intel/pinctrl-tigerlake.c
   # for pin name and pin number.
@@ -697,7 +693,6 @@ config_ghost() {
 
 config_rex() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev0.0"
 
   # See kernel/v5.15/drivers/pinctrl/intel/pinctrl-meteorlake.c
   # for pin name and pin number.
@@ -822,6 +817,15 @@ main() {
   if ! "config_${PLATFORM_CONFIG}"; then
     echo "Configuration failed for platform ${PLATFORM_CONFIG}." >&2
     exit "${EXIT_CONFIG}"
+  fi
+
+  if [[ "${TRANSPORT}" != "UART" ]]; then
+    if ! spidev="$(get_spidev)"; then
+      echo "Failed to find spidev" >&2
+      exit "${EXIT_CONFIG}"
+    else
+      DEVICE="${spidev}"
+    fi
   fi
 
   # Help the user out with defaults, if no *file* was given.
