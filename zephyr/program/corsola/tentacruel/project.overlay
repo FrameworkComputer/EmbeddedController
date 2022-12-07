@@ -12,7 +12,7 @@
 #include "../ite_adc.dtsi"
 #include "../battery_tentacruel.dtsi"
 #include "../cbi_tentacruel.dtsi"
-#include "../gpio_tentacruel.dtsi"
+#include "../ite_gpio.dtsi"
 #include "../ite_keyboard.dtsi"
 #include "../ite_i2c.dtsi"
 #include "../ite_interrupts.dtsi"
@@ -21,6 +21,55 @@
 #include "../ite_usbc.dtsi"
 
 / {
+	named-gpios {
+		/delete-node/ usb_c0_ppc_bc12_int_odl;
+
+		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+
+		usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+
+		/delete-node/ usb_c0_ppc_frsinfo;
+
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+	};
+
+	unused-pins {
+		unused-gpios =
+			/* pg_pp5000_z2_od */
+			<&gpiod 2 GPIO_INPUT>,
+			/* pg_mt6315_proc_b_odl */
+			<&gpioe 1 GPIO_INPUT>,
+			/* ec_pen_chg_dis_odl */
+			<&gpioh 3 GPIO_ODR_HIGH>,
+			/* unnamed nc pins */
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
+			/* spi_clk_gpg6 */
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
+			/* spi_mosi_gpg4 */
+			<&gpiog 4 GPIO_OUTPUT_LOW>,
+			/* spi_miso_gpg5 */
+			<&gpiog 5 GPIO_OUTPUT_LOW>,
+			/* spi_cs_gpg7 */
+			<&gpiog 7 GPIO_OUTPUT_LOW>;
+	};
+
 	gpio-interrupts {
 		int_base_imu: base_imu {
 			handler = "motion_interrupt";
