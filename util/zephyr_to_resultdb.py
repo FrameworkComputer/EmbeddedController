@@ -31,6 +31,9 @@ def translate_status(status):
         ret_status = "FAIL"
     elif status in ["skipped", "filtered"]:
         ret_status = "SKIP"
+    elif status == "blocked":
+        # Twister status for tests that didn't run due to test suite timeout
+        ret_status = "ABORT"
 
     return ret_status
 
