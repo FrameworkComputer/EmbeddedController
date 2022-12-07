@@ -234,6 +234,7 @@ class Zmake:
         clobber=False,
         bringup=False,
         coverage=False,
+        cmake_defs=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
@@ -265,6 +266,7 @@ class Zmake:
                     clobber=clobber,
                     bringup=bringup,
                     coverage=coverage,
+                    cmake_defs=cmake_defs,
                     allow_warnings=allow_warnings,
                     extra_cflags=extra_cflags,
                     delete_intermediates=delete_intermediates,
@@ -442,6 +444,7 @@ class Zmake:
         clobber=False,
         bringup=False,
         coverage=False,
+        cmake_defs=None,
         allow_warnings=False,
         extra_cflags=None,
         delete_intermediates=False,
@@ -491,6 +494,10 @@ class Zmake:
                         ),
                     },
                 )
+                if cmake_defs:
+                    base_config |= zmake.build_config.BuildConfig.from_args(
+                        cmake_defs
+                    )
 
                 # Prune the module paths to just those required by the project.
                 module_paths = project.prune_modules(self.module_paths)

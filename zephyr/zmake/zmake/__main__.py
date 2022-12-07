@@ -361,6 +361,12 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         dest="delete_intermediates",
         help="Delete intermediate files to save disk space",
     )
+    sub_parser.add_argument(
+        "-D",
+        "--cmake-define",
+        action="append",
+        dest="cmake_defs",
+    )
 
 
 def main(argv=None):
