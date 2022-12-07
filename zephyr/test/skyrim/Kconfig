@@ -53,6 +53,15 @@ config TEST_BOARD_USB_PD_POLICY
 	select TEST_ENABLE_USB_PD_HOST_CMD
 	default n
 
+config TEST_BOARD_PPC_CONFIG
+	bool "Enable PPC config tests"
+	default n
+
+config TEST_BOARD_PPC_CONFIG_SRC
+	string "Source file to use for this test"
+	default "common/ppc_config.c"
+	depends on TEST_BOARD_PPC
+
 config TEST_ENABLE_USB_PD_HOST_CMD
 	bool "Fake config to enable this feature"
 	default n

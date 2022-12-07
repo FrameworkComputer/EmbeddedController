@@ -25,6 +25,35 @@
 			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C1_TCPC_FASTSW_CTL_EN";
 		};
+
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpio0 3 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
+			gpios = <&gpio0 4 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
+		};
+
+		ioex_usb_c0_ilim_3a_en: usb_c0_ppc_ilim_3a_en {
+			gpios = <&gpio0 5 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_PPC_ILIM_3A_EN";
+		};
+
+		gpio_usb_c1_in_hpd: usb_c1_in_hpd {
+			gpios = <&gpio0 6 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_HPD_IN_DB";
+		};
+
+		ioex_usb_c1_sbu_flip: usb_c1_sbu_flip {
+			gpios = <&gpio0 7 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_SBU_FLIP";
+		};
+
+		ioex_usb_c0_sbu_flip: usb_c0_sbu_flip {
+			gpios = <&gpio0 8 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_SBU_FLIP";
+		};
 	};
 };
 

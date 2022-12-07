@@ -26,22 +26,48 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
 
+  skyrim.crystaldrift.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+
   # Frostflow tests
   skyrim.frostflow:
     extra_configs:
     - CONFIG_TEST_BOARD_FROSTFLOW=y
+
+  skyrim.frostflow.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_FROSTFLOW=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
 
   # Markarth tests
   skyrim.markarth:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y
 
+  skyrim.markarth.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+
   # Skyrim tests
   skyrim.skyrim:
     extra_configs:
     - CONFIG_TEST_BOARD_SKYRIM=y
 
+  skyrim.skyrim.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+
   # Winterhold tests
   skyrim.winterhold:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
+
+  skyrim.winterhold.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG_SRC="winterhold/ppc_config.c"
