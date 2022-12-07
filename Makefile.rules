@@ -750,6 +750,14 @@ flash_ec: $(out)/ec.bin
 flash_dfu: $(out)/ec.bin
 	sudo ./$(BDIR)/dfu $(out)/ec.bin
 
+.PHONY: print-all-baseboards
+print-all-baseboards: $(foreach b, $(BOARDS), print-baseboard-$(b))
+print-baseboard-%:
+	@$(MAKE) BOARD=$* V=$(V) print-one-baseboard
+.PHONY: print-one-baseboard
+print-one-baseboard:
+	@echo "${BOARD}=${BASEBOARD}"
+
 # Deprecated, use print-make-vars instead
 .PHONY: print-baseboard
 print-baseboard:
