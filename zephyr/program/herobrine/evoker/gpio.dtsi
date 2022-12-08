@@ -260,7 +260,6 @@
 			<&gpiod 7 0>,
 			<&gpio8 6 0>,
 			<&gpiod 4 0>,
-			<&gpio4 1 0>,
 			<&gpio3 4 0>,
 			<&gpioc 7 0>,
 			<&gpioa 4 0>,
