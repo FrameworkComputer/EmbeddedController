@@ -154,6 +154,9 @@ struct charger_drv {
 
 	/* Dumps charger registers */
 	void (*dump_registers)(int chgnum);
+
+	/* Dumps prochot status information */
+	void (*dump_prochot)(int chgnum);
 };
 
 struct charger_config_t {
@@ -414,6 +417,12 @@ enum ec_error_list charger_get_battery_cells(int chgnum, int *cells);
  * @param chgnum: charger IC index.
  */
 void print_charger_debug(int chgnum);
+
+/*
+ * Print prochot status for debugging purposes
+ * @param chgnum: charger IC index.
+ */
+void print_charger_prochot(int chgnum);
 
 /**
  * Get the value of CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON

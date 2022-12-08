@@ -189,6 +189,15 @@ void print_charger_debug(int chgnum)
 		ccputs("disabled\n");
 }
 
+void print_charger_prochot(int chgnum)
+{
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count()))
+		return;
+
+	if (chg_chips[chgnum].drv->dump_prochot)
+		chg_chips[chgnum].drv->dump_prochot(chgnum);
+}
+
 static int command_charger(int argc, const char **argv)
 {
 	int d;

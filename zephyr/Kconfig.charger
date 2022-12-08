@@ -780,4 +780,8 @@ config PLATFORM_EC_DC_PROCHOT_CURRENT_MA
 	  To set the PROCHOT# signal assertion threshold for battery over
 	  discharging current conditions.
 
+config PLATFORM_EC_CHARGER_DUMP_PROCHOT
+	bool "Enable support for prochot status dumping functions"
+	default n
+
 endif # PLATFORM_EC_CHARGER
