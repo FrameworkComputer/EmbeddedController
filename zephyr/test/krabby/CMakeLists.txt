@@ -12,17 +12,17 @@ zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/corsola/include")
 
 target_sources(app PRIVATE
 	src/stubs.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/krabby/usbc_config.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/krabby/usb_pd_policy.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/ite_usbc.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/ite_usb_pd_policy.c)
 
 target_sources_ifdef(CONFIG_TEST_KRABBY
 	app PRIVATE
 	src/charger_workaround.c
 	src/usb_mux_init.c
 	src/usbc_config.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/krabby/charger_workaround.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/ite_charger_workaround.c)
 
 target_sources_ifdef(CONFIG_TEST_TENTACRUEL
 	app PRIVATE
 	src/temp_tentacruel.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/krabby/temp_tentacruel.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/tentacruel/src/temp.c)

@@ -13,7 +13,7 @@ zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/corsola/include")
 target_sources(app PRIVATE src/fakes.c)
 
 target_sources_ifdef(CONFIG_TEST_STEELIX_RUSTY
-app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/kingler/board_steelix.c)
+app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/corsola/steelix/src/board.c)
 target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CONVERTIBLE
 			app PRIVATE src/tablet.c)
 target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CLAMSHELL
