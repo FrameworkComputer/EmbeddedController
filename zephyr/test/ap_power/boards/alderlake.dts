@@ -9,6 +9,7 @@
 	common-pwrseq {
 		compatible = "intel,ap-pwrseq";
 		s5-inactivity-timeout = <1>;
+		all-sys-pwrgd-timeout = <50>;
 	};
 
 	en_pp5000: pwr-en-pp5000-s5 {
@@ -161,7 +162,8 @@
 		ec-dsw-pwrok-slp-sus-emul {
 			output-signal = <&slp_sus>;
 			assert-delay-ms = <20>;
-			init-value= <0>;
+			init-value= <1>;
+			invert-value;
 		};
 	};
 
@@ -184,12 +186,14 @@
 		ec-pch-rsmrst-slp-s3-emul {
 			output-signal = <&slp_s3>;
 			assert-delay-ms = <40>;
-			init-value= <0>;
+			init-value= <1>;
+			invert-value;
 		};
 		ec-pch-rsmrst-slp-s0-emul {
 			output-signal = <&slp_s0>;
 			assert-delay-ms = <45>;
-			init-value= <0>;
+			init-value= <1>;
+			invert-value;
 		};
 		ec-pch-rsmrst-all-sys-pwrgd {
 			output-signal = <&all_sys_pwrgd>;
@@ -213,6 +217,10 @@
 			assert-delay-ms = <50>;
 			invert-value;
 		};
+		pch-pwrok-slp-sus-emul {
+			output-signal = <&slp_sus>;
+			assert-delay-ms = <60>;
+		};
 	};
 
 	tp-sys-s0-power-fail {
@@ -225,10 +233,9 @@
 		input-signal = <&pch_pwrok>;
 		init-value = <0>;
 		edge = "EDGE_ACTIVE_ON_ASSERT";
-		pch-pwrok-dsw-pwrok-emul {
-			output-signal = <&dsw_pwrok>;
+		pch-pwrok-slp-sus-emul {
+			output-signal = <&slp_sus>;
 			assert-delay-ms = <70>;
-			invert-value;
 		};
 
 		pch_pwrok-rsmrst-emul {
@@ -250,13 +257,11 @@
 		pch-pwrok-slp-s3-emul {
 			output-signal = <&slp_s3>;
 			assert-delay-ms = <20>;
-			invert-value;
 		};
 
 		pch-pwrok-slp-s0-emul {
 			output-signal = <&slp_s0>;
 			assert-delay-ms = <15>;
-			invert-value;
 		};
 	};
 

@@ -30,12 +30,18 @@ enum power_signal_emul_source {
 	PWR_SIG_EMUL_SRC_ADC,
 };
 
+struct wv_dt_spec {
+	enum espi_vwire_signal espi_signal;
+	bool invert;
+};
+
 /**
  * @brief Power signal containers definition.
  */
 union power_signal_emul_signal_spec {
 	struct gpio_dt_spec gpio;
 	struct adc_dt_spec adc;
+	struct wv_dt_spec vw;
 };
 
 /**
@@ -95,6 +101,12 @@ struct power_signal_emul_node {
 	struct power_signal_emul_output *const outputs;
 };
 
+#define VW_DT_SPEC_GET(id)                                              \
+	{                                                               \
+		.espi_signal = DT_STRING_UPPER_TOKEN(id, virtual_wire), \
+		.invert = DT_PROP(id, vw_invert),                       \
+	}
+
 #define EMUL_POWER_SIGNAL_GET_SOURCE(inst)                                    \
 	COND_CODE_1(                                                          \
 		DT_NODE_HAS_COMPAT(inst, intel_ap_pwrseq_gpio),               \
@@ -107,13 +119,18 @@ struct power_signal_emul_node {
 				     (PWR_SIG_EMUL_SRC_EXT),                  \
 				     (PWR_SIG_EMUL_SRC_ADC))))))
 
-#define EMUL_POWER_SIGNAL_GET_SIGNAL_SPEC(inst, dir_signal)               \
-	{                                                                 \
-		COND_CODE_1(DT_NODE_HAS_COMPAT(DT_PROP(inst, dir_signal), \
-					       intel_ap_pwrseq_gpio),     \
-			    (.gpio = GPIO_DT_SPEC_GET(                    \
-				     DT_PROP(inst, dir_signal), gpios)),  \
-			    ())                                           \
+#define EMUL_POWER_SIGNAL_GET_SIGNAL_SPEC(inst, dir_signal)                    \
+	{                                                                      \
+		COND_CODE_1(DT_NODE_HAS_COMPAT(DT_PROP(inst, dir_signal),      \
+					       intel_ap_pwrseq_gpio),          \
+			    (.gpio = GPIO_DT_SPEC_GET(                         \
+				     DT_PROP(inst, dir_signal), gpios)),       \
+			    (COND_CODE_1(DT_NODE_HAS_COMPAT(                   \
+						 DT_PROP(inst, dir_signal),    \
+						 intel_ap_pwrseq_vw),          \
+					 (.vw = VW_DT_SPEC_GET(                \
+						  DT_PROP(inst, dir_signal))), \
+					 ())))                                 \
 	}
 
 #define EMUL_POWER_SIGNAL_GET_SIGNAL(inst, dir)                             \
@@ -243,11 +260,30 @@ static void power_signal_emul_set_gpio_value(const struct gpio_dt_spec *spec,
 	zassert_ok(ret, "Getting GPIO flags!!");
 
 	if (gpio_flags & GPIO_INPUT) {
-		ret = gpio_emul_input_set(spec->port, spec->pin, value);
+		ret = gpio_emul_input_set(
+			spec->port, spec->pin,
+			gpio_flags & GPIO_ACTIVE_LOW ? !value : !!value);
 	} else if (gpio_flags & GPIO_OUTPUT) {
 		ret = gpio_pin_set(spec->port, spec->pin, value);
 	}
 	zassert_ok(ret, "Setting GPIO value!!");
+}
+
+/**
+ * @brief Set virtual wire type power signal to value.
+ *
+ * @param spec Pointer to container for virtual wire information specified in
+ *             devicetree.
+ * @param value Value to be set on virtual wire.
+ */
+static void power_signal_emul_set_vw_value(const struct wv_dt_spec *vw,
+					   int value)
+{
+	const struct device *espi =
+		DEVICE_DT_GET_ANY(zephyr_espi_emul_controller);
+
+	emul_espi_host_send_vw(espi, vw->espi_signal,
+			       vw->invert ? !value : !!value);
 }
 
 /**
@@ -270,15 +306,16 @@ power_signal_emul_set_value(struct power_signal_emul_signal_desc *desc,
 	case PWR_SIG_EMUL_SRC_EXT:
 		zassert_ok(power_signal_set(desc->enum_id, value),
 			   "Setting %s Signal value!!", desc->name);
-		__fallthrough;
+		break;
 
 	case PWR_SIG_EMUL_SRC_VW:
-		power_signal_interrupt(desc->enum_id, value);
+		power_signal_emul_set_vw_value(&desc->spec.vw, value);
 		break;
 
 	default:
 		zassert_unreachable("Undefined Signal %s!!", desc->name);
 	}
+	power_signal_interrupt(desc->enum_id, value);
 }
 
 /**
@@ -301,6 +338,7 @@ static int power_signal_emul_get_gpio_value(const struct gpio_dt_spec *spec)
 		ret = gpio_pin_get(spec->port, spec->pin);
 	} else if (gpio_flags & GPIO_OUTPUT) {
 		ret = gpio_emul_output_get(spec->port, spec->pin);
+		ret = gpio_flags & GPIO_ACTIVE_LOW ? !ret : !!ret;
 	}
 
 	return ret;
@@ -318,10 +356,18 @@ power_signal_emul_get_value(struct power_signal_emul_signal_desc *desc)
 {
 	int ret;
 
-	if (desc->source == PWR_SIG_EMUL_SRC_GPIO) {
+	switch (desc->source) {
+	case PWR_SIG_EMUL_SRC_GPIO:
 		ret = power_signal_emul_get_gpio_value(&desc->spec.gpio);
-	} else {
+		break;
+
+	case PWR_SIG_EMUL_SRC_VW:
 		ret = power_signal_get(desc->enum_id);
+		break;
+
+	default:
+		ret = power_signal_get(desc->enum_id);
+		break;
 	}
 
 	return ret;
