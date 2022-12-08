@@ -13,6 +13,13 @@
 #define SHA256_DIGEST_SIZE 32
 #define SHA256_BLOCK_SIZE 64
 
+#ifdef CONFIG_PLATFORM_EC_SHA256_HW_ZEPHYR
+/*
+ * The chip's header file must implement the SHA256 context structure and
+ * specific functions for its hardware accelerator module.
+ */
+#include "sha256_hw.h"
+#else
 #ifdef CONFIG_SHA256_HW_ACCELERATE
 /*
  * The chip's header file must implement the SHA256 context structure and
@@ -28,6 +35,7 @@ struct sha256_ctx {
 	uint8_t block[2 * SHA256_BLOCK_SIZE];
 	uint8_t buf[SHA256_DIGEST_SIZE]; /* Used to store the final digest. */
 };
+#endif
 #endif
 
 void SHA256_init(struct sha256_ctx *ctx);

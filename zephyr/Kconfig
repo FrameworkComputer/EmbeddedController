@@ -578,8 +578,21 @@ config PLATFORM_EC_RTC
 	  to the outside world and can often obtain the current time when
 	  desired.
 
+# Workaround for not being able to have commas in macro arguments
+DT_CHOSEN_CROS_EC_SHA := cros-ec,sha
+
+config PLATFORM_EC_SHA256_HW_ZEPHYR
+	bool
+	default "$(dt_chosen_enabled,$(DT_CHOSEN_CROS_EC_SHA))"
+	select CRYPTO
+	help
+	  Use the Zephyr crypto_sha driver to compute SHA256 hashing.
+	  Enabling this config implies PLATFORM_EC_SHA256_HW_ACCELERATE is
+	  selected.
+
 choice PLATFORM_EC_SHA256_MODE
 	prompt "Select method to use for computing SHA256 hashes"
+	default PLATFORM_EC_SHA256_HW_ACCELERATE if $(dt_chosen_enabled,$(DT_CHOSEN_CROS_EC_SHA))
 	help
 	  The verified boot mechanism requests the hash of the entire read-write
 	  portion of the EC image. This is typically done using a hashing block
