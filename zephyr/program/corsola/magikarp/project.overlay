@@ -10,7 +10,6 @@
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
 #include "../ite_adc.dtsi"
-#include "../cbi_magikarp.dtsi"
 #include "../ite_gpio.dtsi"
 #include "../ite_keyboard.dtsi"
 #include "../ite_i2c.dtsi"
@@ -350,6 +349,36 @@
 	batteries {
 		default_battery: smp_c31n1915 {
 			compatible = "smp,c31n1915", "battery-smart";
+		};
+	};
+
+	/* magikarp-specific fw_config fields. */
+	magikarp-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to describe mainboard orientation in chassis.
+		 */
+		base-gyro {
+			enum-name = "FW_BASE_GYRO";
+			start = <0>;
+			size = <2>;
+
+			None {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_NONE";
+				value = <0>;
+			};
+			icm42607 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_ICM42607";
+				value = <1>;
+				default;
+			};
+			bmi323 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_BMI323";
+				value = <2>;
+			};
 		};
 	};
 };
