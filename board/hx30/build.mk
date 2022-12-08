@@ -17,6 +17,8 @@ CHIP_VARIANT:=mec152x_3400
 
 CHIP_SPI_SIZE_KB:=512
 
+BASEBOARD:=fwk
+
 board-y=board.o led.o power_sequence.o cypress5525.o ucsi.o diagnostics.o cpu_power.o flash_storage.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
 board-$(CONFIG_FANS)+=fan.o
