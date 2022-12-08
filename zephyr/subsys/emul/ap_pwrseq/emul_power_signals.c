@@ -58,7 +58,7 @@ struct power_signal_emul_output {
 	const int deassert_value;
 	const int deassert_delay_ms;
 	const int init_value;
-	const bool retain;
+	const bool initialized;
 	const bool invert;
 	struct k_work_delayable d_work;
 	int value;
@@ -77,7 +77,7 @@ struct power_signal_emul_input {
 	struct power_signal_emul_signal_desc desc;
 	const int assert_value;
 	const int init_value;
-	const bool retain;
+	const bool initialized;
 	const enum power_signal_edge edge;
 	struct gpio_callback cb;
 	int value;
@@ -130,7 +130,7 @@ struct power_signal_emul_node {
 		.assert_value = DT_PROP(inst, assert_value),              \
 		.init_value = DT_PROP_OR(inst, init_value, 0),            \
 		.edge = DT_STRING_TOKEN(inst, edge),                      \
-		.retain = !DT_NODE_HAS_PROP(inst, init_value),            \
+		.initialized = DT_NODE_HAS_PROP(inst, init_value),        \
 	}
 
 #define EMUL_POWER_SIGNAL_OUT_DEF(inst)                                    \
@@ -141,7 +141,7 @@ struct power_signal_emul_node {
 		.deassert_value = DT_PROP(inst, deassert_value),           \
 		.deassert_delay_ms = DT_PROP(inst, deassert_delay_ms),     \
 		.init_value = DT_PROP_OR(inst, init_value, 0),             \
-		.retain = !DT_NODE_HAS_PROP(inst, init_value),             \
+		.initialized = DT_NODE_HAS_PROP(inst, init_value),         \
 		.invert = DT_PROP(inst, invert_value),                     \
 	},
 
@@ -421,27 +421,25 @@ static int power_signal_init_node(struct power_signal_emul_node *node)
 	for (int i = 0; i < node->outputs_count; i++) {
 		out_signal = &node->outputs[i];
 
-		if (out_signal->retain) {
-			out_signal->value =
-				power_signal_emul_get_value(&out_signal->desc);
-		} else {
-			/* Not retaining previous value, override */
+		if (out_signal->initialized) {
 			power_signal_emul_set_value(&out_signal->desc,
 						    out_signal->init_value);
 			out_signal->value = out_signal->init_value;
+		} else {
+			out_signal->value =
+				power_signal_emul_get_value(&out_signal->desc);
 		}
 		k_work_init_delayable(&out_signal->d_work,
 				      emul_signal_work_hanlder);
 	}
 
-	if (in_signal->retain) {
-		in_signal->value =
-			power_signal_emul_get_value(&in_signal->desc);
-	} else {
-		/* Not retaining previous value, override */
+	if (in_signal->initialized) {
 		power_signal_emul_set_value(&in_signal->desc,
 					    in_signal->init_value);
 		in_signal->value = in_signal->init_value;
+	} else {
+		in_signal->value =
+			power_signal_emul_get_value(&in_signal->desc);
 	}
 	if (in_signal->desc.source == PWR_SIG_EMUL_SRC_GPIO) {
 		gpio_init_callback(&in_signal->cb,
