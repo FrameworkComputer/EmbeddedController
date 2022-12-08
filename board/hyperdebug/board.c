@@ -128,16 +128,12 @@ USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ 1 /* SPI2 */, 7, GPIO_SPI2_CS, USB_SPI_ENABLED },
+	{ 1 /* SPI2 */, 7, GPIO_CN9_25, USB_SPI_ENABLED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 void usb_spi_board_enable(struct usb_spi_config const *config)
 {
-	/* Configure SPI GPIOs */
-	gpio_config_module(MODULE_SPI, 1);
-	gpio_config_module(MODULE_SPI_FLASH, 1);
-
 	/* Set all SPI pins to high speed */
 	STM32_GPIO_OSPEEDR(GPIO_F) |= 0xFFF00000;
 	STM32_GPIO_OSPEEDR(GPIO_D) |= 0x000000C3;
@@ -159,9 +155,6 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 
 	/* Disable clocks to SPI2 module */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
-
-	/* Release SPI GPIOs */
-	gpio_config_module(MODULE_SPI_FLASH, 0);
 }
 
 USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
@@ -175,8 +168,8 @@ const struct i2c_port_t i2c_ports[] = {
 	{ .name = "controller",
 	  .port = I2C_PORT_CONTROLLER,
 	  .kbps = 100,
-	  .scl = GPIO_TPM_I2C1_HOST_SCL,
-	  .sda = GPIO_TPM_I2C1_HOST_SDA },
+	  .scl = GPIO_CN7_2,
+	  .sda = GPIO_CN7_4 },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -237,6 +230,9 @@ static void board_init(void)
 	/* Structured endpoints */
 	usb_spi_enable(&usb_spi, 1);
 	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0xF0000000;
+
+	/* Configure SPI GPIOs */
+	gpio_config_module(MODULE_SPI, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
