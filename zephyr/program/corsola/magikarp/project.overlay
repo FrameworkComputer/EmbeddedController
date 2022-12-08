@@ -10,7 +10,6 @@
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
 #include "../ite_adc.dtsi"
-#include "../battery_magikarp.dtsi"
 #include "../cbi_magikarp.dtsi"
 #include "../ite_gpio.dtsi"
 #include "../ite_keyboard.dtsi"
@@ -345,6 +344,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_power_white>;
 			led-values = <0>;
+		};
+	};
+
+	batteries {
+		default_battery: smp_c31n1915 {
+			compatible = "smp,c31n1915", "battery-smart";
 		};
 	};
 };

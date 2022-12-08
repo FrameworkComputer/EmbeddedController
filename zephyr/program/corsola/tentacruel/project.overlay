@@ -10,7 +10,6 @@
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
 #include "../ite_adc.dtsi"
-#include "../battery_tentacruel.dtsi"
 #include "../cbi_tentacruel.dtsi"
 #include "../ite_gpio.dtsi"
 #include "../ite_keyboard.dtsi"
@@ -473,6 +472,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_power_white>;
 			led-values = <0>;
+		};
+	};
+
+	batteries {
+		default_battery: dynapack_c140254 {
+			compatible = "dynapack,c140254", "battery-smart";
 		};
 	};
 };
