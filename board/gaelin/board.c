@@ -24,8 +24,6 @@
 #include "usbc_config.h"
 #include "usbc_ppc.h"
 
-#include <stdbool.h>
-
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
@@ -70,6 +68,21 @@ static int usba_retimer_init(int port)
 		CPRINTS("A%d: PS8811 retimer not detected!", port);
 	} else {
 		CPRINTS("A%d: PS8811 retimer detected", port);
+	}
+
+	if (port == USBA_PORT_A1) {
+		/* Set channel B output swing */
+		/* offset 0xA4, Data 0x04 */
+		rv |= ps8811_i2c_field_update(me, PS8811_REG_PAGE1,
+					      PS8811_REG1_USB_CHAN_B_SWING,
+					      PS8811_CHAN_B_SWING_MASK, 0x4);
+
+		/* Set channel B output DE level */
+		/* offset 0xA6, Data 0x12 */
+		rv |= ps8811_i2c_field_update(me, PS8811_REG_PAGE1,
+					      PS8811_REG1_USB_CHAN_B_DE_PS_MSB,
+					      PS8811_CHAN_B_DE_PS_MSB_MASK,
+					      0x12);
 	}
 
 	return rv;
