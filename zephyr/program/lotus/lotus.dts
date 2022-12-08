@@ -4,20 +4,8 @@
  */
 
 / {
-	aliases {
-		gpio-wp = &ec_wp_l;
-	};
-
 	named-gpios {
-		compatible = "named-gpios";
-
-		ec_wp_l: write-protect {
-			gpios = <&gpioa 0 GPIO_INPUT>;
-		};
-		/* unimplemented GPIOs */
-		entering-rw {
-			enum-name = "GPIO_ENTERING_RW";
-		};
+		/* Lotus-specific GPIO customizations */
 	};
 };
 
