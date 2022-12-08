@@ -216,24 +216,6 @@ static int test_mula32(void)
 	return EC_SUCCESS;
 }
 
-#define SWAP_TEST_HARNESS(t, x, y)   \
-	do {                         \
-		t a = x, b = y;      \
-		swap(a, b);          \
-		TEST_ASSERT(a == y); \
-		TEST_ASSERT(b == x); \
-	} while (0)
-
-static int test_swap(void)
-{
-	SWAP_TEST_HARNESS(uint8_t, UINT8_MAX, 0);
-	SWAP_TEST_HARNESS(uint16_t, UINT16_MAX, 0);
-	SWAP_TEST_HARNESS(uint32_t, UINT32_MAX, 0);
-	SWAP_TEST_HARNESS(float, 1, 0);
-	SWAP_TEST_HARNESS(double, 1, 0);
-	return EC_SUCCESS;
-}
-
 static int test_bytes_are_trivial(void)
 {
 	static const uint8_t all0x00[] = { 0x00, 0x00, 0x00 };
@@ -391,7 +373,6 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_scratchpad);
 	RUN_TEST(test_cond_t);
 	RUN_TEST(test_mula32);
-	RUN_TEST(test_swap);
 	RUN_TEST(test_bytes_are_trivial);
 	RUN_TEST(test_is_aligned);
 	RUN_TEST(test_safe_memcmp);
