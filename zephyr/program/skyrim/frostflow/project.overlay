@@ -140,6 +140,53 @@
 			rpm_target = <4600>;
 		};
 	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the board
+	 * dts files.
+	 */
+	Frostflow-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		* FW_CONFIG field to enable fingerprint or not.
+		*/
+		fingerprint {
+			enum-name = "FW_FINGERPRINT";
+			start = <0>;
+			size = <1>;
+
+			fingerprint-absent{
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FINGERPRINT_ABSENT";
+				value = <0>;
+			};
+			fingerprint-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FINGERPRINT_PRESENT";
+				value = <1>;
+			};
+		};
+		/*
+		* FW_CONFIG field to enable stylus or not.
+		*/
+		stylus {
+			enum-name = "FW_STYLUS";
+			start = <1>;
+			size = <1>;
+
+			stylus-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_ABSENT";
+				value = <0>;
+			};
+			stylus-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_PRESENT";
+				value = <1>;
+			};
+		};
+	};
 };
 
 /* i2c overrides */
