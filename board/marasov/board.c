@@ -37,7 +37,7 @@ static void board_chipset_resume(void)
 {
 	/* Allow keyboard backlight to be enabled */
 
-	if (IS_ENABLED(CONFIG_PWM_KBLIGHT))
+	if (ec_cfg_kb_bl_type())
 		gpio_set_level(GPIO_EC_KB_BL_EN_L, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -47,7 +47,18 @@ static void board_chipset_suspend(void)
 {
 	/* Turn off the keyboard backlight if it's on. */
 
-	if (IS_ENABLED(CONFIG_PWM_KBLIGHT))
+	if (ec_cfg_kb_bl_type())
 		gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	/*
+	 * Remove keyboard backlight feature for devices that don't support it.
+	 */
+	if (!ec_cfg_kb_bl_type())
+		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
+	else
+		return flags0;
+}
