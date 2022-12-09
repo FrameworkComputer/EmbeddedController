@@ -188,6 +188,22 @@ static const char *_text_state(enum pchg_state state)
 	return state_names[state];
 }
 
+static void pchg_print_status(const struct pchg *ctx)
+{
+	int port = PCHG_CTX_TO_PORT(ctx);
+	enum pchg_event event = PCHG_EVENT_NONE;
+
+	queue_peek_units(&ctx->events, &event, 0, 1);
+	ccprintf("P%d STATE_%s EVENT_%s SOC=%d%%\n", port,
+		 _text_state(ctx->state), _text_event(ctx->event),
+		 ctx->battery_percent);
+	ccprintf("mode=%s\n", _text_mode(ctx->mode));
+	ccprintf("error=0x%x dropped=%u fw_version=0x%x\n", ctx->error,
+		 ctx->dropped_event_count, ctx->fw_version);
+	ccprintf("bist_cmd=0x%02x next_event=%s\n", ctx->bist_cmd,
+		 _text_event(event));
+}
+
 static void _clear_port(struct pchg *ctx)
 {
 	mutex_lock(&ctx->mtx);
@@ -1012,13 +1028,7 @@ static int cc_pchg(int argc, const char **argv)
 	ctx = &pchgs[port];
 
 	if (argc == 2) {
-		ccprintf("P%d STATE_%s EVENT_%s SOC=%d%%\n", port,
-			 _text_state(ctx->state), _text_event(ctx->event),
-			 ctx->battery_percent);
-		ccprintf("mode=%s\n", _text_mode(ctx->mode));
-		ccprintf("error=0x%x dropped=%u fw_version=0x%x\n", ctx->error,
-			 ctx->dropped_event_count, ctx->fw_version);
-		ccprintf("bist_cmd=0x%02x\n", ctx->bist_cmd);
+		pchg_print_status(ctx);
 		return EC_SUCCESS;
 	}
 
