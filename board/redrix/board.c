@@ -49,6 +49,8 @@ struct pchg pchgs[] = {
 			.irq_pin = GPIO_PEN_INT_ODL,
 			.full_percent = 96,
 			.block_size = 128,
+			/* A stylus needs about 700ms to complete recovery */
+			.rf_charge_msec = 1000,
 		},
 		.policy = {
 			[PCHG_CHIPSET_STATE_ON] = &pchg_policy_on,
