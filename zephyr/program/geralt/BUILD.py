@@ -11,7 +11,7 @@ def register_variant(
     """Register a variant of geralt."""
     register_binman_project(
         project_name=project_name,
-        zephyr_board="it81202bx",
+        zephyr_board="it81202cx",
         dts_overlays=[here / project_name / "project.overlay"],
         kconfig_files=[
             here / "program.conf",
