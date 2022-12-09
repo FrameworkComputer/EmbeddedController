@@ -94,7 +94,7 @@
 	/delete-property/ fifo-enable;
 
 	bc12_ppc_port0: rt1739@70 {
-		compatible = "richtek,rt1739";
+		compatible = "richtek,rt1739-bc12", "richtek,rt1739-ppc";
 		status = "okay";
 		reg = <0x70>;
 	};
