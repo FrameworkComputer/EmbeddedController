@@ -266,6 +266,7 @@
 			<&gpio8 6 0>,
 			<&gpio9 3 0>,
 			<&gpio9 5 0>,
+			<&gpioa 0 0>,
 			<&gpioa 2 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
