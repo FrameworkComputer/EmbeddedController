@@ -225,6 +225,7 @@
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_KBD_KSO2";
 		};
 	};
 
