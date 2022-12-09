@@ -285,7 +285,7 @@ static enum gpio_signal find_signal_by_name(const char *name)
 }
 
 /*
- * Set the mode of a GPIO pin: input/opendrain/pushpull.
+ * Set the mode of a GPIO pin: input/opendrain/pushpull/alternate.
  */
 static int command_gpio_mode(int argc, const char **argv)
 {
@@ -307,6 +307,8 @@ static int command_gpio_mode(int argc, const char **argv)
 		flags |= GPIO_OUTPUT | GPIO_OPEN_DRAIN;
 	else if (strcasecmp(argv[2], "pushpull") == 0)
 		flags |= GPIO_OUTPUT;
+	else if (strcasecmp(argv[2], "alternate") == 0)
+		flags |= GPIO_ALTERNATE;
 	else
 		return EC_ERROR_PARAM2;
 
@@ -315,7 +317,7 @@ static int command_gpio_mode(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(gpiomode, command_gpio_mode,
-			      "name <input | opendrain | pushpull>",
+			      "name <input | opendrain | pushpull | alternate>",
 			      "Set a GPIO mode", CMD_FLAG_RESTRICTED);
 
 /*
