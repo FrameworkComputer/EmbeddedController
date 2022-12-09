@@ -8,6 +8,7 @@
 #include "console.h"
 #include "ec_version.h"
 #include "gpio.h"
+#include "hwtimer.h"
 #include "i2c.h"
 #include "queue_policies.h"
 #include "registers.h"
@@ -126,35 +127,31 @@ USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
  * usb_spi_board_disable to be defined to enable and disable the SPI bridge.
  */
 
-/* SPI devices */
+#define OCTOSPI_CLOCK (16000000UL)
+#define SPI_CLOCK (16000000UL)
+
+/* SPI devices, default to 250 kb/s for all. */
 const struct spi_device_t spi_devices[] = {
-	{ 1 /* SPI2 */, 7, GPIO_CN9_25, USB_SPI_ENABLED },
+	{ .name = "SPI2",
+	  .port = 1,
+	  .div = 5,
+	  .gpio_cs = GPIO_CN9_25,
+	  .usb_flags = USB_SPI_ENABLED },
+	{ .name = "QSPI",
+	  .port = -1 /* OCTOSPI */,
+	  .div = 63,
+	  .gpio_cs = GPIO_CN10_6,
+	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 void usb_spi_board_enable(struct usb_spi_config const *config)
 {
-	/* Set all SPI pins to high speed */
-	STM32_GPIO_OSPEEDR(GPIO_F) |= 0xFFF00000;
-	STM32_GPIO_OSPEEDR(GPIO_D) |= 0x000000C3;
-	STM32_GPIO_OSPEEDR(GPIO_C) |= 0x000000F0;
-
-	/* Enable clocks to SPI2 module */
-	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_SPI2EN;
-
-	/* Reset SPI2 */
-	STM32_RCC_APB1RSTR1 |= STM32_RCC_APB1RSTR1_SPI2RST;
-	STM32_RCC_APB1RSTR1 &= ~STM32_RCC_APB1RSTR1_SPI2RST;
-
-	spi_enable(&spi_devices[0], 1);
+	/* All initialization already done in board_init(). */
 }
 
 void usb_spi_board_disable(struct usb_spi_config const *config)
 {
-	spi_enable(&spi_devices[0], 0);
-
-	/* Disable clocks to SPI2 module */
-	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 }
 
 USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
@@ -200,11 +197,257 @@ const void *const usb_strings[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /******************************************************************************
+ * OCTOSPI driver.
+ */
+
+#define OCTOSPI_INIT_TIMEOUT_US (100 * MSEC)
+
+/*
+ * Timeout for a complete SPI transaction.  Users can potentially set the clock
+ * down to 62.5 kHz and transfer up to 2048 bytes, which would take 262ms
+ * assuming no FIFO stalls.
+ */
+#define OCTOSPI_TRANSACTION_TIMEOUT_US (500 * MSEC)
+
+/*
+ * Wait for a certain set of status bits to all be asserted.
+ */
+static int octospi_wait_for(uint32_t flags, timestamp_t deadline)
+{
+	while ((STM32_OCTOSPI_SR & flags) != flags) {
+		timestamp_t now = get_time();
+		if (timestamp_expired(deadline, &now))
+			return EC_ERROR_TIMEOUT;
+	}
+	return EC_SUCCESS;
+}
+
+/*
+ * Write transaction: Write a number of bytes on the OCTOSPI bus.
+ */
+static int octospi_indirect_write(const uint8_t *txdata, int txlen)
+{
+	timestamp_t deadline;
+	/* Deadline on the entire SPI transaction. */
+	deadline.val = get_time().val + OCTOSPI_TRANSACTION_TIMEOUT_US;
+
+	/* Enable OCTOSPI, indirect write mode. */
+	STM32_OCTOSPI_CR = STM32_OCTOSPI_CR_FMODE_IND_WRITE |
+			   STM32_OCTOSPI_CR_EN;
+	/* Clear completion flag from last transaction. */
+	STM32_OCTOSPI_FCR = STM32_OCTOSPI_FCR_CTCF;
+
+	/* Data length. */
+	STM32_OCTOSPI_DLR = txlen - 1;
+	/* No instruction or address, only data. */
+	STM32_OCTOSPI_CCR =
+		STM32_OCTOSPI_CCR_IMODE_NONE | STM32_OCTOSPI_CCR_ADMODE_NONE |
+		STM32_OCTOSPI_CCR_ABMODE_NONE | STM32_OCTOSPI_CCR_DMODE_1WIRE;
+
+	/* Transmit data, four bytes at a time. */
+	for (int i = 0; i < txlen; i += 4) {
+		uint32_t value = 0;
+		int rv;
+		for (int j = 0; j < 4; j++) {
+			if (i + j < txlen)
+				value |= txdata[i + j] << (j * 8);
+		}
+		/* Wait for room in the FIFO. */
+		if ((rv = octospi_wait_for(STM32_OCTOSPI_SR_FTF, deadline)))
+			return rv;
+		STM32_OCTOSPI_DR = value;
+	}
+	/* Wait for transaction completion flag. */
+	return octospi_wait_for(STM32_OCTOSPI_SR_TCF, deadline);
+}
+
+/*
+ * Read transaction: Optionally write a few bytes, before reading a number of
+ * bytes on the OCTOSPI bus.
+ */
+static int octospi_indirect_read(const uint8_t *control_data, int control_len,
+				 uint8_t *rxdata, int rxlen)
+{
+	uint32_t instruction = 0, address = 0;
+	timestamp_t deadline;
+
+	/* Deadline on the entire SPI transaction. */
+	deadline.val = get_time().val + OCTOSPI_TRANSACTION_TIMEOUT_US;
+
+	/* Enable OCTOSPI, indirect read mode. */
+	STM32_OCTOSPI_CR = STM32_OCTOSPI_CR_FMODE_IND_READ |
+			   STM32_OCTOSPI_CR_EN;
+	/* Clear completion flag from last transaction. */
+	STM32_OCTOSPI_FCR = STM32_OCTOSPI_FCR_CTCF;
+
+	/* Data length (receive). */
+	STM32_OCTOSPI_DLR = rxlen - 1;
+	if (control_len == 0) {
+		/*
+		 * Set up OCTOSPI for: No instruction, no address, then read
+		 * data.
+		 */
+		STM32_OCTOSPI_CCR = STM32_OCTOSPI_CCR_IMODE_NONE |
+				    STM32_OCTOSPI_CCR_ADMODE_NONE |
+				    STM32_OCTOSPI_CCR_ABMODE_NONE |
+				    STM32_OCTOSPI_CCR_DMODE_1WIRE;
+	} else if (control_len <= 4) {
+		/*
+		 * Set up OCTOSPI for: One to four bytes of instruction, no
+		 * address, then read data.
+		 */
+		STM32_OCTOSPI_CCR = STM32_OCTOSPI_CCR_IMODE_1WIRE |
+				    (control_len - 1)
+					    << STM32_OCTOSPI_CCR_ISIZE_POS |
+				    STM32_OCTOSPI_CCR_ADMODE_NONE |
+				    STM32_OCTOSPI_CCR_ABMODE_NONE |
+				    STM32_OCTOSPI_CCR_DMODE_1WIRE;
+		for (int i = 0; i < control_len; i++) {
+			instruction <<= 8;
+			instruction |= control_data[i];
+		}
+	} else if (control_len <= 8) {
+		/*
+		 * Set up OCTOSPI for: One to four bytes of instruction, four
+		 * bytes of address, then read data.
+		 */
+		STM32_OCTOSPI_CCR = STM32_OCTOSPI_CCR_IMODE_1WIRE |
+				    (control_len - 1)
+					    << STM32_OCTOSPI_CCR_ISIZE_POS |
+				    STM32_OCTOSPI_CCR_ADMODE_1WIRE |
+				    STM32_OCTOSPI_CCR_ADSIZE_4BYTES |
+				    STM32_OCTOSPI_CCR_ABMODE_NONE |
+				    STM32_OCTOSPI_CCR_DMODE_1WIRE;
+		for (int i = 0; i < control_len - 4; i++) {
+			instruction <<= 8;
+			instruction |= control_data[i];
+		}
+		for (int i = 0; i < 4; i++) {
+			address <<= 8;
+			address |= control_data[control_len - 4 + i];
+		}
+	} else if (control_len <= 12) {
+		uint32_t alternate = 0;
+		/*
+		 * Set up OCTOSPI for: One to four bytes of instruction, four
+		 * bytes of address, four "alternate" bytes, then read data.
+		 */
+		STM32_OCTOSPI_CCR = STM32_OCTOSPI_CCR_IMODE_1WIRE |
+				    (control_len - 1)
+					    << STM32_OCTOSPI_CCR_ISIZE_POS |
+				    STM32_OCTOSPI_CCR_ADMODE_1WIRE |
+				    STM32_OCTOSPI_CCR_ADSIZE_4BYTES |
+				    STM32_OCTOSPI_CCR_ABMODE_1WIRE |
+				    STM32_OCTOSPI_CCR_ABSIZE_4BYTES |
+				    STM32_OCTOSPI_CCR_DMODE_1WIRE;
+		for (int i = 0; i < control_len - 8; i++) {
+			instruction <<= 8;
+			instruction |= control_data[i];
+		}
+		for (int i = 0; i < 4; i++) {
+			address <<= 8;
+			address |= control_data[control_len - 8 + i];
+		}
+		for (int i = 0; i < 4; i++) {
+			alternate <<= 8;
+			alternate |= control_data[control_len - 4 + i];
+		}
+		STM32_OCTOSPI_ABR = alternate;
+	} else {
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+	/* Set instruction and address registers, triggering the start of the
+	 * write+read transaction. */
+	STM32_OCTOSPI_IR = instruction;
+	STM32_OCTOSPI_AR = address;
+
+	/* Receive data, four bytes at a time. */
+	for (int i = 0; i < rxlen; i += 4) {
+		int rv;
+		uint32_t value;
+		/* Wait for data available in the FIFO. */
+		if ((rv = octospi_wait_for(STM32_OCTOSPI_SR_FTF, deadline)))
+			return rv;
+		value = STM32_OCTOSPI_DR;
+		for (int j = 0; j < 4; j++) {
+			if (i + j < rxlen)
+				rxdata[i + j] = value >> (j * 8);
+		}
+	}
+	/* Wait for transaction completion flag. */
+	return octospi_wait_for(STM32_OCTOSPI_SR_TCF, deadline);
+}
+
+/*
+ * Board-specific SPI driver entry point, called by usb_spi.c.  On this board,
+ * the only spi device declared as requiring board specific driver is OCTOSPI.
+ */
+int usb_spi_board_transaction(const struct spi_device_t *spi_device,
+			      const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			      int rxlen)
+{
+	int rv = EC_SUCCESS;
+	bool previous_cs;
+
+	previous_cs = gpio_get_level(spi_device->gpio_cs);
+
+	/* Drive chip select low */
+	gpio_set_level(spi_device->gpio_cs, 0);
+
+	/*
+	 * STM32L5 OctoSPI in "indirect mode" supports two types of SPI
+	 * operations, "read" and "write", in addition to the main data, each
+	 * type of operation can be preceded by up to 12 bytes of
+	 * "instructions", (which are always written from HyperDebug to the SPI
+	 * device).  We can use the above features to support some combination
+	 * of write-followed-by-read in a single OctoSPI transaction.
+	 */
+
+	if (rxlen == SPI_READBACK_ALL) {
+		cprints(CC_SPI,
+			"Full duplex not supported by OctoSPI hardware");
+		rv = EC_ERROR_UNIMPLEMENTED;
+	} else if (!rxlen && !txlen) {
+		/* No operation requested, done. */
+	} else if (!rxlen) {
+		/*
+		 * Transmit-only transaction.  This is implemented by not using
+		 * any of the up to 12 bytes of instructions, but as all "data".
+		 */
+		rv = octospi_indirect_write(txdata, txlen);
+	} else if (txlen <= 12) {
+		/*
+		 * Sending of up to 12 bytes, followed by reading a possibly
+		 * large number of bytes.  This is implemented by a "read"
+		 * transaction using the instruction and address feature of
+		 * OctoSPI.
+		 */
+		rv = octospi_indirect_read(txdata, txlen, rxdata, rxlen);
+	} else {
+		/*
+		 * Sending many bytes, followed by reading.  This is implemented
+		 * as two separate OctoSPI transactions.  (Chip select is kept
+		 * asserted across both transactions, outside the control of the
+		 * OctoSPI hardware.)
+		 */
+		rv = octospi_indirect_write(txdata, txlen);
+		if (rv == EC_SUCCESS)
+			rv = octospi_indirect_read(NULL, 0, rxdata, rxlen);
+	}
+
+	/* Return chip select to previous level. */
+	gpio_set_level(spi_device->gpio_cs, previous_cs);
+	return rv;
+}
+
+/******************************************************************************
  * Initialize board.
  */
 
 static void board_init(void)
 {
+	timestamp_t deadline;
+
 	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0x0000FF00;
 
 	/* We know VDDIO2 is present, enable the GPIO circuit. */
@@ -220,7 +463,6 @@ static void board_init(void)
 	queue_init(&usart5_to_usb);
 	queue_init(&usb_to_usart5);
 
-	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0x0F000000;
 	/* UART init */
 	usart_init(&usart2);
 	usart_init(&usart3);
@@ -229,10 +471,55 @@ static void board_init(void)
 
 	/* Structured endpoints */
 	usb_spi_enable(&usb_spi, 1);
-	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0xF0000000;
 
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI, 1);
+
+	/*
+	 * Enable SPI2.
+	 */
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_SPI2EN;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR1 |= STM32_RCC_APB1RSTR1_SPI2RST;
+	STM32_RCC_APB1RSTR1 &= ~STM32_RCC_APB1RSTR1_SPI2RST;
+
+	spi_enable(&spi_devices[0], 1);
+
+	/*
+	 * Enable OCTOSPI, no driver for this in chip/stm32.
+	 */
+	deadline.val = get_time().val + OCTOSPI_INIT_TIMEOUT_US;
+
+	STM32_RCC_AHB3ENR |= STM32_RCC_AHB3ENR_QSPIEN;
+	while (STM32_OCTOSPI_SR & STM32_OCTOSPI_SR_BUSY) {
+		timestamp_t now = get_time();
+		if (timestamp_expired(deadline, &now)) {
+			/*
+			 * Ideally, the USB host would have a way of
+			 * discovering our failure to initialize OctoSPI.  But
+			 * for now, log and move on, this would happen only on
+			 * code bug or hardware failure.
+			 */
+			cprints(CC_SPI, "Initialization of OctoSPI failed");
+			break;
+		}
+	}
+
+	/*
+	 * Declare that a "Standard" SPI flash device, maximum size is connected
+	 * to OCTOSPI.  This allows the controller to send arbitrary 32-bit
+	 * addresses, which is needed as we use the instruction and address
+	 * bytes as arbitrary data to send via SPI.
+	 */
+	STM32_OCTOSPI_DCR1 = STM32_OCTOSPI_DCR1_MTYP_STANDARD |
+			     STM32_OCTOSPI_DCR1_DEVSIZE_MSK;
+	/* Clock prescaler (max value 255) */
+	STM32_OCTOSPI_DCR2 = spi_devices[1].div;
+	/* Zero dummy cycles */
+	STM32_OCTOSPI_TCR = 0;
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

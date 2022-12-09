@@ -52,6 +52,9 @@ struct spi_device_t {
 	 */
 	uint8_t usb_flags;
 #endif
+
+	/* Port name */
+	const char *name;
 };
 
 extern
