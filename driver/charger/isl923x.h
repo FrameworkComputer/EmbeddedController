@@ -97,6 +97,7 @@
 #define ISL9237_C0_VREG_REF_MASK 0x03
 
 /* Control0: disable adapter voltaqe regulation */
+#define ISL923X_C0_ENABLE_BUCK BIT(1)
 #define ISL923X_C0_DISABLE_VREG BIT(2)
 
 /* Control0: battery DCHOT reference for RS2 == 20mOhm */

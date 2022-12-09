@@ -705,6 +705,16 @@ static void isl923x_init(int chgnum)
 
 		if (raw_write16(chgnum, ISL9238C_REG_CONTROL6, reg))
 			goto init_fail;
+
+		if (IS_ENABLED(CONFIG_ISL9238C_ENABLE_BUCK_MODE)) {
+			if (raw_read16(chgnum, ISL923X_REG_CONTROL0, &reg))
+				goto init_fail;
+
+			reg |= ISL923X_C0_ENABLE_BUCK;
+
+			if (raw_write16(chgnum, ISL923X_REG_CONTROL0, reg))
+				goto init_fail;
+		}
 	}
 
 	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {

@@ -3487,6 +3487,11 @@
  */
 #undef CONFIG_ISL9238C_DISABLE_CMOUT_LATCH
 
+/*
+ * ISL9238C enable Force Buck mode.
+ */
+#undef CONFIG_ISL9238C_ENABLE_BUCK_MODE
+
 /* Support MKBP event */
 #undef CONFIG_MKBP_EVENT
 

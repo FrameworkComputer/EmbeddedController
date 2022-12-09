@@ -766,6 +766,14 @@ config PLATFORM_EC_ISL9238C_DISABLE_CMOUT_LATCH
 	help
 	  Disable the CMOUT latch function for ISL9238C.
 
+config PLATFORM_EC_ISL9238C_ENABLE_BUCK_MODE
+	bool "Enable Force Buck mode"
+	default n
+	depends on PLATFORM_EC_CHARGER_ISL9238C
+	help
+	  Enable Force Buck mode for ISL9238C.
+	  If the Force Buck mode is enabled, the Buck-Boost window narrows.
+
 config PLATFORM_EC_AC_PROCHOT_CURRENT_MA
 	int "Value of the prochot threshold current in mA"
 	default 3328
