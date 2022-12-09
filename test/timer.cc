@@ -26,7 +26,7 @@ test_static int test_usleep(void)
 	usleep(expected_duration);
 	int sleep_duration = time_since32(start_time);
 
-	TEST_NEAR(expected_duration, sleep_duration, 20, "%d");
+	TEST_NEAR(expected_duration, sleep_duration, 100, "%d");
 
 	return EC_SUCCESS;
 }
