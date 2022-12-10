@@ -59,12 +59,22 @@ static void emul_ev_handler(struct ap_power_ev_callback *callback,
 	};
 }
 
+static void ap_pwrseq_reset_ev_counters(void)
+{
+	power_resume_count = 0;
+	power_start_up_count = 0;
+	power_hard_off_count = 0;
+	power_shutdown_count = 0;
+	power_shutdown_complete_count = 0;
+	power_suspend_count = 0;
+}
+
 ZTEST(ap_pwrseq, test_ap_pwrseq_0)
 {
 	zassert_equal(0,
 		      power_signal_emul_load(
 			      EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_g3_to_s0)),
-		      "Unable to load test platfform `tp_sys_g3_to_s0`");
+		      "Unable to load test platform `tp_sys_g3_to_s0`");
 
 	k_msleep(500);
 
@@ -79,7 +89,7 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_1)
 	zassert_equal(0,
 		      power_signal_emul_load(EMUL_POWER_SIGNAL_TEST_PLATFORM(
 			      tp_sys_s0_power_fail)),
-		      "Unable to load test platfform `tp_sys_s0_power_fail`");
+		      "Unable to load test platform `tp_sys_s0_power_fail`");
 
 	/*
 	 * Once emulated power signals are loaded, we need to wake AP power
@@ -101,18 +111,70 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_2)
 		0,
 		power_signal_emul_load(EMUL_POWER_SIGNAL_TEST_PLATFORM(
 			tp_sys_g3_to_s0_power_down)),
-		"Unable to load test platfform `tp_sys_g3_to_s0_power_down`");
+		"Unable to load test platform `tp_sys_g3_to_s0_power_down`");
 
 	ap_power_exit_hardoff();
 	k_msleep(2000);
-	zassert_equal(3, power_shutdown_count,
+	zassert_equal(2, power_shutdown_count,
 		      "AP_POWER_SHUTDOWN event not generated");
-	zassert_equal(3, power_shutdown_complete_count,
+	zassert_equal(2, power_shutdown_complete_count,
 		      "AP_POWER_SHUTDOWN_COMPLETE event not generated");
 	zassert_equal(1, power_suspend_count,
-		      "AP_POWER_SUSPEND event generated");
+		      "AP_POWER_SUSPEND event not generated");
 	zassert_equal(1, power_hard_off_count,
+		      "AP_POWER_HARD_OFF event not generated");
+}
+
+ZTEST(ap_pwrseq, test_ap_pwrseq_3)
+{
+	zassert_equal(0,
+		      power_signal_emul_load(EMUL_POWER_SIGNAL_TEST_PLATFORM(
+			      tp_sys_s5_slp_sus_fail)),
+		      "Unable to load test platform `tp_sys_s5_slp_sus_fail`");
+
+	ap_power_exit_hardoff();
+	k_msleep(500);
+
+	zassert_equal(1, power_hard_off_count,
+		      "AP_POWER_HARD_OFF event not generated");
+}
+
+ZTEST(ap_pwrseq, test_ap_pwrseq_4)
+{
+	zassert_equal(
+		0,
+		power_signal_emul_load(EMUL_POWER_SIGNAL_TEST_PLATFORM(
+			tp_sys_s4_dsw_pwrok_fail)),
+		"Unable to load test platform `tp_sys_s4_dsw_pwrok_fail`");
+
+	ap_power_exit_hardoff();
+	k_msleep(500);
+
+	zassert_equal(0, power_hard_off_count,
 		      "AP_POWER_HARD_OFF event generated");
+	zassert_equal(1, power_shutdown_count,
+		      "AP_POWER_SHUTDOWN event not generated");
+	zassert_equal(1, power_shutdown_complete_count,
+		      "AP_POWER_SHUTDOWN_COMPLETE event not generated");
+}
+
+ZTEST(ap_pwrseq, test_ap_pwrseq_5)
+{
+	zassert_equal(
+		0,
+		power_signal_emul_load(EMUL_POWER_SIGNAL_TEST_PLATFORM(
+			tp_sys_s3_dsw_pwrok_fail)),
+		"Unable to load test platform `tp_sys_s3_dsw_pwrok_fail`");
+
+	ap_power_exit_hardoff();
+	k_msleep(500);
+
+	zassert_equal(0, power_hard_off_count,
+		      "AP_POWER_HARD_OFF event generated");
+	zassert_equal(1, power_shutdown_count,
+		      "AP_POWER_SHUTDOWN event not generated");
+	zassert_equal(1, power_shutdown_complete_count,
+		      "AP_POWER_SHUTDOWN_COMPLETE event not generated");
 }
 
 ZTEST(ap_pwrseq, test_insufficient_power_blocks_s5)
@@ -120,7 +182,7 @@ ZTEST(ap_pwrseq, test_insufficient_power_blocks_s5)
 	zassert_equal(0,
 		      power_signal_emul_load(
 			      EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_g3_to_s0)),
-		      "Unable to load test platfform `tp_sys_g3_to_s0`");
+		      "Unable to load test platform `tp_sys_g3_to_s0`");
 	system_can_boot_ap_fake.return_val = 0;
 
 	ap_power_exit_hardoff();
@@ -134,6 +196,7 @@ ZTEST(ap_pwrseq, test_insufficient_power_blocks_s5)
 void ap_pwrseq_after_test(void *data)
 {
 	power_signal_emul_unload();
+	ap_pwrseq_reset_ev_counters();
 }
 
 void *ap_pwrseq_setup_suite(void)
