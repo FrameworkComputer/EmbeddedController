@@ -4,7 +4,6 @@
  */
 
 #include "accelgyro.h"
-#include "common.h"
 #include "cros_cbi.h"
 #include "driver/accelgyro_bmi323.h"
 #include "driver/accelgyro_icm42607.h"

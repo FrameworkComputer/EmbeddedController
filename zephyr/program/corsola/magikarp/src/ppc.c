@@ -6,14 +6,10 @@
 /* Tentacruel PPC/BC12 (mixed RT1739 or PI3USB9201+SYV682X) configuration */
 
 #include "baseboard_usbc_config.h"
-#include "console.h"
-#include "cros_board_info.h"
+#include "driver/ppc/syv682x_public.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
-#include "usbc/ppc.h"
-#include "variant_db_detection.h"
-
-#include <zephyr/logging/log.h>
+#include "usb_charge.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

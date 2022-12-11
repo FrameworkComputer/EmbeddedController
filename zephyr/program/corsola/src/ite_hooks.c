@@ -6,7 +6,6 @@
 #include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "extpower.h"
-#include "gpio.h"
 #include "hooks.h"
 
 #include <zephyr/drivers/gpio.h>

@@ -10,7 +10,6 @@
 #include "driver/ppc/syv682x.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
-#include "variant_db_detection.h"
 
 void c0_bc12_interrupt(enum gpio_signal signal)
 {

@@ -7,7 +7,7 @@
 #define ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_
 
 #include "charger/chg_rt9490.h"
-#include "include/temp_sensor.h"
+#include "temp_sensor.h"
 
 #include <zephyr/devicetree.h>
 

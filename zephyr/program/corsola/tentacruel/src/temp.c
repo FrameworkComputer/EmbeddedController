@@ -4,15 +4,10 @@
  */
 
 #include "charge_state.h"
-#include "charger.h"
 #include "common.h"
-#include "config.h"
-#include "console.h"
 #include "driver/charger/rt9490.h"
 #include "hooks.h"
 #include "temp_sensor/temp_sensor.h"
-#include "thermal.h"
-#include "util.h"
 
 #define NUM_CURRENT_LEVELS ARRAY_SIZE(current_table)
 #define TEMP_THRESHOLD 50

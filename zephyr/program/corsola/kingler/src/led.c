@@ -6,7 +6,6 @@
  */
 #include "common.h"
 #include "ec_commands.h"
-#include "led_common.h"
 #include "led_onoff_states.h"
 #include "led_pwm.h"
 

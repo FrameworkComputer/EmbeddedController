@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_DRIVER_USB_MUX_PS8743_PUBLIC_H
 #define __CROS_EC_DRIVER_USB_MUX_PS8743_PUBLIC_H
 
+#include "usb_mux.h"
+
 #include <inttypes.h>
 
 #define PS8743_I2C_ADDR0_FLAG 0x10

@@ -11,15 +11,11 @@
 #endif
 
 #include "baseboard_usbc_config.h"
-#include "charger.h"
 #include "console.h"
-#include "driver/bc12/pi3usb9201_public.h"
-#include "driver/charger/isl923x_public.h"
 #include "driver/ppc/nx20p348x.h"
-#include "driver/ppc/rt1718s.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/rt1718s.h"
-#include "driver/usb_mux/ps8743.h"
+#include "driver/usb_mux/ps8743_public.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"

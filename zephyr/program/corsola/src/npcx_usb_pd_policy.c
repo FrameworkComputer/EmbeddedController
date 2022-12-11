@@ -4,14 +4,10 @@
  */
 
 #include "baseboard_usbc_config.h"
-#include "charge_manager.h"
-#include "console.h"
-#include "driver/ppc/rt1718s.h"
-#include "system.h"
-#include "usb_mux.h"
+#include "driver/tcpm/rt1718s.h"
+#include "driver/tcpm/tcpm.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
-#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)

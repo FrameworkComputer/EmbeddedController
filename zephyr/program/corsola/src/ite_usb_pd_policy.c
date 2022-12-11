@@ -5,7 +5,6 @@
 
 #include "adc.h"
 #include "charge_manager.h"
-#include "chipset.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
