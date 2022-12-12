@@ -76,8 +76,14 @@ FORWARD_DECLARE_ENUM(battery_present){
 	BP_NOT_SURE,
 };
 
+/*
+ * BATTERY_CUTOFF_STATE_IN_PROGRESS: Battery cutoff has begun but not completed.
+ * BATTERY_CUTOFF_STATE_PENDING: Battery cutoff is requested by the
+ * AP but hasn't started.
+ */
 enum battery_cutoff_states {
 	BATTERY_CUTOFF_STATE_NORMAL = 0,
+	BATTERY_CUTOFF_STATE_IN_PROGRESS,
 	BATTERY_CUTOFF_STATE_CUT_OFF,
 	BATTERY_CUTOFF_STATE_PENDING,
 };
@@ -437,6 +443,11 @@ int battery_imbalance_mv(void);
  * @return EC_RES_INVALID_COMMAND if the battery doesn't support.
  */
 int board_cut_off_battery(void);
+
+/**
+ * Return if the battery start cut off.
+ */
+int battery_cutoff_in_progress(void);
 
 /**
  * Return if the battery has been cut off.

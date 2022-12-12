@@ -311,10 +311,16 @@ int battery_is_cut_off(void)
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_CUT_OFF);
 }
 
+int battery_cutoff_in_progress(void)
+{
+	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_IN_PROGRESS);
+}
+
 static void pending_cutoff_deferred(void)
 {
 	int rv;
 
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 	rv = board_cut_off_battery();
 
 	if (rv == EC_RES_SUCCESS) {
@@ -350,6 +356,7 @@ static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 		}
 	}
 
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
 		CUTOFFPRINTS("is successful.");
@@ -387,6 +394,7 @@ static int command_cutoff(int argc, const char **argv)
 		}
 	}
 
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
 		ccprints("Battery cut off");
