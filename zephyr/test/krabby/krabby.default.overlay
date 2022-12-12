@@ -6,8 +6,36 @@
 #include "common.dtsi"
 #include "../program/corsola/ite_gpio.dtsi"
 #include "../program/corsola/ite_interrupts.dtsi"
+#include "../program/corsola/power_signal.dtsi"
 
 /* remove pinctrl to avoid pull in too many unwanted dependency */
 /delete-node/ &pinctrl;
 
-/delete-node/ &{/hibernate-wake-pins};
+/delete-node/ &int_usb_c0_ppc_bc12;
+/delete-node/ &int_volume_up;
+/delete-node/ &int_volume_down;
+/delete-node/ &int_tablet_mode;
+/delete-node/ &int_usba;
+/delete-node/ &int_wp;
+/delete-node/ &int_spi0_cs;
+/delete-node/ &int_x_ec_gpio2;
+/delete-node/ &int_ccd_mode_odl;
+/delete-node/ &int_base_imu;
+/delete-node/ &int_lid_imu;
+
+&{/aliases} {
+	/delete-property/ int-wp;
+};
+
+/* open-drain is not supported in gpio emul, re-config to push-pull  */
+&ec_pmic_en_odl {
+	gpios = <&gpiod 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&sys_rst_odl {
+	gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+};
+
+/* set default gpio-emul state */
+&power_button_l {
+	gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+};

@@ -22,3 +22,8 @@ int board_get_adjusted_usb_pd_port_count(int port)
 {
 	return 2;
 }
+
+uint16_t tcpc_get_alert_status(void)
+{
+	return 0;
+}

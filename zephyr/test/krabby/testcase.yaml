@@ -9,7 +9,13 @@ tests:
     extra_args: DTC_OVERLAY_FILE="krabby.default.overlay"
     extra_configs:
       - CONFIG_TEST_KRABBY=y
+      - CONFIG_AP_ARM_MTK_MT8186=y
       - CONFIG_MUX_INIT_ADC=y
+      - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+      - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+      - CONFIG_PLATFORM_EC_POWERSEQ=y
+      - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+      - CONFIG_SHIMMED_TASKS=y
   krabby.tentacruel:
     extra_args: DTC_OVERLAY_FILE="krabby.tentacruel.overlay"
     extra_configs:

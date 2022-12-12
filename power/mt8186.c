@@ -212,16 +212,6 @@ static void power_reset_host_sleep_state(void)
 	power_chipset_handle_host_sleep_event(HOST_SLEEP_EVENT_DEFAULT_RESET,
 					      NULL);
 }
-
-static void handle_chipset_reset(void)
-{
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
-		CPRINTS("Chipset reset: exit s3");
-		power_reset_host_sleep_state();
-		task_wake(TASK_ID_CHIPSET);
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
 /*
