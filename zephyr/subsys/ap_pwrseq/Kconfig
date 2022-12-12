@@ -23,6 +23,14 @@ module = AP_PWRSEQ
 module-str = AP power sequencing
 source "subsys/logging/Kconfig.template.log_config"
 
+config AP_PWRSEQ_DRIVER
+	bool "AP Power sequencing driver support"
+	select EVENTS
+	help
+	  AP power sequence driver establishes an underlaying framework to
+	  easily add or extend AP Power Sequence action handler routines, it is
+	  designed to follow the zephyr's State Machine Framework (SMF).
+
 config AP_PWRSEQ_SIGNAL_ADC
 	bool
 	default y

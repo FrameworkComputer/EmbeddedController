@@ -14,6 +14,8 @@ zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_GPIO signal_gpio.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_VW signal_vw.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_ADC signal_adc.c)
 
+zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_DRIVER ap_pwrseq.c)
+
 zephyr_library_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ
 	x86_non_dsx_common_pwrseq_sm_handler.c
 	x86_non_dsx_chipset_power_state.c)
