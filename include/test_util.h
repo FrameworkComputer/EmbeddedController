@@ -16,6 +16,7 @@ extern "C" {
 
 #include "common.h"
 #include "console.h"
+#include "math_util.h"
 #include "stack_trace.h"
 
 #ifdef CONFIG_ZTEST
@@ -92,9 +93,7 @@ extern "C" {
 #define TEST_NEAR(a, b, epsilon, fmt) \
 	TEST_OPERATOR(ABS((a) - (b)), epsilon, <, fmt)
 
-#define __ABS(n) ((n) > 0 ? (n) : -(n))
-
-#define TEST_ASSERT_ABS_LESS(n, t) TEST_OPERATOR(__ABS(n), t, <, "%d")
+#define TEST_ASSERT_ABS_LESS(n, t) TEST_OPERATOR(ABS(n), t, <, "%d")
 
 #define TEST_ASSERT_ARRAY_EQ(s, d, n)                                        \
 	do {                                                                 \
