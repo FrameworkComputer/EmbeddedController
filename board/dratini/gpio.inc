@@ -79,6 +79,9 @@ GPIO(USB_C1_TCPC_RST_ODL,      PIN(3, 2), GPIO_ODR_HIGH)
 GPIO(EN_USB_A_5V,              PIN(3, 5), GPIO_OUT_LOW)
 GPIO(EN_USB_A_LOW_PWR_OD,      PIN(9, 4), GPIO_OUT_LOW)
 
+/* CCD mode line*/
+GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_INPUT)
+
 /* Misc Signals */
 GPIO(EC_BATT_PRES_ODL,         PIN(E, 1), GPIO_INPUT)
 GPIO(LED_AMBER_C0_L,           PIN(C, 4), GPIO_OUT_HIGH)        /* Amber C0 port */
