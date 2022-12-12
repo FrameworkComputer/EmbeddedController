@@ -41,16 +41,6 @@
 
 #include <zephyr/devicetree.h>
 
-/*
- * Create guards so that code used for a source is only
- * included if that signal source is configured in the
- * devicetree.
- */
-#define HAS_GPIO_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_gpio)
-#define HAS_VW_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_vw)
-#define HAS_EXT_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_external)
-#define HAS_ADC_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_adc)
-
 /**
  * @brief Definitions for AP power sequence signals.
  *
@@ -86,7 +76,7 @@ enum power_signal {
 
 #undef PWR_SIGNAL_ENUM_COMMA
 
-#if HAS_EXT_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_EXTERNAL
 /**
  * Definitions required for external (board-specific)
  * power signals.
@@ -133,7 +123,7 @@ int board_power_signal_get(enum power_signal signal);
  */
 int board_power_signal_set(enum power_signal signal, int value);
 
-#endif /* HAS_EXT_SIGNALS */
+#endif /* CONFIG_AP_PWRSEQ_SIGNAL_EXTERNAL */
 
 /**
  * @brief Get the value of this power signal.

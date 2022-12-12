@@ -12,8 +12,6 @@
 
 #define MY_COMPAT intel_ap_pwrseq_vw
 
-#if HAS_VW_SIGNALS
-
 /*
  * A callback must be registered on the ESPI device (for the
  * bus events that are required to be handled) that calls
@@ -140,5 +138,3 @@ void power_signal_vw_init(void)
 		vw_update_all(false);
 	}
 }
-
-#endif /* HAS_VW_SIGNALS */

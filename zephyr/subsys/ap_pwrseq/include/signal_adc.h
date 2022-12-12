@@ -6,6 +6,8 @@
 #ifndef __AP_PWRSEQ_SIGNAL_ADC_H__
 #define __AP_PWRSEQ_SIGNAL_ADC_H__
 
+#include <zephyr/devicetree.h>
+
 #include <power_signals.h>
 
 #define PWR_SIG_TAG_ADC PWR_ADC_
@@ -22,9 +24,7 @@
 #define PWR_ADC_ENUM(id) TAG_ADC(PWR_SIG_TAG_ADC, PWR_SIGNAL_ENUM(id)),
 
 enum pwr_sig_adc {
-#if HAS_ADC_SIGNALS
 	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_ADC_ENUM)
-#endif
 		PWR_SIG_ADC_COUNT
 };
 

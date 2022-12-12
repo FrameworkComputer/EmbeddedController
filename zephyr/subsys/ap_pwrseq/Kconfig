@@ -23,6 +23,34 @@ module = AP_PWRSEQ
 module-str = AP power sequencing
 source "subsys/logging/Kconfig.template.log_config"
 
+config AP_PWRSEQ_SIGNAL_ADC
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_ADC_ENABLED
+	help
+	  Helper symbol to enable ADC based power sequencing.
+
+config AP_PWRSEQ_SIGNAL_EXTERNAL
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_EXTERNAL_ENABLED
+	help
+	  Helper symbol to enable external signal based power sequencing.
+
+config AP_PWRSEQ_SIGNAL_GPIO
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_GPIO_ENABLED
+	help
+	  Helper symbol to enable GPIO based power sequencing.
+
+config AP_PWRSEQ_SIGNAL_VW
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_VW_ENABLED
+	help
+	  Helper symbol to enable virtual wire (VW) based power sequencing.
+
 config AP_PWRSEQ_AUTOSTART
 	bool "Start the power sequence thread automatically"
 	default n

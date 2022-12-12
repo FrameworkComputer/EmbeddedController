@@ -6,6 +6,10 @@
 #ifndef __AP_PWRSEQ_SIGNAL_GPIO_H__
 #define __AP_PWRSEQ_SIGNAL_GPIO_H__
 
+#include <zephyr/devicetree.h>
+
+#include <power_signals.h>
+
 #define PWR_SIG_TAG_GPIO PWR_GPIO_
 
 /*
@@ -20,9 +24,7 @@
 #define PWR_GPIO_ENUM(id) TAG_GPIO(PWR_SIG_TAG_GPIO, PWR_SIGNAL_ENUM(id)),
 
 enum pwr_sig_gpio {
-#if HAS_GPIO_SIGNALS
 	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_GPIO_ENUM)
-#endif
 		PWR_SIG_GPIO_COUNT
 };
 

@@ -3,17 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "signal_adc.h"
+
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 
 #include <power_signals.h>
-#include <signal_adc.h>
 
 #define MY_COMPAT intel_ap_pwrseq_adc
-
-#if HAS_ADC_SIGNALS
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
@@ -199,5 +198,3 @@ void power_signal_adc_init(void)
 		power_signal_adc_enable(i);
 	}
 }
-
-#endif /*  HAS_ADC_SIGNALS */
