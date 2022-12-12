@@ -1,0 +1,123 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+
+/ {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &base_accel;
+		bma4xx-int = &lid_accel;
+	};
+	named-i2c-ports {
+	    compatible = "named-i2c-ports";
+
+	    i2c_sensor: i2c-sensor {
+		    i2c-port = <&i2c_ctrl0>;
+		    enum-names = "I2C_PORT_SENSOR";
+	    };
+	    i2c_eeprom: i2c-eeprom {
+		    i2c-port = <&i2c_ctrl0>;
+		    enum-names = "I2C_PORT_EEPROM";
+	    };
+	};
+	gpio-interrupts {
+		int_base_imu: base_imu {
+			handler = "base_sensor_interrupt";
+		};
+
+		int_lid_imu: lid_imu {
+			handler = "lid_sensor_interrupt";
+		};
+	};
+	/*
+	 * change all underlying sensor drivers to bmi260 to have a easier way
+	 * to mock interrupt handlers.
+	 */
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi260";
+			status = "okay";
+		};
+
+		bma422_data: bma422-drv-data {
+			compatible = "cros-ec,drvdata-bmi260";
+			status = "okay";
+		};
+	};
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,bmi260-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_sensor>;
+			drv-data = <&bma422_data>;
+			alternate-for = <&lid_accel>;
+			mutex = <&lid_mutex>;
+		};
+
+		alt_base_accel: alt-base-accel {
+			compatible = "cros-ec,bmi260-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			port = <&i2c_sensor>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_accel>;
+			mutex = <&base_mutex>;
+		};
+
+		alt_base_gyro: alt-base-gyro {
+			compatible = "cros-ec,bmi260-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			port = <&i2c_sensor>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_gyro>;
+			mutex = <&base_mutex>;
+		};
+	};
+};
+
+&i2c_ctrl0 {
+	status="okay";
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&lid_accel {
+	compatible = "cros-ec,bmi260-accel";
+};
+
+&base_accel {
+	compatible = "cros-ec,bmi260-accel";
+};
+
+&base_gyro {
+	compatible = "cros-ec,bmi260-gyro";
+};
+
+&icm42607_data {
+	compatible = "cros-ec,drvdata-bmi260";
+};
+
+&lis2dw12_data {
+	compatible = "cros-ec,drvdata-bmi260";
+};

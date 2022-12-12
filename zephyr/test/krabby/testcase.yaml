@@ -11,7 +11,17 @@ tests:
       - CONFIG_TEST_KRABBY=y
       - CONFIG_MUX_INIT_ADC=y
   krabby.tentacruel:
-    extra_args: DTC_OVERLAY_FILE="common.dts;adc_temp.dts;../program/corsola/ite_interrupts.dtsi;../program/corsola/ite_gpio.dtsi;../program/corsola/tentacruel/thermistor.dtsi;pinctrl.dts"
+    extra_args: DTC_OVERLAY_FILE="common.dts;adc_temp.dts;../program/corsola/ite_interrupts.dtsi;../program/corsola/ite_gpio.dtsi;../program/corsola/tentacruel/thermistor.dtsi;pinctrl.dts;../program/corsola/ite_motionsense.dtsi;../program/corsola/tentacruel/cbi.dtsi;cbi_sensor.dts""
     extra_configs:
       - CONFIG_TEST_TENTACRUEL=y
       - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
+      - CONFIG_EEPROM=y
+      - CONFIG_EEPROM_SIMULATOR=n
+      - CONFIG_EMUL_EEPROM_AT2X=y
+      - CONFIG_PLATFORM_EC_MOTIONSENSE=y
+      - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
+      - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_LID_ANGLE=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI260=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y

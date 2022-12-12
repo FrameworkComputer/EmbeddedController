@@ -18,6 +18,7 @@
 #include "../ite_motionsense.dtsi"
 #include "../ite_usbc.dtsi"
 #include "./thermistor.dtsi"
+#include "./cbi.dtsi"
 
 / {
 	aliases {
@@ -27,6 +28,7 @@
 		 * its own <>_INT_EVENT.
 		 */
 		bmi3xx-int = &base_accel;
+		bma4xx-int = &lid_accel;
 	};
 
 	named-gpios {
@@ -80,7 +82,11 @@
 
 	gpio-interrupts {
 		int_base_imu: base_imu {
-			handler = "motion_interrupt";
+			handler = "base_sensor_interrupt";
+		};
+
+		int_lid_imu: lid_imu {
+			handler = "lid_sensor_interrupt";
 		};
 
 		/delete-node/ usb_c0_ppc_bc12;
@@ -152,11 +158,20 @@
 	motionsense-mutex {
 		base_mutex_bmi323: bmi323-mutex {
 		};
+
+		lid_mutex_bma422: bma422-mutex {
+		};
 	};
 
 	/* Rotation matrix used by drivers. */
 	motionsense-rotation-ref {
-		base_rot_ref_bmi: base-rotation-ref-bmi {
+		lid_rot_ref_bma422: lid-rotation-ref-bma422 {
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 1>;
+		};
+
+		base_rot_ref_bmi323: base-rotation-ref-bmi323 {
 			mat33 = <0 1 0
 				 (-1) 0 0
 				 0 0 1>;
@@ -177,9 +192,39 @@
 			compatible = "cros-ec,drvdata-bmi3xx";
 			status = "okay";
 		};
+
+		bma422_data: bma422-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
 	};
 
 	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bma422>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_bma422>;
+			default-range = <2>;
+			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+			alternate-for = <&lid_accel>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
 		alt_base_accel: alt-base-accel {
 			compatible = "cros-ec,bmi3xx-accel";
 			status = "okay";
@@ -188,7 +233,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex_bmi323>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref_bmi>;
+			rot-standard-ref = <&base_rot_ref_bmi323>;
 			drv-data = <&bmi323_data>;
 			alternate-for = <&base_accel>;
 			configs {
@@ -211,7 +256,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex_bmi323>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref_bmi>;
+			rot-standard-ref = <&base_rot_ref_bmi323>;
 			drv-data = <&bmi323_data>;
 			alternate-for = <&base_gyro>;
 		};
@@ -344,36 +389,6 @@
 	batteries {
 		default_battery: dynapack_c140254 {
 			compatible = "dynapack,c140254", "battery-smart";
-		};
-	};
-
-	/* tentacruel-specific fw_config fields. */
-	tentacruel-fw-config {
-		compatible = "cros-ec,cbi-fw-config";
-		/*
-		 * FW_CONFIG field to describe mainboard orientation in chassis.
-		 */
-		base-gyro {
-			enum-name = "FW_BASE_GYRO";
-			start = <8>;
-			size = <2>;
-
-			None {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_BASE_NONE";
-				value = <0>;
-			};
-			icm42607 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_BASE_ICM42607";
-				value = <1>;
-				default;
-			};
-			bmi323 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_BASE_BMI323";
-				value = <2>;
-			};
 		};
 	};
 };
