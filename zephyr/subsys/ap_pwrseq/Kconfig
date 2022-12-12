@@ -4,6 +4,8 @@
 
 menuconfig AP_PWRSEQ
 	bool "AP Power sequencing support"
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_ENABLED
 	select HAS_TASK_POWERBTN
 	select GPIO_GET_CONFIG
 	help

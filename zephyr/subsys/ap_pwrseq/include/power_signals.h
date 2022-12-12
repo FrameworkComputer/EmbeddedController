@@ -41,8 +41,6 @@
 
 #include <zephyr/devicetree.h>
 
-#if DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq)
-
 /*
  * Create guards so that code used for a source is only
  * included if that signal source is configured in the
@@ -324,7 +322,5 @@ static inline int power_wait_signals_timeout(power_signal_mask_t want,
  * @brief Create a mask from a power signal.
  */
 #define POWER_SIGNAL_MASK(signal) (1 << (signal))
-
-#endif /* DT_HAS_COMPAT_STATUS_OKAY */
 
 #endif /* __AP_PWRSEQ_POWER_SIGNALS_H__ */
