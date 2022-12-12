@@ -13,7 +13,7 @@
 		 * by alias. Using the alias, each driver creates
 		 * its own <>_INT_EVENT.
 		 */
-		icm42607-int = &lid_accel;
+		bmi3xx-int = &lid_accel;
 	};
 
 	/*
@@ -49,8 +49,8 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
-		icm42607_data: icm42607-drv-data {
-			compatible = "cros-ec,drvdata-icm42607";
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
 			status = "okay";
 		};
 	};
@@ -62,7 +62,7 @@
 	 */
 	motionsense-sensor {
 		lid_accel: lid-accel {
-			compatible = "cros-ec,icm42607-accel";
+			compatible = "cros-ec,bmi3xx-accel";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
@@ -71,7 +71,7 @@
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
-			drv-data = <&icm42607_data>;
+			drv-data = <&bmi323_data>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -85,7 +85,7 @@
 		};
 
 		lid_gyro: lid-gyro {
-			compatible = "cros-ec,icm42607-gyro";
+			compatible = "cros-ec,bmi3xx-gyro";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
@@ -93,7 +93,7 @@
 			mutex = <&lid_mutex>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
-			drv-data = <&icm42607_data>;
+			drv-data = <&bmi323_data>;
 		};
 	};
 
