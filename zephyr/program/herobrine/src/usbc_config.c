@@ -63,6 +63,11 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
+__overridable int board_charger_profile_override(struct charge_state_data *curr)
+{
+	return EC_SUCCESS;
+}
+
 int charger_profile_override(struct charge_state_data *curr)
 {
 	int usb_mv;
@@ -85,6 +90,8 @@ int charger_profile_override(struct charge_state_data *curr)
 		for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
 			pd_set_external_voltage_limit(port, usb_mv);
 	}
+
+	board_charger_profile_override(curr);
 
 	return 0;
 }
