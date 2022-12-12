@@ -12,7 +12,7 @@
 
 #include <power_signals.h>
 
-#define MY_COMPAT intel_ap_pwrseq_adc
+#define DT_DRV_COMPAT intel_ap_pwrseq_adc
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
@@ -25,24 +25,26 @@ struct adc_config {
 	enum power_signal signal;
 };
 
-#define ADC_HIGH_DEV(id) DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(id))
+#define ADC_HIGH_DEV(node_id) DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(node_id))
 
-#define ADC_HIGH_CHAN(id) DT_IO_CHANNELS_INPUT(id)
+#define ADC_HIGH_CHAN(node_id) DT_IO_CHANNELS_INPUT(node_id)
 
-#define ADC_THRESH(id) DT_PROP(id, threshold_mv)
+#define ADC_THRESH(node_id) DT_PROP(node_id, threshold_mv)
 
-#define INIT_ADC_CONFIG(id)                                                   \
+#define INIT_ADC_CONFIG(inst)                                                 \
 	{                                                                     \
-		.dev_trig_high = DEVICE_DT_GET(DT_PHANDLE(id, trigger_high)), \
-		.dev_trig_low = DEVICE_DT_GET(DT_PHANDLE(id, trigger_low)),   \
-		.adc_dev = ADC_HIGH_DEV(DT_PHANDLE(id, trigger_high)),        \
-		.adc_ch = ADC_HIGH_CHAN(DT_PHANDLE(id, trigger_high)),        \
-		.threshold = ADC_THRESH(DT_PHANDLE(id, trigger_high)),        \
-		.signal = PWR_SIGNAL_ENUM(id),                                \
+		.dev_trig_high =                                              \
+			DEVICE_DT_GET(DT_INST_PHANDLE(inst, trigger_high)),   \
+		.dev_trig_low =                                               \
+			DEVICE_DT_GET(DT_INST_PHANDLE(inst, trigger_low)),    \
+		.adc_dev = ADC_HIGH_DEV(DT_INST_PHANDLE(inst, trigger_high)), \
+		.adc_ch = ADC_HIGH_CHAN(DT_INST_PHANDLE(inst, trigger_high)), \
+		.threshold = ADC_THRESH(DT_INST_PHANDLE(inst, trigger_high)), \
+		.signal = PWR_DT_INST_SIGNAL_ENUM(inst),                      \
 	},
 
-static const struct adc_config config[] = { DT_FOREACH_STATUS_OKAY(
-	MY_COMPAT, INIT_ADC_CONFIG) };
+static const struct adc_config config[] = { DT_INST_FOREACH_STATUS_OKAY(
+	INIT_ADC_CONFIG) };
 
 /*
  * Bit allocations for atomic state
@@ -138,30 +140,32 @@ int power_signal_adc_disable(enum pwr_sig_adc adc)
 
 #define TAG_ADC(tag, name) DT_CAT(tag, name)
 
-#define PWR_ADC_ENUM(id) TAG_ADC(PWR_SIG_TAG_ADC, PWR_SIGNAL_ENUM(id))
+#define PWR_ADC_ENUM(inst) \
+	TAG_ADC(PWR_SIG_TAG_ADC, PWR_DT_INST_SIGNAL_ENUM(inst))
 
-#define ADC_CB(id, lev) cb_##lev##_##id
+#define ADC_CB(inst, lev) cb_##lev##_##inst
 
-#define ADC_CB_DEFINE(id, lev)                                            \
-	static void ADC_CB(id, lev)(const struct device *dev,             \
-				    const struct sensor_trigger *trigger) \
-	{                                                                 \
-		trigger_##lev(PWR_ADC_ENUM(id));                          \
+#define ADC_CB_DEFINE(inst, lev)                                            \
+	static void ADC_CB(inst, lev)(const struct device *dev,             \
+				      const struct sensor_trigger *trigger) \
+	{                                                                   \
+		trigger_##lev(PWR_ADC_ENUM(inst));                          \
 	}
 
-DT_FOREACH_STATUS_OKAY_VARGS(MY_COMPAT, ADC_CB_DEFINE, high)
-DT_FOREACH_STATUS_OKAY_VARGS(MY_COMPAT, ADC_CB_DEFINE, low)
+DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_CB_DEFINE, high)
+DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_CB_DEFINE, low)
 
-#define ADC_CB_COMMA(id, lev) ADC_CB(id, lev),
+#define ADC_CB_COMMA(inst, lev) ADC_CB(inst, lev),
 
 void power_signal_adc_init(void)
 {
 	struct sensor_trigger trig = { .type = SENSOR_TRIG_THRESHOLD,
 				       .chan = SENSOR_CHAN_VOLTAGE };
-	sensor_trigger_handler_t low_cb[] = { DT_FOREACH_STATUS_OKAY_VARGS(
-		MY_COMPAT, ADC_CB_COMMA, low) };
-	sensor_trigger_handler_t high_cb[] = { DT_FOREACH_STATUS_OKAY_VARGS(
-		MY_COMPAT, ADC_CB_COMMA, high) };
+	sensor_trigger_handler_t low_cb[] = { DT_INST_FOREACH_STATUS_OKAY_VARGS(
+		ADC_CB_COMMA, low) };
+	sensor_trigger_handler_t high_cb[] = {
+		DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_CB_COMMA, high)
+	};
 	int i, rv;
 	int32_t val = 0;
 

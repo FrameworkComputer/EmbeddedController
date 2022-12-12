@@ -15,8 +15,6 @@
 #include <ap_power_host_sleep.h>
 #include <x86_common_pwrseq.h>
 
-#define DT_DRV_COMPAT intel_ap_pwrseq
-
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_MS 250
 

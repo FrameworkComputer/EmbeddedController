@@ -10,7 +10,7 @@
 #include <atomic.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
-#define MY_COMPAT intel_ap_pwrseq_vw
+#define DT_DRV_COMPAT intel_ap_pwrseq_vw
 
 /*
  * A callback must be registered on the ESPI device (for the
@@ -23,11 +23,11 @@
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
-#define INIT_ESPI_SIGNAL(id)                                            \
-	{                                                               \
-		.espi_signal = DT_STRING_UPPER_TOKEN(id, virtual_wire), \
-		.signal = PWR_SIGNAL_ENUM(id),                          \
-		.invert = DT_PROP(id, vw_invert),                       \
+#define INIT_ESPI_SIGNAL(inst)                                                 \
+	{                                                                      \
+		.espi_signal = DT_INST_STRING_UPPER_TOKEN(inst, virtual_wire), \
+		.signal = PWR_DT_INST_SIGNAL_ENUM(inst),                       \
+		.invert = DT_INST_PROP(inst, vw_invert),                       \
 	},
 
 /*
@@ -39,8 +39,8 @@ struct vw_config {
 	bool invert; /* Invert the signal value */
 };
 
-const static struct vw_config vw_config[] = { DT_FOREACH_STATUS_OKAY(
-	MY_COMPAT, INIT_ESPI_SIGNAL) };
+const static struct vw_config vw_config[] = { DT_INST_FOREACH_STATUS_OKAY(
+	INIT_ESPI_SIGNAL) };
 
 /*
  * Current signal value.

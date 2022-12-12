@@ -10,12 +10,12 @@
 
 #include <power_signals.h>
 
-#define MY_COMPAT intel_ap_pwrseq_gpio
+#define DT_DRV_COMPAT intel_ap_pwrseq_gpio
 
-#define INIT_GPIO_SPEC(id) GPIO_DT_SPEC_GET(id, gpios),
+#define INIT_GPIO_SPEC(inst) GPIO_DT_SPEC_INST_GET(inst, gpios),
 
-const static struct gpio_dt_spec spec[] = { DT_FOREACH_STATUS_OKAY(
-	MY_COMPAT, INIT_GPIO_SPEC) };
+const static struct gpio_dt_spec spec[] = { DT_INST_FOREACH_STATUS_OKAY(
+	INIT_GPIO_SPEC) };
 
 /*
  * Configuration for GPIO inputs.
@@ -27,16 +27,16 @@ struct ps_gpio_int {
 	unsigned no_enable : 1;
 };
 
-#define INIT_GPIO_CONFIG(id)                                 \
-	{                                                    \
-		.flags = DT_PROP_OR(id, interrupt_flags, 0), \
-		.signal = PWR_SIGNAL_ENUM(id),               \
-		.no_enable = DT_PROP(id, no_enable),         \
-		.output = DT_PROP(id, output),               \
+#define INIT_GPIO_CONFIG(inst)                                      \
+	{                                                           \
+		.flags = DT_INST_PROP_OR(inst, interrupt_flags, 0), \
+		.signal = PWR_DT_INST_SIGNAL_ENUM(inst),            \
+		.no_enable = DT_INST_PROP(inst, no_enable),         \
+		.output = DT_INST_PROP(inst, output),               \
 	},
 
-const static struct ps_gpio_int gpio_config[] = { DT_FOREACH_STATUS_OKAY(
-	MY_COMPAT, INIT_GPIO_CONFIG) };
+const static struct ps_gpio_int gpio_config[] = { DT_INST_FOREACH_STATUS_OKAY(
+	INIT_GPIO_CONFIG) };
 
 static struct gpio_callback int_cb[ARRAY_SIZE(gpio_config)];
 
