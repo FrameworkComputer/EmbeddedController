@@ -22,6 +22,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
 
 if(DEFINED CONFIG_BOARD_EVOKER)
 	project(evoker)
+	zephyr_library_sources(
+		"evoker/src/charger_override.c"
+	)
 elseif(DEFINED CONFIG_BOARD_HEROBRINE)
 	project(herobrine)
 	add_subdirectory(herobrine)
