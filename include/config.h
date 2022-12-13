@@ -5130,6 +5130,11 @@
 #undef CONFIG_USB_PD_FRS
 
 /*
+ * Enable USB-PD extended power range.
+ */
+#undef CONFIG_USB_PD_EPR
+
+/*
  * USB Product ID. Each platform (e.g. baseboard set) should have a single
  * VID/PID combination. If there is a big enough change within a platform,
  * then we can differentiate USB topologies by varying the HW version field

@@ -470,6 +470,13 @@ config PLATFORM_EC_USB_PD_LONG_PRESS_MAX_MS
 	 partner in ms. Any press longer than this will not be considered a valid USB
 	 PD button press.
 
+config PLATFORM_EC_USB_PD_EPR
+	bool "USB PD Extended Power Range support"
+	depends on PLATFORM_EC_USB_PD_REV30
+	default n
+	help
+	  This enables support for EPR (Extended Power Range).
+
 rsource "Kconfig.svdm_rsp"
 
 endif  # PLATFORM_EC_USB_POWER_DELIVERY

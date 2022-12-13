@@ -201,4 +201,20 @@ void pe_clear_ado(int port);
 void pe_clear_port_data(int port);
 #endif /* TEST_BUILD */
 
+/**
+ * Check whether the port is in EPR mode or not.
+ *
+ * @param port USB-C port number
+ * @return true if the port is in EPR mode or false.
+ */
+bool pe_snk_in_epr_mode(int port);
+
+/**
+ * Checks whether the port is ready for EPR entry.
+ *
+ * @param port USB-C port number
+ * @return true if the port can enter EPR mode or false.
+ */
+bool pe_snk_can_enter_epr_mode(int port);
+
 #endif /* __CROS_EC_USB_PE_H */

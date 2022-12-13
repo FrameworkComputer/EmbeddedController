@@ -287,6 +287,13 @@ enum usb_pe_state {
 	PE_SNK_CHUNK_RECEIVED, /* pe-st76 */
 	PE_VCS_FORCE_VCONN, /* pe-st77 */
 	PE_GET_REVISION, /* pe-st78 */
+
+	/* EPR states */
+	PE_SNK_SEND_EPR_MODE_ENTRY,
+	PE_SNK_EPR_MODE_ENTRY_WAIT_FOR_RESPONSE,
+	PE_SNK_EPR_KEEP_ALIVE,
+	PE_SNK_SEND_EPR_MODE_EXIT,
+	PE_SNK_EPR_MODE_EXIT_RECEIVED,
 };
 
 /*
@@ -426,6 +433,14 @@ __maybe_unused static __const_data const char *const pe_state_names[] = {
 	[PE_DDR_WAIT_FOR_VCONN_OFF] = "PE_DDR_Wait_For_VCONN_Off",
 	[PE_DDR_PERFORM_DATA_RESET] = "PE_DDR_Perform_Data_Reset",
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
+#ifdef CONFIG_USB_PD_EPR
+	[PE_SNK_SEND_EPR_MODE_ENTRY] = "PE_SNK_Send_EPR_Mode_Entry",
+	[PE_SNK_EPR_MODE_ENTRY_WAIT_FOR_RESPONSE] =
+		"PE_SNK_EPR_Mode_Entry_Wait_For_Response",
+	[PE_SNK_EPR_KEEP_ALIVE] = "PE_SNK_EPR_Keep_Alive",
+	[PE_SNK_SEND_EPR_MODE_EXIT] = "PE_SNK_Send_EPR_Mode_Exit",
+	[PE_SNK_EPR_MODE_EXIT_RECEIVED] = "PE_SNK_EPR_Mode_Exit_Received",
+#endif
 #endif /* CONFIG_USB_PD_REV30 */
 };
 
@@ -1056,6 +1071,18 @@ uint32_t pd_get_requested_current(int port)
 	return pe[port].curr_limit;
 }
 
+#ifdef CONFIG_USB_PD_EPR
+/**
+ * Return true if we're in an SPR contract. Note that before exiting EPR mode,
+ * port partners are required first to drop to SPR. Thus, we can be still in
+ * EPR mode (with a SPR contract).
+ */
+static int pe_in_spr_contract(int port)
+{
+	return pd_get_requested_voltage(port) <= PD_MAX_SPR_VOLTAGE;
+}
+#endif /* CONFIG_USB_PD_EPR */
+
 /*
  * Determine if this port may communicate with the cable plug.
  *
@@ -1120,6 +1147,41 @@ static bool pe_can_send_sop_vdm(int port, int vdm_cmd)
 	}
 
 	return false;
+}
+
+static const uint32_t pd_get_fixed_pdo(int port)
+{
+	return pe[port].src_caps[0];
+}
+
+bool pe_snk_in_epr_mode(int port)
+{
+	return PE_CHK_FLAG(port, PE_FLAGS_IN_EPR);
+}
+
+bool pe_snk_can_enter_epr_mode(int port)
+{
+	/*
+	 * 6.4.10.1 of USB PD R3.1 V1.6
+	 *
+	 * 1. A Sink Shall Not be Connected to the Source through a CT-VPD.
+	 * 2. The Source and Sink Shall be in an SPR Explicit Contract.
+	 * 3. The EPR Mode capable bit Shall have been set in the 5V fixed PDO
+	 *    in the last Source_Capabilities Message the Sink received.
+	 * 4. The EPR Mode capable bit Shall have been set in the RDO in the
+	 *    last Request Message the Source received.
+	 */
+	if (is_vpd_ct_supported(port)) {
+		return false;
+	}
+
+	if (!pe_is_explicit_contract(port))
+		return false;
+
+	if (!(pd_get_fixed_pdo(port) & PDO_FIXED_EPR_MODE_CAPABLE))
+		return false;
+
+	return true;
 }
 
 static void pe_send_soft_reset(const int port, enum tcpci_msg_type type)
@@ -1304,7 +1366,8 @@ __overridable bool pd_can_charge_from_device(int port, const int pdo_cnt,
 		 * Get max power that the partner offers (not necessarily what
 		 * this board will request)
 		 */
-		pd_find_pdo_index(pdo_cnt, pdos, PD_REV3_MAX_VOLTAGE, &max_pdo);
+		pd_find_pdo_index(pdo_cnt, pdos, pd_get_max_voltage(),
+				  &max_pdo);
 		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv, &unused);
 		max_mw = max_ma * max_mv / 1000;
 
@@ -1765,6 +1828,60 @@ static bool sink_dpm_requests(int port)
 			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_FRS_DET_DISABLE);
 		} else if (common_src_snk_dpm_requests(port)) {
 			return true;
+#ifdef CONFIG_USB_PD_EPR
+		} else if (PE_CHK_DPM_REQUEST(port,
+					      DPM_REQUEST_EPR_MODE_ENTRY)) {
+			if (pe_snk_in_epr_mode(port)) {
+				PE_CLR_DPM_REQUEST(port,
+						   DPM_REQUEST_EPR_MODE_ENTRY);
+				CPRINTS("C%d: Already in EPR mode", port);
+				return false;
+			}
+
+			if (!pe_snk_can_enter_epr_mode(port)) {
+				PE_CLR_DPM_REQUEST(port,
+						   DPM_REQUEST_EPR_MODE_ENTRY);
+				CPRINTS("C%d: Not allowed to enter EPR", port);
+				return false;
+			}
+
+			pe_set_dpm_curr_request(port,
+						DPM_REQUEST_EPR_MODE_ENTRY);
+			pd_set_max_voltage(PD_MAX_VOLTAGE_MV);
+			set_state_pe(port, PE_SNK_SEND_EPR_MODE_ENTRY);
+			return true;
+		} else if (PE_CHK_DPM_REQUEST(port,
+					      DPM_REQUEST_EPR_MODE_EXIT)) {
+			if (!pe_snk_in_epr_mode(port)) {
+				PE_CLR_DPM_REQUEST(port,
+						   DPM_REQUEST_EPR_MODE_EXIT);
+				CPRINTS("C%d: Not in EPR mode", port);
+				return false;
+			}
+
+			/*
+			 * If we're already in an SPR contract, send an exit
+			 * message. Figure 8-217.
+			 */
+			if (pe_in_spr_contract(port)) {
+				pe_set_dpm_curr_request(
+					port, DPM_REQUEST_EPR_MODE_EXIT);
+				set_state_pe(port, PE_SNK_SEND_EPR_MODE_EXIT);
+				return true;
+			}
+
+			/*
+			 * Can't exit yet because we're still in EPR contract.
+			 * Send an SPR RDO to negotiate an SPR contract.
+			 * Keep DPM_REQUEST_EPR_MODE_EXIT so that we can retry.
+			 */
+			CPRINTS("C%d: Request SPR before EPR exit", port);
+			pd_set_max_voltage(PD_MAX_SPR_VOLTAGE);
+			pe_set_dpm_curr_request(port,
+						DPM_REQUEST_NEW_POWER_LEVEL);
+			set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
+			return true;
+#endif /* CONFIG_USB_PD_EPR */
 		} else {
 			CPRINTF("Unhandled DPM Request %x received\n",
 				dpm_request);
@@ -1776,7 +1893,7 @@ static bool sink_dpm_requests(int port)
 	return false;
 }
 
-/* Get the previous TypeC state. */
+/* Get the previous PE state. */
 static enum usb_pe_state get_last_state_pe(const int port)
 {
 	return pe[port].ctx.previous - &pe_states[0];
@@ -1821,6 +1938,7 @@ static void pe_send_request_msg(int port)
 	uint32_t rdo;
 	uint32_t curr_limit;
 	uint32_t supply_voltage;
+	enum pd_data_msg_type msg;
 
 	/*
 	 * If we are charging through a VPD, the requested voltage and current
@@ -1848,10 +1966,22 @@ static void pe_send_request_msg(int port)
 	pe[port].curr_limit = curr_limit;
 	pe[port].supply_voltage = supply_voltage;
 
-	tx_emsg[port].len = 4;
+	if (IS_ENABLED(CONFIG_USB_PD_EPR) && pe_snk_in_epr_mode(port)) {
+		const uint32_t *src_caps = pd_get_src_caps(port);
 
-	memcpy(tx_emsg[port].buf, (uint8_t *)&rdo, tx_emsg[port].len);
-	send_data_msg(port, TCPCI_MSG_SOP, PD_DATA_REQUEST);
+		tx_emsg[port].len = 8;
+		memcpy(tx_emsg[port].buf, (uint8_t *)&rdo, sizeof(rdo));
+		memcpy(tx_emsg[port].buf + sizeof(rdo),
+		       (uint8_t *)&src_caps[RDO_POS(rdo) - 1],
+		       sizeof(src_caps[0]));
+		msg = PD_DATA_EPR_REQUEST;
+	} else {
+		tx_emsg[port].len = 4;
+		memcpy(tx_emsg[port].buf, (uint8_t *)&rdo, tx_emsg[port].len);
+		msg = PD_DATA_REQUEST;
+	}
+
+	send_data_msg(port, TCPCI_MSG_SOP, msg);
 }
 
 static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
@@ -3223,6 +3353,7 @@ static void pe_snk_wait_for_capabilities_run(int port)
 	uint8_t type;
 	uint8_t cnt;
 	uint8_t ext;
+	uint32_t *payload;
 
 	/*
 	 * Transition to the PE_SNK_Evaluate_Capability state when:
@@ -3234,9 +3365,23 @@ static void pe_snk_wait_for_capabilities_run(int port)
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
 		cnt = PD_HEADER_CNT(rx_emsg[port].header);
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
+		payload = (uint32_t *)rx_emsg[port].buf;
 
 		if ((ext == 0) && (cnt > 0) && (type == PD_DATA_SOURCE_CAP)) {
 			set_state_pe(port, PE_SNK_EVALUATE_CAPABILITY);
+			return;
+		} else if (ext > 0) {
+			switch (type) {
+#ifdef CONFIG_USB_PD_EPR
+			case PD_EXT_EPR_SOURCE_CAP:
+				if (!pe_snk_in_epr_mode(port))
+					break;
+				set_state_pe(port, PE_SNK_EVALUATE_CAPABILITY);
+				break;
+#endif /* CONFIG_USB_PD_EPR */
+			default:
+				extended_message_not_supported(port, payload);
+			}
 			return;
 		}
 	}
@@ -3562,7 +3707,9 @@ static void pe_snk_transition_sink_exit(int port)
  */
 static void pe_snk_ready_entry(int port)
 {
-	print_current_state(port);
+	if (get_last_state_pe(port) != PE_SNK_EPR_KEEP_ALIVE) {
+		print_current_state(port);
+	}
 
 	/* Ensure any message send flags are cleaned up */
 	PE_CLR_MASK(port, PE_MASK_READY_CLR);
@@ -3589,6 +3736,11 @@ static void pe_snk_ready_entry(int port)
 	 * have been sent since enter this state.
 	 */
 	pe_update_wait_and_add_jitter_timer(port);
+
+	if (IS_ENABLED(CONFIG_USB_PD_EPR) && pe_snk_in_epr_mode(port)) {
+		pd_timer_enable(port, PE_TIMER_SINK_EPR_KEEP_ALIVE,
+				PD_T_SINK_EPR_KEEP_ALIVE);
+	}
 }
 
 static void pe_snk_ready_run(int port)
@@ -3615,6 +3767,13 @@ static void pe_snk_ready_run(int port)
 			case PD_EXT_GET_BATTERY_STATUS:
 				set_state_pe(port, PE_GIVE_BATTERY_STATUS);
 				break;
+#ifdef CONFIG_USB_PD_EPR
+			case PD_EXT_EPR_SOURCE_CAP:
+				if (!pe_snk_in_epr_mode(port))
+					break;
+				set_state_pe(port, PE_SNK_EVALUATE_CAPABILITY);
+				break;
+#endif /* CONFIG_USB_PD_EPR */
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES && CONFIG_BATTERY */
 			default:
 				extended_message_not_supported(port, payload);
@@ -3646,6 +3805,17 @@ static void pe_snk_ready_run(int port)
 			case PD_DATA_ALERT:
 				set_state_pe(port, PE_ALERT_RECEIVED);
 				return;
+#ifdef CONFIG_USB_PD_EPR
+			case PD_DATA_EPR_MODE:
+				struct eprmdo *mdo = (void *)payload;
+
+				if (mdo->action == PD_EPRMDO_ACTION_EXIT) {
+					set_state_pe(
+						port,
+						PE_SNK_EPR_MODE_EXIT_RECEIVED);
+				}
+				return;
+#endif /* CONFIG_USB_PD_EPR */
 #endif /* CONFIG_USB_PD_REV30 */
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
@@ -3772,6 +3942,11 @@ static void pe_snk_ready_run(int port)
 
 		/* Inform DPM state machine that PE is set for messages */
 		dpm_set_pe_ready(port, true);
+
+		if (pd_timer_is_expired(port, PE_TIMER_SINK_EPR_KEEP_ALIVE)) {
+			set_state_pe(port, PE_SNK_EPR_KEEP_ALIVE);
+			return;
+		}
 	}
 }
 
@@ -3779,6 +3954,10 @@ static void pe_snk_ready_exit(int port)
 {
 	/* Inform DPM state machine that PE is in ready state */
 	dpm_set_pe_ready(port, false);
+
+	if (IS_ENABLED(CONFIG_USB_PD_EPR) && pe_snk_in_epr_mode(port)) {
+		pd_timer_disable(port, PE_TIMER_SINK_EPR_KEEP_ALIVE);
+	}
 }
 
 /**
@@ -7710,6 +7889,268 @@ static void pe_ddr_perform_data_reset_exit(int port)
 }
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
 
+#ifdef CONFIG_USB_PD_EPR
+static void pe_enter_epr_mode(int port)
+{
+	PE_SET_FLAG(port, PE_FLAGS_IN_EPR);
+	CPRINTS("C%d: Entered EPR", port);
+}
+
+static void pe_exit_epr_mode(int port)
+{
+	PE_CLR_FLAG(port, PE_FLAGS_IN_EPR);
+	PE_CLR_DPM_REQUEST(port, DPM_REQUEST_EPR_MODE_EXIT);
+	CPRINTS("C%d: Exited EPR", port);
+}
+
+/*
+ * PE_SNK_EPR_KEEP_ALIVE
+ */
+static void pe_snk_epr_keep_alive_entry(int port)
+{
+	struct pd_ecdb *ecdb = (void *)tx_emsg[port].buf;
+
+	if (pe_debug_level >= DEBUG_LEVEL_2) {
+		print_current_state(port);
+	}
+
+	ecdb->type = PD_EXT_CTRL_EPR_KEEPALIVE;
+	ecdb->data = 0;
+	tx_emsg[port].len = sizeof(*ecdb);
+
+	send_ext_data_msg(port, TCPCI_MSG_SOP, PD_EXT_CONTROL);
+	pe_sender_response_msg_entry(port);
+}
+
+static void pe_snk_epr_keep_alive_run(int port)
+{
+	enum pe_msg_check msg_check = pe_sender_response_msg_run(port);
+
+	if (msg_check & PE_MSG_DISCARDED) {
+		/*
+		 * An EPR_KeepAlive was discarded due to an incoming message
+		 * from the source. Both ends know the partnership is alive. We
+		 * go back to SNK_Ready and restart the KeepAlive timer.
+		 */
+		set_state_pe(port, PE_SNK_READY);
+		return;
+	}
+
+	if (msg_check & PE_MSG_SENT &&
+	    PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		int type = PD_HEADER_TYPE(rx_emsg[port].header);
+		int cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		int ext = PD_HEADER_EXT(rx_emsg[port].header);
+		struct pd_ecdb *ecdb = (void *)rx_emsg[port].buf;
+
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		if (cnt == 0 || ext == 0 || type != PD_EXT_CONTROL) {
+			CPRINTS("C%d: Protocol Error: 0x%04x", port,
+				rx_emsg[port].header);
+			pe_send_soft_reset(port, TCPCI_MSG_SOP);
+		} else if (ecdb->type == PD_EXT_CTRL_EPR_KEEPALIVE_ACK) {
+			pe_sender_response_msg_exit(port);
+			set_state_pe(port, PE_SNK_READY);
+		}
+
+		return;
+	}
+
+	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
+		pe_set_hard_reset(port);
+}
+
+/*
+ * PE_SNK_SEND_EPR_MODE_ENTRY
+ */
+static void pe_snk_send_epr_mode_entry_entry(int port)
+{
+	struct eprmdo *eprmdo = (void *)tx_emsg[port].buf;
+
+	print_current_state(port);
+
+	/* Send EPR mode entry message */
+	eprmdo->action = PD_EPRMDO_ACTION_ENTER;
+	eprmdo->data = 0; /* EPR Sink Operational PDP */
+	eprmdo->reserved = 0;
+	tx_emsg[port].len = sizeof(*eprmdo);
+
+	send_data_msg(port, TCPCI_MSG_SOP, PD_DATA_EPR_MODE);
+	pe_sender_response_msg_entry(port);
+
+	pd_timer_enable(port, PE_TIMER_SINK_EPR_ENTER, PD_T_ENTER_EPR);
+}
+
+static void pe_snk_send_epr_mode_entry_run(int port)
+{
+	enum pe_msg_check msg_check;
+
+	/* Check the state of the message sent */
+	msg_check = pe_sender_response_msg_run(port);
+
+	if (msg_check & PE_MSG_DISCARDED) {
+		set_state_pe(port, PE_SNK_READY);
+		return;
+	}
+
+	if ((msg_check & PE_MSG_SENT) &&
+	    PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		uint8_t type = PD_HEADER_TYPE(rx_emsg[port].header);
+		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint8_t ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+		if ((ext == 0) && (cnt > 0) && (type == PD_DATA_EPR_MODE)) {
+			struct eprmdo *eprmdo = (void *)rx_emsg[port].buf;
+
+			if (eprmdo->action == PD_EPRMDO_ACTION_ENTER_ACK) {
+				/* EPR Enter Mode Acknowledge received */
+				set_state_pe(
+					port,
+					PE_SNK_EPR_MODE_ENTRY_WAIT_FOR_RESPONSE);
+				return;
+			}
+			/*
+			 * Other actions should result in soft reset but not
+			 * clear from the spec. So, we just let it time out.
+			 */
+		}
+	}
+
+	/* When the SinkEPREnterTimer times out, send a soft reset. */
+	if (pd_timer_is_expired(port, PE_TIMER_SINK_EPR_ENTER)) {
+		pe_send_soft_reset(port, TCPCI_MSG_SOP);
+	} else if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE)) {
+		pe_send_soft_reset(port, TCPCI_MSG_SOP);
+	}
+}
+
+static void pe_snk_send_epr_mode_entry_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
+}
+
+/*
+ * PE_SNK_EPR_MODE_ENTRY_WAIT_FOR_RESPONSE
+ */
+static void pe_snk_epr_mode_entry_wait_for_response_entry(int port)
+{
+	print_current_state(port);
+	/* Wait for EPR Enter Mode response */
+}
+
+static void pe_snk_epr_mode_entry_wait_for_response_run(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		uint8_t type = PD_HEADER_TYPE(rx_emsg[port].header);
+		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint8_t ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+		if ((ext == 0) && (cnt > 0) && (type == PD_DATA_EPR_MODE)) {
+			struct eprmdo *eprmdo = (void *)rx_emsg[port].buf;
+
+			if (eprmdo->action == PD_EPRMDO_ACTION_ENTER_SUCCESS) {
+				pe_enter_epr_mode(port);
+				set_state_pe(port,
+					     PE_SNK_WAIT_FOR_CAPABILITIES);
+				return;
+			} else if (eprmdo->action ==
+				   PD_EPRMDO_ACTION_ENTER_FAILED) {
+				/* Table 6-50 EPR Mode Data Object */
+				CPRINTS("C%d: Failed to enter EPR for 0x%x",
+					port, eprmdo->data);
+			}
+			/* Fall through to soft reset. */
+		}
+		/*
+		 * 6.4.10.1 Process to enter EPR Mode
+		 * "3. If the Sink receives any Message, other than an
+		 * EPR_ModeMessage with ENTER_SUCCESS, the Sink Shall initiate a
+		 * Soft Reset."
+		 */
+		pe_send_soft_reset(port, TCPCI_MSG_SOP);
+		return;
+	}
+
+	/* When the SinkEPREnterTimer times out, send a soft reset. */
+	if (pd_timer_is_expired(port, PE_TIMER_SINK_EPR_ENTER)) {
+		PE_SET_FLAG(port, PE_FLAGS_SNK_WAIT_CAP_TIMEOUT);
+		pe_send_soft_reset(port, TCPCI_MSG_SOP);
+	}
+}
+
+static void pe_snk_epr_mode_entry_wait_for_response_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_SINK_EPR_ENTER);
+	/*
+	 * Figure 8-215 indicates a sink shall enter EPR Mode on exit but Figure
+	 * 6-34 indicates we enter EPR mode only on success (and soft reset
+	 * otherwise). Since the later makes sense, we don't enter EPR here.
+	 */
+}
+
+/*
+ * PE_SNK_SEND_EPR_MODE_EXIT
+ */
+static void pe_snk_send_epr_mode_exit_entry(int port)
+{
+	struct eprmdo *eprmdo = (void *)tx_emsg[port].buf;
+
+	print_current_state(port);
+
+	/* Send EPR mode entry message */
+	eprmdo->action = PD_EPRMDO_ACTION_EXIT;
+	eprmdo->data = 0;
+	eprmdo->reserved = 0;
+	tx_emsg[port].len = sizeof(*eprmdo);
+
+	send_data_msg(port, TCPCI_MSG_SOP, PD_DATA_EPR_MODE);
+	pe_sender_response_msg_entry(port);
+}
+
+static void pe_snk_send_epr_mode_exit_run(int port)
+{
+	enum pe_msg_check msg_check = pe_sender_response_msg_run(port);
+
+	if (msg_check & PE_MSG_DISCARDED) {
+		set_state_pe(port, PE_SNK_READY);
+		return;
+	}
+
+	if (msg_check & PE_MSG_SENT) {
+		pe_sender_response_msg_exit(port);
+		pe_exit_epr_mode(port);
+		set_state_pe(port, PE_SNK_WAIT_FOR_CAPABILITIES);
+	}
+}
+
+/*
+ * PE_SNK_EPR_MODE_EXIT_RECEIVED
+ */
+static void pe_snk_epr_mode_exit_received_entry(int port)
+{
+	print_current_state(port);
+
+	/*
+	 * Table 8-22 Steps for Exiting EPR Mode (Source Initiated) states 'The
+	 * Port Partners are in an Explicit Contract using an SPR PDO.' Thus,
+	 * it's expected Source already has sent new SPR PDOs (and we switched
+	 * to a SPR contract) before it sent EPR mode exit. Violation of this
+	 * results in a hard reset (6.4.10.3.3 Exits due to errors).
+	 */
+	if (!pe_in_spr_contract(port)) {
+		CPRINTS("C%d: Received EPR exit while in EPR contract", port);
+		pe_set_hard_reset(port);
+		return;
+	}
+
+	pe_exit_epr_mode(port);
+	set_state_pe(port, PE_SNK_WAIT_FOR_CAPABILITIES);
+}
+#endif /* CONFIG_USB_PD_EPR */
+
 const uint32_t *const pd_get_src_caps(int port)
 {
 	return pe[port].src_caps;
@@ -8221,6 +8662,29 @@ static __const_data const struct usb_state pe_states[] = {
 		.exit  = pe_ddr_perform_data_reset_exit,
 	},
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
+#ifdef CONFIG_USB_PD_EPR
+	[PE_SNK_EPR_KEEP_ALIVE] = {
+		.entry = pe_snk_epr_keep_alive_entry,
+		.run = pe_snk_epr_keep_alive_run,
+	},
+	[PE_SNK_SEND_EPR_MODE_ENTRY] = {
+		.entry = pe_snk_send_epr_mode_entry_entry,
+		.run = pe_snk_send_epr_mode_entry_run,
+		.exit = pe_snk_send_epr_mode_entry_exit,
+	},
+	[PE_SNK_EPR_MODE_ENTRY_WAIT_FOR_RESPONSE] = {
+		.entry = pe_snk_epr_mode_entry_wait_for_response_entry,
+		.run = pe_snk_epr_mode_entry_wait_for_response_run,
+		.exit = pe_snk_epr_mode_entry_wait_for_response_exit,
+	},
+	[PE_SNK_SEND_EPR_MODE_EXIT] = {
+		.entry = pe_snk_send_epr_mode_exit_entry,
+		.run = pe_snk_send_epr_mode_exit_run,
+	},
+	[PE_SNK_EPR_MODE_EXIT_RECEIVED] = {
+		.entry = pe_snk_epr_mode_exit_received_entry,
+	},
+#endif /* CONFIG_USB_PD_EPR */
 #endif /* CONFIG_USB_PD_REV30 */
 };
 

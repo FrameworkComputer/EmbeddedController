@@ -113,6 +113,14 @@ enum pd_task_timer {
 	PE_TIMER_SENDER_RESPONSE,
 
 	/*
+	 *  6.6.21 EPR Timers of PD R3.1 V1.6
+	 *  This timer is used to ensure the EPR Mode entry process completes
+	 *  within PD_T_ENTER_EPR.
+	 */
+	PE_TIMER_SINK_EPR_ENTER,
+	PE_TIMER_SINK_EPR_KEEP_ALIVE,
+
+	/*
 	 * This timer is used to ensure that the time before the next Sink
 	 * Request Message, after a Wait Message has been received from the
 	 * Source in response to a Sink Request Message.
