@@ -7029,7 +7029,12 @@ struct ec_params_typec_status {
 	uint8_t port;
 } __ec_align1;
 
-struct ec_response_typec_status {
+/*
+ * ec_response_typec_status is deprecated. Use ec_response_typec_status_v1.
+ * If you need to support old ECs who speak only v0, use
+ * ec_response_typec_status_v0 instead. They're binary-compatible.
+ */
+struct ec_response_typec_status /* DEPRECATED */ {
 	uint8_t pd_enabled; /* PD communication enabled - bool */
 	uint8_t dev_connected; /* Device connected - bool */
 	uint8_t sop_connected; /* Device is SOP PD capable - bool */
@@ -7066,6 +7071,53 @@ struct ec_response_typec_status {
 	uint32_t source_cap_pdos[7]; /* Max 7 PDOs can be present */
 
 	uint32_t sink_cap_pdos[7]; /* Max 7 PDOs can be present */
+} __ec_align1;
+
+struct cros_ec_typec_status {
+	uint8_t pd_enabled; /* PD communication enabled - bool */
+	uint8_t dev_connected; /* Device connected - bool */
+	uint8_t sop_connected; /* Device is SOP PD capable - bool */
+	uint8_t source_cap_count; /* Number of Source Cap PDOs */
+
+	uint8_t power_role; /* enum pd_power_role */
+	uint8_t data_role; /* enum pd_data_role */
+	uint8_t vconn_role; /* enum pd_vconn_role */
+	uint8_t sink_cap_count; /* Number of Sink Cap PDOs */
+
+	uint8_t polarity; /* enum tcpc_cc_polarity */
+	uint8_t cc_state; /* enum pd_cc_states */
+	uint8_t dp_pin; /* DP pin mode (MODE_DP_IN_[A-E]) */
+	uint8_t mux_state; /* USB_PD_MUX* - encoded mux state */
+
+	char tc_state[32]; /* TC state name */
+
+	uint32_t events; /* PD_STATUS_EVENT bitmask */
+
+	/*
+	 * BCD PD revisions for partners
+	 *
+	 * The format has the PD major revision in the upper nibble, and the PD
+	 * minor revision in the next nibble. The following two nibbles hold the
+	 * major and minor specification version. If a partner does not support
+	 * the Revision message, only the major revision will be given.
+	 * ex. PD Revision 3.2 Version 1.9 would map to 0x3219
+	 *
+	 * PD revision/version will be 0 if no PD device is connected.
+	 */
+	uint16_t sop_revision;
+	uint16_t sop_prime_revision;
+} __ec_align1;
+
+struct ec_response_typec_status_v0 {
+	struct cros_ec_typec_status typec_status;
+	uint32_t source_cap_pdos[7]; /* Max 7 PDOs can be present */
+	uint32_t sink_cap_pdos[7]; /* Max 7 PDOs can be present */
+} __ec_align1;
+
+struct ec_response_typec_status_v1 {
+	struct cros_ec_typec_status typec_status;
+	uint32_t source_cap_pdos[11]; /* Max 11 PDOs can be present */
+	uint32_t sink_cap_pdos[11]; /* Max 11 PDOs can be present */
 } __ec_align1;
 
 /**
