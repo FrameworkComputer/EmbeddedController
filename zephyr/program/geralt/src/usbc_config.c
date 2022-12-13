@@ -5,15 +5,13 @@
 
 /* Geralt baseboard-specific USB-C configuration */
 
-#include "adc.h"
+#include "charge_manager.h"
 #include "charge_state_v2.h"
-#include "charger.h"
 #include "console.h"
 #include "driver/tcpm/it83xx_pd.h"
-#include "hooks.h"
-#include "usb_charge.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
+#include "zephyr_adc.h"
 
 #include <ap_power/ap_power.h>
 

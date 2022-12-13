@@ -4,7 +4,7 @@
  */
 
 #include "gpio/gpio_int.h"
-#include "usbc/ppc.h"
+#include "usbc_ppc.h"
 
 #include <zephyr/init.h>
 

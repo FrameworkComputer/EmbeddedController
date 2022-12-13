@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 
 #include <zephyr/drivers/gpio.h>
