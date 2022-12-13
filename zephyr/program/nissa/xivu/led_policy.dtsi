@@ -4,8 +4,22 @@
 
 		power-state-charge {
 			charge-state = "PWR_STATE_CHARGE";
-			/* Battery percent range (>= Empty, <= 94%) */
-			batt-lvl = <0 94>;
+			/*
+			 * The EC modifies the raw battery level to a 'Display'
+			 * level that is then sent to the AP.
+			 * The battery percentages that the LED driver uses for
+			 * comparison is the raw level, but the Display values
+			 * are the ones used to determine the LED thresholds.
+			 * The Display values map to raw values as:
+			 * Display	Raw
+			 * 10%		13%
+			 * 11%		14%
+			 * 94%		91%
+			 * 95%		92%
+			 */
+
+			/* Battery display percent range (>= Empty, <= 94%) */
+			batt-lvl = <0 91>;
 
 			color-0 {
 				led-color = <&color_amber>;
@@ -14,8 +28,11 @@
 
 		power-state-charge-lvl-2 {
 			charge-state = "PWR_STATE_CHARGE";
-			/* Battery percent range (>= 95%, <= Near Full) */
-			batt-lvl = <95 97>;
+			/*
+			 * Battery display percent range
+			 * (>= 95%, <= Near Full)
+			 */
+			batt-lvl = <92 97>;
 
 			color-0 {
 				led-color = <&color_white>;
@@ -33,8 +50,8 @@
 		power-state-discharge-s0 {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
-			/* Battery percent range (>= 11%, <= Full) */
-			batt-lvl = <11 100>;
+			/* Battery display percent range (>= 11%, <= Full) */
+			batt-lvl = <14 100>;
 
 			color-0 {
 				led-color = <&color_white>;
@@ -68,8 +85,8 @@
 		power-state-discharge-s0-batt-low {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
-			/* Battery percent range (>= Empty, <= 10%) */
-			batt-lvl = <0 10>;
+			/* Battery display percent range (>= Empty, <= 10%) */
+			batt-lvl = <0 13>;
 
 			/* Amber 1 sec, off 3 sec */
 			color-0 {
