@@ -1167,14 +1167,16 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
 		}
 
-		if ((get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_TCPC) &&
-		    IS_ENABLED(CONFIG_USB_CHARGER)) {
+		if (get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_TCPC) {
 			/* Update charge manager with new VBUS state */
-			usb_charger_vbus_change(port, !!(tcpc_vbus[port] &
-							 BIT(VBUS_PRESENT)));
+			if (IS_ENABLED(CONFIG_USB_CHARGER))
+				usb_charger_vbus_change(port,
+							!!(tcpc_vbus[port] &
+							   BIT(VBUS_PRESENT)));
 
-			if (pd_event)
+			if (pd_event) {
 				*pd_event |= TASK_EVENT_WAKE;
+			}
 		}
 	}
 }
