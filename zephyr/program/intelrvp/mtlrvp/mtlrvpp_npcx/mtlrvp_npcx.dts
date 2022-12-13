@@ -211,15 +211,15 @@
 		label = "NCT38XX_ALERT_1";
 	};
 
-	usb_c0_hb_retimer: jhl8040r-c0@56 {
-		compatible = "intel,jhl8040r";
+	usb_c0_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r";
 		reg = <0x56>;
 		reset-pin = <&usb_c0_hb_retimer_rst>;
 		ls-en-pin = <&usb_c0_hb_retimer_ls_en>;
 	};
 
-	usb_c1_hb_retimer: jhl8040r-c1@57 {
-		compatible = "intel,jhl8040r";
+	usb_c1_hb_retimer: jhl9040r-c1@57 {
+		compatible = "intel,jhl9040r";
 		reg = <0x57>;
 		reset-pin = <&usb_c1_hb_retimer_rst>;
 		ls-en-pin = <&usb_c1_hb_retimer_ls_en>;
@@ -250,15 +250,15 @@
 		int-pin = <&usbc_tcpc_alrt_p3>;
 	};
 
-	usb_c2_hb_retimer: jhl8040r-c2@58 {
-		compatible = "intel,jhl8040r";
+	usb_c2_hb_retimer: jhl9040r-c2@58 {
+		compatible = "intel,jhl9040r";
 		reg = <0x58>;
 		reset-pin = <&usb_c2_hb_retimer_rst>;
 		ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
 	};
 
-	usb_c3_hb_retimer: jhl8040r-c3@59 {
-		compatible = "intel,jhl8040r";
+	usb_c3_hb_retimer: jhl9040r-c3@59 {
+		compatible = "intel,jhl9040r";
 		reg = <0x59>;
 		reset-pin = <&usb_c3_hb_retimer_rst>;
 		ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
