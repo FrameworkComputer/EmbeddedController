@@ -585,7 +585,11 @@ struct tcpc_config_t {
 	const struct tcpm_drv *drv;
 	/* See TCPC_FLAGS_* above */
 	uint32_t flags;
+#ifdef CONFIG_PLATFORM_EC_TCPC_INTERRUPT
+	struct gpio_dt_spec irq_gpio;
+#else
 	enum gpio_signal alert_signal;
+#endif
 };
 
 #ifndef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG

@@ -17,7 +17,10 @@
 			.addr_flags = DT_REG_ADDR(id),                         \
 		},                                                             \
 		.drv = &tcpci_tcpm_drv,                                        \
-		.alert_signal = COND_CODE_1(DT_NODE_HAS_PROP(id, alert_gpio),  \
-			(GPIO_SIGNAL(DT_PHANDLE(id, alert_gpio))),             \
-			(GPIO_LIMIT)),                                         \
+		COND_CODE_1(CONFIG_PLATFORM_EC_TCPC_INTERRUPT,                 \
+			(.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {})),  \
+			(.alert_signal = COND_CODE_1(                          \
+				DT_NODE_HAS_PROP(id, int_pin),                 \
+				(GPIO_SIGNAL(DT_PHANDLE(id, int_pin))),        \
+				(GPIO_LIMIT)))),                               \
 	},

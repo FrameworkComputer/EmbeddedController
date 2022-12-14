@@ -31,6 +31,15 @@ rsource "Kconfig.usb_charger"
 
 if PLATFORM_EC_USBC
 
+config PLATFORM_EC_TCPC_INTERRUPT
+	bool "Enables tcpc driver"
+	default y
+	help
+	  By default, the tcpc driver is automatically enabled and will
+	  initialize using the devicetree configs. Disable to stop tcpc
+	  intterupt callbacks from being generated and save space on flash if a
+	  custom driver is used instead.
+
 config PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT
 	int "Charger input current in mA"
 	depends on PLATFORM_EC_CHARGE_MANAGER

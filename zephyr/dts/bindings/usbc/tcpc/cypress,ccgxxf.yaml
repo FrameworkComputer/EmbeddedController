@@ -14,7 +14,16 @@ properties:
     default: 0
     description: |
       TCPC configuration flags
-  int-pin:
-    type: phandle
+  irq-gpios:
+    type: phandle-array
     required: false
-    description: Interrupt from TCPC
+    description: |
+      Interrupt from TCPC using shim driver
+  int-pin:
+    type: phandles
+    required: false
+    deprecated: true
+    description: |
+      Interrupt from TCPC using gpio-int. This property should only be used when
+      CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n and should be removed when the chip
+      uses the common TCPC driver.

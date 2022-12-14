@@ -384,10 +384,10 @@ static void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C2_PPC_INT_ODL);
 
+#ifndef CONFIG_ZEPHYR
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_C2_TCPC_INT_ODL);
 
-#ifndef CONFIG_ZEPHYR
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C2_BC12_INT_ODL);
@@ -395,8 +395,8 @@ static void board_tcpc_init(void)
 
 	if (ec_cfg_usb_db_type() != DB_USB_ABSENT) {
 		gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
-		gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 #ifndef CONFIG_ZEPHYR
+		gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 		gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 #endif /* !CONFIG_ZEPHYR */
 	}

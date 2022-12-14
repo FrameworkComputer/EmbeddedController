@@ -188,12 +188,14 @@ void ppc_alert(enum gpio_signal signal)
  */
 static void stubs_interrupt_init(void)
 {
+	cprints(CC_USB, "Resetting TCPCs...");
+	cflush();
+
+#if !(CONFIG_PLATFORM_EC_TCPC_INTERRUPT)
 	/* Enable TCPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
-
-	cprints(CC_USB, "Resetting TCPCs...");
-	cflush();
+#endif
 
 	/* Reset generic TCPCI on port 0. */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l), 0);

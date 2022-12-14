@@ -80,8 +80,7 @@ struct tcpci_ctx {
 	const struct tcpci_emul_partner_ops *partner;
 
 	/** Reference to Alert# GPIO emulator. */
-	const struct device *alert_gpio_port;
-	gpio_pin_t alert_gpio_pin;
+	struct gpio_dt_spec irq_gpio;
 };
 
 /** Run-time data used by the emulator */
@@ -105,15 +104,7 @@ struct tcpc_emul_data {
 		.tx_msg = &tcpci_emul_tx_msg_##n,                            \
 		.error_on_ro_write = true,                                   \
 		.error_on_rsvd_write = true,                                 \
-		.alert_gpio_port = COND_CODE_1(                              \
-			DT_INST_NODE_HAS_PROP(n, alert_gpio),                \
-			(DEVICE_DT_GET(DT_GPIO_CTLR(                         \
-				DT_INST_PROP(n, alert_gpio), gpios))),       \
-			(NULL)),                                             \
-		.alert_gpio_pin = COND_CODE_1(                               \
-			DT_INST_NODE_HAS_PROP(n, alert_gpio),                \
-			(DT_GPIO_PIN(DT_INST_PROP(n, alert_gpio), gpios)),   \
-			(0)),                                                \
+		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}),      \
 	};                                                                   \
 	static struct tcpc_emul_data tcpc_emul_data_##n = {                \
 		.tcpci_ctx = &tcpci_ctx##n,                                \

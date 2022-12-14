@@ -4,6 +4,7 @@
  */
 
 #include "driver/tcpm/ps8xxx_public.h"
+#include "usbc/utils.h"
 
 #include <zephyr/devicetree.h>
 
@@ -18,7 +19,7 @@
 		},                                                             \
 		.drv = &ps8xxx_tcpm_drv,                                       \
 		.flags = DT_PROP(id, tcpc_flags),                              \
-		.alert_signal = COND_CODE_1(DT_NODE_HAS_PROP(id, int_pin),     \
-			(GPIO_SIGNAL(DT_PHANDLE(id, int_pin))),                \
-			(GPIO_LIMIT)),                                         \
+		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),            \
 	},
+
+DT_FOREACH_STATUS_OKAY(PS8XXX_COMPAT, TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH)

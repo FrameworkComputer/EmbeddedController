@@ -14,7 +14,8 @@ properties:
     default: 0
     description: |
       TCPC configuration flags
-  int-pin:
-    type: phandle
+  irq-gpios:
+    type: phandle-array
     required: false
-    description: Interrupt from TCPC
+    description: |
+      Interrupt from TCPC

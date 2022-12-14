@@ -40,6 +40,9 @@ config LINK_TEST_SUITE_FLASH
 	help
 	  Include the test suite exercising flash-related code in the binary.
 
+config LINK_TEST_SUITE_GPIO_UNHOOK
+  	bool "Link and execute the unhooked gpio tests"
+
 config LINK_TEST_SUITE_HOST_COMMANDS
 	select PLATFORM_EC_CHARGE_STATE_DEBUG
 	bool "Link and test the host command tests"

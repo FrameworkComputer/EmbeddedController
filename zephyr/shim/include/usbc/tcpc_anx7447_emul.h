@@ -17,7 +17,5 @@
 			.addr_flags = DT_REG_ADDR(id),                         \
 		},                                                             \
 		.drv = &anx7447_tcpm_drv,                                      \
-		.alert_signal = COND_CODE_1(DT_NODE_HAS_PROP(id, alert_gpio),  \
-			(GPIO_SIGNAL(DT_PHANDLE(id, alert_gpio))),             \
-			(GPIO_LIMIT)),                                         \
+		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),            \
 	},

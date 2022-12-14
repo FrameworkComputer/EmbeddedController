@@ -36,4 +36,16 @@
  */
 #define USBC_PORT_FROM_INST(inst) USBC_PORT(DT_DRV_INST(inst))
 
+/*
+ * Check that the TCPC interrupt flag defined in the devicetree is the same as
+ * the hardware.
+ *
+ * @param id: node id of the tcpc port
+ */
+#define TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH(id)                             \
+	BUILD_ASSERT(                                                          \
+		(DT_PROP(id, tcpc_flags) & TCPC_FLAGS_ALERT_ACTIVE_HIGH) == 0, \
+		"TCPC interrupt configuration error for " DT_NODE_FULL_NAME(   \
+			id));
+
 #endif /* __CROS_EC_ZEPHYR_SHIM_USBC_UTIL */

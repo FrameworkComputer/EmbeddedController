@@ -176,10 +176,6 @@ void board_tcpc_init(void)
 	/* Enable PPC interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_swctl));
 
-	/* Enable TCPC interrupts */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
-
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
