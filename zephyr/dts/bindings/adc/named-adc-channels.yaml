@@ -115,3 +115,11 @@ child-binding:
       - ADC_EVB_CH_2
       - ADC_EVB_CH_3
       - ADC_EVB_CH_4
+      - ADC_MAIN_BOARD_ID
+      - ADC_HUB_BOARD_ID
+      - ADC_GPU_BOARD_ID_0
+      - ADC_GPU_BOARD_ID_1
+      - ADC_HUB_DEVICE_ID_0
+      - ADC_HUB_DEVICE_ID_1
+      - ADC_HUB_DEVICE_ID_2
+      - ADC_ADAPTER_CURRENT
