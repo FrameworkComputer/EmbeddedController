@@ -9,7 +9,6 @@
 #include "console.h"
 #include "driver/charger/sm5803.h"
 #include "extpower.h"
-#include "nissa_common.h"
 #include "usb_pd.h"
 
 #include <zephyr/logging/log.h>

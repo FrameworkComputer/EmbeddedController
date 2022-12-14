@@ -11,7 +11,6 @@
 #include "driver/tcpm/raa489000.h"
 #include "extpower.h"
 #include "hooks.h"
-#include "nissa_common.h"
 #include "usb_pd.h"
 
 #include <zephyr/logging/log.h>

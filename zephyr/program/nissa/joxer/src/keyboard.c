@@ -8,7 +8,6 @@
 #include "gpio/gpio.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
-#include "nissa_common.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>

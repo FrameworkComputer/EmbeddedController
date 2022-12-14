@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "../cbi.dtsi"
-
 #include "cbi.dtsi"
 #include "fan.dtsi"
 #include "gpio.dtsi"

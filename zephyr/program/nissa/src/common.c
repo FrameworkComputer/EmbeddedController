@@ -7,9 +7,7 @@
 #include "charge_state_v2.h"
 #include "charger.h"
 #include "chipset.h"
-#include "cros_cbi.h"
 #include "hooks.h"
-#include "nissa_common.h"
 #include "system.h"
 #include "usb_mux.h"
 
@@ -63,50 +61,6 @@ int pd_check_vconn_swap(int port)
 __override uint8_t board_get_charger_chip_count(void)
 {
 	return board_get_usb_pd_port_count();
-}
-
-/*
- * Retrieve sub-board type from FW_CONFIG.
- */
-enum nissa_sub_board_type nissa_get_sb_type(void)
-{
-	static enum nissa_sub_board_type sb = NISSA_SB_UNKNOWN;
-	int ret;
-	uint32_t val;
-
-	/*
-	 * Return cached value.
-	 */
-	if (sb != NISSA_SB_UNKNOWN)
-		return sb;
-
-	sb = NISSA_SB_NONE; /* Defaults to none */
-	ret = cros_cbi_get_fw_config(FW_SUB_BOARD, &val);
-	if (ret != 0) {
-		LOG_WRN("Error retrieving CBI FW_CONFIG field %d",
-			FW_SUB_BOARD);
-		return sb;
-	}
-	switch (val) {
-	default:
-		LOG_WRN("No sub-board defined");
-		break;
-	case FW_SUB_BOARD_1:
-		sb = NISSA_SB_C_A;
-		LOG_INF("SB: USB type C, USB type A");
-		break;
-
-	case FW_SUB_BOARD_2:
-		sb = NISSA_SB_C_LTE;
-		LOG_INF("SB: USB type C, WWAN LTE");
-		break;
-
-	case FW_SUB_BOARD_3:
-		sb = NISSA_SB_HDMI_A;
-		LOG_INF("SB: HDMI, USB type A");
-		break;
-	}
-	return sb;
 }
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,

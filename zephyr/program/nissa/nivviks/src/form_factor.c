@@ -7,7 +7,6 @@
 #include "cros_cbi.h"
 #include "hooks.h"
 #include "motionsense_sensors.h"
-#include "nissa_common.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>

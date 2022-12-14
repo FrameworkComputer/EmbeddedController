@@ -10,7 +10,6 @@
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "hooks.h"
-#include "nissa_common.h"
 #include "system.h"
 #include "usb_mux.h"
 

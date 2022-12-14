@@ -8,7 +8,7 @@
 #include "charger/isl923x_public.h"
 #include "console.h"
 #include "extpower.h"
-#include "nissa_common.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 
 #include <zephyr/logging/log.h>

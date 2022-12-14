@@ -3,12 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* Nissa common declarations */
+/* Nissa sub-board declarations */
 
-#ifndef __CROS_EC_NISSA_NISSA_COMMON_H__
-#define __CROS_EC_NISSA_NISSA_COMMON_H__
-
-#include "usb_mux.h"
+#ifndef __CROS_EC_NISSA_NISSA_SUB_BOARD_H__
+#define __CROS_EC_NISSA_NISSA_SUB_BOARD_H__
 
 enum nissa_sub_board_type {
 	NISSA_SB_UNKNOWN = -1, /* Uninitialised */
@@ -20,4 +18,4 @@ enum nissa_sub_board_type {
 
 enum nissa_sub_board_type nissa_get_sb_type(void);
 
-#endif /* __CROS_EC_NISSA_NISSA_COMMON_H__ */
+#endif /* __CROS_EC_NISSA_NISSA_SUB_BOARD_H__ */

@@ -15,7 +15,7 @@
 #include "hooks.h"
 #include "motion_sense.h"
 #include "motionsense_sensors.h"
-#include "nissa_common.h"
+#include "nissa_sub_board.h"
 #include "tablet_mode.h"
 
 #include <zephyr/devicetree.h>

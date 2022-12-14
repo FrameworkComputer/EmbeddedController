@@ -7,7 +7,6 @@
 #include "fan.h"
 #include "gpio/gpio.h"
 #include "hooks.h"
-#include "nissa_common.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
