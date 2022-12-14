@@ -11,5 +11,6 @@
 #include "peripheral_charger.h"
 
 extern struct pchg_drv cps8100_drv;
+extern struct pchg_drv cps8200_drv;
 
 #endif /* __CROS_EC_WPC_CPS8100_H */
