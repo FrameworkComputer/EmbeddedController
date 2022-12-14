@@ -51,8 +51,11 @@ DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_INIT_I2C);
 
 int pd_check_vconn_swap(int port)
 {
-	/* Allow VCONN swaps if the AP is on. */
-	return chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON);
+	/* Do not allow vconn swap if 5V rail is off. */
+	const struct gpio_dt_spec *const ec_soc_dsw_pwrok_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_soc_dsw_pwrok);
+
+	return gpio_pin_get_dt(ec_soc_dsw_pwrok_gpio);
 }
 
 /*
