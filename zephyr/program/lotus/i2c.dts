@@ -1,0 +1,162 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-2 = &i2c2_0;
+		i2c-3 = &i2c3_0;
+		i2c-4 = &i2c4_1;
+		i2c-5 = &i2c5_0;
+		i2c-6 = &i2c6_1;
+		i2c-7 = &i2c7_0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_hid_slave: hid_slave {
+			/* TODO: how to configure slave mode */
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_HID_SLAVE";
+		};
+		i2c_cypd0: cypd0 {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_CYPD0";
+		};
+		i2c_cypd1: cypd1 {
+			i2c-port = <&i2c2_0>;
+			enum-names = "I2C_PORT_CYPD1";
+		};
+		i2c_battery: battery{
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_BATTERY",
+				"I2C_PORT_CHARGER";
+		};
+		i2c_touchpad: touchpad {
+			i2c-port = <&i2c4_1>;
+			enum-names = "I2C_PORT_TOUCHPAD";
+			dynamic-speed;
+		};
+		i2c_gpu0: gpu0 {
+			i2c-port = <&i2c5_0>;
+			enum-names = "I2C_PORT_GPU0";
+		};
+		i2c_gpu1: gpu1 {
+			i2c-port = <&i2c6_1>;
+			enum-names = "I2C_PORT_GPU1";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c7_0>;
+			enum-names =  "I2C_PORT_SENSOR";
+		};
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c2_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c3_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c4_1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl4 {
+	status = "okay";
+};
+
+&i2c5_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+
+&i2c6_1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl6 {
+	status = "okay";
+};
+
+&i2c7_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl7 {
+	status = "okay";
+};
