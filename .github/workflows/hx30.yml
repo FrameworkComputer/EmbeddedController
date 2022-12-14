@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - hx3*
+      - hx20-hx30*
   pull_request:
     branches: 
-      - hx30
+      - hx20-hx30
   workflow_dispatch:
 
 jobs:
