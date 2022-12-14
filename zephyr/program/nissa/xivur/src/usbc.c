@@ -137,8 +137,7 @@ uint16_t tcpc_get_alert_status(void)
 		}
 	}
 
-	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
@@ -247,7 +246,7 @@ static void poll_c0_int(void)
 
 static void poll_c1_int(void)
 {
-	poll_usb_gpio(1, GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
+	poll_usb_gpio(1, GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
 		      &poll_c1_int_data);
 }
 

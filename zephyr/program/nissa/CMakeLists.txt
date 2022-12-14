@@ -91,6 +91,7 @@ if(DEFINED CONFIG_BOARD_XIVUR)
 	project(xivur)
 	zephyr_library_sources(
 			"xivur/src/led.c"
+			"xivur/src/board.c"
 			"xivur/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "xivur/src/fan.c")

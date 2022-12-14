@@ -121,6 +121,9 @@
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			gpios = <&gpio9 1 GPIO_OUTPUT>;
 		};
+		gpio_en_usb_a1_vbus: en_usb_a1_vbus {
+			gpios = <&gpiod 4 GPIO_OUTPUT>;
+		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_POWER_BUTTON_L";
@@ -172,6 +175,9 @@
 		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_usb_c1_int_odl: usb_c1_int_odl {
+			gpios = <&gpio0 2 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
 			gpios = <&gpio9 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
