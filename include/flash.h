@@ -73,6 +73,13 @@ void crec_flash_print_region_info(void);
 #endif
 #endif /* CONFIG_FLASH_MULTIPLE_REGION */
 
+/**
+ * Get number of flash banks
+ *
+ * @return number of flash banks
+ */
+int crec_flash_total_banks(void);
+
 /* Persistent protection state flash offset / size / bank */
 #if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
 

@@ -220,6 +220,11 @@ int crec_flash_bank_start_offset(int bank)
 
 #endif /* CONFIG_FLASH_MULTIPLE_REGION */
 
+int crec_flash_total_banks(void)
+{
+	return PHYSICAL_BANKS;
+}
+
 static int flash_range_ok(int offset, int size_req, int align)
 {
 	if (offset < 0 || size_req < 0 || offset > CONFIG_FLASH_SIZE_BYTES ||
@@ -763,7 +768,7 @@ uint32_t crec_flash_get_protect(void)
 #endif
 
 	/* Scan flash protection */
-	for (i = 0; i < PHYSICAL_BANKS; i++) {
+	for (i = 0; i < crec_flash_total_banks(); i++) {
 		int is_ro = (i >= WP_BANK_OFFSET &&
 			     i < WP_BANK_OFFSET + WP_BANK_COUNT);
 		enum flash_region region = is_ro ? FLASH_REGION_RO :
@@ -1052,7 +1057,7 @@ static int command_flash_info(int argc, const char **argv)
 #endif
 
 	ccputs("Protected now:");
-	for (i = 0; i < PHYSICAL_BANKS; i++) {
+	for (i = 0; i < crec_flash_total_banks(); i++) {
 		if (!(i & 31))
 			ccputs("\n    ");
 		else if (!(i & 7))
