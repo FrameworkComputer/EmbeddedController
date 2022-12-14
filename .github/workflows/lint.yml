@@ -1,0 +1,38 @@
+name: lint code in pull request
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    name: lint new changes
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: get checkpatch
+        run: |
+          wget "https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl"
+          wget "https://raw.githubusercontent.com/torvalds/linux/master/scripts/spelling.txt"
+          chmod +x checkpatch.pl
+
+      - name: checkpatch
+        run: |
+          git diff origin/${{ github.base_ref }} | ./checkpatch.pl --mailback --no-tree --ignore MAINTAINERS,FILE_PATH_CHANGES,SPDX_LICENSE_TAG - > checkpatch.txt || true
+          exit=0
+          if [ -s checkpatch.txt ]; then
+            errors=$(cat checkpatch.txt)
+            errors="${errors//'%'/'%25'}"
+            errors="${errors//$'\n'/'%0A'}"
+            errors="${errors//$'\r'/'%0D'}"
+            echo "::error file=Checkpatch.txt::$errors"
+            exit=1
+          fi
+          if [ $exit = 1 ]; then
+            exit 1;
+          fi
+      - name: output
+        run: |
+          cat checkpatch.txt
