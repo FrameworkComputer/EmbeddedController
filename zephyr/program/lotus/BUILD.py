@@ -6,6 +6,7 @@ register_npcx_project(
     project_name="lotus",
     zephyr_board="npcx9m3f",
     dts_overlays=[
+        here / "gpio.dts",
         here / "led_pins.dts",
         here / "lotus.dts",
     ],
