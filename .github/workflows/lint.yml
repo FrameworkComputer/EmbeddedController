@@ -2,7 +2,6 @@ name: lint code in pull request
 
 on:
   pull_request:
-    types: [opened, edited, reopened]
 
 jobs:
   build:
@@ -22,6 +21,7 @@ jobs:
       - name: checkpatch
         run: |
           git diff origin/${{ github.base_ref }} | ./checkpatch.pl --mailback --no-tree --ignore MAINTAINERS,FILE_PATH_CHANGES,SPDX_LICENSE_TAG - > checkpatch.txt || true
+          exit=0
           if [ -s checkpatch.txt ]; then
             errors=$(cat checkpatch.txt)
             errors="${errors//'%'/'%25'}"
@@ -30,7 +30,7 @@ jobs:
             echo "::error file=Checkpatch.txt::$errors"
             exit=1
           fi
-          if [ ${exit} == 1 ]; then
+          if [ $exit = 1 ]; then
             exit 1;
           fi
       - name: output

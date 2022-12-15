@@ -15,11 +15,13 @@
 #include "als.h"
 #include "bd99992gw.h"
 #include "button.h"
+#include "battery.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
 #include "cypress5525.h"
+#include "diagnostics.h"
 #include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -52,6 +54,7 @@
 #include "pwm_chip.h"
 #include "spi.h"
 #include "spi_chip.h"
+#include "spi_flash.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -70,6 +73,7 @@
 #include "keyboard_8042.h"
 #include "keyboard_8042_sharedlib.h"
 #include "host_command_customization.h"
+#include "flash_storage.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -359,6 +363,21 @@ void board_reset_pd_mcu(void)
 
 }
 
+void spi_mux_control(int enable)
+{
+	if (enable) {
+		/* Disable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 2);
+	} else {
+		/* Enable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 1);
+	}
+}
+
 static int power_button_pressed_on_boot;
 int poweron_reason_powerbtn(void)
 {
@@ -398,6 +417,9 @@ DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
 static void board_power_off_deferred(void)
 {
 	int i;
+	/* Turn off BGATE and NGATE for power saving */
+	charger_psys_enable(0);
+	charge_gate_onoff(0);
 
 	/* Disable interrupts */
 	interrupt_disable();
@@ -496,19 +518,98 @@ static void check_chassis_open(int init)
 	}
 }
 
+void charge_gate_onoff(uint8_t enable)
+{
+	int control0 = 0x0000;
+	int control1 = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, &control0)) {
+		CPRINTS("read gate control1 fail");
+	}
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read gate control1 fail");
+	}
+
+	if (enable) {
+		control0 &= ~ISL9241_CONTROL0_NGATE;
+		control1 &= ~ISL9241_CONTROL1_BGATE;
+		CPRINTS("B&N Gate off");
+	} else {
+		control0 |= ISL9241_CONTROL0_NGATE;
+		control1 |= ISL9241_CONTROL1_BGATE;
+		CPRINTS("B&N Gate on");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, control0)) {
+		CPRINTS("Update gate control0 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update gate control1 fail");
+	}
+
+}
+
+
+void charger_psys_enable(uint8_t enable)
+{
+	int control1 = 0x0000;
+	int control4 = 0x0000;
+	int data = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read psys control1 fail");
+	}
+
+	if (enable) {
+		control1 &= ~ISL9241_CONTROL1_IMON;
+		control1 |= ISL9241_CONTROL1_PSYS;
+		control4 &= ~ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0B00;		/* Set ACOK reference to 4.544V */
+		CPRINTS("Power saving disable");
+	} else {
+		control1 |= ISL9241_CONTROL1_IMON;
+		control1 &= ~ISL9241_CONTROL1_PSYS;
+		control4 |= ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0000;		/* Set ACOK reference to 0V */
+		CPRINTS("Power saving enable");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, data)) {
+		CPRINTS("Update ACOK reference fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update psys control1 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, control4)) {
+		CPRINTS("Update psys control4 fail");
+	}
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
 	int version = board_get_version();
-	uint8_t memcap;
 
 	if (version > 6)
 		gpio_set_flags(GPIO_EN_INVPWR, GPIO_OUT_LOW);
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+	if (flash_storage_get(FLASH_FLAGS_ACPOWERON) && !ac_boot_status())
+		*host_get_customer_memmap(0x48) = flash_storage_get(FLASH_FLAGS_ACPOWERON);
 
-	if (memcap && !ac_boot_status())
-		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
+	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
+		set_standalone_mode(1);
 
 	check_chassis_open(1);
 
@@ -529,6 +630,7 @@ static void board_chipset_startup(void)
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 1);
 
+	charger_psys_enable(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -537,16 +639,17 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
-	int version = board_get_version();
+	int batt_status;
+
+	battery_status(&batt_status);
 
 	CPRINTS(" HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
 
 #ifdef CONFIG_EMI_REGION1
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 #endif
-	if (version > 6)
-		gpio_set_level(GPIO_EN_INVPWR, 0);
 
+	charger_psys_enable(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
@@ -559,6 +662,7 @@ static void board_chipset_resume(void)
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
+	charger_psys_enable(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -572,6 +676,7 @@ static void board_chipset_suspend(void)
 		gpio_set_level(GPIO_EC_MUTE_L, 0);
 		gpio_set_level(GPIO_CAM_EN, 0);
 	}
+	charger_psys_enable(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,
@@ -640,12 +745,13 @@ BUILD_ASSERT(ARRAY_SIZE(hx20_board_versions) == BOARD_VERSION_COUNT);
 
 int get_hardware_id(enum adc_channel channel)
 {
-	int version= BOARD_VERSION_UNKNOWN;
+	int version[ADC_CH_COUNT] = {BOARD_VERSION_UNKNOWN};
 	int mv;
 	int i;
 
-	if (channel >= ADC_CH_COUNT)
+	if (channel >= ADC_CH_COUNT) {
 		return BOARD_VERSION_UNKNOWN;
+	}
 
 	mv = adc_read_channel(channel);
 
@@ -654,11 +760,11 @@ int get_hardware_id(enum adc_channel channel)
 
 	for (i = 0; i < BOARD_VERSION_COUNT; i++)
 		if (mv < hx20_board_versions[i].thresh_mv) {
-			version = hx20_board_versions[i].version;
-			return version;
+			version[channel] = hx20_board_versions[i].version;
+			return version[channel];
 		}
 
-	return version;
+	return version[channel];
 }
 
 int board_get_version(void)
@@ -743,7 +849,7 @@ static void charger_chips_init(void)
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2, ISL9241_CONTROL2_TRICKLE_CHG_CURR_128 |
 			ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
-			ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100))
+			ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -756,6 +862,9 @@ static void charger_chips_init(void)
 		goto init_fail;
 
 	val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
+
+	/* make sure battery FET is enabled on EC on */
+	val &= ~ISL9241_CONTROL1_BGATE;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL1, val))
@@ -778,15 +887,20 @@ void charger_update(void)
 {
 	static int pre_ac_state;
 	static int pre_dc_state;
-	uint16_t val = 0x0000;
+	int val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
 		pre_dc_state != battery_is_present())
 	{
 		CPRINTS("update charger!!");
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
-				ISL9241_CONTROL1_SWITCH_FREQ | ISL9241_CONTROL1_PSYS;
+		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL1, &val)) {
+			CPRINTS("read charger control1 fail");
+		}
+
+		val |= (ISL9241_CONTROL1_PROCHOT_REF_6800 |
+				ISL9241_CONTROL1_SWITCH_FREQ);
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL1, val)) {
@@ -1039,17 +1153,7 @@ static int cmd_spimux(int argc, char **argv)
 		if (!parse_bool(argv[1], &enable))
 			return EC_ERROR_PARAM1;
 
-		if (enable){
-			/* Disable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 2);
-		} else {
-			/* Enable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 1);
-		}
+		spi_mux_control(enable);
 	}
 	return EC_SUCCESS;
 }

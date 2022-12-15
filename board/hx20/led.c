@@ -229,7 +229,6 @@ static void set_active_port_color(int color)
 static void led_set_battery(void)
 {
 	static int battery_ticks;
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -240,8 +239,11 @@ static void led_set_battery(void)
 		(battery_ticks & 0x2) ? EC_LED_COLOR_RED : EC_LED_COLOR_BLUE);
 		return;
 	}
-	/* Blink both mainboard LEDS as a warning if the chasssis is open and power is on */
-	if (!gpio_get_level(GPIO_CHASSIS_OPEN)) {
+	/*
+	 * Blink both mainboard LEDS as a warning if the chasssis is open and power is on,
+	 * if EC in standalone mode, disable the blinking behavior when chassis is open.
+	 */
+	if (!gpio_get_level(GPIO_CHASSIS_OPEN) && !get_standalone_mode()) {
 		set_pwm_led_color(PWM_LED0, (battery_ticks & 0x2) ? EC_LED_COLOR_RED : -1);
 		set_pwm_led_color(PWM_LED1, (battery_ticks & 0x2) ? EC_LED_COLOR_RED : -1);
 		return;
@@ -263,14 +265,8 @@ static void led_set_battery(void)
 		break;
 	case PWR_STATE_ERROR:
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		set_active_port_color(EC_LED_COLOR_WHITE);
-		break;
 	case PWR_STATE_IDLE:
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color((battery_ticks & 0x4) ?
-					EC_LED_COLOR_AMBER : -1);
-		else
-			set_active_port_color(EC_LED_COLOR_WHITE);
+		set_active_port_color(EC_LED_COLOR_WHITE);
 		break;
 	default:
 		break;
@@ -300,7 +296,7 @@ static void led_set_power(void)
 		if (charge_prevent_power_on(0))
 			set_pwr_led_color(PWM_LED2, (power_tick %
 				LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-				EC_LED_COLOR_RED : -1);
+				EC_LED_COLOR_WHITE : -1);
 		else
 			set_pwr_led_color(PWM_LED2, EC_LED_COLOR_WHITE);
 	} else

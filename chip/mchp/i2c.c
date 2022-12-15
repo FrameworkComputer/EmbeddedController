@@ -744,7 +744,6 @@ static int i2c_mrx_start(int ctrl)
 		}
 	}
 
-
 	cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
 	/* Controller generates START, transmits data(address) capturing
 	 * 9-bits from SDA (8-bit address + (N)Ack bit).

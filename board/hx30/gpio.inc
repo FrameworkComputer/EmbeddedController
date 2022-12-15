@@ -38,6 +38,10 @@ GPIO_INT(CHASSIS_OPEN,    PIN(0161), GPIO_INT_BOTH, chassis_control_interrupt)	/
 GPIO_INT(ADP_IN,          PIN(0172), GPIO_INT_BOTH, extpower_interrupt)		/* Adaptor in from charger ACOK pin */
 GPIO_INT(PLT_RST_L,       PIN(024),  GPIO_INT_BOTH, soc_plt_reset_interrupt)	/* CPU triggered Platform reset */
 
+/* Privacy switches */
+GPIO(CAM_SW,              PIN(067),  GPIO_INT_BOTH) /* Monitor open/close of camera privacy switch */
+GPIO(MIC_SW,              PIN(0175), GPIO_INT_BOTH) /* Monitor open/close of microphone privacy switch */
+
 /* UART input */
 GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
 	 uart_deepsleep_interrupt)
@@ -104,8 +108,6 @@ GPIO(MUX_SBU_UART_FLIP,		PIN(0255), GPIO_OUT_LOW) /* SBU debug mux enable */
 GPIO(EC_PROCHOT_L,	PIN(0222), GPIO_INPUT | GPIO_ODR_HIGH)
 GPIO(FAN_SPEED,         PIN(050),  GPIO_INPUT)
 GPIO(FP_CTRL,		PIN(0245), GPIO_INPUT) /* Fingerprint control */
-GPIO(CAM_SW,		PIN(067),  GPIO_INPUT) /* (UNIMPLEMENTED) Monitor to close CAM PWR */
-GPIO(MIC_SW,		PIN(0175), GPIO_INPUT) /* (UNIMPLEMENTED) DMIC function */
 GPIO(SOC_EC_INT_L,	PIN(0246), GPIO_INPUT | GPIO_ODR_HIGH)    /* HID interrupt, notify host to read data */
 
 GPIO(TYPEC_G_DRV2_EN,	PIN(0101), GPIO_OUT_HIGH)    /* LED drv */

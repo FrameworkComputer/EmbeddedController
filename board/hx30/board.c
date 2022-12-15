@@ -312,6 +312,8 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 	GPIO_AC_PRESENT,
 	GPIO_ON_OFF_BTN_L,
+	GPIO_CAM_SW,
+	GPIO_MIC_SW,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
@@ -821,7 +823,7 @@ int get_hardware_id(enum adc_channel channel)
 	int mv;
 	int i;
 
-	mv = adc_read_channel(ADC_AD_BID);
+	mv = adc_read_channel(channel);
 
 	if (mv == ADC_READ_ERROR)
 		return BOARD_VERSION_UNKNOWN;

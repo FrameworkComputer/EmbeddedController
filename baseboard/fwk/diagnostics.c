@@ -114,8 +114,9 @@ bool diagnostics_tick(void)
 		set_hw_diagnostic(DIAGNOSTICS_NO_S0, true);
 	}
 
-    if ((charge_get_state() == PWR_STATE_ERROR) && !standalone_mode)
+	if ((charge_get_state() == PWR_STATE_ERROR) && !standalone_mode) {
 		set_hw_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, true);
+	}
 
 	if (hw_diagnostic_tick & 0x01) {
 		/*off*/

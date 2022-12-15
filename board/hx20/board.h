@@ -161,6 +161,7 @@
 
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_SMART
+#define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_CHARGE_MANAGER
 /* #define CONFIG_CHARGE_RAMP_SW */
@@ -727,7 +728,6 @@ void board_reset_pd_mcu(void);
 /* P sensor */
 void psensor_interrupt(enum gpio_signal signal);
 
-
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);
 
@@ -769,11 +769,15 @@ void update_me_change(int change);
 
 int poweron_reason_powerbtn(void);
 
+void spi_mux_control(int enable);
+
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
 void board_resume_from_deep_sleep(void);
 #endif
 
+void charge_gate_onoff(uint8_t enable);
+void charger_psys_enable(uint8_t enable);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

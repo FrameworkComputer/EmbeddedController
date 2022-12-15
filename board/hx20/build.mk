@@ -17,15 +17,13 @@ CHIP_VARIANT:=mec152x_3400
 
 CHIP_SPI_SIZE_KB:=512
 
-board-y=board.o led.o power_sequence.o cypress5525.o ucsi.o diagnostics.o cpu_power.o
-board-$(CONFIG_BATTERY_SMART)+=battery.o
-board-$(CONFIG_FANS)+=fan.o
+BASEBOARD:=fwk
+
+board-y=board.o led.o power_sequence.o cypress5525.o ucsi.o cpu_power.o
 board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o
 board-$(CONFIG_POWER_BUTTON_CUSTOM) += power_button_x86.o
 board-$(CONFIG_PECI) += peci_customization.o
 board-$(HAS_TASK_HOSTCMD) += host_command_customization.o
-board-$(CONFIG_SYSTEMSERIAL_DEBUG) += system_serial.o
-board-$(CONFIG_8042_AUX) += ps2mouse.o
 board-$(CONFIG_I2C_HID_MEDIAKEYS) += i2c_hid_mediakeys.o
 
 
