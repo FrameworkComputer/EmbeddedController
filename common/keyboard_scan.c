@@ -6,6 +6,7 @@
 /* Keyboard scanner module for Chrome EC */
 
 #include "adc.h"
+#include "atomic_bit.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -146,16 +147,21 @@ test_export_static int keyboard_scan_is_enabled(void)
 
 void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 {
+	atomic_val_t old;
 	/* Access atomically */
 	if (enable) {
-		atomic_clear_bits((atomic_t *)&disable_scanning_mask, mask);
+		old = atomic_clear_bits((atomic_t *)&disable_scanning_mask,
+					mask);
 	} else {
-		atomic_or((atomic_t *)&disable_scanning_mask, mask);
+		old = atomic_or((atomic_t *)&disable_scanning_mask, mask);
 		clear_typematic_key();
 	}
 
-	/* Let the task figure things out */
-	task_wake(TASK_ID_KEYSCAN);
+	/* Using atomic_get() causes build errors on some archs */
+	if (old != disable_scanning_mask) {
+		/* If the mask has changed, let the task figure things out */
+		task_wake(TASK_ID_KEYSCAN);
+	}
 }
 
 /**
