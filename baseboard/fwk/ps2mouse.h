@@ -54,6 +54,12 @@ enum ps2_mouse_task_evt {
 
 };
 
+enum ps2_mouse_report_mode {
+	PS2MOUSE_REPORT_UNKNOWN,
+	PS2MOUSE_REPORT_PARALLEL,
+	PS2MOUSE_REPORT_HYBRID,
+};
+
 #define LEFT_BTN BIT(0)
 #define RIGHT_BTN BIT(1)
 #define MIDDLE_BTN BIT(2)

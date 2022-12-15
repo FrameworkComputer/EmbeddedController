@@ -338,6 +338,7 @@ void read_touchpad_in_report(void)
 	int need_reset = 0;
 	uint8_t data[128];
 	int xfer_len = 0;
+	int report_mode = PS2MOUSE_REPORT_UNKNOWN;
 	int16_t x, y;
 	uint8_t response_byte = 0x08;
 
@@ -368,7 +369,11 @@ void read_touchpad_in_report(void)
 		CPRINTS("PS2M Touchpad need to reset");
 		xfer_len = 6;
 		need_reset = 1;
-	}
+	} else if (xfer_len == 7)
+		report_mode = PS2MOUSE_REPORT_HYBRID;
+	else if (xfer_len == 8)
+		report_mode = PS2MOUSE_REPORT_PARALLEL;
+
 	xfer_len = MIN(126, xfer_len-2);
 	rv = i2c_xfer_unlocked(I2C_PORT_TOUCHPAD,
 							TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
@@ -412,8 +417,20 @@ read_failed:
 	if (rv == EC_SUCCESS && data[2] == 0x02) {
 		/*0x0800 02 04 feff 0000
 		 *0x0800 02 04 fdff ffff */
-		x = (int16_t)(data[4] + (data[5] << 8));
-		y = -(int16_t)(data[6] + (data[7] << 8));
+		if (report_mode == PS2MOUSE_REPORT_HYBRID) {
+
+			if (data[4] & 0x80)
+				x = (int16_t)(data[4] + (0xff << 8));
+			else
+				x = (int16_t)data[4];
+			if (data[5] & 0x80)
+				y = -(int16_t)(data[5] + (0xff << 8));
+			else
+				y = -(int16_t)data[5];
+		} else {
+			x = (int16_t)(data[4] + (data[5] << 8));
+			y = -(int16_t)(data[6] + (data[7] << 8));
+		}
 		x = MIN(255, MAX(x, -255));
 		y = MIN(255, MAX(y, -255));
 		/*button data*/
