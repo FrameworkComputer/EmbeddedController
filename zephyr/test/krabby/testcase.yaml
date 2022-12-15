@@ -6,12 +6,12 @@ common:
   platform_allow: native_posix
 tests:
   krabby.default:
-    extra_args: DTC_OVERLAY_FILE="common.dts;../program/corsola/ite_interrupts.dtsi;../program/corsola/ite_gpio.dtsi;pinctrl.dts"
+    extra_args: DTC_OVERLAY_FILE="krabby.default.overlay"
     extra_configs:
       - CONFIG_TEST_KRABBY=y
       - CONFIG_MUX_INIT_ADC=y
   krabby.tentacruel:
-    extra_args: DTC_OVERLAY_FILE="common.dts;adc_temp.dts;../program/corsola/ite_interrupts.dtsi;../program/corsola/ite_gpio.dtsi;../program/corsola/tentacruel/thermistor.dtsi;pinctrl.dts;../program/corsola/ite_motionsense.dtsi;../program/corsola/tentacruel/cbi.dtsi;cbi_sensor.dts""
+    extra_args: DTC_OVERLAY_FILE="krabby.tentacruel.overlay"
     extra_configs:
       - CONFIG_TEST_TENTACRUEL=y
       - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
