@@ -2,12 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config ADC
+config NAMED_ADC_CHANNELS
+	bool "Named ADC Channels support"
 	default y
 	depends on DT_HAS_NAMED_ADC_CHANNELS_ENABLED
+	select ADC
 
-# Note - CONFIG_ADC is defined in upstream Zephyr
-if ADC
+# Options using the named channels APIs.
+if NAMED_ADC_CHANNELS
 
 # Chromium EC provides it's own "adc" command.  Disable the Zephyr
 # built-in ADC shell command.
@@ -23,6 +25,11 @@ config PLATFORM_EC_ADC_CMD
 	  console command and reading a state of ADC channel with the
 	  EC_CMD_ADC_READ host command. Replaces generic Zephyr "adc"
 	  command.
+
+endif # NAMED_ADC_CHANNELS
+
+# Options used by native drivers as well.
+if ADC
 
 config PLATFORM_EC_ADC_RESOLUTION
 	int "ADC resolution"

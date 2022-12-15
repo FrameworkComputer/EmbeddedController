@@ -16,9 +16,6 @@ LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 #error "Define only one 'adc' console command."
 #endif
 
-#define HAS_NAMED_ADC_CHANNELS DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
-
-#if HAS_NAMED_ADC_CHANNELS
 #define ADC_CHANNEL_INIT(node_id) \
 	[ZSHIM_ADC_ID(node_id)] = {                                       \
 		.name = DT_NODE_FULL_NAME(node_id),                       \
@@ -42,13 +39,11 @@ struct adc_t adc_channels[] = { DT_FOREACH_CHILD(DT_INST(0, named_adc_channels),
 const struct adc_t adc_channels[] = { DT_FOREACH_CHILD(
 	DT_INST(0, named_adc_channels), ADC_CHANNEL_INIT) };
 #endif
-#endif /* named_adc_channels */
 
 static int init_device_bindings(const struct device *device)
 {
 	ARG_UNUSED(device);
 
-#if HAS_NAMED_ADC_CHANNELS
 	for (int i = 0; i < ARRAY_SIZE(adc_channels); i++) {
 		if (!device_is_ready(adc_channels[i].dev))
 			k_oops();
@@ -56,7 +51,6 @@ static int init_device_bindings(const struct device *device)
 		adc_channel_setup(adc_channels[i].dev,
 				  &adc_channels[i].channel_cfg);
 	}
-#endif
 
 	return 0;
 }
