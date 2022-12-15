@@ -294,9 +294,18 @@ void set_ps2_mouse_emulation(bool disable)
 }
 void set_power(bool standby)
 {
-	int data = BIT(11) + standby ? 1 : 0;
+	uint16_t data = BIT(11) | (standby ? 0x01 : 0x0);
 
-	i2c_write_offset16(I2C_PORT_TOUCHPAD, TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN, PCT3854_COMMAND, data, 1);
+	i2c_write_offset16(I2C_PORT_TOUCHPAD,
+		TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN, PCT3854_COMMAND, data, 2);
+}
+
+void set_reset(void)
+{
+	uint16_t data = BIT(8);
+
+	i2c_write_offset16(I2C_PORT_TOUCHPAD,
+		TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN, PCT3854_COMMAND, data, 2);
 }
 
 void setup_touchpad(void)
@@ -491,6 +500,8 @@ void mouse_interrupt_handler_task(void *p)
 					CPRINTS("PS2M Configuring for ps2 emulation mode");
 					/*tp takes about 80 ms to come up, wait a bit*/
 					usleep(200*MSEC);
+					set_power(false);
+					set_reset();
 					setup_touchpad();
 
 					gpio_enable_interrupt(GPIO_SOC_TP_INT_L);
@@ -501,12 +512,15 @@ void mouse_interrupt_handler_task(void *p)
 				}
 				if (power_state == POWER_S0S3 || power_state == POWER_S5) {
 					/* Power Down */
+					set_power(true);
 					gpio_disable_interrupt(GPIO_SOC_TP_INT_L);
 					gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 				}
 			}
 			if (evt & PS2MOUSE_EVT_REENABLE) {
 				CPRINTS("PS2M renabling");
+				set_power(false);
+				set_reset();
 				setup_touchpad();
 				gpio_enable_interrupt(GPIO_SOC_TP_INT_L);
 				gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
