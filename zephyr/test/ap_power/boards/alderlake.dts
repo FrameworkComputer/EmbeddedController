@@ -127,10 +127,30 @@
 		dbg-label = "PP3300 PWROK";
 		enum-name = "PWR_DSW_PWROK";
 	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <6>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+	mock_cmp_high: mock-cmp-high {
+		compatible = "cros,vcmp-mock";
+		threshold-mv = <50>;
+		io-channels = <&adc0 0>;
+	};
+	mock_cmp_low: mock-cmp-low {
+		compatible = "cros,vcmp-mock";
+		threshold-mv = <100>;
+		io-channels = <&adc0 1>;
+	};
 	pwr-pp1p05-pwrok {
-		compatible = "intel,ap-pwrseq-external";
-		dbg-label = "PP1P05 PWROK";
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP1P05 PWROK (from ADC)";
 		enum-name = "PWR_PG_PP1P05";
+		trigger-high = <&mock_cmp_high>;
+		trigger-low = <&mock_cmp_low>;
 	};
 
 	en_pp3300_emul: en-pp3300-emul {
