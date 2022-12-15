@@ -385,7 +385,7 @@ mux_state_t get_mux_mode_to_set(int port)
 	 * If the SoC is down, then we disconnect the MUX to save power since
 	 * no one cares about the data lines.
 	 */
-	if (IS_ENABLED(CONFIG_POWER_COMMON) &&
+	if (IS_ENABLED(CONFIG_AP_POWER_CONTROL) &&
 	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
 		return USB_PD_MUX_NONE;
 

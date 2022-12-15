@@ -1768,12 +1768,10 @@ void tc_event_check(int port, int evt)
 			pd_dpm_request(port, DPM_REQUEST_HARD_RESET_SEND);
 	}
 
-#ifdef CONFIG_POWER_COMMON
-	if (IS_ENABLED(CONFIG_POWER_COMMON)) {
+	if (IS_ENABLED(CONFIG_AP_POWER_CONTROL)) {
 		if (evt & PD_EVENT_POWER_STATE_CHANGE)
 			handle_new_power_state(port);
 	}
-#endif /* CONFIG_POWER_COMMON */
 
 	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 		int i;
@@ -1892,10 +1890,11 @@ static void pd_update_dual_role_config(int port)
 
 __maybe_unused static void handle_new_power_state(int port)
 {
-	if (!IS_ENABLED(CONFIG_POWER_COMMON))
+	if (!IS_ENABLED(CONFIG_AP_POWER_CONTROL))
 		assert(0);
 
-	if (IS_ENABLED(CONFIG_POWER_COMMON) && IS_ENABLED(CONFIG_USB_PE_SM)) {
+	if (IS_ENABLED(CONFIG_AP_POWER_CONTROL) &&
+	    IS_ENABLED(CONFIG_USB_PE_SM)) {
 		if (chipset_in_or_transitioning_to_state(
 			    CHIPSET_STATE_ANY_OFF)) {
 			/*
