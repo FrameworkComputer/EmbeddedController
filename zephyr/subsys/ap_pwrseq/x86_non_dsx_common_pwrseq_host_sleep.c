@@ -6,6 +6,72 @@
 #include <ap_power_host_sleep.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
+#ifdef CONFIG_AP_SLP_S0_DEBUG
+#include "util.h"
+
+LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
+
+static void slp_s0_debug_alarm(struct k_work *work)
+{
+	/* Wake up host by rtc event */
+	host_set_single_event(EC_HOST_EVENT_RTC);
+}
+static K_WORK_DELAYABLE_DEFINE(slp_s0_debug_alarm_data, slp_s0_debug_alarm);
+
+static enum ec_status
+host_command_slp_s0_debug_alarm(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_set_alarm_slp_s0_dbg *p = args->params;
+	struct k_work_sync work_sync;
+
+	if (p->time < 1)
+		k_work_cancel_delayable_sync(&slp_s0_debug_alarm_data,
+					     &work_sync);
+	else
+		k_work_schedule(&slp_s0_debug_alarm_data, K_SECONDS(p->time));
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SET_ALARM_SLP_S0_DBG,
+		     host_command_slp_s0_debug_alarm, EC_VER_MASK(0));
+
+/**
+ * Test the RTC alarm by setting an interrupt on RTC match.
+ */
+static int console_command_slp_s0_debug_alarm(const struct shell *sh, int argc,
+					      const char **argv)
+{
+	uint16_t s;
+	char *e;
+	struct k_work_sync work_sync;
+
+	s = strtoi(argv[1], &e, 10);
+	if (*e) {
+		shell_error(sh, "Invalid argument, numbers only");
+		return -EINVAL;
+	}
+
+	if (s < 1) {
+		k_work_cancel_delayable_sync(&slp_s0_debug_alarm_data,
+					     &work_sync);
+		shell_fprintf(sh, SHELL_INFO,
+			      "SLP_S0 debug alarm is canceled\n");
+	} else {
+		k_work_schedule(&slp_s0_debug_alarm_data, K_SECONDS(s));
+		shell_fprintf(sh, SHELL_INFO,
+			      "SLP_S0 debug alarm is set to go off in %d sec\n",
+			      s);
+	}
+
+	return EC_SUCCESS;
+}
+SHELL_CMD_ARG_REGISTER(slp_s0_debug_alarm, NULL,
+		       "Set SLP_S0 alarm time. "
+		       "Usage: slp_s0_debug_alarm <seconds>",
+		       console_command_slp_s0_debug_alarm, 2, 0);
+
+#endif
+
 /**
  * Type of sleep hang detected
  */
@@ -27,6 +93,13 @@ static K_WORK_DELAYABLE_DEFINE(sleep_transition_timeout_data,
 
 void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
+#ifdef CONFIG_AP_SLP_S0_DEBUG
+	LOG_ERR("Detected sleep hang cancel the slp_s0_debug_alarm"
+		"and don't trigger EC_HOST_EVENT_HANG_DETECT\n");
+	k_work_cancel_delayable(&slp_s0_debug_alarm_data);
+	return;
+#endif /* CONFIG_AP_SLP_S0_DEBUG */
+
 	/*
 	 * Wake up the AP so they don't just chill in a non-suspended state and
 	 * burn power. Overload a vaguely related event bit since event bits are

@@ -198,6 +198,21 @@ config AP_PWRSEQ_DEBUG_MODE_COMMAND
 	  during this time EC may lose Sx lines, This option enables console
 	  command to enable debug mode and prevent force shutdown.
 
+config AP_SLP_S0_DEBUG
+	bool "SLP_S0 debug"
+	depends on AP_PWRSEQ_S0IX
+	help
+	  Enable debugging of SLP_S0 timeouts.  This option enables
+	  the host command EC_CMD_SET_ALARM_SLP_S0_DBG and the console
+	  command  'slp_s0_debug_alarm'.
+
+	  These commands set a debug alarm time in seconds. If the debug
+	  alarm expires, the EC generates an RTC wake event to the host.
+
+	  If the sleep timeout expires before the debug alarm, then the
+	  debug alarm is cancelled.
+
+
 endif
 
 config AP_EVENTS

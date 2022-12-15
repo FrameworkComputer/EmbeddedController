@@ -7916,6 +7916,13 @@ struct ec_params_ucsi_ppm_get {
 	uint8_t size;
 } __ec_align2;
 
+#define EC_CMD_SET_ALARM_SLP_S0_DBG 0x0142
+
+/* RTC params and response structures */
+struct ec_params_set_alarm_slp_s0_dbg {
+	uint32_t time;
+} __ec_align2;
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 

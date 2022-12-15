@@ -9467,6 +9467,33 @@ static int cmd_console_print(int argc, char *argv[])
 	return ec_command(EC_CMD_CONSOLE_PRINT, 0, msg, msg_len + 1, NULL, 0);
 }
 
+int cmd_set_alarm_slp_s0_dbg(int argc, char *argv[])
+{
+	struct ec_params_set_alarm_slp_s0_dbg p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <sec>\n", argv[0]);
+		return -1;
+	}
+	p.time = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad time.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_SET_ALARM_SLP_S0_DBG, 0, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	if (p.time == 0)
+		printf("Disabling alarm for SLP S0 Debug.\n");
+	else
+		printf("Wake host in %d secs for SLP_S0 Debug.\n", p.time);
+	return 0;
+}
+
 struct param_info {
 	const char *name; /* name of this parameter */
 	const char *help; /* help message */
@@ -12366,6 +12393,10 @@ const struct command commands[] = {
 	  "[reboot] [help]\n"
 	  "\tStress test the ec host command interface." },
 	{ "switches", cmd_switches, "\n\tPrints current EC switch positions" },
+	{ "slps0dbgsetalarm", cmd_set_alarm_slp_s0_dbg,
+	  "<sec>\n"
+	  "\tSet alarm to wake host in <sec> seconds, "
+	  "PS: EC won't wake host if SLP_S0 is not asserted" },
 	{ "sysinfo", cmd_sysinfo,
 	  "[flags|reset_flags|firmware_copy]\n"
 	  "\tDisplay system info." },
