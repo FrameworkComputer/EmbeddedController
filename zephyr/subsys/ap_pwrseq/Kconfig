@@ -27,6 +27,7 @@ config AP_PWRSEQ_SIGNAL_ADC
 	bool
 	default y
 	depends on DT_HAS_INTEL_AP_PWRSEQ_ADC_ENABLED
+	select SENSOR
 	help
 	  Helper symbol to enable ADC based power sequencing.
 
