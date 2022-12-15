@@ -17,6 +17,7 @@
 #define CONFIG_KEYBOARD_FACTORY_TEST
 
 /* charger margin */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
 #define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
 
 /* Motion sensing drivers */

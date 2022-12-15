@@ -47,6 +47,7 @@
  * b/147463641: The charger IC seems to overdraw ~4%, therefore we
  * reduce our target accordingly.
  */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
 #define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 4
 #define CONFIG_OCPC
 #undef CONFIG_CHARGER_SINGLE_CHIP

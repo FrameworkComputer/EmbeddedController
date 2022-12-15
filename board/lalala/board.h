@@ -37,6 +37,7 @@
  * b/147463641: The charger IC seems to overdraw ~4%, therefore we
  * reduce our target accordingly.
  */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
 #define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 4
 
 /* GPIO for C1 interrupts, for baseboard use */

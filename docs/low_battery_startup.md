@@ -427,3 +427,13 @@ Optional.
 Similar to `CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON`, this is the minimum
 charger power needed to boot even when the battery is less than
 `CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON_WITH_AC`
+
+### `CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT`
+
+Optional, default 5%.
+
+This option reduces the charger's programmed current limit below the detected
+current limit for a given charger in an attempt to ensure that load transients
+won't overcurrent the source. Devices that require a lot of power to boot may
+need to either decrease the derating factor (if behavior remains acceptable when
+decreased) or increase `MIN_POWER_MW` settings to compensate.

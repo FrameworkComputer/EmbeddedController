@@ -27,6 +27,7 @@
 #define CONFIG_MP2964
 
 /* OEM requested 5% charger current margin */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
 #define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
 
 /* LED */

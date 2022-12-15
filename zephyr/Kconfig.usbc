@@ -66,7 +66,7 @@ config PLATFORM_EC_CHARGER_MIN_INPUT_CURRENT_LIMIT
 
 config PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT
 	int "Charger input current derating percentage"
-	default 0
+	default 5
 	depends on PLATFORM_EC_CHARGE_MANAGER
 	help
 	  Setting this to a nonzero value causes actual charger current limits
@@ -79,6 +79,16 @@ config PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT
 	  safety-related reasons. If a more complex (non-linear) adjustment is
 	  required, boards should override the board_set_charge_limit()
 	  function instead of configuring this option.
+
+	  The default value is set to prevent most overcurrent conditions during
+	  load transients, because power supplies vary in their tolerance to
+	  such short-lived overcurrent conditions and many chargers respond
+	  slowly to those transients.
+
+	  Projects SHOULD characterize system behavior to tune for system
+	  behavior and charger response in order to optimize this (allowing the
+	  derating to be reduced) and ensure transients do not exceed the range
+	  of acceptable current (which might require greater derating).
 
 config PLATFORM_EC_USBC_OCP
 	bool

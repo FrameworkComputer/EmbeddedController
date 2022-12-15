@@ -1076,10 +1076,20 @@
  * and input current is limited to 1000 mA, the charger will be given a limit
  * of 960 mA.
  *
+ * The default value is set to prevent most overcurrent conditions during load
+ * transients, because power supplies vary in their tolerance to such
+ * short-lived overcurrent conditions and many chargers respond slowly to those
+ * transients.
+ *
+ * Projects SHOULD characterize system behavior to tune for system
+ * behavior and charger response in order to optimize this (allowing the
+ * derating to be reduced) and ensure transients do not exceed the range of
+ * acceptable current (which might require greater derating).
+ *
  * Boards requiring more complex control over input current should leave this
  * undefined and override board_set_charge_limit instead.
  */
-#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
 
 /*
  * This config option is used to enable IDCHG trigger for prochot. This macro

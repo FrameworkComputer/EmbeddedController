@@ -77,6 +77,7 @@
  * Nocturne seems to overdraw its set input current limit by about 5%.
  * Request at most 95% of what's desired.
  */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
 #define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
 #undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
