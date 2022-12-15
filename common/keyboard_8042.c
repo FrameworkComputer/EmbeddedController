@@ -90,7 +90,7 @@ enum scancode_set_list {
  * Mutex to control write access to the to-host buffer head.  Don't need to
  * mutex the tail because reads are only done in one place.
  */
-static mutex_t to_host_mutex;
+K_MUTEX_DEFINE(to_host_mutex);
 
 /* Queue command/data to the host */
 enum {
