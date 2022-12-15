@@ -33,6 +33,7 @@
 #define FLAG_FRS_RX_SIGNALLED BIT(1)
 #define FLAG_FRS_VBUS_VALID_FALL BIT(2)
 static atomic_t frs_flag[CONFIG_USB_PD_PORT_MAX_COUNT];
+K_MUTEX_DEFINE(adc_lock);
 
 /* i2c_write function which won't wake TCPC from low power mode. */
 static int rt1718s_write(int port, int reg, int val, int len)
@@ -585,7 +586,6 @@ static int rt1718s_enter_low_power_mode(int port)
 
 int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
 {
-	static mutex_t adc_lock;
 	int rv;
 	const int max_wait_times = 30;
 
