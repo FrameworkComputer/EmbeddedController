@@ -40,4 +40,7 @@ config EEPROM_SHELL
 config PWM_SHELL
 	default n
 
+config SENSOR_SHELL
+	default n
+
 orsource "Kconfig.defaults-$(ARCH)"
