@@ -1,0 +1,17 @@
+# Copyright Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Generic voltage comparator device mock implementation
+
+compatible: "cros,vcmp-mock"
+
+include: sensor-device.yaml
+
+properties:
+  io-channels:
+    type: phandle-array
+    required: true
+
+  threshold-mv:
+    type: int
+    required: true

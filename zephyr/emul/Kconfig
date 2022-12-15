@@ -132,6 +132,14 @@ config PWM_MOCK
 	  Enable the PWM mock. This driver is a pure mock and does nothing by
 	  default.
 
+config VCMP_MOCK
+	bool "Generic voltage comparator device mock implementation"
+	default y
+	depends on DT_HAS_CROS_VCMP_MOCK_ENABLED
+	select ADC
+	help
+	  Enable the generic voltage comparator mock driver.
+
 config EMUL_PCT2075
 	bool "PCT2075 emulator"
 	default y
