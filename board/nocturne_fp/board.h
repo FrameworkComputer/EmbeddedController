@@ -155,6 +155,7 @@
 /* SPI configuration for the fingerprint sensor */
 #define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_FP_PORT 2 /* SPI4: third master config */
+#define CONFIG_SPI_MUTABLE_DEVICE_LIST
 
 #define CONFIG_FINGERPRINT_MCU
 #ifdef SECTION_IS_RW

@@ -55,7 +55,7 @@ struct spi_device_t {
 };
 
 extern
-#ifndef CONFIG_FINGERPRINT_MCU
+#ifndef CONFIG_SPI_MUTABLE_DEVICE_LIST
 	const
 #endif
 	struct spi_device_t spi_devices[];

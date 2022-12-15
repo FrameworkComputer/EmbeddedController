@@ -4054,6 +4054,11 @@
  */
 #define CONFIG_SPI_FLASH_READ_WAIT_MS 1
 
+/*
+ * Allow modification to e.g. clock divisor or other fields of spi_devices[].
+ */
+#undef CONFIG_SPI_MUTABLE_DEVICE_LIST
+
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
 
