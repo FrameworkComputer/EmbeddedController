@@ -11,3 +11,4 @@ baseboard-$(CONFIG_BATTERY_SMART)+=battery.o
 baseboard-$(CONFIG_FANS)+=fan.o
 baseboard-$(CONFIG_SYSTEMSERIAL_DEBUG) += system_serial.o
 baseboard-$(CONFIG_8042_AUX) += ps2mouse.o
+baseboard-$(HAS_TASK_HOSTCMD) += baseboard_host_commands.o
