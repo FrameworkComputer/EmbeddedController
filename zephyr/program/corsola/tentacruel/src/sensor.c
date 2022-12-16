@@ -22,12 +22,17 @@ void base_sensor_interrupt(enum gpio_signal signal)
 {
 	uint32_t val;
 
-	cros_cbi_get_fw_config(BASE_SENSOR, &val);
-	if (val == BASE_ICM42607) {
-		icm42607_interrupt(signal);
-	} else if (val == BASE_BMI323) {
-		bmi3xx_interrupt(signal);
-	} else if (val == BASE_NONE) {
+	cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	if (val == CONVERTIBLE) {
+		cros_cbi_get_fw_config(BASE_SENSOR, &val);
+		if (val == BASE_BMI323) {
+			bmi3xx_interrupt(signal);
+		}
+		/* The convertible device gyro sensor default is icm42607 */
+		else {
+			icm42607_interrupt(signal);
+		}
+	} else {
 		base_is_none = true;
 	}
 }
@@ -36,12 +41,17 @@ void lid_sensor_interrupt(enum gpio_signal signal)
 {
 	uint32_t val;
 
-	cros_cbi_get_fw_config(LID_SENSOR, &val);
-	if (val == LID_LIS2DWLTR) {
-		lis2dw12_interrupt(signal);
-	} else if (val == LID_BMA422) {
-		bma4xx_interrupt(signal);
-	} else if (val == LID_NONE) {
+	cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	if (val == CONVERTIBLE) {
+		cros_cbi_get_fw_config(LID_SENSOR, &val);
+		if (val == LID_BMA422) {
+			bma4xx_interrupt(signal);
+		}
+		/* The convertible device lid sensor default is lis2dw12 */
+		else {
+			lis2dw12_interrupt(signal);
+		}
+	} else {
 		lid_is_none = true;
 	}
 }
