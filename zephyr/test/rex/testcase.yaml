@@ -6,7 +6,9 @@ common:
   platform_allow: native_posix
 tests:
   rex.default:
+    extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;./fan.dtsi;"
     extra_configs:
     - CONFIG_TEST_USB_PD_POLICY=y
     - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
     - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
+    - CONFIG_TEST_FAN=y

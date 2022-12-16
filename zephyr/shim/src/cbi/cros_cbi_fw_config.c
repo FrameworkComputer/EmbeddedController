@@ -189,8 +189,8 @@ static int cros_cbi_fw_config_get_field(uint32_t cached_fw_config,
 	return 0;
 }
 
-int cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
-			   uint32_t *value)
+test_mockable int cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
+					 uint32_t *value)
 {
 	int rc;
 

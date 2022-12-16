@@ -5,19 +5,27 @@
 config TEST_USB_PD_POLICY
 	bool "Run the tests intended for usb_pd_policy"
 	help
-	  Include usb_pd_policy.c into the binary and test
-	  their functions.
+	  Include usb_pd_policy.c into the binary and test their functions.
 
 config TEST_ENABLE_USB_PD_DISCHARGE
 	bool "Enable CONFIG_USB_PD_DISCHARGE"
 	help
-	  This is used to define CONFIG_USB_PD_DISCHARGE
-	  for testing purposes directly
+	  This is used to define CONFIG_USB_PD_DISCHARGE for testing purposes
+	  directly.
 
 config TEST_ENABLE_USB_PD_HOST_CMD
 	bool "Enable CONFIG_USB_PD_HOST_CMD"
 	help
-	  This is used to define CONFIG_USB_PD_HOST_CMD
-	  for testing purposes directly
+	  This is used to define CONFIG_USB_PD_HOST_CMD for testing purposes
+	  directly.
+
+config TEST_FAN
+	bool "Run the tests intended for fan"
+	help
+	  Include fan.c into the binary and test their functions.
+
+module = REX
+module-str = Rex board-specific code
+source "subsys/logging/Kconfig.template.log_config"
 
 source "Kconfig.zephyr"
