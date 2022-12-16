@@ -224,17 +224,17 @@ enum pchg_chipset_state {
  */
 struct pchg_config {
 	/* Charger driver */
-	const struct pchg_drv *drv;
+	struct pchg_drv *drv;
 	/* I2C port number */
-	const int i2c_port;
+	int i2c_port;
 	/* GPIO pin used for IRQ */
-	const enum gpio_signal irq_pin;
+	enum gpio_signal irq_pin;
 	/* Full battery percentage */
-	const uint8_t full_percent;
+	uint8_t full_percent;
 	/* Update block size */
-	const uint32_t block_size;
+	uint32_t block_size;
 	/* RF charge duration in msec. Set it to 0 to disable RF charge. */
-	const uint16_t rf_charge_msec;
+	uint16_t rf_charge_msec;
 };
 
 struct pchg_update {
