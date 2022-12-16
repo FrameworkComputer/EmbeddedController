@@ -12,6 +12,10 @@
 			"path": "board/hx30"
 		},
 		{
+			"name": "baseboard fwk",
+			"path": "baseboard/fwk"
+		},
+		{
 			"name": "mchp",
 			"path": "chip/mchp"
 		},

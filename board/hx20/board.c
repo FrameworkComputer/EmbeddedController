@@ -283,7 +283,7 @@ int board_i2c_p2c(int port)
 
 
 const struct i2c_slv_port_t i2c_slv_ports[] = {
-	{"pch", MCHP_I2C_PORT0, 0x50}
+	{"pch", MCHP_I2C_CTRL3, 0x50}
 };
 const unsigned int i2c_slvs_used = ARRAY_SIZE(i2c_slv_ports);
 
