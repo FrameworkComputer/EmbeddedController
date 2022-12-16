@@ -18,8 +18,10 @@
  */
 static inline int write_protect_is_asserted(void)
 {
-#ifdef CONFIG_WP_ALWAYS
+#if defined(CONFIG_WP_ALWAYS)
 	return true;
+#elif defined(CONFIG_WP_DISABLE)
+	return false;
 #else
 	return gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_wp));
 #endif

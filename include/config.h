@@ -2289,6 +2289,11 @@
  */
 #undef CONFIG_FW_RESET_VECTOR
 
+/*
+ * Always disable the write protect function
+ */
+#undef CONFIG_WP_DISABLE
+
 /*****************************************************************************/
 /* Motion sensor based gesture recognition information */
 /* These all require HAS_TASK_MOTIONSENSE to work */

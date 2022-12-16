@@ -2684,6 +2684,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_FW_RESET_VECTOR
 #endif
 
+#undef CONFIG_WP_DISABLE
+#ifdef CONFIG_PLATFORM_EC_WP_DISABLE
+#define CONFIG_WP_DISABLE
+#endif
+
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #if defined(CONFIG_HCDEBUG_OFF)
 #define CONFIG_HOSTCMD_DEBUG_MODE 0

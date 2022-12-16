@@ -4,9 +4,6 @@
  */
 
 / {
-	aliases {
-		gpio-wp = &gpio_wp;
-	};
 
 	named-gpios {
 		compatible = "named-gpios";
@@ -279,11 +276,6 @@
 		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
-		};
-
-		/* must configure gpio for write protect pin */
-		gpio_wp: ec_wp_l {
-			gpios = <&gpiod 7 (GPIO_INPUT_PULL_UP | GPIO_ACTIVE_LOW)>;
 		};
 	};
 };
