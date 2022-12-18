@@ -1238,13 +1238,12 @@ void espi_mswv1_interrupt(void)
 	girq24_result = MCHP_INT_RESULT(24);
 	MCHP_INT_SOURCE(24) = girq24_result;
 
-	bpos = __builtin_ctz(girq24_result); /* rbit, clz sequence */
-	while (bpos != 32) {
+	while (girq24_result) {
+		bpos = __builtin_ctz(girq24_result); /* rbit, clz sequence */
 		d = *(uint8_t *)(MCHP_ESPI_MSVW_BASE + 8 +
 				(12 * (bpos >> 2)) + (bpos & 0x03)) & 0x01;
 		(girq24_vw_handlers[bpos])(d, bpos);
 		girq24_result &= ~(1ul << bpos);
-		bpos = __builtin_ctz(girq24_result);
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_GIRQ24, espi_mswv1_interrupt, 2);
@@ -1259,13 +1258,12 @@ void espi_msvw2_interrupt(void)
 	girq25_result = MCHP_INT_RESULT(25);
 	MCHP_INT_SOURCE(25) = girq25_result;
 
-	bpos = __builtin_ctz(girq25_result); /* rbit, clz sequence */
-	while (bpos != 32) {
+	while (girq25_result) {
+		bpos = __builtin_ctz(girq25_result); /* rbit, clz sequence */
 		d = *(uint8_t *)(MCHP_ESPI_MSVW_BASE + (12 * 7) + 8 +
 				(12 * (bpos >> 2)) + (bpos & 0x03)) & 0x01;
 		(girq25_vw_handlers[bpos])(d, bpos);
 		girq25_result &= ~(1ul << bpos);
-		bpos = __builtin_ctz(girq25_result);
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_GIRQ25, espi_msvw2_interrupt, 2);
