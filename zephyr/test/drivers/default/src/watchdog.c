@@ -33,7 +33,8 @@
 /**
  * @brief Boolean to indicate watchdog alert triggered
  */
-bool wdt_warning_triggered;
+extern bool wdt_warning_triggered;
+bool wdt_initialized;
 
 /**
  * @brief timer to used to validate watchdog expiries.
@@ -52,17 +53,10 @@ static void watchdog_before(void *state)
 	/* When shuffling need watchdog initialized and running
 	 * for other tests.
 	 */
-	(void)watchdog_init();
-	(void)wdt_setup(wdt, 0);
-}
-
-/**
- * @brief Watchdog test teardown handler.
- */
-static void watchdog_after(void *state)
-{
-	ARG_UNUSED(state);
-	wdt_warning_triggered = false;
+	if (!wdt_initialized) {
+		(void)watchdog_init();
+		wdt_initialized = true;
+	}
 }
 
 /**
@@ -81,8 +75,7 @@ ZTEST(watchdog, test_watchdog_init)
 
 	/* Test already initialized (initialized in watchdog_before) */
 	retval = watchdog_init();
-	zassert_equal(-ENOMEM, retval, "Expected -ENOMEM, returned %d.",
-		      retval);
+	zassert_equal(-EBUSY, retval, "Expected -EBUSY, returned %d.", retval);
 }
 
 /**
@@ -100,6 +93,7 @@ ZTEST(watchdog, test_watchdog_reload)
 	int safe_wait_ms = DEFAULT_WDT_EXPIRY_MS / 2;
 
 	zassert_false(wdt_warning_triggered, "Watchdog timer expired early.");
+	watchdog_reload();
 	for (i = 0; i < 10; i++) {
 		k_timer_start(&ktimer, K_MSEC(safe_wait_ms), K_NO_WAIT);
 		k_busy_wait(safe_wait_ms * 1000);
@@ -137,5 +131,5 @@ ZTEST(watchdog, test_wdt_warning_handler)
 /**
  * @brief Test Suite: Verifies watchdog functionality.
  */
-ZTEST_SUITE(watchdog, drivers_predicate_post_main, NULL, watchdog_before,
-	    watchdog_after, NULL);
+ZTEST_SUITE(watchdog, drivers_predicate_post_main, NULL, watchdog_before, NULL,
+	    NULL);

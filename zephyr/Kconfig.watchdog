@@ -27,4 +27,14 @@ config PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS
 	  For the ITE chip, use CONFIG_WDT_ITE_WARNING_LEADING_TIME_MS instead
 	  of this config.
 
+config PLATFORM_EC_WATCHDOG_HELPER
+	bool "Use watchdog helper to trigger warning"
+	default n
+	depends on WDT_COUNTER
+	help
+	  If enabled, watchdog shim will setup cros-ec,watchdog-helper
+	  with CONFIG_WATCHDOG_AUX_TIMER_PERIOD_MS timeout.
+	  Watchdog helper is used to trigger warning and gather debugging
+	  information before hardware watchdog resets the SoC.
+
 endif # WATCHDOG
