@@ -4,7 +4,10 @@
  */
 
 #include "board_chipset.h"
+#include "ec_commands.h"
 #include "hooks.h"
+#include "usb_pd.h"
+#include "usbc_ppc.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
@@ -22,6 +25,16 @@ int charger_get_min_bat_pct_for_power_on(void)
 	return 2;
 }
 
+int ppc_init(int port)
+{
+	return EC_SUCCESS;
+}
+
+enum pd_cc_states pd_get_task_cc_state(int port)
+{
+	return PD_CC_NONE;
+}
+
 ZTEST_USER(board_chipset, test_good_battery_normal_boot)
 {
 	timestamp_t start_time;
@@ -33,7 +46,8 @@ ZTEST_USER(board_chipset, test_good_battery_normal_boot)
 	hook_notify(HOOK_CHIPSET_PRE_INIT);
 	time_diff_us = get_time().val - start_time.val;
 
-	zassert_true(time_diff_us < 10, "CHIPSET_PRE_INIT hook delayed", NULL);
+	zassert_true(time_diff_us <= 20000, "CHIPSET_PRE_INIT hook delayed",
+		     NULL);
 }
 
 ZTEST_USER(board_chipset, test_low_battery_normal_boot)
@@ -47,7 +61,8 @@ ZTEST_USER(board_chipset, test_low_battery_normal_boot)
 	hook_notify(HOOK_CHIPSET_PRE_INIT);
 	time_diff_us = get_time().val - start_time.val;
 
-	zassert_true(time_diff_us < 10, "CHIPSET_PRE_INIT hook delayed", NULL);
+	zassert_true(time_diff_us <= 20000, "CHIPSET_PRE_INIT hook delayed",
+		     NULL);
 }
 
 ZTEST_USER(board_chipset, test_low_battery_delayed_boot)
