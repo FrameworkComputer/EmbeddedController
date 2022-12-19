@@ -392,6 +392,10 @@ static int common_pwr_sm_run(int state)
 
 		/* All the power rails must be stable */
 		if (power_signal_get(PWR_ALL_SYS_PWRGD)) {
+			/*
+			 * Disable idle task deep sleep when in S0.
+			 */
+			disable_sleep(SLEEP_MASK_AP_RUN);
 #if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 			/* Notify power event before resume */
 			ap_power_ev_send_callbacks(AP_POWER_RESUME_INIT);
