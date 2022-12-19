@@ -9,6 +9,7 @@ register_npcx_project(
         here / "adc.dts",
         here / "i2c.dts",
         here / "gpio.dts",
+        here / "interrupts.dts",
         here / "led_pins.dts",
         here / "lotus.dts",
     ],

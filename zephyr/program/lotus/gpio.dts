@@ -164,8 +164,9 @@
 		chassis_open_l {
 			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, Fingerprint power button */
 		};
-		hw_acav_in {
+		gpio_hw_acav_in: hw_acav_in {
 			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
+			enum-name = "GPIO_AC_PRESENT";
 		};
 		lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;		/* PSL in4 signal, lid switch */
