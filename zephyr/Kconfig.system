@@ -82,4 +82,12 @@ config PLATFORM_EC_FW_RESET_VECTOR
 	  needs to be provided is system_get_fw_reset_vector that
 	  will return the address of the reset vector.
 
+config PLATFORM_EC_WP_DISABLE
+	bool "Always disable the write protect function"
+	default n
+	help
+	  This defines if the project does not connect the HW write
+	  protect pin, always return the write protect disable when
+	  system get the write protect status.
+
 endif # PLATFORM_EC

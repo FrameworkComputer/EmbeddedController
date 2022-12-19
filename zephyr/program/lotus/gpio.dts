@@ -4,9 +4,6 @@
  */
 
 / {
-	aliases {
-		gpio-wp = &gpio_wp;
-	};
 
 	named-gpios {
 		compatible = "named-gpios";
@@ -17,7 +14,7 @@
 		ec_espi_rst_l {
 			gpios = <&gpio5 4 GPIO_PULL_DOWN>;
 		};
-		edp_sw {
+		edp_mux_pwm_sw {
 			gpios = <&gpioc 6 GPIO_OUTPUT_HIGH>;	/* Reserved */
 		};
 		ec_sci_l {
@@ -56,17 +53,17 @@
 		ec_smb_da4 {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
-		ec_smb_ck5 {
+		ec_smb_s0_ck5 {
 			gpios = <&gpio3 3 GPIO_INPUT>;
 		};
-		ec_smb_da5 {
+		ec_smb_s0_da5 {
 			gpios = <&gpio3 6 GPIO_INPUT>;
 		};
-		ac_present_pd_l {
-			gpios = <&gpiof 5 GPIO_INPUT>;		/* Monitor AC present from PD */
+		ec_smb_s5_ck5 {
+			gpios = <&gpiof 5 GPIO_INPUT>;
 		};
-		sleep_l {
-			gpios = <&gpiof 4 GPIO_OUTPUT_LOW>;
+		ec_smb_s5_da5 {
+			gpios = <&gpiof 4 GPIO_INPUT>;
 		};
 		ec_smb_ck6 {
 			gpios = <&gpioe 4 GPIO_INPUT>;
@@ -137,8 +134,8 @@
 		ec_pwm_en_l {
 			gpios = <&gpio1 0 GPIO_OUTPUT_LOW>;	/* Enable EDP mux control chip */
 		};
-		smux_edp_sw {
-			gpios = <&gpio0 7 GPIO_ODR_HIGH>;	/* EDP PWM mux seletc, L=dGPU; H=iGPU */
+		ac_present_pd_l {
+			gpios = <&gpio0 7 GPIO_INPUT>;		/* Monitor AC present from PD */
 		};
 		sm_panel_bken_ec {
 			gpios = <&gpio0 6 GPIO_OUTPUT_LOW>;
@@ -164,7 +161,7 @@
 		on_off_btn_l {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, MB power button */
 		};
-		fp_switch_l {
+		chassis_open_l {
 			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, Fingerprint power button */
 		};
 		hw_acav_in {
@@ -172,6 +169,9 @@
 		};
 		lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;		/* PSL in4 signal, lid switch */
+		};
+		0p75_1p8valw_pwren {
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
 		hub_b_pwr_en {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
@@ -221,8 +221,8 @@
 		enbkl_apu {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor APU EDP BKL */
 		};
-		0p75_1p8valw_pwren {
-			gpios = <&gpioc 7 GPIO_OUTPUT_LOW>;
+		dgpu_pwr_en {
+			gpios = <&gpioc 7 GPIO_INPUT>;
 		};
 		0p75vs_pwr_en {
 			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
@@ -260,7 +260,7 @@
 		en_invpwr {
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
-		chassis_open_l {
+		sleep_l {
 			gpios = <&gpiod 5 GPIO_INPUT>;
 		};
 		pd_b_i2c_int_ec_l {
@@ -270,7 +270,7 @@
 			gpios = <&gpioe 5 GPIO_INPUT>;
 		};
 		pbtn_out_l {
-			gpios = <&gpio5 0 GPIO_ODR_HIGH>;
+			gpios = <&gpio5 0 GPIO_ODR_LOW>;
 		};
 		thermtrip {
 			gpios = <&gpio8 1 GPIO_INPUT>;
@@ -280,23 +280,18 @@
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
-
-		/* must configure gpio for write protect pin */
-		gpio_wp: ec_wp_l {
-			gpios = <&gpiod 7 (GPIO_INPUT_PULL_UP | GPIO_ACTIVE_LOW)>;
-		};
 	};
 };
 
 /* PSL input pads*/
 &psl_in1_gpd2 {
-	/* MB power button */
+	/* Power button */
 	psl-in-mode = "edge";
 	psl-in-pol = "low-falling";
 };
 
 &psl_in2_gp00 {
-	/* FP power button */
+	/* Chassis open */
 	psl-in-mode = "edge";
 	psl-in-pol = "low-falling";
 };
