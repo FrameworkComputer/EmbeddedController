@@ -322,6 +322,46 @@ void gpio_reset(enum gpio_signal signal)
 			      configs[signal].init_flags);
 }
 
+int gpio_save_port_config(const struct device *port, gpio_flags_t *flags,
+			  int buff_size)
+{
+	int state_offset = 0;
+
+	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
+		if (state_offset >= buff_size) {
+			LOG_ERR("%s buffer is too small", __func__);
+			return EC_ERROR_UNKNOWN;
+		}
+
+		if (port == configs[i].spec.port) {
+			gpio_pin_get_config_dt(&configs[i].spec,
+					       &flags[state_offset++]);
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
+int gpio_restore_port_config(const struct device *port, gpio_flags_t *flags,
+			     int buff_size)
+{
+	int state_offset = 0;
+
+	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
+		if (state_offset >= buff_size) {
+			LOG_ERR("%s buffer is too small", __func__);
+			return EC_ERROR_UNKNOWN;
+		}
+
+		if (port == configs[i].spec.port) {
+			gpio_pin_configure_dt(&configs[i].spec,
+					      flags[state_offset++]);
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
 void gpio_reset_port(const struct device *port)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {

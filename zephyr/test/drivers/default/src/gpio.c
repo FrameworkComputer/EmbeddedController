@@ -381,6 +381,80 @@ ZTEST(gpio, test_gpio_reset)
 		      flags);
 }
 
+ZTEST(gpio, test_gpio_save_port_config)
+{
+	const struct device *port =
+		DEVICE_DT_GET(DT_GPIO_CTLR(DT_NODELABEL(gpio_test), gpios));
+	const struct gpio_dt_spec *spec;
+	gpio_flags_t flags[32] = { 0 };
+	gpio_flags_t zephyr_flags;
+	gpio_flags_t flags_at_start[GPIO_COUNT];
+	int index = 0;
+
+	/* Snapshot of GPIO flags before testing */
+	for (int i = 0; i < GPIO_COUNT; i++) {
+		flags_at_start[i] = gpio_helper_get_flags(i);
+		gpio_set_flags(i, GPIO_OUTPUT);
+	}
+
+	/* save the current state of the port */
+	gpio_save_port_config(port, flags, sizeof(flags));
+
+	for (int i = 0; i < GPIO_COUNT; i++) {
+		spec = gpio_get_dt_spec(i);
+		if (spec->port == port) {
+			gpio_pin_get_config_dt(spec, &zephyr_flags);
+			zassert_equal(flags[index], zephyr_flags,
+				      "Flags get 0x%x", flags[index]);
+			index++;
+		}
+	}
+
+	for (int i = 0; i < GPIO_COUNT; ++i) {
+		gpio_set_flags(i, flags_at_start[i]);
+	}
+}
+
+ZTEST(gpio, test_gpio_restore_port_config)
+{
+	const struct device *port =
+		DEVICE_DT_GET(DT_GPIO_CTLR(DT_NODELABEL(gpio_test), gpios));
+	const struct gpio_dt_spec *spec;
+	gpio_flags_t flags[32] = { 0 };
+	gpio_flags_t zephyr_flags;
+	gpio_flags_t flags_at_start[GPIO_COUNT];
+	int index = 0;
+
+	/* Snapshot of GPIO flags before testing */
+	for (int i = 0; i < GPIO_COUNT; i++) {
+		flags_at_start[i] = gpio_helper_get_flags(i);
+		gpio_set_flags(i, GPIO_OUTPUT);
+	}
+
+	/* save the current state of the port */
+	gpio_save_port_config(port, flags, sizeof(flags));
+
+	/* reset the port */
+	gpio_reset_port(port);
+
+	/* restore the port config and check */
+	gpio_restore_port_config(port, flags, sizeof(flags));
+
+	for (int i = 0; i < GPIO_COUNT; i++) {
+		spec = gpio_get_dt_spec(i);
+		if (spec->port == port) {
+			gpio_pin_get_config_dt(spec, &zephyr_flags);
+			zassert_equal(flags[index], zephyr_flags,
+				      "Flags get 0x%x", flags[index]);
+			index++;
+		}
+	}
+
+	for (int i = 0; i < GPIO_COUNT; ++i) {
+		gpio_set_flags(i, flags_at_start[i]);
+	}
+}
+
 ZTEST(gpio, test_gpio_reset_port)
 {
 	const struct device *port =
