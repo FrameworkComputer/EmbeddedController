@@ -244,7 +244,10 @@ static void reset_nct38xx_port(int port)
 	const struct gpio_dt_spec *reset_gpio_l;
 	const struct device *ioex_port0, *ioex_port1;
 
-	/* TODO(b/225189538): Save and restore ioex signals */
+	/* The maximum pin numbers of the NCT38xx IO expander port is 8 */
+	gpio_flags_t saved_port0_flags[8] = { 0 };
+	gpio_flags_t saved_port1_flags[8] = { 0 };
+
 	if (port == USBC_PORT_C0) {
 		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_l);
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
@@ -257,6 +260,10 @@ static void reset_nct38xx_port(int port)
 		/* Invalid port: do nothing */
 		return;
 	}
+	gpio_save_port_config(ioex_port0, saved_port0_flags,
+			      ARRAY_SIZE(saved_port0_flags));
+	gpio_save_port_config(ioex_port1, saved_port1_flags,
+			      ARRAY_SIZE(saved_port1_flags));
 
 	gpio_pin_set_dt(reset_gpio_l, 0);
 	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
@@ -266,8 +273,10 @@ static void reset_nct38xx_port(int port)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
 
 	/* Re-enable the IO expander pins */
-	gpio_reset_port(ioex_port0);
-	gpio_reset_port(ioex_port1);
+	gpio_restore_port_config(ioex_port0, saved_port0_flags,
+				 ARRAY_SIZE(saved_port0_flags));
+	gpio_restore_port_config(ioex_port1, saved_port1_flags,
+				 ARRAY_SIZE(saved_port1_flags));
 }
 
 void board_reset_pd_mcu(void)
