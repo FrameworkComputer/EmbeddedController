@@ -29,10 +29,10 @@
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 
-#define GPIO_AC_OK_PATH DT_PATH(named_gpios, acok_od)
+#define GPIO_AC_OK_PATH NAMED_GPIOS_GPIO_NODE(acok_od)
 #define GPIO_AC_OK_PIN DT_GPIO_PIN(GPIO_AC_OK_PATH, gpios)
 
-#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PATH NAMED_GPIOS_GPIO_NODE(ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
 static void integration_usb_before(void *state)

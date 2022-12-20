@@ -17,7 +17,7 @@
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
-#define WP_L_GPIO_PATH DT_PATH(named_gpios, wp_l)
+#define WP_L_GPIO_PATH NAMED_GPIOS_GPIO_NODE(wp_l)
 
 static int gpio_wp_l_set(int value)
 {

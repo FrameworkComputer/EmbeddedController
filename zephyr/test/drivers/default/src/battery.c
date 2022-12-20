@@ -17,7 +17,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
-#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PATH NAMED_GPIOS_GPIO_NODE(ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
 FAKE_VALUE_FUNC(int, battery2_write_func, const struct emul *, int, uint8_t,

@@ -17,7 +17,7 @@
 #include <console.h>
 #include <lid_switch.h>
 
-#define LID_GPIO_PATH DT_PATH(named_gpios, lid_open_ec)
+#define LID_GPIO_PATH NAMED_GPIOS_GPIO_NODE(lid_open_ec)
 #define LID_GPIO_PIN DT_GPIO_PIN(LID_GPIO_PATH, gpios)
 
 int emul_lid_open(void)

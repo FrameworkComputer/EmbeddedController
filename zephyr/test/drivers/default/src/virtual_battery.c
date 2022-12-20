@@ -389,7 +389,7 @@ ZTEST(virtual_battery_direct, test_read_bad_reg)
 	zassert_equal(EC_ERROR_INVAL, error_code);
 }
 
-#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PATH NAMED_GPIOS_GPIO_NODE(ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
 static int set_battery_present(bool batt_present)

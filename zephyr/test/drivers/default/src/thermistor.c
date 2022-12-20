@@ -17,10 +17,10 @@
 
 #include <temp_sensor.h>
 
-#define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
+#define GPIO_PG_EC_DSW_PWROK_PATH NAMED_GPIOS_GPIO_NODE(pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
 
-#define GPIO_EC_PG_PIN_TEMP_PATH DT_PATH(named_gpios, ec_pg_pin_temp)
+#define GPIO_EC_PG_PIN_TEMP_PATH NAMED_GPIOS_GPIO_NODE(ec_pg_pin_temp)
 #define GPIO_EC_PG_PIN_TEMP_PORT DT_GPIO_PIN(GPIO_EC_PG_PIN_TEMP_PATH, gpios)
 
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)

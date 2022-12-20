@@ -103,8 +103,8 @@ struct npcx_io_info {
 	COND_CODE_1(DT_NODE_HAS_PROP(node, gpios), (NAMED_GPIO_INFO(node)), ())
 
 static struct npcx_io_info gpio_info[] = {
-#if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), NAMED_GPIO_INIT)
+#if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
+	DT_FOREACH_CHILD(NAMED_GPIOS_NODE, NAMED_GPIO_INIT)
 #endif
 #if DT_NODE_EXISTS(UNUSED_GPIOS_NODE)
 		DT_FOREACH_PROP_ELEM(UNUSED_GPIOS_NODE, unused_gpios,

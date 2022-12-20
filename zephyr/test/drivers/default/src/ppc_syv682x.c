@@ -22,7 +22,7 @@
 #include <zephyr/ztest_assert.h>
 
 #define SYV682X_NODE DT_NODELABEL(syv682x_emul)
-#define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)
+#define GPIO_USB_C1_FRS_EN_PATH NAMED_GPIOS_GPIO_NODE(usb_c1_frs_en)
 
 struct ppc_syv682x_fixture {
 	const struct emul *ppc_emul;

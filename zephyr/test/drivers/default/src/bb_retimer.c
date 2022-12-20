@@ -22,9 +22,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
-#define GPIO_USB_C1_LS_EN_PATH DT_PATH(named_gpios, usb_c1_ls_en)
+#define GPIO_USB_C1_LS_EN_PATH NAMED_GPIOS_GPIO_NODE(usb_c1_ls_en)
 #define GPIO_USB_C1_LS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_LS_EN_PATH, gpios)
-#define GPIO_USB_C1_RT_RST_ODL_PATH DT_PATH(named_gpios, usb_c1_rt_rst_odl)
+#define GPIO_USB_C1_RT_RST_ODL_PATH NAMED_GPIOS_GPIO_NODE(usb_c1_rt_rst_odl)
 #define GPIO_USB_C1_RT_RST_ODL_PORT \
 	DT_GPIO_PIN(GPIO_USB_C1_RT_RST_ODL_PATH, gpios)
 #define BB_RETIMER_NODE DT_NODELABEL(usb_c1_bb_retimer_emul)

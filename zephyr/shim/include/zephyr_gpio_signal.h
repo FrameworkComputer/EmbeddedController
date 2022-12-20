@@ -11,6 +11,16 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
 
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_gpios) == 1,
+	     "only one named-gpios compatible node may be present");
+
+#define NAMED_GPIOS_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(named_gpios)
+
+/*
+ * Returns the node path for a specific named-gpios gpio
+ */
+#define NAMED_GPIOS_GPIO_NODE(name) DT_CHILD(NAMED_GPIOS_NODE, name)
+
 /** @brief Returns the enum-name property as a token
  *
  * Returns the enum-name property for this node as an upper case token
@@ -58,13 +68,13 @@
 
 enum gpio_signal {
 	GPIO_UNIMPLEMENTED = -1,
-#if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_IMPL_SIGNAL)
+#if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
+	DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_IMPL_SIGNAL)
 #endif
 		GPIO_COUNT,
-#if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_UNIMPL_SIGNAL)
-		DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_ALIAS_LIST)
+#if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
+	DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_UNIMPL_SIGNAL)
+		DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_DT_ALIAS_LIST)
 #endif
 			GPIO_LIMIT = 0x0FFF,
 
@@ -85,7 +95,7 @@ BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
  * the named_gpios node, into the correct enum gpio_signal that can be used
  * with platform/ec gpio API
  */
-#define NAMED_GPIO(name) GPIO_SIGNAL(DT_PATH(named_gpios, name))
+#define NAMED_GPIO(name) GPIO_SIGNAL(DT_CHILD(NAMED_GPIOS_NODE, name))
 
 /** @brief Obtain a named gpio enum from a label and property
  *
@@ -132,7 +142,7 @@ BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
 
 #define GPIO_DT_FROM_NODELABEL(label) GPIO_DT_FROM_NODE(DT_NODELABEL(label))
 
-#if DT_NODE_EXISTS(DT_PATH(named_gpios))
+#if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
 /*
  * Declare the pointers that refer to the gpio_dt_spec entries
  * for each GPIO.
@@ -142,11 +152,11 @@ struct gpio_dt_spec;
 #define GPIO_DT_PTR_DECL(id) \
 	extern const struct gpio_dt_spec *const GPIO_DT_NAME(GPIO_SIGNAL(id));
 
-DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_PTR_DECL)
+DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_DT_PTR_DECL)
 
 #undef GPIO_DT_PTR_DECL
 
-#endif /* DT_NODE_EXISTS(DT_PATH(named_gpios)) */
+#endif /* DT_NODE_EXISTS(NAMED_GPIOS_NODE) */
 
 #define IOEXPANDER_ID_EXPAND(id) ioex_chip_##id
 #define IOEXPANDER_ID(id) IOEXPANDER_ID_EXPAND(id)

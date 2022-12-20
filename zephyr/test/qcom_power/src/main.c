@@ -27,30 +27,31 @@
 
 /* For simplicity, enforce that all the gpios are on the same controller. */
 #define GPIO_DEVICE \
-	DEVICE_DT_GET(DT_GPIO_CTLR(DT_PATH(named_gpios, ap_rst_l), gpios))
-#define ASSERT_SAME_CONTROLLER(x)                                            \
-	BUILD_ASSERT(DT_DEP_ORD(DT_GPIO_CTLR(DT_PATH(named_gpios, ap_rst_l), \
-					     gpios)) ==                      \
-		     DT_DEP_ORD(DT_GPIO_CTLR(DT_PATH(named_gpios, x), gpios)))
+	DEVICE_DT_GET(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(ap_rst_l), gpios))
+#define ASSERT_SAME_CONTROLLER(x)                                        \
+	BUILD_ASSERT(                                                    \
+		DT_DEP_ORD(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(ap_rst_l), \
+					gpios)) ==                       \
+		DT_DEP_ORD(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(x), gpios)))
 
-#define AP_RST_L_PIN DT_GPIO_PIN(DT_PATH(named_gpios, ap_rst_l), gpios)
+#define AP_RST_L_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ap_rst_l), gpios)
 ASSERT_SAME_CONTROLLER(ap_rst_l);
-#define POWER_GOOD_PIN DT_GPIO_PIN(DT_PATH(named_gpios, mb_power_good), gpios)
+#define POWER_GOOD_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(mb_power_good), gpios)
 ASSERT_SAME_CONTROLLER(mb_power_good);
-#define AP_SUSPEND_PIN DT_GPIO_PIN(DT_PATH(named_gpios, ap_suspend), gpios)
+#define AP_SUSPEND_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ap_suspend), gpios)
 ASSERT_SAME_CONTROLLER(ap_suspend);
 #define SWITCHCAP_PG_PIN \
-	DT_GPIO_PIN(DT_PATH(named_gpios, src_vph_pwr_pg), gpios)
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(src_vph_pwr_pg), gpios)
 ASSERT_SAME_CONTROLLER(src_vph_pwr_pg);
-#define PMIC_RESIN_L_PIN DT_GPIO_PIN(DT_PATH(named_gpios, pmic_resin_l), gpios)
+#define PMIC_RESIN_L_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(pmic_resin_l), gpios)
 ASSERT_SAME_CONTROLLER(pmic_resin_l);
 #define EC_PWR_BTN_ODL_PIN \
-	DT_GPIO_PIN(DT_PATH(named_gpios, ec_pwr_btn_odl), gpios)
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ec_pwr_btn_odl), gpios)
 ASSERT_SAME_CONTROLLER(ec_pwr_btn_odl);
-#define LID_OPEN_EC_PIN DT_GPIO_PIN(DT_PATH(named_gpios, lid_open_ec), gpios)
+#define LID_OPEN_EC_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(lid_open_ec), gpios)
 ASSERT_SAME_CONTROLLER(lid_open_ec);
 #define PMIC_KPD_PWR_ODL_PIN \
-	DT_GPIO_PIN(DT_PATH(named_gpios, pmic_kpd_pwr_odl), gpios)
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(pmic_kpd_pwr_odl), gpios)
 ASSERT_SAME_CONTROLLER(pmic_kpd_pwr_odl);
 
 static int chipset_reset_count;

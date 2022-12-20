@@ -134,7 +134,7 @@ ZTEST(vboot_efs2, test_vboot_main_jump_timeout)
 	zassert_equal(show_power_shortage_called, 0, NULL);
 }
 
-#define PACKET_MODE_GPIO DT_PATH(named_gpios, ec_gsc_packet_mode)
+#define PACKET_MODE_GPIO NAMED_GPIOS_GPIO_NODE(ec_gsc_packet_mode)
 
 static const struct device *uart_shell_dev =
 	DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));

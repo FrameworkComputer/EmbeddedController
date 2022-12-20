@@ -28,7 +28,7 @@
 #include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
-#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PATH NAMED_GPIOS_GPIO_NODE(ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
 void test_set_battery_level(int percentage)

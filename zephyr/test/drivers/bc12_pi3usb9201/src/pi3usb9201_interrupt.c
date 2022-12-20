@@ -15,11 +15,11 @@
 #include <zephyr/ztest.h>
 
 /* Get reference to externally linked handlers (defined in DTS) */
-#define USBC0_GPIO_PATH DT_PATH(named_gpios, usb_c0_bc12_int_l)
+#define USBC0_GPIO_PATH NAMED_GPIOS_GPIO_NODE(usb_c0_bc12_int_l)
 #define USBC0_GPIO_DEV DEVICE_DT_GET(DT_GPIO_CTLR(USBC0_GPIO_PATH, gpios))
 #define USBC0_GPIO_PORT DT_GPIO_PIN(USBC0_GPIO_PATH, gpios)
 
-#define USBC1_GPIO_PATH DT_PATH(named_gpios, usb_c1_bc12_int_l)
+#define USBC1_GPIO_PATH NAMED_GPIOS_GPIO_NODE(usb_c1_bc12_int_l)
 #define USBC1_GPIO_DEV DEVICE_DT_GET(DT_GPIO_CTLR(USBC1_GPIO_PATH, gpios))
 #define USBC1_GPIO_PORT DT_GPIO_PIN(USBC1_GPIO_PATH, gpios)
 

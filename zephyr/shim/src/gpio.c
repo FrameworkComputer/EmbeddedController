@@ -59,8 +59,8 @@ struct gpio_config {
 	COND_CODE_1(DT_NODE_HAS_PROP(id, gpios), (GPIO_CONFIG(id)), ())
 
 static const struct gpio_config configs[] = {
-#if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_IMPL_CONFIG)
+#if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
+	DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_IMPL_CONFIG)
 #endif
 };
 
@@ -81,8 +81,8 @@ static const struct gpio_config configs[] = {
 	const struct gpio_dt_spec *const GPIO_DT_NAME(GPIO_SIGNAL(id)) = \
 		&configs[GPIO_SIGNAL(id)].spec;
 
-#if DT_NODE_EXISTS(DT_PATH(named_gpios))
-DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_PTRS)
+#if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
+DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_PTRS)
 #endif
 
 int gpio_is_implemented(enum gpio_signal signal)
