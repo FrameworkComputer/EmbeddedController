@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "bbram.h"
 #include "system.h"
 #include "system_chip.h"
 
@@ -10,9 +11,6 @@
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(shim_xec_system, LOG_LEVEL_ERR);
-
-#define GET_BBRAM_OFS(node) DT_PROP(DT_PATH(named_bbram_regions, node), offset)
-#define GET_BBRAM_SZ(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
 
 /*
  * Reset image type back to RO in BBRAM as watchdog resets.
@@ -29,8 +27,8 @@ void cros_chip_wdt_handler(const struct device *wdt_dev, int channel_id)
 		return;
 	}
 
-	bbram_write(bbram_dev, GET_BBRAM_OFS(ec_img_load),
-		    GET_BBRAM_SZ(ec_img_load), (uint8_t *)&value);
+	bbram_write(bbram_dev, BBRAM_REGION_OFFSET(ec_img_load),
+		    BBRAM_REGION_SIZE(ec_img_load), (uint8_t *)&value);
 }
 
 static void chip_bbram_status_check(void)

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "bbram.h"
 #include "drivers/cros_system.h"
 #include "gpio/gpio_int.h"
 #include "rom_chip.h"
@@ -85,7 +86,7 @@ struct cros_system_npcx_data {
 /* Get saved reset flag address in battery-backed ram */
 #define BBRAM_SAVED_RESET_FLAG_ADDR                    \
 	(DT_REG_ADDR(DT_INST(0, nuvoton_npcx_bbram)) + \
-	 DT_PROP(DT_PATH(named_bbram_regions, saved_reset_flags), offset))
+	 BBRAM_REGION_OFFSET(saved_reset_flags))
 
 /* Soc specific system local functions */
 static int system_npcx_watchdog_stop(void)

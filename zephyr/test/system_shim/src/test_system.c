@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "bbram.h"
 #include "drivers/cros_system.h"
 #include "fakes.h"
 #include "system.h"
@@ -18,11 +19,6 @@
 #include <zephyr/ztest_test_new.h>
 
 LOG_MODULE_REGISTER(test);
-
-#define BBRAM_REGION_OFF(name) \
-	DT_PROP(DT_PATH(named_bbram_regions, name), offset)
-#define BBRAM_REGION_SIZE(name) \
-	DT_PROP(DT_PATH(named_bbram_regions, name), size)
 
 static char mock_data[64] =
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@";
@@ -48,22 +44,22 @@ ZTEST(system, test_bbram_get)
 
 	rc = system_get_bbram(SYSTEM_BBRAM_IDX_PD0, output);
 	zassert_ok(rc);
-	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFF(pd0),
+	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFFSET(pd0),
 			  BBRAM_REGION_SIZE(pd0), NULL);
 
 	rc = system_get_bbram(SYSTEM_BBRAM_IDX_PD1, output);
 	zassert_ok(rc);
-	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFF(pd1),
+	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFFSET(pd1),
 			  BBRAM_REGION_SIZE(pd1), NULL);
 
 	rc = system_get_bbram(SYSTEM_BBRAM_IDX_PD2, output);
 	zassert_ok(rc);
-	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFF(pd2),
+	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFFSET(pd2),
 			  BBRAM_REGION_SIZE(pd2), NULL);
 
 	rc = system_get_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, output);
 	zassert_ok(rc);
-	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFF(try_slot),
+	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFFSET(try_slot),
 			  BBRAM_REGION_SIZE(try_slot), NULL);
 }
 
