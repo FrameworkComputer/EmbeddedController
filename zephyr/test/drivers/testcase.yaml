@@ -331,3 +331,8 @@ tests:
   drivers.memmap:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_MEMMAP=y
+  drivers.host_command_memory_dump:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP=y
+      - CONFIG_PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042=y

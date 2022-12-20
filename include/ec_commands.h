@@ -5576,6 +5576,54 @@ struct ec_params_reboot_ec {
  */
 #define EC_CMD_VERSION0 0x00DC
 
+/*
+ * Memory Dump Commands
+ *
+ * Since the HOSTCMD response size is limited, depending on the
+ * protocol, retrieving a memory dump is split into 3 commands.
+ *
+ * 1. EC_CMD_MEMORY_DUMP_GET_METADATA returns the number of memory dump entries,
+ *    and the total dump size.
+ * 2. EC_CMD_MEMORY_DUMP_GET_ENTRY_INFO returns the address and size for a given
+ *    memory dump entry index.
+ * 3. EC_CMD_MEMORY_DUMP_READ_MEMORY returns the actual memory at a given
+ *    address. The address and size must be within the bounds of the given
+ *    memory dump entry index. Each response is limited to the max response size
+ *    of the host protocol, so this may need to be called repeatedly to retrieve
+ *    the entire memory dump entry.
+ *
+ * Memory entries may overlap and may be out of order.
+ * The host should check for overlaps to optimize transfer rate.
+ */
+#define EC_CMD_MEMORY_DUMP_GET_METADATA 0x00DD
+struct ec_response_memory_dump_get_metadata {
+	uint16_t memory_dump_entry_count;
+	uint32_t memory_dump_total_size;
+} __ec_align4;
+
+#define EC_CMD_MEMORY_DUMP_GET_ENTRY_INFO 0x00DE
+struct ec_params_memory_dump_get_entry_info {
+	uint16_t memory_dump_entry_index;
+} __ec_align4;
+
+struct ec_response_memory_dump_get_entry_info {
+	uint32_t address;
+	uint32_t size;
+} __ec_align4;
+
+#define EC_CMD_MEMORY_DUMP_READ_MEMORY 0x00DF
+
+struct ec_params_memory_dump_read_memory {
+	uint16_t memory_dump_entry_index;
+	uint32_t address;
+	uint32_t size;
+} __ec_align4;
+
+/*
+ * EC_CMD_MEMORY_DUMP_READ_MEMORY response buffer is written directly into
+ * host_cmd_handler_args.response and host_cmd_handler_args.response_size.
+ */
+
 /*****************************************************************************/
 /*
  * PD commands

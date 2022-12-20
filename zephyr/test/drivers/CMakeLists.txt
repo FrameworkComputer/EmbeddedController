@@ -64,6 +64,7 @@ add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_MEMMAP memmap)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_LED_COMMON led_common)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_PS8XXX ps8xxx)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_GPIO_UNHOOK gpio_unhook)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP host_command_memory_dump)
 
 get_target_property(TEST_SOURCES_NEW app SOURCES)
 

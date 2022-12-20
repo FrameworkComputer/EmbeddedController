@@ -184,4 +184,7 @@ config LINK_TEST_SUITE_LED_COMMON
 	depends on !PLATFORM_EC_LED_DT
 	select PLATFORM_EC_LED_COMMON
 
+config LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP
+	bool "Link and test memory dump host commands tests"
+
 source "Kconfig.zephyr"
