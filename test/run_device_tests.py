@@ -102,6 +102,10 @@ SERVO_MICRO = "servo_micro"
 GCC = "gcc"
 CLANG = "clang"
 
+PRIVATE_YES = "yes"
+PRIVATE_NO = "no"
+PRIVATE_ONLY = "only"
+
 TEST_ASSETS_BUCKET = "gs://chromiumos-test-assets-public/fpmcu/RO"
 DARTMONKEY_IMAGE_PATH = os.path.join(
     TEST_ASSETS_BUCKET, "dartmonkey_v2.0.2887-311310808.bin"
@@ -183,10 +187,16 @@ class AllTests:
     """All possible tests."""
 
     @staticmethod
-    def get(board_config: BoardConfig) -> List[TestConfig]:
+    def get(board_config: BoardConfig, with_private: str) -> List[TestConfig]:
         """Return public and private test configs for the specified board."""
-        public_tests = AllTests.get_public_tests(board_config)
-        private_tests = AllTests.get_private_tests()
+        public_tests = (
+            []
+            if with_private == PRIVATE_ONLY
+            else AllTests.get_public_tests(board_config)
+        )
+        private_tests = (
+            [] if with_private == PRIVATE_NO else AllTests.get_private_tests()
+        )
 
         return public_tests + private_tests
 
@@ -656,10 +666,12 @@ def run_test(
                 return test.num_fails == 0
 
 
-def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
+def get_test_list(
+    config: BoardConfig, test_args, with_private: str
+) -> List[TestConfig]:
     """Get a list of tests to run."""
     if test_args == "all":
-        return AllTests.get(config)
+        return AllTests.get(config, with_private)
 
     test_list = []
     for test in test_args:
@@ -667,7 +679,7 @@ def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
         test_regex = re.compile(test)
         tests = [
             test
-            for test in AllTests.get(config)
+            for test in AllTests.get(config, with_private)
             if test_regex.fullmatch(test.config_name)
         ]
         if not tests:
@@ -858,6 +870,11 @@ def main():
         help="The port connected to the FPMCU console.",
     )
 
+    with_private_choices = [PRIVATE_YES, PRIVATE_NO, PRIVATE_ONLY]
+    parser.add_argument(
+        "--with_private", choices=with_private_choices, default=PRIVATE_YES
+    )
+
     args = parser.parse_args()
     logging.basicConfig(
         format="%(levelname)s:%(message)s", level=args.log_level
@@ -865,7 +882,7 @@ def main():
     validate_args_combination(args)
 
     board_config = BOARD_CONFIGS[args.board]
-    test_list = get_test_list(board_config, args.tests)
+    test_list = get_test_list(board_config, args.tests, args.with_private)
     logging.debug("Running tests: %s", [test.config_name for test in test_list])
 
     with ThreadPoolExecutor(max_workers=1) as executor:
