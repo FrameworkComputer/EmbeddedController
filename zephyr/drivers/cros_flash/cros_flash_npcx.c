@@ -8,6 +8,7 @@
 #include "../drivers/flash/spi_nor.h"
 #include "flash.h"
 #include "spi_flash_reg.h"
+#include "watchdog.h"
 #include "write_protect.h"
 
 #include <zephyr/drivers/flash.h>
@@ -443,6 +444,14 @@ static int cros_flash_npcx_write(const struct device *dev, int offset, int size,
 		return -EINVAL;
 	}
 
+	/*
+	 * If the AP sends a sequence of write commands, we may not have time to
+	 * reload the watchdog normally.  Force a reload here to avoid the
+	 * watchdog triggering in the middle of flashing.
+	 */
+	if (IS_ENABLED(CONFIG_WATCHDOG))
+		watchdog_reload();
+
 	/* Lock physical flash operations */
 	crec_flash_lock_mapped_storage(1);
 
@@ -480,7 +489,22 @@ static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 	/* Lock physical flash operations */
 	crec_flash_lock_mapped_storage(1);
 
-	ret = flash_erase(data->flash_dev, offset, size);
+	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE) {
+		/*
+		 * Reload the watchdog timer, so that erasing many flash pages
+		 * doesn't cause a watchdog reset
+		 */
+		if (IS_ENABLED(CONFIG_WATCHDOG))
+			watchdog_reload();
+
+		/* Start erase */
+		ret = flash_erase(data->flash_dev, offset,
+				  CONFIG_FLASH_ERASE_SIZE);
+		if (ret)
+			break;
+
+		offset += CONFIG_FLASH_ERASE_SIZE;
+	}
 
 	/* Unlock physical flash operations */
 	crec_flash_lock_mapped_storage(0);
