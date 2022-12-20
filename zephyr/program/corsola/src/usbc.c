@@ -215,11 +215,11 @@ static void baseboard_x_ec_gpio2_init(void)
 	 * After C1 port tasks finished, we intentionally increase the port
 	 * count by 1 for usb_mux to access the C1 virtual mux for notifying
 	 * mainlink direction.
-	 * The current delay is set to 1 second. cros-ec-typec module will
+	 * The current delay is set to 500 ms. cros-ec-typec module will
 	 * not be getting the fake type-c port count if the deferred call is
 	 * later than the kernel upstarts.
 	 */
-	hook_call_deferred(&tasks_init_deferred_data, SECOND);
+	hook_call_deferred(&tasks_init_deferred_data, 500 * MSEC);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_x_ec_gpio2_init, HOOK_PRIO_DEFAULT);
 
