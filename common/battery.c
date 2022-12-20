@@ -243,10 +243,10 @@ static void print_battery_info(void)
 		ccprintf("%dh:%d\n", hour, minute);
 	}
 
-	print_item_name("full_factor:");
+	print_item_name("Full Factor:");
 	ccprintf("0.%d\n", batt_host_full_factor);
 
-	print_item_name("shutdown_soc:");
+	print_item_name("Shutdown SoC:");
 	ccprintf("%d %%\n", batt_host_shutdown_pct);
 
 #ifdef CONFIG_BATTERY_FUEL_GAUGE
