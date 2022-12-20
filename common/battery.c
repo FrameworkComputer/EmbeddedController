@@ -66,7 +66,7 @@ static const char *get_error_text(int rv)
 
 static void print_item_name(const char *name)
 {
-	ccprintf("  %-11s", name);
+	ccprintf("  %-14s", name);
 }
 
 static int check_print_error(int rv)
@@ -214,6 +214,10 @@ static void print_battery_info(void)
 	print_item_name("  Design:");
 	if (check_print_error(battery_design_capacity(&value)))
 		ccprintf("%d mAh\n", value);
+
+	print_item_name("Charge Cycle:");
+	if (check_print_error(battery_cycle_count(&value)))
+		ccprintf("%d\n", value);
 
 	print_item_name("Time-full:");
 	if (check_print_error(battery_time_to_full(&value))) {
