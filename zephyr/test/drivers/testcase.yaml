@@ -92,6 +92,11 @@ tests:
   drivers.flash:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_FLASH=y
+  drivers.flash.page_layout:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_FLASH=y
+      - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=500
+      - CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT=y
   drivers.host_cmd:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
