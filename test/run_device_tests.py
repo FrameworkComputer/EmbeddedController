@@ -503,6 +503,14 @@ def power(board_config: BoardConfig, power_on: bool) -> None:
     subprocess.run(cmd, check=False).check_returncode()
 
 
+def power_cycle(board_config: BoardConfig) -> None:
+    """power_cycle the boards."""
+    logging.debug("power_cycling board")
+    power(board_config, power_on=False)
+    time.sleep(1)
+    power(board_config, power_on=True)
+
+
 def hw_write_protect(enable: bool) -> None:
     """Enable/disable hardware write protect."""
     if enable:
@@ -743,9 +751,7 @@ def flash_and_run_test(
         return False
 
     if test.toggle_power:
-        power(board_config, power_on=False)
-        time.sleep(1)
-        power(board_config, power_on=True)
+        power_cycle(board_config)
 
     hw_write_protect(test.enable_hw_write_protect)
 
