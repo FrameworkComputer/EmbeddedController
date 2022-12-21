@@ -4500,6 +4500,7 @@ static void pe_alert_received_entry(int port)
 
 /**
  * PE_DRS_Evaluate_Swap
+ * PE_DRS_UFP_DFP_Evaluate_Swap and PE_DRS_DFP_UFP_Evaluate_Swap embedded here.
  */
 static void pe_drs_evaluate_swap_entry(int port)
 {
@@ -4509,8 +4510,8 @@ static void pe_drs_evaluate_swap_entry(int port)
 	if (pd_check_data_swap(port, pe[port].data_role)) {
 		PE_SET_FLAG(port, PE_FLAGS_ACCEPT);
 		/*
-		 * PE_DRS_UFP_DFP_Evaluate_Swap and
-		 * PE_DRS_DFP_UFP_Evaluate_Swap states embedded here.
+		 * PE_DRS_UFP_DFP_Accept_Swap and
+		 * PE_DRS_DFP_UFP_Accept_Swap states embedded here.
 		 */
 		send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_ACCEPT);
 	} else {
