@@ -715,7 +715,7 @@ def flash_and_run_test(
             patch_image(test, image_path)
         except Exception as exception:  # pylint: disable=broad-except
             logging.warning(
-                "An exception occurred while patching " "image: %s", exception
+                "An exception occurred while patching image: %s", exception
             )
             return False
 
