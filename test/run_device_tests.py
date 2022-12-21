@@ -55,7 +55,7 @@ import socket
 import subprocess
 import sys
 import time
-from typing import BinaryIO, Dict, List, Optional, Tuple
+from typing import BinaryIO, Callable, Dict, List, Optional, Tuple
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
@@ -192,6 +192,14 @@ class TestConfig:
     passed: bool = field(init=False, default=False)
     num_passes: int = field(init=False, default=0)
     num_fails: int = field(init=False, default=0)
+
+    # The callbacks below are called before and after a test is executed and
+    # may be used for additional test setup, post test activities, or other tasks
+    # that do not otherwise fit into the test workflow. The default behavior is
+    # to simply return True and if either callback returns False then the test
+    # is reported a failure.
+    pre_test_callback: Callable = field(init=True, default=lambda board: True)
+    post_test_callback: Callable = field(init=True, default=lambda board: True)
 
     def __post_init__(self):
         if self.finish_regexes is None:
@@ -696,6 +704,7 @@ def process_console_output_line(line: bytes, test: TestConfig):
 
 def run_test(
     test: TestConfig,
+    build_board: str,
     console: io.FileIO,
     reboot_timeout: float,
     executor: ThreadPoolExecutor,
@@ -714,6 +723,11 @@ def run_test(
     if test.apptype_to_use != ApplicationType.PRODUCTION:
         test_cmd = "runtest " + " ".join(test.test_args) + "\n"
         console.write(test_cmd.encode())
+
+    logging.debug("Calling pre-test callback")
+    if not test.pre_test_callback(build_board):
+        logging.error("pre-test callback failed, aborting")
+        return False
 
     while True:
         console.flush()
@@ -747,7 +761,9 @@ def run_test(
                 for line in lines:
                     process_console_output_line(line, test)
 
-                return test.num_fails == 0
+                logging.debug("Calling post-test callback")
+                post_cb_passed = test.post_test_callback(build_board)
+                return test.num_fails == 0 and post_cb_passed
 
 
 def get_test_list(
@@ -859,7 +875,11 @@ def flash_and_run_test(
             console = stack.enter_context(console_file)
 
         return run_test(
-            test, console, board_config.reboot_timeout, executor=executor
+            test,
+            build_board,
+            console,
+            board_config.reboot_timeout,
+            executor=executor,
         )
 
 
