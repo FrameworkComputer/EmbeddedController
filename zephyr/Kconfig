@@ -479,8 +479,9 @@ config PLATFORM_EC_MKBP_EVENT
 
 config PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
     bool
+    default y
+    depends on DT_HAS_CROS_EC_MKBP_EVENT_WAKEUP_MASK_ENABLED
     depends on PLATFORM_EC_MKBP_EVENT
-    default $(dt_node_has_prop,/ec-mkbp-event-wakeup-mask,wakeup-mask)
     help
       Enable which MKBP events should wakeup the system in suspend.
       For example:
@@ -493,8 +494,9 @@ config PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
 
 config PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
     bool
+    default y
+    depends on DT_HAS_CROS_EC_MKBP_HOST_EVENT_WAKEUP_MASK_ENABLED
     depends on PLATFORM_EC_MKBP_EVENT
-    default $(dt_node_has_prop,/ec-mkbp-host-event-wakeup-mask,wakeup-mask)
     help
       Enable which host events should wakeup the system in suspend.
       For example:

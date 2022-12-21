@@ -2,9 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: EC MKBP Event node
-
-compatible: "ec-wake-mask-event"
+# Common fields for EC MKBP event nodes
 
 properties:
   wakeup-mask:
@@ -16,7 +14,7 @@ properties:
       processor from suspend mode.
       e.g.
       ec-mkbp-host-event-wakeup-mask {
-        compatible = "ec-wake-mask-event";
+        compatible = "cros-ec,mkbp-host-event-wakeup-mask";
         wakeup-mask = <(
           HOST_EVENT_LID_OPEN |
           HOST_EVENT_POWER_BUTTON |
