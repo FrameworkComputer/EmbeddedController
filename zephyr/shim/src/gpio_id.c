@@ -35,9 +35,9 @@ __override uint32_t board_get_sku_id(void)
 		if (sizeof(bits) == 0)
 			return (uint32_t)-1;
 
-		sku_id = CONVERT_NUMERAL_SYSTEM(DT_STRING_TOKEN(DT_PATH(sku),
-								system),
-						bits, ARRAY_SIZE(bits));
+		sku_id = CONVERT_NUMERAL_SYSTEM(
+			DT_STRING_TOKEN(SKU_GPIO_ID_NODE, system), bits,
+			ARRAY_SIZE(bits));
 	}
 
 	return sku_id;
@@ -60,7 +60,7 @@ __override int board_get_version(void)
 			return -1;
 
 		board_version = CONVERT_NUMERAL_SYSTEM(
-			DT_STRING_TOKEN(DT_PATH(board), system), bits,
+			DT_STRING_TOKEN(BOARD_GPIO_ID_NODE, system), bits,
 			ARRAY_SIZE(bits));
 	}
 
