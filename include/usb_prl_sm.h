@@ -143,4 +143,12 @@ void prl_hard_reset_complete(int port);
  */
 void prl_execute_hard_reset(int port);
 
+/**
+ * Enables or disables checking the data role on incoming messages.
+ *
+ * @param port USB-C port number
+ * @param enable True to enable checking, false to disable checking
+ */
+void prl_set_data_role_check(int port, bool enable);
+
 #endif /* __CROS_EC_USB_PRL_H */

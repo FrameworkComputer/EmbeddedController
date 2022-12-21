@@ -120,6 +120,8 @@ __maybe_unused static void print_flag(const char *group, int set_or_clear,
 #define PRL_FLAGS_ABORT BIT(9)
 /* Flag to note current TX message uses chunking */
 #define PRL_FLAGS_CHUNKING BIT(10)
+/* Flag to disable checking data role on incoming messages. */
+#define PRL_FLAGS_IGNORE_DATA_ROLE BIT(11)
 
 struct bit_name {
 	int value;
@@ -139,6 +141,7 @@ static __const_data const struct bit_name flag_bit_names[] = {
 	{ PRL_FLAGS_MSG_RECEIVED, "PRL_FLAGS_MSG_RECEIVED" },
 	{ PRL_FLAGS_ABORT, "PRL_FLAGS_ABORT" },
 	{ PRL_FLAGS_CHUNKING, "PRL_FLAGS_CHUNKING" },
+	{ PRL_FLAGS_IGNORE_DATA_ROLE, "PRL_FLAGS_IGNORE_DATA_ROLE" },
 };
 
 __maybe_unused static void print_bits(const char *group, const char *desc,
@@ -557,6 +560,14 @@ void prl_execute_hard_reset(int port)
 	PRL_HR_SET_FLAG(port, PRL_FLAGS_PE_HARD_RESET);
 	set_state_prl_hr(port, PRL_HR_RESET_LAYER);
 	task_wake(PD_PORT_TO_TASK_ID(port));
+}
+
+void prl_set_data_role_check(int port, bool enable)
+{
+	if (enable)
+		RCH_CLR_FLAG(port, PRL_FLAGS_IGNORE_DATA_ROLE);
+	else
+		RCH_SET_FLAG(port, PRL_FLAGS_IGNORE_DATA_ROLE);
 }
 
 int prl_is_running(int port)
@@ -2199,9 +2210,12 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 * defined in [USB Type-C 2.0] Shall be performed."
 	 *
 	 * The spec lists no required state for this check, so centralize it by
-	 * processing this requirement in the PRL RX.
+	 * processing this requirement in the PRL RX. Because the TCPM does not
+	 * swap data roles instantaneously, disable this check during the
+	 * transition.
 	 */
-	if (PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
+	if (!RCH_CHK_FLAG(port, PRL_FLAGS_IGNORE_DATA_ROLE) &&
+	    PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
 	    PD_HEADER_DROLE(header) == pd_get_data_role(port)) {
 		CPRINTS("C%d Error: Data role mismatch (0x%08x)", port, header);
 		tc_start_error_recovery(port);

@@ -63,6 +63,10 @@ void prl_execute_hard_reset(int port)
 	mock_prl_port[port].last_tx_type = TCPCI_MSG_TX_HARD_RESET;
 }
 
+void prl_set_data_role_check(int port, bool enable)
+{
+}
+
 enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type partner)
 {
 	return PD_REV30;
