@@ -268,11 +268,16 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 	return ret;
 }
 
-#if defined(CONFIG_CONSOLE_CHANNEL) && DT_NODE_EXISTS(DT_PATH(ec_console))
-#define EC_CONSOLE DT_PATH(ec_console)
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(ec_console) <= 1,
+	     "at most one ec-console compatible node may be present");
 
-static const char *const disabled_channels[] = DT_PROP(EC_CONSOLE, disabled);
-static const size_t disabled_channel_count = DT_PROP_LEN(EC_CONSOLE, disabled);
+#define EC_CONSOLE_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(ec_console)
+#if DT_NODE_EXISTS(EC_CONSOLE_NODE)
+
+static const char *const disabled_channels[] =
+	DT_PROP(EC_CONSOLE_NODE, disabled);
+static const size_t disabled_channel_count =
+	DT_PROP_LEN(EC_CONSOLE_NODE, disabled);
 static int init_ec_console(const struct device *unused)
 {
 	for (size_t i = 0; i < disabled_channel_count; i++)
@@ -281,7 +286,7 @@ static int init_ec_console(const struct device *unused)
 	return 0;
 }
 SYS_INIT(init_ec_console, PRE_KERNEL_1, 50);
-#endif /* CONFIG_CONSOLE_CHANNEL && DT_NODE_EXISTS(DT_PATH(ec_console)) */
+#endif /* CONFIG_PLATFORM_EC_CONSOLE_CHANNEL */
 
 static int init_ec_shell(const struct device *unused)
 {
