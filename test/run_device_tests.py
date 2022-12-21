@@ -42,6 +42,7 @@ Run the script on the remote machine:
 # pylint: disable=too-many-lines
 
 import argparse
+from collections import namedtuple
 import concurrent
 from concurrent.futures.thread import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -141,6 +142,9 @@ BLOONCHIPPER_V5938_IMAGE_PATH = os.path.join(
     TEST_ASSETS_BUCKET, "bloonchipper_v2.0.5938-197506c1.bin"
 )
 
+RangedValue = namedtuple("RangedValue", "nominal range")
+PowerUtilization = namedtuple("PowerUtilization", "idle sleep")
+
 
 class ImageType(Enum):
     """EC Image type to use for the test."""
@@ -178,6 +182,8 @@ class BoardConfig:
     rollback_region1_regex: object
     mpu_regex: object
     reboot_timeout: float
+    expected_fp_power: PowerUtilization
+    expected_mcu_power: PowerUtilization
     variants: Dict
 
 
@@ -381,6 +387,24 @@ class AllTests:
             TestConfig(test_name="unaligned_access_benchmark"),
             TestConfig(test_name="utils", timeout_secs=20),
             TestConfig(test_name="utils_str"),
+            TestConfig(
+                config_name="power_utilization_idle",
+                test_name="power_utilization",
+                apptype_to_use=ApplicationType.PRODUCTION,
+                toggle_power=True,
+                pre_test_callback=lambda config=None: set_sleep_mode(False),
+                post_test_callback=verify_idle_power_utilization,
+                finish_regexes=[RW_IMAGE_BOOTED_REGEX],
+            ),
+            TestConfig(
+                config_name="power_utilization_sleep",
+                test_name="power_utilization",
+                apptype_to_use=ApplicationType.PRODUCTION,
+                toggle_power=True,
+                pre_test_callback=lambda config=None: set_sleep_mode(True),
+                post_test_callback=verify_sleep_power_utilization,
+                finish_regexes=[RW_IMAGE_BOOTED_REGEX],
+            ),
         ]
 
         # Run unaligned access tests for all boards and RO versions.
@@ -448,6 +472,12 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
+    expected_fp_power=PowerUtilization(
+        idle=RangedValue(0.71, 0.53), sleep=RangedValue(0.69, 0.51)
+    ),
+    expected_mcu_power=PowerUtilization(
+        idle=RangedValue(16.05, 0.14 * 2), sleep=RangedValue(0.53, 0.35 * 2)
+    ),
     variants={
         "bloonchipper_v2.0.4277": {
             "ro_image_path": BLOONCHIPPER_V4277_IMAGE_PATH
@@ -466,6 +496,12 @@ DARTMONKEY_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
+    expected_fp_power=PowerUtilization(
+        idle=RangedValue(0.03, 0.05), sleep=RangedValue(0.03, 0.05)
+    ),
+    expected_mcu_power=PowerUtilization(
+        idle=RangedValue(42.67, 0.35 * 2), sleep=RangedValue(4.46, 0.23 * 2)
+    ),
     # For dartmonkey board, run panic data test also on nocturne_fp and
     # nami_fp boards with appropriate RO image.
     variants={
@@ -489,6 +525,14 @@ HELIPILOT_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_64040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_200B0000_REGEX,
+    # Power utilization numbers were experimentally derived via onboard ADCs and verified with a DMM
+    # TODO(b/319314358): Helipilot tests are failing on Quincy V2 boards
+    expected_fp_power=PowerUtilization(
+        idle=RangedValue(0.0, 0.1), sleep=RangedValue(0.0, 0.1)
+    ),
+    expected_mcu_power=PowerUtilization(
+        idle=RangedValue(9.2, 0.8), sleep=RangedValue(1.6, 1.3)
+    ),
     variants={},
 )
 
@@ -584,6 +628,19 @@ def get_console(board_config: BoardConfig) -> Optional[str]:
                 return pty[1].strip()
 
     return None
+
+
+def set_sleep_mode(enter_sleep: bool) -> bool:
+    """Enters or exists sleep mode based on enter_sleep parameter"""
+    sleep_mode = "on" if enter_sleep else "off"
+    cmd = [
+        "dut-control",
+        f"fpmcu_slp:{sleep_mode}",
+    ]
+
+    logging.debug('Running command: "%s"', cmd)
+    proc = subprocess.run(cmd, check=False)
+    return proc.returncode == 0
 
 
 def power(board_config: BoardConfig, power_on: bool) -> None:
@@ -1080,6 +1137,110 @@ def main():
             print(colorama.Style.RESET_ALL)
 
     sys.exit(exit_code)
+
+
+def get_power_utilization() -> Tuple[Optional[float], Optional[float]]:
+    """Retrieve board power utilization data"""
+    fp_power_signal = "ppvar_fp_mw"
+    mcu_power_signal = "ppvar_mcu_mw"
+    cmd = [
+        "dut-control",
+        "--value_only",  # only the summary will print the field names
+        "-t",
+        "10",  # sample time in seconds
+        fp_power_signal,
+        mcu_power_signal,
+    ]
+    logging.debug('Running command: "%s"', " ".join(cmd))
+
+    fp_power_mw = None
+    mcu_power_mw = None
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
+        for line in io.TextIOWrapper(proc.stdout):  # type: ignore[arg-type]
+            # Only the summary is required and those lines start with @@ and have 6 other fields
+            # (NAME, COUNT, AVERAGE, STDDEV, MAX, MIN)
+            response = line.split()
+            if len(response) != 7 or response[0] != "@@":
+                continue
+
+            resp_name, _, resp_avg, _, _, _ = response[1:]
+
+            if resp_name == fp_power_signal:
+                fp_power_mw = float(resp_avg.strip())
+            elif resp_name == mcu_power_signal:
+                mcu_power_mw = float(resp_avg.strip())
+
+            logging.debug(
+                "fp_power_mw:%s \t mcu_power_mw:%s", fp_power_mw, mcu_power_mw
+            )
+
+            if fp_power_mw is not None and mcu_power_mw is not None:
+                return (fp_power_mw, mcu_power_mw)
+
+    logging.error("Failed to receive required power data from FPMCU")
+    return (None, None)
+
+
+def verify_power_utilization(
+    fp_power_mw: float,
+    mcu_power_mw: float,
+    fp_expected: RangedValue,
+    mcu_expected: RangedValue,
+) -> bool:
+    """Get the name of the console for a given board."""
+
+    if fp_power_mw is not None and mcu_power_mw is not None:
+        fp_mw_delta = abs(fp_power_mw - fp_expected.nominal)
+        mcu_mw_delta = abs(mcu_power_mw - mcu_expected.nominal)
+
+        logging.info(
+            "fp power:\tactual: %0.2f expected: %0.2f threshold: +/-%0.2f",
+            fp_power_mw,
+            fp_expected.nominal,
+            fp_expected.range,
+        )
+        logging.info(
+            "mcu power:\tactual: %0.2f expected: %0.2f threshold: +/-%0.2f",
+            mcu_power_mw,
+            mcu_expected.nominal,
+            mcu_expected.range,
+        )
+
+        return (
+            fp_mw_delta <= fp_expected.range
+            and mcu_mw_delta <= mcu_expected.range
+        )
+
+    logging.error("Failed to receive required power data from FPMCU")
+    return False
+
+
+def verify_idle_power_utilization(board_config: BoardConfig) -> bool:
+    """Verifies that idle power utilization is within range for the specified board"""
+
+    fp_power_mw, mcu_power_mw = get_power_utilization()
+    return verify_power_utilization(
+        fp_power_mw,
+        mcu_power_mw,
+        board_config.expected_fp_power.idle,
+        board_config.expected_mcu_power.idle,
+    )
+
+
+def verify_sleep_power_utilization(board_config: BoardConfig) -> bool:
+    """Verifies that sleep power utilization is within range for the specified board"""
+
+    fp_power_mw, mcu_power_mw = get_power_utilization()
+    ret = verify_power_utilization(
+        fp_power_mw,
+        mcu_power_mw,
+        board_config.expected_fp_power.sleep,
+        board_config.expected_mcu_power.sleep,
+    )
+
+    # Make sure to exit sleep mode!
+    set_sleep_mode(False)
+    return ret
 
 
 if __name__ == "__main__":
