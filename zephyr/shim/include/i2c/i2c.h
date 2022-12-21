@@ -8,9 +8,12 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/toolchain.h>
 
-#ifdef CONFIG_PLATFORM_EC_I2C
-#if DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_i2c_ports) == 1,
+	     "only one named-i2c-ports compatible node may be present");
+
+#define NAMED_I2C_PORTS_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(named_i2c_ports)
 
 #define NPCX_PORT_COMPAT nuvoton_npcx_i2c_port
 #define ITE_IT8XXX2_PORT_COMPAT ite_it8xxx2_i2c
@@ -170,11 +173,7 @@ BUILD_ASSERT(I2C_PORT_COUNT != 0, "No I2C devices defined");
  * I2C_PORT_BATTERY or I2C_PORT_SENSOR) to the unique port numbers created by
  * enum i2c_ports_chip above for every I2C port devicetree node.
  */
-enum i2c_ports {
-	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), NAMED_I2C_PORT_COMMA)
-};
-#endif /* named_i2c_ports */
-#endif /* CONFIG_PLATFORM_EC_I2C */
+enum i2c_ports { DT_FOREACH_CHILD(NAMED_I2C_PORTS_NODE, NAMED_I2C_PORT_COMMA) };
 
 /**
  * @brief Adaptation of platform/ec's port IDs which map a port/bus to a device.
