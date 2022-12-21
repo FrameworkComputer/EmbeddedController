@@ -89,6 +89,9 @@ tests:
     extra_args: CONF_FILE="prj.conf;dps/prj.conf"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USB_PD_DPS=y
+  drivers.flash:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_FLASH=y
   drivers.host_cmd:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
