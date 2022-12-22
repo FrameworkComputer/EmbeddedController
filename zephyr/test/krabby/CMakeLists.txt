@@ -25,7 +25,9 @@ target_sources_ifdef(CONFIG_TEST_KRABBY
 target_sources_ifdef(CONFIG_TEST_TENTACRUEL
 	app PRIVATE
 	src/fake.c
+	src/ppc_tentacruel.c
 	src/temp_tentacruel.c
 	src/fwconfig_tentacruel.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/tentacruel/src/ppc.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/tentacruel/src/temp.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/tentacruel/src/sensor.c)

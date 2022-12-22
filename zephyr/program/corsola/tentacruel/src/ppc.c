@@ -28,7 +28,7 @@ static bool board_has_syv_ppc(void)
 {
 	static uint32_t board_version = BOARD_VERSION_UNKNOWN;
 
-	if (board_version == BOARD_VERSION_UNKNOWN) {
+	if (board_version == BOARD_VERSION_UNKNOWN || IS_ENABLED(CONFIG_TEST)) {
 		if (cbi_get_board_version(&board_version) != EC_SUCCESS) {
 			LOG_ERR("Failed to get board version.");
 			board_version = 0;
