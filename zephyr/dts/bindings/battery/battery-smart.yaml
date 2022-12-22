@@ -59,6 +59,7 @@ properties:
          - "smp,cosxdy9k"
          - "smp,highpower_gh02047xl"
          - "smp,highpower_si03058xl"
+         - "smp,si03054xl"
          - "sunwoda,atlvkyjx"
          - "sunwoda,cosvkyjx"
          - "sunwoda,l22d3pg0"
