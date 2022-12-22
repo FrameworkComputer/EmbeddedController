@@ -40,6 +40,9 @@
 		smp_highpower_si03058xl {
 			compatible = "smp,highpower_si03058xl", "battery-smart";
 		};
+		smp_si03054xl {
+			compatible = "smp,si03054xl", "battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {
