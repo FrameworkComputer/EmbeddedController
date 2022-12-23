@@ -21,17 +21,15 @@
 #define THERMAL_DESKTOP_LID_OPEN \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(50), \
+			[EC_TEMP_THRESH_WARN] = C_TO_K(44), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(110), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(45), \
+			[EC_TEMP_THRESH_WARN] = C_TO_K(40), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
 		}, \
-		.temp_fan_off = C_TO_K(31), \
-		.temp_fan_max = C_TO_K(38), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_desktop_lid_open =
 	THERMAL_DESKTOP_LID_OPEN;
@@ -42,17 +40,15 @@ __maybe_unused static const struct ec_thermal_config thermal_desktop_lid_open =
 #define THERMAL_DESKTOP_LID_CLOSE \
 	{                         \
 		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(55), \
+			[EC_TEMP_THRESH_WARN] = C_TO_K(43), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(110), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(50), \
+			[EC_TEMP_THRESH_WARN] = C_TO_K(39), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
-		}, \
-		.temp_fan_off = C_TO_K(32), \
-		.temp_fan_max = C_TO_K(39),  \
+		},  \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_desktop_lid_close =
 	THERMAL_DESKTOP_LID_CLOSE;
@@ -63,7 +59,7 @@ __maybe_unused static const struct ec_thermal_config thermal_desktop_lid_close =
 #define THERMAL_LAPTOP           \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(45), \
+			[EC_TEMP_THRESH_WARN] = C_TO_K(44), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(110), \
 		}, \
@@ -72,8 +68,6 @@ __maybe_unused static const struct ec_thermal_config thermal_desktop_lid_close =
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
 		}, \
-		.temp_fan_off = C_TO_K(30), \
-		.temp_fan_max = C_TO_K(38), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_laptop =
 	THERMAL_LAPTOP;

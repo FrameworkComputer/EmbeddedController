@@ -58,6 +58,8 @@
 			temp_host_halt = <110>;
 			temp_host_release_high = <95>;
 			temp_host_release_halt = <100>;
+			temp_fan_off = <42>;
+			temp_fan_max = <70>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&soc_pct2075>;
 		};
@@ -193,8 +195,8 @@
 	/delete-property/ temp_host_high;
 	/delete-property/ temp_host_halt;
 	/delete-property/ temp_host_release_high;
-	/delete-property/ temp_fan_off;
-	/delete-property/ temp_fan_max;
+	temp_fan_off = <54>;
+	temp_fan_max = <67>;
 };
 
 /* handler overrides */
