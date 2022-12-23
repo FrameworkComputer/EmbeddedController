@@ -21,3 +21,8 @@ pytest util "$@"
 # Run shell tests
 cd util
 ./test-inject-keys.sh
+
+# Run the Zephyr config tests
+# NOTE: this uses the Zephyr version of kconfiglib, runs separately from
+# test_kconfig_check.py
+pytest check_zephyr_project_config_unittest.py
