@@ -160,6 +160,7 @@
 		};
 		on_off_btn_l {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, MB power button */
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		chassis_open_l {
 			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, Fingerprint power button */
@@ -170,6 +171,7 @@
 		};
 		lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;		/* PSL in4 signal, lid switch */
+			enum-name = "GPIO_LID_OPEN";
 		};
 		0p75_1p8valw_pwren {
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
@@ -272,6 +274,7 @@
 		};
 		pbtn_out_l {
 			gpios = <&gpio5 0 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		thermtrip {
 			gpios = <&gpio8 1 GPIO_INPUT>;
