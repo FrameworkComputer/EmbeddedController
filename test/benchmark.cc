@@ -83,6 +83,28 @@ test_static int test_long_benchmark()
 	return EC_SUCCESS;
 }
 
+test_static int test_result_comparison()
+{
+	constexpr auto result1 = BenchmarkResult{
+		.name = "implementation1",
+		.elapsed_time = 10000,
+		.average_time = 100,
+		.min_time = 10,
+		.max_time = 200,
+	};
+
+	constexpr auto result2 = BenchmarkResult{
+		.name = "implementation2",
+		.elapsed_time = 8000,
+		.average_time = 80,
+		.min_time = 13,
+		.max_time = 150,
+	};
+
+	BenchmarkResult::compare(result1, result2);
+	return EC_SUCCESS;
+}
+
 test_static int test_empty_benchmark_name()
 {
 	Benchmark benchmark;
@@ -132,6 +154,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_num_iterations);
 	RUN_TEST(test_multiple_benchmarks);
 	RUN_TEST(test_long_benchmark);
+	RUN_TEST(test_result_comparison);
 	RUN_TEST(test_too_many_runs);
 	RUN_TEST(test_empty_benchmark_name);
 	RUN_TEST(test_min_max_time);

@@ -42,12 +42,40 @@ struct BenchmarkResult {
 	std::string_view name;
 	/* Total elapsed time (us) for all iterations */
 	uint32_t elapsed_time;
-	/* Average elapsed time (ns) for a single iteration */
+	/* Average elapsed time (us) for a single iteration */
 	uint32_t average_time;
 	/* Minimum elapsed time (us) for a single iteration */
 	uint32_t min_time;
 	/* Maximum elapsed time (us) for a single iteration */
 	uint32_t max_time;
+
+	/* Compare two BenchmarkResult structs and print delta between baseline
+	 * and other. */
+	static void compare(const BenchmarkResult &baseline,
+			    const BenchmarkResult &other)
+	{
+		auto print_comparison = [](std::string_view title,
+					   uint32_t baseline, uint32_t other) {
+			ccprintf(" %7s (us): %9u %9u %+9d (%+d%%)\n",
+				 title.data(), baseline, other,
+				 other - baseline,
+				 100 *
+					 (static_cast<int32_t>(other) -
+					  static_cast<int32_t>(baseline)) /
+					 static_cast<int32_t>(baseline));
+		};
+		ccprintf("-----------------------------------------------\n");
+		ccprintf("Compare: %s vs %s\n", baseline.name.data(),
+			 other.name.data());
+		ccprintf("-----------------------------------------------\n");
+		print_comparison("Elapsed", baseline.elapsed_time,
+				 other.elapsed_time);
+		print_comparison("Min", baseline.min_time, other.min_time);
+		print_comparison("Max", baseline.max_time, other.max_time);
+		print_comparison("Avg", baseline.average_time,
+				 other.average_time);
+		cflush();
+	}
 };
 
 /* Benchmark main class responsible for running the experiments and
