@@ -633,7 +633,7 @@ def run_test(
                 return False
             continue
 
-        logging.debug(line)
+        logging.debug(line.decode("utf-8").rstrip())
         test.logs.append(line)
         # Look for test_print_result() output (success or failure)
         line_str = process_console_output_line(line, test)
@@ -859,7 +859,9 @@ def main():
     )
 
     args = parser.parse_args()
-    logging.basicConfig(level=args.log_level)
+    logging.basicConfig(
+        format="%(levelname)s:%(message)s", level=args.log_level
+    )
     validate_args_combination(args)
 
     board_config = BOARD_CONFIGS[args.board]
