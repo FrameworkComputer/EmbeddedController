@@ -370,10 +370,12 @@ static void state_machine(uint64_t tnow)
 		break;
 
 	case PWRBTN_STATE_BOOT_KB_RESET:
-		/* Initial forced pulse is done.  Ignore the actual power
+		/*
+		 * Initial forced pulse is done.  Ignore the actual power
 		 * button until it's released, so that holding down the
 		 * recovery combination doesn't cause the chipset to shut back
-		 * down. */
+		 * down.
+		 */
 		set_pwrbtn_to_pch(1, 0);
 		if (power_button_is_pressed())
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
@@ -381,8 +383,10 @@ static void state_machine(uint64_t tnow)
 			pwrbtn_state = PWRBTN_STATE_IDLE;
 		break;
 	case PWRBTN_STATE_WAS_OFF:
-		/* Done stretching initial power button signal, so show the
-		 * true power button state to the PCH. */
+		/*
+		 * Done stretching initial power button signal, so show the
+		 * true power button state to the PCH.
+		 */
 		if (power_button_is_pressed()) {
 			/* User is still holding the power button */
 			pwrbtn_state = PWRBTN_STATE_HELD;

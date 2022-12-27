@@ -5,6 +5,10 @@
 cmake_minimum_required(VERSION 3.20.5)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(lotus)
+zephyr_library_sources(
+	"src/power_sequence.c"
+)
+
 zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER
 					"src/power_button_x86.c")
 
