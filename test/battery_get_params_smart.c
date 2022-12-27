@@ -167,9 +167,9 @@ static int test_flags(void)
 	 */
 	reset_and_fail_on(0, 0, -1);
 	batt.flags |= BATT_FLAG_BAD_TEMPERATURE;
-	batt.flags |= BIT(31);
+	batt.flags |= BATT_FLAG_DEEP_CHARGE;
 	battery_get_params(&batt);
-	TEST_ASSERT(batt.flags & BIT(31));
+	TEST_ASSERT(batt.flags & BATT_FLAG_DEEP_CHARGE);
 	TEST_ASSERT(!(batt.flags & BATT_FLAG_BAD_ANY));
 
 	/*

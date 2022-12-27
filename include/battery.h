@@ -170,6 +170,9 @@ int battery_get_avg_voltage(void); /* in mV */
 	(BATT_FLAG_BAD_ANY | BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE | \
 	 BATT_FLAG_IMBALANCED_CELL)
 
+/* The flag of prechare when the battery voltage is lower than voltage_min */
+#define BATT_FLAG_DEEP_CHARGE 0x00010000
+
 /* Battery constants */
 struct battery_info {
 	/* Operation voltage in mV */

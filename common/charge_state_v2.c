@@ -1556,7 +1556,8 @@ __test_only enum charge_state_v2 charge_get_state_v2(void)
 
 static void deep_charge_battery(int *need_static)
 {
-	if (curr.state == ST_IDLE) {
+	if ((curr.state == ST_IDLE) &&
+	    (curr.batt.flags & BATT_FLAG_DEEP_CHARGE)) {
 		/* Deep charge time out , do nothing */
 		curr.requested_voltage = 0;
 		curr.requested_current = 0;
@@ -1579,6 +1580,7 @@ static void deep_charge_battery(int *need_static)
 		set_charge_state(ST_PRECHARGE);
 		curr.requested_voltage = batt_info->voltage_max;
 		curr.requested_current = batt_info->precharge_current;
+		curr.batt.flags |= BATT_FLAG_DEEP_CHARGE;
 	}
 }
 
@@ -1831,13 +1833,26 @@ void charger_task(void *u)
 			goto wait_for_it;
 		}
 
-		if (IS_ENABLED(CONFIG_BATTERY_LOW_VOLTAGE_PROTECTION) &&
-		    !(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE) &&
-		    (curr.batt.voltage <= batt_info->voltage_min)) {
-			deep_charge_battery(&need_static);
-			goto wait_for_it;
-		}
+		/*
+		 * When the battery voltage is lower than voltage_min,precharge
+		 * first to protect the battery
+		 */
+		if (IS_ENABLED(CONFIG_BATTERY_LOW_VOLTAGE_PROTECTION)) {
+			if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE) &&
+			    (curr.batt.voltage <= batt_info->voltage_min)) {
+				deep_charge_battery(&need_static);
+				goto wait_for_it;
+			}
 
+			/*
+			 * Finished deep charge before timeout. Clear the flag
+			 * so that we can do deep charge again (when it's deeply
+			 * discharged again).
+			 */
+			if ((curr.batt.flags & BATT_FLAG_DEEP_CHARGE)) {
+				curr.batt.flags &= ~BATT_FLAG_DEEP_CHARGE;
+			}
+		}
 		/* The battery is responding. Yay. Try to use it. */
 
 		/*
