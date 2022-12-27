@@ -118,40 +118,25 @@ template <int MAX_NUM_RESULTS = 5> class Benchmark {
 
 	void print_results() const
 	{
-		print_header();
-		for (int i = 0; i < num_results_; ++i)
-			print_result(results_[i]);
+		for (int i = 0; i < num_results_; ++i) {
+			auto &result = results_[i];
+			ccprintf("------------------------------\n");
+			ccprintf("Benchmark: %s\n", result.name.data());
+			ccprintf("------------------------------\n");
+			ccprintf(" Iterations:   %u\n",
+				 options_.num_iterations);
+			ccprintf(" Elapsed (us): %u\n", result.elapsed_time);
+			ccprintf(" Min (us):     %u\n", result.min_time);
+			ccprintf(" Max (us):     %u\n", result.max_time);
+			ccprintf(" Avg (us):     %u\n", result.average_time);
+			cflush();
+		}
 	}
 
     private:
 	const BenchmarkOptions options_;
 	std::array<BenchmarkResult, MAX_NUM_RESULTS> results_;
 	int num_results_ = 0;
-
-	/* Print table header with column names */
-	void print_header() const
-	{
-		constexpr char kSeparator[] = "--------------------------";
-
-		ccprintf("%16s | %15s | %13s | %13s | %13s | %13s\n",
-			 "Test Name", "Num Iterations", "Elapsed (us)",
-			 "Min (us)", "Max (us)", "Avg (us)");
-		ccprintf("%.*s | %.*s | %.*s | %.*s | %.*s | %.*s\n", 16,
-			 kSeparator, 15, kSeparator, 13, kSeparator, 13,
-			 kSeparator, 13, kSeparator, 13, kSeparator);
-		cflush();
-	}
-
-	/* Print a single benchmark result */
-	int print_result(const BenchmarkResult &result) const
-	{
-		ccprintf("%16s | %15u | %13u | %13u | %13u | %13u\n",
-			 result.name.data(), options_.num_iterations,
-			 result.elapsed_time, result.min_time, result.max_time,
-			 result.average_time);
-		cflush();
-		return EC_SUCCESS;
-	}
 };
 
 #endif /* __CROS_EC_BENCHMARK_H */
