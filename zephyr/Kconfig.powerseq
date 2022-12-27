@@ -83,6 +83,7 @@ menuconfig PLATFORM_EC_POWERSEQ_CUSTOMER
 	default n
 	help
 	  Enable customer power sequencing code.
+	  Must create the power_sequence.c in board layer.
 
 menuconfig PLATFORM_EC_POWERSEQ_AMD
 	bool "AMD power sequencing"

@@ -158,7 +158,7 @@
 		gpu_alert_l {
 			gpios = <&gpiob 1 GPIO_INPUT>;
 		};
-		on_off_btn_l {
+		gpio_on_off_btn_l: on_off_btn_l {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, MB power button */
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};

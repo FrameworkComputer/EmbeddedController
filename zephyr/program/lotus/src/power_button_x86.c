@@ -15,6 +15,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power_button.h"
+#include "power_sequence.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -54,6 +55,7 @@
  *    to host    v                      v
  *     @S0   make code             break code
  */
+#define PWRBTN_DELAY_INIT (5 * MSEC) /* 5ms to wait VALW power rail ready*/
 #define PWRBTN_DELAY_T0 (32 * MSEC) /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1 (4 * SECOND - PWRBTN_DELAY_T0) /* 4 secs - t0 */
 /*
@@ -135,20 +137,7 @@ static void set_pwrbtn_to_pch(int high, int init)
 		high = 1;
 	}
 #endif
-	CPRINTS("PB PCH pwrbtn=%s", high ? "HIGH" : "LOW");
-	if (IS_ENABLED(CONFIG_POWER_BUTTON_TO_PCH_CUSTOM))
-		board_pwrbtn_to_pch(high);
-	else
-		gpio_set_level(GPIO_PCH_PWRBTN_L, high);
-}
-
-void power_button_pch_press(void)
-{
-	CPRINTS("PB PCH force press");
-
-	/* Assert power button signal to PCH */
-	if (!power_button_is_pressed())
-		set_pwrbtn_to_pch(0, 0);
+	gpio_set_level(GPIO_PCH_PWRBTN_L, high);
 }
 
 void power_button_pch_release(void)
@@ -204,58 +193,8 @@ static void power_button_released(uint64_t tnow)
  */
 static void set_initial_pwrbtn_state(void)
 {
-	uint32_t reset_flags = system_get_reset_flags();
-
-	if (system_jumped_to_this_image() &&
-	    chipset_in_state(CHIPSET_STATE_ON)) {
-		/*
-		 * Jumped to this image while the chipset was already on, so
-		 * simply reflect the actual power button state unless power
-		 * button pulse is disabled. If power button SMI pulse is
-		 * enabled, then it should be honored, else setting power
-		 * button to PCH could lead to x86 platform shutting down. If
-		 * power button is still held by the time control reaches
-		 * state_machine(), it would take the appropriate action there.
-		 */
-		if (power_button_is_pressed() && power_button_pulse_enabled) {
-			CPRINTS("PB init-jumped-held");
-			set_pwrbtn_to_pch(0, 0);
-		} else {
-			CPRINTS("PB init-jumped");
-		}
-		return;
-	} else if ((reset_flags & EC_RESET_FLAG_AP_OFF) ||
-		   (keyboard_scan_get_boot_keys() == BOOT_KEY_DOWN_ARROW)) {
-		/* Clear AP_OFF so that it won't be carried over to RW. */
-		system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
-		/*
-		 * Reset triggered by keyboard-controlled reset, and down-arrow
-		 * was held down.  Or reset flags request AP off.
-		 *
-		 * Leave the main processor off.  This is a fail-safe
-		 * combination for debugging failures booting the main
-		 * processor.
-		 *
-		 * Don't let the PCH see that the power button was pressed.
-		 * Otherwise, it might power on.
-		 */
-		CPRINTS("PB init-off");
-		power_button_pch_release();
-		return;
-	} else if (reset_flags & EC_RESET_FLAG_AP_IDLE) {
-		system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
-		pwrbtn_state = PWRBTN_STATE_IDLE;
-		CPRINTS("PB idle");
-		return;
-	}
-
-#ifdef CONFIG_BRINGUP
-	pwrbtn_state = PWRBTN_STATE_IDLE;
-#else
 	pwrbtn_state = PWRBTN_STATE_INIT_ON;
-#endif
-	CPRINTS("PB %s",
-		pwrbtn_state == PWRBTN_STATE_INIT_ON ? "init-on" : "idle");
+	CPRINTS("PB init-on");
 }
 
 /**
@@ -275,18 +214,18 @@ static void state_machine(uint64_t tnow)
 	switch (pwrbtn_state) {
 	case PWRBTN_STATE_PRESSED:
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			/*
-			 * Chipset is off, so wake the chipset and send it a
-			 * long enough pulse to wake up.  After that we'll
-			 * reflect the true power button state.  If we don't
-			 * stretch the pulse here, the user may release the
-			 * power button before the chipset finishes waking from
-			 * hard off state.
-			 */
-			chipset_exit_hard_off();
-			tnext_state = tnow + PWRBTN_INITIAL_US;
-			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
-			set_pwrbtn_to_pch(0, 0);
+			/* Check the VALW power rail is ready */
+			if (get_power_rail_status()) {
+				/*
+				 * Power button out signal implements in power_sequence.c,
+				 * just call the exit hard off start to run the state mechine.
+				 */
+				chipset_exit_hard_off();
+				pwrbtn_state = PWRBTN_STATE_IDLE;
+			} else {
+				tnext_state = tnow + PWRBTN_DELAY_INIT;
+				pwrbtn_state = PWRBTN_STATE_PRESSED;
+			}
 		} else {
 			if (power_button_pulse_enabled) {
 				/* Chipset is on, so send the chipset a pulse */
@@ -349,52 +288,22 @@ static void state_machine(uint64_t tnow)
 			}
 		}
 
-		/*
-		 * Power the system on if possible.  Gating due to insufficient
-		 * battery is handled inside set_pwrbtn_to_pch().
-		 */
-		chipset_exit_hard_off();
-#ifdef CONFIG_DELAY_DSW_PWROK_TO_PWRBTN
-		/* Check if power button is ready. If not, we'll come back. */
-		if (get_time().val - get_time_dsw_pwrok() <
-		    CONFIG_DSW_PWROK_TO_PWRBTN_US) {
-			tnext_state = get_time_dsw_pwrok() +
-				      CONFIG_DSW_PWROK_TO_PWRBTN_US;
-			break;
+		/* Check the VALW power rail is ready */
+		if (get_power_rail_status()) {
+			/*
+			 * Power button out signal implements in power_sequence.c,
+			 * just call the exit hard off start to run the state mechine.
+			 */
+			chipset_exit_hard_off();
+			pwrbtn_state = PWRBTN_STATE_IDLE;
+		} else {
+			tnext_state = tnow + PWRBTN_DELAY_INIT;
+			pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		}
-#endif
-
-		set_pwrbtn_to_pch(0, 1);
-		tnext_state = get_time().val + PWRBTN_INITIAL_US;
-		pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
 		break;
 
 	case PWRBTN_STATE_BOOT_KB_RESET:
-		/*
-		 * Initial forced pulse is done.  Ignore the actual power
-		 * button until it's released, so that holding down the
-		 * recovery combination doesn't cause the chipset to shut back
-		 * down.
-		 */
-		set_pwrbtn_to_pch(1, 0);
-		if (power_button_is_pressed())
-			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
-		else
-			pwrbtn_state = PWRBTN_STATE_IDLE;
-		break;
 	case PWRBTN_STATE_WAS_OFF:
-		/*
-		 * Done stretching initial power button signal, so show the
-		 * true power button state to the PCH.
-		 */
-		if (power_button_is_pressed()) {
-			/* User is still holding the power button */
-			pwrbtn_state = PWRBTN_STATE_HELD;
-		} else {
-			/* Stop stretching the power button press */
-			power_button_released(tnow);
-		}
-		break;
 	case PWRBTN_STATE_IDLE:
 	case PWRBTN_STATE_HELD:
 	case PWRBTN_STATE_EAT_RELEASE:
@@ -407,6 +316,7 @@ void power_button_task(void *u)
 {
 	uint64_t t;
 	uint64_t tsleep;
+	enum power_button_state curr_state = PWRBTN_STATE_IDLE;
 
 	/*
 	 * Record the time when the task starts so that the state machine can
@@ -418,8 +328,11 @@ void power_button_task(void *u)
 		t = get_time().val;
 
 		/* Update state machine */
-		CPRINTS("PB task %d = %s", pwrbtn_state,
-			state_names[pwrbtn_state]);
+		if (pwrbtn_state != curr_state) {
+			CPRINTS("PB task %d = %s", pwrbtn_state,
+				state_names[pwrbtn_state]);
+			curr_state = pwrbtn_state;
+		}
 
 		state_machine(t);
 
@@ -429,7 +342,7 @@ void power_button_task(void *u)
 			tsleep = tnext_state;
 		t = get_time().val;
 		if (tsleep > t) {
-			unsigned d = tsleep == -1 ? -1 : (unsigned)(tsleep - t);
+			uint16_t d = tsleep == -1 ? -1 : (uint16_t)(tsleep - t);
 			/*
 			 * (Yes, the conversion from uint64_t to unsigned could
 			 * theoretically overflow if we wanted to sleep for
@@ -438,8 +351,10 @@ void power_button_task(void *u)
 			 * back to sleep after deciding that we woke up too
 			 * early.)
 			 */
-			CPRINTS("PB task %d = %s, wait %d", pwrbtn_state,
-				state_names[pwrbtn_state], d);
+			if (pwrbtn_state != curr_state) {
+				CPRINTS("PB task %d = %s, wait %d", pwrbtn_state,
+					state_names[pwrbtn_state], d);
+			}
 			task_wait_event(d);
 		}
 	}

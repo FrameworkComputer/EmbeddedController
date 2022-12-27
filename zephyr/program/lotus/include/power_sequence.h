@@ -14,4 +14,7 @@ enum power_signal {
 	X86_VR_PG,
 	POWER_SIGNAL_COUNT
 };
+
+int get_power_rail_status(void);
+
 #endif	/* __CROS_EC_POWERSEQUENCE_H */

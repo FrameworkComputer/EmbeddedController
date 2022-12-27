@@ -40,11 +40,6 @@ int power_button_signal_asserted(void);
 void power_button_interrupt(enum gpio_signal signal);
 
 /**
- * For x86 systems, force-assert the power button signal to the PCH.
- */
-void power_button_pch_press(void);
-
-/**
  * For x86 systems, force-deassert the power button signal to the PCH.
  */
 void power_button_pch_release(void);
