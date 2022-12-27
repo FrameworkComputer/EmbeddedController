@@ -784,6 +784,15 @@ void board_hibernate(void)
 	 */
 	ppc_vbus_source_enable(0, 0);
 	ppc_vbus_sink_enable(0, 1);
+	/*
+	 * PPC1 therefore now needs to be configured the same way as PPC0,
+	 * to mimic the previous dead-battery behavior and allow wake on AC
+	 * plug.
+	 */
+	if (!IS_ENABLED(CONFIG_HIBERNATE_PSL)) {
+		ppc_vbus_source_enable(1, 0);
+		ppc_vbus_sink_enable(1, 1);
+	}
 
 	/*
 	 * If CCD not active, set port 0 SBU_EN=0 to avoid power leakage during
