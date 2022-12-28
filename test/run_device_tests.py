@@ -37,6 +37,8 @@ Run the script on the remote machine:
                 --jlink_port 19020 --console_port 10000
 """
 # pylint: enable=line-too-long
+# TODO(b/267800058): refactor into multiple modules
+# pylint: disable=too-many-lines
 
 import argparse
 import concurrent
