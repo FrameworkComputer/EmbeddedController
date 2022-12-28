@@ -76,7 +76,7 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now);
  *
  * @param us		Number of microseconds to delay.
  */
-void udelay(unsigned us);
+void udelay(unsigned int us);
 
 /**
  * Sleep.
@@ -89,7 +89,7 @@ void udelay(unsigned us);
  *
  * @param us		Number of microseconds to sleep.
  */
-void usleep(unsigned us);
+void usleep(unsigned int us);
 
 /**
  * Sleep for milliseconds.
@@ -98,7 +98,7 @@ void usleep(unsigned us);
  *
  * @param ms		Number of milliseconds to sleep.
  */
-static inline void msleep(unsigned ms)
+static inline void msleep(unsigned int ms)
 {
 	usleep(ms * MSEC);
 }
@@ -110,7 +110,7 @@ static inline void msleep(unsigned ms)
  *
  * @param sec		Number of seconds to sleep.
  */
-static inline void sleep(unsigned sec)
+static inline void sleep(unsigned int sec)
 {
 	usleep(sec * SECOND);
 }
@@ -166,7 +166,7 @@ static inline int time_until(uint32_t from_time, uint32_t to_time)
  * @param start		Start time to compare against
  * @return number of microseconds that have elapsed since that start time
  */
-static inline unsigned time_since32(timestamp_t start)
+static inline unsigned int time_since32(timestamp_t start)
 {
 	return time_until(start.le.lo, get_time().le.lo);
 }

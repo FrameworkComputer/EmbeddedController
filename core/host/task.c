@@ -185,7 +185,7 @@ void task_trigger_test_interrupt(void (*isr)(void))
 	pthread_mutex_unlock(&interrupt_lock);
 }
 
-void interrupt_generator_udelay(unsigned us)
+void interrupt_generator_udelay(unsigned int us)
 {
 	generator_sleep_deadline.val = get_time().val + us;
 	generator_sleeping = 1;

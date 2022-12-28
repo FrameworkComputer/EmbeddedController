@@ -251,9 +251,9 @@ extern mutex_t g_sensor_mutex;
 extern struct motion_sensor_t motion_sensors[];
 
 #ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-extern unsigned motion_sensor_count;
+extern unsigned int motion_sensor_count;
 #else
-extern const unsigned motion_sensor_count;
+extern const unsigned int motion_sensor_count;
 #endif
 /* Needed if reading ALS via LPC is needed */
 extern const struct motion_sensor_t *motion_als_sensors[];

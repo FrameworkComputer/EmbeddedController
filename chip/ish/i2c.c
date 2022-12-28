@@ -253,7 +253,7 @@ static void i2c_write_buffer(uint32_t *base, uint8_t len, const uint8_t *buffer,
 }
 
 static void i2c_write_read_commands(uint32_t *base, uint8_t len, int more_data,
-				    unsigned restart_flag)
+				    unsigned int restart_flag)
 {
 	/* this routine just set RX FIFO's control bit(s),
 	 * READ command or RESTART */

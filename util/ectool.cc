@@ -9959,7 +9959,7 @@ int cmd_pd_log(int argc, char *argv[])
 	struct ec_response_usb_pd_power_info pinfo;
 	int rv;
 	unsigned long long milliseconds;
-	unsigned seconds;
+	unsigned int seconds;
 	time_t now;
 	struct tm ltime;
 	char time_str[64];

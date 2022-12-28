@@ -2167,7 +2167,7 @@ unsigned int calc_api_csum_bin(void)
  *******************************************************************
  *
  *	static int crc_tab...init
- *	static unsigned ... crc_tab...[]
+ *	static unsigned int ... crc_tab...[]
  *
  *	The algorithms use tables with pre-calculated  values.  This
  *	speeds	up	the calculation dramatically. The first time the

@@ -107,7 +107,7 @@ static const struct {
 /* Contexts for all tasks */
 static task_ tasks[TASK_ID_COUNT];
 /* Validity checks about static task invariants */
-BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
+BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned int) * 8);
 BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 
 /* Stacks for all tasks */

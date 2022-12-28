@@ -23,8 +23,8 @@ const static struct gpio_dt_spec spec[] = { DT_INST_FOREACH_STATUS_OKAY(
 struct ps_gpio_int {
 	gpio_flags_t flags;
 	uint8_t signal;
-	unsigned output : 1;
-	unsigned no_enable : 1;
+	unsigned int output : 1;
+	unsigned int no_enable : 1;
 };
 
 #define INIT_GPIO_CONFIG(inst)                                      \

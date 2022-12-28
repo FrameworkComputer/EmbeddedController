@@ -159,7 +159,7 @@ static uint32_t task_reset_state[TASK_ID_COUNT] = {
 #endif /* CONFIG_TASK_RESET_LIST */
 
 /* Validity checks about static task invariants */
-BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
+BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned int) * 8);
 BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 BUILD_ASSERT(BIT(TASK_ID_COUNT) < TASK_RESET_LOCK);
 

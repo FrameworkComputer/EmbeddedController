@@ -36,9 +36,9 @@ void force_time(timestamp_t ts)
 	STM32_TIM32_CNT(2) = ts.le.lo;
 }
 
-void udelay(unsigned us)
+void udelay(unsigned int us)
 {
-	unsigned t0 = STM32_TIM32_CNT(2);
+	unsigned int t0 = STM32_TIM32_CNT(2);
 	while ((STM32_TIM32_CNT(2) - t0) < us)
 		;
 }
@@ -289,6 +289,6 @@ void __hw_timer_enable_clock(int n, int enable)
 { /* Done in hardware init */
 }
 
-void usleep(unsigned us)
+void usleep(unsigned int us)
 { /* Used only as a workaround */
 }

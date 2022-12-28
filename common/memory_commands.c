@@ -116,8 +116,8 @@ static int command_read_word(int argc, const char **argv)
 {
 	volatile uint32_t *address;
 	uint32_t value;
-	unsigned access_size = 4;
-	unsigned argc_offs = 0;
+	unsigned int access_size = 4;
+	unsigned int argc_offs = 0;
 	char *e;
 
 	if (argc < 2)

@@ -132,7 +132,7 @@ struct i2c_req {
 	uint8_t addr_match_flag;
 	const uint8_t *tx_data;
 	uint8_t *rx_data;
-	volatile unsigned received_count;
+	volatile unsigned int received_count;
 	volatile int tx_remain;
 	volatile i2c_target_state_t state;
 	volatile int restart;

@@ -91,7 +91,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	}
 }
 
-static unsigned blink_second;
+static unsigned int blink_second;
 
 static void elm_led_set_power(void)
 {

@@ -38,7 +38,7 @@ struct lb_brightness_def {
 };
 
 extern const struct lb_brightness_def lb_brightness_levels[];
-extern const unsigned lb_brightness_levels_count;
+extern const unsigned int lb_brightness_levels_count;
 #endif
 
 /* Request a preset sequence from the lightbar task. */

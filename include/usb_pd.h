@@ -1565,13 +1565,13 @@ void pd_snk_give_back(int port, uint32_t *const ma, uint32_t *const mv);
  * Put a cap on the max voltage requested as a sink.
  * @param mv maximum voltage in millivolts.
  */
-void pd_set_max_voltage(unsigned mv);
+void pd_set_max_voltage(unsigned int mv);
 
 /**
  * Get the max voltage that can be requested as set by pd_set_max_voltage().
  * @return max voltage
  */
-unsigned pd_get_max_voltage(void);
+unsigned int pd_get_max_voltage(void);
 
 /**
  * Check if this board supports the given input voltage.

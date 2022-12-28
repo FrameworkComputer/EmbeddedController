@@ -90,8 +90,8 @@ void dma_disable_all(void)
  * @param memory	Pointer to memory address for receive/transmit
  * @param flags		DMA flags for the control register.
  */
-static void prepare_stream(enum dma_channel stream, unsigned count,
-			   void *periph, void *memory, unsigned flags)
+static void prepare_stream(enum dma_channel stream, unsigned int count,
+			   void *periph, void *memory, unsigned int flags)
 {
 	stm32_dma_stream_t *dma_stream = dma_get_channel(stream);
 	uint32_t ccr = STM32_DMA_CCR_PL_VERY_HIGH;
@@ -120,7 +120,7 @@ void dma_go(stm32_dma_stream_t *stream)
 	stream->scr |= STM32_DMA_CCR_EN;
 }
 
-void dma_prepare_tx(const struct dma_option *option, unsigned count,
+void dma_prepare_tx(const struct dma_option *option, unsigned int count,
 		    const void *memory)
 {
 	/*
@@ -132,7 +132,8 @@ void dma_prepare_tx(const struct dma_option *option, unsigned count,
 			       option->flags);
 }
 
-void dma_start_rx(const struct dma_option *option, unsigned count, void *memory)
+void dma_start_rx(const struct dma_option *option, unsigned int count,
+		  void *memory)
 {
 	stm32_dma_stream_t *stream = dma_get_channel(option->channel);
 
@@ -203,7 +204,7 @@ void dma_test(enum dma_channel stream)
 	stm32_dma_stream_t *dma_stream = dma_get_channel(stream);
 	uint32_t ctrl;
 	char periph[32], memory[32];
-	unsigned count = sizeof(periph);
+	unsigned int count = sizeof(periph);
 	int i;
 
 	memset(memory, '\0', sizeof(memory));

@@ -19,7 +19,7 @@ uint32_t difftime(timestamp_t t0, timestamp_t t1)
 int timer_calib_task(void *data)
 {
 	timestamp_t t0, t1;
-	unsigned d;
+	unsigned int d;
 
 	while (1) {
 		task_wait_event(-1);
