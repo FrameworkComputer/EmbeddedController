@@ -26,7 +26,7 @@ config CROS_EC_RO_MEM_OFF
 	default 0x0
 
 config CROS_EC_RW_MEM_OFF
-	default 0x60000
+	default $(dt_node_int_prop_hex,/binman/ec-rw,offset)
 
 config FLASH_LOAD_OFFSET
 	default CROS_EC_RW_MEM_OFF if CROS_EC_RW
