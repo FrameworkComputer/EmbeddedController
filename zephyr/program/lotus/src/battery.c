@@ -10,11 +10,6 @@
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
-const struct battery_info *battery_get_info(void)
-{
-	return &board_battery_info->batt_info;
-}
-
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres = BP_NOT_SURE;

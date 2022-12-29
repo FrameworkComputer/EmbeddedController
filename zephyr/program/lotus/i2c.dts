@@ -103,6 +103,11 @@
 	pinctrl-names = "default";
 
 	/* TODO: Add the device on this bus */
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
 
 &i2c_ctrl3 {
