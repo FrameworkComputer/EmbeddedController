@@ -11,6 +11,7 @@ register_npcx_project(
         here / "gpio.dts",
         here / "interrupts.dts",
         here / "led_pins.dts",
+        here / "battery.dts",
         here / "lotus.dts",
     ],
 )
