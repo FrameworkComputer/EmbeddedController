@@ -10,9 +10,25 @@
 #include "sha256.h"
 #include "util.h"
 
+#ifdef CONFIG_ZTEST
+static uint8_t emulated_registers[3];
+#define IT8XXX2_GCTRL_SHA1HASHCTRLR emulated_registers[0]
+#define IT8XXX2_GCTRL_SHA1HBADDR emulated_registers[1]
+#define IT8XXX2_GCTRL_SHA2HBADDR emulated_registers[2]
+uint8_t it8xxx2_sha256_get_sha1hbaddr(void)
+{
+	return IT8XXX2_GCTRL_SHA1HBADDR;
+}
+
+uint8_t it8xxx2_sha256_get_sha2hbaddr(void)
+{
+	return IT8XXX2_GCTRL_SHA2HBADDR;
+}
+#else
 #define IT8XXX2_GCTRL_SHA1HASHCTRLR REG8(0x00f0202d)
 #define IT8XXX2_GCTRL_SHA1HBADDR REG8(0x00f0202e)
 #define IT8XXX2_GCTRL_SHA2HBADDR REG8(0x00f0202f)
+#endif
 
 static const uint32_t sha256_h0[8] = { 0x6a09e667, 0xbb67ae85, 0x3c6ef372,
 				       0xa54ff53a, 0x510e527f, 0x9b05688c,

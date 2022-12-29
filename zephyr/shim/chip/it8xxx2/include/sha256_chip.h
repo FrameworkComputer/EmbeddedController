@@ -25,4 +25,9 @@ struct sha256_ctx {
 
 void SHA256_abort(struct sha256_ctx *ctx);
 
+#ifdef CONFIG_ZTEST
+extern uint8_t it8xxx2_sha256_get_sha1hbaddr(void);
+extern uint8_t it8xxx2_sha256_get_sha2hbaddr(void);
+#endif
+
 #endif /* __CROS_EC_IT8XXX2_SHA256_H */
