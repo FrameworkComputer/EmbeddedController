@@ -32,6 +32,12 @@ config BOARD_CRYSTALDRIFT
 	  Build Google Crystaldrift reference board.  This board uses an AMD SoC
 	  and NPCX9 EC
 
+config BOARD_MARKARTH
+	bool "Google Markarth Board"
+	help
+	  Build Google Markarth reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
+
 config BOARD_USB_HUB_RESET
 	bool "Support USB hub reset or not"
 	default y

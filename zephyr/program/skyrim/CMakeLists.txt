@@ -41,3 +41,8 @@ if(DEFINED CONFIG_BOARD_CRYSTALDRIFT)
 	project(crystaldrift)
 	add_subdirectory(crystaldrift)
 endif()
+
+if(DEFINED CONFIG_BOARD_MARKARTH)
+	project(markarth)
+	add_subdirectory(markarth)
+endif()

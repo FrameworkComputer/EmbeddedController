@@ -46,3 +46,7 @@ register_skyrim_project(
 register_skyrim_project(
     project_name="crystaldrift",
 )
+
+register_skyrim_project(
+    project_name="markarth",
+)
