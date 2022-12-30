@@ -16,6 +16,7 @@
 #include "../npcx_keyboard.dtsi"
 #include "../npcx_usbc.dtsi"
 #include "../npcx_default_gpio_pinctrl.dtsi"
+#include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/battery.h>
 
 / {
@@ -207,6 +208,29 @@
 			led-values = <0 100>;
 		};
 	};
+
+	/* temp sensors */
+	named-adc-channels {
+		adc_temp_charger: temp-charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 8>;
+		};
+	};
+
+	temp_charger_thermistor: charger-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_charger>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_sensor_charger: charger-thermistor {
+			temp_host_halt = <75>;
+			temp_host_release_halt = <65>;
+			sensor = <&temp_charger_thermistor>;
+		};
+	};
 };
 
 /* Amber LED */
@@ -250,3 +274,17 @@
 		/delete-node/ tablet_mode;
 	};
 };
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+/* adc0 overrides */
+&adc0 {
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42
+		     &adc0_chan8_gpf1>;
+};
+
