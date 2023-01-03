@@ -187,6 +187,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "npcx_evb",
     "npcx_evb_arm",
     "nuwani",
+    "omnigul",
     "osiris",
     "palkia",
     "pazquel",
