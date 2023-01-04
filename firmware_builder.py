@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S python3 -u
 # -*- coding: utf-8 -*-
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
@@ -13,6 +13,7 @@ import argparse
 import multiprocessing
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 
@@ -303,6 +304,12 @@ def test(opts):
         subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
         # Verify the tests pass with ASan also
+        ec_dir = os.path.dirname(__file__)
+        build_dir = os.path.join(ec_dir, "build")
+        host_dir = os.path.join(build_dir, "host")
+        print(f"# Deleting {host_dir}")
+        shutil.rmtree(host_dir)
+
         cmd = ["make", "TEST_ASAN=y", target, f"-j{opts.cpus}"]
         print(f"# Running {' '.join(cmd)}.")
         subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
