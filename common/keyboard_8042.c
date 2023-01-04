@@ -470,7 +470,7 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 	enum ec_error_list ret;
 
 #ifdef CONFIG_KEYBOARD_DEBUG
-	char mylabel = get_keycap_label(row, col);
+	uint8_t mylabel = get_keycap_label(row, col);
 
 	if (mylabel & KEYCAP_LONG_LABEL_BIT)
 		CPRINTS("KB (%d,%d)=%d %s", row, col, is_pressed,

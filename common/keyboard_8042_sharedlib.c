@@ -104,7 +104,7 @@ const char *get_keycap_long_label(uint8_t idx)
 }
 
 #ifndef CONFIG_KEYBOARD_CUSTOMIZATION
-static char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
+static uint8_t keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{ KLLI_UNKNO, KLLI_UNKNO, KLLI_L_CTR, KLLI_SEARC, KLLI_R_CTR,
 	  KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO },
 	{ KLLI_F11, KLLI_ESC, KLLI_TAB, '~', 'a', 'z', '1', 'q' },
@@ -132,14 +132,14 @@ static char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 #endif
 };
 
-char get_keycap_label(uint8_t row, uint8_t col)
+uint8_t get_keycap_label(uint8_t row, uint8_t col)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		return keycap_label[col][row];
 	return KLLI_UNKNO;
 }
 
-void set_keycap_label(uint8_t row, uint8_t col, char val)
+void set_keycap_label(uint8_t row, uint8_t col, uint8_t val)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		keycap_label[col][row] = val;
