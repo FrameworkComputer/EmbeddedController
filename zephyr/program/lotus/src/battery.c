@@ -7,18 +7,31 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "battery_fuel_gauge.h"
+#include "console.h"
 
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 
 enum battery_present battery_is_present(void)
 {
-	enum battery_present batt_pres = BP_NOT_SURE;
+	enum battery_present batt_pres = BP_NO;
+	char text[32];
+	static int retry;
 
-    /*
-     * TODO: implement battery present function.
-     */
+	/*
+	 * EC does not connect to the battery present pin,
+	 * add the workaround to read the battery device name (register 0x21).
+	 */
 
-    batt_pres_prev = batt_pres;
+	if (battery_device_name(text, sizeof(text))) {
+		if (retry++ > 3) {
+			batt_pres = BP_NO;
+			retry = 0;
+		}
+	} else {
+		batt_pres = BP_YES;
+		retry = 0;
+	}
 
 	return batt_pres;
 }
