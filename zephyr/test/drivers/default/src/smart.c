@@ -257,6 +257,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_TEMPERATURE);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_TEMPERATURE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -264,6 +265,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  SB_RELATIVE_STATE_OF_CHARGE);
 	flags = BATT_FLAG_RESPONSIVE | BATT_FLAG_BAD_STATE_OF_CHARGE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -271,6 +273,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_VOLTAGE);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_VOLTAGE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -278,6 +281,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_CURRENT);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_CURRENT;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -285,18 +289,21 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_AVERAGE_CURRENT);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_AVERAGE_CURRENT;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail charging voltage read; want charge cannot be set */
 	i2c_common_emul_set_read_fail_reg(common_data, SB_CHARGING_VOLTAGE);
 	flags = BATT_FLAG_RESPONSIVE | BATT_FLAG_BAD_DESIRED_VOLTAGE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail charging voltage read; want charge cannot be set */
 	i2c_common_emul_set_read_fail_reg(common_data, SB_CHARGING_CURRENT);
 	flags = BATT_FLAG_RESPONSIVE | BATT_FLAG_BAD_DESIRED_CURRENT;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -304,6 +311,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_REMAINING_CAPACITY);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_REMAINING_CAPACITY;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -311,6 +319,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_FULL_CHARGE_CAPACITY);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_FULL_CAPACITY;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -318,6 +327,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_BATTERY_STATUS);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_STATUS;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -325,6 +335,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_FAIL_ALL_REG);
 	flags = BATT_FLAG_BAD_ANY;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
@@ -332,6 +343,7 @@ ZTEST_USER(smart_battery, test_battery_get_params)
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 }
@@ -471,6 +483,7 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 
 	/* Test that fake charge level is applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 	zassert_equal(fake_charge, batt.state_of_charge, "%d%% != %d%%",
@@ -483,6 +496,7 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 	i2c_common_emul_set_read_fail_reg(common_data, SB_FULL_CHARGE_CAPACITY);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_FULL_CAPACITY;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 	zassert_equal(fake_charge, batt.state_of_charge, "%d%% != %d%%",
@@ -499,6 +513,7 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 
 	/* Test that fake charge level is not applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 	charge = 100 * bat->cap / bat->full_cap;
@@ -551,6 +566,7 @@ ZTEST_USER(smart_battery, test_battery_fake_temperature)
 
 	/* Test that fake temperature is applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 	zassert_equal(fake_temp, batt.temperature, "%d != %d", fake_temp,
@@ -563,6 +579,7 @@ ZTEST_USER(smart_battery, test_battery_fake_temperature)
 
 	/* Test that fake temperature is not applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	batt.flags = 0;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 	zassert_equal(bat->temp, batt.temperature, "%d != %d", bat->temp,

@@ -165,6 +165,10 @@ int battery_get_avg_voltage(void); /* in mV */
 #define BATT_FLAG_BAD_AVERAGE_CURRENT 0x00001000
 /* All of the above BATT_FLAG_BAD_* bits */
 #define BATT_FLAG_BAD_ANY 0x000017fc
+/* Flags which are set or unset on every access (via battery_get_params) */
+#define BATT_FLAG_VOLATILE                                                  \
+	(BATT_FLAG_BAD_ANY | BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE | \
+	 BATT_FLAG_IMBALANCED_CELL)
 
 /* Battery constants */
 struct battery_info {

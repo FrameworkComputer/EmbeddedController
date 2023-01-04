@@ -451,6 +451,34 @@ static void apply_fake_state_of_charge(struct batt_params *batt)
 	batt->flags &= ~BATT_FLAG_BAD_REMAINING_CAPACITY;
 }
 
+static bool battery_want_charge(struct batt_params *batt)
+{
+	if (batt->flags &
+	    (BATT_FLAG_BAD_DESIRED_VOLTAGE | BATT_FLAG_BAD_DESIRED_CURRENT |
+	     BATT_FLAG_BAD_STATE_OF_CHARGE))
+		return false;
+
+	/*
+	 * Charging allowed if both desired voltage and current are nonzero
+	 * and battery isn't full (and we read them all correctly).
+	 */
+	if (batt->desired_voltage && batt->desired_current &&
+	    batt->state_of_charge < BATTERY_LEVEL_FULL)
+		return true;
+
+	/*
+	 * TODO (crosbug.com/p/29467): remove this workaround for dead battery
+	 * that requests no voltage/current
+	 */
+	if (IS_ENABLED(CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD)) {
+		if (batt->desired_voltage == 0 && batt->desired_current == 0 &&
+		    batt->state_of_charge == 0)
+			return true;
+	}
+
+	return false;
+}
+
 void battery_get_params(struct batt_params *batt)
 {
 	struct batt_params batt_new;
@@ -462,7 +490,7 @@ void battery_get_params(struct batt_params *batt)
 	 * will be preserved.
 	 */
 	memcpy(&batt_new, batt, sizeof(*batt));
-	batt_new.flags = 0;
+	batt_new.flags &= ~BATT_FLAG_VOLATILE;
 
 	if (sb_read(SB_TEMPERATURE, &batt_new.temperature) &&
 	    fake_temperature < 0)
@@ -487,6 +515,7 @@ void battery_get_params(struct batt_params *batt)
 
 	if (sb_read(SB_AVERAGE_CURRENT, &v))
 		batt_new.flags |= BATT_FLAG_BAD_AVERAGE_CURRENT;
+
 	if (sb_read(SB_CHARGING_VOLTAGE, &batt_new.desired_voltage))
 		batt_new.flags |= BATT_FLAG_BAD_DESIRED_VOLTAGE;
 
@@ -523,26 +552,7 @@ void battery_get_params(struct batt_params *batt)
 		batt_new.is_present = BP_NOT_SURE;
 #endif
 
-	/*
-	 * Charging allowed if both desired voltage and current are nonzero
-	 * and battery isn't full (and we read them all correctly).
-	 */
-	if (!(batt_new.flags &
-	      (BATT_FLAG_BAD_DESIRED_VOLTAGE | BATT_FLAG_BAD_DESIRED_CURRENT |
-	       BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
-#ifdef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
-	    /*
-	     * TODO (crosbug.com/p/29467): remove this workaround
-	     * for dead battery that requests no voltage/current
-	     */
-	    ((batt_new.desired_voltage && batt_new.desired_current &&
-	      batt_new.state_of_charge < BATTERY_LEVEL_FULL) ||
-	     (batt_new.desired_voltage == 0 && batt_new.desired_current == 0 &&
-	      batt_new.state_of_charge == 0)))
-#else
-	    batt_new.desired_voltage && batt_new.desired_current &&
-	    batt_new.state_of_charge < BATTERY_LEVEL_FULL)
-#endif
+	if (battery_want_charge(&batt_new))
 		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
 	else
 		/* Force both to zero */

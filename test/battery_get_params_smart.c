@@ -163,6 +163,16 @@ static int test_flags(void)
 	test_flag(SB_BATTERY_STATUS, BATT_FLAG_BAD_STATUS);
 
 	/*
+	 * Volatile flags should be cleared and other flags should be preserved.
+	 */
+	reset_and_fail_on(0, 0, -1);
+	batt.flags |= BATT_FLAG_BAD_TEMPERATURE;
+	batt.flags |= BIT(31);
+	battery_get_params(&batt);
+	TEST_ASSERT(batt.flags & BIT(31));
+	TEST_ASSERT(!(batt.flags & BATT_FLAG_BAD_ANY));
+
+	/*
 	 * All reads succeed. BATT_FLAG_RESPONSIVE should be set. Then, all
 	 * reads fail. BATT_FLAG_RESPONSIVE should be cleared.
 	 */
