@@ -21,10 +21,7 @@ test-list-host=$(TEST_LIST_HOST)
 else
 test-list-host = accel_cal
 test-list-host += aes
-ifeq ($(TEST_ASAN),)
-# TODO(b/264432260): always_memset fails with TEST_ASAN
 test-list-host += always_memset
-endif
 test-list-host += base32
 test-list-host += battery_get_params_smart
 test-list-host += benchmark
