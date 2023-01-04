@@ -4,10 +4,15 @@
  */
 
 #include "charge_state.h"
+#include "console.h"
 #include "cypress_pd_common.h"
 #include "driver/charger/isl9241.h"
+#include "task.h"
 #include "usb_pd.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 enum pd_power_role pd_get_power_role(int port)
 {
@@ -43,7 +48,7 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	/*
 	 * TODO: macro and return the CONFIG_USB_PD_PORT_MAX_COUNT
 	 */
-	return 4;
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
@@ -76,4 +81,12 @@ int board_set_active_charge_port(int charge_port)
 	 * TODO: implement set active charge port function.
 	 */
 	return EC_SUCCESS;
+}
+
+void cypd_interrupt_handler_task(void *p)
+{
+	int evt;
+	while (1) {
+		evt = task_wait_event(10*MSEC);
+	}
 }
