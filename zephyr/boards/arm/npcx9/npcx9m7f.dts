@@ -10,7 +10,12 @@
 #include "npcx9.dtsi"
 
 / {
-	/* The NPCX9m7F includes 320 KiB of code RAM, and 1 MiB flash */
+	/*
+	 * The NPCX9m7F includes 640 kB of code RAM, and 1 MB flash. Padding
+	 * is added to make the image the same size as the internal flash. This
+	 * is required to support the flashrom tool which requires an image that
+	 * matches the full internal flash size.
+	 */
 	binman {
 		wp-ro {
 			offset = <0x0>;
@@ -31,5 +36,7 @@
 				};
 			};
 		};
+		pad-byte = <0xff>;
+		pad-after = <0x60000>;
 	};
 };
