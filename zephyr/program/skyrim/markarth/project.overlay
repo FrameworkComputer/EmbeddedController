@@ -21,11 +21,11 @@
 / {
 	/* battery overrides */
 	batteries {
-		default_battery: aec_5477109 {
-			compatible = "aec,5477109", "battery-smart";
+		default_battery: lgc_ap19b8m-2 {
+			compatible = "lgc,ap19b8m-2", "battery-smart";
 		};
-		smp_l20m3pg1 {
-			compatible = "smp,l20m3pg1", "battery-smart";
+		cosmx_ap20cbl-3 {
+			compatible = "cosmx,ap20cbl-3", "battery-smart";
 		};
 	};
 
