@@ -51,4 +51,8 @@
 #define HAS_TASK_USB_MUX 1
 #endif /* CONFIG_PLATFORM_EC_USB_MUX_TASK */
 
+#ifdef CONFIG_HAS_TASK_CYPD
+#define HAS_TASK_CYPD 1
+#endif /* CONFIG_HAS_TASK_CYPD */
+
 #endif /* __CROS_EC_SHIMMED_TASKS_H */
