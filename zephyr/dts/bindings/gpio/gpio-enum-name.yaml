@@ -58,6 +58,7 @@ properties:
       - GPIO_KBD_KSO2
       - GPIO_LID_ACCEL_INT_L
       - GPIO_LID_OPEN
+      - GPIO_LID_SW
       - GPIO_PACKET_MODE_EN
       - GPIO_PCH_DSW_PWROK
       - GPIO_PCH_PWRBTN_L
