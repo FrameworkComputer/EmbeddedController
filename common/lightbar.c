@@ -1611,6 +1611,7 @@ void lightbar_task(void)
 			case LIGHTBAR_TAP:
 			case LIGHTBAR_PROGRAM:
 				st.cur_seq = st.prev_seq;
+				break;
 			default:
 				break;
 			}
