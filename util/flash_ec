@@ -1292,7 +1292,7 @@ function flash_it83xx() {
 		c2d2_wait_for_h1_power_on_or_reset
 
 		# Don't let the EC come out of reset after H1 reset
-		dut_control ec_reset:on
+		dut_control gsc_ec_reset:on
 
 		# Enable i2c bus on C2D2 at 400kbps
 		servo_save_add "i2c_ec_bus_speed"
@@ -1318,7 +1318,7 @@ function flash_it83xx() {
 	# We need to send the special waveform very soon after the EC powers on
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
 		# The EC was held in reset above
-		dut_control ec_reset:off
+		dut_control gsc_ec_reset:off
 	elif servo_has_cold_reset; then
 		servo_ec_hard_reset_or_die
 	fi
@@ -1480,11 +1480,11 @@ function flash_npcx_uut() {
 		c2d2_wait_for_h1_power_on_or_reset
 
 		# Don't let the EC come out of reset after H1 reset
-		dut_control ec_reset:on
+		dut_control gsc_ec_reset:on
 
 		# Force the EC to boot in UART update mode coming out of reset
 		ec_enable_boot0 "uut"
-		dut_control ec_reset:off
+		dut_control gsc_ec_reset:off
 
 		# Ensure normal UART operation
 		ec_disable_boot0 "uut"
