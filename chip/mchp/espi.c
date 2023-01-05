@@ -56,6 +56,11 @@
 #define ESPI_CHAN_READY_POLL_INTERVAL_US 100
 
 static uint32_t espi_channels_ready;
+static uint8_t espi_slave_oobDn[128]; /* Rx buffer */
+static uint8_t espi_slave_oobUp[128]; /* Tx buffer */
+
+#define espi_OOB_RxDn_BufferAddress ((uint32_t)espi_slave_oobDn)
+#define espi_OOB_TxUp_BufferAddress ((uint32_t)espi_slave_oobUp)
 
 /*
  * eSPI Virtual Wire reset values
@@ -450,6 +455,28 @@ static void espi_vw_pre_init(void)
 
 	CPRINTS("eSPI VW Pre-Init Done");
 	trace0(0, ESPI, 0, "eSPI VW Pre-Init Done");
+}
+
+void espi_oob_init(void)
+{
+	/**
+	 * Init OOB RX to be read to rx data packet from master
+	 * note: espi_OOB_RxDn_BufferAddress = &espi_slave_oobDn[]
+	 */
+	MCHP_ESPI_OOB_RX_ADDR_LO = espi_OOB_RxDn_BufferAddress;
+	MCHP_ESPI_OOB_RX_LEN |= (0xFF << 16);
+	MCHP_ESPI_OOB_RX_CTL |= BIT(0); /* SET_RECEIVE_AVAILABLE */
+
+	/**
+	 * Init OOB TX to be read to tx
+	 * note: espi_OOB_TxUp_BufferAddress = &espi_slave_oobUp[]
+	 */
+	MCHP_ESPI_OOB_TX_ADDR_LO = espi_OOB_TxUp_BufferAddress;
+	MCHP_ESPI_OOB_TX_LEN = 0x04;
+
+	MCHP_ESPI_OOB_TX_IEN |= BIT(1);
+	MCHP_ESPI_OOB_RX_IEN |= BIT(0);
+	CPRINTS("init RXIN=0x%08x", MCHP_ESPI_OOB_RX_IEN);
 }
 
 
@@ -995,6 +1022,121 @@ void espi_vw_evt2_dflt(uint32_t wire_state, uint32_t bpos)
 	MCHP_INT_DISABLE(25) = (1ul << bpos);
 }
 
+int espi_oob_retry_receive_date(uint8_t *readBuf)
+{
+	int retry = 2;
+	int i;
+	/* Clear slave OOB Dn/Up buffers */
+	memset(espi_slave_oobDn, 0, sizeof(espi_slave_oobDn));
+
+	/**
+	 * Init OOB RX to be read to rx data packet from master
+	 * note: espi_OOB_RxDn_BufferAddress = &espi_slave_oobDn[]
+	 */
+	MCHP_ESPI_OOB_RX_ADDR_LO = espi_OOB_RxDn_BufferAddress;
+	MCHP_ESPI_OOB_RX_LEN |= (0xFF << 16);
+	MCHP_ESPI_OOB_RX_CTL |= BIT(0); /* SET_RECEIVE_AVAILABLE */
+
+		/* wait eSPI Tx done */
+	while (retry--) {
+		msleep(5);
+		if (espi_slave_oobDn[0] != 0) {
+			if (espi_slave_oobDn[1] == 0x01) {
+				/* only process peci cmd */
+				for (i = 0; i < espi_slave_oobDn[2]-2; i++)
+					readBuf[i] = espi_slave_oobDn[i+5];
+			}
+			return EC_SUCCESS;
+		}
+	}
+
+	return EC_ERROR_UNKNOWN;
+}
+
+int espi_oob_build_peci_command(uint8_t srcAddr, uint8_t destAddr, uint8_t cmdCode,
+		uint8_t nWrite, uint8_t *writeBuf, uint8_t *readBuf)
+{
+	int i;
+
+	/* Clear slave OOB Dn/Up buffers */
+	memset(espi_slave_oobDn, 0, sizeof(espi_slave_oobDn));
+	memset(espi_slave_oobUp, 0, sizeof(espi_slave_oobUp));
+
+	/**
+	 * Init OOB RX to be read to rx data packet from master
+	 * note: espi_OOB_RxDn_BufferAddress = &espi_slave_oobDn[]
+	 */
+	MCHP_ESPI_OOB_RX_ADDR_LO = espi_OOB_RxDn_BufferAddress;
+	MCHP_ESPI_OOB_RX_LEN |= (0xFF << 16);
+	MCHP_ESPI_OOB_RX_CTL |= BIT(0); /* SET_RECEIVE_AVAILABLE */
+
+	/**
+	 * Init OOB TX to be read to tx
+	 * note: espi_OOB_TxUp_BufferAddress = &espi_slave_oobUp[]
+	 */
+	MCHP_ESPI_OOB_TX_ADDR_LO = espi_OOB_TxUp_BufferAddress;
+	MCHP_ESPI_OOB_TX_LEN = nWrite + 4;
+
+	/**
+	 * eSPI PECI command Format.
+	 *
+	 * eSPI Slave to PCH: Request fro PCH Temperature
+	 *       +-----------------------------------------------+
+	 * Byte# |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+	 *       +-----------------------------------------------+
+	 *   0   |      OOB Message = 21h   -> EC eSPI HW        |
+	 *       +-----------------------------------------------+
+	 *   1   |      Tag: EC eSPI HW  |  Length=0 EC eSPI HW  |
+	 *       +-----------------------------------------------+
+	 *   2   |      Length = N + 3 EC eSPI HW Reg            |
+	 *       +-----------------------------------------------+
+	 *   3   |      Dest Slave Addr[7:1]= 10h(PCH)     |  0  |  => 0x20
+	 *       +-----------------------------------------------+
+	 *   4   |      Command Code = 01h (PECI Command)        |  => 0x01
+	 *       +-----------------------------------------------+
+	 *   5   |      Byte Count = N                           |  => 0x05
+	 *       +-----------------------------------------------+
+	 *   6   |      Source Slave Address[7:1] = 07h    |  1  |  => 0x0F
+	 *       +-----------------------------------------------+
+	 *   7   |      PECI Target Address                      |  => 0x30
+	 *       +-----------------------------------------------+
+	 *       |      See PECI Spec (ex. GetTemp WtLen=1)      |
+	 *       +-----------------------------------------------+
+	 *       |      See PECI Spec (ex. GetTemp RdLen=2)      |
+	 *       +-----------------------------------------------+
+	 *       |      See PECI Spec (ex. GetTemp CmdCode=0x01) |
+	 *       +-----------------------------------------------+
+	 *       |      ........                                 |
+	 *       +-----------------------------------------------+
+	 *  N+5  |      Last Data                                |
+	 *       +-----------------------------------------------+
+	 */
+
+	espi_slave_oobUp[0] = destAddr;	/* Destination slave address */
+	espi_slave_oobUp[1] = cmdCode;	/* Command code */
+	espi_slave_oobUp[2] = nWrite+1;	/* Byte count */
+	espi_slave_oobUp[3] = srcAddr;	/* Source slave address */
+	memcpy(espi_slave_oobUp + 4, writeBuf, nWrite); /* Copy the other datas */
+
+	MCHP_ESPI_OOB_TX_STATUS = 0x2F;	/* Write clear register, reset status */
+	MCHP_ESPI_OOB_TX_CTL |= 0x01;	/* TRANSMIT_START */
+
+	/* wait eSPI Tx done */
+	msleep(5);
+
+	if (espi_slave_oobDn[0] != 0) {
+		if (espi_slave_oobDn[1] == 0x01) {
+			/* only process peci cmd */
+			for (i = 0; i < espi_slave_oobDn[2]-2; i++)
+				readBuf[i] = espi_slave_oobDn[i+5];
+		}
+	} else {
+		return EC_ERROR_TIMEOUT;
+	}
+
+	return EC_SUCCESS;
+}
+
 /************************************************************************/
 /* Interrupt handlers */
 
@@ -1181,23 +1323,28 @@ void espi_reset_isr(void)
 		MCHP_INT_ENABLE(MCHP_ESPI_GIRQ) = (
 				MCHP_ESPI_PC_GIRQ_BIT +
 				MCHP_ESPI_OOB_TX_GIRQ_BIT +
+				MCHP_ESPI_OOB_RX_GIRQ_BIT +
 				MCHP_ESPI_FC_GIRQ_BIT +
 				MCHP_ESPI_VW_EN_GIRQ_BIT);
-		MCHP_ESPI_OOB_TX_IEN = (1ul << 1);
 		MCHP_ESPI_FC_IEN = (1ul << 1);
 		MCHP_ESPI_PC_IEN = (1ul << 25);
 		CPRINTS("eSPI Reset de-assert");
 		trace0(0, ESPI, 0, "eSPI Reset de-assert");
 
+		/* we need to initial oob channel register when espi reset pin de-assert */
+		espi_oob_init();
+
 	} else { /* falling edge - reset asserted */
 		MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = (
 					MCHP_ESPI_PC_GIRQ_BIT +
 					MCHP_ESPI_OOB_TX_GIRQ_BIT +
+					MCHP_ESPI_OOB_RX_GIRQ_BIT +
 					MCHP_ESPI_FC_GIRQ_BIT +
 					MCHP_ESPI_VW_EN_GIRQ_BIT);
 		MCHP_INT_DISABLE(MCHP_ESPI_GIRQ) = (
 					MCHP_ESPI_PC_GIRQ_BIT +
 					MCHP_ESPI_OOB_TX_GIRQ_BIT +
+					MCHP_ESPI_OOB_RX_GIRQ_BIT +
 					MCHP_ESPI_FC_GIRQ_BIT +
 					MCHP_ESPI_VW_EN_GIRQ_BIT);
 		espi_channels_ready = 0;
@@ -1241,11 +1388,11 @@ void espi_oob_tx_isr(void)
 
 	sts = MCHP_ESPI_OOB_TX_STATUS;
 	MCHP_ESPI_OOB_TX_STATUS = sts;
-	MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = MCHP_ESPI_OOB_TX_GIRQ_BIT;
+
 	if (sts & (1ul << 1)) {
+		espi_oob_init();
 		/* Channel Enable change */
 		if (sts & (1ul << 9)) { /* enable? */
-			MCHP_ESPI_OOB_RX_LEN = 73;
 			MCHP_ESPI_IO_OOB_READY = 1;
 			espi_channels_ready |= (1ul << 2);
 			CPRINTS("eSPI OOB_UP ISR: OOB Channel Enable");
@@ -1260,6 +1407,8 @@ void espi_oob_tx_isr(void)
 		CPRINTS("eSPI OOB_UP status = 0x%x", sts);
 		trace11(0, ESPI, 0, "eSPI OOB_TX Status = 0x%08x", sts);
 	}
+
+	MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = MCHP_ESPI_OOB_TX_GIRQ_BIT;
 }
 DECLARE_IRQ(MCHP_IRQ_ESPI_OOB_UP, espi_oob_tx_isr, 2);
 

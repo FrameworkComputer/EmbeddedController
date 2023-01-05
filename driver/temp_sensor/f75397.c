@@ -6,22 +6,22 @@
 /* F75303 temperature sensor module for Chrome EC */
 
 #include "common.h"
-#include "f75303.h"
+#include "f75397.h"
 #include "i2c.h"
 #include "hooks.h"
 #include "util.h"
 #include "console.h"
 
-static int temps[F75303_IDX_COUNT];
-static int8_t fake_temp[F75303_IDX_COUNT] = {-1, -1, -1};
-static uint8_t f75303_enabled = 1;
+static int temps[F75397_IDX_COUNT];
+static int8_t fake_temp[F75397_IDX_COUNT] = {-1, -1};
+static uint8_t f75397_enabled = 1;
 
 /**
  * Enable or disable reading from the sensor
  */
-void f75303_set_enabled(uint8_t enabled)
+void f75397_set_enabled(uint8_t enabled)
 {
-	f75303_enabled = enabled;
+	f75397_enabled = enabled;
 }
 
 /**
@@ -29,7 +29,7 @@ void f75303_set_enabled(uint8_t enabled)
  */
 static int raw_read8(const int offset, int *data)
 {
-	return i2c_read8(I2C_PORT_THERMAL, F75303_I2C_ADDR_FLAGS,
+	return i2c_read8(I2C_PORT_THERMAL, F75397_I2C_ADDR_FLAGS,
 			 offset, data);
 }
 
@@ -48,33 +48,32 @@ static int get_temp(const int offset, int *temp)
 	return EC_SUCCESS;
 }
 
-int f75303_get_val(int idx, int *temp)
+int f75397_get_val(int idx, int *temp)
 {
-	if (idx < 0 || F75303_IDX_COUNT <= idx)
+	if (idx < 0 || F75397_IDX_COUNT <= idx)
 		return EC_ERROR_INVAL;
 
 	if (fake_temp[idx] != -1) {
 		*temp = C_TO_K(fake_temp[idx]);
 		return EC_SUCCESS;
 	}
-	if (!f75303_enabled)
+	if (!f75397_enabled)
 		return EC_ERROR_NOT_POWERED;
 
 	*temp = temps[idx];
 	return EC_SUCCESS;
 }
 
-static void f75303_sensor_poll(void)
+static void f75397_sensor_poll(void)
 {
-	if (f75303_enabled) {
-		get_temp(F75303_TEMP_LOCAL, &temps[F75303_IDX_LOCAL]);
-		get_temp(F75303_TEMP_REMOTE1, &temps[F75303_IDX_REMOTE1]);
-		get_temp(F75303_TEMP_REMOTE2, &temps[F75303_IDX_REMOTE2]);
+	if (f75397_enabled) {
+		get_temp(F75397_TEMP_LOCAL, &temps[F75397_IDX_LOCAL]);
+		get_temp(F75397_TEMP_REMOTE1, &temps[F75397_IDX_REMOTE1]);
 	}
 }
-DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
+DECLARE_HOOK(HOOK_SECOND, f75397_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
-static int f75303_set_fake_temp(int argc, char **argv)
+static int f75397_set_fake_temp(int argc, char **argv)
 {
 	int index;
 	int value;
@@ -84,7 +83,7 @@ static int f75303_set_fake_temp(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	index = strtoi(argv[1], &e, 0);
-	if ((*e) || (index < 0) || (index >= F75303_IDX_COUNT))
+	if ((*e) || (index < 0) || (index >= F75397_IDX_COUNT))
 		return EC_ERROR_PARAM1;
 
 	if (!strcasecmp(argv[2], "off")) {
@@ -103,6 +102,6 @@ static int f75303_set_fake_temp(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(f75303, f75303_set_fake_temp,
+DECLARE_CONSOLE_COMMAND(f75397, f75397_set_fake_temp,
 		"<index> <value>|off",
-		"Set fake temperature of sensor f75303.");
+		"Set fake temperature of sensor f75397.");

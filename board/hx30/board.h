@@ -158,6 +158,9 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* Optional features */
+#define CONFIG_ALS
+#define CONFIG_CMD_ALS
+#define ALS_POLL_PERIOD (50 * MSEC)
 
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_SMART
@@ -182,6 +185,10 @@
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 55000 /* only if battery is not present*/
 #define CONFIG_CHARGER_CUSTOMER_SETTING
 #define CONFIG_CMD_CHARGER_DUMP
+
+
+#define CONFIG_ALS_CM32183
+
 /*
  * MCHP disable this for Kabylake eSPI bring up
  * #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
@@ -329,6 +336,10 @@
  */
 #define CONFIG_FLASH_SIZE 0x100000
 #define CONFIG_SPI_FLASH_W25Q80
+#define SPI_BIOS_SETUP 0x00
+
+#define BIOS_SETUP_AC_BOOT	BIT(0)
+#define BIOS_SETUP_STANDALONE	BIT(1)
 
 /*
  * Enable extra SPI flash and generic SPI
@@ -398,6 +409,7 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_DPTF
 #define CONFIG_TEMP_SENSOR_F75303
+#define CONFIG_TEMP_SENSOR_F75397
 #define F75303_I2C_ADDR_FLAGS 0x4D
 #define CONFIG_CHIPSET_CAN_THROTTLE		/* Enable EC_PROCHOT_L control */
 
@@ -411,17 +423,8 @@
 #define CONFIG_PECI_COMMON
 #define CONFIG_PECI_TJMAX 100
 
-/* SPI Accelerometer
- * CONFIG_SPI_FLASH_PORT is the index into
- * spi_devices[] in board.c
- */
-/*#define CONFIG_SPI_ACCEL_PORT 1*/
 
-/*
- * Enable EC UART commands to read/write
- * motion sensor.
- */
-/*#define CONFIG_CMD_ACCELS*/
+#define CONFIG_CMD_ACCELS
 
 /*
  * Enable 1 slot of secure temporary storage to support
@@ -479,18 +482,18 @@
 #define GPIO_I2C_2_SCL      GPIO_EC_I2C_3_SCL
 #define GPIO_I2C_3_SDA      GPIO_EC_SMB_SDA3
 #define GPIO_I2C_3_SCL      GPIO_EC_SMB_CLK3
-#define GPIO_I2C_6_SDA      GPIO_EC_I2C06_PD_SDA
-#define GPIO_I2C_6_SCL      GPIO_EC_I2C06_PD_CLK
-
-
-/* EVT - DVT cover */
-#define GPIO_EC_KBL_PWR_EN		    GPIO_TYPEC_G_DRV2_EN
+#define GPIO_I2C_4_SDA      GPIO_EC_SMB_SDA4
+#define GPIO_I2C_4_SCL      GPIO_EC_SMB_CLK4
+#define GPIO_I2C_6_SDA      GPIO_EC_I2C06_PD1_SDA
+#define GPIO_I2C_6_SCL      GPIO_EC_I2C06_PD1_CLK
+#define GPIO_I2C_7_SDA      GPIO_EC_I2C07_PD2_SDA
+#define GPIO_I2C_7_SCL      GPIO_EC_I2C07_PD2_CLK
 
 
 /* I2C ports */
 #define I2C_CONTROLLER_COUNT	5
 #define I2C_SLAVE_CONTROLLER_COUNT	1
-#define I2C_PORT_COUNT		5
+#define I2C_PORT_COUNT		7
 
 
 /*
@@ -505,13 +508,15 @@
  *
  * All other ports set to 0xff (not used)
  */
-
+#define CONFIG_I2C_DEBUG
 #define I2C_PORT_TOUCHPAD		MCHP_I2C_PORT2
-#define I2C_PORT_PD_MCU         MCHP_I2C_PORT6
+#define I2C_PORT_PD_MCU0        MCHP_I2C_PORT6
+#define I2C_PORT_PD_MCU1        MCHP_I2C_PORT7
 #define I2C_PORT_TCPC           MCHP_I2C_PORT3
 #define I2C_PORT_BATTERY        MCHP_I2C_PORT1
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT1
 #define I2C_PORT_THERMAL		MCHP_I2C_PORT3
+#define I2C_PORT_ALS			MCHP_I2C_PORT4
 
 /* GPIO for power signal */
 #ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -558,7 +563,8 @@
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_HANG_DETECT) |		\
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_HANG_REBOOT) |		\
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_UCSI) |			\
-	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_BATT_BTP))
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_BATT_BTP) |		\
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_QEVENT))
 
 #define SCI_HOST_WAKE_EVENT_MASK			\
 	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED) |			\
@@ -591,7 +597,6 @@ enum adc_channel {
 	ADC_TP_BOARD_ID,
 	ADC_AD_BID,
 	ADC_AUDIO_BOARD_ID,
-	ADC_PROCHOT_L,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
@@ -648,6 +653,7 @@ enum temp_sensor_id {
 #ifdef CONFIG_PECI
 	TEMP_SENSOR_PECI,
 #endif /* CONFIG_PECI */
+	TEMP_SENSOR2_REMOTE,
 	TEMP_SENSOR_COUNT
 };
 
@@ -668,17 +674,13 @@ enum power_signal {
 };
 
 enum sensor_id {
-	BASE_ACCEL,
-	BASE_GYRO,
-#ifdef CONFIG_ACCEL_KX022
-	LID_ACCEL,
-#endif
+	SENSOR_ALS,
 	SENSOR_COUNT,
 };
 
 /* Light sensors */
 enum als_id {
-	ALS_OPT3001 = 0,
+	ALS_CM32183 = 0,
 
 	ALS_COUNT
 };
@@ -728,6 +730,9 @@ void board_reset_pd_mcu(void);
 /* P sensor */
 void psensor_interrupt(enum gpio_signal signal);
 
+void board_spi_read_byte(uint8_t offset, uint8_t *data);
+void board_spi_write_byte(uint8_t offset, uint8_t data);
+
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);
 
@@ -749,6 +754,7 @@ void cancel_board_power_off(void);
 
 /* power sequence */
 int board_chipset_power_on(void);
+void update_prevent_power_on_flag(int status);
 
 int board_get_version(void);
 
@@ -759,6 +765,9 @@ void s5_power_up_control(int control);
 
 int pos_get_state(void);
 
+int is_non_acpi_mode(void);
+void set_non_acpi_mode(int enable);
+
 void me_gpio_change(uint32_t flags);
 
 int get_hardware_id(enum adc_channel channel);
@@ -768,8 +777,15 @@ int ac_boot_status(void);
 void update_me_change(int change);
 
 int poweron_reason_powerbtn(void);
+int poweron_reason_acin(void);
+
+enum battery_present board_batt_is_present(void);
 
 void spi_mux_control(int enable);
+
+#ifdef CONFIG_EMI_REGION1
+void power_state_clear(int state);
+#endif
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

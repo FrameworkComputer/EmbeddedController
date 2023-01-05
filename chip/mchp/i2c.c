@@ -80,6 +80,10 @@
 #define CFG_ENABLE	BIT(10) /* enable controller */
 #define CFG_GC_DIS	BIT(14) /* disable general call address */
 #define CFG_PROM_EN BIT(15) /* enable Promiscuous mode */
+#define CFG_FLUSH_SXBUF (16) /* clear slave Tx buffer */
+#define CFG_FLUSH_SRBUF (17) /* clear slave Rx buffer */
+#define CFG_FLUSH_MXBUF (18) /* clear master Tx buffer */
+#define CFG_FLUSH_MRBUF (19) /* clear master Rx buffer */
 #define CFG_ENIDI	BIT(29) /* Enable I2C idle interrupt */
 /* Enable network layer master done interrupt */
 #define CFG_ENMI	BIT(30)
@@ -109,6 +113,8 @@
  * one byte assuming the bus isn't being held.
  */
 #define I2C_WAIT_BLOCKING_TIMEOUT_US 25
+
+#define I2C_MAX_HOST_PACKET_SIZE_EXTEND 350
 
 enum i2c_transaction_state {
 	/* Stop condition was sent in previous transaction */
@@ -154,7 +160,7 @@ static struct {
 	int count;
 	int length;
 	uint8_t addr;
-	uint8_t buffer[I2C_MAX_HOST_PACKET_SIZE];
+	uint8_t buffer[I2C_MAX_HOST_PACKET_SIZE_EXTEND];
 } slavedata[I2C_SLAVE_CONTROLLER_COUNT];
 
 static const uint16_t i2c_controller_pcr[MCHP_I2C_CTRL_MAX] = {
@@ -172,24 +178,24 @@ static int chip_i2c_is_controller_valid(int controller)
 	return 1;
 }
 
-static int chip_i2c_get_slave_addresses(int port)
+static int chip_i2c_get_slave_addresses(int controller)
 {
 #ifdef CONFIG_I2C_SLAVE
 	int i;
 	for (i = 0; i < i2c_slvs_used; i++) {
-		if (i2c_slv_ports[i].port == port)
+		if (i2c_slv_ports[i].port == controller)
 			/*return two addresses, one for read, one for write*/
 			return i2c_slv_ports[i].slave_adr;
 	}
 #endif
 	return 0;
 }
-static int chip_i2c_get_slave_data_idx(int port)
+static int chip_i2c_get_slave_data_idx(int controller)
 {
 #ifdef CONFIG_I2C_SLAVE
 	int i;
 	for (i = 0; i < i2c_slvs_used; i++) {
-		if (i2c_slv_ports[i].port == port)
+		if (i2c_slv_ports[i].port == controller)
 			/*return two addresses, one for read, one for write*/
 			return i;
 	}
@@ -365,7 +371,7 @@ static void restart_slave(int controller)
  */
 static void configure_controller(int controller, int port, int kbps)
 {
-	uint32_t slave = chip_i2c_get_slave_addresses(port);
+	uint32_t slave = chip_i2c_get_slave_addresses(controller);
 	if (!chip_i2c_is_controller_valid(controller))
 		return;
 
@@ -617,6 +623,21 @@ static int i2c_mtx(int ctrl)
 		cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
 	}
 
+	/* Workaround to revocer the LAB flag error */
+	while (MCHP_I2C_STATUS(ctrl) & STS_LAB) {
+		CPRINTS("I2C%d wSTS LAB error, doing reset!", ctrl);
+		MCHP_I2C_CONFIG(ctrl) |= CFG_FLUSH_MRBUF | CFG_FLUSH_MXBUF |
+					CFG_FLUSH_SRBUF | CFG_FLUSH_SXBUF;
+		reset_controller(ctrl);
+		usleep(1000);
+
+		MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr_8bit;
+		/* Clock out the slave address, sending START bit */
+		MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
+			CTRL_ACK | CTRL_STA;
+		cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
+	}
+
 	for (i = 0; i < cdata[ctrl].out_size; ++i) {
 		rv = wait_byte_done(ctrl, 0xff, 0x00);
 		if (rv) {
@@ -700,6 +721,29 @@ static int i2c_mrx_start(int ctrl)
 		/* address then START */
 		MCHP_I2C_CTRL(ctrl) = u8 | CTRL_PIN;
 	}
+
+	/* Workaround to revocer the LAB flag error */
+	while (MCHP_I2C_STATUS(ctrl) & STS_LAB) {
+		CPRINTS("I2C%d rSTS LAB error, doing reset!", ctrl);
+		MCHP_I2C_CONFIG(ctrl) |= CFG_FLUSH_MRBUF | CFG_FLUSH_MXBUF |
+					CFG_FLUSH_SRBUF | CFG_FLUSH_SXBUF;
+		reset_controller(ctrl);
+		usleep(1000);
+
+		if (cdata[ctrl].transaction_state == I2C_TRANSACTION_OPEN) {
+			cdata[ctrl].flags |= (1ul << 5);
+			/* Repeated-START then address */
+			MCHP_I2C_CTRL(ctrl) = u8;
+		}
+
+		MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr_8bit | 0x01;
+		if (cdata[ctrl].transaction_state == I2C_TRANSACTION_STOPPED) {
+			cdata[ctrl].flags |= (1ul << 6);
+			/* address then START */
+			MCHP_I2C_CTRL(ctrl) = u8 | CTRL_PIN;
+		}
+	}
+
 	cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
 	/* Controller generates START, transmits data(address) capturing
 	 * 9-bits from SDA (8-bit address + (N)Ack bit).
@@ -841,8 +885,10 @@ int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
 
 	cdata[ctrl].flags |= (1ul << 15);
 	/* MCHP wait for STOP to complete */
-	if (cdata[ctrl].xflags & I2C_XFER_STOP)
+	if (cdata[ctrl].xflags & I2C_XFER_STOP) {
+		cdata[ctrl].transaction_state = I2C_TRANSACTION_STOPPED;
 		wait_idle(ctrl);
+	}
 
 	/* Check for error conditions */
 	if (MCHP_I2C_STATUS(ctrl) & (STS_LAB | STS_BER)) {
@@ -1000,9 +1046,15 @@ static void handle_interrupt(int controller)
 	uint32_t r;
 	int slave_idx;
 	int id = cdata[controller].task_waiting;
+
 #ifdef CONFIG_I2C_SLAVE
 	if (cdata[controller].slave_mode) {
 		slave_idx = chip_i2c_get_slave_data_idx(controller);
+
+		/* we don't need to process wrong slave idx */
+		if (slave_idx < 0)
+			return;
+
 		r = MCHP_I2C_STATUS(controller);
 		if (r & STS_BER) {
 			/*stop and restart*/
@@ -1045,8 +1097,8 @@ static void handle_interrupt(int controller)
 		} else {
 			slavedata[slave_idx].buffer[slavedata[slave_idx].count++] = MCHP_I2C_DATA(controller);
 		}
-		if (slavedata[slave_idx].count >= I2C_MAX_HOST_PACKET_SIZE) {
-			slavedata[slave_idx].count = I2C_MAX_HOST_PACKET_SIZE - 1;
+		if (slavedata[slave_idx].count >= I2C_MAX_HOST_PACKET_SIZE_EXTEND) {
+			slavedata[slave_idx].count = I2C_MAX_HOST_PACKET_SIZE_EXTEND - 1;
 		}
 		MCHP_INT_SOURCE(MCHP_I2C_GIRQ) = MCHP_I2C_GIRQ_BIT(controller);
 		return;

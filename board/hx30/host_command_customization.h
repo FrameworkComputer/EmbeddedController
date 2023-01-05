@@ -87,6 +87,7 @@ struct ec_params_me_control {
 	uint8_t me_mode;
 } __ec_align1;
 
+/* To notice EC enter non-acpi mode */
 #define EC_CMD_CUSTOM_HELLO	0x3E07
 
 #define EC_CMD_DISABLE_PS2_EMULATION 0x3E08
@@ -160,6 +161,8 @@ enum bb_retimer_control_mode {
 	BB_EXIT_FW_UPDATE_MODE = BIT(1),
 	/* enable compliance mode */
 	BB_ENABLE_COMPLIANCE_MODE = BIT(2),
+	/* disable compliance mode */
+	BB_DISABLE_COMPLIANCE_MODE = BIT(3),
 	/* Check fw update mode */
 	BB_CHECK_STATUS	= BIT(7),
 };
@@ -195,6 +198,22 @@ struct ec_response_fp_led_level {
 
 struct ec_response_chassis_open_check {
 	uint8_t status;
+} __ec_align1;
+
+/* To notice EC enter acpi mode */
+#define EC_CMD_CUSTOM_HELLO_ACPI       0x3E10
+
+#define EC_CMD_READ_PD_VERSION 0x3E11
+
+struct ec_response_read_pd_version {
+	uint8_t pd0_version[8];
+	uint8_t pd1_version[8];
+} __ec_align1;
+
+#define EC_CMD_THERMAL_QEVENT 0x3E12
+
+struct ec_params_thermal_qevent_control {
+	uint8_t send_event;
 } __ec_align1;
 
 #define EC_CMD_STANDALONE_MODE 0x3E13

@@ -94,4 +94,8 @@ const char *espi_vw_get_wire_name(enum espi_vw_signal signal);
 int espi_signal_is_vw(int signal);
 
 
+int espi_oob_build_peci_command(uint8_t srcAddr, uint8_t destAddr, uint8_t cmdCode,
+		uint8_t nWrite, uint8_t *writeBuf, uint8_t *readBuf);
+
+
 #endif  /* __CROS_EC_ESPI_H */

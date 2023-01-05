@@ -14,15 +14,15 @@
 #include "adc_chip.h"
 #include "als.h"
 #include "bd99992gw.h"
-#include "button.h"
 #include "battery.h"
+#include "button.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
 #include "cypress5525.h"
 #include "diagnostics.h"
-#include "driver/als_opt3001.h"
+#include "driver/als_cm32183.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -60,6 +60,7 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "driver/temp_sensor/f75303.h"
+#include "driver/temp_sensor/f75397.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -236,7 +237,6 @@ const struct adc_t adc_channels[] = {
 	[ADC_TP_BOARD_ID]     = {"TP_BID", 3300, 4096, 0, 3},
 	[ADC_AD_BID]          = {"AD_BID", 3300, 4096, 0, 4},
 	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5},
-	[ADC_PROCHOT_L]       = {"PROCHOT_L", 3300, 4096, 0, 6}
 
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
@@ -245,14 +245,21 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
+	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
 	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
 	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
-	{"pd",       MCHP_I2C_PORT6, 400,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
-	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
+	{"als",      MCHP_I2C_PORT4, 100,  GPIO_I2C_4_SDA, GPIO_I2C_4_SCL},
+	{"pd1",      MCHP_I2C_PORT6, 400,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
+	{"pd2",      MCHP_I2C_PORT7, 400,  GPIO_I2C_7_SDA, GPIO_I2C_7_SCL},
 
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+struct als_t als[] = {
+	{"CAPELLA", cm32183_init, cm32183_read_lux, 32},
+};
+BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 /*
  * Map ports to controller.
@@ -260,8 +267,10 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT6,
+	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT7,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT3,
+	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT4,
 	(MCHP_I2C_CTRL4 << 8) + MCHP_I2C_PORT2,
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT0,
 };
@@ -283,6 +292,7 @@ int board_i2c_p2c(int port)
 
 
 const struct i2c_slv_port_t i2c_slv_ports[] = {
+	/* Actually, we are checking the controller instead of port */
 	{"pch", MCHP_I2C_CTRL3, 0x50}
 };
 const unsigned int i2c_slvs_used = ARRAY_SIZE(i2c_slv_ports);
@@ -302,6 +312,8 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 	GPIO_AC_PRESENT,
 	GPIO_ON_OFF_BTN_L,
+	GPIO_CAM_SW,
+	GPIO_MIC_SW,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
@@ -363,6 +375,7 @@ void board_reset_pd_mcu(void)
 
 }
 
+
 void spi_mux_control(int enable)
 {
 	if (enable) {
@@ -376,6 +389,21 @@ void spi_mux_control(int enable)
 		/* Set GPIO56 as SPI for access SPI ROM */
 		gpio_set_alternate_function(1, 0x4000, 1);
 	}
+}
+
+
+
+/**
+ * Check the plug-in AC then power on system setting.
+ */
+bool ac_poweron_check(void)
+{
+	return flash_storage_get(FLASH_FLAGS_ACPOWERON);
+}
+
+int poweron_reason_acin(void)
+{
+	return extpower_is_present() && ac_poweron_check();
 }
 
 static int power_button_pressed_on_boot;
@@ -420,6 +448,7 @@ static void board_power_off_deferred(void)
 	/* Turn off BGATE and NGATE for power saving */
 	charger_psys_enable(0);
 	charge_gate_onoff(0);
+
 
 	/* Disable interrupts */
 	interrupt_disable();
@@ -518,6 +547,7 @@ static void check_chassis_open(int init)
 	}
 }
 
+
 void charge_gate_onoff(uint8_t enable)
 {
 	int control0 = 0x0000;
@@ -581,6 +611,7 @@ void charger_psys_enable(uint8_t enable)
 		CPRINTS("Power saving enable");
 	}
 
+
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_ACOK_REFERENCE, data)) {
 		CPRINTS("Update ACOK reference fail");
@@ -597,13 +628,10 @@ void charger_psys_enable(uint8_t enable)
 	}
 }
 
+
 /* Initialize board. */
 static void board_init(void)
 {
-	int version = board_get_version();
-
-	if (version > 6)
-		gpio_set_flags(GPIO_EN_INVPWR, GPIO_OUT_LOW);
 
 	if (flash_storage_get(FLASH_FLAGS_ACPOWERON) && !ac_boot_status())
 		*host_get_customer_memmap(0x48) = flash_storage_get(FLASH_FLAGS_ACPOWERON);
@@ -617,19 +645,24 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
 
 	reconfigure_kbbl_pwm_frquency();
+
+	/**
+	 * If we plug-in DC and chassis open, EC will assert EC_ON.
+	 * We should de-assert the VCI_OUT if we do not power on system.
+	 */
+	if (!extpower_is_present())
+		board_power_off();
+
+	/* GPIO062 for DVT2 or the older boards need to set the input. */
+	if (board_get_version() <= BOARD_VERSION_8)
+		gpio_set_flags(GPIO_PM_SLP_S0_L, GPIO_INPUT);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
-	int version = board_get_version();
-
 	CPRINTS("HOOK_CHIPSET_STARTUP - called board_chipset_startup");
-
-	if (version > 6)
-		gpio_set_level(GPIO_EN_INVPWR, 1);
-
 	charger_psys_enable(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
@@ -650,10 +683,22 @@ static void board_chipset_shutdown(void)
 #endif
 
 	charger_psys_enable(0);
+
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
 		HOOK_PRIO_DEFAULT);
+
+static int force_gpio6_rework;
+
+void disable_bb_retimer_power_deferred(void)
+{
+	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework) {
+		CPRINTS("Disable BBR power");
+		gpio_set_level(GPIO_PM_SLP_S0_L, 0);
+	}
+}
+DECLARE_DEFERRED(disable_bb_retimer_power_deferred);
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
@@ -663,9 +708,18 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
 	charger_psys_enable(1);
+
+	/* Enable BB retimer power, for MP boards. */
+	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework) {
+		CPRINTS("Enable BBR power");
+		gpio_set_level(GPIO_PM_SLP_S0_L, 1);
+	}
+
+	hook_call_deferred(&disable_bb_retimer_power_deferred_data, -1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
+
 
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
@@ -677,10 +731,32 @@ static void board_chipset_suspend(void)
 		gpio_set_level(GPIO_CAM_EN, 0);
 	}
 	charger_psys_enable(0);
+
+	/* Disable BB retimer power, for MP boards. */
+	hook_call_deferred(&disable_bb_retimer_power_deferred_data, 3 * SECOND);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,
 		HOOK_PRIO_DEFAULT);
+
+
+static int cmd_forcegpio6(int argc, char **argv)
+{
+	if (argc == 2 && !strcasecmp(argv[1], "enable")) {
+		force_gpio6_rework = 1;
+		gpio_set_flags(GPIO_PM_SLP_S0_L, GPIO_OUTPUT);
+	} else if (argc == 2 && !strcasecmp(argv[1], "disable")) {
+		force_gpio6_rework = 0;
+		if (board_get_version() <= BOARD_VERSION_8)
+			gpio_set_flags(GPIO_PM_SLP_S0_L, GPIO_INPUT);
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(forcegpio6, cmd_forcegpio6,
+			"[enable/disable]",
+			"Force retimer GPIO6 control on early boards with rework");
 
 void board_hibernate(void)
 {
@@ -690,8 +766,6 @@ void board_hibernate_late(void)
 {
 	/* put host chipset into reset */
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
-
-
 }
 
 /* according to Panel team suggest, delay 60ms to meet spec */
@@ -745,13 +819,9 @@ BUILD_ASSERT(ARRAY_SIZE(hx20_board_versions) == BOARD_VERSION_COUNT);
 
 int get_hardware_id(enum adc_channel channel)
 {
-	int version[ADC_CH_COUNT] = {BOARD_VERSION_UNKNOWN};
+	int version = BOARD_VERSION_UNKNOWN;
 	int mv;
 	int i;
-
-	if (channel >= ADC_CH_COUNT) {
-		return BOARD_VERSION_UNKNOWN;
-	}
 
 	mv = adc_read_channel(channel);
 
@@ -760,11 +830,11 @@ int get_hardware_id(enum adc_channel channel)
 
 	for (i = 0; i < BOARD_VERSION_COUNT; i++)
 		if (mv < hx20_board_versions[i].thresh_mv) {
-			version[channel] = hx20_board_versions[i].version;
-			return version[channel];
+			version = hx20_board_versions[i].version;
+			return version;
 		}
 
-	return version[channel];
+	return version;
 }
 
 int board_get_version(void)
@@ -953,10 +1023,16 @@ const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_PECI] = {
 		.name = "PECI",
 		.type = TEMP_SENSOR_TYPE_CPU,
-		.read = peci_temp_sensor_get_val,
+		.read = peci_over_espi_temp_sensor_get_val,
 		.idx = 0,
 	},
 #endif /* CONFIG_PECI */
+	[TEMP_SENSOR2_REMOTE] = {
+		.name = "F75397_VCCGT",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75397_get_val,
+		.idx = F75397_IDX_REMOTE1
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -1004,11 +1080,11 @@ static const struct ec_thermal_config thermal_inductor_local = {
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(62),
+	.temp_fan_off = C_TO_K(51),
+	.temp_fan_max = C_TO_K(69),
 };
 
 static const struct ec_thermal_config thermal_inductor_cpu = {
@@ -1019,10 +1095,10 @@ static const struct ec_thermal_config thermal_inductor_cpu = {
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(40),
+	.temp_fan_off = C_TO_K(51),
 	.temp_fan_max = C_TO_K(69),
 };
 static const struct ec_thermal_config thermal_inductor_ddr = {
@@ -1033,11 +1109,11 @@ static const struct ec_thermal_config thermal_inductor_ddr = {
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(67),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(77),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
 	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(62),
+	.temp_fan_max = C_TO_K(69),
 };
 
 static const struct ec_thermal_config thermal_battery = {
@@ -1057,19 +1133,34 @@ static const struct ec_thermal_config thermal_battery = {
 #ifdef CONFIG_PECI
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = C_TO_K(95),
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(103),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
+		[EC_TEMP_THRESH_WARN] = C_TO_K(115),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(120),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(127),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
 		[EC_TEMP_THRESH_HIGH] = 0,
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(104),
+	.temp_fan_off = C_TO_K(103),
 	.temp_fan_max = C_TO_K(105),
 };
 #endif
+
+static const struct ec_thermal_config thermal_inductor2_vccgt = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(88),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(51),
+	.temp_fan_max = C_TO_K(69),
+};
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
@@ -1082,6 +1173,7 @@ static void setup_fans(void)
 #ifdef CONFIG_PECI
 	thermal_params[TEMP_SENSOR_PECI] = thermal_cpu;
 #endif
+	thermal_params[TEMP_SENSOR2_REMOTE] = thermal_inductor2_vccgt;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
@@ -1098,33 +1190,6 @@ void check_deferred_time (const struct deferred_data *data)
 			hook_call_deferred(data, 0);
 	}
 }
-
-static int prochot_low_time;
-
-void prochot_monitor(void)
-{
-	int val_l;
-	/* TODO Enable this once PROCHOT has moved to VCCIN_AUX_CORE_ALERT#_R
-	* Right now the voltage for this is too low for us to sample using gpio.
-	*/
-	val_l = adc_read_channel(ADC_PROCHOT_L) > 500;
-	/*val_l = gpio_get_level(GPIO_EC_val_lPROCHOT_L);*/
-	if (val_l) {
-		prochot_low_time = 0;
-	} else {
-		prochot_low_time++;
-		if ((prochot_low_time & 0xF) == 0xF && chipset_in_state(CHIPSET_STATE_ON))
-			CPRINTF("PROCHOT has been low for too long - investigate");
-	}
-
-	check_chassis_open(0);
-
-	check_deferred_time(&board_power_off_deferred_data);
-
-}
-DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
-
-
 
 int mainboard_power_button_first_state;
 static void mainboard_power_button_change_deferred(void)
@@ -1143,12 +1208,10 @@ void mainboard_power_button_interrupt(enum gpio_signal signal)
 			   50);
 }
 
-
-
-
 static int cmd_spimux(int argc, char **argv)
 {
 	int enable;
+
 	if (argc == 2) {
 		if (!parse_bool(argv[1], &enable))
 			return EC_ERROR_PARAM1;
@@ -1212,6 +1275,16 @@ void fingerprint_power_button_interrupt(enum gpio_signal signal)
 		hook_call_deferred(&fingerprint_power_button_change_deferred_data,
 				50);
 }
+
+void board_hook_second(void)
+{
+
+	check_chassis_open(0);
+
+	check_deferred_time(&board_power_off_deferred_data);
+
+}
+DECLARE_HOOK(HOOK_SECOND, board_hook_second, HOOK_PRIO_DEFAULT);
 
 static int cmd_bbram(int argc, char **argv)
 {

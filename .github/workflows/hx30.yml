@@ -1,0 +1,39 @@
+name: build hx30 firmware
+
+on:
+  push:
+    branches:
+      - hx3*
+      - hx20-hx30*
+  pull_request:
+    branches: 
+      - hx20-hx30
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build hx30
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: install toolchain
+        run: sudo apt install gcc-arm-none-eabi libftdi1-dev
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: build hx30 board
+        env:
+          BOARD: hx30
+        run: |
+          make -j BOARD=$BOARD CROSS_COMPILE=arm-none-eabi-
+          echo Built $BOARD ec
+      - name: file sha256
+        run: sha256sum build/hx30/ec.bin
+      - name: generate artifact version
+        run: |
+          echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: hx30.${{ env.VERSIONINFO }}.bin
+          path: build/hx30/ec.bin

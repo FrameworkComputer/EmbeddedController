@@ -346,6 +346,7 @@ DECLARE_HOOK(HOOK_INIT, peci_init, HOOK_PRIO_DEFAULT);
 int peci_transaction(struct peci_data *peci)
 {
 	struct peci_params_t peci_params;
+	uint8_t rv;
 	int index;
 	int dlen;
 	uint8_t aw_FCS_calc;
@@ -381,11 +382,11 @@ int peci_transaction(struct peci_data *peci)
 		peci_params.cmd_fifo[peci_params.cmd_length - 1] = aw_FCS_calc;
 	}
 
-	peci_trans(&peci_params);
+	rv = peci_trans(&peci_params);
 
 	/* TODO: check error message, if no error, pass the data fifo to *in*/
 	for (dlen = 0; dlen < peci_params.read_length; dlen++)
 		peci->r_buf[dlen] = peci_params.data_fifo[dlen];
 
-	return PECI_STATUS_NO_ERR;
+	return rv;
 }

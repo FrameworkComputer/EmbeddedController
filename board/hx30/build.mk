@@ -22,9 +22,6 @@ BASEBOARD:=fwk
 board-y=board.o led.o power_sequence.o cypress5525.o ucsi.o cpu_power.o
 board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o
 board-$(CONFIG_POWER_BUTTON_CUSTOM) += power_button_x86.o
-board-$(CONFIG_PECI) += peci_customization.o
+board-$(CONFIG_PECI) += peci_customization.o peci_over_espi.o
 board-$(HAS_TASK_HOSTCMD) += host_command_customization.o
 board-$(CONFIG_I2C_HID_MEDIAKEYS) += i2c_hid_mediakeys.o
-
-
-

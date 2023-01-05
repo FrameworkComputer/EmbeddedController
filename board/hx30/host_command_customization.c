@@ -25,11 +25,14 @@
 #include "ps2mouse.h"
 #include "keyboard_8042_sharedlib.h"
 #include "diagnostics.h"
+#include "driver/als_cm32183.h"
 #include "cpu_power.h"
 #include "flash_storage.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #ifdef CONFIG_EMI_REGION1
+
+static int non_acpi_mode;
 
 static void sci_enable(void);
 DECLARE_DEFERRED(sci_enable);
@@ -40,6 +43,16 @@ int pos_get_state(void)
 		return true;
 	else
 		return false;
+}
+int is_non_acpi_mode(void)
+{
+	/* check the system is in non_acpi_mode */
+	return non_acpi_mode;
+}
+
+void set_non_acpi_mode(int enable)
+{
+	non_acpi_mode = enable;
 }
 
 static void sci_enable(void)
@@ -54,6 +67,8 @@ static void sci_enable(void)
 		flash_storage_update(FLASH_FLAGS_ACPOWERON, ac_boot_status() ? 1 : 0);
 		flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
 		flash_storage_commit();
+
+		set_non_acpi_mode(0);
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -173,9 +188,26 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	s5_power_up_control(1);
 	update_me_change(0);
 
+	/* clear ENTER_S4/S5 flag */
+	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
+		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
+
 	/* clear ACPI ready flags for pre-os*/
 	*host_get_customer_memmap(0x00) &= ~BIT(0);
+	set_non_acpi_mode(1);
 
+	r->out_data = d + 0x01020304;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO, host_custom_command_hello, EC_VER_MASK(0));
+
+static enum ec_status host_custom_command_hello_acpi(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_hello *p = args->params;
+	struct ec_response_hello *r = args->response;
+	uint32_t d = p->in_data;
 	/**
 	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
 	 * every boot up (both cold boot and warn boot)
@@ -191,7 +223,7 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO, host_custom_command_hello, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO_ACPI, host_custom_command_hello_acpi, EC_VER_MASK(0));
 
 
 static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *args)
@@ -254,6 +286,9 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 	case BB_ENABLE_COMPLIANCE_MODE:
 		enable_compliance_mode(p->controller);
 		break;
+	case BB_DISABLE_COMPLIANCE_MODE:
+		disable_compliance_mode(p->controller);
+		break;
 	case BB_CHECK_STATUS:
 		r->status = check_tbt_mode(p->controller);
 		args->response_size = sizeof(*r);
@@ -279,6 +314,31 @@ static enum ec_status chassis_open_check(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_OPEN_CHECK, chassis_open_check, EC_VER_MASK(0));
 
+static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
+{
+	struct ec_response_read_pd_version *r = args->response;
+
+	memcpy(r->pd0_version, get_pd_version(0), sizeof(r->pd0_version));
+	memcpy(r->pd1_version, get_pd_version(1), sizeof(r->pd1_version));
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
+
+static enum ec_status thermal_qevent(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_thermal_qevent_control *p = args->params;
+
+	if (p->send_event) {
+		host_set_single_event(EC_HOST_EVENT_THERMAL_QEVENT);
+		return EC_RES_SUCCESS;
+	}
+	return EC_ERROR_INVAL;
+}
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_QEVENT, thermal_qevent, EC_VER_MASK(0));
+
 
 static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
 {
@@ -289,3 +349,4 @@ static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
 
 }
 DECLARE_HOST_COMMAND(EC_CMD_STANDALONE_MODE, standalone_mode, EC_VER_MASK(0));
+

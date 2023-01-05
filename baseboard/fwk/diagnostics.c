@@ -32,6 +32,20 @@ uint8_t bios_complete;
 uint8_t fan_seen;
 uint8_t s0_seen;
 uint8_t run_diagnostics;
+
+int standalone_mode;
+
+void set_standalone_mode(int enable)
+{
+	CPRINTS("set standalone = %d", enable);
+	standalone_mode = enable;
+}
+
+int get_standalone_mode(void)
+{
+	return standalone_mode;
+}
+
 void reset_diagnostics(void)
 {
 	hw_diagnostics =0;
@@ -100,9 +114,9 @@ bool diagnostics_tick(void)
 		set_hw_diagnostic(DIAGNOSTICS_NO_S0, true);
 	}
 
-    if (charge_get_state() == PWR_STATE_ERROR){
-        set_hw_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, true);
-    }
+	if ((charge_get_state() == PWR_STATE_ERROR) && !standalone_mode) {
+		set_hw_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, true);
+	}
 
 	if (hw_diagnostic_tick & 0x01) {
 		/*off*/
@@ -163,13 +177,13 @@ static void diagnostic_check_tempsensor_deferred(void)
 	device_id[0] = get_hardware_id(ADC_TP_BOARD_ID);
 	device_id[1] = get_hardware_id(ADC_AUDIO_BOARD_ID);
 
-	if (device_id[0] <= BOARD_VERSION_1 ||  device_id[0] >= BOARD_VERSION_14 ||
-		(high_adc[0] - low_adc[0]) > ADC_NC_DELTA) {
+	if ((device_id[0] <= BOARD_VERSION_1 ||  device_id[0] >= BOARD_VERSION_14 ||
+		(high_adc[0] - low_adc[0]) > ADC_NC_DELTA) && !standalone_mode) {
 		set_hw_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
 	}
 
-	if (device_id[1] <= BOARD_VERSION_1 ||  device_id[1] >= BOARD_VERSION_14 ||
-		(high_adc[1] - low_adc[1]) > ADC_NC_DELTA) {
+	if ((device_id[1] <= BOARD_VERSION_1 ||  device_id[1] >= BOARD_VERSION_14 ||
+		(high_adc[1] - low_adc[1]) > ADC_NC_DELTA) && !standalone_mode) {
 		set_hw_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
 	}
     CPRINTS("TP  Ver %d, delta %d", device_id[0], high_adc[0] - low_adc[0]);
@@ -204,6 +218,6 @@ void set_bios_diagnostic(uint8_t code)
 
 	if (code == CODE_DDR_FAIL)
 		set_hw_diagnostic(DIAGNOSTICS_NO_DDR, true);
-	if (code == CODE_NO_EDP)
+	if (code == CODE_NO_EDP && !standalone_mode)
 		set_hw_diagnostic(DIAGNOSTICS_NO_EDP, true);
 }
