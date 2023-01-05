@@ -21,6 +21,17 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
+/*
+ * Unimplemented functions:
+ * 1. Control port current 3A/1.5A for GRL test.
+ * 2. Control port VBUS enable/disable.
+ * 3. Update system power state to PD chip. (Avoid PD chip does the error recovery)
+ * 4. Control PD chip compliance mode
+ * 5. Flash PD flow
+ * 6. Extended message handler
+ * 7. UCSI handler
+ */
+
 static struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
 		.i2c_port = I2C_PORT_PD_MCU0,
@@ -51,6 +62,9 @@ static struct pd_port_current_state_t pd_port_states[] = {
 
 	}
 };
+
+static int prev_charge_port = -1;
+static bool verbose_msg_logging = 0;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -175,18 +189,24 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	return rv;
 }
 
-void pd0_update_state_deferred(void)
+static void pd0_update_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0);
 }
 DECLARE_DEFERRED(pd0_update_state_deferred);
 
-void pd1_update_state_deferred(void)
+static void pd1_update_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_1);
 
 }
 DECLARE_DEFERRED(pd1_update_state_deferred);
+
+static void update_power_state_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PWRSTAT);
+}
+DECLARE_DEFERRED(update_power_state_deferred);
 
 static void cypd_print_version(int controller, const char *vtype, uint8_t *data)
 {
@@ -465,21 +485,30 @@ static void cypd_handle_state(int controller)
 
 }
 
+static void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len)
+{
+	if (verbose_msg_logging) {
+		CPRINTS("PD Controller %d Port %d  Code 0x%02x %s %s Len: 0x%02x",
+		controller,
+		port,
+		id,
+		code,
+		id & 0x80 ? "Response" : "Event",
+		len);
+	}
+}
+
 /*****************************************************************************/
 /* Interrupt handler */
-
 
 int cypd_device_int(int controller)
 {
 	int data;
 
 	if (cypd_read_reg16(controller, CCG_RESPONSE_REG, &data) == EC_SUCCESS) {
-		/*
-		 * print_pd_response_code(controller,
-		 * -1,
-		 * data & 0xff,
-		 * data>>8);
-		 */
+
+		print_pd_response_code(controller, -1, data & 0xff, data>>8);
+
 		switch (data & 0xFF) {
 		case CCG_RESPONSE_RESET_COMPLETE:
 			CPRINTS("PD%d Reset Complete", controller);
@@ -510,12 +539,8 @@ void cypd_port_int(int controller, int port)
 		CCG_PORT_PD_RESPONSE_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("PORT_PD_RESPONSE_REG failed");
-	/*
-	 * print_pd_response_code(controller,
-	 *	port,
-	 *	data2[0],
-	 *	data2[1]);
-	 */
+
+	print_pd_response_code(controller, port, data2[0], data2[1]);
 
 	response_len = data2[1];
 	switch (data2[0]) {
@@ -538,6 +563,14 @@ void cypd_port_int(int controller, int port)
 		cypd_update_port_state(controller, port);
 		break;
 	default:
+		if (response_len && verbose_msg_logging) {
+			CPRINTF("Port:%d Data:0x", port_idx);
+			i2c_read_offset16_block(i2c_port, addr_flags,
+				CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
+			for (i = 0; i < response_len; i++)
+				CPRINTF("%02x", data2[i]);
+			CPRINTF("\n");
+		}
 		break;
 	}
 }
@@ -671,38 +704,27 @@ void cypd_interrupt_handler_task(void *p)
 
 enum pd_power_role pd_get_power_role(int port)
 {
-	/*
-	 * TODO: return actual power role when PD code is imeplemtn.
-	 */
-	return PD_ROLE_SINK;
+	return pd_port_states[port].power_role;
 }
 
 void pd_request_power_swap(int port)
 {
-	/*
-	 * TODO: implement request power swap function.
-	 */
+	CPRINTS("TODO Implement %s port %d", __func__, port);
 }
 
 void pd_set_new_power_request(int port)
 {
 	/* We probably dont need to do this since we will always request max. */
+	CPRINTS("TODO Implement %s port %d", __func__, port);
 }
 
 int pd_is_connected(int port)
 {
-	/*
-	 * TODO: implement check type-c port status.
-	 */
-	return false;
+	return pd_port_states[port].c_state != CCG_STATUS_NOTHING;
 }
-
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	/*
-	 * TODO: macro and return the CONFIG_USB_PD_PORT_MAX_COUNT
-	 */
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
@@ -732,9 +754,11 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 int board_set_active_charge_port(int charge_port)
 {
-	/*
-	 * TODO: implement set active charge port function.
-	 */
+	prev_charge_port = charge_port;
+
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+	CPRINTS("Updating %s port %d", __func__, charge_port);
+
 	return EC_SUCCESS;
 }
 
