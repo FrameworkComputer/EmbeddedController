@@ -26,11 +26,11 @@
 		};
 		i2c_cypd0: cypd0 {
 			i2c-port = <&i2c1_0>;
-			enum-names = "I2C_PORT_CYPD0";
+			enum-names = "I2C_PORT_PD_MCU0";
 		};
 		i2c_cypd1: cypd1 {
 			i2c-port = <&i2c2_0>;
-			enum-names = "I2C_PORT_CYPD1";
+			enum-names = "I2C_PORT_PD_MCU1";
 		};
 		i2c_battery: battery{
 			i2c-port = <&i2c3_0>;
