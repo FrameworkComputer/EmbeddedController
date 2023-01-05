@@ -252,7 +252,8 @@ int i2c_xfer_unlocked(const int port, const uint16_t addr_flags,
 		}
 
 		/* Big endian flag is used in wrappers for this call */
-		if (no_pec_af & ~(I2C_ADDR_MASK | I2C_FLAG_BIG_ENDIAN))
+		if (no_pec_af & ~(I2C_ADDR_MASK | I2C_FLAG_BIG_ENDIAN |
+						I2C_FLAG_ADDR16_LITTLE_ENDIAN))
 			ccprintf("Ignoring flags from i2c addr_flags: %04x",
 				 no_pec_af);
 
@@ -615,8 +616,13 @@ int i2c_read_offset16(const int port, const uint16_t addr_flags,
 	if (len < 0 || len > 2)
 		return EC_ERROR_INVAL;
 
-	addr[0] = (offset >> 8) & 0xff;
-	addr[1] = offset & 0xff;
+	if (I2C_IS_ADDR16_LITTLE_ENDIAN(addr_flags)) {
+		addr[0] = offset & 0xff;
+		addr[1] = (offset >> 8) & 0xff;
+	} else {
+		addr[0] = (offset >> 8) & 0xff;
+		addr[1] = offset & 0xff;
+	}
 
 	/* I2C read 16-bit word: transmit 16-bit offset, and read buffer */
 	rv = i2c_xfer(port, addr_flags, addr, 2, buf, len);
@@ -644,8 +650,13 @@ int i2c_write_offset16(const int port, const uint16_t addr_flags,
 	if (len < 0 || len > 2)
 		return EC_ERROR_INVAL;
 
-	buf[0] = (offset >> 8) & 0xff;
-	buf[1] = offset & 0xff;
+	if (I2C_IS_ADDR16_LITTLE_ENDIAN(addr_flags)) {
+		buf[0] = offset & 0xff;
+		buf[1] = (offset >> 8) & 0xff;
+	} else {
+		buf[0] = (offset >> 8) & 0xff;
+		buf[1] = offset & 0xff;
+	}
 
 	if (len == 1) {
 		buf[2] = data & 0xff;
@@ -667,8 +678,13 @@ int i2c_read_offset16_block(const int port, const uint16_t addr_flags,
 {
 	uint8_t addr[sizeof(uint16_t)];
 
-	addr[0] = (offset >> 8) & 0xff;
-	addr[1] = offset & 0xff;
+	if (I2C_IS_ADDR16_LITTLE_ENDIAN(addr_flags)) {
+		addr[0] = offset & 0xff;
+		addr[1] = (offset >> 8) & 0xff;
+	} else {
+		addr[0] = (offset >> 8) & 0xff;
+		addr[1] = offset & 0xff;
+	}
 
 	return i2c_xfer(port, addr_flags, addr, 2, data, len);
 }
@@ -679,8 +695,13 @@ int i2c_write_offset16_block(const int port, const uint16_t addr_flags,
 	int rv;
 	uint8_t addr[sizeof(uint16_t)];
 
-	addr[0] = (offset >> 8) & 0xff;
-	addr[1] = offset & 0xff;
+	if (I2C_IS_ADDR16_LITTLE_ENDIAN(addr_flags)) {
+		addr[0] = offset & 0xff;
+		addr[1] = (offset >> 8) & 0xff;
+	} else {
+		addr[0] = (offset >> 8) & 0xff;
+		addr[1] = offset & 0xff;
+	}
 
 	/*
 	 * Split into two transactions to avoid the stack space consumption of
