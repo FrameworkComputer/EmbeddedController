@@ -55,9 +55,11 @@ static void usbc_interrupt_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
+#endif
 
 	/* Enable SBU fault interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_sbu_fault));
@@ -313,6 +315,7 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -365,6 +368,7 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 	return voltage < BC12_MIN_VOLTAGE;
 }
+#endif
 
 #define SAFE_RESET_VBUS_DELAY_MS 900
 #define SAFE_RESET_VBUS_MV 5000
