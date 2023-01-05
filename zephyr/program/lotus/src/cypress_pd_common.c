@@ -468,6 +468,146 @@ static void cypd_handle_state(int controller)
 /*****************************************************************************/
 /* Interrupt handler */
 
+
+int cypd_device_int(int controller)
+{
+	int data;
+
+	if (cypd_read_reg16(controller, CCG_RESPONSE_REG, &data) == EC_SUCCESS) {
+		/*
+		 * print_pd_response_code(controller,
+		 * -1,
+		 * data & 0xff,
+		 * data>>8);
+		 */
+		switch (data & 0xFF) {
+		case CCG_RESPONSE_RESET_COMPLETE:
+			CPRINTS("PD%d Reset Complete", controller);
+
+			pd_chip_config[controller].state = CCG_STATE_POWER_ON;
+			/* Run state handler to set up controller */
+			task_set_event(TASK_ID_CYPD, 4 << controller);
+			break;
+		default:
+			CPRINTS("INTR_REG CTRL:%d TODO Device 0x%x", controller, data & 0xFF);
+		}
+	} else
+		return EC_ERROR_INVAL;
+
+
+	return EC_SUCCESS;
+}
+
+void cypd_port_int(int controller, int port)
+{
+	int rv, response_len;
+	uint8_t data2[32];
+	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
+	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+	int port_idx = (controller << 1) + port;
+	/* enum pd_msg_type sop_type; */
+	rv = i2c_read_offset16_block(i2c_port, addr_flags,
+		CCG_PORT_PD_RESPONSE_REG(port), data2, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("PORT_PD_RESPONSE_REG failed");
+	/*
+	 * print_pd_response_code(controller,
+	 *	port,
+	 *	data2[0],
+	 *	data2[1]);
+	 */
+
+	response_len = data2[1];
+	switch (data2[0]) {
+	case CCG_RESPONSE_PORT_DISCONNECT:
+		CPRINTS("CYPD_RESPONSE_PORT_DISCONNECT");
+		pd_port_states[port_idx].current = 0;
+		pd_port_states[port_idx].voltage = 0;
+		pd_set_input_current_limit(port_idx, 0, 0);
+		cypd_update_port_state(controller, port);
+
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
+		break;
+	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
+		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
+		cypd_update_port_state(controller, port);
+		break;
+	case CCG_RESPONSE_PORT_CONNECT:
+		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
+		cypd_update_port_state(controller, port);
+		break;
+	default:
+		break;
+	}
+}
+
+void cypd_interrupt(int controller)
+{
+	int data;
+	int rv;
+	int clear_mask = 0;
+
+	rv = cypd_get_int(controller, &data);
+	if (rv != EC_SUCCESS) {
+		return;
+	}
+
+	if (data & CCG_DEV_INTR) {
+		cypd_device_int(controller);
+		clear_mask |= CCG_DEV_INTR;
+	}
+
+	if (data & CCG_PORT0_INTR) {
+		cypd_port_int(controller, 0);
+		clear_mask |= CCG_PORT0_INTR;
+	}
+
+	if (data & CCG_PORT1_INTR) {
+		cypd_port_int(controller, 1);
+		clear_mask |= CCG_PORT1_INTR;
+	}
+
+	if (data & CCG_ICLR_INTR)
+		clear_mask |= CCG_ICLR_INTR;
+
+	if (data & CCG_UCSI_INTR) {
+		/*
+		 * TODO: implement ucsi_read_tunnel(controller);
+		 */
+		cypd_clear_int(controller, CCG_UCSI_INTR);
+	}
+
+	cypd_clear_int(controller, clear_mask);
+}
+
+void pd0_chip_interrupt_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_0);
+
+}
+DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
+
+void pd1_chip_interrupt_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_1);
+
+}
+DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
+
+void pd0_chip_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+}
+
+void pd1_chip_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
+}
+
+/*****************************************************************************/
+/* CYPD task */
+
 void cypd_interrupt_handler_task(void *p)
 {
 	int i, j, evt;
@@ -488,6 +628,12 @@ void cypd_interrupt_handler_task(void *p)
 
 	while (1) {
 		evt = task_wait_event(10*MSEC);
+
+		if (evt & CCG_EVT_INT_CTRL_0)
+			cypd_interrupt(0);
+
+		if (evt & CCG_EVT_INT_CTRL_1)
+			cypd_interrupt(1);
 
 		if (evt & CCG_EVT_STATE_CTRL_0) {
 			cypd_handle_state(0);
@@ -518,30 +664,6 @@ void cypd_interrupt_handler_task(void *p)
 			}
 		}
 	}
-}
-
-void pd0_chip_interrupt_deferred(void)
-{
-	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_0);
-
-}
-DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
-
-void pd1_chip_interrupt_deferred(void)
-{
-	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_1);
-
-}
-DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
-
-void pd0_chip_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
-}
-
-void pd1_chip_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
 }
 
 /*****************************************************************************/
