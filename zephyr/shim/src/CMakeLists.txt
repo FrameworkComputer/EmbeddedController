@@ -7,6 +7,7 @@ zephyr_library_sources(crc.c)
 zephyr_library_sources(gpio.c)
 zephyr_library_sources(gpio_int.c)
 
+add_subdirectory("buttons")
 add_subdirectory("cbi")
 add_subdirectory("led_driver")
 

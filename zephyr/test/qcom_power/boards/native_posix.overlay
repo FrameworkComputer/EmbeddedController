@@ -87,7 +87,7 @@
 			/* GPIO_PULL_UP will cause this start asserted,
 			 * i.e. not pressed.
 			 */
-			gpios = <&gpio0 25 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio0 25 (GPIO_INPUT | GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_switchcap_pg: src_vph_pwr_pg {
