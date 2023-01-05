@@ -270,10 +270,10 @@
 		sleep_l {
 			gpios = <&gpiod 5 GPIO_INPUT>;
 		};
-		pd_b_i2c_int_ec_l {
+		gpio_pd_chip1_interrupt: pd_b_i2c_int_ec_l {
 			gpios = <&gpioe 2 GPIO_INPUT>;
 		};
-		pd_a_i2c_int_ec_l {
+		gpio_pd_chip0_interrupt: pd_a_i2c_int_ec_l {
 			gpios = <&gpioe 5 GPIO_INPUT>;
 		};
 		gpio_pbtn_out: pbtn_out_l {

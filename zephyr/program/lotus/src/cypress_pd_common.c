@@ -3,16 +3,61 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/drivers/gpio.h>
+
 #include "charge_state.h"
 #include "console.h"
 #include "cypress_pd_common.h"
 #include "driver/charger/isl9241.h"
+#include "hooks.h"
+#include "i2c.h"
 #include "task.h"
 #include "usb_pd.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
+
+/*****************************************************************************/
+/* Internal functions */
+
+/*****************************************************************************/
+/* Interrupt handler */
+
+void cypd_interrupt_handler_task(void *p)
+{
+	int evt;
+	while (1) {
+		evt = task_wait_event(10*MSEC);
+	}
+}
+
+void pd0_chip_interrupt_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_0);
+
+}
+DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
+
+void pd1_chip_interrupt_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_1);
+
+}
+DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
+
+void pd0_chip_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+}
+
+void pd1_chip_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
+}
+
+/*****************************************************************************/
+/* Commmon functions */
 
 enum pd_power_role pd_get_power_role(int port)
 {
@@ -83,10 +128,8 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void cypd_interrupt_handler_task(void *p)
-{
-	int evt;
-	while (1) {
-		evt = task_wait_event(10*MSEC);
-	}
-}
+/*****************************************************************************/
+/* Host command */
+
+/*****************************************************************************/
+/* EC console command */

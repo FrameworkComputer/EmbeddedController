@@ -37,5 +37,15 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
+		int_pd_chip0_interrupt: pd_chip0_interrupt {
+			irq-pin = <&gpio_pd_chip0_interrupt>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "pd0_chip_interrupt";
+		};
+		int_pd_chip1_interrupt: pd_chip1_interrupt {
+			irq-pin = <&gpio_pd_chip1_interrupt>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "pd1_chip_interrupt";
+		};
 	};
 };
