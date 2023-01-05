@@ -119,6 +119,24 @@
 				value = <1>;
 			};
 		};
+
+		base-sensor {
+			enum-name = "FW_BASE_SENSOR";
+			start = <3>;
+			size = <1>;
+
+			bmi323 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_BMI323";
+				value = <0>;
+				default;
+			};
+			lis2dw12 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_LIS2DW12";
+				value = <1>;
+			};
+		};
 	};
 
 	/* Rotation matrices for motion sensors. */
