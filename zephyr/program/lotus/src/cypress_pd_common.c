@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <atomic.h>
+#include <zephyr/init.h>
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -17,6 +19,7 @@
 #include "usb_pd.h"
 #include "usb_tc_sm.h"
 #include "util.h"
+#include "zephyr_console_shim.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -81,6 +84,18 @@ static int cypd_write_reg_block(int controller, int reg, void *data, int len)
 	return rv;
 }
 
+static int cypd_write_reg16(int controller, int reg, int data)
+{
+	int rv;
+	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
+	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+
+	rv = i2c_write_offset16(i2c_port, addr_flags, reg, data, 2);
+	if (rv != EC_SUCCESS)
+		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
+	return rv;
+}
+
 static int cypd_write_reg8(int controller, int reg, int data)
 {
 	int rv;
@@ -127,6 +142,16 @@ static int cypd_read_reg8(int controller, int reg, int *data)
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
 	return rv;
+}
+
+static int cypd_reset(int controller)
+{
+	/*
+	 * Device Reset: This command is used to request the CCG device to perform a soft reset
+	 * and start at the boot-loader stage again
+	 * Note: need barrel AC or battery
+	 */
+	return cypd_write_reg16(controller, CCG_RESET_REG, CCG_RESET_CMD);
 }
 
 static int cypd_get_int(int controller, int *intreg)
@@ -256,7 +281,7 @@ static void cypd_update_port_state(int controller, int port)
 
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_PD_STATUS_REG failed");
+		CPRINTS("CCG_PD_STATUS_REG failed");
 	pd_port_states[port_idx].pd_state =
 		pd_status_reg[1] & BIT(2) ? 1 : 0; /*do we have a valid PD contract*/
 	pd_port_states[port_idx].power_role =
@@ -268,7 +293,7 @@ static void cypd_update_port_state(int controller, int port)
 
 	rv = cypd_read_reg8(controller, CCG_TYPE_C_STATUS_REG(port), &typec_status_reg);
 	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_TYPE_C_STATUS_REG failed");
+		CPRINTS("CCG_TYPE_C_STATUS_REG failed");
 
 	pd_port_states[port_idx].cc = typec_status_reg & BIT(1) ? POLARITY_CC2 : POLARITY_CC1;
 	pd_port_states[port_idx].c_state = (typec_status_reg >> 2) & 0x7;
@@ -455,7 +480,7 @@ static void cypd_handle_state(int controller)
 
 			/*
 			 * Avoid the error recovery happened, disable to change the CCG power state
-			 * cypd_set_power_state(CYP5525_POWERSTATE_S5, controller);
+			 * cypd_set_power_state(CCG_POWERSTATE_S5, controller);
 			 */
 			cypd_setup(controller);
 
@@ -488,11 +513,10 @@ static void cypd_handle_state(int controller)
 static void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len)
 {
 	if (verbose_msg_logging) {
-		CPRINTS("PD Controller %d Port %d  Code 0x%02x %s %s Len: 0x%02x",
+		CPRINTS("PD Controller %d Port %d  Code 0x%02x %s Len: 0x%02x",
 		controller,
 		port,
 		id,
-		code,
 		id & 0x80 ? "Response" : "Event",
 		len);
 	}
@@ -529,7 +553,7 @@ int cypd_device_int(int controller)
 
 void cypd_port_int(int controller, int port)
 {
-	int rv, response_len;
+	int i, rv, response_len;
 	uint8_t data2[32];
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
@@ -767,3 +791,200 @@ int board_set_active_charge_port(int charge_port)
 
 /*****************************************************************************/
 /* EC console command */
+
+static int cmd_cypd_get_status(int argc, const char **argv)
+{
+	int i, p, data;
+	uint8_t data16[16];
+	char *e;
+
+	static const char * const mode[] = {"Boot", "FW1", "FW2", "Invald"};
+	static const char * const current_level[] = {"DefaultA", "1.5A", "3A", "InvA"};
+	static const char * const port_status[] = {
+		"Nothing", "Sink", "Source", "Debug", "Audio", "Powered Acc",
+		"Unsupported", "Invalid"
+	};
+	static const char * const state[] = {
+		"ERR", "POWER_ON", "APP_SETUP", "READY", "BOOTLOADER"
+	};
+	const struct gpio_dt_spec *intr;
+
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		intr = gpio_get_dt_spec(pd_chip_config[i].gpio);
+		CPRINTS("PD%d INT value: %d", i, gpio_pin_get_dt(intr));
+	}
+
+	/* If a signal is specified, print only that one */
+	if (argc == 2) {
+		i = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		if (i < PD_CHIP_COUNT) {
+			CPRINTS("State: %s", state[pd_chip_config[i].state]);
+			cypd_read_reg16(i, CCG_SILICON_ID, &data);
+			CPRINTS("CYPD_SILICON_ID: 0x%04x", data);
+			cypd_get_version(i);
+			cypd_read_reg8(i, CCG_DEVICE_MODE, &data);
+			CPRINTS("CYPD_DEVICE_MODE: 0x%02x %s", data, mode[data & 0x03]);
+			cypd_read_reg_block(i, CCG_HPI_VERSION, data16, 4);
+			CPRINTS("HPI_VERSION: 0x%02x%02x%02x%02x",
+						data16[3], data16[2], data16[1], data16[0]);
+			cypd_read_reg8(i, CCG_INTR_REG, &data);
+			CPRINTS("CYPD_INTR_REG: 0x%02x %s %s %s %s",
+						data,
+						data & CCG_DEV_INTR ? "DEV" : "",
+						data & CCG_PORT0_INTR ? "PORT0" : "",
+						data & CCG_PORT1_INTR ? "PORT1" : "",
+						data & CCG_UCSI_INTR ? "UCSI" : "");
+			cypd_read_reg16(i, CCG_RESPONSE_REG, &data);
+			CPRINTS("CYPD_RESPONSE_REG: 0x%02x", data);
+			cypd_read_reg16(i, CCG_PORT_PD_RESPONSE_REG(0), &data);
+			CPRINTS("CYPD_PORT0_PD_RESPONSE_REG: 0x%02x", data);
+			cypd_read_reg16(i, CCG_PORT_PD_RESPONSE_REG(1), &data);
+			CPRINTS("CYPD_PORT1_PD_RESPONSE_REG: 0x%02x", data);
+			cypd_read_reg8(i, CCG_BOOT_MODE_REASON, &data);
+			CPRINTS("CYPD_BOOT_MODE_REASON: 0x%02x", data);
+			cypd_read_reg8(i, CCG_PDPORT_ENABLE_REG, &data);
+			CPRINTS("CYPD_PDPORT_ENABLE_REG: 0x%04x", data);
+			cypd_read_reg8(i, CCG_POWER_STAT, &data);
+			CPRINTS("CYPD_POWER_STAT: 0x%02x", data);
+			cypd_read_reg8(i, CCG_ICL_STS_REG, &data);
+			CPRINTS("CCG_ICL_STS_REG: 0x%04x", data);
+			cypd_read_reg8(i, CCG_SYS_PWR_STATE, &data);
+			CPRINTS("CYPD_SYS_PWR_STATE: 0x%02x", data);
+			for (p = 0; p < 2; p++) {
+				CPRINTS("=====Port %d======", p);
+				cypd_read_reg_block(i, CCG_PD_STATUS_REG(p), data16, 4);
+				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s",
+						data16[1] & BIT(2) ? "Contract" : "NoContract",
+						data16[0] & BIT(6) ? "DFP" : "UFP",
+						data16[1] & BIT(0) ? "Source" : "Sink",
+						data16[1] & BIT(5) ? "En" : "Dis");
+				cypd_read_reg8(i, CCG_TYPE_C_STATUS_REG(p), &data);
+				CPRINTS("   TYPE_C_STATUS : %s %s %s %s %s",
+							data & 0x1 ? "Connected" : "Not Connected",
+							data & 0x2 ? "CC2" : "CC1",
+							port_status[(data >> 2) & 0x7],
+							data & 0x20 ? "Ra" : "NoRa",
+							current_level[(data >> 6) & 0x03]);
+				cypd_read_reg_block(i, CCG_CURRENT_RDO_REG(p), data16, 4);
+				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA 0x%08x",
+						((data16[0] + (data16[1]<<8)) & 0x3FF)*10,
+						(((data16[1]>>2) + (data16[2]<<6)) & 0x3FF)*10,
+						*(uint32_t *)data16);
+
+				cypd_read_reg_block(i, CCG_CURRENT_PDO_REG(p), data16, 4);
+				CPRINTS("             PDO : MaxCurrent:%dmA Voltage%dmA 0x%08x",
+						((data16[0] + (data16[1]<<8)) & 0x3FF)*10,
+						(((data16[1]>>2) + (data16[2]<<6)) & 0x3FF)*50,
+						*(uint32_t *)data16);
+				cypd_read_reg8(i, CCG_TYPE_C_VOLTAGE_REG(p), &data);
+				CPRINTS("  TYPE_C_VOLTAGE : %dmV", data*100);
+				cypd_read_reg16(i, CCG_PORT_INTR_STATUS_REG(p), &data);
+				CPRINTS(" INTR_STATUS_REG0: 0x%02x", data);
+				cypd_read_reg16(i, CCG_PORT_INTR_STATUS_REG(p)+2, &data);
+				CPRINTS(" INTR_STATUS_REG1: 0x%02x", data);
+				/* Flush console to avoid truncating output */
+				cflush();
+			}
+
+		}
+
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(cypdstatus, cmd_cypd_get_status, "[number]",
+			"Get Cypress PD controller status");
+
+static int cmd_cypd_control(int argc, const char **argv)
+{
+	int i, enable;
+	char *e;
+
+	if (argc >= 3) {
+		i = strtoi(argv[2], &e, 0);
+		if (*e || i >= PD_CHIP_COUNT)
+			return EC_ERROR_PARAM2;
+
+		if (!strncmp(argv[1], "en", 2) || !strncmp(argv[1], "dis", 3)) {
+			if (!parse_bool(argv[1], &enable))
+				return EC_ERROR_PARAM1;
+			if (enable)
+				gpio_enable_interrupt(pd_chip_config[i].gpio);
+			else
+				gpio_disable_interrupt(pd_chip_config[i].gpio);
+		} else if (!strncmp(argv[1], "reset", 5)) {
+			cypd_write_reg8(i, CCG_PDPORT_ENABLE_REG, 0);
+			/*can take up to 650ms to discharge port for disable*/
+			cypd_wait_for_ack(i, 65000);
+			cypd_clear_int(i, CCG_DEV_INTR +
+					  CCG_PORT0_INTR +
+					  CCG_PORT1_INTR +
+					  CCG_UCSI_INTR);
+			usleep(50);
+			CPRINTS("Full reset PD controller %d", i);
+			/*
+			 * see if we can talk to the PD chip yet - issue a reset command
+			 * Note that we cannot issue a full reset command if the PD controller
+			 * has a device attached - as it will return with an invalid command
+			 * due to needing to disable all ports first.
+			 */
+			if (cypd_reset(i) == EC_SUCCESS) {
+				CPRINTS("reset ok %d", i);
+			}
+		} else if (!strncmp(argv[1], "clearint", 8)) {
+			cypd_clear_int(i, CCG_DEV_INTR +
+					  CCG_PORT0_INTR +
+					  CCG_PORT1_INTR +
+					  CCG_UCSI_INTR);
+		} else if (!strncmp(argv[1], "verbose", 7)) {
+			verbose_msg_logging = (i != 0);
+			CPRINTS("verbose=%d", verbose_msg_logging);
+		} else if (!strncmp(argv[1], "write16", 3)) {
+			int r;
+			int regval;
+			if (argc < 5) {
+				return EC_ERROR_PARAM4;
+			}
+			r = strtoul(argv[3], &e, 0);
+			regval = strtoul(argv[4], &e, 0);
+			cypd_write_reg16(i, r,  regval);
+		} else if (!strncmp(argv[1], "write8", 3)) {
+			int r;
+			int regval;
+
+			if (argc < 5)
+				return EC_ERROR_PARAM4;
+			r = strtoul(argv[3], &e, 0);
+			regval = strtoul(argv[4], &e, 0);
+			cypd_write_reg8(i, r,  regval);
+		} else if (!strncmp(argv[1], "read16", 2)) {
+			int r;
+			int regval;
+
+			if (argc < 4)
+				return EC_ERROR_PARAM3;
+			r = strtoul(argv[3], &e, 0);
+			cypd_read_reg16(i, r,  &regval);
+			CPRINTS("data=%d", regval);
+		} else if (!strncmp(argv[1], "read8", 2)) {
+			int r;
+			int regval;
+
+			if (argc < 4)
+				return EC_ERROR_PARAM3;
+			r = strtoul(argv[3], &e, 0);
+			cypd_read_reg8(i, r,  &regval);
+			CPRINTS("data=%d", regval);
+		} else {
+			return EC_ERROR_PARAM1;
+		}
+	} else {
+		return EC_ERROR_PARAM_COUNT;
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
+			"[enable/disable/reset/clearint/verbose/ucsi] [controller]",
+			"Set if handling is active for controller");
