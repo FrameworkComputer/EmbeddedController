@@ -198,6 +198,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum f75303_index {
+	F75303_IDX_LOCAL = 0,
+	F75303_IDX_REMOTE1,
+	F75303_IDX_REMOTE2,
+	F75303_IDX_COUNT,
+};
+
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_POWER_TECH,

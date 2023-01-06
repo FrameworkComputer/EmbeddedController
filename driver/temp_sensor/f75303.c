@@ -10,10 +10,19 @@
 #include "f75303.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "math_util.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
+
+#define F75303_RESOLUTION 11
+#define F75303_SHIFT1 (16 - F75303_RESOLUTION)
+#define F75303_SHIFT2 (F75303_RESOLUTION - 8)
+
 static int temps[F75303_IDX_COUNT];
-static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
+static int8_t fake_temp[F75303_IDX_COUNT];
 
 /**
  * Read 8 bits register from temp sensor.
@@ -50,6 +59,34 @@ int f75303_get_val(int idx, int *temp)
 	return EC_SUCCESS;
 }
 
+static inline int f75303_reg_to_mk(int16_t reg)
+{
+	int temp_mc;
+
+	temp_mc = (((reg >> F75303_SHIFT1) * 1000) >> F75303_SHIFT2);
+
+	return MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc);
+}
+
+int f75303_get_val_k(int idx, int *temp_k_ptr)
+{
+	if (idx >= F75303_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
+	return EC_SUCCESS;
+}
+
+int f75303_get_val_mk(int idx, int *temp_mk_ptr)
+{
+	if (idx >= F75303_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_mk_ptr = temps[idx];
+	return EC_SUCCESS;
+}
+
+#ifndef CONFIG_ZEPHYR
 static void f75303_sensor_poll(void)
 {
 	get_temp(F75303_TEMP_LOCAL, &temps[F75303_IDX_LOCAL]);
@@ -57,6 +94,18 @@ static void f75303_sensor_poll(void)
 	get_temp(F75303_TEMP_REMOTE2, &temps[F75303_IDX_REMOTE2]);
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
+#else
+void f75303_update_temperature(int idx)
+{
+	int temp_reg = 0;
+
+	if (idx >= F75303_IDX_COUNT)
+		return;
+
+	if (get_temp(idx, &temp_reg) == EC_SUCCESS)
+		temps[idx] = f75303_reg_to_mk(temp_reg);
+}
+#endif /* CONFIG_ZEPHYR */
 
 static int f75303_set_fake_temp(int argc, const char **argv)
 {
@@ -89,3 +138,12 @@ static int f75303_set_fake_temp(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(f75303, f75303_set_fake_temp, "<index> <value>|off",
 			"Set fake temperature of sensor f75303.");
+
+static void f75303_init(void)
+{
+	int index;
+
+	for (index = 0; index < F75303_IDX_COUNT; index++)
+		fake_temp[index] = -1;
+}
+DECLARE_HOOK(HOOK_INIT, f75303_init, HOOK_PRIO_TEMP_SENSOR);
