@@ -226,6 +226,7 @@ static int anx7483_set(const struct usb_mux *me, mux_state_t mux_state,
 		       bool *ack_required)
 {
 	int reg;
+	int val;
 
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
@@ -243,7 +244,16 @@ static int anx7483_set(const struct usb_mux *me, mux_state_t mux_state,
 	/*
 	 * Always ensure i2c control is set and state machine is enabled
 	 * (setting ANX7483_CTRL_REG_BYPASS_EN disables state machine)
+	 * Not recommend because it turns off whole low power function
 	 */
+	/*
+	 * Modify LFPS_TIMER to prevent going USB SLUMBER state too early
+	 */
+	RETURN_ERROR(anx7483_read(me, ANX7483_LFPS_TIMER_REG, &val));
+	val &= ~ANX7483_LFPS_TIMER_MASK;
+	val |= ANX7483_LFPS_TIMER_SLUMBER_TIME_H << ANX7483_LFPS_TIMER_SHIFT;
+	RETURN_ERROR(anx7483_write(me, ANX7483_LFPS_TIMER_REG, val));
+
 	reg = ANX7483_CTRL_REG_EN;
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= ANX7483_CTRL_USB_EN;
