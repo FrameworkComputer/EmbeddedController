@@ -7,4 +7,9 @@ if BOARD_NPCX9
 config BOARD
 	default "npcx9"
 
+if FLASH
+config PLATFORM_EC_CONSOLE_CMD_FLASH
+	default y
+endif # FLASH
+
 endif # BOARD_NPCX9
