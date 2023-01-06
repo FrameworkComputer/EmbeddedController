@@ -19,6 +19,17 @@
 		ec-rw {
 			offset = <0x50000>;
 			size = <0x50000>;
+			rw-fw {
+				rw-fwid {
+					/* Fix the lcoation of the FWID to the
+					 * last 32 bytes of the flash. This
+					 * ensures the RW entries in the FMAP
+					 * stored in the RO section of flash
+					 * are always correct.
+					 */
+					offset = <(0x50000 - 32)>;
+				};
+			};
 		};
 	};
 };

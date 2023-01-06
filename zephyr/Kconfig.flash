@@ -76,6 +76,13 @@ config PLATFORM_EC_INTERNAL_STORAGE
 
 endchoice
 
+config PLATFORM_EC_RW_TOTAL_IMAGE_SIZE
+	hex
+	default $(dt_node_int_prop_hex,/binman/ec-rw,size)
+	help
+	  Total size of the EC RW image, including the 32-byte RW_FWID. The
+	  source of truth for this setting is the binman devicetree node.
+
 # Workaround for not being able to have commas in macro arguments
 DT_CHOSEN_CROS_FLASH := cros-ec,flash
 
