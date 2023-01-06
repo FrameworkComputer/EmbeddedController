@@ -306,6 +306,7 @@ class Zmake:
         clobber=False,
         bringup=False,
         coverage=False,
+        cmake_defs=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
@@ -321,6 +322,7 @@ class Zmake:
             clobber=clobber,
             bringup=bringup,
             coverage=coverage,
+            cmake_defs=cmake_defs,
             allow_warnings=allow_warnings,
             all_projects=all_projects,
             extra_cflags=extra_cflags,
@@ -339,6 +341,7 @@ class Zmake:
         all_projects=False,
         extra_cflags=None,
         keep_temps=False,
+        cmake_defs=None,
     ):
         """Compare EC builds at two commits."""
         temp_dir = tempfile.mkdtemp(prefix="zcompare-")
@@ -382,6 +385,7 @@ class Zmake:
                 clobber=False,
                 bringup=False,
                 coverage=False,
+                cmake_defs=cmake_defs,
                 allow_warnings=False,
                 all_projects=all_projects,
                 extra_cflags=extra_cflags,
