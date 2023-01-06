@@ -128,7 +128,7 @@
 		dp_path_sel: dp-path-sel {
 			gpios = <&gpiog 0 GPIO_OUTPUT_HIGH>;
 		};
-		en_pp4200_s4: en-pp4200-s4 {
+		en_pp4200_s5: en-pp4200-s5 {
 			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
 		};
 		sys_rst_odl: sys-rst-odl {
