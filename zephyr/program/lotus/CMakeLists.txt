@@ -9,6 +9,7 @@ zephyr_library_sources(
 	"src/power_sequence.c"
 	"src/cypress_pd_common.c"
 	"src/battery.c"
+	"src/charger.c"
 )
 
 zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER

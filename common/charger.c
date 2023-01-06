@@ -264,7 +264,7 @@ DECLARE_CONSOLE_COMMAND(charger, command_charger,
 );
 
 /* Driver wrapper functions */
-
+#ifndef CONFIG_CHARGER_INIT_CUSTOM
 static void charger_chips_init(void)
 {
 	int chip;
@@ -275,6 +275,7 @@ static void charger_chips_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C);
+#endif
 
 enum ec_error_list charger_post_init(void)
 {
