@@ -508,6 +508,11 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 		      batt.remaining_capacity);
 }
 
+static void reset_battfake(void *data)
+{
+	shell_execute_cmd(get_ec_shell(), "battfake -1");
+}
+
 /** Test battery fake temperature set and read */
 ZTEST_USER(smart_battery, test_battery_fake_temperature)
 {
@@ -564,4 +569,5 @@ ZTEST_USER(smart_battery, test_battery_fake_temperature)
 		      batt.temperature);
 }
 
-ZTEST_SUITE(smart_battery, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(smart_battery, drivers_predicate_post_main, NULL, NULL,
+	    reset_battfake, NULL);
