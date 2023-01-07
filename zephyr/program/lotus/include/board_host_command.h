@@ -30,7 +30,7 @@ struct ec_params_flash_notified {
 
 /*****************************************************************************/
 /*
- * Configure the behavior of the charge limit control
+ * Configure the behavior of the charge limit control.
  */
 #define EC_CMD_CHARGE_LIMIT_CONTROL	0x3E03
 #define EC_CHARGE_LIMIT_RESTORE		0x7F
@@ -60,14 +60,25 @@ struct ec_response_chg_limit_control {
 
 /*****************************************************************************/
 /*
- * This command uses to notify the EC that the system is in non-ACPI mode
+ * This command uses to notify the EC that the system is in non-ACPI mode.
  */
 #define EC_CMD_NON_ACPI_NOTIFY		0x3E07
 
 /*****************************************************************************/
 /*
- * This command uses to notify the EC that the system is in ACPI mode
+ * This command uses to notify the EC that the system is in ACPI mode.
  */
 #define EC_CMD_ACPI_NOTIFY		0x3E10
+
+/*****************************************************************************/
+/*
+ * This command returns the PD chip version.
+ */
+#define EC_CMD_READ_PD_VERSION		0x3E11
+
+struct ec_response_read_pd_version {
+	uint8_t pd0_version[8];
+	uint8_t pd1_version[8];
+} __ec_align1;
 
 #endif /* __BOARD_HOST_COMMAND_H */

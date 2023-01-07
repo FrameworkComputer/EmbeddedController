@@ -790,6 +790,11 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
+uint8_t *get_pd_version(int controller)
+{
+	return pd_chip_config[controller].version;
+}
+
 void set_pd_fw_update(bool is_update)
 {
 	firmware_update = is_update;

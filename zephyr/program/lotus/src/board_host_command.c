@@ -114,3 +114,16 @@ static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ACPI_NOTIFY, enter_acpi_mode, EC_VER_MASK(0));
+
+static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
+{
+	struct ec_response_read_pd_version *r = args->response;
+
+	memcpy(r->pd0_version, get_pd_version(0), sizeof(r->pd0_version));
+	memcpy(r->pd1_version, get_pd_version(1), sizeof(r->pd1_version));
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));

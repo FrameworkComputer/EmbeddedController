@@ -398,4 +398,12 @@ void set_pd_fw_update(bool is_update);
  */
 void cypd_reinitialize(void);
 
+/**
+ * Get the pd version object
+ *
+ * @param controller	PD chip controller
+ * @return uint8_t*
+ */
+uint8_t *get_pd_version(int controller);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
