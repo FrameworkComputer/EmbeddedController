@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_CYPRESS_PD_COMMON_H
 #define __CROS_EC_CYPRESS_PD_COMMON_H
 
+#include "usb_pd.h"
+
 /* 7 bit address  */
 #define CCG_I2C_CHIP0	0x08
 #define CCG_I2C_CHIP1	0x40
@@ -383,5 +385,17 @@ struct pd_chip_ucsi_info_t {
 	int write_tunnel_complete;
 	int wait_ack;
 } __packed;
+
+/**
+ * If PD chip is doing the firmware update, we should disable the PD task
+ *
+ * @param is_update	Firmware update flag.
+ */
+void set_pd_fw_update(bool is_update);
+
+/**
+ * After PD chip firmware update complete, need to reinitialize the PD chip
+ */
+void cypd_reinitialize(void);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

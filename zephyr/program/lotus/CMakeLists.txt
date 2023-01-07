@@ -10,6 +10,7 @@ zephyr_library_sources(
 	"src/cypress_pd_common.c"
 	"src/battery.c"
 	"src/charger.c"
+	"src/board_host_command.c"
 )
 
 zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER

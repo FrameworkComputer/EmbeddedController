@@ -67,7 +67,8 @@ static struct pd_port_current_state_t pd_port_states[] = {
 };
 
 static int prev_charge_port = -1;
-static bool verbose_msg_logging = 0;
+static bool verbose_msg_logging;
+static bool firmware_update;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -686,6 +687,9 @@ void cypd_interrupt_handler_task(void *p)
 	while (1) {
 		evt = task_wait_event(10*MSEC);
 
+		if (firmware_update)
+			continue;
+
 		if (evt & CCG_EVT_INT_CTRL_0)
 			cypd_interrupt(0);
 
@@ -784,6 +788,22 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTS("Updating %s port %d", __func__, charge_port);
 
 	return EC_SUCCESS;
+}
+
+void set_pd_fw_update(bool is_update)
+{
+	firmware_update = is_update;
+}
+
+void cypd_reinitialize(void)
+{
+	int i;
+
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		pd_chip_config[i].state = CCG_STATE_POWER_ON;
+		/* Run state handler to set up controller */
+		task_set_event(TASK_ID_CYPD, 4<<i);
+	}
 }
 
 /*****************************************************************************/
