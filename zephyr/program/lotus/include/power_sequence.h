@@ -17,4 +17,6 @@ enum power_signal {
 
 int get_power_rail_status(void);
 
+void power_s5_up_control(int control);
+
 #endif	/* __CROS_EC_POWERSEQUENCE_H */

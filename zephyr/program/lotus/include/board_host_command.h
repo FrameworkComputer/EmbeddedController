@@ -9,7 +9,9 @@
 #include "host_command.h"
 
 /*****************************************************************************/
-/* Configure the behavior of the flash notify */
+/*
+ * Configure the behavior of the flash notify
+ */
 #define EC_CMD_FLASH_NOTIFIED		0x3E01
 
 enum ec_flash_notified_flags {
@@ -27,7 +29,9 @@ struct ec_params_flash_notified {
 } __ec_align1;
 
 /*****************************************************************************/
-/* Configure the behavior of the charge limit control */
+/*
+ * Configure the behavior of the charge limit control
+ */
 #define EC_CMD_CHARGE_LIMIT_CONTROL	0x3E03
 #define EC_CHARGE_LIMIT_RESTORE		0x7F
 
@@ -53,5 +57,17 @@ struct ec_response_chg_limit_control {
 	uint8_t max_percentage;
 	uint8_t min_percentage;
 } __ec_align1;
+
+/*****************************************************************************/
+/*
+ * This command uses to notify the EC that the system is in non-ACPI mode
+ */
+#define EC_CMD_NON_ACPI_NOTIFY		0x3E07
+
+/*****************************************************************************/
+/*
+ * This command uses to notify the EC that the system is in ACPI mode
+ */
+#define EC_CMD_ACPI_NOTIFY		0x3E10
 
 #endif /* __BOARD_HOST_COMMAND_H */

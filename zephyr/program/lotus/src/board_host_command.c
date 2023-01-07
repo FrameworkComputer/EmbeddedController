@@ -12,6 +12,7 @@
 #include "ec_commands.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
+#include "power_sequence.h"
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
@@ -68,3 +69,48 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_NOTIFIED, flash_notified,
 			EC_VER_MASK(0));
+
+static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
+{
+	/**
+	 * TODO:
+	 * When system boot into OS, host will call this command to verify,
+	 * It means system should in S0 state, and we need to set the resume
+	 * S0ix flag to avoid the wrong state when unknown reason warm boot.
+	 * if (chipset_in_state(CHIPSET_STATE_STANDBY))
+	 *	*host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE) |= EC_PS_RESUME_S0ix;
+	 */
+
+	/**
+	 * When system reboot and go into setup menu, we need to set the power_s5_up flag
+	 * to wait SLP_S5 and SLP_S3 signal to boot into OS.
+	 */
+	power_s5_up_control(1);
+
+	/**
+	 * TODO: clear ENTER_S4/S5 flag
+	 * power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
+	 *	EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
+	 */
+
+	/**
+	 * TODO: clear ACPI ready flags for pre-os
+	 * *host_get_customer_memmap(0x00) &= ~BIT(0);
+	 */
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));
+
+static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
+{
+	/**
+	 * TODO:
+	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
+	 * every boot up (both cold boot and warn boot)
+	 * hook_call_deferred(&sci_enable_data, 250 * MSEC);
+	 */
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ACPI_NOTIFY, enter_acpi_mode, EC_VER_MASK(0));
