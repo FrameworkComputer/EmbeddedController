@@ -92,6 +92,14 @@ void chgstate_set_manual_current(int curr_ma);
 void chgstate_set_manual_voltage(int volt_mv);
 
 /**
+ * @brief Set the chg ctrl mode object
+ *
+ * @param mode: charger mode
+ * @return int
+ */
+int set_chg_ctrl_mode(enum ec_charge_control_mode mode);
+
+/**
  * Board-specific routine to indicate if the base is connected.
  */
 int board_is_base_connected(void);

@@ -1085,7 +1085,7 @@ void chgstate_set_manual_voltage(int volt_mv)
 }
 
 /* Force charging off before the battery is full. */
-static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
+int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 {
 	bool discharge_on_ac = false;
 	int current, voltage;

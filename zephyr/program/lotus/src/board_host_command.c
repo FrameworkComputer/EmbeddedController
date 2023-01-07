@@ -12,7 +12,6 @@
 #include "ec_commands.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
-#include "host_command.h"
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
