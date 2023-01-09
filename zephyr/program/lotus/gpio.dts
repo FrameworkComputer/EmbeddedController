@@ -290,6 +290,8 @@
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
+		gpio_ec_pch_wake_odl: ec_soc_wake_l {
+		};
 	};
 };
 
