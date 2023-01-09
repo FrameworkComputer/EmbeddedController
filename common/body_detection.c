@@ -143,12 +143,11 @@ static void determine_window_size(int odr)
 	}
 }
 
-/* Determine variance threshold scale by range and resolution. */
-static void determine_threshold_scale(int range, int resolution, int rms_noise)
+/* Determine variance threshold scale by range. */
+static void determine_threshold_scale(int range, int rms_noise)
 {
 	/*
 	 * range:              g
-	 * resolution:         bits
 	 * data_1g:            LSB/g
 	 * data_1g / 9800:     LSB/(mm/s^2)
 	 * (data_1g / 9800)^2: (LSB^2)/(mm^2/s^4), which number of
@@ -156,7 +155,7 @@ static void determine_threshold_scale(int range, int resolution, int rms_noise)
 	 * rms_noise:          ug
 	 * var_noise:          mm^2/s^4
 	 */
-	const int data_1g = BIT(resolution - 1) / range;
+	const int data_1g = MOTION_SCALING_FACTOR / range;
 	const int multiplier = POW2(data_1g);
 	const int divisor = POW2(9800);
 	/*
@@ -181,7 +180,6 @@ static void determine_threshold_scale(int range, int resolution, int rms_noise)
 void body_detect_reset(void)
 {
 	int odr = body_sensor->drv->get_data_rate(body_sensor);
-	int resolution = body_sensor->drv->get_resolution(body_sensor);
 	int rms_noise = body_sensor->drv->get_rms_noise(body_sensor);
 
 	body_detect_change_state(BODY_DETECTION_ON_BODY, false);
@@ -192,8 +190,7 @@ void body_detect_reset(void)
 	if (odr == 0)
 		return;
 	determine_window_size(odr);
-	determine_threshold_scale(body_sensor->current_range, resolution,
-				  rms_noise);
+	determine_threshold_scale(body_sensor->current_range, rms_noise);
 	/* initialize motion data and state */
 	memset(data, 0, sizeof(data));
 	history_idx = 0;
