@@ -49,7 +49,7 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		soc-pct2075 {
+		soc-f75303 {
 			temp_host_high = <100>;
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
@@ -57,11 +57,11 @@
 			temp_fan_off = <35>;
 			temp_fan_max = <70>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
-			sensor = <&soc_pct2075>;
+			sensor = <&soc_f75303>;
 		};
-		amb-pct2075 {
+		amb-f75303 {
 			power-good-pin = <&gpio_pg_pwr_s5>;
-			sensor = <&amb_pct2075>;
+			sensor = <&amb_f75303>;
 		};
 	};
 
@@ -183,4 +183,23 @@
 
 &usbc_port1 {
 	/delete-property/ bc12;
+};
+
+&i2c6_1 {
+	/delete-node/ soc-pct2075@48;
+	/delete-node/ amb-pct2075@4f;
+	soc_f75303: soc-f75303@48 {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x48>;
+	};
+
+	amb_f75303: amb-f75303@4f {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4f>;
+	};
+};
+
+&i2c_sensor {
+	/delete-node/ enum-names;
+	enum-names = "I2C_PORT_THERMAL";
 };
