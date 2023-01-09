@@ -10,6 +10,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "cros_version.h"
 #include "ec_commands.h"
@@ -123,6 +124,9 @@ __maybe_unused static void print_flag(const char *group, int set_or_clear,
 /* Flag to disable checking data role on incoming messages. */
 #define PRL_FLAGS_IGNORE_DATA_ROLE BIT(11)
 
+/* For checking flag_bit_names[] */
+#define PRL_FLAGS_COUNT 12
+
 struct bit_name {
 	int value;
 	const char *name;
@@ -143,6 +147,7 @@ static __const_data const struct bit_name flag_bit_names[] = {
 	{ PRL_FLAGS_CHUNKING, "PRL_FLAGS_CHUNKING" },
 	{ PRL_FLAGS_IGNORE_DATA_ROLE, "PRL_FLAGS_IGNORE_DATA_ROLE" },
 };
+BUILD_ASSERT(ARRAY_SIZE(flag_bit_names) == PRL_FLAGS_COUNT);
 
 __maybe_unused static void print_bits(const char *group, const char *desc,
 				      int value, const struct bit_name *names,
