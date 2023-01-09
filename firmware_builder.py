@@ -237,13 +237,15 @@ def bundle_firmware(opts):
     bundle_dir = get_bundle_dir(opts)
     ec_dir = os.path.dirname(__file__)
     for build_target in sorted(os.listdir(os.path.join(ec_dir, "build"))):
+        if build_target in ["host"]:
+            continue
         tarball_name = "".join([build_target, ".firmware.tbz2"])
         tarball_path = os.path.join(bundle_dir, tarball_name)
         cmd = [
             "tar",
             "cvfj",
             tarball_path,
-            "--exclude=*.o.d",
+            "--exclude=*.d",
             "--exclude=*.o",
             ".",
         ]
