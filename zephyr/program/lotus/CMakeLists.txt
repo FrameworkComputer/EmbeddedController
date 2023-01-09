@@ -6,11 +6,11 @@ cmake_minimum_required(VERSION 3.20.5)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(lotus)
 zephyr_library_sources(
-	"src/power_sequence.c"
-	"src/cypress_pd_common.c"
 	"src/battery.c"
-	"src/charger.c"
 	"src/board_host_command.c"
+	"src/charger.c"
+	"src/cypress_pd_common.c"
+	"src/power_sequence.c"
 )
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON

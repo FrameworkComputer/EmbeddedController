@@ -187,6 +187,12 @@ static void set_color(int node_idx, uint32_t ticks)
 
 static int match_node(int node_idx)
 {
+	/**
+	 * TODO: Implement customization-led feature
+	 * a. chassis open
+	 * b. battery disconnect
+	 */
+
 	/* Check if this node depends on power state */
 	if (node_array[node_idx].pwr_state != PWR_STATE_UNCHANGE) {
 		enum charge_state pwr_state = charge_get_state();
