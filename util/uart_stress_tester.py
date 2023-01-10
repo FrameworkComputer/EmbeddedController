@@ -194,7 +194,7 @@ class UartSerial:
         if self.serial.inWaiting() == 0:
             time.sleep(1)
 
-        return self.serial.read(self.serial.inWaiting()).decode()
+        return self.serial.read(self.serial.inWaiting()).decode(errors="ignore")
 
     def prepare(self):
         """Prepare the test:
