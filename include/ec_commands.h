@@ -7735,6 +7735,32 @@ struct ec_response_battery_static_info_v1 {
 	char type_ext[12];
 } __ec_align4;
 
+/**
+ * struct ec_response_battery_static_info_v2 - hostcmd v2 battery static info
+ *
+ * Equivalent to struct ec_response_battery_static_info, but with strings
+ * further lengthened (relative to v1) to accommodate the maximum string length
+ * permitted by the Smart Battery Data Specification revision 1.1 and fields
+ * renamed to better match that specification.
+ *
+ * @design_capacity: battery design capacity (in mAh)
+ * @design_voltage: battery design voltage (in mV)
+ * @cycle_count: battery cycle count
+ * @manufacturer: battery manufacturer string
+ * @device_name: battery model string
+ * @serial: battery serial number string
+ * @chemistry: battery type string
+ */
+struct ec_response_battery_static_info_v2 {
+	uint16_t design_capacity;
+	uint16_t design_voltage;
+	uint32_t cycle_count;
+	char manufacturer[32];
+	char device_name[32];
+	char serial[32];
+	char chemistry[32];
+} __ec_align4;
+
 /*
  * Get battery dynamic information, i.e. information that is likely to change
  * every time it is read.

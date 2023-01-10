@@ -7997,64 +7997,59 @@ void print_battery_flags(int flags)
 	printf("\n");
 }
 
-int get_battery_command(int index)
+static int get_battery_command_print_info(
+	uint8_t index,
+	const struct ec_response_battery_static_info_v2 *const static_r)
 {
-	struct ec_params_battery_static_info static_p;
-	struct ec_response_battery_static_info_v1 static_r;
-	struct ec_params_battery_dynamic_info dynamic_p;
+	struct ec_params_battery_dynamic_info dynamic_p = {
+		.index = index,
+	};
 	struct ec_response_battery_dynamic_info dynamic_r;
 	int rv;
 
-	printf("Battery %d info:\n", index);
-
-	static_p.index = index;
-	rv = ec_command(EC_CMD_BATTERY_GET_STATIC, 1, &static_p,
-			sizeof(static_p), &static_r, sizeof(static_r));
-	if (rv < 0)
-		return -1;
-
-	dynamic_p.index = index;
 	rv = ec_command(EC_CMD_BATTERY_GET_DYNAMIC, 0, &dynamic_p,
 			sizeof(dynamic_p), &dynamic_r, sizeof(dynamic_r));
 	if (rv < 0)
 		return -1;
+
+	printf("Battery %d info:\n", index);
 
 	if (dynamic_r.flags & EC_BATT_FLAG_INVALID_DATA) {
 		printf("  Invalid data (not present?)\n");
 		return -1;
 	}
 
-	if (!is_string_printable(static_r.manufacturer_ext))
+	if (!is_string_printable(static_r->manufacturer))
 		goto cmd_error;
-	printf("  OEM name:               %s\n", static_r.manufacturer_ext);
+	printf("  OEM name:               %s\n", static_r->manufacturer);
 
-	if (!is_string_printable(static_r.model_ext))
+	if (!is_string_printable(static_r->device_name))
 		goto cmd_error;
-	printf("  Model number:           %s\n", static_r.model_ext);
+	printf("  Model number:           %s\n", static_r->device_name);
 
-	if (!is_string_printable(static_r.type_ext))
+	if (!is_string_printable(static_r->chemistry))
 		goto cmd_error;
-	printf("  Chemistry   :           %s\n", static_r.type_ext);
+	printf("  Chemistry   :           %s\n", static_r->chemistry);
 
-	if (!is_string_printable(static_r.serial_ext))
+	if (!is_string_printable(static_r->serial))
 		goto cmd_error;
-	printf("  Serial number:          %s\n", static_r.serial_ext);
+	printf("  Serial number:          %s\n", static_r->serial);
 
-	if (!is_battery_range(static_r.design_capacity))
+	if (!is_battery_range(static_r->design_capacity))
 		goto cmd_error;
-	printf("  Design capacity:        %u mAh\n", static_r.design_capacity);
+	printf("  Design capacity:        %u mAh\n", static_r->design_capacity);
 
 	if (!is_battery_range(dynamic_r.full_capacity))
 		goto cmd_error;
 	printf("  Last full charge:       %u mAh\n", dynamic_r.full_capacity);
 
-	if (!is_battery_range(static_r.design_voltage))
+	if (!is_battery_range(static_r->design_voltage))
 		goto cmd_error;
-	printf("  Design output voltage   %u mV\n", static_r.design_voltage);
+	printf("  Design output voltage   %u mV\n", static_r->design_voltage);
 
-	if (!is_battery_range(static_r.cycle_count))
+	if (!is_battery_range(static_r->cycle_count))
 		goto cmd_error;
-	printf("  Cycle count             %u\n", static_r.cycle_count);
+	printf("  Cycle count             %u\n", static_r->cycle_count);
 
 	if (!is_battery_range(dynamic_r.actual_voltage))
 		goto cmd_error;
@@ -8084,6 +8079,89 @@ cmd_error:
 	return -1;
 }
 
+static int get_battery_command_v2(uint8_t index)
+{
+	struct ec_params_battery_static_info static_p = {
+		.index = index,
+	};
+	struct ec_response_battery_static_info_v2 static_r;
+	int rv;
+
+	rv = ec_command(EC_CMD_BATTERY_GET_STATIC, 2, &static_p,
+			sizeof(static_p), &static_r, sizeof(static_r));
+	if (rv < 0) {
+		fprintf(stderr, "CMD_BATTERY_GET_STATIC v2 failed: %d\n", rv);
+		return -1;
+	}
+
+	return get_battery_command_print_info(index, &static_r);
+}
+
+static int get_battery_command_v1(uint8_t index)
+{
+	struct ec_params_battery_static_info static_p {
+		.index = index,
+	};
+	struct ec_response_battery_static_info_v1 static_r;
+	int rv;
+
+	rv = ec_command(EC_CMD_BATTERY_GET_STATIC, 1, &static_p,
+			sizeof(static_p), &static_r, sizeof(static_r));
+	if (rv < 0) {
+		fprintf(stderr, "CMD_BATTERY_GET_STATIC v1 failed: %d\n", rv);
+		return -1;
+	}
+
+	/* Translate v1 response into v2 to display it */
+	struct ec_response_battery_static_info_v2 static_v2 = {
+		.design_capacity = static_r.design_capacity,
+		.design_voltage = static_r.design_voltage,
+		.cycle_count = static_r.cycle_count,
+	};
+	strncpy(static_v2.manufacturer, static_r.manufacturer_ext,
+		sizeof(static_v2.manufacturer) - 1);
+	strncpy(static_v2.device_name, static_r.model_ext,
+		sizeof(static_v2.device_name) - 1);
+	strncpy(static_v2.serial, static_r.serial_ext,
+		sizeof(static_v2.serial) - 1);
+	strncpy(static_v2.chemistry, static_r.type_ext,
+		sizeof(static_v2.chemistry) - 1);
+
+	return get_battery_command_print_info(index, &static_v2);
+}
+static int get_battery_command_v0(uint8_t index)
+{
+	struct ec_params_battery_static_info static_p = {
+		.index = index,
+	};
+	struct ec_response_battery_static_info static_r;
+	int rv;
+
+	rv = ec_command(EC_CMD_BATTERY_GET_STATIC, 0, &static_p,
+			sizeof(static_p), &static_r, sizeof(static_r));
+	if (rv < 0) {
+		fprintf(stderr, "CMD_BATTERY_GET_STATIC v0 failed: %d\n", rv);
+		return -1;
+	}
+
+	/* Translate v0 response into v2 to display it */
+	struct ec_response_battery_static_info_v2 static_v2 = {
+		.design_capacity = static_r.design_capacity,
+		.design_voltage = static_r.design_voltage,
+		.cycle_count = static_r.cycle_count,
+	};
+	strncpy(static_v2.manufacturer, static_r.manufacturer,
+		sizeof(static_v2.manufacturer) - 1);
+	strncpy(static_v2.device_name, static_r.model,
+		sizeof(static_v2.device_name) - 1);
+	strncpy(static_v2.serial, static_r.serial,
+		sizeof(static_v2.serial) - 1);
+	strncpy(static_v2.chemistry, static_r.type,
+		sizeof(static_v2.chemistry) - 1);
+
+	return get_battery_command_print_info(index, &static_v2);
+}
+
 int cmd_battery(int argc, char *argv[])
 {
 	char batt_text[EC_MEMMAP_TEXT_MAX];
@@ -8104,11 +8182,19 @@ int cmd_battery(int argc, char *argv[])
 	}
 
 	/*
-	 * Read non-primary batteries through hostcmd, and all batteries
-	 * if longer strings are supported for static info.
+	 * Prefer to use newer hostcmd versions if supported because these allow
+	 * us to read longer strings, and always use hostcmd for non-primary
+	 * batteries because memmap doesn't export that data.
 	 */
-	if (index > 0 || ec_cmd_version_supported(EC_CMD_BATTERY_GET_STATIC, 1))
-		return get_battery_command(index);
+	uint32_t versions;
+	ec_get_cmd_versions(EC_CMD_BATTERY_GET_STATIC, &versions);
+
+	if (versions & EC_VER_MASK(2))
+		return get_battery_command_v2(index);
+	else if (versions & EC_VER_MASK(1))
+		return get_battery_command_v1(index);
+	else if (index > 0)
+		return get_battery_command_v0(index);
 
 	val = read_mapped_mem8(EC_MEMMAP_BATTERY_VERSION);
 	if (val < 1) {
