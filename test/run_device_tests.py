@@ -643,15 +643,17 @@ def run_test(
                 return False
             continue
 
-        logging.debug(line.decode("utf-8").rstrip())
         test.logs.append(line)
         # Look for test_print_result() output (success or failure)
         line_str = process_console_output_line(line, test)
         if line_str is None:
             # Sometimes we get non-unicode from the console (e.g., when the
             # board reboots.) Not much we can do in this case, so we'll just
-            # ignore it.
+            # ignore it and print log the line as is.
+            logging.debug(line)
             continue
+
+        logging.debug(line_str.rstrip())
 
         for finish_re in test.finish_regexes:
             if finish_re.match(line_str):
