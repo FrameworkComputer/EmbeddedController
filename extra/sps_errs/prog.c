@@ -48,9 +48,9 @@ static const char *ec_strerr(enum ec_status r)
 	return "<undefined result>";
 };
 
-	/****************************************************************************
-	 * Debugging output
-	 */
+/****************************************************************************
+ * Debugging output
+ */
 
 #define LINELEN 16
 

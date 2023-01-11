@@ -334,7 +334,7 @@ int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 						 LIS2MDL_ODR_50HZ;
 	}
 
-	normalized_rate = rate <= 0 ? 0 :
+	normalized_rate = rate <= 0		      ? 0 :
 			  reg_val == LIS2MDL_ODR_10HZ ? 10000 :
 			  reg_val == LIS2MDL_ODR_20HZ ? 20000 :
 							50000;
