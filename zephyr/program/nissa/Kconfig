@@ -23,6 +23,12 @@ config BOARD_NEREID
 	  Build Google Nereid reference board. Nereid has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_NEREID_CX
+	bool "Google Nereid Board with IT81302 CX"
+	help
+	  Build Google Nereid reference board, but with IT81302 CX EC rather
+	  than IT81302 BX.
+
 config BOARD_CRAASK
 	bool "Google Craask Board"
 	help

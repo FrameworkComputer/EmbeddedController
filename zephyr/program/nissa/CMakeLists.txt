@@ -22,7 +22,7 @@ if(DEFINED CONFIG_BOARD_NIVVIKS)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nivviks/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "nivviks/src/charger.c")
 endif()
-if(DEFINED CONFIG_BOARD_NEREID)
+if(DEFINED CONFIG_BOARD_NEREID OR DEFINED CONFIG_BOARD_NEREID_CX)
 	project(nereid)
 	zephyr_library_sources(
 			"src/led.c"

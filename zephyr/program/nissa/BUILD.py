@@ -40,6 +40,18 @@ nereid = register_nissa_project(
     chip="it81302bx",
 )
 
+nereid_cx = register_binman_project(
+    project_name="nereid_cx",
+    zephyr_board="it81302cx",
+    dts_overlays=[here / "nereid" / "project.overlay"],
+    kconfig_files=[
+        here / "program.conf",
+        here / "it8xxx2_program.conf",
+        here / "it8xxx2cx_program.conf",
+        here / "nereid" / "project.conf",
+    ],
+)
+
 craask = register_nissa_project(
     project_name="craask",
     chip="npcx9m3f",
