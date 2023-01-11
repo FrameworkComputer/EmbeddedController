@@ -20,4 +20,3 @@ properties:
 
         For example, the WUI mapping on NPCX7 monotonic counter alarm would be
            mtc-alarm = <&wui_mtc>;
-

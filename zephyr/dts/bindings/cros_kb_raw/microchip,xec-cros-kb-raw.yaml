@@ -17,4 +17,3 @@ properties:
 
     pinctrl-names:
       required: true
-

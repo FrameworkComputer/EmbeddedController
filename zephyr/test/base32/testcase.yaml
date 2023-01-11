@@ -2,4 +2,3 @@ common:
   platform_allow: native_posix
 tests:
   base32.default: {}
-

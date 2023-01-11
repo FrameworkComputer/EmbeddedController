@@ -17,7 +17,7 @@ properties:
    ship_mode_reg_addr:
       default: 0x00
    ship_mode_reg_data:
-      default: [ 0x0010, 0x0010 ]
+      default: [0x0010, 0x0010]
    # Charging/Discharging FETs Status
    # Register SBS_PackStatus_ACCESS (0x99)
    # Discharging disabled  Bit-3: XDSG       1 = Active
