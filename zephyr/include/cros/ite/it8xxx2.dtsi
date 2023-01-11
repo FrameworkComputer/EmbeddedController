@@ -50,6 +50,10 @@
 	};
 
 	soc {
+		/* TODO(b/265198571): Migrate Zephyr EC builds to upstream SHI
+		 * drivers.
+		 */
+		/delete-node/ shi@f03a00;
 		shi: shi@f03a00 {
 			compatible = "ite,it8xxx2-cros-shi";
 			reg = <0x00f03a00 0x30>;

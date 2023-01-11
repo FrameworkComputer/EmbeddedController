@@ -89,6 +89,10 @@
 			mtc-alarm = <&wui_mtc>;
 		};
 
+		/* TODO(b/265198571): Migrate Zephyr EC builds to upstream SHI
+		 * drivers.
+		 */
+		 /delete-node/ shi@4000f000;
 		shi: shi@4000f000 {
 			compatible = "nuvoton,npcx-cros-shi";
 			reg = <0x4000f000 0x120>;

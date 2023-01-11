@@ -175,13 +175,13 @@ struct cros_shi_npcx_data {
 /* Driver convenience defines */
 #define DRV_CONFIG(dev) ((const struct cros_shi_npcx_config *)(dev)->config)
 #define DRV_DATA(dev) ((struct cros_shi_npcx_data *)(dev)->data)
-#define HAL_INSTANCE(dev) (struct shi_reg *)(DRV_CONFIG(dev)->base)
+#define HAL_INSTANCE(dev) (struct cros_shi_reg *)(DRV_CONFIG(dev)->base)
 
 /* Forward declaration */
-static void cros_shi_npcx_reset_prepare(struct shi_reg *const inst);
+static void cros_shi_npcx_reset_prepare(struct cros_shi_reg *const inst);
 
 /* Read pointer of input or output buffer by consecutive reading */
-static uint32_t shi_read_buf_pointer(struct shi_reg *const inst)
+static uint32_t shi_read_buf_pointer(struct cros_shi_reg *const inst)
 {
 	uint8_t stat;
 
@@ -197,7 +197,7 @@ static uint32_t shi_read_buf_pointer(struct shi_reg *const inst)
  * Valid offset of SHI output buffer to write.
  * When SIMUL bit is set, IBUFPTR can be used instead of OBUFPTR
  */
-static uint32_t shi_valid_obuf_offset(struct shi_reg *const inst)
+static uint32_t shi_valid_obuf_offset(struct cros_shi_reg *const inst)
 {
 	return (shi_read_buf_pointer(inst) + SHI_OUT_PREAMBLE_LENGTH) %
 	       SHI_OBUF_FULL_SIZE;
@@ -228,7 +228,8 @@ static void shi_write_half_outbuf(void)
  * This routine read SHI input buffer to msg buffer until
  * we have received a certain number of bytes
  */
-static int shi_read_inbuf_wait(struct shi_reg *const inst, uint32_t szbytes)
+static int shi_read_inbuf_wait(struct cros_shi_reg *const inst,
+			       uint32_t szbytes)
 {
 	/* Copy data to msg buffer from input buffer */
 	for (uint32_t i = 0; i < szbytes; i++, shi_params.sz_received++) {
@@ -249,7 +250,7 @@ static int shi_read_inbuf_wait(struct shi_reg *const inst, uint32_t szbytes)
 }
 
 /* This routine fills out all SHI output buffer with status byte */
-static void shi_fill_out_status(struct shi_reg *const inst, uint8_t status)
+static void shi_fill_out_status(struct cros_shi_reg *const inst, uint8_t status)
 {
 	uint8_t start, end;
 	volatile uint8_t *fill_ptr;
@@ -287,7 +288,7 @@ static void shi_fill_out_status(struct shi_reg *const inst, uint8_t status)
 }
 
 /* This routine handles shi received unexpected data */
-static void shi_bad_received_data(struct shi_reg *const inst)
+static void shi_bad_received_data(struct cros_shi_reg *const inst)
 {
 	/* State machine mismatch, timeout, or protocol we can't handle. */
 	shi_fill_out_status(inst, EC_SPI_RX_BAD_DATA);
@@ -309,7 +310,7 @@ static void shi_bad_received_data(struct shi_reg *const inst)
  * This routine write SHI output buffer from msg buffer over halt of it.
  * It make sure we have enough time to handle next operations.
  */
-static void shi_write_first_pkg_outbuf(struct shi_reg *const inst,
+static void shi_write_first_pkg_outbuf(struct cros_shi_reg *const inst,
 				       uint16_t szbytes)
 {
 	uint8_t size, offset;
@@ -358,7 +359,8 @@ static void shi_write_first_pkg_outbuf(struct shi_reg *const inst,
  */
 static void shi_send_response_packet(struct host_packet *pkt)
 {
-	struct shi_reg *const inst = (struct shi_reg *)(cros_shi_cfg.base);
+	struct cros_shi_reg *const inst =
+		(struct cros_shi_reg *)(cros_shi_cfg.base);
 
 	/*
 	 * Disable interrupts. This routine is not called from interrupt
@@ -397,7 +399,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 	__enable_irq();
 }
 
-void shi_handle_host_package(struct shi_reg *const inst)
+void shi_handle_host_package(struct cros_shi_reg *const inst)
 {
 	uint32_t sz_inbuf_int = shi_params.sz_request / SHI_IBUF_HALF_SIZE;
 	uint32_t cnt_inbuf_int = shi_params.sz_received / SHI_IBUF_HALF_SIZE;
@@ -439,7 +441,7 @@ void shi_handle_host_package(struct shi_reg *const inst)
 	host_packet_receive(&shi_packet);
 }
 
-static void shi_parse_header(struct shi_reg *const inst)
+static void shi_parse_header(struct cros_shi_reg *const inst)
 {
 	/* We're now inside a transaction */
 	state = SHI_STATE_RECEIVING;
@@ -482,7 +484,7 @@ static void shi_parse_header(struct shi_reg *const inst)
 	}
 }
 
-static void shi_sec_ibf_int_enable(struct shi_reg *const inst, int enable)
+static void shi_sec_ibf_int_enable(struct cros_shi_reg *const inst, int enable)
 {
 	if (enable) {
 		/* Setup IBUFLVL2 threshold and enable it */
@@ -529,7 +531,7 @@ static void log_unexpected_state(char *isr_name)
 	last_error_state = state;
 }
 
-static void shi_handle_cs_assert(struct shi_reg *const inst)
+static void shi_handle_cs_assert(struct cros_shi_reg *const inst)
 {
 	/* If not enabled, ignore glitches on SHI_CS_L */
 	if (state == SHI_STATE_DISABLED)
@@ -558,7 +560,7 @@ static void shi_handle_cs_assert(struct shi_reg *const inst)
 	disable_sleep(SLEEP_MASK_SPI);
 }
 
-static void shi_handle_cs_deassert(struct shi_reg *const inst)
+static void shi_handle_cs_deassert(struct cros_shi_reg *const inst)
 {
 	/*
 	 * If the buffer is still used by the host command.
@@ -596,7 +598,7 @@ static void shi_handle_cs_deassert(struct shi_reg *const inst)
 	DEBUG_CPRINTF("END\n");
 }
 
-static void shi_handle_input_buf_half_full(struct shi_reg *const inst)
+static void shi_handle_input_buf_half_full(struct cros_shi_reg *const inst)
 {
 	if (state == SHI_STATE_RECEIVING) {
 		/* Read data from input to msg buffer */
@@ -618,7 +620,7 @@ static void shi_handle_input_buf_half_full(struct shi_reg *const inst)
 	}
 }
 
-static void shi_handle_input_buf_full(struct shi_reg *const inst)
+static void shi_handle_input_buf_full(struct cros_shi_reg *const inst)
 {
 	if (state == SHI_STATE_RECEIVING) {
 		/* read data from input to msg buffer */
@@ -644,7 +646,7 @@ static void cros_shi_npcx_isr(const struct device *dev)
 {
 	uint8_t stat;
 	uint8_t stat2;
-	struct shi_reg *const inst = HAL_INSTANCE(dev);
+	struct cros_shi_reg *const inst = HAL_INSTANCE(dev);
 
 	/* Read status register and clear interrupt status early */
 	stat = inst->EVSTAT;
@@ -717,7 +719,7 @@ static void cros_shi_npcx_isr(const struct device *dev)
 	}
 }
 
-static void cros_shi_npcx_reset_prepare(struct shi_reg *const inst)
+static void cros_shi_npcx_reset_prepare(struct cros_shi_reg *const inst)
 {
 	uint32_t i;
 
@@ -766,7 +768,7 @@ static int cros_shi_npcx_enable(const struct device *dev)
 {
 	const struct cros_shi_npcx_config *const config = DRV_CONFIG(dev);
 	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
-	struct shi_reg *const inst = HAL_INSTANCE(dev);
+	struct cros_shi_reg *const inst = HAL_INSTANCE(dev);
 	int ret;
 
 	ret = clock_control_on(clk_dev,
@@ -831,7 +833,7 @@ static int shi_npcx_init(const struct device *dev)
 {
 	int ret;
 	const struct cros_shi_npcx_config *const config = DRV_CONFIG(dev);
-	struct shi_reg *const inst = HAL_INSTANCE(dev);
+	struct cros_shi_reg *const inst = HAL_INSTANCE(dev);
 	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
 
 	/* Turn on shi device clock first */
@@ -918,10 +920,10 @@ DEVICE_DT_INST_DEFINE(0, shi_npcx_init, /* pm_control_fn= */ NULL,
 		      &cros_shi_npcx_driver_api);
 
 /* KBS register structure check */
-NPCX_REG_SIZE_CHECK(shi_reg, 0x120);
-NPCX_REG_OFFSET_CHECK(shi_reg, SHICFG1, 0x001);
-NPCX_REG_OFFSET_CHECK(shi_reg, EVENABLE, 0x005);
-NPCX_REG_OFFSET_CHECK(shi_reg, IBUFSTAT, 0x00a);
-NPCX_REG_OFFSET_CHECK(shi_reg, EVENABLE2, 0x010);
-NPCX_REG_OFFSET_CHECK(shi_reg, OBUF, 0x020);
-NPCX_REG_OFFSET_CHECK(shi_reg, IBUF, 0x0A0);
+NPCX_REG_SIZE_CHECK(cros_shi_reg, 0x120);
+NPCX_REG_OFFSET_CHECK(cros_shi_reg, SHICFG1, 0x001);
+NPCX_REG_OFFSET_CHECK(cros_shi_reg, EVENABLE, 0x005);
+NPCX_REG_OFFSET_CHECK(cros_shi_reg, IBUFSTAT, 0x00a);
+NPCX_REG_OFFSET_CHECK(cros_shi_reg, EVENABLE2, 0x010);
+NPCX_REG_OFFSET_CHECK(cros_shi_reg, OBUF, 0x020);
+NPCX_REG_OFFSET_CHECK(cros_shi_reg, IBUF, 0x0A0);

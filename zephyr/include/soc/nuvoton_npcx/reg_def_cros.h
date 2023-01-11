@@ -1,7 +1,6 @@
-/*
- * Copyright (c) 2020 Nuvoton Technology Corporation.
- *
- * SPDX-License-Identifier: Apache-2.0
+/* Copyright 2020 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  */
 
 /*
@@ -27,7 +26,7 @@ struct mtc_reg {
 #define NPCX_WTC_WIE 31
 
 /* SHI (Serial Host Interface) registers */
-struct shi_reg {
+struct cros_shi_reg {
 	volatile uint8_t reserved1;
 	/* 0x001: SHI Configuration 1 */
 	volatile uint8_t SHICFG1;
