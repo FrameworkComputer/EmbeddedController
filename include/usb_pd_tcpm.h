@@ -8,6 +8,13 @@
 #ifndef __CROS_EC_USB_PD_TCPM_H
 #define __CROS_EC_USB_PD_TCPM_H
 
+/*
+ * I don't know why but gcc's preprocessor doesn't like this file,
+ * sometimes. Adding a #line directive anywhere in this file seems to fix the
+ * problem. #line marks the *next* line, so it is off by one.
+ */
+#line 17
+
 #include "common.h"
 #include "compiler.h"
 #include "ec_commands.h"
