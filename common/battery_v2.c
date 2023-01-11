@@ -98,16 +98,11 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 		r->design_voltage = bs->design_voltage;
 		r->cycle_count = bs->cycle_count;
 
-		/* Truncate strings to reduced v0 size */
-		memcpy(&r->manufacturer, &bs->manufacturer_ext,
-		       sizeof(r->manufacturer));
-		r->manufacturer[sizeof(r->manufacturer) - 1] = 0;
-		memcpy(&r->model, &bs->model_ext, sizeof(r->model));
-		r->model[sizeof(r->model) - 1] = 0;
-		memcpy(&r->serial, &bs->serial_ext, sizeof(r->serial));
-		r->serial[sizeof(r->serial) - 1] = 0;
-		memcpy(&r->type, &bs->type_ext, sizeof(r->type));
-		r->type[sizeof(r->type) - 1] = 0;
+		strzcpy(r->manufacturer, bs->manufacturer_ext,
+			sizeof(r->manufacturer));
+		strzcpy(r->model, bs->model_ext, sizeof(r->model));
+		strzcpy(r->serial, bs->serial_ext, sizeof(r->serial));
+		strzcpy(r->type, bs->type_ext, sizeof(r->type));
 
 		args->response_size = sizeof(*r);
 	} else if (args->version == 1) {
@@ -117,16 +112,11 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 		r->design_voltage = bs->design_voltage;
 		r->cycle_count = bs->cycle_count;
 
-		/* Truncate strings to reduced size */
-		memcpy(r->manufacturer_ext, &bs->manufacturer_ext,
-		       sizeof(r->manufacturer_ext));
-		r->manufacturer_ext[sizeof(r->manufacturer_ext) - 1] = 0;
-		memcpy(r->model_ext, &bs->model_ext, sizeof(r->model_ext));
-		r->model_ext[sizeof(r->model_ext) - 1] = 0;
-		memcpy(r->serial_ext, &bs->serial_ext, sizeof(r->serial_ext));
-		r->serial_ext[sizeof(r->serial_ext) - 1] = 0;
-		memcpy(r->type_ext, &bs->type_ext, sizeof(r->type_ext));
-		r->type_ext[sizeof(r->type_ext) - 1] = 0;
+		strzcpy(r->manufacturer_ext, bs->manufacturer_ext,
+			sizeof(r->manufacturer_ext));
+		strzcpy(r->model_ext, bs->model_ext, sizeof(r->model_ext));
+		strzcpy(r->serial_ext, bs->serial_ext, sizeof(r->serial_ext));
+		strzcpy(r->type_ext, bs->type_ext, sizeof(r->type_ext));
 
 		args->response_size = sizeof(*r);
 	} else {
