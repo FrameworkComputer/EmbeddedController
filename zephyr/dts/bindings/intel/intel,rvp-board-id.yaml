@@ -7,20 +7,20 @@ description: Intel RVP Board id
 compatible: "intel,rvp-board-id"
 
 properties:
-    bom-gpios:
-      type: phandle-array
-      required: true
-      description: |
-       A list contains GPIO pins corresponding to BOM ID bits.
+  bom-gpios:
+    type: phandle-array
+    required: true
+    description: |
+     A list contains GPIO pins corresponding to BOM ID bits.
 
-    fab-gpios:
-      type: phandle-array
-      required: true
-      description: |
-       A list contains GPIO pins corresponding to FAB ID bits.
+  fab-gpios:
+    type: phandle-array
+    required: true
+    description: |
+     A list contains GPIO pins corresponding to FAB ID bits.
 
-    board-gpios:
-      type: phandle-array
-      required: true
-      description: |
-       A list contains GPIO pins corresponding to BOARD ID bits.
+  board-gpios:
+    type: phandle-array
+    required: true
+    description: |
+     A list contains GPIO pins corresponding to BOARD ID bits.

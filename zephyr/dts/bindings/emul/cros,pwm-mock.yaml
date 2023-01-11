@@ -6,10 +6,10 @@ description: A generic PWM mock
 compatible: "cros,pwm-mock"
 include: [pwm-controller.yaml, base.yaml]
 properties:
-   reg:
-     required: true
+  reg:
+    required: true
 
 pwm-cells:
-    - channel
-    - period
-    - flags
+  - channel
+  - period
+  - flags

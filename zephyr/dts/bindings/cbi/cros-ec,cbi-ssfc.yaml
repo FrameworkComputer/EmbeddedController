@@ -7,28 +7,28 @@ description: CBI Second Source Factory Cache (SSFC)
 compatible: "cros-ec,cbi-ssfc"
 
 child-binding:
-    description:
-        CBI SSFC fields definition.
-        The order of the children in this node define the order
-        of the SSFC bit fields from least significant bit to most
-        significant bit. The total size of all SSFC bit fields
-        must not exceed 32 bits.
-    properties:
-        enum-name:
-            type: string
-            required: true
-            description:
-              Enum values used only for description purposes
-            enum:
-            - AUDIO_CODEC
-            - BASE_SENSOR
-            - LID_SENSOR
-            - LIGHTBAR
-            - USB_SS_MUX
-        size:
-            type: int
-            required: true
-            description: The size of the field in bits.
+  description:
+    CBI SSFC fields definition.
+    The order of the children in this node define the order
+    of the SSFC bit fields from least significant bit to most
+    significant bit. The total size of all SSFC bit fields
+    must not exceed 32 bits.
+  properties:
+    enum-name:
+      type: string
+      required: true
+      description:
+        Enum values used only for description purposes
+      enum:
+      - AUDIO_CODEC
+      - BASE_SENSOR
+      - LID_SENSOR
+      - LIGHTBAR
+      - USB_SS_MUX
+    size:
+      type: int
+      required: true
+      description: The size of the field in bits.
 
 # Example:
 #

@@ -9,12 +9,12 @@ compatible: "intel,ap-pwrseq-adc"
 include: intel,ap-pwr-signal-base.yaml
 
 properties:
-    trigger-high:
-        description: Rising edge trigger adc comparator
-        type: phandle
-        required: true
+  trigger-high:
+    description: Rising edge trigger adc comparator
+    type: phandle
+    required: true
 
-    trigger-low:
-        description: Falling edge trigger adc comparator
-        type: phandle
-        required: true
+  trigger-low:
+    description: Falling edge trigger adc comparator
+    type: phandle
+    required: true

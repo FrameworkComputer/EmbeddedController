@@ -8,7 +8,7 @@ compatible: "nxp,rtc-pcf85063a"
 include: [base.yaml, i2c-device.yaml]
 
 properties:
-    int-pin:
-      type: phandle
-      required: true
-      description: Interrupt from RTC
+  int-pin:
+    type: phandle
+    required: true
+    description: Interrupt from RTC

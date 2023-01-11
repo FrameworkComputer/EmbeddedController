@@ -9,14 +9,14 @@ compatible: "intel,jhl9040r"
 include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
 
 properties:
-    reset-pin:
-      type: phandle
-      required: true
+  reset-pin:
+    type: phandle
+    required: true
 
-    int-pin:
-      type: phandle
-      required: false
+  int-pin:
+    type: phandle
+    required: false
 
-    ls-en-pin:
-      type: phandle
-      required: false
+  ls-en-pin:
+    type: phandle
+    required: false
