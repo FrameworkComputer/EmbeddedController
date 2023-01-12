@@ -60,7 +60,7 @@
 		timeout = <5>;
 	};
 
-	charger_bc12_port1: rt9490@53 {
+	charger: rt9490@53 {
 		compatible = "richtek,rt9490";
 		status = "okay";
 		reg = <0x53>;
@@ -86,8 +86,8 @@
 	pinctrl-names = "default";
 	/delete-property/ fifo-enable;
 
-	bc12_ppc_port0: rt1739@70 {
-		compatible = "richtek,rt1739-bc12", "richtek,rt1739-ppc";
+	ppc_port0: rt1739@70 {
+		compatible = "richtek,rt1739-ppc";
 		status = "okay";
 		reg = <0x70>;
 	};
