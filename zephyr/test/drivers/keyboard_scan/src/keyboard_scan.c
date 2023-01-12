@@ -239,10 +239,9 @@ ZTEST(keyboard_scan, host_command_simulate_key__locked)
 
 	zassert_true(system_is_locked(), "Expecting locked system.");
 
-	struct ec_response_keyboard_factory_test response;
 	struct ec_params_mkbp_simulate_key params;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MKBP_SIMULATE_KEY, 0, response, params);
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_MKBP_SIMULATE_KEY, 0, params);
 
 	ret = host_command_process(&args);
 	zassert_equal(EC_RES_ACCESS_DENIED, ret, "Command returned %u", ret);
@@ -255,13 +254,12 @@ ZTEST(keyboard_scan, host_command_simulate_key__bad_params)
 	system_is_locked_fake.return_val = 0;
 	zassert_false(system_is_locked(), "Expecting unlocked system.");
 
-	struct ec_response_keyboard_factory_test response;
 	struct ec_params_mkbp_simulate_key params = {
 		.col = KEYBOARD_COLS_MAX,
 		.row = KEYBOARD_ROWS,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MKBP_SIMULATE_KEY, 0, response, params);
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_MKBP_SIMULATE_KEY, 0, params);
 
 	ret = host_command_process(&args);
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Command returned %u", ret);
