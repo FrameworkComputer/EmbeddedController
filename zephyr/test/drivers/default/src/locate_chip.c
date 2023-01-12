@@ -20,13 +20,11 @@ ZTEST_USER(locate_chip, test_hc_locate_chip_tcpc)
 	int ret;
 	struct ec_params_locate_chip p;
 	struct ec_response_locate_chip r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LOCATE_CHIP, 0, r, p);
 
 	p.type = EC_CHIP_TYPE_TCPC;
 	p.index = 0;
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_locate_chip(NULL, &p, &r);
 
 	zassert_equal(ret, EC_RES_SUCCESS, "Unexpected return value: %d", ret);
 	zassert_equal(r.bus_type, EC_BUS_TYPE_I2C, "Unexpected bus_type: %d",
@@ -39,7 +37,7 @@ ZTEST_USER(locate_chip, test_hc_locate_chip_tcpc)
 	p.type = EC_CHIP_TYPE_TCPC;
 	p.index = 1;
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_locate_chip(NULL, &p, &r);
 
 	zassert_equal(ret, EC_RES_SUCCESS, "Unexpected return value: %d", ret);
 	zassert_equal(r.bus_type, EC_BUS_TYPE_I2C, "Unexpected bus_type: %d",
@@ -58,13 +56,11 @@ ZTEST_USER(locate_chip, test_hc_locate_chip_tcpc_overflow)
 	int ret;
 	struct ec_params_locate_chip p;
 	struct ec_response_locate_chip r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LOCATE_CHIP, 0, r, p);
 
 	p.type = EC_CHIP_TYPE_TCPC;
 	p.index = 10;
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_locate_chip(NULL, &p, &r);
 
 	zassert_equal(ret, EC_RES_OVERFLOW, "Unexpected return value: %d", ret);
 }
@@ -77,13 +73,11 @@ ZTEST_USER(locate_chip, test_hc_locate_chip_eeprom)
 	int ret;
 	struct ec_params_locate_chip p;
 	struct ec_response_locate_chip r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LOCATE_CHIP, 0, r, p);
 
 	p.type = EC_CHIP_TYPE_CBI_EEPROM;
 	p.index = 0;
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_locate_chip(NULL, &p, &r);
 
 	zassert_equal(ret, EC_RES_SUCCESS, "Unexpected return value: %d", ret);
 	zassert_equal(r.bus_type, EC_BUS_TYPE_I2C, "Unexpected bus_type: %d",
@@ -102,13 +96,11 @@ ZTEST_USER(locate_chip, test_hc_locate_chip_eeprom_overflow)
 	int ret;
 	struct ec_params_locate_chip p;
 	struct ec_response_locate_chip r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LOCATE_CHIP, 0, r, p);
 
 	p.type = EC_CHIP_TYPE_CBI_EEPROM;
 	p.index = 1;
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_locate_chip(NULL, &p, &r);
 
 	zassert_equal(ret, EC_RES_OVERFLOW, "Unexpected return value: %d", ret);
 }
@@ -121,11 +113,9 @@ ZTEST_USER(locate_chip, test_hc_locate_chip_invalid)
 	int ret;
 	struct ec_params_locate_chip p;
 	struct ec_response_locate_chip r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LOCATE_CHIP, 0, r, p);
 
 	p.type = EC_CHIP_TYPE_COUNT;
-	ret = host_command_process(&args);
+	ret = ec_cmd_locate_chip(NULL, &p, &r);
 
 	zassert_equal(ret, EC_RES_INVALID_PARAM, "Unexpected return value: %d",
 		      ret);

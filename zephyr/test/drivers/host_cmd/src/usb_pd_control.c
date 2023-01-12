@@ -41,10 +41,8 @@ run_usb_pd_control(int port, struct ec_response_usb_pd_control_v2 *resp)
 		.mux = USB_PD_CTRL_MUX_NO_CHANGE,
 		.swap = USB_PD_CTRL_SWAP_NONE
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_USB_PD_CONTROL, 2, *resp, params);
 
-	return host_command_process(&args);
+	return ec_cmd_usb_pd_control_v2(NULL, &params, resp);
 }
 
 ZTEST_USER(host_cmd_usb_pd_control, test_good_index_no_partner)

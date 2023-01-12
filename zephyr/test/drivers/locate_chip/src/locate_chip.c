@@ -17,10 +17,8 @@ ZTEST_USER(locate_chip, test_invalid_request_for_eeprom)
 		.type = EC_CHIP_TYPE_CBI_EEPROM,
 	};
 	struct ec_response_locate_chip r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LOCATE_CHIP, 0, r, p);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_locate_chip(NULL, &p, &r);
 
 	zassert_equal(ret, EC_RES_UNAVAILABLE, "Unexpected return value: %d",
 		      ret);

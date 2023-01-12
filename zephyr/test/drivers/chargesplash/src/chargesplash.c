@@ -29,10 +29,8 @@ chargesplash_hostcmd(enum ec_chargesplash_cmd cmd,
 		     struct ec_response_chargesplash *response)
 {
 	struct ec_params_chargesplash params = { .cmd = cmd };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_CHARGESPLASH, 0, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_chargesplash(NULL, &params, response);
 }
 
 static bool is_chargesplash_requested(void)

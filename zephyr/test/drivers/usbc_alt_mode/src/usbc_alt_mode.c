@@ -301,10 +301,9 @@ ZTEST_F(usbc_alt_mode, verify_discovery_via_pd_host_cmd)
 	struct ec_params_usb_pd_info_request params = { .port = TEST_PORT };
 	struct ec_params_usb_pd_discovery_entry response;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_DISCOVERY, 0, response, params);
+	struct host_cmd_handler_args args;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_usb_pd_discovery(&args, &params, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.ptype, IDH_PTYPE_AMA);
 	zassert_equal(response.vid, USB_VID_GOOGLE);

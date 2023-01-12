@@ -24,10 +24,7 @@ ZTEST(hc_adc, normal_path)
 
 	adc_read_channel_fake.return_val = 123;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_ADC_READ, UINT8_C(0), response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_adc_read(NULL, &params, &response);
 
 	zassert_ok(ret, "Host command returned %u", ret);
 	zassert_equal(1, adc_read_channel_fake.call_count);
@@ -42,10 +39,7 @@ ZTEST(hc_adc, bad_ch_number)
 	struct ec_response_adc_read response;
 	uint16_t ret;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_ADC_READ, UINT8_C(0), response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_adc_read(NULL, &params, &response);
 
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Host command returned %u",
 		      ret);

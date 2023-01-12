@@ -141,11 +141,9 @@ ZTEST(power_seq, test_host_sleep_success)
 	zassert_equal(power_get_state(), POWER_S0);
 
 	/* Suspend for 30 seconds */
-	zassert_ok(host_command_process(
-		&(struct host_cmd_handler_args)BUILD_HOST_COMMAND_PARAMS(
-			EC_CMD_HOST_SLEEP_EVENT, 0,
-			(struct ec_params_host_sleep_event){
-				.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND })));
+	zassert_ok(ec_cmd_host_sleep_event(
+		NULL, &(struct ec_params_host_sleep_event){
+			      .sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND }));
 	k_sleep(K_MSEC(1));
 	set_signal_state(POWER_S3);
 	k_sleep(K_SECONDS(30));
@@ -153,11 +151,9 @@ ZTEST(power_seq, test_host_sleep_success)
 
 	/* Resume */
 	set_signal_state(POWER_S0);
-	zassert_ok(host_command_process(
-		&(struct host_cmd_handler_args)BUILD_HOST_COMMAND_PARAMS(
-			EC_CMD_HOST_SLEEP_EVENT, 0,
-			(struct ec_params_host_sleep_event){
-				.sleep_event = HOST_SLEEP_EVENT_S3_RESUME })));
+	zassert_ok(ec_cmd_host_sleep_event(
+		NULL, &(struct ec_params_host_sleep_event){
+			      .sleep_event = HOST_SLEEP_EVENT_S3_RESUME }));
 	zassert_equal(power_get_state(), POWER_S0);
 
 	/* Verify that EC_HOST_EVENT_HANG_DETECT is not triggered */
@@ -174,11 +170,9 @@ ZTEST(power_seq, test_host_sleep_hang)
 	zassert_equal(power_get_state(), POWER_S0);
 
 	/* Send HOST_SLEEP_EVENT_S3_SUSPEND and hang for 30 seconds */
-	zassert_ok(host_command_process(
-		&(struct host_cmd_handler_args)BUILD_HOST_COMMAND_PARAMS(
-			EC_CMD_HOST_SLEEP_EVENT, 0,
-			(struct ec_params_host_sleep_event){
-				.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND })));
+	zassert_ok(ec_cmd_host_sleep_event(
+		NULL, &(struct ec_params_host_sleep_event){
+			      .sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND }));
 	k_sleep(K_SECONDS(30));
 
 	/* Verify that EC_HOST_EVENT_HANG_DETECT is triggered */

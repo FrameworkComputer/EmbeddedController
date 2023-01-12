@@ -27,10 +27,7 @@ ZTEST(led_common, host_command__query)
 		[EC_LED_COLOR_WHITE] = 1, [EC_LED_COLOR_AMBER] = 0,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_ok(ret, "Host command returned %d", ret);
 	zassert_mem_equal(expected_brightness_ranges, response.brightness_range,
@@ -48,10 +45,7 @@ ZTEST(led_common, host_command__invalid_led)
 		.flags = EC_LED_FLAGS_QUERY,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Host command returned %d",
 		      ret);
@@ -72,10 +66,7 @@ ZTEST(led_common, host_command__supported_channel)
 		},
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Host command returned %d",
 		      ret);
@@ -96,10 +87,7 @@ ZTEST(led_common, host_command__manual_control)
 		},
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_SUCCESS, ret, "Host command returned %d", ret);
 	zassert_true(
@@ -123,10 +111,7 @@ ZTEST(led_common, host_command__auto_control)
 		.flags = EC_LED_FLAGS_AUTO,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_SUCCESS, ret, "Host command returned %d", ret);
 	zassert_equal(1, board_led_auto_control_fake.call_count,

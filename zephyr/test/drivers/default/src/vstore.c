@@ -58,11 +58,10 @@ ZTEST_USER(vstore, test_vstore_read_bad_slot)
 		.slot = CONFIG_VSTORE_SLOT_COUNT,
 	};
 	struct ec_response_vstore_read response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_VSTORE_READ, 0, response, params);
 
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM,
-		      "Failed to fail on invalid slot %d", params.slot);
+	zassert_equal(ec_cmd_vstore_read(NULL, &params, &response),
+		      EC_RES_INVALID_PARAM, "Failed to fail on invalid slot %d",
+		      params.slot);
 }
 
 ZTEST_USER(vstore, test_vstore_write_bad_slot)
@@ -84,8 +83,6 @@ static void do_vstore_write_read(unsigned int slot)
 		.slot = slot,
 		/* .data is set up below */
 	};
-	struct host_cmd_handler_args write_args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_VSTORE_WRITE, 0, write_params);
 	struct ec_params_vstore_read read_params = {
 		.slot = slot,
 	};
@@ -101,8 +98,7 @@ static void do_vstore_write_read(unsigned int slot)
 		write_params.data[i] = i + 1;
 
 	/* Write to a slot */
-	zassert_ok(host_command_process(&write_args), NULL);
-	zassert_ok(write_args.result, NULL);
+	zassert_ok(ec_cmd_vstore_write(NULL, &write_params), NULL);
 
 	/* Check that it is now locked */
 	zassert_ok(host_command_process(&info_args), NULL);
@@ -121,7 +117,8 @@ static void do_vstore_write_read(unsigned int slot)
 			  EC_VSTORE_SLOT_SIZE, "response.data did not match");
 
 	/* Try to write to it again */
-	zassert_equal(host_command_process(&write_args), EC_RES_ACCESS_DENIED,
+	zassert_equal(ec_cmd_vstore_write(NULL, &write_params),
+		      EC_RES_ACCESS_DENIED,
 		      "Failed to fail on writing locked slot %d",
 		      write_params.slot);
 
@@ -144,8 +141,7 @@ static void do_vstore_write_read(unsigned int slot)
 	/* Clear locks and try the write again, this time with zero bytes  */
 	vstore_clear_lock();
 	memset(write_params.data, '\0', EC_VSTORE_SLOT_SIZE);
-	zassert_ok(host_command_process(&write_args), NULL);
-	zassert_ok(write_args.result, NULL);
+	zassert_ok(ec_cmd_vstore_write(NULL, &write_params), NULL);
 
 	/* Check that it is now locked */
 	zassert_ok(host_command_process(&info_args), NULL);
@@ -182,8 +178,6 @@ ZTEST_USER(vstore, test_vstore_state)
 		.slot = 0,
 		/* .data is set up below */
 	};
-	struct host_cmd_handler_args write_args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_VSTORE_WRITE, 0, write_params);
 
 	struct ec_params_reboot_ec reboot_params = {
 		.cmd = EC_REBOOT_JUMP_RW,
@@ -203,8 +197,7 @@ ZTEST_USER(vstore, test_vstore_state)
 		write_params.data[i] = i + 1;
 
 	/* Write to a slot */
-	zassert_ok(host_command_process(&write_args), NULL);
-	zassert_ok(write_args.result, NULL);
+	zassert_ok(ec_cmd_vstore_write(NULL, &write_params), NULL);
 
 	/* Set up so we get back to this test on a reboot */
 	if (!setjmp(env)) {

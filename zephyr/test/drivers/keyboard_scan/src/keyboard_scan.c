@@ -240,10 +240,8 @@ ZTEST(keyboard_scan, host_command_simulate_key__locked)
 	zassert_true(system_is_locked(), "Expecting locked system.");
 
 	struct ec_params_mkbp_simulate_key params;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_MKBP_SIMULATE_KEY, 0, params);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_simulate_key(NULL, &params);
 	zassert_equal(EC_RES_ACCESS_DENIED, ret, "Command returned %u", ret);
 }
 
@@ -258,10 +256,8 @@ ZTEST(keyboard_scan, host_command_simulate_key__bad_params)
 		.col = KEYBOARD_COLS_MAX,
 		.row = KEYBOARD_ROWS,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_MKBP_SIMULATE_KEY, 0, params);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_simulate_key(NULL, &params);
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Command returned %u", ret);
 }
 

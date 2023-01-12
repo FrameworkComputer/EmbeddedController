@@ -112,37 +112,39 @@ ZTEST_USER(i2c_passthru, test_passthru_protect)
 		.port = I2C_PORT_SENSOR,
 		.subcmd = EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE,
 	};
-	struct host_cmd_handler_args enable_args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_I2C_PASSTHRU_PROTECT, 0, enable_params);
 
 	/* Check the protect status: 0 (unprotected) */
-	zassert_ok(host_command_process(&status_args), NULL);
-	zassert_ok(status_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_passthru_protect(&status_args, &status_params,
+					       &response),
+		   NULL);
 	zassert_equal(status_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.status, 0, "response.status = %d",
 		      response.status);
 
 	/* Protect the bus */
-	zassert_ok(host_command_process(&enable_args), NULL);
-	zassert_ok(enable_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_passthru_protect(NULL, &enable_params, &response),
+		   NULL);
 
 	/* Check the protect status: 1 (protected) */
-	zassert_ok(host_command_process(&status_args), NULL);
-	zassert_ok(status_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_passthru_protect(&status_args, &status_params,
+					       &response),
+		   NULL);
 	zassert_equal(status_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.status, 1, "response.status = %d",
 		      response.status);
 
 	/* Error case: wrong subcmd */
 	status_params.subcmd = 10;
-	zassert_equal(host_command_process(&status_args),
+	zassert_equal(ec_cmd_i2c_passthru_protect(NULL, &status_params,
+						  &response),
 		      EC_RES_INVALID_COMMAND, NULL);
 	status_params.subcmd = EC_CMD_I2C_PASSTHRU_PROTECT_STATUS;
 
 	/* Error case: wrong port */
 	status_params.port = 10;
-	zassert_equal(host_command_process(&status_args), EC_RES_INVALID_PARAM,
-		      NULL);
+	zassert_equal(ec_cmd_i2c_passthru_protect(NULL, &status_params,
+						  &response),
+		      EC_RES_INVALID_PARAM, NULL);
 	status_params.port = I2C_PORT_SENSOR;
 
 	/* Error case: response size not enough */
@@ -164,8 +166,7 @@ ZTEST_USER(i2c_passthru, test_passthru_protect_tcpcs)
 		.port = I2C_PORT_SENSOR,
 		.subcmd = EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE_TCPCS,
 	};
-	struct host_cmd_handler_args enable_args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_I2C_PASSTHRU_PROTECT, 0, enable_params);
+	struct ec_response_i2c_passthru_protect enable_response;
 	uint16_t tcpc_addr = DT_REG_ADDR(DT_NODELABEL(tcpci_emul));
 	uint8_t *out_data;
 	uint8_t param_buf[sizeof(struct ec_params_i2c_passthru) +
@@ -182,8 +183,9 @@ ZTEST_USER(i2c_passthru, test_passthru_protect_tcpcs)
 	system_is_locked_fake.return_val = false;
 
 	/* Protect the all TCPC buses */
-	zassert_ok(host_command_process(&enable_args), NULL);
-	zassert_ok(enable_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_passthru_protect(NULL, &enable_params,
+					       &enable_response),
+		   NULL);
 
 	passthru_params->port = I2C_PORT_USB_C0;
 	passthru_params->num_msgs = 2;
@@ -211,8 +213,9 @@ ZTEST_USER(i2c_passthru, test_passthru_protect_tcpcs)
 	system_is_locked_fake.return_val = true;
 
 	/* Protect the all TCPC buses */
-	zassert_ok(host_command_process(&enable_args), NULL);
-	zassert_ok(enable_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_passthru_protect(NULL, &enable_params,
+					       &enable_response),
+		   NULL);
 
 	zassert_equal(host_command_process(&passthru_args),
 		      EC_RES_ACCESS_DENIED);

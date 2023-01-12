@@ -161,22 +161,6 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_clear_cmd)
 	}
 }
 
-static enum ec_status host_event_mask_cmd_helper(uint32_t command,
-						 uint32_t mask)
-{
-	enum ec_status ret_val;
-
-	struct ec_params_host_event_mask params = {
-		.mask = mask,
-	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(command, 0, params);
-
-	ret_val = host_command_process(&args);
-
-	return ret_val;
-}
-
 /**
  * @brief TestPurpose: Verify EC_CMD_HOST_EVENT_CLEAR clear host command.
  */
@@ -195,7 +179,10 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_clear__cmd)
 
 	zassert_true(events & mask, "events=0x%X", events);
 
-	ret_val = host_event_mask_cmd_helper(EC_CMD_HOST_EVENT_CLEAR, mask);
+	ret_val = ec_cmd_host_event_clear(NULL,
+					  &(struct ec_params_host_event_mask){
+						  .mask = mask,
+					  });
 
 	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
 		      EC_RES_SUCCESS, ret_val);
@@ -224,7 +211,10 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_clear_b_cmd)
 	events_b = result.value;
 	zassert_true(events_b & mask, "events_b=0x%X", events_b);
 
-	ret_val = host_event_mask_cmd_helper(EC_CMD_HOST_EVENT_CLEAR_B, mask);
+	ret_val = ec_cmd_host_event_clear_b(NULL,
+					    &(struct ec_params_host_event_mask){
+						    .mask = mask,
+					    });
 
 	zassert_equal(ret_val, EC_RES_SUCCESS, "Expected %d, returned %d",
 		      EC_RES_SUCCESS, ret_val);

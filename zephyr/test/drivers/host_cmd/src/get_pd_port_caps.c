@@ -15,10 +15,8 @@ ZTEST_USER(host_cmd_get_pd_port_caps, test_good_index)
 {
 	struct ec_params_get_pd_port_caps params = { .port = 0 };
 	struct ec_response_get_pd_port_caps response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GET_PD_PORT_CAPS, 0, response, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_get_pd_port_caps(NULL, &params, &response),
 		   "Failed to process get_pd_port_caps for port %d",
 		   params.port);
 
@@ -37,10 +35,9 @@ ZTEST_USER(host_cmd_get_pd_port_caps, test_bad_index)
 {
 	struct ec_params_get_pd_port_caps params = { .port = 32 };
 	struct ec_response_get_pd_port_caps response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GET_PD_PORT_CAPS, 0, response, params);
 
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM,
+	zassert_equal(ec_cmd_get_pd_port_caps(NULL, &params, &response),
+		      EC_RES_INVALID_PARAM,
 		      "Failed to fail get_pd_port_caps for port %d",
 		      params.port);
 }

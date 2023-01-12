@@ -33,10 +33,8 @@ static uint16_t set_backlight_percent_helper(uint8_t percent)
 	struct ec_params_pwm_set_keyboard_backlight params = {
 		.percent = percent
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT, 0, params);
 
-	return host_command_process(&args);
+	return ec_cmd_pwm_set_keyboard_backlight(NULL, &params);
 }
 
 ZTEST(keyboard_backlight, host_command_set_backlight__normal)
@@ -69,10 +67,8 @@ ZTEST(keyboard_backlight, host_command_get_backlight__normal)
 	k_sleep(K_MSEC(50));
 
 	struct ec_response_pwm_get_keyboard_backlight response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
-		EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT, 0, response);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_pwm_get_keyboard_backlight(NULL, &response);
 	zassert_ok(ret, "Host command failed: %d", ret);
 	zassert_equal(expected_percentage, response.percent, NULL);
 	zassert_equal(1, response.enabled, "Got 0x%02x", response.enabled);

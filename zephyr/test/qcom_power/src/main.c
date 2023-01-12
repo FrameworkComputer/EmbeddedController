@@ -304,10 +304,8 @@ ZTEST(qcom_power, test_request_sleep)
 	struct ec_params_host_sleep_event params = {
 		.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_HOST_SLEEP_EVENT, UINT8_C(0), params);
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event(NULL, &params));
 	zassert_ok(gpio_emul_input_set(gpio_dev, AP_SUSPEND_PIN, 1));
 	k_sleep(K_SECONDS(16));
 	zassert_equal(power_get_state(), POWER_S3);
@@ -322,11 +320,9 @@ ZTEST(qcom_power, test_request_sleep_timeout)
 	struct ec_params_host_sleep_event params = {
 		.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_HOST_SLEEP_EVENT, UINT8_C(0), params);
 
 	shell_backend_dummy_clear_output(get_ec_shell());
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event(NULL, &params));
 	k_sleep(K_SECONDS(16));
 	zassert_equal(power_get_state(), POWER_S0);
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
@@ -450,8 +446,6 @@ ZTEST(qcom_power, test_host_sleep_event_resume)
 	struct ec_params_host_sleep_event params = {
 		.sleep_event = HOST_SLEEP_EVENT_S3_RESUME,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_HOST_SLEEP_EVENT, UINT8_C(0), params);
 
 	/* Get into S3 first */
 	power_signal_enable_interrupt(GPIO_AP_SUSPEND);
@@ -468,7 +462,7 @@ ZTEST(qcom_power, test_host_sleep_event_resume)
 		      power_get_state());
 
 	/* Call host command to notify ec resume is done. */
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event(NULL, &params));
 	k_sleep(K_MSEC(10));
 	zassert_equal(power_get_state(), POWER_S0, "power_state=%d",
 		      power_get_state());

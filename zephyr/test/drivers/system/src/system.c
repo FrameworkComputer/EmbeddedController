@@ -26,12 +26,10 @@ FAKE_VOID_FUNC(jump_to_image, uintptr_t);
 ZTEST_USER(system, test_hostcmd_sysinfo)
 {
 	struct ec_response_sysinfo response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_SYSINFO, 0, response);
+	struct host_cmd_handler_args args;
 
 	/* Simply issue the command and get the results */
-	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	zassert_ok(ec_cmd_sysinfo(&args, &response), NULL);
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_equal(response.reset_flags, 0, "response.reset_flags = %d",
 		      response.reset_flags);

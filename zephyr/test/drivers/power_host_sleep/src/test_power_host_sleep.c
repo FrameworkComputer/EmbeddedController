@@ -74,8 +74,7 @@ ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__bad_event)
 		.suspend_params = { 0 },
 	};
 	struct ec_response_host_sleep_event_v1 r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, 1, r, p);
+	struct host_cmd_handler_args args;
 
 	/* Clear garbage for verifiable value */
 	r.resume_response.sleep_transitions = 0;
@@ -83,7 +82,7 @@ ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__bad_event)
 	power_chipset_handle_host_sleep_event_fake.custom_fake =
 		_test_power_chipset_handle_host_sleep_event;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event_v1(&args, &p, &r));
 	zassert_equal(args.response_size, 0);
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 1);
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
@@ -102,8 +101,7 @@ ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__s3_suspend)
 		.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND,
 	};
 	struct ec_response_host_sleep_event_v1 r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, 1, r, p);
+	struct host_cmd_handler_args args;
 
 	/* Set m/lsb of uint16_t to check for type coercion errors */
 	p.suspend_params.sleep_timeout_ms = BIT(15) + 1;
@@ -111,7 +109,7 @@ ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__s3_suspend)
 	power_chipset_handle_host_sleep_event_fake.custom_fake =
 		_test_power_chipset_handle_host_sleep_event;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event_v1(&args, &p, &r));
 	zassert_equal(args.response_size, 0);
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 1);
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
@@ -130,13 +128,12 @@ ZTEST_USER(power_host_sleep, test_non_existent_sleep_event_v1__s3_resume)
 		.sleep_event = HOST_SLEEP_EVENT_S3_RESUME,
 	};
 	struct ec_response_host_sleep_event_v1 r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, 1, r, p);
+	struct host_cmd_handler_args args;
 
 	power_chipset_handle_host_sleep_event_fake.custom_fake =
 		_test_power_chipset_handle_host_sleep_event;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event_v1(&args, &p, &r));
 	zassert_equal(args.response_size, sizeof(r));
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 1);
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,

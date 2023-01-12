@@ -17,14 +17,13 @@ ZTEST_USER(hc_test_protocol, test_echo_max_buffer_size)
 		.ec_result = EC_SUCCESS,
 	};
 	struct ec_response_test_protocol response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_TEST_PROTOCOL, 0, response, params);
+	struct host_cmd_handler_args args;
 
 	/* Set first and last bytes of input array */
 	params.buf[0] = 0x1;
 	params.buf[ARRAY_SIZE(params.buf) - 1] = 0x2;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_test_protocol(&args, &params, &response));
 	zassert_equal(args.response_size, sizeof(response));
 
 	/* Check contents are echoed back in response */
@@ -40,8 +39,7 @@ ZTEST_USER(hc_test_protocol, test_echo_min_buffer_size_failing_command)
 		.ec_result = EC_ERROR_TRY_AGAIN,
 	};
 	struct ec_response_test_protocol response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_TEST_PROTOCOL, 0, response, params);
+	struct host_cmd_handler_args args;
 
 	/*
 	 * Set first and last bytes of input array, neither will be written to
@@ -50,7 +48,8 @@ ZTEST_USER(hc_test_protocol, test_echo_min_buffer_size_failing_command)
 	params.buf[0] = 0x1;
 	params.buf[ARRAY_SIZE(params.buf) - 1] = 0x2;
 
-	zassert_equal(host_command_process(&args), params.ec_result);
+	zassert_equal(ec_cmd_test_protocol(&args, &params, &response),
+		      params.ec_result);
 	zassert_equal(args.response_size, params.ret_len);
 
 	/* Check contents were never echoed back as intended */

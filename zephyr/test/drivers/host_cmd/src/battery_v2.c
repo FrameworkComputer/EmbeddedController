@@ -19,10 +19,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__invalid_index)
 	};
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_BATTERY_GET_STATIC, 0, response, params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_get_static(NULL, &params, &response);
 	zassert_equal(EC_RES_INVALID_PARAM, rv, "Got %d", rv);
 }
 
@@ -34,10 +31,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__v0)
 	struct ec_response_battery_static_info response;
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_BATTERY_GET_STATIC, 0, response, params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_get_static(NULL, &params, &response);
 	zassert_ok(rv, "Got %d", rv);
 
 	/* Validate all of the fields */
@@ -67,10 +61,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__v1)
 	struct ec_response_battery_static_info_v1 response;
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_BATTERY_GET_STATIC, 1, response, params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_get_static_v1(NULL, &params, &response);
 	zassert_ok(rv, "Got %d", rv);
 
 	/* Validate all of the fields */
@@ -129,10 +120,7 @@ ZTEST(host_cmd_battery_v2, test_get_dynamic__invalid_index)
 	};
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_BATTERY_GET_DYNAMIC, 0, response, params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_get_dynamic(NULL, &params, &response);
 	zassert_equal(EC_RES_INVALID_PARAM, rv, "Got %d", rv);
 }
 
@@ -144,10 +132,7 @@ ZTEST(host_cmd_battery_v2, test_get_dynamic)
 	};
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_BATTERY_GET_DYNAMIC, 0, response, params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_get_dynamic(NULL, &params, &response);
 	zassert_ok(rv, "Got %d", rv);
 
 	/* Validate the data */

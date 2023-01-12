@@ -16,12 +16,9 @@ ZTEST(host_cmd, test_hibernate_get)
 		.seconds = 0,
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_HIBERNATION_DELAY, 0, response, params);
-
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_hibernation_delay(NULL, &params, &response));
 	params.seconds = 123;
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_hibernation_delay(NULL, &params, &response));
 	zassert_equal(123, response.hibernate_delay, NULL);
 }
 

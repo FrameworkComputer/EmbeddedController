@@ -29,10 +29,9 @@ ZTEST(host_cmd_get_version, test_get_version_v1)
 {
 	int ret;
 	struct ec_response_get_version_v1 r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_VERSION, 1, r);
+	struct host_cmd_handler_args args;
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_get_version_v1(&args, &r);
 
 	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
 
@@ -54,10 +53,9 @@ ZTEST(host_cmd_get_version, test_get_version_v0)
 {
 	int ret;
 	struct ec_response_get_version r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_VERSION, 0, r);
+	struct host_cmd_handler_args args;
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_get_version(&args, &r);
 
 	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
 

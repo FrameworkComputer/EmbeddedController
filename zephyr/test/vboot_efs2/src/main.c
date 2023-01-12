@@ -244,12 +244,11 @@ ZTEST(vboot_efs2, test_vboot_main_vboot_get_rw_hash_fail)
 		.offset = 0,
 		.size = 0x12345,
 	};
-	struct host_cmd_handler_args hash_start_args = BUILD_HOST_COMMAND(
-		EC_CMD_VBOOT_HASH, 0, response, hash_start_params);
 
 	shell_backend_dummy_clear_output(shell_zephyr);
 
-	zassert_ok(host_command_process(&hash_start_args), NULL);
+	zassert_ok(ec_cmd_vboot_hash(NULL, &hash_start_params, &response),
+		   NULL);
 	vboot_main();
 
 	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);

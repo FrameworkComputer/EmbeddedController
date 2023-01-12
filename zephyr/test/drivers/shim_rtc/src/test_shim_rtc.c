@@ -18,21 +18,17 @@ ZTEST_USER(rtc_shim, test_hc_rtc_set_get_value)
 {
 	struct ec_params_rtc set_value;
 	struct ec_response_rtc get_value;
-	struct host_cmd_handler_args set_args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_RTC_SET_VALUE, 0, set_value);
-	struct host_cmd_handler_args get_args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_RTC_GET_VALUE, 0, get_value);
 
 	/* Initially set/get arbitrary value */
 	set_value.time = 1337;
-	zassert_ok(host_command_process(&set_args));
-	zassert_ok(host_command_process(&get_args));
+	zassert_ok(ec_cmd_rtc_set_value(NULL, &set_value));
+	zassert_ok(ec_cmd_rtc_get_value(NULL, &get_value));
 	zassert_equal(get_value.time, set_value.time);
 
 	/* One more time to be sure the test is creating the value change */
 	set_value.time = 1776;
-	zassert_ok(host_command_process(&set_args));
-	zassert_ok(host_command_process(&get_args));
+	zassert_ok(ec_cmd_rtc_set_value(NULL, &set_value));
+	zassert_ok(ec_cmd_rtc_get_value(NULL, &get_value));
 	zassert_equal(get_value.time, set_value.time);
 }
 
@@ -40,21 +36,17 @@ ZTEST_USER(rtc_shim, test_hc_rtc_set_get_alarm)
 {
 	struct ec_params_rtc set_value;
 	struct ec_response_rtc get_value;
-	struct host_cmd_handler_args set_args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_RTC_SET_ALARM, 0, set_value);
-	struct host_cmd_handler_args get_args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_RTC_GET_ALARM, 0, get_value);
 
 	/* Initially set/get zero value */
 	set_value.time = 0;
-	zassert_ok(host_command_process(&set_args));
-	zassert_ok(host_command_process(&get_args));
+	zassert_ok(ec_cmd_rtc_set_alarm(NULL, &set_value));
+	zassert_ok(ec_cmd_rtc_get_alarm(NULL, &get_value));
 	zassert_equal(get_value.time, set_value.time);
 
 	/* One more time to be sure the test is creating the value change */
 	set_value.time = 1776;
-	zassert_ok(host_command_process(&set_args));
-	zassert_ok(host_command_process(&get_args));
+	zassert_ok(ec_cmd_rtc_set_alarm(NULL, &set_value));
+	zassert_ok(ec_cmd_rtc_get_alarm(NULL, &get_value));
 	/*
 	 * The RTC driver adds 1 second to the alarm time to compensate for
 	 * truncation error. For example, 7 seconds is returned when the
@@ -67,8 +59,6 @@ ZTEST_USER(rtc_shim, test_hc_rtc_set_get_alarm)
 ZTEST(rtc_shim, test_hc_rtc_set_alarm_can_fire_cb)
 {
 	struct ec_params_rtc set_value;
-	struct host_cmd_handler_args set_args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_RTC_SET_ALARM, 0, set_value);
 
 #ifdef CONFIG_HOSTCMD_X86
 	/* Enable the RTC event to fire */
@@ -88,7 +78,7 @@ ZTEST(rtc_shim, test_hc_rtc_set_alarm_can_fire_cb)
 
 	/* Initially set arbitrary value of alarm in 2 seconds*/
 	set_value.time = 2;
-	zassert_ok(host_command_process(&set_args));
+	zassert_ok(ec_cmd_rtc_set_alarm(NULL, &set_value));
 	/* Set fake driver time forward to hit the alarm in 2 seconds */
 
 	/*

@@ -14,21 +14,20 @@
 ZTEST_USER(usb_pd_host_cmd, test_hc_pd_host_event_status)
 {
 	struct ec_response_host_event_status response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
-		EC_CMD_PD_HOST_EVENT_STATUS, 0, response);
+	struct host_cmd_handler_args args;
 
 	/* Clear events */
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_pd_host_event_status(&args, &response));
 
 	/* Send arbitrary event */
 	pd_send_host_event(1);
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_pd_host_event_status(&args, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_true(response.status & 1);
 
 	/* Send again to make sure the host command cleared the event */
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_pd_host_event_status(&args, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.status, 0);
 }
@@ -51,10 +50,9 @@ ZTEST_USER(usb_pd_host_cmd, test_hc_remote_hash_entry__bad_dev_id)
 		/* Dev ID can't be 0 */
 		.dev_id = 0,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_PD_RW_HASH_ENTRY, 0, params);
 
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+	zassert_equal(ec_cmd_usb_pd_rw_hash_entry(NULL, &params),
+		      EC_RES_INVALID_PARAM);
 }
 
 ZTEST_USER(usb_pd_host_cmd, test_hc_remote_hash_entry__add_entry)
@@ -63,13 +61,11 @@ ZTEST_USER(usb_pd_host_cmd, test_hc_remote_hash_entry__add_entry)
 		/* Arbitrary dev_id */
 		.dev_id = 1,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_PD_RW_HASH_ENTRY, 0, params);
 
 	memset(rw_hash_table, 0,
 	       RW_HASH_ENTRIES * sizeof(struct ec_params_usb_pd_rw_hash_entry));
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_usb_pd_rw_hash_entry(NULL, &params));
 	zassert_mem_equal(test_find_hc_remote_hash_entry(params.dev_id),
 			  &params, sizeof(params));
 }
@@ -87,19 +83,15 @@ ZTEST_USER(usb_pd_host_cmd, test_hc_remote_hash_entry__update_entry)
 		/* Arbitrary different reserved bytes */
 		.reserved = 3,
 	};
-	struct host_cmd_handler_args initial_args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_PD_RW_HASH_ENTRY, 0, initial_entry);
-	struct host_cmd_handler_args update_args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_PD_RW_HASH_ENTRY, 0, update_entry);
 
 	memset(rw_hash_table, 0,
 	       RW_HASH_ENTRIES * sizeof(struct ec_params_usb_pd_rw_hash_entry));
 
-	zassert_ok(host_command_process(&initial_args));
+	zassert_ok(ec_cmd_usb_pd_rw_hash_entry(NULL, &initial_entry));
 	zassert_mem_equal(test_find_hc_remote_hash_entry(initial_entry.dev_id),
 			  &initial_entry, sizeof(initial_entry));
 
-	zassert_ok(host_command_process(&update_args));
+	zassert_ok(ec_cmd_usb_pd_rw_hash_entry(NULL, &update_entry));
 	zassert_mem_equal(test_find_hc_remote_hash_entry(update_entry.dev_id),
 			  &update_entry, sizeof(update_entry));
 }
@@ -107,11 +99,9 @@ ZTEST_USER(usb_pd_host_cmd, test_hc_remote_hash_entry__update_entry)
 ZTEST_USER(usb_pd_host_cmd, test_host_command_hc_pd_ports)
 {
 	struct ec_response_usb_pd_ports response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_USB_PD_PORTS, 0, response);
+	struct host_cmd_handler_args args;
 
-	zassert_ok(host_command_process(&args));
-	zassert_ok(args.result);
+	zassert_ok(ec_cmd_usb_pd_ports(&args, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.num_ports, CONFIG_USB_PD_PORT_MAX_COUNT);
 }
@@ -144,19 +134,19 @@ ZTEST_USER(usb_pd_host_cmd, test_typec_control_invalid_args)
 		.port = 0,
 		.command = TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
 	/* Setting the TBT UFP responses is not supported by default. */
-	zassert_equal(host_command_process(&args), EC_RES_UNAVAILABLE);
+	zassert_equal(ec_cmd_typec_control(NULL, &params), EC_RES_UNAVAILABLE);
 
 	/* Neither is mux setting. */
 	params.command = TYPEC_CONTROL_COMMAND_USB_MUX_SET;
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+	zassert_equal(ec_cmd_typec_control(NULL, &params),
+		      EC_RES_INVALID_PARAM);
 
 	/* This is not a valid enum value but should be representable. */
 	params.command = 0xff;
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+	zassert_equal(ec_cmd_typec_control(NULL, &params),
+		      EC_RES_INVALID_PARAM);
 }
 
 ZTEST_USER(usb_pd_host_cmd, test_typec_status_invalid_args)
@@ -169,7 +159,8 @@ ZTEST_USER(usb_pd_host_cmd, test_typec_status_invalid_args)
 		BUILD_HOST_COMMAND(EC_CMD_TYPEC_STATUS, 0, response, params);
 
 	/* An invalid port should result in an error. */
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+	zassert_equal(ec_cmd_typec_status(NULL, &params, &response),
+		      EC_RES_INVALID_PARAM);
 
 	params.port = 0;
 	args.response_max = sizeof(struct ec_response_typec_status) - 1;

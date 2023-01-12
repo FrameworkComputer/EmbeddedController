@@ -18,18 +18,15 @@ ZTEST_USER(i2c, test_i2c_set_speed_success)
 		.port = I2C_PORT_USB_C0,
 		.cmd = EC_I2C_CONTROL_GET_SPEED,
 	};
-	struct host_cmd_handler_args get_args =
-		BUILD_HOST_COMMAND(EC_CMD_I2C_CONTROL, 0, response, get_params);
+	struct host_cmd_handler_args get_args;
 	struct ec_params_i2c_control set_params = {
 		.port = I2C_PORT_USB_C0,
 		.cmd = EC_I2C_CONTROL_SET_SPEED,
 	};
-	struct host_cmd_handler_args set_args =
-		BUILD_HOST_COMMAND(EC_CMD_I2C_CONTROL, 0, response, set_params);
+	struct host_cmd_handler_args set_args;
 
 	/* Get the speed: 100. */
-	zassert_ok(host_command_process(&get_args), NULL);
-	zassert_ok(get_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_control(&get_args, &get_params, &response), NULL);
 	zassert_equal(get_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.cmd_response.speed_khz, 100,
 		      "response.cmd_response.speed_khz = %d",
@@ -37,16 +34,14 @@ ZTEST_USER(i2c, test_i2c_set_speed_success)
 
 	/* Set the speed to 400. */
 	set_params.cmd_params.speed_khz = 400;
-	zassert_ok(host_command_process(&set_args), NULL);
-	zassert_ok(set_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_control(&set_args, &set_params, &response), NULL);
 	zassert_equal(set_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.cmd_response.speed_khz, 100,
 		      "response.cmd_response.speed_khz = %d",
 		      response.cmd_response.speed_khz);
 
 	/* Get the speed to verify. */
-	zassert_ok(host_command_process(&get_args), NULL);
-	zassert_ok(get_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_control(&get_args, &get_params, &response), NULL);
 	zassert_equal(get_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.cmd_response.speed_khz, 400,
 		      "response.cmd_response.speed_khz = %d",
@@ -54,16 +49,14 @@ ZTEST_USER(i2c, test_i2c_set_speed_success)
 
 	/* Set the speed to 1000. */
 	set_params.cmd_params.speed_khz = 1000;
-	zassert_ok(host_command_process(&set_args), NULL);
-	zassert_ok(set_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_control(&set_args, &set_params, &response), NULL);
 	zassert_equal(set_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.cmd_response.speed_khz, 400,
 		      "response.cmd_response.speed_khz = %d",
 		      response.cmd_response.speed_khz);
 
 	/* Get the speed to verify. */
-	zassert_ok(host_command_process(&get_args), NULL);
-	zassert_ok(get_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_control(&get_args, &get_params, &response), NULL);
 	zassert_equal(get_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.cmd_response.speed_khz, 1000,
 		      "response.cmd_response.speed_khz = %d",
@@ -71,8 +64,7 @@ ZTEST_USER(i2c, test_i2c_set_speed_success)
 
 	/* Set the speed back to 100. */
 	set_params.cmd_params.speed_khz = 100;
-	zassert_ok(host_command_process(&set_args), NULL);
-	zassert_ok(set_args.result, NULL);
+	zassert_ok(ec_cmd_i2c_control(&set_args, &set_params, &response), NULL);
 	zassert_equal(set_args.response_size, sizeof(response), NULL);
 	zassert_equal(response.cmd_response.speed_khz, 1000,
 		      "response.cmd_response.speed_khz = %d",
@@ -87,11 +79,10 @@ ZTEST_USER(i2c, test_i2c_set_speed_not_dynamic)
 		.cmd = EC_I2C_CONTROL_SET_SPEED,
 		.cmd_params.speed_khz = 400,
 	};
-	struct host_cmd_handler_args set_args =
-		BUILD_HOST_COMMAND(EC_CMD_I2C_CONTROL, 0, response, set_params);
 
 	/* Set the speed to 400 on a bus which doesn't support dynamic-speed. */
-	zassert_equal(EC_RES_ERROR, host_command_process(&set_args), NULL);
+	zassert_equal(EC_RES_ERROR,
+		      ec_cmd_i2c_control(NULL, &set_params, &response), NULL);
 }
 
 ZTEST_USER(i2c, test_i2c_control_wrong_port)
@@ -101,12 +92,10 @@ ZTEST_USER(i2c, test_i2c_control_wrong_port)
 		.port = 10,
 		.cmd = EC_I2C_CONTROL_GET_SPEED,
 	};
-	struct host_cmd_handler_args get_args =
-		BUILD_HOST_COMMAND(EC_CMD_I2C_CONTROL, 0, response, get_params);
 
 	/* Set the .port=10, which is not defined. */
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&get_args),
-		      NULL);
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_i2c_control(NULL, &get_params, &response), NULL);
 }
 
 ZTEST_USER(i2c, test_i2c_control_wrong_cmd)
@@ -116,12 +105,10 @@ ZTEST_USER(i2c, test_i2c_control_wrong_cmd)
 		.port = I2C_PORT_USB_C0,
 		.cmd = 10,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_I2C_CONTROL, 0, response, params);
 
 	/* Call the .cmd=10, which is not defined. */
-	zassert_equal(EC_RES_INVALID_COMMAND, host_command_process(&args),
-		      NULL);
+	zassert_equal(EC_RES_INVALID_COMMAND,
+		      ec_cmd_i2c_control(NULL, &params, &response), NULL);
 }
 
 ZTEST_USER(i2c, test_i2c_set_speed_wrong_freq)
@@ -132,12 +119,10 @@ ZTEST_USER(i2c, test_i2c_set_speed_wrong_freq)
 		.cmd = EC_I2C_CONTROL_SET_SPEED,
 		.cmd_params.speed_khz = 123,
 	};
-	struct host_cmd_handler_args set_args =
-		BUILD_HOST_COMMAND(EC_CMD_I2C_CONTROL, 0, response, set_params);
 
 	/* Set the speed to 123 KHz (an invalid speed). */
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&set_args),
-		      NULL);
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_i2c_control(NULL, &set_params, &response), NULL);
 }
 
 static void i2c_freq_reset(void)

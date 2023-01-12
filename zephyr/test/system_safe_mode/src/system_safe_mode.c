@@ -128,16 +128,13 @@ ZTEST_USER(system_safe_mode, test_blocked_command_in_safe_mode)
 	};
 	struct ec_response_gpio_get cmd_response;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GPIO_GET, 0, cmd_response, cmd_params);
-
 	zassert_false(system_is_in_safe_mode());
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_gpio_get(NULL, &cmd_params, &cmd_response));
 
 	k_sys_fatal_error_handler(K_ERR_CPU_EXCEPTION, NULL);
 
 	zassert_true(system_is_in_safe_mode());
-	zassert_true(host_command_process(&args));
+	zassert_true(ec_cmd_gpio_get(NULL, &cmd_params, &cmd_response));
 }
 
 ZTEST_USER(system_safe_mode, test_panic_event_notify)

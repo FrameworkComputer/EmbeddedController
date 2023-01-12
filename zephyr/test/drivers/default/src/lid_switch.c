@@ -60,16 +60,11 @@ static void lid_switch_after(void *unused)
 	struct ec_params_force_lid_open params = {
 		.enabled = 0,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FORCE_LID_OPEN, 0, params);
 	int res;
 
-	res = host_command_process(&args);
+	res = ec_cmd_force_lid_open(NULL, &params);
 	if (res)
 		TC_ERROR("host_command_process() failed (%d)\n", res);
-
-	if (args.result)
-		TC_ERROR("args.result != 0 (%d != 0)\n", args.result);
 
 	res = emul_lid_open();
 	if (res)
@@ -287,16 +282,13 @@ ZTEST(lid_switch, test_hc_force_lid_open)
 	struct ec_params_force_lid_open params = {
 		.enabled = 1,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FORCE_LID_OPEN, 0, params);
 
 	/* Start closed. */
 	zassert_ok(emul_lid_close());
 	k_sleep(K_MSEC(100));
 	zassert_equal(lid_is_open(), 0);
 
-	zassert_ok(host_command_process(&args));
-	zassert_ok(args.result);
+	zassert_ok(ec_cmd_force_lid_open(NULL, &params));
 	k_sleep(K_MSEC(100));
 	zassert_equal(lid_is_open(), 1);
 }

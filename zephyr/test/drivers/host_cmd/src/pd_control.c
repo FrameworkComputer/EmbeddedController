@@ -20,12 +20,10 @@ ZTEST_USER(host_cmd_pd_control, test_bad_index)
 {
 	struct ec_params_pd_control params = { .chip = BAD_PORT,
 					       .subcmd = PD_RESET };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PD_CONTROL, 0, params);
 
 	zassert_true(board_get_usb_pd_port_count() < BAD_PORT,
 		     "Intended bad port exists");
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM,
+	zassert_equal(ec_cmd_pd_control(NULL, &params), EC_RES_INVALID_PARAM,
 		      "Failed to fail pd_control for port %d", params.chip);
 }
 
@@ -33,10 +31,8 @@ ZTEST_USER(host_cmd_pd_control, test_unimplemented_command)
 {
 	struct ec_params_pd_control params = { .chip = TEST_PORT,
 					       .subcmd = PD_CHIP_ON };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PD_CONTROL, 0, params);
 
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_COMMAND,
+	zassert_equal(ec_cmd_pd_control(NULL, &params), EC_RES_INVALID_COMMAND,
 		      "Failed to fail pd_control for port %d", params.chip);
 }
 
@@ -97,26 +93,22 @@ ZTEST_USER(host_cmd_pd_control, test_suspend_low_battery)
 {
 	struct ec_params_pd_control params = { .chip = TEST_PORT,
 					       .subcmd = PD_SUSPEND };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PD_CONTROL, 0, params);
 
 	/* Suspending the port for firmware update should fail at critical low
 	 * battery.
 	 */
 	test_set_battery_level(1);
-	zassert_equal(host_command_process(&args), EC_RES_BUSY);
+	zassert_equal(ec_cmd_pd_control(NULL, &params), EC_RES_BUSY);
 }
 
 ZTEST_USER(host_cmd_pd_control, test_control_disable)
 {
 	struct ec_params_pd_control params = { .chip = TEST_PORT,
 					       .subcmd = PD_RESET };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PD_CONTROL, 0, params);
 
 	host_cmd_pd_control(TEST_PORT, PD_CONTROL_DISABLE);
 
-	zassert_equal(host_command_process(&args), EC_RES_ACCESS_DENIED,
+	zassert_equal(ec_cmd_pd_control(NULL, &params), EC_RES_ACCESS_DENIED,
 		      "Access was not denied for port %d", params.chip);
 
 	/*

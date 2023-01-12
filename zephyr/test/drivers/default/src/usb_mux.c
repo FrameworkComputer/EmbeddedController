@@ -819,13 +819,13 @@ ZTEST(usb_init_mux, test_usb_mux_hc_mux_info)
 {
 	struct ec_response_usb_pd_mux_info response;
 	struct ec_params_usb_pd_mux_info params;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO, 0, response, params);
+	struct host_cmd_handler_args args;
 	mux_state_t exp_mode;
 
 	/* Test invalid port parameter */
 	params.port = 5;
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_usb_pd_mux_info(NULL, &params, &response));
 
 	/* Set correct port for rest of the test */
 	params.port = USBC_PORT_C1;
@@ -833,13 +833,15 @@ ZTEST(usb_init_mux, test_usb_mux_hc_mux_info)
 	/* Test error on getting mux mode */
 	set_proxy_get_mux_state_seq(USB_PD_MUX_USB_ENABLED);
 	proxy_get_fake.return_val = EC_ERROR_UNKNOWN;
-	zassert_equal(EC_RES_ERROR, host_command_process(&args));
+	zassert_equal(EC_RES_ERROR,
+		      ec_cmd_usb_pd_mux_info(NULL, &params, &response));
 
 	/* Test getting mux mode */
 	reset_proxy_fakes();
 	exp_mode = USB_PD_MUX_USB_ENABLED;
 	set_proxy_get_mux_state_seq(exp_mode);
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
+	zassert_equal(EC_RES_SUCCESS,
+		      ec_cmd_usb_pd_mux_info(&args, &params, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(exp_mode, response.flags, "mode is 0x%x (!= 0x%x)",
 		      response.flags, exp_mode);
@@ -850,7 +852,8 @@ ZTEST(usb_init_mux, test_usb_mux_hc_mux_info)
 	exp_mode = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_HPD_LVL |
 		   USB_PD_MUX_HPD_IRQ;
 	set_proxy_get_mux_state_seq(exp_mode);
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
+	zassert_equal(EC_RES_SUCCESS,
+		      ec_cmd_usb_pd_mux_info(&args, &params, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(exp_mode, response.flags, "mode is 0x%x (!= 0x%x)",
 		      response.flags, exp_mode);

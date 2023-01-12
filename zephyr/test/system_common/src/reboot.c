@@ -121,8 +121,6 @@ ZTEST(host_cmd_reboot, test_reboot)
 	int ret;
 	int i;
 	struct ec_params_reboot_ec p;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_REBOOT_EC, 0, p);
 	int reboot_at_shutdown;
 
 	struct {
@@ -216,7 +214,7 @@ ZTEST(host_cmd_reboot, test_reboot)
 		RESET_FAKE(system_reset);
 		RESET_FAKE(system_hibernate);
 
-		ret = host_command_process(&args);
+		ret = ec_cmd_reboot_ec(NULL, &p);
 
 		zassert_equal(ret, tests[i].expect_return,
 			      "Unexpected return value (%d): %d", i, ret);

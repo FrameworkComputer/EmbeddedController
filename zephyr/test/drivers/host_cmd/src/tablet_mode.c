@@ -42,10 +42,7 @@ ZTEST_USER_F(host_cmd_tablet_mode, test_tablet_mode_on)
 		.tablet_mode = TABLET_MODE_FORCE_TABLET
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_SET_TABLET_MODE, UINT8_C(0), params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_set_tablet_mode(NULL, &params);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected EC_RES_SUCCESS, but got %d",
 		      rv);
 	/* Return 1 if in tablet mode, 0 otherwise */
@@ -61,10 +58,7 @@ ZTEST_USER_F(host_cmd_tablet_mode, test_tablet_mode_off)
 		.tablet_mode = TABLET_MODE_FORCE_CLAMSHELL
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_SET_TABLET_MODE, UINT8_C(0), params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_set_tablet_mode(NULL, &params);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected EC_RES_SUCCESS, but got %d",
 		      rv);
 	/* Return 1 if in tablet mode, 0 otherwise */
@@ -80,10 +74,7 @@ ZTEST_USER_F(host_cmd_tablet_mode, test_tablet_mode_reset)
 		.tablet_mode = TABLET_MODE_DEFAULT
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_SET_TABLET_MODE, UINT8_C(0), params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_set_tablet_mode(NULL, &params);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected EC_RES_SUCCESS, but got %d",
 		      rv);
 	/* Return 1 if in tablet mode, 0 otherwise */
@@ -99,10 +90,7 @@ ZTEST_USER_F(host_cmd_tablet_mode, test_tablet_mode_invalid_parameter)
 		.tablet_mode = 0xEE /* Sufficiently random, bad value.*/
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_SET_TABLET_MODE, UINT8_C(0), params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_set_tablet_mode(NULL, &params);
 	zassert_equal(EC_RES_INVALID_PARAM, rv,
 		      "Expected EC_RES_INVALID_PARAM, but got %d", rv);
 	/* Return 1 if in tablet mode, 0 otherwise */

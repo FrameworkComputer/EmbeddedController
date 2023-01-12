@@ -68,10 +68,9 @@ ZTEST_USER(pd_log, test_bad_type)
 	struct ec_params_pd_write_log_entry params = {
 		.type = PD_EVENT_ACC_BASE,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 }
 
 ZTEST_USER(pd_log, test_bad_port)
@@ -79,11 +78,10 @@ ZTEST_USER(pd_log, test_bad_port)
 	struct ec_params_pd_write_log_entry params = {
 		.type = PD_EVENT_MCU_BASE,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
 	params.port = board_get_usb_pd_port_count() + 1;
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 }
 
 ZTEST_USER_F(pd_log, test_mcu_charge)
@@ -92,10 +90,8 @@ ZTEST_USER_F(pd_log, test_mcu_charge)
 		.type = PD_EVENT_MCU_CHARGE,
 		.port = 0,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
-	zassert_ok(host_command_process(&args), NULL);
+	zassert_ok(ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 	zassert_equal(sizeof(struct event_log_entry) + PD_LOG_ENTRY_DATA_SIZE,
 		      log_dequeue_event(&fixture->log_entry), NULL);
 	zassert_equal(params.type, fixture->log_entry.type, NULL);
@@ -112,10 +108,8 @@ ZTEST_USER_F(pd_log, test_mcu_connect)
 		.type = PD_EVENT_MCU_CONNECT,
 		.port = 0,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
-	zassert_ok(host_command_process(&args), NULL);
+	zassert_ok(ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 	zassert_equal(sizeof(struct event_log_entry),
 		      log_dequeue_event(&fixture->log_entry), NULL);
 	zassert_equal(params.type, fixture->log_entry.type, NULL);

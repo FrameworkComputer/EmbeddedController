@@ -42,10 +42,8 @@ ZTEST(mkbp_event, test_host_command_get_events__empty)
 	/* Issue a host command to get the next event (from any source) */
 	uint16_t ret;
 	struct ec_response_get_next_event response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_NEXT_EVENT, 0, response);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_get_next_event(NULL, &response);
 	zassert_equal(EC_RES_UNAVAILABLE, ret,
 		      "Expected EC_RES_UNAVAILABLE but got %d", ret);
 }
@@ -71,20 +69,18 @@ ZTEST(mkbp_event, test_host_command_host_event_wake_mask)
 {
 	struct ec_response_mkbp_event_wake_mask response = { 0 };
 	struct ec_params_mkbp_event_wake_mask params = { 0 };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, 0, response, params);
 
 	/* Set the wake mask to 0x12345678 */
 	params.action = SET_WAKE_MASK;
 	params.mask_type = EC_MKBP_HOST_EVENT_WAKE_MASK;
 	params.new_wake_mask = 0x12345678;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_mkbp_wake_mask(NULL, &params, &response));
 
 	/* Get the wake mask */
 	params.action = GET_WAKE_MASK;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_mkbp_wake_mask(NULL, &params, &response));
 	zassert_equal(0x12345678, response.wake_mask);
 }
 
@@ -92,20 +88,18 @@ ZTEST(mkbp_event, test_host_command_event_wake_mask)
 {
 	struct ec_response_mkbp_event_wake_mask response = { 0 };
 	struct ec_params_mkbp_event_wake_mask params = { 0 };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, 0, response, params);
 
 	/* Set the wake mask to 0x87654321 */
 	params.action = SET_WAKE_MASK;
 	params.mask_type = EC_MKBP_EVENT_WAKE_MASK;
 	params.new_wake_mask = 0x87654321;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_mkbp_wake_mask(NULL, &params, &response));
 
 	/* Get the wake mask */
 	params.action = GET_WAKE_MASK;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_mkbp_wake_mask(NULL, &params, &response));
 	zassert_equal(0x87654321, response.wake_mask);
 }
 
@@ -116,19 +110,20 @@ ZTEST(mkbp_event, test_host_command_wake_mask__invalid_args)
 		.action = -1,
 		.mask_type = -1,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_WAKE_MASK, 0, response, params);
 
 	/* Check invalid action */
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_mkbp_wake_mask(NULL, &params, &response));
 
 	/* Check invalid mask type in getter */
 	params.action = GET_WAKE_MASK;
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_mkbp_wake_mask(NULL, &params, &response));
 
 	/* Check invalid mask type in setter */
 	params.action = SET_WAKE_MASK;
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_mkbp_wake_mask(NULL, &params, &response));
 }
 
 ZTEST(mkbp_event, test_console_command_wake_mask_event)
@@ -172,10 +167,8 @@ ZTEST(mkbp_event, test_host_command_get_events__get_event)
 	/* Retrieve this event via host command */
 
 	struct ec_response_get_next_event response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_NEXT_EVENT, 0, response);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_get_next_event(NULL, &response);
 	zassert_equal(EC_RES_SUCCESS, ret, "Expected EC_RES_SUCCESS but got %d",
 		      ret);
 
@@ -237,17 +230,15 @@ ZTEST(mkbp_event, test_host_command_get_events__get_event_v2)
 	/* Retrieve these events via host commands */
 
 	struct ec_response_get_next_event response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_NEXT_EVENT, 2, response);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_get_next_event_v2(NULL, &response);
 	zassert_equal(EC_RES_SUCCESS, ret, "Expected EC_RES_SUCCESS but got %d",
 		      ret);
 	zassert_true((response.event_type & EC_MKBP_HAS_MORE_EVENTS) != 0,
 		     "Expected EC_MKBP_HAS_MORE_EVENTS but got 0x%x",
 		     response.event_type);
 
-	ret = host_command_process(&args);
+	ret = ec_cmd_get_next_event_v2(NULL, &response);
 	zassert_equal(EC_RES_SUCCESS, ret, "Expected EC_RES_SUCCESS but got %d",
 		      ret);
 	zassert_true((response.event_type & EC_MKBP_HAS_MORE_EVENTS) == 0,
