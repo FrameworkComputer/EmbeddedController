@@ -126,9 +126,6 @@ tcpci_src_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
 		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
 	uint16_t header;
 
-	/* Data used for responses */
-	uint32_t rmdo;
-
 	header = sys_get_le16(msg->buf);
 
 	if (PD_HEADER_EXT(header)) {
@@ -168,9 +165,14 @@ tcpci_src_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
 							   0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_GET_REVISION:
-			rmdo = 0x31000000;
-			tcpci_partner_send_data_msg(
-				common_data, PD_DATA_REVISION, &rmdo, 1, 0);
+			if (!common_data->rmdo) {
+				tcpci_partner_send_control_msg(
+					common_data, PD_CTRL_NOT_SUPPORTED, 0);
+				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+			}
+			tcpci_partner_send_data_msg(common_data,
+						    PD_DATA_REVISION,
+						    &common_data->rmdo, 1, 0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;

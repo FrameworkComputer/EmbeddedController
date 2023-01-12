@@ -1634,6 +1634,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->identity_vdos = 0;
 	data->svids_vdos = 0;
 	data->modes_vdos = 0;
+	data->rmdo = 0;
 	data->enter_usb_accept = false;
 
 	tcpci_partner_common_clear_ams_ctrl_msg(data);

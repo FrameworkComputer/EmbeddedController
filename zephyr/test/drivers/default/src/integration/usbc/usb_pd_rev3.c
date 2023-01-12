@@ -43,6 +43,9 @@ static void *usb_attach_5v_3a_pd_source_setup(void)
 	test_fixture.src_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
+	/* Set the partner's USB PD Revision to 3.1 */
+	test_fixture.source_5v_3a.rmdo = 0x31000000;
+
 	return &test_fixture;
 }
 

@@ -187,6 +187,8 @@ struct tcpci_partner_data {
 		 */
 		bool have_response[PD_BATT_MAX];
 	} battery_capabilities;
+	/* RMDO returned by partner in response to a Get_Revision message */
+	uint32_t rmdo;
 	/* Used to control accept/reject for partner port of Enter_USB msg */
 	bool enter_usb_accept;
 
