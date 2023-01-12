@@ -175,7 +175,7 @@ Building directly from the EC repository:
 
 ```bash
 cros_sdk
-cd ~/trunk/src/platform/ec
+cd ~/chromiumos/src/platform/ec
 make -j BOARD=<boardname>
 ```
 
@@ -527,6 +527,9 @@ Please refer to existing commits (`git log`) to see the proper format for the
 commit message. If you have configured git properly, running `git commit` with
 the `-s` argument will add the Signed-off-by line for you.
 
+Note that code you submit must adhere to the [ChromeOS EC Firmware Test
+Requirements].
+
 ## Debugging
 
 While adding `printf` statements can be handy, there are some other options for
@@ -677,3 +680,5 @@ cat /tmp/artifact_bundle_metadata
 cat /tmp/metrics_build
 ls -l /tmp/artifact_bundles/
 ```
+
+[ChromeOS EC Firmware Test Requirements]: ./docs/chromeos-ec-firmware-test-requirements.md

@@ -5,6 +5,12 @@ tests in the EC codebase.
 
 [TOC]
 
+## Test Coverage Requirements
+
+All changes to the EC code base require you include tests covering at least 80%
+of any new or changed lines of code. Refer to the [ChromeOS EC Firmware Test
+Requirements] for details.
+
 ## Availability
 
 Code coverage is only available for host-based unit tests, as opposed to manual
@@ -148,3 +154,5 @@ and click on the latest successful build.
 ![LUCI post-submit screenshot](images/postsubmit.png)
 
 From there, it is exactly the same steps as above to get to the artifacts.
+
+[ChromeOS EC Firmware Test Requirements]: ./chromeos-ec-firmware-test-requirements.md

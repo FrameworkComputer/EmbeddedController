@@ -38,6 +38,7 @@
 *   [Unit Tests](./unit_tests.md)
     *   [Zephyr Testing](./zephyr/ztest.md)
 *   [Code Coverage](./code_coverage.md)
+*   [ChromeOS EC Firmware Test Requirements](./chromeos-ec-firmware-test-requirements.md)
 
 ## Updaters
 
