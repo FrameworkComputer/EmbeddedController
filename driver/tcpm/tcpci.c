@@ -1221,10 +1221,18 @@ void tcpci_tcpc_alert(int port)
 	 * completion events. This will send an event to the PD tasks
 	 * immediately
 	 */
-	if (alert & TCPC_REG_ALERT_TX_COMPLETE)
-		pd_transmit_complete(port, alert & TCPC_REG_ALERT_TX_SUCCESS ?
-						   TCPC_TX_COMPLETE_SUCCESS :
-						   TCPC_TX_COMPLETE_FAILED);
+	if (alert & TCPC_REG_ALERT_TX_COMPLETE) {
+		int tx_status;
+
+		if (alert & TCPC_REG_ALERT_TX_SUCCESS)
+			tx_status = TCPC_TX_COMPLETE_SUCCESS;
+		else if (alert & TCPC_REG_ALERT_TX_DISCARDED)
+			tx_status = TCPC_TX_COMPLETE_DISCARDED;
+		else
+			tx_status = TCPC_TX_COMPLETE_FAILED;
+
+		pd_transmit_complete(port, tx_status);
+	}
 
 	tcpc_get_bist_test_mode(port, &bist_mode);
 

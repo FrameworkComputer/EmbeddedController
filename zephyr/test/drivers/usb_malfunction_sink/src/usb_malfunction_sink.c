@@ -248,14 +248,14 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap_and_pd_disable)
 	struct ec_response_typec_status typec_status;
 
 	/*
-	 * Ignore first SourceCapabilities message and discard others by sending
-	 * different messages. This will lead to PD disable.
+	 * Ignore first SourceCapabilities message and failed others.
+	 * This will lead to PD disable.
 	 */
 	fixture->actions[0].action_mask = TCPCI_FAULTY_EXT_IGNORE_SRC_CAP;
 	fixture->actions[0].count = 1;
 	tcpci_faulty_ext_append_action(&fixture->faulty_snk_ext,
 				       &fixture->actions[0]);
-	fixture->actions[1].action_mask = TCPCI_FAULTY_EXT_DISCARD_SRC_CAP;
+	fixture->actions[1].action_mask = TCPCI_FAULTY_EXT_FAIL_SRC_CAP;
 	fixture->actions[1].count = TCPCI_FAULTY_EXT_INFINITE_ACTION;
 	tcpci_faulty_ext_append_action(&fixture->faulty_snk_ext,
 				       &fixture->actions[1]);
@@ -269,4 +269,59 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap_and_pd_disable)
 	zassert_true(typec_status.pd_enabled);
 	zassert_true(typec_status.dev_connected);
 	zassert_false(typec_status.sop_connected);
+}
+
+ZTEST_F(usb_malfunction_sink, test_discard_source_cap)
+{
+	struct tcpci_partner_log_msg *msg;
+	uint16_t header;
+	int msg_cnt = 0;
+
+	/*
+	 * Discard SourceCapabilities messages, this will lead to SoftReset.
+	 */
+	fixture->actions[0].action_mask = TCPCI_FAULTY_EXT_DISCARD_SRC_CAP;
+	fixture->actions[0].count = TCPCI_FAULTY_EXT_INFINITE_ACTION;
+	tcpci_faulty_ext_append_action(&fixture->faulty_snk_ext,
+				       &fixture->actions[0]);
+
+	tcpci_partner_common_enable_pd_logging(&fixture->sink, true);
+	connect_sink_to_port(&fixture->sink, fixture->tcpci_emul,
+			     fixture->charger_emul);
+	tcpci_partner_common_enable_pd_logging(&fixture->sink, false);
+
+	/*
+	 * Check if SourceCapability message alternate with Accept and
+	 * SoftReset.
+	 * The sequence will be
+	 * TCPM: SourceCapability -> TCPC: Accept -> TCPM: SoftReset ->
+	 * TCPC: Accept
+	 */
+	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->sink.msg_log, msg, node)
+	{
+		header = sys_get_le16(msg->buf);
+
+		switch (msg_cnt % 4) {
+		case 0:
+			zassert_equal(
+				PD_HEADER_TYPE(header), PD_DATA_SOURCE_CAP,
+				"Expected message %d to be SourceCapabilities, not 0x%x",
+				msg_cnt, PD_HEADER_TYPE(header));
+			break;
+		case 1:
+		case 3:
+			zassert_equal(
+				PD_HEADER_TYPE(header), PD_CTRL_ACCEPT,
+				"Expected message %d to be Accept, not 0x%x",
+				msg_cnt, PD_HEADER_TYPE(header));
+			break;
+		case 2:
+			zassert_equal(
+				PD_HEADER_TYPE(header), PD_CTRL_SOFT_RESET,
+				"Expected message %d to be SoftReset, not 0x%x",
+				msg_cnt, PD_HEADER_TYPE(header));
+			break;
+		}
+		msg_cnt++;
+	}
 }
