@@ -172,7 +172,7 @@ class BinmanPacker(BasePacker):
 
         proc = jobclient.popen(
             [
-                "binman",
+                util.get_tool_path("binman"),
                 "-v",
                 "5",
                 "build",

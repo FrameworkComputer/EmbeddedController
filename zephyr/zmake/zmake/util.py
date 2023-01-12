@@ -7,6 +7,7 @@ import os
 import pathlib
 import re
 import shlex
+import shutil
 
 
 def c_str(input_str):
@@ -184,3 +185,23 @@ def log_multi_line(logger, level, message):
     for line in message.splitlines():
         if line:
             logger.log(level, line)
+
+
+def get_tool_path(program):
+    """Get the path to a program.
+
+    First, the TOOL_PATH_${program} environment variable is checked,
+    and if unspecified, the PATH environment variable is searched.
+
+    This allows callers to customize which tools zmake uses.
+
+    Args:
+        program: The program to locate
+
+    Returns:
+        The Path to the program.
+    """
+    path = os.environ.get(f"TOOL_PATH_{program}")
+    if path:
+        return pathlib.Path(path)
+    return pathlib.Path(shutil.which(program))

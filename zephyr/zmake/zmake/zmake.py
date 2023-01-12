@@ -761,7 +761,11 @@ class Zmake:
         """Builds one sub-dir of a configured project (build-ro, etc)."""
 
         with self.jobserver.get_job():
-            cmd = ["/usr/bin/ninja", "-C", dirs[build_name].as_posix()]
+            cmd = [
+                util.get_tool_path("ninja"),
+                "-C",
+                dirs[build_name].as_posix(),
+            ]
             if self.goma:
                 # Go nuts ninja, goma does the heavy lifting!
                 cmd.append("-j1024")
@@ -827,7 +831,7 @@ class Zmake:
         else:
             self.logger.info("Running lcov on %s.", build_dir)
         cmd = [
-            "/usr/bin/lcov",
+            util.get_tool_path("lcov"),
             "--gcov-tool",
             gcov,
             "-q",
@@ -879,7 +883,7 @@ class Zmake:
         # Merge info files into a single lcov.info
         self.logger.info("Merging coverage data into %s.", output_file)
         cmd = [
-            "/usr/bin/lcov",
+            util.get_tool_path("lcov"),
             "-o",
             output_file,
             "--rc",

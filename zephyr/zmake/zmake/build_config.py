@@ -97,7 +97,7 @@ class BuildConfig:
 
         return jobclient.popen(
             [
-                "/usr/bin/cmake",
+                util.get_tool_path("cmake"),
                 "-S",
                 project_dir,
                 "-B",
