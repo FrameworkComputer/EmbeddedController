@@ -31,6 +31,13 @@ tests:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
       - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+  drivers.default.console_cmds.gpio_keys:
+    extra_args: CONF_FILE="prj.conf;default/prj.conf"
+                DTC_OVERLAY_FILE="default/boards/native_posix.overlay;default/boards/power_button.dtsi"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
+      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_PLATFORM_EC_POWER_BUTTON=n
   drivers.default.mock_power:
     timeout: 360
     extra_args: CONF_FILE="prj.conf;default/prj.conf"

@@ -9,6 +9,7 @@
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "include/power_button.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power/qcom.h"
@@ -358,8 +359,10 @@ ZTEST(qcom_power, test_power_button)
 
 	zassert_ok(gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 0));
 	k_sleep(K_MSEC(100));
+	zassert_equal(power_button_signal_asserted(), 1);
 	zassert_ok(gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 1));
 	k_sleep(K_MSEC(500));
+	zassert_equal(power_button_signal_asserted(), 0);
 	zassert_equal(power_get_state(), POWER_S0);
 }
 
