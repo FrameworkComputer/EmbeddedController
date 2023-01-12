@@ -55,6 +55,14 @@ static void *syv682x_test_setup(void)
 	return &fixture;
 }
 
+static void syv682x_test_before(void *data)
+{
+	/* Reset ppc_discharge_vbus to disable to clear the cached force
+	 * discharge bit in the CONTROL_2 register
+	 */
+	ppc_discharge_vbus(syv682x_port, false);
+}
+
 static void syv682x_test_after(void *data)
 {
 	struct ppc_syv682x_fixture *fixture = data;
@@ -79,8 +87,8 @@ static void syv682x_test_after(void *data)
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST_SUITE(ppc_syv682x, drivers_predicate_post_main, syv682x_test_setup, NULL,
-	    syv682x_test_after, NULL);
+ZTEST_SUITE(ppc_syv682x, drivers_predicate_post_main, syv682x_test_setup,
+	    syv682x_test_before, syv682x_test_after, NULL);
 
 ZTEST_F(ppc_syv682x, test_syv682x_board_is_syv682c)
 {
