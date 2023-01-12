@@ -4,6 +4,7 @@
  */
 
 #include "console.h"
+#include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
@@ -12,7 +13,6 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
 
-#define TEST_PORT USBC_PORT_C0
 #define BAD_PORT 65
 
 static enum ec_status run_pd_chip_info(int port,
@@ -27,10 +27,12 @@ static enum ec_status run_pd_chip_info(int port,
 
 ZTEST_USER(host_cmd_pd_chip_info, test_good_index)
 {
-	struct ec_response_pd_chip_info_v1 response;
+	for (enum usbc_port p = USBC_PORT_C0; p < USBC_PORT_COUNT; p++) {
+		struct ec_response_pd_chip_info_v1 response;
 
-	zassert_ok(run_pd_chip_info(TEST_PORT, &response),
-		   "Failed to process pd_get_chip_info for port %d", TEST_PORT);
+		zassert_ok(run_pd_chip_info(p, &response),
+			   "Failed to process pd_get_chip_info for port %d", p);
+	}
 	/*
 	 * Note: verification of the specific fields depends on the chips used
 	 * and therefore would belong in a driver-level test
