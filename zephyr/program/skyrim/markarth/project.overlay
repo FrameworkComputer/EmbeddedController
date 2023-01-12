@@ -39,10 +39,6 @@
 			gpios = <&gpio9 6 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
-		gpio_lid_sw: lid_sw {
-			gpios = <&gpio0 1 GPIO_INPUT>;
-			enum-name = "GPIO_LID_SW";
-		};
 	};
 
 	/* gpio-interrupts overrides */
