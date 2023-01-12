@@ -8,47 +8,6 @@ target_sources(app PRIVATE
     src/charge_manager.c
     src/charge_state_prevent_power_on.c
     src/console.c
-    src/console_cmd/adc.c
-    src/console_cmd/battery.c
-    src/console_cmd/cbi.c
-    src/console_cmd/charge_manager.c
-    src/console_cmd/charge_state.c
-    src/console_cmd/charger.c
-    src/console_cmd/chargen.c
-    src/console_cmd/accelinit.c
-    src/console_cmd/accelinfo.c
-    src/console_cmd/accelspoof.c
-    src/console_cmd/accelrate.c
-    src/console_cmd/accelrange.c
-    src/console_cmd/accelread.c
-    src/console_cmd/accelres.c
-    src/console_cmd/button.c
-    src/console_cmd/crash.c
-    src/console_cmd/cutoff.c
-    src/console_cmd/ec_features.c
-    src/console_cmd/gpio.c
-    src/console_cmd/i2c_portmap.c
-    src/console_cmd/md.c
-    src/console_cmd/hcdebug.c
-    src/console_cmd/hibdelay.c
-    src/console_cmd/hostevent.c
-    src/console_cmd/panic_output.c
-    src/console_cmd/port80.c
-    src/console_cmd/powerindebug.c
-    src/console_cmd/power_button.c
-    src/console_cmd/pwr_avg.c
-    src/console_cmd/rtc.c
-    src/console_cmd/rw.c
-    src/console_cmd/shared_mem.c
-    src/console_cmd/sleepmask.c
-    src/console_cmd/sleeptimeout.c
-    src/console_cmd/switch.c
-    src/console_cmd/sysinfo.c
-    src/console_cmd/tcpci_dump.c
-    src/console_cmd/usb_pd_console.c
-    src/console_cmd/vboot_hash.c
-    src/console_cmd/version.c
-    src/console_cmd/waitms.c
     src/cros_cbi.c
     src/espi.c
     src/gpio.c
