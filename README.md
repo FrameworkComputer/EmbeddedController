@@ -294,7 +294,7 @@ and turn on other developer-friendly flags (note that write protect must be
 disabled for this to work):
 
 ```bash
-# /usr/share/vboot/bin/set_gbb_flags.sh 0x239
+# futility gbb --set --flash --flags=0x239
 ```
 
 ```bash
