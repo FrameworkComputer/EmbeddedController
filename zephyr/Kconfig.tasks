@@ -180,7 +180,15 @@ config HAS_TASK_POWERBTN
 	  power button is held for 4 seconds but this tasks adjusts that to 8
 	  seconds, to allow time for the usual Chromium OS shutdown sequence.
 
-if HAS_TASK_POWERBTN
+config HAS_TASK_POWERBTN_CUSTOMER
+	bool
+	depends on PLATFORM_EC_POWER_BUTTON
+	help
+	  This turns on the powerbtn task which handles monitoring the power
+	  button. When the application processor (AP) is off (S5 or G3 states),
+	  this task triggers a power-up sequence on a power-button press.
+
+if HAS_TASK_POWERBTN || HAS_TASK_POWERBTN_CUSTOMER
 
 config TASK_POWERBTN_STACK_SIZE
 	int "POWERBTN task stack size"

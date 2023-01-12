@@ -7,6 +7,17 @@
 	named-gpios {
 		/* Lotus-specific GPIO customizations */
 	};
+
+	typec-port {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+		};
+	};
 };
 
 &cros_kb_raw {

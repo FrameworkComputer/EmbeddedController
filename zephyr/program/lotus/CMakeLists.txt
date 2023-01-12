@@ -4,6 +4,14 @@
 
 cmake_minimum_required(VERSION 3.20.5)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
-project(ec)
+project(lotus)
+zephyr_library_sources(
+	"src/power_sequence.c"
+	"src/cypress_pd_common.c"
+	"src/battery.c"
+)
+
+zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER
+					"src/power_button_x86.c")
 
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")

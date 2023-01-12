@@ -8,7 +8,7 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		ec_soc_rsmrst_l {
+		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
 			gpios = <&gpio5 6 (GPIO_OUTPUT_LOW | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_espi_rst_l {
@@ -158,19 +158,22 @@
 		gpu_alert_l {
 			gpios = <&gpiob 1 GPIO_INPUT>;
 		};
-		on_off_btn_l {
+		gpio_on_off_btn_l: on_off_btn_l {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, MB power button */
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		chassis_open_l {
 			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, Fingerprint power button */
 		};
-		hw_acav_in {
+		gpio_hw_acav_in: hw_acav_in {
 			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
+			enum-name = "GPIO_AC_PRESENT";
 		};
 		lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;		/* PSL in4 signal, lid switch */
+			enum-name = "GPIO_LID_OPEN";
 		};
-		0p75_1p8valw_pwren {
+		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
 		hub_b_pwr_en {
@@ -179,28 +182,30 @@
 		als_int_l {
 			gpios = <&gpio7 5 GPIO_INPUT>;
 		};
-		pch_pwr_en {
+		gpio_pch_pwr_en: pch_pwr_en {
 			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 		};
 		h_prochot_l {
 			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
 		};
-		slp_s3_l {
+		gpio_slp_s3_l: slp_s3_l {
 			gpios = <&gpioa 3 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
 		};
-		slp_s5_l {
+		gpio_slp_s5_l: slp_s5_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S5_L";
 		};
 		cam_en {
 			gpios = <&gpio6 7 GPIO_OUTPUT_LOW>;
 		};
-		sys_pwrgd_ec {
+		gpio_sys_pwrgd_ec: sys_pwrgd_ec {
 			gpios = <&gpio7 0 GPIO_OUTPUT_LOW>;
 		};
-		vr_on {
+		gpio_vr_on: vr_on {
 			gpios = <&gpio6 2 GPIO_OUTPUT_LOW>;
 		};
-		susp_l {
+		gpio_susp_l: susp_l {
 			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
 		};
 		left_side {
@@ -209,7 +214,7 @@
 		right_side {
 			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;	/* right side LED follow IFGA3 */
 		};
-		syson {
+		gpio_syson: syson {
 			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
 		};
 		fp_control {
@@ -224,10 +229,10 @@
 		dgpu_pwr_en {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 		};
-		0p75vs_pwr_en {
+		gpio_0p75vs_pwr_en: 0p75vs_pwr_en {
 			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
 		};
-		apu_aud_pwr_en {
+		gpio_apu_aud_pwr_en: apu_aud_pwr_en {
 			gpios = <&gpioa 0 GPIO_OUTPUT_LOW>;
 		};
 		i2c_int_tp_1 {
@@ -239,11 +244,13 @@
 		cam_sw {
 			gpios = <&gpio9 3 GPIO_INPUT>;
 		};
-		spok {
+		gpio_spok: spok {
 			gpios = <&gpio9 4 GPIO_INPUT>;		/* Monitor 3VALW PWR OK */
+			enum-name = "GPIO_POWER_GOOD_3VALW";
 		};
-		vr_pwrgd {
+		gpio_vr_pwrgd: vr_pwrgd {
 			gpios = <&gpio9 7 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_GOOD_VR";
 		};
 		gpu_i2c_s5_int {
 			gpios = <&gpioa 5 GPIO_INPUT>;
@@ -269,8 +276,9 @@
 		pd_a_i2c_int_ec_l {
 			gpios = <&gpioe 5 GPIO_INPUT>;
 		};
-		pbtn_out_l {
+		gpio_pbtn_out: pbtn_out_l {
 			gpios = <&gpio5 0 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		thermtrip {
 			gpios = <&gpio8 1 GPIO_INPUT>;
