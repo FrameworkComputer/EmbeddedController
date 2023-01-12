@@ -13,6 +13,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Disable console commands to help save space */
+#undef CONFIG_CMD_POWERINDEBUG
+
 #define CONFIG_MP2964
 
 /* Barrel Jack */
