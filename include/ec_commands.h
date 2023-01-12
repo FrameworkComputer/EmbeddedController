@@ -248,7 +248,11 @@ extern "C" {
 
 #define EC_FAN_SPEED_ENTRIES 4 /* Number of fans at EC_MEMMAP_FAN */
 #define EC_FAN_SPEED_NOT_PRESENT 0xffff /* Entry not present */
-#define EC_FAN_SPEED_STALLED 0xfffe /* Fan stalled */
+
+/* Report 0 for fan stalled so userspace applications can take
+ * an appropriate action based on this value to control the fan.
+ */
+#define EC_FAN_SPEED_STALLED 0x0 /* Fan stalled */
 
 /* Battery bit flags at EC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT 0x01
