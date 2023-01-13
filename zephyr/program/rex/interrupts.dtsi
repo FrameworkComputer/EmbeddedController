@@ -72,6 +72,16 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lis2dw12_interrupt";
 		};
+		int_volume_up: volume_up {
+			irq-pin = <&gpio_ec_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_volume_down: volume_down {
+			irq-pin = <&gpio_ec_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
 	};
 };
 
