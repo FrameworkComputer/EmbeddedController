@@ -71,3 +71,9 @@ __override int board_get_default_battery_type(void)
 
 	return type;
 }
+
+__override void board_ocpc_init(struct ocpc_data *ocpc)
+{
+	/* There's no provision to measure Isys */
+	ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
+}
