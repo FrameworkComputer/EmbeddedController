@@ -25,6 +25,8 @@ source "subsys/logging/Kconfig.template.log_config"
 
 config AP_PWRSEQ_DRIVER
 	bool "AP Power sequencing driver support"
+	select SMF
+	select SMF_ANCESTOR_SUPPORT
 	select EVENTS
 	help
 	  AP power sequence driver establishes an underlaying framework to

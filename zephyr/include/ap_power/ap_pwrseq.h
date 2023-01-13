@@ -17,6 +17,20 @@ void ap_pwrseq_wake(void);
 extern "C" {
 #endif
 
+#define AP_POWER_SUB_STATE_ENUM_DEF_WITH_COMMA(node_id, prop, idx) \
+	DT_CAT6(node_id, _P_, prop, _IDX_, idx, _STRING_UPPER_TOKEN),
+
+#define AP_PWRSEQ_EACH_SUB_STATE_ENUM_DEF(node_id)                              \
+	COND_CODE_1(                                                            \
+		DT_NODE_HAS_PROP(node_id, chipset),                             \
+		(DT_FOREACH_PROP_ELEM(node_id, chipset,                         \
+				      AP_POWER_SUB_STATE_ENUM_DEF_WITH_COMMA)), \
+		(COND_CODE_1(DT_NODE_HAS_PROP(node_id, application),            \
+			     (DT_FOREACH_PROP_ELEM(                             \
+				     node_id, application,                      \
+				     AP_POWER_SUB_STATE_ENUM_DEF_WITH_COMMA)),  \
+			     ())))
+
 /** @brief AP power sequence valid power states. */
 enum ap_pwrseq_state {
 	AP_POWER_STATE_UNINIT, /* EC and AP are Uninitialized */
@@ -27,8 +41,9 @@ enum ap_pwrseq_state {
 	AP_POWER_STATE_S2, /* AP is low wake-latency sleep */
 	AP_POWER_STATE_S1, /* AP is in suspend state */
 	AP_POWER_STATE_S0, /* AP is in active state */
-	/* TODO: Add substate enumeration */
-	AP_POWER_STATE_COUNT,
+	DT_FOREACH_STATUS_OKAY(ap_pwrseq_sub_states,
+			       AP_PWRSEQ_EACH_SUB_STATE_ENUM_DEF)
+		AP_POWER_STATE_COUNT,
 	AP_POWER_STATE_UNDEF = 0xFFFE,
 	AP_POWER_STATE_ERROR = 0xFFFF,
 };

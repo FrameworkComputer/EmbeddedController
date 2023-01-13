@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "ap_power/ap_pwrseq.h"
+#include "ap_pwrseq_drv_sm.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -37,11 +37,36 @@ struct ap_pwrseq_data {
 	struct ap_pwrseq_cb_list exit_list;
 };
 
+/* Resolve into substate name string */
+#define AP_PWRSEQ_SUB_STATE_STR_DEFINE_WITH_COMA(state) state,
+
+#define AP_PWRSEQ_EACH_SUB_STATE_STR_DEFINE(node_id, prop, idx) \
+	AP_PWRSEQ_SUB_STATE_STR_DEFINE_WITH_COMA(               \
+		DT_CAT5(node_id, _P_, prop, _IDX_, idx))
+
+#define AP_PWRSEQ_EACH_SUB_STATE_STR_DEF_NODE_CHILD_DEFINE(node_id)          \
+	COND_CODE_1(                                                         \
+		DT_NODE_HAS_PROP(node_id, application),                      \
+		(DT_FOREACH_PROP_ELEM(node_id, application,                  \
+				      AP_PWRSEQ_EACH_SUB_STATE_STR_DEFINE)), \
+		(COND_CODE_1(DT_NODE_HAS_PROP(node_id, chipset),             \
+			     (DT_FOREACH_PROP_ELEM(                          \
+				     node_id, chipset,                       \
+				     AP_PWRSEQ_EACH_SUB_STATE_STR_DEFINE)),  \
+			     ())))
+
 static const char *const ap_pwrseq_state_str[AP_POWER_STATE_COUNT] = {
-	"AP_POWER_STATE_UNINIT", "AP_POWER_STATE_G3", "AP_POWER_STATE_S5",
-	"AP_POWER_STATE_S4",	 "AP_POWER_STATE_S3", "AP_POWER_STATE_S2",
-	"AP_POWER_STATE_S1",	 "AP_POWER_STATE_S0",
-	/* TODO: Add substate name strings */
+	"AP_POWER_STATE_UNINIT",
+	"AP_POWER_STATE_G3",
+	"AP_POWER_STATE_S5",
+	"AP_POWER_STATE_S4",
+	"AP_POWER_STATE_S3",
+	"AP_POWER_STATE_S2",
+	"AP_POWER_STATE_S1",
+	"AP_POWER_STATE_S0",
+	DT_FOREACH_STATUS_OKAY(
+		ap_pwrseq_sub_states,
+		AP_PWRSEQ_EACH_SUB_STATE_STR_DEF_NODE_CHILD_DEFINE)
 };
 BUILD_ASSERT(ARRAY_SIZE(ap_pwrseq_state_str) == AP_POWER_STATE_COUNT);
 
@@ -129,6 +154,9 @@ static uint32_t ap_pwrseq_wait_event(const struct device *dev)
 static void ap_pwrseq_thread(void *arg, void *unused1, void *unused2)
 {
 	struct device *const dev = (struct device *)arg;
+	struct ap_pwrseq_data *const data = dev->data;
+	enum ap_pwrseq_state cur_state, new_state;
+	int run_status;
 	uint32_t events;
 
 	LOG_INF("Power Sequence thread start");
@@ -140,14 +168,35 @@ static void ap_pwrseq_thread(void *arg, void *unused1, void *unused2)
 		LOG_DBG("Events posted: %0#x", events);
 
 		/**
-		 * TODO: Process state machine until the new state is not equal
-		 * to previous state and generate callbacks.
+		 * Process generated events and keep looping while state
+		 * transitions are occurring.
 		 **/
-		ap_pwrseq_send_entry_callback(dev, AP_POWER_STATE_UNDEF,
-					      AP_POWER_STATE_UNDEF);
+		while (true) {
+			ap_pwrseq_state_lock(dev);
 
-		ap_pwrseq_send_exit_callback(dev, AP_POWER_STATE_UNDEF,
-					     AP_POWER_STATE_UNDEF);
+			cur_state = ap_pwrseq_sm_get_cur_state(data->sm_data);
+			run_status =
+				ap_pwrseq_sm_run_state(data->sm_data, events);
+			new_state = ap_pwrseq_sm_get_cur_state(data->sm_data);
+
+			ap_pwrseq_state_unlock(dev);
+			if (run_status) {
+				/* Was this terminated? */
+				return;
+			}
+
+			/* Check if state transition took place */
+			if (cur_state == new_state) {
+				break;
+			}
+			LOG_INF("%s -> %s", ap_pwrseq_get_state_str(cur_state),
+				ap_pwrseq_get_state_str(new_state));
+
+			ap_pwrseq_send_exit_callback(dev, new_state, cur_state);
+
+			ap_pwrseq_send_entry_callback(dev, new_state,
+						      cur_state);
+		}
 	}
 }
 
@@ -165,7 +214,8 @@ static int ap_pwrseq_driver_init(const struct device *dev)
 {
 	struct ap_pwrseq_data *const data = dev->data;
 
-	/* TODO: Obtain state machine data reference. */
+	data->sm_data = ap_pwrseq_sm_get_instance();
+
 	k_mutex_init(&data->mux);
 	k_event_init(&data->evt);
 
@@ -182,7 +232,16 @@ const struct device *ap_pwrseq_get_instance(void)
 
 int ap_pwrseq_start(const struct device *dev, enum ap_pwrseq_state init_state)
 {
-	/* TODO: Initialize state machine */
+	struct ap_pwrseq_data *const data = dev->data;
+	int ret;
+
+	ap_pwrseq_state_lock(dev);
+	ret = ap_pwrseq_sm_init(data->sm_data, ap_pwrseq_tid, init_state);
+	ap_pwrseq_state_unlock(dev);
+	if (ret) {
+		return ret;
+	}
+
 	k_thread_start(ap_pwrseq_tid);
 
 	return 0;
@@ -202,13 +261,16 @@ void ap_pwrseq_post_event(const struct device *dev, enum ap_pwrseq_event event)
 
 enum ap_pwrseq_state ap_pwrseq_get_current_state(const struct device *dev)
 {
+	struct ap_pwrseq_data *const data = dev->data;
+	enum ap_pwrseq_state ret_state;
+
 	ap_pwrseq_state_lock(dev);
 
-	/* TODO: Call function to get current state from state machine */
+	ret_state = ap_pwrseq_sm_get_cur_state(data->sm_data);
 
 	ap_pwrseq_state_unlock(dev);
 
-	return AP_POWER_STATE_UNDEF;
+	return ret_state;
 }
 
 const char *const ap_pwrseq_get_state_str(enum ap_pwrseq_state state)
