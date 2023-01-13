@@ -1041,7 +1041,7 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 	/* Power Status */
 	sdb.power_status = 0x0;
 
-	partner_rmdo = pe_get_partner_rmdo(port);
+	partner_rmdo = pd_get_partner_rmdo(port);
 	if ((partner_rmdo.major_rev == 3 && partner_rmdo.minor_rev >= 1) ||
 	    partner_rmdo.major_rev > 3) {
 		/* USB PD Rev 3.1: 6.5.2 Status Message */

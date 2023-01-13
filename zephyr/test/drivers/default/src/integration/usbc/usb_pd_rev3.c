@@ -6,10 +6,12 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "chipset.h"
+#include "ec_commands.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
@@ -20,6 +22,8 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
+
+#define TEST_PORT 0
 
 struct usb_attach_5v_3a_pd_source_rev3_fixture {
 	struct tcpci_partner_data source_5v_3a;
@@ -170,6 +174,20 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_batt_cap_invalid)
 			 .battery_type) &
 			BIT(0),
 		"Invalid battery ref bit should be set");
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_typec_status_using_rmdo)
+{
+	struct ec_params_typec_status params = { .port = TEST_PORT };
+	struct ec_response_typec_status response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_TYPEC_STATUS, 0, response, params);
+
+	/* Check that the revision response in EC_CMD_TYPEC_STATUS matches
+	 * bits 16-31 of the partner's RMDO
+	 */
+	zassert_ok(host_command_process(&args));
+	zassert_equal(response.sop_revision, fixture->source_5v_3a.rmdo >> 16);
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_msg)

@@ -6941,6 +6941,18 @@ enum tcpc_cc_polarity {
 #define PD_STATUS_REV_GET_MINOR(r) ((r >> 8) & 0xF)
 
 /*
+ * Encode revision from partner RMDO
+ *
+ * Unlike the specification revision given in the PD header, specification and
+ * version information returned in the revision message data object (RMDO) is
+ * not offset.
+ */
+#define PD_STATUS_RMDO_REV_SET_MAJOR(r) (r << 12)
+#define PD_STATUS_RMDO_REV_SET_MINOR(r) (r << 8)
+#define PD_STATUS_RMDO_VER_SET_MAJOR(r) (r << 4)
+#define PD_STATUS_RMDO_VER_SET_MINOR(r) (r)
+
+/*
  * Decode helpers for Source and Sink Capability PDOs
  *
  * Note: The Power Delivery Specification should be considered the ultimate
@@ -7044,12 +7056,13 @@ struct ec_response_typec_status {
 	/*
 	 * BCD PD revisions for partners
 	 *
-	 * The format has the PD major reversion in the upper nibble, and PD
-	 * minor version in the next nibble.  Following two nibbles are
-	 * currently 0.
-	 * ex. PD 3.2 would map to 0x3200
+	 * The format has the PD major revision in the upper nibble, and the PD
+	 * minor revision in the next nibble. The following two nibbles hold the
+	 * major and minor specification version. If a partner does not support
+	 * the Revision message, only the major revision will be given.
+	 * ex. PD Revision 3.2 Version 1.9 would map to 0x3219
 	 *
-	 * PD major/minor will be 0 if no PD device is connected.
+	 * PD revision/version will be 0 if no PD device is connected.
 	 */
 	uint16_t sop_revision;
 	uint16_t sop_prime_revision;

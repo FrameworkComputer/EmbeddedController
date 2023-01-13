@@ -3093,6 +3093,14 @@ uint32_t pd_get_requested_current(int port);
 bool pd_get_partner_usb_comm_capable(int port);
 
 /**
+ * Gets the port partner's RMDO from the PE state.
+ *
+ * @param port USB-C port number
+ * @return port partner's Revision Message Data Object (RMDO).
+ */
+struct rmdo pd_get_partner_rmdo(int port);
+
+/**
  * Return true if PD is in disconnect state
  *
  * @param port USB-C port number

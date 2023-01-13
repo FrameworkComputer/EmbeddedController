@@ -866,7 +866,7 @@ int pd_send_alert_msg(int port, uint32_t ado)
 	 * ADO before sending to a USB PD 3.0 partner and block the
 	 * message if the ADO is empty.
 	 */
-	partner_rmdo = pe_get_partner_rmdo(port);
+	partner_rmdo = pd_get_partner_rmdo(port);
 	if (partner_rmdo.major_rev == 0) {
 		ado &= ~(ADO_EXTENDED_ALERT_EVENT |
 			 ADO_EXTENDED_ALERT_EVENT_TYPE);

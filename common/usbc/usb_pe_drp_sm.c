@@ -1459,7 +1459,7 @@ void pe_clear_ado(int port)
 	mutex_unlock(&pe[port].ado_lock);
 }
 
-struct rmdo pe_get_partner_rmdo(int port)
+struct rmdo pd_get_partner_rmdo(int port)
 {
 	return pe[port].partner_rmdo;
 }
