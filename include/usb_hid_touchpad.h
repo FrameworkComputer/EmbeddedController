@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_USB_HID_TOUCHPAD_H
 #define __CROS_EC_USB_HID_TOUCHPAD_H
 
+#include "common.h"
+
 #define USB_HID_TOUCHPAD_TIMESTAMP_UNIT 100 /* usec */
 
 #define REPORT_ID_TOUCHPAD 0x01
