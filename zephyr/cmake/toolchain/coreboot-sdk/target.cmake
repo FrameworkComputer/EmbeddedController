@@ -21,7 +21,7 @@ elseif("${ARCH}" STREQUAL "x86" AND CONFIG_X86_64)
 endif()
 
 if(NOT DEFINED COREBOOT_SDK_ROOT)
-  set(COREBOOT_SDK_ROOT "/opt/coreboot-sdk")
+  set(COREBOOT_SDK_ROOT "$ENV{COREBOOT_SDK_ROOT}")
 endif()
 
 set(CC gcc)
