@@ -17,7 +17,7 @@
 ZTEST_USER(rtc_shim, test_hc_rtc_set_get_value)
 {
 	struct ec_params_rtc set_value;
-	struct ec_params_rtc get_value;
+	struct ec_response_rtc get_value;
 	struct host_cmd_handler_args set_args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_RTC_SET_VALUE, 0, set_value);
 	struct host_cmd_handler_args get_args =
@@ -39,7 +39,7 @@ ZTEST_USER(rtc_shim, test_hc_rtc_set_get_value)
 ZTEST_USER(rtc_shim, test_hc_rtc_set_get_alarm)
 {
 	struct ec_params_rtc set_value;
-	struct ec_params_rtc get_value;
+	struct ec_response_rtc get_value;
 	struct host_cmd_handler_args set_args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_RTC_SET_ALARM, 0, set_value);
 	struct host_cmd_handler_args get_args =
