@@ -17,11 +17,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"src/stt.c")
 
-if(DEFINED CONFIG_BOARD_MORTHAL)
-	project(morthal)
-	add_subdirectory(morthal)
-endif()
-
 if(DEFINED CONFIG_BOARD_SKYRIM)
 	project(skyrim)
 	add_subdirectory(skyrim)

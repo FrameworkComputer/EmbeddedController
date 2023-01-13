@@ -25,11 +25,6 @@ def register_skyrim_project(
 
 
 register_skyrim_project(
-    project_name="morthal",
-)
-
-
-register_skyrim_project(
     project_name="skyrim",
 )
 
