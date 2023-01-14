@@ -908,6 +908,25 @@ static int x86_non_dsx_s3_run(void *data)
 }
 
 AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S3, NULL, x86_non_dsx_s3_run, NULL);
+
+static int x86_non_dsx_s0_run(void *data)
+{
+	if (signals_valid_and_on(IN_PCH_SLP_S3)) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S3);
+	}
+#if CONFIG_AP_PWRSEQ_S0IX
+	if (ap_power_sleep_get_notify() == AP_POWER_SLEEP_SUSPEND &&
+	    power_signals_on(IN_PCH_SLP_S0)) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S0IX);
+	} else if (ap_power_sleep_get_notify() == AP_POWER_SLEEP_RESUME) {
+		ap_power_sleep_notify_transition(AP_POWER_SLEEP_RESUME);
+	}
+#endif
+
+	return 0;
+}
+
+AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S0, NULL, x86_non_dsx_s0_run, NULL);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 #ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
