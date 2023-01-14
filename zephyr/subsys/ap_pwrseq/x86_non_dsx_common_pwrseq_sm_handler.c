@@ -864,6 +864,29 @@ static int x86_non_dsx_s5_exit(void *data)
 
 AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S5, x86_non_dsx_s5_entry,
 			   x86_non_dsx_s5_run, x86_non_dsx_s5_exit);
+
+static int x86_non_dsx_s4_run(void *data)
+{
+	if (power_signal_get(PWR_RSMRST) == 0 ||
+	    signals_valid_and_on(IN_PCH_SLP_S5)) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S5);
+	}
+
+	if (signals_valid_and_off(IN_PCH_SLP_S4)) {
+#if CONFIG_AP_PWRSEQ_S0IX
+		/*
+		 * Clearing the S0ix flag on the path to S0
+		 * to handle any reset conditions.
+		 */
+		ap_power_reset_host_sleep_state();
+#endif
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S3);
+	}
+
+	return 0;
+}
+
+AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S4, NULL, x86_non_dsx_s4_run, NULL);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 #ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
