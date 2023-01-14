@@ -815,6 +815,55 @@ static int x86_non_dsx_g3_exit(void *data)
 
 AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_G3, x86_non_dsx_g3_entry,
 			   x86_non_dsx_g3_run, x86_non_dsx_g3_exit);
+
+static int x86_non_dsx_s5_entry(void *data)
+{
+	if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout)) {
+		atomic_set_bit(flags, S5_INACTIVE_TIMER_RUNNING);
+		k_timer_start(
+			&x86_non_dsx_timer,
+			K_SECONDS(AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout)),
+			K_NO_WAIT);
+	}
+
+	return 0;
+}
+
+static int x86_non_dsx_s5_run(void *data)
+{
+	/*
+	 * At this point, lower level action handlers of state machine should
+	 * have already checked that required power rails are OK.
+	 */
+	rsmrst_pass_thru_handler();
+	if (power_signal_get(PWR_EC_PCH_RSMRST)) {
+		if (signals_valid_and_off(IN_PCH_SLP_S5)) {
+			return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S4);
+		}
+	}
+	/* S5 inactivity timeout, go to G3 */
+	if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) == 0) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
+	} else if (k_timer_remaining_get(&x86_non_dsx_timer) == 0) {
+		/* Timer is expired */
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
+	}
+
+	return 0;
+}
+
+static int x86_non_dsx_s5_exit(void *data)
+{
+	if (atomic_test_bit(flags, S5_INACTIVE_TIMER_RUNNING)) {
+		k_timer_stop(&x86_non_dsx_timer);
+		atomic_clear_bit(flags, S5_INACTIVE_TIMER_RUNNING);
+	}
+
+	return 0;
+}
+
+AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S5, x86_non_dsx_s5_entry,
+			   x86_non_dsx_s5_run, x86_non_dsx_s5_exit);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 #ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
