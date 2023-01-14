@@ -2688,8 +2688,8 @@ int cmd_pd_device_info(int argc, char *argv[])
 	}
 
 	p->port = port;
-	rv = ec_command(EC_CMD_USB_PD_DEV_INFO, 0, p, sizeof(*p), ec_inbuf,
-			ec_max_insize);
+	rv = ec_command(EC_CMD_USB_PD_DEV_INFO, 0, p, sizeof(*p), r0,
+			sizeof(*r0));
 	if (rv < 0)
 		return rv;
 
