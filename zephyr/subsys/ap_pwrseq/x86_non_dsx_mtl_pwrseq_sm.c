@@ -122,4 +122,28 @@ static int x86_non_dsx_mtl_s3_run(void *data)
 
 AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_S3, x86_non_dsx_mtl_s3_entry,
 			      x86_non_dsx_mtl_s3_run, NULL);
+
+static int x86_non_dsx_mtl_s0_run(void *data)
+{
+	if (power_signal_get(PWR_RSMRST) == 0) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
+	}
+
+	return 0;
+}
+
+static int x86_non_dsx_mtl_s0_exit(void *data)
+{
+	enum ap_pwrseq_state new_state = ap_pwrseq_sm_get_entry_state(data);
+
+	if (new_state < AP_POWER_STATE_S3) {
+		power_signal_set(PWR_PCH_PWROK, 0);
+		power_signal_set(PWR_EC_PCH_SYS_PWROK, 0);
+	}
+
+	return 0;
+}
+
+AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_S0, NULL, x86_non_dsx_mtl_s0_run,
+			      x86_non_dsx_mtl_s0_exit);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
