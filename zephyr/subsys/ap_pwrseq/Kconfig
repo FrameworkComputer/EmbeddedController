@@ -52,6 +52,17 @@ config AP_PWRSEQ_SIGNAL_VW
 	help
 	  Helper symbol to enable virtual wire (VW) based power sequencing.
 
+config AP_PWRSEQ_SIGNAL_DEBUG_NAMES
+	bool
+	default y if PLATFORM_EC_BRINGUP
+	help
+	  Enable this option to allow display of the more descriptive
+	  dbg-name based signal names.
+	  Disable this option to just show the enum-name of the signals.
+	  Enabled by default during bringup.
+
+	  Disabling the option will save around 520 bytes of flash space.
+
 config AP_PWRSEQ_AUTOSTART
 	bool "Start the power sequence thread automatically"
 	default n

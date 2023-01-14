@@ -42,7 +42,11 @@ struct ps_config {
 
 #define PWR_ENUM(id, tag) TAG_PWR_ENUM(tag, PWR_SIGNAL_ENUM(id))
 
+#ifdef CONFIG_AP_PWRSEQ_SIGNAL_DEBUG_NAMES
 #define DBGNAME(id) "(" DT_PROP(id, enum_name) ") " DT_PROP(id, dbg_label)
+#else
+#define DBGNAME(id) DT_PROP(id, enum_name)
+#endif
 
 #define GEN_PS_ENTRY(id, src, tag)             \
 	{                                      \
