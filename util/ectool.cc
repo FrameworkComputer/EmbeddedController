@@ -3011,7 +3011,7 @@ int cmd_smart_discharge(int argc, char *argv[])
 	}
 
 	rv = ec_command(EC_CMD_SMART_DISCHARGE, 0, p, sizeof(*p), r,
-			ec_max_insize);
+			sizeof(*r));
 	if (rv < 0) {
 		perror("ERROR: EC_CMD_SMART_DISCHARGE failed");
 		return rv;
