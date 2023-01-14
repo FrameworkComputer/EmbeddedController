@@ -887,6 +887,27 @@ static int x86_non_dsx_s4_run(void *data)
 }
 
 AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S4, NULL, x86_non_dsx_s4_run, NULL);
+
+static int x86_non_dsx_s3_run(void *data)
+{
+	if (power_signal_get(PWR_RSMRST) == 0 ||
+	    signals_valid_and_on(IN_PCH_SLP_S4)) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S4);
+	}
+
+	if (signals_valid_and_on(IN_PCH_SLP_S3)) {
+		return 0;
+	}
+
+	/* All the power rails must be stable */
+	if (power_signal_get(PWR_ALL_SYS_PWRGD)) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S0);
+	}
+
+	return 0;
+}
+
+AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S3, NULL, x86_non_dsx_s3_run, NULL);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 #ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
