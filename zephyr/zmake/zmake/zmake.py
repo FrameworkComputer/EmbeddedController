@@ -191,6 +191,7 @@ class Zmake:
 
         self.executor = zmake.multiproc.Executor()
         self._sequential = self.jobserver.is_sequential() and not goma
+        self.cmp_failed_projects = {}
         self.failed_projects = []
 
     @property
@@ -342,6 +343,9 @@ class Zmake:
         extra_cflags=None,
         keep_temps=False,
         cmake_defs=None,
+        compare_configs=False,
+        compare_binaries_disable=False,
+        compare_devicetrees=False,
     ):
         """Compare EC builds at two commits."""
         temp_dir = tempfile.mkdtemp(prefix="zcompare-")
@@ -403,9 +407,20 @@ class Zmake:
                     checkout.ref,
                 )
                 return result
+        if not compare_binaries_disable:
+            failed_projects = cmp_builds.check_binaries(projects)
+            self.cmp_failed_projects["binary"] = failed_projects
+            self.failed_projects.extend(failed_projects)
+        if compare_configs:
+            failed_projects = cmp_builds.check_configs(projects)
+            self.cmp_failed_projects["config"] = failed_projects
+            self.failed_projects.extend(failed_projects)
+        if compare_devicetrees:
+            failed_projects = cmp_builds.check_devicetrees(projects)
+            self.cmp_failed_projects["devicetree"] = failed_projects
+            self.failed_projects.extend(failed_projects)
 
-        self.failed_projects = cmp_builds.check_binaries(projects)
-
+        self.failed_projects = list(set(self.failed_projects))
         if len(self.failed_projects) == 0:
             self.logger.info("Zephyr compare builds successful:")
             for checkout in cmp_builds.checkouts:

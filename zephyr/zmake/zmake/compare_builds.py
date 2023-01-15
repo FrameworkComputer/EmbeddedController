@@ -105,6 +105,18 @@ def create_bin_from_elf(elf_input, bin_output):
         sys.exit(1)
 
 
+def _compare_non_test_projects(projects, cmp_method, *args):
+    failed_projects = []
+    for project in projects:
+        if project.config.is_test:
+            continue
+
+        if not cmp_method(project, *args):
+            failed_projects.append(project.config.project_name)
+
+    return failed_projects
+
+
 @dataclasses.dataclass
 class CheckoutConfig:
     """All the information needed to build the EC at a specific checkout."""
@@ -174,6 +186,51 @@ class CompareBuilds:
                 git_ref="HEAD",
             )
 
+    def _compare_binaries(self, project):
+        output_path = (
+            pathlib.Path("ec")
+            / "build"
+            / "zephyr"
+            / pathlib.Path(project.config.project_name)
+            / "output"
+        )
+
+        output_dir1 = self.checkouts[0].modules_dir / output_path
+        output_dir2 = self.checkouts[1].modules_dir / output_path
+
+        bin_output1 = output_dir1 / "ec.bin"
+        bin_output2 = output_dir2 / "ec.bin"
+
+        # ELF executables don't compare due to meta data.  Convert to a binary
+        # for the comparison
+        if project.config.output_packer == packer_registry["elf"]:
+            create_bin_from_elf(
+                elf_input=output_dir1 / "zephyr.elf", bin_output=bin_output1
+            )
+            create_bin_from_elf(
+                elf_input=output_dir2 / "zephyr.elf", bin_output=bin_output2
+            )
+
+        bin1_path = pathlib.Path(bin_output1)
+        bin2_path = pathlib.Path(bin_output2)
+        if not os.path.isfile(bin1_path) or not os.path.isfile(bin2_path):
+            logging.error(
+                "Zephyr EC binary not found for project %s",
+                project.config.project_name,
+            )
+            return False
+
+        try:
+            subprocess.run(
+                ["cmp", bin_output1, bin_output2],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError:
+            return False
+        return True
+
     def check_binaries(self, projects):
         """Compare Zephyr EC binaries for two different source trees
 
@@ -185,53 +242,83 @@ class CompareBuilds:
             all projects compared successfully.
         """
 
-        failed_projects = []
-        for project in projects:
-            if project.config.is_test:
-                continue
+        failed_projects = _compare_non_test_projects(
+            projects, self._compare_binaries
+        )
+        return failed_projects
 
-            output_path = (
-                pathlib.Path("ec")
-                / "build"
-                / "zephyr"
-                / pathlib.Path(project.config.project_name)
-                / "output"
+    def _compare_build_files(self, project, build_mode, file):
+        build_path = (
+            pathlib.Path("ec")
+            / "build"
+            / "zephyr"
+            / pathlib.Path(project.config.project_name)
+            / f"build-{build_mode}"
+            / "zephyr"
+        )
+
+        build_dir1 = self.checkouts[0].modules_dir / build_path
+        build_dir2 = self.checkouts[1].modules_dir / build_path
+
+        file1 = build_dir1 / file
+        file2 = build_dir2 / file
+
+        try:
+            data1 = ""
+            data2 = ""
+            with open(file1) as fp1, open(file2) as fp2:
+                data1 = fp1.read()
+                data2 = fp2.read()
+            data1 = data1.replace(self.checkouts[0].full_ref, "")
+            data2 = data2.replace(self.checkouts[1].full_ref, "")
+            return data1 == data2
+        except FileNotFoundError as err:
+            logging.error(
+                "Zephyr build-%s %s file not found for project %s: %s",
+                build_mode,
+                file,
+                project.config.project_name,
+                err,
             )
+        return False
 
-            output_dir1 = self.checkouts[0].modules_dir / output_path
-            output_dir2 = self.checkouts[1].modules_dir / output_path
+    def _check_build_files(self, project, file):
+        return self._compare_build_files(
+            project, "ro", file
+        ) and self._compare_build_files(project, "rw", file)
 
-            bin_output1 = output_dir1 / "ec.bin"
-            bin_output2 = output_dir2 / "ec.bin"
+    def check_configs(self, projects):
+        """Compare Zephyr EC Config files for two different source trees
 
-            # ELF executables don't compare due to meta data.  Convert to a binary
-            # for the comparison
-            if project.config.output_packer == packer_registry["elf"]:
-                create_bin_from_elf(
-                    elf_input=output_dir1 / "zephyr.elf", bin_output=bin_output1
-                )
-                create_bin_from_elf(
-                    elf_input=output_dir2 / "zephyr.elf", bin_output=bin_output2
-                )
+        Args:
+            projects: List of projects to compare the .config files.
 
-            bin1_path = pathlib.Path(bin_output1)
-            bin2_path = pathlib.Path(bin_output2)
-            if not os.path.isfile(bin1_path) or not os.path.isfile(bin2_path):
-                failed_projects.append(project.config.project_name)
-                logging.error(
-                    "Zephyr EC binary not found for project %s",
-                    project.config.project_name,
-                )
-                continue
+        Returns:
+            A list of projects that failed to compare.  An empty list indicates that
+            all projects compared successfully.
+        """
 
-            try:
-                subprocess.run(
-                    ["cmp", bin_output1, bin_output2],
-                    check=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-            except subprocess.CalledProcessError:
-                failed_projects.append(project.config.project_name)
+        failed_projects = _compare_non_test_projects(
+            projects,
+            self._check_build_files,
+            ".config",
+        )
+        return failed_projects
 
+    def check_devicetrees(self, projects):
+        """Compare Zephyr EC devicetree files for two different source trees
+
+        Args:
+            projects: List of projects to compare the zephyr.dts files.
+
+        Returns:
+            A list of projects that failed to compare.  An empty list indicates that
+            all projects compared successfully.
+        """
+
+        failed_projects = _compare_non_test_projects(
+            projects,
+            self._check_build_files,
+            "zephyr.dts",
+        )
         return failed_projects
