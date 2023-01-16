@@ -19,4 +19,10 @@ config PLATFORM_EC_PORT80_QUIET
 	  The history is still available via the 'port80' EC command.
 	  Enabling this will reduce the logging overhead during AP startup.
 
+config PLATFORM_EC_PORT80_CUSTOM_FORMAT
+	bool "Print Port80 code for customized format"
+	help
+	  Enable this config to print the port80 code for customized
+	  format.
+
 endif # PLATFORM_EC_HOST_INTERFACE_ESPI
