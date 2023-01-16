@@ -10729,6 +10729,17 @@ int cmd_typec_vdm_response(int argc, char *argv[])
 		       r->vdm_response_err);
 	}
 
+	if (r->vdm_attention_objects > 0) {
+		printf("VDM Attention:");
+		for (i = 0; i < r->vdm_attention_objects; i++)
+			printf("\n  0x%08x", r->vdm_attention[i]);
+		printf("\n");
+		printf("%d Attention messages remaining\n",
+		       r->vdm_attention_left);
+	} else {
+		printf("No VDM Attention found");
+	}
+
 	return 0;
 }
 

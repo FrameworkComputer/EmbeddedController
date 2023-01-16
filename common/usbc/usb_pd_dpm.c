@@ -199,6 +199,8 @@ static void vdm_attention_enqueue(int port, int length, uint32_t *buf)
 	/* Note: this should not happen, but log anyway */
 	if (queue_add_unit(&dpm[port].attention_queue, &new_entry) == 0)
 		CPRINTS("Error: Dropping port %d Attention", port);
+	else
+		pd_notify_event(port, PD_STATUS_EVENT_VDM_ATTENTION);
 
 	mutex_unlock(&dpm[port].queue_lock);
 #endif /* CONFIG_USB_PD_VDM_AP_CONTROL */

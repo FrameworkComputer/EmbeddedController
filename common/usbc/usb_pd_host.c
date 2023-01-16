@@ -268,6 +268,12 @@ static enum ec_status hc_typec_vdm_response(struct host_cmd_handler_args *args)
 		memcpy(r->vdm_response, data,
 		       r->vdm_data_objects * sizeof(uint32_t));
 
+	r->vdm_attention_objects =
+		dpm_vdm_attention_pop(p->port, data, &r->vdm_attention_left);
+	if (r->vdm_attention_objects > 0)
+		memcpy(r->vdm_attention, data,
+		       r->vdm_attention_objects * sizeof(uint32_t));
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_TYPEC_VDM_RESPONSE, hc_typec_vdm_response,

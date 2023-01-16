@@ -6929,6 +6929,7 @@ enum tcpc_cc_polarity {
 #define PD_STATUS_EVENT_MUX_1_SET_DONE BIT(5)
 #define PD_STATUS_EVENT_VDM_REQ_REPLY BIT(6)
 #define PD_STATUS_EVENT_VDM_REQ_FAILED BIT(7)
+#define PD_STATUS_EVENT_VDM_ATTENTION BIT(8)
 
 /*
  * Encode and decode for BCD revision response
@@ -7362,7 +7363,8 @@ struct ec_params_rgbkbd_set_color {
 } __ec_align1;
 
 /*
- * Gather the response to the most recent VDM REQ from the AP
+ * Gather the response to the most recent VDM REQ from the AP, as well
+ * as popping the oldest VDM:Attention from the DPM queue
  */
 #define EC_CMD_TYPEC_VDM_RESPONSE 0x013C
 
@@ -7379,6 +7381,14 @@ struct ec_response_typec_vdm_response {
 	uint16_t vdm_response_err;
 	/* VDM data, including VDM header */
 	uint32_t vdm_response[VDO_MAX_SIZE];
+	/* Number of 32-bit Attention fields filled in */
+	uint8_t vdm_attention_objects;
+	/* Number of remaining messages to consume */
+	uint8_t vdm_attention_left;
+	/* Reserved */
+	uint16_t reserved1;
+	/* VDM:Attention contents */
+	uint32_t vdm_attention[2];
 } __ec_align1;
 
 /*****************************************************************************/
