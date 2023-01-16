@@ -321,9 +321,6 @@ int crec_flash_response_fill_banks(struct ec_response_flash_info_2 *r,
 	int banks_idx = 0;
 	int res;
 
-	if (num_banks < 1)
-		return EC_RES_INVALID_PARAM;
-
 	do {
 		res = flash_get_region(sector_idx, &region);
 		if (res != EC_RES_SUCCESS && res != EC_RES_IN_PROGRESS)
