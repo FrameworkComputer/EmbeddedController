@@ -392,15 +392,21 @@ static void handle_sprintf_rv(int rv, size_t *len)
 static void zephyr_print(const char *buff, size_t size)
 {
 	/*
-	 * shell_* functions can not be used in ISRs so use printk instead.
+	 * shell_* functions can not be used in ISRs so optionally use
+	 * printk instead.
 	 * If the shell is about to be (or is) stopped, use printk, since the
 	 * output may be stalled and the shell mutex held.
 	 * Also, console_buf_notify_chars uses a mutex, which may not be
 	 * locked in ISRs.
 	 */
-	if (k_is_in_isr() || shell_stopped ||
+	bool in_isr = k_is_in_isr();
+
+	if (in_isr || shell_stopped ||
 	    shell_zephyr->ctx->state != SHELL_STATE_ACTIVE) {
-		printk("%s", buff);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT) ||
+		    !in_isr) {
+			printk("%s", buff);
+		}
 	} else {
 		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))

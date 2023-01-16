@@ -35,6 +35,18 @@ config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
 config SHELL_BACKEND_SERIAL_RX_RING_BUFFER_SIZE
 	default 192
 
+config PLATFORM_EC_ISR_CONSOLE_OUTPUT
+	bool "Log in ISRs"
+	depends on CONSOLE
+	default y
+	help
+	  If enabled, allowing console output when in interrupt service routines
+	  via printk. If disabled, silently drop these messages.
+
+	  Console output via printk is unbuffered, so console output when in ISRs
+	  should be avoided if possible - larger amounts of output will prevent
+	  the EC from timely interrupt servicing.
+
 menuconfig PLATFORM_EC_HOSTCMD_CONSOLE
 	bool "Console Host Command"
 	depends on PLATFORM_EC_HOSTCMD
