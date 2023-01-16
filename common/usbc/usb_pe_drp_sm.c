@@ -6308,7 +6308,8 @@ static void pe_vdm_response_entry(int port)
 		 * attention is only SVDM with no response
 		 * (just goodCRC) return zero here.
 		 */
-		dfp_consume_attention(port, rx_payload);
+		dpm_notify_attention(port, PD_HEADER_CNT(rx_emsg[port].header),
+				     rx_payload);
 		pe_set_ready_state(port);
 		return;
 #endif

@@ -98,6 +98,31 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
  */
 enum ec_status dpm_copy_vdm_reply(int port, uint8_t *type, uint8_t *size,
 				  uint32_t *buf);
+
+/*
+ * Informs the DPM of a received Attention message.  Note: all Attention
+ * messages are assumed to be SOP since cables are disallowed from sending
+ * this type of VDM.
+ *
+ * @param[in] port		USB-C port number
+ * @param[in] vdo_objects	Number of objects filled in
+ * @param[in] buf		Buffer containing received VDM (header and VDO)
+ */
+void dpm_notify_attention(int port, size_t vdo_objects, uint32_t *buf);
+
+/*
+ * Copy and pop the last VDM:Attention from the DPM queue.
+ *
+ * It is assumed that buf points to a uint32_t array with at least two elements
+ * to hold the minimum possible Attention response.
+ *
+ * @param[in] port		USB-C port number
+ * @param[out] buf		Buffer to copy VDM header and VDO
+ * @param[out] items_left	Number of Attention messages left in the queue
+ * @return			Number of 32-bit objects filled in (0 if empty)
+ */
+uint8_t dpm_vdm_attention_pop(int port, uint32_t *buf, uint8_t *items_left);
+
 /*
  * Determines the current allocation for the connection, past the basic
  * CONFIG_USB_PD_PULLUP value set by the TC (generally 1.5 A)

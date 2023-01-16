@@ -45,6 +45,10 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 {
 }
 
+void dpm_notify_attention(int port, size_t vdo_objects, uint32_t *buf)
+{
+}
+
 void dpm_set_mode_exit_request(int port)
 {
 }
