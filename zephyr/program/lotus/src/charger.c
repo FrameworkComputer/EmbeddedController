@@ -43,7 +43,6 @@ static void charger_chips_init(void)
 			return;
 		}
 
-
 	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
 		if (chg_chips[chip].drv->init)
 			chg_chips[chip].drv->init(chip);
@@ -52,21 +51,20 @@ static void charger_chips_init(void)
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2, 
 		ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
-		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
-		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000))
+		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_PSYS_GAIN |
-			ISL9241_CONTROL3_ACLIM_RELOAD))
+		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_ACLIM_RELOAD |
+		ISL9241_CONTROL3_BATGONE))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL0, 0x0000))
 		goto init_fail;
 
-	val = ISL9241_CONTROL1_PROCHOT_REF_6800;
-	val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ << 7) &
+	val = ISL9241_CONTROL1_PROCHOT_REF_6000;
+	val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7) &
 			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
 
 	/* make sure battery FET is enabled on EC on */
@@ -76,9 +74,23 @@ static void charger_chips_init(void)
 		ISL9241_REG_CONTROL1, val))
 		goto init_fail;
 
-	/* according to Power team suggest, Set ACOK reference to 4.544V */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, 0x0B00))
+		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
+		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
+		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_OTG_VOLTAGE, 0x0000))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_OTG_CURRENT, 0x0000))
+		goto init_fail;
+
+	/* according to Power team suggest, Set ACOK reference to 4.032V */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4032)))
 		goto init_fail;
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
@@ -89,58 +101,6 @@ init_fail:
 }
 DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C + 1);
 #endif
-
-static void charger_enable_psys(void)
-{
-	int control1;
-
-	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, &control1))
-		CPRINTS("read psys control1 fail");
-
-	control1 &= ~ISL9241_CONTROL1_IMON;
-	control1 |= ISL9241_CONTROL1_PSYS;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, 0x0B00))
-		CPRINTS("Update ACOK reference fail");
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, control1))
-		CPRINTS("Update psys control1 fail");
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, 0x0000))
-		CPRINTS("Update psys control4 fail");
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, charger_enable_psys, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, charger_enable_psys, HOOK_PRIO_DEFAULT);
-
-static void charger_disable_psys(void)
-{
-	int control1;
-
-	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, &control1))
-		CPRINTS("read psys control1 fail");
-
-	control1 |= ISL9241_CONTROL1_IMON;
-	control1 &= ~ISL9241_CONTROL1_PSYS;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, 0x0000))
-		CPRINTS("Update ACOK reference fail");
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, control1))
-		CPRINTS("Update psys control1 fail");
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_GP_COMPARATOR))
-		CPRINTS("Update psys control4 fail");
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_disable_psys, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, charger_disable_psys, HOOK_PRIO_DEFAULT);
 
 void charger_update(void)
 {
@@ -158,8 +118,8 @@ void charger_update(void)
 			CPRINTS("read charger control1 fail");
 		}
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6800;
-		val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ << 7) &
+		val = ISL9241_CONTROL1_PROCHOT_REF_6000;
+		val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7) &
 			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -169,7 +129,7 @@ void charger_update(void)
 
 		/* Set DC prochot to 6.912A */
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_DC_PROCHOT, 0x1B00))
+			ISL9241_REG_DC_PROCHOT, 0x1D00))
 			CPRINTS("Update DC prochot fail");
 
 		pre_ac_state = extpower_is_present();
@@ -178,39 +138,3 @@ void charger_update(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
-
-void charger_gate_onoff(uint8_t enable)
-{
-	int control0 = 0x0000;
-	int control1 = 0x0000;
-
-	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL0, &control0)) {
-		CPRINTS("read gate control1 fail");
-	}
-
-	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, &control1)) {
-		CPRINTS("read gate control1 fail");
-	}
-
-	if (enable) {
-		control0 &= ~ISL9241_CONTROL0_NGATE_OFF;
-		control1 &= ~ISL9241_CONTROL1_BGATE_OFF;
-		CPRINTS("B&N Gate off");
-	} else {
-		control0 |= ISL9241_CONTROL0_NGATE_OFF;
-		control1 |= ISL9241_CONTROL1_BGATE_OFF;
-		CPRINTS("B&N Gate on");
-	}
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL0, control0)) {
-		CPRINTS("Update gate control0 fail");
-	}
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, control1)) {
-		CPRINTS("Update gate control1 fail");
-	}
-}
