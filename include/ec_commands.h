@@ -7375,8 +7375,8 @@ struct ec_response_typec_vdm_response {
 	uint8_t vdm_data_objects;
 	/* Partner to address - see enum typec_partner_type */
 	uint8_t partner_type;
-	/* Reserved */
-	uint16_t reserved;
+	/* enum ec_status describing VDM response */
+	uint16_t vdm_response_err;
 	/* VDM data, including VDM header */
 	uint32_t vdm_response[VDO_MAX_SIZE];
 } __ec_align1;

@@ -10719,13 +10719,14 @@ int cmd_typec_vdm_response(int argc, char *argv[])
 	if (rv < 0)
 		return -1;
 
-	if (r->vdm_data_objects > 0) {
+	if (r->vdm_data_objects > 0 && r->vdm_response_err == EC_RES_SUCCESS) {
 		printf("VDM response from partner: %d", r->partner_type);
 		for (i = 0; i < r->vdm_data_objects; i++)
 			printf("\n  0x%08x", r->vdm_response[i]);
 		printf("\n");
 	} else {
-		printf("No VDM response found\n");
+		printf("No VDM response found (err: %d)\n",
+		       r->vdm_response_err);
 	}
 
 	return 0;

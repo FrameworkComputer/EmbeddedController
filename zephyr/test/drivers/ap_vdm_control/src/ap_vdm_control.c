@@ -337,6 +337,7 @@ ZTEST_F(ap_vdm_control, test_vdm_response_ack)
 		     "Failed to see VDM ACK event");
 
 	vdm_resp = host_cmd_typec_vdm_response(TEST_PORT);
+	zassert_equal(vdm_resp.vdm_response_err, EC_RES_SUCCESS);
 	zassert_equal(vdm_resp.partner_type, req.partner_type,
 		      "Failed to see correct partner");
 	zassert_equal(vdm_resp.vdm_data_objects, fixture->partner.identity_vdos,
@@ -375,6 +376,7 @@ ZTEST_F(ap_vdm_control, test_vdm_request_nak)
 		     "Failed to see VDM NAK event");
 
 	vdm_resp = host_cmd_typec_vdm_response(TEST_PORT);
+	zassert_equal(vdm_resp.vdm_response_err, EC_RES_SUCCESS);
 	zassert_equal(vdm_resp.partner_type, req.partner_type,
 		      "Failed to see correct partner");
 	zassert_equal(vdm_resp.vdm_data_objects,
@@ -390,9 +392,6 @@ ZTEST_F(ap_vdm_control, test_vdm_request_failed)
 {
 	struct ec_response_typec_status status;
 	struct ec_response_typec_vdm_response vdm_resp;
-	struct ec_params_typec_status params = { .port = TEST_PORT };
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_TYPEC_VDM_RESPONSE, 0, vdm_resp, params);
 
 	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ENTER_MODE) |
 				  VDO_SVDM_VERS(VDM_VER20);
@@ -413,7 +412,8 @@ ZTEST_F(ap_vdm_control, test_vdm_request_failed)
 	zassert_true(status.events & PD_STATUS_EVENT_VDM_REQ_FAILED,
 		     "Failed to see notice of no reply");
 
-	zassert_equal(host_command_process(&args), EC_RES_UNAVAILABLE,
+	vdm_resp = host_cmd_typec_vdm_response(TEST_PORT);
+	zassert_equal(vdm_resp.vdm_response_err, EC_RES_UNAVAILABLE,
 		      "Failed to get unavailable");
 }
 
@@ -431,9 +431,6 @@ ZTEST_F(ap_vdm_control, test_vdm_request_bad_port)
 ZTEST_F(ap_vdm_control, test_vdm_request_in_progress)
 {
 	struct ec_response_typec_vdm_response vdm_resp;
-	struct ec_params_typec_status params = { .port = TEST_PORT };
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_TYPEC_VDM_RESPONSE, 0, vdm_resp, params);
 
 	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
 				  VDO_SVDM_VERS(VDM_VER20);
@@ -446,18 +443,17 @@ ZTEST_F(ap_vdm_control, test_vdm_request_in_progress)
 	host_cmd_typec_control_vdm_req(TEST_PORT, req);
 
 	/* Give no processing time and immediately ask for our result */
-	zassert_equal(host_command_process(&args), EC_RES_BUSY,
-		      "Failed to see busy");
+	vdm_resp = host_cmd_typec_vdm_response(TEST_PORT);
+	zassert_equal(vdm_resp.vdm_response_err, EC_RES_BUSY,
+		      "Failed to get busy");
 }
 
 ZTEST_F(ap_vdm_control, test_vdm_request_no_send)
 {
 	struct ec_response_typec_vdm_response vdm_resp;
-	struct ec_params_typec_status params = { .port = TEST_PORT };
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_TYPEC_VDM_RESPONSE, 0, vdm_resp, params);
 
 	/* Check for an error on a fresh connection with no VDM REQ sent */
-	zassert_equal(host_command_process(&args), EC_RES_UNAVAILABLE,
+	vdm_resp = host_cmd_typec_vdm_response(TEST_PORT);
+	zassert_equal(vdm_resp.vdm_response_err, EC_RES_UNAVAILABLE,
 		      "Failed to see no message ready");
 }
