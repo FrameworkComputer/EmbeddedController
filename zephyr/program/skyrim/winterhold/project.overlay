@@ -58,8 +58,8 @@
 			temp_host_halt = <110>;
 			temp_host_release_high = <95>;
 			temp_host_release_halt = <100>;
-			temp_fan_off = <42>;
-			temp_fan_max = <70>;
+			temp_fan_off = <55>;
+			temp_fan_max = <75>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&soc_pct2075>;
 		};
@@ -190,7 +190,7 @@
 &fan0 {
 	pwms = <&pwm0 0 PWM_KHZ(2) PWM_POLARITY_NORMAL>;
 	rpm_min = <2100>;
-	rpm_start = <2600>;
+	rpm_start = <2800>;
 	rpm_max = <4800>;
 };
 
@@ -213,8 +213,8 @@
 	/delete-property/ temp_host_high;
 	/delete-property/ temp_host_halt;
 	/delete-property/ temp_host_release_high;
-	temp_fan_off = <54>;
-	temp_fan_max = <67>;
+	temp_fan_off = <62>;
+	temp_fan_max = <72>;
 };
 
 /* handler overrides */

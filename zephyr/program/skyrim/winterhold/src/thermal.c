@@ -13,7 +13,11 @@
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ##args)
 
+/*AMB sensor for thermal tabel control*/
 #define TEMP_AMB TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_amb))
+/*SOC and CPU sensor for fan tabel control*/
+#define TEMP_SOC TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_soc))
+#define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_cpu))
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
@@ -59,18 +63,105 @@ __maybe_unused static const struct ec_thermal_config thermal_desktop_lid_close =
 #define THERMAL_LAPTOP           \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(44), \
+			[EC_TEMP_THRESH_WARN] = C_TO_K(42), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(110), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(40), \
+			[EC_TEMP_THRESH_WARN] = C_TO_K(38), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
 		}, \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_laptop =
 	THERMAL_LAPTOP;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define FAN_SOC_DESKTOP_LID_OPEN \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(110), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
+		}, \
+		.temp_fan_off = C_TO_K(55), \
+		.temp_fan_max = C_TO_K(75), \
+	}
+__maybe_unused static const struct ec_thermal_config fan_soc_desktop_lid_open =
+	FAN_SOC_DESKTOP_LID_OPEN;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define FAN_SOC_DESKTOP_LID_CLOSE \
+	{                         \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(110), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
+		}, \
+		.temp_fan_off = C_TO_K(55), \
+		.temp_fan_max = C_TO_K(75),  \
+	}
+__maybe_unused static const struct ec_thermal_config fan_soc_desktop_lid_close =
+	FAN_SOC_DESKTOP_LID_CLOSE;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define FAN_SOC_LAPTOP           \
+	{                        \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(110), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
+		}, \
+		.temp_fan_off = C_TO_K(51), \
+		.temp_fan_max = C_TO_K(71), \
+	}
+__maybe_unused static const struct ec_thermal_config fan_soc_laptop =
+	FAN_SOC_LAPTOP;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define FAN_CPU_DESKTOP_LID_OPEN                                        \
+	{                                                               \
+		.temp_fan_off = C_TO_K(62), .temp_fan_max = C_TO_K(72), \
+	}
+__maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_open =
+	FAN_CPU_DESKTOP_LID_OPEN;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define FAN_CPU_DESKTOP_LID_CLOSE                                       \
+	{                                                               \
+		.temp_fan_off = C_TO_K(62), .temp_fan_max = C_TO_K(72), \
+	}
+__maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_close =
+	FAN_CPU_DESKTOP_LID_CLOSE;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define FAN_CPU_LAPTOP                                                  \
+	{                                                               \
+		.temp_fan_off = C_TO_K(58), .temp_fan_max = C_TO_K(68), \
+	}
+__maybe_unused static const struct ec_thermal_config fan_cpu_laptop =
+	FAN_CPU_LAPTOP;
 
 static int last_amb_temp = -1;
 
@@ -82,13 +173,19 @@ static void thermal_table_switch(void)
 	if (body_state == BODY_DETECTION_OFF_BODY) {
 		if (lid_is_open()) {
 			thermal_params[TEMP_AMB] = thermal_desktop_lid_open;
+			thermal_params[TEMP_SOC] = fan_soc_desktop_lid_open;
+			thermal_params[TEMP_CPU] = fan_cpu_desktop_lid_open;
 			CPRINTS("Thermal: Desktop lid open mode");
 		} else {
 			thermal_params[TEMP_AMB] = thermal_desktop_lid_close;
+			thermal_params[TEMP_SOC] = fan_soc_desktop_lid_close;
+			thermal_params[TEMP_CPU] = fan_cpu_desktop_lid_close;
 			CPRINTS("Thermal: Desktop lid close mode");
 		}
 	} else {
 		thermal_params[TEMP_AMB] = thermal_laptop;
+		thermal_params[TEMP_SOC] = fan_soc_laptop;
+		thermal_params[TEMP_CPU] = fan_cpu_laptop;
 		CPRINTS("Thermal: Laptop mode");
 	}
 }
