@@ -397,7 +397,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 {
 	static int last;
 	int i, evt;
-	uint8_t *resp = args->response;
+	struct ec_response_get_next_event *r = args->response;
 	const struct mkbp_event_source *src;
 
 	int data_size = -EC_ERROR_BUSY;
@@ -427,7 +427,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 		if (src == NULL)
 			return EC_RES_ERROR;
 
-		resp[0] = evt; /* Event type */
+		r->event_type = evt;
 
 		/*
 		 * get_data() can return -EC_ERROR_BUSY which indicates that the
@@ -437,7 +437,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 		 * event instead.  Therefore, we have to service that button
 		 * event first.
 		 */
-		data_size = src->get_data(resp + 1);
+		data_size = src->get_data((uint8_t *)&r->data);
 		if (data_size == -EC_ERROR_BUSY) {
 			mutex_lock(&state.lock);
 			state.events |= BIT(evt);
@@ -447,7 +447,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 
 	/* If there are no more events and we support the "more" flag, set it */
 	if (!set_inactive_if_no_events() && args->version >= 2)
-		resp[0] |= EC_MKBP_HAS_MORE_EVENTS;
+		r->event_type |= EC_MKBP_HAS_MORE_EVENTS;
 
 	if (data_size < 0)
 		return EC_RES_ERROR;
