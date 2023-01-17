@@ -825,6 +825,15 @@ DECLARE_DEFERRED(siglog_deferred);
 
 static void siglog_add(enum gpio_signal signal)
 {
+	const struct power_signal_info *s = power_signal_list;
+	int i;
+
+	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++) {
+		if (s->gpio == signal && s->flags & POWER_SIGNAL_NO_LOG) {
+			return;
+		}
+	}
+
 	if (siglog_entries >= MAX_SIGLOG_ENTRIES) {
 		siglog_truncated = 1;
 		return;

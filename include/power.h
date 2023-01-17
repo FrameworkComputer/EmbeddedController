@@ -54,7 +54,9 @@ FORWARD_DECLARE_ENUM(power_state){
  * +------------------------------------------------------+
  * |       1         |    Signal interrupt state at boot  |
  * +------------------------------------------------------+
- * |     2 : 32      |            Reserved                |
+ * |       2         |     Do not log the signal change   |
+ * +------------------------------------------------------+
+ * |     3 : 32      |            Reserved                |
  * +-----------------+------------------------------------+
  */
 
@@ -64,6 +66,8 @@ FORWARD_DECLARE_ENUM(power_state){
 
 #define POWER_SIGNAL_INTR_STATE BIT(1)
 #define POWER_SIGNAL_DISABLE_AT_BOOT BIT(1)
+
+#define POWER_SIGNAL_NO_LOG BIT(2)
 
 /* Information on an power signal */
 struct power_signal_info {
