@@ -195,5 +195,8 @@ enum usb_strings {
  */
 #define OCTOSPI_TRANSACTION_TIMEOUT_US (500 * MSEC)
 
+/* Interrupt handler, called by common/gpio.c. */
+void gpio_edge(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */
