@@ -185,5 +185,15 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
+/* Timeout for initializing the OctoSPI controller. */
+#define OCTOSPI_INIT_TIMEOUT_US (100 * MSEC)
+
+/*
+ * Timeout for a complete SPI transaction.  Users can potentially set the clock
+ * down to 62.5 kHz and transfer up to 2048 bytes, which would take 262ms
+ * assuming no FIFO stalls.
+ */
+#define OCTOSPI_TRANSACTION_TIMEOUT_US (500 * MSEC)
+
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */
