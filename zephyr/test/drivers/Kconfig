@@ -85,6 +85,9 @@ config LINK_TEST_SUITE_PANIC_OUTPUT
 config LINK_TEST_SUITE_POWER_HOST_SLEEP
 	bool "Link and run the power/host_sleep.c specific tests"
 
+config LINK_TEST_SUITE_PS8XXX
+	bool "Link and test the ps8xxx tests"
+
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
 
