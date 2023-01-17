@@ -1432,6 +1432,7 @@ static void pe_clear_port_data(int port)
 
 	dpm_remove_sink(port);
 	dpm_remove_source(port);
+	dpm_init(port);
 
 	/* Exit BIST Test mode, in case the TCPC entered it. */
 	tcpc_set_bist_test_mode(port, false);
