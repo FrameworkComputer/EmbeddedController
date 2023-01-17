@@ -59,6 +59,7 @@
 
 &i2c0_0 {
 	status = "okay";
+	label = "I2C_PORT0";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
 	pinctrl-names = "default";
@@ -72,6 +73,7 @@
 
 &i2c1_0 {
 	status = "okay";
+	label = "I2C_PORT1";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
@@ -85,6 +87,7 @@
 
 &i2c2_0 {
 	status = "okay";
+	label = "I2C_PORT2";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
@@ -98,6 +101,7 @@
 
 &i2c3_0 {
 	status = "okay";
+	label = "I2C_PORT3";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
 	pinctrl-names = "default";
@@ -116,6 +120,7 @@
 
 &i2c4_1 {
 	status = "okay";
+	label = "I2C_PORT4";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
 	pinctrl-names = "default";
@@ -129,6 +134,7 @@
 
 &i2c5_0 {
 	status = "okay";
+	label = "I2C_PORT5";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
 	pinctrl-names = "default";
@@ -142,6 +148,7 @@
 
 &i2c6_1 {
 	status = "okay";
+	label = "I2C_PORT6";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
 	pinctrl-names = "default";
@@ -155,6 +162,7 @@
 
 &i2c7_0 {
 	status = "okay";
+	label = "I2C_PORT7";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
 	pinctrl-names = "default";
