@@ -134,5 +134,19 @@
 				led-color = <&color_off>;
 			};
 		};
+
+		power-state-forced-idle {
+			charge-state = "PWR_STATE_FORCED_IDLE";
+
+			/* Amber 2 sec, White 2 sec */
+			color-0 {
+				led-color = <&color_amber>;
+				period-ms = <2000>;
+			};
+			color-1 {
+				led-color = <&color_white>;
+				period-ms = <2000>;
+			};
+		};
 	};
 };
