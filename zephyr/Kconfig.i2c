@@ -77,4 +77,11 @@ config PLATFORM_EC_SMBUS_PEC
 
 	  This option also enables error checking function on smart batteries.
 
+config PLATFORM_EC_I2C_NACK_RETRY_COUNT
+	int "I2C operation retry count when transaction error"
+	default 0
+	help
+	  Defines I2C operation retry count when transaction general input/output
+	  error (-EIO) and also when the I2C is busy.
+
 endif # PLATFORM_EC_I2C

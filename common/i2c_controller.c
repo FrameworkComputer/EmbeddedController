@@ -269,7 +269,8 @@ int i2c_xfer_unlocked(const int port, const uint16_t addr_flags,
 		case 0:
 			return EC_SUCCESS;
 		case -EIO:
-			return EC_ERROR_INVAL;
+			ret = EC_ERROR_INVAL;
+			continue;
 		default:
 			return EC_ERROR_UNKNOWN;
 		}
