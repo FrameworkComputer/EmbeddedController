@@ -28,7 +28,7 @@
  * Expected Results
  *  - The port 80 console commands return the appropriate result
  */
-ZTEST(port80, test_port80_console)
+ZTEST(console_cmd_port80, test_port80_console)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "port80"), NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "port80 flush"), NULL);
