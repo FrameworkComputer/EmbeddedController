@@ -724,7 +724,14 @@ static void pre_work_set_rtc_alarm(void)
 	while (!(STM32_RTC_ISR & STM32_RTC_ISR_ALRAWF))
 		;
 	STM32_RTC_ISR &= ~STM32_RTC_ISR_ALRAF;
+#ifdef STM32_EXTI_RPR
+	/* Separate rising and falling edge pending registers. */
+	STM32_EXTI_RPR = BIT(18);
+	STM32_EXTI_FPR = BIT(18);
+#else
+	/* One combined rising/falling edge pending registers. */
 	STM32_EXTI_PR = BIT(18);
+#endif
 }
 
 /* Register setup after RTC alarm is updated */
@@ -947,7 +954,14 @@ void reset_rtc_alarm(struct rtc_time_reg *rtc)
 
 	/* Disable RTC alarm interrupt */
 	STM32_EXTI_IMR &= ~BIT(18);
+#ifdef STM32_EXTI_RPR
+	/* Separate rising and falling edge pending registers. */
+	STM32_EXTI_RPR = BIT(18);
+	STM32_EXTI_FPR = BIT(18);
+#else
+	/* One combined rising/falling edge pending registers. */
 	STM32_EXTI_PR = BIT(18);
+#endif
 
 	/* Clear the pending RTC alarm IRQ in NVIC */
 	task_clear_pending_irq(STM32_IRQ_RTC_ALARM);
