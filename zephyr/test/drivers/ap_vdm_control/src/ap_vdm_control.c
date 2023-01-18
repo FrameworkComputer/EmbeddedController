@@ -28,7 +28,8 @@ struct ap_vdm_control_fixture {
 struct tcpci_cable_data passive_usb3 = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT),
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
+		VDO_SVDM_VERS(VDM_VER20),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_PCABLE,
 		/* modal operation */ false, USB_VID_GOOGLE),
@@ -46,7 +47,8 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	/* Add Discover Identity response */
 	partner->identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT);
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
+		VDO_SVDM_VERS(VDM_VER20);
 	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
 		/* modal operation */ true, USB_VID_GOOGLE);
@@ -63,7 +65,8 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	/* Support one mode for DisplayPort VID.*/
 	partner->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES);
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES) |
+		VDO_SVDM_VERS(VDM_VER20);
 	partner->modes_vdm[VDO_INDEX_HDR + 1] =
 		VDO_MODE_DP(MODE_DP_PIN_C | MODE_DP_PIN_D, 0, 1,
 			    CABLE_RECEPTACLE, MODE_DP_V13, MODE_DP_SNK);
@@ -73,7 +76,8 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	/* Support DisplayPort VID. */
 	partner->svids_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID);
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID) |
+		VDO_SVDM_VERS(VDM_VER20);
 	partner->svids_vdm[VDO_INDEX_HDR + 1] =
 		VDO_SVID(USB_SID_DISPLAYPORT, 0);
 	partner->svids_vdos = VDO_INDEX_HDR + 2;
@@ -227,7 +231,8 @@ ZTEST_F(ap_vdm_control, test_send_vdm_req_bad_count)
 
 ZTEST_F(ap_vdm_control, test_send_vdm_sop_req_valid)
 {
-	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT);
+	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -246,7 +251,8 @@ ZTEST_F(ap_vdm_control, test_send_vdm_sop_req_valid)
 
 ZTEST_F(ap_vdm_control, test_send_vdm_sop_prime_req_valid)
 {
-	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT);
+	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -265,7 +271,8 @@ ZTEST_F(ap_vdm_control, test_send_vdm_sop_prime_req_valid)
 
 ZTEST_F(ap_vdm_control, test_send_vdm_sop_attention_bad)
 {
-	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ATTENTION);
+	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ATTENTION) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct ec_params_typec_control params = {
 		.port = TEST_PORT,
 		.command = TYPEC_CONTROL_COMMAND_SEND_VDM_REQ,
@@ -284,7 +291,8 @@ ZTEST_F(ap_vdm_control, test_send_vdm_sop_attention_bad)
 
 ZTEST_F(ap_vdm_control, test_send_vdm_req_in_progress)
 {
-	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT);
+	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct ec_params_typec_control params = {
 		.port = TEST_PORT,
 		.command = TYPEC_CONTROL_COMMAND_SEND_VDM_REQ,
@@ -312,7 +320,8 @@ ZTEST_F(ap_vdm_control, test_vdm_response_ack)
 {
 	struct ec_response_typec_status status;
 	struct ec_response_typec_vdm_response vdm_resp;
-	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT);
+	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -342,7 +351,8 @@ ZTEST_F(ap_vdm_control, test_vdm_request_nak)
 {
 	struct ec_response_typec_status status;
 	struct ec_response_typec_vdm_response vdm_resp;
-	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ENTER_MODE);
+	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ENTER_MODE) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -352,7 +362,8 @@ ZTEST_F(ap_vdm_control, test_vdm_request_nak)
 	/* Add DisplayPort EnterMode NAK */
 	fixture->partner.enter_mode_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_NAK) | CMD_ENTER_MODE);
+		    VDO_CMDT(CMDT_RSP_NAK) | CMD_ENTER_MODE) |
+		VDO_SVDM_VERS(VDM_VER20);
 	fixture->partner.enter_mode_vdos = VDO_INDEX_HDR + 1;
 
 	host_cmd_typec_control_vdm_req(TEST_PORT, req);
@@ -383,7 +394,8 @@ ZTEST_F(ap_vdm_control, test_vdm_request_failed)
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 		EC_CMD_TYPEC_VDM_RESPONSE, 0, vdm_resp, params);
 
-	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ENTER_MODE);
+	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ENTER_MODE) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -423,7 +435,8 @@ ZTEST_F(ap_vdm_control, test_vdm_request_in_progress)
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 		EC_CMD_TYPEC_VDM_RESPONSE, 0, vdm_resp, params);
 
-	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT);
+	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
+				  VDO_SVDM_VERS(VDM_VER20);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
