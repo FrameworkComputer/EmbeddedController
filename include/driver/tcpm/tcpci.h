@@ -340,8 +340,46 @@ int tcpci_tcpm_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 		       bool *ack_required);
 int tcpci_tcpm_mux_get(const struct usb_mux *me, mux_state_t *mux_state);
 int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me);
+
+/**
+ * Get the TCPC chip information (chip IDs, etc) for the given port.
+ *
+ * The returned value is cached internally, so subsequent calls to this function
+ * will not access the TCPC. If live is true, data will be fetched from the TCPC
+ * regardless of whether any cached data is available.
+ *
+ * If chip_info is NULL, this will ensure the cache is up to date but avoid
+ * writing the output chip_info.
+ *
+ * If the TCPC is accessed (live data is retrieved), this will wake the chip up
+ * from low power mode on I2C access. It is expected that the USB-PD state
+ * machine will return it to low power mode as appropriate afterward.
+ *
+ * Returns EC_SUCCESS or an error; chip_info is not updated on error.
+ */
 int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info);
+
+/**
+ * Equivalent to tcpci_get_chip_info, but allows the caller to modify the cache
+ * if new data is fetched.
+ *
+ * If mutator is non-NULL and data is read from the TCPC (either because live
+ * data is requested or nothing was cached), then it is called with a pointer
+ * to the cached information for the port. It can then make changes to the
+ * cached data (for example correcting IDs that are known to be reported
+ * incorrectly by some chips, possibly requiring more communication with the
+ * TCPC). Any error returned by mutator causes this function to return with the
+ * same error.
+ *
+ * If mutator writes through the cached data pointer, those changes will be
+ * retained until live data is requested again.
+ */
+int tcpci_get_chip_info_mutable(
+	int port, int live, struct ec_response_pd_chip_info_v1 *chip_info,
+	int (*mutator)(int port, bool live,
+		       struct ec_response_pd_chip_info_v1 *cached));
+
 int tcpci_get_vbus_voltage(int port, int *vbus);
 bool tcpci_tcpm_get_snk_ctrl(int port);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);

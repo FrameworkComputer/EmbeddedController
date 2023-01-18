@@ -1375,65 +1375,80 @@ int tcpci_get_vbus_voltage(int port, int *vbus)
 	return EC_SUCCESS;
 }
 
-/*
- * This call will wake up the TCPC if it is in low power mode upon accessing the
- * i2c bus (but the pd state machine should put it back into low power mode).
- *
- * Once it's called, the chip info will be stored in cache, which can be
- * accessed by tcpm_get_chip_info without worrying about chip states.
- */
-int tcpci_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 *chip_info)
+int tcpci_get_chip_info_mutable(
+	int port, int live, struct ec_response_pd_chip_info_v1 *const chip_info,
+	int (*const mutator)(int port, bool live,
+			     struct ec_response_pd_chip_info_v1 *cached))
 {
 	static struct ec_response_pd_chip_info_v1
 		cached_info[CONFIG_USB_PD_PORT_MAX_COUNT];
-	struct ec_response_pd_chip_info_v1 *i;
+	struct ec_response_pd_chip_info_v1 *info;
 	int error;
-	int val;
 
 	if (port >= board_get_usb_pd_port_count())
 		return EC_ERROR_INVAL;
 
-	i = &cached_info[port];
+	info = &cached_info[port];
 
-	/* If already cached && live data is not asked, return cached value */
-	if (i->vendor_id && !live) {
+	/* Fetch live data if nothing is cached or live data was requested */
+	if (!info->vendor_id || live) {
+		int vendor_id, product_id, device_id;
+
 		/*
-		 * If chip_info is NULL, chip info will be stored in cache and
-		 * can be read later by another call.
+		 * The cache is no longer valid because we're fetching. Avoid
+		 * storing the new vendor ID until we've actually succeeded so
+		 * future invocations won't see partial data and assume it's a
+		 * valid cache.
 		 */
-		if (chip_info)
-			memcpy(chip_info, i, sizeof(*i));
+		info->vendor_id = 0;
+		error = tcpc_read16(port, TCPC_REG_VENDOR_ID, &vendor_id);
+		if (error)
+			return error;
 
-		return EC_SUCCESS;
+		error = tcpc_read16(port, TCPC_REG_PRODUCT_ID, &product_id);
+		if (error)
+			return error;
+		info->product_id = product_id;
+
+		error = tcpc_read16(port, TCPC_REG_BCD_DEV, &device_id);
+		if (error)
+			return error;
+		info->device_id = device_id;
+
+		/*
+		 * This varies chip to chip; more specific driver code is
+		 * expected to override this value if it can by providing a
+		 * mutator.
+		 */
+		info->fw_version_number = -1;
+
+		info->vendor_id = vendor_id;
+		if (mutator != NULL) {
+			error = mutator(port, live, info);
+			if (error) {
+				/*
+				 * Mutator needs to have a complete view, but if
+				 * it fails the cache is invalidated.
+				 */
+				info->vendor_id = 0;
+				return error;
+			}
+		}
 	}
-
-	error = tcpc_read16(port, TCPC_REG_VENDOR_ID, &val);
-	if (error)
-		return error;
-	i->vendor_id = val;
-
-	error = tcpc_read16(port, TCPC_REG_PRODUCT_ID, &val);
-	if (error)
-		return error;
-	i->product_id = val;
-
-	error = tcpc_read16(port, TCPC_REG_BCD_DEV, &val);
-	if (error)
-		return error;
-	i->device_id = val;
-
 	/*
-	 * This varies chip to chip; more specific driver code is expected to
-	 * override this value if it can.
+	 * If chip_info is NULL, this invocation will ensure the cache is fresh
+	 * but return nothing.
 	 */
-	i->fw_version_number = -1;
-
-	/* Copy the cached value to return if chip_info is not NULL */
 	if (chip_info)
-		memcpy(chip_info, i, sizeof(*i));
+		memcpy(chip_info, info, sizeof(*info));
 
 	return EC_SUCCESS;
+}
+
+int tcpci_get_chip_info(int port, int live,
+			struct ec_response_pd_chip_info_v1 *chip_info)
+{
+	return tcpci_get_chip_info_mutable(port, live, chip_info, NULL);
 }
 
 /*

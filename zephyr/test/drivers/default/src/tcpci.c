@@ -200,6 +200,11 @@ ZTEST(tcpci, test_generic_tcpci_get_chip_info)
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
 	test_tcpci_get_chip_info(emul, common_data, USBC_PORT_C0);
+
+	zassert_equal(EC_ERROR_INVAL,
+		      tcpci_get_chip_info(board_get_usb_pd_port_count(), false,
+					  NULL),
+		      "get_chip_info should return INVAL for an invalid port");
 }
 
 /** Test TCPCI enter low power mode */

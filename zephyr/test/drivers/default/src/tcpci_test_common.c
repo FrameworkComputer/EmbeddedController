@@ -900,6 +900,19 @@ void test_tcpci_drp_toggle(const struct emul *emul,
 			TCPC_REG_COMMAND_LOOK4CONNECTION);
 }
 
+static int test_tcpci_get_chip_info_mutator_device_id(
+	int port, bool live, struct ec_response_pd_chip_info_v1 *cached)
+{
+	cached->device_id = 0xbeef;
+	return EC_SUCCESS;
+}
+
+static int test_tcpci_get_chip_info_mutator_fail(
+	int port, bool live, struct ec_response_pd_chip_info_v1 *cached)
+{
+	return EC_ERROR_UNCHANGED;
+}
+
 /** Test TCPCI get chip info */
 void test_tcpci_get_chip_info(const struct emul *emul,
 			      struct i2c_common_emul_data *common_data,
@@ -913,13 +926,16 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
 	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
 
-	/* Test error on failed product id get */
+	/*
+	 * Test error on failed product id get. Cache should not be valid
+	 * because the previous call to get_chip_info failed.
+	 */
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_PRODUCT_ID);
-	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
+	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 0, &info));
 
 	/* Test error on failed BCD get */
-	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
-	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_BCD_DEV);
+	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 0, &info));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -948,6 +964,19 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 	zassert_equal(vendor, info.vendor_id);
 	zassert_equal(product, info.product_id);
 	zassert_equal(bcd, info.device_id);
+
+	/* Test providing a callback to modify cached data. */
+	zassert_equal(EC_SUCCESS,
+		      tcpci_get_chip_info_mutable(
+			      port, 1, &info,
+			      test_tcpci_get_chip_info_mutator_device_id));
+	zassert_equal(0xbeef, info.device_id);
+
+	/* Errors from the mutator get bubbled up. */
+	zassert_equal(EC_ERROR_UNCHANGED,
+		      tcpci_get_chip_info_mutable(
+			      port, 1, &info,
+			      test_tcpci_get_chip_info_mutator_fail));
 }
 
 /** Test TCPCI enter low power mode */
