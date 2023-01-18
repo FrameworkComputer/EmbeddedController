@@ -506,6 +506,16 @@ void host_cmd_usb_pd_get_amode(
 	int *response_size);
 
 /**
+ * @brief Run the host command to get the PD chip information.
+ *
+ * @param port          The USB-C port number
+ * @param response      Destination for command response.
+ * @return The result code from the host command
+ */
+int host_cmd_usb_pd_dev_info(uint8_t port,
+			     struct ec_params_usb_pd_rw_hash_entry *response);
+
+/**
  * Run the host command to control PD port behavior, with the sub-command of
  * TYPEC_CONTROL_COMMAND_ENTER_MODE
  *

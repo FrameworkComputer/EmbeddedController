@@ -635,6 +635,18 @@ void host_cmd_usb_pd_get_amode(
 	*response_size = args.response_size;
 }
 
+int host_cmd_usb_pd_dev_info(uint8_t port,
+			     struct ec_params_usb_pd_rw_hash_entry *response)
+{
+	struct ec_params_usb_pd_info_request params = {
+		.port = port,
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_USB_PD_DEV_INFO, 0, *response, params);
+
+	return host_command_process(&args);
+}
+
 void host_events_save(struct host_events_ctx *host_events_ctx)
 {
 	host_events_ctx->lpc_host_events = lpc_get_host_events();
