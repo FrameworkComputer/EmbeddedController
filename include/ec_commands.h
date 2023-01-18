@@ -7850,7 +7850,7 @@ enum boot_time_param {
 	RESET_CNT,
 };
 
-struct ap_boot_time_data {
+struct ec_response_get_boot_time {
 	uint64_t timestamp[RESET_CNT];
 	uint16_t cnt;
 } __ec_align4;

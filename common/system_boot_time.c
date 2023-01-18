@@ -11,7 +11,7 @@
 
 #ifdef CONFIG_SYSTEM_BOOT_TIME_LOGGING
 /* Content of ap_boot_time will be lost on sysjump */
-static struct ap_boot_time_data ap_boot_time;
+static struct ec_response_get_boot_time ap_boot_time;
 #endif
 
 /* This function updates timestamp for ap boot time params */
@@ -46,7 +46,7 @@ void update_ap_boot_time(enum boot_time_param param)
 static enum ec_status
 host_command_get_boot_time(struct host_cmd_handler_args *args)
 {
-	struct ap_boot_time_data *boot_time = args->response;
+	struct ec_response_get_boot_time *boot_time = args->response;
 
 	if (args->response_max < sizeof(*boot_time)) {
 		return EC_RES_RESPONSE_TOO_BIG;

@@ -8399,7 +8399,7 @@ int cmd_board_version(int argc, char *argv[])
 
 int cmd_boottime(int argc, char *argv[])
 {
-	struct ap_boot_time_data response;
+	struct ec_response_get_boot_time response;
 	int rv;
 
 	rv = ec_command(EC_CMD_GET_BOOT_TIME, 0, NULL, 0, &response,

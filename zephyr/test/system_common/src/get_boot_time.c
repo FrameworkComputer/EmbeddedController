@@ -18,7 +18,7 @@ ZTEST_SUITE(host_cmd_get_boot_time, NULL, NULL, NULL, NULL, NULL);
 ZTEST(host_cmd_get_boot_time, test_get_boot_time)
 {
 	int ret;
-	struct ap_boot_time_data r;
+	struct ec_response_get_boot_time r;
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_BOOT_TIME, 0, r);
 
