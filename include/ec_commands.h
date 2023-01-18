@@ -2471,6 +2471,7 @@ enum ec_led_id {
 #define EC_LED_FLAGS_AUTO BIT(1) /* Switch LED back to automatic control */
 
 enum ec_led_colors {
+	EC_LED_COLOR_INVALID = -1,
 	EC_LED_COLOR_RED = 0,
 	EC_LED_COLOR_GREEN,
 	EC_LED_COLOR_BLUE,
