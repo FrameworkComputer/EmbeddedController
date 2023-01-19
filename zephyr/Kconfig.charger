@@ -184,6 +184,18 @@ config PLATFORM_EC_CHARGER_RAA489000
 	  Enables the driver for the Renesas RAA489000 battery charger
 	  with integrated USB-C TCPC.
 
+config PLATFORM_EC_RAA489000_AC_PRESENT_CONTROL
+	bool "Invert the AC_PRESENT signal when in OTG mode"
+	depends on PLATFORM_EC_CHARGER_RAA489000 && !PLATFORM_EC_EXTPOWER_GPIO
+	help
+	  Enables the RAA489000 chip to invert the AC_PRESENT signal
+	  when the charger is in OTG (sourcing) mode.
+	  This is required when the internal comparator is used to
+	  generate the AC_PRESENT signal from the ACOK signal.
+	  In OTG mode the ACOK signal is high, but the AC_PRESENT
+	  should be set low, so the comparator output must be inverted.
+	  The GPIO_AC_PRESENT gpio signal must not be configured.
+
 config PLATFORM_EC_CHARGER_RT9490
 	bool "Use the RT9490 charger"
 	default y
