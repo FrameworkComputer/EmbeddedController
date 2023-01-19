@@ -197,6 +197,64 @@ ZTEST(mkbp_event, test_host_command_get_events__get_event)
 		      interrupt_gpio_monitor_fake.call_count);
 }
 
+ZTEST(mkbp_event, test_host_command_get_events__get_event_v2)
+{
+	/*
+	 * Dispatch some fake events and ensure they get returned by the
+	 * host command. Event types must be different.
+	 */
+
+	const struct ec_response_get_next_event expected_event = {
+		.event_type = EC_MKBP_EVENT_KEY_MATRIX,
+		.data.key_matrix = {
+			/* Arbitrary key matrix data (uint8_t[13]) */
+			0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb,
+			0xc, 0xd
+		},
+	};
+	const struct ec_response_get_next_event expected_event2 = {
+		.event_type = EC_MKBP_EVENT_BUTTON,
+		.data.buttons = BIT(EC_MKBP_VOL_UP) | BIT(EC_MKBP_VOL_DOWN),
+	};
+	int ret;
+
+	/*
+	 * Add the above events to the MKBP keyboard FIFO and raise the
+	 * events
+	 */
+
+	ret = mkbp_fifo_add(expected_event.event_type,
+			    expected_event.data.key_matrix);
+	zassert_equal(EC_SUCCESS, ret, "Got %d when adding to FIFO", ret);
+
+	ret = mkbp_fifo_add(expected_event2.event_type,
+			    expected_event2.data.key_matrix);
+	zassert_equal(EC_SUCCESS, ret, "Got %d when adding to FIFO", ret);
+
+	activate_mkbp_with_events(BIT(expected_event.event_type));
+	activate_mkbp_with_events(BIT(expected_event2.event_type));
+
+	/* Retrieve these events via host commands */
+
+	struct ec_response_get_next_event response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_NEXT_EVENT, 2, response);
+
+	ret = host_command_process(&args);
+	zassert_equal(EC_RES_SUCCESS, ret, "Expected EC_RES_SUCCESS but got %d",
+		      ret);
+	zassert_true((response.event_type & EC_MKBP_HAS_MORE_EVENTS) != 0,
+		     "Expected EC_MKBP_HAS_MORE_EVENTS but got 0x%x",
+		     response.event_type);
+
+	ret = host_command_process(&args);
+	zassert_equal(EC_RES_SUCCESS, ret, "Expected EC_RES_SUCCESS but got %d",
+		      ret);
+	zassert_true((response.event_type & EC_MKBP_HAS_MORE_EVENTS) == 0,
+		     "Expected no EC_MKBP_HAS_MORE_EVENTS but got 0x%x",
+		     response.event_type);
+}
+
 ZTEST(mkbp_event, test_no_ap_response)
 {
 	/* Cause an event but do not send any host commands. This should cause
