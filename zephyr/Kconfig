@@ -137,6 +137,18 @@ config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	  the EC starts up, performs some amount of processing and then gets a
 	  reset that it is not expecting.
 
+config PLATFORM_EC_BOOT_NO_SLEEP
+	bool "Disable deep sleep after boot"
+	default y if !ZTEST
+	help
+	  Disable deep sleep for PLATFORM_EC_BOOT_NO_SLEEP_MS after boot.
+
+config PLATFORM_EC_BOOT_NO_SLEEP_MS
+	int "No deep sleep after boot duration"
+	default 15000
+	help
+	  Duration for PLATFORM_EC_BOOT_NO_SLEEP in ms.
+
 config PLATFORM_EC_WAIT_RESET_CYCLES_PER_ITERATION
 	int "CPU execution cycle per iteration for waiting the H1 reset"
 	default 4

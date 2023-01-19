@@ -18,8 +18,14 @@
 #include "zephyr_espi_shim.h"
 
 #include <zephyr/kernel.h>
+#include <zephyr/pm/policy.h>
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/sys/printk.h>
+
+static void console_allow_sleep(struct k_timer *timer)
+{
+	pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
+}
 
 /* For testing purposes this is not named main. See main_shim.c for the real
  * main() function.
@@ -40,6 +46,18 @@ void ec_app_main(void)
 	if (IS_ENABLED(CONFIG_WATCHDOG) &&
 	    !IS_ENABLED(CONFIG_WDT_DISABLE_AT_BOOT)) {
 		watchdog_init();
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_BOOT_NO_SLEEP)) {
+		struct k_timer timer;
+		k_timeout_t duration =
+			K_MSEC(CONFIG_PLATFORM_EC_BOOT_NO_SLEEP_MS);
+
+		k_timer_init(&timer, console_allow_sleep, NULL);
+		k_timer_start(&timer, duration, K_NO_WAIT);
+
+		pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_IDLE,
+					 PM_ALL_SUBSTATES);
 	}
 
 	/*
