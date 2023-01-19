@@ -711,6 +711,10 @@ static void isl923x_init(int chgnum)
 				goto init_fail;
 
 			reg |= ISL923X_C0_ENABLE_BUCK;
+			/* Adjusts phase comparator threshold offset */
+			reg &= ~ISL923X_C0_BUCK_PHASE_MASK;
+			reg |= CONFIG_ISL9238C_BUCK_PHASE_VOLTAGE
+			       << ISL923X_C0_BUCK_PHASE_SHIFT;
 
 			if (raw_write16(chgnum, ISL923X_REG_CONTROL0, reg))
 				goto init_fail;

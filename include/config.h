@@ -3505,6 +3505,9 @@
  */
 #undef CONFIG_ISL9238C_ENABLE_BUCK_MODE
 
+/* ISL9238C adjusts phase comparator threshold offset */
+#define CONFIG_ISL9238C_BUCK_PHASE_VOLTAGE 0
+
 /* Support MKBP event */
 #undef CONFIG_MKBP_EVENT
 

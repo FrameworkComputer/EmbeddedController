@@ -786,6 +786,13 @@ config PLATFORM_EC_ISL9238C_ENABLE_BUCK_MODE
 	  Enable Force Buck mode for ISL9238C.
 	  If the Force Buck mode is enabled, the Buck-Boost window narrows.
 
+config PLATFORM_EC_ISL9238C_BUCK_PHASE_VOLTAGE
+	int "Value of phase comparator threshold offset"
+	default 0
+	help
+	  Adjusts the phase comparator threshold offset for forward buck
+	  and buck-boost.
+
 config PLATFORM_EC_AC_PROCHOT_CURRENT_MA
 	int "Value of the prochot threshold current in mA"
 	default 3328

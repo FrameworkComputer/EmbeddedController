@@ -107,6 +107,10 @@
 #define ISL923X_C0_DCHOT_3A (3 << 3)
 #define ISL923X_C0_DCHOT_MASK (3 << 3)
 
+/* Control0: adjusts phase comparator threshold offset for forward buck */
+#define ISL923X_C0_BUCK_PHASE_MASK GENMASK(15, 13)
+#define ISL923X_C0_BUCK_PHASE_SHIFT 13
+
 /* Control0: BGATE force on */
 #define RAA489000_C0_BGATE_FORCE_ON BIT(10)
 #define RAA489000_C0_EN_CHG_PUMPS_TO_100PCT BIT(6)
