@@ -12,7 +12,7 @@ SECTION_PROLOGUE(.end_of_ram_info, 0, )
 {
 	ASSERT(DEFINED(_image_ram_end) && _image_ram_end > 0, "Error: _image_ram_end is not defined");
 
-#if defined(RAM_ADDR) && defined(RAM_SIZE)
+#if defined(RAM_ADDR) && defined(RAM_SIZE) && defined(CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE)
 	PROVIDE(__unused_ram_start = _image_ram_end);
 	PROVIDE(__unused_ram_end = RAM_ADDR + RAM_SIZE);
 	PROVIDE(__unused_ram_size = __unused_ram_end - __unused_ram_start);
