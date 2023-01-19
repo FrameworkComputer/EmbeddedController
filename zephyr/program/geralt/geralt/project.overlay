@@ -13,5 +13,6 @@
 #include "../motionsense.dtsi"
 #include "../power_signal.dtsi"
 #include "../usbc.dtsi"
+#include "../shi.dtsi"
 #include "battery.dtsi"
 #include "led.dtsi"

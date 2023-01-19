@@ -14,5 +14,6 @@ register_raw_project(
         "i2c.dts",
         "interrupts.dts",
         "pwm.dts",
+        "shi.dts",
     ],
 )

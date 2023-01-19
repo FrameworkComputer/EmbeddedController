@@ -4,6 +4,7 @@
  */
 
 #include "../cbi.dtsi"
+#include "../shi.dtsi"
 
 #include "generated.dtsi"
 #include "keyboard.dtsi"
