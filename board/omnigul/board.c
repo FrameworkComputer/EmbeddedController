@@ -4,14 +4,11 @@
  */
 
 #include "button.h"
-#include "cbi.h"
-#include "charge_ramp.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
-#include "driver/als_tcs3400.h"
 #include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
@@ -31,11 +28,6 @@
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
-
-__override void board_cbi_init(void)
-{
-	config_usb_db_type();
-}
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
