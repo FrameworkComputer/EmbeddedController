@@ -21,11 +21,12 @@
 		    (DT_STRING_UPPER_TOKEN(id, prop)), (0))
 
 /*
- * Return string-token if the property exists, otherwise return -1
+ * Return string-token if the property exists, otherwise return
+ * EC_LED_COLOR_INVALID.
  */
-#define GET_PROP_NVE(id, prop)                  \
+#define GET_COLOR_PROP_NVE(id, prop)            \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, prop), \
-		    (DT_STRING_UPPER_TOKEN(id, prop)), (-1))
+		    (DT_STRING_UPPER_TOKEN(id, prop)), (EC_LED_COLOR_INVALID))
 
 #define LED_ENUM(id, enum_name) DT_STRING_TOKEN(id, enum_name)
 #define LED_ENUM_WITH_COMMA(id, enum_name)           \

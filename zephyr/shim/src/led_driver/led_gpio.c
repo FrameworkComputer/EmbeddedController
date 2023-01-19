@@ -31,11 +31,11 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 
 DT_INST_FOREACH_CHILD(0, GEN_PINS_ARRAY)
 
-#define SET_PIN_NODE(node_id)                          \
-	{ .led_color = GET_PROP(node_id, led_color),   \
-	  .led_id = GET_PROP(node_id, led_id),         \
-	  .br_color = GET_PROP_NVE(node_id, br_color), \
-	  .gpio_pins = PINS_ARRAY(node_id),            \
+#define SET_PIN_NODE(node_id)                                \
+	{ .led_color = GET_PROP(node_id, led_color),         \
+	  .led_id = GET_PROP(node_id, led_id),               \
+	  .br_color = GET_COLOR_PROP_NVE(node_id, br_color), \
+	  .gpio_pins = PINS_ARRAY(node_id),                  \
 	  .pins_count = DT_PROP_LEN(node_id, led_pins) };
 
 /*
