@@ -13,10 +13,40 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
+/* Configure the flash */
+#undef CONFIG_RO_SIZE
+#undef CONFIG_FW_PSTATE_OFF
+#undef CONFIG_FW_PSTATE_SIZE
+#undef CONFIG_RW_MEM_OFF
+#undef CONFIG_RW_SIZE
+
+#define CONFIG_RO_SIZE (4 * 1024)
+#define CONFIG_RW_MEM_OFF (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
+#define CONFIG_RW_SIZE (CONFIG_FLASH_SIZE_BYTES - CONFIG_RW_MEM_OFF)
+#undef CONFIG_IMAGE_PADDING
+
+#ifdef SECTION_IS_RO
+
+/* Configure the Boot Manager. */
+#define CONFIG_MALLOC
+#define CONFIG_DFU_BOOTMANAGER_MAIN
+#define CONFIG_DFU_BOOTMANAGER_SHARED
+#undef CONFIG_COMMON_RUNTIME
+#undef CONFIG_COMMON_PANIC_OUTPUT
+#undef CONFIG_COMMON_GPIO
+#undef CONFIG_COMMON_TIMER
+#undef CONFIG_WATCHDOG
+
+#else /* !SECTION_IS_RO */
+
 #define CONFIG_BOARD_PRE_INIT
 
 #define CONFIG_ROM_BASE 0x0
 #define CONFIG_ROM_SIZE (CONFIG_RAM_BASE - CONFIG_ROM_BASE)
+
+/* DFU Firmware Update */
+#define CONFIG_DFU_RUNTIME
+#define CONFIG_DFU_BOOTMANAGER_SHARED
 
 /* Enable USB forwarding on UART 2, 3, 4, and 5. */
 #define CONFIG_STREAM_USART
@@ -38,6 +68,7 @@
 /* Optional features */
 #define CONFIG_HW_CRC
 #undef CONFIG_PVD
+
 /*
  * See 'Programmable voltage detector characteristics' in the
  * STM32F072x8 Datasheet.  PVD Threshold 1 corresponds to a falling
@@ -72,7 +103,8 @@
 #define USB_IFACE_USART3_STREAM 4
 #define USB_IFACE_USART4_STREAM 5
 #define USB_IFACE_USART5_STREAM 6
-#define USB_IFACE_COUNT 7
+#define USB_IFACE_DFU 7
+#define USB_IFACE_COUNT 8
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL 0
@@ -114,9 +146,12 @@
 #define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1 << 9) - 4)
 #define CONFIG_USB_I2C_MAX_READ_COUNT ((1 << 9) - 6)
 
+#endif /* SECTION_IS_RO */
+
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
+#undef CONFIG_FLASH_PSTATE
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -145,6 +180,7 @@ enum usb_strings {
 	USB_STR_USART3_STREAM_NAME,
 	USB_STR_USART4_STREAM_NAME,
 	USB_STR_USART5_STREAM_NAME,
+	USB_STR_DFU_NAME,
 
 	USB_STR_COUNT
 };
