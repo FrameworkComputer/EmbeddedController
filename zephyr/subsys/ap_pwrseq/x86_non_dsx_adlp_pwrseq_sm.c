@@ -211,4 +211,23 @@ static int x86_non_dsx_adlp_s4_run(void *data)
 
 AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_S4, NULL, x86_non_dsx_adlp_s4_run,
 			      NULL);
+
+static int x86_non_dsx_adlp_s3_entry(void *data)
+{
+	ap_off();
+
+	return 0;
+}
+
+static int x86_non_dsx_adlp_s3_run(void *data)
+{
+	if (!power_signal_get(PWR_DSW_PWROK) || power_signal_get(PWR_SLP_SUS)) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
+	}
+
+	return 0;
+}
+
+AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_S3, x86_non_dsx_adlp_s3_entry,
+			      x86_non_dsx_adlp_s3_run, NULL);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
