@@ -396,10 +396,10 @@ int hook_call_deferred(const struct deferred_data *data, int us);
  * CONFIG_COMMON_RUNTIME nor CONFIG_PLATFORM_EC_HOOKS is defined)
  */
 #define hook_call_deferred(unused1, unused2) -1
-#define DECLARE_HOOK(t, func, p)               \
-	void CONCAT2(unused_hook_, func)(void) \
-	{                                      \
-		func();                        \
+#define DECLARE_HOOK(t, func, p)                     \
+	void CONCAT4(unused_hook_, t, _, func)(void) \
+	{                                            \
+		func();                              \
 	}
 #define DECLARE_DEFERRED(func)                     \
 	void CONCAT2(unused_deferred_, func)(void) \
