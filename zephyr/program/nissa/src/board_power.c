@@ -190,6 +190,25 @@ static int board_ap_power_g3_run(void *data)
 
 AP_POWER_APP_STATE_DEFINE(AP_POWER_STATE_G3, board_ap_power_g3_entry,
 			  board_ap_power_g3_run, NULL);
+
+static int board_ap_power_s0_run(void *data)
+{
+	if (power_signal_get(PWR_ALL_SYS_PWRGD) &&
+	    power_signal_get(PWR_VCCST_PWRGD) &&
+	    power_signal_get(PWR_PCH_PWROK) &&
+	    power_signal_get(PWR_EC_PCH_SYS_PWROK)) {
+		/*
+		 * Make sure all the signals checked inside the condition are
+		 * asserted before disabling these two power signals.
+		 */
+		power_signal_disable(PWR_DSW_PWROK);
+		power_signal_disable(PWR_PG_PP1P05);
+	}
+
+	return 0;
+}
+
+AP_POWER_APP_STATE_DEFINE(AP_POWER_STATE_S0, NULL, board_ap_power_s0_run, NULL);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 int board_power_signal_get(enum power_signal signal)
