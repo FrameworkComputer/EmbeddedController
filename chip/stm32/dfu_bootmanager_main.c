@@ -93,7 +93,7 @@ static void dfu_bootmanager_init(void)
 {
 	/* enable clock on Power module */
 #ifndef CHIP_FAMILY_STM32H7
-#ifdef CHIP_FAMILY_STM32L4
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	STM32_RCC_APB1ENR1 |= STM32_RCC_PWREN;
 #else
 	STM32_RCC_APB1ENR |= STM32_RCC_PWREN;
@@ -105,7 +105,7 @@ static void dfu_bootmanager_init(void)
 #elif defined(CHIP_FAMILY_STM32H7)
 	/* enable backup registers */
 	STM32_RCC_AHB4ENR |= BIT(28);
-#elif defined(CHIP_FAMILY_STM32L4)
+#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	/* enable RTC APB clock */
 	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_RTCAPBEN;
 #else
@@ -118,25 +118,40 @@ static void dfu_bootmanager_init(void)
 	STM32_PWR_CR |= BIT(8);
 }
 
+/*
+ * Load stack pointer and reset vector from an ARM vector table, and jump.
+ */
+static void jump_to_arm_reset_vector(uint32_t addr)
+{
+	/*
+	 * The first 32-bit entry ARM vector table is the initial value of the
+	 * stack pointer, the second entry is the reset vector.
+	 */
+	asm("mov r1, %0\n"
+	    /* Load stack pointer */
+	    "ldr r0, [r1, 0]\n"
+	    "msr msp, r0\n"
+	    /* Load reset vector */
+	    "ldr r0, [r1, 4]\n"
+	    /* Jump without saving return address (would modify msp) */
+	    "bx r0\n"
+	    : /* no outputs */
+	    : "r"(addr)
+	    :);
+}
+
 static void jump_to_rw(void)
 {
-	void (*addr)(void);
-
-	addr = (void (*)(void))(*((uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE +
-					       CONFIG_RW_MEM_OFF + 4)));
-
-	addr();
+	jump_to_arm_reset_vector(CONFIG_PROGRAM_MEMORY_BASE +
+				 CONFIG_RW_MEM_OFF);
 }
 
 static void jump_to_dfu(void)
 {
-	void (*addr)(void);
-
-	addr = (void (*)(void))(*((uint32_t *)(STM32_DFU_BASE + 4)));
-
 	/* Clear the scratchpad. */
 	dfu_bootmanager_backup_write(DFU_BOOTMANAGER_VALUE_CLEAR);
-	addr();
+
+	jump_to_arm_reset_vector(STM32_DFU_BASE);
 }
 
 /*
@@ -159,7 +174,7 @@ int main(void)
  * shortly after the jump. If the application is corrupt and fails before
  * this, the only action that can be done is jumping into DFU mode.
  */
-void exception_panic(void)
+void __keep exception_panic(void)
 {
 	dfu_bootmanager_enter_dfu();
 }
