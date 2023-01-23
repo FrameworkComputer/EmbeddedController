@@ -422,6 +422,16 @@ void lfw_main(void)
 	uart_init();
 	system_init();
 
+	/*
+	 * We need to switch control of VCI_OUT (aliased as EC_ON) away from
+	 * VCI_INx to keep the machine powered even after the user releases the
+	 * power button. This ensures that we can stay on long enough to read
+	 * from SPI flash.
+	 */
+	gpio_reset(GPIO_EC_ON);
+	MCHP_VCI_REGISTER |= MCHP_VCI_REGISTER_FW_CNTRL;
+	MCHP_VCI_REGISTER |= MCHP_VCI_REGISTER_FW_EXT;
+
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	uart_puts("littlefw ");
