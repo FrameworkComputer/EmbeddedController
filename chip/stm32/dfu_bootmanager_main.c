@@ -51,7 +51,10 @@
  */
 static int rw_is_empty(void)
 {
-	return crec_flash_is_erased(CONFIG_RW_MEM_OFF, 8);
+	if (IS_ENABLED(CONFIG_FLASH_CROS))
+		return crec_flash_is_erased(CONFIG_RW_MEM_OFF, 8);
+	/* No flash support, we cannot tell.  Assume not empty. */
+	return 0;
 }
 
 /*
