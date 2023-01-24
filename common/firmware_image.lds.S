@@ -126,9 +126,11 @@ SECTIONS
 	} > FLASH =0xff
 #endif
 #endif
+#ifdef CONFIG_IMAGE_PADDING
 	.padding : AT(IMAGE_PADDING_AT) {
 		BYTE(0xff);
 	} > FLASH =0xff
+#endif
 
 #ifdef CONFIG_IPI
 	/* The section holds address of IPI buffer but no symbols. */
