@@ -10,22 +10,21 @@ import argparse
 import logging
 import os
 import pathlib
+import site
 import sys
 import tempfile
 
 EC_BASE = pathlib.Path(__file__).parent.parent
 
-ZEPHYR_BASE = os.environ.get("ZEPHYR_BASE")
-if not ZEPHYR_BASE:
-    ZEPHYR_BASE = os.path.join(
-        EC_BASE.resolve().parent.parent,
-        "third_party",
-        "zephyr",
-        "main",
+if "ZEPHYR_BASE" in os.environ:
+    ZEPHYR_BASE = pathlib.Path(os.environ.get("ZEPHYR_BASE"))
+else:
+    ZEPHYR_BASE = pathlib.Path(
+        EC_BASE.resolve().parent.parent / "third_party" / "zephyr" / "main"
     )
 
-sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts"))
-sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts", "kconfig"))
+site.addsitedir(ZEPHYR_BASE / "scripts")
+site.addsitedir(ZEPHYR_BASE / "scripts" / "kconfig")
 # pylint:disable=import-error,wrong-import-position
 import kconfiglib
 import zephyr_module
@@ -114,8 +113,8 @@ class KconfigCheck:
             with open(pathlib.Path(temp_dir) / "Kconfig.dts", "w") as file:
                 file.write("")
 
-            os.environ["ZEPHYR_BASE"] = ZEPHYR_BASE
-            os.environ["srctree"] = ZEPHYR_BASE
+            os.environ["ZEPHYR_BASE"] = str(ZEPHYR_BASE)
+            os.environ["srctree"] = str(ZEPHYR_BASE)
             os.environ["KCONFIG_BINARY_DIR"] = temp_dir
             os.environ["ARCH_DIR"] = "arch"
             os.environ["ARCH"] = "*"

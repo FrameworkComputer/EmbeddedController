@@ -56,14 +56,15 @@ class TestKconfigCheck(unittest.TestCase):
         )
         process_kconfig_mock.assert_called_once_with("project", "meta")
         kconfig_mock.assert_called_once_with(
-            check_zephyr_project_config.ZEPHYR_BASE + "/Kconfig"
+            str(check_zephyr_project_config.ZEPHYR_BASE / "Kconfig")
         )
 
         self.assertEqual(
-            os.environ["ZEPHYR_BASE"], check_zephyr_project_config.ZEPHYR_BASE
+            os.environ["ZEPHYR_BASE"],
+            str(check_zephyr_project_config.ZEPHYR_BASE),
         )
         self.assertEqual(
-            os.environ["srctree"], check_zephyr_project_config.ZEPHYR_BASE
+            os.environ["srctree"], str(check_zephyr_project_config.ZEPHYR_BASE)
         )
         self.assertEqual(os.environ["ARCH_DIR"], "arch")
         self.assertEqual(os.environ["ARCH"], "*")
