@@ -820,25 +820,24 @@ config_brya() {
   # the pin number is 100 from the pinctrl-tigerlake.c.
   # From the gpio-ranges, the gpio value is 824 + (100-99) = 825
 
-  local gpiochip="gpiochip664"
-  # Support kernel version 5.10 during transition to 5.15+
-  match_kernel_regex "^5\.10\." && gpiochip="gpiochip152"
-  readonly GPIO_CHIP="${gpiochip}"
+  local gpiochip_dev_path="pci0000:00/INTC1055:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
 
-  local offset=0
-  # Support kernel version 5.10 during transition to 5.15+
-  # v5.10 has GPIOs that are offset by -512
-  match_kernel_regex "^5\.10\." && offset=512
+  local GPIO_CHIP="gpiochip${gpiobase}"
 
-  # FPMCU RST_ODL is on GPP_D1 = 824 + (100 - 99) = 825
-  local gpionrst=825
-  readonly GPIO_NRST=$(( gpionrst - offset ))
-  # FPMCU BOOT0 is on GPP_D0 = 824 + (99 - 99) = 824
-  local gpioboot=824
-  readonly GPIO_BOOT0=$(( gpioboot - offset ))
-  # FP_PWR_EN is on GPP_D2 = 824 + (101 - 99) = 826
-  local gpiopwren=826
-  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+  # FPMCU RST_ODL is on GPP_D1 = 160 + (100 - 99) = 161
+  local gpionrst=161
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_D0 = 160 + (99 - 99) = 160
+  local gpioboot=160
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_D2 = 160 + (101 - 99) = 162
+  local gpiopwren=162
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_brask() {
