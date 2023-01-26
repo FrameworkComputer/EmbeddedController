@@ -454,7 +454,7 @@ ZTEST_F(ap_vdm_control, test_vdm_request_failed)
 ZTEST_F(ap_vdm_control, test_vdm_request_bad_port)
 {
 	struct ec_response_typec_vdm_response vdm_resp;
-	struct ec_params_typec_status params = { .port = 88 };
+	struct ec_params_typec_vdm_response params = { .port = 88 };
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 		EC_CMD_TYPEC_VDM_RESPONSE, 0, vdm_resp, params);
 
