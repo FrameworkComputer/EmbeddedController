@@ -32,7 +32,11 @@ struct cros_flash_xec_data {
 	const struct device *spi_ctrl_dev;
 };
 
-static struct spi_config spi_cfg;
+/* initialize spi_cfg, SPI driver checks "SPI word size" field */
+static struct spi_config spi_cfg = {
+	.operation = SPI_WORD_SET(8) | SPI_LINES_SINGLE,
+	.frequency = DT_PROP(DT_NODELABEL(int_flash), spi_max_frequency)
+};
 
 #define FLASH_DEV DT_NODELABEL(int_flash)
 #define SPI_CONTROLLER_DEV DT_NODELABEL(spi0)
