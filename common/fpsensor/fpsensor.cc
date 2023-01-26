@@ -2,7 +2,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
 #include "compile_time_macros.h"
 
 extern "C" {
@@ -809,6 +808,64 @@ static int command_fpcapture(int argc, const char **argv)
 DECLARE_CONSOLE_COMMAND_FLAGS(fpcapture, command_fpcapture, NULL,
 			      "Capture fingerprint in PGM format",
 			      CMD_FLAG_RESTRICTED);
+
+/* Transfer a chunk of the image from the host to the FPMCU
+ *
+ * Command format:
+ *  fpupload <offset> <hex encoded pixel string>
+ *
+ * To limit the size of the commands, only a chunk of the image is sent for
+ * each command invocation.
+ */
+static int command_fpupload(int argc, const char **argv)
+{
+	const char *pixels_str;
+	uint8_t *dest;
+	int offset;
+
+	if (argc != 3)
+		return EC_ERROR_PARAM1;
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+	offset = atoi(argv[1]);
+	if (offset < 0)
+		return EC_ERROR_PARAM1;
+	dest = fp_buffer + FP_SENSOR_IMAGE_OFFSET + offset;
+
+	pixels_str = argv[2];
+	while (*pixels_str) {
+		if (dest >= fp_buffer + FP_SENSOR_IMAGE_SIZE)
+			return EC_ERROR_PARAM1;
+		char hex_str[] = { pixels_str[0], pixels_str[1], '\0' };
+		*dest = static_cast<uint8_t>(strtol(hex_str, NULL, 16));
+		pixels_str += 2;
+		++dest;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(fpupload, command_fpupload, NULL,
+			"Copy fp image onto fpmcu fpsensor buffer");
+
+/* Transfer an image from the FPMCU to the host
+ *
+ * Command format:
+ *  fpdownload
+ *
+ * This is useful to verify the data was transferred correctly. Note that it
+ * requires the terminal to be configured as explained in the comment above
+ * upload_pgm_image().
+ */
+static int command_fpdownload(int argc, const char **argv)
+{
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+
+	upload_pgm_image(fp_buffer + FP_SENSOR_IMAGE_OFFSET);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(fpdownload, command_fpdownload, NULL,
+			"Copy fp image from fpmcu fpsensor buffer");
 
 static int command_fpenroll(int argc, const char **argv)
 {
