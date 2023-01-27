@@ -52,7 +52,7 @@ class TestKconfigCheck(unittest.TestCase):
 
         parse_modules_mock.assert_called_once_with(
             check_zephyr_project_config.ZEPHYR_BASE,
-            extra_modules=[check_zephyr_project_config.EC_BASE],
+            modules=[check_zephyr_project_config.EC_BASE],
         )
         process_kconfig_mock.assert_called_once_with("project", "meta")
         kconfig_mock.assert_called_once_with(
@@ -83,9 +83,7 @@ class TestKconfigCheck(unittest.TestCase):
 
         kconfig_mock.assert_called_once_with(kconfig_path)
         self.assertEqual(process_kconfig_mock.call_count, 0)
-        parse_modules_mock.assert_called_once_with(
-            mock.ANY, extra_modules=mock.ANY
-        )
+        parse_modules_mock.assert_called_once_with(mock.ANY, modules=mock.ANY)
 
     @mock.patch("pathlib.Path.is_file")
     @mock.patch("check_zephyr_project_config.KconfigCheck._init_kconfig")

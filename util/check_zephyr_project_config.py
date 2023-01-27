@@ -96,7 +96,7 @@ class KconfigCheck:
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             modules = zephyr_module.parse_modules(
-                ZEPHYR_BASE, extra_modules=[EC_BASE]
+                ZEPHYR_BASE, modules=[EC_BASE]
             )
 
             kconfig = ""
