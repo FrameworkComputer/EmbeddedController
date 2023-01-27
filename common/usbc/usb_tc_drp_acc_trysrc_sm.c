@@ -1729,7 +1729,7 @@ static void print_current_state(const int port)
 	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
 		CPRINTS_L1("C%d: %s", port, tc_state_names[get_state_tc(port)]);
 	else
-		CPRINTS("C%d: tc-st%d", port, get_state_tc(port));
+		CPRINTS_L1("C%d: tc-st%d", port, get_state_tc(port));
 }
 
 static void handle_device_access(int port)

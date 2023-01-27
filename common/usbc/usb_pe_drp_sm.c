@@ -1787,7 +1787,7 @@ static void print_current_state(const int port)
 		CPRINTS_L1("C%d: %s%s", port,
 			   pe_state_names[get_state_pe(port)], mode);
 	else
-		CPRINTS("C%d: pe-st%d", port, get_state_pe(port));
+		CPRINTS_L1("C%d: pe-st%d", port, get_state_pe(port));
 }
 
 static void send_source_cap(int port)
