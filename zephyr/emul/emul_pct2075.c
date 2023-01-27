@@ -100,7 +100,7 @@ static int pct2075_emul_init(const struct emul *emul,
 		},                                                   \
 	}; \
 	EMUL_DT_INST_DEFINE(n, pct2075_emul_init, &pct2075_data_##n,   \
-			    &common_cfg_##n, &i2c_common_emul_api)
+			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_PCT2075_EMUL)
 

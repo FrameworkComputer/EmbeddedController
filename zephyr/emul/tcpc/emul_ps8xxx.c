@@ -676,7 +676,7 @@ static int ps8xxx_emul_init(const struct emul *emul,
 		},							\
 	}; \
 	TCPCI_EMUL_DEFINE(n, ps8xxx_emul_init, &ps8xxx_emul_cfg_##n,  \
-			  &ps8xxx_emul_data_##n, &i2c_ps8xxx_emul_api)
+			  &ps8xxx_emul_data_##n, &i2c_ps8xxx_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(PS8XXX_EMUL)
 

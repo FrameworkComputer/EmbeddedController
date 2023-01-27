@@ -101,7 +101,7 @@ static int tusb1064_emul_init(const struct emul *emul,
 		.common = { .cfg = &common_cfg_##n }                   \
 	};                                                             \
 	EMUL_DT_INST_DEFINE(n, tusb1064_emul_init, &tusb1064_data_##n, \
-			    &common_cfg_##n, &i2c_common_emul_api)
+			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_TUSB1064_EMUL)
 

@@ -63,7 +63,7 @@ static int i2c_mock_init(const struct emul *emul, const struct device *parent)
 	};                                                           \
 	static struct i2c_common_emul_data i2c_mock_data_##n;        \
 	EMUL_DT_INST_DEFINE(n, i2c_mock_init, &i2c_mock_data_##n,    \
-			    &i2c_mock_cfg_##n, &i2c_common_emul_api)
+			    &i2c_mock_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_I2C_MOCK)
 

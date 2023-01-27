@@ -95,7 +95,8 @@ struct tcpc_emul_data {
 	const struct i2c_common_emul_cfg i2c_cfg;
 };
 
-#define TCPCI_EMUL_DEFINE(n, init, cfg_ptr, chip_data_ptr, bus_api)          \
+#define TCPCI_EMUL_DEFINE(n, init, cfg_ptr, chip_data_ptr, bus_api,          \
+			  backend_api)                                       \
 	static uint8_t tcpci_emul_tx_buf_##n[128];                           \
 	static struct tcpci_emul_msg tcpci_emul_tx_msg_##n = {               \
 		.buf = tcpci_emul_tx_buf_##n,                                \
@@ -123,7 +124,8 @@ struct tcpc_emul_data {
 			.addr = DT_INST_REG_ADDR(n),                       \
 		},                                                         \
 	}; \
-	EMUL_DT_INST_DEFINE(n, init, &tcpc_emul_data_##n, cfg_ptr, bus_api)
+	EMUL_DT_INST_DEFINE(n, init, &tcpc_emul_data_##n, cfg_ptr, bus_api,  \
+			    backend_api)
 
 /** Response from TCPCI specific device operations */
 enum tcpci_emul_ops_resp {

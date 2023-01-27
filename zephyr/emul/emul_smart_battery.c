@@ -885,7 +885,7 @@ DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_VALIDATE_STRING_PROPS_SIZE)
 		.addr = DT_INST_REG_ADDR(n),                          \
 	};                                                            \
 	EMUL_DT_INST_DEFINE(n, sbat_emul_init, &sbat_emul_data_##n,   \
-			    &sbat_emul_cfg_##n, &i2c_common_emul_api)
+			    &sbat_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL)
 

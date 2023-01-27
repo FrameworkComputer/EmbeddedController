@@ -153,7 +153,7 @@ struct i2c_emul_api i2c_tcpci_generic_emul_api = {
 
 #define TCPCI_GENERIC_EMUL(n)                                     \
 	TCPCI_EMUL_DEFINE(n, tcpci_generic_emul_init, NULL, NULL, \
-			  &i2c_tcpci_generic_emul_api)
+			  &i2c_tcpci_generic_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(TCPCI_GENERIC_EMUL)
 

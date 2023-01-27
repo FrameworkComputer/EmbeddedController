@@ -293,7 +293,8 @@ void lis2dw12_emul_clear_accel_reading(const struct emul *emul)
 		},                                                        \
 	}; \
 	EMUL_DT_INST_DEFINE(n, emul_lis2dw12_init, &lis2dw12_emul_data_##n, \
-			    &lis2dw12_emul_cfg_##n, &i2c_common_emul_api)
+			    &lis2dw12_emul_cfg_##n, &i2c_common_emul_api,   \
+			    NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_LIS2DW12)
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

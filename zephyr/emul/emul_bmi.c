@@ -1105,7 +1105,7 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 		.addr = DT_INST_REG_ADDR(n),                         \
 	};                                                           \
 	EMUL_DT_INST_DEFINE(n, bmi_emul_init, &bmi_emul_data_##n,    \
-			    &bmi_emul_cfg_##n, &i2c_common_emul_api)
+			    &bmi_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL)
 

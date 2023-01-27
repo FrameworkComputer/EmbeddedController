@@ -105,7 +105,7 @@ static int basic_i2c_device_init(const struct emul *emul,
 	};                                                                \
 	EMUL_DT_INST_DEFINE(n, basic_i2c_device_init,                     \
 			    &basic_i2c_device_data_##n, &common_cfg_##n,  \
-			    &i2c_common_emul_api)
+			    &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_BASIC_I2C_DEVICE_EMUL);
 

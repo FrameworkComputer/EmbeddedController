@@ -146,7 +146,7 @@ struct i2c_emul_api i2c_anx7447_emul_api = {
 
 #define ANX7447_EMUL(n)                                     \
 	TCPCI_EMUL_DEFINE(n, anx7447_emul_init, NULL, NULL, \
-			  &i2c_anx7447_emul_api)
+			  &i2c_anx7447_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(ANX7447_EMUL)
 

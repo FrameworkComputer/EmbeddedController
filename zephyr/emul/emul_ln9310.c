@@ -505,7 +505,7 @@ static int emul_ln9310_init(const struct emul *emul,
 		.addr = DT_INST_REG_ADDR(n),                                     \
 	};                                                                       \
 	EMUL_DT_INST_DEFINE(n, emul_ln9310_init, &ln9310_emul_data_##n,          \
-			    &ln9310_emul_cfg_##n, &i2c_common_emul_api)
+			    &ln9310_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_LN9310)
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

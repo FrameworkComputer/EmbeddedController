@@ -348,7 +348,7 @@ static int emul_sn5s330_init(const struct emul *emul,
 		},                                                             \
 	}; \
 	EMUL_DT_INST_DEFINE(n, emul_sn5s330_init, &sn5s330_emul_data_##n,        \
-			    &sn5s330_emul_cfg_##n, &i2c_common_emul_api)
+			    &sn5s330_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_SN5S330)
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
