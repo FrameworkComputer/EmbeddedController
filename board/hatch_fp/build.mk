@@ -66,6 +66,7 @@ test-list-y=\
        system_is_locked \
        timer \
        timer_dos \
+       tpm_seed_clear \
        utils \
        utils_str \
 
