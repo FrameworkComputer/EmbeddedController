@@ -163,6 +163,7 @@ void pd_prepare_sysjump(void)
 #endif /* CONFIG_ZEPHYR */
 }
 
+#ifdef CONFIG_USB_PD_DP_MODE
 /*
  * This algorithm defaults to choosing higher pin config over lower ones in
  * order to prefer multi-function if desired.
@@ -226,6 +227,7 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 
 	return 1 << get_next_bit(&pin_caps);
 }
+#endif /* CONFIG_USB_PD_DP_MODE */
 
 struct svdm_amode_data *pd_get_amode_data(int port, enum tcpci_msg_type type,
 					  uint16_t svid)
@@ -783,6 +785,7 @@ bool is_active_cable_element_retimer(int port)
 	       disc->identity.product_t2.a2_rev30.active_elem == ACTIVE_RETIMER;
 }
 
+#ifdef CONFIG_USB_PD_DP_MODE
 __overridable void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
@@ -1040,6 +1043,7 @@ __overridable void svdm_exit_dp_mode(int port)
 		baseboard_mst_enable_control(port, 0);
 #endif
 }
+#endif /* CONFIG_USB_PD_DP_MODE */
 
 #ifdef CONFIG_USB_PD_TCPMV1
 __overridable int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
@@ -1104,6 +1108,7 @@ __overridable int svdm_tbt_compat_attention(int port, uint32_t *payload)
  * configuration to Device Policy Manager.
  */
 const struct svdm_amode_fx supported_modes[] = {
+#ifdef CONFIG_USB_PD_DP_MODE
 	{
 		.svid = USB_SID_DISPLAYPORT,
 		.enter = &svdm_enter_dp_mode,
@@ -1113,6 +1118,7 @@ const struct svdm_amode_fx supported_modes[] = {
 		.attention = &svdm_dp_attention,
 		.exit = &svdm_exit_dp_mode,
 	},
+#endif /* CONFIG_USB_PD_DP_MODE */
 #ifdef CONFIG_USB_PD_TCPMV1
 	{
 		.svid = USB_VID_GOOGLE,
@@ -1136,7 +1142,7 @@ const struct svdm_amode_fx supported_modes[] = {
 };
 const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 
-#ifdef CONFIG_CMD_MFALLOW
+#if defined(CONFIG_CMD_MFALLOW)
 static int command_mfallow(int argc, const char **argv)
 {
 	char *e;

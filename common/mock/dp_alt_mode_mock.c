@@ -29,8 +29,3 @@ void mock_dp_alt_mode_reset(void)
 {
 	/* Nothing to do right now, but in the future ... */
 }
-
-void dp_init(int port)
-{
-	CPRINTS("C%d: DP init", port);
-}

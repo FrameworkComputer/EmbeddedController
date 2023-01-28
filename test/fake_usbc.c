@@ -270,14 +270,6 @@ const char *pd_get_task_state_name(int port)
 }
 #endif /* CONFIG_USB_DRP_ACC_TRYSRC */
 
-void dp_init(int port)
-{
-}
-
-void dp_vdm_acked(int port, int cmd)
-{
-}
-
 void dpm_init(int port)
 {
 }

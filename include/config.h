@@ -4805,6 +4805,9 @@
 /* Enable the encoding of msg SOP* in bits 31-28 of 32-bit msg header type */
 #undef CONFIG_USB_PD_DECODE_SOP
 
+/* Enable to support DisplayPort mode from the EC */
+#undef CONFIG_USB_PD_DP_MODE
+
 /*
  * The USB4 specification defines compatibility support for USB4 products to
  * interact with existing Thunderbolt 3 products. Enable this config to enter
@@ -5921,6 +5924,15 @@
 #if !defined(CONFIG_USB_PD_ALT_MODE_DFP)
 #error CONFIG_USB_PD_ALT_MODE_DFP must be enabled for USB4 mode support
 #endif
+#endif
+
+/******************************************************************************/
+/*
+ * If CONFIG_USB_PD_ALT_MODE_DFP is set and this isn't a zephyr build (which
+ * already did its preprocessing earlier), then enable DP Mode by default
+ */
+#if defined(CONFIG_USB_PD_ALT_MODE_DFP) && !defined(CONFIG_ZEPHYR)
+#define CONFIG_USB_PD_DP_MODE
 #endif
 
 /******************************************************************************/

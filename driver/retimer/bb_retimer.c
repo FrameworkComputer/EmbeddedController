@@ -432,6 +432,8 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 	 * Bit 8: DP_CONNECTION
 	 * 0 – No DP connection
 	 * 1 – DP connected
+	 *
+	 * TODO: Refactor if CONFIG_USB_PD_VDM_AP_CONTROL is supported
 	 */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		set_retimer_con |= BB_RETIMER_DP_CONNECTION;

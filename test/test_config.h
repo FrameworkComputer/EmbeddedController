@@ -451,6 +451,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_DISCHARGE_GPIO
 #undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_DP_MODE
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif
@@ -475,6 +476,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_DISCHARGE_GPIO
 #undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_DP_MODE
 #define CONFIG_USBC_SS_MUX
 #define I2C_PORT_HOST_TCPC 0
 #define CONFIG_CHARGE_MANAGER
@@ -551,6 +553,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_TEST_USB_PE_SM
 #define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_DP_MODE
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USB_PID 0x5036

@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#ifdef CONFIG_USB_PD_DP_MODE
 /*
  * Initialize DP state for the specified port.
  *
@@ -88,4 +89,40 @@ void dp_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd);
 enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 					    uint32_t *vdm);
 
+#else /* CONFIG_USB_PD_DP_MODE */
+static inline void dp_init(int port)
+{
+}
+
+static inline bool dp_is_active(int port)
+{
+	return false;
+}
+
+static inline bool dp_is_idle(int port)
+{
+	return true;
+}
+
+static inline bool dp_entry_is_done(int port)
+{
+	return false;
+}
+
+static inline void dp_vdm_acked(int port, enum tcpci_msg_type type,
+				int vdo_count, uint32_t *vdm)
+{
+}
+
+static inline void dp_vdm_naked(int port, enum tcpci_msg_type type,
+				uint8_t vdm_cmd)
+{
+}
+
+static inline enum dpm_msg_setup_status
+dp_setup_next_vdm(int port, int *vdo_count, uint32_t *vdm)
+{
+	return MSG_SETUP_ERROR;
+}
+#endif /* CONFIG_USB_PD_DP_MODE */
 #endif /* __CROS_EC_USB_DP_ALT_MODE_H */

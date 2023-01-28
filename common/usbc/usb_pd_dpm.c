@@ -283,27 +283,20 @@ enum ec_status pd_request_enter_mode(int port, enum typec_mode mode)
 				       DPM_FLAG_ENTER_USB4))
 		return EC_RES_BUSY;
 
-	switch (mode) {
-	case TYPEC_MODE_DP:
+	if (IS_ENABLED(CONFIG_USB_PD_DP_MODE) && mode == TYPEC_MODE_DP) {
 		if (dp_is_idle(port))
 			dp_init(port);
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_DP);
-		break;
-#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
-	case TYPEC_MODE_TBT:
+	} else if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
+		   mode == TYPEC_MODE_TBT) {
 		/* TODO(b/235984702#comment21): Refactor alt mode modules
 		 * to better support mode reentry. */
 		if (dp_is_idle(port))
 			dp_init(port);
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_TBT);
-		break;
-#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
-#ifdef CONFIG_USB_PD_USB4
-	case TYPEC_MODE_USB4:
+	} else if (IS_ENABLED(CONFIG_USB_PD_USB4) && mode == TYPEC_MODE_USB4) {
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_USB4);
-		break;
-#endif
-	default:
+	} else {
 		return EC_RES_INVALID_PARAM;
 	}
 
