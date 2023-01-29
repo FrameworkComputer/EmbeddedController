@@ -81,11 +81,14 @@ const struct i2c_port_t i2c_ports[] = {
 	  .scl = GPIO_EC_I2C_EEPROM_SCL,
 	  .sda = GPIO_EC_I2C_EEPROM_SDA },
 
+#ifndef BOARD_DIBBI
 	{ .name = "battery",
 	  .port = I2C_PORT_BATTERY,
 	  .kbps = 100,
 	  .scl = GPIO_EC_I2C_BATTERY_SCL,
 	  .sda = GPIO_EC_I2C_BATTERY_SDA },
+#endif
+
 #if defined(HAS_TASK_MOTIONSENSE) || defined(BOARD_SHOTZO)
 	{ .name = "sensor",
 	  .port = I2C_PORT_SENSOR,

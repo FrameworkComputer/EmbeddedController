@@ -40,7 +40,8 @@ void pd_power_supply_reset(int port)
 		return;
 
 	/* Disable VBUS source */
-	gpio_set_level(GPIO_EN_USB_C0_VBUS, 0);
+	/* TODO(b/267742066): Actually disable VBUS */
+	/* gpio_set_level(GPIO_EN_USB_C0_VBUS, 0); */
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -49,10 +50,12 @@ void pd_power_supply_reset(int port)
 int pd_set_power_supply_ready(int port)
 {
 	/* Disable charging */
-	gpio_set_level(GPIO_EN_PPVAR_USBC_ADP_L, 1);
+	/* TODO(b/267742066): Actually disable charging */
+	/* gpio_set_level(GPIO_EN_PPVAR_USBC_ADP_L, 1); */
 
 	/* Enable VBUS source */
-	gpio_set_level(GPIO_EN_USB_C0_VBUS, 1);
+	/* TODO(b/267742066): Actually enable VBUS */
+	/* gpio_set_level(GPIO_EN_USB_C0_VBUS, 1); */
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -65,5 +68,5 @@ __override int pd_snk_is_vbus_provided(int port)
 	if (port != CHARGE_PORT_TYPEC0)
 		return 0;
 
-	return gpio_get_level(GPIO_USBC_ADP_PRESENT_L);
+	return tcpm_check_vbus_level(port, VBUS_PRESENT);
 }

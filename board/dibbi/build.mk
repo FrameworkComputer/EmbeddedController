@@ -10,5 +10,6 @@ CHIP:=it83xx
 CHIP_FAMILY:=it8320
 CHIP_VARIANT:=it8320dx
 BASEBOARD:=dedede
+BOARD:=dibbi
 
 board-y=board.o led.o usb_pd_policy.o
