@@ -13,6 +13,7 @@ properties:
     enum:
       - "aec,5477109"
       - "atl,cfd72"
+      - "bms-gf,cr50"
       - "byd,l22b3pg0"
       - "byd,wv3k8"
       - "cdt,c340152"
