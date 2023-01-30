@@ -22,6 +22,7 @@
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/sys/printk.h>
 
+static struct k_timer timer;
 static void console_allow_sleep(struct k_timer *timer)
 {
 	pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
@@ -49,7 +50,6 @@ void ec_app_main(void)
 	}
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_BOOT_NO_SLEEP)) {
-		struct k_timer timer;
 		k_timeout_t duration =
 			K_MSEC(CONFIG_PLATFORM_EC_BOOT_NO_SLEEP_MS);
 
