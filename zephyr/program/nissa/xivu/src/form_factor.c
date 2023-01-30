@@ -22,22 +22,34 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-static bool use_alt_sensor;
-static bool use_alt_lid_accel;
+enum motionsense_type {
+	motion_none = 0,
+	motion_bmi323,
+	motion_lsm6dso,
+};
+
+enum lid_accel_type {
+	lid_none = 0,
+	lid_bma422,
+	lid_lis2dw12,
+};
+
+static int use_sensor = motion_bmi323;
+static int use_lid_accel = lid_bma422;
 
 void motion_interrupt(enum gpio_signal signal)
 {
-	if (use_alt_sensor)
+	if (use_sensor == motion_bmi323)
 		bmi3xx_interrupt(signal);
-	else
+	else if (use_sensor == motion_lsm6dso)
 		lsm6dso_interrupt(signal);
 }
 
 void lid_accel_interrupt(enum gpio_signal signal)
 {
-	if (use_alt_lid_accel)
+	if (use_lid_accel == lid_bma422)
 		bma4xx_interrupt(signal);
-	else
+	else if (use_lid_accel == lid_lis2dw12)
 		lis2dw12_interrupt(signal);
 }
 
@@ -45,33 +57,42 @@ static void form_factor_init(void)
 {
 	if (cros_cbi_ssfc_check_match(
 		    CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_bmi323)))) {
-		use_alt_sensor = true;
+		use_sensor = motion_bmi323;
 		MOTIONSENSE_ENABLE_ALTERNATE(alt_base_accel);
 		MOTIONSENSE_ENABLE_ALTERNATE(alt_base_gyro);
 		ccprints("BASE ACCEL IS BMI323");
 	} else if (cros_cbi_ssfc_check_match(CBI_SSFC_VALUE_ID(
 			   DT_NODELABEL(base_sensor_lsm6dso)))) {
-		use_alt_sensor = false;
+		use_sensor = motion_lsm6dso;
 		ccprints("BASE ACCEL IS LSM6DSO");
 	} else {
-		use_alt_sensor = false;
+		use_sensor = motion_none;
 		ccprints("no motionsense");
 	}
 
 	if (cros_cbi_ssfc_check_match(
 		    CBI_SSFC_VALUE_ID(DT_NODELABEL(lid_sensor_bma422)))) {
-		use_alt_lid_accel = true;
+		use_lid_accel = lid_bma422;
 		MOTIONSENSE_ENABLE_ALTERNATE(alt_lid_accel);
 		ccprints("LID SENSOR IS BMA422");
 	} else if (cros_cbi_ssfc_check_match(CBI_SSFC_VALUE_ID(
 			   DT_NODELABEL(lid_sensor_lis2dw12)))) {
-		use_alt_lid_accel = false;
+		use_lid_accel = lid_lis2dw12;
 		ccprints("LID SENSOR IS LIS2DW12");
 	} else {
-		use_alt_lid_accel = false;
+		use_lid_accel = lid_none;
 		ccprints("no lid sensor");
 	}
 
-	motion_sensors_check_ssfc();
+	if (use_sensor && use_lid_accel) {
+		motion_sensors_check_ssfc();
+	} else {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
+		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_imu_int_l),
+				      GPIO_DISCONNECTED);
+		ccprints("Clamshell: disable motionsense function.");
+	}
 }
 DECLARE_HOOK(HOOK_INIT, form_factor_init, HOOK_PRIO_POST_I2C);
