@@ -24,6 +24,11 @@
 		zephyr,flash-controller = &int_flash;
 	};
 
+	/* MEC172x Chrome design - 256KB code size */
+	flash0: flash@c0000 {
+		reg = <0x000C0000 0x40000>;
+	};
+
 	named-pwms {
 		compatible = "named-pwms";
 	};
