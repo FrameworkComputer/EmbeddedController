@@ -90,4 +90,5 @@ enum pixart_pct3854_regs {
 };
 #define TOUCHPAD_I2C_HID_DESCRIPTOR 0x0020
 void set_ps2_mouse_emulation(bool disable);
+void tp_int_count_clear(void);
 #endif	/* __CROS_EC_PS2MOUSE_H */
