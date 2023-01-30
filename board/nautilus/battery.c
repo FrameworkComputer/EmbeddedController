@@ -32,7 +32,7 @@ static enum battery_present batt_pres_prev = BP_NOT_SURE;
 #define CHARGING_CURRENT_MA_SAFE 1500
 
 static const struct battery_info info = {
-	.voltage_max = 8700,
+	.voltage_max = 8600,
 	.voltage_normal = 7700,
 	.voltage_min = 6000,
 	/* Pre-charge values. */
