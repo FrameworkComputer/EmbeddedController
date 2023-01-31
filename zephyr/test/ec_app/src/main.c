@@ -6,7 +6,9 @@
 #include "ec_app_main.h"
 #include "hooks.h"
 #include "task.h"
+#include "timer.h"
 
+#include <zephyr/pm/policy.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
@@ -98,6 +100,17 @@ ZTEST(ec_app_tests, test_start_ec_tasks)
 	zassert_equal(task_start_called(), 1, "Tasks did not start.");
 }
 #endif
+
+ZTEST(ec_app_tests, test_ec_boot_sleep_disable)
+{
+#ifdef CONFIG_PLATFORM_EC_BOOT_NO_SLEEP_MS
+	zassert_true(pm_policy_state_lock_is_active(PM_STATE_SUSPEND_TO_IDLE,
+						    PM_ALL_SUBSTATES));
+	k_msleep(2 * CONFIG_PLATFORM_EC_BOOT_NO_SLEEP_MS);
+#endif
+	zassert_false(pm_policy_state_lock_is_active(PM_STATE_SUSPEND_TO_IDLE,
+						     PM_ALL_SUBSTATES));
+}
 
 /* Does setup for all of the test cases. */
 void *ec_app_setup(void)
