@@ -470,6 +470,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_OCP
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_DFP
                                                 "${PLATFORM_EC}/common/usb_pd_alt_mode_dfp.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DISCOVERY
+                                                "${PLATFORM_EC}/common/usb_pd_discovery.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_UFP
                                                 "${PLATFORM_EC}/common/usb_pd_alt_mode_ufp.c")
 

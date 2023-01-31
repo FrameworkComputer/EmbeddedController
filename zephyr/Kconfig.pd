@@ -225,6 +225,7 @@ config PLATFORM_EC_USB_PD_VDM_AP_CONTROL
 config PLATFORM_EC_USB_PD_ALT_MODE_DFP
 	bool "Downward Facing Port support"
 	default y
+	depends on PLATFORM_EC_USB_PD_DISCOVERY
 	help
 	  Enable support for USB Power Delivery alternate mode of Downward
 	  Facing Port.
@@ -242,6 +243,14 @@ config PLATFORM_EC_USB_PD_ALT_MODE_UFP
 	  Downstream Facing Port (DFP) role. Enable this option to support
 	  USB4 and ThunderBolt operation when the Chromium OS data role
 	  resolves to the UFP role.
+
+config PLATFORM_EC_USB_PD_DISCOVERY
+	bool "Enable EC to direct Discover VDMs"
+	default y
+	help
+	  This enables support for the EC probing and storing the various
+	  partner discovery messages (DiscoverIdentity, DiscoverModes,
+	  DiscoverSVIDs).
 
 config PLATFORM_EC_USB_PD_USB32_DRD
 	bool "Port is capable of operating as a USB3.2 device"
