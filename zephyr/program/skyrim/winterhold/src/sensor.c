@@ -24,7 +24,7 @@ void base_accel_interrupt(enum gpio_signal signal)
 		bmi3xx_interrupt(signal);
 	else if (val == 1)
 		lis2dw12_interrupt(signal);
-	else if (val == 2) {
+	else if (val >= 2) {
 		if (fw_val == FW_BASE_BMI323)
 			bmi3xx_interrupt(signal);
 		else if (fw_val == FW_BASE_LIS2DW12)
@@ -43,7 +43,7 @@ static void motionsense_init(void)
 
 	if (ret == EC_SUCCESS && val < 1) {
 		MOTIONSENSE_ENABLE_ALTERNATE(alt_base_accel);
-	} else if (val == 2) {
+	} else if (val >= 2) {
 		if (fw_val == FW_BASE_BMI323) {
 			MOTIONSENSE_ENABLE_ALTERNATE(alt_base_accel);
 			ccprints("BASE ACCEL is BMI323");
