@@ -213,6 +213,9 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_pr_swap)
 	snk_resp = host_cmd_typec_status(TEST_USB_PORT);
 	zassert_equal(PD_ROLE_SOURCE, snk_resp.power_role,
 		      "SNK Returned power_role=%u", snk_resp.power_role);
+
+	tcpci_partner_common_handler_mask_msg(&super_fixture->partner_emul,
+					      PD_CTRL_ACCEPT, false);
 }
 
 /**
