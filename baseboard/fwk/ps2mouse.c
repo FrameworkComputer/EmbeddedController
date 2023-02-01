@@ -220,6 +220,20 @@ void touchpad_i2c_interrupt(enum gpio_signal signal)
  */
 timestamp_t last_int_time;
 int unprocessed_tp_int_count;
+
+void tp_int_count_clear(void)
+{
+	/*
+	 * The touchpad will assert the interrupt when HID driver does the HID reset,
+	 * due to the GPIO_EC_I2C_3_SDA does not have interrupt function, so the
+	 * detected_host_packet does not set to true when HID driver is working.
+	 *
+	 * If we don't clear this count every power on, EC will re-enable the touchpad
+	 * and cause the HID driver yellow bang
+	 */
+	unprocessed_tp_int_count = 0;
+}
+
 void touchpad_interrupt(enum gpio_signal signal)
 {
 	timestamp_t now = get_time();
@@ -474,6 +488,7 @@ void mouse_interrupt_handler_task(void *p)
 		if (evt & PS2MOUSE_EVT_HC_DISABLE && ec_mode_disabled == false) {
 			ec_mode_disabled = true;
 			CPRINTS("PS2M HC Disable");
+			tp_int_count_clear();
 			gpio_disable_interrupt(GPIO_SOC_TP_INT_L);
 			gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 		}
@@ -530,6 +545,7 @@ void mouse_interrupt_handler_task(void *p)
 				if (power_state == POWER_S0S3 || power_state == POWER_S5) {
 					/* Power Down */
 					set_power(true);
+					tp_int_count_clear();
 					gpio_disable_interrupt(GPIO_SOC_TP_INT_L);
 					gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 				}
