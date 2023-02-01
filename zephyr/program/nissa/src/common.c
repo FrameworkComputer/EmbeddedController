@@ -131,3 +131,14 @@ __override void board_hibernate_late(void)
 	 * a small delay, so return.
 	 */
 }
+
+#ifdef CONFIG_OCPC
+__override void board_ocpc_init(struct ocpc_data *ocpc)
+{
+	/* Ensure board has at least 2 charger chips. */
+	if (board_get_charger_chip_count() > 1) {
+		/* There's no provision to measure Isys */
+		ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
+	}
+}
+#endif
