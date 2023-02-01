@@ -51,6 +51,11 @@
 #define HAS_TASK_MAIN 1
 #endif /* CONFIG_TASK_HOSTCMD_THREAD_DEDICATED */
 
+#if (defined(CONFIG_SHELL_BACKEND_SERIAL) || \
+     defined(CONFIG_SHELL_BACKEND_DUMMY))
+#define HAS_TASK_SHELL 1
+#endif
+
 /* These non-shimmed (extra) tasks are always present */
 #define HAS_TASK_IDLE 1
 #define HAS_TASK_SYSWORKQ 1

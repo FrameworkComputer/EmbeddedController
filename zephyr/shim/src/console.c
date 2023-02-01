@@ -308,6 +308,14 @@ const struct shell *get_ec_shell(void)
 }
 #endif
 
+k_tid_t get_shell_thread(void)
+{
+	if (shell_zephyr == NULL) {
+		return NULL;
+	}
+	return shell_zephyr->thread;
+}
+
 void uart_tx_start(void)
 {
 }

@@ -81,4 +81,11 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
  */
 size_t console_buf_notify_chars(const char *s, size_t len);
 
+/**
+ * get_shell_thread() - Get the thread id for the shell backend
+ *
+ * @returns Backend shell thread id or NULL if not enabled
+ */
+k_tid_t get_shell_thread(void);
+
 #endif /* __CROS_EC_ZEPHYR_CONSOLE_SHIM_H */
