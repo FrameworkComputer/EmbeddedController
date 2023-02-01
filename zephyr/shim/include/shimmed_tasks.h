@@ -49,5 +49,6 @@
 
 /* These non-shimmed (extra) tasks are always present */
 #define HAS_TASK_IDLE 1
+#define HAS_TASK_SYSWORKQ 1
 
 #endif /* __CROS_EC_SHIMMED_TASKS_H */

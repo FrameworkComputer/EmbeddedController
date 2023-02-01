@@ -9,6 +9,7 @@
 #include <zephyr/kernel/thread.h>
 #include <zephyr/ztest.h>
 
+k_tid_t get_sysworkq_thread(void);
 k_tid_t get_idle_thread(void);
 
 /* Utility functions for finding a Zephyr thread by name */
@@ -49,6 +50,7 @@ ZTEST_USER(extra_tasks, test_sysworkq_thread_mapping)
 
 	sysworkq_thread = find_thread_by_name("sysworkq");
 	zassert_not_null(sysworkq_thread);
+	zassert_equal(sysworkq_thread, get_sysworkq_thread());
 }
 
 ZTEST_USER(extra_tasks, test_idle_thread_mapping)

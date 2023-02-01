@@ -89,9 +89,14 @@ test_export_static k_tid_t get_idle_thread(void)
 	return NULL;
 }
 
+test_export_static k_tid_t get_sysworkq_thread(void)
+{
+	return &k_sys_work_q.thread;
+}
+
 task_id_t task_get_current(void)
 {
-	if (in_deferred_context()) {
+	if (get_sysworkq_thread() == k_current_get()) {
 		return TASK_ID_SYSWORKQ;
 	}
 
@@ -364,5 +369,5 @@ inline bool in_deferred_context(void)
 	/*
 	 * Deferred calls run in the sysworkq.
 	 */
-	return (k_current_get() == &k_sys_work_q.thread);
+	return (k_current_get() == get_sysworkq_thread());
 }
