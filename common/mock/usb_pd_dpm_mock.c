@@ -17,12 +17,26 @@
 #error "Mocks should only be in the test build."
 #endif
 
+__overridable const struct svdm_response svdm_rsp = {
+	.identity = NULL,
+	.svids = NULL,
+	.modes = NULL,
+};
+
 struct mock_dpm_port_t dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_dpm_reset(void)
 {
 	/* Reset all values to 0. */
 	memset(dpm, 0, sizeof(dpm));
+}
+
+void dfp_consume_attention(int port, uint32_t *payload)
+{
+}
+
+void pd_prepare_sysjump(void)
+{
 }
 
 void dpm_init(int port)

@@ -270,6 +270,14 @@ const char *pd_get_task_state_name(int port)
 }
 #endif /* CONFIG_USB_DRP_ACC_TRYSRC */
 
+void dfp_consume_attention(int port, uint32_t *payload)
+{
+}
+
+void pd_prepare_sysjump(void)
+{
+}
+
 void dpm_init(int port)
 {
 }

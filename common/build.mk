@@ -187,7 +187,6 @@ common-$(CONFIG_USB_PD_DUAL_ROLE)+=usb_pd_dual_role.o
 common-$(CONFIG_USB_PD_HOST_CMD)+=usb_pd_host_cmd.o
 common-$(CONFIG_USB_PD_CONSOLE_CMD)+=usb_pd_console_cmd.o
 endif
-common-$(CONFIG_USB_PD_ALT_MODE_DFP)+=usb_pd_alt_mode_dfp.o
 common-$(CONFIG_USB_PD_DISCOVERY)+=usb_pd_discovery.o
 common-$(CONFIG_USB_PD_ALT_MODE_UFP)+=usb_pd_alt_mode_ufp.o
 common-$(CONFIG_USB_PD_DPS)+=dps.o

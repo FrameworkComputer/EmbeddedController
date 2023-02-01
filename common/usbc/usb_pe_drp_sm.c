@@ -591,8 +591,6 @@ static struct policy_engine {
 	int32_t vpd_vdo;
 	/* Alternate mode discovery results */
 	struct pd_discovery discovery[DISCOVERY_TYPE_COUNT];
-	/* Active alternate modes */
-	struct partner_active_modes partner_amodes[AMODE_TYPE_COUNT];
 
 	/* Partner type to send */
 	enum tcpci_msg_type tx_type;
@@ -7786,8 +7784,6 @@ void pd_dfp_mode_init(int port)
 {
 	PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
 
-	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
-
 	/* Reset the DPM and DP modules to enable alternate mode entry. */
 	dpm_mode_exit_complete(port);
 	dp_init(port);
@@ -7835,15 +7831,6 @@ pd_get_am_discovery(int port, enum tcpci_msg_type type)
 	ASSERT(type < DISCOVERY_TYPE_COUNT);
 
 	return &pe[port].discovery[type];
-}
-
-__maybe_unused struct partner_active_modes *
-pd_get_partner_active_modes(int port, enum tcpci_msg_type type)
-{
-	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
-		assert(0);
-	ASSERT(type < AMODE_TYPE_COUNT);
-	return &pe[port].partner_amodes[type];
 }
 
 __maybe_unused void pd_set_dfp_enter_mode_flag(int port, bool set)
