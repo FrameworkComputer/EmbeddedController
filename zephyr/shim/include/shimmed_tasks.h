@@ -47,4 +47,7 @@
 #define HAS_TASK_USB_MUX 1
 #endif /* CONFIG_PLATFORM_EC_USB_MUX_TASK */
 
+/* These non-shimmed (extra) tasks are always present */
+#define HAS_TASK_IDLE 1
+
 #endif /* __CROS_EC_SHIMMED_TASKS_H */

@@ -78,6 +78,17 @@ static struct task_ctx_base_data *task_get_base_data(task_id_t cros_task_id)
 	return &shimmed_tasks_data[cros_task_id];
 }
 
+test_export_static k_tid_t get_idle_thread(void)
+{
+	extern struct k_thread z_idle_threads[];
+
+	if (!IS_ENABLED(CONFIG_SMP)) {
+		return &z_idle_threads[0];
+	}
+	__ASSERT(false, "%s does not support SMP", __func__);
+	return NULL;
+}
+
 task_id_t task_get_current(void)
 {
 	if (in_deferred_context()) {
@@ -89,6 +100,10 @@ task_id_t task_get_current(void)
 		return TASK_ID_HOSTCMD;
 	}
 #endif
+
+	if (get_idle_thread() == k_current_get()) {
+		return TASK_ID_IDLE;
+	}
 
 	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
 		if (task_to_k_tid[i] == k_current_get())

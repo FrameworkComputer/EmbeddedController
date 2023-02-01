@@ -3,9 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "task.h"
+
 #include <zephyr/kernel.h>
 #include <zephyr/kernel/thread.h>
 #include <zephyr/ztest.h>
+
+k_tid_t get_idle_thread(void);
 
 /* Utility functions for finding a Zephyr thread by name */
 static k_tid_t found_thread;
@@ -53,6 +57,7 @@ ZTEST_USER(extra_tasks, test_idle_thread_mapping)
 
 	idle_thread = find_thread_by_name("idle");
 	zassert_not_null(idle_thread);
+	zassert_equal(idle_thread, get_idle_thread());
 }
 
 ZTEST_SUITE(extra_tasks, NULL, NULL, NULL, NULL, NULL);
