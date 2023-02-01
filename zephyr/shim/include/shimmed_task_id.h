@@ -225,7 +225,8 @@ enum {
 
 /*
  * Additional task IDs for features that runs on non shimmed threads,
- * task_get_current() needs to be updated to identify these ones.
+ * thread_id_to_task_id() and task_id_to_thread_id() need to be updated
+ * to identify these tasks.
  */
 /* clang-format off */
 #define CROS_EC_EXTRA_TASKS(fn)                                         \
