@@ -131,6 +131,11 @@ static void jump_to_arm_reset_vector(uint32_t addr)
 	    /* Load stack pointer */
 	    "ldr r0, [r1, 0]\n"
 	    "msr msp, r0\n"
+	    /*
+	     * Memory barrier to ensure subsequent instructions uses modified
+	     * stack pointer.
+	     */
+	    "isb\n"
 	    /* Load reset vector */
 	    "ldr r0, [r1, 4]\n"
 	    /* Jump without saving return address (would modify msp) */
