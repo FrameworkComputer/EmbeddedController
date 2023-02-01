@@ -47,6 +47,10 @@
 #define HAS_TASK_USB_MUX 1
 #endif /* CONFIG_PLATFORM_EC_USB_MUX_TASK */
 
+#ifdef CONFIG_TASK_HOSTCMD_THREAD_DEDICATED
+#define HAS_TASK_MAIN 1
+#endif /* CONFIG_TASK_HOSTCMD_THREAD_DEDICATED */
+
 /* These non-shimmed (extra) tasks are always present */
 #define HAS_TASK_IDLE 1
 #define HAS_TASK_SYSWORKQ 1

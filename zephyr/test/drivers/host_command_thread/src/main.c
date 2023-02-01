@@ -21,9 +21,6 @@
 
 #define CUSTOM_COMMAND_ID 0x0088
 
-/* Pointer to the main thread, defined in kernel/init.c */
-extern struct k_thread z_main_thread;
-
 /* Thread id of fake main thread */
 static k_tid_t fake_main_tid;
 
@@ -33,7 +30,7 @@ static int last_check_main_thread_result;
 static enum ec_status check_main_thread(struct host_cmd_handler_args *args)
 {
 	last_check_main_thread_result =
-		(k_current_get() == &z_main_thread ? 1 : -1);
+		(k_current_get() == get_main_thread() ? 1 : -1);
 	return EC_RES_SUCCESS;
 }
 
@@ -46,13 +43,13 @@ static void fake_main_thread(void *a, void *b, void *c)
 
 K_THREAD_STACK_DEFINE(fake_main_thread_stack, 4000);
 
-/* Override in_host_command_main() from shim/src/host_command.c so
+/* Override get_hostcmd_thread() from shim/src/tasks.c so
  * task_get_current() returns TASK_ID_HOSTCMD when fake main thread
  * is running.
  */
-bool in_host_command_main(void)
+k_tid_t get_hostcmd_thread(void)
 {
-	return (k_current_get() == fake_main_tid);
+	return fake_main_tid;
 }
 
 ZTEST_SUITE(host_cmd_thread, drivers_predicate_post_main, NULL, NULL, NULL,
@@ -74,11 +71,11 @@ ZTEST(host_cmd_thread, test_takeover)
 	k_msleep(500);
 
 	/* Get the name of the thread (must be done after the sleep) */
-	const char *main_thread_name = k_thread_name_get(&z_main_thread);
+	const char *main_thread_name = k_thread_name_get(get_main_thread());
 
 	/* Verify that the thread is not the hostcmd thread */
 	zassert_equal(EC_TASK_PRIORITY(EC_TASK_HOSTCMD_PRIO),
-		      k_thread_priority_get(&z_main_thread));
+		      k_thread_priority_get(get_main_thread()));
 	zassert_equal(strlen(expected_thread_name), strlen(main_thread_name));
 	zassert_mem_equal(expected_thread_name, main_thread_name,
 			  strlen(expected_thread_name));

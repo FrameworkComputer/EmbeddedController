@@ -229,7 +229,8 @@ enum {
  */
 /* clang-format off */
 #define CROS_EC_EXTRA_TASKS(fn)                                         \
-	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_MAIN, (fn(HOSTCMD)), ()) \
+	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_MAIN, (fn(HOSTCMD)),     \
+		(fn(MAIN)))                                             \
 	fn(SYSWORKQ)                                                    \
 	fn(IDLE)
 /* clang-format on */

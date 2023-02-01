@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "host_command.h"
 #include "task.h"
 
 #include <zephyr/kernel.h>
@@ -37,9 +38,11 @@ ZTEST_USER(extra_tasks, test_main_thread_mapping)
 
 	hostcmd_thread = find_thread_by_name("HOSTCMD");
 	zassert_not_null(hostcmd_thread);
+	zassert_equal(hostcmd_thread, get_hostcmd_thread());
 
 	main_thread = find_thread_by_name("main");
 	zassert_not_null(main_thread);
+	zassert_equal(main_thread, get_main_thread());
 	/* Not equal when CONFIG_TASK_HOSTCMD_THREAD_DEDICATED is set */
 	zassert_not_equal(main_thread, hostcmd_thread);
 }

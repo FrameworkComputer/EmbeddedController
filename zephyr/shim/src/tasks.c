@@ -94,17 +94,43 @@ test_export_static k_tid_t get_sysworkq_thread(void)
 	return &k_sys_work_q.thread;
 }
 
+k_tid_t get_main_thread(void)
+{
+	/* Pointer to the main thread, defined in kernel/init.c */
+	extern struct k_thread z_main_thread;
+
+	return &z_main_thread;
+}
+
+test_mockable k_tid_t get_hostcmd_thread(void)
+{
+#if IS_ENABLED(HAS_TASK_HOSTCMD)
+	if (IS_ENABLED(CONFIG_TASK_HOSTCMD_THREAD_MAIN)) {
+		return get_main_thread();
+	}
+	return task_to_k_tid[TASK_ID_HOSTCMD];
+#endif /* HAS_TASK_HOSTCMD */
+	__ASSERT(false, "HOSTCMD task is not enabled");
+	return NULL;
+}
+
 task_id_t task_get_current(void)
 {
 	if (get_sysworkq_thread() == k_current_get()) {
 		return TASK_ID_SYSWORKQ;
 	}
 
-#ifdef CONFIG_TASK_HOSTCMD_THREAD_MAIN
-	if (in_host_command_main()) {
+#if IS_ENABLED(HAS_TASK_HOSTCMD)
+	if (get_hostcmd_thread() == k_current_get()) {
 		return TASK_ID_HOSTCMD;
 	}
-#endif
+#endif /* HAS_TASK_HOSTCMD */
+
+#if IS_ENABLED(HAS_TASK_MAIN)
+	if (get_main_thread() == k_current_get()) {
+		return TASK_ID_MAIN;
+	}
+#endif /* HAS_TASK_MAIN */
 
 	if (get_idle_thread() == k_current_get()) {
 		return TASK_ID_IDLE;
