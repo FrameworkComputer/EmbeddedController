@@ -128,20 +128,17 @@ platform/ec$ ./twister -T path/to/my/tests
 
 ### Run a specific test
 ```shell
-platform/ec$ ./twister -s external/platform/ec/zephyr/test/<test dir>/<my.test.case>
+platform/ec$ ./twister -s <test dir>/<my.test.scenario>
 ```
 
 For example:
 ```shell
-platform/ec$ ./twister -s external/platform/ec/zephyr/test/drivers/drivers.default
+platform/ec$ ./twister -s drivers/drivers.default
 ```
 
-Explanation of this string: `external/` is not a path component, but rather a
-label that indicates we are running tests from outside of the Zephyr tree;
-`platform/ec/zephyr/test/` is the location of our tests relative to the first
-common parent of `ZEPHYR_BASE` and `platform/ec`; `drivers` is the directory for
-our driver tests, and `drivers.default` is a specific test scenario defined in
-that directory's `testcase.yaml` file.
+Explanation of this string: `drivers/` is the directory under `zephyr/test/`
+that contains the requested test, and `drivers.default` is the specific test
+scenario specified in that directory's `testcase.yaml` file.
 
 ### Run all tests with coverage
 
