@@ -85,7 +85,7 @@ config PLATFORM_EC_FW_RESET_VECTOR
 config PLATFORM_EC_SYSTEM_SAFE_MODE
 	bool "Enable System Safe Mode"
 	default n
-	depends on (CPU_CORTEX_M || ARCH_POSIX) && !TASK_HOSTCMD_THREAD_MAIN
+	depends on (CPU_CORTEX_M || ARCH_POSIX)
 	help
 	  This enables system safe mode for retrieving system state after
 	  a panic occurs. System safe mode only runs briefly after a panic.

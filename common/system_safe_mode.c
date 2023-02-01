@@ -26,17 +26,24 @@ static const int safe_mode_allowed_hostcmds[] = {
 	EC_CMD_GET_UPTIME_INFO
 };
 
-#ifndef CONFIG_ZEPHYR
-
-/* TODO: This function can be generalized for zephyr and legacy EC by
- * improving ec_tasks support in zephyr.
- */
-static bool task_is_safe_mode_critical(task_id_t task_id)
+bool is_task_safe_mode_critical(task_id_t task_id)
 {
 	const task_id_t safe_mode_critical_tasks[] = {
+#ifdef HAS_TASK_HOOK
 		TASK_ID_HOOKS,
+#endif
+#ifdef HAS_TASK_IDLE
 		TASK_ID_IDLE,
+#endif
+#ifdef HAS_TASK_HOSTCMD
 		TASK_ID_HOSTCMD,
+#endif
+#ifdef HAS_TASK_MAIN
+		TASK_ID_MAIN,
+#endif
+#ifdef HAS_TASK_SYSWORKQ
+		TASK_ID_SYSWORKQ,
+#endif
 	};
 	for (int i = 0; i < ARRAY_SIZE(safe_mode_critical_tasks); i++)
 		if (safe_mode_critical_tasks[i] == task_id)
@@ -44,15 +51,17 @@ static bool task_is_safe_mode_critical(task_id_t task_id)
 	return false;
 }
 
-bool current_task_is_safe_mode_critical(void)
+bool is_current_task_safe_mode_critical(void)
 {
-	return task_is_safe_mode_critical(task_get_current());
+	return is_task_safe_mode_critical(task_get_current());
 }
+
+#ifndef CONFIG_ZEPHYR
 
 int disable_non_safe_mode_critical_tasks(void)
 {
 	for (task_id_t task_id = 0; task_id < TASK_ID_COUNT; task_id++) {
-		if (!task_is_safe_mode_critical(task_id)) {
+		if (!is_task_safe_mode_critical(task_id)) {
 			task_disable_task(task_id);
 		}
 	}
@@ -108,7 +117,7 @@ int start_system_safe_mode(void)
 		return EC_ERROR_INVAL;
 	}
 
-	if (current_task_is_safe_mode_critical()) {
+	if (is_current_task_safe_mode_critical()) {
 		/* TODO: Restart critical tasks */
 		panic_printf(
 			"Fault in critical task, cannot enter system safe mode\n");

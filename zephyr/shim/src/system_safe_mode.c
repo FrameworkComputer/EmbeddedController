@@ -13,46 +13,24 @@
 #include <zephyr/kernel.h>
 #include <zephyr/kernel/thread.h>
 
-static bool thread_is_safe_mode_critical(const struct k_thread *thread)
-{
-	/* List of safe mode critical tasks */
-	static const char *safe_mode_critical_threads[] = {
-		"main",
-		"sysworkq",
-		"idle",
-		"HOSTCMD",
-	};
-	for (int i = 0; i < ARRAY_SIZE(safe_mode_critical_threads); i++)
-		if (strcmp(thread->name, safe_mode_critical_threads[i]) == 0)
-			return true;
-	return false;
-}
-
-__override bool current_task_is_safe_mode_critical(void)
-{
-	return thread_is_safe_mode_critical(k_current_get());
-}
-
-static void abort_non_critical_threads_cb(const struct k_thread *thread,
-					  void *user_data)
-{
-	ARG_UNUSED(user_data);
-
-	/*
-	 * Don't abort if thread is critical or current thread.
-	 * Current thread will be canceled automatically after returning from
-	 * exception handler.
-	 */
-	if (thread_is_safe_mode_critical(thread) || k_current_get() == thread)
-		return;
-
-	printk("Aborting thread %s\n", thread->name);
-	k_thread_abort((struct k_thread *)thread);
-}
-
 __override int disable_non_safe_mode_critical_tasks(void)
 {
-	k_thread_foreach(abort_non_critical_threads_cb, NULL);
+	for (task_id_t task_id = 0; task_id < TASK_ID_COUNT + EXTRA_TASK_COUNT;
+	     task_id++) {
+		k_tid_t thread_id = task_id_to_thread_id(task_id);
+
+		/* Don't abort the thread when:
+		 * 1) The task to thread lookup failed
+		 * 2) It's the current thread since it will be aborted
+		 *    automatically by the Zephyr kernel.
+		 * 3) The thread is safe mode critical
+		 */
+		if (thread_id == NULL || thread_id == k_current_get() ||
+		    is_task_safe_mode_critical(task_id)) {
+			continue;
+		}
+		k_thread_abort(thread_id);
+	}
 	return EC_SUCCESS;
 }
 

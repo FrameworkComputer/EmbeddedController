@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_SYSTEM_SAFE_MODE_H
 #define __CROS_EC_SYSTEM_SAFE_MODE_H
 
+#include "task.h"
+
 /**
  * Checks if running in system safe mode
  *
@@ -21,11 +23,11 @@ bool system_is_in_safe_mode(void);
 bool command_is_allowed_in_safe_mode(int command);
 
 /**
- * Checks if current task critical for system safe mode
+ * Checks if a task is critical for system safe mode
  *
- * @return True if current task is safe mode critical
+ * @return True if task is safe mode critical
  */
-bool current_task_is_safe_mode_critical(void);
+bool is_task_safe_mode_critical(task_id_t task_id);
 
 /**
  * Disables tasks that are not critical for safe mode
