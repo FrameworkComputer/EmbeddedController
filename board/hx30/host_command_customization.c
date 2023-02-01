@@ -187,6 +187,7 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	 */
 	s5_power_up_control(1);
 	update_me_change(0);
+	tp_int_count_clear();
 
 	/* clear ENTER_S4/S5 flag */
 	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
