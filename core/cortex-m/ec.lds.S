@@ -389,6 +389,22 @@ SECTIONS
 	#define INIT_ROM_LMA	ORIGIN(ROM_RESIDENT_VMA)
 #endif
 
+	/*
+	 * This SRAM section is not used by common/ or chip/stm32/, but
+	 * available if particular boards want to move the vector table
+	 * into SRAM for performance or mutability.
+	 */
+	.vtable : {
+		/*
+		 * Vector table must be at the base of SRAM. The vector
+		 * table section contains a RAM copy of the vector table used on
+		 * STM chips for relocating the vector table.
+		 */
+		. = ALIGN(8);
+		*(.bss.vector_table)
+		. = ALIGN(8);
+	} > IRAM
+
 #ifdef CONFIG_PRESERVE_LOGS
 	.preserve_logs(NOLOAD) : {
 		. = ALIGN(8);
