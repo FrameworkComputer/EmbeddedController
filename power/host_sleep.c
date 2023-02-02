@@ -115,6 +115,16 @@ void sleep_notify_transition(enum sleep_notify_type check_state, int hook_id)
 	sleep_set_notify(SLEEP_NOTIFY_NONE);
 }
 
+#ifdef CONFIG_POWERSEQ_S0IX_COUNTER
+atomic_t s0ix_counter;
+
+static void handle_chipset_suspend(void)
+{
+	atomic_inc(&s0ix_counter);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, handle_chipset_suspend, HOOK_PRIO_LAST);
+#endif /* CONFIG_POWERSEQ_S0IX_COUNTER */
+
 #ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
 static uint16_t sleep_signal_timeout;

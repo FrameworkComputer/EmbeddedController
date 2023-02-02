@@ -48,6 +48,15 @@ config PLATFORM_EC_POWER_SLEEP_FAILURE_DETECTION
 	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
 	  command.
 
+config PLATFORM_EC_POWERSEQ_S0IX_COUNTER
+	bool "Enable S0ix counter"
+	depends on PLATFORM_EC_POWERSEQ_S0IX
+	depends on PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	default y
+	help
+	  Enables counter which increases at every transitions to S0ix state.
+	  Counter can be read via host command.
+
 config PLATFORM_EC_HOSTCMD_AP_RESET
 	bool "Host command: EC_CMD_AP_RESET"
 	depends on PLATFORM_EC_HOSTCMD

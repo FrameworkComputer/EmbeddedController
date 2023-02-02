@@ -400,6 +400,11 @@ void power_reset_host_sleep_state(void);
 #endif /* CONFIG_POWER_S0IX */
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 
+#if defined(CONFIG_AP_PWRSEQ_S0IX_COUNTER) || \
+	defined(CONFIG_POWERSEQ_S0IX_COUNTER)
+extern atomic_t s0ix_counter;
+#endif
+
 /**
  * Board specific implementation to enable/disable the PP5000 rail.
  *
