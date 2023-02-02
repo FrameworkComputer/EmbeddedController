@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/amd_stb.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -72,6 +73,12 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		CPRINTS("Can't reset: SOC is off");
 		return;
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_AMD_STB_DUMP) &&
+	    amd_stb_dump_in_progress()) {
+		CPRINTS("STB dump still in progress during reset");
+		amd_stb_dump_finish();
 	}
 
 	report_ap_reset(reason);
@@ -268,6 +275,9 @@ __override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 		get_lazy_wake_mask(POWER_S0ix, &sleep_wake_mask);
 		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, sleep_wake_mask);
 	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_AMD_STB_DUMP))
+		amd_stb_dump_trigger();
 
 	CPRINTS("Warning: Detected sleep hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);

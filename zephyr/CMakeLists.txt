@@ -183,6 +183,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM
                                                 "${PLATFORM_EC}/driver/accelgyro_lsm6dsm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_FIFO
                                                 "${PLATFORM_EC}/common/motion_sense_fifo.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STB_DUMP
+                                                "${PLATFORM_EC}/driver/amd_stb.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BODY_DETECTION
                                                 "${PLATFORM_EC}/common/body_detection.c")
 zephyr_library_sources_ifdef(CONFIG_NAMED_ADC_CHANNELS
