@@ -10,3 +10,7 @@ zephyr_library_sources(
 		"src/keyboard.c"
 )
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/fan.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	"src/keyboard.c"
+	"src/keyboard_customization.c"
+)
