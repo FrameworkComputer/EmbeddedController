@@ -20,6 +20,7 @@
 #include "usb_dp_alt_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_dp_hpd_gpio.h"
 #include "usb_pd_tcpm.h"
 
 #include <stdbool.h>
@@ -33,11 +34,6 @@
 #define CPRINTS(format, args...)
 #endif
 
-/* TODO(b/270409742): Remove this macro system for determining the GPIO */
-#ifndef PORT_TO_HPD
-#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
-#endif /* PORT_TO_HPD */
-
 /*
  * Note: the following DP-related variables must be kept as-is since
  * some boards are using them in their board-specific code.
@@ -48,6 +44,10 @@
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.  Since this is used in overridable functions, this
  * has to be global.
+ *
+ * Note: This variable is also defined in the AP VDM control module and it
+ * is assumed that the two will never be compiled together, as the modules are
+ * mutually exclusive.
  */
 uint64_t svdm_hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -565,19 +565,6 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
-#if defined(CONFIG_USB_PD_DP_HPD_GPIO) && \
-	!defined(CONFIG_USB_PD_DP_HPD_GPIO_CUSTOM)
-void svdm_set_hpd_gpio(int port, int en)
-{
-	gpio_set_level(PORT_TO_HPD(port), en);
-}
-
-int svdm_get_hpd_gpio(int port)
-{
-	return gpio_get_level(PORT_TO_HPD(port));
-}
-#endif
-
 __overridable void svdm_dp_post_config(int port)
 {
 	mux_state_t mux_mode = svdm_dp_get_mux_mode(port);
@@ -591,12 +578,7 @@ __overridable void svdm_dp_post_config(int port)
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
 
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	svdm_set_hpd_gpio(port, 1);
-
-	/* set the minimum time delay (2ms) for the next HPD IRQ */
-	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
+	dp_hpd_gpio_set(port, true, false);
 
 	usb_mux_hpd_update(port,
 			   USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ_DEASSERTED);
@@ -611,9 +593,6 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 {
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	int cur_lvl = svdm_get_hpd_gpio(port);
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 	mux_state_t mux_state;
 
 	dp_status[port] = payload[1];
@@ -633,33 +612,8 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 		return 1;
 	}
 
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	if (irq && !lvl) {
-		/*
-		 * IRQ can only be generated when the level is high, because
-		 * the IRQ is signaled by a short low pulse from the high level.
-		 */
-		CPRINTF("ERR:HPD:IRQ&LOW\n");
-		return 0; /* nak */
-	}
-
-	if (irq && cur_lvl) {
-		uint64_t now = get_time().val;
-		/* wait for the minimum spacing between IRQ_HPD if needed */
-		if (now < svdm_hpd_deadline[port])
-			usleep(svdm_hpd_deadline[port] - now);
-
-		/* generate IRQ_HPD pulse */
-		svdm_set_hpd_gpio(port, 0);
-		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
-		svdm_set_hpd_gpio(port, 1);
-	} else {
-		svdm_set_hpd_gpio(port, lvl);
-	}
-
-	/* set the minimum time delay (2ms) for the next HPD IRQ */
-	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
+	if (dp_hpd_gpio_set(port, lvl, irq) != EC_SUCCESS)
+		return 0;
 
 	mux_state = (lvl ? USB_PD_MUX_HPD_LVL : USB_PD_MUX_HPD_LVL_DEASSERTED) |
 		    (irq ? USB_PD_MUX_HPD_IRQ : USB_PD_MUX_HPD_IRQ_DEASSERTED);
@@ -678,9 +632,7 @@ __overridable void svdm_exit_dp_mode(int port)
 {
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	svdm_set_hpd_gpio(port, 0);
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
+	dp_hpd_gpio_set(port, false, false);
 	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
 					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 #ifdef USB_PD_PORT_TCPC_MST
