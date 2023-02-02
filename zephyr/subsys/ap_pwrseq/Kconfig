@@ -169,6 +169,15 @@ config AP_PWRSEQ_S0IX_ERROR_RECOVERY
 	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
 	  command.
 
+config AP_PWRSEQ_S0IX_COUNTER
+	bool "Enable S0ix counter"
+	depends on AP_PWRSEQ_S0IX
+	depends on AP_PWRSEQ_HOST_SLEEP
+	default y
+	help
+	  Enables counter which increases at every transitions to S0ix state.
+	  Counter can be read via host command.
+
 config AP_PWRSEQ_DEBUG_MODE_COMMAND
 	bool "Console commands to enable/disable AP debug mode"
 	depends on X86_NON_DSX_PWRSEQ
