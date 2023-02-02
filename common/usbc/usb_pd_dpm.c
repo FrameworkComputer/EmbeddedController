@@ -26,6 +26,7 @@
 #include "usb_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_ap_vdm_control.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
@@ -54,23 +55,6 @@ static enum debug_level dpm_debug_level = DEBUG_LEVEL_1;
 #define CPRINTS(format, args...)
 #endif
 
-/* Max Attention length is header + 1 VDO */
-#define DPM_ATTENTION_MAX_VDO 2
-
-/*
- * VDM:Attention queue for boards using AP-driven VDMs
- *
- * Depth must be a power of 2, which is normally enforced by the queue init
- * code, but must be manually enforced here.
- */
-#define DPM_ATTENTION_QUEUE_DEPTH 8
-BUILD_ASSERT(POWER_OF_TWO(DPM_ATTENTION_QUEUE_DEPTH));
-
-struct attention_queue_entry {
-	int objects;
-	uint32_t attention[DPM_ATTENTION_MAX_VDO];
-};
-
 static struct {
 	/* state machine context */
 	struct sm_ctx ctx;
@@ -80,15 +64,6 @@ static struct {
 	enum tcpci_msg_type req_type;
 	mutex_t vdm_req_mutex;
 	enum dpm_pd_button_state pd_button_state;
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-	uint32_t vdm_reply[VDO_MAX_SIZE];
-	uint8_t vdm_reply_cnt;
-	enum tcpci_msg_type vdm_reply_type;
-	struct queue attention_queue;
-	struct queue_state queue_state;
-	struct attention_queue_entry queue_buffer[DPM_ATTENTION_QUEUE_DEPTH];
-	mutex_t queue_lock;
-#endif
 } dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 __overridable const struct svdm_response svdm_rsp = {
@@ -175,36 +150,12 @@ static int init_dpm_mutexes(const struct device *dev)
 
 	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		k_mutex_init(&dpm[port].vdm_req_mutex);
-
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-		k_mutex_init(&dpm[port].queue_lock);
-#endif
 	}
 
 	return 0;
 }
 SYS_INIT(init_dpm_mutexes, POST_KERNEL, 50);
 #endif /* CONFIG_ZEPHYR */
-
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-static void init_attention_queue_structs(void)
-{
-	int i;
-
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		dpm[i].attention_queue.state = &dpm[i].queue_state;
-		dpm[i].attention_queue.policy = &queue_policy_null;
-		dpm[i].attention_queue.buffer_units = DPM_ATTENTION_QUEUE_DEPTH;
-		dpm[i].attention_queue.buffer_units_mask =
-			DPM_ATTENTION_QUEUE_DEPTH - 1;
-		dpm[i].attention_queue.unit_bytes =
-			sizeof(struct attention_queue_entry);
-		dpm[i].attention_queue.buffer =
-			(uint8_t *)&dpm[i].queue_buffer[0];
-	}
-}
-DECLARE_HOOK(HOOK_INIT, init_attention_queue_structs, HOOK_PRIO_FIRST);
-#endif
 
 void pd_prepare_sysjump(void)
 {
@@ -291,51 +242,6 @@ void dfp_consume_attention(int port, uint32_t *payload)
 	}
 }
 
-static void vdm_attention_enqueue(int port, int length, uint32_t *buf)
-{
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-	struct attention_queue_entry new_entry;
-
-	new_entry.objects = length;
-	memcpy(new_entry.attention, buf, length * sizeof(uint32_t));
-
-	mutex_lock(&dpm[port].queue_lock);
-
-	/* If the queue is already full, discard the last entry */
-	if (queue_is_full(&dpm[port].attention_queue))
-		queue_advance_head(&dpm[port].attention_queue, 1);
-
-	/* Note: this should not happen, but log anyway */
-	if (queue_add_unit(&dpm[port].attention_queue, &new_entry) == 0)
-		CPRINTS("Error: Dropping port %d Attention", port);
-	else
-		pd_notify_event(port, PD_STATUS_EVENT_VDM_ATTENTION);
-
-	mutex_unlock(&dpm[port].queue_lock);
-#endif /* CONFIG_USB_PD_VDM_AP_CONTROL */
-}
-
-uint8_t dpm_vdm_attention_pop(int port, uint32_t *buf, uint8_t *items_left)
-{
-	int length = 0;
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-	struct attention_queue_entry popped_entry;
-
-	mutex_lock(&dpm[port].queue_lock);
-
-	if (!queue_is_empty(&dpm[port].attention_queue)) {
-		queue_remove_unit(&dpm[port].attention_queue, &popped_entry);
-
-		length = popped_entry.objects;
-		memcpy(buf, popped_entry.attention, length * sizeof(buf[0]));
-	}
-	*items_left = queue_count(&dpm[port].attention_queue);
-
-	mutex_unlock(&dpm[port].queue_lock);
-#endif /* CONFIG_USB_PD_VDM_AP_CONTROL */
-	return length;
-}
-
 __overridable bool board_is_tbt_usb4_port(int port)
 {
 	return true;
@@ -360,7 +266,7 @@ enum ec_status pd_request_vdm(int port, const uint32_t *data, int vdo_count,
 
 	/* SVDM Attention message must be 1 or 2 VDOs in length */
 	if (PD_VDO_SVDM(data[0]) && (PD_VDO_CMD(data[0]) == CMD_ATTENTION) &&
-	    vdo_count > DPM_ATTENTION_MAX_VDO) {
+	    vdo_count > PD_ATTENTION_MAX_VDO) {
 		mutex_unlock(&dpm[port].vdm_req_mutex);
 		return EC_RES_INVALID_PARAM;
 	}
@@ -380,6 +286,16 @@ enum ec_status pd_request_vdm(int port, const uint32_t *data, int vdo_count,
 	mutex_unlock(&dpm[port].vdm_req_mutex);
 
 	return EC_RES_SUCCESS;
+}
+
+void dpm_clear_vdm_request(int port)
+{
+	DPM_CLR_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
+}
+
+bool dpm_check_vdm_request(int port)
+{
+	return DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
 }
 
 enum ec_status pd_request_enter_mode(int port, enum typec_mode mode)
@@ -420,11 +336,7 @@ void dpm_init(int port)
 {
 	dpm[port].flags = 0;
 	dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-	/* Clear any stored AP messages */
-	dpm[port].vdm_reply_cnt = 0;
-	queue_init(&dpm[port].attention_queue);
-#endif
+	ap_vdm_init(port);
 
 	/* Ensure that DPM state machine gets reset */
 	set_state_dpm(port, DPM_WAITING);
@@ -503,16 +415,11 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 	assert(vdo_count >= 1);
 	assert(vdo_count <= VDO_MAX_SIZE);
 
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-	/* Don't alert the modules, only store and notify the AP */
-	dpm[port].vdm_reply_cnt = vdo_count;
-	memcpy(dpm[port].vdm_reply, vdm, vdo_count * sizeof(uint32_t));
-	dpm[port].vdm_reply_type = type;
-	pd_notify_event(port, PD_STATUS_EVENT_VDM_REQ_REPLY);
+	if (IS_ENABLED(CONFIG_USB_PD_VDM_AP_CONTROL)) {
+		ap_vdm_acked(port, type, vdo_count, vdm);
+		return;
+	}
 
-	/* Clear the flag now that reply fields are updated */
-	DPM_CLR_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
-#else
 	switch (svid) {
 	case USB_SID_DISPLAYPORT:
 		dp_vdm_acked(port, type, vdo_count, vdm);
@@ -531,28 +438,16 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
 			svid);
 	}
-#endif /* CONFIG_USB_PD_VDM_AP_CONTROL */
 }
 
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		   uint8_t vdm_cmd, uint32_t vdm_header)
 {
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-	/* Don't alert the modules, only store and notify the AP */
-	dpm[port].vdm_reply_type = type;
-
-	if (vdm_header != 0) {
-		dpm[port].vdm_reply_cnt = 1;
-		dpm[port].vdm_reply[0] = vdm_header;
-		pd_notify_event(port, PD_STATUS_EVENT_VDM_REQ_REPLY);
-	} else {
-		dpm[port].vdm_reply_cnt = 0;
-		pd_notify_event(port, PD_STATUS_EVENT_VDM_REQ_FAILED);
+	if (IS_ENABLED(CONFIG_USB_PD_VDM_AP_CONTROL)) {
+		ap_vdm_naked(port, type, svid, vdm_cmd, vdm_header);
+		return;
 	}
 
-	/* Clear the flag now that reply fields are updated */
-	DPM_CLR_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
-#else
 	switch (svid) {
 	case USB_SID_DISPLAYPORT:
 		dp_vdm_naked(port, type, vdm_cmd);
@@ -571,27 +466,6 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
 			svid);
 	}
-#endif /* CONFIG_USB_PD_VDM_AP_CONTROL */
-}
-
-enum ec_status dpm_copy_vdm_reply(int port, uint8_t *type, uint8_t *size,
-				  uint32_t *buf)
-{
-#ifdef CONFIG_USB_PD_VDM_AP_CONTROL
-	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ))
-		return EC_RES_BUSY;
-
-	if (dpm[port].vdm_reply_cnt == 0)
-		return EC_RES_UNAVAILABLE;
-
-	*type = dpm[port].vdm_reply_type;
-	*size = dpm[port].vdm_reply_cnt;
-	memcpy(buf, dpm[port].vdm_reply, *size * sizeof(uint32_t));
-
-	return EC_RES_SUCCESS;
-#else
-	return EC_RES_INVALID_COMMAND;
-#endif /* CONFIG_USB_PD_VDM_AP_CONTROL */
 }
 
 static void dpm_send_req_vdm(int port)
@@ -625,9 +499,7 @@ void dpm_notify_attention(int port, size_t vdo_objects, uint32_t *buf)
 	 * VDO
 	 */
 	dfp_consume_attention(port, buf);
-
-	if (IS_ENABLED(CONFIG_USB_PD_VDM_AP_CONTROL))
-		vdm_attention_enqueue(port, vdo_objects, buf);
+	ap_vdm_attention_enqueue(port, vdo_objects, buf);
 }
 
 void dpm_handle_alert(int port, uint32_t ado)

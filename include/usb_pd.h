@@ -596,6 +596,9 @@ struct partner_active_modes {
 #define VDO_PRODUCT(pid, bcd) (((pid)&0xffff) << 16 | ((bcd)&0xffff))
 #define PD_PRODUCT_PID(vdo) (((vdo) >> 16) & 0xffff)
 
+/* Max Attention length is header + 1 VDO */
+#define PD_ATTENTION_MAX_VDO 2
+
 /* PD Rev 3.1 Revision Message Data Object (RMDO) */
 struct rmdo {
 	uint32_t reserved : 16;

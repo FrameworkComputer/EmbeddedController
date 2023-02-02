@@ -31,6 +31,7 @@ all-obj-$(CONFIG_USB_CTVPD)+=$(_usbc_dir)usb_pe_ctvpd_sm.o
 all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usbc_pd_policy.o
 all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usb_pe_drp_sm.o
 all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usb_pd_dpm.o
+all-obj-$(CONFIG_USB_PD_VDM_AP_CONTROL)+=$(_usbc_dir)ap_vdm_control.o
 all-obj-$(CONFIG_USB_PD_DP_MODE)+=$(_usbc_dir)dp_alt_mode.o
 all-obj-$(CONFIG_USB_PD_TBT_COMPAT_MODE)+=$(_usbc_dir)tbt_alt_mode.o
 all-obj-$(CONFIG_USB_PD_USB4)+=$(_usbc_dir)usb_mode.o
