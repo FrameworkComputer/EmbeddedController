@@ -13,9 +13,12 @@
 
 #include <stdint.h>
 
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
+
+#include <gpio.h>
 
 #define TEST_PORT USBC_PORT_C0
 
@@ -870,4 +873,243 @@ ZTEST_F(ap_vdm_control, test_no_ec_dp_mode)
 
 	status = host_cmd_typec_status(TEST_PORT);
 	zassert_equal(status.dp_pin, 0);
+}
+
+ZTEST_F(ap_vdm_control, test_vdm_hpd_level)
+{
+	uint32_t vdm_attention_data[2];
+	int opos = 1;
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	/* HPD GPIO should be low before the test */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+
+	run_verify_dp_entry(fixture, opos);
+
+	/* Now send Attention to change HPD */
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
+		VDO_SVDM_VERS(VDM_VER20);
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+
+	k_sleep(K_MSEC(100));
+	/*
+	 * Verify the HPD GPIO is set now
+	 */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
+}
+
+ZTEST_F(ap_vdm_control, test_vdm_hpd_irq_ignored)
+{
+	uint32_t vdm_attention_data[2];
+	int opos = 1;
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	/* HPD GPIO should be low before the test */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+
+	run_verify_dp_entry(fixture, opos);
+
+	/* Send our bad Attention message */
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
+		VDO_SVDM_VERS(VDM_VER20);
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      false, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+
+	k_sleep(K_MSEC(100));
+	/*
+	 * Verify the HPD IRQ was rejected since HPD is low
+	 */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+}
+
+ZTEST_F(ap_vdm_control, test_vdm_status_hpd)
+{
+	int opos = 1;
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	/* HPD GPIO should be low before the test */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+
+	/* Set up our slightly different DP Status */
+	fixture->partner.dp_status_vdm[VDO_INDEX_HDR + 1] =
+		VDO_DP_STATUS(0, /* IRQ_HPD */
+			      true, /* HPD_HI|LOW - Changed*/
+			      0, /* request exit DP */
+			      0, /* request exit USB */
+			      1, /* MF pref */
+			      true, /* DP Enabled */
+			      0, /* power low e.g. normal */
+			      0x2 /* Connected as Sink */);
+
+	/* Run Entry step by step to check HPD at each point */
+	struct typec_vdm_req req = {
+		.vdm_data = { VDO(USB_SID_DISPLAYPORT, 1,
+				  CMD_ENTER_MODE | VDO_OPOS(opos)) |
+			      VDO_SVDM_VERS(VDM_VER20) },
+		.vdm_data_objects = 1,
+		.partner_type = TYPEC_PARTNER_SOP,
+	};
+
+	/* Step 1: EnterMode */
+	host_cmd_typec_control_vdm_req(TEST_PORT, req);
+	k_sleep(K_MSEC(100));
+
+	verify_expected_reply(req.partner_type,
+			      fixture->partner.enter_mode_vdos,
+			      fixture->partner.enter_mode_vdm);
+
+	/* Step 2: DP Status */
+	req.vdm_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_STATUS | VDO_OPOS(opos)) |
+		VDO_SVDM_VERS(VDM_VER20);
+	req.vdm_data[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
+					0, /* HPD level ... not applicable */
+					0, /* exit DP? ... no */
+					0, /* usb mode? ... no */
+					0, /* multi-function ... no */
+					0, /* currently enabled ... no */
+					0, /* power low? ... no */
+					1 /* DP source connected */);
+	req.vdm_data_objects = 2;
+	req.partner_type = TYPEC_PARTNER_SOP;
+
+	host_cmd_typec_control_vdm_req(TEST_PORT, req);
+	k_sleep(K_MSEC(100));
+
+	verify_expected_reply(req.partner_type, fixture->partner.dp_status_vdos,
+			      fixture->partner.dp_status_vdm);
+	/* Wait for it... */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+
+	/* Step 3: DP Configure */
+	req.vdm_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos)) |
+		VDO_SVDM_VERS(VDM_VER20);
+	req.vdm_data[1] = VDO_DP_CFG(MODE_DP_PIN_D, /* pin mode */
+				     1, /* DPv1.3 signaling */
+				     2); /* Set that partner should be DP sink
+					  */
+	req.vdm_data_objects = 2;
+	req.partner_type = TYPEC_PARTNER_SOP;
+
+	host_cmd_typec_control_vdm_req(TEST_PORT, req);
+	k_sleep(K_MSEC(100));
+
+	verify_expected_reply(req.partner_type, fixture->partner.dp_config_vdos,
+			      fixture->partner.dp_config_vdm);
+	/* Now! */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
+}
+
+ZTEST_F(ap_vdm_control, test_vdm_hpd_disconnect_clear)
+{
+	uint32_t vdm_attention_data[2];
+	int opos = 1;
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	run_verify_dp_entry(fixture, opos);
+
+	/* Test that we see our Attention message */
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
+		VDO_SVDM_VERS(VDM_VER20);
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+
+	k_sleep(K_MSEC(100));
+	/*
+	 * Verify the HPD GPIO is set now
+	 */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
+
+	/* And disconnect */
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+}
+
+ZTEST_F(ap_vdm_control, test_vdm_wake_on_dock)
+{
+	uint32_t vdm_attention_data[2];
+	int opos = 1;
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	/* HPD GPIO should be low before the test */
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+
+	run_verify_dp_entry(fixture, opos);
+
+	/* Now put the AP to "sleep" */
+	test_set_chipset_to_power_level(POWER_S3);
+
+	/* Drain the MKBP event queue first */
+	struct host_cmd_handler_args args;
+	struct ec_response_get_next_event event;
+
+	args.version = 0;
+	args.command = EC_CMD_GET_NEXT_EVENT;
+	args.params = NULL;
+	args.params_size = 0;
+	args.response = &event;
+	args.response_max = sizeof(event);
+	args.response_size = 0;
+
+	while (host_command_process(&args) == EC_RES_SUCCESS) {
+	}
+
+	/* Test that we see our Attention message cause an event */
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
+		VDO_SVDM_VERS(VDM_VER20);
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+
+	k_sleep(K_MSEC(100));
+
+	/* Look for our MKBP event */
+	zassert_equal(host_command_process(&args), EC_RES_SUCCESS);
+	zassert_equal(event.event_type, EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
 }
