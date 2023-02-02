@@ -9,6 +9,7 @@
  */
 
 #include "builtin/assert.h"
+#include "chipset.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -19,6 +20,7 @@
 #include "tcpm/tcpm.h"
 #include "temp_sensor.h"
 #include "usb_pd.h"
+#include "usb_pd_dp_hpd_gpio.h"
 #include "usb_pd_dpm_sm.h"
 
 #include <stdbool.h>
@@ -41,6 +43,17 @@
 #define DPM_ATTENTION_QUEUE_DEPTH 8
 BUILD_ASSERT(POWER_OF_TWO(DPM_ATTENTION_QUEUE_DEPTH));
 
+/*
+ * timestamp of the next possible toggle to ensure the 2-ms spacing
+ * between IRQ_HPD.  Note, other boards use the DP module to store this
+ * variable so it's globally accessible for board code.
+ *
+ * Note: This is also defined in the EC-driven DP module, and it's assumed
+ * that these modules are mutually exclusive and will not be compiled
+ * for the same board.
+ */
+uint64_t svdm_hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 struct attention_queue_entry {
 	int objects;
 	uint32_t attention[PD_ATTENTION_MAX_VDO];
@@ -54,6 +67,10 @@ static struct {
 	struct queue_state queue_state;
 	struct attention_queue_entry queue_buffer[DPM_ATTENTION_QUEUE_DEPTH];
 	mutex_t queue_lock;
+	/* Have we seen the DP:Configure ACK? */
+	bool dp_configured;
+	/* Did we get a HPD high signal before DP:Configure completed? */
+	bool hpd_pending;
 } ap_storage[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #ifdef CONFIG_ZEPHYR
@@ -90,6 +107,27 @@ static void init_attention_queue_structs(void)
 }
 DECLARE_HOOK(HOOK_INIT, init_attention_queue_structs, HOOK_PRIO_FIRST);
 
+/* Process HPD signals from the DP:Status or Attention contents */
+static void attention_hpd_process(int port, uint32_t vdo)
+{
+	bool hpd_level = PD_VDO_DPSTS_HPD_LVL(vdo);
+	bool hpd_irq = PD_VDO_DPSTS_HPD_IRQ(vdo);
+
+	if (!ap_storage[port].dp_configured && hpd_level)
+		ap_storage[port].hpd_pending = true;
+	else
+		dp_hpd_gpio_set(port, hpd_level, hpd_irq);
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+	    (hpd_irq || hpd_level))
+		/*
+		 * Wake up the AP.  IRQ or level high indicates a DP
+		 * sink is now present.
+		 */
+		if (IS_ENABLED(CONFIG_MKBP_EVENT))
+			pd_notify_dp_alt_mode_entry(port);
+}
+
 void ap_vdm_attention_enqueue(int port, int length, uint32_t *buf)
 {
 	struct attention_queue_entry new_entry;
@@ -110,6 +148,10 @@ void ap_vdm_attention_enqueue(int port, int length, uint32_t *buf)
 		pd_notify_event(port, PD_STATUS_EVENT_VDM_ATTENTION);
 
 	mutex_unlock(&ap_storage[port].queue_lock);
+
+	/* Process HPD from the message if we're configured */
+	if (PD_VDO_VID(buf[0]) == USB_SID_DISPLAYPORT && length > 1)
+		attention_hpd_process(port, buf[1]);
 }
 
 static uint8_t ap_vdm_attention_pop(int port, uint32_t *buf,
@@ -139,6 +181,9 @@ void ap_vdm_init(int port)
 	/* Clear any stored AP messages */
 	ap_storage[port].vdm_reply_cnt = 0;
 	queue_init(&ap_storage[port].attention_queue);
+	ap_storage[port].dp_configured = false;
+	ap_storage[port].hpd_pending = false;
+	dp_hpd_gpio_set(port, false, false);
 }
 
 void ap_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
@@ -155,6 +200,32 @@ void ap_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 
 	/* Clear the flag now that reply fields are updated */
 	dpm_clear_vdm_request(port);
+
+	if ((PD_VDO_VID(vdm[0]) == USB_SID_DISPLAYPORT) &&
+	    PD_VDO_SVDM(vdm[0]) && (PD_VDO_CMD(vdm[0]) == CMD_DP_CONFIG)) {
+		/*
+		 * If this was a DP:Configure ACK, register it so we can start
+		 * sending HPD signals
+		 */
+		ap_storage[port].dp_configured = true;
+		if (ap_storage[port].hpd_pending)
+			dp_hpd_gpio_set(port, true, false);
+	} else if ((PD_VDO_VID(vdm[0]) == USB_SID_DISPLAYPORT) &&
+		   PD_VDO_SVDM(vdm[0]) &&
+		   (PD_VDO_CMD(vdm[0]) == CMD_DP_STATUS) && vdo_count > 1) {
+		/*
+		 * If this was a DP:Status ACK, register if the HPD signal was
+		 * set in it.  According to 3.9.2.2 USB PD-to-HPD Timing in
+		 * VESA DisplayPort Alt Mode on USB Type-C Standard Version
+		 * 2.0:
+		 * "A USB PD-to-HPD converter shall drive a low level on its
+		 * HPD driver whenever DisplayPort Configuration on the USB-C
+		 * interface is not enabled"
+		 *
+		 * So we may not transmit this HPD high until DP:Configure ACK
+		 */
+		attention_hpd_process(port, vdm[1]);
+	}
 }
 
 void ap_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
