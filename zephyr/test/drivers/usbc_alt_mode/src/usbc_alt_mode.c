@@ -258,16 +258,6 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 
 	/* Verify host command when VDOs are present. */
 	struct ec_response_typec_status status;
-	struct ec_params_usb_pd_get_mode_response response;
-	int response_size;
-
-	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &response, &response_size);
-
-	/* Response should be populated with a DisplayPort VDO */
-	zassert_equal(response_size, sizeof(response));
-	zassert_equal(response.svid, USB_SID_DISPLAYPORT);
-	zassert_equal(response.vdo[0],
-		      fixture->partner.modes_vdm[response.opos], NULL);
 
 	/* DPM configures the partner on DP mode entry */
 	/* Verify port partner thinks its configured for DisplayPort */
@@ -480,16 +470,6 @@ ZTEST_F(usbc_alt_mode_minus_dp_configure, test_dp_mode_entry_minus_config)
 
 	/* Verify host command when VDOs are present. */
 	struct ec_response_typec_status status;
-	struct ec_params_usb_pd_get_mode_response response;
-	int response_size;
-
-	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &response, &response_size);
-
-	/* Response should be populated with a DisplayPort VDO */
-	zassert_equal(response_size, sizeof(response));
-	zassert_equal(response.svid, USB_SID_DISPLAYPORT);
-	zassert_equal(response.vdo[0],
-		      fixture->partner.modes_vdm[response.opos], NULL);
 
 	/* DPM configures the partner on DP mode entry */
 	/* Verify port partner thinks it's *NOT* configured for DisplayPort */

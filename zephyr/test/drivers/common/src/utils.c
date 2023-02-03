@@ -618,23 +618,6 @@ struct ec_response_typec_vdm_response host_cmd_typec_vdm_response(int port)
 	return response;
 }
 
-void host_cmd_usb_pd_get_amode(
-	uint8_t port, uint16_t svid_idx,
-	struct ec_params_usb_pd_get_mode_response *response, int *response_size)
-{
-	struct ec_params_usb_pd_get_mode_request params = {
-		.port = port,
-		.svid_idx = svid_idx,
-	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_USB_PD_GET_AMODE, 0, params);
-	args.response = response;
-
-	zassert_ok(host_command_process(&args),
-		   "Failed to get alternate-mode info for port %d", port);
-	*response_size = args.response_size;
-}
-
 int host_cmd_usb_pd_dev_info(uint8_t port,
 			     struct ec_params_usb_pd_rw_hash_entry *response)
 {

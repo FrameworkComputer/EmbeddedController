@@ -77,25 +77,6 @@ ZTEST_USER(espi, test_host_command_typec_status)
 	zassert_equal(args.response_size, sizeof(response));
 }
 
-ZTEST_USER(espi, test_host_command_usb_pd_get_amode)
-{
-	/* Only test we've enabled the command */
-	struct ec_params_usb_pd_get_mode_request params = {
-		.port = PORT,
-		.svid_idx = 0,
-	};
-	struct ec_params_usb_pd_get_mode_response response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_GET_AMODE, 0, response, params);
-
-	zassert_ok(host_command_process(&args));
-	zassert_ok(args.result);
-	/* Note: with no SVIDs the response size is the size of the svid field.
-	 * See the usb alt mode test for verifying larger struct sizes
-	 */
-	zassert_equal(args.response_size, sizeof(response.svid));
-}
-
 ZTEST_USER(espi, test_host_command_gpio_get_v0)
 {
 	struct ec_params_gpio_get p = {

@@ -507,3 +507,70 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 	}
 	return rsize;
 }
+
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_set_mode_request *p = args->params;
+
+	if ((p->port >= board_get_usb_pd_port_count()) || (!p->svid) ||
+	    (!p->opos))
+		return EC_RES_INVALID_PARAM;
+
+	switch (p->cmd) {
+	case PD_EXIT_MODE:
+		if (pd_dfp_exit_mode(p->port, TCPCI_MSG_SOP, p->svid, p->opos))
+			pd_send_vdm(p->port, p->svid,
+				    CMD_EXIT_MODE | VDO_OPOS(p->opos), NULL, 0);
+		else {
+			CPRINTF("Failed exit mode\n");
+			return EC_RES_ERROR;
+		}
+		break;
+	case PD_ENTER_MODE:
+		if (pd_dfp_enter_mode(p->port, TCPCI_MSG_SOP, p->svid, p->opos))
+			pd_send_vdm(p->port, p->svid,
+				    CMD_ENTER_MODE | VDO_OPOS(p->opos), NULL,
+				    0);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE, hc_remote_pd_set_amode,
+		     EC_VER_MASK(0));
+
+static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
+{
+	struct svdm_amode_data *modep;
+	const struct ec_params_usb_pd_get_mode_request *p = args->params;
+	struct ec_params_usb_pd_get_mode_response *r = args->response;
+
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	/* no more to send */
+	/* TODO(b/148528713): Use TCPMv2's separate storage for SOP'. */
+	if (p->svid_idx >= pd_get_svid_count(p->port, TCPCI_MSG_SOP)) {
+		r->svid = 0;
+		args->response_size = sizeof(r->svid);
+		return EC_RES_SUCCESS;
+	}
+
+	r->svid = pd_get_svid(p->port, p->svid_idx, TCPCI_MSG_SOP);
+	r->opos = 0;
+	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPCI_MSG_SOP),
+	       sizeof(uint32_t) * PDO_MODES);
+	modep = pd_get_amode_data(p->port, TCPCI_MSG_SOP, r->svid);
+
+	if (modep)
+		r->opos = pd_alt_mode(p->port, TCPCI_MSG_SOP, r->svid);
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE, hc_remote_pd_get_amode,
+		     EC_VER_MASK(0));
+
+#endif /* CONFIG_USB_PD_ALT_MODE_DFP */

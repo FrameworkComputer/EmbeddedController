@@ -19,26 +19,27 @@
 
 ZTEST_F(usbc_alt_mode, verify_displayport_mode_power_cycle)
 {
+	struct ec_response_typec_status status;
+
 	/* Verify that the TCPM enters DP mode on attach, exits on AP power-off,
 	 * and enters again on AP power on.
 	 */
 
 	zassert_true(fixture->partner.displayport_configured, NULL);
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED),
+		      USB_PD_MUX_DP_ENABLED);
 
 	mock_power_request(POWER_REQ_SOFT_OFF);
 
 	zassert_false(fixture->partner.displayport_configured, NULL);
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED), 0);
 
 	mock_power_request(POWER_REQ_ON);
+
 	zassert_true(fixture->partner.displayport_configured, NULL);
-
-	struct ec_params_usb_pd_get_mode_response response;
-	int response_size;
-
-	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &response, &response_size);
-
-	zassert_equal(response_size, sizeof(response), NULL);
-	zassert_equal(response.svid, USB_SID_DISPLAYPORT, NULL);
-	zassert_equal(response.vdo[0],
-		      fixture->partner.modes_vdm[response.opos], NULL);
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED),
+		      USB_PD_MUX_DP_ENABLED);
 }
