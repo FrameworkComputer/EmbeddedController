@@ -65,19 +65,21 @@ def build(opts):
     ec_dir = pathlib.Path(__file__).parent
 
     # Run formatting checks on all python files.
-    subprocess.run(
-        ["black", "--check", "."], cwd=os.path.dirname(__file__), check=True
-    )
+    cmd = ["black", "--check", "."]
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
     chromite_dir = ec_dir.resolve().parent.parent.parent / "chromite"
+    cmd = [
+        "isort",
+        f"--settings-file={chromite_dir / '.isort.cfg'}",
+        "--check",
+        "--gitignore",
+        "--dont-follow-links",
+        ".",
+    ]
+    print(f"# Running {' '.join(cmd)}.")
     subprocess.run(
-        [
-            "isort",
-            f"--settings-file={chromite_dir / '.isort.cfg'}",
-            "--check",
-            "--gitignore",
-            "--dont-follow-links",
-            ".",
-        ],
+        cmd,
         cwd=os.path.dirname(__file__),
         check=True,
     )
