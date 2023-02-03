@@ -25,6 +25,7 @@ import zmake.project
 import zmake.util as util
 import zmake.version
 
+
 ninja_warnings = re.compile(r"^(\S*: )?warning:.*")
 ninja_errors = re.compile(r"error:.*")
 

@@ -24,6 +24,7 @@ import subprocess
 
 import yaml  # pylint:disable=import-error
 
+
 SECTION_RO = "RO"
 SECTION_RW = "RW"
 # Default size of extra stack frame needed by exception context switch.

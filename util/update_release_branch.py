@@ -19,6 +19,7 @@ import subprocess
 import sys
 import textwrap
 
+
 BUG_NONE_PATTERN = re.compile("none", flags=re.IGNORECASE)
 
 

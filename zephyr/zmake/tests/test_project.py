@@ -15,6 +15,7 @@ import zmake.modules
 import zmake.output_packers
 import zmake.project
 
+
 board_names = st.text(alphabet=set(string.ascii_lowercase) | {"_"}, min_size=1)
 sets_of_board_names = st.lists(st.lists(board_names, unique=True))
 

@@ -27,6 +27,7 @@ import re
 import sys
 import traceback
 
+
 # Try to use kconfiglib if available, but fall back to a simple recursive grep.
 # This is used by U-Boot in some situations so we keep it to avoid forking this
 # script.

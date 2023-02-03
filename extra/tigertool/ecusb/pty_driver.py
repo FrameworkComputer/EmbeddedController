@@ -18,6 +18,7 @@ import time
 import pexpect  # pylint:disable=import-error
 from pexpect import fdpexpect  # pylint:disable=import-error
 
+
 # Expecting a result in 3 seconds is plenty even for slow platforms.
 DEFAULT_UART_TIMEOUT = 3
 FLUSH_UART_TIMEOUT = 1

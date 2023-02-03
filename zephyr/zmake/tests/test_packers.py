@@ -12,6 +12,7 @@ import hypothesis.strategies as st  # pylint:disable=import-error
 import pytest  # pylint:disable=import-error
 import zmake.output_packers as packers
 
+
 # Strategies for use with hypothesis
 absolute_path = st.from_regex(regex=r"\A/[\w/]*\Z")
 

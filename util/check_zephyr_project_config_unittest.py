@@ -13,6 +13,7 @@ import unittest
 import check_zephyr_project_config
 import mock  # pylint:disable=import-error
 
+
 # pylint:disable=protected-access
 
 

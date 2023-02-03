@@ -16,9 +16,11 @@ import shlex
 import subprocess
 import sys
 
-import zmake.project
-from chromite.api.gen_sdk.chromite.api import firmware_pb2
 from google.protobuf import json_format  # pylint: disable=import-error
+import zmake.project
+
+from chromite.api.gen_sdk.chromite.api import firmware_pb2
+
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"

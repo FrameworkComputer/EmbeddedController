@@ -17,10 +17,11 @@ import shutil
 import subprocess
 import sys
 
-from chromite.api.gen_sdk.chromite.api import firmware_pb2
-
 # pylint: disable=import-error
 from google.protobuf import json_format
+
+from chromite.api.gen_sdk.chromite.api import firmware_pb2
+
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
@@ -61,15 +62,17 @@ def build(opts):
     message.
     """
     metric_list = firmware_pb2.FwBuildMetricList()
+    ec_dir = pathlib.Path(__file__).parent
 
     # Run formatting checks on all python files.
     subprocess.run(
         ["black", "--check", "."], cwd=os.path.dirname(__file__), check=True
     )
+    chromite_dir = ec_dir.resolve().parent.parent.parent / "chromite"
     subprocess.run(
         [
             "isort",
-            "--settings-file=.isort.cfg",
+            f"--settings-file={chromite_dir / '.isort.cfg'}",
             "--check",
             "--gitignore",
             "--dont-follow-links",
@@ -88,7 +91,6 @@ def build(opts):
             file.write(json_format.MessageToJson(metric_list))
         return
 
-    ec_dir = pathlib.Path(__file__).parent
     subprocess.run([ec_dir / "util" / "check_clang_format.py"], check=True)
 
     cmd = ["make", "clobber"]

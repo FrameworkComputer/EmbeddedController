@@ -14,6 +14,7 @@ import site
 import sys
 import tempfile
 
+
 EC_BASE = pathlib.Path(__file__).parent.parent
 
 if "ZEPHYR_BASE" in os.environ:
@@ -34,6 +35,7 @@ site.addsitedir(ZEPHYR_BASE / "scripts" / "kconfig")
 # pylint:disable=import-error,wrong-import-position
 import kconfiglib
 import zephyr_module
+
 
 # pylint:enable=import-error,wrong-import-position
 

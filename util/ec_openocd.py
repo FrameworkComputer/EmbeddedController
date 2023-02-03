@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 
+
 """
 Flashes and debugs the EC through openocd
 """

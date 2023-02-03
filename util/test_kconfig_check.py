@@ -14,6 +14,7 @@ import unittest
 
 import kconfig_check
 
+
 # Prefix that we strip from each Kconfig option, when considering whether it is
 # equivalent to a CONFIG option with the same name
 PREFIX = "PLATFORM_EC_"

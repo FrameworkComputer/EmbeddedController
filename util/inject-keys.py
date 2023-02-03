@@ -13,6 +13,7 @@ import string
 import subprocess
 import sys
 
+
 KEYMATRIX = {
     "`": (3, 1),
     "1": (6, 1),

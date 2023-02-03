@@ -4,6 +4,7 @@
 
 from setuptools import setup
 
+
 setup(
     name="ec3po",
     version="1.0.0rc1",

@@ -17,7 +17,9 @@ Prerequisite:
         e.g. dut-control cr50_uart_timestamp:off
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import argparse
 import atexit
@@ -29,6 +31,7 @@ import threading
 import time
 
 import serial  # pylint:disable=import-error
+
 
 BAUDRATE = 115200  # Default baudrate setting for UART port
 CROS_USERNAME = "root"  # Account name to login to ChromeOS

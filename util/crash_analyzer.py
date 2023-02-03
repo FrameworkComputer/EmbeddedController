@@ -10,6 +10,7 @@ import pathlib
 import re
 import sys
 
+
 # TODO(b/253492108): Add regexp for missing architectures.
 # Regex tested here: https://regex101.com/r/K5S8cB/1
 _REGEX_CORTEX_M0 = (

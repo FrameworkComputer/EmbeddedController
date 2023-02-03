@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 import zlib  # CRC32
 
+
 # MEC152xH has 256KB SRAM from 0xE0000 - 0x120000
 # SRAM is divided into contiguous CODE & DATA
 # CODE at [0xE0000, 0x117FFF] DATA at [0x118000, 0x11FFFF]

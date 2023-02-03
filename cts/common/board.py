@@ -6,13 +6,14 @@
 
 from __future__ import print_function
 
+from abc import ABCMeta, abstractmethod
 import os
 import shutil
 import subprocess as sp
-from abc import ABCMeta, abstractmethod
 
 import serial  # pylint:disable=import-error
 import six
+
 
 OCD_SCRIPT_DIR = "/usr/share/openocd/scripts"
 OPENOCD_CONFIGS = {

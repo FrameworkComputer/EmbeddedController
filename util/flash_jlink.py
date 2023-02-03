@@ -25,6 +25,7 @@ import sys
 import tempfile
 import time
 
+
 DEFAULT_SEGGER_REMOTE_PORT = 19020
 
 # Commands are documented here: https://wiki.segger.com/J-Link_Commander

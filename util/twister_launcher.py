@@ -82,16 +82,16 @@ import argparse
 import json
 import os
 import pathlib
+from pathlib import Path
 import re
 import shlex
 import shutil
+from shutil import which
 import socket
 import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
-from shutil import which
 
 
 def find_checkout() -> Path:

@@ -18,6 +18,7 @@ import select
 import threading
 from typing import Any, ClassVar, Dict, List
 
+
 # Should we log job names or not
 LOG_JOB_NAMES = True
 

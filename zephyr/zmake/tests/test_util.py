@@ -12,6 +12,7 @@ import hypothesis.strategies as st  # pylint:disable=import-error
 import pytest  # pylint:disable=import-error
 import zmake.util as util
 
+
 # Strategies for use with hypothesis
 version_integers = st.integers(min_value=0)
 version_tuples = st.tuples(version_integers, version_integers, version_integers)

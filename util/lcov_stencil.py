@@ -13,11 +13,12 @@ https://github.com/linux-test-project/lcov/blob/master/bin/geninfo
 """
 
 import argparse
+from collections import defaultdict
 import logging
 import re
 import sys
-from collections import defaultdict
 from typing import Dict, Set
+
 
 EXTRACT_LINE = re.compile(r"^(FN|DA|BRDA):(\d+),")
 EXTRACT_FN = re.compile(r"^(FN):(\d+),(\S+)")

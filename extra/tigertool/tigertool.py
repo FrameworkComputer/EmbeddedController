@@ -13,6 +13,7 @@ import time
 
 import ecusb.tiny_servo_common as c
 
+
 STM_VIDPID = "18d1:5027"
 serialno = "Uninitialized"
 

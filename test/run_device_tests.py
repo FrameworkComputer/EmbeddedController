@@ -40,24 +40,26 @@ Run the script on the remote machine:
 
 import argparse
 import concurrent
+from concurrent.futures.thread import ThreadPoolExecutor
+from dataclasses import dataclass
+from dataclasses import field
+from enum import Enum
 import io
 import logging
 import os
+from pathlib import Path
 import re
 import socket
 import subprocess
 import sys
 import time
-from concurrent.futures.thread import ThreadPoolExecutor
-from dataclasses import dataclass, field
-from enum import Enum
-from pathlib import Path
 from typing import BinaryIO, Dict, List, Optional, Tuple
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
-import fmap
 from contextlib2 import ExitStack
+import fmap
+
 
 # pylint: enable=import-error
 

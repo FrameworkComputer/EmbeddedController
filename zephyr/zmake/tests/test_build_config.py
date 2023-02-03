@@ -13,9 +13,10 @@ import tempfile
 import hypothesis  # pylint:disable=import-error
 import hypothesis.strategies as st  # pylint:disable=import-error
 import pytest  # pylint:disable=import-error
+from zmake.build_config import BuildConfig
 import zmake.jobserver
 import zmake.util as util
-from zmake.build_config import BuildConfig
+
 
 # pylint:disable=redefined-outer-name,unused-argument
 

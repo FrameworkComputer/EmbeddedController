@@ -20,6 +20,7 @@ each binaries into right memory location.
 import argparse
 import struct
 
+
 MANIFEST_ENTRY_SIZE = 0x80
 HEADER_SIZE = 0x1000
 PAGE_SIZE = 0x1000

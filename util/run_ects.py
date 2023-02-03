@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 
+
 # List of tests to run.
 TESTS = ["meta", "gpio", "hook", "i2c", "interrupt", "mutex", "task", "timer"]
 
