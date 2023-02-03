@@ -9,6 +9,7 @@
 #include "host_command.h"
 #include "system.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/gpio.h>
@@ -497,6 +498,106 @@ ZTEST_USER(flash, test_console_cmd_flashwp__bad_param)
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "flashwp xyz"), NULL);
 }
 
+ZTEST_USER(flash, test_console_cmd_flash_erase__flash_locked)
+{
+	/* Force write protection on */
+	zassert_ok(crec_flash_physical_protect_now(1));
+
+	CHECK_CONSOLE_CMD("flasherase 0x1000 0x1000", NULL,
+			  EC_ERROR_ACCESS_DENIED);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_erase__bad_args)
+{
+	/* No args*/
+	CHECK_CONSOLE_CMD("flasherase", NULL, EC_ERROR_PARAM_COUNT);
+
+	/* Check for 1 of 2 required args */
+	CHECK_CONSOLE_CMD("flasherase 0x1000", NULL, EC_ERROR_PARAM_COUNT);
+
+	/* Check for alpha arg instead of number*/
+	CHECK_CONSOLE_CMD("flasherase xyz 100", NULL, EC_ERROR_PARAM1);
+	CHECK_CONSOLE_CMD("flasherase 100 xyz", NULL, EC_ERROR_PARAM2);
+}
+
+/**
+ * @brief Writes a 32-bit word at a specific location in flash memory. Uses Host
+ *        Command interface to communicate with flash driver.
+ *
+ * @param offset Address to begin writing at.
+ * @param data A 32-bit word to write.
+ * @return uint16_t Host command return status.
+ */
+static uint16_t write_flash_helper32(uint32_t offset, uint32_t data)
+{
+	uint8_t out_buf[sizeof(struct ec_params_flash_write) + sizeof(data)];
+
+	/* The write host command structs need to be filled run-time */
+	struct ec_params_flash_write *write_params =
+		(struct ec_params_flash_write *)out_buf;
+	struct host_cmd_handler_args write_args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_FLASH_WRITE, 0);
+
+	write_params->offset = offset;
+	write_params->size = sizeof(data);
+	write_args.params = write_params;
+	write_args.params_size = sizeof(*write_params) + sizeof(data);
+
+	/* Flash write `data` */
+	memcpy(write_params + 1, &data, sizeof(data));
+	return host_command_process(&write_args);
+}
+
+/**
+ * @brief Reads a 32-bit word at a specific location in flash memory. Uses Host
+ *        Command interface to communicate with flash driver.
+ *
+ * @param offset Address to begin reading from.
+ * @param data Output param for 32-bit read data.
+ * @return uint16_t Host command return status.
+ */
+static uint16_t read_flash_helper32(uint32_t offset, uint32_t *output)
+{
+	struct ec_params_flash_read read_params = {
+		.offset = offset,
+		.size = sizeof(*output),
+	};
+	struct host_cmd_handler_args read_args =
+		BUILD_HOST_COMMAND(EC_CMD_FLASH_READ, 0, *output, read_params);
+
+	/* Flash read and compare the readback data */
+	return host_command_process(&read_args);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_erase__happy)
+{
+	/* Immediately before the region to erase */
+	zassert_ok(write_flash_helper32(0x40000 - 4, 0x5A5A5A5A));
+
+	/* Start and end of the region we will erase */
+	zassert_ok(write_flash_helper32(0x40000, 0xA1B2C3D4));
+	zassert_ok(write_flash_helper32(0x50000 - 4, 0x1A2B3C4D));
+
+	/* Immediately after the region to erase */
+	zassert_ok(write_flash_helper32(0x50000, 0xA5A5A5A5));
+
+	CHECK_CONSOLE_CMD("flasherase 0x40000 0x10000", NULL, EC_SUCCESS);
+
+	uint32_t output;
+
+	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x50000, &output));
+	zassert_equal(output, 0xA5A5A5A5, "Got %08x", output);
+
+	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x50000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
 /**
  * @brief Prepare a region of flash for the test_crec_flash_is_erased* tests
  *
@@ -561,29 +662,23 @@ ZTEST_USER(flash, test_crec_flash_is_erased__not_erased)
 		     NULL);
 }
 
-static void flash_reset(void)
+static void flash_reset(void *data)
 {
+	ARG_UNUSED(data);
+
 	/* Set the GPIO WP_L to default */
-	gpio_wp_l_set(0);
+	zassert_ok(gpio_wp_l_set(0));
 
 	/* Reset the protection flags */
 	cros_flash_emul_protect_reset();
+	zassert_ok(crec_flash_physical_protect_now(0));
+
+	/* Tests modify these banks. Erase them. */
+	zassert_ok(crec_flash_erase(0x10000, 0x10000));
+	zassert_ok(crec_flash_erase(0x30000, 0x10000));
+	zassert_ok(crec_flash_erase(0x40000, 0x10000));
+	zassert_ok(crec_flash_erase(0x50000, 0x10000));
 }
 
-static void flash_before(void *data)
-{
-	ARG_UNUSED(data);
-	flash_reset();
-}
-
-static void flash_after(void *data)
-{
-	ARG_UNUSED(data);
-	flash_reset();
-
-	/* The test modifies this bank. Erase it in case of failure. */
-	crec_flash_erase(0x10000, 0x10000);
-}
-
-ZTEST_SUITE(flash, drivers_predicate_post_main, NULL, flash_before, flash_after,
+ZTEST_SUITE(flash, drivers_predicate_post_main, NULL, flash_reset, flash_reset,
 	    NULL);
