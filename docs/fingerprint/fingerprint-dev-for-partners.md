@@ -254,6 +254,12 @@ You should see something like this. Leave it running:
 
 In the other terminal, build and flash the firmware:
 
+Make sure the toolchain is installed:
+
+```bash
+(chroot) $ sudo cros_setup_toolchains
+```
+
 Navigate to the EC source:
 
 ```bash
