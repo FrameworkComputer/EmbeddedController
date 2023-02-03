@@ -720,6 +720,18 @@ ZTEST(isl923x, test_isl923x_is_acok)
 	rv = raa489000_is_acok(CHARGER_NUM, &acok);
 	zassert_equal(EC_SUCCESS, rv, "AC OK check did not return success");
 	zassert_false(acok, "AC OK is true");
+
+	/*
+	 * Charger is sourcing - ACOK is always false,
+	 * even if the pin is asserted.
+	 */
+	raa489000_emul_set_acok_pin(isl923x_emul, 1);
+	raa489000_emul_set_state_machine_state(isl923x_emul,
+					       RAA489000_INFO2_STATE_OTG);
+
+	rv = raa489000_is_acok(CHARGER_NUM, &acok);
+	zassert_equal(EC_SUCCESS, rv, "AC OK check did not return success");
+	zassert_false(acok, "ACOK is true when sourcing, expected false");
 }
 
 ZTEST(isl923x, test_isl923x_enable_asgate)
