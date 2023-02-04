@@ -26,6 +26,8 @@ static struct queue const host_events =
 	QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, uint32_t);
 struct mutex host_event_mtx;
 
+static int pchg_count;
+
 /*
  * Events and errors to be reported to the host in each chipset state.
  *
@@ -777,6 +779,8 @@ static void pchg_startup(void)
 
 	CPRINTS("%s", __func__);
 	queue_init(&host_events);
+
+	pchg_count = board_get_pchg_count();
 
 	for (p = 0; p < pchg_count; p++) {
 		rv = EC_SUCCESS;
