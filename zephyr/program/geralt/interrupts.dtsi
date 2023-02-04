@@ -66,6 +66,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
+		int_pg_pp4200_s5: pg-pp4200-s5 {
+			irq-pin = <&pg_pp4200_s5_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
 		int_warm_rst: warm-rst {
 			irq-pin = <&ap_ec_warm_rst_req>;
 			flags = <GPIO_INT_EDGE_RISING>;

@@ -129,7 +129,11 @@
 			gpios = <&gpiog 0 GPIO_OUTPUT_HIGH>;
 		};
 		en_pp4200_s5: en-pp4200-s5 {
-			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
+		};
+		pg_pp4200_s5_od: pg-pp4200-s5-od {
+			gpios = <&gpioc 5 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
 		};
 		sys_rst_odl: sys-rst-odl {
 			gpios = <&gpiog 1 GPIO_ODR_LOW>;
@@ -182,8 +186,6 @@
 		unused-gpios =
 			/* pg_pp5000_z1_od */
 			<&gpiod 2 GPIO_INPUT>,
-			/* pg_pp4200_s5_od */
-			<&gpioc 5 GPIO_INPUT>,
 			/* charge_en */
 			<&gpioe 1 GPIO_INPUT>,
 			/* unnamed nc pins */

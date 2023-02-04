@@ -5,7 +5,7 @@
 
 / {
 	power_signal_list: power-signal-list {
-		compatible = "mediatek,mt8186-power-signal-list";
+		compatible = "mediatek,mt8188-power-signal-list";
 
 		ap_in_rst {
 			power-enum-name = "AP_IN_RST";
@@ -22,6 +22,10 @@
 		ap_warm_rst_req {
 			power-enum-name = "AP_WARM_RST_REQ";
 			power-gpio-pin = <&ap_ec_warm_rst_req>;
+		};
+		pg_pp4200_s5 {
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&pg_pp4200_s5_od>;
 		};
 	};
 };
