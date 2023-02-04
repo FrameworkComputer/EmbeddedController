@@ -72,6 +72,7 @@ properties:
       - GPIO_PG_EC_ALL_SYS_PWRGD
       - GPIO_PG_EC_DSW_PWROK
       - GPIO_PG_EC_RSMRST_ODL
+      - GPIO_PG_PP4200_S5_OD
       - GPIO_PMIC_EC_PWRGD
       - GPIO_PMIC_KPD_PWR_ODL
       - GPIO_PMIC_RESIN_L
