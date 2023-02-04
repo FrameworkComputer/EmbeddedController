@@ -827,4 +827,11 @@ config PLATFORM_EC_GPIO_ID
 	  devicetree node using the known nodelabels gpio_id_sku and
 	  gpio_id_board.
 
+config PLATFORM_EC_UNIMPLEMENTED_GPIO
+        bool "Remove pin control in Zephyr code"
+	default n
+	help
+	  In Zephyr shim, some gpios should not be controlled if project
+	  does not implement this pin.
+
 endif # PLATFORM_EC
