@@ -106,6 +106,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "ambassador",
     "anahera",
     "atlas",
+    "aurash",
     "banshee",
     "berknip",
     "bloog",
