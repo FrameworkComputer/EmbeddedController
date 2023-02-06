@@ -26,6 +26,11 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
 
+  skyrim.crystaldrift.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_FAN=y
+
   skyrim.crystaldrift.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
@@ -52,6 +57,11 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y
 
+  skyrim.markarth.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_TEST_BOARD_FAN=y
+
   skyrim.markarth.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y
@@ -61,6 +71,11 @@ tests:
   skyrim.skyrim:
     extra_configs:
     - CONFIG_TEST_BOARD_SKYRIM=y
+
+  skyrim.skyrim.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_FAN=y
 
   skyrim.skyrim.ppc_config:
     extra_configs:

@@ -18,7 +18,7 @@ LOG_MODULE_DECLARE(crystaldrift, CONFIG_SKYRIM_LOG_LEVEL);
 /*
  * Skyrim fan support
  */
-static void fan_init(void)
+test_export_static void fan_init(void)
 {
 	int ret;
 	uint32_t val;

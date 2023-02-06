@@ -48,6 +48,14 @@ config TEST_BOARD_NAME
 	default "skyrim" if TEST_BOARD_SKYRIM
 	default "winterhold" if TEST_BOARD_WINTERHOLD
 
+config TEST_BOARD_FAN
+	bool "Enable fan tests"
+
+config TEST_BOARD_FAN_SRC
+	string "Source file to use for this test"
+	default "common/fan.c"
+	depends on TEST_BOARD_FAN
+
 config TEST_BOARD_USB_PD_POLICY
 	bool "Enable USB PD policy specific tests"
 	select TEST_ENABLE_USB_PD_HOST_CMD

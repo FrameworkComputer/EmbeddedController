@@ -55,6 +55,32 @@
 			enum-name = "IOEX_USB_C0_SBU_FLIP";
 		};
 	};
+
+	skyrim-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		fan {
+			enum-name = "FW_FAN";
+			start = <10>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+	};
 };
 
 &gpio0 {
