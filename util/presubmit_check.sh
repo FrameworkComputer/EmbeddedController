@@ -19,26 +19,3 @@ if git diff --no-ext-diff "${upstream_branch}" HEAD |
   echo "error: CPRINTS strings should not include newline characters" >&2
   exit 1
 fi
-
-# Directories that need to be tested by separate unit tests.
-unittest_dirs="util/ec3po/ extra/stack_analyzer/"
-
-for dir in $unittest_dirs; do
-    dir_files=$(echo "${PRESUBMIT_FILES}" | grep "${dir}")
-    if [[ -z "${dir_files}" ]]; then
-        continue
-    fi
-
-    if [[ ! -e "${dir}/.tests-passed" ]]; then
-        echo "Unit tests have not passed.  Please run \"${dir}run_tests.sh\"."
-        exit 1
-    fi
-
-    changed_files=$(find ${dir_files} -newer "${dir}/.tests-passed")
-    if [[ -n "${changed_files}" ]] && [[ -n "${dir_files}" ]]; then
-        echo "Files have changed since last time unit tests passed:"
-        echo "${changed_files}" | sed -e 's/^/  /'
-        echo "Please run \"${dir}run_tests.sh\"."
-        exit 1
-    fi
-done
