@@ -135,6 +135,7 @@ config CROS_EC_RO_MEM_OFF
 config CROS_EC_RO_SIZE
 	hex "The size of the RO region."
 	default 0xb000 if ARCH_POSIX
+	default $(dt_node_int_prop_hex,/binman/wp-ro,size)
 	help
 		This will be used (along with SYSTEM_RO_MEM_OFF) to determine if the
 		current PC is in the RO section.
@@ -148,6 +149,7 @@ config CROS_EC_RW_MEM_OFF
 config CROS_EC_RW_SIZE
 	hex "The size of the RW region."
 	default 0x75000 if ARCH_POSIX
+	default $(dt_node_int_prop_hex,/binman/ec-rw,size)
 	help
 		This will be used (along with SYSTEM_RW_MEM_OFF) to determine if the
 		current PC is in the RW section.
