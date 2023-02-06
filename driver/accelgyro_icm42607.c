@@ -1125,6 +1125,15 @@ static int icm42607_init_config(const struct motion_sensor_t *s)
 	if (ret)
 		return ret;
 
+#ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
+	/* Device operation in shared spi bus configuration */
+	mask = 0x03;
+	val = 0x03;
+	ret = icm_field_update8(s, ICM42607_REG_INTF_CONFIG0, mask, val);
+	if (ret)
+		return ret;
+#endif
+
 	/* disable i3c support */
 	mask = ICM42607_I3C_SDR_EN | ICM42607_I3C_DDR_EN;
 	ret = icm_field_update8(s, ICM42607_REG_INTF_CONFIG1, mask, 0);
