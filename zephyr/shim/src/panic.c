@@ -4,7 +4,6 @@
  */
 
 #include "common.h"
-#include "host_command.h"
 #include "panic.h"
 #include "system_safe_mode.h"
 
@@ -150,9 +149,6 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 	}
 
 	LOG_PANIC();
-
-	if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS))
-		host_set_single_event(EC_HOST_EVENT_PANIC);
 
 	/* Start system safe mode if possible */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE)) {
