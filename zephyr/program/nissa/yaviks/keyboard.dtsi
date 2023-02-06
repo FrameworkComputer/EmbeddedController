@@ -46,5 +46,27 @@
 		     &kso12_default
 		     &kso13_default
 		     &kso14_default>;
-	pinctrl-names = "default";
+	pinctrl-1 = <&ksi0_sleep
+		     &ksi1_sleep
+		     &ksi2_sleep
+		     &ksi3_sleep
+		     &ksi4_sleep
+		     &ksi5_sleep
+		     &ksi6_sleep
+		     &ksi7_sleep
+		     &kso0_sleep
+		     &kso1_sleep
+		     &kso3_sleep
+		     &kso4_sleep
+		     &kso5_sleep
+		     &kso6_sleep
+		     &kso7_sleep
+		     &kso8_sleep
+		     &kso9_sleep
+		     &kso10_sleep
+		     &kso11_sleep
+		     &kso12_sleep
+		     &kso13_sleep
+		     &kso14_sleep>;
+	pinctrl-names = "default", "sleep";
 };
