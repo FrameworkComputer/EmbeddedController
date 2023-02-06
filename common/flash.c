@@ -1183,7 +1183,7 @@ static int command_flash_read(int argc, const char **argv)
 	int offset = -1;
 	int size = 256;
 	int rv;
-	char *data;
+	uint8_t *data;
 	int i;
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
@@ -1194,7 +1194,7 @@ static int command_flash_read(int argc, const char **argv)
 		size = shared_mem_size();
 
 	/* Acquire the shared memory buffer */
-	rv = shared_mem_acquire(size, &data);
+	rv = shared_mem_acquire(size, (char **)&data);
 	if (rv) {
 		ccputs("Can't get shared mem\n");
 		return rv;

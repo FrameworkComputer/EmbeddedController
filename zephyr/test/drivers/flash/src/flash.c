@@ -16,6 +16,7 @@
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell_dummy.h>
+#include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
 
 #define WP_L_GPIO_PATH NAMED_GPIOS_GPIO_NODE(wp_l)
@@ -643,6 +644,47 @@ ZTEST_USER(flash, test_console_cmd_flash_write__happy)
 	/* Check the space after to ensure it is still erased. */
 	zassert_ok(read_flash_helper32(0x10000 + 4, &output));
 	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_read__bad_args)
+{
+	/* No args*/
+	CHECK_CONSOLE_CMD("flashread", NULL, EC_ERROR_PARAM_COUNT);
+
+	/* Check for alpha arg instead of number*/
+	CHECK_CONSOLE_CMD("flashread xyz 100", NULL, EC_ERROR_PARAM1);
+	CHECK_CONSOLE_CMD("flashread 100 xyz", NULL, EC_ERROR_PARAM2);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_read__too_big)
+{
+	CHECK_CONSOLE_CMD("flashread 0x10000 " STRINGIFY(INT_MAX), NULL,
+			  EC_ERROR_INVAL);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_read__happy_4_bytes)
+{
+	/* Write some bytes to read */
+	zassert_ok(write_flash_helper32(0x10000, sys_cpu_to_be32(0xA1B2C3D4)));
+
+	static const char *expected = "\r\n\r\n"
+				      "00010000: a1 b2 c3 d4\r\n";
+	CHECK_CONSOLE_CMD("flashread 0x10000 4", expected, EC_SUCCESS);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_read__happy_17_bytes)
+{
+	/* Test 16-byte column wrapping behavior */
+
+	/* Write some bytes to read */
+	zassert_ok(write_flash_helper32(0x10000, sys_cpu_to_be32(0xA1B2C3D4)));
+
+	static const char *expected =
+		"\r\n\r\n"
+		"00010000: a1 b2 c3 d4 ff ff ff ff ff ff ff ff ff ff ff ff\r\n"
+		"00010010: ff\r\n";
+
+	CHECK_CONSOLE_CMD("flashread 0x10000 17", expected, EC_SUCCESS);
 }
 
 /**
