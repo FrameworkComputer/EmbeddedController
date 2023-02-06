@@ -3,8 +3,5 @@
  * found in the LICENSE file.
  */
 #include <zephyr/logging/log.h>
-#include <zephyr/ztest.h>
 
-LOG_MODULE_REGISTER(crystaldrift, CONFIG_SKYRIM_LOG_LEVEL);
-
-ZTEST_SUITE(common, NULL, NULL, NULL, NULL, NULL);
+LOG_MODULE_REGISTER(skyrim, CONFIG_SKYRIM_LOG_LEVEL);

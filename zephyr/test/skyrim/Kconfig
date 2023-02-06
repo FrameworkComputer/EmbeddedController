@@ -71,6 +71,10 @@ config TEST_BOARD_USB_MUX_CONFIG_SRC
 	default "common/usb_mux_config.c"
 	depends on TEST_BOARD_USB_MUX_CONFIG
 
+config SKYRIM_LOG_LEVEL
+	int "Fake config to allow building"
+	default 4 # Log level debug by default
+
 config TEST_ENABLE_USB_PD_HOST_CMD
 	bool "Fake config to enable this feature"
 	default n
