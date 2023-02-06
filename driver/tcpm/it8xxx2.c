@@ -349,10 +349,21 @@ static void it8xxx2_enable_vconn(enum usbpd_port port, int enabled)
 
 static void it8xxx2_enable_cc(enum usbpd_port port, int enable)
 {
-	if (enable)
+	if (enable) {
+#ifdef IT8XXX2_USBPD_CCGCR_BIT7_RESERVED
+		IT83XX_USBPD_CCCSR(port) &= ~(USBPD_REG_MASK_CC1_DISCONNECT |
+					      USBPD_REG_MASK_CC2_DISCONNECT);
+#else
 		IT83XX_USBPD_CCGCR(port) &= ~USBPD_REG_MASK_DISABLE_CC;
-	else
+#endif
+	} else {
+#ifdef IT8XXX2_USBPD_CCGCR_BIT7_RESERVED
+		IT83XX_USBPD_CCCSR(port) |= (USBPD_REG_MASK_CC1_DISCONNECT |
+					     USBPD_REG_MASK_CC2_DISCONNECT);
+#else
 		IT83XX_USBPD_CCGCR(port) |= USBPD_REG_MASK_DISABLE_CC;
+#endif
+	}
 }
 
 static void it8xxx2_set_power_role(enum usbpd_port port, int power_role)

@@ -1548,8 +1548,18 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #undef CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
 #ifdef CONFIG_PLATFORM_EC_USB_PD_TCPM_DRIVER_IT8XXX2
 #define CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
+#if defined(CONFIG_SOC_IT81202_CX) || defined(CONFIG_SOC_IT81302_CX)
+/* CCGCR 04h bit[3,2,1] Rp 3A value is changed to 000b. */
+#define IT8XXX2_USBPD_RP_3A0_VALUE_IS_ZERO
+/*
+ * CCGCR 04h bit[7] is reserved, so we control the power of cc analog module
+ * by CCCSR 05h bit[7,3].
+ */
+#define IT8XXX2_USBPD_CCGCR_BIT7_RESERVED
+#else
 /* Individual setting CC1 and CC2 resistance. */
 #define IT83XX_USBPD_CC1_CC2_RESISTANCE_SEPARATE
+#endif
 #endif
 
 #undef CONFIG_USB_PD_TCPM_DRIVER_IT83XX
