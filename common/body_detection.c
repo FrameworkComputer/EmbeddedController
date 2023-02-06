@@ -182,7 +182,10 @@ void body_detect_reset(void)
 	int odr = body_sensor->drv->get_data_rate(body_sensor);
 	int rms_noise = body_sensor->drv->get_rms_noise(body_sensor);
 
-	body_detect_change_state(BODY_DETECTION_ON_BODY, false);
+	if (motion_state == BODY_DETECTION_ON_BODY)
+		stationary_timeframe = 0;
+	else
+		body_detect_change_state(BODY_DETECTION_ON_BODY, false);
 	/*
 	 * The sensor is suspended since its ODR is 0,
 	 * there is no need to reset until sensor is up again
