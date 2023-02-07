@@ -5,6 +5,7 @@
 
 /* Richtek RT1739 USB-C Power Path Controller */
 #include "atomic.h"
+#include "battery.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"
@@ -247,12 +248,42 @@ static int rt1739_set_frs_enable(int port, int enable)
 
 static int rt1739_init(int port)
 {
-	int device_id, oc_setting;
+	int device_id, oc_setting, sys_ctrl, vbus_switch_ctrl;
+	bool batt_connected = false;
 
 	atomic_clear(&flags[port]);
 
-	RETURN_ERROR(write_reg(port, RT1739_REG_SW_RESET, RT1739_SW_RESET));
-	usleep(1 * MSEC);
+	RETURN_ERROR(read_reg(port, RT1739_REG_SYS_CTRL, &sys_ctrl));
+	RETURN_ERROR(
+		read_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, &vbus_switch_ctrl));
+
+	if (IS_ENABLED(CONFIG_BATTERY_FUEL_GAUGE)) {
+		batt_connected = (battery_get_disconnect_state() ==
+				  BATTERY_NOT_DISCONNECTED);
+	}
+
+	if (sys_ctrl & RT1739_DEAD_BATTERY) {
+		/*
+		 * Dead battery boot, see b/267412033#comment6 for the init
+		 * sequence.
+		 */
+		RETURN_ERROR(
+			write_reg(port, RT1739_REG_SYS_CTRL,
+				  RT1739_DEAD_BATTERY | RT1739_SHUTDOWN_OFF));
+		rt1739_vbus_sink_enable(port, true);
+		RETURN_ERROR(write_reg(port, RT1739_REG_SYS_CTRL,
+				       RT1739_OT_EN | RT1739_SHUTDOWN_OFF));
+	} else if (batt_connected || !(vbus_switch_ctrl & RT1739_HV_SNK_EN)) {
+		/*
+		 * If rt1739 is not sinking, or there's a working battery,
+		 * we can reset its registers safely.
+		 *
+		 * Otherwise, don't touch the VBUS_SWITCH_CTRL reg.
+		 */
+		RETURN_ERROR(
+			write_reg(port, RT1739_REG_SW_RESET, RT1739_SW_RESET));
+		usleep(1 * MSEC);
+	}
 	RETURN_ERROR(write_reg(port, RT1739_REG_SYS_CTRL,
 			       RT1739_OT_EN | RT1739_SHUTDOWN_OFF));
 
