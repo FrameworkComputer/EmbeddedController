@@ -18,7 +18,7 @@ machine against a board connected to a local machine. For example:
 Start servod and JLink locally:
 
 (local chroot) $ sudo servod --board dragonclaw
-(local chroot) $ JLinkRemoteServerCLExe -select USB
+(local chroot) $ sudo JLinkRemoteServerCLExe -select USB
 
 Forward the FPMCU console on a TCP port:
 
