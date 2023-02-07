@@ -1,6 +1,7 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Module for project config wrapper object."""
 
 import dataclasses
@@ -43,8 +44,8 @@ class ProjectConfig:
     zephyr_board: str
     supported_toolchains: "list[str]"
     output_packer: type
-    modules: "dict[str, typing.Any]" = dataclasses.field(
-        default_factory=lambda: zmake.modules.known_modules,
+    modules: typing.Iterable[str] = dataclasses.field(
+        default_factory=lambda: ["ec"],
     )
     is_test: bool = dataclasses.field(default=False)
     test_args: typing.List[str] = dataclasses.field(default_factory=list)
