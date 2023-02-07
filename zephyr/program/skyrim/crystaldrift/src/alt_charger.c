@@ -12,9 +12,15 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 
+#ifdef CONFIG_ZTEST
+#undef CHG_ENABLE_ALTERNATE
+void chg_enable_alternate_test(int port);
+#define CHG_ENABLE_ALTERNATE(x) chg_enable_alternate_test(x)
+#endif /* CONFIG_ZTEST */
+
 LOG_MODULE_DECLARE(crystaldrift, CONFIG_SKYRIM_LOG_LEVEL);
 
-static void alt_charger_init(void)
+test_export_static void alt_charger_init(void)
 {
 	int ret;
 	uint32_t val;

@@ -26,6 +26,11 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
 
+  skyrim.crystaldrift.alt_charger:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_ALT_CHARGER=y
+
   skyrim.crystaldrift.fan:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
@@ -71,6 +76,11 @@ tests:
   skyrim.skyrim:
     extra_configs:
     - CONFIG_TEST_BOARD_SKYRIM=y
+
+  skyrim.skyrim.alt_charger:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_ALT_CHARGER=y
 
   skyrim.skyrim.fan:
     extra_configs:

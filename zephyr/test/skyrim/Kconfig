@@ -48,6 +48,14 @@ config TEST_BOARD_NAME
 	default "skyrim" if TEST_BOARD_SKYRIM
 	default "winterhold" if TEST_BOARD_WINTERHOLD
 
+config TEST_BOARD_ALT_CHARGER
+	bool "Enable alt charger specific tests"
+
+config TEST_BOARD_ALT_CHARGER_SRC
+	string "Source file to use for this test"
+	default "common/alt_charger.c"
+	depends on TEST_BOARD_ALT_CHARGER
+
 config TEST_BOARD_FAN
 	bool "Enable fan tests"
 
