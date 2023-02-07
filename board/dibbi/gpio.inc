@@ -36,6 +36,7 @@ GPIO_INT(EC_RECOVERY_BTN_ODL,	PIN(K, 7), GPIO_INT_BOTH, button_interrupt)
 /* Recovery button input from H1 */
 GPIO_INT(H1_EC_RECOVERY_BTN_ODL,PIN(K, 4), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(BJ_ADP_PRESENT_L,	PIN(A, 7), GPIO_INT_BOTH | GPIO_PULL_UP, adp_connect_interrupt)
+GPIO_INT(USB_C0_FAULT_L,	PIN(K, 0), GPIO_INT_FALLING, ppc_interrupt)
 
 /* Power sequence GPIOs */
 GPIO(EC_AP_PSYS,		PIN(J, 2), GPIO_OUT_LOW)
@@ -93,7 +94,6 @@ GPIO(EN_USB_A1_VBUS,		PIN(C, 6), GPIO_OUT_LOW)
 GPIO(EN_USB_A2_VBUS,		PIN(C, 4), GPIO_OUT_LOW)
 GPIO(EN_USB_A3_VBUS,		PIN(J, 5), GPIO_OUT_LOW)
 GPIO(EC_USB_C0_FRS_EN,		PIN(K, 6), GPIO_OUT_LOW)
-GPIO(USB_C0_FAULT_L,		PIN(K, 0), GPIO_OUT_LOW)
 
 /* MKBP event synchronization */
 /* TODO(b/257833880) Check whether this pin is needed */

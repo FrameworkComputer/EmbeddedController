@@ -10,6 +10,7 @@
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
+#include "driver/ppc/syv682x_public.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
@@ -31,6 +32,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_ppc.h"
 
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
@@ -71,6 +73,19 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.drv = &it83xx_tcpm_drv,
 	},
 };
+
+/* PPCs */
+struct ppc_config_t ppc_chips[] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.frs_en = GPIO_EC_USB_C0_FRS_EN,
+		.drv = &syv682x_drv,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
+
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* USB Muxes */
 const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -134,6 +149,9 @@ void board_init(void)
 
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
 
+	/* Enable PPC interrupt */
+	gpio_enable_interrupt(GPIO_USB_C0_FAULT_L);
+
 	/* Turn on 5V if the system is on, otherwise turn it off */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
@@ -172,7 +190,7 @@ int board_vbus_source_enabled(int port)
 	if (port != CHARGE_PORT_TYPEC0)
 		return 0;
 
-	return tcpm_check_vbus_level(port, VBUS_PRESENT);
+	return ppc_is_vbus_present(port);
 }
 
 /* Vconn control for integrated ITE TCPC */
@@ -257,12 +275,6 @@ void adp_connect_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&adp_connect_deferred_data, ADP_DEBOUNCE_MS * MSEC);
 }
 
-/* IRQ for USB-C plug/unplug. */
-void usbc_connect_interrupt(enum gpio_signal signal)
-{
-	task_wake(TASK_ID_PD_C0);
-}
-
 int board_set_active_charge_port(int port)
 {
 	const int active_port = charge_manager_get_active_charge_port();
@@ -301,8 +313,7 @@ int board_set_active_charge_port(int port)
 
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
-		/* TODO(b/267742066): Actually enable USBC */
-		/* gpio_set_level(GPIO_EN_PPVAR_USBC_ADP_L, 0); */
+		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 1);
 		gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
 		break;
@@ -311,8 +322,7 @@ int board_set_active_charge_port(int port)
 		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
 			return EC_ERROR_INVAL;
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 0);
-		/* TODO(b/267742066): Actually disable USBC */
-		/* gpio_set_level(GPIO_EN_PPVAR_USBC_ADP_L, 1); */
+		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
 		gpio_disable_interrupt(GPIO_BJ_ADP_PRESENT_L);
 		break;
 	default:
@@ -364,6 +374,12 @@ __override int extpower_is_present(void)
 	 * There's no battery, so running this method implies we have power.
 	 */
 	return 1;
+}
+
+void ppc_interrupt(enum gpio_signal signal)
+{
+	if (signal == GPIO_USB_C0_FAULT_L)
+		syv682x_interrupt(USBC_PORT_C0);
 }
 
 /* Must come after other header files and interrupt handler declarations */

@@ -44,6 +44,12 @@
 #define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0: ITE EC TCPC */
 #define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
 
+/* PPC */
+#define CONFIG_USB_PD_DISCHARGE_PPC
+#define CONFIG_USB_PD_VBUS_DETECT_PPC
+#define CONFIG_USBC_PPC
+#define CONFIG_USBC_PPC_SYV682X
+
 /* USB Mux and Retimer */
 #define CONFIG_USB_MUX_IT5205 /* C0: ITE Mux */
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
@@ -120,6 +126,8 @@ enum charge_port {
 	CHARGE_PORT_TYPEC0,
 	CHARGE_PORT_BARRELJACK,
 };
+
+enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
 
 enum pwm_channel {
 	PWM_CH_LED_RED,
