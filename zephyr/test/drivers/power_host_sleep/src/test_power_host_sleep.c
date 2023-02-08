@@ -397,5 +397,33 @@ ZTEST(power_host_sleep, test_set_get_host_sleep_state)
 		      HOST_SLEEP_EVENT_S0IX_RESUME);
 }
 
+ZTEST(power_host_sleep, verify_increment_change_state)
+{
+	struct ec_params_s0ix_cnt params = { .flags = EC_S0IX_COUNTER_RESET };
+	struct ec_response_s0ix_cnt rsp;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_GET_S0IX_COUNTER, 0, rsp, params);
+
+	/* Verify that counter is set to 0 */
+	zassert_ok(host_command_process(&args), "Failed to get sleep counter");
+	zassert_equal(rsp.s0ix_counter, 0);
+
+	/* Simulate S0ix state */
+	sleep_set_notify(SLEEP_NOTIFY_SUSPEND);
+	sleep_notify_transition(SLEEP_NOTIFY_SUSPEND, HOOK_CHIPSET_SUSPEND);
+
+	/* Confirm counter incrementation */
+	params.flags = 0;
+	zassert_ok(host_command_process(&args), "Failed to get sleep counter");
+	zassert_equal(rsp.s0ix_counter, 1);
+
+	/* Reset counter and re-fetch it to verify that reset works */
+	params.flags = EC_S0IX_COUNTER_RESET;
+	zassert_ok(host_command_process(&args), "Failed to get sleep counter");
+	params.flags = 0;
+	zassert_ok(host_command_process(&args), "Failed to get sleep counter");
+	zassert_equal(rsp.s0ix_counter, 0);
+}
+
 ZTEST_SUITE(power_host_sleep, drivers_predicate_post_main, NULL,
 	    power_host_sleep_before_after, power_host_sleep_before_after, NULL);
