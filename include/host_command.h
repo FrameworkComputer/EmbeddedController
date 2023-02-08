@@ -132,16 +132,9 @@ struct host_command {
 	int version_mask;
 };
 
-#ifdef CONFIG_HOST_EVENT64
 typedef uint64_t host_event_t;
 #define HOST_EVENT_CPRINTS(str, e) CPRINTS("%s 0x%016" PRIx64, str, e)
 #define HOST_EVENT_CCPRINTF(str, e) ccprintf("%s 0x%016" PRIx64 "\n", str, e)
-
-#else
-typedef uint32_t host_event_t;
-#define HOST_EVENT_CPRINTS(str, e) CPRINTS("%s 0x%08x", str, e)
-#define HOST_EVENT_CCPRINTF(str, e) ccprintf("%s 0x%08x\n", str, e)
-#endif
 
 /**
  * Return a pointer to the memory-mapped buffer.

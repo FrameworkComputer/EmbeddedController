@@ -49,10 +49,8 @@ static int get_data_size(enum ec_mkbp_event e)
 	case EC_MKBP_EVENT_KEY_MATRIX:
 		return KEYBOARD_COLS_MAX;
 
-#ifdef CONFIG_HOST_EVENT64
 	case EC_MKBP_EVENT_HOST_EVENT64:
 		return sizeof(uint64_t);
-#endif
 
 	case EC_MKBP_EVENT_HOST_EVENT:
 	case EC_MKBP_EVENT_BUTTON:

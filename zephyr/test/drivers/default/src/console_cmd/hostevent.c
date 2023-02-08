@@ -12,11 +12,7 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
 
-#ifdef CONFIG_HOST_EVENT64
 #define HOSTEVENT_PRINT_FORMAT "016" PRIx64
-#else
-#define HOSTEVENT_PRINT_FORMAT "08" PRIx32
-#endif
 
 struct console_cmd_hostevent_fixture {
 	struct host_events_ctx ctx;

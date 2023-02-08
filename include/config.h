@@ -2489,9 +2489,6 @@
 /* clear bit(s) to mask reporting of an EC_HOST_EVENT_XXX event(s) */
 #define CONFIG_HOST_EVENT_REPORT_MASK 0xffffffffffffffffULL
 
-/* Config option to support 64-bit hostevents and wake-masks. */
-#define CONFIG_HOST_EVENT64
-
 /*
  * The host commands are sorted in the .rodata.hcmds section so use the binary
  * search algorithm to match a command to its handler
