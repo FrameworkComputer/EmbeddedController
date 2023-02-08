@@ -2548,13 +2548,6 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, charge_command_charge_control,
 		     EC_VER_MASK(1) | EC_VER_MASK(2));
 
-static void reset_current_limit(void)
-{
-	user_current_limit = -1U;
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, reset_current_limit, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_current_limit, HOOK_PRIO_DEFAULT);
-
 static enum ec_status
 charge_command_current_limit(struct host_cmd_handler_args *args)
 {
