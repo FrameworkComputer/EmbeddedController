@@ -1,0 +1,35 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		/* STB dumping GPIOs */
+		gpio_ec_sfh_int_h: ec_sfh_int_h {
+			gpios = <&gpio0 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_sfh_ec_int_h: sfh_ec_int_h {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_stb_dump: stb_dump {
+			irq-pin = <&gpio_sfh_ec_int_h>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "amd_stb_dump_interrupt";
+		};
+	};
+};
+
+&gpio0 {
+	ngpios = <2>;
+};
