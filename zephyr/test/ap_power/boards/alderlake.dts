@@ -362,4 +362,35 @@
 		nodes = <&en_pp3300_emul &en_pp5000_emul &ec_soc_dsw_pwrok_emul
 			     &ec_pch_rsmrst_s3_dsw_pwrok_fail_emul>;
 	};
+
+	pch_sleep: pch-sleep {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pch_pwrok>;
+
+		slp-s0-suspend-emul {
+			output-signal = <&slp_s0>;
+			init-value=<1>;
+		};
+	};
+
+	tp-sys-sleep {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&pch_sleep>;
+	};
+
+	pch_wake: pch-wake {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pch_pwrok>;
+
+		slp-s0-resume-emul {
+			output-signal = <&slp_s0>;
+			init-value=<0>;
+		};
+	};
+
+	tp-sys-wake {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&pch_wake>;
+	};
+
 };

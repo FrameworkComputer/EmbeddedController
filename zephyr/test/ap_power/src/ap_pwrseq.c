@@ -6,7 +6,9 @@
 #include "ap_power/ap_power.h"
 #include "ap_power/ap_power_interface.h"
 #include "chipset.h"
+#include "ec_commands.h"
 #include "emul/emul_power_signals.h"
+#include "host_command.h"
 #include "test_mocks.h"
 #include "test_state.h"
 
@@ -82,6 +84,90 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_0)
 		      "AP_POWER_STARTUP event not generated");
 	zassert_equal(1, power_resume_count,
 		      "AP_POWER_RESUME event not generated");
+}
+
+ZTEST(ap_pwrseq, test_ap_pwrseq_0_sleep)
+{
+	struct ec_params_host_sleep_event_v1 host_sleep_ev_p = {
+		.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND,
+		.suspend_params = { EC_HOST_SLEEP_TIMEOUT_DEFAULT },
+	};
+	struct ec_response_host_sleep_event_v1 host_sleep_ev_r;
+	struct host_cmd_handler_args host_sleep_ev_args = BUILD_HOST_COMMAND(
+		EC_CMD_HOST_SLEEP_EVENT, 1, host_sleep_ev_r, host_sleep_ev_p);
+
+	struct ec_params_s0ix_cnt s0ix_cnt_ev_p = {
+		.flags = EC_S0IX_COUNTER_RESET
+	};
+	struct ec_response_s0ix_cnt s0ix_cnt_ev_r;
+	struct host_cmd_handler_args s0ix_cnt_ev_args = BUILD_HOST_COMMAND(
+		EC_CMD_GET_S0IX_COUNTER, 0, s0ix_cnt_ev_r, s0ix_cnt_ev_p);
+
+	/* Verify that counter is set to 0 */
+	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
+		   "Failed to get s0ix counter");
+	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 0);
+
+	/* Send host sleep event */
+	zassert_ok(host_command_process(&host_sleep_ev_args));
+
+	/* Assert SLP_S0# */
+	zassert_equal(0,
+		      power_signal_emul_load(
+			      EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_sleep)),
+		      "Unable to load test platform `tp_sys_g3_to_s0`");
+
+	k_msleep(500);
+
+	/*
+	 * Verify that counter has been increased,
+	 * clear the flag for get command
+	 */
+	s0ix_cnt_ev_p.flags = 0;
+	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
+		   "Failed to get s0ix counter");
+	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 1);
+}
+
+ZTEST(ap_pwrseq, test_ap_pwrseq_0_wake)
+{
+	struct ec_params_host_sleep_event_v1 p = {
+		.sleep_event = HOST_SLEEP_EVENT_S0IX_RESUME,
+		.suspend_params = { EC_HOST_SLEEP_TIMEOUT_DEFAULT },
+	};
+	struct ec_response_host_sleep_event_v1 r;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, 1, r, p);
+	struct ec_params_s0ix_cnt s0ix_cnt_ev_p = { .flags = 0 };
+	struct ec_response_s0ix_cnt s0ix_cnt_ev_r;
+	struct host_cmd_handler_args s0ix_cnt_ev_args = BUILD_HOST_COMMAND(
+		EC_CMD_GET_S0IX_COUNTER, 0, s0ix_cnt_ev_r, s0ix_cnt_ev_p);
+
+	/* Confirm that counters keeps the same value through wakeup */
+	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
+		   "Failed to get s0ix counter");
+	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 1);
+
+	zassert_equal(0,
+		      power_signal_emul_load(
+			      EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_wake)),
+		      "Unable to load test platform `tp_sys_g3_to_s0`");
+
+	k_msleep(500);
+	zassert_ok(host_command_process(&args));
+	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
+		   "Failed to get sleep counter");
+	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 1);
+
+	/* Verify the reset command sets the counter to zero */
+	s0ix_cnt_ev_p.flags = EC_S0IX_COUNTER_RESET;
+	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
+		   "Failed to get s0ix counter");
+
+	s0ix_cnt_ev_p.flags = 0;
+	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
+		   "Failed to get s0ix counter");
+	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 0);
 }
 
 ZTEST(ap_pwrseq, test_ap_pwrseq_1)
