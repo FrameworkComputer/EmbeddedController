@@ -1970,12 +1970,6 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 		return true;
 	}
 
-	/* If mode entry was successful, disable the timer */
-	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_SETUP_DONE)) {
-		pd_timer_disable(port, PE_TIMER_DISCOVER_IDENTITY);
-		return false;
-	}
-
 	/*
 	 * Run discovery functions when the timer indicating either cable
 	 * discovery spacing or BUSY spacing runs out.
@@ -2014,6 +2008,10 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 			pe[port].tx_type = TCPCI_MSG_SOP_PRIME;
 			set_state_pe(port, PE_INIT_VDM_MODES_REQUEST);
 			return true;
+		} else {
+			PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
+			pd_timer_disable(port, PE_TIMER_DISCOVER_IDENTITY);
+			return false;
 		}
 	}
 
@@ -6144,19 +6142,12 @@ static void pe_vdm_request_dpm_run(int port)
 		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
 		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
 		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
-		uint16_t svid = PD_VDO_VID(payload[0]);
-		uint8_t vdm_cmd = PD_VDO_CMD(payload[0]);
 
 		/*
 		 * PE initiator VDM-ACKed state for requested VDM, like
 		 * PE_INIT_VDM_FOO_ACKed, embedded here.
 		 */
 		dpm_vdm_acked(port, sop, cnt, payload);
-
-		if (sop == TCPCI_MSG_SOP && svid == USB_SID_DISPLAYPORT &&
-		    vdm_cmd == CMD_DP_CONFIG) {
-			PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
-		}
 		break;
 	}
 	case VDM_RESULT_NAK: {
@@ -6166,7 +6157,6 @@ static void pe_vdm_request_dpm_run(int port)
 		 * PE initiator VDM-NAKed state for requested VDM, like
 		 * PE_INIT_VDM_FOO_NAKed, embedded here.
 		 */
-		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 
 		/*
 		 * Because Not Supported messages or response timeouts are
@@ -6194,7 +6184,6 @@ static void pe_vdm_request_dpm_exit(int port)
 {
 	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
-		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 
 		/*
 		 * Mark failure to respond as discovery failure.
@@ -7793,16 +7782,12 @@ void pd_dfp_discovery_init(int port)
 		  BIT(task_get_current()));
 
 	memset(pe[port].discovery, 0, sizeof(pe[port].discovery));
+	PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 }
 
 void pd_dfp_mode_init(int port)
 {
-	/*
-	 * Clear the VDM Setup Done and Modal Operation flags so we will
-	 * have a fresh discovery
-	 */
-	PE_CLR_MASK(port, BIT(PE_FLAGS_VDM_SETUP_DONE_FN) |
-				  BIT(PE_FLAGS_MODAL_OPERATION_FN));
+	PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
 
 	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
 
