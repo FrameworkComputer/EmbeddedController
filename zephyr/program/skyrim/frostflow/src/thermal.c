@@ -12,7 +12,7 @@
 #include "thermal.h"
 #include "util.h"
 
-#define TEMP_AMB TEMP_SENSOR_ID(DT_NODELABEL(temp_amb))
+#define TEMP_MEM TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_memory))
 
 struct fan_step {
 	/*
@@ -68,17 +68,17 @@ int fan_table_to_rpm(int fan, int *temp)
 	 *  3. invariant path. (return the current RPM)
 	 */
 
-	if (temp[TEMP_AMB] < prev_tmp[TEMP_AMB]) {
+	if (temp[TEMP_MEM] < prev_tmp[TEMP_MEM]) {
 		for (i = current_level; i > 0; i--) {
-			if (temp[TEMP_AMB] < fan_step_table[i].off[TEMP_AMB])
+			if (temp[TEMP_MEM] <= fan_step_table[i].off[TEMP_MEM])
 				current_level = i - 1;
 			else
 				break;
 		}
-	} else if (temp[TEMP_AMB] > prev_tmp[TEMP_AMB]) {
+	} else if (temp[TEMP_MEM] > prev_tmp[TEMP_MEM]) {
 		for (i = current_level; i < NUM_FAN_LEVELS; i++) {
-			if (temp[TEMP_AMB] > fan_step_table[i].on[TEMP_AMB])
-				current_level = i + 1;
+			if (temp[TEMP_MEM] >= fan_step_table[i].on[TEMP_MEM])
+				current_level = i;
 			else
 				break;
 		}
