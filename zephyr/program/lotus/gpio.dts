@@ -110,8 +110,8 @@
 		gpio_ec_mute_l: ec_mute_l {
 			gpios = <&gpio2 0 GPIO_ODR_LOW>;
 		};
-		gpu_3v_5v_en {
-			gpios = <&gpio1 7 GPIO_OUTPUT_LOW>;	/* Detect GPU/B then enable 3V/5V PWR output H */
+		gpio_gpu_3v_5v_en: gpu_3v_5v_en {
+			gpios = <&gpio1 7 GPIO_OUTPUT_HIGH>;	/* Detect GPU/B then enable 3V/5V PWR output H */
 		};
 		gpio_wlan_en: wlan_en {
 			gpios = <&gpio1 6 GPIO_OUTPUT_LOW>;
@@ -176,8 +176,8 @@
 		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
 			gpios = <&gpiod 7 GPIO_OUTPUT_HIGH>;
 		};
-		hub_b_pwr_en {
-			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
+		gpio_hub_b_pwr_en: hub_b_pwr_en {
+			gpios = <&gpio8 6 GPIO_OUTPUT_HIGH>;
 		};
 		als_int_l {
 			gpios = <&gpio7 5 GPIO_INPUT>;
