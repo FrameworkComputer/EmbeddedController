@@ -66,7 +66,7 @@ void SHA256_init(struct sha256_ctx *ctx)
 
 static void SHA256_chip_calculation(struct sha256_ctx *ctx)
 {
-	volatile uint8_t hash_ctrl __unused;
+	uint8_t hash_ctrl __unused;
 	uint32_t key;
 
 	key = irq_lock();
@@ -85,7 +85,35 @@ void SHA256_update(struct sha256_ctx *ctx, const uint8_t *data, uint32_t len)
 	ASSERT(len % 4 == 0);
 
 	while (rem_len) {
-		ctx->w[ctx->w_index++] = htobe32(p[data_index++]);
+		uint32_t tmp, x = p[data_index++];
+
+		/*
+		 * htobe32(x); manually inlining this saves several instructions
+		 * when compared to a call to __bswapsi2, saving function call
+		 * overhead and reloading of the mask constants (because there
+		 * are registers to spare in this function). It's written as
+		 * inline assembly to ensure that it won't get lowered to a
+		 * __builtin_bswap32 that might not be inlined.
+		 *
+		 * x = ((x << 8) & 0xFF00FF00) | ((x >> 8) & 0xFF00FF);
+		 * x = (x << 16) | (x >> 16)
+		 */
+		if (IS_ENABLED(CONFIG_RISCV) &&
+		    IS_ENABLED(CONFIG_LITTLE_ENDIAN)) {
+			__asm__(" slli %[scratch], %[x], 8\n"
+				" srli %[x], %[x], 8\n"
+				" and %[scratch], %[scratch], %[hi]\n"
+				" and %[x], %[x], %[lo]\n"
+				" or %[x], %[scratch], %[x]\n"
+				" slli %[scratch], %[x], 16\n"
+				" srli %[x], %[x], 16\n"
+				" or %[x], %[x], %[scratch]\n"
+				: [x] "+r"(x), [scratch] "=&r"(tmp)
+				: [hi] "r"(0xFF00FF00), [lo] "r"(0x00FF00FF));
+		} else {
+			x = htobe32(x);
+		}
+		ctx->w[ctx->w_index++] = x;
 		if (ctx->w_index >= 16) {
 			SHA256_chip_calculation(ctx);
 		}
