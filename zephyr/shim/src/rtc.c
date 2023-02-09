@@ -95,7 +95,13 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 		return;
 	}
 
-	seconds += system_get_rtc_sec();
+	/*
+	 * Adding 1 additional second because system_get_rtc_sec
+	 * returns the number of seconds truncated to the nearest
+	 * integer. This results in missed alarms if the actual
+	 * value is 7.99 seconds and 7 seconds is returned.
+	 */
+	seconds += system_get_rtc_sec() + 1;
 
 	cros_rtc_set_alarm(cros_rtc_dev, seconds, microseconds);
 }
