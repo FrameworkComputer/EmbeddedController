@@ -122,7 +122,6 @@ $(BUILD)/zephyr/%_final.info: $(BUILD)/zephyr/%_stenciled.info
 	'$(THIRD_PARTY)/**' \
 	'$(PLATFORM_EC)/zephyr/drivers/**' \
 	'$(PLATFORM_EC)/zephyr/include/drivers/**' \
-	'$(PLATFORM_EC)/zephyr/program/**' \
 	'$(PLATFORM_EC)/zephyr/shim/chip/**' \
 	'$(PLATFORM_EC)/zephyr/shim/chip/npcx/npcx_monitor/**' \
 	'$(PLATFORM_EC)/zephyr/shim/core/**' \
