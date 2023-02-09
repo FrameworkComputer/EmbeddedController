@@ -185,6 +185,17 @@ void dfp_consume_modes(int port, enum tcpci_msg_type type, int cnt,
 			       PD_DISC_COMPLETE);
 }
 
+void pd_disable_discovery(int port)
+{
+	/* Mark identity and SVIDs for the port partner and cable as failed.
+	 * With no discovered SVIDs, there are no modes to mark as failed.
+	 */
+	pd_set_identity_discovery(port, TCPCI_MSG_SOP, PD_DISC_FAIL);
+	pd_set_svids_discovery(port, TCPCI_MSG_SOP, PD_DISC_FAIL);
+	pd_set_identity_discovery(port, TCPCI_MSG_SOP_PRIME, PD_DISC_FAIL);
+	pd_set_svids_discovery(port, TCPCI_MSG_SOP_PRIME, PD_DISC_FAIL);
+}
+
 void pd_set_identity_discovery(int port, enum tcpci_msg_type type,
 			       enum pd_discovery_state disc)
 {

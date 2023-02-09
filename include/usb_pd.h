@@ -1960,6 +1960,13 @@ void pd_dfp_discovery_init(int port);
 void pd_dfp_mode_init(int port);
 
 /**
+ * Mark all discovery types as failed to prevent any further discovery attempts
+ * until a connection change or DPM request triggers discovery again.
+ * @param port USB-C port number
+ */
+void pd_disable_discovery(int port);
+
+/**
  * Set identity discovery state for this type and port
  *
  * @param port  USB-C port number

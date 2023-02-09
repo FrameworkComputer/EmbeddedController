@@ -48,8 +48,6 @@ enum {
 	PE_FLAGS_PS_RESET_COMPLETE_FN,
 	/* VCONN swap operation has completed */
 	PE_FLAGS_VCONN_SWAP_COMPLETE_FN,
-	/* Flag to note no more setup VDMs (discovery, etc.) should be sent */
-	PE_FLAGS_VDM_SETUP_DONE_FN,
 	/* Flag to note PR Swap just completed for Startup entry */
 	PE_FLAGS_PR_SWAP_COMPLETE_FN,
 	/* Flag to note FRS/PRS context in shared state machine path */

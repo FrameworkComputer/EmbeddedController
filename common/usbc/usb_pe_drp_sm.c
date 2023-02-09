@@ -1927,13 +1927,6 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		assert(0);
 
-	/*
-	 * DONE set once modal entry is successful, discovery completes, or
-	 * discovery results in a NAK
-	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_SETUP_DONE))
-		return false;
-
 	/* Apply Port Discovery DR Swap Policy */
 	if (port_discovery_dr_swap_policy(
 		    port, pe[port].data_role,
@@ -1951,12 +1944,9 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 	 */
 	if (pe[port].data_role == PD_ROLE_UFP &&
 	    prl_get_rev(port, TCPCI_MSG_SOP) == PD_REV20) {
-		pd_set_identity_discovery(port, TCPCI_MSG_SOP, PD_DISC_FAIL);
-		pd_set_identity_discovery(port, TCPCI_MSG_SOP_PRIME,
-					  PD_DISC_FAIL);
+		pd_disable_discovery(port);
 		pd_notify_event(port, PD_STATUS_EVENT_SOP_DISC_DONE);
 		pd_notify_event(port, PD_STATUS_EVENT_SOP_PRIME_DISC_DONE);
-		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 		return false;
 	}
 
@@ -2009,7 +1999,6 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 			set_state_pe(port, PE_INIT_VDM_MODES_REQUEST);
 			return true;
 		} else {
-			PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 			pd_timer_disable(port, PE_TIMER_DISCOVER_IDENTITY);
 			return false;
 		}
@@ -7782,7 +7771,6 @@ void pd_dfp_discovery_init(int port)
 		  BIT(task_get_current()));
 
 	memset(pe[port].discovery, 0, sizeof(pe[port].discovery));
-	PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
 }
 
 void pd_dfp_mode_init(int port)
