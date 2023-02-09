@@ -5,6 +5,7 @@
 
 /* Power button state machine for x86 platforms */
 
+#include "board_adc.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"

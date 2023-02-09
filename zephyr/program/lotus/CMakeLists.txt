@@ -13,6 +13,7 @@ zephyr_library_sources(
 	"src/charger.c"
 	"src/cypress_pd_common.c"
 	"src/power_sequence.c"
+	"src/adc.c"
 )
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
