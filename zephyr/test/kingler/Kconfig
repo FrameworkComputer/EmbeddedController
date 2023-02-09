@@ -53,4 +53,17 @@ config TEST_KINGLER_CCD
 	help
 	  Include alt_sensor.c into the binary to test the alt sensor probe via
 	  SSFC.
+
+config TEST_VOLTORB
+	bool "Run the tests intended for voltorb"
+	help
+	  Include voltorb_usbc.c into the binary to test the type-c output
+	  current limit function.
+
+config TEST_USB_PD_POLICY
+	bool "Run the tests intended for voltorb usb policy"
+	help
+	  Include voltorb_usbc.c into the binary to test the type-c output
+	  current limit function.
+
 source "Kconfig.zephyr"

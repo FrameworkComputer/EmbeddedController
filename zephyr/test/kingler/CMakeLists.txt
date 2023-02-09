@@ -33,3 +33,6 @@ target_sources_ifdef(CONFIG_TEST_ALT_SENSOR_PROBE
 			app PRIVATE src/alt_sensor.c)
 target_sources_ifdef(CONFIG_TEST_KINGLER_CCD
 app PRIVATE src/ccd.c ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/board.c)
+target_sources_ifdef(CONFIG_TEST_VOLTORB
+			app PRIVATE src/voltorb_usbc.c
+			${PLATFORM_EC_PROGRAM_DIR}/corsola/voltorb/src/usbc.c)

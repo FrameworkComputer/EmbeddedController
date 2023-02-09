@@ -48,3 +48,9 @@ tests:
     extra_configs:
       - CONFIG_TEST_STEELIX_RUSTY=y
       - CONFIG_TEST_ALT_SENSOR_PROBE=y
+  kingler.voltorb:
+    extra_args:
+      DTC_OVERLAY_FILE="kingler.default.overlay"
+    extra_configs:
+      - CONFIG_TEST_VOLTORB=y
+      - CONFIG_TEST_USB_PD_POLICY=y
