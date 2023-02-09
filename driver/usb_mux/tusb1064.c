@@ -89,8 +89,8 @@ int tusb1064_set_dp_rx_eq(const struct usb_mux *me, int db)
 }
 
 /* Writes control register to set switch mode */
-static int tusb1064_set_mux(const struct usb_mux *me, mux_state_t mux_state,
-			    bool *ack_required)
+int tusb1064_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+		     bool *ack_required)
 {
 	uint8_t reg;
 	int rv;
