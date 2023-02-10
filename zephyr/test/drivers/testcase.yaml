@@ -101,6 +101,13 @@ tests:
   drivers.console:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_CONSOLE=y
+  drivers.console_cmd_crash:
+    extra_args: CONF_FILE="prj.conf;default/prj.conf"
+                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_CRASH=y
+      - CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH=y
+      - CONFIG_ASSERT_TEST=y
   drivers.dps:
     extra_args: CONF_FILE="prj.conf;dps/prj.conf"
     extra_configs:

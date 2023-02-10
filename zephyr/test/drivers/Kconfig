@@ -11,6 +11,9 @@ config LINK_TEST_SUITE_DEFAULT
 config LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS
 	bool "Link and test the default console commands test suite"
 
+config LINK_TEST_SUITE_CONSOLE_CMD_CRASH
+	bool "Link and test the console command crash test suite"
+
 config LINK_TEST_SUITE_ANX7447
 	bool "Link and test the anx7447 tests"
 

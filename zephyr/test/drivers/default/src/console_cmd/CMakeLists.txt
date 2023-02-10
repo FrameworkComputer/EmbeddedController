@@ -18,7 +18,6 @@ target_sources(app PRIVATE
 	accelread.c
 	accelres.c
 	button.c
-	crash.c
 	cutoff.c
 	ec_features.c
 	gpio.c
