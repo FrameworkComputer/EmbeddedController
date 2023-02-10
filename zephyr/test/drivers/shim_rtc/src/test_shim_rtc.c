@@ -55,7 +55,13 @@ ZTEST_USER(rtc_shim, test_hc_rtc_set_get_alarm)
 	set_value.time = 1776;
 	zassert_ok(host_command_process(&set_args));
 	zassert_ok(host_command_process(&get_args));
-	zassert_equal(get_value.time, set_value.time);
+	/*
+	 * The RTC driver adds 1 second to the alarm time to compensate for
+	 * truncation error. For example, 7 seconds is returned when the
+	 * actual time is 7.9 seconds. "get_value.time - 1" removes the
+	 * additional seconded for this test.
+	 */
+	zassert_equal(get_value.time - 1, set_value.time);
 }
 
 ZTEST(rtc_shim, test_hc_rtc_set_alarm_can_fire_cb)
@@ -84,7 +90,14 @@ ZTEST(rtc_shim, test_hc_rtc_set_alarm_can_fire_cb)
 	set_value.time = 2;
 	zassert_ok(host_command_process(&set_args));
 	/* Set fake driver time forward to hit the alarm in 2 seconds */
-	system_set_rtc(4);
+
+	/*
+	 * The RTC driver adds 1 second to the alarm time to compensate for
+	 * truncation error. For example, 7 seconds is returned when the
+	 * actual time is 7.9 seconds. So, RTC seconds is set to 5 instead
+	 * of 4.
+	 */
+	system_set_rtc(5);
 
 	/* Wait for irq to finish */
 	k_sleep(K_SECONDS(1));
