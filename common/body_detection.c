@@ -38,6 +38,12 @@ static struct body_detect_motion_data {
 	uint64_t n2_variance; /* n^2 * var(history) */
 } data[2]; /* motion data for X-axis and Y-axis */
 
+static void print_body_detect_mode(void)
+{
+	CPRINTS("body detect mode %sabled",
+		body_detect_get_state() ? "en" : "dis");
+}
+
 /*
  * This function will update new variance and new sum according to incoming
  * value, previous value, previous sum and previous variance.
@@ -115,14 +121,13 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 		stationary_timeframe = 0;
 	}
 
+	/* state changing log */
+	print_body_detect_mode();
+
 	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE))
 		host_set_single_event(EC_HOST_EVENT_BODY_DETECT_CHANGE);
 
 	hook_notify(HOOK_BODY_DETECT_CHANGE);
-
-	/* state changing log */
-	CPRINTS("body_detect changed state to: %s body",
-		motion_state ? "on" : "off");
 }
 
 enum body_detect_states body_detect_get_state(void)
@@ -259,4 +264,38 @@ bool body_detect_get_spoof(void)
 {
 	return spoof_enable;
 }
-#endif
+
+static int command_setbodydetectionmode(int argc, const char **argv)
+{
+	if (argc == 1) {
+		print_body_detect_mode();
+		return EC_SUCCESS;
+	}
+
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (argv[1][0] == 'o' && argv[1][1] == 'n') {
+		body_detect_change_state(BODY_DETECTION_ON_BODY, true);
+		spoof_enable = true;
+	} else if (argv[1][0] == 'o' && argv[1][1] == 'f') {
+		body_detect_change_state(BODY_DETECTION_OFF_BODY, true);
+		spoof_enable = true;
+	} else if (argv[1][0] == 'r') {
+		body_detect_reset();
+		/*
+		 * Don't call body_detect_set_spoof(), since
+		 * body_detect_change_state() was already called by
+		 * body_detect_reset().
+		 */
+		spoof_enable = false;
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(
+	bodydetectmode, command_setbodydetectionmode, "[on | off | reset]",
+	"Manually force body detect mode to on (body), off (body) or reset.");
+#endif /* CONFIG_ACCEL_SPOOF_MODE */
