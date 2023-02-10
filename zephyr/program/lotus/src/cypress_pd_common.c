@@ -676,10 +676,16 @@ void cypd_interrupt_handler_task(void *p)
 			charge_manager_update_charge(j, i, NULL);
 	}
 
+	/* trigger the handle_state to start setup in task */
+	task_set_event(TASK_ID_CYPD, (CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1));
+
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		gpio_enable_interrupt(pd_chip_config[i].gpio);
+		task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0<<i);
+	}
+
 	while (1) {
 		evt = task_wait_event(10*MSEC);
-
-		continue;
 
 		if (firmware_update)
 			continue;
