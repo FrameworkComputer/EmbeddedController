@@ -5,6 +5,7 @@
 
 #include <atomic.h>
 #include <zephyr/init.h>
+#include "gpio/gpio_int.h"
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -233,6 +234,21 @@ static void update_power_state_deferred(void)
 	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PWRSTAT);
 }
 DECLARE_DEFERRED(update_power_state_deferred);
+
+static void cypd_enable_interrupt(int controller, int enable_ndisable)
+{
+	if (controller) {
+			if (enable_ndisable)
+				gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip1_interrupt));
+			else
+				gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip1_interrupt));
+	}else {
+			if (enable_ndisable)
+				gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
+			else
+				gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
+	}
+}
 
 static void cypd_print_version(int controller, const char *vtype, uint8_t *data)
 {
@@ -680,7 +696,7 @@ void cypd_interrupt_handler_task(void *p)
 	task_set_event(TASK_ID_CYPD, (CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1));
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		gpio_enable_interrupt(pd_chip_config[i].gpio);
+		cypd_enable_interrupt(i, true);
 		task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0<<i);
 	}
 
@@ -936,9 +952,9 @@ static int cmd_cypd_control(int argc, const char **argv)
 			if (!parse_bool(argv[1], &enable))
 				return EC_ERROR_PARAM1;
 			if (enable)
-				gpio_enable_interrupt(pd_chip_config[i].gpio);
+				cypd_enable_interrupt(i, true);
 			else
-				gpio_disable_interrupt(pd_chip_config[i].gpio);
+				cypd_enable_interrupt(i, false);
 		} else if (!strncmp(argv[1], "reset", 5)) {
 			cypd_write_reg8(i, CCG_PDPORT_ENABLE_REG, 0);
 			/*can take up to 650ms to discharge port for disable*/
