@@ -95,6 +95,10 @@ test_export_static timestamp_t shutdown_target_time;
 static bool is_charging_progress_displayed;
 static timestamp_t precharge_start_time;
 static struct sustain_soc sustain_soc;
+static struct current_limit {
+	uint32_t value; /* Charge limit to apply, in mA */
+	int soc; /* Minimum battery SoC at which the limit will be applied. */
+} current_limit = { -1U, 0 };
 
 /*
  * The timestamp when the battery charging current becomes stable.
@@ -1456,6 +1460,15 @@ static void sustain_battery_soc(void)
 		mode_text[mode]);
 }
 
+static void current_limit_battery_soc(void)
+{
+	if (user_current_limit != current_limit.value &&
+	    charge_get_display_charge() / 10 >= current_limit.soc) {
+		user_current_limit = current_limit.value;
+		CPRINTS("Current limit %dmA applied", user_current_limit);
+	}
+}
+
 /*****************************************************************************/
 /* Hooks */
 void charger_init(void)
@@ -1906,6 +1919,9 @@ void charger_task(void *u)
 
 		/* Run battery sustainer (no-op if not applicable). */
 		sustain_battery_soc();
+
+		/* Run battery soc check for setting the current limit. */
+		current_limit_battery_soc();
 
 		if ((!(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
 		     curr.batt.state_of_charge != prev_charge) ||
@@ -2553,12 +2569,26 @@ charge_command_current_limit(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_current_limit *p = args->params;
 
-	user_current_limit = p->limit;
+	/* Version 0 only supports setting a charge current limit */
+	if (args->version == 0) {
+		user_current_limit = p->limit;
+		current_limit.value = p->limit;
+		return EC_RES_SUCCESS;
+	}
+
+	/* Check if battery state of charge param is within range */
+	if (p->battery_soc < 0 || p->battery_soc > 100) {
+		CPRINTS("Invalid param: %d", p->battery_soc);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	current_limit.value = p->limit;
+	current_limit.soc = p->battery_soc;
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CURRENT_LIMIT, charge_command_current_limit,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 /*
  * Expose charge/battery related state

@@ -4772,9 +4772,18 @@ struct ec_response_charge_state {
  * Set maximum battery charging current.
  */
 #define EC_CMD_CHARGE_CURRENT_LIMIT 0x00A1
+#define EC_VER_CHARGE_CURRENT_LIMIT 1
 
 struct ec_params_current_limit {
 	uint32_t limit; /* in mA */
+
+	/* Added in v1 */
+	/*
+	 * Battery state of charge is the minimum charge percentage at which
+	 * the battery charge current limit will apply.
+	 * When not set, the limit will apply regardless of state of charge.
+	 */
+	uint8_t battery_soc; /* battery state of charge, 0-100 */
 } __ec_align4;
 
 /*

@@ -96,7 +96,8 @@ const char help_str[] =
 	"  cbi\n"
 	"      Get/Set/Remove Cros Board Info\n"
 	"  chargecurrentlimit\n"
-	"      Set the maximum battery charging current\n"
+	"    Set the maximum battery charging current and the minimum battery\n"
+	"    SoC at which it will apply.\n"
 	"  chargecontrol\n"
 	"      Force the battery to stop charging or discharge\n"
 	"  chargeoverride\n"
@@ -3231,8 +3232,8 @@ static int cmd_temperature_print(int id, int mtemp)
 	int temp = mtemp + EC_TEMP_SENSOR_OFFSET;
 
 	temp_p.id = id;
-	rc = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0, &temp_p,
-			sizeof(temp_p), &temp_r, sizeof(temp_r));
+	rc = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0, &temp_p, sizeof(temp_p),
+			&temp_r, sizeof(temp_r));
 	if (rc < 0)
 		return rc;
 
@@ -3253,7 +3254,8 @@ static int cmd_temperature_print(int id, int mtemp)
 		else
 			printf("  %10d%% (%d K and %d K)",
 			       get_temp_ratio(temp, r.temp_fan_off,
-			       r.temp_fan_max), r.temp_fan_off, r.temp_fan_max);
+					      r.temp_fan_max),
+			       r.temp_fan_off, r.temp_fan_max);
 	else
 		printf("%20s(rc=%d)", "error", rc);
 
@@ -7529,24 +7531,61 @@ int cmd_ext_power_limit(int argc, char *argv[])
 			  0);
 }
 
+static void cmd_charge_current_limit_help(const char *cmd)
+{
+	fprintf(stderr,
+		"\n"
+		"  Usage: %s <max_current_mA>\n"
+		"    Set the maximum battery charging current.\n"
+		"  Usage: %s <max_current_mA> [battery_SoC]\n"
+		"    Set the maximum battery charging current and the minimum battery\n"
+		"    SoC at which it will apply. Setting [battery_SoC] is only \n"
+		"    supported in v1.\n"
+		"\n",
+		cmd, cmd);
+}
+
 int cmd_charge_current_limit(int argc, char *argv[])
 {
 	struct ec_params_current_limit p;
+	int version = 1;
 	int rv;
 	char *e;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <max_current_mA>\n", argv[0]);
+	if (!ec_cmd_version_supported(EC_CMD_CHARGE_CURRENT_LIMIT, 1))
+		version = 0;
+
+	if (version < 1) {
+		if (argc != 2) {
+			cmd_charge_current_limit_help(argv[0]);
+			return -1;
+		}
+	} else if (argc < 2 || argc > 3) {
+		cmd_charge_current_limit_help(argv[0]);
 		return -1;
 	}
 
 	p.limit = strtol(argv[1], &e, 0);
 	if (e && *e) {
-		fprintf(stderr, "Bad value.\n");
+		fprintf(stderr, "ERROR: Bad limit value: %s\n", argv[1]);
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0, &p, sizeof(p), NULL, 0);
+	if (argc == 3) {
+		p.battery_soc = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "ERROR: Bad battery SoC value: %s\n",
+				argv[2]);
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_CHARGE_CURRENT_LIMIT, version, &p, sizeof(p),
+			NULL, 0);
+	if (rv < 0) {
+		fprintf(stderr, "ERROR: Battery SoC is out of range.\n");
+	}
+
 	return rv;
 }
 
