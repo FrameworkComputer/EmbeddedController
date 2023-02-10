@@ -37,7 +37,7 @@ config PLATFORM_EC_TCPC_INTERRUPT
 	help
 	  By default, the tcpc driver is automatically enabled and will
 	  initialize using the devicetree configs. Disable to stop tcpc
-	  intterupt callbacks from being generated and save space on flash if a
+	  interrupt callbacks from being generated and save space on flash if a
 	  custom driver is used instead.
 
 config PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT
