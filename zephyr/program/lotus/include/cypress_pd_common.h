@@ -12,7 +12,7 @@
 
 /* 7 bit address  */
 #define CCG_I2C_CHIP0	0x42
-#define CCG_I2C_CHIP1	0x42
+#define CCG_I2C_CHIP1	0x40
 
 #define BB_PWR_DOWN_TIMEOUT (4000*MSEC)
 
