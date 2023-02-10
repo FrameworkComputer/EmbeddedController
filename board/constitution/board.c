@@ -12,6 +12,7 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/wpc/cps8100.h"
 #include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
@@ -41,7 +42,6 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
-extern struct pchg_drv cps8100_drv;
 struct pchg pchgs[] = {
 	[0] = {
 		.cfg = &(const struct pchg_config) {
