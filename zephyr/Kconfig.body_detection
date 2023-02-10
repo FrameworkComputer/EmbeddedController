@@ -83,7 +83,7 @@ config PLATFORM_EC_BODY_DETECTION_NOTIFY_MODE_CHANGE
 	bool "Notify host with a specific host event when body status is changed"
 	default n
 	help
-	  Notify the host via SCI events EC_HOST_EVENT_MODE_CHANGE when body
+	  Notify the host via SCI events EC_HOST_EVENT_BODY_DETECT_CHANGE when body
 	  status is changed, in addition to adding an event in the motion sensor
 	  FIFO queue.
 

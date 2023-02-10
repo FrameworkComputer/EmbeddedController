@@ -780,6 +780,9 @@ enum host_event_code {
 	 */
 	EC_HOST_EVENT_INVALID = 32,
 
+	/* Body detect (lap/desk) change event */
+	EC_HOST_EVENT_BODY_DETECT_CHANGE = 33,
+
 	/*
 	 * Only 64 host events are supported. This enum uses 1-based counting so
 	 * it can skip 0 (NONE), so the last legal host event number is 64.
@@ -826,6 +829,7 @@ enum host_event_code {
 			"KEYBOARD_RECOVERY_HW_REINIT",                         \
 		[EC_HOST_EVENT_WOV] = "WOV",                                   \
 		[EC_HOST_EVENT_INVALID] = "INVALID",                           \
+		[EC_HOST_EVENT_BODY_DETECT_CHANGE] = "BODY_DETECT_CHANGE",     \
 	}
 /* clang-format on */
 

@@ -115,9 +115,8 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 		stationary_timeframe = 0;
 	}
 
-#ifdef CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
-#endif
+	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE))
+		host_set_single_event(EC_HOST_EVENT_BODY_DETECT_CHANGE);
 
 	hook_notify(HOOK_BODY_DETECT_CHANGE);
 
