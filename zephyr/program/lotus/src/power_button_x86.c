@@ -193,8 +193,8 @@ static void power_button_released(uint64_t tnow)
  */
 static void set_initial_pwrbtn_state(void)
 {
-	pwrbtn_state = PWRBTN_STATE_INIT_ON;
-	CPRINTS("PB init-on");
+	pwrbtn_state = PWRBTN_STATE_IDLE;
+	CPRINTS("PB idle");
 }
 
 /**
