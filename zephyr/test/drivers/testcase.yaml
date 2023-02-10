@@ -309,6 +309,7 @@ tests:
   drivers.host_cmd_thread:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_HOST_CMD_THREAD=y
+      - CONFIG_TASK_HOSTCMD_THREAD_MAIN=y
   drivers.pi3usb9201:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_PI3USB9201=y

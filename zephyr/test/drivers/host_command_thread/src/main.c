@@ -24,12 +24,16 @@
 /* Pointer to the main thread, defined in kernel/init.c */
 extern struct k_thread z_main_thread;
 
+/* Thread id of fake main thread */
+static k_tid_t fake_main_tid;
+
 /* 0 - did not run, 1 - true, -1 - false */
 static int last_check_main_thread_result;
 
 static enum ec_status check_main_thread(struct host_cmd_handler_args *args)
 {
-	last_check_main_thread_result = in_host_command_main() ? 1 : -1;
+	last_check_main_thread_result =
+		(k_current_get() == &z_main_thread ? 1 : -1);
 	return EC_RES_SUCCESS;
 }
 
@@ -42,6 +46,15 @@ static void fake_main_thread(void *a, void *b, void *c)
 
 K_THREAD_STACK_DEFINE(fake_main_thread_stack, 4000);
 
+/* Override in_host_command_main() from shim/src/host_command.c so
+ * task_get_current() returns TASK_ID_HOSTCMD when fake main thread
+ * is running.
+ */
+bool in_host_command_main(void)
+{
+	return (k_current_get() == fake_main_tid);
+}
+
 ZTEST_SUITE(host_cmd_thread, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);
 
@@ -51,7 +64,8 @@ ZTEST(host_cmd_thread, test_takeover)
 		BUILD_HOST_COMMAND_SIMPLE(CUSTOM_COMMAND_ID, 0);
 	const char expected_thread_name[] = "HOSTCMD";
 	struct k_thread fake_main_thread_data;
-	k_tid_t tid = k_thread_create(
+
+	fake_main_tid = k_thread_create(
 		&fake_main_thread_data, fake_main_thread_stack,
 		K_THREAD_STACK_SIZEOF(fake_main_thread_stack), fake_main_thread,
 		NULL, NULL, NULL, 1, 0, K_NO_WAIT);
@@ -79,5 +93,5 @@ ZTEST(host_cmd_thread, test_takeover)
 	zassert_equal(-1, last_check_main_thread_result);
 
 	/* Kill the extra thread */
-	k_thread_abort(tid);
+	k_thread_abort(fake_main_tid);
 }

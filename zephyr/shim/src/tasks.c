@@ -96,7 +96,7 @@ task_id_t task_get_current(void)
 	}
 
 	__ASSERT(false, "Task index out of bound");
-	return 0;
+	return TASK_ID_INVALID;
 }
 
 atomic_t *task_get_event_bitmap(task_id_t cros_task_id)

@@ -30,7 +30,7 @@ void host_command_main(void)
 	host_command_task(NULL);
 }
 
-bool in_host_command_main(void)
+test_mockable bool in_host_command_main(void)
 {
 	return (k_current_get() == &z_main_thread);
 }
