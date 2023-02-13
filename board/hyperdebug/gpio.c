@@ -338,6 +338,65 @@ DECLARE_CONSOLE_COMMAND_FLAGS(gpiopullmode, command_gpio_pull_mode,
 			      "name <none | up | down>",
 			      "Set a GPIO weak pull mode", CMD_FLAG_RESTRICTED);
 
+/*
+ * Set multiple aspects of a GPIO pin simultaneously, that is, can switch output
+ * level, opendrain/pushpull, and pullup simultaneously, eliminating the risk of
+ * glitches.
+ */
+static int command_gpio_multiset(int argc, const char **argv)
+{
+	int gpio;
+	int flags;
+
+	if (argc < 4)
+		return EC_ERROR_PARAM_COUNT;
+
+	gpio = find_signal_by_name(argv[2]);
+	if (gpio == GPIO_COUNT)
+		return EC_ERROR_PARAM2;
+	flags = gpio_get_flags(gpio);
+
+	if (argc > 3 && strcasecmp(argv[3], "-") != 0) {
+		flags = flags & ~(GPIO_LOW | GPIO_HIGH);
+		if (strcasecmp(argv[3], "0") == 0)
+			flags |= GPIO_LOW;
+		else if (strcasecmp(argv[3], "1") == 0)
+			flags |= GPIO_HIGH;
+		else
+			return EC_ERROR_PARAM3;
+	}
+
+	if (argc > 4 && strcasecmp(argv[4], "-") != 0) {
+		flags = flags & ~(GPIO_INPUT | GPIO_OUTPUT | GPIO_OPEN_DRAIN);
+		if (strcasecmp(argv[4], "input") == 0)
+			flags |= GPIO_INPUT;
+		else if (strcasecmp(argv[4], "opendrain") == 0)
+			flags |= GPIO_OUTPUT | GPIO_OPEN_DRAIN;
+		else if (strcasecmp(argv[4], "pushpull") == 0)
+			flags |= GPIO_OUTPUT;
+		else if (strcasecmp(argv[4], "alternate") == 0)
+			flags |= GPIO_ALTERNATE;
+		else
+			return EC_ERROR_PARAM4;
+	}
+
+	if (argc > 5 && strcasecmp(argv[5], "-") != 0) {
+		flags = flags & ~(GPIO_PULL_UP | GPIO_PULL_DOWN);
+		if (strcasecmp(argv[5], "none") == 0)
+			;
+		else if (strcasecmp(argv[5], "up") == 0)
+			flags |= GPIO_PULL_UP;
+		else if (strcasecmp(argv[5], "down") == 0)
+			flags |= GPIO_PULL_DOWN;
+		else
+			return EC_ERROR_PARAM5;
+	}
+
+	/* Update GPIO flags. */
+	gpio_set_flags(gpio, flags);
+	return EC_SUCCESS;
+}
+
 static int command_gpio_monitoring_start(int argc, const char **argv)
 {
 	BUILD_ASSERT(STM32_IRQ_EXTI15 < 32);
@@ -668,10 +727,13 @@ static int command_gpio(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 	if (!strcasecmp(argv[1], "monitoring"))
 		return command_gpio_monitoring(argc, argv);
+	if (!strcasecmp(argv[1], "multiset"))
+		return command_gpio_multiset(argc, argv);
 	return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(gpio, command_gpio,
-			      "monitoring start PIN"
+			      "multiset PIN [level] [mode] [pullmode]"
+			      "\nmonitoring start PIN"
 			      "\nmonitoring read PIN"
 			      "\nmonitoring stop PIN",
 			      "GPIO manipulation", CMD_FLAG_RESTRICTED);
