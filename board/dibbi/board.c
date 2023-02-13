@@ -197,14 +197,11 @@ int board_vbus_source_enabled(int port)
 /* Vconn control for integrated ITE TCPC */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
-	/* Vconn control is only for port 0 */
-	if (port)
-		return;
-
-	if (cc_pin == USBPD_CC_PIN_1)
-		gpio_set_level(GPIO_EN_USB_C0_CC1_VCONN, !!enabled);
-	else
-		gpio_set_level(GPIO_EN_USB_C0_CC2_VCONN, !!enabled);
+	/*
+	 * We ignore the cc_pin and PPC vconn because polarity and PPC vconn
+	 * should already be set correctly in the PPC driver via the pd
+	 * state machine.
+	 */
 }
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
