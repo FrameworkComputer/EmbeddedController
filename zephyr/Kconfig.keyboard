@@ -195,6 +195,13 @@ config PLATFORM_EC_CMD_BUTTON
 	  This command simulates button press. The buttons are like volume-up,
 	  volume-down, and recovery buttons.
 
+config PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
+	bool "Support entering recovery mode using buttons"
+	help
+	  Support for entering recovery mode using the volume buttons or a
+	  dedicated recovery button. Note that these are *buttons* and not keys
+	  in the keyboard matrix.
+
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	bool "Console command: ksstate, kbpress, 8042"
 	default y if PLATFORM_EC_KEYBOARD
