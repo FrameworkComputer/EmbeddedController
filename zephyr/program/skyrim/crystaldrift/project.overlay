@@ -28,6 +28,12 @@
 
 	named-gpios {
 		/* Crystaldrift-specific GPIO customizations */
+		gpio_ec_chg_led_r: ec_chg_led_r {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_chg_led_b: ec_chg_led_b {
+			gpios = <&gpio8 0 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	named-temp-sensors {
