@@ -32,7 +32,7 @@ GPIO_INT(UART1_RX,		PIN(B, 0), GPIO_INT_BOTH, uart_deepsleep_interrupt)	/* UART_
 /* Other interrupts */
 GPIO_INT(EC_WP_OD,		PIN(A, 6), GPIO_INT_BOTH, switch_interrupt)
 /* Directly connected recovery button */
-GPIO_INT(EC_RECOVERY_BTN_ODL,	PIN(K, 7), GPIO_INT_BOTH, button_interrupt)
+GPIO_INT(EC_RECOVERY_BTN_OD,	PIN(K, 7), GPIO_INT_BOTH, button_interrupt)
 /* Recovery button input from H1 */
 GPIO_INT(H1_EC_RECOVERY_BTN_ODL,PIN(K, 4), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(BJ_ADP_PRESENT,	PIN(A, 7), GPIO_INT_BOTH, adp_connect_interrupt)
