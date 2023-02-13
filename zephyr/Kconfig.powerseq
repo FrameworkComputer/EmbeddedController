@@ -218,11 +218,12 @@ config PLATFORM_EC_POWERSEQ_MT8186
 	  Use the MT8186 code for power sequencing.
 
 config PLATFORM_EC_POWERSEQ_MT8188
-	bool "Use common MT8186 code for power sequencing"
+	bool "Use common MT8188 code for power sequencing"
 	default y
 	depends on AP_ARM_MTK_MT8188
 	help
-	  Use the MT8188 code for power sequencing.
+	  Use the MT8188 code for power sequencing. Re-use MT8186 common
+	  code.
 
 config PLATFORM_EC_POWERSEQ_SC7180
 	bool "SC7180 power sequencing"
