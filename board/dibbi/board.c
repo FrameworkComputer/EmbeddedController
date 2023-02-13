@@ -147,7 +147,7 @@ void board_init(void)
 {
 	int on;
 
-	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
+	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT);
 
 	/* Enable PPC interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_FAULT_L);
@@ -250,7 +250,7 @@ static int8_t bj_adp_connected = -1;
 static void adp_connect_deferred(void)
 {
 	const struct charge_port_info *pi;
-	int connected = !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
+	int connected = gpio_get_level(GPIO_BJ_ADP_PRESENT);
 
 	/* Debounce */
 	if (connected == bj_adp_connected)
@@ -315,15 +315,15 @@ int board_set_active_charge_port(int port)
 	case CHARGE_PORT_TYPEC0:
 		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 1);
-		gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
+		gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT);
 		break;
 	case CHARGE_PORT_BARRELJACK:
 		/* Make sure BJ adapter is sourcing power */
-		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
+		if (!gpio_get_level(GPIO_BJ_ADP_PRESENT))
 			return EC_ERROR_INVAL;
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 0);
 		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
-		gpio_disable_interrupt(GPIO_BJ_ADP_PRESENT_L);
+		gpio_disable_interrupt(GPIO_BJ_ADP_PRESENT);
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -345,8 +345,8 @@ static void board_charge_manager_init(void)
 			charge_manager_update_charge(j, i, NULL);
 	}
 
-	port = gpio_get_level(GPIO_BJ_ADP_PRESENT_L) ? CHARGE_PORT_TYPEC0 :
-						       CHARGE_PORT_BARRELJACK;
+	port = gpio_get_level(GPIO_BJ_ADP_PRESENT) ? CHARGE_PORT_BARRELJACK :
+						     CHARGE_PORT_TYPEC0;
 	CPRINTUSB("Power source is p%d (%s)", port,
 		  port == CHARGE_PORT_TYPEC0 ? "USB-C" : "BJ");
 
