@@ -241,6 +241,7 @@ static void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;
 	const struct device *ioex_port0, *ioex_port1;
+	int rv;
 
 	/* The maximum pin numbers of the NCT38xx IO expander port is 8 */
 	gpio_flags_t saved_port0_flags[8] = { 0 };
@@ -275,6 +276,18 @@ static void reset_nct38xx_port(int port)
 				 ARRAY_SIZE(saved_port0_flags));
 	gpio_restore_port_config(ioex_port1, saved_port1_flags,
 				 ARRAY_SIZE(saved_port1_flags));
+
+	if (power_get_state() == POWER_S0) {
+		/* If we transitioned to S0 during the reset then the restore
+		 * may set the vbus enable pin low. Ensure the A port is
+		 * always powered in S0.
+		 */
+		rv = usb_charge_set_mode(port, USB_CHARGE_MODE_ENABLED,
+					 USB_ALLOW_SUSPEND_CHARGE);
+		if (rv)
+			CPRINTSUSB("S0 TCPC enable failure on port %d(%d)",
+				   port, rv);
+	}
 }
 
 void board_reset_pd_mcu(void)
