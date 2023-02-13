@@ -156,17 +156,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 void board_init(void)
 {
-	int on;
-
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT);
 
 	/* Enable PPC interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_FAULT_L);
-
-	/* Turn on 5V if the system is on, otherwise turn it off */
-	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
-			      CHIPSET_STATE_SOFT_OFF);
-	board_power_5v_enable(on);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -180,10 +173,8 @@ void board_reset_pd_mcu(void)
 __override void board_power_5v_enable(int enable)
 {
 	/*
-	 * Mainboard 5V regulator activated by GPIO.
-	 * USB-A ports are activated by usb_port_power_dumb.
+	 * Nothing to do. 5V should always be enabled while in Z1 or above.
 	 */
-	gpio_set_level(GPIO_EN_PP5000, !!enable);
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
