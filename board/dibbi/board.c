@@ -191,7 +191,7 @@ int board_vbus_source_enabled(int port)
 	if (port != CHARGE_PORT_TYPEC0)
 		return 0;
 
-	return ppc_is_vbus_present(port);
+	return ppc_is_sourcing_vbus(port);
 }
 
 /* Vconn control for integrated ITE TCPC */
