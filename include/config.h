@@ -846,6 +846,10 @@
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON_2
 
+/* Configure recovery button. e.g. BUTTON_FLAG_ACTIVE_HIGH */
+#undef CONFIG_DEDICATED_RECOVERY_BUTTON_FLAGS
+#undef CONFIG_DEDICATED_RECOVERY_BUTTON_2_FLAGS
+
 /*
  * RISC-V core specific panic data is bigger than Cortex-M core specific panic
  * data. Including this into union in panic_data structure causes whole
