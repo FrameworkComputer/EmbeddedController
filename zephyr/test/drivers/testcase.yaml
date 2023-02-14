@@ -200,7 +200,9 @@ tests:
       - CONFIG_POWER_SEQUENCE_MOCK=y
       - CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP=y
   drivers.ps8xxx:
-    extra_args: CONF_FILE="prj.conf;ps8xxx/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./ps8xxx/usbc.dts"
+    extra_args: >
+      CONF_FILE="prj.conf;ps8xxx/prj.conf"
+      DTC_OVERLAY_FILE="./boards/native_posix.overlay;./ps8xxx/usbc.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_PS8XXX=y
   drivers.rt9490:
@@ -278,7 +280,8 @@ tests:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
   drivers.usbc_console_pd_legacy:
-    extra_args: DTC_OVERLAY_FILE="default/boards/native_posix.overlay;./usbc_console_pd/usbc_legacy.dts"
+    extra_args: >
+      DTC_OVERLAY_FILE="default/boards/native_posix.overlay;./usbc_console_pd/usbc_legacy.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n

@@ -2,12 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 description: |
-  Define additional substates to be included in state machine.
+  Define additional substates to be included in state machine. Use corresponding
+  macros to provide action handlers.
 compatible: "ap-pwrseq-sub-states"
 
-description: |
-  String array of additional substates, use corresponding macros to provide
-  action handlers.
 properties:
   chipset:
     type: string-array
