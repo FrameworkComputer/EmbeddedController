@@ -461,7 +461,7 @@ void set_pd_fw_update(bool update);
 
 void cypd_charger_init_complete(void);
 
-void cypd_aconly_reconnect(void);
+void cypd_reconnect(void);
 
 int cypd_reconnect_port_enable(int controller);
 
