@@ -739,7 +739,7 @@ static int cc_ctn730(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	port = strtoi(argv[1], &end, 0);
-	if (*end || port < 0 || pchg_count <= port)
+	if (*end || port < 0 || board_get_pchg_count() <= port)
 		return EC_ERROR_PARAM2;
 
 	cmd->message_type = CTN730_MESSAGE_TYPE_COMMAND;
