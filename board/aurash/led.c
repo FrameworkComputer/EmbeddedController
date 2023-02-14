@@ -33,8 +33,8 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
 	LED_OFF = 0,
-	LED_RED,
-	LED_GREEN,
+	LED_BLUE,
+	LED_AMBER,
 
 	/* Number of colors, not a color itself */
 	LED_COLOR_COUNT
@@ -42,8 +42,8 @@ enum led_color {
 
 static int set_color_power(enum led_color color, int duty)
 {
-	int green = 0;
-	int red = 0;
+	int amber = 0;
+	int blue = 0;
 
 	if (duty < 0 || 100 < duty)
 		return EC_ERROR_UNKNOWN;
@@ -51,25 +51,31 @@ static int set_color_power(enum led_color color, int duty)
 	switch (color) {
 	case LED_OFF:
 		break;
-	case LED_GREEN:
-		green = 1;
+	case LED_AMBER:
+		amber = 1;
 		break;
-	case LED_RED:
-		red = 1;
+	case LED_BLUE:
+		blue = 1;
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
 	}
 
-	if (red)
-		pwm_set_duty(PWM_CH_LED_RED, duty);
-	else
-		pwm_set_duty(PWM_CH_LED_RED, 0);
+	if (blue && duty) {
+		gpio_set_level(GPIO_LED_BLUE_CONTROL, 1);
+		pwm_set_duty(PWM_CH_LED_BLUE, duty);
+	} else {
+		gpio_set_level(GPIO_LED_BLUE_CONTROL, 0);
+		pwm_set_duty(PWM_CH_LED_BLUE, 0);
+	}
 
-	if (green)
-		pwm_set_duty(PWM_CH_LED_GREEN, duty);
-	else
-		pwm_set_duty(PWM_CH_LED_GREEN, 0);
+	if (amber && duty) {
+		gpio_set_level(GPIO_LED_ORANGE_CONTROL, 1);
+		pwm_set_duty(PWM_CH_LED_AMBER, duty);
+	} else {
+		gpio_set_level(GPIO_LED_ORANGE_CONTROL, 0);
+		pwm_set_duty(PWM_CH_LED_AMBER, 0);
+	}
 
 	return EC_SUCCESS;
 }
@@ -84,9 +90,11 @@ static int set_color(enum ec_led_id id, enum led_color color, int duty)
 	}
 }
 
-#define LED_PULSE_US (2 * SECOND)
-/* 40 msec for nice and smooth transition. */
-#define LED_PULSE_TICK_US (40 * MSEC)
+#define LED_PERIOD (4 * SECOND)
+#define LED_DUTY_CYCLE (25)
+#define LED_PULSE_US (LED_PERIOD * LED_DUTY_CYCLE / 100 / 2)
+/* 10 msec for nice and smooth transition. */
+#define LED_PULSE_TICK_US (10 * MSEC)
 
 /*
  * When pulsing is enabled, brightness is incremented by <duty_inc> every
@@ -98,17 +106,26 @@ static struct {
 	int duty_inc;
 	enum led_color color;
 	int duty;
+	uint32_t time_off;
 } led_pulse;
 
-#define CONFIG_TICK(interval, color) \
-	config_tick((interval), 100 / (LED_PULSE_US / (interval)), (color))
+/*
+ * LED_PERIOD = time_on + time_off;
+ * time_on = LED_PULSE_US * 2;
+ * time_off = LED_PERIOD - LED_PULSE_US * 2;
+ */
+#define CONFIG_TICK(interval, period, color)                       \
+	config_tick((interval), 100 / (LED_PULSE_US / (interval)), \
+		    LED_PERIOD - LED_PULSE_US * 2, (color))
 
-static void config_tick(uint32_t interval, int duty_inc, enum led_color color)
+static void config_tick(uint32_t interval, int duty_inc, int time_off,
+			enum led_color color)
 {
 	led_pulse.interval = interval;
 	led_pulse.duty_inc = duty_inc;
 	led_pulse.color = color;
 	led_pulse.duty = 0;
+	led_pulse.time_off = time_off;
 }
 
 static void pulse_power_led(enum led_color color)
@@ -133,12 +150,15 @@ static void led_tick(void)
 		pulse_power_led(led_pulse.color);
 	elapsed = get_time().le.lo - start;
 	next = led_pulse.interval > elapsed ? led_pulse.interval - elapsed : 0;
+	next = (led_pulse.duty - led_pulse.duty_inc) ?
+		       next :
+		       next + led_pulse.time_off;
 	hook_call_deferred(&led_tick_data, next);
 }
 
 static void led_suspend(void)
 {
-	CONFIG_TICK(LED_PULSE_TICK_US, LED_GREEN);
+	CONFIG_TICK(LED_PULSE_TICK_US, LED_PERIOD, LED_BLUE);
 	led_tick();
 }
 DECLARE_DEFERRED(led_suspend);
@@ -178,7 +198,7 @@ static void led_resume(void)
 	hook_call_deferred(&led_suspend_data, -1);
 	hook_call_deferred(&led_shutdown_data, -1);
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		set_color(EC_LED_ID_POWER_LED, LED_GREEN, 100);
+		set_color(EC_LED_ID_POWER_LED, LED_BLUE, 100);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, led_resume, HOOK_PRIO_DEFAULT);
 
@@ -186,7 +206,7 @@ void led_alert(int enable)
 {
 	if (enable) {
 		/* Overwrite the current signal */
-		config_tick(1 * SECOND, 100, LED_RED);
+		config_tick(1 * SECOND, 100, 0, LED_AMBER);
 		led_tick();
 	} else {
 		/* Restore the previous signal */
@@ -203,7 +223,7 @@ void show_critical_error(void)
 {
 	hook_call_deferred(&led_tick_data, -1);
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		set_color(EC_LED_ID_POWER_LED, LED_RED, 100);
+		set_color(EC_LED_ID_POWER_LED, LED_AMBER, 100);
 }
 
 static int command_led(int argc, const char **argv)
@@ -218,10 +238,10 @@ static int command_led(int argc, const char **argv)
 		ccprintf("o%s\n", led_auto_control_is_enabled(id) ? "ff" : "n");
 	} else if (!strcasecmp(argv[1], "off")) {
 		set_color(id, LED_OFF, 0);
-	} else if (!strcasecmp(argv[1], "red")) {
-		set_color(id, LED_RED, 100);
-	} else if (!strcasecmp(argv[1], "green")) {
-		set_color(id, LED_GREEN, 100);
+	} else if (!strcasecmp(argv[1], "blue")) {
+		set_color(id, LED_BLUE, 100);
+	} else if (!strcasecmp(argv[1], "amber")) {
+		set_color(id, LED_AMBER, 100);
 	} else if (!strcasecmp(argv[1], "alert")) {
 		led_alert(1);
 	} else if (!strcasecmp(argv[1], "crit")) {
@@ -231,24 +251,25 @@ static int command_led(int argc, const char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(led, command_led, "[debug|red|green|off|alert|crit]",
+DECLARE_CONSOLE_COMMAND(led, command_led, "[debug|blue|amber|off|alert|crit]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_RED] = 100;
-	brightness_range[EC_LED_COLOR_GREEN] = 100;
+	brightness_range[EC_LED_COLOR_AMBER] = 100;
+	brightness_range[EC_LED_COLOR_BLUE] = 100;
 }
 
 int led_set_brightness(enum ec_led_id id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_RED])
-		return set_color(id, LED_RED, brightness[EC_LED_COLOR_RED]);
-	else if (brightness[EC_LED_COLOR_GREEN])
-		return set_color(id, LED_GREEN, brightness[EC_LED_COLOR_GREEN]);
+	if (brightness[EC_LED_COLOR_BLUE])
+		return set_color(id, LED_BLUE, brightness[EC_LED_COLOR_BLUE]);
+	else if (brightness[EC_LED_COLOR_AMBER])
+		return set_color(id, LED_AMBER, brightness[EC_LED_COLOR_AMBER]);
 	else
 		return set_color(id, LED_OFF, 0);
 }
+
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 				       int max_ma, int charge_mv)
 {

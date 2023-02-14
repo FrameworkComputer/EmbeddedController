@@ -2,11 +2,13 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
 #include "adc.h"
 #include "builtin/assert.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
+#include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -29,6 +31,32 @@
 
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
+
+/******************************************************************************/
+/* Power on by HDMI/ DP monitor */
+struct monitor_config {
+	enum gpio_signal gpio;
+	uint8_t state;
+};
+
+static struct monitor_config monitors[MONITOR_COUNT] = {
+	[HDMI1_MONITOR] = {
+		.gpio = GPIO_HDMI1_MONITOR_ON,
+		.state = MONITOR_OFF,
+	},
+
+	[HDMI2_MONITOR] = {
+		.gpio = GPIO_HDMI2_MONITOR_ON,
+		.state = MONITOR_OFF,
+	},
+
+	[OPTION_MONITOR] = {
+		.gpio = GPIO_OPTION_MONITOR_ON,
+		.state = MONITOR_OFF,
+	},
+};
+
+/******************************************************************************/
 
 /******************************************************************************/
 /* USB-A charging control */
@@ -88,7 +116,6 @@ int board_set_active_charge_port(int port)
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
 	case CHARGE_PORT_TYPEC1:
-	case CHARGE_PORT_TYPEC2:
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
 		break;
 	case CHARGE_PORT_BARRELJACK:
@@ -105,92 +132,6 @@ int board_set_active_charge_port(int port)
 }
 
 static uint8_t usbc_overcurrent;
-static int32_t base_5v_power_s5;
-static int32_t base_5v_power_z1;
-
-/*
- * Power usage for each port as measured or estimated.
- * Units are milliwatts (5v x ma current)
- */
-
-/* PP5000_S5 loads */
-#define PWR_S5_BASE_LOAD (5 * 1431)
-#define PWR_S5_FRONT_HIGH (5 * 1737)
-#define PWR_S5_FRONT_LOW (5 * 1055)
-#define PWR_S5_REAR_HIGH (5 * 1737)
-#define PWR_S5_REAR_LOW (5 * 1055)
-#define PWR_S5_HDMI (5 * 580)
-#define PWR_S5_MAX (5 * 10000)
-#define FRONT_DELTA (PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW)
-#define REAR_DELTA (PWR_S5_REAR_HIGH - PWR_S5_REAR_LOW)
-
-/* PP5000_Z1 loads */
-#define PWR_Z1_BASE_LOAD (5 * 5)
-#define PWR_Z1_C_HIGH (5 * 3600)
-#define PWR_Z1_C_LOW (5 * 2000)
-#define PWR_Z1_MAX (5 * 9000)
-/*
- * Update the 5V power usage, assuming no throttling,
- * and invoke the power monitoring.
- */
-static void update_5v_usage(void)
-{
-	int front_ports = 0;
-	int rear_ports = 0;
-
-	/*
-	 * Recalculate the 5V load, assuming no throttling.
-	 */
-	base_5v_power_s5 = PWR_S5_BASE_LOAD;
-	if (!gpio_get_level(GPIO_USB_A0_OC_ODL)) {
-		front_ports++;
-		base_5v_power_s5 += PWR_S5_FRONT_LOW;
-	}
-	if (!gpio_get_level(GPIO_USB_A1_OC_ODL)) {
-		front_ports++;
-		base_5v_power_s5 += PWR_S5_FRONT_LOW;
-	}
-	/*
-	 * Only 1 front port can run higher power at a time.
-	 */
-	if (front_ports > 0)
-		base_5v_power_s5 += PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW;
-
-	if (!gpio_get_level(GPIO_USB_A2_OC_ODL)) {
-		rear_ports++;
-		base_5v_power_s5 += PWR_S5_REAR_LOW;
-	}
-	if (!gpio_get_level(GPIO_USB_A3_OC_ODL)) {
-		rear_ports++;
-		base_5v_power_s5 += PWR_S5_REAR_LOW;
-	}
-	/*
-	 * Only 1 rear port can run higher power at a time.
-	 */
-	if (rear_ports > 0)
-		base_5v_power_s5 += PWR_S5_REAR_HIGH - PWR_S5_REAR_LOW;
-	if (!gpio_get_level(GPIO_HDMI_CONN_OC_ODL))
-		base_5v_power_s5 += PWR_S5_HDMI;
-	base_5v_power_z1 = PWR_Z1_BASE_LOAD;
-	if (usbc_overcurrent)
-		base_5v_power_z1 += PWR_Z1_C_HIGH;
-	/*
-	 * Invoke the power handler immediately.
-	 */
-	hook_call_deferred(&power_monitor_data, 0);
-}
-DECLARE_DEFERRED(update_5v_usage);
-/*
- * Start power monitoring after ADCs have been initialised.
- */
-DECLARE_HOOK(HOOK_INIT, update_5v_usage, HOOK_PRIO_INIT_ADC + 1);
-
-static void port_ocp_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&update_5v_usage_data, 0);
-}
-/* Must come after other header files and interrupt handler declarations */
-#include "gpio_list.h"
 
 /******************************************************************************/
 /*
@@ -216,6 +157,7 @@ static void adp_connect_deferred(void)
 		return;
 	if (connected)
 		ec_bj_power(&pi.voltage, &pi.current);
+
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
 	adp_connected = connected;
@@ -247,12 +189,29 @@ DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
 static void board_init(void)
 {
+	int i;
+
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_ODL);
 	gpio_enable_interrupt(GPIO_HDMI_CONN_OC_ODL);
-	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
+	gpio_enable_interrupt(GPIO_USB_A4_OC_ODL);
+
+	if (ec_cfg_power_on_monitor() == POWER_ON_MONITOR_ENABLE) {
+		/*
+		 * Only enable interrupt when fw_config set it as enable.
+		 */
+		gpio_enable_interrupt(GPIO_HDMI1_MONITOR_ON);
+		gpio_enable_interrupt(GPIO_HDMI2_MONITOR_ON);
+		gpio_enable_interrupt(GPIO_OPTION_MONITOR_ON);
+
+		/*
+		 * Initialize the monitor state to corresponding gpio state.
+		 */
+		for (i = 0; i < MONITOR_COUNT; i++)
+			monitors[i].state = gpio_get_level(monitors[i].gpio);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -262,7 +221,6 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
 	usbc_overcurrent = is_overcurrented;
-	update_5v_usage();
 }
 /*
  * Power monitoring and management.
@@ -307,7 +265,6 @@ void board_overcurrent_event(int port, int is_overcurrented)
 #define THROT_TYPE_A_REAR BIT(1)
 #define THROT_TYPE_C0 BIT(2)
 #define THROT_TYPE_C1 BIT(3)
-#define THROT_TYPE_C2 BIT(4)
 #define THROT_PROCHOT BIT(5)
 
 /*
@@ -324,6 +281,9 @@ void board_overcurrent_event(int port, int is_overcurrented)
 #define POWER_DELAY_MS 2
 #define POWER_READINGS (10 / POWER_DELAY_MS)
 
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
+
 static void power_monitor(void)
 {
 	static uint32_t current_state;
@@ -331,8 +291,6 @@ static void power_monitor(void)
 	static uint8_t index;
 	int32_t delay;
 	uint32_t new_state = 0, diff;
-	int32_t headroom_5v_s5 = PWR_S5_MAX - base_5v_power_s5;
-	int32_t headroom_5v_z1 = PWR_Z1_MAX - base_5v_power_z1;
 
 	/*
 	 * If CPU is off or suspended, no need to throttle
@@ -408,7 +366,6 @@ static void power_monitor(void)
 			 */
 			if (gap <= 0) {
 				new_state |= THROT_TYPE_A_REAR;
-				headroom_5v_s5 += REAR_DELTA;
 				if (!(current_state & THROT_TYPE_A_REAR))
 					gap += POWER_GAIN_TYPE_A;
 			}
@@ -417,8 +374,7 @@ static void power_monitor(void)
 			 */
 			if (gap <= 0) {
 				new_state |= THROT_TYPE_A_FRONT;
-				headroom_5v_s5 += FRONT_DELTA;
-				if (!(current_state & THROT_TYPE_A_REAR))
+				if (!(current_state & THROT_TYPE_A_FRONT))
 					gap += POWER_GAIN_TYPE_A;
 			}
 			/*
@@ -427,7 +383,6 @@ static void power_monitor(void)
 			 */
 			if (ppc_is_sourcing_vbus(0) && gap <= 0) {
 				new_state |= THROT_TYPE_C0;
-				headroom_5v_z1 += PWR_Z1_C_HIGH - PWR_Z1_C_LOW;
 				if (!(current_state & THROT_TYPE_C0))
 					gap += POWER_GAIN_TYPE_C;
 			}
@@ -437,18 +392,7 @@ static void power_monitor(void)
 			 */
 			if (ppc_is_sourcing_vbus(1) && gap <= 0) {
 				new_state |= THROT_TYPE_C1;
-				headroom_5v_z1 += PWR_Z1_C_HIGH - PWR_Z1_C_LOW;
 				if (!(current_state & THROT_TYPE_C1))
-					gap += POWER_GAIN_TYPE_C;
-			}
-			/*
-			 * If the type-C port is sourcing power,
-			 * check whether it should be throttled.
-			 */
-			if (ppc_is_sourcing_vbus(2) && gap <= 0) {
-				new_state |= THROT_TYPE_C2;
-				headroom_5v_z1 += PWR_Z1_C_HIGH - PWR_Z1_C_LOW;
-				if (!(current_state & THROT_TYPE_C2))
 					gap += POWER_GAIN_TYPE_C;
 			}
 			/*
@@ -457,60 +401,6 @@ static void power_monitor(void)
 			 */
 			if (gap <= 0)
 				new_state |= THROT_PROCHOT;
-		}
-	}
-	/*
-	 * Check the 5v power usage and if necessary,
-	 * adjust the throttles in priority order.
-	 *
-	 * Either throttle may have already been activated by
-	 * the overall power control.
-	 *
-	 * We rely on the overcurrent detection to inform us
-	 * if the port is in use.
-	 *
-	 *  - If type C not already throttled:
-	 *	* If not overcurrent, prefer to limit type C [1].
-	 *	* If in overcurrentuse:
-	 *		- limit type A first [2]
-	 *		- If necessary, limit type C [3].
-	 *  - If type A not throttled, if necessary limit it [2].
-	 */
-	if (headroom_5v_z1 < 0) {
-		/*
-		 * Check whether type C is not throttled,
-		 * and is not overcurrent.
-		 */
-		if (!((new_state & THROT_TYPE_C0) || usbc_overcurrent)) {
-			/*
-			 * [1] Type C not in overcurrent, throttle it.
-			 */
-			headroom_5v_z1 += PWR_Z1_C_HIGH - PWR_Z1_C_LOW;
-			new_state |= THROT_TYPE_C0;
-		}
-		/*
-		 * [2] If still under-budget, limit type C.
-		 * No need to check if it is already throttled or not.
-		 */
-		if (headroom_5v_z1 < 0)
-			new_state |= THROT_TYPE_C0;
-	}
-	if (headroom_5v_s5 < 0) {
-		/*
-		 * [1] If type A rear not already throttled, and power still
-		 * needed, limit type A rear.
-		 */
-		if (!(new_state & THROT_TYPE_A_REAR) && headroom_5v_s5 < 0) {
-			headroom_5v_s5 += PWR_S5_REAR_HIGH - PWR_S5_REAR_LOW;
-			new_state |= THROT_TYPE_A_REAR;
-		}
-		/*
-		 * [2] If type A front not already throttled, and power still
-		 * needed, limit type A front.
-		 */
-		if (!(new_state & THROT_TYPE_A_FRONT) && headroom_5v_s5 < 0) {
-			headroom_5v_s5 += PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW;
-			new_state |= THROT_TYPE_A_FRONT;
 		}
 	}
 	/*
@@ -541,26 +431,88 @@ static void power_monitor(void)
 		tcpm_select_rp_value(1, rp);
 		pd_update_contract(1);
 	}
-	if (diff & THROT_TYPE_C2) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C2) ?
-						TYPEC_RP_1A5 :
-						TYPEC_RP_3A0;
-
-		ppc_set_vbus_source_current_limit(2, rp);
-		tcpm_select_rp_value(2, rp);
-		pd_update_contract(2);
-	}
 	if (diff & THROT_TYPE_A_REAR) {
 		int typea_bc = (new_state & THROT_TYPE_A_REAR) ? 1 : 0;
 
-		gpio_set_level(GPIO_USB_A_LOW_PWR0_OD, typea_bc);
 		gpio_set_level(GPIO_USB_A_LOW_PWR1_OD, typea_bc);
 	}
 	if (diff & THROT_TYPE_A_FRONT) {
 		int typea_bc = (new_state & THROT_TYPE_A_FRONT) ? 1 : 0;
 
 		gpio_set_level(GPIO_USB_A_LOW_PWR2_OD, typea_bc);
-		gpio_set_level(GPIO_USB_A_LOW_PWR3_OD, typea_bc);
 	}
 	hook_call_deferred(&power_monitor_data, delay);
+}
+/*
+ * Start power monitoring after ADCs have been initialised.
+ */
+DECLARE_HOOK(HOOK_INIT, power_monitor, HOOK_PRIO_INIT_ADC + 1);
+
+/******************************************************************************/
+/*
+ * System power on and wake up by monitor power button.
+ *
+ * After pressing power button of monitor for power on, monitor will send power
+ * on signal with 3.3V / 200ms to DT. If DT detect that pulse, there are three
+ * DT behavior:
+ *
+ *  - Do nothing in state S0.
+ *  - Wake up from state S0ix.
+ *  - Power on from state S5 and G3.
+ */
+
+/* Debounce time for HDMI power button press */
+#define MONITOR_DEBOUNCE_MS 100
+
+static void monitor_irq_deferred(void);
+DECLARE_DEFERRED(monitor_irq_deferred);
+
+static void monitor_irq_deferred(void)
+{
+	int i;
+
+	for (i = 0; i < MONITOR_COUNT; i++) {
+		if (monitors[i].state && gpio_get_level(monitors[i].gpio)) {
+			/*
+			 * System power on from state S5 and G3.
+			 */
+			if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+				chipset_power_on();
+			/*
+			 * System wake up from state S0ix.
+			 */
+			else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+				power_button_simulate_press(200);
+		}
+		monitors[i].state = MONITOR_OFF;
+	}
+}
+
+/* Power on by HDMI/ DP monitor. */
+void monitor_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * Power on by HDMI/ DP monitor only works
+	 * when system is not in S0.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		return;
+
+	if (ec_cfg_power_on_monitor() == POWER_ON_MONITOR_ENABLE) {
+		switch (signal) {
+		case GPIO_HDMI1_MONITOR_ON:
+			monitors[HDMI1_MONITOR].state = MONITOR_ON;
+			break;
+		case GPIO_HDMI2_MONITOR_ON:
+			monitors[HDMI2_MONITOR].state = MONITOR_ON;
+			break;
+		case GPIO_OPTION_MONITOR_ON:
+			monitors[OPTION_MONITOR].state = MONITOR_ON;
+			break;
+		default:
+			break;
+		}
+		hook_call_deferred(&monitor_irq_deferred_data,
+				   MONITOR_DEBOUNCE_MS * MSEC);
+	}
 }

@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Brask board specific files build
+# Aurash board specific files build
 #
 
 CHIP:=npcx
@@ -13,7 +13,6 @@ BASEBOARD:=brask
 
 board-y=
 board-y+=board.o
-board-y+=fans.o
 board-y+=fw_config.o
 board-y+=i2c.o
 board-y+=led.o

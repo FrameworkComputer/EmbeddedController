@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Brask board configuration */
+/* Aurash board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -16,7 +16,7 @@
 #define CONFIG_MP2964
 
 /* Barrel Jack */
-#define DEDICATED_CHARGE_PORT 3
+#define DEDICATED_CHARGE_PORT 2
 
 /* HDMI CEC */
 #define CONFIG_CEC
@@ -36,11 +36,10 @@
 #define CONFIG_IO_EXPANDER_PORT_COUNT 2
 
 #define CONFIG_USB_PD_PPC
-#define CONFIG_USB_PD_TCPM_RT1715
 #define CONFIG_USBC_RETIMER_INTEL_BB
 
-#define CONFIG_USBC_RETIMER_KB800X
-#define CONFIG_KB800X_CUSTOM_XBAR
+#undef CONFIG_CMD_POWERINDEBUG
+
 #define CONFIG_USBC_PPC_SYV682X
 #undef CONFIG_SYV682X_HV_ILIM
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
@@ -88,24 +87,19 @@
 #define GPIO_POWER_BUTTON_L GPIO_GSC_EC_PWR_BTN_ODL
 #define GPIO_SYS_RESET_L GPIO_SYS_RST_ODL
 #define GPIO_WP_L GPIO_EC_WP_ODL
-#define GPIO_RECOVERY_L GPIO_EC_RECOVERY_BTN_OD
-#define GPIO_RECOVERY_L_2 GPIO_GSC_EC_RECOVERY_BTN_OD
+#define GPIO_RECOVERY_L GPIO_EC_RECOVERY_BTN_ODL
+#define GPIO_RECOVERY_L_2 GPIO_GSC_EC_RECOVERY_BTN_ODL
 
 /* I2C Bus Configuration */
 
-#define I2C_PORT_DP_REDRIVER NPCX_I2C_PORT0_0
+#define I2C_PORT_USB_C0_C1_TCPC NPCX_I2C_PORT1_0
 
-#define I2C_PORT_USB_C0_C2_TCPC NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1_TCPC NPCX_I2C_PORT4_1
+#define I2C_PORT_USB_C0_C1_PPC NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_A0_A1_MIX NPCX_I2C_PORT6_1
 
-#define I2C_PORT_USB_C0_C2_PPC NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_PPC NPCX_I2C_PORT6_1
+#define I2C_PORT_USB_C0_C1_BC12 NPCX_I2C_PORT2_0
 
-#define I2C_PORT_USB_C0_C2_BC12 NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_BC12 NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_MUX NPCX_I2C_PORT3_0
-#define I2C_PORT_USB_C1_MUX NPCX_I2C_PORT6_1
+#define I2C_PORT_USB_C0_C1_MUX NPCX_I2C_PORT3_0
 
 #define I2C_PORT_QI NPCX_I2C_PORT5_0
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
@@ -115,8 +109,8 @@
 
 #define I2C_ADDR_MP2964_FLAGS 0x20
 
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x58
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR 0x59
+#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x56
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR 0x57
 
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
@@ -137,12 +131,6 @@
 /* ADC */
 #define CONFIG_ADC
 
-/*
- * TODO(b/197478860): Enable the fan control. We need
- * to check the sensor value and adjust the fan speed.
- */
-#define CONFIG_FANS FAN_CH_COUNT
-
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
 
@@ -155,15 +143,13 @@
 enum charge_port {
 	CHARGE_PORT_TYPEC0,
 	CHARGE_PORT_TYPEC1,
-	CHARGE_PORT_TYPEC2,
 	CHARGE_PORT_BARRELJACK,
 	CHARGE_PORT_ENUM_COUNT
 };
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1_CPU,
+	ADC_TEMP_SENSOR_1_SSD,
 	ADC_TEMP_SENSOR_2_CPU_VR,
-	ADC_TEMP_SENSOR_3_WIFI,
 	ADC_TEMP_SENSOR_4_DIMM,
 	ADC_VBUS,
 	ADC_PPVAR_IMON, /* ADC3 */
@@ -171,27 +157,31 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_1_CPU,
+	TEMP_SENSOR_1_SSD,
 	TEMP_SENSOR_2_CPU_VR,
-	TEMP_SENSOR_3_WIFI,
 	TEMP_SENSOR_4_DIMM,
 	TEMP_SENSOR_COUNT
 };
 
-enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C2_NCT38XX, IOEX_PORT_COUNT };
+enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C1_NCT38XX, IOEX_PORT_COUNT };
 
 enum pwm_channel {
-	PWM_CH_LED_GREEN, /* PWM0 */
-	PWM_CH_FAN, /* PWM5 */
-	PWM_CH_LED_RED, /* PWM2 */
+	PWM_CH_LED_AMBER, /* PWM0 */
+	PWM_CH_LED_BLUE, /* PWM2 */
 	PWM_CH_COUNT
 };
 
-enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
+enum monitor_port {
+	HDMI1_MONITOR,
+	HDMI2_MONITOR,
+	OPTION_MONITOR,
+	MONITOR_COUNT
+};
 
-enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
+enum monitor_state { MONITOR_OFF, MONITOR_ON };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
+extern void monitor_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -12,16 +12,16 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-static union brask_cbi_fw_config fw_config;
+static union aurash_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
 
 /*
- * FW_CONFIG defaults for brask if the CBI.FW_CONFIG data is not
+ * FW_CONFIG defaults for aurash if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union brask_cbi_fw_config fw_config_defaults = {
-	.audio = DB_NAU88L25B_I2S,
-	.bj_power = BJ_135W,
+static const union aurash_cbi_fw_config fw_config_defaults = {
+	.bj_power = BJ_90W,
+	.po_mon = POWER_ON_MONITOR_ENABLE,
 };
 
 /*
@@ -31,18 +31,16 @@ static const struct {
 	int voltage;
 	int current;
 } bj_power[] = {
-	[BJ_135W] = { /* 0 - 135W (also default) */
-			.voltage = 19500,
-			.current = 6920
-	},
-	[BJ_230W] = { /* 1 - 230W */
-			.voltage = 19500,
-			.current = 11800
-	}
+	[BJ_90W] = { /* 0 - 90W (also default) */
+	  .voltage = 19000,
+	  .current = 4740 },
+	[BJ_135W] = { /* 1 - 135W */
+	  .voltage = 19500,
+	  .current = 6920 },
 };
 
 /****************************************************************************
- * Brask FW_CONFIG access
+ * Aurash FW_CONFIG access
  */
 void board_init_fw_config(void)
 {
@@ -50,6 +48,11 @@ void board_init_fw_config(void)
 		CPRINTS("CBI: Read FW_CONFIG failed, using board defaults");
 		fw_config = fw_config_defaults;
 	}
+}
+
+union aurash_cbi_fw_config get_fw_config(void)
+{
+	return fw_config;
 }
 
 void ec_bj_power(uint32_t *voltage, uint32_t *current)
@@ -62,4 +65,9 @@ void ec_bj_power(uint32_t *voltage, uint32_t *current)
 		bj = 0;
 	*voltage = bj_power[bj].voltage;
 	*current = bj_power[bj].current;
+}
+
+enum ec_cfg_power_on_monitor ec_cfg_power_on_monitor(void)
+{
+	return fw_config.po_mon;
 }
