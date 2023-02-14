@@ -51,11 +51,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
-		int_usb_c1_bc12_charger: usb-c1-bc12-charger {
-			irq-pin = <&usb_c1_bc12_charger_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "rt9490_bc12_dt_interrupt";
-		};
 		int_lid_open: lid-open {
 			irq-pin = <&lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;

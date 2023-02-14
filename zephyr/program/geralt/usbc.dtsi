@@ -11,7 +11,6 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			bc12 = <&bc12_ppc_port0>;
 			ppc = <&bc12_ppc_port0>;
 			tcpc = <&usbpd0>;
 			chg = <&charger_bc12_port1>;
@@ -29,7 +28,6 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			bc12 = <&charger_bc12_port1>;
 			ppc = <&ppc_port1>;
 			tcpc = <&usbpd1>;
 			usb-mux-chain-1 {

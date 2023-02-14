@@ -635,6 +635,7 @@ const struct charger_drv rt9490_drv = {
 #endif
 };
 
+#ifdef CONFIG_USB_CHARGER
 /* BC1.2 */
 static int rt9490_get_bc12_ilim(enum charge_supplier supplier)
 {
@@ -790,6 +791,7 @@ struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
 	},
 };
 #endif /* CONFIG_BC12_SINGLE_DRIVER */
+#endif /* CONFIG_USB_CHARGER */
 
 int rt9490_get_thermistor_val(const struct temp_sensor_t *sensor, int *temp_ptr)
 {

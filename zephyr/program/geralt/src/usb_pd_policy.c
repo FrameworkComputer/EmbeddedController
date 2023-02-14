@@ -18,7 +18,7 @@ int pd_check_vconn_swap(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	static atomic_t vbus_prev[CONFIG_USB_PD_PORT_MAX_COUNT];
+	__maybe_unused static atomic_t vbus_prev[CONFIG_USB_PD_PORT_MAX_COUNT];
 	int vbus;
 
 	/*

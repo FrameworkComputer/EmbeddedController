@@ -316,6 +316,7 @@ static int rt1739_init(int port)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_USB_CHARGER
 static int rt1739_get_bc12_ilim(int charge_supplier)
 {
 	switch (charge_supplier) {
@@ -413,6 +414,7 @@ static void rt1739_usb_charger_task_event(const int port, uint32_t evt)
 		rt1739_enable_bc12_detection(port, false);
 	}
 }
+#endif /* CONFIG_USB_CHARGER */
 
 static atomic_t pending_events;
 
@@ -434,8 +436,10 @@ void rt1739_deferred_interrupt(void)
 		if (read_reg(port, RT1739_REG_INT_EVENT5, &event5))
 			continue;
 
+#ifdef CONFIG_USB_CHARGER
 		if (event5 & RT1739_BC12_SNK_DONE_INT)
 			usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
+#endif /* CONFIG_USB_CHARGER */
 
 		/* write to clear EVENT4 since FRS interrupt has been handled */
 		write_reg(port, RT1739_REG_INT_EVENT4, event4);
@@ -476,6 +480,7 @@ const struct ppc_drv rt1739_ppc_drv = {
 	.interrupt = &rt1739_interrupt,
 };
 
+#ifdef CONFIG_USB_CHARGER
 const struct bc12_drv rt1739_bc12_drv = {
 	.usb_charger_task_init = rt1739_usb_charger_task_init,
 	.usb_charger_task_event = rt1739_usb_charger_task_event,
@@ -489,3 +494,4 @@ struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
 	},
 };
 #endif /* CONFIG_BC12_SINGLE_DRIVER */
+#endif /* CONFIG_USB_CHARGER */
