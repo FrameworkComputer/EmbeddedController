@@ -23,33 +23,33 @@
 			rpm_target = <0>;
 		};
 		level_1 {
-			temp_on = <45 48 0>;
-			temp_off = <34 45 99>;
+			temp_on = <46 48 0>;
+			temp_off = <40 45 99>;
 			rpm_target = <2600>;
 		};
 		level_2 {
-			temp_on = <47 49 0>;
-			temp_off = <41 46 99>;
+			temp_on = <49 49 0>;
+			temp_off = <44 46 99>;
 			rpm_target = <2800>;
 		};
 		level_3 {
-			temp_on = <49 50 54>;
-			temp_off = <44 47 51>;
+			temp_on = <53 50 54>;
+			temp_off = <47 47 51>;
 			rpm_target = <3100>;
 		};
 		level_4 {
-			temp_on = <50 56 60>;
-			temp_off = <46 48 52>;
+			temp_on = <56 56 60>;
+			temp_off = <51 48 52>;
 			rpm_target = <3300>;
 		};
 		level_5 {
-			temp_on = <52 60 64>;
-			temp_off = <48 52 56>;
+			temp_on = <60 60 64>;
+			temp_off = <54 52 56>;
 			rpm_target = <3600>;
 		};
 		level_6 {
 			temp_on = <100 100 100>;
-			temp_off = <49 54 58>;
+			temp_off = <58 54 58>;
 			rpm_target = <4000>;
 		};
 	};
