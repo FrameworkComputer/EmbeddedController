@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "gpio/gpio_int.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 
@@ -30,6 +31,13 @@ static void board_i2c3_ctrl(bool enable)
 		}
 	}
 }
+
+static void geralt_common_init(void)
+{
+	gpio_enable_dt_interrupt(
+		GPIO_INT_FROM_NODELABEL(int_ap_xhci_init_done));
+}
+DECLARE_HOOK(HOOK_INIT, geralt_common_init, HOOK_PRIO_PRE_DEFAULT);
 
 static void board_enable_i2c3(void)
 {
