@@ -423,20 +423,11 @@ void cypd_set_error_recovery(void)
 	int i;
 
 	for (i = 0;  i < PD_CHIP_COUNT; i++) {
-		if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-				charger_current_battery_params()->state_of_charge > 0 &&
-				board_batt_is_present() == BP_YES) {
-			/* CYPD firmware will issue error recovery when we change the system
-			 * power state to S0, if battery can't provide the power, it will cause
-			 * power loss.
-			 *
-			 * We can write the 0xC0 to avoid cypd to do the error recovery before we
-			 * change the system power state
-			 */
-			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
-			reconnect_flag = false;
-		} else
-			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
+		/* We use port reconnect (0x2C) to replace error recovery (0xC1) for GRL issue.
+		 * GRL FV 3.1.2.3.
+		 * 0xC0 means no recovery.
+		 */
+		cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
 	}
 }
 
@@ -460,7 +451,7 @@ void update_system_power_state(int controller)
 		cypd_set_power_state(CYP5525_POWERSTATE_S0, controller);
 		if (reconnect_flag) {
 			CPRINTS("CYPD reconnect");
-			cypd_aconly_reconnect();
+			cypd_reconnect();
 			reconnect_flag = false;
 		}
 		break;
@@ -1411,10 +1402,11 @@ int cypd_reconnect_port_enable(int controller)
 	return rv;
 }
 
-void cypd_aconly_reconnect(void)
+void cypd_reconnect(void)
 {
 	int events;
 
+	/* trigger port reconnect, will check ac status while disable port */
 	events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
 	if (events & TASK_EVENT_TIMER)
 		cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
