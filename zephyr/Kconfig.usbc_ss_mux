@@ -48,7 +48,6 @@ config PLATFORM_EC_USB_MUX_VIRTUAL
 
 config PLATFORM_EC_USBC_RETIMER_FW_UPDATE
 	bool "Support firmware update of USB Type-C retimers"
-	default y
 	depends on PLATFORM_EC_USBC_SS_MUX
 	help
 	   Enable this to support USB Type-C retimer firmware update. Each
