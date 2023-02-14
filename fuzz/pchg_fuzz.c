@@ -34,7 +34,6 @@ struct pchg pchgs[] = {
 		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
 	},
 };
-const int pchg_count = ARRAY_SIZE(pchgs);
 
 static pthread_cond_t done_cond;
 static pthread_mutex_t lock;
@@ -46,6 +45,11 @@ static pthread_mutex_t lock;
 static uint8_t input[MAX_MESSAGE_SIZE * MAX_MESSAGES];
 static uint8_t *head, *tail;
 static bool data_available;
+
+int board_get_pchg_count(void)
+{
+	return ARRAY_SIZE(pchgs);
+}
 
 int pchg_i2c_xfer(int port, uint16_t addr_flags, const uint8_t *out,
 		  int out_size, uint8_t *in, int in_size, int flags)
