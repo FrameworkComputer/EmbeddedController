@@ -41,6 +41,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_CROS_DRV
                                                             ioex.c
                                                             ioex_drv.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_KB8010 kb8010_usb_mux.c)
 if (NOT DEFINED CONFIG_PLATFORM_EC_KEYBOARD_DISCRETE)
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
                                                             keyboard_raw.c)

@@ -124,6 +124,19 @@ config PLATFORM_EC_CONSOLE_CMD_RETIMER
 	  This console command allows read or write to the retimer registers
 	  connected in a chain.
 
+config PLATFORM_EC_USBC_RETIMER_KB8010
+	bool "Enable Kandou KB8010 Active Retimer"
+	default y
+	depends on DT_HAS_KANDOU_KB8010_ENABLED
+	help
+	  The KB8001 is a Universal Serial Bus (USB) Type-C 40 Gb/s multiprotocol
+	  switch and bidirectional Bit-Level Retimer (BLR) which supports:
+	    - Display Port: four unidirectional DP lanes
+	    - USB3.1 Gen1/2: one bi-directional USB lane
+	    - USB4/Thunderbolt: two bi-directional lanes
+	    - Multifunction Display (MFD): two unidirectional lanes of DP and
+	      one bidirectional lane of USB3.1 Gen1/2
+
 endif # PLATFORM_EC_USBC
 
 config PLATFORM_EC_USBC_RETIMER_ANX7483

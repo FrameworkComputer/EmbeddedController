@@ -20,6 +20,7 @@ ganfeng	Battery vendor
 getac	Battery vendor
 gfl	Battery vendor
 intersil	Intersil
+kandou		Kandou
 lgc	LG Chem
 powertech	Battery vendor
 pow-tech	Battery vendor

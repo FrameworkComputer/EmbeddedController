@@ -13,6 +13,7 @@
 #include "usbc/anx7483_usb_mux.h"
 #include "usbc/bb_retimer_usb_mux.h"
 #include "usbc/it5205_usb_mux.h"
+#include "usbc/kb8010_usb_mux.h"
 #include "usbc/ps8743_usb_mux.h"
 #include "usbc/ps8818_usb_mux.h"
 #include "usbc/tcpci_usb_mux.h"
@@ -35,6 +36,7 @@
 	(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),       \
 	(BB_RETIMER_USB_MUX_COMPAT, USB_MUX_CONFIG_BB_RETIMER), \
 	(IT5205_USB_MUX_COMPAT, USB_MUX_CONFIG_IT5205),         \
+	(KB8010_USB_MUX_COMPAT, USB_MUX_CONFIG_KB8010),         \
 	(PS8743_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8743),         \
 	(PS8743_EMUL_COMPAT, USB_MUX_CONFIG_PS8743),         \
 	(PS8818_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8818),         \
