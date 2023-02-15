@@ -76,7 +76,9 @@ corresponding `struct device` is not instantiated, either because the driver
 has not been enabled or because of a devicetree misconfiguration (missing
 `status = "okay"`).
 
-Quick fix: enable the corresponding driver (CONFIG_...=y) or fix the devicetree.
+Quick fix: find what device is causing the issue (look into
+`devicetree_generated.h`) enable the corresponding driver (CONFIG_...=y) or fix
+the devicetree.
 
 Proper fix: find the code referencing to the undefined node, make sure that the
 corresponding Kconfig option depends on the subsystem being enabled (ADC,
