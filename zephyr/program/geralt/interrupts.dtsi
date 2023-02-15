@@ -98,7 +98,7 @@
 		};
 		int_ap_xhci_init_done: ap-xhci-init-done {
 			irq-pin = <&ap_xhci_init_done>;
-			flags = <GPIO_INT_EDGE_RISING>;
+			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "xhci_interrupt";
 		};
 	};
