@@ -28,11 +28,6 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		/* RAA489000 implements TCPCI 2.0 */
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_VBUS_MONITOR,
-		.irq_gpio = {
-			.port = DEVICE_DT_GET(DT_NODELABEL(gpio0)),
-			.pin = 1,
-			.dt_flags = (GPIO_ACTIVE_LOW | GPIO_PULL_UP),
-		},
 	},
 	{ /* sub-board */
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -44,11 +39,6 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		/* RAA489000 implements TCPCI 2.0 */
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_VBUS_MONITOR,
-		.irq_gpio = {
-			.port = DEVICE_DT_GET(DT_NODELABEL(gpio0)),
-			.pin = 2,
-			.dt_flags = (GPIO_ACTIVE_LOW | GPIO_PULL_UP),
-		},
 	},
 };
 
@@ -215,4 +205,69 @@ void board_reset_pd_mcu(void)
 	 * TODO(b:147316511): could send a reset command to the TCPC here
 	 * if needed.
 	 */
+}
+
+/*
+ * Because the TCPCs and BC1.2 chips share interrupt lines, it's possible
+ * for an interrupt to be lost if one asserts the IRQ, the other does the same
+ * then the first releases it: there will only be one falling edge to trigger
+ * the interrupt, and the line will be held low. We handle this by running a
+ * deferred check after a falling edge to see whether the IRQ is still being
+ * asserted. If it is, we assume an interrupt may have been lost and we need
+ * to poll each chip for events again.
+ */
+#define USBC_INT_POLL_DELAY_US 5000
+
+static void poll_c0_int(void);
+DECLARE_DEFERRED(poll_c0_int);
+static void poll_c1_int(void);
+DECLARE_DEFERRED(poll_c1_int);
+
+static void usbc_interrupt_trigger(int port)
+{
+	schedule_deferred_pd_interrupt(port);
+}
+
+static inline void poll_usb_gpio(int port, const struct gpio_dt_spec *gpio,
+				 const struct deferred_data *ud)
+{
+	if (!gpio_pin_get_dt(gpio)) {
+		usbc_interrupt_trigger(port);
+		hook_call_deferred(ud, USBC_INT_POLL_DELAY_US);
+	}
+}
+
+static void poll_c0_int(void)
+{
+	poll_usb_gpio(0, GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl),
+		      &poll_c0_int_data);
+}
+
+static void poll_c1_int(void)
+{
+	poll_usb_gpio(1, GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
+		      &poll_c1_int_data);
+}
+
+void usb_interrupt(enum gpio_signal signal)
+{
+	int port;
+	const struct deferred_data *ud;
+
+	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl))) {
+		port = 0;
+		ud = &poll_c0_int_data;
+	} else {
+		port = 1;
+		ud = &poll_c1_int_data;
+	}
+	/*
+	 * We've just been called from a falling edge, so there's definitely
+	 * no lost IRQ right now. Cancel any pending check.
+	 */
+	hook_call_deferred(ud, -1);
+	/* Trigger polling of TCPC and BC1.2 in respective tasks */
+	usbc_interrupt_trigger(port);
+	/* Check for lost interrupts in a bit */
+	hook_call_deferred(ud, USBC_INT_POLL_DELAY_US);
 }
