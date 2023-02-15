@@ -17,6 +17,17 @@
 #include "timer.h"
 #include "util.h"
 
+struct dac_t {
+	uint32_t enable_mask;
+	volatile uint32_t *data_register;
+};
+
+/* Sparse array of DAC capabilities for GPIO pins. */
+const struct dac_t dac_channels[GPIO_COUNT] = {
+	[GPIO_CN7_9] = { STM32_DAC_CR_EN1, &STM32_DAC_DHR12R1 },
+	[GPIO_CN7_10] = { STM32_DAC_CR_EN2, &STM32_DAC_DHR12R2 },
+};
+
 /*
  * A cyclic buffer is used to record events (edges) of one or more GPIO
  * signals.  Each event records the time since the previous event, and the
@@ -275,6 +286,7 @@ static int command_gpio_mode(int argc, const char **argv)
 {
 	int gpio;
 	int flags;
+	uint32_t dac_enable_value = STM32_DAC_CR;
 
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
@@ -285,24 +297,35 @@ static int command_gpio_mode(int argc, const char **argv)
 	flags = gpio_get_flags(gpio);
 
 	flags = flags & ~(GPIO_INPUT | GPIO_OUTPUT | GPIO_OPEN_DRAIN);
+	dac_enable_value &= ~dac_channels[gpio].enable_mask;
 	if (strcasecmp(argv[2], "input") == 0)
 		flags |= GPIO_INPUT;
 	else if (strcasecmp(argv[2], "opendrain") == 0)
 		flags |= GPIO_OUTPUT | GPIO_OPEN_DRAIN;
 	else if (strcasecmp(argv[2], "pushpull") == 0)
 		flags |= GPIO_OUTPUT;
-	else if (strcasecmp(argv[2], "alternate") == 0)
+	else if (strcasecmp(argv[2], "dac") == 0) {
+		if (dac_channels[gpio].enable_mask == 0) {
+			ccprintf("Error: Pin does not support dac\n");
+			return EC_ERROR_PARAM2;
+		}
+		dac_enable_value |= dac_channels[gpio].enable_mask;
+		/* Disable digital output, when DAC is overriding. */
+		flags |= GPIO_INPUT;
+	} else if (strcasecmp(argv[2], "alternate") == 0)
 		flags |= GPIO_ALTERNATE;
 	else
 		return EC_ERROR_PARAM2;
 
 	/* Update GPIO flags. */
 	gpio_set_flags(gpio, flags);
+	STM32_DAC_CR = dac_enable_value;
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND_FLAGS(gpiomode, command_gpio_mode,
-			      "name <input | opendrain | pushpull | alternate>",
-			      "Set a GPIO mode", CMD_FLAG_RESTRICTED);
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	gpiomode, command_gpio_mode,
+	"name <input | opendrain | pushpull | dac | alternate>",
+	"Set a GPIO mode", CMD_FLAG_RESTRICTED);
 
 /*
  * Set the weak pulling of a GPIO pin: up/down/none.
@@ -338,6 +361,48 @@ DECLARE_CONSOLE_COMMAND_FLAGS(gpiopullmode, command_gpio_pull_mode,
 			      "name <none | up | down>",
 			      "Set a GPIO weak pull mode", CMD_FLAG_RESTRICTED);
 
+static int set_dac(int gpio, const char *value)
+{
+	int milli_volts;
+	char *e;
+	if (dac_channels[gpio].enable_mask == 0) {
+		ccprintf("Error: Pin does not support dac\n");
+		return EC_ERROR_PARAM6;
+	}
+
+	milli_volts = strtoi(value, &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM6;
+
+	if (milli_volts <= 0)
+		*dac_channels[gpio].data_register = 0;
+	else if (milli_volts >= 3300)
+		*dac_channels[gpio].data_register = 4095;
+	else
+		*dac_channels[gpio].data_register = milli_volts * 4096 / 3300;
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Set the value in millivolts for driving the DAC of a given pin.
+ */
+static int command_gpio_analog_set(int argc, const char **argv)
+{
+	int gpio;
+
+	if (argc < 4)
+		return EC_ERROR_PARAM_COUNT;
+
+	gpio = find_signal_by_name(argv[2]);
+	if (gpio == GPIO_COUNT)
+		return EC_ERROR_PARAM2;
+
+	if (set_dac(gpio, argv[3]) != EC_SUCCESS)
+		return EC_ERROR_PARAM3;
+	return EC_SUCCESS;
+}
+
 /*
  * Set multiple aspects of a GPIO pin simultaneously, that is, can switch output
  * level, opendrain/pushpull, and pullup simultaneously, eliminating the risk of
@@ -347,6 +412,7 @@ static int command_gpio_multiset(int argc, const char **argv)
 {
 	int gpio;
 	int flags;
+	uint32_t dac_enable_value = STM32_DAC_CR;
 
 	if (argc < 4)
 		return EC_ERROR_PARAM_COUNT;
@@ -368,13 +434,22 @@ static int command_gpio_multiset(int argc, const char **argv)
 
 	if (argc > 4 && strcasecmp(argv[4], "-") != 0) {
 		flags = flags & ~(GPIO_INPUT | GPIO_OUTPUT | GPIO_OPEN_DRAIN);
+		dac_enable_value &= ~dac_channels[gpio].enable_mask;
 		if (strcasecmp(argv[4], "input") == 0)
 			flags |= GPIO_INPUT;
 		else if (strcasecmp(argv[4], "opendrain") == 0)
 			flags |= GPIO_OUTPUT | GPIO_OPEN_DRAIN;
 		else if (strcasecmp(argv[4], "pushpull") == 0)
 			flags |= GPIO_OUTPUT;
-		else if (strcasecmp(argv[4], "alternate") == 0)
+		else if (strcasecmp(argv[4], "dac") == 0) {
+			if (dac_channels[gpio].enable_mask == 0) {
+				ccprintf("Error: Pin does not support dac\n");
+				return EC_ERROR_PARAM2;
+			}
+			dac_enable_value |= dac_channels[gpio].enable_mask;
+			/* Disable digital output, when DAC is overriding. */
+			flags |= GPIO_INPUT;
+		} else if (strcasecmp(argv[4], "alternate") == 0)
 			flags |= GPIO_ALTERNATE;
 		else
 			return EC_ERROR_PARAM4;
@@ -392,8 +467,14 @@ static int command_gpio_multiset(int argc, const char **argv)
 			return EC_ERROR_PARAM5;
 	}
 
+	if (argc > 6 && strcasecmp(argv[6], "-") != 0) {
+		if (set_dac(gpio, argv[6]) != EC_SUCCESS)
+			return EC_ERROR_PARAM6;
+	}
+
 	/* Update GPIO flags. */
 	gpio_set_flags(gpio, flags);
+	STM32_DAC_CR = dac_enable_value;
 	return EC_SUCCESS;
 }
 
@@ -725,22 +806,44 @@ static int command_gpio(int argc, const char **argv)
 {
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
+	if (!strcasecmp(argv[1], "analog-set"))
+		return command_gpio_analog_set(argc, argv);
 	if (!strcasecmp(argv[1], "monitoring"))
 		return command_gpio_monitoring(argc, argv);
 	if (!strcasecmp(argv[1], "multiset"))
 		return command_gpio_multiset(argc, argv);
 	return EC_ERROR_PARAM1;
 }
-DECLARE_CONSOLE_COMMAND_FLAGS(gpio, command_gpio,
-			      "multiset PIN [level] [mode] [pullmode]"
-			      "\nmonitoring start PIN"
-			      "\nmonitoring read PIN"
-			      "\nmonitoring stop PIN",
-			      "GPIO manipulation", CMD_FLAG_RESTRICTED);
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	gpio, command_gpio,
+	"multiset name [level] [mode] [pullmode] [milli_volts]"
+	"\nanalog-set name milli_volts"
+	"\nmonitoring start name..."
+	"\nmonitoring read name..."
+	"\nmonitoring stop name...",
+	"GPIO manipulation", CMD_FLAG_RESTRICTED);
 
 static int command_reinit(int argc, const char **argv)
 {
+	const struct gpio_info *g = gpio_list;
+	int i;
+
 	stop_all_gpio_monitoring();
+
+	/* Set all GPIOs to defaults */
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
+		int flags = g->flags;
+
+		if (flags & GPIO_DEFAULT)
+			continue;
+
+		/* Set up GPIO based on flags */
+		gpio_set_flags_by_mask(g->port, g->mask, flags);
+	}
+
+	/* Disable any DAC (which would override GPIO function of pins) */
+	STM32_DAC_CR = 0;
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(reinit, command_reinit, "",

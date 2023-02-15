@@ -200,6 +200,9 @@ static void board_init(void)
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI, 1);
 
+	/* Enable DAC */
+	STM32_RCC_APB1ENR |= STM32_RCC_APB1ENR1_DAC1EN;
+
 	/*
 	 * Enable SPI2.
 	 */
