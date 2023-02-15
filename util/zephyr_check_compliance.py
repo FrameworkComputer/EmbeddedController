@@ -77,14 +77,27 @@ def _parse_args(argv):
     return parser.parse_args(argv)
 
 
-def _changed_files_prefix(prefix, commit_range):
+def _patch_get_files():
+    """Patch compliance get_files() to exclude non zephyr files."""
+    original_get_files = check_compliance.get_files
+
+    def patched_get_files(**kwargs):
+        out = []
+        for file in original_get_files(**kwargs):
+            if file.startswith("zephyr/"):
+                out.append(file)
+        return out
+
+    check_compliance.get_files = patched_get_files
+
+
+def _changed_files(commit_range):
     check_compliance.COMMIT_RANGE = commit_range
     check_compliance.GIT_TOP = EC_BASE
 
     files = check_compliance.get_files(filter="d")
-    for file in files:
-        if file.startswith(prefix):
-            return True
+    if len(files) > 0:
+        return True
 
     return False
 
@@ -99,8 +112,10 @@ def main(argv):
 
     commit_range = f"{args.commit}~1..{args.commit}"
 
-    if not _changed_files_prefix("zephyr/", commit_range):
-        # Skip if nothing changed under zephyr/
+    _patch_get_files()
+
+    if not _changed_files(commit_range):
+        # Exit early if nothing changed
         return
 
     # TODO: also enable DevicetreeBindings
