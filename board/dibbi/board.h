@@ -17,6 +17,14 @@
 
 #define CONFIG_CMD_CHARGER_DUMP
 
+/* I2C Bus Configuration */
+#define I2C_PORT_HDMI2_EDID IT83XX_I2C_CH_B
+#undef I2C_PORT_USB_C0
+#define I2C_PORT_USB_C0 IT83XX_I2C_CH_C
+#define I2C_PORT_HDMI2_SRC_DDC IT83XX_I2C_CH_D
+#define I2C_PORT_HDMI1_EDID IT83XX_I2C_CH_E
+#define I2C_PORT_HDMI1_SRC_DDC IT83XX_I2C_CH_F
+
 /* Power */
 #undef CONFIG_CHARGER
 #undef CONFIG_CHARGER_DISCHARGE_ON_AC
@@ -52,8 +60,6 @@
 
 /* USB Mux and Retimer */
 #define CONFIG_USB_MUX_IT5205 /* C0: ITE Mux */
-#undef I2C_PORT_USB_C0
-#define I2C_PORT_USB_C0 IT83XX_I2C_CH_C
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
 /* USB Type A Features */

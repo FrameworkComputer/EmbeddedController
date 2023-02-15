@@ -6,6 +6,7 @@
 /* Dibbi board-specific configuration */
 
 #include "adc_chip.h"
+#include "board.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
@@ -380,5 +381,45 @@ void ppc_interrupt(enum gpio_signal signal)
 		syv682x_interrupt(USBC_PORT_C0);
 }
 
+/* I2C Ports */
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA },
+
+	{ .name = "hdmi2_edid",
+	  .port = I2C_PORT_HDMI2_EDID,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_HDMI2_EDID_SCL,
+	  .sda = GPIO_EC_I2C_HDMI2_EDID_SDA },
+
+	{ .name = "usbc0",
+	  .port = I2C_PORT_USB_C0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C0_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_SDA },
+
+	{ .name = "hdmi2_src_ddc",
+	  .port = I2C_PORT_HDMI2_SRC_DDC,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_HDMI2_SRC_DDC_SCL,
+	  .sda = GPIO_EC_I2C_HDMI2_SRC_DDC_SDA },
+
+	{ .name = "hdmi1_edid",
+	  .port = I2C_PORT_HDMI1_EDID,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_HDMI1_EDID_SCL,
+	  .sda = GPIO_EC_I2C_HDMI1_EDID_SDA },
+
+	{ .name = "hdmi1_src_ddc",
+	  .port = I2C_PORT_HDMI1_SRC_DDC,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_HDMI1_SRC_DDC_SCL,
+	  .sda = GPIO_EC_I2C_HDMI1_SRC_DDC_SDA },
+};
+
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
