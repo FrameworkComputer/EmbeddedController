@@ -10,7 +10,9 @@ zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/skyrim/include")
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
-target_sources(app PRIVATE src/common.c src/${CONFIG_TEST_BOARD_NAME}/common.c)
+add_subdirectory(tests/common)
+
+target_sources(app PRIVATE src/${CONFIG_TEST_BOARD_NAME}/common.c)
 
 target_sources_ifdef(CONFIG_TEST_BOARD_ALT_CHARGER app PRIVATE src/${CONFIG_TEST_BOARD_ALT_CHARGER_SRC} ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/alt_charger.c)
 target_sources_ifdef(CONFIG_TEST_BOARD_FAN app PRIVATE src/${CONFIG_TEST_BOARD_FAN_SRC} ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/fan.c)
