@@ -165,17 +165,18 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	roundup = !!(sensor->config[config_id].odr & ROUND_UP_FLAG);
 
 	ret = sensor->drv->set_data_rate(sensor, odr, roundup);
-	if (ret)
-		return ret;
 
 	if (IS_ENABLED(CONFIG_CONSOLE_VERBOSE))
-		CPRINTS("%s ODR: %d - roundup %d from config %d [AP %d]",
+		CPRINTS("%s ODR: %d - roundup %d from config %d [AP %d]: %d",
 			sensor->name, odr, roundup, config_id,
-			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
+			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr), ret);
 	else
-		CPRINTS("%c%d ODR %d rup %d cfg %d AP %d", sensor->name[0],
+		CPRINTS("%c%d ODR %d rup %d cfg %d AP %d: %d", sensor->name[0],
 			sensor->type, odr, roundup, config_id,
-			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
+			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr), ret);
+
+	if (ret)
+		return ret;
 
 	mutex_lock(&g_sensor_mutex);
 	odr = sensor->drv->get_data_rate(sensor);
