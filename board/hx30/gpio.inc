@@ -110,7 +110,7 @@ GPIO(FAN_SPEED,         PIN(050),  GPIO_INPUT)
 GPIO(FP_CTRL,		PIN(0245), GPIO_INPUT) /* Fingerprint control */
 GPIO(SOC_EC_INT_L,	PIN(0246), GPIO_INPUT | GPIO_ODR_HIGH)    /* HID interrupt, notify host to read data */
 
-GPIO(TYPEC_G_DRV2_EN,	PIN(0101), GPIO_OUT_HIGH)    /* LED drv */
+GPIO(TYPEC_G_DRV2_EN,	PIN(0101), GPIO_OUT_LOW)    /* LED drv */
 GPIO(ME_EN,		PIN(064),  GPIO_OUT_LOW) /* PVT ME control use VTR3(1.8v) */
 GPIO(EC_BKOFF_L,	PIN(0102), GPIO_OUT_LOW) /* Panel backlight control */
 GPIO(CAM_EN,		PIN(0171), GPIO_OUT_LOW) /* Open camera power  */
