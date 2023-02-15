@@ -28,6 +28,12 @@
 					size = <32>;
 					text-label = "version";
 				};
+				cbi {
+					type = "fill";
+					size = <0>;
+					fill-byte = [ff];
+					preserve;
+				};
 			};
 		};
 		ec-rw {

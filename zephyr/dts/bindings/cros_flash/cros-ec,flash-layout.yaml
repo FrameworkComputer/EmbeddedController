@@ -37,3 +37,9 @@ properties:
     required: false
     description: >-
       Set if the section should be read-only.
+  preserve:
+    type: boolean
+    required: false
+    description: >-
+      Set if the section should be preserved when updating firmware. This is
+      just a signal. Enforcement of this is upto the updater.
