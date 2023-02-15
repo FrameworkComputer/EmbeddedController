@@ -184,14 +184,14 @@ static int _enable_keystroke(int enabled)
 #define ENABLE_KEYSTROKE(enabled) \
 	TEST_EQ(_enable_keystroke(enabled), EC_SUCCESS, "%d")
 
-static int _reset_8042(void)
+static int _reset_8042_def(void)
 {
 	keyboard_host_write(ATKBD_CMD_RESET_DEF, 0);
 	VERIFY_ATKBD_ACK();
 
 	return EC_SUCCESS;
 }
-#define RESET_8042() TEST_EQ(_reset_8042(), EC_SUCCESS, "%d")
+#define RESET_8042_DEF() TEST_EQ(_reset_8042_def(), EC_SUCCESS, "%d")
 
 static int _set_typematic(uint8_t val)
 {
@@ -603,7 +603,7 @@ test_static int test_typematic(void)
 	/*
 	 * 500ms delay, 10.9 chars / sec.
 	 */
-	RESET_8042();
+	RESET_8042_DEF();
 
 	press_key(1, 1, 1);
 	VERIFY_LPC_CHAR_DELAY("\x01\x01\x01", 650);
@@ -801,6 +801,16 @@ test_static int test_atkbd_set_ex_leds(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_atkbd_reset(void)
+{
+	i8042_write_data(ATKBD_CMD_RESET);
+	VERIFY_ATKBD_ACK();
+	/* Successful BAT self-test */
+	VERIFY_LPC_CHAR("\xAA");
+
+	return EC_SUCCESS;
+}
+
 test_static int test_scancode_set2(void)
 {
 	SET_SCANCODE(2);
@@ -989,6 +999,7 @@ void run_test(int argc, const char **argv)
 		RUN_TEST(test_atkbd_set_leds_keypress_during);
 		RUN_TEST(test_atkbd_set_leds_abort_set);
 		RUN_TEST(test_atkbd_set_ex_leds);
+		RUN_TEST(test_atkbd_reset);
 		RUN_TEST(test_single_key_press);
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);
