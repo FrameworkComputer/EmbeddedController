@@ -191,11 +191,11 @@ void board_reset_pd_mcu(void)
 	cprints(CC_USB, "Resetting TCPCs...");
 	cflush();
 
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 1);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
 	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 0);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
 }
 
 void board_set_tcpc_power_mode(int port, int mode)
@@ -292,20 +292,4 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	}
 
 	charge_set_input_current_limit(charge_ma, charge_mv);
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
-		if (!gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
-			status |= PD_STATUS_TCPC_ALERT_0;
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_int_odl)))
-		if (!gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
-			status |= PD_STATUS_TCPC_ALERT_1;
-
-	return status;
 }

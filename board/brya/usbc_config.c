@@ -398,11 +398,15 @@ static void board_tcpc_init(void)
 #ifndef CONFIG_ZEPHYR
 		gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 		gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+#else
+	} else {
+		tcpc_config[1].irq_gpio.port = NULL;
 #endif /* !CONFIG_ZEPHYR */
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
+#ifndef CONFIG_ZEPHYR
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
@@ -416,6 +420,7 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
+#endif
 
 int ppc_get_alert_status(int port)
 {

@@ -161,16 +161,16 @@
 			gpios = <&gpio0 8 (GPIO_OUTPUT_LOW)>;
 		};
 		usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
-			gpios = <&gpio0 9 GPIO_INPUT>;
+			gpios = <&gpio0 9 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
-			gpios = <&gpio0 10 GPIO_INPUT>;
+			gpios = <&gpio0 10 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		usb_c0_tcpc_rst_l: usb_c0_tcpc_rst_l {
-			gpios = <&gpio0 11 (GPIO_OUTPUT_HIGH | GPIO_INPUT)>;
+			gpios = <&gpio0 11 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		usb_c1_tcpc_rst_l: usb_c1_tcpc_rst_l {
-			gpios = <&gpio0 12 (GPIO_OUTPUT_HIGH | GPIO_INPUT)>;
+			gpios = <&gpio0 12 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c1_ppc_int: usb_c1_ppc_int {
 			gpios = <&gpio0 13 GPIO_INPUT>;
@@ -894,6 +894,7 @@
 			status = "okay";
 			reg = <0x82>;
 			irq-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
+			rst-gpios = <&gpio0 11 GPIO_ACTIVE_LOW>;
 		};
 	};
 
@@ -939,6 +940,7 @@
 			compatible = "cros,ps8xxx-emul";
 			reg = <0xb>;
 			irq-gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
+			rst-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
 			p0-i2c-addr = <0x8>;
 			p1-i2c-addr = <0x9>;
 			gpio-i2c-addr = <0x1a>;

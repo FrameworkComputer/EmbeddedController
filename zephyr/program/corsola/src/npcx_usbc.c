@@ -136,9 +136,9 @@ void board_reset_pd_mcu(void)
 	CPRINTS("Resetting TCPCs...");
 	/* reset C0 ANX3447 */
 	/* Assert reset */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst), 1);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
 	msleep(1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst), 0);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
 	/* After TEST_R release, anx7447/3447 needs 2ms to finish eFuse
 	 * loading.
 	 */
@@ -220,23 +220,6 @@ int board_set_active_charge_port(int port)
 	}
 
 	return EC_SUCCESS;
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
-		if (!gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst))) {
-			status |= PD_STATUS_TCPC_ALERT_0;
-		}
-	}
-
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
-		return status |= PD_STATUS_TCPC_ALERT_1;
-	}
-	return status;
 }
 
 void ppc_interrupt(enum gpio_signal signal)

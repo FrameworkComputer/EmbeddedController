@@ -146,6 +146,7 @@ DEFINE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
 DEFINE_FAKE_VOID_FUNC(board_reset_pd_mcu);
 
+#ifndef CONFIG_PLATFORM_EC_TCPC_INTERRUPT
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
@@ -154,20 +155,21 @@ uint16_t tcpc_get_alert_status(void)
 	 * Check which port has the ALERT line set and ignore if that TCPC has
 	 * its reset line active.
 	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_int_odl))) {
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_int_odl))) {
 		if (gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l)) != 0)
+			    GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l)) == 0)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_int_odl))) {
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_int_odl))) {
 		if (gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l)) != 0)
+			    GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l)) == 0)
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}
 
 	return status;
 }
+#endif
 
 void ppc_alert(enum gpio_signal signal)
 {
@@ -198,14 +200,14 @@ static void stubs_interrupt_init(void)
 #endif
 
 	/* Reset generic TCPCI on port 0. */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l), 0);
-	msleep(1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l), 1);
+	msleep(1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l), 0);
 
 	/* Reset PS8XXX on port 1. */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l), 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l), 1);
+	msleep(PS8XXX_RESET_DELAY_MS);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l), 0);
 
 	/* Enable PPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));

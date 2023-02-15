@@ -256,11 +256,11 @@ static void reset_nct38xx_port(int port)
 	gpio_flags_t saved_port1_flags[8] = { 0 };
 
 	if (port == USBC_PORT_C0) {
-		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_l);
+		reset_gpio_l = &tcpc_config[0].rst_gpio;
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
 		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
 	} else if (port == USBC_PORT_C1) {
-		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_rst_l);
+		reset_gpio_l = &tcpc_config[1].rst_gpio;
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port0));
 		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
 	} else {
@@ -305,29 +305,6 @@ void board_reset_pd_mcu(void)
 
 	/* Reset TCPC1 */
 	reset_nct38xx_port(USBC_PORT_C1);
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	/*
-	 * Check which port has the ALERT line set and ignore if that TCPC has
-	 * its reset line active.
-	 */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
-		if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-			    gpio_usb_c0_tcpc_rst_l)) != 0)
-			status |= PD_STATUS_TCPC_ALERT_0;
-	}
-
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
-		if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-			    gpio_usb_c1_tcpc_rst_l)) != 0)
-			status |= PD_STATUS_TCPC_ALERT_1;
-	}
-
-	return status;
 }
 
 #ifdef CONFIG_PLATFORM_EC_USB_CHARGER

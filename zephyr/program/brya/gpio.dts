@@ -208,11 +208,11 @@
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		gpio_usb_c0_c2_tcpc_int_odl: usb_c0_c2_tcpc_int_odl {
-			gpios = <&gpioe 0 GPIO_INPUT>;
+			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_C2_TCPC_INT_ODL";
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
-			gpios = <&gpioa 2 GPIO_INPUT>;
+			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {

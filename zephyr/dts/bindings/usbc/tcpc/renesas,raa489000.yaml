@@ -19,3 +19,8 @@ properties:
     required: false
     description: |
       Interrupt from TCPC
+  rst-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      TCPC reset line

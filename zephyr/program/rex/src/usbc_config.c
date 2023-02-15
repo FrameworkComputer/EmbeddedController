@@ -86,7 +86,7 @@ static void reset_nct38xx_port(int port)
 
 	/* TODO(b/225189538): Save and restore ioex signals */
 	if (port == USBC_PORT_C0) {
-		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_odl);
+		reset_gpio_l = &tcpc_config[0].rst_gpio;
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
 		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
 	} else {
@@ -113,36 +113,10 @@ void board_reset_pd_mcu(void)
 	reset_nct38xx_port(USBC_PORT_C0);
 
 	/* Reset TCPC1 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 1);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
 	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 0);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
 	msleep(PS8815_FW_INIT_DELAY_MS);
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-	const struct gpio_dt_spec *tcpc_c0_rst_l;
-	const struct gpio_dt_spec *tcpc_c1_rst_l;
-
-	tcpc_c0_rst_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_odl);
-	tcpc_c1_rst_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl);
-
-	/*
-	 * Check which port has the ALERT line set and ignore if that TCPC has
-	 * its reset line active.
-	 */
-	if (gpio_pin_get_dt(&tcpc_config[0].irq_gpio) &&
-	    !gpio_pin_get_dt(tcpc_c0_rst_l)) {
-		status |= PD_STATUS_TCPC_ALERT_0;
-	}
-
-	if (gpio_pin_get_dt(&tcpc_config[1].irq_gpio) &&
-	    !gpio_pin_get_dt(tcpc_c1_rst_l)) {
-		status |= PD_STATUS_TCPC_ALERT_1;
-	}
-
-	return status;
 }
 
 void ppc_interrupt(enum gpio_signal signal)

@@ -587,6 +587,7 @@ struct tcpc_config_t {
 	uint32_t flags;
 #ifdef CONFIG_PLATFORM_EC_TCPC_INTERRUPT
 	struct gpio_dt_spec irq_gpio;
+	struct gpio_dt_spec rst_gpio;
 #else
 	enum gpio_signal alert_signal;
 #endif

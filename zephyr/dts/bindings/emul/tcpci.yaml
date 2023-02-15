@@ -13,6 +13,12 @@ properties:
     description: |
       Interrupt from TCPC using shim driver
 
+  rst-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      TCPC reset line using shim driver
+
   int-pin:
     type: phandles
     required: false
