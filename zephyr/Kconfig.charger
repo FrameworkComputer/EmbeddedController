@@ -37,6 +37,13 @@ config PLATFORM_EC_OCPC
 
 endchoice # PLATFORM_EC_CHARGER_TYPE
 
+config PLATFORM_EC_CHARGER_INIT_CUSTOM
+	bool "Allow the customized initial configuration"
+	default name
+	help
+	  When enabled, the board layer must create the charger_chips_init()
+	  function for customizing the initial configuration.
+
 config PLATFORM_EC_CHARGER_RUNTIME_CONFIG
 	bool "Allow charger configuration at runtime"
 	default n

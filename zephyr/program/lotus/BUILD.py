@@ -7,11 +7,12 @@ register_npcx_project(
     zephyr_board="npcx9m3f",
     dts_overlays=[
         here / "adc.dts",
-        here / "i2c.dts",
-        here / "gpio.dts",
-        here / "interrupts.dts",
-        here / "led_pins.dts",
         here / "battery.dts",
+        here / "gpio.dts",
+        here / "i2c.dts",
+        here / "interrupts.dts",
+        here / "led_policy.dts",
+        here / "pwm_leds.dts",
         here / "lotus.dts",
     ],
 )

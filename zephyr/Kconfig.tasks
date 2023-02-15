@@ -253,4 +253,21 @@ config TASK_USB_CHG_STACK_SIZE
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY
 
+config HAS_TASK_CYPD
+	bool
+	depends on PLATFORM_EC_STANDALONE_PD_CHIP
+	help
+	  This turns on the CYPD task which handles standalone PD chip
+	  to service PD message interrupts for any port.
+
+if HAS_TASK_CYPD
+
+config TASK_CYPD_STACK_SIZE
+	int "CYPD task stack size"
+	default 768
+	help
+	  The stack size of the cypd task.
+
+endif # HASK_TASK_CYPD
+
 endmenu # Tasks

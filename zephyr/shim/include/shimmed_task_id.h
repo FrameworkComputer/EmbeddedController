@@ -47,6 +47,7 @@ enum {
 	EC_TASK_PD_INT_C1_PRIO,
 	EC_TASK_PD_INT_C2_PRIO,
 	EC_TASK_PD_INT_C3_PRIO,
+	EC_TASK_CYPD_PRIO,
 	EC_TASK_PRIO_COUNT,
 };
 
@@ -158,6 +159,11 @@ enum {
 		    (CROS_EC_TASK(PD_INT_C3, pd_interrupt_handler_task, 3, \
 				  CONFIG_TASK_PD_INT_STACK_SIZE,           \
 				  EC_TASK_PD_INT_C3_PRIO)),                \
+		    ())                                                    \
+	COND_CODE_1(HAS_TASK_CYPD,                                    \
+		    (CROS_EC_TASK(CYPD, cypd_interrupt_handler_task, 0, \
+				  CONFIG_TASK_CYPD_STACK_SIZE,           \
+				  EC_TASK_CYPD_PRIO)),                \
 		    ())
 #elif defined(CONFIG_HAS_TEST_TASKS)
 #include "shimmed_test_tasks.h"

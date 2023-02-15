@@ -5,13 +5,20 @@
 cmake_minimum_required(VERSION 3.20.5)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(lotus)
+cros_ec_library_include_directories(include)
+zephyr_include_directories(include)
 zephyr_library_sources(
-	"src/power_sequence.c"
-	"src/cypress_pd_common.c"
 	"src/battery.c"
+	"src/board_host_command.c"
+	"src/charger.c"
+	"src/cypress_pd_common.c"
+	"src/power_sequence.c"
 )
 
-zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER
-					"src/power_button_x86.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
+	"src/led_pwm.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
+	"src/led.c")
 
-zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER
+	"src/power_button_x86.c")

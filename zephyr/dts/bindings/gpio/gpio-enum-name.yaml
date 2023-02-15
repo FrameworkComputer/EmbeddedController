@@ -135,6 +135,8 @@ properties:
       - GPIO_VOLUME_UP_L
       - GPIO_WARM_RESET_L
       - GPIO_WP_L
+      - GPIO_EC_PD_INTA_L
+      - GPIO_EC_PD_INTB_L
       - IOEX_USB_A1_RETIMER_EN
       - IOEX_USB_C0_BB_RETIMER_LS_EN
       - IOEX_USB_C0_BB_RETIMER_RST

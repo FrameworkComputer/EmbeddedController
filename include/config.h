@@ -950,6 +950,9 @@
 /* Allow run-time completion of the charger driver structure */
 #undef CONFIG_CHARGER_RUNTIME_CONFIG
 
+/* Allow the customized initial configuration */
+#undef CONFIG_CHARGER_INIT_CUSTOM
+
 /*
  * Board has only one charger chip (default, undef when board contains multiple
  * charger chips

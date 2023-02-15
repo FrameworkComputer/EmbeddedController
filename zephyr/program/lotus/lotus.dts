@@ -12,10 +12,29 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		/*
+		 * If the CHARGER_SINGLE_CHIP config is enabled, only
+		 * one charger chip must be defined.
+		 *
+		 * In the Zephyer OS, the CONFIG_USB_PD_PORT_MAX_COUNT will check
+		 * the device tree compatible "named-usbc-port"
+		 */
 		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger>;
+		};
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+		};
+		usbc_port2: port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+		};
+		usbc_port3: port3@3 {
+			compatible = "named-usbc-port";
+			reg = <3>;
 		};
 	};
 };
