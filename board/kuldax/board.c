@@ -69,7 +69,11 @@ __override void board_pchg_power_on(int port, bool on)
 
 int board_get_pchg_count(void)
 {
-	return ARRAY_SIZE(pchgs);
+	if (ec_cfg_has_peripheral_charger()) {
+		return ARRAY_SIZE(pchgs);
+	} else {
+		return 0;
+	}
 }
 
 /******************************************************************************/
