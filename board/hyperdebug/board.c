@@ -4,6 +4,7 @@
  */
 /* HyperDebug board configuration */
 
+#include "adc.h"
 #include "common.h"
 #include "ec_version.h"
 #include "i2c.h"
@@ -166,6 +167,40 @@ const void *const usb_strings[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /******************************************************************************
+ * Set up USB PD
+ */
+
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	/*
+	 * All available ADC signals, converted to mV (3300mV/4096).  Every one
+	 * is declared with same name as the GPIO signal on the same pin, that
+	 * is how opentitantool identifies the signal.
+	 *
+	 * Technically, the Nucleo-L552ZE-Q board can run at either 1v8 or 3v3
+	 * supply, but we use HyperDebug only on 3v3 setting.  If in the future
+	 * we want to detect actual voltage, Vrefint could be used.  This would
+	 * also serve as calibration as the supply voltage may not be 3300mV
+	 * exactly.
+	 */
+	[ADC_CN9_11] = { "CN9_11", 3300, 4096, 0, STM32_AIN(1) },
+	[ADC_CN9_9] = { "CN9_9", 3300, 4096, 0, STM32_AIN(2) },
+	/*[ADC_CN10_9] = { "CN10_9", 3300, 4096, 0, STM32_AIN(3) },*/
+	[ADC_CN9_5] = { "CN9_5", 3300, 4096, 0, STM32_AIN(4) },
+	[ADC_CN10_29] = { "CN10_29", 3300, 4096, 0, STM32_AIN(5) },
+	[ADC_CN10_11] = { "CN10_11", 3300, 4096, 0, STM32_AIN(6) },
+	[ADC_CN9_3] = { "CN9_3", 3300, 4096, 0, STM32_AIN(7) },
+	[ADC_CN9_1] = { "CN9_1", 3300, 4096, 0, STM32_AIN(8) },
+	[ADC_CN7_9] = { "CN7_9", 3300, 4096, 0, STM32_AIN(9) },
+	[ADC_CN7_10] = { "CN7_10", 3300, 4096, 0, STM32_AIN(10) },
+	[ADC_CN7_12] = { "CN7_12", 3300, 4096, 0, STM32_AIN(11) },
+	[ADC_CN7_14] = { "CN7_14", 3300, 4096, 0, STM32_AIN(12) },
+	[ADC_CN9_7] = { "CN9_7", 3300, 4096, 0, STM32_AIN(15) },
+	[ADC_CN10_7] = { "CN10_7", 3300, 4096, 0, STM32_AIN(16) },
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/******************************************************************************
  * Initialize board.
  */
 
@@ -199,6 +234,11 @@ static void board_init(void)
 
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI, 1);
+
+	/* Enable ADC */
+	STM32_RCC_AHB2ENR |= STM32_RCC_AHB2ENR_ADCEN;
+	/* Initialize the ADC by performing a fake reading */
+	adc_read_channel(ADC_CN9_11);
 
 	/* Enable DAC */
 	STM32_RCC_APB1ENR |= STM32_RCC_APB1ENR1_DAC1EN;

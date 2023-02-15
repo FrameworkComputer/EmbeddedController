@@ -50,7 +50,11 @@
 #define STM32_PLLR 2
 
 #define STM32_USE_PLL
+#define CPU_CLOCK 104000000
 
+#define CONFIG_ADC
+#define CONFIG_ADC_SAMPLE_TIME STM32_ADC_SMPR_247_5_CY
+#undef CONFIG_ADC_WATCHDOG
 #define CONFIG_BOARD_PRE_INIT
 
 #define CONFIG_ROM_BASE 0x0
@@ -195,6 +199,28 @@ enum usb_strings {
 	USB_STR_DFU_NAME,
 
 	USB_STR_COUNT
+};
+
+/* ADC signal */
+enum adc_channel {
+	ADC_CN9_11, /* ADC12_IN1 */
+	ADC_CN9_9, /* ADC12_IN2 */
+	/* ADC_CN10_9, */ /* ADC12_IN3, Nucleo USB VBUS sense */
+	ADC_CN9_5, /* ADC12_IN4 */
+	ADC_CN10_29, /* ADC12_IN5 */
+	ADC_CN10_11, /* ADC12_IN6 */
+	ADC_CN9_3, /* ADC12_IN7 */
+	ADC_CN9_1, /* ADC12_IN8 */
+	ADC_CN7_9, /* ADC12_IN9 */
+	ADC_CN7_10, /* ADC12_IN10 */
+	ADC_CN7_12, /* ADC12_IN11 */
+	ADC_CN7_14, /* ADC12_IN12 */
+	/* PC4, not on connectors */ /* ADC12_IN13 */
+	/* PC5, not on connectors */ /* ADC12_IN14 */
+	ADC_CN9_7, /* ADC12_IN15 */
+	ADC_CN10_7, /* ADC12_IN16 */
+	/* Number of ADC channels */
+	ADC_CH_COUNT
 };
 
 /* Timeout for initializing the OctoSPI controller. */
