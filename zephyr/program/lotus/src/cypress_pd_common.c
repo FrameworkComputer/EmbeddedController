@@ -784,11 +784,12 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * ac prochot should bigger than input current
 	 * And needs to be at least 128mA bigger than the adapter current
 	 */
-	prochot_ma = (DIV_ROUND_UP(charge_ma, 128) * 128);
-	charge_ma = charge_ma * 95 / 100;
+	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
 
-	if ((prochot_ma - charge_ma) < 128) {
-		charge_ma = prochot_ma - 128;
+	charge_ma = charge_ma * 94 / 100;
+
+	if ((prochot_ma - charge_ma) < 855) {
+		charge_ma = prochot_ma - 855;
 	}
 
 	charge_set_input_current_limit(charge_ma, charge_mv);
