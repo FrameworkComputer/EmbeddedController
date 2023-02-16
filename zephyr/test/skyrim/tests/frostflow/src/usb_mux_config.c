@@ -6,8 +6,13 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-#include <gpio.h>
+#include <driver/retimer/ps8811.h>
 #include <usbc/usb_muxes.h>
+
+FAKE_VALUE_FUNC(int, ps8811_i2c_read, const struct usb_mux *, int, int, int *);
+FAKE_VALUE_FUNC(int, ps8811_i2c_field_update, const struct usb_mux *, int, int,
+		uint8_t, uint8_t);
+FAKE_VALUE_FUNC(int, ps8811_i2c_write, const struct usb_mux *, int, int, int);
 
 int board_c0_amd_fp6_mux_set(const struct usb_mux *me, mux_state_t mux_state);
 int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state);

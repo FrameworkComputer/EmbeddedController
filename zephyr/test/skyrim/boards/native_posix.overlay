@@ -59,6 +59,24 @@
 	skyrim-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
+		io-db {
+			enum-name = "FW_IO_DB";
+			start = <6>;
+			size = <2>;
+
+			io-db-ps8811-ps8818 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_PS8811_PS8818";
+				value = <0>;
+			};
+			io-db-none-anx7483 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_NONE_ANX7483";
+				value = <1>;
+				default;
+			};
+		};
+
 		fan {
 			enum-name = "FW_FAN";
 			start = <10>;

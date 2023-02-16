@@ -16,6 +16,13 @@
 
 #include <zephyr/drivers/gpio.h>
 
+#ifdef CONFIG_ZTEST
+
+#undef USB_MUX_ENABLE_ALTERNATIVE
+#define USB_MUX_ENABLE_ALTERNATIVE(x)
+
+#endif /* CONFIG_ZTEST */
+
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 

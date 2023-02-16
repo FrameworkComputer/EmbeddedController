@@ -76,12 +76,10 @@ config TEST_BOARD_PPC_CONFIG_CUSTOM
 
 config TEST_BOARD_USB_MUX_CONFIG
 	bool "Enable USB mux config tests"
-	default n
 
-config TEST_BOARD_USB_MUX_CONFIG_SRC
-	string "Source file to use for this test"
-	default "common/usb_mux_config.c"
-	depends on TEST_BOARD_USB_MUX_CONFIG
+config TEST_BOARD_USB_MUX_CONFIG_CUSTOM
+	bool "Enable USB mux config tests with a variant-specific test file"
+	select TEST_BOARD_USB_MUX_CONFIG
 
 config SKYRIM_LOG_LEVEL
 	int "Fake config to allow building"

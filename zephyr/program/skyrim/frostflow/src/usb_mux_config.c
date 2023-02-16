@@ -17,6 +17,13 @@
 #include "usbc/usb_muxes.h"
 #include "util.h"
 
+#ifdef CONFIG_ZTEST
+/* Verify this is still needed for b/247151116. */
+#undef I2C_PORT_NODELABEL
+#define I2C_PORT_NODELABEL(x) 0
+
+#endif /* CONFIG_ZTEST */
+
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
