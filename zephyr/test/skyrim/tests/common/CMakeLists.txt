@@ -4,6 +4,14 @@
 
 target_sources(app PRIVATE src/common.c)
 
+# Alt charger
+if (DEFINED CONFIG_TEST_BOARD_ALT_CHARGER)
+	target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/alt_charger.c)
+	if (NOT DEFINED CONFIG_TEST_BOARD_ALT_CHARGER_CUSTOM)
+		target_sources(app PRIVATE src/alt_charger.c)
+	endif()
+endif()
+
 # PPC config
 if (DEFINED CONFIG_TEST_BOARD_PPC_CONFIG)
 	target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/ppc_config.c)

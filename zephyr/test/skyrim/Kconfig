@@ -51,10 +51,9 @@ config TEST_BOARD_NAME
 config TEST_BOARD_ALT_CHARGER
 	bool "Enable alt charger specific tests"
 
-config TEST_BOARD_ALT_CHARGER_SRC
-	string "Source file to use for this test"
-	default "common/alt_charger.c"
-	depends on TEST_BOARD_ALT_CHARGER
+config TEST_BOARD_ALT_CHARGER_CUSTOM
+	bool "ENable alt charger tests with a variant-specific test file"
+	select TEST_BOARD_ALT_CHARGER
 
 config TEST_BOARD_FAN
 	bool "Enable fan tests"
