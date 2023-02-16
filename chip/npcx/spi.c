@@ -148,9 +148,19 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		/* Waiting till reading is finished */
 		while (!IS_BIT_SET(NPCX_SPI_STAT, NPCX_SPI_STAT_RBF))
 			;
-		/* Reading the (unused) data */
-		clear_databuf();
+
+		if (rxlen == SPI_READBACK_ALL) {
+			rxdata[i] = (uint8_t)NPCX_SPI_DATA;
+			CPRINTS("rxdata[i]=%x", rxdata[i]);
+		} else {
+			/* Reading the (unused) data to empty the read buffer */
+			clear_databuf();
+		}
 	}
+
+	if (rxlen == SPI_READBACK_ALL)
+		goto terminate;
+
 	CPRINTS("write end");
 	/* Reading the data */
 	for (i = 0; i < rxlen; ++i) {
@@ -166,6 +176,8 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		rxdata[i] = (uint8_t)NPCX_SPI_DATA;
 		CPRINTS("rxdata[i]=%x", rxdata[i]);
 	}
+
+terminate:
 	/* Deassert CS# (high) to end transaction */
 	gpio_set_level(gpio, 1);
 	mutex_unlock(&spi_lock);
