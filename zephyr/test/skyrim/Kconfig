@@ -71,12 +71,10 @@ config TEST_BOARD_USB_PD_POLICY
 
 config TEST_BOARD_PPC_CONFIG
 	bool "Enable PPC config tests"
-	default n
 
-config TEST_BOARD_PPC_CONFIG_SRC
-	string "Source file to use for this test"
-	default "common/ppc_config.c"
-	depends on TEST_BOARD_PPC
+config TEST_BOARD_PPC_CONFIG_CUSTOM
+	bool "ENable PPC config tests with a variant-specific test file"
+	select TEST_BOARD_PPC_CONFIG
 
 config TEST_BOARD_USB_MUX_CONFIG
 	bool "Enable USB mux config tests"

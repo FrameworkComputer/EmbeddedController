@@ -9,7 +9,6 @@
 #include <usbc_ppc.h>
 
 FAKE_VOID_FUNC(nx20p348x_interrupt, int);
-DEFINE_FAKE_VOID_FUNC(nx20p348x_interrupt, int);
 
 static void ppc_config_before(void *fixture)
 {

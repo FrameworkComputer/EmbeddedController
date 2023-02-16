@@ -51,11 +51,11 @@ tests:
     - CONFIG_TEST_BOARD_FROSTFLOW=y
     - CONFIG_TEST_BOARD_PPC_CONFIG=y
 
-  # skyrim.frostflow.usb_mux_config:
-  #   extra_configs:
-  #   - CONFIG_TEST_BOARD_FROSTFLOW=y
-  #   - CONFIG_TEST_BOARD_USB_MUX_CONFIG=y
-  #   - CONFIG_TEST_BOARD_USB_MUX_CONFIG_SRC="frostflow/usb_mux_config.c"
+#  skyrim.frostflow.usb_mux_config:
+#    extra_configs:
+#    - CONFIG_TEST_BOARD_FROSTFLOW=y
+#    - CONFIG_TEST_BOARD_USB_MUX_CONFIG=y
+#    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_SRC="frostflow/usb_mux_config.c"
 
   # Markarth tests
   skyrim.markarth:
@@ -100,5 +100,4 @@ tests:
   skyrim.winterhold.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
-    - CONFIG_TEST_BOARD_PPC_CONFIG=y
-    - CONFIG_TEST_BOARD_PPC_CONFIG_SRC="winterhold/ppc_config.c"
+    - CONFIG_TEST_BOARD_PPC_CONFIG_CUSTOM=y
