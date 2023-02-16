@@ -12,6 +12,14 @@ if (DEFINED CONFIG_TEST_BOARD_ALT_CHARGER)
 	endif()
 endif()
 
+# Fan
+if (DEFINED CONFIG_TEST_BOARD_FAN)
+	target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/fan.c)
+	if (NOT DEFINED CONFIG_TEST_BOARD_FAN_CUSTOM)
+		target_sources(app PRIVATE src/fan.c)
+	endif()
+endif()
+
 # PPC config
 if (DEFINED CONFIG_TEST_BOARD_PPC_CONFIG)
 	target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/ppc_config.c)

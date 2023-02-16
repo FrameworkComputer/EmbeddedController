@@ -16,5 +16,4 @@ add_subdirectory_ifdef(CONFIG_TEST_BOARD_WINTERHOLD tests/winterhold)
 
 target_sources(app PRIVATE src/${CONFIG_TEST_BOARD_NAME}/common.c)
 
-target_sources_ifdef(CONFIG_TEST_BOARD_FAN app PRIVATE src/${CONFIG_TEST_BOARD_FAN_SRC} ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/fan.c)
 target_sources_ifdef(CONFIG_TEST_BOARD_USB_MUX_CONFIG app PRIVATE src/${TEST_BOARD_USB_MUX_CONFIG_SRC} ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/usb_mux_config.c)

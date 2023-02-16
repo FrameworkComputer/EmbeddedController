@@ -58,10 +58,9 @@ config TEST_BOARD_ALT_CHARGER_CUSTOM
 config TEST_BOARD_FAN
 	bool "Enable fan tests"
 
-config TEST_BOARD_FAN_SRC
-	string "Source file to use for this test"
-	default "common/fan.c"
-	depends on TEST_BOARD_FAN
+config TEST_BOARD_FAN_CUSTOM
+	bool "ENable fan tests with a variant-specific test file"
+	select TEST_BOARD_FAN
 
 config TEST_BOARD_USB_PD_POLICY
 	bool "Enable USB PD policy specific tests"
