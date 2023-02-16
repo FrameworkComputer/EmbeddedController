@@ -2483,11 +2483,7 @@
 #undef CONFIG_HOST_COMMAND_STATUS
 
 /* clear bit(s) to mask reporting of an EC_HOST_EVENT_XXX event(s) */
-#ifdef CONFIG_HOST_EVENT64
 #define CONFIG_HOST_EVENT_REPORT_MASK 0xffffffffffffffffULL
-#else
-#define CONFIG_HOST_EVENT_REPORT_MASK 0xffffffff
-#endif
 
 /* Config option to support 64-bit hostevents and wake-masks. */
 #define CONFIG_HOST_EVENT64
