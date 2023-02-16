@@ -988,21 +988,23 @@ function flash_flashrom() {
 
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
-			sleep 0.1
+			sleep 0.2
 			dut_control cold_reset:off
 		fi
 
 		# Enable SPI programming mode.
 		if [[ "${CHIP}" == "ite_spi" ||
-		      "${CHIP}" == "ite_spi_ccd_i2c" ||
-		      "${CHIP}" == "it8xxx2" ]]; then
-			# Set hardware strap pin (GPG6) of SPI programming as low then start ec
-			dut_control fw_up:on
-			sleep 0.1
-			dut_control cold_reset:off
-			sleep 0.1
-			# We have to release the HW strap pin because it also SPI clock pin.
-			dut_control fw_up:off
+			"${CHIP}" == "ite_spi_ccd_i2c" ||
+			"${CHIP}" == "it8xxx2" ]]; then
+					# Set hardware strap pin (GPG6) of SPI
+					# programming as low then start ec
+					dut_control fw_up:on
+					sleep 0.1
+					dut_control cold_reset:off
+					sleep 0.2
+					# We have to release the HW strap pin
+					# because it also SPI clock pin.
+					dut_control fw_up:off
 		fi
 
 		servo_save_add "spi1_vref" "off"
@@ -1022,7 +1024,7 @@ function flash_flashrom() {
 			# Set GP_SEL# as low then start ec
 			dut_control cold_reset:on
 			dut_control fw_up:on
-			# sleep 0.1
+			sleep 0.2
 			dut_control cold_reset:off
 		else
 			# Assert EC reset.
