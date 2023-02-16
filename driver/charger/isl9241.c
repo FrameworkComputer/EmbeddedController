@@ -343,18 +343,20 @@ error:
 	return rv;
 }
 
-static enum ec_error_list isl9241_get_vsys_voltage(int chgnum, int port,
-						   int *voltage)
+/**
+ * Mutex less version of isl9241_get_vsys_voltage. This should be called only
+ * if control3_mutex_isl9241 is already locked.
+ */
+static enum ec_error_list _get_vsys_voltage(int chgnum, int port, int *voltage)
 {
 	int val = 0;
 	int rv = EC_SUCCESS;
 
-	mutex_lock(&control3_mutex_isl9241);
 	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL3,
 			    ISL9241_CONTROL3_ENABLE_ADC, MASK_SET);
 	if (rv) {
 		CPRINTS("Could not enable ADC for Vsys. (rv=%d)", rv);
-		goto unlock_control3;
+		return rv;
 	}
 
 	usleep(ISL9241_ADC_POLLING_TIME_US);
@@ -365,7 +367,7 @@ static enum ec_error_list isl9241_get_vsys_voltage(int chgnum, int port,
 		CPRINTS("Could not read Vsys. (rv=%d)", rv);
 		isl9241_update(chgnum, ISL9241_REG_CONTROL3,
 			       ISL9241_CONTROL3_ENABLE_ADC, MASK_CLR);
-		goto unlock_control3;
+		return rv;
 	}
 
 	/* Adjust adc_val. Same as Vin. */
@@ -373,7 +375,16 @@ static enum ec_error_list isl9241_get_vsys_voltage(int chgnum, int port,
 	val *= ISL9241_VIN_ADC_STEP_MV;
 	*voltage = val;
 
-unlock_control3:
+	return rv;
+}
+
+static enum ec_error_list isl9241_get_vsys_voltage(int chgnum, int port,
+						   int *voltage)
+{
+	int rv;
+
+	mutex_lock(&control3_mutex_isl9241);
+	rv = _get_vsys_voltage(chgnum, port, voltage);
 	mutex_unlock(&control3_mutex_isl9241);
 
 	return rv;
@@ -825,7 +836,7 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 	deadline.val = get_time().val + ISL9241_BYPASS_VSYS_TIMEOUT_MS * MSEC;
 	do {
 		msleep(ISL9241_BYPASS_VSYS_TIMEOUT_MS / 10);
-		if (isl9241_get_vsys_voltage(chgnum, 0, &vsys)) {
+		if (_get_vsys_voltage(chgnum, 0, &vsys)) {
 			CPRINTS("Aborting bypass mode. Vsys is unknown.");
 			rv = EC_ERROR_UNKNOWN;
 			goto unlock_control3;
