@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "system_boot_time.h"
 #include "zephyr_console_shim.h"
 
 #include <zephyr/init.h>
@@ -237,6 +238,7 @@ void rsmrst_pass_thru_handler(void)
 			k_msleep(AP_PWRSEQ_DT_VALUE(rsmrst_delay));
 		LOG_DBG("Setting PWR_EC_PCH_RSMRST to %d", in_sig_val);
 		power_signal_set(PWR_EC_PCH_RSMRST, in_sig_val);
+		update_ap_boot_time(RSMRST);
 	}
 }
 
