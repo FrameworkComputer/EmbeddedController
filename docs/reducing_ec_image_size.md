@@ -216,7 +216,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_MFALLOW | `mfallow` | |
 | | CONFIG_CMD_MMAPINFO | `mmapinfo` | |
 | x | CONFIG_CMD_PD | `pd` | Used by FAFT PD, TAST `firmware.ECSystemLocked` |
-| | CONFIG_CMD_PD_DEV_DUMP_INFO | | Not a console command |
+| | CONFIG_CMD_PD_DEV_DUMP_INFO | | Not supported by TCPMv2 |
 | | CONFIG_CMD_PD_FLASH | `pd flash` | Not supported by TCPMv2 |
 | | CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE | `pd <port> srccaps` | Defining this reduces the verbosity of this command, saving bytes |
 | | CONFIG_CMD_PECI | `peci` | firmware_ECThermal uses `ectool tempsinfo` |

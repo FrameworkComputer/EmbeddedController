@@ -2038,9 +2038,6 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 {
 	pe[port].dev_id = dev_id;
 	memcpy(pe[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
-#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
-	pd_dev_dump_info(dev_id, rw_hash);
-#endif
 	pe[port].current_image = current_image;
 
 	if (IS_ENABLED(CONFIG_USB_PD_HOST_CMD)) {

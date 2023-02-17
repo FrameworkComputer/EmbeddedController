@@ -801,19 +801,6 @@ enum pd_dual_role_states pd_get_dual_role(int port)
 	return drp_state[port];
 }
 
-#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
-static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
-{
-	int j;
-
-	ccprintf("DevId:%d.%d Hash:", HW_DEV_ID_MAJ(dev_id),
-		 HW_DEV_ID_MIN(dev_id));
-	for (j = 0; j < PD_RW_HASH_SIZE / 4; j++)
-		ccprintf(" %08x ", hash[j]);
-	ccprintf("\n");
-}
-#endif /* CONFIG_CMD_PD_DEV_DUMP_INFO */
-
 const char *tc_get_current_state(int port)
 {
 	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
