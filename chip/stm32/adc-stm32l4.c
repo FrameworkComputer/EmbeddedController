@@ -35,14 +35,12 @@ struct adc_profile_t {
 #endif
 #endif
 
-#if defined(CHIP_FAMILY_STM32L4)
 #define ADC_CALIBRATION_TIMEOUT_US 100000U
 #define ADC_ENABLE_TIMEOUT_US 200000U
 #define ADC_CONVERSION_TIMEOUT_US 200000U
 
 #define NUMBER_OF_ADC_CHANNEL 2
-uint8_t adc1_initialized;
-#endif
+static uint8_t adc1_initialized;
 
 #ifdef CONFIG_ADC_PROFILE_FAST_CONTINUOUS
 
