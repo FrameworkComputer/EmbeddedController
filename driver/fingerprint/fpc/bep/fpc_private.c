@@ -18,7 +18,8 @@
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
-static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4) = { 0 };
+static uint8_t
+	enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE_FPC] __aligned(4) = { 0 };
 
 /* Recorded error flags */
 static uint16_t errors;
@@ -41,11 +42,11 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.model_id = 1,
 	.version = 1,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_IMAGE_SIZE,
+	.frame_size = FP_SENSOR_IMAGE_SIZE_FPC,
 	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X,
-	.height = FP_SENSOR_RES_Y,
-	.bpp = FP_SENSOR_RES_BPP,
+	.width = FP_SENSOR_RES_X_FPC,
+	.height = FP_SENSOR_RES_Y_FPC,
+	.bpp = FP_SENSOR_RES_BPP_FPC,
 };
 
 typedef struct fpc_bep_sensor fpc_bep_sensor_t;
@@ -62,12 +63,12 @@ extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1025;
 
 const fpc_sensor_info_t fpc_sensor_info = {
 	.sensor = &fpc_bep_sensor_1025,
-	.image_buffer_size = FP_SENSOR_IMAGE_SIZE,
+	.image_buffer_size = FP_SENSOR_IMAGE_SIZE_FPC,
 };
 
 const fpc_bio_info_t fpc_bio_info = {
 	.algorithm = &fpc_bep_algorithm_pfe_1025,
-	.template_size = FP_ALGORITHM_TEMPLATE_SIZE,
+	.template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
 };
 
 #elif defined(CONFIG_FP_SENSOR_FPC1035)
@@ -142,12 +143,12 @@ int fpc_check_hwid(void)
 	int status;
 
 	status = fpc_get_hwid(&id);
-	if ((id >> 4) != FP_SENSOR_HWID) {
+	if ((id >> 4) != FP_SENSOR_HWID_FPC) {
 		CPRINTS("FPC unknown silicon 0x%04x", id);
 		return FP_ERROR_BAD_HWID;
 	}
 	if (status == EC_SUCCESS)
-		CPRINTS(FP_SENSOR_NAME " id 0x%04x", id);
+		CPRINTS(FP_SENSOR_NAME_FPC " id 0x%04x", id);
 
 	return status;
 }

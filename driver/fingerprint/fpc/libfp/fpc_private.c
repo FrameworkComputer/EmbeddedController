@@ -41,9 +41,9 @@
  * The sensor context is uncached as it contains the SPI buffers,
  * the binary library assumes that it is aligned.
  */
-static uint8_t ctx[FP_SENSOR_CONTEXT_SIZE] __uncached __aligned(4);
+static uint8_t ctx[FP_SENSOR_CONTEXT_SIZE_FPC] __uncached __aligned(4);
 static bio_sensor_t bio_sensor;
-static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4);
+static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE_FPC] __aligned(4);
 
 /* recorded error flags */
 static uint16_t errors;
@@ -56,11 +56,11 @@ static struct ec_response_fp_info fpc1145_info = {
 	.model_id = 1,
 	.version = 1,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_IMAGE_SIZE,
+	.frame_size = FP_SENSOR_IMAGE_SIZE_FPC,
 	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X,
-	.height = FP_SENSOR_RES_Y,
-	.bpp = FP_SENSOR_RES_BPP,
+	.width = FP_SENSOR_RES_X_FPC,
+	.height = FP_SENSOR_RES_Y_FPC,
+	.bpp = FP_SENSOR_RES_BPP_FPC,
 };
 
 /* Sensor IC commands */
@@ -130,13 +130,13 @@ int fpc_check_hwid(void)
 	int status;
 
 	status = fpc_get_hwid(&id);
-	if ((id >> 4) != FP_SENSOR_HWID) {
+	if ((id >> 4) != FP_SENSOR_HWID_FPC) {
 		CPRINTS("FPC unknown silicon 0x%04x", id);
 		errors |= FP_ERROR_BAD_HWID;
 		return EC_ERROR_HW_INTERNAL;
 	}
 	if (status == EC_SUCCESS)
-		CPRINTS(FP_SENSOR_NAME " id 0x%04x", id);
+		CPRINTS(FP_SENSOR_NAME_FPC " id 0x%04x", id);
 	return status;
 }
 
@@ -230,9 +230,9 @@ int fp_sensor_init(void)
 		 * Ensure that any previous context data is obliterated in case
 		 * of a sensor reset.
 		 */
-		memset(ctx, 0, FP_SENSOR_CONTEXT_SIZE);
+		memset(ctx, 0, FP_SENSOR_CONTEXT_SIZE_FPC);
 
-		res = fp_sensor_open(ctx, FP_SENSOR_CONTEXT_SIZE);
+		res = fp_sensor_open(ctx, FP_SENSOR_CONTEXT_SIZE_FPC);
 		/* Flush messages from the PAL if any */
 		cflush();
 		CPRINTS("Sensor init (attempt %d): 0x%x", attempt, res);

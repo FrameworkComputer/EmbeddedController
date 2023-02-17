@@ -12,6 +12,11 @@
 #include "elan/elan_sensor.h"
 #else
 #include "fpc/fpc_sensor.h"
+#define FP_SENSOR_IMAGE_SIZE (FP_SENSOR_IMAGE_SIZE_FPC)
+#define FP_SENSOR_RES_X (FP_SENSOR_RES_X_FPC)
+#define FP_SENSOR_RES_Y (FP_SENSOR_RES_Y_FPC)
+#define FP_ALGORITHM_TEMPLATE_SIZE (FP_ALGORITHM_TEMPLATE_SIZE_FPC)
+#define FP_MAX_FINGER_COUNT (FP_MAX_FINGER_COUNT_FPC)
 #endif
 #else
 /* These values are used by the host (emulator) tests. */

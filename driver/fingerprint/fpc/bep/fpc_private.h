@@ -28,7 +28,8 @@ typedef struct {
  * the finger detect zones are covered. A client can call
  * fp_sensor_finger_status to determine the current status.
  *
- * @param[in]  image_data      pointer to FP_SENSOR_IMAGE_SIZE bytes of memory
+ * @param[in]  image_data      pointer to a buffer containing at least
+ * FP_SENSOR_IMAGE_SIZE_FPC bytes of memory
  * @param[out] fp_sensor_info  Structure containing output data.
  *
  * @return
@@ -42,8 +43,8 @@ int fp_sensor_maintenance(uint8_t *image_data,
  * Get the HWID of the sensor.
  *
  * @param id Pointer to where to store the HWID value.  The HWID value here is
- * the full 16 bits (contrast to FP_SENSOR_HWID where the lower four bits, which
- * are a manufacturing id, are truncated).
+ * the full 16 bits (contrast to FP_SENSOR_HWID_FPC where the lower four bits,
+ * which are a manufacturing id, are truncated).
  * @return
  * - EC_SUCCESS on success
  * - EC_ERROR_INVAL or FP_ERROR_SPI_COMM on error

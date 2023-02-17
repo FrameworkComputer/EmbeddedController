@@ -10,7 +10,7 @@
 
 #ifdef SECTION_IS_RW
 #include "fpc/fpc_sensor.h"
-static const uint32_t fp_sensor_hwid = FP_SENSOR_HWID;
+static const uint32_t fp_sensor_hwid = FP_SENSOR_HWID_FPC;
 #else
 static const uint32_t fp_sensor_hwid = UINT32_MAX;
 #endif
