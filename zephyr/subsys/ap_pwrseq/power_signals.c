@@ -64,18 +64,18 @@ struct ps_config {
 /*
  * Generate the power signal configuration array.
  */
+/* clang-format off */
 static const struct ps_config sig_config[] = {
 	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_gpio, GEN_PS_ENTRY,
 				     PWR_SIG_SRC_GPIO, PWR_SIG_TAG_GPIO)
-		DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_vw, GEN_PS_ENTRY,
-					     PWR_SIG_SRC_VW, PWR_SIG_TAG_VW)
-			DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_external,
-						     GEN_PS_ENTRY_NO_ENUM,
-						     PWR_SIG_SRC_EXT)
-				DT_FOREACH_STATUS_OKAY_VARGS(
-					intel_ap_pwrseq_adc, GEN_PS_ENTRY,
-					PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
+	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_vw, GEN_PS_ENTRY,
+				     PWR_SIG_SRC_VW, PWR_SIG_TAG_VW)
+	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_external,
+				     GEN_PS_ENTRY_NO_ENUM, PWR_SIG_SRC_EXT)
+	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_adc, GEN_PS_ENTRY,
+				     PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
 };
+/* clang-format on */
 
 #define PWR_SIGNAL_POLLED(id) PWR_SIGNAL_ENUM(id),
 

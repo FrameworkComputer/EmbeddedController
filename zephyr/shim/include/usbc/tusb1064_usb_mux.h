@@ -12,30 +12,32 @@
 #define TUSB1064_EMUL_COMPAT zephyr_tusb1064_emul
 
 #if defined(CONFIG_USB_MUX_TUSB1044)
-#define USB_MUX_CONFIG_TUSB1064(mux_id)                        \
-	{                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id),                 \
-			.driver = &tusb1064_usb_mux_driver,    \
-			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
-			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
-			.hpd_update = &tusb1044_hpd_update,    \
+/* clang-format off */
+#define USB_MUX_CONFIG_TUSB1064(mux_id)                \
+	{                                              \
+		USB_MUX_COMMON_FIELDS(mux_id),         \
+		.driver = &tusb1064_usb_mux_driver,    \
+		.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
+		.i2c_addr_flags = DT_REG_ADDR(mux_id), \
+		.hpd_update = &tusb1044_hpd_update,    \
 	}
 #elif defined(CONFIG_USB_MUX_TUSB546)
-#define USB_MUX_CONFIG_TUSB1064(mux_id)                        \
-	{                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id),                 \
-			.driver = &tusb1064_usb_mux_driver,    \
-			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
-			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
+#define USB_MUX_CONFIG_TUSB1064(mux_id)                \
+	{                                              \
+		USB_MUX_COMMON_FIELDS(mux_id),         \
+		.driver = &tusb1064_usb_mux_driver,    \
+		.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
+		.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
 #else
-#define USB_MUX_CONFIG_TUSB1064(mux_id)                        \
-	{                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id),                 \
-			.driver = &tusb1064_usb_mux_driver,    \
-			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
-			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
+#define USB_MUX_CONFIG_TUSB1064(mux_id)                \
+	{                                              \
+		USB_MUX_COMMON_FIELDS(mux_id),         \
+		.driver = &tusb1064_usb_mux_driver,    \
+		.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
+		.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
+/* clang-format on */
 #endif /* defined(CONFIG_USB_MUX_TUSB1044) */
 
 #endif /* __ZEPHYR_SHIM_TUBS1064_USB_MUX_H */

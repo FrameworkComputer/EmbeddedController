@@ -32,6 +32,7 @@ extern "C" {
 			     ())))
 
 /** @brief AP power sequence valid power states. */
+/* clang-format off */
 enum ap_pwrseq_state {
 	AP_POWER_STATE_UNINIT, /* EC and AP are Uninitialized */
 	AP_POWER_STATE_G3, /* AP is OFF */
@@ -43,10 +44,11 @@ enum ap_pwrseq_state {
 	AP_POWER_STATE_S0, /* AP is in active state */
 	DT_FOREACH_STATUS_OKAY(ap_pwrseq_sub_states,
 			       AP_PWRSEQ_EACH_SUB_STATE_ENUM_DEF)
-		AP_POWER_STATE_COUNT,
+	AP_POWER_STATE_COUNT,
 	AP_POWER_STATE_UNDEF = 0xFFFE,
 	AP_POWER_STATE_ERROR = 0xFFFF,
 };
+/* clang-format on */
 
 /** @brief AP power sequence events. */
 enum ap_pwrseq_event {

@@ -23,10 +23,12 @@
 
 #define PWR_GPIO_ENUM(id) TAG_GPIO(PWR_SIG_TAG_GPIO, PWR_SIGNAL_ENUM(id)),
 
+/* clang-format off */
 enum pwr_sig_gpio {
 	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_GPIO_ENUM)
-		PWR_SIG_GPIO_COUNT
+	PWR_SIG_GPIO_COUNT
 };
+/* clang-format on */
 
 #undef PWR_GPIO_ENUM
 #undef TAG_GPIO

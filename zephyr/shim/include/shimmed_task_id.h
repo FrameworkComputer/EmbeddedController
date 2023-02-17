@@ -212,14 +212,16 @@ enum {
  */
 #define CROS_EC_TASK(name, ...) TASK_ID_##name,
 #define TASK_TEST(name, ...) CROS_EC_TASK(name)
+/* clang-format off */
 enum {
 	CROS_EC_TASK_LIST
 #ifdef TEST_BUILD
-		TASK_ID_TEST_RUNNER,
+	TASK_ID_TEST_RUNNER,
 #endif
 	TASK_ID_COUNT,
 	TASK_ID_INVALID = 0xff, /* Unable to find the task */
 };
+/* clang-format on */
 #undef CROS_EC_TASK
 #undef TASK_TEST
 

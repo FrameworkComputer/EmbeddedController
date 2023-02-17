@@ -66,16 +66,15 @@
  * The order that these compatibles are processed in
  * must be the same as in power_signals.c
  */
+/* clang-format off */
 enum power_signal {
 	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_SIGNAL_ENUM_COMMA)
-		DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw,
-				       PWR_SIGNAL_ENUM_COMMA)
-			DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external,
-					       PWR_SIGNAL_ENUM_COMMA)
-				DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc,
-						       PWR_SIGNAL_ENUM_COMMA)
-					POWER_SIGNAL_COUNT,
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_SIGNAL_ENUM_COMMA)
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external, PWR_SIGNAL_ENUM_COMMA)
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_SIGNAL_ENUM_COMMA)
+	POWER_SIGNAL_COUNT,
 };
+/* clang-format on */
 
 #undef PWR_SIGNAL_ENUM_COMMA
 

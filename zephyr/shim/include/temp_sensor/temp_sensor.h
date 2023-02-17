@@ -120,10 +120,12 @@ enum temp_sensor_id {
 #define PCT2075_SENSOR_ID(node_id) DT_CAT(PCT2075_, node_id)
 #define PCT2075_SENSOR_ID_WITH_COMMA(node_id) PCT2075_SENSOR_ID(node_id),
 
+/* clang-format off */
 enum pct2075_sensor {
 	DT_FOREACH_STATUS_OKAY(PCT2075_COMPAT, PCT2075_SENSOR_ID_WITH_COMMA)
-		PCT2075_COUNT,
+	PCT2075_COUNT,
 };
+/* clang-format on */
 
 #undef PCT2075_SENSOR_ID_WITH_COMMA
 
@@ -136,10 +138,12 @@ enum pct2075_sensor {
 #define TMP112_SENSOR_ID(node_id) DT_CAT(TMP112_, node_id)
 #define TMP112_SENSOR_ID_WITH_COMMA(node_id) TMP112_SENSOR_ID(node_id),
 
+/* clang-format off */
 enum tmp112_sensor {
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, TMP112_SENSOR_ID_WITH_COMMA)
-		TMP112_COUNT,
+	TMP112_COUNT,
 };
+/* clang-format on */
 
 #undef TMP112_SENSOR_ID_WITH_COMMA
 
@@ -152,10 +156,12 @@ enum tmp112_sensor {
 #define F75303_SENSOR_ID(node_id) DT_CAT(F75303_, node_id)
 #define F75303_SENSOR_ID_WITH_COMMA(node_id) F75303_SENSOR_ID(node_id),
 
+/* clang-format off */
 enum f75303_sensor {
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, F75303_SENSOR_ID_WITH_COMMA)
-		F75303_IDX_COUNT,
+	F75303_IDX_COUNT,
 };
+/* clang-format on */
 
 #undef F75303_SENSOR_ID_WITH_COMMA
 
