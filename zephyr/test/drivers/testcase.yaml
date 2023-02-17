@@ -300,9 +300,6 @@ tests:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_FRS=y
       - CONFIG_PLATFORM_EC_USB_PD_FRS_TCPC=y
-  drivers.usbc_legacy:
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_LEGACY=y
   drivers.usbc_ocp:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_OCP=y

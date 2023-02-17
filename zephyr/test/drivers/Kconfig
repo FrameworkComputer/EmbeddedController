@@ -143,12 +143,6 @@ config LINK_TEST_SUITE_USBC_FRS
 	select LOG
 	select PLATFORM_EC_USB_PD_FRS
 
-config LINK_TEST_SUITE_USBC_LEGACY
-	bool "Link tests for common USBC legacy code"
-	help
-	  Include test coverage for legacy USB-C code. This is typically
-	  for obsolete functionality or unsupported hardware.
-
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"
 

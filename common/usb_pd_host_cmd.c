@@ -126,28 +126,6 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY, hc_remote_pd_discovery,
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 #ifdef CONFIG_COMMON_RUNTIME
-static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_usb_pd_info_request *p = args->params;
-	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
-	uint16_t dev_id;
-	uint32_t current_image;
-
-	if (p->port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	pd_dev_get_rw_hash(p->port, &dev_id, r->dev_rw_hash, &current_image);
-
-	r->dev_id = dev_id;
-	r->current_image = current_image;
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO, hc_remote_pd_dev_info,
-		     EC_VER_MASK(0));
-
 static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
 	[USB_PD_CTRL_ROLE_TOGGLE_ON] = PD_DRP_TOGGLE_ON,
 	[USB_PD_CTRL_ROLE_TOGGLE_OFF] = PD_DRP_TOGGLE_OFF,
