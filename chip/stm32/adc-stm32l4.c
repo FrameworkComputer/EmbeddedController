@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+/* ADC drivers for STM32L4xx as well as STM32L5xx. */
+
 #include "adc.h"
 #include "clock.h"
 #include "common.h"
