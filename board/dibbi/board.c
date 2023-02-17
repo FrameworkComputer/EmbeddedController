@@ -314,7 +314,6 @@ int board_set_active_charge_port(int port)
 	case CHARGE_PORT_TYPEC0:
 		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 1);
-		gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT);
 		break;
 	case CHARGE_PORT_BARRELJACK:
 		/* Make sure BJ adapter is sourcing power */
@@ -322,7 +321,6 @@ int board_set_active_charge_port(int port)
 			return EC_ERROR_INVAL;
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 0);
 		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
-		gpio_disable_interrupt(GPIO_BJ_ADP_PRESENT);
 		break;
 	default:
 		return EC_ERROR_INVAL;
