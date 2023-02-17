@@ -121,6 +121,12 @@ static void adc_configure(int ain_id, int ain_rank,
 	STM32_ADC1_CFGR &= ~STM32_ADC1_CFGR_DMAEN;
 }
 
+static void stm32_adc1_isr_clear(uint32_t bitmask)
+{
+	/* Write 1 to clear */
+	STM32_ADC1_ISR = bitmask;
+}
+
 int adc_read_channel(enum adc_channel ch)
 {
 	const struct adc_t *adc = adc_channels + ch;
@@ -178,7 +184,7 @@ int adc_read_channel(enum adc_channel ch)
 		}
 
 		/* Enable ADC */
-		STM32_ADC1_ISR |= STM32_ADC1_ISR_ADRDY;
+		stm32_adc1_isr_clear(STM32_ADC1_ISR_ADRDY);
 		STM32_ADC1_CR |= STM32_ADC1_CR_ADEN;
 		wait_loop_index =
 			((ADC_ENABLE_TIMEOUT_US * (CPU_CLOCK / (100000 * 2))) /
@@ -188,6 +194,7 @@ int adc_read_channel(enum adc_channel ch)
 			if (wait_loop_index == 0)
 				break;
 		}
+		stm32_adc1_isr_clear(STM32_ADC1_ISR_ADRDY);
 
 		adc1_initialized = 1;
 	}
@@ -204,7 +211,7 @@ int adc_read_channel(enum adc_channel ch)
 	}
 
 	/* Clear JEOS bit */
-	STM32_ADC1_ISR |= BIT(6);
+	stm32_adc1_isr_clear(BIT(6));
 
 	/* read converted value */
 	if (adc->rank == 1)
