@@ -41,10 +41,10 @@ struct adc_profile_t {
 #define ADC_ENABLE_TIMEOUT_US 200000U
 #define ADC_CONVERSION_TIMEOUT_US 200000U
 
-#define NUMBER_OF_ADC_CHANNEL 2
 static uint8_t adc1_initialized;
 
 #ifdef CONFIG_ADC_PROFILE_FAST_CONTINUOUS
+#error "Continuous ADC sampling not implemented for STM32L4/5"
 
 #ifndef CONFIG_ADC_SAMPLE_TIME
 #define CONFIG_ADC_SAMPLE_TIME STM32_ADC_SMPR_1_5_CY
@@ -71,7 +71,7 @@ static const struct adc_profile_t profile = {
 };
 #endif
 
-static void adc_init(const struct adc_t *adc)
+static void adc_init(void)
 {
 	/*
 	 * If clock is already enabled, and ADC module is enabled
@@ -102,10 +102,9 @@ static void adc_init(const struct adc_t *adc)
 
 BUILD_ASSERT(CONFIG_ADC_SAMPLE_TIME > 0 && CONFIG_ADC_SAMPLE_TIME <= 8);
 
-static void adc_configure(int ain_id, int ain_rank,
-			  enum stm32_adc_smpr sample_time)
+static void adc_configure_channel(int ain_id, enum stm32_adc_smpr sample_time)
 {
-	/* Select Sampling time and channel to convert */
+	/* Select Sampling time for channel to convert */
 	if (sample_time == STM32_ADC_SMPR_DEFAULT)
 		sample_time = CONFIG_ADC_SAMPLE_TIME;
 
@@ -116,16 +115,12 @@ static void adc_configure(int ain_id, int ain_rank,
 		STM32_ADC1_SMPR2 &= ~(7 << ((ain_id - 11) * 3));
 		STM32_ADC1_SMPR2 |= ((sample_time - 1) << ((ain_id - 11) * 3));
 	}
+}
 
-	/* Setup Rank */
-	STM32_ADC1_JSQR &= ~(0x03);
-	STM32_ADC1_JSQR |= NUMBER_OF_ADC_CHANNEL - 1;
-
-	STM32_ADC1_JSQR &= ~(0x1F << (((ain_rank - 1) * 6) + 8));
-	STM32_ADC1_JSQR |= (ain_id << (((ain_rank - 1) * 6) + 8));
-
-	/* Disable DMA */
-	STM32_ADC1_CFGR &= ~STM32_ADC1_CFGR_DMAEN;
+static void adc_select_channel(int ain_id)
+{
+	/* Setup an "injected sequence" consisting of only this one channel. */
+	STM32_ADC1_JSQR = ain_id << 8;
 }
 
 static void stm32_adc1_isr_clear(uint32_t bitmask)
@@ -144,15 +139,17 @@ int adc_read_channel(enum adc_channel ch)
 	mutex_lock(&adc_lock);
 
 	if (adc1_initialized == 0) {
-		adc_init(adc);
+		adc_init();
 
-		/* Configure Injected Channel N */
-		for (uint8_t i = 0; i < NUMBER_OF_ADC_CHANNEL; i++) {
+		/* Configure Channel N */
+		for (uint8_t i = 0; i < ADC_CH_COUNT; i++) {
 			const struct adc_t *adc = adc_channels + i;
 
-			adc_configure(adc->channel, adc->rank,
-				      adc->sample_time);
+			adc_configure_channel(adc->channel, adc->sample_time);
 		}
+
+		/* Disable DMA */
+		STM32_ADC1_CFGR &= ~STM32_ADC1_CFGR_DMAEN;
 
 		if ((STM32_ADC1_CR & STM32_ADC1_CR_ADEN) !=
 		    STM32_ADC1_CR_ADEN) {
@@ -206,6 +203,9 @@ int adc_read_channel(enum adc_channel ch)
 		adc1_initialized = 1;
 	}
 
+	/* Configure Injected Channel N */
+	adc_select_channel(adc->channel);
+
 	/* Start injected conversion */
 	STM32_ADC1_CR |= BIT(3); /* JADSTART */
 
@@ -221,10 +221,7 @@ int adc_read_channel(enum adc_channel ch)
 	stm32_adc1_isr_clear(BIT(6));
 
 	/* read converted value */
-	if (adc->rank == 1)
-		value = STM32_ADC1_JDR1;
-	if (adc->rank == 2)
-		value = STM32_ADC1_JDR2;
+	value = STM32_ADC1_JDR1;
 
 	mutex_unlock(&adc_lock);
 

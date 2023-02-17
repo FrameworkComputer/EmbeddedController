@@ -43,9 +43,6 @@ struct adc_t {
 	int factor_div;
 	int shift;
 	int channel;
-#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
-	int rank;
-#endif
 
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4) || \
 	defined(CHIP_FAMILY_STM32L5)
@@ -62,8 +59,5 @@ void adc_disable(void);
 
 /* Just plain id mapping for code readability */
 #define STM32_AIN(x) (x)
-
-/* Add for ADCs with RANK */
-#define STM32_RANK(x) (x)
 
 #endif /* __CROS_EC_ADC_CHIP_H */
