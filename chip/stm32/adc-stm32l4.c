@@ -100,16 +100,21 @@ static void adc_init(const struct adc_t *adc)
 	STM32_ADC1_CFGR &= ~STM32_ADC1_CFGR_AUTDLY;
 }
 
+BUILD_ASSERT(CONFIG_ADC_SAMPLE_TIME > 0 && CONFIG_ADC_SAMPLE_TIME <= 8);
+
 static void adc_configure(int ain_id, int ain_rank,
-			  enum stm32_adc_smpr sample_rate)
+			  enum stm32_adc_smpr sample_time)
 {
 	/* Select Sampling time and channel to convert */
+	if (sample_time == STM32_ADC_SMPR_DEFAULT)
+		sample_time = CONFIG_ADC_SAMPLE_TIME;
+
 	if (ain_id <= 10) {
 		STM32_ADC1_SMPR1 &= ~(7 << ((ain_id - 1) * 3));
-		STM32_ADC1_SMPR1 |= (sample_rate << ((ain_id - 1) * 3));
+		STM32_ADC1_SMPR1 |= ((sample_time - 1) << ((ain_id - 1) * 3));
 	} else {
 		STM32_ADC1_SMPR2 &= ~(7 << ((ain_id - 11) * 3));
-		STM32_ADC1_SMPR2 |= (sample_rate << ((ain_id - 11) * 3));
+		STM32_ADC1_SMPR2 |= ((sample_time - 1) << ((ain_id - 11) * 3));
 	}
 
 	/* Setup Rank */
@@ -146,7 +151,7 @@ int adc_read_channel(enum adc_channel ch)
 			const struct adc_t *adc = adc_channels + i;
 
 			adc_configure(adc->channel, adc->rank,
-				      adc->sample_rate);
+				      adc->sample_time);
 		}
 
 		if ((STM32_ADC1_CR & STM32_ADC1_CR_ADEN) !=

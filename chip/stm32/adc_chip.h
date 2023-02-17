@@ -49,7 +49,7 @@ struct adc_t {
 
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4) || \
 	defined(CHIP_FAMILY_STM32L5)
-	enum stm32_adc_smpr sample_rate; /* Sampling Rate of the channel */
+	enum stm32_adc_smpr sample_time; /* Sampling Time of the channel */
 #endif
 };
 
