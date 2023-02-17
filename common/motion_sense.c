@@ -38,6 +38,12 @@
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ##args)
 
+/* Number of times we ran motion_sense_task; for stats printing */
+static atomic_t motion_sense_task_loops;
+
+/* When we started the task the last time */
+static timestamp_t ts_begin_task;
+
 /* Minimum time in between running motion sense task loop. */
 unsigned int motion_min_interval = CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC;
 STATIC_IF(CONFIG_CMD_ACCEL_INFO) int accel_disp;
@@ -371,10 +377,31 @@ static void motion_sense_switch_sensor_rate(void)
 }
 DECLARE_DEFERRED(motion_sense_switch_sensor_rate);
 
+static void motion_sense_print_stats(const char *event)
+{
+	unsigned int active = 0;
+	unsigned int states = 0;
+	int i;
+
+	for (i = 0; i < motion_sensor_count; i++) {
+		if (motion_sensors[i].active_mask)
+			active |= BIT(i);
+		/* States fit in 2 bits but we'll give them 4 for readbility */
+		states |= motion_sensors[i].state << (4 * i);
+	}
+
+	CPRINTS("Motion pre-%s; loops %u; last %u ms ago; a=0x%x, s=0x%x",
+		event, (unsigned int)motion_sense_task_loops,
+		(unsigned int)(get_time().val - ts_begin_task.val) / 1000,
+		active, states);
+}
+
 static void motion_sense_shutdown(void)
 {
 	int i;
 	struct motion_sensor_t *sensor;
+
+	motion_sense_print_stats("shutdown");
 
 	sensor_active = SENSOR_ACTIVE_S5;
 	for (i = 0; i < motion_sensor_count; i++) {
@@ -396,6 +423,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, motion_sense_shutdown,
 
 static void motion_sense_suspend(void)
 {
+	motion_sense_print_stats("suspend");
+
 	/*
 	 *  If we are coming from S5, don't enter suspend:
 	 *  We will go in SO almost immediately.
@@ -425,6 +454,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sense_suspend,
 
 static void motion_sense_resume(void)
 {
+	motion_sense_print_stats("resume");
+
 	sensor_active = SENSOR_ACTIVE_S0;
 	hook_call_deferred(&motion_sense_switch_sensor_rate_data,
 			   CONFIG_MOTION_SENSE_RESUME_DELAY_US);
@@ -764,7 +795,7 @@ static void check_and_queue_gestures(uint32_t *event)
 void motion_sense_task(void *u)
 {
 	int i, ret, sample_id = 0;
-	timestamp_t ts_begin_task, ts_end_task;
+	timestamp_t ts_end_task;
 	int32_t time_diff;
 	uint32_t event = 0;
 	uint16_t ready_status = 0;
@@ -782,6 +813,7 @@ void motion_sense_task(void *u)
 
 	while (1) {
 		ts_begin_task = get_time();
+		atomic_add(&motion_sense_task_loops, 1);
 		for (i = 0; i < motion_sensor_count; ++i) {
 			sensor = &motion_sensors[i];
 
