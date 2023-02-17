@@ -2577,8 +2577,8 @@ charge_command_current_limit(struct host_cmd_handler_args *args)
 	}
 
 	/* Check if battery state of charge param is within range */
-	if (p->battery_soc < 0 || p->battery_soc > 100) {
-		CPRINTS("Invalid param: %d", p->battery_soc);
+	if (p->battery_soc > 100) {
+		CPRINTS("Invalid battery_soc: %d", p->battery_soc);
 		return EC_RES_INVALID_PARAM;
 	}
 

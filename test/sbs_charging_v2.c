@@ -23,18 +23,18 @@
 
 enum ec_charge_control_mode get_chg_ctrl_mode(void);
 
-static int mock_chipset_state = CHIPSET_STATE_ON;
-static int is_shutdown;
-static int is_force_discharge;
-static int is_hibernated;
-static int override_voltage, override_current, override_usec;
-static int display_soc;
-static int is_full;
+test_static int mock_chipset_state = CHIPSET_STATE_ON;
+test_static int is_shutdown;
+test_static int is_force_discharge;
+test_static int is_hibernated;
+test_static int override_voltage, override_current, override_usec;
+test_static int display_soc;
+test_static int is_full;
 
 /* The simulation doesn't really hibernate, so we must reset this ourselves */
 extern timestamp_t shutdown_target_time;
 
-static void reset_mocks(void)
+test_static void reset_mocks(void)
 {
 	mock_chipset_state = CHIPSET_STATE_ON;
 	is_shutdown = is_force_discharge = is_hibernated = 0;
@@ -102,7 +102,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	return 0;
 }
 
-static uint32_t meh;
+test_static uint32_t meh;
 enum ec_status charger_profile_override_get_param(uint32_t param,
 						  uint32_t *value)
 {
@@ -122,7 +122,7 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 	return EC_RES_INVALID_PARAM;
 }
 
-static int wait_charging_state(void)
+test_static int wait_charging_state(void)
 {
 	enum charge_state state;
 	task_wake(TASK_ID_CHARGER);
@@ -132,7 +132,7 @@ static int wait_charging_state(void)
 	return state;
 }
 
-static int charge_control(enum ec_charge_control_mode mode)
+test_static int charge_control(enum ec_charge_control_mode mode)
 {
 	struct ec_params_charge_control p;
 
@@ -155,7 +155,7 @@ __override int calc_is_full(void)
 }
 
 /* Setup init condition */
-static void test_setup(int on_ac)
+test_static void test_setup(int on_ac)
 {
 	const struct battery_info *bat_info = battery_get_info();
 
@@ -191,20 +191,20 @@ static void test_setup(int on_ac)
 }
 
 /* Host Event helpers */
-static int ev_is_set(int event)
+test_static int ev_is_set(int event)
 {
 	return host_get_events() & EC_HOST_EVENT_MASK(event);
 }
-static int ev_is_clear(int event)
+test_static int ev_is_clear(int event)
 {
 	return !ev_is_set(event);
 }
-static void ev_clear(int event)
+test_static void ev_clear(int event)
 {
 	host_clear_events(EC_HOST_EVENT_MASK(event));
 }
 
-static int test_charge_state(void)
+test_static int test_charge_state(void)
 {
 	enum charge_state state;
 	uint32_t flags;
@@ -303,7 +303,7 @@ static int test_charge_state(void)
 	return EC_SUCCESS;
 }
 
-static int test_low_battery(void)
+test_static int test_low_battery(void)
 {
 	test_setup(1);
 
@@ -365,7 +365,7 @@ static int test_low_battery(void)
 	return EC_SUCCESS;
 }
 
-static int test_deep_charge_battery(void)
+test_static int test_deep_charge_battery(void)
 {
 	enum charge_state_v2 state_v2;
 	const struct battery_info *bat_info = battery_get_info();
@@ -394,7 +394,7 @@ static int test_deep_charge_battery(void)
 
 	return EC_SUCCESS;
 }
-static int test_high_temp_battery(void)
+test_static int test_high_temp_battery(void)
 {
 	test_setup(1);
 
@@ -415,7 +415,7 @@ static int test_high_temp_battery(void)
 	return EC_SUCCESS;
 }
 
-static int test_cold_battery_with_ac(void)
+test_static int test_cold_battery_with_ac(void)
 {
 	test_setup(1);
 
@@ -429,7 +429,7 @@ static int test_cold_battery_with_ac(void)
 	return EC_SUCCESS;
 }
 
-static int test_cold_battery_no_ac(void)
+test_static int test_cold_battery_no_ac(void)
 {
 	test_setup(0);
 
@@ -445,7 +445,7 @@ static int test_cold_battery_no_ac(void)
 	return EC_SUCCESS;
 }
 
-static int test_external_funcs(void)
+test_static int test_external_funcs(void)
 {
 	int rv, temp;
 	uint32_t flags;
@@ -517,7 +517,7 @@ static int test_external_funcs(void)
 
 #define CHG_OPT1 0x2000
 #define CHG_OPT2 0x4000
-static int test_hc_charge_state(void)
+test_static int test_hc_charge_state(void)
 {
 	enum charge_state state;
 	int i, rv, tmp;
@@ -646,7 +646,7 @@ static int test_hc_charge_state(void)
 	return EC_SUCCESS;
 }
 
-static int test_hc_current_limit(void)
+test_static int test_hc_current_limit(void)
 {
 	int rv, norm_current, lower_current;
 	struct ec_params_charge_state cs_params;
@@ -696,7 +696,66 @@ static int test_hc_current_limit(void)
 	return EC_SUCCESS;
 }
 
-static int test_low_battery_hostevents(void)
+test_static int test_hc_current_limit_v1(void)
+{
+	int rv, norm_current, lower_current, current;
+	struct ec_params_current_limit params;
+
+	/* On AC */
+	test_setup(1);
+	display_soc = 700;
+	wait_charging_state();
+
+	/* See what current the charger is delivering */
+	rv = charger_get_current(0, &norm_current);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+
+	/* Lower it a bit */
+	lower_current = norm_current - 256;
+	params.limit = lower_current;
+	params.battery_soc = 80;
+	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 1, &params,
+				    sizeof(params), 0, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	wait_charging_state();
+
+	/* Check current limit is not applied. */
+	rv = charger_get_current(0, &current);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	TEST_ASSERT(norm_current == current);
+
+	/* Increase the soc above the slow charge trigger point. */
+	display_soc = 900;
+	wait_charging_state();
+
+	/* Check current limit is applied. */
+	rv = charger_get_current(0, &current);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	TEST_ASSERT(current == lower_current);
+
+	/* Remove the limit */
+	params.limit = -1U;
+	params.battery_soc = 0;
+	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 1, &params,
+				    sizeof(params), 0, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	wait_charging_state();
+
+	/* Check current limit is removed. */
+	rv = charger_get_current(0, &current);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+	TEST_ASSERT(norm_current == current);
+
+	/* Test invalid value. */
+	params.battery_soc = 101;
+	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 1, &params,
+				    sizeof(params), 0, 0);
+	TEST_ASSERT(rv = EC_RES_INVALID_PARAM);
+
+	return EC_SUCCESS;
+}
+
+test_static int test_low_battery_hostevents(void)
 {
 	int state;
 
@@ -769,7 +828,7 @@ static int test_low_battery_hostevents(void)
 	return EC_SUCCESS;
 }
 
-static int test_battery_sustainer(void)
+test_static int test_battery_sustainer(void)
 {
 	struct ec_params_charge_control p;
 	struct ec_response_charge_control r;
@@ -879,7 +938,7 @@ static int test_battery_sustainer(void)
 	return EC_SUCCESS;
 }
 
-static int test_battery_sustainer_discharge_idle(void)
+test_static int test_battery_sustainer_discharge_idle(void)
 {
 	struct ec_params_charge_control p;
 	int rv;
@@ -954,6 +1013,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_external_funcs);
 	RUN_TEST(test_hc_charge_state);
 	RUN_TEST(test_hc_current_limit);
+	RUN_TEST(test_hc_current_limit_v1);
 	RUN_TEST(test_low_battery_hostevents);
 	RUN_TEST(test_battery_sustainer);
 	RUN_TEST(test_battery_sustainer_discharge_idle);
