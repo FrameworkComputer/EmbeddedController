@@ -6,8 +6,8 @@
 #include "aes.h"
 #include "cryptoc/util.h"
 #include "fpsensor_crypto.h"
-#include "fpsensor_private.h"
 #include "fpsensor_state.h"
+#include "fpsensor_utils.h"
 #include "rollback.h"
 
 #include <stdbool.h>

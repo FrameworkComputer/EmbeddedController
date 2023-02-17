@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "common/fpsensor/fpsensor_private.h"
 #include "ec_commands.h"
+#include "fpsensor_utils.h"
 #include "mock/fpsensor_detect_mock.h"
 #include "string.h"
 #include "test_util.h"
