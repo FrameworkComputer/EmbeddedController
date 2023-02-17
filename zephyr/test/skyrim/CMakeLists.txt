@@ -12,7 +12,8 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
 add_subdirectory(tests/common)
 add_subdirectory_ifdef(CONFIG_TEST_BOARD_BASEBOARD tests/baseboard)
+add_subdirectory_ifdef(CONFIG_TEST_BOARD_CRYSTALDRIFT tests/crystaldrift)
 add_subdirectory_ifdef(CONFIG_TEST_BOARD_FROSTFLOW tests/frostflow)
+add_subdirectory_ifdef(CONFIG_TEST_BOARD_MARKARTH tests/markarth)
+add_subdirectory_ifdef(CONFIG_TEST_BOARD_SKYRIM tests/skyrim)
 add_subdirectory_ifdef(CONFIG_TEST_BOARD_WINTERHOLD tests/winterhold)
-
-target_sources(app PRIVATE src/${CONFIG_TEST_BOARD_NAME}/common.c)
