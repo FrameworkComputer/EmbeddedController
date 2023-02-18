@@ -45,11 +45,12 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 struct pchg pchgs[] = {
 	[0] = {
 		.cfg = &(const struct pchg_config) {
-			.drv = &cps8100_drv,
+			.drv = &cps8200_drv,
 			.i2c_port = I2C_PORT_QI,
 			.irq_pin = GPIO_QI_INT_ODL,
 			.full_percent = 96,
 			.block_size = 128,
+			.flags = PCHG_CFG_FW_UPDATE_SYNC,
 		},
 		.policy = {
 			[PCHG_CHIPSET_STATE_ON] = &pchg_policy_on,

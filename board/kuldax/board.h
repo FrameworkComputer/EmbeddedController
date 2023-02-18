@@ -145,6 +145,7 @@
 #ifdef SECTION_IS_RW
 #define CONFIG_PERIPHERAL_CHARGER
 #define CONFIG_CPS8100
+#define CONFIG_SW_CRC
 #endif
 
 #ifndef __ASSEMBLER__
