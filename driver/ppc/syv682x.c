@@ -724,12 +724,26 @@ static bool syv682x_is_sink(uint8_t control_1)
 	return false;
 }
 
+static bool syv682x_is_vconn_controlled_by_tcpc(int port)
+{
+	return tcpc_config[port].flags & TCPC_FLAGS_CONTROL_VCONN;
+}
+
 static int syv682x_init(int port)
 {
 	int rv;
 	int regval;
 	int status, control_1;
 	enum tcpc_rp_value initial_current_limit;
+
+	/*
+	 * Vconn must be sourced by syv682x. The maximum voltage of HOST_CCx
+	 * pin is 3.6V. Vconn source by TCPC may exceed 3.6V and damage syv682x.
+	 */
+	if (syv682x_is_vconn_controlled_by_tcpc(port)) {
+		CPRINTS("ERROR! Vconn MUST NOT be controlled by TCPC");
+		return EC_ERROR_INVALID_CONFIG;
+	}
 
 	rv = read_reg(port, SYV682X_STATUS_REG, &status);
 	if (rv)
