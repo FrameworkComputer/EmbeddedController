@@ -249,14 +249,8 @@ enum power_state power_chipset_init(void)
 	int exit_hard_off = 1;
 	enum power_state init_state = power_get_signal_state();
 
-	/* Enable reboot / sleep control inputs from AP */
-	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
-	gpio_enable_interrupt(GPIO_AP_EC_SYSRST_ODL);
-
 	if (system_jumped_late()) {
 		if (init_state == POWER_S0) {
-			gpio_enable_interrupt(GPIO_AP_EC_WDTRST_L);
-			gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 			disable_sleep(SLEEP_MASK_AP_RUN);
 			CPRINTS("already in S0");
 		}
@@ -274,8 +268,6 @@ enum power_state power_chipset_init(void)
 		exit_hard_off = 0;
 	} else if (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE) {
 		if (init_state == POWER_S0) {
-			gpio_enable_interrupt(GPIO_AP_EC_WDTRST_L);
-			gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 			disable_sleep(SLEEP_MASK_AP_RUN);
 		}
 
@@ -349,8 +341,9 @@ enum power_state power_handle_state(enum power_state state)
 		is_exiting_off = false;
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
-		gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
-		gpio_enable_interrupt(GPIO_AP_EC_WDTRST_L);
+		power_signal_enable_interrupt(GPIO_AP_IN_SLEEP_L);
+		power_signal_enable_interrupt(GPIO_AP_EC_WDTRST_L);
+		power_signal_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 
 #if DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5), 1);
@@ -441,8 +434,9 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
-		gpio_disable_interrupt(GPIO_AP_EC_WDTRST_L);
-		gpio_disable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
+		power_signal_disable_interrupt(GPIO_AP_IN_SLEEP_L);
+		power_signal_disable_interrupt(GPIO_AP_EC_WDTRST_L);
+		power_signal_disable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
