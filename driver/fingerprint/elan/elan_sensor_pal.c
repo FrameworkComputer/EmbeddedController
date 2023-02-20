@@ -10,7 +10,6 @@
 #include "elan_sensor.h"
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
-#include "endian.h"
 #include "fpsensor.h"
 #include "gpio.h"
 #include "link_defs.h"

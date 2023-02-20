@@ -9,7 +9,6 @@
 #include "elan_sensor.h"
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
-#include "endian.h"
 #include "fpsensor.h"
 #include "gpio.h"
 #include "link_defs.h"
@@ -18,6 +17,7 @@
 #include "spi.h"
 #include "system.h"
 #include "timer.h"
+#include "trng.h"
 #include "util.h"
 
 #include <stddef.h>
@@ -244,4 +244,22 @@ int fp_maintenance(void)
 {
 	CPRINTF("========%s=======\n", __func__);
 	return elan_fp_maintenance(&errors);
+}
+
+/**
+ * Provides the init_trng function required by the elan library using the EC
+ * trng API
+ */
+void init_trng(void)
+{
+	trng_init();
+}
+
+/**
+ * Provides the exit_trng function required by the elan library using the EC
+ * trng API
+ */
+void exit_trng(void)
+{
+	trng_exit();
 }
