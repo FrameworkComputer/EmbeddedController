@@ -519,8 +519,12 @@ int ac_boot_status(void)
 	return (*host_get_customer_memmap(0x48) & BIT(0)) ? true : false;
 }
 
+/* counter for chassis open while ec no power, only rtc power */
 static uint8_t chassis_vtr_open_count;
+/* counter for chassis open while ec has power */
 static uint8_t chassis_open_count;
+/* counter for chassis press while ec has power, clear when enter S0 */
+static uint8_t chassis_press_counter;
 
 static void check_chassis_open(int init)
 {
@@ -542,6 +546,11 @@ static void check_chassis_open(int init)
 				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
 								++chassis_open_count);
 		}
+
+		/* counter for chasis pin */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			if (chassis_press_counter < 0xFF)
+				chassis_press_counter++;
 
 		CPRINTF("Chassis was open");
 	}
@@ -708,6 +717,10 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
 	charger_psys_enable(1);
+
+	/* clear when systm enter S0 */
+	CPRINTS("S0 to clear sw3 cnt: %d", chassis_press_counter);
+	chassis_press_counter = 0;
 
 	/* Enable BB retimer power, for MP boards. */
 	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework) {
@@ -1335,3 +1348,17 @@ static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_arg
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_INTRUSION, host_chassis_intrusion_control,
 			EC_VER_MASK(0));
+
+static enum ec_status chassis_counter(struct host_cmd_handler_args *args)
+{
+	struct ec_response_chassis_counter *r = args->response;
+
+
+	CPRINTS("Read chassis counter: %d", chassis_press_counter);
+	r->press_counter = chassis_press_counter;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_COUNTER, chassis_counter, EC_VER_MASK(0));
