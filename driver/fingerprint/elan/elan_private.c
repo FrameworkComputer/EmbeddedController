@@ -34,11 +34,11 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.model_id = MID,
 	.version = VERSION,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_RES_X * FP_SENSOR_RES_Y,
+	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN,
 	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X,
-	.height = FP_SENSOR_RES_Y,
-	.bpp = FP_SENSOR_RES_BPP,
+	.width = FP_SENSOR_RES_X_ELAN,
+	.height = FP_SENSOR_RES_Y_ELAN,
+	.bpp = FP_SENSOR_RES_BPP_ELAN,
 };
 
 /**
