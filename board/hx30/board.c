@@ -718,10 +718,6 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_CAM_EN, 1);
 	charger_psys_enable(1);
 
-	/* clear when systm enter S0 */
-	CPRINTS("S0 to clear sw3 cnt: %d", chassis_press_counter);
-	chassis_press_counter = 0;
-
 	/* Enable BB retimer power, for MP boards. */
 	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework) {
 		CPRINTS("Enable BBR power");
@@ -1356,6 +1352,10 @@ static enum ec_status chassis_counter(struct host_cmd_handler_args *args)
 
 	CPRINTS("Read chassis counter: %d", chassis_press_counter);
 	r->press_counter = chassis_press_counter;
+
+	/* clear when bios get, bios will get this data while post */
+	chassis_press_counter = 0;
+
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
