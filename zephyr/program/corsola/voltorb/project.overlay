@@ -82,9 +82,6 @@
 		/* Voltorb LED bat charge */
 		bat-power-state-charge {
 			charge-state = "PWR_STATE_CHARGE";
-			/* Battery is charging */
-			batt-state-mask = <SB_STATUS_DISCHARGING>;
-			batt-state = <0>;
 			/* Battery percent range (>= Empty, <= 96%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY
 					(BATTERY_LEVEL_NEAR_FULL - 1)>;
@@ -97,31 +94,6 @@
 		/* Voltorb LED bat charge near full */
 		bat-power-state-charge-near-full {
 			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
-			/* Battery is charging */
-			batt-state-mask = <SB_STATUS_DISCHARGING>;
-			batt-state = <0>;
-
-			color-0 {
-				led-color = <&color_amber>;
-			};
-		};
-
-		/* Voltorb LED bat charge idle */
-		bat-power-state-charge-idle {
-			charge-state = "PWR_STATE_CHARGE";
-			/* Battery is discharging */
-			batt-state-mask = <SB_STATUS_DISCHARGING>;
-			batt-state = <SB_STATUS_DISCHARGING>;
-
-			color-0 {
-				led-color = <&color_blue>;
-			};
-		};
-		bat-power-state-charge-near-full-idle {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
-			/* Battery is discharging */
-			batt-state-mask = <SB_STATUS_DISCHARGING>;
-			batt-state = <SB_STATUS_DISCHARGING>;
 
 			color-0 {
 				led-color = <&color_blue>;
@@ -132,43 +104,9 @@
 		bat-power-state-discharge-s0 {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
-			/* Battery percent range (>= 14%, <= Full) */
-			batt-lvl = <(BATTERY_LEVEL_LOW + 4) BATTERY_LEVEL_FULL>;
 
 			color-0 {
 				led-color = <&color_blue>;
-			};
-		};
-		bat-power-state-discharge-s0-bat-low {
-			charge-state = "PWR_STATE_DISCHARGE";
-			chipset-state = "POWER_S0";
-			/* Battery percent range (>= 7%, <= 13%) */
-			batt-lvl = <(BATTERY_LEVEL_CRITICAL + 2)
-					(BATTERY_LEVEL_LOW + 3)>;
-
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
-			};
-		};
-		bat-power-state-discharge-s0-bat-critical {
-			charge-state = "PWR_STATE_DISCHARGE";
-			chipset-state = "POWER_S0";
-			/* Battery percent range (>= Empty, <= 6%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY
-					(BATTERY_LEVEL_CRITICAL + 1)>;
-
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <1000>;
 			};
 		};
 		bat-power-state-discharge-s3 {
@@ -196,7 +134,6 @@
 		/* Voltorb LED bat error */
 		bat-power-state-error {
 			charge-state = "PWR_STATE_ERROR";
-			chipset-state = "POWER_S0";
 
 			color-0 {
 				led-color = <&color_amber>;
@@ -205,27 +142,6 @@
 			color-1 {
 				led-color = <&color_off>;
 				period-ms = <1000>;
-			};
-		};
-		bat-power-state-error-s3 {
-			charge-state = "PWR_STATE_ERROR";
-			chipset-state = "POWER_S3";
-
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
-			};
-		};
-		bat-power-state-error-s5 {
-			charge-state = "PWR_STATE_ERROR";
-			chipset-state = "POWER_S5";
-
-			color-0 {
-				led-color = <&color_off>;
 			};
 		};
 
