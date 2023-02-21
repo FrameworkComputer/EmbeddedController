@@ -197,17 +197,25 @@ void sbu_fault_interrupt(enum gpio_signal signal)
 	pd_handle_overcurrent(port);
 }
 
-void usb_fault_interrupt(enum gpio_signal signal)
+static void usb_fault_alert(void)
 {
 	int out;
 
-	CPRINTSUSB("USB fault(%d), alerting the SoC", signal);
 	out = gpio_pin_get_dt(
 		      GPIO_DT_FROM_NODELABEL(gpio_usb_hub_fault_q_odl)) &&
 	      gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_a0_fault_odl)) &&
 	      gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_a1_fault_db_odl));
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_fault_odl), out);
+
+	if (out == 0)
+		CPRINTSUSB("USB fault, alerting the SoC");
+}
+DECLARE_DEFERRED(usb_fault_alert);
+
+void usb_fault_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&usb_fault_alert_data, 0);
 }
 
 void usb_pd_soc_interrupt(enum gpio_signal signal)
