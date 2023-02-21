@@ -19,7 +19,8 @@
 
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
-#if CONFIG_X86_NON_DSX_PWRSEQ_MTL
+#if defined(CONFIG_X86_NON_DSX_PWRSEQ_MTL) || \
+	defined(CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL)
 #define X86_NON_DSX_MTL_FORCE_SHUTDOWN_TO_MS 50
 
 void board_ap_power_force_shutdown(void)

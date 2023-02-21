@@ -5,7 +5,7 @@
 menuconfig AP_PWRSEQ
 	bool "AP Power sequencing support"
 	default y
-	depends on DT_HAS_INTEL_AP_PWRSEQ_ENABLED
+	depends on DT_HAS_INTEL_AP_PWRSEQ_ENABLED && !TEST_DISABLE_AP_PWRSEQ
 	select HAS_TASK_POWERBTN
 	select GPIO_GET_CONFIG
 	help
@@ -179,3 +179,9 @@ config AP_PWRSEQ_DEBUG_MODE_COMMAND
 	  command to enable debug mode and prevent force shutdown.
 
 endif
+
+config AP_EVENTS
+	bool "Enable AP events"
+	default y
+	help
+	  Helper symbol to enable Application Processor(AP) events.

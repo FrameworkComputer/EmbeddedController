@@ -5,10 +5,23 @@
 common:
   platform_allow: native_posix
 tests:
-  rex.default:
-    extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;./fan.dtsi;"
+  rex.usb_pd_policy:
     extra_configs:
-    - CONFIG_TEST_USB_PD_POLICY=y
-    - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
-    - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
-    - CONFIG_TEST_FAN=y
+      - CONFIG_TEST_USB_PD_POLICY=y
+      - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
+      - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
+
+  rex.fan:
+    extra_args: DTC_OVERLAY_FILE="boards/native_posix.overlay;fan.dtsi"
+    extra_configs:
+      - CONFIG_TEST_FAN=y
+
+  rex.board_power:
+    extra_dtc_overlay_files:
+      - board_power.dtsi
+    extra_configs:
+      - CONFIG_TEST_BOARD_POWER=y
+      - CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL=y
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_AP_EVENTS=n

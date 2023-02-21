@@ -56,6 +56,7 @@
 	DT_INST_STRING_UPPER_TOKEN(inst, enum_name)
 
 #define PWR_SIGNAL_ENUM_COMMA(id) PWR_SIGNAL_ENUM(id),
+
 /**
  * @brief Enum of all power signals.
  *

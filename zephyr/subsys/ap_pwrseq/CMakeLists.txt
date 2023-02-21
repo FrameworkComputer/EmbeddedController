@@ -2,7 +2,7 @@
 
 zephyr_library_include_directories(include)
 
-zephyr_library_sources(ap_events.c)
+zephyr_library_sources_ifdef(CONFIG_AP_EVENTS ap_events.c)
 
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ
 	ap_power_interface.c
