@@ -9,6 +9,7 @@
 #include "fpc_bio_algorithm.h"
 #include "fpc_private.h"
 #include "fpsensor.h"
+#include "fpsensor_utils.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "spi.h"
@@ -19,9 +20,6 @@
 #include <stddef.h>
 
 #include <sys/types.h>
-
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
 /* Minimum reset duration */
 #define FP_SENSOR_RESET_DURATION_US (10 * MSEC)

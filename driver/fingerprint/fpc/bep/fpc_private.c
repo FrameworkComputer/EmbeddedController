@@ -6,6 +6,7 @@
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 #include "fpc_bio_algorithm.h"
 #include "fpsensor.h"
+#include "fpsensor_utils.h"
 #include "gpio.h"
 #include "spi.h"
 #include "system.h"
@@ -13,10 +14,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
-/* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
 static uint8_t
 	enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE_FPC] __aligned(4) = { 0 };

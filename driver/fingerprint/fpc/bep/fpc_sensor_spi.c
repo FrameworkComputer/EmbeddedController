@@ -9,6 +9,7 @@
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 #include "fpc_sensor_spi.h"
 #include "fpsensor.h"
+#include "fpsensor_utils.h"
 #include "gpio.h"
 #include "spi.h"
 #include "util.h"
@@ -16,10 +17,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-/* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
 #define SPI_BUF_SIZE (1024)
 

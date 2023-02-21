@@ -10,6 +10,7 @@
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
 #include "fpsensor.h"
+#include "fpsensor_utils.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "math_util.h"
@@ -23,8 +24,6 @@
 #include <stddef.h>
 
 static uint16_t errors;
-
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
 
 /* Sensor description */
 static struct ec_response_fp_info ec_fp_sensor_info = {

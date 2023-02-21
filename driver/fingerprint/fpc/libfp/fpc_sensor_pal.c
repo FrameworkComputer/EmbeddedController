@@ -8,14 +8,12 @@
 #include "console.h"
 #include "fpc_sensor_pal.h"
 #include "fpsensor.h"
+#include "fpsensor_utils.h"
 #include "shared_mem.h"
 #include "spi.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
-
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
 void fpc_pal_log_entry(const char *tag, int log_level, const char *format, ...)
 {
