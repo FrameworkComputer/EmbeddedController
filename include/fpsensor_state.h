@@ -10,8 +10,8 @@
 
 #include "atomic.h"
 #include "common.h"
-#include "driver/fingerprint/fpsensor.h"
 #include "ec_commands.h"
+#include "fpsensor_driver.h"
 #include "link_defs.h"
 #include "timer.h"
 

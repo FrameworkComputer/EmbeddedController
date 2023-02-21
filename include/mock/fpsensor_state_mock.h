@@ -6,8 +6,8 @@
 #ifndef __MOCK_FPSENSOR_STATE_MOCK_H
 #define __MOCK_FPSENSOR_STATE_MOCK_H
 
-#include "driver/fingerprint/fpsensor.h"
 #include "ec_commands.h"
+#include "fpsensor_driver.h"
 
 #include <stdbool.h>
 #include <stdint.h>
