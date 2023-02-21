@@ -11,6 +11,7 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor_alg.h"
+#include "fpsensor_types.h"
 
 #include <stdint.h>
 
@@ -72,12 +73,6 @@ void fp_sensor_low_power(void);
  * the presence of a finger.
  */
 void fp_sensor_configure_detect(void);
-
-enum finger_state {
-	FINGER_NONE = 0,
-	FINGER_PARTIAL = 1,
-	FINGER_PRESENT = 2,
-};
 
 /**
  * Returns the status of the finger on the sensor.

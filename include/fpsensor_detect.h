@@ -8,23 +8,7 @@
 #ifndef __CROS_EC_FPSENSOR_DETECT_H
 #define __CROS_EC_FPSENSOR_DETECT_H
 
-enum fp_sensor_type {
-	FP_SENSOR_TYPE_UNKNOWN = -1,
-	FP_SENSOR_TYPE_FPC,
-	FP_SENSOR_TYPE_ELAN,
-};
-
-enum fp_transport_type {
-	FP_TRANSPORT_TYPE_UNKNOWN = -1,
-	FP_TRANSPORT_TYPE_SPI,
-	FP_TRANSPORT_TYPE_UART
-};
-
-enum fp_sensor_spi_select {
-	FP_SENSOR_SPI_SELECT_UNKNOWN = -1,
-	FP_SENSOR_SPI_SELECT_DEVELOPMENT,
-	FP_SENSOR_SPI_SELECT_PRODUCTION
-};
+#include "fpsensor_types.h"
 
 const char *fp_transport_type_to_str(enum fp_transport_type type);
 const char *fp_sensor_type_to_str(enum fp_sensor_type type);
