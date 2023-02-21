@@ -252,7 +252,9 @@ extern "C" {
 /* Report 0 for fan stalled so userspace applications can take
  * an appropriate action based on this value to control the fan.
  */
-#define EC_FAN_SPEED_STALLED 0x0 /* Fan stalled */
+#define EC_FAN_SPEED_STALLED 0x0
+/* This should be used only for ectool to support old ECs. */
+#define EC_FAN_SPEED_STALLED_DEPRECATED 0xfffe
 
 /* Battery bit flags at EC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT 0x01

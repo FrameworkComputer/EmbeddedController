@@ -3649,6 +3649,9 @@ static int print_fan(int idx)
 	switch (rv) {
 	case EC_FAN_SPEED_NOT_PRESENT:
 		return -1;
+	case EC_FAN_SPEED_STALLED_DEPRECATED:
+		printf("Fan %d stalled (RPM: %d)\n", idx, rv);
+		break;
 	default:
 		printf("Fan %d RPM: %d\n", idx, rv);
 		break;
