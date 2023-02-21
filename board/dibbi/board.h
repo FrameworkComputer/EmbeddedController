@@ -154,12 +154,18 @@ enum adc_channel {
 	ADC_VSNS_PP3300_A, /* ADC0 */
 	ADC_TEMP_SENSOR_1, /* ADC2 */
 	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_TEMP_SENSOR_3, /* ADC13 */
 	ADC_PPVAR_PWR_IN_IMON, /* ADC15 */
 	ADC_SNS_PPVAR_PWR_IN, /* ADC16 */
 	ADC_CH_COUNT
 };
 
-enum temp_sensor_id { TEMP_SENSOR_1, TEMP_SENSOR_2, TEMP_SENSOR_COUNT };
+enum temp_sensor_id {
+	TEMP_SENSOR_1,
+	TEMP_SENSOR_2,
+	TEMP_SENSOR_3,
+	TEMP_SENSOR_COUNT
+};
 
 #endif /* !__ASSEMBLER__ */
 

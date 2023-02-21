@@ -54,6 +54,11 @@ const struct adc_t adc_channels[] = {
 				.factor_div = ADC_READ_MAX + 1,
 				.shift = 0,
 				.channel = CHIP_ADC_CH3 },
+	[ADC_TEMP_SENSOR_3] = { .name = "TEMP_SENSOR3",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH13 },
 	[ADC_PPVAR_PWR_IN_IMON] = { .name = "ADC_PPVAR_PWR_IN_IMON",
 				    .factor_mul = ADC_MAX_MVOLT,
 				    .factor_div = ADC_READ_MAX + 1,
@@ -138,10 +143,14 @@ const struct temp_sensor_t temp_sensors[] = {
 			    .type = TEMP_SENSOR_TYPE_BOARD,
 			    .read = get_temp_3v3_51k1_47k_4050b,
 			    .idx = ADC_TEMP_SENSOR_1 },
-	[TEMP_SENSOR_2] = { .name = "Ambient",
+	[TEMP_SENSOR_2] = { .name = "SoC power",
 			    .type = TEMP_SENSOR_TYPE_BOARD,
 			    .read = get_temp_3v3_51k1_47k_4050b,
 			    .idx = ADC_TEMP_SENSOR_2 },
+	[TEMP_SENSOR_3] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
