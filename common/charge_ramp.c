@@ -44,8 +44,11 @@ test_mockable int chg_ramp_allowed(int port, int supplier)
 		/* default: fall through */
 	}
 
+#ifdef CONFIG_USB_CHARGER
 	/* Otherwise ask the BC1.2 detect module */
 	return usb_charger_ramp_allowed(port, supplier);
+#endif
+	return 0;
 }
 
 test_mockable int chg_ramp_max(int port, int supplier, int sup_curr)
@@ -53,6 +56,8 @@ test_mockable int chg_ramp_max(int port, int supplier, int sup_curr)
 	switch (supplier) {
 	case CHARGE_SUPPLIER_PD:
 	case CHARGE_SUPPLIER_TYPEC:
+		return 0;
+
 	case CHARGE_SUPPLIER_TYPEC_DTS:
 		/*
 		 * We should not ramp DTS beyond what they advertise, otherwise
@@ -62,6 +67,9 @@ test_mockable int chg_ramp_max(int port, int supplier, int sup_curr)
 		/* default: fall through */
 	}
 
+#ifdef CONFIG_USB_CHARGER
 	/* Otherwise ask the BC1.2 detect module */
 	return usb_charger_ramp_max(port, supplier, sup_curr);
+#endif
+	return 0;
 }
