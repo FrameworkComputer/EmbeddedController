@@ -165,6 +165,11 @@
 &i2c0_0 {
 	/delete-node/ nx20p348x@71;
 	/delete-node/ pi3usb9201@5f;
+	/delete-node/ anx7483@3e;
+};
+
+&amd_fp6_port0 {
+	board-set = "board_c0_amd_fp6_mux_set";
 };
 
 &i2c1_0 {
@@ -179,6 +184,9 @@
 &usbc_port0 {
 	/delete-property/ bc12;
 	/delete-property/ chg_alt;
+	usb-mux-chain-0 {
+		usb-muxes = <&amd_fp6_port0>;
+	};
 };
 
 &usbc_port1 {

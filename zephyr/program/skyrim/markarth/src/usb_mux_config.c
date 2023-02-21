@@ -48,12 +48,12 @@ static int ioex_set_flip(int port, mux_state_t mux_state)
 	return EC_SUCCESS;
 }
 
-int board_anx7483_c0_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+int board_c0_amd_fp6_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	/* Set the SBU polarity mux */
 	RETURN_ERROR(ioex_set_flip(me->usb_port, mux_state));
 
-	return anx7483_set_default_tuning(me, mux_state);
+	return EC_SUCCESS;
 }
 
 int board_anx7483_c1_mux_set(const struct usb_mux *me, mux_state_t mux_state)
