@@ -108,6 +108,10 @@ tests:
       - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_CRASH=y
       - CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH=y
       - CONFIG_ASSERT_TEST=y
+  drivers.console_cmd_mfallow:
+    extra_args: CONF_FILE="prj.conf;console_cmd_mfallow/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_MFALLOW=y
   drivers.dps:
     extra_args: CONF_FILE="prj.conf;dps/prj.conf"
     extra_configs:
