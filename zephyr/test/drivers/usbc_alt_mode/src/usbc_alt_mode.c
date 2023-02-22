@@ -23,6 +23,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
+#include <gpio.h>
+
 #define TEST_PORT 0
 
 /* Arbitrary */
@@ -251,6 +253,9 @@ ZTEST_F(usbc_alt_mode, verify_discovery_params_too_small)
 
 ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 {
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
 		k_sleep(K_SECONDS(1));
@@ -293,7 +298,107 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 	zassert_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
 		      USB_PD_MUX_HPD_LVL, "Failed to set HPD level in mux");
 	zassert_equal((status.mux_state & USB_PD_MUX_HPD_IRQ),
-		      USB_PD_MUX_HPD_IRQ, "Failed to set HPD IRQin mux");
+		      USB_PD_MUX_HPD_IRQ, "Failed to set HPD IRQ in mux");
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
+}
+
+ZTEST_F(usbc_alt_mode, verify_bad_hpd_irq_reject)
+{
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+		k_sleep(K_SECONDS(1));
+	}
+
+	/*
+	 * Compose a bad Attention packet which sets IRQ with HPD low
+	 */
+	uint32_t vdm_attention_data[2];
+
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(1) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION);
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      false, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+	k_sleep(K_SECONDS(1));
+
+	/* Verify that no HPD notification triggered */
+	struct ec_response_typec_status status;
+
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_not_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
+			  USB_PD_MUX_HPD_LVL);
+	zassert_not_equal((status.mux_state & USB_PD_MUX_HPD_IRQ),
+			  USB_PD_MUX_HPD_IRQ);
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+}
+
+ZTEST_F(usbc_alt_mode, verify_hpd_clear)
+{
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+		k_sleep(K_SECONDS(1));
+	}
+
+	/*
+	 * Set our HPD to high and then low, ensuring our HPD indicators
+	 * track this
+	 */
+	uint32_t vdm_attention_data[2];
+
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(1) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION);
+	vdm_attention_data[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+	k_sleep(K_SECONDS(1));
+
+	/* Verify that HPD notification triggered */
+	struct ec_response_typec_status status;
+
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
+		      USB_PD_MUX_HPD_LVL);
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
+
+	vdm_attention_data[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
+					      false, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+
+	k_sleep(K_SECONDS(1));
+	/* Verify that HPD cleared */
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_not_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
+			  USB_PD_MUX_HPD_LVL);
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
 }
 
 ZTEST_F(usbc_alt_mode, verify_discovery_via_pd_host_cmd)

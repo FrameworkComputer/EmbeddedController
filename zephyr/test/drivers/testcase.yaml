@@ -269,10 +269,12 @@ tests:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE=y
   drivers.usbc_alt_mode:
+    extra_args: CONF_FILE="prj.conf;usbc_alt_mode/prj.conf"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
     timeout: 120
   drivers.usbc_alt_mode_ec_entry:
+    extra_args: CONF_FILE="prj.conf;usbc_alt_mode/prj.conf"
     timeout: 120
     extra_configs:
       - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
