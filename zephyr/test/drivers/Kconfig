@@ -247,4 +247,7 @@ config LINK_TEST_SUITE_ANX7452
 	  Include the test suite of ANX7452 retimer in the binary. The tests
 	  use I2C emulation.
 
+config LINK_TEST_SUITE_SM5803
+	bool "Link and test the SM5803 charger tests"
+
 source "Kconfig.zephyr"

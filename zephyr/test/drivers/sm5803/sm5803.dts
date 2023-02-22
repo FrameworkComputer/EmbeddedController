@@ -1,0 +1,32 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			chg = <&sm5803_emul>;
+		};
+	};
+
+	gpio2: gpio@2000 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x2000 0x4>;
+		falling-edge;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <1>;
+	};
+};
+
+&i2c0 {
+	sm5803_emul: sm5803@32 {
+		compatible = "cros,sm5803-emul", "siliconmitus,sm5803";
+		status = "okay";
+		reg = <0x32>;
+		interrupt-gpios = <&gpio2 0 (GPIO_ACTIVE_LOW)>;
+	};
+};
