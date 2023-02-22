@@ -15,8 +15,6 @@
 static void dump_pe(int port)
 {
 	int i, j, idh_ptype;
-	struct svdm_amode_data *modep;
-	uint32_t mode_caps;
 	const union disc_ident_ack *resp;
 	enum tcpci_msg_type type;
 	/* TODO(b/152417597): Output SOP' discovery results */
@@ -64,14 +62,6 @@ static void dump_pe(int port)
 			ccprintf(" [%d] %08x", j + 1,
 				 disc->svids[i].mode_vdo[j]);
 		ccprintf("\n");
-
-		modep = pd_get_amode_data(port, TCPCI_MSG_SOP,
-					  disc->svids[i].svid);
-		if (modep) {
-			mode_caps = modep->data->mode_vdo[modep->opos - 1];
-			ccprintf("MODE[%d]: svid:%04x caps:%08x\n", modep->opos,
-				 modep->fx->svid, mode_caps);
-		}
 	}
 }
 
