@@ -5,7 +5,7 @@
 
 #include "fpsensor_detect.h"
 
-enum fp_sensor_type get_fp_sensor_type(void)
+enum fp_sensor_type fpsensor_detect_get_type(void)
 {
 	return FP_SENSOR_TYPE_FPC;
 }

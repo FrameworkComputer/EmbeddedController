@@ -235,7 +235,7 @@ extern "C" void fp_task(void)
 	int timeout_us = -1;
 
 	CPRINTS("FP_SENSOR_SEL: %s",
-		fp_sensor_type_to_str(get_fp_sensor_type()));
+		fp_sensor_type_to_str(fpsensor_detect_get_type()));
 
 #ifdef HAVE_FP_PRIVATE_DRIVER
 	/* Reset and initialize the sensor IC */

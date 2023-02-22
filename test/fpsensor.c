@@ -53,7 +53,7 @@ test_static int test_host_command_protocol_info(
 	struct ec_response_get_protocol_info info;
 	int rv;
 
-	mock_ctrl_fpsensor_detect.get_fp_sensor_type_return =
+	mock_ctrl_fpsensor_detect.fpsensor_detect_get_type_return =
 		FP_SENSOR_TYPE_FPC;
 	mock_ctrl_fpsensor_detect.get_fp_transport_type_return = transport_type;
 
