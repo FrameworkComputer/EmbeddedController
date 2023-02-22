@@ -700,14 +700,14 @@ static int command_mfallow(int argc, const char **argv)
 
 	port = strtoi(argv[1], &e, 10);
 	if (*e || port >= board_get_usb_pd_port_count())
-		return EC_ERROR_PARAM2;
+		return EC_ERROR_PARAM1;
 
 	if (!strcasecmp(argv[2], "true"))
 		dp_port_mf_allow[port] = true;
 	else if (!strcasecmp(argv[2], "false"))
 		dp_port_mf_allow[port] = false;
 	else
-		return EC_ERROR_PARAM1;
+		return EC_ERROR_PARAM2;
 
 	ccprintf("Port: %d multi function allowed is %s ", port, argv[2]);
 	return EC_SUCCESS;
