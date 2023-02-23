@@ -47,5 +47,10 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "pd1_chip_interrupt";
 		};
+		int_module_oc_interrupt: module_oc_interrupt {
+			irq-pin = <&gpio_module_oc_interrupt>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "module_oc_interrupt";
+		};
 	};
 };
