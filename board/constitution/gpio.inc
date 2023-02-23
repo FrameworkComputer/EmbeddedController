@@ -28,13 +28,23 @@ GPIO_INT(USB_C2_BC12_INT_ODL,        PIN(8, 3), GPIO_INT_FALLING, bc12_interrupt
 GPIO_INT(USB_C2_PPC_INT_ODL,         PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(BJ_ADP_PRESENT_ODL,         PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, adp_connect_interrupt)
 GPIO_INT(EC_RECOVERY_BTN_OD,         PIN(2, 3), GPIO_INT_BOTH, button_interrupt)
-GPIO_INT(HDMI_CONN_OC_ODL,           PIN(2, 4), GPIO_INPUT | GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(HDMI_CONN_OC_ODL,           PIN(5, 0), GPIO_INPUT | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A0_OC_ODL,              PIN(3, 1), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A1_OC_ODL,              PIN(3, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 
 /* PSE controller */
 GPIO(EC_PSE_PWM_INT,                 PIN(9, 6), GPIO_INPUT)
 GPIO(EC_RST_LTC4291,                 PIN(9, 7), GPIO_OUT_HIGH)
+
+/* TPU */
+GPIO(PP3300_TPU_EN,                  PIN(2, 6), GPIO_OUT_HIGH)
+
+/* Wake EC */
+GPIO(WLAN_PCIE_WAKE_EC,              PIN(4, 1), GPIO_INPUT)
+GPIO(LAN_WAKE_EC,                    PIN(9, 3), GPIO_INPUT)
+
+/* ADB Scaler signals */
+GPIO(ADB_WAKEUP_EC,                  PIN(2, 5), GPIO_INPUT)
 
 /* CCD */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -49,12 +59,8 @@ GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
 /* ADC, need to check the usage */
 GPIO(ANALOG_PPVAR_PWR_IN_IMON_EC,    PIN(4, 2), GPIO_INPUT)
 
-/* Display */
-GPIO(DP_CONN_OC_ODL,                 PIN(2, 5), GPIO_INPUT)
-
-
 /* BarrelJack */
-GPIO(EN_PPVAR_BJ_ADP_L,              PIN(0, 7), GPIO_OUT_LOW)
+GPIO(EN_PPVAR_BJ_ADP_L,              PIN(0, 4), GPIO_OUT_LOW)
 
 /* Chipset PCH */
 GPIO(EC_PCHHOT_ODL,                  PIN(7, 4), GPIO_INPUT)
@@ -75,18 +81,14 @@ GPIO(CPU_C10_GATE_L,                 PIN(6, 7), GPIO_INPUT)
 GPIO(EC_PCH_PWR_BTN_ODL,             PIN(C, 1), GPIO_ODR_HIGH)
 GPIO(GSC_EC_RECOVERY_BTN_OD,         PIN(2, 2), GPIO_INPUT)
 
-/* NFC */
-/* TODO(b/194068530): Enable NFC */
-GPIO(NFC_COIL_ACT_L,                 PIN(D, 4), GPIO_INPUT)
-GPIO(NFC_LOW_POWER_MODE,             PIN(9, 5), GPIO_OUT_HIGH)
-GPIO(NFC_CARD_DET_L,                 PIN(A, 3), GPIO_INPUT)
-GPIO(EN_NFC_BUZZER,                  PIN(0, 5), GPIO_OUT_LOW)
-
 /* HDMI CEC */
 /* TODO(b/197474873): Enable HDMI CEC */
-GPIO(HDMI_CEC_IN,                    PIN(4, 0), GPIO_INPUT)
-GPIO(HDMI_CEC_OUT,                   PIN(D, 3), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-GPIO(HDMI_CEC_PULL_UP,               PIN(C, 2), GPIO_OUT_HIGH)
+GPIO(HDMIA_CEC_IN,                   PIN(2, 7), GPIO_INPUT)
+GPIO(HDMIA_CEC_OUT,                  PIN(1, 0), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
+GPIO(HDMIA_CEC_PULL_UP,              PIN(1, 1), GPIO_OUT_HIGH)
+GPIO(HDMIB_CEC_IN,                   PIN(4, 0), GPIO_INPUT)
+GPIO(HDMIB_CEC_OUT,                  PIN(D, 3), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
+GPIO(HDMIB_CEC_PULL_UP,              PIN(C, 2), GPIO_OUT_HIGH)
 
 /* I2C SCL/SDA */
 GPIO(EC_I2C_LTC_SCL,                 PIN(3, 3), GPIO_INPUT)
@@ -101,6 +103,8 @@ GPIO(EC_I2C_USB_C0_C2_RT_SCL,        PIN(D, 1), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_C2_RT_SDA,        PIN(D, 0), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_C2_TCPC_SCL,      PIN(9, 0), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_C2_TCPC_SDA,      PIN(8, 7), GPIO_INPUT)
+GPIO(EC_I2C_ADB_SCL,                 PIN(E, 4), GPIO_INPUT)
+GPIO(EC_I2C_ADB_SDA,                 PIN(E, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_PPC_SCL,          PIN(F, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_PPC_SDA,          PIN(F, 2), GPIO_INPUT)
 
@@ -157,15 +161,22 @@ ALTERNATE(PIN_MASK(4, 0x38), 0, MODULE_ADC, 0)               /* GPIO45/ADC0, GPI
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)               /* GPIOE1/ADC7 */
 
 /* Unused Pins */
+UNUSED(PIN(D, 4))       /* GPIOD4/CRSIN3 */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(8, 1))       /* GPIO81/PECI_DATA */
 UNUSED(PIN(5, 6))       /* GPIO56/CLKRUN# */
-UNUSED(PIN(9, 7))       /* GPIO97 */
 UNUSED(PIN(8, 6))       /* GPIO86/TXD/CR_SOUT2 */
+UNUSED(PIN(1, 7))       /* KSO2/GPIO17/JTAG_TDI */
+UNUSED(PIN(1, 6))       /* KSO03/GPIO16/JTAG_TDO_SWO */
 UNUSED(PIN(1, 3))       /* KSO06/GPO13/GP_SEL# */
 UNUSED(PIN(1, 2))       /* KSO07/GPO12/JEN# */
-UNUSED(PIN(0, 6))       /* KSO11/GPIO06/P80_CLK */
-UNUSED(PIN(0, 4))       /* KSO13/GPIO04 */
+UNUSED(PIN(0, 7))       /* KSO10/GPIO07/P80_CLK */
+UNUSED(PIN(0, 6))       /* KSO11/GPIO06/P80_DAT */
+UNUSED(PIN(0, 5))       /* KSO12/GPIO05 */
+UNUSED(PIN(A, 3))       /* SPIP_MOSI/GPIOA3 */
+UNUSED(PIN(9, 5))       /* SPIP_MISO/GPIO95 */
+UNUSED(PIN(D, 2))       /* PSL_IN1/GPIOD2 */
+UNUSED(PIN(0, 2))       /* GPIO02/PSL_IN4 */

@@ -58,6 +58,14 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_LTC_SDA,
 	},
 	{
+		/* I2C6 */
+		.name = "ADB",
+		.port = I2C_PORT_ADB,
+		.kbps = 1000,
+		.scl = GPIO_EC_I2C_ADB_SCL,
+		.sda = GPIO_EC_I2C_ADB_SDA,
+	},
+	{
 		/* I2C7 */
 		.name = "eeprom",
 		.port = I2C_PORT_EEPROM,
