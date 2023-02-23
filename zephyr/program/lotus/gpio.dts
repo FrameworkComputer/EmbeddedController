@@ -149,7 +149,7 @@
 		gpio_usb30_hub_en: usb30_hub_en {
 			gpios = <&gpio8 2 GPIO_OUTPUT_HIGH>;
 		};
-		module_oc_l {
+		gpio_module_oc_interrupt: module_oc_l {
 			gpios = <&gpio8 3 GPIO_INPUT>;		/* Detect Hub/B 3V/5V OCP event */
 		};
 		gpio_ec_edp_reset: ec_edp_reset {
@@ -177,7 +177,7 @@
 			gpios = <&gpiod 7 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_hub_b_pwr_en: hub_b_pwr_en {
-			gpios = <&gpio8 6 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 		};
 		als_int_l {
 			gpios = <&gpio7 5 GPIO_INPUT>;
@@ -274,7 +274,7 @@
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_sleep_l: sleep_l {
-			gpios = <&gpiod 5 GPIO_INPUT>;
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
 		};
 		gpio_pd_chip1_interrupt: pd_b_i2c_int_ec_l {
 			gpios = <&gpioe 2 GPIO_INPUT>;
