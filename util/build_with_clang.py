@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # Copyright 2021 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -151,6 +150,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "grunt",
     "gumboz",
     "guybrush",
+    "hades",
     "hatch",
     "helios",
     "herobrine",
