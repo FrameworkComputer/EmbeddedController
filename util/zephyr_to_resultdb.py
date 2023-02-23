@@ -2,6 +2,7 @@
 # Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """ Upload twister results to ResultDB
 
     Usage:
@@ -135,7 +136,12 @@ def testcase_to_result(testsuite, testcase, base_tags, config_tags):
         assert_msg = re.findall(
             r"Assertion failed.*$", testcase["log"], re.MULTILINE
         )
-        result["failureReason"] = {"primaryErrorMessage": assert_msg[0]}
+        if assert_msg:
+            result["failureReason"] = {"primaryErrorMessage": assert_msg[0]}
+        else:
+            result["failureReason"] = {
+                "primaryErrorMessage": "Assert not found - possibly occurred in test setup"
+            }
 
     return result
 
