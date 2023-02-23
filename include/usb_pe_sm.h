@@ -210,6 +210,13 @@ void pe_clear_port_data(int port);
 bool pe_snk_in_epr_mode(int port);
 
 /**
+ * Make a sink exit EPR mode explicitly.
+ *
+ * @param port USB-C port number
+ */
+void pe_snk_epr_explicit_exit(int port);
+
+/**
  * Checks whether the port is ready for EPR entry.
  *
  * @param port USB-C port number

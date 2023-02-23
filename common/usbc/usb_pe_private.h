@@ -92,6 +92,11 @@ enum {
 	PE_FLAGS_ENTERING_EPR_FN,
 	/* In EPR mode */
 	PE_FLAGS_IN_EPR_FN,
+	/*
+	 * Indicate the port exited EPR mode explicitly. If this is set, the
+	 * port wouldn't enter EPR mode automatically.
+	 */
+	PE_FLAGS_EPR_EXPLICIT_EXIT_FN,
 	/* Discovery disabled due to UFP/PD 2.0 constraint. */
 	PE_FLAGS_DISCOVERY_DISABLED_FN,
 	/* Last element */

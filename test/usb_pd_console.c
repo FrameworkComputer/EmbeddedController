@@ -35,6 +35,7 @@ static bool pe_get_current_state_called;
 static bool pe_get_flags_called;
 static bool pe_is_explicit_contract_called;
 static bool pe_snk_in_epr_mode_called;
+static bool pe_snk_epr_explicit_exit_called;
 static bool pd_get_dual_role_called;
 static bool board_get_usb_pd_port_count_called;
 static bool pd_srccaps_dump_called;
@@ -84,6 +85,11 @@ bool pe_snk_in_epr_mode(int port)
 {
 	pe_snk_in_epr_mode_called = true;
 	return true;
+}
+
+void pe_snk_epr_explicit_exit(int port)
+{
+	pe_snk_epr_explicit_exit_called = true;
 }
 
 const char *pe_get_current_state(int port)
@@ -726,18 +732,22 @@ static int test_command_pd_epr(void)
 	request = 0;
 	pd_get_power_role_called = false;
 	pd_get_power_role_return = PD_ROLE_SINK;
+	pe_snk_epr_explicit_exit_called = false;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
 	TEST_ASSERT(pd_get_power_role_called);
 	TEST_ASSERT(request == DPM_REQUEST_EPR_MODE_ENTRY);
+	TEST_ASSERT(!pe_snk_epr_explicit_exit_called);
 
 	/* Return SUCCESS with request==DPM_REQUEST_EPR_MODE_EXIT. */
 	argv[3] = "exit";
 	request = 0;
 	pd_get_power_role_called = false;
 	pd_get_power_role_return = PD_ROLE_SINK;
+	pe_snk_epr_explicit_exit_called = false;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
 	TEST_ASSERT(pd_get_power_role_called);
 	TEST_ASSERT(request == DPM_REQUEST_EPR_MODE_EXIT);
+	TEST_ASSERT(pe_snk_epr_explicit_exit_called);
 
 	/* Return EC_ERROR_PARAM3 for invalid sub-command. */
 	argv[3] = "start";

@@ -226,6 +226,8 @@ static
 			req = DPM_REQUEST_EPR_MODE_ENTRY;
 		} else if (!strcasecmp(argv[3], "exit")) {
 			req = DPM_REQUEST_EPR_MODE_EXIT;
+			/* Prevent snk_ready from repeatedly entering EPR. */
+			pe_snk_epr_explicit_exit(port);
 		} else {
 			return EC_ERROR_PARAM3;
 		}

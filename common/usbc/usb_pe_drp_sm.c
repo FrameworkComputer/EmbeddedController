@@ -1159,6 +1159,11 @@ bool pe_snk_in_epr_mode(int port)
 	return PE_CHK_FLAG(port, PE_FLAGS_IN_EPR);
 }
 
+void pe_snk_epr_explicit_exit(int port)
+{
+	PE_SET_FLAG(port, PE_FLAGS_EPR_EXPLICIT_EXIT);
+}
+
 bool pe_snk_can_enter_epr_mode(int port)
 {
 	/*
@@ -3749,9 +3754,12 @@ static void pe_snk_ready_entry(int port)
 	 */
 	pe_update_wait_and_add_jitter_timer(port);
 
-	if (IS_ENABLED(CONFIG_USB_PD_EPR) && pe_snk_in_epr_mode(port)) {
-		pd_timer_enable(port, PE_TIMER_SINK_EPR_KEEP_ALIVE,
-				PD_T_SINK_EPR_KEEP_ALIVE);
+	if (IS_ENABLED(CONFIG_USB_PD_EPR)) {
+		if (pe_snk_in_epr_mode(port))
+			pd_timer_enable(port, PE_TIMER_SINK_EPR_KEEP_ALIVE,
+					PD_T_SINK_EPR_KEEP_ALIVE);
+		else if (!PE_CHK_FLAG(port, PE_FLAGS_EPR_EXPLICIT_EXIT))
+			pd_dpm_request(port, DPM_REQUEST_EPR_MODE_ENTRY);
 	}
 }
 
@@ -4138,6 +4146,7 @@ static void pe_send_soft_reset_entry(int port)
 	print_current_state(port);
 
 	PE_CLR_FLAG(port, PE_FLAGS_ENTERING_EPR);
+	PE_CLR_FLAG(port, PE_FLAGS_EPR_EXPLICIT_EXIT);
 
 	/* Reset Protocol Layer (softly) */
 	prl_reset_soft(port);
@@ -7913,6 +7922,7 @@ static void pe_ddr_perform_data_reset_exit(int port)
 static void pe_enter_epr_mode(int port)
 {
 	PE_CLR_FLAG(port, PE_FLAGS_ENTERING_EPR);
+	PE_CLR_FLAG(port, PE_FLAGS_EPR_EXPLICIT_EXIT);
 	PE_SET_FLAG(port, PE_FLAGS_IN_EPR);
 	CPRINTS("C%d: Entered EPR", port);
 }
