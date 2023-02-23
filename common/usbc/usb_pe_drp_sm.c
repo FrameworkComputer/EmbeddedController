@@ -8158,7 +8158,14 @@ const uint32_t *const pd_get_src_caps(int port)
 
 void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
 {
+	const int limit = ARRAY_SIZE(pe[port].src_caps);
 	int i;
+
+	if (cnt > limit) {
+		CPRINTS("C%d: Trim PDOs (%d) exceeding limit (%d)", port, cnt,
+			limit);
+		cnt = limit;
+	}
 
 	pe[port].src_cap_cnt = cnt;
 
