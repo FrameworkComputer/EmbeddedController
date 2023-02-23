@@ -10,12 +10,12 @@
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		/* I2C0 */
-		.name = "dp_redriver",
-		.port = I2C_PORT_DP_REDRIVER,
+		/* I2C0 C1 TCPC */
+		.name = "tcpc1",
+		.port = I2C_PORT_USB_C1_TCPC,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_DP_SCL,
-		.sda = GPIO_EC_I2C_DP_SDA,
+		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
+		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
 	},
 	{
 		/* I2C1 */
@@ -42,12 +42,12 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
 	},
 	{
-		/* I2C4 C1 TCPC */
-		.name = "tcpc1",
-		.port = I2C_PORT_USB_C1_TCPC,
+		/* I2C4 */
+		.name = "ppc1",
+		.port = I2C_PORT_USB_C1_PPC,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
+		.scl = GPIO_EC_I2C_USB_C1_PPC_SCL,
+		.sda = GPIO_EC_I2C_USB_C1_PPC_SDA,
 	},
 	{
 		/* I2C5 */
@@ -56,14 +56,6 @@ const struct i2c_port_t i2c_ports[] = {
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_LTC_SCL,
 		.sda = GPIO_EC_I2C_LTC_SDA,
-	},
-	{
-		/* I2C6 */
-		.name = "ppc1",
-		.port = I2C_PORT_USB_C1_PPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C1_MIX_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_MIX_SDA,
 	},
 	{
 		/* I2C7 */

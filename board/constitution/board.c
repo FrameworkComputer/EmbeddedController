@@ -133,13 +133,10 @@ static int32_t base_5v_power_z1;
 
 /* PP5000_S5 loads */
 #define PWR_S5_BASE_LOAD (5 * 1431)
-#define PWR_S5_FRONT_HIGH (5 * 1737)
-#define PWR_S5_FRONT_LOW (5 * 1055)
 #define PWR_S5_REAR_HIGH (5 * 1737)
 #define PWR_S5_REAR_LOW (5 * 1055)
 #define PWR_S5_HDMI (5 * 580)
 #define PWR_S5_MAX (5 * 10000)
-#define FRONT_DELTA (PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW)
 #define REAR_DELTA (PWR_S5_REAR_HIGH - PWR_S5_REAR_LOW)
 
 /* PP5000_Z1 loads */
@@ -153,7 +150,6 @@ static int32_t base_5v_power_z1;
  */
 static void update_5v_usage(void)
 {
-	int front_ports = 0;
 	int rear_ports = 0;
 
 	/*
@@ -161,24 +157,10 @@ static void update_5v_usage(void)
 	 */
 	base_5v_power_s5 = PWR_S5_BASE_LOAD;
 	if (!gpio_get_level(GPIO_USB_A0_OC_ODL)) {
-		front_ports++;
-		base_5v_power_s5 += PWR_S5_FRONT_LOW;
-	}
-	if (!gpio_get_level(GPIO_USB_A1_OC_ODL)) {
-		front_ports++;
-		base_5v_power_s5 += PWR_S5_FRONT_LOW;
-	}
-	/*
-	 * Only 1 front port can run higher power at a time.
-	 */
-	if (front_ports > 0)
-		base_5v_power_s5 += PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW;
-
-	if (!gpio_get_level(GPIO_USB_A2_OC_ODL)) {
 		rear_ports++;
 		base_5v_power_s5 += PWR_S5_REAR_LOW;
 	}
-	if (!gpio_get_level(GPIO_USB_A3_OC_ODL)) {
+	if (!gpio_get_level(GPIO_USB_A1_OC_ODL)) {
 		rear_ports++;
 		base_5v_power_s5 += PWR_S5_REAR_LOW;
 	}
@@ -269,8 +251,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_HDMI_CONN_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
-	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
-	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -303,7 +283,6 @@ void board_overcurrent_event(int port, int is_overcurrented)
  *
  * There are 3 throttles that can be applied (in priority order):
  *
- *  - Type A BC1.2 front port restriction (3W)
  *  - Type A BC1.2 rear port restriction (3W)
  *  - Type C PD (throttle to 1.5A if sourcing)
  *  - Turn on PROCHOT, which immediately throttles the CPU.
@@ -321,17 +300,12 @@ void board_overcurrent_event(int port, int is_overcurrented)
  *
  *  All measurements are in milliwatts.
  */
-#define THROT_TYPE_A_FRONT BIT(0)
-#define THROT_TYPE_A_REAR BIT(1)
-#define THROT_TYPE_C0 BIT(2)
-#define THROT_TYPE_C1 BIT(3)
-#define THROT_TYPE_C2 BIT(4)
-#define THROT_PROCHOT BIT(5)
+#define THROT_TYPE_A_REAR BIT(0)
+#define THROT_TYPE_C0 BIT(1)
+#define THROT_TYPE_C1 BIT(2)
+#define THROT_TYPE_C2 BIT(3)
+#define THROT_PROCHOT BIT(4)
 
-/*
- * Power gain if front USB A ports are limited.
- */
-#define POWER_GAIN_TYPE_A 3200
 /*
  * Power gain if Type C port is limited.
  */
@@ -427,17 +401,6 @@ static void power_monitor(void)
 			if (gap <= 0) {
 				new_state |= THROT_TYPE_A_REAR;
 				headroom_5v_s5 += REAR_DELTA;
-				if (!(current_state & THROT_TYPE_A_REAR))
-					gap += POWER_GAIN_TYPE_A;
-			}
-			/*
-			 * Limiting type-A power front ports.
-			 */
-			if (gap <= 0) {
-				new_state |= THROT_TYPE_A_FRONT;
-				headroom_5v_s5 += FRONT_DELTA;
-				if (!(current_state & THROT_TYPE_A_REAR))
-					gap += POWER_GAIN_TYPE_A;
 			}
 			/*
 			 * If the type-C port is sourcing power,
@@ -515,20 +478,12 @@ static void power_monitor(void)
 	}
 	if (headroom_5v_s5 < 0) {
 		/*
-		 * [1] If type A rear not already throttled, and power still
+		 * If type A rear not already throttled, and power still
 		 * needed, limit type A rear.
 		 */
 		if (!(new_state & THROT_TYPE_A_REAR) && headroom_5v_s5 < 0) {
 			headroom_5v_s5 += PWR_S5_REAR_HIGH - PWR_S5_REAR_LOW;
 			new_state |= THROT_TYPE_A_REAR;
-		}
-		/*
-		 * [2] If type A front not already throttled, and power still
-		 * needed, limit type A front.
-		 */
-		if (!(new_state & THROT_TYPE_A_FRONT) && headroom_5v_s5 < 0) {
-			headroom_5v_s5 += PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW;
-			new_state |= THROT_TYPE_A_FRONT;
 		}
 	}
 	/*
@@ -573,12 +528,6 @@ static void power_monitor(void)
 
 		gpio_set_level(GPIO_USB_A_LOW_PWR0_OD, typea_bc);
 		gpio_set_level(GPIO_USB_A_LOW_PWR1_OD, typea_bc);
-	}
-	if (diff & THROT_TYPE_A_FRONT) {
-		int typea_bc = (new_state & THROT_TYPE_A_FRONT) ? 1 : 0;
-
-		gpio_set_level(GPIO_USB_A_LOW_PWR2_OD, typea_bc);
-		gpio_set_level(GPIO_USB_A_LOW_PWR3_OD, typea_bc);
 	}
 	hook_call_deferred(&power_monitor_data, delay);
 }

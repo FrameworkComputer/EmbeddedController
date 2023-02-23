@@ -9,7 +9,6 @@
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/bb_retimer_public.h"
-#include "driver/retimer/kb800x.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
@@ -77,7 +76,7 @@ struct ppc_config_t ppc_chips[] = {
 	},
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_USB_C1_PPC,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.i2c_addr_flags = SYV682X_ADDR1_FLAGS,
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C2] = {
@@ -99,39 +98,6 @@ static const struct usb_mux_chain usbc0_tcss_usb_mux = {
 			.hpd_update = &virtual_hpd_update,
 		},
 };
-static const struct usb_mux_chain usbc1_tcss_usb_mux = {
-	.mux =
-		&(const struct usb_mux){
-			.usb_port = USBC_PORT_C1,
-			.driver = &virtual_usb_mux_driver,
-			.hpd_update = &virtual_hpd_update,
-		},
-};
-static const struct usb_mux_chain usbc2_tcss_usb_mux = {
-	.mux =
-		&(const struct usb_mux){
-			.usb_port = USBC_PORT_C2,
-			.driver = &virtual_usb_mux_driver,
-			.hpd_update = &virtual_hpd_update,
-		},
-};
-
-struct kb800x_control_t kb800x_control[] = {
-	[USBC_PORT_C0] = {
-	},
-	[USBC_PORT_C1] = {
-		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_R_L,
-		.ss_lanes = {
-			[KB800X_A0] = KB800X_TX0, [KB800X_A1] = KB800X_RX0,
-			[KB800X_B0] = KB800X_RX1, [KB800X_B1] = KB800X_TX1,
-			[KB800X_C0] = KB800X_RX0, [KB800X_C1] = KB800X_TX0,
-			[KB800X_D0] = KB800X_TX1, [KB800X_D1] = KB800X_RX1,
-			}
-	},
-	[USBC_PORT_C2] = {
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(kb800x_control) == USBC_PORT_COUNT);
 
 const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
@@ -145,23 +111,18 @@ const struct usb_mux_chain usb_muxes[] = {
 		.next = &usbc0_tcss_usb_mux,
 	},
 	[USBC_PORT_C1] = {
-		.mux = &(const struct usb_mux) {
+		.mux = &(const struct usb_mux){
 			.usb_port = USBC_PORT_C1,
-			.driver = &kb800x_usb_mux_driver,
-			.i2c_port = I2C_PORT_USB_C1_MUX,
-			.i2c_addr_flags = KB800X_I2C_ADDR0_FLAGS,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
 		},
-		.next = &usbc1_tcss_usb_mux,
 	},
 	[USBC_PORT_C2] = {
-		.mux = &(const struct usb_mux) {
+		.mux = &(const struct usb_mux){
 			.usb_port = USBC_PORT_C2,
-			.driver = &bb_usb_retimer,
-			.hpd_update = bb_retimer_hpd_update,
-			.i2c_port = I2C_PORT_USB_C0_C2_MUX,
-			.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
 		},
-		.next = &usbc2_tcss_usb_mux,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -174,7 +135,7 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_USB_C1_BC12,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_2_FLAGS,
 	},
 	[USBC_PORT_C2] = {
 		.i2c_port = I2C_PORT_USB_C0_C2_BC12,
@@ -270,7 +231,6 @@ void board_reset_pd_mcu(void)
 	 */
 
 	gpio_set_level(tcpc_rst, 0);
-	gpio_set_level(GPIO_USB_C1_RT_RST_R_L, 0);
 
 	/*
 	 * delay for power-on to reset-off and min. assertion time
@@ -279,7 +239,6 @@ void board_reset_pd_mcu(void)
 	msleep(20);
 
 	gpio_set_level(tcpc_rst, 1);
-	gpio_set_level(GPIO_USB_C1_RT_RST_R_L, 1);
 
 	/* wait for chips to come up */
 
