@@ -107,6 +107,8 @@
 #define I2C_PORT_USB_C0_C2_MUX NPCX_I2C_PORT3_0
 #define I2C_PORT_USB_C1_MUX NPCX_I2C_PORT6_1
 
+#define I2C_PORT_PSE NPCX_I2C_PORT5_0
+
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 #define I2C_PORT_MP2964 NPCX_I2C_PORT7_0
 
@@ -135,6 +137,9 @@
 
 /* ADC */
 #define CONFIG_ADC
+
+/* PSE */
+#define CONFIG_PSE_LTC4291
 
 /*
  * TODO(b/197478860): Enable the fan control. We need
