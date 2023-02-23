@@ -1805,7 +1805,7 @@ static void tch_wait_for_message_request_from_pe_entry(const int port)
 	PDMSG_CLR_FLAG(port, PRL_FLAGS_ABORT);
 
 	/* All Messages are chunked */
-	tch[port].flags = PRL_FLAGS_CHUNKING;
+	TCH_SET_FLAG(port, PRL_FLAGS_CHUNKING);
 }
 
 static void tch_wait_for_message_request_from_pe_run(const int port)
