@@ -148,7 +148,7 @@
 			gpios = <&gpio0 4 GPIO_OUTPUT_LOW>;	/* Enable LM5143 */
 		};
 		gpio_usb30_hub_en: usb30_hub_en {
-			gpios = <&gpio8 2 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio8 2 GPIO_OUTPUT_LOW>;
 		};
 		gpio_module_oc_interrupt: module_oc_l {
 			gpios = <&gpio8 3 GPIO_INPUT>;		/* Detect Hub/B 3V/5V OCP event */
