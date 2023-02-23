@@ -180,7 +180,7 @@ enum temp_sensor_id {
 enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C2_NCT38XX, IOEX_PORT_COUNT };
 
 enum pwm_channel {
-	PWM_CH_LED_GREEN, /* PWM0 */
+	PWM_CH_LED_WHITE, /* PWM0 */
 	PWM_CH_FAN, /* PWM5 */
 	PWM_CH_LED_RED, /* PWM2 */
 	PWM_CH_COUNT

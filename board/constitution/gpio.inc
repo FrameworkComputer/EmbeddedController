@@ -117,7 +117,7 @@ GPIO(USB_A_OC_SOC_L,                 PIN(8, 0), GPIO_OUT_HIGH)
 
 /* LED */
 /* TODO(b/197471359): LED implementation */
-GPIO(LED_GREEN_L,                    PIN(C, 3), GPIO_OUT_LOW)
+GPIO(LED_WHITE_L,                    PIN(C, 3), GPIO_OUT_LOW)
 GPIO(LED_RED_L,                      PIN(C, 4), GPIO_OUT_LOW)
 
 /* USBC */
