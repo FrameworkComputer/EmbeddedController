@@ -222,4 +222,11 @@ struct ec_params_standalone_mode {
 	uint8_t enable;
 } __ec_align1;
 
+/* how many times did chassis(sw3) pressed */
+#define EC_CMD_CHASSIS_COUNTER 0x3E15
+
+struct ec_response_chassis_counter {
+	uint8_t press_counter;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
