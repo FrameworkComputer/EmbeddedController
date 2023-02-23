@@ -116,6 +116,16 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 
+		/*
+		 * TODO(b/270601972):
+		 * Important note on testing emulated output GPIOs: Using
+		 * gpio_set_level() won't be observable from a gpio_get_level()
+		 * unless the output gpio is also configured as an input gpio.
+		 *
+		 * One may also configure the gpio as an input in the test
+                 * itself instead of device tree.
+		 * /
+
 		/* <&gpio0 1 x> is reserved as 'entering-rw' in
 		 * src/platform/ec/zephyr/dts/board-overlays/native_posix.dts
 		 */
