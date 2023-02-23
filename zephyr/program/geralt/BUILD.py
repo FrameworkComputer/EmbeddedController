@@ -9,7 +9,7 @@ def register_variant(
     project_name,
 ):
     """Register a variant of geralt."""
-    register_binman_project(
+    return register_binman_project(
         project_name=project_name,
         zephyr_board="it81202cx",
         dts_overlays=[here / project_name / "project.overlay"],
@@ -20,4 +20,4 @@ def register_variant(
     )
 
 
-register_variant("geralt")
+geralt = register_variant("geralt")
