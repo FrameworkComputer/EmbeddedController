@@ -19,4 +19,9 @@
  */
 void cros_flash_emul_protect_reset(void);
 
+/**
+ * @brief Enable the protection.
+ */
+void cros_flash_emul_enable_protect(void);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_FLASH_H_ */

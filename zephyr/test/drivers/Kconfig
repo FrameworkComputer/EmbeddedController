@@ -29,6 +29,12 @@ config LINK_TEST_SUITE_AP_VDM_CONTROL
 config LINK_TEST_SUITE_BUTTON
 	bool "Link tests for common/button.c"
 
+config LINK_TEST_SUITE_CBI_FLASH
+	bool "Link and execute the zephyr/shim/src/cbi/cbi_flash.c tests"
+	help
+	  Include the CBI Flash storage driver test suite
+	  in the binary.
+
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
 

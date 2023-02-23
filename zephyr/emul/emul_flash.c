@@ -194,6 +194,11 @@ void cros_flash_emul_protect_reset(void)
 	ro_protected = all_protected = false;
 }
 
+void cros_flash_emul_enable_protect(void)
+{
+	ro_protected = all_protected = true;
+}
+
 static int cros_flash_emul_get_jedec_id(const struct device *dev,
 					uint8_t *manufacturer, uint16_t *device)
 {

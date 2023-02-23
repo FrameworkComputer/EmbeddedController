@@ -666,7 +666,7 @@ int crec_flash_is_erased(uint32_t offset, int size)
 	return 1;
 }
 
-int crec_flash_read(int offset, int size, char *data)
+test_mockable int crec_flash_read(int offset, int size, char *data)
 {
 #ifdef CONFIG_MAPPED_STORAGE
 	const char *src;

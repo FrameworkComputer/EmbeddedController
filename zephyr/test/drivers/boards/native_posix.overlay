@@ -1175,7 +1175,7 @@
 };
 
 &flash0 {
-        erase-block-size = <0x10000>;
+        erase-block-size = <0x1000>;
         write-block-size = <1>;
         reg = <0x00000000 DT_SIZE_K(512)>;
 };
