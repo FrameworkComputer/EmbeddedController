@@ -231,13 +231,17 @@ match_kernel_regex() {
 # * platform_base_name "hatch-arc-r"      --> "hatch"
 # * platform_base_name "hatch-borealis"   --> "hatch"
 # * platform_base_name "hatch"            --> "hatch"
+# * platform_base_name "strongbad64"      --> "strongbad"
 #
 # Usage: platform_base_name <platform_name>
 platform_base_name() {
   local platform_name="$1"
 
   # We remove any suffix starting at the first '-'.
-  echo "${platform_name%%-*}"
+  local base_name="${platform_name%%-*}"
+
+  # Remove any numbers from the base name.
+  echo "${base_name//[0-9]/}"
 }
 
 get_default_fw() {
