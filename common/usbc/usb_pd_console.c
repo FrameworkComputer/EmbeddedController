@@ -192,18 +192,47 @@ static
 		ccprintf("TC State: %s, Flags: 0x%04x",
 			 tc_get_current_state(port), tc_get_flags(port));
 
-		if (IS_ENABLED(CONFIG_USB_PE_SM))
-			ccprintf(" PE State: %s, Flags: 0x%04x\n",
+		if (IS_ENABLED(CONFIG_USB_PE_SM)) {
+			ccprintf(" PE State: %s, Flags: 0x%04x",
 				 pe_get_current_state(port),
 				 pe_get_flags(port));
-		else
-			ccprintf("\n");
+			if (pe_is_explicit_contract(port)) {
+				if (pe_snk_in_epr_mode(port))
+					ccprintf(" EPR");
+				else
+					ccprintf(" SPR");
+			}
+		}
+		ccprintf("\n");
 
 		cflush();
 	} else if (!strcasecmp(argv[2], "srccaps")) {
 		pd_srccaps_dump(port);
 	} else if (!strcasecmp(argv[2], "cc")) {
 		ccprintf("Port C%d CC%d\n", port, pd_get_task_cc_state(port));
+#ifdef CONFIG_USB_PD_EPR
+	} else if (!strcasecmp(argv[2], "epr")) {
+		enum pd_dpm_request req;
+
+		if (argc < 4) {
+			return EC_ERROR_PARAM_COUNT;
+		}
+		if (pd_get_power_role(port) != PD_ROLE_SINK) {
+			ccprintf("EPR is currently supported only for sink\n");
+			/* Suppress (long) help message */
+			return EC_SUCCESS;
+		}
+		if (!strcasecmp(argv[3], "enter")) {
+			req = DPM_REQUEST_EPR_MODE_ENTRY;
+		} else if (!strcasecmp(argv[3], "exit")) {
+			req = DPM_REQUEST_EPR_MODE_EXIT;
+		} else {
+			return EC_ERROR_PARAM3;
+		}
+		pd_dpm_request(port, req);
+		ccprintf("EPR %s requested\n", argv[3]);
+		return EC_SUCCESS;
+#endif
 	}
 
 	if (IS_ENABLED(CONFIG_CMD_PD_TIMER) && !strcasecmp(argv[2], "timer")) {
@@ -232,6 +261,9 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"\n\t<port> suspend|resume"
 			"\n\t<port> dualrole [on|off|freeze|sink|source]"
 			"\n\t<port> swap [power|data|vconn]"
+#ifdef CONFIG_USB_PD_EPR
+			"\n\t<port> epr [enter|exit]"
+#endif
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 			,
 			"USB PD");

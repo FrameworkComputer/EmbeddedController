@@ -610,6 +610,10 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #endif
 #endif /* TEST_USB_PD || TEST_USB_PD_GIVEBACK || TEST_USB_PD_REV30 */
 
+#ifdef TEST_USB_PD_CONSOLE
+#define CONFIG_USB_PD_EPR
+#endif
+
 #ifdef TEST_USB_PPC
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
