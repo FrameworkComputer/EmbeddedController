@@ -34,11 +34,6 @@ GPIO_INT(USB_A0_OC_ODL,              PIN(3, 1), GPIO_INPUT | GPIO_PULL_UP | GPIO
 GPIO_INT(USB_A1_OC_ODL,              PIN(3, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A2_OC_ODL,              PIN(2, 7), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A3_OC_ODL,              PIN(2, 6), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
-#ifdef SECTION_IS_RW
-GPIO_INT(QI_INT_ODL,                 PIN(9, 6), GPIO_INT_FALLING, pchg_irq)
-#else
-UNIMPLEMENTED(QI_INT_ODL)
-#endif
 
 /* CCD */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -86,10 +81,6 @@ GPIO(NFC_LOW_POWER_MODE,             PIN(9, 5), GPIO_OUT_HIGH)
 GPIO(NFC_CARD_DET_L,                 PIN(A, 3), GPIO_INPUT)
 GPIO(EN_NFC_BUZZER,                  PIN(0, 5), GPIO_OUT_LOW)
 
-/* Wireless Charger */
-GPIO(EC_QI_PWR,                      PIN(D, 2), GPIO_OUT_LOW)
-GPIO(QI_RESET_L,                     PIN(9, 3), GPIO_OUT_HIGH)
-
 /* HDMI CEC */
 /* TODO(b/197474873): Enable HDMI CEC */
 GPIO(HDMI_CEC_IN,                    PIN(4, 0), GPIO_INPUT)
@@ -97,8 +88,6 @@ GPIO(HDMI_CEC_OUT,                   PIN(D, 3), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(HDMI_CEC_PULL_UP,               PIN(C, 2), GPIO_OUT_HIGH)
 
 /* I2C SCL/SDA */
-GPIO(EC_I2C_QI_SCL,                  PIN(3, 3), GPIO_INPUT)
-GPIO(EC_I2C_QI_SDA,                  PIN(3, 6), GPIO_INPUT)
 GPIO(EC_I2C_MISC_SCL_R,              PIN(B, 3), GPIO_INPUT)
 GPIO(EC_I2C_MISC_SDA_R,              PIN(B, 2), GPIO_INPUT)
 GPIO(EC_I2C_DP_SCL,                  PIN(B, 5), GPIO_INPUT)
@@ -153,7 +142,6 @@ IOEX(USB_C2_FRS_EN,          EXPIN(IOEX_C2_NCT38XX, 0, 6), GPIO_LOW)
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
 
 /* I2C alternate functions */
-ALTERNATE(PIN_MASK(3, 0x48), 0, MODULE_I2C, 0)               /* GPIO33/I2C5_SCL0/CTS_L, GPIO36/RTS_L/I2C5_SDA0 */
 ALTERNATE(PIN_MASK(8, 0x80), 0, MODULE_I2C, 0)               /* GPIO87/I2C1_SDA0 */
 ALTERNATE(PIN_MASK(9, 0x07), 0, MODULE_I2C, 0)               /* GPIO92/I2C2_SCL0, GPIO91/I2C2_SDA0, GPIO90/I2C1_SCL0 */
 ALTERNATE(PIN_MASK(B, 0x0c), 0, MODULE_I2C, 0)               /* GPIOB3/I2C7_SCL0/DCD_L, GPIOB2/I2C7_SDA0/DSR_L */

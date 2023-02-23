@@ -12,7 +12,6 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/tcpm/tcpci.h"
-#include "driver/wpc/cps8100.h"
 #include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
@@ -41,36 +40,6 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
-
-struct pchg pchgs[] = {
-	[0] = {
-		.cfg = &(const struct pchg_config) {
-			.drv = &cps8100_drv,
-			.i2c_port = I2C_PORT_QI,
-			.irq_pin = GPIO_QI_INT_ODL,
-			.full_percent = 96,
-			.block_size = 128,
-		},
-		.policy = {
-			[PCHG_CHIPSET_STATE_ON] = &pchg_policy_on,
-			[PCHG_CHIPSET_STATE_SUSPEND] = &pchg_policy_suspend,
-		},
-		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
-	},
-};
-
-int board_get_pchg_count(void)
-{
-	return ARRAY_SIZE(pchgs);
-}
-
-__override void board_pchg_power_on(int port, bool on)
-{
-	if (port == 0)
-		gpio_set_level(GPIO_EC_QI_PWR, on);
-	else
-		CPRINTS("%s: Invalid port=%d", __func__, port);
-}
 
 /******************************************************************************/
 
