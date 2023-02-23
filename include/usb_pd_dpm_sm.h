@@ -13,6 +13,14 @@
 
 #include "ec_commands.h"
 #include "usb_pd_tcpm.h"
+#include "usb_sm.h"
+
+/**
+ * Sets the debug level for the DPM layer
+ *
+ * @param level debug level
+ */
+void dpm_set_debug_level(enum debug_level level);
 
 /*
  * Initializes DPM state for a port.

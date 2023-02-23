@@ -39,6 +39,7 @@ static
 			else if (level > DEBUG_LEVEL_MAX)
 				level = DEBUG_LEVEL_MAX;
 
+			dpm_set_debug_level(level);
 			prl_set_debug_level(level);
 			pe_set_debug_level(level);
 			tc_set_debug_level(level);

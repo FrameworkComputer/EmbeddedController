@@ -19,6 +19,7 @@
 /* Defined in implementation */
 int command_pd(int argc, const char **argv);
 
+static enum debug_level dpm_debug_level;
 static enum debug_level prl_debug_level;
 static enum debug_level pe_debug_level;
 static enum debug_level tc_debug_level;
@@ -90,6 +91,11 @@ void pd_timer_dump(int port)
 void pd_srccaps_dump(int port)
 {
 	pd_srccaps_dump_called = true;
+}
+
+void dpm_set_debug_level(enum debug_level level)
+{
+	dpm_debug_level = level;
 }
 
 void prl_set_debug_level(enum debug_level level)
@@ -273,6 +279,7 @@ static int test_command_pd_dump(void)
 		sprintf(test, "%d", i);
 		argv[2] = test;
 		TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
+		TEST_ASSERT(dpm_debug_level == i);
 		TEST_ASSERT(prl_debug_level == i);
 		TEST_ASSERT(pe_debug_level == i);
 		TEST_ASSERT(tc_debug_level == i);
@@ -280,6 +287,7 @@ static int test_command_pd_dump(void)
 
 	sprintf(test, "%d", DEBUG_LEVEL_MAX + 1);
 	argv[2] = test;
+	TEST_ASSERT(dpm_debug_level == DEBUG_LEVEL_MAX);
 	TEST_ASSERT(prl_debug_level == DEBUG_LEVEL_MAX);
 	TEST_ASSERT(pe_debug_level == DEBUG_LEVEL_MAX);
 	TEST_ASSERT(tc_debug_level == DEBUG_LEVEL_MAX);
