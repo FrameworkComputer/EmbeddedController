@@ -46,6 +46,7 @@
 /* Input state flags */
 #define IN_SUSPEND_ASSERTED POWER_SIGNAL_MASK(AP_IN_S3)
 #define IN_AP_RST POWER_SIGNAL_MASK(AP_IN_RST)
+#define IN_PG_PP4200_S5 POWER_SIGNAL_MASK(PG_PP4200_S5)
 
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #define FORCED_SHUTDOWN_DELAY (8 * SECOND)
