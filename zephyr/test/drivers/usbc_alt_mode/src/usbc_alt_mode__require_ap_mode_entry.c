@@ -94,3 +94,33 @@ ZTEST_F(usbc_alt_mode, verify_mode_exit_via_pd_host_cmd)
 	status = host_cmd_typec_status(TEST_PORT);
 	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED), 0);
 }
+
+ZTEST_F(usbc_alt_mode, verify_early_status_hpd_set)
+{
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		ztest_test_skip();
+	}
+
+	/*
+	 * Tweak our DP:Status reply to set HPD and ensure it's transmitted
+	 * through our HPD GPIO
+	 */
+	fixture->partner.dp_status_vdm[VDO_INDEX_HDR + 1] =
+		/* Mainly copied from hoho */
+		VDO_DP_STATUS(0, /* IRQ_HPD */
+			      true, /* HPD_HI|LOW - Changed*/
+			      0, /* request exit DP */
+			      0, /* request exit USB */
+			      0, /* MF pref */
+			      true, /* DP Enabled */
+			      0, /* power low e.g. normal */
+			      0x2 /* Connected as Sink */);
+
+	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+	k_sleep(K_SECONDS(1));
+
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
+}

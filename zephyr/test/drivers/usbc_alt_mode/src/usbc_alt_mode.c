@@ -180,7 +180,6 @@ static void *usbc_alt_mode_setup(void)
 	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
 
 	add_discovery_responses(partner);
-	add_displayport_mode_responses(partner);
 
 	return &fixture;
 }
@@ -195,6 +194,8 @@ static void usbc_alt_mode_before(void *data)
 
 	struct usbc_alt_mode_fixture *fixture = data;
 
+	/* Re-populate our usual responses in case a test overrode them */
+	add_displayport_mode_responses(&fixture->partner);
 	connect_partner_to_port(fixture->tcpci_emul, fixture->charger_emul,
 				&fixture->partner, &fixture->src_ext);
 }
@@ -399,6 +400,67 @@ ZTEST_F(usbc_alt_mode, verify_hpd_clear)
 	zassert_not_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
 			  USB_PD_MUX_HPD_LVL);
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+}
+
+ZTEST_F(usbc_alt_mode, verify_hpd_irq_set)
+{
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+		k_sleep(K_SECONDS(1));
+	}
+
+	/*
+	 * Set our HPD to high and toggle the IRQ low to high
+	 */
+	uint32_t vdm_attention_data[2];
+
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(1) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION);
+	vdm_attention_data[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+	k_sleep(K_SECONDS(1));
+
+	/* Verify that HPD notification triggered */
+	struct ec_response_typec_status status;
+
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
+		      USB_PD_MUX_HPD_LVL);
+	zassert_not_equal((status.mux_state & USB_PD_MUX_HPD_IRQ),
+			  USB_PD_MUX_HPD_IRQ);
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
+
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
+
+	k_sleep(K_SECONDS(1));
+	/* Verify that HPD IRQ set now */
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_HPD_LVL),
+		      USB_PD_MUX_HPD_LVL);
+	zassert_equal((status.mux_state & USB_PD_MUX_HPD_IRQ),
+		      USB_PD_MUX_HPD_IRQ);
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
 }
 
 ZTEST_F(usbc_alt_mode, verify_discovery_via_pd_host_cmd)
