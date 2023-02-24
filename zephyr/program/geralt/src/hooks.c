@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "charger.h"
+#include "driver/charger/rt9490.h"
+#include "extpower.h"
 #include "gpio/gpio_int.h"
 #include "gpio_signal.h"
 #include "hooks.h"
@@ -85,3 +88,10 @@ static int install_suspend_handler(const struct device *unused)
 }
 
 SYS_INIT(install_suspend_handler, APPLICATION, 1);
+
+static void board_hook_ac_change(void)
+{
+	rt9490_enable_adc(CHARGER_SOLO, extpower_is_present());
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_hook_ac_change, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_hook_ac_change, HOOK_PRIO_LAST);
