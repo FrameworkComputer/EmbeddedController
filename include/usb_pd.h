@@ -134,8 +134,8 @@ enum pd_rx_errors {
 	 PDO_AUG_MAX_CURR(max_ma) | PDO_TYPE_AUGMENTED)
 
 /* RDO : Request Data Object */
-#define RDO_OBJ_POS(n) (((n)&0x7) << 28)
-#define RDO_POS(rdo) (((rdo) >> 28) & 0x7)
+#define RDO_OBJ_POS(n) (((n)&0xF) << 28)
+#define RDO_POS(rdo) (((rdo) >> 28) & 0xF)
 #define RDO_GIVE_BACK BIT(27)
 #define RDO_CAP_MISMATCH BIT(26)
 #define RDO_COMM_CAP BIT(25)
