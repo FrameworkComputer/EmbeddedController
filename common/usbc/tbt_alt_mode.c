@@ -560,7 +560,7 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 
 uint32_t pd_get_tbt_mode_vdo(int port, enum tcpci_msg_type type)
 {
-	uint32_t tbt_mode_vdo[PDO_MODES];
+	uint32_t tbt_mode_vdo[VDO_MAX_OBJECTS];
 
 	return pd_get_mode_vdo_for_svid(port, type, USB_VID_INTEL,
 					tbt_mode_vdo) ?

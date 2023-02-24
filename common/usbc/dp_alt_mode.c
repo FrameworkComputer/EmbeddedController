@@ -260,7 +260,7 @@ void dp_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 					    uint32_t *vdm)
 {
-	uint32_t mode_vdos[PDO_MODES];
+	uint32_t mode_vdos[VDO_MAX_OBJECTS];
 	int vdo_count_ret;
 
 	if (*vdo_count < VDO_MAX_SIZE)
@@ -401,7 +401,7 @@ int svdm_dp_status(int port, uint32_t *payload)
  */
 int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 {
-	uint32_t mode_vdos[PDO_MODES];
+	uint32_t mode_vdos[VDO_MAX_OBJECTS];
 	uint32_t mode_caps;
 	uint32_t pin_caps;
 	int mf_pref;

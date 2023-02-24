@@ -595,7 +595,7 @@ static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 	r->svid = pd_get_svid(p->port, p->svid_idx, TCPCI_MSG_SOP);
 	r->opos = 0;
 	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPCI_MSG_SOP),
-	       sizeof(uint32_t) * PDO_MODES);
+	       sizeof(uint32_t) * VDO_MAX_OBJECTS);
 	modep = pd_get_amode_data(p->port, TCPCI_MSG_SOP, r->svid);
 
 	if (modep)

@@ -77,7 +77,6 @@ enum pd_rx_errors {
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS 7
-#define PDO_MODES (PDO_MAX_OBJECTS - 1)
 
 /* PDO : Power Data Object */
 /*
@@ -348,7 +347,7 @@ struct svid_mode_data {
 	/* The number of modes discovered for this SVID */
 	int mode_cnt;
 	/* The discovered mode VDOs */
-	uint32_t mode_vdo[PDO_MODES];
+	uint32_t mode_vdo[VDO_MAX_OBJECTS];
 	/* State of mode discovery for this SVID */
 	enum pd_discovery_state discovery;
 };
@@ -417,10 +416,10 @@ union disc_ident_ack {
 		uint32_t product_t3;
 	};
 
-	uint32_t raw_value[PDO_MAX_OBJECTS - 1];
+	uint32_t raw_value[VDO_MAX_OBJECTS];
 };
 BUILD_ASSERT(sizeof(union disc_ident_ack) ==
-	     sizeof(uint32_t) * (PDO_MAX_OBJECTS - 1));
+	     sizeof(uint32_t) * (VDO_MAX_OBJECTS));
 
 /* Discover Identity data - ACK plus discovery state */
 struct identity_data {
@@ -2041,7 +2040,7 @@ enum pd_discovery_state pd_get_modes_discovery(int port,
  * @param type     Transmit type (SOP, SOP') for VDM
  * @param svid     SVID to get
  * @param vdo_out  Discover Mode VDO response to set
- *                 Note: It must be able to fit wihin PDO_MODES VDOs.
+ *                 Note: It must be able to fit within PDO_MAX_OBJECTS VDOs.
  * @return         Mode VDO cnt of specified SVID if is discovered,
  *                 0 otherwise
  */

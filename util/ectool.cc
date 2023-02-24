@@ -2603,7 +2603,7 @@ static int in_gfu_mode(int *opos, int port)
 	}
 
 	*opos = 0; /* invalid ... must be 1 thru 6 */
-	for (i = 0; i < PDO_MODES; i++) {
+	for (i = 0; i < VDO_MAX_OBJECTS; i++) {
 		if (r->vdo[i] == MODE_GOOGLE_FU) {
 			*opos = i + 1;
 			break;
@@ -2906,7 +2906,7 @@ int cmd_pd_get_amode(int argc, char *argv[])
 		if (!r->svid)
 			break;
 		printf("%cSVID:0x%04x ", (r->opos) ? '*' : ' ', r->svid);
-		for (i = 0; i < PDO_MODES; i++) {
+		for (i = 0; i < VDO_MAX_OBJECTS; i++) {
 			printf("%c0x%08x ",
 			       (r->opos && (r->opos == i + 1)) ? '*' : ' ',
 			       r->vdo[i]);
