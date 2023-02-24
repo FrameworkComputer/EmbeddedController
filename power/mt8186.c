@@ -47,6 +47,7 @@
 #define IN_SUSPEND_ASSERTED POWER_SIGNAL_MASK(AP_IN_S3)
 #define IN_AP_RST POWER_SIGNAL_MASK(AP_IN_RST)
 #define IN_PG_PP4200_S5 POWER_SIGNAL_MASK(PG_PP4200_S5)
+#define IN_PMIC_AP_RST POWER_SIGNAL_MASK(PMIC_AP_RST)
 
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #define FORCED_SHUTDOWN_DELAY (8 * SECOND)
@@ -59,6 +60,8 @@
 #define PMIC_EN_PULSE_MS 50
 /* PMIC hard off delay with 20% tolerance. */
 #define PMIC_HARD_OFF_DELAY (8 * SECOND / 100 * 120)
+/* Timeout for PMIC resetting AP after hard off. */
+#define PMIC_AP_RESET_TIMEOUT (1 * SECOND)
 
 /* 30 ms for hard reset, we hold it longer to prevent TPM false alarm. */
 #define SYS_RST_PULSE_LENGTH (50 * MSEC)
@@ -327,6 +330,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_G3S5:
 #if DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
+		power_signal_enable_interrupt(GPIO_PMIC_EC_RESETB);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5), 1);
 		if (power_wait_mask_signals_timeout(IN_PG_PP4200_S5,
 						    IN_PG_PP4200_S5,
@@ -429,7 +433,12 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 #if DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
+		if (power_wait_mask_signals_timeout(IN_PMIC_AP_RST,
+						    IN_PMIC_AP_RST,
+						    PMIC_AP_RESET_TIMEOUT))
+			CPRINTS("PMIC reset AP timeout. Forcing PMIC off");
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5), 0);
+		power_signal_disable_interrupt(GPIO_PMIC_EC_RESETB);
 #endif
 		return POWER_G3;
 	default:

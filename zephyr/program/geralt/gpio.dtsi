@@ -161,7 +161,9 @@
 			gpios = <&gpiob 5 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 		};
 		pmic_ec_resetb: pmic-ec-resetb {
-			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
 		};
 
 		/*

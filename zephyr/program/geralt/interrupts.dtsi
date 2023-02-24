@@ -71,6 +71,11 @@
 			flags = <GPIO_INT_EDGE_RISING>;
 			handler = "chipset_reset_request_interrupt";
 		};
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
 		int_ap_in_rst: ap-in-rst {
 			irq-pin = <&ap_sysrst_odl_r>;
 			flags = <GPIO_INT_EDGE_BOTH>;

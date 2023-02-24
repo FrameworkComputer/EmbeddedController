@@ -27,5 +27,9 @@
 			power-enum-name = "PG_PP4200_S5";
 			power-gpio-pin = <&pg_pp4200_s5_od>;
 		};
+		pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&pmic_ec_resetb>;
+		};
 	};
 };

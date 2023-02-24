@@ -8,7 +8,7 @@ include: power-signal-list.yaml
 
 properties:
   power-signals-required:
-    default: 5
+    default: 6
 
 child-binding:
   properties:
@@ -19,3 +19,4 @@ child-binding:
         - AP_WDT_ASSERTED
         - AP_WARM_RST_REQ
         - PG_PP4200_S5
+        - PMIC_AP_RST
