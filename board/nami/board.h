@@ -223,13 +223,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT,
 };
 
-enum f75303_index {
-	F75303_IDX_LOCAL = 0,
-	F75303_IDX_REMOTE1,
-	F75303_IDX_REMOTE2,
-	F75303_IDX_COUNT,
-};
-
 /*
  * Motion sensors:
  * When reading through IO memory is set up for sensors (LPC is used),

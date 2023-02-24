@@ -149,21 +149,15 @@ enum tmp112_sensor {
 
 /* F75303 access array */
 /*
- * Get the F75303 sensor ID from a hardware device node.
+ * Get the F75303 sensor ID.
+ *
+ * The F75303 driver only supports a single device instance on the board. Each
+ * device supports 3 temperature sensor types: local, remote1, and remote2.
+ * Use the temperature sensor type as the sensor ID.
  *
  * @param node_id: node id of a hardware F75303 sensor node
  */
-#define F75303_SENSOR_ID(node_id) DT_CAT(F75303_, node_id)
-#define F75303_SENSOR_ID_WITH_COMMA(node_id) F75303_SENSOR_ID(node_id),
-
-/* clang-format off */
-enum f75303_sensor {
-	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, F75303_SENSOR_ID_WITH_COMMA)
-	F75303_IDX_COUNT,
-};
-/* clang-format on */
-
-#undef F75303_SENSOR_ID_WITH_COMMA
+#define F75303_SENSOR_ID(node_id) DT_STRING_TOKEN(node_id, temperature_type)
 
 struct zephyr_temp_sensor {
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */

@@ -8,3 +8,14 @@ description: >
 compatible: "cros-ec,temp-sensor-f75303"
 
 include: i2c-device.yaml
+
+properties:
+  temperature-type:
+    type: string
+    required: true
+    description:
+      One temperature sensor have three sensor type.
+    enum:
+      - F75303_IDX_LOCAL
+      - F75303_IDX_REMOTE1
+      - F75303_IDX_REMOTE2

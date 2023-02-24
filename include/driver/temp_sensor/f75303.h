@@ -1,12 +1,12 @@
-/* Copyright 2018 The ChromiumOS Authors
+/* Copyright 2023 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* F75303 temperature sensor module for Chrome EC */
-
 #ifndef __CROS_EC_F75303_H
 #define __CROS_EC_F75303_H
+
+#include "i2c.h"
 
 #ifdef BOARD_MUSHU
 #define F75303_I2C_ADDR_FLAGS 0x4D
@@ -28,10 +28,21 @@ struct f75303_sensor_t {
 
 extern const struct f75303_sensor_t f75303_sensors[];
 
-/* F75303 register */
-#define F75303_TEMP_LOCAL 0x00
-#define F75303_TEMP_REMOTE1 0x01
-#define F75303_TEMP_REMOTE2 0x23
+/*
+ * The F75303 driver only supports a single device instance on the board.
+ * Each device supports 3 temperature sensor types: local, remote1, and
+ * remote2. The f75303_index selects the temperature sensor type to read.
+ */
+enum f75303_index {
+	F75303_IDX_LOCAL,
+	F75303_IDX_REMOTE1,
+	F75303_IDX_REMOTE2,
+	F75303_IDX_COUNT,
+};
+
+#define F75303_TEMP_LOCAL_REGISTER 0x00
+#define F75303_TEMP_REMOTE1_REGISTER 0x01
+#define F75303_TEMP_REMOTE2_REGISTER 0x23
 
 /**
  * Get the last polled value of a sensor.
