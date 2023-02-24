@@ -4315,6 +4315,12 @@
 /* Define if tcpc on the board supports VBUS measurement */
 #undef CONFIG_USB_PD_VBUS_MEASURE_TCPC
 
+/*
+ * Define if system use stand alone pd solution.
+ * For stand alone solution, PD control VBUS itself, and will notify ec.
+ */
+#undef CONFIG_USB_PD_VBUS_CTRL_BY_PD_CHIP
+
 /* Define the type-c port controller I2C base address. */
 #define CONFIG_TCPC_I2C_BASE_ADDR_FLAGS 0x4E
 
