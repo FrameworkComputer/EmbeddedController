@@ -205,19 +205,6 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 	 */
 }
 
-__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
-{
-	int ilim3A;
-
-	if (port < 0 || port > CONFIG_USB_PD_PORT_MAX_COUNT)
-		return;
-
-	/* Switch between 1.5A and 3A ILIM values */
-	ilim3A = (rp == TYPEC_RP_3A0);
-
-	tcpm_select_rp_value(0, ilim3A);
-}
-
 /******************************************************************************/
 /*
  * Since dibbi has no battery, it must source all of its power from either
