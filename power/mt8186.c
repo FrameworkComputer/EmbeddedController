@@ -56,7 +56,8 @@
 /* Maximum time it should for PMIC to turn on after toggling PMIC_EN_ODL. */
 #define PMIC_EN_TIMEOUT (300 * MSEC)
 #define PMIC_EN_PULSE_MS 50
-#define PMIC_HARD_OFF_DELAY (8 * SECOND)
+/* PMIC hard off delay with 20% tolerance. */
+#define PMIC_HARD_OFF_DELAY (8 * SECOND / 100 * 120)
 
 /* 30 ms for hard reset, we hold it longer to prevent TPM false alarm. */
 #define SYS_RST_PULSE_LENGTH (50 * MSEC)
