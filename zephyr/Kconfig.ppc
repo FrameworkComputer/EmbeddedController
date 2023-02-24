@@ -60,6 +60,15 @@ config PLATFORM_EC_USBC_PPC_AOZ1380
 	  provide all the functionality and protection needed for sourcing
 	  and sinking current through a USB Type-C port with PD capability.
 
+config PLATFORM_EC_USBC_PPC_TCPCI
+	bool "USB-C TCPCI PD Sink and Source Protection Switch"
+	select PLATFORM_EC_USBC_OCP
+	help
+	  A TCPC which supports TCPCI integrates two power switches and control
+	  circuitry to provide the functionality and protection needed for
+	  sourcing and sinking current through a USB Type-C port with PD
+	  capability.
+
 config PLATFORM_EC_USBC_PPC_RT1718S
 	bool "Richtek RT1718S TCPC/PPC"
 	select PLATFORM_EC_USB_PD_TCPM_RT1718S
