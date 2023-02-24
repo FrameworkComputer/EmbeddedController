@@ -200,19 +200,19 @@
 &i2c6_1 {
 	/delete-node/ soc-pct2075@48;
 	/delete-node/ amb-pct2075@4f;
-	f75303_local: f75303-local@4f {
+	f75303_local: f75303-local@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		reg = <0x4f>;
+		reg = <0x4d>;
 		temperature-type = "F75303_IDX_LOCAL";
 	};
-	f75303_remote_1: f75303-remote-1@4f {
+	f75303_remote_1: f75303-remote-1@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		reg = <0x4f>;
+		reg = <0x4d>;
 		temperature-type = "F75303_IDX_REMOTE1";
 	};
-	f75303_remote_2: f75303-remote-2@4f {
+	f75303_remote_2: f75303-remote-2@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		reg = <0x4f>;
+		reg = <0x4d>;
 		temperature-type = "F75303_IDX_REMOTE2";
 	};
 };
