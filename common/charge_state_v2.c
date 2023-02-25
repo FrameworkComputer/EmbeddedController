@@ -2567,23 +2567,22 @@ DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, charge_command_charge_control,
 static enum ec_status
 charge_command_current_limit(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_current_limit *p = args->params;
-
-	/* Version 0 only supports setting a charge current limit */
 	if (args->version == 0) {
+		const struct ec_params_current_limit *p = args->params;
 		user_current_limit = p->limit;
 		current_limit.value = p->limit;
-		return EC_RES_SUCCESS;
-	}
+	} else {
+		const struct ec_params_current_limit_v1 *p = args->params;
 
-	/* Check if battery state of charge param is within range */
-	if (p->battery_soc > 100) {
-		CPRINTS("Invalid battery_soc: %d", p->battery_soc);
-		return EC_RES_INVALID_PARAM;
-	}
+		/* Check if battery state of charge param is within range */
+		if (p->battery_soc > 100) {
+			CPRINTS("Invalid battery_soc: %d", p->battery_soc);
+			return EC_RES_INVALID_PARAM;
+		}
 
-	current_limit.value = p->limit;
-	current_limit.soc = p->battery_soc;
+		current_limit.value = p->limit;
+		current_limit.soc = p->battery_soc;
+	}
 
 	return EC_RES_SUCCESS;
 }

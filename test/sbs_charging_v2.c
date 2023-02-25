@@ -699,7 +699,7 @@ test_static int test_hc_current_limit(void)
 test_static int test_hc_current_limit_v1(void)
 {
 	int rv, norm_current, lower_current, current;
-	struct ec_params_current_limit params;
+	struct ec_params_current_limit_v1 params;
 
 	/* On AC */
 	test_setup(1);
