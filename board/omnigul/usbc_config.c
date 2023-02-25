@@ -73,7 +73,7 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0_PPC,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.i2c_addr_flags = SYV682X_ADDR2_FLAGS,
 		.frs_en = IOEX_USB_C0_FRS_EN,
 		.drv = &syv682x_drv,
 	},
