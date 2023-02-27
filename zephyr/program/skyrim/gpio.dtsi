@@ -259,9 +259,6 @@
 			gpios = <&gpioc 1 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
-		ec_gpio56 {
-			gpios = <&gpio5 6 GPIO_INPUT_PULL_UP>;
-		};
 		ec_flprg2 {
 			gpios = <&gpio8 6 GPIO_INPUT_PULL_UP>;
 		};
