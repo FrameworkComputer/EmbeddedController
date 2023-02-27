@@ -13,19 +13,19 @@
 #include "usb_spi.h"
 #include "util.h"
 
-#define OCTOSPI_CLOCK (16000000UL)
-#define SPI_CLOCK (16000000UL)
+#define OCTOSPI_CLOCK (CPU_CLOCK)
+#define SPI_CLOCK (CPU_CLOCK)
 
-/* SPI devices, default to 250 kb/s for all. */
+/* SPI devices, default to 406 kb/s for all. */
 struct spi_device_t spi_devices[] = {
 	{ .name = "SPI2",
 	  .port = 1,
-	  .div = 5,
+	  .div = 7,
 	  .gpio_cs = GPIO_CN9_25,
 	  .usb_flags = USB_SPI_ENABLED },
 	{ .name = "QSPI",
 	  .port = -1 /* OCTOSPI */,
-	  .div = 63,
+	  .div = 255,
 	  .gpio_cs = GPIO_CN10_6,
 	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE },
 };
@@ -121,9 +121,11 @@ static int command_spi_set_speed(int argc, const char **argv)
 		 * slightly slower speed than requested, if it cannot be matched
 		 * exactly.
 		 */
-		spi_devices[index].div =
+		int divisor =
 			(OCTOSPI_CLOCK + desired_speed - 1) / desired_speed - 1;
-		STM32_OCTOSPI_DCR2 = spi_devices[index].div;
+		if (divisor >= 256)
+			divisor = 255;
+		STM32_OCTOSPI_DCR2 = spi_devices[index].div = divisor;
 	} else {
 		int divisor = 7;
 		/*
