@@ -68,6 +68,9 @@ struct mkbp_state {
 static struct mkbp_state state;
 uint32_t mkbp_last_event_time;
 
+static const int ap_comm_failure_threshold = 2;
+static int ap_comm_failure_count;
+
 #ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
 static uint32_t mkbp_event_wake_mask = CONFIG_MKBP_EVENT_WAKEUP_MASK;
 #endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
@@ -310,6 +313,7 @@ static void force_mkbp_if_events(void)
 		 * activate_mkbp_with_events() will set interrupt state to
 		 * ACTIVE before this function will be called.
 		 */
+		++ap_comm_failure_count;
 		if (++state.failed_attempts < 3) {
 			send_mkbp_interrupt = 1;
 			toggled = 1;
@@ -329,8 +333,18 @@ static void force_mkbp_if_events(void)
 	}
 	mutex_unlock(&state.lock);
 
-	if (toggled)
-		CPRINTS("MKBP not cleared within threshold, toggling.");
+	if (toggled) {
+		/**
+		 * Don't spam the EC logs when the AP is hung. Instead, log the
+		 * first few failures, and then indicate the AP is likely hung.
+		 */
+		if (ap_comm_failure_count < ap_comm_failure_threshold) {
+			CPRINTS("MKBP not cleared within threshold, toggling.");
+		} else if (ap_comm_failure_count == ap_comm_failure_threshold) {
+			CPRINTS("MKBP: The AP is failing to respond despite "
+				"being powered on.");
+		}
+	}
 
 	if (send_mkbp_interrupt)
 		activate_mkbp_with_events(0);
@@ -358,8 +372,14 @@ static int set_inactive_if_no_events(void)
 	mutex_unlock(&state.lock);
 
 	/* Cancel our safety net since the events were cleared. */
-	if (interrupt_cleared)
+	if (interrupt_cleared) {
 		hook_call_deferred(&force_mkbp_if_events_data, -1);
+		/**
+		 * This AP communication was successful.
+		 * Reset the count to log the next AP communication failure.
+		 */
+		ap_comm_failure_count = 0;
+	}
 
 	return interrupt_cleared;
 }
