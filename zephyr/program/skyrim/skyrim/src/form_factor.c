@@ -40,7 +40,7 @@ static void form_factor_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, form_factor_init, HOOK_PRIO_POST_I2C);
 
-static void clamshell_init(void)
+test_export_static void clamshell_init(void)
 {
 	int ret;
 	uint32_t val;

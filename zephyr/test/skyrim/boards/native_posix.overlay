@@ -54,10 +54,47 @@
 			gpios = <&gpio0 8 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_SBU_FLIP";
 		};
+
+		gpio_accel_gyro_int_l: accel_gyro_int_l {
+			gpios = <&gpio0 9 GPIO_INPUT>;
+		};
+
+		tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio0 11 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_accel_gyro: accel_gyro {
+			irq-pin = <&gpio_accel_gyro_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
 	};
 
 	skyrim-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
+
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <0>;
+			size = <1>;
+
+			ff-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CLAMSHELL";
+				value = <0>;
+			};
+			ff-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CONVERTIBLE";
+				value = <1>;
+				default;
+			};
+		};
 
 		io-db {
 			enum-name = "FW_IO_DB";
@@ -116,6 +153,21 @@
 				value = <1>;
 			};
 		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		eeprom {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_EEPROM";
+		};
+
+		i2c_sensor: sensor {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+
 	};
 };
 

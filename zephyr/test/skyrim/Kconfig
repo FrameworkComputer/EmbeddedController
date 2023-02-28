@@ -62,6 +62,15 @@ config TEST_BOARD_FAN_CUSTOM
 	bool "ENable fan tests with a variant-specific test file"
 	select TEST_BOARD_FAN
 
+config TEST_BOARD_FORM_FACTOR
+	select PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT
+	select PLATFORM_EC_GMR_TABLET_MODE
+	select PLATFORM_EC_TABLET_MODE
+	bool "Run the tests intended for form factor testing"
+	help
+	  Include tests which checks accelerometer
+	  interrupt and tablet mode.
+
 config TEST_BOARD_USB_PD_POLICY
 	bool "Enable USB PD policy specific tests"
 	select TEST_ENABLE_USB_PD_HOST_CMD

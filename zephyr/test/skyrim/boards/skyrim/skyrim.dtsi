@@ -1,0 +1,30 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include "../native_posix.overlay"
+#include "../../../../program/skyrim/skyrim/motionsense.dtsi"
+
+/ {
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+
+		lid_rot_ref1: lid-rotation-ref1 {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+};
