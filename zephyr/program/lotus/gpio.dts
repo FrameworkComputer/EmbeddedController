@@ -92,10 +92,10 @@
 		gpu_b_gpio03_ec {
 			gpios = <&gpio2 6 GPIO_ODR_HIGH>;	/* Reserved */
 		};
-		usb3_ec_p2_cc1 {
+		gpio_usb3_ec_p2_cc1: usb3_ec_p2_cc1 {
 			gpios = <&gpio2 5 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
 		};
-		usb3_ec_p2_cc2 {
+		gpio_usb3_ec_p2_cc2: usb3_ec_p2_cc2 {
 			gpios = <&gpio2 4 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
 		};
 		ec_sbub {
