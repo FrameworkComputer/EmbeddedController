@@ -169,7 +169,7 @@
 			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		lid_sw_l {
+		gpio_lid_sw_l: lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;		/* PSL in4 signal, lid switch */
 			enum-name = "GPIO_LID_OPEN";
 		};
