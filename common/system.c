@@ -629,10 +629,10 @@ test_mockable_static void jump_to_image(uintptr_t init_addr)
 	/* Disable interrupts before jump */
 	interrupt_disable_all();
 
-#ifdef CONFIG_DMA
+#ifdef CONFIG_DMA_CROS
 	/* Disable all DMA channels to avoid memory corruption */
 	dma_disable_all();
-#endif /* CONFIG_DMA */
+#endif /* CONFIG_DMA_CROS */
 
 	/* Jump to the reset vector */
 	resetvec = (void (*)(void))init_addr;

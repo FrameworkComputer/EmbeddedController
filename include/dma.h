@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_DMA_H
 #define __CROS_EC_DMA_H
 
-#ifdef CONFIG_DMA
+#ifdef CONFIG_DMA_CROS
 
 #include "common.h"
 #include "registers.h"
@@ -167,5 +167,5 @@ int dma_wait(enum dma_channel channel);
  */
 void dma_init(void);
 
-#endif /* CONFIG_DMA */
+#endif /* CONFIG_DMA_CROS */
 #endif

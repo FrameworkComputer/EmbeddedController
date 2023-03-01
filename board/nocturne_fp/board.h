@@ -91,7 +91,7 @@
 /* Optional features */
 #undef CONFIG_ADC
 #define CONFIG_CMD_IDLE_STATS
-#define CONFIG_DMA
+#define CONFIG_DMA_CROS
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_FPU
 /*

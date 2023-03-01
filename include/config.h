@@ -1987,7 +1987,7 @@
 #undef CONFIG_DEVICE_STATE
 
 /* Support DMA transfers inside the EC */
-#undef CONFIG_DMA
+#undef CONFIG_DMA_CROS
 
 /* Use the common interrupt handlers for DMA IRQs */
 #define CONFIG_DMA_DEFAULT_HANDLERS

@@ -58,7 +58,7 @@ void board_config_pre_init(void)
 					  (3 << 24);
 
 #elif defined(VARIANT_KUKUI_EC_STM32L431)
-#ifdef CONFIG_DMA
+#ifdef CONFIG_DMA_CROS
 	dma_init();
 #endif
 	/*
