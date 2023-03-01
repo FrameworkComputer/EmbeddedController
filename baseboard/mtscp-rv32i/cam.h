@@ -8,9 +8,15 @@
 
 #include "ipi_chip.h"
 
+/*
+ * IMPORTANT:
+ * Please check MAX_MTKCAM_IPI_EVENT_SIZE if IPI message structure changes
+ */
+#define MAX_MTKCAM_IPI_EVENT_SIZE 86
+
 struct cam_msg {
 	unsigned char id;
-	unsigned char msg[86];
+	unsigned char msg[MAX_MTKCAM_IPI_EVENT_SIZE];
 };
 
 BUILD_ASSERT(member_size(struct cam_msg, msg) <=
