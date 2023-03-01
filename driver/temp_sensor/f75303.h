@@ -14,11 +14,16 @@
 #define F75303_I2C_ADDR_FLAGS 0x4C
 #endif
 
-enum f75303_index {
-	F75303_IDX_LOCAL = 0,
-	F75303_IDX_REMOTE1,
-	F75303_IDX_REMOTE2,
-	F75303_IDX_COUNT,
+/*
+ * I2C port and address information for all the board F75303 sensors should be
+ * defined in an array of the following structures, with an enum f75303_sensor
+ * indexing the array.  The enum f75303_sensor shall end with a F75303_IDX_COUNT
+ * defining the maximum number of sensors for the board.
+ */
+
+struct f75303_sensor_t {
+	int i2c_port;
+	int i2c_addr_flags;
 };
 
 /* F75303 register */
