@@ -95,6 +95,7 @@ static int pd_port0_1_5A;
 static int pd_port1_1_5A;
 static int pd_port2_1_5A;
 static int pd_port3_1_5A;
+static int ac_port = -1;
 
 void set_pd_fw_update(bool update)
 {
@@ -228,6 +229,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 {
 	int rv = EC_SUCCESS;
 	int intr_status;
+	int event;
 	rv = cypd_write_reg8(controller, reg, data);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write Reg8 0x%x fail!", reg);
@@ -237,7 +239,30 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		return EC_ERROR_INVAL;
 	}
 	rv = cypd_get_int(controller, &intr_status);
+	if (rv != EC_SUCCESS)
+		return rv;
 	if (intr_status & CYP5525_DEV_INTR) {
+		CPRINTS("data = %d", data);
+		if (data == CYP5525_AC_AT_PORT) {
+			rv = cypd_read_reg8(controller, CYP5525_RESPONSE_REG, &event);
+			CPRINTS("event = %d", event);
+			if (rv != EC_SUCCESS)
+				CPRINTS("fail to read response");
+			switch (event) {
+			case CYPD_RESPONSE_AC_AT_P0:
+				ac_port = (controller * 2) + 0;
+				break;
+			case CYPD_RESPONSE_AC_AT_P1:
+				ac_port = (controller * 2) + 1;
+				break;
+			case CYPD_RESPONSE_NO_AC:
+			case CYPD_RESPONSE_EC_MODE:
+				ac_port = -1;
+				break;
+			}
+			CPRINTS("ac_port = %d", ac_port);
+		} else
+			CPRINTS("unknown event");
 		cypd_clear_int(controller, CYP5525_DEV_INTR);
 	}
 	usleep(50);
@@ -1745,6 +1770,27 @@ static void update_power_limit_deferred(void)
 }
 DECLARE_DEFERRED(update_power_limit_deferred);
 
+int check_power_on_port(void)
+{
+	int rv;
+
+	/* only read CYPD when it ready */
+	if (pd_chip_config[0].state != CYP5525_STATE_READY)
+		return -1;
+
+	CPRINTS("READ C0");
+	rv = cypd_write_reg8_wait_ack(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_AC_AT_PORT);
+	if (rv != EC_SUCCESS)
+		return -1;
+	if (ac_port >= 0)
+		return ac_port;
+	CPRINTS("READ C1");
+	rv = cypd_write_reg8_wait_ack(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_AC_AT_PORT);
+	if (rv != EC_SUCCESS)
+		return -1;
+	return ac_port;
+}
+
 /**
  * Set active charge port -- only one port can be active at a time.
  *
@@ -1757,6 +1803,20 @@ static int prev_charge_port = -1;
 int board_set_active_charge_port(int charge_port)
 {
 	CPRINTS("start change port = %d, prev_charge_port = %d", charge_port, prev_charge_port);
+
+	/* if no battery, EC should not control C_CTRL */
+	if (board_batt_is_present() != BP_YES) {
+		/* check if CYPD ready */
+		if (charge_port == -1)
+			return EC_ERROR_TRY_AGAIN;
+
+		/* store current port and update power limit */
+		CPRINTS("No batt, no change");
+		prev_charge_port = charge_port;
+		hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
+		CPRINTS("Updating %s port %d", __func__, charge_port);
+		return EC_SUCCESS;
+	}
 
 	/* port need change, stop all power and ready to switch. */
 	if (prev_charge_port != -1 && prev_charge_port != charge_port) {

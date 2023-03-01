@@ -140,6 +140,8 @@
 #define CYP5525_P0_CY_P1_OFF			0xA2
 #define CYP5525_P0P1_TURN_OFF_C_CTRL	0xA3
 
+#define CYP5525_AC_AT_PORT				0xC4
+
 /************************************************
  *	PD COMMAND DEFINITION
  * See 001-97863_0N_V.pdf from cypress for the HPI
@@ -192,6 +194,10 @@ enum cypd_response {
 	CYPD_RESPONSE_DISCOVER_MODE_RESPONSE = 0x1A,
 	CYPD_RESPONSE_CABLE_COMM_NOT_ALLOWED = 0x1B,
 	CYPD_RESPONSE_EXT_SNK_CAP = 0x1C,
+	CYPD_RESPONSE_AC_AT_P0 = 0x33,
+	CYPD_RESPONSE_AC_AT_P1 = 0x34,
+	CYPD_RESPONSE_NO_AC = 0x35,
+	CYPD_RESPONSE_EC_MODE = 0x36,
 	CYPD_RESPONSE_FWCT_IDENT_INVALID = 0x40,
 	CYPD_RESPONSE_FWCT_INVALID_GUID = 0x41,
 	CYPD_RESPONSE_FWCT_INVALID_VERSION = 0x42,
@@ -478,5 +484,14 @@ void cypd_release_port(int controller, int port);
 void cypd_ppm_port_clear(void);
 
 int cypd_check_typec_port(int controller, int port);
+
+/**
+ * When chromebook power by ac only, the vbus is enabled by CYPD.
+ * EC should not control it.
+ * EC should read active port from CYPD and sync active port.
+ *
+ * @return active port
+ */
+int check_power_on_port(void);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */
