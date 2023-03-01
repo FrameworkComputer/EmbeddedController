@@ -281,12 +281,23 @@ static void lpc_generate_smi(void)
 
 static void lpc_generate_sci(void)
 {
+#ifndef CONFIG_PLATFORM_EC_SCI_GPIO
 	/* Enforce signal-high for long enough to debounce high */
 	espi_vw_set_wire(VW_SCI_L, 1);
 	udelay(VWIRE_PULSE_TRIGGER_TIME);
 	espi_vw_set_wire(VW_SCI_L, 0);
 	udelay(VWIRE_PULSE_TRIGGER_TIME);
 	espi_vw_set_wire(VW_SCI_L, 1);
+#else
+	/* Enforce signal-high for long enough to debounce high */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_sci_l), 1);
+	udelay(65);
+	/* Generate a falling edge */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_sci_l), 0);
+	udelay(65);
+	/* Set signal high, now that we've generated the edge */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_sci_l), 1);
+#endif
 }
 
 #else

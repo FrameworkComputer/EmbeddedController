@@ -216,6 +216,28 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	return rv;
 }
 
+static void	update_external_cc_mux(int port, int cc)
+{
+	if (port == 1) {
+		switch(cc) {
+			case POLARITY_CC1:
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc1), 1);
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc2), 0);
+				break;
+
+			case POLARITY_CC2:
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc1), 0);
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc2), 1);
+				break;
+
+			default:
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc1), 0);
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc2), 0);
+		}
+	}
+}
+
+
 static void pd0_update_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0);
@@ -325,6 +347,8 @@ static void cypd_update_port_state(int controller, int port)
 		type_c_current = 3000;
 		break;
 	}
+
+	update_external_cc_mux(port_idx,pd_port_states[port_idx].c_state == CCG_STATUS_NOTHING ? 0xFF : pd_port_states[port_idx].cc);
 
 	rv = cypd_read_reg_block(controller, CCG_CURRENT_PDO_REG(port), pdo_reg, 4);
 	pd_current = (pdo_reg[0] + ((pdo_reg[1] & 0x3) << 8)) * 10;

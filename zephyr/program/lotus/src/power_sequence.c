@@ -99,6 +99,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 
 static void chipset_force_g3(void)
 {
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
@@ -210,6 +211,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * currently, I will follow the power on sequence to make sure DUT can
 		 * power up from S5.
 		 */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
 		k_msleep(20);
@@ -247,6 +249,8 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(85);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		return POWER_S3;

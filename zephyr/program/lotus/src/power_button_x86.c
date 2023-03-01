@@ -384,8 +384,9 @@ void chipset_power_on(void)
  */
 static void powerbtn_x86_lid_change(void)
 {
-	/* If chipset is off, pulse the power button on lid open to wake it. */
-	if (lid_is_open()) {
+	/* If chipset in suspend mode, pulse the power button on lid open to wake it. */
+	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)
+	    && pwrbtn_state != PWRBTN_STATE_INIT_ON) {
 		chipset_power_on();
 	}
 }

@@ -17,7 +17,7 @@
 		gpio_edp_mux_pwm_sw: edp_mux_pwm_sw {
 			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;	/* Reserved */
 		};
-		ec_sci_l {
+		gpio_ec_sci_l: ec_sci_l {
 			gpios = <&gpio7 6 GPIO_ODR_HIGH>;	/* Reserved */
 		};
 		ovp {
@@ -92,10 +92,10 @@
 		gpu_b_gpio03_ec {
 			gpios = <&gpio2 6 GPIO_ODR_HIGH>;	/* Reserved */
 		};
-		usb3_ec_p2_cc1 {
+		gpio_usb3_ec_p2_cc1: usb3_ec_p2_cc1 {
 			gpios = <&gpio2 5 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
 		};
-		usb3_ec_p2_cc2 {
+		gpio_usb3_ec_p2_cc2: usb3_ec_p2_cc2 {
 			gpios = <&gpio2 4 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
 		};
 		ec_sbub {
@@ -149,7 +149,7 @@
 		gpio_usb30_hub_en: usb30_hub_en {
 			gpios = <&gpio8 2 GPIO_OUTPUT_HIGH>;
 		};
-		module_oc_l {
+		gpio_module_oc_interrupt: module_oc_l {
 			gpios = <&gpio8 3 GPIO_INPUT>;		/* Detect Hub/B 3V/5V OCP event */
 		};
 		gpio_ec_edp_reset: ec_edp_reset {
@@ -169,7 +169,7 @@
 			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		lid_sw_l {
+		gpio_lid_sw_l: lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;		/* PSL in4 signal, lid switch */
 			enum-name = "GPIO_LID_OPEN";
 		};
@@ -283,7 +283,7 @@
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_sleep_l: sleep_l {
-			gpios = <&gpiod 5 GPIO_INPUT>;
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
 		};
 		gpio_pd_chip1_interrupt: pd_b_i2c_int_ec_l {
 			gpios = <&gpioe 2 GPIO_INPUT>;
