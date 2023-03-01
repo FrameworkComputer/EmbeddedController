@@ -62,4 +62,10 @@ config PLATFORM_EC_HOST_INTERFACE_USB
 
 endchoice # PLATFORM_EC_HOST_INTERFACE_TYPE
 
+config PLATFORM_EC_SCI_GPIO
+	bool "generated the SCI event via GPIO"
+	help
+	  Generated the SCI event vai the EC GPIO. This config just for verifying
+	  the SCI event and will remove when eSPI interface is workable.
+
 endif # PLATFORM_EC_HOSTCMD

@@ -17,7 +17,7 @@
 		edp_mux_pwm_sw {
 			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;	/* Reserved */
 		};
-		ec_sci_l {
+		gpio_ec_sci_l: ec_sci_l {
 			gpios = <&gpio7 6 GPIO_ODR_HIGH>;	/* Reserved */
 		};
 		ovp {
