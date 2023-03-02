@@ -250,4 +250,16 @@ config PLATFORM_EC_CONSOLE_CMD_S5_TIMEOUT
 	  transitioning to the G3 state. This command is useful for power
 	  testing.
 
+config PLATFORM_EC_CDECK_POWER_CONTROL
+	bool "Poll C deck status for power sequencing"
+	default y
+	help
+	  Poll the C deck status and switch on and off if modules are removed or added
+
+config PLATFORM_EC_GPU_POWER_CONTROL
+	bool "Poll GPU status for power sequencing"
+	default y
+	help
+	  EPoll the GPU bay status and switch off if modules are removed
+
 endif # PLATFORM_EC_POWERSEQ

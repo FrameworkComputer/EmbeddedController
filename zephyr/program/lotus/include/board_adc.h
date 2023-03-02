@@ -6,6 +6,8 @@
 #ifndef __BOARD_ADC_H__
 #define __BOARD_ADC_H__
 
+#include "adc.h"
+
 enum board_version_t {
 	BOARD_VERSION_UNKNOWN = -1,
 	BOARD_VERSION_0,
@@ -26,5 +28,7 @@ enum board_version_t {
 	BOARD_VERSION_15,
 	BOARD_VERSION_COUNT,
 };
+
+enum board_version_t get_hardware_id(enum adc_channel channel);
 
 #endif /* __BOARD_LED_H__ */
