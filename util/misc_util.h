@@ -79,4 +79,16 @@ int ec_cmd_version_supported(int cmd, int ver);
  * <major>.<minor>.<sublevel>
  */
 int kernel_version_ge(int major, int minor, int sublevel);
+
+/**
+ * Prints data in hexdump canonical format.
+ *
+ * @param data Buffer of data to print
+ * @param len Length of data to print
+ * @param offset_start Starting offset added to the printed offset.
+ *     This only affects how the offset is printed, it does not affect
+ *     what data is printed.
+ */
+void hexdump_canonical(const uint8_t *data, size_t len, uint32_t offset_start);
+
 #endif
