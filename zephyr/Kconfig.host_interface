@@ -68,4 +68,10 @@ config PLATFORM_EC_SCI_GPIO
 	  Generated the SCI event vai the EC GPIO. This config just for verifying
 	  the SCI event and will remove when eSPI interface is workable.
 
+config PLATFORM_EC_HOST_EVENT64
+	bool "support 64-bit events"
+	help
+	  Config option to support 64-bit hostevents and
+	  wake-masks.
+
 endif # PLATFORM_EC_HOSTCMD

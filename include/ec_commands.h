@@ -769,6 +769,22 @@ enum host_event_code {
 	 * not initialized on the EC, or improperly configured on the host.
 	 */
 	EC_HOST_EVENT_INVALID = 32,
+
+	/* UCSI done */
+	EC_HOST_EVENT_UCSI = 33,
+
+	/* BTP fundtion: update battery capacity */
+	EC_HOST_EVENT_BATT_BTP = 34,
+
+	/* Thermal Qevent fundtion: send Qevent to notice host read acpi temp */
+	EC_HOST_EVENT_THERMAL_QEVENT = 35,
+
+	/* For modern satndby */
+	EC_HOST_EVENT_PB_RELEASE = 51,
+	/*
+	 * Only 64 host events are supported. This enum uses 1-based counting so
+	 * it can skip 0 (NONE), so the last legal host event number is 64.
+	 */
 };
 /* Host event mask */
 #define EC_HOST_EVENT_MASK(event_code) BIT_ULL((event_code)-1)
@@ -810,6 +826,10 @@ enum host_event_code {
 			"KEYBOARD_RECOVERY_HW_REINIT",                         \
 		[EC_HOST_EVENT_WOV] = "WOV",                                   \
 		[EC_HOST_EVENT_INVALID] = "INVALID",                           \
+		[EC_HOST_EVENT_UCSI] = "UCSI",                                 \
+		[EC_HOST_EVENT_BATT_BTP] = "BATTERY_TRIP_POINT",               \
+		[EC_HOST_EVENT_THERMAL_QEVENT] = "THERMAL_QEVENT",             \
+		[EC_HOST_EVENT_PB_RELEASE] = "POWER_BTN_RELEASE",              \
 	}
 /* clang-format on */
 

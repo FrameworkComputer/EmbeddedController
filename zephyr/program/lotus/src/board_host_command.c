@@ -8,15 +8,30 @@
 
 #include "board_host_command.h"
 #include "console.h"
+#include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
+#include "hooks.h"
+#include "lpc.h"
 #include "power_sequence.h"
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
+
+static void sci_enable(void);
+DECLARE_DEFERRED(sci_enable);
+static void sci_enable(void)
+{
+	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & BIT(0)) {
+		/* when host set EC driver ready flag, EC need to enable SCI */
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
+	} else
+		hook_call_deferred(&sci_enable_data, 250 * MSEC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, sci_enable, HOOK_PRIO_DEFAULT);
 
 static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 {

@@ -1737,6 +1737,11 @@ void charger_task(void *u)
 
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+		battery_customize(&curr);
+#endif
+
 #ifdef CONFIG_OCPC
 		if (curr.ac)
 			ocpc_get_adcs(&curr.ocpc);

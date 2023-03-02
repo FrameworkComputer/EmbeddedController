@@ -194,4 +194,8 @@ const struct batt_params *charger_current_battery_params(void);
 /* Config Charger */
 #include "charge_state_v2.h"
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+void battery_customize(struct charge_state_data *curr_batt);
+#endif
+
 #endif /* __CROS_EC_CHARGE_STATE_H */
