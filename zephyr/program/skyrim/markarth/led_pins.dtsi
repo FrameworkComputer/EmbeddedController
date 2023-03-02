@@ -32,10 +32,10 @@
 			led-values = <100 0>;
 		};
 
-		color_white: color-white {
-			led-color = "LED_WHITE";
+		color_blue: color-blue {
+			led-color = "LED_BLUE";
 			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_WHITE";
+			br-color = "EC_LED_COLOR_BLUE";
 			led-pwms = <&pwm_y &pwm_w>;
 			led-values = <0 100>;
 		};
@@ -50,7 +50,7 @@
 	pinctrl-names = "default";
 };
 
-/* White "battery full" LED */
+/* Blue "battery full" LED */
 &pwm3 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
