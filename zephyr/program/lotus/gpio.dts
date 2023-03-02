@@ -14,7 +14,7 @@
 		ec_espi_rst_l {
 			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		edp_mux_pwm_sw {
+		gpio_edp_mux_pwm_sw: edp_mux_pwm_sw {
 			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;	/* Reserved */
 		};
 		gpio_ec_sci_l: ec_sci_l {
@@ -111,7 +111,7 @@
 			gpios = <&gpio2 0 GPIO_ODR_LOW>;
 		};
 		gpio_gpu_3v_5v_en: gpu_3v_5v_en {
-			gpios = <&gpio1 7 GPIO_OUTPUT_HIGH>;	/* Detect GPU/B then enable 3V/5V PWR output H */
+			gpios = <&gpio1 7 GPIO_OUTPUT_LOW>;	/* Detect GPU/B then enable 3V/5V PWR output H */
 		};
 		gpio_wlan_en: wlan_en {
 			gpios = <&gpio1 6 GPIO_OUTPUT_LOW>;
@@ -226,6 +226,15 @@
 		fp_control {
 			gpios = <&gpio6 0 GPIO_INPUT>;		/* Finger Printer feature */
 		};
+		gpio_mux_a0: mux_a0 {
+			gpios = <&gpio3 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_mux_a1: mux_a1 {
+			gpios = <&gpioe 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_mux_a2: mux_a2 {
+			gpios = <&gpiof 1 GPIO_OUTPUT_LOW>;
+		};
 		f_beam_open_l {
 			gpios = <&gpiof 0 GPIO_INPUT>;
 		};
@@ -295,8 +304,6 @@
 		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
-		};
-		gpio_ec_pch_wake_odl: ec_soc_wake_l {
 		};
 	};
 };
