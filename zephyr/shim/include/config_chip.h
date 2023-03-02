@@ -2762,4 +2762,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_CPS8100
 #endif
 
+#undef CONFIG_HOST_EVENT64
+#ifdef CONFIG_PLATFORM_EC_HOST_EVENT64
+#define CONFIG_HOST_EVENT64
+#undef CONFIG_HOST_EVENT_REPORT_MASK
+#define CONFIG_HOST_EVENT_REPORT_MASK 0xffffffffffffffffULL
+#endif
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */
