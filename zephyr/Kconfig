@@ -88,6 +88,7 @@ config PLATFORM_EC_CUSTOMIZED_DESIGN
 	default n
 	help
 	  Enable the customized design in common code.
+	  This config is only used at non-chromeOS project.
 
 config PLATFORM_EC_ACPI
 	bool "Advanced Confiugration and Power Interface (ACPI)"

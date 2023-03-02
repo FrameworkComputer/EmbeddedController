@@ -71,6 +71,7 @@ config PLATFORM_EC_SCI_GPIO
 config PLATFORM_EC_HOST_EVENT64
 	bool "support 64-bit events"
 	help
-	  Config option to support 64-bit hostevents and wake-masks.
+	  Config option to support 64-bit hostevents and
+	  wake-masks.
 
 endif # PLATFORM_EC_HOSTCMD

@@ -143,21 +143,15 @@ void battery_customize(struct charge_state_data *curr_batt)
 	/* BTP: Notify AP update battery */
 	new_btp = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_TRIP_POINT) +
 			(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_TRIP_POINT+1) << 8);
-	if (new_btp > old_btp && !battery_is_cut_off())
-	{
-		if (curr_batt->batt.remaining_capacity > new_btp)
-		{
+	if (new_btp > old_btp && !battery_is_cut_off()) {
+		if (curr_batt->batt.remaining_capacity > new_btp) {
 			old_btp = new_btp;
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			ccprintf ("trigger higher BTP: %d", old_btp);
 		}
-	} else if (new_btp < old_btp && !battery_is_cut_off())
-	{
-		if (curr_batt->batt.remaining_capacity < new_btp)
-		{
+	} else if (new_btp < old_btp && !battery_is_cut_off()) {
+		if (curr_batt->batt.remaining_capacity < new_btp) {
 			old_btp = new_btp;
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			ccprintf ("trigger lower BTP: %d", old_btp);
 		}
 	}
 
