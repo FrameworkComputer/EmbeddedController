@@ -18,6 +18,9 @@
 #include "util.h"
 #include "watchdog.h"
 
+#define BASE_EXCEPTION_FRAME_SIZE_BYTES (8 * sizeof(uint32_t))
+#define FPU_EXCEPTION_FRAME_SIZE_BYTES (18 * sizeof(uint32_t))
+
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
@@ -73,6 +76,53 @@ static void print_reg(int regnum, const uint32_t *regs, int index)
 static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
 {
 	return (exc_return & 0xf) == 1 || (exc_return & 0xf) == 9;
+}
+
+/*
+ * Returns the size of the exception frame.
+ *
+ * See B1.5.7 "Stack alignment on exception entry" of ARM DDI 0403D for details.
+ * In short, the exception frame size can be either 0x20, 0x24, 0x68, or 0x6c
+ * depending on FPU context and padding for 8-byte alignment.
+ */
+static uint32_t get_exception_frame_size(const struct panic_data *pdata)
+{
+	uint32_t frame_size = 0;
+
+	/* base exception frame */
+	frame_size += BASE_EXCEPTION_FRAME_SIZE_BYTES;
+
+	/* CPU uses xPSR[9] to indicate whether it padded the stack for
+	 * alignment or not.
+	 */
+	if (pdata->cm.frame[CORTEX_PANIC_FRAME_REGISTER_PSR] & BIT(9))
+		frame_size += sizeof(uint32_t);
+
+#ifdef CONFIG_FPU
+	/* CPU uses EXC_RETURN[4] to indicate whether it stored extended
+	 * frame for FPU or not.
+	 */
+	if (!(pdata->cm.regs[CORTEX_PANIC_REGISTER_LR] & BIT(4)))
+		frame_size += FPU_EXCEPTION_FRAME_SIZE_BYTES;
+#endif
+
+	return frame_size;
+}
+
+/*
+ * Returns the position of the process stack before the exception frame.
+ * It computes the size of the exception frame and adds it to psp.
+ * If the exception happened in the exception context, it returns psp as is.
+ */
+uint32_t get_panic_stack_pointer(const struct panic_data *pdata)
+{
+	uint32_t psp = pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
+
+	if (!is_frame_in_handler_stack(
+		    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]))
+		psp += get_exception_frame_size(pdata);
+
+	return psp;
 }
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
@@ -165,51 +215,6 @@ static void show_fault(uint32_t cfsr, uint32_t hfsr, uint32_t dfsr)
 }
 
 /*
- * Returns the size of the exception frame.
- *
- * See B1.5.7 "Stack alignment on exception entry" of ARM DDI 0403D for details.
- * In short, the exception frame size can be either 0x20, 0x24, 0x68, or 0x6c
- * depending on FPU context and padding for 8-byte alignment.
- */
-static uint32_t get_exception_frame_size(const struct panic_data *pdata)
-{
-	uint32_t frame_size = 0;
-
-	/* base exception frame */
-	frame_size += 8 * sizeof(uint32_t);
-
-	/* CPU uses xPSR[9] to indicate whether it padded the stack for
-	 * alignment or not. */
-	if (pdata->cm.frame[CORTEX_PANIC_FRAME_REGISTER_PSR] & BIT(9))
-		frame_size += sizeof(uint32_t);
-
-#ifdef CONFIG_FPU
-	/* CPU uses EXC_RETURN[4] to indicate whether it stored extended
-	 * frame for FPU or not. */
-	if (!(pdata->cm.regs[CORTEX_PANIC_REGISTER_LR] & BIT(4)))
-		frame_size += 18 * sizeof(uint32_t);
-#endif
-
-	return frame_size;
-}
-
-/*
- * Returns the position of the process stack before the exception frame.
- * It computes the size of the exception frame and adds it to psp.
- * If the exception happened in the exception context, it returns psp as is.
- */
-static uint32_t get_process_stack_position(const struct panic_data *pdata)
-{
-	uint32_t psp = pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
-
-	if (!is_frame_in_handler_stack(
-		    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]))
-		psp += get_exception_frame_size(pdata);
-
-	return psp;
-}
-
-/*
  * Show extra information that might be useful to understand a panic()
  *
  * We show fault register information, including the fault address registers
@@ -235,7 +240,7 @@ static void panic_show_process_stack(const struct panic_data *pdata)
 {
 	panic_printf("\n=========== Process Stack Contents ===========");
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID) {
-		uint32_t psp = get_process_stack_position(pdata);
+		uint32_t psp = get_panic_stack_pointer(pdata);
 		int i;
 		for (i = 0; i < 16; i++) {
 			if (psp + sizeof(uint32_t) >
@@ -321,7 +326,8 @@ void __keep report_panic(void)
 		     pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
 	/* If stack is valid, copy exception frame to pdata */
 	if ((sp & 3) == 0 && sp >= CONFIG_RAM_BASE &&
-	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE - 8 * sizeof(uint32_t)) {
+	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE -
+			    BASE_EXCEPTION_FRAME_SIZE_BYTES) {
 		const uint32_t *sregs = (const uint32_t *)sp;
 		int i;
 

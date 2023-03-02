@@ -1762,6 +1762,11 @@
  */
 #undef CONFIG_SYSTEM_SAFE_MODE
 #define CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC 2000
+/*
+ * Prints the stack of the faulting task to the console buffer in system safe
+ * mode.
+ */
+#define CONFIG_SYSTEM_SAFE_MODE_PRINT_STACK
 
 /*
  * Provide the default GPIO abstraction layer.

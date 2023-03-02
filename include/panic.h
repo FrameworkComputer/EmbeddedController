@@ -190,6 +190,12 @@ struct panic_data *test_get_panic_data_pointer(void);
 struct panic_data *get_panic_data_write(void);
 
 /**
+ * Return a pointer to the stack of the process that caused the panic.
+ * The implementation of this function will depend on the architecture.
+ */
+uint32_t get_panic_stack_pointer(const struct panic_data *pdata);
+
+/**
  * Chip-specific implementation for backing up panic data to persistent
  * storage. This function is used to ensure that the panic data can survive loss
  * of VCC power rail.

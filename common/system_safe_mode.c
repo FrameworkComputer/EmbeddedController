@@ -17,6 +17,8 @@
 #include "timer.h"
 #include "watchdog.h"
 
+#define STACK_PRINT_SIZE_WORDS 32
+
 static bool in_safe_mode;
 
 static const int safe_mode_allowed_hostcmds[] = {
@@ -88,6 +90,32 @@ bool system_is_in_safe_mode(void)
 	return !!in_safe_mode;
 }
 
+/*
+ * Print contents of stack to console buffer.
+ */
+static void print_panic_stack(void)
+{
+	uint32_t sp;
+	const struct panic_data *pdata = panic_get_data();
+
+	ccprintf("\n========== Stack Contents ===========");
+	sp = get_panic_stack_pointer(pdata);
+	for (int i = 0; i < STACK_PRINT_SIZE_WORDS; i++) {
+		if (sp == 0 ||
+		    sp + sizeof(uint32_t) > CONFIG_RAM_BASE + CONFIG_RAM_SIZE) {
+			ccprintf("\nSP(%x) out of range", sp);
+			break;
+		}
+		if (i % 4 == 0)
+			ccprintf("\n%08x:", sp);
+		ccprintf(" %08x", *(uint32_t *)sp);
+		sp += sizeof(uint32_t);
+	}
+	ccprintf("\n");
+	/* Flush so dump isn't mixed with other output */
+	cflush();
+}
+
 bool command_is_allowed_in_safe_mode(int command)
 {
 	for (int i = 0; i < ARRAY_SIZE(safe_mode_allowed_hostcmds); i++)
@@ -98,6 +126,9 @@ bool command_is_allowed_in_safe_mode(int command)
 
 static void system_safe_mode_start(void)
 {
+	ccprintf("*** Post Panic System Safe Mode ***\n");
+	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE_PRINT_STACK))
+		print_panic_stack();
 	if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS))
 		host_set_single_event(EC_HOST_EVENT_PANIC);
 }

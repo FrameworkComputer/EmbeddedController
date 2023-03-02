@@ -202,6 +202,12 @@ struct panic_data *test_get_panic_data_pointer(void)
 }
 #endif
 
+__overridable uint32_t get_panic_stack_pointer(const struct panic_data *pdata)
+{
+	/* Not Implemented */
+	return 0;
+}
+
 test_mockable struct panic_data *get_panic_data_write(void)
 {
 	/*
