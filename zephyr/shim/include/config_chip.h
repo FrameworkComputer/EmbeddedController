@@ -2769,4 +2769,9 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_HOST_EVENT_REPORT_MASK 0xffffffffffffffffULL
 #endif
 
+#undef CONFIG_CUSTOMIZED_DESIGN
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#define CONFIG_CUSTOMIZED_DESIGN
+#endif
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */

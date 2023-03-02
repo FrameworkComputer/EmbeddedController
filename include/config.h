@@ -1348,6 +1348,9 @@
 /* Wireless chargers */
 #undef CONFIG_CPS8100
 
+/* Enable customized design */
+#undef CONFIG_CUSTOMIZED_DESIGN
+
 /*****************************************************************************/
 
 /*

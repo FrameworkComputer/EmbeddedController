@@ -83,6 +83,12 @@ rsource "Kconfig.wireless_charger"
 #
 # Please keep these in alphabetical order
 
+config PLATFORM_EC_CUSTOMIZED_DESIGN
+	bool "Enabled the customized design in common code"
+	default n
+	help
+	  Enable the customized design in common code.
+
 config PLATFORM_EC_ACPI
 	bool "Advanced Confiugration and Power Interface (ACPI)"
 	default y if AP_X86 && PLATFORM_EC_HOST_INTERFACE_ESPI
