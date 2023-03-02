@@ -598,8 +598,13 @@ class Zmake:
                     )
                     wait_funcs.append(wait_func)
             # Outside the with...get_job above.
+            result = 0
             for wait_func in wait_funcs:
-                wait_func()
+                if wait_func():
+                    result = 1
+            if result:
+                self.failed_projects.append(project.config.project_name)
+                return 1
 
             if build_after_configure:
                 self._build(
@@ -732,8 +737,13 @@ class Zmake:
                 )
                 wait_funcs.append(wait_func)
         # Outside the with...get_job above.
+        result = 0
         for wait_func in wait_funcs:
-            wait_func()
+            if wait_func():
+                result = 1
+        if result:
+            self.failed_projects.append(project.config.project_name)
+            return 1
 
         with self.jobserver.get_job():
             # Run the packer.
