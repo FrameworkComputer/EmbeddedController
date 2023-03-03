@@ -7533,7 +7533,6 @@ int cmd_charge_current_limit(int argc, char *argv[])
 	struct ec_params_current_limit_v1 p1;
 	uint32_t limit;
 	uint8_t battery_soc;
-	int rv;
 	char *e;
 
 	/*
