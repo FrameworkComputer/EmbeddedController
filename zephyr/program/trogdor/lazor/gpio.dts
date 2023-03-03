@@ -100,15 +100,15 @@
 		gpio_accel_gyro_int_l: accel_gyro_int_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;
 		};
-		gpio_da9313_gpio0: da9313_gpio0 {
-			gpios = <&gpioe 2 GPIO_INPUT>;
-			enum-name = "GPIO_DA9313_GPIO0";
-		};
 		/*
-		 * Active low input
+		 * Note, this signal is active low when used as the ln9310
+		 * interrupt input, and active high when used as the da9313
+		 * power good input.  The board code clears the active low
+		 * flag when da9313 is detected.
 		 */
-		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
-			gpios = <&gpioe 2 (GPIO_ACTIVE_LOW | GPIO_INPUT)>;
+		gpio_switchcap_pg_int_l: gpio_da9313_gpio0: da9313_gpio0 {
+			gpios = <&gpioe 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_DA9313_GPIO0";
 		};
 		gpio_ec_rst_odl: ec_rst_odl {
 			gpios = <&gpio0 2 GPIO_INPUT>;
