@@ -1,6 +1,7 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Registry of known Zephyr modules."""
 
 import zmake.build_config as build_config
@@ -25,6 +26,7 @@ known_modules = {
     "cmsis": third_party_module,
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
     "nanopb": third_party_module,
+    "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
 }
 
 
