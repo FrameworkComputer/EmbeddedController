@@ -26,17 +26,15 @@
 		charger_vap_otg_en {
 			gpios = <&gpio7 3 GPIO_OUTPUT_LOW>;
 		};
-		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+
+		/*
+		 * Board ID 1 repurposes the gpio_ec_batt_pres_odl pin as
+		 * an output signal.  The board code switches the pin
+		 * pin configuration to an output when board ID 1 is detected.
+		 */
+		gpio_id_1_ec_kb_bl_en: gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioa 3 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
-		};
-		/*
-		 * Same GPIO as gpio_ec_batt_pres_odl,
-		 * but only enabled for board id 1.
-		 */
-		gpio_id_1_ec_kb_bl_en: id_1_ec_kb_bl_en {
-			gpios = <&gpioa 3 GPIO_OUTPUT_LOW>;
-			no-auto-init;
 		};
 		gpio_id_1_ec_batt_pres_odl: id_1_ec_batt_pres_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;
@@ -259,12 +257,6 @@
 		};
 		id_1_usb_c0_c2_tcpc_rst_odl {
 			gpios = <&gpio3 4 GPIO_ODR_LOW>;
-		};
-		usb_c0_int_odl {
-			gpios = <&gpiob 1 GPIO_INPUT>;
-		};
-		usb_c2_int_odl {
-			gpios = <&gpio4 1 GPIO_INPUT>;
 		};
 		usb_c0_rt_int_odl: usb_c0_rt_int_odl {
 			gpios = <&gpiob 1 GPIO_INPUT>;

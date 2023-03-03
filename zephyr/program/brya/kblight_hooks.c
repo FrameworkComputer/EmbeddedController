@@ -52,6 +52,9 @@ static void board_backlight_handler(struct ap_power_ev_callback *cb,
 static void set_board_id_1_gpios(void)
 {
 	static struct ap_power_ev_callback cb;
+	const struct gpio_dt_spec *ec_kb_bl_en =
+		GPIO_DT_FROM_NODELABEL(gpio_id_1_ec_kb_bl_en);
+	gpio_flags_t flags = ec_kb_bl_en->dt_flags;
 
 	/*
 	 * Add a callback for suspend/resume to
@@ -63,7 +66,14 @@ static void set_board_id_1_gpios(void)
 
 	if (get_board_id() != 1)
 		return;
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_id_1_ec_kb_bl_en),
-			      GPIO_OUTPUT_LOW);
+
+	/*
+	 * Note, use gpio_pin_configure() instead of gpio_pin_configure_dt()
+	 * because gpio_pin_configure_dt() only sets additional flags, and
+	 * cannot clear flags.
+	 */
+	flags &= ~GPIO_INPUT;
+	flags |= GPIO_OUTPUT_LOW;
+	gpio_pin_configure(ec_kb_bl_en->port, ec_kb_bl_en->pin, flags);
 }
 DECLARE_HOOK(HOOK_INIT, set_board_id_1_gpios, HOOK_PRIO_FIRST);
