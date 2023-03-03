@@ -10,7 +10,7 @@
 
 #include "common.h"
 #include "fpsensor.h"
-#include "mock/fp_sensor_mock.h"
+#include "mock/fpsensor_mock.h"
 
 #include <stdlib.h>
 

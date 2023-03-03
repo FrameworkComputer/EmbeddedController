@@ -8,8 +8,8 @@
  * @brief Controls for the mock fpsensor private driver
  */
 
-#ifndef __MOCK_FP_SENSOR_MOCK_H
-#define __MOCK_FP_SENSOR_MOCK_H
+#ifndef __MOCK_FPSENSOR_MOCK_H
+#define __MOCK_FPSENSOR_MOCK_H
 
 #include "common.h"
 #include "fpsensor.h"

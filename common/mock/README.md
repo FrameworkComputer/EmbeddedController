@@ -45,7 +45,7 @@ Example `.mocklist`:
 
  #define CONFIG_TEST_MOCK_LIST \
     MOCK(ROLLBACK)             \
-    MOCK(FP_SENSOR)
+    MOCK(FPSENSOR)
 ```
 
 If you need additional [mock control](#mock-controls) functionality, you may
@@ -79,10 +79,10 @@ which resides in [include/mock](/include/mock).
 
 *   When creating mock controls, consider placing all your mock parameters in
     one externally facing struct, like in
-    [fp_sensor_mock.h](/include/mock/fp_sensor_mock.h). The primary reason for
+    [fpsensor_mock.h](/include/mock/fpsensor_mock.h). The primary reason for
     this is to allow the mock to be easily used by a fuzzer (write random bytes
     into the struct with memcpy).
 *   When following the above pattern, please provide a macro for resetting
     default values for this struct, like in
-    [fp_sensor_mock.h](/include/mock/fp_sensor_mock.h). This allows unit tests
+    [fpsensor_mock.h](/include/mock/fpsensor_mock.h). This allows unit tests
     to quickly reset the mock state/parameters before each unrelated unit test.
