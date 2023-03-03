@@ -162,7 +162,7 @@
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, power button */
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
-		chassis_open_l {
+		gpio_chassis_open_l: chassis_open_l {
 			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis feature */
 		};
 		gpio_hw_acav_in: hw_acav_in {
@@ -208,11 +208,11 @@
 		gpio_susp_l: susp_l {
 			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
 		};
-		left_side {
-			gpios = <&gpio4 0 GPIO_OUTPUT_HIGH>;	/* left side LED follow IFGA3 */
+		gpio_left_side: left_side {
+			gpios = <&gpio4 0 GPIO_OUTPUT_LOW>;	/* left side LED follow IFGA3 */
 		};
-		right_side {
-			gpios = <&gpiod 3 GPIO_OUTPUT_HIGH>;	/* right side LED follow IFGA3 */
+		gpio_right_side: right_side {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;	/* right side LED follow IFGA3 */
 		};
 		gpio_syson: syson {
 			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;

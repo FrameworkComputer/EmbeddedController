@@ -11,6 +11,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "cypress_pd_common.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -187,11 +188,28 @@ static void set_color(int node_idx, uint32_t ticks)
 
 static int match_node(int node_idx)
 {
+	int active_charge_port = charge_manager_get_active_charge_port();
+
 	/**
-	 * TODO: Implement customization-led feature
-	 * a. chassis open
-	 * b. battery disconnect
+	 * TODO:
+	 * 1. standalone led behavior
+	 * 2. GPU Bay Module Fault
 	 */
+
+	/**
+	 * Charge LED should control the left side and right side.
+	 * If the chassis is opened or there isn't an active charge port, needs to open both sides.
+	 */
+	if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) &&
+		(active_charge_port != -1)) {
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_right_side), (active_charge_port < 2) ? 1 : 0);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_left_side), (active_charge_port >= 2) ? 1 : 0);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
+	}
 
 	/* Check if this node depends on power state */
 	if (node_array[node_idx].pwr_state != PWR_STATE_UNCHANGE) {
@@ -201,12 +219,9 @@ static int match_node(int node_idx)
 			return -1;
 
 		/* Check if this node depends on charge port */
-		if (node_array[node_idx].charge_port != -1) {
-			int port = charge_manager_get_active_charge_port();
-
-			if (node_array[node_idx].charge_port != port)
+		if (node_array[node_idx].charge_port != -1)
+			if (node_array[node_idx].charge_port != active_charge_port)
 				return -1;
-		}
 	}
 
 	/* Check if this node depends on chipset state */
@@ -223,6 +238,13 @@ static int match_node(int node_idx)
 
 		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))
+			return -1;
+	}
+
+	if (node_array[node_idx].pwr_state == PWR_STATE_UNCHANGE &&
+		node_array[node_idx].chipset_state == 0 &&
+		node_array[node_idx].batt_lvl[0] == -1) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1)
 			return -1;
 	}
 
@@ -259,6 +281,14 @@ static void board_led_set_color(void)
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
+	/**
+	 * TODO: Debug led should add at here
+	 *
+	 * if (debug_led_active)
+	 *	contorl_debug_led;
+	 * else
+	 *	board_led_set_color();
+	 */
 	board_led_set_color();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);

@@ -52,7 +52,12 @@
 			charge-state = "PWR_STATE_ERROR";
 
 			color-0 {
-				led-color = <&color_white>;
+				led-color = <&color_red>;
+				period-ms = <500>;
+			};
+			color-1 {
+				led-color = <&color_blue>;
+				period-ms = <500>;
 			};
 		};
 
@@ -85,6 +90,17 @@
 
 			color-0 {
 				led-color = <&color_power_off>;
+			};
+		};
+
+		chassis_open {
+			color-0 {
+				led-color = <&color_red>;
+				period-ms = <500>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <500>;
 			};
 		};
 	};
