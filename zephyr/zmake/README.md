@@ -6,7 +6,7 @@
 
 ## Usage
 
-**Usage:** `zmake [-h] [--checkout CHECKOUT] [-j JOBS] [--goma] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL} | -D] [-L] [--log-label] [--modules-dir MODULES_DIR] [--zephyr-base ZEPHYR_BASE] subcommand ...`
+**Usage:** `zmake [-h] [--checkout CHECKOUT] [-j JOBS] [--goma] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL} | -D] [-L] [--log-label] [--modules-dir MODULES_DIR] [--projects-dir PROJECTS_DIR] [--zephyr-base ZEPHYR_BASE] subcommand ...`
 
 Chromium OS's meta-build tool for Zephyr
 
@@ -29,6 +29,7 @@ Chromium OS's meta-build tool for Zephyr
 | `-L`, `--no-log-label` | Turn off logging labels |
 | `--log-label` | Turn on logging labels |
 | `--modules-dir MODULES_DIR` | The path to a directory containing all modules needed.  If unspecified, zmake will assume you have a Chrome OS checkout and try locating them in the checkout. |
+| `--projects-dir PROJECTS_DIR` | Base directory to search for BUILD.py files. |
 | `--zephyr-base ZEPHYR_BASE` | Path to Zephyr OS repository |
 
 ## Subcommands
@@ -116,13 +117,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake list-projects
 
-**Usage:** `zmake list-projects [-h] [--format FMT] [search_dir]`
-
-#### Positional Arguments
-
-|   |   |
-|---|---|
-| `search_dir` | Optional directory to search for BUILD.py files in. |
+**Usage:** `zmake list-projects [-h] [--format FMT]`
 
 #### Optional Arguments
 

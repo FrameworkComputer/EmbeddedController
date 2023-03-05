@@ -164,6 +164,7 @@ class Zmake:
         goma=False,
         gomacc="/mnt/host/depot_tools/.cipd_bin/gomacc",
         modules_dir=None,
+        projects_dir=None,
         zephyr_base=None,
     ):
         zmake.multiproc.LogWriter.reset()
@@ -184,6 +185,11 @@ class Zmake:
             self.module_paths = zmake.modules.locate_from_checkout(
                 self.checkout
             )
+
+        if projects_dir:
+            self.projects_dir = projects_dir.resolve()
+        else:
+            self.projects_dir = self.module_paths["ec"] / "zephyr"
 
         if jobserver:
             self.jobserver = jobserver
@@ -211,9 +217,7 @@ class Zmake:
 
         Returns a list of projects.
         """
-        found_projects = zmake.project.find_projects(
-            self.module_paths["ec"] / "zephyr"
-        )
+        found_projects = zmake.project.find_projects(self.projects_dir)
         if all_projects:
             projects = set(found_projects.values())
         else:
@@ -934,18 +938,13 @@ class Zmake:
             raise OSError(get_process_failure_msg(proc))
         return 0
 
-    def list_projects(self, fmt, search_dir):
+    def list_projects(self, fmt):
         """List project names known to zmake on stdout.
 
         Args:
             fmt: The formatting string to print projects with.
-            search_dir: Directory to start the search for
-                BUILD.py files at.
         """
-        if not search_dir:
-            search_dir = self.module_paths["ec"] / "zephyr"
-
-        for project in zmake.project.find_projects(search_dir).values():
+        for project in zmake.project.find_projects(self.projects_dir).values():
             print(fmt.format(config=project.config), end="")
 
         return 0

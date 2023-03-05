@@ -278,7 +278,12 @@ class TestFilters:
     ],
 )
 def test_list_projects(
-    project_names, fmt, search_dir, expected_output, capsys, zmake_from_dir
+    project_names,
+    fmt,
+    search_dir,
+    expected_output,
+    capsys,
+    zmake_factory_from_dir,
 ):
     """Test listing projects with default directory."""
     fake_projects = {
@@ -292,12 +297,14 @@ def test_list_projects(
         )
         for name in project_names
     }
+
+    zmk = zmake_factory_from_dir(projects_dir=search_dir)
     with unittest.mock.patch(
         "zmake.project.find_projects",
         autospec=True,
         return_value=fake_projects,
     ):
-        zmake_from_dir.list_projects(fmt=fmt, search_dir=search_dir)
+        zmk.list_projects(fmt=fmt)
 
     captured = capsys.readouterr()
     assert captured.out == expected_output

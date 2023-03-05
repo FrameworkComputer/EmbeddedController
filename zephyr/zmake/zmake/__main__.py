@@ -162,6 +162,11 @@ def get_argparser():
         "checkout.",
     )
     parser.add_argument(
+        "--projects-dir",
+        type=pathlib.Path,
+        help="Base directory to search for BUILD.py files.",
+    )
+    parser.add_argument(
         "--zephyr-base", type=pathlib.Path, help="Path to Zephyr OS repository"
     )
 
@@ -237,12 +242,6 @@ def get_argparser():
             "Output format to print projects (str.format(config=project.config) is "
             "called on this for each project)."
         ),
-    )
-    list_projects.add_argument(
-        "search_dir",
-        type=pathlib.Path,
-        nargs="?",
-        help="Optional directory to search for BUILD.py files in.",
     )
 
     # TODO(b/b/242563072): Remove stub support for test and testall entirely after users have gotten
