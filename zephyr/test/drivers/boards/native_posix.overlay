@@ -23,6 +23,7 @@
 	};
 
 	aliases {
+		bma4xx-int = &ms_bma4xx;
 		bmi260-int = &ms_bmi260_accel;
 		bmi160-int = &ms_bmi160_accel;
 		tcs3400-int = &tcs3400_clear;
@@ -583,6 +584,9 @@
 		mutex_bma255: bma255-mutex {
 		};
 
+		mutex_bma4xx: bma4xx-mutex {
+		};
+
 		mutex_bmi260: bmi260-mutex {
 		};
 
@@ -600,6 +604,11 @@
 	motionsense-sensor-data {
 		bma255_data: bma255-drv-data {
 			compatible = "cros-ec,drvdata-bma255";
+			status = "okay";
+		};
+
+		bma4xx_data: bma4xx-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
 			status = "okay";
 		};
 
@@ -764,6 +773,18 @@
 			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
 		};
 
+		ms_bma4xx: ms-bma4xx {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&mutex_bma4xx>;
+			port = <&named_i2c1>;
+			drv-data = <&bma4xx_data>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+		};
+
 		ms_lis2dw12_accel: ms-lis2dw12-accel {
 			compatible = "cros-ec,lis2dw12";
 			status = "okay";
@@ -838,6 +859,13 @@
 			error-on-wo-read;
 			error-on-reserved-bit-write;
 			simulate-command-exec-time;
+		};
+
+		bma422_emul: bma4xx@19 {
+			compatible = "cros,bma4xx-emul";
+			status = "okay";
+			reg = <0x19>;
+			motionsense-sensor = <&ms_bma4xx>;
 		};
 	};
 

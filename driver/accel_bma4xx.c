@@ -51,8 +51,8 @@ static inline int bma4_read8(const struct motion_sensor_t *s, const int reg,
 	return i2c_read8(s->port, s->i2c_spi_addr_flags, reg, data_ptr);
 }
 
-static inline int bma4_read16(const struct motion_sensor_t *s, const int reg,
-			      int *data_ptr)
+__maybe_unused static inline int bma4_read16(const struct motion_sensor_t *s,
+					     const int reg, int *data_ptr)
 {
 	return i2c_read16(s->port, s->i2c_spi_addr_flags, reg, data_ptr);
 }
@@ -639,7 +639,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	int interrupt_status_reg, fifo_depth;
 
 	/* Read interrupt status, also clears pending IRQs */
-	RETURN_ERROR(bma4_read16(s, BMA4_INT_STATUS_1, &interrupt_status_reg));
+	RETURN_ERROR(bma4_read8(s, BMA4_INT_STATUS_1, &interrupt_status_reg));
 	if ((interrupt_status_reg &
 	     (BMA4_FFULL_INT | BMA4_FWM_INT | BMA4_ACC_DRDY_INT)) == 0) {
 		return EC_ERROR_NOT_HANDLED;

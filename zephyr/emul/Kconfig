@@ -30,6 +30,16 @@ config EMUL_BMA255
 	  It is used to test bma2x2 driver. Emulators API is available in
 	  zephyr/include/emul/emul_bma255.h
 
+config EMUL_BMA4XX
+	bool "BMA4xx emulator"
+	default y
+	depends on DT_HAS_CROS_BMA4XX_EMUL_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the BMA4xx emulator, used to test the bma4xx driver on an
+	  emulated I2C bus; emulator API is in
+	  zephyr/include/emul/emul_bma4xx.h.
+
 config EMUL_BC12_DETECT_PI3USB9201
 	bool "PI3USB9201 emulator"
 	default y
