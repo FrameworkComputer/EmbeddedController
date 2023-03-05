@@ -537,7 +537,7 @@ class Zmake:
                 dts_overlay_config = project.find_dts_overlays(module_paths)
 
                 toolchain_support = project.get_toolchain(
-                    module_paths, override=toolchain
+                    self.module_paths, override=toolchain
                 )
                 toolchain_config = toolchain_support.get_build_config()
 
