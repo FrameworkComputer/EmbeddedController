@@ -228,6 +228,9 @@ static void nereid_subboard_config(void)
 	enum nissa_sub_board_type sb = nissa_get_sb_type();
 	static struct ap_power_ev_callback power_cb;
 
+#if USB_PORT_ENABLE_COUNT > 1
+	BUILD_ASSERT(USB_PORT_ENABLE_COUNT == 2,
+		     "Nissa assumes no more than 2 USB-A ports");
 	/*
 	 * USB-A port: current limit output is configured by default and unused
 	 * if this port is not present. VBUS enable must be configured if
@@ -252,10 +255,9 @@ static void nereid_subboard_config(void)
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 				      GPIO_DISCONNECTED);
 		/* Disable second USB-A port enable GPIO */
-		__ASSERT(USB_PORT_ENABLE_COUNT == 2,
-			 "USB A port count != 2 (%d)", USB_PORT_ENABLE_COUNT);
 		usb_port_enable[1] = -1;
 	}
+#endif
 	/*
 	 * USB-C port: the default configuration has I2C on the I2C pins,
 	 * but the interrupt line needs to be configured.
