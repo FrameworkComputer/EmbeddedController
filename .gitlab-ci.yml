@@ -273,6 +273,46 @@ skyrim_coverage:
     PROJECT: "skyrim"
   <<: *coverage_template
 
+winterhold:
+  variables:
+    PROJECT: "winterhold"
+  <<: *build_template
+
+winterhold_coverage:
+  variables:
+    PROJECT: "winterhold"
+  <<: *coverage_template
+
+frostflow:
+  variables:
+    PROJECT: "frostflow"
+  <<: *build_template
+
+frostflow_coverage:
+  variables:
+    PROJECT: "frostflow"
+  <<: *coverage_template
+
+crystaldrift:
+  variables:
+    PROJECT: "crystaldrift"
+  <<: *build_template
+
+crystaldrift_coverage:
+  variables:
+    PROJECT: "crystaldrift"
+  <<: *coverage_template
+
+markarth:
+  variables:
+    PROJECT: "markarth"
+  <<: *build_template
+
+markarth_coverage:
+  variables:
+    PROJECT: "markarth"
+  <<: *coverage_template
+
 rex:
   variables:
     PROJECT: "rex"

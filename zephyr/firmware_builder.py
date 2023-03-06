@@ -3,6 +3,7 @@
 # Copyright 2021 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Build and test all of the Zephyr boards.
 
 This is the entry point for the custom firmware builder workflow recipe.
@@ -34,6 +35,11 @@ SPECIAL_BOARDS = [
     "kingler",
     "rex",
     "geralt",
+    # Skyrim variants
+    "winterhold",
+    "frostflow",
+    "crystaldrift",
+    "markarth",
 ]
 
 BINARY_SIZE_REGIONS = [
@@ -91,7 +97,7 @@ def build(opts):
             metric = metric_list.value.add()
             metric.target_name = project.config.project_name
             metric.platform_name = project.config.zephyr_board
-            for (variant, _) in project.iter_builds():
+            for variant, _ in project.iter_builds():
                 build_log = build_dir / f"build-{variant}" / "build.log"
                 parse_buildlog(
                     build_log,
