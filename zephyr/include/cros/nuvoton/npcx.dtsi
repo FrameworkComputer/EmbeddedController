@@ -19,7 +19,7 @@
 		cros-ec,watchdog = &twd0;
 	};
 
-	named-bbram-regions {
+	bbram_regions: named-bbram-regions {
 		compatible = "named-bbram-regions";
 
 		scratchpad {

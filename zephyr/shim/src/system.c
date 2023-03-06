@@ -86,6 +86,22 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
 }
 
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
+{
+	int offset, size, rc;
+
+	if (bbram_dev == NULL)
+		return EC_ERROR_INVAL;
+
+	rc = bbram_lookup(idx, &offset, &size);
+	if (rc)
+		return rc;
+
+	rc = bbram_write(bbram_dev, offset, size, &value);
+
+	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
+}
+
 void chip_save_reset_flags(uint32_t flags)
 {
 	if (bbram_dev == NULL) {
