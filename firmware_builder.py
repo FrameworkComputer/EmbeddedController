@@ -3,6 +3,7 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Build, bundle, or test all of the EC boards.
 
 This is the entry point for the custom firmware builder workflow recipe.  It
@@ -109,6 +110,15 @@ def build(opts):
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
     cmd = ["make", "-C", "extra/rma_reset", f"-j{opts.cpus}"]
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+
+    # extra/usb_updater is used in chromeos-base/ec-devutils
+    cmd = ["make", "-C", "extra/usb_updater", "clean"]
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+
+    cmd = ["make", "-C", "extra/usb_updater", "usb_updater2", f"-j{opts.cpus}"]
     print(f"# Running {' '.join(cmd)}.")
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
