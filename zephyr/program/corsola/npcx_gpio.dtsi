@@ -176,7 +176,7 @@
 			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
-			gpios = <&gpio7 3 GPIO_INPUT>;
+			gpios = <&gpio7 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		gpio_usb_c0_tcpc_rst: usb_c0_tcpc_rst {
@@ -192,7 +192,7 @@
 			gpios = <&gpio3 4 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
-			gpios = <&gpioe 1 GPIO_INPUT>;
+			gpios = <&gpioe 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		ec_batt_pres_odl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
