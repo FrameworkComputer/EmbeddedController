@@ -7,6 +7,7 @@
 #include "chipset.h"
 #include "ec_commands.h"
 #include "usb_charge.h"
+#include "usb_dp_alt_mode.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 
@@ -222,4 +223,8 @@ ZTEST_USER(usb_pd_policy, test_board_is_sourcing_vbus)
 	zassert_equal(1, ppc_is_sourcing_vbus_fake.call_count);
 }
 
+ZTEST_USER(usb_pd_policy, test_uhbr13_5_not_allowed)
+{
+	zassert_false(board_is_dp_uhbr13_5_allowed(0), NULL, NULL);
+}
 ZTEST_SUITE(usb_pd_policy, NULL, NULL, usb_pd_policy_before, NULL, NULL);
