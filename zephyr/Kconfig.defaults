@@ -43,4 +43,7 @@ config PWM_SHELL
 config SENSOR_SHELL
 	default n
 
+config ESPI_NPCX_PERIPHERAL_DEBUG_PORT_80_MULTI_BYTE
+	default y
+
 orsource "Kconfig.defaults-$(ARCH)"
