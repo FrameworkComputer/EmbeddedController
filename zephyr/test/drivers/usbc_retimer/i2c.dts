@@ -1,0 +1,46 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			tcpc = <&ps8xxx_emul0>;
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			tcpc = <&ps8xxx_emul1>;
+		};
+	};
+};
+
+&i2c2 {
+	status="okay";
+
+	ps8xxx_emul0: ps8xxx_emul@c {
+		compatible = "cros,ps8xxx-emul";
+		reg = <0xc>;
+		p0-i2c-addr = <0x10>;
+		p1-i2c-addr = <0x11>;
+		gpio-i2c-addr = <0x1b>;
+	};
+};
+
+&i2c3 {
+	status="okay";
+
+	/delete-node/ ps8xxx_emul@b;
+
+	ps8xxx_emul1: ps8xxx_emul@b {
+		compatible = "cros,ps8xxx-emul";
+		reg = <0xb>;
+		p0-i2c-addr = <0x8>;
+		p1-i2c-addr = <0x9>;
+		gpio-i2c-addr = <0x1a>;
+	};
+
+};

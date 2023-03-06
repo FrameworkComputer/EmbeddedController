@@ -897,6 +897,11 @@
 			ls-en-pin = <&usb_c1_ls_en>;
 		};
 
+		ps8811_emul: ps8811_emul@72 {
+			compatible = "cros,ps8811-emul";
+			reg = <0x72>;
+		};
+
 		ps8xxx_emul: ps8xxx_emul@b {
 			compatible = "cros,ps8xxx-emul";
 			reg = <0xb>;

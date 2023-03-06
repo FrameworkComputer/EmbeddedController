@@ -97,14 +97,6 @@ config PLATFORM_EC_USBC_RETIMER_ANX7483
 	  USB3.2 Gen 2 10Gbps signals to support type-C (USB-C) ports with
 	  DisplayPort Alternate Mode.
 
-config PLATFORM_EC_USBC_RETIMER_PS8811
-	bool "Support Parade PS8811 Single Port USB 3.1 Gen 2 10G Retimer"
-	help
-	  The PS8811 is a one-port bidirectional USB 3.1 Gen 2 retimer that
-	  integrates the UniEye equalizer and a retimer to re-condition USB 3.1
-	  signals for long media link applications. It supports USB 3.1 Gen 2
-	  with operation speed up to 10Gbps as well as Gen 1 operation at 5Gbps.
-
 config PLATFORM_EC_USBC_RETIMER_PS8818
 	bool "Parade PS8818 USB Type-C Retimer for USB and DP Alternate Mode"
 	default y
@@ -133,3 +125,12 @@ config PLATFORM_EC_KB800X_CUSTOM_XBAR
 	  lanes.
 
 endif # PLATFORM_EC_USBC
+
+config PLATFORM_EC_USBC_RETIMER_PS8811
+	bool "Support Parade PS8811 Single Port USB 3.1 Gen 2 10G Retimer"
+	depends on PLATFORM_EC_USBC || TEST_DISABLE_PLATFORM_EC_USBC
+	help
+	  The PS8811 is a one-port bidirectional USB 3.1 Gen 2 retimer that
+	  integrates the UniEye equalizer and a retimer to re-condition USB 3.1
+	  signals for long media link applications. It supports USB 3.1 Gen 2
+	  with operation speed up to 10Gbps as well as Gen 1 operation at 5Gbps.

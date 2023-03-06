@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+rsource "retimer/Kconfig"
 rsource "tcpc/Kconfig"
 
 config EMUL_COMMON_I2C

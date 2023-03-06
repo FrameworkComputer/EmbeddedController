@@ -14,6 +14,13 @@ menuconfig PLATFORM_EC_USBC
 	  of attached USB-C partners and enabling alternate operational modes,
 	  including Display Port, Thunderbolt, and USB4.
 
+config TEST_DISABLE_PLATFORM_EC_USBC
+	bool "Test disable USB type-C"
+	depends on ZTEST && !PLATFORM_EC_USBC
+	help
+	  Use this config to allow tests for code that doesn't actually rely on
+	  USBC.
+
 rsource "Kconfig.retimer"
 rsource "Kconfig.pd_int_shared"
 rsource "Kconfig.pd_meas_vbus"

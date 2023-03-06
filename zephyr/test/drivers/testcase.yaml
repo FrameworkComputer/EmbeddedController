@@ -320,6 +320,10 @@ tests:
   drivers.usbc_ppc:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
+  drivers.usbc_retimer.ps8811:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_USBC_RETIMER=y
+      - CONFIG_PLATFORM_EC_USBC_RETIMER_PS8811=y
   drivers.usbc_svdm_dfp_only:
     extra_args: CONF_FILE="prj.conf;usbc_svdm_dfp_only/prj.conf"
                 DTC_OVERLAY_FILE="usbc_svdm_dfp_only/boards/native_posix.overlay"
