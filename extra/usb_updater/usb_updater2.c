@@ -501,7 +501,8 @@ static int transfer_block(struct usb_endpoint *uep,
 	for (transfer_size = 0; transfer_size < payload_size;) {
 		int chunk_size;
 
-		chunk_size = MIN(uep->chunk_len, payload_size - transfer_size);
+		chunk_size = MIN((size_t)uep->chunk_len,
+				 payload_size - transfer_size);
 		xfer(uep, transfer_data_ptr, chunk_size, NULL, 0, 0);
 		transfer_data_ptr += chunk_size;
 		transfer_size += chunk_size;
