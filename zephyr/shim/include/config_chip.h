@@ -1250,12 +1250,6 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #define CONFIG_USB_CHARGER
 #endif
 
-#define USB_PORT_COUNT                                                         \
-	COND_CODE_1(DT_NODE_EXISTS(DT_INST(0, cros_ec_usba_port_enable_pins)), \
-		    (DT_PROP_LEN(DT_INST(0, cros_ec_usba_port_enable_pins),    \
-				 enable_pins)),                                \
-		    (0))
-
 #undef CONFIG_USB_PORT_ENABLE_DYNAMIC
 #ifdef CONFIG_PLATFORM_EC_USB_PORT_ENABLE_DYNAMIC
 #define CONFIG_USB_PORT_ENABLE_DYNAMIC
@@ -1264,6 +1258,12 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #undef CONFIG_USB_PORT_POWER_DUMB
 #ifdef CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
 #define CONFIG_USB_PORT_POWER_DUMB
+/* usb_charge.h sets USB_PORT_ENABLE_COUNT from this for POWER_DUMB */
+#define USB_PORT_COUNT                                                         \
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST(0, cros_ec_usba_port_enable_pins)), \
+		    (DT_PROP_LEN(DT_INST(0, cros_ec_usba_port_enable_pins),    \
+				 enable_pins)),                                \
+		    (0))
 #endif
 
 #undef CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK
@@ -1274,6 +1274,13 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #undef CONFIG_USB_PORT_POWER_SMART
 #ifdef CONFIG_PLATFORM_EC_USB_PORT_POWER_SMART
 #define CONFIG_USB_PORT_POWER_SMART
+#undef CONFIG_USB_PORT_POWER_SMART_PORT_COUNT /* override config.h default */
+/* usb_charge.h sets USB_PORT_ENABLE_COUNT from this for POWER_SMART */
+#define CONFIG_USB_PORT_POWER_SMART_PORT_COUNT                                 \
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST(0, cros_ec_usba_port_enable_pins)), \
+		    (DT_PROP_LEN(DT_INST(0, cros_ec_usba_port_enable_pins),    \
+				 enable_pins)),                                \
+		    (0))
 #endif
 
 #undef CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
