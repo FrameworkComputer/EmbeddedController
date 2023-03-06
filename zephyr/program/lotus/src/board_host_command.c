@@ -16,6 +16,9 @@
 #include "hooks.h"
 #include "lpc.h"
 #include "power_sequence.h"
+#include "system.h"
+#include "util.h"
+#include "zephyr_console_shim.h"
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
@@ -142,3 +145,22 @@ static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
+
+/* EC console command for Project */
+static int cmd_bbram(int argc, const char **argv)
+{
+	uint8_t bbram;
+	uint8_t ram_addr;
+	char *e;
+
+	if (argc > 1) {
+		ram_addr = strtoi(argv[1], &e, 0);
+		system_get_bbram(ram_addr, &bbram);
+		CPRINTF("BBram%d: %d", ram_addr, bbram);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(bbram, cmd_bbram,
+			"[bbram address]",
+			"get bbram data with hibdata_index");
