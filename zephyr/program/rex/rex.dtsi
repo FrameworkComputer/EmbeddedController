@@ -43,6 +43,21 @@
 		ec-i2c-c0-rt-sda {
 			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
+
+		/*
+		 * The pinmap utility does not currently support ACTIVE_LOW
+		 * flag. So it is set here.
+		 */
+		/delete-node/ usb_c0_tcpc_int_odl;
+		/delete-node/ usb_c1_tcpc_int_odl;
+		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
+		};
+		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
+			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
+		};
 	};
 
 	usba-port-enable-list {
