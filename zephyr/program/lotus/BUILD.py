@@ -14,5 +14,6 @@ register_npcx_project(
         here / "led_policy.dts",
         here / "pwm_leds.dts",
         here / "lotus.dts",
+        here / "fan.dts",
     ],
 )

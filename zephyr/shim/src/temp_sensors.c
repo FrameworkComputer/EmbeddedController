@@ -51,6 +51,8 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(TEMP_SENSORS_COMPAT) == 1,
 #define FILL_POWER_GOOD(node_id)
 #endif /* ANY_INST_HAS_POWER_GOOD_PIN */
 
+#ifndef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+
 static int thermistor_get_temp(const struct temp_sensor_t *sensor,
 			       int *temp_ptr)
 {
@@ -94,6 +96,8 @@ static int thermistor_get_temp(const struct temp_sensor_t *sensor,
 	}
 
 DT_FOREACH_STATUS_OKAY(cros_ec_thermistor, DEFINE_THERMISTOR_DATA)
+
+#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 
 #if DT_HAS_COMPAT_STATUS_OKAY(PCT2075_COMPAT)
 /* The function maybe unused because a temperature sensor can be added to dts

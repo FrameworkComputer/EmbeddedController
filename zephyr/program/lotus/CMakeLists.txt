@@ -22,6 +22,5 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
-
 zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER
 	"src/power_button_x86.c")

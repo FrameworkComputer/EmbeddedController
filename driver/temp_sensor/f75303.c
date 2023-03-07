@@ -6,11 +6,17 @@
 /* F75303 temperature sensor module for Chrome EC */
 
 #include "common.h"
-#include "f75303.h"
 #include "i2c.h"
 #include "hooks.h"
+#include "temp_sensor/f75303.h"
 #include "util.h"
 #include "console.h"
+
+
+
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
 
 static int temps[F75303_IDX_COUNT];
 static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
@@ -38,6 +44,7 @@ static int raw_read8(int sensor, const int offset, int *data)
 #endif /* !CONFIG_ZEPHYR */
 
 
+#ifndef CONFIG_ZEPHYR
 static int get_temp(const int offset, int *temp)
 {
 	int rv;
@@ -50,6 +57,21 @@ static int get_temp(const int offset, int *temp)
 	*temp = C_TO_K(temp_raw);
 	return EC_SUCCESS;
 }
+#else
+static int get_temp(int sensor, const int offset, int *temp)
+{
+	int rv;
+	int temp_raw = 0;
+
+	rv = raw_read8(sensor, offset, &temp_raw);
+	if (rv != 0)
+		return rv;
+
+	*temp = C_TO_K(temp_raw);
+	return EC_SUCCESS;
+}
+#endif /* !CONFIG_ZEPHYR */
+
 
 int f75303_get_val(int idx, int *temp)
 {
@@ -77,7 +99,7 @@ DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 void f75303_update_temperature(int idx)
 {
 	int temp_reg = 0;
-	int rv;
+	int rv = 0;
 
 	if (idx >= F75303_IDX_COUNT)
 		return;

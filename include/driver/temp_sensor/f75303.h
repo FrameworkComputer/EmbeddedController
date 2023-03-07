@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_F75303_H
 #define __CROS_EC_F75303_H
 
+#include "i2c.h"
+
 #ifdef BOARD_MUSHU
 #define F75303_I2C_ADDR_FLAGS 0x4D
 #else
@@ -26,6 +28,15 @@ struct f75303_sensor_t {
 	int i2c_addr_flags;
 };
 
+extern const struct f75303_sensor_t f75303_sensors[];
+
+enum f75303_index {
+	F75303_IDX_LOCAL = 0,
+	F75303_IDX_REMOTE1,
+	F75303_IDX_REMOTE2,
+	F75303_IDX_COUNT,
+};
+
 /* F75303 register */
 #define F75303_TEMP_LOCAL 0x00
 #define F75303_TEMP_REMOTE1 0x01
@@ -41,5 +52,9 @@ struct f75303_sensor_t {
  * @return EC_SUCCESS if successful, non-zero if error.
  */
 int f75303_get_val(int idx, int *temp);
+
+#ifdef CONFIG_ZEPHYR
+void f75303_update_temperature(int idx);
+#endif /* CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_F75303_H */

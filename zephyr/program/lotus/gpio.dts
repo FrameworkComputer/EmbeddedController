@@ -217,12 +217,6 @@
 		gpio_syson: syson {
 			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
 		};
-		fan1 {
-			gpios = <&gpioc 3 GPIO_ODR_HIGH>;	/* Fan full on */
-		};
-		fan2 {
-			gpios = <&gpioc 2 GPIO_ODR_HIGH>;	/* Fan full on */
-		};
 		fp_control {
 			gpios = <&gpio6 0 GPIO_INPUT>;		/* Finger Printer feature */
 		};
