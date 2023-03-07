@@ -76,6 +76,7 @@ unifdef -x2 -m -UCONFIG_HOSTCMD_ALIGNED -U__ACPI__ -D__KERNEL__ -U__cplusplus \
   -UCHROMIUM_EC "${tmp}"
 
 # Check kernel checkpatch passes.
-"${CROS_WORKON_SRCROOT}/src/repohooks/checkpatch.pl" -f "${tmp}"
+# TODO(b/272119670) Calling the hook directly leaves us open to breakages.
+"${CROS_WORKON_SRCROOT}/src/repohooks/third_party/checkpatch.pl" -f "${tmp}"
 
 cp "${tmp}" "${out}"
