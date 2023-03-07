@@ -2,6 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config EMUL_ANX7483
+	bool "ANX7483 Emulator"
+	depends on DT_HAS_CROS_ANX7483_EMUL_ENABLED
+	default y
+	help
+	  Enable emulator for ANX7483 retimer.
+
 config EMUL_PS8811
 	bool "Parade PS8811 Emulator"
 	depends on DT_HAS_CROS_PS8811_EMUL_ENABLED

@@ -897,6 +897,11 @@
 			ls-en-pin = <&usb_c1_ls_en>;
 		};
 
+		anx7483_emul: anx7483_emul@3e {
+			compatible = "cros,anx7483-emul", "analogix,anx7483";
+			reg = <0x3e>;
+		};
+
 		ps8811_emul: ps8811_emul@72 {
 			compatible = "cros,ps8811-emul";
 			reg = <0x72>;

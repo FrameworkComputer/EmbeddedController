@@ -181,18 +181,19 @@ static struct anx7483_tuning_set anx7483_dock_flip[] = {
 	{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
 };
 
-static inline int anx7483_read(const struct usb_mux *me, uint8_t reg, int *val)
+test_export_static int anx7483_read(const struct usb_mux *me, uint8_t reg,
+				    int *val)
 {
 	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
-static inline int anx7483_write(const struct usb_mux *me, uint8_t reg,
-				uint8_t val)
+test_export_static int anx7483_write(const struct usb_mux *me, uint8_t reg,
+				     uint8_t val)
 {
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
-static int anx7483_init(const struct usb_mux *me)
+test_export_static int anx7483_init(const struct usb_mux *me)
 {
 	timestamp_t start;
 	int rv;
@@ -222,8 +223,8 @@ static int anx7483_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int anx7483_set(const struct usb_mux *me, mux_state_t mux_state,
-		       bool *ack_required)
+test_export_static int anx7483_set(const struct usb_mux *me,
+				   mux_state_t mux_state, bool *ack_required)
 {
 	int reg;
 	int val;
@@ -265,7 +266,8 @@ static int anx7483_set(const struct usb_mux *me, mux_state_t mux_state,
 	return anx7483_write(me, ANX7483_ANALOG_STATUS_CTRL_REG, reg);
 }
 
-static int anx7483_get(const struct usb_mux *me, mux_state_t *mux_state)
+test_export_static int anx7483_get(const struct usb_mux *me,
+				   mux_state_t *mux_state)
 {
 	int reg;
 
