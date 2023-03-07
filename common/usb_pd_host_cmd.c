@@ -148,6 +148,7 @@ static const mux_state_t typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
  * Bit 1: Optical/Non-optical cable
  * Bit 2: Legacy Thunderbolt adapter
  * Bit 3: Active Link Uni-Direction/Bi-Direction
+ * Bit 4: Retimer/Rediriver cable
  */
 static uint8_t get_pd_control_flags(int port)
 {
@@ -179,6 +180,9 @@ static uint8_t get_pd_control_flags(int port)
 				 0;
 	control_flags |= cable_resp.lsrx_comm == UNIDIR_LSRX_COMM ?
 				 USB_PD_CTRL_ACTIVE_LINK_UNIDIR :
+				 0;
+	control_flags |= cable_resp.retimer_type == USB_RETIMER ?
+				 USB_PD_CTRL_RETIMER_CABLE :
 				 0;
 
 	return control_flags;

@@ -5792,6 +5792,8 @@ enum pd_cc_states {
 #define USB_PD_CTRL_TBT_LEGACY_ADAPTER BIT(2)
 /* Active Link Uni-Direction */
 #define USB_PD_CTRL_ACTIVE_LINK_UNIDIR BIT(3)
+/* Retimer/Redriver cable */
+#define USB_PD_CTRL_RETIMER_CABLE BIT(4)
 
 struct ec_response_usb_pd_control_v2 {
 	uint8_t enabled;
