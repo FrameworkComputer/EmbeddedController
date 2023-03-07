@@ -369,9 +369,10 @@ static void motion_sense_switch_sensor_rate(void)
 							     0, NULL);
 			}
 			/* Re-enable double tap in case AP disabled it */
-			sensor->drv->manage_activity(
-				sensor, MOTIONSENSE_ACTIVITY_DOUBLE_TAP, 1,
-				NULL);
+			if (IS_ENABLED(CONFIG_GESTURE_SENSOR_DOUBLE_TAP))
+				sensor->drv->manage_activity(
+					sensor, MOTIONSENSE_ACTIVITY_DOUBLE_TAP,
+					1, NULL);
 		}
 	}
 }
