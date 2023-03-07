@@ -1404,6 +1404,9 @@ int cypd_reconnect_port_disable(int controller)
 	if (port_power_role == PD_ROLE_SINK && (pd_status_reg[1] & BIT(2)) == BIT(2))
 		portEnable |= BIT(1);
 
+	/* If there is DC, just force reconnect port. */
+	if (board_batt_is_present() == BP_YES)
+		portEnable = 0x0;
 
 	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, portEnable);
 	if (rv != EC_SUCCESS)
