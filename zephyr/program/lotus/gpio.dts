@@ -111,7 +111,8 @@
 			gpios = <&gpio2 0 GPIO_ODR_LOW>;
 		};
 		gpio_gpu_3v_5v_en: gpu_3v_5v_en {
-			gpios = <&gpio1 7 GPIO_OUTPUT_LOW>;	/* Detect GPU/B then enable 3V/5V PWR output H */
+			/* Detect GPU/B then enable 3V/5V PWR output H */
+			gpios = <&gpio1 7 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_wlan_en: wlan_en {
 			gpios = <&gpio1 6 GPIO_OUTPUT_LOW>;
