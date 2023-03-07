@@ -315,15 +315,13 @@ uint16_t tcpc_get_alert_status(void)
 	 * Check which port has the ALERT line set and ignore if that TCPC has
 	 * its reset line active.
 	 */
-	if (!gpio_pin_get_dt(
-		    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
 			    gpio_usb_c0_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
-	if (!gpio_pin_get_dt(
-		    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
 			    gpio_usb_c1_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_1;
