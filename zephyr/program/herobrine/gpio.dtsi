@@ -13,11 +13,11 @@
 		compatible = "named-gpios";
 
 		gpio_usb_c0_pd_int_odl: usb_c0_pd_int_odl {
-			gpios = <&gpioe 0 GPIO_INPUT>;
+			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PD_INT_ODL";
 		};
 		gpio_usb_c1_pd_int_odl: usb_c1_pd_int_odl {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PD_INT_ODL";
 		};
 		gpio_usb_c0_swctl_int_odl: usb_c0_swctl_int_odl {
