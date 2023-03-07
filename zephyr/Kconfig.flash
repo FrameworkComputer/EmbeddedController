@@ -112,4 +112,13 @@ config PLATFORM_EC_FLASH_PSTATE
 	  defined, write protect state is maintained solely by the physical
 	  flash driver.
 
+config PLATFORM_EC_NPCX_FLASH_ERASE_SIZE
+	hex "Change the NPCX EC chip erase size"
+	default 0x10000
+	help
+	  THE NPCX supports erase sizes of 64 KiB, 32 KiB, and 4 KiB.
+	  The NPCX flash driver does not currently support CONFIG_FLASH_MULTIPLE_REGION,
+	  so set the erase size to the maximum (64 KiB) for the best performance.
+
+
 endif # PLATFORM_EC_FLASH_CROS
