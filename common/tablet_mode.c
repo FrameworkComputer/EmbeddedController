@@ -13,6 +13,8 @@
 #include "tablet_mode.h"
 #include "timer.h"
 
+#include <string.h>
+
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ##args)
 
@@ -250,13 +252,14 @@ static int command_settabletmode(int argc, const char **argv)
 	if (tablet_mode_forced == false)
 		tablet_mode_store = tablet_mode;
 
-	if (argv[1][0] == 'o' && argv[1][1] == 'n') {
+	/* |+1| to also make sure the strings the same length. */
+	if (strncmp(argv[1], "on", strlen("on") + 1) == 0) {
 		tablet_mode = TABLET_TRIGGER_LID;
 		tablet_mode_forced = true;
-	} else if (argv[1][0] == 'o' && argv[1][1] == 'f') {
+	} else if (strncmp(argv[1], "off", strlen("off") + 1) == 0) {
 		tablet_mode = 0;
 		tablet_mode_forced = true;
-	} else if (argv[1][0] == 'r') {
+	} else if (strncmp(argv[1], "reset", strlen("reset") + 1) == 0) {
 		tablet_mode = tablet_mode_store;
 		tablet_mode_forced = false;
 	} else {

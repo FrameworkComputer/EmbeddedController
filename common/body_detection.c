@@ -275,13 +275,14 @@ static int command_setbodydetectionmode(int argc, const char **argv)
 	if (argc != 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (argv[1][0] == 'o' && argv[1][1] == 'n') {
+	/* |+1| to also make sure the strings the same length. */
+	if (strncmp(argv[1], "on", strlen("on") + 1) == 0) {
 		body_detect_change_state(BODY_DETECTION_ON_BODY, true);
 		spoof_enable = true;
-	} else if (argv[1][0] == 'o' && argv[1][1] == 'f') {
+	} else if (strncmp(argv[1], "off", strlen("off") + 1) == 0) {
 		body_detect_change_state(BODY_DETECTION_OFF_BODY, true);
 		spoof_enable = true;
-	} else if (argv[1][0] == 'r') {
+	} else if (strncmp(argv[1], "reset", strlen("reset") + 1) == 0) {
 		body_detect_reset();
 		/*
 		 * Don't call body_detect_set_spoof(), since
