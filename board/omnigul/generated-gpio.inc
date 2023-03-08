@@ -66,6 +66,7 @@ GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
 GPIO(USB_C1_RT_INT_ODL,              PIN(A, 0), GPIO_INPUT)
 GPIO(USB_C1_RT_RST_R_ODL,            PIN(0, 2), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
+GPIO(USB_C1_BC12_INT_ODL,            PIN(5, 0), GPIO_ODR_HIGH)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -111,15 +112,14 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
-UNUSED(PIN(4, 1))       /*GPIO41/ADC4*/
-UNUSED(PIN(7, 0))       /*GPIO70/PS2_DAT0*/
-UNUSED(PIN(8, 3))       /*GPIO83/KSO15*/
-UNUSED(PIN(9, 6))       /*GPIO96/F_DIO1*/
-UNUSED(PIN(B, 1))       /*GPIOB1/KSO17/CR_SIN4*/
-UNUSED(PIN(D, 0))       /*GPIOD0/I2C3_SDA0*/
-UNUSED(PIN(D, 1))       /*GPIOD1/I2C3_SCL0*/
-UNUSED(PIN(D, 4))       /*GPIOD4/CR_SIN3*/
-UNUSED(PIN(C, 6))       /*GPIOC6/SMI*/
-UNUSED(PIN(5, 0))       /*GPIO50*/
+UNUSED(PIN(4, 1))       /* GPIO41/ADC4 */
+UNUSED(PIN(7, 0))       /* GPIO70/PS2_DAT0 */
+UNUSED(PIN(8, 3))       /* GPIO83/KSO15 */
+UNUSED(PIN(9, 6))       /* GPIO96/F_DIO1 */
+UNUSED(PIN(B, 1))       /* GPIOB1/KSO17/CR_SIN4 */
+UNUSED(PIN(D, 0))       /* GPIOD0/I2C3_SDA0 */
+UNUSED(PIN(D, 1))       /* GPIOD1/I2C3_SCL0 */
+UNUSED(PIN(D, 4))       /* GPIOD4/CR_SIN3 */
+UNUSED(PIN(C, 6))       /* GPIOC6/SMI */
 
 /* Pre-configured PSL balls:  J8  K6 */
