@@ -59,7 +59,7 @@ ZTEST_USER(extra_tasks, test_hostcmd_thread_mapping)
 	k_tid_t hostcmd_thread;
 	k_tid_t main_thread;
 
-#if IS_ENABLED(HAS_TASK_HOSTCMD)
+#ifdef HAS_TASK_HOSTCMD
 #ifdef CONFIG_TASK_HOSTCMD_THREAD_MAIN
 	k_thread_name_set(get_main_thread(), "HOSTCMD");
 #endif /* CONFIG_TASK_HOSTCMD_THREAD_MAIN */

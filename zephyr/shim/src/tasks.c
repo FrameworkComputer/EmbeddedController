@@ -106,7 +106,7 @@ k_tid_t get_main_thread(void)
 
 test_mockable k_tid_t get_hostcmd_thread(void)
 {
-#if IS_ENABLED(HAS_TASK_HOSTCMD)
+#ifdef HAS_TASK_HOSTCMD
 	if (IS_ENABLED(CONFIG_TASK_HOSTCMD_THREAD_MAIN)) {
 		return get_main_thread();
 	}
@@ -130,12 +130,12 @@ k_tid_t task_id_to_thread_id(task_id_t task_id)
 		case TASK_ID_SYSWORKQ:
 			return get_sysworkq_thread();
 
-#if IS_ENABLED(HAS_TASK_HOSTCMD)
+#ifdef HAS_TASK_HOSTCMD
 		case TASK_ID_HOSTCMD:
 			return get_hostcmd_thread();
 #endif /* HAS_TASK_HOSTCMD */
 
-#if IS_ENABLED(HAS_TASK_MAIN)
+#ifdef HAS_TASK_MAIN
 		case TASK_ID_MAIN:
 			return get_main_thread();
 #endif /* HAS_TASK_MAIN */
@@ -162,13 +162,13 @@ task_id_t thread_id_to_task_id(k_tid_t thread_id)
 		return TASK_ID_SYSWORKQ;
 	}
 
-#if IS_ENABLED(HAS_TASK_HOSTCMD)
+#ifdef HAS_TASK_HOSTCMD
 	if (get_hostcmd_thread() == thread_id) {
 		return TASK_ID_HOSTCMD;
 	}
 #endif /* HAS_TASK_HOSTCMD */
 
-#if IS_ENABLED(HAS_TASK_MAIN)
+#ifdef HAS_TASK_MAIN
 	if (get_main_thread() == thread_id) {
 		return TASK_ID_MAIN;
 	}
