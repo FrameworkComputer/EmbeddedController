@@ -4,9 +4,9 @@
  */
 
 /* Brya specific PWM LED settings: there are 2 LEDs on each side of the board,
- * each one can be controlled separately. The LED colors are white or amber,
+ * each one can be controlled separately. The LED colors are blue or amber,
  * and the default behavior is tied to the charging process: both sides are
- * amber while charging the battery and white when the battery is charged.
+ * amber while charging the battery and blue when the battery is charged.
  */
 
 #include "common.h"
@@ -25,17 +25,17 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 /*
- * We only have a white and an amber LED, so setting any other color results in
+ * We only have a blue and an amber LED, so setting any other color results in
  * both LEDs being off. Cap at 50% to save power.
  */
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
-	/* Amber, White */
-	[EC_LED_COLOR_RED] = { 0, 0 },	  [EC_LED_COLOR_GREEN] = { 0, 0 },
-	[EC_LED_COLOR_BLUE] = { 0, 0 },	  [EC_LED_COLOR_YELLOW] = { 0, 0 },
-	[EC_LED_COLOR_WHITE] = { 0, 50 }, [EC_LED_COLOR_AMBER] = { 50, 0 },
+	/* Amber, Blue */
+	[EC_LED_COLOR_RED] = { 0, 0 },	 [EC_LED_COLOR_GREEN] = { 0, 0 },
+	[EC_LED_COLOR_BLUE] = { 0, 50 }, [EC_LED_COLOR_YELLOW] = { 0, 0 },
+	[EC_LED_COLOR_WHITE] = { 0, 0 }, [EC_LED_COLOR_AMBER] = { 50, 0 },
 };
 
-/* Two logical LEDs with amber and white channels. */
+/* Two logical LEDs with amber and blue channels. */
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 	{
 		.ch0 = PWM_CH_LED1,
@@ -51,7 +51,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	memset(brightness_range, '\0',
 	       sizeof(*brightness_range) * EC_LED_COLOR_COUNT);
 	brightness_range[EC_LED_COLOR_AMBER] = 100;
-	brightness_range[EC_LED_COLOR_WHITE] = 100;
+	brightness_range[EC_LED_COLOR_BLUE] = 100;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
@@ -67,8 +67,8 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	if (brightness[EC_LED_COLOR_WHITE])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_WHITE);
+	if (brightness[EC_LED_COLOR_BLUE])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_BLUE);
 	else if (brightness[EC_LED_COLOR_AMBER])
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
 	else
