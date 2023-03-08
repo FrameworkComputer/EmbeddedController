@@ -14,6 +14,7 @@
 
 #define PCT2075_COMPAT nxp_pct2075
 #define TMP112_COMPAT cros_ec_temp_sensor_tmp112
+#define F75303_COMPAT cros_ec_temp_sensor_f75303
 #define SB_TSI_COMPAT amd_sb_tsi
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
@@ -26,6 +27,7 @@
 #define FOREACH_TEMP_SENSOR(fn)                                             \
 	DT_FOREACH_STATUS_OKAY(PCT2075_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, fn)                           \
+	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(THERMISTOR_COMPAT, fn)
@@ -139,6 +141,22 @@ enum tmp112_sensor {
 };
 
 #undef TMP112_SENSOR_ID_WITH_COMMA
+
+/* F75303 access array */
+/*
+ * Get the F75303 sensor ID from a hardware device node.
+ *
+ * @param node_id: node id of a hardware F75303 sensor node
+ */
+#define F75303_SENSOR_ID(node_id) DT_CAT(F75303_, node_id)
+#define F75303_SENSOR_ID_WITH_COMMA(node_id) F75303_SENSOR_ID(node_id),
+
+enum f75303_sensor {
+	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, F75303_SENSOR_ID_WITH_COMMA)
+		F75303_COUNT,
+};
+
+#undef F75303_SENSOR_ID_WITH_COMMA
 
 struct zephyr_temp_sensor {
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */

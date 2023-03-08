@@ -6,11 +6,17 @@
 /* F75303 temperature sensor module for Chrome EC */
 
 #include "common.h"
-#include "f75303.h"
 #include "i2c.h"
 #include "hooks.h"
+#include "temp_sensor/f75303.h"
 #include "util.h"
 #include "console.h"
+
+
+
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
 
 static int temps[F75303_IDX_COUNT];
 static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
@@ -18,11 +24,27 @@ static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
 /**
  * Read 8 bits register from temp sensor.
  */
+#ifndef CONFIG_ZEPHYR
+/**
+ * Read 8 bits register from temp sensor.
+ */
 static int raw_read8(const int offset, int *data)
 {
 	return i2c_read8(I2C_PORT_THERMAL, F75303_I2C_ADDR_FLAGS, offset, data);
 }
+#else
+/**
+ * Read 8 bits register from temp sensor.
+ */
+static int raw_read8(int sensor, const int offset, int *data)
+{
+	return i2c_read8(f75303_sensors[sensor].i2c_port,
+			 f75303_sensors[sensor].i2c_addr_flags, offset, data);
+}
+#endif /* !CONFIG_ZEPHYR */
 
+
+#ifndef CONFIG_ZEPHYR
 static int get_temp(const int offset, int *temp)
 {
 	int rv;
@@ -35,6 +57,21 @@ static int get_temp(const int offset, int *temp)
 	*temp = C_TO_K(temp_raw);
 	return EC_SUCCESS;
 }
+#else
+static int get_temp(int sensor, const int offset, int *temp)
+{
+	int rv;
+	int temp_raw = 0;
+
+	rv = raw_read8(sensor, offset, &temp_raw);
+	if (rv != 0)
+		return rv;
+
+	*temp = C_TO_K(temp_raw);
+	return EC_SUCCESS;
+}
+#endif /* !CONFIG_ZEPHYR */
+
 
 int f75303_get_val(int idx, int *temp)
 {
@@ -50,6 +87,7 @@ int f75303_get_val(int idx, int *temp)
 	return EC_SUCCESS;
 }
 
+#ifndef CONFIG_ZEPHYR
 static void f75303_sensor_poll(void)
 {
 	get_temp(F75303_TEMP_LOCAL, &temps[F75303_IDX_LOCAL]);
@@ -57,6 +95,29 @@ static void f75303_sensor_poll(void)
 	get_temp(F75303_TEMP_REMOTE2, &temps[F75303_IDX_REMOTE2]);
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
+#else
+void f75303_update_temperature(int idx)
+{
+	int temp_reg = 0;
+	int rv = 0;
+
+	if (idx >= F75303_IDX_COUNT)
+		return;
+	switch (idx) {
+	case 0:
+		rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
+		break;
+	case 1:
+		rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
+		break;
+	case 2:
+		rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
+		break;
+	}
+	if (rv == EC_SUCCESS)
+		temps[idx] = temp_reg;
+}
+#endif /* CONFIG_ZEPHYR */
 
 static int f75303_set_fake_temp(int argc, const char **argv)
 {

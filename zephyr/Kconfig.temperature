@@ -56,6 +56,12 @@ config PLATFORM_EC_TEMP_SENSOR_TMP112
 	  Enables support for the CrosEC TMP112 driver, an i2c peripheral
 	  temperature sensor from TI.
 
+config PLATFORM_EC_TEMP_SENSOR_F75303
+	bool "F75303 support"
+	help
+	  Enables support for the CrosEC F75303 driver, an i2c peripheral
+	  temperature sensor from FINTEK.
+
 endif # PLATFORM_EC_TEMP_SENSOR
 
 
