@@ -26,6 +26,8 @@ FAKE_VOID_FUNC(ccd_interrupt, enum gpio_signal);
 #ifdef CONFIG_TEST_STEELIX_RUSTY
 FAKE_VOID_FUNC(x_ec_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(motion_sensors_check_ssfc);
+#else
+FAKE_VOID_FUNC(motion_interrupt, enum gpio_signal);
 #endif
 
 #ifdef CONFIG_VARIANT_CORSOLA_DB_DETECTION
