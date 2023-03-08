@@ -57,7 +57,7 @@ config PLATFORM_EC_USB_MUX_IT5205
 config PLATFORM_EC_USB_MUX_PS8743
 	bool "Parade PS8743 USB-C Host Switch with redriver"
 	default y
-	depends on DT_HAS_PARADE_PS8743_ENABLED
+	depends on DT_HAS_PARADE_PS8743_ENABLED || DT_HAS_ZEPHYR_PS8743_EMUL_ENABLED
 	help
 	  This is a Parade USB 3.1 Gen 1 / DisplayPort (DP) Alt Mode
 	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching

@@ -149,6 +149,15 @@ config EMUL_PCT2075
 	  Enable the PCT2075 temperature sensor emulator. It uses emulated I2C bus.
 	  Emulator API is available in zephyr/include/emul/emul_pct2075.h.
 
+config EMUL_PS8743
+	bool "PS8743 emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_PS8743_EMUL_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the PS8743 usb mux. This driver use emulated I2C bus.
+	  Emulator API is available in zephyr/include/emul/emul_ps8743.h.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"

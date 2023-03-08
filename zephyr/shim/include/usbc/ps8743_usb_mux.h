@@ -9,6 +9,7 @@
 #include "usb_mux/ps8743_public.h"
 
 #define PS8743_USB_MUX_COMPAT parade_ps8743
+#define PS8743_EMUL_COMPAT zephyr_ps8743_emul
 
 /* clang-format off */
 #define USB_MUX_CONFIG_PS8743(mux_id)                  \
