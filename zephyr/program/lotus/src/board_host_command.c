@@ -33,6 +33,12 @@ static void sci_enable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, sci_enable, HOOK_PRIO_DEFAULT);
 
+static void sci_disable(void)
+{
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, sci_disable, HOOK_PRIO_DEFAULT);
+
 static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 {
 

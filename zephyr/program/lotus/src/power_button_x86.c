@@ -44,21 +44,23 @@
  * duration.  Since (t0+t1) causes a 4-second offset, the hard reset timeout in
  * the chipset triggers after 8 seconds as desired.
  *
- *   PWRBTN#   ---                      ----
- *     to EC     |______________________|
+ *   PWRBTN#   ---                                          ----
+ *     to EC     |__________________________________________|
  *
  *
- *   PWRBTN#   ---  ---------           ----
- *    to PCH     |__|       |___________|
- *                t0    t1    held down
+ *   PWRBTN#   ---  ---------                               ----
+ *    to PCH     |__|       |_______________________________|
+ *                t0    t1  |    t2    |     t3    |
  *
- *   scan code   |                      |
- *    to host    v                      v
- *     @S0   make code             break code
+ *   scan code   |                                          |
+ *    to host    v                                          v
+ *     @S0   make code                                 break code
  */
 #define PWRBTN_DELAY_INIT (5 * MSEC) /* 5ms to wait VALW power rail ready*/
 #define PWRBTN_DELAY_T0 (32 * MSEC) /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1 (4 * SECOND - PWRBTN_DELAY_T0) /* 4 secs - t0 */
+#define PWRBTN_DELAY_T2 (4 * SECOND) /* Force CPU to G3 */
+#define PWRBTN_DELAY_T3 (4 * SECOND) /* EC reset */
 /*
  * Length of time to stretch initial power button press to give chipset a
  * chance to wake up (~100ms) and react to the press (~16ms).  Also used as
@@ -92,6 +94,10 @@ enum power_button_state {
 	PWRBTN_STATE_BOOT_KB_RESET,
 	/* Power button pressed when chipset was off; stretching pulse */
 	PWRBTN_STATE_WAS_OFF,
+	/* Power button pressed keep long time; reset EC */
+	PWRBTN_STATE_NEED_RESET,
+	/* Power button press keep long time; force shutdown */
+	PWRBTN_STATE_NEED_SHUTDOWN,
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
 
@@ -214,7 +220,8 @@ static void state_machine(uint64_t tnow)
 
 	switch (pwrbtn_state) {
 	case PWRBTN_STATE_PRESSED:
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		/* chipset exit hard off function only executes at G3 state */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
 			/* Check the VALW power rail is ready */
 			if (get_power_rail_status()) {
 				/*
@@ -302,11 +309,39 @@ static void state_machine(uint64_t tnow)
 			pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		}
 		break;
+	case PWRBTN_STATE_HELD:
 
+		if (power_button_is_pressed()) {
+			tnext_state = tnow + PWRBTN_DELAY_T2;
+			pwrbtn_state = PWRBTN_STATE_NEED_SHUTDOWN;
+		} else {
+			power_button_released(tnow);
+		}
+
+		break;
+	case PWRBTN_STATE_NEED_SHUTDOWN:
+
+		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			CPRINTS("PB held press 8s execute force shutdown");
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
+		}
+
+		if (power_button_is_pressed()) {
+			tnext_state = tnow + PWRBTN_DELAY_T3;
+			pwrbtn_state = PWRBTN_STATE_NEED_RESET;
+		} else
+			power_button_released(tnow);
+
+		break;
+	case PWRBTN_STATE_NEED_RESET:
+		if (power_button_is_pressed())
+			system_reset(SYSTEM_RESET_HARD);
+		else
+			power_button_released(tnow);
+		break;
 	case PWRBTN_STATE_BOOT_KB_RESET:
 	case PWRBTN_STATE_WAS_OFF:
 	case PWRBTN_STATE_IDLE:
-	case PWRBTN_STATE_HELD:
 	case PWRBTN_STATE_EAT_RELEASE:
 		/* Do nothing */
 		break;

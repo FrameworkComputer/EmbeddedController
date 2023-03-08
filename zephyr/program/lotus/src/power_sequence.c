@@ -25,6 +25,7 @@ static int power_s5_up;		/* Chipset is sequencing up or down */
 static int keep_pch_power;	/* For S4 wake source */
 static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
+static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -117,6 +118,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		report_ap_reset(reason);
 		keep_pch_power = 0;
+		force_g3_flags = 1;
 		chipset_force_g3();
 	}
 }
@@ -157,6 +159,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5:
+
+		if (force_g3_flags) {
+			force_g3_flags = 0;
+			return POWER_S5G3;
+		}
 
 		if (power_s5_up) {
 			while (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {

@@ -298,6 +298,10 @@ void update_dynamic_battery_info(void)
 	struct ec_response_battery_dynamic_info *const bd =
 		&battery_dynamic[BATT_IDX_MAIN];
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	static int batt_os_percentage;
+#endif
+
 	curr = charge_get_status();
 	tmp = 0;
 	if (curr->ac)
@@ -326,17 +330,25 @@ void update_dynamic_battery_info(void)
 
 	if (!(curr->batt.flags & BATT_FLAG_BAD_VOLTAGE))
 		bd->actual_voltage = curr->batt.voltage;
-
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	/* let the OS battery remaining time both empty and full time more smooth */
+	if (!(curr->batt.flags & BATT_FLAG_BAD_CURRENT))
+		bd->actual_current = battery_get_avg_current();
+#else
 	if (!(curr->batt.flags & BATT_FLAG_BAD_CURRENT))
 		bd->actual_current = curr->batt.current;
-
+#endif
 	if (!(curr->batt.flags & BATT_FLAG_BAD_DESIRED_VOLTAGE))
 		bd->desired_voltage = curr->batt.desired_voltage;
 
 	if (!(curr->batt.flags & BATT_FLAG_BAD_DESIRED_CURRENT))
 		bd->desired_current = curr->batt.desired_current;
 
-	if (!(curr->batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
+	if (!(curr->batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+		&& !(curr->batt.flags & BATT_FLAG_BAD_FULL_CAPACITY)
+#endif
+	) {
 		/*
 		 * If we're running off the battery, it must have some charge.
 		 * Don't report zero charge, as that has special meaning
@@ -345,6 +357,11 @@ void update_dynamic_battery_info(void)
 		if (curr->batt.remaining_capacity == 0 &&
 		    !curr->batt_is_charging)
 			bd->remaining_capacity = 1;
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+		/* Avoid to show the percentage when battery fully charge */
+		else if (curr->ac && (curr->batt.status & STATUS_FULLY_CHARGED))
+			bd->remaining_capacity = curr->batt.full_capacity;
+#endif
 		else
 			bd->remaining_capacity = curr->batt.remaining_capacity;
 	}
@@ -363,8 +380,22 @@ void update_dynamic_battery_info(void)
 	    battery_is_below_threshold(BATT_THRESHOLD_TYPE_SHUTDOWN, false))
 		tmp |= EC_BATT_FLAG_LEVEL_CRITICAL;
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	batt_os_percentage = (bd->remaining_capacity * 1000) / (curr->batt.full_capacity + 1);
+	/*
+	 * sync with OS battery percentage to avoid battery show charging icon at 100%
+	 * os battery display formula: rounding (remainig / full capacity)*100
+	 */
+	if (curr->ac && batt_os_percentage > 994) {
+		tmp |= EC_BATT_FLAG_DISCHARGING;
+	} else {
+		tmp |= curr->batt_is_charging ? EC_BATT_FLAG_CHARGING :
+						EC_BATT_FLAG_DISCHARGING;
+	}
+#else
 	tmp |= curr->batt_is_charging ? EC_BATT_FLAG_CHARGING :
 					EC_BATT_FLAG_DISCHARGING;
+#endif
 
 	if (battery_is_cut_off())
 		tmp |= EC_BATT_FLAG_CUT_OFF;

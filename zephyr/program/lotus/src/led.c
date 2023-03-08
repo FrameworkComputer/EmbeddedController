@@ -6,20 +6,24 @@
  */
 
 #include <zephyr/drivers/gpio.h>
+#include <stdint.h>
 
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "cypress_pd_common.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lid_switch.h"
 #include "led.h"
 #include "led_common.h"
 #include "power.h"
 #include "system.h"
 #include "util.h"
 
+#include <zephyr/drivers/pwm.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
@@ -29,6 +33,17 @@ LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 struct led_color_node_t {
 	struct led_pins_node_t *pins_node;
 	int acc_period;
+};
+
+#define BREATH_LIGHT_LENGTH 100
+#define BREATH_HOLD_LENGTH 50
+#define BREATH_OFF_LENGTH 200
+
+enum breath_status {
+	BREATH_LIGHT_UP = 0,
+	BREATH_LIGHT_DOWN,
+	BREATH_HOLD,
+	BREATH_OFF,
 };
 
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
@@ -172,6 +187,9 @@ static void set_color(int node_idx, uint32_t ticks)
 		if (!led_auto_control_is_enabled(pins_node->led_id))
 			break; /* Auto control is disabled */
 
+		if (pins_node->led_id == EC_LED_ID_POWER_LED)
+			break; /* Avoid power led control */
+
 		/*
 		 * Period value that we use here is in terms of number
 		 * of ticks stored during initialization of the struct
@@ -187,11 +205,28 @@ static void set_color(int node_idx, uint32_t ticks)
 
 static int match_node(int node_idx)
 {
+	int active_charge_port = charge_manager_get_active_charge_port();
+
 	/**
-	 * TODO: Implement customization-led feature
-	 * a. chassis open
-	 * b. battery disconnect
+	 * TODO:
+	 * 1. standalone led behavior
+	 * 2. GPU Bay Module Fault
 	 */
+
+	/**
+	 * Charge LED should control the left side and right side.
+	 * If the chassis is opened or there isn't an active charge port, needs to open both sides.
+	 */
+	if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) &&
+		(active_charge_port != -1)) {
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_right_side), (active_charge_port < 2) ? 1 : 0);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_left_side), (active_charge_port >= 2) ? 1 : 0);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
+	}
 
 	/* Check if this node depends on power state */
 	if (node_array[node_idx].pwr_state != PWR_STATE_UNCHANGE) {
@@ -201,12 +236,9 @@ static int match_node(int node_idx)
 			return -1;
 
 		/* Check if this node depends on charge port */
-		if (node_array[node_idx].charge_port != -1) {
-			int port = charge_manager_get_active_charge_port();
-
-			if (node_array[node_idx].charge_port != port)
+		if (node_array[node_idx].charge_port != -1)
+			if (node_array[node_idx].charge_port != active_charge_port)
 				return -1;
-		}
 	}
 
 	/* Check if this node depends on chipset state */
@@ -226,9 +258,147 @@ static int match_node(int node_idx)
 			return -1;
 	}
 
+	if (node_array[node_idx].pwr_state == PWR_STATE_UNCHANGE &&
+		node_array[node_idx].chipset_state == 0 &&
+		node_array[node_idx].batt_lvl[0] == -1) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1)
+			return -1;
+	}
+
 	/* We found the node that matches the current system state */
 	return node_idx;
 }
+
+/* =========== Breath API =========== */
+
+uint8_t breath_led_light_up;
+uint8_t breath_led_light_down;
+uint8_t breath_led_hold;
+uint8_t breath_led_off;
+
+int breath_pwm_enable;
+int breath_led_status;
+static void breath_led_pwm_deferred(void);
+DECLARE_DEFERRED(breath_led_pwm_deferred);
+
+void pwm_set_breath_dt(const struct led_pins_node_t *pins_node, int percent)
+{
+	struct pwm_pin_t *pwm_pins = pins_node->pwm_pins;
+	uint32_t pulse_ns;
+
+	pulse_ns = DIV_ROUND_NEAREST(1000000 * percent, 100);
+
+	for (int j = 0; j < pins_node->pins_count; j++) {
+		pwm_set_pulse_dt(&pwm_pins[j].pwm, pulse_ns);
+	}
+}
+
+/*
+ *	Breath LED API
+ *	Max duty (percentage) = BREATH_LIGHT_LENGTH (100%)
+ *	Fade time (second) = 1000ms(In) / 1000ms(Out)
+ *	Duration time (second) = BREATH_HOLD_LENGTH(500ms)
+ *	Interval time (second) = BREATH_OFF_LENGTH(2000ms)
+ */
+
+static void breath_led_pwm_deferred(void)
+{
+	switch (breath_led_status) {
+	case BREATH_LIGHT_UP:
+
+		if (breath_led_light_up <= BREATH_LIGHT_LENGTH)
+			pwm_set_breath_dt(GET_PIN_NODE(7, 0), breath_led_light_up++);
+		else {
+			breath_led_light_up = 0;
+			breath_led_light_down = BREATH_LIGHT_LENGTH;
+			breath_led_status = BREATH_HOLD;
+		}
+
+		break;
+	case BREATH_HOLD:
+
+		if (breath_led_hold <= BREATH_HOLD_LENGTH)
+			breath_led_hold++;
+		else {
+			breath_led_hold = 0;
+			breath_led_status = BREATH_LIGHT_DOWN;
+		}
+
+		break;
+	case BREATH_LIGHT_DOWN:
+
+		if (breath_led_light_down != 0)
+			pwm_set_breath_dt(GET_PIN_NODE(7, 0),
+				     breath_led_light_down--);
+		else {
+			breath_led_light_down = BREATH_LIGHT_LENGTH;
+			breath_led_status = BREATH_OFF;
+		}
+
+		break;
+	case BREATH_OFF:
+
+		if (breath_led_off <= BREATH_OFF_LENGTH)
+			breath_led_off++;
+		else {
+			breath_led_off = 0;
+			breath_led_status = BREATH_LIGHT_UP;
+		}
+
+		break;
+	}
+
+	if (breath_pwm_enable)
+		hook_call_deferred(&breath_led_pwm_deferred_data, 10 * MSEC);
+}
+
+void breath_led_run(uint8_t enable)
+{
+	if (enable && !breath_pwm_enable) {
+		breath_pwm_enable = true;
+		breath_led_status = BREATH_LIGHT_UP;
+		hook_call_deferred(&breath_led_pwm_deferred_data, 10 * MSEC);
+	} else if (!enable && breath_pwm_enable) {
+		breath_pwm_enable = false;
+		breath_led_light_up = 0;
+		breath_led_light_down = 0;
+		breath_led_hold = 0;
+		breath_led_off = 0;
+		breath_led_status = BREATH_OFF;
+		hook_call_deferred(&breath_led_pwm_deferred_data, -1);
+	}
+}
+
+static void board_led_set_power(void)
+{
+
+	/* turn off led when lid is close*/
+	if (!lid_is_open()) {
+		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
+		return;
+	}
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+		breath_led_run(1);
+		return;
+	}
+
+	breath_led_run(0);
+
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		led_set_color(LED_WHITE, EC_LED_ID_POWER_LED);
+	} else
+		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
+}
+
+/*
+ * TODO:
+ * 1. bbram implement
+ * 2. FP level control
+ * 3. Host cmd control
+ */
+
+/* =============================== */
 
 static void board_led_set_color(void)
 {
@@ -259,7 +429,18 @@ static void board_led_set_color(void)
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
+	/**
+	 * TODO: Debug led should add at here
+	 *
+	 * if (debug_led_active)
+	 *	contorl_debug_led;
+	 * else
+	 *	board_led_set_color();
+	 */
 	board_led_set_color();
+
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		board_led_set_power();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
