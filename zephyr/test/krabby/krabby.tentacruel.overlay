@@ -169,6 +169,9 @@
 		};
 		port1@1 {
 			ppc = <&ppc_port1>;
+			usb-mux-chain-1 {
+				usb-muxes = <&ps8743_mux_1>;
+			};
 		};
 	};
 };
@@ -223,4 +226,14 @@
 
 &lis2dw12_data {
 	compatible = "cros-ec,drvdata-bmi260";
+};
+
+&i2c_ctrl4 {
+	/delete-node/ tusb1064-mux-1@44;
+
+	ps8743_mux_1: ps8743-mux-1@10 {
+		compatible = "zephyr,ps8743-emul";
+		reg = <0x10>;
+		board-init = "ps8743_eq_c1_setting";
+	};
 };
