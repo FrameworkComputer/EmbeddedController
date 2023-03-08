@@ -18,7 +18,6 @@ int main(int argc, char *argv[])
 	 */
 	char pdata[4096];
 	size_t size = 0;
-	size_t read;
 
 	BUILD_ASSERT(sizeof(pdata) > sizeof(struct panic_data) * 2);
 
@@ -35,21 +34,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	while (1) {
-		read = fread(&pdata[size], 1, sizeof(pdata) - size, stdin);
-		if (read < 0) {
-			fprintf(stderr, "Cannot read panicinfo from stdin.\n");
-			return 1;
-		}
-		if (read == 0)
-			break;
-
-		size += read;
-		if (size == sizeof(pdata)) {
-			fprintf(stderr, "Too much panicinfo data in stdin.\n");
-			return 1;
-		}
-	}
+	size = get_panic_input(pdata, sizeof(pdata));
+	if (size < 0)
+		return 1;
 
 	return parse_panic_info(pdata, size) ? 1 : 0;
 }

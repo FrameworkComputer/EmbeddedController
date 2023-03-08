@@ -6,7 +6,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "compile_time_macros.h"
+
+#include <cstddef>
+
+/* Helpers from ec/include/compile_time_macros.h */
+#ifndef CONFIG_ZEPHYR
+#define BIT(nr) (1U << (nr))
+#endif
 
 #include "ec_panicinfo.h"
 
@@ -144,6 +150,30 @@ static int parse_panic_info_rv32i(const struct panic_data *pdata)
 	       regs[30], mepc);
 
 	return 0;
+}
+
+int get_panic_input(char *data, size_t max_size)
+{
+	size_t size = 0;
+	size_t read;
+
+	while (1) {
+		read = fread(&data[size], 1, max_size - size, stdin);
+		if (read < 0) {
+			fprintf(stderr, "Cannot read panicinfo from stdin.\n");
+			return -1;
+		}
+		if (read == 0)
+			break;
+
+		size += read;
+		if (size >= max_size) {
+			fprintf(stderr, "Too much panicinfo data in stdin.\n");
+			return -1;
+		}
+	}
+
+	return size;
 }
 
 int parse_panic_info(const char *data, size_t size)

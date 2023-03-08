@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_PANIC_DEFS_H
 #define __CROS_EC_PANIC_DEFS_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
