@@ -10,9 +10,12 @@
 #include "../generated.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
-#include "../led.dtsi"
 #include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../rex.dtsi"
 #include "../temp_sensors.dtsi"
 #include "../usbc.dtsi"
+
+/* Rex project DTS includes */
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
