@@ -473,6 +473,10 @@ enum system_bbram_idx {
 	SYSTEM_BBRAM_IDX_PD1,
 	SYSTEM_BBRAM_IDX_PD2,
 	SYSTEM_BBRAM_IDX_TRY_SLOT,
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX,
+	SYSTEM_BBRAM_IDX_FP_LED_LEVEL,
+#endif
 };
 
 /* Maximum number of bbram indexes allotted for PD port state data */

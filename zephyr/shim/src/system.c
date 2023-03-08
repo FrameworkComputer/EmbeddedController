@@ -19,6 +19,11 @@
 #define BBRAM_REGION_PD2 DT_PATH(named_bbram_regions, pd2)
 #define BBRAM_REGION_TRY_SLOT DT_PATH(named_bbram_regions, try_slot)
 
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#define BBRAM_REGION_CHARGE_LIMIT_MAX DT_PATH(named_bbram_regions, charge_limit_max)
+#define BBRAM_REGION_FP_LED_LEVEL DT_PATH(named_bbram_regions, fp_led_level)
+#endif
+
 #define GET_BBRAM_OFFSET(node) \
 	DT_PROP(DT_PATH(named_bbram_regions, node), offset)
 #define GET_BBRAM_SIZE(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
@@ -64,6 +69,20 @@ static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
 		*size_out = DT_PROP(BBRAM_REGION_TRY_SLOT, size);
 		break;
 #endif
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#if DT_NODE_EXISTS(BBRAM_REGION_CHARGE_LIMIT_MAX)
+	case SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX:
+		*offset_out = DT_PROP(BBRAM_REGION_CHARGE_LIMIT_MAX, offset);
+		*size_out = DT_PROP(BBRAM_REGION_CHARGE_LIMIT_MAX, size);
+		break;
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_FP_LED_LEVEL)
+	case SYSTEM_BBRAM_IDX_FP_LED_LEVEL:
+		*offset_out = DT_PROP(BBRAM_REGION_FP_LED_LEVEL, offset);
+		*size_out = DT_PROP(BBRAM_REGION_FP_LED_LEVEL, size);
+		break;
+#endif
+#endif
 	default:
 		return EC_ERROR_INVAL;
 	}
@@ -82,6 +101,22 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 		return rc;
 
 	rc = bbram_read(bbram_dev, offset, size, value);
+
+	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
+}
+
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
+{
+	int offset, size, rc;
+
+	if (bbram_dev == NULL)
+		return EC_ERROR_INVAL;
+
+	rc = bbram_lookup(idx, &offset, &size);
+	if (rc)
+		return rc;
+
+	rc = bbram_write(bbram_dev, offset, size, &value);
 
 	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
 }
