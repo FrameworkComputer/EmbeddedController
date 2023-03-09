@@ -10,12 +10,9 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-DECLARE_FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config,
-			enum cbi_fw_config_field_id, uint32_t *);
-DEFINE_FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
-		       uint32_t *);
-DECLARE_FAKE_VOID_FUNC(fan_set_count, int);
-DEFINE_FAKE_VOID_FUNC(fan_set_count, int);
+FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
+		uint32_t *);
+FAKE_VOID_FUNC(fan_set_count, int);
 
 int cros_cbi_get_fw_config_mock(enum cbi_fw_config_field_id field_id,
 				uint32_t *value)
