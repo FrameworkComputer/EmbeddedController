@@ -78,9 +78,8 @@
 #undef CONFIG_BATTERY_SMART
 
 /* LED */
-/* TODO(b/259467280) Determine what LED/PWM impl is needed*/
-/* #define CONFIG_LED_PWM */
-/* #define CONFIG_LED_PWM_COUNT 1 */
+#define CONFIG_LED_PWM
+#define CONFIG_LED_PWM_COUNT 1
 
 /* PWM */
 #define CONFIG_PWM
