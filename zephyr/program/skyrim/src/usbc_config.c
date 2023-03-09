@@ -272,9 +272,9 @@ static void reset_nct38xx_port(int port)
 	gpio_save_port_config(ioex_port1, saved_port1_flags,
 			      ARRAY_SIZE(saved_port1_flags));
 
-	gpio_pin_set_dt(reset_gpio_l, 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(reset_gpio_l, 1);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	gpio_pin_set_dt(reset_gpio_l, 0);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
@@ -316,13 +316,13 @@ uint16_t tcpc_get_alert_status(void)
 	 * its reset line active.
 	 */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+		if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
 			    gpio_usb_c0_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+		if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
 			    gpio_usb_c1_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}

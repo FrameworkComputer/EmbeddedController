@@ -99,11 +99,11 @@
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
 		gpio_usb_c0_tcpc_rst_l: usb_c0_tcpc_rst_l {
-			gpios = <&gpio3 4 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio3 4 (GPIO_OUTPUT_HIGH | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_TCPC_RST_L";
 		};
 		gpio_usb_c1_tcpc_rst_l: usb_c1_tcpc_rst_l {
-			gpios = <&gpio3 7 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio3 7 (GPIO_OUTPUT_HIGH | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 		};
 		usb_c0_hpd {
