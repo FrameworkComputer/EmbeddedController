@@ -246,6 +246,27 @@ static int rt1739_set_frs_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
+static int rt1739_src_oc(enum tcpc_rp_value rp)
+{
+	switch (rp) {
+	case TYPEC_RP_3A0:
+		return RT1739_LV_SRC_OCP_SEL_3_3A;
+	case TYPEC_RP_1A5:
+		return RT1739_LV_SRC_OCP_SEL_1_75A;
+	default:
+		return RT1739_LV_SRC_OCP_SEL_1_25A;
+	}
+}
+
+static int rt1739_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	int reg;
+
+	RETURN_ERROR(read_reg(port, RT1739_REG_VBUS_OC_SETTING, &reg));
+	reg = (reg & ~RT1739_LV_SRC_OCP_MASK) | rt1739_src_oc(rp);
+	return write_reg(port, RT1739_REG_VBUS_OC_SETTING, reg);
+}
+
 static int rt1739_init(int port)
 {
 	int device_id, oc_setting, sys_ctrl, vbus_switch_ctrl;
@@ -305,12 +326,16 @@ static int rt1739_init(int port)
 			(RT1739_OVP_SEL_23_0V << RT1739_VIN_HV_OVP_SEL_SHIFT)));
 	/* VBUS OCP -> 3.3A (or 5.5A for ES2 HV Sink) */
 	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
+	oc_setting = 0;
 	if (device_id == RT1739_DEVICE_ID_ES2)
-		oc_setting = (RT1739_LV_SRC_OCP_SEL_3_3A |
-			      RT1739_HV_SINK_OCP_SEL_5_5A);
+		oc_setting |= RT1739_HV_SINK_OCP_SEL_5_5A;
 	else
-		oc_setting = (RT1739_LV_SRC_OCP_SEL_3_3A |
-			      RT1739_HV_SINK_OCP_SEL_3_3A);
+		oc_setting |= RT1739_HV_SINK_OCP_SEL_3_3A;
+#if defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
+	oc_setting |= rt1739_src_oc(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT);
+#else
+	oc_setting |= rt1739_src_oc(CONFIG_USB_PD_PULLUP);
+#endif
 	RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_OC_SETTING, oc_setting));
 
 	return EC_SUCCESS;
@@ -468,6 +493,7 @@ const struct ppc_drv rt1739_ppc_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 	.is_vbus_present = &rt1739_is_vbus_present,
 #endif
+	.set_vbus_source_current_limit = &rt1739_set_vbus_source_current_limit,
 #ifdef CONFIG_USBC_PPC_POLARITY
 	.set_polarity = &rt1739_set_polarity,
 #endif
