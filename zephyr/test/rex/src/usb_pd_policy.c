@@ -13,18 +13,12 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-DECLARE_FAKE_VALUE_FUNC(int, chipset_in_state, int);
-DEFINE_FAKE_VALUE_FUNC(int, chipset_in_state, int);
-DECLARE_FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
-DEFINE_FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
-DECLARE_FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
-DEFINE_FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
-DECLARE_FAKE_VOID_FUNC(pd_send_host_event, int);
-DEFINE_FAKE_VOID_FUNC(pd_send_host_event, int);
-DECLARE_FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
-DEFINE_FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
-DECLARE_FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
-DEFINE_FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
+FAKE_VALUE_FUNC(int, chipset_in_state, int);
+FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
+FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
+FAKE_VOID_FUNC(pd_send_host_event, int);
+FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
+FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
 
 int chipset_in_state_mock(int state_mask)
 {
