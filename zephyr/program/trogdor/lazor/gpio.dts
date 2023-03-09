@@ -166,10 +166,10 @@
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_c0_pd_rst_l: usb_c0_pd_rst_l {
-			gpios = <&gpiof 1 GPIO_ODR_HIGH>;
+			gpios = <&gpiof 1 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c1_pd_rst_l: usb_c1_pd_rst_l {
-			gpios = <&gpioe 4 GPIO_ODR_HIGH>;
+			gpios = <&gpioe 4 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_dp_mux_oe_l: dp_mux_oe_l {
 			gpios = <&gpio9 6 GPIO_ODR_HIGH>;
