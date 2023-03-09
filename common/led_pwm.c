@@ -165,6 +165,7 @@ static void pulse_leds(enum ec_led_colors color, int ontime, int period)
 	pulse_leds_deferred();
 }
 
+#ifdef CONFIG_BATTERY
 static int show_charge_state(void)
 {
 	enum charge_state chg_st = charge_get_state();
@@ -201,8 +202,10 @@ static int show_charge_state(void)
 	}
 	return 1;
 }
+#endif /* CONFIG_BATTERY */
 
 #ifndef CONFIG_LED_PWM_CHARGE_STATE_ONLY
+#ifdef CONFIG_BATTERY
 static int show_battery_state(void)
 {
 	int batt_percentage = charge_get_percent();
@@ -225,6 +228,7 @@ static int show_battery_state(void)
 	}
 	return 1;
 }
+#endif /* CONFIG_BATTERY */
 
 static int show_chipset_state(void)
 {
@@ -246,13 +250,17 @@ static int show_chipset_state(void)
 
 static void update_leds(void)
 {
+#ifdef CONFIG_BATTERY
 	/* Reflecting the charge state is the highest priority. */
 	if (show_charge_state())
 		return;
+#endif /* CONFIG_BATTERY */
 
 #ifndef CONFIG_LED_PWM_CHARGE_STATE_ONLY
+#ifdef CONFIG_BATTERY
 	if (show_battery_state())
 		return;
+#endif /* CONFIG_BATTERY */
 
 	if (show_chipset_state())
 		return;
