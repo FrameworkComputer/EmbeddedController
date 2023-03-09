@@ -68,7 +68,7 @@
  * Not all registers are passed in the context from Zephyr
  * (see include/zephyr/arch/riscv/exp.h), in particular
  * the mcause register is not saved (mstatus is saved instead).
- * The assignments must match util/ec_panicinfo.c
+ * The assignments must match include/panic_defs.h
  */
 #define PANIC_ARCH PANIC_ARCH_RISCV_RV32I
 #define PANIC_REG_LIST(M)         \
