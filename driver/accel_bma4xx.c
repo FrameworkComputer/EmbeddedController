@@ -296,9 +296,79 @@ static int get_resolution(const struct motion_sensor_t *s)
 	return BMA4_12_BIT_RESOLUTION;
 }
 
+/**
+ * Return the data rate in millihz corresponding to an acc_odr register value.
+ *
+ * The input value is assumed to be in the range 1 to 15 inclusive, which is the
+ * entire range of documented values for acc_odr.
+ */
+static int bma4_reg_to_odr(uint8_t reg)
+{
+	/*
+	 * Maximum data rate is 12.8 kHz (12800000 mHz) at register value 0xf.
+	 * Reducing the register value by 1 halves data rate down to a minimum
+	 * of 0.78125 Hz at reg=1. Right-shifting the maximum value according
+	 * to the difference of the register value and maximum rate yields the
+	 * actual ODR, easily proven exhaustively:
+	 *
+	 * >>> [12800000 >> (0xf - reg) for reg in range(1, 16)]
+	 * [781, 1562, ... 6400000, 12800000]
+	 *
+	 * The register is documented to be valid only for values 1..=15, and
+	 * we can only cause undefined behavior if the register value is too
+	 * large; it's only wrong if reg = 0, not undefined.
+	 */
+	ASSERT(reg >= 1 && reg <= 15);
+	return 12800000 >> (0xf - reg);
+}
+
+/**
+ * Return a ACCEL_CONFIG register value for the given data rate in millihz.
+ *
+ * This always returns a valid acc_odr setting in the range of 1
+ * (DATA_RATE_0_78HZ) to 12 (DATA_RATE_1600HZ) inclusive. Rounds down if the
+ * requested rate cannot be exactly programmed.
+ */
+static uint8_t bma4_odr_to_reg(uint32_t odr)
+{
+	/*
+	 * Clamp ODR to supported sample rates, because any value outside that
+	 * range yields illegal register values. The lower bound is rounded up
+	 * to the nearest millihertz, since rounding down puts it out of range,
+	 * and the upper bound is limited to the highest non-reserved sample
+	 * rate (higher rates are documented but marked as reserved).
+	 */
+	odr = MIN(MAX(782 /* 25/32 Hz */, odr), 1600000);
+
+	/*
+	 * reg_to_odr (above) is fairly easy to understand, but this operation
+	 * is not as obvious to derive. It is derived algebraically, starting
+	 * with the reg_to_odr expression:
+	 *
+	 * 1. odr = 12800000 >> (15 - reg)
+	 * 2. Convert bitshift to division by an exponent so it can be
+	 *    manipulated more clearly: odr = 12800000 / (2**(15 - reg))
+	 * 3. Negate the exponent and replace division with multiplication:
+	 *    odr = 12800000 * 2**(reg - 15)
+	 * 4. Simplify by factoring out 2**12 (4096): odr = 3125 * 2**(reg - 3)
+	 * 5. Solve for reg: reg = log2(8 * odr / 3125)
+	 *
+	 * To avoid integer truncation issues, the multiplication is scaled by a
+	 * factor of 512 to yield log2(4096 * odr / 3125) - log2(512). For
+	 * high ODRs (greater than 800 Hz) the intermediate 4096 * odr exceeds
+	 * the range of a 32-bit integer, but losing bits in the division isn't
+	 * a problem for sufficiently large values so if the intermediate would
+	 * overflow 32 bits we instead skip the scaling by 512.
+	 */
+	uint32_t fp_shift = odr >= 800000 ? 0 : __fls(512);
+	uint32_t intermediate = (8 << fp_shift) * odr / 3125;
+
+	return __fls(intermediate) - fp_shift;
+}
+
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int round)
 {
-	int ret;
+	int ret = 0;
 	struct accelgyro_saved_data_t *data = s->drv_data;
 
 	mutex_lock(s->mutex);
@@ -309,7 +379,10 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int round)
 						 BMA4_ACCEL_ENABLE_MSK));
 		data->odr = 0;
 	} else {
-		int odr_reg_val = BMA4_ODR_TO_REG(rate);
+		uint8_t odr_reg_val = bma4_odr_to_reg(rate);
+
+		ASSERT((odr_reg_val & BMA4_ACCEL_ODR_MSK) == odr_reg_val &&
+		       odr_reg_val != 0);
 
 		if (data->odr == 0) {
 			/* Accel was disabled; enable it */
@@ -321,8 +394,14 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int round)
 					      BMA4_ACCEL_ENABLE_MSK));
 		}
 
-		if ((BMA4_REG_TO_ODR(odr_reg_val) < rate) && round)
-			odr_reg_val = BMA4_ODR_TO_REG(rate * 2);
+		if ((bma4_reg_to_odr(odr_reg_val) < rate) && round)
+			/*
+			 * Go up to the next highest data rate, but don't exceed
+			 * the highest supported rate (odr_3k2 and higher are
+			 * documented but marked as reserved).
+			 */
+			odr_reg_val = MIN(BMA4_OUTPUT_DATA_RATE_1600HZ,
+					  odr_reg_val + 1);
 
 		/* Determine the new value of control reg and write it. */
 		GOTO_ON_ERROR(out,
@@ -331,7 +410,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int round)
 					    BMA4_ACCEL_ODR_MSK));
 
 		/* If successfully written, then save the new data rate. */
-		data->odr = BMA4_REG_TO_ODR(odr_reg_val);
+		data->odr = bma4_reg_to_odr(odr_reg_val);
 	}
 
 out:
