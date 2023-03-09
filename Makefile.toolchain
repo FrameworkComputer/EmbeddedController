@@ -265,7 +265,7 @@ ifneq (${HOST_SYSROOT},)
 endif
 HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
-		  -fuse-ld=bfd -no-pie \
+		  -no-pie -flto\
 		  $(if $(TEST_COVERAGE), --coverage,) \
 		  $(if $(TEST_ASAN), -fsanitize=address) \
 		  $(if $(TEST_MSAN), -fsanitize=memory) \
