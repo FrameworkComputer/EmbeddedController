@@ -95,7 +95,7 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED)
 			continue;
 
-		mv = ((src_caps[i] >> 10) & 0x3FF) * 50;
+		mv = PDO_FIXED_GET_VOLT(src_caps[i]);
 		/* Skip invalid voltage */
 		if (!mv)
 			continue;
@@ -112,7 +112,7 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 			uw = 250000 * (src_caps[i] & 0x3FF);
 		} else {
-			int ma = (src_caps[i] & 0x3FF) * 10;
+			int ma = PDO_FIXED_GET_CURR(src_caps[i]);
 
 			ma = MIN(ma, PD_MAX_CURRENT_MA);
 			uw = ma * mv;
