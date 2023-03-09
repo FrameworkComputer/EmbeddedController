@@ -5303,7 +5303,7 @@ static int ms_help(const char *cmd)
 	printf("  %s                              - dump all motion data\n",
 	       cmd);
 	printf("  %s active                       - print active flag\n", cmd);
-	printf("  %s info NUM                     - print sensor info\n", cmd);
+	printf("  %s info [NUM]                   - print sensor info\n", cmd);
 	printf("  %s ec_rate NUM [RATE_MS]        - set/get sample rate\n",
 	       cmd);
 	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n", cmd);
@@ -5420,179 +5420,221 @@ static int cmd_motionsense(int argc, char **argv)
 		}
 	}
 
-	if (argc == 3 && !strcasecmp(argv[1], "info")) {
+	if ((argc == 2 || argc == 3) && !strcasecmp(argv[1], "info")) {
 		int version = 0;
+		int loop_start;
+		int loop_end;
+		int i;
 
 		rv = get_latest_cmd_version(EC_CMD_MOTION_SENSE_CMD, &version);
 		if (rv < 0)
 			return rv;
 
+		if (argc == 2) {
+			param.cmd = MOTIONSENSE_CMD_DUMP;
+			param.dump.max_sensor_count = ECTOOL_MAX_SENSOR;
+			rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1, &param,
+					ms_command_sizes[param.cmd].outsize,
+					resp,
+					ms_command_sizes[param.cmd].insize);
+			if (rv < 0)
+				return rv;
+			if (resp->dump.sensor_count > ECTOOL_MAX_SENSOR)
+				return -1;
+
+			loop_start = 0;
+			loop_end = resp->dump.sensor_count;
+		} else {
+			loop_start = strtol(argv[2], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[2]);
+				return -1;
+			}
+			loop_end = loop_start + 1;
+		}
 		param.cmd = MOTIONSENSE_CMD_INFO;
-		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "Bad %s arg.\n", argv[2]);
-			return -1;
+
+		for (i = loop_start; i < loop_end; i++) {
+			param.sensor_odr.sensor_num = i;
+
+			if (argc == 2) {
+				if (i != loop_start)
+					printf("\n");
+				printf("Index:    %d\n", i);
+			}
+
+			rv = ec_command(EC_CMD_MOTION_SENSE_CMD, version,
+					&param,
+					ms_command_sizes[param.cmd].outsize,
+					resp,
+					ms_command_sizes[param.cmd].insize);
+			if (rv < 0) {
+				/*
+				 * Return the error code to a higher level if
+				 * we're querying about a specific sensor; else
+				 * just print the error.
+				 */
+				if (argc == 3)
+					return rv;
+
+				printf("Error: %d\n", rv);
+				continue;
+			}
+			printf("Type:     ");
+			switch (resp->info.type) {
+			case MOTIONSENSE_TYPE_ACCEL:
+				printf("accel\n");
+				break;
+			case MOTIONSENSE_TYPE_GYRO:
+				printf("gyro\n");
+				break;
+			case MOTIONSENSE_TYPE_MAG:
+				printf("magnetometer\n");
+				break;
+			case MOTIONSENSE_TYPE_LIGHT:
+				printf("light\n");
+				break;
+			case MOTIONSENSE_TYPE_LIGHT_RGB:
+				printf("rgb light\n");
+				break;
+			case MOTIONSENSE_TYPE_PROX:
+				printf("proximity\n");
+				break;
+			case MOTIONSENSE_TYPE_ACTIVITY:
+				printf("activity\n");
+				break;
+			case MOTIONSENSE_TYPE_BARO:
+				printf("barometer\n");
+				break;
+			case MOTIONSENSE_TYPE_SYNC:
+				printf("sync\n");
+				break;
+			default:
+				printf("unknown\n");
+			}
+
+			printf("Location: ");
+			switch (resp->info.location) {
+			case MOTIONSENSE_LOC_BASE:
+				printf("base\n");
+				break;
+			case MOTIONSENSE_LOC_LID:
+				printf("lid\n");
+				break;
+			case MOTIONSENSE_LOC_CAMERA:
+				printf("camera\n");
+				break;
+			default:
+				printf("unknown\n");
+			}
+
+			printf("Chip:     ");
+			switch (resp->info.chip) {
+			case MOTIONSENSE_CHIP_KXCJ9:
+				printf("kxcj9\n");
+				break;
+			case MOTIONSENSE_CHIP_LSM6DS0:
+				printf("lsm6ds0\n");
+				break;
+			case MOTIONSENSE_CHIP_BMI160:
+				printf("bmi160\n");
+				break;
+			case MOTIONSENSE_CHIP_SI1141:
+				printf("si1141\n");
+				break;
+			case MOTIONSENSE_CHIP_KX022:
+				printf("kx022\n");
+				break;
+			case MOTIONSENSE_CHIP_L3GD20H:
+				printf("l3gd20h\n");
+				break;
+			case MOTIONSENSE_CHIP_BMA255:
+				printf("bma255\n");
+				break;
+			case MOTIONSENSE_CHIP_BMP280:
+				printf("bmp280\n");
+				break;
+			case MOTIONSENSE_CHIP_OPT3001:
+				printf("opt3001\n");
+				break;
+			case MOTIONSENSE_CHIP_CM32183:
+				printf("cm32183\n");
+				break;
+			case MOTIONSENSE_CHIP_BH1730:
+				printf("bh1730\n");
+				break;
+			case MOTIONSENSE_CHIP_GPIO:
+				printf("gpio\n");
+				break;
+			case MOTIONSENSE_CHIP_LIS2DH:
+				printf("lis2dh\n");
+				break;
+			case MOTIONSENSE_CHIP_LSM6DSM:
+				printf("lsm6dsm\n");
+				break;
+			case MOTIONSENSE_CHIP_LIS2DE:
+				printf("lis2de\n");
+				break;
+			case MOTIONSENSE_CHIP_LIS2MDL:
+				printf("lis2mdl\n");
+				break;
+			case MOTIONSENSE_CHIP_LSM6DS3:
+				printf("lsm6ds3\n");
+				break;
+			case MOTIONSENSE_CHIP_LSM6DSO:
+				printf("lsm6dso\n");
+				break;
+			case MOTIONSENSE_CHIP_LNG2DM:
+				printf("lng2dm\n");
+				break;
+			case MOTIONSENSE_CHIP_TCS3400:
+				printf("tcs3400\n");
+				break;
+			case MOTIONSENSE_CHIP_LIS2DW12:
+				printf("lis2dw12\n");
+				break;
+			case MOTIONSENSE_CHIP_LIS2DWL:
+				printf("lis2dwl\n");
+				break;
+			case MOTIONSENSE_CHIP_LIS2DS:
+				printf("lis2ds\n");
+				break;
+			case MOTIONSENSE_CHIP_BMI260:
+				printf("bmi260\n");
+				break;
+			case MOTIONSENSE_CHIP_ICM426XX:
+				printf("icm426xx\n");
+				break;
+			case MOTIONSENSE_CHIP_ICM42607:
+				printf("icm42607\n");
+				break;
+			case MOTIONSENSE_CHIP_BMI323:
+				printf("bmi323\n");
+				break;
+			case MOTIONSENSE_CHIP_BMA422:
+				printf("bma422\n");
+				break;
+			case MOTIONSENSE_CHIP_BMI220:
+				printf("bmi220\n");
+				break;
+			default:
+				printf("unknown\n");
+			}
+
+			if (version >= 3) {
+				printf("Min Frequency:              %d mHz\n",
+				       resp->info_3.min_frequency);
+				printf("Max Frequency:              %d mHz\n",
+				       resp->info_3.max_frequency);
+				printf("FIFO Max Event Count:       %d\n",
+				       resp->info_3.fifo_max_event_count);
+			}
+			if (version >= 4) {
+				printf("Flags:                      %d\n",
+				       resp->info_4.flags);
+			}
 		}
 
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, version, &param,
-				ms_command_sizes[param.cmd].outsize, resp,
-				ms_command_sizes[param.cmd].insize);
-		if (rv < 0)
-			return rv;
-
-		printf("Type:     ");
-		switch (resp->info.type) {
-		case MOTIONSENSE_TYPE_ACCEL:
-			printf("accel\n");
-			break;
-		case MOTIONSENSE_TYPE_GYRO:
-			printf("gyro\n");
-			break;
-		case MOTIONSENSE_TYPE_MAG:
-			printf("magnetometer\n");
-			break;
-		case MOTIONSENSE_TYPE_LIGHT:
-			printf("light\n");
-			break;
-		case MOTIONSENSE_TYPE_LIGHT_RGB:
-			printf("rgb light\n");
-			break;
-		case MOTIONSENSE_TYPE_PROX:
-			printf("proximity\n");
-			break;
-		case MOTIONSENSE_TYPE_ACTIVITY:
-			printf("activity\n");
-			break;
-		case MOTIONSENSE_TYPE_BARO:
-			printf("barometer\n");
-			break;
-		case MOTIONSENSE_TYPE_SYNC:
-			printf("sync\n");
-			break;
-		default:
-			printf("unknown\n");
-		}
-
-		printf("Location: ");
-		switch (resp->info.location) {
-		case MOTIONSENSE_LOC_BASE:
-			printf("base\n");
-			break;
-		case MOTIONSENSE_LOC_LID:
-			printf("lid\n");
-			break;
-		case MOTIONSENSE_LOC_CAMERA:
-			printf("camera\n");
-			break;
-		default:
-			printf("unknown\n");
-		}
-
-		printf("Chip:     ");
-		switch (resp->info.chip) {
-		case MOTIONSENSE_CHIP_KXCJ9:
-			printf("kxcj9\n");
-			break;
-		case MOTIONSENSE_CHIP_LSM6DS0:
-			printf("lsm6ds0\n");
-			break;
-		case MOTIONSENSE_CHIP_BMI160:
-			printf("bmi160\n");
-			break;
-		case MOTIONSENSE_CHIP_SI1141:
-			printf("si1141\n");
-			break;
-		case MOTIONSENSE_CHIP_KX022:
-			printf("kx022\n");
-			break;
-		case MOTIONSENSE_CHIP_L3GD20H:
-			printf("l3gd20h\n");
-			break;
-		case MOTIONSENSE_CHIP_BMA255:
-			printf("bma255\n");
-			break;
-		case MOTIONSENSE_CHIP_BMP280:
-			printf("bmp280\n");
-			break;
-		case MOTIONSENSE_CHIP_OPT3001:
-			printf("opt3001\n");
-			break;
-		case MOTIONSENSE_CHIP_CM32183:
-			printf("cm32183\n");
-			break;
-		case MOTIONSENSE_CHIP_BH1730:
-			printf("bh1730\n");
-			break;
-		case MOTIONSENSE_CHIP_GPIO:
-			printf("gpio\n");
-			break;
-		case MOTIONSENSE_CHIP_LIS2DH:
-			printf("lis2dh\n");
-			break;
-		case MOTIONSENSE_CHIP_LSM6DSM:
-			printf("lsm6dsm\n");
-			break;
-		case MOTIONSENSE_CHIP_LIS2DE:
-			printf("lis2de\n");
-			break;
-		case MOTIONSENSE_CHIP_LIS2MDL:
-			printf("lis2mdl\n");
-			break;
-		case MOTIONSENSE_CHIP_LSM6DS3:
-			printf("lsm6ds3\n");
-			break;
-		case MOTIONSENSE_CHIP_LSM6DSO:
-			printf("lsm6dso\n");
-			break;
-		case MOTIONSENSE_CHIP_LNG2DM:
-			printf("lng2dm\n");
-			break;
-		case MOTIONSENSE_CHIP_TCS3400:
-			printf("tcs3400\n");
-			break;
-		case MOTIONSENSE_CHIP_LIS2DW12:
-			printf("lis2dw12\n");
-			break;
-		case MOTIONSENSE_CHIP_LIS2DWL:
-			printf("lis2dwl\n");
-			break;
-		case MOTIONSENSE_CHIP_LIS2DS:
-			printf("lis2ds\n");
-			break;
-		case MOTIONSENSE_CHIP_BMI260:
-			printf("bmi260\n");
-			break;
-		case MOTIONSENSE_CHIP_ICM426XX:
-			printf("icm426xx\n");
-			break;
-		case MOTIONSENSE_CHIP_ICM42607:
-			printf("icm42607\n");
-			break;
-		case MOTIONSENSE_CHIP_BMI323:
-			printf("bmi323\n");
-			break;
-		case MOTIONSENSE_CHIP_BMA422:
-			printf("bma422\n");
-			break;
-		case MOTIONSENSE_CHIP_BMI220:
-			printf("bmi220\n");
-			break;
-		default:
-			printf("unknown\n");
-		}
-
-		if (version >= 3) {
-			printf("Min Frequency:              %d mHz\n",
-			       resp->info_3.min_frequency);
-			printf("Max Frequency:              %d mHz\n",
-			       resp->info_3.max_frequency);
-			printf("FIFO Max Event Count:       %d\n",
-			       resp->info_3.fifo_max_event_count);
-		}
-		if (version >= 4) {
-			printf("Flags:                      %d\n",
-			       resp->info_4.flags);
-		}
 		return 0;
 	}
 
