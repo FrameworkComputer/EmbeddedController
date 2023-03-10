@@ -17,6 +17,7 @@
 #include <zephyr/logging/log.h>
 
 #include "board_adc.h"
+#include "flash_storage.h"
 
 LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_ERR);
 
@@ -37,7 +38,8 @@ enum input_deck_state {
 	DECK_TURNING_ON,
     DECK_ON,
 	DECK_FORCE_OFF,
-	DECK_FORCE_ON
+	DECK_FORCE_ON,
+	DECK_NO_DETECTION /* input deck will follow power sequence, no present check */
 } deck_state;
 
 enum input_deck_mux {
@@ -86,7 +88,19 @@ static void scan_c_deck(bool full_scan)
 	set_hub_mux(6);
 }
 
+static void board_input_module_init(void)
+{
+	/* Illuminate motherboard and daughter board LEDs equally to start. */
+	if (flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER) == 0) {
+		deck_state = DECK_NO_DETECTION;
+	} else {
+		deck_state = DECK_OFF;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT);
+
 #ifdef CONFIG_PLATFORM_CDECK_POWER_CONTROL
+
 static void poll_c_deck(void)
 {
 	static int turning_on_count;
@@ -131,9 +145,13 @@ static void poll_c_deck(void)
 }
 DECLARE_HOOK(HOOK_TICK, poll_c_deck, HOOK_PRIO_DEFAULT);
 
+#endif /* CONFIG_PLATFORM_CDECK_POWER_CONTROL */
+
 static void input_modules_powerup(void)
 {
-	if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON) {
+	if (deck_state == DECK_NO_DETECTION) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+	} else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON) {
 		deck_state = DECK_DISCONNECTED;
 	}
 }
@@ -141,7 +159,9 @@ static void input_modules_powerup(void)
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, input_modules_powerup, HOOK_PRIO_DEFAULT);
 static void input_modules_powerdown(void)
 {
-	if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON) {
+	if (deck_state == DECK_NO_DETECTION) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+	} else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON) {
 		deck_state = DECK_OFF;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 		/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD*/
@@ -151,14 +171,12 @@ static void input_modules_powerdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 
-#endif /* CONFIG_PLATFORM_CDECK_POWER_CONTROL */
-
 /* EC console command */
 static int inputdeck_cmd(int argc, const char **argv)
 {
 	int i;
 	static const char * deck_states[] = {
-		"OFF", "DISCONNECTED", "TURNING_ON", "ON", "FORCE_OFF", "FORCE_ON"
+		"OFF", "DISCONNECTED", "TURNING_ON", "ON", "FORCE_OFF", "FORCE_ON", "NO_DETECTION"
 	};
 
 	if (argc >= 2) {
@@ -172,6 +190,8 @@ static int inputdeck_cmd(int argc, const char **argv)
 		} else if (!strncmp(argv[1], "auto", 4)) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 			deck_state = DECK_DISCONNECTED;
+		} else if (!strncmp(argv[1], "nodetection", 4)) {
+			deck_state = DECK_NO_DETECTION;
 		}
 	}
     scan_c_deck(true);
@@ -183,5 +203,5 @@ static int inputdeck_cmd(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND(inputdeck, inputdeck_cmd, "[on/auto]",
-			"Get Input modules status");
+DECLARE_CONSOLE_COMMAND(inputdeck, inputdeck_cmd, "[on/off/auto/nodetection]",
+			"Input modules power sequence control");
