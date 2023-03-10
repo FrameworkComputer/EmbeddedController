@@ -201,6 +201,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 						"${PLATFORM_EC}/driver/amd_stt.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BACKLIGHT_LID
                                                 "${PLATFORM_EC}/common/backlight_lid.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DETACHABLE_BASE
+                                                "${PLATFORM_EC}/common/base_state.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                 "${PLATFORM_EC}/common/battery.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_V1
