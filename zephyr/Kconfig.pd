@@ -382,6 +382,13 @@ config PLATFORM_EC_USB_PD_DP_MODE
 	  DFP from the Embedded Controller directly.  This flag gates all the
 	  on-EC logic for determining specifics such as VDM contents.
 
+config PLATFORM_EC_USB_PD_DP21_MODE
+	bool "Enable DP2.1 Support"
+	depends on PLATFORM_EC_USB_PD_DP_MODE
+	help
+	  This enables support for entering DisplayPort alternate mode 2.1 as
+	  a DFP from the Embedded Controller directly.
+
 config PLATFORM_EC_USB_PD_USB4
 	bool "USB4 support"
 	depends on PLATFORM_EC_USB_PD_REV30
