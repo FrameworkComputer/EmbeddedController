@@ -979,6 +979,55 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 			      test_tcpci_get_chip_info_mutator_fail));
 }
 
+void test_tcpci_get_vbus_voltage(const struct emul *emul,
+				 struct i2c_common_emul_data *common_data,
+				 enum usbc_port port)
+{
+	const struct tcpm_drv *drv = tcpc_config[port].drv;
+	const int fake_vbus[] = { 0,	 25,	1500,  5000,  12000, 16000,
+				  20000, 25575, 25600, 51150, 51200, 102300 };
+	const int fake_meas[] = { 0, 1, 2, 3, 4, 5, 128, 256, 512, 1023 };
+	const int fake_scl[] = { 0, 1 << 10, 2 << 10 };
+	int vbus = 0;
+
+	/* Test dev_cap_1 unsupported */
+	tcpci_emul_set_reg(emul, TCPC_REG_DEV_CAP_1, 0);
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      drv->get_vbus_voltage(port, &vbus));
+
+	tcpci_emul_set_reg(emul, TCPC_REG_DEV_CAP_1,
+			   TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE);
+
+	/* Refresh cached dev_cap_1 */
+	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
+
+	/* Test error on failed command get */
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_FAIL_ALL_REG);
+	zassert_equal(EC_ERROR_INVAL, drv->get_vbus_voltage(port, &vbus));
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test by setting vbus */
+	for (int i = 0; i < ARRAY_SIZE(fake_vbus); i++) {
+		tcpci_emul_set_vbus_voltage(emul, fake_vbus[i]);
+		zassert_equal(EC_SUCCESS, drv->get_vbus_voltage(port, &vbus));
+		zassert_equal(vbus, fake_vbus[i]);
+	}
+
+	/* Test by setting the register */
+	for (int i = 0; i < ARRAY_SIZE(fake_meas); i++) {
+		for (int j = 0; j < ARRAY_SIZE(fake_scl); j++) {
+			tcpci_emul_set_reg(emul, TCPC_REG_VBUS_VOLTAGE,
+					   (fake_meas[i] | fake_scl[j]));
+			zassert_equal(EC_SUCCESS,
+				      drv->get_vbus_voltage(port, &vbus));
+			zassert_equal(vbus, BIT(j) * fake_meas[i] *
+						    TCPC_REG_VBUS_VOLTAGE_LSB);
+		}
+	}
+}
+
 /** Test TCPCI enter low power mode */
 void test_tcpci_low_power_mode(const struct emul *emul,
 			       struct i2c_common_emul_data *common_data,

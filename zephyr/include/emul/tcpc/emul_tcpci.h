@@ -312,6 +312,14 @@ struct tcpci_emul_msg *tcpci_emul_get_tx_msg(const struct emul *emul);
 void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev);
 
 /**
+ * @brief Set TCPCI VBUS Voltage in VBUS_VOLTAGE register
+ *
+ * @param emul Pointer to TCPC emulator
+ * @param vbus_mv Requested VBUS in mV
+ */
+void tcpci_emul_set_vbus_voltage(const struct emul *emul, uint32_t vbus_mv);
+
+/**
  * @brief Set callback which is called when alert register is changed
  *
  * @param emul Pointer to TCPC emulator

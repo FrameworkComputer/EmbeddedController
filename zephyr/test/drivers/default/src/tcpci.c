@@ -104,6 +104,16 @@ ZTEST(tcpci, test_generic_tcpci_set_rx_detect)
 	test_tcpci_set_rx_detect(emul, common_data, USBC_PORT_C0);
 }
 
+/** Test TCPCI get vbus voltage */
+ZTEST(tcpci, test_generic_tcpci_get_vbus_voltage)
+{
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(emul);
+
+	test_tcpci_get_vbus_voltage(emul, common_data, USBC_PORT_C0);
+}
+
 /** Test TCPCI get raw message from TCPC revision 2.0 */
 ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev2)
 {

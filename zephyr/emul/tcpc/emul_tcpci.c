@@ -462,6 +462,29 @@ void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev)
 	}
 }
 
+void tcpci_emul_set_vbus_voltage(const struct emul *emul, uint32_t vbus_mv)
+{
+	uint16_t meas;
+	uint16_t scale = 0;
+
+	__ASSERT(!(vbus_mv % TCPC_REG_VBUS_VOLTAGE_LSB),
+		 "vbus_mv must be divisible by %d (%d)",
+		 TCPC_REG_VBUS_VOLTAGE_LSB, vbus_mv);
+
+	meas = vbus_mv / TCPC_REG_VBUS_VOLTAGE_LSB;
+
+	while (meas >= (1 << 10) && scale < 3) {
+		__ASSERT(!(meas & 1), "vbus_mv %d does not fit into the reg.",
+			 vbus_mv);
+		meas >>= 1;
+		scale += 1;
+	}
+	__ASSERT(scale < 3, "scale %d, meas %d doesn't fit into the reg.",
+		 scale, meas);
+
+	tcpci_emul_set_reg(emul, TCPC_REG_VBUS_VOLTAGE, (scale << 10) | meas);
+}
+
 /** Check description in emul_tcpci.h */
 void tcpci_emul_set_alert_callback(const struct emul *emul,
 				   tcpci_emul_alert_state_func alert_callback,
