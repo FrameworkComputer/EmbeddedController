@@ -121,6 +121,9 @@ config LINK_TEST_SUITE_TIMER
 config LINK_TEST_SUITE_USB_COMMON
 	bool "Link and test USB common code tests"
 
+config LINK_TEST_SUITE_USB_PD_DISCOVERY
+	bool "Link and test USB PD discovery tests"
+
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 
