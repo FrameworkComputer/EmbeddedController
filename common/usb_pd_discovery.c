@@ -426,17 +426,6 @@ enum idh_ptype get_usb_pd_cable_type(int port)
 	return disc->identity.idh.product_type;
 }
 
-bool is_usb2_cable_support(int port)
-{
-	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-
-	return disc->identity.idh.product_type == IDH_PTYPE_PCABLE ||
-	       pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < VDM_VER20 ||
-	       disc->identity.product_t2.a2_rev30.usb_20_support ==
-		       USB2_SUPPORTED;
-}
-
 bool is_cable_speed_gen2_capable(int port)
 {
 	const struct pd_discovery *disc =

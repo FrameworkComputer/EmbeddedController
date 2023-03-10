@@ -2338,14 +2338,6 @@ int pd_ufp_get_dp_opos(int port);
 void pd_ufp_enable_hpd_send(int port);
 
 /*
- * Returns True if cable supports USB2 connection
- *
- * @param port  USB-C port number
- * @return      True is usb2_supported, false otherwise
- */
-bool is_usb2_cable_support(int port);
-
-/*
  * Checks if Cable speed is Gen2 or better
  *
  * @param port  USB-C port number
