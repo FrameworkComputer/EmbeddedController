@@ -23,6 +23,12 @@
 
 #include <motion_sense_fifo.h>
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 31
+
 #ifdef CONFIG_ACCEL_BMA4XX_INT_EVENT
 #define BMA4XX_USE_INTERRUPTS
 #endif
