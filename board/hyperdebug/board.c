@@ -7,7 +7,6 @@
 #include "adc.h"
 #include "common.h"
 #include "ec_version.h"
-#include "i2c.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
@@ -124,25 +123,6 @@ USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
  */
 
 USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
-
-/******************************************************************************
- * Support I2C bridging over USB.
- */
-
-/* I2C ports */
-const struct i2c_port_t i2c_ports[] = {
-	{ .name = "controller",
-	  .port = I2C_PORT_CONTROLLER,
-	  .kbps = 100,
-	  .scl = GPIO_CN7_2,
-	  .sda = GPIO_CN7_4 },
-};
-const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-int usb_i2c_board_is_enabled(void)
-{
-	return 1;
-}
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.

@@ -152,7 +152,6 @@
 #define CONFIG_USB_I2C
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
-#define I2C_PORT_CONTROLLER 0
 
 /* See i2c_ite_flash_support.c for more information about these values */
 /*#define CONFIG_ITE_FLASH_SUPPORT */
