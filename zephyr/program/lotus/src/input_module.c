@@ -36,7 +36,7 @@ enum input_deck_state {
     DECK_OFF,
 	DECK_DISCONNECTED,
 	DECK_TURNING_ON,
-    DECK_ON,
+	DECK_ON,
 	DECK_FORCE_OFF,
 	DECK_FORCE_ON,
 	DECK_NO_DETECTION /* input deck will follow power sequence, no present check */
@@ -72,9 +72,9 @@ static void scan_c_deck(bool full_scan)
 			/* Switch the mux */
 			set_hub_mux(i);
 			/*
-			* In the specification table Switching Characteristics over Operating Range,
-			* the maximum Bus Select Time needs 6.6 ns, so delay 1 us to stable
-			*/
+			 * In the specification table Switching Characteristics over Operating
+			 * range the maximum Bus Select Time needs 6.6 ns, so delay a little
+			 */
 			usleep(INPUT_MODULE_MUX_DELAY_US);
 
 			hub_board_id[i] = get_hardware_id(ADC_HUB_BOARD_ID);
@@ -106,41 +106,44 @@ static void poll_c_deck(void)
 	static int turning_on_count;
 
 	switch (deck_state) {
-		case DECK_OFF:
-			break;
-		case DECK_DISCONNECTED:
-			scan_c_deck(true);
-			/* TODO only poll touchpad and currently connected B1/C1 modules
-			* if c deck state is ON as these must be removed first
-			*/
-			if (hub_board_id[TOUCHPAD] == 13) {
-				turning_on_count = 0;
-				deck_state = DECK_TURNING_ON;
-			}
+	case DECK_OFF:
 		break;
-		case DECK_TURNING_ON:
-			turning_on_count++;
-			scan_c_deck(false);
-			if (hub_board_id[TOUCHPAD] == 13 && turning_on_count > INPUT_MODULE_POWER_ON_DELAY) {
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
-				deck_state = DECK_ON;
-				CPRINTS("Input modules on");
-			}
-		break;
-		case DECK_ON:
-			/* TODO Add lid detection, if lid is closed input modules cannot be removed */
+	case DECK_DISCONNECTED:
+		scan_c_deck(true);
+		/* TODO only poll touchpad and currently connected B1/C1 modules
+		 * if c deck state is ON as these must be removed first
+		 */
+		if (hub_board_id[TOUCHPAD] == 13) {
+			turning_on_count = 0;
+			deck_state = DECK_TURNING_ON;
+		}
+	break;
+	case DECK_TURNING_ON:
+		turning_on_count++;
+		scan_c_deck(false);
+		if (hub_board_id[TOUCHPAD] == 13 &&
+			turning_on_count > INPUT_MODULE_POWER_ON_DELAY) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+			deck_state = DECK_ON;
+			CPRINTS("Input modules on");
+		}
+	break;
+	case DECK_ON:
+		/* TODO Add lid detection,
+		 * if lid is closed input modules cannot be removed
+		 */
 
-			scan_c_deck(false);
-			if (hub_board_id[TOUCHPAD] > 14) {
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
-				deck_state = DECK_DISCONNECTED;
-				CPRINTS("Input modules off");
-			}
-			break;
-		case DECK_FORCE_ON:
-		case DECK_FORCE_OFF:
-		default:
-			break;
+		scan_c_deck(false);
+		if (hub_board_id[TOUCHPAD] > 14) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+			deck_state = DECK_DISCONNECTED;
+			CPRINTS("Input modules off");
+		}
+		break;
+	case DECK_FORCE_ON:
+	case DECK_FORCE_OFF:
+	default:
+		break;
 	}
 }
 DECLARE_HOOK(HOOK_TICK, poll_c_deck, HOOK_PRIO_DEFAULT);
@@ -175,7 +178,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 static int inputdeck_cmd(int argc, const char **argv)
 {
 	int i;
-	static const char * deck_states[] = {
+	static const char * const deck_states[] = {
 		"OFF", "DISCONNECTED", "TURNING_ON", "ON", "FORCE_OFF", "FORCE_ON", "NO_DETECTION"
 	};
 
@@ -194,12 +197,12 @@ static int inputdeck_cmd(int argc, const char **argv)
 			deck_state = DECK_NO_DETECTION;
 		}
 	}
-    scan_c_deck(true);
+	scan_c_deck(true);
 	ccprintf("Deck state: %s\n", deck_states[deck_state]);
 	for (i = 0; i < 8; i++)
 		ccprintf("    C deck status %d = %d\n", i, hub_board_id[i]);
 
-    ccprintf("Input module Overcurrent Events: %d\n", oc_count);
+	ccprintf("Input module Overcurrent Events: %d\n", oc_count);
 	return EC_SUCCESS;
 }
 

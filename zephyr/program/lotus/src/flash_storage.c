@@ -50,7 +50,9 @@ int flash_storage_initialize(void)
 
 	int rv;
 
-	rv = crec_flash_physical_read(SPI_FLAGS_REGION, sizeof(current_flags), (void *)&current_flags);
+	rv = crec_flash_physical_read(SPI_FLAGS_REGION,
+									sizeof(current_flags),
+									(void *)&current_flags);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Could not load flash storage");
 
