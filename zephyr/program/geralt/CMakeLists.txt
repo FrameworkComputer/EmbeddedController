@@ -23,6 +23,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 			"src/usbc_config.c"
 			"src/usb_pd_policy.c"
 )
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DETACHABLE_BASE
+			"src/base_detect.c"
+)
 
 if(DEFINED CONFIG_BOARD_GERALT)
 	project(geralt)
