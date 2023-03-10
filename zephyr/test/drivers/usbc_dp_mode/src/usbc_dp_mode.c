@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
 #include "emul/emul_isl923x.h"
@@ -21,6 +22,7 @@
 #include <stdint.h>
 
 #include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
 
@@ -755,6 +757,21 @@ ZTEST_F(usbc_dp_mode, test_dp21_dp_cable)
 	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
 		      USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED,
 		      "Failed to see DP set with DP2.1 cable");
+}
+
+ZTEST_F(usbc_dp_mode, test_dp21_cable_console)
+{
+	static int status;
+
+	setup_active_dp_base_cable(&fixture->partner);
+	connect_sink_to_port(&fixture->partner, fixture->tcpci_emul,
+			     fixture->charger_emul);
+
+	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+	k_sleep(K_MSEC(1000));
+
+	status = shell_execute_cmd(get_ec_shell(), "pdcable 0");
+	zassert_ok(status, "Expected %d, but got %d", EC_SUCCESS, status);
 }
 
 ZTEST_F(usbc_dp_mode, test_dp21_undef_cable)
