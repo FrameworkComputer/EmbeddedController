@@ -207,7 +207,7 @@ static void board_init(void)
 	/* Enable DAC */
 	STM32_RCC_APB1ENR |= STM32_RCC_APB1ENR1_DAC1EN;
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_PRE_DEFAULT);
 
 static void usart_reinit(struct usb_stream_config const *usart_usb,
 			 struct usart_config const *usart)

@@ -15,6 +15,7 @@
 #include "gpio_chip.h"
 #include "hooks.h"
 #include "hwtimer.h"
+#include "panic.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -115,6 +116,70 @@
 #define CYCLIC_BUFFER_SIZE 65536
 /* Number of concurrent gpio monitoring operations supported. */
 #define NUM_CYCLIC_BUFFERS 3
+
+struct pwm_pin_t {
+	timer_ctlr_t *timer_regs;
+	uint8_t timer_no;
+	uint8_t channel; /* Range 1 - 4 */
+	uint8_t pad_alternate_function;
+};
+
+#define PWM_TIMER(N) (timer_ctlr_t *)STM32_TIM_BASE(N), PWM_TIMER_##N
+
+/* Sparse array of PWM capabilities for GPIO pins. */
+const struct pwm_pin_t pwm_pins[GPIO_COUNT] = {
+	[GPIO_CN10_31] = { PWM_TIMER(1), 1, 1 }, /* PA8, MCO */
+	[GPIO_CN10_4] = { PWM_TIMER(1), 1, 1 }, /* PE9 */
+	[GPIO_CN10_6] = { PWM_TIMER(1), 2, 1 }, /* PE11, QSPI CS */
+	[GPIO_NUCLEO_LED3] = { PWM_TIMER(1), 2, 1 }, /* PA9 */
+	[GPIO_CN12_33] = { PWM_TIMER(1), 3, 1 }, /* PA10 */
+	[GPIO_CN9_22] = { PWM_TIMER(3), 1, 2 }, /* PE3 */
+	[GPIO_CN7_11] = { PWM_TIMER(3), 1, 2 }, /* PB4 */
+	[GPIO_CN9_16] = { PWM_TIMER(3), 2, 2 }, /* PE4 */
+	[GPIO_CN9_18] = { PWM_TIMER(3), 3, 2 }, /* PE5 */
+	[GPIO_CN9_7] = { PWM_TIMER(3), 3, 2 }, /* PB0 */
+	[GPIO_CN9_20] = { PWM_TIMER(3), 4, 2 }, /* PE6 */
+	[GPIO_CN10_7] = { PWM_TIMER(3), 4, 2 }, /* PB1 */
+	[GPIO_CN9_15] = { PWM_TIMER(4), 1, 2 }, /* PB6 */
+	[GPIO_CN7_7] = { PWM_TIMER(4), 1, 2 }, /* PD12 */
+	[GPIO_NUCLEO_LED2] = { PWM_TIMER(4), 2, 2 }, /* PB7 */
+	[GPIO_CN12_41] = { PWM_TIMER(4), 2, 2 }, /* PD13 */
+	[GPIO_CN7_16] = { PWM_TIMER(4), 3, 2 }, /* PD14 */
+	[GPIO_CN7_18] = { PWM_TIMER(4), 4, 2 }, /* PD15 */
+	[GPIO_CN10_29] = { PWM_TIMER(5), 1, 2 }, /* PA0 */
+	[GPIO_CN11_9] = { PWM_TIMER(5), 1, 2 }, /* PF6 */
+	[GPIO_CN10_11] = { PWM_TIMER(5), 2, 2 }, /* PA1 */
+	[GPIO_CN9_26] = { PWM_TIMER(5), 2, 2 }, /* PF7 */
+	[GPIO_CN9_3] = { PWM_TIMER(5), 3, 2 }, /* PA2 */
+	[GPIO_CN9_24] = { PWM_TIMER(5), 3, 2 }, /* PF8 */
+	[GPIO_CN9_1] = { PWM_TIMER(5), 4, 2 }, /* PA3 */
+	[GPIO_CN9_28] = { PWM_TIMER(5), 4, 2 }, /* PF9 */
+	[GPIO_CN7_1] = { PWM_TIMER(8), 1, 3 }, /* PC6 */
+	[GPIO_NUCLEO_LED1] = { PWM_TIMER(8), 2, 3 }, /* PC7 */
+	[GPIO_CN8_2] = { PWM_TIMER(8), 3, 3 }, /* PC8 */
+	[GPIO_CN8_4] = { PWM_TIMER(8), 4, 3 }, /* PC9 */
+	[GPIO_CN12_28] = { PWM_TIMER(15), 1, 14 }, /* PB14 */
+	[GPIO_CN11_66] = { PWM_TIMER(15), 1, 14 }, /* PG10 */
+	[GPIO_CN12_26] = { PWM_TIMER(15), 2, 14 }, /* PB15 */
+	[GPIO_CN12_42] = { PWM_TIMER(15), 2, 14 }, /* PF10 */
+	[GPIO_CN10_33] = { PWM_TIMER(16), 1, 14 }, /* PE0 */
+	[GPIO_CN11_61] = { PWM_TIMER(17), 1, 14 }, /* PE1 */
+};
+
+#undef PWM_TIMER
+
+struct timer_pwm_use_t {
+	/*
+	 * Number of channels currently generating PWM waveform based on this
+	 * timer. Hardware timer will be running if and only if this is nonzero.
+	 */
+	int num_channels_in_use;
+	/* Which pin is currently using each timer channel (GPIO_COUNT if none).
+	 */
+	int channel_pin[4];
+};
+
+struct timer_pwm_use_t timer_pwm_use[18];
 
 struct dac_t {
 	uint32_t enable_mask;
@@ -451,6 +516,42 @@ static void board_gpio_init(void)
 	/* Prepare timer for use in GPIO bit-banging. */
 	__hw_timer_enable_clock(BITBANG_TIMER, 1);
 	task_enable_irq(IRQ_TIM(BITBANG_TIMER));
+
+	/*
+	 * Choose PWM as the alternate function for pins below, without actually
+	 * putting the pins in "alternate" mode (instead leaving it in GPIO
+	 * mode).  At runtime, the "gpio mode" command can be used to enable the
+	 * PWM function for any of these pins.
+	 */
+	for (int i = 0; i < GPIO_COUNT; i++) {
+		if (!pwm_pins[i].timer_regs)
+			continue;
+
+		int index = GPIO_MASK_TO_NUM(gpio_list[i].mask);
+		uint32_t gpio_base = gpio_list[i].port;
+
+		volatile uint32_t *af_register;
+
+		if (index < 8) {
+			af_register = &STM32_GPIO_AFRL(gpio_base);
+		} else {
+			af_register = &STM32_GPIO_AFRH(gpio_base);
+			index -= 8;
+		}
+
+		uint32_t val = *af_register;
+		val &= ~(0x0000000FU << (index * 4));
+		val |= ((uint32_t)pwm_pins[i].pad_alternate_function)
+		       << (index * 4);
+		*af_register = val;
+	}
+
+	for (int i = 0; i < sizeof(timer_pwm_use) / sizeof(timer_pwm_use[0]);
+	     i++) {
+		timer_pwm_use[i].num_channels_in_use = 0;
+		for (int j = 0; j < 4; j++)
+			timer_pwm_use[i].channel_pin[j] = GPIO_COUNT;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_gpio_init, HOOK_PRIO_DEFAULT);
 
@@ -1488,6 +1589,163 @@ static int command_gpio_bit_bang(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
+static int command_gpio_pwm(int argc, const char **argv)
+{
+	if (argc < 4)
+		return EC_ERROR_PARAM_COUNT;
+
+	int gpio = gpio_find_by_name(argv[2]);
+	if (gpio == GPIO_COUNT)
+		return EC_ERROR_PARAM2;
+	if (!pwm_pins[gpio].timer_regs) {
+		ccprintf("Error: Pin does not support pwm\n");
+		return EC_ERROR_PARAM2;
+	}
+
+	timer_ctlr_t *const tim = pwm_pins[gpio].timer_regs;
+	const int timer_no = pwm_pins[gpio].timer_no;
+	const int current_pin =
+		timer_pwm_use[timer_no]
+			.channel_pin[(pwm_pins[gpio].channel - 1)];
+
+	if (strcasecmp(argv[3], "off") == 0) {
+		if (current_pin != gpio)
+			return EC_SUCCESS;
+
+		timer_pwm_use[timer_no]
+			.channel_pin[(pwm_pins[gpio].channel - 1)] = GPIO_COUNT;
+
+		/* Clear output enable bit for this channel. */
+		tim->ccer &= ~(1U << ((pwm_pins[gpio].channel - 1) * 4));
+
+		if (--timer_pwm_use[timer_no].num_channels_in_use > 0)
+			return EC_SUCCESS;
+
+		/* Last PWM user of this timer gone, stop the timer. */
+		tim->cr1 = 0x0000;
+
+		/* Disable timer clock. */
+		__hw_timer_enable_clock(timer_no, 0);
+		return EC_SUCCESS;
+	}
+
+	if (argc < 5)
+		return EC_ERROR_PARAM_COUNT;
+	const uint32_t timer_freq = clock_get_timer_freq();
+	char *e;
+	uint64_t desired_period_ns = strtoull(argv[3], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM3;
+
+	/* Duty cycle of the high pulse */
+	uint64_t desired_high_ns = strtoull(argv[4], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM4;
+
+	if (desired_high_ns > desired_period_ns)
+		return EC_ERROR_PARAM4;
+
+	if (desired_period_ns > 0xFFFFFFFFFFFFFFFFULL / timer_freq) {
+		/* Would overflow below. */
+		return EC_ERROR_PARAM3;
+	}
+
+	/* Calculate number of hardware timer ticks for each full PWM period. */
+	uint64_t divisor = desired_period_ns * timer_freq / 1000000000;
+
+	if (divisor > (1ULL << 32)) {
+		/* Would overflow the 32-bit timer. */
+		return EC_ERROR_PARAM3;
+	}
+
+	/* Calculate number of hardware timer ticks with high PWM output. */
+	uint64_t high_count = desired_high_ns * timer_freq / 1000000000;
+
+	/* Appropriate power of two for prescaling */
+	uint32_t prescaler = find_suitable_prescaler(divisor);
+
+	if (current_pin != GPIO_COUNT && current_pin != gpio) {
+		ccprintf("Error: PWM on %s conflicts with %s\n", argv[2],
+			 gpio_list[current_pin].name);
+		return EC_ERROR_PARAM2;
+	}
+
+	if (timer_pwm_use[timer_no].num_channels_in_use == 0) {
+		/* Enable timer clock. */
+		__hw_timer_enable_clock(timer_no, 1);
+
+		/* Disable counter during setup (should be already). */
+		tim->cr1 = 0x0000;
+
+		tim->psc = prescaler - 1;
+		tim->arr = DIV_ROUND_NEAREST(divisor, prescaler) - 1;
+
+		/* Output, PWM mode 1, preload enable. */
+		tim->ccmr1 = (6 << 12) | BIT(11) | (6 << 4) | BIT(3);
+		tim->ccmr2 = (6 << 12) | BIT(11) | (6 << 4) | BIT(3);
+
+	} else if (tim->psc != prescaler - 1 ||
+		   tim->arr != DIV_ROUND_NEAREST(divisor, prescaler) - 1) {
+		if (timer_pwm_use[timer_no].num_channels_in_use == 1 &&
+		    current_pin == gpio) {
+			/* We can switch timer frequency. */
+			tim->cr1 = 0x0000;
+			tim->psc = prescaler - 1;
+			tim->arr = DIV_ROUND_NEAREST(divisor, prescaler) - 1;
+		} else {
+			/*
+			 * Cannot change timer frequency without affecting
+			 * existing PWM on another channel of this same timer.
+			 */
+			for (int j = 0; j < 3; j++) {
+				int other_pin =
+					timer_pwm_use[timer_no].channel_pin[j];
+				if (other_pin == GPIO_COUNT)
+					continue;
+				ccprintf(
+					"Error: PWM frequency of %s conflicts with %s\n",
+					argv[2], gpio_list[other_pin].name);
+				return EC_ERROR_PARAM2;
+			}
+			/*
+			 * Loop above should have found at least one non-empty
+			 * entry, since num_channels_in_use is non-zero.
+			 */
+			panic("PWM invariant");
+		}
+	}
+
+	tim->ccr[pwm_pins[gpio].channel] =
+		DIV_ROUND_NEAREST(high_count, prescaler) - 1;
+
+	/* Output enable. Set active high/low. */
+	tim->ccer |= 1 << ((pwm_pins[gpio].channel - 1) * 4);
+
+	if (tim->cr1 == 0) {
+		/*
+		 * Generate update event to force immediate loading of shadow
+		 * registers, (otherwise the counter might have to run to 16-bit
+		 * overflow before the new value of ARR took effect).
+		 */
+		tim->egr |= 1;
+
+		/* Not all timers have BDTR register. */
+		if (timer_no == 1 || timer_no >= 8)
+			tim->bdtr |= STM32_TIM_BDTR_MOE;
+
+		/* Enable auto-reload preload, start counting. */
+		tim->cr1 |= BIT(7) | BIT(0);
+	}
+	if (current_pin == GPIO_COUNT) {
+		timer_pwm_use[timer_no]
+			.channel_pin[(pwm_pins[gpio].channel - 1)] = gpio;
+		timer_pwm_use[timer_no].num_channels_in_use++;
+	}
+	ccprintf("Count: %d\n", tim->cnt);
+
+	return EC_SUCCESS;
+}
+
 static int command_gpio(int argc, const char **argv)
 {
 	if (argc < 2)
@@ -1504,6 +1762,8 @@ static int command_gpio(int argc, const char **argv)
 		return command_gpio_set_reset(argc, argv);
 	if (!strcasecmp(argv[1], "bit-bang"))
 		return command_gpio_bit_bang(argc, argv);
+	if (!strcasecmp(argv[1], "pwm"))
+		return command_gpio_pwm(argc, argv);
 	return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(
@@ -1542,6 +1802,24 @@ static void gpio_reinit(void)
 
 	/* Disable any DAC (which would override GPIO function of pins) */
 	STM32_DAC_CR = 0;
+
+	/* Disable any PWM */
+	for (int gpio = 0; gpio < GPIO_COUNT; gpio++) {
+		timer_ctlr_t *const tim = pwm_pins[gpio].timer_regs;
+		if (!tim)
+			continue;
+
+		/* Clear output enable bit for this channel. */
+		tim->ccer &= ~(1U << ((pwm_pins[gpio].channel - 1) * 4));
+		/* Stop the timer. */
+		tim->cr1 = 0x0000;
+	}
+	for (int i = 0; i < sizeof(timer_pwm_use) / sizeof(timer_pwm_use[0]);
+	     i++) {
+		timer_pwm_use[i].num_channels_in_use = 0;
+		for (int j = 0; j < 4; j++)
+			timer_pwm_use[i].channel_pin[j] = GPIO_COUNT;
+	}
 
 	/*
 	 * Default behavior of blue user button is to pull CN10_29 low, as that
