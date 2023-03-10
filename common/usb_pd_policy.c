@@ -575,6 +575,14 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE, hc_remote_pd_set_amode,
 		     EC_VER_MASK(0));
 
+const uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
+				enum tcpci_msg_type type)
+{
+	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
+
+	return disc->svids[svid_idx].mode_vdo;
+}
+
 static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 {
 	struct svdm_amode_data *modep;

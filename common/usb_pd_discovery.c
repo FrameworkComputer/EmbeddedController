@@ -366,14 +366,6 @@ const struct svid_mode_data *pd_get_next_mode(int port,
 	return NULL;
 }
 
-const uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
-				enum tcpci_msg_type type)
-{
-	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
-
-	return disc->svids[svid_idx].mode_vdo;
-}
-
 bool pd_is_mode_discovered_for_svid(int port, enum tcpci_msg_type type,
 				    uint16_t svid)
 {
