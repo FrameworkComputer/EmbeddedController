@@ -16,6 +16,7 @@ zephyr_library_sources(
 	"src/adc.c"
 	"src/input_module.c"
 	"src/gpu.c"
+	"src/flash_storage.c"
 )
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
