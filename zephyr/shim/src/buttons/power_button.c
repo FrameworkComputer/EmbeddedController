@@ -9,15 +9,15 @@
 #include "task.h"
 #include "util.h"
 
-#include <zephyr/drivers/gpio_keys.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/shell/shell.h>
 
 LOG_MODULE_REGISTER(power_button, CONFIG_GPIO_LOG_LEVEL);
 
-#define POWER_BUTTON_LBL DT_NODELABEL(power_button)
-#define POWER_BUTTON_IDX DT_NODE_CHILD_IDX(POWER_BUTTON_LBL)
-#define GPIOKEYS_DEV DEVICE_DT_GET(DT_PARENT(POWER_BUTTON_LBL))
+#define POWER_BUTTON_NODE DT_NODELABEL(power_button)
+static const struct gpio_dt_spec power_button =
+	GPIO_DT_SPEC_GET(POWER_BUTTON_NODE, gpios);
 
 static struct power_button_data_s {
 	int8_t state;
@@ -30,7 +30,7 @@ int power_button_is_pressed(void)
 
 int power_button_signal_asserted(void)
 {
-	return gpio_keys_get_pin(GPIOKEYS_DEV, POWER_BUTTON_IDX);
+	return gpio_pin_get_dt(&power_button);
 }
 
 int power_button_wait_for_release(int timeout_us)

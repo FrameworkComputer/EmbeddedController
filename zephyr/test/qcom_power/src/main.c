@@ -22,9 +22,12 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
+#include <zephyr/input/input.h>
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
+
+#include <dt-bindings/buttons.h>
 
 /* For simplicity, enforce that all the gpios are on the same controller. */
 #define GPIO_DEVICE \
@@ -361,6 +364,29 @@ ZTEST(qcom_power, test_power_button)
 	zassert_equal(power_button_signal_asserted(), 0);
 	zassert_equal(power_get_state(), POWER_S0);
 }
+
+#ifdef CONFIG_INPUT_GPIO_KEYS
+
+ZTEST(qcom_power, test_power_button_input_event)
+{
+	const struct device *dev = DEVICE_DT_GET_ONE(zephyr_gpio_keys);
+
+	zassert_equal(power_button_is_pressed(), 0);
+
+	input_report_key(dev, BUTTON_POWER, 1, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 1);
+
+	input_report_key(dev, BUTTON_RECOVERY, 1, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 1);
+
+	input_report_abs(dev, INPUT_ABS_X, 1, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 1);
+
+	input_report_key(dev, BUTTON_POWER, 0, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 0);
+}
+
+#endif
 
 ZTEST(qcom_power, test_power_button_no_power_good)
 {

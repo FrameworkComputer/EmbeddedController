@@ -2,5 +2,5 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-zephyr_library_sources_ifdef(CONFIG_GPIO_KEYS_ZEPHYR        buttons.c)
-zephyr_library_sources_ifdef(CONFIG_GPIO_KEYS_ZEPHYR        power_button.c)
+zephyr_library_sources_ifdef(CONFIG_INPUT_GPIO_KEYS         buttons.c)
+zephyr_library_sources_ifdef(CONFIG_INPUT_GPIO_KEYS         power_button.c)
