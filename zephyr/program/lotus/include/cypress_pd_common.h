@@ -89,6 +89,8 @@
 	(0x102B + (x * 0x1000))
 #define CCG_PORT_INTR_STATUS_REG(x) \
 	(0x1034 + (x * 0x1000))
+#define CCG_SINK_PPS_AVS_CTRL_REG(x) \
+	(0x1066 + (x * 0x1000))
 #define CCG_PORT_PD_RESPONSE_REG(x) \
 	(0x1400 + (x * 0x1000))
 #define CCG_READ_DATA_MEMORY_REG(x, offset) \
@@ -167,6 +169,29 @@
 #define RT_EVT_VSYS_ADDED	1
 #define RT_EVT_RETRY_STATUS	2
 #define RT_EVT_UPDATE_STATUS	3
+
+
+/************************************************/
+/*  EPR EVENT Response                          */
+/************************************************/
+#define EPR_EVENT_TYPE_MASK 0x7F
+#define EPR_EVENT_POWER_ROLE_MASK 0x80
+#define EPR_EVENT_POWER_ROLE_SINK 0x80
+
+enum epr_event_type {
+	EPR_MODE_ENTERED,
+	EPR_MODE_EXITED,
+	EPR_MODE_ENTER_FAILED,
+};
+
+enum epr_event_failure_type {
+	EPR_FAILURE_UNKNOWN,
+	EPR_FAILURE_EPR_CABLE,
+	EPR_FAILURE_EPR_VCONN,
+	EPR_FAILURE_RDO,
+	EPR_FAILURE_UNABLE_NOW,
+	EPR_FAILURE_PDO
+};
 
 /************************************************/
 /*  CCG Task Events                            */
@@ -298,7 +323,10 @@ enum ccg_response {
 	CCG_RESPONSE_SBU_OVP_ERROR = 0xBB,
 	CCG_RESPONSE_VBUS_SHORT_ERROR = 0xBC,
 	CCG_RESPONSE_REVERSE_CURRENT_ERROR = 0xBD,
-	CCG_RESPONSE_SINK_STANDBY = 0xBE
+	CCG_RESPONSE_SINK_STANDBY = 0xBE,
+	CCG_RESPONSE_ACK_TIMEOUT_EVENT = 0xC0,
+	CCG_RESPONSE_BC12_EVENT = 0xC4,
+	CCG_RESPONSE_EPR_EVENT = 0xD9
 };
 
 enum ccg_pd_state {
@@ -364,6 +392,7 @@ struct pd_port_current_state_t {
 	enum ccg_c_state c_state; /* What device is attached on the other side */
 	uint8_t pd_state;
 	uint8_t cc;
+	uint8_t epr_active;
 
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;
