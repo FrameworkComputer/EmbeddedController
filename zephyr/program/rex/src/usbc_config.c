@@ -271,3 +271,11 @@ int board_set_active_charge_port(int port)
 
 	return EC_SUCCESS;
 }
+
+__override bool board_is_tbt_usb4_port(int port)
+{
+	if (port == USBC_PORT_C0)
+		return true;
+
+	return false;
+}
