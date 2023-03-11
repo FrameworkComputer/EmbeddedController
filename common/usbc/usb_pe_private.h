@@ -86,6 +86,8 @@ enum {
 	PE_FLAGS_SRC_SNK_SETTLE_FN,
 	/* In EPR mode */
 	PE_FLAGS_IN_EPR_FN,
+	/* Discovery disabled due to UFP/PD 2.0 constraint. */
+	PE_FLAGS_DISCOVERY_DISABLED_FN,
 	/* Last element */
 	PE_FLAGS_COUNT
 };

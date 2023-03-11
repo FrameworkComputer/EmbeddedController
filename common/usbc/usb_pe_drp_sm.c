@@ -2063,6 +2063,12 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		assert(0);
 
+	/* TODO(b/272827504): Gate discovery via a DPM request and remove this
+	 * flag.
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_DISCOVERY_DISABLED))
+		return false;
+
 	/* Apply Port Discovery DR Swap Policy */
 	if (port_discovery_dr_swap_policy(
 		    port, pe[port].data_role,
@@ -2080,6 +2086,12 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 	 */
 	if (pe[port].data_role == PD_ROLE_UFP &&
 	    prl_get_rev(port, TCPCI_MSG_SOP) == PD_REV20) {
+		/* Although, logically, "pd_disable_discovery" should set
+		 * "PE_FLAGS_DISCOVERY_DISABLED," set it here to make its
+		 * limited purpose obvious: When discovery is impossible, send
+		 * discovery-done events exactly once.
+		 */
+		PE_SET_FLAG(port, PE_FLAGS_DISCOVERY_DISABLED);
 		pd_disable_discovery(port);
 		pd_notify_event(port, PD_STATUS_EVENT_SOP_DISC_DONE);
 		pd_notify_event(port, PD_STATUS_EVENT_SOP_PRIME_DISC_DONE);
