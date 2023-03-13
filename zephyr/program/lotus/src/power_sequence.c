@@ -27,8 +27,8 @@ static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asser
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
 
-static void board_pwoer_off(void);
-DECLARE_DEFERRED(board_pwoer_off);
+static void board_power_off(void);
+DECLARE_DEFERRED(board_power_off);
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -291,7 +291,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
 
 		/* call board power off function to try to hibernate if DC only*/
-		hook_call_deferred(&board_pwoer_off_data,  100 * MSEC);
+		hook_call_deferred(&board_power_off_data,  100 * MSEC);
 		return POWER_G3;
 	default:
 		break;
@@ -338,7 +338,7 @@ static void peripheral_power_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
 
-static void board_pwoer_off(void)
+static void board_power_off(void)
 {
 	/* TODO: check the chassis open behavior */
 
@@ -353,5 +353,5 @@ static void board_pwoer_off(void)
 		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1)
 		system_enter_hibernate(1, 0);
 }
-DECLARE_HOOK(HOOK_INIT, board_pwoer_off, HOOK_PRIO_DEFAULT+1);
-DECLARE_HOOK(HOOK_AC_CHANGE, board_pwoer_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_power_off, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_AC_CHANGE, board_power_off, HOOK_PRIO_DEFAULT);
