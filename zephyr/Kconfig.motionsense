@@ -16,6 +16,8 @@ menuconfig PLATFORM_EC_MOTIONSENSE
       Based on the data, it also does other things like calculating lid angle
       and detect tablet mode.
 
+if PLATFORM_EC_MOTIONSENSE
+
 config PLATFORM_EC_ACCEL_FIFO
     bool "Sensor FIFO"
     help
@@ -184,3 +186,5 @@ config PLATFORM_EC_GESTURE_HOST_DETECTION
 
 rsource "Kconfig.sensor_devices"
 rsource "Kconfig.body_detection"
+
+endif # PLATFORM_EC_MOTIONSENSE
