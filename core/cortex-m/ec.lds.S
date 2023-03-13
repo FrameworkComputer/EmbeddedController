@@ -382,7 +382,11 @@ SECTIONS
  * TODO(b/202863352): Unify clang and gcc behavior.
  */
 #ifdef __clang__
+#if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
+	__data_lma_start = .;
+#else
 	__data_lma_start = LOADADDR(.data);
+#endif
 #else
 	__data_lma_start = .;
 #endif
