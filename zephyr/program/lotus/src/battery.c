@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "battery_fuel_gauge.h"
+#include "board_adc.h"
 #include "board_host_command.h"
 #include "charger.h"
 #include "charge_state.h"
@@ -24,30 +25,57 @@
 
 static uint8_t charging_maximum_level = EC_CHARGE_LIMIT_RESTORE;
 static int old_btp;
+static int power_on_check_batt;
+
+/* check battery timer */
+K_TIMER_DEFINE(check_battery_timer, NULL, NULL);
 
 enum battery_present battery_is_present(void)
 {
-	enum battery_present batt_pres = BP_NO;
+	static enum battery_present batt_pres = BP_NOT_SURE;
 	char text[32];
 	static int retry;
 
-	/*
-	 * EC does not connect to the battery present pin,
-	 * add the workaround to read the battery device name (register 0x21).
+	/* timer expired, return no battery */
+	if (k_timer_status_get(&check_battery_timer) > 0) {
+		CPRINTS("check battery timeout, stop precharge!");
+		power_on_check_batt = 0;
+		return BP_NO;
+	}
+
+	/* check the battery present pin first */
+	/* TODO: remove the comment at DVT phase
+	 * if (board_get_version() > BOARD_VERSION_4) {
+	 *	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 1) {
+	 *		k_timer_stop(&check_battery_timer);
+	 *		return BP_YES;
+	 *	}
+	 * }
 	 */
 
+	/* try to read the battery information */
 	if (battery_device_name(text, sizeof(text))) {
-		if (retry++ > 3) {
+		/* add the retry if read the bad respond */
+		if (retry++ > 3 && !power_on_check_batt) {
 			batt_pres = BP_NO;
 			retry = 0;
 		}
 	} else {
+		k_timer_stop(&check_battery_timer);
 		batt_pres = BP_YES;
 		retry = 0;
 	}
 
 	return batt_pres;
 }
+
+static void enable_check_battery_timer(void)
+{
+	/* start the timer */
+	power_on_check_batt = 1;
+	k_timer_start(&check_battery_timer, K_SECONDS(30), K_NO_WAIT);
+}
+DECLARE_HOOK(HOOK_INIT, enable_check_battery_timer, HOOK_PRIO_DEFAULT);
 
 static void battery_percentage_control(void)
 {

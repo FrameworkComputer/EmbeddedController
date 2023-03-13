@@ -296,6 +296,9 @@
 			gpios = <&gpio8 1 GPIO_INPUT>;
 		};
 
+		gpio_battery_present: battery_present {
+			/* TODO: set the battery present pin */
+		};
 		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
