@@ -10,6 +10,9 @@
 
 #define CONFIG_LTO
 
+/* Disable deferred (async) flash protect*/
+#undef CONFIG_FLASH_PROTECT_DEFERRED
+
 /* Configure the flash */
 #undef CONFIG_RO_SIZE
 #undef CONFIG_FW_PSTATE_OFF

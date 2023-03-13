@@ -1880,6 +1880,19 @@ struct ec_params_flash_protect {
 	uint32_t flags;
 } __ec_align4;
 
+enum flash_protect_action {
+	FLASH_PROTECT_ASYNC = 0,
+	FLASH_PROTECT_GET_RESULT = 1,
+};
+
+/* Version 2 of the command is "asynchronous". */
+struct ec_params_flash_protect_v2 {
+	uint8_t action; /**< enum flash_protect_action */
+	uint8_t reserved[3]; /**< padding for alignment */
+	uint32_t mask;
+	uint32_t flags;
+} __ec_align4;
+
 /**
  * struct ec_response_flash_protect - Response to the flash protect command.
  * @flags: Current value of flash protect flags.

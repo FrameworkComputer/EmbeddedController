@@ -380,6 +380,12 @@ config PLATFORM_EC_FLASH_CROS
 	  e.g. to support auto-update. Various write-protection features are
 	  also provided.
 
+config PLATFORM_EC_FLASH_PROTECT_DEFERRED
+	bool "Enable Async Flash Protect"
+	help
+	  Enable the async version of the FLASH_PROTECT command. This uses
+	  a deferred flash_protect_set.
+
 config PLATFORM_EC_HOOKS
 	bool "Hooks and deferred compatibility shim"
 	default y

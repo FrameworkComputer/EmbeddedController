@@ -19,6 +19,9 @@
 
 #include "baseboard.h"
 
+/* Disable deferred (async) flash protect*/
+#undef CONFIG_FLASH_PROTECT_DEFERRED
+
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
 
