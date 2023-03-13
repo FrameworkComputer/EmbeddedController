@@ -380,6 +380,16 @@ int tcpci_get_chip_info_mutable(
 	int (*mutator)(int port, bool live,
 		       struct ec_response_pd_chip_info_v1 *cached));
 
+/**
+ * This function is identical to the tcpci_get_vbus_voltage without
+ * checking the DEV_CAP_1.
+ *
+ * @param port: The USB-C port to query
+ * @param vbus: VBUS voltage in mV the TCPC sensed
+ *
+ * @return EC_SUCCESS on success, and otherwise on failure.
+ */
+int tcpci_get_vbus_voltage_no_check(int port, int *vbus);
 int tcpci_get_vbus_voltage(int port, int *vbus);
 bool tcpci_tcpm_get_snk_ctrl(int port);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);

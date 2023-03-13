@@ -1360,12 +1360,9 @@ void tcpci_tcpc_alert(int port)
 		task_set_event(PD_PORT_TO_TASK_ID(port), pd_event);
 }
 
-int tcpci_get_vbus_voltage(int port, int *vbus)
+int tcpci_get_vbus_voltage_no_check(int port, int *vbus)
 {
 	int error, val;
-
-	if (!(dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE))
-		return EC_ERROR_UNIMPLEMENTED;
 
 	error = tcpc_read16(port, TCPC_REG_VBUS_VOLTAGE, &val);
 	if (error)
@@ -1373,6 +1370,14 @@ int tcpci_get_vbus_voltage(int port, int *vbus)
 
 	*vbus = TCPC_REG_VBUS_VOLTAGE_VBUS(val);
 	return EC_SUCCESS;
+}
+
+int tcpci_get_vbus_voltage(int port, int *vbus)
+{
+	if (!(dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE))
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return tcpci_get_vbus_voltage_no_check(port, vbus);
 }
 
 int tcpci_get_chip_info_mutable(
