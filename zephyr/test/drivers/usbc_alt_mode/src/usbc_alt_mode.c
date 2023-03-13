@@ -651,3 +651,63 @@ ZTEST_SUITE(usbc_alt_mode_minus_dp_configure, drivers_predicate_post_main,
 	    usbc_alt_mode_minus_dp_configure_setup,
 	    usbc_alt_mode_minus_dp_configure_before,
 	    usbc_alt_mode_minus_dp_configure_after, NULL);
+
+/* Set up the partner to refuse to swap to UFP, preventing discovery in PD 2.0.
+ * Configure DP alt mode responses to try to catch the TCPM entering DP mode
+ * anyway.
+ */
+static void *usbc_alt_mode_no_drs_setup(void)
+{
+	static struct usbc_alt_mode_fixture fixture;
+	struct tcpci_partner_data *partner = &fixture.partner;
+	struct tcpci_src_emul_data *src_ext = &fixture.src_ext;
+
+	tcpci_partner_init(partner, PD_REV20);
+	partner->extensions = tcpci_src_emul_init(src_ext, partner, NULL);
+	tcpci_partner_set_drs_support(partner, /*drs_to_ufp_supported=*/false,
+				      /*drs_to_dfp_supported=*/true);
+
+	/* Get references for the emulators */
+	fixture.tcpci_emul = EMUL_GET_USBC_BINDING(TEST_PORT, tcpc);
+	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
+
+	add_discovery_responses(partner);
+
+	return &fixture;
+}
+
+ZTEST_F(usbc_discovery_no_drs, test_no_drs_no_discovery)
+{
+	/* Verify host command when VDOs are present. */
+	struct ec_response_typec_status status =
+		host_cmd_typec_status(TEST_PORT);
+	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
+	struct ec_response_typec_discovery *discovery =
+		(struct ec_response_typec_discovery *)response_buffer;
+
+	/* Verify port partner does not think it's configured for DisplayPort */
+	zassert_false(fixture->partner.displayport_configured);
+
+	/* Verify TCPM reports discovery done with no data from partner. */
+	zassert_true(status.events & PD_STATUS_EVENT_SOP_DISC_DONE);
+	zassert_true(status.events & PD_STATUS_EVENT_SOP_PRIME_DISC_DONE);
+
+	host_cmd_typec_discovery(TEST_PORT, TYPEC_PARTNER_SOP, response_buffer,
+				 sizeof(response_buffer));
+	zassert_equal(discovery->identity_count, 0,
+		      "Expected 0 identity VDOs, got %d",
+		      discovery->identity_count);
+
+	/* Verify TCPM does not notify AP of discovery done again. */
+	host_cmd_typec_control_clear_events(
+		TEST_PORT, PD_STATUS_EVENT_SOP_DISC_DONE |
+				   PD_STATUS_EVENT_SOP_PRIME_DISC_DONE);
+	k_sleep(K_MSEC(100));
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_false(status.events & (PD_STATUS_EVENT_SOP_DISC_DONE |
+				       PD_STATUS_EVENT_SOP_PRIME_DISC_DONE));
+}
+
+ZTEST_SUITE(usbc_discovery_no_drs, drivers_predicate_post_main,
+	    usbc_alt_mode_no_drs_setup, usbc_alt_mode_before,
+	    usbc_alt_mode_after, NULL);

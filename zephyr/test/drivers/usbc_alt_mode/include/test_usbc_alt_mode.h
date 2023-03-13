@@ -40,4 +40,11 @@ struct usbc_alt_mode_minus_dp_configure_fixture {
 	struct tcpci_src_emul_data src_ext;
 };
 
+struct usbc_discovery_no_drs_fixture {
+	const struct emul *tcpci_emul;
+	const struct emul *charger_emul;
+	struct tcpci_partner_data partner;
+	struct tcpci_src_emul_data src_ext;
+};
+
 #endif /* ZEPHYR_TEST_DRIVERS_USBC_ALT_MODE_TEST_USBC_ALT_MODE_H_ */
