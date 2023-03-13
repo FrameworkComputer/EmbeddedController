@@ -19,10 +19,10 @@
 #include "board_adc.h"
 #include "flash_storage.h"
 
-LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_ERR);
+LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_INF);
 
-#define INPUT_MODULE_POWER_ON_DELAY (40)
-#define INPUT_MODULE_MUX_DELAY_US 10
+#define INPUT_MODULE_POWER_ON_DELAY (2)
+#define INPUT_MODULE_MUX_DELAY_US 2
 
 int oc_count;
 int force_on;
@@ -31,6 +31,25 @@ void module_oc_interrupt(enum gpio_signal signal)
 {
     oc_count++;
 }
+
+enum input_modules_t {
+	INPUT_MODULE_SHORT,
+	INPUT_MODULE_RESERVED_1,
+	INPUT_MODULE_RESERVED_2,
+	INPUT_MODULE_RESERVED_3,
+	INPUT_MODULE_RESERVED_4,
+	INPUT_MODULE_RESERVED_5,
+	INPUT_MODULE_RESERVED_6,
+	INPUT_MODULE_RESERVED_7,
+	INPUT_MODULE_GENERIC_A,
+	INPUT_MODULE_GENERIC_B,
+	INPUT_MODULE_GENERIC_C,
+	INPUT_MODULE_KEYBOARD_B,
+	INPUT_MODULE_KEYBOARD_A,
+	INPUT_MODULE_TOUCHPAD,
+	INPUT_MODULE_RESERVED_15,
+	INPUT_MODULE_DISCONNECTED,
+};
 
 enum input_deck_state {
     DECK_OFF,
@@ -48,8 +67,8 @@ enum input_deck_mux {
 	TOP_ROW_2,
 	TOP_ROW_3,
 	TOP_ROW_4,
-	TOP_ROW_5,
 	TOUCHPAD,
+	TOP_ROW_NOT_CONNECTED,
 	HUBBOARD = 7
 };
 
@@ -85,7 +104,7 @@ static void scan_c_deck(bool full_scan)
 		hub_board_id[TOUCHPAD] = get_hardware_id(ADC_HUB_BOARD_ID);
 	}
 	/* Turn off hub mux pins*/
-	set_hub_mux(6);
+	set_hub_mux(TOP_ROW_NOT_CONNECTED);
 }
 
 static void board_input_module_init(void)
@@ -99,12 +118,12 @@ static void board_input_module_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT);
 
-#ifdef CONFIG_PLATFORM_CDECK_POWER_CONTROL
+
 
 static void poll_c_deck(void)
 {
 	static int turning_on_count;
-
+	
 	switch (deck_state) {
 	case DECK_OFF:
 		break;
@@ -113,31 +132,33 @@ static void poll_c_deck(void)
 		/* TODO only poll touchpad and currently connected B1/C1 modules
 		 * if c deck state is ON as these must be removed first
 		 */
-		if (hub_board_id[TOUCHPAD] == 13) {
+		if (hub_board_id[TOUCHPAD] == INPUT_MODULE_TOUCHPAD) {
 			turning_on_count = 0;
 			deck_state = DECK_TURNING_ON;
 		}
-	break;
+		break;
 	case DECK_TURNING_ON:
 		turning_on_count++;
 		scan_c_deck(false);
-		if (hub_board_id[TOUCHPAD] == 13 &&
+		if (hub_board_id[TOUCHPAD] == INPUT_MODULE_TOUCHPAD &&
 			turning_on_count > INPUT_MODULE_POWER_ON_DELAY) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
 			deck_state = DECK_ON;
-			CPRINTS("Input modules on");
+			LOG_INF("Input modules on");
+		} else if (hub_board_id[TOUCHPAD] != INPUT_MODULE_TOUCHPAD) {
+			deck_state = DECK_DISCONNECTED;
 		}
-	break;
+		break;
 	case DECK_ON:
 		/* TODO Add lid detection,
 		 * if lid is closed input modules cannot be removed
 		 */
 
 		scan_c_deck(false);
-		if (hub_board_id[TOUCHPAD] > 14) {
+		if (hub_board_id[TOUCHPAD] > INPUT_MODULE_TOUCHPAD) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 			deck_state = DECK_DISCONNECTED;
-			CPRINTS("Input modules off");
+			LOG_INF("Input modules off");
 		}
 		break;
 	case DECK_FORCE_ON:
@@ -148,7 +169,7 @@ static void poll_c_deck(void)
 }
 DECLARE_HOOK(HOOK_TICK, poll_c_deck, HOOK_PRIO_DEFAULT);
 
-#endif /* CONFIG_PLATFORM_CDECK_POWER_CONTROL */
+
 
 static void input_modules_powerup(void)
 {
@@ -168,7 +189,7 @@ static void input_modules_powerdown(void)
 		deck_state = DECK_OFF;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 		/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD*/
-		set_hub_mux(6);
+		set_hub_mux(TOP_ROW_NOT_CONNECTED);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, input_modules_powerdown, HOOK_PRIO_DEFAULT);
@@ -177,7 +198,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 /* EC console command */
 static int inputdeck_cmd(int argc, const char **argv)
 {
-	int i;
+	int i, mv, id;
 	static const char * const deck_states[] = {
 		"OFF", "DISCONNECTED", "TURNING_ON", "ON", "FORCE_OFF", "FORCE_ON", "NO_DETECTION"
 	};
@@ -199,8 +220,20 @@ static int inputdeck_cmd(int argc, const char **argv)
 	}
 	scan_c_deck(true);
 	ccprintf("Deck state: %s\n", deck_states[deck_state]);
-	for (i = 0; i < 8; i++)
-		ccprintf("    C deck status %d = %d\n", i, hub_board_id[i]);
+	for (i = 0; i < 8; i++) {
+			/* Switch the mux */
+			set_hub_mux(i);
+			/*
+			 * In the specification table Switching Characteristics over Operating
+			 * range the maximum Bus Select Time needs 6.6 ns, so delay a little
+			 */
+			usleep(INPUT_MODULE_MUX_DELAY_US);
+
+			id = get_hardware_id(ADC_HUB_BOARD_ID);
+			mv = adc_read_channel(ADC_HUB_BOARD_ID);
+			ccprintf("    C deck status %d = %d %d mv\n", i, id, mv);
+
+		}
 
 	ccprintf("Input module Overcurrent Events: %d\n", oc_count);
 	return EC_SUCCESS;
