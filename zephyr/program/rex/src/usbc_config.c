@@ -94,9 +94,9 @@ static void reset_nct38xx_port(int port)
 		return;
 	}
 
-	gpio_pin_set_dt(reset_gpio_l, 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(reset_gpio_l, 1);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	gpio_pin_set_dt(reset_gpio_l, 0);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0) {
 		msleep(NCT3807_RESET_POST_DELAY_MS);
@@ -113,9 +113,9 @@ void board_reset_pd_mcu(void)
 	reset_nct38xx_port(USBC_PORT_C0);
 
 	/* Reset TCPC1 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 1);
+	msleep(PS8XXX_RESET_DELAY_MS);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 0);
 	msleep(PS8815_FW_INIT_DELAY_MS);
 }
 
@@ -133,12 +133,12 @@ uint16_t tcpc_get_alert_status(void)
 	 * its reset line active.
 	 */
 	if (gpio_pin_get_dt(&tcpc_config[0].irq_gpio) &&
-	    gpio_pin_get_dt(tcpc_c0_rst_l)) {
+	    !gpio_pin_get_dt(tcpc_c0_rst_l)) {
 		status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
 	if (gpio_pin_get_dt(&tcpc_config[1].irq_gpio) &&
-	    gpio_pin_get_dt(tcpc_c1_rst_l)) {
+	    !gpio_pin_get_dt(tcpc_c1_rst_l)) {
 		status |= PD_STATUS_TCPC_ALERT_1;
 	}
 

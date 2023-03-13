@@ -58,6 +58,14 @@
 			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
+		/delete-node/ usb_c0_tcpc_rst_odl;
+		/delete-node/ usb_c1_rt_rst_r_odl;
+		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_odl {
+			gpios = <&gpio6 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
+			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+		};
 	};
 
 	usba-port-enable-list {
