@@ -99,7 +99,7 @@
 			gpios = <&gpio2 4 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
 		};
 		ec_sbub {
-			gpios = <&gpio2 3 GPIO_OUTPUT_HIGH>;	/* CCG8 debug mode use */
+			gpios = <&gpio2 3 GPIO_INPUT>;	/* CCG8 debug mode use */
 		};
 		ec_sbua {
 			gpios = <&gpio2 2 GPIO_OUTPUT_HIGH>;	/* CCG8 debug mode use */
@@ -296,6 +296,9 @@
 			gpios = <&gpio8 1 GPIO_INPUT>;
 		};
 
+		gpio_battery_present: battery_present {
+			/* TODO: set the battery present pin */
+		};
 		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
