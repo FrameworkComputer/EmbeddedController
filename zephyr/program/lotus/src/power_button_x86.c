@@ -200,8 +200,18 @@ static void power_button_released(uint64_t tnow)
  */
 static void set_initial_pwrbtn_state(void)
 {
-	pwrbtn_state = PWRBTN_STATE_IDLE;
-	CPRINTS("PB idle");
+	/**
+	 * EC will be power off when DC connect without AC.
+	 * When user press the power button when DC only, EC should auto power on the system,
+	 * but when user connect the AC, it just power on EC.
+	 */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 1) {
+		pwrbtn_state = PWRBTN_STATE_IDLE;
+		CPRINTS("PB idle");
+	} else {
+		pwrbtn_state = PWRBTN_STATE_INIT_ON;
+		CPRINTS("PB init power on");
+	}
 }
 
 /**
