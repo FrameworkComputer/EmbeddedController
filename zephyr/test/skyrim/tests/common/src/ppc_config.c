@@ -42,6 +42,10 @@ ZTEST(ppc_config, board_aoz1380_set_vbus_source_current_limit)
 	rv = board_aoz1380_set_vbus_source_current_limit(0, TYPEC_RP_1A5);
 	zassert_equal(rv, EC_SUCCESS);
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
+
+	/* Only port0 is supported. */
+	rv = board_aoz1380_set_vbus_source_current_limit(1, TYPEC_RP_1A5);
+	zassert_equal(rv, EC_ERROR_INVAL);
 }
 
 ZTEST(ppc_config, ppc_interrupt)

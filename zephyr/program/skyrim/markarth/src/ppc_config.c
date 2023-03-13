@@ -23,6 +23,9 @@ int board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv = EC_SUCCESS;
 
+	if (port != 0)
+		return EC_ERROR_INVAL;
+
 	rv = gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_c0_ilim_3a_en),
 			     (rp == TYPEC_RP_3A0) ? 1 : 0);
 
