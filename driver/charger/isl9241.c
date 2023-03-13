@@ -147,6 +147,53 @@ static enum ec_error_list isl9241_device_id(int chgnum, int *id)
 	return isl9241_read(chgnum, ISL9241_REG_DEVICE_ID, id);
 }
 
+static enum ec_error_list isl9241_set_frequency(int chgnum, int freq_khz)
+{
+	int rv;
+	int reg;
+	int freq;
+
+	mutex_lock(&control1_mutex_isl9241);
+	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL1, &reg);
+	if (rv) {
+		CPRINTS("Could not read CONTROL1. (rv=%d)", rv);
+		return rv;
+	}
+	/* 000 = 1420kHz */
+	/* 001 = 1180kHz */
+	/* 010 = 1020kHz */
+	/* 011 = 890kHz  */
+	/* 100 = 808kHz  */
+	/* 101 = 724kHz  */
+	/* 110 = 656kHz  */
+	/* 111 = 600kHz  */
+	if (freq_khz >= 1300)
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_1420KHZ;
+	else if (freq_khz >= 1100)
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_1180KHZ;
+	else if (freq_khz >= 955)
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_1020KHZ;
+	else if (freq_khz >= 849)
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_890KHZ;
+	else if (freq_khz >= 766)
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_808KHZ;
+	else if (freq_khz >= 690)
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ;
+	else if (freq_khz >= 678)
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ;
+	else
+		freq = ISL9241_CONTROL1_SWITCHING_FREQ_600KHZ;
+
+	reg &= ~ISL9241_CONTROL1_SWITCHING_FREQ_MASK;
+	reg |= (freq << 7);
+	rv = isl9241_write(chgnum, ISL9241_REG_CONTROL1, reg);
+	if (rv)
+		return rv;
+
+	mutex_unlock(&control1_mutex_isl9241);
+	return EC_SUCCESS;
+}
+
 static enum ec_error_list isl9241_get_option(int chgnum, int *option)
 {
 	int rv;
@@ -1232,6 +1279,7 @@ const struct charger_drv isl9241_drv = {
 	.get_input_current_limit = &isl9241_get_input_current_limit,
 	.manufacturer_id = &isl9241_manufacturer_id,
 	.device_id = &isl9241_device_id,
+	.set_frequency = &isl9241_set_frequency,
 	.get_option = &isl9241_get_option,
 	.set_option = &isl9241_set_option,
 #ifdef CONFIG_CHARGE_RAMP_HW

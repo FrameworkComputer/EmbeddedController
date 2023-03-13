@@ -113,6 +113,7 @@ struct charger_drv {
 
 	enum ec_error_list (*manufacturer_id)(int chgnum, int *id);
 	enum ec_error_list (*device_id)(int chgnum, int *id);
+	enum ec_error_list (*set_frequency)(int chgnum, int freq_khz);
 	enum ec_error_list (*get_option)(int chgnum, int *option);
 	enum ec_error_list (*set_option)(int chgnum, int option);
 
@@ -344,6 +345,7 @@ enum ec_error_list charger_get_input_current(int chgnum, int *input_current);
 enum ec_error_list charger_manufacturer_id(int *id);
 enum ec_error_list charger_device_id(int *id);
 enum ec_error_list charger_get_option(int *option);
+enum ec_error_list charger_set_frequency(int freq_khz);
 enum ec_error_list charger_set_option(int option);
 enum ec_error_list charger_set_hw_ramp(int enable);
 

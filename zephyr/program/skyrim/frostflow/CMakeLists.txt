@@ -8,6 +8,7 @@ zephyr_library_sources(
 		"src/usb_mux_config.c"
 		"src/ppc_config.c"
 		"src/thermal.c"
+		"src/charger.c"
 )
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	"src/keyboard.c"
