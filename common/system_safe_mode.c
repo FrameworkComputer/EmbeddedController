@@ -29,7 +29,7 @@ static const int safe_mode_allowed_hostcmds[] = {
 bool is_task_safe_mode_critical(task_id_t task_id)
 {
 	const task_id_t safe_mode_critical_tasks[] = {
-#ifdef HAS_TASK_HOOK
+#ifdef HAS_TASK_HOOKS
 		TASK_ID_HOOKS,
 #endif
 #ifdef HAS_TASK_IDLE
