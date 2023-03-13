@@ -423,51 +423,6 @@ static int anx7447_get_vbus_voltage(int port, int *vbus)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-/*
- * This interface are workable while ADC is enabled, before
- * calling them should make sure ec driver finished chip initialization.
- */
-static bool is_equal_greater_safe0v(int port)
-{
-	int vbus;
-	int error;
-
-	error = anx7447_get_vbus_voltage(port, &vbus);
-	if (error)
-		return true;
-
-	if (vbus > VSAFE0V_MAX)
-		return true;
-
-	return false;
-}
-
-int anx7447_set_power_supply_ready(int port)
-{
-	int count = 0;
-
-	while (is_equal_greater_safe0v(port)) {
-		if (count >= 10)
-			break;
-		msleep(100);
-		count++;
-	}
-
-	return tcpc_write(port, TCPC_REG_COMMAND, 0x77);
-}
-#endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC */
-
-int anx7447_power_supply_reset(int port)
-{
-	return tcpc_write(port, TCPC_REG_COMMAND, 0x66);
-}
-
-int anx7447_board_charging_enable(int port, int enable)
-{
-	return tcpc_write(port, TCPC_REG_COMMAND, enable ? 0x55 : 0x44);
-}
-
 static void anx7447_vendor_defined_alert(int port)
 {
 	int alert;

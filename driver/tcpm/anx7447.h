@@ -160,10 +160,6 @@ struct anx7447_i2c_addr {
  */
 #define ANX74XX_RESET_FINISH_MS 2
 
-int anx7447_set_power_supply_ready(int port);
-int anx7447_power_supply_reset(int port);
-int anx7447_board_charging_enable(int port, int enable);
-
 void anx7447_hpd_mode_en(int port);
 void anx7447_hpd_output_en(int port);
 
