@@ -41,24 +41,25 @@
 
 struct {
 	enum board_version_t version;
-	int thresh_mv;
+	int min_thresh_mv;
+	int max_thresh_mv;
 } const board_versions[] = {
-	{ BOARD_VERSION_0, 203 },
-	{ BOARD_VERSION_1, 409 },
-	{ BOARD_VERSION_2, 615 },
-	{ BOARD_VERSION_3, 821 },
-	{ BOARD_VERSION_4, 1028},
-	{ BOARD_VERSION_5, 1234 },
-	{ BOARD_VERSION_6, 1440 },
-	{ BOARD_VERSION_7, 1646 },
-	{ BOARD_VERSION_8, 1853 },
-	{ BOARD_VERSION_9, 2059 },
-	{ BOARD_VERSION_10, 2265 },
-	{ BOARD_VERSION_11, 2471 },
-	{ BOARD_VERSION_12, 2678 },
-	{ BOARD_VERSION_13, 2884 },
-	{ BOARD_VERSION_14, 3090 },
-	{ BOARD_VERSION_15, 3300 },
+	{ BOARD_VERSION_0, 0, 110 },
+	{ BOARD_VERSION_1, 113, 234 },
+	{ BOARD_VERSION_2, 239, 360 },
+	{ BOARD_VERSION_3, 369, 491 },
+	{ BOARD_VERSION_4, 527, 648},
+	{ BOARD_VERSION_5, 722, 843 },
+	{ BOARD_VERSION_6, 844, 965 },
+	{ BOARD_VERSION_7, 972, 1093 },
+	{ BOARD_VERSION_8, 1259, 1380 },
+	{ BOARD_VERSION_9, 1439, 1560 },
+	{ BOARD_VERSION_10, 1580, 1710 },
+	{ BOARD_VERSION_11, 1900, 2040 },
+	{ BOARD_VERSION_12, 2060, 2195 },
+	{ BOARD_VERSION_13, 2250, 2600 },
+	{ BOARD_VERSION_14, 2645, 2766 },
+	{ BOARD_VERSION_15, 2770, 3300 },
 };
 BUILD_ASSERT(ARRAY_SIZE(board_versions) == BOARD_VERSION_COUNT);
 
@@ -76,7 +77,7 @@ enum board_version_t get_hardware_id(enum adc_channel channel)
 	}
 
 	for (i = 0; i < BOARD_VERSION_COUNT; i++)
-		if (mv < board_versions[i].thresh_mv) {
+		if (mv >= board_versions[i].min_thresh_mv && mv <= board_versions[i].max_thresh_mv) {
 			version = board_versions[i].version;
 			return version;
 		}
