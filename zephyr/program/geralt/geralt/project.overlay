@@ -13,6 +13,7 @@
 #include "../mkbp.dtsi"
 #include "../motionsense.dtsi"
 #include "../power_signal.dtsi"
+#include "../uart.dtsi"
 #include "../usbc.dtsi"
 #include "../shi.dtsi"
 #include "battery.dtsi"

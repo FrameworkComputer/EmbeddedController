@@ -134,7 +134,6 @@
 	prescale-scl-low = <1>;
 };
 
-/* TODO(b/260377762): peripheral mode */
 &i2c4 {
 	/* I2C_DETACHABLE_BASE */
 	status = "okay";
@@ -143,4 +142,20 @@
 		     &i2c4_data_gpe7_default>;
 	pinctrl-names = "default";
 	prescale-scl-low = <1>;
+
+	target-enable;
+	hid_i2c_target: hid-i2c-target@56 {
+		compatible = "cros-ec,hid-i2c-touchpad";
+
+		reg = <0x56>;
+		max_pressure = <255>;
+		logical_max_x = <2925>;
+		logical_max_y = <1426>;
+		physical_max_x = <929>;
+		physical_max_y = <457>;
+
+		/* TODO(b/301380459): allocate pid */
+		vid = <0x18d1>;
+		pid = <0x50ff>;
+	};
 };

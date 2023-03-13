@@ -1,0 +1,38 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: HID over I2C Touchpad
+
+compatible: "cros-ec,hid-i2c-touchpad"
+
+include: i2c-device.yaml
+
+properties:
+  logical_max_x:
+    type: int
+    description: The logical maximum x_axis setting
+
+  logical_max_y:
+    type: int
+    description: The logical maximum y_axis setting
+
+  physical_max_x:
+    type: int
+    description: The physical maximum x_axis setting
+
+  physical_max_y:
+    type: int
+    description: The physical maximum y_axis setting
+
+  max_pressure:
+    type: int
+    description: The maximum pressure for touchpad
+
+  vid:
+    type: int
+    description: Vendor ID of this HID device
+
+  pid:
+    type: int
+    description: Product ID of this HID device
