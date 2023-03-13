@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "driver/tcpm/tcpci.h"
+#include "ec_commands.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "usb_pd.h"
@@ -957,8 +958,14 @@ void tcpci_partner_common_swap_data_role(struct tcpci_partner_data *data)
 static enum tcpci_partner_handler_res
 tcpci_partner_common_dr_swap_handler(struct tcpci_partner_data *data)
 {
-	tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
-	tcpci_partner_common_swap_data_role(data);
+	enum pd_ctrl_msg_type response = PD_CTRL_REJECT;
+
+	if ((data->data_role == PD_ROLE_DFP && data->drs_to_ufp_supported) ||
+	    (data->data_role == PD_ROLE_UFP && data->drs_to_dfp_supported))
+		response = PD_CTRL_ACCEPT;
+	tcpci_partner_send_control_msg(data, response, 0);
+	if (response == PD_CTRL_ACCEPT)
+		tcpci_partner_common_swap_data_role(data);
 
 	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 }
@@ -1642,6 +1649,8 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->send_goodcrc = true;
 
 	data->rev = rev;
+	data->drs_to_dfp_supported = true;
+	data->drs_to_ufp_supported = true;
 	data->vconn_supported = true;
 
 	data->ops.transmit = tcpci_partner_transmit_op;
@@ -1657,6 +1666,14 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	tcpci_partner_reset_battery_capability_state(data);
 
 	data->cable = NULL;
+}
+
+void tcpci_partner_set_drs_support(struct tcpci_partner_data *data,
+				   bool drs_to_ufp_supported,
+				   bool drs_to_dfp_supported)
+{
+	data->drs_to_ufp_supported = drs_to_ufp_supported;
+	data->drs_to_dfp_supported = drs_to_dfp_supported;
 }
 
 void tcpci_partner_set_vconn_support(struct tcpci_partner_data *data,

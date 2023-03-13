@@ -76,6 +76,14 @@ struct tcpci_partner_data {
 	enum pd_power_role power_role;
 	/** Data role (used in message header) */
 	enum pd_data_role data_role;
+	/** Whether this partner will Accept a Data Role Swap that would switch
+	 * the partner from DFP to UFP.
+	 */
+	bool drs_to_ufp_supported;
+	/** Whether this partner will Accept a Data Role Swap that would switch
+	 * the partner from UFP to DFP.
+	 */
+	bool drs_to_dfp_supported;
 	/** VCONN role */
 	enum pd_vconn_role vconn_role;
 	/** Revision (used in message header) */
@@ -355,6 +363,18 @@ struct tcpci_partner_extension_ops {
  */
 void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev);
 
+/**
+ * @brief Set the partner emulator to support or not support swapping data roles
+ * to UFP and DFP. If the partner supports a swap, it should respond to DR_Swap
+ * with Accept with that role as the new data role.
+ *
+ * @param data Pointer to USB-C partner emulator
+ * @param drs_to_ufp_supported Whether the partner supports swapping to UFP
+ * @param drs_to_dfp_supported Whether the partner supports swapping to DFP
+ */
+void tcpci_partner_set_drs_support(struct tcpci_partner_data *data,
+				   bool drs_to_ufp_supported,
+				   bool drs_to_dfp_supported);
 /**
  * @brief Set the partner emulator to support or not support sourcing VCONN. If
  * the partner supports VCONN, it should respond to VCONN Swap with Accept,
