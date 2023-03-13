@@ -355,3 +355,9 @@ static void board_power_off(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_power_off, HOOK_PRIO_DEFAULT+1);
 DECLARE_HOOK(HOOK_AC_CHANGE, board_power_off, HOOK_PRIO_DEFAULT);
+
+void chipset_throttle_cpu(int throttle)
+{
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
+}
