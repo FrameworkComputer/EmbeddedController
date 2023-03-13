@@ -49,7 +49,8 @@ static int in_progress;
 #define VBOOT_HASH_BLOCKING false
 
 static
-#ifdef CONFIG_SOC_IT8XXX2_SHA256_HW_ACCELERATE
+#if (defined(CONFIG_SOC_IT8XXX2_SHA256_HW_ACCELERATE) && \
+     !defined(CONFIG_PLATFORM_EC_SHA256_HW_ZEPHYR))
 	__attribute__((section(".__sha256_ram_block")))
 #endif
 	struct sha256_ctx ctx;
