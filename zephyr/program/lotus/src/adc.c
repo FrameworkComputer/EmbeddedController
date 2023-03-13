@@ -20,46 +20,45 @@
  * +------------------+-----------+--------------+---------+----------------------+
  * |  BOARD VERSION   |  voltage  |  main board  |   GPU   |     Input module     |
  * +------------------+-----------+--------------+---------+----------------------+
- * | BOARD_VERSION_0  |  100  mv  |    Unused    |         |       Reserved       |
- * | BOARD_VERSION_1  |  310  mv  |    Unused    |         |       Reserved       |
- * | BOARD_VERSION_2  |  520  mv  |    Unused    |         |       Reserved       |
- * | BOARD_VERSION_3  |  720  mv  |    Unused    |         |       Reserved       |
- * | BOARD_VERSION_4  |  930  mv  |    EVT1      |         |       Reserved       |
- * | BOARD_VERSION_5  |  1130 mv  |    Unused    |         |       Reserved       |
- * | BOARD_VERSION_6  |  1340 mv  |    Unused    |         |       Reserved       |
- * | BOARD_VERSION_7  |  1550 mv  |    DVT1      |         |       Reserved       |
- * | BOARD_VERSION_8  |  1750 mv  |    DVT2      |         |    Generic A size    |
- * | BOARD_VERSION_9  |  1960 mv  |    PVT       |         |    Generic B size    |
- * | BOARD_VERSION_10 |  2170 mv  |    MP        |         |    Generic C size    |
- * | BOARD_VERSION_11 |  2370 mv  |    Unused    | RID_0   |    10 Key B size     |
- * | BOARD_VERSION_12 |  2580 mv  |    Unused    | RID_0,1 |       Keyboard       |
- * | BOARD_VERSION_13 |  2780 mv  |    Unused    | RID_0   |       Touchpad       |
- * | BOARD_VERSION_14 |  2990 mv  |    Unused    |         |       Reserved       |
- * | BOARD_VERSION_15 |  3300 mv  |    Unused    |         |    Not installed     |
+ * | BOARD_VERSION_0  |  0    mv  |    Unused    |         |       Reserved       |
+ * | BOARD_VERSION_1  |  173  mv  |    Unused    |         |       Reserved       |
+ * | BOARD_VERSION_2  |  300  mv  |    Unused    |         |       Reserved       |
+ * | BOARD_VERSION_3  |  430  mv  |    Unused    |         |       Reserved       |
+ * | BOARD_VERSION_4  |  588  mv  |    EVT1      |         |       Reserved       |
+ * | BOARD_VERSION_5  |  783  mv  |    Unused    |         |       Reserved       |
+ * | BOARD_VERSION_6  |  905  mv  |    Unused    |         |       Reserved       |
+ * | BOARD_VERSION_7  |  1033 mv  |    DVT1      |         |       Reserved       |
+ * | BOARD_VERSION_8  |  1320 mv  |    DVT2      |         |    Generic A size    |
+ * | BOARD_VERSION_9  |  1500 mv  |    PVT       |         |    Generic B size    |
+ * | BOARD_VERSION_10 |  1650 mv  |    MP        |         |    Generic C size    |
+ * | BOARD_VERSION_11 |  1980 mv  |    Unused    | RID_0   |    10 Key B size     |
+ * | BOARD_VERSION_12 |  2135 mv  |    Unused    | RID_0,1 |       Keyboard       |
+ * | BOARD_VERSION_13 |  2500 mv  |    Unused    | RID_0   |       Touchpad       |
+ * | BOARD_VERSION_14 |  2706 mv  |    Unused    |         |       Reserved       |
+ * | BOARD_VERSION_15 |  2813 mv  |    Unused    |         |    Not installed     |
  * +------------------+-----------+--------------+---------+----------------------+
  */
 
 struct {
 	enum board_version_t version;
-	int min_thresh_mv;
-	int max_thresh_mv;
+	int thresh_mv;
 } const board_versions[] = {
-	{ BOARD_VERSION_0, 0, 110 },
-	{ BOARD_VERSION_1, 113, 234 },
-	{ BOARD_VERSION_2, 239, 360 },
-	{ BOARD_VERSION_3, 369, 491 },
-	{ BOARD_VERSION_4, 527, 648},
-	{ BOARD_VERSION_5, 722, 843 },
-	{ BOARD_VERSION_6, 844, 965 },
-	{ BOARD_VERSION_7, 972, 1093 },
-	{ BOARD_VERSION_8, 1259, 1380 },
-	{ BOARD_VERSION_9, 1439, 1560 },
-	{ BOARD_VERSION_10, 1580, 1710 },
-	{ BOARD_VERSION_11, 1900, 2040 },
-	{ BOARD_VERSION_12, 2060, 2195 },
-	{ BOARD_VERSION_13, 2250, 2600 },
-	{ BOARD_VERSION_14, 2645, 2766 },
-	{ BOARD_VERSION_15, 2770, 3300 },
+	{ BOARD_VERSION_0, 85  },
+	{ BOARD_VERSION_1, 233 },
+	{ BOARD_VERSION_2, 360 },
+	{ BOARD_VERSION_3, 492 },
+	{ BOARD_VERSION_4, 649 },
+	{ BOARD_VERSION_5, 844 },
+	{ BOARD_VERSION_6, 965 },
+	{ BOARD_VERSION_7, 1094 },
+	{ BOARD_VERSION_8, 1380 },
+	{ BOARD_VERSION_9, 1562 },
+	{ BOARD_VERSION_10, 1710 },
+	{ BOARD_VERSION_11, 2040 },
+	{ BOARD_VERSION_12, 2197 },
+	{ BOARD_VERSION_13, 2557 },
+	{ BOARD_VERSION_14, 2766 },
+	{ BOARD_VERSION_15, 2814 },
 };
 BUILD_ASSERT(ARRAY_SIZE(board_versions) == BOARD_VERSION_COUNT);
 
@@ -77,7 +76,7 @@ enum board_version_t get_hardware_id(enum adc_channel channel)
 	}
 
 	for (i = 0; i < BOARD_VERSION_COUNT; i++)
-		if (mv >= board_versions[i].min_thresh_mv && mv <= board_versions[i].max_thresh_mv) {
+		if (mv < board_versions[i].thresh_mv) {
 			version = board_versions[i].version;
 			return version;
 		}
