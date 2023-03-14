@@ -32,6 +32,7 @@ config CROS_EC_KEYSCAN
 
 choice PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 	prompt "Select the keyboard protocol to use"
+	depends on AP
 	help
 	  Select the keyboard protocol used to communicate key presses to the
 	  AP. PLATFORM_EC_KEYBOARD_PROTOCOL_8042 is supported by x86-compatible
