@@ -232,7 +232,8 @@ enum sensor_id {
 	 (1 << CONFIG_LID_ANGLE_SENSOR_LID))
 #endif
 
-#if defined(TEST_TABLET_BROKEN_SENSOR) || defined(TEST_TABLET_NO_SENSOR)
+#if defined(TEST_TABLET_BROKEN_SENSOR) || defined(TEST_TABLET_NO_SENSOR) || \
+	defined(TEST_MOTION_LID)
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
 #endif

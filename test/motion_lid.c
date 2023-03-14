@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -135,15 +136,45 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 /* Test utilities */
 static void wait_for_valid_sample(void)
 {
-	uint8_t sample;
 	uint8_t *lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
+	uint8_t sample;
+	int i;
 
-	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
-	usleep(TEST_LID_EC_RATE);
-	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
-		usleep(TEST_LID_SLEEP_RATE);
+	for (i = 0; i < 2 * TABLET_MODE_DEBOUNCE_COUNT; i++) {
+		sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
+		usleep(TEST_LID_EC_RATE);
+		while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) ==
+		       sample)
+			usleep(TEST_LID_SLEEP_RATE);
+	}
 }
 
+static int tablet_hook_count;
+
+static void tablet_mode_change_hook(void)
+{
+	tablet_hook_count++;
+}
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, tablet_mode_change_hook,
+	     HOOK_PRIO_DEFAULT);
+
+void before_test(void)
+{
+	/* Make sure the device lid is in a consistent state (close). */
+	gpio_set_level(GPIO_TABLET_MODE_L, 1);
+	msleep(50);
+	gpio_set_level(GPIO_LID_OPEN, 0);
+	msleep(50);
+	tablet_hook_count = 1;
+}
+
+/*
+ * The device lid is closed from before_test,
+ * Initialize the EC, set the sensors to match the lid angle (0 degree)
+ * and go through several lid angles.
+ * When lid angle are close to 0 or 360, activate the GMRs GPIO or not
+ * and observe their on lid angle data quality and the tablet mode state.
+ */
 static int test_lid_angle(void)
 {
 	struct motion_sensor_t *base =
@@ -172,6 +203,10 @@ static int test_lid_angle(void)
 	TEST_ASSERT(lid->collection_rate != 0);
 	TEST_ASSERT(wait_us > 0);
 
+	/* Check we are in clamshell mode initially. */
+	TEST_ASSERT(tablet_hook_count == 1);
+	TEST_ASSERT(!tablet_get_mode());
+
 	/*
 	 * Set the base accelerometer as if it were sitting flat on a desk
 	 * and set the lid to closed.
@@ -182,7 +217,10 @@ static int test_lid_angle(void)
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 0;
 	lid->xyz[Z] = -ONE_G_MEASURED;
-	gpio_set_level(GPIO_LID_OPEN, 0);
+
+	/* Check we are still in clamshell mode, no event */
+	TEST_ASSERT(tablet_hook_count == 1);
+	TEST_ASSERT(!tablet_get_mode());
 
 	wait_for_valid_sample();
 	lid_angle = motion_lid_get_angle();
@@ -200,6 +238,8 @@ static int test_lid_angle(void)
 	wait_for_valid_sample();
 
 	TEST_ASSERT(motion_lid_get_angle() == 90);
+	TEST_ASSERT(tablet_hook_count == 1);
+	TEST_ASSERT(!tablet_get_mode());
 
 	/* Set lid open to 225. */
 	lid->xyz[X] = 0;
@@ -208,6 +248,10 @@ static int test_lid_angle(void)
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 225);
 
+	/* We are now in tablet mode */
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
+
 	/* Set lid open to 350 */
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = -1 * ONE_G_MEASURED * 0.1736;
@@ -215,15 +259,28 @@ static int test_lid_angle(void)
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 350);
 
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
+
+	/* Assert tablet GMT sensor, no change. */
+	gpio_set_level(GPIO_TABLET_MODE_L, 0);
+	msleep(50);
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
+
 	/*
 	 * Set lid open to 10.  Since the lid switch still indicates that it's
 	 * open, we should be getting an unreliable reading.
+	 * We are still in tablet mode.
 	 */
+	gpio_set_level(GPIO_TABLET_MODE_L, 1);
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = ONE_G_MEASURED * 0.1736;
 	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
 
 	/* Rotate back to 180 and then 10 */
 	lid->xyz[X] = 0;
@@ -231,6 +288,8 @@ static int test_lid_angle(void)
 	lid->xyz[Z] = ONE_G_MEASURED;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 180);
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
 
 	/*
 	 * Again, since the lid isn't closed, the angle should be unreliable.
@@ -241,6 +300,8 @@ static int test_lid_angle(void)
 	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
 
 	/*
 	 * Align base with hinge and make sure it returns unreliable for angle.
@@ -251,6 +312,8 @@ static int test_lid_angle(void)
 	base->xyz[Z] = 0;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
 
 	/*
 	 * Use all three axes and set lid to negative base and make sure
@@ -264,6 +327,9 @@ static int test_lid_angle(void)
 	lid->xyz[Z] = 13712;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 180);
+	/* Still in tablet mode */
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
 
 	/*
 	 * Close the lid and set the angle to 0.
@@ -278,6 +344,8 @@ static int test_lid_angle(void)
 	msleep(100);
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 0);
+	TEST_ASSERT(tablet_hook_count == 3);
+	TEST_ASSERT(!tablet_get_mode());
 
 	/*
 	 * Make the angle large, but since the lid is closed, the angle should
@@ -288,12 +356,20 @@ static int test_lid_angle(void)
 	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
+	TEST_ASSERT(tablet_hook_count == 3);
+	TEST_ASSERT(!tablet_get_mode());
+
+	/* Open the lid, the large angle is now valid */
+	gpio_set_level(GPIO_LID_OPEN, 1);
+	msleep(100);
+	TEST_ASSERT(motion_lid_get_angle() == 350);
+	TEST_ASSERT(tablet_hook_count == 4);
+	TEST_ASSERT(tablet_get_mode());
 
 	/*
-	 * Open the lid to 350, and then close the lid and set the angle
+	 * Close the lid and set the angle
 	 * to 10. The reading of small angle shouldn't be corrected.
 	 */
-	gpio_set_level(GPIO_LID_OPEN, 1);
 	msleep(100);
 	gpio_set_level(GPIO_LID_OPEN, 0);
 	msleep(100);
@@ -302,7 +378,10 @@ static int test_lid_angle(void)
 	lid->xyz[Z] = -1 * ONE_G_MEASURED * 0.9848;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 10);
+	TEST_ASSERT(tablet_hook_count == 5);
+	TEST_ASSERT(!tablet_get_mode());
 
+	/* Shutdown in place, same mode. */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S5);
@@ -311,6 +390,8 @@ static int test_lid_angle(void)
 	/* Lid is powered off, collection rate is 0. */
 	TEST_ASSERT(lid->collection_rate == 0);
 	TEST_ASSERT(wait_us == -1);
+	TEST_ASSERT(tablet_hook_count == 5);
+	TEST_ASSERT(!tablet_get_mode());
 
 	return EC_SUCCESS;
 }
