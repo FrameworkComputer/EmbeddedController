@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Validate all C source is formatted with clang-format.
+"""Validate all C/C++ source is formatted with clang-format.
 
 This isn't very useful to users to call directly, but it is run it the
 CQ.  Most users will likely find out they forgot to clang-format by
@@ -21,7 +21,7 @@ from chromite.lib import commandline
 
 
 def main(argv=None):
-    """Find all C files and runs clang-format on them."""
+    """Find all C/C++ files and runs clang-format on them."""
     parser = commandline.ArgumentParser()
     parser.add_argument(
         "--fix",
@@ -59,7 +59,11 @@ def main(argv=None):
             continue
         if "third_party" in path.parts:
             continue
-        if path.name.endswith(".c") or path.name.endswith(".h"):
+        if (
+            path.name.endswith(".c")
+            or path.name.endswith(".cc")
+            or path.name.endswith(".h")
+        ):
             cmd.append(path)
 
     logging.debug("Running %s", " ".join(shlex.quote(str(x)) for x in cmd))
@@ -72,7 +76,7 @@ def main(argv=None):
         stdin=subprocess.DEVNULL,
     )
     if result.stderr:
-        logging.error("All C source must be formatted with clang-format!")
+        logging.error("All C/C++ source must be formatted with clang-format!")
         for line in result.stderr.splitlines():
             logging.error("%s", line)
         return 1
