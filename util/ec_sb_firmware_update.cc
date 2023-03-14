@@ -3,20 +3,21 @@
  * found in the LICENSE file.
  */
 
+#include "comm-host.h"
+#include "compile_time_macros.h"
+#include "ec_commands.h"
+#include "ec_sb_firmware_update.h"
+#include "lock/gec_lock.h"
+#include "misc_util.h"
+#include "powerd_lock.h"
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include "comm-host.h"
-#include "compile_time_macros.h"
-#include "ec_sb_firmware_update.h"
-#include "ec_commands.h"
-#include "lock/gec_lock.h"
-#include "misc_util.h"
-#include "powerd_lock.h"
+#include <unistd.h>
 
 /* Subcommands: [check|update] */
 enum {

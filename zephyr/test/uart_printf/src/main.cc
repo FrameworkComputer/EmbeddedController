@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <cstring>
-#include <string>
-
-#include <zephyr/ztest.h>
-
 #include "common.h"
 #include "printf.h"
 #include "uart.h"
+
+#include <zephyr/ztest.h>
+
+#include <cstring>
+#include <string>
 
 ZTEST_SUITE(uart_printf, nullptr, nullptr, nullptr, nullptr, nullptr);
 

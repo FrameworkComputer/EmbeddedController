@@ -10,18 +10,19 @@
 #define _GNU_SOURCE /* for asprintf */
 #endif
 
+#include "cmd.h"
+#include "com_port.h"
+#include "main.h"
+#include "misc_util.h"
+#include "opr.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
-#include "com_port.h"
-#include "cmd.h"
-#include "main.h"
-#include "misc_util.h"
-#include "opr.h"
+#include <unistd.h>
 
 /*----------------------------------------------------------------------------
  * Global Variables

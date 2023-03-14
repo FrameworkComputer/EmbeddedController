@@ -7,8 +7,8 @@
  */
 
 #include "benchmark.h"
-
 #include "console.h"
+
 #include <array>
 #include <cstdint>
 #include <cstdlib>

@@ -4,18 +4,19 @@
  * found in the LICENSE file.
  */
 
+#include "compile_time_macros.h"
+#include "ec_commands.h"
+#include "lb_common.h"
+#include "lightbar.h"
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include "compile_time_macros.h"
-#include "ec_commands.h"
-#include "lb_common.h"
-#include "lightbar.h"
+#include <unistd.h>
 
 static const char usage[] =
 	"\n"

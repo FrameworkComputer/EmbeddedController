@@ -4,20 +4,21 @@
  * found in the LICENSE file.
  */
 
-#include <errno.h>
-#include <getopt.h>
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-
 #include "com_port.h"
 #include "compile_time_macros.h"
 #include "main.h"
 #include "misc_util.h"
 #include "opr.h"
+
+#include <errno.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <getopt.h>
+#include <sys/stat.h>
 
 /*----------------------------------------------------------------------------
  * Constant definitions

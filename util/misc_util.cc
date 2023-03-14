@@ -3,15 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "comm-host.h"
+#include "misc_util.h"
+
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/utsname.h>
 
-#include "comm-host.h"
-#include "misc_util.h"
+#include <sys/utsname.h>
 
 int write_file(const char *filename, const char *buf, int size)
 {

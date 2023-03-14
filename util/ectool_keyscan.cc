@@ -3,18 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <fcntl.h>
+#include "comm-host.h"
+#include "ectool.h"
+#include "keyboard_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <endian.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <endian.h>
-
-#include "comm-host.h"
-#include "keyboard_config.h"
-#include "ectool.h"
 
 enum {
 	/* Alloc this many more scans when needed */

@@ -3,19 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <assert.h>
-#include <endian.h>
-#include <errno.h>
-#include <libusb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "comm-host.h"
 #include "comm-usb.h"
 #include "ec_commands.h"
 #include "misc_util.h"
 #include "usb_descriptor.h"
+
+#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <endian.h>
+#include <libusb.h>
 
 #define USB_ERROR(m, r) print_libusb_error(__FILE__, __LINE__, m, r)
 

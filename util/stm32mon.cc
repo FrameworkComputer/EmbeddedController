@@ -19,25 +19,26 @@
 #define _DEFAULT_SOURCE /* Newer glibc */
 #define _BSD_SOURCE /* Older glibc */
 
-#include <arpa/inet.h>
-#include <compile_time_macros.h>
+#include "ec_version.h"
+
 #include <errno.h>
-#include <fcntl.h>
-#include <getopt.h>
 #include <inttypes.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
+#include <time.h>
+
+#include <arpa/inet.h>
+#include <compile_time_macros.h>
+#include <fcntl.h>
+#include <getopt.h>
 #include <linux/i2c-dev.h>
 #include <linux/spi/spidev.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <termios.h>
-#include <time.h>
 #include <unistd.h>
-
-#include "ec_version.h"
 
 #define KBYTES_TO_BYTES 1024
 

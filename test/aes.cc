@@ -19,8 +19,8 @@
 #include "test_util.h"
 
 extern "C" {
-#include "aes.h"
 #include "aes-gcm.h"
+#include "aes.h"
 #include "builtin/assert.h"
 #include "console.h"
 #include "timer.h"
