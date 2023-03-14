@@ -17,6 +17,7 @@
 #include "motion_sense.h"
 #include "power_button.h"
 #include "spi.h"
+#include "tablet_mode.h"
 #include "temp_sensor.h"
 #include "test_util.h"
 #include "timer.h"
@@ -61,6 +62,10 @@ test_mockable void button_interrupt(enum gpio_signal signal)
 }
 
 test_mockable void fps_event(enum gpio_signal signal)
+{
+}
+
+test_mockable void gmr_tablet_switch_isr(enum gpio_signal signal)
 {
 }
 

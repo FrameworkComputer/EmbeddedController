@@ -9,6 +9,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_angle.h"
+#include "lid_switch.h"
 #include "stdbool.h"
 #include "tablet_mode.h"
 #include "timer.h"
@@ -36,14 +37,22 @@ static bool tablet_mode_forced;
  */
 static uint32_t tablet_mode_store;
 
-/* True if GMR sensor is reporting 360 degrees. */
-static bool gmr_sensor_at_360;
+/* True if the tablet GMR sensor is reporting 360 degrees. */
+STATIC_IF(CONFIG_GMR_TABLET_MODE) bool gmr_sensor_at_360;
+
+/* True if the lid GMR sensor is reporting 0 degrees. */
+STATIC_IF(CONFIG_GMR_TABLET_MODE) bool gmr_sensor_at_0;
 
 /*
  * True: all calls to tablet_set_mode are ignored and tablet_mode if forced to 0
  * False: all calls to tablet_set_mode are honored
  */
 static bool disabled;
+
+static const char *const tablet_mode_names[] = {
+	"clamshell",
+	"tablet",
+};
 
 int tablet_get_mode(void)
 {
@@ -52,7 +61,7 @@ int tablet_get_mode(void)
 
 static inline void print_tablet_mode(void)
 {
-	CPRINTS("tablet mode %sabled", tablet_mode ? "en" : "dis");
+	CPRINTS("%s mode", tablet_mode_names[tablet_mode]);
 }
 
 static void notify_tablet_mode_change(void)
@@ -85,15 +94,18 @@ void tablet_set_mode(int mode, uint32_t trigger)
 		return;
 	}
 
-	if (gmr_sensor_at_360 && !mode) {
+	if (IS_ENABLED(CONFIG_GMR_TABLET_MODE) &&
+	    ((gmr_sensor_at_360 && !mode) || (gmr_sensor_at_0 && mode))) {
 		/*
 		 * If tablet mode is being forced by the user, then this logging
 		 * would be misleading since the mode wouldn't change anyway, so
 		 * skip it.
 		 */
 		if (!tablet_mode_forced)
-			CPRINTS("Ignoring tablet mode exit while gmr sensor "
-				"reports 360-degree tablet mode.");
+			CPRINTS("Ignoring %s mode entry while gmr sensors "
+				"reports lid %s",
+				tablet_mode_names[mode],
+				(gmr_sensor_at_360 ? "flipped" : "closed"));
 		return;
 	}
 
@@ -151,6 +163,14 @@ static void gmr_tablet_switch_interrupt_debounce(void)
 			gmr_sensor_at_360 ? DPTF_PROFILE_FLIPPED_360_MODE :
 					    DPTF_PROFILE_CLAMSHELL);
 	}
+
+	/*
+	 * When tablet mode is only decided by the GMR sensor (or
+	 * or substitute, send the tablet_mode change request.
+	 */
+	if (!IS_ENABLED(CONFIG_LID_ANGLE))
+		tablet_set_mode(gmr_sensor_at_360, TABLET_TRIGGER_LID);
+
 	/*
 	 * 1. Peripherals are disabled only when lid reaches 360 position (It's
 	 * probably already disabled by motion_sense task). We deliberately do
@@ -162,24 +182,68 @@ static void gmr_tablet_switch_interrupt_debounce(void)
 	 * deliberately do not clear tablet mode when lid is leaving 360
 	 * position(if motion lid driver is used). Instead, we let motion lid
 	 * driver to clear it when lid goes into laptop zone.
+	 * 3. However, there is a potential race condition with
+	 * tablet_mode_lid_event() which can be triggered before this debounce
+	 * function is called, with |gmr_sensor_at_360| still true.
+	 * When we notice the lid is closed when the this function is called and
+	 * |gmr_sensor_at_360| false, send a transition to go in clamshell mode.
+	 * It would mean the user was able to transition in less than ~10ms...
 	 */
-
-	if (!IS_ENABLED(CONFIG_LID_ANGLE) || gmr_sensor_at_360)
-		tablet_set_mode(gmr_sensor_at_360, TABLET_TRIGGER_LID);
+	if (IS_ENABLED(CONFIG_LID_ANGLE)) {
+		if (gmr_sensor_at_360)
+			tablet_set_mode(1, TABLET_TRIGGER_LID);
+		else if (gmr_sensor_at_0)
+			tablet_set_mode(0, TABLET_TRIGGER_LID);
+	}
 
 	if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE) && gmr_sensor_at_360)
 		lid_angle_peripheral_enable(0);
 }
 DECLARE_DEFERRED(gmr_tablet_switch_interrupt_debounce);
 
-/* Debounce time for gmr sensor tablet mode interrupt */
-#define GMR_SENSOR_DEBOUNCE_US (30 * MSEC)
+/*
+ * Debounce time for gmr sensor tablet mode interrupt
+ * There could be a race between the GMR sensor for the tablet and
+ * the GMR sensor for the lid changes state at the same time.
+ * We let the lid sensor GMR debouce first. We would be able to go in tablet
+ * mode when LID_OPEN goes from low to high and TABLET_MODE_L goes from high
+ * to low.
+ * However, in the opposite case, the debouce lid angle interrupt will request
+ * the tablet_mode to be clamshell, but |gmr_sensor_at_360| will still be true,
+ * the request will be ignored.
+ */
+#define GMR_SENSOR_DEBOUNCE_US (LID_DEBOUNCE_US + 10 * MSEC)
 
 void gmr_tablet_switch_isr(enum gpio_signal signal)
 {
 	hook_call_deferred(&gmr_tablet_switch_interrupt_debounce_data,
 			   GMR_SENSOR_DEBOUNCE_US);
 }
+
+/*
+ * tablet gmr sensor() calls tablet_set_mode() to go in tablet mode
+ * when we know for sure the tablet is in tablet mode,
+ *
+ * It would call tablet_set_mode() to get out only when there are not
+ * accelerometer, as we want to get out at ~180 degree.
+ * But if for some reason the accelerometers are not working, we won't get
+ * out of tablet mode. Therefore, we need a similar function to go in
+ * clamshell mode when the lid is closed.
+ */
+static __maybe_unused void tablet_mode_lid_event(void)
+{
+	if (!lid_is_open()) {
+		gmr_sensor_at_0 = true;
+		tablet_set_mode(0, TABLET_TRIGGER_LID);
+		if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE))
+			lid_angle_peripheral_enable(1);
+	} else {
+		gmr_sensor_at_0 = false;
+	}
+}
+#if defined(CONFIG_LID_ANGLE) && defined(CONFIG_LID_SWITCH)
+DECLARE_HOOK(HOOK_LID_CHANGE, tablet_mode_lid_event, HOOK_PRIO_DEFAULT);
+#endif
 
 static void gmr_tablet_switch_init(void)
 {
@@ -193,8 +257,10 @@ static void gmr_tablet_switch_init(void)
 	 * so that the cached state reflects reality.
 	 */
 	gmr_tablet_switch_interrupt_debounce();
+	if (IS_ENABLED(CONFIG_LID_ANGLE) && IS_ENABLED(CONFIG_LID_SWITCH))
+		tablet_mode_lid_event();
 }
-DECLARE_HOOK(HOOK_INIT, gmr_tablet_switch_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, gmr_tablet_switch_init, HOOK_PRIO_POST_LID);
 
 void gmr_tablet_switch_disable(void)
 {
@@ -203,7 +269,7 @@ void gmr_tablet_switch_disable(void)
 	hook_call_deferred(&gmr_tablet_switch_interrupt_debounce_data, -1);
 	tablet_disable();
 }
-#endif
+#endif /* CONFIG_GMR_TABLET_MODE */
 
 static enum ec_status tablet_mode_command(struct host_cmd_handler_args *args)
 {
