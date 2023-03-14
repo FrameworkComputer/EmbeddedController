@@ -16,17 +16,20 @@ const struct i2c_port_t i2c_ports[] = {
 	  .port = 0,
 	  .kbps = 100,
 	  .scl = GPIO_CN7_2,
-	  .sda = GPIO_CN7_4 },
+	  .sda = GPIO_CN7_4,
+	  .flags = I2C_PORT_FLAG_DYNAMIC_SPEED },
 	{ .name = "I2C2",
 	  .port = 1,
 	  .kbps = 100,
 	  .scl = GPIO_CN9_19,
-	  .sda = GPIO_CN9_21 },
+	  .sda = GPIO_CN9_21,
+	  .flags = I2C_PORT_FLAG_DYNAMIC_SPEED },
 	{ .name = "I2C3",
 	  .port = 2,
 	  .kbps = 100,
 	  .scl = GPIO_CN9_11,
-	  .sda = GPIO_CN9_9 },
+	  .sda = GPIO_CN9_9,
+	  .flags = I2C_PORT_FLAG_DYNAMIC_SPEED },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -59,7 +62,7 @@ static int find_i2c_by_name(const char *name)
 
 static void print_i2c_info(int index)
 {
-	uint32_t bits_per_second = 100000;
+	uint32_t bits_per_second = 1000 * i2c_freq_to_khz(i2c_get_freq(index));
 
 	ccprintf("  %d %s %d bps\n", index, i2c_ports[index].name,
 		 bits_per_second);
@@ -95,13 +98,52 @@ static int command_i2c_info(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
+static int command_i2c_set_speed(int argc, const char **argv)
+{
+	int index;
+	uint32_t desired_speed;
+	char *e;
+	if (argc < 5)
+		return EC_ERROR_PARAM_COUNT;
+
+	index = find_i2c_by_name(argv[3]);
+	if (index < 0)
+		return EC_ERROR_PARAM3;
+
+	desired_speed = strtoi(argv[4], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM4;
+
+	if (desired_speed >= 1000000) {
+		i2c_set_freq(index, I2C_FREQ_1000KHZ);
+	} else if (desired_speed >= 400000) {
+		i2c_set_freq(index, I2C_FREQ_400KHZ);
+	} else {
+		i2c_set_freq(index, I2C_FREQ_100KHZ);
+	}
+	return EC_SUCCESS;
+}
+
+static int command_i2c_set(int argc, const char **argv)
+{
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
+	if (!strcasecmp(argv[2], "speed"))
+		return command_i2c_set_speed(argc, argv);
+	return EC_ERROR_PARAM2;
+}
+
 static int command_i2c(int argc, const char **argv)
 {
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 	if (!strcasecmp(argv[1], "info"))
 		return command_i2c_info(argc, argv);
+	if (!strcasecmp(argv[1], "set"))
+		return command_i2c_set(argc, argv);
 	return EC_ERROR_PARAM1;
 }
-DECLARE_CONSOLE_COMMAND_FLAGS(i2c, command_i2c, "info [PORT]",
+DECLARE_CONSOLE_COMMAND_FLAGS(i2c, command_i2c,
+			      "info [PORT]"
+			      "\nset speed PORT BPS",
 			      "I2C bus manipulation", CMD_FLAG_RESTRICTED);
