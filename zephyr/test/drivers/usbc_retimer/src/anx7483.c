@@ -33,6 +33,11 @@ static int anx7483_emul_test_get_reg(int reg, uint8_t *val)
 	return anx7483_emul_get_reg(ANX7483_EMUL, reg, val);
 }
 
+static int anx7483_emul_test_set_mask(int reg, uint8_t val, uint8_t def)
+{
+	return anx7483_emul_set_reg_reserved_mask(ANX7483_EMUL, reg, val, def);
+}
+
 static int anx7483_emul_test_set_reg(int reg, uint8_t val)
 {
 	return anx7483_emul_set_reg(ANX7483_EMUL, reg, val);
@@ -758,6 +763,175 @@ ZTEST(anx7483, test_emul_reserved)
 		ANX7483_DRX2_PORT_CFG4_REG,
 		ANX7483_DRX2_PORT_CFG4_REG_RESERVED_MASK);
 	zexpect_not_equal(rv, 0);
+}
+
+/*
+ * Verify that we can make changes to the reserved masks to allow board-specific
+ * tunings to be tested.
+ */
+ZTEST(anx7483, test_emul_update_reserved)
+{
+	int rv;
+	uint8_t antimask;
+
+	antimask = (uint8_t)(~ANX7483_LFPS_TIMER_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_LFPS_TIMER_REG, antimask, 0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_LFPS_TIMER_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_ANALOG_STATUS_CTRL_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_ANALOG_STATUS_CTRL_REG,
+					antimask, 0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_ANALOG_STATUS_CTRL_REG,
+				       ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_ENABLE_EQ_FLAT_SWING_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_ENABLE_EQ_FLAT_SWING_REG,
+					antimask, 0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_ENABLE_EQ_FLAT_SWING_REG,
+				       ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_AUX_SNOOPING_CTRL_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_AUX_SNOOPING_CTRL_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_AUX_SNOOPING_CTRL_REG,
+				       ~antimask);
+	zexpect_ok(rv);
+
+	/* CFG0 */
+	antimask = (uint8_t)(~ANX7483_UTX1_PORT_CFG0_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_UTX1_PORT_CFG0_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_UTX1_PORT_CFG0_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_UTX2_PORT_CFG0_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_UTX2_PORT_CFG0_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_UTX2_PORT_CFG0_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_URX1_PORT_CFG0_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_URX1_PORT_CFG0_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_URX1_PORT_CFG0_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_URX2_PORT_CFG0_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_URX2_PORT_CFG0_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_URX2_PORT_CFG0_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_DRX1_PORT_CFG0_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_DRX1_PORT_CFG0_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_DRX1_PORT_CFG0_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_DRX2_PORT_CFG0_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_DRX2_PORT_CFG0_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_DRX2_PORT_CFG0_REG, ~antimask);
+	zexpect_ok(rv);
+
+	/* CFG2 */
+	antimask = (uint8_t)(~ANX7483_UTX1_PORT_CFG2_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_UTX1_PORT_CFG2_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_UTX1_PORT_CFG2_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_UTX2_PORT_CFG2_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_UTX2_PORT_CFG2_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_UTX2_PORT_CFG2_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_URX1_PORT_CFG2_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_URX1_PORT_CFG2_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_URX1_PORT_CFG2_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_URX2_PORT_CFG2_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_URX2_PORT_CFG2_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_URX2_PORT_CFG2_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_DRX1_PORT_CFG2_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_DRX1_PORT_CFG2_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_DRX1_PORT_CFG2_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_DRX2_PORT_CFG2_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_DRX2_PORT_CFG2_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_DRX2_PORT_CFG2_REG, ~antimask);
+	zexpect_ok(rv);
+
+	/* CFG4 */
+	antimask = (uint8_t)(~ANX7483_UTX1_PORT_CFG4_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_UTX1_PORT_CFG4_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_UTX1_PORT_CFG4_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_UTX2_PORT_CFG4_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_UTX2_PORT_CFG4_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_UTX2_PORT_CFG4_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_URX1_PORT_CFG4_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_URX1_PORT_CFG4_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_URX1_PORT_CFG4_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_URX2_PORT_CFG4_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_URX2_PORT_CFG4_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_URX2_PORT_CFG4_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_DRX1_PORT_CFG4_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_DRX1_PORT_CFG4_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_DRX1_PORT_CFG4_REG, ~antimask);
+	zexpect_ok(rv);
+
+	antimask = (uint8_t)(~ANX7483_DRX2_PORT_CFG4_REG_RESERVED_MASK);
+	rv = anx7483_emul_test_set_mask(ANX7483_DRX2_PORT_CFG4_REG, antimask,
+					0);
+	zexpect_ok(rv);
+	rv = anx7483_emul_test_set_reg(ANX7483_DRX2_PORT_CFG4_REG, ~antimask);
+	zexpect_ok(rv);
 }
 
 /*

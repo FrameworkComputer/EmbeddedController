@@ -14,13 +14,7 @@ LOG_MODULE_REGISTER(anx7483_emul, CONFIG_RETIMER_EMUL_LOG_LEVEL);
 
 #define DT_DRV_COMPAT cros_anx7483_emul
 
-struct register_config {
-	uint8_t reg;
-	uint8_t def;
-	uint8_t reserved;
-};
-
-static const struct register_config register_configs[] = {
+static const struct anx7483_register default_reg_configs[ANX7483_REG_MAX] = {
 	{
 		.reg = ANX7483_LFPS_TIMER_REG,
 		.def = ANX7483_LFPS_TIMER_REG_DEFAULT,
@@ -229,71 +223,96 @@ static int anx7483_emul_write_byte(const struct emul *emul, int reg,
 	return (anx7483_emul_set_reg(emul, reg, val) == 0) ? 0 : -EIO;
 }
 
-static const struct register_config *get_reg_config(int reg)
+static struct anx7483_register *get_register_mut(const struct emul *emul,
+						 int reg)
 {
-	for (size_t i = 0; i < ARRAY_SIZE(register_configs); i++) {
-		if (register_configs[i].reg == reg)
-			return &register_configs[i];
+	struct anx7483_emul_data *anx7483 = emul->data;
+
+	for (size_t i = 0; i < ANX7483_REG_MAX; i++) {
+		if (anx7483->regs[i].reg == reg)
+			return &anx7483->regs[i];
 	}
 
 	return NULL;
 }
 
-int anx7483_emul_get_reg(const struct emul *emulator, int reg, uint8_t *val)
+static const struct anx7483_register *
+get_register_const(const struct emul *emul, int reg)
 {
-	struct anx7483_emul_data *anx7483 = emulator->data;
-	const struct register_config *config = get_reg_config(reg);
+	return get_register_mut(emul, reg);
+}
 
-	if (!config) {
-		LOG_DBG("Unknown register %x", reg);
+int anx7483_emul_get_reg(const struct emul *emul, int r, uint8_t *val)
+{
+	const struct anx7483_register *reg = get_register_const(emul, r);
+
+	if (!reg) {
+		LOG_DBG("Unknown register %x", r);
 		return -EINVAL;
 	}
 
-	*val = anx7483->regs[reg];
+	*val = reg->value;
 	return 0;
 }
 
-int anx7483_emul_set_reg(const struct emul *emulator, int reg, uint8_t val)
+int anx7483_emul_set_reg(const struct emul *emul, int r, uint8_t val)
 {
-	struct anx7483_emul_data *anx7483 = emulator->data;
-	const struct register_config *config = get_reg_config(reg);
+	struct anx7483_register *reg = get_register_mut(emul, r);
 
-	if (!config) {
-		LOG_DBG("Unknown register %x", reg);
+	if (!reg) {
+		LOG_DBG("Unknown register %x", r);
 		return -EINVAL;
 	}
 
-	if ((val & config->reserved) != (config->def & config->reserved)) {
+	if ((val & reg->reserved) != (reg->def & reg->reserved)) {
 		LOG_DBG("Reserved bits modified for reg %02x, val: %02x, \
 			default: %02x, reserved: %02x",
-			reg, val, config->def, config->reserved);
+			r, val, reg->def, reg->reserved);
 		return -EINVAL;
 	}
 
-	if (reg >= ARRAY_SIZE(anx7483->regs)) {
-		LOG_DBG("Register %x is out of bounds", reg);
+	reg->value = val;
+	return 0;
+}
+
+int anx7483_emul_set_reg_reserved_mask(const struct emul *emul, int r,
+				       uint8_t mask, uint8_t def)
+{
+	struct anx7483_register *reg = get_register_mut(emul, r);
+
+	if (!reg) {
+		LOG_DBG("Unknown register %x", r);
 		return -EINVAL;
 	}
 
-	anx7483->regs[reg] = val;
+	LOG_DBG("Overwriting reserved mask value for reg: %02x from %x to %x",
+		r, reg->reserved, mask);
+	reg->reserved = mask;
+	reg->def = def;
 	return 0;
 }
 
 void anx7483_emul_reset(const struct emul *emul)
 {
-	/* Use the setter helps catch any default misconfigs. */
-	for (size_t i = 0; i < ARRAY_SIZE(register_configs); i++)
-		anx7483_emul_set_reg(emul, register_configs[i].reg,
-				     register_configs[i].def);
+	struct anx7483_emul_data *anx7483 = emul->data;
+
+	/* Initialize our default register config. */
+	memcpy(&anx7483->regs, default_reg_configs,
+	       ANX7483_REG_MAX * sizeof(struct anx7483_register));
+
+	/* Using the setter helps catch any default misconfigs. */
+	for (size_t i = 0; i < ANX7483_REG_MAX; i++)
+		anx7483_emul_set_reg(emul, anx7483->regs[i].reg,
+				     anx7483->regs[i].def);
 }
 
 static int anx7483_emul_init(const struct emul *emul,
 			     const struct device *parent)
 {
-	struct anx7483_emul_data *data = emul->data;
+	struct anx7483_emul_data *anx7483 = emul->data;
 
 	anx7483_emul_reset(emul);
-	i2c_common_emul_init(&data->common);
+	i2c_common_emul_init(&anx7483->common);
 
 	return 0;
 }

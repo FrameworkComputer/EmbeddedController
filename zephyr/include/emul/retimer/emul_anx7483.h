@@ -34,6 +34,11 @@
 #define ANX7483_DRX1_PORT_CFG2_REG_RESERVED_MASK GENMASK(3, 0)
 #define ANX7483_DRX2_PORT_CFG2_REG_RESERVED_MASK GENMASK(3, 0)
 
+/*
+ * See b/230694492#comment12 for why CFG3 doesn't have any reserved bits,
+ * contrary to what the documentation says.
+ */
+
 #define ANX7483_UTX1_PORT_CFG4_REG_RESERVED_MASK (GENMASK(7, 5) | GENMASK(3, 2))
 #define ANX7483_UTX2_PORT_CFG4_REG_RESERVED_MASK (GENMASK(7, 5) | GENMASK(3, 2))
 #define ANX7483_URX1_PORT_CFG4_REG_RESERVED_MASK (GENMASK(7, 5) | GENMASK(3, 2))
@@ -94,14 +99,29 @@ struct anx7483_emul_cfg {
 	const struct i2c_common_emul_cfg common;
 };
 
+struct anx7483_register {
+	uint8_t reg;
+	uint8_t value;
+	uint8_t def;
+	uint8_t reserved;
+};
+
 struct anx7483_emul_data {
 	struct i2c_common_emul_data common;
 
-	uint8_t regs[ANX7483_REG_MAX];
+	struct anx7483_register regs[ANX7483_REG_MAX];
 };
 
-int anx7483_emul_get_reg(const struct emul *emulator, int reg, uint8_t *val);
-int anx7483_emul_set_reg(const struct emul *emulator, int reg, uint8_t val);
+int anx7483_emul_get_reg(const struct emul *emul, int r, uint8_t *val);
+int anx7483_emul_set_reg(const struct emul *emul, int r, uint8_t val);
+
+/*
+ * Some bits that are marked as reserved are used for board-specific tuning.
+ * This function allows board tests to pass by allowing them to update reserved
+ * masks for their use cases.
+ */
+int anx7483_emul_set_reg_reserved_mask(const struct emul *emul, int r,
+				       uint8_t mask, uint8_t def);
 
 void anx7483_emul_reset(const struct emul *emul);
 
