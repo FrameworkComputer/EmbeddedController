@@ -66,6 +66,9 @@
 		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
 			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 		};
+		ec_wp_l {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
 	};
 
 	usba-port-enable-list {
