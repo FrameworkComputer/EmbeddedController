@@ -97,11 +97,16 @@ extern "C" {
 
 #define TEST_ASSERT_ARRAY_EQ(s, d, n)                                        \
 	do {                                                                 \
-		int __i;                                                     \
-		for (__i = 0; __i < n; ++__i)                                \
+		if (n < 0)                                                   \
+			return EC_ERROR_UNKNOWN;                             \
+                                                                             \
+		unsigned int __n = n;                                        \
+                                                                             \
+		for (unsigned int __i = 0; __i < __n; ++__i)                 \
+                                                                             \
 			if ((s)[__i] != (d)[__i]) {                          \
 				ccprintf("%s:%d: ASSERT_ARRAY_EQ failed at " \
-					 "index=%d: %d != %d\n",             \
+					 "index=%u: %d != %d\n",             \
 					 __FILE__, __LINE__, __i,            \
 					 (int)(s)[__i], (int)(d)[__i]);      \
 				task_dump_trace();                           \
@@ -111,11 +116,16 @@ extern "C" {
 
 #define TEST_ASSERT_MEMSET(d, c, n)                                        \
 	do {                                                               \
-		int __i;                                                   \
-		for (__i = 0; __i < n; ++__i)                              \
+		if (n < 0)                                                 \
+			return EC_ERROR_UNKNOWN;                           \
+                                                                           \
+		unsigned int __n = n;                                      \
+                                                                           \
+		for (unsigned int __i = 0; __i < __n; ++__i)               \
+                                                                           \
 			if ((d)[__i] != (c)) {                             \
 				ccprintf("%s:%d: ASSERT_MEMSET failed at " \
-					 "index=%d: %d != %d\n",           \
+					 "index=%u: %d != %d\n",           \
 					 __FILE__, __LINE__, __i,          \
 					 (int)(d)[__i], (c));              \
 				task_dump_trace();                         \
