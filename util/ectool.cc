@@ -38,6 +38,7 @@
 
 #include <libec/add_entropy_command.h>
 #include <libec/ec_panicinfo.h>
+#include <libec/fingerprint/fp_encryption_status_command.h>
 #include <libec/rand_num_command.h>
 
 /* Maximum flash size (16 MB, conservative) */
@@ -2460,17 +2461,21 @@ out:
 int cmd_fp_enc_status(int argc, char *argv[])
 {
 	int rv;
-	struct ec_response_fp_encryption_status resp = { 0 };
 
-	rv = ec_command(EC_CMD_FP_ENC_STATUS, 0, NULL, 0, &resp, sizeof(resp));
-	if (rv < 0) {
-		printf("Get FP sensor encryption status failed.\n");
-	} else {
-		print_fp_enc_flags("FPMCU encryption status:", resp.status);
-		print_fp_enc_flags("Valid flags:            ",
-				   resp.valid_flags);
-		rv = 0;
+	ec::FpEncryptionStatusCommand fp_encryptionstatus_command;
+
+	if (!fp_encryptionstatus_command.Run(comm_get_fd())) {
+		int rv = -EECRESULT - fp_encryptionstatus_command.Result();
+		fprintf(stderr,
+			"FP Encryption Status returned with errors: %d\n", rv);
+		return rv;
 	}
+	print_fp_enc_flags("FPMCU encryption status:",
+			   fp_encryptionstatus_command.GetStatus());
+	print_fp_enc_flags("Valid flags:            ",
+			   fp_encryptionstatus_command.GetValidFlags());
+	rv = 0;
+
 	return rv;
 }
 
