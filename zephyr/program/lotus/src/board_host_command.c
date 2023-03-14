@@ -34,7 +34,6 @@ static void sci_enable(void)
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, sci_enable, HOOK_PRIO_DEFAULT);
 
 static void sci_disable(void)
 {
@@ -117,10 +116,7 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 *	EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 	 */
 
-	/**
-	 * TODO: clear ACPI ready flags for pre-os
-	 * *host_get_customer_memmap(0x00) &= ~BIT(0);
-	 */
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~BIT(0);
 
 	return EC_RES_SUCCESS;
 }
@@ -128,12 +124,7 @@ DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0)
 
 static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 {
-	/**
-	 * TODO:
-	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
-	 * every boot up (both cold boot and warn boot)
-	 * hook_call_deferred(&sci_enable_data, 250 * MSEC);
-	 */
+	hook_call_deferred(&sci_enable_data, 250 * MSEC);
 
 	return EC_RES_SUCCESS;
 }
