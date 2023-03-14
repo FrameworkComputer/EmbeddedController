@@ -876,7 +876,7 @@ static int command_fpclear(int argc, const char **argv)
 	 */
 	enum ec_error_list rc = fp_console_action(FP_MODE_RESET_SENSOR);
 
-	if (rc < 0)
+	if (rc != EC_SUCCESS)
 		CPRINTS("Failed to clear fingerprint context: %d", rc);
 
 	atomic_clear(&fp_events);
