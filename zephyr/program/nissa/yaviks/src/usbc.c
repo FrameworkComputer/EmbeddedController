@@ -281,69 +281,21 @@ void usb_c0_interrupt(enum gpio_signal s)
 }
 
 /* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-static void check_c1_line(void);
-DECLARE_DEFERRED(check_c1_line);
-
-static void notify_c1_chips(void)
-{
-	schedule_deferred_pd_interrupt(1);
-	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
-	/* Charger is handled in board_process_pd_alert */
-}
-
-static void check_c1_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips.
-	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
-		notify_c1_chips();
-		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-	}
-}
-
 void usb_c1_interrupt(enum gpio_signal s)
 {
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c1_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c1_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
+	/* Charger and BC1.2 are handled in board_process_pd_alert */
+	schedule_deferred_pd_interrupt(1);
 }
-
-/*
- * Check state of IRQ lines at startup, ensuring an IRQ that happened before
- * the EC started up won't get lost (leaving the IRQ line asserted and blocking
- * any further interrupts on the port).
- *
- * Although the PD task will check for pending TCPC interrupts on startup,
- * the charger sharing the IRQ will not be polled automatically.
- */
-void board_handle_initial_typec_irq(void)
-{
-	check_c0_line();
-	if (board_get_usb_pd_port_count() == 2)
-		check_c1_line();
-}
-/*
- * This must run after sub-board detection (which happens in EC main()),
- * but isn't depended on by anything else either.
- */
-DECLARE_HOOK(HOOK_INIT, board_handle_initial_typec_irq, HOOK_PRIO_LAST);
 
 /*
  * Handle charger interrupts in the PD task. Not doing so can lead to a priority
  * inversion where we fail to respond to TCPC alerts quickly enough because we
- * don't get another edge on a shared IRQ until the charger interrupt is cleared
- * (or the IRQ is polled again), which happens in the low-priority charger task:
- * the high-priority type-C handler is thus blocked on the lower-priority
- * charger.
+ * don't get another edge on a shared IRQ until the other interrupt is cleared
+ * (or the IRQ is polled again), which happens in lower-priority tasks: the
+ * high-priority type-C handler is thus blocked on the lower-priority one(s).
  *
- * To avoid that, we run charger interrupts at the same priority.
+ * To avoid that, we run charger and BC1.2 interrupts synchronously alongside
+ * PD interrupts so they have the same priority.
  */
 void board_process_pd_alert(int port)
 {
@@ -351,10 +303,19 @@ void board_process_pd_alert(int port)
 	 * Port 0 doesn't use an external TCPC, so its interrupts don't need
 	 * this special handling.
 	 */
-	if (port == 1 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
+	if (port != 1)
+		return;
+
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
 		sm5803_handle_interrupt(port);
+		usb_charger_task_set_event_sync(1, USB_CHG_EVENT_BC12);
 	}
+	/*
+	 * Immediately schedule another TCPC interrupt if it seems we haven't
+	 * cleared all pending interrupts.
+	 */
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl)))
+		schedule_deferred_pd_interrupt(port);
 }
 
 int pd_snk_is_vbus_provided(int port)
