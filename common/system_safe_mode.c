@@ -32,9 +32,7 @@ bool is_task_safe_mode_critical(task_id_t task_id)
 #ifdef HAS_TASK_HOOKS
 		TASK_ID_HOOKS,
 #endif
-#ifdef HAS_TASK_IDLE
 		TASK_ID_IDLE,
-#endif
 #ifdef HAS_TASK_HOSTCMD
 		TASK_ID_HOSTCMD,
 #endif
