@@ -13,8 +13,5 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 target_sources_ifdef(CONFIG_TEST_USB_PD_POLICY app PRIVATE src/usb_pd_policy.c)
 target_sources_ifdef(CONFIG_TEST_USB_PD_POLICY app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/src/usb_pd_policy.c)
 
-target_sources_ifdef(CONFIG_TEST_FAN app PRIVATE src/fan.c)
-target_sources_ifdef(CONFIG_TEST_FAN app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/src/fan.c)
-
 target_sources_ifdef(CONFIG_TEST_BOARD_POWER app PRIVATE src/board_power.c)
 target_sources_ifdef(CONFIG_TEST_BOARD_POWER app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/src/board_power.c)

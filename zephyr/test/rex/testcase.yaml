@@ -11,13 +11,6 @@ tests:
       - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
       - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
 
-  rex.fan:
-    extra_dtc_overlay_files:
-      - boards/native_posix.overlay
-      - fan.dtsi
-    extra_configs:
-      - CONFIG_TEST_FAN=y
-
   rex.board_power:
     extra_dtc_overlay_files:
       - board_power.dtsi
