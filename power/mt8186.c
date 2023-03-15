@@ -159,7 +159,13 @@ void chipset_watchdog_interrupt(enum gpio_signal signal)
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s: 0x%x", __func__, reason);
+	bool chipset_off = chipset_in_state(CHIPSET_STATE_ANY_OFF);
+
+	CPRINTS("%s: 0x%x%s", __func__, reason, chipset_off ? "(skipped)" : "");
+
+	if (chipset_off)
+		return;
+
 	report_ap_reset(reason);
 
 	is_shutdown = true;
@@ -424,6 +430,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+		/* Stop the power key shutdown deferred in case the power key
+		 * is still pressed.
+		 */
+		hook_call_deferred(&chipset_force_shutdown_button_data, -1);
+
 		power_signal_disable_interrupt(GPIO_AP_IN_SLEEP_L);
 		power_signal_disable_interrupt(GPIO_AP_EC_WDTRST_L);
 		power_signal_disable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
