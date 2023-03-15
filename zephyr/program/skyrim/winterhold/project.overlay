@@ -54,22 +54,22 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		temp_sensor_soc: soc-pct2075 {
-			temp_host_high = <105>;
-			temp_host_halt = <110>;
-			temp_host_release_high = <95>;
-			temp_host_release_halt = <100>;
+			temp_host_high = <97>;
+			temp_host_halt = <98>;
+			temp_host_release_high = <87>;
+			temp_host_release_halt = <88>;
 			temp_fan_off = <55>;
 			temp_fan_max = <72>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&soc_pct2075>;
 		};
 		temp_sensor_amb: amb-pct2075 {
-			temp_host_warn = <50>;
-			temp_host_high = <105>;
-			temp_host_halt = <110>;
-			temp_host_release_warn = <45>;
-			temp_host_release_high = <95>;
-			temp_host_release_halt = <100>;
+			temp_host_warn = <43>;
+			temp_host_high = <97>;
+			temp_host_halt = <98>;
+			temp_host_release_warn = <39>;
+			temp_host_release_high = <87>;
+			temp_host_release_halt = <88>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&amb_pct2075>;
 		};
@@ -196,10 +196,10 @@
 
 /* temperature sensor overrides */
 &temp_sensor_charger {
-	temp_host_high = <100>;
-	temp_host_halt = <110>;
-	temp_host_release_high = <90>;
-	temp_host_release_halt = <100>;
+	temp_host_high = <97>;
+	temp_host_halt = <98>;
+	temp_host_release_high = <87>;
+	temp_host_release_halt = <88>;
 };
 
 &temp_sensor_memory {
