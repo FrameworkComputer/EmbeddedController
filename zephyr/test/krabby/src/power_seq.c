@@ -30,6 +30,8 @@ FAKE_VOID_FUNC(chipset_resume_hook);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, chipset_resume_hook, HOOK_PRIO_DEFAULT);
 FAKE_VALUE_FUNC(int, system_jumped_late);
 
+#define S5_INACTIVE_SEC 11
+
 static void set_signal_state(enum power_state state)
 {
 	const struct gpio_dt_spec *ap_ec_sysrst_odl =
@@ -67,8 +69,9 @@ static void power_seq_before(void *f)
 	set_test_runner_tid();
 
 	/* Start from G3 */
-	power_set_state(POWER_G3);
 	set_signal_state(POWER_G3);
+	power_set_state(POWER_G3);
+	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
 
 	RESET_FAKE(chipset_pre_init_hook);
 	RESET_FAKE(chipset_startup_hook);
@@ -93,6 +96,8 @@ ZTEST(power_seq, test_power_state_machine)
 	/* S0 -> G3 */
 	power_set_state(POWER_S0);
 	set_signal_state(POWER_G3);
+	zassert_equal(power_get_state(), POWER_S5);
+	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -109,6 +114,7 @@ ZTEST(power_seq, test_power_btn_short_press)
 	 */
 	zassert_equal(chipset_pre_init_hook_fake.call_count, 1);
 	zassert_equal(chipset_startup_hook_fake.call_count, 0);
+	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -128,6 +134,7 @@ ZTEST(power_seq, test_lid_open)
 	 */
 	zassert_equal(chipset_pre_init_hook_fake.call_count, 1);
 	zassert_equal(chipset_startup_hook_fake.call_count, 0);
+	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -210,13 +217,15 @@ ZTEST(power_seq, test_force_shutdown)
 					   ec_pmic_en_odl->pin),
 		      0);
 
-	/* Wait 10 seconds for EC_PMIC_EN_ODL release and drop to G3 */
+	/* Wait 10 seconds for EC_PMIC_EN_ODL release and drop to S5 then G3 */
 	k_sleep(K_SECONDS(10));
 	zassert_equal(gpio_emul_output_get(sys_rst_odl->port, sys_rst_odl->pin),
 		      0);
 	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
 					   ec_pmic_en_odl->pin),
 		      1);
+	zassert_equal(power_get_state(), POWER_S5);
+	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -259,13 +268,15 @@ ZTEST(power_seq, test_force_shutdown_button)
 					   ec_pmic_en_odl->pin),
 		      0);
 
-	k_sleep(K_SECONDS(3)); /* Wait for G3 */
+	k_sleep(K_SECONDS(3)); /* Wait for S5 */
 
 	/* PMIC_EN released */
-	zassert_equal(power_get_state(), POWER_G3);
+	zassert_equal(power_get_state(), POWER_S5);
 	zassert_equal(gpio_emul_output_get(ec_pmic_en_odl->port,
 					   ec_pmic_en_odl->pin),
 		      1);
+	k_sleep(K_SECONDS(S5_INACTIVE_SEC)); /* Wait for G3 */
+	zassert_equal(power_get_state(), POWER_G3);
 }
 
 /* AP reset (S0 -> S0).
@@ -358,6 +369,10 @@ static void power_chipset_init_subtest(enum power_state signal_state,
 	RESET_FAKE(chipset_pre_init_hook);
 	task_wake(TASK_ID_CHIPSET);
 	k_sleep(K_SECONDS(1));
+
+	/* need 10 seconds to drop from s5 to g3 */
+	if (expected_state == POWER_G3)
+		k_sleep(K_SECONDS(S5_INACTIVE_SEC));
 
 	if (signal_state == expected_state) {
 		/* Expect nothing changed */
