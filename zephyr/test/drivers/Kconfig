@@ -236,4 +236,10 @@ config LINK_TEST_SUITE_LED_COMMON
 config LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP
 	bool "Link and test memory dump host commands tests"
 
+config LINK_TEST_SUITE_ANX7452
+	bool "Link and test the anx7452 tests"
+	help
+	  Include the test suite of ANX7452 retimer in the binary. The tests
+	  use I2C emulation.
+
 source "Kconfig.zephyr"

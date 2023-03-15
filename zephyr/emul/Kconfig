@@ -190,6 +190,17 @@ config EMUL_PCT2075
 	  Enable the PCT2075 temperature sensor emulator. It uses emulated I2C bus.
 	  Emulator API is available in zephyr/include/emul/emul_pct2075.h.
 
+config EMUL_ANX7452
+	bool "ANX7452 retimer emulator"
+	default y
+	depends on ZTEST && DT_HAS_ANALOGIX_ANX7452_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the ANX7452(Analogix) retimer emulator. This driver use
+	  emulated I2C bus. It is used to test anx7452 driver. It supports
+	  reads and writes to all emulator registers. Emulators API is
+	  available in zephyr/include/emul/emul_anx7452.h
+
 config EMUL_PS8743
 	bool "PS8743 emulator"
 	default y
