@@ -92,6 +92,16 @@ config EMUL_TUSB1064
 	  Enable the TUSB1064 usb mux. This driver use emulated I2C bus.
 	  Emulator API is available in zephyr/include/emul/emul_tusb1064.h.
 
+config EMUL_USB_MUX_AMD_FP6
+	bool "AMD FP6 USB mux emulator"
+	default y
+	depends on ZTEST && DT_HAS_AMD_USBC_MUX_AMD_FP6_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable emulator for the AMD FP6 USB mux target.  This is a mux
+	  which, while it resides on the SoC, presents itself to the EC as a
+	  I2C target device
+
 config EMUL_BB_RETIMER
 	bool "BB retimer emulator"
 	default y
