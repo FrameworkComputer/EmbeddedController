@@ -52,7 +52,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(cros_ec_gpio_interrupts) == 1,
 	extern void DT_STRING_TOKEN(id, handler)(enum gpio_signal);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
-DT_FOREACH_CHILD(DT_IRQ_NODE, INT_HANDLER_DECLARE)
+DT_FOREACH_CHILD_STATUS_OKAY(DT_IRQ_NODE, INT_HANDLER_DECLARE)
 #endif
 
 #undef INT_HANDLER_DECLARE
@@ -85,7 +85,7 @@ struct gpio_callback int_cb_data[GPIO_INT_COUNT];
  */
 static const struct gpio_int_config gpio_int_data[] = {
 
-	DT_FOREACH_CHILD(DT_IRQ_NODE, INT_CONFIG_FROM_NODE)
+	DT_FOREACH_CHILD_STATUS_OKAY(DT_IRQ_NODE, INT_CONFIG_FROM_NODE)
 };
 #endif
 
@@ -107,7 +107,7 @@ static const struct gpio_int_config gpio_int_data[] = {
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
 
-DT_FOREACH_CHILD(DT_IRQ_NODE, INT_CONFIG_PTR_DECLARE)
+DT_FOREACH_CHILD_STATUS_OKAY(DT_IRQ_NODE, INT_CONFIG_PTR_DECLARE)
 
 #endif
 

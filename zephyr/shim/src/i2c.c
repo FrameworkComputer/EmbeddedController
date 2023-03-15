@@ -36,11 +36,12 @@
  * Since all the ports will eventually be handled by device tree. This will
  * be removed at that point.
  */
-const struct i2c_port_t i2c_ports[] = { DT_FOREACH_CHILD(NAMED_I2C_PORTS_NODE,
-							 I2C_PORT_INIT) };
+const struct i2c_port_t i2c_ports[] = { DT_FOREACH_CHILD_STATUS_OKAY(
+	NAMED_I2C_PORTS_NODE, I2C_PORT_INIT) };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-static const int i2c_remote_ports[I2C_PORT_COUNT] = { DT_FOREACH_CHILD(
-	NAMED_I2C_PORTS_NODE, INIT_REMOTE_PORTS) };
+static const int i2c_remote_ports[I2C_PORT_COUNT] = {
+	DT_FOREACH_CHILD_STATUS_OKAY(NAMED_I2C_PORTS_NODE, INIT_REMOTE_PORTS)
+};
 
 static const struct device *i2c_devices[I2C_PORT_COUNT] = { I2C_FOREACH_PORT(
 	INIT_DEV_BINDING) };

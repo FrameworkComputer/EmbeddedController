@@ -173,7 +173,9 @@ BUILD_ASSERT(I2C_PORT_COUNT != 0, "No I2C devices defined");
  * I2C_PORT_BATTERY or I2C_PORT_SENSOR) to the unique port numbers created by
  * enum i2c_ports_chip above for every I2C port devicetree node.
  */
-enum i2c_ports { DT_FOREACH_CHILD(NAMED_I2C_PORTS_NODE, NAMED_I2C_PORT_COMMA) };
+enum i2c_ports {
+	DT_FOREACH_CHILD_STATUS_OKAY(NAMED_I2C_PORTS_NODE, NAMED_I2C_PORT_COMMA)
+};
 
 /**
  * @brief Adaptation of platform/ec's port IDs which map a port/bus to a device.
