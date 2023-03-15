@@ -256,6 +256,97 @@ ZTEST(power_host_sleep, test_suspend_then_resume_with_timeout)
 	zassert_true(context.sleep_transitions & EC_HOST_RESUME_SLEEP_TIMEOUT);
 }
 
+ZTEST(power_host_sleep, test_suspend_then_resume_with_reboot)
+{
+	struct ec_params_host_sleep_event_v1 p;
+	struct ec_response_host_sleep_event_v1 r;
+	struct host_cmd_handler_args args;
+	struct host_sleep_event_context context = {
+		.sleep_timeout_ms = EC_HOST_SLEEP_TIMEOUT_DEFAULT,
+		.sleep_transitions = 0.
+	};
+
+	/* Start then suspend process like the OS would */
+	p.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND;
+	zassert_ok(ec_cmd_host_sleep_event_v1(&args, &p, &r));
+
+	/* Verify we notified the chipset */
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 1);
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
+		      p.sleep_event);
+
+	/* Now kick the internals as if we suspend and then fail to resume */
+	sleep_start_suspend(&context);
+	/* Register the suspend transition (cancels timeout hook) */
+	sleep_suspend_transition();
+	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
+
+	/* No timeout hooks should've fired */
+	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 0);
+	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 0);
+
+	/* Transition to resume state and wait for hang timeout */
+	sleep_resume_transition();
+	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
+
+	/* Resume state transition timeout hook should've fired */
+	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 1);
+	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 1);
+	zassert_equal(power_chipset_handle_sleep_hang_fake.arg0_val,
+		      SLEEP_HANG_S0IX_RESUME);
+	zassert_equal(power_board_handle_sleep_hang_fake.arg0_val,
+		      SLEEP_HANG_S0IX_RESUME);
+
+	/* But now the OS says it's actually rebooted */
+	p.sleep_event = 0;
+	zassert_ok(ec_cmd_host_sleep_event_v1(&args, &p, &r));
+
+	/* Verify we alerted as if this was a resume */
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 2);
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
+		      HOST_SLEEP_EVENT_S0IX_RESUME);
+}
+
+ZTEST(power_host_sleep, test_suspend_then_reboot)
+{
+	struct ec_params_host_sleep_event_v1 p;
+	struct ec_response_host_sleep_event_v1 r;
+	struct host_cmd_handler_args args;
+	struct host_sleep_event_context context = {
+		.sleep_timeout_ms = EC_HOST_SLEEP_TIMEOUT_DEFAULT,
+		.sleep_transitions = 0.
+	};
+
+	/* Start then suspend process like the OS would */
+	p.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND;
+	zassert_ok(ec_cmd_host_sleep_event_v1(&args, &p, &r));
+
+	/* Verify we notified the chipset */
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 1);
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
+		      p.sleep_event);
+
+	/* Now kick the internals as if we suspend and then fail to resume */
+	sleep_start_suspend(&context);
+	/* Register the suspend transition (cancels timeout hook) */
+	sleep_suspend_transition();
+	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
+
+	/* No timeout hooks should've fired */
+	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 0);
+	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 0);
+
+	/* Transition to resume state and then send that we rebooted instead */
+	sleep_resume_transition();
+	p.sleep_event = 0;
+	zassert_ok(ec_cmd_host_sleep_event_v1(&args, &p, &r));
+
+	/* Verify we alerted as if this was a resume */
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 2);
+	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
+		      HOST_SLEEP_EVENT_S0IX_RESUME);
+}
+
 /* Only used in test_sleep_set_notify */
 static bool _test_host_sleep_hook_called;
 

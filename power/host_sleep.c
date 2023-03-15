@@ -36,6 +36,13 @@ host_command_host_sleep_event(struct host_cmd_handler_args *args)
 	struct host_sleep_event_context ctx;
 	enum host_sleep_event state = p->sleep_event;
 
+	/*
+	 * Treat a reboot after suspend as a resume for notification purposes
+	 * (see b/273327518 for more details)
+	 */
+	if (host_sleep_state == HOST_SLEEP_EVENT_S0IX_SUSPEND && state == 0)
+		state = HOST_SLEEP_EVENT_S0IX_RESUME;
+
 	host_sleep_state = state;
 	ctx.sleep_transitions = 0;
 	switch (state) {
