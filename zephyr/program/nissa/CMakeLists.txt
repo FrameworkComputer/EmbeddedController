@@ -99,3 +99,13 @@ if(DEFINED CONFIG_BOARD_XIVUR)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "xivur/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "xivur/src/charger.c")
 endif()
+if(DEFINED CONFIG_BOARD_ULDREN)
+	project(uldren)
+	zephyr_library_sources(
+			"uldren/src/led.c"
+			"uldren/src/keyboard.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "uldren/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "uldren/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "uldren/src/charger.c")
+endif()

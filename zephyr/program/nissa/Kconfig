@@ -65,6 +65,12 @@ config BOARD_YAVIKS
 	  Build Google Yaviks board. Yaviks has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_ULDREN
+	bool "Google Uldren Board"
+	help
+	  Build Google Uldren reference board. Uldren has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
 
 module = NISSA
 module-str = Nissa board-specific code
