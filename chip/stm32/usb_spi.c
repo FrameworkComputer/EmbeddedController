@@ -442,11 +442,19 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 		}
 #endif
 
-		status_code = (custom_board_driver ? usb_spi_board_transaction :
-						     spi_transaction)(
-			current_device, config->state->spi_write_ctx.buffer,
-			config->state->spi_write_ctx.transfer_size,
-			config->state->spi_read_ctx.buffer, read_count);
+		if (custom_board_driver) {
+			status_code = usb_spi_board_transaction(
+				current_device, 0 /* flash_flags */,
+				config->state->spi_write_ctx.buffer,
+				config->state->spi_write_ctx.transfer_size,
+				config->state->spi_read_ctx.buffer, read_count);
+		} else {
+			status_code = spi_transaction(
+				current_device,
+				config->state->spi_write_ctx.buffer,
+				config->state->spi_write_ctx.transfer_size,
+				config->state->spi_read_ctx.buffer, read_count);
+		}
 
 		/* Cast the EC status code to USB SPI and start the response. */
 		status_code = usb_spi_map_error(status_code);
@@ -669,8 +677,8 @@ int usb_spi_interface(struct usb_spi_config const *config, usb_uint *rx_buf,
 
 __overridable int
 usb_spi_board_transaction(const struct spi_device_t *spi_device,
-			  const uint8_t *txdata, int txlen, uint8_t *rxdata,
-			  int rxlen)
+			  uint32_t flash_flags, const uint8_t *txdata,
+			  int txlen, uint8_t *rxdata, int rxlen)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }

@@ -27,7 +27,9 @@ struct spi_device_t spi_devices[] = {
 	  .port = -1 /* OCTOSPI */,
 	  .div = 255,
 	  .gpio_cs = GPIO_CN10_6,
-	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE },
+	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE |
+		       USB_SPI_FLASH_DUAL_SUPPORT |
+		       USB_SPI_FLASH_QUAD_SUPPORT },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
@@ -366,11 +368,14 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
  * the only spi device declared as requiring board specific driver is OCTOSPI.
  */
 int usb_spi_board_transaction(const struct spi_device_t *spi_device,
-			      const uint8_t *txdata, int txlen, uint8_t *rxdata,
-			      int rxlen)
+			      uint32_t flash_flags, const uint8_t *txdata,
+			      int txlen, uint8_t *rxdata, int rxlen)
 {
 	int rv = EC_SUCCESS;
 	bool previous_cs;
+
+	if (flash_flags & FLASH_FLAGS_REQUIRING_SUPPORT)
+		return EC_ERROR_UNIMPLEMENTED;
 
 	previous_cs = gpio_get_level(spi_device->gpio_cs);
 
