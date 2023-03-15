@@ -187,6 +187,20 @@ static inline int usb_charger_ramp_max(int port, int supplier, int sup_curr)
 void usb_charger_task_set_event(int port, uint8_t event);
 
 /**
+ * Synchronously handle an event for a specific USB charger port.
+ *
+ * This is the same as using usb_charger_task_set_event for a given port
+ * and event, but executes synchronously (on the calling thread) instead of
+ * asynchronously (on the dedicated USB charger thread).
+ *
+ * Most users should prefer to use the asynchronous equivalent, but it is
+ * sometimes necessary to use this version in order to avoid priority inversion
+ * when a higher-priority task must ensure BC1.2 processing completes before
+ * continuing.
+ */
+void usb_charger_task_set_event_sync(int port, uint8_t event);
+
+/**
  * Reset available BC 1.2 chargers on all ports
  *
  * @param port
