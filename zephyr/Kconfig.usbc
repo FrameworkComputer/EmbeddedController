@@ -245,6 +245,14 @@ config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT8XXX2
 	  This supports up to two USB Type-C ports with Dual Role function
 	  (provider and consumer) and Fast Role Swap detection.
 
+config PLATFORM_EC_IT83XX_TUNE_CC_PHY
+	bool "Enable tune cc physical parameters"
+	depends on PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	help
+	  Enable board to tune cc physical parameters (ex.rising, falling time).
+	  Board must define board_get_cc_tuning_parameter(enum usbpd_port port)
+	  function.
+
 config PLATFORM_EC_USB_PD_PULLUP
 	int "Default source Rp value"
 	default 1
