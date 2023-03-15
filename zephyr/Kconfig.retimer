@@ -134,3 +134,13 @@ config PLATFORM_EC_USBC_RETIMER_PS8811
 	  integrates the UniEye equalizer and a retimer to re-condition USB 3.1
 	  signals for long media link applications. It supports USB 3.1 Gen 2
 	  with operation speed up to 10Gbps as well as Gen 1 operation at 5Gbps.
+
+config PLATFORM_EC_USBC_RETIMER_ANX7452
+	bool "Support Analogix ANX7452 Active Retimer"
+	default y
+	depends on DT_HAS_ANALOGIX_ANX7452_ENABLED
+	help
+	  ANX7452 is a 2-lane USB4 Re-timer MUX capable of switching the USB4
+	  fabric protocol to support a single USB Type-C™ (USB-C™) port. ANX7452
+	  can be also configured to a DisplayPort (DP)2.0 Re-timer which
+	  supports up to 4-lane UHBR20.
