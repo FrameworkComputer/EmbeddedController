@@ -4,9 +4,9 @@
  */
 
 #include "common.h"
-#include "test_util.h"
+#include "config.h"
 #include "fpc_private.h"
-#include "board.h"
+#include "test_util.h"
 
 #ifdef SECTION_IS_RW
 #include "fpc/fpc_sensor.h"
