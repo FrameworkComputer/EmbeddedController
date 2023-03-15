@@ -75,6 +75,67 @@
 		};
 	};
 
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_tcpc0: tcpc0 {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_TCPC0";
+		};
+
+		i2c_tcpc1: tcpc1 {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_TCPC1";
+		};
+
+		i2c_sensor: sensor {
+			i2c-port = <&i2c6_1>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+
+	i2c0_0: i2c@400 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x400 4>;
+
+		anx7483_port0: anx7483_emul0@3e {
+			compatible = "cros,anx7483-emul", "analogix,anx7483";
+			reg = <0x3e>;
+		};
+	};
+
+	i2c1_0: i2c@500 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x500 4>;
+
+		anx7483_port1: anx7483_emul1@3e {
+			compatible = "cros,anx7483-emul", "analogix,anx7483";
+			reg = <0x3e>;
+		};
+
+		ps8811_port1: ps8811_emul@72 {
+			compatible = "cros,ps8811-emul";
+			reg = <0x72>;
+		};
+	};
+
+	i2c6_1: i2c@600 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x600 4>;
+	};
+
 	skyrim-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
@@ -153,21 +214,6 @@
 				value = <1>;
 			};
 		};
-	};
-
-	named-i2c-ports {
-		compatible = "named-i2c-ports";
-
-		eeprom {
-			i2c-port = <&i2c0>;
-			enum-names = "I2C_PORT_EEPROM";
-		};
-
-		i2c_sensor: sensor {
-			i2c-port = <&i2c0>;
-			enum-names = "I2C_PORT_SENSOR";
-		};
-
 	};
 };
 

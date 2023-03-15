@@ -16,11 +16,10 @@
 
 #include <zephyr/drivers/gpio.h>
 
+/* TODO: Remove once board tests are done. */
 #ifdef CONFIG_ZTEST
-
 #undef USB_MUX_ENABLE_ALTERNATIVE
 #define USB_MUX_ENABLE_ALTERNATIVE(x)
-
 #endif /* CONFIG_ZTEST */
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
@@ -30,7 +29,7 @@
  * USB C0 (general) and C1 (just ANX DB) use IOEX pins to
  * indicate flipped polarity to a protection switch.
  */
-static int ioex_set_flip(int port, mux_state_t mux_state)
+test_export_static int ioex_set_flip(int port, mux_state_t mux_state)
 {
 	if (port == 0) {
 		if (mux_state & USB_PD_MUX_POLARITY_INVERTED)

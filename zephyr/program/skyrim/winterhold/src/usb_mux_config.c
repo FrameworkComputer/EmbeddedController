@@ -24,7 +24,7 @@
  * USB C0 (general) and C1 (just ANX DB) use IOEX pins to
  * indicate flipped polarity to a protection switch.
  */
-static int ioex_set_flip(int port, mux_state_t mux_state)
+test_export_static int ioex_set_flip(int port, mux_state_t mux_state)
 {
 	if (port == 0) {
 		if (mux_state & USB_PD_MUX_POLARITY_INVERTED)

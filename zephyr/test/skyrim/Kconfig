@@ -84,6 +84,8 @@ config TEST_BOARD_PPC_CONFIG_CUSTOM
 
 config TEST_BOARD_USB_MUX_CONFIG
 	bool "Enable USB mux config tests"
+	select PLATFORM_EC_USB_MUX_MOCK
+	select PLATFORM_EC_USBC_RETIMER_PS8811
 
 config TEST_BOARD_USB_MUX_CONFIG_CUSTOM
 	bool "Enable USB mux config tests with a variant-specific test file"

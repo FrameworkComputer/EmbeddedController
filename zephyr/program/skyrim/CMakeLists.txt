@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 3.13.1)
 
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
+zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+
 zephyr_library_sources("src/common.c")
 zephyr_library_sources("src/power_signals.c")
 

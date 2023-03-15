@@ -36,6 +36,11 @@ tests:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
     - CONFIG_TEST_BOARD_PPC_CONFIG=y
 
+  skyrim.crystaldrift.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
   # Frostflow tests
   skyrim.frostflow:
     extra_configs:
@@ -60,6 +65,11 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y
     - CONFIG_TEST_BOARD_PPC_CONFIG=y
+
+  skyrim.markarth.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
 
   # Skyrim tests
   skyrim.skyrim:
@@ -97,3 +107,8 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
     - CONFIG_TEST_BOARD_PPC_CONFIG_CUSTOM=y
+
+  skyrim.winterhold.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
