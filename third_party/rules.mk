@@ -55,3 +55,43 @@ $(third-party-test-targets): LDFLAGS_EXTRA += $(CRYPTOC_LDFLAGS)
 $(third-party-test-targets): $(out)/cryptoc/libcryptoc.a
 
 endif # CONFIG_LIBCRYPTOC
+
+# Build and link against googletest in *test* builds if configured.
+ifeq ($(TEST_BUILD),y)
+ifeq ($(CONFIG_GOOGLETEST),y)
+
+# The googletest path can be overridden on invocation. For example:
+# $ make GOOGLETEST_DIR=~/src/googletest BOARD=bloonchipper
+GOOGLETEST_DIR ?= $(realpath ../../third_party/googletest)
+GOOGLETEST_INSTALL_DIR := $(realpath $(out))/googletest/install
+CMAKE_TOOLCHAIN_FILE := $(CURDIR)/cmake/toolchain-armv7m.cmake
+
+GOOGLETEST_CFLAGS := -I$(GOOGLETEST_INSTALL_DIR)/include
+GOOGLETEST_LDFLAGS := -L$(GOOGLETEST_INSTALL_DIR)/lib -lgtest
+GOOGLETEST_LIB := $(GOOGLETEST_INSTALL_DIR)/lib/libgtest.a
+
+$(GOOGLETEST_LIB):
+	mkdir -p $(out)/googletest && \
+	cd $(out)/googletest && \
+	cmake -Dgtest_disable_pthreads=ON \
+		-GNinja \
+		-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE) \
+		-DCMAKE_INSTALL_PREFIX=$(GOOGLETEST_INSTALL_DIR) \
+		$(GOOGLETEST_DIR) && \
+	cmake --build . && \
+	cmake --install .
+
+# On-device tests.
+third-party-test-targets=$(foreach test,$(test-list-y),\
+	$(out)/RW/$(test).RW.elf $(out)/RO/$(test).RO.elf)
+$(third-party-test-targets): LDFLAGS_EXTRA += $(GOOGLETEST_LDFLAGS)
+$(third-party-test-targets): CFLAGS += $(GOOGLETEST_CFLAGS)
+$(third-party-test-targets): $(GOOGLETEST_LIB)
+
+# Test files can include googletest headers, so the headers need to be
+# installed first.
+$(ro-objs): $(GOOGLETEST_LIB)
+$(rw-objs): $(GOOGLETEST_LIB)
+
+endif # CONFIG_GOOGLETEST
+endif # TEST_BUILD

@@ -5848,6 +5848,11 @@
  */
 #define CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US 65
 
+/*
+ * Build and link *test* images with googletest.
+ */
+#undef CONFIG_GOOGLETEST
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a
