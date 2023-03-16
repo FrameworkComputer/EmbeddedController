@@ -210,9 +210,10 @@
 };
 
 &temp_sensor_cpu {
-	/delete-property/ temp_host_high;
-	/delete-property/ temp_host_halt;
-	/delete-property/ temp_host_release_high;
+	temp_host_high = <110>;
+	temp_host_halt = <112>;
+	temp_host_release_high = <96>;
+	temp_host_release_halt = <96>;
 	temp_fan_off = <76>;
 	temp_fan_max = <82>;
 };
