@@ -292,6 +292,37 @@ int anx7483_emul_set_reg_reserved_mask(const struct emul *emul, int r,
 	return 0;
 }
 
+int anx7483_emul_get_eq(const struct emul *emul, enum anx7483_tune_pin pin,
+			enum anx7483_eq_setting *eq)
+{
+	int reg;
+	int rv;
+
+	if (pin == ANX7483_PIN_UTX1)
+		reg = ANX7483_UTX1_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_UTX2)
+		reg = ANX7483_UTX2_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_URX1)
+		reg = ANX7483_URX1_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_URX2)
+		reg = ANX7483_URX2_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_DRX1)
+		reg = ANX7483_DRX1_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_DRX2)
+		reg = ANX7483_DRX2_PORT_CFG0_REG;
+	else
+		return EC_ERROR_INVAL;
+
+	rv = anx7483_emul_get_reg(emul, reg, (uint8_t *)eq);
+	if (rv)
+		return rv;
+
+	*eq &= ANX7483_CFG0_EQ_MASK;
+	*eq >>= ANX7483_CFG0_EQ_SHIFT;
+
+	return EC_SUCCESS;
+}
+
 void anx7483_emul_reset(const struct emul *emul)
 {
 	struct anx7483_emul_data *anx7483 = emul->data;

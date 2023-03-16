@@ -43,6 +43,18 @@ static int anx7483_emul_test_set_reg(int reg, uint8_t val)
 	return anx7483_emul_set_reg(ANX7483_EMUL, reg, val);
 }
 
+static int anx7483_emul_test_get_eq(enum anx7483_tune_pin pin,
+				    enum anx7483_eq_setting *eq)
+{
+	return anx7483_emul_get_eq(ANX7483_EMUL, pin, eq);
+}
+
+static int anx7483_test_set_eq(enum anx7483_tune_pin pin,
+			       enum anx7483_eq_setting eq)
+{
+	return anx7483_set_eq(&mux, pin, eq);
+}
+
 static int anx7483_i2c_read(int reg, int *data)
 {
 	return anx7483_read(&mux, reg, data);
@@ -230,55 +242,49 @@ ZTEST(anx7483, test_init)
  * equalization for a pin.
  */
 
-ZTEST(anx7483, test_set_eq)
+ZTEST(anx7483, test_set_eq_func)
 {
 	int rv;
-	uint8_t val;
+	enum anx7483_eq_setting eq;
 
-	rv = anx7483_set_eq(&mux, ANX7483_PIN_UTX1, ANX7483_EQ_SETTING_12_5DB);
+	rv = anx7483_test_set_eq(ANX7483_PIN_UTX1, ANX7483_EQ_SETTING_12_5DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG0_REG, &val);
+	rv = anx7483_emul_test_get_eq(ANX7483_PIN_UTX1, &eq);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG0_EQ_SHIFT) & 0xf,
-		      ANX7483_EQ_SETTING_12_5DB);
+	zexpect_equal(eq, ANX7483_EQ_SETTING_12_5DB);
 
-	rv = anx7483_set_eq(&mux, ANX7483_PIN_UTX2, ANX7483_EQ_SETTING_12_5DB);
+	rv = anx7483_test_set_eq(ANX7483_PIN_UTX2, ANX7483_EQ_SETTING_12_5DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG0_REG, &val);
+	rv = anx7483_emul_test_get_eq(ANX7483_PIN_UTX2, &eq);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG0_EQ_SHIFT) & 0xf,
-		      ANX7483_EQ_SETTING_12_5DB);
+	zexpect_equal(eq, ANX7483_EQ_SETTING_12_5DB);
 
-	rv = anx7483_set_eq(&mux, ANX7483_PIN_URX1, ANX7483_EQ_SETTING_12_5DB);
+	rv = anx7483_test_set_eq(ANX7483_PIN_URX1, ANX7483_EQ_SETTING_12_5DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG0_REG, &val);
+	rv = anx7483_emul_test_get_eq(ANX7483_PIN_URX1, &eq);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG0_EQ_SHIFT) & 0xf,
-		      ANX7483_EQ_SETTING_12_5DB);
+	zexpect_equal(eq, ANX7483_EQ_SETTING_12_5DB);
 
-	rv = anx7483_set_eq(&mux, ANX7483_PIN_URX2, ANX7483_EQ_SETTING_12_5DB);
+	rv = anx7483_test_set_eq(ANX7483_PIN_URX2, ANX7483_EQ_SETTING_12_5DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG0_REG, &val);
+	rv = anx7483_emul_test_get_eq(ANX7483_PIN_URX2, &eq);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG0_EQ_SHIFT) & 0xf,
-		      ANX7483_EQ_SETTING_12_5DB);
+	zexpect_equal(eq, ANX7483_EQ_SETTING_12_5DB);
 
-	rv = anx7483_set_eq(&mux, ANX7483_PIN_DRX1, ANX7483_EQ_SETTING_12_5DB);
+	rv = anx7483_test_set_eq(ANX7483_PIN_DRX1, ANX7483_EQ_SETTING_12_5DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG0_REG, &val);
+	rv = anx7483_emul_test_get_eq(ANX7483_PIN_DRX1, &eq);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG0_EQ_SHIFT) & 0xf,
-		      ANX7483_EQ_SETTING_12_5DB);
+	zexpect_equal(eq, ANX7483_EQ_SETTING_12_5DB);
 
-	rv = anx7483_set_eq(&mux, ANX7483_PIN_DRX2, ANX7483_EQ_SETTING_12_5DB);
+	rv = anx7483_test_set_eq(ANX7483_PIN_DRX2, ANX7483_EQ_SETTING_12_5DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG0_REG, &val);
+	rv = anx7483_emul_test_get_eq(ANX7483_PIN_DRX2, &eq);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG0_EQ_SHIFT) & 0xf,
-		      ANX7483_EQ_SETTING_12_5DB);
+	zexpect_equal(eq, ANX7483_EQ_SETTING_12_5DB);
 
 	/* Test invalid pin. */
-	rv = anx7483_set_eq(&mux, 0xff, ANX7483_EQ_SETTING_12_5DB);
+	rv = anx7483_test_set_eq(0xff, ANX7483_EQ_SETTING_12_5DB);
 	zexpect_not_equal(rv, 0);
 }
 

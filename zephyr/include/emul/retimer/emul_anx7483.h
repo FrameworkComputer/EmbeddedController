@@ -7,6 +7,7 @@
 #define __EMUL_ANX7483_H
 
 #include "driver/retimer/anx7483.h"
+#include "driver/retimer/anx7483_public.h"
 #include "emul/emul_common_i2c.h"
 
 #include <zephyr/device.h>
@@ -122,6 +123,9 @@ int anx7483_emul_set_reg(const struct emul *emul, int r, uint8_t val);
  */
 int anx7483_emul_set_reg_reserved_mask(const struct emul *emul, int r,
 				       uint8_t mask, uint8_t def);
+
+int anx7483_emul_get_eq(const struct emul *emul, enum anx7483_tune_pin pin,
+			enum anx7483_eq_setting *eq);
 
 void anx7483_emul_reset(const struct emul *emul);
 
