@@ -15,3 +15,6 @@ target_sources_ifdef(CONFIG_TEST_USB_PD_POLICY app PRIVATE ${PLATFORM_EC_PROGRAM
 
 target_sources_ifdef(CONFIG_TEST_BOARD_POWER app PRIVATE src/board_power.c)
 target_sources_ifdef(CONFIG_TEST_BOARD_POWER app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/src/board_power.c)
+
+target_sources_ifdef(CONFIG_TEST_BOARD_USB_MUX_CONFIG app PRIVATE src/usb_mux_config.c)
+target_sources_ifdef(CONFIG_TEST_BOARD_USB_MUX_CONFIG app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/rex/src/usb_mux_config.c)
