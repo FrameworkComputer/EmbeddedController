@@ -31,6 +31,7 @@ extern "C" {
 #include "fpsensor_detect.h"
 #include "fpsensor_state.h"
 #include "fpsensor_utils.h"
+#include "scoped_fast_cpu.h"
 
 #if !defined(CONFIG_RNG)
 #error "fpsensor requires RNG"
@@ -212,8 +213,9 @@ static void fp_process_finger(void)
 		res = spi_transaction_flush(&spi_devices[0]);
 		if (res)
 			CPRINTS("Failed to flush SPI: 0x%x", res);
+
 		/* we need CPU power to do the computations */
-		clock_enable_module(MODULE_FAST_CPU, 1);
+		ScopedFastCpu fast_cpu;
 
 		if (sensor_mode & FP_MODE_ENROLL_IMAGE)
 			evt = fp_process_enroll();
@@ -223,9 +225,6 @@ static void fp_process_finger(void)
 		sensor_mode &= ~FP_MODE_ANY_CAPTURE;
 		overall_time_us = time_since32(overall_t0);
 		send_mkbp_event(evt);
-
-		/* go back to lower power mode */
-		clock_enable_module(MODULE_FAST_CPU, 0);
 	} else {
 		timestamps_invalid |= FPSTATS_CAPTURE_INV;
 	}
