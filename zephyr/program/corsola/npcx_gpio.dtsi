@@ -123,7 +123,7 @@
 			gpios = <&gpio7 7 GPIO_INPUT>;
 		};
 		gpio_lid_open: lid_open {
-			gpios = <&gpiod 2 GPIO_INPUT>;
+			gpios = <&gpiod 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_acok_od: acok_od {

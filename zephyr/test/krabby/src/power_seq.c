@@ -124,6 +124,7 @@ ZTEST(power_seq, test_lid_open)
 	const struct gpio_dt_spec *lid_open = gpio_get_dt_spec(GPIO_LID_OPEN);
 
 	gpio_emul_input_set(lid_open->port, lid_open->pin, 0);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(power_get_state(), POWER_G3);
 
 	gpio_emul_input_set(lid_open->port, lid_open->pin, 1);
