@@ -10,6 +10,7 @@
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
+#include "stm32-dma.h"
 #include "timer.h"
 #include "usart-stm32l5.h"
 #include "usb-stream.h"
@@ -266,8 +267,9 @@ static void board_init(void)
 			     STM32_OCTOSPI_DCR1_DEVSIZE_MSK;
 	/* Clock prescaler (max value 255) */
 	STM32_OCTOSPI_DCR2 = spi_devices[1].div;
-	/* Zero dummy cycles */
-	STM32_OCTOSPI_TCR = 0;
+
+	/* Select DMA channel */
+	dma_select_channel(STM32_DMAC_CH13, DMAMUX_REQ_OCTOSPI1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
