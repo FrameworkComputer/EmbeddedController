@@ -117,6 +117,7 @@ enum temp_sensor_id { TEMP_SENSOR_1, TEMP_SENSOR_2, TEMP_SENSOR_COUNT };
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_GANFENG,
+	BATTERY_POWTECH_SG20JL1C,
 	BATTERY_TYPE_COUNT,
 };
 
