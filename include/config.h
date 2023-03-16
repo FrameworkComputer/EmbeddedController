@@ -231,6 +231,9 @@
 /* Send the SCI event to notify host when body status change */
 #undef CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE
 
+/* Send the MKBP event to notify host when body status change */
+#undef CONFIG_BODY_DETECTION_NOTIFY_MKBP
+
 /* Always enable the body detection function in S0 */
 #undef CONFIG_BODY_DETECTION_ALWAYS_ENABLE_IN_S0
 

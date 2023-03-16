@@ -87,6 +87,13 @@ config PLATFORM_EC_BODY_DETECTION_NOTIFY_MODE_CHANGE
 	  status is changed, in addition to adding an event in the motion sensor
 	  FIFO queue.
 
+config PLATFORM_EC_BODY_DETECTION_NOTIFY_MKBP
+	bool "Notify host with MKBP event when the body on/off"
+	default n
+	help
+	  Notify the host via EC_MKBP_FRONT_PROXIMITY
+	  when the body status changed.
+
 config PLATFORM_EC_BODY_DETECTION_ALWAYS_ENABLE_IN_S0
 	bool "Always enable body detection function in S0"
 	default n
