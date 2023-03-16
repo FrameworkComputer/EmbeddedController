@@ -63,6 +63,108 @@
 			gpios = <&gpio0 11 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
+
+		/* Power signals */
+		usb_a1_retimer_en: usb_a1_retimer_en {
+			gpios = <&gpio0 12 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_A1_RETIMER_EN";
+		};
+
+		gpio_ec_disable_disp_bl: ec_disable_disp_bl {
+			gpios = <&gpio0 13 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT_L";
+		};
+
+		gpio_slp_s3_l: slp_s3_l {
+			gpios = <&gpio0 14 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
+			alias = "GPIO_PCH_SLP_S0_L";
+		};
+
+		gpio_slp_s5_l: slp_s5_l {
+			gpios = <&gpio0 15 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S5_L";
+		};
+
+		gpio_s0_pgood: pg_pcore_s0_r_od {
+			gpios = <&gpio0 16 GPIO_INPUT>;
+			enum-name = "GPIO_S0_PGOOD";
+		};
+
+		gpio_prochot_odl: prochot_odl {
+			gpios = <&gpio0 17 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_PROCHOT";
+		};
+
+		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
+			gpios = <&gpio0 18 GPIO_INPUT>;
+		};
+
+		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
+			gpios = <&gpio0 19 GPIO_INPUT>;
+		};
+
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpio0 20 GPIO_OUTPUT_LOW>;
+		};
+
+		gpio_en_pwr_s0_r: en_pwr_s0_r {
+			/*
+			 * Needs to be configured as I/O to allow tested code to
+			 * read this pin.
+			 */
+			gpios = <&gpio0 21 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
+		};
+
+		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
+			gpios = <&gpio0 22 GPIO_INPUT>;
+		};
+
+		gpio_en_pwr_pcore_s0_r: en_pwr_pcore_s0_r {
+			/*
+			 * Needs to be configured as I/O to allow tested code to
+			 * read this pin.
+			 */
+			gpios = <&gpio0 23 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
+		};
+
+		gpio_pcore_ocp_r_l: pcore_ocp_r_l {
+			gpios = <&gpio0 24 GPIO_INPUT>;
+		};
+
+		/* STB dumping GPIOs */
+		gpio_ec_sfh_int_h: ec_sfh_int_h {
+			gpios = <&gpio0 25 GPIO_OUTPUT_LOW>;
+		};
+		gpio_sfh_ec_int_h: sfh_ec_int_h {
+			gpios = <&gpio0 26 GPIO_INPUT>;
+		};
+
+		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
+			gpios = <&gpio0 27 GPIO_OUTPUT_LOW>;
+		};
+
+		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
+			gpios = <&gpio0 28 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+
+		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
+			/*
+			 * Needs to be configured as I/O to allow tested code to
+			 * read this pin.
+			 */
+			gpios = <&gpio0 29 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
+			enum-name = "GPIO_PCH_RSMRST_L";
+		};
+
+		gpio_soc_thermtrip_odl: soc_thermtrip_odl {
+			gpios = <&gpio0 30 GPIO_INPUT>;
+		};
+
+		gpio_hub_rst: hub_rst {
+			gpios = <&gpio0 31 GPIO_OUTPUT_HIGH>;
+		};
 	};
 
 	gpio-interrupts {
@@ -72,6 +174,48 @@
 			irq-pin = <&gpio_accel_gyro_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bmi3xx_interrupt";
+		};
+
+		int_pg_groupc_s0: pg_groupc_s0 {
+			irq-pin = <&gpio_pg_groupc_s0_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_interrupt_handler";
+		};
+
+		int_pg_lpddr_s0: pg_lpddr_s0 {
+			irq-pin = <&gpio_pg_lpddr5_s0_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_interrupt_handler";
+		};
+
+		int_pg_lpddr_s3: pg_lpddr_s3 {
+			irq-pin = <&gpio_pg_lpddr5_s3_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_interrupt_handler";
+		};
+
+		int_prochot: prochot {
+			irq-pin = <&gpio_prochot_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "throttle_ap_prochot_input_interrupt";
+		};
+
+		int_soc_pcore_ocp: soc_pcore_ocp {
+			irq-pin = <&gpio_pcore_ocp_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "baseboard_soc_pcore_ocp";
+		};
+
+		int_soc_thermtrip: soc_thermtrip {
+			irq-pin = <&gpio_soc_thermtrip_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "baseboard_soc_thermtrip";
+		};
+
+		int_stb_dump: stb_dump {
+			irq-pin = <&gpio_sfh_ec_int_h>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "power_interrupt_handler";
 		};
 	};
 
@@ -245,5 +389,5 @@
 };
 
 &gpio0 {
-	ngpios = <23>;
+	ngpios = <32>;
 };

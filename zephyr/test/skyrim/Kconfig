@@ -75,6 +75,11 @@ config TEST_BOARD_USB_PD_POLICY
 	bool "Enable USB PD policy specific tests"
 	select TEST_ENABLE_USB_PD_HOST_CMD
 
+config TEST_BOARD_POWER_SIGNALS
+	bool "Enable power signals tests"
+	select AP_POWER_CONTROL
+	select BOARD_USB_HUB_RESET
+
 config TEST_BOARD_PPC_CONFIG
 	bool "Enable PPC config tests"
 
@@ -97,6 +102,9 @@ config SKYRIM_LOG_LEVEL
 	int "Fake config to allow building"
 	default 4 # Log level debug by default
 
+config AP_POWER_CONTROL
+	bool "Fake config to enable this feature"
+
 config TEST_ENABLE_USB_PD_HOST_CMD
 	bool "Fake config to enable this feature"
 
@@ -104,6 +112,9 @@ config USB_PD_DISCHARGE
 	bool "Fake config to enable this feature"
 
 config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
+	bool "Fake config to enable this feature"
+
+config BOARD_USB_HUB_RESET
 	bool "Fake config to enable this feature"
 
 source "Kconfig.zephyr"

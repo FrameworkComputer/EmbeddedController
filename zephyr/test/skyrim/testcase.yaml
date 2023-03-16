@@ -5,10 +5,19 @@
 common:
   platform_allow: native_posix
 tests:
-  # Baseboard tests
+  # Baseboard tests TEST_BOARD_POWER_SIGNALS
   skyrim.baseboard:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
+
+  skyrim.baseboard.power_signals:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_POWER_SIGNALS=y
+    - CONFIG_PLATFORM_EC_AMD_STB_DUMP=y
+    - CONFIG_PLATFORM_EC_THROTTLE_AP=y
+    - CONFIG_PLATFORM_EC_THROTTLE_AP_NO_FAN=y
+    - CONFIG_PLATFORM_EC_THROTTLE_AP_SINGLE_PIN=y
 
   skyrim.baseboard.usb_pd_policy:
     extra_configs:

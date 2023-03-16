@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+#ifdef CONFIG_ZTEST
+#define CHARGER_SOLO 0
+#endif
+
 #include "ap_power/ap_power.h"
 #include "charger.h"
 #include "chipset.h"
@@ -52,8 +56,9 @@ const struct prochot_cfg prochot_cfg = {
 };
 
 /* Chipset hooks */
-static void baseboard_suspend_change(struct ap_power_ev_callback *cb,
-				     struct ap_power_ev_data data)
+test_export_static void
+baseboard_suspend_change(struct ap_power_ev_callback *cb,
+			 struct ap_power_ev_data data)
 {
 	switch (data.event) {
 	default:
@@ -91,7 +96,7 @@ static void handle_prochot(bool asserted, void *data)
 		ccprints("Charger prochot deasserted externally");
 }
 
-static void baseboard_init(void)
+test_export_static void baseboard_init(void)
 {
 	static struct ap_power_ev_callback cb;
 	const struct gpio_dt_spec *gpio_ec_sfh_int_h =
