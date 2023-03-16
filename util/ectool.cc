@@ -11,7 +11,6 @@
 #include "crc.h"
 #include "cros_ec_dev.h"
 #include "ec_flash.h"
-#include "ec_panicinfo.h"
 #include "ec_version.h"
 #include "ectool.h"
 #include "i2c.h"
