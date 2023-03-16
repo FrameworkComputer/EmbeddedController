@@ -22,6 +22,13 @@ int mock_cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
 	return 0;
 }
 
+int mock_cros_cbi_get_fw_config_anx7452(enum cbi_fw_config_field_id field_id,
+					uint32_t *value)
+{
+	*value = FW_USB_DB_USB4_ANX7452;
+	return 0;
+}
+
 int mock_cros_cbi_get_fw_config_no_usb_db(enum cbi_fw_config_field_id field_id,
 					  uint32_t *value)
 {
@@ -45,6 +52,16 @@ static void usb_mux_config_before(void *fixture)
 ZTEST_USER(usb_mux_config, test_setup_mux)
 {
 	cros_cbi_get_fw_config_fake.custom_fake = mock_cros_cbi_get_fw_config;
+
+	hook_notify(HOOK_INIT);
+
+	zassert_equal(1, cros_cbi_get_fw_config_fake.call_count);
+}
+
+ZTEST_USER(usb_mux_config, test_setup_mux_anx7452)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		mock_cros_cbi_get_fw_config_anx7452;
 
 	hook_notify(HOOK_INIT);
 

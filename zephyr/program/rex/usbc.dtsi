@@ -37,6 +37,12 @@
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_c1 &tcpci_mux_c1>;
 			};
+			usb_mux_chain_anx7452_port1: usb-mux-chain-1-anx7452 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_anx7452_retimer
+					     &virtual_mux_c1>;
+				alternative-chain;
+			};
 		};
 		port1-muxes {
 			tcpci_mux_c1: tcpci-mux-c1 {
