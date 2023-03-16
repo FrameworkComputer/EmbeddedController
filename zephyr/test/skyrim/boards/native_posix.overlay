@@ -105,6 +105,7 @@
 		anx7483_port0: anx7483_emul0@3e {
 			compatible = "cros,anx7483-emul", "analogix,anx7483";
 			reg = <0x3e>;
+			board-set = "board_anx7483_c0_mux_set";
 		};
 	};
 
@@ -119,6 +120,7 @@
 		anx7483_port1: anx7483_emul1@3e {
 			compatible = "cros,anx7483-emul", "analogix,anx7483";
 			reg = <0x3e>;
+			board-set = "board_anx7483_c1_mux_set";
 		};
 
 		ps8811_port1: ps8811_emul@72 {
@@ -212,6 +214,31 @@
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_CHARGER_ISL9538";
 				value = <1>;
+			};
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&anx7483_port0>;
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+
+			usb-mux-chain-1-anx {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&anx7483_port1>;
 			};
 		};
 	};

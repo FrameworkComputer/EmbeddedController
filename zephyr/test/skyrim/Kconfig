@@ -84,8 +84,10 @@ config TEST_BOARD_PPC_CONFIG_CUSTOM
 
 config TEST_BOARD_USB_MUX_CONFIG
 	bool "Enable USB mux config tests"
+	select AP_POWER_CONTROL
 	select PLATFORM_EC_USB_MUX_MOCK
 	select PLATFORM_EC_USBC_RETIMER_PS8811
+	select PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
 
 config TEST_BOARD_USB_MUX_CONFIG_CUSTOM
 	bool "Enable USB mux config tests with a variant-specific test file"
@@ -99,6 +101,9 @@ config TEST_ENABLE_USB_PD_HOST_CMD
 	bool "Fake config to enable this feature"
 
 config USB_PD_DISCHARGE
+	bool "Fake config to enable this feature"
+
+config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
 	bool "Fake config to enable this feature"
 
 source "Kconfig.zephyr"

@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
+#include "chipset.h"
 #include "usbc/usb_muxes.h"
 #include "ztest/usb_mux_config.h"
 
@@ -14,6 +14,24 @@ int ioex_set_flip(int port, mux_state_t mux_state);
 int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state);
 
 DEFINE_FAKE_VOID_FUNC(usb_mux_enable_alternative);
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+enum tcpc_cc_polarity pd_get_polarity(int port)
+{
+	return 0;
+}
+
+FAKE_VOID_FUNC(chipset_force_shutdown, enum chipset_shutdown_reason);
+FAKE_VALUE_FUNC(int, extpower_is_present);
+
+int chipset_in_state(int mask)
+{
+	return mask & CHIPSET_STATE_ON;
+}
 
 ZTEST_SUITE(usb_mux_config_common, NULL, NULL, NULL, NULL, NULL);
 
