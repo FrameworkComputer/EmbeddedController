@@ -27,9 +27,6 @@ static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asser
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
 
-static void board_power_off(void);
-DECLARE_DEFERRED(board_power_off);
-
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
 	[X86_3VALW_PG] = {
@@ -184,10 +181,12 @@ enum power_state power_handle_state(enum power_state state)
 				}
 			}
 			/* Power up to next state */
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
 			return POWER_S5S3;
 		}
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 1) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
 			/* Power up to next state */
 			return POWER_S5S3;
 		}
@@ -206,6 +205,7 @@ enum power_state power_handle_state(enum power_state state)
 			k_msleep(10);
 			return POWER_S3S0;
 		} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
 			k_msleep(55);
 			/* Power down to next state */
 			return POWER_S3S5;
@@ -289,9 +289,6 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-
-		/* call board power off function to try to hibernate if DC only*/
-		hook_call_deferred(&board_power_off_data,  100 * MSEC);
 		return POWER_G3;
 	default:
 		break;
@@ -338,26 +335,23 @@ static void peripheral_power_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
 
-static void board_power_off(void)
-{
-	/* TODO: check the chassis open behavior */
-
-	/**
-	 * The conditions of the board power off:
-	 * 1. DC only
-	 * 2. chipset state in S5/G3
-	 * 3. power button doesn't assert
-	 */
-
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1)
-		system_enter_hibernate(1, 0);
-}
-DECLARE_HOOK(HOOK_INIT, board_power_off, HOOK_PRIO_DEFAULT+1);
-DECLARE_HOOK(HOOK_AC_CHANGE, board_power_off, HOOK_PRIO_DEFAULT);
-
 void chipset_throttle_cpu(int throttle)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
 }
+
+static void usb30_hub_reset(void)
+{
+	/**
+	 * This hook is called when the system warm boots or cold boots,
+	 * adding the delay time to filter the cold boot condition.
+	 */
+	usleep(200 * MSEC);
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
+		usleep(10 * MSEC);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, usb30_hub_reset, HOOK_PRIO_DEFAULT);
