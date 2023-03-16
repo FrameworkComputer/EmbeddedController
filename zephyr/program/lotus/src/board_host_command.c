@@ -34,7 +34,6 @@ static void sci_enable(void)
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, sci_enable, HOOK_PRIO_DEFAULT);
 
 static void sci_disable(void)
 {
@@ -51,12 +50,7 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 	case FLASH_FIRMWARE_START:
 		CPRINTS("Start flashing firmware, flags:0x%02x", p->flags);
 		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_powerbtn));
-		
-		/**
-		 * TODO: After LID switch function is impelmented, disable the
-		 * interrupt fo the lid switch pin
-		 * gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(lid_sw));
-		 */
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
 
 		if ((p->flags & FLASH_FLAG_PD) == FLASH_FLAG_PD) {
 			gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
@@ -71,12 +65,7 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_powerbtn));
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip1_interrupt));
-
-		/**
-		 * TODO: After LID switch function is impelmented, enable the
-		 * interrupt fo the lid switch pin
-		 * gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(lid_sw));
-		 */
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
 
 		set_pd_fw_update(false);
 		/* resetup PD controllers */
@@ -117,10 +106,7 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 *	EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 	 */
 
-	/**
-	 * TODO: clear ACPI ready flags for pre-os
-	 * *host_get_customer_memmap(0x00) &= ~BIT(0);
-	 */
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~BIT(0);
 
 	return EC_RES_SUCCESS;
 }
@@ -128,12 +114,7 @@ DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0)
 
 static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 {
-	/**
-	 * TODO:
-	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
-	 * every boot up (both cold boot and warn boot)
-	 * hook_call_deferred(&sci_enable_data, 250 * MSEC);
-	 */
+	hook_call_deferred(&sci_enable_data, 250 * MSEC);
 
 	return EC_RES_SUCCESS;
 }
