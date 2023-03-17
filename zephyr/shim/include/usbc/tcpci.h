@@ -4,6 +4,7 @@
  */
 
 #include "driver/tcpm/tcpci.h"
+#include "usbc/tcpc_rt1715.h"
 
 #include <zephyr/devicetree.h>
 
@@ -58,6 +59,12 @@
 #define TCPC_ALT_DECLARE(node_id)                   \
 	COND_CODE_1(DT_PROP_OR(node_id, is_alt, 0), \
 		    (TCPC_ALT_DECLARATION(node_id);), ())
+
+/*
+ * Forward declare a struct tcpc_config_t for every TCPC node in the tree with
+ * the "is-alt" property set.
+ */
+DT_FOREACH_STATUS_OKAY(RT1715_TCPC_COMPAT, TCPC_ALT_DECLARE)
 
 #define TCPC_ENABLE_ALTERNATE_BY_NODELABEL(usb_port_num, nodelabel) \
 	memcpy(&tcpc_config[usb_port_num],                          \

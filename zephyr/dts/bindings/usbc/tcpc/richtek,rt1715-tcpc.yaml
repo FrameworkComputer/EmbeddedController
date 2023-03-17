@@ -1,0 +1,21 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC RT1715 TCPC
+
+compatible: "richtek,rt1715-tcpc"
+
+include: ["i2c-device.yaml", "cros-ec,tcpci.yaml"]
+
+properties:
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
+  irq-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      Interrupt from TCPC
