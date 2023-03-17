@@ -88,7 +88,7 @@ static bool is_s5g3_passed;
  * indicate exiting off state, and don't respect the power signals until chipset
  * on.
  */
-static bool is_exiting_off = true;
+static bool is_exiting_off;
 
 /* Turn on the PMIC power source to AP, this also boots AP. */
 static void set_pmic_pwron(void)
@@ -287,6 +287,14 @@ enum power_state power_chipset_init(void)
 		return init_state;
 	}
 
+	/* If the init signal state is at S5, assigns it to G3 to match the
+	 * default GPIO and PP4200_S5 rail states.
+	 */
+	if (init_state == POWER_S5) {
+		init_state = POWER_G3;
+		is_s5g3_passed = true;
+	}
+
 	if (battery_is_present() == BP_YES)
 		/*
 		 * (crosbug.com/p/28289): Wait battery stable.
@@ -295,14 +303,9 @@ enum power_state power_chipset_init(void)
 		 */
 		battery_wait_for_stable();
 
-	if (exit_hard_off) {
-		if (init_state == POWER_S5 || init_state == POWER_G3) {
-			/* Auto-power on */
-			mt8186_exit_off();
-		} else {
-			is_exiting_off = false;
-		}
-	}
+	if (exit_hard_off && init_state == POWER_G3)
+		/* Auto-power on */
+		mt8186_exit_off();
 
 	if (init_state != POWER_G3 && !exit_hard_off)
 		/* Force shutdown from S5 if the PMIC is already up. */
