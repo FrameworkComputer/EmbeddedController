@@ -57,5 +57,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
+		int_chassis_open: chassis_open {
+			irq-pin = <&gpio_chassis_open_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "chassis_open_interrupt";
+		};
 	};
 };

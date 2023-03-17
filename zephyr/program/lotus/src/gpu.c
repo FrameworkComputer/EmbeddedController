@@ -7,49 +7,95 @@
  */
 
 #include "adc.h"
+#include "gpu.h"
 #include "board_adc.h"
 #include "console.h"
 #include "system.h"
 #include "hooks.h"
 
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
+LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 
+#define VALID_BOARDID(ID1, ID0) ((ID1 <<8) + ID0)
 
-#ifdef CONFIG_PLATFORM_EC_GPU_POWER_CONTROL
-
-static void check_gpu_module(void)
+static int module_present = 0;
+bool gpu_present(void)
 {
-	int gpu_board_version_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
-	int gpu_board_version_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
-	int prevent_power_on = 0;
+	return module_present;
+}
 
-	if (gpu_board_version_0 == BOARD_VERSION_13) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-	} else if (gpu_board_version_0 == BOARD_VERSION_11) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 1);
-	} else if (gpu_board_version_0 == BOARD_VERSION_12) {
-		if (gpu_board_version_1 == BOARD_VERSION_12) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 1);
-		} else {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-			prevent_power_on = 1;
-		}
-	} else {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-		prevent_power_on = 1;
+void check_gpu_module(void)
+{
+	int gpu_id_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
+	int gpu_id_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
+	int module_present = 0;
+	int gpu_detected = 0;
+
+	switch (VALID_BOARDID(gpu_id_1, gpu_id_0)) {
+	case VALID_BOARDID(BOARD_VERSION_12, BOARD_VERSION_12):
+		LOG_INF("Detected dual interposer device");
+		module_present = 1;
+		gpu_detected = 1;
+		break;
+	case VALID_BOARDID(BOARD_VERSION_11, BOARD_VERSION_15):
+	case VALID_BOARDID(BOARD_VERSION_13, BOARD_VERSION_15):
+		LOG_INF("Detected single interposer device");
+		module_present = 1;
+		break;
+
+	default:
+		LOG_INF("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
+		module_present = 0;
+	break;
 	}
 
-	/* TODO: LED blink error*/
-	if (prevent_power_on)
-		CPRINTS("GPU connect error, prevent power on");
+	if (module_present) {
+		module_present = 1;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
+		if (gpu_detected) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 1);
+		}
+	} else {
+		module_present = 0;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
+	}
 }
+DECLARE_DEFERRED(check_gpu_module);
 DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
 
-#endif /* CONFIG_PLATFORM_EC_GPU_POWER_CONTROL */
 
+void chassis_open_interrupt(enum gpio_signal signal)
+{
+	/* Make sure the module is off as fast as possible! */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+	module_present = 0;
+
+	hook_call_deferred(&check_gpu_module_data, 50*MSEC);
+}
+
+/* Interrupt was not working for some reason, poll*/
+static int prev_open_state;
+static void poll_gpu(void)
+{
+	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
+	if (open_state != prev_open_state) {
+		if (open_state) {
+			check_gpu_module();
+		} else {
+			LOG_INF("Powering off GPU");
+			/* Make sure the module is off as fast as possible! */
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+			module_present = 0;
+		}
+
+	}
+
+	prev_open_state = open_state;
+
+}
+DECLARE_HOOK(HOOK_TICK, poll_gpu, HOOK_PRIO_DEFAULT);

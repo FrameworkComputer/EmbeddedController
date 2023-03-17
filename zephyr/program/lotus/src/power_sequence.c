@@ -14,6 +14,7 @@
 #include "power_sequence.h"
 #include "task.h"
 #include "util.h"
+#include "gpu.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
@@ -222,7 +223,10 @@ enum power_state power_handle_state(enum power_state state)
 		 * power up from S5.
 		 */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
+		if (gpu_present()) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
+		}
+
 		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 1);
@@ -289,6 +293,7 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
+
 		return POWER_G3;
 	default:
 		break;
