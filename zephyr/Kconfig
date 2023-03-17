@@ -562,6 +562,13 @@ config PLATFORM_EC_BUTTON_DEBOUNCE
 	help
 	  Configure the button debounce time in us per project requirement.
 
+config PLATFORM_EC_PSE_LTC4291
+	bool "power sourcing equipment (PSE)  support"
+	help
+	  Enable the power sourcing equipment (PSE) driver support for
+	  Analog Device power over ethernet (PoE) power sourcing equipment (PSE)
+	  controller.
+
 config PLATFORM_EC_PWM_HC
 	bool
 	help

@@ -124,6 +124,9 @@ driver-$(CONFIG_GPU_NVIDIA)+=nvidia_gpu.o
 # Voltage regulators
 driver-$(CONFIG_REGULATOR_IR357X)+=regulator_ir357x.o
 
+# Power Sourcing Equipment
+driver-$(CONFIG_PSE_LTC4291)+=pse_ltc4291.o
+
 # Temperature sensors
 driver-$(CONFIG_TEMP_SENSOR_ADT7481)+=temp_sensor/adt7481.o
 driver-$(CONFIG_TEMP_SENSOR_BD99992GW)+=temp_sensor/bd99992gw.o

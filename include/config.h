@@ -3748,6 +3748,9 @@
 /* Support PS/2 interface */
 #undef CONFIG_PS2
 
+/* Support Power Sourcing Equipment */
+#undef CONFIG_PSE_LTC4291
+
 /*
  * Define this option to enable programmable voltage detector which will
  * trigger an interrupt when the voltage drops below a threshold specified
