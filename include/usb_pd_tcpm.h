@@ -134,6 +134,17 @@ static inline int cc_is_open(enum tcpc_cc_voltage_status cc1,
 }
 
 /**
+ * Returns true if we detect a powered cable without sink attached.
+ * This is a pair of Ra and Open.
+ */
+static inline int cc_is_pwred_cbl_without_snk(enum tcpc_cc_voltage_status cc1,
+					      enum tcpc_cc_voltage_status cc2)
+{
+	return (cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_OPEN) ||
+	       (cc1 == TYPEC_CC_VOLT_OPEN && cc2 == TYPEC_CC_VOLT_RA);
+}
+
+/**
  * Returns true if we detect the port partner is a snk debug accessory.
  */
 static inline int cc_is_snk_dbg_acc(enum tcpc_cc_voltage_status cc1,

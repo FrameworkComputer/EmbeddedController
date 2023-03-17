@@ -296,7 +296,7 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 		((drp_state == PD_DRP_TOGGLE_ON) && auto_toggle_supported);
 
 	/* Set to appropriate port state */
-	if (cc_is_open(cc1, cc2)) {
+	if (cc_is_open(cc1, cc2) || cc_is_pwred_cbl_without_snk(cc1, cc2)) {
 		/*
 		 * If nothing is attached then use drp_state to determine next
 		 * state. If DRP auto toggle is still on, then remain in the
