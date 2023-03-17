@@ -136,8 +136,9 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
 	int cur_lvl = svdm_get_hpd_gpio(port);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
-	mux_state_t mux_state;
+	mux_state_t mux_state, mux_mode;
 
+	mux_mode = svdm_dp_get_mux_mode(port);
 	dp_status[port] = payload[1];
 
 	if (!is_dp_muxable(port)) {
@@ -149,7 +150,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	if (lvl) {
 		set_dp_path_sel(port);
 
-		usb_mux_set(port, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT,
+		usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
 		usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
