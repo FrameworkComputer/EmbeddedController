@@ -30,6 +30,26 @@ def register_nissa_project(
     )
 
 
+def register_nivviks_project(
+    project_name,
+):
+    """Wrapper function for registering a variant of nivviks."""
+    return register_nissa_project(
+        project_name=project_name,
+        chip="npcx9m3f",
+    )
+
+
+def register_nereid_project(
+    project_name,
+):
+    """Wrapper function for registering a variant of nereid."""
+    return register_nissa_project(
+        project_name=project_name,
+        chip="it81302bx",
+    )
+
+
 nivviks = register_nissa_project(
     project_name="nivviks",
     chip="npcx9m3f",
