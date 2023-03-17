@@ -6,6 +6,9 @@
 #ifndef __UTIL_MISC_UTIL_H
 #define __UTIL_MISC_UTIL_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #define GENERIC_MAX(x, y) ((x) > (y) ? (x) : (y))
 #define GENERIC_MIN(x, y) ((x) < (y) ? (x) : (y))
 #ifndef MAX

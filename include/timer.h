@@ -9,6 +9,8 @@
 #define __CROS_EC_TIMER_H
 
 #ifndef CONFIG_ZEPHYR
+#include <time.h>
+
 #include <sys/types.h>
 #else
 /* Data type for POSIX style clock() implementation */
