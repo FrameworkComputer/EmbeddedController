@@ -6,7 +6,7 @@
 """ Upload twister results to ResultDB
 
     Usage:
-    $ rdb stream -new -realm chromium:public -var builder_name:${HOSTNAME%%.*}
+    $ rdb stream -new -realm chromium:public -tag builder_name:${HOSTNAME%%.*}
       -- ./util/zephyr_to_resultdb.py --results=twister-out/twister.json
       --upload=True
 """
@@ -117,11 +117,9 @@ def testcase_to_result(testsuite, testcase, base_tags, config_tags):
             },
         },
         "tags": [
+            {"key": "suite", "value": testsuite["name"]},
             {"key": "platform", "value": testsuite["platform"]},
         ],
-        "variant": {
-            "def": {"suite": testsuite["name"]},
-        },
         "duration": translate_duration(testcase),
         "testMetadata": {"name": testcase["identifier"]},
     }

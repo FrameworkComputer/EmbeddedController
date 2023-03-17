@@ -191,7 +191,7 @@ def upload_results(ec_base, outdir):
                 "-new",
                 "-realm",
                 "chromium:public",
-                "-var",
+                "-tag",
                 "builder_name:" + hostname,
                 "--",
                 "vpython3",
