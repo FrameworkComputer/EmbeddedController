@@ -1,0 +1,28 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&amd_fp6_emul0>;
+			};
+		};
+	};
+};
+
+&i2c2 {
+	status="okay";
+
+	amd_fp6_emul0: amd_fp6_emul@5c {
+		compatible = "amd,usbc-mux-amd-fp6";
+		status = "okay";
+		reg = <0x5c>;
+	};
+};

@@ -17,6 +17,9 @@ config LINK_TEST_SUITE_CONSOLE_CMD_CRASH
 config LINK_TEST_SUITE_CONSOLE_CMD_MFALLOW
 	bool "Link and test the console command mfallow test suite"
 
+config LINK_TEST_SUITE_AMD_FP6_USB_MUX
+	bool "Link and test the AMD FP6 USB mux tests"
+
 config LINK_TEST_SUITE_ANX7447
 	bool "Link and test the anx7447 tests"
 

@@ -52,6 +52,12 @@ tests:
       - CONFIG_POWER_SEQUENCE_MOCK=y
       - CONFIG_PLATFORM_EC_USB_PD_DPS=y
       - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+  drivers.amd_fp6_usb_mux:
+    extra_dtc_overlay_files:
+      - ./boards/native_posix.overlay
+      - ./amd_fp6_usb_mux/usbc.dts
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_AMD_FP6_USB_MUX=y
   drivers.anx7447:
     extra_args: CONF_FILE="prj.conf;anx7447/prj.conf"
       DTC_OVERLAY_FILE="./boards/native_posix.overlay;./anx7447/tcpc_policy.dts"
