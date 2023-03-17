@@ -205,6 +205,7 @@ build_boards: | $(FAILED_BOARDS_DIR)
 
 .PHONY: buildall_only
 buildall_only: build_boards build_cros_ec_commands
+	$(MAKE) BOARD=host utils
 	$(MAKE) build_cts
 	$(MAKE) buildfuzztests
 
