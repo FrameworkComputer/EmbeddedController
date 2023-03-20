@@ -142,6 +142,9 @@ BOARDS_RAIDEN=(
 	soraka
 )
 
+BOARDS_MCHP_INT_SPI=(
+	mtlrvpp_mchp
+)
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
 BITBANG_RATE="57600"  # Could be overwritten by a command line option.
 
@@ -157,6 +160,8 @@ DEFINE_boolean dry_run "${FLAGS_FALSE}" \
 	"Print the commands to be run instead of actually running them."
 DEFINE_string image "" \
 	"Full pathname of the EC firmware image to flash."
+DEFINE_string mchp_loader "" \
+	"Full pathname of the Microchip loader firmware image to SRAM."
 DEFINE_string logfile "" \
 	"Stm32 only: pathname of the file to store communications log."
 DEFINE_string offset "0" \
@@ -322,6 +327,10 @@ if in_array "${BOARDS_IT83XX_SPI_PROGRAMMING[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("ite_spi")
 fi
 
+if in_array "${BOARDS_MCHP_INT_SPI[@]}" "${BOARD}"; then
+	SUPPORTED_CHIPS+=("mchp_int_spi")
+fi
+
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
 	SUPPORTED_CHIPS+=("${FLAGS_chip}")
 fi
@@ -379,7 +388,7 @@ esac
 
 case "${CHIP}" in
 	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi"| \
-			"ite_spi_ccd_i2c"|"it8xxx2")
+			"ite_spi_ccd_i2c"|"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
@@ -748,6 +757,29 @@ function ec_image() {
 		fi
 	fi
 	die "no EC image found : build one or specify one."
+}
+
+# Find the Loader image to use
+function mchp_loader_image() {
+	# If no image specified on the command line, try default ones
+	if [[ -n "${FLAGS_mchp_loader}" ]] ; then
+		if [ -e "${FLAGS_mchp_loader}" ] || \
+		   [ "${FLAGS_mchp_loader}" == "-" ]; then
+			echo "${FLAGS_mchp_loader}"
+			return
+		fi
+		die "Invalid image path: ${FLAGS_mchp_loader}"
+	else
+		if [ -f "${LOCAL_BUILD}" ]; then
+			echo "${LOCAL_BUILD}"
+			return
+		fi
+		if [ -f "${EMERGE_BUILD}" ]; then
+			echo "${EMERGE_BUILD}"
+			return
+		fi
+	fi
+	die "No loader image found: build one or specify one"
 }
 
 # Get the correct UART for flashing. The resulting string is concatenated with
@@ -1615,8 +1647,37 @@ function flash_npcx_int_spi() {
 	flash_flashrom
 }
 
-function flash_mec1322() {
-	flash_flashrom
+function flash_mchp_int_spi() {
+	EC_UART="$(servo_ec_uart)"
+	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
+
+	# Use of --value_only argument helps to get only baudrate value.
+	current_baudrate="$(dut_control_get "${EC_UART_PREFIX}"_baudrate)"
+
+	# On script exit, serial port will be configured back with saved
+	# baudrate by servo_restore thru cleanup method
+	servo_save_add "${EC_UART_PREFIX}_baudrate" "${current_baudrate}"
+
+	# Reset chip in firmware update mode
+	dut_control cold_reset:on fw_up:on cold_reset:off
+
+	# Set 9600 baudrate to program Second loader image
+	sec_load_baudrate=9600
+	if [ "${current_baudrate}" != "${sec_load_baudrate}" ] ; then
+	   dut_control "${EC_UART_PREFIX}"_baudrate:"${sec_load_baudrate}"
+	fi
+	# Load Second loader image into SRAM
+	mchp/crisis_rcvry_util.py -s "$(mchp_loader_image)" -p "${EC_UART}"
+
+	# Set 57600 baudrate to program EC image
+	image_load_baudrate=57600
+	dut_control "${EC_UART_PREFIX}"_baudrate:"${image_load_baudrate}"
+
+	# Flash EC image into the internal flash
+	mchp/crisis_rcvry_util.py -e "$(ec_image)" -p "${EC_UART}"
+
+	# Reset chip in firmware execution mode
+	dut_control cold_reset:on fw_up:off cold_reset:off
 }
 
 info "Using ${SERVO_TYPE}."
