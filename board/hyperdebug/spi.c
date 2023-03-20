@@ -354,12 +354,12 @@ static int octospi_indirect_read(const uint8_t *control_data, int control_len,
 /*
  * Board-specific SPI driver entry point, called by usb_spi.c.
  */
-void usb_spi_board_enable(struct usb_spi_config const *config)
+void usb_spi_board_enable(void)
 {
 	/* All initialization already done in board_init(). */
 }
 
-void usb_spi_board_disable(struct usb_spi_config const *config)
+void usb_spi_board_disable(void)
 {
 }
 

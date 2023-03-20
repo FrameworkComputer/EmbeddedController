@@ -84,12 +84,12 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-USB_SPI_CONFIG(usb_spi, USB_IFACE_I2C_SPI, USB_EP_I2C_SPI, 0);
+USB_SPI_CONFIG(USB_IFACE_I2C_SPI, USB_EP_I2C_SPI, 0);
 /* SPI interface is always enabled, no need to do anything. */
-void usb_spi_board_enable(struct usb_spi_config const *config)
+void usb_spi_board_enable(void)
 {
 }
-void usb_spi_board_disable(struct usb_spi_config const *config)
+void usb_spi_board_disable(void)
 {
 }
 #endif /* !HAS_SPI_TOUCHPAD */
@@ -206,7 +206,7 @@ static void board_init(void)
 	spi_enable(&spi_devices[SPI_ST_TP_DEVICE_ID], 0);
 
 	/* Disable SPI passthrough when the system is locked */
-	usb_spi_enable(&usb_spi, system_is_locked());
+	usb_spi_enable(system_is_locked());
 
 	/* Set all four SPI pins to high speed */
 	/* pins B3/5, A15 */

@@ -521,9 +521,6 @@ struct usb_spi_state {
  * together all information required to operate a USB gpio.
  */
 struct usb_spi_config {
-	/* In RAM state of the USB SPI bridge. */
-	struct usb_spi_state *state;
-
 	/* Interface and endpoint indices. */
 	int interface;
 	int endpoint;
@@ -539,6 +536,10 @@ struct usb_spi_config {
 	uint32_t flags;
 };
 
+/* Storage of configuration and state of USB->SPI bridge. */
+extern struct usb_spi_state usb_spi_state;
+extern struct usb_spi_config const usb_spi;
+
 /*
  * Use when you want the SPI subsystem to be enabled even when the USB SPI
  * endpoint is not enabled by the host. This means that when this firmware
@@ -550,9 +551,6 @@ struct usb_spi_config {
 /*
  * Convenience macro for defining a USB SPI bridge driver.
  *
- * NAME is used to construct the names of the trampoline functions and the
- * usb_spi_config struct, the latter is just called NAME.
- *
  * INTERFACE is the index of the USB interface to associate with this
  * SPI driver.
  *
@@ -562,30 +560,28 @@ struct usb_spi_config {
  * FLAGS encodes different run-time control parameters. See
  * USB_SPI_CONFIG_FLAGS_* for definitions.
  */
-#define USB_SPI_CONFIG(NAME, INTERFACE, ENDPOINT, FLAGS)                    \
-	static uint16_t CONCAT2(NAME,                                       \
-				_buffer_)[(USB_SPI_BUFFER_SIZE + 1) / 2];   \
-	static usb_uint CONCAT2(                                            \
-		NAME, _ep_rx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram;   \
-	static usb_uint CONCAT2(                                            \
-		NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram;   \
-	static void CONCAT2(NAME, _deferred_)(void);                        \
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));                        \
-	struct usb_spi_state CONCAT2(NAME, _state_) = {                     \
+#define USB_SPI_CONFIG(INTERFACE, ENDPOINT, FLAGS)                          \
+	static uint16_t usb_spi_buffer_[(USB_SPI_BUFFER_SIZE + 1) / 2];     \
+	static usb_uint                                                     \
+		usb_spi_ep_rx_buffer_[USB_MAX_PACKET_SIZE / 2] __usb_ram;   \
+	static usb_uint                                                     \
+		usb_spi_ep_tx_buffer_[USB_MAX_PACKET_SIZE / 2] __usb_ram;   \
+	static void usb_spi_deferred_(void);                                \
+	DECLARE_DEFERRED(usb_spi_deferred_);                                \
+	struct usb_spi_state usb_spi_state = {                              \
 		.enabled_host = 0,                                          \
 		.enabled_device = 0,                                        \
 		.enabled = 0,                                               \
 		.current_spi_device_idx = 0,                                \
-		.spi_write_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_), \
-		.spi_read_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_),  \
+		.spi_write_ctx.buffer = (uint8_t *)usb_spi_buffer_,         \
+		.spi_read_ctx.buffer = (uint8_t *)usb_spi_buffer_,          \
 	};                                                                  \
-	struct usb_spi_config const NAME = {                                \
-		.state = &CONCAT2(NAME, _state_),                           \
+	struct usb_spi_config const usb_spi = {                             \
 		.interface = INTERFACE,                                     \
 		.endpoint = ENDPOINT,                                       \
-		.deferred = &CONCAT2(NAME, _deferred__data),                \
-		.ep_rx_ram = CONCAT2(NAME, _ep_rx_buffer_),                 \
-		.ep_tx_ram = CONCAT2(NAME, _ep_tx_buffer_),                 \
+		.deferred = &usb_spi_deferred__data,                        \
+		.ep_rx_ram = usb_spi_ep_rx_buffer_,                         \
+		.ep_tx_ram = usb_spi_ep_tx_buffer_,                         \
 		.flags = FLAGS,                                             \
 	};                                                                  \
 	const struct usb_interface_descriptor USB_IFACE_DESC(INTERFACE) = { \
@@ -615,35 +611,34 @@ struct usb_spi_config {
 		.wMaxPacketSize = USB_MAX_PACKET_SIZE,                      \
 		.bInterval = 0,                                             \
 	};                                                                  \
-	static void CONCAT2(NAME, _ep_tx_)(void)                            \
+	static void usb_spi_ep_tx_(void)                                    \
 	{                                                                   \
-		usb_spi_tx(&NAME);                                          \
+		usb_spi_tx();                                               \
 	}                                                                   \
-	static void CONCAT2(NAME, _ep_rx_)(void)                            \
+	static void usb_spi_ep_rx_(void)                                    \
 	{                                                                   \
-		usb_spi_rx(&NAME);                                          \
+		usb_spi_rx();                                               \
 	}                                                                   \
-	static void CONCAT2(NAME, _ep_event_)(enum usb_ep_event evt)        \
+	static void usb_spi_ep_event_(enum usb_ep_event evt)                \
 	{                                                                   \
-		usb_spi_event(&NAME, evt);                                  \
+		usb_spi_event(evt);                                         \
 	}                                                                   \
-	USB_DECLARE_EP(ENDPOINT, CONCAT2(NAME, _ep_tx_),                    \
-		       CONCAT2(NAME, _ep_rx_), CONCAT2(NAME, _ep_event_));  \
-	static int CONCAT2(NAME, _interface_)(usb_uint * rx_buf,            \
-					      usb_uint * tx_buf)            \
+	USB_DECLARE_EP(ENDPOINT, usb_spi_ep_tx_, usb_spi_ep_rx_,            \
+		       usb_spi_ep_event_);                                  \
+	static int usb_spi_interface_(usb_uint *rx_buf, usb_uint *tx_buf)   \
 	{                                                                   \
-		return usb_spi_interface(&NAME, rx_buf, tx_buf);            \
+		return usb_spi_interface(rx_buf, tx_buf);                   \
 	}                                                                   \
-	USB_DECLARE_IFACE(INTERFACE, CONCAT2(NAME, _interface_));           \
-	static void CONCAT2(NAME, _deferred_)(void)                         \
+	USB_DECLARE_IFACE(INTERFACE, usb_spi_interface_);                   \
+	static void usb_spi_deferred_(void)                                 \
 	{                                                                   \
-		usb_spi_deferred(&NAME);                                    \
+		usb_spi_deferred();                                         \
 	}
 
 /*
  * Handle SPI request in a deferred callback.
  */
-void usb_spi_deferred(struct usb_spi_config const *config);
+void usb_spi_deferred(void);
 
 /*
  * Set the enable state for the USB-SPI bridge.
@@ -653,24 +648,23 @@ void usb_spi_deferred(struct usb_spi_config const *config);
  * available for host tools to use without forcing the device to
  * disconnect or disable whatever else might be using the SPI bus.
  */
-void usb_spi_enable(struct usb_spi_config const *config, int enabled);
+void usb_spi_enable(int enabled);
 
 /*
  * These functions are used by the trampoline functions defined above to
  * connect USB endpoint events with the generic USB GPIO driver.
  */
-void usb_spi_tx(struct usb_spi_config const *config);
-void usb_spi_rx(struct usb_spi_config const *config);
-void usb_spi_event(struct usb_spi_config const *config, enum usb_ep_event evt);
-int usb_spi_interface(struct usb_spi_config const *config, usb_uint *rx_buf,
-		      usb_uint *tx_buf);
+void usb_spi_tx(void);
+void usb_spi_rx(void);
+void usb_spi_event(enum usb_ep_event evt);
+int usb_spi_interface(usb_uint *rx_buf, usb_uint *tx_buf);
 
 /*
  * These functions should be implemented by the board to provide any board
  * specific operations required to enable or disable access to the SPI device.
  */
-void usb_spi_board_enable(struct usb_spi_config const *config);
-void usb_spi_board_disable(struct usb_spi_config const *config);
+void usb_spi_board_enable(void);
+void usb_spi_board_disable(void);
 
 /*
  * In order to facilitate special SPI busses not covered by standard EC

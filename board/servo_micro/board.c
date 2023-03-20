@@ -302,7 +302,7 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-void usb_spi_board_enable(struct usb_spi_config const *config)
+void usb_spi_board_enable(void)
 {
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI_FLASH, 1);
@@ -320,7 +320,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	spi_enable(&spi_devices[0], 1);
 }
 
-void usb_spi_board_disable(struct usb_spi_config const *config)
+void usb_spi_board_disable(void)
 {
 	spi_enable(&spi_devices[0], 0);
 
@@ -331,7 +331,7 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	gpio_config_module(MODULE_SPI_FLASH, 0);
 }
 
-USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
+USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI, 0);
 
 /******************************************************************************
  * Support I2C bridging over USB.
@@ -380,8 +380,8 @@ static void board_init(void)
 	/* Enable GPIO expander. */
 	gpio_set_level(GPIO_TCA6416_RESET_L, 1);
 
-	/* Structured enpoints */
-	usb_spi_enable(&usb_spi, 1);
+	/* Structured endpoints */
+	usb_spi_enable(1);
 
 	/* Enable UARTs by default. */
 	gpio_set_level(GPIO_UART1_EN_L, 0);
@@ -418,6 +418,6 @@ static void board_jump(void)
 	usart_shutdown(&usart4);
 
 	/* Shutdown other hardware modules and let RW reinitialize them */
-	usb_spi_enable(&usb_spi, 0);
+	usb_spi_enable(0);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, board_jump, HOOK_PRIO_DEFAULT);

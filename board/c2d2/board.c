@@ -297,7 +297,7 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-void usb_spi_board_enable(struct usb_spi_config const *config)
+void usb_spi_board_enable(void)
 {
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI_FLASH, 1);
@@ -315,7 +315,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	spi_enable(&spi_devices[0], 1);
 }
 
-void usb_spi_board_disable(struct usb_spi_config const *config)
+void usb_spi_board_disable(void)
 {
 	spi_enable(&spi_devices[0], 0);
 
@@ -329,7 +329,7 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	STM32_GPIO_OSPEEDR(GPIO_B) &= ~0xff000000;
 }
 
-USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI,
+USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI,
 	       USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE);
 
 /******************************************************************************
@@ -531,7 +531,7 @@ static int command_enable_spi(int argc, const char **argv)
 			gpio_set_level(GPIO_EN_CLK_CSN_EC_UART, 0);
 
 			/* Disable SPI. Sets SPI pins to inputs. */
-			usb_spi_enable(&usb_spi, 0);
+			usb_spi_enable(0);
 
 			/* Set default state for chip select */
 			gpio_set_flags(GPIO_SPI_CSN, GPIO_INPUT);
@@ -584,7 +584,7 @@ static int command_enable_spi(int argc, const char **argv)
 			gpio_set_flags(GPIO_SPI_CSN, GPIO_OUT_HIGH);
 
 			/* Enable SPI. Sets SPI pins to SPI alternate mode. */
-			usb_spi_enable(&usb_spi, 1);
+			usb_spi_enable(1);
 
 			/* Set requested Vref voltage */
 			gpio_set_level(GPIO_SEL_SPIVREF_H1VREF_3V3,
@@ -1072,6 +1072,6 @@ static void board_jump(void)
 	usart_shutdown(&usart4);
 
 	/* Ensure SPI2 is disabled as well */
-	usb_spi_enable(&usb_spi, 0);
+	usb_spi_enable(0);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, board_jump, HOOK_PRIO_DEFAULT);

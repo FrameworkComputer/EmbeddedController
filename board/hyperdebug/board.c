@@ -122,7 +122,7 @@ USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
  * usb_spi_board_disable to be defined to enable and disable the SPI bridge.
  */
 
-USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
+USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI, 0);
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
@@ -210,7 +210,7 @@ static void board_init(void)
 	usart_init(&usart5);
 
 	/* Structured endpoints */
-	usb_spi_enable(&usb_spi, 1);
+	usb_spi_enable(1);
 
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI, 1);
