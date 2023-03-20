@@ -1,0 +1,32 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ /* Define nodes with the "is-alt" property set. Used by the TCPC shim
+  * test to validate the runtime replacement of the TCPC driver.
+  */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+&i2c0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	tcpc_rt1715_0_alt: tcpc-rt1715-0-alt@a{
+		compatible = "richtek,rt1715-tcpc", "cros,i2c-mock";
+		reg = <0xa>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+		is-alt;
+	};
+
+	tcpc_rt1715_1_alt: tcpc-rt1715-1-alt@b{
+		compatible = "richtek,rt1715-tcpc", "cros,i2c-mock";
+		reg = <0xb>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+		is-alt;
+	};
+};

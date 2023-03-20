@@ -158,6 +158,12 @@ config LINK_TEST_SUITE_USBC_OCP
 config LINK_TEST_SUITE_USBC_PPC
 	bool "Link tests for common USBC PPC code"
 
+config LINK_TEST_SUITE_USBC_TCPC
+	bool "Link tests for common USBC TCPC code"
+	help
+	  Include the USBC TCPC test suite in the
+	  binary.
+
 config LINK_TEST_SUITE_USBC_SVDM_DFP_ONLY
 	bool "Link and test the usbc_svdm_dfp_only tests"
 
