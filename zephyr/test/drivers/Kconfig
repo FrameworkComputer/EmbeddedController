@@ -103,6 +103,12 @@ config LINK_TEST_SUITE_POWER_HOST_SLEEP
 config LINK_TEST_SUITE_PS8XXX
 	bool "Link and test the ps8xxx tests"
 
+config LINK_TEST_SUITE_RT1718S
+	bool "Link and test the rt1718s tests"
+	help
+	  Link tests rt1718s test suite for the TCPM driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
 
