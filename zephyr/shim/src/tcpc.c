@@ -18,6 +18,7 @@
 #include "usbc/tcpc_raa489000.h"
 #include "usbc/tcpc_rt1715.h"
 #include "usbc/tcpc_rt1718s.h"
+#include "usbc/tcpc_rt1718s_emul.h"
 #include "usbc/tcpci.h"
 #include "usbc/utils.h"
 
@@ -48,7 +49,9 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 	CHECK_COMPAT(PS8XXX_EMUL_COMPAT, usbc_id, tcpc_id,  \
 		     TCPC_CONFIG_PS8XXX_EMUL)               \
 	CHECK_COMPAT(ANX7447_EMUL_COMPAT, usbc_id, tcpc_id, \
-		     TCPC_CONFIG_ANX7447_EMUL)
+		     TCPC_CONFIG_ANX7447_EMUL)              \
+	CHECK_COMPAT(RT1718S_EMUL_COMPAT, usbc_id, tcpc_id, \
+		     TCPC_CONFIG_RT1718S_EMUL)
 #else
 #define TCPC_CHIP_FIND_EMUL(...)
 #endif /* TEST_BUILD */

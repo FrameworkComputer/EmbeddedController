@@ -47,6 +47,15 @@ config EMUL_PS8XXX
 	  for TCPCI emulator. PS8XXX specific API is available in
 	  zephyr/include/emul/tcpc/emul_ps8xxx.h
 
+config EMUL_RT1718S
+	bool "Richtek rt1718s emulator"
+	default y
+	depends on DT_HAS_CROS_RT1718S_TCPC_EMUL_ENABLED
+	help
+	  Enable emulator for rt1718s of TCPM. This emulator is extension for
+	  TCPCI emulator. rt1718s specific API is available in
+	  zephyr/include/emul/tcpc/emul_rt1718s.h
+
 config EMUL_TCPCI_PARTNER_SRC
 	bool "USB-C source device emulator"
 	select EMUL_TCPCI_PARTNER_COMMON
