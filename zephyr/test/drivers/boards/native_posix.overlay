@@ -124,8 +124,8 @@
 		 * unless the output gpio is also configured as an input gpio.
 		 *
 		 * One may also configure the gpio as an input in the test
-                 * itself instead of device tree.
-		 * /
+		 * itself instead of device tree.
+		 */
 
 		/* <&gpio0 1 x> is reserved as 'entering-rw' in
 		 * src/platform/ec/zephyr/dts/board-overlays/native_posix.dts

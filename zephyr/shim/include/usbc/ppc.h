@@ -6,6 +6,7 @@
 #ifndef ZEPHYR_CHROME_USBC_PPC_H
 #define ZEPHYR_CHROME_USBC_PPC_H
 
+#include "usbc/ppc_aoz1380.h"
 #include "usbc/ppc_nx20p348x.h"
 #include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
@@ -15,6 +16,57 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+
+/**
+ * @brief Create a unique name based on a PPC altnernate node.
+ *
+ *	ppc_syv682x_alt: syv682x@43 {
+ *		compatible = "silergy,syv682x";
+ *		status = "okay";
+ *		reg = <0x43>;
+ *		frs_en_gpio = <&ioex_usb_c0_frs_en>;
+ *		is-alt;
+ *	};
+ *
+ * Usage:
+ *	PPC_ALT_NAME_GET(DT_NODELABEL(ppc_syv682x_alt))
+ *
+ * expands to "ppc_alt_DT_N_S_i2c_100_S_syv682x_43"
+ */
+#define PPC_ALT_NAME_GET(node_id) DT_CAT(ppc_alt_, node_id)
+
+/**
+ * @brief Get the PPC alternate entry based on a nodelabel.
+ *
+ * Usage:
+ *	PPC_ALT_FROM_NODELABEL(ppc_syv682x_alt))
+ *
+ * expands to "ppc_alt_DT_N_S_i2c_100_S_syv682x_43"
+ */
+#define PPC_ALT_FROM_NODELABEL(lbl) (PPC_ALT_NAME_GET(DT_NODELABEL(lbl)))
+
+/**
+ * @brief - Forward declare a global struct ppc_config_t entry based on
+ * a single PPC altnerate from the devicetree.
+ */
+#define PPC_ALT_DECLARATION(node_id) \
+	extern const struct ppc_config_t PPC_ALT_NAME_GET(node_id)
+
+#define PPC_ALT_DECLARE(node_id)                    \
+	COND_CODE_1(DT_PROP_OR(node_id, is_alt, 0), \
+		    (PPC_ALT_DECLARATION(node_id);), ())
+
+/*
+ * Forward declare a struct ppc_config_t for every PPC node in the tree with the
+ * "is-alt" property set.
+ */
+DT_FOREACH_STATUS_OKAY(AOZ1380_COMPAT, PPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(NX20P348X_COMPAT, PPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(RT1739_PPC_COMPAT, PPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(SN5S330_COMPAT, PPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(SN5S330_EMUL_COMPAT, PPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(SYV682X_COMPAT, PPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(SYV682X_EMUL_COMPAT, PPC_ALT_DECLARE)
 
 extern struct ppc_config_t ppc_chips_alt[];
 
@@ -35,5 +87,9 @@ extern struct ppc_config_t ppc_chips_alt[];
 		memcpy(&ppc_chips[usb_port_num], &ppc_chips_alt[usb_port_num],        \
 		       sizeof(struct ppc_config_t));                                  \
 	} while (0)
+
+#define PPC_ENABLE_ALTERNATE_BY_NODELABEL(usb_port_num, nodelabel)           \
+	memcpy(&ppc_chips[usb_port_num], &PPC_ALT_FROM_NODELABEL(nodelabel), \
+	       sizeof(struct ppc_config_t))
 
 #endif /* ZEPHYR_CHROME_USBC_PPC_H */

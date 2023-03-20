@@ -54,4 +54,26 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 struct ppc_config_t ppc_chips_alt[] = { DT_FOREACH_STATUS_OKAY(named_usbc_port,
 							       PPC_CHIP_ALT) };
 
+#define PPC_ALT_DEFINITION(node_id, config_fn) \
+	const struct ppc_config_t PPC_ALT_NAME_GET(node_id) = config_fn(node_id)
+
+#define PPC_ALT_DEFINE(node_id, config_fn)          \
+	COND_CODE_1(DT_PROP_OR(node_id, is_alt, 0), \
+		    (PPC_ALT_DEFINITION(node_id, config_fn);), ())
+
+/*
+ * Define a global struct ppc_config_t for every PPC node in the tree with the
+ * "is-alt" property set.
+ */
+DT_FOREACH_STATUS_OKAY_VARGS(AOZ1380_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_AOZ1380)
+DT_FOREACH_STATUS_OKAY_VARGS(NX20P348X_COMPAT, PPC_ALT_DEFINE,
+			     PPC_CHIP_NX20P348X)
+DT_FOREACH_STATUS_OKAY_VARGS(RT1739_PPC_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_RT1739)
+DT_FOREACH_STATUS_OKAY_VARGS(SN5S330_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_SN5S330)
+DT_FOREACH_STATUS_OKAY_VARGS(SN5S330_EMUL_COMPAT, PPC_ALT_DEFINE,
+			     PPC_CHIP_SN5S330)
+DT_FOREACH_STATUS_OKAY_VARGS(SYV682X_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_SYV682X)
+DT_FOREACH_STATUS_OKAY_VARGS(SYV682X_EMUL_COMPAT, PPC_ALT_DEFINE,
+			     PPC_CHIP_SYV682X)
+
 #endif /* #if DT_HAS_COMPAT_STATUS_OKAY */

@@ -3,4 +3,7 @@
 # found in the LICENSE file.
 
 # Add source files
-target_sources(app PRIVATE src/usbc_ppc.c)
+target_sources(app PRIVATE
+  src/usbc_ppc.c
+  src/ppc_shim.c
+)

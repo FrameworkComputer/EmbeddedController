@@ -10,3 +10,10 @@ properties:
     required: false
     description: |
       GPIO interrupt from PPC
+
+  is-alt:
+    type: boolean
+    required: false
+    description: |
+      If present, this node refers to an altnerate PPC device. The PPC device
+      is not used by default, and must be manually enabled at runtime.

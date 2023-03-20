@@ -1,0 +1,47 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ /* Defint nodes with the "is-alt" property set. Used by the PPC shim
+  * test to validate the runtime replacement of the PPC driver.
+  */
+
+/ {
+	ppc_aoz1380_alt: ppc-aoz1380-alt{
+		compatible = "aoz,aoz1380";
+		status = "okay";
+		is-alt;
+	};
+};
+
+&i2c0 {
+	ppc_nx20p348x_alt: nx20p348x@77 {
+		compatible = "nxp,nx20p348x", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x77>;
+		is-alt;
+	};
+
+	ppc_rt1739_alt: rt1739@70 {
+		compatible = "richtek,rt1739-ppc", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x70>;
+		is-alt;
+	};
+
+	ppc_syv682x_alt: syv682x@43 {
+		compatible = "silergy,syv682x", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x43>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		is-alt;
+	};
+
+	ppc_sn5s330_alt: sn5s330@49 {
+		compatible = "ti,sn5s330", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x49>;
+		is-alt;
+	};
+};
