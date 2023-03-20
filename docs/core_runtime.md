@@ -148,6 +148,8 @@ Similarly, the HOOK_SECOND and HOOK_TICK hooks are called periodically by the
 HOOKS task loop (the *tick* duration is platform-defined and shorter than the
 second).
 
+For examples, of hooks and deferred functions, see the [`hooks` testcases].
+
 Note: be specially careful about priority inversions when accessing resources
 protected by a mutex (e.g. a shared I2C controller) in a deferred function.
 Indeed being the lowest priority task, it might be de-scheduled for long time
@@ -327,3 +329,5 @@ topic.
 -   TODO: Address the rest of the comments from https://crrev.com/c/445941
 
 \[1]: bitmap: array of bits.
+
+[`hooks` testcases]: ../test/hooks.c
