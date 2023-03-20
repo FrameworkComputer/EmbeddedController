@@ -200,8 +200,13 @@ static void power_button_released(uint64_t tnow)
  */
 static void set_initial_pwrbtn_state(void)
 {
-	pwrbtn_state = PWRBTN_STATE_IDLE;
-	CPRINTS("PB idle");
+	if (system_get_reset_flags() == EC_RESET_FLAG_HARD) {
+		pwrbtn_state = PWRBTN_STATE_INIT_ON;
+		CPRINTS("PB init-on after updating firmware");
+	} else {
+		pwrbtn_state = PWRBTN_STATE_IDLE;
+		CPRINTS("PB idle");
+	}
 }
 
 /**
