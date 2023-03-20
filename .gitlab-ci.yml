@@ -223,6 +223,11 @@ nivviks_coverage:
     PROJECT: "nivviks"
   <<: *coverage_template
 
+nereid_coverage:
+  variables:
+    PROJECT: "nereid"
+  <<: *coverage_template
+
 it8xxx2_evb:
   variables:
     PROJECT: "it8xxx2_evb"
