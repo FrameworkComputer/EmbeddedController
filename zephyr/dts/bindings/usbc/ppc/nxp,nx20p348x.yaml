@@ -6,4 +6,4 @@ description: NXP NX20P348X USBC PPC binding
 
 compatible: "nxp,nx20p348x"
 
-include: ppc-chip.yaml
+include: ["i2c-device.yaml", "ppc-chip.yaml"]
