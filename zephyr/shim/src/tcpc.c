@@ -81,6 +81,14 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 MAYBE_CONST struct tcpc_config_t tcpc_config[] = { DT_FOREACH_STATUS_OKAY(
 	named_usbc_port, TCPC_CHIP) };
 
+#define TCPC_ALT_DEFINITION(node_id, config_fn)                 \
+	const struct tcpc_config_t TCPC_ALT_NAME_GET(node_id) = \
+		config_fn(node_id)
+
+#define TCPC_ALT_DEFINE(node_id, config_fn)         \
+	COND_CODE_1(DT_PROP_OR(node_id, is_alt, 0), \
+		    (TCPC_ALT_DEFINITION(node_id, config_fn);), ())
+
 #ifdef CONFIG_PLATFORM_EC_TCPC_INTERRUPT
 
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);
