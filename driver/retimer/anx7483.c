@@ -25,13 +25,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-/* Tuning defaults */
-struct anx7483_tuning_set {
-	uint8_t addr;
-	uint8_t value;
-};
-
-const static struct anx7483_tuning_set anx7483_usb_enabled[] = {
+const test_export_static struct anx7483_tuning_set anx7483_usb_enabled[] = {
 	{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
 	{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
 	{ ANX7483_DRX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
@@ -68,7 +62,7 @@ const static struct anx7483_tuning_set anx7483_usb_enabled[] = {
 	{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
 };
 
-static struct anx7483_tuning_set anx7483_dp_enabled[] = {
+const test_export_static struct anx7483_tuning_set anx7483_dp_enabled[] = {
 	{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
 
 	{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
@@ -105,7 +99,7 @@ static struct anx7483_tuning_set anx7483_dp_enabled[] = {
 	{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
 };
 
-static struct anx7483_tuning_set anx7483_dock_noflip[] = {
+const test_export_static struct anx7483_tuning_set anx7483_dock_noflip[] = {
 	{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
 
 	{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
@@ -143,7 +137,7 @@ static struct anx7483_tuning_set anx7483_dock_noflip[] = {
 	{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
 };
 
-static struct anx7483_tuning_set anx7483_dock_flip[] = {
+const test_export_static struct anx7483_tuning_set anx7483_dock_flip[] = {
 	{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
 
 	{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
@@ -180,6 +174,11 @@ static struct anx7483_tuning_set anx7483_dock_flip[] = {
 	{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
 	{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
 };
+
+const size_t anx7483_usb_enabled_count = ARRAY_SIZE(anx7483_usb_enabled);
+const size_t anx7483_dp_enabled_count = ARRAY_SIZE(anx7483_dp_enabled);
+const size_t anx7483_dock_noflip_count = ARRAY_SIZE(anx7483_dock_noflip);
+const size_t anx7483_dock_flip_count = ARRAY_SIZE(anx7483_dock_flip);
 
 test_export_static int anx7483_read(const struct usb_mux *me, uint8_t reg,
 				    int *val)

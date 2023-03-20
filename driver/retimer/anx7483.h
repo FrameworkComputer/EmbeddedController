@@ -8,6 +8,14 @@
 #ifndef __CROS_EC_USB_RETIMER_ANX7483_H
 #define __CROS_EC_USB_RETIMER_ANX7483_H
 
+#include "common.h"
+
+/* Tuning defaults */
+struct anx7483_tuning_set {
+	uint8_t addr;
+	uint8_t value;
+};
+
 /*
  * LFPS_TIMER register
  *

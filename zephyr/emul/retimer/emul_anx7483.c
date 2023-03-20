@@ -337,6 +337,25 @@ void anx7483_emul_reset(const struct emul *emul)
 				     anx7483->regs[i].def);
 }
 
+int anx7483_emul_validate_tuning(const struct emul *emul,
+				 const struct anx7483_tuning_set *tuning,
+				 size_t tuning_count)
+{
+	uint8_t val;
+	int rv;
+
+	for (size_t i = 0; i < tuning_count; i++) {
+		rv = anx7483_emul_get_reg(emul, tuning[i].addr, &val);
+		if (rv)
+			return rv;
+
+		if (val != tuning[i].value)
+			return 1;
+	}
+
+	return 0;
+}
+
 static int anx7483_emul_init(const struct emul *emul,
 			     const struct device *parent)
 {

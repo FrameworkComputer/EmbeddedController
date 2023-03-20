@@ -129,4 +129,8 @@ int anx7483_emul_get_eq(const struct emul *emul, enum anx7483_tune_pin pin,
 
 void anx7483_emul_reset(const struct emul *emul);
 
+int anx7483_emul_validate_tuning(const struct emul *emul,
+				 const struct anx7483_tuning_set *tuning,
+				 size_t tuning_count);
+
 #endif /* __EMUL_ANX7483_H */

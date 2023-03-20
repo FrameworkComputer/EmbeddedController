@@ -22,6 +22,16 @@ int anx7483_get(const struct usb_mux *me, mux_state_t *mux_state);
 int anx7483_read(const struct usb_mux *me, uint8_t reg, int *val);
 int anx7483_write(const struct usb_mux *me, uint8_t reg, uint8_t val);
 
+extern const struct anx7483_tuning_set anx7483_usb_enabled[];
+extern const struct anx7483_tuning_set anx7483_dp_enabled[];
+extern const struct anx7483_tuning_set anx7483_dock_noflip[];
+extern const struct anx7483_tuning_set anx7483_dock_flip[];
+
+extern const size_t anx7483_usb_enabled_count;
+extern const size_t anx7483_dp_enabled_count;
+extern const size_t anx7483_dock_noflip_count;
+extern const size_t anx7483_dock_flip_count;
+
 static struct usb_mux mux = {
 	.i2c_port = I2C_PORT_NODELABEL(i2c3),
 	.i2c_addr_flags = 0x3e,
@@ -942,526 +952,231 @@ ZTEST(anx7483, test_emul_update_reserved)
 
 /*
  * Tests that the ANX7483 driver correctly configures the default tuning for
- * USB. The register values should match those in the anx7483_usb_enabled struct
- * within the driver.
+ * USB.
  */
 ZTEST(anx7483, test_tuning_usb)
 {
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_usb_enabled struct within the driver.
+	 */
+	const struct anx7483_tuning_set usb_enabled[] = {
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_OUT },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_OUT },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_OUT },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_OUT },
+
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+	};
 	int rv;
-	uint8_t val;
 
 	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_USB_ENABLED);
 	zexpect_ok(rv);
 
-	/* CFG0 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG0_REG, &val);
+	zassert_equal(ARRAY_SIZE(usb_enabled), anx7483_usb_enabled_count);
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, usb_enabled,
+					  ARRAY_SIZE(usb_enabled));
 	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	/* CFG1 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	/* CFG2 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	/* CFG3 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_OUT);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_OUT);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_OUT);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_OUT);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	/* CFG4 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
 }
 
 /*
  * Tests that the ANX7483 driver correctly configures the default tuning for
- * DisplayPort. The register values should match those in the anx7483_dp_enabled
- * struct within the driver.
+ * DisplayPort.
  */
 ZTEST(anx7483, test_tuning_dp)
 {
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_dp_enabled struct within the driver.
+	 */
+	const struct anx7483_tuning_set dp_enabled[] = {
+		{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
+
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+	};
 	int rv;
-	uint8_t val;
 
 	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_DP_ENABLED);
 	zexpect_ok(rv);
 
-	/* CFG0 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG0_REG, &val);
+	zassert_equal(ARRAY_SIZE(dp_enabled), anx7483_dp_enabled_count);
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dp_enabled,
+					  ARRAY_SIZE(dp_enabled));
 	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	/* CFG1 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	/* CFG2 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	/* CFG3 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	/* CFG4 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
 }
 
 /*
  * Tests that the ANX7483 driver correctly configures the default tuning for
- * dock mode in a non-flipped state. The register values should match those in
- * the anx7483_dock_noflip struct within the driver.
+ * dock mode in a non-flipped state.
  */
 ZTEST(anx7483, test_tuning_dock_noflip)
 {
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_dock_noflip struct within the driver.
+	 */
+	const test_export_static struct anx7483_tuning_set dock_noflip[] = {
+		{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
+
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+	};
 	int rv;
-	uint8_t val;
 
 	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_DOCK);
 	zexpect_ok(rv);
 
-	/* Corresponds to anx7483_dock_noflip. */
-	/* CFG0 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG0_REG, &val);
+	zassert_equal(ARRAY_SIZE(dock_noflip), anx7483_dock_noflip_count);
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dock_noflip,
+					  ARRAY_SIZE(dock_noflip));
 	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	/* CFG1 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	/* CFG2 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	/* CFG3 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	/* CFG4 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
 }
 
 /*
  * Tests that the ANX7483 driver correctly configures the default tuning for
- * dock mode in a flipped state. The register values should match those in
- * the anx7483_dock_flip struct within the driver.
+ * dock mode in a flipped state.
  */
 ZTEST(anx7483, test_tuning_dock_flip)
 {
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_dock_flip struct within the driver.
+	 */
+	const test_export_static struct anx7483_tuning_set dock_flip[] = {
+		{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
+
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_CFG3_100Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_CFG3_90Ohm_IN },
+	};
 	int rv;
-	uint8_t val;
 
 	rv = anx7483_set_default_tuning(
 		&mux, USB_PD_MUX_DOCK | USB_PD_MUX_POLARITY_INVERTED);
 	zexpect_ok(rv);
 
-	/* CFG0 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG0_REG, &val);
+	zassert_equal(ARRAY_SIZE(dock_flip), anx7483_dock_flip_count);
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dock_flip,
+					  ARRAY_SIZE(dock_flip));
 	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG0_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG0_DEF);
-
-	/* CFG1 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG1_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG1_DEF);
-
-	/* CFG2 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG2_DEF);
-
-	/* CFG3 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_100Ohm_IN);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG3_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG3_90Ohm_IN);
-
-	/* CFG4 */
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DRX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_ENABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX1_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
-
-	rv = anx7483_emul_test_get_reg(ANX7483_DTX2_PORT_CFG4_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal(val, ANX7483_CFG4_TERM_DISABLE);
 }
