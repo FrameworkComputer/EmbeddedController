@@ -22,7 +22,7 @@
 	DT_HAS_COMPAT_STATUS_OKAY(SYV682X_EMUL_COMPAT)
 
 #define PPC_CHIP_ENTRY(usbc_id, ppc_id, config_fn) \
-	[USBC_PORT_NEW(usbc_id)] = config_fn(ppc_id)
+	[USBC_PORT_NEW(usbc_id)] = config_fn(ppc_id),
 
 #define CHECK_COMPAT(compat, usbc_id, ppc_id, config_fn) \
 	COND_CODE_1(DT_NODE_HAS_COMPAT(ppc_id, compat),  \
