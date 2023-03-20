@@ -508,10 +508,16 @@ void bus_fault_handler(void)
 
 void ignore_bus_fault(int ignored)
 {
-	if (IS_ENABLED(CHIP_FAMILY_STM32H7)) {
-		if (ignored == 0)
-			asm volatile("dsb; isb");
-	}
+	/*
+	 * According to
+	 * https://developer.arm.com/documentation/ddi0403/d/System-Level-Architecture/System-Level-Programmers--Model/Overview-of-system-level-terminology-and-operation/Exceptions?lang=en,
+	 * the Imprecise BusFault is an asynchronous fault in ARMv7-M.
+	 *
+	 * Before re-enabling the bus fault, we use a barrier to make sure that
+	 * the fault has been processed.
+	 */
+	if (ignored == 0)
+		asm volatile("dsb; isb");
 
 	/*
 	 * Flash code might call this before cpu_init(),
