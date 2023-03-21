@@ -331,6 +331,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
                                                 "${PLATFORM_EC}/common/motion_sense.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MP2964
                                                 "${PLATFORM_EC}/driver/mp2964.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_INA236
+                                                "${PLATFORM_EC}/driver/ina2xx.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PERIPHERAL_CHARGER
                                                 "${PLATFORM_EC}/common/peripheral_charger.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PORT80

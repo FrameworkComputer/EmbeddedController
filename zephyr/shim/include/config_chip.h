@@ -2598,6 +2598,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define I2C_ADDR_MP2964_FLAGS DT_REG_ADDR(DT_NODELABEL(pmic_mp2964))
 #endif
 
+#undef CONFIG_INA236
+#ifdef CONFIG_PLATFORM_EC_INA236
+#define CONFIG_INA236
+#endif
+
 #undef CONFIG_ACCELGYRO_ICM_COMM_SPI
 #ifdef CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_SPI
 #define CONFIG_ACCELGYRO_ICM_COMM_SPI

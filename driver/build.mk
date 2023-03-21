@@ -100,7 +100,7 @@ driver-$(CONFIG_IO_EXPANDER_TCA64XXA)+=ioexpander/tca64xxa.o
 driver-$(CONFIG_CTN730)+=nfc/ctn730.o
 
 # Current/Power monitor
-driver-$(CONFIG_INA219)$(CONFIG_INA231)+=ina2xx.o
+driver-$(CONFIG_INA219)$(CONFIG_INA231)$(CONFIG_INA236)+=ina2xx.o
 driver-$(CONFIG_INA3221)+=ina3221.o
 
 # LED drivers
