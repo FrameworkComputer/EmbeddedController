@@ -359,6 +359,7 @@ struct pd_port_current_state_t {
 	enum cyp5525_port_state port_state;
 	int voltage;
 	int current;
+	int ac_port;
 	enum cypd_c_state c_state; /* What device is attached on the other side */
 	uint8_t pd_state;
 	uint8_t cc;

@@ -95,7 +95,6 @@ static int pd_port0_1_5A;
 static int pd_port1_1_5A;
 static int pd_port2_1_5A;
 static int pd_port3_1_5A;
-static int ac_port = -1;
 
 void set_pd_fw_update(bool update)
 {
@@ -225,7 +224,7 @@ int cyp5225_wait_for_ack(int controller, int timeout_us)
 }
 
 
-int cypd_write_reg8_wait_ack(int controller, int reg, int data)
+int cypd_write_reg8_wait_ack(int controller, int reg, int data, int delay_ms)
 {
 	int rv = EC_SUCCESS;
 	int intr_status;
@@ -234,35 +233,33 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write Reg8 0x%x fail!", reg);
 
-	if (cyp5225_wait_for_ack(controller, 100*MSEC) != EC_SUCCESS) {
+	if (cyp5225_wait_for_ack(controller, delay_ms * MSEC) != EC_SUCCESS) {
 		CPRINTS("%s timeout on interrupt", __func__);
 		return EC_ERROR_INVAL;
 	}
 	rv = cypd_get_int(controller, &intr_status);
 	if (rv != EC_SUCCESS)
 		return rv;
+
 	if (intr_status & CYP5525_DEV_INTR) {
-		CPRINTS("data = %d", data);
 		if (data == CYP5525_AC_AT_PORT) {
 			rv = cypd_read_reg8(controller, CYP5525_RESPONSE_REG, &event);
-			CPRINTS("event = %d", event);
 			if (rv != EC_SUCCESS)
 				CPRINTS("fail to read response");
 			switch (event) {
 			case CYPD_RESPONSE_AC_AT_P0:
-				ac_port = (controller * 2) + 0;
+				pd_port_states[(controller * 2) + 0].ac_port = 1;
 				break;
 			case CYPD_RESPONSE_AC_AT_P1:
-				ac_port = (controller * 2) + 1;
+				pd_port_states[(controller * 2) + 1].ac_port = 1;
 				break;
 			case CYPD_RESPONSE_NO_AC:
 			case CYPD_RESPONSE_EC_MODE:
-				ac_port = -1;
 				break;
+			default:
+				CPRINTS("Check AC get unknown event 0x%04x", event);
 			}
-			CPRINTS("ac_port = %d", ac_port);
-		} else
-			CPRINTS("unknown event");
+		}
 		cypd_clear_int(controller, CYP5525_DEV_INTR);
 	}
 	usleep(50);
@@ -296,11 +293,11 @@ int cypd_set_power_state(int power_state, int controller)
 	CPRINTS("C%d, %s pwr state %d", controller, __func__, power_state);
 
 	if (controller < 2)
-		rv = cypd_write_reg8_wait_ack(controller, CYP5525_SYS_PWR_STATE, power_state);
+		rv = cypd_write_reg8_wait_ack(controller, CYP5525_SYS_PWR_STATE, power_state, 100);
 	else {
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 
-			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state, 100);
 			if (rv != EC_SUCCESS)
 				break;
 		}
@@ -314,6 +311,13 @@ void cypd_charger_init_complete(void)
 	charger_init_ok = 1;
 }
 
+void cypd_update_ac_status(int controller)
+{
+	CPRINTS("Check C%d AC status!", controller);
+	if (cypd_write_reg8_wait_ack(controller,
+		CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_AC_AT_PORT, 200))
+		CPRINTS("CYPD Read AC status fail");
+}
 
 int cypd_update_power_status(int controller)
 {
@@ -329,10 +333,10 @@ int cypd_update_power_status(int controller)
 
 	CPRINTS("C%d, %s power_stat 0x%x", controller, __func__, power_stat);
 	if (controller < 2) {
-		rv = cypd_write_reg8_wait_ack(controller, CYP5525_POWER_STAT, power_stat);
+		rv = cypd_write_reg8_wait_ack(controller, CYP5525_POWER_STAT, power_stat, 100);
 	} else {
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
-			rv = cypd_write_reg8_wait_ack(i, CYP5525_POWER_STAT, power_stat);
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_POWER_STAT, power_stat, 100);
 			if (rv != EC_SUCCESS)
 				break;
 		}
@@ -452,7 +456,7 @@ void cypd_set_error_recovery(void)
 		 * GRL FV 3.1.2.3.
 		 * 0xC0 means no recovery.
 		 */
-		cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
+		cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0, 100);
 	}
 }
 
@@ -1120,7 +1124,8 @@ void cypd_handle_state(int controller)
 	case CYP5525_STATE_APP_SETUP:
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
-			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
+			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION,
+				board_get_version(), 100);
 			/* We should update the power status and system power state by pd chip at initial*/
 			cypd_update_power_status(controller);
 
@@ -1128,12 +1133,16 @@ void cypd_handle_state(int controller)
 			
 
 			cyp5525_setup(controller);
+
+			/* After cypd setup complete, check the AC status */
+			cypd_update_ac_status(controller);
+
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
 
 			cyp5525_ucsi_startup(controller);
-			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 			update_system_power_state(controller);
+			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CYP5525_STATE_READY;
@@ -1555,8 +1564,10 @@ void cypd_release_port(int controller, int port)
 	int port_idx = (controller << 1) + port;
 
 	/* if port disconnect should set RP and PDO to default */
-	cypd_write_reg8_wait_ack(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
-	cypd_write_reg8_wait_ack(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
+	cypd_write_reg8_wait_ack(controller, CYP5525_PD_CONTROL_REG(port),
+		CYPD_PD_CMD_SET_TYPEC_1_5A, 100);
+	cypd_write_reg8_wait_ack(controller, CYP5525_SELECT_SOURCE_PDO_REG(port),
+		CYPD_PD_CMD_SET_TYPEC_3A, 100);
 
 	if (cypd_port_3a_status(controller, port)) {
 		pd_3a_set = 0;
@@ -1775,23 +1786,20 @@ DECLARE_DEFERRED(update_power_limit_deferred);
 
 int check_power_on_port(void)
 {
-	int rv;
-
+	int port;
 	/* only read CYPD when it ready */
-	if (pd_chip_config[0].state != CYP5525_STATE_READY)
-		return -1;
+	if (!(pd_chip_config[0].state == CYP5525_STATE_READY &&
+		pd_chip_config[1].state == CYP5525_STATE_READY)) {
+		CPRINTS("CYPD not ready, just delay 100ms to wait");
+		usleep(100 * MSEC);
+	}
 
-	CPRINTS("READ C0");
-	rv = cypd_write_reg8_wait_ack(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_AC_AT_PORT);
-	if (rv != EC_SUCCESS)
-		return -1;
-	if (ac_port >= 0)
-		return ac_port;
-	CPRINTS("READ C1");
-	rv = cypd_write_reg8_wait_ack(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_AC_AT_PORT);
-	if (rv != EC_SUCCESS)
-		return -1;
-	return ac_port;
+	for (port = 0; port < PD_PORT_COUNT; port++)
+		if (pd_port_states[port].ac_port == 1)
+			return port;
+
+	/* if no ac port is checked return -1 */
+	return -1;
 }
 
 /**
@@ -1805,8 +1813,6 @@ int check_power_on_port(void)
 static int prev_charge_port = -1;
 int board_set_active_charge_port(int charge_port)
 {
-	CPRINTS("start change port = %d, prev_charge_port = %d", charge_port, prev_charge_port);
-
 	/* if no battery, EC should not control C_CTRL */
 	if (board_batt_is_present() != BP_YES) {
 		/* check if CYPD ready */
@@ -1814,7 +1820,6 @@ int board_set_active_charge_port(int charge_port)
 			return EC_ERROR_TRY_AGAIN;
 
 		/* store current port and update power limit */
-		CPRINTS("No batt, no change");
 		prev_charge_port = charge_port;
 		hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
 		CPRINTS("Updating %s port %d", __func__, charge_port);
@@ -1824,7 +1829,7 @@ int board_set_active_charge_port(int charge_port)
 	/* port need change, stop all power and ready to switch. */
 	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
 		update_soc_power_limit(false, true);
-		CPRINTS("all off");
+		CPRINTS("Disable all type-c port to change the charger port");
 		cypd_write_reg8(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
 		cypd_write_reg8(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
 		usleep(250*MSEC);
@@ -1836,15 +1841,11 @@ int board_set_active_charge_port(int charge_port)
 	if (charge_port >=0 ) {
 		int pd_controller = (charge_port & 0x02) >> 1;
 		int pd_port = charge_port & 0x01;
-
-		CPRINTS("force off ctrler = %d", (~pd_controller) & 0x01);
 		cypd_write_reg8((~pd_controller) & 0x01, CYP5525_CUST_C_CTRL_CONTROL_REG,
 			CYP5525_P0P1_TURN_OFF_C_CTRL);
-		CPRINTS("choose p %d, ctrler = %d, p = %d", charge_port, pd_controller, pd_port);
 		cypd_write_reg8(pd_controller, CYP5525_CUST_C_CTRL_CONTROL_REG,
 			pd_port ? CYP5525_P0_OFF_P1_CY : CYP5525_P0_CY_P1_OFF);
 	} else {
-		CPRINTS("else = %d, set all ports auto", charge_port);
 		cypd_write_reg8(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
 		cypd_write_reg8(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
 	}
