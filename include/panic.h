@@ -174,11 +174,16 @@ uintptr_t get_panic_data_start(void);
 struct panic_data *test_get_panic_data_pointer(void);
 #endif
 
-/*
- * Return a pointer to panic_data structure that can be safely written.
- * Please note that this function can move jump data and jump tags.
- * It can also delete panic data from previous boot, so this function
- * should be used when we are sure that we don't need it.
+/**
+ * Return a pointer to panic_data structure that can be safely written.  Please
+ * note that this function can move jump data and jump tags.  It can also delete
+ * panic data from previous boot, so this function should be used when we are
+ * sure that we don't need it.
+ *
+ * NOTE: Invoking this function without subsequently setting the rest of the
+ * panic data is unsafe because it leaves the panic data in an unfinished state
+ * that may be inappropriately reported to the AP.
+ * TODO(b/274661193): Finalize panic data with panic magic.
  *
  * @param pointer to panic_data structure that can be safely written
  */

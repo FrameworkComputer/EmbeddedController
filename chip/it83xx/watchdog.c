@@ -38,8 +38,23 @@ static void watchdog_set_warning_timer(int32_t ms, int init)
 
 void watchdog_warning_irq(void)
 {
-	struct panic_data *const pdata_ptr = get_panic_data_write();
-
+	/*
+	 * Why we directly use the PANIC_DATA_PTR:
+	 *
+	 * We don't get the panic data pointer from get_panic_data_write()
+	 * because this interrupt fires on a warning and we don't want to
+	 * initialize a panic with only a warning. We also don't use
+	 * panic_get_data() because that function returns a NULL pointer if
+	 * panic data was never prior initialized.
+	 *
+	 * Why we fill ipc/mepc here in the watchdog bark/warning interrupt:
+	 *
+	 * In ITE, a full watchdog bite results in an EC reset that bypasses all
+	 * exception handlers. We save the program counter now (during a
+	 * warning) before a full watchdog bite occurs so it is accessible after
+	 * the bite.
+	 */
+	struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 #if defined(CHIP_CORE_NDS32)
 	pdata_ptr->nds_n8.ipc = get_ipc();
 #elif defined(CHIP_CORE_RISCV)
