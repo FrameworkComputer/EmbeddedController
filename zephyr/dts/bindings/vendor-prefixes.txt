@@ -22,3 +22,4 @@ dynapack	Battery vendor
 atl	Battery vendor
 bms-gf	Battery vendor
 pow-tech	Battery vendor
+gfl	Battery vendor
