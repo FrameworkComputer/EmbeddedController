@@ -30,11 +30,13 @@ DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 SPECIAL_BOARDS = [
     "herobrine",
     "krabby",
-    "nivviks",
     "skyrim",
     "kingler",
     "rex",
     "geralt",
+    # Nissa variants
+    "nereid",
+    "nivviks",
     # Skyrim variants
     "winterhold",
     "frostflow",
