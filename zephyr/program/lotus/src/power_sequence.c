@@ -224,6 +224,7 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
 		if (gpu_present()) {
+			CPRINTS("Enabling GPU power");
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
 		}
 

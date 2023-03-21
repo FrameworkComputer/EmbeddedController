@@ -10,4 +10,6 @@
 
 bool gpu_present(void);
 
+void gpu_post_power_init(void);
+
 #endif /* __BOARD_GPU_H__ */
