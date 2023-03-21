@@ -95,7 +95,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi3xx>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref>;
+			rot-standard-ref = <&base_rot_ref_bmi>;
 			drv-data = <&bmi3xx_data>;
 			alternate-for = <&base_accel>;
 			configs {
