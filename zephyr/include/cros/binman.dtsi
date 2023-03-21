@@ -30,6 +30,17 @@
 				};
 			};
 		};
+
+		rollback0 {
+			type = "null";
+			size = <0x0>;
+		};
+
+		rollback1 {
+			type = "null";
+			size = <0x0>;
+		};
+
 		ec-rw {
 			compatible = "cros-ec,flash-layout";
 			type = "section";
