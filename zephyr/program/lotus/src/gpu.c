@@ -17,10 +17,10 @@
 
 LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 
-#define VALID_BOARDID(ID1, ID0) ((ID1 <<8) + ID0)
+#define VALID_BOARDID(ID1, ID0) ((ID1 << 8) + ID0)
 
-static int module_present = 0;
-	int gpu_detected = 0;
+static int module_present;
+static int gpu_detected;
 bool gpu_present(void)
 {
 	return module_present;
@@ -78,6 +78,7 @@ static int prev_open_state;
 static void poll_gpu(void)
 {
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
+
 	if (open_state != prev_open_state) {
 		if (open_state) {
 			check_gpu_module();
@@ -102,8 +103,9 @@ static void gpu_mux_configure(void)
 {
 	int rv = 1;
 	int data;
+
 	if (module_present) {
-		/* TODO Setup real gpu detection, for now just detect if thermal sensor is present */
+		/* TODO Setup real gpu detection, for now just detect thermal sensor*/
 		/* Disable gpu detection until mux is fixed */
 		rv = i2c_read8(I2C_PORT_GPU0, 0x4d, 0x00, &data);
 		if (rv == EC_SUCCESS && flash_storage_get(FLASH_FLAGS_ENABLE_GPU_MUX)) {
