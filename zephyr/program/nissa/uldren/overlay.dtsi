@@ -296,7 +296,9 @@
 			<&gpio8 6 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
+			<&gpioc 6 0>,
 			<&gpioc 7 0>,
+			<&gpioe 4 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>;
 	 };
