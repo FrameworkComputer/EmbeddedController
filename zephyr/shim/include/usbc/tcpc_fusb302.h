@@ -10,7 +10,8 @@
 
 #define FUSB302_TCPC_COMPAT fairchild_fusb302
 
-#define TCPC_CONFIG_FUSB302(id) \
+/* clang-format off */
+#define TCPC_CONFIG_FUSB302(id)                                                \
 	{                                                                      \
 		.bus_type = EC_BUS_TYPE_I2C,                                   \
 		.i2c_info = {                                                  \
@@ -24,7 +25,8 @@
 				DT_NODE_HAS_PROP(id, int_pin),                 \
 				(GPIO_SIGNAL(DT_PHANDLE(id, int_pin))),        \
 				(GPIO_LIMIT)))),                               \
-	},
+	}
+/* clang-format on */
 
 DT_FOREACH_STATUS_OKAY(FUSB302_TCPC_COMPAT,
 		       TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH)

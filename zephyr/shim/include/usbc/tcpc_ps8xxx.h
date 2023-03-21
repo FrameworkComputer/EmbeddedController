@@ -10,7 +10,8 @@
 
 #define PS8XXX_COMPAT parade_ps8xxx
 
-#define TCPC_CONFIG_PS8XXX(id) \
+/* clang-format off */
+#define TCPC_CONFIG_PS8XXX(id)                                                 \
 	{                                                                      \
 		.bus_type = EC_BUS_TYPE_I2C,                                   \
 		.i2c_info = {                                                  \
@@ -26,6 +27,7 @@
 				(GPIO_SIGNAL(DT_PHANDLE(id, int_pin))),        \
 				(GPIO_LIMIT)))                                 \
 		),                                                             \
-	},
+	}
+/* clang-format on */
 
 DT_FOREACH_STATUS_OKAY(PS8XXX_COMPAT, TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH)

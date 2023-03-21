@@ -34,7 +34,7 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 #if DT_HAS_TCPC
 
 #define TCPC_CHIP_ENTRY(usbc_id, tcpc_id, config_fn) \
-	[USBC_PORT_NEW(usbc_id)] = config_fn(tcpc_id)
+	[USBC_PORT_NEW(usbc_id)] = config_fn(tcpc_id),
 
 #define CHECK_COMPAT(compat, usbc_id, tcpc_id, config_fn) \
 	COND_CODE_1(DT_NODE_HAS_COMPAT(tcpc_id, compat),  \

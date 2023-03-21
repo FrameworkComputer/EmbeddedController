@@ -9,7 +9,8 @@
 
 #define TCPCI_EMUL_COMPAT cros_tcpci_generic_emul
 
-#define TCPC_CONFIG_TCPCI_EMUL(id) \
+/* clang-format off */
+#define TCPC_CONFIG_TCPCI_EMUL(id)                                             \
 	{                                                                      \
 		.bus_type = EC_BUS_TYPE_I2C,                                   \
 		.i2c_info = {                                                  \
@@ -23,4 +24,5 @@
 				DT_NODE_HAS_PROP(id, int_pin),                 \
 				(GPIO_SIGNAL(DT_PHANDLE(id, int_pin))),        \
 				(GPIO_LIMIT)))),                               \
-	},
+	}
+/* clang-format on */
