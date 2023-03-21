@@ -5,6 +5,7 @@
 
 #include "usbc/ppc.h"
 #include "usbc/ppc_aoz1380.h"
+#include "usbc/ppc_ktu1125.h"
 #include "usbc/ppc_nx20p348x.h"
 #include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
@@ -14,6 +15,7 @@
 #include <zephyr/devicetree.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(AOZ1380_COMPAT) ||          \
+	DT_HAS_COMPAT_STATUS_OKAY(KTU1125_COMPAT) ||      \
 	DT_HAS_COMPAT_STATUS_OKAY(NX20P348X_COMPAT) ||    \
 	DT_HAS_COMPAT_STATUS_OKAY(RT1739_PPC_COMPAT) ||   \
 	DT_HAS_COMPAT_STATUS_OKAY(SN5S330_COMPAT) ||      \
@@ -30,6 +32,7 @@
 
 #define PPC_CHIP_FIND(usbc_id, ppc_id)                                       \
 	CHECK_COMPAT(AOZ1380_COMPAT, usbc_id, ppc_id, PPC_CHIP_AOZ1380)      \
+	CHECK_COMPAT(KTU1125_COMPAT, usbc_id, ppc_id, PPC_CHIP_KTU1125)      \
 	CHECK_COMPAT(NX20P348X_COMPAT, usbc_id, ppc_id, PPC_CHIP_NX20P348X)  \
 	CHECK_COMPAT(RT1739_PPC_COMPAT, usbc_id, ppc_id, PPC_CHIP_RT1739)    \
 	CHECK_COMPAT(SN5S330_COMPAT, usbc_id, ppc_id, PPC_CHIP_SN5S330)      \
@@ -66,6 +69,7 @@ struct ppc_config_t ppc_chips_alt[] = { DT_FOREACH_STATUS_OKAY(named_usbc_port,
  * "is-alt" property set.
  */
 DT_FOREACH_STATUS_OKAY_VARGS(AOZ1380_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_AOZ1380)
+DT_FOREACH_STATUS_OKAY_VARGS(KTU1125_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_KTU1125)
 DT_FOREACH_STATUS_OKAY_VARGS(NX20P348X_COMPAT, PPC_ALT_DEFINE,
 			     PPC_CHIP_NX20P348X)
 DT_FOREACH_STATUS_OKAY_VARGS(RT1739_PPC_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_RT1739)
