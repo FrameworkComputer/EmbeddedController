@@ -34,6 +34,7 @@ SPECIAL_BOARDS = [
     "kingler",
     "rex",
     "geralt",
+    "myst",
     # Nissa variants
     "nereid",
     "nivviks",

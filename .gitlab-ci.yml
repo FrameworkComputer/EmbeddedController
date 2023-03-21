@@ -322,6 +322,16 @@ geralt_coverage:
     PROJECT: "geralt"
   <<: *coverage_template
 
+myst:
+  variables:
+    PROJECT: "myst"
+  <<: *build_template
+
+myst_coverage:
+  variables:
+    PROJECT: "myst"
+  <<: *coverage_template
+
 ec_coverage:
   stage: test
   needs: []
