@@ -147,7 +147,7 @@ BITBANG_RATE="57600"  # Could be overwritten by a command line option.
 
 # Flags
 DEFINE_integer bitbang_rate "${BITBANG_RATE}" \
-	"UART baud rate to use when bit bang programming, " \
+	"UART baud rate to use when bit bang programming, "\
 "standard UART rates from 9600 to 57600 are supported."
 DEFINE_string board "" \
 	"The board to run debugger on."
