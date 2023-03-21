@@ -125,6 +125,7 @@ $(BUILD)/zephyr/%_final.info: $(BUILD)/zephyr/%_stenciled.info
 	'$(PLATFORM_EC)/zephyr/shim/chip/**' \
 	'$(PLATFORM_EC)/zephyr/shim/chip/npcx/npcx_monitor/**' \
 	'$(PLATFORM_EC)/zephyr/shim/core/**' \
+	'$(PLATFORM_EC)/driver/tcpm/it8xxx2.c' \
 	$(GENERATED_AND_SYSTEM_PATTERNS) $(TEST_PATTERNS)
 
 .PRECIOUS: $(BUILD)/zephyr/%_rpt
