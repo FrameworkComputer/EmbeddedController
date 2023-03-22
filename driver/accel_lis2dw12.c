@@ -122,6 +122,9 @@ static int lis2dw12_load_fifo(struct motion_sensor_t *s, int nsamples)
 			/* Apply precision, sensitivity and rotation vector. */
 			st_normalize(s, axis, &fifo[i]);
 
+			if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+			    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+				axis = s->spoof_xyz;
 			if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 				struct ec_response_motion_sensor_data vect;
 				/* Fill vector array. */

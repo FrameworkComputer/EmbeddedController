@@ -605,7 +605,7 @@ static void process_fifo_data(struct motion_sensor_t *s, uint8_t *data,
 	ASSERT(data_bytes % 6 == 0);
 
 	for (int i = 0; i < data_bytes; i += 6) {
-		intv3_t v;
+		int *v = s->raw_xyz;
 
 		if (data[i + 1] == 0x80 && data[i] == 0) {
 			/* 0x8000 means read overrun; out of data */
@@ -613,6 +613,9 @@ static void process_fifo_data(struct motion_sensor_t *s, uint8_t *data,
 		}
 		swizzle_sample_data(s, &data[i], v);
 
+		if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+		    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+			v = s->spoof_xyz;
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 			struct ec_response_motion_sensor_data response = {
 				.sensor_num = s - motion_sensors,

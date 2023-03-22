@@ -313,12 +313,15 @@ static void __maybe_unused icm42607_push_fifo_data(struct motion_sensor_t *s,
 						   const uint8_t *raw,
 						   uint32_t ts)
 {
-	intv3_t v;
 	struct ec_response_motion_sensor_data vect;
+	int *v = s->raw_xyz;
 
 	if (icm42607_normalize(s, v, raw) != EC_SUCCESS)
 		return;
 
+	if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+	    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+		v = s->spoof_xyz;
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		vect.data[X] = v[X];
 		vect.data[Y] = v[Y];

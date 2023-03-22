@@ -230,7 +230,6 @@ static void bmi3_parse_fifo_data(struct motion_sensor_t *s,
 {
 	struct bmi_drv_data_t *data = BMI_GET_DATA(s);
 	uint16_t reg_data;
-	intv3_t v;
 	int i;
 
 	/* Start index for FIFO parsing after I2C sync word removal */
@@ -258,6 +257,7 @@ static void bmi3_parse_fifo_data(struct motion_sensor_t *s,
 	while (fifo_size > 0) {
 		for (i = 0; i < NUM_OF_PRIMARY_SENSOR; i++) {
 			struct motion_sensor_t *sens_output = s + i;
+			int *v = sens_output->raw_xyz;
 
 			if (data->flags & BIT(i + BMI_FIFO_FLAG_OFFSET)) {
 				/*
@@ -292,6 +292,9 @@ static void bmi3_parse_fifo_data(struct motion_sensor_t *s,
 
 				rotate(v, *sens_output->rot_standard_ref, v);
 
+				if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+				    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+					v = sens_output->spoof_xyz;
 				if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 					struct ec_response_motion_sensor_data
 						vect;
