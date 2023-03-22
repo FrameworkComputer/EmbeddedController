@@ -12,20 +12,22 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-static union brya_cbi_fw_config fw_config;
+static union omnigul_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
 
 /*
- * FW_CONFIG defaults for brya if the CBI.FW_CONFIG data is not
+ * FW_CONFIG defaults for Omnigul if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union brya_cbi_fw_config fw_config_defaults = {
-	.usb_db = DB_USB3_PS8815,
+static const union omnigul_cbi_fw_config fw_config_defaults = {
 	.kb_bl = KEYBOARD_BACKLIGHT_ENABLED,
+	.tab_mode = TABLETMODE_DISABLED,
+	.aud = AUDIO_ALC5682I_ALC1019,
+	.sar_id = SAR_ID_0,
 };
 
 /****************************************************************************
- * Brya FW_CONFIG access
+ * Omnigul FW_CONFIG access
  */
 void board_init_fw_config(void)
 {
@@ -35,12 +37,7 @@ void board_init_fw_config(void)
 	}
 }
 
-union brya_cbi_fw_config get_fw_config(void)
+union omnigul_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
-}
-
-enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void)
-{
-	return fw_config.usb_db;
 }
