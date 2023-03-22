@@ -508,6 +508,11 @@ static int init(struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
+	ret = st_write_data_with_mask(s, LIS2DW12_LOW_NOISE_ADDR,
+				      LIS2DW12_LOW_NOISE_MASK, LIS2DW12_EN_BIT);
+	if (ret != EC_SUCCESS)
+		goto err_unlock;
+
 	/* Interrupt trigger level of power-on-reset is HIGH */
 	if (IS_ENABLED(ACCEL_LIS2DW12_INT_ENABLE)) {
 		ret = st_write_data_with_mask(s, LIS2DW12_H_ACTIVE_ADDR,
