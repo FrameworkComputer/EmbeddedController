@@ -5,7 +5,7 @@
 """Define zmake projects for geralt."""
 
 
-def register_variant(
+def register_geralt_project(
     project_name,
 ):
     """Register a variant of geralt."""
@@ -20,4 +20,4 @@ def register_variant(
     )
 
 
-geralt = register_variant("geralt")
+geralt = register_geralt_project(project_name="geralt")
