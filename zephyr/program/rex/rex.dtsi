@@ -138,7 +138,9 @@
 		compatible = "nuvoton,nct38xx";
 		gpio-dev = <&nct3807_C0>;
 		reg = <0x70>;
-		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
 		/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
