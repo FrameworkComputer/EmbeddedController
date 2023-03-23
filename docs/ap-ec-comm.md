@@ -106,6 +106,20 @@ they're being called with. Different versions of a command may have different
 parameter or response formats. `EC_CMD_GET_CMD_VERSIONS` returns the versions of
 the given command supported by the EC. These version numbers start at 0.
 
+## Tracing
+
+Command tracing can be done on the EC console (`hc debug` command) and/or in
+the kernel:
+```
+echo 1 > /sys/kernel/debug/tracing/events/cros_ec/enable
+cat /sys/kernel/debug/tracing/trace
+
+369.416372: cros_ec_request_start: version: 0, command: EC_CMD_USB_PD_POWER_INFO
+369.420528: cros_ec_request_done: version: 0, command: EC_CMD_USB_PD_POWER_INFO, ec result: EC_RES_SUCCESS, retval: 16
+369.420529: cros_ec_request_start: version: 0, command: EC_CMD_USB_PD_DISCOVERY
+369.421383: cros_ec_request_done: version: 0, command: EC_CMD_USB_PD_DISCOVERY, ec result: EC_RES_SUCCESS, retval: 5
+```
+
 ## Transport-specific details
 
 Although the command and response formats are the same across all transports,
