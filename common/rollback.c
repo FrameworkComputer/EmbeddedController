@@ -8,9 +8,6 @@
 #include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
-#ifdef CONFIG_LIBCRYPTOC
-#include "cryptoc/util.h"
-#endif
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -24,6 +21,18 @@
 #include "task.h"
 #include "trng.h"
 #include "util.h"
+
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+#ifdef CONFIG_BORINGSSL_CRYPTO
+#include "openssl/mem.h"
+#define secure_clear(buffer, size) OPENSSL_cleanse(buffer, size)
+#elif defined(CONFIG_LIBCRYPTOC)
+#include "cryptoc/util.h"
+#define secure_clear(buffer, size) always_memset(buffer, 0, size)
+#else
+#error One of CONFIG_BORINGSSL_CRYPTO or CONFIG_LIBCRYPTOC should be defined
+#endif
+#endif
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
@@ -73,7 +82,7 @@ static uint32_t unlock_rollback(void)
 static void clear_rollback(struct rollback_data *data)
 {
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-	always_memset(data->secret, 0, sizeof(data->secret));
+	secure_clear(data->secret, sizeof(data->secret));
 #endif
 }
 
@@ -222,7 +231,7 @@ static int add_entropy(uint8_t *dst, const uint8_t *src, const uint8_t *add,
 #ifdef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
 failed:
 #endif
-	always_memset(&ctx, 0, sizeof(ctx));
+	secure_clear(&ctx, sizeof(ctx));
 	return ret;
 }
 #else
