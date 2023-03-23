@@ -7,6 +7,8 @@
  */
 
 #include "adc.h"
+#include "gpio/gpio_int.h"
+#include "gpio.h"
 #include "gpu.h"
 #include "board_adc.h"
 #include "console.h"
@@ -32,6 +34,7 @@ void check_gpu_module(void)
 	int gpu_id_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
 	int gpu_id_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
 
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_chassis_open));
 
 	switch (VALID_BOARDID(gpu_id_1, gpu_id_0)) {
 	case VALID_BOARDID(BOARD_VERSION_12, BOARD_VERSION_12):
@@ -57,6 +60,7 @@ void check_gpu_module(void)
 
 	if (module_present) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
@@ -69,40 +73,19 @@ DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
 
 void chassis_open_interrupt(enum gpio_signal signal)
 {
-	/* Make sure the module is off as fast as possible! */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-	module_present = 0;
-
-	hook_call_deferred(&check_gpu_module_data, 50*MSEC);
-}
-
-/* Interrupt was not working for some reason, poll*/
-static int prev_open_state;
-static void poll_gpu(void)
-{
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
 
-	if (open_state != prev_open_state) {
-		if (open_state) {
-			check_gpu_module();
-		} else {
-			LOG_INF("Powering off GPU");
-			/* Make sure the module is off as fast as possible! */
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-			module_present = 0;
-		}
+	if (!open_state) {
+		/* Make sure the module is off as fast as possible! */
+		LOG_INF("Powering off GPU");
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+		module_present = 0;
+	} else {
+		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
-
-	prev_open_state = open_state;
-
 }
-DECLARE_HOOK(HOOK_TICK, poll_gpu, HOOK_PRIO_DEFAULT);
-
-
 
 static void gpu_mux_configure(void)
 {
@@ -124,5 +107,3 @@ static void gpu_mux_configure(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, gpu_mux_configure, HOOK_PRIO_DEFAULT);
-
-
