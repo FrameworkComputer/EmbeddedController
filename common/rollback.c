@@ -45,25 +45,6 @@ static int get_rollback_offset(int region)
 #endif
 }
 
-#ifdef SECTION_IS_RO
-static int get_rollback_erase_size_bytes(int region)
-{
-	int erase_size;
-
-#ifndef CONFIG_FLASH_MULTIPLE_REGION
-	erase_size = CONFIG_FLASH_ERASE_SIZE;
-#else
-	int rollback_start_bank = crec_flash_bank_index(CONFIG_ROLLBACK_OFF);
-
-	erase_size = crec_flash_bank_erase_size(rollback_start_bank + region);
-#endif
-	ASSERT(erase_size > 0);
-	ASSERT(ROLLBACK_REGIONS * erase_size <= CONFIG_ROLLBACK_SIZE);
-	ASSERT(sizeof(struct rollback_data) <= erase_size);
-	return erase_size;
-}
-#endif
-
 /*
  * When MPU is available, read rollback with interrupts disabled, to minimize
  * time protection is left open.
@@ -187,6 +168,22 @@ failed:
 #endif
 
 #ifdef CONFIG_ROLLBACK_UPDATE
+static int get_rollback_erase_size_bytes(int region)
+{
+	int erase_size;
+
+#ifndef CONFIG_FLASH_MULTIPLE_REGION
+	erase_size = CONFIG_FLASH_ERASE_SIZE;
+#else
+	int rollback_start_bank = crec_flash_bank_index(CONFIG_ROLLBACK_OFF);
+
+	erase_size = crec_flash_bank_erase_size(rollback_start_bank + region);
+#endif
+	ASSERT(erase_size > 0);
+	ASSERT(ROLLBACK_REGIONS * erase_size <= CONFIG_ROLLBACK_SIZE);
+	ASSERT(sizeof(struct rollback_data) <= erase_size);
+	return erase_size;
+}
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
 static int add_entropy(uint8_t *dst, const uint8_t *src, const uint8_t *add,
