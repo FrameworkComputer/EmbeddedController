@@ -2,6 +2,22 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
+  message(STATUS "Performing EC specific devicetree checks")
+
+  # Zephyr's gen_defines.py creates an EDT object of the final devicetree,
+  # saving it as pickle file in the build directory.
+  set(NAMED_GPIOS_SCRIPT ${PLATFORM_EC}/zephyr/scripts/named_gpios.py)
+  set(CMD_NAMED_GPIOS ${PYTHON_EXECUTABLE} ${NAMED_GPIOS_SCRIPT}
+    --zephyr-base ${ZEPHYR_BASE}
+    --edt-pickle ${EDT_PICKLE}
+  )
+  execute_process(COMMAND ${CMD_NAMED_GPIOS} RESULT_VARIABLE ret)
+  if(NOT "${ret}" STREQUAL "0")
+    message(FATAL_ERROR "named_gpios.py failed with return code: ${ret}")
+  endif()
+endif()
+
 if(DEFINED ZMAKE_INCLUDE_DIR)
   zephyr_include_directories("${ZMAKE_INCLUDE_DIR}")
 endif()
