@@ -114,7 +114,6 @@ endif()
 if(DEFINED CONFIG_BOARD_ULDREN)
 	project(uldren)
 	zephyr_library_sources(
-			"uldren/src/led.c"
 			"uldren/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "uldren/src/fan.c")

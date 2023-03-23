@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include "../cbi.dtsi"
+ #include "../cbi.dtsi"
 
-#include "cbi.dtsi"
-#include "generated.dtsi"
-#include "keyboard.dtsi"
-#include "motionsense.dtsi"
-#include "overlay.dtsi"
-#include "power_signals.dtsi"
-#include "pwm_leds.dtsi"
+ #include "cbi.dtsi"
+ #include "generated.dtsi"
+ #include "keyboard.dtsi"
+ #include "led_pins.dtsi"
+ #include "led_policy.dtsi"
+ #include "motionsense.dtsi"
+ #include "overlay.dtsi"
+ #include "power_signals.dtsi"
