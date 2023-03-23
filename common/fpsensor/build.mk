@@ -4,6 +4,9 @@
 
 # Build for fingerprint sensor
 
+# Only build if CONFIG_FINGERPRINT_MCU or TEST_BUILD is "y".
+ifneq (,$(filter y,$(CONFIG_FINGERPRINT_MCU) $(TEST_BUILD)))
+
 # Note that this variable includes the trailing "/"
 _fpsensor_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
@@ -24,3 +27,5 @@ all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_state_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_crypto_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_obj)
 all-obj-$(HAS_TASK_CONSOLE)+=$(_fpsensor_detect_strings_obj)
+
+endif # CONFIG_FINGERPRINT_MCU or TEST_BUILD
