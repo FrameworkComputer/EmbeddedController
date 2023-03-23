@@ -64,13 +64,13 @@
 			6w-thermal {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_THERMAL_6W";
-				value = <1>;
+				value = <0>;
 				default;
 			};
 			15w-thermal {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_THERMAL_15W";
-				value = <2>;
+				value = <1>;
 			};
 		};
 
