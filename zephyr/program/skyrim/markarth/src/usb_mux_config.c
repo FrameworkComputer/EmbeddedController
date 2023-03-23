@@ -56,59 +56,6 @@ int board_c0_amd_fp6_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 	return EC_SUCCESS;
 }
 
-int board_anx7483_c1_mux_set(const struct usb_mux *me, mux_state_t mux_state)
-{
-	bool flipped = mux_state & USB_PD_MUX_POLARITY_INVERTED;
-
-	/* Set the SBU polarity mux */
-	RETURN_ERROR(ioex_set_flip(me->usb_port, mux_state));
-
-	/* Remove flipped from the state for easier compraisons */
-	mux_state = mux_state & ~USB_PD_MUX_POLARITY_INVERTED;
-
-	RETURN_ERROR(anx7483_set_default_tuning(me, mux_state));
-
-	if (mux_state == USB_PD_MUX_USB_ENABLED) {
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-	} else if (mux_state == USB_PD_MUX_DP_ENABLED) {
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-	} else if (mux_state == USB_PD_MUX_DOCK && !flipped) {
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-	} else if (mux_state == USB_PD_MUX_DOCK && flipped) {
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX1,
-					    ANX7483_EQ_SETTING_12_5DB));
-		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_DRX2,
-					    ANX7483_EQ_SETTING_12_5DB));
-	}
-
-	return EC_SUCCESS;
-}
-
 int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	CPRINTSUSB("C1: PS8818 mux using default tuning");
@@ -121,22 +68,3 @@ int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 
 	return 0;
 }
-
-static void setup_mux(void)
-{
-	uint32_t val;
-
-	if (cros_cbi_get_fw_config(FW_IO_DB, &val) != 0)
-		CPRINTSUSB("Error finding FW_DB_IO in CBI FW_CONFIG");
-	/* Val will have our dts default on error, so continue setup */
-
-	if (val == FW_IO_DB_PS8811_PS8818) {
-		CPRINTSUSB("C1: Setting PS8818 mux");
-		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_ps8818_port1);
-	} else if (val == FW_IO_DB_NONE_ANX7483) {
-		CPRINTSUSB("C1: Setting ANX7483 mux");
-	} else {
-		CPRINTSUSB("Unexpected DB_IO board: %d", val);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_INIT_I2C);

@@ -56,11 +56,6 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y
 
-  skyrim.markarth.fan:
-    extra_configs:
-    - CONFIG_TEST_BOARD_MARKARTH=y
-    - CONFIG_TEST_BOARD_FAN=y
-
   skyrim.markarth.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y

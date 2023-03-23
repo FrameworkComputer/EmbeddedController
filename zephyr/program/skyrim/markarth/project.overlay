@@ -93,46 +93,24 @@
 				default;
 			};
 		};
-		io-db {
-			enum-name = "FW_IO_DB";
-			start = <6>;
-			size = <2>;
-
-			io-db-ps8811-ps8818 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_IO_DB_PS8811_PS8818";
-				value = <0>;
-			};
-			io-db-none-anx7483 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_IO_DB_NONE_ANX7483";
-				value = <1>;
-				default;
-			};
-		};
 
 		/*
-		 * FW_CONFIG field to enable fan or not.
+		 * FW_CONFIG field to enable KB back light or not.
 		 */
-		fan {
-			enum-name = "FW_FAN";
-			start = <10>;
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <1>;
 			size = <1>;
 
-			no-fan {
+			no-kb-bl {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_FAN_NOT_PRESENT";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
 				value = <0>;
 			};
-			fan-present {
+			kb-bl-present {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_FAN_PRESENT";
+				enum-name = "FW_KB_BL_PRESENT";
 				value = <1>;
-				/*
-				 * Set as default so that unprovisioned
-				 * configs will run the fan regardless.
-				 */
-				default;
 			};
 		};
 	};
@@ -143,12 +121,6 @@
 		lid_rot_ref: lid-rotation-ref {
 			mat33 = <0 (-1) 0
 				 1 0 0
-				 0 0 1>;
-		};
-
-		lid_rot_ref1: lid-rotation-ref1 {
-			mat33 = <0 1 0
-				 (-1) 0 0
 				 0 0 1>;
 		};
 
@@ -178,6 +150,7 @@
 
 &i2c1_0 {
 	/delete-node/ pi3usb9201@5f;
+	/delete-node/ anx7483@3e;
 };
 
 &i2c4_1 {
@@ -195,6 +168,12 @@
 
 &usbc_port1 {
 	/delete-property/ bc12;
+	/delete-node/ usb-mux-chain-1-anx;
+	/delete-node/ usb-mux-chain-1-ps;
+	usb-mux-chain-1-ps8818 {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port1 &ps8818_port1>;
+	};
 };
 
 &i2c6_1 {
