@@ -110,6 +110,8 @@
 #define RT1718S_UNLOCK_PW_2 0xF0
 #define RT1718S_UNLOCK_PW_1 0xF1
 
+#define RT1718S_RT2 0xF2
+
 #define RT1718S_RT2_SYS_CTRL5 0xF210
 
 #define RT1718S_VBUS_VOL_TO_REG(_vol) (CLAMP(_vol, 5, 20) - 5)
