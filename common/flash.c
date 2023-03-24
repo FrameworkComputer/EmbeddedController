@@ -1024,7 +1024,6 @@ static struct ec_params_flash_erase_v1 erase_info;
 
 static void flash_erase_deferred(void)
 {
-	erase_rc = EC_RES_BUSY;
 	if (crec_flash_erase(erase_info.params.offset, erase_info.params.size))
 		erase_rc = EC_RES_ERROR;
 	else
@@ -1477,6 +1476,7 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 			memcpy(&erase_info, p_1, sizeof(*p_1));
 			hook_call_deferred(&flash_erase_deferred_data,
 					   100 * MSEC);
+			erase_rc = EC_RES_BUSY;
 		} else {
 			/*
 			 * Not our job to return the result of
