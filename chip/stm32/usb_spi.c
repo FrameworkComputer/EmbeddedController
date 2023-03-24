@@ -26,6 +26,136 @@ static bool usb_spi_transmitted_packet(void);
 static void usb_spi_read_packet(struct usb_spi_packet_ctx *packet);
 static void usb_spi_write_packet(struct usb_spi_packet_ctx *packet);
 
+struct usb_spi_transfer_ctx {
+	/* Address of transfer buffer. */
+	uint8_t *buffer;
+	/* Number of bytes in the transfer. */
+	size_t transfer_size;
+	/* Number of bytes transferred. */
+	size_t transfer_index;
+};
+
+enum usb_spi_mode {
+	/* No tasks are required. */
+	USB_SPI_MODE_IDLE = 0,
+	/* Indicates the device needs to send it's USB SPI configuration.*/
+	USB_SPI_MODE_SEND_CONFIGURATION,
+	/* Indicates the device needs to respond to chip select. */
+	USB_SPI_MODE_SEND_CHIP_SELECT_RESPONSE,
+	/* Indicates we device needs start the SPI transfer. */
+	USB_SPI_MODE_START_SPI,
+	/* Indicates we should start a transfer response. */
+	USB_SPI_MODE_START_RESPONSE,
+	/* Indicates we need to continue a transfer response. */
+	USB_SPI_MODE_CONTINUE_RESPONSE,
+};
+
+struct usb_spi_state {
+	/*
+	 * The SPI bridge must be enabled both locally and by the host to allow
+	 * access to the SPI device.  The enabled_host flag is set and cleared
+	 * by sending USB_SPI_REQ_ENABLE and USB_SPI_REQ_DISABLE to the device
+	 * control endpoint.  The enabled_device flag is set by calling
+	 * usb_spi_enable.
+	 */
+	uint8_t enabled_host;
+	uint8_t enabled_device;
+
+	/*
+	 * The current enabled state.  This is only updated in the deferred
+	 * callback.  Whenever either of the host or device specific enable
+	 * flags is changed the deferred callback is queued, and it will check
+	 * their combined state against this flag.  If the combined state is
+	 * different, then one of usb_spi_board_enable or usb_spi_board_disable
+	 * is called and this flag is updated.  This ensures that the board
+	 * specific state update routines are only called from the deferred
+	 * callback.
+	 */
+	uint8_t enabled;
+
+	/*
+	 * The index of the SPI port currently receiving forwarded transactions,
+	 * default is zero.
+	 */
+	uint8_t current_spi_device_idx;
+
+	/* Mark the current operating mode. */
+	enum usb_spi_mode mode;
+
+	/*
+	 * Stores the status code response for the transfer, delivered in the
+	 * header for the first response packet. Error code is cleared during
+	 * first RX packet and set if a failure occurs.
+	 */
+	uint16_t status_code;
+
+	/* Stores the content from the USB packets */
+	struct usb_spi_packet_ctx receive_packet;
+	struct usb_spi_packet_ctx transmit_packet;
+
+	/*
+	 * Flags describing if and how multi-lane (dual/quad), double transfer
+	 * rate, and other advanced flash protocol features are to be used.
+	 */
+	uint32_t flash_flags;
+
+	/*
+	 * Context structures representing the progress receiving the SPI
+	 * write data and transmitting the SPI read data.
+	 */
+	struct usb_spi_transfer_ctx spi_write_ctx;
+	struct usb_spi_transfer_ctx spi_read_ctx;
+};
+
+/*
+ * Compile time Per-USB gpio configuration stored in flash.  Instances of this
+ * structure are provided by the user of the USB gpio.  This structure binds
+ * together all information required to operate a USB gpio.
+ */
+struct usb_spi_config {
+	/* Interface and endpoint indices. */
+	int interface;
+	int endpoint;
+
+	/* Deferred function to call to handle SPI request. */
+	const struct deferred_data *deferred;
+
+	/* Pointers to USB endpoint buffers. */
+	usb_uint *ep_rx_ram;
+	usb_uint *ep_tx_ram;
+};
+
+/*
+ * Handle SPI request in a deferred callback.
+ */
+void usb_spi_deferred(void);
+
+/*
+ * Storage of configuration and state of USB->SPI bridge.
+ */
+static uint16_t usb_spi_buffer_[(USB_SPI_BUFFER_SIZE + 1) / 2];
+static usb_uint usb_spi_ep_rx_buffer_[USB_MAX_PACKET_SIZE / 2] __usb_ram;
+static usb_uint usb_spi_ep_tx_buffer_[USB_MAX_PACKET_SIZE / 2] __usb_ram;
+
+static struct usb_spi_state usb_spi_state = {
+	.enabled_host = 0,
+	.enabled_device = 0,
+	.enabled = 0,
+	.current_spi_device_idx = 0,
+	.spi_write_ctx.buffer = (uint8_t *)usb_spi_buffer_,
+	.spi_read_ctx.buffer = (uint8_t *)usb_spi_buffer_,
+};
+
+DECLARE_DEFERRED(usb_spi_deferred);
+
+struct usb_spi_config const usb_spi = {
+	.interface = USB_IFACE_SPI,
+	.endpoint = USB_EP_SPI,
+	.deferred = &usb_spi_deferred_data,
+	.ep_rx_ram = usb_spi_ep_rx_buffer_,
+	.ep_tx_ram = usb_spi_ep_tx_buffer_,
+};
+
 /*
  * Map EC error codes to USB_SPI error codes.
  *
@@ -825,3 +955,36 @@ usb_spi_board_transaction(const struct spi_device_t *spi_device,
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
+
+/*
+ * Register this file with the low-level USB driver.
+ */
+const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_SPI) = {
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = USB_IFACE_SPI,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 2,
+	.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
+	.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SPI,
+	.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SPI,
+	.iInterface = USB_STR_SPI_NAME,
+};
+const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_SPI, 0) = {
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = 0x80 | USB_EP_SPI,
+	.bmAttributes = 0x02 /* Bulk IN */,
+	.wMaxPacketSize = USB_MAX_PACKET_SIZE,
+	.bInterval = 10,
+};
+const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_SPI, 1) = {
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = USB_EP_SPI,
+	.bmAttributes = 0x02 /* Bulk OUT */,
+	.wMaxPacketSize = USB_MAX_PACKET_SIZE,
+	.bInterval = 0,
+};
+USB_DECLARE_EP(USB_EP_SPI, usb_spi_tx, usb_spi_rx, usb_spi_event);
+USB_DECLARE_IFACE(USB_IFACE_SPI, usb_spi_interface);

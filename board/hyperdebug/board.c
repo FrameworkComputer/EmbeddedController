@@ -119,13 +119,6 @@ USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
 		  usart5_to_usb)
 
 /******************************************************************************
- * Support SPI bridging over USB, this requires usb_spi_board_enable and
- * usb_spi_board_disable to be defined to enable and disable the SPI bridge.
- */
-
-USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI);
-
-/******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 
