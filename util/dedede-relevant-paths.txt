@@ -1,6 +1,8 @@
 # Here you can place files of interest to be included in the commit message for
 # merge commits to firmware-dedede-13606.B
+chip/it83xx
 common/charge_state_v2.c
+common/fpsensor/build.mk
 common/mkbp_*
 common/ocpc.c
 common/usbc/usb_tc_drp_acc_trysrc_sm.c
