@@ -329,8 +329,7 @@ void usb_spi_board_disable(void)
 	STM32_GPIO_OSPEEDR(GPIO_B) &= ~0xff000000;
 }
 
-USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI,
-	       USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE);
+USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI);
 
 /******************************************************************************
  * Check parity setting on usarts.

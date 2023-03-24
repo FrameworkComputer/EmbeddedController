@@ -369,7 +369,7 @@ void usb_spi_deferred(void)
 		&usb_spi_state.transmit_packet;
 	transmit_packet->packet_size = 0;
 
-	if (usb_spi.flags & USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE)
+	if (IS_ENABLED(CONFIG_USB_SPI_IGNORE_HOST_SIDE_ENABLE))
 		enabled = usb_spi_state.enabled_device;
 	else
 		enabled = usb_spi_state.enabled_device &&
@@ -649,7 +649,7 @@ int usb_spi_interface(usb_uint *rx_buf, usb_uint *tx_buf)
 	 * Our state has changed, call the deferred function to handle the
 	 * state change.
 	 */
-	if (!(usb_spi.flags & USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE))
+	if (!IS_ENABLED(CONFIG_USB_SPI_IGNORE_HOST_SIDE_ENABLE))
 		hook_call_deferred(usb_spi.deferred, 0);
 
 	usb_spi_reset_interface();

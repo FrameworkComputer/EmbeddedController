@@ -84,7 +84,7 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-USB_SPI_CONFIG(USB_IFACE_I2C_SPI, USB_EP_I2C_SPI, 0);
+USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI);
 /* SPI interface is always enabled, no need to do anything. */
 void usb_spi_board_enable(void)
 {

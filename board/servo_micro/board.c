@@ -331,7 +331,7 @@ void usb_spi_board_disable(void)
 	gpio_config_module(MODULE_SPI_FLASH, 0);
 }
 
-USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI, 0);
+USB_SPI_CONFIG(USB_IFACE_SPI, USB_EP_SPI);
 
 /******************************************************************************
  * Support I2C bridging over USB.

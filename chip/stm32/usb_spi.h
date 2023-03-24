@@ -531,22 +531,11 @@ struct usb_spi_config {
 	/* Pointers to USB endpoint buffers. */
 	usb_uint *ep_rx_ram;
 	usb_uint *ep_tx_ram;
-
-	/* Flags. See USB_SPI_CONFIG_FLAGS_* for definitions */
-	uint32_t flags;
 };
 
 /* Storage of configuration and state of USB->SPI bridge. */
 extern struct usb_spi_state usb_spi_state;
 extern struct usb_spi_config const usb_spi;
-
-/*
- * Use when you want the SPI subsystem to be enabled even when the USB SPI
- * endpoint is not enabled by the host. This means that when this firmware
- * enables SPI, then the HW SPI module is enabled (i.e. SPE bit is set) until
- * this firmware disables the SPI module; it ignores the host's enables state.
- */
-#define USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE BIT(0)
 
 /*
  * Convenience macro for defining a USB SPI bridge driver.
@@ -556,11 +545,8 @@ extern struct usb_spi_config const usb_spi;
  *
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
  * transmitting bytes.
- *
- * FLAGS encodes different run-time control parameters. See
- * USB_SPI_CONFIG_FLAGS_* for definitions.
  */
-#define USB_SPI_CONFIG(INTERFACE, ENDPOINT, FLAGS)                          \
+#define USB_SPI_CONFIG(INTERFACE, ENDPOINT)                                 \
 	static uint16_t usb_spi_buffer_[(USB_SPI_BUFFER_SIZE + 1) / 2];     \
 	static usb_uint                                                     \
 		usb_spi_ep_rx_buffer_[USB_MAX_PACKET_SIZE / 2] __usb_ram;   \
@@ -582,7 +568,6 @@ extern struct usb_spi_config const usb_spi;
 		.deferred = &usb_spi_deferred__data,                        \
 		.ep_rx_ram = usb_spi_ep_rx_buffer_,                         \
 		.ep_tx_ram = usb_spi_ep_tx_buffer_,                         \
-		.flags = FLAGS,                                             \
 	};                                                                  \
 	const struct usb_interface_descriptor USB_IFACE_DESC(INTERFACE) = { \
 		.bLength = USB_DT_INTERFACE_SIZE,                           \

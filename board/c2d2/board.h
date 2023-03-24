@@ -70,6 +70,7 @@
 
 /* Enable control of SPI over USB */
 #define CONFIG_USB_SPI
+#define CONFIG_USB_SPI_IGNORE_HOST_SIDE_ENABLE
 #define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_FLASH_PORT 0 /* SPI2 is 0th in stm's SPI_REGS var */
 

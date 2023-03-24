@@ -5546,6 +5546,14 @@
 /* USB SPI config */
 #undef CONFIG_USB_SPI
 
+/*
+ * Use when you want the SPI subsystem to be enabled even when the USB SPI
+ * endpoint is not enabled by the host. This means that when this firmware
+ * enables SPI, then the HW SPI module is enabled (i.e. SPE bit is set) until
+ * this firmware disables the SPI module; it ignores the host's enables state.
+ */
+#undef CONFIG_USB_SPI_IGNORE_HOST_SIDE_ENABLE
+
 /*****************************************************************************/
 /* USB I2C config */
 #undef CONFIG_USB_I2C
