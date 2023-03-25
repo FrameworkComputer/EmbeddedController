@@ -112,10 +112,6 @@
 		als_rgb_int_odl: als-rgb-int-odl {
 			gpios = <&gpiof 1 GPIO_INPUT>;
 		};
-		ec_ap_rsvd0_odl: ec-ap-rsvd0-odl {
-			gpios = <&gpioh 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8 |
-					   GPIO_ACTIVE_LOW)>;
-		};
 		usb_c0_dp_in_hpd: usb-c0-dp-in-hpd {
 			gpios = <&gpioh 3 GPIO_OUTPUT_LOW>;
 		};
@@ -186,19 +182,14 @@
 		compatible = "unused-gpios";
 
 		unused-gpios =
-			/* pg_pp5000_z1_od */
-			<&gpiod 2 GPIO_INPUT>,
-			/* charge_en */
-			<&gpioe 1 GPIO_INPUT>,
 			/* unnamed nc pins */
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
-			/* h5,h6: uart base tx/rx */
-			<&gpioh 5 GPIO_INPUT>,
-			<&gpioh 6 GPIO_INPUT>,
-			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
-			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
+			/* pg_pp5000_z1_od */
+			<&gpiod 2 GPIO_INPUT>,
+			/* CHARGE_EN DNS */
+			<&gpioe 1 GPIO_INPUT_PULL_DOWN>,
 			/* spi_clk_gpg6 */
 			<&gpiog 6 GPIO_INPUT_PULL_UP>,
 			/* spi_mosi_gpg4 */
@@ -206,7 +197,16 @@
 			/* spi_miso_gpg5 */
 			<&gpiog 5 GPIO_OUTPUT_LOW>,
 			/* spi_cs_gpg7 */
-			<&gpiog 7 GPIO_OUTPUT_LOW>;
+			<&gpiog 7 GPIO_OUTPUT_LOW>,
+			/* Input w/o I-PULL for unused GPIO w/ Ex-PU
+			 * EC_AP_RSVD0_ODL
+			 */
+			<&gpioh 0 GPIO_INPUT>,
+			/* h5,h6: uart base tx/rx */
+			<&gpioh 5 GPIO_INPUT>,
+			<&gpioh 6 GPIO_INPUT>,
+			<&gpiom 2 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
+			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>;
 	};
 };
 

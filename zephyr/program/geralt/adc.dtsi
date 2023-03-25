@@ -41,6 +41,7 @@
 		     &adc0_ch1_gpi1_default
 		     &adc0_ch2_gpi2_default
 		     &adc0_ch5_gpi5_default
+		     &adc0_ch6_gpi6_default
 		     &adc0_ch7_gpi7_default>;
 	pinctrl-names = "default";
 };
