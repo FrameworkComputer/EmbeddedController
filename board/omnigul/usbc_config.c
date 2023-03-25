@@ -105,7 +105,7 @@ static const struct usb_mux_chain usbc1_usb3_db_retimer = {
 const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.mux = &(const struct usb_mux) {
-			.usb_port = USBC_PORT_C1,
+			.usb_port = USBC_PORT_C0,
 			.driver = &virtual_usb_mux_driver,
 			.hpd_update = &virtual_hpd_update,
 		},
