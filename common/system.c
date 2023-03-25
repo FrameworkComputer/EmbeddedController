@@ -1835,15 +1835,6 @@ __overridable int board_write_mac_addr(const char *mac_addr)
 }
 #endif /* CONFIG_MAC_ADDR_LEN */
 
-__attribute__((weak)) void clock_enable_module(enum module_id module,
-					       int enable)
-{
-	/*
-	 * Default weak implementation - for chips that don't support this
-	 * function.
-	 */
-}
-
 __test_only void system_common_reset_state(void)
 {
 	jdata = 0;

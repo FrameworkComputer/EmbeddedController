@@ -750,3 +750,7 @@ DECLARE_CONSOLE_COMMAND(
 	"Give a timeout value for the console in use timeout.\n"
 	"See also 'sleep mask'.");
 #endif /* CONFIG_LOW_POWER_IDLE */
+
+void clock_enable_module(enum module_id module, int enable)
+{
+}

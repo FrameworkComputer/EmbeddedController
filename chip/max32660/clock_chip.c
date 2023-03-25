@@ -139,3 +139,7 @@ void clock_init(void)
 		}
 	}
 }
+
+void clock_enable_module(enum module_id module, int enable)
+{
+}

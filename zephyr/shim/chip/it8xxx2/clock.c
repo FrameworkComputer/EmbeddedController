@@ -31,3 +31,7 @@ int clock_get_freq(void)
 
 	return pll_reg_to_freq[reg_val];
 }
+
+void clock_enable_module(enum module_id module, int enable)
+{
+}

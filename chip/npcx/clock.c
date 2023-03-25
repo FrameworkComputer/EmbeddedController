@@ -162,6 +162,11 @@ void clock_turbo(void)
 	 */
 	NPCX_HFCBCD = NPCX_HFCBCD & 0xF3;
 }
+
+void clock_enable_module(enum module_id module, int enable)
+{
+}
+
 #elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 void clock_turbo(void)
 {
@@ -198,6 +203,12 @@ void clock_enable_module(enum module_id module, int enable)
 		else
 			clock_normal();
 	}
+}
+
+#else
+
+void clock_enable_module(enum module_id module, int enable)
+{
 }
 
 #endif

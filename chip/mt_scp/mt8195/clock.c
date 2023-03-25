@@ -501,3 +501,7 @@ int command_ulposc(int argc, const char *argv[])
 DECLARE_CONSOLE_COMMAND(ulposc, command_ulposc, "[ulposc]",
 			"Measure ULPOSC frequency");
 #endif
+
+void clock_enable_module(enum module_id module, int enable)
+{
+}
