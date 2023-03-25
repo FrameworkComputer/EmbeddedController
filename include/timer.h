@@ -27,6 +27,10 @@ typedef long clock_t;
 #define MINUTE 60000000
 #define HOUR 3600000000ull /* Too big to fit in a signed int */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Microsecond timestamp. */
 typedef union {
 	uint64_t val;
@@ -195,5 +199,9 @@ static inline int time_after(uint32_t a, uint32_t b)
 #ifdef CONFIG_ZTEST
 extern timestamp_t *get_time_mock;
 #endif /* CONFIG_ZTEST */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TIMER_H */
