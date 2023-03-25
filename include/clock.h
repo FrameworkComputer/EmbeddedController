@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Set the CPU clocks and PLLs.
  */
@@ -107,5 +111,9 @@ void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode);
  * Notify the clock module that the UART for the console is in use.
  */
 void clock_refresh_console_in_use(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CLOCK_H */
