@@ -261,6 +261,7 @@ conflicting_options := \
 	MPU \
 	PECI \
 	PS2 \
+	SMBUS \
 	SPI \
 	UART_CONSOLE
 
