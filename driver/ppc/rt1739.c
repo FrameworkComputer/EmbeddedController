@@ -482,6 +482,31 @@ void rt1739_interrupt(int port)
 	hook_call_deferred(&rt1739_deferred_interrupt_data, 0);
 }
 
+/* disconnect SBU, DP, DM when unused to save power */
+void rt1739_pd_connect(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+		if (ppc_chips[i].drv == &rt1739_ppc_drv)
+			update_reg(i, RT1739_REG_SBU_CTRL_01,
+				   RT1739_DM_SWEN | RT1739_DP_SWEN |
+					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
+				   MASK_SET);
+	}
+}
+DECLARE_HOOK(HOOK_USB_PD_CONNECT, rt1739_pd_connect, HOOK_PRIO_DEFAULT);
+
+void rt1739_pd_disconnect(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+		if (ppc_chips[i].drv == &rt1739_ppc_drv)
+			update_reg(i, RT1739_REG_SBU_CTRL_01,
+				   RT1739_DM_SWEN | RT1739_DP_SWEN |
+					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
+				   MASK_CLR);
+	}
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, rt1739_pd_disconnect, HOOK_PRIO_DEFAULT);
+
 const struct ppc_drv rt1739_ppc_drv = {
 	.init = &rt1739_init,
 	.is_sourcing_vbus = &rt1739_is_sourcing_vbus,
