@@ -79,6 +79,31 @@ test_static int test_malloc_too_large(void)
 	return EC_SUCCESS;
 }
 
+/**
+ * Useful for manually testing the behavior of double frees.
+ *
+ * For example, if you compile the malloc implementation provided by newlib
+ * with the patch in https://crrev.com/c/4406822, you'll get something like:
+ *
+ * assertion "inuse(p)" failed: file "newlib/libc/stdlib/mallocr.c",
+ * line 1841, function: do_check_inuse_chunk
+ * _exit called with rc: 1
+ *
+ * If you run the host tests you'll get something like:
+ *
+ * free(): double free detected in tcache 2
+ * Aborted
+ */
+test_static int test_malloc_double_free(void)
+{
+	uint8_t *volatile ptr = malloc(10);
+	TEST_NE(ptr, NULL, "%p");
+	free(ptr);
+	free(ptr);
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	test_reset();
