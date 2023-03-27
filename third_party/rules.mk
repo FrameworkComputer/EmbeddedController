@@ -33,7 +33,8 @@ ifeq ($(CONFIG_BORINGSSL_CRYPTO), y)
 
 ifeq ($(CROSS_COMPILE), armv7m-cros-eabi-)
 CMAKE_SYSTEM_PROCESSOR ?= armv7
-OPENSSL_NO_ASM ?= 0
+# TODO(b/275450331): Enable the asm after we fix the crash.
+OPENSSL_NO_ASM ?= 1
 else ifeq ($(CROSS_COMPILE), x86_64-pc-linux-gnu-)
 CMAKE_SYSTEM_PROCESSOR ?= x86_64
 OPENSSL_NO_ASM ?= 0
