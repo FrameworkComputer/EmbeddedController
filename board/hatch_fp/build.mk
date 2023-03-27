@@ -44,6 +44,7 @@ test-list-y=\
        global_initialization \
        libc_printf \
        libcxx \
+       malloc \
        mpu \
        mutex \
        panic \

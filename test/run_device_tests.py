@@ -275,6 +275,7 @@ class AllTests:
             ),
             TestConfig(test_name="global_initialization"),
             TestConfig(test_name="libcxx"),
+            TestConfig(test_name="malloc", imagetype_to_use=ImageType.RO),
             TestConfig(
                 config_name="mpu_ro",
                 test_name="mpu",
