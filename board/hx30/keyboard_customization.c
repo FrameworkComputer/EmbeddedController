@@ -41,6 +41,14 @@ uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 		{0x006a, 0x000a, 0xe074, 0xe054, 0x0000, 0x006b, 0x0073, 0x0074},
 };
 
+#ifdef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
+#define FN_PRESSED BIT(0)
+#define FN_LOCKED BIT(1)
+static uint8_t Fn_key;
+static uint32_t fn_key_table_media;
+static uint32_t fn_key_table;
+#endif
+
 
 uint16_t get_scancode_set2(uint8_t row, uint8_t col)
 {
@@ -141,13 +149,27 @@ int caps_status_check(void)
 
 void hx20_8042_led_control(int data)
 {
-	if (data & CAPS_LED) {
-		caps_led_status = 1;
-		gpio_set_level(GPIO_CAP_LED_L, 1);
+	#ifdef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
+	if (Fn_key & FN_PRESSED) {
+		if (Fn_key & FN_LOCKED) {
+			caps_led_status = 1;
+			gpio_set_level(GPIO_CAP_LED_L, 1);
+		} else {
+			caps_led_status = 0;
+			gpio_set_level(GPIO_CAP_LED_L, 0);
+		}
 	} else {
-		caps_led_status = 0;
-		gpio_set_level(GPIO_CAP_LED_L, 0);
+	#endif
+		if (data & CAPS_LED) {
+			caps_led_status = 1;
+			gpio_set_level(GPIO_CAP_LED_L, 1);
+		} else {
+			caps_led_status = 0;
+			gpio_set_level(GPIO_CAP_LED_L, 0);
+		}
+	#ifdef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
 	}
+	#endif
 }
 
 void caps_suspend(void)
@@ -217,11 +239,7 @@ void board_kblight_init(void)
 #endif
 
 #ifdef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
-#define FN_PRESSED BIT(0)
-#define FN_LOCKED BIT(1)
-static uint8_t Fn_key;
-static uint32_t fn_key_table_media;
-static uint32_t fn_key_table;
+
 
 int fn_table_media_set(int8_t pressed, uint32_t fn_bit)
 {
@@ -372,14 +390,34 @@ int hotkey_special_key(uint16_t *key_code, int8_t pressed)
 	const uint16_t prss_key = *key_code;
 
 	switch (prss_key) {
+	// CUSTOM PWOOLFORD
+	case SCANCODE_I:
+		if (fn_table_set(pressed, KB_FN_I))
+			*key_code = SCANCODE_UP;
+		break;
+	case SCANCODE_J:
+		if (fn_table_set(pressed, KB_FN_J))
+			*key_code = SCANCODE_LEFT;
+		break;
+	case SCANCODE_K:
+		if (fn_table_set(pressed, KB_FN_K))
+			*key_code = SCANCODE_DOWN;
+		break;
+	case SCANCODE_L:
+		if (fn_table_set(pressed, KB_FN_L))
+			*key_code = SCANCODE_RIGHT;
+		break;
+	// END CUSTOM PWOOLFORD
 	case SCANCODE_DELETE:  /* TODO: INSERT */
 		if (fn_table_set(pressed, KB_FN_DELETE))
 			*key_code = 0xe070;
 		break;
-	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
+	/* replaced by IJKL navigation
+	case SCANCODE_K:  // TODO: SCROLL_LOCK 
 		if (fn_table_set(pressed, KB_FN_K))
 			*key_code = SCANCODE_SCROLL_LOCK;
 		break;
+	*/
 	case SCANCODE_S:  /* TODO: SYSRQ */
 		/*if (!fn_table_set(pressed, KB_FN_S))*/
 

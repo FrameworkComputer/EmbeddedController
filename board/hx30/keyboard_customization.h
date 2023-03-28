@@ -96,6 +96,11 @@ enum kb_fn_table {
     KB_FN_B = BIT(20),
     KB_FN_P = BIT(21),
     KB_FN_SPACE = BIT(22),
+
+	// CUSTOM PWOOLFORD
+	KB_FN_I = BIT(23),
+	KB_FN_J = BIT(24),
+	KB_FN_L = BIT(25)
 };
 
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
