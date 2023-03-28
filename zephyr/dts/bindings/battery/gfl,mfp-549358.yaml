@@ -1,18 +1,18 @@
-description: "Gfl NB0280-549358"
-compatible: "gfl,nb0280-549358"
+description: "Gfl MFP-549358"
+compatible: "gfl,mfp-549358"
 
 include: battery-smart.yaml
 
 properties:
   enum-name:
     type: string
-    default: "gfl,nb0280-549358"
+    default: "gfl,mfp-549358"
 
   # Fuel gauge
   manuf_name:
     default: "GFL"
   device_name:
-    default: "NB0280-549358"
+    default: "MFP-549358"
   ship_mode_reg_addr:
     default: 0x00
   ship_mode_reg_data:
