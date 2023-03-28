@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "board_host_command.h"
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
@@ -27,6 +28,7 @@ static int keep_pch_power;	/* For S4 wake source */
 static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
+static int stress_test_enable;
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -166,16 +168,15 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5G3;
 		}
 
-		if (power_s5_up) {
+		if (power_s5_up || stress_test_enable) {
 			while (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
 				if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
 					if (++s5_exit_tries > ap_boot_delay) {
 						CPRINTS("timeout waiting for S5 exit");
 						/*
 						 * TODO: RTC reset function
-						 * TODO: ODM stress tool feature
 						 */
-
+						stress_test_enable = 0;
 						/* SLP_S5 asserted, power down to G3S5 state */
 						return POWER_S5G3;
 					}
@@ -361,3 +362,20 @@ static void usb30_hub_reset(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, usb30_hub_reset, HOOK_PRIO_DEFAULT);
+
+static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
+{
+	const struct ec_response_ap_reboot_delay *p = args->params;
+
+	stress_test_enable = 1;
+	/* don't let AP send zero it will stuck power sequence at S5 */
+	if (p->delay < 181 && p->delay)
+		ap_boot_delay = p->delay;
+	else
+		return EC_ERROR_INVAL;
+
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
+			EC_VER_MASK(0));
