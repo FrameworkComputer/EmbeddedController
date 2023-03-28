@@ -337,14 +337,14 @@ ZTEST(lis2dw12, test_lis2dw12_set_rate)
 			test_params[i].expected_reg_val, odr_bits,
 			LIS2DW12_ODR_MAX_VAL);
 
-		/* Check if high performance mode was enabled if rate >
-		 * 200,000mHz
+		/* Check if high performance mode was enabled if rate >=
+		 * 50,000mHz
 		 */
 
 		uint8_t mode_bits = lis2dw12_emul_peek_mode(emul);
 		uint8_t lpmode_bits = lis2dw12_emul_peek_lpmode(emul);
 
-		if (odr_bits > LIS2DW12_ODR_200HZ_VAL) {
+		if (odr_bits >= LIS2DW12_ODR_50HZ_VAL) {
 			/* High performance mode, LP mode immaterial */
 			zassert_equal(mode_bits, LIS2DW12_HIGH_PERF,
 				      "MODE[1:0] should be 0x%x, but got 0x%x",
