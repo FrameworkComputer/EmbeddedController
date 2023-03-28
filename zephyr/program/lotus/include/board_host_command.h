@@ -73,6 +73,17 @@ struct ec_response_chg_limit_control {
 	uint8_t min_percentage;
 } __ec_align1;
 
+
+/*****************************************************************************/
+/*
+ * This command uses to notify the EC needs to keep the pch power in s5.
+ */
+#define EC_CMD_SET_AP_REBOOT_DELAY	0x3E05
+
+struct ec_response_ap_reboot_delay {
+	uint8_t delay;
+} __ec_align1;
+
 /*****************************************************************************/
 /*
  * This command uses to notify the EC that the system is in non-ACPI mode.
