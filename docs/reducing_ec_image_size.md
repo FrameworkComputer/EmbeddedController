@@ -135,6 +135,18 @@ $ ninja -C /tmp/zephyr-herobrine/herobrine/build-ro rom_report
 Please refer to the [Zephyr Optimization Tools][3] documentation for details on
 the `rom_report` and `ram_report` targets.
 
+## Checking a board's config
+
+If you want to see what configs are enabled for a given board, use the
+`print-configs` `Makefile` target:
+
+```shell
+$ make BOARD=<BOARD> print-configs
+```
+
+You can also open the `./build/<BOARD>/.config` file that is generated after
+building the board with `make BOARD=<BOARD>`.
+
 ## Disable console commands
 
 The lowest hanging fruit for reducing the EC image size is by disabling console
