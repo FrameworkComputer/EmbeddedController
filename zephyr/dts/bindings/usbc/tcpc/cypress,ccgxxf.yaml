@@ -6,7 +6,7 @@ description: USBC TCPC
 
 compatible: "cypress,ccgxxf"
 
-include: i2c-device.yaml
+include: ["i2c-device.yaml", "cros-ec,tcpci.yaml"]
 
 properties:
   tcpc-flags:

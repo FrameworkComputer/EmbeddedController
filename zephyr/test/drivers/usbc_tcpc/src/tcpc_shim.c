@@ -17,26 +17,34 @@ static struct tcpc_config_t tcpc_config_saved[] = { DT_FOREACH_STATUS_OKAY(
 
 ZTEST(tcpc_shim, test_tcpc_alts_exist)
 {
-	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_rt1715_0_alt));
-	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_rt1715_1_alt));
+	/* Verify all TCPC types are able to create an alternate TCPC entry */
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_anx7447_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_ccgxxf_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_fusb302_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_ps8xxx_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_raa489000_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_nct38xx_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_rt1715_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_rt1718s_alt));
+	zassert_not_null(&TCPC_ALT_FROM_NODELABEL(tcpc_alt));
 }
 
 ZTEST(tcpc_shim, test_tcpc_alt_enable)
 {
 	/* Enable an alternate TCPC on each USB-C port */
-	TCPC_ENABLE_ALTERNATE_BY_NODELABEL(0, tcpc_rt1715_0_alt);
-	TCPC_ENABLE_ALTERNATE_BY_NODELABEL(1, tcpc_rt1715_1_alt);
+	TCPC_ENABLE_ALTERNATE_BY_NODELABEL(0, tcpc_ps8xxx_alt);
+	TCPC_ENABLE_ALTERNATE_BY_NODELABEL(1, tcpc_rt1715_alt);
 
 	zassert_mem_equal(&tcpc_config[0],
-			  &TCPC_ALT_FROM_NODELABEL(tcpc_rt1715_0_alt),
+			  &TCPC_ALT_FROM_NODELABEL(tcpc_ps8xxx_alt),
 			  sizeof(struct tcpc_config_t));
 	zassert_mem_equal(&tcpc_config[1],
-			  &TCPC_ALT_FROM_NODELABEL(tcpc_rt1715_1_alt),
+			  &TCPC_ALT_FROM_NODELABEL(tcpc_rt1715_alt),
 			  sizeof(struct tcpc_config_t));
 
-	TCPC_ENABLE_ALTERNATE_BY_NODELABEL(0, tcpc_rt1715_1_alt);
+	TCPC_ENABLE_ALTERNATE_BY_NODELABEL(0, tcpc_anx7447_alt);
 	zassert_mem_equal(&tcpc_config[0],
-			  &TCPC_ALT_FROM_NODELABEL(tcpc_rt1715_1_alt),
+			  &TCPC_ALT_FROM_NODELABEL(tcpc_anx7447_alt),
 			  sizeof(struct tcpc_config_t));
 }
 

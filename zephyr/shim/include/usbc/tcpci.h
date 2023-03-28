@@ -4,7 +4,18 @@
  */
 
 #include "driver/tcpm/tcpci.h"
+#include "usbc/tcpc_anx7447.h"
+#include "usbc/tcpc_anx7447_emul.h"
+#include "usbc/tcpc_ccgxxf.h"
+#include "usbc/tcpc_fusb302.h"
+#include "usbc/tcpc_generic_emul.h"
+#include "usbc/tcpc_nct38xx.h"
+#include "usbc/tcpc_ps8xxx.h"
+#include "usbc/tcpc_ps8xxx_emul.h"
+#include "usbc/tcpc_raa489000.h"
 #include "usbc/tcpc_rt1715.h"
+#include "usbc/tcpc_rt1718s.h"
+#include "usbc/utils.h"
 
 #include <zephyr/devicetree.h>
 
@@ -64,7 +75,21 @@
  * Forward declare a struct tcpc_config_t for every TCPC node in the tree with
  * the "is-alt" property set.
  */
+DT_FOREACH_STATUS_OKAY(ANX7447_TCPC_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(CCGXXF_TCPC_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(FUSB302_TCPC_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(PS8XXX_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(NCT38XX_TCPC_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(RAA489000_TCPC_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(RT1718S_TCPC_COMPAT, TCPC_ALT_DECLARE)
 DT_FOREACH_STATUS_OKAY(RT1715_TCPC_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(TCPCI_COMPAT, TCPC_ALT_DECLARE)
+
+#ifdef TEST_BUILD
+DT_FOREACH_STATUS_OKAY(TCPCI_EMUL_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(PS8XXX_EMUL_COMPAT, TCPC_ALT_DECLARE)
+DT_FOREACH_STATUS_OKAY(ANX7447_EMUL_COMPAT, TCPC_ALT_DECLARE)
+#endif
 
 #define TCPC_ENABLE_ALTERNATE_BY_NODELABEL(usb_port_num, nodelabel) \
 	memcpy(&tcpc_config[usb_port_num],                          \
