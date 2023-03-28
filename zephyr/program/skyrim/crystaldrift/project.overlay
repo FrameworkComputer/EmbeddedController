@@ -182,3 +182,21 @@
 		usb-muxes = <&amd_fp6_port0>;
 	};
 };
+/* fan overrides */
+&fan0 {
+	pwms = <&pwm0 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <2500>;
+	rpm_start = <2500>;
+	rpm_max = <4800>;
+};
+
+&temp_sensor_cpu {
+	temp_host_warn = <90>;
+	temp_host_high = <102>;
+	temp_host_halt = <104>;
+	temp_host_release_warn = <87>;
+	temp_host_release_high = <92>;
+	temp_host_release_halt = <94>;
+	temp_fan_off = <38>;
+	temp_fan_max = <76>;
+};
