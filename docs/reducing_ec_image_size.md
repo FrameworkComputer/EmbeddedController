@@ -1,8 +1,8 @@
 # Reducing the EC image size
 
-The EC ToT codebase continues grows as new features are added and for bug
-fixes. This puts pressure on older boards that have limited flash space
-remaining. This document provides some tips for reducing the EC image size.
+The EC ToT codebase continues grows as new features are added and for bug fixes.
+This puts pressure on older boards that have limited flash space remaining. This
+document provides some tips for reducing the EC image size.
 
 [TOC]
 
@@ -10,15 +10,15 @@ remaining. This document provides some tips for reducing the EC image size.
 
 The EC codebase supports two build types:
 
-1. `cros-ec` builds are the legacy EC images built using Make (e.g. `make
-   BOARD=volteer`)
-1. `zephyr-ec` builds are the EC images built using the Zephyr RTOS kernel using
-   zmake/Cmake (e.g. `zmake build herobrine`)
+1.  `cros-ec` builds are the legacy EC images built using Make (e.g. `make
+    BOARD=volteer`)
+1.  `zephyr-ec` builds are the EC images built using the Zephyr RTOS kernel
+    using zmake/Cmake (e.g. `zmake build herobrine`)
 
 ### Checking a single cros-ec build
 
 Building a single cros-ec board using `make BOARD=<board> -j` reports the the
-number of bytes free in flash and RAM for both the RO and RW images.  An example
+number of bytes free in flash and RAM for both the RO and RW images. An example
 from building the juniper board is shown below.
 
 ```
@@ -57,19 +57,20 @@ The cros-ec makefile provides two make targets for helping track the impact of
 code changes.
 
 `make savesizes` saves the EC footprint information for all boards, providing
-the baseline for comparison.  `make newsizes` compares the sizes of the current
+the baseline for comparison. `make newsizes` compares the sizes of the current
 build against the EC footprint information saved by most recent invocation of
 `make savesizes`.
 
 General workflow:
-1. Checkout branch you need to compare against.  For example `repo start
-   check-ec-size -r cros/main` or `repo start check-ec-size -r <hash>`.
-1. Run `make buildall -j`.
-1. Run `make savesizes`.
-1. Apply your code change (e.g. change the local branch, cherry-pick your
-   changes, or directly edit source files).
-1. Run `make buildall -j` again.
-1. Run `make newsizes` to generate report of size changes.
+
+1.  Checkout branch you need to compare against. For example `repo start
+    check-ec-size -r cros/main` or `repo start check-ec-size -r <hash>`.
+1.  Run `make buildall -j`.
+1.  Run `make savesizes`.
+1.  Apply your code change (e.g. change the local branch, cherry-pick your
+    changes, or directly edit source files).
+1.  Run `make buildall -j` again.
+1.  Run `make newsizes` to generate report of size changes.
 
 Example report from `make newsizes` shown below:
 
@@ -84,8 +85,7 @@ build/cerise/RW/space_free_flash grew by 548 bytes: (7076 to 7624)
 
 ### Checking a single zephyr-ec build
 
-By default, `zmake` will display the flash and SRAM usage of the
-board.
+By default, `zmake` will display the flash and SRAM usage of the board.
 
 ```
 $ zmake build herobrine
@@ -118,7 +118,7 @@ This can be useful for identifying particular modules that contribute to the
 image size.
 
 The `rom_report` and `ram_report` targets are currently only supported when
-working outside the chroot.  Follow the [instructions][1] for building zephyr-ec
+working outside the chroot. Follow the [instructions][1] for building zephyr-ec
 images outside chroot before running the commands below.
 
 ```
@@ -151,7 +151,7 @@ building the board with `make BOARD=<BOARD>`.
 
 The lowest hanging fruit for reducing the EC image size is by disabling console
 commands that provide debug information only and don't impact the user or the
-automated testing.  Any console command that is not used by the FAFT tests and
+automated testing. Any console command that is not used by the FAFT tests and
 suites is safe to disable in the EC images.
 
 For cros-ec builds, add `#undef CONFIG_CMD_<name>` to the board.h or baseboard.h
@@ -160,8 +160,10 @@ file to disable the console command.
 For zephyr-ec builds, add `CONFIG_PLATFORM_EC_CONSOLE_CMD_<name>=n` to the board
 prj.conf file to disable the console command.
 
-* TODO: Create new CONFIG/Kconfig option that disables all console commands not
-  required by FAFT.
+*   TODO: Create new CONFIG/Kconfig option that disables all console commands
+    not required by FAFT.
+
+<!-- mdformat off(Don't format table) -->
 
 | Used by FAFT | config.h option | Console commands | Notes |
 |:---|:---|:---|:---|
@@ -271,6 +273,8 @@ prj.conf file to disable the console command.
 | x | CONFIG_CMD_USB_PD_PE | `pe` | Doesn't appear to be used but might be by FAFT PD |
 | x | CONFIG_CMD_WAITMS | `waitms` | firmware_ECWatchdog | |
 
+<!-- mdformat on -->
+
 ## Reduce or eliminate USB-C debugging
 
 The TCPM (Type-C Port manager) implementation is one of the more complex modules
@@ -279,13 +283,14 @@ enabled by default due to the value provided during both board bringup and on
 production systems.
 
 The TCPM provides the following debug levels:
-* `DEBUG_DISABLE` (0) - Debugging disabled, no runtime messages displayed
-* `DEBUG_LEVEL_1` (1) - Displays all the state transitions for the TC (Type-C)
-  and PE (Policy Engine) state machines
-* `DEBUG_LEVEL_2` (2) - Displays the raw contents of received PD (Power
-  Delivery) packets, excluding PING packets
-* `DEBUG_LEVEL_3` (3) - Enables debug messages in the PRL Also displays received
-  PING packets.
+
+*   `DEBUG_DISABLE` (0) - Debugging disabled, no runtime messages displayed
+*   `DEBUG_LEVEL_1` (1) - Displays all the state transitions for the TC (Type-C)
+    and PE (Policy Engine) state machines
+*   `DEBUG_LEVEL_2` (2) - Displays the raw contents of received PD (Power
+    Delivery) packets, excluding PING packets
+*   `DEBUG_LEVEL_3` (3) - Enables debug messages in the PRL Also displays
+    received PING packets.
 
 When `CONFIG_USB_PD_DEBUG_LEVEL` is undefined, the EC allows runtime
 configuration of the USB-C debug level using the `pd dump <level>` EC console
@@ -311,12 +316,12 @@ For zephyr-ec builds, add the following to your prj.conf file:
 Approximate flash space savings from each fixed level setting:
 
 Fixed Debug Level | Relative Saving | Cumulative Saving
---- | --- | ---
-Disabled | 0 | 0
-3 | 100 bytes | 100 bytes
-2 | 500-600 bytes | 600-700 bytes
-1 | 100 bytes | 700-800 bytes
-0 | 2000 bytes | 2700-2800 bytes
+----------------- | --------------- | -----------------
+Disabled          | 0               | 0
+3                 | 100 bytes       | 100 bytes
+2                 | 500-600 bytes   | 600-700 bytes
+1                 | 100 bytes       | 700-800 bytes
+0                 | 2000 bytes      | 2700-2800 bytes
 
 The recommended setting is setting the fixed debug level to `DEBUG_LEVEL_2` (2).
 This adds details about received PD packets in the EC log stored by the kernel
@@ -328,7 +333,7 @@ shipping firmware.
 ### TCPMv1 Configuration
 
 Many older platforms still use the legacy TCPMv1 (`CONFIG_USB_PD_TCPMV1`)
-implementation.  Specific to TCPMv1, the PD protocol state names can be removed
+implementation. Specific to TCPMv1, the PD protocol state names can be removed
 from the debug output by adding the following to the board.h/baseboard.h file.
 
 ```c
@@ -351,10 +356,14 @@ By default, `ASSERT()` calls generate a console message of the following form:
 There are two options available that reduce the size of strings stored with the
 `ASSERT()` calls.
 
+<!-- mdformat off(Don't format table) -->
+
 Description | cros-ec setting | zephyr-ec setting | Total Savings
 :--- | :--- | :--- | :---
 Display only file and line number | `#define CONFIG_DEBUG_ASSERT_BRIEF` | `CONFIG_PLATFORM_EC_DEBUG_ASSERT_BRIEF=y` | 2000-2500 bytes
 Disable all debug from ASSERT() calls.<br> EC is reset using a software breakpoint. | `#undef CONFIG_DEBUG_ASSERT_REBOOTS` | `CONFIG_PLATFORM_EC_DEBUG_ASSERT_REBOOTS=n`<br>`CONFIG_PLATFORM_EC_DEBUG_ASSERT_BREAKPOINT=y` | 3000-4000 bytes
+
+<!-- mdformat on -->
 
 It is not recommended to disable `CONFIG_PLATFORM_EC_DEBUG_ASSERT_REBOOTS` on
 shipping firmware.
@@ -369,7 +378,7 @@ For cros-ec builds, add `#undef CONFIG_CONSOLE_CMDHELP` and `#undef
 CONFIG_CONSOLE_HISTORY` to the board.h/baseboard.h file.
 
 zephyr-ec builds use Zephyr's shell subsystem and by default enable the
-`CONFIG_SHELL_MINIMAL` option.  This option already disables shell help along
+`CONFIG_SHELL_MINIMAL` option. This option already disables shell help along
 with many other non-critical features. Refer to the shell subsystem [Kconfig][2]
 source file for the complete list of shell features than can be configured.
 
@@ -392,9 +401,9 @@ CONFIG_LTO=y
 ```
 
 Note that for zephyr-ec builds, LTO is only turned on for the source files found
-under `platform/ec`.  The upstream Zephyr code does not currently support LTO
-due to some auto-generated code that breaks the assumptions made by the linker.
-This [Github issue][4] tracks the effort to support LTO in the Zephyr kernel.
+under `platform/ec`. The upstream Zephyr code does not currently support LTO due
+to some auto-generated code that breaks the assumptions made by the linker. This
+[Github issue][4] tracks the effort to support LTO in the Zephyr kernel.
 
 ### CONFIG_CHIP_INIT_ROM_REGION
 
@@ -404,10 +413,11 @@ effective cros-ec image size by identifying data structures that do not need to
 be copied into the code RAM section at startup.
 
 This option has the following requirements:
-1. EC executes code from RAM
-2. The ROM/flash size is larger than 2 times the code RAM size.
-3. The RO code released for the board includes this
-   [change](https://crrev.com/c/2428566).
+
+1.  EC executes code from RAM
+2.  The ROM/flash size is larger than 2 times the code RAM size.
+3.  The RO code released for the board includes this
+    [change](https://crrev.com/c/2428566).
 
 The only EC chip that matches these prerequisites is the Nuvoton NPCX7.
 
@@ -439,7 +449,7 @@ GPIO(PMIC_FORCE_RESET_ODL, PIN(A, 2),  GPIO_ODR_HIGH)
 ```
 
 Normally, the GPIO name is stored exactly as specified by the macro:
-`PMIC_FORCE_RESET_ODL`.  However, when `CONFIG_COMMON_GPIO_SHORTNAMES` is
+`PMIC_FORCE_RESET_ODL`. However, when `CONFIG_COMMON_GPIO_SHORTNAMES` is
 defined, then the GPIO name is shortened to only include port and pin number:
 `A2`.
 
