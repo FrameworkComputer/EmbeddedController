@@ -327,6 +327,7 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
 {
 	const struct nxp_rtc_pcf85063a_config *const config = DRV_CONFIG(dev);
 	struct nxp_rtc_pcf85063a_data *data = DRV_DATA(dev);
+	uint8_t default_val;
 	uint8_t val;
 	int ret;
 
@@ -348,13 +349,18 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
 	 *	BIT 1 (12 or 24-hour mode)          : (0) 24-hour mode
 	 *	BIT 0 (internal oscillator capacitor: (0) 7pF
 	 */
+	default_val = CONTROL_1_DEFAULT_VALUE;
+#ifdef CONFIG_PLATFORM_EC_PCF85063A_CAP_SEL
+	default_val |= CAP_SEL;
+#endif
+
 	ret = pcf85063a_read_reg(dev, REG_CONTROL_1, &val);
 
 	if (ret < 0) {
 		return ret;
 	}
 
-	if (val != CONTROL_1_DEFAULT_VALUE) {
+	if (val != default_val) {
 		/* PCF85063A is not initialized, so send soft reset */
 		ret = pcf85063a_write_reg(dev, REG_CONTROL_1, SOFT_RESET);
 
