@@ -1,11 +1,13 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Types which provide many builds and composite them into a single binary."""
 import logging
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 from typing import Dict, Optional
 
 import zmake.build_config as build_config
@@ -172,6 +174,7 @@ class BinmanPacker(BasePacker):
 
         proc = jobclient.popen(
             [
+                sys.executable,
                 util.get_tool_path("binman"),
                 "-v",
                 "5",
