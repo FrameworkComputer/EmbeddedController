@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
 #include "module_id.h"
 
 #include <zephyr/device.h>
@@ -32,6 +33,6 @@ int clock_get_freq(void)
 	return pll_reg_to_freq[reg_val];
 }
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 }

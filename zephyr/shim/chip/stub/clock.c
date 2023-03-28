@@ -4,7 +4,8 @@
  */
 
 #include "clock.h"
+#include "common.h"
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 }

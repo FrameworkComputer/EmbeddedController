@@ -751,6 +751,6 @@ DECLARE_CONSOLE_COMMAND(
 	"See also 'sleep mask'.");
 #endif /* CONFIG_LOW_POWER_IDLE */
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 }

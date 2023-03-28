@@ -239,7 +239,7 @@ void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
 	}
 }
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 	if (module == MODULE_USB) {
 		if (enable) {

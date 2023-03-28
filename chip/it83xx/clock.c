@@ -702,6 +702,6 @@ DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 #endif /* CONFIG_CMD_IDLE_STATS */
 #endif /* CONFIG_LOW_POWER_IDLE */
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 }

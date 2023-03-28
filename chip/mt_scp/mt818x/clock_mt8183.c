@@ -371,6 +371,6 @@ static int command_ulposc(int argc, const char *argv[])
 DECLARE_CONSOLE_COMMAND(ulposc, command_ulposc, "[calibrate]",
 			"Calibrate ULPOSC frequency");
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 }

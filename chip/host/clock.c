@@ -6,12 +6,13 @@
  */
 
 #include "clock.h"
+#include "common.h"
 
 int clock_get_freq(void)
 {
 	return 16000000;
 }
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 }

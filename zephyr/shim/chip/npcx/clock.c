@@ -4,6 +4,7 @@
  */
 
 #include "clock_chip.h"
+#include "common.h"
 #include "module_id.h"
 
 #include <zephyr/device.h>
@@ -66,7 +67,7 @@ void clock_normal(void)
 	cdcg_base->HFCBCD = (FIUDIV_VAL << 4);
 }
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 	/* Assume we have a single task using MODULE_FAST_CPU */
 	if (module == MODULE_FAST_CPU) {
