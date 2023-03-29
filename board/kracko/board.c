@@ -656,6 +656,22 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	charger_set_otg_current_voltage(port, current, 5000);
 }
 
+__override uint16_t board_get_ps8xxx_product_id(int port)
+{
+	/* Kracko variant doesn't have ps8xxx product in the port 0 */
+	if (port == 0)
+		return 0;
+
+	switch (get_cbi_ssfc_tcpc_p1()) {
+	case SSFC_TCPC_P1_PS8805:
+		return PS8805_PRODUCT_ID;
+	case SSFC_TCPC_P1_DEFAULT:
+	case SSFC_TCPC_P1_PS8705:
+	default:
+		return PS8705_PRODUCT_ID;
+	}
+}
+
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = { [PWM_CH_KBLIGHT] = {
 					      .channel = 0,
