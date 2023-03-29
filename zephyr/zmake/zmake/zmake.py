@@ -478,7 +478,6 @@ class Zmake:
                         ),
                         "ZEPHYR_BASE": str(self.zephyr_base),
                         "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
-                        "ZMAKE_PROJECT_NAME": project.config.project_name,
                         **(
                             {"EXTRA_EC_VERSION_FLAGS": "--static"}
                             if static_version
