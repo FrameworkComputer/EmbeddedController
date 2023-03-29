@@ -127,10 +127,6 @@
 		 * itself instead of device tree.
 		 */
 
-		/* <&gpio0 1 x> is reserved as 'entering-rw' in
-		 * src/platform/ec/zephyr/dts/board-overlays/native_posix.dts
-		 */
-
 		/* In test WP is output because CBI use it, but it is also
 		 * input, because test_all_tags set it to enable write
 		 * protection.
