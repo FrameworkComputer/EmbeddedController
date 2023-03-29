@@ -76,11 +76,12 @@
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
+				/* 50 Hz to support body detection. */
 				ec-s0 {
-					odr = <(12500 | ROUND_UP_FLAG)>;
+					odr = <(50000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(12500 | ROUND_UP_FLAG)>;
+					odr = <(50000 | ROUND_UP_FLAG)>;
 				};
 			};
 		};
