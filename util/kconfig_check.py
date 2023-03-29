@@ -2,6 +2,7 @@
 # Copyright 2021 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Kconfig checker
 
 Checks that the .config file provided does not introduce any new ad-hoc CONFIG
@@ -285,21 +286,37 @@ class KconfigCheck:
             List of config and menuconfig options found
         """
         if USE_KCONFIGLIB and try_kconfiglib:
-            os.environ["srctree"] = srcdir
-            kconf = kconfiglib.Kconfig(
-                "Kconfig",
-                warn=False,
-                search_paths=search_paths,
-                allow_empty_macros=True,
+            os.environ.update(
+                {
+                    "srctree": srcdir,
+                    "SOC_DIR": "soc",
+                    "ARCH_DIR": "arch",
+                    "BOARD_DIR": "boards/*/*",
+                    "ARCH": "*",
+                }
             )
+            kconfigs = []
+            for filename in [
+                "Kconfig",
+                os.path.join(os.environ["ZEPHYR_BASE"], "Kconfig.zephyr"),
+            ]:
+                kconf = kconfiglib.Kconfig(
+                    filename,
+                    warn=False,
+                    search_paths=search_paths,
+                    allow_empty_macros=True,
+                )
 
-            # There is always a MODULES config, since kconfiglib is designed for
-            # linux, but we don't want it
-            kconfigs = [name for name in kconf.syms if name != "MODULES"]
+                symbols = [
+                    node.item.name
+                    for node in kconf.node_iter()
+                    if isinstance(node.item, kconfiglib.Symbol)
+                ]
 
-            if prefix:
-                re_drop_prefix = re.compile(r"^%s" % prefix)
-                kconfigs = [re_drop_prefix.sub("", name) for name in kconfigs]
+                if prefix:
+                    re_drop_prefix = re.compile(r"^%s" % prefix)
+                    symbols = [re_drop_prefix.sub("", name) for name in symbols]
+                kconfigs += symbols
         else:
             kconfigs = []
             # Remove the prefix if present

@@ -266,7 +266,7 @@ conflicting_options := \
 	UART_CONSOLE
 
 cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
-	 -a util/config_allowed.txt -p PLATFORM_EC_ -s zephyr/ \
+	 -a util/config_allowed.txt -p PLATFORM_EC_ -s "" \
 	 -I "${ZEPHYR_BASE}" \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check
 else
