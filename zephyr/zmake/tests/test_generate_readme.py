@@ -15,7 +15,7 @@ def test_generate_readme_contents():
     readme = gen_readme.generate_readme()
 
     # Look for a string we know should appear in the README.
-    assert "### zmake testall\n" in readme
+    assert "### zmake build\n" in readme
 
 
 @pytest.mark.parametrize(

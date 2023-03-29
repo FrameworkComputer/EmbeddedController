@@ -271,9 +271,9 @@ class TestFilters:
         ),
         (
             ["link"],
-            "{config.project_name} is_test={config.is_test}\n",
+            "{config.project_name} {config.zephyr_board}\n",
             None,
-            "link is_test=False\n",
+            "link some_board\n",
         ),
     ],
 )

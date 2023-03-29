@@ -24,14 +24,6 @@ def register_host_project(**kwargs):
     return _register_project(**kwargs)
 
 
-def register_host_test(test_name, **kwargs):
-    """Register a test project that runs on the host."""
-    kwargs.setdefault("is_test", True)
-    return register_host_project(
-        project_name="test-{}".format(test_name), **kwargs
-    )
-
-
 def register_raw_project(**kwargs):
     """Register a project that uses RawBinPacker."""
     kwargs.setdefault("supported_toolchains", ["coreboot-sdk", "zephyr"])

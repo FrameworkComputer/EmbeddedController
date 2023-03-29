@@ -47,14 +47,11 @@ class ProjectConfig:
     modules: typing.Iterable[str] = dataclasses.field(
         default_factory=lambda: ["ec"],
     )
-    is_test: bool = dataclasses.field(default=False)
-    test_args: typing.List[str] = dataclasses.field(default_factory=list)
     dts_overlays: "list[str]" = dataclasses.field(default_factory=list)
     kconfig_files: "list[pathlib.Path]" = dataclasses.field(
         default_factory=list
     )
     project_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
-    test_timeout_secs: float = dataclasses.field(default=2 * 60)
 
 
 class Project:

@@ -108,9 +108,6 @@ def create_bin_from_elf(elf_input, bin_output):
 def _compare_non_test_projects(projects, cmp_method, *args):
     failed_projects = []
     for project in projects:
-        if project.config.is_test:
-            continue
-
         if not cmp_method(project, *args):
             failed_projects.append(project.config.project_name)
 

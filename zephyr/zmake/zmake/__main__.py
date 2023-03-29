@@ -244,40 +244,6 @@ def get_argparser():
         ),
     )
 
-    # TODO(b/b/242563072): Remove stub support for test and testall entirely after users have gotten
-    # used to twister.
-    test = sub.add_parser(
-        "test",
-        help="Configure, build and run tests on specified projects; DEPRECATED",
-    )
-    test.add_argument(
-        "--no-rebuild",
-        action="store_true",
-        help="Do not configure or build before running tests.",
-    )
-    add_common_configure_args(test)
-    add_common_build_args(test)
-
-    testall = sub.add_parser(
-        "testall",
-        help="Alias for test --all; DEPRECATED",
-    )
-    testall.add_argument(
-        "--clobber",
-        action="store_true",
-        dest="clobber",
-        help="Delete existing build directories, even if configuration is unchanged",
-    )
-    testall.add_argument(
-        "-B", "--build-dir", type=pathlib.Path, help="Build directory"
-    )
-    testall.add_argument(
-        "--static",
-        action="store_true",
-        dest="static_version",
-        help="Generate static version information for reproducible builds",
-    )
-
     generate_readme = sub.add_parser(
         "generate-readme",
         help="Update the auto-generated markdown documentation",

@@ -136,7 +136,7 @@ def test_find_projects_empty(tmp_path):
 
 CONFIG_FILE_1 = """
 register_raw_project(project_name="one", zephyr_board="one")
-register_host_test(test_name="two")
+register_host_project(project_name="two")
 register_npcx_project(project_name="three", zephyr_board="three")
 register_binman_project(project_name="four", zephyr_board="four")
 """
@@ -165,22 +165,17 @@ def test_find_projects(tmp_path):
     projects = zmake.project.find_projects(tmp_path)
     assert len(projects) == 5
     assert projects["one"].config.project_dir == cf1_dir
-    assert not projects["one"].config.is_test
 
-    assert projects["test-two"].config.project_dir == cf1_dir
-    assert projects["test-two"].config.zephyr_board == "native_posix"
-    assert projects["test-two"].config.is_test
+    assert projects["two"].config.project_dir == cf1_dir
+    assert projects["two"].config.zephyr_board == "native_posix"
 
     assert projects["three"].config.project_dir == cf1_dir
-    assert not projects["three"].config.is_test
     assert projects["three"].config.zephyr_board == "three"
 
     assert projects["four"].config.project_dir == cf1_dir
-    assert not projects["four"].config.is_test
     assert projects["four"].config.zephyr_board == "four"
 
     assert projects["five"].config.project_dir == cf2_dir
-    assert not projects["five"].config.is_test
     assert projects["five"].config.zephyr_board == "foo"
 
 

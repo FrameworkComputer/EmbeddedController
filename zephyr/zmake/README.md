@@ -126,48 +126,6 @@ Chromium OS's meta-build tool for Zephyr
 | `-h`, `--help` | show this help message and exit |
 | `--format FMT` | Output format to print projects (str.format(config=project.config) is called on this for each project). |
 
-### zmake test
-
-**Usage:** `zmake test [-h] [--no-rebuild] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
-
-#### Positional Arguments
-
-|   |   |
-|---|---|
-| `project_name` | Name(s) of the project(s) to build |
-
-#### Optional Arguments
-
-|   |   |
-|---|---|
-| `-h`, `--help` | show this help message and exit |
-| `--no-rebuild` | Do not configure or build before running tests. |
-| `--bringup` | Enable bringup debugging features |
-| `--clobber` | Delete existing build directories, even if configuration is unchanged |
-| `--static` | Generate static version information for reproducible builds |
-| `--save-temps` | Save the temporary files containing preprocessor output |
-| `--allow-warnings` | Do not treat warnings as errors |
-| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
-| `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
-| `--delete-intermediates` | Delete intermediate files to save disk space |
-| `-D CMAKE_DEFS`, `--cmake-define CMAKE_DEFS` | None |
-| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
-| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
-| `-a`, `--all` | Select all projects |
-
-### zmake testall
-
-**Usage:** `zmake testall [-h] [--clobber] [-B BUILD_DIR] [--static]`
-
-#### Optional Arguments
-
-|   |   |
-|---|---|
-| `-h`, `--help` | show this help message and exit |
-| `--clobber` | Delete existing build directories, even if configuration is unchanged |
-| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Build directory |
-| `--static` | Generate static version information for reproducible builds |
-
 ### zmake generate-readme
 
 **Usage:** `zmake generate-readme [-h] [-o OUTPUT_FILE] [--diff]`

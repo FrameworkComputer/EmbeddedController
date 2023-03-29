@@ -284,13 +284,12 @@ class Zmake:
                 result = self.executor.wait()
                 if result:
                     return result
-        non_test_projects = [p for p in projects if not p.config.is_test]
-        if len(non_test_projects) > 1 and coverage and build_after_configure:
+        if coverage and build_after_configure:
             result = self.executor.wait()
             if result:
                 return result
             result = self._merge_lcov_files(
-                projects=non_test_projects,
+                projects=projects,
                 build_dir=build_dir,
                 output_file=build_dir / "all_builds.info",
             )
@@ -432,32 +431,6 @@ class Zmake:
                 self.logger.info("   %s: %s", checkout.ref, checkout.full_ref)
 
         return len(self.failed_projects)
-
-    def test(  # pylint: disable=unused-argument
-        self,
-        project_names,
-    ):
-        """Build and run tests for the specified projects.
-
-        Using zmake to run tests is no longer supported. Use twister.
-        """
-        self.logger.error(
-            "zmake test is deprecated. Use twister -T zephyr/test/<test_dir>."
-        )
-
-        return 0
-
-    def testall(
-        self,
-    ):
-        """Build and run tests for all projects.
-
-        Using zmake to run tests is no longer supported. Use twister.
-        """
-        self.logger.error(
-            "zmake testall is deprecated. To build all packages, use zmake build -a."
-        )
-        return self.test([])
 
     def _configure(
         self,
@@ -757,9 +730,9 @@ class Zmake:
                 if not newdir.exists():
                     newdir.mkdir()
 
-            # For non-tests, they won't link with coverage, so don't pack the
-            # firmware. Also generate a lcov file.
-            if coverage and not project.config.is_test:
+            # Projects won't link with coverage, so don't pack the firmware.
+            # Also generate a lcov file.
+            if coverage:
                 self._run_lcov(
                     build_dir,
                     output_dir / "zephyr.info",
@@ -801,8 +774,7 @@ class Zmake:
                 cmd.append("-j1024")
             elif self._sequential:
                 cmd.append("-j1")
-            # Only tests will actually build with coverage enabled.
-            if coverage and not project.config.is_test:
+            if coverage:
                 cmd.append("all.libraries")
             self.logger.info(
                 "Building %s:%s: %s",
