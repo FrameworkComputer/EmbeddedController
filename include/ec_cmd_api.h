@@ -356,6 +356,7 @@ _CROS_EC_C0_F_RF(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT, pwm_get_keyboard_backlight);
 _CROS_EC_C0_F_PF(EC_CMD_PWM_SET_DUTY, pwm_set_duty);
 _CROS_EC_C0_F_PF(EC_CMD_PWM_SET_FAN_DUTY, pwm_set_fan_duty_v0);
 _CROS_EC_C0_F_PF(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT, pwm_set_keyboard_backlight);
+_CROS_EC_C0_F_PF_RF(EC_CMD_RAND_NUM, rand_num);
 _CROS_EC_C0_F(EC_CMD_REBOOT, reboot);
 _CROS_EC_C0_F(EC_CMD_REBOOT_AP_ON_G3, reboot_ap_on_g3);
 _CROS_EC_C1_F_PF(EC_CMD_REBOOT_AP_ON_G3, reboot_ap_on_g3);
