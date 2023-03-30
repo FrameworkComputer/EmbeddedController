@@ -25,7 +25,7 @@
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
-			gpios = <&gpio0 4 GPIO_INPUT>;
+			gpios = <&gpio0 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		ec_batt_pres_odl {
 			gpios = <&gpio0 5 GPIO_INPUT>;
