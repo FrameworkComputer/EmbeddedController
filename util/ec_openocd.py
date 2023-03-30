@@ -7,7 +7,9 @@
 import argparse
 import dataclasses
 import distutils.spawn
+import os
 import pathlib
+import signal
 import socket
 import subprocess
 import sys
@@ -111,6 +113,7 @@ def debug(interface, board, port, executable, attach):
         encoding="utf-8",
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        preexec_fn=os.setsid,
     )
 
     # Wait for OpenOCD to start, it'll open a port for GDB connections
@@ -130,8 +133,10 @@ def debug(interface, board, port, executable, attach):
 
     sock.close()
 
-    gdb_args = create_gdb_args(board, port, executable, attach)
+    old_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     # Start GDB
+    gdb_args = create_gdb_args(board, port, executable, attach)
     gdb = subprocess.Popen(
         gdb_args, stdout=sys.stdout, stderr=subprocess.STDOUT, stdin=sys.stdin
     )
@@ -140,6 +145,8 @@ def debug(interface, board, port, executable, attach):
     while gdb.poll() == None and openocd.poll() == None:
         (output, _) = openocd.communicate()
         openocd_out += output
+
+    signal.signal(signal.SIGINT, old_sigint)
 
     # Wait for OpenOCD to shutdown
     print("Waiting for OpenOCD to finish...")
@@ -160,6 +167,9 @@ def debug(interface, board, port, executable, attach):
 def debug_external(board, port, executable, attach):
     """Run GDB against an external gdbserver."""
     gdb_args = create_gdb_args(board, port, executable, attach)
+
+    old_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     subprocess.run(
         gdb_args,
         stdout=sys.stdout,
@@ -167,6 +177,8 @@ def debug_external(board, port, executable, attach):
         stdin=sys.stdin,
         check=True,
     )
+
+    signal.signal(signal.SIGINT, old_sigint)
 
 
 def get_flash_file(board):
