@@ -179,7 +179,7 @@ static enum ec_error_list isl9241_set_frequency(int chgnum, int freq_khz)
 		freq = ISL9241_CONTROL1_SWITCHING_FREQ_808KHZ;
 	else if (freq_khz >= 690)
 		freq = ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ;
-	else if (freq_khz >= 678)
+	else if (freq_khz >= 628)
 		freq = ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ;
 	else
 		freq = ISL9241_CONTROL1_SWITCHING_FREQ_600KHZ;
