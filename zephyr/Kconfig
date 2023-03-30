@@ -223,6 +223,14 @@ config PLATFORM_EC_CMD_GPIO_EXTENDED
 
 	  NOTE: This flag should be removed on a shipping device.
 
+config PLATFORM_EC_CMD_POWERINDEBUG
+	bool "Console command: powerindebug"
+	default y
+	help
+	  Enable the `powerindebug` console command. This command is used to
+	  get and set power signal. This flag should be disabled on a shipping
+	  device.
+
 config PLATFORM_EC_CONSOLE_CMD_HCDEBUG
 	bool "Console command: hcdebug"
 	default y
