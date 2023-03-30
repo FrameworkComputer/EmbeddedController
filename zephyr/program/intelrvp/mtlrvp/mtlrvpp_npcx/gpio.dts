@@ -61,8 +61,22 @@
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		usbc_tcpc_alrt_p0: usbc-tcpc-alrt-p0 {
-			gpios = <&gpio4 0 GPIO_INPUT>;
+		/*
+		 * Note - the Intel boards implement their own handlers
+		 * for tcpc_get_alert_status().  These handlers use
+		 * gpio_get_level(), which returns the raw state of the pin,
+		 * ignoring the GPIO_ACTIVE_LOW flag.
+		 *
+		 * However, the interrupt pin is shared with the upstream
+		 * driver gpio_nct38xx_alert.c, which does use the logical
+		 * level of the pin and requires that the signal is active low.
+		 *
+		 * Mark the signal active low here as well which ensures there
+		 * is no conflict between the gpio_pin_configure_dt() run by
+		 * the named-gpios driver and the gpio_nct38xx_alert.c driver.
+		 */
+		 usbc_tcpc_alrt_p0: usbc-tcpc-alrt-p0 {
+			gpios = <&gpio4 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P0 */
 		usb_c0_c1_tcpc_rst_odl: usb-c0-c1-tcpc-rst-odl {
