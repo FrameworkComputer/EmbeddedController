@@ -480,8 +480,9 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		 * The beginning of the buffer contains nonce, encryption_salt
 		 * and tag.
 		 */
-		enc_info = (struct ec_fp_template_encryption_metadata
-				    *)(fp_enc_buffer);
+		enc_info = reinterpret_cast<
+			struct ec_fp_template_encryption_metadata *>(
+			fp_enc_buffer);
 		enc_info->struct_version = FP_TEMPLATE_FORMAT_VERSION;
 		trng_init();
 		trng_rand_bytes(enc_info->nonce, FP_CONTEXT_NONCE_BYTES);
