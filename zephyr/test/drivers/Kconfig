@@ -131,6 +131,12 @@ config LINK_TEST_SUITE_RT1718S
 	  Link tests rt1718s test suite for the TCPM driver related function
 	  tests.
 
+config LINK_TEST_SUITE_RT1739
+	bool "Link and test the rt1739 tests"
+	help
+	  Link tests rt1739s test suite for the PPC driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
 

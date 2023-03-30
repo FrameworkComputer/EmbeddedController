@@ -337,6 +337,15 @@ tests:
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
     - ./rt1718s/ppc_tcpc.dts
+  drivers.rt1739:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_RT1739=y
+    extra_conf_files:
+    - prj.conf
+    - rt1739/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./rt1739/ppc.dts
   drivers.rt9490:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_RT9490=y
