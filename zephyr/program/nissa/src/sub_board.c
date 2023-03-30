@@ -19,7 +19,6 @@
 #include "usbc/usb_muxes.h"
 
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
@@ -39,55 +38,56 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	return cached_usb_pd_port_count;
 }
 
+test_export_static enum nissa_sub_board_type nissa_cached_sub_board =
+	NISSA_SB_UNKNOWN;
 /*
  * Retrieve sub-board type from FW_CONFIG.
  */
 enum nissa_sub_board_type nissa_get_sb_type(void)
 {
-	static enum nissa_sub_board_type sb = NISSA_SB_UNKNOWN;
 	int ret;
 	uint32_t val;
 
 	/*
 	 * Return cached value.
 	 */
-	if (sb != NISSA_SB_UNKNOWN)
-		return sb;
+	if (nissa_cached_sub_board != NISSA_SB_UNKNOWN)
+		return nissa_cached_sub_board;
 
-	sb = NISSA_SB_NONE; /* Defaults to none */
+	nissa_cached_sub_board = NISSA_SB_NONE; /* Defaults to none */
 	ret = cros_cbi_get_fw_config(FW_SUB_BOARD, &val);
 	if (ret != 0) {
 		LOG_WRN("Error retrieving CBI FW_CONFIG field %d",
 			FW_SUB_BOARD);
-		return sb;
+		return nissa_cached_sub_board;
 	}
 	switch (val) {
 	default:
 		LOG_WRN("No sub-board defined");
 		break;
 	case FW_SUB_BOARD_1:
-		sb = NISSA_SB_C_A;
+		nissa_cached_sub_board = NISSA_SB_C_A;
 		LOG_INF("SB: USB type C, USB type A");
 		break;
 
 	case FW_SUB_BOARD_2:
-		sb = NISSA_SB_C_LTE;
+		nissa_cached_sub_board = NISSA_SB_C_LTE;
 		LOG_INF("SB: USB type C, WWAN LTE");
 		break;
 
 	case FW_SUB_BOARD_3:
-		sb = NISSA_SB_HDMI_A;
+		nissa_cached_sub_board = NISSA_SB_HDMI_A;
 		LOG_INF("SB: HDMI, USB type A");
 		break;
 	}
-	return sb;
+	return nissa_cached_sub_board;
 }
 
 /*
  * Initialise the USB PD port count, which
  * depends on which sub-board is attached.
  */
-static void board_usb_pd_count_init(void)
+test_export_static void board_usb_pd_count_init(void)
 {
 	switch (nissa_get_sb_type()) {
 	default:
@@ -181,6 +181,7 @@ __overridable void nissa_configure_hdmi_power_gpios(void)
  */
 #define I2C4_NODE DT_NODELABEL(i2c4)
 #if DT_NODE_EXISTS(I2C4_NODE)
+#include <zephyr/drivers/pinctrl.h>
 PINCTRL_DT_DEFINE(I2C4_NODE);
 
 /* disable i2c4 alternate function  */
