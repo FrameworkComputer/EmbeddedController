@@ -15,6 +15,12 @@
 
 /delete-node/ &{/hibernate-wake-pins};
 
+/*
+ * The unused-pins functionality is not currently tested. Remove
+ * to avoid mismatches in the GPIO flags configuration.
+ */
+/delete-node/ &{/unused-pins};
+
 / {
 	name_temp_charger: charger {
 		compatible = "cros-ec,temp-sensor-thermistor";
