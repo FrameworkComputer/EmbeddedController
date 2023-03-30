@@ -444,6 +444,6 @@
  * after waking up automatically for better power consumption.
  */
 &power_leakage_io {
-	leak-gpios = <&gpioa 4 0
-		      &gpiof 1 0>;
+	leak-gpios = <&gpioa 4 GPIO_OPEN_DRAIN
+		      &gpiof 1 GPIO_OPEN_DRAIN>;
 };
