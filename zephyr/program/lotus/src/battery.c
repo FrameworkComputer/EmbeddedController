@@ -48,6 +48,7 @@ enum battery_present battery_is_present(void)
 	 * if (board_get_version() > BOARD_VERSION_4) {
 	 *	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 1) {
 	 *		k_timer_stop(&check_battery_timer);
+	 *		power_on_check_batt = 0;
 	 *		return BP_YES;
 	 *	}
 	 * }
@@ -62,6 +63,7 @@ enum battery_present battery_is_present(void)
 		}
 	} else {
 		k_timer_stop(&check_battery_timer);
+		power_on_check_batt = 0;
 		batt_pres = BP_YES;
 		retry = 0;
 	}
