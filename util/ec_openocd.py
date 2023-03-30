@@ -6,6 +6,7 @@
 
 import argparse
 import dataclasses
+import distutils.spawn
 import pathlib
 import socket
 import subprocess
@@ -16,6 +17,9 @@ import time
 """
 Flashes and debugs the EC through openocd
 """
+
+# GDB variant to use if the board specific one is not found
+FALLBACK_GDB_VARIANT = "gdb-multiarch"
 
 
 @dataclasses.dataclass
@@ -55,8 +59,20 @@ def create_gdb_args(board, port, executable):
         raise RuntimeError(f"Unsupported board {board}")
 
     board_info = boards[board]
+
+    if distutils.spawn.find_executable(board_info.gdb_variant):
+        gdb_path = board_info.gdb_variant
+    elif distutils.spawn.find_executable(FALLBACK_GDB_VARIANT):
+        print(
+            f"GDB executable {board_info.gdb_variant} not found, "
+            f"using {FALLBACK_GDB_VARIANT} instead"
+        )
+        gdb_path = FALLBACK_GDB_VARIANT
+    else:
+        raise RuntimeError("No GDB executable found in the system")
+
     args = [
-        board_info.gdb_variant,
+        gdb_path,
         executable,
         # GDB can't autodetect these according to OpenOCD
         "-ex",
