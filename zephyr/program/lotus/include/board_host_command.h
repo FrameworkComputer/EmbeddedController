@@ -107,4 +107,11 @@ struct ec_response_read_pd_version {
 	uint8_t pd1_version[8];
 } __ec_align1;
 
+#define EC_CMD_CHECK_DECK_STATE		0x3E16
+
+struct ec_response_deck_state {
+	uint8_t input_deck_board_id[8];
+	uint8_t deck_state;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */
