@@ -9,6 +9,7 @@ zephyr_library_sources("src/adc.c")
 zephyr_library_sources("src/board_host_command.c")
 zephyr_library_sources("src/cypress_pd_common.c")
 zephyr_library_sources("src/flash_storage.c")
+zephyr_library_sources("src/cpu_power.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
