@@ -124,6 +124,7 @@ void test_set_chipset_to_g3(void)
 		      power_get_state());
 }
 
+#if DT_HAS_COMPAT_STATUS_OKAY(cros_isl923x_emul)
 void connect_source_to_port(struct tcpci_partner_data *partner,
 			    struct tcpci_src_emul_data *src, int pdo_index,
 			    const struct emul *tcpci_emul,
@@ -181,6 +182,7 @@ void disconnect_sink_from_port(const struct emul *tcpci_emul)
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul));
 	k_sleep(K_SECONDS(1));
 }
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(cros_isl923x_emul) */
 
 uint8_t acpi_read(uint8_t acpi_addr)
 {
