@@ -11,6 +11,7 @@
 #define SB_RMI_WRITE_SUSTAINED_POWER_LIMIT_CMD  0x30
 #define SB_RMI_WRITE_FAST_PPT_LIMIT_CMD 0x31
 #define SB_RMI_WRITE_SLOW_PPT_LIMIT_CMD 0x32
+#define SB_RMI_WRITE_P3T_LIMIT_CMD 0x3C
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
 
