@@ -68,6 +68,9 @@ config LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP
 config LINK_TEST_SUITE_ISL923X
 	bool "Link and test the isl923x tests"
 
+config LINK_TEST_SUITE_ISL9241
+	bool "Link and test the isl9241 tests"
+
 config LINK_TEST_SUITE_I2C_CONTROLLER
 	bool "Link and test the i2c_controller tests"
 
