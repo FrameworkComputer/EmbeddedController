@@ -116,7 +116,7 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_FINGERPRINT, fp_get_next_event);
 
 static enum ec_status fp_command_tpm_seed(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_seed *params =
+	const auto *params =
 		static_cast<const ec_params_fp_seed *>(args->params);
 
 	if (params->struct_version != FP_TEMPLATE_FORMAT_VERSION) {
@@ -143,7 +143,7 @@ int fp_tpm_seed_is_set(void)
 static enum ec_status
 fp_command_encryption_status(struct host_cmd_handler_args *args)
 {
-	struct ec_response_fp_encryption_status *r =
+	auto *r =
 		static_cast<ec_response_fp_encryption_status *>(args->response);
 
 	r->valid_flags = FP_ENC_STATUS_SEED_SET;
@@ -209,10 +209,8 @@ enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 
 static enum ec_status fp_command_mode(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_mode *p =
-		static_cast<const ec_params_fp_mode *>(args->params);
-	struct ec_response_fp_mode *r =
-		static_cast<ec_response_fp_mode *>(args->response);
+	const auto *p = static_cast<const ec_params_fp_mode *>(args->params);
+	auto *r = static_cast<ec_response_fp_mode *>(args->response);
 
 	enum ec_status ret = fp_set_sensor_mode(p->mode, &r->mode);
 
@@ -225,7 +223,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_MODE, fp_command_mode, EC_VER_MASK(0));
 
 static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_context_v1 *p =
+	const auto *p =
 		static_cast<const ec_params_fp_context_v1 *>(args->params);
 	uint32_t mode_output;
 
@@ -282,10 +280,10 @@ void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
 static enum ec_status
 fp_command_read_match_secret(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_read_match_secret *params =
+	const auto *params =
 		static_cast<const ec_params_fp_read_match_secret *>(
 			args->params);
-	struct ec_response_fp_read_match_secret *response =
+	auto *response =
 		static_cast<ec_response_fp_read_match_secret *>(args->response);
 	int8_t fgr = params->fgr;
 	timestamp_t now = get_time();
