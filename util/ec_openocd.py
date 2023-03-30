@@ -26,7 +26,10 @@ class BoardInfo:
 
 
 # Debuggers for each board, OpenOCD currently only supports GDB
-boards = {"skyrim": BoardInfo("arm-none-eabi-gdb", 6, 4)}
+boards = {
+    "rex": BoardInfo("arm-none-eabi-gdb", 6, 4),
+    "skyrim": BoardInfo("arm-none-eabi-gdb", 6, 4),
+}
 
 
 def create_openocd_args(interface, board):
