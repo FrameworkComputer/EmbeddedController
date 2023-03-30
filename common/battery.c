@@ -695,8 +695,12 @@ void battery_validate_params(struct batt_params *batt)
 	 * anything above the boiling point of tungsten until this bug
 	 * is fixed. If the battery is really that warm, we probably
 	 * have more urgent problems.
+	 * TODO(b/276000336). Some batteries occasionally give obviously
+	 * incorrect results of 591.1K and 2151K, which are 318C and 1878C.
+	 * Ignore these for now.
 	 */
-	if (batt->temperature > CELSIUS_TO_DECI_KELVIN(5660)) {
+	if (batt->temperature > CELSIUS_TO_DECI_KELVIN(5660) ||
+	    batt->temperature == 5911 || batt->temperature == 21510) {
 		CPRINTS("ignoring ridiculous batt.temp of %dC",
 			DECI_KELVIN_TO_CELSIUS(batt->temperature));
 		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
