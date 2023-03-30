@@ -18,6 +18,8 @@ import time
 Flashes and debugs the EC through openocd
 """
 
+EC_BASE = pathlib.Path(__file__).parent.parent
+
 # GDB variant to use if the board specific one is not found
 FALLBACK_GDB_VARIANT = "gdb-multiarch"
 
@@ -40,13 +42,12 @@ def create_openocd_args(interface, board):
     if not board in boards:
         raise RuntimeError(f"Unsupported board {board}")
 
-    board_info = boards[board]
     args = [
         "openocd",
         "-f",
         f"interface/{interface}.cfg",
         "-c",
-        "add_script_search_dir openocd",
+        f"add_script_search_dir {EC_BASE}/util/openocd",
         "-f",
         f"board/{board}.cfg",
     ]
@@ -155,25 +156,13 @@ def debug(interface, board, port, executable):
 
 def get_flash_file(board):
     return (
-        pathlib.Path(__file__).parent
-        / ".."
-        / "build"
-        / "zephyr"
-        / board
-        / "output"
-        / "ec.bin"
+        EC_BASE / "build" / "zephyr" / board / "output" / "ec.bin"
     ).resolve()
 
 
 def get_executable_file(board):
     return (
-        pathlib.Path(__file__).parent
-        / ".."
-        / "build"
-        / "zephyr"
-        / board
-        / "output"
-        / "zephyr.ro.elf"
+        EC_BASE / "build" / "zephyr" / board / "output" / "zephyr.ro.elf"
     ).resolve()
 
 
