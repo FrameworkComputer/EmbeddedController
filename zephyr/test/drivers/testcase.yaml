@@ -412,6 +412,14 @@ tests:
   drivers.timer:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_TIMER=y
+  drivers.upstream_fuel_gauge:
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./upstream_fuel_gauge/fuel_gauge.dts
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_UPSTREAM_FUEL_GAUGE=y
+    - CONFIG_FUEL_GAUGE=y
+    - CONFIG_EMUL=y
   drivers.usb_common:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USB_COMMON=y

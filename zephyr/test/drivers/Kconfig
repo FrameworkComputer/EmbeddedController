@@ -163,6 +163,9 @@ config LINK_TEST_SUITE_SYSTEM
 config LINK_TEST_SUITE_TIMER
 	bool "Link and test the timer tests"
 
+config LINK_TEST_SUITE_UPSTREAM_FUEL_GAUGE
+	bool "Link and test usage of upstream fuel-gauge API"
+
 config LINK_TEST_SUITE_USB_COMMON
 	bool "Link and test USB common code tests"
 
