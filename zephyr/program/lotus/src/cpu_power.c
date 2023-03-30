@@ -93,13 +93,11 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		active_mpower = 0;
 	}
 
-	/* TODO: update the P3T value */
-
 	if (battery_is_present()) {
 		/* Battery is present */
 		spl_watt = 45000;
-		fppt_watt = 54000;
-		sppt_watt = 65000;
+		sppt_watt = 54000;
+		fppt_watt = 65000;
 		p3t_watt = 65000;
 		if (active_mpower > 100000)
 			p3t_watt = (active_mpower * 110 * 90 / 10000) + 85000 - 20000;
@@ -148,23 +146,8 @@ void update_soc_power_limit_hook(void)
 {
 	update_soc_power_limit(false, false);
 }
-
 DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
-
-
-
-void update_soc_power_on_boot_deferred(void)
-{
-	update_soc_power_limit(true, false);
-}
-DECLARE_DEFERRED(update_soc_power_on_boot_deferred);
-
-void update_soc_power_limit_boot(void)
-{
-	hook_call_deferred(&update_soc_power_on_boot_deferred_data, MSEC*1000);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_soc_power_limit_boot, HOOK_PRIO_DEFAULT);
 
 static int cmd_cpupower(int argc, const char **argv)
 {
