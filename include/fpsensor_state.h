@@ -91,7 +91,7 @@ void fp_task_simulate(void);
  *
  * @param idx the index of the template to clear.
  */
-void fp_clear_finger_context(int idx);
+void fp_clear_finger_context(uint16_t idx);
 
 /**
  * Clear all fingerprint templates associated with the current user id and

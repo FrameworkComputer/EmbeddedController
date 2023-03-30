@@ -69,7 +69,7 @@ void fp_task_simulate(void)
 		task_wait_event(timeout_us);
 }
 
-void fp_clear_finger_context(int idx)
+void fp_clear_finger_context(uint16_t idx)
 {
 	always_memset(fp_template[idx], 0, sizeof(fp_template[0]));
 	always_memset(fp_positive_match_salt[idx], 0,
@@ -83,15 +83,13 @@ void fp_clear_finger_context(int idx)
  */
 static void _fp_clear_context(void)
 {
-	int idx;
-
 	templ_valid = 0;
 	templ_dirty = 0;
 	always_memset(fp_buffer, 0, sizeof(fp_buffer));
 	always_memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
 	always_memset(user_id, 0, sizeof(user_id));
 	fp_disable_positive_match_secret(&positive_match_secret_state);
-	for (idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
+	for (uint16_t idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
 		fp_clear_finger_context(idx);
 }
 

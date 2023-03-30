@@ -412,7 +412,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 	const auto *params =
 		static_cast<const struct ec_params_fp_frame *>(args->params);
 	void *out = args->response;
-	uint32_t idx = FP_FRAME_GET_BUFFER_INDEX(params->offset);
+	uint16_t idx = FP_FRAME_GET_BUFFER_INDEX(params->offset);
 	uint32_t offset = params->offset & FP_FRAME_OFFSET_MASK;
 	uint32_t size = params->size;
 	uint16_t fgr;
@@ -579,7 +579,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	uint32_t size = params->size & ~FP_TEMPLATE_COMMIT;
 	bool xfer_complete = params->size & FP_TEMPLATE_COMMIT;
 	uint32_t offset = params->offset;
-	uint32_t idx = templ_valid;
+	uint16_t idx = templ_valid;
 	uint8_t key[SBP_ENC_KEY_LEN];
 	struct ec_fp_template_encryption_metadata *enc_info;
 	int ret;
