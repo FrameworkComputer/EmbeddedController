@@ -88,6 +88,18 @@ if(DEFINED CONFIG_BOARD_YAVIKS)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "yaviks/src/charger.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "yaviks/src/fan.c")
 endif()
+if(DEFINED CONFIG_BOARD_YAVILLA)
+	project(yavilla)
+	zephyr_library_sources(
+			"yavilla/src/led.c"
+			"yavilla/src/keyboard.c"
+			"yavilla/src/board.c"
+			"yavilla/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "yavilla/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "yavilla/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "yavilla/src/fan.c")
+endif()
 if(DEFINED CONFIG_BOARD_XIVUR)
 	project(xivur)
 	zephyr_library_sources(
