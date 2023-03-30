@@ -14,8 +14,8 @@ import sys
 from typing import List, Optional
 
 
-def verify_no_duplicates(zephyr_base, edt_pickle):
-    """Verify there are no duplicate GPIOs in the named-gpios node.
+def _load_edt(zephyr_base, edt_pickle):
+    """Load an EDT object from a pickle file source.
 
     Args:
         zephyr_base: pathlib.Path pointing to the Zephyr OS repository.
@@ -23,7 +23,12 @@ def verify_no_duplicates(zephyr_base, edt_pickle):
             file.
 
     Returns:
-        True if no duplicates found.  Returns False otherwise.
+        A 3-field tuple: (edtlib, edt, project_name)
+            edtlib: module object for the edtlib
+            edt: EDT object of the devicetree
+            project_name: string containing the name of the project or test.
+
+        Returns None if the edtlib pickle file doesn't exist.
     """
     zephyr_devicetree_path = (
         zephyr_base / "scripts" / "dts" / "python-devicetree" / "src"
@@ -36,16 +41,39 @@ def verify_no_duplicates(zephyr_base, edt_pickle):
         with open(edt_pickle, "rb") as edt_file:
             edt = pickle.load(edt_file)
     except FileNotFoundError:
-        # Skip the GPIOs check if the edt_pickle file doesn't exist.
-        # UnpicklingErrors will generate a failure.
-        return True
+        # Skip the all EC specific checks if the edt_pickle file doesn't exist.
+        # UnpicklingErrors will raise an exception and fail the build.
+        return None, None, None
 
+    if "twister-out" in edt_pickle.parts:
+        # For tests built with twister, the edt.pickle file is located in a
+        # path ending <test_name>/zephyr/.
+        project_name = edt_pickle.parents[1].name
+    else:
+        # For Zephyr EC project, the edt.pickle file is located in a path
+        # ending <project>/build-[ro|rw|single-image]/zephyr/.
+        project_name = edt_pickle.parents[2].name
+
+    edtlib = inspect.getmodule(edt)
+
+    return edtlib, edt, project_name
+
+
+def verify_no_duplicates(edtlib, edt, project_name):
+    """Verify there are no duplicate GPIOs in the named-gpios node.
+
+    Args:
+        edtlib: Module object for the edtlib library.
+        edt: EDT object representation of a devicetree
+        project_name: A string containing the project/test name
+
+    Returns:
+        True if no duplicates found.  Returns False otherwise.
+    """
     # Dictionary of GPIO controllers, indexed by the GPIO controller nodelabel
     gpio_ctrls = dict()
     duplicates = 0
     count = 0
-
-    edtlib = inspect.getmodule(edt)
 
     try:
         named_gpios = edt.get_node("/named-gpios")
@@ -91,7 +119,9 @@ def verify_no_duplicates(zephyr_base, edt_pickle):
             gpio_ctrls[nodelabel][gpio_pin] = node.name
 
     if duplicates:
-        logging.error("%d duplicate GPIOs found in %s", duplicates, edt_pickle)
+        logging.error(
+            "%d duplicate GPIOs found in %s", duplicates, project_name
+        )
         return False
 
     logging.info("Verified %d GPIOs, no duplicates found", count)
@@ -157,7 +187,12 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
 
     logging.basicConfig(format=log_format, level=args.log_level)
 
-    if not verify_no_duplicates(args.zephyr_base, args.edt_pickle):
+    edtlib, edt, project_name = _load_edt(args.zephyr_base, args.edt_pickle)
+
+    if edtlib is None:
+        return 0
+
+    if not verify_no_duplicates(edtlib, edt, project_name):
         return 1
 
     return 0
