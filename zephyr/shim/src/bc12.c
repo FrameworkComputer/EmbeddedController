@@ -28,6 +28,8 @@ BUILD_ASSERT(DT_HAS_COMPAT_STATUS_OKAY(RT1718S_TCPC_COMPAT));
 #define BC12_CHIP_FIND(usbc_id, bc12_id)                                       \
 	CHECK_COMPAT(RT1718S_BC12_COMPAT, usbc_id, bc12_id, BC12_CHIP_RT1718S) \
 	CHECK_COMPAT(RT1739_BC12_COMPAT, usbc_id, bc12_id, BC12_CHIP_RT1739)   \
+	CHECK_COMPAT(RT1739_BC12_EMUL_COMPAT, usbc_id, bc12_id,                \
+		     BC12_CHIP_RT1739)                                         \
 	CHECK_COMPAT(RT9490_BC12_COMPAT, usbc_id, bc12_id, BC12_CHIP_RT9490)   \
 	CHECK_COMPAT(PI3USB9201_COMPAT, usbc_id, bc12_id, BC12_CHIP_PI3USB9201)
 

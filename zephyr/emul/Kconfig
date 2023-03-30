@@ -156,6 +156,14 @@ config EMUL_RTC
 	help
 	  This options enables the RTC emulator for testing.
 
+config EMUL_RT1739
+	bool "RT1739 PPC emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_RT1739_EMUL_ENABLED
+	help
+	  Enable the RT1739 PPC emulator. This driver use emulated I2C bus.
+	  Emulator API is available in zephyr/include/emul/emul_rt1739.h.
+
 config EMUL_RT9490
 	bool "Rt9490 charger emulator"
 	default y

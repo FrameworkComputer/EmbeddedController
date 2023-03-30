@@ -6,6 +6,7 @@
 #include "driver/ppc/rt1739.h"
 
 #define RT1739_PPC_COMPAT richtek_rt1739_ppc
+#define RT1739_PPC_EMUL_COMPAT zephyr_rt1739_emul
 
 #define PPC_CHIP_RT1739(id)                                                \
 	{                                                                  \
