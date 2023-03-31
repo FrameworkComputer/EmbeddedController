@@ -83,7 +83,7 @@ static bool is_resetting;
 /* indicate MT8186 is AP reset is held by servo or GSC. */
 test_export_static bool is_held;
 /* indicate MT8186 is processing a AP forcing shutdown. */
-static bool is_shutdown;
+test_export_static bool is_shutdown;
 /* indicate MT8186 has been dropped to S5G3 from the last IN_AP_RST state . */
 static bool is_s5g3_passed;
 /*
@@ -290,6 +290,14 @@ enum power_state power_chipset_init(void)
 	int exit_hard_off = 1;
 	enum power_state init_state = power_get_signal_state();
 
+	if (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE) {
+		if (init_state == POWER_S0) {
+			disable_sleep(SLEEP_MASK_AP_RUN);
+		}
+
+		return init_state;
+	}
+
 	if (system_jumped_late()) {
 		if (init_state == POWER_S0) {
 			disable_sleep(SLEEP_MASK_AP_RUN);
@@ -307,12 +315,6 @@ enum power_state power_chipset_init(void)
 		 * the only way is to ask GPIO_AC_PRESENT directly.
 		 */
 		exit_hard_off = 0;
-	} else if (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE) {
-		if (init_state == POWER_S0) {
-			disable_sleep(SLEEP_MASK_AP_RUN);
-		}
-
-		return init_state;
 	}
 
 	/* If the init signal state is at S5, assigns it to G3 to match the
@@ -335,9 +337,10 @@ enum power_state power_chipset_init(void)
 		/* Auto-power on */
 		mt8186_exit_off();
 
-	if (init_state != POWER_G3 && !exit_hard_off)
+	if (init_state != POWER_G3 && !exit_hard_off) {
 		/* Force shutdown from S5 if the PMIC is already up. */
 		chipset_force_shutdown(CHIPSET_SHUTDOWN_INIT);
+	}
 
 	return init_state;
 }
