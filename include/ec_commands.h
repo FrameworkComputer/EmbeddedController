@@ -1273,7 +1273,7 @@ struct ec_response_get_version_v1 {
 	char cros_fwid_rw[32]; /* Added in version 1 */
 } __ec_align4;
 
-/* Read test - DEPRECATED */
+/* Read test - OBSOLETE */
 #define EC_CMD_READ_TEST 0x0003
 
 /*
