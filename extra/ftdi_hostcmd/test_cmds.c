@@ -457,7 +457,6 @@ static struct lookup cmd_table[] = {
 	{ 0xa1, "EC_CMD_CHARGE_CURRENT_LIMIT" },
 	{ 0xa2, "EC_CMD_EXT_POWER_CURRENT_LIMIT" },
 	{ 0xb4, "EC_CMD_BATTERY_VENDOR_PARAM" },
-	{ 0xb5, "EC_CMD_SB_FW_UPDATE" },
 	{ 0xd2, "EC_CMD_REBOOT_EC" },
 	{ 0xd3, "EC_CMD_GET_PANIC_INFO" },
 	{ 0xd1, "EC_CMD_REBOOT" },
