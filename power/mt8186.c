@@ -90,6 +90,9 @@ static bool is_s5g3_passed;
  */
 static bool is_exiting_off;
 
+/* forward declaration */
+static enum power_state power_get_signal_state(void);
+
 /* Turn on the PMIC power source to AP, this also boots AP. */
 static void set_pmic_pwron(void)
 {
@@ -159,7 +162,12 @@ void chipset_watchdog_interrupt(enum gpio_signal signal)
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	bool chipset_off = chipset_in_state(CHIPSET_STATE_ANY_OFF);
+	int state = power_get_signal_state();
+	/* use the signal state instead of the chipset_in_state because the
+	 * power_state is not initaialized when chipset_force_shutdown is called
+	 * from power_chipset_init.
+	 */
+	bool chipset_off = (state != POWER_S0 && state != POWER_S3);
 
 	CPRINTS("%s: 0x%x%s", __func__, reason, chipset_off ? "(skipped)" : "");
 
