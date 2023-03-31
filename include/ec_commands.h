@@ -4997,37 +4997,15 @@ struct ec_response_device_event {
 /*****************************************************************************/
 /* Smart battery pass-through */
 
-/* Get / Set 16-bit smart battery registers */
+/* Get / Set 16-bit smart battery registers  - OBSOLETE */
 #define EC_CMD_SB_READ_WORD 0x00B0
 #define EC_CMD_SB_WRITE_WORD 0x00B1
 
 /* Get / Set string smart battery parameters
- * formatted as SMBUS "block".
+ * formatted as SMBUS "block". - OBSOLETE
  */
 #define EC_CMD_SB_READ_BLOCK 0x00B2
 #define EC_CMD_SB_WRITE_BLOCK 0x00B3
-
-struct ec_params_sb_rd {
-	uint8_t reg;
-} __ec_align1;
-
-struct ec_response_sb_rd_word {
-	uint16_t value;
-} __ec_align2;
-
-struct ec_params_sb_wr_word {
-	uint8_t reg;
-	uint16_t value;
-} __ec_align1;
-
-struct ec_response_sb_rd_block {
-	uint8_t data[32];
-} __ec_align1;
-
-struct ec_params_sb_wr_block {
-	uint8_t reg;
-	uint16_t data[32];
-} __ec_align1;
 
 /*****************************************************************************/
 /* Battery vendor parameters

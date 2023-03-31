@@ -723,11 +723,6 @@
 #define CONFIG_BATT_HOST_FULL_FACTOR 97
 
 /*
- * Smart battery pass-through host commands.
- */
-#undef CONFIG_SB_PASSTHROUGH
-
-/*
  * Expose some data when it is needed.
  * For example, battery disconnect state
  */
