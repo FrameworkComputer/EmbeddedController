@@ -44,6 +44,13 @@ config PLATFORM_EC_CHARGER_INIT_CUSTOM
 	  When enabled, the board layer must create the charger_chips_init()
 	  function for customizing the initial configuration.
 
+config PLATFORM_EC_CHARGER_BYPASS_REVERSE_TURBO
+	bool "Enable charger reverse turbo when running in bypass"
+	default n
+	help
+	  When enabled, the charger will allow the battery to suppliment
+	  the ac power by boosting the battery up to the system bus voltage.
+
 config PLATFORM_EC_CHARGER_RUNTIME_CONFIG
 	bool "Allow charger configuration at runtime"
 	default n
