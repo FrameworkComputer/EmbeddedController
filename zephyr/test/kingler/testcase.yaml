@@ -1,56 +1,52 @@
-# Copyright 2022 The ChromiumOS Authors
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
-
 common:
   platform_allow: native_posix
 tests:
   kingler.steelix:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.steelix.overlay"
     extra_configs:
-      - CONFIG_TEST_STEELIX_RUSTY=y
-      - CONFIG_TEST_FORM_FACTOR_CONVERTIBLE=y
-      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+    - CONFIG_TEST_STEELIX_RUSTY=y
+    - CONFIG_TEST_FORM_FACTOR_CONVERTIBLE=y
+    - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+    extra_dtc_overlay_files:
+    - kingler.steelix.overlay
   kingler.rusty:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.steelix.overlay"
     extra_configs:
-      - CONFIG_TEST_STEELIX_RUSTY=y
-      - CONFIG_TEST_FORM_FACTOR_CLAMSHELL=y
-      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+    - CONFIG_TEST_STEELIX_RUSTY=y
+    - CONFIG_TEST_FORM_FACTOR_CLAMSHELL=y
+    - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+    extra_dtc_overlay_files:
+    - kingler.steelix.overlay
   kingler.db_detect_typec:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.default.overlay"
     extra_configs:
-      - CONFIG_TEST_DB_DETECT_TYPEC=y
-      - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    - CONFIG_TEST_DB_DETECT_TYPEC=y
+    - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    extra_dtc_overlay_files:
+    - kingler.default.overlay
   kingler.db_detect_hdmi:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.default.overlay"
     extra_configs:
-      - CONFIG_TEST_DB_DETECT_HDMI=y
-      - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    - CONFIG_TEST_DB_DETECT_HDMI=y
+    - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    extra_dtc_overlay_files:
+    - kingler.default.overlay
   kingler.db_detect_none:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.steelix.overlay"
     extra_configs:
-      - CONFIG_TEST_DB_DETECT_NONE=y
-      - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    - CONFIG_TEST_DB_DETECT_NONE=y
+    - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    extra_dtc_overlay_files:
+    - kingler.steelix.overlay
   kingler.ccd:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.default.overlay"
     extra_configs:
-      - CONFIG_TEST_KINGLER_CCD=y
+    - CONFIG_TEST_KINGLER_CCD=y
+    extra_dtc_overlay_files:
+    - kingler.default.overlay
   kingler.alt_sensor:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.steelix.overlay"
     extra_configs:
-      - CONFIG_TEST_STEELIX_RUSTY=y
-      - CONFIG_TEST_ALT_SENSOR_PROBE=y
+    - CONFIG_TEST_STEELIX_RUSTY=y
+    - CONFIG_TEST_ALT_SENSOR_PROBE=y
+    extra_dtc_overlay_files:
+    - kingler.steelix.overlay
   kingler.voltorb:
-    extra_args:
-      DTC_OVERLAY_FILE="kingler.default.overlay"
     extra_configs:
-      - CONFIG_TEST_VOLTORB=y
-      - CONFIG_TEST_USB_PD_POLICY=y
+    - CONFIG_TEST_VOLTORB=y
+    - CONFIG_TEST_USB_PD_POLICY=y
+    extra_dtc_overlay_files:
+    - kingler.default.overlay

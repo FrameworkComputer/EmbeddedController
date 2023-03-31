@@ -2,9 +2,12 @@ common:
   platform_allow: native_posix
 tests:
   ap_power.alderlake:
-    extra_args: CONFIG_EMUL_POWER_SIGNALS=y
-                CONFIG_X86_NON_DSX_PWRSEQ_ADL=y
-                CONFIG_AP_X86_INTEL_ADL=y
-                CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4=y
-                CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y
-                DTC_OVERLAY_FILE="boards/native_posix.overlay";"boards/alderlake.dts"
+    extra_dtc_overlay_files:
+    - boards/native_posix.overlay
+    - boards/alderlake.dts
+    extra_configs:
+    - CONFIG_EMUL_POWER_SIGNALS=y
+    - CONFIG_X86_NON_DSX_PWRSEQ_ADL=y
+    - CONFIG_AP_X86_INTEL_ADL=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y

@@ -3,385 +3,447 @@ common:
 tests:
   drivers.default:
     timeout: 360
-    extra_args: CONF_FILE="prj.conf;default/prj.conf"
-                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_DEFAULT=y
-      - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
-      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
-      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
-      - CONFIG_PLATFORM_EC_USB_PD_DPS=y
-      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
-      - CONFIG_PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP=y
+    - CONFIG_LINK_TEST_SUITE_DEFAULT=y
+    - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
+    - CONFIG_PLATFORM_EC_USB_PD_DPS=y
+    - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
   drivers.default.bring_up:
     timeout: 360
-    extra_args: CONF_FILE="prj.conf;default/prj.conf"
-                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_DEFAULT=y
-      - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
-      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
-      - CONFIG_PLATFORM_EC_BRINGUP=y
-      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
-      - CONFIG_PLATFORM_EC_USB_PD_DPS=y
-      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+    - CONFIG_LINK_TEST_SUITE_DEFAULT=y
+    - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_PLATFORM_EC_BRINGUP=y
+    - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
+    - CONFIG_PLATFORM_EC_USB_PD_DPS=y
+    - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
   drivers.default.console_cmds:
     timeout: 360
-    extra_args: CONF_FILE="prj.conf;default/prj.conf"
-                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
-      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
   drivers.default.console_cmds.gpio_keys:
     timeout: 360
-    extra_args: CONF_FILE="prj.conf;default/prj.conf"
-                DTC_OVERLAY_FILE="default/boards/native_posix.overlay;default/boards/power_button.dtsi"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
-      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
-      - CONFIG_PLATFORM_EC_POWER_BUTTON=n
+    - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_PLATFORM_EC_POWER_BUTTON=n
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
+    - default/boards/power_button.dtsi
   drivers.default.mock_power:
     timeout: 360
-    extra_args: CONF_FILE="prj.conf;default/prj.conf"
-                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_DEFAULT=y
-      - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
-      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
-      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
-      - CONFIG_POWER_SEQUENCE_MOCK=y
-      - CONFIG_PLATFORM_EC_USB_PD_DPS=y
-      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+    - CONFIG_LINK_TEST_SUITE_DEFAULT=y
+    - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
+    - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_PLATFORM_EC_USB_PD_DPS=y
+    - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
   drivers.amd_fp6_usb_mux:
     extra_dtc_overlay_files:
-      - ./boards/native_posix.overlay
-      - ./amd_fp6_usb_mux/usbc.dts
+    - ./boards/native_posix.overlay
+    - ./amd_fp6_usb_mux/usbc.dts
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_AMD_FP6_USB_MUX=y
+    - CONFIG_LINK_TEST_SUITE_AMD_FP6_USB_MUX=y
   drivers.anx7447:
-    extra_args: CONF_FILE="prj.conf;anx7447/prj.conf"
-      DTC_OVERLAY_FILE="./boards/native_posix.overlay;./anx7447/tcpc_policy.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_ANX7447=y
+    - CONFIG_LINK_TEST_SUITE_ANX7447=y
+    extra_conf_files:
+    - prj.conf
+    - anx7447/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./anx7447/tcpc_policy.dts
   drivers.ap_mux_control:
-    extra_args: CONF_FILE="prj.conf;ap_mux_control/prj.conf"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL=y
+    - CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL=y
+    extra_conf_files:
+    - prj.conf
+    - ap_mux_control/prj.conf
   drivers.ap_vdm_control:
-    extra_args: CONF_FILE="prj.conf;ap_vdm_control/prj.conf"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_AP_VDM_CONTROL=y
+    - CONFIG_LINK_TEST_SUITE_AP_VDM_CONTROL=y
+    extra_conf_files:
+    - prj.conf
+    - ap_vdm_control/prj.conf
   drivers.ap_vdm_control_disabled:
-    extra_args: CONF_FILE="prj.conf;ap_vdm_control/prj.conf"
     extra_configs:
-      - CONFIG_PLATFORM_EC_USB_PD_VDM_AP_CONTROL=n
-      - CONFIG_LINK_TEST_SUITE_AP_VDM_CONTROL=y
+    - CONFIG_PLATFORM_EC_USB_PD_VDM_AP_CONTROL=n
+    - CONFIG_LINK_TEST_SUITE_AP_VDM_CONTROL=y
+    extra_conf_files:
+    - prj.conf
+    - ap_vdm_control/prj.conf
   drivers.button:
     timeout: 360
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_BUTTON=y
-      - CONFIG_PLATFORM_EC_CMD_BUTTON=y
-      - CONFIG_PLATFORM_EC_VOLUME_BUTTONS=y
-      - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
+    - CONFIG_LINK_TEST_SUITE_BUTTON=y
+    - CONFIG_PLATFORM_EC_CMD_BUTTON=y
+    - CONFIG_PLATFORM_EC_VOLUME_BUTTONS=y
+    - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
   drivers.cbi_flash:
-    extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;./cbi_flash/binman.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_CBI_FLASH=y
-      - CONFIG_PLATFORM_EC_CBI_FLASH=y
-      - CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES=0x80000
+    - CONFIG_LINK_TEST_SUITE_CBI_FLASH=y
+    - CONFIG_PLATFORM_EC_CBI_FLASH=y
+    - CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES=0x80000
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./cbi_flash/binman.dts
   drivers.common_cbi:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_COMMON_CBI=y
-      - CONFIG_PLATFORM_EC_EEPROM_CBI_WP=y
+    - CONFIG_LINK_TEST_SUITE_COMMON_CBI=y
+    - CONFIG_PLATFORM_EC_EEPROM_CBI_WP=y
   drivers.common_cbi_gpio:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_COMMON_CBI_GPIO=y
-      - CONFIG_PLATFORM_EC_CBI_GPIO=y
+    - CONFIG_LINK_TEST_SUITE_COMMON_CBI_GPIO=y
+    - CONFIG_PLATFORM_EC_CBI_GPIO=y
   drivers.common_charger:
     extra_configs:
-      - CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT=5
-      - CONFIG_PLATFORM_EC_CHARGER_MIN_INPUT_CURRENT_LIMIT=100
-      - CONFIG_LINK_TEST_SUITE_COMMON_CHARGER=y
-      # Set to focus testing for Herobrine
-      # Config is y only in nissa
-      - CONFIG_PLATFORM_EC_CHARGER_RAA489000=n
-      - CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG=y
+    - CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT=5
+    - CONFIG_PLATFORM_EC_CHARGER_MIN_INPUT_CURRENT_LIMIT=100
+    - CONFIG_LINK_TEST_SUITE_COMMON_CHARGER=y
+    # Set to focus testing for Herobrine
+    # Config is y only in nissa
+    - CONFIG_PLATFORM_EC_CHARGER_RAA489000=n
+    - CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG=y
   drivers.chargesplash:
     timeout: 360
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
+    - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
   drivers.chargesplash.mock_power:
     timeout: 360
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
-      - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
+    - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.console:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_CONSOLE=y
+    - CONFIG_LINK_TEST_SUITE_CONSOLE=y
   drivers.console_cmd_crash:
-    extra_args: CONF_FILE="prj.conf;default/prj.conf"
-                DTC_OVERLAY_FILE="default/boards/native_posix.overlay"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_CRASH=y
-      - CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH=y
-      - CONFIG_ASSERT_TEST=y
+    - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_CRASH=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH=y
+    - CONFIG_ASSERT_TEST=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
   drivers.console_cmd_mfallow:
-    extra_args: CONF_FILE="prj.conf;console_cmd_mfallow/prj.conf"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_MFALLOW=y
+    - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_MFALLOW=y
+    extra_conf_files:
+    - prj.conf
+    - console_cmd_mfallow/prj.conf
   drivers.dps:
-    extra_args: CONF_FILE="prj.conf;dps/prj.conf"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USB_PD_DPS=y
+    - CONFIG_LINK_TEST_SUITE_USB_PD_DPS=y
+    extra_conf_files:
+    - prj.conf
+    - dps/prj.conf
   drivers.flash:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_FLASH=y
-      - CONFIG_PLATFORM_EC_CONSOLE_CMD_FLASH=y
+    - CONFIG_LINK_TEST_SUITE_FLASH=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_FLASH=y
   drivers.flash.page_layout:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_FLASH=y
-      - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=500
-      - CONFIG_PLATFORM_EC_CONSOLE_CMD_FLASH=y
-      - CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT=y
+    - CONFIG_LINK_TEST_SUITE_FLASH=y
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=500
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_FLASH=y
+    - CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT=y
   drivers.gpio_unhook:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_GPIO_UNHOOK=y
-      - CONFIG_GPIO_GET_CONFIG=y
+    - CONFIG_LINK_TEST_SUITE_GPIO_UNHOOK=y
+    - CONFIG_GPIO_GET_CONFIG=y
   drivers.host_cmd:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
-      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
-      - CONFIG_PLATFORM_EC_USB_PD_LOGGING=y
-      - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
-      - CONFIG_PLATFORM_EC_HOST_COMMAND_STATUS=y
+    - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_PLATFORM_EC_USB_PD_LOGGING=y
+    - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
+    - CONFIG_PLATFORM_EC_HOST_COMMAND_STATUS=y
   drivers.host_cmd_read_memmap:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP=y
-      - CONFIG_PLATFORM_EC_HOST_COMMAND_STATUS=y
-      - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI=n
-      - CONFIG_PLATFORM_EC_HOST_INTERFACE_SHI=y
+    - CONFIG_LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP=y
+    - CONFIG_PLATFORM_EC_HOST_COMMAND_STATUS=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI=n
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_SHI=y
   drivers.host_cmd_read_memmap.no_switches:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP=y
-      - CONFIG_PLATFORM_EC_HOST_COMMAND_STATUS=y
-      - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI=n
-      - CONFIG_PLATFORM_EC_HOST_INTERFACE_SHI=y
-      - CONFIG_PLATFORM_EC_SWITCH=n
+    - CONFIG_LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP=y
+    - CONFIG_PLATFORM_EC_HOST_COMMAND_STATUS=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI=n
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_SHI=y
+    - CONFIG_PLATFORM_EC_SWITCH=n
   drivers.isl923x:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_ISL923X=y
+    - CONFIG_LINK_TEST_SUITE_ISL923X=y
   drivers.isl923x.mock_power:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_ISL923X=y
-      - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_LINK_TEST_SUITE_ISL923X=y
+    - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.isl9241:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_ISL9241=y
+    - CONFIG_PLATFORM_EC_CHARGER_DUMP_PROCHOT=y
+    - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
     extra_dtc_overlay_files:
-      - ./boards/native_posix.overlay
-      - ./isl9241/usbc.dts
-    extra_configs:
-      - CONFIG_LINK_TEST_SUITE_ISL9241=y
-      - CONFIG_PLATFORM_EC_CHARGER_DUMP_PROCHOT=y
-      - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
+    - ./boards/native_posix.overlay
+    - ./isl9241/usbc.dts
   drivers.i2c_controller:
-    extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;i2c_controller/i2c.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_I2C_CONTROLLER=y
+    - CONFIG_LINK_TEST_SUITE_I2C_CONTROLLER=y
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - i2c_controller/i2c.dts
   drivers.it8xxx2_hw_sha256:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_IT8XXX2_HW_SHA256=y
-      - CONFIG_PLATFORM_EC_SHA256_HW_ACCELERATE=y
+    - CONFIG_LINK_TEST_SUITE_IT8XXX2_HW_SHA256=y
+    - CONFIG_PLATFORM_EC_SHA256_HW_ACCELERATE=y
   drivers.keyboard_scan:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_KEYBOARD_SCAN=y
+    - CONFIG_LINK_TEST_SUITE_KEYBOARD_SCAN=y
   drivers.led_driver:
-    extra_args: CONF_FILE="prj.conf;led_driver/prj.conf"
-      DTC_OVERLAY_FILE="./boards/native_posix.overlay;./led_driver/led_pins.dts;./led_driver/led_policy.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_LED_DRIVER=y
+    - CONFIG_LINK_TEST_SUITE_LED_DRIVER=y
+    extra_conf_files:
+    - prj.conf
+    - led_driver/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./led_driver/led_pins.dts
+    - ./led_driver/led_policy.dts
   drivers.led_common:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_LED_COMMON=y
-      - CONFIG_PLATFORM_EC_LED_DT=n
+    - CONFIG_LINK_TEST_SUITE_LED_COMMON=y
+    - CONFIG_PLATFORM_EC_LED_DT=n
   drivers.locate_chip:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS=y
-      - CONFIG_PLATFORM_EC_CBI=n
+    - CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS=y
+    - CONFIG_PLATFORM_EC_CBI=n
   drivers.mkbp:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_MKBP=y
-      - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=y
-      - CONFIG_PLATFORM_EC_MKBP_INPUT_DEVICES=y
-      - CONFIG_PLATFORM_EC_MKBP_EVENT=y
-      - CONFIG_PLATFORM_EC_MKBP_USE_GPIO=y
-      - CONFIG_PLATFORM_EC_KEYBOARD_KEYPAD=y
-    tags:
-      common
-      mkbp
+    - CONFIG_LINK_TEST_SUITE_MKBP=y
+    - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=y
+    - CONFIG_PLATFORM_EC_MKBP_INPUT_DEVICES=y
+    - CONFIG_PLATFORM_EC_MKBP_EVENT=y
+    - CONFIG_PLATFORM_EC_MKBP_USE_GPIO=y
+    - CONFIG_PLATFORM_EC_KEYBOARD_KEYPAD=y
+    tags: common mkbp
   drivers.panic_output:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_PANIC_OUTPUT=y
-      - CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH=y
-      - CONFIG_ZTEST_THREAD_PRIORITY=1
+    - CONFIG_LINK_TEST_SUITE_PANIC_OUTPUT=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH=y
+    - CONFIG_ZTEST_THREAD_PRIORITY=1
   drivers.power_host_sleep:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_POWER_HOST_SLEEP=y
-      # Make tests independent of chipset specific code
-      - CONFIG_AP_ARM_QUALCOMM_SC7280=n
-      - CONFIG_PLATFORM_EC_POWERSEQ_SC7280=n
-
-      - CONFIG_POWER_SEQUENCE_MOCK=y
-      - CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP=y
+    - CONFIG_LINK_TEST_SUITE_POWER_HOST_SLEEP=y
+    # Make tests independent of chipset specific code
+    - CONFIG_AP_ARM_QUALCOMM_SC7280=n
+    - CONFIG_PLATFORM_EC_POWERSEQ_SC7280=n
+    - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP=y
   drivers.ps8xxx:
-    extra_args: >
-      CONF_FILE="prj.conf;ps8xxx/prj.conf"
-      DTC_OVERLAY_FILE="./boards/native_posix.overlay;./ps8xxx/usbc.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_PS8XXX=y
+    - CONFIG_LINK_TEST_SUITE_PS8XXX=y
+    extra_conf_files:
+    - prj.conf
+    - ps8xxx/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./ps8xxx/usbc.dts"
   drivers.rt1718s:
-    extra_args: CONF_FILE="prj.conf;rt1718s/prj.conf"
-      DTC_OVERLAY_FILE="./boards/native_posix.overlay;./rt1718s/ppc_tcpc.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_RT1718S=y
+    - CONFIG_LINK_TEST_SUITE_RT1718S=y
+    extra_conf_files:
+    - prj.conf
+    - rt1718s/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./rt1718s/ppc_tcpc.dts
   drivers.rt9490:
-    extra_args: CONF_FILE="prj.conf;rt9490/prj.conf"
-      DTC_OVERLAY_FILE="./boards/native_posix.overlay;./rt9490/charger.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_RT9490=y
+    - CONFIG_LINK_TEST_SUITE_RT9490=y
+    extra_conf_files:
+    - prj.conf
+    - rt9490/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./rt9490/charger.dts
   drivers.shim_gpio_id:
-    extra_args: CONF_FILE="prj.conf"
-      DTC_OVERLAY_FILE="boards/native_posix.overlay;shim_gpio_id/gpio_id.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_SHIM_GPIO_ID=y
+    - CONFIG_LINK_TEST_SUITE_SHIM_GPIO_ID=y
+    extra_conf_files:
+    - prj.conf
+    extra_dtc_overlay_files:
+    - boards/native_posix.overlay
+    - shim_gpio_id/gpio_id.dts
   drivers.shim_pwm_hc:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_SHIM_PWM_HC=y
+    - CONFIG_LINK_TEST_SUITE_SHIM_PWM_HC=y
   drivers.shim_rtc:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_SHIM_RTC=y
-      - CONFIG_PLATFORM_EC_RTC=y
-      - CONFIG_PLATFORM_EC_HOSTCMD=y
-      - CONFIG_PLATFORM_EC_HOSTCMD_RTC=y
+    - CONFIG_LINK_TEST_SUITE_SHIM_RTC=y
+    - CONFIG_PLATFORM_EC_RTC=y
+    - CONFIG_PLATFORM_EC_HOSTCMD=y
+    - CONFIG_PLATFORM_EC_HOSTCMD_RTC=y
   drivers.system:
-    tags:
-      common
-      system
+    tags: common system
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_SYSTEM=y
-      - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+    - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.system_board_version_cbi:
-    tags:
-      common
-      system
+    tags: common system
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_SYSTEM=y
-      - CONFIG_PLATFORM_EC_BOARD_VERSION_CBI=y
-      - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+    - CONFIG_PLATFORM_EC_BOARD_VERSION_CBI=y
+    - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.timer:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_TIMER=y
+    - CONFIG_LINK_TEST_SUITE_TIMER=y
   drivers.usb_common:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USB_COMMON=y
+    - CONFIG_LINK_TEST_SUITE_USB_COMMON=y
   drivers.usb_port_power_dumb:
-    extra_args: DTC_OVERLAY_FILE="./boards/native_posix.overlay;./usb_port_power_dumb/usba.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB=y
-      - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB=y
+    - CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB=y
+    - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB=y
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./usb_port_power_dumb/usba.dts
   drivers.usb_pd_discharge:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USB_COMMON=y
-      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=y
-      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
-      - CONFIG_PLATFORM_EC_USB_PD_FLAGS=y
+    - CONFIG_LINK_TEST_SUITE_USB_COMMON=y
+    - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=y
+    - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
+    - CONFIG_PLATFORM_EC_USB_PD_FLAGS=y
   drivers.usb_pd_discovery:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USB_PD_DISCOVERY=y
+    - CONFIG_LINK_TEST_SUITE_USB_PD_DISCOVERY=y
   drivers.usb_pd_flags:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USB_COMMON=y
-      - CONFIG_PLATFORM_EC_USB_PD_FLAGS=y
-      - CONFIG_PLATFORM_EC_USB_PD_RUNTIME_FLAGS=y
+    - CONFIG_LINK_TEST_SUITE_USB_COMMON=y
+    - CONFIG_PLATFORM_EC_USB_PD_FLAGS=y
+    - CONFIG_PLATFORM_EC_USB_PD_RUNTIME_FLAGS=y
   drivers.usb_retimer_fw_update:
     timeout: 120
-    extra_args: CONF_FILE="prj.conf;usb_retimer_fw_update/prj.conf"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE=y
+    - CONFIG_LINK_TEST_SUITE_USB_RETIMER_FW_UPDATE=y
+    extra_conf_files:
+    - prj.conf
+    - usb_retimer_fw_update/prj.conf
   drivers.usbc_alt_mode:
-    extra_args: CONF_FILE="prj.conf;usbc_alt_mode/prj.conf"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
+    - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
     timeout: 120
+    extra_conf_files:
+    - prj.conf
+    - usbc_alt_mode/prj.conf
   drivers.usbc_alt_mode_ec_entry:
-    extra_args: CONF_FILE="prj.conf;usbc_alt_mode/prj.conf"
     timeout: 120
     extra_configs:
-      - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
-      - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
-      - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY=n
+    - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
+    - CONFIG_POWER_SEQUENCE_MOCK=y
+    extra_conf_files:
+    - prj.conf
+    - usbc_alt_mode/prj.conf
   drivers.usbc_console_pd:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
+    - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
   drivers.usbc_console_pd_legacy:
-    extra_args: >
-      DTC_OVERLAY_FILE="default/boards/native_posix.overlay;./usbc_console_pd/usbc_legacy.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
-      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+    - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
+    - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
+    - ./usbc_console_pd/usbc_legacy.dts
   drivers.usbc_ctvpd:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_CTVPD=y
+    - CONFIG_LINK_TEST_SUITE_USBC_CTVPD=y
   drivers.usbc_frs:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_FRS=y
-      - CONFIG_PLATFORM_EC_USB_PD_FRS_TCPC=y
+    - CONFIG_LINK_TEST_SUITE_USBC_FRS=y
+    - CONFIG_PLATFORM_EC_USB_PD_FRS_TCPC=y
   drivers.usbc_ocp:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
+    - CONFIG_LINK_TEST_SUITE_USBC_OCP=y
   drivers.usbc_ppc:
-    extra_args: >
-      DTC_OVERLAY_FILE="default/boards/native_posix.overlay;./usbc_ppc/ppc_alts.dts"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
-      - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
+    - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
+    - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
+    - ./usbc_ppc/ppc_alts.dts
   drivers.usbc_tcpc:
     extra_dtc_overlay_files:
-      - default/boards/native_posix.overlay
-      - usbc_tcpc/tcpc_alts.dts
+    - default/boards/native_posix.overlay
+    - usbc_tcpc/tcpc_alts.dts
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_TCPC=y
+    - CONFIG_LINK_TEST_SUITE_USBC_TCPC=y
   drivers.usbc_retimer.anx7483:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_RETIMER_ANX7483=y
+    - CONFIG_LINK_TEST_SUITE_USBC_RETIMER_ANX7483=y
   drivers.usbc_retimer.ps8811:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_RETIMER_PS8811=y
+    - CONFIG_LINK_TEST_SUITE_USBC_RETIMER_PS8811=y
   drivers.usbc_svdm_dfp_only:
-    extra_args: CONF_FILE="prj.conf;usbc_svdm_dfp_only/prj.conf"
-                DTC_OVERLAY_FILE="usbc_svdm_dfp_only/boards/native_posix.overlay"
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_SVDM_DFP_ONLY=y
+    - CONFIG_LINK_TEST_SUITE_USBC_SVDM_DFP_ONLY=y
+    extra_conf_files:
+    - prj.conf
+    - usbc_svdm_dfp_only/prj.conf
+    extra_dtc_overlay_files:
+    - usbc_svdm_dfp_only/boards/native_posix.overlay
   drivers.usbc_tbt_mode:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE=y
+    - CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE=y
   drivers.usbc_usb4_mode:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_USB4_MODE=y
-      - CONFIG_PLATFORM_EC_USB_PD_DATA_RESET_MSG=y
+    - CONFIG_LINK_TEST_SUITE_USBC_USB4_MODE=y
+    - CONFIG_PLATFORM_EC_USB_PD_DATA_RESET_MSG=y
   drivers.usbc_vconn_swap:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_USBC_VCONN_SWAP=y
+    - CONFIG_LINK_TEST_SUITE_USBC_VCONN_SWAP=y
   drivers.host_cmd_thread:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_HOST_CMD_THREAD=y
-      - CONFIG_TASK_HOSTCMD_THREAD_MAIN=y
+    - CONFIG_LINK_TEST_SUITE_HOST_CMD_THREAD=y
+    - CONFIG_TASK_HOSTCMD_THREAD_MAIN=y
   drivers.pi3usb9201:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_PI3USB9201=y
+    - CONFIG_LINK_TEST_SUITE_PI3USB9201=y
   drivers.memmap:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_MEMMAP=y
+    - CONFIG_LINK_TEST_SUITE_MEMMAP=y
   drivers.host_command_memory_dump:
     extra_configs:
-      - CONFIG_LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP=y
-      - CONFIG_PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP=y
-      - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042=y
+    - CONFIG_LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP=y
+    - CONFIG_PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP=y
+    - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042=y

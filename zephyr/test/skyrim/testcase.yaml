@@ -82,11 +82,11 @@ tests:
     - CONFIG_TEST_BOARD_PPC_CONFIG=y
 
   skyrim.skyrim.form_factor:
-    extra_args:
-      DTC_OVERLAY_FILE="./boards/skyrim/skyrim.dtsi;"
     extra_configs:
     - CONFIG_TEST_BOARD_SKYRIM=y
     - CONFIG_TEST_BOARD_FORM_FACTOR=y
+    extra_dtc_overlay_files:
+    - ./boards/skyrim/skyrim.dtsi
 
   # Winterhold tests
   skyrim.winterhold:
