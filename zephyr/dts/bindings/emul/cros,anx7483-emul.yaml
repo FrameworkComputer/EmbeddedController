@@ -6,4 +6,4 @@ description: Zephyr ANX7483 emulator
 
 compatible: "cros,anx7483-emul"
 
-include: base.yaml
+include: ["base.yaml", "cros-ec,usbc-mux.yaml"]
