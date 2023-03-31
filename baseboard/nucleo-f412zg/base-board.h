@@ -157,8 +157,7 @@
  * Other
  *-------------------------------------------------------------------------*/
 
-#define CONFIG_AES
-#define CONFIG_AES_GCM
+#define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_DMA_CROS
 #define CONFIG_FPU
 #define CONFIG_HOST_COMMAND_STATUS
