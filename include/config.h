@@ -327,12 +327,6 @@
 #define CONFIG_ADC_PROFILE_SINGLE
 #undef CONFIG_ADC_PROFILE_FAST_CONTINUOUS
 
-/* Support AES symmetric-key algorithm */
-#undef CONFIG_AES
-
-/* Support AES-GCM */
-#undef CONFIG_AES_GCM
-
 /*
  * Some ALS modules may be connected to the EC. We need the command, and
  * specific drivers for each module.

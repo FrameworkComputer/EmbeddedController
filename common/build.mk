@@ -33,10 +33,6 @@ common-$(CONFIG_ACCEL_KX022)+=math_util.o
 common-$(CONFIG_BODY_DETECTION)+=math_util.o
 common-$(CONFIG_TEMP_SENSOR_TMP112)+=math_util.o
 common-$(CONFIG_TEMP_SENSOR_PCT2075)+=math_util.o
-ifneq ($(CORE),cortex-m)
-common-$(CONFIG_AES)+=aes.o
-endif
-common-$(CONFIG_AES_GCM)+=aes-gcm.o
 common-$(CONFIG_CMD_ADC)+=adc.o
 common-$(HAS_TASK_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
