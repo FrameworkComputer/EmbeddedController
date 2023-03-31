@@ -20,6 +20,7 @@
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x77>;
+		irq-gpios = < &gpio0 14 GPIO_ACTIVE_LOW >;
 		is-alt;
 	};
 

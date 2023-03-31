@@ -17,4 +17,11 @@
  */
 uint8_t nx20p348x_emul_peek(const struct emul *emul, int reg);
 
+/**
+ * Set an interrupt in the first interrupt register
+ *
+ * @param emul - NX20P383X emulator data
+ * @param val - value for interrupt register
+ */
+void nx20p348x_emul_set_interrupt1(const struct emul *emul, uint8_t val);
 #endif

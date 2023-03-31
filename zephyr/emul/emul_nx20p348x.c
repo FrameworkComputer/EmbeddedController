@@ -11,6 +11,9 @@
 #include "util.h"
 
 #include <zephyr/device.h>
+#include <zephyr/devicetree/gpio.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
@@ -26,6 +29,7 @@ LOG_MODULE_REGISTER(emul_nx20p348x);
 
 struct nx20p348x_emul_data {
 	struct i2c_common_emul_data common;
+	struct gpio_dt_spec irq_gpio;
 	uint8_t regs[NX20P348X_MAX_REG + 1];
 };
 
@@ -42,6 +46,16 @@ struct nx20p348x_reg_default nx20p348x_defaults[] = {
 	{ .offset = NX20P348X_5V_SRC_OCP_THRESHOLD_REG, .val = 0x0B },
 };
 
+static void nx20p348x_emul_interrupt_set(const struct emul *emul, int val)
+{
+	struct nx20p348x_emul_data *data =
+		(struct nx20p348x_emul_data *)emul->data;
+
+	int res = gpio_emul_input_set(data->irq_gpio.port, data->irq_gpio.pin,
+				      val);
+	__ASSERT_NO_MSG(res == 0);
+}
+
 void nx20p348x_emul_reset_regs(const struct emul *emul)
 {
 	struct nx20p348x_emul_data *data =
@@ -54,6 +68,7 @@ void nx20p348x_emul_reset_regs(const struct emul *emul)
 
 		data->regs[def.offset] = def.val;
 	}
+	nx20p348x_emul_interrupt_set(emul, 1);
 }
 
 uint8_t nx20p348x_emul_peek(const struct emul *emul, int reg)
@@ -66,25 +81,39 @@ uint8_t nx20p348x_emul_peek(const struct emul *emul, int reg)
 	return data->regs[reg];
 }
 
+void nx20p348x_emul_set_interrupt1(const struct emul *emul, uint8_t val)
+{
+	struct nx20p348x_emul_data *data =
+		(struct nx20p348x_emul_data *)emul->data;
+
+	data->regs[NX20P348X_INTERRUPT1_REG] = val;
+
+	nx20p348x_emul_interrupt_set(emul, 0);
+}
+
 static int nx20p348x_emul_read(const struct emul *emul, int reg, uint8_t *val,
 			       int bytes, void *unused_data)
 {
 	struct nx20p348x_emul_data *data =
 		(struct nx20p348x_emul_data *)emul->data;
 
-	if (!IN_RANGE(reg, 0, NX20P348X_MAX_REG)) {
-		LOG_ERR("Register out of range: %d", reg);
+	if (!IN_RANGE(reg, 0, NX20P348X_MAX_REG))
 		return -EINVAL;
-	}
 
-	if (bytes != 0) {
-		LOG_ERR("Emulator expects single byte transactions: "
-			"%d bytes requested",
-			bytes);
+	if (bytes != 0)
 		return -EINVAL;
-	}
 
 	*val = data->regs[reg];
+
+	/* Interrupt registers are clear on read and de-assert when serviced */
+	if (reg == NX20P348X_INTERRUPT1_REG ||
+	    reg == NX20P348X_INTERRUPT2_REG) {
+		data->regs[reg] = 0;
+
+		if (data->regs[NX20P348X_INTERRUPT1_REG] == 0 &&
+		    data->regs[NX20P348X_INTERRUPT2_REG] == 0)
+			nx20p348x_emul_interrupt_set(emul, 1);
+	}
 
 	return 0;
 }
@@ -95,17 +124,11 @@ static int nx20p348x_emul_write(const struct emul *emul, int reg, uint8_t val,
 	struct nx20p348x_emul_data *data =
 		(struct nx20p348x_emul_data *)emul->data;
 
-	if (!IN_RANGE(reg, 0, NX20P348X_MAX_REG)) {
-		LOG_ERR("Register out of range: %d", reg);
+	if (!IN_RANGE(reg, 0, NX20P348X_MAX_REG))
 		return -EINVAL;
-	}
 
-	if (bytes != 1) {
-		LOG_ERR("Emulator expects single byte transactions: "
-			"%d bytes written",
-			bytes);
+	if (bytes != 1)
 		return -EINVAL;
-	}
 
 	data->regs[reg] = val;
 
@@ -129,12 +152,14 @@ static int nx20p348x_emul_init(const struct emul *emul,
 }
 
 #define INIT_NX20P348X_EMUL(n)                                                \
-	static struct i2c_common_emul_cfg common_cfg_##n;                     \
 	static struct nx20p348x_emul_data nx20p348x_emul_data_##n;            \
 	static struct i2c_common_emul_cfg common_cfg_##n = {                  \
 		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),               \
 		.data = &nx20p348x_emul_data_##n.common,                      \
 		.addr = DT_INST_REG_ADDR(n)                                   \
+	};                                                                    \
+	static struct nx20p348x_emul_data nx20p348x_emul_data_##n = {         \
+		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}),       \
 	};                                                                    \
 	EMUL_DT_INST_DEFINE(n, nx20p348x_emul_init, &nx20p348x_emul_data_##n, \
 			    &common_cfg_##n, &i2c_common_emul_api, NULL)

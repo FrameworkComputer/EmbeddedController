@@ -502,7 +502,6 @@ static int nx20p348x_dump(int port)
 	int reg;
 	int rv;
 
-	ccprintf("Port %d NX20P348X registers\n", port);
 	for (reg_addr = NX20P348X_DEVICE_ID_REG;
 	     reg_addr <= NX20P348X_DEVICE_CONTROL_REG; reg_addr++) {
 		rv = read_reg(port, reg_addr, &reg);

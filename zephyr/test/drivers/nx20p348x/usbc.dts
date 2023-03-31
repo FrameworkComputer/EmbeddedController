@@ -21,5 +21,6 @@
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x71>;
+		irq-gpios = < &gpio0 14 GPIO_ACTIVE_LOW >;
 	};
 };

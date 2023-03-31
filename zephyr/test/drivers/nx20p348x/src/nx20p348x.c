@@ -112,3 +112,135 @@ ZTEST(nx20p348x_driver, test_ppc_dump)
 	/* Weakly verify something reasonable was output to console */
 	zassert_not_null(strstr(outbuffer, "]: 0x"));
 }
+
+ZTEST_F(nx20p348x_driver, test_db_exit_err)
+{
+	uint8_t reg;
+
+	/* Test an error to exit dead battery mode */
+	nx20p348x_emul_set_interrupt1(fixture->nx20p348x_emul,
+				      NX20P348X_INT1_DBEXIT_ERR);
+
+	/* Give the interrupt time to process */
+	k_sleep(K_MSEC(500));
+
+	/* Interrupt should have set DB exit in the control register */
+	reg = nx20p348x_emul_peek(fixture->nx20p348x_emul,
+				  NX20P348X_DEVICE_CONTROL_REG);
+	zassert_equal((reg & NX20P348X_CTRL_DB_EXIT), NX20P348X_CTRL_DB_EXIT);
+}
+
+ZTEST_F(nx20p348x_driver, test_db_exit_err_max)
+{
+	uint8_t reg;
+
+	/* Set a DB exit error 10 times */
+	for (int i = 0; i < 10; i++) {
+		nx20p348x_emul_set_interrupt1(fixture->nx20p348x_emul,
+					      NX20P348X_INT1_DBEXIT_ERR);
+		k_sleep(K_MSEC(500));
+	}
+
+	/* Interrupt should now be masked by the driver */
+	reg = nx20p348x_emul_peek(fixture->nx20p348x_emul,
+				  NX20P348X_INTERRUPT1_MASK_REG);
+	zassert_equal((reg & NX20P348X_INT1_DBEXIT_ERR),
+		      NX20P348X_INT1_DBEXIT_ERR);
+}
+
+/* Add filler in case of event data */
+#define MAX_RESPONSE_PD_LOG_ENTRY_SIZE (sizeof(struct ec_response_pd_log) + 16)
+
+static void flush_pd_log(void)
+{
+	uint8_t response_buffer[MAX_RESPONSE_PD_LOG_ENTRY_SIZE];
+	struct ec_response_pd_log *response =
+		(struct ec_response_pd_log *)response_buffer;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_PD_GET_LOG_ENTRY, 0);
+
+	args.response = response;
+	args.response_max = sizeof(response_buffer);
+
+	for (int i = 0; i < 10; i++) {
+		zassert_ok(host_command_process(&args));
+
+		if (response->type == PD_EVENT_NO_ENTRY)
+			return;
+
+		k_sleep(K_MSEC(500));
+	}
+
+	zassert_unreachable("Failed to flush PD log");
+}
+
+ZTEST_F(nx20p348x_driver, test_vbus_overcurrent)
+{
+	uint8_t response_buffer[MAX_RESPONSE_PD_LOG_ENTRY_SIZE];
+	struct ec_response_pd_log *response =
+		(struct ec_response_pd_log *)response_buffer;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_PD_GET_LOG_ENTRY, 0);
+
+	flush_pd_log();
+
+	/* Set up overcurrent */
+	nx20p348x_emul_set_interrupt1(fixture->nx20p348x_emul,
+				      NX20P348X_INT1_OC_5VSRC);
+	k_sleep(K_MSEC(500));
+
+	args.response = response;
+	args.response_max = sizeof(response_buffer);
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(TEST_PORT, PD_LOG_PORT(response->size_port));
+	zassert_equal(0, PD_LOG_SIZE(response->size_port));
+	zassert_equal(PD_EVENT_PS_FAULT, response->type);
+	zassert_equal(PS_FAULT_OCP, response->data);
+}
+
+ZTEST_F(nx20p348x_driver, test_vbus_reverse_current)
+{
+	uint8_t response_buffer[MAX_RESPONSE_PD_LOG_ENTRY_SIZE];
+	struct ec_response_pd_log *response =
+		(struct ec_response_pd_log *)response_buffer;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_PD_GET_LOG_ENTRY, 0);
+
+	flush_pd_log();
+
+	/* Set up reverse current */
+	nx20p348x_emul_set_interrupt1(fixture->nx20p348x_emul,
+				      NX20P348X_INT1_RCP_5VSRC);
+	k_sleep(K_MSEC(500));
+
+	args.response = response;
+	args.response_max = sizeof(response_buffer);
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(TEST_PORT, PD_LOG_PORT(response->size_port));
+	zassert_equal(0, PD_LOG_SIZE(response->size_port));
+	zassert_equal(PD_EVENT_PS_FAULT, response->type);
+	zassert_equal(PS_FAULT_OCP, response->data);
+}
+
+ZTEST_F(nx20p348x_driver, test_vbus_short)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+	const char *outbuffer;
+	size_t buffer_size;
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+
+	/* Set up Vbus short, which we only report in the console */
+	nx20p348x_emul_set_interrupt1(fixture->nx20p348x_emul,
+				      NX20P348X_INT1_SC_5VSRC);
+	k_sleep(K_MSEC(500));
+
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+
+	zassert_true(buffer_size > 0);
+
+	/* Weakly verify something reasonable was output to console */
+	zassert_not_null(strstr(outbuffer, "short"));
+}
