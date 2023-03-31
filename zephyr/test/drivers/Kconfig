@@ -97,6 +97,11 @@ config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 config LINK_TEST_SUITE_MKBP
 	bool "Link and test the mkbp tests"
 
+config LINK_TEST_SUITE_NX20P348X
+	bool "Link and test the nx20p348x tests"
+	select PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
+	select PLATFORM_EC_USBC_PPC_NX20P3483
+
 config LINK_TEST_SUITE_PANIC_OUTPUT
 	bool "Link and test the panic_output tests"
 

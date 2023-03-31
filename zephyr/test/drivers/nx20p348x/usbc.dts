@@ -1,0 +1,25 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			ppc = <&nx20p348x_emul>;
+		};
+	};
+};
+
+&i2c2 {
+	status="okay";
+
+	nx20p348x_emul: nx20p348x_emul@9 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x71>;
+	};
+};
