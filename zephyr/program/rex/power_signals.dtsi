@@ -92,6 +92,11 @@
 		gpios = <&gpiof 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
+
+	ap-power {
+		compatible = "ap-pwrseq-sub-states";
+		chipset = "AP_POWER_STATE_S0IX";
+	};
 };
 
 /*
