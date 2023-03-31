@@ -223,6 +223,7 @@ fi
 echo "# Preparing Makefile"
 cat > "${TMP_DIR}/Makefile" <<HEREDOC
 ORIGIN ?= $(realpath .)
+BORINGSSL_DIR ?= $(realpath ../../third_party/boringssl)
 CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 ZEPHYR_BASE ?= $(realpath ../../../src/third_party/zephyr/main)
 BOARDS ?= ${BOARDS[*]}
@@ -241,6 +242,7 @@ endif
 build-%: ec-%
 	\$(MAKE) --no-print-directory -C \$(@:build-%=ec-%)                   \\
 		STATIC_VERSION=1                                              \\
+		BORINGSSL_DIR=\$(BORINGSSL_DIR)                               \\
 		CRYPTOC_DIR=\$(CRYPTOC_DIR)                                   \\
 		ZEPHYR_BASE=\$(ZEPHYR_BASE)                                   \\
 		\$(addprefix proj-,\$(BOARDS))
