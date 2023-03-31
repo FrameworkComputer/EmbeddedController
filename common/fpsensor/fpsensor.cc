@@ -4,12 +4,14 @@
  */
 #include "compile_time_macros.h"
 
+/* Boringssl headers need to be included before extern "C" section. */
+#include "openssl/mem.h"
+
 extern "C" {
 #include "atomic.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
-#include "cryptoc/util.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "host_command.h"
@@ -517,7 +519,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 				      encrypted_template, encrypted_blob_size,
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
-		always_memset(key, 0, sizeof(key));
+		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
 			return EC_RES_UNAVAILABLE;
@@ -640,7 +642,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 				      encrypted_template, encrypted_blob_size,
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
-		always_memset(key, 0, sizeof(key));
+		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to decipher template", idx);
 			/* Don't leave bad data in the template buffer */
@@ -659,8 +661,8 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 		if (bytes_are_trivial(positive_match_salt,
 				      sizeof(fp_positive_match_salt[0]))) {
 			CPRINTS("fgr%d: Trivial positive match salt.", idx);
-			always_memset(fp_template[idx], 0,
-				      sizeof(fp_template[0]));
+			OPENSSL_cleanse(fp_template[idx],
+					sizeof(fp_template[0]));
 			return EC_RES_INVALID_PARAM;
 		}
 		memcpy(fp_positive_match_salt[idx], positive_match_salt,
