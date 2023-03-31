@@ -9,22 +9,22 @@
 	temp_ddr_soc: ddr_soc {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
-		adc = <&adc_ddr_soc>;
+		adc = <&adc_temp_sensor_1>;
 	};
 	temp_ambient: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
-		adc = <&adc_ambient>;
+		adc = <&adc_temp_sensor_2>;
 	};
 	temp_charger: charger {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
-		adc = <&adc_charger>;
+		adc = <&adc_temp_sensor_3>;
 	};
 	temp_wwan: wwan {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
-		adc = <&adc_wwan>;
+		adc = <&adc_temp_sensor_4>;
 	};
 
 	named-temp-sensors {

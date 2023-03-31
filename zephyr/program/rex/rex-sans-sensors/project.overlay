@@ -9,7 +9,7 @@
 &i2c0_0 {
 	status = "disabled";
 };
-&i2c_ec_i2c_sensor {
+&i2c_ec_i2c_sensor_scl_r {
 	status = "disabled";
 };
 &int_imu {

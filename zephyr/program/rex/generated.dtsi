@@ -10,19 +10,19 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
-		adc_ddr_soc: ddr_soc {
+		adc_temp_sensor_1: temp_sensor_1 {
 			enum-name = "ADC_TEMP_SENSOR_1_DDR_SOC";
 			io-channels = <&adc0 0>;
 		};
-		adc_ambient: ambient {
+		adc_temp_sensor_2: temp_sensor_2 {
 			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
 			io-channels = <&adc0 1>;
 		};
-		adc_charger: charger {
+		adc_temp_sensor_3: temp_sensor_3 {
 			enum-name = "ADC_TEMP_SENSOR_3_CHARGER";
 			io-channels = <&adc0 8>;
 		};
-		adc_wwan: wwan {
+		adc_temp_sensor_4: temp_sensor_4 {
 			enum-name = "ADC_TEMP_SENSOR_4_WWAN";
 			io-channels = <&adc0 7>;
 		};
@@ -36,7 +36,7 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ccd_mode_odl: ccd_mode_odl {
-			gpios = <&gpioe 5 GPIO_ODR_HIGH>;
+			gpios = <&gpioe 5 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
@@ -56,7 +56,7 @@
 			gpios = <&gpio7 3 GPIO_OUTPUT>;
 		};
 		gpio_ec_edp_bl_en: ec_edp_bl_en {
-			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
+			gpios = <&gpiod 3 GPIO_OUTPUT>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
@@ -72,7 +72,7 @@
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
 		};
-		gpio_mech_pwr_btn_odl: mech_pwr_btn_odl {
+		gpio_ec_mech_pwr_btn_l: ec_mech_pwr_btn_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
@@ -102,7 +102,7 @@
 		gpio_ec_soc_wake_r_odl: ec_soc_wake_r_odl {
 			gpios = <&gpioc 0 GPIO_ODR_LOW>;
 		};
-		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+		gpio_ec_spare_gpio01: ec_spare_gpio01 {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_ec_spare_gpio42: ec_spare_gpio42 {
@@ -120,7 +120,7 @@
 		gpio_ec_spare_gpioa4: ec_spare_gpioa4 {
 			gpios = <&gpioa 4 GPIO_OUTPUT>;
 		};
-		gpio_ec_imvp92_en_smb: ec_imvp92_en_smb {
+		gpio_ec_spare_gpiob1: ec_spare_gpiob1 {
 			gpios = <&gpiob 1 GPIO_OUTPUT>;
 		};
 		gpio_ec_spare_gpioc7: ec_spare_gpioc7 {
@@ -144,7 +144,7 @@
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_en_pp5000_fan: en_pp5000_fan {
-			gpios = <&gpio6 1 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio6 1 GPIO_OUTPUT>;
 		};
 		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
 			gpios = <&gpiod 7 GPIO_OUTPUT>;
@@ -172,10 +172,10 @@
 			gpios = <&gpio6 0 GPIO_OUTPUT>;
 		};
 		gpio_lid_open: lid_open {
-			gpios = <&gpiod 2 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
-		gpio_seq_ec_all_sys_pg: seq_ec_all_sys_pg {
+		gpio_seq_ec_all_sys_pg_od: seq_ec_all_sys_pg_od {
 			gpios = <&gpiof 4 GPIO_INPUT>;
 		};
 		gpio_seq_ec_rsmrst_odl: seq_ec_rsmrst_odl {
@@ -212,7 +212,7 @@
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
-			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio0 3 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c0_rt_int_odl: usb_c0_rt_int_odl {
 			gpios = <&gpioa 0 GPIO_INPUT>;
@@ -222,7 +222,7 @@
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_odl {
-			gpios = <&gpio6 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio6 7 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c1_bc12_int_odl: usb_c1_bc12_int_odl {
 			gpios = <&gpio5 0 GPIO_INPUT>;
@@ -242,7 +242,7 @@
 			gpios = <&gpio7 2 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
-			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -253,7 +253,7 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
-		i2c_ec_i2c_sensor: ec_i2c_sensor {
+		i2c_ec_i2c_sensor_scl_r: ec_i2c_sensor_scl_r {
 			i2c-port = <&i2c0_0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
@@ -272,7 +272,6 @@
 		i2c_ec_i2c_usb_c1_tcp: ec_i2c_usb_c1_tcp {
 			i2c-port = <&i2c4_1>;
 			enum-names = "I2C_PORT_USB_C1_TCPC";
-			dynamic-speed;
 		};
 		i2c_ec_i2c_bat: ec_i2c_bat {
 			i2c-port = <&i2c5_0>;

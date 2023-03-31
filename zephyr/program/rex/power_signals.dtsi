@@ -146,7 +146,7 @@
 };
 
 /* pwr-all-sys-pwrgd */
-&gpio_seq_ec_all_sys_pg {
+&gpio_seq_ec_all_sys_pg_od {
 	no-auto-init;
 };
 

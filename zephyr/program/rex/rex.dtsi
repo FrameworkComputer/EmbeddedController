@@ -43,6 +43,27 @@
 		ec-i2c-c0-rt-sda {
 			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
+
+		/* Overrides for generated.dtsi */
+		ec_edp_bl_en {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
+		};
+		en_pp5000_fan {
+			gpios = <&gpio6 1 GPIO_OUTPUT_LOW>;
+		};
+		usb_c0_tcpc_rst_odl {
+			gpios = <&gpio6 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+		};
+		usb_c1_rt_rst_r_odl {
+			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	/* Special I2C port attribute */
+	named-i2c-ports {
+		ec_i2c_usb_c1_tcp {
+			dynamic-speed;
+		};
 	};
 
 	usba-port-enable-list {
