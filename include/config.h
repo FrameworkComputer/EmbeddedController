@@ -1313,6 +1313,13 @@
  */
 #undef CONFIG_BATTERY_MAX_IMBALANCE_MV
 
+/*
+ * Select this option if the charger will be used in a bypass mode in
+ * order to pass the input current from AC directly to the system
+ * power rail for efficiency.
+ */
+#undef CONFIG_CHARGER_BYPASS_MODE
+
 /* Set this option when using a Narrow VDC (NVDC) charger, such as ISL9237/8. */
 #undef CONFIG_CHARGER_NARROW_VDC
 

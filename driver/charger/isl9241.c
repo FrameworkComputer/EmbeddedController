@@ -703,6 +703,7 @@ static void isl9241_dump_prochot_status(int chgnum)
 }
 #endif
 
+#ifdef CONFIG_CHARGER_BYPASS_MODE
 static bool isl9241_is_ac_present(int chgnum)
 {
 	static bool ac_is_present;
@@ -1074,6 +1075,7 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 
 	return rv;
 }
+#endif /* CONFIG_CHARGER_BYPASS_MODE */
 
 /*****************************************************************************/
 /* ISL-9241 initialization */
@@ -1288,7 +1290,9 @@ const struct charger_drv isl9241_drv = {
 	.ramp_is_detected = &isl9241_ramp_is_detected,
 	.ramp_get_current_limit = &isl9241_ramp_get_current_limit,
 #endif
+#ifdef CONFIG_CHARGER_BYPASS_MODE
 	.enable_bypass_mode = isl9241_enable_bypass_mode,
+#endif
 #ifdef CONFIG_CMD_CHARGER_DUMP
 	.dump_registers = &command_isl9241_dump,
 #endif
