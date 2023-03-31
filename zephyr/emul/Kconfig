@@ -59,6 +59,16 @@ config EMUL_CHARGER_ISL9241
 	  battery charger which can communicate over I2C, and utilizes the
 	  emulated I2C bus.
 
+config EMUL_PPC_NX20P348X
+	bool "NXP PPC emulator"
+	default y
+	depends on ZTEST && DT_HAS_NXP_NX20P348X_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the NX20P348X emulator, which covers both the NX20P3481 and
+	  NX20P3483.  It is also register compatible with the SM5360A.  This
+	  emulator makes use of the emulated I2C bus.
+
 config EMUL_PPC_SYV682X
 	bool "Silergy SYV682x PPC emulator"
 	default y

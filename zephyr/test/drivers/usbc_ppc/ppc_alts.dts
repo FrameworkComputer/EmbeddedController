@@ -17,7 +17,7 @@
 
 &i2c0 {
 	ppc_nx20p348x_alt: nx20p348x@77 {
-		compatible = "nxp,nx20p348x", "cros,i2c-mock";
+		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x77>;
 		is-alt;
