@@ -102,7 +102,7 @@
 			enum-name = "GPIO_SYS_RESET_L";
 		};
 		gpio_ec_wp_l: ec_wp_l {
-			gpios = <&gpioa 7 GPIO_INPUT>;
+			gpios = <&gpioa 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_en_kb_bl: en_kb_bl {
 			gpios = <&gpio7 4 GPIO_OUTPUT>;
@@ -191,7 +191,7 @@
 			enum-name = "GPIO_USB_C0_DP_HPD";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpio6 7 GPIO_INPUT>;
+			gpios = <&gpio6 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_ppc_rst_l: usb_c0_ppc_rst_l {
@@ -201,7 +201,7 @@
 			gpios = <&gpio0 2 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
-			gpios = <&gpio3 7 GPIO_INPUT>;
+			gpios = <&gpio3 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		gpio_usb_c1_frs_alert_od: usb_c1_frs_alert_od {
@@ -212,11 +212,11 @@
 			enum-name = "GPIO_USB_C1_DP_HPD";
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpio7 0 GPIO_INPUT>;
+			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
-			gpios = <&gpio3 4 GPIO_INPUT>;
+			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
