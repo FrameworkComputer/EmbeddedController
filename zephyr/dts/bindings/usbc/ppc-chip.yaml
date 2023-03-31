@@ -9,7 +9,7 @@ properties:
     type: phandles
     required: false
     description: |
-      GPIO interrupt from PPC
+      GPIO interrupt from PPC using a named-gpios child node
 
   is-alt:
     type: boolean
@@ -17,3 +17,9 @@ properties:
     description: |
       If present, this node refers to an altnerate PPC device. The PPC device
       is not used by default, and must be manually enabled at runtime.
+
+  irq-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      Interrupt line from the PPC (zephyr standard GPIO format)
