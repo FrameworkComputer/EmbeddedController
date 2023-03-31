@@ -35,6 +35,9 @@ static bool is_valid_rt1718s_page1_register(int reg)
 	case RT1718S_VCONN_CONTROL_2:
 	case RT1718S_FRS_CTRL2:
 	case RT1718S_VBUS_CTRL_EN:
+	case RT1718S_GPIO_CTRL(RT1718S_GPIO1):
+	case RT1718S_GPIO_CTRL(RT1718S_GPIO2):
+	case RT1718S_GPIO_CTRL(RT1718S_GPIO3):
 		return true;
 	default:
 		return false;
@@ -104,6 +107,30 @@ int rt1718s_emul_get_reg(const struct emul *emul, int reg, uint16_t *val)
 	}
 
 	*val = reference_page[reg_addr];
+	return EC_SUCCESS;
+}
+
+int rt1718s_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
+{
+	uint8_t reg_addr;
+	uint8_t *reference_page;
+	struct rt1718s_emul_data *rt1718s_data = emul->data;
+
+	if ((reg >> 8) == RT1718S_RT2) {
+		reg_addr = reg & 0xFF;
+		reference_page = rt1718s_data->reg_page2;
+	} else if (is_valid_rt1718s_page1_register(reg)) {
+		reg_addr = reg;
+		reference_page = rt1718s_data->reg_page1;
+	} else {
+		return tcpci_emul_set_reg(emul, reg, val);
+	}
+
+	if (reg_addr > RT1718S_EMUL_REG_COUNT_PER_PAGE) {
+		return -EINVAL;
+	}
+
+	reference_page[reg_addr] = val;
 	return EC_SUCCESS;
 }
 

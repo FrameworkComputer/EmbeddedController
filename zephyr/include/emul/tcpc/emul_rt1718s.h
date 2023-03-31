@@ -45,6 +45,19 @@ struct rt1718s_emul_data {
 int rt1718s_emul_get_reg(const struct emul *emul, int reg, uint16_t *val);
 
 /**
+ * @brief Setting each byte of register from rt1718s emulator
+ *
+ * @param emul Pointer to I2C rt1718s emulator
+ * @param reg First byte of last write message
+ * @param val byte to write to the reg in emulator
+ *
+ * @return 0 on success
+ * @return -EINVAL when register is out of range defined in rt1718s private
+ *                 register or val is NULL
+ */
+int rt1718s_emul_set_reg(const struct emul *emul, int reg, uint16_t val);
+
+/**
  * @brief Reset the register set history
  *
  * @param emul Pointer to I2C rt1718s emulator

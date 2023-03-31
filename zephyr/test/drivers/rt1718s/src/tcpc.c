@@ -7,47 +7,15 @@
 #include "driver/tcpm/rt1718s_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "emul/tcpc/emul_rt1718s.h"
-#include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
+#include "test_common.h"
 
 #include <zephyr/drivers/emul.h>
-#include <zephyr/logging/log.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
-LOG_MODULE_REGISTER(rt1718s_tcpc_test, CONFIG_TCPCI_EMUL_LOG_LEVEL);
-
-#define RT1718S_NODE DT_NODELABEL(rt1718s_emul)
-
-static const int tcpm_rt1718s_port = USBC_PORT_C0;
-static const struct emul *rt1718s_emul = EMUL_DT_GET(RT1718S_NODE);
-
-static void rt1718s_clear_set_reg_history(void *f)
-{
-	rt1718s_emul_reset_set_history(rt1718s_emul);
-}
 
 ZTEST_SUITE(rt1718s_tcpc, drivers_predicate_post_main, NULL,
 	    rt1718s_clear_set_reg_history, rt1718s_clear_set_reg_history, NULL);
-
-static uint16_t get_emul_reg(const struct emul *emul, int reg)
-{
-	uint16_t val;
-
-	zassert_ok(rt1718s_emul_get_reg(emul, reg, &val),
-		   "Cannot get reg %x on rt1718s emul", reg);
-	return val;
-}
-
-static void compare_reg_val_with_mask(const struct emul *emul, int reg,
-				      uint16_t expected, uint16_t mask)
-{
-	uint16_t masked_val = get_emul_reg(emul, reg) & mask;
-	uint16_t masked_expected = expected & mask;
-
-	zassert_equal(masked_val, masked_expected,
-		      "expected register %x with mask %x should be %x, get %x",
-		      reg, mask, masked_expected, masked_val);
-}
 
 static void test_bc12_reg_init_settings(const struct emul *emul)
 {
@@ -241,4 +209,17 @@ ZTEST(rt1718s_tcpc, test_set_frs)
 	compare_reg_val_with_mask(rt1718s_emul, RT1718S_FRS_CTRL2, 0x10, 0xFF);
 	compare_reg_val_with_mask(rt1718s_emul, RT1718S_VBUS_CTRL_EN, 0x3F,
 				  0xFF);
+}
+
+ZTEST(rt1718s_tcpc, test_set_snk_ctrl)
+{
+	zassert_ok(rt1718s_tcpm_drv.set_snk_ctrl(tcpm_rt1718s_port, true));
+	compare_reg_val_with_mask(
+		rt1718s_emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_HIGH,
+		TCPC_REG_COMMAND_SNK_CTRL_HIGH | TCPC_REG_COMMAND_SNK_CTRL_LOW);
+
+	zassert_ok(rt1718s_tcpm_drv.set_snk_ctrl(tcpm_rt1718s_port, false));
+	compare_reg_val_with_mask(
+		rt1718s_emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_LOW,
+		TCPC_REG_COMMAND_SNK_CTRL_HIGH | TCPC_REG_COMMAND_SNK_CTRL_LOW);
 }
