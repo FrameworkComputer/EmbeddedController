@@ -168,7 +168,7 @@ cmd_rsasign_rwsig = futility sign --type rwsig \
 
 # commands to build optional xref files
 cmd_deps_to_list = cat $(deps) | tr -d ':\\' | tr ' ' '\012' \
-	| egrep '\.[chS]$$' | sort | uniq > $@
+	| grep -E '\.[chS]$$' | sort | uniq > $@
 cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
