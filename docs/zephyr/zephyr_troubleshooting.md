@@ -149,7 +149,13 @@ object files, this is useful to inspect the macro output. To do that use the
 `zmake` flag:
 
 ```
-zmake build $PROJECT --extra-cflags=-save-temps=obj
+zmake build --save-temps $PROJECT
+```
+
+or for unit tests:
+
+```
+./twister -x=CONFIG_COMPILER_SAVE_TEMPS=y
 ```
 
 This leaves a bunch of `.i` files in the build/ directory.

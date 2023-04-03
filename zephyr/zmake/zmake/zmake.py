@@ -483,11 +483,6 @@ class Zmake:
                             if static_version
                             else {}
                         ),
-                        **(
-                            {"EXTRA_CFLAGS": "-save-temps=obj"}
-                            if save_temps
-                            else {}
-                        ),
                     },
                 )
                 if cmake_defs:
@@ -520,6 +515,10 @@ class Zmake:
                 if coverage:
                     base_config |= zmake.build_config.BuildConfig(
                         kconfig_defs={"CONFIG_COVERAGE": "y"}
+                    )
+                if save_temps:
+                    base_config |= zmake.build_config.BuildConfig(
+                        kconfig_defs={"CONFIG_COMPILER_SAVE_TEMPS": "y"}
                     )
                 if allow_warnings:
                     base_config |= zmake.build_config.BuildConfig(
