@@ -203,8 +203,12 @@ build_boards: | $(FAILED_BOARDS_DIR)
 	@rm -f $(FAILED_BOARDS_DIR)/*
 	$(MAKE) try_build_boards
 
+.PHONY: check_undef
+check_undef:
+	$(call quiet,check_undef)
+
 .PHONY: buildall_only
-buildall_only: build_boards build_cros_ec_commands
+buildall_only: build_boards build_cros_ec_commands check_undef
 	$(MAKE) BOARD=host utils
 	$(MAKE) build_cts
 	$(MAKE) buildfuzztests
@@ -269,10 +273,14 @@ cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
 	 -a util/config_allowed.txt -p PLATFORM_EC_ -s "" \
 	 -I "${ZEPHYR_BASE}" \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check
+cmd_check_undef = ./util/kconfig_check.py -s "" -I "${ZEPHYR_BASE}" \
+	check_undef
 else
 cmd_check_allowed = true
+cmd_check_undef = true
 endif
 quiet_cmd_check_allowed = CHECK_ALLOWED ${config}
+quiet_cmd_check_undef = CHECK_UNDEF
 
 # Print any important notices at the end of the build.
 .PHONY: notice
