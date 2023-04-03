@@ -8,13 +8,6 @@
 #ifndef __CROS_EC_COMMON_H
 #define __CROS_EC_COMMON_H
 
-/*
- * I don't know why but gcc's preprocessor doesn't like the autoconf.h file,
- * sometimes. Adding a #line directive anywhere in this file seems to fix the
- * problem. #line marks the *next* line, so it is off by one.
- */
-#line 17
-
 #include "compile_time_macros.h"
 
 #include <inttypes.h>
