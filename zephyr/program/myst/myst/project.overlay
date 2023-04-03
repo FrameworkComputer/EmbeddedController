@@ -82,54 +82,104 @@
 				default;
 			};
 		};
-		io-db {
-			enum-name = "FW_IO_DB";
-			start = <6>;
+
+		fingerprint {
+			enum-name = "FW_FINGERPRINT";
+			start = <1>;
 			size = <2>;
 
-			io-db-tcpcname-ppcname {
+			fp-disabled {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_IO_DB_TCPCNAME_PPC_NAME";
+				enum-name = "FW_FP_DISABLED";
 				value = <0>;
 				default;
 			};
+			fp-uart {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FP_UART";
+				value = <1>;
+			};
+			fp-spi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FP_SPI";
+				value = <2>;
+			};
 		};
 
-		/*
-		 * FW_CONFIG field to enable fan or not.
-		 */
-		fan {
-			enum-name = "FW_FAN";
+		wlan {
+			enum-name = "FW_WLAN";
+			start = <3>;
+			size = <2>;
+
+			wlan-mt7922 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WLAN_MT7922";
+				value = <0>;
+				default;
+			};
+			wlan-mt7925 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WLAN_MT7925";
+				value = <1>;
+			};
+		};
+
+		wwan {
+			enum-name = "FW_WWAN";
+			start = <5>;
+			size = <2>;
+
+			wwan-disabled {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WWAN_DISABLED";
+				value = <0>;
+				default;
+			};
+			wwan-fm101-gl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WWAN_FM101_GL";
+				value = <1>;
+			};
+		};
+
+		io-db {
+			enum-name = "FW_IO_DB";
+			start = <7>;
+			size = <3>;
+
+			io-db-none {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_NONE";
+				value = <0>;
+				default;
+			};
+			io-db-sku-a {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_SKU_A";
+				value = <1>;
+			};
+			io-db-sku-b {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_SKU_B";
+				value = <2>;
+			};
+		};
+
+		kb-bl {
+			enum-name = "FW_KB_BL";
 			start = <10>;
 			size = <1>;
 
-			no-fan {
+			kb-bl-disabled {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_FAN_NOT_PRESENT";
+				enum-name = "FW_KB_BL_DISABLED";
 				value = <0>;
+				default;
 			};
-			fan-present {
+			kb-bl-enabled {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_FAN_PRESENT";
+				enum-name = "FW_KB_BL_ENABLED";
 				value = <1>;
-				/*
-				 * Set as default so that unprovisioned
-				 * configs will run the fan regardless.
-				 */
-				default;
-			};
-		};
-
-		charger-option {
-			enum-name = "FW_CHARGER";
-			start = <11>;
-			size = <2>;
-
-			charger-isl9241 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_CHARGER_ISL9241";
-				value = <0>;
-				default;
 			};
 		};
 	};
