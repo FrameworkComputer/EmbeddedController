@@ -9,8 +9,6 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
 
-#include <autoconf.h>
-
 #define SENSOR_NODE DT_PATH(motionsense_sensor)
 #define SENSOR_INFO_NODE DT_PATH(motionsense_sensor_info)
 #define SENSOR_ALT_NODE DT_PATH(motionsense_sensor_alt)
