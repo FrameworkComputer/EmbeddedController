@@ -190,3 +190,38 @@ $3 = 0x100ba480 "tach@400e1000"
 ```
 
 If the symbol has been optimized, try rebuilding with `CONFIG_LTO=n`.
+
+
+## Using GDB for debugging unit tests
+
+Unit tests running on `native_posix` produce an executable file that can be
+rebuilt directly with ninja to save time, and run with GDB to help out
+debugging. This can be found after a twister run in the `twister-out`
+directory. For example:
+
+```
+$ ./twister -v -T zephyr/test/hooks
+...
+INFO - 1/1 native_posix hooks.default PASSED (native 0.042s)
+...
+
+# Modify the test code
+
+$ ninja -C twister-out/native_posix/hooks.default
+...
+[7/7] Linking C executable zephyr/zephyr.elf
+
+$ ./twister-out/native_posix/hooks.default/zephyr/zephyr.elf
+...
+PROJECT EXECUTION SUCCESSFUL
+
+$ gdb ./twister-out/native_posix/hooks.default/zephyr/zephyr.elf
+Reading symbols from ./twister-out/native_posix/hooks.default/zephyr/zephyr.elf...
+(gdb) b main
+Breakpoint 1 at 0x80568a9: file boards/posix/native_posix/main.c, line 112.
+(gdb) run
+Starting program: /mnt/host/source/src/platform/ec/twister-out/native_posix/hooks.default/zephyr/zephyr.elf
+Breakpoint 1, main (argc=-17520, argv=0xffffbc24) at boards/posix/native_posix/main.c:112
+112             posix_init(argc, argv);
+...
+```
