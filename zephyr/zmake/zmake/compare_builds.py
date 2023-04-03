@@ -8,6 +8,7 @@ import dataclasses
 import logging
 import os
 import pathlib
+import shlex
 import subprocess
 import sys
 
@@ -51,7 +52,14 @@ def git_do_checkout(module_name, work_dir, git_source, dst_dir, git_ref):
         dst_dir: Destination directory for the checkout, relative to the work_dir.
         git_ref: Git reference to checkout.
     """
-    cmd = ["git", "clone", "--quiet", "--no-checkout", git_source, dst_dir]
+    cmd = [
+        "git",
+        "clone",
+        "--quiet",
+        "--no-checkout",
+        "file://" + str(git_source),
+        str(dst_dir),
+    ]
 
     try:
         subprocess.run(
@@ -62,7 +70,7 @@ def git_do_checkout(module_name, work_dir, git_source, dst_dir, git_ref):
             stderr=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError:
-        logging.error("Clone failed for %s", module_name)
+        logging.error("Clone failed for %s: %s", module_name, shlex.join(cmd))
         sys.exit(1)
 
     cmd = ["git", "-C", dst_dir, "checkout", "--quiet", git_ref]
@@ -75,7 +83,12 @@ def git_do_checkout(module_name, work_dir, git_source, dst_dir, git_ref):
             stderr=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError:
-        logging.error("Checkout of %s failed for %s", git_ref, module_name)
+        logging.error(
+            "Checkout of %s failed for %s: %s",
+            git_ref,
+            module_name,
+            shlex.join(cmd),
+        )
         sys.exit(1)
 
 
