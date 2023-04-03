@@ -303,11 +303,10 @@
  */
 #undef CONFIG_SYNC_INT_EVENT
 
+#ifndef CONFIG_ZEPHYR
 /* Compile chip support for digital-to-analog converter */
 #undef CONFIG_DAC
-
-/* Compile chip support for analog-to-digital convertor */
-#undef CONFIG_ADC
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * Allow runtime configuration of the adc_channels[] array
@@ -435,8 +434,10 @@
  */
 #undef CONFIG_ASSEMBLY_MULA32
 
+#ifndef CONFIG_ZEPHYR
 /* Support audio codec. */
 #undef CONFIG_AUDIO_CODEC
+#endif /* CONFIG_ZEPHYR */
 /* Audio codec caps. */
 #undef CONFIG_AUDIO_CODEC_CAP_WOV_AUDIO_SHM
 #undef CONFIG_AUDIO_CODEC_CAP_WOV_LANG_SHM
@@ -1466,10 +1467,12 @@
 
 /* AP chipset support; pick at most one */
 #undef CONFIG_CHIPSET_ALDERLAKE /* Intel Alderlake (x86) */
+#ifndef CONFIG_ZEPHYR
 #undef CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540 /* Intel Alderlake (x86) \
 					     * with power sequencer  \
 					     * chip                  \
 					     */
+#endif /* CONFIG_ZEPHYR */
 #undef CONFIG_CHIPSET_APOLLOLAKE /* Intel Apollolake (x86) */
 #undef CONFIG_CHIPSET_CANNONLAKE /* Intel Cannonlake (x86) */
 #undef CONFIG_CHIPSET_COMETLAKE /* Intel Cometlake (x86) */
@@ -2021,8 +2024,10 @@
 /* Maximal EC sampling rate */
 #undef CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ
 
+#ifndef CONFIG_ZEPHYR
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * Support for sending emulated sysrq events to AP (on designs with a keyboard,
@@ -2232,8 +2237,10 @@
 /* Allow EC serial console input to wake up the EC from STOP mode */
 #undef CONFIG_FORCE_CONSOLE_RESUME
 
+#ifndef CONFIG_ZEPHYR
 /* Enable support for floating point unit */
 #undef CONFIG_FPU
+#endif /* CONFIG_ZEPHYR */
 
 /* Enable warnings on FPU exceptions */
 #undef CONFIG_FPU_WARNINGS
@@ -2702,7 +2709,9 @@
 /*****************************************************************************/
 /* I2C configuration */
 
+#ifndef CONFIG_ZEPHYR
 #undef CONFIG_I2C
+#endif /* CONFIG_ZEPHYR */
 #undef CONFIG_I2C_DEBUG
 #undef CONFIG_I2C_DEBUG_PASSTHRU
 #undef CONFIG_I2C_PASSTHRU_RESTRICTED
@@ -2784,6 +2793,7 @@
  */
 #undef CONFIG_I2C_MULTI_PORT_CONTROLLER
 
+#ifndef CONFIG_ZEPHYR
 /*
  * Enable I2C bitbang driver.
  *
@@ -2795,6 +2805,7 @@
  * {"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
  */
 #undef CONFIG_I2C_BITBANG
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * If defined, reduce I2C traffic from update functions (i2c_update8/16
@@ -2852,7 +2863,9 @@
  * Compile driver for INA219 or INA231 or INA3221.
  * Only one of these may be defined (if any).
  */
+#ifndef CONFIG_ZEPHYR
 #undef CONFIG_INA219
+#endif /* CONFIG_ZEPHYR */
 #undef CONFIG_INA231
 #undef CONFIG_INA3221
 
@@ -3173,11 +3186,13 @@
  */
 #undef CONFIG_LED_POLICY_STD
 
+#ifndef CONFIG_ZEPHYR
 /*
  * Support common PWM-controlled LEDs that conform to the Chrome OS LED
  * behaviour specification.
  */
 #undef CONFIG_LED_PWM
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * Support common PWM-controlled LEDs that do not conform to the Chrom OS LED
@@ -3413,8 +3428,10 @@
 /* Size of low power RAM. */
 #undef CONFIG_LPRAM_SIZE
 
+#ifndef CONFIG_ZEPHYR
 /* Use Link-Time Optimizations to try to reduce the firmware code size */
 #undef CONFIG_LTO
+#endif /* CONFIG_ZEPHYR */
 
 /* Provide rudimentary malloc/free like services for shared memory. */
 #undef CONFIG_MALLOC
@@ -3567,8 +3584,10 @@
  */
 #undef CONFIG_MKBP_INPUT_DEVICES
 
+#ifndef CONFIG_ZEPHYR
 /* Support memory protection unit (MPU) */
 #undef CONFIG_MPU
+#endif /* CONFIG_ZEPHYR */
 
 /* Do not try hold I/O pins at frozen level during deep sleep */
 #undef CONFIG_NO_PINHOLD
@@ -3586,8 +3605,10 @@
 #undef CONFIG_PANIC_DATA_BASE
 #undef CONFIG_PANIC_DATA_SIZE
 
+#ifndef CONFIG_ZEPHYR
 /* Support PECI interface to x86 processor */
 #undef CONFIG_PECI
+#endif /* CONFIG_ZEPHYR */
 
 /* Common code for PECI interface to x86 processor */
 #undef CONFIG_PECI_COMMON
@@ -3750,8 +3771,10 @@
  */
 #undef CONFIG_CPU_PROCHOT_GATE_ON_C10
 
+#ifndef CONFIG_ZEPHYR
 /* Support PS/2 interface */
 #undef CONFIG_PS2
+#endif /* CONFIG_ZEPHYR */
 
 /* Support Power Sourcing Equipment */
 #undef CONFIG_PSE_LTC4291
@@ -3765,8 +3788,10 @@
 #undef CONFIG_PVD
 
 /*****************************************************************************/
+#ifndef CONFIG_ZEPHYR
 /* Support PWM control */
 #undef CONFIG_PWM
+#endif /* CONFIG_ZEPHYR */
 
 /* Define clock input to PWM module. */
 #undef CONFIG_PWM_INPUT_LFCLK
@@ -3991,8 +4016,10 @@
  */
 /* #undef CONFIG_SMBUS */
 
+#ifndef CONFIG_ZEPHYR
 /* Support SPI interfaces */
 #undef CONFIG_SPI
+#endif /* CONFIG_ZEPHYR */
 
 /* Support deprecated SPI protocol version 2. */
 #undef CONFIG_SPI_PROTOCOL_V2
@@ -4024,8 +4051,10 @@
 /* Define the SPI port to use to access the fingerprint sensor */
 #undef CONFIG_SPI_FP_PORT
 
+#ifndef CONFIG_ZEPHYR
 /* Support JEDEC SFDP based Serial NOR flash */
 #undef CONFIG_SPI_NOR
+#endif /* CONFIG_ZEPHYR */
 
 /* Enable SPI_NOR debugging providing additional console output while
  * initializing Serial NOR Flash devices including SFDP discovery. */
@@ -4417,8 +4446,10 @@
 /* Baud rate for UARTs */
 #define CONFIG_UART_BAUD_RATE 115200
 
+#ifndef CONFIG_ZEPHYR
 /* UART index (number) for EC console */
 #undef CONFIG_UART_CONSOLE
+#endif /* CONFIG_ZEPHYR */
 
 /* UART index (number) for host UART, if present */
 #undef CONFIG_UART_HOST
@@ -5415,8 +5446,10 @@
 /* Support reporting of configuration bMaxPower in mA */
 #define CONFIG_USB_MAXPOWER_MA 500
 
+#ifndef CONFIG_ZEPHYR
 /* Support reporting as self powered in USB configuration. */
 #undef CONFIG_USB_SELF_POWERED
+#endif /* CONFIG_ZEPHYR */
 
 /* Support correct handling of USB suspend (host-initiated). */
 #undef CONFIG_USB_SUSPEND
@@ -5847,8 +5880,10 @@
  */
 #undef CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT
 
+#ifndef CONFIG_ZEPHYR
 /* Define this to enable system boot time logging */
 #undef CONFIG_SYSTEM_BOOT_TIME_LOGGING
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * The USB port used for CCD. Defaults to 0/C0.
@@ -6342,9 +6377,11 @@
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
 
+#ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_LED_PWM_COUNT
 #define CONFIG_LED_PWM
 #endif /* defined(CONFIG_LED_PWM_COUNT) */
+#endif /* CONFIG_ZEPHYR */
 
 #ifdef CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
 #define CONFIG_LED_PWM_CHARGE_STATE_ONLY
@@ -6420,7 +6457,9 @@
 #ifndef HAS_TASK_CHIPSET
 #undef CONFIG_AP_HANG_DETECT
 #undef CONFIG_CHIPSET_ALDERLAKE
+#ifndef CONFIG_ZEPHYR
 #undef CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540
+#endif /* CONFIG_ZEPHYR */
 #undef CONFIG_CHIPSET_APOLLOLAKE
 #undef CONFIG_CHIPSET_CANNONLAKE
 #undef CONFIG_CHIPSET_COMETLAKE
@@ -6446,11 +6485,13 @@
  * for. In Zephyr this can be implied by multiple options, so we provide the
  * same symbol here instead of making code examine HAS_TASK_CHIPSET.
  */
+#ifndef CONFIG_ZEPHYR
 #ifndef CONFIG_AP_POWER_CONTROL
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_AP_POWER_CONTROL
 #endif /* HAS_TASK_CHIPSET */
 #endif /* CONFIG_AP_POWER_CONTROL */
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * If a board has a chipset task, set the minimum charger power required for
