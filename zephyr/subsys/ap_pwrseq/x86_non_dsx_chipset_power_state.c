@@ -143,6 +143,17 @@ static void x86_non_dsx_chipset_state_entry_cb(const struct device *dev,
 
 #if CONFIG_AP_PWRSEQ_S0IX
 	case AP_POWER_STATE_S0IX:
+		/*
+		 * Check sleep state and notify listeners of S0ix suspend if
+		 * HC already set sleep suspend state.
+		 */
+		ap_power_sleep_notify_transition(AP_POWER_SLEEP_SUSPEND);
+		/*
+		 * Enable idle task deep sleep. Allow the low power idle task
+		 * to go into deep sleep in S0ix.
+		 */
+		enable_sleep(SLEEP_MASK_AP_RUN);
+
 		ap_power_ev_send_callbacks(AP_POWER_S0IX_SUSPEND);
 #if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 		ap_power_ev_send_callbacks(AP_POWER_SUSPEND_COMPLETE);
@@ -176,6 +187,11 @@ static void x86_non_dsx_chipset_state_exit_cb(const struct device *dev,
 
 #if CONFIG_AP_PWRSEQ_S0IX
 	case AP_POWER_STATE_S0IX:
+		/*
+		 * Disable idle task deep sleep. This means that the low
+		 * power idle task will not go into deep sleep while in S0.
+		 */
+		disable_sleep(SLEEP_MASK_AP_RUN);
 #if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 		ap_power_ev_send_callbacks(AP_POWER_RESUME_INIT);
 #endif
