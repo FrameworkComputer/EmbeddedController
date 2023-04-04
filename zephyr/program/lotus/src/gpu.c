@@ -16,6 +16,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "flash_storage.h"
+#include "extpower.h"
 
 LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 
@@ -28,6 +29,15 @@ bool gpu_present(void)
 	return module_present;
 }
 
+static void update_gpu_ac_power_state(void)
+{
+	if (extpower_is_present() && module_present) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 1);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, update_gpu_ac_power_state, HOOK_PRIO_DEFAULT);
 
 void check_gpu_module(void)
 {
@@ -66,6 +76,7 @@ void check_gpu_module(void)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 	}
+	update_gpu_ac_power_state();
 }
 DECLARE_DEFERRED(check_gpu_module);
 DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
@@ -78,6 +89,7 @@ void chassis_open_interrupt(enum gpio_signal signal)
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
 		LOG_INF("Powering off GPU");
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
@@ -107,3 +119,6 @@ static void gpu_mux_configure(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, gpu_mux_configure, HOOK_PRIO_DEFAULT);
+
+
+
