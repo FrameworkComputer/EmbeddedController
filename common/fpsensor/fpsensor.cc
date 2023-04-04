@@ -41,11 +41,6 @@ extern "C" {
 /* Ready to encrypt a template. */
 static timestamp_t encryption_deadline;
 
-/* raw image offset inside the acquired frame */
-#ifndef FP_SENSOR_IMAGE_OFFSET
-#define FP_SENSOR_IMAGE_OFFSET 0
-#endif
-
 #define FP_MODE_ANY_CAPTURE \
 	(FP_MODE_CAPTURE | FP_MODE_ENROLL_IMAGE | FP_MODE_MATCH)
 #define FP_MODE_ANY_DETECT_FINGER \

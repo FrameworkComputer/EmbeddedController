@@ -32,6 +32,7 @@
 #define FP_MAX_FINGER_COUNT_ELAN 3
 #endif
 
+#define FP_SENSOR_IMAGE_OFFSET_ELAN (0)
 #define FP_SENSOR_RES_BPP_ELAN (8)
 
 /**
