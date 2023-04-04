@@ -28,10 +28,10 @@ The main source code for fingerprint sensor functionality lives in the
 The following "boards" (specified by the `BOARD` environment variable when
 building the EC code) are for fingerprint:
 
-MCU                      | Sensor     | Firmware (EC "board")                          | Dev Board                                    | Nucleo Board
------------------------- | ---------- | ---------------------------------------------- | -------------------------------------------- | ------------
-[STM32H743] \(Cortex-M7) | [FPC 1145] | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | [Icetower v0.2] <br>(Previously Dragontalon) | [Nucleo H743ZI2]
-[STM32F412] \(Cortex-M4) | [FPC 1025] | `bloonchipper`<br>(aka `hatch_fp`)             | [Dragonclaw v0.3]                            | [Nucleo F412ZG]
+MCU                      | Sensor     | Firmware (EC "board")                          | Dev Board                                  | Nucleo Board
+------------------------ | ---------- | ---------------------------------------------- | ------------------------------------------ | ------------
+[STM32H743] \(Cortex-M7) | [FPC 1145] | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | [Icetower v3] <br>(Previously Dragontalon) | [Nucleo H743ZI2]
+[STM32F412] \(Cortex-M4) | [FPC 1025] | `bloonchipper`<br>(aka `hatch_fp`)             | [Dragonclaw v0.3]                          | [Nucleo F412ZG]
 
 RAM and Flash details for each board are in the [Fingerprint MCU RAM and Flash]
 document.
@@ -368,7 +368,7 @@ disconnected.*
 @@   pp3300_dx_mcu_mw    488     1.57    0.59     9.73     1.31
 ```
 
-### Icetower v0.1
+### Icetower v3
 
 <!-- mdformat off(b/139308852) -->
 *** note
@@ -593,7 +593,7 @@ that are connected via UART use [`cros_ec_uart.c`].
 [FPC 1145 Template Size]: https://chromium.googlesource.com/chromiumos/platform/ec/+/127521b109be8aac352e80e319e46ed123360408/driver/fingerprint/fpc/libfp/fpc1145_private.h#46
 [FPC 1025 Template Size]: https://chromium.googlesource.com/chromiumos/platform/ec/+/127521b109be8aac352e80e319e46ed123360408/driver/fingerprint/fpc/bep/fpc1025_private.h#44
 [Dragonclaw v0.3]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board
-[Icetower v0.2]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board
+[Icetower v3]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board
 [Nucleo F412ZG]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-F412ZG/6137573
 [Nucleo H743ZI2]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-H743ZI2/10130892
 [CBI Info]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md

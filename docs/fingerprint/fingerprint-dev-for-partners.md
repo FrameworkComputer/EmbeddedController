@@ -48,9 +48,9 @@ Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 ***
 <!-- mdformat on -->
 
-This FPMCU board is Icetower Rev 0.1. |
-------------------------------------- |
-![Icetower board]                     |
+This FPMCU board is Icetower Rev 3. |
+----------------------------------- |
+![Icetower board]                   |
 
 <!-- mdformat off(b/139308852) -->
 *** note
@@ -69,7 +69,7 @@ debug a running program.
 
 There are several variants of Servo and the fingerprint team uses the
 [Servo Micro](#servo-micro) for its simplicity. It lacks builtin JTAG/SWD
-support for single step debugging, but Dragonclaw v0.3 and Icetower v0.1 have an
+support for single step debugging, but Dragonclaw v0.3 and Icetower v3 have an
 [SWD connector](#servo-micro-swd) that can be used.
 
 [Servo Micro](#servo-micro) |
@@ -598,7 +598,7 @@ Make sure that this interface is disabled:
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
 [Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
-[Icetower board]: ../images/icetower_v0.1.jpg
+[Icetower board]: ../images/icetower_v3.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->
