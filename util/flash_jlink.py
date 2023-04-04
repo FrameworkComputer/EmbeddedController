@@ -160,6 +160,8 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
             "auto",
             "-autoconnect",
             "1",
+            "-NoGui",
+            "1",
             "-CommandFile",
             cmd_file,
         ]
