@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_FPSENSOR_UTILS_H
 #define __CROS_EC_FPSENSOR_UTILS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -31,5 +32,13 @@ enum ec_error_list validate_fp_buffer_offset(uint32_t buffer_size,
 #ifdef __cplusplus
 }
 #endif
+
+#define FP_MODE_ANY_CAPTURE \
+	(FP_MODE_CAPTURE | FP_MODE_ENROLL_IMAGE | FP_MODE_MATCH)
+#define FP_MODE_ANY_DETECT_FINGER \
+	(FP_MODE_FINGER_DOWN | FP_MODE_FINGER_UP | FP_MODE_ANY_CAPTURE)
+#define FP_MODE_ANY_WAIT_IRQ (FP_MODE_FINGER_DOWN | FP_MODE_ANY_CAPTURE)
+
+bool fp_match_success(int match_result);
 
 #endif /* __CROS_EC_FPSENSOR_UTILS_H */
