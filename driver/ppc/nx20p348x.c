@@ -410,7 +410,7 @@ static void nx20p348x_handle_interrupt(int port)
 		    NX20P348X_DB_EXIT_FAIL_THRESHOLD) {
 			ppc_prints("failed to exit DB mode", port);
 			if (read_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
-				     &mask_reg)) {
+				     &mask_reg) == 0) {
 				mask_reg |= NX20P348X_INT1_DBEXIT_ERR;
 				write_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
 					  mask_reg);
