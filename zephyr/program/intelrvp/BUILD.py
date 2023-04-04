@@ -37,6 +37,7 @@ def register_intelrvp_project(
         zephyr_board=chip,
         dts_overlays=dts_overlays,
         kconfig_files=kconfig_files,
+        inherited_from=["intelrvp"],
     )
 
 

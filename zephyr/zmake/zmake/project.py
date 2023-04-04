@@ -52,6 +52,20 @@ class ProjectConfig:
         default_factory=list
     )
     project_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
+    inherited_from: typing.Iterable[str] = dataclasses.field(
+        default_factory=list
+    )
+
+    @property
+    def full_name(self) -> str:
+        """Get the full project name, e.g. baseboard.variant"""
+        inherited_from = (
+            [self.inherited_from]
+            if isinstance(self.inherited_from, str)
+            else self.inherited_from
+        )
+
+        return ".".join([*inherited_from, self.project_name])
 
 
 class Project:
@@ -198,12 +212,16 @@ class ProjectRegistrationHandler:
             Another ProjectRegistrationHandler.
         """
         new_config = dataclasses.asdict(self.base_config)
+        new_config["inherited_from"] = [
+            *self.base_config.inherited_from,
+            self.base_config.project_name,
+        ]
+
         for key, value in kwargs.items():
             if isinstance(value, list):
                 new_config[key] = [*new_config[key], *value]
             else:
                 new_config[key] = value
-
         return self.register_func(**new_config)
 
 

@@ -17,6 +17,7 @@ def register_geralt_project(
             here / "program.conf",
             here / project_name / "project.conf",
         ],
+        inherited_from=["geralt"],
     )
 
 

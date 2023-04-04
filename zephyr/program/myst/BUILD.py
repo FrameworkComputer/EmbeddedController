@@ -21,6 +21,7 @@ def register_myst_project(
             # Project-specific KConfig customization.
             here / project_name / "project.conf",
         ],
+        inherited_from=["myst"],
     )
 
 

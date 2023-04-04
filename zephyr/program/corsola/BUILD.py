@@ -27,6 +27,7 @@ def register_corsola_project(
             here / f"{chip_kconfig}_program.conf",
             here / project_name / "project.conf",
         ],
+        inherited_from=["corsola"],
     )
 
 

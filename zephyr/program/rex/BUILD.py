@@ -25,6 +25,7 @@ def register_rex_project(
             here / project_name / "project.overlay",
         ],
         kconfig_files=kconfig_files,
+        inherited_from=["rex"],
     )
 
 
