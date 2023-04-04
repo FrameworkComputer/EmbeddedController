@@ -232,7 +232,7 @@ LINKS ?= ${LINKS[*]}
 all: build-${OLD_REF} build-${NEW_REF}
 
 ec-%:
-	git clone --quiet --no-checkout \$(ORIGIN) \$@
+	git clone --quiet --no-checkout --shared \$(ORIGIN) \$@
 	git -C \$@ checkout --quiet \$(@:ec-%=%)
 ifneq (\$(LINKS),)
 	ln -s \$(addprefix \$(ORIGIN)/,\$(LINKS)) \$@
