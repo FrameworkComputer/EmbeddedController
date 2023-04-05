@@ -8,7 +8,7 @@
 #include "console.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/nx20p348x_public.h"
-#include "emul/emul_nx20p348x.h"
+#include "nx20p348x_test_shared.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
@@ -19,12 +19,6 @@
 #include <zephyr/ztest.h>
 
 #define NX20P383X_NODE DT_NODELABEL(nx20p348x_emul)
-
-#define TEST_PORT USBC_PORT_C0
-
-struct nx20p348x_driver_fixture {
-	const struct emul *nx20p348x_emul;
-};
 
 static void *nx20p348x_driver_setup(void)
 {
@@ -80,19 +74,6 @@ ZTEST_F(nx20p348x_driver, test_discharge_vbus)
 				  NX20P348X_DEVICE_CONTROL_REG);
 	zassert_not_equal((reg & NX20P348X_CTRL_VBUSDIS_EN),
 			  NX20P348X_CTRL_VBUSDIS_EN);
-}
-
-ZTEST(nx20p348x_driver, test_sink_enable_timeout_failure)
-{
-	/* Note: PPC requires a TCPC GPIO to enable its sinking */
-	zassert_equal(ppc_vbus_sink_enable(TEST_PORT, true), EC_ERROR_TIMEOUT);
-}
-
-ZTEST(nx20p348x_driver, test_source_enable_timeout_failure)
-{
-	/* Note: PPC requires a TCPC GPIO to enable its sourcing */
-	zassert_equal(ppc_vbus_source_enable(TEST_PORT, true),
-		      EC_ERROR_TIMEOUT);
 }
 
 ZTEST(nx20p348x_driver, test_ppc_dump)
