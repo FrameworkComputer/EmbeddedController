@@ -257,6 +257,14 @@ tests:
     - CONFIG_PLATFORM_EC_MKBP_USE_GPIO=y
     - CONFIG_PLATFORM_EC_KEYBOARD_KEYPAD=y
     tags: common mkbp
+  drivers.nx20p3481:
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./nx20p348x/usbc.dts
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_NX20P348X=y
+    - CONFIG_PLATFORM_EC_USBC_PPC_NX20P3481=y
+    - CONFIG_PLATFORM_EC_USBC_PPC_NX20P3483=n
   drivers.nx20p3483:
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay

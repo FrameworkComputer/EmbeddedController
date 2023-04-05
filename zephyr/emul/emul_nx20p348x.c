@@ -132,6 +132,28 @@ static int nx20p348x_emul_write(const struct emul *emul, int reg, uint8_t val,
 
 	data->regs[reg] = val;
 
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_USBC_PPC_NX20P3481) &&
+	    reg == NX20P348X_SWITCH_CONTROL_REG) {
+		bool enabled = val & NX20P3481_SWITCH_CONTROL_HVSNK;
+
+		/* Update our status as if we turned on/off Vbus sinking */
+		if (enabled)
+			data->regs[NX20P348X_SWITCH_STATUS_REG] |=
+				NX20P348X_SWITCH_STATUS_HVSNK;
+		else
+			data->regs[NX20P348X_SWITCH_STATUS_REG] &=
+				~NX20P348X_SWITCH_STATUS_HVSNK;
+
+		/* Do the same for sourcing */
+		enabled = val & NX20P3481_SWITCH_CONTROL_5VSRC;
+		if (enabled)
+			data->regs[NX20P348X_SWITCH_STATUS_REG] |=
+				NX20P348X_SWITCH_STATUS_5VSRC;
+		else
+			data->regs[NX20P348X_SWITCH_STATUS_REG] &=
+				~NX20P348X_SWITCH_STATUS_5VSRC;
+	}
+
 	return 0;
 }
 
