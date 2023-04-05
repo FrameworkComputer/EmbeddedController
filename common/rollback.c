@@ -49,19 +49,24 @@ static int get_rollback_offset(int region)
  * When MPU is available, read rollback with interrupts disabled, to minimize
  * time protection is left open.
  */
-static void lock_rollback(void)
+static void lock_rollback(uint32_t key)
 {
 #ifdef CONFIG_ROLLBACK_MPU_PROTECT
 	mpu_lock_rollback(1);
-	interrupt_enable();
+	irq_unlock(key);
 #endif
 }
 
-static void unlock_rollback(void)
+static uint32_t unlock_rollback(void)
 {
 #ifdef CONFIG_ROLLBACK_MPU_PROTECT
-	interrupt_disable();
+	uint32_t key;
+
+	key = irq_lock();
 	mpu_lock_rollback(0);
+	return key;
+#else
+	return 0;
 #endif
 }
 
@@ -76,13 +81,14 @@ int read_rollback(int region, struct rollback_data *data)
 {
 	int offset;
 	int ret = EC_SUCCESS;
+	uint32_t key;
 
 	offset = get_rollback_offset(region);
 
-	unlock_rollback();
+	key = unlock_rollback();
 	if (crec_flash_read(offset, sizeof(*data), (char *)data))
 		ret = EC_ERROR_UNKNOWN;
-	lock_rollback();
+	lock_rollback(key);
 
 	return ret;
 }
@@ -251,6 +257,7 @@ static int rollback_update(int32_t next_min_version, const uint8_t *entropy,
 	struct rollback_data *data = (struct rollback_data *)block;
 	BUILD_ASSERT(sizeof(block) >= sizeof(*data));
 	int erase_size, offset, region, ret;
+	uint32_t key;
 
 	if (crec_flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW) {
 		ret = EC_ERROR_ACCESS_DENIED;
@@ -322,15 +329,15 @@ static int rollback_update(int32_t next_min_version, const uint8_t *entropy,
 		goto out;
 	}
 
-	unlock_rollback();
+	key = unlock_rollback();
 	if (crec_flash_erase(offset, erase_size)) {
 		ret = EC_ERROR_UNKNOWN;
-		lock_rollback();
+		lock_rollback(key);
 		goto out;
 	}
 
 	ret = crec_flash_write(offset, sizeof(block), block);
-	lock_rollback();
+	lock_rollback(key);
 
 out:
 	clear_rollback(data);
