@@ -672,11 +672,6 @@ static int check_keys_changed(uint8_t *state)
 	}
 
 	if (any_change) {
-#ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
-		/* Suppress keyboard noise */
-		keyboard_suppress_noise();
-#endif
-
 		if (print_state_changes)
 			print_state(state, "state");
 

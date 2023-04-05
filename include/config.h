@@ -3106,13 +3106,6 @@
 #undef CONFIG_KEYBOARD_SCANCODE_CALLBACK
 
 /*
- * Call board-supplied keyboard_suppress_noise() function when the debounced
- * keyboard state changes.  Some boards use this to send a signal to the audio
- * codec to suppress typing noise picked up by the microphone.
- */
-#undef CONFIG_KEYBOARD_SUPPRESS_NOISE
-
-/*
  * Enable keyboard testing functionality. This enables a message which receives
  * a list of keyscan events from the AP and processes them.  This will cause
  * keypresses to appear on the AP through the same mechanism as a normal
