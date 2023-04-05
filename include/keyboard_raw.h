@@ -108,15 +108,10 @@ static inline int keyboard_raw_get_cols(void)
 
 static inline void keyboard_raw_set_cols(int cols)
 {
-#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
-	/* Keyboard ID is probably encoded right after the last column. Scanner
-	 * would read keyboard ID if the column size is decreased. */
-	assert(cols == KEYBOARD_COLS_MAX);
-#else
 	/* We can only decrease the column size. You have to assume a larger
 	 * grid (and reduce scanning size if the keyboard has no keypad). */
 	assert(cols <= KEYBOARD_COLS_MAX);
-#endif
+
 	keyboard_cols = cols;
 }
 

@@ -3725,17 +3725,6 @@ struct ec_params_mkbp_simulate_key {
 	uint8_t pressed;
 } __ec_align1;
 
-#define EC_CMD_GET_KEYBOARD_ID 0x0063
-
-struct ec_response_keyboard_id {
-	uint32_t keyboard_id;
-} __ec_align4;
-
-enum keyboard_id {
-	KEYBOARD_ID_UNSUPPORTED = 0,
-	KEYBOARD_ID_UNREADABLE = 0xffffffff,
-};
-
 /* Configure keyboard scanning */
 #define EC_CMD_MKBP_SET_CONFIG 0x0064
 #define EC_CMD_MKBP_GET_CONFIG 0x0065

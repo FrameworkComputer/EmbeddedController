@@ -122,16 +122,6 @@ static inline void keyboard_scan_enable(int enable,
 }
 #endif
 
-#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
-/**
- * Get the KEYBOARD ID for a keyboard
- *
- * @return A value that identifies keyboard variants. Its meaning and
- * the number of bits actually used is the supported keyboard layout.
- */
-int keyboard_get_keyboard_id(void);
-#endif
-
 #ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 void set_vol_up_key(uint8_t row, uint8_t col);
 #else

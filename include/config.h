@@ -3125,11 +3125,6 @@
 #undef CONFIG_KEYBOARD_KSO_HIGH_DRIVE
 
 /*
- * Add support for keyboards with language ID pins
- */
-#undef CONFIG_KEYBOARD_LANGUAGE_ID
-
-/*
  * Enable keypad (a palm-sized keyboard section usually placed on the far right)
  */
 #undef CONFIG_KEYBOARD_KEYPAD
