@@ -4,6 +4,7 @@
  */
 
 #include "driver/tcpm/tcpci.h"
+#include "i2c/i2c.h"
 
 #include <zephyr/devicetree.h>
 
