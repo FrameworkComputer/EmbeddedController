@@ -34,4 +34,12 @@ config PLATFORM_EC_ROLLBACK_UPDATE
 	  (e.g. by adding more entropy to the secret or changing minimal
 	  RW version).
 
+config PLATFORM_EC_ROLLBACK_MPU_PROTECT
+	bool "Enable MPU protection of rollback regions"
+	depends on MPU
+	default y
+	help
+	  If enabled, flash area that contains rollback data will be protected
+	  against unwanted read/write.
+
 endif  # PLATFORM_EC_ROLLBACK

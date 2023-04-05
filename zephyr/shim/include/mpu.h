@@ -32,4 +32,8 @@ int mpu_protect_code_ram(void);
 int mpu_lock_ro_flash(void);
 int mpu_lock_rw_flash(void);
 
+#ifdef CONFIG_PLATFORM_EC_ROLLBACK_MPU_PROTECT
+int mpu_lock_rollback(int lock);
+#endif
+
 #endif /* __CROS_EC_CPU_H */
