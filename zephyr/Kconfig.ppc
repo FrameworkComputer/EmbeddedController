@@ -86,6 +86,14 @@ config PLATFORM_EC_USBC_PPC_KTU1125
 	  solution to USB Type-C applications by eliminating the dependence
 	  on external components.
 
+config PLATFORM_EC_USBC_PPC_NX20P3481
+	bool "NX20P3481 High Voltage Sink/Source Combo Switch"
+	depends on DT_HAS_NXP_NX20P348X_ENABLED
+	select PLATFORM_EC_USBC_OCP
+	help
+	  The NX20P3481 is a product with combined multiple power switches
+	  and a LDO for USB PD application.
+
 config PLATFORM_EC_USBC_PPC_NX20P3483
 	bool "NX20P3483 High Voltage Sink/Source Combo Switch"
 	default y
