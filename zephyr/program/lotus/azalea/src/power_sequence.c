@@ -174,16 +174,20 @@ enum power_state power_handle_state(enum power_state state)
 						/*
 						 * TODO: RTC reset function
 						 */
+						ap_boot_delay = 9;
+						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						/* SLP_S5 asserted, power down to G3S5 state */
 						return POWER_S5G3;
 					}
 				}
 			}
+			s5_exit_tries = 0;
 			return POWER_S5S3;
 		}
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 1) {
+			s5_exit_tries = 0;
 			/* Power up to next state */
 			return POWER_S5S3;
 		}
