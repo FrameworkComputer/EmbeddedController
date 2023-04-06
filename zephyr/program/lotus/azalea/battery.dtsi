@@ -11,8 +11,5 @@
 		atl_framework61w {
 			compatible = "atl,framework61w", "battery-smart";
 		};
-		atl_framework85w {
-			compatible = "atl,framework85w", "battery-smart";
-		};
 	};
 };
