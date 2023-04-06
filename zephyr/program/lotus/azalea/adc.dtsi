@@ -13,19 +13,7 @@
 			enum-name = "ADC_MAIN_BOARD_ID";
 			io-channels = <&adc0 0>;
 		};
-		adc_hub_boardid: hub-boardid {
-			enum-name = "ADC_HUB_BOARD_ID";
-			io-channels = <&adc0 1>;
-		};
-		adc_gpu_boardid0: gpu-boardid0 {
-			enum-name = "ADC_GPU_BOARD_ID_0";
-			io-channels = <&adc0 2>;
-		};
-		adc_gpu_boardid1: gpu-boardid1 {
-			enum-name = "ADC_GPU_BOARD_ID_1";
-			io-channels = <&adc0 3>;
-		};
-		adc_psys_chgr: psys-chgr {
+		adc_i_sys: i-sys {
 			enum-name = "ADC_PSYS";
 			io-channels = <&adc0 4>;
 		};
@@ -33,16 +21,23 @@
 			enum-name = "ADC_ADAPTER_CURRENT";
 			io-channels = <&adc0 5>;
 		};
+		adc_tp_board_id: tp_board_id {
+			enum-name = "ADC_TOUCHPAD_ID";
+			io-channels = <&adc0 7>;
+		};
+		adc_audio_board_id: audio_board_id {
+			enum-name = "ADC_AUDIO_ID";
+			io-channels = <&adc0 8>;
+		};
 	};
 };
 
 &adc0 {
 	status = "okay";
 	pinctrl-0 = <&adc0_chan0_gp45
-		     &adc0_chan1_gp44
-		     &adc0_chan2_gp43
-		     &adc0_chan3_gp42
 		     &adc0_chan4_gp41
-		     &adc0_chan5_gp37>;
+		     &adc0_chan5_gp37
+		     &adc0_chan7_gpe1
+		     &adc0_chan8_gpf1>;
 	pinctrl-names = "default";
 };
