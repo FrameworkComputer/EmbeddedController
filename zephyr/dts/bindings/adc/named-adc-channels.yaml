@@ -125,3 +125,4 @@ child-binding:
       - ADC_ADAPTER_CURRENT
       - ADC_TOUCHPAD_ID
       - ADC_AUDIO_ID
+      - ADC_VCIN1_BATT_TEMP

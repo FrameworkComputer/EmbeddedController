@@ -29,6 +29,10 @@
 			enum-name = "ADC_AUDIO_ID";
 			io-channels = <&adc0 8>;
 		};
+		adc_vcin1_batt_temp: vcin1_batt_temp {
+			enum-name = "ADC_VCIN1_BATT_TEMP";
+			io-channels = <&adc0 9>;
+		};
 	};
 };
 
@@ -38,6 +42,7 @@
 		     &adc0_chan4_gp41
 		     &adc0_chan5_gp37
 		     &adc0_chan7_gpe1
-		     &adc0_chan8_gpf1>;
+		     &adc0_chan8_gpf1
+		     &adc0_chan9_gpf0>;
 	pinctrl-names = "default";
 };

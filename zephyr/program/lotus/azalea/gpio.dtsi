@@ -62,7 +62,7 @@
 		mic_sw {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
-		vcin_batt_temp {
+		gpio_ec_kbl_pwr_en: ec_kbl_pwr_en {
 			gpios = <&gpiob 1 GPIO_INPUT>;
 		};
 		gpio_on_off_btn_l: on_off_btn_l {
@@ -128,19 +128,16 @@
 			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
 		};
 		en_3v_chgrtc {
-			gpios = <&gpio4 4 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio4 4 GPIO_OUTPUT_LOW>;	/* reserved */
 		};
 		ac_present_pd_l {
 			gpios = <&gpio4 3 GPIO_INPUT>;		/* Monitor AC present from PD */
 		};
 		ec_beep {
-			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;	/* reserved */
 		};
 		fp_control {
-			gpios = <&gpio3 4 GPIO_OUTPUT_LOW>;	/* Finger Printer feature */
-		};
-		gpio_ec_kbl_pwr_en: ec_kbl_pwr_en {
-			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio3 4 GPIO_INPUT>;		/* Finger Printer feature */
 		};
 		enbkl_apu {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor APU EDP BKL */
@@ -162,9 +159,6 @@
 		};
 		cam_sw {
 			gpios = <&gpio9 3 GPIO_INPUT>;
-		};
-		on_off_fp_l {
-			gpios = <&gpioa 7 GPIO_INPUT>;
 		};
 		gpio_spok: pwr_3v5v_pg {
 			gpios = <&gpio9 4 GPIO_INPUT>;		/* Monitor 3VALW PWR OK */
