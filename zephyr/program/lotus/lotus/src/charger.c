@@ -6,12 +6,15 @@
 
 #include "battery.h"
 #include "board_charger.h"
+#include "charge_manager.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "console.h"
 #include "driver/charger/isl9241.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
@@ -139,3 +142,28 @@ void charger_update(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
+
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	int prochot_ma;
+
+	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
+		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
+	}
+	/*
+	 * ac prochot should bigger than input current
+	 * And needs to be at least 128mA bigger than the adapter current
+	 */
+	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
+
+	charge_ma = charge_ma * 94 / 100;
+
+	if ((prochot_ma - charge_ma) < 855) {
+		charge_ma = prochot_ma - 855;
+	}
+
+	charge_set_input_current_limit(charge_ma, charge_mv);
+	/* sync-up ac prochot with current change */
+	isl9241_set_ac_prochot(0, prochot_ma);
+}

@@ -797,31 +797,6 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	int prochot_ma;
-
-	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
-		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
-	}
-	/*
-	 * ac prochot should bigger than input current
-	 * And needs to be at least 128mA bigger than the adapter current
-	 */
-	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
-
-	charge_ma = charge_ma * 94 / 100;
-
-	if ((prochot_ma - charge_ma) < 855) {
-		charge_ma = prochot_ma - 855;
-	}
-
-	charge_set_input_current_limit(charge_ma, charge_mv);
-	/* sync-up ac prochot with current change */
-	isl9241_set_ac_prochot(0, prochot_ma);
-}
-
 int board_set_active_charge_port(int charge_port)
 {
 	prev_charge_port = charge_port;
