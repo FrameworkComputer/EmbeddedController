@@ -1,0 +1,53 @@
+/ {
+	named-i2c-ports {
+		i2c_ec_i2c_batt: ec_i2c_batt {
+			i2c-port = <&i2c_ctrl7>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+	};
+
+	usbc {
+		port0@0 {
+			chg = <&chg_port0>;
+		};
+		port1@1 {
+			chg = <&chg_port1>;
+		};
+	};
+
+	batteries {
+		default_battery: lgc {
+			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+	};
+};
+
+&i2c_ctrl3 {
+	chg_port0: isl923x@9 {
+		compatible = "cros,isl923x-emul", "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+		battery = <&battery>;
+	};
+};
+
+&i2c_ctrl5 {
+	chg_port1: isl923x@9 {
+		compatible = "cros,isl923x-emul", "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+&i2c_ctrl7 {
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <6>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		desired-charg-volt = <11250>;
+		desired-charg-cur = <2400>;
+		mf-name = "LGC";
+		dev-name = "AP18C8K";
+	};
+};

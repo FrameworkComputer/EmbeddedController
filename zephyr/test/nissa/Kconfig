@@ -2,6 +2,24 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+choice TEST_TARGET
+	prompt "Select test target to build"
+	help
+	  Select the build target for a given test. Each test target must select
+	  exactly one, because some tests assume configuration that conflicts with
+	  others.
+
+	config TEST_NISSA_SUB_BOARD
+		bool "Tests for sub_board.c"
+		help
+		  The test target that exercises nissa/src/sub_board.c.
+
+	config TEST_NISSA_COMMON
+		bool "Tests for common.c"
+		help
+		  The test target that exercises nissa/src/common.c.
+endchoice
+
 module = NISSA
 module-str = Nissa board-specific code (unit tests)
 source "subsys/logging/Kconfig.template.log_config"

@@ -20,6 +20,8 @@
 		gpio-hpd-odl = &gpio_sb_4;
 		/* LTE */
 		gpio-en-sub-s5-rails = &gpio_sb_2;
+
+		gpio-wp = &gpio_ec_wp_odl;
 	};
 
 	gpio-interrupts {
@@ -47,6 +49,10 @@
 
 		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
 			gpios = <&gpioe 4 GPIO_OUTPUT>;
+		};
+
+		gpio_ec_wp_odl: ec_wp_odl {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 
 		entering_rw {
