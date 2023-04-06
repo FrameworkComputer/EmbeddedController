@@ -31,4 +31,11 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)
 	project(azalea)
+	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_AZALEA include)
+	zephyr_include_directories("include/azalea")
+	zephyr_library_sources(
+			"azalea/src/battery.c"
+			"azalea/src/charger.c"
+			"azalea/src/power_sequence.c"
+	)
 endif()

@@ -1,0 +1,134 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwm_pins {
+		compatible = "cros-ec,pwm-pin-config";
+
+		pwm_b: pwm_b {
+			#led-pin-cells = <1>;
+			pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
+		};
+
+		pwm_r: pwm_r {
+			#led-pin-cells = <1>;
+			pwms = <&pwm3 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
+		};
+
+		pwm_g: pwm_g {
+			#led-pin-cells = <1>;
+			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
+		};
+
+		pwm_power_w: pwm_power_w {
+			#led-pin-cells = <1>;
+			pwms = <&pwm5 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		color_off: color-off {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pwm_b 0>,
+				   <&pwm_r 0>,
+				   <&pwm_g 0>;
+		};
+
+		color_red: color-red {
+			led-color = "LED_RED";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pwm_b 0>,
+				   <&pwm_r 8>,
+				   <&pwm_g 0>;
+		};
+
+		color_green: color-green {
+			led-color = "LED_GREEN";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pwm_b 0>,
+				   <&pwm_r 0>,
+				   <&pwm_g 8>;
+		};
+
+		color_blue: color-blue {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pwm_b 8>,
+				   <&pwm_r 0>,
+				   <&pwm_g 0>;
+		};
+
+		color_yellow: color-yellow {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pwm_b 0>,
+				   <&pwm_r 4>,
+				   <&pwm_g 5>;
+		};
+
+		color_white: color-white {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pwm_b 5>,
+				   <&pwm_r 4>,
+				   <&pwm_g 10>;
+		};
+
+		color_amber: color-amber {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pwm_b 0>,
+				   <&pwm_r 9>,
+				   <&pwm_g 1>;
+		};
+
+		color_power_off: color-power-off {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pins = <&pwm_power_w 0>;
+		};
+
+		color_power_white: color-power-white {
+			led-color = "LED_WHITE";
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pins = <&pwm_power_w 55>;
+		};
+	};
+};
+
+/* Battery charging Blue LED */
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
+};
+
+/* Battery charging Red LED */
+&pwm3 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
+};
+
+/* Battery charging Green LED */
+&pwm4 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm4_gpb6>;
+	pinctrl-names = "default";
+};
+
+/* Finger Printer White LED */
+&pwm5 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};
