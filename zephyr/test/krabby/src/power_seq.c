@@ -32,6 +32,9 @@ FAKE_VALUE_FUNC(int, system_jumped_late);
 
 #define S5_INACTIVE_SEC 11
 
+/* mt8186 is_held flag */
+extern bool is_held;
+
 static void set_signal_state(enum power_state state)
 {
 	const struct gpio_dt_spec *ap_ec_sysrst_odl =
@@ -59,6 +62,8 @@ static void set_signal_state(enum power_state state)
 		zassert_unreachable("state %d not supported", state);
 	}
 
+	/* reset is_held flag */
+	is_held = false;
 	task_wake(TASK_ID_CHIPSET);
 	k_sleep(K_SECONDS(1));
 }
@@ -69,8 +74,8 @@ static void power_seq_before(void *f)
 	set_test_runner_tid();
 
 	/* Start from G3 */
-	set_signal_state(POWER_G3);
 	power_set_state(POWER_G3);
+	set_signal_state(POWER_G3);
 	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
 
 	RESET_FAKE(chipset_pre_init_hook);

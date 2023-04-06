@@ -44,7 +44,7 @@
 		int_ap_in_rst: ap_in_rst {
 			irq-pin = <&ap_sysrst_odl_r>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_signal_interrupt";
+			handler = "chipset_warm_reset_interrupt";
 		};
 		int_ap_wdtrst: ap_wdtrst {
 			irq-pin = <&ap_ec_wdtrst_l>;

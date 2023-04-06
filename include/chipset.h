@@ -221,7 +221,7 @@ void chipset_ap_rst_interrupt(enum gpio_signal signal);
 /**
  * GPIO interrupt handler of warm reset signal from servo or H1.
  *
- * It is used in Qualcomm chipset power sequence.
+ * It is used in Qualcomm/MediaTek chipset power sequence.
  */
 void chipset_warm_reset_interrupt(enum gpio_signal signal);
 
