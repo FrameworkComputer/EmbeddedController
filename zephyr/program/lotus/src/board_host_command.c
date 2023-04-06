@@ -133,7 +133,28 @@ static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
 
-/* EC console command for Project */
+static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_custom_version *r = args->response;
+	char temp_version[32];
+	int idx;
+
+	strzcpy(temp_version, system_get_version(EC_IMAGE_RO),
+		sizeof(temp_version));
+
+	for (idx = 0; idx < sizeof(r->simple_version); idx++) {
+		r->simple_version[idx] = temp_version[idx + 18];
+	}
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_SIMPLE_VERSION, host_command_get_simple_version, EC_VER_MASK(0));
+
+/*******************************************************************************/
+/*                       EC console command for Project                        */
+/*******************************************************************************/
 static int cmd_bbram(int argc, const char **argv)
 {
 	uint8_t bbram;
