@@ -467,7 +467,6 @@ charge_manager_fill_power_info(int port,
 			board_fill_source_power_info(port, r);
 		}
 	} else {
-		int use_ramp_current;
 		uint32_t max_mv, max_ma, pdo, unused;
 
 		switch (sup) {
@@ -540,13 +539,7 @@ charge_manager_fill_power_info(int port,
 #endif
 
 #if defined(HAS_TASK_CHG_RAMP) || defined(CONFIG_CHARGE_RAMP_HW)
-		/* Read ramped current if active charging port */
-		use_ramp_current = (charge_port == port) &&
-				   chg_ramp_allowed(port, sup);
-#else
-		use_ramp_current = 0;
-#endif
-		if (use_ramp_current) {
+		if ((charge_port == port) && chg_ramp_allowed(port, sup)) {
 			/* Current limit is output of ramp module */
 			r->meas.current_lim = chg_ramp_get_current_limit();
 
@@ -563,10 +556,12 @@ charge_manager_fill_power_info(int port,
 				chg_ramp_is_stable() ?
 					r->meas.current_lim :
 					chg_ramp_max(port, sup, max_ma);
-
 		} else {
 			r->meas.current_max = r->meas.current_lim = max_ma;
 		}
+#else
+		r->meas.current_max = r->meas.current_lim = max_ma;
+#endif
 		r->max_power = r->meas.current_max * r->meas.voltage_max;
 
 		r->meas.voltage_now = get_vbus_voltage(port, r->role);
