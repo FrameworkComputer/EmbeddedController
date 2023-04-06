@@ -285,7 +285,7 @@ static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *a
 	}
 
 	if (p->modes & CHG_LIMIT_SET_LIMIT) {
-		if( p->max_percentage < 20 )
+		if (p->max_percentage < 20)
 			return EC_RES_ERROR;
 
 		charging_maximum_level = p->max_percentage;

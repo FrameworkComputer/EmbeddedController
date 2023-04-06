@@ -46,10 +46,10 @@ static void charger_chips_init(void)
 
 	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_ACOK_REFERENCE, &data) != EC_SUCCESS) {
-			CPRINTS("Retry Charger init");
-			hook_call_deferred(&charger_chips_init_retry_data, 100*MSEC);
-			return;
-		}
+		CPRINTS("Retry Charger init");
+		hook_call_deferred(&charger_chips_init_retry_data, 100*MSEC);
+		return;
+	}
 
 	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
 		if (chg_chips[chip].drv->init)
@@ -101,8 +101,7 @@ void charger_update(void)
 	int val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
-		pre_dc_state != battery_is_present())
-	{
+		pre_dc_state != battery_is_present()) {
 		CPRINTS("update charger!!");
 
 		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -139,12 +138,14 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
 	}
-	/* ac prochot should bigger than input current
-	 * And needs to be at least 128mA bigger than the adapter current*/
+	/*
+	 * ac prochot should bigger than input current
+	 * And needs to be at least 128mA bigger than the adapter current
+	 */
 	prochot_ma = (DIV_ROUND_UP(charge_ma, 128) * 128);
 	charge_ma = charge_ma * 95 / 100;
 
-	if ((prochot_ma - charge_ma) < 128){
+	if ((prochot_ma - charge_ma) < 128) {
 		charge_ma = prochot_ma - 128;
 	}
 

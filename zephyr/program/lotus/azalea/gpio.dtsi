@@ -70,7 +70,7 @@
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_chassis_open_l: chassis_open_l {
-			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis feature */
+			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis open */
 		};
 		gpio_hw_acav_in: hw_acav_in {
 			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
