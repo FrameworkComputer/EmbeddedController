@@ -200,17 +200,15 @@ static int add_entropy(uint8_t *dst, const uint8_t *src, const uint8_t *add,
 	BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
 	struct sha256_ctx ctx;
 	uint8_t *hash;
-#ifdef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
-	uint8_t extra;
-	int i;
-#endif
 
 	SHA256_init(&ctx);
 	SHA256_update(&ctx, src, CONFIG_ROLLBACK_SECRET_SIZE);
 	SHA256_update(&ctx, add, add_len);
 #ifdef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
 	/* Add some locally produced entropy */
-	for (i = 0; i < CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE; i++) {
+	for (int i = 0; i < CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE; i++) {
+		uint8_t extra;
+
 		if (!board_get_entropy(&extra, 1))
 			goto failed;
 		SHA256_update(&ctx, &extra, 1);
