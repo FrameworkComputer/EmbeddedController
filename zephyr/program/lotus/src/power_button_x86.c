@@ -103,7 +103,8 @@ static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
 
 static const char *const state_names[] = {
 	"idle",	    "pressed",	   "t0",      "t1",	  "held",    "lid-open",
-	"released", "eat-release", "init-on", "recovery", "was-off",
+	"released", "eat-release", "init-on", "recovery", "was-off", "need-reset",
+	"need-shutdown",
 };
 
 /*
