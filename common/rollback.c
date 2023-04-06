@@ -192,11 +192,11 @@ static int get_rollback_erase_size_bytes(int region)
 }
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
+#ifdef CONFIG_SHA256
 static int add_entropy(uint8_t *dst, const uint8_t *src, const uint8_t *add,
 		       unsigned int add_len)
 {
 	int ret = 0;
-#ifdef CONFIG_SHA256
 	BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
 	struct sha256_ctx ctx;
 	uint8_t *hash;
@@ -223,11 +223,11 @@ static int add_entropy(uint8_t *dst, const uint8_t *src, const uint8_t *add,
 failed:
 #endif
 	always_memset(&ctx, 0, sizeof(ctx));
-#else
-#error "Adding entropy to secret in rollback region requires SHA256."
-#endif
 	return ret;
 }
+#else
+#error "Adding entropy to secret in rollback region requires SHA256."
+#endif /* CONFIG_SHA256 */
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 
 /**
