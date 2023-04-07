@@ -15,7 +15,6 @@
 #include "power_sequence.h"
 #include "task.h"
 #include "util.h"
-#include "gpu.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
@@ -103,7 +102,6 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 
 static void chipset_force_g3(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
@@ -176,19 +174,20 @@ enum power_state power_handle_state(enum power_state state)
 						/*
 						 * TODO: RTC reset function
 						 */
+						ap_boot_delay = 9;
+						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						/* SLP_S5 asserted, power down to G3S5 state */
 						return POWER_S5G3;
 					}
 				}
 			}
-			/* Power up to next state */
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
+			s5_exit_tries = 0;
 			return POWER_S5S3;
 		}
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 1) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
+			s5_exit_tries = 0;
 			/* Power up to next state */
 			return POWER_S5S3;
 		}
@@ -207,7 +206,6 @@ enum power_state power_handle_state(enum power_state state)
 			k_msleep(10);
 			return POWER_S3S0;
 		} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
 			k_msleep(55);
 			/* Power down to next state */
 			return POWER_S3S5;
@@ -224,11 +222,6 @@ enum power_state power_handle_state(enum power_state state)
 		 * power up from S5.
 		 */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
-		if (gpu_present()) {
-			CPRINTS("Enabling GPU power");
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
-		}
-
 		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 1);
@@ -273,7 +266,6 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		power_s5_up_control(0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		return POWER_S5;
 
@@ -309,17 +301,17 @@ static void peripheral_power_startup(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wl_rst_l), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_resume(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_kbl_pwr_en), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 
@@ -328,17 +320,17 @@ static void peripheral_power_shutdown(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wl_rst_l), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_suspend(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_kbl_pwr_en), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
 
@@ -347,21 +339,6 @@ void chipset_throttle_cpu(int throttle)
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
 }
-
-static void usb30_hub_reset(void)
-{
-	/**
-	 * This hook is called when the system warm boots or cold boots,
-	 * adding the delay time to filter the cold boot condition.
-	 */
-	usleep(200 * MSEC);
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
-		usleep(10 * MSEC);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESET, usb30_hub_reset, HOOK_PRIO_DEFAULT);
 
 static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 {

@@ -1,0 +1,15 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: atl_framework55w {
+			compatible = "atl,framework55w", "battery-smart";
+		};
+		atl_framework61w {
+			compatible = "atl,framework61w", "battery-smart";
+		};
+	};
+};

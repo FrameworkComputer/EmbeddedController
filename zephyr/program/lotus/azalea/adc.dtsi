@@ -1,0 +1,48 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_main_boardid: main-boardid {
+			enum-name = "ADC_MAIN_BOARD_ID";
+			io-channels = <&adc0 0>;
+		};
+		adc_i_sys: i-sys {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 4>;
+		};
+		adc_i_adp: i-adp {
+			enum-name = "ADC_ADAPTER_CURRENT";
+			io-channels = <&adc0 5>;
+		};
+		adc_tp_board_id: tp_board_id {
+			enum-name = "ADC_TOUCHPAD_ID";
+			io-channels = <&adc0 7>;
+		};
+		adc_audio_board_id: audio_board_id {
+			enum-name = "ADC_AUDIO_ID";
+			io-channels = <&adc0 8>;
+		};
+		adc_vcin1_batt_temp: vcin1_batt_temp {
+			enum-name = "ADC_VCIN1_BATT_TEMP";
+			io-channels = <&adc0 9>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan4_gp41
+		     &adc0_chan5_gp37
+		     &adc0_chan7_gpe1
+		     &adc0_chan8_gpf1
+		     &adc0_chan9_gpf0>;
+	pinctrl-names = "default";
+};
