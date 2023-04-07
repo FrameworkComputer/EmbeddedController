@@ -1060,6 +1060,9 @@ const struct accelgyro_drv bmi3xx_drv = {
 #ifdef ACCELGYRO_BMI3XX_INT_ENABLE
 	.irq_handler = irq_handler,
 #endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	.list_activities = bmi_list_activities,
+#endif
 #ifdef CONFIG_BODY_DETECTION
 	.get_rms_noise = get_rms_noise,
 #endif
