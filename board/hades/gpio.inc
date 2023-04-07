@@ -9,7 +9,7 @@
 
 /* INTERRUPT GPIOs: */
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
-GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
+GPIO_INT(EC_PROCHOT_IN_L,                PIN(A, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
 GPIO_INT(EC_WP_ODL,                      PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(GSC_EC_PWR_BTN_ODL,             PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW, power_button_interrupt)
 GPIO_INT(LID_OPEN,                       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
@@ -64,7 +64,6 @@ GPIO(PCH_PWROK,                      PIN(7, 2), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(EC_USB_PCH_C0_OC_ODL,           PIN(9, 4), GPIO_ODR_HIGH)
 GPIO(EC_USB_PCH_C2_OC_ODL,           PIN(9, 7), GPIO_ODR_HIGH)
-GPIO(USB_C0_FRS_EN,                  PIN(A, 0), GPIO_OUT_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 GPIO(EN_USB_A_LOW_POWER,             PIN(9, 3), GPIO_OUT_LOW)
 GPIO(PG_PP3300_S5_EC_SEQ_OD,         PIN(B, 5), GPIO_OUT_LOW)
@@ -108,6 +107,7 @@ ALTERNATE(PIN_MASK(B, 0xC0), 0, MODULE_PWM, 0)               /* GPIOB7/PWM5, GPI
 /* ADC alternate functions */
 ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/ADC6 */
 ALTERNATE(PIN_MASK(4, 0x36), 0, MODULE_ADC, 0)               /* GPIO42/ADC3/RI_L, GPIO45/ADC0, GPIO44/ADC1, GPIO41/ADC4 */
+/* TODO: GPIOF0/ADC9 for USB_C1_VBUSM */
 
 /* KB alternate functions */
 ALTERNATE(PIN_MASK(0, 0xf0), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO10&P80_CLK/GPIO07, KSO11&P80_DAT/GPIO06, KSO12/GPIO05, KSO13/GPIO04 */
