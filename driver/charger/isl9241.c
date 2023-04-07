@@ -28,19 +28,6 @@
 #error "ISL9241 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
 #endif
 
-/* Sense resistor default values in milli Ohm */
-#define ISL9241_DEFAULT_RS1 20 /* Input current sense resistor */
-#define ISL9241_DEFAULT_RS2 10 /* Battery charge current sense resistor */
-
-#define BOARD_RS1 CONFIG_CHARGER_SENSE_RESISTOR_AC
-#define BOARD_RS2 CONFIG_CHARGER_SENSE_RESISTOR
-
-#define BC_REG_TO_CURRENT(REG) (((REG)*ISL9241_DEFAULT_RS2) / BOARD_RS2)
-#define BC_CURRENT_TO_REG(CUR) (((CUR)*BOARD_RS2) / ISL9241_DEFAULT_RS2)
-
-#define AC_REG_TO_CURRENT(REG) (((REG)*ISL9241_DEFAULT_RS1) / BOARD_RS1)
-#define AC_CURRENT_TO_REG(CUR) (((CUR)*BOARD_RS1) / ISL9241_DEFAULT_RS1)
-
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHARGER, "ISL9241 " format, ##args)
 
@@ -491,10 +478,10 @@ int isl9241_set_ac_prochot(int chgnum, int ma)
 	 * This routine should ensure these bits are not set
 	 * before writing the register.
 	 */
-	if (ma > AC_REG_TO_CURRENT(ISL9241_AC_PROCHOT_CURRENT_MAX))
-		reg = ISL9241_AC_PROCHOT_CURRENT_MAX;
-	else if (ma < AC_REG_TO_CURRENT(ISL9241_AC_PROCHOT_CURRENT_MIN))
-		reg = ISL9241_AC_PROCHOT_CURRENT_MIN;
+	if (ma > ISL9241_AC_PROCHOT_CURRENT_MAX)
+		reg = AC_CURRENT_TO_REG(ISL9241_AC_PROCHOT_CURRENT_MAX);
+	else if (ma < ISL9241_AC_PROCHOT_CURRENT_MIN)
+		reg = AC_CURRENT_TO_REG(ISL9241_AC_PROCHOT_CURRENT_MIN);
 	else
 		reg = AC_CURRENT_TO_REG(ma);
 

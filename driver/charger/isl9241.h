@@ -169,4 +169,17 @@
  */
 #define ISL9241_BYPASS_VSYS_TIMEOUT_MS 500
 
+/* Sense resistor default values in milli Ohm */
+#define ISL9241_DEFAULT_RS1 20 /* Input current sense resistor */
+#define ISL9241_DEFAULT_RS2 10 /* Battery charge current sense resistor */
+
+#define BOARD_RS1 CONFIG_CHARGER_SENSE_RESISTOR_AC
+#define BOARD_RS2 CONFIG_CHARGER_SENSE_RESISTOR
+
+#define BC_REG_TO_CURRENT(REG) (((REG)*ISL9241_DEFAULT_RS2) / BOARD_RS2)
+#define BC_CURRENT_TO_REG(CUR) (((CUR)*BOARD_RS2) / ISL9241_DEFAULT_RS2)
+
+#define AC_REG_TO_CURRENT(REG) (((REG)*ISL9241_DEFAULT_RS1) / BOARD_RS1)
+#define AC_CURRENT_TO_REG(CUR) (((CUR)*BOARD_RS1) / ISL9241_DEFAULT_RS1)
+
 #endif /* __CROS_EC_ISL9241_H */

@@ -191,7 +191,7 @@ ZTEST_F(isl9241_driver, test_ac_prochot)
 					 ISL9241_REG_AC_PROCHOT));
 	zassert_equal(isl9241_emul_peek(fixture->isl9241_emul,
 					ISL9241_REG_AC_PROCHOT),
-		      ISL9241_AC_PROCHOT_CURRENT_MAX);
+		      AC_CURRENT_TO_REG(ISL9241_AC_PROCHOT_CURRENT_MAX));
 
 	cur = (ISL9241_AC_PROCHOT_CURRENT_MIN - 100) * scale;
 	printf("cur %d ", cur);
@@ -200,7 +200,7 @@ ZTEST_F(isl9241_driver, test_ac_prochot)
 					 ISL9241_REG_AC_PROCHOT));
 	zassert_equal(isl9241_emul_peek(fixture->isl9241_emul,
 					ISL9241_REG_AC_PROCHOT),
-		      ISL9241_AC_PROCHOT_CURRENT_MIN);
+		      AC_CURRENT_TO_REG(ISL9241_AC_PROCHOT_CURRENT_MIN));
 }
 
 ZTEST_F(isl9241_driver, test_dc_prochot)
