@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Renesas (Intersil) ISL-9241 battery charger driver.
+ * Renesas (Intersil) ISL-9241 (and RAA489110) battery charger driver.
  */
 
 /* TODO(b/175881324) */
@@ -474,9 +474,9 @@ int isl9241_set_ac_prochot(int chgnum, int ma)
 	uint16_t reg;
 
 	/*
-	 * The register reserves bits [6:0] and bits [15:13].
-	 * This routine should ensure these bits are not set
-	 * before writing the register.
+	 * The register reserves bits [6:0] ([4:0] for rsa489110) and bits
+	 * [15:13]. This routine should ensure these bits are not set before
+	 * writing the register.
 	 */
 	if (ma > ISL9241_AC_PROCHOT_CURRENT_MAX)
 		reg = AC_CURRENT_TO_REG(ISL9241_AC_PROCHOT_CURRENT_MAX);
@@ -497,9 +497,9 @@ int isl9241_set_dc_prochot(int chgnum, int ma)
 	int rv;
 
 	/*
-	 * The register reserves bits [7:0] and bits [15:14].
-	 * This routine should ensure these bits are not set
-	 * before writing the register.
+	 * The register reserves bits [7:0] ([5:0] for RAA489110) and bits
+	 * [15:14]. This routine should ensure these bits are not set before
+	 * writing the register.
 	 */
 	if (ma > ISL9241_DC_PROCHOT_CURRENT_MAX)
 		ma = ISL9241_DC_PROCHOT_CURRENT_MAX;
@@ -725,6 +725,19 @@ static bool isl9241_is_in_chrg(int chgnum)
 	return trickle_charge_enabled || fast_charge_enabled;
 }
 
+static enum ec_error_list
+isl9241_update_force_buck_mode(int chgnum, enum mask_update_action action)
+{
+	if (IS_ENABLED(CONFIG_CHARGER_ISL9241))
+		return isl9241_update(chgnum, ISL9241_REG_CONTROL4,
+				      ISL9241_CONTROL4_FORCE_BUCK_MODE, action);
+	else
+		/* CONFIG_CHARGER_RAA489110 */
+		return isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+				      RAA489110_CONTROL0_EN_FORCE_BUCK_MODE,
+				      action);
+}
+
 /*
  * Transition from Bypass to BAT.
  */
@@ -736,8 +749,7 @@ static enum ec_error_list isl9241_bypass_to_bat(int chgnum)
 
 	mutex_lock(&control3_mutex_isl9241);
 	/* 1: Disable force forward buck/reverse boost. */
-	isl9241_update(chgnum, ISL9241_REG_CONTROL4,
-		       ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_CLR);
+	isl9241_update_force_buck_mode(chgnum, MASK_CLR);
 
 	/*
 	 * 2: Turn off BYPSG, turn on NGATE, disable charge pump 100%, disable
@@ -774,8 +786,7 @@ static enum ec_error_list isl9241_bypass_chrg_to_bat(int chgnum)
 
 	mutex_lock(&control3_mutex_isl9241);
 	/* 1: Disable force forward buck/reverse boost. */
-	isl9241_update(chgnum, ISL9241_REG_CONTROL4,
-		       ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_CLR);
+	isl9241_update_force_buck_mode(chgnum, MASK_CLR);
 	/* 2: Disable fast charge. */
 	isl9241_write(chgnum, ISL9241_REG_CHG_CURRENT_LIMIT, 0);
 	/* 3: Disable trickle charge. */
@@ -915,8 +926,7 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 	/* 17: Read diode emulation active bit. */
 	/* 18: Disable 10mA discharge on CSOP. */
 	/* 19*: Force forward buck/reverse boost mode. */
-	isl9241_update(chgnum, ISL9241_REG_CONTROL4,
-		       ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_SET);
+	isl9241_update_force_buck_mode(chgnum, MASK_SET);
 
 	if (!isl9241_is_ac_present(chgnum)) {
 		/*
@@ -972,8 +982,7 @@ static enum ec_error_list isl9241_bypass_to_nvdc(int chgnum)
 
 	/* 1*: Reduce system load below ACLIM. */
 	/* 3*: Disable force forward buck/reverse boost. */
-	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL4,
-			    ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_CLR);
+	rv = isl9241_update_force_buck_mode(chgnum, MASK_CLR);
 	if (rv)
 		return rv;
 
