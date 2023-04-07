@@ -6,3 +6,4 @@
 #include "common.dtsi"
 #include "../program/corsola/npcx_interrupts.dtsi"
 #include "../program/corsola/npcx_gpio.dtsi"
+#include "../program/corsola/usba.dtsi"

@@ -4,7 +4,9 @@
  */
 
 #include <board-overlays/native_posix.dts>
+#include <dt-bindings/usb_pd_tcpm.h>
 #include <npcx_emul.dts>
+#include <zephyr/dt-bindings/gpio/gpio.h>
 
 / {
 	usbc {
@@ -25,6 +27,11 @@
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1>;
 			};
+			usb_mux_chain_1_hdmi_db: usb-mux-chain-1-hdmi-db {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
+			};
 		};
 		port0-muxes {
 			virtual_mux_0: virtual-mux-0 {
@@ -35,6 +42,41 @@
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
+		};
+	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <6>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger_pmon_r {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 0>;
+			/*
+			 * ISL9238C PSYS output is 1.44 uA/W over 33K resistor.
+			 */
+			mul = <21043>;
+		};
+		adc_ec_id0 {
+			enum-name = "ADC_ID_0";
+			io-channels = <&adc0 1>;
+		};
+		adc_ec_id1 {
+			enum-name = "ADC_ID_1";
+			io-channels = <&adc0 2>;
+		};
+		adc_charger_amon_r {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 3>;
+			mul = <1000>;
+			div = <18>;
 		};
 	};
 
@@ -81,36 +123,17 @@
 		/* list of sensors in force mode */
 		accel-force-mode-sensors = <&lid_accel>;
 	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 		i2c_sensor: i2c-sensor {
-			i2c-port = <&i2c0_0>;
+			i2c-port = <&i2c_ctrl0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
 		i2c_eeprom: i2c-eeprom {
-			i2c-port = <&i2c3_0>;
-			enum-names = "I2C_PORT_EEPROM";
-		};
-	};
-	/* TODO(jbettis): Move the i2c ports and pinctrls to npcx_emul.dts,
-	 * and add all of them instead of just these.
-	 */
-	soc-if {
-		i2c0_0: io_i2c_ctrl0_port0 {
-			compatible = "nuvoton,npcx-i2c-port";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			port = <0x00>;
-			controller = <&i2c_ctrl0>;
-			status = "disabled";
-		};
-		i2c3_0: io_i2c_ctrl3_port0 {
-			compatible = "nuvoton,npcx-i2c-port";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			port = <0x30>;
-			controller = <&i2c_ctrl3>;
-			status = "disabled";
+			i2c-port = <&i2c_ctrl3>;
+			enum-names = "I2C_PORT_EEPROM", "I2C_PORT_BATTERY",
+					"I2C_PORT_CHARGER";
 		};
 	};
 	pinctrl: pinctrl {
@@ -138,43 +161,31 @@
 	};
 };
 
-&i2c0_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
-	pinctrl-names = "default";
-};
-
 &i2c_ctrl0 {
 	status = "okay";
+
+
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		status = "okay";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
 };
 
 &i2c_ctrl2 {
 	status = "okay";
 };
 
-i2c_pwr_cbi: &i2c3_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
-	pinctrl-names = "default";
-
-	charger: isl923x@9 {
-		compatible = "intersil,isl923x";
-		status = "okay";
-		reg = <0x9>;
-	};
-};
-
 &i2c_ctrl3 {
 	status = "okay";
-};
 
-&i2c_ctrl5 {
-	status = "okay";
-};
-
-&i2c_ctrl3 {
 	cbi_eeprom: eeprom@50 {
 		compatible = "atmel,at24";
 		reg = <0x50>;
@@ -184,3 +195,8 @@ i2c_pwr_cbi: &i2c3_0 {
 		timeout = <5>;
 	};
 };
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+
