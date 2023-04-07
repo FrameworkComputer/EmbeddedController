@@ -195,22 +195,16 @@ ZTEST(keyboard_scan, console_command_kbpress__invalid)
  */
 FAKE_VOID_FUNC(key_state_changed, int, int, uint8_t);
 
-ZTEST(keyboard_scan, console_command_kbpress__press_and_release)
+ZTEST(keyboard_scan, test_console_command_kbpress__press)
 {
-	/* Pres and release a key */
+	/* Press and release a key */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 1 2"));
 
-	/* Hold a key down */
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 3 4 1"));
-
-	/* Release the key */
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 3 4 0"));
-
 	/* Pause a bit to allow the key scan task to process. */
-	k_sleep(K_MSEC(200));
+	k_sleep(K_MSEC(500));
 
-	/* Expect four key events */
-	zassert_equal(4, key_state_changed_fake.call_count);
+	/* Expect two key events */
+	zassert_equal(2, key_state_changed_fake.call_count);
 
 	/* Press col=1,row=2 (state==1) */
 	zassert_equal(1, key_state_changed_fake.arg1_history[0]);
@@ -221,16 +215,33 @@ ZTEST(keyboard_scan, console_command_kbpress__press_and_release)
 	zassert_equal(1, key_state_changed_fake.arg1_history[1]);
 	zassert_equal(2, key_state_changed_fake.arg0_history[1]);
 	zassert_false(key_state_changed_fake.arg2_history[1]);
+}
+
+ZTEST(keyboard_scan, test_console_command_kbpress__down_and_up)
+{
+	/* Hold a key down */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 3 4 1"));
+
+	/* Release the key */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 3 4 0"));
+
+	/* Pause a bit to allow the key scan task to process. */
+	k_sleep(K_MSEC(500));
+
+	/* Expect two key events */
+	zassert_equal(2, key_state_changed_fake.call_count,
+		      "Actual call_count=%d",
+		      key_state_changed_fake.call_count);
 
 	/* Press col=3,row=4 (state==1) */
-	zassert_equal(3, key_state_changed_fake.arg1_history[2]);
-	zassert_equal(4, key_state_changed_fake.arg0_history[2]);
-	zassert_true(key_state_changed_fake.arg2_history[2]);
+	zassert_equal(3, key_state_changed_fake.arg1_history[0]);
+	zassert_equal(4, key_state_changed_fake.arg0_history[0]);
+	zassert_true(key_state_changed_fake.arg2_history[0]);
 
 	/* Release col=3,row=4 (state==0) */
-	zassert_equal(3, key_state_changed_fake.arg1_history[3]);
-	zassert_equal(4, key_state_changed_fake.arg0_history[3]);
-	zassert_false(key_state_changed_fake.arg2_history[3]);
+	zassert_equal(3, key_state_changed_fake.arg1_history[1]);
+	zassert_equal(4, key_state_changed_fake.arg0_history[1]);
+	zassert_false(key_state_changed_fake.arg2_history[1]);
 }
 
 ZTEST(keyboard_scan, host_command_simulate_key__locked)
@@ -379,6 +390,11 @@ static void reset_keyboard(void *data)
 
 	/* Reset KB emulator */
 	clear_emulated_keys();
+
+	/* Clear debouncing state to prevent latent key presses from appearing
+	 * in a later test.
+	 */
+	test_keyboard_scan_debounce_reset();
 
 	/* Reset all mocks. */
 	RESET_FAKE(key_state_changed);

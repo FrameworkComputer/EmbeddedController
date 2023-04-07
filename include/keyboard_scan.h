@@ -185,6 +185,11 @@ __test_only void keyboard_scan_set_print_state_changes(int val);
  * @return int non-zero if enabled, zero otherwise.
  */
 int keyboard_scan_is_enabled(void);
+
+/**
+ * @brief Reset key debouncing logic
+ */
+void test_keyboard_scan_debounce_reset(void);
 #endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_KEYBOARD_SCAN_H */

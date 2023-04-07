@@ -1199,4 +1199,15 @@ __test_only void keyboard_scan_set_print_state_changes(int val)
 {
 	print_state_changes = val;
 }
+
+__test_only void test_keyboard_scan_debounce_reset(void)
+{
+	memset(&debouncing, 0, sizeof(debouncing));
+	memset(&debounced_state, 0, sizeof(debounced_state));
+	memset(&scan_time, 0, sizeof(scan_time));
+	memset(&scan_edge_index, 0, sizeof(scan_edge_index));
+
+	scan_time_index = 0;
+	post_scan_clock_us = 0;
+}
 #endif /* TEST_BUILD */
