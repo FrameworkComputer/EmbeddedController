@@ -448,7 +448,7 @@ ZTEST(power_common, test_power_board_system_is_idle)
 /**
  * Test power console command
  */
-ZTEST(power_common, power_console_cmd)
+ZTEST(power_common, test_power_console_cmd)
 {
 	const char *buffer;
 	size_t buffer_size;
@@ -484,7 +484,7 @@ ZTEST(power_common, power_console_cmd)
 /**
  * Test powerinfo console command
  */
-ZTEST_USER(power_common, powerinfo_console_cmd)
+ZTEST_USER(power_common, test_powerinfo_console_cmd)
 {
 	char expected_buffer[32];
 

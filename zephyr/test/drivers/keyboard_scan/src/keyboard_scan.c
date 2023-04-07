@@ -102,7 +102,7 @@ ZTEST(keyboard_scan, test_press_enter)
 	k_sleep(K_MSEC(100));
 }
 
-ZTEST(keyboard_scan, console_command_ksstate__noargs)
+ZTEST(keyboard_scan, test_console_command_ksstate__noargs)
 {
 	const char *outbuffer;
 	size_t buffer_size;
@@ -124,7 +124,7 @@ ZTEST(keyboard_scan, console_command_ksstate__noargs)
 	zassert_true(keyboard_scan_is_enabled());
 }
 
-ZTEST(keyboard_scan, console_command_ksstate__force)
+ZTEST(keyboard_scan, test_console_command_ksstate__force)
 {
 	/* This command forces the keyboard to start scanning (if not already)
 	 * and enable state change printing. To test: turn scanning off, run
@@ -140,7 +140,7 @@ ZTEST(keyboard_scan, console_command_ksstate__force)
 	zassert_true(keyboard_scan_get_print_state_changes());
 }
 
-ZTEST(keyboard_scan, console_command_ksstate__on_off)
+ZTEST(keyboard_scan, test_console_command_ksstate__on_off)
 {
 	/* This command turns state change printing on/off */
 
@@ -153,13 +153,13 @@ ZTEST(keyboard_scan, console_command_ksstate__on_off)
 	zassert_false(keyboard_scan_get_print_state_changes());
 }
 
-ZTEST(keyboard_scan, console_command_ksstate__invalid)
+ZTEST(keyboard_scan, test_console_command_ksstate__invalid)
 {
 	/* Pass a string that cannot be parsed as a bool */
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "ksstate xyz"));
 }
 
-ZTEST(keyboard_scan, console_command_kbpress__noargs)
+ZTEST(keyboard_scan, test_console_command_kbpress__noargs)
 {
 	const char *outbuffer;
 	size_t buffer_size;
@@ -176,7 +176,7 @@ ZTEST(keyboard_scan, console_command_kbpress__noargs)
 		   outbuffer);
 }
 
-ZTEST(keyboard_scan, console_command_kbpress__invalid)
+ZTEST(keyboard_scan, test_console_command_kbpress__invalid)
 {
 	/* Row or column number out of range, or wrong type */
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "kbpress -1 0"));
@@ -244,7 +244,7 @@ ZTEST(keyboard_scan, test_console_command_kbpress__down_and_up)
 	zassert_false(key_state_changed_fake.arg2_history[1]);
 }
 
-ZTEST(keyboard_scan, host_command_simulate_key__locked)
+ZTEST(keyboard_scan, test_host_command_simulate_key__locked)
 {
 	uint16_t ret;
 
@@ -256,7 +256,7 @@ ZTEST(keyboard_scan, host_command_simulate_key__locked)
 	zassert_equal(EC_RES_ACCESS_DENIED, ret, "Command returned %u", ret);
 }
 
-ZTEST(keyboard_scan, host_command_simulate_key__bad_params)
+ZTEST(keyboard_scan, test_host_command_simulate_key__bad_params)
 {
 	uint16_t ret;
 
@@ -295,7 +295,7 @@ static uint16_t send_keypress_host_command(uint8_t col, uint8_t row,
 	return host_command_process(&args);
 }
 
-ZTEST(keyboard_scan, host_command_simulate__key_press)
+ZTEST(keyboard_scan, test_host_command_simulate__key_press)
 {
 	uint16_t ret;
 
@@ -327,7 +327,7 @@ ZTEST(keyboard_scan, host_command_simulate__key_press)
 FAKE_VOID_FUNC(system_enter_hibernate, uint32_t, uint32_t);
 FAKE_VOID_FUNC(chipset_reset, int);
 
-ZTEST(keyboard_scan, special_key_combos)
+ZTEST(keyboard_scan, test_special_key_combos)
 {
 	system_is_locked_fake.return_val = 0;
 	zassert_false(system_is_locked(), "Expecting unlocked system.");

@@ -167,7 +167,7 @@ static void dps_selection_after(void *data)
 	reset();
 }
 
-ZTEST_USER_F(dps_selection, dps_pdo_switch)
+ZTEST_USER_F(dps_selection, test_dps_pdo_switch)
 {
 	struct common_fixture *common = &fixture->common;
 	struct tcpci_src_emul_data *src_ext = &common->src_ext;

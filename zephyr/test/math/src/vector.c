@@ -8,7 +8,7 @@
 
 #include <zephyr/ztest.h>
 
-ZTEST_USER(math, cosine_of_angle_diff__zero_magnitude_vector)
+ZTEST_USER(math, test_cosine_of_angle_diff__zero_magnitude_vector)
 {
 	intv3_t v0 = { 0, 0, 0 };
 	intv3_t v1 = { 1, 1, 1 };
@@ -17,7 +17,7 @@ ZTEST_USER(math, cosine_of_angle_diff__zero_magnitude_vector)
 	zassert_equal(cosine_of_angle_diff(v1, v0), 0);
 }
 
-ZTEST_USER(math, rotate_inv__null_matrix)
+ZTEST_USER(math, test_rotate_inv__null_matrix)
 {
 	intv3_t v = { 1, 2, 3 };
 	intv3_t r = { 4, 5, 6 };

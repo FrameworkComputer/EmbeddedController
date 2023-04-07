@@ -25,7 +25,7 @@ int board_aoz1380_set_vbus_source_current_limit(int port,
 
 ZTEST_SUITE(ppc_config, NULL, NULL, ppc_config_before, NULL, NULL);
 
-ZTEST(ppc_config, board_aoz1380_set_vbus_source_current_limit)
+ZTEST(ppc_config, test_board_aoz1380_set_vbus_source_current_limit)
 {
 	int rv;
 	const struct gpio_dt_spec *gpio =
@@ -48,7 +48,7 @@ ZTEST(ppc_config, board_aoz1380_set_vbus_source_current_limit)
 	zassert_equal(rv, EC_ERROR_INVAL);
 }
 
-ZTEST(ppc_config, ppc_interrupt)
+ZTEST(ppc_config, test_ppc_interrupt)
 {
 	ppc_interrupt(GPIO_USB_C0_PPC_INT_ODL);
 	zassert_equal(aoz1380_interrupt_fake.call_count, 1);

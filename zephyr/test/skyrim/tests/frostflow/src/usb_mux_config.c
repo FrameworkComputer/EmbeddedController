@@ -19,7 +19,7 @@ int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state);
 
 ZTEST_SUITE(usb_mux_config, NULL, NULL, NULL, NULL, NULL);
 
-ZTEST(usb_mux_config, board_c0_amd_fp6_mux_set)
+ZTEST(usb_mux_config, test_board_c0_amd_fp6_mux_set)
 {
 	const struct gpio_dt_spec *c0 =
 		GPIO_DT_FROM_NODELABEL(ioex_usb_c0_sbu_flip);
@@ -48,7 +48,7 @@ ZTEST(usb_mux_config, board_c0_amd_fp6_mux_set)
 	zassert_equal(gpio_emul_output_get(c1->port, c1->pin), 1);
 }
 
-ZTEST(usb_mux_config, board_c1_ps8818_mux_set)
+ZTEST(usb_mux_config, test_board_c1_ps8818_mux_set)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_in_hpd);

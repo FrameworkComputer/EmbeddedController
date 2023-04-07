@@ -124,7 +124,7 @@ static void usbc_console_pd_after(void *data)
 	common_after(&outer->common);
 }
 
-ZTEST_USER_F(usbc_console_pd, pd_command)
+ZTEST_USER_F(usbc_console_pd, test_pd_command)
 {
 	struct common_fixture *common = &fixture->common;
 	struct tcpci_src_emul_data *src_ext = &common->src_ext;

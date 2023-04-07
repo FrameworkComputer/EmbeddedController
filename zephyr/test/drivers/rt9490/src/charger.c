@@ -14,7 +14,7 @@
 static const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(rt9490));
 static const int chgnum = CHARGER_SOLO;
 
-ZTEST(rt9490_chg, current)
+ZTEST(rt9490_chg, test_current)
 {
 	struct {
 		int reg;
@@ -51,7 +51,7 @@ ZTEST(rt9490_chg, current)
 	zassert_not_equal(rt9490_drv.set_current(chgnum, 5001), 0, NULL);
 }
 
-ZTEST(rt9490_chg, voltage)
+ZTEST(rt9490_chg, test_voltage)
 {
 	struct {
 		int reg;
@@ -89,7 +89,7 @@ ZTEST(rt9490_chg, voltage)
 	zassert_not_equal(rt9490_drv.set_voltage(chgnum, 18801), 0, NULL);
 }
 
-ZTEST(rt9490_chg, otg)
+ZTEST(rt9490_chg, test_otg)
 {
 	struct {
 		int reg_v, reg_c, expected_v, expected_c;
@@ -134,7 +134,7 @@ ZTEST(rt9490_chg, otg)
 	zassert_equal(rt9490_drv.is_sourcing_otg_power(chgnum, 0), false, NULL);
 }
 
-ZTEST(rt9490_chg, aicr)
+ZTEST(rt9490_chg, test_aicr)
 {
 	struct {
 		int reg;
@@ -206,7 +206,7 @@ ZTEST(rt9490_chg, test_option)
 	zassert_true(opt == 0, NULL);
 }
 
-ZTEST(rt9490_chg, misc_info)
+ZTEST(rt9490_chg, test_misc_info)
 {
 	int status;
 	int device_id;

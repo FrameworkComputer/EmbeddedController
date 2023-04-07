@@ -15,7 +15,7 @@
 
 #include <emul/emul_kb_raw.h>
 
-ZTEST(mkbp_info, host_command_mkbp_info__keyboard_info)
+ZTEST(mkbp_info, test_host_command_mkbp_info__keyboard_info)
 {
 	/* Get the number of keyboard rows and columns */
 
@@ -31,7 +31,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__keyboard_info)
 	zassert_equal(KEYBOARD_COLS_MAX, response.cols, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__supported_buttons)
+ZTEST(mkbp_info, test_host_command_mkbp_info__supported_buttons)
 {
 	/* Get the set of supported buttons */
 
@@ -47,7 +47,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__supported_buttons)
 	zassert_equal(get_supported_buttons(), response.buttons, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__supported_switches)
+ZTEST(mkbp_info, test_host_command_mkbp_info__supported_switches)
 {
 	/* Get the set of supported switches */
 
@@ -63,7 +63,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__supported_switches)
 	zassert_equal(get_supported_switches(), response.switches, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__supported_invalid)
+ZTEST(mkbp_info, test_host_command_mkbp_info__supported_invalid)
 {
 	/* Request support info on a non-existent type of input device. */
 
@@ -79,7 +79,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__supported_invalid)
 		      "Host command didn't fail properly: %d", ret);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_keyboard_matrix)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_keyboard_matrix)
 {
 	/* Hold down a key so we can validate the returned keyboard matrix state
 	 */
@@ -107,7 +107,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_keyboard_matrix)
 		     "Expected key is not pressed");
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_host_events)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_host_events)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -121,7 +121,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_host_events)
 	zassert_equal((uint32_t)host_get_events(), response.host_event, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_host_events64)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_host_events64)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -135,7 +135,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_host_events64)
 	zassert_equal(host_get_events(), response.host_event64, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_buttons)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_buttons)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -149,7 +149,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_buttons)
 	zassert_equal(mkbp_get_button_state(), response.buttons, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_switches)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_switches)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -163,7 +163,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_switches)
 	zassert_equal(mkbp_get_switch_state(), response.switches, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_invalid)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_invalid)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -177,7 +177,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_invalid)
 		      ret);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__invalid)
+ZTEST(mkbp_info, test_host_command_mkbp_info__invalid)
 {
 	int ret;
 	union ec_response_get_next_data response;

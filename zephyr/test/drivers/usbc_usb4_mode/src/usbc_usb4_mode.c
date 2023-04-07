@@ -163,7 +163,7 @@ static void usbc_usb4_mode_after(void *data)
 	tcpci_partner_common_clear_logged_msgs(&fix->partner);
 }
 
-ZTEST_F(usbc_usb4_mode, verify_discovery)
+ZTEST_F(usbc_usb4_mode, test_verify_discovery)
 {
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
@@ -188,7 +188,7 @@ ZTEST_F(usbc_usb4_mode, verify_discovery)
 }
 
 /* Without an e-marked cable, USB4 mode cannot be entered */
-ZTEST_F(usbc_usb4_mode, verify_usb4_entry_fail)
+ZTEST_F(usbc_usb4_mode, test_verify_usb4_entry_fail)
 {
 	struct ec_response_typec_status status;
 
@@ -217,7 +217,7 @@ ZTEST_F(usbc_usb4_mode, verify_usb4_entry_fail)
 }
 
 /* With passive e-marked cable, USB4 mode can be entered on SOP only */
-ZTEST_F(usbc_usb4_mode, verify_usb4_passive_entry_exit)
+ZTEST_F(usbc_usb4_mode, test_verify_usb4_passive_entry_exit)
 {
 	struct ec_response_typec_status status;
 

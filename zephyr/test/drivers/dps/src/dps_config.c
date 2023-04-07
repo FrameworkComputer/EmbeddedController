@@ -69,13 +69,13 @@ ZTEST_F(dps_config, test_config)
 	*config = fixture->saved_config;
 }
 
-ZTEST(dps_config, console_cmd__print_info)
+ZTEST(dps_config, test_console_cmd__print_info)
 {
 	/* Print current status to console */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "dps"), NULL);
 }
 
-ZTEST(dps_config, console_cmd__enable)
+ZTEST(dps_config, test_console_cmd__enable)
 {
 	/* Disable DPS first, then try enabling */
 	dps_enable(false);
@@ -86,7 +86,7 @@ ZTEST(dps_config, console_cmd__enable)
 	zassert_true(dps_is_enabled(), NULL);
 }
 
-ZTEST(dps_config, console_cmd__disable)
+ZTEST(dps_config, test_console_cmd__disable)
 {
 	/* Should already by enabled due to before() function */
 	zassert_true(dps_is_enabled(), NULL);
@@ -96,13 +96,13 @@ ZTEST(dps_config, console_cmd__disable)
 	zassert_false(dps_is_enabled(), NULL);
 }
 
-ZTEST(dps_config, console_cmd__fakepwr_print)
+ZTEST(dps_config, test_console_cmd__fakepwr_print)
 {
 	/* Print current fake power status to console */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "dps fakepwr"), NULL);
 }
 
-ZTEST(dps_config, console_cmd__fakepwr_enable_disable)
+ZTEST(dps_config, test_console_cmd__fakepwr_enable_disable)
 {
 	zassert_false(dps_is_fake_enabled(),
 		      "fakepwr shouldn't be enabled by default");
@@ -119,7 +119,7 @@ ZTEST(dps_config, console_cmd__fakepwr_enable_disable)
 	zassert_false(dps_is_fake_enabled(), NULL);
 }
 
-ZTEST(dps_config, console_cmd__fakepwr_invalid)
+ZTEST(dps_config, test_console_cmd__fakepwr_invalid)
 {
 	/* Various invalid parameters */
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "dps fakepwr 100"), NULL);
@@ -129,7 +129,7 @@ ZTEST(dps_config, console_cmd__fakepwr_invalid)
 		   NULL);
 }
 
-ZTEST(dps_config, console_cmd__debuglevel)
+ZTEST(dps_config, test_console_cmd__debuglevel)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "dps debug 999"), NULL);
 
@@ -137,7 +137,7 @@ ZTEST(dps_config, console_cmd__debuglevel)
 		      *dps_get_debug_level());
 }
 
-ZTEST(dps_config, console_cmd__setkmore)
+ZTEST(dps_config, test_console_cmd__setkmore)
 {
 	struct dps_config_t *config = dps_get_config();
 	char cmd[32];
@@ -165,7 +165,7 @@ ZTEST(dps_config, console_cmd__setkmore)
 		      config->k_less_pwr + 1);
 }
 
-ZTEST(dps_config, console_cmd__setkless)
+ZTEST(dps_config, test_console_cmd__setkless)
 {
 	struct dps_config_t *config = dps_get_config();
 	char cmd[32];
@@ -193,7 +193,7 @@ ZTEST(dps_config, console_cmd__setkless)
 		      config->k_more_pwr - 1);
 }
 
-ZTEST(dps_config, console_cmd__setksample)
+ZTEST(dps_config, test_console_cmd__setksample)
 {
 	struct dps_config_t *config = dps_get_config();
 
@@ -209,7 +209,7 @@ ZTEST(dps_config, console_cmd__setksample)
 		      config->k_sample);
 }
 
-ZTEST(dps_config, console_cmd__setkwindow)
+ZTEST(dps_config, test_console_cmd__setkwindow)
 {
 	struct dps_config_t *config = dps_get_config();
 
@@ -222,7 +222,7 @@ ZTEST(dps_config, console_cmd__setkwindow)
 	zassert_equal(4, config->k_window, "k_window is %d", config->k_window);
 }
 
-ZTEST(dps_config, console_cmd__settcheck)
+ZTEST(dps_config, test_console_cmd__settcheck)
 {
 	struct dps_config_t *config = dps_get_config();
 
@@ -237,7 +237,7 @@ ZTEST(dps_config, console_cmd__settcheck)
 		      config->t_check);
 }
 
-ZTEST(dps_config, console_cmd__settstable)
+ZTEST(dps_config, test_console_cmd__settstable)
 {
 	struct dps_config_t *config = dps_get_config();
 
@@ -252,7 +252,7 @@ ZTEST(dps_config, console_cmd__settstable)
 		      config->t_stable);
 }
 
-ZTEST(dps_config, console_cmd__invalid)
+ZTEST(dps_config, test_console_cmd__invalid)
 {
 	/* Non-existent subcommand should fail */
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "dps foobar xyz"), NULL);

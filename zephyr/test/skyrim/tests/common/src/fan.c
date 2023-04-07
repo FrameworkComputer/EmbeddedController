@@ -51,7 +51,7 @@ static void fan_before(void *fixture)
 
 ZTEST_SUITE(fan, NULL, NULL, fan_before, NULL, NULL);
 
-ZTEST(fan, board_supports_pcore_ocp)
+ZTEST(fan, test_board_supports_pcore_ocp)
 {
 	/* Only supported for board version > 3. */
 	board_version = 2;
@@ -62,7 +62,7 @@ ZTEST(fan, board_supports_pcore_ocp)
 	zassert_true(board_supports_pcore_ocp());
 }
 
-ZTEST(fan, fan_init)
+ZTEST(fan, test_fan_init)
 {
 	/* Only disable fans on board version >= 3. */
 	fan_present = false;

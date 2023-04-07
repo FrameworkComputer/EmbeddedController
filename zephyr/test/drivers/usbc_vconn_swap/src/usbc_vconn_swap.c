@@ -153,7 +153,7 @@ static void usbc_vconn_swap_not_supported_after(void *data)
 	common_after(&outer->common);
 }
 
-ZTEST_F(usbc_vconn_swap, vconn_swap_before_discovery)
+ZTEST_F(usbc_vconn_swap, test_vconn_swap_before_discovery)
 {
 	struct ec_response_typec_status status =
 		host_cmd_typec_status(TEST_PORT);
@@ -162,7 +162,7 @@ ZTEST_F(usbc_vconn_swap, vconn_swap_before_discovery)
 		      "TCPM did not initiate VCONN Swap after attach");
 }
 
-ZTEST_F(usbc_vconn_swap, vconn_swap_via_host_command)
+ZTEST_F(usbc_vconn_swap, test_vconn_swap_via_host_command)
 {
 	struct ec_response_typec_status status =
 		host_cmd_typec_status(TEST_PORT);
@@ -181,7 +181,7 @@ ZTEST_F(usbc_vconn_swap, vconn_swap_via_host_command)
 ZTEST_SUITE(usbc_vconn_swap, drivers_predicate_post_main, usbc_vconn_swap_setup,
 	    usbc_vconn_swap_before, usbc_vconn_swap_after, NULL);
 
-ZTEST_F(usbc_vconn_swap_not_supported, vconn_swap_force_vconn)
+ZTEST_F(usbc_vconn_swap_not_supported, test_vconn_swap_force_vconn)
 {
 	struct ec_response_typec_status status =
 		host_cmd_typec_status(TEST_PORT);

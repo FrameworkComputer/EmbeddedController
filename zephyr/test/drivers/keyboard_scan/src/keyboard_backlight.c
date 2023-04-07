@@ -37,7 +37,7 @@ static uint16_t set_backlight_percent_helper(uint8_t percent)
 	return ec_cmd_pwm_set_keyboard_backlight(NULL, &params);
 }
 
-ZTEST(keyboard_backlight, host_command_set_backlight__normal)
+ZTEST(keyboard_backlight, test_host_command_set_backlight__normal)
 {
 	/* Set the backlight intensity level to this and verify */
 	uint8_t expected_percentage = 50;
@@ -46,7 +46,7 @@ ZTEST(keyboard_backlight, host_command_set_backlight__normal)
 	zassert_equal(expected_percentage, kblight_get(), NULL);
 }
 
-ZTEST(keyboard_backlight, host_command_set_backlight__out_of_range)
+ZTEST(keyboard_backlight, test_host_command_set_backlight__out_of_range)
 {
 	/* Too high */
 	uint8_t expected_percentage = 101;
@@ -55,7 +55,7 @@ ZTEST(keyboard_backlight, host_command_set_backlight__out_of_range)
 		      set_backlight_percent_helper(expected_percentage), NULL);
 }
 
-ZTEST(keyboard_backlight, host_command_get_backlight__normal)
+ZTEST(keyboard_backlight, test_host_command_get_backlight__normal)
 {
 	/* Set this backlight intensity and verify via host command */
 	uint8_t expected_percentage = 50;
@@ -74,7 +74,7 @@ ZTEST(keyboard_backlight, host_command_get_backlight__normal)
 	zassert_equal(1, response.enabled, "Got 0x%02x", response.enabled);
 }
 
-ZTEST(keyboard_backlight, console_command__noargs)
+ZTEST(keyboard_backlight, test_console_command__noargs)
 {
 	/* Command should print current status. Set backlight on and to 70% */
 
@@ -94,7 +94,7 @@ ZTEST(keyboard_backlight, console_command__noargs)
 		   "Actual string: `%s`", outbuffer);
 }
 
-ZTEST(keyboard_backlight, console_command__set_on)
+ZTEST(keyboard_backlight, test_console_command__set_on)
 {
 	/* Command should enable backlight to given intensity */
 
@@ -103,7 +103,7 @@ ZTEST(keyboard_backlight, console_command__set_on)
 	zassert_equal(1, kblight_get_current_enable(), NULL);
 }
 
-ZTEST(keyboard_backlight, console_command__set_off)
+ZTEST(keyboard_backlight, test_console_command__set_off)
 {
 	zassert_ok(set_backlight_percent_helper(40), NULL);
 	k_sleep(K_MSEC(50));
@@ -114,7 +114,7 @@ ZTEST(keyboard_backlight, console_command__set_off)
 	zassert_equal(0, kblight_get_current_enable(), NULL);
 }
 
-ZTEST(keyboard_backlight, console_command__bad_params)
+ZTEST(keyboard_backlight, test_console_command__bad_params)
 {
 	zassert_equal(EC_ERROR_PARAM1,
 		      shell_execute_cmd(get_ec_shell(), "kblight NaN"), NULL);
@@ -124,7 +124,7 @@ ZTEST(keyboard_backlight, console_command__bad_params)
 		      shell_execute_cmd(get_ec_shell(), "kblight 101"), NULL);
 }
 
-ZTEST(keyboard_backlight, set_backlight__device_not_ready)
+ZTEST(keyboard_backlight, test_set_backlight__device_not_ready)
 {
 	const struct pwm_dt_spec kblight_pwm_dt =
 		PWM_DT_SPEC_GET(KBLIGHT_PWM_NODE);

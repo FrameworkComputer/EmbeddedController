@@ -38,7 +38,7 @@ static void alt_charger_before(void *fixture)
 
 ZTEST_SUITE(alt_charger, NULL, NULL, alt_charger_before, NULL, NULL);
 
-ZTEST(alt_charger, normal_charger)
+ZTEST(alt_charger, test_normal_charger)
 {
 	alt_charger = false;
 	alt_charger_init();
@@ -46,7 +46,7 @@ ZTEST(alt_charger, normal_charger)
 	zassert_equal(chg_enable_alternate_test_fake.call_count, 0);
 }
 
-ZTEST(alt_charger, alt_charger)
+ZTEST(alt_charger, test_alt_charger)
 {
 	alt_charger = true;
 	alt_charger_init();

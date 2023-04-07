@@ -222,7 +222,7 @@ static enum ec_status fetch_memory_dump(struct mem_dump *dump)
  * Ensure that a memory dump returns empty list if requested before being
  * initialized.
  */
-ZTEST_USER(memory_dump, dump_before_registered)
+ZTEST_USER(memory_dump, test_dump_before_registered)
 {
 	struct ec_response_memory_dump_get_metadata metadata_response;
 	int rv;
@@ -236,7 +236,7 @@ ZTEST_USER(memory_dump, dump_before_registered)
 }
 
 /* Check if thread stack is included in memory dump */
-ZTEST_USER(memory_dump, dump_thread_stack)
+ZTEST_USER(memory_dump, test_dump_thread_stack)
 {
 	const uint32_t magic_val_1 = 0x11111111;
 	const uint32_t magic_val_2 = 0x22222222;
@@ -301,7 +301,7 @@ ZTEST_USER(memory_dump, dump_thread_stack)
 }
 
 /* Check if keyscan thread stack is included in memory dump */
-ZTEST_USER(memory_dump, verify_excluded_threads_not_dumped)
+ZTEST_USER(memory_dump, test_verify_excluded_threads_not_dumped)
 {
 	struct mem_dump dump;
 	k_tid_t main_thread;

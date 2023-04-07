@@ -24,7 +24,7 @@ struct console_cmd_hash_fixture {
 	uint8_t ro_hash[SHA256_DIGEST_SIZE];
 };
 
-ZTEST_F(console_cmd_hash, get_rw)
+ZTEST_F(console_cmd_hash, test_get_rw)
 {
 	const char *outbuffer;
 	size_t buffer_size;
@@ -50,7 +50,7 @@ ZTEST_F(console_cmd_hash, get_rw)
 	zassert_ok(!strstr(outbuffer, hash_buf), "Output was: `%s`", outbuffer);
 }
 
-ZTEST_F(console_cmd_hash, get_ro)
+ZTEST_F(console_cmd_hash, test_get_ro)
 {
 	const char *outbuffer;
 	size_t buffer_size;
@@ -76,7 +76,7 @@ ZTEST_F(console_cmd_hash, get_ro)
 	zassert_ok(!strstr(outbuffer, hash_buf), "Output was: `%s`", outbuffer);
 }
 
-ZTEST_F(console_cmd_hash, abort)
+ZTEST_F(console_cmd_hash, test_abort)
 {
 	const char *outbuffer;
 	size_t buffer_size;
@@ -99,7 +99,7 @@ ZTEST_F(console_cmd_hash, abort)
 		     "Output was: `%s`", outbuffer);
 }
 
-ZTEST_F(console_cmd_hash, custom_range)
+ZTEST_F(console_cmd_hash, test_custom_range)
 {
 	char command[256];
 	uint32_t offset = flash_get_rw_offset(system_get_active_copy());
@@ -140,7 +140,7 @@ ZTEST_F(console_cmd_hash, custom_range)
 		   outbuffer, hash_buf);
 }
 
-ZTEST_F(console_cmd_hash, custom_range_with_nonce)
+ZTEST_F(console_cmd_hash, test_custom_range_with_nonce)
 {
 	char command[256];
 	uint32_t offset = flash_get_rw_offset(system_get_active_copy());
@@ -183,7 +183,7 @@ ZTEST_F(console_cmd_hash, custom_range_with_nonce)
 		   outbuffer, hash_buf);
 }
 
-ZTEST(console_cmd_hash, invalid)
+ZTEST(console_cmd_hash, test_invalid)
 {
 	/* Invalid subcommand */
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "hash foo"));

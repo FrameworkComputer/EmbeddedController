@@ -10,7 +10,7 @@
 
 #include <zephyr/ztest.h>
 
-ZTEST_USER(math, bitmask_uint64)
+ZTEST_USER(math, test_bitmask_uint64)
 {
 	zassert_equal(bitmask_uint64(-1), 0);
 	zassert_equal(bitmask_uint64(64), 0);

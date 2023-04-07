@@ -8,12 +8,12 @@
 
 #include <zephyr/ztest.h>
 
-ZTEST_USER(math, int_sqrtf_negative)
+ZTEST_USER(math, test_int_sqrtf_negative)
 {
 	zassert_equal(int_sqrtf(-100), 0);
 }
 
-ZTEST_USER(math, int_sqrtf_overflow)
+ZTEST_USER(math, test_int_sqrtf_overflow)
 {
 	zassert_equal(int_sqrtf(INT64_MAX), INT32_MAX);
 }

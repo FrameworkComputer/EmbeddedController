@@ -20,7 +20,7 @@ void ppc_interrupt(enum gpio_signal signal);
 
 ZTEST_SUITE(ppc_config, NULL, NULL, ppc_config_before, NULL, NULL);
 
-ZTEST(ppc_config, ppc_interrupt_c0)
+ZTEST(ppc_config, test_ppc_interrupt_c0)
 {
 	ppc_interrupt(GPIO_USB_C0_PPC_INT_ODL);
 	zassert_equal(nx20p348x_interrupt_fake.call_count, 1);
@@ -28,7 +28,7 @@ ZTEST(ppc_config, ppc_interrupt_c0)
 	zassert_equal(nx20p348x_interrupt_fake.arg0_val, 0);
 }
 
-ZTEST(ppc_config, ppc_interrupt_c1)
+ZTEST(ppc_config, test_ppc_interrupt_c1)
 {
 	ppc_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 	zassert_equal(nx20p348x_interrupt_fake.call_count, 1);

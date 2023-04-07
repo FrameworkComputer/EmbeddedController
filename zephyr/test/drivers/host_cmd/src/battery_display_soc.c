@@ -10,7 +10,7 @@
 
 #include <zephyr/ztest.h>
 
-ZTEST_USER(battery_display_soc, happy_path)
+ZTEST_USER(battery_display_soc, test_happy_path)
 {
 	const uint32_t full_charge_as_tenths =
 		CONFIG_BATT_HOST_FULL_FACTOR * 10;

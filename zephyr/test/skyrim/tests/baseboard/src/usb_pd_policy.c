@@ -19,7 +19,7 @@ FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
 
 int board_is_sourcing_vbus(int port);
 
-ZTEST(usb_pd_policy, pd_check_vconn_swap)
+ZTEST(usb_pd_policy, test_pd_check_vconn_swap)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5);
@@ -37,7 +37,7 @@ ZTEST(usb_pd_policy, pd_check_vconn_swap)
 	zassert_false(pd_check_vconn_swap(1));
 }
 
-ZTEST(usb_pd_policy, pd_power_supply_reset_c0_success)
+ZTEST(usb_pd_policy, test_pd_power_supply_reset_c0_success)
 {
 	ppc_vbus_source_enable_fake.return_val = EC_SUCCESS;
 	ppc_vbus_sink_enable_fake.return_val = EC_SUCCESS;
@@ -61,7 +61,7 @@ ZTEST(usb_pd_policy, pd_power_supply_reset_c0_success)
 	zassert_equal(pd_send_host_event_fake.call_count, 1);
 }
 
-ZTEST(usb_pd_policy, pd_power_supply_reset_c1_success)
+ZTEST(usb_pd_policy, test_pd_power_supply_reset_c1_success)
 {
 	ppc_vbus_source_enable_fake.return_val = EC_SUCCESS;
 	ppc_vbus_sink_enable_fake.return_val = EC_SUCCESS;
@@ -85,7 +85,7 @@ ZTEST(usb_pd_policy, pd_power_supply_reset_c1_success)
 	zassert_equal(pd_send_host_event_fake.call_count, 1);
 }
 
-ZTEST(usb_pd_policy, pd_set_power_supply_ready_c0_success)
+ZTEST(usb_pd_policy, test_pd_set_power_supply_ready_c0_success)
 {
 	ppc_vbus_source_enable_fake.return_val = EC_SUCCESS;
 	ppc_vbus_sink_enable_fake.return_val = EC_SUCCESS;
@@ -115,7 +115,7 @@ ZTEST(usb_pd_policy, pd_set_power_supply_ready_c0_success)
 	zassert_equal(pd_send_host_event_fake.call_count, 1);
 }
 
-ZTEST(usb_pd_policy, pd_set_power_supply_ready_c1_success)
+ZTEST(usb_pd_policy, test_pd_set_power_supply_ready_c1_success)
 {
 	ppc_vbus_source_enable_fake.return_val = EC_SUCCESS;
 	ppc_vbus_sink_enable_fake.return_val = EC_SUCCESS;
@@ -145,7 +145,7 @@ ZTEST(usb_pd_policy, pd_set_power_supply_ready_c1_success)
 	zassert_equal(pd_send_host_event_fake.call_count, 1);
 }
 
-ZTEST(usb_pd_policy, pd_set_power_supply_ready_c0_failure)
+ZTEST(usb_pd_policy, test_pd_set_power_supply_ready_c0_failure)
 {
 	/* Test with ppc_vbus_sink_enable_fake failing. */
 	ppc_vbus_sink_enable_fake.return_val = EC_ERROR_INVAL;
@@ -169,7 +169,7 @@ ZTEST(usb_pd_policy, pd_set_power_supply_ready_c0_failure)
 	zassert_equal(pd_send_host_event_fake.call_count, 0);
 }
 
-ZTEST(usb_pd_policy, pd_set_power_supply_ready_c1_failure)
+ZTEST(usb_pd_policy, test_pd_set_power_supply_ready_c1_failure)
 {
 	/* Test with ppc_vbus_sink_enable_fake failing. */
 	ppc_vbus_sink_enable_fake.return_val = EC_ERROR_INVAL;
@@ -193,7 +193,7 @@ ZTEST(usb_pd_policy, pd_set_power_supply_ready_c1_failure)
 	zassert_equal(pd_send_host_event_fake.call_count, 0);
 }
 
-ZTEST(usb_pd_policy, board_pd_set_frs_enable)
+ZTEST(usb_pd_policy, test_board_pd_set_frs_enable)
 {
 	const struct gpio_dt_spec *c0 =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_fastsw_ctl_en);
@@ -214,7 +214,7 @@ ZTEST(usb_pd_policy, board_pd_set_frs_enable)
 	zassert_equal(gpio_emul_output_get(c1->port, c1->pin), 0);
 }
 
-ZTEST(usb_pd_policy, board_is_sourcing_vbus_c0_true)
+ZTEST(usb_pd_policy, test_board_is_sourcing_vbus_c0_true)
 {
 	tcpm_get_src_ctrl_fake.return_val = true;
 	zassert_true(board_is_sourcing_vbus(0));
@@ -223,7 +223,7 @@ ZTEST(usb_pd_policy, board_is_sourcing_vbus_c0_true)
 	zassert_equal(tcpm_get_src_ctrl_fake.arg0_val, 0);
 }
 
-ZTEST(usb_pd_policy, board_is_sourcing_vbus_c0_false)
+ZTEST(usb_pd_policy, test_board_is_sourcing_vbus_c0_false)
 {
 	tcpm_get_src_ctrl_fake.return_val = false;
 	zassert_false(board_is_sourcing_vbus(0));
@@ -232,7 +232,7 @@ ZTEST(usb_pd_policy, board_is_sourcing_vbus_c0_false)
 	zassert_equal(tcpm_get_src_ctrl_fake.arg0_val, 0);
 }
 
-ZTEST(usb_pd_policy, board_is_sourcing_vbus_c1_true)
+ZTEST(usb_pd_policy, test_board_is_sourcing_vbus_c1_true)
 {
 	tcpm_get_src_ctrl_fake.return_val = true;
 	zassert_true(board_is_sourcing_vbus(1));
@@ -241,7 +241,7 @@ ZTEST(usb_pd_policy, board_is_sourcing_vbus_c1_true)
 	zassert_equal(tcpm_get_src_ctrl_fake.arg0_val, 1);
 }
 
-ZTEST(usb_pd_policy, board_is_sourcing_vbus_c1_false)
+ZTEST(usb_pd_policy, test_board_is_sourcing_vbus_c1_false)
 {
 	tcpm_get_src_ctrl_fake.return_val = false;
 	zassert_false(board_is_sourcing_vbus(1));

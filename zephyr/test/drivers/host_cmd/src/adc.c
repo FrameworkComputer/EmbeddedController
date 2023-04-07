@@ -14,7 +14,7 @@
 
 FAKE_VALUE_FUNC(int, adc_read_channel, enum adc_channel);
 
-ZTEST(hc_adc, normal_path)
+ZTEST(hc_adc, test_normal_path)
 {
 	struct ec_params_adc_read params = {
 		.adc_channel = ADC_TEMP_SENSOR_CHARGER,
@@ -31,7 +31,7 @@ ZTEST(hc_adc, normal_path)
 	zassert_equal(123, response.adc_value);
 }
 
-ZTEST(hc_adc, bad_ch_number)
+ZTEST(hc_adc, test_bad_ch_number)
 {
 	struct ec_params_adc_read params = {
 		.adc_channel = ADC_CH_COUNT + 1, /* Invalid */

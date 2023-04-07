@@ -176,7 +176,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_batt_cap_invalid)
 		"Invalid battery ref bit should be set");
 }
 
-ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_typec_status_using_rmdo)
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_verify_typec_status_using_rmdo)
 {
 	struct ec_params_typec_status params = { .port = TEST_PORT };
 	struct ec_response_typec_status response;
@@ -190,7 +190,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_typec_status_using_rmdo)
 	zassert_equal(response.sop_revision, fixture->source_5v_3a.rmdo >> 16);
 }
 
-ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_msg)
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_verify_alert_msg)
 {
 	zassert_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS);
 
@@ -198,7 +198,8 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_msg)
 	zassert_true(fixture->src_ext.alert_received);
 }
 
-ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_on_power_state_change)
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
+	test_verify_alert_on_power_state_change)
 {
 	/* Suspend and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_SUSPEND);
@@ -238,7 +239,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_on_power_state_change)
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
-	verify_simultaneous_alert_status_resolution)
+	test_verify_simultaneous_alert_status_resolution)
 {
 	zassert_false(fixture->src_ext.alert_received);
 	zassert_false(fixture->src_ext.status_received);
@@ -292,7 +293,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
-	verify_inaction_on_pd_button_press_while_awake)
+	test_verify_inaction_on_pd_button_press_while_awake)
 {
 	uint32_t ado;
 
@@ -311,7 +312,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
-	verify_inaction_on_invalid_pd_button_press)
+	test_verify_inaction_on_invalid_pd_button_press)
 {
 	uint32_t ado;
 
@@ -344,7 +345,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
 	k_sleep(K_SECONDS(10));
 }
 
-ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_startup_on_pd_button_press)
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_verify_startup_on_pd_button_press)
 {
 	uint32_t ado;
 
@@ -376,7 +377,8 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_startup_on_pd_button_press)
 	zassert_true(chipset_in_state(CHIPSET_STATE_ON));
 }
 
-ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_chipset_on_pd_button_behavior)
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
+	test_verify_chipset_on_pd_button_behavior)
 {
 	uint32_t ado;
 
@@ -443,7 +445,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_chipset_on_pd_button_behavior)
 	k_sleep(K_SECONDS(10));
 }
 
-ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_uvdm_not_supported)
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_verify_uvdm_not_supported)
 {
 	uint32_t vdm_header = VDO(USB_VID_GOOGLE, 0 /* unstructured */, 0);
 

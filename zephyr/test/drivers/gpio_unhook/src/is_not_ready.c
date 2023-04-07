@@ -13,7 +13,7 @@
 
 ZTEST_SUITE(not_ready, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 
-ZTEST(not_ready, bad_tcpc)
+ZTEST(not_ready, test_bad_tcpc)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		gpio_flags_t flags;

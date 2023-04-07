@@ -14,7 +14,7 @@
 FAKE_VOID_FUNC(switch_interrupt, int);
 #endif
 
-ZTEST(ec_cmd_read_memmap, id)
+ZTEST(ec_cmd_read_memmap, test_id)
 {
 	struct ec_params_read_memmap params = {
 		.offset = EC_MEMMAP_ID,
@@ -38,7 +38,7 @@ ZTEST(ec_cmd_read_memmap, id)
 	zassert_equal('C', response[1]);
 }
 
-ZTEST(ec_cmd_read_memmap, switches)
+ZTEST(ec_cmd_read_memmap, test_switches)
 {
 	struct ec_params_read_memmap params = {
 		.offset = EC_MEMMAP_SWITCHES,
@@ -66,7 +66,7 @@ ZTEST(ec_cmd_read_memmap, switches)
 	}
 }
 
-ZTEST(ec_cmd_read_memmap, invalid)
+ZTEST(ec_cmd_read_memmap, test_invalid)
 {
 	struct ec_params_read_memmap params = {
 		.offset = EC_MEMMAP_ID,

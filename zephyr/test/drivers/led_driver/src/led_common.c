@@ -9,7 +9,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-ZTEST(led_common, host_command__query)
+ZTEST(led_common, test_host_command__query)
 {
 	/* Gets the brightness range for an LED */
 
@@ -34,7 +34,7 @@ ZTEST(led_common, host_command__query)
 			  sizeof(expected_brightness_ranges), NULL);
 }
 
-ZTEST(led_common, host_command__invalid_led)
+ZTEST(led_common, test_host_command__invalid_led)
 {
 	/* Try accessing info on a non-existent LED */
 
@@ -51,7 +51,7 @@ ZTEST(led_common, host_command__invalid_led)
 		      ret);
 }
 
-ZTEST(led_common, host_command__supported_channel)
+ZTEST(led_common, test_host_command__supported_channel)
 {
 	/* Try setting brightness on a color channel that is not supported */
 
@@ -72,7 +72,7 @@ ZTEST(led_common, host_command__supported_channel)
 		      ret);
 }
 
-ZTEST(led_common, host_command__manual_control)
+ZTEST(led_common, test_host_command__manual_control)
 {
 	/* Set brightness for an LED directly */
 
@@ -100,7 +100,7 @@ ZTEST(led_common, host_command__manual_control)
 
 FAKE_VOID_FUNC(board_led_auto_control);
 
-ZTEST(led_common, host_command__auto_control)
+ZTEST(led_common, test_host_command__auto_control)
 {
 	/* Configure an LED for automatic control */
 

@@ -41,7 +41,7 @@ ZTEST(multi_port, test_multiple_ports)
 		     "port 0 and port 1 contains duplicate information.\n");
 }
 
-ZTEST(multi_port, fw_version_cache)
+ZTEST(multi_port, test_fw_version_cache)
 {
 	zassert_ok(tcpci_emul_set_reg(ps8xxx_emul_0, PS8XXX_REG_FW_REV, 0x12),
 		   "Unable to set firmware rev for emulator 0.\n");

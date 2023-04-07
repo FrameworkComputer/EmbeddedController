@@ -872,7 +872,7 @@ ZTEST(host_cmd_motion_sense, test_spoof_invalid_mode)
 		      NULL);
 }
 
-ZTEST(host_cmd_motion_sense, set_kb_wake_lid_angle)
+ZTEST(host_cmd_motion_sense, test_set_kb_wake_lid_angle)
 {
 	struct ec_response_motion_sense response;
 	int16_t expected_lid_angle = 45;
@@ -885,7 +885,7 @@ ZTEST(host_cmd_motion_sense, set_kb_wake_lid_angle)
 	zassert_equal(expected_lid_angle, response.kb_wake_angle.ret);
 }
 
-ZTEST(host_cmd_motion_sense, get_lid_angle)
+ZTEST(host_cmd_motion_sense, test_get_lid_angle)
 {
 	struct ec_response_motion_sense response;
 	int rv;

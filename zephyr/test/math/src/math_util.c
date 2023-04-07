@@ -10,7 +10,7 @@
 
 #include <zephyr/ztest.h>
 
-ZTEST_USER(math, arc_cos__x_below_range)
+ZTEST_USER(math, test_arc_cos__x_below_range)
 {
 	fp_t result = arc_cos(FLOAT_TO_FP(-1.1));
 
@@ -18,7 +18,7 @@ ZTEST_USER(math, arc_cos__x_below_range)
 		       "arc_cos(-1.1) was %d", FP_TO_INT(result));
 }
 
-ZTEST_USER(math, arc_cos__x_above_range)
+ZTEST_USER(math, test_arc_cos__x_above_range)
 {
 	fp_t result = arc_cos(FLOAT_TO_FP(1.1));
 
@@ -26,7 +26,7 @@ ZTEST_USER(math, arc_cos__x_above_range)
 		       "arc_cos(1.1) was %d", FP_TO_INT(result));
 }
 
-ZTEST_USER(math, int_sqrtf)
+ZTEST_USER(math, test_int_sqrtf)
 {
 	zassert_equal(int_sqrtf(0), 0);
 	zassert_equal(int_sqrtf(15), 3);
@@ -36,13 +36,13 @@ ZTEST_USER(math, int_sqrtf)
 	zassert_equal(int_sqrtf(1000000000000000005), 1000000000);
 }
 
-ZTEST_USER(math, fp_sqrtf)
+ZTEST_USER(math, test_fp_sqrtf)
 {
 	zassert_within(fp_sqrtf(FLOAT_TO_FP(15)), FLOAT_TO_FP(3.872983),
 		       FLOAT_TO_FP(0.001), NULL);
 }
 
-ZTEST_USER(math, print_ints)
+ZTEST_USER(math, test_print_ints)
 {
 	char buffer[10];
 
