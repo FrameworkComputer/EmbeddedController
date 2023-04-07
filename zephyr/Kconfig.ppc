@@ -80,7 +80,12 @@ config PLATFORM_EC_USBC_PPC_RT1718S
 
 config PLATFORM_EC_USBC_PPC_KTU1125
 	bool "Kinetic KTU1125 Power Path Controller"
+	default y
+	depends on DT_HAS_KINETIC_KTU1125_ENABLED
 	select PLATFORM_EC_USBC_OCP
+	select PLATFORM_EC_USBC_PPC_POLARITY
+	select PLATFORM_EC_USBC_PPC_SBU
+	select PLATFORM_EC_USBC_PPC_VCONN if PLATFORM_EC_USBC_VCONN
 	help
 	  KTU1125 integrates power switches to provide a compact protection
 	  solution to USB Type-C applications by eliminating the dependence

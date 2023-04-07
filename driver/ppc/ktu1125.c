@@ -96,11 +96,10 @@ static int ktu1125_dump(int port)
 /* helper */
 static int ktu1125_power_path_control(int port, int enable)
 {
-	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SW_AB_EN) :
-			      clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SW_AB_EN | KTU1125_CC1S_VCONN |
-						KTU1125_CC2S_VCONN);
+	int status =
+		enable ?
+			set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_SW_AB_EN) :
+			clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_SW_AB_EN);
 
 	if (status) {
 		CPRINTS("ppc p%d: Failed to %s power path", port,
@@ -345,11 +344,19 @@ static int ktu1125_discharge_vbus(int port, int enable)
 #ifdef CONFIG_USBC_PPC_VCONN
 static int ktu1125_set_vconn(int port, int enable)
 {
-	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_VCONN_EN) :
-			      clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_VCONN_EN | KTU1125_CC1S_VCONN |
-						KTU1125_CC2S_VCONN);
+	int polarity;
+	int status;
+	int flags = KTU1125_VCONN_EN;
+
+	polarity = polarity_rm_dts(pd_get_polarity(port));
+
+	if (enable) {
+		flags |= polarity ? KTU1125_CC2S_VCONN : KTU1125_CC1S_VCONN;
+		status = set_flags(port, KTU1125_SET_SW_CFG, flags);
+	} else {
+		flags |= KTU1125_CC1S_VCONN | KTU1125_CC2S_VCONN;
+		status = clr_flags(port, KTU1125_SET_SW_CFG, flags);
+	}
 
 	return status;
 }
