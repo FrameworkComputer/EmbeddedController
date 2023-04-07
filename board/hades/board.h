@@ -136,7 +136,7 @@
 
 /* Charger defines */
 #define CONFIG_CHARGER_BYPASS_MODE
-#define CONFIG_CHARGER_ISL9241
+#define CONFIG_CHARGER_RAA489110
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 /* Round down 7700 max current to multiple of 128mA for ISL9241 AC prochot. */
