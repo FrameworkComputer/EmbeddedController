@@ -42,8 +42,8 @@ const struct board_batt_params board_battery_info[] = {
 			.manuf_name = "LGC KT0030G024",
 			.device_name = "AP19B8M",
 			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
 			},
 			.fet = {
 				.reg_addr = 0x43,
@@ -72,8 +72,8 @@ const struct board_batt_params board_battery_info[] = {
 		.fuel_gauge = {
 			.manuf_name = "COSMX KT0030B004",
 			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
 			},
 			.fet = {
 				.mfgacc_support = 1,
