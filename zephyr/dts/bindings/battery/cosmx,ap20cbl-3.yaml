@@ -14,9 +14,9 @@ properties:
   device_name:
     default: "AP20CBL"
   ship_mode_reg_addr:
-    default: 0x00
+    default: 0x3A
   ship_mode_reg_data:
-    default: [0x0010, 0x0010]
+    default: [0xC574, 0xC574]
   # Documentation: b/263692236#comment2
   # Manufacturer Access 0x00
   # b1: D-FET

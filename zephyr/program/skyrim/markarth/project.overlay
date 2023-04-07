@@ -22,7 +22,7 @@
 	/* battery overrides */
 	batteries {
 		default_battery: lgc_ap19b8m-2 {
-			compatible = "lgc,ap19b8m-2", "battery-smart";
+			compatible = "lgc,ap19b8m", "battery-smart";
 		};
 		cosmx_ap20cbl-3 {
 			compatible = "cosmx,ap20cbl-3", "battery-smart";
