@@ -486,7 +486,7 @@ void rt1739_interrupt(int port)
 void rt1739_pd_connect(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
-		if (ppc_chips[i].drv == &rt1739_ppc_drv)
+		if (ppc_chips[i].drv == &rt1739_ppc_drv && pd_is_connected(i))
 			update_reg(i, RT1739_REG_SBU_CTRL_01,
 				   RT1739_DM_SWEN | RT1739_DP_SWEN |
 					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
@@ -498,7 +498,8 @@ DECLARE_HOOK(HOOK_USB_PD_CONNECT, rt1739_pd_connect, HOOK_PRIO_DEFAULT);
 void rt1739_pd_disconnect(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
-		if (ppc_chips[i].drv == &rt1739_ppc_drv)
+		if (ppc_chips[i].drv == &rt1739_ppc_drv &&
+		    pd_is_disconnected(i))
 			update_reg(i, RT1739_REG_SBU_CTRL_01,
 				   RT1739_DM_SWEN | RT1739_DP_SWEN |
 					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
