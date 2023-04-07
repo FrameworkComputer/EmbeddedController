@@ -9,6 +9,8 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
 
+#define LID_ACCEL SENSOR_ID(DT_NODELABEL(lid_accel))
+
 #define SENSOR_NODE DT_PATH(motionsense_sensor)
 #define SENSOR_INFO_NODE DT_PATH(motionsense_sensor_info)
 #define SENSOR_ALT_NODE DT_PATH(motionsense_sensor_alt)
@@ -2166,6 +2168,13 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #undef CONFIG_CMD_ACCEL_SPOOF
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
 #define CONFIG_CMD_ACCEL_SPOOF
+#endif
+
+#undef CONFIG_GESTURE_DETECTION
+#undef CONFIG_GESTURE_DETECTION_MASK
+#ifdef CONFIG_PLATFORM_EC_GESTURE_DETECTION
+#define CONFIG_GESTURE_DETECTION
+#define CONFIG_GESTURE_DETECTION_MASK BIT(CONFIG_BODY_DETECTION_SENSOR)
 #endif
 
 #undef CONFIG_GESTURE_HOST_DETECTION

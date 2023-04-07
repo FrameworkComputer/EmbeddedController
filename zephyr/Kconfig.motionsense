@@ -179,6 +179,11 @@ config PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
 
 endif # PLATFORM_EC_ACCEL_SPOOF_MODE
 
+config PLATFORM_EC_GESTURE_DETECTION
+	bool "Gesture detection"
+	help
+	  Enable this to support gesture detection.
+
 config PLATFORM_EC_GESTURE_HOST_DETECTION
 	bool "Gesture host detection"
 	help

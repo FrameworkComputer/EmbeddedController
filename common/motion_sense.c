@@ -777,7 +777,8 @@ static void check_and_queue_gestures(uint32_t *event)
 						"Inv_Portrait", "Inv_Landscape",
 						"Unknown"
 					};
-					CPRINTS(mode[vector.activity_data.state]);
+					CPRINTS("%s",
+						mode[vector.activity_data.state]);
 				}
 			}
 			mutex_unlock(sensor->mutex);
