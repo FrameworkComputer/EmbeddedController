@@ -10,7 +10,7 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		cpu-f75303 {
+		local-f75303 {
 			temp_host_warn = <108>;
 			temp_host_high = <108>;
 			temp_host_halt = <127>;
@@ -19,7 +19,7 @@
 			temp_fan_off = <35>;
 			temp_fan_max = <55>;
 			power-good-pin = <&gpio_slp_s5_l>;
-			sensor = <&cpu_f75303>;
+			sensor = <&local_f75303>;
 		};
 		ddr-f75303 {
 			temp_host_warn = <108>;
@@ -32,7 +32,7 @@
 			power-good-pin = <&gpio_slp_s5_l>;
 			sensor = <&ddr_f75303>;
 		};
-		local-f75303 {
+		cpu-f75303 {
 			temp_host_warn = <108>;
 			temp_host_high = <108>;
 			temp_host_halt = <127>;
@@ -41,7 +41,7 @@
 			temp_fan_off = <35>;
 			temp_fan_max = <55>;
 			power-good-pin = <&gpio_slp_s5_l>;
-			sensor = <&local_f75303>;
+			sensor = <&cpu_f75303>;
 		};
 	};
 
