@@ -52,7 +52,8 @@
 		};
 		i2c_sensor: sensor {
 			i2c-port = <&i2c7_0>;
-			enum-names =  "I2C_PORT_SENSOR";
+			enum-names =  "I2C_PORT_SENSOR",
+				"I2C_PORT_THERMAL_AP";
 		};
 	};
 };
@@ -195,6 +196,11 @@
 	cpu_f75303: cpu_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		reg = <0x4d>;
+	};
+
+	temp_cpu: cpu@4c {
+		compatible = "amd,sb-tsi";
+		reg = <0x4c>;
 	};
 };
 
