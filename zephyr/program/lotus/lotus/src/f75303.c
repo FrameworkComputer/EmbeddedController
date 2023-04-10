@@ -11,10 +11,11 @@
 #include "temp_sensor/f75303.h"
 #include "temp_sensor/temp_sensor.h"
 #include "util.h"
+#include "lotus/gpu.h"
 #include "console.h"
 
-static int temps[F75303_IDX_COUNT];
-static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
+static int temps[F75303_COUNT];
+static int8_t fake_temp[F75303_COUNT] = { -1, -1, -1, -1, -1, -1};
 
 /**
  * Read 8 bits register from temp sensor.
@@ -40,7 +41,7 @@ static int get_temp(int sensor, const int offset, int *temp)
 
 int f75303_get_val(int idx, int *temp)
 {
-	if (idx < 0 || F75303_IDX_COUNT <= idx)
+	if (idx < 0 || F75303_COUNT <= idx)
 		return EC_ERROR_INVAL;
 
 	if (fake_temp[idx] != -1) {
@@ -57,7 +58,7 @@ void f75303_update_temperature(int idx)
 	int temp_reg = 0;
 	int rv = 0;
 
-	if (idx >= F75303_IDX_COUNT)
+	if (idx >= F75303_COUNT)
 		return;
 	switch (idx) {
 	case 0:
@@ -68,6 +69,24 @@ void f75303_update_temperature(int idx)
 		break;
 	case 2:
 		rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
+		break;
+	case 3:
+		if (gpu_present())
+			rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
+		else
+			rv = EC_ERROR_NOT_POWERED;
+		break;
+	case 4:
+		if (gpu_present())
+			rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
+		else
+			rv = EC_ERROR_NOT_POWERED;
+		break;
+	case 5:
+		if (gpu_present())
+			rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
+		else
+			rv = EC_ERROR_NOT_POWERED;
 		break;
 	}
 	if (rv == EC_SUCCESS)
@@ -84,7 +103,7 @@ static int f75303_set_fake_temp(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	index = strtoi(argv[1], &e, 0);
-	if ((*e) || (index < 0) || (index >= F75303_IDX_COUNT))
+	if ((*e) || (index < 0) || (index >= F75303_COUNT))
 		return EC_ERROR_PARAM1;
 
 	if (!strcasecmp(argv[2], "off")) {

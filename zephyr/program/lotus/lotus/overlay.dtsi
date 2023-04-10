@@ -43,6 +43,39 @@
 			power-good-pin = <&gpio_slp_s5_l>;
 			sensor = <&cpu_f75303>;
 		};
+		gpu-vr-f75303 {
+			temp_host_warn = <108>;
+			temp_host_high = <108>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_fan_off = <35>;
+			temp_fan_max = <55>;
+			power-good-pin = <&gpio_slp_s5_l>;
+			sensor = <&gpu_vr_f75303>;
+		};
+		gpu-vram-f75303 {
+			temp_host_warn = <108>;
+			temp_host_high = <108>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_fan_off = <35>;
+			temp_fan_max = <55>;
+			power-good-pin = <&gpio_slp_s5_l>;
+			sensor = <&gpu_vram_f75303>;
+		};
+		gpu-amb-f75303 {
+			temp_host_warn = <108>;
+			temp_host_high = <108>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_fan_off = <35>;
+			temp_fan_max = <55>;
+			power-good-pin = <&gpio_slp_s5_l>;
+			sensor = <&gpu_amb_f75303>;
+		};
 	};
 
 	typec-port {
