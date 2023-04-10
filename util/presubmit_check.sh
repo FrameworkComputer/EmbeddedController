@@ -19,3 +19,11 @@ if git diff --no-ext-diff "${upstream_branch}" HEAD |
   echo "error: CPRINTS strings should not include newline characters" >&2
   exit 1
 fi
+
+# Check for missing 'test_' prefix from ZTEST definitions
+if git diff --no-ext-diff "${upstream_branch}" HEAD |
+     pcregrep -M "^\+(ZTEST|ZTEST_F|ZTEST_USER|ZTEST_USER_F)\(\w+,[\n\+|\s]*\w+\)" |
+     pcregrep -vM "\(\w+,[\n\+]*\s*test_\w+\)"; then
+  echo "error: 'test_' prefix missing from test function name" >&2
+  exit 1
+fi
