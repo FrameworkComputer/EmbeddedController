@@ -1,4 +1,4 @@
-/* Copyright 2022 The ChromiumOS Authors
+/* Copyright 2023 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,5 +6,66 @@
 / {
   /* Uldren-specific fw_config fields. */
 	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to enable KB back light or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <4>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable USB DB.
+		 */
+		db-usb {
+			enum-name = "FW_DB_USB";
+			start = <6>;
+			size = <1>;
+
+			no-db-usb {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_DB_USB_NOT_PRESENT";
+				value = <0>;
+			};
+			db-usb-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_DB_USB_PRESENT";
+				value = <1>;
+				default;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field for tablet present or not.
+		 */
+		 tablet {
+			enum-name = "FW_TABLET";
+			start = <7>;
+			size = <1>;
+
+			no-tablet {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_NOT_PRESENT";
+				value = <0>;
+			};
+			tablet-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_PRESENT";
+				value = <1>;
+			};
+		};
 	};
 };

@@ -1,4 +1,4 @@
-/* Copyright 2021 The ChromiumOS Authors
+/* Copyright 2023 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -316,7 +316,6 @@
 			<&gpio8 3 0>,
 			<&gpio8 5 0>,
 			<&gpio8 6 0>,
-			<&gpioa 0 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
 			<&gpioc 0 0>,
