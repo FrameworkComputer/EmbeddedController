@@ -98,11 +98,61 @@ ZTEST(system, test_system_common_pre_init__watch_dog_panic)
 	uint32_t info;
 	uint8_t exception;
 
+	/* Watchdog reset should result in any existing panic data being
+	 * overwritten
+	 */
+	panic_set_reason(PANIC_SW_DIV_ZERO, 0x12, 0x34);
+
 	/* Clear all reset flags and set them arbitrarily */
 	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
 	system_common_pre_init();
 	panic_get_reason(&reason, &info, &exception);
 	zassert_equal(reason, PANIC_SW_WATCHDOG);
+	zassert_equal(info, 0);
+	zassert_equal(exception, 0);
+}
+
+ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_initialized)
+{
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+
+	/* Watchdog reset should not overwrite panic info if already filled
+	 * in with watchdog panic info that HAS NOT been read by host
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG, 0x12, 0x34);
+
+	/* Clear all reset flags and set them arbitrarily */
+	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
+	system_common_pre_init();
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG);
+	zassert_equal(info, 0x12);
+	zassert_equal(exception, 0x34);
+}
+
+ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_read)
+{
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+	struct panic_data *pdata;
+
+	/* Watchdog reset should overwrite panic info if already filled
+	 * in with watchdog panic info that HAS been read by host
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG, 0x12, 0x34);
+	pdata = get_panic_data_write();
+	pdata->flags |= PANIC_DATA_FLAG_OLD_HOSTCMD;
+
+	/* Clear all reset flags and set them arbitrarily */
+	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
+	system_common_pre_init();
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG);
+	zassert_equal(info, 0);
+	zassert_equal(exception, 0);
 }
 
 ZTEST(system, test_system_encode_save_flags)
