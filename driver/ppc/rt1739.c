@@ -212,6 +212,12 @@ static int rt1739_workaround(int port)
 				  RT1739_HVLV_SCP_EN | RT1739_HVLV_OCRC_EN));
 		break;
 
+	case RT1739_DEVICE_ID_ES4:
+		CPRINTS("RT1739 ES4");
+		RETURN_ERROR(update_reg(port, RT1739_REG_LVHVSW_OV_CTRL,
+					RT1739_OT_SEL_LVL, MASK_CLR));
+		break;
+
 	default:
 		CPRINTF("RT1739 unknown device id: %02X", device_id);
 		break;
@@ -295,21 +301,17 @@ static int rt1739_init(int port)
 		RETURN_ERROR(write_reg(port, RT1739_REG_SYS_CTRL,
 				       RT1739_OT_EN | RT1739_SHUTDOWN_OFF));
 	} else if (batt_connected || !(vbus_switch_ctrl & RT1739_HV_SNK_EN)) {
-		/*
-		 * If rt1739 is not sinking, or there's a working battery,
-		 * we can reset its registers safely.
-		 *
-		 * Otherwise, don't touch the VBUS_SWITCH_CTRL reg.
+		/* b/275294155: reset vbus switch only instead of doing a full
+		 * reset
 		 */
-		RETURN_ERROR(
-			write_reg(port, RT1739_REG_SW_RESET, RT1739_SW_RESET));
-		usleep(1 * MSEC);
+		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, 0));
 	}
 	RETURN_ERROR(write_reg(port, RT1739_REG_SYS_CTRL,
 			       RT1739_OT_EN | RT1739_SHUTDOWN_OFF));
 
 	RETURN_ERROR(rt1739_workaround(port));
 	RETURN_ERROR(rt1739_set_frs_enable(port, false));
+	RETURN_ERROR(rt1739_set_vconn(port, false));
 	RETURN_ERROR(update_reg(port, RT1739_REG_VBUS_DET_EN,
 				RT1739_VBUS_PRESENT_EN, MASK_SET));
 	RETURN_ERROR(update_reg(port, RT1739_REG_SBU_CTRL_01,
