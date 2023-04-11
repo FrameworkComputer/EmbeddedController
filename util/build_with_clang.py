@@ -265,6 +265,7 @@ NDS32_BOARDS = [
     "sasukette",
     "shotzo",
     "storo",
+    "taranza",
     "waddledee",
     "wheelie",
 ]

@@ -49,6 +49,7 @@ BINARY_SIZE_BOARDS = [
     "moli",
     "prism",
     "shotzo",
+    "taranza",
 ]
 
 
