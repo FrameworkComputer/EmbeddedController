@@ -6,7 +6,7 @@
 / {
 	#address-cells = <1>;
 	#size-cells = <1>;
-	binman {
+	binman: binman {
 		filename = "ec.bin";
 		pad-byte = <0x1d>;
 		wp-ro {
