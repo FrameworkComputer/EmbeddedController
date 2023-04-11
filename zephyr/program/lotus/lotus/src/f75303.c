@@ -49,7 +49,10 @@ int f75303_get_val(int idx, int *temp)
 		return EC_SUCCESS;
 	}
 
-	*temp = temps[idx];
+	if (!gpu_present() && (idx < 3))
+		*temp = 0;
+	else
+		*temp = temps[idx];
 	return EC_SUCCESS;
 }
 
@@ -61,32 +64,38 @@ void f75303_update_temperature(int idx)
 	if (idx >= F75303_COUNT)
 		return;
 	switch (idx) {
+	/* gpu_vr_f75303 */
 	case 0:
-		rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
-		break;
-	case 1:
-		rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
-		break;
-	case 2:
-		rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
-		break;
-	case 3:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
-	case 4:
+	/* gpu_vram_f75303 */
+	case 1:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
-	case 5:
+	/* gpu_amb_f75303 */
+	case 2:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
+		break;
+	/* local_f75303 */
+	case 3:
+		rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
+		break;
+	/* ddr_f75303 */
+	case 4:
+		rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
+		break;
+	/* cpu_f75303 */
+	case 5:
+		rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
 		break;
 	}
 	if (rv == EC_SUCCESS)
