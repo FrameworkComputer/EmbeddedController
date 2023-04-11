@@ -3,8 +3,7 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_ec_flash_layout
-
+#include "cbi_flash.h"
 #include "console.h"
 #include "cros_board_info.h"
 #include "flash.h"
@@ -12,26 +11,13 @@
 #include "write_protect.h"
 
 #include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(cbi_flash, LOG_LEVEL_ERR);
 
-#define CBI_FLASH_NODE DT_NODELABEL(cbi_flash)
-#define CBI_FLASH_OFFSET DT_PROP(CBI_FLASH_NODE, offset)
-#define CBI_FLASH_PRESERVE DT_PROP(CBI_FLASH_NODE, preserve)
-
-BUILD_ASSERT(DT_NODE_EXISTS(CBI_FLASH_NODE) == 1,
-	     "CBI flash DT node label not found");
-BUILD_ASSERT((CBI_FLASH_OFFSET % CONFIG_FLASH_ERASE_SIZE) == 0,
-	     "CBI flash offset is not erase-size aligned");
-BUILD_ASSERT((CBI_IMAGE_SIZE % CONFIG_FLASH_ERASE_SIZE) == 0,
-	     "CBI flash size is not erase-size aligned");
-BUILD_ASSERT(CBI_IMAGE_SIZE > 0, "CBI flash size must be greater than zero");
-
 static int flash_load(uint8_t offset, uint8_t *data, int len)
 {
-	return crec_flash_read(CBI_FLASH_OFFSET, CBI_IMAGE_SIZE, (char *)data);
+	return crec_flash_unprotected_read(CBI_FLASH_OFFSET, CBI_IMAGE_SIZE,
+					   (char *)data);
 }
 
 static int flash_is_write_protected(void)

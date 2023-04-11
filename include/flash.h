@@ -320,15 +320,32 @@ int crec_flash_get_size(void);
 int crec_flash_dataptr(int offset, int size_req, int align, const char **ptrp);
 
 /**
+ * Read from flash without hiding protected sections data
+ *
+ * If flash is mapped (CONFIG_MAPPED_STORAGE), it is usually more efficient to
+ * use flash_dataptr() to get a pointer directly to the flash memory rather
+ * than use flash_read(), since the former saves a memcpy() operation.
+ *
+ * This method won't hide the protected flash sections data.
+ *
+ * @param offset	Flash offset to read.
+ * @param size		Number of bytes to read.
+ * @param data		Destination buffer for data.  Must be 32-bit aligned.
+ */
+int crec_flash_unprotected_read(int offset, int size, char *data);
+
+/**
  * Read from flash.
  *
  * If flash is mapped (CONFIG_MAPPED_STORAGE), it is usually more efficient to
  * use flash_dataptr() to get a pointer directly to the flash memory rather
  * than use flash_read(), since the former saves a memcpy() operation.
  *
- * @param offset	Flash offset to write.
- * @param size	        Number of bytes to write.
- * @param data          Destination buffer for data.  Must be 32-bit aligned.
+ * This method hides the protected flash sections data.
+ *
+ * @param offset	Flash offset to read.
+ * @param size		Number of bytes to read.
+ * @param data		Destination buffer for data.  Must be 32-bit aligned.
  */
 int crec_flash_read(int offset, int size, char *data);
 

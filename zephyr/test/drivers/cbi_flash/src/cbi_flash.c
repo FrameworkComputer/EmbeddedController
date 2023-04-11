@@ -16,7 +16,7 @@
 #define CBI_FLASH_NODE DT_NODELABEL(cbi_flash)
 #define CBI_FLASH_OFFSET DT_PROP(CBI_FLASH_NODE, offset)
 
-FAKE_VALUE_FUNC(int, crec_flash_read, int, int, char *);
+FAKE_VALUE_FUNC(int, crec_flash_unprotected_read, int, int, char *);
 
 ZTEST(cbi_flash, test_cbi_flash_is_write_protected)
 {
@@ -42,7 +42,7 @@ ZTEST(cbi_flash, test_cbi_flash_load)
 		input_data[index] = index % 255;
 	}
 	cbi_config.drv->store(input_data);
-	crec_flash_read_fake.return_val = crec_flash_physical_read(
+	crec_flash_unprotected_read_fake.return_val = crec_flash_physical_read(
 		CBI_FLASH_OFFSET, CBI_IMAGE_SIZE, data);
 
 	zassert_ok(cbi_config.drv->load(0, data, 0));
@@ -55,7 +55,7 @@ ZTEST(cbi_flash, test_cbi_flash_load_error)
 {
 	uint8_t data[CBI_IMAGE_SIZE];
 
-	crec_flash_read_fake.return_val = EC_ERROR_INVAL;
+	crec_flash_unprotected_read_fake.return_val = EC_ERROR_INVAL;
 	zassert_equal(cbi_config.drv->load(0, data, 0), EC_ERROR_INVAL);
 }
 
@@ -78,7 +78,7 @@ ZTEST(cbi_flash, test_cbi_flash_store_fail)
 static void cbi_flash_before(void *fixture)
 {
 	ARG_UNUSED(fixture);
-	RESET_FAKE(crec_flash_read);
+	RESET_FAKE(crec_flash_unprotected_read);
 }
 
 ZTEST_SUITE(cbi_flash, drivers_predicate_post_main, NULL, cbi_flash_before,

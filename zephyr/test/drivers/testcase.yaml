@@ -482,3 +482,12 @@ tests:
     - anx7452/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ANX7452=y
+  drivers.flash_cbi:
+    extra_dtc_overlay_files:
+    - boards/native_posix.overlay
+    - cbi_flash/binman.dts
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FLASH=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_FLASH=y
+    - CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES=0x80000
+    - CONFIG_PLATFORM_EC_CBI_FLASH=y

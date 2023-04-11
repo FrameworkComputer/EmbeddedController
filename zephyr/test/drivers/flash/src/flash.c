@@ -564,31 +564,300 @@ static uint16_t read_flash_helper32(uint32_t offset, uint32_t *output)
 ZTEST_USER(flash, test_console_cmd_flash_erase__happy)
 {
 	/* Immediately before the region to erase */
-	zassert_ok(write_flash_helper32(0x40000 - 4, 0x5A5A5A5A));
+	zassert_ok(write_flash_helper32(0x10000 - 4, 0x5A5A5A5A));
 
 	/* Start and end of the region we will erase */
-	zassert_ok(write_flash_helper32(0x40000, 0xA1B2C3D4));
-	zassert_ok(write_flash_helper32(0x50000 - 4, 0x1A2B3C4D));
+	zassert_ok(write_flash_helper32(0x10000, 0xA1B2C3D4));
+	zassert_ok(write_flash_helper32(0x20000 - 4, 0x1A2B3C4D));
 
 	/* Immediately after the region to erase */
-	zassert_ok(write_flash_helper32(0x50000, 0xA5A5A5A5));
+	zassert_ok(write_flash_helper32(0x20000, 0xA5A5A5A5));
 
-	CHECK_CONSOLE_CMD("flasherase 0x40000 0x10000", NULL, EC_SUCCESS);
+	CHECK_CONSOLE_CMD("flasherase 0x10000 0x10000", NULL, EC_SUCCESS);
 
 	uint32_t output;
 
 	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x10000 - 4, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x20000, &output));
+	zassert_equal(output, 0xA5A5A5A5, "Got %08x", output);
+
+	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x10000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x20000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+#ifdef CONFIG_PLATFORM_EC_CBI_FLASH
+ZTEST_USER(flash, test_console_cmd_flash_erase__cbi_overlap_0)
+{
+	uint32_t output;
+
+	/* Immediately before the region to erase */
+	zassert_ok(write_flash_helper32(0x3F000 - 4, 0x5A5A5A5A));
+	/* Immediately after the region to erase */
+	zassert_ok(write_flash_helper32(0x40000, 0xA5A5A5A5));
+
+	/* The CBI region */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
 	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+
+	CHECK_CONSOLE_CMD("flasherase 0x3F000 0x1000", NULL, EC_SUCCESS);
+
+	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xA5A5A5A5, "Got %08x", output);
+
+	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_erase__cbi_overlap_left)
+{
+	uint32_t output;
+
+	/* Immediately before the region to erase */
+	zassert_ok(write_flash_helper32(0x3F000 - 4, 0x5A5A5A5A));
+	/* Immediately after the region to erase */
+	zassert_ok(write_flash_helper32(0x50000, 0x5A5A5A5A));
+	/* Immediately after the CBI region */
+	zassert_ok(write_flash_helper32(0x40000, 0xA5A5A5A5));
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xA5A5A5A5, "Got %08x", output);
+
+	/* The CBI region */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+
+	CHECK_CONSOLE_CMD("flasherase 0x3F000 0x11000", NULL, EC_SUCCESS);
+
+	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x50000, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+
+	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x50000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_erase__cbi_overlap_right)
+{
+	uint32_t output;
+
+	/* Immediately before the region to erase */
+	zassert_ok(write_flash_helper32(0x2F000 - 4, 0x5A5A5A5A));
+	/* Immediately after the region to erase */
+	zassert_ok(write_flash_helper32(0x40000, 0xA5A5A5A5));
+	/* Immediately before the CBI region */
+	zassert_ok(write_flash_helper32(0x3F000 - 4, 0xA5A5A5AA));
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0xA5A5A5AA, "Got %08x", output);
+
+	/* The CBI region */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+
+	CHECK_CONSOLE_CMD("flasherase 0x2F000 0x11000", NULL, EC_SUCCESS);
+
+	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x2F000 - 4, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xA5A5A5A5, "Got %08x", output);
+
+	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x2F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_erase__left)
+{
+	uint32_t output;
+
+	/* Immediately before the region to erase */
+	zassert_ok(write_flash_helper32(0x3E000 - 4, 0x5A5A5A5A));
+	zassert_ok(write_flash_helper32(0x3E000, 0x5A5AAA5A));
+	/* Immediately before the CBI region */
+	zassert_ok(write_flash_helper32(0x3F000 - 4, 0x5A5A5AAA));
+	/* Immediately after the CBI region */
+	zassert_ok(write_flash_helper32(0x40000, 0xA5A5A5A5));
+
+	/* The CBI region */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+
+	CHECK_CONSOLE_CMD("flasherase 0x3E000 0x1000", NULL, EC_SUCCESS);
+
+	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x3E000 - 4, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xA5A5A5A5, "Got %08x", output);
+
+	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x3E000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_erase__right)
+{
+	uint32_t output;
+
+	/* Immediately before the CBI region */
+	zassert_ok(write_flash_helper32(0x3F000 - 4, 0x5A5A5AAA));
+	/* Immediately after the CBI region */
+	zassert_ok(write_flash_helper32(0x40000, 0xA5A5A5A5));
+	zassert_ok(write_flash_helper32(0x41000 - 4, 0x555A5A5A));
+	/* Immediately after the region to erase */
+	zassert_ok(write_flash_helper32(0x41000, 0x5A5A5A5A));
+
+	/* The CBI region */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+
+	CHECK_CONSOLE_CMD("flasherase 0x40000 0x1000", NULL, EC_SUCCESS);
+
+	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0x5A5A5AAA, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x41000, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+
+	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x41000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_erase__cbi_overlap_1)
+{
+	uint32_t output;
+
+	/* Immediately before the region to erase */
+	zassert_ok(write_flash_helper32(0x20000 - 4, 0x5A5A5A5A));
+	/* Immediately after the region to erase */
+	zassert_ok(write_flash_helper32(0x50000, 0xA5A5A5A5));
+	/* Immediately before the CBI region */
+	zassert_ok(write_flash_helper32(0x3F000 - 4, 0x555A5A5A));
+	/* Immediately after the CBI region */
+	zassert_ok(write_flash_helper32(0x40000, 0xA5A555A5));
+
+	/* The CBI region */
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0x555A5A5A, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xA5A555A5, "Got %08x", output);
+
+	CHECK_CONSOLE_CMD("flasherase 0x20000 0x30000", NULL, EC_SUCCESS);
+
+	/* These should remain untouched */
+	zassert_ok(read_flash_helper32(0x20000 - 4, &output));
 	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
 	zassert_ok(read_flash_helper32(0x50000, &output));
 	zassert_equal(output, 0xA5A5A5A5, "Got %08x", output);
 
 	/* These are within the erase region and should be reset to all FF */
+	zassert_ok(read_flash_helper32(0x20000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
 	zassert_ok(read_flash_helper32(0x40000, &output));
 	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
 	zassert_ok(read_flash_helper32(0x50000 - 4, &output));
 	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
 }
+
+ZTEST_USER(flash, test_console_cmd_flash_write__cbi_0)
+{
+	uint32_t output;
+
+	/* Immediately before the CBI region */
+	zassert_ok(write_flash_helper32(0x3F000 - 4, 0x555A5A5A));
+	zassert_ok(read_flash_helper32(0x3F000 - 4, &output));
+	zassert_equal(output, 0x555A5A5A, "Got %08x", output);
+	/* Immediately after the CBI region */
+	zassert_ok(write_flash_helper32(0x40000, 0xA5A555A5));
+	zassert_ok(read_flash_helper32(0x40000, &output));
+	zassert_equal(output, 0xA5A555A5, "Got %08x", output);
+
+	/* The CBI region */
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+
+	zassert_ok(write_flash_helper32(0x10000, 0x5A5A5A5A));
+	zassert_ok(read_flash_helper32(0x10000, &output));
+	zassert_equal(output, 0x5A5A5A5A, "Got %08x", output);
+
+	zassert_ok(write_flash_helper32(0x50000, 0x5AAA5A5A));
+	zassert_ok(read_flash_helper32(0x50000, &output));
+	zassert_equal(output, 0x5AAA5A5A, "Got %08x", output);
+
+	zassert_ok(write_flash_helper32(0x3F000, 0x5A5A5A5A));
+	zassert_ok(read_flash_helper32(0x3F000, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+
+	zassert_ok(write_flash_helper32(0x40000 - 4, 0x5AAA5A5A));
+	zassert_ok(read_flash_helper32(0x40000 - 4, &output));
+	zassert_equal(output, 0xFFFFFFFF, "Got %08x", output);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_write__cbi_1)
+{
+	uint32_t output;
+
+	/* At the start of CBI region */
+	zassert_ok(write_flash_helper32(0x3F000 - 2, 0x555A5A5A));
+	zassert_ok(read_flash_helper32(0x3F000 - 2, &output));
+	zassert_equal(output, 0xFFFF5A5A, "Got %08x", output);
+
+	/* At the end of CBI region */
+	zassert_ok(write_flash_helper32(0x40000 - 2, 0xA5A555A5));
+	zassert_ok(read_flash_helper32(0x40000 - 2, &output));
+	zassert_equal(output, 0xA5A5FFFF, "Got %08x", output);
+}
+#endif
 
 ZTEST_USER(flash, test_console_cmd_flash_write__flash_locked)
 {
