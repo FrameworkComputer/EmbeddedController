@@ -73,6 +73,22 @@ struct ec_response_chg_limit_control {
 	uint8_t min_percentage;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Configure the behavior of the charge limit control.
+ */
+
+#define EC_CMD_PWM_GET_FAN_ACTUAL_RPM	0x3E04
+
+struct ec_params_ec_pwm_get_actual_fan_rpm {
+	/* The index of the fan */
+	uint8_t index;
+} __ec_align1;
+
+struct ec_response_pwm_get_actual_fan_rpm {
+	uint16_t rpm;
+} __ec_align2;
+
 
 /*****************************************************************************/
 /*
