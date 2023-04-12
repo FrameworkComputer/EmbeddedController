@@ -64,21 +64,21 @@ void f75303_update_temperature(int idx)
 	if (idx >= F75303_COUNT)
 		return;
 	switch (idx) {
-	/* gpu_vr_f75303 */
+	/* gpu_amb_f75303 */
 	case 0:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
-	/* gpu_vram_f75303 */
+	/* gpu_vr_f75303 */
 	case 1:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
-	/* gpu_amb_f75303 */
+	/* gpu_vram_f75303 */
 	case 2:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);

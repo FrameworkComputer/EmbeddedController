@@ -141,17 +141,17 @@
 	pinctrl-names = "default";
 
 	/* TODO: Add the device on this bus */
+	gpu_amb_f75303: gpu_amb_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4d>;
+	};
+
 	gpu_vr_f75303: gpu_vr_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		reg = <0x4d>;
 	};
 
 	gpu_vram_f75303: gpu_vram_f75303@4d {
-		compatible = "cros-ec,temp-sensor-f75303";
-		reg = <0x4d>;
-	};
-
-	gpu_amb_f75303: gpu_amb_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		reg = <0x4d>;
 	};
