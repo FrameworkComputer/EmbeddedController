@@ -8,6 +8,7 @@
 
 #include "board_host_command.h"
 #include "console.h"
+#include "cpu_power.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "ec_commands.h"
@@ -117,6 +118,13 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 * to wait SLP_S5 and SLP_S3 signal to boot into OS.
 	 */
 	power_s5_up_control(1);
+
+	/**
+	 * Even though the protocol returns EC_SUCCESS,
+	 * the system still does not update the power limit.
+	 * So move the update process at here.
+	 */
+	update_soc_power_limit(true, false);
 
 	/**
 	 * TODO: clear ENTER_S4/S5 flag
