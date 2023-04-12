@@ -249,7 +249,7 @@
 		rst-gpios = <&gpio7 4 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
 	};
 
-	rt1716_tcpc_port1: rt1716@4e {
+	tcpc_rt1716_port1: rt1716@4e {
 		compatible = "richtek,rt1715-tcpc";
 		reg = <0x4e>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
@@ -291,7 +291,7 @@
 		reg = <0x72>;
 	};
 
-	ppc_port1_syv: ppc_syv@40 {
+	ppc_syv_port1: ppc_syv@40 {
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x40>;

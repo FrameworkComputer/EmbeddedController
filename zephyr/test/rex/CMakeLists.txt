@@ -7,6 +7,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(rex)
 
 zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/rex/include")
+zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/rex/rex/include")
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 

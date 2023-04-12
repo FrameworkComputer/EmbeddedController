@@ -13,7 +13,6 @@
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/nct38xx.h"
-#include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -23,6 +22,7 @@
 #include "system.h"
 #include "task.h"
 #include "usb_mux.h"
+#include "usbc_config.h"
 #include "usbc_ppc.h"
 
 #include <stdbool.h>
@@ -38,10 +38,6 @@
 
 /*******************************************************************/
 /* USB-C Configuration Start */
-
-/* USB-C ports */
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
-BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 static void usbc_interrupt_init(void)
 {
@@ -81,7 +77,7 @@ void sbu_fault_interrupt(enum gpio_signal signal)
 	pd_handle_overcurrent(port);
 }
 
-static void reset_nct38xx_port(int port)
+void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;
 	const struct device *ioex_port0, *ioex_port1;
@@ -107,34 +103,6 @@ static void reset_nct38xx_port(int port)
 	/* Re-enable the IO expander pins */
 	gpio_reset_port(ioex_port0);
 	gpio_reset_port(ioex_port1);
-}
-
-void board_reset_pd_mcu(void)
-{
-	/* Reset TCPC0 */
-	reset_nct38xx_port(USBC_PORT_C0);
-
-	/* Reset TCPC1 */
-	if (tcpc_config[1].rst_gpio.port) {
-		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
-		msleep(PS8XXX_RESET_DELAY_MS);
-		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
-		msleep(PS8815_FW_INIT_DELAY_MS);
-	}
-}
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(USBC_PORT_C1);
-		break;
-	default:
-		break;
-	}
 }
 
 void bc12_interrupt(enum gpio_signal signal)

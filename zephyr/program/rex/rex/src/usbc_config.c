@@ -3,29 +3,13 @@
  * found in the LICENSE file.
  */
 
-/* Screebo board-specific USB-C configuration */
-
+#include "cros_cbi.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "ppc/syv682x_public.h"
 #include "system.h"
+#include "usb_mux_config.h"
 #include "usbc_config.h"
-#include "usbc_ppc.h"
-
-#include <zephyr/drivers/gpio.h>
-
-void screebo_ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C1);
-		break;
-	default:
-		break;
-	}
-}
 
 void board_reset_pd_mcu(void)
 {
@@ -33,10 +17,29 @@ void board_reset_pd_mcu(void)
 	reset_nct38xx_port(USBC_PORT_C0);
 
 	/* Reset TCPC1 */
-	if (tcpc_config[1].rst_gpio.port) {
+	if (usb_db_type == FW_USB_DB_USB3) {
 		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
 		msleep(PS8XXX_RESET_DELAY_MS);
 		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
 		msleep(PS8815_FW_INIT_DELAY_MS);
+	}
+}
+
+void ppc_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_PPC_INT_ODL:
+		syv682x_interrupt(USBC_PORT_C0);
+		break;
+	case GPIO_USB_C1_PPC_INT_ODL:
+		if (usb_db_type == FW_USB_DB_USB3) {
+			nx20p348x_interrupt(USBC_PORT_C1);
+		}
+		if (usb_db_type == FW_USB_DB_USB4_ANX7452) {
+			syv682x_interrupt(USBC_PORT_C1);
+		}
+		break;
+	default:
+		break;
 	}
 }
