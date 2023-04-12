@@ -453,7 +453,7 @@ DT_INST_FOREACH_STATUS_OKAY(INIT_ISL923X)
 #ifdef CONFIG_ZTEST_NEW_API
 
 #define ISL923X_EMUL_RESET_RULE_AFTER(n) \
-	isl923x_emul_reset(&isl923x_emul_data_##n)
+	isl923x_emul_reset(&isl923x_emul_data_##n);
 
 static void emul_isl923x_reset_before(const struct ztest_unit_test *test,
 				      void *data)
@@ -461,7 +461,7 @@ static void emul_isl923x_reset_before(const struct ztest_unit_test *test,
 	ARG_UNUSED(test);
 	ARG_UNUSED(data);
 
-	DT_INST_FOREACH_STATUS_OKAY(ISL923X_EMUL_RESET_RULE_AFTER);
+	DT_INST_FOREACH_STATUS_OKAY(ISL923X_EMUL_RESET_RULE_AFTER)
 }
 ZTEST_RULE(emul_isl923x_reset, emul_isl923x_reset_before, NULL);
 #endif /* CONFIG_ZTEST_NEW_API */
