@@ -1,0 +1,191 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Rex program common DTSI includes */
+#include "../fan.dtsi"
+#include "../generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../power_signals.dtsi"
+#include "../rex.dtsi"
+#include "../usbc.dtsi"
+
+/* Screebo project DTS includes */
+#include "temp_sensors.dtsi"
+
+/ {
+	named-gpios {
+		/delete-node/ led_3_l;
+		/delete-node/ led_4_l;
+		/delete-node/ ec-i2c-sensor-scl;
+		/delete-node/ ec-i2c-sensor-sda;
+		/delete-node/ ec_imu_int_r_l;
+		/delete-node/ ec_als_rgb_int_r_l;
+		/delete-node/ ec_accel_int_r_l;
+		/delete-node/ ec_volup_btn_odl;
+		/delete-node/ ec_voldn_btn_odl;
+		/delete-node/ tablet_mode_l;
+		/delete-node/ ec_spare_gpiob1;
+		/delete-node/ ec_spare_gpioa2;
+		/delete-node/ usb_c1_rst_odl;
+
+		gpio_usb_c1_rt_3p3_sx_en: usb_c1_rt_3p3_sx_en {
+			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c1_rst_odl: usb_c1_rst_odl {
+			gpios = <&gpio3 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c1_rt_int_odl: usb_c1_rt_int_odl {
+			gpios = <&gpio7 2 GPIO_INPUT>;
+		};
+		gpio_usb_a1_oc_pu_en: usb_a1_oc_pu_en {
+			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_a_low_pwr_od: usb_a_low_pwr_od {
+			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
+		};
+		ioex_usb_c1_rt_rst_ls_l: usb_c1_rt_rst_ls_l {
+			gpios = <&ioex_c1_port0 7 GPIO_OUTPUT>;
+		};
+		ioex_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&ioex_c1_port0 6 GPIO_OUTPUT_LOW>;
+		};
+
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			<&gpiob 4 0>,
+			<&gpiob 5 0>,
+			<&gpio5 6 0>,
+			<&gpiod 4 0>,
+			<&gpio8 1 0>,
+			<&gpio9 7 0>,
+			<&gpio9 3 0>,
+			<&gpio9 5 0>,
+			<&gpio6 0 0>;
+	};
+
+	gpio-interrupts {
+		/delete-node/ ec_imu;
+		/delete-node/ ec_als_rgb;
+		/delete-node/ ec_accel;
+		/delete-node/ volume_up;
+		/delete-node/ volume_down;
+		usb_c0_ppc {
+			handler = "screebo_ppc_interrupt";
+		};
+		usb_c1_ppc {
+			handler = "screebo_ppc_interrupt";
+		};
+	};
+
+	named-i2c-ports {
+		/delete-node/ ec_i2c_sensor_scl_r;
+	};
+
+	batteries {
+		default_battery: cdt_c340152 {
+			compatible = "cdt,c340152", "battery-smart";
+		};
+	};
+};
+
+/* ADC and GPIO alt-function specifications */
+&adc0 {
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan3_gp42
+		     &adc0_chan7_gpe1
+		     &adc0_chan8_gpf1
+		     &adc0_chan11_gpc7>;
+	pinctrl-names = "default";
+};
+
+&i2c0_0 {
+	status = "disabled";
+};
+&i2c_ctrl0 {
+	status = "disabled";
+};
+
+&i2c3_0 {
+	usb_c1_hb_retimer: jhl9040r-c0@58 {
+		compatible = "intel,jhl9040r";
+		reg = <0x58>;
+		ls-en-pin = <&gpio_usb_c1_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c1_rt_int_odl>;
+		reset-pin = <&ioex_usb_c1_rt_rst_ls_l>;
+	};
+};
+
+&i2c4_1 {
+	/delete-node/ ps8xxx@b;
+
+	tcpc_port1: nct38xx@73 {
+		compatible = "nuvoton,nct38xx";
+		gpio-dev = <&nct3807_C1>;
+		reg = <0x73>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
+		/* a duplicate of the <&gpio_usb_c1_rst_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		rst-gpios = <&gpio3 7 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+	};
+
+	nct3807_C1: nct3807_C1@73 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x73>;
+		label = "NCT3807_C1";
+
+		ioex_c1_port0: gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT3807_C1_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+			pinmux_mask = <0xf7>;
+		};
+	};
+
+	nct3808_alert_1 {
+		compatible = "nuvoton,nct38xx-gpio-alert";
+		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
+		nct38xx-dev = <&nct3807_C1>;
+		label = "NCT3807_ALERT_0";
+	};
+};
+
+&i2c6_1 {
+	/delete-node/ nx20p348x@72;
+
+	ppc_port1_syv: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&ioex_usb_c1_frs_en>;
+	};
+};
+
+&usbc_port1 {
+	ppc = <&ppc_port1_syv>;
+	usb-mux-chain-1 {
+		usb-muxes = <&usb_c1_hb_retimer &virtual_mux_c1>;
+	};
+};

@@ -8,6 +8,12 @@ config BOARD_REX
 	  Build Google Rex reference board.  The board uses Nuvoton
 	  NPCX9 chip as the EC.
 
+config BOARD_SCREEBO
+	bool "Google Screebo Board"
+	help
+	  Build Google Screebo variant board. The board uses Nuvoton
+	  NPCX9 chip as the EC.
+
 module = REX
 module-str = Rex board-specific code
 source "subsys/logging/Kconfig.template.log_config"

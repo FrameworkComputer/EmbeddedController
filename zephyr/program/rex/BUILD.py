@@ -44,3 +44,7 @@ register_rex_project(
         here / "rex-sans-sensors" / "project.conf",
     ],
 )
+
+register_rex_project(
+    project_name="screebo",
+)
