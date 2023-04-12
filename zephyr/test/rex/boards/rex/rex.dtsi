@@ -5,3 +5,15 @@
 
 #include "../native_posix.overlay"
 #include "../../../../program/rex/rex/cbi.dtsi"
+
+/ {
+	/* Unused Stub */
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		named_i2c0: i2c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_MUX";
+		};
+	};
+};
