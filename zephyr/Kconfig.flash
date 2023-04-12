@@ -120,6 +120,30 @@ config PLATFORM_EC_FLASH_PSTATE
 	  defined, write protect state is maintained solely by the physical
 	  flash driver.
 
+if PLATFORM_EC_FLASH_PSTATE
+
+config PLATFORM_EC_FLASH_PSTATE_BANK
+	bool "Store the pstate data in its own dedicated bank of flash"
+	default y
+	help
+	  Store the pstate data in its own dedicated bank of flash.  This allows
+	  disabling the protect-RO-at-boot flag without rewriting the RO
+	  firmware, but costs a bank of flash.
+
+	  If this is not defined, the pstate data is stored inside the RO
+	  firmware image itself.  This is more space-efficient, but the only way
+	  to clear the flag once it's set is to rewrite the RO firmware (after
+	  removing the WP screw, of course).
+
+config PLATFORM_EC_FLASH_PSTATE_LOCKED
+	bool "Lock the pstate by default"
+	depends on !PLATFORM_EC_FLASH_PSTATE_BANK
+	help
+	  Lock the pstate by default, Currently only supported when
+	  PLATFORM_EC_FLASH_PSTATE_BANK is not defined.
+
+endif # PLATFORM_EC_FLASH_PSTATE
+
 config PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT
 	bool "Use Zephyr flash page layout API to get sector information"
 	default y if SOC_FAMILY_STM32
