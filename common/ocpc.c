@@ -701,7 +701,7 @@ void ocpc_reset(struct ocpc_data *ocpc)
 	ocpc_precharge_enable(false);
 }
 
-static void ocpc_set_pid_constants(void)
+test_export_static void ocpc_set_pid_constants(void)
 {
 	ocpc_get_pid_constants(&k_p, &k_p_div, &k_i, &k_i_div, &k_d, &k_d_div);
 }
@@ -800,3 +800,14 @@ static int command_ocpcdrvlmt(int argc, const char **argv)
 }
 DECLARE_SAFE_CONSOLE_COMMAND(ocpcdrvlmt, command_ocpcdrvlmt, "[<drive_limit>]",
 			     "Show/Set drive limit for OCPC PID loop");
+
+#ifdef TEST_BUILD
+int test_ocpc_get_viz_output(void)
+{
+	return viz_output;
+}
+int test_ocpc_get_debug_output(void)
+{
+	return debug_output;
+}
+#endif

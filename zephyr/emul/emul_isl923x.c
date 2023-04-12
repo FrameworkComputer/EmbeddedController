@@ -58,6 +58,9 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 /** Mask used for the control 8 register */
 #define REG_CONTROL8_MASK GENMASK(15, 0)
 
+/** Mask used for the control 10 register */
+#define REG_CONTROL10_MASK GENMASK(15, 0)
+
 /** Mask used for the AC PROCHOT register */
 #define REG_PROCHOT_AC_MASK GENMASK(12, 7)
 
@@ -100,6 +103,8 @@ struct isl923x_emul_data {
 	uint16_t control_4_reg;
 	/** Emulated control 8 register (RAA489000-only) */
 	uint16_t control_8_reg;
+	/** Emulated control 10 register (RAA48900-only) */
+	uint16_t control_10_reg;
 	/** Emulated info 2 reg */
 	uint16_t info_2_reg;
 	/** Emulated AC PROCHOT register */
@@ -267,6 +272,9 @@ static int isl923x_emul_read_byte(const struct emul *emul, int reg,
 	case RAA489000_REG_CONTROL8:
 		READ_REG_16(data->control_8_reg, bytes, val);
 		break;
+	case RAA489000_REG_CONTROL10:
+		READ_REG_16(data->control_10_reg, bytes, val);
+		break;
 	case ISL9238_REG_INFO2:
 		READ_REG_16(data->info_2_reg, bytes, val);
 		break;
@@ -359,6 +367,10 @@ static int isl923x_emul_write_byte(const struct emul *emul, int reg,
 	case RAA489000_REG_CONTROL8:
 		WRITE_REG_16(data->control_8_reg, bytes, val,
 			     REG_CONTROL8_MASK);
+		break;
+	case RAA489000_REG_CONTROL10:
+		WRITE_REG_16(data->control_10_reg, bytes, val,
+			     REG_CONTROL10_MASK);
 		break;
 	case ISL9238_REG_INFO2:
 		__ASSERT(false, "Write to read-only reg ISL9238_REG_INFO2");
