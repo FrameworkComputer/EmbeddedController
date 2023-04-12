@@ -10,7 +10,13 @@
 #define EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS	0x100
 #define EC_CUSTOMIZED_MEMMAP_POWER_STATE	0x101
 #define EC_CUSTOMIZED_MEMMAP_WAKE_EVENT		0x102
-
+/*
+ * define wake source for keep PCH power
+ * BIT0 for RTCwake
+ * BIT1 for USBwake
+ */
+#define RTCWAKE  BIT(0)
+#define USBWAKE  BIT(1)
 
 /* Battery */
 #define EC_CUSTOMIZED_MEMMAP_BATT_AVER_TEMP	0x103
