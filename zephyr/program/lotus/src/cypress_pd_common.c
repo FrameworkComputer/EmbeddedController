@@ -309,7 +309,7 @@ static void cypd_update_port_state(int controller, int port)
 {
 	int rv;
 	uint8_t pd_status_reg[4];
-	uint8_t pdo_reg[4];
+	uint32_t pdo_reg;
 	uint8_t rdo_reg[4];
 
 	int typec_status_reg;
@@ -330,6 +330,7 @@ static void cypd_update_port_state(int controller, int port)
 		pd_status_reg[0] & BIT(6) ? PD_ROLE_DFP : PD_ROLE_UFP;
 	pd_port_states[port_idx].vconn =
 		pd_status_reg[1] & BIT(5) ? PD_ROLE_VCONN_SRC : PD_ROLE_VCONN_OFF;
+	pd_port_states[port_idx].epr_active = pd_status_reg[2] & BIT(7) ? 1 : 0;
 
 	rv = cypd_read_reg8(controller, CCG_TYPE_C_STATUS_REG(port), &typec_status_reg);
 	if (rv != EC_SUCCESS)
@@ -351,9 +352,31 @@ static void cypd_update_port_state(int controller, int port)
 #ifdef CONFIG_BOARD_LOTUS
 	update_external_cc_mux(port_idx,pd_port_states[port_idx].c_state == CCG_STATUS_NOTHING ? 0xFF : pd_port_states[port_idx].cc);
 #endif
-	rv = cypd_read_reg_block(controller, CCG_CURRENT_PDO_REG(port), pdo_reg, 4);
-	pd_current = (pdo_reg[0] + ((pdo_reg[1] & 0x3) << 8)) * 10;
-	pd_voltage = (((pdo_reg[1] & 0xFC) >> 2) + ((pdo_reg[2] & 0xF) << 6)) * 50;
+
+	rv = cypd_read_reg_block(controller, CCG_CURRENT_PDO_REG(port), &pdo_reg, 4);
+	switch (pdo_reg & PDO_TYPE_MASK) {
+		case PDO_TYPE_FIXED:
+			pd_current = PDO_FIXED_CURRENT(pdo_reg);
+			pd_voltage = PDO_FIXED_VOLTAGE(pdo_reg);
+			break;
+		case PDO_TYPE_BATTERY:
+			pd_current = PDO_BATT_MAX_POWER(pdo_reg)/PDO_BATT_MAX_VOLTAGE(pdo_reg);
+			pd_voltage = PDO_BATT_MIN_VOLTAGE(pdo_reg);
+		break;
+		case PDO_TYPE_VARIABLE:
+			pd_current = PDO_VAR_MAX_CURRENT(pdo_reg);
+			pd_voltage = PDO_VAR_MAX_VOLTAGE(pdo_reg);
+		break;
+		case PDO_TYPE_AUGMENTED:
+			pd_current = PDO_AUG_MAX_CURRENT(pdo_reg);
+			pd_voltage = PDO_AUG_MAX_VOLTAGE(pdo_reg);
+		break;
+	}
+
+	if (pd_voltage > 20000) {
+		/* (charge_ma * charge_mv / 20000 ) * 0.9 */
+		pd_current = pd_current * pd_voltage / 20000;
+	} 
 
 	cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
 	rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
@@ -401,6 +424,35 @@ static void cypd_update_port_state(int controller, int port)
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
 		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
+	}
+}
+
+static void cypd_update_epr_state(int controller, int port, int response_len)
+{
+	int rv;
+	uint8_t data[16];
+	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
+	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+
+	rv = i2c_read_offset16_block(i2c_port, addr_flags,
+		CCG_READ_DATA_MEMORY_REG(port, 0), data, MIN(response_len, 16));
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("CCG_READ_DATA_MEMORY_REG failed");
+
+	if ((data[0] & EPR_EVENT_POWER_ROLE_MASK) == EPR_EVENT_POWER_ROLE_SINK) {
+		switch (data[0] & EPR_EVENT_TYPE_MASK) {
+		case EPR_MODE_ENTERED:
+			CPRINTS("Entered EPR");
+			break;
+		case EPR_MODE_EXITED:
+			CPRINTS("Exited EPR");
+			break;
+		case EPR_MODE_ENTER_FAILED:
+		default:
+		/* see epr_event_failure_type*/
+			CPRINTS("EPR failed %d", data[1]);
+		}
 	}
 }
 
@@ -452,8 +504,8 @@ static int cypd_setup(int controller)
 		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT0_INTR},
 		{ CCG_PD_CONTROL_REG(1), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT1_INTR},
 		/* Set the port event mask */
-		{ CCG_EVENT_MASK_REG(0), 0x7ffff, 4, CCG_PORT0_INTR},
-		{ CCG_EVENT_MASK_REG(1), 0x7ffff, 4, CCG_PORT1_INTR },
+		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
+		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
 		/* EC INIT Complete */
 		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_EC_INIT_COMPLETE, CCG_PORT0_INTR },
 	};
@@ -626,6 +678,11 @@ void cypd_port_int(int controller, int port)
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
+		cypd_update_port_state(controller, port);
+		break;
+	case CCG_RESPONSE_EPR_EVENT:
+		CPRINTS("CCG_RESPONSE_EPR_EVENT %d", port_idx);
+		cypd_update_epr_state(controller, port, response_len);
 		cypd_update_port_state(controller, port);
 		break;
 	default:
@@ -898,11 +955,13 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 			for (p = 0; p < 2; p++) {
 				CPRINTS("=====Port %d======", p);
 				cypd_read_reg_block(i, CCG_PD_STATUS_REG(p), data16, 4);
-				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s",
+				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s Partner:%s EPR:%s",
 						data16[1] & BIT(2) ? "Contract" : "NoContract",
 						data16[0] & BIT(6) ? "DFP" : "UFP",
 						data16[1] & BIT(0) ? "Source" : "Sink",
-						data16[1] & BIT(5) ? "En" : "Dis");
+						data16[1] & BIT(5) ? "En" : "Dis",
+						data16[2] & BIT(3) ? "Un-chunked" : "Chunked",
+						data16[2] & BIT(7) ? "EPR" : "Non EPR");
 				cypd_read_reg8(i, CCG_TYPE_C_STATUS_REG(p), &data);
 				CPRINTS("   TYPE_C_STATUS : %s %s %s %s %s",
 							data & 0x1 ? "Connected" : "Not Connected",
