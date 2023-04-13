@@ -197,6 +197,7 @@
 	rpm_min = <2100>;
 	rpm_start = <2800>;
 	rpm_max = <4800>;
+	rpm_deviation = <3>;
 };
 
 /* temperature sensor overrides */
