@@ -91,7 +91,10 @@ extern "C" {
  * macros for integer division with various rounding variants
  * default integer division rounds down.
  */
+#ifndef DIV_ROUND_UP
 #define DIV_ROUND_UP(x, y) (((x) + ((y)-1)) / (y))
+#endif
+
 #define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
 
 /* Like strtol(), but for integers. */
