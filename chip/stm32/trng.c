@@ -16,7 +16,7 @@
 #include "trng.h"
 #include "util.h"
 
-uint32_t trng_rand(void)
+static uint32_t trng_rand(void)
 {
 	int tries = 300;
 	/* Wait for a valid random number */

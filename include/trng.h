@@ -28,13 +28,6 @@ void trng_init(void);
 void trng_exit(void);
 
 /**
- * Retrieve a 32 bit random value.
- *
- * Not supported on all platforms.
- **/
-uint32_t trng_rand(void);
-
-/**
  * Output len random bytes into buffer.
  *
  * Not supported on all platforms.

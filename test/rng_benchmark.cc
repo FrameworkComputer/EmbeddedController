@@ -31,7 +31,7 @@ test_static int test_rng()
 	trng_init();
 	auto result = benchmark.run("trng", [&trng_out]() {
 		static int i = 0;
-		trng_out[i++] = trng_rand();
+		trng_rand_bytes(&trng_out[i++], sizeof(uint32_t));
 	});
 	trng_exit();
 
@@ -46,7 +46,7 @@ test_static int test_rng()
 	result = benchmark.run("trng_on_off", [&trng_out]() {
 		trng_init();
 		static int i = 0;
-		trng_out[i++] = trng_rand();
+		trng_rand_bytes(&trng_out[i++], sizeof(uint32_t));
 		trng_exit();
 	});
 
