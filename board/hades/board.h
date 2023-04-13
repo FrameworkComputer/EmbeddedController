@@ -177,8 +177,8 @@ enum temp_sensor_id {
 };
 
 enum battery_type {
-	BATTERY_DYNAPACK_COSMX,
-	BATTERY_DYNAPACK_HIGHPOWER,
+	BATTERY_LGC_AP21A8T,
+
 	BATTERY_TYPE_COUNT
 };
 

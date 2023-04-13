@@ -33,20 +33,22 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* DYNAPACK COSMAX Battery Information */
-	[BATTERY_DYNAPACK_COSMX] = {
+	/* LGC AP21A8T Battery Information */
+	[BATTERY_LGC_AP21A8T] = {
 		/* RAJ240045 Fuel Gauge */
 		.fuel_gauge = {
-			.manuf_name = "333-2C-4C-A",
+			.manuf_name = "LGC KT0040G014",
 			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
 			},
 			.fet = {
 				.mfgacc_support = 0,
 				.reg_addr = 0x43,
-				.reg_mask = 0x0003,
+				.reg_mask = 0x0001,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
 			}
 		},
 		.batt_info = {
@@ -55,46 +57,17 @@ const struct board_batt_params board_battery_info[] = {
 			.voltage_min		= 12000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
+			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
-			.charging_max_c		= 50,
-			.discharging_min_c	= -10,
-			.discharging_max_c	= 60,
-		},
-	},
-	/* DYNAPACK HIGHPOWER Battery Information */
-	[BATTERY_DYNAPACK_HIGHPOWER] = {
-		/* RAJ240045 Fuel Gauge */
-		.fuel_gauge = {
-			.manuf_name = "333-2D-4C-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
-			},
-			.fet = {
-				.mfgacc_support = 0,
-				.reg_addr = 0x43,
-				.reg_mask = 0x0003,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 17600,
-			.voltage_normal		= 15400, /* mV */
-			.voltage_min		= 12000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 50,
-			.discharging_min_c	= -10,
-			.discharging_max_c	= 60,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 75,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DYNAPACK_COSMX;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_LGC_AP21A8T;
 
 enum battery_present battery_hw_present(void)
 {
