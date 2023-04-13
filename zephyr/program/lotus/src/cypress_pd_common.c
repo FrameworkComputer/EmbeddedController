@@ -373,6 +373,11 @@ static void cypd_update_port_state(int controller, int port)
 		break;
 	}
 
+	if (pd_voltage > 20000) {
+		/* (charge_ma * charge_mv / 20000 ) * 0.9 */
+		pd_current = pd_current * pd_voltage / 20000;
+	} 
+
 	cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
 	rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
 

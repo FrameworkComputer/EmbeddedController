@@ -184,7 +184,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	/*Handle EPR converstion through the buck switcher*/
 	if (charge_mv > 20000) {
 		/* (charge_ma * charge_mv / 20000 ) * 0.9 */
-		charge_ma = (90 * charge_ma * charge_mv / 2000000);
+		charge_ma = (90 * (int64_t)charge_ma * (int64_t)charge_mv / 2000000);
 		CPRINTS("Updating charger with EPR correction: ma %d",charge_ma);
 	} else {
 		charge_ma = charge_ma * 94 / 100;
