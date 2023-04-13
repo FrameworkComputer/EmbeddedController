@@ -155,6 +155,10 @@
 		compatible = "cros-ec,temp-sensor-f75303";
 		reg = <0x4d>;
 	};
+	gpu_amdr23m: gpu_amdr23m@40 {
+		compatible = "cros-ec,temp-sensor-amdr23m";
+		reg = <0x40>;
+	};
 };
 
 &i2c_ctrl5 {

@@ -19,6 +19,10 @@
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
 
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#define AMDR23M_COMPAT cros_ec_temp_sensor_amdr23m
+#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
+
 #define TEMP_SENSORS_NODEID DT_INST(0, TEMP_SENSORS_COMPAT)
 
 #define TEMP_RT9490_FN(node_id, fn) \
@@ -28,6 +32,7 @@
 	DT_FOREACH_STATUS_OKAY(PCT2075_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, fn)                           \
+	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(THERMISTOR_COMPAT, fn)
@@ -157,6 +162,27 @@ enum f75303_sensor {
 };
 
 #undef F75303_SENSOR_ID_WITH_COMMA
+
+
+
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+
+/* AMDR23M access array */
+/*
+ * Get the AMDR23M sensor ID from a hardware device node.
+ *
+ * @param node_id: node id of a hardware AMDR23M sensor node
+ */
+#define AMDR23M_SENSOR_ID(node_id) DT_CAT(AMDR23M_, node_id)
+#define AMDR23M_SENSOR_ID_WITH_COMMA(node_id) AMDR23M_SENSOR_ID(node_id),
+
+enum amdr23m_sensor {
+	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, AMDR23M_SENSOR_ID_WITH_COMMA)
+		AMDR23M_COUNT,
+};
+
+#undef AMDR23M_SENSOR_ID_WITH_COMMA
+#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 
 struct zephyr_temp_sensor {
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */
