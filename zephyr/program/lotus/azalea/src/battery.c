@@ -4,10 +4,11 @@
  */
 #include <zephyr/drivers/gpio.h>
 
-
+#include "adc.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "battery_fuel_gauge.h"
+#include "board_adc.h"
 #include "board_host_command.h"
 #include "charger.h"
 #include "charge_state.h"
@@ -22,29 +23,29 @@
 
 #define CACHE_INVALIDATION_TIME_US (3 * SECOND)
 
+static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static uint8_t charging_maximum_level = EC_CHARGE_LIMIT_RESTORE;
 static int old_btp;
 
 enum battery_present battery_is_present(void)
 {
-	enum battery_present batt_pres = BP_NO;
-	char text[32];
-	static int retry;
+	enum battery_present batt_pres;
+	int mv;
+
+	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
+	batt_pres = (mv < 3000 ? BP_YES : BP_NO);
+
+	if (mv == ADC_READ_ERROR)
+		return BP_NO;
 
 	/*
-	 * EC does not connect to the battery present pin,
-	 * add the workaround to read the battery device name (register 0x21).
+	 * If the battery is present now and was present last time we checked,
+	 * return early.
 	 */
+	if (batt_pres == BP_YES && batt_pres_prev == batt_pres)
+		return batt_pres;
 
-	if (battery_device_name(text, sizeof(text))) {
-		if (retry++ > 3) {
-			batt_pres = BP_NO;
-			retry = 0;
-		}
-	} else {
-		batt_pres = BP_YES;
-		retry = 0;
-	}
+	batt_pres_prev = batt_pres;
 
 	return batt_pres;
 }
@@ -79,6 +80,15 @@ static void battery_percentage_control(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
+
+enum battery_present board_batt_is_present(void)
+{
+	/*
+	 * Due to adc_read_channel() will clear the task event,
+	 * we should get the battery status without read adc channel again.
+	 */
+	return batt_pres_prev;
+}
 
 void battery_customize(struct charge_state_data *curr_batt)
 {
@@ -275,7 +285,7 @@ static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *a
 	}
 
 	if (p->modes & CHG_LIMIT_SET_LIMIT) {
-		if( p->max_percentage < 20 )
+		if (p->max_percentage < 20)
 			return EC_RES_ERROR;
 
 		charging_maximum_level = p->max_percentage;

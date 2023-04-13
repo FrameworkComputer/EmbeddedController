@@ -6,12 +6,16 @@
 
 #include "battery.h"
 #include "board_charger.h"
+#include "charge_manager.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "console.h"
 #include "driver/charger/isl9241.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "charge_manager.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
@@ -38,10 +42,10 @@ static void charger_chips_init(void)
 	 */
 	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_ACOK_REFERENCE, &data) != EC_SUCCESS) {
-			CPRINTS("Retry Charger init");
-			hook_call_deferred(&charger_chips_init_retry_data, 100*MSEC);
-			return;
-		}
+		CPRINTS("Retry Charger init");
+		hook_call_deferred(&charger_chips_init_retry_data, 100*MSEC);
+		return;
+	}
 
 	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
 		if (chg_chips[chip].drv->init)
@@ -110,8 +114,7 @@ void charger_update(void)
 	int val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
-		pre_dc_state != battery_is_present())
-	{
+		pre_dc_state != battery_is_present()) {
 		CPRINTS("update charger!!");
 
 		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -139,3 +142,69 @@ void charger_update(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
+
+static bool bypass_force_en;
+__override int board_should_charger_bypass(void)
+{
+	int power_uw = charge_manager_get_power_limit_uw();
+
+	if (bypass_force_en)
+		return true;
+	if (power_uw >= 100000000)
+		return true;
+	else
+		return false;
+}
+
+/* EC console command */
+static int chgbypass_cmd(int argc, const char **argv)
+{
+	if (argc >= 2) {
+		if (!strncmp(argv[1], "en", 2)) {
+			bypass_force_en = true;
+		} else if (!strncmp(argv[1], "dis", 3)) {
+			bypass_force_en = false;
+		} else {
+			return EC_ERROR_PARAM1;
+		}
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(chargerbypass, chgbypass_cmd, "[en/dis]",
+			"Force charger bypass enabled");
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	int prochot_ma;
+
+	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
+		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
+	}
+
+	/*Handle EPR converstion through the buck switcher*/
+	if (charge_mv > 20000) {
+		/* (charge_ma * charge_mv / 20000 ) * 0.9 */
+		charge_ma = (90 * charge_ma * charge_mv / 2000000);
+		CPRINTS("Updating charger with EPR correction: ma %d",charge_ma);
+	} else {
+		charge_ma = charge_ma * 94 / 100;
+	}
+	/*
+	 * ac prochot should bigger than input current
+	 * And needs to be at least 128mA bigger than the adapter current
+	 */
+	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
+
+
+	if ((prochot_ma - charge_ma) < 853) {
+		/* We need prochot to be at least 1 LSB above
+		 * the input current limit. This is not ideal
+		 * due to the low accuracy on prochot.
+		 */
+		prochot_ma += 853;
+	}
+
+	charge_set_input_current_limit(charge_ma, charge_mv);
+	/* sync-up ac prochot with current change */
+	isl9241_set_ac_prochot(0, prochot_ma);
+}

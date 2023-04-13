@@ -681,6 +681,17 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 		 */
 		return EC_ERROR_PARAM2;
 
+
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+	CPRINTS("Bypass -> RTB");
+	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		       ISL9241_CONTROL0_REVERSE_TURBO_BOOST, MASK_SET);
+
+	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE,
+					bi->voltage_max);
+
+#endif /* CONFIG_CHARGER_BYPASS_REVERSE_TURBO */
+
 	return EC_SUCCESS;
 }
 
@@ -719,6 +730,19 @@ static enum ec_error_list isl9241_bypass_to_nvdc(int chgnum)
 	const struct battery_info *bi = battery_get_info();
 	int voltage;
 	int rv;
+
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+	CPRINTS("RTB -> Bypass");
+	/* 1: Stop switching. */
+	rv = isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, 0);
+	if (rv)
+		return rv;
+
+	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+			ISL9241_CONTROL0_REVERSE_TURBO_BOOST, MASK_CLR);
+	if (rv)
+		return rv;
+#endif
 
 	CPRINTS("bypass -> nvdc");
 

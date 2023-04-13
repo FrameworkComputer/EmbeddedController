@@ -12,7 +12,7 @@
 		i2c-2 = &i2c2_0;
 		i2c-3 = &i2c3_0;
 		i2c-4 = &i2c4_1;
-		i2c-5 = &i2c5_0;
+		i2c-5 = &i2c5_1;
 		i2c-6 = &i2c6_1;
 		i2c-7 = &i2c7_0;
 	};
@@ -43,7 +43,7 @@
 			dynamic-speed;
 		};
 		i2c_gpu0: gpu0 {
-			i2c-port = <&i2c5_0>;
+			i2c-port = <&i2c5_1>;
 			enum-names = "I2C_PORT_GPU0";
 		};
 		i2c_gpu1: gpu1 {
@@ -52,7 +52,8 @@
 		};
 		i2c_sensor: sensor {
 			i2c-port = <&i2c7_0>;
-			enum-names =  "I2C_PORT_SENSOR";
+			enum-names =  "I2C_PORT_SENSOR",
+				"I2C_PORT_THERMAL_AP";
 		};
 	};
 };
@@ -132,14 +133,28 @@
 	status = "okay";
 };
 
-&i2c5_0 {
+&i2c5_1 {
 	status = "okay";
 	label = "I2C_PORT5";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
-	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-0 = <&i2c5_1_sda_scl_gpf4_f5>;
 	pinctrl-names = "default";
 
 	/* TODO: Add the device on this bus */
+	gpu_amb_f75303: gpu_amb_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4d>;
+	};
+
+	gpu_vr_f75303: gpu_vr_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4d>;
+	};
+
+	gpu_vram_f75303: gpu_vram_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4d>;
+	};
 };
 
 &i2c_ctrl5 {
@@ -168,7 +183,7 @@
 	pinctrl-names = "default";
 
 	/* TODO: Add the device on this bus */
-	cpu_f75303: cpu_f75303@4d {
+	local_f75303: local_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		reg = <0x4d>;
 	};
@@ -178,9 +193,14 @@
 		reg = <0x4d>;
 	};
 
-	local_f75303: local_f75303@4d {
+	cpu_f75303: cpu_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		reg = <0x4d>;
+	};
+
+	temp_cpu: cpu@4c {
+		compatible = "amd,sb-tsi";
+		reg = <0x4c>;
 	};
 };
 

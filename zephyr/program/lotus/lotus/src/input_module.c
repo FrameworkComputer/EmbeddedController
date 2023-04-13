@@ -6,6 +6,7 @@
 #include <atomic.h>
 #include <zephyr/init.h>
 #include "gpio/gpio_int.h"
+#include "board_host_command.h"
 #include "console.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -118,8 +119,6 @@ static void board_input_module_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT);
 
-
-
 static void poll_c_deck(void)
 {
 	static int turning_on_count;
@@ -194,6 +193,23 @@ static void input_modules_powerdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_modules_powerdown, HOOK_PRIO_DEFAULT);
+
+/* Host command */
+static enum ec_status check_deck_state(struct host_cmd_handler_args *args)
+{
+	struct ec_response_deck_state *r = args->response;
+	int idx;
+
+	for (idx = 0; idx < 8; idx++)
+		r->input_deck_board_id[idx] = (uint8_t)hub_board_id[idx];
+
+	r->deck_state = deck_state;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHECK_DECK_STATE, check_deck_state, EC_VER_MASK(0));
 
 /* EC console command */
 static int inputdeck_cmd(int argc, const char **argv)

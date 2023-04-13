@@ -216,7 +216,8 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	return rv;
 }
 
-static void	update_external_cc_mux(int port, int cc)
+#ifdef CONFIG_BOARD_LOTUS
+static void update_external_cc_mux(int port, int cc)
 {
 	if (port == 1) {
 		switch(cc) {
@@ -236,7 +237,7 @@ static void	update_external_cc_mux(int port, int cc)
 		}
 	}
 }
-
+#endif
 
 static void pd0_update_state_deferred(void)
 {
@@ -348,8 +349,9 @@ static void cypd_update_port_state(int controller, int port)
 		type_c_current = 3000;
 		break;
 	}
-
+#ifdef CONFIG_BOARD_LOTUS
 	update_external_cc_mux(port_idx,pd_port_states[port_idx].c_state == CCG_STATUS_NOTHING ? 0xFF : pd_port_states[port_idx].cc);
+#endif
 
 	rv = cypd_read_reg_block(controller, CCG_CURRENT_PDO_REG(port), &pdo_reg, 4);
 	switch (pdo_reg & PDO_TYPE_MASK) {
@@ -845,45 +847,6 @@ int pd_is_connected(int port)
 __override uint8_t board_get_usb_pd_port_count(void)
 {
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	int prochot_ma;
-
-	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
-		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
-	}
-
-	/*Handle EPR converstion through the buck switcher*/
-	if (charge_mv > 20000) {
-		/* (charge_ma * charge_mv / 20000 ) * 0.9 */
-		charge_ma = (90 * charge_ma * charge_mv / 2000000);
-		CPRINTS("Updating charger with EPR correction: ma %d",charge_ma);
-	} else {
-		
-	}
-
-	/*
-	 * ac prochot should bigger than input current
-	 * And needs to be at least 128mA bigger than the adapter current
-	 */
-	prochot_ma = (DIV_ROUND_UP(charge_ma, 853) * 853);
-
-	charge_ma = charge_ma * 95 / 100;
-
-	if ((prochot_ma - charge_ma) < 853) {
-		/* We need prochot to be at least 1 LSB above
-		 * the input current limit. This is not ideal
-		 * due to the low accuracy on prochot.
-		 */
-		prochot_ma += 853;
-	}
-
-	charge_set_input_current_limit(charge_ma, charge_mv);
-	/* sync-up ac prochot with current change */
-	isl9241_set_ac_prochot(0, prochot_ma);
 }
 
 int board_set_active_charge_port(int charge_port)

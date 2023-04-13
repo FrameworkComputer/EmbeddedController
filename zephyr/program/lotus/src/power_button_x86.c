@@ -103,7 +103,8 @@ static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
 
 static const char *const state_names[] = {
 	"idle",	    "pressed",	   "t0",      "t1",	  "held",    "lid-open",
-	"released", "eat-release", "init-on", "recovery", "was-off",
+	"released", "eat-release", "init-on", "recovery", "was-off", "need-reset",
+	"need-shutdown",
 };
 
 /*
@@ -200,8 +201,22 @@ static void power_button_released(uint64_t tnow)
  */
 static void set_initial_pwrbtn_state(void)
 {
-	pwrbtn_state = PWRBTN_STATE_IDLE;
-	CPRINTS("PB idle");
+	uint32_t reset_flags = system_get_reset_flags();
+
+	if (reset_flags == EC_RESET_FLAG_HARD) {
+		pwrbtn_state = PWRBTN_STATE_INIT_ON;
+		CPRINTS("PB init-on after updating firmware");
+	} else if (((reset_flags & EC_RESET_FLAG_HIBERNATE) == EC_RESET_FLAG_HIBERNATE) &&
+		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0)) {
+		/**
+		 * EC needs to auto power on after exiting the hibernate mode w/o external power
+		 */
+		pwrbtn_state = PWRBTN_STATE_INIT_ON;
+		CPRINTS("PB init power on");
+	} else {
+		pwrbtn_state = PWRBTN_STATE_IDLE;
+		CPRINTS("PB idle");
+	}
 }
 
 /**
