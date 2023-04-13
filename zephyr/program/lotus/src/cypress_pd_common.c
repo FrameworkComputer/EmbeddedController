@@ -216,7 +216,8 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	return rv;
 }
 
-static void	update_external_cc_mux(int port, int cc)
+#ifdef CONFIG_BOARD_LOTUS
+static void update_external_cc_mux(int port, int cc)
 {
 	if (port == 1) {
 		switch(cc) {
@@ -236,7 +237,7 @@ static void	update_external_cc_mux(int port, int cc)
 		}
 	}
 }
-
+#endif
 
 static void pd0_update_state_deferred(void)
 {
@@ -347,9 +348,9 @@ static void cypd_update_port_state(int controller, int port)
 		type_c_current = 3000;
 		break;
 	}
-
+#ifdef CONFIG_BOARD_LOTUS
 	update_external_cc_mux(port_idx,pd_port_states[port_idx].c_state == CCG_STATUS_NOTHING ? 0xFF : pd_port_states[port_idx].cc);
-
+#endif
 	rv = cypd_read_reg_block(controller, CCG_CURRENT_PDO_REG(port), pdo_reg, 4);
 	pd_current = (pdo_reg[0] + ((pdo_reg[1] & 0x3) << 8)) * 10;
 	pd_voltage = (((pdo_reg[1] & 0xFC) >> 2) + ((pdo_reg[2] & 0xF) << 6)) * 50;
@@ -794,31 +795,6 @@ int pd_is_connected(int port)
 __override uint8_t board_get_usb_pd_port_count(void)
 {
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	int prochot_ma;
-
-	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
-		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
-	}
-	/*
-	 * ac prochot should bigger than input current
-	 * And needs to be at least 128mA bigger than the adapter current
-	 */
-	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
-
-	charge_ma = charge_ma * 94 / 100;
-
-	if ((prochot_ma - charge_ma) < 855) {
-		charge_ma = prochot_ma - 855;
-	}
-
-	charge_set_input_current_limit(charge_ma, charge_mv);
-	/* sync-up ac prochot with current change */
-	isl9241_set_ac_prochot(0, prochot_ma);
 }
 
 int board_set_active_charge_port(int charge_port)

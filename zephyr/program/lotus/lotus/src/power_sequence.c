@@ -7,6 +7,7 @@
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
+#include "customized_shared_memory.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
@@ -24,7 +25,6 @@
 
 static int power_ready;
 static int power_s5_up;		/* Chipset is sequencing up or down */
-static int keep_pch_power;	/* For S4 wake source */
 static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
@@ -54,6 +54,23 @@ const struct power_signal_info power_signal_list[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+static int keep_pch_power(void)
+{
+	int wake_source = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT);
+
+	/* This feature only use on the ODM stress test tool */
+	if (wake_source & RTCWAKE)
+		return true;
+	else
+		return false;
+
+}
+
+static void clear_rtcwake(void)
+{
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~BIT(0);
+}
 
 static void board_power_on(void);
 DECLARE_DEFERRED(board_power_on);
@@ -120,7 +137,6 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	CPRINTS("%s(%d)", __func__, reason);
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		report_ap_reset(reason);
-		keep_pch_power = 0;
 		force_g3_flags = 1;
 		chipset_force_g3();
 	}
@@ -176,6 +192,8 @@ enum power_state power_handle_state(enum power_state state)
 						/*
 						 * TODO: RTC reset function
 						 */
+						ap_boot_delay = 9;
+						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						/* SLP_S5 asserted, power down to G3S5 state */
 						return POWER_S5G3;
@@ -184,11 +202,13 @@ enum power_state power_handle_state(enum power_state state)
 			}
 			/* Power up to next state */
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
+			s5_exit_tries = 0;
 			return POWER_S5S3;
 		}
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 1) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
+			s5_exit_tries = 0;
 			/* Power up to next state */
 			return POWER_S5S3;
 		}
@@ -247,6 +267,9 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
+
+		clear_rtcwake();
+
 		return POWER_S0;
 
 	case POWER_S0:
@@ -285,7 +308,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * 1. Customer testing tool
 		 * 2. There is a type-c USB input deck connect on the unit
 		 */
-		if (keep_pch_power)
+		if (keep_pch_power())
 			return POWER_S5;
 
 		/* Don't need to keep pch power, turn off the pch power and power down to G3*/

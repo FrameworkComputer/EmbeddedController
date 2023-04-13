@@ -4,7 +4,7 @@
  */
 #include <zephyr/drivers/gpio.h>
 
-
+#include "adc.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "battery_fuel_gauge.h"
@@ -23,59 +23,32 @@
 
 #define CACHE_INVALIDATION_TIME_US (3 * SECOND)
 
+static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static uint8_t charging_maximum_level = EC_CHARGE_LIMIT_RESTORE;
 static int old_btp;
-static int power_on_check_batt;
-
-/* check battery timer */
-K_TIMER_DEFINE(check_battery_timer, NULL, NULL);
 
 enum battery_present battery_is_present(void)
 {
-	static enum battery_present batt_pres = BP_NOT_SURE;
-	char text[32];
-	static int retry;
+	enum battery_present batt_pres;
+	int mv;
 
-	/* timer expired, return no battery */
-	if (k_timer_status_get(&check_battery_timer) > 0) {
-		CPRINTS("check battery timeout, stop precharge!");
-		power_on_check_batt = 0;
+	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
+	batt_pres = (mv < 3000 ? BP_YES : BP_NO);
+
+	if (mv == ADC_READ_ERROR)
 		return BP_NO;
-	}
 
-	/* check the battery present pin first */
-	/* TODO: remove the comment at DVT phase
-	 * if (board_get_version() > BOARD_VERSION_4) {
-	 *	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 1) {
-	 *		k_timer_stop(&check_battery_timer);
-	 *		return BP_YES;
-	 *	}
-	 * }
+	/*
+	 * If the battery is present now and was present last time we checked,
+	 * return early.
 	 */
+	if (batt_pres == BP_YES && batt_pres_prev == batt_pres)
+		return batt_pres;
 
-	/* try to read the battery information */
-	if (battery_device_name(text, sizeof(text))) {
-		/* add the retry if read the bad respond */
-		if (retry++ > 3 && !power_on_check_batt) {
-			batt_pres = BP_NO;
-			retry = 0;
-		}
-	} else {
-		k_timer_stop(&check_battery_timer);
-		batt_pres = BP_YES;
-		retry = 0;
-	}
+	batt_pres_prev = batt_pres;
 
 	return batt_pres;
 }
-
-static void enable_check_battery_timer(void)
-{
-	/* start the timer */
-	power_on_check_batt = 1;
-	k_timer_start(&check_battery_timer, K_SECONDS(30), K_NO_WAIT);
-}
-DECLARE_HOOK(HOOK_INIT, enable_check_battery_timer, HOOK_PRIO_DEFAULT);
 
 static void battery_percentage_control(void)
 {
@@ -107,6 +80,15 @@ static void battery_percentage_control(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
+
+enum battery_present board_batt_is_present(void)
+{
+	/*
+	 * Due to adc_read_channel() will clear the task event,
+	 * we should get the battery status without read adc channel again.
+	 */
+	return batt_pres_prev;
+}
 
 void battery_customize(struct charge_state_data *curr_batt)
 {
@@ -303,7 +285,7 @@ static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *a
 	}
 
 	if (p->modes & CHG_LIMIT_SET_LIMIT) {
-		if( p->max_percentage < 20 )
+		if (p->max_percentage < 20)
 			return EC_RES_ERROR;
 
 		charging_maximum_level = p->max_percentage;

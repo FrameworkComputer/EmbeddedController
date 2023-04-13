@@ -73,6 +73,22 @@ struct ec_response_chg_limit_control {
 	uint8_t min_percentage;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Configure the behavior of the charge limit control.
+ */
+
+#define EC_CMD_PWM_GET_FAN_ACTUAL_RPM	0x3E04
+
+struct ec_params_ec_pwm_get_actual_fan_rpm {
+	/* The index of the fan */
+	uint8_t index;
+} __ec_align1;
+
+struct ec_response_pwm_get_actual_fan_rpm {
+	uint16_t rpm;
+} __ec_align2;
+
 
 /*****************************************************************************/
 /*
@@ -106,5 +122,26 @@ struct ec_response_read_pd_version {
 	uint8_t pd0_version[8];
 	uint8_t pd1_version[8];
 } __ec_align1;
+
+/*****************************************************************************/
+/*
+ * This command returns the input deck state and board id.
+ */
+#define EC_CMD_CHECK_DECK_STATE		0x3E16
+
+struct ec_response_deck_state {
+	uint8_t input_deck_board_id[8];
+	uint8_t deck_state;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * This command returns the simple ec version.
+ */
+#define EC_CMD_GET_SIMPLE_VERSION	0x3E17
+
+struct ec_response_get_custom_version {
+	char simple_version[9];
+} __ec_align4;
 
 #endif /* __BOARD_HOST_COMMAND_H */

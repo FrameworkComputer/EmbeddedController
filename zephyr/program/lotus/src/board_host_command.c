@@ -8,9 +8,11 @@
 
 #include "board_host_command.h"
 #include "console.h"
+#include "cpu_power.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "ec_commands.h"
+#include "fan.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -83,6 +85,23 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_NOTIFIED, flash_notified,
 			EC_VER_MASK(0));
 
+static enum ec_status hc_pwm_get_fan_actual_rpm(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_ec_pwm_get_actual_fan_rpm *p = args->params;
+	struct ec_response_pwm_get_actual_fan_rpm *r = args->response;
+
+	if (FAN_CH_COUNT == 0 || p->index >= FAN_CH_COUNT)
+		return EC_ERROR_INVAL;
+
+	r->rpm = fan_get_rpm_actual(FAN_CH(p->index));
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_FAN_ACTUAL_RPM,
+		     hc_pwm_get_fan_actual_rpm,
+		     EC_VER_MASK(0));
+
 static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 {
 	/**
@@ -99,6 +118,13 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 * to wait SLP_S5 and SLP_S3 signal to boot into OS.
 	 */
 	power_s5_up_control(1);
+
+	/**
+	 * Even though the protocol returns EC_SUCCESS,
+	 * the system still does not update the power limit.
+	 * So move the update process at here.
+	 */
+	update_soc_power_limit(true, false);
 
 	/**
 	 * TODO: clear ENTER_S4/S5 flag
@@ -133,7 +159,28 @@ static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
 
-/* EC console command for Project */
+static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_custom_version *r = args->response;
+	char temp_version[32];
+	int idx;
+
+	strzcpy(temp_version, system_get_version(EC_IMAGE_RO),
+		sizeof(temp_version));
+
+	for (idx = 0; idx < sizeof(r->simple_version); idx++) {
+		r->simple_version[idx] = temp_version[idx + 18];
+	}
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_SIMPLE_VERSION, host_command_get_simple_version, EC_VER_MASK(0));
+
+/*******************************************************************************/
+/*                       EC console command for Project                        */
+/*******************************************************************************/
 static int cmd_bbram(int argc, const char **argv)
 {
 	uint8_t bbram;
