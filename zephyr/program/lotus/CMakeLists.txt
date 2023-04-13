@@ -28,6 +28,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/input_module.c"
 			"lotus/src/gpu.c"
 			"lotus/src/power_sequence.c"
+			"lotus/src/f75303.c"
 	)
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)

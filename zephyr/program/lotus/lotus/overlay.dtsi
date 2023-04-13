@@ -10,38 +10,82 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		cpu-f75303 {
-			temp_host_warn = <108>;
-			temp_host_high = <108>;
+		local-f75303 {
+			temp_host_warn = <90>;
+			temp_host_high = <90>;
 			temp_host_halt = <127>;
-			temp_host_release_warn = <60>;
-			temp_host_release_high = <60>;
-			temp_fan_off = <35>;
-			temp_fan_max = <55>;
+			temp_host_release_warn = <40>;
+			temp_host_release_high = <40>;
+			temp_fan_off = <40>;
+			temp_fan_max = <52>;
 			power-good-pin = <&gpio_slp_s5_l>;
-			sensor = <&cpu_f75303>;
+			sensor = <&local_f75303>;
 		};
 		ddr-f75303 {
-			temp_host_warn = <108>;
-			temp_host_high = <108>;
+			temp_host_warn = <90>;
+			temp_host_high = <90>;
 			temp_host_halt = <127>;
-			temp_host_release_warn = <60>;
-			temp_host_release_high = <60>;
-			temp_fan_off = <35>;
-			temp_fan_max = <55>;
+			temp_host_release_warn = <40>;
+			temp_host_release_high = <40>;
+			temp_fan_off = <40>;
+			temp_fan_max = <52>;
 			power-good-pin = <&gpio_slp_s5_l>;
 			sensor = <&ddr_f75303>;
 		};
-		local-f75303 {
+		cpu-f75303 {
+			temp_host_warn = <90>;
+			temp_host_high = <90>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <40>;
+			temp_host_release_high = <40>;
+			temp_fan_off = <40>;
+			temp_fan_max = <60>;
+			power-good-pin = <&gpio_slp_s5_l>;
+			sensor = <&cpu_f75303>;
+		};
+		amd-apu {
 			temp_host_warn = <108>;
 			temp_host_high = <108>;
 			temp_host_halt = <127>;
 			temp_host_release_warn = <60>;
 			temp_host_release_high = <60>;
-			temp_fan_off = <35>;
-			temp_fan_max = <55>;
+			temp_fan_off = <0>;
+			temp_fan_max = <108>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&temp_cpu>;
+		};
+		gpu-amb-f75303 {
+			temp_host_warn = <100>;
+			temp_host_high = <100>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <40>;
+			temp_host_release_high = <40>;
+			temp_fan_off = <40>;
+			temp_fan_max = <70>;
 			power-good-pin = <&gpio_slp_s5_l>;
-			sensor = <&local_f75303>;
+			sensor = <&gpu_amb_f75303>;
+		};
+		gpu-vr-f75303 {
+			temp_host_warn = <100>;
+			temp_host_high = <100>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <40>;
+			temp_host_release_high = <40>;
+			temp_fan_off = <40>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_slp_s5_l>;
+			sensor = <&gpu_vr_f75303>;
+		};
+		gpu-vram-f75303 {
+			temp_host_warn = <100>;
+			temp_host_high = <100>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <40>;
+			temp_host_release_high = <40>;
+			temp_fan_off = <40>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_slp_s5_l>;
+			sensor = <&gpu_vram_f75303>;
 		};
 	};
 
