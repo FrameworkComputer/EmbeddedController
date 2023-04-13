@@ -172,7 +172,7 @@
 			gpios = <&gpio0 13 GPIO_INPUT>;
 		};
 		gpio_usb_c0_ppc_int: usb_c0_ppc_int {
-			gpios = <&gpio0 14 GPIO_INPUT>;
+			gpios = <&gpio0 14 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
 			gpios = <&gpio0 15 (GPIO_OUTPUT | GPIO_INPUT)>;
