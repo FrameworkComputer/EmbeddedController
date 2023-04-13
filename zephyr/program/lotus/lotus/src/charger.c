@@ -150,7 +150,9 @@ __override int board_should_charger_bypass(void)
 
 	if (bypass_force_en)
 		return true;
-	if (power_uw >= 100000000)
+
+	/* Workaround: don't enter bypass mode when the battery is disconnected */
+	if (power_uw >= 100000000 && (battery_is_present() == BP_YES))
 		return true;
 	else
 		return false;
