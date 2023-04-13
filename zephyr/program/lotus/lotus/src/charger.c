@@ -14,6 +14,7 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "charge_manager.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
@@ -142,6 +143,35 @@ void charger_update(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
+static bool bypass_force_en;
+__override int board_should_charger_bypass(void)
+{
+	int power_uw = charge_manager_get_power_limit_uw();
+
+	if (bypass_force_en)
+		return true;
+	if (power_uw >= 100000000)
+		return true;
+	else
+		return false;
+}
+
+/* EC console command */
+static int chgbypass_cmd(int argc, const char **argv)
+{
+	if (argc >= 2) {
+		if (!strncmp(argv[1], "en", 2)) {
+			bypass_force_en = true;
+		} else if (!strncmp(argv[1], "dis", 3)) {
+			bypass_force_en = false;
+		} else {
+			return EC_ERROR_PARAM1;
+		}
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(chargerbypass, chgbypass_cmd, "[en/dis]",
+			"Force charger bypass enabled");
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {

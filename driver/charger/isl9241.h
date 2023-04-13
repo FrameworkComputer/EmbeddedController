@@ -42,6 +42,7 @@
 /* Configures various charger options */
 #define ISL9241_REG_CONTROL0 0x39
 /* 2: Input Voltage Regulation (0 = Enable (default), 1 = Disable) */
+#define ISL9241_CONTROL0_REVERSE_TURBO_BOOST BIT(0)
 #define ISL9241_CONTROL0_INPUT_VTG_REGULATION BIT(2)
 #define ISL9241_CONTROL0_EN_VIN_VOUT_COMP BIT(5)
 #define ISL9241_CONTROL0_EN_CHARGE_PUMPS BIT(6)

@@ -1319,6 +1319,13 @@
 #undef CONFIG_CHARGER_EN_ACTIVE_LOW
 
 /*
+ * Enable reverse turbo boost to allow battery to suppliment
+ * the AC adapter power when an adapter is connected and
+ * the charger is running in bypass mode
+ */
+#undef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+
+/*
  * OCPC - One Charger IC Per Type-C
  *
  * Define this if the board may have multiple charger ICs in the system.  The
