@@ -10,6 +10,7 @@
 
 #include "config.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef CONFIG_ZEPHYR
@@ -28,6 +29,38 @@ BUILD_ASSERT(FAN_CH_COUNT == CONFIG_PLATFORM_EC_NUM_FANS);
 
 #endif /* CONFIG_PLATFORM_EC_FAN */
 #endif /* CONFIG_ZEPHYR */
+
+/**
+ * STOPPED means not spinning.
+ *
+ * When setting fan rpm, some implementations in chip layer (npcx and it83xx)
+ * is to adjust fan pwm duty steps by steps. In this period, fan_status will
+ * be marked as CHANGING. After change is done, fan_status will become LOCKED.
+ *
+ * In the period of changing pwm duty, if it's trying to increase/decrease duty
+ * even when duty is already in upper/lower bound. Then this action won't work,
+ * and fan_status will be marked as FRUSTRATED.
+ *
+ * For other implementations in chip layer (mchp), there is no
+ * changing period. So they don't have CHANGING status.
+ * Just return status as LOCKED in normal spinning case, return STOPPED when
+ * not spinning, return FRUSTRATED when the related flags (which is read from
+ * chip's register) is set.
+ */
+enum fan_status {
+	FAN_STATUS_STOPPED = 0,
+	FAN_STATUS_CHANGING = 1,
+	FAN_STATUS_LOCKED = 2,
+	FAN_STATUS_FRUSTRATED = 3
+};
+
+/* Fan mode */
+enum fan_mode {
+	/* FAN rpm mode */
+	FAN_RPM = 0,
+	/* FAN duty mode */
+	FAN_DUTY,
+};
 
 struct fan_conf {
 	unsigned int flags;
@@ -51,6 +84,26 @@ struct fan_rpm {
 struct fan_t {
 	const struct fan_conf *conf;
 	const struct fan_rpm *rpm;
+};
+
+/* Fan status data structure */
+struct fan_data {
+	/* Fan mode */
+	enum fan_mode current_fan_mode;
+	/* Actual rpm */
+	int rpm_actual;
+	/* Previous rpm */
+	int rpm_pre;
+	/* Target rpm */
+	int rpm_target;
+	/* Fan config flags */
+	unsigned int flags;
+	/* Automatic fan status */
+	enum fan_status auto_status;
+	/* Current PWM duty cycle percentage */
+	int pwm_percent;
+	/* Whether the PWM channel is enabled */
+	bool pwm_enabled;
 };
 
 /* Values for .flags field */
@@ -167,29 +220,6 @@ int fan_get_rpm_target(int ch);
 /* Is the fan stalled when it shouldn't be? */
 int fan_is_stalled(int ch);
 
-/**
- * STOPPED means not spinning.
- *
- * When setting fan rpm, some implementations in chip layer (npcx and it83xx)
- * is to adjust fan pwm duty steps by steps. In this period, fan_status will
- * be marked as CHANGING. After change is done, fan_status will become LOCKED.
- *
- * In the period of changing pwm duty, if it's trying to increase/decrease duty
- * even when duty is already in upper/lower bound. Then this action won't work,
- * and fan_status will be marked as FRUSTRATED.
- *
- * For other implementations in chip layer (mchp), there is no
- * changing period. So they don't have CHANGING status.
- * Just return status as LOCKED in normal spinning case, return STOPPED when
- * not spinning, return FRUSTRATED when the related flags (which is read from
- * chip's register) is set.
- */
-enum fan_status {
-	FAN_STATUS_STOPPED = 0,
-	FAN_STATUS_CHANGING = 1,
-	FAN_STATUS_LOCKED = 2,
-	FAN_STATUS_FRUSTRATED = 3
-};
 enum fan_status fan_get_status(int ch);
 
 /* Initialize the HW according to the desired flags */
@@ -200,5 +230,21 @@ int fan_get_count(void);
 void fan_set_count(int count);
 
 int is_thermal_control_enabled(int idx);
+
+#ifdef CONFIG_ZEPHYR
+extern struct fan_data fan_data[];
+
+/**
+ * This function sets PWM duty based on target RPM.
+ *
+ * The target and current RPM values in fan_data entry that
+ * corresponds to selected fan has to be updated before this
+ * function is called.
+ *
+ * @param ch    Fan number (index into fan_data[] and fans[])
+ * Return       Fan status (see fan_status enum definition)
+ */
+enum fan_status board_override_fan_control_duty(int ch);
+#endif
 
 #endif /* __CROS_EC_FAN_H */

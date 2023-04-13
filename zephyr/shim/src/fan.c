@@ -62,34 +62,6 @@ DT_INST_FOREACH_CHILD(0, FAN_CONFIGS)
 
 const struct fan_t fans[FAN_CH_COUNT] = { DT_INST_FOREACH_CHILD(0, FAN_INST) };
 
-/* Fan mode */
-enum fan_mode {
-	/* FAN rpm mode */
-	FAN_RPM = 0,
-	/* FAN duty mode */
-	FAN_DUTY,
-};
-
-/* Fan status data structure */
-struct fan_data {
-	/* Fan mode */
-	enum fan_mode current_fan_mode;
-	/* Actual rpm */
-	int rpm_actual;
-	/* Previous rpm */
-	int rpm_pre;
-	/* Target rpm */
-	int rpm_target;
-	/* Fan config flags */
-	unsigned int flags;
-	/* Automatic fan status */
-	enum fan_status auto_status;
-	/* Current PWM duty cycle percentage */
-	int pwm_percent;
-	/* Whether the PWM channel is enabled */
-	bool pwm_enabled;
-};
-
 /* Data structure to define PWM and tachometer. */
 struct fan_config {
 	struct pwm_dt_spec pwm;
@@ -97,7 +69,7 @@ struct fan_config {
 	const struct device *tach;
 };
 
-static struct fan_data fan_data[FAN_CH_COUNT];
+struct fan_data fan_data[FAN_CH_COUNT];
 static const struct fan_config fan_config[FAN_CH_COUNT] = {
 	DT_INST_FOREACH_CHILD(0, FAN_CONTROL_INST)
 };
@@ -268,8 +240,13 @@ static void fan_tick_func_rpm(int ch)
 	/* Get actual rpm */
 	data->rpm_actual = fan_rpm(ch);
 
+	/* TODO: b/279132492 */
+#ifdef CONFIG_PLATFORM_EC_CUSTOM_FAN_DUTY_CONTROL
+	data->auto_status = board_override_fan_control_duty(ch);
+#else
 	/* Do smart fan stuff */
 	data->auto_status = fan_smart_control(ch);
+#endif
 }
 
 static void fan_tick_func_duty(int ch)
