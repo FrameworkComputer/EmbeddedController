@@ -41,21 +41,24 @@
 #define USB_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_DUMB
 
-/* USB Type C and USB PD defines */
-#define CONFIG_USB_PD_TCPM_RT1715
-#undef CONFIG_USB_PD_TCPM_NCT38XX
+/* USB-C0 */
+#define CONFIG_USB_PD_TCPM_NCT38XX
+#define CONFIG_USBC_PPC_TCPCI
+#define CONFIG_USBC_RETIMER_PI3DPX1207
+
+/* USB-C1 */
+#define CONFIG_USB_PD_TCPM_ANX7406
+#define CONFIG_USBC_PPC_TCPCI
 #define CONFIG_USBC_RETIMER_PS8818
+
+/* USB-C Common */
+#define CONFIG_USB_PD_FRS_TCPC
 
 /* I2C speed console command */
 #define CONFIG_CMD_I2C_SPEED
 
 /* I2C control host command */
 #define CONFIG_HOSTCMD_I2C_CONTROL
-
-#define CONFIG_USBC_PPC_SYV682X
-#define CONFIG_USB_PD_FRS_PPC
-#undef CONFIG_SYV682X_HV_ILIM
-#define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
 
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 30000 /* us */
@@ -104,22 +107,24 @@
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
-/* I2C Bus Configuration */
-
-#define I2C_PORT_SENSOR NPCX_I2C_PORT0_0
-
+/*
+ * I2C Bus Configuration
+ */
+/* 0: Unused */
+/* 1: USB-C0 */
 #define I2C_PORT_USB_C0_TCPC NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1_TCPC NPCX_I2C_PORT2_0
-
 #define I2C_PORT_USB_C0_PPC NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1_PPC NPCX_I2C_PORT2_0
-
 #define I2C_PORT_USB_C0_BC12 NPCX_I2C_PORT1_0
+/* 2: USB-C1 */
+#define I2C_PORT_USB_C1_TCPC NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_C1_PPC NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_BC12 NPCX_I2C_PORT2_0
-
-#define I2C_PORT_USBA1_RT NPCX_I2C_PORT6_1
-
+/* 3: Reserved for Accels */
+/* 4: Unused */
+/* 5: Battery */
 #define I2C_PORT_BATTERY NPCX_I2C_PORT5_0
+/* 6: Unused */
+/* 7: Charger, EEPROM, IMVP9 VR, MONITOR */
 #define I2C_PORT_CHARGER NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 

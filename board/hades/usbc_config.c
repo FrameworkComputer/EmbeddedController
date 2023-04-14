@@ -10,9 +10,10 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "driver/bc12/pi3usb9201_public.h"
-#include "driver/ppc/syv682x_public.h"
+#include "driver/ppc/tcpci_ppc.h"
 #include "driver/retimer/ps8818_public.h"
-#include "driver/tcpm/rt1715.h"
+#include "driver/tcpm/anx7406.h"
+#include "driver/tcpm/nct38xx.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
 #include "fw_config.h"
@@ -42,17 +43,20 @@ const struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C0_TCPC,
-			.addr_flags = RT1715_I2C_ADDR_FLAGS,
+			/* Circuit 1 (p1 = 0x70, p2 = 0x74) */
+			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		},
-		.drv = &rt1715_tcpm_drv,
+		.drv = &nct38xx_tcpm_drv,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1_TCPC,
-			.addr_flags = RT1715_I2C_ADDR_FLAGS,
+			.addr_flags = ANX7406_TCPC0_I2C_ADDR_FLAGS,
 		},
-		.drv = &rt1715_tcpm_drv,
+		.drv = &anx7406_tcpm_drv,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -72,13 +76,13 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0_PPC,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.drv = &tcpci_ppc_drv,
 	},
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_USB_C1_PPC,
-		.i2c_addr_flags = SYV682X_ADDR2_FLAGS,
-		.drv = &syv682x_drv,
+		.i2c_addr_flags = ANX7406_TCPC0_I2C_ADDR_FLAGS,
+		.drv = &tcpci_ppc_drv,
 	},
 };
 
@@ -218,7 +222,20 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 void board_reset_pd_mcu(void)
 {
-	/* There's no reset pin on TCPC */
+	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 0);
+
+	/*
+	 * delay for power-on to reset-off and min. assertion time
+	 */
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+
+	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 1);
+
+	nct38xx_reset_notify(USBC_PORT_C0);
+
+	/* wait for chips to come up */
+	if (NCT3807_RESET_POST_DELAY_MS != 0)
+		msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
 static void board_tcpc_init(void)
@@ -293,18 +310,49 @@ void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
+static void ppc_handle_interrupt(int port)
+{
+	/*
+	 * Ignore false positives (which may happen when we're already
+	 * disconnected).
+	 */
+	if (!ppc_chips[port].drv->is_sourcing_vbus(port))
+		return;
+
+	/*
+	 * If this is triggered by AOZ15333, it's either over current, short
+	 * circuit, or over temperature. If this is triggered by AOZ13937, it's
+	 * either over temperature, over voltage, or reverse current.
+	 */
+	ppc_prints("C%d: Vbus OC/OT/SC/OV/RC", port);
+	pd_handle_overcurrent(port);
+}
+
+static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+
+static void ppc_irq_deferred(void)
+{
+	uint32_t pending = atomic_clear(&irq_pending);
+
+	for (int i = 0; i < board_get_usb_pd_port_count(); i++)
+		if (pending & BIT(i))
+			ppc_handle_interrupt(i);
+}
+DECLARE_DEFERRED(ppc_irq_deferred);
+
 void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C0);
+		atomic_or(&irq_pending, BIT(0));
 		break;
 	case GPIO_USB_C1_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C1);
+		atomic_or(&irq_pending, BIT(1));
 		break;
 	default:
 		break;
 	}
+	hook_call_deferred(&ppc_irq_deferred_data, 0);
 }
 
 void retimer_interrupt(enum gpio_signal signal)
