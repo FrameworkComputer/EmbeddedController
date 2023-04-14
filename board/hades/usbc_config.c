@@ -46,10 +46,10 @@ const struct tcpc_config_t tcpc_config[] = {
 		},
 		.drv = &rt1715_tcpm_drv,
 	},
-	[USBC_PORT_C2] = {
+	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
-			.port = I2C_PORT_USB_C2_TCPC,
+			.port = I2C_PORT_USB_C1_TCPC,
 			.addr_flags = RT1715_I2C_ADDR_FLAGS,
 		},
 		.drv = &rt1715_tcpm_drv,
@@ -75,11 +75,11 @@ struct ppc_config_t ppc_chips[] = {
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
 		.drv = &syv682x_drv,
 	},
-	[USBC_PORT_C2] = {
-		.i2c_port = I2C_PORT_USB_C2_PPC,
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1_PPC,
 		.i2c_addr_flags = SYV682X_ADDR2_FLAGS,
-		.frs_en = GPIO_USB_C2_FRS_EN,
 		.drv = &syv682x_drv,
+		.frs_en = GPIO_USB_C1_FRS_EN,
 	},
 };
 
@@ -146,8 +146,8 @@ int board_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 const static struct usb_mux_chain usbc2_ps8818 = {
 	.mux =
 		&(const struct usb_mux){
-			.usb_port = USBC_PORT_C2,
-			.i2c_port = I2C_PORT_USB_C2_TCPC,
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_USB_C1_TCPC,
 			.i2c_addr_flags = PS8818_I2C_ADDR0_FLAGS,
 			.driver = &ps8818_usb_retimer_driver,
 			.board_set = &board_ps8818_mux_set,
@@ -163,9 +163,9 @@ const struct usb_mux_chain usb_muxes[] = {
 			.hpd_update = &virtual_hpd_update,
 		},
 	},
-	[USBC_PORT_C2] = {
+	[USBC_PORT_C1] = {
 		.mux = &(const struct usb_mux) {
-			.usb_port = USBC_PORT_C2,
+			.usb_port = USBC_PORT_C1,
 			.driver = &virtual_usb_mux_driver,
 			.hpd_update = &virtual_hpd_update,
 		},
@@ -180,8 +180,8 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.i2c_port = I2C_PORT_USB_C0_BC12,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
-	[USBC_PORT_C2] = {
-		.i2c_port = I2C_PORT_USB_C2_BC12,
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1_BC12,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
 };
@@ -230,15 +230,15 @@ static void board_tcpc_init(void)
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C2_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C2_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C2_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
@@ -249,7 +249,7 @@ uint16_t tcpc_get_alert_status(void)
 	if (gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL) == 0)
 		status |= PD_STATUS_TCPC_ALERT_0;
 
-	if (gpio_get_level(GPIO_USB_C2_TCPC_INT_ODL) == 0)
+	if (gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL) == 0)
 		status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
@@ -260,8 +260,8 @@ int ppc_get_alert_status(int port)
 	if (port == USBC_PORT_C0)
 		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
 
-	if (port == USBC_PORT_C2)
-		return gpio_get_level(GPIO_USB_C2_PPC_INT_ODL) == 0;
+	if (port == USBC_PORT_C1)
+		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
 
 	return 0;
 }
@@ -272,8 +272,8 @@ void tcpc_alert_event(enum gpio_signal signal)
 	case GPIO_USB_C0_TCPC_INT_ODL:
 		schedule_deferred_pd_interrupt(USBC_PORT_C0);
 		break;
-	case GPIO_USB_C2_TCPC_INT_ODL:
-		schedule_deferred_pd_interrupt(USBC_PORT_C2);
+	case GPIO_USB_C1_TCPC_INT_ODL:
+		schedule_deferred_pd_interrupt(USBC_PORT_C1);
 		break;
 	default:
 		break;
@@ -286,7 +286,7 @@ void bc12_interrupt(enum gpio_signal signal)
 	case GPIO_USB_C0_BC12_INT_ODL:
 		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 		break;
-	case GPIO_USB_C2_BC12_INT_ODL:
+	case GPIO_USB_C1_BC12_INT_ODL:
 		usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 		break;
 	default:
@@ -300,8 +300,8 @@ void ppc_interrupt(enum gpio_signal signal)
 	case GPIO_USB_C0_PPC_INT_ODL:
 		syv682x_interrupt(USBC_PORT_C0);
 		break;
-	case GPIO_USB_C2_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C2);
+	case GPIO_USB_C1_PPC_INT_ODL:
+		syv682x_interrupt(USBC_PORT_C1);
 		break;
 	default:
 		break;

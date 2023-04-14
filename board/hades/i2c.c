@@ -22,11 +22,11 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		/* I2C2 */
-		.name = "tcpc2",
-		.port = I2C_PORT_USB_C2_TCPC,
+		.name = "tcpc1",
+		.port = I2C_PORT_USB_C1_TCPC,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_C2_SCL,
-		.sda = GPIO_EC_I2C_USB_C2_SDA,
+		.scl = GPIO_EC_I2C_USB_C1_SCL,
+		.sda = GPIO_EC_I2C_USB_C1_SDA,
 	},
 	{
 		/* I2C5 */
