@@ -179,6 +179,10 @@ static int anx7406_init(int port)
 	if (rv)
 		return rv;
 
+	rv = board_anx7406_init(port);
+	if (rv)
+		return rv;
+
 	/* Let sink_ctrl & source_ctrl GPIO pin controlled by TCPC */
 	tcpc_write(port, ANX7406_REG_VBUS_SOURCE_CTRL, SOURCE_GPIO_OEN);
 	tcpc_write(port, ANX7406_REG_VBUS_SINK_CTRL, SINK_GPIO_OEN);

@@ -83,9 +83,6 @@ static void board_init(void)
 
 	nvidia_gpu_init_policy(d_notify_policies);
 
-	/* Unblock USB_C1_PPC_SNK_EN */
-	anx7406_set_gpio(USBC_PORT_C1, 0, 1);
-
 	/* Adjust glitch filtering on PPVAR_SYS (b/282181312) */
 	rv = i2c_xfer(I2C_PORT_MISC, i2c_sequencer_addr_flag, out, sizeof(out),
 		      NULL, 0);
@@ -97,4 +94,13 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 void gpu_overt_interrupt(enum gpio_signal signal)
 {
 	nvidia_gpu_over_temp(gpio_get_level(signal));
+}
+
+int board_anx7406_init(int port)
+{
+	/* Unblock USB_C1_PPC_SNK_EN */
+	if (port == USBC_PORT_C1)
+		return anx7406_set_gpio(USBC_PORT_C1, 0, 1);
+
+	return EC_SUCCESS;
 }

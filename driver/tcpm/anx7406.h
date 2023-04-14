@@ -147,4 +147,12 @@ void anx7406_update_hpd_status(const struct usb_mux *mux,
  */
 enum ec_error_list anx7406_set_gpio(int port, uint8_t gpio, bool value);
 
+/**
+ * Call back for board specific initialization
+ *
+ * @param port USB-C port
+ * @return enum ec_error_list
+ */
+int board_anx7406_init(int port);
+
 #endif /* __CROS_EC_USB_PD_TCPM_ANX7406_H */
