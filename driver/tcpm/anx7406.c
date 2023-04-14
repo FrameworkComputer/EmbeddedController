@@ -16,7 +16,7 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, "ANX7406: " format, ##args)
 
 const struct anx7406_i2c_addr anx7406_i2c_addrs_flags[] = {
 	{ ANX7406_TCPC0_I2C_ADDR_FLAGS, ANX7406_TOP0_I2C_ADDR_FLAGS },
@@ -115,7 +115,7 @@ static int anx7406_init(int port)
 {
 	int rv, i;
 
-	CPRINTS("C%d: %s", port, __func__);
+	CPRINTS("C%d: init", port);
 	/*
 	 * find corresponding anx7406 TOP address according to
 	 * specified TCPC address
@@ -132,7 +132,7 @@ static int anx7406_init(int port)
 		}
 	}
 	if (!I2C_STRIP_FLAGS(i2c_peripheral[port].top_addr_flags)) {
-		CPRINTS("C%d: 0x%x is invalid for anx7406", port,
+		CPRINTS("C%d: 0x%x is invalid", port,
 			i2c_peripheral[port].top_addr_flags);
 		return EC_ERROR_UNKNOWN;
 	}
@@ -192,7 +192,7 @@ static int anx7406_init(int port)
 
 	rv = anx7406_hpd_reset(port);
 
-	CPRINTS("C%d: TCPC anx7406 initial success", port);
+	CPRINTS("C%d: init success", port);
 	return rv;
 }
 
