@@ -681,17 +681,6 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 		 */
 		return EC_ERROR_PARAM2;
 
-
-#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
-	CPRINTS("Bypass -> RTB");
-	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
-		       ISL9241_CONTROL0_REVERSE_TURBO_BOOST, MASK_SET);
-
-	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE,
-					bi->voltage_max);
-
-#endif /* CONFIG_CHARGER_BYPASS_REVERSE_TURBO */
-
 	return EC_SUCCESS;
 }
 
@@ -731,19 +720,6 @@ static enum ec_error_list isl9241_bypass_to_nvdc(int chgnum)
 	int voltage;
 	int rv;
 
-#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
-	CPRINTS("RTB -> Bypass");
-	/* 1: Stop switching. */
-	rv = isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, 0);
-	if (rv)
-		return rv;
-
-	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL0,
-			ISL9241_CONTROL0_REVERSE_TURBO_BOOST, MASK_CLR);
-	if (rv)
-		return rv;
-#endif
-
 	CPRINTS("bypass -> nvdc");
 
 	/* 1*: Reduce system load below ACLIM. */
@@ -782,27 +758,135 @@ static enum ec_error_list isl9241_bypass_to_nvdc(int chgnum)
 			     bi->voltage_max);
 }
 
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+/*
+ * Transition from Bypass to RTB (C).
+ */
+static enum ec_error_list isl9241_bypass_to_rtb(int chgnum)
+{
+	int rv;
+	const struct battery_info *bi = battery_get_info();
+
+	CPRINTS("Bypass -> RTB");
+	/* 1*: Enable Reverse Turbo Boost function. */
+	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+	       ISL9241_CONTROL0_REVERSE_TURBO_BOOST, MASK_SET);
+
+	if (rv)
+		return rv;
+
+	/* 2*: Set MaxSysVoltage register to full battery charge voltage. */
+	rv = isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE,
+		bi->voltage_max);
+
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Transition from RTB to Bypass (F).
+ */
+static enum ec_error_list isl9241_rtb_to_bypass(int chgnum)
+{
+	int rv;
+
+	CPRINTS("RTB -> Bypass");
+	/* 1*: Disable switching. */
+	rv = isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, 0);
+
+	if (rv)
+		return rv;
+
+	/* 2*: Disable reverse turbo boost function. */
+	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		ISL9241_CONTROL0_REVERSE_TURBO_BOOST, MASK_CLR);
+
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Transition from RTB to Bypass (E).
+ */
+static enum ec_error_list isl9241_rtb_chrg_to_rtb(int chgnum)
+{
+	int rv;
+
+	CPRINTS("RTB_chrg -> RTB");
+
+	/* 2: Disable fast charge. */
+	rv = isl9241_write(chgnum, ISL9241_REG_CHG_CURRENT_LIMIT, 0);
+	if (rv)
+		return rv;
+
+	/* 3: Disable trickle charge. */
+	rv = isl9241_write(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE, 0);
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+#endif
+
 static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 {
 	enum ec_error_list rv = EC_ERROR_UNKNOWN;
 
 	if (enable) {
-		/* We should be already in NVDC. */
-		if (isl9241_is_in_chrg(chgnum)) {
-			/* (Optional) L (then A) */
-			rv = isl9241_nvdc_chrg_to_nvdc(chgnum);
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+		int reg;
+
+		rv = isl9241_read(chgnum, ISL9241_REG_CONTROL0, &reg);
+
+		if ((reg & ISL9241_CONTROL0_REVERSE_TURBO_BOOST) &&
+			battery_is_present() == BP_NO) {
+			/* Needs to exit RTB mode if battery is disconnects */
+			if (isl9241_is_in_chrg(chgnum)) {
+				/* E (then F) */
+				rv = isl9241_rtb_chrg_to_rtb(chgnum);
+				if (rv)
+					CPRINTS("RTB_chrg -> RTB failed(%d)", rv);
+			}
+			/* F */
+			rv = isl9241_rtb_to_bypass(chgnum);
 			if (rv)
-				CPRINTS("nvdc_chrg -> nvdc failed(%d)", rv);
+				CPRINTS("RTB -> bypass failed(%d)", rv);
 		}
-		/* A */
-		rv = isl9241_nvdc_to_bypass(chgnum);
-		if (rv == EC_ERROR_PARAM1 || rv == EC_ERROR_PARAM2) {
-			CPRINTS("AC removed (%d) in nvdc -> bypass mode", rv);
-			return isl9241_bypass_to_bat(chgnum);
-		} else if (rv) {
-			CPRINTS("Failed to enable bypass mode(%d)", rv);
-			return isl9241_bypass_to_nvdc(chgnum);
+		/* If charger already in bypass mode, ignore it */
+		if (!(reg & ISL9241_CONTROL0_EN_BYPASS_GATE)) {
+#endif
+			/* We should be already in NVDC. */
+			if (isl9241_is_in_chrg(chgnum)) {
+				/* (Optional) L (then A) */
+				rv = isl9241_nvdc_chrg_to_nvdc(chgnum);
+				if (rv)
+					CPRINTS("nvdc_chrg -> nvdc failed(%d)", rv);
+			}
+			/* A */
+			rv = isl9241_nvdc_to_bypass(chgnum);
+			if (rv == EC_ERROR_PARAM1 || rv == EC_ERROR_PARAM2) {
+				CPRINTS("AC removed (%d) in nvdc -> bypass mode", rv);
+				return isl9241_bypass_to_bat(chgnum);
+			} else if (rv) {
+				CPRINTS("Failed to enable bypass mode(%d)", rv);
+				return isl9241_bypass_to_nvdc(chgnum);
+			}
+
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
 		}
+
+		rv = isl9241_read(chgnum, ISL9241_REG_CONTROL0, &reg);
+		if ((reg & ISL9241_CONTROL0_EN_BYPASS_GATE) &&
+			battery_is_present() == BP_YES) {
+			rv = isl9241_bypass_to_rtb(chgnum);
+			if (rv)
+				CPRINTS("bypass -> RTB failed(%d)", rv);
+		}
+#endif
 		return rv;
 	}
 
@@ -815,6 +899,12 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 			if (rv)
 				CPRINTS("bypass_chrg -> bypass failed(%d)", rv);
 		}
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+		/* F */
+		rv = isl9241_rtb_to_bypass(chgnum);
+		if (rv)
+			CPRINTS("RTB -> bypass failed(%d)", rv);
+#endif
 		/* B */
 		rv = isl9241_bypass_to_nvdc(chgnum);
 		if (rv)

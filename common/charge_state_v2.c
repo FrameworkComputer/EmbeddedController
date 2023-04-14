@@ -994,7 +994,11 @@ static int charge_request(int voltage, int current)
 	 */
 	should_bypass = board_should_charger_bypass();
 	if ((should_bypass && !(curr.chg.status & CHARGER_BYPASS_MODE)) ||
-	    (!should_bypass && (curr.chg.status & CHARGER_BYPASS_MODE)))
+	    (!should_bypass && (curr.chg.status & CHARGER_BYPASS_MODE))
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+	    || board_want_change_mode()
+#endif
+	    )
 		charger_enable_bypass_mode(0, should_bypass);
 
 	/*

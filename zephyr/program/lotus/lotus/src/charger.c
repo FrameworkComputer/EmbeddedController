@@ -180,6 +180,18 @@ __override int board_should_charger_bypass(void)
 		return false;
 }
 
+int board_want_change_mode(void)
+{
+	static int pre_batt = BP_YES;
+	int curr_batt = battery_is_present();
+
+	if (pre_batt != curr_batt) {
+		pre_batt = curr_batt;
+		return true;
+	} else
+		return false;
+}
+
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
