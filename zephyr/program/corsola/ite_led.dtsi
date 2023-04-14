@@ -109,42 +109,42 @@
 	pwm-led-pins {
 		compatible = "cros-ec,pwm-led-pins";
 
-		color_power_off: color-power-off {
-			led-color = "LED_OFF";
+		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_power_white>;
-			led-values = <0>;
+
+			color_power_off: color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			color_power_white: color-power-white {
+				led-color = "LED_WHITE";
+				br-color = "EC_LED_COLOR_WHITE";
+				led-values = <100>;
+			};
 		};
 
-		color_power_white: color-power-white {
-			led-color = "LED_WHITE";
-			br-color = "EC_LED_COLOR_WHITE";
-			led-id = "EC_LED_ID_POWER_LED";
-			led-pwms = <&led_power_white>;
-			led-values = <100>;
-		};
-
-		color_battery_off: color-battery-off {
-			led-color = "LED_OFF";
+		battery_led: batter-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&led_battery_amber &led_battery_white>;
-			led-values = <0 0>;
-		};
 
-		color_battery_amber: color-battery-amber {
-			led-color = "LED_AMBER";
-			br-color = "EC_LED_COLOR_AMBER";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			led-pwms = <&led_battery_amber &led_battery_white>;
-			led-values = <100 0>;
-		};
+			color_battery_off: color-battery-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
 
-		color_battery_white: color-battery-white {
-			led-color = "LED_WHITE";
-			br-color = "EC_LED_COLOR_WHITE";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			led-pwms = <&led_battery_amber &led_battery_white>;
-			led-values = <0 100>;
+			color_battery_amber: color-battery-amber {
+				led-color = "LED_AMBER";
+				br-color = "EC_LED_COLOR_AMBER";
+				led-values = <100 0>;
+			};
+
+			color_battery_white: color-battery-white {
+				led-color = "LED_WHITE";
+				br-color = "EC_LED_COLOR_WHITE";
+				led-values = <0 100>;
+			};
 		};
 	};
 };

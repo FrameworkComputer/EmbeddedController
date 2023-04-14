@@ -20,23 +20,24 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 	     "Exactly one instance of cros-ec,gpio-led-pins should be defined.");
 
-#define SET_PIN(node_id, prop, i)                                     \
-	{ .signal = GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, i)), \
-	  .val = DT_PROP_BY_IDX(node_id, led_values, i) },
+#define SET_PIN(node_id, prop, i)                                      \
+	{ .signal = GPIO_SIGNAL(                                       \
+		  DT_PHANDLE_BY_IDX(DT_PARENT(node_id), led_pins, i)), \
+	  .val = DT_PROP_BY_IDX(node_id, prop, i) },
 
 #define SET_GPIO_PIN(node_id) \
-	{ DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN) };
+	{ DT_FOREACH_PROP_ELEM(node_id, led_values, SET_PIN) };
 
 #define GEN_PINS_ARRAY(id) struct gpio_pin_t PINS_ARRAY(id)[] = SET_GPIO_PIN(id)
 
-DT_INST_FOREACH_CHILD(0, GEN_PINS_ARRAY)
+DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_ARRAY)
 
 #define SET_PIN_NODE(node_id)                                \
 	{ .led_color = GET_PROP(node_id, led_color),         \
-	  .led_id = GET_PROP(node_id, led_id),               \
+	  .led_id = GET_PROP(DT_PARENT(node_id), led_id),    \
 	  .br_color = GET_COLOR_PROP_NVE(node_id, br_color), \
 	  .gpio_pins = PINS_ARRAY(node_id),                  \
-	  .pins_count = DT_PROP_LEN(node_id, led_pins) };
+	  .pins_count = DT_PROP_LEN(node_id, led_values) };
 
 /*
  * Initialize led_pins_node_t struct for each pin node defined
@@ -44,14 +45,16 @@ DT_INST_FOREACH_CHILD(0, GEN_PINS_ARRAY)
 #define GEN_PINS_NODES(id) \
 	const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id)
 
-DT_INST_FOREACH_CHILD(0, GEN_PINS_NODES)
+DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_NODES)
 
 /*
  * Array of pointers to each pin node
  */
 #define PINS_NODE_PTR(id) &PINS_NODE(id),
-const struct led_pins_node_t *pins_node[] = { DT_INST_FOREACH_CHILD(
-	0, PINS_NODE_PTR) };
+const struct led_pins_node_t *pins_node[] = {
+	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD,
+						PINS_NODE_PTR)
+};
 
 /*
  * Set all the GPIO pins defined in the node to the defined value,

@@ -338,12 +338,15 @@
 	pwm-led-pins {
 		compatible = "cros-ec,pwm-led-pins";
 
-		/* Overwrite Power LED white to off */
-		color_power_white: color-power-white {
-			led-color = "LED_WHITE";
+		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_power_white>;
-			led-values = <0>;
+
+			/* Overwrite Power LED white to off */
+			color_power_white: color-power-white {
+				led-color = "LED_WHITE";
+				led-values = <0>;
+			};
 		};
 	};
 
