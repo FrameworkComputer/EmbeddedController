@@ -93,6 +93,19 @@ import tempfile
 import time
 
 
+# Paths under the EC base dir that contain tests. This is used to define
+# Twister's search scope.
+EC_TEST_PATHS = [
+    Path("common"),
+    Path("zephyr/test"),
+]
+
+# Paths under ZEPHYR_BASE that we also wish to search for test cases.
+ZEPHYR_TEST_PATHS = [
+    Path("tests/subsys/shell"),
+]
+
+
 def find_checkout() -> Path:
     """Find the location of the source checkout or return None."""
     cros_checkout = os.environ.get("CROS_WORKON_SRCROOT")
@@ -336,9 +349,12 @@ def main():
         # should encompass all current Zephyr EC tests. The paths are meant to
         # be as specific as possible to limit Twister's search scope. This saves
         # significant time when starting Twister.
-        twister_cli.extend(["-T", str(ec_base / "common")])
-        twister_cli.extend(["-T", str(ec_base / "zephyr/test")])
-        twister_cli.extend(["-T", str(zephyr_base / "tests/subsys/shell")])
+        for path in EC_TEST_PATHS:
+            twister_cli.extend(["-T", str(ec_base / path)])
+
+        # Upstream tests we also wish to run:
+        for path in ZEPHYR_TEST_PATHS:
+            twister_cli.extend(["-T", str(zephyr_base / path)])
 
     if intercepted_args.platform:
         # Pass user-provided -p args when present.
