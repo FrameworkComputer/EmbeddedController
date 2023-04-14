@@ -140,7 +140,7 @@ __maybe_unused static const struct ec_thermal_config fan_soc_laptop =
  */
 #define FAN_CPU_DESKTOP_LID_OPEN                                        \
 	{                                                               \
-		.temp_fan_off = C_TO_K(76), .temp_fan_max = C_TO_K(82), \
+		.temp_fan_off = C_TO_K(72), .temp_fan_max = C_TO_K(82), \
 	}
 __maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_open =
 	FAN_CPU_DESKTOP_LID_OPEN;
@@ -150,7 +150,7 @@ __maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_open =
  */
 #define FAN_CPU_DESKTOP_LID_CLOSE                                       \
 	{                                                               \
-		.temp_fan_off = C_TO_K(76), .temp_fan_max = C_TO_K(82), \
+		.temp_fan_off = C_TO_K(72), .temp_fan_max = C_TO_K(82), \
 	}
 __maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_close =
 	FAN_CPU_DESKTOP_LID_CLOSE;
@@ -160,7 +160,7 @@ __maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_close =
  */
 #define FAN_CPU_LAPTOP                                                  \
 	{                                                               \
-		.temp_fan_off = C_TO_K(72), .temp_fan_max = C_TO_K(78), \
+		.temp_fan_off = C_TO_K(68), .temp_fan_max = C_TO_K(78), \
 	}
 __maybe_unused static const struct ec_thermal_config fan_cpu_laptop =
 	FAN_CPU_LAPTOP;
