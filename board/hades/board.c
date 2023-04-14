@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "anx7406.h"
 #include "battery.h"
 #include "button.h"
 #include "charge_ramp.h"
@@ -75,6 +76,9 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_ODL);
 
 	nvidia_gpu_init_policy(d_notify_policies);
+
+	/* Unblock USB_C1_PPC_SNK_EN */
+	anx7406_set_gpio(USBC_PORT_C1, 0, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
