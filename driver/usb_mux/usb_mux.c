@@ -851,3 +851,69 @@ static enum ec_status hc_usb_pd_mux_ack(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_MUX_ACK, hc_usb_pd_mux_ack, EC_VER_MASK(0));
+
+#ifdef CONFIG_CMD_RETIMER
+static int console_command_retimer(int argc, const char **argv)
+{
+	char rw, *e;
+	uint32_t reg, data, val = 0;
+	int port, rv = EC_ERROR_UNIMPLEMENTED;
+	const struct usb_mux *mux;
+	const struct usb_mux_chain *mux_chain;
+
+	if (argc < 4 || argc > 5)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* Get port number */
+	port = strtoi(argv[1], &e, 0);
+	if (*e || !board_is_usb_pd_port_present(port))
+		return EC_ERROR_PARAM1;
+
+	mux_chain = &usb_muxes[port];
+	if (!mux_chain)
+		return EC_ERROR_PARAM1;
+
+	/* Validate r/w selection */
+	rw = argv[2][0];
+	if (rw != 'w' && rw != 'r')
+		return EC_ERROR_PARAM2;
+
+	/* Get register address */
+	reg = strtoull(argv[3], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM3;
+
+	/* Get value to be written */
+	if (rw == 'w') {
+		val = strtoull(argv[4], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM4;
+	}
+
+	/*
+	 * It is assumed that similar chips are connected in chain and the
+	 * same set of data is written to all the chained chips.
+	 */
+	for (; mux_chain != NULL; mux_chain = mux_chain->next) {
+		mux = mux_chain->mux;
+		if (mux->driver && mux->driver->retimer_read &&
+		    mux->driver->retimer_write) {
+			if (rw == 'r') {
+				rv = mux->driver->retimer_read(mux, reg, &data);
+				if (rv == EC_SUCCESS) {
+					CPRINTS("Addr 0x%x register %d = 0x%x",
+						mux->i2c_addr_flags, reg, data);
+				}
+			} else {
+				rv = mux->driver->retimer_write(mux, reg, val);
+			}
+		}
+	}
+
+	return rv;
+}
+DECLARE_CONSOLE_COMMAND(retimer, console_command_retimer,
+			"<port> r <reg>"
+			"\n<port> w <reg> <val>",
+			"Read or write to retimer register");
+#endif /* CONFIG_CMD_RETIMER */

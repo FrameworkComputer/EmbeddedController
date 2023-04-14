@@ -14,30 +14,44 @@
 
 /* Time between load switch enable and the reset being de-asserted */
 #define KB800X_POWER_ON_DELAY_MS 20
+#define KB800X_REG_OFFSET_MAX UINT16_MAX
+#define KB800X_REG_DATA_MAX UINT8_MAX
 
 static mux_state_t cached_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-static int kb800x_write(const struct usb_mux *me, uint16_t address,
-			uint8_t data)
+static int kb800x_write(const struct usb_mux *me, uint32_t address,
+			uint32_t data)
 {
 	uint8_t kb800x_config[3] = { 0x00, 0x00, 0x00 };
 
+	/* Validate the register address */
+	if (address > KB800X_REG_OFFSET_MAX)
+		return EC_ERROR_INVAL;
+
+	/* Validate the writeable data */
+	if (data > KB800X_REG_DATA_MAX)
+		return EC_ERROR_INVAL;
+
 	kb800x_config[0] = (address >> 8) & 0xff;
 	kb800x_config[1] = address & 0xff;
-	kb800x_config[2] = data;
+	kb800x_config[2] = (uint8_t)data;
 	return i2c_xfer(me->i2c_port, me->i2c_addr_flags, kb800x_config,
 			sizeof(kb800x_config), NULL, 0);
 }
 
-static int kb800x_read(const struct usb_mux *me, uint16_t address,
-		       uint8_t *data)
+static int kb800x_read(const struct usb_mux *me, uint32_t address,
+		       uint32_t *data)
 {
 	uint8_t kb800x_config[2] = { 0x00, 0x00 };
+
+	/* Validate the register address */
+	if (address > KB800X_REG_OFFSET_MAX)
+		return EC_ERROR_INVAL;
 
 	kb800x_config[0] = (address >> 8) & 0xff;
 	kb800x_config[1] = address & 0xff;
 	return i2c_xfer(me->i2c_port, me->i2c_addr_flags, kb800x_config,
-			sizeof(kb800x_config), data, 1);
+			sizeof(kb800x_config), (uint8_t *)data, 1);
 }
 
 #ifdef CONFIG_KB800X_CUSTOM_XBAR
@@ -83,7 +97,7 @@ static int kb800x_assign_tx_to_eb(const struct usb_mux *me,
 				  enum kb800x_eb eb)
 {
 	uint8_t field_value = 0;
-	uint8_t regval;
+	uint32_t regval;
 	int rv;
 
 	field_value = KB800X_PHY_IS_AB(phy_lane) ? tx_eb_to_field_ab[eb] :
@@ -106,7 +120,7 @@ static int kb800x_assign_rx_to_eb(const struct usb_mux *me,
 {
 	uint16_t address = 0;
 	uint8_t field_value = 0;
-	uint8_t regval = 0;
+	uint32_t regval = 0;
 	int rv;
 
 	field_value = rx_phy_lane_to_field[phy_lane];
@@ -472,76 +486,12 @@ static int kb800x_enter_low_power_mode(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_CMD_RETIMER
-
-static int console_command_kb800x_xfer(int argc, const char **argv)
-{
-	char rw, *e;
-	int rv, port, reg, val;
-	uint8_t data;
-	const struct usb_mux_chain *mux_chain;
-	const struct usb_mux *mux;
-
-	if (argc < 4)
-		return EC_ERROR_PARAM_COUNT;
-
-	/* Get port number */
-	port = strtoi(argv[1], &e, 0);
-	if (*e || !board_is_usb_pd_port_present(port))
-		return EC_ERROR_PARAM1;
-
-	mux_chain = &usb_muxes[port];
-	while (mux_chain) {
-		if (mux_chain->mux->driver == &kb800x_usb_mux_driver)
-			break;
-		mux_chain = mux_chain->next;
-	}
-
-	if (!mux_chain)
-		return EC_ERROR_PARAM1;
-
-	mux = mux_chain->mux;
-
-	/* Validate r/w selection */
-	rw = argv[2][0];
-	if (rw != 'w' && rw != 'r')
-		return EC_ERROR_PARAM2;
-
-	/* Get register address */
-	reg = strtoi(argv[3], &e, 0);
-	if (*e || reg < 0)
-		return EC_ERROR_PARAM3;
-	rv = EC_SUCCESS;
-	if (rw == 'r')
-		rv = kb800x_read(mux, reg, &data);
-	else {
-		if (argc < 5)
-			return EC_ERROR_PARAM_COUNT;
-		/* Get value to be written */
-		val = strtoi(argv[4], &e, 0);
-		if (*e || val < 0)
-			return EC_ERROR_PARAM4;
-		rv = kb800x_write(mux, reg, val);
-		if (rv == EC_SUCCESS) {
-			rv = kb800x_read(mux, reg, &data);
-			if (rv == EC_SUCCESS && data != val)
-				rv = EC_ERROR_UNKNOWN;
-		}
-	}
-
-	if (rv == EC_SUCCESS)
-		ccprintf("register 0x%x [%d] = 0x%x [%d]\n", reg, reg, data,
-			 data);
-
-	return rv;
-}
-DECLARE_CONSOLE_COMMAND(kbxfer, console_command_kb800x_xfer,
-			"<port> <r/w> <reg> | <val>",
-			"Read or write to KB retimer register");
-#endif /* CONFIG_CMD_RETIMER */
-
 const struct usb_mux_driver kb800x_usb_mux_driver = {
 	.init = kb800x_init,
 	.set = kb800x_set_state,
 	.enter_low_power_mode = kb800x_enter_low_power_mode,
+#ifdef CONFIG_CMD_RETIMER
+	.retimer_read = kb800x_read,
+	.retimer_write = kb800x_write,
+#endif /* CONFIG_CMD_RETIMER */
 };

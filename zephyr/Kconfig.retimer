@@ -9,6 +9,7 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 	default y
 	depends on PLATFORM_EC_USB_MUX
 	depends on DT_HAS_INTEL_JHL8040R_ENABLED
+	select PLATFORM_EC_CONSOLE_CMD_RETIMER
 	select PLATFORM_EC_USB_PD_USB4
 	select PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
 	select PLATFORM_EC_USBC_RETIMER_FW_UPDATE
@@ -36,6 +37,7 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_HB
 	default y
 	depends on PLATFORM_EC_USB_MUX
 	depends on DT_HAS_INTEL_JHL9040R_ENABLED
+	select PLATFORM_EC_CONSOLE_CMD_RETIMER
 	select PLATFORM_EC_USB_PD_USB4
 	select PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
 	select PLATFORM_EC_USBC_RETIMER_FW_UPDATE
@@ -98,6 +100,7 @@ config PLATFORM_EC_USBC_RETIMER_PS8818
 
 config PLATFORM_EC_USBC_RETIMER_KB800X
 	bool "Enable KB800X retimer"
+	select PLATFORM_EC_CONSOLE_CMD_RETIMER
 	help
 	  The KB8001 is a Universal Serial Bus (USB) Type-C 40 Gb/s multiprotocol
 	  switch and bidirectional Bit-Level Retimer (BLR) which supports:
@@ -114,6 +117,12 @@ config PLATFORM_EC_KB800X_CUSTOM_XBAR
 	help
 	  Enable this to allow using a custom crossbar configuration for the HSIO
 	  lanes.
+
+config PLATFORM_EC_CONSOLE_CMD_RETIMER
+	bool "Console command: retimer"
+	help
+	  This console command allows read or write to the retimer registers
+	  connected in a chain.
 
 endif # PLATFORM_EC_USBC
 

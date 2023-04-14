@@ -1704,7 +1704,7 @@
 #undef CONFIG_CMD_RAND
 #define CONFIG_CMD_REGULATOR
 #undef CONFIG_CMD_RESET_FLAGS
-#define CONFIG_CMD_RETIMER
+#undef CONFIG_CMD_RETIMER
 #undef CONFIG_CMD_RTC
 #undef CONFIG_CMD_RTC_ALARM
 #define CONFIG_CMD_RW
@@ -6713,6 +6713,12 @@
 	defined(CONFIG_USB_MUX_VIRTUAL)
 #define CONFIG_USB_MUX_AP_ACK_REQUEST
 #endif /* CONFIG_USBC_RETIMER_INTEL_BB || CONFIG_USBC_RETIMER_INTEL_HB */
+
+/* Enable retimer console command */
+#if (defined(CONFIG_USBC_RETIMER_INTEL_BB) || \
+     defined(CONFIG_USBC_RETIMER_KB800X))
+#define CONFIG_CMD_RETIMER
+#endif
 
 /*****************************************************************************/
 

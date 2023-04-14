@@ -244,7 +244,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_RAND | `rand` | Used only on STM32 |
 | | CONFIG_CMD_REGULATOR | `ir357x` | |
 | | CONFIG_CMD_RESET_FLAGS | `rflags` | |
-| | CONFIG_CMD_RETIMER | `bb`<br>`kbxfer` | |
+| | CONFIG_CMD_RETIMER | `retimer` | |
 | | CONFIG_CMD_RTC | `rtc` | |
 | | CONFIG_CMD_RTC_ALARM | `rtc_alarm` | |
 | | CONFIG_CMD_RW | `rw` | |
