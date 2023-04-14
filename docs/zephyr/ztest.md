@@ -54,10 +54,18 @@ test cases, but the attributes are applied to all test cases in the file. See
 for more details.
 
 Some common attributes include:
-- `extra_configs` which is a list of Kconfigs to add to the test.
-- `extra_args` which is a string containing additional arguments to pass to
-  CMake
+- `extra_configs` - a list of Kconfigs to add to the test.
+- `extra_conf_files` - specifies a YAML list of additional Kconfig files to
+  to apply to the build. Replaces the `CONF_FILE` field in extra_args.
+- `extra_overlay_confs` - specifies a list of overlay Kconfig files. Replaces
+  the `OVERLAY_CONFIG` field in extra_args.
+- `extra_dtc_overlay_files` - specifies a list of additional device tree files
+  to apply to the build. Replaces the `DTC_OVERLAY_FILE` field in extra_args.
 
+`extra_args` is a string field that allows injecting free-form CMake variables
+into the build. It is rarely needed and the practice of specifying `CONF_FILE`,
+`OVERLAY_CONFIG`, or `DTC_OVERLAY_FILE` here is deprecated. Please use the
+above fields for these functions, as they are much more readable.
 ## Integration tests
 
 Integration tests build the full EC. They require devicetree and all Kconfigs to
