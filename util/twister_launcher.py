@@ -1,5 +1,4 @@
 #!/usr/bin/env vpython3
-
 # Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -121,7 +120,12 @@ def find_paths():
 
     if cros_checkout:
         ec_base = cros_checkout / "src" / "platform" / "ec"
-        zephyr_base = cros_checkout / "src" / "third_party" / "zephyr" / "main"
+        try:
+            zephyr_base = Path(os.environ["ZEPHYR_BASE"]).resolve()
+        except KeyError as err:
+            zephyr_base = (
+                cros_checkout / "src" / "third_party" / "zephyr" / "main"
+            )
         zephyr_modules_dir = cros_checkout / "src" / "third_party" / "zephyr"
     else:
         try:
