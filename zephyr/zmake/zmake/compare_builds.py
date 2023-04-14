@@ -137,12 +137,14 @@ class CheckoutConfig:
     work_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
     zephyr_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
     modules_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
+    projects_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
 
     def __post_init__(self):
         self.full_ref = get_git_hash(self.ref)
         self.work_dir = pathlib.Path(self.temp_dir) / self.full_ref
         self.zephyr_dir = self.work_dir / "zephyr-base"
         self.modules_dir = self.work_dir / "modules"
+        self.projects_dir = self.modules_dir / "ec" / "zephyr"
 
         os.mkdir(self.work_dir)
 

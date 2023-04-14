@@ -383,6 +383,7 @@ class Zmake:
                 transformed_module = {module_name: new_path}
                 self.module_paths.update(transformed_module)
 
+            self.projects_dir = checkout.projects_dir
             self.zephyr_base = checkout.zephyr_dir
 
             self.logger.info("Building projects at %s", checkout.ref)
