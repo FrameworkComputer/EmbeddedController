@@ -6,6 +6,7 @@
 /* ANX7406 port manager */
 
 #include "anx7406.h"
+#include "assert.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
