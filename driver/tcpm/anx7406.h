@@ -6,6 +6,7 @@
 #ifndef __CROS_EC_USB_PD_TCPM_ANX7406_H
 #define __CROS_EC_USB_PD_TCPM_ANX7406_H
 
+#include "stdbool.h"
 #include "usb_mux.h"
 
 struct anx7406_i2c_addr {
@@ -67,6 +68,10 @@ struct anx7406_i2c_addr {
 #define ANX7406_REG_HPD_DEGLITCH_H 0x80
 #define ANX7406_REG_HPD_OEN BIT(6)
 #define HPD_DEGLITCH_TIME 0x0D
+
+#define ANX7406_REG_GPIO0 0xCA
+#define GPIO0_OUTPUT_HIGH (BIT(0) | BIT(1))
+#define GPIO0_OUTPUT_LOW BIT(0)
 
 #define EXT_I2C_OP_DELAY 1000
 /* Internal I2C0 master */
@@ -131,5 +136,15 @@ int anx7406_set_aux(int port, int flip);
 int anx7406_hpd_reset(const int port);
 void anx7406_update_hpd_status(const struct usb_mux *mux,
 			       mux_state_t mux_state);
+
+/**
+ * Set/clear GPIO
+ *
+ * @param port  USB-C port
+ * @param gpio  GPIO number
+ * @param value  true:high false:low
+ * @return  enum ec_error_list
+ */
+enum ec_error_list anx7406_set_gpio(int port, uint8_t gpio, bool value);
 
 #endif /* __CROS_EC_USB_PD_TCPM_ANX7406_H */

@@ -31,6 +31,21 @@ const struct anx7406_i2c_addr anx7406_i2c_addrs_flags[] = {
 
 static struct anx7406_i2c_addr i2c_peripheral[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+enum ec_error_list anx7406_set_gpio(int port, uint8_t gpio, bool value)
+{
+	if (gpio != 0) {
+		CPRINTS("C%d: Setting GPIO%d not supported", port, gpio);
+		return EC_ERROR_INVAL;
+	}
+
+	CPRINTS("C%d: Setting GPIO%u %s", port, gpio, value ? "high" : "low");
+
+	return i2c_write8(tcpc_config[port].i2c_info.port,
+			  i2c_peripheral[port].top_addr_flags,
+			  ANX7406_REG_GPIO0,
+			  value ? GPIO0_OUTPUT_HIGH : GPIO0_OUTPUT_LOW);
+}
+
 static int anx7406_set_hpd(int port, int hpd_lvl)
 {
 	int val;
