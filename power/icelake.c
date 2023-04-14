@@ -258,6 +258,11 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3S5:
+		if (intel_x86_wait_power_up_ok() != EC_SUCCESS) {
+			chipset_force_shutdown(
+				CHIPSET_SHUTDOWN_BATTERY_INHIBIT);
+			return POWER_G3;
+		}
 #if defined(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
 		/*
 		 * Prevent glitches on the SLP_S3_L and PCH_PWROK
