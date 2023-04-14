@@ -1193,14 +1193,12 @@ tests:
   drivers.usbc_ppc:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
-    - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
     - ./usbc_ppc/ppc_alts.dts
   drivers.usbc_ppc.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
-    - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
     - ./usbc_ppc/ppc_alts.dts

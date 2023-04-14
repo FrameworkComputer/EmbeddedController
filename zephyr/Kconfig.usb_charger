@@ -87,19 +87,4 @@ config PLATFORM_EC_MT6360_BC12_GPIO
 	  a GPIO: GPIO_BC12_DET_EN. Assert GPIO_BC12_DET_EN to detect a BC1.2
 	  device, and deassert GPIO_BC12_DET_EN to mux the USB-PHY back.
 
-config PLATFORM_EC_BC12_SINGLE_DRIVER
-	bool "Only support a single BC12 driver"
-	default y
-	help
-	  Enable this if the board only needs one BC12 driver. This includes
-	  the case that has multiple chips that use the same driver.
-
-	  If undefined, the board should define a bc12_ports[] array which
-	  associates each port to its bc12 driver:
-
-	     struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	        { .drv = &xxx_drv },
-	        { .drv = &yyy_drv },
-	     };
-
 endif  # PLATFORM_EC_USB_CHARGER
