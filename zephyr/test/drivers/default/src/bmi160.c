@@ -347,7 +347,7 @@ ZTEST_USER(bmi160, test_bmi_gyr_set_offset)
 	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_bmi_get_i2c_common_data(emul);
-	int16_t input_v[3];
+	int16_t input_v[3] = { 0, 0, 0 };
 	int16_t temp = 0;
 	intv3_t ret_v;
 	intv3_t exp_v;
