@@ -237,7 +237,8 @@ static int match_node(int node_idx)
 
 	/* Check if this node depends on battery level */
 	if (node_array[node_idx].batt_lvl[0] != -1) {
-		int curr_batt_lvl = charge_get_percent();
+		int curr_batt_lvl =
+			DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
 
 		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))
