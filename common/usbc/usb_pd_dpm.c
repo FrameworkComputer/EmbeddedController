@@ -142,11 +142,9 @@ static void print_current_state(const int port)
 }
 
 #ifdef CONFIG_ZEPHYR
-static int init_dpm_mutexes(const struct device *dev)
+static int init_dpm_mutexes(void)
 {
 	int port;
-
-	ARG_UNUSED(dev);
 
 	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		k_mutex_init(&dpm[port].vdm_req_mutex);

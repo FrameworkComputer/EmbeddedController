@@ -36,10 +36,8 @@ void rtc_callback(const struct device *dev)
 }
 
 /** Initialize the rtc. */
-static int system_init_rtc(const struct device *unused)
+static int system_init_rtc(void)
 {
-	ARG_UNUSED(unused);
-
 	cros_rtc_dev = DEVICE_DT_GET(CROS_RTC_NODE);
 	if (!cros_rtc_dev) {
 		LOG_ERR("Error: device %s is not ready", cros_rtc_dev->name);

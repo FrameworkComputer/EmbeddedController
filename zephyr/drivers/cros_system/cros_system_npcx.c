@@ -632,9 +632,8 @@ DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
 
 PINCTRL_DT_DEFINE(DBG_NODE);
 
-static int jtag_init(const struct device *dev)
+static int jtag_init(void)
 {
-	ARG_UNUSED(dev);
 	struct dbg_reg *const dbg_reg_base = HAL_DBG_REG_BASE_ADDR;
 	const struct pinctrl_dev_config *pcfg =
 		PINCTRL_DT_DEV_CONFIG_GET(DBG_NODE);

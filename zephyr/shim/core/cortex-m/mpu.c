@@ -21,7 +21,7 @@ void mpu_enable(void)
 	}
 }
 
-static int mpu_disable_fixed_regions(const struct device *dev)
+static int mpu_disable_fixed_regions(void)
 {
 	/* MPU is configured and enabled by the Zephyr init code, disable the
 	 * fixed sections by default.

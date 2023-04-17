@@ -52,10 +52,8 @@ BUILD_ASSERT(ARRAY_SIZE(port_mutex) < 32);
 static uint8_t port_protected[I2C_PORT_COUNT + I2C_BITBANG_PORT_COUNT];
 
 #ifdef CONFIG_ZEPHYR
-static int init_port_mutex(const struct device *dev)
+static int init_port_mutex(void)
 {
-	ARG_UNUSED(dev);
-
 	for (int i = 0; i < ARRAY_SIZE(port_mutex); ++i)
 		k_mutex_init(port_mutex + i);
 

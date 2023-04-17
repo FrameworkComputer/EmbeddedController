@@ -125,10 +125,8 @@ void hmac_SHA256(uint8_t *output, const uint8_t *key, const int key_len,
 			 SHA256_DIGEST_SIZE);
 }
 
-static int zephyr_shim_init_sha256(const struct device *unused)
+static int zephyr_shim_init_sha256(void)
 {
-	ARG_UNUSED(unused);
-
 	if (!device_is_ready(sha256_hw_dev)) {
 		k_oops();
 	}

@@ -46,7 +46,7 @@ static void espi_enable_callback(struct ap_power_ev_callback *cb,
 	}
 }
 
-static int init_espi_enable_callback(const struct device *unused)
+static int init_espi_enable_callback(void)
 {
 	static struct ap_power_ev_callback cb;
 

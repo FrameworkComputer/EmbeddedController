@@ -263,12 +263,10 @@ const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal)
 /* Allow access to this function in tests so we can run it multiple times
  * without having to create a new binary for each run.
  */
-test_export_static int init_gpios(const struct device *unused)
+test_export_static int init_gpios(void)
 {
 	gpio_flags_t flags;
 	bool is_sys_jumped = system_jumped_to_this_image();
-
-	ARG_UNUSED(unused);
 
 	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
 		int rv;

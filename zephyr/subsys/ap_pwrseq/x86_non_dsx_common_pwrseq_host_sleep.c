@@ -173,7 +173,7 @@ static void ap_power_sleep_event_handler(struct ap_power_ev_callback *cb,
 /*
  * Registers callback for s0ix events.
  */
-static int ap_power_sleep_s0ix_event(const struct device *unused)
+static int ap_power_sleep_s0ix_event(void)
 {
 	static struct ap_power_ev_callback cb;
 

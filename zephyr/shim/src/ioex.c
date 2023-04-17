@@ -34,12 +34,10 @@ int ioex_init(int ioex)
 	return EC_SUCCESS;
 }
 
-static int ioex_init_default(const struct device *unused)
+static int ioex_init_default(void)
 {
 	int ret;
 	int i;
-
-	ARG_UNUSED(unused);
 
 	for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; i++) {
 		/* IO Expander has been initialized, skip re-initializing */

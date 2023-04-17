@@ -167,7 +167,7 @@ host_command_hibernation_delay(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY, host_command_hibernation_delay,
 		     EC_VER_MASK(0));
 
-static int hibernate_init(const struct device *unused)
+static int hibernate_init(void)
 {
 	static struct ap_power_ev_callback cb;
 

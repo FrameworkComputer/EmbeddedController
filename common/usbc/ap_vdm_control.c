@@ -57,11 +57,9 @@ static struct {
 } ap_storage[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #ifdef CONFIG_ZEPHYR
-static int init_ap_vdm_mutexes(const struct device *dev)
+static int init_ap_vdm_mutexes(void)
 {
 	int port;
-
-	ARG_UNUSED(dev);
 
 	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		k_mutex_init(&ap_storage[port].queue_lock);

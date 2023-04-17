@@ -576,9 +576,8 @@ int power_signal_emul_unload(void)
  *
  * @return 0 Return success only.
  */
-static int power_signal_emul_work_q_init(const struct device *dev)
+static int power_signal_emul_work_q_init(void)
 {
-	ARG_UNUSED(dev);
 	struct k_work_queue_config cfg = {
 		.name = "psignal_emul",
 		.no_yield = true,

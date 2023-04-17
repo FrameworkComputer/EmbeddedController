@@ -52,10 +52,8 @@ void system_mpu_config(void)
 	/* Reseve for future use */
 }
 
-static int chip_system_init(const struct device *unused)
+static int chip_system_init(void)
 {
-	ARG_UNUSED(unused);
-
 	/*
 	 * Check BBRAM power status.
 	 */

@@ -40,10 +40,8 @@ const struct adc_t adc_channels[] = { DT_FOREACH_CHILD(
 	DT_INST(0, named_adc_channels), ADC_CHANNEL_INIT) };
 #endif
 
-static int init_device_bindings(const struct device *device)
+static int init_device_bindings(void)
 {
-	ARG_UNUSED(device);
-
 	for (int i = 0; i < ARRAY_SIZE(adc_channels); i++) {
 		if (!device_is_ready(adc_channels[i].dev))
 			k_oops();

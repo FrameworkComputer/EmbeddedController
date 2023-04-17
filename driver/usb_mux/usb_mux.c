@@ -120,11 +120,10 @@ extern mutex_t queue_lock[];
 #endif
 
 #ifdef CONFIG_ZEPHYR
-static int init_mux_mutex(const struct device *dev)
+static int init_mux_mutex(void)
 {
 	int port;
 
-	ARG_UNUSED(dev);
 	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		k_mutex_init(&mux_lock[port]);
 

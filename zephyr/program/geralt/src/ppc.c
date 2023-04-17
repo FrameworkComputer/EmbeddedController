@@ -8,7 +8,7 @@
 
 #include <zephyr/init.h>
 
-static int board_usbc_init(const struct device *unused)
+static int board_usbc_init(void)
 {
 	/* Enable PPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc_bc12));

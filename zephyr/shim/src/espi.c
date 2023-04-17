@@ -692,7 +692,7 @@ static void espi_peripheral_handler(const struct device *dev,
 	}
 }
 
-static int zephyr_shim_setup_espi(const struct device *unused)
+static int zephyr_shim_setup_espi(void)
 {
 	uint32_t enable = 1;
 	static const struct {

@@ -342,10 +342,8 @@ __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 	return max_speed;
 }
 
-static int board_pre_task_peripheral_init(const struct device *unused)
+static int board_pre_task_peripheral_init(void)
 {
-	ARG_UNUSED(unused);
-
 	/* Only reset tcpc/pd if not sysjump */
 	if (!system_jumped_late()) {
 		/* Initialize tcpc and all ioex */

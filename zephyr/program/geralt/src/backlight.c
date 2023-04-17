@@ -32,7 +32,7 @@ static void board_backlight_handler(struct ap_power_ev_callback *cb,
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_bl_en_od), value);
 }
 
-static int install_backlight_handler(const struct device *unused)
+static int install_backlight_handler(void)
 {
 	static struct ap_power_ev_callback cb;
 

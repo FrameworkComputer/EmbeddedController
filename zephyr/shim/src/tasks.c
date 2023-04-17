@@ -393,10 +393,8 @@ void start_ec_tasks(void)
  * This allows us to set events on tasks before they even start, e.g. in
  * INIT_HOOKS.
  */
-int init_signals(const struct device *unused)
+int init_signals(void)
 {
-	ARG_UNUSED(unused);
-
 	for (size_t i = 0; i < TASK_ID_COUNT + EXTRA_TASK_COUNT; ++i) {
 		struct task_ctx_base_data *const data = task_get_base_data(i);
 

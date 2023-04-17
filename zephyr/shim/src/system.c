@@ -335,10 +335,8 @@ static int check_reset_cause(void)
 	return 0;
 }
 
-test_export_static int system_preinitialize(const struct device *unused)
+test_export_static int system_preinitialize(void)
 {
-	ARG_UNUSED(unused);
-
 	if (bbram_dev && !device_is_ready(bbram_dev)) {
 		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
 		return -1;

@@ -173,13 +173,12 @@ static void x86_non_dsx_chipset_state_exit_cb(const struct device *dev,
 	}
 }
 
-static int x86_non_dsx_chipset_init_events(const struct device *dev)
+static int x86_non_dsx_chipset_init_events(void)
 {
 	static struct ap_pwrseq_state_callback ap_pwrseq_entry_cb;
 	static struct ap_pwrseq_state_callback ap_pwrseq_exit_cb;
 	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
 
-	ARG_UNUSED(dev);
 	power_signal_init();
 
 	ap_pwrseq_entry_cb.cb = x86_non_dsx_chipset_state_entry_cb;

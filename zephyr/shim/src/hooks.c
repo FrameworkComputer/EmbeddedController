@@ -95,7 +95,7 @@ static void check_hook_task_priority(void)
 }
 DECLARE_HOOK(HOOK_INIT, check_hook_task_priority, HOOK_PRIO_FIRST);
 
-static int zephyr_shim_setup_hooks(const struct device *unused)
+static int zephyr_shim_setup_hooks(void)
 {
 	int rv;
 
@@ -217,7 +217,7 @@ static void ev_handler(struct ap_power_ev_callback *cb,
 /*
  * Events are received from the AP power event system and sent to the hooks.
  */
-static int zephyr_shim_ap_power_event(const struct device *unused)
+static int zephyr_shim_ap_power_event(void)
 {
 	static struct ap_power_ev_callback cb;
 

@@ -76,10 +76,8 @@ static atomic_t odr_event_required;
 __maybe_unused static int fifo_int_enabled;
 
 #ifdef CONFIG_ZEPHYR
-static int init_sensor_mutex(const struct device *dev)
+static int init_sensor_mutex(void)
 {
-	ARG_UNUSED(dev);
-
 	k_mutex_init(&g_sensor_mutex);
 
 	return 0;

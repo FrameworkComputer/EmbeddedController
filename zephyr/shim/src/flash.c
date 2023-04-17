@@ -131,10 +131,8 @@ test_mockable int crec_flash_physical_read(int offset, int size, char *data)
 	return rv;
 }
 
-static int flash_dev_init(const struct device *unused)
+static int flash_dev_init(void)
 {
-	ARG_UNUSED(unused);
-
 	if (!device_is_ready(cros_flash_dev) ||
 	    !device_is_ready(flash_ctrl_dev))
 		k_oops();

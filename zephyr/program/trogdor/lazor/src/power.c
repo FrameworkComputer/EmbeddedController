@@ -45,7 +45,7 @@ static void board_power_change(struct ap_power_ev_callback *cb,
 	}
 }
 
-static int board_power_handler_init(const struct device *unused)
+static int board_power_handler_init(void)
 {
 	static struct ap_power_ev_callback cb;
 

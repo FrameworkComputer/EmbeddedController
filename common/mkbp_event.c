@@ -80,10 +80,8 @@ static uint32_t mkbp_host_event_wake_mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 #ifdef CONFIG_ZEPHYR
-static int init_mkbp_mutex(const struct device *dev)
+static int init_mkbp_mutex(void)
 {
-	ARG_UNUSED(dev);
-
 	k_mutex_init(&state.lock);
 
 	return 0;

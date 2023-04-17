@@ -278,7 +278,7 @@ static const char *const disabled_channels[] =
 	DT_PROP(EC_CONSOLE_NODE, disabled);
 static const size_t disabled_channel_count =
 	DT_PROP_LEN(EC_CONSOLE_NODE, disabled);
-static int init_ec_console(const struct device *unused)
+static int init_ec_console(void)
 {
 	for (size_t i = 0; i < disabled_channel_count; i++)
 		console_channel_disable(disabled_channels[i]);
@@ -288,7 +288,7 @@ static int init_ec_console(const struct device *unused)
 SYS_INIT(init_ec_console, PRE_KERNEL_1, 50);
 #endif /* CONFIG_PLATFORM_EC_CONSOLE_CHANNEL */
 
-static int init_ec_shell(const struct device *unused)
+static int init_ec_shell(void)
 {
 #if defined(CONFIG_SHELL_BACKEND_SERIAL)
 	shell_zephyr = shell_backend_uart_get_ptr();
