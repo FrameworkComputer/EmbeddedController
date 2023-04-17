@@ -1,6 +1,6 @@
 ---
 name: build-zephyr
-description: Build a zephyr based EC firmware
+description: Build a Zephyr based EC firmware
 inputs:
   target:
     description: target
@@ -15,7 +15,7 @@ runs:
         echo Built ${{ inputs.target }} EC
 
     - name: File sha256
-      run: sha256sum src/platform/ec/build/zephyr/${{ inputs.target }}/output/ec.bin
+      run: sha256sum ~/chromiumos/src/platform/ec/build/zephyr/${{ inputs.target }}/output/ec.bin
 
     - name: Generate artifact version
       run: |
@@ -23,5 +23,5 @@ runs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: ${{ inputs.target }}.${{ env.VERSIONINFO }}.bin
-        path: src/platform/ec/build/zephyr/${{ inputs.target }}/output/ec.bin
+        name: ${{ inputs.target }}.${{ env.VERSIONINFO }}
+        path: ~/chromiumos/src/platform/ec/build/zephyr/${{ inputs.target }}/output
