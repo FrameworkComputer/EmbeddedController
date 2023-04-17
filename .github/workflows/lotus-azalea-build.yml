@@ -1,0 +1,47 @@
+name: build lotus, azalea firmware
+
+on:
+  push:
+    branches:
+      - lotus*
+  pull_request:
+    branches:
+      - lotus-zephyr
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build lotus/azalea
+    runs-on: [self-hosted]
+
+    steps:
+      # TODO: Might need to use git?
+      - name: Checkout EC code
+        uses: actions/checkout@v2
+          path: /home/github/chromiumos/src/platform/ec
+
+      #- name: Checkout Zephyr code
+      #  uses: actions/checkout@v2
+      #    path: /home/github/chromiumos/src/third_party/zephyr/main
+      #    ref: lotus-zephyr
+      #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
+
+      - name: Manual checkout
+        run: |
+          #pushd ~/chromiumos
+          #pushd src/platform/ec
+          #git fetch github-private
+          #git checkout lotus-zephyr
+          #popd
+          pushd src/third_party/zephyr/main
+          git fetch github-private
+          git checkout lotus-zephyr
+          popd
+
+      - uses: ./.github/workflows/build-zephyr
+        with:
+          target: lotus
+
+      #- uses: ./.github/workflows/build-zephyr
+      #  with:
+      #    target: azalea
