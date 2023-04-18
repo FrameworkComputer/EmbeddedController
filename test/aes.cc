@@ -19,19 +19,14 @@
 #include "test_util.h"
 
 extern "C" {
+#include "aes-gcm.h"
+#include "aes.h"
 #include "builtin/assert.h"
 #include "console.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
 }
-
-#include "aes_gcm_helpers.h"
-#include "openssl/aes.h"
-
-/* These must be included after the "openssl/aes.h" */
-#include "crypto/fipsmodule/aes/internal.h"
-#include "crypto/fipsmodule/modes/internal.h"
 
 /* Temporary buffer, to avoid using too much stack space. */
 static uint8_t tmp[512];

@@ -83,7 +83,8 @@
 
 /* Enabled features */
 
-#define CONFIG_BORINGSSL_CRYPTO
+#define CONFIG_AES
+#define CONFIG_AES_GCM
 #define CONFIG_DMA_CROS
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_FPU
