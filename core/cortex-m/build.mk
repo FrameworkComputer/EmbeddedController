@@ -44,6 +44,8 @@ core-y=cpu.o debug.o init.o vecttable.o
 ifneq ($(cc-name),clang)
 core-y+=ldivmod.o llsr.o uldivmod.o
 endif
+core-$(CONFIG_AES)+=aes.o
+core-$(CONFIG_AES_GCM)+=ghash.o
 core-$(CONFIG_ARMV7M_CACHE)+=cache.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o
