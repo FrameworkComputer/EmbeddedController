@@ -13,11 +13,6 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 {
 }
 
-int pd_check_vconn_swap(int port)
-{
-	return 0;
-}
-
 int board_get_adjusted_usb_pd_port_count(int port)
 {
 	return 2;

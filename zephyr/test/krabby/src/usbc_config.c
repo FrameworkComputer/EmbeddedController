@@ -4,12 +4,16 @@
  */
 
 #include "adc.h"
+#include "baseboard_usbc_config.h"
 #include "charge_manager.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/ppc/syv682x_public.h"
+#include "driver/tcpm/rt1718s.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_syv682x.h"
+#include "emul/tcpc/emul_rt1718s.h"
 #include "i2c/i2c.h"
+#include "test_state.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 
@@ -17,7 +21,7 @@
 #include <zephyr/drivers/emul.h>
 #include <zephyr/ztest.h>
 
-bool ppc_sink_enabled(int port)
+static bool ppc_sink_enabled(int port)
 {
 	const struct emul *emul = (port == 0) ?
 					  EMUL_DT_GET(DT_NODELABEL(ppc0_emul)) :
@@ -27,6 +31,17 @@ bool ppc_sink_enabled(int port)
 	syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &val);
 
 	return !(val & (SYV682X_CONTROL_1_PWR_ENB | SYV682X_CONTROL_1_HV_DR));
+}
+
+static bool usb_c1_source_gpio_enabled(void)
+{
+	const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(rt1718s_emul));
+	uint16_t val = 0;
+
+	rt1718s_emul_get_reg(emul, RT1718S_GPIO_CTRL(GPIO_EN_USB_C1_SOURCE),
+			     &val);
+
+	return val & RT1718S_GPIO_CTRL_O;
 }
 
 ZTEST(usbc_config, test_set_active_charge_port)
@@ -59,7 +74,7 @@ ZTEST(usbc_config, test_set_active_charge_port)
 	zassert_false(ppc_sink_enabled(0), NULL);
 	zassert_true(ppc_sink_enabled(1), NULL);
 
-	/* turn of sourcing, sinking port 0 */
+	/* turn off sourcing, sinking port 0 */
 	pd_power_supply_reset(0);
 	zassert_ok(board_set_active_charge_port(0), NULL);
 	zassert_true(ppc_sink_enabled(0), NULL);
@@ -104,6 +119,16 @@ ZTEST(usbc_config, test_set_active_charge_port_fail)
 	zassert_false(ppc_sink_enabled(1), NULL);
 }
 
+ZTEST(usbc_config, test_rt1718s_gpio_toggle)
+{
+	/* toggle sourcing on port 1, expect rt1718s gpio also changes */
+	zassert_false(usb_c1_source_gpio_enabled());
+	zassert_ok(pd_set_power_supply_ready(1));
+	zassert_true(usb_c1_source_gpio_enabled());
+	pd_power_supply_reset(1);
+	zassert_false(usb_c1_source_gpio_enabled());
+}
+
 ZTEST(usbc_config, test_adc_channel)
 {
 	zassert_equal(board_get_vbus_adc(0), ADC_VBUS_C0, NULL);
@@ -128,4 +153,5 @@ static void reset_ppc_state(void *fixture)
 	board_set_active_charge_port(CHARGE_PORT_NONE);
 }
 
-ZTEST_SUITE(usbc_config, NULL, NULL, reset_ppc_state, NULL, NULL);
+ZTEST_SUITE(usbc_config, krabby_predicate_post_main, NULL, reset_ppc_state,
+	    NULL, NULL);

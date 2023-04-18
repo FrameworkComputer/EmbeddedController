@@ -15,7 +15,8 @@ zephyr_include_directories(
 target_sources(app PRIVATE
 	src/stubs.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/ite_usbc.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/ite_usb_pd_policy.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/ite_usb_pd_policy.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/src/usb_pd_policy.c)
 
 target_sources_ifdef(CONFIG_TEST_KRABBY
 	app PRIVATE

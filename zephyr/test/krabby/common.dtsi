@@ -47,7 +47,7 @@
 			compatible = "named-usbc-port";
 			status = "okay";
 			reg = <1>;
-			tcpc = <&tcpci_emul>;
+			tcpc = <&rt1718s_emul>;
 			ppc = <&ppc1_emul>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
@@ -146,6 +146,12 @@
 		 */
 		frs_en_gpio = <&gpio_ec_x_gpio1>;
 		alert_gpio = <&gpio_x_ec_gpio2>;
+	};
+
+	rt1718s_emul: rt1718s@2c {
+		compatible = "cros,rt1718s-tcpc-emul", "richtek,rt1718s-tcpc";
+		status = "okay";
+		reg = <0x2c>;
 	};
 };
 

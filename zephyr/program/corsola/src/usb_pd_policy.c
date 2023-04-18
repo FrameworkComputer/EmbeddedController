@@ -6,11 +6,13 @@
 #include "baseboard_usbc_config.h"
 #include "chipset.h"
 #include "console.h"
+#include "driver/tcpm/rt1718s.h"
 #include "hooks.h"
 #include "timer.h"
 #include "typec_control.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
@@ -219,4 +221,50 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 	/* ack */
 	return 1;
+}
+
+void pd_power_supply_reset(int port)
+{
+	int prev_en;
+
+	prev_en = ppc_is_sourcing_vbus(port);
+
+#ifdef CONFIG_USB_PD_TCPM_RT1718S
+	if (port == USBC_PORT_C1) {
+		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 0);
+	}
+#endif
+
+	/* Disable VBUS. */
+	ppc_vbus_source_enable(port, 0);
+
+	/* Enable discharge if we were previously sourcing 5V */
+	if (prev_en) {
+		pd_set_vbus_discharge(port, 1);
+	}
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+
+int pd_set_power_supply_ready(int port)
+{
+	/* Disable charging. */
+	RETURN_ERROR(ppc_vbus_sink_enable(port, 0));
+
+	pd_set_vbus_discharge(port, 0);
+
+#ifdef CONFIG_USB_PD_TCPM_RT1718S
+	/* Provide Vbus. */
+	if (port == USBC_PORT_C1) {
+		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 1);
+	}
+#endif
+
+	RETURN_ERROR(ppc_vbus_source_enable(port, 1));
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
+	return EC_SUCCESS;
 }
