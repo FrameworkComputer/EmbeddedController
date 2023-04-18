@@ -70,11 +70,11 @@ before_script:
             done ;
             git checkout -d "${rev}" ;
     }
-  - boringssl_commit() {
-      repo init -u https://chromium.googlesource.com/chromiumos/manifest -b main > /dev/null
-      repo sync external/gob/boringssl/boringssl > /dev/null
-      repo info external/gob/boringssl/boringssl | grep -Po '(?<=Manifest revision: )\w*'
-    }
+  - "boringssl_commit() {
+      repo init -u https://chromium.googlesource.com/chromiumos/manifest -b main > /dev/null ;
+      repo sync external/gob/boringssl/boringssl > /dev/null ;
+      repo info external/gob/boringssl/boringssl | grep -Po '(?<=Manifest revision: )\\w*' ;
+    }"
   - ec_commit_date="$(cd ${EC_DIR} ; git log -1 HEAD --format=%cd --date=iso)"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr" "main" "${ZEPHYR_BASE}" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis" "chromeos-main" "${MODULES_DIR}/cmsis" "${ec_commit_date}"
