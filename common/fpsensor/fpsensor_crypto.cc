@@ -8,13 +8,13 @@
 #include "fpsensor_state.h"
 #include "fpsensor_utils.h"
 #include "openssl/aes.h"
-#include "openssl/mem.h"
 
 /* These must be included after the "openssl/aes.h" */
 #include "crypto/fipsmodule/aes/internal.h"
 #include "crypto/fipsmodule/modes/internal.h"
 
 extern "C" {
+#include "cryptoc/util.h"
 #include "rollback.h"
 #include "sha256.h"
 #include "util.h"
@@ -101,7 +101,7 @@ static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
 	compute_hmac_sha256(key_buf, prk, prk_size, message_buf, info_size + 1);
 
 	memcpy(out_key, key_buf, out_key_size);
-	OPENSSL_cleanse(key_buf, sizeof(key_buf));
+	always_memset(key_buf, 0, sizeof(key_buf));
 
 	return EC_SUCCESS;
 }
@@ -156,8 +156,8 @@ int hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk, size_t prk_size,
 		out_key += block_size;
 		L -= block_size;
 	}
-	OPENSSL_cleanse(T_buffer, sizeof(T_buffer));
-	OPENSSL_cleanse(info_buffer, sizeof(info_buffer));
+	always_memset(T_buffer, 0, sizeof(T_buffer));
+	always_memset(info_buffer, 0, sizeof(info_buffer));
 	return EC_SUCCESS;
 #undef HASH_LEN
 }
@@ -187,7 +187,7 @@ int derive_positive_match_secret(uint8_t *output,
 	/* "Extract" step of HKDF. */
 	hkdf_extract(prk, input_positive_match_salt,
 		     FP_POSITIVE_MATCH_SALT_BYTES, ikm, sizeof(ikm));
-	OPENSSL_cleanse(ikm, sizeof(ikm));
+	always_memset(ikm, 0, sizeof(ikm));
 
 	memcpy(info, info_prefix, strlen(info_prefix));
 	memcpy(info + strlen(info_prefix), user_id, sizeof(user_id));
@@ -195,7 +195,7 @@ int derive_positive_match_secret(uint8_t *output,
 	/* "Expand" step of HKDF. */
 	ret = hkdf_expand(output, FP_POSITIVE_MATCH_SECRET_BYTES, prk,
 			  sizeof(prk), info, sizeof(info));
-	OPENSSL_cleanse(prk, sizeof(prk));
+	always_memset(prk, 0, sizeof(prk));
 
 	/* Check that secret is not full of 0x00 or 0xff. */
 	if (bytes_are_trivial(output, FP_POSITIVE_MATCH_SECRET_BYTES)) {
@@ -225,7 +225,7 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 	/* "Extract step of HKDF. */
 	hkdf_extract(prk, salt, FP_CONTEXT_ENCRYPTION_SALT_BYTES, ikm,
 		     sizeof(ikm));
-	OPENSSL_cleanse(ikm, sizeof(ikm));
+	always_memset(ikm, 0, sizeof(ikm));
 
 	/*
 	 * Only 1 "expand" step of HKDF since the size of the "info" context
@@ -234,7 +234,7 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 	 */
 	ret = hkdf_expand_one_step(out_key, SBP_ENC_KEY_LEN, prk, sizeof(prk),
 				   (uint8_t *)user_id, sizeof(user_id));
-	OPENSSL_cleanse(prk, sizeof(prk));
+	always_memset(prk, 0, sizeof(prk));
 
 	return ret;
 }
