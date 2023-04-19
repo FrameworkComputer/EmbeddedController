@@ -9,30 +9,43 @@
 		compatible = "cros-ec,led-policy";
 
 		pwr-power-state-off {
-			color-0 {
-				led-color = <&color_power_off>;
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
 		pwr-power-state-on {
 			chipset-state = "POWER_S0";
 
-			color-0 {
-				led-color = <&color_power_green>;
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
 			};
 		};
 
 		pwr-power-state-s3 {
 			chipset-state = "POWER_S3";
 
-			color-0 {
-				led-color = <&color_power_green>;
-				period-ms = <1000>;
-			};
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
 
-			color-1 {
-				led-color = <&color_power_off>;
-				period-ms = <3000>;
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 	};
@@ -71,17 +84,17 @@
 			led-pwms = <&led_power_red &led_power_green
 				    &led_power_blue>;
 
-			color_power_off: color-power-off {
+			color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0 0 0>;
 			};
 
-			color_power_green: color-power-green {
+			color-power-green {
 				led-color = "LED_GREEN";
 				led-values = <0 100 0>;
 			};
 
-			color_power_blue: color-power-blue {
+			color-power-blue {
 				led-color = "LED_BLUE";
 				led-values = <0 0 100>;
 			};

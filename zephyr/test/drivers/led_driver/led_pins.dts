@@ -14,14 +14,16 @@
 	gpio-led-pins {
 		compatible = "cros-ec,gpio-led-pins";
 
-		left-led {
+		left_led: left-led {
 			led-id = "EC_LED_ID_SYSRQ_DEBUG_LED";
 			led-pins = <&gpio_ec_chg_led_y_c1
 				    &gpio_ec_chg_led_w_c1>;
-			color_off_left: color-off-left {
+
+			color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
+
 			color_blue_left: color-blue-left {
 				led-color = "LED_BLUE";
 				led-values = <1 0>;
@@ -32,11 +34,12 @@
 			};
 		};
 
-		right-led {
+		right_led: right-led {
 			led-id = "EC_LED_ID_RIGHT_LED";
 			led-pins = <&gpio_ec_chg_led_y_c0
 				    &gpio_ec_chg_led_w_c0>;
-			color_off_right: color-off-right {
+
+			color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};

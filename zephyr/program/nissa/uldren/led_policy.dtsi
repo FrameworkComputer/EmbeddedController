@@ -9,16 +9,24 @@
 			batt-lvl = <BATTERY_LEVEL_EMPTY
 						BATTERY_LEVEL_FULL>;
 
-			color-0 {
-				led-color = <&color_white>;
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
-			color-0 {
-				led-color = <&color_off>;
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -27,8 +35,12 @@
 			chipset-state = "POWER_S0";
 			batt-lvl = <BATTERY_LEVEL_LOW BATTERY_LEVEL_FULL>;
 
-			color-0 {
-				led-color = <&color_off>;
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -36,8 +48,12 @@
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
-			color-0 {
-				led-color = <&color_off>;
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -45,8 +61,12 @@
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 
-			color-0 {
-				led-color = <&color_off>;
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -55,8 +75,12 @@
 			chipset-state = "POWER_S0";
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
-			color-0 {
-				led-color = <&color_amber>;
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
@@ -65,50 +89,66 @@
 			chipset-state = "POWER_S3";
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
-			color-0 {
-				led-color = <&color_amber>;
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
 		power-state-error-s0 {
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S0";
-			/* Amber 1 sec, off 1 sec */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <1000>;
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* Amber 1 sec, off 1 sec */
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
 			};
 		};
 
 		power-state-error-s3 {
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S3";
-			/* Amber 1 sec, off 3 sec */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* Amber 1 sec, off 3 sec */
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
 		power-state-error-s5 {
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S5";
-			/* Amber 1 sec, off 3 sec */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* Amber 1 sec, off 3 sec */
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 	};

@@ -8,8 +8,11 @@
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			/* Turn on Blue LED */
-			color-0 {
-				led-color = <&color_blue>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_BLUE";
+				};
 			};
 		};
 
@@ -19,8 +22,11 @@
 			batt-lvl = <97 100>;
 
 			/* Turn on Blue LED */
-			color-0 {
-				led-color = <&color_blue>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_BLUE";
+				};
 			};
 		};
 
@@ -30,8 +36,11 @@
 			batt-lvl = <0 97>;
 
 			/* Turn on Amber LED */
-			color-0 {
-				led-color = <&color_amber>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
@@ -40,8 +49,11 @@
 			chipset-state = "POWER_S0";
 
 			/* Turn on Blue LED */
-			color-0 {
-				led-color = <&color_blue>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_BLUE";
+				};
 			};
 		};
 
@@ -50,13 +62,16 @@
 			chipset-state = "POWER_S3";
 
 			/* One sec Amber, three secs Off */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
@@ -65,8 +80,11 @@
 			chipset-state = "POWER_S5";
 
 			/* Turn off */
-			color-0 {
-				led-color = <&color_off>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -74,13 +92,16 @@
 			charge-state = "LED_PWRS_FORCED_IDLE";
 
 			/* 2 secs Amber, 2 secs Blue */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <2000>;
-			};
-			color-1 {
-				led-color = <&color_blue>;
-				period-ms = <2000>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_BLUE";
+					period-ms = <2000>;
+				};
 			};
 		};
 
@@ -88,13 +109,16 @@
 			charge-state = "LED_PWRS_ERROR";
 
 			/* One sec Amber, one sec Off */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <1000>;
+			batt-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
 			};
 		};
 

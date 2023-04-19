@@ -16,8 +16,11 @@ child-binding:
        charge-state = "LED_PWRS_DISCHARGE";
        chipset-state = "POWER_S0";
        charge-port = <0>;
-       color-0 {
-         led-color = <&color_blue>;
+       led-0 {
+         led-id = "EC_LED_ID_BATTERY_LED";
+         color-0 {
+           led-color = "LED_BLUE";
+         };
        };
     };
 
@@ -82,30 +85,57 @@ child-binding:
       type: array
 
   child-binding:
-    description: Color enum
     properties:
-      led-color:
+      led-id:
         description: |
-          Handle to LED pins node that describes pins to set to enable a
-          particular color.
-        type: phandle
+          This property is the same as the one required by the
+          EC_CMD_LED_CONTROL host command.
+          It must match the enum names defined in ec_commands.h.
+        type: string
         required: true
-      period-ms:
-        description: |
-          In case of blinking LEDs, amount of time in msecs the LED
-          color is active. This value must be a multiple of
-          HOOK_TICK_INTERVAL_MS.
-          e.g.
-          power-state-error {
-             charge-state = "LED_PWRS_ERROR";
-             /* One sec Amber, one sec Off */
-             color-0 {
-               led-color = <&color_amber>;
-               period-ms = <1000>;
-             };
-             color-1 {
-               led-color = <&color_off>;
-               period-ms = <1000>;
-             };
-          };
-        type: int
+        enum:
+          - EC_LED_ID_BATTERY_LED
+          - EC_LED_ID_POWER_LED
+          - EC_LED_ID_ADAPTER_LED
+          - EC_LED_ID_LEFT_LED
+          - EC_LED_ID_RIGHT_LED
+          - EC_LED_ID_RECOVERY_HW_REINIT_LED
+          - EC_LED_ID_SYSRQ_DEBUG_LED
+    child-binding:
+      properties:
+        led-color:
+          description: |
+            The color to be set for this LED. Must be one of the colors defined
+            for this LED in led_pins.dts or pwm_pins.dts.
+          type: string
+          required: true
+          enum:
+            - LED_OFF
+            - LED_RED
+            - LED_GREEN
+            - LED_BLUE
+            - LED_YELLOW
+            - LED_WHITE
+            - LED_AMBER
+        period-ms:
+          description: |
+            In case of blinking LEDs, amount of time in msecs the LED
+            color is active. This value must be a multiple of
+            HOOK_TICK_INTERVAL_MS.
+            e.g.
+            power-state-error {
+               charge-state = "LED_PWRS_ERROR";
+               led-0 {
+                 led-node = "EC_LED_ID_BATTERY_LED";
+                 /* One sec Amber, one sec Off */
+                 color-0 {
+                   led-color = "LED_AMBER";
+                   period-ms = <1000>;
+                 };
+                 color-1 {
+                   led-color = "LED_OFF";
+                   period-ms = <1000>;
+                 };
+               };
+            };
+          type: int

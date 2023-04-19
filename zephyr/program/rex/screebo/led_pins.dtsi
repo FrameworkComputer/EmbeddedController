@@ -10,17 +10,17 @@
 		combo_led: combo-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&gpio_led_1_l &gpio_led_2_l>;
-			color_off: color-off {
+			color-off {
 				led-color = "LED_OFF";
 				led-values = <1 1>;
 			};
 
-			color_amber: color-amber {
+			color-amber {
 				led-color = "LED_AMBER";
 				led-values = <1 0>;
 			};
 
-			color_white: color-white {
+			color-white {
 				led-color = "LED_WHITE";
 				led-values = <0 1>;
 			};

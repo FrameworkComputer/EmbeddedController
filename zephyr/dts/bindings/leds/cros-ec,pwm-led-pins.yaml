@@ -43,7 +43,7 @@ child-binding:
       e.g. For blue and amber PWM channels, in order to set color amber, a node
       looks like this where 100 is PWM duty cycle in percentage.
       color-amber {
-                   led-color = "LED_AMBER";
+                   led-color = <LED_AMBER>;
                    led-values = <100 0>;
                   };
     properties:

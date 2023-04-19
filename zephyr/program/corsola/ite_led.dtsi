@@ -11,24 +11,36 @@
 		bat-power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
 
-			color-0 {
-				led-color = <&color_battery_amber>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
 		bat-power-state-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
-			color-0 {
-				led-color = <&color_battery_white>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		bat-power-state-discharge {
 			charge-state = "LED_PWRS_DISCHARGE";
 
-			color-0 {
-				led-color = <&color_battery_off>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -37,56 +49,76 @@
 			chipset-state = "POWER_S0";
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
-			color-0 {
-				led-color = <&color_battery_amber>;
-				period-ms = <1000>;
-			};
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
 
-			color-1 {
-				led-color = <&color_battery_off>;
-				period-ms = <3000>;
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
 		bat-power-state-error {
 			charge-state = "LED_PWRS_ERROR";
 
-			color-0 {
-				led-color = <&color_battery_amber>;
-				period-ms = <1000>;
-			};
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
 
-			color-1 {
-				led-color = <&color_battery_off>;
-				period-ms = <1000>;
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
 			};
 		};
 
 		pwr-power-state-off {
-			color-0 {
-				led-color = <&color_power_off>;
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
 		pwr-power-state-on {
 			chipset-state = "POWER_S0";
 
-			color-0 {
-				led-color = <&color_power_white>;
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		pwr-power-state-s3 {
 			chipset-state = "POWER_S3";
 
-			color-0 {
-				led-color = <&color_power_white>;
-				period-ms = <1000>;
-			};
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
 
-			color-1 {
-				led-color = <&color_power_off>;
-				period-ms = <3000>;
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 	};
@@ -113,12 +145,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_power_white>;
 
-			color_power_off: color-power-off {
+			color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color_power_white: color-power-white {
+			color-power-white {
 				led-color = "LED_WHITE";
 				led-values = <100>;
 			};
@@ -128,17 +160,17 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&led_battery_amber &led_battery_white>;
 
-			color_battery_off: color-battery-off {
+			color-battery-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color_battery_amber: color-battery-amber {
+			color-battery-amber {
 				led-color = "LED_AMBER";
 				led-values = <100 0>;
 			};
 
-			color_battery_white: color-battery-white {
+			color-battery-white {
 				led-color = "LED_WHITE";
 				led-values = <0 100>;
 			};

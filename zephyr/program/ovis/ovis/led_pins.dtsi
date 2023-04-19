@@ -10,17 +10,17 @@
 		left_led: left-led {
 			led-id = "EC_LED_ID_LEFT_LED";
 			led-pins = <&gpio_led_1_l &gpio_led_2_l>;
-			color_off_left: color-off-left {
+			color-off-left {
 				led-color = "LED_OFF";
 				led-values = <1 1>;
 			};
 
-			color_amber_left: color-amber-left {
+			color-amber-left {
 				led-color = "LED_AMBER";
 				led-values = <0 1>;
 			};
 
-			color_white_left: color-white-left {
+			color-white-left {
 				led-color = "LED_WHITE";
 				led-values = <1 0>;
 			};

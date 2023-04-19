@@ -176,7 +176,7 @@
 			>;
 	};
 
-	led_colors: led-colors {
+	led-colors {
 		compatible = "cros-ec,led-policy";
 
 		/* ponyta LED bat charge */
@@ -185,8 +185,12 @@
 			/* Battery display percent range (>= 0, <= 4%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
 
-			color-0 {
-				led-color = <&color_red>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_RED";
+				};
 			};
 		};
 
@@ -195,8 +199,12 @@
 			/* Battery display percent range (>= 5, <= 96%) */
 			batt-lvl = <BATTERY_LEVEL_CRITICAL 96>;
 
-			color-0 {
-				led-color = <&color_amber>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
@@ -205,8 +213,12 @@
 			/* Battery display percent range (>= 97, <= 99) */
 			batt-lvl = <97 99>;
 
-			color-0 {
-				led-color = <&color_green>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
 			};
 		};
 
@@ -214,8 +226,12 @@
 		bat-state-charge-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
-			color-0 {
-				led-color = <&color_green>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
 			};
 		};
 
@@ -223,8 +239,12 @@
 		bat-state-discharge {
 			charge-state = "LED_PWRS_DISCHARGE";
 
-			color-0 {
-				led-color = <&color_battery_off>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -232,13 +252,17 @@
 		bat-state-error {
 			charge-state = "LED_PWRS_ERROR";
 
-			color-0 {
-				led-color = <&color_red>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_battery_off>;
-				period-ms = <1000>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_RED";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
 			};
 		};
 
@@ -246,8 +270,12 @@
 		bat-state-idle {
 			charge-state = "LED_PWRS_IDLE";
 
-			color-0 {
-				led-color = <&color_green>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
 			};
 		};
 
@@ -255,13 +283,17 @@
 		bat-state-forced-idle {
 			charge-state = "LED_PWRS_FORCED_IDLE";
 
-			color-0 {
-				led-color = <&color_red>;
-				period-ms = <2000>;
-			};
-			color-1 {
-				led-color = <&color_green>;
-				period-ms = <2000>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_RED";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_GREEN";
+					period-ms = <2000>;
+				};
 			};
 		};
 
@@ -269,8 +301,12 @@
 		power-state-s0 {
 			chipset-state = "POWER_S0";
 
-			color-0 {
-				led-color = <&color_white>;
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
@@ -278,13 +314,17 @@
 		power-state-s3 {
 			chipset-state = "POWER_S3";
 
-			color-0 {
-				led-color = <&color_white>;
-				period-ms = <3000>;
-			};
-			color-1 {
-				led-color = <&color_power_off>;
-				period-ms = <500>;
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <3000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <500>;
+				};
 			};
 		};
 
@@ -292,8 +332,12 @@
 		power-state-s5 {
 			chipset-state = "POWER_S5";
 
-			color-0 {
-				led-color = <&color_power_off>;
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 	};
@@ -318,22 +362,22 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&led_battery_red &led_battery_green>;
 
-			color_battery_off: color-battery-off {
+			color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color_red: color-red {
+			color-red {
 				led-color = "LED_RED";
 				led-values = <100 0>;
 			};
 
-			color_amber: color-amber {
+			color-amber {
 				led-color = "LED_AMBER";
 				led-values = <100 20>;
 			};
 
-			color_green: color_green {
+			color-green {
 				led-color = "LED_GREEN";
 				led-values = <0 100>;
 			};
@@ -343,12 +387,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_power_white>;
 
-			color_white: color_white {
+			color-white {
 				led-color = "LED_WHITE";
 				led-values = <100>;
 			};
 
-			color_power_off: color-power-off {
+			color-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};

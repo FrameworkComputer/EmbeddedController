@@ -21,17 +21,17 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&pwm_y &pwm_b>;
 
-			color_off: color-off {
+			color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color_amber: color-amber {
+			color-amber {
 				led-color = "LED_AMBER";
 				led-values = <100 0>;
 			};
 
-			color_blue: color-blue {
+			color-blue {
 				led-color = "LED_BLUE";
 				led-values = <0 100>;
 			};

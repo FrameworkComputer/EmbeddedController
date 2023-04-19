@@ -37,7 +37,6 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_ARRAY)
 	{                                                       \
 		.led_color = GET_PROP(node_id, led_color),      \
 		.led_id = GET_PROP(DT_PARENT(node_id), led_id), \
-		.br_color = GET_PROP(node_id, led_color) - 1,   \
 		.gpio_pins = PINS_ARRAY(node_id),               \
 		.pins_count = DT_PROP_LEN(node_id, led_values)  \
 	}
@@ -86,10 +85,17 @@ void led_set_color(enum led_color color, enum ec_led_id led_id)
 	}
 }
 
+void led_set_color_with_pattern(const struct led_pattern_node_t *led)
+{
+	struct led_pins_node_t *pins_node =
+		led->pattern_color[led->cur_color].led_color_node;
+	led_set_color_with_node(pins_node);
+}
+
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
-		int br_color = pins_node[i]->br_color;
+		int br_color = pins_node[i]->led_color - 1;
 
 		if (br_color != EC_LED_COLOR_INVALID)
 			brightness_range[br_color] = 1;
@@ -101,10 +107,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	bool color_set = false;
 
 	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
-		int br_color = pins_node[i]->br_color;
+		int br_color = pins_node[i]->led_color - 1;
 
-		if (br_color != EC_LED_COLOR_INVALID &&
-		    brightness[br_color] != 0) {
+		if ((br_color != EC_LED_COLOR_INVALID) &&
+		    (brightness[br_color] != 0)) {
 			color_set = true;
 			led_set_color(pins_node[i]->led_color, led_id);
 		}
@@ -148,3 +154,12 @@ const struct led_pins_node_t *led_get_node(enum led_color color,
 	return pin_node;
 }
 #endif /* TEST_BUILD */
+
+/* Called by hook task every HOOK_TICK_INTERVAL_MS */
+void board_led_apply_color(void)
+{
+	/*
+	 * GPIO LEDs can be applied when they are set and does not need to be
+	 * applied asynchronously. This function is left empty on purpose.
+	 */
+}
