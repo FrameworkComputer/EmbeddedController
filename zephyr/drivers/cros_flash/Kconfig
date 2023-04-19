@@ -83,6 +83,7 @@ config CROS_FLASH_HAS_READOUT_PROTECTION
 
 choice CROS_FLASH_BACKEND
 	prompt "Backend for cros-flash driver"
+	default CROS_FLASH_BACKEND_STM32 if SOC_FAMILY_STM32
 	help
 	  Backend for cros-flash driver provides functions responsible for
 	  changing write protection and readout protection state, blocking
@@ -90,6 +91,13 @@ choice CROS_FLASH_BACKEND
 
 	  Backend performs these operations using extended operations exposed by
 	  flash API or can interact with the hardware directly.
+
+config CROS_FLASH_BACKEND_STM32
+	bool "STM32 backend for cros-flash driver"
+	depends on SOC_FLASH_STM32
+	select CROS_FLASH_HAS_READOUT_PROTECTION if FLASH_STM32_READOUT_PROTECTION
+	select FLASH_EX_OP_ENABLED
+	select FLASH_STM32_WRITE_PROTECT
 
 config CROS_FLASH_BACKEND_FAKE
 	bool "Fake backend for cros-flash driver"
@@ -119,5 +127,19 @@ config CROS_FLASH_INIT_PRIORITY
 	  This sets the priority of the cros-flash driver for Zephyr shim.
 	  This driver depends on the flash-controller driver in Zephyr.
 	  Its priority must be lower than CONFIG_FLASH_INIT_PRIORITY.
+
+# Backend-specific configs
+
+config CROS_FLASH_STM32_EC_JUMP_STRUCTURE
+	bool "Enable backward compatibility with EC flash jump structure"
+	depends on CROS_FLASH_BACKEND_STM32 && SOC_SERIES_STM32F4X
+	default n
+	select CROS_FLASH_CUSTOM_JUMP_STRUCTURE
+	help
+	  This option enables backward compatibility with EC flash protection
+	  data. During sysjump, flash protection information is saved in jump
+	  tags. The part we've jumped to will read the data, so it will report
+	  protection correctly. This includes the code for coverting the data
+	  between old and new formats.
 
 endif # CROS_FLASH
