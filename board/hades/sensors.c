@@ -19,8 +19,8 @@ struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_GPU] = {
-		.name = "TEMP_GPU",
+	[ADC_TEMP_SENSOR_2_FAN] = {
+		.name = "TEMP_FAN",
 		.input_ch = NPCX_ADC_CH1,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -29,6 +29,13 @@ struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_3_CHARGER] = {
 		.name = "TEMP_CHARGER",
 		.input_ch = NPCX_ADC_CH6,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_4_GPU_FBVDD] = {
+		.name = "TEMP_GPU_FBVDD",
+		.input_ch = NPCX_ADC_CH7,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
@@ -43,6 +50,13 @@ struct adc_t adc_channels[] = {
 	[ADC_ADP_TYP] = {
 		.name = "ADP_TYP",
 		.input_ch = NPCX_ADC_CH4,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_USB_C1_VBUSM] = {
+		.name = "USB_C1_VBUSM",
+		.input_ch = NPCX_ADC_CH9,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
@@ -62,13 +76,19 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "GPU",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_GPU,
+		.idx = ADC_TEMP_SENSOR_2_FAN,
 	},
 	[TEMP_SENSOR_3_CHARGER] = {
 		.name = "Charger",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_3_CHARGER,
+	},
+	[TEMP_SENSOR_4_GPU_FBVDD] = {
+		.name = "GPU FBVDD",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_4_GPU_FBVDD,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
@@ -131,5 +151,6 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
 	[TEMP_SENSOR_2_GPU] = THERMAL_GPU,
 	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
+	[TEMP_SENSOR_4_GPU_FBVDD] = THERMAL_GPU,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);

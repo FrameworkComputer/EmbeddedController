@@ -39,7 +39,7 @@ static const struct fan_conf fan_conf_1 = {
 	.flags = FAN_USE_RPM_MODE,
 	.ch = MFT_CH_1, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
-	.enable_gpio = GPIO_EN_PP5000_FAN2,
+	.enable_gpio = GPIO_EN_PP12000_FAN_X,
 };
 
 static const struct fan_rpm fan_rpm_0 = {

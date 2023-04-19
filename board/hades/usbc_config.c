@@ -79,7 +79,6 @@ struct ppc_config_t ppc_chips[] = {
 		.i2c_port = I2C_PORT_USB_C1_PPC,
 		.i2c_addr_flags = SYV682X_ADDR2_FLAGS,
 		.drv = &syv682x_drv,
-		.frs_en = GPIO_USB_C1_FRS_EN,
 	},
 };
 

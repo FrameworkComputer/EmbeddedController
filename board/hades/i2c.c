@@ -32,21 +32,13 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C5 */
 		.name = "battery",
 		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
+		.kbps = 400,
 		.scl = GPIO_EC_I2C_BAT_SCL,
 		.sda = GPIO_EC_I2C_BAT_SDA,
 	},
 	{
-		/* I2C6 */
-		.name = "usba1",
-		.port = I2C_PORT_USBA1_RT,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_USBA_RT_SCL,
-		.sda = GPIO_EC_I2C_USBA_RT_SDA,
-	},
-	{
 		/* I2C7 */
-		.name = "eeprom",
+		.name = "misc",
 		.port = I2C_PORT_EEPROM,
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_MISC_SCL_R,
