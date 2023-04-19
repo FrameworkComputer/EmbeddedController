@@ -6,6 +6,7 @@
 # Zephyr module.  The format is:
 #  vendor-prefix<TAB>vendor name
 aec	Battery vendor
+aoz	Alpha & Omega Semiconductor
 atl	Battery vendor
 bms-gf	Battery vendor
 byd	Battery vendor
@@ -14,6 +15,7 @@ cosmx	Battery vendor
 cros-ec	The Chromium OS Embedded Controller Project
 cros	The Chromium OS Embedded Controller Project
 dynapack	Battery vendor
+fairchild	Fairchild Semiconductor
 ganfeng	Battery vendor
 getac	Battery vendor
 gfl	Battery vendor
