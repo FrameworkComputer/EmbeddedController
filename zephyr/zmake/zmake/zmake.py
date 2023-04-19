@@ -521,9 +521,9 @@ class Zmake:
                     base_config |= zmake.build_config.BuildConfig(
                         kconfig_defs={"CONFIG_COMPILER_SAVE_TEMPS": "y"}
                     )
-                if allow_warnings:
+                if not allow_warnings:
                     base_config |= zmake.build_config.BuildConfig(
-                        cmake_defs={"ALLOW_WARNINGS": "ON"}
+                        kconfig_defs={"CONFIG_COMPILER_WARNINGS_AS_ERRORS": "y"}
                     )
                 if extra_cflags:
                     base_config |= zmake.build_config.BuildConfig(

@@ -45,12 +45,6 @@ if(DEFINED CONFIG_PLATFORM_EC)
   # with Zephyr builds only.
   zephyr_compile_definitions("CONFIG_ZEPHYR")
 
-  # Force compiler warnings to generate errors
-  option(ALLOW_WARNINGS "Do not treat warnings as errors")
-  if (NOT ALLOW_WARNINGS)
-    zephyr_compile_options(-Werror)
-  endif()
-
   include(fpu.cmake)
 
   # When LTO is enabled, enable only for the "app" library, which compiles
