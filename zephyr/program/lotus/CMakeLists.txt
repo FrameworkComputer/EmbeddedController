@@ -39,5 +39,6 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/battery.c"
 			"azalea/src/charger.c"
 			"azalea/src/power_sequence.c"
+			"azalea/src/keyboard_customization.c"
 	)
 endif()
