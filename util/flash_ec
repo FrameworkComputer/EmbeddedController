@@ -116,6 +116,7 @@ BOARDS_NPCX_7M7X_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
+	helipilot
 )
 
 BOARDS_NPCX_INT_SPI=(
@@ -381,7 +382,7 @@ case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	bloonchipper|dartmonkey|hatch_fp|nami_fp|nocturne_fp ) MCU="fpmcu" ;;
+	bloonchipper|dartmonkey|hatch_fp|helipilot|nami_fp|nocturne_fp ) MCU="fpmcu" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
@@ -1021,6 +1022,14 @@ function flash_flashrom() {
 
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
+			sleep 0.2
+			dut_control cold_reset:off
+		# Gang programmer mode for npcx_spi requires using dev_mode
+		# rather than fw_up
+		elif [[ "${CHIP}" == "npcx_spi" ]]; then
+			servo_save_add "dev_mode" "off"
+
+			dut_control dev_mode:on
 			sleep 0.2
 			dut_control cold_reset:off
 		fi
