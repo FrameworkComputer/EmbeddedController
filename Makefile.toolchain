@@ -39,6 +39,7 @@ CLANG_BOARDS:= \
 	bloonchipper \
 	dartmonkey \
 	hatch_fp \
+	helipilot \
 	nami_fp \
 	nocturne_fp \
 	nucleo-dartmonkey \

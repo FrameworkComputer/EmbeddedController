@@ -21,6 +21,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Fingerprint boards
     "dartmonkey",
     "bloonchipper",
+    "helipilot",
     "nami_fp",
     "nucleo-dartmonkey",
     "nucleo-f412zg",
