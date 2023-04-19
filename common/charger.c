@@ -163,30 +163,34 @@ void print_charger_debug(int chgnum)
 	if (check_print_error(charger_device_id(&d)))
 		ccprintf("0x%04x\n", d);
 
-	/* charge voltage limit */
-	print_item_name("V_batt:");
-	if (check_print_error(charger_get_voltage(chgnum, &d)))
-		ccprintf("%5d (%4d - %5d, %3d)\n", d, info->voltage_min,
-			 info->voltage_max, info->voltage_step);
-
-	/* charge current limit */
-	print_item_name("I_batt:");
-	if (check_print_error(charger_get_current(chgnum, &d)))
-		ccprintf("%5d (%4d - %5d, %3d)\n", d, info->current_min,
-			 info->current_max, info->current_step);
-
-	/* input current limit */
-	print_item_name("I_in:");
-	if (check_print_error(charger_get_input_current_limit(chgnum, &d)))
-		ccprintf("%5d (%4d - %5d, %3d)\n", d, info->input_current_min,
-			 info->input_current_max, info->input_current_step);
-
 	/* dptf current limit */
 	print_item_name("I_dptf:");
 	if (dptf_limit_ma >= 0)
 		ccprintf("%5d\n", dptf_limit_ma);
 	else
 		ccputs("disabled\n");
+
+	/* Limits */
+	ccprintf("Limits\t\t\t ( min    max  step)\n");
+
+	/* charge voltage limit */
+	print_item_name("chg_voltage:");
+	if (check_print_error(charger_get_voltage(chgnum, &d)))
+		ccprintf("\t%5d mV (%4d - %5d, %3d)\n", d, info->voltage_min,
+			 info->voltage_max, info->voltage_step);
+
+	/* charge current limit */
+	print_item_name("chg_current:");
+	if (check_print_error(charger_get_current(chgnum, &d)))
+		ccprintf("\t%5d mA (%4d - %5d, %3d)\n", d, info->current_min,
+			 info->current_max, info->current_step);
+
+	/* input current limit */
+	print_item_name("input_current:");
+	if (check_print_error(charger_get_input_current_limit(chgnum, &d)))
+		ccprintf("\t%5d mA (%4d - %5d, %3d)\n", d,
+			 info->input_current_min, info->input_current_max,
+			 info->input_current_step);
 }
 
 void print_charger_prochot(int chgnum)
