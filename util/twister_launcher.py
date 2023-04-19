@@ -279,15 +279,10 @@ def main():
         zephyr_modules.append(ec_base)
 
     # Twister CLI args
-    # TODO(b/239165779): Reduce or remove the usage of label properties
-    # Zephyr upstream has deprecated the label property. We need to allow
-    # warnings during twister runs until all the label properties are removed
-    # from all board and test overlays.
     twister_cli = [
         sys.executable,
         str(zephyr_base / "scripts" / "twister"),  # Executable path
         "--ninja",
-        "--disable-warnings-as-errors",
         f"-x=DTS_ROOT={str( ec_base / 'zephyr')}",
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_BASE={zephyr_base}",
@@ -382,6 +377,10 @@ def main():
         gcov_tool = None
         if intercepted_args.toolchain == "host":
             gcov_tool = "gcov"
+            # Inside the chroot, the binutils is still at v2.36 and does not
+            # support the -no-pie flag with the linker and generates warnings.
+            # Disable warnings as errors for the GCC toolchain only.
+            twister_cli.extend(["--disable-warnings-as-errors"])
         elif intercepted_args.toolchain == "llvm":
             gcov_tool = str(ec_base / "util" / "llvm-gcov.sh")
         else:
