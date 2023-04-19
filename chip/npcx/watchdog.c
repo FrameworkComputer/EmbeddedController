@@ -142,14 +142,14 @@ DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 int watchdog_init(void)
 {
 #if SUPPORT_WDG
+	const uint32_t pre_wdcnt = WDCNT_VALUE;
+
 	/* Touch watchdog before init if it is already running */
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WD_RUN))
 		touch_watchdog_count();
 
 	/* Keep prescaler ratio timer0 clock to 1:1024 */
 	NPCX_TWCP = 0x0A;
-	/* Keep prescaler ratio watchdog clock to 1:1 */
-	NPCX_WDCP = 0;
 
 	/* Clear watchdog reset status initially*/
 	SET_BIT(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS);
@@ -164,10 +164,30 @@ int watchdog_init(void)
 	SET_BIT(NPCX_T0CSR, NPCX_T0CSR_TESDIS);
 
 	/*
-	 * Set WDCNT initial reload value and T0OUT timeout period
-	 * WDCNT = 0 will generate watchdog reset
+	 * Calculate and set WDCNT initial reload value and T0OUT timeout
+	 * period
+	 * When WDCNT counts down to 0: generate watchdog reset
 	 */
-	NPCX_WDCNT = WDCNT_VALUE;
+	if (pre_wdcnt <= 255) {
+		/* Keep prescaler ratio watchdog clock to 1:1 */
+		NPCX_WDCP = 0;
+		NPCX_WDCNT = pre_wdcnt;
+	} else {
+		uint8_t wdcp;
+		uint8_t pre_scal;
+
+		pre_scal = DIV_ROUND_UP(pre_wdcnt, 255);
+
+		/*
+		 * Find the smallest power of 2 greater than or equal to the
+		 * prescaler
+		 */
+		wdcp = __fls(pre_scal - 1) + 1;
+		pre_scal = 1 << wdcp;
+
+		NPCX_WDCP = wdcp;
+		NPCX_WDCNT = pre_wdcnt / pre_scal;
+	}
 
 	/* Disable interrupt */
 	interrupt_disable();
