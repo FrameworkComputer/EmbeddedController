@@ -5,21 +5,21 @@
 # Valid device-tree compatible string prefixes used in this
 # Zephyr module.  The format is:
 #  vendor-prefix<TAB>vendor name
-cros-ec	The Chromium OS Embedded Controller Project
-cros	The Chromium OS Embedded Controller Project
-intersil	Intersil
-lgc	LG Chem
-smp	Battery vendor
 aec	Battery vendor
-powertech	Battery vendor
-getac	Battery vendor
-ganfeng	Battery vendor
-byd	Battery vendor
-celxpert	Battery vendor
-sunwoda	Battery vendor
-cosmx	Battery vendor
-dynapack	Battery vendor
 atl	Battery vendor
 bms-gf	Battery vendor
-pow-tech	Battery vendor
+byd	Battery vendor
+celxpert	Battery vendor
+cosmx	Battery vendor
+cros-ec	The Chromium OS Embedded Controller Project
+cros	The Chromium OS Embedded Controller Project
+dynapack	Battery vendor
+ganfeng	Battery vendor
+getac	Battery vendor
 gfl	Battery vendor
+intersil	Intersil
+lgc	LG Chem
+powertech	Battery vendor
+pow-tech	Battery vendor
+smp	Battery vendor
+sunwoda	Battery vendor
