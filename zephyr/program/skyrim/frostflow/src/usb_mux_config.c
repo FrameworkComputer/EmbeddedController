@@ -5,6 +5,7 @@
 
 /* Frostflow board-specific USB-C mux configuration */
 
+#include "ap_power/ap_power.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -175,8 +176,26 @@ void baseboard_a1_retimer_setup(void)
 }
 DECLARE_DEFERRED(baseboard_a1_retimer_setup);
 
-void board_chipset_startup(void)
+test_export_static void board_resume_change(struct ap_power_ev_callback *cb,
+					    struct ap_power_ev_data data)
 {
-	hook_call_deferred(&baseboard_a1_retimer_setup_data, 500 * MSEC);
+	switch (data.event) {
+	default:
+		return;
+
+	case AP_POWER_RESUME:
+		/* Any retimer tuning can be done after the retimer turns on */
+		hook_call_deferred(&baseboard_a1_retimer_setup_data, 20 * MSEC);
+		break;
+	}
 }
-DECLARE_HOOK(HOOK_INIT, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+void board_callback_init(void)
+{
+	static struct ap_power_ev_callback cb;
+
+	/* Setup a resume callback */
+	ap_power_ev_init_callback(&cb, board_resume_change, AP_POWER_RESUME);
+	ap_power_ev_add_callback(&cb);
+}
+DECLARE_HOOK(HOOK_INIT, board_callback_init, HOOK_PRIO_DEFAULT);
