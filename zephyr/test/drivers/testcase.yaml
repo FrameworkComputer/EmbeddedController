@@ -338,15 +338,6 @@ tests:
     - CONFIG_PLATFORM_EC_RTC=y
     - CONFIG_PLATFORM_EC_HOSTCMD=y
     - CONFIG_PLATFORM_EC_HOSTCMD_RTC=y
-  drivers.sm5803:
-    extra_conf_files:
-    - prj.conf
-    - sm5803/prj.conf
-    extra_configs:
-    - CONFIG_LINK_TEST_SUITE_SM5803=y
-    extra_dtc_overlay_files:
-    - boards/native_posix.overlay
-    - sm5803/sm5803.dts
   drivers.system:
     tags: common system
     extra_configs:

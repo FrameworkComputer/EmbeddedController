@@ -75,7 +75,6 @@ add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_PS8XXX ps8xxx)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_GPIO_UNHOOK gpio_unhook)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP host_command_memory_dump)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ANX7452 anx7452)
-add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_SM5803 sm5803)
 
 get_target_property(TEST_SOURCES_NEW app SOURCES)
 
