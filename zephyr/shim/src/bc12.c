@@ -8,6 +8,7 @@
 #include "usbc/bc12_rt1718s.h"
 #include "usbc/bc12_rt1739.h"
 #include "usbc/bc12_rt9490.h"
+#include "usbc/bc12_upstream.h"
 #include "usbc/tcpc_rt1718s.h"
 #include "usbc/utils.h"
 
@@ -31,7 +32,10 @@ BUILD_ASSERT(DT_HAS_COMPAT_STATUS_OKAY(RT1718S_TCPC_COMPAT));
 	CHECK_COMPAT(RT1739_BC12_EMUL_COMPAT, usbc_id, bc12_id,                \
 		     BC12_CHIP_RT1739)                                         \
 	CHECK_COMPAT(RT9490_BC12_COMPAT, usbc_id, bc12_id, BC12_CHIP_RT9490)   \
-	CHECK_COMPAT(PI3USB9201_COMPAT, usbc_id, bc12_id, BC12_CHIP_PI3USB9201)
+	CHECK_COMPAT(PI3USB9201_COMPAT, usbc_id, bc12_id,                      \
+		     BC12_CHIP_PI3USB9201)                                     \
+	CHECK_COMPAT(PI3USB9201_UPSTREAM_COMPAT, usbc_id, bc12_id,             \
+		     BC12_CHIP_UPSTREAM)
 
 #define BC12_CHIP(usbc_id)                           \
 	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, bc12), \

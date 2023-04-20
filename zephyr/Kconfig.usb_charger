@@ -23,6 +23,7 @@ config PLATFORM_EC_USB_CHARGER_SINGLE_TASK
 
 config PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	bool
+	default y if USB_BC12_PI3USB9201
 	help
 	  This is a helper symbol that indicates the BC1.2 chip needs to be
 	  triggered on data role swaps in addition to VBUS changes.
