@@ -221,7 +221,8 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	current = current_task;
 
 	if (IS_ENABLED(CONFIG_DEBUG_STACK_OVERFLOW) &&
-	    *current->stack != STACK_UNUSED_VALUE) {
+	    *current->stack != STACK_UNUSED_VALUE &&
+	    task_enabled(current - tasks)) {
 		panic_printf("\n\nStack overflow in %s task!\n",
 			     task_get_name(current - tasks));
 

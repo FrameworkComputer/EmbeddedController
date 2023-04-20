@@ -309,9 +309,11 @@ task_ *next_sched_task(void)
 #ifdef CONFIG_DEBUG_STACK_OVERFLOW
 	if (*current_task->stack != STACK_UNUSED_VALUE) {
 		int i = task_get_current();
-
-		panic_printf("\n\nStack overflow in %s task!\n", task_names[i]);
-		software_panic(PANIC_SW_STACK_OVERFLOW, i);
+		if (task_enabled(i)) {
+			panic_printf("\n\nStack overflow in %s task!\n",
+				     task_names[i]);
+			software_panic(PANIC_SW_STACK_OVERFLOW, i);
+		}
 	}
 #endif
 
