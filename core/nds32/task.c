@@ -520,6 +520,11 @@ void task_enable_task(task_id_t tskid)
 	atomic_or(&tasks_enabled, BIT(tskid));
 }
 
+bool task_enabled(task_id_t tskid)
+{
+	return tasks_enabled & BIT(tskid);
+}
+
 void task_disable_task(task_id_t tskid)
 {
 	atomic_clear_bits(&tasks_enabled, BIT(tskid));

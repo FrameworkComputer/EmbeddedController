@@ -299,6 +299,11 @@ void task_enable_all_tasks(void);
 void task_enable_task(task_id_t tskid);
 
 /**
+ * Task is enabled.
+ */
+bool task_enabled(task_id_t tskid);
+
+/**
  * Disable a task.
  *
  * If the task disable itself, this will cause an immediate reschedule.
