@@ -87,19 +87,31 @@ ZTEST(power_signals, test_baseboard_suspend_change)
 {
 	const struct gpio_dt_spec *gpio_ec_disable_disp_bl =
 		GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl);
-	const struct gpio_dt_spec *usb_a1_retimer_en =
-		GPIO_DT_FROM_NODELABEL(usb_a1_retimer_en);
 
 	struct ap_power_ev_data data;
 
 	data.event = AP_POWER_SUSPEND;
 	baseboard_suspend_change(NULL, data);
 	zassert_true(gpio_emul_output_get_dt(gpio_ec_disable_disp_bl));
-	zassert_false(gpio_emul_output_get_dt(usb_a1_retimer_en));
 
 	data.event = AP_POWER_RESUME;
 	baseboard_suspend_change(NULL, data);
 	zassert_false(gpio_emul_output_get_dt(gpio_ec_disable_disp_bl));
+}
+
+ZTEST(power_signals, test_baseboard_shutdown_change)
+{
+	const struct gpio_dt_spec *usb_a1_retimer_en =
+		GPIO_DT_FROM_NODELABEL(usb_a1_retimer_en);
+
+	struct ap_power_ev_data data;
+
+	data.event = AP_POWER_SHUTDOWN;
+	baseboard_suspend_change(NULL, data);
+	zassert_false(gpio_emul_output_get_dt(usb_a1_retimer_en));
+
+	data.event = AP_POWER_STARTUP;
+	baseboard_suspend_change(NULL, data);
 	zassert_true(gpio_emul_output_get_dt(usb_a1_retimer_en));
 }
 
