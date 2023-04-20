@@ -286,10 +286,10 @@
 			gpios = <&gpio1 9 GPIO_OUTPUT>;
 		};
 		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
-			gpios = <&gpio1 10 GPIO_INPUT>;
+			gpios = <&gpio1 10 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c1_bc12_int_l: usb_c1_bc12_int_l {
-			gpios = <&gpio1 11 GPIO_INPUT>;
+			gpios = <&gpio1 11 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
                 gpio_usb_c0_hpd: usb_c0_hpd {
                         gpios = <&gpio1 12 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;

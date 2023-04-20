@@ -274,6 +274,12 @@ config LINK_TEST_SUITE_CONSOLE
 config LINK_TEST_SUITE_HOST_CMD_THREAD
 	bool "Link and test the host command thread override tests"
 
+config LINK_TEST_SUITE_BC12_UPSTREAM
+	bool "Link and test the BC1.2 upsstream tests"
+	help
+	  This test suite validates integration of the EC application with
+	  the upstream Zephyr BC1.2 driver API.
+
 config LINK_TEST_SUITE_PI3USB9201
 	bool "Link and test the pi3usb9201 tests"
 

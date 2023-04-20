@@ -1301,6 +1301,12 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.bc12_upstream:
+    extra_dtc_overlay_files:
+    - bc12_upstream/boards/native_posix.overlay
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_BC12_UPSTREAM=y
+    - CONFIG_USB_BC12=y
   drivers.pi3usb9201:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_PI3USB9201=y
