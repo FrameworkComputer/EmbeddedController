@@ -45,6 +45,7 @@ export PYTHONPATH="${PWD}"
 
 # Run pytest.
 if "${COVERAGE}" ; then
+  ${PYTHON?} -m coverage erase
   ${PYTHON?} -m coverage run --source=zmake -m pytest -v "$@"
   ${PYTHON?} -m coverage report
   ${PYTHON?} -m coverage html
