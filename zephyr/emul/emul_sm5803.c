@@ -699,7 +699,8 @@ static int sm5803_emul_init(const struct emul *emul,
 			.port = DEVICE_DT_GET(DT_GPIO_CTLR(DT_DRV_INST(n),     \
 							   interrupt_gpios)),  \
 			.pin = DT_INST_GPIO_PIN(n, interrupt_gpios),           \
-			.dt_flags = DT_INST_GPIO_FLAGS(n, interrupt_gpios),    \
+			.dt_flags = (gpio_dt_flags_t)			       \
+				DT_INST_GPIO_FLAGS(n, interrupt_gpios),	       \
 		},                                                             \
 	};     \
 	EMUL_DT_INST_DEFINE(n, sm5803_emul_init, &sm5803_emul_data_##n,          \

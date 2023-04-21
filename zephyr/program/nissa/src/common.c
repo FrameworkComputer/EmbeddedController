@@ -81,7 +81,7 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
 
 static int battery_cells;
 
-void board_get_battery_cells(void)
+test_export_static void board_get_battery_cells(void)
 {
 	if (charger_get_battery_cells(CHARGER_PRIMARY, &battery_cells) ==
 	    EC_SUCCESS) {

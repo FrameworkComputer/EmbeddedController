@@ -23,19 +23,20 @@
 };
 
 &i2c_ctrl3 {
-	chg_port0: isl923x@9 {
-		compatible = "cros,isl923x-emul", "intersil,isl923x";
+	chg_port0: sm5803_primary@32 {
+		compatible = "cros,sm5803-emul", "siliconmitus,sm5803";
 		status = "okay";
-		reg = <0x9>;
-		battery = <&battery>;
+		reg = <0x32>;
+		interrupt-gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
 	};
 };
 
 &i2c_ctrl5 {
-	chg_port1: isl923x@9 {
-		compatible = "cros,isl923x-emul", "intersil,isl923x";
+	chg_port1: sm5803_secondary@32 {
+		compatible = "cros,sm5803-emul", "siliconmitus,sm5803";
 		status = "okay";
-		reg = <0x9>;
+		reg = <0x32>;
+		interrupt-gpios = <&gpio0 2 GPIO_INPUT_PULL_UP>;
 	};
 };
 

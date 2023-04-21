@@ -6,6 +6,7 @@
 #include "ap_power/ap_power_events.h"
 #include "battery.h"
 #include "charger.h"
+#include "emul/emul_sm5803.h"
 #include "hooks.h"
 #include "ocpc.h"
 #include "usb_pd.h"
@@ -23,6 +24,7 @@ static void suite_before(void *fixture)
 {
 	RESET_FAKE(battery_is_present);
 	RESET_FAKE(board_get_usb_pd_port_count);
+	board_get_usb_pd_port_count_fake.return_val = 2;
 	RESET_FAKE(board_set_active_charge_port);
 	RESET_FAKE(power_button_is_pressed);
 }
@@ -104,12 +106,23 @@ ZTEST(nissa_common, test_ocpc_configuration)
 	zassert_equal(ocpc_data.chg_flags[1], OCPC_NO_ISYS_MEAS_CAP);
 }
 
+void board_get_battery_cells(void);
+
 ZTEST(nissa_common, test_sm5803_buck_boost_forbidden)
 {
+	const struct emul *const charger_emul =
+		EMUL_DT_GET(DT_NODELABEL(chg_port0));
+	int cells;
+
+	/* Default 2S PMODE allows 12V charging. */
+	zassert_ok(charger_get_battery_cells(0, &cells));
+	zassert_equal(cells, 2);
 	zassert_true(pd_is_valid_input_voltage(12000));
 
-	/*
-	 * TODO(b:267959470): use SM5803 emulator for this test so behavior can
-	 * be verified with assorted battery cell counts.
-	 */
+	/* 3S forbids 12V charging. */
+	sm5803_emul_set_pmode(charger_emul, 0x16 /* 3S, 1.5A with BFET */);
+	zassert_ok(charger_get_battery_cells(0, &cells));
+	zassert_equal(cells, 3);
+	board_get_battery_cells(); /* Refresh cached cell count */
+	zassert_false(pd_is_valid_input_voltage(12000));
 }
