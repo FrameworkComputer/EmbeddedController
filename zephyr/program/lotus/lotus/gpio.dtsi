@@ -62,8 +62,8 @@
 		gpio_ssd2_pwr_en: ssd2_pwr_en {
 			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>; /* control JSSD2 PWR */
 		};
-		ssd_gpu_sel {
-			gpios = <&gpiof 4 GPIO_OUTPUT_LOW>; /* L:GPU / H:SSD */
+		gpio_ssd_gpu_sel: ssd_gpu_sel {
+			gpios = <&gpiof 4 GPIO_OUTPUT_HIGH>; /* L:GPU; H:SSD */
 		};
 		ec_smb_ck6 {
 			gpios = <&gpioe 4 GPIO_ODR_LOW>;
@@ -233,7 +233,7 @@
 		gpio_mux_a2: mux_a2 {
 			gpios = <&gpiof 1 GPIO_OUTPUT_LOW>;
 		};
-		f_beam_open_l {
+		gpio_f_beam_open_l: f_beam_open_l {
 			gpios = <&gpiof 0 GPIO_INPUT>;
 		};
 		enbkl_apu {
