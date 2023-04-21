@@ -331,6 +331,18 @@ def test(opts):
         print(f"# Running {' '.join(cmd)}.")
         subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
+        # Use the x86_64-cros-linux-gnu- compiler also
+        cmd = [
+            "make",
+            "clean",
+            "HOST_CROSS_COMPILE=x86_64-cros-linux-gnu-",
+            "TEST_ASAN=y",
+            target,
+            f"-j{opts.cpus}",
+        ]
+        print(f"# Running {' '.join(cmd)}.")
+        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+
 
 def main(args):
     """Builds, bundles, or tests all of the EC targets.
