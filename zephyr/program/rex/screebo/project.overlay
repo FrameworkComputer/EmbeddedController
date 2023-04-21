@@ -188,6 +188,7 @@
 };
 
 &i2c6_1 {
+	/delete-node/ usb-c1-kb8010-retimer@8;
 	/delete-node/ ktu1125@38;
 	/delete-node/ ppc_syv@40;
 

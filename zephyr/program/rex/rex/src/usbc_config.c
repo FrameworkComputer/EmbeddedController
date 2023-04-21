@@ -57,6 +57,8 @@ __override bool board_is_tbt_usb4_port(int port)
 {
 	if (port == USBC_PORT_C0)
 		return true;
+	if (port == USBC_PORT_C1 && usb_db_type != FW_USB_DB_USB3)
+		return true;
 
 	return false;
 }
