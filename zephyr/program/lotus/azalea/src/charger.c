@@ -84,6 +84,12 @@ static void charger_chips_init(void)
 		ISL9241_REG_ACOK_REFERENCE, 0x0B00))
 		goto init_fail;
 
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
+		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
+		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
+		goto init_fail;
+
 	/* TODO: should we need to talk to PD chip after initial complete ? */
 	CPRINTS("ISL9241 customized initial complete!");
 	return;
@@ -91,7 +97,7 @@ static void charger_chips_init(void)
 init_fail:
 	CPRINTF("ISL9241 customer init failed!");
 }
-DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C);
 #endif
 
 void charger_update(void)
