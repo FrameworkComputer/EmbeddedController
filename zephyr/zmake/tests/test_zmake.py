@@ -164,8 +164,11 @@ class TestFilters:
         assert not recs
 
     @staticmethod
-    def test_filter_info(zmake_factory_from_dir, tmp_path):
+    def test_filter_info(zmake_factory_from_dir, tmp_path, monkeypatch):
         """Test what appears on the INFO level"""
+        monkeypatch.setattr(
+            os, "environ", {"TOOL_PATH_ninja": "/usr/bin/ninja"}
+        )
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.INFO)
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
@@ -192,8 +195,11 @@ class TestFilters:
         assert expected == set(recs)
 
     @staticmethod
-    def test_filter_debug(zmake_factory_from_dir, tmp_path):
+    def test_filter_debug(zmake_factory_from_dir, tmp_path, monkeypatch):
         """Test what appears on the DEBUG level"""
+        monkeypatch.setattr(
+            os, "environ", {"TOOL_PATH_ninja": "/usr/bin/ninja"}
+        )
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.DEBUG)
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
