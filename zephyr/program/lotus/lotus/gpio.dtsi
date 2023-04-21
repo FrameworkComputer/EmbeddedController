@@ -18,7 +18,7 @@
 			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;	/* Reserved */
 		};
 		gpio_ec_sci_l: ec_sci_l {
-			gpios = <&gpio7 6 GPIO_ODR_HIGH>;	/* Reserved */
+			gpios = <&gpio7 6 GPIO_ODR_LOW>;	/* Reserved */
 		};
 		ovp {
 			gpios = <&gpioc 5 GPIO_INPUT>;		/* SYS report Fault even to EC */
@@ -48,10 +48,10 @@
 			gpios = <&gpiod 0 GPIO_INPUT>;
 		};
 		ec_smb_ck4 {
-			gpios = <&gpiof 3 GPIO_INPUT>;
+			gpios = <&gpiof 3 GPIO_ODR_LOW>;
 		};
 		ec_smb_da4 {
-			gpios = <&gpiof 2 GPIO_INPUT>;
+			gpios = <&gpiof 2 GPIO_ODR_LOW>;
 		};
 		ec_smb_s0_ck5 {
 			gpios = <&gpio3 3 GPIO_INPUT>;
@@ -59,17 +59,17 @@
 		ec_smb_s0_da5 {
 			gpios = <&gpio3 6 GPIO_INPUT>;
 		};
-		ec_smb_s5_ck5 {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+		gpio_ssd2_pwr_en: ssd2_pwr_en {
+			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>; /* control JSSD2 PWR */
 		};
-		ec_smb_s5_da5 {
-			gpios = <&gpiof 4 GPIO_INPUT>;
+		ssd_gpu_sel {
+			gpios = <&gpiof 4 GPIO_OUTPUT_LOW>; /* L:GPU / H:SSD */
 		};
 		ec_smb_ck6 {
-			gpios = <&gpioe 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioe 4 GPIO_ODR_LOW>;
 		};
 		ec_smb_da6 {
-			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioe 3 GPIO_ODR_LOW>;
 		};
 		ec_smb_ck7 {
 			gpios = <&gpiob 3 GPIO_INPUT>;
@@ -121,7 +121,7 @@
 			gpios = <&gpio1 5 GPIO_OUTPUT_LOW>;	/* Enable GPIO Vsys/VADP PWR */
 		};
 		apu_ec_int_l {
-			gpios = <&gpio1 4 GPIO_OUTPUT_HIGH>;	/* HID over I2C interrupt */
+			gpios = <&gpio1 4 GPIO_ODR_LOW>;	/* HID over I2C interrupt */
 		};
 		ec_disen2 {
 			gpios = <&gpio1 3 GPIO_OUTPUT_LOW>;	/* Disable LM5143 Ph2 */
@@ -221,6 +221,9 @@
 		fp_control {
 			gpios = <&gpio6 0 GPIO_INPUT>;		/* Finger Printer feature */
 		};
+		gpio_battery_present: battery_present {
+			gpios = <&gpio4 1 GPIO_INPUT>;
+		};
 		gpio_mux_a0: mux_a0 {
 			gpios = <&gpio3 4 GPIO_OUTPUT_LOW>;
 		};
@@ -265,9 +268,6 @@
 		gpu_i2c_s5_int {
 			gpios = <&gpioa 5 GPIO_INPUT>;
 		};
-		gpu_i2c_s0_int {
-			gpios = <&gpiob 0 GPIO_INPUT>;
-		};
 		gpio_wl_rst_l: wl_rst_l {
 			gpios = <&gpio6 1 GPIO_OUTPUT_LOW>;
 		};
@@ -294,10 +294,6 @@
 		};
 		thermtrip {
 			gpios = <&gpio8 1 GPIO_INPUT>;
-		};
-
-		gpio_battery_present: battery_present {
-			/* TODO: set the battery present pin */
 		};
 		/* unimplemented GPIOs */
 		entering-rw {
