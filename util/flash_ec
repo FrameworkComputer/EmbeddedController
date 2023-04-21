@@ -850,6 +850,7 @@ function claim_pty() {
 
 	# reverse order to SIGSTOP parents before children
 	for pid in $(echo "${pids}" | tac -s " "); do
+		# shellcheck disable=SC2009
 		if ps -o cmd= "${pid}" | grep -qE "(servod|/sbin/init)"; then
 			info "Skip stopping servod or init: process ${pid}."
 		else
