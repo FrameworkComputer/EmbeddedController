@@ -27,6 +27,11 @@ test_mockable int bmi3xx_interrupt(enum gpio_signal signal)
 	return -EINVAL;
 }
 
+test_mockable int bma4xx_interrupt(enum gpio_signal signal)
+{
+	return -EINVAL;
+}
+
 test_mockable int board_anx7483_c0_mux_set(const struct usb_mux *me,
 					   mux_state_t mux_state)
 {

@@ -59,6 +59,10 @@
 			gpios = <&gpio0 9 GPIO_INPUT>;
 		};
 
+		gpio_lid_accel_int_l: lid_accel_int_l {
+			gpios = <&gpio0 10 GPIO_INPUT>;
+		};
+
 		tablet_mode_l: tablet_mode_l {
 			gpios = <&gpio0 11 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
@@ -174,6 +178,12 @@
 			irq-pin = <&gpio_accel_gyro_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bmi3xx_interrupt";
+		};
+
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_lid_accel_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
 		};
 
 		int_pg_groupc_s0: pg_groupc_s0 {

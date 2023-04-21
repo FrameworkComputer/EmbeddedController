@@ -160,7 +160,7 @@
 		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
 			gpios = <&gpio7 3 GPIO_INPUT>;
 		};
-		3axis_int_l {
+		gpio_lid_accel_int_l: 3axis_int_l {
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {

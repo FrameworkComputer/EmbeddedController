@@ -41,6 +41,14 @@
 		};
 	};
 
+	gpio-interrupts {
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_lid_accel_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+	};
+
 	/* gpio-interrupts overrides */
 	gpio-interrupts {
 		/delete-node/ usb_c0_bc12;
