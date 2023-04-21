@@ -188,8 +188,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	int prochot_ma;
 	uint64_t calculate_ma;
 
-
-	CPRINTS("%s", __func__);
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
 	}
