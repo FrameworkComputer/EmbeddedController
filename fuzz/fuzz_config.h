@@ -25,7 +25,8 @@
 #endif /* ! FUZZ_HOSTCMD_VERBOSE */
 
 /* The following are for fpsensor host commands. */
-#define CONFIG_BORINGSSL_CRYPTO
+#define CONFIG_AES
+#define CONFIG_AES_GCM
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
 #define CONFIG_SHA256
 

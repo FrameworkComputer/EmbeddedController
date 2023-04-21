@@ -3,21 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include "aes_gcm_helpers.h"
 #include "fpsensor_crypto.h"
 #include "fpsensor_state.h"
 #include "fpsensor_utils.h"
-#include "openssl/aes.h"
-
-/* These must be included after the "openssl/aes.h" */
-#include "crypto/fipsmodule/aes/internal.h"
-#include "crypto/fipsmodule/modes/internal.h"
 
 extern "C" {
+#include "aes-gcm.h"
+#include "aes.h"
 #include "cryptoc/util.h"
 #include "rollback.h"
 #include "sha256.h"
-#include "util.h"
 
 test_export_static int get_ikm(uint8_t *ikm);
 test_mockable void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
@@ -27,9 +22,9 @@ test_mockable void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
 }
 
 #include <stdbool.h>
-
-#if !defined(CONFIG_BORINGSSL_CRYPTO) || !defined(CONFIG_ROLLBACK_SECRET_SIZE)
-#error "fpsensor requires CONFIG_BORINGSSL_CRYPTO and ROLLBACK_SECRET_SIZE"
+#if !defined(CONFIG_AES) || !defined(CONFIG_AES_GCM) || \
+	!defined(CONFIG_ROLLBACK_SECRET_SIZE)
+#error "fpsensor requires AES, AES_GCM and ROLLBACK_SECRET_SIZE"
 #endif
 
 test_export_static int get_ikm(uint8_t *ikm)
