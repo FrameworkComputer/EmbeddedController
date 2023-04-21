@@ -69,6 +69,8 @@ GPIO(EN_USB_A_LOW_POWER,             PIN(9, 3), GPIO_OUT_LOW)
 GPIO(PG_PP3300_S5_EC_SEQ_OD,         PIN(B, 5), GPIO_OUT_LOW)
 GPIO(USB_C1_FRS_EN,                  PIN(D, 4), GPIO_OUT_LOW)
 GPIO(NVIDIA_GPU_ACOFF_ODL,           PIN(5, 6), GPIO_ODR_HIGH)
+GPIO(LED_4_L,                        PIN(6, 0), GPIO_OUT_LOW)
+GPIO(LED_3_L,                        PIN(C, 2), GPIO_OUT_LOW)
 GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_LOW)
 GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_LOW)
 
@@ -130,6 +132,4 @@ UNUSED(PIN(0, 2))       /* GPIO02 */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(8, 1))       /* GPIO81 */
-UNUSED(PIN(6, 0))       /* GPIO60 */
-UNUSED(PIN(C, 2))       /* GPIOC2 */
 UNUSED(PIN(E, 1))       /* GPIOE1 */
