@@ -5,14 +5,16 @@
 
 /* F75303 temperature sensor module for Chrome EC -Framework only */
 
+#include "board_adc.h"
 #include "common.h"
+#include "console.h"
 #include "i2c.h"
 #include "hooks.h"
+#include "lotus/gpu.h"
+#include "system.h"
 #include "temp_sensor/f75303.h"
 #include "temp_sensor/temp_sensor.h"
 #include "util.h"
-#include "lotus/gpu.h"
-#include "console.h"
 
 #define F75303_SENSOR_ID_INTERNAL(node_id) DT_CAT(F75303_, node_id)
 #define F75303_SENSOR_ID_WITH_COMMA_INTERNAL(node_id) F75303_SENSOR_ID_INTERNAL(node_id),
