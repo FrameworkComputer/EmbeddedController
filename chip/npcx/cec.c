@@ -179,7 +179,7 @@ enum cec_state {
 };
 
 /* Edge to trigger capture timer interrupt on */
-enum cap_edge { CAP_EDGE_FALLING, CAP_EDGE_RISING };
+enum cap_edge { CAP_EDGE_NONE, CAP_EDGE_FALLING, CAP_EDGE_RISING };
 
 /* Receive buffer and states */
 struct cec_rx {
@@ -263,9 +263,18 @@ static void tmr_cap_start(enum cap_edge edge, int timeout)
 {
 	int mdl = NPCX_MFT_MODULE_1;
 
-	/* Select edge to trigger capture on */
-	UPDATE_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEDG,
-		   edge == CAP_EDGE_RISING);
+	if (edge == CAP_EDGE_NONE) {
+		/*
+		 * If edge is NONE, disable capture interrupts and wait for a
+		 * timeout only.
+		 */
+		CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
+	} else {
+		/* Select edge to trigger capture on */
+		UPDATE_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEDG,
+			   edge == CAP_EDGE_RISING);
+		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
+	}
 
 	/*
 	 * Set capture timeout. If we don't have a timeout, we
@@ -310,14 +319,6 @@ static int tmr_cap_get(void)
 	return (cap_charge + cap_delay - NPCX_TCRA(mdl));
 }
 
-static void tmr_oneshot_start(int timeout)
-{
-	int mdl = NPCX_MFT_MODULE_1;
-
-	NPCX_TCNT1(mdl) = timeout;
-	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD, 1);
-}
-
 static void tmr2_start(int timeout)
 {
 	int mdl = NPCX_MFT_MODULE_1;
@@ -336,7 +337,7 @@ static void tmr2_stop(void)
 void enter_state(enum cec_state new_state)
 {
 	int gpio = -1, timeout = -1;
-	enum cap_edge cap_edge = -1;
+	enum cap_edge cap_edge = CAP_EDGE_NONE;
 	uint8_t addr;
 
 	cec_state = new_state;
@@ -525,10 +526,7 @@ void enter_state(enum cec_state new_state)
 	if (gpio >= 0)
 		gpio_set_level(CEC_GPIO_OUT, gpio);
 	if (timeout >= 0) {
-		if (cap_edge >= 0)
-			tmr_cap_start(cap_edge, timeout);
-		else
-			tmr_oneshot_start(timeout);
+		tmr_cap_start(cap_edge, timeout);
 	}
 }
 
