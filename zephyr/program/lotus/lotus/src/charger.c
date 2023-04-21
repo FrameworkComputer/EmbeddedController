@@ -171,13 +171,23 @@ static bool bypass_force_en;
 __override int board_should_charger_bypass(void)
 {
 	int power_uw = charge_manager_get_power_limit_uw();
+	int voltage_mv = charge_manager_get_charger_voltage();
+	int curr_batt = battery_is_present();
 
 	if (bypass_force_en)
 		return true;
-	if (power_uw >= 100000000)
-		return true;
-	else
-		return false;
+
+	if (curr_batt == BP_YES) {
+		if (power_uw > 90000000)
+			return true;
+		else
+			return false;
+	} else {
+		if (voltage_mv >= 20000)
+			return true;
+		else
+			return false;
+	}
 }
 
 int board_want_change_mode(void)
