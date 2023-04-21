@@ -69,8 +69,13 @@ else
 test: twister_host twister_llvm
 endif
 
+ifdef COVERAGE
+zmake_unit_tests:
+	zmake/run_tests.sh --coverage
+else
 zmake_unit_tests:
 	zmake/run_tests.sh
+endif
 
 twister_host $(PLATFORM_EC)/twister-out-host/coverage.info: TOOLCHAIN=host
 twister_host $(PLATFORM_EC)/twister-out-host/coverage.info:
