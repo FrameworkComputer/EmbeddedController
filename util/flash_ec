@@ -794,7 +794,7 @@ function servo_save_add() {
 			# Don't save the control with the prefix, because
 			# dut_control will add the prefix again when we restore
 			# the settings.
-			save=( "${CTRL_RESULT#${DUT_CTRL_PREFIX}}" "${save[@]}" )
+			save=( "${CTRL_RESULT#"${DUT_CTRL_PREFIX}"}" "${save[@]}" )
 		   fi
 		   ;;
 		2) save=( "$1:$2" "${save[@]}" )
