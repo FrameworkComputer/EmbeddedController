@@ -21,7 +21,11 @@
 
 /*
  * Other code modules assume that notebook mode (i.e. tablet_mode = 0) at
- * startup
+ * startup.
+ * tablet_mode is mask, one bit for each source that can trigger a change to
+ * tablet mode:
+ * - TABLET_TRIGGER_LID: the lid angle is over the threshold.
+ * - TABLET_TRIGGER_BASE: the detachable keyboard is disconnected.
  */
 static uint32_t tablet_mode;
 
@@ -53,6 +57,7 @@ static const char *const tablet_mode_names[] = {
 	"clamshell",
 	"tablet",
 };
+BUILD_ASSERT(ARRAY_SIZE(tablet_mode_names) == 2);
 
 int tablet_get_mode(void)
 {
@@ -61,7 +66,7 @@ int tablet_get_mode(void)
 
 static inline void print_tablet_mode(void)
 {
-	CPRINTS("%s mode", tablet_mode_names[tablet_mode]);
+	CPRINTS("%s mode", tablet_mode_names[tablet_get_mode()]);
 }
 
 static void notify_tablet_mode_change(void)
