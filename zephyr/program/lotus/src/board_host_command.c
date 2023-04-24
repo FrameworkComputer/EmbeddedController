@@ -7,6 +7,7 @@
 #include <zephyr/drivers/gpio.h>
 
 #include "board_host_command.h"
+#include "chipset.h"
 #include "console.h"
 #include "cpu_power.h"
 #include "customized_shared_memory.h"
@@ -134,9 +135,9 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 * When system boot into OS, host will call this command to verify,
 	 * It means system should in S0 state, and we need to set the resume
 	 * S0ix flag to avoid the wrong state when unknown reason warm boot.
-	 * if (chipset_in_state(CHIPSET_STATE_STANDBY))
-	 *	*host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE) |= EC_PS_RESUME_S0ix;
 	 */
+	if (chipset_in_state(CHIPSET_STATE_STANDBY))
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE) |= EC_PS_RESUME_S0ix;
 
 	/**
 	 * When system reboot and go into setup menu, we need to set the power_s5_up flag
@@ -151,11 +152,8 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 */
 	update_soc_power_limit(true, false);
 
-	/**
-	 * TODO: clear ENTER_S4/S5 flag
-	 * power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
-	 *	EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
-	 */
+	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
+		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~BIT(0);
 
