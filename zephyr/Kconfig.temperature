@@ -62,6 +62,12 @@ config PLATFORM_EC_TEMP_SENSOR_F75303
 	  Enables support for the CrosEC F75303 driver, an i2c peripheral
 	  temperature sensor from FINTEK.
 
+config PLATFORM_EC_TEMP_SENSOR_AMD_R23M
+	bool "AMD R23M support"
+	help
+	  Enables support for the CrosEC AMD R23M driver, an i2c peripheral
+	  temperature sensor from AMD.
+
 endif # PLATFORM_EC_TEMP_SENSOR
 
 

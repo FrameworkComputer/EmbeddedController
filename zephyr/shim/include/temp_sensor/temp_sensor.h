@@ -18,10 +18,7 @@
 #define SB_TSI_COMPAT amd_sb_tsi
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
-
-#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #define AMDR23M_COMPAT cros_ec_temp_sensor_amdr23m
-#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 
 #define TEMP_SENSORS_NODEID DT_INST(0, TEMP_SENSORS_COMPAT)
 
@@ -164,9 +161,6 @@ enum f75303_sensor {
 #undef F75303_SENSOR_ID_WITH_COMMA
 
 
-
-#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
-
 /* AMDR23M access array */
 /*
  * Get the AMDR23M sensor ID from a hardware device node.
@@ -182,7 +176,6 @@ enum amdr23m_sensor {
 };
 
 #undef AMDR23M_SENSOR_ID_WITH_COMMA
-#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 
 struct zephyr_temp_sensor {
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */

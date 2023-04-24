@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "gpu.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "lotus/amd_r23m.h"
@@ -76,7 +77,7 @@ int amdr23m_get_val(int idx, int *temp)
 
 int amd_dgpu_delay(void)
 {
-	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & BIT(0))
+	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY)
 		return true;
 	else
 		return false;
@@ -87,6 +88,13 @@ void amdr23m_update_temperature(int idx)
 {
 	uint8_t reg[5];
 	int rv;
+
+
+	/*
+	 * if not detect GPU should not send I2C.
+	 */
+	if (!gpu_present())
+		return;
 
 	/*
 	 * We shouldn't read the GPU temperature when the state

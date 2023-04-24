@@ -32,7 +32,7 @@ static void sci_enable(void);
 DECLARE_DEFERRED(sci_enable);
 static void sci_enable(void)
 {
-	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & BIT(0)) {
+	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY) {
 		/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 	} else
@@ -157,7 +157,7 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 *	EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 	 */
 
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~BIT(0);
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~ACPI_DRIVER_READY;
 
 	return EC_RES_SUCCESS;
 }
