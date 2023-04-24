@@ -1809,6 +1809,17 @@ void charger_task(void *u)
 		}
 
 		/*
+		 * Always check the disconnect state if the battery is present.
+		 * This is because the battery disconnect state is one of the
+		 * items used to decide whether or not to leave safe mode.
+		 *
+		 * Note: For our purposes, an unresponsive battery is
+		 * considered to be disconnected
+		 */
+		battery_seems_disconnected = battery_get_disconnect_state() !=
+					     BATTERY_NOT_DISCONNECTED;
+
+		/*
 		 * If we had trouble talking to the battery or the charger, we
 		 * should probably do nothing for a bit, and if it doesn't get
 		 * better then flag it as an error.
@@ -1867,14 +1878,6 @@ void charger_task(void *u)
 			}
 		}
 		/* The battery is responding. Yay. Try to use it. */
-
-		/*
-		 * Always check the disconnect state.  This is because
-		 * the battery disconnect state is one of the items used
-		 * to decide whether or not to leave safe mode.
-		 */
-		battery_seems_disconnected = battery_get_disconnect_state() ==
-					     BATTERY_DISCONNECTED;
 
 		revive_battery(&need_static);
 
