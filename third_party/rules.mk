@@ -35,7 +35,7 @@ ifeq ($(CROSS_COMPILE), armv7m-cros-eabi-)
 CMAKE_SYSTEM_PROCESSOR ?= armv7
 # TODO(b/275450331): Enable the asm after we fix the crash.
 OPENSSL_NO_ASM ?= 1
-else ifeq ($(CROSS_COMPILE), x86_64-pc-linux-gnu-)
+else ifneq (,$(findstring x86_64, $(CROSS_COMPILE)))
 CMAKE_SYSTEM_PROCESSOR ?= x86_64
 OPENSSL_NO_ASM ?= 0
 else
