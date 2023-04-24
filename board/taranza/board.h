@@ -68,7 +68,7 @@
 
 /* USB Type A Features */
 #define CONFIG_USB_PORT_POWER_DUMB
-#define USB_PORT_COUNT 4 /* Type A ports */
+#define USB_PORT_COUNT 5 /* Type A ports */
 
 /* No battery */
 #undef CONFIG_BATTERY_CUT_OFF
