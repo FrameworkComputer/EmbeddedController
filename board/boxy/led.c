@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledee specific PWM LED settings. */
+/* Boxy specific PWM LED settings. */
 
 #include "common.h"
 #include "ec_commands.h"
@@ -16,9 +16,7 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-/*
- * Board has one physical LED with red, green, and blue
- */
+/* One physical LED with red, green, and blue. */
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 	/* Red, Green, Blue */
 	[EC_LED_COLOR_RED] = { 100, 0, 0 },
