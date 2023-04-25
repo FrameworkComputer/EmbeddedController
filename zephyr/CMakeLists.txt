@@ -65,7 +65,6 @@ endif()
 
 # Set extra compiler flags.
 zephyr_cc_option(-mno-unaligned-access)
-zephyr_cc_option(-fno-PIC)
 zephyr_cc_option(-Wimplicit-fallthrough)
 
 if (DEFINED CONFIG_RISCV)

@@ -6,8 +6,5 @@
 # this out to the copy in ${ZEPHYR_BASE}.
 include("${ZEPHYR_BASE}/cmake/compiler/gcc/compiler_flags.cmake")
 
-# Disable position independent code.
-add_compile_options(-fno-PIC)
-
 # gcc flags for coverage generation
 set_compiler_property(PROPERTY coverage -fprofile-arcs -ftest-coverage -fno-inline)
