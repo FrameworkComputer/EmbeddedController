@@ -53,7 +53,8 @@ const struct tcpc_config_t tcpc_config[] = {
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			 TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
 			 TCPC_FLAGS_CONTROL_VCONN |
-			 TCPC_FLAGS_CONTROL_FRS,
+			 TCPC_FLAGS_CONTROL_FRS |
+			 TCPC_FLAGS_VBUS_MONITOR,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);

@@ -106,6 +106,12 @@
 #define PD_MAX_VOLTAGE_MV 20000
 
 /*
+ * Because of b:279526032, modify monitor Vbus from Charger to TCPC.
+ */
+#undef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+#define CONFIG_USB_PD_VBUS_MEASURE_TCPC
+
+/*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
  * then redefined here to so it's more clear which signal is being used for
