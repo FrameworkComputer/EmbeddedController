@@ -45,6 +45,19 @@ struct ec_params_flash_notified {
 
 /*****************************************************************************/
 /*
+ * Factory will need change Fnkey and power button
+ * key scancode to test keyboard.
+ */
+#define EC_CMD_FACTORY_MODE	0x3E02
+#define RESET_FOR_SHIP 0x5A
+
+struct ec_params_factory_notified {
+	/* factory mode enable */
+	uint8_t flags;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
  * Configure the behavior of the charge limit control.
  */
 #define EC_CMD_CHARGE_LIMIT_CONTROL	0x3E03

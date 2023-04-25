@@ -12,7 +12,9 @@
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "ec_commands.h"
+#include "factory.h"
 #include "fan.h"
+#include "flash_storage.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -83,6 +85,29 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_NOTIFIED, flash_notified,
+			EC_VER_MASK(0));
+
+static enum ec_status factory_mode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_factory_notified *p = args->params;
+	int enable = 1;
+
+
+	if (p->flags)
+		factory_setting(enable);
+	else
+		factory_setting(!enable);
+
+	if (p->flags == RESET_FOR_SHIP) {
+		/* clear bbram for shipping */
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX, 0);
+		flash_storage_load_defaults();
+		flash_storage_commit();
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FACTORY_MODE, factory_mode,
 			EC_VER_MASK(0));
 
 static enum ec_status hc_pwm_get_fan_actual_rpm(struct host_cmd_handler_args *args)
