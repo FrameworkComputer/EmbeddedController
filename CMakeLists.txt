@@ -27,3 +27,4 @@ endif()
 
 add_subdirectory(zephyr)
 add_subdirectory(common)
+add_subdirectory(third_party)
