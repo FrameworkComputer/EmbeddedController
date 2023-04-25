@@ -34,8 +34,6 @@
 
 #define CHG_PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP)
 
-#define VBUS_UNCHANGED(curr, pend, new) (curr == new &&pend == new)
-
 /* Macros to config the PD role */
 #define CONF_SET_CLEAR(c, set, clear) ((c | (set)) & ~(clear))
 #define CONF_SRC(c)                                      \
