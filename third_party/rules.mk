@@ -30,16 +30,11 @@ CPPFLAGS += -I$(CRYPTOC_DIR)/include
 CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
 
 ifeq ($(CONFIG_BORINGSSL_CRYPTO), y)
-
-ifeq ($(CROSS_COMPILE), armv7m-cros-eabi-)
-CMAKE_SYSTEM_PROCESSOR ?= armv7
-# TODO(b/275450331): Enable the asm after we fix the crash.
-OPENSSL_NO_ASM ?= 1
-else ifneq (,$(findstring x86_64, $(CROSS_COMPILE)))
-CMAKE_SYSTEM_PROCESSOR ?= x86_64
-OPENSSL_NO_ASM ?= 0
-else
-$(error ERROR: Unknown compiler: $(CROSS_COMPILE))
+ifndef CMAKE_SYSTEM_PROCESSOR
+$(error ERROR: Set CMAKE_SYSTEM_PROCESSOR in core/$(CORE)/toolchain.mk)
+endif
+ifndef OPENSSL_NO_ASM
+$(error ERROR: Set OPENSSL_NO_ASM in core/$(CORE)/toolchain.mk)
 endif
 
 BORINGSSL_OUTDIR := $(out)/third_party/boringssl/crypto
