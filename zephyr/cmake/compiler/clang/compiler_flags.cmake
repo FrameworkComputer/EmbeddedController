@@ -19,3 +19,9 @@ endif()
 
 # clang flags for coverage generation
 set_property(TARGET compiler PROPERTY coverage --coverage -fno-inline)
+
+# Compiler flags for disabling position independent code / executable
+set_compiler_property(PROPERTY no_position_independent
+                      -fno-PIC
+                      -fno-PIE
+)
