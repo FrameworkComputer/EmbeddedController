@@ -3,23 +3,42 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
 #include "driver/charger/sm5803.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sm5803.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
+#include "hooks.h"
 #include "test/drivers/charger_utils.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
 #include <zephyr/drivers/emul.h>
+#include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-#define CHARGER_NUM get_charger_num(&sm5803_drv)
-#define SM5803_EMUL EMUL_DT_GET(DT_NODELABEL(sm5803_emul))
+void sm5803_before_test(void *fixture);
 
-ZTEST_SUITE(sm5803, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(sm5803, drivers_predicate_post_main, NULL, sm5803_before_test, NULL,
+	    NULL);
+
+ZTEST(sm5803, test_sensible_ocpc_configuration)
+{
+	/*
+	 * A lot of OCPC-related code assumes there are exactly two chargers,
+	 * with IDs 0 and 1. Verify that this test's configuration yields
+	 * compatible configuration, since the driver contains some OCPC-related
+	 * code that we want to test.
+	 */
+	zassert_equal(chg_chips[CHARGER_PRIMARY].drv, &sm5803_drv);
+	zassert_equal(chg_chips[CHARGER_SECONDARY].drv, &sm5803_drv);
+}
+
+#define CHARGER_NUM CHARGER_PRIMARY
+#define SM5803_EMUL EMUL_DT_GET(DT_NODELABEL(sm5803_emul))
+#define SM5803_EMUL_SECONDARY EMUL_DT_GET(DT_NODELABEL(sm5803_emul_secondary))
 
 ZTEST(sm5803, test_chip_id)
 {
@@ -199,7 +218,7 @@ static void verify_init_common(struct i2c_log *const log_ptr)
  * Driver internal "init completed" flag needs to be cleared to actually run
  * init.
  */
-extern bool chip_inited[1];
+extern bool chip_inited[2];
 /** Driver internal cached value of chip device ID. */
 extern int dev_id;
 
@@ -420,6 +439,40 @@ ZTEST(sm5803, test_init_rev2)
 	zassert_equal(log.entries_asserted, log.entries_used,
 		      "recorded %d transactions but only verified %d",
 		      log.entries_used, log.entries_asserted);
+}
+
+FAKE_VALUE_FUNC(const uint8_t *, system_get_jump_tag, uint16_t, int *, int *);
+
+static const uint8_t *get_fake_inited_jump_tag(uint16_t tag, int *version,
+					       int *size)
+{
+	static const bool bbram_inited[] = { true, true };
+
+	BUILD_ASSERT(sizeof(bbram_inited) == sizeof(chip_inited));
+	*version = 1;
+	*size = sizeof(bbram_inited);
+	return (uint8_t *)bbram_inited;
+}
+
+ZTEST(sm5803, test_init_status_preserve)
+{
+	/* run init_status_preserve() */
+	chip_inited[0] = true;
+	chip_inited[1] = true;
+	hook_notify(HOOK_SYSJUMP);
+
+	/* pretend we rebooted and reset init state */
+	chip_inited[0] = false;
+	chip_inited[1] = false;
+	system_get_jump_tag_fake.custom_fake = get_fake_inited_jump_tag;
+	/*
+	 * init_status_retrieve() should restore chip_inited before charger
+	 * init runs, which would fail since we haven't mocked a number of the
+	 * registers it writes.
+	 */
+	hook_notify(HOOK_INIT);
+	zassert_true(chip_inited[0]);
+	zassert_true(chip_inited[1]);
 }
 
 ZTEST(sm5803, test_fast_charge_current)
@@ -738,4 +791,295 @@ ZTEST(sm5803, test_vsys_compensation)
 					  SM5803_REG_IR_COMP1);
 	zassert_not_equal(
 		sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0, 0), 0);
+}
+
+ZTEST(sm5803, test_vbus_sink_enable)
+{
+	uint8_t flow1, flow2, flow3;
+
+	zassert_ok(sm5803_vbus_sink_enable(CHARGER_NUM, 1));
+	sm5803_emul_get_flow_regs(SM5803_EMUL, &flow1, &flow2, &flow3);
+	zassert_equal(flow1, 0x01, "FLOW1 should be set to sink mode; was %#x",
+		      flow1);
+	zassert_equal(
+		flow2, 0x07,
+		"FLOW2 should enable automatic charge management; was %#x",
+		flow2);
+
+	zassert_ok(sm5803_vbus_sink_enable(CHARGER_NUM, 0));
+	sm5803_emul_get_flow_regs(SM5803_EMUL, &flow1, &flow2, &flow3);
+	zassert_equal(flow1, 0, "FLOW1 should disable sinking; was %#x", flow1);
+	zassert_equal(flow2, 0, "FLOW2 should disable auto charge; was %#x",
+		      flow2);
+
+	/* Secondary charger has slightly different operation. */
+	zassert_ok(sm5803_vbus_sink_enable(CHARGER_SECONDARY, 1));
+	sm5803_emul_get_flow_regs(SM5803_EMUL_SECONDARY, &flow1, &flow2,
+				  &flow3);
+	zassert_equal(flow1, 0x01, "FLOW1 should be set to sink mode; was %#x",
+		      flow1);
+
+	zassert_ok(sm5803_vbus_sink_enable(CHARGER_SECONDARY, 0));
+	sm5803_emul_get_flow_regs(SM5803_EMUL_SECONDARY, &flow1, &flow2,
+				  &flow3);
+	zassert_equal(flow1, 0, "FLOW1 should disable sinking; was %#x", flow1);
+}
+
+ZTEST(sm5803, test_charge_ramp)
+{
+	int icl;
+
+	/* Enables DPM loop when ramp is requested */
+	zassert_ok(sm5803_drv.set_hw_ramp(CHARGER_NUM, 1));
+	zassert_equal(sm5803_emul_get_chg_mon(SM5803_EMUL), 1);
+	/* These functions always report these values */
+	zassert_equal(sm5803_drv.ramp_is_stable(CHARGER_NUM), 0);
+	zassert_equal(sm5803_drv.ramp_is_detected(CHARGER_NUM), 1);
+	/* Ramp limit is always the same as regular ICL */
+	zassert_ok(charger_get_input_current_limit(CHARGER_NUM, &icl));
+	zassert_equal(sm5803_drv.ramp_get_current_limit(CHARGER_NUM), icl);
+
+	/* Requesting disable turns off the DPM loop */
+	zassert_ok(sm5803_drv.set_hw_ramp(CHARGER_NUM, 0));
+	zassert_equal(sm5803_emul_get_chg_mon(SM5803_EMUL), 0);
+}
+
+/** Get the source mode voltage target, in mV. */
+static uint32_t get_source_voltage(void)
+{
+	return 2720 + 10 * ((sm5803_emul_get_disch_conf1(SM5803_EMUL) << 3) |
+			    (sm5803_emul_get_disch_conf2(SM5803_EMUL) & 7));
+}
+
+ZTEST(sm5803, test_configure_sourcing)
+{
+	/* Typical configuration, 5V @ 1.5A */
+	zassert_ok(sm5803_drv.set_otg_current_voltage(CHARGER_NUM, 1500, 5000));
+	zassert_equal(sm5803_emul_get_disch_conf5(SM5803_EMUL), 30,
+		      "Current limit should be 30 * 50 mA, but"
+		      " register value is %#x",
+		      sm5803_emul_get_disch_conf5(SM5803_EMUL));
+	zassert_equal(get_source_voltage(), 5000,
+		      "actual source voltage was set to %d mV",
+		      get_source_voltage());
+
+	/* Very large currents don't write bits they shouldn't */
+	zassert_ok(sm5803_drv.set_otg_current_voltage(CHARGER_NUM, 6500, 5000));
+	zassert_equal(
+		sm5803_emul_get_disch_conf5(SM5803_EMUL), 0x7F,
+		"current limit should be maximum, but register value is %#x",
+		sm5803_emul_get_disch_conf5(SM5803_EMUL));
+
+	/* Small voltages don't underflow */
+	zassert_ok(sm5803_drv.set_otg_current_voltage(CHARGER_NUM, 1000, 2000));
+	zassert_equal(
+		get_source_voltage(), 2720,
+		"small voltages should clamp to minimum, but is set to %d mV",
+		get_source_voltage());
+
+	/* Errors bubble up */
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					  SM5803_REG_DISCH_CONF5);
+	zassert_not_equal(
+		sm5803_drv.set_otg_current_voltage(CHARGER_NUM, 1500, 5000), 0);
+}
+
+ZTEST(sm5803, test_sourcing)
+{
+	uint8_t gpadc1, gpadc2;
+	uint8_t flow1, flow2, flow3;
+
+	/* Preset source current limit */
+	sm5803_drv.set_otg_current_voltage(CHARGER_NUM, 1000, 0);
+	/* Turn off GPADCs so we can check they get turned on */
+	sm5803_emul_set_gpadc_conf(SM5803_EMUL, 0, 0);
+
+	zassert_ok(sm5803_drv.enable_otg_power(CHARGER_NUM, 1));
+	zassert_true(sm5803_drv.is_sourcing_otg_power(CHARGER_NUM, 0));
+	/* GPADCs got turned on as needed. */
+	sm5803_emul_get_gpadc_conf(SM5803_EMUL, &gpadc1, &gpadc2);
+	zassert_equal(gpadc1, 0xf7,
+		      "GPADCs should be set to active state, but CONF1 = %#x",
+		      gpadc1);
+	zassert_equal(gpadc2, 0,
+		      "GPADCs should be set to active state, but CONF2 = %#x",
+		      gpadc2);
+	/* Source current limit is turned on */
+	zassert_equal(sm5803_emul_get_ana_en1(SM5803_EMUL), 0x19,
+		      "CLS_DISABLE should be cleared, but ANA_EN1 = %#x",
+		      sm5803_emul_get_ana_en1(SM5803_EMUL));
+	/* Source current ramp was disabled */
+	zassert_equal(sm5803_emul_get_disch_conf6(SM5803_EMUL), 0x01);
+	/* FLOW1 was set to sourcing with current regulation */
+	sm5803_emul_get_flow_regs(SM5803_EMUL, &flow1, &flow2, &flow3);
+	zassert_equal(flow1, 0x07);
+	/* Source voltage is 5V and current limit is retained from previous */
+	zassert_equal(get_source_voltage(), 5000);
+
+	/* Status polling function works */
+	zassert_true(sm5803_drv.is_sourcing_otg_power(CHARGER_NUM, 0));
+
+	/* Now turn off source mode */
+	sm5803_emul_set_disch_status(SM5803_EMUL, 0x18);
+	zassert_ok(sm5803_drv.enable_otg_power(CHARGER_NUM, 0));
+	zassert_equal(sm5803_emul_get_disch_status(SM5803_EMUL), 0,
+		      "discharge status flags should be cleared but were not");
+	zassert_equal(sm5803_emul_get_disch_conf6(SM5803_EMUL), 0,
+		      "DISCH_CONF6 should be cleared, but is now %#x",
+		      sm5803_emul_get_disch_conf6(SM5803_EMUL));
+	/* Source mode is disabled */
+	sm5803_emul_get_flow_regs(SM5803_EMUL, &flow1, &flow2, &flow3);
+	zassert_equal(flow1, 0);
+
+	/* Assorted errors bubble up */
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					  SM5803_REG_DISCH_CONF5);
+	zassert_not_equal(sm5803_drv.enable_otg_power(CHARGER_NUM, 1), 0);
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					  SM5803_REG_ANA_EN1);
+	zassert_not_equal(sm5803_drv.enable_otg_power(CHARGER_NUM, 1), 0);
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					  SM5803_REG_FLOW1);
+	zassert_not_equal(sm5803_drv.enable_otg_power(CHARGER_NUM, 0), 0);
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					  SM5803_REG_STATUS_DISCHG);
+	zassert_not_equal(sm5803_drv.enable_otg_power(CHARGER_NUM, 0), 0);
+}
+
+ZTEST(sm5803, test_set_option)
+{
+	uint8_t flow1, flow2, flow3;
+
+	/* set_option() writes all three flow registers */
+	zassert_ok(sm5803_drv.set_option(CHARGER_NUM, 0x654321));
+	sm5803_emul_get_flow_regs(SM5803_EMUL, &flow1, &flow2, &flow3);
+	/* FLOW1 bits 4-6 always read 0 */
+	zassert_equal(flow1, 0x01, "actual value was %#x", flow1);
+	zassert_equal(flow2, 0x43, "actual value was %#x", flow2);
+	/* FLOW3 bits 4-7 are unimplemented */
+	zassert_equal(flow3, 0x05, "actual value was %#x", flow3);
+
+	/* and I2C errors are returned */
+	i2c_common_emul_set_write_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					   SM5803_REG_FLOW3);
+	zassert_not_equal(sm5803_drv.set_option(CHARGER_NUM, 0), 0);
+	i2c_common_emul_set_write_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					   SM5803_REG_FLOW2);
+	zassert_not_equal(sm5803_drv.set_option(CHARGER_NUM, 0), 0);
+	i2c_common_emul_set_write_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					   SM5803_REG_FLOW1);
+	zassert_not_equal(sm5803_drv.set_option(CHARGER_NUM, 0), 0);
+}
+
+ZTEST(sm5803, test_acok)
+{
+	bool acok;
+
+	zassert_ok(sm5803_is_acok(CHARGER_NUM, &acok));
+	zassert_false(acok);
+
+	sm5803_emul_set_vbus_voltage(SM5803_EMUL, 4986);
+	zassert_ok(sm5803_is_acok(CHARGER_NUM, &acok));
+	zassert_true(acok);
+
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_meas(SM5803_EMUL),
+					  SM5803_REG_VBUS_MEAS_MSB);
+	zassert_not_equal(sm5803_is_acok(CHARGER_NUM, &acok), 0);
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_main(SM5803_EMUL),
+					  SM5803_REG_STATUS1);
+	zassert_not_equal(sm5803_is_acok(CHARGER_NUM, &acok), 0);
+}
+
+ZTEST(sm5803, test_chg_det)
+{
+	int chg_det;
+
+	zassert_ok(sm5803_get_chg_det(CHARGER_NUM, &chg_det));
+	zassert_false(chg_det);
+
+	sm5803_emul_set_vbus_voltage(SM5803_EMUL, 9001);
+	zassert_ok(sm5803_get_chg_det(CHARGER_NUM, &chg_det));
+	zassert_true(chg_det);
+
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_main(SM5803_EMUL),
+					  SM5803_REG_STATUS1);
+	zassert_not_equal(sm5803_get_chg_det(CHARGER_NUM, &chg_det), 0);
+}
+
+ZTEST(sm5803, test_vbus_discharge)
+{
+	/* Enabling VBUS discharge sets the discharge enable bit */
+	zassert_ok(sm5803_set_vbus_disch(CHARGER_NUM, 1));
+	zassert_equal(sm5803_emul_get_ports_ctrl(SM5803_EMUL), 1,
+		      "actual value was %#x",
+		      sm5803_emul_get_ports_ctrl(SM5803_EMUL));
+
+	/* And we can clear it */
+	zassert_ok(sm5803_set_vbus_disch(CHARGER_NUM, 0));
+	zassert_equal(sm5803_emul_get_ports_ctrl(SM5803_EMUL), 0,
+		      "actual value was %#x",
+		      sm5803_emul_get_ports_ctrl(SM5803_EMUL));
+
+	/* Errors are returned */
+	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_main(SM5803_EMUL),
+					  SM5803_REG_PORTS_CTRL);
+	zassert_not_equal(sm5803_set_vbus_disch(CHARGER_NUM, 0), 0);
+}
+
+ZTEST(sm5803, test_hibernate)
+{
+	uint8_t gpadc1, gpadc2;
+
+	/*
+	 * Assorted registers get programmed on hibernate; use the secondary
+	 * charger because it has some extra handling.
+	 */
+	sm5803_hibernate(CHARGER_SECONDARY);
+	zassert_equal(
+		sm5803_emul_get_reference_reg(SM5803_EMUL_SECONDARY), 0x03,
+		"REFERENCE1 should disable LDOs, but actual value was %#x",
+		sm5803_emul_get_reference_reg(SM5803_EMUL_SECONDARY));
+	zassert_true(sm5803_emul_is_clock_slowed(SM5803_EMUL_SECONDARY));
+
+	sm5803_emul_get_gpadc_conf(SM5803_EMUL_SECONDARY, &gpadc1, &gpadc2);
+	zassert_equal(gpadc1, 0,
+		      "GPADCs should be disabled, but GPADC1 was %#x", gpadc1);
+	zassert_equal(gpadc2, 0,
+		      "GPADCs should be disabled, but GPADC2 was %#x", gpadc2);
+
+	zassert_false(sm5803_emul_is_psys_dac_enabled(SM5803_EMUL_SECONDARY));
+
+	zassert_equal(sm5803_emul_get_cc_config(SM5803_EMUL_SECONDARY), 0x01,
+		      "Sigma-delta should be disabled, but CC_CONFIG1 was %#x",
+		      sm5803_emul_get_cc_config(SM5803_EMUL_SECONDARY));
+
+	zassert_equal(sm5803_emul_get_phot1(SM5803_EMUL_SECONDARY), 0x20,
+		      "PHOT1 should disable comparators, but value was %#x",
+		      sm5803_emul_get_phot1(SM5803_EMUL_SECONDARY));
+
+	/* Primary charger doesn't disable LDOs. */
+	sm5803_hibernate(CHARGER_PRIMARY);
+	zassert_equal(
+		sm5803_emul_get_reference_reg(SM5803_EMUL), 0,
+		"REFERENCE1 should not disable LDOs, but actual value was %#x",
+		sm5803_emul_get_reference_reg(SM5803_EMUL));
+
+	/* Error paths don't do anything catastrophically bad */
+	i2c_common_emul_set_write_fail_reg(
+		sm5803_emul_get_i2c_main(SM5803_EMUL_SECONDARY),
+		SM5803_REG_REFERENCE);
+	sm5803_hibernate(CHARGER_SECONDARY);
+
+	i2c_common_emul_set_read_fail_reg(
+		sm5803_emul_get_i2c_main(SM5803_EMUL_SECONDARY),
+		SM5803_REG_REFERENCE);
+	sm5803_hibernate(CHARGER_SECONDARY);
+}
+
+void sm5803_before_test(void *fixture)
+{
+	/* Ensure the driver's cached device ID is a "typical" chip. */
+	dev_id = 3;
+
+	system_get_jump_tag_fake.custom_fake = NULL;
 }

@@ -1813,7 +1813,7 @@ static enum ec_error_list sm5803_set_otg_current_voltage(int chgnum,
 		   SM5803_DISCH_CONF5_CLS_LIMIT);
 	rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF5, reg);
 
-	reg = SM5803_VOLTAGE_TO_REG(output_voltage);
+	reg = MAX(SM5803_VOLTAGE_TO_REG(output_voltage), 0);
 	rv = chg_write8(chgnum, SM5803_REG_VPWR_MSB, (reg >> 3));
 	rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF2,
 			 reg & SM5803_DISCH_CONF5_VPWR_LSB);

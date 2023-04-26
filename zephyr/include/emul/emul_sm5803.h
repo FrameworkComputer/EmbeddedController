@@ -82,3 +82,35 @@ uint8_t sm5803_emul_get_gpio_ctrl(const struct emul *emul);
  * Register values are concatenated, with COMP1 as MSB and COMP2 as LSB.
  */
 uint16_t sm5803_emul_get_ir_comp(const struct emul *emul);
+
+/** Get the value of the CHG_MON register. */
+uint8_t sm5803_emul_get_chg_mon(const struct emul *emul);
+
+/** Get the value of the ANA_EN1 (ANA_EN_REG1) register. */
+uint8_t sm5803_emul_get_ana_en1(const struct emul *emul);
+
+/** Get the value of the DISCH_CONF1 register. */
+uint8_t sm5803_emul_get_disch_conf1(const struct emul *emul);
+/** Get the value of the DISCH_CONF2 register. */
+uint8_t sm5803_emul_get_disch_conf2(const struct emul *emul);
+/** Get the value of the DISCH_CONF5 register. */
+uint8_t sm5803_emul_get_disch_conf5(const struct emul *emul);
+/** Get the value of the DISCH_CONF6 register. */
+uint8_t sm5803_emul_get_disch_conf6(const struct emul *emul);
+/** Get the value of the STATUS_DISCH register. */
+uint8_t sm5803_emul_get_disch_status(const struct emul *emul);
+
+/** Set a value for the STATUS_DISCH register. */
+void sm5803_emul_set_disch_status(const struct emul *emul, uint8_t value);
+
+/** Get the value of the PORTS_CTRL register. */
+uint8_t sm5803_emul_get_ports_ctrl(const struct emul *emul);
+
+/** Get the value of the REFERENCE1 register (REG_REFERENCE) */
+uint8_t sm5803_emul_get_reference_reg(const struct emul *emul);
+
+/** Return true if the PSYS1_DAC_EN bit of REG_PSYS1 is set. */
+bool sm5803_emul_is_psys_dac_enabled(const struct emul *emul);
+
+/** Get the value of the PHOT1 register. */
+uint8_t sm5803_emul_get_phot1(const struct emul *emul);

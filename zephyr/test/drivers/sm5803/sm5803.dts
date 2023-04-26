@@ -9,6 +9,11 @@
 			compatible = "named-usbc-port";
 			chg = <&sm5803_emul>;
 		};
+
+		port1@1 {
+		  compatible = "named-usbc-port";
+		  chg = <&sm5803_emul_secondary>;
+		};
 	};
 
 	gpio2: gpio@2000 {
@@ -29,4 +34,16 @@
 		reg = <0x32>;
 		interrupt-gpios = <&gpio2 0 (GPIO_ACTIVE_LOW)>;
 	};
+};
+
+&i2c1 {
+  sm5803_emul_secondary: sm5803-secondary@32 {
+		compatible = "cros,sm5803-emul", "siliconmitus,sm5803";
+		status = "okay";
+		reg = <0x32>;
+	};
+};
+
+&default_battery {
+	ship_mode_reg_data = <0x2000>;
 };
