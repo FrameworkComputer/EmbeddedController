@@ -126,3 +126,9 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
     - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
+  skyrim.winterhold.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_TEST_BOARD_FAN=y
+    - CONFIG_TEST_BOARD_FAN_CUSTOM=y
