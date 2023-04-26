@@ -752,6 +752,8 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 		/* To conserve bandwidth, timestamps are relative to `now`. */
 		ccprintf("  %d %lld %s\n", signal_no, tail_time.val - now.val,
 			 slot->tail_level ? "F" : "R");
+		/* Flush console to avoid truncating output */
+		cflush();
 		slot->tail_level = !slot->tail_level;
 	}
 	buf->tail = tail;
