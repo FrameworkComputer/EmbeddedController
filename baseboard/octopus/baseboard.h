@@ -55,6 +55,14 @@
 
 /* Allow the EC to enter deep sleep in S0 */
 #define CONFIG_LOW_POWER_S0
+
+/*
+ * Increase period to prevent false positive hangs (b/255368431).
+ * TODO(b/281584278): Reevaluate period when more data is available.
+ */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 2100
+
 #elif defined(VARIANT_OCTOPUS_EC_ITE8320)
 /* IT83XX config */
 #define CONFIG_IT83XX_VCC_1P8V
