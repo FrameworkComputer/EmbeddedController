@@ -6,10 +6,16 @@ common:
   platform_allow: native_posix
 tests:
   rex.usb_pd_policy:
+    extra_dtc_overlay_files:
+      - board_power.dtsi
     extra_configs:
       - CONFIG_TEST_USB_PD_POLICY=y
       - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
       - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
+      - CONFIG_TEST_BOARD_POWER=y
+      - CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_AP_EVENTS=n
 
   rex.board_power:
     extra_dtc_overlay_files:

@@ -12,6 +12,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "ioexpander.h"
+#include "power_signals.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -22,8 +23,8 @@
 
 int pd_check_vconn_swap(int port)
 {
-	/* Allow VCONN swaps if the AP is on. */
-	return chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON);
+	/* Allow VCONN swaps when PWR_ALL_SYS_PWRGD is set. */
+	return power_signal_get(PWR_ALL_SYS_PWRGD);
 }
 
 void pd_power_supply_reset(int port)

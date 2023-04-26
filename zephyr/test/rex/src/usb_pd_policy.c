@@ -13,6 +13,8 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
+#include <mock/power_signals.h>
+
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
 FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
@@ -20,9 +22,16 @@ FAKE_VOID_FUNC(pd_send_host_event, int);
 FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
 FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
 
-int chipset_in_state_mock(int state_mask)
+int power_signal_get_all_sys_pwrgd_mock(enum power_signal signal)
 {
-	return state_mask == (CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON);
+	if (signal == PWR_ALL_SYS_PWRGD) {
+		return 1;
+	}
+
+	/* LCOV_EXCL_START */
+	zassert_unreachable("Wrong input received");
+	return -1;
+	/* LCOV_EXCL_STOP */
 }
 
 int ppc_vbus_source_enable_0_mock(int port, int enable)
@@ -105,6 +114,7 @@ static void usb_pd_policy_before(void *fixture)
 {
 	ARG_UNUSED(fixture);
 	RESET_FAKE(chipset_in_state);
+	RESET_FAKE(power_signal_get);
 	RESET_FAKE(ppc_vbus_source_enable);
 	RESET_FAKE(pd_set_vbus_discharge);
 	RESET_FAKE(pd_send_host_event);
@@ -114,9 +124,9 @@ static void usb_pd_policy_before(void *fixture)
 
 ZTEST_USER(usb_pd_policy, test_pd_check_vconn_swap)
 {
-	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
+	power_signal_get_fake.custom_fake = power_signal_get_all_sys_pwrgd_mock;
 	zassert_true(pd_check_vconn_swap(0), NULL, NULL);
-	zassert_equal(1, chipset_in_state_fake.call_count);
+	zassert_equal(1, power_signal_get_fake.call_count);
 }
 
 ZTEST_USER(usb_pd_policy, test_pd_power_supply_reset)

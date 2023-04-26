@@ -125,4 +125,11 @@
 		gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
 		output;
 	};
+	pwr-all-sys-pwrgd {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+		gpios = <&gpio0 23 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
 };
