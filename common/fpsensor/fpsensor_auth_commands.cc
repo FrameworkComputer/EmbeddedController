@@ -51,3 +51,47 @@ fp_command_establish_pairing_key_keygen(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_ESTABLISH_PAIRING_KEY_KEYGEN,
 		     fp_command_establish_pairing_key_keygen, EC_VER_MASK(0));
+
+static enum ec_status
+fp_command_establish_pairing_key_wrap(struct host_cmd_handler_args *args)
+{
+	const auto *params =
+		static_cast<const ec_params_fp_establish_pairing_key_wrap *>(
+			args->params);
+	auto *r = static_cast<ec_response_fp_establish_pairing_key_wrap *>(
+		args->response);
+
+	ScopedFastCpu fast_cpu;
+
+	bssl::UniquePtr<EC_KEY> private_key =
+		decrypt_private_key(params->encrypted_private_key);
+	if (private_key == nullptr) {
+		return EC_RES_UNAVAILABLE;
+	}
+
+	bssl::UniquePtr<EC_KEY> public_key =
+		create_ec_key_from_pubkey(params->peers_pubkey);
+	if (public_key == nullptr) {
+		return EC_RES_UNAVAILABLE;
+	}
+
+	enum ec_error_list ret = generate_ecdh_shared_secret(
+		*private_key, *public_key, r->encrypted_pairing_key.data,
+		sizeof(r->encrypted_pairing_key.data));
+	if (ret != EC_SUCCESS) {
+		return EC_RES_UNAVAILABLE;
+	}
+
+	ret = encrypt_data_in_place(FP_AES_KEY_ENC_METADATA_VERSION,
+				    r->encrypted_pairing_key.info,
+				    r->encrypted_pairing_key.data,
+				    sizeof(r->encrypted_pairing_key.data));
+	if (ret != EC_SUCCESS) {
+		return EC_RES_UNAVAILABLE;
+	}
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_ESTABLISH_PAIRING_KEY_WRAP,
+		     fp_command_establish_pairing_key_wrap, EC_VER_MASK(0));
