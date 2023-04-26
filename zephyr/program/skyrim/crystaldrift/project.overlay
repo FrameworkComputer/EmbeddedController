@@ -37,6 +37,9 @@
 		gpio_ec_chg_led_b: ec_chg_led_b {
 			gpios = <&gpio8 0 GPIO_OUTPUT_LOW>;
 		};
+		gpio_ec_usbhub_en: ec_usbhub_en {
+			gpios = <&gpio4 5 GPIO_OUTPUT_HIGH>;
+		};
 	};
 
 	gpio-interrupts {
