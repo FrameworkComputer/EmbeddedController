@@ -277,15 +277,10 @@ void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
 	state->deadline.val = 0;
 }
 
-static enum ec_status
-fp_command_read_match_secret(struct host_cmd_handler_args *args)
+enum ec_status fp_read_match_secret(
+	int8_t fgr,
+	uint8_t positive_match_secret[FP_POSITIVE_MATCH_SECRET_BYTES])
 {
-	const auto *params =
-		static_cast<const ec_params_fp_read_match_secret *>(
-			args->params);
-	auto *response =
-		static_cast<ec_response_fp_read_match_secret *>(args->response);
-	int8_t fgr = params->fgr;
 	timestamp_t now = get_time();
 	struct positive_match_secret_state state_copy =
 		positive_match_secret_state;
@@ -308,7 +303,7 @@ fp_command_read_match_secret(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 	}
 
-	if (derive_positive_match_secret(response->positive_match_secret,
+	if (derive_positive_match_secret(positive_match_secret,
 					 fp_positive_match_salt[fgr]) !=
 	    EC_SUCCESS) {
 		CPRINTS("Failed to derive positive match secret for finger %d",
@@ -317,6 +312,27 @@ fp_command_read_match_secret(struct host_cmd_handler_args *args)
 		return EC_RES_ERROR;
 	}
 	CPRINTS("Derived positive match secret for finger %d", fgr);
+
+	return EC_RES_SUCCESS;
+}
+
+static enum ec_status
+fp_command_read_match_secret(struct host_cmd_handler_args *args)
+{
+	const auto *params =
+		static_cast<const ec_params_fp_read_match_secret *>(
+			args->params);
+	auto *response =
+		static_cast<ec_response_fp_read_match_secret *>(args->response);
+	int8_t fgr = params->fgr;
+
+	ec_status ret =
+		fp_read_match_secret(fgr, response->positive_match_secret);
+
+	if (ret != EC_RES_SUCCESS) {
+		return ret;
+	}
+
 	args->response_size = sizeof(*response);
 
 	return EC_RES_SUCCESS;
