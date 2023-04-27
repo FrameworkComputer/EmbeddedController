@@ -56,6 +56,8 @@ struct sm5803_emul_data {
 	uint8_t pre_fast_conf[6];
 	/** Raw value of GPIO0_CTRL register */
 	uint8_t gpio_ctrl;
+	/** Raw values of IR_COMP_REG1 and 2 */
+	uint8_t ir_comp1, ir_comp2;
 };
 
 struct sm5803_emul_cfg {
@@ -241,6 +243,13 @@ uint8_t sm5803_emul_get_gpio_ctrl(const struct emul *emul)
 	return data->gpio_ctrl;
 }
 
+uint16_t sm5803_emul_get_ir_comp(const struct emul *emul)
+{
+	struct sm5803_emul_data *data = emul->data;
+
+	return (data->ir_comp1 << 8) | data->ir_comp2;
+}
+
 static void sm5803_emul_reset(const struct emul *emul)
 {
 	struct sm5803_emul_data *data = emul->data;
@@ -285,6 +294,8 @@ static void sm5803_emul_reset(const struct emul *emul)
 	data->disch_conf5 = 0;
 	memset(data->pre_fast_conf, 0, sizeof(data->pre_fast_conf));
 	data->gpio_ctrl = 0x04;
+	data->ir_comp1 = 1;
+	data->ir_comp2 = 1;
 
 	/* Interrupt pin deasserted */
 	gpio_emul_input_set(cfg->interrupt_gpio.port, cfg->interrupt_gpio.pin,
@@ -409,6 +420,12 @@ static int sm5803_chg_read_byte(const struct emul *target, int reg,
 	case SM5803_REG_PRE_FAST_CONF_REG1 + 5:
 		*val = data->pre_fast_conf[reg - SM5803_REG_PRE_FAST_CONF_REG1];
 		return 0;
+	case SM5803_REG_IR_COMP1:
+		*val = data->ir_comp1;
+		return 0;
+	case SM5803_REG_IR_COMP2:
+		*val = data->ir_comp2;
+		return 0;
 	case SM5803_REG_LOG2:
 		*val = ((data->ibus * ADC_CURRENT_LSB_MA) >
 			(data->input_current_limit * ICL_LSB_MA))
@@ -453,6 +470,12 @@ static int sm5803_chg_write_byte(const struct emul *target, int reg,
 	case SM5803_REG_PRE_FAST_CONF_REG1 + 4:
 	case SM5803_REG_PRE_FAST_CONF_REG1 + 5:
 		data->pre_fast_conf[reg - SM5803_REG_PRE_FAST_CONF_REG1] = val;
+		return 0;
+	case SM5803_REG_IR_COMP1:
+		data->ir_comp1 = val;
+		return 0;
+	case SM5803_REG_IR_COMP2:
+		data->ir_comp2 = val;
 		return 0;
 	case SM5803_REG_PHOT1:
 		data->phot1 = val;

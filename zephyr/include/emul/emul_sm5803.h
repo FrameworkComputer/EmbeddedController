@@ -75,3 +75,10 @@ void sm5803_emul_set_irqs(const struct emul *emul, uint8_t irq1, uint8_t irq2,
 
 /** Get the value of the GPIO_CTRL_1 register, which controls GPIO0. */
 uint8_t sm5803_emul_get_gpio_ctrl(const struct emul *emul);
+
+/**
+ * Get the values of the IR_COMP1 and IR_COMP2 registers.
+ *
+ * Register values are concatenated, with COMP1 as MSB and COMP2 as LSB.
+ */
+uint16_t sm5803_emul_get_ir_comp(const struct emul *emul);

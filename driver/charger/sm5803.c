@@ -1941,7 +1941,7 @@ static enum ec_error_list sm5803_set_vsys_compensation(int chgnum,
 	/* Set IR drop compensation */
 	r = ocpc->combined_rsys_rbatt_mo * 100 / 167; /* 1.67mOhm steps */
 	r = MAX(0, r);
-	rv = chg_write8(chgnum, SM5803_REG_IR_COMP2, r & 0x7F);
+	rv = chg_write8(chgnum, SM5803_REG_IR_COMP2, r & 0xFF);
 	rv |= chg_read8(chgnum, SM5803_REG_IR_COMP1, &regval);
 	regval &= ~SM5803_IR_COMP_RES_SET_MSB;
 	r = r >> 8; /* Bits 9:8 */
@@ -1952,7 +1952,7 @@ static enum ec_error_list sm5803_set_vsys_compensation(int chgnum,
 	if (rv)
 		return EC_ERROR_UNKNOWN;
 
-	return EC_ERROR_UNIMPLEMENTED;
+	return EC_SUCCESS;
 }
 
 /* Hardware current ramping (aka DPM: Dynamic Power Management) */
