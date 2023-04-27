@@ -24,4 +24,16 @@ uint8_t nx20p348x_emul_peek(const struct emul *emul, int reg);
  * @param val - value for interrupt register
  */
 void nx20p348x_emul_set_interrupt1(const struct emul *emul, uint8_t val);
+
+/**
+ * Enable/Disable interact with the TCPC
+ *
+ * This is used for pretending no TCPC connected on the port.
+ * Interaction is default enabled.
+ *
+ * @param emul - NX20P383X emulator data
+ * @param val - value for interrupt register
+ */
+void nx20p348x_emul_set_tcpc_interact(const struct emul *emul, bool en);
+
 #endif

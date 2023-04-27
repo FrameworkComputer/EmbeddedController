@@ -4,8 +4,12 @@
  */
 
 #include "driver/ppc/nx20p348x.h"
+#include "driver/tcpm/tcpci.h"
 #include "emul/emul_common_i2c.h"
+#include "emul/emul_nx20p348x.h"
 #include "emul/emul_stub_device.h"
+#include "emul/tcpc/emul_tcpci.h"
+#include "emul/utils.h"
 #include "usbc/ppc_nx20p348x.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -30,7 +34,9 @@ LOG_MODULE_REGISTER(emul_nx20p348x);
 struct nx20p348x_emul_data {
 	struct i2c_common_emul_data common;
 	struct gpio_dt_spec irq_gpio;
+	const struct emul *tcpc_emul;
 	uint8_t regs[NX20P348X_MAX_REG + 1];
+	bool tcpc_interact;
 };
 
 struct nx20p348x_reg_default {
@@ -69,6 +75,7 @@ void nx20p348x_emul_reset_regs(const struct emul *emul)
 		data->regs[def.offset] = def.val;
 	}
 	nx20p348x_emul_interrupt_set(emul, 1);
+	nx20p348x_emul_set_tcpc_interact(emul, true);
 }
 
 uint8_t nx20p348x_emul_peek(const struct emul *emul, int reg)
@@ -79,6 +86,13 @@ uint8_t nx20p348x_emul_peek(const struct emul *emul, int reg)
 		(struct nx20p348x_emul_data *)emul->data;
 
 	return data->regs[reg];
+}
+
+void nx20p348x_emul_set_tcpc_interact(const struct emul *emul, bool en)
+{
+	struct nx20p348x_emul_data *data =
+		(struct nx20p348x_emul_data *)emul->data;
+	data->tcpc_interact = en;
 }
 
 void nx20p348x_emul_set_interrupt1(const struct emul *emul, uint8_t val)
@@ -102,6 +116,55 @@ static int nx20p348x_emul_read(const struct emul *emul, int reg, uint8_t *val,
 
 	if (bytes != 0)
 		return -EINVAL;
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_USBC_PPC_NX20P3483) &&
+	    data->tcpc_interact) {
+		uint16_t pwr_status;
+		bool src_en, snk_en;
+
+		tcpci_emul_get_reg(data->tcpc_emul, TCPC_REG_POWER_STATUS,
+				   &pwr_status);
+		src_en = pwr_status & TCPC_REG_POWER_STATUS_SOURCING_VBUS;
+		snk_en = pwr_status & TCPC_REG_POWER_STATUS_SINKING_VBUS;
+
+		if (reg == NX20P348X_SWITCH_STATUS_REG) {
+			if (src_en) {
+				data->regs[reg] |=
+					NX20P348X_SWITCH_STATUS_5VSRC;
+			} else {
+				data->regs[reg] &=
+					~(NX20P348X_SWITCH_STATUS_5VSRC |
+					  NX20P348X_SWITCH_STATUS_HVSRC);
+			}
+			if (snk_en) {
+				data->regs[reg] |=
+					NX20P348X_SWITCH_STATUS_HVSNK;
+			} else {
+				data->regs[reg] &=
+					(~NX20P348X_SWITCH_STATUS_HVSNK);
+			}
+		} else if (reg == NX20P348X_DEVICE_STATUS_REG) {
+			int mode = data->regs[reg] &
+				   (~NX20P3483_DEVICE_MODE_MASK);
+			bool db_exit =
+				!!(data->regs[NX20P348X_DEVICE_CONTROL_REG] &
+				   NX20P348X_CTRL_DB_EXIT);
+
+			if (snk_en) {
+				mode = NX20P3483_MODE_HV_SNK;
+			} else if (src_en) {
+				mode = NX20P3483_MODE_5V_SRC;
+			} else if (data->regs[NX20P348X_SWITCH_STATUS_REG] &
+				   NX20P348X_SWITCH_STATUS_HVSRC) {
+				mode = NX20P3483_MODE_HV_SRC;
+			} else if (!db_exit) {
+				mode = NX20P348X_MODE_DEAD_BATTERY;
+			}
+			data->regs[reg] = (data->regs[reg] &
+					   ~NX20P3483_DEVICE_MODE_MASK) |
+					  mode;
+		}
+	}
 
 	*val = data->regs[reg];
 
@@ -173,17 +236,20 @@ static int nx20p348x_emul_init(const struct emul *emul,
 	return 0;
 }
 
-#define INIT_NX20P348X_EMUL(n)                                                \
-	static struct nx20p348x_emul_data nx20p348x_emul_data_##n;            \
-	static struct i2c_common_emul_cfg common_cfg_##n = {                  \
-		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),               \
-		.data = &nx20p348x_emul_data_##n.common,                      \
-		.addr = DT_INST_REG_ADDR(n)                                   \
-	};                                                                    \
-	static struct nx20p348x_emul_data nx20p348x_emul_data_##n = {         \
-		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}),       \
-	};                                                                    \
-	EMUL_DT_INST_DEFINE(n, nx20p348x_emul_init, &nx20p348x_emul_data_##n, \
+#define INIT_NX20P348X_EMUL(n)                                                 \
+	static struct nx20p348x_emul_data nx20p348x_emul_data_##n;             \
+	static struct i2c_common_emul_cfg common_cfg_##n = {                   \
+		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),                \
+		.data = &nx20p348x_emul_data_##n.common,                       \
+		.addr = DT_INST_REG_ADDR(n)                                    \
+	};                                                                     \
+	static struct nx20p348x_emul_data nx20p348x_emul_data_##n = {          \
+		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}),        \
+		.tcpc_emul =                                                   \
+			EMUL_GET_USBC_PROP_BINDING(ppc, DT_DRV_INST(n), tcpc), \
+		.tcpc_interact = true,                                         \
+	};                                                                     \
+	EMUL_DT_INST_DEFINE(n, nx20p348x_emul_init, &nx20p348x_emul_data_##n,  \
 			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_NX20P348X_EMUL)
