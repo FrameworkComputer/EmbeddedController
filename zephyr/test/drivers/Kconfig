@@ -250,4 +250,9 @@ config LINK_TEST_SUITE_ANX7452
 config LINK_TEST_SUITE_SM5803
 	bool "Link and test the SM5803 charger tests"
 
+config LINK_TEST_SUITE_BODY_DETECTION
+	bool "Link and test the body detection tests"
+	help
+	  Include the test suite exercising body detection behaviors in the binary.
+
 source "Kconfig.zephyr"

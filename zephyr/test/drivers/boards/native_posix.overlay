@@ -31,6 +31,13 @@
 		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 		int-wp = &int_wp_l;
+		/*
+		 * Use LIS2DW12 accelerometer for on-body sensor.
+		 * The base_accel is currently using bma255. However, that
+		 * sensor driver (accel_bma2x2.c) does not support body
+		 * detection, since it's missing get_rms_noise().
+		 */
+		on-body-sensor = &ms_lis2dw12_accel;
 	};
 
 	ec-console {
