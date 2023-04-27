@@ -4,7 +4,6 @@
  */
 
 #include "battery.h"
-#include "battery_fuel_gauge.h"
 #include "charger.h"
 #include "console.h"
 #include "driver/charger/sm5803.h"
@@ -53,21 +52,4 @@ __override void board_hibernate(void)
 	sm5803_hibernate(CHARGER_PRIMARY);
 	LOG_INF("Charger(s) hibernated");
 	cflush();
-}
-
-__override int board_get_default_battery_type(void)
-{
-	int type = DEFAULT_BATTERY_TYPE;
-	int cells;
-
-	if (charger_get_battery_cells(CHARGER_PRIMARY, &cells) == EC_SUCCESS) {
-		if (cells == 3)
-			type = DEFAULT_BATTERY_TYPE_3S;
-		if (cells != 2 && cells != 3)
-			LOG_ERR("Unexpected number of cells");
-	} else {
-		LOG_ERR("Failed to get default battery type");
-	}
-
-	return type;
 }

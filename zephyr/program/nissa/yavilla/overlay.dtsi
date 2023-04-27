@@ -20,28 +20,16 @@
 
 	batteries {
 		default_battery: cosmx {
-			compatible = "cosmx,gh02047xl", "battery-smart";
+			compatible = "cosmx,gg02047xl", "battery-smart";
 		};
-		dynapack_atl_gh02047xl {
-			compatible = "dynapack,atl_gh02047xl", "battery-smart";
+		dynapack_byd_gg02047xl {
+			compatible = "dynapack,byd_gg02047xl", "battery-smart";
 		};
-		dynapack_cosmx_gh02047xl {
-			compatible = "dynapack,cosmx_gh02047xl", "battery-smart";
+		dynapack_hpp_gg02047xl {
+			compatible = "dynapack,hpp_gg02047xl", "battery-smart";
 		};
-		smp_coslight_gh02047xl {
-			compatible = "smp,coslight_gh02047xl", "battery-smart";
-		};
-		smp_highpower_gh02047xl {
-			compatible = "smp,highpower_gh02047xl", "battery-smart";
-		};
-		default_battery_3s:cosmx_si03058xl {
-			compatible = "cosmx,si03058xl", "battery-smart";
-		};
-		smp_highpower_si03058xl {
-			compatible = "smp,highpower_si03058xl", "battery-smart";
-		};
-		smp_si03054xl {
-			compatible = "smp,si03054xl", "battery-smart";
+		atl_gb-s20-4473a9 {
+			compatible = "atl,gb-s20-4473a9", "battery-smart";
 		};
 	};
 
