@@ -221,6 +221,7 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 		return ret;
 	}
 
+	/* TODO (b/276344630): Replace with boringssl version. */
 	/* "Extract step of HKDF. */
 	hkdf_extract(prk, salt, FP_CONTEXT_ENCRYPTION_SALT_BYTES, ikm,
 		     sizeof(ikm));
@@ -251,6 +252,7 @@ int aes_gcm_encrypt(const uint8_t *key, int key_size, const uint8_t *plaintext,
 		return EC_ERROR_INVAL;
 	}
 
+	/* TODO(b/279950931): Use public boringssl API. */
 	res = AES_set_encrypt_key(key, 8 * key_size, &aes_key);
 	if (res) {
 		CPRINTS("Failed to set encryption key: %d", res);
@@ -283,6 +285,7 @@ int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
 		return EC_ERROR_INVAL;
 	}
 
+	/* TODO(b/279950931): Use public boringssl API. */
 	res = AES_set_encrypt_key(key, 8 * key_size, &aes_key);
 	if (res) {
 		CPRINTS("Failed to set decryption key: %d", res);
