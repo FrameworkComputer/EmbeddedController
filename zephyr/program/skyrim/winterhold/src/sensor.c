@@ -11,43 +11,38 @@
 #include "hooks.h"
 #include "motionsense_sensors.h"
 
+static int cbi_boardversion = -1;
+static int cbi_fwconfig;
+
 void base_accel_interrupt(enum gpio_signal signal)
 {
-	int ret;
-	uint32_t val;
-	uint32_t fw_val;
-
-	ret = cbi_get_board_version(&val);
-	cros_cbi_get_fw_config(FW_BASE_SENSOR, &fw_val);
-
-	if (ret == EC_SUCCESS && val < 1)
+	if (cbi_boardversion == 0)
 		bmi3xx_interrupt(signal);
-	else if (val == 1)
+	else if (cbi_boardversion == 1)
 		lis2dw12_interrupt(signal);
-	else if (val >= 2) {
-		if (fw_val == FW_BASE_BMI323)
+	else if (cbi_boardversion >= 2) {
+		if (cbi_fwconfig == FW_BASE_BMI323)
 			bmi3xx_interrupt(signal);
-		else if (fw_val == FW_BASE_LIS2DW12)
+		else if (cbi_fwconfig == FW_BASE_LIS2DW12)
 			lis2dw12_interrupt(signal);
-	}
+	} else
+		lis2dw12_interrupt(signal);
 }
 
 static void motionsense_init(void)
 {
 	int ret;
-	uint32_t val;
-	uint32_t fw_val;
 
-	ret = cbi_get_board_version(&val);
-	cros_cbi_get_fw_config(FW_BASE_SENSOR, &fw_val);
+	ret = cbi_get_board_version(&cbi_boardversion);
+	cros_cbi_get_fw_config(FW_BASE_SENSOR, &cbi_fwconfig);
 
-	if (ret == EC_SUCCESS && val < 1) {
+	if (ret == EC_SUCCESS && cbi_boardversion < 1) {
 		MOTIONSENSE_ENABLE_ALTERNATE(alt_base_accel);
-	} else if (val >= 2) {
-		if (fw_val == FW_BASE_BMI323) {
+	} else if (cbi_boardversion >= 2) {
+		if (cbi_fwconfig == FW_BASE_BMI323) {
 			MOTIONSENSE_ENABLE_ALTERNATE(alt_base_accel);
 			ccprints("BASE ACCEL is BMI323");
-		} else if (fw_val == FW_BASE_LIS2DW12) {
+		} else if (cbi_fwconfig == FW_BASE_LIS2DW12) {
 			ccprints("BASE ACCEL IS LIS2DW12");
 		}
 	}
