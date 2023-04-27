@@ -85,7 +85,6 @@ struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.frs_en = GPIO_EC_USB_C0_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 };
@@ -110,8 +109,6 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_VBUS,
 	GPIO_EN_USB_A1_VBUS,
-	GPIO_EN_USB_A2_VBUS,
-	GPIO_EN_USB_A3_VBUS,
 };
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
@@ -300,14 +297,6 @@ int board_set_active_charge_port(int port)
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
 		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
-		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 0);
-		break;
-	case CHARGE_PORT_BARRELJACK:
-		/* Make sure BJ adapter is sourcing power */
-		if (!gpio_get_level(GPIO_BJ_ADP_PRESENT))
-			return EC_ERROR_INVAL;
-		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_OD, 1);
-		ppc_vbus_sink_enable(USBC_PORT_C0, 1);
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -374,23 +363,11 @@ const struct i2c_port_t i2c_ports[] = {
 	  .scl = GPIO_EC_I2C_EEPROM_SCL,
 	  .sda = GPIO_EC_I2C_EEPROM_SDA },
 
-	{ .name = "hdmi2_edid",
-	  .port = I2C_PORT_HDMI2_EDID,
-	  .kbps = 100,
-	  .scl = GPIO_EC_I2C_HDMI2_EDID_SCL,
-	  .sda = GPIO_EC_I2C_HDMI2_EDID_SDA },
-
 	{ .name = "usbc0",
 	  .port = I2C_PORT_USB_C0,
 	  .kbps = 1000,
 	  .scl = GPIO_EC_I2C_USB_C0_SCL,
 	  .sda = GPIO_EC_I2C_USB_C0_SDA },
-
-	{ .name = "hdmi2_src_ddc",
-	  .port = I2C_PORT_HDMI2_SRC_DDC,
-	  .kbps = 100,
-	  .scl = GPIO_EC_I2C_HDMI2_SRC_DDC_SCL,
-	  .sda = GPIO_EC_I2C_HDMI2_SRC_DDC_SDA },
 
 	{ .name = "hdmi1_edid",
 	  .port = I2C_PORT_HDMI1_EDID,
