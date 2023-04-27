@@ -143,6 +143,36 @@ static int set_reg(struct tcpci_ctx *ctx, int reg, uint16_t val)
 	return 0;
 }
 
+/**
+ * @brief Update value of given register of TCPCI
+ *
+ * @param ctx Pointer to TCPCI context
+ * @param reg Register address which value will be changed
+ * @param val New value of the register
+ * @param mask Mask to apply with the val
+ *
+ * @return 0 on success
+ * @return -EINVAL when register is out of range defined in TCPCI specification
+ */
+static int update_reg(struct tcpci_ctx *ctx, int reg, uint16_t val,
+		      uint16_t mask)
+{
+	uint16_t v;
+
+	if (get_reg(ctx, reg, &v)) {
+		return -EINVAL;
+	}
+
+	v &= ~mask;
+	v |= (val & mask);
+
+	if (set_reg(ctx, reg, v)) {
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /** Check description in emul_tcpci.h */
 int tcpci_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
 {
@@ -1175,11 +1205,30 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 				TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK);
 		}
 		break;
+	case TCPC_REG_COMMAND_DISABLE_VBUS_DETECT:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0,
+			   TCPC_REG_POWER_STATUS_VBUS_DET);
+		break;
 	case TCPC_REG_COMMAND_ENABLE_VBUS_DETECT:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0xFF,
+			   TCPC_REG_POWER_STATUS_VBUS_DET);
+		break;
 	case TCPC_REG_COMMAND_SNK_CTRL_LOW:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0,
+			   TCPC_REG_POWER_STATUS_SINKING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_SNK_CTRL_HIGH:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0xFF,
+			   TCPC_REG_POWER_STATUS_SINKING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_SRC_CTRL_LOW:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0,
+			   TCPC_REG_POWER_STATUS_SOURCING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_SRC_CTRL_HIGH:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0xFF,
+			   TCPC_REG_POWER_STATUS_SOURCING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_I2CIDLE:
 		break;
 	default:
