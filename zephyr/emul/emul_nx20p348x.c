@@ -197,7 +197,7 @@ static void nx20p348x_emul_reset_rule_before(const struct ztest_unit_test *test,
 	ARG_UNUSED(data);
 
 #define NX20P348X_EMUL_RESET_RULE_BEFORE(n) \
-	nx20p348x_emul_reset_regs(EMUL_DT_GET(DT_DRV_INST(n)))
+	nx20p348x_emul_reset_regs(EMUL_DT_GET(DT_DRV_INST(n)));
 
 	DT_INST_FOREACH_STATUS_OKAY(NX20P348X_EMUL_RESET_RULE_BEFORE);
 }
