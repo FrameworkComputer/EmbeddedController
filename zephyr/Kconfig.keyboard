@@ -228,6 +228,12 @@ config PLATFORM_EC_KEYBOARD_STRICT_DEBOUNCE
 	  debounce_down_us and debounce_up_us to an equal value. This guarantees
 	  key events are registered in the order the keys are pressed.
 
+config PLATFORM_KEYBOARD_SCANCODE_CALLBACK
+	bool "Keyboard scan code callback support"
+	help
+	  Enable callback support, board-specific 8042 keyboard callback
+	  when a key state is changed.
+
 endif # PLATFORM_EC_KEYBOARD
 
 
