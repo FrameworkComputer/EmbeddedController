@@ -1101,8 +1101,8 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 	}
 
 	/* Remove override when a charger is plugged */
-	if (clear_override &&
-	    override_port != port
+	if (clear_override && override_port != port &&
+	    override_port != OVERRIDE_DONT_CHARGE
 #ifndef CONFIG_CHARGE_MANAGER_DRP_CHARGING
 	    /* only remove override when it's a dedicated charger */
 	    && dualrole_capability[port] == CAP_DEDICATED

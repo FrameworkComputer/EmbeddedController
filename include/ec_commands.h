@@ -5945,6 +5945,10 @@ struct ec_params_usb_pd_discovery_entry {
 
 /* Negative port parameters have special meaning */
 enum usb_pd_override_ports {
+	/*
+	 * DONT_CHARGE is for all ports. Thus it's persistent across plug-in
+	 * or plug-out.
+	 */
 	OVERRIDE_DONT_CHARGE = -2,
 	OVERRIDE_OFF = -1,
 	/* [0, CONFIG_USB_PD_PORT_MAX_COUNT): Port# */
