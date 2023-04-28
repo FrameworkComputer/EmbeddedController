@@ -110,6 +110,8 @@ config PLATFORM_EC_FAN
 	  available. Also enables a periodic task (1s) to verify fan is
 	  running (is not stalled).
 
+if PLATFORM_EC_FAN
+
 config PLATFORM_EC_CUSTOM_FAN_CONTROL
 	bool "Fan custom control support"
 	default n
@@ -125,7 +127,6 @@ config PLATFORM_EC_CUSTOM_FAN_DUTY_CONTROL
 	  their own fan duty control mechanism by implementing
 	  the routine board_override_fan_control_duty().
 
-if PLATFORM_EC_FAN
 
 config PLATFORM_EC_NUM_FANS
 	int "Number of fans"
