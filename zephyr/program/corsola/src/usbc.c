@@ -76,16 +76,18 @@ uint8_t board_get_adjusted_usb_pd_port_count(void)
 /* USB-A */
 void usb_a0_interrupt(enum gpio_signal signal)
 {
+	const int xhci_stat = gpio_get_level(signal);
+
+#ifdef USB_PORT_ENABLE_COUNT
 	enum usb_charge_mode mode = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
 					    gpio_ap_xhci_init_done)) ?
 					    USB_CHARGE_MODE_ENABLED :
 					    USB_CHARGE_MODE_DISABLED;
 
-	const int xhci_stat = gpio_get_level(signal);
-
 	for (int i = 0; i < USB_PORT_COUNT; i++) {
 		usb_charge_set_mode(i, mode, USB_ALLOW_SUSPEND_CHARGE);
 	}
+#endif /* USB_PORT_ENABLE_COUNT */
 
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		/*
