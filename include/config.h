@@ -2857,10 +2857,15 @@
  * Only one of these may be defined (if any).
  */
 #ifndef CONFIG_ZEPHYR
+/*
+ * These symbols also exist as Kconfigs in Zephyr. Zephyr based boards
+ * need to use the upstream driver, or these symbols need to be changed
+ * downstream to not conflict.
+ */
 #undef CONFIG_INA219
+#undef CONFIG_INA3221
 #endif /* CONFIG_ZEPHYR */
 #undef CONFIG_INA231
-#undef CONFIG_INA3221
 
 /*****************************************************************************/
 /* Inductive charging */
