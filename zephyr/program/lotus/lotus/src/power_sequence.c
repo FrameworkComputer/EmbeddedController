@@ -12,6 +12,7 @@
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "lpc.h"
 #include "power.h"
 #include "power_sequence.h"
 #include "task.h"
@@ -65,6 +66,51 @@ static int keep_pch_power(void)
 	else
 		return false;
 
+}
+
+/*
+ * Backup copies of SCI mask to preserve across S0ix suspend/resume
+ * cycle. If the host uses S0ix, BIOS is not involved during suspend and resume
+ * operations and hence SCI masks are programmed only once during boot-up.
+ *
+ * These backup variables are set whenever host expresses its interest to
+ * enter S0ix and then lpc_host_event_mask for SCI are cleared. When
+ * host resumes from S0ix, masks from backup variables are copied over to
+ * lpc_host_event_mask for SCI.
+ */
+static host_event_t backup_sci_mask;
+
+/*
+ * Clear host event masks for SCI when host is entering S0ix. This is
+ * done to prevent any SCI interrupts when the host is in suspend. Since
+ * BIOS is not involved in the suspend path, EC needs to take care of clearing
+ * these masks.
+ */
+static void lpc_s0ix_suspend_clear_masks(void)
+{
+	backup_sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_WAKE_EVENT_MASK);
+}
+
+/*
+ * Restore host event masks for SCI when host exits S0ix. This is done
+ * because BIOS is not involved in the resume path and so EC needs to restore
+ * the masks from backup variables.
+ */
+static void lpc_s0ix_resume_restore_masks(void)
+{
+	/*
+	 * No need to restore SCI masks if both backup_sci_mask are zero.
+	 * This indicates that there was a failure to enter S0ix
+	 * and hence SCI masks were never backed up.
+	 */
+	if (!backup_sci_mask)
+		return;
+
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, backup_sci_mask);
+
+	backup_sci_mask = 0;
 }
 
 static void clear_rtcwake(void)
@@ -265,6 +311,7 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
 
+		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
@@ -288,6 +335,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 0);
 
+		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		return POWER_S3;
