@@ -8,9 +8,11 @@
 #include "common.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
+#include "tablet_mode.h"
 #include "temp_sensor.h"
 #include "temp_sensor/thermistor.h"
 #include "thermal.h"
@@ -134,10 +136,19 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static void baseboard_sensors_init(void)
 {
-	/* Enable gpio interrupt for lid accel sensor */
-	gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
+	if (ec_cfg_has_tabletmode()) {
+		/* Enable gpio interrupt for lid accel sensor */
+		gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
+	} else {
+		gmr_tablet_switch_disable();
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_EC_ACCEL_INT_R_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_EC_IMU_INT_R_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 

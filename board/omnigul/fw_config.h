@@ -53,4 +53,6 @@ union omnigul_cbi_fw_config {
  */
 union omnigul_cbi_fw_config get_fw_config(void);
 
+bool ec_cfg_has_tabletmode(void);
+
 #endif /* __BOARD_OMNIGUL_FW_CONFIG_H_ */

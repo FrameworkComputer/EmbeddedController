@@ -41,3 +41,8 @@ union omnigul_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
 }
+
+bool ec_cfg_has_tabletmode(void)
+{
+	return (fw_config.tab_mode == TABLETMODE_ENABLED);
+}
