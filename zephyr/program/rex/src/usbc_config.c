@@ -115,10 +115,12 @@ void board_reset_pd_mcu(void)
 	reset_nct38xx_port(USBC_PORT_C0);
 
 	/* Reset TCPC1 */
-	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
-	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
-	msleep(PS8815_FW_INIT_DELAY_MS);
+	if (tcpc_config[1].rst_gpio.port) {
+		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
+		msleep(PS8XXX_RESET_DELAY_MS);
+		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
+		msleep(PS8815_FW_INIT_DELAY_MS);
+	}
 }
 
 void ppc_interrupt(enum gpio_signal signal)
