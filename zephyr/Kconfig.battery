@@ -178,6 +178,49 @@ config PLATFORM_EC_BATTERY_MAX_IMBALANCE_MV
 	  system tolerant of larger values of
 	  CONFIG_PLATFORM_EC_BATTERY_MAX_IMBALANCE_MV.
 
+config PLATFORM_EC_BATTERY_STBL_STAT
+	bool "Check whether the battery is initialized and stable"
+	help
+	  Enables support for checking the specific battery status to
+	  judge whether the battery is initialized and stable when the battery
+	  wakes up from ship mode. Use two MASKs to provide logical AND and
+	  logical OR options for different status.
+
+	  For example:
+	    STATUS_TERMINATE_CHARGE_ALARM(TCA):0x4000
+	    STATUS_TERMINATE_DISCHARGE_ALARM(TDA):0x0800
+
+	  Logical OR -- just check one of TCA/TDA mask:
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK1=(0x4000 | 0x0800)
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK2=0xFFFF
+
+	  Logical AND -- check both TCA/TDA mask:
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK1=0x4000
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK2=0x0800
+
+	  The default configuration is logical OR.
+
+if PLATFORM_EC_BATTERY_STBL_STAT
+
+config PLATFORM_EC_BATT_ALARM_MASK1
+	hex "The battery status mask"
+	default 0x4800
+	help
+	  Use two MASKs to provide logical AND and logical OR options for different
+	  status. Default mask 0x4800 means
+	  (STATUS_TERMINATE_CHARGE_ALARM | STATUS_TERMINATE_DISCHARGE_ALARM),
+	  any one of these two masks is set, the battery state can be considered
+	  stable.
+
+config PLATFORM_EC_BATT_ALARM_MASK2
+	hex "The battery status mask"
+	default 0xFFFF
+	help
+	  Use two MASKs to provide logical AND and logical OR options for different
+	  status. Default mask 0xFFFF means do not use this mask.
+
+endif # PLATFORM_EC_BATTERY_STBL_STAT
+
 config PLATFORM_EC_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON
 	int "Minimum battery percentage for power on with an imbalanced pack"
 	depends on PLATFORM_EC_BATTERY_MEASURE_IMBALANCE

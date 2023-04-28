@@ -665,6 +665,12 @@
 #undef CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 
 /*
+ * Check the specific battery status to judge whether the battery is
+ * initialized and stable when the battery wakes up from ship mode.
+ */
+#undef CONFIG_BATTERY_STBL_STAT
+
+/*
  * Some batteries don't update full capacity timely or don't update it at all.
  * On such systems, compensation is required to guarantee remaining_capacity
  * will be equal to full_capacity eventually. This used to be done in ACPI.
@@ -6409,6 +6415,33 @@
 /* If battery_v2 isn't used, it's v1. */
 #if defined(CONFIG_BATTERY) && !defined(CONFIG_BATTERY_V2)
 #define CONFIG_BATTERY_V1
+#endif
+
+/*
+ * Check the specific battery status to judge whether the battery is
+ * initialized and stable when the battery wakes up from ship mode.
+ * Use two MASKs to provide logical AND and logical OR options for different
+ * status. For example:
+ *
+ * Logical OR -- just check one of TCA/TDA mask:
+ *   #define CONFIG_BATT_ALARM_MASK1 \
+ *       (STATUS_TERMINATE_CHARGE_ALARM | STATUS_TERMINATE_DISCHARGE_ALARM)
+ *   #define CONFIG_BATT_ALARM_MASK2 0xFFFF
+ *
+ * Logical AND -- check both TCA/TDA mask:
+ *   #define CONFIG_BATT_ALARM_MASK1 STATUS_TERMINATE_CHARGE_ALARM
+ *   #define CONFIG_BATT_ALARM_MASK2 STATUS_TERMINATE_DISCHARGE_ALARM
+ *
+ * The default configuration is logical OR.
+ */
+#ifdef CONFIG_BATTERY_STBL_STAT
+#ifndef CONFIG_BATT_ALARM_MASK1
+#define CONFIG_BATT_ALARM_MASK1 \
+	(STATUS_TERMINATE_CHARGE_ALARM | STATUS_TERMINATE_DISCHARGE_ALARM)
+#endif
+#ifndef CONFIG_BATT_ALARM_MASK2
+#define CONFIG_BATT_ALARM_MASK2 0xFFFF
+#endif
 #endif
 
 /*****************************************************************************/
