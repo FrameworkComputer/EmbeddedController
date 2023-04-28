@@ -272,7 +272,7 @@
 		is-alt;
 	};
 
-	ppc_port1_nxp: nx20p348x@72 {
+	ppc_nx20p_port1: nx20p348x@72 {
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x72>;

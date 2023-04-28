@@ -1,5 +1,5 @@
 &i2c4_1 {
-	tcpc_port1: ps8xxx@b {
+	tcpc_ps8815_port1: ps8xxx@b {
 		compatible = "parade,ps8xxx";
 		reg = <0xb>;
 		tcpc-flags = <(
