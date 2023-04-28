@@ -82,7 +82,15 @@ DECLARE_HOOK(HOOK_INIT, enable_check_battery_timer, HOOK_PRIO_DEFAULT);
 static void battery_percentage_control(void)
 {
 	enum ec_charge_control_mode new_mode;
+	static int in_percentage_control;
 	int rv;
+
+	/**
+	 * If the host command EC_CMD_CHARGE_CONTROL set control mode to CHARGE_CONTROL_DISCHARGE
+	 * or CHARGE_CONTROL_IDLE, ignore the battery_percentage_control();
+	 */
+	if (!in_percentage_control && get_chg_ctrl_mode() != CHARGE_CONTROL_NORMAL)
+		return;
 
 	if (charging_maximum_level == EC_CHARGE_LIMIT_RESTORE)
 		system_get_bbram(SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX, &charging_maximum_level);
@@ -93,12 +101,16 @@ static void battery_percentage_control(void)
 			charging_maximum_level = charging_maximum_level | 0x64;
 	} else if (charging_maximum_level < 20)
 		new_mode = CHARGE_CONTROL_NORMAL;
-	else if (charge_get_percent() > charging_maximum_level)
+	else if (charge_get_percent() > charging_maximum_level) {
 		new_mode = CHARGE_CONTROL_DISCHARGE;
-	else if (charge_get_percent() == charging_maximum_level)
+		in_percentage_control = 1;
+	} else if (charge_get_percent() == charging_maximum_level) {
 		new_mode = CHARGE_CONTROL_IDLE;
-	else
+		in_percentage_control = 1;
+	} else {
 		new_mode = CHARGE_CONTROL_NORMAL;
+		in_percentage_control = 0;
+	}
 
 	set_chg_ctrl_mode(new_mode);
 #ifdef CONFIG_PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
