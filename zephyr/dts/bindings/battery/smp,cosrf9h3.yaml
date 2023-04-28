@@ -14,7 +14,7 @@ properties:
 
   # Fuel gauge
   manuf_name:
-    default: "SMP-COS3.63"
+    default: "SMP-COS-3.63"
   device_name:
     default: "DELL RF9H3"
   ship_mode_reg_addr:
