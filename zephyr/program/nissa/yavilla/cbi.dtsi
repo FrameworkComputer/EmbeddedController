@@ -91,6 +91,27 @@
 		 */
 
 		/*
+		 * FW_CONFIG field to indicate tablet mode present
+		 * or absent.
+		 */
+		tablet {
+			enum-name = "FW_TABLET";
+			start = <13>;
+			size = <1>;
+
+			tablet-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_PRESENT";
+				value = <1>;
+			};
+			tablet-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_ABSENT";
+				value = <0>;
+			};
+		};
+
+		/*
 		 * FW_CONFIG field for multiple storage.
 		 *
 		 *	start = <31>;
