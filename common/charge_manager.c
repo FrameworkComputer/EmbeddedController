@@ -1528,15 +1528,13 @@ static enum ec_status
 hc_charge_port_override(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_charge_port_override *p = args->params;
-	const int16_t override_port = p->override_port;
+	const int16_t op = p->override_port;
 
-	if (override_port < OVERRIDE_DONT_CHARGE ||
-	    override_port >= CHARGE_PORT_COUNT)
+	if (op < OVERRIDE_DONT_CHARGE || op >= CHARGE_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	return charge_manager_set_override(override_port) == EC_SUCCESS ?
-		       EC_RES_SUCCESS :
-		       EC_RES_ERROR;
+	return charge_manager_set_override(op) == EC_SUCCESS ? EC_RES_SUCCESS :
+							       EC_RES_ERROR;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_CHARGE_PORT_OVERRIDE, hc_charge_port_override,
 		     EC_VER_MASK(0));
