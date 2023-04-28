@@ -14,27 +14,24 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "driver/charger/isl9241.h"
+#include "driver/ppc/ktu1125_public.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/rt1718s.h"
 #include "driver/usb_mux/amd_fp6.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "power.h"
 #include "usb_mux.h"
+#include "usb_mux_config.h"
 #include "usb_pd_tcpm.h"
 #include "usbc/usb_muxes.h"
+#include "usbc_config.h"
 #include "usbc_ppc.h"
 
 #include <zephyr/drivers/gpio.h>
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
-
-/* USB-A ports */
-enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_A1, USBA_PORT_COUNT };
-
-/* USB-C ports */
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
-BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 static void usbc_interrupt_init(void)
 {
@@ -57,7 +54,7 @@ int board_set_active_charge_port(int port)
 		CPRINTSUSB("Disabling all charger ports");
 
 		/* Disable all ports. */
-		for (i = 0; i < ppc_cnt; i++) {
+		for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 			/*
 			 * Do not return early if one fails otherwise we can
 			 * get into a boot loop assertion failure.
@@ -83,7 +80,7 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < ppc_cnt; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (i == port)
 			continue;
 
@@ -119,6 +116,29 @@ void usb_pd_soc_interrupt(enum gpio_signal signal)
 	 * it as a point of interest.
 	 */
 	CPRINTSUSB("SOC PD Interrupt");
+}
+
+void ppc_interrupt(enum gpio_signal signal)
+{
+	uint32_t io_db_type = get_io_db_type_from_cached_cbi();
+
+	switch (signal) {
+	case GPIO_USB_C0_PPC_INT_ODL:
+		ktu1125_interrupt(USBC_PORT_C0);
+		break;
+
+	case GPIO_USB_C1_PPC_INT_ODL:
+		if (io_db_type == FW_IO_DB_SKU_A) {
+			nx20p348x_interrupt(USBC_PORT_C1);
+		}
+		if (io_db_type == FW_IO_DB_SKU_B) {
+			ktu1125_interrupt(USBC_PORT_C1);
+		}
+		break;
+
+	default:
+		break;
+	}
 }
 
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */

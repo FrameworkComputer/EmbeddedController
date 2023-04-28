@@ -5,6 +5,7 @@
 cmake_minimum_required(VERSION 3.20.5)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
+cros_ec_library_include_directories(include)
 
 zephyr_library_sources("src/common.c")
 zephyr_library_sources("src/power_signals.c")

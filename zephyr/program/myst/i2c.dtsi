@@ -76,15 +76,16 @@
 	tcpc_port0: rt1716@70 {
 		compatible = "richtek,rt1716";
 		reg = <0x70>;
-		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
-		/* TBD */
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
 		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
 	};
 
-	ppc_port0: ktu1125@78 {
+	ppc_port0: ktu1125@38 {
 		compatible = "kinetic,ktu1125";
 		status = "okay";
-		reg = <0x78>;
+		reg = <0x38>;
 	};
 };
 
@@ -105,7 +106,7 @@
 		reg = <0x40>;
 	};
 
-	tcpc_port1: rt1718s-tcpc@40 {
+	tcpc_rt1718_port1: rt1718s-tcpc@40 {
 		compatible = "richtek,rt1718s-tcpc";
 		reg = <0x40>;
 		tcpc-flags = <(
@@ -117,15 +118,28 @@
 		 * the "named-gpios" node will be dealt with at a later date.
 		 */
 		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
+		is-alt;
 	};
 
-	ppc_port1: nx20p348x@71 {
+	ppc_nx20p_port1: nx20p348x@71 {
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x71>;
+		is-alt;
 	};
 
-	/* TODO: add SKU-B DB b/275610001 */
+	tcpc_ps8815_port1: ps8xxx@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+		is-alt;
+	};
+
+	ppc_ktu1125_port1: ktu1125@38 {
+		compatible = "kinetic,ktu1125";
+		status = "okay";
+		reg = <0x38>;
+		is-alt;
+	};
 };
 
 &i2c_ctrl1 {

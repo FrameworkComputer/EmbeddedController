@@ -4,6 +4,6 @@
 
 cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MYST include)
 zephyr_library_sources(
-		"src/ppc_config.c"
 		"src/keyboard.c"
+		"src/usb_mux_config.c"
 )
