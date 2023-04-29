@@ -10,15 +10,14 @@
 
 #include <zephyr/drivers/gpio.h>
 
-static void check_usbhub_en(void)
+static void usb_porta_startup(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_usbhub_en))) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_usbhub_en), 0);
-	} else if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-		   !gpio_pin_get_dt(
-			   GPIO_DT_FROM_NODELABEL(gpio_ec_usbhub_en))) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_usbhub_en), 1);
-	}
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_usbhub_en), 1);
 }
-DECLARE_HOOK(HOOK_SECOND, check_usbhub_en, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usb_porta_startup, HOOK_PRIO_DEFAULT);
+
+static void usb_porta_shutdown(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_usbhub_en), 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_porta_shutdown, HOOK_PRIO_DEFAULT);
