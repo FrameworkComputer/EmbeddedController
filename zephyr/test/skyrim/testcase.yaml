@@ -43,7 +43,7 @@ tests:
   skyrim.crystaldrift.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
-    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG_CUSTOM=y
 
   skyrim.crystaldrift.usb_mux_config:
     extra_configs:

@@ -3,3 +3,4 @@
 # found in the LICENSE file.
 
 target_sources(app PRIVATE src/common.c)
+target_sources_ifdef(CONFIG_TEST_BOARD_PPC_CONFIG app PRIVATE src/ppc_config.c)
