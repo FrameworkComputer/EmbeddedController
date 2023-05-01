@@ -7,4 +7,7 @@
 register_host_project(
     project_name="dev-posix",
     zephyr_board="native_posix",
+    dts_overlays=[
+        "dev.dtsi",
+    ],
 )
