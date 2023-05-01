@@ -115,19 +115,22 @@
 		 * by alias. Using the alias, each driver creates
 		 * its own <>_INT_EVENT.
 		 */
-		bmi3xx-int = &alt_base_accel;
+		bmi3xx-int = &lid_accel;
+
+		/* Use lid accelerometer for body detection */
+		on-body-sensor = &lid_accel;
 	};
 
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
-		base_mutex_bmi323: bmi323-mutex {
+		lid_mutex_bmi323: bmi323-mutex {
 		};
 	};
 
 	/* Rotation matrix used by drivers. */
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
-		base_rot_ref_bmi: base-rotation-ref-bmi {
+		lid_rot_ref_bmi: lid-rotation-ref-bmi {
 			mat33 = <1 0 0
 				 0 1 0
 				 0 0 1>;
@@ -145,15 +148,15 @@
 		/delete-node/ base-accel;
 		/delete-node/ base-gyro;
 
-		alt_base_accel: alt-base-accel {
+		lid_accel: lid-accel {
 			compatible = "cros-ec,bmi3xx-accel";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_LID";
-			mutex = <&base_mutex_bmi323>;
+			mutex = <&lid_mutex_bmi323>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref_bmi>;
+			rot-standard-ref = <&lid_rot_ref_bmi>;
 			default-range = <2>;
 			drv-data = <&bmi323_data>;
 			configs {
@@ -168,15 +171,15 @@
 			};
 		};
 
-		alt_base_gyro: alt-base-gyro {
+		lid_gyro: lid-gyro {
 			compatible = "cros-ec,bmi3xx-gyro";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_LID";
-			mutex = <&base_mutex_bmi323>;
+			mutex = <&lid_mutex_bmi323>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref_bmi>;
+			rot-standard-ref = <&lid_rot_ref_bmi>;
 			drv-data = <&bmi323_data>;
 		};
 	};
