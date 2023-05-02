@@ -7,7 +7,6 @@ menuconfig EMUL_SN5S330
 	default y
 	depends on DT_HAS_CROS_SN5S330_EMUL_ENABLED
 	depends on I2C_EMUL
-	depends on ASSERT
 	help
 	  Enable the sn5s330 emulator. This driver uses the emulated I2C bus. It
 	  is used to test the sn5s330 driver. Emulator API is available in

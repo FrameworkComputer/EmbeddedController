@@ -190,6 +190,7 @@ static void sn5s330_emul_set_int_pin(const struct emul *emul, bool val)
 	struct sn5s330_emul_data *data = emul->data;
 	int res = gpio_emul_input_set(data->gpio_int_port, data->gpio_int_pin,
 				      val);
+	ARG_UNUSED(res);
 	__ASSERT_NO_MSG(res == 0);
 }
 
