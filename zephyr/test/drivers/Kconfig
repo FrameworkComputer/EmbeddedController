@@ -65,6 +65,9 @@ config LINK_TEST_SUITE_HOST_COMMANDS
 config LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP
 	bool "Link and test the host command read memmap tests"
 
+config LINK_TEST_SUITE_ICM42607
+	bool "Link and test the icm42607 tests"
+
 config LINK_TEST_SUITE_ISL923X
 	bool "Link and test the isl923x tests"
 

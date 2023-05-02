@@ -9,6 +9,7 @@
  */
 
 #include "accelgyro.h"
+#include "builtin/endian.h"
 #include "console.h"
 #include "driver/accelgyro_icm42607.h"
 #include "driver/accelgyro_icm_common.h"
@@ -959,6 +960,9 @@ static int icm42607_read_temp(const struct motion_sensor_t *s, int *temp_ptr)
 
 	if (ret != EC_SUCCESS)
 		return ret;
+
+	/* This register is big-endian and not configurable */
+	val = be16toh(val);
 
 	/* ensure correct propagation of 16 bits sign bit */
 	val = sign_extend(val, 15);

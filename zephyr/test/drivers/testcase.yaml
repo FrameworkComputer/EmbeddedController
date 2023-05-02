@@ -202,6 +202,15 @@ tests:
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI=n
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_SHI=y
     - CONFIG_PLATFORM_EC_SWITCH=n
+  drivers.icm42607:
+    extra_configs:
+    - CONFIG_PLATFORM_EC_ACCELGYRO_BMI160=n
+    - CONFIG_LINK_TEST_SUITE_ICM42607=y
+    - CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607=y
+    - CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C=y
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./icm42607/sensor.dts
   drivers.isl923x:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ISL923X=y
