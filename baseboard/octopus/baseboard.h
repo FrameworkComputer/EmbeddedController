@@ -321,6 +321,9 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 
+/* Free up more flash. */
+#undef CONFIG_CMD_ACCELSPOOF
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
