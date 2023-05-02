@@ -115,11 +115,6 @@ static int nct38xx_init(int port)
 
 	/* Set FRS direction for SNK detect, if FRS is enabled */
 	if (tcpm_tcpc_has_frs_control(port)) {
-		reg = TCPC_REG_DEV_CAP_2_SNK_FR_SWAP;
-		rv = tcpc_write(port, TCPC_REG_DEV_CAP_2, reg);
-		if (rv)
-			return rv;
-
 		reg = TCPC_REG_CONFIG_EXT_1_FR_SWAP_SNK_DIR;
 		rv = tcpc_write(port, TCPC_REG_CONFIG_EXT_1, reg);
 		if (rv)
