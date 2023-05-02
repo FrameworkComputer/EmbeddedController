@@ -19,6 +19,7 @@
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "led.h"
 #include "lpc.h"
 #include "power_sequence.h"
 #include "system.h"
@@ -160,6 +161,39 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));
+
+static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_fp_led_control *p = args->params;
+	struct ec_response_fp_led_level *r = args->response;
+	uint8_t led_level = FP_LED_HIGH;
+
+	if (p->get_led_level) {
+		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+
+	switch (p->set_led_level) {
+	case FP_LED_BRIGHTNESS_HIGH:
+		led_level = FP_LED_HIGH;
+		break;
+	case FP_LED_BRIGHTNESS_MEDIUM:
+		led_level = FP_LED_MEDIUM;
+		break;
+	case FP_LED_BRIGHTNESS_LOW:
+		led_level = FP_LED_LOW;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+		break;
+	}
+
+	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control, EC_VER_MASK(0));
 
 static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 {
