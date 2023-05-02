@@ -93,3 +93,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_HW_ZEPHYR
 	                                                    sha256_hw.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP
 	                                                    register_memory_dump.c)
+if (DEFINED CONFIG_HOST_SERVICE)
+zephyr_library_sources_ifdef(CONFIG_HECI
+                                                            host_command_heci.c)
+endif()
