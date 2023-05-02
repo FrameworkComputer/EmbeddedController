@@ -14,7 +14,6 @@
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/ztest.h>
 
 LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
