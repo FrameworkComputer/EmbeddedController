@@ -14,7 +14,10 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+
+#ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>
+#endif
 
 #define DT_DRV_COMPAT zephyr_smart_battery_emul
 
@@ -893,6 +896,7 @@ DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL)
 	case DT_INST_DEP_ORD(n):   \
 		return sbat_emul_data_##n.common.emul.target;
 
+#ifdef CONFIG_ZTEST
 static void emul_smart_battery_reset_capacity(const struct emul *emul)
 {
 	struct sbat_emul_data *bat_data = emul->data;
@@ -913,6 +917,7 @@ static void emul_sbat_reset(const struct ztest_unit_test *test, void *data)
 }
 
 ZTEST_RULE(emul_smart_battery_reset, NULL, emul_sbat_reset);
+#endif /* CONFIG_ZTEST */
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
 
