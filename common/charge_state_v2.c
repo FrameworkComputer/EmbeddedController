@@ -201,7 +201,7 @@ void reset_prev_disp_charge(void)
 static int battery_sustainer_set(int8_t lower, int8_t upper)
 {
 	if (lower == -1 || upper == -1) {
-		CPRINTS("Sustain mode disabled");
+		CPRINTS("Sustainer disabled");
 		sustain_soc.lower = -1;
 		sustain_soc.upper = -1;
 		return EC_SUCCESS;
@@ -213,6 +213,7 @@ static int battery_sustainer_set(int8_t lower, int8_t upper)
 			return EC_RES_UNAVAILABLE;
 		sustain_soc.lower = lower;
 		sustain_soc.upper = upper;
+		CPRINTS("Sustainer set: %d%% ~ %d%%", lower, upper);
 		return EC_SUCCESS;
 	}
 
