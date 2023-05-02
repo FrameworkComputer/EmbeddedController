@@ -613,6 +613,9 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 
 	case STATE_ATKBD_SETLEDS:
 		CPRINTS5("KB eaten by STATE_ATKBD_SETLEDS");
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+		board_caps_led_control(data);
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
 		output[out_len++] = ATKBD_RET_ACK;
 		data_port_state = STATE_ATKBD_CMD;
 		break;
@@ -708,6 +711,9 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			output[out_len++] = ATKBD_RET_ACK;
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+			output[out_len++] = ATKBD_RET_TEST_SUCCESS; /* keyboard BAT test success */
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
 			break;
 
 		case ATKBD_CMD_RESEND:
@@ -1045,7 +1051,39 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 		task_wake(TASK_ID_KEYPROTO);
 	}
 }
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+void simulate_keyboard(uint16_t scancode, int is_pressed)
+{
+	uint8_t scan_code[MAX_SCAN_CODE_LEN];
+	uint32_t len;
+	enum scancode_set_list code_set;
 
+	/*
+	 * Only send the scan code if main chipset is fully awake and
+	 * keystrokes are enabled.
+	 */
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !keystroke_enabled)
+		return;
+
+	code_set = acting_code_set(scancode_set);
+	if (!is_supported_code_set(code_set))
+		return;
+
+	scancode_bytes(scancode, is_pressed, code_set, scan_code,
+		       &len);
+	ASSERT(len > 0);
+
+	if (is_pressed)
+		set_typematic_key(scan_code, len);
+	else
+		clear_typematic_key();
+
+	if (keystroke_enabled) {
+		i8042_send_to_host(len, scan_code, CHAN_KBD, 0);
+		task_wake(TASK_ID_KEYPROTO);
+	}
+}
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_KEYBOARD

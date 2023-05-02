@@ -173,5 +173,8 @@ SHAREDLIB(const struct button_8042_t buttons_8042[] = {
 		  { SCANCODE_6, 1 },
 		  { SCANCODE_7, 1 },
 		  { SCANCODE_8, 1 },
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+		  {SCANCODE_FAKE_POWER, 0},
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
 	  });
 BUILD_ASSERT(ARRAY_SIZE(buttons_8042) == KEYBOARD_BUTTON_COUNT);
