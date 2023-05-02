@@ -509,7 +509,7 @@ Prior to uploading a new change for review, please run the EC unit tests with:
 
 These commands will build and run unit tests in an emulator on your host.
 
-Pre-submit checks are run when you try to upload a change-list. If you wish to
+Pre-upload checks are run when you try to upload a change-list. If you wish to
 run these checks manually first, commit your change locally then run the
 following command from within the chroot and while in the `src/platform/ec`
 directory:
@@ -518,14 +518,13 @@ directory:
 (chroot) $ ~/trunk/src/repohooks/pre-upload.py
 ```
 
-The pre-submit checks include checking the commit message. Commit messages must
-have a `BUG`, `BRANCH`, and `TEST` line along with `Signed-off-by: First Last
-<name@company.com>`. The signed-off-by line is a statement that you have written
-this code and it can be contributed under the terms of the `LICENSE` file.
+The pre-upload checks include checking the commit message.  Commit messages must
+have a `BUG` and `TEST`.  You may also optionally include a `BRANCH` line with a
+list of board names for which the CL should be cherry-picked back to old
+branches for.
 
 Please refer to existing commits (`git log`) to see the proper format for the
-commit message. If you have configured git properly, running `git commit` with
-the `-s` argument will add the Signed-off-by line for you.
+commit message.
 
 Note that code you submit must adhere to the [ChromeOS EC Firmware Test
 Requirements].
