@@ -13,7 +13,9 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>
+#endif
 
 #define DT_DRV_COMPAT cros_tcpci_generic_emul
 
