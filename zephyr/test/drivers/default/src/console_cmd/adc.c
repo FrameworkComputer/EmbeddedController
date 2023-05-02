@@ -21,20 +21,20 @@ ZTEST_USER(console_cmd_adc, test_adc_noname)
 /* adc with named channels */
 ZTEST_USER(console_cmd_adc, test_adc_named_channels)
 {
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc charger"),
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc 0"),
 		   "Failed to get charger adc channel.");
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc ddr-soc"),
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc 2"),
 		   "Failed to get ddr-soc adc channel.");
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc fan"),
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc 3"),
 		   "Failed to get fan adc channel.");
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc psys"),
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "adc 5"),
 		   "Failed to get psys adc channel.");
 }
 
 /* adc with unknown channel */
 ZTEST_USER(console_cmd_adc, test_adc_wrong_name)
 {
-	int rv = shell_execute_cmd(get_ec_shell(), "adc fish");
+	int rv = shell_execute_cmd(get_ec_shell(), "adc 9");
 
 	zassert_equal(rv, EC_ERROR_PARAM1, "Expected %d, but got %d",
 		      EC_ERROR_PARAM1, rv);
