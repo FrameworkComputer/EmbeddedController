@@ -42,7 +42,6 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 	COND_CODE_1(DT_NODE_HAS_COMPAT(tcpc_id, compat),  \
 		    (TCPC_CHIP_ENTRY(usbc_id, tcpc_id, config_fn)), ())
 
-#ifdef TEST_BUILD
 #define TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)               \
 	CHECK_COMPAT(TCPCI_EMUL_COMPAT, usbc_id, tcpc_id,   \
 		     TCPC_CONFIG_TCPCI_EMUL)                \
@@ -52,9 +51,6 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 		     TCPC_CONFIG_ANX7447_EMUL)              \
 	CHECK_COMPAT(RT1718S_EMUL_COMPAT, usbc_id, tcpc_id, \
 		     TCPC_CONFIG_RT1718S_EMUL)
-#else
-#define TCPC_CHIP_FIND_EMUL(...)
-#endif /* TEST_BUILD */
 
 #define TCPC_CHIP_FIND(usbc_id, tcpc_id)                                       \
 	CHECK_COMPAT(ANX7447_TCPC_COMPAT, usbc_id, tcpc_id,                    \
