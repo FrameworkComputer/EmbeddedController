@@ -42,6 +42,11 @@
 				usb-muxes = <&virtual_mux_c1>;
 				alternative-chain;
 			};
+			usb_mux_chain_kb8010_port1: usb-mux-chain-1-kb8010 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_c1>;
+				alternative-chain;
+			};
 		};
 		port1-muxes {
 			tcpci_mux_c1: tcpci-mux-c1 {

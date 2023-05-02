@@ -285,6 +285,13 @@
 		irq = <&int_usb_c1_bc12>;
 	};
 
+	ppc_ktu1125_port1: ktu1125@38 {
+		compatible = "kinetic,ktu1125";
+		status = "okay";
+		reg = <0x38>;
+		is-alt;
+	};
+
 	ppc_port1_nxp: nx20p348x@72 {
 		compatible = "nxp,nx20p348x";
 		status = "okay";

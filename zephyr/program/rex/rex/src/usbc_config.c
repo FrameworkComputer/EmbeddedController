@@ -4,6 +4,7 @@
  */
 
 #include "cros_cbi.h"
+#include "driver/ppc/ktu1125_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "ppc/syv682x_public.h"
@@ -37,6 +38,9 @@ void ppc_interrupt(enum gpio_signal signal)
 		}
 		if (usb_db_type == FW_USB_DB_USB4_ANX7452) {
 			syv682x_interrupt(USBC_PORT_C1);
+		}
+		if (usb_db_type == FW_USB_DB_USB4_KB8010) {
+			ktu1125_interrupt(USBC_PORT_C1);
 		}
 		break;
 	default:

@@ -60,6 +60,12 @@ static void setup_usb_db(void)
 		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(1, tcpc_rt1716_port1);
 		PPC_ENABLE_ALTERNATE_BY_NODELABEL(1, ppc_syv_port1);
 		break;
+	case FW_USB_DB_USB4_KB8010:
+		LOG_INF("USB DB: Setting KB8010 mux");
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_kb8010_port1);
+		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(1, tcpc_rt1716_port1);
+		PPC_ENABLE_ALTERNATE_BY_NODELABEL(1, ppc_ktu1125_port1);
+		break;
 	default:
 		LOG_INF("USB DB: No known USB DB found");
 	}
