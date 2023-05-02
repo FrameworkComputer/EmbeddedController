@@ -592,7 +592,12 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable);
 static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 {
 	const struct battery_info *bi = battery_get_info();
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	uint64_t calculate_ma;
+	int charge_current = charge_manager_get_charger_current();
+#else
 	const int charge_current = charge_manager_get_charger_current();
+#endif
 	const int charge_voltage = charge_manager_get_charger_voltage();
 	int vsys, vsys_target;
 	timestamp_t deadline;
@@ -600,6 +605,15 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 	CPRINTS("nvdc -> bypass");
 
 	/* 1: Set adapter current limit. */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	/*Handle EPR converstion through the buck switcher*/
+	if (charge_voltage > 20000)
+		calculate_ma = (int64_t)charge_current * 90 * 94 / 10000;
+	else
+		calculate_ma = (int64_t)charge_current * 88 / 100;
+
+	charge_current = (int)calculate_ma;
+#endif
 	isl9241_set_input_current_limit(chgnum, charge_current);
 
 	/* 2: Set charge pumps to 100%. */
@@ -615,8 +629,13 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 		       ISL9241_CONTROL0_EN_VIN_VOUT_COMP, MASK_SET);
 
 	/* 5: Set ACOK reference higher than battery full voltage. */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(bi->voltage_max + 1100));
+#else
 	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
 		      ISL9241_MV_TO_ACOK_REFERENCE(bi->voltage_max + 800));
+#endif
 
 	/* 6*: Reduce system load below ACLIM. */
 	/* 7: Turn off BGATE */
@@ -624,7 +643,11 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 		       MASK_SET);
 
 	/* 8*: Set MaxSysVoltage to VADP. */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	vsys_target = bi->voltage_max;
+#else
 	vsys_target = MIN(charge_voltage - 256, CHARGE_V_MAX);
+#endif
 	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, vsys_target);
 
 	/* 9*: Wait until VSYS == MaxSysVoltage. */

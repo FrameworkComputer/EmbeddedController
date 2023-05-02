@@ -178,7 +178,7 @@ __override int board_should_charger_bypass(void)
 		return true;
 
 	if (curr_batt == BP_YES) {
-		if (power_uw > 90000000)
+		if (power_uw > 100000000)
 			return true;
 		else
 			return false;
