@@ -449,7 +449,7 @@ static void fill_response(struct ec_response_vboot_hash *r, int request_offset)
 		r->reserved0 = 0;
 		r->offset = data_offset;
 		r->size = data_size;
-		ASSERT(SHA256_DIGEST_SIZE < sizeof(r->hash_digest));
+		BUILD_ASSERT(sizeof(r->hash_digest) >= SHA256_DIGEST_SIZE);
 		memcpy(r->hash_digest, hash, SHA256_DIGEST_SIZE);
 	} else
 		r->status = EC_VBOOT_HASH_STATUS_NONE;
