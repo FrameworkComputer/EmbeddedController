@@ -1,6 +1,7 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Common miscellaneous utility functions for zmake."""
 
 import os
@@ -203,5 +204,5 @@ def get_tool_path(program):
     """
     path = os.environ.get(f"TOOL_PATH_{program}")
     if path:
-        return pathlib.Path(path)
+        return pathlib.Path(path).resolve()
     return pathlib.Path(shutil.which(program))

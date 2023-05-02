@@ -179,6 +179,7 @@ class Zmake:
             self.zephyr_base = (
                 self.checkout / "src" / "third_party" / "zephyr" / "main"
             )
+        self.zephyr_base = self.zephyr_base.resolve()
 
         if modules_dir:
             self.module_paths = zmake.modules.locate_from_directory(modules_dir)
