@@ -1,6 +1,7 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Module for job counters, limiting the amount of concurrent executions."""
 
 import fcntl
@@ -67,7 +68,9 @@ class JobClient:
         # By default, we scrub the environment for all commands we run, setting
         # the bare minimum (PATH only).  This prevents us from building obscure
         # dependencies on the environment variables.
-        kwargs.setdefault("env", {"PATH": "/bin:/usr/bin"})
+        kwargs.setdefault(
+            "env", {"PATH": "/bin:/usr/bin", "PYTHONPATH": ":".join(sys.path)}
+        )
         kwargs.setdefault("pass_fds", [])
         kwargs["env"].update(self.env())
         kwargs["pass_fds"] += self.pass_fds()

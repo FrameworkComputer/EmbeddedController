@@ -12,6 +12,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Dict, Optional, Set, Union
 
@@ -479,6 +480,7 @@ class Zmake:
                         ),
                         "ZEPHYR_BASE": str(self.zephyr_base),
                         "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
+                        "PYTHON_PREFER": sys.executable,
                         **(
                             {"EXTRA_EC_VERSION_FLAGS": "--static"}
                             if static_version
