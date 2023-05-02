@@ -204,12 +204,20 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		calculate_ma = (int64_t)charge_ma * 88 / 100;
 	}
 
-	/**
-	 * Use the hardware design to assert the prochot pin (INA236),
-	 * disable the charger prochot
+	/*
+	 * ac prochot should bigger than input current
+	 * And needs to be at least 128mA bigger than the adapter current
 	 */
 	charge_ma = (uint16_t)calculate_ma;
-	prochot_ma = charge_ma * 3;
+	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
+
+	if ((prochot_ma - charge_ma) < 853) {
+		/* We need prochot to be at least 1 LSB above
+		 * the input current limit. This is not ideal
+		 * due to the low accuracy on prochot.
+		 */
+		prochot_ma += 853;
+	}
 
 	charge_set_input_current_limit(charge_ma, charge_mv);
 	/* sync-up ac prochot with current change */
