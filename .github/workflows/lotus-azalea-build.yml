@@ -38,13 +38,13 @@ jobs:
           pushd src/platform/ec
           git fetch github-private
           git clean -ffdx
-          git reset --hard $GITHUB_REF
+          git reset --hard github-priate/$GITHUB_REF
           popd
 
           pushd src/third_party/zephyr/main
           git fetch github-private
           git clean -ffdx
-          git reset --hard lotus-zephyr
+          git reset --hard github-priate/lotus-zephyr
           popd
 
       - uses: ./.github/workflows/build-zephyr
