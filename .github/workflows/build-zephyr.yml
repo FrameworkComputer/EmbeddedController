@@ -7,6 +7,10 @@ inputs:
     description: target
     default: lotus
 
+on:
+  pull_request:
+  push:
+
 jobs:
   build:
     name: Build Lotus
