@@ -1966,6 +1966,57 @@ static void process_preferred_voltage(void)
 		pd_set_new_power_request(port);
 }
 
+/* Calculate the sleep duration, before we run around the task loop again */
+int calculate_sleep_dur(int battery_critical, int sleep_usec)
+{
+	/* How long to sleep? */
+	if (problems_exist) {
+		/* If there are errors, don't wait very long. */
+		sleep_usec = CHARGE_POLL_PERIOD_SHORT;
+	} else if (sleep_usec <= 0) {
+		/* default values depend on the state */
+		if (!curr.ac &&
+		    (curr.state == ST_IDLE || curr.state == ST_DISCHARGE)) {
+#ifdef CONFIG_CHARGER_OTG
+			int output_current = curr.output_current;
+#else
+			int output_current = 0;
+#endif
+			/*
+			 * If AP is off and we do not provide power, we can
+			 * sleep a long time.
+			 */
+			if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
+					     CHIPSET_STATE_ANY_SUSPEND) &&
+			    output_current == 0)
+				sleep_usec = CHARGE_POLL_PERIOD_VERY_LONG;
+			else
+				/* Discharging, not too urgent */
+				sleep_usec = CHARGE_POLL_PERIOD_LONG;
+		} else {
+			/* AC present, so pay closer attention */
+			sleep_usec = CHARGE_POLL_PERIOD_CHARGE;
+		}
+	}
+
+	/* Adjust for time spent in the charge loop */
+	sleep_usec -= (int)(get_time().val - curr.ts.val);
+	if (sleep_usec < CHARGE_MIN_SLEEP_USEC)
+		sleep_usec = CHARGE_MIN_SLEEP_USEC;
+	else if (sleep_usec > CHARGE_MAX_SLEEP_USEC)
+		sleep_usec = CHARGE_MAX_SLEEP_USEC;
+
+	/*
+	 * If battery is critical, ensure that the sleep time is not very long
+	 * since we might want to hibernate or cut-off battery sooner.
+	 */
+	if (battery_critical &&
+	    (sleep_usec > CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US))
+		sleep_usec = CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US;
+
+	return sleep_usec;
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -2082,53 +2133,7 @@ void charger_task(void *u)
 		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
 			process_preferred_voltage();
 
-		/* How long to sleep? */
-		if (problems_exist)
-			/* If there are errors, don't wait very long. */
-			sleep_usec = CHARGE_POLL_PERIOD_SHORT;
-		else if (sleep_usec <= 0) {
-			/* default values depend on the state */
-			if (!curr.ac && (curr.state == ST_IDLE ||
-					 curr.state == ST_DISCHARGE)) {
-#ifdef CONFIG_CHARGER_OTG
-				int output_current = curr.output_current;
-#else
-				int output_current = 0;
-#endif
-				/*
-				 * If AP is off and we do not provide power, we
-				 * can sleep a long time.
-				 */
-				if (chipset_in_state(
-					    CHIPSET_STATE_ANY_OFF |
-					    CHIPSET_STATE_ANY_SUSPEND) &&
-				    output_current == 0)
-					sleep_usec =
-						CHARGE_POLL_PERIOD_VERY_LONG;
-				else
-					/* Discharging, not too urgent */
-					sleep_usec = CHARGE_POLL_PERIOD_LONG;
-			} else {
-				/* AC present, so pay closer attention */
-				sleep_usec = CHARGE_POLL_PERIOD_CHARGE;
-			}
-		}
-
-		/* Adjust for time spent in this loop */
-		sleep_usec -= (int)(get_time().val - curr.ts.val);
-		if (sleep_usec < CHARGE_MIN_SLEEP_USEC)
-			sleep_usec = CHARGE_MIN_SLEEP_USEC;
-		else if (sleep_usec > CHARGE_MAX_SLEEP_USEC)
-			sleep_usec = CHARGE_MAX_SLEEP_USEC;
-
-		/*
-		 * If battery is critical, ensure that the sleep time is not
-		 * very long since we might want to hibernate or cut-off
-		 * battery sooner.
-		 */
-		if (battery_critical &&
-		    (sleep_usec > CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US))
-			sleep_usec = CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US;
+		sleep_usec = calculate_sleep_dur(battery_critical, sleep_usec);
 
 		task_wait_event(sleep_usec);
 	}
