@@ -47,7 +47,7 @@ jobs:
           git reset --hard github-private/lotus-zephyr
           popd
 
-      - uses: ./.github/workflows/build-zephyr
+      - uses: ./.github/workflows/build-zephyr.yml
         with:
           target: lotus
 
