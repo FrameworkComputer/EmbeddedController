@@ -1866,7 +1866,7 @@ static void decide_charge_state(int *need_staticp, int *battery_criticalp)
 }
 
 /* Determine voltage/current to request and make it so */
-static void adjust_requested_vi(const struct charger_info *info)
+static void adjust_requested_vi(const struct charger_info *const info)
 {
 	/* Turn charger off if it's not needed */
 	if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT) &&
@@ -1926,6 +1926,46 @@ static void adjust_requested_vi(const struct charger_info *info)
 		charge_request(curr.requested_voltage, curr.requested_current);
 }
 
+/* Handle selection of the preferred voltage */
+static void process_preferred_voltage(void)
+{
+	int is_pd_supply = charge_manager_get_supplier() == CHARGE_SUPPLIER_PD;
+	int port = charge_manager_get_active_charge_port();
+	int bat_spec_desired_mw =
+		curr.batt.desired_current * curr.batt.desired_voltage / 1000;
+	int prev_plt_and_desired_mw;
+
+	/* save previous plt_and_desired_mw, since it will be updated below */
+	prev_plt_and_desired_mw = charge_get_plt_plus_bat_desired_mw();
+
+	/*
+	 * Update desired power by the following rules:
+	 * 1. If the battery is not charging with PD, we reset the desired_mw to
+	 * the battery spec. The actual desired_mw will be evaluated when it
+	 * starts charging with PD again.
+	 * 2. If the battery SoC under battery's constant voltage percent (this
+	 * is a rough value that can be applied to most batteries), the battery
+	 * can fully sink the power, the desired power should be the same as the
+	 * battery spec, and we don't need to use evaluated value
+	 * stable_current.
+	 * 3. If the battery SoC is above battery's constant voltage percent,
+	 * the real battery desired charging power will decrease slowly and so
+	 * does the charging current. We can evaluate the battery desired power
+	 * by the product of stable_current and battery voltage.
+	 */
+	if (!is_pd_supply)
+		desired_mw = bat_spec_desired_mw;
+	else if (curr.batt.state_of_charge < pd_pref_config.cv)
+		desired_mw = bat_spec_desired_mw;
+	else if (stable_current != CHARGE_CURRENT_UNINITIALIZED)
+		desired_mw = curr.batt.voltage * stable_current / 1000;
+
+	/* if the plt_and_desired_mw changes, re-evaluate PDO */
+	if (is_pd_supply &&
+	    prev_plt_and_desired_mw != charge_get_plt_plus_bat_desired_mw())
+		pd_set_new_power_request(port);
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -1933,7 +1973,6 @@ void charger_task(void *u)
 	int battery_critical;
 	int need_static = 1;
 	const struct charger_info *const info = charger_get_info();
-	int prev_plt_and_desired_mw;
 	int chgnum = 0;
 
 	/* Set up the task - note that charger_init() has already run. */
@@ -2040,6 +2079,9 @@ void charger_task(void *u)
 
 		adjust_requested_vi(info);
 
+		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
+			process_preferred_voltage();
+
 		/* How long to sleep? */
 		if (problems_exist)
 			/* If there are errors, don't wait very long. */
@@ -2070,54 +2112,6 @@ void charger_task(void *u)
 				/* AC present, so pay closer attention */
 				sleep_usec = CHARGE_POLL_PERIOD_CHARGE;
 			}
-		}
-
-		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV)) {
-			int is_pd_supply = charge_manager_get_supplier() ==
-					   CHARGE_SUPPLIER_PD;
-			int port = charge_manager_get_active_charge_port();
-			int bat_spec_desired_mw = curr.batt.desired_current *
-						  curr.batt.desired_voltage /
-						  1000;
-
-			/*
-			 * save the previous plt_and_desired_mw, since it
-			 * will be updated below
-			 */
-			prev_plt_and_desired_mw =
-				charge_get_plt_plus_bat_desired_mw();
-
-			/*
-			 * Update desired power by the following rules:
-			 * 1. If the battery is not charging with PD, we reset
-			 * the desired_mw to the battery spec. The actual
-			 * desired_mw will be evaluated when it starts charging
-			 * with PD again.
-			 * 2. If the battery SoC under battery's constant
-			 * voltage percent (this is a rough value that can be
-			 * applied to most batteries), the battery can fully
-			 * sink the power, the desired power should be the
-			 * same as the battery spec, and we don't need to use
-			 * evaluated value stable_current.
-			 * 3. If the battery SoC is above battery's constant
-			 * voltage percent, the real battery desired charging
-			 * power will decrease slowly and so does the charging
-			 * current. We can evaluate the battery desired power
-			 * by the product of stable_current and battery voltage.
-			 */
-			if (!is_pd_supply)
-				desired_mw = bat_spec_desired_mw;
-			else if (curr.batt.state_of_charge < pd_pref_config.cv)
-				desired_mw = bat_spec_desired_mw;
-			else if (stable_current != CHARGE_CURRENT_UNINITIALIZED)
-				desired_mw = curr.batt.voltage *
-					     stable_current / 1000;
-
-			/* if the plt_and_desired_mw changes, re-evaluate PDO */
-			if (is_pd_supply &&
-			    prev_plt_and_desired_mw !=
-				    charge_get_plt_plus_bat_desired_mw())
-				pd_set_new_power_request(port);
 		}
 
 		/* Adjust for time spent in this loop */
