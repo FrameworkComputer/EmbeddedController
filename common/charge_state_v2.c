@@ -1635,16 +1635,9 @@ static void revive_battery(int *need_static)
 	battery_seems_dead = battery_was_removed = 0;
 }
 
-/* Main loop */
-void charger_task(void *u)
+/* Set up the initial state of the charger task */
+static void charger_setup(const struct charger_info *info)
 {
-	int sleep_usec;
-	int battery_critical;
-	int need_static = 1;
-	const struct charger_info *const info = charger_get_info();
-	int prev_plt_and_desired_mw;
-	int chgnum = 0;
-
 	/* Get the battery-specific values */
 	batt_info = battery_get_info();
 
@@ -1685,6 +1678,20 @@ void charger_task(void *u)
 	}
 
 	battery_level_shutdown = board_set_battery_level_shutdown();
+}
+
+/* Main loop */
+void charger_task(void *u)
+{
+	int sleep_usec;
+	int battery_critical;
+	int need_static = 1;
+	const struct charger_info *const info = charger_get_info();
+	int prev_plt_and_desired_mw;
+	int chgnum = 0;
+
+	/* Set up the task - note that charger_init() has already run. */
+	charger_setup(info);
 
 	while (1) {
 		/* Let's see what's going on... */
