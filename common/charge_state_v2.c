@@ -1723,6 +1723,44 @@ void check_battery_change_soc(void)
 	}
 }
 
+/* We've noticed a change in AC presence, let the board know */
+static void process_ac_change(const int chgnum)
+{
+	board_check_extpower();
+	if (curr.ac) {
+		/*
+		 * Some chargers are unpowered when the AC is off, so we'll
+		 * reinitialize it when AC comes back and set the input current
+		 * limit. Try again if it fails.
+		 */
+		int rv = charger_post_init();
+
+		if (rv != EC_SUCCESS) {
+			charge_problem(PR_POST_INIT, rv);
+		} else if (curr.desired_input_current !=
+			   CHARGE_CURRENT_UNINITIALIZED) {
+			rv = charger_set_input_current_limit(
+				chgnum, curr.desired_input_current);
+			if (rv != EC_SUCCESS)
+				charge_problem(PR_SET_INPUT_CURR, rv);
+		}
+
+		if (rv == EC_SUCCESS)
+			prev_ac = curr.ac;
+	} else {
+		/* Some things are only meaningful on AC */
+		set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+		battery_seems_dead = 0;
+		prev_ac = curr.ac;
+
+		/*
+		 * b/187967523, we should clear charge current, otherwise it
+		 * will affect typeC output. This should be ok for all chargers.
+		 */
+		charger_set_current(chgnum, 0);
+	}
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -1745,49 +1783,9 @@ void charger_task(void *u)
 		curr.ac = extpower_is_present();
 		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
 			base_check_extpower();
-		if (curr.ac != prev_ac) {
-			/*
-			 * We've noticed a change in AC presence, let the board
-			 * know.
-			 */
-			board_check_extpower();
-			if (curr.ac) {
-				/*
-				 * Some chargers are unpowered when the AC is
-				 * off, so we'll reinitialize it when AC
-				 * comes back and set the input current limit.
-				 * Try again if it fails.
-				 */
-				int rv = charger_post_init();
 
-				if (rv != EC_SUCCESS) {
-					charge_problem(PR_POST_INIT, rv);
-				} else if (curr.desired_input_current !=
-					   CHARGE_CURRENT_UNINITIALIZED) {
-					rv = charger_set_input_current_limit(
-						chgnum,
-						curr.desired_input_current);
-					if (rv != EC_SUCCESS)
-						charge_problem(
-							PR_SET_INPUT_CURR, rv);
-				}
-
-				if (rv == EC_SUCCESS)
-					prev_ac = curr.ac;
-			} else {
-				/* Some things are only meaningful on AC */
-				set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
-				battery_seems_dead = 0;
-				prev_ac = curr.ac;
-
-				/*
-				 * b/187967523, we should clear charge current,
-				 * otherwise it will effect typeC output.this
-				 * should be ok for all chargers.
-				 */
-				charger_set_current(chgnum, 0);
-			}
-		}
+		if (curr.ac != prev_ac)
+			process_ac_change(chgnum);
 
 		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
 			base_update_battery_info();
