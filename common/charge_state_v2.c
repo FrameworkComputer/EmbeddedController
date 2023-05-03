@@ -1761,6 +1761,22 @@ static void process_ac_change(const int chgnum)
 	}
 }
 
+/* Handle a change in the battery-present state */
+static void process_battery_present_change(const struct charger_info *info,
+					   int chgnum)
+{
+	prev_bp = curr.batt.is_present;
+
+	/* Update battery info due to change of battery */
+	batt_info = battery_get_info();
+
+	curr.desired_input_current = get_desired_input_current(prev_bp, info);
+	if (curr.desired_input_current != CHARGE_CURRENT_UNINITIALIZED)
+		charger_set_input_current_limit(chgnum,
+						curr.desired_input_current);
+	hook_notify(HOOK_BATTERY_SOC_CHANGE);
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -1798,19 +1814,8 @@ void charger_task(void *u)
 #endif /* CONFIG_OCPC */
 
 		if (prev_bp != curr.batt.is_present) {
-			prev_bp = curr.batt.is_present;
-
-			/* Update battery info due to change of battery */
-			batt_info = battery_get_info();
+			process_battery_present_change(info, chgnum);
 			need_static = 1;
-
-			curr.desired_input_current =
-				get_desired_input_current(prev_bp, info);
-			if (curr.desired_input_current !=
-			    CHARGE_CURRENT_UNINITIALIZED)
-				charger_set_input_current_limit(
-					chgnum, curr.desired_input_current);
-			hook_notify(HOOK_BATTERY_SOC_CHANGE);
 		}
 
 		battery_validate_params(&curr.batt);
