@@ -1,0 +1,75 @@
+name: build lotus, azalea firmware
+
+on:
+  push:
+    branches:
+      - lotus*
+  #pull_request:
+  #  branches:
+  #    - lotus-zephyr
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build lotus/azalea
+    runs-on: [self-hosted]
+
+    strategy:
+      # Only build one at a time because we have only one working directory
+      max-parallel: 1
+      matrix:
+        platform: [lotus, azalea]
+
+    # Build not in $GITHUB_HOME but in the chroot env
+    defaults:
+      run:
+        working-directory: /data/ec_home/chromiumos
+
+    steps:
+      # Need to use git
+      #- name: Checkout EC code
+      #  uses: actions/checkout@v3
+      #  with:
+      #    path: /data/ec_home/chromiumos/src/platform/ec
+
+      #- name: Checkout Zephyr code
+      #  uses: actions/checkout@v2
+      #    path: /data/ec_home/chromiumos/src/third_party/zephyr/main
+      #    ref: lotus-zephyr
+      #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
+
+      # Need to manually checkout
+      # actions/checkout@v3 complains:
+      # Error: Repository path '/data/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
+      # See: https://github.com/actions/checkout/issues/197
+      - name: Manual checkout
+        run: |
+          pushd src/platform/ec
+          git fetch github-private
+          git clean -ffdx
+          # TODO: Doesn't work with on PR, only push
+          git reset --hard github-private/$GITHUB_REF_NAME
+          popd
+
+          pushd src/third_party/zephyr/main
+          git fetch github-private
+          git clean -ffdx
+          git reset --hard github-private/lotus-zephyr
+          popd
+
+      - name: Build Lotus
+        run: |
+          cros_sdk zmake build ${{ matrix.platform }}
+          echo Built ${{ matrix.platform }} EC
+
+      - name: File sha256
+        run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform }}/output/ec.bin
+
+      - name: Generate artifact version
+        run: |
+          echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform }}.${{ env.VERSIONINFO }}
+          path: /data/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform }}/output
