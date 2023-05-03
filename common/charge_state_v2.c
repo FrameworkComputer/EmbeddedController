@@ -1942,13 +1942,11 @@ void charger_task(void *u)
 				curr.state = ST_IDLE;
 		}
 
-#ifdef CONFIG_CHARGE_MANAGER
-		if (curr.batt.state_of_charge >=
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
+		    curr.batt.state_of_charge >=
 			    CONFIG_CHARGE_MANAGER_BAT_PCT_SAFE_MODE_EXIT &&
-		    !battery_seems_disconnected) {
+		    !battery_seems_disconnected)
 			charge_manager_leave_safe_mode();
-		}
-#endif
 
 		/* Keep the AP informed */
 		if (need_static)
@@ -1972,13 +1970,12 @@ void charger_task(void *u)
 
 		prev_full = is_full;
 
-#ifndef CONFIG_CHARGER_MAINTAIN_VBAT
 		/* Turn charger off if it's not needed */
-		if (curr.state == ST_IDLE || curr.state == ST_DISCHARGE) {
+		if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT) &&
+		    (curr.state == ST_IDLE || curr.state == ST_DISCHARGE)) {
 			curr.requested_voltage = 0;
 			curr.requested_current = 0;
 		}
-#endif
 
 		/* Apply external limits */
 		if (curr.requested_current > user_current_limit)
@@ -2013,20 +2010,17 @@ void charger_task(void *u)
 				if (manual_current != -1)
 					curr.requested_current = manual_current;
 			}
-		} else {
-#ifndef CONFIG_CHARGER_MAINTAIN_VBAT
+		} else if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT)) {
 			curr.requested_voltage = charger_closest_voltage(
 				curr.batt.voltage + info->voltage_step);
 			curr.requested_current = -1;
-#endif
-#ifdef CONFIG_EC_EC_COMM_BATTERY_SERVER
 			/*
 			 * On EC-EC server, do not charge if curr.ac is 0: there
 			 * might still be some external power available but we
 			 * do not want to use it for charging.
 			 */
-			curr.requested_current = 0;
-#endif
+			if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_SERVER))
+				curr.requested_current = 0;
 		}
 
 		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
