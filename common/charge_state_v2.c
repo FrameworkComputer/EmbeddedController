@@ -443,9 +443,12 @@ static int add_margin(int value, int m)
 {
 	return value + m * value / 128;
 }
+#endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
 
-static void charge_allocate_input_current_limit(void)
+/* allocate power between the base and the lid */
+static void base_charge_allocate_input_current_limit(void)
 {
+#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	/*
 	 * All the power numbers are in mW.
 	 *
@@ -704,8 +707,8 @@ static void charge_allocate_input_current_limit(void)
 
 	if (debugging)
 		CPRINTF("====\n");
-}
 #endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
+}
 
 /* Update base battery information */
 static void base_update_battery_info(void)
@@ -2026,11 +2029,11 @@ void charger_task(void *u)
 #endif
 		}
 
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-		charge_allocate_input_current_limit();
-#else
-		charge_request(curr.requested_voltage, curr.requested_current);
-#endif
+		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+			base_charge_allocate_input_current_limit();
+		else
+			charge_request(curr.requested_voltage,
+				       curr.requested_current);
 
 		/* How long to sleep? */
 		if (problems_exist)
