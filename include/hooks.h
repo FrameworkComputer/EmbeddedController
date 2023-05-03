@@ -222,7 +222,7 @@ enum hook_type {
 	HOOK_POWER_BUTTON_CHANGE,
 
 	/*
-	 * Battery state of charge changed
+	 * Battery state-of-charge changed
 	 *
 	 * Hook routines are called from the charger task.
 	 */

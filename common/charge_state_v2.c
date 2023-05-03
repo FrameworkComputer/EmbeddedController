@@ -1700,6 +1700,26 @@ static void base_check_extpower(void)
 #endif
 }
 
+/* check for and handle any state-of-charge change with the battery */
+void check_battery_change_soc(void)
+{
+	if ((!(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
+	     curr.batt.state_of_charge != prev_charge) ||
+#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
+	    (charge_base != prev_charge_base) ||
+#endif
+	    (is_full != prev_full) || (curr.state != prev_state) ||
+	    (charge_get_display_charge() != prev_disp_charge)) {
+		show_charging_progress();
+		prev_charge = curr.batt.state_of_charge;
+		prev_disp_charge = charge_get_display_charge();
+#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
+		prev_charge_base = charge_base;
+#endif
+		hook_notify(HOOK_BATTERY_SOC_CHANGE);
+	}
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -1945,21 +1965,8 @@ void charger_task(void *u)
 		/* Run battery soc check for setting the current limit. */
 		current_limit_battery_soc();
 
-		if ((!(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
-		     curr.batt.state_of_charge != prev_charge) ||
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-		    (charge_base != prev_charge_base) ||
-#endif
-		    (is_full != prev_full) || (curr.state != prev_state) ||
-		    (charge_get_display_charge() != prev_disp_charge)) {
-			show_charging_progress();
-			prev_charge = curr.batt.state_of_charge;
-			prev_disp_charge = charge_get_display_charge();
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-			prev_charge_base = charge_base;
-#endif
-			hook_notify(HOOK_BATTERY_SOC_CHANGE);
-		}
+		check_battery_change_soc();
+
 		prev_full = is_full;
 
 #ifndef CONFIG_CHARGER_MAINTAIN_VBAT
