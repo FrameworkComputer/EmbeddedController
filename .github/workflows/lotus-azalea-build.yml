@@ -47,6 +47,11 @@ jobs:
           git reset --hard github-private/lotus-zephyr
           popd
 
+      - name: Debug
+        run: |
+          ls -la .github/workflows
+          ls -la .github/workflows/build-zephyr
+
       - uses: ./.github/workflows/build-zephyr
         with:
           target: lotus
