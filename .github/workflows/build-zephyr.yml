@@ -1,27 +1,31 @@
 ---
 name: build-zephyr
 description: Build a Zephyr based EC firmware
+
 inputs:
   target:
     description: target
     default: lotus
-runs:
-  using: composite
-  steps:
-    - name: Build Lotus
-      run: |
-        cd ~/chromiumos
-        cros_sdk zmake build ${{ inputs.target }}
-        echo Built ${{ inputs.target }} EC
 
-    - name: File sha256
-      run: sha256sum ~/chromiumos/src/platform/ec/build/zephyr/${{ inputs.target }}/output/ec.bin
+jobs:
+  build:
+    name: Build Lotus
+    runs-on: self-hosted
+    steps:
+      - name: Build Lotus
+        run: |
+          cd ~/chromiumos
+          cros_sdk zmake build ${{ inputs.target }}
+          echo Built ${{ inputs.target }} EC
 
-    - name: Generate artifact version
-      run: |
-        echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
+      - name: File sha256
+        run: sha256sum ~/chromiumos/src/platform/ec/build/zephyr/${{ inputs.target }}/output/ec.bin
 
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{ inputs.target }}.${{ env.VERSIONINFO }}
-        path: ~/chromiumos/src/platform/ec/build/zephyr/${{ inputs.target }}/output
+      - name: Generate artifact version
+        run: |
+          echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ inputs.target }}.${{ env.VERSIONINFO }}
+          path: ~/chromiumos/src/platform/ec/build/zephyr/${{ inputs.target }}/output
