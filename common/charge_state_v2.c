@@ -309,62 +309,6 @@ static const struct dual_battery_policy db_policy = {
 		(total_power) -= val_capped;              \
 	} while (0)
 
-/* Update base battery information */
-static void update_base_battery_info(void)
-{
-	struct ec_response_battery_dynamic_info *const bd =
-		&battery_dynamic[BATT_IDX_BASE];
-
-	base_connected = board_is_base_connected();
-
-	if (!base_connected) {
-		const int invalid_flags = EC_BATT_FLAG_INVALID_DATA;
-		/* Invalidate static/dynamic information */
-		if (bd->flags != invalid_flags) {
-			bd->flags = invalid_flags;
-
-			host_set_single_event(EC_HOST_EVENT_BATTERY);
-			host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
-		}
-		charge_base = -1;
-		base_responsive = 0;
-		prev_current_base = 0;
-		prev_allow_charge_base = 0;
-	} else if (base_responsive) {
-		int old_flags = bd->flags;
-		int flags_changed;
-		int old_full_capacity = bd->full_capacity;
-
-		ec_ec_client_base_get_dynamic_info();
-		flags_changed = (old_flags != bd->flags);
-		/* Fetch static information when flags change. */
-		if (flags_changed)
-			ec_ec_client_base_get_static_info();
-
-		battery_memmap_refresh(BATT_IDX_BASE);
-
-		/* Newly connected battery, or change in capacity. */
-		if (old_flags & EC_BATT_FLAG_INVALID_DATA ||
-		    ((old_flags & EC_BATT_FLAG_BATT_PRESENT) !=
-		     (bd->flags & EC_BATT_FLAG_BATT_PRESENT)) ||
-		    old_full_capacity != bd->full_capacity)
-			host_set_single_event(EC_HOST_EVENT_BATTERY);
-
-		if (flags_changed)
-			host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
-
-		/* Update charge_base */
-		if (bd->flags & (BATT_FLAG_BAD_FULL_CAPACITY |
-				 BATT_FLAG_BAD_REMAINING_CAPACITY))
-			charge_base = -1;
-		else if (bd->full_capacity > 0)
-			charge_base = 100 * bd->remaining_capacity /
-				      bd->full_capacity;
-		else
-			charge_base = 0;
-	}
-}
-
 /**
  * Setup current settings for base, and record previous values, if the base
  * is responsive.
@@ -762,6 +706,64 @@ static void charge_allocate_input_current_limit(void)
 		CPRINTF("====\n");
 }
 #endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
+
+/* Update base battery information */
+static void base_update_battery_info(void)
+{
+#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
+	struct ec_response_battery_dynamic_info *const bd =
+		&battery_dynamic[BATT_IDX_BASE];
+
+	base_connected = board_is_base_connected();
+
+	if (!base_connected) {
+		const int invalid_flags = EC_BATT_FLAG_INVALID_DATA;
+		/* Invalidate static/dynamic information */
+		if (bd->flags != invalid_flags) {
+			bd->flags = invalid_flags;
+
+			host_set_single_event(EC_HOST_EVENT_BATTERY);
+			host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
+		}
+		charge_base = -1;
+		base_responsive = 0;
+		prev_current_base = 0;
+		prev_allow_charge_base = 0;
+	} else if (base_responsive) {
+		int old_flags = bd->flags;
+		int flags_changed;
+		int old_full_capacity = bd->full_capacity;
+
+		ec_ec_client_base_get_dynamic_info();
+		flags_changed = (old_flags != bd->flags);
+		/* Fetch static information when flags change. */
+		if (flags_changed)
+			ec_ec_client_base_get_static_info();
+
+		battery_memmap_refresh(BATT_IDX_BASE);
+
+		/* Newly connected battery, or change in capacity. */
+		if (old_flags & EC_BATT_FLAG_INVALID_DATA ||
+		    ((old_flags & EC_BATT_FLAG_BATT_PRESENT) !=
+		     (bd->flags & EC_BATT_FLAG_BATT_PRESENT)) ||
+		    old_full_capacity != bd->full_capacity)
+			host_set_single_event(EC_HOST_EVENT_BATTERY);
+
+		if (flags_changed)
+			host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
+
+		/* Update charge_base */
+		if (bd->flags & (BATT_FLAG_BAD_FULL_CAPACITY |
+				 BATT_FLAG_BAD_REMAINING_CAPACITY))
+			charge_base = -1;
+		else if (bd->full_capacity > 0)
+			charge_base = 100 * bd->remaining_capacity /
+				      bd->full_capacity;
+		else
+			charge_base = 0;
+	}
+#endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
+}
 
 static const char *const state_list[] = { "idle", "discharge", "charge",
 					  "precharge" };
@@ -1764,9 +1766,8 @@ void charger_task(void *u)
 			}
 		}
 
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-		update_base_battery_info();
-#endif
+		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+			base_update_battery_info();
 
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
