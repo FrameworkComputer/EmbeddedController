@@ -329,7 +329,7 @@ DISABLE_GCC_WARNING("-Winfinite-recursion")
 #endif
 static void stack_overflow_recurse(int n)
 {
-	ccprintf("+%d", n);
+	panic_printf("+%d", n);
 
 	/*
 	 * Force task context switch, since that's where we do stack overflow
@@ -343,7 +343,7 @@ static void stack_overflow_recurse(int n)
 	 * Do work after the recursion, or else the compiler uses tail-chaining
 	 * and we don't actually consume additional stack.
 	 */
-	ccprintf("-%d", n);
+	panic_printf("-%d", n);
 }
 ENABLE_CLANG_WARNING("-Winfinite-recursion")
 #if __GNUC__ >= 12
