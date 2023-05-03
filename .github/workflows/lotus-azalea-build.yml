@@ -47,14 +47,23 @@ jobs:
           git reset --hard github-private/lotus-zephyr
           popd
 
-      - name: Debug
+      - name: Build Lotus
         run: |
-          ls -la .github/workflows
-          ls -la .github/workflows/build-zephyr
+          cros_sdk zmake build lotus
+          echo Built lotus EC
 
-      - uses: ./.github/workflows/build-zephyr
+      - name: File sha256
+        run: sha256sum src/platform/ec/build/zephyr/lotus/output/ec.bin
+
+      - name: Generate artifact version
+        run: |
+          echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v2
         with:
-          target: lotus
+          name: lotus.${{ env.VERSIONINFO }}
+          path: src/platform/ec/build/zephyr/lotus/output
+
 
       #- uses: ./.github/workflows/build-zephyr
       #  with:
