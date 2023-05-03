@@ -14,7 +14,7 @@ FAKE_VOID_FUNC(chipset_reset_request_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(power_signal_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(chipset_watchdog_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(extpower_interrupt, enum gpio_signal);
-FAKE_VOID_FUNC(usb_a0_interrupt, enum gpio_signal);
+FAKE_VOID_FUNC(xhci_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(switch_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(tcpc_alert_event, enum gpio_signal);
 FAKE_VOID_FUNC(ppc_interrupt, enum gpio_signal);

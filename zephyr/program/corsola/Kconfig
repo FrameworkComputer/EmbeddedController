@@ -53,12 +53,4 @@ config VARIANT_CORSOLA_DB_DETECTION
           includes pin configuration and driver loading.
 	default y
 
-config VARIANT_CORSOLA_USBA
-	bool "Corsola Platform USB-A support"
-	help
-	  Support Corsola USB-A related functions. Enable this function if
-	  it has USB-A ports.
-        depends on PLATFORM_EC_USBC
-	default y
-
 source "Kconfig.zephyr"

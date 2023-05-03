@@ -15,7 +15,7 @@
 /delete-node/ &int_volume_up;
 /delete-node/ &int_volume_down;
 /delete-node/ &int_tablet_mode;
-/delete-node/ &int_usba;
+/delete-node/ &int_xhci;
 /delete-node/ &int_wp;
 /delete-node/ &int_spi0_cs;
 /delete-node/ &int_x_ec_gpio2;

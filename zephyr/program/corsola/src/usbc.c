@@ -33,9 +33,8 @@ static bool tasks_inited;
 /* Baseboard */
 static void baseboard_init(void)
 {
-#ifdef CONFIG_VARIANT_CORSOLA_USBA
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usba));
-#endif
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_xhci));
+
 	/* If CCD mode has enabled before init, force the ccd_interrupt. */
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ccd_mode_odl))) {
 		ccd_interrupt(GPIO_CCD_MODE_ODL);
@@ -74,7 +73,7 @@ uint8_t board_get_adjusted_usb_pd_port_count(void)
 }
 
 /* USB-A */
-void usb_a0_interrupt(enum gpio_signal signal)
+void xhci_interrupt(enum gpio_signal signal)
 {
 	const int xhci_stat = gpio_get_level(signal);
 
