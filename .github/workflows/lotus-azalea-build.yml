@@ -13,13 +13,16 @@ jobs:
   build:
     name: Build lotus/azalea
     runs-on: [self-hosted]
+    defaults:
+      run:
+        working-directory: /data/ec_home/chromiumos
 
     steps:
       # TODO: Might need to use git?
-      - name: Checkout EC code
-        uses: actions/checkout@v3
-        with:
-          path: /data/ec_home/chromiumos/src/platform/ec
+      #- name: Checkout EC code
+      #  uses: actions/checkout@v3
+      #  with:
+      #    path: /data/ec_home/chromiumos/src/platform/ec
 
       #- name: Checkout Zephyr code
       #  uses: actions/checkout@v2
@@ -27,14 +30,17 @@ jobs:
       #    ref: lotus-zephyr
       #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
 
-          # pushd src/platform/ec
-          # git fetch github-private
-          # git clean -ffdx
-          # git reset --hard $GITHUB_REF
-          # popd
+      # Need to manually checkout
+      # Error: Repository path '/data/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
+      # See: https://github.com/actions/checkout/issues/197
       - name: Manual checkout
         run: |
-          pushd ~/chromiumos
+          pushd src/platform/ec
+          git fetch github-private
+          git clean -ffdx
+          git reset --hard $GITHUB_REF
+          popd
+
           pushd src/third_party/zephyr/main
           git fetch github-private
           git clean -ffdx
