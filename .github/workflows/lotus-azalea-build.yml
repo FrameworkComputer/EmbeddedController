@@ -71,4 +71,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform }}.${{ env.VERSIONINFO }}
-          path: src/platform/ec/build/zephyr/${{ matrix.platform }}/output
+          path: /data/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform }}/output
