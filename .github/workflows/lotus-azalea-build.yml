@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - lotus*
-  pull_request:
-    branches:
-      - lotus-zephyr
+  #pull_request:
+  #  branches:
+  #    - lotus-zephyr
   workflow_dispatch:
 
 jobs:
@@ -47,6 +47,7 @@ jobs:
           pushd src/platform/ec
           git fetch github-private
           git clean -ffdx
+          # TODO: Doesn't work with on PR, only push
           git reset --hard github-private/$GITHUB_REF_NAME
           popd
 
