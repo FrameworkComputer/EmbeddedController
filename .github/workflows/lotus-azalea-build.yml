@@ -38,7 +38,7 @@ jobs:
           pushd src/platform/ec
           git fetch github-private
           git clean -ffdx
-          git reset --hard github-private/$GITHUB_REF
+          git reset --hard github-private/$GITHUB_REF_NAME
           popd
 
           pushd src/third_party/zephyr/main
