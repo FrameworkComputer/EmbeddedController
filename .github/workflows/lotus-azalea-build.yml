@@ -17,8 +17,9 @@ jobs:
     steps:
       # TODO: Might need to use git?
       - name: Checkout EC code
-        uses: actions/checkout@v2
-        path: /data/ec_home/chromiumos/src/platform/ec
+        uses: actions/checkout@v3
+        with:
+          path: /data/ec_home/chromiumos/src/platform/ec
 
       #- name: Checkout Zephyr code
       #  uses: actions/checkout@v2
