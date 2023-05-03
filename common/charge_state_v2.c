@@ -1778,8 +1778,48 @@ static void process_battery_present_change(const struct charger_info *info,
 }
 
 /* Decide on the charge state we are in */
-static void decide_charge_state(int *need_staticp)
+static void decide_charge_state(int *need_staticp, int *battery_criticalp)
 {
+	/* If we *know* there's no battery, wait for one to appear. */
+	if (curr.batt.is_present == BP_NO) {
+		if (!curr.ac)
+			CPRINTS("running with no battery and no AC");
+		set_charge_state(ST_IDLE);
+		curr.batt_is_charging = 0;
+		battery_was_removed = 1;
+		return;
+	}
+
+	/*
+	 * Always check the disconnect state if the battery is present. This is
+	 * because the battery disconnect state is one of the items used to
+	 * decide whether or not to leave safe mode.
+	 *
+	 * Note: For our purposes, an unresponsive battery is considered to be
+	 * disconnected
+	 */
+	battery_seems_disconnected = battery_get_disconnect_state() !=
+				     BATTERY_NOT_DISCONNECTED;
+
+	/*
+	 * If we had trouble talking to the battery or the charger, we should
+	 * probably do nothing for a bit, and if it doesn't get better then flag
+	 * it as an error.
+	 */
+	if (curr.chg.flags & CHG_FLAG_BAD_ANY)
+		charge_problem(PR_CHG_FLAGS, curr.chg.flags);
+	if (curr.batt.flags & BATT_FLAG_BAD_ANY)
+		charge_problem(PR_BATT_FLAGS, curr.batt.flags);
+
+	/*
+	 * If AC is present, check if input current is sufficient to actually
+	 * charge battery.
+	 */
+	curr.batt_is_charging = curr.ac && (curr.batt.current >= 0);
+
+	/* Don't let the battery hurt itself. */
+	*battery_criticalp = shutdown_on_critical_battery();
+
 	if (!curr.ac) {
 		set_charge_state(ST_DISCHARGE);
 		return;
@@ -1815,9 +1855,8 @@ static void decide_charge_state(int *need_staticp)
 		 * we can do deep charge again (when it's deeply discharged
 		 * again).
 		 */
-		if ((curr.batt.flags & BATT_FLAG_DEEP_CHARGE)) {
+		if ((curr.batt.flags & BATT_FLAG_DEEP_CHARGE))
 			curr.batt.flags &= ~BATT_FLAG_DEEP_CHARGE;
-		}
 	}
 	/* The battery is responding. Yay. Try to use it. */
 
@@ -1892,49 +1931,8 @@ void charger_task(void *u)
 			curr.requested_current = curr.batt.desired_current;
 		}
 
-		/* If we *know* there's no battery, wait for one to appear. */
-		if (curr.batt.is_present == BP_NO) {
-			if (!curr.ac)
-				CPRINTS("running with no battery and no AC");
-			set_charge_state(ST_IDLE);
-			curr.batt_is_charging = 0;
-			battery_was_removed = 1;
-			goto wait_for_it;
-		}
+		decide_charge_state(&need_static, &battery_critical);
 
-		/*
-		 * Always check the disconnect state if the battery is present.
-		 * This is because the battery disconnect state is one of the
-		 * items used to decide whether or not to leave safe mode.
-		 *
-		 * Note: For our purposes, an unresponsive battery is
-		 * considered to be disconnected
-		 */
-		battery_seems_disconnected = battery_get_disconnect_state() !=
-					     BATTERY_NOT_DISCONNECTED;
-
-		/*
-		 * If we had trouble talking to the battery or the charger, we
-		 * should probably do nothing for a bit, and if it doesn't get
-		 * better then flag it as an error.
-		 */
-		if (curr.chg.flags & CHG_FLAG_BAD_ANY)
-			charge_problem(PR_CHG_FLAGS, curr.chg.flags);
-		if (curr.batt.flags & BATT_FLAG_BAD_ANY)
-			charge_problem(PR_BATT_FLAGS, curr.batt.flags);
-
-		/*
-		 * If AC is present, check if input current is sufficient to
-		 * actually charge battery.
-		 */
-		curr.batt_is_charging = curr.ac && (curr.batt.current >= 0);
-
-		/* Don't let the battery hurt itself. */
-		battery_critical = shutdown_on_critical_battery();
-
-		decide_charge_state(&need_static);
-
-	wait_for_it:
 		if (IS_ENABLED(CONFIG_CHARGER_PROFILE_OVERRIDE) &&
 		    get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL) {
 			sleep_usec = charger_profile_override(&curr);
