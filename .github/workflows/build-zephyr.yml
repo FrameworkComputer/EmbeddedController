@@ -1,5 +1,11 @@
 ---
 name: build-zephyr
+description: Build a Zephyr based EC firmware
+
+inputs:
+  target:
+    description: target
+    default: lotus
 
 on:
   pull_request:
