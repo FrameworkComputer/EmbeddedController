@@ -1,0 +1,24 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_INA2XX
+	bool "Support current-shunt and power monitor"
+	help
+	  Enables support for current-shunt and power monitor chips.
+	  Some project will use the current-shunt and power monitor chips
+	  to read the actaully current.
+
+if PLATFORM_EC_INA2XX
+
+config PLATFORM_EC_INA236
+	bool "Enable INA236 support"
+	depends on PLATFORM_EC_I2C
+	help
+	  Enables support for the INA236.
+	  This is a 16-bit digital current monitor with an I2C/SMBus-compatible
+	  interface that is compliant with a wide rang of digital bus voltages.
+	  The device monitors the voltage across an external sense resistor and
+	  reports values for current, bus voltage, and power.
+
+endif # PLATFORM_EC_INA2XX

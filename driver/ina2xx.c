@@ -17,7 +17,11 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 /* I2C base address */
+#if defined(CONFIG_INA231) || defined(CONFIG_INA219)
 #define INA2XX_I2C_ADDR_FLAGS 0x40
+#else
+#define INA2XX_I2C_ADDR_FLAGS 0x41
+#endif
 
 uint16_t ina2xx_read(uint8_t idx, uint8_t reg)
 {

@@ -435,4 +435,12 @@ void cypd_reinitialize(void);
  */
 uint8_t *get_pd_version(int controller);
 
+/**
+ * Get the PDO current
+ *
+ * @param port		The activer charge port
+ * @return int
+ */
+int pd_get_active_current(int port);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

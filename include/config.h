@@ -2806,6 +2806,7 @@
  */
 #undef CONFIG_INA219
 #undef CONFIG_INA231
+#undef CONFIG_INA236
 #undef CONFIG_INA3221
 
 /*****************************************************************************/
