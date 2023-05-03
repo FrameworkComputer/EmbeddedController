@@ -68,7 +68,7 @@ jobs:
         run: |
           echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform }}.${{ env.VERSIONINFO }}
           path: src/platform/ec/build/zephyr/${{ matrix.platform }}/output
