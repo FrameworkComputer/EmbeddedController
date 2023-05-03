@@ -1680,6 +1680,24 @@ static void charger_setup(const struct charger_info *info)
 	battery_level_shutdown = board_set_battery_level_shutdown();
 }
 
+/* Check base external-power settings and react as needed */
+static void base_check_extpower(void)
+{
+	/* This #ifdef protects access to vars that are otherwise unavailable */
+#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
+	/*
+	 * When base is powering the system, make sure curr.ac stays 0.
+	 * TODO(b:71723024): Fix extpower_is_present() in hardware instead.
+	 */
+	if (base_responsive && prev_current_base < 0)
+		curr.ac = 0;
+
+	/* System is off: if AC gets connected, reset the base. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !prev_ac && curr.ac)
+		board_base_reset();
+#endif
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -1700,20 +1718,8 @@ void charger_task(void *u)
 		problems_exist = 0;
 		battery_critical = 0;
 		curr.ac = extpower_is_present();
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-		/*
-		 * When base is powering the system, make sure curr.ac stays 0.
-		 * TODO(b:71723024): Fix extpower_is_present() in hardware
-		 * instead.
-		 */
-		if (base_responsive && prev_current_base < 0)
-			curr.ac = 0;
-
-		/* System is off: if AC gets connected, reset the base. */
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !prev_ac &&
-		    curr.ac)
-			board_base_reset();
-#endif
+		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+			base_check_extpower();
 		if (curr.ac != prev_ac) {
 			/*
 			 * We've noticed a change in AC presence, let the board
