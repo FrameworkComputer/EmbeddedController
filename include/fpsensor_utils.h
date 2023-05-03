@@ -25,8 +25,8 @@ extern "C" {
  *   EC_ERROR_INVAL: if size+offset > buffer_size
  *   EC_SUCCESS: otherwise
  */
-int validate_fp_buffer_offset(uint32_t buffer_size, uint32_t offset,
-			      uint32_t size);
+enum ec_error_list validate_fp_buffer_offset(uint32_t buffer_size,
+					     uint32_t offset, uint32_t size);
 
 #ifdef __cplusplus
 }

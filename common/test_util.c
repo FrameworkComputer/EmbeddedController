@@ -173,8 +173,9 @@ void test_run_multistep(void)
 }
 
 #ifdef HAS_TASK_HOSTCMD
-int test_send_host_command(int command, int version, const void *params,
-			   int params_size, void *resp, int resp_size)
+enum ec_status test_send_host_command(int command, int version,
+				      const void *params, int params_size,
+				      void *resp, int resp_size)
 {
 	struct host_cmd_handler_args args;
 

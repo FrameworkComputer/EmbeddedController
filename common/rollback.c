@@ -153,9 +153,9 @@ failed:
 }
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-test_mockable int rollback_get_secret(uint8_t *secret)
+test_mockable enum ec_error_list rollback_get_secret(uint8_t *secret)
 {
-	int ret = EC_ERROR_UNKNOWN;
+	enum ec_error_list ret = EC_ERROR_UNKNOWN;
 	struct rollback_data data;
 
 	if (get_latest_rollback(&data) < 0)

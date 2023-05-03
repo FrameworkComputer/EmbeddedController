@@ -31,9 +31,9 @@ test_mockable void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
 #error "fpsensor requires CONFIG_BORINGSSL_CRYPTO and ROLLBACK_SECRET_SIZE"
 #endif
 
-test_export_static int get_ikm(uint8_t *ikm)
+test_export_static enum ec_error_list get_ikm(uint8_t *ikm)
 {
-	int ret;
+	enum ec_error_list ret;
 
 	if (!fp_tpm_seed_is_set()) {
 		CPRINTS("Seed hasn't been set.");
@@ -76,9 +76,10 @@ static void hkdf_extract(uint8_t *prk, const uint8_t *salt, size_t salt_size,
 	compute_hmac_sha256(prk, salt, salt_size, ikm, ikm_size);
 }
 
-static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
-				uint8_t *prk, size_t prk_size, uint8_t *info,
-				size_t info_size)
+static enum ec_error_list hkdf_expand_one_step(uint8_t *out_key,
+					       size_t out_key_size,
+					       uint8_t *prk, size_t prk_size,
+					       uint8_t *info, size_t info_size)
 {
 	uint8_t key_buf[SHA256_DIGEST_SIZE];
 	uint8_t message_buf[SHA256_DIGEST_SIZE + 1];
@@ -105,8 +106,9 @@ static int hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size,
 	return EC_SUCCESS;
 }
 
-int hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk, size_t prk_size,
-		const uint8_t *info, size_t info_size)
+enum ec_error_list hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk,
+			       size_t prk_size, const uint8_t *info,
+			       size_t info_size)
 {
 	/*
 	 * "Expand" step of HKDF.
@@ -161,10 +163,11 @@ int hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk, size_t prk_size,
 #undef HASH_LEN
 }
 
-int derive_positive_match_secret(uint8_t *output,
-				 const uint8_t *input_positive_match_salt)
+enum ec_error_list
+derive_positive_match_secret(uint8_t *output,
+			     const uint8_t *input_positive_match_salt)
 {
-	int ret;
+	enum ec_error_list ret;
 	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed)];
 	uint8_t prk[SHA256_DIGEST_SIZE];
 	static const char info_prefix[] = "positive_match_secret for user ";
@@ -205,9 +208,9 @@ int derive_positive_match_secret(uint8_t *output,
 	return ret;
 }
 
-int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
+enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 {
-	int ret;
+	enum ec_error_list ret;
 	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed)];
 	uint8_t prk[SHA256_DIGEST_SIZE];
 
@@ -239,9 +242,11 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 	return ret;
 }
 
-int aes_gcm_encrypt(const uint8_t *key, int key_size, const uint8_t *plaintext,
-		    uint8_t *ciphertext, int text_size, const uint8_t *nonce,
-		    int nonce_size, uint8_t *tag, int tag_size)
+enum ec_error_list aes_gcm_encrypt(const uint8_t *key, int key_size,
+				   const uint8_t *plaintext,
+				   uint8_t *ciphertext, int text_size,
+				   const uint8_t *nonce, int nonce_size,
+				   uint8_t *tag, int tag_size)
 {
 	int res;
 	AES_KEY aes_key;
@@ -271,10 +276,11 @@ int aes_gcm_encrypt(const uint8_t *key, int key_size, const uint8_t *plaintext,
 	return EC_SUCCESS;
 }
 
-int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
-		    const uint8_t *ciphertext, int text_size,
-		    const uint8_t *nonce, int nonce_size, const uint8_t *tag,
-		    int tag_size)
+enum ec_error_list aes_gcm_decrypt(const uint8_t *key, int key_size,
+				   uint8_t *plaintext,
+				   const uint8_t *ciphertext, int text_size,
+				   const uint8_t *nonce, int nonce_size,
+				   const uint8_t *tag, int tag_size)
 {
 	int res;
 	AES_KEY aes_key;

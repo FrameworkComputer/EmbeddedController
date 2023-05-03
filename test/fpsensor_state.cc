@@ -12,11 +12,11 @@
 
 #include <stdbool.h>
 
-test_static int test_fp_enc_status_valid_flags(void)
+test_static enum ec_error_list test_fp_enc_status_valid_flags(void)
 {
 	/* Putting expected value here because test_static should take void */
 	const uint32_t expected = FP_ENC_STATUS_SEED_SET;
-	int rv;
+	enum ec_status rv;
 	struct ec_response_fp_encryption_status resp = { 0 };
 
 	rv = test_send_host_command(EC_CMD_FP_ENC_STATUS, 0, NULL, 0, &resp,
@@ -24,20 +24,20 @@ test_static int test_fp_enc_status_valid_flags(void)
 	if (rv != EC_RES_SUCCESS) {
 		ccprintf("%s:%s(): failed to get encryption status. rv = %d\n",
 			 __FILE__, __func__, rv);
-		return -1;
+		return EC_ERROR_UNKNOWN;
 	}
 
 	if (resp.valid_flags != expected) {
 		ccprintf("%s:%s(): expected valid flags 0x%08x, got 0x%08x\n",
 			 __FILE__, __func__, expected, resp.valid_flags);
-		return -1;
+		return EC_ERROR_UNKNOWN;
 	}
 
-	return EC_RES_SUCCESS;
+	return EC_SUCCESS;
 }
 
-static int
-check_seed_set_result(const int rv, const uint32_t expected,
+static enum ec_error_list
+check_seed_set_result(const enum ec_status rv, const uint32_t expected,
 		      const struct ec_response_fp_encryption_status *resp)
 {
 	const uint32_t actual = resp->status & FP_ENC_STATUS_SEED_SET;
@@ -45,15 +45,15 @@ check_seed_set_result(const int rv, const uint32_t expected,
 	if (rv != EC_RES_SUCCESS || expected != actual) {
 		ccprintf("%s:%s(): rv = %d, seed is set: %d\n", __FILE__,
 			 __func__, rv, actual);
-		return -1;
+		return EC_ERROR_UNKNOWN;
 	}
 
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_tpm_seed_not_set(void)
+test_static enum ec_error_list test_fp_tpm_seed_not_set(void)
 {
-	int rv;
+	enum ec_status rv;
 	struct ec_response_fp_encryption_status resp = { 0 };
 
 	/* Initially the seed should not have been set. */
@@ -63,9 +63,9 @@ test_static int test_fp_tpm_seed_not_set(void)
 	return check_seed_set_result(rv, 0, &resp);
 }
 
-test_static int test_set_fp_tpm_seed(void)
+test_static enum ec_error_list test_set_fp_tpm_seed(void)
 {
-	int rv;
+	enum ec_status rv;
 	struct ec_params_fp_seed params;
 	struct ec_response_fp_encryption_status resp = { 0 };
 
@@ -78,7 +78,7 @@ test_static int test_set_fp_tpm_seed(void)
 	if (rv != EC_RES_SUCCESS) {
 		ccprintf("%s:%s(): rv = %d, set seed failed\n", __FILE__,
 			 __func__, rv);
-		return -1;
+		return EC_ERROR_UNKNOWN;
 	}
 
 	/* Now seed should have been set. */
@@ -88,9 +88,9 @@ test_static int test_set_fp_tpm_seed(void)
 	return check_seed_set_result(rv, FP_ENC_STATUS_SEED_SET, &resp);
 }
 
-test_static int test_set_fp_tpm_seed_again(void)
+test_static enum ec_error_list test_set_fp_tpm_seed_again(void)
 {
-	int rv;
+	enum ec_status rv;
 	struct ec_params_fp_seed params;
 	struct ec_response_fp_encryption_status resp = { 0 };
 
@@ -106,7 +106,7 @@ test_static int test_set_fp_tpm_seed_again(void)
 		ccprintf("%s:%s(): rv = %d, setting seed the second time "
 			 "should result in EC_RES_ACCESS_DENIED but did not.\n",
 			 __FILE__, __func__, rv);
-		return -1;
+		return EC_ERROR_UNKNOWN;
 	}
 
 	/* Now seed should still be set. */
@@ -116,7 +116,7 @@ test_static int test_set_fp_tpm_seed_again(void)
 	return check_seed_set_result(rv, FP_ENC_STATUS_SEED_SET, &resp);
 }
 
-test_static int test_fp_set_sensor_mode(void)
+test_static enum ec_error_list test_fp_set_sensor_mode(void)
 {
 	uint32_t requested_mode = 0;
 	uint32_t output_mode = 0;
@@ -169,7 +169,7 @@ test_static int test_fp_set_sensor_mode(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_set_maintenance_mode(void)
+test_static enum ec_error_list test_fp_set_maintenance_mode(void)
 {
 	uint32_t output_mode = 0;
 
@@ -186,7 +186,8 @@ test_static int test_fp_set_maintenance_mode(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_command_read_match_secret_fail_fgr_less_than_zero(void)
+test_static enum ec_error_list
+test_fp_command_read_match_secret_fail_fgr_less_than_zero(void)
 {
 	/* Create invalid param with fgr < 0 */
 	struct ec_params_fp_read_match_secret test_match_secret = {
@@ -201,7 +202,8 @@ test_static int test_fp_command_read_match_secret_fail_fgr_less_than_zero(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_command_read_match_secret_fail_fgr_large_than_max(void)
+test_static enum ec_error_list
+test_fp_command_read_match_secret_fail_fgr_large_than_max(void)
 {
 	/* Create invalid param with fgr = FP_MAX_FINGER_COUNT */
 	struct ec_params_fp_read_match_secret test_match_secret = {
@@ -215,7 +217,8 @@ test_static int test_fp_command_read_match_secret_fail_fgr_large_than_max(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_command_read_match_secret_fail_timeout(void)
+test_static enum ec_error_list
+test_fp_command_read_match_secret_fail_timeout(void)
 {
 	/* Create valid param with 0 <= fgr < 5 */
 	struct ec_params_fp_read_match_secret test_match_secret_1 = {
@@ -235,7 +238,8 @@ test_static int test_fp_command_read_match_secret_fail_timeout(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_command_read_match_secret_unmatched_fgr(void)
+test_static enum ec_error_list
+test_fp_command_read_match_secret_unmatched_fgr(void)
 {
 	/* Create valid param with 0 <= fgr < 5 */
 	uint16_t matched_fgr = 1;
@@ -263,7 +267,8 @@ test_static int test_fp_command_read_match_secret_unmatched_fgr(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_command_read_match_secret_unreadable_state(void)
+test_static enum ec_error_list
+test_fp_command_read_match_secret_unreadable_state(void)
 {
 	/* Create valid param with 0 <= fgr < 5 */
 	uint16_t matched_fgr = 1;
@@ -291,7 +296,8 @@ test_static int test_fp_command_read_match_secret_unreadable_state(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_command_read_match_secret_derive_fail(void)
+test_static enum ec_error_list
+test_fp_command_read_match_secret_derive_fail(void)
 {
 	struct ec_response_fp_read_match_secret response = { 0 };
 	/* Create valid param with 0 <= fgr < 5 */
@@ -322,7 +328,8 @@ test_static int test_fp_command_read_match_secret_derive_fail(void)
 	return EC_SUCCESS;
 }
 
-test_static int test_fp_command_read_match_secret_derive_succeed(void)
+test_static enum ec_error_list
+test_fp_command_read_match_secret_derive_succeed(void)
 {
 	struct ec_response_fp_read_match_secret response = { 0 };
 	/* Create valid param with 0 <= fgr < 5 */
@@ -367,7 +374,7 @@ test_static int test_fp_command_read_match_secret_derive_succeed(void)
 	TEST_ASSERT(test_send_host_command(
 			    EC_CMD_FP_READ_MATCH_SECRET, 0,
 			    &test_match_secret_1, sizeof(test_match_secret_1),
-			    &response, sizeof(response)) == EC_SUCCESS);
+			    &response, sizeof(response)) == EC_RES_SUCCESS);
 
 	TEST_ASSERT_ARRAY_EQ(
 		response.positive_match_secret,

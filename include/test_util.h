@@ -16,6 +16,7 @@ extern "C" {
 
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "math_util.h"
 #include "stack_trace.h"
 
@@ -191,8 +192,9 @@ void test_print_result(void);
 int test_get_error_count(void);
 
 /* Simulates host command sent from the host */
-int test_send_host_command(int command, int version, const void *params,
-			   int params_size, void *resp, int resp_size);
+enum ec_status test_send_host_command(int command, int version,
+				      const void *params, int params_size,
+				      void *resp, int resp_size);
 
 /* Optionally defined interrupt generator entry point */
 void interrupt_generator(void);

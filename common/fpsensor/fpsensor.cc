@@ -394,8 +394,9 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_INFO, fp_command_info,
 
 BUILD_ASSERT(FP_CONTEXT_NONCE_BYTES == 12);
 
-int validate_fp_buffer_offset(const uint32_t buffer_size, const uint32_t offset,
-			      const uint32_t size)
+enum ec_error_list validate_fp_buffer_offset(const uint32_t buffer_size,
+					     const uint32_t offset,
+					     const uint32_t size)
 {
 	uint32_t bytes_requested;
 
@@ -419,7 +420,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 	uint16_t fgr;
 	uint8_t key[SBP_ENC_KEY_LEN];
 	struct ec_fp_template_encryption_metadata *enc_info;
-	int ret;
+	enum ec_error_list ret;
 
 	if (size > args->response_max)
 		return EC_RES_INVALID_PARAM;
@@ -561,7 +562,7 @@ static bool template_needs_validation_value(
 	return enc_info->struct_version == 3 && FP_TEMPLATE_FORMAT_VERSION == 4;
 }
 
-static int
+static enum ec_status
 validate_template_format(struct ec_fp_template_encryption_metadata *enc_info)
 {
 	if (template_needs_validation_value(enc_info))
@@ -585,7 +586,6 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	uint16_t idx = templ_valid;
 	uint8_t key[SBP_ENC_KEY_LEN];
 	struct ec_fp_template_encryption_metadata *enc_info;
-	int ret;
 
 	/* Can we store one more template ? */
 	if (idx >= FP_MAX_FINGER_COUNT)
@@ -594,7 +594,8 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	if (args->params_size !=
 	    size + offsetof(struct ec_params_fp_template, data))
 		return EC_RES_INVALID_PARAM;
-	ret = validate_fp_buffer_offset(sizeof(fp_enc_buffer), offset, size);
+	enum ec_error_list ret =
+		validate_fp_buffer_offset(sizeof(fp_enc_buffer), offset, size);
 	if (ret != EC_SUCCESS)
 		return EC_RES_INVALID_PARAM;
 
@@ -621,8 +622,8 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 		 */
 		enc_info = (struct ec_fp_template_encryption_metadata *)
 			fp_enc_buffer;
-		ret = validate_template_format(enc_info);
-		if (ret != EC_RES_SUCCESS) {
+		enum ec_status res = validate_template_format(enc_info);
+		if (res != EC_RES_SUCCESS) {
 			CPRINTS("fgr%d: Template format not supported", idx);
 			return EC_RES_INVALID_PARAM;
 		}
