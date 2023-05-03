@@ -13,12 +13,20 @@ jobs:
   build:
     name: Build lotus/azalea
     runs-on: [self-hosted]
+
+    strategy:
+      # Only build one at a time because we have only one working directory
+      max-parallel: 1
+      matrix:
+        platform: [lotus, azalea]
+
+    # Build not in $GITHUB_HOME but in the chroot env
     defaults:
       run:
         working-directory: /data/ec_home/chromiumos
 
     steps:
-      # TODO: Might need to use git?
+      # Need to use git
       #- name: Checkout EC code
       #  uses: actions/checkout@v3
       #  with:
@@ -31,6 +39,7 @@ jobs:
       #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
 
       # Need to manually checkout
+      # actions/checkout@v3 complains:
       # Error: Repository path '/data/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
       # See: https://github.com/actions/checkout/issues/197
       - name: Manual checkout
@@ -49,11 +58,11 @@ jobs:
 
       - name: Build Lotus
         run: |
-          cros_sdk zmake build lotus
-          echo Built lotus EC
+          cros_sdk zmake build ${{ matrix.platform }}
+          echo Built ${{ matrix.platform }} EC
 
       - name: File sha256
-        run: sha256sum src/platform/ec/build/zephyr/lotus/output/ec.bin
+        run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform }}/output/ec.bin
 
       - name: Generate artifact version
         run: |
@@ -61,10 +70,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: lotus.${{ env.VERSIONINFO }}
-          path: src/platform/ec/build/zephyr/lotus/output
-
-
-      #- uses: ./.github/workflows/build-zephyr
-      #  with:
-      #    target: azalea
+          name: ${{ matrix.platform }}.${{ env.VERSIONINFO }}
+          path: src/platform/ec/build/zephyr/${{ matrix.platform }}/output
