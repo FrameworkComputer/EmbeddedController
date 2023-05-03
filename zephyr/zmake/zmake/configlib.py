@@ -48,3 +48,11 @@ def register_mchp_project(**kwargs):
     kwargs.setdefault("output_packer", zmake.output_packers.MchpPacker)
     kwargs.setdefault("modules", ["ec", "cmsis"])
     return register_binman_project(**kwargs)
+
+
+def register_ish_project(**kwargs):
+    """Register a project that uses IshBinPacker."""
+    kwargs.setdefault("supported_toolchains", ["coreboot-sdk", "zephyr"])
+    kwargs.setdefault("output_packer", zmake.output_packers.IshBinPacker)
+    kwargs.setdefault("modules", ["ec", "ish", "cmsis", "hal_intel"])
+    return _register_project(**kwargs)
