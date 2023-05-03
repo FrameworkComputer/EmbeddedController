@@ -400,14 +400,14 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0ix:
 		CPRINTS("PH S0ix");
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
-			/* 
+			/*
 			 * If power signal lose, we need to resume to S0 and
-			 * clear the resume ms flag 
+			 * clear the resume ms flag
 			 */
 			if (resume_ms_flag > 0)
 				resume_ms_flag--;
 			return POWER_S0;
-		}		
+		}
 		if (check_s0ix_statsus())
 			return POWER_S0ixS0;
 

@@ -186,7 +186,6 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
-		break;
 	}
 
 	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
