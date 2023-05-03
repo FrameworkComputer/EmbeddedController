@@ -143,6 +143,69 @@ static void board_power_on(void)
 	}
 }
 
+void power_state_clear(int state)
+{
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE) &= ~state;
+}
+
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
+/*
+ * Backup copies of SCI mask to preserve across S0ix suspend/resume
+ * cycle. If the host uses S0ix, BIOS is not involved during suspend and resume
+ * operations and hence SCI masks are programmed only once during boot-up.
+ *
+ * These backup variables are set whenever host expresses its interest to
+ * enter S0ix and then lpc_host_event_mask for SCI are cleared. When
+ * host resumes from S0ix, masks from backup variables are copied over to
+ * lpc_host_event_mask for SCI.
+ */
+static int enter_ms_flag;
+static int resume_ms_flag;
+
+static int check_s0ix_statsus(void)
+{
+	int power_status;
+	int clear_flag;
+
+	/* check power state S0ix flags */
+	if (chipset_in_state(CHIPSET_STATE_ON) || chipset_in_state(CHIPSET_STATE_STANDBY)) {
+		power_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE);
+
+
+		/**
+		 * Sometimes PCH will set the enter and resume flag continuously
+		 * so clear the EMI when we read the flag.
+		 */
+		if (power_status & EC_PS_ENTER_S0ix)
+			enter_ms_flag++;
+
+		if (power_status & EC_PS_RESUME_S0ix)
+			resume_ms_flag++;
+
+		clear_flag = power_status & (EC_PS_ENTER_S0ix | EC_PS_RESUME_S0ix);
+
+		power_state_clear(clear_flag);
+
+		if (enter_ms_flag || resume_ms_flag)
+			return 1;
+	}
+	return 0;
+}
+
+void s0ix_status_handle(void)
+{
+	int s0ix_state_change;
+
+	s0ix_state_change = check_s0ix_statsus();
+
+	if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_ON))
+		task_wake(TASK_ID_CHIPSET);
+	else if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_STANDBY))
+		task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
+#endif
+
 int get_power_rail_status(void)
 {
 	/*
@@ -326,7 +389,48 @@ enum power_state power_handle_state(enum power_state state)
 			k_msleep(5);
 			return POWER_S0S3;
 		}
+
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
+		if (check_s0ix_statsus())
+			return POWER_S0S0ix;
+#endif
 		break;
+
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
+	case POWER_S0ix:
+		CPRINTS("PH S0ix");
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
+			/*
+			 * If power signal lose, we need to resume to S0 and
+			 * clear the resume ms flag
+			 */
+			if (resume_ms_flag > 0)
+				resume_ms_flag--;
+			return POWER_S0;
+		}
+		if (check_s0ix_statsus())
+			return POWER_S0ixS0;
+
+		break;
+
+	case POWER_S0ixS0:
+		CPRINTS("PH S0ixS0");
+		if (resume_ms_flag > 0)
+			resume_ms_flag--;
+		CPRINTS("PH S0ixS0->S0");
+		return POWER_S0;
+
+		break;
+
+	case POWER_S0S0ix:
+		CPRINTS("PH S0->S0ix");
+		if (enter_ms_flag > 0)
+			enter_ms_flag--;
+		CPRINTS("PH S0S0ix->S0ix");
+		return POWER_S0ix;
+
+		break;
+#endif
 
 	case POWER_S0S3:
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
@@ -366,6 +470,10 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
+
+		/* clear suspend flag when system shutdown */
+		power_state_clear(EC_PS_ENTER_S0ix |
+			EC_PS_RESUME_S0ix | EC_PS_RESUME_S3 | EC_PS_ENTER_S3);
 
 		return POWER_G3;
 	default:

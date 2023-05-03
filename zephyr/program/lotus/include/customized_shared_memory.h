@@ -9,6 +9,16 @@
 /* Customized memmap start at offset 0xF00 */
 #define EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS	0x100
 #define EC_CUSTOMIZED_MEMMAP_POWER_STATE	0x101
+
+#define EC_PS_ENTER_S3			BIT(0)
+#define EC_PS_RESUME_S3			BIT(1)
+#define EC_PS_ENTER_S4			BIT(2)
+#define EC_PS_RESUME_S4			BIT(3)
+#define EC_PS_ENTER_S5			BIT(4)
+#define EC_PS_RESUME_S5			BIT(5)
+#define EC_PS_ENTER_S0ix		BIT(6)
+#define EC_PS_RESUME_S0ix		BIT(7)
+
 #define EC_CUSTOMIZED_MEMMAP_WAKE_EVENT		0x102
 /*
  * define wake source for keep PCH power

@@ -7,6 +7,7 @@
 #include <zephyr/drivers/gpio.h>
 
 #include "board_host_command.h"
+#include "chipset.h"
 #include "console.h"
 #include "cpu_power.h"
 #include "customized_shared_memory.h"
@@ -18,6 +19,7 @@
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "led.h"
 #include "lpc.h"
 #include "power_sequence.h"
 #include "system.h"
@@ -134,9 +136,9 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 * When system boot into OS, host will call this command to verify,
 	 * It means system should in S0 state, and we need to set the resume
 	 * S0ix flag to avoid the wrong state when unknown reason warm boot.
-	 * if (chipset_in_state(CHIPSET_STATE_STANDBY))
-	 *	*host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE) |= EC_PS_RESUME_S0ix;
 	 */
+	if (chipset_in_state(CHIPSET_STATE_STANDBY))
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE) |= EC_PS_RESUME_S0ix;
 
 	/**
 	 * When system reboot and go into setup menu, we need to set the power_s5_up flag
@@ -151,17 +153,46 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 */
 	update_soc_power_limit(true, false);
 
-	/**
-	 * TODO: clear ENTER_S4/S5 flag
-	 * power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
-	 *	EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
-	 */
+	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
+		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~BIT(0);
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));
+
+static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_fp_led_control *p = args->params;
+	struct ec_response_fp_led_level *r = args->response;
+	uint8_t led_level = FP_LED_HIGH;
+
+	if (p->get_led_level) {
+		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+
+	switch (p->set_led_level) {
+	case FP_LED_BRIGHTNESS_HIGH:
+		led_level = FP_LED_HIGH;
+		break;
+	case FP_LED_BRIGHTNESS_MEDIUM:
+		led_level = FP_LED_MEDIUM;
+		break;
+	case FP_LED_BRIGHTNESS_LOW:
+		led_level = FP_LED_LOW;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control, EC_VER_MASK(0));
 
 static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 {
