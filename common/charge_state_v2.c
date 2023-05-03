@@ -1865,6 +1865,67 @@ static void decide_charge_state(int *need_staticp, int *battery_criticalp)
 	set_charge_state(ST_CHARGE);
 }
 
+/* Determine voltage/current to request and make it so */
+static void adjust_requested_vi(const struct charger_info *info)
+{
+	/* Turn charger off if it's not needed */
+	if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT) &&
+	    (curr.state == ST_IDLE || curr.state == ST_DISCHARGE)) {
+		curr.requested_voltage = 0;
+		curr.requested_current = 0;
+	}
+
+	/* Apply external limits */
+	if (curr.requested_current > user_current_limit)
+		curr.requested_current = user_current_limit;
+
+	/* Round to valid values */
+	curr.requested_voltage =
+		charger_closest_voltage(curr.requested_voltage);
+	curr.requested_current =
+		charger_closest_current(curr.requested_current);
+
+	/* Charger only accepts request when AC is on. */
+	if (curr.ac) {
+		/*
+		 * Some batteries would wake up after cut-off if we keep
+		 * charging it. Thus, we only charge when AC is on and battery
+		 * is not cut off yet.
+		 */
+		if (battery_is_cut_off()) {
+			curr.requested_voltage = 0;
+			curr.requested_current = 0;
+		}
+		/*
+		 * As a safety feature, some chargers will stop charging if we
+		 * don't communicate with it frequently enough. In manual mode,
+		 * we'll just tell it what it knows.
+		 */
+		else {
+			if (manual_voltage != -1)
+				curr.requested_voltage = manual_voltage;
+			if (manual_current != -1)
+				curr.requested_current = manual_current;
+		}
+	} else if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT)) {
+		curr.requested_voltage = charger_closest_voltage(
+			curr.batt.voltage + info->voltage_step);
+		curr.requested_current = -1;
+		/*
+		 * On EC-EC server, do not charge if curr.ac is 0: there might
+		 * still be some external power available but we do not want to
+		 * use it for charging.
+		 */
+		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_SERVER))
+			curr.requested_current = 0;
+	}
+
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+		base_charge_allocate_input_current_limit();
+	else
+		charge_request(curr.requested_voltage, curr.requested_current);
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -1977,64 +2038,7 @@ void charger_task(void *u)
 
 		prev_full = is_full;
 
-		/* Turn charger off if it's not needed */
-		if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT) &&
-		    (curr.state == ST_IDLE || curr.state == ST_DISCHARGE)) {
-			curr.requested_voltage = 0;
-			curr.requested_current = 0;
-		}
-
-		/* Apply external limits */
-		if (curr.requested_current > user_current_limit)
-			curr.requested_current = user_current_limit;
-
-		/* Round to valid values */
-		curr.requested_voltage =
-			charger_closest_voltage(curr.requested_voltage);
-		curr.requested_current =
-			charger_closest_current(curr.requested_current);
-
-		/* Charger only accpets request when AC is on. */
-		if (curr.ac) {
-			/*
-			 * Some batteries would wake up after cut-off if we keep
-			 * charging it. Thus, we only charge when AC is on and
-			 * battery is not cut off yet.
-			 */
-			if (battery_is_cut_off()) {
-				curr.requested_voltage = 0;
-				curr.requested_current = 0;
-			}
-			/*
-			 * As a safety feature, some chargers will stop
-			 * charging if we don't communicate with it frequently
-			 * enough. In manual mode, we'll just tell it what it
-			 * knows.
-			 */
-			else {
-				if (manual_voltage != -1)
-					curr.requested_voltage = manual_voltage;
-				if (manual_current != -1)
-					curr.requested_current = manual_current;
-			}
-		} else if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT)) {
-			curr.requested_voltage = charger_closest_voltage(
-				curr.batt.voltage + info->voltage_step);
-			curr.requested_current = -1;
-			/*
-			 * On EC-EC server, do not charge if curr.ac is 0: there
-			 * might still be some external power available but we
-			 * do not want to use it for charging.
-			 */
-			if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_SERVER))
-				curr.requested_current = 0;
-		}
-
-		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
-			base_charge_allocate_input_current_limit();
-		else
-			charge_request(curr.requested_voltage,
-				       curr.requested_current);
+		adjust_requested_vi(info);
 
 		/* How long to sleep? */
 		if (problems_exist)
