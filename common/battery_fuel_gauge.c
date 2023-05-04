@@ -276,7 +276,7 @@ static enum ec_error_list battery_get_fet_status_regval(int type, int *regval)
 	return rv;
 }
 
-int battery_is_charge_fet_disabled(void)
+test_mockable int battery_is_charge_fet_disabled(void)
 {
 	int rv;
 	int reg;
