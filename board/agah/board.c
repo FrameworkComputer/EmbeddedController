@@ -39,8 +39,8 @@ struct d_notify_policy d_notify_policies[] = {
 	[D_NOTIFY_1] = AC_ATLEAST_W(100),
 	[D_NOTIFY_2] = AC_ATLEAST_W(65),
 	[D_NOTIFY_3] = AC_DC,
-	[D_NOTIFY_4] = DC_ATLEAST_SOC(20),
-	[D_NOTIFY_5] = DC_ATLEAST_SOC(5),
+	[D_NOTIFY_4] = DC_ATMOST_SOC(20),
+	[D_NOTIFY_5] = DC_ATMOST_SOC(5),
 };
 BUILD_ASSERT(ARRAY_SIZE(d_notify_policies) == D_NOTIFY_COUNT);
 

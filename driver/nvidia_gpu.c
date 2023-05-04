@@ -100,7 +100,7 @@ static void evaluate_d_notify_level(void)
 
 		for (lvl = D_NOTIFY_5; lvl >= D_NOTIFY_1; lvl--) {
 			if (policy[lvl].power_source == D_NOTIFY_DC) {
-				if (soc <= policy[lvl].dc.min_battery_soc) {
+				if (soc <= policy[lvl].dc.max_battery_soc) {
 					set_d_notify_level(lvl);
 					break;
 				}
