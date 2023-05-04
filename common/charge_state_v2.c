@@ -84,7 +84,7 @@ static uint8_t battery_level_shutdown;
 static const struct battery_info *batt_info;
 static struct charge_state_data curr;
 static enum charge_state_v2 prev_state;
-static int prev_ac, prev_charge, prev_full, prev_disp_charge;
+static int prev_ac, prev_charge, prev_disp_charge;
 static enum battery_present prev_bp;
 static int is_full; /* battery not accepting current */
 static enum ec_charge_control_mode chg_ctl_mode;
@@ -1723,7 +1723,7 @@ static void base_check_extpower(void)
 }
 
 /* check for and handle any state-of-charge change with the battery */
-void check_battery_change_soc(void)
+void check_battery_change_soc(bool prev_full)
 {
 	if ((!(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
 	     curr.batt.state_of_charge != prev_charge) ||
@@ -2114,6 +2114,7 @@ void charger_task(void *u)
 	int need_static = 1;
 	const struct charger_info *const info = charger_get_info();
 	int chgnum = 0;
+	bool prev_full = false;
 
 	/* Set up the task - note that charger_init() has already run. */
 	charger_setup(info);
@@ -2158,7 +2159,7 @@ void charger_task(void *u)
 		/* Run battery soc check for setting the current limit. */
 		current_limit_battery_soc();
 
-		check_battery_change_soc();
+		check_battery_change_soc(prev_full);
 
 		prev_full = is_full;
 
