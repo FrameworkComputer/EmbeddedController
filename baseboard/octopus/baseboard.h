@@ -324,6 +324,7 @@
 /* Free up more flash. */
 #undef CONFIG_CMD_ACCELSPOOF
 #undef CONFIG_CMD_MFALLOW
+#undef CONFIG_CMD_MD
 
 #ifndef __ASSEMBLER__
 
