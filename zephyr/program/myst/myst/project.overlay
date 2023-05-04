@@ -188,16 +188,16 @@
 			start = <11>;
 			size = <1>;
 
-			storage-nvme {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "STORAGE_TYPE_NVME";
-				value = <0>;
-				default;
-			};
 			storage-mmc {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "STORAGE_TYPE_MMC";
+				value = <0>;
+			};
+			storage-nvme {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "STORAGE_TYPE_NVME";
 				value = <1>;
+				default;
 			};
 		};
 	};
