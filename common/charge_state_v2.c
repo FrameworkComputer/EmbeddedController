@@ -73,7 +73,7 @@
 static timestamp_t uvp_throttle_start_time;
 #endif /* CONFIG_THROTTLE_AP_ON_BAT_OLTAGE */
 
-static int charge_request(int voltage, int current);
+static int charge_request(int voltage, int current, bool is_full);
 
 static uint8_t battery_level_shutdown;
 
@@ -86,7 +86,6 @@ static struct charge_state_data curr;
 static enum charge_state_v2 prev_state;
 static int prev_ac, prev_charge, prev_disp_charge;
 static enum battery_present prev_bp;
-static int is_full; /* battery not accepting current */
 static enum ec_charge_control_mode chg_ctl_mode;
 static int manual_voltage; /* Manual voltage override (-1 = no override) */
 static int manual_current; /* Manual current override (-1 = no override) */
@@ -99,6 +98,11 @@ static struct current_limit {
 	uint32_t value; /* Charge limit to apply, in mA */
 	int soc; /* Minimum battery SoC at which the limit will be applied. */
 } current_limit = { -1U, 0 };
+
+/* State which is reported out from the charger */
+struct state {
+	bool is_full; /* battery is full, i.e. not accepting current */
+} local_state;
 
 /*
  * The timestamp when the battery charging current becomes stable.
@@ -365,9 +369,11 @@ static int set_base_current(int current_base, int allow_charge_base)
  *                          sense with positive current)
  * @param current_lid Current to be drawn by lid (negative to provide power)
  * @param allow_charge_lid Whether lid battery should be charged
+ * @param is_full Whether the lid battery is full
  */
 static void set_base_lid_current(int current_base, int allow_charge_base,
-				 int current_lid, int allow_charge_lid)
+				 int current_lid, int allow_charge_lid,
+				 bool is_full)
 {
 	/* "OTG" voltage from lid to base. */
 	const int otg_voltage = db_policy.otg_voltage;
@@ -414,9 +420,9 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 			return;
 		if (allow_charge_lid)
 			ret = charge_request(curr.requested_voltage,
-					     curr.requested_current);
+					     curr.requested_current, is_full);
 		else
-			ret = charge_request(0, 0);
+			ret = charge_request(0, 0, is_full);
 	} else {
 		ret = charge_set_output_current_limit(
 			CHARGER_SOLO, -current_lid, otg_voltage);
@@ -465,7 +471,7 @@ static int add_margin(int value, int m)
 #endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
 
 /* allocate power between the base and the lid */
-static void base_charge_allocate_input_current_limit(void)
+static void base_charge_allocate_input_current_limit(bool is_full)
 {
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	/*
@@ -502,7 +508,8 @@ static void base_charge_allocate_input_current_limit(void)
 		&battery_dynamic[BATT_IDX_BASE];
 
 	if (!base_connected) {
-		set_base_lid_current(0, 0, curr.desired_input_current, 1);
+		set_base_lid_current(0, 0, curr.desired_input_current, 1,
+				     is_full);
 		prev_base_battery_power = -1;
 		return;
 	}
@@ -542,7 +549,8 @@ static void base_charge_allocate_input_current_limit(void)
 					db_policy.margin_otg_current);
 			}
 
-			set_base_lid_current(base_current, 0, lid_current, 0);
+			set_base_lid_current(base_current, 0, lid_current, 0,
+					     is_full);
 			return;
 		}
 
@@ -551,7 +559,7 @@ static void base_charge_allocate_input_current_limit(void)
 		 * when system restarts, or when AC is plugged.
 		 */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			set_base_lid_current(0, 0, 0, 0);
+			set_base_lid_current(0, 0, 0, 0, is_full);
 			if (base_responsive) {
 				/* Base still responsive, put it to sleep. */
 				CPRINTF("Hibernating base\n");
@@ -571,7 +579,7 @@ static void base_charge_allocate_input_current_limit(void)
 		 */
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
 		    !base_critical) {
-			set_base_lid_current(0, 0, 0, 0);
+			set_base_lid_current(0, 0, 0, 0, is_full);
 			return;
 		}
 
@@ -583,7 +591,8 @@ static void base_charge_allocate_input_current_limit(void)
 			set_base_lid_current(
 				-base_current, 0, lid_current,
 				charge_lid <
-					db_policy.max_charge_lid_batt_to_batt);
+					db_policy.max_charge_lid_batt_to_batt,
+				is_full);
 		} else {
 			/*
 			 * Base battery is too low, apply power to it, and allow
@@ -606,7 +615,7 @@ static void base_charge_allocate_input_current_limit(void)
 				base_current, db_policy.margin_otg_current);
 
 			set_base_lid_current(base_current, base_critical,
-					     -lid_current, 0);
+					     -lid_current, 0, is_full);
 		}
 
 		return;
@@ -623,7 +632,7 @@ static void base_charge_allocate_input_current_limit(void)
 			current_lid = 0;
 		}
 
-		set_base_lid_current(current_base, 1, current_lid, 1);
+		set_base_lid_current(current_base, 1, current_lid, 1, is_full);
 		return;
 	}
 
@@ -720,7 +729,7 @@ static void base_charge_allocate_input_current_limit(void)
 			CPRINTF("current: base %d mA / lid %d mA\n",
 				current_base, current_lid);
 
-		set_base_lid_current(current_base, 1, current_lid, 1);
+		set_base_lid_current(current_base, 1, current_lid, 1, is_full);
 	} else { /* Discharging */
 	}
 
@@ -887,7 +896,8 @@ bool charging_progress_displayed(void)
 	return rv;
 }
 
-static void show_charging_progress(void)
+/* Output to the console so progress is visible */
+static void show_charging_progress(bool is_full)
 {
 	int rv = 0, minutes, to_full, chgnum = 0;
 	int dsoc;
@@ -984,7 +994,7 @@ __overridable int board_should_charger_bypass(void)
  * Ask the charger for some voltage and current. If either value is 0,
  * charging is disabled; otherwise it's enabled. Negative values are ignored.
  */
-static int charge_request(int voltage, int current)
+static int charge_request(int voltage, int current, bool is_full)
 {
 	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS, r4 = EC_SUCCESS;
 	static int prev_volt, prev_curr;
@@ -1723,16 +1733,16 @@ static void base_check_extpower(void)
 }
 
 /* check for and handle any state-of-charge change with the battery */
-void check_battery_change_soc(bool prev_full)
+void check_battery_change_soc(bool is_full, bool prev_full)
 {
 	if ((!(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
 	     curr.batt.state_of_charge != prev_charge) ||
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	    (charge_base != prev_charge_base) ||
 #endif
-	    (is_full != prev_full) || (curr.state != prev_state) ||
+	    is_full != prev_full || (curr.state != prev_state) ||
 	    (charge_get_display_charge() != prev_disp_charge)) {
-		show_charging_progress();
+		show_charging_progress(is_full);
 		prev_charge = curr.batt.state_of_charge;
 		prev_disp_charge = charge_get_display_charge();
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
@@ -1906,7 +1916,8 @@ static void decide_charge_state(int *need_staticp, int *battery_criticalp)
 }
 
 /* Determine voltage/current to request and make it so */
-static void adjust_requested_vi(const struct charger_info *const info)
+static void adjust_requested_vi(const struct charger_info *const info,
+				bool is_full)
 {
 	/* Turn charger off if it's not needed */
 	if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT) &&
@@ -1961,9 +1972,10 @@ static void adjust_requested_vi(const struct charger_info *const info)
 	}
 
 	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
-		base_charge_allocate_input_current_limit();
+		base_charge_allocate_input_current_limit(is_full);
 	else
-		charge_request(curr.requested_voltage, curr.requested_current);
+		charge_request(curr.requested_voltage, curr.requested_current,
+			       is_full);
 }
 
 /* Handle selection of the preferred voltage */
@@ -2114,6 +2126,7 @@ void charger_task(void *u)
 	int need_static = 1;
 	const struct charger_info *const info = charger_get_info();
 	int chgnum = 0;
+	bool is_full = false; /* battery not accepting current */
 	bool prev_full = false;
 
 	/* Set up the task - note that charger_init() has already run. */
@@ -2159,17 +2172,19 @@ void charger_task(void *u)
 		/* Run battery soc check for setting the current limit. */
 		current_limit_battery_soc();
 
-		check_battery_change_soc(prev_full);
+		check_battery_change_soc(is_full, prev_full);
 
 		prev_full = is_full;
 
-		adjust_requested_vi(info);
+		adjust_requested_vi(info, is_full);
 
 		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
 			process_preferred_voltage();
 
-		sleep_usec = calculate_sleep_dur(battery_critical, sleep_usec);
+		/* Report our state */
+		local_state.is_full = is_full;
 
+		sleep_usec = calculate_sleep_dur(battery_critical, sleep_usec);
 		task_wait_event(sleep_usec);
 	}
 }
@@ -2376,7 +2391,7 @@ int charge_get_percent(void)
 	 * to the battery, that'll be zero, which is probably as good as
 	 * anything.
 	 */
-	return is_full ? 100 : curr.batt.state_of_charge;
+	return local_state.is_full ? 100 : curr.batt.state_of_charge;
 }
 
 test_mockable int charge_get_display_charge(void)
