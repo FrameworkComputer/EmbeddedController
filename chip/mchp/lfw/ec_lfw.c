@@ -353,6 +353,37 @@ enum ec_image system_get_image_copy(void)
 	return MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX);
 }
 
+/**
+ * lfw wdt
+ * this function is for RTC power fail are not stable
+ * when the RTC power domain comes up later than the EC ALW power domain
+ * will cause PLL lock never stable also make EC stuck in while
+ * add wdt to reset EC lfw again
+ * timeout default follow CONFIG_WATCHDOG_PERIOD_MS(1.6s)
+ */
+void lfw_wdt(void)
+{
+	/* Clear WDT PCR sleep enable */
+	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_WDT);
+
+	/* Set timeout. It takes 1007us to decrement WDG_CNT by 1. */
+	MCHP_WDG_LOAD = CONFIG_WATCHDOG_PERIOD_MS * 1000 / 1007;
+
+	/* start watchdog */
+	MCHP_WDG_CTL |= 1;
+
+	/* Reload watchdog */
+	MCHP_WDG_KICK = 1;
+}
+
+void lfw_wdt_stop(void)
+{
+	/* Stop watchdog */
+	MCHP_WDG_CTL &= ~1;
+
+	/* Reload watchdog */
+	MCHP_WDG_KICK = 1;
+}
 
 /*
  * lfw_main is entered by MEC BootROM or EC_RO/RW calling it directly.
@@ -404,7 +435,9 @@ void lfw_main(void)
 	trace0(0, LFW, 0, "LFW first trace");
 
 	timer_init();
+	lfw_wdt();
 	clock_init();
+	lfw_wdt_stop();
 	cpu_init();
 	dma_init();
 	uart_init();
