@@ -36,8 +36,6 @@
 #undef PD_MAX_POWER_MW
 #define PD_MAX_POWER_MW 65000
 #define CONFIG_USB_PD_VBUS_DETECT_GPIO
-/* ADC sensors could measure VBUS on this board, but components are DNS */
-#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 
 /* Override macro for C0 only */
 #define PORT_TO_HPD(port) (GPIO_USB_C0_DP_HPD)
@@ -150,6 +148,7 @@ enum adc_channel {
 	ADC_VSNS_PP3300_A, /* ADC0 */
 	ADC_TEMP_SENSOR_1, /* ADC2 */
 	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_VBUS, /* ADC4 */
 	ADC_TEMP_SENSOR_3, /* ADC13 */
 	ADC_PPVAR_PWR_IN_IMON, /* ADC15 */
 	ADC_SNS_PPVAR_PWR_IN, /* ADC16 */
