@@ -8,6 +8,7 @@
 #include "config.h"
 #include "console.h"
 #include "customized_shared_memory.h"
+#include "cypress_pd_common.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
@@ -368,6 +369,9 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
+		/* set the PD chip system power state "S0" */
+		cypd_set_power_active(POWER_S0);
+
 		clear_rtcwake();
 
 		return POWER_S0;
@@ -432,6 +436,9 @@ enum power_state power_handle_state(enum power_state state)
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+
+		/* set the PD chip system power state "S3" */
+		cypd_set_power_active(POWER_S3);
 		return POWER_S3;
 
 	case POWER_S3S5:
@@ -439,6 +446,9 @@ enum power_state power_handle_state(enum power_state state)
 		power_s5_up_control(0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+
+		/* set the PD chip system power state "S5" */
+		cypd_set_power_active(POWER_S5);
 		return POWER_S5;
 
 	case POWER_S5G3:
