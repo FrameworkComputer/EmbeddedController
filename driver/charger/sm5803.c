@@ -1952,7 +1952,7 @@ static enum ec_error_list sm5803_set_vsys_compensation(int chgnum,
 	if (rv)
 		return EC_ERROR_UNKNOWN;
 
-	return EC_SUCCESS;
+	return EC_ERROR_UNIMPLEMENTED;
 }
 
 /* Hardware current ramping (aka DPM: Dynamic Power Management) */

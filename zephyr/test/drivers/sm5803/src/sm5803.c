@@ -767,21 +767,27 @@ ZTEST(sm5803, test_vsys_compensation)
 
 	/* Minimum possible resistance */
 	ocpc.combined_rsys_rbatt_mo = 0;
-	zassert_ok(sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0, 0));
+	zassert_equal(sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0,
+						       0),
+		      EC_ERROR_UNIMPLEMENTED);
 	zassert_equal(sm5803_emul_get_ir_comp(SM5803_EMUL), 0x2100,
 		      "actual IR_COMP value was %#x",
 		      sm5803_emul_get_ir_comp(SM5803_EMUL));
 
 	/* Maximum resistance supported by SM5803 (1.67 mOhm * 0x3FF) */
 	ocpc.combined_rsys_rbatt_mo = 1709;
-	zassert_ok(sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0, 0));
+	zassert_equal(sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0,
+						       0),
+		      EC_ERROR_UNIMPLEMENTED);
 	zassert_equal(sm5803_emul_get_ir_comp(SM5803_EMUL), 0xE1FF,
 		      "actual IR_COMP value was %#x",
 		      sm5803_emul_get_ir_comp(SM5803_EMUL));
 
 	/* Typical actual resistance */
 	ocpc.combined_rsys_rbatt_mo = 42;
-	zassert_ok(sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0, 0));
+	zassert_equal(sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0,
+						       0),
+		      EC_ERROR_UNIMPLEMENTED);
 	zassert_equal(sm5803_emul_get_ir_comp(SM5803_EMUL), 0x2119,
 		      "actual IR_COMP value was %#x",
 		      sm5803_emul_get_ir_comp(SM5803_EMUL));
@@ -789,8 +795,9 @@ ZTEST(sm5803, test_vsys_compensation)
 	/* Communication errors bubble up */
 	i2c_common_emul_set_read_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
 					  SM5803_REG_IR_COMP1);
-	zassert_not_equal(
-		sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc, 0, 0), 0);
+	zassert_not_equal(sm5803_drv.set_vsys_compensation(CHARGER_NUM, &ocpc,
+							   0, 0),
+			  EC_ERROR_UNIMPLEMENTED);
 }
 
 ZTEST(sm5803, test_vbus_sink_enable)

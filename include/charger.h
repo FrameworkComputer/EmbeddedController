@@ -127,6 +127,10 @@ struct charger_drv {
 	/*
 	 * Some chargers can perform VSYS output compensation.  Configure the
 	 * charger IC with the right parameters.
+	 *
+	 * Returns EC_ERROR_UNIMPLEMENTED if further action is required from the
+	 * OCPC control loop (which is typical), EC_SUCCESS if no further action
+	 * is required, or any other status on error.
 	 */
 	enum ec_error_list (*set_vsys_compensation)(int chgnum,
 						    struct ocpc_data *o,
