@@ -210,6 +210,14 @@ config EMUL_PS8743
 	  Enable the PS8743 usb mux. This driver use emulated I2C bus.
 	  Emulator API is available in zephyr/include/emul/emul_ps8743.h.
 
+config EMUL_ICM42607
+	bool "icm42607 emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_ICM42607_EMUL_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the ICM42607 accelerometer and gyroscope emulator.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"
