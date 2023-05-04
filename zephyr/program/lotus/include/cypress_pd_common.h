@@ -443,4 +443,11 @@ uint8_t *get_pd_version(int controller);
  */
 int pd_get_active_current(int port);
 
+/**
+ * Set system power state
+ *
+ * @param power		The power state
+ */
+void cypd_set_power_active(enum power_state power);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

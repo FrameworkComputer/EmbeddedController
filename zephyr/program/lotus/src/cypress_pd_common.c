@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "power.h"
 #include "task.h"
 #include "usb_pd.h"
 #include "usb_tc_sm.h"
@@ -427,6 +428,26 @@ static void cypd_update_port_state(int controller, int port)
 	}
 }
 
+int cypd_set_power_state(int power_state, int controller)
+{
+	int i;
+	int rv = EC_SUCCESS;
+
+	CPRINTS("C%d, %s pwr state %d", controller, __func__, power_state);
+
+	if (controller < 2)
+		rv = cypd_write_reg8_wait_ack(controller, CCG_SYS_PWR_STATE, power_state);
+	else {
+		for (i = 0; i < PD_CHIP_COUNT; i++) {
+
+			rv = cypd_write_reg8_wait_ack(i, CCG_SYS_PWR_STATE, power_state);
+			if (rv != EC_SUCCESS)
+				break;
+		}
+	}
+	return rv;
+}
+
 static void cypd_update_epr_state(int controller, int port, int response_len)
 {
 	int rv;
@@ -478,6 +499,32 @@ static int cypd_update_power_status(int controller)
 		}
 	}
 	return rv;
+}
+
+void update_system_power_state(int controller)
+{
+	enum power_state ps = power_get_state();
+
+	switch (ps) {
+	case POWER_G3:
+	case POWER_S5:
+	case POWER_S5G3:
+	case POWER_S3S5:
+		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		break;
+	case POWER_S3:
+		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		break;
+	default:
+		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		break;
+	}
+
+}
+
+void cypd_set_power_active(enum power_state power)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
 
 #define CYPD_SETUP_CMDS_LEN 5
@@ -572,10 +619,7 @@ static void cypd_handle_state(int controller)
 			cypd_get_version(controller);
 			cypd_update_power_status(controller);
 
-			/*
-			 * Avoid the error recovery happened, disable to change the CCG power state
-			 * cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-			 */
+			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
 			cypd_setup(controller);
 
 			/* After initial complete, update the type-c port state */
@@ -587,12 +631,8 @@ static void cypd_handle_state(int controller)
 			 * cyp5525_ucsi_startup(controller);
 			 */
 
+			update_system_power_state(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
-
-			/*
-			 * Avoid the error recovery happened, disable to change the CCG power state
-			 * update_system_power_state(controller);
-			 */
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CCG_STATE_READY;
@@ -787,6 +827,9 @@ void cypd_interrupt_handler_task(void *p)
 
 		if (firmware_update)
 			continue;
+
+		if (evt & CCG_EVT_S_CHANGE)
+			update_system_power_state(2);
 
 		if (evt & CCG_EVT_INT_CTRL_0)
 			cypd_interrupt(0);
@@ -1047,6 +1090,15 @@ static int cmd_cypd_control(int argc, const char **argv)
 		} else if (!strncmp(argv[1], "verbose", 7)) {
 			verbose_msg_logging = (i != 0);
 			CPRINTS("verbose=%d", verbose_msg_logging);
+		}  else if (!strncmp(argv[1], "powerstate", 10)) {
+			int pwrstate;
+
+			if (argc < 4)
+				return EC_ERROR_PARAM3;
+			pwrstate = strtoul(argv[3], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			cypd_set_power_state(pwrstate, 2);
 		} else if (!strncmp(argv[1], "write16", 3)) {
 			int r;
 			int regval;
