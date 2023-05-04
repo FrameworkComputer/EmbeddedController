@@ -1780,6 +1780,27 @@ static void process_battery_present_change(const struct charger_info *info,
 /* Decide on the charge state we are in */
 static void decide_charge_state(int *need_staticp, int *battery_criticalp)
 {
+	/* battery current stable now, so save the current. */
+	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV) &&
+	    get_time().val > stable_ts.val && curr.batt.current >= 0)
+		stable_current = curr.batt.current;
+
+	/*
+	 * Now decide what we want to do about it. We'll normally just pass
+	 * along whatever the battery wants to the charger. Note that if
+	 * battery_get_params() can't get valid values from the battery it uses
+	 * (0, 0), which is probably safer than blindly applying power to a
+	 * battery we can't talk to.
+	 */
+	if (curr.batt.flags &
+	    (BATT_FLAG_BAD_DESIRED_VOLTAGE | BATT_FLAG_BAD_DESIRED_CURRENT)) {
+		curr.requested_voltage = 0;
+		curr.requested_current = 0;
+	} else {
+		curr.requested_voltage = curr.batt.desired_voltage;
+		curr.requested_current = curr.batt.desired_current;
+	}
+
 	/* If we *know* there's no battery, wait for one to appear. */
 	if (curr.batt.is_present == BP_NO) {
 		if (!curr.ac)
@@ -2060,27 +2081,6 @@ void charger_task(void *u)
 		battery_validate_params(&curr.batt);
 
 		notify_host_of_over_current(&curr.batt);
-
-		/* battery current stable now, saves the current. */
-		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV) &&
-		    get_time().val > stable_ts.val && curr.batt.current >= 0)
-			stable_current = curr.batt.current;
-
-		/*
-		 * Now decide what we want to do about it. We'll normally just
-		 * pass along whatever the battery wants to the charger. Note
-		 * that if battery_get_params() can't get valid values from the
-		 * battery it uses (0, 0), which is probably safer than blindly
-		 * applying power to a battery we can't talk to.
-		 */
-		if (curr.batt.flags & (BATT_FLAG_BAD_DESIRED_VOLTAGE |
-				       BATT_FLAG_BAD_DESIRED_CURRENT)) {
-			curr.requested_voltage = 0;
-			curr.requested_current = 0;
-		} else {
-			curr.requested_voltage = curr.batt.desired_voltage;
-			curr.requested_current = curr.batt.desired_current;
-		}
 
 		decide_charge_state(&need_static, &battery_critical);
 
