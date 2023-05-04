@@ -26,6 +26,13 @@
 void trng_init(void);
 
 /**
+ * Generate true random number.
+ *
+ * Not supported by all platforms.
+ **/
+uint32_t trng_rand(void);
+
+/**
  * Shutdown the true random number generator.
  *
  * The opposite operation of trng_init(), disable the hardware resources
