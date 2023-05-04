@@ -229,7 +229,7 @@ void pd_power_supply_reset(int port)
 
 	prev_en = ppc_is_sourcing_vbus(port);
 
-#ifdef CONFIG_USB_PD_TCPM_RT1718S
+#if defined(CONFIG_USB_PD_TCPM_RT1718S) && CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	if (port == USBC_PORT_C1) {
 		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 0);
 	}
@@ -254,7 +254,7 @@ int pd_set_power_supply_ready(int port)
 
 	pd_set_vbus_discharge(port, 0);
 
-#ifdef CONFIG_USB_PD_TCPM_RT1718S
+#if defined(CONFIG_USB_PD_TCPM_RT1718S) && CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	/* Provide Vbus. */
 	if (port == USBC_PORT_C1) {
 		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 1);

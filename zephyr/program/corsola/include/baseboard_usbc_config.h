@@ -10,6 +10,8 @@
 
 #include "gpio.h"
 
+#include <zephyr/sys/util_macro.h>
+
 #ifdef CONFIG_PLATFORM_EC_USB_PD_TCPM_RT1718S
 #define GPIO_EN_USB_C1_SINK RT1718S_GPIO1
 #define GPIO_EN_USB_C1_SOURCE RT1718S_GPIO2
@@ -27,8 +29,11 @@ int ps8743_eq_c1_setting(void);
 enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_COUNT };
 
 /* USB-C ports */
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
-BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
+#define USBC_PORT_N(i, _) USBC_PORT_C##i = i
+enum usbc_port {
+	LISTIFY(CONFIG_USB_PD_PORT_MAX_COUNT, USBC_PORT_N, (, )),
+	USBC_PORT_COUNT
+};
 
 /**
  * Is the port fine to be muxed its DisplayPort lines?

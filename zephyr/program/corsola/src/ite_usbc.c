@@ -15,9 +15,17 @@
 #include "variant_db_detection.h"
 #include "zephyr_adc.h"
 
+#include <zephyr/sys/util_macro.h>
+
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+
+#define ITE_CC_PARAMETER(i, _)                                    \
+	{                                                         \
+		.rising_time = IT83XX_TX_PRE_DRIVING_TIME_1_UNIT, \
+		.falling_time = IT83XX_TX_PRE_DRIVING_TIME_2_UNIT \
+	}
 
 int tusb1064_mux_1_board_init(const struct usb_mux *me)
 {
@@ -40,20 +48,9 @@ int tusb1064_mux_1_board_init(const struct usb_mux *me)
 const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 {
 	const static struct cc_para_t
-		cc_parameter[CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT] = {
-			{
-				.rising_time =
-					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
-				.falling_time =
-					IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
-			},
-			{
-				.rising_time =
-					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
-				.falling_time =
-					IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
-			},
-		};
+		cc_parameter[CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT] = { LISTIFY(
+			CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT, ITE_CC_PARAMETER,
+			(, )) };
 
 	return &cc_parameter[port];
 }

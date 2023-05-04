@@ -59,10 +59,12 @@ void board_tcpc_init(void)
 		board_reset_pd_mcu();
 	}
 
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	/* Do not enable TCPC interrupt on port 1 if not type-c */
 	if (corsola_get_db_type() != CORSOLA_DB_TYPEC) {
 		tcpc_config[USBC_PORT_C1].irq_gpio.port = NULL;
 	}
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT > 1 */
 
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
@@ -118,6 +120,7 @@ __override int board_rt1718s_init(int port)
 	return EC_SUCCESS;
 }
 
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 __override int board_rt1718s_set_frs_enable(int port, int enable)
 {
 	if (port == USBC_PORT_C1)
@@ -130,6 +133,7 @@ __override int board_rt1718s_set_frs_enable(int port, int enable)
 				       enable ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
 	return EC_SUCCESS;
 }
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT > 1 */
 
 void board_reset_pd_mcu(void)
 {
@@ -144,8 +148,10 @@ void board_reset_pd_mcu(void)
 	 */
 	msleep(2);
 
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	/* reset C1 RT1718s */
 	rt1718s_sw_reset(USBC_PORT_C1);
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT > 1 */
 }
 
 /* Used by Vbus discharge common code with CONFIG_USB_PD_DISCHARGE */
@@ -154,6 +160,7 @@ int board_vbus_source_enabled(int port)
 	return ppc_is_sourcing_vbus(port);
 }
 
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 __override int board_rt1718s_set_snk_enable(int port, int enable)
 {
 	if (port == USBC_PORT_C1) {
@@ -162,6 +169,7 @@ __override int board_rt1718s_set_snk_enable(int port, int enable)
 
 	return EC_SUCCESS;
 }
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT > 1 */
 
 int board_set_active_charge_port(int port)
 {
@@ -253,9 +261,11 @@ __override int board_get_vbus_voltage(int port)
 		if (rv)
 			return 0;
 		break;
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	case USBC_PORT_C1:
 		rt1718s_get_adc(port, RT1718S_ADC_VBUS1, &voltage);
 		break;
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT > 1 */
 	default:
 		return 0;
 	}
