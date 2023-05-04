@@ -2049,6 +2049,44 @@ static void check_extpower(int chgnum)
 		process_ac_change(chgnum);
 }
 
+/* processing for new charge state, returning updated sleep_usec */
+static int process_charge_state(int *need_staticp, int sleep_usec)
+{
+	if (IS_ENABLED(CONFIG_CHARGER_PROFILE_OVERRIDE) &&
+	    get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL) {
+		sleep_usec = charger_profile_override(&curr);
+		if (sleep_usec < 0)
+			charge_problem(PR_CUSTOM, sleep_usec);
+	}
+
+	if (IS_ENABLED(CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS) &&
+	    battery_outside_charging_temperature()) {
+		curr.requested_current = 0;
+		curr.requested_voltage = 0;
+		curr.batt.flags &= ~BATT_FLAG_WANT_CHARGE;
+		if (curr.state != ST_DISCHARGE)
+			curr.state = ST_IDLE;
+	}
+
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
+	    curr.batt.state_of_charge >=
+		    CONFIG_CHARGE_MANAGER_BAT_PCT_SAFE_MODE_EXIT &&
+	    !battery_seems_disconnected)
+		charge_manager_leave_safe_mode();
+
+	/* Keep the AP informed */
+	if (*need_staticp)
+		*need_staticp = update_static_battery_info();
+
+	/* Wait on the dynamic info until the static info is good. */
+	if (!*need_staticp)
+		update_dynamic_battery_info();
+	notify_host_of_low_battery_charge();
+	notify_host_of_low_battery_voltage();
+
+	return sleep_usec;
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -2090,37 +2128,7 @@ void charger_task(void *u)
 		notify_host_of_over_current(&curr.batt);
 
 		decide_charge_state(&need_static, &battery_critical);
-
-		if (IS_ENABLED(CONFIG_CHARGER_PROFILE_OVERRIDE) &&
-		    get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL) {
-			sleep_usec = charger_profile_override(&curr);
-			if (sleep_usec < 0)
-				charge_problem(PR_CUSTOM, sleep_usec);
-		}
-
-		if (IS_ENABLED(CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS) &&
-		    battery_outside_charging_temperature()) {
-			curr.requested_current = 0;
-			curr.requested_voltage = 0;
-			curr.batt.flags &= ~BATT_FLAG_WANT_CHARGE;
-			if (curr.state != ST_DISCHARGE)
-				curr.state = ST_IDLE;
-		}
-
-		if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
-		    curr.batt.state_of_charge >=
-			    CONFIG_CHARGE_MANAGER_BAT_PCT_SAFE_MODE_EXIT &&
-		    !battery_seems_disconnected)
-			charge_manager_leave_safe_mode();
-
-		/* Keep the AP informed */
-		if (need_static)
-			need_static = update_static_battery_info();
-		/* Wait on the dynamic info until the static info is good. */
-		if (!need_static)
-			update_dynamic_battery_info();
-		notify_host_of_low_battery_charge();
-		notify_host_of_low_battery_voltage();
+		sleep_usec = process_charge_state(&need_static, sleep_usec);
 
 		/* And the EC console */
 		is_full = calc_is_full();
