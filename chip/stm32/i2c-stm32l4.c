@@ -116,10 +116,9 @@ static const uint32_t timingr_regs[I2C_CLK_SRC_COUNT][I2C_FREQ_COUNT] = {
 	},
 };
 
-static void i2c_set_freq_port(const struct i2c_port_t *p,
-			      enum stm32_i2c_clk_src src, enum i2c_freq freq)
+int chip_i2c_set_freq(int port, enum i2c_freq freq)
 {
-	int port = p->port;
+	enum stm32_i2c_clk_src src = I2C_CLK_SRC_16MHZ;
 
 	/* Disable port */
 	STM32_I2C_CR1(port) = 0;
@@ -130,6 +129,13 @@ static void i2c_set_freq_port(const struct i2c_port_t *p,
 	STM32_I2C_CR1(port) = STM32_I2C_CR1_PE;
 
 	pdata[port].freq = freq;
+
+	return EC_SUCCESS;
+}
+
+enum i2c_freq chip_i2c_get_freq(int port)
+{
+	return pdata[port].freq;
 }
 
 /**
@@ -142,7 +148,6 @@ static void i2c_init_port(const struct i2c_port_t *p)
 	int port = p->port;
 	uint32_t val;
 	enum i2c_freq freq;
-	enum stm32_i2c_clk_src src = I2C_CLK_SRC_16MHZ;
 
 	/* Enable I2C clock */
 	if (!(STM32_RCC_APB1ENR1 & (1 << (21 + port))))
@@ -176,7 +181,7 @@ static void i2c_init_port(const struct i2c_port_t *p)
 	}
 
 	/* Set up initial bus frequencies */
-	i2c_set_freq_port(p, src, freq);
+	chip_i2c_set_freq(p->port, freq);
 
 	/* Set up default timeout */
 	i2c_set_timeout(port, 0);
