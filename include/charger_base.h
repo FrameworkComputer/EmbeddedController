@@ -57,4 +57,8 @@ bool charger_base_charge_near_full(void);
 /* Get the base input-voltage */
 int charger_base_get_input_voltage(const struct charge_state_data *curr);
 
+/* Set the input voltage for the base */
+void charger_base_set_input_voltage(struct charge_state_data *curr,
+				    int input_voltage);
+
 #endif /* __CROS_EC_CHARGER_BASE_H */

@@ -677,5 +677,11 @@ int charger_base_get_input_voltage(const struct charge_state_data *curr)
 	return curr->input_voltage;
 }
 
+void charger_base_set_input_voltage(struct charge_state_data *curr,
+				    int input_voltage)
+{
+	curr->input_voltage = input_voltage;
+}
+
 /* Reset the base on S5->S0 transition. */
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_base_reset, HOOK_PRIO_DEFAULT);

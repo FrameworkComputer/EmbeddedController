@@ -17,8 +17,6 @@
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "ec_ec_comm_client.h"
-#include "ec_ec_comm_server.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -1106,11 +1104,11 @@ static void charger_setup(const struct charger_info *info)
 	chg_ctl_mode = CHARGE_CONTROL_NORMAL;
 	shutdown_target_time.val = 0UL;
 	battery_seems_dead = 0;
-	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT)) {
 		charger_base_setup();
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	curr.input_voltage = CHARGE_VOLTAGE_UNINITIALIZED;
-#endif
+		charger_base_set_input_voltage(&curr,
+					       CHARGE_VOLTAGE_UNINITIALIZED);
+	}
 #ifdef CONFIG_OCPC
 	ocpc_init(&curr.ocpc);
 	charge_set_active_chg_chip(CHARGE_PORT_NONE);
@@ -1869,9 +1867,8 @@ int charge_set_input_current_limit(int ma, int mv)
 
 	if (IS_ENABLED(CONFIG_OCPC))
 		chgnum = charge_get_active_chg_chip();
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	curr.input_voltage = mv;
-#endif
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+		charger_base_set_input_voltage(&curr, mv);
 	/*
 	 * If battery is not present, we are not locked, and base is not
 	 * connected then allow system to pull as much input current as needed.
