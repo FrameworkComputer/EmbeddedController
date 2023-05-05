@@ -6330,7 +6330,8 @@
  * Define CONFIG_USB_PD_VBUS_MEASURE_TCPC if the tcpc on the board supports
  * VBUS measurement.
  */
-#if defined(CONFIG_USB_PD_TCPM_FUSB302)
+#if defined(CONFIG_USB_PD_TCPM_FUSB302) && \
+	!defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
 #define CONFIG_USB_PD_VBUS_MEASURE_TCPC
 #endif
 
