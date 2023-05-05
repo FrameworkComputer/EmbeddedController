@@ -12,8 +12,6 @@
 
 struct charge_state_data;
 
-extern int charge_base;
-
 /* allocate power between the base and the lid */
 void base_charge_allocate_input_current_limit(
 	const struct charge_state_data *curr, bool is_full, bool debugging);
@@ -49,5 +47,11 @@ bool charger_base_charge_changed(void);
 
 /* Update prev_charge_base with charge_base */
 void charger_base_charge_update(void);
+
+/* Show the current charge level of the base on the console */
+void charger_base_show_charge(void);
+
+/* Check if the base charge is near full */
+bool charger_base_charge_near_full(void);
 
 #endif /* __CROS_EC_CHARGER_BASE_H */

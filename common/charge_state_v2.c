@@ -381,9 +381,8 @@ static void show_charging_progress(bool is_full)
 			to_full ? "to full" : "to empty",
 			is_full ? ", not accepting current" : "");
 
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	CPRINTS("Base battery %d%%", charge_base);
-#endif
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+		charger_base_show_charge();
 
 	if (debugging()) {
 		ccprintf("battery:\n");
@@ -1111,7 +1110,6 @@ static void charger_setup(const struct charger_info *info)
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	curr.input_voltage = CHARGE_VOLTAGE_UNINITIALIZED;
 	battery_dynamic[BATT_IDX_BASE].flags = EC_BATT_FLAG_INVALID_DATA;
-	charge_base = -1;
 #endif
 #ifdef CONFIG_OCPC
 	ocpc_init(&curr.ocpc);
@@ -1727,10 +1725,9 @@ static int battery_near_full(void)
 	if (charge_get_percent() < BATTERY_LEVEL_NEAR_FULL)
 		return 0;
 
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	if (charge_base > -1 && charge_base < BATTERY_LEVEL_NEAR_FULL)
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT) &&
+	    !charger_base_charge_near_full())
 		return 0;
-#endif
 
 	return 1;
 }

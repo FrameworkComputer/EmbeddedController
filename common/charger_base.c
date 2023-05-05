@@ -22,7 +22,7 @@
 
 /* Base has responded to one of our commands already. */
 static int base_responsive;
-int charge_base;
+static int charge_base;
 static int prev_charge_base;
 static int prev_current_base;
 static int prev_allow_charge_base;
@@ -645,6 +645,7 @@ DECLARE_CONSOLE_COMMAND(chgdualdebug, command_chgdualdebug,
 void charger_base_setup(void)
 {
 	base_responsive = 0;
+	charge_base = -1;
 }
 
 bool charger_base_charge_changed(void)
@@ -655,6 +656,19 @@ bool charger_base_charge_changed(void)
 void charger_base_charge_update(void)
 {
 	prev_charge_base = charge_base;
+}
+
+void charger_base_show_charge(void)
+{
+	CPRINTS("Base battery %d%%", charge_base);
+}
+
+bool charger_base_charge_near_full(void)
+{
+	if (charge_base > -1 && charge_base < BATTERY_LEVEL_NEAR_FULL)
+		return false;
+
+	return true;
 }
 
 /* Reset the base on S5->S0 transition. */
