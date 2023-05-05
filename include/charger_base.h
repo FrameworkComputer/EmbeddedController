@@ -13,7 +13,6 @@
 struct charge_state_data;
 
 extern int charge_base;
-extern int prev_charge_base;
 
 /* allocate power between the base and the lid */
 void base_charge_allocate_input_current_limit(
@@ -34,8 +33,9 @@ void base_update_battery_info(void);
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 /* Check if there is a base and it is connected */
 bool base_connected(void);
+
 #else
-bool base_connected(void)
+static inline bool base_connected(void)
 {
 	return false;
 }
@@ -43,5 +43,11 @@ bool base_connected(void)
 
 /* Set up the charger task for the base */
 void charger_base_setup(void);
+
+/* Check if charge_base has changed since last time */
+bool charger_base_charge_changed(void);
+
+/* Update prev_charge_base with charge_base */
+void charger_base_charge_update(void);
 
 #endif /* __CROS_EC_CHARGER_BASE_H */

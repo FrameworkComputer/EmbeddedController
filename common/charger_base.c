@@ -23,7 +23,7 @@
 /* Base has responded to one of our commands already. */
 static int base_responsive;
 int charge_base;
-int prev_charge_base;
+static int prev_charge_base;
 static int prev_current_base;
 static int prev_allow_charge_base;
 static int prev_current_lid;
@@ -645,6 +645,16 @@ DECLARE_CONSOLE_COMMAND(chgdualdebug, command_chgdualdebug,
 void charger_base_setup(void)
 {
 	base_responsive = 0;
+}
+
+bool charger_base_charge_changed(void)
+{
+	return charge_base != prev_charge_base;
+}
+
+void charger_base_charge_update(void)
+{
+	prev_charge_base = charge_base;
 }
 
 /* Reset the base on S5->S0 transition. */

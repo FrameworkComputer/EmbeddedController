@@ -1147,17 +1147,15 @@ void check_battery_change_soc(bool is_full, bool prev_full)
 {
 	if ((!(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
 	     curr.batt.state_of_charge != prev_charge) ||
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	    (charge_base != prev_charge_base) ||
-#endif
+	    (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT) &&
+	     charger_base_charge_changed()) ||
 	    is_full != prev_full || (curr.state != prev_state) ||
 	    (charge_get_display_charge() != prev_disp_charge)) {
 		show_charging_progress(is_full);
 		prev_charge = curr.batt.state_of_charge;
 		prev_disp_charge = charge_get_display_charge();
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-		prev_charge_base = charge_base;
-#endif
+		if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+			charger_base_charge_update();
 		hook_notify(HOOK_BATTERY_SOC_CHANGE);
 	}
 }
