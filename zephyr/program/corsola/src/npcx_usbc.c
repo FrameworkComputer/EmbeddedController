@@ -94,11 +94,18 @@ __override int board_rt1718s_init(int port)
 
 	/* gpio1 low, gpio2 output high when receiving frs signal */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_VBUS_CTRL,
-					  RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS,
+					  RT1718S_GPIO_VBUS_CTRL_FRS_RX_VBUS,
 					  0));
-	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_VBUS_CTRL,
-					  RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS,
-					  0xFF));
+	/* GPIO1 EN_SNK high when received TCPCI SNK enabled command */
+	RETURN_ERROR(rt1718s_update_bits8(
+		port, RT1718S_GPIO1_VBUS_CTRL,
+		RT1718S_GPIO_VBUS_CTRL_ENA_SNK_VBUS_GPIO, 0xFF));
+	/* GPIO2 EN_SRC high when received TCPCI SRC enabled command */
+	RETURN_ERROR(rt1718s_update_bits8(
+		port, RT1718S_GPIO2_VBUS_CTRL,
+		RT1718S_GPIO_VBUS_CTRL_FRS_RX_VBUS |
+			RT1718S_GPIO_VBUS_CTRL_ENA_SRC_VBUS_GPIO,
+		0xFF));
 
 	/* Trigger GPIO 1/2 change when FRS signal received */
 	RETURN_ERROR(rt1718s_update_bits8(
