@@ -18,11 +18,6 @@
 /* When battery type is not initialized */
 #define BATTERY_TYPE_UNINITIALIZED -1
 
-#ifdef CONFIG_BATTERY_CONFIG_IN_CBI
-#define batt_const
-#else
-#define batt_const const
-#endif
 struct ship_mode_info {
 	/*
 	 * Write Block Support. If wb_support is true, then we use a i2c write
@@ -30,25 +25,25 @@ struct ship_mode_info {
 	 * that the i2c transaction will prefix the length (2) when wb_support
 	 * is enabled.
 	 */
-	batt_const uint8_t wb_support;
-	batt_const uint8_t reg_addr;
-	batt_const uint16_t reg_data[SHIP_MODE_WRITES];
+	uint8_t wb_support;
+	uint8_t reg_addr;
+	uint16_t reg_data[SHIP_MODE_WRITES];
 };
 
 struct sleep_mode_info {
-	batt_const bool sleep_supported;
-	batt_const uint8_t reg_addr;
-	batt_const uint16_t reg_data;
+	bool sleep_supported;
+	uint8_t reg_addr;
+	uint16_t reg_data;
 };
 
 struct fet_info {
-	batt_const int mfgacc_support;
-	batt_const int mfgacc_smb_block;
-	batt_const uint8_t reg_addr;
-	batt_const uint16_t reg_mask;
-	batt_const uint16_t disconnect_val;
-	batt_const uint16_t cfet_mask; /* CHG FET status mask */
-	batt_const uint16_t cfet_off_val;
+	int mfgacc_support;
+	int mfgacc_smb_block;
+	uint8_t reg_addr;
+	uint16_t reg_mask;
+	uint16_t disconnect_val;
+	uint16_t cfet_mask; /* CHG FET status mask */
+	uint16_t cfet_off_val;
 };
 
 struct fuel_gauge_info {
@@ -59,10 +54,10 @@ struct fuel_gauge_info {
 	const char *manuf_name;
 	const char *device_name;
 #endif
-	batt_const uint8_t override_nil;
-	batt_const struct ship_mode_info ship_mode;
-	batt_const struct sleep_mode_info sleep_mode;
-	batt_const struct fet_info fet;
+	uint8_t override_nil;
+	struct ship_mode_info ship_mode;
+	struct sleep_mode_info sleep_mode;
+	struct fet_info fet;
 
 #ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
 	/* See battery_*_imbalance_mv() for functions which are suitable. */
@@ -71,8 +66,8 @@ struct fuel_gauge_info {
 };
 
 struct board_batt_params {
-	batt_const struct fuel_gauge_info fuel_gauge;
-	batt_const struct battery_info batt_info;
+	struct fuel_gauge_info fuel_gauge;
+	struct battery_info batt_info;
 };
 
 /* Forward declare board specific data used by common code */
