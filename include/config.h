@@ -471,9 +471,9 @@
 #undef CONFIG_BATTERY
 
 /**
- * Enable Battery-info-in-CBI. It allows a board to read battery info from CBI.
+ * Enable Battery-config-in-CBI. It makes a board read battery info from CBI.
  */
-#undef CONFIG_BATTERY_INFO_IN_CBI
+#undef CONFIG_BATTERY_CONFIG_IN_CBI
 
 /*
  * Config to indicate the battery type that cannot be auto detected.
@@ -1616,7 +1616,7 @@
 #undef CONFIG_CMD_BATDEBUG
 #define CONFIG_CMD_BATTFAKE
 #undef CONFIG_CMD_BATT_MFG_ACCESS
-#undef CONFIG_CMD_BATTERY_INFO_IN_CBI
+#undef CONFIG_CMD_BATTERY_CONFIG
 #undef CONFIG_CMD_BUTTON
 #define CONFIG_CMD_CBI
 #undef CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE

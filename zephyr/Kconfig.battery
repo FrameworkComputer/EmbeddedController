@@ -16,20 +16,20 @@ menuconfig PLATFORM_EC_BATTERY
 
 if PLATFORM_EC_BATTERY
 
-config PLATFORM_EC_BATTERY_INFO_IN_CBI
-	bool "Support battery-info-in-CBI"
+config PLATFORM_EC_BATTERY_CONFIG_IN_CBI
+	bool "Support battery-config-in-CBI"
 	depends on CBI_EEPROM
 	help
-	  If this is enabled, a board reads battery info from CBI and updates
+	  If this is enabled, a board reads battery config from CBI and updates
 	  each param in the default battery info using discovered data.
 
-config PLATFORM_EC_CONSOLE_CMD_BATTERY_INFO_IN_CBI
-	bool "Console commands: biic"
-	depends on PLATFORM_EC_BATTERY_INFO_IN_CBI
+config PLATFORM_EC_CONSOLE_CMD_BATTERY_CONFIG
+	bool "Console commands: bcfg"
+	depends on PLATFORM_EC_BATTERY_CONFIG_IN_CBI
 	help
 	  Enables console commands:
 
-          biic read | dump | reset - Read, dump, reset battery info read from
+          bcfg read | dump | reset - Read, dump, reset battery config read from
           CBI.
 
 choice PLATFORM_EC_BATTERY_SELECT

@@ -14,16 +14,16 @@
 #include "util.h"
 #include "write_protect.h"
 
-int batt_cbi_read(enum cbi_data_tag tag, uint8_t *data, uint8_t size);
-int batt_cbi_read_ship_mode(struct board_batt_params *info);
-int batt_cbi_read_sleep_mode(struct board_batt_params *info);
-int batt_cbi_read_fet_info(struct board_batt_params *info);
-int batt_cbi_read_fuel_gauge_info(struct board_batt_params *info);
-int batt_cbi_read_battery_info(struct board_batt_params *info);
+int batt_conf_read(enum cbi_data_tag tag, uint8_t *data, uint8_t size);
+int batt_conf_read_ship_mode(struct board_batt_params *info);
+int batt_conf_read_sleep_mode(struct board_batt_params *info);
+int batt_conf_read_fet_info(struct board_batt_params *info);
+int batt_conf_read_fuel_gauge_info(struct board_batt_params *info);
+int batt_conf_read_battery_info(struct board_batt_params *info);
 
-struct board_batt_params default_battery_info = {};
+struct board_batt_params default_battery_conf = {};
 
-static struct board_batt_params info_in_cbi = {
+static struct board_batt_params conf_in_cbi = {
 	.fuel_gauge = {
 		.manuf_name = { 'x', 'y', 'z' },
 		.ship_mode = {
@@ -61,11 +61,11 @@ static void test_teardown(void)
 {
 }
 
-DECLARE_EC_TEST(test_batt_cbi_read)
+DECLARE_EC_TEST(test_batt_conf_read)
 {
-	struct ship_mode_info *info = &info_in_cbi.fuel_gauge.ship_mode;
+	struct ship_mode_info *info = &conf_in_cbi.fuel_gauge.ship_mode;
 	struct ship_mode_info *dflt =
-		&default_battery_info.fuel_gauge.ship_mode;
+		&default_battery_conf.fuel_gauge.ship_mode;
 	enum cbi_data_tag tag;
 
 	/* Program data in invalid size. */
@@ -75,8 +75,8 @@ DECLARE_EC_TEST(test_batt_cbi_read)
 		      EC_SUCCESS);
 
 	/* Read */
-	zassert_equal(batt_cbi_read(tag, &dflt->reg_addr,
-				    sizeof(dflt->reg_addr)),
+	zassert_equal(batt_conf_read(tag, &dflt->reg_addr,
+				     sizeof(dflt->reg_addr)),
 		      EC_ERROR_INVAL);
 
 	return EC_SUCCESS;
@@ -84,14 +84,14 @@ DECLARE_EC_TEST(test_batt_cbi_read)
 
 DECLARE_EC_TEST(test_read_ship_mode)
 {
-	struct ship_mode_info *info = &info_in_cbi.fuel_gauge.ship_mode;
+	struct ship_mode_info *info = &conf_in_cbi.fuel_gauge.ship_mode;
 	struct ship_mode_info *dflt =
-		&default_battery_info.fuel_gauge.ship_mode;
+		&default_battery_conf.fuel_gauge.ship_mode;
 	enum cbi_data_tag tag;
 	uint8_t d8;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_cbi_read_ship_mode(get_batt_params()), EC_SUCCESS);
+	zassert_equal(batt_conf_read_ship_mode(get_batt_params()), EC_SUCCESS);
 
 	/* Validate default info remains unchanged. */
 	zassert_equal(dflt->reg_addr, 0);
@@ -112,7 +112,7 @@ DECLARE_EC_TEST(test_read_ship_mode)
 		      EC_SUCCESS);
 
 	/* Read */
-	zassert_equal(batt_cbi_read_ship_mode(&default_battery_info),
+	zassert_equal(batt_conf_read_ship_mode(&default_battery_conf),
 		      EC_SUCCESS);
 
 	/* Validate default info == info in cbi. */
@@ -126,14 +126,14 @@ DECLARE_EC_TEST(test_read_ship_mode)
 
 DECLARE_EC_TEST(test_read_sleep_mode)
 {
-	struct sleep_mode_info *info = &info_in_cbi.fuel_gauge.sleep_mode;
+	struct sleep_mode_info *info = &conf_in_cbi.fuel_gauge.sleep_mode;
 	struct sleep_mode_info *dflt =
-		&default_battery_info.fuel_gauge.sleep_mode;
+		&default_battery_conf.fuel_gauge.sleep_mode;
 	enum cbi_data_tag tag;
 	uint8_t d8;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_cbi_read_sleep_mode(get_batt_params()), EC_SUCCESS);
+	zassert_equal(batt_conf_read_sleep_mode(get_batt_params()), EC_SUCCESS);
 
 	/* Validate default info remains unchanged. */
 	zassert_equal(dflt->reg_addr, 0);
@@ -153,7 +153,7 @@ DECLARE_EC_TEST(test_read_sleep_mode)
 		      EC_SUCCESS);
 
 	/* Read */
-	zassert_equal(batt_cbi_read_sleep_mode(get_batt_params()), EC_SUCCESS);
+	zassert_equal(batt_conf_read_sleep_mode(get_batt_params()), EC_SUCCESS);
 
 	/* Validate default info == info in cbi. */
 	zassert_equal(dflt->reg_addr, info->reg_addr);
@@ -165,13 +165,13 @@ DECLARE_EC_TEST(test_read_sleep_mode)
 
 DECLARE_EC_TEST(test_read_fet_info)
 {
-	struct fet_info *info = &info_in_cbi.fuel_gauge.fet;
-	struct fet_info *dflt = &default_battery_info.fuel_gauge.fet;
+	struct fet_info *info = &conf_in_cbi.fuel_gauge.fet;
+	struct fet_info *dflt = &default_battery_conf.fuel_gauge.fet;
 	enum cbi_data_tag tag;
 	uint8_t d8;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_cbi_read_fet_info(get_batt_params()), EC_SUCCESS);
+	zassert_equal(batt_conf_read_fet_info(get_batt_params()), EC_SUCCESS);
 
 	/* Validate default info remains unchanged. */
 	zassert_equal(dflt->reg_addr, 0);
@@ -203,7 +203,7 @@ DECLARE_EC_TEST(test_read_fet_info)
 		      EC_SUCCESS);
 
 	/* Read */
-	zassert_equal(batt_cbi_read_fet_info(get_batt_params()), EC_SUCCESS);
+	zassert_equal(batt_conf_read_fet_info(get_batt_params()), EC_SUCCESS);
 
 	zassert_equal(dflt->reg_addr, info->reg_addr);
 	zassert_equal(dflt->reg_mask, info->reg_mask);
@@ -214,14 +214,14 @@ DECLARE_EC_TEST(test_read_fet_info)
 
 DECLARE_EC_TEST(test_read_fuel_gauge_info)
 {
-	struct fuel_gauge_info *info = &info_in_cbi.fuel_gauge;
-	struct fuel_gauge_info *dflt = &default_battery_info.fuel_gauge;
+	struct fuel_gauge_info *info = &conf_in_cbi.fuel_gauge;
+	struct fuel_gauge_info *dflt = &default_battery_conf.fuel_gauge;
 	enum cbi_data_tag tag;
 	uint8_t d8;
 	const char empty[32] = {};
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_cbi_read_fuel_gauge_info(get_batt_params()),
+	zassert_equal(batt_conf_read_fuel_gauge_info(get_batt_params()),
 		      EC_SUCCESS);
 
 	/* Validate default info remains unchanged. */
@@ -242,7 +242,7 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	zassert_equal(cbi_set_board_info(tag, &d8, sizeof(d8)), EC_SUCCESS);
 
 	/* Read */
-	zassert_equal(batt_cbi_read_fuel_gauge_info(get_batt_params()),
+	zassert_equal(batt_conf_read_fuel_gauge_info(get_batt_params()),
 		      EC_SUCCESS);
 
 	/* Validate default info == info in cbi. */
@@ -259,12 +259,12 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 
 DECLARE_EC_TEST(test_read_battery_info)
 {
-	struct battery_info *info = &info_in_cbi.batt_info;
-	struct battery_info *dflt = &default_battery_info.batt_info;
+	struct battery_info *info = &conf_in_cbi.batt_info;
+	struct battery_info *dflt = &default_battery_conf.batt_info;
 	enum cbi_data_tag tag;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_cbi_read_battery_info(get_batt_params()),
+	zassert_equal(batt_conf_read_battery_info(get_batt_params()),
 		      EC_SUCCESS);
 
 	/* Validate default info remains unchanged. */
@@ -332,7 +332,7 @@ DECLARE_EC_TEST(test_read_battery_info)
 		      EC_SUCCESS);
 
 	/* Read */
-	zassert_equal(batt_cbi_read_battery_info(get_batt_params()),
+	zassert_equal(batt_conf_read_battery_info(get_batt_params()),
 		      EC_SUCCESS);
 
 	/* Validate default info == info in cbi. */
@@ -351,11 +351,11 @@ DECLARE_EC_TEST(test_read_battery_info)
 	return EC_SUCCESS;
 }
 
-TEST_SUITE(test_suite_battery_cbi)
+TEST_SUITE(test_suite_battery_config)
 {
 	ztest_test_suite(
-		test_battery_cbi,
-		ztest_unit_test_setup_teardown(test_batt_cbi_read, test_setup,
+		test_battery_config,
+		ztest_unit_test_setup_teardown(test_batt_conf_read, test_setup,
 					       test_teardown),
 		ztest_unit_test_setup_teardown(test_read_ship_mode, test_setup,
 					       test_teardown),
@@ -367,5 +367,5 @@ TEST_SUITE(test_suite_battery_cbi)
 					       test_setup, test_teardown),
 		ztest_unit_test_setup_teardown(test_read_battery_info,
 					       test_setup, test_teardown));
-	ztest_run_test_suite(test_battery_cbi);
+	ztest_run_test_suite(test_battery_config);
 }

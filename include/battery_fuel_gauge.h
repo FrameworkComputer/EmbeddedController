@@ -18,7 +18,7 @@
 /* When battery type is not initialized */
 #define BATTERY_TYPE_UNINITIALIZED -1
 
-#ifdef CONFIG_BATTERY_INFO_IN_CBI
+#ifdef CONFIG_BATTERY_CONFIG_IN_CBI
 #define batt_const
 #else
 #define batt_const const
@@ -52,7 +52,7 @@ struct fet_info {
 };
 
 struct fuel_gauge_info {
-#ifdef CONFIG_BATTERY_INFO_IN_CBI
+#ifdef CONFIG_BATTERY_CONFIG_IN_CBI
 	char manuf_name[32];
 	char device_name[32];
 #else
@@ -76,8 +76,8 @@ struct board_batt_params {
 };
 
 /* Forward declare board specific data used by common code */
-#ifdef CONFIG_BATTERY_INFO_IN_CBI
-extern struct board_batt_params default_battery_info;
+#ifdef CONFIG_BATTERY_CONFIG_IN_CBI
+extern struct board_batt_params default_battery_conf;
 #else
 extern const struct board_batt_params board_battery_info[];
 #endif
@@ -125,13 +125,13 @@ int battery_is_charge_fet_disabled(void);
  */
 enum ec_error_list battery_sleep_fuel_gauge(void);
 
-#ifdef CONFIG_BATTERY_INFO_IN_CBI
+#ifdef CONFIG_BATTERY_CONFIG_IN_CBI
 /**
  * Return struct board_batt_params of default battery.
  */
 inline struct board_batt_params *get_batt_params(void)
 {
-	return &default_battery_info;
+	return &default_battery_conf;
 }
 #endif
 

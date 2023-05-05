@@ -236,7 +236,7 @@ DECLARE_EC_TEST(test_all_tags)
 	/*
 	 * Fail if a (new) tag is missing from the unit test.
 	 *
-	 * Tags after FUEL_GAUGE_MANUF_NAME are tested in test/battery_cbi.c.
+	 * Tags after FUEL_GAUGE_MANUF_NAME are tested in test/battery_config.c.
 	 * Since they don't have dedicated accessors, adding them here do not
 	 * exercise any new lines.
 	 */
