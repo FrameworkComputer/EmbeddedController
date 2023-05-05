@@ -475,7 +475,7 @@ static int add_margin(int value, int m)
 /* allocate power between the base and the lid */
 static void
 base_charge_allocate_input_current_limit(const struct charge_state_data *curr,
-					 bool is_full)
+					 bool is_full, bool debugging)
 {
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	/*
@@ -1981,10 +1981,12 @@ static void adjust_requested_vi(const struct charger_info *const info,
 			curr.requested_current = 0;
 	}
 
-	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
-		base_charge_allocate_input_current_limit(&curr, is_full);
-	else
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT)) {
+		base_charge_allocate_input_current_limit(&curr, is_full,
+							 debugging);
+	} else {
 		charge_request(true, is_full);
+	}
 }
 
 /* Handle selection of the preferred voltage */
