@@ -1109,7 +1109,6 @@ static void charger_setup(const struct charger_info *info)
 		charger_base_setup();
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	curr.input_voltage = CHARGE_VOLTAGE_UNINITIALIZED;
-	battery_dynamic[BATT_IDX_BASE].flags = EC_BATT_FLAG_INVALID_DATA;
 #endif
 #ifdef CONFIG_OCPC
 	ocpc_init(&curr.ocpc);
@@ -1933,13 +1932,16 @@ int charge_set_input_current_limit(int ma, int mv)
 	}
 
 	curr.desired_input_current = ma;
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	/* Wake up charger task to allocate current between lid and base. */
-	charge_wakeup();
-	return EC_SUCCESS;
-#else
-	return charger_set_input_current_limit(chgnum, ma);
-#endif
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT)) {
+		/*
+		 * Wake up charger task to allocate current between lid and
+		 * base.
+		 */
+		charge_wakeup();
+		return EC_SUCCESS;
+	} else {
+		return charger_set_input_current_limit(chgnum, ma);
+	}
 }
 
 #ifdef CONFIG_OCPC

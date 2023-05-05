@@ -646,6 +646,7 @@ void charger_base_setup(void)
 {
 	base_responsive = 0;
 	charge_base = -1;
+	battery_dynamic[BATT_IDX_BASE].flags = EC_BATT_FLAG_INVALID_DATA;
 }
 
 bool charger_base_charge_changed(void)
