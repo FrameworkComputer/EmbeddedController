@@ -21,7 +21,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 
 /* Base has responded to one of our commands already. */
-int base_responsive;
+static int base_responsive;
 int charge_base;
 int prev_charge_base;
 static int prev_current_base;
@@ -641,6 +641,11 @@ static int command_chgdualdebug(int argc, const char **argv)
 DECLARE_CONSOLE_COMMAND(chgdualdebug, command_chgdualdebug,
 			"[charge (auto|<current>)|discharge (auto|<current>)]",
 			"Manually control dual-battery charging algorithm.");
+
+void charger_base_setup(void)
+{
+	base_responsive = 0;
+}
 
 /* Reset the base on S5->S0 transition. */
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_base_reset, HOOK_PRIO_DEFAULT);

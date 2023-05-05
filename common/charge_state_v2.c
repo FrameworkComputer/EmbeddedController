@@ -1106,8 +1106,9 @@ static void charger_setup(const struct charger_info *info)
 	chg_ctl_mode = CHARGE_CONTROL_NORMAL;
 	shutdown_target_time.val = 0UL;
 	battery_seems_dead = 0;
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+		charger_base_setup();
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	base_responsive = 0;
 	curr.input_voltage = CHARGE_VOLTAGE_UNINITIALIZED;
 	battery_dynamic[BATT_IDX_BASE].flags = EC_BATT_FLAG_INVALID_DATA;
 	charge_base = -1;

@@ -12,7 +12,6 @@
 
 struct charge_state_data;
 
-extern int base_responsive;
 extern int charge_base;
 extern int prev_charge_base;
 
@@ -41,5 +40,8 @@ bool base_connected(void)
 	return false;
 }
 #endif
+
+/* Set up the charger task for the base */
+void charger_base_setup(void);
 
 #endif /* __CROS_EC_CHARGER_BASE_H */
