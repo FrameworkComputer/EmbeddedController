@@ -300,9 +300,10 @@ static void dump_charge_state(void)
 #ifdef CONFIG_CHARGER_OTG
 	DUMP(output_current, "%dmA");
 #endif
-#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-	DUMP(input_voltage, "%dmV");
-#endif
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT)) {
+		ccprintf("input_voltage = %dmV\n",
+			 charger_base_get_input_voltage(&curr));
+	}
 	ccprintf("chg_ctl_mode = %s (%d)\n",
 		 cmode < CHARGE_CONTROL_COUNT ? mode_text[cmode] : "UNDEF",
 		 cmode);

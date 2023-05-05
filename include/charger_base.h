@@ -54,4 +54,7 @@ void charger_base_show_charge(void);
 /* Check if the base charge is near full */
 bool charger_base_charge_near_full(void);
 
+/* Get the base input-voltage */
+int charger_base_get_input_voltage(const struct charge_state_data *curr);
+
 #endif /* __CROS_EC_CHARGER_BASE_H */
