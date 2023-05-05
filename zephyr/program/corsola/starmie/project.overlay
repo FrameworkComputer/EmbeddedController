@@ -20,8 +20,8 @@
 
 / {
 	batteries {
-		default_battery: c235 {
-			compatible = "celxpert,c235-41", "battery-smart";
+		default_battery: b300049 {
+			compatible = "celxpert,b300049", "battery-smart";
 		};
 	};
 	gpio-interrupts {
