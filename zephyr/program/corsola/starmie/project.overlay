@@ -195,6 +195,9 @@
 	};
 
 	usbc {
+		/delete-node/ port1@1;
+		/delete-node/ port1-muxes;
+
 		port0@0{
 			usb-mux-chain-0{
 				usb-muxes = <&ps8743_mux_1 &virtual_mux_0>;
