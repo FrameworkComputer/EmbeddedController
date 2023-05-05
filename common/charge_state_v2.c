@@ -473,7 +473,9 @@ static int add_margin(int value, int m)
 #endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
 
 /* allocate power between the base and the lid */
-static void base_charge_allocate_input_current_limit(bool is_full)
+static void
+base_charge_allocate_input_current_limit(const struct charge_state_data *curr,
+					 bool is_full)
 {
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	/*
@@ -508,18 +510,19 @@ static void base_charge_allocate_input_current_limit(bool is_full)
 
 	const struct ec_response_battery_dynamic_info *const base_bd =
 		&battery_dynamic[BATT_IDX_BASE];
+	const struct batt_params *batt = &curr->batt;
 
 	if (!base_connected()) {
-		set_base_lid_current(0, 0, curr.desired_input_current, 1,
+		set_base_lid_current(0, 0, curr->desired_input_current, 1,
 				     is_full);
 		prev_base_battery_power = -1;
 		return;
 	}
 
 	/* Charging */
-	if (curr.desired_input_current > 0 && curr.input_voltage > 0)
-		total_power =
-			curr.desired_input_current * curr.input_voltage / 1000;
+	if (curr->desired_input_current > 0 && curr->input_voltage > 0)
+		total_power = curr->desired_input_current *
+			      curr->input_voltage / 1000;
 
 	/*
 	 * TODO(b:71723024): We should be able to replace this test by curr.ac,
@@ -627,10 +630,10 @@ static void base_charge_allocate_input_current_limit(bool is_full)
 	if (manual_ac_current_base >= 0) {
 		int current_base = manual_ac_current_base;
 		int current_lid =
-			curr.desired_input_current - manual_ac_current_base;
+			curr->desired_input_current - manual_ac_current_base;
 
 		if (current_lid < 0) {
-			current_base = curr.desired_input_current;
+			current_base = curr->desired_input_current;
 			current_lid = 0;
 		}
 
@@ -654,18 +657,16 @@ static void base_charge_allocate_input_current_limit(bool is_full)
 	 * based on remaining capacity.
 	 */
 	/* Estimate lid battery power. */
-	if (!(curr.batt.flags &
-	      (BATT_FLAG_BAD_VOLTAGE | BATT_FLAG_BAD_CURRENT)))
-		lid_battery_power =
-			curr.batt.current * curr.batt.voltage / 1000;
+	if (!(batt->flags & (BATT_FLAG_BAD_VOLTAGE | BATT_FLAG_BAD_CURRENT)))
+		lid_battery_power = batt->current * batt->voltage / 1000;
 	if (lid_battery_power < prev_lid_battery_power)
 		lid_battery_power =
 			smooth_value(prev_lid_battery_power, lid_battery_power,
 				     db_policy.battery_power_smooth);
-	if (!(curr.batt.flags &
+	if (!(batt->flags &
 	      (BATT_FLAG_BAD_DESIRED_VOLTAGE | BATT_FLAG_BAD_DESIRED_CURRENT)))
-		lid_battery_power_max = curr.batt.desired_current *
-					curr.batt.desired_voltage / 1000;
+		lid_battery_power_max =
+			batt->desired_current * batt->desired_voltage / 1000;
 
 	lid_battery_power = MIN(lid_battery_power, lid_battery_power_max);
 
@@ -718,8 +719,8 @@ static void base_charge_allocate_input_current_limit(bool is_full)
 			CPRINTF("power: base %d mW / lid %d mW\n", power_base,
 				power_lid);
 
-		current_base = 1000 * power_base / curr.input_voltage;
-		current_lid = 1000 * power_lid / curr.input_voltage;
+		current_base = 1000 * power_base / curr->input_voltage;
+		current_lid = 1000 * power_lid / curr->input_voltage;
 
 		if (current_base > db_policy.max_lid_to_base_current) {
 			current_lid += (current_base -
@@ -1981,7 +1982,7 @@ static void adjust_requested_vi(const struct charger_info *const info,
 	}
 
 	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
-		base_charge_allocate_input_current_limit(is_full);
+		base_charge_allocate_input_current_limit(&curr, is_full);
 	else
 		charge_request(true, is_full);
 }
