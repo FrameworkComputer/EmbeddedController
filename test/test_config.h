@@ -38,6 +38,10 @@
 #define CONFIG_BASE32
 #endif
 
+#ifdef TEST_BATTERY_CBI
+#define CONFIG_BATTERY_INFO_IN_CBI
+#endif
+
 #ifdef TEST_BKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID
 #endif

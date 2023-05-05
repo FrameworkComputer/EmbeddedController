@@ -18,6 +18,11 @@
 /* When battery type is not initialized */
 #define BATTERY_TYPE_UNINITIALIZED -1
 
+#ifdef CONFIG_BATTERY_INFO_IN_CBI
+#define batt_const
+#else
+#define batt_const const
+#endif
 struct ship_mode_info {
 	/*
 	 * Write Block Support. If wb_support is true, then we use a i2c write
@@ -25,34 +30,39 @@ struct ship_mode_info {
 	 * that the i2c transaction will prefix the length (2) when wb_support
 	 * is enabled.
 	 */
-	const uint8_t wb_support;
-	const uint8_t reg_addr;
-	const uint16_t reg_data[SHIP_MODE_WRITES];
+	batt_const uint8_t wb_support;
+	batt_const uint8_t reg_addr;
+	batt_const uint16_t reg_data[SHIP_MODE_WRITES];
 };
 
 struct sleep_mode_info {
-	const bool sleep_supported;
-	const uint8_t reg_addr;
-	const uint16_t reg_data;
+	batt_const bool sleep_supported;
+	batt_const uint8_t reg_addr;
+	batt_const uint16_t reg_data;
 };
 
 struct fet_info {
-	const int mfgacc_support;
-	const int mfgacc_smb_block;
-	const uint8_t reg_addr;
-	const uint16_t reg_mask;
-	const uint16_t disconnect_val;
-	const uint16_t cfet_mask; /* CHG FET status mask */
-	const uint16_t cfet_off_val;
+	batt_const int mfgacc_support;
+	batt_const int mfgacc_smb_block;
+	batt_const uint8_t reg_addr;
+	batt_const uint16_t reg_mask;
+	batt_const uint16_t disconnect_val;
+	batt_const uint16_t cfet_mask; /* CHG FET status mask */
+	batt_const uint16_t cfet_off_val;
 };
 
 struct fuel_gauge_info {
+#ifdef CONFIG_BATTERY_INFO_IN_CBI
+	char manuf_name[32];
+	char device_name[32];
+#else
 	const char *manuf_name;
 	const char *device_name;
-	const uint8_t override_nil;
-	const struct ship_mode_info ship_mode;
-	const struct sleep_mode_info sleep_mode;
-	const struct fet_info fet;
+#endif
+	batt_const uint8_t override_nil;
+	batt_const struct ship_mode_info ship_mode;
+	batt_const struct sleep_mode_info sleep_mode;
+	batt_const struct fet_info fet;
 
 #ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
 	/* See battery_*_imbalance_mv() for functions which are suitable. */
@@ -61,12 +71,16 @@ struct fuel_gauge_info {
 };
 
 struct board_batt_params {
-	const struct fuel_gauge_info fuel_gauge;
-	const struct battery_info batt_info;
+	batt_const struct fuel_gauge_info fuel_gauge;
+	batt_const struct battery_info batt_info;
 };
 
 /* Forward declare board specific data used by common code */
+#ifdef CONFIG_BATTERY_INFO_IN_CBI
+extern struct board_batt_params default_battery_info;
+#else
 extern const struct board_batt_params board_battery_info[];
+#endif
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
 
 #ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
@@ -110,5 +124,15 @@ int battery_is_charge_fet_disabled(void);
  * @return	0 if successful, non-zero if error occurred
  */
 enum ec_error_list battery_sleep_fuel_gauge(void);
+
+#ifdef CONFIG_BATTERY_INFO_IN_CBI
+/**
+ * Return struct board_batt_params of default battery.
+ */
+inline struct board_batt_params *get_batt_params(void)
+{
+	return &default_battery_info;
+}
+#endif
 
 #endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */

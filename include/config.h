@@ -470,6 +470,11 @@
  */
 #undef CONFIG_BATTERY
 
+/**
+ * Enable Battery-info-in-CBI. It allows a board to read battery info from CBI.
+ */
+#undef CONFIG_BATTERY_INFO_IN_CBI
+
 /*
  * Config to indicate the battery type that cannot be auto detected.
  */

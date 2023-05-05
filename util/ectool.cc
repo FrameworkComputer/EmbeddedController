@@ -8531,7 +8531,9 @@ static void cmd_cbi_help(char *cmd)
 
 static int cmd_cbi_is_string_field(enum cbi_data_tag tag)
 {
-	return tag == CBI_TAG_DRAM_PART_NUM || tag == CBI_TAG_OEM_NAME;
+	return tag == CBI_TAG_DRAM_PART_NUM || tag == CBI_TAG_OEM_NAME ||
+	       tag == CBI_TAG_FUEL_GAUGE_MANUF_NAME ||
+	       tag == CBI_TAG_FUEL_GAUGE_DEVICE_NAME;
 }
 
 /*

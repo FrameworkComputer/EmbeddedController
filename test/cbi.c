@@ -233,8 +233,14 @@ DECLARE_EC_TEST(test_all_tags)
 		     "0x%llx, 0x%llx", (unsigned long long)d64,
 		     (unsigned long long)d8);
 
-	/* Fail if a (new) tag is missing from the unit test. */
-	zassert_equal(count, CBI_TAG_COUNT, "%d, %d", count, CBI_TAG_COUNT);
+	/*
+	 * Fail if a (new) tag is missing from the unit test.
+	 *
+	 * Tags after FUEL_GAUGE_MANUF_NAME are tested in test/battery_cbi.c.
+	 * Since they don't have dedicated accessors, adding them here do not
+	 * exercise any new lines.
+	 */
+	zassert_equal(count, CBI_TAG_FUEL_GAUGE_MANUF_NAME);
 
 	/* Write protect */
 	write_protect_set(1);
