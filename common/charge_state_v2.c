@@ -1724,21 +1724,33 @@ static void charger_setup(const struct charger_info *info)
 	battery_level_shutdown = board_set_battery_level_shutdown();
 }
 
-/* Check base external-power settings and react as needed */
-static void base_check_extpower(void)
+/*
+ * Check base external-power settings and react as needed
+ *
+ * @param ac Current ac value from struct charge_state_data
+ * @param prev_ac Previous value of ac
+ * Returns true if ac should be zeroed, false to leave it along
+ */
+static bool base_check_extpower(int ac, int prev_ac)
 {
 	/* This #ifdef protects access to vars that are otherwise unavailable */
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
+	bool zero_ac = false;
+
 	/*
-	 * When base is powering the system, make sure curr.ac stays 0.
+	 * When base is powering the system, make sure ac stays 0.
 	 * TODO(b:71723024): Fix extpower_is_present() in hardware instead.
 	 */
-	if (base_responsive && prev_current_base < 0)
-		curr.ac = 0;
+	if (base_responsive && prev_current_base < 0) {
+		ac = 0;
+		zero_ac = true;
+	}
 
 	/* System is off: if AC gets connected, reset the base. */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !prev_ac && curr.ac)
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !prev_ac && ac)
 		board_base_reset();
+
+	return zero_ac;
 #endif
 }
 
@@ -2084,8 +2096,10 @@ int calculate_sleep_dur(int battery_critical, int sleep_usec)
 static void check_extpower(int chgnum)
 {
 	curr.ac = extpower_is_present();
-	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
-		base_check_extpower();
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT)) {
+		if (base_check_extpower(curr.ac, prev_ac))
+			curr.ac = 0;
+	}
 
 	if (curr.ac != prev_ac)
 		process_ac_change(chgnum);
