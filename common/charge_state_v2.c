@@ -124,7 +124,6 @@ STATIC_IF(CONFIG_USB_PD_PREFER_MV) int desired_mw;
 STATIC_IF_NOT(CONFIG_USB_PD_PREFER_MV) struct pd_pref_config_t pd_pref_config;
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
-static int base_connected;
 /* Base has responded to one of our commands already. */
 static int base_responsive;
 static int charge_base;
@@ -144,9 +143,16 @@ static int manual_ac_current_base = -1;
  */
 static int manual_noac_enabled;
 static int manual_noac_current_base;
-#else
-static const int base_connected;
 #endif
+
+/* Check if there is a base and it is connected */
+static bool base_connected(void)
+{
+	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
+		return board_is_base_connected();
+
+	return false;
+}
 
 /* Is battery connected but unresponsive after precharge? */
 static int battery_seems_dead;
@@ -405,7 +411,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 	else
 		lid_first = 0; /* All other cases: control the base first */
 
-	if (!lid_first && base_connected) {
+	if (!lid_first && base_connected()) {
 		ret = set_base_current(current_base, allow_charge_base);
 		if (ret)
 			return;
@@ -433,7 +439,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 
 	prev_current_lid = current_lid;
 
-	if (lid_first && base_connected) {
+	if (lid_first && base_connected()) {
 		ret = set_base_current(current_base, allow_charge_base);
 		if (ret)
 			return;
@@ -443,7 +449,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 	 * Make sure cross-power is enabled (it might not be enabled right after
 	 * plugging the base, or when an adapter just got connected).
 	 */
-	if (base_connected && current_base != 0)
+	if (base_connected() && current_base != 0)
 		board_enable_base_power(1);
 }
 
@@ -507,7 +513,7 @@ static void base_charge_allocate_input_current_limit(bool is_full)
 	const struct ec_response_battery_dynamic_info *const base_bd =
 		&battery_dynamic[BATT_IDX_BASE];
 
-	if (!base_connected) {
+	if (!base_connected()) {
 		set_base_lid_current(0, 0, curr.desired_input_current, 1,
 				     is_full);
 		prev_base_battery_power = -1;
@@ -745,9 +751,7 @@ static void base_update_battery_info(void)
 	struct ec_response_battery_dynamic_info *const bd =
 		&battery_dynamic[BATT_IDX_BASE];
 
-	base_connected = board_is_base_connected();
-
-	if (!base_connected) {
+	if (!base_connected()) {
 		const int invalid_flags = EC_BATT_FLAG_INVALID_DATA;
 		/* Invalidate static/dynamic information */
 		if (bd->flags != invalid_flags) {
@@ -1554,7 +1558,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bat_low_voltage_throttle_reset,
 static int get_desired_input_current(enum battery_present batt_present,
 				     const struct charger_info *const info)
 {
-	if (batt_present == BP_YES || system_is_locked() || base_connected) {
+	if (batt_present == BP_YES || system_is_locked() || base_connected()) {
 #ifdef CONFIG_CHARGE_MANAGER
 		int ilim = charge_manager_get_charger_current();
 		return ilim == CHARGE_CURRENT_UNINITIALIZED ?
@@ -2471,7 +2475,7 @@ int charge_set_input_current_limit(int ma, int mv)
 	 * browning out due to insufficient input current.
 	 */
 	if (curr.batt.is_present != BP_YES && !system_is_locked() &&
-	    !base_connected) {
+	    !base_connected()) {
 		int prev_input = 0;
 
 		charger_get_input_current_limit(chgnum, &prev_input);
