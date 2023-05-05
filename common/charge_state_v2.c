@@ -73,7 +73,7 @@
 static timestamp_t uvp_throttle_start_time;
 #endif /* CONFIG_THROTTLE_AP_ON_BAT_OLTAGE */
 
-static int charge_request(int voltage, int current, bool is_full);
+static int charge_request(bool use_curr, bool is_full);
 
 static uint8_t battery_level_shutdown;
 
@@ -424,11 +424,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 		ret = charger_set_input_current_limit(chgnum, current_lid);
 		if (ret)
 			return;
-		if (allow_charge_lid)
-			ret = charge_request(curr.requested_voltage,
-					     curr.requested_current, is_full);
-		else
-			ret = charge_request(0, 0, is_full);
+		ret = charge_request(allow_charge_lid, is_full);
 	} else {
 		ret = charge_set_output_current_limit(
 			CHARGER_SOLO, -current_lid, otg_voltage);
@@ -997,13 +993,22 @@ __overridable int board_should_charger_bypass(void)
 /*
  * Ask the charger for some voltage and current. If either value is 0,
  * charging is disabled; otherwise it's enabled. Negative values are ignored.
+ *
+ * @param use_curr Use values from requested voltage and current (otherwise use
+ * 0 for both)
+ * @param is_full Battery is full
  */
-static int charge_request(int voltage, int current, bool is_full)
+static int charge_request(bool use_curr, bool is_full)
 {
 	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS, r4 = EC_SUCCESS;
 	static int prev_volt, prev_curr;
 	bool should_bypass;
+	int voltage = 0, current = 0;
 
+	if (use_curr) {
+		voltage = curr.requested_voltage;
+		current = curr.requested_current;
+	}
 	if (!voltage || !current) {
 #ifdef CONFIG_CHARGER_NARROW_VDC
 		current = 0;
@@ -1978,8 +1983,7 @@ static void adjust_requested_vi(const struct charger_info *const info,
 	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
 		base_charge_allocate_input_current_limit(is_full);
 	else
-		charge_request(curr.requested_voltage, curr.requested_current,
-			       is_full);
+		charge_request(true, is_full);
 }
 
 /* Handle selection of the preferred voltage */
