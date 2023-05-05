@@ -68,6 +68,9 @@ common-$(CONFIG_CHARGER)+=charger.o
 ifneq ($(CONFIG_CHARGER),)
 common-$(CONFIG_BATTERY)+=charge_state_v2.o
 endif
+ifneq ($(CONFIG_EC_EC_COMM_BATTERY_CLIENT),)
+common-$(CONFIG_BATTERY)+=charger_base.o
+endif
 common-$(CONFIG_CHARGER_PROFILE_OVERRIDE_COMMON)+=charger_profile_override.o
 common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
 common-$(CONFIG_COMMON_GPIO)+=gpio.o gpio_commands.o

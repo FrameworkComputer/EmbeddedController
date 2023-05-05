@@ -435,4 +435,17 @@ void print_charger_prochot(int chgnum);
  */
 int charger_get_min_bat_pct_for_power_on(void);
 
+/* Wake up the task when something important happens */
+void charge_wakeup(void);
+
+/*
+ * Ask the charger for some voltage and current. If either value is 0,
+ * charging is disabled; otherwise it's enabled. Negative values are ignored.
+ *
+ * @param use_curr Use values from requested voltage and current (otherwise use
+ * 0 for both)
+ * @param is_full Battery is full
+ */
+int charge_request(bool use_curr, bool is_full);
+
 #endif /* __CROS_EC_CHARGER_H */
