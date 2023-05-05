@@ -437,7 +437,6 @@ void lfw_main(void)
 	timer_init();
 	lfw_wdt();
 	clock_init();
-	lfw_wdt_stop();
 	cpu_init();
 	dma_init();
 	uart_init();
@@ -524,7 +523,7 @@ void lfw_main(void)
 
 		init_addr = CONFIG_RO_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE;
 	}
-
+	lfw_wdt_stop();
 	trace11(0, LFW, 0, "Get EC reset handler from 0x%08x", (init_addr + 4));
 	trace11(0, LFW, 0, "Jump to EC @ 0x%08x",
 		*((uint32_t *)(init_addr + 4)));
