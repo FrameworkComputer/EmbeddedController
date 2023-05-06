@@ -1,0 +1,26 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_imu: ec_imu {
+			irq-pin = <&gpio_ec_imu_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lsm6dso_interrupt";
+		};
+		int_als_rgb: ec_als_rgb {
+			irq-pin = <&gpio_ec_als_rgb_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcs3400_interrupt";
+		};
+		int_accel: ec_accel {
+			irq-pin = <&gpio_ec_accel_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
+		};
+	};
+};

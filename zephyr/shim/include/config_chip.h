@@ -2214,6 +2214,12 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #define CONFIG_LID_SWITCH
 #endif
 
+/* Integrated Sensor Hub: to set EC_FEATURE_ISH */
+#undef CHIP_ISH
+#ifdef CONFIG_SOC_FAMILY_INTEL_ISH
+#define CHIP_ISH
+#endif
+
 /* motion sense */
 #undef CONFIG_MOTIONSENSE
 #ifdef CONFIG_PLATFORM_EC_MOTIONSENSE
