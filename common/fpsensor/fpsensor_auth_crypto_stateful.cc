@@ -77,3 +77,54 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 
 	return enc_key;
 }
+
+enum ec_error_list
+decrypt_data(const struct fp_auth_command_encryption_metadata &info,
+	     const uint8_t *enc_data, size_t enc_data_size, uint8_t *data,
+	     size_t data_size)
+{
+	if (info.struct_version != 1) {
+		return EC_ERROR_INVAL;
+	}
+
+	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
+	enum ec_error_list ret =
+		derive_encryption_key(enc_key.data(), info.encryption_salt);
+	if (ret != EC_SUCCESS) {
+		CPRINTS("Failed to derive key");
+		return ret;
+	}
+
+	if (enc_data_size != data_size) {
+		CPRINTS("Data size mismatch");
+		return EC_ERROR_OVERFLOW;
+	}
+
+	ret = aes_gcm_decrypt(enc_key.data(), enc_key.size(), data, enc_data,
+			      data_size, info.nonce, sizeof(info.nonce),
+			      info.tag, sizeof(info.tag));
+	if (ret != EC_SUCCESS) {
+		CPRINTS("Failed to decipher data");
+		return ret;
+	}
+
+	return EC_SUCCESS;
+}
+
+bssl::UniquePtr<EC_KEY> decrypt_private_key(
+	const struct fp_encrypted_private_key &encrypted_private_key)
+{
+	CleanseWrapper<std::array<uint8_t, sizeof(encrypted_private_key.data)> >
+		privkey;
+
+	enum ec_error_list ret = decrypt_data(
+		encrypted_private_key.info, encrypted_private_key.data,
+		sizeof(encrypted_private_key.data), privkey.data(),
+		privkey.size());
+	if (ret != EC_SUCCESS) {
+		CPRINTS("Failed to decrypt private key");
+		return nullptr;
+	}
+
+	return create_ec_key_from_privkey(privkey.data(), privkey.size());
+}

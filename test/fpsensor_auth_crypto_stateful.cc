@@ -56,8 +56,12 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_data(void)
 	/* The encrypted data should not be the same as the input. */
 	TEST_ASSERT_ARRAY_NE(data, input, data.size());
 
-	/* TODO(crrev/c/4511815): Decrypt the data, and check the result is the
-	 * same. */
+	std::array<uint8_t, 32> output;
+	TEST_EQ(decrypt_data(info, data.data(), data.size(), output.data(),
+			     output.size()),
+		EC_SUCCESS, "%d");
+
+	TEST_ASSERT_ARRAY_EQ(input, output, sizeof(input));
 
 	return EC_SUCCESS;
 }
@@ -79,8 +83,15 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_key(void)
 
 	TEST_EQ(enc_key->info.struct_version, version, "%d");
 
-	/* TODO(crrev/c/4511815): Decrypt the data, and check the result is the
-	 * same. */
+	bssl::UniquePtr<EC_KEY> out_key = decrypt_private_key(*enc_key);
+
+	TEST_NE(key.get(), nullptr, "%p");
+
+	std::array<uint8_t, 32> output_privkey;
+	EC_KEY_priv2oct(out_key.get(), output_privkey.data(),
+			output_privkey.size());
+
+	TEST_ASSERT_ARRAY_EQ(privkey, output_privkey, sizeof(privkey));
 
 	return EC_SUCCESS;
 }
