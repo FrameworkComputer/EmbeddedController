@@ -19,6 +19,7 @@ extern "C" {
 #include "ec_commands.h"
 #include "math_util.h"
 #include "stack_trace.h"
+#include "string.h"
 
 #ifdef CONFIG_ZTEST
 #include "ec_tasks.h"
@@ -113,6 +114,19 @@ extern "C" {
 				task_dump_trace();                           \
 				return EC_ERROR_UNKNOWN;                     \
 			}                                                    \
+	} while (0)
+
+#define TEST_ASSERT_ARRAY_NE(s, d, n)                                         \
+	do {                                                                  \
+		if (n < 0)                                                    \
+			return EC_ERROR_UNKNOWN;                              \
+                                                                              \
+		if (memcmp(&s[0], &d[0], n) == 0) {                           \
+			ccprintf("%s:%d: ASSERT_ARRAY_NE failed\n", __FILE__, \
+				 __LINE__);                                   \
+			task_dump_trace();                                    \
+			return EC_ERROR_UNKNOWN;                              \
+		}                                                             \
 	} while (0)
 
 #define TEST_ASSERT_MEMSET(d, c, n)                                        \
