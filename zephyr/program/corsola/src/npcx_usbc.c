@@ -11,6 +11,7 @@
 #endif
 
 #include "baseboard_usbc_config.h"
+#include "battery.h"
 #include "console.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/anx7447.h"
@@ -53,8 +54,10 @@ DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
 
 void board_tcpc_init(void)
 {
-	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_late()) {
+	/* Reset TCPC if we only we have a battery connected, or the SINK
+	 * gpio to the PPC might be reset and cause brown-out.
+	 */
+	if (!system_jumped_late() && battery_is_present() == BP_YES) {
 		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
 		board_reset_pd_mcu();
 	}
@@ -84,7 +87,13 @@ __override int board_rt1718s_init(int port)
 {
 	static bool gpio_initialized;
 
-	if (!system_jumped_late() && !gpio_initialized) {
+	/* Reset TCPC sink/source control when it's a power-on reset or has a
+	 * battery. Do not alter the carried GPIO status or this might stop PPC
+	 * sinking and brown-out the system when battery disconnected.
+	 */
+	if (!system_jumped_late() && !gpio_initialized &&
+	    (battery_is_present() == BP_YES ||
+	     (system_get_reset_flags() & EC_RESET_FLAG_POWER_ON))) {
 		/* set GPIO 1~3 as push pull, as output, output low. */
 		rt1718s_gpio_set_flags(port, RT1718S_GPIO1, GPIO_OUT_LOW);
 		rt1718s_gpio_set_flags(port, RT1718S_GPIO2, GPIO_OUT_LOW);
