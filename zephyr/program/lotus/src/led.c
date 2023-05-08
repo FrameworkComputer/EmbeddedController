@@ -35,10 +35,6 @@ struct led_color_node_t {
 	int acc_period;
 };
 
-#define BREATH_LIGHT_LENGTH 100
-#define BREATH_HOLD_LENGTH 50
-#define BREATH_OFF_LENGTH 200
-
 enum breath_status {
 	BREATH_LIGHT_UP = 0,
 	BREATH_LIGHT_DOWN,
@@ -286,7 +282,13 @@ void pwm_set_breath_dt(const struct led_pins_node_t *pins_node, int percent)
 	struct pwm_pin_t *pwm_pins = pins_node->pwm_pins;
 	uint32_t pulse_ns;
 
-	pulse_ns = DIV_ROUND_NEAREST(1000000 * percent, 100);
+	/*
+	 * pulse_ns = (period_ns*duty_cycle_in_perct)/100
+	 * freq = 100 Hz, period_ns = 1000000000/100 = 10000000ns
+	 * duty_cycle = 50 %, pulse_ns  = (10000000*50)/100 = 5000000ns
+	 */
+
+	pulse_ns = DIV_ROUND_NEAREST(10000000 * percent, 100);
 
 	for (int j = 0; j < pins_node->pins_count; j++) {
 		pwm_set_pulse_dt(&pwm_pins[j].pwm, pulse_ns);
@@ -300,24 +302,45 @@ void pwm_set_breath_dt(const struct led_pins_node_t *pins_node, int percent)
  *	Duration time (second) = BREATH_HOLD_LENGTH(500ms)
  *	Interval time (second) = BREATH_OFF_LENGTH(2000ms)
  */
-
 static void breath_led_pwm_deferred(void)
 {
+	uint8_t led_hold_length;
+	uint8_t led_duty_percentage;
+	uint8_t bbram_led_level;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &bbram_led_level);
+
+	switch (bbram_led_level) {
+	case FP_LED_LOW:
+		led_duty_percentage = FP_LED_LOW;
+		led_hold_length = BREATH_ON_LENGTH_LOW;
+		break;
+	case FP_LED_MEDIUM:
+		led_duty_percentage = FP_LED_MEDIUM;
+		led_hold_length = BREATH_ON_LENGTH_MID;
+		break;
+	case FP_LED_HIGH:
+	default:
+		led_duty_percentage = FP_LED_HIGH;
+		led_hold_length = BREATH_ON_LENGTH_HIGH;
+		break;
+	}
+
 	switch (breath_led_status) {
 	case BREATH_LIGHT_UP:
 
-		if (breath_led_light_up <= BREATH_LIGHT_LENGTH)
+		if (breath_led_light_up <= led_duty_percentage)
 			pwm_set_breath_dt(GET_PIN_NODE(7, 0), breath_led_light_up++);
 		else {
 			breath_led_light_up = 0;
-			breath_led_light_down = BREATH_LIGHT_LENGTH;
+			breath_led_light_down = led_duty_percentage;
 			breath_led_status = BREATH_HOLD;
 		}
 
 		break;
 	case BREATH_HOLD:
 
-		if (breath_led_hold <= BREATH_HOLD_LENGTH)
+		if (breath_led_hold <= led_hold_length)
 			breath_led_hold++;
 		else {
 			breath_led_hold = 0;
@@ -331,7 +354,7 @@ static void breath_led_pwm_deferred(void)
 			pwm_set_breath_dt(GET_PIN_NODE(7, 0),
 				     breath_led_light_down--);
 		else {
-			breath_led_light_down = BREATH_LIGHT_LENGTH;
+			breath_led_light_down = led_duty_percentage;
 			breath_led_status = BREATH_OFF;
 		}
 
@@ -371,6 +394,9 @@ void breath_led_run(uint8_t enable)
 
 static void board_led_set_power(void)
 {
+	uint8_t bbram_led_level;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &bbram_led_level);
 
 	/* turn off led when lid is close*/
 	if (!lid_is_open()) {
@@ -386,7 +412,8 @@ static void board_led_set_power(void)
 	breath_led_run(0);
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		led_set_color(LED_WHITE, EC_LED_ID_POWER_LED);
+		pwm_set_breath_dt(GET_PIN_NODE(7, 0),
+			bbram_led_level ? bbram_led_level : FP_LED_HIGH);
 	} else
 		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
 }

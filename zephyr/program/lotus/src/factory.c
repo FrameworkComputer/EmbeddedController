@@ -22,3 +22,8 @@ void factory_setting(uint8_t enable)
 	else
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_powerbtn));
 }
+
+int factory_status(void)
+{
+	return factory_enable;
+}

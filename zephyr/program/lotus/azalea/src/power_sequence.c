@@ -8,10 +8,12 @@
 #include "config.h"
 #include "console.h"
 #include "customized_shared_memory.h"
+#include "cypress_pd_common.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "lpc.h"
 #include "power.h"
 #include "power_sequence.h"
 #include "task.h"
@@ -66,6 +68,52 @@ static int keep_pch_power(void)
 
 }
 
+
+/*
+ * Backup copies of SCI mask to preserve across S0ix suspend/resume
+ * cycle. If the host uses S0ix, BIOS is not involved during suspend and resume
+ * operations and hence SCI masks are programmed only once during boot-up.
+ *
+ * These backup variables are set whenever host expresses its interest to
+ * enter S0ix and then lpc_host_event_mask for SCI are cleared. When
+ * host resumes from S0ix, masks from backup variables are copied over to
+ * lpc_host_event_mask for SCI.
+ */
+static host_event_t backup_sci_mask;
+
+/*
+ * Clear host event masks for SCI when host is entering S0ix. This is
+ * done to prevent any SCI interrupts when the host is in suspend. Since
+ * BIOS is not involved in the suspend path, EC needs to take care of clearing
+ * these masks.
+ */
+static void lpc_s0ix_suspend_clear_masks(void)
+{
+	backup_sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_WAKE_EVENT_MASK);
+}
+
+/*
+ * Restore host event masks for SCI when host exits S0ix. This is done
+ * because BIOS is not involved in the resume path and so EC needs to restore
+ * the masks from backup variables.
+ */
+static void lpc_s0ix_resume_restore_masks(void)
+{
+	/*
+	 * No need to restore SCI masks if both backup_sci_mask are zero.
+	 * This indicates that there was a failure to enter S0ix
+	 * and hence SCI masks were never backed up.
+	 */
+	if (!backup_sci_mask)
+		return;
+
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, backup_sci_mask);
+
+	backup_sci_mask = 0;
+}
+
 static void clear_rtcwake(void)
 {
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~BIT(0);
@@ -95,6 +143,69 @@ static void board_power_on(void)
 		hook_call_deferred(&board_power_on_data, 5 * MSEC);
 	}
 }
+
+void power_state_clear(int state)
+{
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE) &= ~state;
+}
+
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
+/*
+ * Backup copies of SCI mask to preserve across S0ix suspend/resume
+ * cycle. If the host uses S0ix, BIOS is not involved during suspend and resume
+ * operations and hence SCI masks are programmed only once during boot-up.
+ *
+ * These backup variables are set whenever host expresses its interest to
+ * enter S0ix and then lpc_host_event_mask for SCI are cleared. When
+ * host resumes from S0ix, masks from backup variables are copied over to
+ * lpc_host_event_mask for SCI.
+ */
+static int enter_ms_flag;
+static int resume_ms_flag;
+
+static int check_s0ix_statsus(void)
+{
+	int power_status;
+	int clear_flag;
+
+	/* check power state S0ix flags */
+	if (chipset_in_state(CHIPSET_STATE_ON) || chipset_in_state(CHIPSET_STATE_STANDBY)) {
+		power_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE);
+
+
+		/**
+		 * Sometimes PCH will set the enter and resume flag continuously
+		 * so clear the EMI when we read the flag.
+		 */
+		if (power_status & EC_PS_ENTER_S0ix)
+			enter_ms_flag++;
+
+		if (power_status & EC_PS_RESUME_S0ix)
+			resume_ms_flag++;
+
+		clear_flag = power_status & (EC_PS_ENTER_S0ix | EC_PS_RESUME_S0ix);
+
+		power_state_clear(clear_flag);
+
+		if (enter_ms_flag || resume_ms_flag)
+			return 1;
+	}
+	return 0;
+}
+
+void s0ix_status_handle(void)
+{
+	int s0ix_state_change;
+
+	s0ix_state_change = check_s0ix_statsus();
+
+	if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_ON))
+		task_wake(TASK_ID_CHIPSET);
+	else if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_STANDBY))
+		task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
+#endif
 
 int get_power_rail_status(void)
 {
@@ -254,8 +365,12 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
 
+		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
+
+		/* set the PD chip system power state "S0" */
+		cypd_set_power_active(POWER_S0);
 
 		clear_rtcwake();
 
@@ -268,7 +383,48 @@ enum power_state power_handle_state(enum power_state state)
 			k_msleep(5);
 			return POWER_S0S3;
 		}
+
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
+		if (check_s0ix_statsus())
+			return POWER_S0S0ix;
+#endif
 		break;
+
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
+	case POWER_S0ix:
+		CPRINTS("PH S0ix");
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
+			/*
+			 * If power signal lose, we need to resume to S0 and
+			 * clear the resume ms flag
+			 */
+			if (resume_ms_flag > 0)
+				resume_ms_flag--;
+			return POWER_S0;
+		}
+		if (check_s0ix_statsus())
+			return POWER_S0ixS0;
+
+		break;
+
+	case POWER_S0ixS0:
+		CPRINTS("PH S0ixS0");
+		if (resume_ms_flag > 0)
+			resume_ms_flag--;
+		CPRINTS("PH S0ixS0->S0");
+		return POWER_S0;
+
+		break;
+
+	case POWER_S0S0ix:
+		CPRINTS("PH S0->S0ix");
+		if (enter_ms_flag > 0)
+			enter_ms_flag--;
+		CPRINTS("PH S0S0ix->S0ix");
+		return POWER_S0ix;
+
+		break;
+#endif
 
 	case POWER_S0S3:
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
@@ -277,8 +433,12 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 0);
 
+		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+
+		/* set the PD chip system power state "S3" */
+		cypd_set_power_active(POWER_S3);
 		return POWER_S3;
 
 	case POWER_S3S5:
@@ -286,6 +446,9 @@ enum power_state power_handle_state(enum power_state state)
 		power_s5_up_control(0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+
+		/* set the PD chip system power state "S5" */
+		cypd_set_power_active(POWER_S5);
 		return POWER_S5;
 
 	case POWER_S5G3:

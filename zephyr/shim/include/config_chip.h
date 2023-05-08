@@ -798,6 +798,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #define CONFIG_KEYBOARD_STRICT_DEBOUNCE
 #endif
 
+#undef CONFIG_KEYBOARD_SCANCODE_CALLBACK
+#ifdef CONFIG_PLATFORM_KEYBOARD_SCANCODE_CALLBACK
+#define CONFIG_KEYBOARD_SCANCODE_CALLBACK
+#endif
+
 #undef CONFIG_LED_COMMON
 #ifdef CONFIG_PLATFORM_EC_LED_COMMON
 #define CONFIG_LED_COMMON
@@ -2596,6 +2601,11 @@ extern char mock_jump_data[sizeof(struct jump_data) + 256];
 #ifdef CONFIG_PLATFORM_EC_MP2964
 #define CONFIG_MP2964
 #define I2C_ADDR_MP2964_FLAGS DT_REG_ADDR(DT_NODELABEL(pmic_mp2964))
+#endif
+
+#undef CONFIG_INA236
+#ifdef CONFIG_PLATFORM_EC_INA236
+#define CONFIG_INA236
 #endif
 
 #undef CONFIG_ACCELGYRO_ICM_COMM_SPI

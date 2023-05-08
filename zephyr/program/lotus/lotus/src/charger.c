@@ -5,16 +5,21 @@
 #include <zephyr/drivers/gpio.h>
 
 #include "battery.h"
+#include "board_adc.h"
 #include "board_charger.h"
+#include "charger.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "charger.h"
+#include "chipset.h"
 #include "console.h"
+#include "cypress_pd_common.h"
 #include "driver/charger/isl9241.h"
+#include "driver/ina2xx.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "charge_manager.h"
+#include "math_util.h"
+#include "system.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
@@ -27,6 +32,9 @@ static void charger_chips_init_retry(void)
 	charger_chips_init();
 }
 DECLARE_DEFERRED(charger_chips_init_retry);
+
+static void board_check_current(void);
+DECLARE_DEFERRED(board_check_current);
 
 static void charger_chips_init(void)
 {
@@ -92,12 +100,13 @@ static void charger_chips_init(void)
 		ISL9241_REG_OTG_CURRENT, 0x0000))
 		goto init_fail;
 
-	/* according to Power team suggest, Set ACOK reference to 4.032V */
+	/* According to Power team suggest, Set ACOK reference to 4.704V */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4032)))
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4704)))
 		goto init_fail;
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
+	hook_call_deferred(&board_check_current_data, 10*MSEC);
 	CPRINTS("ISL9241 customized initial complete!");
 	return;
 
@@ -118,22 +127,37 @@ void charger_update(void)
 		CPRINTS("update charger!!");
 
 		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL1, &val)) {
+			ISL9241_REG_CONTROL1, &val))
 			CPRINTS("read charger control1 fail");
-		}
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6000;
+		val &= ~ISL9241_CONTROL1_SWITCHING_FREQ_MASK;
 		val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7) &
 			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL1, val)) {
+			ISL9241_REG_CONTROL1, val))
 			CPRINTS("Update charger control1 fail");
-		}
 
-		/* Set DC prochot to 6.912A */
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_DC_PROCHOT, 0x1D00))
+		/**
+		 * Update the isl9241 control3
+		 * AC only need to disable the input current limit loop
+		 */
+		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL3, &val))
+			CPRINTS("read charger control3 fail");
+
+		if (extpower_is_present() && !battery_is_present())
+			val |= ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP;
+		else
+			val &= ~ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP;
+
+		/**
+		 * Update the DC prochot current limit
+		 * EVT: DC prochot value = 6820 mA / (10 / 3) = 2130 mA (0x800)
+		 * DVT: DC prochot value = 7100 mA / (10 / 5) = 3584 mA (0xE00)
+		 */
+		if (isl9241_set_dc_prochot(0,
+			(board_get_version() < BOARD_VERSION_7) ? 0x800 : 0xE00))
 			CPRINTS("Update DC prochot fail");
 
 		pre_ac_state = extpower_is_present();
@@ -158,6 +182,95 @@ __override int board_should_charger_bypass(void)
 		return false;
 }
 
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	int prochot_ma;
+	uint64_t calculate_ma;
+
+
+	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
+		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
+	}
+
+	/*Handle EPR converstion through the buck switcher*/
+	if (charge_mv > 20000) {
+		/**
+		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
+		 * actually, the charge_ma already correction, so just * 0.9 * 0.94
+		 */
+		calculate_ma = (int64_t)charge_ma * 90 * 94 / 10000;
+		CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
+	} else {
+		calculate_ma = (int64_t)charge_ma * 88 / 100;
+	}
+
+	/*
+	 * ac prochot should bigger than input current
+	 * And needs to be at least 128mA bigger than the adapter current
+	 */
+	charge_ma = (uint16_t)calculate_ma;
+	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
+
+	if ((prochot_ma - charge_ma) < 853) {
+		/* We need prochot to be at least 1 LSB above
+		 * the input current limit. This is not ideal
+		 * due to the low accuracy on prochot.
+		 */
+		prochot_ma += 853;
+	}
+
+	charge_set_input_current_limit(charge_ma, charge_mv);
+	/* sync-up ac prochot with current change */
+	isl9241_set_ac_prochot(0, prochot_ma);
+}
+
+void board_check_current(void)
+{
+	int16_t sv = ina2xx_read(0, INA2XX_REG_SHUNT_VOLT);
+	static int curr_status = EC_DEASSERTED_PROCHOT;
+	static int pre_status = EC_DEASSERTED_PROCHOT;
+	static int active_port;
+	static int shunt_register;
+
+	active_port = charge_manager_get_active_charge_port();
+
+	if (active_port == CHARGE_PORT_NONE) {
+		curr_status = EC_DEASSERTED_PROCHOT;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
+		hook_call_deferred(&board_check_current_data, 100 * MSEC);
+		return;
+	}
+
+	if (board_get_version() >= BOARD_VERSION_7)
+		shunt_register = 10;
+	else
+		shunt_register = 5;
+
+	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > pd_get_active_current(active_port)) {
+		/* Only assert the prochot at EVT phase */
+		curr_status = EC_ASSERTED_PROCHOT;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
+		hook_call_deferred(&board_check_current_data, 10 * MSEC);
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		/* Don't need to de-assert the prochot when system in S5/G3 */
+		curr_status = EC_DEASSERTED_PROCHOT;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
+		hook_call_deferred(&board_check_current_data, 100 * MSEC);
+	} else {
+		curr_status = EC_DEASSERTED_PROCHOT;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
+		hook_call_deferred(&board_check_current_data, 10 * MSEC);
+	}
+
+	if (curr_status != pre_status)
+		CPRINTS("EC %sassert prochot!! INA236 current=%d mA",
+			curr_status == EC_DEASSERTED_PROCHOT ? "de-" : "",
+			(INA2XX_SHUNT_UV(sv) / shunt_register));
+
+	pre_status = curr_status;
+}
+
 /* EC console command */
 static int chgbypass_cmd(int argc, const char **argv)
 {
@@ -174,39 +287,3 @@ static int chgbypass_cmd(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(chargerbypass, chgbypass_cmd, "[en/dis]",
 			"Force charger bypass enabled");
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	int prochot_ma;
-
-	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
-		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
-	}
-
-	/*Handle EPR converstion through the buck switcher*/
-	if (charge_mv > 20000) {
-		/* (charge_ma * charge_mv / 20000 ) * 0.9 */
-		charge_ma = (90 * (int64_t)charge_ma * (int64_t)charge_mv / 2000000);
-		CPRINTS("Updating charger with EPR correction: ma %d",charge_ma);
-	} else {
-		charge_ma = charge_ma * 94 / 100;
-	}
-	/*
-	 * ac prochot should bigger than input current
-	 * And needs to be at least 128mA bigger than the adapter current
-	 */
-	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
-
-
-	if ((prochot_ma - charge_ma) < 853) {
-		/* We need prochot to be at least 1 LSB above
-		 * the input current limit. This is not ideal
-		 * due to the low accuracy on prochot.
-		 */
-		prochot_ma += 853;
-	}
-
-	charge_set_input_current_limit(charge_ma, charge_mv);
-	/* sync-up ac prochot with current change */
-	isl9241_set_ac_prochot(0, prochot_ma);
-}

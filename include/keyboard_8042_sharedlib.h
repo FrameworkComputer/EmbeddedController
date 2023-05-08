@@ -184,6 +184,22 @@ enum scancode_values {
 	SCANCODE_SCROLL_LOCK = 0x007e,
 
 	SCANCODE_CTRL_BREAK = 0xe07e,
-};
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	SCANCODE_FN = 0x00ff,
+	SCANCODE_ESC = 0x0076,
+	SCANCODE_DELETE = 0xe071,
+	SCANCODE_K = 0x0042,
+	SCANCODE_P = 0x004D,
+	SCANCODE_S = 0x001B,
+	SCANCODE_SPACE = 0x0029,
+
+	SCANCODE_FAKE_FN = 0xe016,
+	SCANCODE_FAKE_POWER = 0xe025,
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
+};
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+void board_caps_led_control(int data);
+void simulate_keyboard(uint16_t scancode, int is_pressed);
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
 #endif /* __CROS_EC_KEYBOARD_8042_SHAREDLIB_H */

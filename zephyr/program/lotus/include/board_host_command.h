@@ -23,6 +23,14 @@
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_UCSI) |		\
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_BATT_BTP))
 
+#define SCI_HOST_WAKE_EVENT_MASK			\
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED) |			\
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |			\
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_AC_CONNECTED) |		\
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_AC_DISCONNECTED) |	\
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_BATT_BTP)	|			\
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED))
+
 /*****************************************************************************/
 /*
  * Configure the behavior of the flash notify
@@ -118,6 +126,21 @@ struct ec_response_ap_reboot_delay {
  * This command uses to notify the EC that the system is in non-ACPI mode.
  */
 #define EC_CMD_NON_ACPI_NOTIFY		0x3E07
+
+/*****************************************************************************/
+/*
+ * This command uses to change the fingerprint LED level.
+ */
+#define EC_CMD_FP_LED_LEVEL_CONTROL	0x3E0E
+
+struct ec_params_fp_led_control {
+	uint8_t set_led_level;
+	uint8_t get_led_level;
+} __ec_align1;
+
+struct ec_response_fp_led_level {
+	uint8_t level;
+} __ec_align1;
 
 /*****************************************************************************/
 /*

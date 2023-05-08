@@ -35,7 +35,8 @@
 		i2c_battery: battery{
 			i2c-port = <&i2c3_0>;
 			enum-names = "I2C_PORT_BATTERY",
-				"I2C_PORT_CHARGER";
+				"I2C_PORT_CHARGER",
+				"I2C_PORT_MASTER";
 		};
 		i2c_touchpad: touchpad {
 			i2c-port = <&i2c4_1>;

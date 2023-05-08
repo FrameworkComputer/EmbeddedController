@@ -38,6 +38,16 @@
 #define GPIO_LED_PINS_NODE DT_PATH(gpio_led_pins)
 #define PWM_LED_PINS_NODE DT_PATH(pwm_led_pins)
 
+#define FP_LED_HIGH 55
+#define FP_LED_MEDIUM 40
+#define FP_LED_LOW 15
+
+#define BREATH_ON_LENGTH_HIGH	62
+#define BREATH_ON_LENGTH_MID	72
+#define BREATH_ON_LENGTH_LOW	90
+
+#define BREATH_OFF_LENGTH 200
+
 enum led_color {
 	LED_OFF,
 	LED_RED,
@@ -47,6 +57,12 @@ enum led_color {
 	LED_WHITE,
 	LED_AMBER,
 	LED_COLOR_COUNT /* Number of colors, not a color itself */
+};
+
+enum fp_led_brightness_level {
+	FP_LED_BRIGHTNESS_HIGH = 0,
+	FP_LED_BRIGHTNESS_MEDIUM = 1,
+	FP_LED_BRIGHTNESS_LOW = 2,
 };
 
 /*
