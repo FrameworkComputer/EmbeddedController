@@ -26,7 +26,7 @@
 #endif
 
 /* Power states */
-enum charge_state {
+enum led_pwr_state {
 	/* Meta-state; unchanged from previous time through task loop */
 	PWR_STATE_UNCHANGE = 0,
 	/* Initializing charge state machine at boot */
@@ -61,7 +61,7 @@ enum charge_state {
 /* Battery is responsive */
 #define CHARGE_FLAG_BATT_RESPONSIVE BIT(2)
 
-/* Debugging constants, in the same order as enum charge_state. This string
+/* Debugging constants, in the same order as enum led_pwr_state. This string
  * table was moved here to sync with enum above.
  */
 #define CHARGE_STATE_NAME_TABLE                                             \
@@ -75,7 +75,7 @@ enum charge_state {
 /**
  * Return current charge state.
  */
-enum charge_state charge_get_state(void);
+enum led_pwr_state charge_get_state(void);
 
 /**
  * Return current charge v2 state.

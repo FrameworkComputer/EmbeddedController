@@ -15,7 +15,7 @@ const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-static enum charge_state prv_chstate = PWR_STATE_INIT;
+static enum led_pwr_state prv_chstate = PWR_STATE_INIT;
 
 #define LED_OFF MT6370_LED_ID_OFF
 #define LED_RED MT6370_LED_ID1
@@ -29,7 +29,7 @@ static enum charge_state prv_chstate = PWR_STATE_INIT;
 
 static void kukui_led_set_battery(void)
 {
-	enum charge_state chstate;
+	enum led_pwr_state chstate;
 	static uint8_t prv_r, prv_g, prv_b;
 	uint8_t br[EC_LED_COLOR_COUNT] = { 0 };
 

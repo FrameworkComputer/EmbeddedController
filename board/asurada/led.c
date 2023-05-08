@@ -143,7 +143,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 static void update_led(enum ec_led_id led_id, bool is_active_charge_port,
 		       int duty, int tick)
 {
-	enum charge_state power_state = charge_get_state();
+	enum led_pwr_state power_state = charge_get_state();
 
 	if (power_state == PWR_STATE_IDLE) {
 		/* Factory mode: blinking white (2sec on + 2sec off) */

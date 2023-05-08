@@ -504,7 +504,7 @@ void config_leds(enum led_charge_state charge)
 static void call_handler(void)
 {
 	int soc;
-	enum charge_state cs;
+	enum led_pwr_state cs;
 
 	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		return;

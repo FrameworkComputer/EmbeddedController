@@ -70,7 +70,7 @@ static void nautilus_led_set_power_battery(void)
 {
 	static unsigned int power_ticks;
 	enum led_color cur_led_color = LED_RED;
-	enum charge_state chg_state = charge_get_state();
+	enum led_pwr_state chg_state = charge_get_state();
 	int charge_percent = charge_get_percent();
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {

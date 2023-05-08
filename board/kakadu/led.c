@@ -26,7 +26,7 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 static void kakadu_led_set_battery(void)
 {
-	enum charge_state chstate;
+	enum led_pwr_state chstate;
 	enum power_state powerstate;
 	static uint8_t prv_white, prv_amber;
 	static uint8_t time_cnt;

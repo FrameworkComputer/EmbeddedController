@@ -123,7 +123,7 @@ static void rammus_led_set_power(void)
 
 static void rammus_led_set_battery(void)
 {
-	enum charge_state chg_state = charge_get_state();
+	enum led_pwr_state chg_state = charge_get_state();
 	int charge_percent = charge_get_percent();
 	static unsigned int charge_ticks;
 
