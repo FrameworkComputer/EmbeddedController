@@ -246,6 +246,7 @@ class AllTests:
                 toggle_power=True,
                 enable_hw_write_protect=True,
             ),
+            TestConfig(test_name="fpsensor_auth_crypto"),
             TestConfig(test_name="fpsensor_hw"),
             TestConfig(
                 config_name="fpsensor_spi_ro",

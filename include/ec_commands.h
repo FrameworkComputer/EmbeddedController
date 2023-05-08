@@ -7787,6 +7787,13 @@ struct ec_response_fp_read_match_secret {
 	uint8_t positive_match_secret[FP_POSITIVE_MATCH_SECRET_BYTES];
 } __ec_align4;
 
+#define FP_ELLIPTIC_CURVE_PUBLIC_KEY_POINT_LEN 32
+
+struct fp_elliptic_curve_public_key {
+	uint8_t x[FP_ELLIPTIC_CURVE_PUBLIC_KEY_POINT_LEN];
+	uint8_t y[FP_ELLIPTIC_CURVE_PUBLIC_KEY_POINT_LEN];
+} __ec_align4;
+
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */
 

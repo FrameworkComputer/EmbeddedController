@@ -22,6 +22,7 @@ test-list-y=\
        flash_physical \
        flash_write_protect \
        fpsensor \
+       fpsensor_auth_crypto \
        fpsensor_hw \
        libc_printf \
        mpu \
