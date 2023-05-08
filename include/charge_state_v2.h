@@ -244,7 +244,7 @@ int board_should_charger_bypass(void);
  *
  * @return True for requesting change.
  */
-int board_want_change_mode(void);
+int board_want_charger_change_mode(void);
 #endif
 
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
