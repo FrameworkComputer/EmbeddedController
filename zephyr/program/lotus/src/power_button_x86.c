@@ -418,7 +418,7 @@ static void powerbtn_x86_init(void)
 {
 	set_initial_pwrbtn_state();
 }
-DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT + 1);
 
 void chipset_power_on(void)
 {
