@@ -39,4 +39,15 @@ create_pubkey_from_ec_key(const EC_KEY &key);
 bssl::UniquePtr<EC_KEY>
 create_ec_key_from_pubkey(const fp_elliptic_curve_public_key &pubkey);
 
+/**
+ * Create a boringssl @EC_KEY from a private key.
+ *
+ * @param[in] privkey private key
+ *
+ * @return @p EC_KEY on success
+ * @return nullptr on error
+ */
+bssl::UniquePtr<EC_KEY> create_ec_key_from_privkey(const uint8_t *privkey,
+						   size_t privkey_size);
+
 #endif /* __CROS_EC_FPSENSOR_AUTH_CRYPTO_H */

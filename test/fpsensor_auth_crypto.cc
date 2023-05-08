@@ -89,12 +89,40 @@ test_static enum ec_error_list test_fp_create_pubkey_from_ec_key(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list test_fp_create_ec_key_from_privkey(void)
+{
+	std::array<uint8_t, 32> data = {};
+
+	bssl::UniquePtr<EC_KEY> key =
+		create_ec_key_from_privkey(data.data(), data.size());
+
+	TEST_NE(key.get(), nullptr, "%p");
+
+	/* There is nothing to check for the private key. */
+
+	return EC_SUCCESS;
+}
+
+test_static enum ec_error_list test_fp_create_ec_key_from_privkey_fail(void)
+{
+	std::array<uint8_t, 1> data = {};
+
+	bssl::UniquePtr<EC_KEY> key =
+		create_ec_key_from_privkey(data.data(), data.size());
+
+	TEST_EQ(key.get(), nullptr, "%p");
+
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 extern "C" void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_create_ec_key_from_pubkey);
 	RUN_TEST(test_fp_create_ec_key_from_pubkey_fail);
+	RUN_TEST(test_fp_create_ec_key_from_privkey);
+	RUN_TEST(test_fp_create_ec_key_from_privkey_fail);
 	RUN_TEST(test_fp_create_pubkey_from_ec_key);
 	test_print_result();
 }
