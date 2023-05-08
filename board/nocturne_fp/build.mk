@@ -40,6 +40,7 @@ test-list-y=\
        flash_physical \
        flash_write_protect \
        fpsensor \
+       fpsensor_auth_crypto_stateful \
        fpsensor_auth_crypto_stateless \
        fpsensor_hw \
        ftrapv \
