@@ -111,6 +111,9 @@ $(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(BORINGSSL_OUTDIR)/libcrypto.a
 $(out)/$(PROJECT).exe: LDFLAGS_EXTRA += $(BORINGSSL_LDFLAGS)
 $(out)/$(PROJECT).exe: $(BORINGSSL_OUTDIR)/libcrypto.a
 
+# On-device tests.
+third-party-test-targets=$(foreach test,$(test-list-y),\
+	$(out)/RW/$(test).RW.elf $(out)/RO/$(test).RO.elf)
 $(third-party-test-targets): LDFLAGS_EXTRA += $(BORINGSSL_LDFLAGS)
 $(third-party-test-targets): $(BORINGSSL_OUTDIR)/libcrypto.a
 endif # CONFIG_BORINGSSL_CRYPTO
