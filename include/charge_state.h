@@ -83,7 +83,7 @@ enum led_pwr_state {
  * only to control the LEDs (with one not-quite-correct exception). For V2
  * we use a different set of states internally.
  */
-enum charge_state_v2 {
+enum charge_state {
 	ST_IDLE = 0,
 	ST_DISCHARGE,
 	ST_CHARGE,
@@ -98,7 +98,7 @@ struct charge_state_data {
 	int batt_is_charging;
 	struct charger_params chg;
 	struct batt_params batt;
-	enum charge_state_v2 state;
+	enum charge_state state;
 	int requested_voltage;
 	int requested_current;
 	int desired_input_current;
@@ -126,7 +126,7 @@ enum led_pwr_state led_pwr_get_state(void);
 /**
  * Return current charge v2 state.
  */
-__test_only enum charge_state_v2 charge_get_state_v2(void);
+__test_only enum charge_state charge_get_state(void);
 
 /**
  * Return non-zero if battery is so low we want to keep AP off.

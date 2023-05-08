@@ -12,35 +12,35 @@
 
 int battery_outside_charging_temperature(void);
 
-struct charge_state_v2_fixture {
+struct charge_state_fixture {
 	struct charge_state_data charge_state_data;
 };
 
 static void *setup(void)
 {
-	static struct charge_state_v2_fixture fixture;
+	static struct charge_state_fixture fixture;
 
 	return &fixture;
 }
 
 static void before(void *f)
 {
-	struct charge_state_v2_fixture *fixture = f;
+	struct charge_state_fixture *fixture = f;
 
 	fixture->charge_state_data = *charge_get_status();
 }
 
 static void after(void *f)
 {
-	struct charge_state_v2_fixture *fixture = f;
+	struct charge_state_fixture *fixture = f;
 
 	*charge_get_status() = fixture->charge_state_data;
 }
 
-ZTEST_SUITE(charge_state_v2, drivers_predicate_post_main, setup, before, after,
+ZTEST_SUITE(charge_state, drivers_predicate_post_main, setup, before, after,
 	    NULL);
 
-ZTEST(charge_state_v2, test_battery_flag_bad_temperature)
+ZTEST(charge_state, test_battery_flag_bad_temperature)
 {
 	struct charge_state_data *curr = charge_get_status();
 
@@ -48,7 +48,7 @@ ZTEST(charge_state_v2, test_battery_flag_bad_temperature)
 	zassert_ok(battery_outside_charging_temperature());
 }
 
-ZTEST(charge_state_v2, test_battery_temperature_range)
+ZTEST(charge_state, test_battery_temperature_range)
 {
 	struct charge_state_data *curr = charge_get_status();
 	const struct battery_info *batt_info = battery_get_info();
@@ -98,7 +98,7 @@ ZTEST(charge_state_v2, test_battery_temperature_range)
 	zassert_ok(battery_outside_charging_temperature());
 }
 
-ZTEST(charge_state_v2, test_current_limit_derating)
+ZTEST(charge_state, test_current_limit_derating)
 {
 	int charger_current_limit;
 
@@ -115,7 +115,7 @@ ZTEST(charge_state_v2, test_current_limit_derating)
 		charger_current_limit);
 }
 
-ZTEST(charge_state_v2, test_minimum_current_limit)
+ZTEST(charge_state, test_minimum_current_limit)
 {
 	int charger_current_limit;
 

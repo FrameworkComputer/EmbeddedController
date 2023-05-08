@@ -80,7 +80,7 @@ static uint8_t battery_level_shutdown;
  */
 static const struct battery_info *batt_info;
 static struct charge_state_data curr;
-static enum charge_state_v2 prev_state;
+static enum charge_state prev_state;
 static int prev_ac, prev_charge, prev_disp_charge;
 static enum battery_present prev_bp;
 static enum ec_charge_control_mode chg_ctl_mode;
@@ -776,7 +776,7 @@ static void notify_host_of_low_battery_charge(void)
 #endif
 }
 
-static void set_charge_state(enum charge_state_v2 state)
+static void set_charge_state(enum charge_state state)
 {
 	prev_state = curr.state;
 	curr.state = state;
@@ -1026,7 +1026,7 @@ static void wakeup_battery(int *need_static)
 	}
 }
 
-__test_only enum charge_state_v2 charge_get_state_v2(void)
+__test_only enum charge_state charge_get_state(void)
 {
 	return curr.state;
 }
