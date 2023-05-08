@@ -122,6 +122,54 @@ test_static enum ec_error_list test_fp_create_ec_key_from_privkey_fail(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list test_fp_generate_ecdh_shared_secret(void)
+{
+	struct fp_elliptic_curve_public_key pubkey = {
+		.x = {
+			0x85, 0xAD, 0x35, 0x23, 0x05, 0x1E, 0x33, 0x3F,
+			0xCA, 0xA7, 0xEA, 0xA5, 0x88, 0x33, 0x12, 0x95,
+			0xA7, 0xB5, 0x98, 0x9F, 0x32, 0xEF, 0x7D, 0xE9,
+			0xF8, 0x70, 0x14, 0x5E, 0x89, 0xCB, 0xDE, 0x1F,
+		},
+		.y = {
+			0xD1, 0xDC, 0x91, 0xC6, 0xE6, 0x5B, 0x1E, 0x3C,
+			0x01, 0x6C, 0xE6, 0x50, 0x25, 0x5D, 0x89, 0xCF,
+			0xB7, 0x8D, 0x88, 0xB9, 0x0D, 0x09, 0x41, 0xF1,
+			0x09, 0x4F, 0x61, 0x55, 0x6C, 0xC4, 0x96, 0x6B,
+		},
+	};
+
+	bssl::UniquePtr<EC_KEY> public_key = create_ec_key_from_pubkey(pubkey);
+
+	TEST_NE(public_key.get(), nullptr, "%p");
+
+	std::array<uint8_t, 32> privkey = { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					    1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					    2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+
+	bssl::UniquePtr<EC_KEY> private_key =
+		create_ec_key_from_privkey(privkey.data(), privkey.size());
+
+	TEST_NE(private_key.get(), nullptr, "%p");
+
+	std::array<uint8_t, 32> shared_secret;
+	TEST_EQ(generate_ecdh_shared_secret(*private_key, *public_key,
+					    shared_secret.data(),
+					    shared_secret.size()),
+		EC_SUCCESS, "%d");
+
+	std::array<uint8_t, 32> expected_result = {
+		0x46, 0x86, 0xca, 0x75, 0xce, 0xa1, 0xde, 0x23,
+		0x48, 0xb3, 0x0b, 0xfc, 0xd7, 0xbe, 0x7a, 0xa0,
+		0x33, 0x17, 0x6c, 0x97, 0xc6, 0xa7, 0x70, 0x7c,
+		0xd4, 0x2c, 0xfd, 0xc0, 0xba, 0xc1, 0x47, 0x01,
+	};
+
+	TEST_ASSERT_ARRAY_EQ(shared_secret, expected_result,
+			     shared_secret.size());
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 extern "C" void run_test(int argc, const char **argv)
@@ -131,5 +179,6 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_create_ec_key_from_privkey);
 	RUN_TEST(test_fp_create_ec_key_from_privkey_fail);
 	RUN_TEST(test_fp_create_pubkey_from_ec_key);
+	RUN_TEST(test_fp_generate_ecdh_shared_secret);
 	test_print_result();
 }

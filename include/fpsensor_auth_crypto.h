@@ -126,4 +126,20 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 bssl::UniquePtr<EC_KEY> decrypt_private_key(
 	const struct fp_encrypted_private_key &encrypted_private_key);
 
+/**
+ * Generate the ECDH shared secret from private key and public key.
+ *
+ * @param[in] private_key the private key of the ECDH
+ * @param[in] public_key the public key of the ECDH
+ * @param[out] shared_secret the shared secret
+ * @param[in] share_secret_size the size of shared secret
+ *
+ * @return EC_SUCCESS on success
+ * @return EC_ERROR_* on error
+ */
+enum ec_error_list generate_ecdh_shared_secret(const EC_KEY &private_key,
+					       const EC_KEY &public_key,
+					       uint8_t *shared_secret,
+					       uint8_t share_secret_size);
+
 #endif /* __CROS_EC_FPSENSOR_AUTH_CRYPTO_H */
