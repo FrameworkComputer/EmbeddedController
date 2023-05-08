@@ -7,6 +7,7 @@
  * RT1718S TCPC Driver
  */
 
+#include "battery.h"
 #include "console.h"
 #include "driver/tcpm/rt1718s.h"
 #include "driver/tcpm/tcpci.h"
@@ -260,6 +261,11 @@ static int rt1718s_set_vconn(int port, int enable)
 static int rt1718s_init(int port)
 {
 	static bool need_sw_reset = true;
+
+	/* Do not reset the TCPC when device is no battery connected, otherwise
+	 * the SINK GPIO to the PPC may be reset, and cause a brown-out.
+	 */
+	need_sw_reset &= battery_is_present() == BP_YES;
 
 	if (!system_jumped_late() && need_sw_reset) {
 		RETURN_ERROR(rt1718s_sw_reset(port));
