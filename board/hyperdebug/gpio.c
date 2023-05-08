@@ -28,6 +28,34 @@ const struct dac_t dac_channels[GPIO_COUNT] = {
 };
 
 /*
+ * GPIO structure for keeping extra flags such as GPIO_OPEN_DRAIN, to be applied
+ * whenever the pin is switched into "alternate" mode.
+ */
+struct gpio_alt_flags {
+	/* Port base address */
+	uint32_t port;
+
+	/* Bitmask on that port (multiple bits allowed) */
+	uint32_t mask;
+
+	/* Flags (GPIO_*; see above). */
+	uint32_t flags;
+};
+
+/*
+ * Construct the gpio_alt_flags array, this really is just a subset of the
+ * columns in the gpio_alt_funcs array in common/gpio.c (which is not accessible
+ * from here).  This array is used by extra_alternate_flags().
+ */
+#define ALTERNATE(pinmask, function, module, flagz) \
+	{ GPIO_##pinmask, .flags = (flagz) },
+
+static __const_data const struct gpio_alt_flags gpio_alt_flags[] = {
+#include "gpio.wrap"
+};
+#undef ALTERNATE
+
+/*
  * A cyclic buffer is used to record events (edges) of one or more GPIO
  * signals.  Each event records the time since the previous event, and the
  * signal that changed (the direction of change is not explicitly recorded).
@@ -284,6 +312,30 @@ static void stop_all_gpio_monitoring(void)
 	}
 }
 
+/*
+ * Return GPIO_OPEN_DRAIN or any other special flags to apply when the given
+ * signal is in "alternate" mode.
+ */
+static uint32_t extra_alternate_flags(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+	const struct gpio_alt_flags *af;
+
+	/* Find the first ALTERNATE() declaration for the given pin. */
+	for (af = gpio_alt_flags;
+	     af < gpio_alt_flags + ARRAY_SIZE(gpio_alt_flags); af++) {
+		if (af->port != g->port)
+			continue;
+
+		if (af->mask & g->mask) {
+			return af->flags;
+		}
+	}
+
+	/* No ALTERNATE() declaration mention the given pin. */
+	return 0;
+}
+
 /**
  * Find a GPIO signal by name.
  *
@@ -344,7 +396,7 @@ static int command_gpio_mode(int argc, const char **argv)
 		/* Disable digital output, when DAC is overriding. */
 		flags |= GPIO_INPUT;
 	} else if (strcasecmp(argv[2], "alternate") == 0)
-		flags |= GPIO_ALTERNATE;
+		flags |= GPIO_ALTERNATE | extra_alternate_flags(gpio);
 	else
 		return EC_ERROR_PARAM2;
 
@@ -484,7 +536,7 @@ static int command_gpio_multiset(int argc, const char **argv)
 			/* Disable digital output, when DAC is overriding. */
 			flags |= GPIO_INPUT;
 		} else if (strcasecmp(argv[4], "alternate") == 0)
-			flags |= GPIO_ALTERNATE;
+			flags |= GPIO_ALTERNATE | extra_alternate_flags(gpio);
 		else
 			return EC_ERROR_PARAM4;
 	}
@@ -871,6 +923,9 @@ static int command_reinit(int argc, const char **argv)
 
 		if (flags & GPIO_DEFAULT)
 			continue;
+
+		if (flags & GPIO_ALTERNATE)
+			flags |= extra_alternate_flags(i);
 
 		/* Set up GPIO based on flags */
 		gpio_set_flags_by_mask(g->port, g->mask, flags);
