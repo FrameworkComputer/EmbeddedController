@@ -28,20 +28,18 @@
 
 int ppc_prints(const char *string, int port)
 {
-#if defined(TEST_LEGACY_BUILD) || !defined(CONFIG_USBC_PPC_LOGGING)
+#if !defined(TEST_LEGACY_BUILD) && defined(CONFIG_USBC_PPC_LOGGING)
+	CPRINTS("ppc p%d %s", port, string);
+#endif /* !defined(TEST_LEGACY_BUILD) && defined(CONFIG_USBC_PPC_LOGGING) */
 	return 0;
-#else
-	return CPRINTS("ppc p%d %s", port, string);
-#endif /* defined(TEST_LEGACY_BUILD) || !defined(CONFIG_USBC_PPC_LOGGING) */
 }
 
 int ppc_err_prints(const char *string, int port, int error)
 {
-#if defined(TEST_LEGACY_BUILD) || !defined(CONFIG_USBC_PPC_LOGGING)
+#if !defined(TEST_LEGACY_BUILD) && defined(CONFIG_USBC_PPC_LOGGING)
+	CPRINTS("ppc p%d %s (%d)", port, string, error);
+#endif /* !defined(TEST_LEGACY_BUILD) && defined(CONFIG_USBC_PPC_LOGGING) */
 	return 0;
-#else
-	return CPRINTS("ppc p%d %s (%d)", port, string, error);
-#endif /* defined(TEST_LEGACY_BUILD) || !defined(CONFIG_USBC_PPC_LOGGING) */
 }
 
 __overridable bool board_port_has_ppc(int port)

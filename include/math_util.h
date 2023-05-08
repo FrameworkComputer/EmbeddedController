@@ -46,8 +46,12 @@ typedef int64_t fp_inter_t;
 /* Fixed-point to float, for unit tests */
 #define FP_TO_FLOAT(x) ((float)(x) / (float)(1 << FP_BITS))
 
+#ifndef FLT_MAX
 #define FLT_MAX INT32_MAX
+#endif
+#ifndef FLT_MIN
 #define FLT_MIN INT32_MIN
+#endif
 
 #endif
 

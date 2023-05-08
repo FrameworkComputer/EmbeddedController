@@ -9,7 +9,7 @@
 #include <zephyr/kernel.h>
 
 /** A stub main to call the real ec app main function. LCOV_EXCL_START */
-void main(void)
+int main(void)
 {
 	ec_app_main();
 
@@ -22,5 +22,7 @@ void main(void)
 		 */
 		k_sleep(K_FOREVER);
 	}
+
+	return 0;
 }
 /* LCOV_EXCL_STOP */

@@ -87,7 +87,8 @@ static const int tbt_opos = 1;
 
 static int tbt_prints(const char *string, int port)
 {
-	return CPRINTS("C%d: TBT %s", port, string);
+	CPRINTS("C%d: TBT %s", port, string);
+	return 0;
 }
 
 /* The states of Thunderbolt negotiation */

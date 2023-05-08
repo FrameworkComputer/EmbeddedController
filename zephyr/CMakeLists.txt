@@ -126,6 +126,16 @@ if (DEFINED CONFIG_PLATFORM_EC)
     "${PLATFORM_EC}/third_party")
 endif()
 
+if (ZEPHYR_PIGWEED_MODULE_DIR)
+  include("${ZEPHYR_PIGWEED_MODULE_DIR}/pw_build/pigweed.cmake")
+  if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED)
+    add_library(log_tokenized_config INTERFACE)
+    target_compile_options(log_tokenized_config INTERFACE -include
+                           ${PLATFORM_EC}/zephyr/include/pigweed/pw_zephyr_tokenized_custom_log.h)
+    pw_set_module_config(pw_log_tokenized_CONFIG log_tokenized_config)
+  endif()
+endif()
+
 add_subdirectory("subsys")
 
 # Creates a phony target all.libraries in case you only want to build the
@@ -650,5 +660,18 @@ if (DEFINED CONFIG_CROS_EC_RW AND DEFINED CONFIG_PLATFORM_EC_RWSIG)
     COMMENT "Signing EC RW"
     DEPENDS zephyr_final key_extract
     VERBATIM
+  )
+endif()
+
+if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED)
+  set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
+    COMMAND
+      ${PYTHON_EXECUTABLE}
+      ${ZEPHYR_PIGWEED_MODULE_DIR}/pw_tokenizer/py/pw_tokenizer/database.py
+      create
+      --force
+      --type csv
+      -d ${CMAKE_BINARY_DIR}/database.bin
+      ${CMAKE_BINARY_DIR}/zephyr/zephyr_pre0.elf
   )
 endif()
