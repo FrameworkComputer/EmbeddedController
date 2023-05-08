@@ -43,7 +43,6 @@ GPIO_INT(EC_WP_OD, PIN(A, 6), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(EC_RECOVERY_BTN_OD, PIN(K, 7), GPIO_INT_BOTH, button_interrupt)
 /* Recovery button input from H1 */
 GPIO_INT(H1_EC_RECOVERY_BTN_ODL, PIN(K, 4), GPIO_INT_BOTH, button_interrupt)
-GPIO_INT(BJ_ADP_PRESENT, PIN(A, 7), GPIO_INT_BOTH, adp_connect_interrupt)
 GPIO_INT(USB_C0_FAULT_L, PIN(K, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_FAULT_L, PIN(K, 3), GPIO_INT_FALLING, ppc_interrupt)
 

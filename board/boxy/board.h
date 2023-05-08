@@ -131,7 +131,6 @@
 
 enum charge_port {
 	CHARGE_PORT_TYPEC0,
-	CHARGE_PORT_BARRELJACK,
 };
 
 enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
