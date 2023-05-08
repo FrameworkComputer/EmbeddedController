@@ -310,7 +310,7 @@ enum sensor_id {
 #define CONFIG_MALLOC
 #endif
 
-#ifdef TEST_SBS_CHARGING_V2
+#ifdef TEST_SBS_CHARGING
 #define CONFIG_BATTERY
 #define CONFIG_BATTERY_V2
 #define CONFIG_BATTERY_COUNT 1
