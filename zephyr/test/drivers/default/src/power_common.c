@@ -518,7 +518,7 @@ static void setup_hibernation_delay(void *state)
 		      ec_cmd_smart_discharge(NULL, &params, &response));
 	/*
 	 * Make sure that battery is in safe zone in good condition to
-	 * not trigger hibernate in charge_state_v2.c
+	 * not trigger hibernate in charge_state.c
 	 */
 	bat->cap = response.dzone.stayup + 5;
 	bat->volt = battery_get_info()->voltage_normal;

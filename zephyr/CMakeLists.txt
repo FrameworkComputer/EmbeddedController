@@ -251,7 +251,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGESPLASH
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
                                                 "${PLATFORM_EC}/common/charger.c"
                                                 "${PLATFORM_EC}/common/charge_manager.c"
-                                                "${PLATFORM_EC}/common/charge_state_v2.c")
+                                                "${PLATFORM_EC}/common/charge_state.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_HW
                                                 "${PLATFORM_EC}/common/charge_ramp.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_SW

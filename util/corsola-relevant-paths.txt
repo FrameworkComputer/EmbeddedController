@@ -1,6 +1,6 @@
 # Here you can place files of interest to be included in the commit message for
 # merge commits to cros/firmware-corsola-15194.B
-common/charge_state_v2.c
+common/charge_state.c
 common/dps.c
 common/mkbp_*
 common/usb_charger.c

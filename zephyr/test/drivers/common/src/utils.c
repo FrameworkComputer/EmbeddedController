@@ -62,7 +62,7 @@ void test_set_chipset_to_s0(void)
 
 	/*
 	 * Make sure that battery is in good condition to
-	 * not trigger hibernate in charge_state_v2.c
+	 * not trigger hibernate in charge_state.c
 	 * Set battery voltage to expected value and capacity to 50%. Battery
 	 * will not be full and accepts charging, but will not trigger
 	 * hibernate. Charge level is set to the default value of an emulator

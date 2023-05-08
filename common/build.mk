@@ -67,7 +67,7 @@ common-$(CONFIG_CHIP_INIT_ROM_REGION)+=init_rom.o
 common-$(CONFIG_CMD_CHARGEN) += chargen.o
 common-$(CONFIG_CHARGER)+=charger.o
 ifneq ($(CONFIG_CHARGER),)
-common-$(CONFIG_BATTERY)+=charge_state_v2.o
+common-$(CONFIG_BATTERY)+=charge_state.o
 endif
 ifneq ($(CONFIG_EC_EC_COMM_BATTERY_CLIENT),)
 common-$(CONFIG_BATTERY)+=charger_base.o

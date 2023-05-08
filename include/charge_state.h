@@ -296,7 +296,7 @@ void board_base_reset(void);
 /**
  * Callback with which boards determine action on critical low battery
  *
- * The default implementation is provided in charge_state_v2.c. Overwrite it
+ * The default implementation is provided in charge_state.c. Overwrite it
  * to customize it.
  *
  * @param curr Pointer to struct charge_state_data
