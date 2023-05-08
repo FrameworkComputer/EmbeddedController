@@ -261,7 +261,6 @@ rsa3-y=rsa.o
 rtc-y=rtc.o
 scratchpad-y=scratchpad.o
 sbrk-y=sbrk.o
-sbs_charging-y=sbs_charging.o
 sbs_charging_v2-y=sbs_charging_v2.o
 scoped_fast_cpu-y=scoped_fast_cpu.o
 sha256-y=sha256.o
