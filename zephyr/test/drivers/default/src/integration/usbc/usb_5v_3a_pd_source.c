@@ -162,20 +162,20 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_battery_not_charging)
 
 ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_charge_state)
 {
-	struct ec_response_charge_state charge_state;
+	struct ec_response_charge_state state;
 
 	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
-	charge_state = host_cmd_charge_state(TEST_PORT);
+	state = host_cmd_charge_state(TEST_PORT);
 
-	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
-	zassert_equal(charge_state.get_state.chg_current, 0,
+	zassert_false(state.get_state.ac, "AC_OK not triggered");
+	zassert_equal(state.get_state.chg_current, 0,
 		      "Max charge current expected 0mA, but was %dmA",
-		      charge_state.get_state.chg_current);
-	zassert_equal(charge_state.get_state.chg_input_current,
+		      state.get_state.chg_current);
+	zassert_equal(state.get_state.chg_input_current,
 		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
 		      "Charge input current limit expected %dmA, but was %dmA",
 		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
-		      charge_state.get_state.chg_input_current);
+		      state.get_state.chg_input_current);
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_typec_status)
