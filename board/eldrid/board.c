@@ -7,7 +7,7 @@
 #include "accelgyro.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"

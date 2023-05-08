@@ -7,7 +7,7 @@
 #include "adc.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"

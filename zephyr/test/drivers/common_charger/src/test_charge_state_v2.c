@@ -4,7 +4,7 @@
  */
 
 #include "battery.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "math_util.h"
 #include "test/drivers/test_state.h"
 

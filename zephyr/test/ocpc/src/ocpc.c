@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "console.h"
 #include "host_command.h"
 #include "ocpc.h"

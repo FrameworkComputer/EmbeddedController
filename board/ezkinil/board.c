@@ -6,7 +6,7 @@
 #include "adc.h"
 #include "button.h"
 #include "cbi_ssfc.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "cros_board_info.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"

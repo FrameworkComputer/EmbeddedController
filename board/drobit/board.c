@@ -7,7 +7,7 @@
 #include "accelgyro.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/syv682x.h"

@@ -35,7 +35,6 @@
 
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
 #include "charger.h"
 #include "common.h"
 #include "compile_time_macros.h"

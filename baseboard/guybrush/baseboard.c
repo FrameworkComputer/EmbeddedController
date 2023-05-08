@@ -10,7 +10,6 @@
 #include "charge_manager.h"
 #include "charge_ramp.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
 #include "charger.h"
 #include "chip/npcx/ps2_chip.h"
 #include "chip/npcx/pwm_chip.h"

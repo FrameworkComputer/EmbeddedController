@@ -9,7 +9,7 @@
 #include "builtin/assert.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "console.h"
 #include "dps.h"

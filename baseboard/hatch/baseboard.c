@@ -7,7 +7,7 @@
 #include "atomic.h"
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
 #include "cros_board_info.h"

@@ -7,7 +7,7 @@
 #include "battery_fuel_gauge.h"
 #include "bc12/pi3usb9201_public.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
 #include "charger/isl9241_public.h"

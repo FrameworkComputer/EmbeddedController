@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "chipset.h"
 #include "driver/charger/sm5803.h"
 #include "driver/tcpm/it83xx_pd.h"

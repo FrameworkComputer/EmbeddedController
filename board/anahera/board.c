@@ -6,7 +6,7 @@
 #include "battery.h"
 #include "button.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
 #include "compile_time_macros.h"

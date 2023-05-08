@@ -4,7 +4,7 @@
  */
 
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger_mt6370.h"
 #include "console.h"
 #include "driver/charger/rt946x.h"

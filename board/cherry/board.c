@@ -5,7 +5,7 @@
 /* Cherry board configuration */
 
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accel_bma422.h"

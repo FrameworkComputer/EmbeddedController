@@ -9,7 +9,7 @@
 #include "board.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/tcpm/it83xx_pd.h"

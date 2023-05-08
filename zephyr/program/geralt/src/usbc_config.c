@@ -6,7 +6,7 @@
 /* Geralt baseboard-specific USB-C configuration */
 
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "console.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "gpio.h"

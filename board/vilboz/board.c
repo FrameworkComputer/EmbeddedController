@@ -5,7 +5,7 @@
 
 #include "battery_smart.h"
 #include "button.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "cros_board_info.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"

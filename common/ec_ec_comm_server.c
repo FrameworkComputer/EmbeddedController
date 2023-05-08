@@ -6,7 +6,7 @@
  */
 
 #include "battery.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "crc8.h"

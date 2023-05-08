@@ -9,7 +9,7 @@
 #include "battery_smart.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"

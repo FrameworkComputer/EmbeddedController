@@ -6,7 +6,7 @@
 /* Corsola baseboard-specific USB-C configuration */
 
 #include "baseboard_usbc_config.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"

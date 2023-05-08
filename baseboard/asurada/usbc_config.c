@@ -10,7 +10,7 @@
 #include "bc12/mt6360_public.h"
 #include "bc12/pi3usb9201_public.h"
 #include "button.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
 #include "console.h"

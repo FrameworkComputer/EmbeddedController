@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "chipset.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/retimer/anx7483_public.h"

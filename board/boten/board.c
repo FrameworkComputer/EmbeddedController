@@ -9,7 +9,7 @@
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"

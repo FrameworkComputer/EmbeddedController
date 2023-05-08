@@ -7,7 +7,7 @@
 #include "atomic.h"
 #include "battery.h"
 #include "battery_smart.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "extpower.h"
 #include "gpio.h"

@@ -7,7 +7,6 @@
 #include "charge_manager.h"
 #include "charge_ramp.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
 #include "charger.h"
 #include "driver/charger/isl9241.h"
 #include "driver/ppc/nx20p348x.h"

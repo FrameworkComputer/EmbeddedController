@@ -4,7 +4,7 @@
  */
 
 #include "battery.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "console.h"
 #include "dps.h"
 #include "ec_commands.h"

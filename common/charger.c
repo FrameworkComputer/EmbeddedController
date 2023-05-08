@@ -7,7 +7,7 @@
 
 #include "battery_smart.h"
 #include "builtin/assert.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"

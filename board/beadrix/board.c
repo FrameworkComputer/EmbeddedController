@@ -8,7 +8,7 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
