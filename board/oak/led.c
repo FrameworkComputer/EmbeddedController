@@ -154,7 +154,7 @@ static void oak_led_set_battery(int board_version)
 		 * - Battery discharging capacity<10%, red blink
 		 * - Battery error: Red ON
 		 */
-		switch (charge_get_state()) {
+		switch (led_pwr_get_state()) {
 		case PWR_STATE_CHARGE:
 			bat_led_set(BAT_LED_AMBER, 1);
 			break;
@@ -219,7 +219,7 @@ static void oak_led_set_battery(int board_version)
 		 *   situation: Orange in blinking mode (1s on, 1s off)
 		 * Using battery or not connected to AC power: OFF
 		 */
-		switch (charge_get_state()) {
+		switch (led_pwr_get_state()) {
 		case PWR_STATE_CHARGE:
 			bat_led_set(BAT_LED_ORANGE, 1);
 			break;

@@ -72,7 +72,7 @@ static void board_led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Always indicate amber on when charging. */
 		color = LED_AMBER;

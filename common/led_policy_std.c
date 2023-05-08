@@ -159,7 +159,7 @@ static void std_led_set_battery(void)
 	 * Same as the chromeos spec
 	 * Green/Amber for CHARGE_FLAG_FORCE_IDLE
 	 */
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		bat_led_set_color(LED_AMBER);
 		break;

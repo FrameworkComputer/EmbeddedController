@@ -136,7 +136,7 @@ static void elm_led_set_battery(void)
 			     0 :
 			     (1000 * remaining_capacity) / full_charge_capacity;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		if (permillage < FULL_BATTERY_PERMILLAGE) {
 			bat_led_set(BAT_LED_BLUE, 0);

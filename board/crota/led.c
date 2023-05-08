@@ -98,7 +98,7 @@ __override enum led_states board_led_get_state(enum led_states desired_state)
 	/* Make sure when battery is pre-charging, the LED will blinking.
 	 * Otherwise it will wait 30 seconds then blinking.
 	 */
-	if (charge_get_state() == PWR_STATE_IDLE) {
+	if (led_pwr_get_state() == PWR_STATE_IDLE) {
 		if (charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
 			desired_state = STATE_BATTERY_ERROR;
 	}

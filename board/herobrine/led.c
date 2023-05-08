@@ -93,7 +93,7 @@ static void board_led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		set_active_port_color(LED_AMBER);

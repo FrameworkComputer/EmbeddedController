@@ -69,7 +69,7 @@ static void led_set_color_battery(enum ec_led_colors color)
 
 static void led_set_battery(void)
 {
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		led_set_color_battery(EC_LED_COLOR_AMBER);

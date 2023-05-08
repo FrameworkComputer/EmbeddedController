@@ -124,7 +124,7 @@ static void led_set_battery(void)
 	 */
 	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_ABSENT) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-		    charge_get_state() != PWR_STATE_CHARGE) {
+		    led_pwr_get_state() != PWR_STATE_CHARGE) {
 			led_set_color_battery(power_ticks++ & 0x2 ? LED_WHITE :
 								    LED_OFF);
 			return;
@@ -133,7 +133,7 @@ static void led_set_battery(void)
 
 	power_ticks = 0;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		led_set_color_battery(LED_AMBER);
 		break;

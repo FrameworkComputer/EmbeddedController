@@ -252,9 +252,9 @@ static int led_get_charge_percent(void)
 
 static void select_active_port_led(int port)
 {
-	if ((charge_get_state() == PWR_STATE_DISCHARGE &&
+	if ((led_pwr_get_state() == PWR_STATE_DISCHARGE &&
 	     led_get_charge_percent() < 10) ||
-	    charge_get_state() == PWR_STATE_ERROR) {
+	    led_pwr_get_state() == PWR_STATE_ERROR) {
 		gpio_set_level(GPIO_LEFT_SIDE, 1);
 		gpio_set_level(GPIO_RIGHT_SIDE, 1);
 	} else if (port == RIGHT_PORT) {
@@ -299,7 +299,7 @@ static void led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		set_active_port_color(EC_LED_COLOR_AMBER);

@@ -156,7 +156,7 @@ static void led_set_battery(void)
 	if (!board_is_convertible()) {
 		if (chipset_in_state(CHIPSET_STATE_SUSPEND |
 				     CHIPSET_STATE_STANDBY) &&
-		    charge_get_state() != PWR_STATE_CHARGE) {
+		    led_pwr_get_state() != PWR_STATE_CHARGE) {
 			power_ticks++;
 
 			led_set_color_battery(0, power_ticks & 0x4 ? LED_WHITE :
@@ -169,7 +169,7 @@ static void led_set_battery(void)
 
 	power_ticks = 0;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		set_active_port_color(LED_AMBER);

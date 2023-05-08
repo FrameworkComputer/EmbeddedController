@@ -80,7 +80,7 @@ static void pulse_leds(enum pwm_led_id id, int period)
 
 static void update_charger_led(enum pwm_led_id id)
 {
-	enum led_pwr_state chg_st = charge_get_state();
+	enum led_pwr_state chg_st = led_pwr_get_state();
 
 	/*
 	 * The colors listed below are the default, but can be overridden.

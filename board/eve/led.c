@@ -486,7 +486,7 @@ static enum led_pattern led_get_double_tap_pattern(int percent_chg)
 
 static void led_select_pattern(enum led_pattern *pattern_desired, int tap)
 {
-	enum led_pwr_state chg_state = charge_get_state();
+	enum led_pwr_state chg_state = led_pwr_get_state();
 	int side;
 	int percent_chg;
 	enum led_pattern new_pattern;

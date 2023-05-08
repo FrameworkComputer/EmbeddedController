@@ -32,7 +32,7 @@ static void katsu_led_set_battery(void)
 	static uint8_t time_cnt;
 	uint8_t br[EC_LED_COLOR_COUNT] = { 0 };
 
-	chstate = charge_get_state();
+	chstate = led_pwr_get_state();
 	powerstate = power_get_state();
 
 	switch (chstate) {

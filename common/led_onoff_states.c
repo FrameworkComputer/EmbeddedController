@@ -49,7 +49,7 @@ static enum led_states led_get_state(void)
 	if (!IS_ENABLED(CONFIG_CHARGER))
 		return new_state;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Get percent charge */
 		charge_lvl = led_get_charge_percent();

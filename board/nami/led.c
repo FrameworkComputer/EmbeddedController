@@ -509,7 +509,7 @@ static void call_handler(void)
 	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		return;
 
-	cs = charge_get_state();
+	cs = led_pwr_get_state();
 	soc = charge_get_display_charge();
 	if (soc < 0)
 		cs = PWR_STATE_ERROR;

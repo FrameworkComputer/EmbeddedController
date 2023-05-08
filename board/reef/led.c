@@ -95,7 +95,7 @@ static void led_set_battery(void)
 	static int battery_ticks;
 	static int suspend_ticks;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		led_set_color_battery(LED_AMBER);
 		break;

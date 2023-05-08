@@ -75,7 +75,7 @@ enum led_pwr_state {
 /**
  * Return current charge state.
  */
-enum led_pwr_state charge_get_state(void);
+enum led_pwr_state led_pwr_get_state(void);
 
 /**
  * Return current charge v2 state.

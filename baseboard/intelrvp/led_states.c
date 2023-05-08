@@ -22,7 +22,7 @@ static enum led_states led_get_state(void)
 	int charge_lvl;
 	enum led_states new_state = LED_NUM_STATES;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Get percent charge */
 		charge_lvl = charge_get_percent();
@@ -115,7 +115,7 @@ static void led_update_battery(void)
 static enum pwr_led_states pwr_led_get_state(void)
 {
 	if (extpower_is_present()) {
-		if (charge_get_state() == PWR_STATE_CHARGE_NEAR_FULL)
+		if (led_pwr_get_state() == PWR_STATE_CHARGE_NEAR_FULL)
 			return PWR_LED_STATE_OFF;
 		else
 			return PWR_LED_STATE_ON;

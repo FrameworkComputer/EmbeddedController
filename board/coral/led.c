@@ -174,7 +174,7 @@ static enum led_states led_get_state(void)
 	int charge_lvl;
 	enum led_states new_state = LED_NUM_STATES;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		/* Get percent charge */
 		charge_lvl = charge_get_percent();

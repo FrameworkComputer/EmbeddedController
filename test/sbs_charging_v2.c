@@ -127,7 +127,7 @@ test_static int wait_charging_state(void)
 	enum led_pwr_state state;
 	task_wake(TASK_ID_CHARGER);
 	msleep(WAIT_CHARGER_TASK);
-	state = charge_get_state();
+	state = led_pwr_get_state();
 	ccprintf("[CHARGING TEST] state = %d\n", state);
 	return state;
 }
@@ -504,7 +504,7 @@ test_static int test_external_funcs(void)
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
 
 	/* and the rest */
-	TEST_ASSERT(charge_get_state() == PWR_STATE_CHARGE);
+	TEST_ASSERT(led_pwr_get_state() == PWR_STATE_CHARGE);
 	TEST_ASSERT(!charge_want_shutdown());
 	TEST_ASSERT(charge_get_percent() == 50);
 	temp = 0;

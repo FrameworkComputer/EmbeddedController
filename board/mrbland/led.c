@@ -100,7 +100,7 @@ static void board_led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		if (chipset_in_state(CHIPSET_STATE_ON |
@@ -159,7 +159,7 @@ static void board_led_set_power(void)
 
 	power_ticks++;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 	case PWR_STATE_CHARGE_NEAR_FULL:
 	case PWR_STATE_DISCHARGE:

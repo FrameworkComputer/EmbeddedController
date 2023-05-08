@@ -63,7 +63,7 @@ static void scarlet_led_set_battery(void)
 
 	battery_second++;
 
-	switch (charge_get_state()) {
+	switch (led_pwr_get_state()) {
 	case PWR_STATE_CHARGE:
 		bat_led_set_color(LED_AMBER);
 		break;

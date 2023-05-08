@@ -33,7 +33,7 @@ static void kukui_led_set_battery(void)
 	static uint8_t prv_r, prv_g, prv_b;
 	uint8_t br[EC_LED_COLOR_COUNT] = { 0 };
 
-	chstate = charge_get_state();
+	chstate = led_pwr_get_state();
 
 	if (prv_chstate == chstate && chstate != PWR_STATE_DISCHARGE)
 		return;

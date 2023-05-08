@@ -17,7 +17,7 @@
 #define __CROS_EC_CHARGE_STATE_V2_H
 
 /*
- * The values exported by charge_get_state() and charge_get_flags() are used
+ * The values exported by led_pwr_get_state() and charge_get_flags() are used
  * only to control the LEDs (with one not-quite-correct exception). For V2
  * we use a different set of states internally.
  */
