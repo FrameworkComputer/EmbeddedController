@@ -273,7 +273,7 @@ static int rt1739_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 	return write_reg(port, RT1739_REG_VBUS_OC_SETTING, reg);
 }
 
-static int rt1739_init(int port)
+int rt1739_init(int port)
 {
 	int device_id, oc_setting, sys_ctrl, vbus_switch_ctrl;
 	bool batt_connected = false;

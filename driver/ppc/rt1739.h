@@ -134,4 +134,6 @@ extern const struct bc12_drv rt1739_bc12_drv;
 
 void rt1739_interrupt(int port);
 
+int rt1739_init(int port);
+
 #endif /* defined(__CROS_EC_PPC_RT1739_H) */

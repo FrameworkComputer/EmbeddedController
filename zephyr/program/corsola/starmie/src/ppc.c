@@ -27,3 +27,11 @@ void ppc_interrupt(enum gpio_signal signal)
 		ppc_chips[0].drv->interrupt(0);
 	}
 }
+
+static int set_rt1739(void)
+{
+	rt1739_init(0);
+	return 0;
+}
+
+SYS_INIT(set_rt1739, POST_KERNEL, 61);
