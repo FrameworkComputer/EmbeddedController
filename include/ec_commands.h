@@ -7814,6 +7814,7 @@ struct fp_auth_command_encryption_metadata {
 } __ec_align4;
 
 #define FP_ELLIPTIC_CURVE_PRIVATE_KEY_LEN 32
+#define FP_ELLIPTIC_CURVE_PUBLIC_KEY_IV_LEN 16
 
 struct fp_encrypted_private_key {
 	struct fp_auth_command_encryption_metadata info;

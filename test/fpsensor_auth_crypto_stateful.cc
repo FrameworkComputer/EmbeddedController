@@ -4,9 +4,11 @@
  */
 
 #include "common.h"
+#include "crypto/elliptic_curve_key.h"
 #include "ec_commands.h"
 #include "fpsensor_auth_crypto.h"
 #include "fpsensor_state_without_driver_info.h"
+#include "openssl/aes.h"
 #include "openssl/bn.h"
 #include "openssl/ec.h"
 #include "openssl/obj_mac.h"
@@ -218,6 +220,73 @@ test_fp_decrypt_data_with_gsc_session_key_in_place_fail(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list test_fp_encrypt_data_with_ecdh_key_in_place(void)
+{
+	constexpr std::array<uint8_t, FP_ELLIPTIC_CURVE_PUBLIC_KEY_IV_LEN>
+		zero_iv = { 0 };
+
+	bssl::UniquePtr<EC_KEY> ecdh_key = generate_elliptic_curve_key();
+
+	std::optional<fp_elliptic_curve_public_key> pubkey =
+		create_pubkey_from_ec_key(*ecdh_key);
+
+	TEST_ASSERT(pubkey.has_value());
+
+	TEST_NE(ecdh_key.get(), nullptr, "%p");
+
+	struct fp_elliptic_curve_public_key response_pubkey;
+
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> secret = {
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5,
+		6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2
+	};
+
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> enc_secret = secret;
+
+	std::array<uint8_t, FP_ELLIPTIC_CURVE_PUBLIC_KEY_IV_LEN> iv = {};
+
+	TEST_ASSERT_ARRAY_EQ(iv, zero_iv, iv.size());
+
+	TEST_EQ(encrypt_data_with_ecdh_key_in_place(
+			*pubkey, enc_secret.data(), enc_secret.size(),
+			iv.data(), iv.size(), response_pubkey),
+		EC_SUCCESS, "%d");
+
+	/* The encrypted data should not be the same as the input. */
+	TEST_ASSERT_ARRAY_NE(enc_secret, secret, secret.size());
+
+	/* The IV should not be zero. */
+	TEST_ASSERT_ARRAY_NE(iv, zero_iv, iv.size());
+
+	bssl::UniquePtr<EC_KEY> output_key =
+		create_ec_key_from_pubkey(response_pubkey);
+
+	TEST_NE(output_key.get(), nullptr, "%p");
+
+	std::array<uint8_t, 32> share_secret;
+	TEST_EQ(generate_ecdh_shared_secret(*ecdh_key, *output_key,
+					    share_secret.data(),
+					    share_secret.size()),
+		EC_SUCCESS, "%d");
+
+	AES_KEY aes_key;
+	TEST_EQ(AES_set_encrypt_key(share_secret.data(), 256, &aes_key), 0,
+		"%d");
+
+	unsigned int block_num = 0;
+	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;
+
+	/* The AES CTR uses the same function for encryption & decryption. */
+	AES_ctr128_encrypt(enc_secret.data(), enc_secret.data(),
+			   enc_secret.size(), &aes_key, iv.data(),
+			   ecount_buf.data(), &block_num);
+
+	/* The secret should be the same after decrypt. */
+	TEST_ASSERT_ARRAY_EQ(enc_secret, secret, secret.size());
+
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 extern "C" void run_test(int argc, const char **argv)
@@ -230,5 +299,6 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_generate_gsc_session_key_fail);
 	RUN_TEST(test_fp_decrypt_data_with_gsc_session_key_in_place);
 	RUN_TEST(test_fp_decrypt_data_with_gsc_session_key_in_place_fail);
+	RUN_TEST(test_fp_encrypt_data_with_ecdh_key_in_place);
 	test_print_result();
 }

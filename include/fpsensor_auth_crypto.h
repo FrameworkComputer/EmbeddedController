@@ -181,5 +181,22 @@ generate_gsc_session_key(const uint8_t *auth_nonce, size_t auth_nonce_size,
 enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
 	const uint8_t *gsc_session_key, size_t gsc_session_key_size,
 	const uint8_t *iv, size_t iv_size, uint8_t *data, size_t data_size);
+/**
+ * Encrypt the data with a ECDH public key.
+ *
+ * @param[in] in_pubkey the input public key
+ * @param[in,out] data the data to be encrypted
+ * @param[in] data_size the data size
+ * @param[out] iv the output IV
+ * @param[in] iv_size the IV size
+ * @param[out] out_pubkey the output public key
+ *
+ * @return EC_SUCCESS on success
+ * @return EC_ERROR_* on error
+ */
+enum ec_error_list encrypt_data_with_ecdh_key_in_place(
+	const struct fp_elliptic_curve_public_key &in_pubkey, uint8_t *data,
+	size_t data_size, uint8_t *iv, size_t iv_size,
+	struct fp_elliptic_curve_public_key &out_pubkey);
 
 #endif /* __CROS_EC_FPSENSOR_AUTH_CRYPTO_H */

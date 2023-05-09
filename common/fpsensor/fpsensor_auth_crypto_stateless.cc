@@ -16,6 +16,7 @@
 #include "openssl/ecdh.h"
 #include "openssl/mem.h"
 #include "openssl/obj_mac.h"
+#include "openssl/rand.h"
 
 extern "C" {
 #include "ec_commands.h"
@@ -156,6 +157,66 @@ enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
 	/* The AES CTR uses the same function for encryption & decryption. */
 	unsigned int block_num = 0;
 	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;
+	AES_ctr128_encrypt(data, data, data_size, &aes_key, aes_iv.data(),
+			   ecount_buf.data(), &block_num);
+
+	return EC_SUCCESS;
+}
+
+enum ec_error_list encrypt_data_with_ecdh_key_in_place(
+	const struct fp_elliptic_curve_public_key &in_pubkey, uint8_t *data,
+	size_t data_size, uint8_t *iv, size_t iv_size,
+	struct fp_elliptic_curve_public_key &out_pubkey)
+{
+	if (iv_size != AES_BLOCK_SIZE) {
+		return EC_ERROR_INVAL;
+	}
+
+	bssl::UniquePtr<EC_KEY> private_key = generate_elliptic_curve_key();
+	if (private_key == nullptr) {
+		return EC_ERROR_MEMORY_ALLOCATION;
+	}
+
+	std::optional<fp_elliptic_curve_public_key> out_key =
+		create_pubkey_from_ec_key(*private_key);
+	if (!out_key.has_value()) {
+		return EC_ERROR_INVAL;
+	}
+
+	out_pubkey = out_key.value();
+
+	bssl::UniquePtr<EC_KEY> public_key =
+		create_ec_key_from_pubkey(in_pubkey);
+	if (public_key == nullptr) {
+		return EC_ERROR_MEMORY_ALLOCATION;
+	}
+
+	CleanseWrapper<std::array<uint8_t, SHA256_DIGEST_SIZE> > enc_key;
+
+	enum ec_error_list ret = generate_ecdh_shared_secret(
+		*private_key, *public_key, enc_key.data(), enc_key.size());
+	if (ret != EC_SUCCESS) {
+		return ret;
+	}
+
+	CleanseWrapper<AES_KEY> aes_key;
+	int res = AES_set_encrypt_key(enc_key.data(), 256, &aes_key);
+	if (res) {
+		return EC_ERROR_INVAL;
+	}
+
+	RAND_bytes(iv, iv_size);
+
+	/* The IV will be changed after the AES_ctr128_encrypt, we need a copy
+	 * for that. */
+	std::array<uint8_t, AES_BLOCK_SIZE> aes_iv;
+
+	std::copy(iv, iv + iv_size, aes_iv.begin());
+
+	unsigned int block_num = 0;
+	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;
+
+	/* The AES CTR uses the same function for encryption & decryption. */
 	AES_ctr128_encrypt(data, data, data_size, &aes_key, aes_iv.data(),
 			   ecount_buf.data(), &block_num);
 
