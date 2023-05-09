@@ -142,4 +142,44 @@ enum ec_error_list generate_ecdh_shared_secret(const EC_KEY &private_key,
 					       uint8_t *shared_secret,
 					       uint8_t share_secret_size);
 
+/**
+ * Generate a gsc_session_key that is derived from auth nonce, GSC nonce and
+ * pairing key.
+ *
+ * @param[in] auth_nonce the auth nonce
+ * @param[in] auth_nonce_size the size of auth nonce
+ * @param[in] gsc_nonce the auth nonce
+ * @param[in] gsc_nonce_size the size of gsc nonce
+ * @param[in] pairing_key the auth nonce
+ * @param[in] pairing_key_size the size of pairing key
+ * @param[in,out] gsc_session_key the output key
+ * @param[in] gsc_session_key_size the output key size
+ *
+ * @return EC_SUCCESS on success
+ * @return EC_ERROR_* on error
+ */
+enum ec_error_list
+generate_gsc_session_key(const uint8_t *auth_nonce, size_t auth_nonce_size,
+			 const uint8_t *gsc_nonce, size_t gsc_nonce_size,
+			 const uint8_t *pairing_key, size_t pairing_key_size,
+			 uint8_t *gsc_session_key, size_t gsc_session_key_size);
+
+/**
+ * Decrypt the data in place with a GSC session key.
+ * Note: The GSC session key is equal to the CK in the original design doc.
+ *
+ * @param[in] gsc_session_key the GSC session key
+ * @param[in] gsc_session_key_size the size of GSC session key
+ * @param[in] iv the IV of the encrypted data
+ * @param[in] iv_size the size of the IV
+ * @param[in,out] data the encrypted data
+ * @param[in] data_size the output data size
+ *
+ * @return EC_SUCCESS on success
+ * @return EC_ERROR_* on error
+ */
+enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
+	const uint8_t *gsc_session_key, size_t gsc_session_key_size,
+	const uint8_t *iv, size_t iv_size, uint8_t *data, size_t data_size);
+
 #endif /* __CROS_EC_FPSENSOR_AUTH_CRYPTO_H */

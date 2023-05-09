@@ -96,6 +96,128 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_key(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list test_fp_generate_gsc_session_key(void)
+{
+	std::array<uint8_t, 32> auth_nonce = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					       1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					       2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+	std::array<uint8_t, 32> gsc_nonce = { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					      1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					      2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+	std::array<uint8_t, 32> pairing_key = { 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+						1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+						2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+
+	std::array<uint8_t, 32> gsc_session_key;
+
+	TEST_EQ(generate_gsc_session_key(auth_nonce.data(), auth_nonce.size(),
+					 gsc_nonce.data(), gsc_nonce.size(),
+					 pairing_key.data(), pairing_key.size(),
+					 gsc_session_key.data(),
+					 gsc_session_key.size()),
+		EC_SUCCESS, "%d");
+
+	std::array<uint8_t, 32> expected_gsc_session_key = {
+		0X1A, 0X1A, 0X3C, 0X33, 0X7F, 0XAE, 0XF9, 0X3E,
+		0XA8, 0X7C, 0XE4, 0XEC, 0XD9, 0XFF, 0X45, 0X8A,
+		0XB6, 0X2F, 0X75, 0XD5, 0XEA, 0X25, 0X93, 0X36,
+		0X60, 0XF1, 0XAB, 0XD2, 0XF4, 0X9F, 0X22, 0X89,
+	};
+
+	TEST_ASSERT_ARRAY_EQ(gsc_session_key, expected_gsc_session_key,
+			     gsc_session_key.size());
+
+	return EC_SUCCESS;
+}
+
+test_static enum ec_error_list test_fp_generate_gsc_session_key_fail(void)
+{
+	std::array<uint8_t, 32> auth_nonce = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					       1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					       2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+	std::array<uint8_t, 32> gsc_nonce = { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					      1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					      2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+	std::array<uint8_t, 32> pairing_key = { 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+						1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+						2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+
+	/* Wrong gsc_session_key size. */
+	std::array<uint8_t, 30> gsc_session_key;
+
+	TEST_NE(generate_gsc_session_key(auth_nonce.data(), auth_nonce.size(),
+					 gsc_nonce.data(), gsc_nonce.size(),
+					 pairing_key.data(), pairing_key.size(),
+					 gsc_session_key.data(),
+					 gsc_session_key.size()),
+		EC_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static enum ec_error_list
+test_fp_decrypt_data_with_gsc_session_key_in_place(void)
+{
+	std::array<uint8_t, 32> gsc_session_key = {
+		0X1A, 0X1A, 0X3C, 0X33, 0X7F, 0XAE, 0XF9, 0X3E,
+		0XA8, 0X7C, 0XE4, 0XEC, 0XD9, 0XFF, 0X45, 0X8A,
+		0XB6, 0X2F, 0X75, 0XD5, 0XEA, 0X25, 0X93, 0X36,
+		0X60, 0XF1, 0XAB, 0XD2, 0XF4, 0X9F, 0X22, 0X89,
+	};
+
+	std::array<uint8_t, 16> iv = {
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5,
+	};
+
+	std::array<uint8_t, 32> data = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					 2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+
+	TEST_EQ(decrypt_data_with_gsc_session_key_in_place(
+			gsc_session_key.data(), gsc_session_key.size(),
+			iv.data(), iv.size(), data.data(), data.size()),
+		EC_SUCCESS, "%d");
+
+	std::array<uint8_t, 32> expected_data = {
+		0X6D, 0XED, 0XAD, 0X04, 0XF8, 0XDB, 0XAE, 0X51,
+		0XF8, 0XEE, 0X94, 0X7E, 0XDB, 0X12, 0X14, 0X22,
+		0X38, 0X32, 0X27, 0XC5, 0X19, 0X72, 0XA3, 0X60,
+		0X67, 0X71, 0X25, 0XE8, 0X27, 0X56, 0XC6, 0X35,
+	};
+
+	TEST_ASSERT_ARRAY_EQ(data, expected_data, data.size());
+
+	return EC_SUCCESS;
+}
+
+test_static enum ec_error_list
+test_fp_decrypt_data_with_gsc_session_key_in_place_fail(void)
+{
+	std::array<uint8_t, 32> gsc_session_key = {
+		0X1A, 0X1A, 0X3C, 0X33, 0X7F, 0XAE, 0XF9, 0X3E,
+		0XA8, 0X7C, 0XE4, 0XEC, 0XD9, 0XFF, 0X45, 0X8A,
+		0XB6, 0X2F, 0X75, 0XD5, 0XEA, 0X25, 0X93, 0X36,
+		0X60, 0XF1, 0XAB, 0XD2, 0XF4, 0X9F, 0X22, 0X89,
+	};
+
+	/* Wrong IV size. */
+	std::array<uint8_t, 32> iv = {
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5,
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5,
+	};
+
+	std::array<uint8_t, 32> data = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					 2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
+
+	TEST_NE(decrypt_data_with_gsc_session_key_in_place(
+			gsc_session_key.data(), gsc_session_key.size(),
+			iv.data(), iv.size(), data.data(), data.size()),
+		EC_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 extern "C" void run_test(int argc, const char **argv)
@@ -104,5 +226,9 @@ extern "C" void run_test(int argc, const char **argv)
 
 	RUN_TEST(test_fp_encrypt_decrypt_data);
 	RUN_TEST(test_fp_encrypt_decrypt_key);
+	RUN_TEST(test_fp_generate_gsc_session_key);
+	RUN_TEST(test_fp_generate_gsc_session_key_fail);
+	RUN_TEST(test_fp_decrypt_data_with_gsc_session_key_in_place);
+	RUN_TEST(test_fp_decrypt_data_with_gsc_session_key_in_place_fail);
 	test_print_result();
 }
