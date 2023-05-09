@@ -3,4 +3,5 @@
 # found in the LICENSE file.
 
 cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SCREEBO include)
+zephyr_include_directories("include")
 zephyr_library_sources("src/keyboard.c" "src/usb_config.c")

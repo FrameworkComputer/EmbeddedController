@@ -1,0 +1,36 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	screebo-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to enable USB DB.
+		 */
+		usb-db {
+			enum-name = "FW_USB_DB";
+			start = <2>;
+			size = <3>;
+
+			io-db-unknown {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_DB_NOT_CONNECTED";
+				value = <0>;
+			};
+			io-db-usb3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_DB_USB3";
+				value = <1>;
+			};
+			io-db-usb4-hayden {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_DB_USB4_HB";
+				value = <2>;
+				default;
+			};
+		};
+	};
+};

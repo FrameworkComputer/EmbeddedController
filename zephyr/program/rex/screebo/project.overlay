@@ -13,6 +13,7 @@
 #include "../usbc.dtsi"
 
 /* Screebo project DTS includes */
+#include "cbi.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "temp_sensors.dtsi"
@@ -31,16 +32,10 @@
 		/delete-node/ tablet_mode_l;
 		/delete-node/ ec_spare_gpiob1;
 		/delete-node/ ec_spare_gpioa2;
-		/delete-node/ usb_c1_rst_odl;
 
 		gpio_usb_c1_rt_3p3_sx_en: usb_c1_rt_3p3_sx_en {
-			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
-		};
-		gpio_usb_c1_rst_odl: usb_c1_rst_odl {
-			gpios = <&gpio3 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
-		};
-		gpio_usb_c1_rt_int_odl: usb_c1_rt_int_odl {
-			gpios = <&gpio7 2 GPIO_INPUT>;
+			gpios = <&gpiob 1 0>;
+			no-auto-init;
 		};
 		gpio_usb_a1_oc_pu_en: usb_a1_oc_pu_en {
 			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
@@ -49,10 +44,12 @@
 			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
 		};
 		ioex_usb_c1_rt_rst_ls_l: usb_c1_rt_rst_ls_l {
-			gpios = <&ioex_c1_port0 7 GPIO_OUTPUT>;
+			gpios = <&ioex_c1_port0 7 0>;
+			no-auto-init;
 		};
 		ioex_usb_c1_frs_en: usb_c1_frs_en {
-			gpios = <&ioex_c1_port0 6 GPIO_OUTPUT_LOW>;
+			gpios = <&ioex_c1_port0 6 0>;
+			no-auto-init;
 		};
 
 	};
@@ -95,6 +92,23 @@
 			compatible = "celxpert,c340152", "battery-smart";
 		};
 	};
+
+	aliases {
+		/* GPIO37 */
+		nct-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
+
+		/* GPIO72 */
+		hbr-usb-c1-rt-int-odl = &gpio_usb_c1_rt_int_odl;
+
+		/* GPIOB1 */
+		hbr-usb-c1-rt-pwr-en = &gpio_usb_c1_rt_3p3_sx_en;
+
+		/* NCT38xx_C1 GPIO07 */
+		hbr-usb-c1-rt-rst = &ioex_usb_c1_rt_rst_ls_l;
+
+		/* NCT38xx_C1 GPIO06 */
+		syv-usb-c1-frs-en = &ioex_usb_c1_frs_en;
+	};
 };
 
 /* ADC and GPIO alt-function specifications */
@@ -126,7 +140,9 @@
 };
 
 &i2c4_1 {
-	tcpc_port1: nct38xx@73 {
+	/delete-node/ rt1716@4e;
+
+	tcpc_nct38xx_port1: nct38xx@73 {
 		compatible = "nuvoton,nct38xx";
 		gpio-dev = <&nct3807_C1>;
 		reg = <0x73>;
@@ -142,7 +158,7 @@
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
 		 */
-		rst-gpios = <&gpio3 7 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		rst-gpios = <&gpio3 7 0>;
 	};
 
 	nct3807_C1: nct3807_C1@73 {
@@ -162,6 +178,15 @@
 			pin_mask = <0xff>;
 			pinmux_mask = <0xf7>;
 		};
+		ioex_c1_port1: gpio@1 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x1>;
+			label = "NCT3807_C1_GPIO1";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+		};
 	};
 
 	nct3808_alert_1 {
@@ -170,12 +195,34 @@
 		nct38xx-dev = <&nct3807_C1>;
 		label = "NCT3807_ALERT_0";
 	};
+
+	tcpc_ps8815_port1: ps8xxx@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
+			TCPC_FLAGS_CONTROL_VCONN |
+			TCPC_FLAGS_CONTROL_FRS)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
+		/* a duplicate of the <&gpio_usb_c1_rt_rst_r_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		rst-gpios = <&gpio7 4 0>;
+		is-alt;
+	};
 };
 
 &i2c6_1 {
-	/delete-node/ nx20p348x@72;
+	/delete-node/ ktu1125@38;
+	/delete-node/ ppc_syv@40;
 
-	ppc_port1_syv: ppc_syv@40 {
+	ppc_syv_port1: ppc_syv@40 {
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x40>;
@@ -184,8 +231,11 @@
 };
 
 &usbc_port1 {
-	ppc = <&ppc_port1_syv>;
-	tcpc = <&tcpc_port1>;
+	/delete-node/ usb-mux-chain-1-anx7452;
+	/delete-node/ usb-mux-chain-1-kb8010;
+
+	ppc = <&ppc_syv_port1>;
+	tcpc = <&tcpc_nct38xx_port1>;
 	usb-mux-chain-1 {
 		usb-muxes = <&usb_c1_hb_retimer &virtual_mux_c1>;
 	};
