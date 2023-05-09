@@ -40,9 +40,15 @@
 	CHECK_COMPAT(SYV682X_COMPAT, usbc_id, ppc_id, PPC_CHIP_SYV682X)      \
 	CHECK_COMPAT(SYV682X_EMUL_COMPAT, usbc_id, ppc_id, PPC_CHIP_SYV682X)
 
-#define PPC_CHIP(usbc_id)                           \
-	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, ppc), \
-		    (PPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, ppc))), ())
+/* clang-format off */
+#define PPC_CHIP_STUB(usbc_id) \
+	[USBC_PORT_NEW(usbc_id)] = {},
+/* clang-format on */
+
+#define PPC_CHIP(usbc_id)                                               \
+	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, ppc),                     \
+		    (PPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, ppc))), \
+		    (PPC_CHIP_STUB(usbc_id)))
 
 #define PPC_CHIP_ALT(usbc_id)                                               \
 	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, ppc_alt),                     \

@@ -71,9 +71,15 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 	CHECK_COMPAT(TCPCI_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_TCPCI)        \
 	TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)
 
-#define TCPC_CHIP(usbc_id)                           \
-	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, tcpc), \
-		    (TCPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, tcpc))), ())
+/* clang-format off */
+#define TCPC_CHIP_STUB(usbc_id) \
+	[USBC_PORT_NEW(usbc_id)] = {},
+/* clang-format on */
+
+#define TCPC_CHIP(usbc_id)                                                \
+	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, tcpc),                      \
+		    (TCPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, tcpc))), \
+		    (TCPC_CHIP_STUB(usbc_id)))
 
 #define MAYBE_CONST \
 	COND_CODE_1(CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG, (), (const))
