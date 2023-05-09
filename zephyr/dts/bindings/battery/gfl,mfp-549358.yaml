@@ -18,17 +18,17 @@ properties:
   ship_mode_reg_data:
     default: [0x0010, 0x0010]
   fet_mfgacc_support:
-    default: 0
+    default: 1
   fet_reg_addr:
-    default: 0x43
+    default: 0x54
   fet_reg_mask:
-    default: 0x0001
+    default: 0x0006
   fet_disconnect_val:
     default: 0x0000
   fet_cfet_mask:
-    default: 0x0002
+    default: 0x4000
   fet_cfet_off_val:
-    default: 0x0000
+    default: 0x4000
 
   # Battery info
   voltage_max:
