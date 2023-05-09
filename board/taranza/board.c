@@ -20,8 +20,6 @@
 #include "intc.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
@@ -111,29 +109,6 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_VBUS, GPIO_EN_USB_A1_VBUS, GPIO_EN_USB_A2_VBUS,
 	GPIO_EN_USB_A3_VBUS, GPIO_EN_USB_A4_VBUS,
 };
-
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_RED] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 2400,
-	},
-
-	[PWM_CH_LED_GREEN] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 2400,
-	},
-
-	[PWM_CH_LED_BLUE] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 2400,
-	}
-
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {

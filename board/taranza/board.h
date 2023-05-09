@@ -77,13 +77,6 @@
 #undef CONFIG_BATTERY_REVIVE_DISCONNECT
 #undef CONFIG_BATTERY_SMART
 
-/* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 1
-
-/* PWM */
-#define CONFIG_PWM
-
 /* Thermistors */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR
@@ -136,13 +129,6 @@ enum charge_port {
 };
 
 enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
-
-enum pwm_channel {
-	PWM_CH_LED_RED,
-	PWM_CH_LED_GREEN,
-	PWM_CH_LED_BLUE,
-	PWM_CH_COUNT,
-};
 
 /* ADC channels */
 enum adc_channel {
