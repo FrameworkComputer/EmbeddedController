@@ -1386,11 +1386,19 @@ static void adjust_requested_vi(const struct charger_info *const info,
 /* Handle selection of the preferred voltage */
 static void process_preferred_voltage(void)
 {
-	int is_pd_supply = charge_manager_get_supplier() == CHARGE_SUPPLIER_PD;
-	int port = charge_manager_get_active_charge_port();
-	int bat_spec_desired_mw =
-		curr.batt.desired_current * curr.batt.desired_voltage / 1000;
+	int is_pd_supply;
+	int port;
+	int bat_spec_desired_mw;
 	int prev_plt_and_desired_mw;
+
+	/* sjg@: Attempt to get code coverage on this function b/281109948 */
+	if (!IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
+		return;
+
+	is_pd_supply = charge_manager_get_supplier() == CHARGE_SUPPLIER_PD;
+	port = charge_manager_get_active_charge_port();
+	bat_spec_desired_mw =
+		curr.batt.desired_current * curr.batt.desired_voltage / 1000;
 
 	/* save previous plt_and_desired_mw, since it will be updated below */
 	prev_plt_and_desired_mw = charge_get_plt_plus_bat_desired_mw();
@@ -1585,8 +1593,7 @@ void charger_task(void *u)
 
 		adjust_requested_vi(info, is_full);
 
-		if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
-			process_preferred_voltage();
+		process_preferred_voltage();
 
 		/* Report our state */
 		local_state.is_full = is_full;
