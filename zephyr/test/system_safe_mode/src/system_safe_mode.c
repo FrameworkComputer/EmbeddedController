@@ -177,7 +177,7 @@ ZTEST_USER(system_safe_mode, test_print_stack_contents)
 	uint16_t write_count;
 	regex_t regex;
 
-	char *regex_str = "========== Stack Contents ===========\n"
+	char *regex_str = "Stack Contents\n"
 			  "[0-9a-f]{8}: 00000000 00000001 00000002 00000003\n"
 			  "[0-9a-f]{8}: 00000004 00000005 00000006 00000007\n"
 			  "[0-9a-f]{8}: 00000008 00000009 0000000a 0000000b\n"

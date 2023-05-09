@@ -19,6 +19,8 @@
 
 #define STACK_PRINT_SIZE_WORDS 32
 
+#define CANNOT_ENTER_SAFE_MODE_FMT "Cannot start SSM: %s\n"
+
 static bool in_safe_mode;
 
 static const int safe_mode_allowed_hostcmds[] = {
@@ -79,8 +81,7 @@ int disable_non_safe_mode_critical_tasks(void)
 
 void handle_system_safe_mode_timeout(void)
 {
-	panic_printf("Safe mode timeout after %d msec\n",
-		     CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC);
+	panic_printf("SSM timeout\n");
 	panic_reboot();
 }
 DECLARE_DEFERRED(handle_system_safe_mode_timeout);
@@ -105,7 +106,7 @@ static void print_panic_stack(void)
 	uint32_t sp;
 	const struct panic_data *pdata = panic_get_data();
 
-	ccprintf("\n========== Stack Contents ===========");
+	ccprintf("\nStack Contents");
 	sp = get_panic_stack_pointer(pdata);
 	for (int i = 0; i < STACK_PRINT_SIZE_WORDS; i++) {
 		if (sp == 0 ||
@@ -133,7 +134,7 @@ bool command_is_allowed_in_safe_mode(int command)
 
 static void system_safe_mode_start(void)
 {
-	ccprintf("*** Post Panic System Safe Mode ***\n");
+	ccprintf("Post Panic SSM\n");
 	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE_PRINT_STACK))
 		print_panic_stack();
 	if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS))
@@ -144,19 +145,19 @@ DECLARE_DEFERRED(system_safe_mode_start);
 int start_system_safe_mode(void)
 {
 	if (!system_is_in_rw()) {
-		panic_printf("Can only enter safe mode from RW image\n");
+		panic_printf(CANNOT_ENTER_SAFE_MODE_FMT, "RO image");
 		return EC_ERROR_INVAL;
 	}
 
 	if (system_is_in_safe_mode()) {
-		panic_printf("Already in system safe mode");
+		panic_printf(CANNOT_ENTER_SAFE_MODE_FMT, "Already in SSM");
 		return EC_ERROR_INVAL;
 	}
 
 	if (is_current_task_safe_mode_critical()) {
 		/* TODO: Restart critical tasks */
-		panic_printf(
-			"Fault in critical task, cannot enter system safe mode\n");
+		panic_printf(CANNOT_ENTER_SAFE_MODE_FMT,
+			     "Panic in critical task");
 		return EC_ERROR_INVAL;
 	}
 
@@ -173,7 +174,7 @@ int start_system_safe_mode(void)
 
 	in_safe_mode = true;
 
-	panic_printf("\nStarting system safe mode\n");
+	panic_printf("Starting SSM\n");
 
 	return EC_SUCCESS;
 }
