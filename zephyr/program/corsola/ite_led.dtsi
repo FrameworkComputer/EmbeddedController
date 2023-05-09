@@ -125,7 +125,7 @@
 			};
 		};
 
-		battery_led: batter-led {
+		battery_led: battery-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&led_battery_amber &led_battery_white>;
 
