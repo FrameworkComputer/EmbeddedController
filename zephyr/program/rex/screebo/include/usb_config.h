@@ -7,5 +7,6 @@
 #define __ZEPHYR_USB_CONFIG_H
 
 extern uint32_t usb_db_type;
+extern uint32_t usb_mb_type;
 
 #endif /* __ZEPHYR_USB_CONFIG_H */

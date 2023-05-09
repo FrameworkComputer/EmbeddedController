@@ -32,5 +32,27 @@
 				default;
 			};
 		};
+		usb-mb {
+			enum-name = "FW_USB_MB";
+			start = <5>;
+			size = <3>;
+
+			io-mb-unknown {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_MB_UNKNOWN";
+				value = <0>;
+			};
+			io-mb-usb3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_MB_USB3";
+				value = <1>;
+			};
+			io-mb-usb4-hayden {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_MB_USB4_HB";
+				value = <2>;
+				default;
+			};
+		};
 	};
 };

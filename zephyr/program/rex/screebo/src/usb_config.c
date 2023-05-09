@@ -28,6 +28,7 @@
 LOG_MODULE_REGISTER(screebo, LOG_LEVEL_INF);
 
 uint32_t usb_db_type;
+uint32_t usb_mb_type;
 
 void screebo_ppc_interrupt(enum gpio_signal signal)
 {
@@ -80,6 +81,12 @@ static void setup_runtime_gpios(void)
 		usb_db_type = FW_USB_DB_NOT_CONNECTED;
 	}
 
+	ret = cros_cbi_get_fw_config(FW_USB_MB, &usb_mb_type);
+	if (ret != 0) {
+		LOG_ERR("Failed to get FW_USB_MB from CBI");
+		usb_mb_type = FW_USB_MB_UNKNOWN;
+	}
+
 	switch (usb_db_type) {
 	case FW_USB_DB_USB3:
 		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rst_odl));
@@ -118,6 +125,13 @@ static void setup_runtime_gpios(void)
 		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_3p3_sx_en));
 		break;
 	}
+
+	if (usb_mb_type != FW_USB_MB_USB4_HB) {
+		/* Just HBR will use these gpios */
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_rt_3p3_sx_en));
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_rt_int_odl));
+		gpio_unused(GPIO_DT_FROM_NODELABEL(ioex_usb_c0_rt_rst_ls_l));
+	}
 }
 DECLARE_HOOK(HOOK_INIT, setup_runtime_gpios, HOOK_PRIO_FIRST);
 
@@ -133,3 +147,21 @@ static void setup_alt_db(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, setup_alt_db, HOOK_PRIO_POST_I2C);
+
+static void setup_mb_usb(void)
+{
+	if (usb_mb_type == FW_USB_MB_USB3) {
+		LOG_INF("USB MB: C0 port is USB3");
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_usb3_port0);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, setup_mb_usb, HOOK_PRIO_POST_I2C);
+
+__override bool board_is_tbt_usb4_port(int port)
+{
+	/* Both C0 and C1 are USB4 port */
+	if (usb_mb_type == FW_USB_MB_USB4_HB)
+		return true;
+
+	return false;
+}

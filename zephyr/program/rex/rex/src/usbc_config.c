@@ -52,3 +52,11 @@ void ppc_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
+
+__override bool board_is_tbt_usb4_port(int port)
+{
+	if (port == USBC_PORT_C0)
+		return true;
+
+	return false;
+}

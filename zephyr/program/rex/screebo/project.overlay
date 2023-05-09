@@ -230,6 +230,14 @@
 	};
 };
 
+&usbc_port0 {
+	usb_mux_chain_usb3_port0: usb-mux-chain-0-usb3 {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&virtual_mux_c0>;
+		alternative-chain;
+	};
+};
+
 &usbc_port1 {
 	/delete-node/ usb-mux-chain-1-anx7452;
 	/delete-node/ usb-mux-chain-1-kb8010;
