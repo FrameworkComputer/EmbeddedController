@@ -135,12 +135,22 @@ example a missing `struct device` can show as
 /tmp/ccCiGy7c.ltrans0.ltrans.o:(.rodata+0x6a0): undefined reference to `__device_dts_ord_75'
 ```
 
-Adding `CONFIG_LTO=n` to the corresponding `prj.conf` usually results in more
-useful error messages, for example:
+Adding `CONFIG_LTO=n` to the corresponding `prj.conf` or building with `zmake
+build <project> -DCONFIG_LTO=n` usually results in more useful error messages,
+for example:
 
 ```
 modules/ec/libec_shim.a(adc.c.obj):(.rodata.adc_channels+0x58): undefined reference to `__device_dts_ord_75'
 ```
+
+## Macro Error Expansion
+
+GCC errors on macros include macro expansion by default. This usually results
+in a wall of errors that makes it very hard to identify the actual problem. For
+these situations it's useful to disable macro expansion entirely by setting
+`CONFIG_COMPILER_TRACK_MACRO_EXPANSION=n`, for example by building with:
+
+`zmake build <project> -DCONFIG_COMPILER_TRACK_MACRO_EXPANSION=n`
 
 ## Build artifacts
 
