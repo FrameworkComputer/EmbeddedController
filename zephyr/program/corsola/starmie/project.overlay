@@ -43,6 +43,11 @@
 			handler = "power_signal_interrupt";
 		};
 
+		pogo_prsnt_int: pogo-prsnt-int {
+			irq-pin = <&pogo_prsnt_int_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "base_detect_interrupt";
+		};
 		/delete-node/ lid_imu;
 	};
 
@@ -71,8 +76,8 @@
 		};
 
 		// POGO_PRSNT_INT_L  GPI5
-		pogo_prsnt_int_l: pogo_prsnt_int_l{
-			gpios = <&gpioi 5 GPIO_INPUT_PULL_DOWN>;
+		pogo_prsnt_int_l: pogo_prsnt_int_l {
+			gpios = <&gpioi 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 
 		pg_pp4200_s5_od: pg-pp4200-s5-od {
@@ -131,8 +136,8 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_ref_bmi: lid-rotation-ref-bmi {
-			mat33 = <1 0 0
-				 0 1 0
+			mat33 = <(-1) 0 0
+				 0 (-1) 0
 				 0 0 1>;
 		};
 	};
