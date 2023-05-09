@@ -1636,6 +1636,10 @@
 #undef CONFIG_CMD_CHARGEN
 #endif
 #define CONFIG_CMD_CHARGER
+
+/* Extra debugging info for the charger */
+#define CONFIG_CHARGE_DEBUG
+
 #undef CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #undef CONFIG_CMD_CHARGER_DUMP
 #undef CONFIG_CMD_CHARGER_PROFILE_OVERRIDE

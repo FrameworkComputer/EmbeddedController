@@ -158,7 +158,6 @@ static int battery_seems_disconnected;
 static int battery_was_removed;
 
 static int problems_exist;
-static int debugging;
 
 static const char *const prob_text[] = {
 	"static update",     "set voltage",	 "set current", "set mode",
@@ -166,6 +165,26 @@ static const char *const prob_text[] = {
 	"custom profile",    "cfg secondary chg"
 };
 BUILD_ASSERT(ARRAY_SIZE(prob_text) == NUM_PROBLEM_TYPES);
+
+#ifdef CONFIG_CHARGE_DEBUG
+static bool is_debugging;
+#endif
+
+void set_debugging(bool val)
+{
+#ifdef CONFIG_CHARGE_DEBUG
+	is_debugging = val;
+#endif
+}
+
+static bool debugging(void)
+{
+#ifdef CONFIG_CHARGE_DEBUG
+	return is_debugging;
+#else
+	return false;
+#endif
+}
 
 /*
  * TODO(crosbug.com/p/27639): When do we decide a problem is real and not
@@ -652,7 +671,7 @@ static void base_charge_allocate_input_current_limit(void)
 			db_policy.battery_power_smooth);
 	base_battery_power = MIN(base_battery_power, base_battery_power_max);
 
-	if (debugging) {
+	if (debugging()) {
 		CPRINTF("%s:\n", __func__);
 		CPRINTF("total power: %d\n", total_power);
 		CPRINTF("base battery power: %d (%d)\n", base_battery_power,
@@ -684,7 +703,7 @@ static void base_charge_allocate_input_current_limit(void)
 
 		/* Give everything else to the lid. */
 		CHG_ALLOCATE(power_lid, total_power, total_power);
-		if (debugging)
+		if (debugging())
 			CPRINTF("power: base %d mW / lid %d mW\n", power_base,
 				power_lid);
 
@@ -697,7 +716,7 @@ static void base_charge_allocate_input_current_limit(void)
 			current_base = db_policy.max_lid_to_base_current;
 		}
 
-		if (debugging)
+		if (debugging())
 			CPRINTF("current: base %d mA / lid %d mA\n",
 				current_base, current_lid);
 
@@ -705,7 +724,7 @@ static void base_charge_allocate_input_current_limit(void)
 	} else { /* Discharging */
 	}
 
-	if (debugging)
+	if (debugging())
 		CPRINTF("====\n");
 #endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
 }
@@ -853,7 +872,7 @@ static void dump_charge_state(void)
 	ccprintf("battery_seems_disconnected = %d\n",
 		 battery_seems_disconnected);
 	ccprintf("battery_was_removed = %d\n", battery_was_removed);
-	ccprintf("debug output = %s\n", debugging ? "on" : "off");
+	ccprintf("debug output = %s\n", debugging() ? "on" : "off");
 	ccprintf("Battery sustainer = %s (%d%% ~ %d%%)\n",
 		 battery_sustainer_enabled() ? "on" : "off", sustain_soc.lower,
 		 sustain_soc.upper);
@@ -924,7 +943,7 @@ static void show_charging_progress(void)
 	CPRINTS("Base battery %d%%", charge_base);
 #endif
 
-	if (debugging) {
+	if (debugging()) {
 		ccprintf("battery:\n");
 		print_battery_debug();
 		ccprintf("charger:\n");
@@ -2862,11 +2881,15 @@ static int command_chgstate(int argc, const char **argv)
 						     CHARGE_CONTROL_NORMAL);
 			if (rv)
 				return rv;
-		} else if (!strcasecmp(argv[1], "debug")) {
+		} else if (IS_ENABLED(CONFIG_CHARGE_DEBUG) &&
+			   !strcasecmp(argv[1], "debug")) {
+			int val;
+
 			if (argc <= 2)
 				return EC_ERROR_PARAM_COUNT;
-			if (!parse_bool(argv[2], &debugging))
+			if (!parse_bool(argv[2], &val))
 				return EC_ERROR_PARAM2;
+			set_debugging(val);
 		} else if (!strcasecmp(argv[1], "sustain")) {
 			int lower, upper;
 
@@ -2889,8 +2912,13 @@ static int command_chgstate(int argc, const char **argv)
 	dump_charge_state();
 	return EC_SUCCESS;
 }
+#ifdef CONFIG_CHARGE_DEBUG
+#define CHGSTATE_DEBUG_HELP "|debug on|off"
+#else
+#define CHGSTATE_DEBUG_HELP ""
+#endif
 DECLARE_CONSOLE_COMMAND(chgstate, command_chgstate,
-			"[idle|discharge|debug on|off]"
+			"[idle|discharge" CHGSTATE_DEBUG_HELP "]"
 			"\n[sustain <lower> <upper>]",
 			"Get/set charge state machine status");
 
