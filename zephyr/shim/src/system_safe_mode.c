@@ -39,11 +39,3 @@ static void safe_mode_timeout_cb(struct k_timer *unused)
 	handle_system_safe_mode_timeout();
 }
 K_TIMER_DEFINE(safe_mode_timeout, safe_mode_timeout_cb, NULL);
-
-__override int schedule_system_safe_mode_timeout(void)
-{
-	k_timer_start(&safe_mode_timeout,
-		      K_MSEC(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE_TIMEOUT_MSEC),
-		      K_NO_WAIT);
-	return EC_SUCCESS;
-}

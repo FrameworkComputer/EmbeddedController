@@ -47,13 +47,6 @@ int disable_non_safe_mode_critical_tasks(void);
 int start_system_safe_mode(void);
 
 /**
- * Schedules safe mode timeout.
- *
- * @return EC_SUCCESS or EC_xxx on error
- */
-int schedule_system_safe_mode_timeout(void);
-
-/**
  * This handler is called when safe mode times out.
  */
 void handle_system_safe_mode_timeout(void);

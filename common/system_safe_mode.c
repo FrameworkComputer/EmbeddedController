@@ -86,13 +86,6 @@ void handle_system_safe_mode_timeout(void)
 }
 DECLARE_DEFERRED(handle_system_safe_mode_timeout);
 
-__overridable int schedule_system_safe_mode_timeout(void)
-{
-	hook_call_deferred(&handle_system_safe_mode_timeout_data,
-			   CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC * MSEC);
-	return EC_SUCCESS;
-}
-
 bool system_is_in_safe_mode(void)
 {
 	return !!in_safe_mode;
@@ -163,7 +156,8 @@ int start_system_safe_mode(void)
 
 	disable_non_safe_mode_critical_tasks();
 
-	schedule_system_safe_mode_timeout();
+	hook_call_deferred(&handle_system_safe_mode_timeout_data,
+			   CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC * MSEC);
 
 	/*
 	 * Schedule a deferred function to run immediately
