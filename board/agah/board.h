@@ -155,8 +155,12 @@
 
 #define CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
 
-/* Give SEQ_EC_DSW_PWROK higher priority to reduce latency for PCH_PWROK. */
-#define NPCX_MIWU0_GROUP_F 1
+/*
+ * Give power signals higher priority to reduce the chance of damaging the PCH
+ * on urgent power loss.
+ */
+#define NPCX_MIWU0_GROUP_F 1 /* SEQ_EC_DSW_PWROK */
+#define NPCX_MIWU0_GROUP_H 2 /* RSMRST */
 
 #ifndef __ASSEMBLER__
 
