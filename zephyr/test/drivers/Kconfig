@@ -83,6 +83,9 @@ config LINK_TEST_SUITE_IT8XXX2_HW_SHA256
 	  Include the it8xxx2_hw_sha256 test suite
 	  in the binary.
 
+config LINK_TEST_SUITE_KEYBOARD_8042
+	bool "Link and test the keyboard_8042 tests"
+
 config LINK_TEST_SUITE_KEYBOARD_SCAN
 	bool "Link and test the keyboard_scan tests"
 	select PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK

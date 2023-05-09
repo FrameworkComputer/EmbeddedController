@@ -430,7 +430,7 @@ static void set_typematic_delays(uint8_t data)
 		((typematic_value_from_host & 0x7) + 8) / 240;
 }
 
-static void reset_rate_and_delay(void)
+test_export_static void reset_rate_and_delay(void)
 {
 	set_typematic_delays(DEFAULT_TYPEMATIC_VALUE);
 }
@@ -451,7 +451,7 @@ static void keyboard_wakeup(void)
 	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 }
 
-static void set_typematic_key(const uint8_t *scan_code, int32_t len)
+test_export_static void set_typematic_key(const uint8_t *scan_code, int32_t len)
 {
 	typematic_deadline.val = get_time().val + typematic_first_delay;
 	memcpy(typematic_scan_code, scan_code, len);
@@ -1390,3 +1390,30 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 	     HOOK_PRIO_DEFAULT);
 
 #endif /* CONFIG_POWER_BUTTON && !CONFIG_MKBP_INPUT_DEVICES */
+
+#ifdef TEST_BUILD
+void test_keyboard_8042_set_resend_command(const uint8_t *data, int length)
+{
+	length = MIN(length, sizeof(resend_command));
+
+	memcpy(resend_command, data, length);
+	resend_command_len = length;
+}
+
+void test_keyboard_8042_reset(void)
+{
+	/* Initialize controller ram */
+	memset(controller_ram, 0, sizeof(controller_ram));
+	controller_ram[0] = I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS;
+
+	/* Typematic state reset */
+	reset_rate_and_delay();
+	clear_typematic_key();
+
+	/* Use default scancode set # 2 */
+	scancode_set = SCANCODE_SET_2;
+
+	/* Keyboard not enabled (matches I8042_KBD_DIS bit being set) */
+	keyboard_enabled = false;
+}
+#endif /* TEST_BUILD */
