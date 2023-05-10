@@ -47,7 +47,7 @@ void nct38xx_reset_notify(int port)
 	boot_type[port] = NCT38XX_BOOT_UNKNOWN;
 }
 
-static int nct38xx_init(int port)
+int nct38xx_init(int port)
 {
 	int rv;
 	int reg;
@@ -81,10 +81,11 @@ static int nct38xx_init(int port)
 			port);
 	else if (tcpc_config[port].flags & TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)
 		CPRINTS("C%d: NO_DEBUG_ACC_CONTROL", port);
-	else
+	else {
 		RETURN_ERROR(tcpc_update8(port, TCPC_REG_TCPC_CTRL,
 					  TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL,
 					  MASK_SET));
+	}
 
 	/*
 	 * Write to the CONTROL_OUT_EN register to enable:
@@ -167,7 +168,7 @@ static int nct38xx_init(int port)
 	return rv;
 }
 
-static int nct38xx_tcpm_init(int port)
+test_export_static int nct38xx_tcpm_init(int port)
 {
 	int rv;
 
@@ -178,7 +179,7 @@ static int nct38xx_tcpm_init(int port)
 	return nct38xx_init(port);
 }
 
-static int nct38xx_tcpm_set_cc(int port, int pull)
+test_export_static int nct38xx_tcpm_set_cc(int port, int pull)
 {
 	/*
 	 * Setting the CC lines to open/open requires that the NCT CTRL_OUT
@@ -216,7 +217,7 @@ static int nct38xx_tcpm_set_cc(int port, int pull)
 	return tcpci_tcpm_set_cc(port, pull);
 }
 
-static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
+test_export_static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
 {
 	int rv;
 
@@ -298,7 +299,7 @@ static void nct38xx_tcpc_alert(int port)
 	}
 }
 
-static int nct3807_handle_fault(int port, int fault)
+test_export_static int nct3807_handle_fault(int port, int fault)
 {
 	int rv = EC_SUCCESS;
 
@@ -323,7 +324,8 @@ static int nct3807_handle_fault(int port, int fault)
 	return rv;
 }
 
-__maybe_unused static int nct38xx_set_frs_enable(int port, int enable)
+__maybe_unused test_export_static int nct38xx_set_frs_enable(int port,
+							     int enable)
 {
 	if (!tcpm_tcpc_has_frs_control(port))
 		return EC_SUCCESS;

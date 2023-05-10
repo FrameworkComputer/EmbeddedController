@@ -39,6 +39,14 @@ config EMUL_TCPCI_PARTNER_COMMON
 	  emulators. It covers sending delayed messages. API of common functions
 	  is available in zephyr/include/emul/tcpc/emul_common_tcpci_partner.h
 
+config EMUL_NCT38XX
+	bool "Nuvoton NCT38xx emulator"
+	default y
+	depends on DT_HAS_NUVOTON_NCT38XX_ENABLED
+	help
+	  Enable emulator for NCT38XX family of TCPC. This emulator is extension
+	  of the TCPCI emulator.
+
 config EMUL_PS8XXX
 	bool "Parade PS8XXX emulator"
 	default y

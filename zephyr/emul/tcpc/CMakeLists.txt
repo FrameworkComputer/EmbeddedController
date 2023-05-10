@@ -13,3 +13,4 @@ zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI_PARTNER_FAULTY_EXT	emul_tcpci_par
 zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI_PARTNER_VPD	emul_tcpci_partner_vpd.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_ANX7447	emul_anx7447.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_RT1718S	emul_rt1718s.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_NCT38XX	emul_nct38xx.c)
