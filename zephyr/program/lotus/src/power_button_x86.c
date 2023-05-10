@@ -7,6 +7,7 @@
 
 #include "board_adc.h"
 #include "charge_state.h"
+#include "customized_shared_memory.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -250,14 +251,22 @@ static void state_machine(uint64_t tnow)
 				pwrbtn_state = PWRBTN_STATE_PRESSED;
 			}
 		} else {
-			if (power_button_pulse_enabled) {
-				/* Chipset is on, so send the chipset a pulse */
+			/*
+			 * when in preOS still need send power button signal
+			 * until ACPI driver ready
+			 */
+			if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS)
+				& ACPI_DRIVER_READY) {
+				/*
+				 * When chipset is on and ACPI driver ready,
+				 * we will send the SCI event to trigger modern standby.
+				 */
+				tnext_state = tnow + PWRBTN_DELAY_T1;
+				pwrbtn_state = PWRBTN_STATE_T1;
+			} else {
 				tnext_state = tnow + PWRBTN_DELAY_T0;
 				pwrbtn_state = PWRBTN_STATE_T0;
 				set_pwrbtn_to_pch(0, 0);
-			} else {
-				tnext_state = tnow + PWRBTN_DELAY_T1;
-				pwrbtn_state = PWRBTN_STATE_T1;
 			}
 		}
 		break;
@@ -418,7 +427,7 @@ static void powerbtn_x86_init(void)
 {
 	set_initial_pwrbtn_state();
 }
-DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT + 1);
 
 void chipset_power_on(void)
 {
