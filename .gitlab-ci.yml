@@ -40,8 +40,6 @@ before_script:
   - export MODULES_DIR="$CI_PROJECT_DIR/modules"
   - export ZEPHYR_BASE="${CI_PROJECT_DIR}/zephyr/main"
   - export REPO_BASE="${CI_PROJECT_DIR}/repo"
-  - git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-  - export PATH="${CI_PROJECT_DIR}/depot_tools:$PATH"
   - git config --global --add safe.directory '*'
   # Get Zephyr repo and modules
   - checkout_at_date() {
@@ -97,6 +95,8 @@ before_script:
             rev="$(git rev-list -n 1 --before="${date}" "${branch}")" ;
     }
   - ec_commit_date="$(cd ${EC_DIR} ; git log -1 HEAD --format=%cd --date=iso)"
+  - checkout_at_date "https://chromium.googlesource.com/chromium/tools/depot_tools.git" "main" "${CI_PROJECT_DIR}/depot_tools" "${ec_commit_date}"
+  - export PATH="${CI_PROJECT_DIR}/depot_tools:$PATH"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr" "main" "${ZEPHYR_BASE}" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis" "chromeos-main" "${MODULES_DIR}/cmsis" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32" "chromeos-main" "${MODULES_DIR}/hal_stm32" "${ec_commit_date}"
