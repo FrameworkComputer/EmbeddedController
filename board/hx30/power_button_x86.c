@@ -444,8 +444,8 @@ static void state_machine(uint64_t tnow)
 	case PWRBTN_STATE_HELD:
 
 		if (power_button_is_pressed()) {
+			tnext_state = tnow + PWRBTN_WAIT_HOLD;
 			if (!gpio_get_level(GPIO_ON_OFF_FP_L)) {
-				tnext_state = tnow + PWRBTN_WAIT_HOLD;
 				if (++hold_check < PWRBTN_FP_HOLD_COUNT)
 					break;
 
@@ -453,7 +453,6 @@ static void state_machine(uint64_t tnow)
 				tnext_state = tnow + PWRBTN_STATE_DELAY;
 				pwrbtn_state = PWRBTN_STATE_NEED_SHUTDOWN;
 			} else if (!gpio_get_level(GPIO_ON_OFF_BTN_L)) {
-				tnext_state = tnow + PWRBTN_WAIT_HOLD;
 				if (++hold_check < PWRBTN_HOLD_COUNT)
 					break;
 
