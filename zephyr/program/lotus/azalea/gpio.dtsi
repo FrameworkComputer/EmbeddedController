@@ -77,7 +77,7 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_lid_sw_l: lid_sw_l {
-			gpios = <&gpio0 2 GPIO_INPUT>;		/* PSL in4 signal, lid switch */
+			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
@@ -219,18 +219,12 @@
 	psl-in-pol = "high-rising";
 };
 
-&psl_in4_gp02 {
-	/* lid switch */
-	psl-in-mode = "edge";
-	psl-in-pol = "high-rising";
-};
-
 /* Power domain device controlled by PSL (Power Switch Logic) IO pads */
 /* Ignored the PSL in 2 (chassis open) at proto phase */
 &power_ctrl_psl {
 	status = "okay";
 	pinctrl-names = "sleep";
-	pinctrl-0 = <&psl_in1_gpd2 &psl_in3_gp01 &psl_in4_gp02>;
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in3_gp01>;
 };
 
 /* host interface */
