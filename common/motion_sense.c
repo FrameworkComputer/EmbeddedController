@@ -698,6 +698,26 @@ static void check_and_queue_gestures(uint32_t *event)
 	if (IS_ENABLED(CONFIG_GESTURE_SENSOR_DOUBLE_TAP) &&
 	    (*event & TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
 			      MOTIONSENSE_ACTIVITY_DOUBLE_TAP))) {
+		if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION)) {
+			struct ec_response_motion_sensor_data vector;
+
+			vector.flags = MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO;
+			/*
+			 * Send events to the FIFO
+			 * AP is ignoring double tap event, do no wake up and no
+			 * automatic disable.
+			 */
+			if (IS_ENABLED(
+				    CONFIG_GESTURE_SENSOR_DOUBLE_TAP_FOR_HOST))
+				vector.flags |= MOTIONSENSE_SENSOR_FLAG_WAKEUP;
+			vector.activity_data.activity =
+				MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
+			vector.activity_data.state = 1 /* triggered */;
+			vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
+			motion_sense_fifo_stage_data(&vector, NULL, 0,
+						     __hw_clock_source_read());
+			motion_sense_fifo_commit_data();
+		}
 		/* Call board specific function to process tap */
 		sensor_board_proc_double_tap();
 	}
@@ -705,7 +725,20 @@ static void check_and_queue_gestures(uint32_t *event)
 	    (*event & TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
 			      MOTIONSENSE_ACTIVITY_SIG_MOTION))) {
 		struct motion_sensor_t *activity_sensor;
+		if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION)) {
+			struct ec_response_motion_sensor_data vector;
 
+			/* Send events to the FIFO */
+			vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP |
+				       MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO;
+			vector.activity_data.activity =
+				MOTIONSENSE_ACTIVITY_SIG_MOTION;
+			vector.activity_data.state = 1 /* triggered */;
+			vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
+			motion_sense_fifo_stage_data(&vector, NULL, 0,
+						     __hw_clock_source_read());
+			motion_sense_fifo_commit_data();
+		}
 		/* Disable further detection */
 		activity_sensor = &motion_sensors[CONFIG_GESTURE_SIGMO_SENSOR];
 		activity_sensor->drv->manage_activity(
@@ -730,6 +763,12 @@ static void check_and_queue_gestures(uint32_t *event)
 			    (*motion_orientation_ptr(sensor) !=
 			     MOTIONSENSE_ORIENTATION_UNKNOWN)) {
 				motion_orientation_update(sensor);
+				vector.activity_data.state =
+					*motion_orientation_ptr(sensor);
+				motion_sense_fifo_stage_data(
+					&vector, NULL, 0,
+					__hw_clock_source_read());
+				motion_sense_fifo_commit_data();
 				if (IS_ENABLED(CONFIG_DEBUG_ORIENTATION)) {
 					static const char *const mode[] = {
 						"Landscape", "Portrait",
