@@ -22,6 +22,7 @@
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #define BBRAM_REGION_CHARGE_LIMIT_MAX DT_PATH(named_bbram_regions, charge_limit_max)
 #define BBRAM_REGION_FP_LED_LEVEL DT_PATH(named_bbram_regions, fp_led_level)
+#define BBRAM_REGION_KB_STATUS DT_PATH(named_bbram_regions, kb_status)
 #endif
 
 #define GET_BBRAM_OFFSET(node) \
@@ -81,6 +82,14 @@ static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
 		*offset_out = DT_PROP(BBRAM_REGION_FP_LED_LEVEL, offset);
 		*size_out = DT_PROP(BBRAM_REGION_FP_LED_LEVEL, size);
 		break;
+
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_KB_STATUS)
+	case SYSTEM_BBRAM_IDX_KBSTATE:
+		*offset_out = DT_PROP(BBRAM_REGION_KB_STATUS, offset);
+		*size_out = DT_PROP(BBRAM_REGION_KB_STATUS, size);
+		break;
+
 #endif
 #endif
 	default:

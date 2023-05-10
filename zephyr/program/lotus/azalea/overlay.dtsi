@@ -127,4 +127,8 @@
 		offset = <0x45>;
 		size = <0x01>;
 	};
+	kb_status {
+		offset = <0x46>;
+		size = <0x01>;
+	};
 };
