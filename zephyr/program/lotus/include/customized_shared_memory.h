@@ -8,6 +8,11 @@
 
 /* Customized memmap start at offset 0xF00 */
 #define EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS	0x100
+
+#define ACPI_DRIVER_READY   BIT(0)
+#define PBTN_OVERRRIDE      BIT(1)
+#define UCSI_EVENT          BIT(2)
+
 #define EC_CUSTOMIZED_MEMMAP_POWER_STATE	0x101
 
 #define EC_PS_ENTER_S3			BIT(0)

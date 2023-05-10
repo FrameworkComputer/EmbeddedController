@@ -18,6 +18,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
 zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER
 	"src/power_button_x86.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR_AMD_R23M
+	"lotus/src/amd_r23m.c")
 
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
