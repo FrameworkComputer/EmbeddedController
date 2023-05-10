@@ -58,7 +58,7 @@
  */
 #define PWRBTN_DELAY_T0		(32 * MSEC)  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1		(4 * SECOND - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
-#define PWRBTN_DELAY_T2		(10 * SECOND)	/* 20s - (T1 + 6s hold) */
+#define PWRBTN_DELAY_T2		(1 * SECOND)	/*  20s - (T1 + 16s hold) */
 #define PWRBTN_DELAY_T3		(1 * SECOND)	/*  11s - (T1 + 6s hold) */
 /*
  * Length of time to stretch initial power button press to give chipset a
@@ -72,8 +72,10 @@
 #define PWRBTN_RETRY_COUNT  200				 /* base on PWRBTN_WAIT_RSMRST 1 count = 20ms */
 #define PWRBTN_WAIT_RELEASE (100 * MSEC)
 #define PWRBTN_STATE_DELAY  (1 * MSEC)       /* debounce for the state change */
-#define PWRBTN_WAIT_HOLD	(1000 * MSEC)
-#define PWRBTN_HOLD_COUNT	6	/* base on PWRBTN_WAIT_HOLD 1 count = 1000ms */
+#define PWRBTN_WAIT_HOLD	(200 * MSEC)
+#define PWRBTN_HOLD_COUNT	30	/* base on PWRBTN_WAIT_HOLD 1 count = 200ms */
+#define PWRBTN_FP_HOLD_COUNT	80	/* base on PWRBTN_WAIT_HOLD 1 count = 200ms */
+
 
 enum power_button_state {
 	/* Button up; state machine idle */
@@ -442,15 +444,25 @@ static void state_machine(uint64_t tnow)
 	case PWRBTN_STATE_HELD:
 
 		if (power_button_is_pressed()) {
-			tnext_state = tnow + PWRBTN_WAIT_HOLD;
-			if (++hold_check < PWRBTN_HOLD_COUNT)
-				break;
+			if (!gpio_get_level(GPIO_ON_OFF_FP_L)) {
+				tnext_state = tnow + PWRBTN_WAIT_HOLD;
+				if (++hold_check < PWRBTN_FP_HOLD_COUNT)
+					break;
 
-			hold_check = 0;
-			tnext_state = tnow + PWRBTN_STATE_DELAY;
-			pwrbtn_state = PWRBTN_STATE_NEED_SHUTDOWN;
+				hold_check = 0;
+				tnext_state = tnow + PWRBTN_STATE_DELAY;
+				pwrbtn_state = PWRBTN_STATE_NEED_SHUTDOWN;
+			} else if (!gpio_get_level(GPIO_ON_OFF_BTN_L)) {
+				tnext_state = tnow + PWRBTN_WAIT_HOLD;
+				if (++hold_check < PWRBTN_HOLD_COUNT)
+					break;
+
+				hold_check = 0;
+				tnext_state = tnow + PWRBTN_STATE_DELAY;
+				pwrbtn_state = PWRBTN_STATE_NEED_SHUTDOWN;
+			}
 		} else {
-			CPRINTS("PB held press 4~10s execute force shutdown");
+			CPRINTS("PB held press over 4s execute force shutdown");
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
 			hold_check = 0;
 			power_button_released(tnow);
@@ -585,6 +597,7 @@ static void powerbtn_x86_changed(void)
 	if (pwrbtn_state == PWRBTN_STATE_BOOT_KB_RESET ||
 	    pwrbtn_state == PWRBTN_STATE_INIT_ON ||
 	    pwrbtn_state == PWRBTN_STATE_LID_OPEN ||
+		pwrbtn_state == PWRBTN_STATE_HELD ||
 	    pwrbtn_state == PWRBTN_STATE_WAS_OFF ||
 		pwrbtn_state == PWRBTN_STATE_NEED_BATT_CUTOFF) {
 		/* Ignore all power button changes during an initial pulse */
