@@ -30,5 +30,5 @@ def argument_parser():
     """Returns an ArgumentParser with standard options configured."""
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--commit", default=PRE_SUBMIT)
-    parser.add_argument("filename", nargs="+", type=Path)
+    parser.add_argument("filename", nargs="*", type=Path)
     return parser
