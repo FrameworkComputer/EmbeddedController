@@ -738,6 +738,11 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 				 gpio_list[gpios[i]].name);
 			return EC_ERROR_PARAM3 + i;
 		}
+		if (slot->signal_no != i) {
+			ccprintf("Error: Inconsistent order at %s\n",
+				 gpio_list[gpios[i]].name);
+			return EC_ERROR_PARAM3 + i;
+		}
 		if (buf == NULL) {
 			buf = slot->buffer;
 		} else if (buf != slot->buffer) {
