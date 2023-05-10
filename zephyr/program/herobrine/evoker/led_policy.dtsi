@@ -5,7 +5,7 @@
 		compatible = "cros-ec,led-policy";
 
 		battery-state-charge {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 
 			color-0 {
 				led-color = <&color_battery_amber>;
@@ -13,7 +13,7 @@
 		};
 
 		battery-state-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_battery_white>;
@@ -21,7 +21,7 @@
 		};
 
 		battery-state-discharge {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 
 			color-0 {
 				led-color = <&color_battery_off>;
@@ -29,7 +29,7 @@
 		};
 
 		battery-state-error {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 
 			color-0 {
 				led-color = <&color_battery_red>;
@@ -38,7 +38,7 @@
 
 		/* force idle mode */
 		battery-state-forced-idle {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+			charge-state = "LED_PWRS_FORCED_IDLE";
 
 			/* Red 1 sec, White 1 sec */
 			color-0 {

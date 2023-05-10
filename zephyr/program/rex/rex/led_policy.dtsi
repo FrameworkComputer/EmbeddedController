@@ -5,7 +5,7 @@
 		compatible = "cros-ec,led-policy";
 
 		power-state-near-full-left {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 			charge-port = <0>; /* Left port */
 
 			/* Turn off the right LED */
@@ -19,7 +19,7 @@
 		};
 
 		power-state-near-full-right {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 			charge-port = <1>; /* Right port */
 
 			/* Turn off the left LED */
@@ -33,7 +33,7 @@
 		};
 
 		power-state-high-left {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range 99..100 */
 			batt-lvl = <99 100>;
 
@@ -50,7 +50,7 @@
 		};
 
 		power-state-high-right {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range 99..100 */
 			batt-lvl = <99 100>;
 			charge-port = <1>; /* Right port */
@@ -66,7 +66,7 @@
 		};
 
 		power-state-charge-left {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range 0..98 */
 			batt-lvl = <0 98>;
 			charge-port = <0>; /* Left port */
@@ -82,7 +82,7 @@
 		};
 
 		power-state-charge-right {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			charge-port = <1>; /* Right port */
 			/* Battery percent range 0..98 */
 			batt-lvl = <0 98>;
@@ -98,7 +98,7 @@
 		};
 
 		power-state-discharge {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			/* Battery percent range (> Low, <= Full) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
@@ -112,7 +112,7 @@
 		};
 
 		power-state-discharge-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			/* Battery percent range (>= Empty, <= Low) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
@@ -136,7 +136,7 @@
 		};
 
 		power-state-idle {
-			charge-state = "PWR_STATE_IDLE";
+			charge-state = "LED_PWRS_IDLE";
 
 			/* Blink both LEDs amber at 0.5 Hz */
 			color-0 {
@@ -158,7 +158,7 @@
 		};
 
 		power-state-forced-idle {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+			charge-state = "LED_PWRS_FORCED_IDLE";
 
 			/* Blink both LEDs amber at 2 Hz */
 			color-0 {
@@ -180,7 +180,7 @@
 		};
 
 		power-state-error {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 
 			/* Blink both LEDs amber at 2 Hz */
 			color-0 {

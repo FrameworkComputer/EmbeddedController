@@ -96,16 +96,16 @@ static void led_set_battery(void)
 	static int suspend_ticks;
 
 	switch (led_pwr_get_state()) {
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE:
 		led_set_color_battery(LED_AMBER);
 		break;
-	case PWR_STATE_DISCHARGE_FULL:
+	case LED_PWRS_DISCHARGE_FULL:
 		if (extpower_is_present()) {
 			led_set_color_battery(LED_BLUE);
 			break;
 		}
 		__fallthrough;
-	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
+	case LED_PWRS_DISCHARGE /* and LED_PWRS_DISCHARGE_FULL */:
 		if (chipset_in_state(CHIPSET_STATE_ON)) {
 			led_set_color_battery(LED_BLUE);
 		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
@@ -119,19 +119,19 @@ static void led_set_battery(void)
 			led_set_color_battery(LED_OFF);
 		}
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		led_set_color_battery((battery_ticks % LED_TOTAL_2SECS_TICKS <
 				       LED_ON_1SEC_TICKS) ?
 					      LED_AMBER :
 					      LED_OFF);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		led_set_color_battery(LED_BLUE);
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		led_set_color_battery(LED_BLUE);
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		led_set_color_battery((battery_ticks % LED_TOTAL_4SECS_TICKS <
 				       LED_ON_2SECS_TICKS) ?
 					      LED_AMBER :

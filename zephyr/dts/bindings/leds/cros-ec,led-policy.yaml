@@ -13,7 +13,7 @@ child-binding:
     e.g. If Blue color needs to be set for charge state discharge in S0, a
     node looks like
     power-state-discharge-s0 {
-       charge-state = "PWR_STATE_DISCHARGE";
+       charge-state = "LED_PWRS_DISCHARGE";
        chipset-state = "POWER_S0";
        charge-port = <0>;
        color-0 {
@@ -26,23 +26,23 @@ child-binding:
       description: |
         If the LED color depends on charge state, this property is used
         to describe it.
-        PWR_STATE_CHARGE - AC is connected, battery is charging.
-        PWR_STATE_DISCHARGE - AC is not connected, battery is discharging.
-        PWR_STATE_ERROR - Battery is in error state.
-        PWR_STATE_IDLE - AC is connected, battery is not charging.
-        PWR_STATE_FORCED_IDLE - AC is connected, battery is not charging.
+        LED_PWRS_CHARGE - AC is connected, battery is charging.
+        LED_PWRS_DISCHARGE - AC is not connected, battery is discharging.
+        LED_PWRS_ERROR - Battery is in error state.
+        LED_PWRS_IDLE - AC is connected, battery is not charging.
+        LED_PWRS_FORCED_IDLE - AC is connected, battery is not charging.
                                 Used during factory testing.
-        PWR_STATE_CHARGE_NEAR_FULL - AC is connected, battery is charging
+        LED_PWRS_CHARGE_NEAR_FULL - AC is connected, battery is charging
                                      and close to fully charged.
       type: string
       required: false
       enum:
-        - PWR_STATE_CHARGE
-        - PWR_STATE_DISCHARGE
-        - PWR_STATE_ERROR
-        - PWR_STATE_IDLE
-        - PWR_STATE_FORCED_IDLE
-        - PWR_STATE_CHARGE_NEAR_FULL
+        - LED_PWRS_CHARGE
+        - LED_PWRS_DISCHARGE
+        - LED_PWRS_ERROR
+        - LED_PWRS_IDLE
+        - LED_PWRS_FORCED_IDLE
+        - LED_PWRS_CHARGE_NEAR_FULL
 
     charge-port:
       description: |
@@ -103,7 +103,7 @@ child-binding:
           HOOK_TICK_INTERVAL_MS.
           e.g.
           power-state-error {
-             charge-state = "PWR_STATE_ERROR";
+             charge-state = "LED_PWRS_ERROR";
              /* One sec Amber, one sec Off */
              color-0 {
                led-color = <&color_amber>;

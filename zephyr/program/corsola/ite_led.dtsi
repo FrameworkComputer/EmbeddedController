@@ -9,7 +9,7 @@
 		compatible = "cros-ec,led-policy";
 
 		bat-power-state-charge {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 
 			color-0 {
 				led-color = <&color_battery_amber>;
@@ -17,7 +17,7 @@
 		};
 
 		bat-power-state-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_battery_white>;
@@ -25,7 +25,7 @@
 		};
 
 		bat-power-state-discharge {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 
 			color-0 {
 				led-color = <&color_battery_off>;
@@ -33,7 +33,7 @@
 		};
 
 		bat-power-state-discharge-s0-bat-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
@@ -49,7 +49,7 @@
 		};
 
 		bat-power-state-error {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 
 			color-0 {
 				led-color = <&color_battery_amber>;

@@ -5,7 +5,7 @@
 		compatible = "cros-ec,led-policy";
 
 		power-state-charge-lvl-1 {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 
 			/* Battery display percent range (>= Empty, <= 94%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
@@ -16,7 +16,7 @@
 		};
 
 		power-state-charge-lvl-2 {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 
 			/* Battery display percent range (>= 95) */
 			batt-lvl = <95 100>;
@@ -27,7 +27,7 @@
 		};
 
 		power-state-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_white>;
@@ -35,7 +35,7 @@
 		};
 
 		power-state-discharge-s0 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery display percent range (>= 11%, <= 100%) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
@@ -46,7 +46,7 @@
 		};
 
 		power-state-discharge-s0-batt-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery display percent range (>= 0, <= 10%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
@@ -63,7 +63,7 @@
 		};
 
 		power-state-discharge-s3 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
 			/* White 1 sec on, 3 sec off */
@@ -78,7 +78,7 @@
 		};
 
 		power-state-discharge-s5 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 
 			color-0 {
@@ -87,7 +87,7 @@
 		};
 
 		power-state-error-s0 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S0";
 			/* Amber 1 sec on, 1 sec off */
 			color-0 {
@@ -101,7 +101,7 @@
 		};
 
 		power-state-error-s3 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S3";
 			/* White 1 sec on, 3 sec off */
 			color-0 {
@@ -115,7 +115,7 @@
 		};
 
 		power-state-error-s5 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S5";
 
 			color-0 {
@@ -124,7 +124,7 @@
 		};
 
 		power-state-forced-idle {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+			charge-state = "LED_PWRS_FORCED_IDLE";
 
 			/* White 2 sec on, Amber 2 sec on */
 			color-0 {

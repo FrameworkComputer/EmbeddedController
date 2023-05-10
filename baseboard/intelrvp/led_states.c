@@ -23,7 +23,7 @@ static enum led_states led_get_state(void)
 	enum led_states new_state = LED_NUM_STATES;
 
 	switch (led_pwr_get_state()) {
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE:
 		/* Get percent charge */
 		charge_lvl = charge_get_percent();
 		/* Determine which charge state to use */
@@ -34,13 +34,13 @@ static enum led_states led_get_state(void)
 		else
 			new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
-	case PWR_STATE_DISCHARGE_FULL:
+	case LED_PWRS_DISCHARGE_FULL:
 		if (extpower_is_present()) {
 			new_state = STATE_CHARGING_FULL_CHARGE;
 			break;
 		}
 		__fallthrough;
-	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
+	case LED_PWRS_DISCHARGE /* and LED_PWRS_DISCHARGE_FULL */:
 		if (chipset_in_state(CHIPSET_STATE_ON))
 			new_state = STATE_DISCHARGE_S0;
 		else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
@@ -48,16 +48,16 @@ static enum led_states led_get_state(void)
 		else
 			new_state = STATE_DISCHARGE_S5;
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		new_state = STATE_BATTERY_ERROR;
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		new_state = STATE_DISCHARGE_S0;
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		new_state = STATE_FACTORY_TEST;
 		break;
 	default:
@@ -115,7 +115,7 @@ static void led_update_battery(void)
 static enum pwr_led_states pwr_led_get_state(void)
 {
 	if (extpower_is_present()) {
-		if (led_pwr_get_state() == PWR_STATE_CHARGE_NEAR_FULL)
+		if (led_pwr_get_state() == LED_PWRS_CHARGE_NEAR_FULL)
 			return PWR_LED_STATE_OFF;
 		else
 			return PWR_LED_STATE_ON;

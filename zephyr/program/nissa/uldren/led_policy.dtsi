@@ -5,7 +5,7 @@
 		compatible = "cros-ec,led-policy";
 
 		power-state-charge {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			batt-lvl = <BATTERY_LEVEL_EMPTY
 						BATTERY_LEVEL_FULL>;
 
@@ -15,7 +15,7 @@
 		};
 
 		power-state-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_off>;
@@ -23,7 +23,7 @@
 		};
 
 		power-state-discharge-s0 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			batt-lvl = <BATTERY_LEVEL_LOW BATTERY_LEVEL_FULL>;
 
@@ -33,7 +33,7 @@
 		};
 
 		power-state-discharge-s3 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
 			color-0 {
@@ -42,7 +42,7 @@
 		};
 
 		power-state-discharge-s5 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 
 			color-0 {
@@ -51,7 +51,7 @@
 		};
 
 		power-state-discharge-s0-batt-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
@@ -61,7 +61,7 @@
 		};
 
 		power-state-discharge-s3-batt-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
@@ -71,7 +71,7 @@
 		};
 
 		power-state-error-s0 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S0";
 			/* Amber 1 sec, off 1 sec */
 			color-0 {
@@ -85,7 +85,7 @@
 		};
 
 		power-state-error-s3 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S3";
 			/* Amber 1 sec, off 3 sec */
 			color-0 {
@@ -99,7 +99,7 @@
 		};
 
 		power-state-error-s5 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S5";
 			/* Amber 1 sec, off 3 sec */
 			color-0 {

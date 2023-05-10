@@ -5,14 +5,14 @@
 		compatible = "cros-ec,led-policy";
 
 		power-state-charge {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			color-0 {
 				led-color = <&color_white>;
 			};
 		};
 
 		power-state-discharge-s0 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery percent range (> Low, <= Full) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
@@ -23,7 +23,7 @@
 		};
 
 		power-state-discharge-s0-batt-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery percent range (>= Empty, <= Low) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
@@ -34,7 +34,7 @@
 		};
 
 		power-state-discharge-s3 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 			/* Battery percent range (> Low, <= Full) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
@@ -45,7 +45,7 @@
 		};
 
 		power-state-discharge-s3-batt-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 			/* Battery percent range (>= Empty, <= Low) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
@@ -56,7 +56,7 @@
 		};
 
 		power-state-discharge-s5 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 
 			color-0 {
@@ -65,7 +65,7 @@
 		};
 
 		power-state-error {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 
 			/* Amber 1 sec, off 1 sec */
 			color-0 {
@@ -79,7 +79,7 @@
 		};
 
 		power-state-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_off>;
@@ -87,7 +87,7 @@
 		};
 
 		power-state-forced-idle {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+			charge-state = "LED_PWRS_FORCED_IDLE";
 
 			/* Amber 2 sec, White 2 sec */
 			color-0 {

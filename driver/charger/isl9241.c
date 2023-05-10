@@ -1215,7 +1215,7 @@ static int isl9241_ramp_get_current_limit(int chgnum)
 static void isl9241_restart_charge_voltage_when_full(void)
 {
 	if (!chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) &&
-	    led_pwr_get_state() == PWR_STATE_CHARGE_NEAR_FULL &&
+	    led_pwr_get_state() == LED_PWRS_CHARGE_NEAR_FULL &&
 	    battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
 		charger_discharge_on_ac(1);
 		msleep(50);

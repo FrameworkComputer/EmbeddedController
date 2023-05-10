@@ -82,7 +82,7 @@
 
 		/* Voltorb LED bat charge */
 		bat-power-state-charge {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery display percent range (>= Empty, <= 99%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY 99>;
 
@@ -93,7 +93,7 @@
 
 		/* Voltorb LED bat charge near full */
 		bat-power-state-charge-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_blue>;
@@ -102,7 +102,7 @@
 
 		/* Voltorb LED bat discharge */
 		bat-power-state-discharge-s0 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 
 			color-0 {
@@ -110,7 +110,7 @@
 			};
 		};
 		bat-power-state-discharge-s3 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
 			color-0 {
@@ -123,7 +123,7 @@
 			};
 		};
 		bat-power-state-discharge-s5 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 
 			color-0 {
@@ -133,7 +133,7 @@
 
 		/* Voltorb LED bat error */
 		bat-power-state-error {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 
 			color-0 {
 				led-color = <&color_amber>;
@@ -147,7 +147,7 @@
 
 		/* Voltorb LED power idle */
 		power-state-idle {
-			charge-state = "PWR_STATE_IDLE";
+			charge-state = "LED_PWRS_IDLE";
 
 			color-0 {
 				led-color = <&color_blue>;
@@ -156,7 +156,7 @@
 
 		/* Voltorb LED power forced idle */
 		power-state-forced-idle {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+			charge-state = "LED_PWRS_FORCED_IDLE";
 
 			color-0 {
 				led-color = <&color_amber>;

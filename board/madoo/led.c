@@ -79,7 +79,7 @@ int battery_safety_check(void)
 	int rv;
 
 	/* ignore battery in error state because it has other behavior */
-	if (led_pwr_get_state() == PWR_STATE_ERROR)
+	if (led_pwr_get_state() == LED_PWRS_ERROR)
 		return false;
 
 	/* turn off LED due to a safety fault */
@@ -130,7 +130,7 @@ __override void led_set_color_battery(enum ec_led_colors color)
 		if (battery_safety_check()) {
 			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_OFF_LVL);
-		} else if (led_pwr_get_state() == PWR_STATE_ERROR &&
+		} else if (led_pwr_get_state() == LED_PWRS_ERROR &&
 			   system_get_board_version() >= 3) {
 			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_ON_LVL);

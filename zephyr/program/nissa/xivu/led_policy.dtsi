@@ -3,7 +3,7 @@
 		compatible = "cros-ec,led-policy";
 
 		power-state-charge {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= Empty, <= 94%) */
 			batt-lvl = <0 94>;
 
@@ -13,7 +13,7 @@
 		};
 
 		power-state-charge-lvl-2 {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= 95%, <= 100%) */
 			batt-lvl = <95 100>;
 
@@ -23,7 +23,7 @@
 		};
 
 		power-state-near-full {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
 				led-color = <&color_white>;
@@ -31,7 +31,7 @@
 		};
 
 		power-state-discharge-s0 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery percent range (>= 11%, <= Full) */
 			batt-lvl = <11 100>;
@@ -42,7 +42,7 @@
 		};
 
 		power-state-discharge-s3 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
 			/* White 1 sec, off 3 sec */
@@ -57,7 +57,7 @@
 		};
 
 		power-state-discharge-s5 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 
 			color-0 {
@@ -66,7 +66,7 @@
 		};
 
 		power-state-discharge-s0-batt-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery percent range (>= Empty, <= 10%) */
 			batt-lvl = <0 10>;
@@ -83,7 +83,7 @@
 		};
 
 		power-state-error-s0 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S0";
 			/* Amber 1 sec, off 1 sec */
 			color-0 {
@@ -97,7 +97,7 @@
 		};
 
 		power-state-error-s3 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S3";
 			/* White 1 sec, off 3 sec */
 			color-0 {
@@ -111,7 +111,7 @@
 		};
 
 		power-state-error-s5 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S5";
 
 			color-0 {

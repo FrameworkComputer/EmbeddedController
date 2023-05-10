@@ -220,7 +220,7 @@ test_static int test_charge_state(void)
 		    EC_SUCCESS);
 	msleep(BATTERY_DETACH_DELAY);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_ERROR);
+	TEST_ASSERT(state == LED_PWRS_ERROR);
 
 	/* Attach battery again, charging */
 	ccprintf("[CHARGING TEST] Attach battery\n");
@@ -229,7 +229,7 @@ test_static int test_charge_state(void)
 	ev_clear(EC_HOST_EVENT_BATTERY);
 	sb_write(SB_FULL_CHARGE_CAPACITY, 0xeff0);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY));
 
 	/* Unplug AC, discharging at 1000mAh */
@@ -237,7 +237,7 @@ test_static int test_charge_state(void)
 	gpio_set_level(GPIO_AC_PRESENT, 0);
 	sb_write(SB_CURRENT, -1000);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	flags = charge_get_flags();
 	TEST_ASSERT(!(flags & CHARGE_FLAG_EXTERNAL_POWER));
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
@@ -247,11 +247,11 @@ test_static int test_charge_state(void)
 	gpio_set_level(GPIO_AC_PRESENT, 0);
 	sb_write(SB_CURRENT, -1000);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	sb_write(SB_TEMPERATURE, 0xffff);
 	state = wait_charging_state();
 	TEST_ASSERT(!is_shutdown);
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(40));
 
 	/* Discharging overtemp */
@@ -260,12 +260,12 @@ test_static int test_charge_state(void)
 	sb_write(SB_CURRENT, -1000);
 
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(90));
 	state = wait_charging_state();
 	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_shutdown);
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(40));
 
 	/* Force idle */
@@ -273,19 +273,19 @@ test_static int test_charge_state(void)
 	gpio_set_level(GPIO_AC_PRESENT, 1);
 	sb_write(SB_CURRENT, 1000);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
 	charge_control(CHARGE_CONTROL_IDLE);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_FORCED_IDLE);
+	TEST_ASSERT(state == LED_PWRS_FORCED_IDLE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(flags & CHARGE_FLAG_FORCE_IDLE);
 	charge_control(CHARGE_CONTROL_NORMAL);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 
 	/* Force discharge */
 	ccprintf("[CHARGING TEST] AC on, force discharge\n");
@@ -293,11 +293,11 @@ test_static int test_charge_state(void)
 	sb_write(SB_CURRENT, 1000);
 	charge_control(CHARGE_CONTROL_DISCHARGE);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_FORCED_IDLE);
+	TEST_ASSERT(state == LED_PWRS_FORCED_IDLE);
 	TEST_ASSERT(is_force_discharge);
 	charge_control(CHARGE_CONTROL_NORMAL);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	TEST_ASSERT(!is_force_discharge);
 
 	return EC_SUCCESS;
@@ -461,28 +461,28 @@ test_static int test_external_funcs(void)
 	/* Invalid or do-nothing commands first */
 	UART_INJECT("chg\n");
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
 
 	UART_INJECT("chg blahblah\n");
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
 
 	UART_INJECT("chg idle\n");
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
 
 	UART_INJECT("chg idle blargh\n");
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
@@ -490,7 +490,7 @@ test_static int test_external_funcs(void)
 	/* Now let's force idle on and off */
 	UART_INJECT("chg idle on\n");
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_FORCED_IDLE);
+	TEST_ASSERT(state == LED_PWRS_FORCED_IDLE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(flags & CHARGE_FLAG_FORCE_IDLE);
@@ -498,13 +498,13 @@ test_static int test_external_funcs(void)
 	UART_INJECT("chg idle off\n");
 	wait_charging_state();
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(state == LED_PWRS_CHARGE);
 	flags = charge_get_flags();
 	TEST_ASSERT(flags & CHARGE_FLAG_EXTERNAL_POWER);
 	TEST_ASSERT(!(flags & CHARGE_FLAG_FORCE_IDLE));
 
 	/* and the rest */
-	TEST_ASSERT(led_pwr_get_state() == PWR_STATE_CHARGE);
+	TEST_ASSERT(led_pwr_get_state() == LED_PWRS_CHARGE);
 	TEST_ASSERT(!charge_want_shutdown());
 	TEST_ASSERT(charge_get_percent() == 50);
 	temp = 0;
@@ -585,7 +585,7 @@ test_static int test_hc_charge_state(void)
 			TEST_ASSERT(rv == EC_RES_SUCCESS);
 		/* Allow the change to take effect */
 		state = wait_charging_state();
-		TEST_ASSERT(state == PWR_STATE_CHARGE);
+		TEST_ASSERT(state == LED_PWRS_CHARGE);
 
 		/* Read it back again*/
 		memset(&resp, 0, sizeof(resp));
@@ -769,7 +769,7 @@ test_static int test_low_battery_hostevents(void)
 	ev_clear(EC_HOST_EVENT_BATTERY_CRITICAL);
 	ev_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_LOW));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_CRITICAL));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN));
@@ -777,7 +777,7 @@ test_static int test_low_battery_hostevents(void)
 	/* (Shout) a little bit louder now */
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, BATTERY_LEVEL_LOW - 1);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_CRITICAL));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN));
@@ -787,7 +787,7 @@ test_static int test_low_battery_hostevents(void)
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE,
 		 CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE + 1);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_CRITICAL));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN));
@@ -797,7 +797,7 @@ test_static int test_low_battery_hostevents(void)
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE,
 		 CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE - 1);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_CRITICAL));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN));
@@ -806,7 +806,7 @@ test_static int test_low_battery_hostevents(void)
 	/* (Shout) a little bit louder now */
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, BATTERY_LEVEL_SHUTDOWN + 1);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_CRITICAL));
 	TEST_ASSERT(ev_is_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN));
@@ -815,7 +815,7 @@ test_static int test_low_battery_hostevents(void)
 	/* (Shout) a little bit louder now */
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, BATTERY_LEVEL_SHUTDOWN - 1);
 	state = wait_charging_state();
-	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_LOW));
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_CRITICAL));
 	/* hey-hey-HEY-hey. Doesn't immediately shut down */

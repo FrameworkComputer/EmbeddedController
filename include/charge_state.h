@@ -34,29 +34,29 @@
 /* Power states */
 enum led_pwr_state {
 	/* Meta-state; unchanged from previous time through task loop */
-	PWR_STATE_UNCHANGE = 0,
+	LED_PWRS_UNCHANGE = 0,
 	/* Initializing charge state machine at boot */
-	PWR_STATE_INIT,
+	LED_PWRS_INIT,
 	/* Re-initializing charge state machine */
-	PWR_STATE_REINIT,
+	LED_PWRS_REINIT,
 	/* Just transitioned from init to idle */
-	PWR_STATE_IDLE0,
+	LED_PWRS_IDLE0,
 	/* Idle; AC present */
-	PWR_STATE_IDLE,
+	LED_PWRS_IDLE,
 	/* Forced Idle */
-	PWR_STATE_FORCED_IDLE,
+	LED_PWRS_FORCED_IDLE,
 	/* Discharging */
-	PWR_STATE_DISCHARGE,
+	LED_PWRS_DISCHARGE,
 	/* Discharging and fully charged */
-	PWR_STATE_DISCHARGE_FULL,
+	LED_PWRS_DISCHARGE_FULL,
 	/* Charging */
-	PWR_STATE_CHARGE,
+	LED_PWRS_CHARGE,
 	/* Charging, almost fully charged */
-	PWR_STATE_CHARGE_NEAR_FULL,
+	LED_PWRS_CHARGE_NEAR_FULL,
 	/* Charging state machine error */
-	PWR_STATE_ERROR,
+	LED_PWRS_ERROR,
 	/*  Count of total states */
-	PWR_STATE_COUNT
+	LED_PWRS_COUNT
 };
 
 /* Charge state flags */

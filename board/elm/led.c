@@ -137,7 +137,7 @@ static void elm_led_set_battery(void)
 			     (1000 * remaining_capacity) / full_charge_capacity;
 
 	switch (led_pwr_get_state()) {
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE:
 		if (permillage < FULL_BATTERY_PERMILLAGE) {
 			bat_led_set(BAT_LED_BLUE, 0);
 			bat_led_set(BAT_LED_ORANGE, 1);
@@ -146,11 +146,11 @@ static void elm_led_set_battery(void)
 			bat_led_set(BAT_LED_ORANGE, 0);
 		}
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		bat_led_set(BAT_LED_BLUE, 1);
 		bat_led_set(BAT_LED_ORANGE, 0);
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		bat_led_set(BAT_LED_BLUE, 0);
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 		    permillage <= CRITICAL_LOW_BATTERY_PERMILLAGE)
@@ -161,11 +161,11 @@ static void elm_led_set_battery(void)
 		else
 			bat_led_set(BAT_LED_ORANGE, 0);
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		bat_led_set(BAT_LED_BLUE, 0);
 		bat_led_set(BAT_LED_ORANGE, (blink_second & 1) ? 0 : 1);
 		break;
-	case PWR_STATE_IDLE: /* Ext. power connected in IDLE. */
+	case LED_PWRS_IDLE: /* Ext. power connected in IDLE. */
 		if (charge_flags & CHARGE_FLAG_FORCE_IDLE) {
 			bat_led_set(BAT_LED_BLUE, (blink_second & 2) ? 0 : 1);
 			bat_led_set(BAT_LED_ORANGE, (blink_second & 2) ? 1 : 0);

@@ -145,11 +145,11 @@ static void update_led(enum ec_led_id led_id, bool is_active_charge_port,
 {
 	enum led_pwr_state power_state = led_pwr_get_state();
 
-	if (power_state == PWR_STATE_IDLE) {
+	if (power_state == LED_PWRS_IDLE) {
 		/* Factory mode: blinking white (2sec on + 2sec off) */
 		set_color(led_id, (tick % 8 < 4) ? EC_LED_COLOR_WHITE : LED_OFF,
 			  duty);
-	} else if (power_state == PWR_STATE_ERROR) {
+	} else if (power_state == LED_PWRS_ERROR) {
 		/* Battery error: blinking amber (1sec on + 1sec off) */
 		set_color(led_id, (tick % 4 < 2) ? EC_LED_COLOR_AMBER : LED_OFF,
 			  duty);
@@ -158,7 +158,7 @@ static void update_led(enum ec_led_id led_id, bool is_active_charge_port,
 		 * Active charge port: amber when charging, white if fully
 		 * charged.
 		 */
-		if (power_state == PWR_STATE_CHARGE)
+		if (power_state == LED_PWRS_CHARGE)
 			set_color(led_id, EC_LED_COLOR_AMBER, duty);
 		else
 			set_color(led_id, EC_LED_COLOR_WHITE, duty);

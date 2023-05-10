@@ -15,7 +15,7 @@ const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-static enum led_pwr_state prv_chstate = PWR_STATE_INIT;
+static enum led_pwr_state prv_chstate = LED_PWRS_INIT;
 
 #define LED_OFF MT6370_LED_ID_OFF
 #define LED_RED MT6370_LED_ID1
@@ -35,25 +35,25 @@ static void kukui_led_set_battery(void)
 
 	chstate = led_pwr_get_state();
 
-	if (prv_chstate == chstate && chstate != PWR_STATE_DISCHARGE)
+	if (prv_chstate == chstate && chstate != LED_PWRS_DISCHARGE)
 		return;
 
 	prv_chstate = chstate;
 
 	switch (chstate) {
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE:
 		/* RGB(current, duty) = (4mA,1/32)*/
 		br[EC_LED_COLOR_BLUE] = 1;
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		/* display SoC 10% = real battery SoC 13%*/
 		if (charge_get_percent() <= 13)
 			br[EC_LED_COLOR_RED] = 1;
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		br[EC_LED_COLOR_GREEN] = 1;
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		br[EC_LED_COLOR_RED] = 1;
 		break;
 	default:
@@ -109,7 +109,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
  */
 static void led_reset_auto_control(void)
 {
-	prv_chstate = PWR_STATE_INIT;
+	prv_chstate = LED_PWRS_INIT;
 }
 
 static void krane_led_init(void)

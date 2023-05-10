@@ -120,10 +120,10 @@ static void board_led_set_battery(void)
 	 * Green/Amber for CHARGE_FLAG_FORCE_IDLE
 	 */
 	switch (led_pwr_get_state()) {
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE:
 		board_led_set_color_battery(LED_AMBER);
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		/* Less than 3%, blink one second every two second */
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 		    charge_get_percent() < CRITICAL_LOW_BATTERY_PERCENTAGE)
@@ -143,20 +143,20 @@ static void board_led_set_battery(void)
 		else
 			board_led_set_color_battery(LED_OFF);
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		board_led_set_color_battery(
 			(battery_ticks % LED_TOTAL_2SECS_TICKS <
 			 LED_ON_1SEC_TICKS) ?
 				LED_RED :
 				LED_OFF);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		board_led_set_color_battery(LED_GREEN);
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		board_led_set_color_battery(LED_GREEN);
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		board_led_set_color_battery(
 			(battery_ticks % LED_TOTAL_4SECS_TICKS <
 			 LED_ON_2SECS_TICKS) ?

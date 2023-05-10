@@ -144,7 +144,7 @@ color-1 {
 
 To tie this behavior with a system state, properties defining system state and color policies are added to `cros-ec,led-policy` node.
 
-e.g. To add a blinking behavior for a system state where charge-state is "PWR_STATE_DISCHARGE and chipset-state is "POWER_S3", a policy node
+e.g. To add a blinking behavior for a system state where charge-state is "LED_PWRS_DISCHARGE and chipset-state is "POWER_S3", a policy node
 is defined as below.
 
 ```
@@ -153,7 +153,7 @@ led-policy {
 	...
 	...
 	power-state-discharge-s3 {
-		charge-state = "PWR_STATE_DISCHARGE";
+		charge-state = "LED_PWRS_DISCHARGE";
 		chipset-state = "POWER_S3";
 
 		/* Amber 1 sec, off 3 sec */

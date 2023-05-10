@@ -534,11 +534,11 @@ static void led_select_pattern(enum led_pattern *pattern_desired, int tap)
 		 * External charger is connected. First determine pattern for
 		 * charging side LED.
 		 */
-		if (chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
-		    ((chg_state == PWR_STATE_DISCHARGE_FULL) &&
+		if (chg_state == LED_PWRS_CHARGE_NEAR_FULL ||
+		    ((chg_state == LED_PWRS_DISCHARGE_FULL) &&
 		     extpower_is_present())) {
 			new_pattern = SOLID_GREEN;
-		} else if (chg_state == PWR_STATE_CHARGE) {
+		} else if (chg_state == LED_PWRS_CHARGE) {
 			new_pattern = SOLID_WHITE;
 		} else {
 			new_pattern = OFF;

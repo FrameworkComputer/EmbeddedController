@@ -1746,39 +1746,39 @@ enum led_pwr_state led_pwr_get_state(void)
 		chflags = charge_get_flags();
 
 		if (battery_seems_dead || curr.batt.is_present == BP_NO)
-			return PWR_STATE_ERROR;
+			return LED_PWRS_ERROR;
 
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			return PWR_STATE_FORCED_IDLE;
+			return LED_PWRS_FORCED_IDLE;
 		else
-			return PWR_STATE_IDLE;
+			return LED_PWRS_IDLE;
 	case ST_DISCHARGE:
 #ifdef CONFIG_PWR_STATE_DISCHARGE_FULL
 		if (battery_near_full())
-			return PWR_STATE_DISCHARGE_FULL;
+			return LED_PWRS_DISCHARGE_FULL;
 		else
 #endif
-			return PWR_STATE_DISCHARGE;
+			return LED_PWRS_DISCHARGE;
 	case ST_CHARGE:
 		/* The only difference here is what the LEDs display. */
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
 		    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE)
-			return PWR_STATE_DISCHARGE;
+			return LED_PWRS_DISCHARGE;
 		else if (battery_near_full())
-			return PWR_STATE_CHARGE_NEAR_FULL;
+			return LED_PWRS_CHARGE_NEAR_FULL;
 		else
-			return PWR_STATE_CHARGE;
+			return LED_PWRS_CHARGE;
 	case ST_PRECHARGE:
 		chflags = charge_get_flags();
 
 		/* we're in battery discovery mode */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			return PWR_STATE_FORCED_IDLE;
+			return LED_PWRS_FORCED_IDLE;
 		else
-			return PWR_STATE_IDLE;
+			return LED_PWRS_IDLE;
 	default:
 		/* Anything else can be considered an error for LED purposes */
-		return PWR_STATE_ERROR;
+		return LED_PWRS_ERROR;
 	}
 }
 

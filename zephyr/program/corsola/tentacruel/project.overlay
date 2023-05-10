@@ -268,7 +268,7 @@
 
 		/* Tentacruel LED bat charge */
 		bat-power-state-charge {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= Empty, <= 94%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
 			color-0 {
@@ -277,7 +277,7 @@
 		};
 
 		bat-power-state-charge-near-full {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= 95%, <= Full) */
 			batt-lvl = <95 BATTERY_LEVEL_FULL>;
 			color-0 {
@@ -287,7 +287,7 @@
 
 		/* Tentacruel LED bat discharge */
 		bat-power-state-discharge {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery percent range (>= 11%, <= Full) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
@@ -298,7 +298,7 @@
 		};
 
 		bat-power-state-discharge-s3 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
 			color-0 {
@@ -313,7 +313,7 @@
 		};
 
 		bat-power-state-discharge-s5 {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 			color-0 {
 				led-color = <&color_battery_off>;
@@ -322,7 +322,7 @@
 
 		/* Tentacruel LED bat error */
 		bat-power-state-error {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S0";
 
 			color-0 {
@@ -337,7 +337,7 @@
 		};
 
 		bat-power-state-error-s3 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S3";
 
 			color-0 {
@@ -352,7 +352,7 @@
 		};
 
 		bat-power-state-error-s5 {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S5";
 
 			color-0 {
