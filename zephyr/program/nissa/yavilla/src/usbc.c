@@ -235,6 +235,25 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	}
 }
 
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
+{
+	/*
+	 * b:213937755: Yavilla C1 port is OCPC (One Charger IC Per Type-C)
+	 * architecture, The charging current is controlled by increasing Vsys.
+	 * However, the charger SM5803 is not limit current while Vsys
+	 * increasing, we can see the current overshoot to ~3.6A to cause
+	 * C1 port brownout with low power charger (5V). To avoid C1 port
+	 * brownout at low power charger connected. Limit charge current to 2A.
+	 */
+	if (charge_mv <= 5000 && port == 1)
+		charge_ma = MIN(charge_ma, 2000);
+	else
+		charge_ma = charge_ma * 96 / 100;
+
+	charge_set_input_current_limit(charge_ma, charge_mv);
+}
+
 void board_reset_pd_mcu(void)
 {
 	/*
