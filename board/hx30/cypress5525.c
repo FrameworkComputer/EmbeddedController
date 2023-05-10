@@ -977,7 +977,7 @@ void cyp5525_port_int(int controller, int port)
 		port,
 		data2[0],
 		data2[1]);
-    }
+	}
 
 	response_len = data2[1];
 	switch (data2[0]) {
