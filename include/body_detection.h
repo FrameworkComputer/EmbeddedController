@@ -9,6 +9,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+struct body_detect_params {
+	int var_noise_factor;
+	int var_threshold;
+	int confidence_delta;
+};
+
 enum body_detect_states { BODY_DETECTION_OFF_BODY, BODY_DETECTION_ON_BODY };
 
 /* get/set the state of body detection */

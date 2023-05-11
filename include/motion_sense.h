@@ -9,6 +9,7 @@
 #define __CROS_EC_MOTION_SENSE_H
 
 #include "atomic.h"
+#include "body_detection.h"
 #include "chipset.h"
 #include "common.h"
 #include "ec_commands.h"
@@ -201,6 +202,11 @@ struct motion_sensor_t {
 	 *         | ambient light)|
 	 */
 	struct motion_data_t config[SENSOR_CONFIG_MAX];
+
+#ifdef CONFIG_BODY_DETECTION
+	/* Body detection sensor configuration. */
+	const struct body_detect_params *bd_params;
+#endif
 
 	/* state parameters */
 	enum sensor_state state;
