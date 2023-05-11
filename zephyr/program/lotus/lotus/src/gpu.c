@@ -12,6 +12,7 @@
 #include "gpu.h"
 #include "board_adc.h"
 #include "console.h"
+#include "driver/temp_sensor/f75303.h"
 #include "system.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -21,6 +22,7 @@
 LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 
 #define VALID_BOARDID(ID1, ID0) ((ID1 << 8) + ID0)
+#define GPU_F75303_I2C_ADDR_FLAGS 0x4D
 
 static int module_present;
 static int gpu_detected;
@@ -120,5 +122,12 @@ static void gpu_mux_configure(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, gpu_mux_configure, HOOK_PRIO_DEFAULT);
 
+static void f75303_disable_alert_mask(void)
+{
+	if (gpu_present())
+		i2c_write8(I2C_PORT_GPU0, GPU_F75303_I2C_ADDR_FLAGS,
+			F75303_ALERT_CHANNEL_MASK, (F75303_DP2_MASK | F75303_DP1_MASK |
+			F75303_LOCAL_MASK));
 
-
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, f75303_disable_alert_mask, HOOK_PRIO_DEFAULT);
