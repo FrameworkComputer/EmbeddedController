@@ -77,4 +77,10 @@ config TEST_DB_DETECTION_USB_COUNT
 	  Include USB-C tests into the binary for testing the reported port
 	  count with db detection.
 
+config TEST_PONYTA
+	bool "Run the tests intended for ponyta"
+	help
+	  Include ponyta_boart.c into the binary to test the alt sensor probe via
+	  SSFC and clamshell or convertible.
+
 source "Kconfig.zephyr"
