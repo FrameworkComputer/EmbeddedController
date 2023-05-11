@@ -270,8 +270,7 @@
 		bat-power-state-charge {
 			charge-state = "PWR_STATE_CHARGE";
 			/* Battery percent range (>= Empty, <= 94%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY
-				   (BATTERY_LEVEL_NEAR_FULL - 3)>;
+			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
 			color-0 {
 				led-color = <&color_battery_amber>;
 			};
@@ -280,8 +279,7 @@
 		bat-power-state-charge-near-full {
 			charge-state = "PWR_STATE_CHARGE";
 			/* Battery percent range (>= 95%, <= Full) */
-			batt-lvl = <(BATTERY_LEVEL_NEAR_FULL - 2)
-				     BATTERY_LEVEL_FULL>;
+			batt-lvl = <95 BATTERY_LEVEL_FULL>;
 			color-0 {
 				led-color = <&color_battery_white>;
 			};

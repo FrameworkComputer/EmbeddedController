@@ -110,7 +110,7 @@ static void board_led_set_battery(void)
 				/* battery capa <= 5%, Red */
 				color = LED_RED;
 			} else if (percent > BATTERY_LEVEL_CRITICAL &&
-				   percent < BATTERY_LEVEL_NEAR_FULL) {
+				   percent < CONFIG_BATT_HOST_FULL_FACTOR) {
 				/* 5% < battery capa < 97%, Orange */
 				color = LED_AMBER;
 			} else {

@@ -666,7 +666,7 @@ void charger_base_show_charge(void)
 
 bool charger_base_charge_near_full(void)
 {
-	if (charge_base > -1 && charge_base < BATTERY_LEVEL_NEAR_FULL)
+	if (charge_base > -1 && charge_base < CONFIG_BATT_HOST_FULL_FACTOR)
 		return false;
 
 	return true;

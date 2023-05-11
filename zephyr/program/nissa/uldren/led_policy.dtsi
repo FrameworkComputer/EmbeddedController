@@ -7,7 +7,7 @@
 		power-state-charge {
 			charge-state = "PWR_STATE_CHARGE";
 			batt-lvl = <BATTERY_LEVEL_EMPTY
-						BATTERY_LEVEL_NEAR_FULL>;
+						BATTERY_LEVEL_FULL>;
 
 			color-0 {
 				led-color = <&color_white>;

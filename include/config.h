@@ -631,12 +631,6 @@
 #define CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT (30 * 60 * SECOND)
 
 /*
- * Specify the battery percentage at which the host is told it is full.
- * If this value is not specified the default is 97% set in battery.h.
- */
-#undef CONFIG_BATTERY_LEVEL_NEAR_FULL
-
-/*
  * Use memory mapped region to store battery information. It supports only
  * single battery systems. V2 should be used unless there is a reason not to.
  */
