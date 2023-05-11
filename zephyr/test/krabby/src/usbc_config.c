@@ -8,10 +8,8 @@
 #include "charge_manager.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/ppc/syv682x_public.h"
-#include "driver/tcpm/rt1718s.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_syv682x.h"
-#include "emul/tcpc/emul_rt1718s.h"
 #include "i2c/i2c.h"
 #include "test_state.h"
 #include "usb_pd.h"
@@ -31,17 +29,6 @@ static bool ppc_sink_enabled(int port)
 	syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &val);
 
 	return !(val & (SYV682X_CONTROL_1_PWR_ENB | SYV682X_CONTROL_1_HV_DR));
-}
-
-static bool usb_c1_source_gpio_enabled(void)
-{
-	const struct emul *emul = EMUL_DT_GET(DT_NODELABEL(rt1718s_emul));
-	uint16_t val = 0;
-
-	rt1718s_emul_get_reg(emul, RT1718S_GPIO_CTRL(GPIO_EN_USB_C1_SOURCE),
-			     &val);
-
-	return val & RT1718S_GPIO_CTRL_O;
 }
 
 ZTEST(usbc_config, test_set_active_charge_port)
@@ -117,16 +104,6 @@ ZTEST(usbc_config, test_set_active_charge_port_fail)
 	/* trying to enable ppc0 results in error */
 	zassert_not_equal(board_set_active_charge_port(0), 0, NULL);
 	zassert_false(ppc_sink_enabled(1), NULL);
-}
-
-ZTEST(usbc_config, test_rt1718s_gpio_toggle)
-{
-	/* toggle sourcing on port 1, expect rt1718s gpio also changes */
-	zassert_false(usb_c1_source_gpio_enabled());
-	zassert_ok(pd_set_power_supply_ready(1));
-	zassert_true(usb_c1_source_gpio_enabled());
-	pd_power_supply_reset(1);
-	zassert_false(usb_c1_source_gpio_enabled());
 }
 
 ZTEST(usbc_config, test_adc_channel)

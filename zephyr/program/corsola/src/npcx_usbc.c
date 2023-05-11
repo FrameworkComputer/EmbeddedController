@@ -179,9 +179,13 @@ int board_vbus_source_enabled(int port)
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 __override int board_rt1718s_set_snk_enable(int port, int enable)
 {
-	if (port == USBC_PORT_C1) {
-		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SINK, enable);
-	}
+	rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SINK, enable);
+
+	return EC_SUCCESS;
+}
+__override int board_rt1718s_set_src_enable(int port, int enable)
+{
+	rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, enable);
 
 	return EC_SUCCESS;
 }
