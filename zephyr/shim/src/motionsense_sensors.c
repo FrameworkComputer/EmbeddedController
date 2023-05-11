@@ -47,6 +47,24 @@ DT_FOREACH_CHILD(SENSOR_MUTEX_NODE, DECLARE_SENSOR_MUTEX)
 DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 #endif
 
+#define SENSOR_BODYDETECT_NODE DT_PATH(motionsense_bodydetect)
+#define SENSOR_BODYDETECT_NAME(id) DT_CAT(BODYDETECT_, id)
+
+#define DECLARE_BODYDETECT_CONFIG(id)                                    \
+	const struct body_detect_params SENSOR_BODYDETECT_NAME(          \
+		DT_PARENT(id)) = {                                       \
+		.var_noise_factor = DT_PROP_OR(id, var_noise_factor, 0), \
+		.var_threshold = DT_PROP_OR(id, var_threshold, 0),       \
+		.confidence_delta = DT_PROP_OR(id, confidence_delta, 0), \
+	};
+
+/*
+ * Declare body detection parameters structure for each node with
+ * status = "okay" and compatible = "cros-ec,motionsense-bodydetect".
+ */
+DT_FOREACH_STATUS_OKAY(cros_ec_motionsense_bodydetect,
+		       DECLARE_BODYDETECT_CONFIG)
+
 /*
  * Declare sensor driver data for
  * each child node with status = "okay" of
@@ -169,6 +187,14 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 			    &SENSOR_DATA_NAME(DT_PHANDLE(id, drv_data)), ))
 
 /*
+ * Get the address of body detect specific data.
+ * See motionsense-sensor-base.yaml for DT example and details.
+ */
+#define SENSOR_BODYDETECT(id)                                \
+	IF_ENABLED(DT_NODE_EXISTS(DT_CHILD(id, bodydetect)), \
+		   (.bd_params = &SENSOR_BODYDETECT_NAME(id), ))
+
+/*
  * Get odr and ec_rate for the motion sensor.
  * See motionsense-sensor-base.yaml and cros-ec,motionsense-sensor-config.yaml
  * for DT example and details.
@@ -214,7 +240,8 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 	.default_range = DT_PROP(id, default_range),                         \
 	SENSOR_I2C_SPI_ADDR_FLAGS(id) SENSOR_MUTEX(id) SENSOR_I2C_PORT(id)   \
 		SENSOR_ROT_STD_REF(id) SENSOR_DRV_DATA(id) SENSOR_CONFIG(id) \
-			SENSOR_INT_SIGNAL(id) SENSOR_FLAGS(id)
+			SENSOR_INT_SIGNAL(id) SENSOR_FLAGS(id)               \
+				SENSOR_BODYDETECT(id)
 
 /* Create motion sensor node with node ID */
 #define DO_MK_SENSOR_ENTRY(id, s_chip, s_type, s_drv, s_min_freq, s_max_freq) \
