@@ -72,7 +72,13 @@
 			default-range = <2>;
 			drv-data = <&lis2dw12_data>;
 			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
-
+			bodydetect {
+				compatible = "cros-ec,motionsense-bodydetect";
+				status = "okay";
+				var_noise_factor = <150>;
+				var_threshold = <3000>;
+				confidence_delta = <2900>;
+			};
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -99,6 +105,13 @@
 			rot-standard-ref = <&base_rot_ref_bmi>;
 			drv-data = <&bmi3xx_data>;
 			alternate-for = <&base_accel>;
+			bodydetect {
+				compatible = "cros-ec,motionsense-bodydetect";
+				status = "okay";
+				var_noise_factor = <120>;
+				var_threshold = <550>;
+				confidence_delta = <525>;
+			};
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
