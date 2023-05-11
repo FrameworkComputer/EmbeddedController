@@ -312,6 +312,9 @@ static void cypd_update_port_state(int controller, int port)
 	uint8_t pd_status_reg[4];
 	uint32_t pdo_reg;
 	uint8_t rdo_reg[4];
+#ifdef CONFIG_BOARD_LOTUS
+	uint64_t calculate_ma;
+#endif
 
 	int typec_status_reg;
 	int pd_current = 0;
@@ -374,11 +377,20 @@ static void cypd_update_port_state(int controller, int port)
 		break;
 	}
 
+#ifdef CONFIG_BOARD_LOTUS
+	/* Handle EPR converstion through the buck switcher */
 	if (pd_voltage > 20000) {
-		/* (charge_ma * charge_mv / 20000 ) * 0.9 */
-		pd_current = pd_current * pd_voltage / 20000;
-	} 
+		/**
+		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
+		 */
+		calculate_ma = (int64_t)pd_current * (int64_t)pd_voltage * 90 * 94 / 200000000;
+	} else {
+		calculate_ma = (int64_t)pd_current * 88 / 100;
+	}
 
+	pd_current = calculate_ma;
+	CPRINTS("Updating charger with EPR correction: ma %d", pd_current);
+#endif
 	cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
 	rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
 

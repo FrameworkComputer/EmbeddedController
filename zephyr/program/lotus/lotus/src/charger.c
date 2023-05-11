@@ -206,30 +206,11 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
 	int prochot_ma;
-	uint64_t calculate_ma;
-
 
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
 	}
 
-	/*Handle EPR converstion through the buck switcher*/
-	if (charge_mv > 20000) {
-		/**
-		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
-		 * actually, the charge_ma already correction, so just * 0.9 * 0.94
-		 */
-		calculate_ma = (int64_t)charge_ma * 90 * 94 / 10000;
-		CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
-	} else {
-		calculate_ma = (int64_t)charge_ma * 88 / 100;
-	}
-
-	/*
-	 * ac prochot should bigger than input current
-	 * And needs to be at least 128mA bigger than the adapter current
-	 */
-	charge_ma = (uint16_t)calculate_ma;
 	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
 
 	if ((prochot_ma - charge_ma) < 853) {

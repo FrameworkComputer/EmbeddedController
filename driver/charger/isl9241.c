@@ -592,28 +592,16 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable);
 static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 {
 	const struct battery_info *bi = battery_get_info();
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-	uint64_t calculate_ma;
-	int charge_current = charge_manager_get_charger_current();
-#else
 	const int charge_current = charge_manager_get_charger_current();
-#endif
+#ifndef CONFIG_CUSTOMIZED_DESIGN
 	const int charge_voltage = charge_manager_get_charger_voltage();
+#endif
 	int vsys, vsys_target;
 	timestamp_t deadline;
 
 	CPRINTS("nvdc -> bypass");
 
 	/* 1: Set adapter current limit. */
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-	/*Handle EPR converstion through the buck switcher*/
-	if (charge_voltage > 20000)
-		calculate_ma = (int64_t)charge_current * 90 * 94 / 10000;
-	else
-		calculate_ma = (int64_t)charge_current * 88 / 100;
-
-	charge_current = (int)calculate_ma;
-#endif
 	isl9241_set_input_current_limit(chgnum, charge_current);
 
 	/* 2: Set charge pumps to 100%. */
