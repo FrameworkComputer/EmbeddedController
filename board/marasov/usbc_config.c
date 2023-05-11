@@ -318,3 +318,10 @@ __override bool board_is_dts_port(int port)
 {
 	return port == USBC_PORT_C0;
 }
+
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
+int pd_snk_is_vbus_provided(int port)
+{
+	return ppc_is_vbus_present(port);
+}
+#endif
