@@ -3948,6 +3948,7 @@
  * override those defaults with these.
  */
 #undef CONFIG_RO_PUBKEY_ADDR
+#undef CONFIG_RO_PUBKEY_READ_ADDR
 #undef CONFIG_RO_PUBKEY_SIZE
 #undef CONFIG_RW_SIG_ADDR
 #undef CONFIG_RW_SIG_SIZE
