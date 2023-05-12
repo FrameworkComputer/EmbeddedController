@@ -22,7 +22,7 @@ __override struct led_descriptor
 						   LED_INDEFINITE } },
 		[STATE_DISCHARGE_S0] = { { EC_LED_COLOR_BLUE,
 					   LED_INDEFINITE } },
-		[STATE_DISCHARGE_S0_BAT_LOW] = { { EC_LED_COLOR_AMBER,
+		[STATE_DISCHARGE_S0_BAT_LOW] = { { EC_LED_COLOR_BLUE,
 						   LED_INDEFINITE } },
 		[STATE_DISCHARGE_S3] = { { EC_LED_COLOR_AMBER,
 					   1 * LED_ONE_SEC },
