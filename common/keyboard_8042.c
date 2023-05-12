@@ -1353,6 +1353,7 @@ static void keyboard_restore_state(void)
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_restore_state, HOOK_PRIO_DEFAULT);
 
+#ifndef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #if defined(CONFIG_POWER_BUTTON) && !defined(CONFIG_MKBP_INPUT_DEVICES)
 /**
  * Handle power button changing state.
@@ -1366,3 +1367,4 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 	     HOOK_PRIO_DEFAULT);
 
 #endif /* CONFIG_POWER_BUTTON && !CONFIG_MKBP_INPUT_DEVICES */
+#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
