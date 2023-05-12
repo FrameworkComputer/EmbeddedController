@@ -951,6 +951,20 @@ __overridable int board_should_charger_bypass(void)
 	return false;
 }
 
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+int board_want_charger_change_mode(void)
+{
+	static int pre_batt = BP_YES;
+	int curr_batt = battery_is_present();
+
+	if (pre_batt != curr_batt) {
+		pre_batt = curr_batt;
+		return true;
+	} else
+		return false;
+}
+#endif
+
 /*
  * Ask the charger for some voltage and current. If either value is 0,
  * charging is disabled; otherwise it's enabled. Negative values are ignored.
@@ -994,7 +1008,11 @@ static int charge_request(int voltage, int current)
 	 */
 	should_bypass = board_should_charger_bypass();
 	if ((should_bypass && !(curr.chg.status & CHARGER_BYPASS_MODE)) ||
-	    (!should_bypass && (curr.chg.status & CHARGER_BYPASS_MODE)))
+	    (!should_bypass && (curr.chg.status & CHARGER_BYPASS_MODE))
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+	    || board_want_charger_change_mode()
+#endif
+	    )
 		charger_enable_bypass_mode(0, should_bypass);
 
 	/*
