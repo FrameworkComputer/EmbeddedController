@@ -514,8 +514,7 @@ static void perform_mux_set(int port, int index, mux_state_t mux_mode,
 		return;
 
 	/* Configure superspeed lanes */
-	mux_state = ((mux_mode != USB_PD_MUX_NONE) &&
-		     (mux_mode != USB_PD_MUX_SAFE_MODE) && polarity) ?
+	mux_state = ((mux_mode != USB_PD_MUX_NONE) && polarity) ?
 			    mux_mode | USB_PD_MUX_POLARITY_INVERTED :
 			    mux_mode;
 

@@ -232,7 +232,7 @@ test_export_static int anx7483_set(const struct usb_mux *me,
 	*ack_required = false;
 
 	/* This driver treats safe mode as none */
-	if (mux_state == USB_PD_MUX_SAFE_MODE)
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
 		mux_state = USB_PD_MUX_NONE;
 
 	/*
