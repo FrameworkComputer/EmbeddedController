@@ -29,10 +29,13 @@ void amd_fp6_emul_set_xbar(const struct emul *emul, bool ready);
  * Set how long a command will take to complete.  On a real system this can be
  * anywhere from 50-100ms and the datasheet defines it can take up to 250ms.
  *
+ * Getting timing to sync consistently in unit testing is difficult, so use the
+ * number of reads to wait instead.
+ *
  * @param emul - AMD FP6 emulator data
- * @param delay_ms - how long after a mux set to wait before reporting the
- *		     status of the set as complete.
+ * @param delay_reads - how long after a mux set to wait before reporting the
+ *		     status of the set as complete (in number of reads)
  */
-void amd_fp6_emul_set_delay(const struct emul *emul, int delay_ms);
+void amd_fp6_emul_set_delay(const struct emul *emul, int delay_reads);
 
 #endif

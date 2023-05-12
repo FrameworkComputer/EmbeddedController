@@ -140,7 +140,7 @@ ZTEST_F(amd_fp6_usb_mux, test_chipset_reset)
 ZTEST_F(amd_fp6_usb_mux, test_long_command)
 {
 	/* Allow the mux to take a while, like on real systems */
-	amd_fp6_emul_set_delay(fixture->amd_fp6_emul, 100);
+	amd_fp6_emul_set_delay(fixture->amd_fp6_emul, 6);
 
 	/* Send a basic set to USB mode */
 	usb_mux_set(TEST_PORT, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT, 1);

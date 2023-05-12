@@ -28,8 +28,8 @@ enum amd_fp6_read_bytes {
 
 struct amd_fp6_data {
 	struct i2c_common_emul_data common;
-	int64_t finish_delay; /* How long before mux set "completes"? */
-	int64_t set_time; /* Time of last set call */
+	int finish_delay; /* How many reads before mux set "completes"? */
+	int waiting_reads; /* How many reads have we waited to complete? */
 	uint8_t last_mux_set; /* Last value of mux set call */
 	uint8_t regs[AMD_FP6_MAX_REG];
 };
@@ -58,11 +58,11 @@ void amd_fp6_emul_reset_regs(const struct emul *emul)
 	data->regs[AMD_FP6_PORT1] = 0;
 }
 
-void amd_fp6_emul_set_delay(const struct emul *emul, int delay_ms)
+void amd_fp6_emul_set_delay(const struct emul *emul, int delay_reads)
 {
 	struct amd_fp6_data *data = (struct amd_fp6_data *)emul->data;
 
-	data->finish_delay = delay_ms;
+	data->finish_delay = delay_reads;
 }
 
 void amd_fp6_emul_set_xbar(const struct emul *emul, bool ready)
@@ -87,11 +87,11 @@ static int amd_fp6_emul_read(const struct emul *emul, int reg, uint8_t *val,
 
 	/* Decide if we've finally finished our operation */
 	if (pos == AMD_FP6_PORT0 && data->finish_delay > 0) {
-		int64_t uptime = k_uptime_delta(&data->set_time);
+		data->waiting_reads++;
 
 		if (((regs[pos] >> AMD_FP6_MUX_PORT_STATUS_OFFSET) ==
 		     AMD_FP6_MUX_PORT_CMD_BUSY) &&
-		    (uptime >= data->finish_delay))
+		    (data->waiting_reads >= data->finish_delay))
 			regs[pos] =
 				amd_fp6_emul_mux_complete(data->last_mux_set);
 	}
@@ -113,11 +113,13 @@ static int amd_fp6_emul_write(const struct emul *emul, int reg, uint8_t val,
 
 	data->last_mux_set = val;
 
-	if (data->finish_delay == 0)
+	if (data->finish_delay == 0) {
 		regs[AMD_FP6_PORT0] = amd_fp6_emul_mux_complete(val);
-	else
+	} else {
+		data->waiting_reads = 0;
 		regs[AMD_FP6_PORT0] = AMD_FP6_MUX_PORT_CMD_BUSY
 				      << AMD_FP6_MUX_PORT_STATUS_OFFSET;
+	}
 
 	return 0;
 }
