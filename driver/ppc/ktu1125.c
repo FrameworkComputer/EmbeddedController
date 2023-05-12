@@ -348,11 +348,15 @@ static int ktu1125_set_vconn(int port, int enable)
 	polarity = polarity_rm_dts(pd_get_polarity(port));
 
 	if (enable) {
-		flags |= polarity ? KTU1125_CC2S_VCONN : KTU1125_CC1S_VCONN;
-		status = set_flags(port, KTU1125_SET_SW_CFG, flags);
+		/*
+		 * If polarity is CC1, then apply VCONN on CC2.
+		 * else if polarity is CC2, then apply VCONN on CC1
+		 */
+		flags |= polarity ? KTU1125_CC1S_VCONN : KTU1125_CC2S_VCONN;
+		status = set_flags(port, KTU1125_CTRL_SW_CFG, flags);
 	} else {
 		flags |= KTU1125_CC1S_VCONN | KTU1125_CC2S_VCONN;
-		status = clr_flags(port, KTU1125_SET_SW_CFG, flags);
+		status = clr_flags(port, KTU1125_CTRL_SW_CFG, flags);
 	}
 
 	return status;
