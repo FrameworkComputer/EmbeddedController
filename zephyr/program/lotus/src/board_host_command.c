@@ -163,6 +163,7 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));
 
+#ifdef CONFIG_BOARD_AZALEA
 static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_update_keyboard_matrix *p = args->params;
@@ -190,6 +191,7 @@ static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_UPDATE_KEYBOARD_MATRIX, update_keyboard_matrix, EC_VER_MASK(0));
+#endif
 
 static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 {
