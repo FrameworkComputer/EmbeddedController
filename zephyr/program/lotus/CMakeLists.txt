@@ -10,7 +10,6 @@ zephyr_library_sources("src/board_function.c")
 zephyr_library_sources("src/board_host_command.c")
 zephyr_library_sources("src/cypress_pd_common.c")
 zephyr_library_sources("src/flash_storage.c")
-zephyr_library_sources("src/cpu_power.c")
 zephyr_library_sources("src/factory.c")
 zephyr_library_sources("src/diagnostics.c")
 zephyr_library_sources("src/ucsi.c")
@@ -37,6 +36,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/power_button_x86.c"
 			"lotus/src/amd_r23m.c"
 			"lotus/src/ej889i.c"
+			"lotus/src/cpu_power.c"
 	)
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)
@@ -46,6 +46,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 	zephyr_library_sources(
 			"azalea/src/battery.c"
 			"azalea/src/charger.c"
+			"azalea/src/cpu_power.c"
 			"azalea/src/power_sequence.c"
 			"azalea/src/keyboard_customization.c"
 			"azalea/src/project_diagnostics.c"
