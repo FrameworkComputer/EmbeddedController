@@ -70,8 +70,6 @@
 #define CONFIG_USB_PORT_POWER_DUMB
 
 /* USB Type C and USB PD defines */
-#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
-
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX
 #define CONFIG_IO_EXPANDER_PORT_COUNT 1
@@ -168,13 +166,6 @@
  */
 #define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x56
 #define USBC_PORT_C2_BB_RETIMER_I2C_ADDR 0x57
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-#define CONFIG_USB_PD_DATA_RESET_MSG
 
 /* Retimer */
 #define CONFIG_USBC_RETIMER_FW_UPDATE
