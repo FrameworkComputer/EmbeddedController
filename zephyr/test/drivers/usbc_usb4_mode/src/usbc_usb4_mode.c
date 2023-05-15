@@ -259,6 +259,44 @@ ZTEST_F(usbc_usb4_mode, test_verify_usb4_passive_entry_exit)
 		      USB_PD_MUX_USB_ENABLED, "Failed to see USB set");
 }
 
+/* If the partner claims to support USB4, but communication is only PD 2.0, the
+ * EC should disregard a request to enter USB4 from the host.
+ */
+ZTEST_F(usbc_usb4_mode, test_verify_usb4_pd2_no_entry)
+{
+	struct ec_response_typec_status status;
+
+	tcpci_partner_init(&fixture->partner, PD_REV20);
+	fixture->partner.cable = &passive_usb4;
+	connect_sink_to_port(&fixture->partner, fixture->tcpci_emul,
+			     fixture->charger_emul);
+
+	/* Instruct partner port to accept Enter_USB message */
+	fixture->partner.enter_usb_accept = true;
+
+	/* Verify that we properly identify a USB4 capable passive cable */
+	verify_cable_found(fixture->partner.cable);
+
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
+		      USB_PD_MUX_USB_ENABLED, "Unexpected starting mux: 0x%02x",
+		      status.mux_state);
+
+	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_USB4);
+	k_sleep(K_SECONDS(1));
+
+	/* PD 2.0 doesn't include Enter_USB, so it's not possible to enter USB4
+	 * mode. A Discover Identity ACK indicating support for USB4 isn't even
+	 * valid under PD 2.0. If the host nevertheless commands the EC to enter
+	 * USB4, the EC should not attempt to do so.
+	 */
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
+		      USB_PD_MUX_USB_ENABLED, "Failed to see USB still set");
+	zassert_not_equal((status.mux_state & USB_MUX_CHECK_MASK),
+			  USB_PD_MUX_USB4_ENABLED, "Unexpected USB4 mode set");
+}
+
 /*
  * TODO(b/260095516): This test suite is only testing the default good case, and
  * one error case where the cable doesn't support USB4. This suite needs to be
