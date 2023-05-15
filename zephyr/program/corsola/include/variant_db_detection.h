@@ -12,6 +12,9 @@
 
 enum corsola_db_type {
 	CORSOLA_DB_UNINIT = -1,
+	/* CORSOLA_DB_NO_DETECTION means there is no detection involved in. */
+	CORSOLA_DB_NO_DETECTION,
+	/* CORSOLA_DB_NONE means there is no DB in the design. */
 	CORSOLA_DB_NONE,
 	CORSOLA_DB_TYPEC,
 	CORSOLA_DB_HDMI,
@@ -28,7 +31,7 @@ enum corsola_db_type corsola_get_db_type(void);
 #elif !defined(CONFIG_TEST)
 inline enum corsola_db_type corsola_get_db_type(void)
 {
-	return CORSOLA_DB_NONE;
+	return CORSOLA_DB_NO_DETECTION;
 }
 #endif
 

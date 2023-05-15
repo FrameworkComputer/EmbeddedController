@@ -45,7 +45,7 @@ DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_PRE_DEFAULT);
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	/* This function returns the PORT_COUNT+1 when HDMI db is connected.
+	/* This function returns the PORT_COUNT when HDMI db is connected.
 	 * This is a trick to ensure the usb_mux_set being set properley.
 	 * HDMI display functions using the USB virtual mux to * communicate
 	 * with the DP bridge.
@@ -56,6 +56,8 @@ __override uint8_t board_get_usb_pd_port_count(void)
 		} else {
 			return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 		}
+	} else if (corsola_get_db_type() == CORSOLA_DB_NONE) {
+		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 	}
 
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
@@ -65,7 +67,7 @@ uint8_t board_get_adjusted_usb_pd_port_count(void)
 {
 	const enum corsola_db_type db = corsola_get_db_type();
 
-	if (db == CORSOLA_DB_TYPEC || db == CORSOLA_DB_NONE) {
+	if (db == CORSOLA_DB_TYPEC || db == CORSOLA_DB_NO_DETECTION) {
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
 	} else {
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
