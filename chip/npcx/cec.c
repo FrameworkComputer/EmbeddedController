@@ -472,15 +472,13 @@ void enter_state(enum cec_state new_state)
 	case CEC_STATE_FOLLOWER_ACK_LOW:
 		addr = cec_rx.transfer.buf[0] & 0x0f;
 		if (addr == cec_addr) {
-			/* Destination is our address */
+			/* Destination is our address, so ACK the packet */
 			gpio = 0;
-			timeout = NOMINAL_SAMPLE_TIME_TICKS;
-		} else if (addr == CEC_BROADCAST_ADDR) {
-			/* Don't ack broadcast or packets which destination
-			 * are us, but continue reading
-			 */
-			timeout = NOMINAL_SAMPLE_TIME_TICKS;
 		}
+		/* Don't ack broadcast or packets whose destinations aren't us,
+		 * but continue reading.
+		 */
+		timeout = NOMINAL_SAMPLE_TIME_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_ACK_VERIFY:
 		/*
