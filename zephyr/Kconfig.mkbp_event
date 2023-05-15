@@ -22,6 +22,11 @@ config PLATFORM_EC_MKBP_USE_HOST_EVENT
     help
       Select to send MKBP events via host event.
 
+config PLATFORM_EC_MKBP_USE_HECI
+    bool "Use HECI"
+    help
+      Select to send MKBP events via HECI.
+
 config PLATFORM_EC_MKBP_USE_GPIO_AND_HOST_EVENT
     bool "Use GPIO and host event"
     help
