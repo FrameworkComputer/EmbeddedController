@@ -132,6 +132,14 @@ void ap_vdm_attention_enqueue(int port, int length, uint32_t *buf)
 {
 	struct attention_queue_entry new_entry;
 
+	/*
+	 * Process HPD from the message if we're configured
+	 * Note: the IRQ toggles are time critical and should be done before
+	 * sending the VDM to the queue
+	 */
+	if (PD_VDO_VID(buf[0]) == USB_SID_DISPLAYPORT && length > 1)
+		attention_hpd_process(port, buf[1]);
+
 	new_entry.objects = length;
 	memcpy(new_entry.attention, buf, length * sizeof(uint32_t));
 
@@ -148,10 +156,6 @@ void ap_vdm_attention_enqueue(int port, int length, uint32_t *buf)
 		pd_notify_event(port, PD_STATUS_EVENT_VDM_ATTENTION);
 
 	mutex_unlock(&ap_storage[port].queue_lock);
-
-	/* Process HPD from the message if we're configured */
-	if (PD_VDO_VID(buf[0]) == USB_SID_DISPLAYPORT && length > 1)
-		attention_hpd_process(port, buf[1]);
 }
 
 static uint8_t ap_vdm_attention_pop(int port, uint32_t *buf,
