@@ -13,6 +13,7 @@
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
+#include "diagnostics.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -265,6 +266,7 @@ static void state_machine(uint64_t tnow)
 				 * Power button out signal implements in power_sequence.c,
 				 * just call the exit hard off start to run the state mechine.
 				 */
+				reset_diagnostics();
 				chipset_exit_hard_off();
 				pwrbtn_state = PWRBTN_STATE_IDLE;
 			} else {
@@ -288,6 +290,7 @@ static void state_machine(uint64_t tnow)
 				tnext_state = tnow + PWRBTN_DELAY_T0;
 				pwrbtn_state = PWRBTN_STATE_T0;
 				set_pwrbtn_to_pch(0, 0);
+				cancel_diagnostics();
 			}
 		}
 		break;
@@ -347,6 +350,7 @@ static void state_machine(uint64_t tnow)
 			 * Power button out signal implements in power_sequence.c,
 			 * just call the exit hard off start to run the state mechine.
 			 */
+			reset_diagnostics();
 			chipset_exit_hard_off();
 			pwrbtn_state = PWRBTN_STATE_IDLE;
 		} else {

@@ -12,6 +12,7 @@ zephyr_library_sources("src/cypress_pd_common.c")
 zephyr_library_sources("src/flash_storage.c")
 zephyr_library_sources("src/cpu_power.c")
 zephyr_library_sources("src/factory.c")
+zephyr_library_sources("src/diagnostics.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
@@ -33,6 +34,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/gpu.c"
 			"lotus/src/power_sequence.c"
 			"lotus/src/f75303.c"
+			"lotus/src/project_diagnostics.c"
 	)
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)
@@ -44,5 +46,6 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/charger.c"
 			"azalea/src/power_sequence.c"
 			"azalea/src/keyboard_customization.c"
+			"lotus/src/project_diagnostics.c"
 	)
 endif()

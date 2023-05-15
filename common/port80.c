@@ -138,6 +138,13 @@ static void port80_dump_buffer(void)
 		display_7seg_write(SEVEN_SEG_PORT80_DISPLAY, last_e);
 }
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+int port_80_last(void)
+{
+	return history[(writes-1) % ARRAY_SIZE(history)];
+}
+#endif
+
 /*****************************************************************************/
 /* Console commands */
 

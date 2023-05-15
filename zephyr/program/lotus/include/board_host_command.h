@@ -148,6 +148,25 @@ struct ec_response_chassis_intrusion_control {
 	uint8_t vtr_open_count;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * This command uses for BIOS boot check.
+ */
+#define EC_CMD_DIAGNOSIS 0x3E0B
+
+enum ec_params_diagnosis_code {
+	/* type: DDR */
+	CODE_DDR_TRAINING_START	= 1,
+	CODE_DDR_TRAINING_FINISH = 2,
+	CODE_DDR_FAIL = 3,
+	CODE_NO_EDP = 4,
+	CODE_PORT80_COMPLETE = 0xFF,
+};
+
+struct ec_params_diagnosis {
+	/* See enum ec_params_diagnosis_code */
+	uint8_t diagnosis_code;
+} __ec_align1;
 
 /*****************************************************************************/
 /*

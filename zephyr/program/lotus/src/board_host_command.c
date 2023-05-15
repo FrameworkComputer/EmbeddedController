@@ -13,6 +13,7 @@
 #include "cpu_power.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
+#include "diagnostics.h"
 #include "ec_commands.h"
 #include "factory.h"
 #include "fan.h"
@@ -207,6 +208,16 @@ static enum ec_status chassis_counter(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_COUNTER, chassis_counter, EC_VER_MASK(0));
+static enum ec_status cmd_diagnosis(struct host_cmd_handler_args *args)
+{
+
+	const struct ec_params_diagnosis *p = args->params;
+
+	set_bios_diagnostic(p->diagnosis_code);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_DIAGNOSIS, cmd_diagnosis,
+			EC_VER_MASK(0));
 
 #ifdef CONFIG_BOARD_AZALEA
 static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
