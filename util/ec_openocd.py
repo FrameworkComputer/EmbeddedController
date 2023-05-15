@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-
 # Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """
 Flashes and debugs the EC through openocd
 """
@@ -123,7 +123,6 @@ def debug(interface, board, port, executable, attach):
         stderr=subprocess.STDOUT,
         preexec_fn=os.setsid,
     ) as openocd:
-
         # Wait for OpenOCD to start, it'll open a port for GDB connections
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         connected = False
@@ -237,10 +236,10 @@ def main():
     )
     flash_parser.set_defaults(command="flash")
     flash_parser.add_argument(
-        "--verify",
-        "-v",
-        default=True,
-        help="Verify flash after writing image, defaults to true",
+        "--no-verify",
+        "-n",
+        action="store_true",
+        help="Do not verify flash after writing image",
     )
 
     debug_parser = sub_parsers.add_parser(
@@ -279,7 +278,7 @@ def main():
         image_file = (
             get_flash_file(args.board) if target_file is None else target_file
         )
-        flash(args.interface, args.board, image_file, args.verify)
+        flash(args.interface, args.board, image_file, not args.no_verify)
     elif args.command == "debug":
         executable_file = (
             get_executable_file(args.board)
