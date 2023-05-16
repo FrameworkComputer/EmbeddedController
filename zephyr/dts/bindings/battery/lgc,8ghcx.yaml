@@ -13,9 +13,11 @@ properties:
     default: "lgc,8ghcx"
 
   manuf_name:
-    default: "LGC-LGC3.685"
+    default: "LGC-LGC3.65"
   device_name:
     default: "DELL 8GHCX"
+  ship_mode_wb_support:
+    default: 1
   ship_mode_reg_addr:
     default: 0x44
   ship_mode_reg_data:

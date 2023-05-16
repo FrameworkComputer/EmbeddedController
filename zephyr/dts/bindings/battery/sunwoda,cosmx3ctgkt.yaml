@@ -2,21 +2,22 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: "SMP-COS3.63 DELL 26JGK"
-compatible: "smp,cos26jgk"
+description: "SWD-COSMX3.618 DELL CTGKT"
+
+compatible: "sunwoda,cosmx3ctgkt"
 
 include: battery-smart.yaml
 
 properties:
   enum-name:
     type: string
-    default: "smp,cos26jgk"
+    default: "sunwoda,cosmx3ctgkt"
 
-  # Fuel gauge
+  # Fuel Gauge
   manuf_name:
-    default: "SMP-COS3.63"
+    default: "SWD-COSMX3.618"
   device_name:
-    default: "DELL 26JGK"
+    default: "DELL CTGKT"
   ship_mode_wb_support:
     default: 1
   ship_mode_reg_addr:
@@ -48,7 +49,7 @@ properties:
   precharge_current:
     default: 256
   start_charging_min_c:
-    default: -3
+    default: 0
   start_charging_max_c:
     default: 50
   charging_min_c:

@@ -17,6 +17,8 @@ properties:
     default: "SWD-ATL3.618"
   device_name:
     default: "DELL CTGKT"
+  ship_mode_wb_support:
+    default: 1
   ship_mode_reg_addr:
     default: 0x44
   ship_mode_reg_data:
