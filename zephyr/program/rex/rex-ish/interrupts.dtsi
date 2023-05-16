@@ -22,5 +22,16 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lis2dw12_interrupt";
 		};
+		int_lid_open: ec_lid_open {
+			irq-pin = <&gpio_ec_lid_open_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_interrupt";
+		};
+		int_tablet_mode: ec_tablet_mode {
+			irq-pin = <&gpio_ec_tablet_mode_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "gmr_tablet_switch_isr";
+		};
+
 	};
 };
