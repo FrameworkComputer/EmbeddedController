@@ -52,6 +52,11 @@ const struct adc_t adc_channels[] = {
 				.factor_div = ADC_READ_MAX + 1,
 				.shift = 0,
 				.channel = CHIP_ADC_CH3 },
+	[ADC_VBUS] = { .name = "VBUS", /* 113/1113 voltage divider */
+		       .factor_mul = ADC_MAX_MVOLT * 1113,
+		       .factor_div = (ADC_READ_MAX + 1) * 113,
+		       .shift = 0,
+		       .channel = CHIP_ADC_CH4 },
 	[ADC_TEMP_SENSOR_3] = { .name = "TEMP_SENSOR3",
 				.factor_mul = ADC_MAX_MVOLT,
 				.factor_div = ADC_READ_MAX + 1,
