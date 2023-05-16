@@ -190,8 +190,16 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_I2C3_PORT 2
 #define STM32_FMPI2C4_PORT 3
 
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
+#define stm32_i2c_reg(port, offset)                                        \
+	((uint16_t *)(((port) == 3 ? STM32_I2C4_BASE :                     \
+				     (STM32_I2C1_BASE + ((port)*0x400))) + \
+		      (offset)))
+#else
 #define stm32_i2c_reg(port, offset) \
 	((uint16_t *)((STM32_I2C1_BASE + ((port)*0x400)) + (offset)))
+#endif
+
 /* --- Power / Reset / Clocks --- */
 #define STM32_PWR_CR REG32(STM32_PWR_BASE + 0x00)
 #define STM32_PWR_CR_LPSDSR (1 << 0)

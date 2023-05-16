@@ -150,15 +150,26 @@ static void i2c_init_port(const struct i2c_port_t *p)
 	enum i2c_freq freq;
 
 	/* Enable I2C clock */
-	if (!(STM32_RCC_APB1ENR1 & (1 << (21 + port))))
+	if (port == 3) {
+		STM32_RCC_APB1ENR2 |= STM32_RCC_APB1ENR2_I2C4EN;
+	} else {
 		STM32_RCC_APB1ENR1 |= 1 << (21 + port);
+	}
 
 	/*	Select HSI 16MHz as I2C clock source	*/
-	val = STM32_RCC_CCIPR;
-	val &= ~(STM32_RCC_CCIPR_I2C1SEL_MASK << (port * 2));
-	val |= STM32_RCC_CCIPR_I2C_HSI16
-	       << (STM32_RCC_CCIPR_I2C1SEL_SHIFT + port * 2);
-	STM32_RCC_CCIPR = val;
+	if (port == 3) {
+		val = STM32_RCC_CCIPR2;
+		val &= ~STM32_RCC_CCIPR2_I2C4SEL_MSK;
+		val |= STM32_RCC_CCIPR_I2C_HSI16
+		       << STM32_RCC_CCIPR2_I2C4SEL_POS;
+		STM32_RCC_CCIPR2 = val;
+	} else {
+		val = STM32_RCC_CCIPR;
+		val &= ~(STM32_RCC_CCIPR_I2C1SEL_MASK << (port * 2));
+		val |= STM32_RCC_CCIPR_I2C_HSI16
+		       << (STM32_RCC_CCIPR_I2C1SEL_SHIFT + port * 2);
+		STM32_RCC_CCIPR = val;
+	}
 
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);

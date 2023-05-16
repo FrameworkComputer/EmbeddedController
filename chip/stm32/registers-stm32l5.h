@@ -1903,7 +1903,11 @@
 /* TODO */
 
 /**************  Bit definition for STM32_RCC_CCIPR2 register  ****************/
-/* TODO */
+#define STM32_RCC_CCIPR2_I2C4SEL_POS 0U
+#define STM32_RCC_CCIPR2_I2C4SEL_MSK (0x3UL << STM32_RCC_CCIPR2_I2C4SEL_POS)
+#define STM32_RCC_CCIPR2_I2C4SEL STM32_RCC_CCIPR2_I2C4SEL_MSK
+#define STM32_RCC_CCIPR2_I2C4SEL_0 (0x1UL << STM32_RCC_CCIPR2_I2C4SEL_POS)
+#define STM32_RCC_CCIPR2_I2C4SEL_1 (0x2UL << STM32_RCC_CCIPR2_I2C4SEL_POS)
 
 /**************  Bit definition for STM32_CRS_CR register  ********************/
 #define STM32_CRS_CR_SYNCOKIE_POS 0U
