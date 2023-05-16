@@ -30,6 +30,12 @@ const struct i2c_port_t i2c_ports[] = {
 	  .scl = GPIO_CN9_11,
 	  .sda = GPIO_CN9_9,
 	  .flags = I2C_PORT_FLAG_DYNAMIC_SPEED },
+	{ .name = "I2C4",
+	  .port = 3,
+	  .kbps = 100,
+	  .scl = GPIO_CN10_8,
+	  .sda = GPIO_CN10_12,
+	  .flags = I2C_PORT_FLAG_DYNAMIC_SPEED },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
