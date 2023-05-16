@@ -91,8 +91,8 @@
 	};
 
 	batteries {
-		default_battery: cdt_c340152 {
-			compatible = "cdt,c340152", "battery-smart";
+		default_battery: celxpert_c340152 {
+			compatible = "celxpert,c340152", "battery-smart";
 		};
 	};
 };
