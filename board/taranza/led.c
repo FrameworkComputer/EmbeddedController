@@ -59,6 +59,9 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 /* Called by hook task every TICK */
 static void led_tick(void)
 {
+	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		return;
+
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		led_set_color_power(LED_WHITE);
 	else
