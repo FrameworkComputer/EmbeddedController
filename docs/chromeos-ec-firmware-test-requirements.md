@@ -56,7 +56,8 @@ reports locally on your machine.
 In limited cases, you may amend your commit message to include the
 `LOW_COVERAGE_REASON` tag. This tag bypasses the code coverage requirement
 enforced by Gerrit. Simply add the tag followed by a description to justify
-bypassing code coverage.
+bypassing code coverage. You must include a reference to a bug (in the form
+`b:1234567` or `b/1234567`) that tracks whatever issue is impeding coverage.
 
 ```
 LOW_COVERAGE_REASON=no emulator for the ANX7483 exists b/248086547
