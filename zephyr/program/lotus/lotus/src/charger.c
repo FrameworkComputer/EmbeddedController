@@ -187,7 +187,7 @@ __override int board_should_charger_bypass(void)
 		else
 			return false;
 	} else {
-		if (voltage_mv >= 20000)
+		if (voltage_mv > 20000)
 			return true;
 		else
 			return false;
