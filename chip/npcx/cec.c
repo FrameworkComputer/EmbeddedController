@@ -870,12 +870,6 @@ static int cec_set_enable(uint8_t enable)
 
 		enter_state(CEC_STATE_IDLE);
 
-		/*
-		 * Capture falling edge of first start
-		 * bit to get things going
-		 */
-		tmr_cap_start(CAP_EDGE_FALLING, 0);
-
 		/* Enable timer interrupts */
 		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
 		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
