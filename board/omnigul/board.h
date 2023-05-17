@@ -81,6 +81,8 @@
 #undef CONFIG_USB_CHARGER
 #undef CONFIG_BC12_DETECT_PI3USB9201
 
+#define CONFIG_USB_PD_COMM_LOCKED
+
 /* I2C speed console command */
 #define CONFIG_CMD_I2C_SPEED
 
@@ -190,6 +192,9 @@
 #define CONFIG_KEYBOARD_CUSTOMIZATION
 #define CONFIG_KEYBOARD_VIVALDI
 #define CONFIG_KEYBOARD_REFRESH_ROW3
+
+/* DISABLE POWERINDEBUG */
+#undef CONFIG_CMD_POWERINDEBUG
 
 /*
  * Older boards have a different ADC assignment.
