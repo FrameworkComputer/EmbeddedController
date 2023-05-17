@@ -53,4 +53,10 @@ config VARIANT_CORSOLA_DB_DETECTION
           includes pin configuration and driver loading.
 	default y
 
+config CORSOLA_HIBERNATE_PRE_OFF_5V
+	bool "Corsola Platform Hibernate Power Sequence Selection"
+	help
+	  Set PP5000_Z2 to deactivate before executing normal corsola hibernate.
+	default n
+
 source "Kconfig.zephyr"

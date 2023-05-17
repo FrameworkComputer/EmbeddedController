@@ -18,5 +18,11 @@ __override void board_hibernate(void)
 
 __override void board_hibernate_late(void)
 {
+#ifdef CONFIG_CORSOLA_HIBERNATE_PRE_OFF_5V
+	/* b/283037861: Pre-off the 5V power line for hibernate. */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp5000_z2), 1);
+	/* It takes around 30ms to release the PP5000 capacitance. */
+	udelay(30 * MSEC);
+#endif
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_ulp), 1);
 }
