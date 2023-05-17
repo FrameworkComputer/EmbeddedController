@@ -135,6 +135,18 @@ ZTEST(panic_output, test_console_cmd__hang)
 		      "Command returned %d but shouldn't have exited", rv);
 }
 
+ZTEST(panic_output, test_console_cmd__null)
+{
+	int rv;
+	const char *cmd[] = { "crash", "null" };
+
+	rv = run_crash_command(2, cmd, K_FOREVER);
+
+	zassert_equal(RETURN_CODE_CRASHED, rv,
+		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(SIGSEGV, signal_received);
+}
+
 ZTEST(panic_output, test_console_cmd__bad_param)
 {
 	int rv;
