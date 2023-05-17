@@ -41,6 +41,8 @@ struct sm5803_emul_data {
 	uint16_t ibus;
 	uint16_t ibat_avg;
 	bool clock_slowed;
+	/** Measured VSYS voltage */
+	uint16_t vsys;
 	uint8_t cc_conf1;
 	/** Raw values of FLOW_REG* */
 	uint8_t flow1, flow2, flow3;
@@ -62,12 +64,24 @@ struct sm5803_emul_data {
 	uint8_t chg_mon;
 	/** Raw value of ANA_EN_REG1 register */
 	uint8_t ana_en1;
+	/** Raw value of STATUS_CHG register */
+	uint8_t chg_status;
 	/** Raw value of STATUS_DISCH register */
 	uint8_t disch_status;
 	/** Raw value of PORTS_CTRL register */
 	uint8_t ports_ctrl;
 	/** Raw value of REFERENCE1 register (REG_REFERENCE) */
 	uint8_t reference1;
+	/** Raw value of LOG_REG1 register (REG_LOG1) */
+	uint8_t log1;
+	/** Raw values of PREREG_CONF_REG{1,2} (REG_VSYS_PREREG_{M,L}LB) */
+	uint8_t prereg_conf1, prereg_conf2;
+	/** Voltage to report on the VBAT_SNSP pin, in mV */
+	uint16_t vbat_sns_mv;
+	/** Raw values of thermal threshold registers (TINT_{HIGH,LOW}_TH) */
+	uint8_t tint_high_th, tint_low_th;
+	/** Charger's reported internal temperature, in kelvin. */
+	uint16_t internal_temp_kelvin;
 };
 
 struct sm5803_emul_cfg {
@@ -231,9 +245,15 @@ void sm5803_emul_get_flow_regs(const struct emul *emul, uint8_t *flow1,
 {
 	struct sm5803_emul_data *data = emul->data;
 
-	*flow1 = data->flow1;
-	*flow2 = data->flow2;
-	*flow3 = data->flow3;
+	if (flow1 != NULL) {
+		*flow1 = data->flow1;
+	}
+	if (flow2 != NULL) {
+		*flow2 = data->flow2;
+	}
+	if (flow3 != NULL) {
+		*flow3 = data->flow3;
+	}
 }
 
 void sm5803_emul_set_pmode(const struct emul *emul, uint8_t pmode)
@@ -265,6 +285,16 @@ SIMPLE_GETTER(disch_conf1, disch_conf1)
 SIMPLE_GETTER(disch_conf2, disch_conf2)
 SIMPLE_GETTER(disch_conf5, disch_conf5)
 SIMPLE_GETTER(disch_conf6, disch_conf6)
+
+SIMPLE_GETTER(chg_status, chg_status)
+
+void sm5803_emul_set_chg_status(const struct emul *emul, uint8_t value)
+{
+	struct sm5803_emul_data *data = emul->data;
+
+	data->chg_status = value;
+}
+
 SIMPLE_GETTER(disch_status, disch_status)
 
 void sm5803_emul_set_disch_status(const struct emul *emul, uint8_t value)
@@ -276,6 +306,7 @@ void sm5803_emul_set_disch_status(const struct emul *emul, uint8_t value)
 
 SIMPLE_GETTER(ports_ctrl, ports_ctrl)
 SIMPLE_GETTER(reference_reg, reference1)
+SIMPLE_GETTER(log1, log1)
 
 bool sm5803_emul_is_psys_dac_enabled(const struct emul *emul)
 {
@@ -285,6 +316,50 @@ bool sm5803_emul_is_psys_dac_enabled(const struct emul *emul)
 }
 
 SIMPLE_GETTER(phot1, phot1)
+
+void sm5803_emul_set_vbat_sns_mv(const struct emul *emul, uint16_t mv)
+{
+	struct sm5803_emul_data *data = emul->data;
+
+	data->vbat_sns_mv = mv;
+}
+
+uint16_t sm5803_emul_vbat_snsp_regval(const struct emul *emul, uint16_t mv)
+{
+	struct sm5803_emul_data *data = emul->data;
+	double divisor;
+
+	/* Volts per ADC LSb varies with number of battery cells. */
+	if (data->pmode <= 5) { /* 1S */
+		divisor = 5.13;
+	} else if (data->pmode >= 6 && data->pmode <= 0xd) { /* 2S */
+		divisor = 10.2;
+	} else if (data->pmode >= 0xe && data->pmode <= 0x16) { /* 3S */
+		divisor = 15.38;
+	} else { /* 4S */
+		divisor = 20.51;
+	}
+
+	return mv / divisor;
+}
+
+void sm5803_emul_set_internal_temperature(const struct emul *emul,
+					  uint16_t kelvin)
+{
+	struct sm5803_emul_data *data = emul->data;
+
+	data->internal_temp_kelvin = MIN(kelvin, 440);
+}
+
+SIMPLE_GETTER(tint_high_th, tint_high_th);
+SIMPLE_GETTER(tint_low_th, tint_low_th);
+
+void sm5803_emul_set_vsys_measured_mv(const struct emul *emul, uint16_t mv)
+{
+	struct sm5803_emul_data *data = emul->data;
+
+	data->vsys = mv;
+}
 
 static void sm5803_emul_reset(const struct emul *emul)
 {
@@ -320,6 +395,7 @@ static void sm5803_emul_reset(const struct emul *emul)
 	data->ibus = 0;
 	data->ibat_avg = 0;
 	data->clock_slowed = false;
+	data->vsys = 0;
 	data->cc_conf1 = 0x09;
 	data->flow1 = 0x01;
 	data->flow2 = 0;
@@ -337,6 +413,13 @@ static void sm5803_emul_reset(const struct emul *emul)
 	data->ana_en1 = 0x99;
 	data->disch_status = 0;
 	data->reference1 = 0;
+	data->log1 = 0;
+	data->prereg_conf1 = 0;
+	data->prereg_conf2 = 0;
+	data->vbat_sns_mv = 0;
+	data->tint_high_th = 0;
+	data->tint_low_th = 0;
+	data->internal_temp_kelvin = 296;
 
 	/* Interrupt pin deasserted */
 	if (cfg->interrupt_gpio != NULL) {
@@ -414,6 +497,8 @@ static int sm5803_main_write_byte(const struct emul *target, int reg,
 	struct sm5803_emul_data *data = target->data;
 
 	switch (reg) {
+	case 0x1f: /* Mystery register used for linear charge enable. */
+		return 0;
 	case SM5803_REG_REFERENCE:
 		data->reference1 = val & GENMASK(3, 0);
 		return 0;
@@ -478,10 +563,10 @@ static int sm5803_chg_read_byte(const struct emul *target, int reg,
 		*val = data->disch_conf6;
 		return 0;
 	case SM5803_REG_PRE_FAST_CONF_REG1:
-	case SM5803_REG_PRE_FAST_CONF_REG1 + 1:
-	case SM5803_REG_PRE_FAST_CONF_REG1 + 2:
-	case SM5803_REG_PRE_FAST_CONF_REG1 + 3:
-	case SM5803_REG_PRE_FAST_CONF_REG1 + 4:
+	case SM5803_REG_PRE_FAST_CONF_REG1 + 1: /* VBAT_FAST_MSB */
+	case SM5803_REG_PRE_FAST_CONF_REG1 + 2: /* VBAT_FAST_LSB */
+	case SM5803_REG_PRE_FAST_CONF_REG1 + 3: /* FAST_CONF4 */
+	case SM5803_REG_PRE_FAST_CONF_REG1 + 4: /* FAST_CONF5 */
 	case SM5803_REG_PRE_FAST_CONF_REG1 + 5:
 		*val = data->pre_fast_conf[reg - SM5803_REG_PRE_FAST_CONF_REG1];
 		return 0;
@@ -491,10 +576,16 @@ static int sm5803_chg_read_byte(const struct emul *target, int reg,
 	case SM5803_REG_IR_COMP2:
 		*val = data->ir_comp2;
 		return 0;
+	case SM5803_REG_LOG1:
+		*val = data->log1;
+		return 0;
 	case SM5803_REG_LOG2:
 		*val = ((data->ibus * ADC_CURRENT_LSB_MA) >
 			(data->input_current_limit * ICL_LSB_MA))
 		       << 1;
+		return 0;
+	case SM5803_REG_STATUS_CHG_REG:
+		*val = data->chg_status;
 		return 0;
 	case SM5803_REG_STATUS_DISCHG:
 		*val = data->disch_status;
@@ -521,12 +612,16 @@ static int sm5803_chg_write_byte(const struct emul *target, int reg,
 		return 0;
 	case SM5803_REG_FLOW1:
 		data->flow1 = val & 0x8f;
+		/* Enabling linear charge turns on the BATFET. */
+		if (val & SM5803_FLOW1_LINEAR_CHARGE_EN) {
+			data->log1 |= SM5803_BATFET_ON;
+		}
 		return 0;
 	case SM5803_REG_FLOW2:
 		data->flow2 = val;
 		return 0;
 	case SM5803_REG_FLOW3:
-		data->flow3 = val & GENMASK(3, 0);
+		data->flow3 = val & GENMASK(6, 0);
 		return 0;
 	case SM5803_REG_SWITCHER_CONF:
 		data->switcher_conf = val & 0xc1;
@@ -549,6 +644,12 @@ static int sm5803_chg_write_byte(const struct emul *target, int reg,
 	case SM5803_REG_DISCH_CONF6:
 		data->disch_conf6 = val;
 		return 0;
+	case SM5803_REG_VSYS_PREREG_MSB:
+		data->prereg_conf1 = val;
+		return 0;
+	case SM5803_REG_VSYS_PREREG_LSB:
+		data->prereg_conf2 = val;
+		return 0;
 	case SM5803_REG_PRE_FAST_CONF_REG1:
 	case SM5803_REG_PRE_FAST_CONF_REG1 + 1:
 	case SM5803_REG_PRE_FAST_CONF_REG1 + 2:
@@ -562,6 +663,10 @@ static int sm5803_chg_write_byte(const struct emul *target, int reg,
 		return 0;
 	case SM5803_REG_IR_COMP2:
 		data->ir_comp2 = val;
+		return 0;
+	case SM5803_REG_STATUS_CHG_REG:
+		/* Bits are cleared when written set */
+		data->chg_status &= ~val;
 		return 0;
 	case SM5803_REG_STATUS_DISCHG:
 		/* Bits are cleared when written set */
@@ -593,6 +698,26 @@ static int sm5803_meas_read_byte(const struct emul *target, int reg,
 	case SM5803_REG_PSYS1:
 		*val = 0x04 | data->psys_dac_enabled;
 		return 0;
+	case SM5803_REG_VBATSNSP_MAX_TH:
+		/* Unimportant; tests don't care what this register reads. */
+		*val = 0;
+		return 0;
+	case SM5803_REG_TINT_HIGH_TH:
+		*val = data->tint_high_th;
+		return 0;
+	case SM5803_REG_TINT_LOW_TH:
+		*val = data->tint_low_th;
+		return 0;
+	case SM5803_REG_VBATSNSP_MEAS_MSB:
+		*val = (sm5803_emul_vbat_snsp_regval(target,
+						     data->vbat_sns_mv) &
+			GENMASK(9, 2)) >>
+		       2;
+		return 0;
+	case SM5803_REG_VBATSNSP_MEAS_LSB:
+		*val = sm5803_emul_vbat_snsp_regval(target, data->vbat_sns_mv) &
+		       GENMASK(1, 0);
+		return 0;
 	case SM5803_REG_IBUS_CHG_MEAS_MSB:
 		*val = (data->ibus & GENMASK(9, 2)) >> 2;
 		return 0;
@@ -606,11 +731,22 @@ static int sm5803_meas_read_byte(const struct emul *target, int reg,
 		*val = (is_chg_det(data) ? SM5803_VBUS_MEAS_CHG_DET : 0) |
 		       (data->vbus & GENMASK(1, 0));
 		return 0;
+	case SM5803_REG_TINT_MEAS_MSB:
+		*val = (uint16_t)(data->internal_temp_kelvin / 0.43) >> 2;
+		return 0;
+		/* Driver doesn't use TINT_MEAS_LSB, so unimplemented. */
 	case SM5803_REG_IBAT_CHG_AVG_MEAS_MSB:
 		*val = (data->ibat_avg & GENMASK(9, 2)) >> 2;
 		return 0;
 	case SM5803_REG_IBAT_CHG_AVG_MEAS_LSB:
 		*val = data->ibat_avg & GENMASK(1, 0);
+		return 0;
+	case SM5803_REG_VSYS_AVG_MEAS_MSB:
+		/* 23.4 mV per LSb */
+		*val = (uint16_t)(data->vsys / 23.4) >> 2;
+		return 0;
+	case SM5803_REG_VSYS_AVG_MEAS_LSB:
+		*val = (uint16_t)(data->vsys / 23.4) & GENMASK(1, 0);
 		return 0;
 	}
 	LOG_INF("SM5803 meas page read of register %#x unhandled", reg);
@@ -631,6 +767,12 @@ static int sm5803_meas_write_byte(const struct emul *target, int reg,
 		return 0;
 	case SM5803_REG_GPADC_CONFIG2:
 		data->gpadc_conf2 = val;
+		return 0;
+	case SM5803_REG_TINT_HIGH_TH:
+		data->tint_high_th = val;
+		return 0;
+	case SM5803_REG_TINT_LOW_TH:
+		data->tint_low_th = val;
 		return 0;
 	}
 
@@ -654,6 +796,8 @@ static int sm5803_test_write_byte(const struct emul *target, int reg,
 				  uint8_t val, int bytes)
 {
 	switch (reg) {
+	case 0x44: /* Mystery register used for linear charge enable. */
+		return 0;
 	case 0x8e: /* Mystery register used for init on chip ID 2 */
 		return 0;
 	}

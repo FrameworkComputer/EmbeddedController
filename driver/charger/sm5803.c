@@ -88,6 +88,18 @@ static int attempt_bfet_enable;
  */
 static bool fast_charge_disabled;
 
+#ifdef TEST_BUILD
+void test_sm5803_set_fast_charge_disabled(bool value)
+{
+	fast_charge_disabled = value;
+}
+
+bool test_sm5803_get_fast_charge_disabled(void)
+{
+	return fast_charge_disabled;
+}
+#endif
+
 #define CHARGING_FAILURE_MAX_COUNT 5
 #define CHARGING_FAILURE_INTERVAL MINUTE
 
@@ -1027,19 +1039,27 @@ void sm5803_disable_low_power_mode(int chgnum)
 		return;
 	}
 	/* Enable Psys DAC */
-	rv |= meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg |= SM5803_PSYS1_DAC_EN;
-	rv |= meas_write8(chgnum, SM5803_REG_PSYS1, reg);
+	rv = meas_write8(chgnum, SM5803_REG_PSYS1, reg);
 
 	/* Enable PROCHOT comparators except Ibus */
 	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg |= SM5803_PHOT1_COMPARATOR_EN;
 	reg &= ~SM5803_PHOT1_IBUS_PHOT_COMP_EN;
 	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
 
-	if (rv)
+err:
+	if (rv) {
 		CPRINTS("%s %d: Failed to set in disable low power mode",
 			CHARGER_NAME, chgnum);
+	}
 }
 
 void sm5803_enable_low_power_mode(int chgnum)
@@ -1055,7 +1075,10 @@ void sm5803_enable_low_power_mode(int chgnum)
 		return;
 	}
 	/* Disable Psys DAC */
-	rv |= meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg &= ~SM5803_PSYS1_DAC_EN;
 	rv |= meas_write8(chgnum, SM5803_REG_PSYS1, reg);
 
@@ -1066,14 +1089,19 @@ void sm5803_enable_low_power_mode(int chgnum)
 	 * called after Vbus has turned on.
 	 */
 	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg &= ~SM5803_PHOT1_COMPARATOR_EN;
 	if (pd_is_connected(chgnum))
 		reg |= SM5803_PHOT1_VBUS_MON_EN;
 	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
 
-	if (rv)
+err:
+	if (rv) {
 		CPRINTS("%s %d: Failed to set in enable low power mode",
 			CHARGER_NAME, chgnum);
+	}
 }
 
 /*
@@ -1231,8 +1259,7 @@ void sm5803_handle_interrupt(int chgnum)
 				 0xFF);
 
 		/* Disable battery charge */
-		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_DISABLED,
-					  MASK_CLR);
+		rv |= sm5803_flow1_update(chgnum, SM5803_FLOW1_MODE, MASK_CLR);
 		if (is_platform_id_2s(platform_id)) {
 			/* 2S battery: set VBAT_SENSP TH 9V */
 			rv |= meas_write8(CHARGER_PRIMARY,

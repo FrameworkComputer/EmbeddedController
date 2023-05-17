@@ -97,9 +97,14 @@ uint8_t sm5803_emul_get_disch_conf2(const struct emul *emul);
 uint8_t sm5803_emul_get_disch_conf5(const struct emul *emul);
 /** Get the value of the DISCH_CONF6 register. */
 uint8_t sm5803_emul_get_disch_conf6(const struct emul *emul);
+
+/** Get the value of the STATUS_CHG register. */
+uint8_t sm5803_emul_get_chg_status(const struct emul *emul);
+/** Get a value for the STATUS_CHG register. */
+void sm5803_emul_set_chg_status(const struct emul *emul, uint8_t value);
+
 /** Get the value of the STATUS_DISCH register. */
 uint8_t sm5803_emul_get_disch_status(const struct emul *emul);
-
 /** Set a value for the STATUS_DISCH register. */
 void sm5803_emul_set_disch_status(const struct emul *emul, uint8_t value);
 
@@ -114,3 +119,20 @@ bool sm5803_emul_is_psys_dac_enabled(const struct emul *emul);
 
 /** Get the value of the PHOT1 register. */
 uint8_t sm5803_emul_get_phot1(const struct emul *emul);
+
+/** Get the value of the LOG1 register. */
+uint8_t sm5803_emul_get_log1(const struct emul *emul);
+
+/** Set the reported voltage on the VBATSNSP pin, in mV. */
+void sm5803_emul_set_vbat_sns_mv(const struct emul *emul, uint16_t mv);
+
+/** Set the reported internal temperature of the charger, in Kelvin. */
+void sm5803_emul_set_internal_temperature(const struct emul *emul,
+					  uint16_t kelvin);
+/** Get the value of the TINT_HIGH_TH register. */
+uint8_t sm5803_emul_get_tint_high_th(const struct emul *emul);
+/** Get the value of the TINT_LOW_TH register. */
+uint8_t sm5803_emul_get_tint_low_th(const struct emul *emul);
+
+/** Set the reported VSYS voltage (as measured), in mV. */
+void sm5803_emul_set_vsys_measured_mv(const struct emul *emul, uint16_t mv);
