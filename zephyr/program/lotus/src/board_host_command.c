@@ -7,6 +7,7 @@
 #include <zephyr/drivers/gpio.h>
 
 #include "board_host_command.h"
+#include "board_function.h"
 #include "chipset.h"
 #include "console.h"
 #include "cpu_power.h"
@@ -38,6 +39,7 @@ static void sci_enable(void)
 	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY) {
 		/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
+		bios_function_detect();
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }

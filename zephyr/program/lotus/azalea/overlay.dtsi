@@ -131,4 +131,8 @@
 		offset = <0x46>;
 		size = <0x01>;
 	};
+	bios_function {
+		offset = <0x47>;
+		size = <0x01>;
+	};
 };

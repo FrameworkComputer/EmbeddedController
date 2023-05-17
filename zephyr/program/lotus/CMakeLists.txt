@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.20.5)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 zephyr_library_sources("src/adc.c")
+zephyr_library_sources("src/board_function.c")
 zephyr_library_sources("src/board_host_command.c")
 zephyr_library_sources("src/cypress_pd_common.c")
 zephyr_library_sources("src/flash_storage.c")
