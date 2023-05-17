@@ -14,7 +14,7 @@
  * RW only, no flash
  * +-------------------- 0x0
  * | ROM vectortable, .text, .rodata, .data LMA
- * +-------------------- 0x68000
+ * +-------------------- 0x6f000
  * | RAM .bss, .data
  * +-------------------- 0xbfc00
  * | Reserved (padding for 1k-alignment)
@@ -23,7 +23,7 @@
  * +-------------------- 0xc0000
  */
 #define CONFIG_ROM_BASE 0x0
-#define CONFIG_RAM_BASE 0x68000
+#define CONFIG_RAM_BASE 0x6f000
 #define CONFIG_ROM_SIZE (CONFIG_RAM_BASE - CONFIG_ROM_BASE)
 #define CONFIG_RAM_SIZE \
 	((CONFIG_IPC_SHARED_OBJ_ADDR & (~(0x400 - 1))) - CONFIG_RAM_BASE)
