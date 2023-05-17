@@ -92,7 +92,7 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 	 * try retrieving again and get the updated data.
 	 */
 	if (!pd_discovery_access_validate(p->port, type)) {
-		CPRINTS("[C%d] %s returns EC_RES_BUSY!!\n", p->port, __func__);
+		CPRINTS("[C%d] %s returns EC_RES_BUSY!!", p->port, __func__);
 		return EC_RES_BUSY;
 	}
 
