@@ -19,6 +19,7 @@ _fpsensor_obj:=$(_fpsensor_dir)fpsensor.o
 _fpsensor_detect_strings_obj:=$(_fpsensor_dir)fpsensor_detect_strings.o
 _fpsensor_debug_obj:=$(_fpsensor_dir)fpsensor_debug.o
 _fpsensor_auth_crypto_stateless_obj:=$(_fpsensor_dir)fpsensor_auth_crypto_stateless.o
+_fpsensor_state_without_driver_info_obj:=$(_fpsensor_dir)fpsensor_state_without_driver_info.o
 
 $(out)/RW/$(_fpsensor_state_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_crypto_obj): CFLAGS+=$(fpsensor_CFLAGS)
@@ -26,12 +27,14 @@ $(out)/RW/$(_fpsensor_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_detect_strings_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_debug_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_auth_crypto_stateless_obj): CFLAGS+=$(fpsensor_CFLAGS)
+$(out)/RW/$(_fpsensor_state_without_driver_info_obj): CFLAGS+=$(fpsensor_CFLAGS)
 
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_state_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_crypto_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_obj)
 all-obj-$(HAS_TASK_CONSOLE)+=$(_fpsensor_detect_strings_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_debug_obj)
+all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_state_without_driver_info_obj)
 
 # If CONFIG_FINGERPRINT_MCU or HAS_TASK_FPSENSOR is "y".
 ifneq (,$(filter y,$(CONFIG_FINGERPRINT_MCU) $(HAS_TASK_FPSENSOR)))

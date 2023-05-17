@@ -39,30 +39,6 @@ uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 			      [FP_POSITIVE_MATCH_SALT_BYTES];
 
-struct positive_match_secret_state
-	positive_match_secret_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
-					.readable = false,
-					.deadline = {
-						.val = 0,
-					} };
-
-/* Index of the last enrolled but not retrieved template. */
-uint16_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
-/* Number of used templates */
-uint16_t templ_valid;
-/* Bitmap of the templates with local modifications */
-uint32_t templ_dirty;
-/* Current user ID */
-uint32_t user_id[FP_CONTEXT_USERID_WORDS];
-/* Part of the IKM used to derive encryption keys received from the TPM. */
-uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
-/* Status of the FP encryption engine. */
-static uint32_t fp_encryption_status;
-
-atomic_t fp_events;
-
-uint32_t sensor_mode;
-
 void fp_task_simulate(void)
 {
 	int timeout_us = -1;
@@ -134,11 +110,6 @@ static enum ec_status fp_command_tpm_seed(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_SEED, fp_command_tpm_seed, EC_VER_MASK(0));
-
-int fp_tpm_seed_is_set(void)
-{
-	return fp_encryption_status & FP_ENC_STATUS_SEED_SET;
-}
 
 static enum ec_status
 fp_command_encryption_status(struct host_cmd_handler_args *args)
