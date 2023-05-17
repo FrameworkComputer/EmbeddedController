@@ -90,6 +90,11 @@
 					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_PMIC_EC_RESETB";
 		};
+
+		gpio_ac_lcd: gpio-ac-lcd{
+			gpios = <&gpiom 6 GPIO_OUTPUT_LOW>;
+		};
+
 		/delete-node/ en_pp5000_usb_a0_vbus;
 		/delete-node/ usb_a0_fault_odl;
 	};
