@@ -599,7 +599,7 @@ int lpc_keyboard_has_char(void)
 	return status;
 }
 
-void lpc_keyboard_put_char(uint8_t chr, int send_irq)
+test_mockable void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	uint32_t kb_char = chr;
 	int rv;

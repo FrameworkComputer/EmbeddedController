@@ -2,7 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "atkbd_protocol.h"
 #include "console.h"
+#include "i8042_protocol.h"
 #include "keyboard_8042.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
@@ -185,11 +187,195 @@ ZTEST(keyboard_8042, test_console_cmd__all)
 	zassert_ok(!strstr(outbuffer, "- Internal:"));
 }
 
+FAKE_VOID_FUNC(chipset_reset, enum chipset_shutdown_reason);
+
+ZTEST(keyboard_8042, test_command__system_reset)
+{
+	keyboard_host_write(I8042_SYSTEM_RESET, true);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	zassert_equal(1, chipset_reset_fake.call_count);
+}
+
+FAKE_VOID_FUNC(lpc_keyboard_put_char, uint8_t, int);
+
+ZTEST(keyboard_8042, test_command__read_control_ram)
+{
+	/* Put test data (0x55) into control RAM */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "8042 ctrlram 0x1 0x55"));
+
+	/* Read offset 0 in the control RAM, which is actually address 0x01.
+	 * (address 0x00, the command register, is skipped over)
+	 */
+	keyboard_host_write(I8042_READ_CTL_RAM + 0, true);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Check the correct byte was reported to the host. */
+	zassert_equal(1, lpc_keyboard_put_char_fake.call_count);
+	zassert_equal(0x55, lpc_keyboard_put_char_fake.arg0_history[0]);
+}
+
+ZTEST(keyboard_8042, test_command__a20)
+{
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Enable A20 */
+	keyboard_host_write(I8042_ENABLE_A20, true);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Verify A20 enabled */
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "8042 internal"));
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_true(buffer_size > 0);
+	zassert_ok(!strstr(outbuffer, "A20_status=1"));
+
+	/* Disable A20 */
+	keyboard_host_write(I8042_DISABLE_A20, true);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Verify A20 is not off */
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "8042 internal"));
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_true(buffer_size > 0);
+	zassert_ok(!strstr(outbuffer, "A20_status=0"));
+}
+
+ZTEST(keyboard_8042, test_command__pulse)
+{
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Sending this pulse command should enable A20 */
+	keyboard_host_write(I8042_PULSE_START | BIT(1), true);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Verify A20 enabled */
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "8042 internal"));
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_true(buffer_size > 0);
+	zassert_ok(!strstr(outbuffer, "A20_status=1"));
+}
+
+ZTEST(keyboard_8042, test_command__invalid)
+{
+	/* Unsupported command */
+	keyboard_host_write(0x00, true);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Check for NAK sent back to host */
+	zassert_equal(1, lpc_keyboard_put_char_fake.call_count);
+	zassert_equal(I8042_RET_NAK,
+		      lpc_keyboard_put_char_fake.arg0_history[0]);
+}
+
+ZTEST(keyboard_8042, test_atkbdcommand__resend)
+{
+	uint8_t resend_data[] = { 0xAA, 0xBB, 0xCC };
+
+	/* Fill in test data to the resend buffer */
+	test_keyboard_8042_set_resend_command(resend_data,
+					      ARRAY_SIZE(resend_data));
+
+	/* Request a resend */
+	keyboard_host_write(ATKBD_CMD_RESEND, false);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Check for above data being sent back to host */
+	zassert_equal(3, lpc_keyboard_put_char_fake.call_count);
+	zassert_equal(resend_data[0],
+		      lpc_keyboard_put_char_fake.arg0_history[0]);
+	zassert_equal(resend_data[1],
+		      lpc_keyboard_put_char_fake.arg0_history[1]);
+	zassert_equal(resend_data[2],
+		      lpc_keyboard_put_char_fake.arg0_history[2]);
+}
+
+ZTEST(keyboard_8042, test_atkbdcommand__unsupported__setall_mb)
+{
+	keyboard_host_write(ATKBD_CMD_SETALL_MB, false);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Should respond with a resend request */
+	zassert_equal(1, lpc_keyboard_put_char_fake.call_count);
+	zassert_equal(ATKBD_RET_RESEND,
+		      lpc_keyboard_put_char_fake.arg0_history[0]);
+}
+
+ZTEST(keyboard_8042, test_atkbdcommand__unsupported__setall_mbr)
+{
+	keyboard_host_write(ATKBD_CMD_SETALL_MBR, false);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Should respond with a resend request */
+	zassert_equal(1, lpc_keyboard_put_char_fake.call_count);
+	zassert_equal(ATKBD_RET_RESEND,
+		      lpc_keyboard_put_char_fake.arg0_history[0]);
+}
+
+ZTEST(keyboard_8042, test_atkbdcommand__unsupported__ex_enable)
+{
+	keyboard_host_write(ATKBD_CMD_EX_ENABLE, false);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Should respond with a resend request */
+	zassert_equal(1, lpc_keyboard_put_char_fake.call_count);
+	zassert_equal(ATKBD_RET_RESEND,
+		      lpc_keyboard_put_char_fake.arg0_history[0]);
+}
+
+ZTEST(keyboard_8042, test_atkbdcommand__unsupported__bad_cmd)
+{
+	/* Non-existent ATKBD command */
+	keyboard_host_write(0x00, false);
+
+	/* Pause a bit to allow the KB task to process */
+	k_sleep(K_MSEC(100));
+
+	/* Should respond with a resend request */
+	zassert_equal(1, lpc_keyboard_put_char_fake.call_count);
+	zassert_equal(ATKBD_RET_RESEND,
+		      lpc_keyboard_put_char_fake.arg0_history[0]);
+}
+
 static void reset(void *fixture)
 {
 	ARG_UNUSED(fixture);
 
 	test_keyboard_8042_reset();
+
+	/* Fakes reset */
+	RESET_FAKE(chipset_reset);
+	RESET_FAKE(lpc_keyboard_put_char);
 }
 
 ZTEST_SUITE(keyboard_8042, drivers_predicate_post_main, NULL, reset, reset,

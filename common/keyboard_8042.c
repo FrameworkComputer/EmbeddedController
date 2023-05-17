@@ -1415,5 +1415,7 @@ void test_keyboard_8042_reset(void)
 
 	/* Keyboard not enabled (matches I8042_KBD_DIS bit being set) */
 	keyboard_enabled = false;
+
+	A20_status = 0;
 }
 #endif /* TEST_BUILD */
