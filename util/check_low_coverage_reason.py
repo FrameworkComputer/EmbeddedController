@@ -5,14 +5,12 @@
 
 """Ensure commit messages using LOW_COVERAGE_REASON include a bug."""
 
+import argparse
 import logging
 import pathlib
 import re
+import subprocess
 import sys
-
-from chromite.lib import commandline
-from chromite.lib import cros_build_lib
-from chromite.lib import git
 
 
 # Look for LOW_COVERAGE_REASON and then an optional b{:|/}number bug reference.
@@ -24,7 +22,7 @@ EC_BASE = pathlib.Path(__file__).resolve().parent.parent
 
 def main(argv=None):
     """Check for bug in LOW_COVERAGE_REASON."""
-    parser = commandline.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "commit_id",
         help="Commit whose message will be checked.",
@@ -36,13 +34,16 @@ def main(argv=None):
         return 0
 
     try:
-        commit_log = git.Log(EC_BASE, rev=opts.commit_id, max_count=1)
-    except cros_build_lib.RunCommandError as err:
-        logging.error("Unable to query git log: %s", str(err))
+        commit_log = subprocess.check_output(
+            ["git", "log", "--max-count=1", opts.commit_id],
+            cwd=EC_BASE,
+        )
+    except subprocess.CalledProcessError as err:
+        logging.error("Unable to query git log: %s", err)
         return 1
 
     # Search commit message for LOW_COVERAGE_REASON and bug
-    matches = LOW_COV_REGEX.findall(commit_log)
+    matches = LOW_COV_REGEX.findall(commit_log.decode())
     if matches and not any({m[2] for m in matches}):
         # We have LOW_COVERAGE_REASON line(s) but none include a bug
         logging.error(
