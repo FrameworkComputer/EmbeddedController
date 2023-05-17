@@ -183,7 +183,6 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
 			tcpc = <&usbpd0>;
 			usb-mux-chain-0 {
@@ -199,7 +198,6 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			bc12 = <&bc12_port1>;
 			chg = <&chg_port1>;
 			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
@@ -329,12 +327,6 @@
 	pinctrl-names = "default", "sleep";
 	status = "okay";
 
-	bc12_port1: pi3usb9201@5f {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5f>;
-	};
-
 	chg_port1: sm5803@32 {
 		compatible = "siliconmitus,sm5803";
 		status = "okay";
@@ -365,12 +357,6 @@
 		     &i2c5_data_gpa5_default>;
 	pinctrl-names = "default";
 	status = "okay";
-
-	bc12_port0: pi3usb9201@5f {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5f>;
-	};
 
 	chg_port0: sm5803@32 {
 		compatible = "siliconmitus,sm5803";
