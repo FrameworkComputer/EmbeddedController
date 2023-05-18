@@ -32,9 +32,6 @@
 		gpio_ec_entering_rw: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
-		gpio-s5-pgood {
-			enum-name = "GPIO_S5_PGOOD";
-		};
 		pch-sys-prwok {
 			enum-name = "GPIO_PCH_SYS_PWROK";
 		};

@@ -67,11 +67,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
-		int_usb_c0_c1_sbu_fault: c0_c1_sbu_fault {
-			irq-pin = <&gpio_usb_c0_c1_fault_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "sbu_fault_interrupt";
-		};
 		int_usb_c0_ppc: usb_c0_ppc {
 			irq-pin = <&gpio_usb_c0_ppc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;

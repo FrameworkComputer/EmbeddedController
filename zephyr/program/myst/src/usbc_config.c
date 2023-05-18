@@ -36,10 +36,6 @@ static void usbc_interrupt_init(void)
 	/* Enable PPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
-
-	/* Enable SBU fault interrupts */
-	gpio_enable_dt_interrupt(
-		GPIO_INT_FROM_NODELABEL(int_usb_c0_c1_sbu_fault));
 }
 DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_POST_I2C);
 
@@ -93,18 +89,6 @@ int board_set_active_charge_port(int port)
 	}
 
 	return EC_SUCCESS;
-}
-
-void sbu_fault_interrupt(enum gpio_signal signal)
-{
-	/*
-	 * TODO: b/275609315
-	 * Determine if the fault happened on C0 or C1
-	 */
-	int port = 0;
-
-	CPRINTSUSB("C%d: SBU fault", port);
-	pd_handle_overcurrent(port);
 }
 
 void usb_pd_soc_interrupt(enum gpio_signal signal)
