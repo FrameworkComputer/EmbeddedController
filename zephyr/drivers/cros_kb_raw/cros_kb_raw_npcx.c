@@ -54,10 +54,10 @@ struct cros_kb_raw_npcx_config {
 #define HAL_INSTANCE(dev) (struct kbs_reg *)(DRV_CONFIG(dev)->base)
 
 /* Keyboard Scan local functions */
-static struct miwu_dev_callback ksi_callback[NPCX_MAX_KEY_ROWS];
+static struct miwu_callback ksi_callback[NPCX_MAX_KEY_ROWS];
 
 static void kb_raw_npcx_init_ksi_wui_callback(
-	const struct device *dev, struct miwu_dev_callback *callback,
+	const struct device *dev, struct miwu_callback *callback,
 	const struct npcx_wui *wui, miwu_dev_callback_handler_t handler)
 {
 	/* KSI signal which has no wake-up input source */
@@ -66,7 +66,7 @@ static void kb_raw_npcx_init_ksi_wui_callback(
 
 	/* Install callback function */
 	npcx_miwu_init_dev_callback(callback, wui, handler, dev);
-	npcx_miwu_manage_dev_callback(callback, 1);
+	npcx_miwu_manage_callback(callback, 1);
 
 	/* Configure MIWU setting and enable its interrupt */
 	npcx_miwu_interrupt_configure(wui, NPCX_MIWU_MODE_EDGE,

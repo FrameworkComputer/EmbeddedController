@@ -34,7 +34,7 @@ struct cros_rtc_npcx_config {
 /* Driver data */
 struct cros_rtc_npcx_data {
 	/* Monotonic counter wake-up callback object */
-	struct miwu_dev_callback miwu_mtc_cb;
+	struct miwu_callback miwu_mtc_cb;
 	cros_rtc_alarm_callback_t alarm_callback;
 };
 
@@ -216,7 +216,7 @@ static int cros_rtc_npcx_init(const struct device *dev)
 	/* Initialize the miwu input and its callback for monotonic counter */
 	npcx_miwu_init_dev_callback(&data->miwu_mtc_cb, &config->mtc_alarm,
 				    counter_npcx_isr, dev);
-	npcx_miwu_manage_dev_callback(&data->miwu_mtc_cb, true);
+	npcx_miwu_manage_callback(&data->miwu_mtc_cb, true);
 
 	/*
 	 * Configure the monotonic counter wake-up event triggered from a rising
