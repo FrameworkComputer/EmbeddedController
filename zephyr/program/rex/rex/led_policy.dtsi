@@ -32,8 +32,43 @@
 			};
 		};
 
+		power-state-high-left {
+			charge-state = "PWR_STATE_CHARGE";
+			/* Battery percent range 99..100 */
+			batt-lvl = <99 100>;
+
+			charge-port = <0>; /* Left port */
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED to White */
+			color-1 {
+				led-color = <&color_white_left>;
+			};
+		};
+
+		power-state-high-right {
+			charge-state = "PWR_STATE_CHARGE";
+			/* Battery percent range 99..100 */
+			batt-lvl = <99 100>;
+			charge-port = <1>; /* Right port */
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED to White */
+			color-1 {
+				led-color = <&color_white_right>;
+			};
+		};
+
 		power-state-charge-left {
 			charge-state = "PWR_STATE_CHARGE";
+			/* Battery percent range 0..98 */
+			batt-lvl = <0 98>;
 			charge-port = <0>; /* Left port */
 
 			/* Left LED to Amber */
@@ -49,6 +84,8 @@
 		power-state-charge-right {
 			charge-state = "PWR_STATE_CHARGE";
 			charge-port = <1>; /* Right port */
+			/* Battery percent range 0..98 */
+			batt-lvl = <0 98>;
 
 			/* Turn off the left LED */
 			color-0 {
