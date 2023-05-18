@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#ifndef __CROS_EC_TCPC_PS8XXX_H
+#define __CROS_EC_TCPC_PS8XXX_H
+
 #include "driver/tcpm/ps8xxx_public.h"
 #include "usbc/utils.h"
 
@@ -32,3 +35,5 @@
 /* clang-format on */
 
 DT_FOREACH_STATUS_OKAY(PS8XXX_COMPAT, TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH)
+
+#endif /* __CROS_EC_TCPC_PS8XXX_H */
