@@ -352,7 +352,7 @@ static void breath_led_pwm_deferred(void)
 
 		if (breath_led_light_down != 0)
 			pwm_set_breath_dt(GET_PIN_NODE(7, 0),
-				     breath_led_light_down--);
+				     --breath_led_light_down);
 		else {
 			breath_led_light_down = led_duty_percentage;
 			breath_led_status = BREATH_OFF;
