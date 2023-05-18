@@ -41,6 +41,11 @@
 				enum-name = "FW_USB_DB_USB4_HB";
 				value = <4>;
 			};
+			io-db-usb4-anx7452v2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_DB_USB4_ANX7452_V2";
+				value = <5>;
+			};
 		};
 	};
 };
