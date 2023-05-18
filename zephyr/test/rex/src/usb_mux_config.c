@@ -40,6 +40,7 @@ int mock_cros_cbi_get_fw_config_no_usb_db(enum cbi_fw_config_field_id field_id,
 int mock_cros_cbi_get_fw_config_error(enum cbi_fw_config_field_id field_id,
 				      uint32_t *value)
 {
+	*value = FW_USB_DB_NOT_CONNECTED;
 	return -1;
 }
 
@@ -90,7 +91,7 @@ ZTEST_USER(usb_mux_config, test_setup_usb_db_error_reading_cbi)
 	hook_notify(HOOK_INIT);
 
 	zassert_equal(1, cros_cbi_get_fw_config_fake.call_count);
-	zassert_equal(-1, usb_db_type);
+	zassert_equal(0, usb_db_type);
 }
 
 ZTEST_SUITE(usb_mux_config, NULL, NULL, usb_mux_config_before, NULL, NULL);

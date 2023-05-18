@@ -19,6 +19,8 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 
+#include <dt-bindings/gpio_defines.h>
+
 #ifdef CONFIG_ZTEST
 
 #undef USB_MUX_ENABLE_ALTERNATIVE
@@ -36,17 +38,67 @@ LOG_MODULE_DECLARE(rex, CONFIG_REX_LOG_LEVEL);
 
 uint32_t usb_db_type;
 
-static void setup_usb_db(void)
+static int gpio_unused(const struct gpio_dt_spec *spec)
+{
+	return gpio_pin_configure(spec->port, spec->pin, GPIO_INPUT_PULL_UP);
+}
+
+static void setup_runtime_gpios(void)
 {
 	int ret;
 
 	ret = cros_cbi_get_fw_config(FW_USB_DB, &usb_db_type);
-	if (ret != 0) {
-		LOG_INF("USB DB: Failed to get FW_USB_DB from CBI");
-		usb_db_type = -1;
-		return;
+	if (ret != EC_SUCCESS) {
+		LOG_INF("Failed to get FW_USB_DB from CBI");
+		usb_db_type = FW_USB_DB_NOT_CONNECTED;
 	}
 
+	switch (usb_db_type) {
+	case FW_USB_DB_USB3:
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rst_odl));
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_int_odl));
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(ps_usb_c1_rt_rst_odl),
+				      GPIO_ODR_HIGH | GPIO_ACTIVE_LOW);
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_frs_en));
+		break;
+
+	case FW_USB_DB_USB4_KB8010:
+		gpio_unused(GPIO_DT_FROM_ALIAS(kb_usb_c1_rst_odl));
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(kb_usb_c1_dp_mode),
+				      GPIO_ODR_HIGH);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(kb_usb_c1_rt_rst_odl),
+				      GPIO_ODR_HIGH);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(kb_usb_c1_frs_alert),
+				      GPIO_INPUT);
+		break;
+
+	case FW_USB_DB_USB4_ANX7452:
+	case FW_USB_DB_USB4_ANX7452_V2:
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(anx_usb_c1_rt_hpd_in),
+				      GPIO_OUTPUT_LOW);
+		gpio_unused(GPIO_DT_FROM_ALIAS(anx_usb_c1_rt_dp_en));
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(anx_usb_c1_rt_usb_en),
+				      GPIO_OUTPUT_LOW);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(anx_usb_c1_frs_en),
+				      GPIO_OUTPUT_LOW);
+		break;
+
+	default:
+		/* GPIO37 */
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rst_odl));
+		/* GPIO72 */
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_int_odl));
+		/* GPIO74 */
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl));
+		/* GPIO83 */
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_frs_en));
+		break;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, setup_runtime_gpios, HOOK_PRIO_FIRST);
+
+static void setup_usb_db(void)
+{
 	switch (usb_db_type) {
 	case FW_USB_DB_NOT_CONNECTED:
 		LOG_INF("USB DB: not connected");

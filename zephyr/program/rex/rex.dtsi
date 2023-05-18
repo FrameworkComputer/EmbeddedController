@@ -54,9 +54,55 @@
 		usb_c0_tcpc_rst_odl {
 			gpios = <&gpio6 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 		};
-		usb_c1_rt_rst_r_odl {
-			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/*
+		 * Override auto-generated GPIO definitions for pins
+		 * that are reconfigured at runtime for specific
+		 * daughterboards.
+		 *
+		 * The flags parameter needs to be 0 here because
+		 * gpio_pin_configure_dt() can only add flags.
+		 */
+
+		usb_c1_rst_odl {
+			gpios = <&gpio3 7 0>;
+			no-auto-init;
 		};
+		usb_c1_rt_int_odl {
+			gpios = <&gpio7 2 0>;
+			no-auto-init;
+		};
+		usb_c1_rt_rst_r_odl {
+			gpios = <&gpio7 4 0>;
+			no-auto-init;
+		};
+		usb_c1_frs_en {
+			gpios = <&gpio8 3 0>;
+			no-auto-init;
+		};
+	};
+
+	aliases {
+		/* GPIO37 */
+		kb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
+		anx-usb-c1-rt-hpd-in = &gpio_usb_c1_rst_odl;
+
+		/* GPIO72 */
+		kb-usb-c1-dp-mode = &gpio_usb_c1_rt_int_odl;
+		anx-usb-c1-rt-dp-en = &gpio_usb_c1_rt_int_odl;
+
+		/* GPIO74 */
+		ps-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+		kb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+		anx-usb-c1-rt-usb-en = &gpio_usb_c1_rt_rst_r_odl;
+
+		/* GPIO83 */
+		kb-usb-c1-frs-alert = &gpio_usb_c1_frs_en;
+		anx-usb-c1-frs-en = &gpio_usb_c1_frs_en;
 	};
 
 	/* Special I2C port attribute */

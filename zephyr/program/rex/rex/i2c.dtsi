@@ -16,7 +16,7 @@
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
 		 */
-		rst-gpios = <&gpio7 4 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		rst-gpios = <&gpio7 4 0>;
 		is-alt;
 	};
 };
