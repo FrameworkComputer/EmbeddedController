@@ -46,6 +46,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
+    "burnet",
     "c2d2",
     "cerise",
     "coffeecake",
@@ -56,21 +57,27 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "duck",
     "eel",
     "elm",
+    "fennel",
     "fluffy",
     "fusb307bgevb",
     "gelatin",
     "hammer",
     "hoho",
+    "jacuzzi",
     "jewel",
+    "juniper",
     "kakadu",
     "kappa",
     "katsu",
+    "krane",
     "kukui",
     "magnemite",
+    "makomo",
     "masterball",
     "minimuffin",
     "moonball",
     "nucleo-f072rb",
+    "oak",
     "pdeval-stm32f072",
     "plankton",
     "prism",
@@ -123,6 +130,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "copano",
     "coral",
     "corori",
+    "corori2",
     "cret",
     "crota",
     "dalboz",
@@ -146,6 +154,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "foob",
     "gaelin",
     "garg",
+    "gelarshie",
     "genesis",
     "gimble",
     "gladios",
@@ -291,20 +300,11 @@ RISCV_BOARDS = [
 
 BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
-    "burnet",  # overflows flash
     "chocodile_vpdmcu",  # compilation error: b/254710459
-    "fennel",  # overflows flash
-    "jacuzzi",  # overflows flash
-    "juniper",  # overflows flash
     "kodama",  # overflows flash
-    "krane",  # overflows flash
-    "makomo",  # overflows flash
-    "oak",  # overflows flash
     # Boards that use CHIP:=npcx
     "bobba",  # overflows flash
     "coachz",  # overflows flash
-    "corori2",  # overflows flash
-    "gelarshie",  # overflows flash
     "lazor",  # overflows flash
     "volteer",  # overflows flash
 ]
