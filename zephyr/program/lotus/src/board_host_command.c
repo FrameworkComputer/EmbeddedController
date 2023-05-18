@@ -165,6 +165,49 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));
 
+static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_chassis_intrusion_control *p = args->params;
+	struct ec_response_chassis_intrusion_control *r = args->response;
+
+	if (p->clear_magic == EC_PARAM_CHASSIS_INTRUSION_MAGIC) {
+		chassis_cmd_clear(1);
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, 0);
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
+		return EC_SUCCESS;
+	}
+
+	if (p->clear_chassis_status) {
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
+		return EC_SUCCESS;
+	}
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, &r->chassis_ever_opened);
+	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_MAGIC, &r->coin_batt_ever_remove);
+	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, &r->total_open_count);
+	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, &r->vtr_open_count);
+
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_INTRUSION, host_chassis_intrusion_control,
+			EC_VER_MASK(0));
+
+static enum ec_status chassis_counter(struct host_cmd_handler_args *args)
+{
+	struct ec_response_chassis_counter *r = args->response;
+
+	r->press_counter = chassis_cmd_clear(0);
+	CPRINTS("Read chassis counter: %d", r->press_counter);
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_COUNTER, chassis_counter, EC_VER_MASK(0));
+
 #ifdef CONFIG_BOARD_AZALEA
 static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 {

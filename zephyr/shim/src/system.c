@@ -24,7 +24,10 @@
 #define BBRAM_REGION_FP_LED_LEVEL DT_PATH(named_bbram_regions, fp_led_level)
 #define BBRAM_REGION_KB_STATUS DT_PATH(named_bbram_regions, kb_status)
 #define BBRAM_REGION_BIOS_FUNCTION DT_PATH(named_bbram_regions, bios_function)
-
+#define BBRAM_REGION_CHASSIS_WAS_OPEN DT_PATH(named_bbram_regions, chassis_was_open)
+#define BBRAM_REGION_CHASSIS_MAGIC DT_PATH(named_bbram_regions, chassis_magic)
+#define BBRAM_REGION_CHASSIS_TOTAL DT_PATH(named_bbram_regions, chassis_total)
+#define BBRAM_REGION_CHASSIS_VTR_OPEN DT_PATH(named_bbram_regions, chassis_vtr_open)
 #endif
 
 #define GET_BBRAM_OFFSET(node) \
@@ -97,6 +100,34 @@ static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
 	case SYSTEM_BBRAM_IDX_BIOS_FUNCTION:
 		*offset_out = DT_PROP(BBRAM_REGION_BIOS_FUNCTION, offset);
 		*size_out = DT_PROP(BBRAM_REGION_BIOS_FUNCTION, size);
+		break;
+
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_WAS_OPEN)
+	case SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN:
+		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_WAS_OPEN, offset);
+		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_WAS_OPEN, size);
+		break;
+
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_MAGIC)
+	case SYSTEM_BBRAM_IDX_CHASSIS_MAGIC:
+		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_MAGIC, offset);
+		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_MAGIC, size);
+		break;
+
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_TOTAL)
+	case SYSTEM_BBRAM_IDX_CHASSIS_TOTAL:
+		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_TOTAL, offset);
+		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_TOTAL, size);
+		break;
+
+#endif
+#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_VTR_OPEN)
+	case SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN:
+		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_VTR_OPEN, offset);
+		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_VTR_OPEN, size);
 		break;
 
 #endif

@@ -12,6 +12,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -226,6 +227,19 @@ static void set_initial_pwrbtn_state(void)
 		CPRINTS("PB idle");
 	}
 }
+
+/**
+ * auto power on system when AC plug-in
+ */
+static void board_extpower(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+		extpower_is_present() && ac_boot_status()) {
+		CPRINTS("Power on from boot on AC present");
+		power_button_pch_pulse();
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 /**
  * Power button state machine.
