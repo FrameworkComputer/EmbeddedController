@@ -276,6 +276,7 @@
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x72>;
+		is-alt;
 	};
 
 	ppc_syv_port1: ppc_syv@40 {

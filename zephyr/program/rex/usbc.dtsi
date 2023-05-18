@@ -31,11 +31,14 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			bc12 = <&bc12_port1>;
-			ppc = <&ppc_nx20p_port1>;
-			tcpc = <&tcpc_ps8815_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_c1>;
+			};
+			usb_mux_chain_ps8815_port1: usb-mux-chain-ps8815-1 {
+				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_c1 &tcpci_mux_c1>;
+				alternative-chain;
 			};
 			usb_mux_chain_anx7452_port1: usb-mux-chain-1-anx7452 {
 				compatible = "cros-ec,usb-mux-chain";
