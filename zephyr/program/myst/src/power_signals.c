@@ -101,6 +101,7 @@ static void baseboard_init(void)
 	/* Enable Power Group interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s3));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_vddq_mem_od));
 
 	/* Enable thermtrip interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_thermtrip));
@@ -146,11 +147,20 @@ void board_pwrbtn_to_pch(int level)
 /* Note: signal parameter unused */
 void baseboard_set_soc_pwr_pgood(enum gpio_signal unused)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_good),
-			gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-				gpio_pg_pcore_s0_r_od)) &&
-				gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-					gpio_pg_groupc_s0_od)));
+	/*
+	 * EC must AND signals PG_VDDQ_MEM_OD, PG_GROUPC_S0_OD, and
+	 * EN_PWR_S0_R. AND PG_LPDDR5_S3_OD for good measure since it
+	 * should be enabled in S0 anyway.
+	 */
+	gpio_pin_set_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_good),
+		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_vddq_mem_od)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_pg_groupc_s0_od)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s3_od)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0)));
 }
 
 void baseboard_s0_pgood(enum gpio_signal signal)
