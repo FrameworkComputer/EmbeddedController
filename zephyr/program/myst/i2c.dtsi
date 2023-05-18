@@ -100,12 +100,6 @@
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
 
-	bc12_port1: rt1718s-bc12@40 {
-		compatible = "richtek,rt1718s-bc12";
-		status = "okay";
-		reg = <0x40>;
-	};
-
 	tcpc_rt1718_port1: rt1718s-tcpc@40 {
 		compatible = "richtek,rt1718s-tcpc";
 		reg = <0x40>;
