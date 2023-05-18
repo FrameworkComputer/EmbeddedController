@@ -9,12 +9,12 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "hooks.h"
-#include "ioexpander.h"
 #include "usb_mux.h"
 #include "usb_mux_config.h"
 #include "usbc/ppc.h"
 #include "usbc/tcpci.h"
 #include "usbc/usb_muxes.h"
+#include "usbc_config.h"
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
@@ -57,14 +57,17 @@ static void setup_usb_db(void)
 	case FW_USB_DB_USB4_ANX7452:
 		LOG_INF("USB DB: Setting ANX7452 mux");
 		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_anx7452_port1);
-		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(1, tcpc_rt1716_port1);
-		PPC_ENABLE_ALTERNATE_BY_NODELABEL(1, ppc_syv_port1);
+		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,
+						   tcpc_rt1716_port1);
+		PPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1, ppc_syv_port1);
 		break;
 	case FW_USB_DB_USB4_KB8010:
 		LOG_INF("USB DB: Setting KB8010 mux");
 		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_kb8010_port1);
-		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(1, tcpc_rt1716_port1);
-		PPC_ENABLE_ALTERNATE_BY_NODELABEL(1, ppc_ktu1125_port1);
+		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,
+						   tcpc_rt1716_port1);
+		PPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,
+						  ppc_ktu1125_port1);
 		break;
 	default:
 		LOG_INF("USB DB: No known USB DB found");
