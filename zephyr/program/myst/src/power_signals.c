@@ -169,7 +169,7 @@ void baseboard_set_en_pwr_pcore(enum gpio_signal unused)
 	 * EN_PWR_S0_R
 	 */
 	gpio_pin_set_dt(
-		GPIO_DT_FROM_NODELABEL(gpio_pg_pcore_s0_r_od),
+		GPIO_DT_FROM_NODELABEL(gpio_en_pwr_pcore_s0),
 		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s3_od)) &&
 			gpio_pin_get_dt(
 				GPIO_DT_FROM_NODELABEL(gpio_pg_groupc_s0_od)) &&
