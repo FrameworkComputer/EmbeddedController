@@ -45,7 +45,7 @@
 			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_ec_c0_retimer_rst_l: ec_c0_retimer_rst_l {
-			gpios = <&gpiof 4 GPIO_OUTPUT>;
+			gpios = <&gpiof 4 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_c1_retimer_int_odl: ec_c1_retimer_int_odl {
 			gpios = <&gpioa 6 GPIO_INPUT>;
@@ -98,7 +98,7 @@
 			gpios = <&gpiof 0 GPIO_ODR_LOW>;
 		};
 		gpio_ec_sys_rst_l: ec_sys_rst_l {
-			gpios = <&gpio7 5 GPIO_OUTPUT>;
+			gpios = <&gpio7 5 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
 		};
 		gpio_ec_wp_l: ec_wp_l {
@@ -131,7 +131,7 @@
 			gpios = <&gpio3 5 GPIO_OUTPUT>;
 		};
 		gpio_en_usb_c0_tcpc_vbsnk_l: en_usb_c0_tcpc_vbsnk_l {
-			gpios = <&gpioc 5 GPIO_ODR_LOW>;
+			gpios = <&gpioc 5 GPIO_INPUT>;
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpio0 1 GPIO_INPUT>;
@@ -196,7 +196,7 @@
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_ppc_rst_l: usb_c0_ppc_rst_l {
-			gpios = <&gpioe 0 GPIO_OUTPUT>;
+			gpios = <&gpioe 0 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c0_sbu_flip: usb_c0_sbu_flip {
 			gpios = <&gpio0 2 GPIO_ODR_LOW>;
