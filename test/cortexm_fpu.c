@@ -11,6 +11,7 @@
 #include "time.h"
 
 static volatile uint32_t fpscr;
+static volatile bool fpu_irq_handled;
 
 /* Override default FPU interrupt handler. */
 void __keep fpu_irq(uint32_t excep_lr, uint32_t excep_sp)
@@ -25,6 +26,8 @@ void __keep fpu_irq(uint32_t excep_lr, uint32_t excep_sp)
 
 	/* Clear FPSCR on stack. */
 	fpu_state[FPU_IDX_REG_FPSCR] &= ~FPU_FPSCR_EXC_FLAGS;
+
+	fpu_irq_handled = true;
 }
 
 /* Performs division without casting to double. */
@@ -46,6 +49,8 @@ test_static int test_cortexm_fpu_underflow(void)
 	float result;
 
 	fpscr = 0;
+	fpu_irq_handled = false;
+
 	result = divf(1.40130e-45f, 2.0f);
 
 	/*
@@ -57,6 +62,10 @@ test_static int test_cortexm_fpu_underflow(void)
 		task_trigger_irq(STM32_IRQ_FPU);
 
 	TEST_ASSERT(result == 0.0f);
+
+	/* Wait for asynchronous FPU interrupt. */
+	while (!fpu_irq_handled) {
+	}
 
 	TEST_ASSERT(fpscr & FPU_FPSCR_UFC);
 
@@ -72,6 +81,8 @@ test_static int test_cortexm_fpu_overflow(void)
 	float result;
 
 	fpscr = 0;
+	fpu_irq_handled = false;
+
 	result = divf(3.40282e38f, 0.5f);
 
 	/*
@@ -84,6 +95,10 @@ test_static int test_cortexm_fpu_overflow(void)
 
 	TEST_ASSERT(isinf(result));
 
+	/* Wait for asynchronous FPU interrupt. */
+	while (!fpu_irq_handled) {
+	}
+
 	TEST_ASSERT(fpscr & FPU_FPSCR_OFC);
 
 	return EC_SUCCESS;
@@ -95,6 +110,8 @@ test_static int test_cortexm_fpu_division_by_zero(void)
 	float result;
 
 	fpscr = 0;
+	fpu_irq_handled = false;
+
 	result = divf(1.0f, 0.0f);
 
 	/*
@@ -107,6 +124,10 @@ test_static int test_cortexm_fpu_division_by_zero(void)
 
 	TEST_ASSERT(isinf(result));
 
+	/* Wait for asynchronous FPU interrupt. */
+	while (!fpu_irq_handled) {
+	}
+
 	TEST_ASSERT(fpscr & FPU_FPSCR_DZC);
 
 	return EC_SUCCESS;
@@ -118,6 +139,8 @@ test_static int test_cortexm_fpu_invalid_operation(void)
 	float result;
 
 	fpscr = 0;
+	fpu_irq_handled = false;
+
 	result = sqrtf(-1.0f);
 
 	/*
@@ -130,6 +153,10 @@ test_static int test_cortexm_fpu_invalid_operation(void)
 
 	TEST_ASSERT(isnan(result));
 
+	/* Wait for asynchronous FPU interrupt. */
+	while (!fpu_irq_handled) {
+	}
+
 	TEST_ASSERT(fpscr & FPU_FPSCR_IOC);
 
 	return EC_SUCCESS;
@@ -141,6 +168,8 @@ test_static int test_cortexm_fpu_inexact(void)
 	float result;
 
 	fpscr = 0;
+	fpu_irq_handled = false;
+
 	result = divf(2.0f, 3.0f);
 
 	/*
@@ -151,6 +180,10 @@ test_static int test_cortexm_fpu_inexact(void)
 
 	/* Check if result is not NaN nor infinity. */
 	TEST_ASSERT(!isnan(result) && !isinf(result));
+
+	/* Wait for asynchronous FPU interrupt. */
+	while (!fpu_irq_handled) {
+	}
 
 	TEST_ASSERT(fpscr & FPU_FPSCR_IXC);
 
