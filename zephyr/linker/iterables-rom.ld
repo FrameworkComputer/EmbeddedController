@@ -1,3 +1,5 @@
+#include <zephyr/linker/iterable_sections.h>
+
 #ifdef CONFIG_PLATFORM_EC_HOSTCMD
 ITERABLE_SECTION_ROM(host_command, 4)
 #endif

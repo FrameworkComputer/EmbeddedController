@@ -7,6 +7,7 @@
 #include "task.h"
 
 #include <zephyr/kernel.h>
+#include <zephyr/sys/iterable_sections.h>
 
 struct host_command *zephyr_find_host_command(int command)
 {
