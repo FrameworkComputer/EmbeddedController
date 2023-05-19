@@ -342,7 +342,7 @@ struct jump_data *get_jump_data(void)
 }
 #endif
 
-int system_jumped_to_this_image(void)
+test_mockable int system_jumped_to_this_image(void)
 {
 	return jumped_to_image;
 }
