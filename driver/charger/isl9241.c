@@ -903,6 +903,16 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 
 	/* Disable */
 	if (isl9241_is_ac_present(chgnum)) {
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+		int reg;
+
+		rv = isl9241_read(chgnum, ISL9241_REG_CONTROL0, &reg);
+		if ((reg & ISL9241_CONTROL0_EN_BYPASS_GATE) != ISL9241_CONTROL0_EN_BYPASS_GATE) {
+			CPRINTS("Does not in bypass mode, ignore change");
+			return rv;
+		}
+
+#endif
 		/* Switch to another AC (e.g. BJ -> Type-C) */
 		if (isl9241_is_in_chrg(chgnum)) {
 			/* J (then B) */

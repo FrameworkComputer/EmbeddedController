@@ -168,6 +168,7 @@ DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
 static bool bypass_force_en;
+static bool bypass_force_disable;
 __override int board_should_charger_bypass(void)
 {
 	int power_uw = charge_manager_get_power_limit_uw();
@@ -177,13 +178,16 @@ __override int board_should_charger_bypass(void)
 	if (bypass_force_en)
 		return true;
 
+	if (bypass_force_disable)
+		return false;
+
 	if (curr_batt == BP_YES) {
 		if (power_uw > 100000000)
 			return true;
 		else
 			return false;
 	} else {
-		if (voltage_mv >= 20000)
+		if (voltage_mv > 20000)
 			return true;
 		else
 			return false;
@@ -200,6 +204,22 @@ int board_want_change_mode(void)
 		return true;
 	} else
 		return false;
+}
+
+int board_discharge_on_ac(int enable)
+{
+	int chgnum;
+	int rv = EC_SUCCESS;
+
+	bypass_force_disable = enable;
+	/*
+	 * When discharge on AC is selected, cycle through all chargers to
+	 * enable or disable this feature.
+	 */
+	for (chgnum = 0; chgnum < board_get_charger_chip_count(); chgnum++)
+		if (chg_chips[chgnum].drv->discharge_on_ac)
+			rv = chg_chips[chgnum].drv->discharge_on_ac(chgnum, enable);
+	return rv;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,

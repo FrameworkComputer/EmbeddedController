@@ -93,7 +93,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		active_mpower = 0;
 	}
 
-	if (battery_is_present()) {
+	if (battery_is_present() == BP_YES) {
 		/* Battery is present */
 		spl_watt = 45000;
 		sppt_watt = 54000;
