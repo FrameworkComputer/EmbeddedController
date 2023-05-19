@@ -57,15 +57,15 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		f75303-local {
+		temp_f75303_local: f75303-local {
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&f75303_local>;
 		};
-		f75303-remote-1 {
+		temp_f75303_remote_1: f75303-remote-1 {
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&f75303_remote_1>;
 		};
-		f75303-remote-2 {
+		temp_f75303_remote_2: f75303-remote-2 {
 			power-good-pin = <&gpio_pg_pwr_s5>;
 			sensor = <&f75303_remote_2>;
 		};
@@ -74,34 +74,34 @@
 	fan_steps: fan-step {
 		compatible = "cros-ec,fan-steps";
 		level_0 {
-			temp_on = <(-1) (-1) 40 (-1) (-1) (-1)>;
-			temp_off = <(-1) (-1) 99 (-1) (-1) (-1)>;
+			temp_on = <(-1) (-1) 75 (-1) 30 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 99 (-1)>;
 			rpm_target = <0>;
 		};
 		level_1 {
-			temp_on = <(-1) (-1) 45 (-1) (-1) (-1)>;
-			temp_off = <(-1) (-1) 39 (-1) (-1) (-1)>;
-			rpm_target = <2400>;
+			temp_on = <(-1) (-1) 75 (-1) 35 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 32 (-1)>;
+			rpm_target = <2200>;
 		};
 		level_2 {
-			temp_on = <(-1) (-1) 50 (-1) (-1) (-1)>;
-			temp_off = <(-1) (-1) 44 (-1) (-1) (-1)>;
-			rpm_target = <2800>;
+			temp_on = <(-1) (-1) 75 (-1) 40 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 37 (-1)>;
+			rpm_target = <2400>;
 		};
 		level_3 {
-			temp_on = <(-1) (-1) 55 (-1) (-1) (-1)>;
-			temp_off = <(-1) (-1) 49 (-1) (-1) (-1)>;
-			rpm_target = <3000>;
+			temp_on = <(-1) (-1) 75 (-1) 43 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 41 (-1)>;
+			rpm_target = <2700>;
 		};
 		level_4 {
-			temp_on = <(-1) (-1) 60 (-1) (-1) (-1)>;
-			temp_off = <(-1) (-1) 54 (-1) (-1) (-1)>;
-			rpm_target = <3450>;
+			temp_on = <(-1) (-1) 75 (-1) 46 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 44 (-1)>;
+			rpm_target = <3000>;
 		};
 		level_5 {
-			temp_on = <(-1) (-1) 65 (-1) (-1) (-1)>;
-			temp_off = <(-1) (-1) 59 (-1) (-1) (-1)>;
-			rpm_target = <3800>;
+			temp_on = <(-1) (-1) 95 (-1) 50 (-1)>;
+			temp_off = <(-1) (-1) 90 (-1) 48 (-1)>;
+			rpm_target = <3300>;
 		};
 	};
 
@@ -270,8 +270,6 @@
 	temp_host_release_warn = <91>;
 	temp_host_release_high = <80>;
 	temp_host_release_halt = <90>;
-	temp_fan_off = <40>;
-	temp_fan_max = <95>;
 };
 
 &temp_sensor_charger {

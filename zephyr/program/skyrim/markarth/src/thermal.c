@@ -13,6 +13,7 @@
 #include "util.h"
 
 #define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_cpu))
+#define TEMP_REMOTE_1 TEMP_SENSOR_ID(DT_NODELABEL(temp_f75303_remote_1))
 
 struct fan_step {
 	/*
@@ -58,16 +59,24 @@ int fan_table_to_rpm(int fan, int *temp)
 	 *  3. invariant path. (return the current RPM)
 	 */
 
-	if (temp[TEMP_CPU] < prev_tmp[TEMP_CPU]) {
+	if ((temp[TEMP_CPU] < prev_tmp[TEMP_CPU]) ||
+	    (temp[TEMP_REMOTE_1] < prev_tmp[TEMP_REMOTE_1])) {
 		for (i = current_level; i > 0; i--) {
-			if (temp[TEMP_CPU] <= fan_step_table[i].off[TEMP_CPU])
+			if ((temp[TEMP_CPU] <=
+			     fan_step_table[i].off[TEMP_CPU]) &&
+			    (temp[TEMP_REMOTE_1] <=
+			     fan_step_table[i].off[TEMP_REMOTE_1]))
 				current_level = i - 1;
 			else
 				break;
 		}
-	} else if (temp[TEMP_CPU] > prev_tmp[TEMP_CPU]) {
+	} else if ((temp[TEMP_CPU] > prev_tmp[TEMP_CPU]) ||
+		   (temp[TEMP_REMOTE_1] > prev_tmp[TEMP_REMOTE_1])) {
 		for (i = current_level; i < NUM_FAN_LEVELS; i++) {
-			if (temp[TEMP_CPU] >= fan_step_table[i].on[TEMP_CPU])
+			if ((temp[TEMP_CPU] >=
+			     fan_step_table[i].on[TEMP_CPU]) ||
+			    (temp[TEMP_REMOTE_1] >=
+			     fan_step_table[i].on[TEMP_REMOTE_1]))
 				current_level = i;
 			else
 				break;
