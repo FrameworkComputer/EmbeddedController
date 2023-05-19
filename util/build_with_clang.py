@@ -118,6 +118,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "banshee",
     "berknip",
     "bloog",
+    "bobba",
     "boldar",
     "brask",
     "brya",
@@ -305,8 +306,6 @@ RISCV_BOARDS = [
 BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     "chocodile_vpdmcu",  # compilation error: b/254710459
-    # Boards that use CHIP:=npcx
-    "bobba",  # overflows flash
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.
