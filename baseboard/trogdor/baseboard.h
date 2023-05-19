@@ -10,6 +10,17 @@
 
 #define CONFIG_LTO
 
+/* Free flash space */
+#undef CONFIG_CONSOLE_CMDHELP
+#undef CONFIG_CONSOLE_HISTORY
+#undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_I2C_SCAN
+#undef CONFIG_CMD_MFALLOW
+#undef CONFIG_CMD_MD
+#undef CONFIG_CMD_RTC
+#undef CONFIG_CMD_TCPC_DUMP
+#undef CONFIG_CMD_TYPEC
+
 /*
  * By default, enable all console messages excepted event and HC:
  * The sensor stack is generating a lot of activity.
