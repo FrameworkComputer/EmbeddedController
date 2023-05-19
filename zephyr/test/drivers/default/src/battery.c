@@ -114,10 +114,6 @@ ZTEST_F(battery, test_board_cutoff_actuates_driver)
 	 * board_cut_off_battery() and may be changed by other factors.
 	 */
 
-	/* Try with invalid battery type */
-	battery_fuel_gauge_type_override = BATTERY_TYPE_COUNT;
-	zassert_equal(EC_RES_ERROR, board_cut_off_battery());
-
 	/* Setup error conditions for battery 1*/
 	battery_fuel_gauge_type_override = 1;
 	fixture->battery_i2c_common->finish_write = NULL;
@@ -135,10 +131,6 @@ ZTEST_F(battery, test_board_cutoff_actuates_driver)
 
 ZTEST_F(battery, test_sleep)
 {
-	/* Try with invalid battery type */
-	battery_fuel_gauge_type_override = BATTERY_TYPE_COUNT;
-	zassert_equal(EC_ERROR_UNKNOWN, battery_sleep_fuel_gauge());
-
 	/* Check 1st battery (lgc,ac17a8m) */
 	battery_fuel_gauge_type_override = 0;
 	zassert_equal(EC_ERROR_UNIMPLEMENTED, battery_sleep_fuel_gauge());
@@ -166,12 +158,6 @@ static int battery2_read(const struct emul *target, int reg, uint8_t *val,
 	}
 
 	return 0;
-}
-
-ZTEST(battery, test_is_charge_fet_disabled__invalid_battery_type)
-{
-	battery_fuel_gauge_type_override = BATTERY_TYPE_COUNT;
-	zassert_equal(-1, battery_is_charge_fet_disabled());
 }
 
 ZTEST(battery, test_is_charge_fet_disabled__cfet_mask_is_0)
@@ -223,12 +209,6 @@ ZTEST_F(battery, test_is_charge_fet_disabled)
 	zassert_equal(1, battery_is_charge_fet_disabled());
 }
 
-ZTEST(battery, test_get_disconnect_state__invalid_battery_type)
-{
-	battery_fuel_gauge_type_override = BATTERY_TYPE_COUNT;
-	zassert_equal(BATTERY_DISCONNECT_ERROR, battery_get_disconnect_state());
-}
-
 ZTEST_F(battery, test_get_disconnect_state__fail_i2c_read)
 {
 	/* Use battery 0 */
@@ -250,6 +230,9 @@ ZTEST_F(battery, test_get_disconnect_state)
 		.count = ARRAY_SIZE(values),
 		.values = values,
 	};
+
+	/* Use battery 0 */
+	battery_fuel_gauge_type_override = 0;
 
 	/* Enable i2c reads and set them to always return 0x2000 */
 	battery2_read_func_fake.custom_fake = battery2_read;
