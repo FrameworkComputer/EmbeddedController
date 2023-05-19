@@ -71,6 +71,35 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 	CHECK_COMPAT(TCPCI_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_TCPCI)        \
 	TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)
 
+#define TCPC_DRIVERS                                                     \
+	ANX7447_TCPC_COMPAT, CCGXXF_TCPC_COMPAT, FUSB302_TCPC_COMPAT,    \
+		IT8XXX2_TCPC_COMPAT, PS8XXX_COMPAT, NCT38XX_TCPC_COMPAT, \
+		RAA489000_TCPC_COMPAT, RT1718S_TCPC_COMPAT,              \
+		RT1715_TCPC_COMPAT, TCPCI_COMPAT, TCPCI_EMUL_COMPAT,     \
+		PS8XXX_EMUL_COMPAT, ANX7447_EMUL_COMPAT, RT1718S_EMUL_COMPAT
+
+/*
+ * This macro gets invoked for every driver in the TCPC_DRIVERS list.
+ * If the passed in tcpc node contains the specified compat string, then
+ * this macro returns 1.  Otherwise the macro returns nothing (EMPTY).
+ */
+#define TCPC_HAS_COMPAT(compat, tcpc) \
+	IF_ENABLED(DT_NODE_HAS_COMPAT(tcpc, compat), 1)
+
+/*
+ * Verify the compatible property of a TCPC node is valid.
+ *
+ * Call TCPC_HAS_COMPAT() for all TCPC compatible strings listed in the
+ * TCPC_DRIVERS list.  If the resulting list is empty, then there was no
+ * matching TCPC driver found and this macro generates a build error.
+ */
+#define TCPC_PROP_COMPATIBLE_VERIFY(tcpc)                                     \
+	IF_ENABLED(IS_EMPTY(FOR_EACH_FIXED_ARG(TCPC_HAS_COMPAT, (), tcpc,     \
+					       TCPC_DRIVERS)),                \
+		   (BUILD_ASSERT(                                             \
+			    0, "Invalid TCPC compatible on node: " STRINGIFY( \
+				       tcpc));))
+
 /* clang-format off */
 #define TCPC_CHIP_STUB(usbc_id) \
 	[USBC_PORT_NEW(usbc_id)] = {},
@@ -81,8 +110,19 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 		    (TCPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, tcpc))), \
 		    (TCPC_CHIP_STUB(usbc_id)))
 
+#define TCPC_CHIP_VERIFY(usbc_id)                   \
+	IF_ENABLED(DT_NODE_HAS_PROP(usbc_id, tcpc), \
+		   (TCPC_PROP_COMPATIBLE_VERIFY(DT_PHANDLE(usbc_id, tcpc))))
+
 #define MAYBE_CONST \
 	COND_CODE_1(CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG, (), (const))
+
+/*
+ * The TCPC_CHIP_IS_VALID macro expands to nothing when the TCPC driver
+ * compatible string is found in the TCPC_DRIVERS list.  Otherwise the macro
+ * expands to a BUILD_ASSERT error.
+ */
+DT_FOREACH_STATUS_OKAY(named_usbc_port, TCPC_CHIP_VERIFY)
 
 /* Type C Port Controllers */
 MAYBE_CONST struct tcpc_config_t tcpc_config[] = { DT_FOREACH_STATUS_OKAY(
