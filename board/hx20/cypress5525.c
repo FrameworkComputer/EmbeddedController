@@ -1487,9 +1487,20 @@ int board_set_active_charge_port(int charge_port)
 	int mask;
 	int i;
 	int disable_lockout;
+	int force_reduce;
+	int current;
+
+	/* if battery is present, set the current limit 500 mA*/
 
 	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
 		update_soc_power_limit(false, true);
+
+		/* force to reduce the input current limit when battery is connected */
+		if (board_batt_is_present() == BP_YES) {
+			force_reduce = 1;
+			charge_set_input_current_limit(500, pd_port_states[charge_port].voltage);
+		}
+
 		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, 0);
 		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, 0);
 		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 0);
@@ -1511,6 +1522,13 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 1);
 		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, 1);
 	}
+
+	/* Switch port complete. set the current limit to charge_ma*0.95 */
+	if (force_reduce) {
+		current = pd_port_states[charge_port].current * 95 / 100;
+		charge_set_input_current_limit(current, pd_port_states[charge_port].voltage);
+	}
+
 	for (i = 0; i < PD_CHIP_COUNT; i++)
 		cypd_write_reg8(i, CYP5225_USER_DISABLE_LOCKOUT, disable_lockout);
 

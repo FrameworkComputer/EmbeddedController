@@ -771,6 +771,8 @@ int poweron_reason_powerbtn(void);
 
 void spi_mux_control(int enable);
 
+enum battery_present board_batt_is_present(void);
+
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
 void board_resume_from_deep_sleep(void);
