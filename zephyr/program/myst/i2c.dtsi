@@ -73,9 +73,9 @@
 	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
 	pinctrl-names = "default";
 
-	tcpc_port0: rt1716@70 {
-		compatible = "richtek,rt1716";
-		reg = <0x70>;
+	tcpc_port0: rt1715@4e {
+		compatible = "richtek,rt1715-tcpc";
+		reg = <0x4e>;
 		tcpc-flags = <(
 			TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
