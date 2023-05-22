@@ -50,7 +50,7 @@ int f75303_get_val(int idx, int *temp)
 	}
 
 	if (!gpu_present() && (idx < 3))
-		*temp = 0;
+		*temp = C_TO_K(0);
 	else
 		*temp = temps[idx];
 	return EC_SUCCESS;
