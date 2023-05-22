@@ -19,6 +19,22 @@
 #include <zephyr/devicetree.h>
 
 /**
+ * @brief List of all supported PPC drivers and emulators. Format is
+ * (compatible, config).
+ */
+/* clang-format off */
+#define PPC_DRIVERS                              \
+	(AOZ1380_COMPAT, PPC_CHIP_AOZ1380),      \
+	(KTU1125_COMPAT, PPC_CHIP_KTU1125),      \
+	(NX20P348X_COMPAT, PPC_CHIP_NX20P348X),  \
+	(RT1739_PPC_COMPAT, PPC_CHIP_RT1739),    \
+	(SN5S330_COMPAT, PPC_CHIP_SN5S330),      \
+	(SN5S330_EMUL_COMPAT, PPC_CHIP_SN5S330), \
+	(SYV682X_COMPAT, PPC_CHIP_SYV682X),      \
+	(SYV682X_EMUL_COMPAT, PPC_CHIP_SYV682X)
+/* clang-format on */
+
+/**
  * @brief Create a unique name based on a PPC altnernate node.
  *
  *	ppc_syv682x_alt: syv682x@43 {
@@ -53,7 +69,7 @@
 #define PPC_ALT_DECLARATION(node_id) \
 	extern const struct ppc_config_t PPC_ALT_NAME_GET(node_id)
 
-#define PPC_ALT_DECLARE(node_id)                    \
+#define PPC_ALT_DECLARE(node_id, config_fn)         \
 	COND_CODE_1(DT_PROP_OR(node_id, is_alt, 0), \
 		    (PPC_ALT_DECLARATION(node_id);), ())
 
@@ -61,14 +77,7 @@
  * Forward declare a struct ppc_config_t for every PPC node in the tree with the
  * "is-alt" property set.
  */
-DT_FOREACH_STATUS_OKAY(AOZ1380_COMPAT, PPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(KTU1125_COMPAT, PPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(NX20P348X_COMPAT, PPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(RT1739_PPC_COMPAT, PPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(SN5S330_COMPAT, PPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(SN5S330_EMUL_COMPAT, PPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(SYV682X_COMPAT, PPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(SYV682X_EMUL_COMPAT, PPC_ALT_DECLARE)
+DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(PPC_ALT_DECLARE, PPC_DRIVERS)
 
 extern struct ppc_config_t ppc_chips_alt[];
 

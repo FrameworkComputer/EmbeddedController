@@ -30,15 +30,17 @@
 	COND_CODE_1(DT_NODE_HAS_COMPAT(ppc_id, compat),  \
 		    (PPC_CHIP_ENTRY(usbc_id, ppc_id, config_fn)), ())
 
-#define PPC_CHIP_FIND(usbc_id, ppc_id)                                       \
-	CHECK_COMPAT(AOZ1380_COMPAT, usbc_id, ppc_id, PPC_CHIP_AOZ1380)      \
-	CHECK_COMPAT(KTU1125_COMPAT, usbc_id, ppc_id, PPC_CHIP_KTU1125)      \
-	CHECK_COMPAT(NX20P348X_COMPAT, usbc_id, ppc_id, PPC_CHIP_NX20P348X)  \
-	CHECK_COMPAT(RT1739_PPC_COMPAT, usbc_id, ppc_id, PPC_CHIP_RT1739)    \
-	CHECK_COMPAT(SN5S330_COMPAT, usbc_id, ppc_id, PPC_CHIP_SN5S330)      \
-	CHECK_COMPAT(SN5S330_EMUL_COMPAT, usbc_id, ppc_id, PPC_CHIP_SN5S330) \
-	CHECK_COMPAT(SYV682X_COMPAT, usbc_id, ppc_id, PPC_CHIP_SYV682X)      \
-	CHECK_COMPAT(SYV682X_EMUL_COMPAT, usbc_id, ppc_id, PPC_CHIP_SYV682X)
+/**
+ * @param driver Tuple containing the PPC (compatible, config) pair.
+ * @param nodes Tuple containing the (usbc_node_id, ppc_node_id) pair
+ */
+#define CHECK_COMPAT_HELPER(driver, nodes)                                     \
+	CHECK_COMPAT(USBC_DRIVER_GET_COMPAT(driver), NODES_GET_USBC_ID(nodes), \
+		     NODES_GET_PROP_ID(nodes), USBC_DRIVER_GET_CONFIG(driver))
+
+#define PPC_CHIP_FIND(usbc_id, ppc_id)                                 \
+	FOR_EACH_FIXED_ARG(CHECK_COMPAT_HELPER, (), (usbc_id, ppc_id), \
+			   PPC_DRIVERS)
 
 /* clang-format off */
 #define PPC_CHIP_STUB(usbc_id) \
@@ -74,16 +76,6 @@ struct ppc_config_t ppc_chips_alt[] = { DT_FOREACH_STATUS_OKAY(named_usbc_port,
  * Define a global struct ppc_config_t for every PPC node in the tree with the
  * "is-alt" property set.
  */
-DT_FOREACH_STATUS_OKAY_VARGS(AOZ1380_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_AOZ1380)
-DT_FOREACH_STATUS_OKAY_VARGS(KTU1125_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_KTU1125)
-DT_FOREACH_STATUS_OKAY_VARGS(NX20P348X_COMPAT, PPC_ALT_DEFINE,
-			     PPC_CHIP_NX20P348X)
-DT_FOREACH_STATUS_OKAY_VARGS(RT1739_PPC_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_RT1739)
-DT_FOREACH_STATUS_OKAY_VARGS(SN5S330_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_SN5S330)
-DT_FOREACH_STATUS_OKAY_VARGS(SN5S330_EMUL_COMPAT, PPC_ALT_DEFINE,
-			     PPC_CHIP_SN5S330)
-DT_FOREACH_STATUS_OKAY_VARGS(SYV682X_COMPAT, PPC_ALT_DEFINE, PPC_CHIP_SYV682X)
-DT_FOREACH_STATUS_OKAY_VARGS(SYV682X_EMUL_COMPAT, PPC_ALT_DEFINE,
-			     PPC_CHIP_SYV682X)
+DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(PPC_ALT_DEFINE, PPC_DRIVERS)
 
 #endif /* #if DT_HAS_COMPAT_STATUS_OKAY */
