@@ -16,4 +16,18 @@
 			enum-names = "I2C_PORT_USB_MUX";
 		};
 	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+		};
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+		};
+	};
 };
