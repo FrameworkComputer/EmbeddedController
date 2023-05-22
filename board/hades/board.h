@@ -125,9 +125,10 @@
 /* 5: Battery */
 #define I2C_PORT_BATTERY NPCX_I2C_PORT5_0
 /* 6: Unused */
-/* 7: Charger, EEPROM, IMVP9 VR, MONITOR */
+/* 7: Charger, EEPROM, IMVP9 VR, MONITOR, Power sequencer */
 #define I2C_PORT_CHARGER NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
+#define I2C_PORT_MISC NPCX_I2C_PORT7_0
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50
 

@@ -67,6 +67,12 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static void board_init(void)
 {
+	const uint16_t i2c_sequencer_addr_flag = 0x10;
+	/* 0xaf: glitch filter reg address */
+	const uint8_t out[2] = { 0xaf, 0x01 };
+
+	int rv;
+
 	if ((system_get_reset_flags() & EC_RESET_FLAG_AP_OFF) ||
 	    (keyboard_scan_get_boot_keys() & BOOT_KEY_DOWN_ARROW)) {
 		CPRINTS("PG_PP3300_S5_OD block is enabled");
@@ -79,6 +85,12 @@ static void board_init(void)
 
 	/* Unblock USB_C1_PPC_SNK_EN */
 	anx7406_set_gpio(USBC_PORT_C1, 0, 1);
+
+	/* Adjust glitch filtering on PPVAR_SYS (b/282181312) */
+	rv = i2c_xfer(I2C_PORT_MISC, i2c_sequencer_addr_flag, out, sizeof(out),
+		      NULL, 0);
+	if (rv)
+		CPRINTS("Failed to adjust sequencer timing (%d)", rv);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

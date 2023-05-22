@@ -39,7 +39,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{
 		/* I2C7 */
 		.name = "misc",
-		.port = I2C_PORT_EEPROM,
+		.port = I2C_PORT_MISC,
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_MISC_SCL_R,
 		.sda = GPIO_EC_I2C_MISC_SDA_R,
