@@ -48,4 +48,48 @@
 		"TCPC interrupt configuration error for " DT_NODE_FULL_NAME(   \
 			id));
 
+/**
+ * @brief Macros used to process USB-C driver organized as a
+ * (compatible, config) tuple.  Where "compatible" is the devictree compatible
+ * string and "config" is the macro used to initialize the USB-C driver
+ * instance.
+ *
+ * The "config" macro has a single parameter, the devicetree node ID.
+ */
+/**
+ * @brief Get compatible from @p driver
+ *
+ * @param driver USB mux driver description in format (compatible, config)
+ */
+#define USB_MUX_DRIVER_GET_COMPAT(driver) GET_ARG_N(1, __DEBRACKET driver)
+
+/**
+ * @brief Get configuration from @p driver
+ *
+ * @param driver USB mux driver description in format (compatible, config)
+ */
+#define USB_MUX_DRIVER_GET_CONFIG(driver) GET_ARG_N(2, __DEBRACKET driver)
+
+/**
+ * @brief Call @p op operation for each node that is compatible with @p driver
+ *
+ * @param driver USB mux driver description in format (compatible, config)
+ * @param op Operation to perform on each USB mux. Should accept mux node ID and
+ *           driver config as arguments.
+ */
+#define USB_MUX_DRIVER_CONFIG(driver, op)                                   \
+	DT_FOREACH_STATUS_OKAY_VARGS(USB_MUX_DRIVER_GET_COMPAT(driver), op, \
+				     USB_MUX_DRIVER_GET_CONFIG(driver))
+
+/**
+ * @brief Call @p op operation for each USB mux node that is compatible with
+ *        any driver from the USB_MUX_DRIVERS list.
+ *        DT_FOREACH_STATUS_OKAY_VARGS() macro can not be used in @p op
+ *
+ * @param op Operation to perform on each USB mux. Should accept mux node ID and
+ *           driver config as arguments.
+ */
+#define USB_MUX_FOREACH_MUX_DT_VARGS(op) \
+	FOR_EACH_FIXED_ARG(USB_MUX_DRIVER_CONFIG, (), op, USB_MUX_DRIVERS)
+
 #endif /* __CROS_EC_ZEPHYR_SHIM_USBC_UTIL */
