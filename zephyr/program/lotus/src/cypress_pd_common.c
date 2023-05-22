@@ -293,6 +293,47 @@ static void update_external_cc_mux(int port, int cc)
 		}
 	}
 }
+
+static void enter_epr_mode(void)
+{
+	int port_idx;
+
+	/* We don't need to enter EPR mode at S5/G3 state */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
+	/**
+	 * PD negotiation completed and in Sink Role,
+	 * execute the CCG command to enter the EPR mode
+	 */
+	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
+		if ((pd_port_states[port_idx].pd_state) &&
+			(pd_port_states[port_idx].power_role == PD_ROLE_SINK) &&
+			!(pd_port_states[port_idx].epr_active)) {
+			CPRINTS("Initiate EPR entry");
+			cypd_write_reg8((port_idx & 0x2) >> 1,
+					CCG_PD_CONTROL_REG(port_idx & 0x1),
+					CCG_PD_CMD_INITIATE_EPR_ENTRY);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(enter_epr_mode);
+
+static void exit_epr_mode(void)
+{
+	int port_idx;
+
+	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
+		if (pd_port_states[port_idx].epr_active) {
+			CPRINTS("Initiate EPR exit");
+			cypd_write_reg8((port_idx & 0x2) >> 1,
+					CCG_PD_CONTROL_REG(port_idx & 0x1),
+					CCG_PD_CMD_INITIATE_EPR_EXIT);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_DEFAULT);
 #endif
 
 static void pd0_update_state_deferred(void)
@@ -1297,8 +1338,11 @@ void cypd_set_power_active(enum power_state power)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
-
+#ifdef CONFIG_BOARD_LOTUS
+#define CYPD_SETUP_CMDS_LEN 7
+#else
 #define CYPD_SETUP_CMDS_LEN 5
+#endif
 static int cypd_setup(int controller)
 {
 	/*
@@ -1321,6 +1365,11 @@ static int cypd_setup(int controller)
 		/* Set the port PDO 1.5A */
 		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT0_INTR},
 		{ CCG_PD_CONTROL_REG(1), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT1_INTR},
+#ifdef CONFIG_BOARD_LOTUS
+		/* Set the EPR PDO mask, disable Auto-Enter EPR */
+		{ SELECT_SINK_PDO_EPR_MASK(0), 0x01, CCG_PORT0_INTR},
+		{ SELECT_SINK_PDO_EPR_MASK(1), 0x01, CCG_PORT1_INTR},
+#endif
 		/* Set the port event mask */
 		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
 		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
@@ -1564,7 +1613,10 @@ void cypd_port_int(int controller, int port)
 		break;
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
-		cypd_set_prepare_pdo(controller, port);
+		cypd_update_port_state(controller, port);
+#ifdef CONFIG_BOARD_LOTUS
+		hook_call_deferred(&enter_epr_mode_data, 100 * MSEC);
+#endif
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
@@ -1999,6 +2051,8 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 				CPRINTS(" INTR_STATUS_REG0: 0x%02x", data);
 				cypd_read_reg16(i, CCG_PORT_INTR_STATUS_REG(p)+2, &data);
 				CPRINTS(" INTR_STATUS_REG1: 0x%02x", data);
+				cypd_read_reg16(i, SELECT_SINK_PDO_EPR_MASK(p), &data);
+				CPRINTS(" SINK PDO EPR MASK: 0x%02x", data);
 				/* Flush console to avoid truncating output */
 				cflush();
 			}
