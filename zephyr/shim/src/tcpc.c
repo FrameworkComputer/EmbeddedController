@@ -42,41 +42,17 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 	COND_CODE_1(DT_NODE_HAS_COMPAT(tcpc_id, compat),  \
 		    (TCPC_CHIP_ENTRY(usbc_id, tcpc_id, config_fn)), ())
 
-#define TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)               \
-	CHECK_COMPAT(TCPCI_EMUL_COMPAT, usbc_id, tcpc_id,   \
-		     TCPC_CONFIG_TCPCI_EMUL)                \
-	CHECK_COMPAT(PS8XXX_EMUL_COMPAT, usbc_id, tcpc_id,  \
-		     TCPC_CONFIG_PS8XXX_EMUL)               \
-	CHECK_COMPAT(ANX7447_EMUL_COMPAT, usbc_id, tcpc_id, \
-		     TCPC_CONFIG_ANX7447_EMUL)              \
-	CHECK_COMPAT(RT1718S_EMUL_COMPAT, usbc_id, tcpc_id, \
-		     TCPC_CONFIG_RT1718S_EMUL)
+/**
+ * @param driver Tuple containing the TCPC (compatible, config) pair.
+ * @param nodes Tuple containing the (usbc_node_id, tcpc_node_id) pair
+ */
+#define CHECK_COMPAT_HELPER(driver, nodes)                                     \
+	CHECK_COMPAT(USBC_DRIVER_GET_COMPAT(driver), NODES_GET_USBC_ID(nodes), \
+		     NODES_GET_PROP_ID(nodes), USBC_DRIVER_GET_CONFIG(driver))
 
-#define TCPC_CHIP_FIND(usbc_id, tcpc_id)                                       \
-	CHECK_COMPAT(ANX7447_TCPC_COMPAT, usbc_id, tcpc_id,                    \
-		     TCPC_CONFIG_ANX7447)                                      \
-	CHECK_COMPAT(CCGXXF_TCPC_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_CCGXXF) \
-	CHECK_COMPAT(FUSB302_TCPC_COMPAT, usbc_id, tcpc_id,                    \
-		     TCPC_CONFIG_FUSB302)                                      \
-	CHECK_COMPAT(IT8XXX2_TCPC_COMPAT, usbc_id, tcpc_id,                    \
-		     TCPC_CONFIG_IT8XXX2)                                      \
-	CHECK_COMPAT(PS8XXX_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_PS8XXX)      \
-	CHECK_COMPAT(NCT38XX_TCPC_COMPAT, usbc_id, tcpc_id,                    \
-		     TCPC_CONFIG_NCT38XX)                                      \
-	CHECK_COMPAT(RAA489000_TCPC_COMPAT, usbc_id, tcpc_id,                  \
-		     TCPC_CONFIG_RAA489000)                                    \
-	CHECK_COMPAT(RT1718S_TCPC_COMPAT, usbc_id, tcpc_id,                    \
-		     TCPC_CONFIG_RT1718S)                                      \
-	CHECK_COMPAT(RT1715_TCPC_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_RT1715) \
-	CHECK_COMPAT(TCPCI_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_TCPCI)        \
-	TCPC_CHIP_FIND_EMUL(usbc_id, tcpc_id)
-
-#define TCPC_DRIVERS                                                     \
-	ANX7447_TCPC_COMPAT, CCGXXF_TCPC_COMPAT, FUSB302_TCPC_COMPAT,    \
-		IT8XXX2_TCPC_COMPAT, PS8XXX_COMPAT, NCT38XX_TCPC_COMPAT, \
-		RAA489000_TCPC_COMPAT, RT1718S_TCPC_COMPAT,              \
-		RT1715_TCPC_COMPAT, TCPCI_COMPAT, TCPCI_EMUL_COMPAT,     \
-		PS8XXX_EMUL_COMPAT, ANX7447_EMUL_COMPAT, RT1718S_EMUL_COMPAT
+#define TCPC_CHIP_FIND(usbc_id, tcpc_id)                                \
+	FOR_EACH_FIXED_ARG(CHECK_COMPAT_HELPER, (), (usbc_id, tcpc_id), \
+			   TCPC_DRIVERS)
 
 /*
  * This macro gets invoked for every driver in the TCPC_DRIVERS list.
@@ -95,7 +71,7 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
  */
 #define TCPC_PROP_COMPATIBLE_VERIFY(tcpc)                                     \
 	IF_ENABLED(IS_EMPTY(FOR_EACH_FIXED_ARG(TCPC_HAS_COMPAT, (), tcpc,     \
-					       TCPC_DRIVERS)),                \
+					       TCPC_DRIVER_COMPATS)),         \
 		   (BUILD_ASSERT(                                             \
 			    0, "Invalid TCPC compatible on node: " STRINGIFY( \
 				       tcpc));))
@@ -118,9 +94,9 @@ LOG_MODULE_REGISTER(tcpc, CONFIG_GPIO_LOG_LEVEL);
 	COND_CODE_1(CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG, (), (const))
 
 /*
- * The TCPC_CHIP_IS_VALID macro expands to nothing when the TCPC driver
- * compatible string is found in the TCPC_DRIVERS list.  Otherwise the macro
- * expands to a BUILD_ASSERT error.
+ * The TCPC_CHIP_VERIFY macro expands to nothing when the TCPC driver
+ * compatible string is found in the TCPC_DRIVER_COMPATS list. Otherwise
+ * the macro expands to a BUILD_ASSERT error.
  */
 DT_FOREACH_STATUS_OKAY(named_usbc_port, TCPC_CHIP_VERIFY)
 
@@ -140,31 +116,7 @@ MAYBE_CONST struct tcpc_config_t tcpc_config[] = { DT_FOREACH_STATUS_OKAY(
  * Define a struct tcpc_config_t for every TCPC node in the tree with the
  * "is-alt" property set.
  */
-DT_FOREACH_STATUS_OKAY_VARGS(ANX7447_TCPC_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_ANX7447)
-DT_FOREACH_STATUS_OKAY_VARGS(CCGXXF_TCPC_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_CCGXXF)
-DT_FOREACH_STATUS_OKAY_VARGS(FUSB302_TCPC_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_FUSB302)
-DT_FOREACH_STATUS_OKAY_VARGS(PS8XXX_COMPAT, TCPC_ALT_DEFINE, TCPC_CONFIG_PS8XXX)
-DT_FOREACH_STATUS_OKAY_VARGS(NCT38XX_TCPC_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_NCT38XX)
-DT_FOREACH_STATUS_OKAY_VARGS(RAA489000_TCPC_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_RAA489000)
-DT_FOREACH_STATUS_OKAY_VARGS(RT1718S_TCPC_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_RT1718S)
-DT_FOREACH_STATUS_OKAY_VARGS(RT1715_TCPC_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_RT1715)
-DT_FOREACH_STATUS_OKAY_VARGS(TCPCI_COMPAT, TCPC_ALT_DEFINE, TCPC_CONFIG_TCPCI)
-
-#ifdef TEST_BUILD
-DT_FOREACH_STATUS_OKAY_VARGS(TCPCI_EMUL_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_TCPCI_EMUL)
-DT_FOREACH_STATUS_OKAY_VARGS(PS8XXX_EMUL_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_PS8XXX_EMUL)
-DT_FOREACH_STATUS_OKAY_VARGS(ANX7447_EMUL_COMPAT, TCPC_ALT_DEFINE,
-			     TCPC_CONFIG_ANX7447_EMUL)
-#endif
+DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(TCPC_ALT_DEFINE, TCPC_DRIVERS)
 
 #ifdef CONFIG_PLATFORM_EC_TCPC_INTERRUPT
 

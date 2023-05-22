@@ -58,6 +58,8 @@
  * USB-C device driver (not the ID of the named-usbc-port node).
  */
 #define USBC_DRIVER_GET_COMPAT(driver) GET_ARG_N(1, __DEBRACKET driver)
+#define USBC_DRIVER_GET_COMPAT_COMMA(driver) USBC_DRIVER_GET_COMPAT(driver),
+#define USBC_DRIVER_GET_CONFIG(driver) GET_ARG_N(2, __DEBRACKET driver)
 #define USBC_DRIVER_GET_CONFIG(driver) GET_ARG_N(2, __DEBRACKET driver)
 
 /**

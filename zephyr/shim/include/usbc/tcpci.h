@@ -21,6 +21,34 @@
 
 #define TCPCI_COMPAT cros_ec_tcpci
 
+/**
+ * @brief List of all supported TCPC drivers and emulators. Format is
+ * (compatible, config).
+ */
+/* clang-format off */
+#define TCPC_DRIVERS                                     \
+	(ANX7447_TCPC_COMPAT, TCPC_CONFIG_ANX7447),      \
+	(CCGXXF_TCPC_COMPAT, TCPC_CONFIG_CCGXXF),        \
+	(FUSB302_TCPC_COMPAT, TCPC_CONFIG_FUSB302),      \
+	(IT8XXX2_TCPC_COMPAT, TCPC_CONFIG_IT8XXX2),      \
+	(PS8XXX_COMPAT, TCPC_CONFIG_PS8XXX),             \
+	(NCT38XX_TCPC_COMPAT, TCPC_CONFIG_NCT38XX),      \
+	(RAA489000_TCPC_COMPAT, TCPC_CONFIG_RAA489000),  \
+	(RT1718S_TCPC_COMPAT, TCPC_CONFIG_RT1718S),      \
+	(RT1715_TCPC_COMPAT, TCPC_CONFIG_RT1715),        \
+	(TCPCI_COMPAT, TCPC_CONFIG_TCPCI),               \
+	(TCPCI_EMUL_COMPAT, TCPC_CONFIG_TCPCI_EMUL),     \
+	(PS8XXX_EMUL_COMPAT, TCPC_CONFIG_PS8XXX_EMUL),   \
+	(ANX7447_EMUL_COMPAT, TCPC_CONFIG_ANX7447_EMUL), \
+	(RT1718S_EMUL_COMPAT, TCPC_CONFIG_RT1718S_EMUL)
+/* clang-format on */
+
+/**
+ * @brief List of TCPC compatible strings only.
+ */
+#define TCPC_DRIVER_COMPATS \
+	FOR_EACH(USBC_DRIVER_GET_COMPAT_COMMA, (), TCPC_DRIVERS)
+
 /* clang-format off */
 #define TCPC_CONFIG_TCPCI(id)                            \
 	{                                                \
@@ -67,29 +95,24 @@
 #define TCPC_ALT_DECLARATION(node_id) \
 	extern const struct tcpc_config_t TCPC_ALT_NAME_GET(node_id)
 
-#define TCPC_ALT_DECLARE(node_id)                   \
+/**
+ * @brief Forward declare a global "struct tcpc_config_t" entry, only if
+ * the TCPC node contains the "is-alt" property.
+ *
+ * @param node_id Node ID of the TCPC device
+ * @param config_fn Unused by this macro, but required by the
+ *                  DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS() wrapper.
+ */
+#define TCPC_ALT_DECLARE(node_id, config_fn)        \
 	COND_CODE_1(DT_PROP_OR(node_id, is_alt, 0), \
 		    (TCPC_ALT_DECLARATION(node_id);), ())
 
 /*
- * Forward declare a struct tcpc_config_t for every TCPC node in the tree with
- * the "is-alt" property set.
+ * For all TCPC drivers/emulators, forward declare a struct
+ * tcpc_config_t for every node in the tree with the "is-alt" property
+ * set.
  */
-DT_FOREACH_STATUS_OKAY(ANX7447_TCPC_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(CCGXXF_TCPC_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(FUSB302_TCPC_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(PS8XXX_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(NCT38XX_TCPC_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(RAA489000_TCPC_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(RT1718S_TCPC_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(RT1715_TCPC_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(TCPCI_COMPAT, TCPC_ALT_DECLARE)
-
-#ifdef TEST_BUILD
-DT_FOREACH_STATUS_OKAY(TCPCI_EMUL_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(PS8XXX_EMUL_COMPAT, TCPC_ALT_DECLARE)
-DT_FOREACH_STATUS_OKAY(ANX7447_EMUL_COMPAT, TCPC_ALT_DECLARE)
-#endif
+DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(TCPC_ALT_DECLARE, TCPC_DRIVERS)
 
 #define TCPC_ENABLE_ALTERNATE_BY_NODELABEL(usb_port_num, nodelabel) \
 	memcpy(&tcpc_config[usb_port_num],                          \
