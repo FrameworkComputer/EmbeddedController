@@ -17,5 +17,6 @@
 
 /* Rex project DTS includes */
 #include "cbi.dtsi"
+#include "i2c.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"

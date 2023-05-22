@@ -126,8 +126,6 @@
 };
 
 &i2c4_1 {
-	/delete-node/ ps8xxx@b;
-
 	tcpc_port1: nct38xx@73 {
 		compatible = "nuvoton,nct38xx";
 		gpio-dev = <&nct3807_C1>;
