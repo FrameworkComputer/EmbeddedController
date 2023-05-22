@@ -46,6 +46,6 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/charger.c"
 			"azalea/src/power_sequence.c"
 			"azalea/src/keyboard_customization.c"
-			"lotus/src/project_diagnostics.c"
+			"azalea/src/project_diagnostics.c"
 	)
 endif()

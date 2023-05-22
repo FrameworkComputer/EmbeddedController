@@ -33,7 +33,6 @@ uint32_t hw_diagnostics;
 uint32_t diagnostic_tick;
 uint32_t diagnostics_ctr;
 uint32_t bios_code;
-uint8_t bios_hc;
 
 uint8_t bios_complete;
 uint8_t fan_seen;
@@ -76,7 +75,6 @@ void set_diagnostic(enum diagnostics_device_idx idx, bool error)
 
 void set_bios_diagnostic(uint8_t code)
 {
-	bios_hc = code;
 	if (code == CODE_PORT80_COMPLETE) {
 		bios_complete = true;
 		CPRINTS("BIOS COMPLETE");
@@ -100,11 +98,11 @@ bool diagnostics_tick(void)
 		return false;
 	}
 
-	/* Wait 25 seconds for checks to complete */
-	if (++diagnostic_tick < 25 * TICK_PER_SEC)
+	/* Wait 15 seconds for checks to complete */
+	if (++diagnostic_tick < 15 * TICK_PER_SEC)
 		return false;
 
-	/* Everything is ok after minimum 25 seconds of checking */
+	/* Everything is ok after minimum 15 seconds of checking */
 	if (bios_complete && hw_diagnostics == 0)
 		return false;
 
@@ -122,7 +120,8 @@ bool diagnostics_tick(void)
 		} else if (diagnostics_ctr == DIAGNOSTICS_HW_FINISH)
 			set_diagnostic_leds(LED_AMBER);
 		else if (diagnostics_ctr < DIAGNOSTICS_MAX) {
-			set_diagnostic_leds((bios_code & (1<<(diagnostics_ctr - DIAGNOSTICS_BIOS_BIT0)))
+			set_diagnostic_leds((bios_code &
+				(1 << (diagnostics_ctr - DIAGNOSTICS_BIOS_BIT0)))
 				? LED_BLUE : LED_GREEN);
 		}
 		diagnostics_ctr++;
