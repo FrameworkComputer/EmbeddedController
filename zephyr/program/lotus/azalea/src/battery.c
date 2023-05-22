@@ -33,7 +33,7 @@ enum battery_present battery_is_present(void)
 	int mv;
 
 	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
-	batt_pres = (mv < 3000 ? BP_YES : BP_NO);
+	batt_pres = (mv < 2200 ? BP_YES : BP_NO);
 
 	if (mv == ADC_READ_ERROR)
 		return BP_NO;
