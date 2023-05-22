@@ -115,11 +115,17 @@ static void check_chassis_open(int init)
 	}
 }
 
-void board_hook_second(void)
+static void board_customer_tick(void);
+DECLARE_DEFERRED(board_customer_tick);
+
+/*
+ * for use experience, setting debounce time to 250 ms.
+ */
+static void board_customer_tick(void)
 {
 	check_chassis_open(0);
+	hook_call_deferred(&board_customer_tick_data, 250 * MSEC);
 }
-DECLARE_HOOK(HOOK_SECOND, board_hook_second, HOOK_PRIO_DEFAULT);
 
 static void bios_function_init(void)
 {
@@ -128,5 +134,6 @@ static void bios_function_init(void)
 			bios_function_status(TYPE_BBRAM, SYSTEM_BBRAM_IDX_BIOS_FUNCTION, 0);
 
 	check_chassis_open(1);
+	hook_call_deferred(&board_customer_tick_data, 1000 * MSEC);
 }
 DECLARE_HOOK(HOOK_INIT, bios_function_init, HOOK_PRIO_DEFAULT + 1);
