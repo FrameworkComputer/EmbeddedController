@@ -37,7 +37,7 @@ const struct board_batt_params board_battery_info[] = {
 	[BATTERY_LGC_AP21A8T] = {
 		/* RAJ240045 Fuel Gauge */
 		.fuel_gauge = {
-			.manuf_name = "LGC KT0040G014",
+			.manuf_name = "LGES KT0040G014",
 			.ship_mode = {
 				.reg_addr = 0x3A,
 				.reg_data = { 0xC574, 0xC574 },
