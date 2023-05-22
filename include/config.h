@@ -3195,6 +3195,10 @@
 #define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_GREEN
 #define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
 
+/* By default, 500 ms period, 50% duty cycle. */
+#define LED_CHARGER_ERROR_ON_TIME 1
+#define LED_CHARGER_ERROR_PERIOD 2
+
 /*
  * By default the PWM LED behaviour is reflected on both LEDs and includes the
  * chipset state, battery state, as well as the charging state.  Enable

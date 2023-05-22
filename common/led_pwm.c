@@ -186,8 +186,9 @@ static int show_charge_state(void)
 		set_led_color(CONFIG_LED_PWM_NEAR_FULL_COLOR);
 	} else if ((battery_is_present() != BP_YES) ||
 		   (chg_st == PWR_STATE_ERROR)) {
-		/* 500 ms period, 50% duty cycle. */
-		pulse_leds(CONFIG_LED_PWM_CHARGE_ERROR_COLOR, 1, 2);
+		/* Ontime and period in PULSE_TICK units. */
+		pulse_leds(CONFIG_LED_PWM_CHARGE_ERROR_COLOR,
+			   LED_CHARGER_ERROR_ON_TIME, LED_CHARGER_ERROR_PERIOD);
 	} else {
 		/* Discharging or not charging. */
 #ifdef CONFIG_LED_PWM_CHARGE_STATE_ONLY
