@@ -80,8 +80,12 @@
 			gpios = <&gpioi 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 
+		en_pp4200_s5: en-pp4200-s5 {
+			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
+		};
+
 		pg_pp4200_s5_od: pg-pp4200-s5-od {
-			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpioc 5 GPIO_INPUT>;
 			enum-name = "GPIO_PG_PP4200_S5_OD";
 		};
 
@@ -93,6 +97,15 @@
 
 		gpio_ac_lcd: gpio-ac-lcd{
 			gpios = <&gpiom 6 GPIO_OUTPUT_LOW>;
+		};
+
+		/delete-node/ entering_rw;
+		/*
+		 * Not used, only to make system.c compilable.
+		 * TODO: find a better way to remove this.
+		 */
+		entering_rw: entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
 		};
 
 		/delete-node/ en_pp5000_usb_a0_vbus;
