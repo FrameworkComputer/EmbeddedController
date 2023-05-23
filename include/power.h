@@ -42,6 +42,10 @@ FORWARD_DECLARE_ENUM(power_state){
 	POWER_S0ixS0, /* S0ix -> S0 */
 	POWER_S0S0ix, /* S0 -> S0ix */
 #endif
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	POWER_S0ixS3, /* S0ix -> S3 */
+	POWER_S3S0ix, /* S3 -> S0ix */
+#endif
 };
 
 /*

@@ -54,6 +54,9 @@ static const char *const state_names[] = {
 #ifdef CONFIG_POWER_S0IX
 	"S0ix->S0", "S0->S0ix",
 #endif
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	"S0ix->S3", "S3->S0ix",
+#endif
 };
 
 static uint32_t in_signals; /* Current input signal states (IN_PGOOD_*) */
@@ -589,6 +592,12 @@ int chipset_in_state(int state_mask)
 		need_mask = CHIPSET_STATE_ON;
 		break;
 #ifdef CONFIG_POWER_S0IX
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	case POWER_S0ixS3:
+	case POWER_S3S0ix:
+		need_mask = CHIPSET_STATE_ON | CHIPSET_STATE_STANDBY;
+		break;
+#endif
 	case POWER_S0ixS0:
 	case POWER_S0S0ix:
 		need_mask = CHIPSET_STATE_ON | CHIPSET_STATE_STANDBY;
@@ -623,6 +632,11 @@ int chipset_in_or_transitioning_to_state(int state_mask)
 	case POWER_S0S3:
 		return state_mask & CHIPSET_STATE_SUSPEND;
 #ifdef CONFIG_POWER_S0IX
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	case POWER_S0ixS3:
+	case POWER_S3S0ix:
+		return state_mask & CHIPSET_STATE_STANDBY;
+#endif
 	case POWER_S0ix:
 	case POWER_S0S0ix:
 		return state_mask & CHIPSET_STATE_STANDBY;

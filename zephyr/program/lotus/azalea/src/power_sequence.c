@@ -170,7 +170,7 @@ static int check_s0ix_statsus(void)
 	int clear_flag;
 
 	/* check power state S0ix flags */
-	if (chipset_in_state(CHIPSET_STATE_ON) || chipset_in_state(CHIPSET_STATE_STANDBY)) {
+	if (chipset_in_state(CHIPSET_STATE_ON) || chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		power_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE);
 
 
@@ -188,8 +188,11 @@ static int check_s0ix_statsus(void)
 
 		power_state_clear(clear_flag);
 
-		if (enter_ms_flag || resume_ms_flag)
-			return 1;
+		if (resume_ms_flag)
+			return CS_EXIT_S0ix;
+
+		if (enter_ms_flag)
+			return CS_ENTER_S0ix;
 	}
 	return 0;
 }
@@ -200,9 +203,9 @@ void s0ix_status_handle(void)
 
 	s0ix_state_change = check_s0ix_statsus();
 
-	if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_ON))
+	if ((s0ix_state_change == CS_ENTER_S0ix) && chipset_in_state(CHIPSET_STATE_ON))
 		task_wake(TASK_ID_CHIPSET);
-	else if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_STANDBY))
+	else if ((s0ix_state_change == CS_EXIT_S0ix) && chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 		task_wake(TASK_ID_CHIPSET);
 }
 DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
@@ -257,6 +260,35 @@ enum power_state power_chipset_init(void)
 	/* If we don't need to image jump to RW, always start at G3 state */
 	chipset_force_g3();
 	return POWER_G3;
+}
+
+static int chipset_prepare_S3(uint8_t enable)
+{
+	if (!enable) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
+		k_msleep(85);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 0);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 1);
+		k_msleep(20);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 1);
+
+		/* wait VR power good */
+		if (power_wait_signals(IN_VR_PGOOD)) {
+			/* something wrong, turn off power and force to g3 */
+			power_chipset_init();
+		}
+
+		k_msleep(10);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
+	}
+
+	return true;
 }
 
 enum power_state power_handle_state(enum power_state state)
@@ -331,10 +363,25 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S3:
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 1) {
-			/* Power up to next state */
+
+			/* still in s0ix state */
+			if (enter_ms_flag)
+				return POWER_S3S0ix;
+
 			k_msleep(10);
 			return POWER_S3S0;
 		} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
+
+			if (enter_ms_flag) {
+				resume_ms_flag = 0;
+				enter_ms_flag = 0;
+				lpc_s0ix_resume_restore_masks();
+				/* Call hooks now that rails are up */
+				hook_notify(HOOK_CHIPSET_RESUME);
+
+				/* if system drop power return to S0 run sequence shutdown */
+				return POWER_S0;
+			}
 			k_msleep(55);
 			/* Power down to next state */
 			return POWER_S3S5;
@@ -356,6 +403,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 1);
 		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 1);
 
 		/* wait VR power good */
 		if (power_wait_signals(IN_VR_PGOOD)) {
@@ -388,7 +436,7 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
-		if (check_s0ix_statsus())
+		if (check_s0ix_statsus() == CS_ENTER_S0ix)
 			return POWER_S0S0ix;
 #endif
 		break;
@@ -401,19 +449,39 @@ enum power_state power_handle_state(enum power_state state)
 			 * If power signal lose, we need to resume to S0 and
 			 * clear the resume ms flag
 			 */
-			if (resume_ms_flag > 0)
+			if (resume_ms_flag > 0) {
 				resume_ms_flag--;
-			return POWER_S0;
+				return POWER_S0ixS0;
+			}
+			return POWER_S0ixS3;
 		}
-		if (check_s0ix_statsus())
+
+		if (check_s0ix_statsus() == CS_EXIT_S0ix)
 			return POWER_S0ixS0;
 
 		break;
 
+	case POWER_S0ixS3:
+		CPRINTS("PH S0ixS3");
+		/* follow power sequence Disable S3 power */
+		chipset_prepare_S3(0);
+		CPRINTS("PH S0ixS0->S3");
+		return POWER_S3;
+
+	case POWER_S3S0ix:
+		CPRINTS("PH S3->S0ix");
+		/* Enable power for CPU check system */
+		chipset_prepare_S3(1);
+		CPRINTS("PH S3S0ix->S0ix");
+		return POWER_S0ix;
+
 	case POWER_S0ixS0:
 		CPRINTS("PH S0ixS0");
-		if (resume_ms_flag > 0)
-			resume_ms_flag--;
+		resume_ms_flag = 0;
+		enter_ms_flag = 0;
+		lpc_s0ix_resume_restore_masks();
+		/* Call hooks now that rails are up */
+		hook_notify(HOOK_CHIPSET_RESUME);
 		CPRINTS("PH S0ixS0->S0");
 		return POWER_S0;
 
@@ -421,8 +489,9 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0S0ix:
 		CPRINTS("PH S0->S0ix");
-		if (enter_ms_flag > 0)
-			enter_ms_flag--;
+		lpc_s0ix_suspend_clear_masks();
+		/* Call hooks before we remove power rails */
+		hook_notify(HOOK_CHIPSET_SUSPEND);
 		CPRINTS("PH S0S0ix->S0ix");
 		return POWER_S0ix;
 
@@ -435,6 +504,7 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(85);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 0);
 
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
@@ -496,7 +566,6 @@ static void peripheral_power_resume(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_kbl_pwr_en), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 
@@ -515,7 +584,6 @@ static void peripheral_power_suspend(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_kbl_pwr_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_pwr_en), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
 
