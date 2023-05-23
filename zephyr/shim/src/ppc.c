@@ -33,6 +33,28 @@
 	FOR_EACH_FIXED_ARG(CHECK_COMPAT_HELPER, (), (usbc_id, ppc_id), \
 			   PPC_DRIVERS)
 
+/*
+ * This macro gets invoked for every driver in the PPC_DRIVERS list.
+ * If the passed in ppc node contains the specified compat string, then
+ * this macro returns 1.  Otherwise the macro returns nothing (EMPTY).
+ */
+#define PPC_HAS_COMPAT(compat, ppc) \
+	IF_ENABLED(DT_NODE_HAS_COMPAT(ppc, compat), 1)
+
+/*
+ * Verify the compatible property of a PPC node is valid.
+ *
+ * Call PPC_HAS_COMPAT() for all PPC compatible strings listed in the
+ * PPC_DRIVERS list.  If the resulting list is empty, then there was no
+ * matching PPC driver found and this macro generates a build error.
+ */
+#define PPC_PROP_COMPATIBLE_VERIFY(ppc)                                        \
+	IF_ENABLED(                                                            \
+		IS_EMPTY(FOR_EACH_FIXED_ARG(PPC_HAS_COMPAT, (), ppc,           \
+					    PPC_DRIVER_COMPATS)),              \
+		(BUILD_ASSERT(0, "Invalid PPC compatible on node: " STRINGIFY( \
+					 ppc));))
+
 /* clang-format off */
 #define PPC_CHIP_STUB(usbc_id) \
 	[USBC_PORT_NEW(usbc_id)] = {},
@@ -43,10 +65,21 @@
 		    (PPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, ppc))), \
 		    (PPC_CHIP_STUB(usbc_id)))
 
+#define PPC_CHIP_VERIFY(usbc_id)                   \
+	IF_ENABLED(DT_NODE_HAS_PROP(usbc_id, ppc), \
+		   (PPC_PROP_COMPATIBLE_VERIFY(DT_PHANDLE(usbc_id, ppc))))
+
 #define PPC_CHIP_ALT(usbc_id)                                               \
 	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, ppc_alt),                     \
 		    (PPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, ppc_alt))), \
 		    ())
+
+/*
+ * The PPC_CHIP_VERIFY macro expands to nothing when the PPC driver
+ * compatible string is found in the PPC_DRIVER_COMPATS list.  Otherwise the
+ * macro expands to a BUILD_ASSERT error.
+ */
+DT_FOREACH_STATUS_OKAY(named_usbc_port, PPC_CHIP_VERIFY)
 
 struct ppc_config_t ppc_chips[] = { DT_FOREACH_STATUS_OKAY(named_usbc_port,
 							   PPC_CHIP) };

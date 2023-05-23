@@ -35,6 +35,12 @@
 /* clang-format on */
 
 /**
+ * @brief List of TCPC compatible strings only.
+ */
+#define PPC_DRIVER_COMPATS \
+	FOR_EACH(USBC_DRIVER_GET_COMPAT_COMMA, (), PPC_DRIVERS)
+
+/**
  * @brief Create a unique name based on a PPC altnernate node.
  *
  *	ppc_syv682x_alt: syv682x@43 {
