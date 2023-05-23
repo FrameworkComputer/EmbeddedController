@@ -18,6 +18,15 @@
 #error "Sensor type not defined!"
 #endif
 
+/**
+ * Runs a test for defective pixels.
+ *
+ * Should be triggered periodically by the client. The maintenance command can
+ * take several hundred milliseconds to run.
+ *
+ * @return EC_ERROR_HW_INTERNAL on error (such as finger on sensor)
+ * @return EC_SUCCESS on success
+ */
 int fpc_fp_maintenance(uint16_t *error_state);
 
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_FPC_FPC_SENSOR_H_ */
