@@ -103,9 +103,6 @@ static void baseboard_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s3));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_vddq_mem_od));
 
-	/* Enable thermtrip interrupt */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_thermtrip));
-
 	/* Enable prochot interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_prochot));
 	throttle_ap_config_prochot(&prochot_cfg);
@@ -197,6 +194,17 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) &&
 			gpio_pin_get_dt(
 				GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5)));
+
+	/*
+	 * Thermaltrip interrupt has a pull-up to the S0 domain, enable/disable
+	 * so that we don't get spurious interrupts when S0 goes down.
+	 */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0)))
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_soc_thermtrip));
+	else
+		gpio_disable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_soc_thermtrip));
 
 	/* Change EN_PWR_PCORE_S0_R if needed*/
 	baseboard_set_en_pwr_pcore(signal);
