@@ -234,6 +234,17 @@
 				    USB_MUX_CB_BOARD_INIT_DECLARE)
 
 /**
+ * @brief Call @p op operation for each USB mux node that is compatible with
+ *        any driver from the USB_MUX_DRIVERS list.
+ *        DT_FOREACH_STATUS_OKAY_VARGS() macro can not be used in @p op
+ *
+ * @param op Operation to perform on each USB mux. Should accept mux node ID and
+ *           driver config as arguments.
+ */
+#define USB_MUX_FOREACH_MUX_DT_VARGS(op) \
+	DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(op, USB_MUX_DRIVERS)
+
+/**
  * @brief Convert @p mux_id and @p conf pair into USB_MUX_LIST entry
  *
  * @param mux_id USB mux node ID

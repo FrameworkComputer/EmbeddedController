@@ -54,42 +54,45 @@
  * string and "config" is the macro used to initialize the USB-C driver
  * instance.
  *
- * The "config" macro has a single parameter, the devicetree node ID.
+ * The "config" macro has a single parameter, the devicetree node ID of the
+ * USB-C device driver (not the ID of the named-usbc-port node).
  */
-/**
- * @brief Get compatible from @p driver
- *
- * @param driver USB mux driver description in format (compatible, config)
- */
-#define USB_MUX_DRIVER_GET_COMPAT(driver) GET_ARG_N(1, __DEBRACKET driver)
-
-/**
- * @brief Get configuration from @p driver
- *
- * @param driver USB mux driver description in format (compatible, config)
- */
-#define USB_MUX_DRIVER_GET_CONFIG(driver) GET_ARG_N(2, __DEBRACKET driver)
+#define USBC_DRIVER_GET_COMPAT(driver) GET_ARG_N(1, __DEBRACKET driver)
+#define USBC_DRIVER_GET_CONFIG(driver) GET_ARG_N(2, __DEBRACKET driver)
 
 /**
  * @brief Call @p op operation for each node that is compatible with @p driver
  *
- * @param driver USB mux driver description in format (compatible, config)
- * @param op Operation to perform on each USB mux. Should accept mux node ID and
- *           driver config as arguments.
+ * @param driver USB driver description in format (compatible, config)
+ * @param op Operation to perform on each USB device. Should accept mux node ID
+ *           and driver config as arguments.
  */
-#define USB_MUX_DRIVER_CONFIG(driver, op)                                   \
-	DT_FOREACH_STATUS_OKAY_VARGS(USB_MUX_DRIVER_GET_COMPAT(driver), op, \
-				     USB_MUX_DRIVER_GET_CONFIG(driver))
+#define USBC_DRIVER_CONFIG(driver, op)                                   \
+	DT_FOREACH_STATUS_OKAY_VARGS(USBC_DRIVER_GET_COMPAT(driver), op, \
+				     USBC_DRIVER_GET_CONFIG(driver))
 
 /**
- * @brief Call @p op operation for each USB mux node that is compatible with
- *        any driver from the USB_MUX_DRIVERS list.
- *        DT_FOREACH_STATUS_OKAY_VARGS() macro can not be used in @p op
+ * @brief Call @p op operation for each USB driver node that found in the
+ *        devicetree that matches a compatible from the caller supplied
+ *        driver list.
  *
- * @param op Operation to perform on each USB mux. Should accept mux node ID and
+ * @param op Operation to perform on each USB driver. Should accept node ID and
  *           driver config as arguments.
+ * @param driver_list USB driver list, each driver in format
+ *                    (compatible, config), separated by commas.
  */
-#define USB_MUX_FOREACH_MUX_DT_VARGS(op) \
-	FOR_EACH_FIXED_ARG(USB_MUX_DRIVER_CONFIG, (), op, USB_MUX_DRIVERS)
+#define DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(op, driver_list) \
+	FOR_EACH_FIXED_ARG(USBC_DRIVER_CONFIG, (), op, driver_list)
+
+/**
+ * @brief When processing the named-usbc-port, the node ID of the USB-C port
+ * and the node ID of a property (ppc, tcpc, etc), are passed as a tuple
+ * as the fixed argument to FOR_EACH_FIXED_ARG.
+ *
+ * The macros below extract the USB-C node ID and the property node ID
+ * from this tuple.
+ */
+#define NODES_GET_USBC_ID(nodes) GET_ARG_N(1, __DEBRACKET nodes)
+#define NODES_GET_PROP_ID(nodes) GET_ARG_N(2, __DEBRACKET nodes)
 
 #endif /* __CROS_EC_ZEPHYR_SHIM_USBC_UTIL */
