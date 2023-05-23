@@ -37,6 +37,7 @@ TEST_PATTERNS='$(PLATFORM_EC)/test/**' \
 	'$(PLATFORM_EC)/core/host/**' \
 	'$(PLATFORM_EC)/zephyr/emul/**' \
 	'$(PLATFORM_EC)/zephyr/mock/**' \
+	'$(PLATFORM_EC)/zephyr/program/dev/**' \
 	'$(THIRD_PARTY)/zephyr/main/subsys/emul/**' \
 	'$(THIRD_PARTY)/zephyr/main/arch/posix/**' \
 	'**/*_benchmark.cc' \
