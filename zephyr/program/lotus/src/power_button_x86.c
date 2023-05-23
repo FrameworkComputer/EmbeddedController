@@ -6,11 +6,13 @@
 /* Power button state machine for x86 platforms */
 
 #include "board_adc.h"
+#include "board_function.h"
 #include "charge_state.h"
 #include "customized_shared_memory.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -208,17 +210,36 @@ static void set_initial_pwrbtn_state(void)
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		CPRINTS("PB init-on after updating firmware");
 	} else if (((reset_flags & EC_RESET_FLAG_HIBERNATE) == EC_RESET_FLAG_HIBERNATE) &&
-		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0)) {
+		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0) &&
+		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 0)) {
 		/**
 		 * EC needs to auto power on after exiting the hibernate mode w/o external power
 		 */
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		CPRINTS("PB init power on");
+	} else if (ac_boot_status() &&
+		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 1)) {
+		/* BIOS setup AC attach power on */
+		pwrbtn_state = PWRBTN_STATE_INIT_ON;
+		CPRINTS("PB init AC attach on");
 	} else {
 		pwrbtn_state = PWRBTN_STATE_IDLE;
 		CPRINTS("PB idle");
 	}
 }
+
+/**
+ * auto power on system when AC plug-in
+ */
+static void board_extpower(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+		extpower_is_present() && ac_boot_status()) {
+		CPRINTS("Power on from boot on AC present");
+		power_button_pch_pulse();
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 /**
  * Power button state machine.

@@ -131,4 +131,24 @@
 		offset = <0x46>;
 		size = <0x01>;
 	};
+	bios_function {
+		offset = <0x47>;
+		size = <0x01>;
+	};
+	chassis_was_open {
+		offset = <0x48>;
+		size = <0x01>;
+	};
+	chassis_magic {
+		offset = <0x49>;
+		size = <0x01>;
+	};
+	chassis_total {
+		offset = <0x4a>;
+		size = <0x01>;
+	};
+	chassis_vtr_open {
+		offset = <0x4b>;
+		size = <0x01>;
+	};
 };

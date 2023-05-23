@@ -130,6 +130,27 @@ struct ec_response_ap_reboot_delay {
 
 /*****************************************************************************/
 /*
+ * This command uses for BIOS check Chassis.
+ */
+#define EC_CMD_CHASSIS_INTRUSION 0x3E09
+#define EC_PARAM_CHASSIS_INTRUSION_MAGIC 0xCE
+#define EC_PARAM_CHASSIS_BBRAM_MAGIC 0xEC
+
+struct ec_params_chassis_intrusion_control {
+	uint8_t clear_magic;
+	uint8_t clear_chassis_status;
+} __ec_align1;
+
+struct ec_response_chassis_intrusion_control {
+	uint8_t chassis_ever_opened;
+	uint8_t coin_batt_ever_remove;
+	uint8_t total_open_count;
+	uint8_t vtr_open_count;
+} __ec_align1;
+
+
+/*****************************************************************************/
+/*
  * This command uses to Swap Control Fn key for the system BIOS menu option.
  */
 #define EC_CMD_UPDATE_KEYBOARD_MATRIX 0x3E0C
@@ -175,6 +196,16 @@ struct ec_response_fp_led_level {
 struct ec_response_read_pd_version {
 	uint8_t pd0_version[8];
 	uint8_t pd1_version[8];
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * This command returns how many times did chassis(sw3) pressed
+ */
+#define EC_CMD_CHASSIS_COUNTER 0x3E15
+
+struct ec_response_chassis_counter {
+	uint8_t press_counter;
 } __ec_align1;
 
 /*****************************************************************************/
