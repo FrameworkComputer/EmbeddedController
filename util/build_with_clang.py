@@ -126,6 +126,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "careena",
     "casta",
     "chronicler",
+    "coachz",
     "collis",
     "constitution",
     "copano",
@@ -176,6 +177,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "kohaku",
     "kuldax",
     "lalala",
+    "lazor",
     "liara",
     "lick",
     "lindar",
@@ -305,8 +307,6 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "chocodile_vpdmcu",  # compilation error: b/254710459
     # Boards that use CHIP:=npcx
     "bobba",  # overflows flash
-    "coachz",  # overflows flash
-    "lazor",  # overflows flash
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.
