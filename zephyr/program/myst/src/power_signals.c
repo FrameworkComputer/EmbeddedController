@@ -140,8 +140,7 @@ void board_pwrbtn_to_pch(int level)
 
 		msleep(EDS_PWR_BTN_RSMRST_T1A_DELAY);
 	}
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mech_pwr_btn_odl),
-			level);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_btn_odl), level);
 }
 
 /* Note: signal parameter unused */
