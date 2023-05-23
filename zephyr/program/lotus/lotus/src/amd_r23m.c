@@ -93,8 +93,10 @@ void amdr23m_update_temperature(int idx)
 	/*
 	 * if not detect GPU should not send I2C.
 	 */
-	if (!gpu_present())
+	if (!gpu_present()) {
+		temps[idx] = C_TO_K(0);
 		return;
+	}
 
 	/*
 	 * We shouldn't read the GPU temperature when the state
