@@ -14,15 +14,6 @@
 
 #include <zephyr/devicetree.h>
 
-#if DT_HAS_COMPAT_STATUS_OKAY(AOZ1380_COMPAT) ||          \
-	DT_HAS_COMPAT_STATUS_OKAY(KTU1125_COMPAT) ||      \
-	DT_HAS_COMPAT_STATUS_OKAY(NX20P348X_COMPAT) ||    \
-	DT_HAS_COMPAT_STATUS_OKAY(RT1739_PPC_COMPAT) ||   \
-	DT_HAS_COMPAT_STATUS_OKAY(SN5S330_COMPAT) ||      \
-	DT_HAS_COMPAT_STATUS_OKAY(SN5S330_EMUL_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(SYV682X_COMPAT) ||      \
-	DT_HAS_COMPAT_STATUS_OKAY(SYV682X_EMUL_COMPAT)
-
 #define PPC_CHIP_ENTRY(usbc_id, ppc_id, config_fn) \
 	[USBC_PORT_NEW(usbc_id)] = config_fn(ppc_id),
 
@@ -77,5 +68,3 @@ struct ppc_config_t ppc_chips_alt[] = { DT_FOREACH_STATUS_OKAY(named_usbc_port,
  * "is-alt" property set.
  */
 DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(PPC_ALT_DEFINE, PPC_DRIVERS)
-
-#endif /* #if DT_HAS_COMPAT_STATUS_OKAY */

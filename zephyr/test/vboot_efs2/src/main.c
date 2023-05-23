@@ -391,9 +391,3 @@ int pd_set_power_supply_ready(int port)
 }
 
 enum usbc_port { USBC_PORT_COUNT };
-
-/* USBC PPC configuration */
-struct ppc_config_t ppc_chips[] = {
-	/* not needed for the test */
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
