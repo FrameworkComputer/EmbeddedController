@@ -150,6 +150,12 @@
 		int-pin = <&usbc_tcpc_alrt_p0>;
 	};
 
+	ppc_port0: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+
 	usb_c0_soc_side_bb_retimer: jhl8040r-c0-soc-side@54 {
 		compatible = "intel,jhl8040r";
 		reg = <0x54>;
@@ -180,6 +186,12 @@
 		compatible = "fairchild,fusb302";
 		reg = <0x22>;
 		int-pin = <&usbc_tcpc_alrt_p1>;
+	};
+
+	ppc_port1: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
 	};
 
 	usb_c1_soc_side_bb_retimer: jhl8040r-c1-soc-side@55 {
@@ -214,6 +226,12 @@
 		int-pin = <&usbc_tcpc_alrt_p2>;
 	};
 
+	ppc_port2: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+
 	usb_c2_bb_retimer: jhl8040r-c2@58 {
 		compatible = "intel,jhl8040r";
 		reg = <0x58>;
@@ -237,6 +255,12 @@
 		compatible = "fairchild,fusb302";
 		reg = <0x22>;
 		int-pin = <&usbc_tcpc_alrt_p3>;
+	};
+
+	ppc_port3: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
 	};
 
 	usb_c3_bb_retimer: jhl8040r-c3@59 {

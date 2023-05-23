@@ -72,21 +72,6 @@ enum usbc_port {
 };
 BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
-/* USB-C PPC configuration */
-struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_TYPEC_AIC_1,
-		.i2c_addr_flags = I2C_ADDR_SN5S330_P0,
-		.drv = &sn5s330_drv,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TYPEC_AIC_1,
-		.i2c_addr_flags = I2C_ADDR_SN5S330_P1,
-		.drv = &sn5s330_drv,
-	},
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
 /* TCPC AIC GPIO Configuration */
 const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 	[USBC_PORT_C0] = {
