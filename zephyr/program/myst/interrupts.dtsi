@@ -53,7 +53,7 @@
 			handler = "baseboard_set_soc_pwr_pgood";
 		};
 		int_s0_pgood: s0_pgood {
-			irq-pin = <&gpio_pg_groupc_s0_od>;
+			irq-pin = <&gpio_pg_pcore_s0_r_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_s0_pgood";
 		};
