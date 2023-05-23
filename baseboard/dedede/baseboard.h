@@ -251,9 +251,6 @@
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
-/* System safe mode for improved panic debugging */
-#define CONFIG_SYSTEM_SAFE_MODE
-
 #ifndef __ASSEMBLER__
 
 #include "atomic_t.h"
