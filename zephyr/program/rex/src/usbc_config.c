@@ -125,7 +125,7 @@ static void board_disable_charger_ports(void)
 	CPRINTSUSB("Disabling all charger ports");
 
 	/* Disable all ports. */
-	for (i = 0; i < ppc_cnt; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		/*
 		 * If this port had booted in dead battery mode, go
 		 * ahead and reset it so EN_SNK responds properly.
@@ -193,7 +193,7 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < ppc_cnt; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (i == port) {
 			continue;
 		}

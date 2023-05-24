@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "usb_mux.h"
 #include "usb_mux_config.h"
+#include "usb_pd.h"
 #include "usbc/ppc.h"
 #include "usbc/tcpci.h"
 #include "usbc/usb_muxes.h"
@@ -132,3 +133,16 @@ static void setup_usb_db(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, setup_usb_db, HOOK_PRIO_POST_I2C);
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	switch (usb_db_type) {
+	case FW_USB_DB_USB3:
+	case FW_USB_DB_USB4_ANX7452:
+	case FW_USB_DB_USB4_ANX7452_V2:
+	case FW_USB_DB_USB4_KB8010:
+		return 2;
+	default:
+		return 1;
+	}
+}
