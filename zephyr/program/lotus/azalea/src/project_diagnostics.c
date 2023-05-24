@@ -10,18 +10,23 @@
 #include "driver/temp_sensor/f75303.h"
 #include "fan.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "port80.h"
+#include "temp_sensor/temp_sensor.h"
 #include "timer.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+#define F75303_I2C_ADDR_FLAGS_4D 0x4D
+#define F75303_PRODUCT_ID 0xFD
+#define F75303_ID	0x21
 
 void check_device_deferred(void)
 {
 	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
 	int audio = get_hardware_id(ADC_AUDIO_ID);
-	int temps;
+	int product_id;
 
 
 	if (touchpad <= BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14)
@@ -30,8 +35,9 @@ void check_device_deferred(void)
 	if (audio <= BOARD_VERSION_1 || audio >= BOARD_VERSION_14)
 		set_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
 
-	f75303_get_val(F75303_IDX_LOCAL, &temps);
-	if (temps == 0)
+	i2c_read8(I2C_PORT_SENSOR, F75303_I2C_ADDR_FLAGS_4D, F75303_PRODUCT_ID, &product_id);
+
+	if (product_id != F75303_ID)
 		set_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
 
 
