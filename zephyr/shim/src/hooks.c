@@ -48,6 +48,7 @@ static void hook_tick_work(struct k_work *work);
 static K_WORK_DELAYABLE_DEFINE(hook_seconds_work_data, hook_second_work);
 static K_WORK_DELAYABLE_DEFINE(hook_ticks_work_data, hook_tick_work);
 
+/* LCOV_EXCL_START informational only; should never happen */
 static void work_queue_error(const void *data, int rv)
 {
 	cprints(CC_HOOK,
@@ -55,6 +56,7 @@ static void work_queue_error(const void *data, int rv)
 		"deferred_data=0x%p, err=%d",
 		data, rv);
 }
+/* LCOV_EXCL_STOP */
 
 static void hook_second_work(struct k_work *work)
 {
@@ -63,8 +65,10 @@ static void hook_second_work(struct k_work *work)
 	hook_notify(HOOK_SECOND);
 
 	rv = k_work_reschedule(&hook_seconds_work_data, K_SECONDS(1));
+	/* LCOV_EXCL_START cannot fail unless delay = K_NO_WAIT */
 	if (rv < 0)
 		work_queue_error(&hook_seconds_work_data, rv);
+	/* LCOV_EXCL_STOP */
 }
 
 static void hook_tick_work(struct k_work *work)
@@ -75,25 +79,18 @@ static void hook_tick_work(struct k_work *work)
 
 	rv = k_work_reschedule(&hook_ticks_work_data,
 			       K_USEC(HOOK_TICK_INTERVAL));
+	/* LCOV_EXCL_START cannot fail unless delay = K_NO_WAIT */
 	if (rv < 0)
 		work_queue_error(&hook_ticks_work_data, rv);
+	/* LCOV_EXCL_STOP */
 }
 
-static void check_hook_task_priority(void)
-{
-	k_tid_t thread = &k_sys_work_q.thread;
-
-	/*
-	 * Numerically lower priorities take precedence, so verify the hook
-	 * related threads cannot preempt any of the shimmed tasks.
-	 */
-	if (k_thread_priority_get(thread) < (TASK_ID_COUNT - 1))
-		cprintf(CC_HOOK,
-			"ERROR: %s has priority %d but must be >= %d\n",
-			k_thread_name_get(thread),
-			k_thread_priority_get(thread), (TASK_ID_COUNT - 1));
-}
-DECLARE_HOOK(HOOK_INIT, check_hook_task_priority, HOOK_PRIO_FIRST);
+/*
+ * Numerically lower priorities take precedence, so verify the hook
+ * related threads cannot preempt any of the shimmed tasks.
+ */
+BUILD_ASSERT(CONFIG_SYSTEM_WORKQUEUE_PRIORITY >= (TASK_ID_COUNT - 1),
+	     "System workqueue priority must be lower than all EC tasks");
 
 static int zephyr_shim_setup_hooks(void)
 {
@@ -101,13 +98,17 @@ static int zephyr_shim_setup_hooks(void)
 
 	/* Startup the HOOK_TICK and HOOK_SECOND recurring work */
 	rv = k_work_reschedule(&hook_seconds_work_data, K_SECONDS(1));
+	/* LCOV_EXCL_START cannot fail unless delay = K_NO_WAIT */
 	if (rv < 0)
 		work_queue_error(&hook_seconds_work_data, rv);
+	/* LCOV_EXCL_STOP */
 
 	rv = k_work_reschedule(&hook_ticks_work_data,
 			       K_USEC(HOOK_TICK_INTERVAL));
+	/* LCOV_EXCL_START cannot fail unless delay = K_NO_WAIT */
 	if (rv < 0)
 		work_queue_error(&hook_ticks_work_data, rv);
+	/* LCOV_EXCL_STOP */
 
 	return 0;
 }
@@ -166,11 +167,17 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 		k_work_cancel_delayable(work);
 	} else if (us >= 0) {
 		rv = k_work_reschedule(work, K_USEC(us));
+		/*
+		 * LCOV_EXCL_START k_work_reschedule only returns errors
+		 * if queue is stopped or unspecified, and the system
+		 * never does either of those.
+		 */
 		if (rv < 0) {
 			work_queue_error(data, rv);
 		}
+		/* LCOV_EXCL_STOP */
 	} else {
-		return EC_ERROR_PARAM2;
+		return EC_ERROR_PARAM2; /* LCOV_EXCL_LINE caller misuse */
 	}
 
 	return rv >= 0 ? EC_SUCCESS : rv;
@@ -191,8 +198,13 @@ static void ev_handler(struct ap_power_ev_callback *cb,
 		       struct ap_power_ev_data data)
 {
 	switch (data.event) {
+	/*
+	 * LCOV_EXCL_START unreachable case unless ap_power_ev_init_callback()
+	 * below adds an event without adding a case here.
+	 */
 	default:
 		break;
+		/* LCOV_EXCL_STOP */
 
 #define CASE_HOOK(h)                           \
 	case AP_POWER_##h:                     \
