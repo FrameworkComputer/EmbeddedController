@@ -41,7 +41,7 @@ uint8_t run_diagnostics;
 void reset_diagnostics(void)
 {
 	/* Diagnostic always reset at G3/S5 */
-	hw_diagnostics = (1 << DIAGNOSTICS_NO_S0);
+	hw_diagnostics = (1 << DIAGNOSTICS_NO_S0) | (1 << DIAGNOSTICS_HW_NO_BATTERY);
 	run_diagnostics = 1;
 
 	diagnostics_ctr = 0;
@@ -135,6 +135,10 @@ static void diagnostics_check(void)
 {
 	/* Clear the DIAGNOSTIC_NO_S0 flag if chipset is resume */
 	set_diagnostic(DIAGNOSTICS_NO_S0, false);
+
+	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
+	if (battery_is_present() == BP_YES)
+		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
 
 	/* Call deferred hook to check the device */
 	project_diagnostics();
