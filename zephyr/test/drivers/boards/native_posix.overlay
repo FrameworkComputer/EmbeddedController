@@ -299,6 +299,12 @@
                         gpios = <&gpio1 13 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
                         enum-name = "GPIO_USB_C1_DP_HPD";
                 };
+		usb_c1_usb_en: usb_c1_usb_en {
+			gpios = <&gpio1 14 GPIO_OUTPUT_LOW>;
+		};
+		usb_c1_dp_en: usb_c1_dp_en {
+			gpios = <&gpio1 15 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	gpio1: gpio@101 {
@@ -311,7 +317,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <14>;
+		ngpios = <16>;
 	};
 
 	gpio-interrupts {

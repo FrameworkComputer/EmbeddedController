@@ -26,7 +26,7 @@
 	usb_c1_anx7452_emul: anx7452@10 {
 		compatible = "analogix,anx7452";
 		reg = <0x10>;
-		usb-en-pin = <&usb_c1_ls_en>;
-		dp-en-pin = <&usb_c1_rt_rst_odl>;
+		usb-en-pin = <&usb_c1_usb_en>;
+		dp-en-pin = <&usb_c1_dp_en>;
 	};
 };
