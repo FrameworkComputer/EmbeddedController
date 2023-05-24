@@ -974,9 +974,14 @@ static int icm42607_read_temp(const struct motion_sensor_t *s, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
-static int icm42607_init_config(const struct motion_sensor_t *s)
+static int icm42607_reset_revA(const struct motion_sensor_t *s)
 {
-	int mask, val, ret;
+	int ret, val;
+
+	/* clear status register */
+	ret = icm_read8(s, ICM42607_REG_INT_STATUS, &val);
+	if (ret)
+		return ret;
 
 	ret = icm_switch_on_mclk(s);
 	if (ret)
@@ -1131,12 +1136,55 @@ static int icm42607_init_config(const struct motion_sensor_t *s)
 
 #ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
 	/* Device operation in shared spi bus configuration */
-	mask = 0x03;
-	val = 0x03;
-	ret = icm_field_update8(s, ICM42607_REG_INTF_CONFIG0, mask, val);
+	ret = icm_field_update8(s, ICM42607_REG_INTF_CONFIG0, 0x03, 0x03);
 	if (ret)
 		return ret;
 #endif
+	return EC_SUCCESS;
+}
+
+static int icm42607_reset_revB(const struct motion_sensor_t *s)
+{
+	int val, ret, i;
+
+	ret = icm_write8(s, ICM42607_REG_SIGNAL_PATH_RESET,
+			 ICM42607_SOFT_RESET_DEV_CONFIG);
+	if (ret)
+		return ret;
+
+	/* Check reset is done, 1ms max */
+	for (i = 0; i < 5; i++) {
+		usleep(200);
+		ret = icm_read8(s, ICM42607_REG_INT_STATUS, &val);
+		if (ret)
+			return ret;
+		if (val == ICM42607_RESET_DONE_INT)
+			break;
+	}
+	if (val != ICM42607_RESET_DONE_INT)
+		return EC_ERROR_HW_INTERNAL;
+
+	return EC_SUCCESS;
+}
+
+static int icm42607_init_config(const struct motion_sensor_t *s,
+				const int who_am_i)
+{
+	int mask, val, ret;
+
+	switch (who_am_i) {
+	case ICM42607_CHIP_ICM42607P:
+		ret = icm42607_reset_revA(s);
+		break;
+	case ICM42607_CHIP_ICM42608P:
+		ret = icm42607_reset_revB(s);
+		break;
+	default:
+		ret = EC_ERROR_ACCESS_DENIED;
+		break;
+	}
+	if (ret)
+		return ret;
 
 	/* disable i3c support */
 	mask = ICM42607_I3C_SDR_EN | ICM42607_I3C_DDR_EN;
@@ -1166,31 +1214,27 @@ static int icm42607_init_config(const struct motion_sensor_t *s)
 static int icm42607_init(struct motion_sensor_t *s)
 {
 	struct accelgyro_saved_data_t *saved_data = ICM_GET_SAVED_DATA(s);
-	int val;
+	int who_am_i;
 	int ret, i;
 
 	mutex_lock(s->mutex);
 
 	/* detect chip using whoami */
-	ret = icm_read8(s, ICM42607_REG_WHO_AM_I, &val);
+	ret = icm_read8(s, ICM42607_REG_WHO_AM_I, &who_am_i);
 	if (ret)
 		goto out_unlock;
 
-	if (val != ICM42607_CHIP_ICM42607P) {
-		CPRINTS("Unknown WHO_AM_I: 0x%02x", val);
+	if (who_am_i != ICM42607_CHIP_ICM42607P &&
+	    who_am_i != ICM42607_CHIP_ICM42608P) {
+		CPRINTS("Unknown WHO_AM_I: 0x%02x", who_am_i);
 		ret = EC_ERROR_ACCESS_DENIED;
 		goto out_unlock;
 	}
 
 	/* first time init done only for 1st sensor (accel) */
 	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
-		/* clear status register */
-		ret = icm_read8(s, ICM42607_REG_INT_STATUS, &val);
-		if (ret)
-			goto out_unlock;
-
 		/* configure sensor */
-		ret = icm42607_init_config(s);
+		ret = icm42607_init_config(s, who_am_i);
 		if (ret)
 			goto out_unlock;
 
