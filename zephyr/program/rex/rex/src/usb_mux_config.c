@@ -112,6 +112,7 @@ static void setup_usb_db(void)
 						  ppc_nx20p_port1);
 		break;
 	case FW_USB_DB_USB4_ANX7452:
+	case FW_USB_DB_USB4_ANX7452_V2:
 		LOG_INF("USB DB: Setting ANX7452 mux");
 		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_anx7452_port1);
 		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,

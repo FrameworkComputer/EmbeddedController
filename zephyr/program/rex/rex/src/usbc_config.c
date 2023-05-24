@@ -33,14 +33,19 @@ void ppc_interrupt(enum gpio_signal signal)
 		syv682x_interrupt(USBC_PORT_C0);
 		break;
 	case GPIO_USB_C1_PPC_INT_ODL:
-		if (usb_db_type == FW_USB_DB_USB3) {
+		switch (usb_db_type) {
+		case FW_USB_DB_USB3:
 			nx20p348x_interrupt(USBC_PORT_C1);
-		}
-		if (usb_db_type == FW_USB_DB_USB4_ANX7452) {
+			break;
+		case FW_USB_DB_USB4_ANX7452:
+		case FW_USB_DB_USB4_ANX7452_V2:
 			syv682x_interrupt(USBC_PORT_C1);
-		}
-		if (usb_db_type == FW_USB_DB_USB4_KB8010) {
+			break;
+		case FW_USB_DB_USB4_KB8010:
 			ktu1125_interrupt(USBC_PORT_C1);
+			break;
+		default:
+			break;
 		}
 		break;
 	default:
