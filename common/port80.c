@@ -38,6 +38,20 @@ static int print_in_int = CONFIG_PORT80_PRINT_IN_INT;
 static void port80_dump_buffer(void);
 DECLARE_DEFERRED(port80_dump_buffer);
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+static int ddr_initialized_fail;
+
+int port_80_last(void)
+{
+	return (uint16_t)history[(writes-1) % ARRAY_SIZE(history)];
+}
+
+int amd_ddr_initialized_check(void)
+{
+	return ddr_initialized_fail;
+}
+#endif
+
 void port_80_write(int data)
 {
 #ifndef CONFIG_PORT80_CUSTOM_FORMAT
@@ -69,7 +83,12 @@ void port_80_write(int data)
 	}
 #else
 	/* This is for customer design to show port80 on 7-segment display */
-	CPRINTF("PORT80: 00%02X\n", data);
+	CPRINTF("PORT80: %04X\n", (data & 0xFFFF));
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	if (data == 0x12344321)
+		ddr_initialized_fail = 1;
+#endif
 #endif
 
 	/* Save current port80 code if system is resetting */

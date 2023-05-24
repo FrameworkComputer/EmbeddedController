@@ -13,6 +13,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "cypress_pd_common.h"
+#include "diagnostics.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -456,18 +457,14 @@ static void board_led_set_color(void)
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
-	/**
-	 * TODO: Debug led should add at here
-	 *
-	 * if (debug_led_active)
-	 *	contorl_debug_led;
-	 * else
-	 *	board_led_set_color();
-	 */
-	board_led_set_color();
-
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		board_led_set_power();
+
+	/* we have an error, override LED control*/
+	if (diagnostics_tick())
+		return;
+
+	board_led_set_color();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 

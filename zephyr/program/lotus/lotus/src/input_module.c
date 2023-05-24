@@ -11,6 +11,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "input_module.h"
 #include "task.h"
 #include "util.h"
 #include "zephyr_console_shim.h"
@@ -27,53 +28,13 @@ LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_INF);
 
 int oc_count;
 int force_on;
+int hub_board_id[8];	/* EC console Debug use */
+enum input_deck_state deck_state;
 
 void module_oc_interrupt(enum gpio_signal signal)
 {
     oc_count++;
 }
-
-enum input_modules_t {
-	INPUT_MODULE_SHORT,
-	INPUT_MODULE_RESERVED_1,
-	INPUT_MODULE_RESERVED_2,
-	INPUT_MODULE_RESERVED_3,
-	INPUT_MODULE_RESERVED_4,
-	INPUT_MODULE_RESERVED_5,
-	INPUT_MODULE_RESERVED_6,
-	INPUT_MODULE_RESERVED_7,
-	INPUT_MODULE_GENERIC_A,
-	INPUT_MODULE_GENERIC_B,
-	INPUT_MODULE_GENERIC_C,
-	INPUT_MODULE_KEYBOARD_B,
-	INPUT_MODULE_KEYBOARD_A,
-	INPUT_MODULE_TOUCHPAD,
-	INPUT_MODULE_RESERVED_15,
-	INPUT_MODULE_DISCONNECTED,
-};
-
-enum input_deck_state {
-    DECK_OFF,
-	DECK_DISCONNECTED,
-	DECK_TURNING_ON,
-	DECK_ON,
-	DECK_FORCE_OFF,
-	DECK_FORCE_ON,
-	DECK_NO_DETECTION /* input deck will follow power sequence, no present check */
-} deck_state;
-
-enum input_deck_mux {
-	TOP_ROW_0 = 0,
-	TOP_ROW_1,
-	TOP_ROW_2,
-	TOP_ROW_3,
-	TOP_ROW_4,
-	TOUCHPAD,
-	TOP_ROW_NOT_CONNECTED,
-	HUBBOARD = 7
-};
-
-int hub_board_id[8];	/* EC console Debug use */
 
 static void set_hub_mux(uint8_t input)
 {
@@ -84,6 +45,7 @@ static void set_hub_mux(uint8_t input)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_mux_a2),
 		((input & BIT(2)) >> 2));
 }
+
 static void scan_c_deck(bool full_scan)
 {
     int i;
@@ -168,8 +130,6 @@ static void poll_c_deck(void)
 }
 DECLARE_HOOK(HOOK_TICK, poll_c_deck, HOOK_PRIO_DEFAULT);
 
-
-
 static void input_modules_powerup(void)
 {
 	if (deck_state == DECK_NO_DETECTION) {
@@ -193,6 +153,11 @@ static void input_modules_powerdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_modules_powerdown, HOOK_PRIO_DEFAULT);
+
+int get_deck_state(void)
+{
+	return deck_state;
+}
 
 /* Host command */
 static enum ec_status check_deck_state(struct host_cmd_handler_args *args)

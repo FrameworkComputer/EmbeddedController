@@ -31,4 +31,20 @@ void port_80_write(int data);
  */
 int port_80_read(void);
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+/**
+ * Get last boot code
+ *
+ * @return Last port 80 code from boot
+ */
+int port_80_last(void);
+
+/**
+ * return amd initialized check result
+ *
+ * @return 0: ddr detect; 1: ddr no detect.
+ */
+int amd_ddr_initialized_check(void);
+#endif
+
 #endif /* __CROS_EC_PORT80_H */

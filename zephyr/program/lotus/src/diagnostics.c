@@ -1,0 +1,147 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "adc.h"
+#include "battery.h"
+#include "board_host_command.h"
+#include "charge_state.h"
+#include "chipset.h"
+#include "diagnostics.h"
+#include "driver/temp_sensor/f75303.h"
+#include "ec_commands.h"
+#include "fan.h"
+#include "gpio.h"
+#include "hooks.h"
+#include "led.h"
+#include "power.h"
+#include "port80.h"
+#include "timer.h"
+#include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+
+/**
+ * CROS_EC_HOOK_TICK_INTERVAL = 200 ms
+ * TICK_PER_SEC = 1000 ms / 200 ms = 5
+ */
+#define TICK_PER_SEC	5
+
+uint32_t hw_diagnostics;
+uint32_t diagnostic_tick;
+uint32_t diagnostics_ctr;
+uint32_t bios_code;
+
+uint8_t bios_complete;
+uint8_t fan_seen;
+uint8_t run_diagnostics;
+
+void reset_diagnostics(void)
+{
+	/* Diagnostic always reset at G3/S5 */
+	hw_diagnostics = (1 << DIAGNOSTICS_NO_S0) | (1 << DIAGNOSTICS_HW_NO_BATTERY);
+	run_diagnostics = 1;
+
+	diagnostics_ctr = 0;
+	bios_complete = 0;
+	bios_code = 0;
+	diagnostic_tick = 0;
+	fan_seen = 0;
+}
+
+void cancel_diagnostics(void)
+{
+	/**
+	 * We need to cancel the diagnostics if the user presses the power
+	 * button to power off the system during the diagnostic.
+	 */
+	run_diagnostics = 0;
+}
+
+static void set_diagnostic_leds(int color)
+{
+	led_set_color(color, EC_LED_ID_BATTERY_LED);
+}
+
+void set_diagnostic(enum diagnostics_device_idx idx, bool error)
+{
+	if (error)
+		hw_diagnostics |= 1 << idx;
+	else
+		hw_diagnostics &= ~(1 << idx);
+}
+
+void set_bios_diagnostic(uint8_t code)
+{
+	if (code == CODE_PORT80_COMPLETE) {
+		bios_complete = true;
+		CPRINTS("BIOS COMPLETE");
+	}
+
+	if (code == CODE_DDR_FAIL)
+		set_diagnostic(DIAGNOSTICS_NO_DDR, true);
+	if (code == CODE_NO_EDP)
+		set_diagnostic(DIAGNOSTICS_NO_EDP, true);
+}
+
+bool diagnostics_tick(void)
+{
+	/* Don't need to run the diagnostic */
+	if (run_diagnostics == 0)
+		return false;
+
+	/* Diagnostic complete */
+	if (diagnostics_ctr >= DIAGNOSTICS_MAX) {
+		run_diagnostics = 0;
+		return false;
+	}
+
+	/* Wait 15 seconds for checks to complete */
+	if (++diagnostic_tick < 15 * TICK_PER_SEC)
+		return false;
+
+	/* Everything is ok after minimum 15 seconds of checking */
+	if (bios_complete && hw_diagnostics == 0)
+		return false;
+
+	/* If something is wrong, display the diagnostic via the LED */
+	if (diagnostic_tick & 0x01)
+		set_diagnostic_leds(LED_OFF);
+	else {
+		if (diagnostics_ctr == DIAGNOSTICS_START) {
+			set_diagnostic_leds(LED_WHITE);
+			bios_code = port_80_last();
+			CPRINTS("Boot issue: HW 0x%08x BIOS: 0x%04x", hw_diagnostics, bios_code);
+		} else if (diagnostics_ctr  < DIAGNOSTICS_HW_FINISH) {
+			set_diagnostic_leds((hw_diagnostics & (1 << diagnostics_ctr))
+				? LED_RED : LED_GREEN);
+		} else if (diagnostics_ctr == DIAGNOSTICS_HW_FINISH)
+			set_diagnostic_leds(LED_AMBER);
+		else if (diagnostics_ctr < DIAGNOSTICS_MAX) {
+			set_diagnostic_leds((bios_code &
+				(1 << (diagnostics_ctr - DIAGNOSTICS_BIOS_BIT0)))
+				? LED_BLUE : LED_GREEN);
+		}
+		diagnostics_ctr++;
+	}
+
+	return true;
+
+}
+
+static void diagnostics_check(void)
+{
+	/* Clear the DIAGNOSTIC_NO_S0 flag if chipset is resume */
+	set_diagnostic(DIAGNOSTICS_NO_S0, false);
+
+	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
+	if (battery_is_present() == BP_YES)
+		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
+
+	/* Call deferred hook to check the device */
+	project_diagnostics();
+
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, diagnostics_check, HOOK_PRIO_DEFAULT);
