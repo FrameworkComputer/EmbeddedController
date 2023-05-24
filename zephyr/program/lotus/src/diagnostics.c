@@ -119,6 +119,8 @@ bool diagnostics_tick(void)
 	/* Everything is ok after minimum 15 seconds of checking */
 	if (bios_complete && hw_diagnostics == 0)
 		return false;
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
 
 	/* If something is wrong, display the diagnostic via the LED */
 	if (diagnostic_tick & 0x01)

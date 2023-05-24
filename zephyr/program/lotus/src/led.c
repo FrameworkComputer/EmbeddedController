@@ -214,7 +214,8 @@ static int match_node(int node_idx)
 	 * Charge LED should control the left side and right side.
 	 * If the chassis is opened or there isn't an active charge port, needs to open both sides.
 	 */
-	if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) &&
+	if (((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) ||
+		get_standalone_mode()) &&
 		(active_charge_port != -1)) {
 		gpio_pin_set_dt(
 			GPIO_DT_FROM_NODELABEL(gpio_right_side), (active_charge_port < 2) ? 1 : 0);
@@ -258,7 +259,8 @@ static int match_node(int node_idx)
 	if (node_array[node_idx].pwr_state == PWR_STATE_UNCHANGE &&
 		node_array[node_idx].chipset_state == 0 &&
 		node_array[node_idx].batt_lvl[0] == -1) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1)
+		if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) ||
+			get_standalone_mode())
 			return -1;
 	}
 
