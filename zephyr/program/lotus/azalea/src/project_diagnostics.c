@@ -29,10 +29,12 @@ void check_device_deferred(void)
 	int product_id;
 
 
-	if (touchpad <= BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14)
+	if ((touchpad <= BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
+		!get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
 
-	if (audio <= BOARD_VERSION_1 || audio >= BOARD_VERSION_14)
+	if ((audio <= BOARD_VERSION_1 || audio >= BOARD_VERSION_14) &&
+		!get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
 
 	i2c_read8(I2C_PORT_SENSOR, F75303_I2C_ADDR_FLAGS_4D, F75303_PRODUCT_ID, &product_id);

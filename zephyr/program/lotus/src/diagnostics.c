@@ -38,6 +38,20 @@ uint8_t bios_complete;
 uint8_t fan_seen;
 uint8_t run_diagnostics;
 
+int standalone_mode;
+
+void set_standalone_mode(int enable)
+{
+	CPRINTS("set standalone = %d", enable);
+	standalone_mode = enable;
+}
+
+int get_standalone_mode(void)
+{
+	return standalone_mode;
+}
+
+
 void reset_diagnostics(void)
 {
 	/* Diagnostic always reset at G3/S5 */
@@ -82,7 +96,7 @@ void set_bios_diagnostic(uint8_t code)
 
 	if (code == CODE_DDR_FAIL)
 		set_diagnostic(DIAGNOSTICS_NO_DDR, true);
-	if (code == CODE_NO_EDP)
+	if (code == CODE_NO_EDP && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_NO_EDP, true);
 }
 
@@ -137,7 +151,7 @@ static void diagnostics_check(void)
 	set_diagnostic(DIAGNOSTICS_NO_S0, false);
 
 	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
-	if (battery_is_present() == BP_YES)
+	if (battery_is_present() == BP_YES || get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
 
 	/* Call deferred hook to check the device */

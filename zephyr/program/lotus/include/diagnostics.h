@@ -58,4 +58,8 @@ void project_diagnostics(void);
 
 bool diagnostics_tick(void);
 
+void set_standalone_mode(int enable);
+
+int get_standalone_mode(void);
+
 #endif	/* __CROS_EC_DIAGNOSTICS_H */
