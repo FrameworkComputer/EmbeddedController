@@ -51,7 +51,7 @@
 			gpios = <&gpioa 6 GPIO_INPUT>;
 		};
 		gpio_ec_c1_retimer_rst_odl: ec_c1_retimer_rst_odl {
-			gpios = <&gpio0 3 GPIO_ODR_LOW>;
+			gpios = <&gpio0 3 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_disable_disp_bl: ec_disable_disp_bl {
 			gpios = <&gpiob 1 GPIO_OUTPUT>;
