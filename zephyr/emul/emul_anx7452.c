@@ -90,7 +90,7 @@ void anx7452_emul_reset(const struct emul *emul)
 
 	data = emul->data;
 
-	data->top_reg = 0xFF;
+	data->top_reg = 0x01 | ANX7452_TOP_RESERVED_BIT;
 
 	data->ctltop_cfg0_reg = 0x00;
 
