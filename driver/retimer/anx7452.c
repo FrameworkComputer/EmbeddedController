@@ -19,33 +19,23 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-static int anx7452_read(const struct usb_mux *me, uint8_t reg, int *val)
+static int anx7452_top_read(const struct usb_mux *me, uint8_t reg, int *val)
 {
 	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
-static int anx7452_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
+static int anx7452_top_update(const struct usb_mux *me, uint8_t reg,
+			      uint8_t mask, uint8_t val)
 {
-	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
+	return i2c_field_update8(me->i2c_port, me->i2c_addr_flags, reg, mask,
+				 val & mask);
 }
 
 static int anx7452_ctltop_update(const struct usb_mux *me, uint8_t reg,
 				 uint8_t mask, uint8_t val)
 {
-	int reg_val = 0;
-	int rv;
-
-	RETURN_ERROR(i2c_read8(me->i2c_port, ANX7452_I2C_ADDR_CTLTOP_FLAGS, reg,
-			       &reg_val));
-	reg_val = (reg_val & ~mask) | (val & mask);
-	rv = i2c_write8(me->i2c_port, ANX7452_I2C_ADDR_CTLTOP_FLAGS, reg,
-			reg_val);
-	if (rv) {
-		CPRINTS("ANX7452: Failed to write to ctltop register %x rv:%d",
-			reg, rv);
-		return EC_ERROR_TIMEOUT;
-	}
-	return EC_SUCCESS;
+	return i2c_field_update8(me->i2c_port, ANX7452_I2C_ADDR_CTLTOP_FLAGS,
+				 reg, mask, val & mask);
 }
 
 static int anx7452_ctltop_update_all(const struct usb_mux *me, uint8_t cfg0_val,
@@ -60,36 +50,58 @@ static int anx7452_ctltop_update_all(const struct usb_mux *me, uint8_t cfg0_val,
 	RETURN_ERROR(anx7452_ctltop_update(me, ANX7452_CTLTOP_CFG2_REG,
 					   ANX7452_CTLTOP_CFG2_REG_BIT_MASK,
 					   cfg2_val));
+	return EC_SUCCESS;
+}
+
+static int anx7452_power_enable(const struct usb_mux *me)
+{
+	int usb_enable;
+
+	usb_enable = anx7452_controls[me->usb_port].usb_enable_gpio;
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+		return EC_ERROR_NOT_POWERED;
+	}
+
+	gpio_set_level(usb_enable, 1);
+	return EC_SUCCESS;
+}
+
+static int anx7452_i2c_awake(const struct usb_mux *me)
+{
+	int rv;
+	timestamp_t start;
+
+	/* Keep trying to update top register until mux wakes up or times
+	 * out
+	 */
+	start = get_time();
+	do {
+		/* Configure for i2c control */
+		rv = anx7452_top_update(
+			me, ANX7452_TOP_STATUS_REG,
+			ANX7452_TOP_STATUS_REG_I2C_CTRL_EN_BIT_MASK,
+			ANX7452_TOP_REG_EN);
+		if (rv == EC_SUCCESS) {
+			break;
+		}
+		usleep(ANX7452_I2C_WAKE_RETRY_DELAY_US);
+	} while (time_since32(start) < ANX7452_I2C_WAKE_TIMEOUT_MS * MSEC);
+	if (rv != EC_SUCCESS) {
+		CPRINTS("ANX7452: Failed to wake mux rv: %d", rv);
+		return EC_ERROR_TIMEOUT;
+	}
 
 	return EC_SUCCESS;
 }
 
 static int anx7452_init(const struct usb_mux *me)
 {
-	int usb_enable;
-	timestamp_t start;
-	int val;
-	int rv;
+	RETURN_ERROR(anx7452_power_enable(me));
 
-	usb_enable = anx7452_controls[me->usb_port].usb_enable_gpio;
-	gpio_set_level(usb_enable, 1);
+	msleep(ANX7452_I2C_PRE_WAKE_WAIT_MS);
 
-	/* Keep reading control register until mux wakes up or times out */
-	start = get_time();
-	do {
-		rv = anx7452_read(me, ANX7452_TOP_STATUS_REG, &val);
-		if (!rv)
-			break;
-		usleep(ANX7452_I2C_WAKE_RETRY_DELAY_US);
-	} while (time_since32(start) < ANX7452_I2C_WAKE_TIMEOUT_MS * MSEC);
-	if (rv) {
-		CPRINTS("ANX7452: Failed to wake mux rv:%d", rv);
-		return EC_ERROR_TIMEOUT;
-	}
-
-	/* Configure for i2c control */
-	val = ANX7452_TOP_REG_EN;
-	RETURN_ERROR(anx7452_write(me, ANX7452_TOP_STATUS_REG, val));
+	RETURN_ERROR(anx7452_i2c_awake(me));
 
 	return EC_SUCCESS;
 }
@@ -100,6 +112,10 @@ static int anx7452_set(const struct usb_mux *me, mux_state_t mux_state,
 	int cfg0_val = 0;
 	int cfg1_val = 0;
 	int cfg2_val = 0;
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+		return EC_ERROR_NOT_POWERED;
+	}
 
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
@@ -129,28 +145,36 @@ static int anx7452_set(const struct usb_mux *me, mux_state_t mux_state,
 		cfg2_val |= ANX7452_CTLTOP_CFG2_TBT_EN;
 	}
 
-	return anx7452_ctltop_update_all(me, cfg0_val, cfg1_val, cfg2_val);
+	RETURN_ERROR(
+		anx7452_ctltop_update_all(me, cfg0_val, cfg1_val, cfg2_val));
+	return EC_SUCCESS;
 }
 
 static int anx7452_get(const struct usb_mux *me, mux_state_t *mux_state)
 {
-	int reg = 0;
+	int reg_val = 0;
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+		*mux_state = USB_PD_MUX_NONE;
+		return EC_ERROR_NOT_POWERED;
+	}
+
+	RETURN_ERROR(anx7452_top_read(me, ANX7452_TOP_STATUS_REG, &reg_val));
 
 	*mux_state = 0;
-	RETURN_ERROR(anx7452_read(me, ANX7452_TOP_STATUS_REG, &reg));
-	if (reg & ANX7452_TOP_FLIP_INFO) {
+	if (reg_val & ANX7452_TOP_FLIP_INFO) {
 		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 	}
-	if (reg & ANX7452_TOP_DP_INFO) {
+	if (reg_val & ANX7452_TOP_DP_INFO) {
 		*mux_state |= USB_PD_MUX_DP_ENABLED;
 	}
-	if (reg & ANX7452_TOP_TBT_INFO) {
+	if (reg_val & ANX7452_TOP_TBT_INFO) {
 		*mux_state |= USB_PD_MUX_TBT_COMPAT_ENABLED;
 	}
-	if (reg & ANX7452_TOP_USB3_INFO) {
+	if (reg_val & ANX7452_TOP_USB3_INFO) {
 		*mux_state |= USB_PD_MUX_USB_ENABLED;
 	}
-	if (reg & ANX7452_TOP_USB4_INFO) {
+	if (reg_val & ANX7452_TOP_USB4_INFO) {
 		*mux_state |= USB_PD_MUX_USB4_ENABLED;
 	}
 
