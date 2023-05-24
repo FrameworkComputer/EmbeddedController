@@ -11,6 +11,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "customized_shared_memory.h"
+#include "diagnostics.h"
 #include "ec_commands.h"
 #include "flash_storage.h"
 #include "hooks.h"
@@ -61,6 +62,9 @@ int ac_boot_status(void)
 void bios_function_detect(void)
 {
 	system_set_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, ac_boot_status());
+
+	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
+		flash_storage_commit();
 }
 
 int chassis_cmd_clear(int type)
@@ -132,6 +136,9 @@ static void bios_function_init(void)
 	if (!ac_boot_status())
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC) =
 			bios_function_status(TYPE_BBRAM, SYSTEM_BBRAM_IDX_BIOS_FUNCTION, 0);
+
+	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
+		set_standalone_mode(1);
 
 	check_chassis_open(1);
 	hook_call_deferred(&board_customer_tick_data, 1000 * MSEC);

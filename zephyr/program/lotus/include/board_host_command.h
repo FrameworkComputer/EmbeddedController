@@ -219,6 +219,17 @@ struct ec_response_read_pd_version {
 
 /*****************************************************************************/
 /*
+ * This command uses to control the standalone mode enable/disable
+ */
+#define EC_CMD_STANDALONE_MODE 0x3E13
+
+struct ec_params_standalone_mode {
+	uint8_t enable;
+} __ec_align1;
+
+
+/*****************************************************************************/
+/*
  * This command returns how many times did chassis(sw3) pressed
  */
 #define EC_CMD_CHASSIS_COUNTER 0x3E15
