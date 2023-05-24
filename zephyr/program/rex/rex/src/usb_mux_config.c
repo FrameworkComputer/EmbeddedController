@@ -77,7 +77,8 @@ static void setup_runtime_gpios(void)
 	case FW_USB_DB_USB4_ANX7452_V2:
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(anx_usb_c1_rt_hpd_in),
 				      GPIO_OUTPUT_LOW);
-		gpio_unused(GPIO_DT_FROM_ALIAS(anx_usb_c1_rt_dp_en));
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(anx_usb_c1_rt_dp_en),
+				      GPIO_OUTPUT_LOW);
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(anx_usb_c1_rt_usb_en),
 				      GPIO_OUTPUT_LOW);
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(anx_usb_c1_frs_en),
