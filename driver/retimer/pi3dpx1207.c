@@ -67,6 +67,10 @@ static void pi3dpx1207_shutoff_power(const struct usb_mux *me)
 	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
 	const int gpio_dp_enable = pi3dpx1207_controls[port].dp_enable_gpio;
 
+	/* The chip may be automatically turned on by PP3300_S5. */
+	if (gpio_enable == GPIO_SIGNAL_NONE)
+		return;
+
 	gpio_or_ioex_set_level(gpio_enable, 0);
 	gpio_or_ioex_set_level(gpio_dp_enable, 0);
 }
@@ -79,7 +83,9 @@ static int pi3dpx1207_init(const struct usb_mux *me)
 	const int port = me->usb_port;
 	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
 
-	gpio_or_ioex_set_level(gpio_enable, 1);
+	if (gpio_enable != GPIO_SIGNAL_NONE)
+		gpio_or_ioex_set_level(gpio_enable, 1);
+
 	return EC_SUCCESS;
 }
 
@@ -107,7 +113,8 @@ static int pi3dpx1207_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 
 	/* USB */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
-		gpio_or_ioex_set_level(gpio_enable, 1);
+		if (gpio_enable != GPIO_SIGNAL_NONE)
+			gpio_or_ioex_set_level(gpio_enable, 1);
 		/* USB with DP */
 		if (mux_state & USB_PD_MUX_DP_ENABLED) {
 			gpio_or_ioex_set_level(gpio_dp_enable, 1);
@@ -125,7 +132,8 @@ static int pi3dpx1207_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	}
 	/* DP without USB */
 	else if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		gpio_or_ioex_set_level(gpio_enable, 1);
+		if (gpio_enable != GPIO_SIGNAL_NONE)
+			gpio_or_ioex_set_level(gpio_enable, 1);
 		gpio_or_ioex_set_level(gpio_dp_enable, 1);
 		mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
 				    PI3DPX1207_MODE_CONF_DP_FLIP :
