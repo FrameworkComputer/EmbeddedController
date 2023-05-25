@@ -156,7 +156,9 @@ void baseboard_set_soc_pwr_pgood(enum gpio_signal unused)
 			gpio_pin_get_dt(
 				GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s3_od)) &&
 			gpio_pin_get_dt(
-				GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0)));
+				GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_pg_pcore_s0_r_od)));
 }
 
 void baseboard_s0_pgood(enum gpio_signal signal)

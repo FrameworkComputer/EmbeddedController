@@ -88,7 +88,7 @@
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
-			gpios = <&gpio9 4 GPIO_ODR_HIGH>;
+			gpios = <&gpio9 4 GPIO_ODR_LOW>;
 		};
 		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
 			gpios = <&gpioa 5 GPIO_OUTPUT>;
