@@ -15,6 +15,7 @@
 #include "../ite_led.dtsi"
 #include "../ite_usbc.dtsi"
 #include "../ite_shi.dtsi"
+#include "./thermistor.dtsi"
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/motionsense/utils.h>
 
@@ -272,6 +273,9 @@
 		temp_sensor_2 {
 			sensor = <&temp_sensor_2_thermistor>;
 		};
+		temp_charger: charger {
+			sensor = <&charger_bc12_port1>;
+		};
 	};
 	/*
 	 * The hardware design sets PWM0 as the amber light,
@@ -430,6 +434,7 @@
 &i2c0{
 	charger_bc12_port1: rt9490@53{
 		compatible = "richtek,rt9490";
+		thermistor = <&thermistor_rt9490>;
 	};
 };
 
