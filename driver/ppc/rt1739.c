@@ -164,7 +164,7 @@ static int rt1739_get_device_id(int port, int *device_id)
 
 static int rt1739_workaround(int port)
 {
-	int device_id;
+	int device_id, vconn_ctrl4;
 
 	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
 
@@ -179,6 +179,8 @@ static int rt1739_workaround(int port)
 					       RT1739_UVLO_DISVBUS_EN |
 					       RT1739_SCP_DISVBUS_EN |
 					       RT1739_OCPS_DISVBUS_EN));
+		RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
+					RT1739_VCONN_CLIMIT_EN, MASK_SET));
 		break;
 
 	case RT1739_DEVICE_ID_ES2:
@@ -210,12 +212,22 @@ static int rt1739_workaround(int port)
 		RETURN_ERROR(
 			write_reg(port, RT1739_REG_VBUS_CTRL1,
 				  RT1739_HVLV_SCP_EN | RT1739_HVLV_OCRC_EN));
+		RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
+					RT1739_VCONN_CLIMIT_EN, MASK_SET));
 		break;
 
 	case RT1739_DEVICE_ID_ES4:
 		CPRINTS("RT1739 ES4");
 		RETURN_ERROR(update_reg(port, RT1739_REG_LVHVSW_OV_CTRL,
 					RT1739_OT_SEL_LVL, MASK_CLR));
+		RETURN_ERROR(
+			read_reg(port, RT1739_REG_VCONN_CTRL4, &vconn_ctrl4));
+		vconn_ctrl4 &= ~RT1739_VCONN_OCP_SEL_MASK;
+		vconn_ctrl4 |= RT1739_VCONN_OCP_SEL_600MA;
+		RETURN_ERROR(
+			write_reg(port, RT1739_REG_VCONN_CTRL4, vconn_ctrl4));
+		RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
+					RT1739_VCONN_CLIMIT_EN, MASK_CLR));
 		break;
 
 	default:
@@ -318,8 +330,6 @@ int rt1739_init(int port)
 				RT1739_DM_SWEN | RT1739_DP_SWEN, MASK_SET));
 	RETURN_ERROR(update_reg(port, RT1739_REG_SBU_CTRL_01,
 				RT1739_SBUSW_MUX_SEL, MASK_CLR));
-	RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
-				RT1739_VCONN_CLIMIT_EN, MASK_SET));
 
 	/* VBUS OVP -> 23V */
 	RETURN_ERROR(write_reg(
@@ -328,7 +338,7 @@ int rt1739_init(int port)
 			(RT1739_OVP_SEL_23_0V << RT1739_VIN_HV_OVP_SEL_SHIFT)));
 	/* VBUS OCP -> 3.3A (or 5.5A for ES2 HV Sink) */
 	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
-	oc_setting = 0;
+	oc_setting = RT1739_OCP_TIMEOUT_SEL_16MS;
 	if (device_id == RT1739_DEVICE_ID_ES2)
 		oc_setting |= RT1739_HV_SINK_OCP_SEL_5_5A;
 	else
