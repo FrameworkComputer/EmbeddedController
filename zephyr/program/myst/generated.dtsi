@@ -54,8 +54,8 @@
 			gpios = <&gpio0 3 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_disable_disp_bl: ec_disable_disp_bl {
-			gpios = <&gpiob 1 GPIO_OUTPUT>;
-			enum-name = "GPIO_ENABLE_BACKLIGHT";
+			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT_L";
 		};
 		gpio_ec_fan1_speed: ec_fan1_speed {
 			gpios = <&gpio4 0 GPIO_INPUT>;
