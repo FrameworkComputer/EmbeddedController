@@ -208,7 +208,7 @@ void fnkey_shutdown(void)
 {
 	uint8_t current_kb = 0;
 
-	/*current_kb |= kblight_get() & 0x7F;*/
+	current_kb |= kblight_get() & 0x7F;
 
 	if (Fn_key & FN_LOCKED) {
 		current_kb |= 0x80;
@@ -410,7 +410,7 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 	case SCANCODE_SPACE:	/* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
 		if (fn_table_set(pressed, KB_FN_SPACE)) {
 			if (pressed) {
-				/*bl_brightness = kblight_get();*/
+				bl_brightness = kblight_get();
 				switch (bl_brightness) {
 				case KEYBOARD_BL_BRIGHTNESS_LOW:
 					bl_brightness = KEYBOARD_BL_BRIGHTNESS_MED;
@@ -419,18 +419,14 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 					bl_brightness = KEYBOARD_BL_BRIGHTNESS_HIGH;
 					break;
 				case KEYBOARD_BL_BRIGHTNESS_HIGH:
-					gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL
-									(gpio_ec_kbl_pwr_en), 0);
 					bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 					break;
 				default:
 				case KEYBOARD_BL_BRIGHTNESS_OFF:
-					gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL
-									(gpio_ec_kbl_pwr_en), 1);
-					bl_brightness = KEYBOARD_BL_BRIGHTNESS_HIGH;
+					bl_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
 					break;
 				}
-				/*kblight_set(bl_brightness);*/
+				kblight_set(bl_brightness);
 			}
 			/* we dont want to pass the space key event to the OS */
 			return EC_ERROR_UNIMPLEMENTED;

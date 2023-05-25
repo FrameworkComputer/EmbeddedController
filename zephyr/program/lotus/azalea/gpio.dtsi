@@ -62,9 +62,6 @@
 		mic_sw {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
-		gpio_ec_kbl_pwr_en: ec_kbl_pwr_en {
-			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
-		};
 		gpio_on_off_btn_l: on_off_btn_l {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, power button */
 			enum-name = "GPIO_POWER_BUTTON_L";
@@ -125,7 +122,7 @@
 			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
 		};
 		gpio_cap_led: cap_led {
-			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
+			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
 		};
 		en_3v_chgrtc {
 			gpios = <&gpio4 4 GPIO_OUTPUT_LOW>;	/* reserved */
