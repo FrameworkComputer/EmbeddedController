@@ -75,11 +75,19 @@ static const struct gpio_config configs[] = {
  *
  * Potentially, instead of generating a pointer, the macro could
  * point directly into the table by exposing the gpio_config struct.
+ *
+ * Skip generating a pointer to unimplemented GPIOs. If GPIO is unimplemented,
+ * GPIO_SIGNAL(id) is resolved to an gpio_signal enum entry which has a value
+ * of -1 (GPIO_UNIMPLEMENTED). As a result we could point to address outside
+ * of the configs array. Also some compilers don't like negative index.
  */
 
-#define GPIO_PTRS(id)                                                    \
-	const struct gpio_dt_spec *const GPIO_DT_NAME(GPIO_SIGNAL(id)) = \
-		&configs[GPIO_SIGNAL(id)].spec;
+#define GPIO_PTRS(id)                                               \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, gpios),                    \
+		    (const struct gpio_dt_spec *const GPIO_DT_NAME( \
+			     GPIO_SIGNAL(id)) =                     \
+			     &configs[GPIO_SIGNAL(id)].spec;),      \
+		    ())
 
 #if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
 DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_PTRS)

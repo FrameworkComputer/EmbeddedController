@@ -151,8 +151,11 @@ BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
  */
 struct gpio_dt_spec;
 
-#define GPIO_DT_PTR_DECL(id) \
-	extern const struct gpio_dt_spec *const GPIO_DT_NAME(GPIO_SIGNAL(id));
+#define GPIO_DT_PTR_DECL(id)                                               \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, gpios),                           \
+		    (extern const struct gpio_dt_spec *const GPIO_DT_NAME( \
+			     GPIO_SIGNAL(id));),                           \
+		    ())
 
 DT_FOREACH_CHILD(NAMED_GPIOS_NODE, GPIO_DT_PTR_DECL)
 
