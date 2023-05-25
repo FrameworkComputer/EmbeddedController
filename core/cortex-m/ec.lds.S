@@ -383,7 +383,7 @@ SECTIONS
  */
 #ifdef __clang__
 #if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
-	__data_lma_start = .;
+	__data_lma_start = LOADADDR(.data) - SIZEOF(.header);
 #else
 	__data_lma_start = LOADADDR(.data);
 #endif
