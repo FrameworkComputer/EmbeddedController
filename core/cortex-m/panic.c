@@ -374,6 +374,13 @@ void __keep report_panic(void)
 	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
 		/* TODO: check for nested exceptions */
 		if (start_system_safe_mode() == EC_SUCCESS) {
+			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
+			/* If not in an interrupt context (e.g. software_panic),
+			 * the next highest priority task will immediately
+			 * execute when the current task is disabled on the
+			 * following line.
+			 */
+			task_disable_task(task_get_current());
 			/* Return from exception on process stack.
 			 * We should not actually land in
 			 * exception_return_placeholder function. Instead the
@@ -381,10 +388,8 @@ void __keep report_panic(void)
 			 * a different task since the current task has
 			 * been disabled.
 			 */
-			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
 			cpu_return_from_exception_psp(
 				exception_return_placeholder);
-
 			__builtin_unreachable();
 		}
 		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;

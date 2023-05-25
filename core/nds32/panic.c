@@ -203,6 +203,12 @@ void report_panic(uint32_t *regs, uint32_t itype)
 	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
 		if (start_system_safe_mode() == EC_SUCCESS) {
 			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
+			/* If not in an interrupt context (e.g. software_panic),
+			 * the next highest priority task will immediately
+			 * execute when the current task is disabled on the
+			 * following line.
+			 */
+			task_disable_task(task_get_current());
 			/* Current task has been disabled.
 			 * Returning from the exception here should cause the
 			 * highest priority task that wasn't disabled to run.
