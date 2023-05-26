@@ -1498,7 +1498,7 @@ int board_set_active_charge_port(int charge_port)
 		/* force to reduce the input current limit when battery is connected */
 		if (board_batt_is_present() == BP_YES) {
 			force_reduce = 1;
-			charge_set_input_current_limit(500, pd_port_states[charge_port].voltage);
+			charge_set_input_current_limit(0, pd_port_states[charge_port].voltage);
 		}
 
 		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, 0);
