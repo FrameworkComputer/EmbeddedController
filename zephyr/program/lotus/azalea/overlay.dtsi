@@ -18,7 +18,7 @@
 			temp_host_release_high = <78>;
 			temp_fan_off = <40>;
 			temp_fan_max = <62>;
-			power-good-pin = <&gpio_slp_s5_l>;
+			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
 		};
 		ddr-f75303 {
@@ -29,7 +29,7 @@
 			temp_host_release_high = <78>;
 			temp_fan_off = <40>;
 			temp_fan_max = <62>;
-			power-good-pin = <&gpio_slp_s5_l>;
+			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ddr_f75303>;
 		};
 		local-f75303 {
@@ -40,7 +40,7 @@
 			temp_host_release_high = <77>;
 			temp_fan_off = <40>;
 			temp_fan_max = <53>;
-			power-good-pin = <&gpio_slp_s5_l>;
+			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&local_f75303>;
 		};
 		amd-apu {
