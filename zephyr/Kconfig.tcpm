@@ -4,13 +4,8 @@
 
 if PLATFORM_EC_USBC
 
-choice PLATFORM_EC_USB_PD_TCPM_TYPE
-	prompt "Choose a Type-C Port Manager (TCPM) to manage TCPC"
-	default PLATFORM_EC_USB_PD_TCPM_TCPCI if DT_HAS_NAMED_USBC_PORT_ENABLED
-	default PLATFORM_EC_USB_PD_TCPM_TCPCI if DT_HAS_CROS_EC_TCPCI_ENABLED
-
 config PLATFORM_EC_USB_PD_TCPM_TCPCI
-	bool "Use TCPCI"
+	bool "TCPCI Compatible Driver"
 	select PLATFORM_EC_USBC_OCP
 	help
 	  Enable a TCPC compatible with the Type-C Port Controller Interface
@@ -18,26 +13,14 @@ config PLATFORM_EC_USB_PD_TCPM_TCPCI
 	  v1.0 of the TCPCI specification. Select this driver directly only
 	  if your specific TCPC chip is not listed as a separate config option.
 
-	  Note: most of the TCPC will depend on PLATFORM_EC_USB_PD_TCPM_TCPCI.
-
-# TODO: Add other choices:
-#  CONFIG_USB_PD_TCPM_STUB
-#  CONFIG_USB_PD_TCPM_ANX3429
-#  CONFIG_USB_PD_TCPM_ANX740X
-#  CONFIG_USB_PD_TCPM_ANX741X
-#  CONFIG_USB_PD_TCPM_ANX7688
-#  CONFIG_USB_PD_TCPM_MT6370
-#  CONFIG_USB_PD_TCPM_FUSB307
-#  CONFIG_USB_PD_TCPM_STM32GX
-
-endchoice # PLATFORM_EC_USB_PD_TCPM_TYPE
-
-if PLATFORM_EC_USB_PD_TCPM_TCPCI
+	  This driver currently is required by all TCPM drivers below, even
+	  drivers that do not implement the TCPCI specification.
 
 config PLATFORM_EC_USB_PD_TCPM_CCGXXF
 	bool "Cypress CCGXXF Single/Dual USB-C Port Controller with Source PPC"
 	default y
 	depends on DT_HAS_CYPRESS_CCGXXF_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  CCGXXF are Single/Dual port USB Type-C controllers that comply with
 	  the USB Type-C and PD specifications. These devices include an
@@ -56,6 +39,7 @@ config PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
 config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT83XX
 	bool "Enable IT83XX driver"
 	select PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  Enable a driver for the ITE IT83XX on-chip UBB Type-C Port Manager.
 	  This supports up to two USB Type-C ports with Dual Role function
@@ -66,6 +50,7 @@ config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT8XXX2
 	default y
 	select PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
 	depends on DT_HAS_ITE_IT8XXX2_USBPD_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  Enable a driver for the ITE IT8XXX2 on-chip UBB Type-C Port Manager.
 	  This supports up to two USB Type-C ports with Dual Role function
@@ -102,6 +87,7 @@ config PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
 
 config PLATFORM_EC_USB_PD_TCPM_ANX7406
 	bool "Analogix ANX7406 USB-C Gen 2 Type-C Port Controller"
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	select PLATFORM_EC_USB_PD_TCPM_MUX
 	help
 	  The Analogix ANX7406 is a USB Type-C Port Controller (TCPC)
@@ -118,6 +104,7 @@ config PLATFORM_EC_USB_PD_TCPM_ANX7447
 	default y
 	depends on DT_HAS_ANALOGIX_ANX7447_TCPC_ENABLED || \
 		DT_HAS_CROS_ANX7447_TCPC_EMUL_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	select PLATFORM_EC_USB_PD_TCPM_MUX
 	default y if DT_HAS_ANALOGIX_ANX7447_TCPC_ENABLED
 	help
@@ -155,6 +142,7 @@ config PLATFORM_EC_USB_PD_TCPM_FUSB302
 	bool "Fairchild's FUSB302 Type-C port controller with USB PD"
 	default y
 	depends on DT_HAS_FAIRCHILD_FUSB302_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  This is a USB Type-C port controller which enables the USB Type-C
 	  detection including attach, and orientation. It integrates the
@@ -166,6 +154,7 @@ config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 	bool "Nuvoton 3807/8 Single/Dual Port Controller with Power Delivery"
 	default y
 	depends on DT_HAS_NUVOTON_NCT38XX_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  The NCT38n7/8 is a single/dual-port, USB Type-C Port Controller
 	  (TCPC). It incorporates a Power Delivery (PD) PHY with BMC encoding,
@@ -173,6 +162,7 @@ config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 
 config PLATFORM_EC_USB_PD_TCPM_PS8XXX
 	bool
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	select PLATFORM_EC_USB_PD_TCPM_MUX
 	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
 	help
@@ -277,6 +267,7 @@ endif # PLATFORM_EC_USB_PD_TCPM_PS8815
 
 config PLATFORM_EC_USB_PD_TCPM_RAA489000
 	bool "Renesas RAA489000 Type-C port controller and battery charger"
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	select PLATFORM_EC_USB_PD_PPC
 	help
 	  Build drivers for the RAA489000, a combined battery charger and USB-C
@@ -313,6 +304,7 @@ config PLATFORM_EC_USB_PD_TCPM_RT1718S
 	bool "Richtek RT1718S Type-C Port Controller"
         default y
         depends on DT_HAS_RICHTEK_RT1718S_TCPC_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  The RT1718S is an integrated USB Type-C TCPC controller which
 	  includes IEC-61000-4-2 ESD protection cell for CC/SBU/DP/DM.
@@ -322,6 +314,7 @@ config PLATFORM_EC_USB_PD_TCPM_RT1718S
 
 config PLATFORM_EC_USB_PD_TCPM_TUSB422
 	bool "TI TUSB422 Port Control with USB PD"
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  This is a a USB PD PHY that enables a USB Type-C port with the
 	  Configuration Channel (CC) logic needed for USB Type-C ecosystems. It
@@ -357,7 +350,5 @@ config PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP
 	  basically a list of registers and their values. By reference to the
 	  Universal Serial Bus Type-C Port Controller Interface Specification
 	  this can help you figure out what is going on.
-
-endif  # PLATFORM_EC_USB_PD_TCPM_TCPCI
 
 endif  # PLATFORM_EC_USBC

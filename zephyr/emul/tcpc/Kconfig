@@ -7,6 +7,7 @@ menuconfig EMUL_TCPCI
 	default y
 	depends on DT_HAS_CROS_TCPCI_GENERIC_EMUL_ENABLED
 	depends on I2C_EMUL
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	select EMUL_COMMON_I2C
 	help
 	  Enable the TCPCI emulator. This driver uses the emulated I2C bus.
