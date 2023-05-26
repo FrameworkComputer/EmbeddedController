@@ -42,7 +42,7 @@ config EMUL_BMA4XX
 
 config EMUL_BC12_DETECT_PI3USB9201
 	bool "PI3USB9201 emulator"
-	default y
+	default y if ZTEST
 	depends on DT_HAS_PERICOM_PI3USB9201_ENABLED
 	help
 	  Enable the PI3USB9201 emulator. PI3USB9201 is a BC1.2 charger
