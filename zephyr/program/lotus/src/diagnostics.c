@@ -113,7 +113,7 @@ bool diagnostics_tick(void)
 	}
 
 	/* Wait 15 seconds for checks to complete */
-	if (++diagnostic_tick < 15 * TICK_PER_SEC)
+	if (++diagnostic_tick < 60 * TICK_PER_SEC)
 		return false;
 
 	/* Everything is ok after minimum 15 seconds of checking */
