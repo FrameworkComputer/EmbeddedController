@@ -14,6 +14,7 @@
 #include "ppc/syv682x_public.h"
 #include "system.h"
 #include "usb_config.h"
+#include "usb_pd.h"
 #include "usbc/ppc.h"
 #include "usbc/tcpci.h"
 #include "usbc/usb_muxes.h"
@@ -164,4 +165,15 @@ __override bool board_is_tbt_usb4_port(int port)
 		return true;
 
 	return false;
+}
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	switch (usb_db_type) {
+	case FW_USB_DB_USB3:
+	case FW_USB_DB_USB4_HB:
+		return 2;
+	default:
+		return 1;
+	}
 }
