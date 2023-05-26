@@ -36,6 +36,8 @@
 
 /* charging current is limited to 0.45C */
 #define CHARGING_CURRENT_45C 2804
+#define CHARGING_CURRENT_NORMAL 3640
+#define CHARGING_VOLTAGE_NORMAL 8650
 
 const struct board_batt_params board_battery_info[] = {
 	/* Dyna Battery Information */
@@ -53,7 +55,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8700,
+			.voltage_max		= 8650,
 			.voltage_normal		= 7600, /* mV */
 			.voltage_min		= 6000, /* mV */
 			.precharge_current	= 150,	/* mA */
@@ -81,7 +83,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max            = 8800,
+			.voltage_max            = 8650,
 			.voltage_normal         = 7700, /* mV */
 			.voltage_min            = 6000, /* mV */
 			.precharge_current      = 200,  /* mA */
@@ -111,6 +113,11 @@ enum battery_present variant_battery_present(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
+	if (curr->requested_current > CHARGING_CURRENT_NORMAL)
+		curr->requested_current = CHARGING_CURRENT_NORMAL;
+	if (curr->requested_voltage > CHARGING_VOLTAGE_NORMAL)
+		curr->requested_voltage = CHARGING_VOLTAGE_NORMAL;
+
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		return 0;
 
