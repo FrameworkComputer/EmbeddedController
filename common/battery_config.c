@@ -281,11 +281,11 @@ static void batt_conf_dump(const struct board_batt_params *info)
 
 static int cc_batt_conf(int argc, const char *argv[])
 {
-	if (argc == 2 && strcasecmp(argv[1], "read") == 0) {
+	if (argc == 1) {
+		batt_conf_dump(&scratch_battery_conf);
+	} else if (argc == 2 && strcasecmp(argv[1], "read") == 0) {
 		batt_conf_read_fuel_gauge_info(&scratch_battery_conf);
 		batt_conf_read_battery_info(&scratch_battery_conf);
-	} else if (argc == 2 && strcasecmp(argv[1], "dump") == 0) {
-		batt_conf_dump(&scratch_battery_conf);
 	} else if (argc == 2 && strcasecmp(argv[1], "reset") == 0) {
 		memcpy(&scratch_battery_conf, &default_battery_conf,
 		       sizeof(scratch_battery_conf));
@@ -294,5 +294,9 @@ static int cc_batt_conf(int argc, const char *argv[])
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(bcfg, cc_batt_conf, "read | dump | reset", NULL);
+DECLARE_CONSOLE_COMMAND(bcfg, cc_batt_conf, "[read | reset]",
+			"\n"
+			"Dump scratch battery config\n"
+			"[reset] Load default config to scratch buffer\n"
+			"[read] Load config from CBI to scratch buffer\n");
 #endif /* CONFIG_CMD_BATTERY_CONFIG */
