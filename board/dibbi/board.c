@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "board.h"
 #include "button.h"
+#include "cec.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"

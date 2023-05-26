@@ -1015,7 +1015,9 @@ static void cec_init(void)
 	cec_init_timer();
 
 	/* If RO doesn't set it, RW needs to set it explicitly. */
+#ifdef CEC_GPIO_PULL_UP
 	gpio_set_level(CEC_GPIO_PULL_UP, 1);
+#endif
 
 	/* Ensure the CEC bus is not pulled low by default on startup. */
 	gpio_set_level(CEC_GPIO_OUT, 1);
