@@ -23,8 +23,11 @@
 #include "hooks.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, "BCNF " format, ##args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, "BCNF " format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, "BCFG " format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, "BCFG " format, ##args)
+
+static char manuf_name[32];
+static char device_name[32];
 
 test_export_static int batt_conf_read(enum cbi_data_tag tag, uint8_t *data,
 				      uint8_t size)
@@ -112,10 +115,15 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 	struct fuel_gauge_info *fg = &info->fuel_gauge;
 	uint8_t d8;
 
-	batt_conf_read(CBI_TAG_FUEL_GAUGE_MANUF_NAME,
-		       (uint8_t *)&fg->manuf_name, sizeof(fg->manuf_name));
-	batt_conf_read(CBI_TAG_FUEL_GAUGE_DEVICE_NAME,
-		       (uint8_t *)&fg->device_name, sizeof(fg->device_name));
+	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_MANUF_NAME, (uint8_t *)manuf_name,
+			   sizeof(manuf_name)) == EC_SUCCESS)
+		fg->manuf_name = manuf_name;
+
+	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_DEVICE_NAME,
+			   (uint8_t *)device_name,
+			   sizeof(device_name)) == EC_SUCCESS)
+		fg->device_name = device_name;
+
 	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_FLAGS, &d8, sizeof(d8)) ==
 	    EC_SUCCESS)
 		fg->override_nil = d8 & BIT(0) ? 1 : 0;
@@ -167,14 +175,26 @@ batt_conf_read_battery_info(struct board_batt_params *info)
 	return EC_SUCCESS;
 }
 
+__overridable bool board_batt_conf_enabled(void)
+{
+	return true;
+}
+
 test_export_static void batt_conf_main(void)
 {
 	CPRINTS("%s", __func__);
-	batt_conf_read_fuel_gauge_info(&default_battery_conf);
-	batt_conf_read_battery_info(&default_battery_conf);
+	if (board_batt_conf_enabled()) {
+		CPRINTS("Reading CBI");
+		batt_conf_read_fuel_gauge_info(&default_battery_conf);
+		batt_conf_read_battery_info(&default_battery_conf);
+	} else {
+		/* Battery config isn't in CBI. */
+		CPRINTS("Detect battery");
+		init_battery_type();
+	}
 	CPRINTS("%s done", __func__);
 }
-DECLARE_HOOK(HOOK_INIT, batt_conf_main, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, batt_conf_main, HOOK_PRIO_POST_I2C);
 
 #ifdef CONFIG_CMD_BATTERY_CONFIG
 static struct board_batt_params scratch_battery_conf;

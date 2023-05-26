@@ -15,7 +15,10 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
-#ifndef CONFIG_BATTERY_CONFIG_IN_CBI
+#ifdef CONFIG_BATTERY_CONFIG_IN_CBI
+static const struct board_batt_params *battery_conf = &default_battery_conf;
+#endif
+
 /*
  * Authenticate the battery connected.
  *
@@ -136,20 +139,33 @@ __overridable int board_get_default_battery_type(void)
 	return DEFAULT_BATTERY_TYPE;
 }
 
-/*
- * Initialize the battery type for the board.
- *
- * The first call to battery_get_info() is when the charger task starts, so
- * initialize the battery type as soon as I2C is initialized.
- */
-static void init_battery_type(void)
+#ifdef CONFIG_BATTERY_CONFIG_IN_CBI
+void init_battery_type(void)
+{
+	int type = get_battery_type();
+
+	if (type == BATTERY_TYPE_COUNT) {
+		CPRINTS("battery not found");
+		type = board_get_default_battery_type();
+	}
+
+	battery_conf = &board_battery_info[type];
+}
+
+const struct board_batt_params *get_batt_params(void)
+{
+	return battery_conf;
+}
+
+#else /* !CONFIG_BATTERY_CONFIG_IN_CBI */
+
+void init_battery_type(void)
 {
 	if (get_battery_type() == BATTERY_TYPE_COUNT)
 		CPRINTS("battery not found");
 }
-DECLARE_HOOK(HOOK_INIT, init_battery_type, HOOK_PRIO_POST_I2C);
 
-static inline const struct board_batt_params *get_batt_params(void)
+const struct board_batt_params *get_batt_params(void)
 {
 	int type = get_battery_type();
 
@@ -157,7 +173,7 @@ static inline const struct board_batt_params *get_batt_params(void)
 					   board_get_default_battery_type() :
 					   type];
 }
-#endif /* !CONFIG_BATTERY_CONFIG_IN_CBI */
+#endif /* CONFIG_BATTERY_CONFIG_IN_CBI */
 
 const struct battery_info *battery_get_info(void)
 {
