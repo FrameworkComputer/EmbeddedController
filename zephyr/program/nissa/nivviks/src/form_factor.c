@@ -21,7 +21,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 #define BASE_SENSOR SENSOR_ID(DT_NODELABEL(base_accel))
 #define BASE_GYRO SENSOR_ID(DT_NODELABEL(base_gyro))
 
-static void form_factor_init(void)
+test_export_static void form_factor_init(void)
 {
 	int ret;
 	uint32_t val;

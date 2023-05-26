@@ -18,6 +18,11 @@ choice TEST_TARGET
 		bool "Tests for common.c"
 		help
 		  The test target that exercises nissa/src/common.c.
+
+	config TEST_NISSA_NIVVIKS
+	  bool "Tests for Nivviks-specific code"
+	  help
+	    The test target that exercises nissa/nivviks/*.c
 endchoice
 
 module = NISSA
