@@ -181,6 +181,11 @@ void cec_tmr_cap_stop(void);
 int cec_tmr_cap_get(void);
 
 /**
+ * ITE-specific callback to record the interrupt time.
+ */
+__override_proto void cec_update_interrupt_time(void);
+
+/**
  * Called when a transfer is initiated from the host. Should trigger an
  * interrupt which then calls cec_event_tx(). It must be called from interrupt
  * context since the CEC state machine relies on the fact that the state is only
@@ -217,3 +222,8 @@ void cec_event_cap(void);
  * Event for transfer from host.
  */
 void cec_event_tx(void);
+
+/**
+ * Interrupt handler for rising and falling edges on the CEC line.
+ */
+void cec_gpio_interrupt(enum gpio_signal signal);

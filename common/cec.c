@@ -855,8 +855,18 @@ void cec_event_tx(void)
 	 * If we have an ongoing receive, this transfer
 	 * will start when transitioning to IDLE
 	 */
-	if (cec_state == CEC_STATE_IDLE)
+	if (cec_state == CEC_STATE_IDLE) {
+		/*
+		 * Only update the interrupt time if it's idle, otherwise it
+		 * will interfere with the timing of the current transfer.
+		 */
+		cec_update_interrupt_time();
 		enter_state(CEC_STATE_INITIATOR_FREE_TIME);
+	}
+}
+
+__overridable void cec_update_interrupt_time(void)
+{
 }
 
 static int cec_send(const uint8_t *msg, uint8_t len)
