@@ -9,7 +9,6 @@
 #include "../generated.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
-#include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../ovis.dtsi"
 #include "../temp_sensors.dtsi"
