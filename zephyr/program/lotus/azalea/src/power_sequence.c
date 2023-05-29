@@ -14,6 +14,8 @@
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
+#include "keyboard_protocol.h"
 #include "lpc.h"
 #include "power.h"
 #include "power_sequence.h"
@@ -291,6 +293,28 @@ static int chipset_prepare_S3(uint8_t enable)
 	return true;
 }
 
+/*
+ * Issue : 866a60d67
+ * for this issue, if into S3 and resume back, system would not take Keybuffer(DBBOUT)
+ * after EC send IRQ1, add this workaround EC manually send Keybuffer  and clearn OBF flag,
+ * it will regenerate a IRQ signal to notice system.
+ */
+static void key_stuck_wa(void);
+DECLARE_DEFERRED(key_stuck_wa);
+static void key_stuck_wa(void)
+{
+	int wa_bit = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON);
+
+	if (wa_bit) {
+		simulate_keyboard(120, 1);
+		simulate_keyboard(120, 0);
+		keyboard_clear_buffer();
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
+		hook_call_deferred(&key_stuck_wa_data, -1);
+	} else
+		hook_call_deferred(&key_stuck_wa_data, 250 * MSEC);
+}
+
 enum power_state power_handle_state(enum power_state state)
 {
 	switch (state) {
@@ -479,6 +503,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S0ixS0");
 		resume_ms_flag = 0;
 		enter_ms_flag = 0;
+		hook_call_deferred(&key_stuck_wa_data, 10 * MSEC);
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
