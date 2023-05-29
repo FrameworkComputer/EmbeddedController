@@ -4,7 +4,6 @@
  */
 
 /* Ovis program common DTSI includes */
-#include "../battery.dtsi"
 #include "../fan.dtsi"
 #include "../generated.dtsi"
 #include "../interrupts.dtsi"
@@ -16,4 +15,7 @@
 
 /* Ovis project DTS includes */
 #include "led_pins.dtsi"
-#include "led_policy.dtsi"
+/*
+ * TODO(b/285166688): need led_policy.dtsi once that has been
+ * implemented to match Ovis requirements
+ */

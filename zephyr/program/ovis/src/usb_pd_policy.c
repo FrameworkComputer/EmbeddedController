@@ -65,6 +65,12 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
+void pd_set_input_current_limit(int port, uint32_t max_ma,
+				uint32_t supply_voltage)
+{
+	/* TODO(b/285166049): Need this to build, does this apply to Ovis */
+}
+
 /* Used by Vbus discharge common code with CONFIG_USB_PD_DISCHARGE */
 int board_vbus_source_enabled(int port)
 {
