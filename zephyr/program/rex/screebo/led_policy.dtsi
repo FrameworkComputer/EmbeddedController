@@ -136,5 +136,15 @@
 				period-ms = <2000>;
 			};
 		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S5";
+
+			/* LED off when S5, others do not change */
+			color-0 {
+				led-color = <&color_off>;
+			};
+		};
 	};
 };
