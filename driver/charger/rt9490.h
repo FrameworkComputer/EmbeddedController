@@ -275,3 +275,4 @@ extern const struct thermistor_info rt9490_thermistor_info;
 
 int rt9490_get_thermistor_val(const struct temp_sensor_t *sensor,
 			      int *temp_ptr);
+extern const struct rt9490_init_setting rt9490_setting;

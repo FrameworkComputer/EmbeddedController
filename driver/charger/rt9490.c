@@ -63,7 +63,8 @@ static const struct charger_info rt9490_charger_info = {
 	.input_current_step = INPUT_I_STEP,
 };
 
-static const struct rt9490_init_setting default_init_setting = {
+#ifndef CONFIG_ZEPHYR
+const struct rt9490_init_setting rt9490_setting = {
 	/* b/230442545#comment28
 	 * With EOC-Force-CCM disabled, the real IEOC would be
 	 * 30~50mA lower than expected, so move eoc_current one step up
@@ -73,6 +74,7 @@ static const struct rt9490_init_setting default_init_setting = {
 	.boost_voltage = 5050,
 	.boost_current = 1500,
 };
+#endif
 
 static enum ec_error_list rt9490_read8(int chgnum, int reg, int *val)
 {
@@ -302,8 +304,8 @@ static int rt9490_init_setting(int chgnum)
 	/*  Disable boost-mode output voltage */
 	RETURN_ERROR(rt9490_enable_otg_power(chgnum, 0));
 	RETURN_ERROR(rt9490_set_otg_current_voltage(
-		chgnum, default_init_setting.boost_current,
-		default_init_setting.boost_voltage));
+		chgnum, rt9490_setting.boost_current,
+		rt9490_setting.boost_voltage));
 #endif
 	/* Disable ILIM_HZ pin current limit */
 	RETURN_ERROR(rt9490_clr_bit(chgnum, RT9490_REG_CHG_CTRL5,
@@ -318,8 +320,8 @@ static int rt9490_init_setting(int chgnum)
 	/* Disable AUTO_AICR / AUTO_MIVR */
 	RETURN_ERROR(rt9490_clr_bit(chgnum, RT9490_REG_ADD_CTRL0,
 				    RT9490_AUTO_AICR | RT9490_AUTO_MIVR));
-	RETURN_ERROR(rt9490_set_mivr(chgnum, default_init_setting.mivr));
-	RETURN_ERROR(rt9490_set_ieoc(chgnum, default_init_setting.eoc_current));
+	RETURN_ERROR(rt9490_set_mivr(chgnum, rt9490_setting.mivr));
+	RETURN_ERROR(rt9490_set_ieoc(chgnum, rt9490_setting.eoc_current));
 	RETURN_ERROR(rt9490_set_iprec(chgnum, batt_info->precharge_current));
 	RETURN_ERROR(rt9490_enable_adc(chgnum, true));
 	RETURN_ERROR(rt9490_enable_jeita(chgnum, false));

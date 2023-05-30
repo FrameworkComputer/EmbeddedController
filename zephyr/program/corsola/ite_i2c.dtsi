@@ -68,6 +68,7 @@
 		status = "okay";
 		reg = <0x53>;
 		irq = <&int_usb_c1_bc12_charger>;
+		mivr = <4000>;
 	};
 };
 

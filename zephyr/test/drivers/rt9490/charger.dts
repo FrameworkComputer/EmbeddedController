@@ -18,7 +18,7 @@
 	status = "okay";
 
 	rt9490: rt9490@53 {
-		compatible = "zephyr,rt9490-emul", "richtek,rt9490";
+		compatible = "richtek,rt9490", "zephyr,rt9490-emul";
 		status = "okay";
 		reg = <0x53>;
 	};

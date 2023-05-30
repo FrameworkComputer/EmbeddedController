@@ -104,7 +104,7 @@
 	status="okay";
 
 	charger: rt9490@53 {
-		compatible = "zephyr,rt9490-emul";
+		compatible = "richtek,rt9490", "zephyr,rt9490-emul";
 		status = "okay";
 		reg = <0x53>;
 	};
