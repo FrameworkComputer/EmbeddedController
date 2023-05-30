@@ -110,12 +110,12 @@ void base_force_state(enum ec_set_base_state_cmd state)
 {
 	switch (state) {
 	case EC_SET_BASE_STATE_ATTACH:
-		base_update(true);
 		base_detect_enable(false);
+		base_update(true);
 		break;
 	case EC_SET_BASE_STATE_DETACH:
-		base_update(false);
 		base_detect_enable(false);
+		base_update(false);
 		break;
 	case EC_SET_BASE_STATE_RESET:
 		base_detect_enable(true);
