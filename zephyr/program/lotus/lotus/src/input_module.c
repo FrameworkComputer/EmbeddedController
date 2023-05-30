@@ -138,8 +138,8 @@ static void input_modules_powerup(void)
 		deck_state = DECK_DISCONNECTED;
 	}
 }
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, input_modules_powerup, HOOK_PRIO_DEFAULT);
 
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, input_modules_powerup, HOOK_PRIO_DEFAULT);
 static void input_modules_powerdown(void)
 {
 	if (deck_state == DECK_NO_DETECTION) {
@@ -151,7 +151,6 @@ static void input_modules_powerdown(void)
 		set_hub_mux(TOP_ROW_NOT_CONNECTED);
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 
 int get_deck_state(void)
