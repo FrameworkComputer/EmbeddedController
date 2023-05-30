@@ -1372,6 +1372,14 @@ uint8_t *get_pd_version(int controller)
 	return pd_chip_config[controller].version;
 }
 
+int active_charge_pd_chip(void)
+{
+	if (prev_charge_port == -1)
+		return 0xff;
+
+	return (prev_charge_port < 2) ? 0 : 1;
+}
+
 void set_pd_fw_update(bool is_update)
 {
 	firmware_update = is_update;
