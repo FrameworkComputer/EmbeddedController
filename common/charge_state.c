@@ -685,10 +685,9 @@ static int shutdown_on_critical_battery(void)
 		CPRINTS("Start shutdown due to critical battery");
 		shutdown_target_time.val =
 			get_time().val + CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US;
-#ifdef CONFIG_HOSTCMD_EVENTS
-		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS) &&
+		    !chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
-#endif
 		return 1;
 	}
 
@@ -767,13 +766,14 @@ int battery_is_below_threshold(enum batt_threshold_type type, bool transitioned)
  */
 static void notify_host_of_low_battery_charge(void)
 {
-#ifdef CONFIG_HOSTCMD_EVENTS
-	if (battery_is_below_threshold(BATT_THRESHOLD_TYPE_LOW, true))
-		host_set_single_event(EC_HOST_EVENT_BATTERY_LOW);
+	if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS)) {
+		if (battery_is_below_threshold(BATT_THRESHOLD_TYPE_LOW, true))
+			host_set_single_event(EC_HOST_EVENT_BATTERY_LOW);
 
-	if (battery_is_below_threshold(BATT_THRESHOLD_TYPE_SHUTDOWN, true))
-		host_set_single_event(EC_HOST_EVENT_BATTERY_CRITICAL);
-#endif
+		if (battery_is_below_threshold(BATT_THRESHOLD_TYPE_SHUTDOWN,
+					       true))
+			host_set_single_event(EC_HOST_EVENT_BATTERY_CRITICAL);
+	}
 }
 
 static void set_charge_state(enum charge_state state)
