@@ -177,9 +177,9 @@
 };
 
 &i2c_ctrl1 {
-	tcpci_emul_1: tcpci_emul@82 {
+	tcpci_emul_1: tcpci_emul@84 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
-		reg = <0x82>;
+		reg = <0x84>;
 	};
 };

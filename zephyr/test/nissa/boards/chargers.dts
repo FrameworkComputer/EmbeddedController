@@ -40,15 +40,3 @@
 	};
 };
 
-&i2c_ctrl7 {
-	battery: sb@b {
-		compatible = "zephyr,smart-battery-emul";
-		reg = <0xb>;
-		cycle-count = <6>;
-		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
-		desired-charg-volt = <11250>;
-		desired-charg-cur = <2400>;
-		mf-name = "LGC";
-		dev-name = "AP18C8K";
-	};
-};

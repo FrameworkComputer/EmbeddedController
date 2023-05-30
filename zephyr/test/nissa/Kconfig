@@ -23,7 +23,18 @@ choice TEST_TARGET
 	  bool "Tests for Nivviks-specific code"
 	  help
 	    The test target that exercises nissa/nivviks/*.c
+
+	config TEST_NISSA_NIVVIKS_CHARGER
+	  bool "Tests for Nivviks-specific charger/USB-C code"
+	  select TEST_USB_PD_POLICY
+	  help
+	    The test target that exercises nissa/nivviks/{charger,usbc}.c
 endchoice
+
+config TEST_USB_PD_POLICY
+	bool
+	help
+	  Enable mocking of chipset_in_state() for PD policy testing.
 
 module = NISSA
 module-str = Nissa board-specific code (unit tests)
