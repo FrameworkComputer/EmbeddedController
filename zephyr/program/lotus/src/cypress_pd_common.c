@@ -388,8 +388,7 @@ static void cypd_update_port_state(int controller, int port)
 		calculate_ma = (int64_t)pd_current * 88 / 100;
 	}
 
-	pd_current = calculate_ma;
-	CPRINTS("Updating charger with EPR correction: ma %d", pd_current);
+	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
 #endif
 	cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
 	rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
@@ -419,9 +418,15 @@ static void cypd_update_port_state(int controller, int port)
 
 	if (pd_port_states[port_idx].pd_state) {
 		if (pd_port_states[port_idx].power_role == PD_ROLE_SINK) {
+#ifdef CONFIG_BOARD_LOTUS
+			pd_set_input_current_limit(port_idx, (int16_t)calculate_ma, pd_voltage);
+			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
+								(int16_t)calculate_ma);
+#else
 			pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
 			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
 								pd_current);
+#endif
 			pd_port_states[port_idx].current = pd_current;
 			pd_port_states[port_idx].voltage = pd_voltage;
 		} else {
