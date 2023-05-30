@@ -22,14 +22,14 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
 	LED_OFF = 0,
-	LED_WHITE,
+	LED_GREEN,
 	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int led_set_color_power(enum led_color color)
 {
 	switch (color) {
-	case LED_WHITE:
+	case LED_GREEN:
 		gpio_set_level(GPIO_LED_W_ODL, LED_ON_LVL);
 		break;
 	case LED_OFF:
@@ -43,13 +43,13 @@ static int led_set_color_power(enum led_color color)
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_WHITE] = 1;
+	brightness_range[EC_LED_COLOR_GREEN] = 1;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_WHITE] != 0)
-		led_set_color_power(LED_WHITE);
+	if (brightness[EC_LED_COLOR_GREEN] != 0)
+		led_set_color_power(LED_GREEN);
 	else
 		led_set_color_power(LED_OFF);
 
@@ -63,7 +63,7 @@ static void led_tick(void)
 		return;
 
 	if (chipset_in_state(CHIPSET_STATE_ON))
-		led_set_color_power(LED_WHITE);
+		led_set_color_power(LED_GREEN);
 	else
 		led_set_color_power(LED_OFF);
 }
