@@ -229,6 +229,11 @@
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 	};
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_pp5000_usb_a0_vbus
+			       &gpio_en_pp5000_usb_a1_vbus>;
+	};
 };
 
 &adc0 {
