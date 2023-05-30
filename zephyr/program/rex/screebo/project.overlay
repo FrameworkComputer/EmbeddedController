@@ -5,7 +5,7 @@
 
 /* Rex program common DTSI includes */
 #include "../fan.dtsi"
-#include "../generated.dtsi"
+#include "gpio.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
 #include "../power_signals.dtsi"
@@ -20,29 +20,9 @@
 
 / {
 	named-gpios {
-		/delete-node/ led_3_l;
-		/delete-node/ led_4_l;
 		/delete-node/ ec-i2c-sensor-scl;
 		/delete-node/ ec-i2c-sensor-sda;
-		/delete-node/ ec_imu_int_r_l;
-		/delete-node/ ec_als_rgb_int_r_l;
-		/delete-node/ ec_accel_int_r_l;
-		/delete-node/ ec_volup_btn_odl;
-		/delete-node/ ec_voldn_btn_odl;
-		/delete-node/ tablet_mode_l;
-		/delete-node/ ec_spare_gpiob1;
-		/delete-node/ ec_spare_gpioa2;
 
-		gpio_usb_c1_rt_3p3_sx_en: usb_c1_rt_3p3_sx_en {
-			gpios = <&gpiob 1 0>;
-			no-auto-init;
-		};
-		gpio_usb_a1_oc_pu_en: usb_a1_oc_pu_en {
-			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
-		};
-		gpio_usb_a_low_pwr_od: usb_a_low_pwr_od {
-			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
-		};
 		ioex_usb_c1_rt_rst_ls_l: usb_c1_rt_rst_ls_l {
 			gpios = <&ioex_c1_port0 7 0>;
 			no-auto-init;
@@ -58,15 +38,15 @@
 		compatible = "unused-gpios";
 
 		unused-gpios =
-			<&gpiob 4 0>,
-			<&gpiob 5 0>,
-			<&gpio5 6 0>,
-			<&gpiod 4 0>,
-			<&gpio8 1 0>,
-			<&gpio9 7 0>,
-			<&gpio9 3 0>,
-			<&gpio9 5 0>,
-			<&gpio6 0 0>;
+			<&gpiob 4 0>, /* ec-i2c-sensor-sda */
+			<&gpiob 5 0>, /* ec-i2c-sensor-scl */
+			<&gpio5 6 0>, /* ec_imu_int_r_l */
+			<&gpiod 4 0>, /* ec_als_rgb_int_r_l */
+			<&gpio8 1 0>, /* ec_accel_int_r_l */
+			<&gpio9 7 0>, /* ec_volup_btn_odl */
+			<&gpio9 3 0>, /* ec_voldn_btn_odl */
+			<&gpio9 5 0>, /* tablet_mode_l */
+			<&gpio6 0 0>; /* led_4_l */
 	};
 
 	gpio-interrupts {
@@ -81,10 +61,6 @@
 		usb_c1_ppc {
 			handler = "screebo_ppc_interrupt";
 		};
-	};
-
-	named-i2c-ports {
-		/delete-node/ ec_i2c_sensor_scl_r;
 	};
 
 	batteries {
@@ -120,13 +96,6 @@
 		     &adc0_chan8_gpf1
 		     &adc0_chan11_gpc7>;
 	pinctrl-names = "default";
-};
-
-&i2c0_0 {
-	status = "disabled";
-};
-&i2c_ctrl0 {
-	status = "disabled";
 };
 
 &i2c3_0 {

@@ -7,10 +7,7 @@
 
 / {
 	named-adc-channels {
-		/delete-node/ temp_sensor_1;
-		/delete-node/ temp_sensor_2;
-		/delete-node/ temp_sensor_3;
-		/delete-node/ temp_sensor_4;
+		compatible = "named-adc-channels";
 
 		adc_ddr_soc: ddr_soc {
 			enum-name = "ADC_TEMP_SENSOR_1";
