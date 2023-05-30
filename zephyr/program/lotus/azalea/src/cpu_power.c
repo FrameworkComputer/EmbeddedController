@@ -6,6 +6,7 @@
 #include "charge_manager.h"
 #include "chipset.h"
 #include "cpu_power.h"
+#include "customized_shared_memory.h"
 #include "console.h"
 #include "driver/sb_rmi.h"
 #include "extpower.h"
@@ -71,6 +72,92 @@ static void set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p
 	update_slow_ppt_limit(sppt);
 	update_peak_package_power_limit(p3t);
 }
+
+/* set 1 for first boot setting */
+int old_slider_mode = 1;
+
+void update_os_power_slider(void)
+{
+	int mode;
+	uint32_t active_mpower;
+	int battery_percent;
+
+	battery_percent = charge_get_percent();
+	active_mpower = charge_manager_get_power_limit_uw() / 1000;
+
+	mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
+
+	if (old_slider_mode == mode)
+		return;
+
+	old_slider_mode = mode;
+
+	switch (mode) {
+	case EC_DC_BEST_PERFORMANCE:
+		spl_watt = 30000;
+		sppt_watt = 30000;
+		fppt_watt = 53000;
+		CPRINTS("DC BEST PERFORMANCE");
+		break;
+	case EC_DC_BALANCED:
+		spl_watt = 28000;
+		sppt_watt = 30000;
+		fppt_watt = 51000;
+		CPRINTS("DC BALANCED");
+		break;
+	case EC_DC_BEST_EFFICIENCYE:
+		spl_watt = 15000;
+		sppt_watt = 20000;
+		fppt_watt = 30000;
+		CPRINTS("DC BEST EFFICIENCYE");
+		break;
+	case EC_DC_BATTERY_SAVER:
+		spl_watt = 15000;
+		sppt_watt = 20000;
+		fppt_watt = 30000;
+		CPRINTS("DC BATTERY SAVER");
+		break;
+	case EC_AC_BEST_PERFORMANCE:
+		spl_watt = 30000;
+		sppt_watt = 43000;
+		fppt_watt = 53000;
+		CPRINTS("AC BEST PERFORMANCE");
+		break;
+	case EC_AC_BALANCED:
+		spl_watt = 28000;
+		sppt_watt = 41000;
+		fppt_watt = 51000;
+		CPRINTS("AC BALANCED");
+		break;
+	case EC_AC_BEST_EFFICIENCYE:
+		spl_watt = 15000;
+		sppt_watt = 25000;
+		fppt_watt = 30000;
+		CPRINTS("AC BEST EFFICIENCYE");
+		break;
+	default:
+	if (battery_is_present() == BP_YES) {
+		spl_watt = 45000;
+		sppt_watt = 54000;
+		fppt_watt = 65000;
+		/* Battery is present */
+			if (active_mpower > 60000 && (battery_percent <= 40)) {
+				spl_watt = 30000;
+				sppt_watt = 35000;
+				fppt_watt = 53000;
+			} else if (active_mpower > 60000 && (battery_percent > 40)) {
+				spl_watt = 30000;
+				sppt_watt = 35000;
+				fppt_watt = 53000;
+			}
+		}
+		CPRINTS("Normal Mode");
+		break;
+	}
+	update_soc_power_limit(false, false);
+}
+DECLARE_HOOK(HOOK_TICK, update_os_power_slider, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, update_os_power_slider, HOOK_PRIO_DEFAULT);
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {

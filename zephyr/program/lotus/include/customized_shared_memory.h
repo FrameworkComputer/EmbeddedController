@@ -78,6 +78,15 @@
 #define ASSERTED_EDP_RESET      BIT(4)
 #define DEASSERTED_EDP_RESET    BIT(5)
 
+#define EC_MEMMAP_POWER_SLIDE               0x151
+#define EC_DC_BEST_PERFORMANCE              BIT(0)
+#define EC_DC_BALANCED                      BIT(1)
+#define EC_DC_BEST_EFFICIENCYE              BIT(2)
+#define EC_DC_BATTERY_SAVER                 BIT(3)
+#define EC_AC_BEST_PERFORMANCE              BIT(4)
+#define EC_AC_BALANCED                      BIT(5)
+#define EC_AC_BEST_EFFICIENCYE              BIT(6)
+
 #define EC_CUSTOMIZED_MEMMAP_DISPLAY_ON		0x153
 
 #endif /* __BOARD_CUSTOMIZED_SHARED_MEMORY_H */

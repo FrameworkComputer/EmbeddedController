@@ -28,6 +28,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 	zephyr_library_sources(
 			"lotus/src/battery.c"
 			"lotus/src/charger.c"
+			"lotus/src/cpu_power.c"
 			"lotus/src/input_module.c"
 			"lotus/src/gpu.c"
 			"lotus/src/power_sequence.c"
