@@ -10,10 +10,9 @@
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
-
-#include <mock/power_signals.h>
 
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
@@ -21,18 +20,6 @@ FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
 FAKE_VOID_FUNC(pd_send_host_event, int);
 FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
 FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
-
-int power_signal_get_all_sys_pwrgd_mock(enum power_signal signal)
-{
-	if (signal == PWR_ALL_SYS_PWRGD) {
-		return 1;
-	}
-
-	/* LCOV_EXCL_START */
-	zassert_unreachable("Wrong input received");
-	return -1;
-	/* LCOV_EXCL_STOP */
-}
 
 int ppc_vbus_source_enable_0_mock(int port, int enable)
 {
@@ -114,7 +101,6 @@ static void usb_pd_policy_before(void *fixture)
 {
 	ARG_UNUSED(fixture);
 	RESET_FAKE(chipset_in_state);
-	RESET_FAKE(power_signal_get);
 	RESET_FAKE(ppc_vbus_source_enable);
 	RESET_FAKE(pd_set_vbus_discharge);
 	RESET_FAKE(pd_send_host_event);
@@ -124,9 +110,18 @@ static void usb_pd_policy_before(void *fixture)
 
 ZTEST_USER(usb_pd_policy, test_pd_check_vconn_swap)
 {
-	power_signal_get_fake.custom_fake = power_signal_get_all_sys_pwrgd_mock;
-	zassert_true(pd_check_vconn_swap(0), NULL, NULL);
-	zassert_equal(1, power_signal_get_fake.call_count);
+	const struct gpio_dt_spec *const en_z1_rails =
+		GPIO_DT_FROM_NODELABEL(gpio_en_z1_rails);
+
+	/* AP 5V rail is off. */
+	zassert_false(gpio_pin_get_dt(en_z1_rails));
+	zassert_false(pd_check_vconn_swap(0));
+	zassert_false(pd_check_vconn_swap(1));
+
+	/*
+	 * Case with the rail on is untestable because emulated GPIOs don't
+	 * allow getting the current value of output pins.
+	 */
 }
 
 ZTEST_USER(usb_pd_policy, test_pd_power_supply_reset)

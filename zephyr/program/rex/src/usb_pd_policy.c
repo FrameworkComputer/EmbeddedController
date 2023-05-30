@@ -23,8 +23,11 @@
 
 int pd_check_vconn_swap(int port)
 {
-	/* Allow VCONN swaps when PWR_ALL_SYS_PWRGD is set. */
-	return power_signal_get(PWR_ALL_SYS_PWRGD);
+	/* Allow VCONN swaps when gpio_en_z1_rails is enabled. */
+	const struct gpio_dt_spec *const en_z1_rails_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_en_z1_rails);
+
+	return gpio_pin_get_dt(en_z1_rails_gpio);
 }
 
 void pd_power_supply_reset(int port)
