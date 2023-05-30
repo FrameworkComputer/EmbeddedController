@@ -3,20 +3,22 @@
 # found in the LICENSE file.
 
 description: "SWD-COS3.634 DELL CTGKT"
-compatible: "sunwoda,cos3ctgkt"
+compatible: "sunwoda,cosctgkt"
 
 include: battery-smart.yaml
 
 properties:
   enum-name:
     type: string
-    default: "sunwoda,cos3ctgkt"
+    default: "sunwoda,cosctgkt"
 
   # Fuel Gauge
   manuf_name:
     default: "SWD-COS3.634"
   device_name:
     default: "DELL CTGKT"
+  ship_mode_wb_support:
+    default: 1
   ship_mode_reg_addr:
     default: 0x44
   ship_mode_reg_data:
