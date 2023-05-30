@@ -38,6 +38,20 @@ uint8_t bios_complete;
 uint8_t fan_seen;
 uint8_t run_diagnostics;
 
+int standalone_mode;
+
+void set_standalone_mode(int enable)
+{
+	CPRINTS("set standalone = %d", enable);
+	standalone_mode = enable;
+}
+
+int get_standalone_mode(void)
+{
+	return standalone_mode;
+}
+
+
 void reset_diagnostics(void)
 {
 	/* Diagnostic always reset at G3/S5 */
@@ -82,7 +96,7 @@ void set_bios_diagnostic(uint8_t code)
 
 	if (code == CODE_DDR_FAIL)
 		set_diagnostic(DIAGNOSTICS_NO_DDR, true);
-	if (code == CODE_NO_EDP)
+	if (code == CODE_NO_EDP && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_NO_EDP, true);
 }
 
@@ -99,12 +113,14 @@ bool diagnostics_tick(void)
 	}
 
 	/* Wait 15 seconds for checks to complete */
-	if (++diagnostic_tick < 15 * TICK_PER_SEC)
+	if (++diagnostic_tick < 60 * TICK_PER_SEC)
 		return false;
 
 	/* Everything is ok after minimum 15 seconds of checking */
 	if (bios_complete && hw_diagnostics == 0)
 		return false;
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
 
 	/* If something is wrong, display the diagnostic via the LED */
 	if (diagnostic_tick & 0x01)
@@ -137,7 +153,7 @@ static void diagnostics_check(void)
 	set_diagnostic(DIAGNOSTICS_NO_S0, false);
 
 	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
-	if (battery_is_present() == BP_YES)
+	if (battery_is_present() == BP_YES || get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
 
 	/* Call deferred hook to check the device */

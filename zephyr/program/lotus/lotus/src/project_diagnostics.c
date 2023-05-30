@@ -21,7 +21,7 @@ void check_device_deferred(void)
 	if (!gpu_present())
 		set_diagnostic(DIAGNOSTICS_GPU_MODULE_FAULT, true);
 
-	if (get_deck_state() != DECK_ON)
+	if (get_deck_state() != DECK_ON && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_INPUT_MODULE_FAULT, true);
 
 	if (!(fan_get_rpm_actual(0) > 100))

@@ -196,18 +196,6 @@ static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_arg
 DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_INTRUSION, host_chassis_intrusion_control,
 			EC_VER_MASK(0));
 
-static enum ec_status chassis_counter(struct host_cmd_handler_args *args)
-{
-	struct ec_response_chassis_counter *r = args->response;
-
-	r->press_counter = chassis_cmd_clear(0);
-	CPRINTS("Read chassis counter: %d", r->press_counter);
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_COUNTER, chassis_counter, EC_VER_MASK(0));
 static enum ec_status cmd_diagnosis(struct host_cmd_handler_args *args)
 {
 
@@ -301,6 +289,29 @@ static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
+
+static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_standalone_mode *p = args->params;
+
+	set_standalone_mode((int)p->enable);
+	return EC_RES_SUCCESS;
+
+}
+DECLARE_HOST_COMMAND(EC_CMD_STANDALONE_MODE, standalone_mode, EC_VER_MASK(0));
+
+static enum ec_status chassis_counter(struct host_cmd_handler_args *args)
+{
+	struct ec_response_chassis_counter *r = args->response;
+
+	r->press_counter = chassis_cmd_clear(0);
+	CPRINTS("Read chassis counter: %d", r->press_counter);
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_COUNTER, chassis_counter, EC_VER_MASK(0));
 
 static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_args *args)
 {
