@@ -132,6 +132,8 @@ DECLARE_HOST_COMMAND(EC_CMD_READ_MEMMAP, host_command_read_memmap,
 		     EC_VER_MASK(0));
 #endif
 
+/* CONFIG_EC_HOST_CMD enables the upstream Host Command support */
+#ifndef CONFIG_EC_HOST_CMD
 static enum ec_status
 host_command_get_cmd_versions(struct host_cmd_handler_args *args)
 {
@@ -154,6 +156,7 @@ host_command_get_cmd_versions(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS, host_command_get_cmd_versions,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
+#endif /* CONFIG_EC_HOST_CMD */
 
 /* Returns what we tell it to. */
 static enum ec_status
@@ -198,7 +201,11 @@ host_command_get_comms_status(struct host_cmd_handler_args *args)
 	struct ec_response_get_comms_status *r = args->response;
 	bool command_ended;
 
+#ifndef CONFIG_EC_HOST_CMD
 	command_ended = host_command_in_process_ended();
+#else
+	command_ended = ec_host_cmd_send_in_progress_ended();
+#endif
 
 	r->flags = command_ended ? 0 : EC_COMMS_STATUS_PROCESSING;
 	args->response_size = sizeof(*r);
@@ -214,13 +221,21 @@ host_command_resend_response(struct host_cmd_handler_args *args)
 {
 	uint16_t result;
 
+#ifndef CONFIG_EC_HOST_CMD
 	result = host_command_get_saved_result();
+#else
+	result = ec_host_cmd_send_in_progress_status();
+#endif
 
 	/* Handle resending response */
-	args->result = result;
 	args->response_size = 0;
 
+#ifndef CONFIG_EC_HOST_CMD
+	args->result = result;
 	return EC_RES_SUCCESS;
+#else
+	return result;
+#endif
 }
 DECLARE_HOST_COMMAND(EC_CMD_RESEND_RESPONSE, host_command_resend_response,
 		     EC_VER_MASK(0));

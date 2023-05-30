@@ -96,7 +96,7 @@ enum {
 		   (CROS_EC_TASK(USB_MUX, usb_mux_task, 0,                 \
 				 CONFIG_TASK_USB_MUX_STACK_SIZE,           \
 				 EC_TASK_USB_MUX_PRIO)))                   \
-	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_DEDICATED,                  \
+	COND_CODE_1(HAS_TASK_HOSTCMD_DEDICATED,                            \
 		    (CROS_EC_TASK(HOSTCMD, host_command_task, 0,           \
 				  CONFIG_TASK_HOSTCMD_STACK_SIZE,          \
 				  EC_TASK_HOSTCMD_PRIO)),                  \
@@ -247,6 +247,8 @@ enum {
 #define CROS_EC_EXTRA_TASKS(fn)                                         \
 	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_MAIN, (fn(HOSTCMD)),     \
 		(fn(MAIN)))                                             \
+	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_DEDICATED,               \
+		(IF_ENABLED(CONFIG_EC_HOST_CMD, (fn(HOSTCMD)))), ())    \
 	COND_CODE_1(CONFIG_SHELL_BACKEND_SERIAL, (fn(SHELL)),           \
 		(COND_CODE_1(CONFIG_SHELL_BACKEND_DUMMY, (fn(SHELL)),   \
 		())))							\

@@ -55,12 +55,14 @@ LOG_MODULE_REGISTER(espi_shim, CONFIG_ESPI_LOG_LEVEL);
  */
 
 /* host command packet handler structure */
+#ifndef CONFIG_EC_HOST_CMD
 static struct host_packet lpc_packet;
 /*
  * For the eSPI host command, request & response use the same share memory.
  * This is for input request temp buffer.
  */
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
+#endif
 static bool init_done;
 
 /*
@@ -463,6 +465,7 @@ static void handle_acpi_write(uint32_t data)
 	lpc_generate_sci();
 }
 
+#ifndef CONFIG_EC_HOST_CMD
 static void lpc_send_response_packet(struct host_packet *pkt)
 {
 	uint32_t data;
@@ -514,6 +517,7 @@ static void handle_host_write(uint32_t data)
 	host_packet_receive(&lpc_packet);
 	return;
 }
+#endif
 
 void lpc_set_acpi_status_mask(uint8_t mask)
 {
@@ -680,10 +684,12 @@ static void espi_peripheral_handler(const struct device *dev,
 		handle_acpi_write(event.evt_data);
 	}
 
+#ifndef CONFIG_EC_HOST_CMD
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD) &&
 	    event_type == ESPI_PERIPHERAL_EC_HOST_CMD) {
 		handle_host_write(event.evt_data);
 	}
+#endif
 
 	if (IS_ENABLED(CONFIG_ESPI_PERIPHERAL_8042_KBC) &&
 	    IS_ENABLED(HAS_TASK_KEYPROTO) &&

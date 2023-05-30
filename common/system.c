@@ -1750,8 +1750,14 @@ static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 	    p.cmd == EC_REBOOT_COLD || p.cmd == EC_REBOOT_HIBERNATE ||
 	    p.cmd == EC_REBOOT_COLD_AP_OFF) {
 		/* Clean busy bits on host for commands that won't return */
+#ifndef CONFIG_EC_HOST_CMD
 		args->result = EC_RES_SUCCESS;
 		host_send_response(args);
+#else
+		ec_host_cmd_send_response(
+			EC_HOST_CMD_SUCCESS,
+			(struct ec_host_cmd_handler_args *)args);
+#endif
 	}
 #endif
 

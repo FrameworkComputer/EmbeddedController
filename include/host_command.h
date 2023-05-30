@@ -53,6 +53,10 @@ struct host_cmd_handler_args {
 	 */
 	uint16_t response_size;
 
+/* The upstream version of this structure doesn't have the result field.
+ * Drop it for the compatibility.
+ */
+#ifndef CONFIG_EC_HOST_CMD
 	/*
 	 * This is the result returned by command and therefore the status to
 	 * be reported from the command execution to the host. The driver
@@ -68,6 +72,7 @@ struct host_cmd_handler_args {
 	 * by this field.
 	 */
 	uint16_t result;
+#endif
 };
 
 /* Args for host packet handler */
@@ -439,11 +444,15 @@ static inline int CROS_EC_COMMAND(CROS_EC_COMMAND_INFO *handle,
 	handle->response = response;
 	handle->response_max = response_size;
 	handle->response_size = 0;
+#ifndef CONFIG_EC_HOST_CMD
 	handle->result = 0;
+#endif
 
 	rv = host_command_process(handle);
+#ifndef CONFIG_EC_HOST_CMD
 	if (handle->result != EC_RES_SUCCESS)
 		return handle->result;
+#endif
 
 	return rv;
 }
