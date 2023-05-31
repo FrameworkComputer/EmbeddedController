@@ -78,9 +78,6 @@ static struct charge_state_data curr;
 static enum charge_state prev_state;
 static int prev_ac, prev_charge, prev_disp_charge;
 static enum battery_present prev_bp;
-static enum ec_charge_control_mode chg_ctl_mode;
-static int manual_voltage; /* Manual voltage override (-1 = no override) */
-static int manual_current; /* Manual current override (-1 = no override) */
 static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_target_time;
 static bool is_charging_progress_displayed;
@@ -98,6 +95,21 @@ struct state {
 	 * Accessed externally via charge_get_percent()
 	 */
 	bool is_full;
+	/* exported by get_chg_ctrl_mode() */
+	enum ec_charge_control_mode chg_ctl_mode;
+	/**
+	 * Manual voltage override (-1 = no override)
+	 * Accessed externally via chgstate_set_manual_voltage() and
+	 * charge_get_charge_state_debug()
+	 */
+	int manual_voltage;
+	/*
+	 * Manual current override (-1 = no override)
+	 * Accessed externally via chgstate_set_manual_current() and
+	 * charge_get_charge_state_debug()
+	 */
+	int manual_current;
+
 } local_state;
 
 /*
@@ -184,7 +196,7 @@ void charge_problem(enum problem_type p, int v)
 
 enum ec_charge_control_mode get_chg_ctrl_mode(void)
 {
-	return chg_ctl_mode;
+	return local_state.chg_ctl_mode;
 }
 
 void reset_prev_disp_charge(void)
@@ -304,8 +316,8 @@ static void dump_charge_state(void)
 	ccprintf("chg_ctl_mode = %s (%d)\n",
 		 cmode < CHARGE_CONTROL_COUNT ? mode_text[cmode] : "UNDEF",
 		 cmode);
-	ccprintf("manual_voltage = %d\n", manual_voltage);
-	ccprintf("manual_current = %d\n", manual_current);
+	ccprintf("manual_voltage = %d\n", local_state.manual_voltage);
+	ccprintf("manual_current = %d\n", local_state.manual_current);
 	ccprintf("user_current_limit = %dmA\n", user_current_limit);
 	ccprintf("battery_seems_dead = %d\n", battery_seems_dead);
 	ccprintf("battery_seems_disconnected = %d\n",
@@ -543,14 +555,14 @@ int charge_request(bool use_curr, bool is_full)
 void chgstate_set_manual_current(int curr_ma)
 {
 	if (curr_ma < 0)
-		manual_current = -1;
+		local_state.manual_current = -1;
 	else
-		manual_current = charger_closest_current(curr_ma);
+		local_state.manual_current = charger_closest_current(curr_ma);
 }
 
 void chgstate_set_manual_voltage(int volt_mv)
 {
-	manual_voltage = charger_closest_voltage(volt_mv);
+	local_state.manual_voltage = charger_closest_voltage(volt_mv);
 }
 
 /* Force charging off before the battery is full. */
@@ -560,8 +572,8 @@ static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 	int current, voltage;
 	int rv;
 
-	current = manual_current;
-	voltage = manual_voltage;
+	current = local_state.manual_current;
+	voltage = local_state.manual_voltage;
 
 	if (mode >= CHARGE_CONTROL_COUNT)
 		return EC_ERROR_INVAL;
@@ -591,9 +603,9 @@ static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 	}
 
 	/* Commit all atomically */
-	chg_ctl_mode = mode;
-	manual_current = current;
-	manual_voltage = voltage;
+	local_state.chg_ctl_mode = mode;
+	local_state.manual_current = current;
+	local_state.manual_voltage = voltage;
 
 	return EC_SUCCESS;
 }
@@ -946,8 +958,8 @@ void charger_init(void)
 	memset(&curr, 0, sizeof(curr));
 	curr.batt.is_present = BP_NOT_SURE;
 	/* Manual voltage/current set to off */
-	manual_voltage = -1;
-	manual_current = -1;
+	local_state.manual_voltage = -1;
+	local_state.manual_current = -1;
 	/*
 	 * Other tasks read the params like state_of_charge at the beginning of
 	 * their tasks. Make them ready first.
@@ -1100,7 +1112,7 @@ static void charger_setup(const struct charger_info *info)
 	batt_info = battery_get_info();
 
 	prev_ac = prev_charge = prev_disp_charge = -1;
-	chg_ctl_mode = CHARGE_CONTROL_NORMAL;
+	local_state.chg_ctl_mode = CHARGE_CONTROL_NORMAL;
 	shutdown_target_time.val = 0UL;
 	battery_seems_dead = 0;
 	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT)) {
@@ -1356,10 +1368,12 @@ static void adjust_requested_vi(const struct charger_info *const info,
 		 * we'll just tell it what it knows.
 		 */
 		else {
-			if (manual_voltage != -1)
-				curr.requested_voltage = manual_voltage;
-			if (manual_current != -1)
-				curr.requested_current = manual_current;
+			if (local_state.manual_voltage != -1)
+				curr.requested_voltage =
+					local_state.manual_voltage;
+			if (local_state.manual_current != -1)
+				curr.requested_current =
+					local_state.manual_current;
 		}
 	} else if (!IS_ENABLED(CONFIG_CHARGER_MAINTAIN_VBAT)) {
 		curr.requested_voltage = charger_closest_voltage(
@@ -2102,10 +2116,10 @@ static int charge_get_charge_state_debug(int param, uint32_t *value)
 		*value = get_chg_ctrl_mode();
 		break;
 	case CS_PARAM_DEBUG_MANUAL_CURRENT:
-		*value = manual_current;
+		*value = local_state.manual_current;
 		break;
 	case CS_PARAM_DEBUG_MANUAL_VOLTAGE:
-		*value = manual_voltage;
+		*value = local_state.manual_voltage;
 		break;
 	case CS_PARAM_DEBUG_SEEMS_DEAD:
 		*value = battery_seems_dead;
