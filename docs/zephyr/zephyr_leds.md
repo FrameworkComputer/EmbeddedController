@@ -40,12 +40,15 @@ LEDs are configured in two steps.
 The LED colors are configured using either GPIO based LEDs or PWM based LEDs.
 
 #### GPIO based LEDs
-Configure GPIO based LEDs using `cros-ec,gpio-led-pins` compatible node described by [cros-ec,gpio_led_pins.yaml].
+Configure GPIO based LEDs using `cros-ec,gpio-led-pins` compatible node
+described by [cros-ec,gpio_led_pins.yaml].
 
 Example:
 
-For this example, the board contains dual-channel LED, one channel turns on the blue color, and one channel turns on the amber color.
-To set the LED color to amber, the yellow channel is enabled and the blue channel is disabled.
+For this example, the board contains dual-channel LED, one channel turns on the
+blue color, and one channel turns on the amber color.
+To set the LED color to amber, the yellow channel is enabled and the blue
+channel is disabled.
 
 ```
 gpio-led-pins {
@@ -76,14 +79,17 @@ GPIO LED Pins dts file example: [led_pins_herobrine.dts]
 
 #### PWM based LEDs
 Configure PWM based LEDs with two separate nodes.
-The `pwm-leds` node, described in [pwm-leds.yaml], configures the PWM channel and frequency.
-The `cros-ec,pwm-led-pins` node, described in [cros-ec,pwm_led_pins.yaml], configures the LED colors.
-PWM LEDs can vary duty-cycle percentage, providing finer color control over GPIO LEDs.
+The `pwm-leds` node, described in [pwm-leds.yaml], configures the PWM channel
+and frequency. The `cros-ec,pwm-led-pins` node, described in
+[cros-ec,pwm_led_pins.yaml], configures the LED colors. PWM LEDs can vary
+duty-cycle percentage, providing finer color control over GPIO LEDs.
 
 Example:
 
-For this example, the board contains dual-channel LED, one channel controls white color intensity, and one channel controls the amber color intensity.
-To set the LED color to amber, the yellow channel duty-cycle is set to 100 percentage and white channel duty-cycle is set to 0.
+For this example, the board contains dual-channel LED, one channel controls
+white color intensity, and one channel controls the amber color intensity. To
+set the LED color to amber, the yellow channel duty-cycle is set to 100
+percentage and white channel duty-cycle is set to 0.
 ```
 pwmleds {
 	compatible = "pwm-leds";
@@ -121,7 +127,8 @@ pwm-led-pins {
 PWM LED Pins dts file example: [led_pins_skyrim.dts]
 
 ### Configure LED Policies
-`cros-ec,led-policy` nodes describe the LED policy and set the LED behavior by referencing `cros-ec,gpio-led-pins` or `cros-ec,pwm-led-pins` nodes.
+`cros-ec,led-policy` nodes describe the LED policy and set the LED behavior by
+referencing `cros-ec,gpio-led-pins` or `cros-ec,pwm-led-pins` nodes.
 These are described in [cros-ec,led_policy.yaml]
 
 
@@ -129,7 +136,8 @@ Example:
 
 Color policies to configure physical behavior of an LED
 
-e.g. If you want an LED to blink, create 2 color policies, one to turn on the LED and one to turn off the LED.
+e.g. If you want an LED to blink, create 2 color policies, one to turn on the
+LED and one to turn off the LED.
 
 ```
 color-0 {
@@ -142,9 +150,11 @@ color-1 {
         };
 ```
 
-To tie this behavior with a system state, properties defining system state and color policies are added to `cros-ec,led-policy` node.
+To tie this behavior with a system state, properties defining system state and
+color policies are added to `cros-ec,led-policy` node.
 
-e.g. To add a blinking behavior for a system state where charge-state is "LED_PWRS_DISCHARGE and chipset-state is "POWER_S3", a policy node
+e.g. To add a blinking behavior for a system state where charge-state is
+"LED_PWR_STATE_DISCHARGE" and chipset-state is "POWER_S3", a policy node
 is defined as below.
 
 ```
@@ -153,7 +163,7 @@ led-policy {
 	...
 	...
 	power-state-discharge-s3 {
-		charge-state = "LED_PWRS_DISCHARGE";
+		charge-state = "LED_PWR_STATE_DISCHARGE";
 		chipset-state = "POWER_S3";
 
 		/* Amber 1 sec, off 3 sec */
@@ -171,7 +181,9 @@ led-policy {
 }
 ```
 
-Note: It is recommended to split the policy specification and the pins specification into two devicetree files. e.g. [led_policy_skyrim.dts],  [led_pins_skyrim.dts]
+Note: It is recommended to split the policy specification and the pins
+specification into two devicetree files. e.g. [led_policy_skyrim.dts],
+[led_pins_skyrim.dts]
 
 LED policy dts file examples
 [led_policy_skyrim.dts], [led_policy_herobrine.dts]
@@ -182,7 +194,8 @@ None
 
 ## Threads
 
-The LEDs are controlled by hook task in the file [led_driver/led.c](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/shim/src/led_driver/led.c).
+The LEDs are controlled by hook task in the file
+[led_driver/led.c](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/shim/src/led_driver/led.c).
 
 ## Testing and Debugging
 TODO: Enable support for ledtest
@@ -193,11 +206,16 @@ TODO: Enable support for ledtest
 
 ![Alt text](https://screenshot.googleplex.com/4eqXmo2jLcSD6eL.png)
 
--   Look for the gpio/pwm pins in the schematic with which the LEDs are attached to.
--   In the above snippet, LEDs are configured to use PWM pins and attached to PWM2 and PWM3.
+-   Look for the gpio/pwm pins in the schematic with which the LEDs are
+attached to.
+-   In the above snippet, LEDs are configured to use PWM pins and attached to
+PWM2 and PWM3.
 -   Add PWM config nodes as shown in [pwm-leds.yaml] and [led_pins_skyrim.dts].
--   Add pin nodes based on the color of the LEDs attached as shown in [cros-ec,pwm_led_pins.yaml] and [led_pins_skyrim.dts]. Name the nodes according to the LED color for readability. e.g. `color-amber`
--   Based on the device LED policy, create led_policy nodes as shown in [cros-ec,led_policy.yaml] and [led_policy_skyrim.dts].
+-   Add pin nodes based on the color of the LEDs attached as shown in
+[cros-ec,pwm_led_pins.yaml] and [led_pins_skyrim.dts]. Name the nodes according
+to the LED color for readability. e.g. `color-amber`
+-   Based on the device LED policy, create led_policy nodes as shown in
+[cros-ec,led_policy.yaml] and [led_policy_skyrim.dts].
 
 ### PWM
 
