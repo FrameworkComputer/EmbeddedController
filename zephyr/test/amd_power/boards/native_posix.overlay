@@ -81,7 +81,7 @@
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_sys_rst_l: ec_sys_rst_l {
-			gpios = <&gpio0 12 (GPIO_ODR_HIGH | GPIO_INPUT)>;
+			gpios = <&gpio0 12 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
 		};
 		gpio_prochot_odl: prochot_odl {
