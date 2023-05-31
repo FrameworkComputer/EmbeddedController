@@ -580,6 +580,15 @@ config PLATFORM_EC_POWER_BUTTON
 
 	  This requires a GPIO named GPIO_POWER_BUTTON_L.
 
+config PLATFORM_EC_POWER_BUTTON_IGNORE_LID
+	bool "Ignore lid switch for power button press"
+	default y if !PLATFORM_EC_LID_SWITCH
+	depends on PLATFORM_EC_POWER_BUTTON
+	help
+	  Don't check for lid_is_open when processing power button presses.
+	  This option should be used when power button support is required,
+	  but there is no lid switch present.
+
 config PLATFORM_EC_BUTTON_DEBOUNCE
 	int "button debounce in us"
 	default 30000
