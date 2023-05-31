@@ -80,7 +80,6 @@ static int prev_ac, prev_charge, prev_disp_charge;
 static enum battery_present prev_bp;
 static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_target_time;
-static bool is_charging_progress_displayed;
 static timestamp_t precharge_start_time;
 static struct sustain_soc sustain_soc;
 static struct current_limit {
@@ -88,7 +87,7 @@ static struct current_limit {
 	int soc; /* Minimum battery SoC at which the limit will be applied. */
 } current_limit = { -1U, 0 };
 
-/* State which is reported out from the charger */
+/* State which is reported out from the charger or updated externally */
 struct state {
 	/*
 	 * battery is full, i.e. not accepting current.
@@ -109,7 +108,11 @@ struct state {
 	 * charge_get_charge_state_debug()
 	 */
 	int manual_current;
-
+	/*
+	 * Accessed externally via charging_progress_displayed() and
+	 * show_charging_progress() (the latter for testing only)
+	 */
+	bool is_charging_progress_displayed;
 } local_state;
 
 /*
@@ -332,9 +335,9 @@ static void dump_charge_state(void)
 
 bool charging_progress_displayed(void)
 {
-	bool rv = is_charging_progress_displayed;
+	bool rv = local_state.is_charging_progress_displayed;
 
-	is_charging_progress_displayed = false;
+	local_state.is_charging_progress_displayed = false;
 	return rv;
 }
 
@@ -345,7 +348,7 @@ static void show_charging_progress(bool is_full)
 	int dsoc;
 
 	if (IS_ENABLED(TEST_BUILD))
-		is_charging_progress_displayed = true;
+		local_state.is_charging_progress_displayed = true;
 #ifdef CONFIG_BATTERY_SMART
 	/*
 	 * Predicted remaining battery capacity based on AverageCurrent().
