@@ -118,6 +118,9 @@ struct sustain_soc {
 	int8_t upper;
 };
 
+#define BAT_MAX_DISCHG_CURRENT 5000 /* mA */
+#define BAT_LOW_VOLTAGE_THRESH 3200 /* mV */
+
 /**
  * Return current charge state.
  */

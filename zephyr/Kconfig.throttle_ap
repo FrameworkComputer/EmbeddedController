@@ -35,13 +35,6 @@ config PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
 	  this feature is enabled, the threshold value must be set in
 	  PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT_LIMIT.
 
-if PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
-
-config PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT_LIMIT
-	int "Discharge current limit in milliamperes"
-	default 0
-endif
-
 config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE
 	bool "Throttle AP based on battery voltage"
 	default n
@@ -50,13 +43,6 @@ config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE
 	  where the board still boots but some components don't function
 	  perfectly. When this feature is enabled, the threshold value must be
 	  set in PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE_THRESH.
-
-if PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE
-
-config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE_THRESH
-	int "Low voltage threshold in millivolts"
-	default 0
-endif
 
 config PLATFORM_EC_GPU_NVIDIA
 	bool "Nvidia GPU supports throttling"
