@@ -40,17 +40,10 @@
 
 static void usbc_interrupt_init(void)
 {
-	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_late()) {
-		board_reset_pd_mcu();
-	}
-
 	/* Enable PPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
-
-	/* Enable SBU fault interrupts */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_sbu_fault));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c2_ppc));
 }
 DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_POST_I2C);
 
@@ -70,40 +63,4 @@ void sbu_fault_interrupt(enum gpio_signal signal)
 
 	CPRINTSUSB("C%d: SBU fault", port);
 	pd_handle_overcurrent(port);
-}
-
-void reset_nct38xx_port(int port)
-{
-	const struct gpio_dt_spec *reset_gpio_l;
-	const struct device *ioex_port0, *ioex_port1;
-
-	/* TODO(b/225189538): Save and restore ioex signals */
-	if (port == USBC_PORT_C0) {
-		reset_gpio_l = &tcpc_config[0].rst_gpio;
-		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
-		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
-	} else {
-		/* Invalid port: do nothing */
-		return;
-	}
-
-	gpio_pin_set_dt(reset_gpio_l, 1);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
-	gpio_pin_set_dt(reset_gpio_l, 0);
-	nct38xx_reset_notify(port);
-	if (NCT3807_RESET_POST_DELAY_MS != 0) {
-		msleep(NCT3807_RESET_POST_DELAY_MS);
-	}
-
-	/* Re-enable the IO expander pins */
-	gpio_reset_port(ioex_port0);
-	gpio_reset_port(ioex_port1);
-}
-
-__override bool board_is_tbt_usb4_port(int port)
-{
-	if (port == USBC_PORT_C0)
-		return true;
-
-	return false;
 }

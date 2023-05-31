@@ -136,7 +136,7 @@
 };
 
 /* pwr-slp-s0-l */
-&gpio_sys_slp_s0ix_3v3_l {
+&gpio_sys_slp_s0ix_l {
 	no-auto-init;
 };
 

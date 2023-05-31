@@ -7,25 +7,10 @@
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
-		int_ac_present: ac_present {
-			irq-pin = <&gpio_acok_od>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "extpower_interrupt";
-		};
 		int_power_button: power_button {
-			irq-pin = <&gpio_ec_mech_pwr_btn_l>;
+			irq-pin = <&gpio_mech_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
-		};
-		int_lid_open: lid_open {
-			irq-pin = <&gpio_lid_open>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "lid_interrupt";
-		};
-		int_usb_c0_sbu_fault: c0_sbu_fault {
-			irq-pin = <&ioex_usb_c0_sbu_fault_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "sbu_fault_interrupt";
 		};
 		int_usb_c0_ppc: usb_c0_ppc {
 			irq-pin = <&gpio_usb_c0_ppc_int_odl>;
@@ -34,6 +19,11 @@
 		};
 		int_usb_c1_ppc: usb_c1_ppc {
 			irq-pin = <&gpio_usb_c1_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usb_c2_ppc: usb_c2_ppc {
+			irq-pin = <&gpio_usb_c2_ppc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
 		};

@@ -14,14 +14,7 @@
 
 void board_reset_pd_mcu(void)
 {
-	/* Reset TCPC0 */
-	reset_nct38xx_port(USBC_PORT_C0);
-
-	/* Reset TCPC1 */
-	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
-	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
-	msleep(PS8815_FW_INIT_DELAY_MS);
+	/* Required for build */
 }
 
 void ppc_interrupt(enum gpio_signal signal)
@@ -31,7 +24,10 @@ void ppc_interrupt(enum gpio_signal signal)
 		syv682x_interrupt(USBC_PORT_C0);
 		break;
 	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(USBC_PORT_C1);
+		syv682x_interrupt(USBC_PORT_C1);
+		break;
+	case GPIO_USB_C2_PPC_INT_ODL:
+		syv682x_interrupt(USBC_PORT_C2);
 		break;
 	default:
 		break;
