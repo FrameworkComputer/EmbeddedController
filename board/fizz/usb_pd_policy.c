@@ -61,19 +61,6 @@ int pd_snk_is_vbus_provided(int port)
 	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
 }
 
-__override int pd_check_power_swap(int port)
-{
-	/* If type-c port is supplying power, we never swap PR (to source) */
-	if (port == charge_manager_get_active_charge_port())
-		return 0;
-	/*
-	 * Allow power swap as long as we are acting as a dual role device,
-	 * otherwise assume our role is fixed (not in S0 or console command
-	 * to fix our role).
-	 */
-	return pd_get_dual_role(port) == PD_DRP_TOGGLE_ON ? 1 : 0;
-}
-
 int pd_check_vconn_swap(int port)
 {
 	/* in G3, do not allow vconn swap since pp5000_A rail is off */
