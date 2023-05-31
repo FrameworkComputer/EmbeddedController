@@ -196,6 +196,7 @@ void amd_power_after(void *fixture)
 	host_clear_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_HANG_DETECT));
 	init_reset_log();
 	system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
+	chipset_throttle_cpu(0);
 }
 
 ZTEST_SUITE(amd_power, NULL, amd_power_setup, amd_power_before, amd_power_after,
