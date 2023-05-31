@@ -93,7 +93,11 @@ static struct current_limit {
 
 /* State which is reported out from the charger */
 struct state {
-	bool is_full; /* battery is full, i.e. not accepting current */
+	/*
+	 * battery is full, i.e. not accepting current.
+	 * Accessed externally via charge_get_percent()
+	 */
+	bool is_full;
 } local_state;
 
 /*
