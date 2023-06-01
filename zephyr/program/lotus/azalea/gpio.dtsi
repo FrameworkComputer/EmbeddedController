@@ -81,7 +81,7 @@
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
-			gpios = <&gpiod 7 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
 		gpio_module_pwr_on: moduel_pwr_on {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;

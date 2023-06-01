@@ -18,8 +18,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
-zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN_CUSTOMER
-	"src/power_button_x86.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR_AMD_R23M
 	"lotus/src/amd_r23m.c")
 
@@ -35,6 +33,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/power_sequence.c"
 			"lotus/src/f75303.c"
 			"lotus/src/project_diagnostics.c"
+			"lotus/src/power_button_x86.c"
 	)
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)
@@ -47,5 +46,6 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/power_sequence.c"
 			"azalea/src/keyboard_customization.c"
 			"azalea/src/project_diagnostics.c"
+			"azalea/src/power_button_x86.c"
 	)
 endif()
