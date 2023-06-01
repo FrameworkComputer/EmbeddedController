@@ -69,7 +69,7 @@ protocol.
 
 ### Debug
 
-The `CONFIG_PLATFORM_EC_HOSTCMD_DEBUG_MODE` choice selects the verbosity
+The `CONFIG_PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE` choice selects the verbosity
 level of messages on the EC console.
 
 Kconfig debug verbosity | Default | Documentation

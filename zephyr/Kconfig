@@ -243,7 +243,7 @@ config PLATFORM_EC_CONSOLE_CMD_HCDEBUG
 
 	    hcdebug [off | normal | every | params]
 
-	  See PLATFORM_EC_HOSTCMD_DEBUG_MODE for more detail.
+	  See PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE for more detail.
 
 config PLATFORM_EC_CONSOLE_CMD_IRQ
 	bool "Console command: irq"
@@ -427,7 +427,19 @@ config PLATFORM_EC_HOSTCMD_REGULATOR
 	  regulator. The board should also implement board functions defined in
 	  include/regulator.h.
 
-choice PLATFORM_EC_HOSTCMD_DEBUG_MODE
+config PLATFORM_EC_HOSTCMD_DEBUG_MODE
+	int
+	default 0 if HCDEBUG_OFF
+	default 1 if HCDEBUG_NORMAL
+	default 2 if HCDEBUG_EVERY
+	default 4 if HCDEBUG_PARAMS
+	default 0
+	help
+	  This is a helper symbol that sets the host command debug level as an
+	  integer value.  This symbol is set automatically based on the
+	  configuration of PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE.
+
+choice PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE
 	prompt "Select method to use for HostCmd Debug Mode"
 	depends on PLATFORM_EC_HOSTCMD
 	default HCDEBUG_NORMAL
@@ -459,7 +471,7 @@ config HCDEBUG_PARAMS
 	  Display all host commands and the parameters received
 	  from the AP.
 
-endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE
+endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE
 
 config PLATFORM_EC_LID_SWITCH
 	bool "Lid switch"
