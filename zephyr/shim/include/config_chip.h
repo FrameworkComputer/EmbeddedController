@@ -1486,12 +1486,10 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #undef CONFIG_USB_PD_REV30
 #ifdef CONFIG_PLATFORM_EC_USB_PD_REV30
 #define CONFIG_USB_PD_REV30
+#endif
 
-/*
- * Support USB PD 3.0 Extended Messages. Note that Chromebooks disabling this
- * config item are non-compliant with PD 3.0, because they have batteries but do
- * not support Get_Battery_Cap or Get_Battery_Status.
- */
+#undef CONFIG_USB_PD_EXTENDED_MESSAGES
+#ifdef CONFIG_PLATFORM_EC_USB_PD_EXTENDED_MESSAGES
 #define CONFIG_USB_PD_EXTENDED_MESSAGES
 #endif
 

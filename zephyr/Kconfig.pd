@@ -194,6 +194,15 @@ config PLATFORM_EC_USB_PD_REV30
 	  This defaults to y because PD Rev3.0 is required for USB4
 	  functionality.
 
+config PLATFORM_EC_USB_PD_EXTENDED_MESSAGES
+	bool "USB 3.0 Extended Message Support"
+	default y
+	depends on PLATFORM_EC_USB_PD_REV30
+	help
+	  Support USB PD 3.0 Extended Messages. Note that Chromebooks disabling
+	  this config item are non-compliant with PD 3.0, because they have
+	  batteries but do not support Get_Battery_Cap or Get_Battery_Status.
+
 config PLATFORM_EC_USB_PD_ALT_MODE
 	bool "USB Power Delivery alternate mode"
 	default y
