@@ -135,9 +135,16 @@ config PLATFORM_EC_USB_PD_5V_CHARGER_CTRL
 	  The function charger_is_sourcing_otg_power is called
 	  to determine if VBUS is enabled on the source port.
 
+config PLATFORM_EC_USBC_VCONN_SWAP
+	bool
+	help
+	  Enable VCONN swap support. This is a helper symbol and should not be
+	  manually enabled or disabled.
+
 config PLATFORM_EC_USBC_VCONN
 	bool "Support USB Type-C VCONN"
 	default y
+	select PLATFORM_EC_USBC_VCONN_SWAP
 	help
 	  This enables support for USB Type-C connector voltage (VCONN). This
 	  option must be enabled to communicate with electronically marked
