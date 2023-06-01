@@ -415,6 +415,22 @@ struct pd_chip_ucsi_info_t {
 	int wait_ack;
 } __packed;
 
+int cypd_write_reg8(int controller, int reg, int data);
+
+int cypd_write_reg_block(int controller, int reg, void *data, int len);
+
+int cypd_read_reg_block(int controller, int reg, void *data, int len);
+
+int cypd_clear_int(int controller, int mask);
+
+void cypd_usci_ppm_reset(void);
+
+int cypd_wait_for_ack(int controller, int timeout_us);
+
+void cypd_print_buff(const char *msg, void *buff, int len);
+
+int cypd_get_int(int controller, int *intreg);
+
 /**
  * If PD chip is doing the firmware update, we should disable the PD task
  *

@@ -19,8 +19,8 @@
 #include "util.h"
 
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ##args)
 
 /* GPU I2C address */
 #define GPU_ADDR_FLAGS 0x0040
