@@ -38,16 +38,6 @@ config PLATFORM_EC_CONSOLE_CMD_CRASH
 	     watchdog            - watchdog timer fired
 	     hang                - infinite loop in the EC code
 
-config PLATFORM_EC_STACKOVERFLOW
-	bool "Console command: crash stack"
-	depends on PLATFORM_EC_CONSOLE_CMD_CRASH
-	default y if !ZTEST && !SOC_POSIX
-	help
-	  This enables the 'stack' parameter for the 'crash' command. This
-	  causes a stack overflow by recursing repeatedly while task switching.
-	  This can be used to check that stack-overflow detection is working
-	  as expected.
-
 config PLATFORM_EC_DEBUG_ASSERT_BRIEF
 	bool "Enable brief panic messages"
 	default n

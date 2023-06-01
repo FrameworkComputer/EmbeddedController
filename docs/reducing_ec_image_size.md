@@ -258,7 +258,6 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_SPI_FLASH | `spi_flasherase`<br>`spi_flashwrite`<br>`spi_flashread`<br>`spi_flash_rsr`<br>`spi_flash_wsr`<br>`spi_flash_wsr` | |
 | | CONFIG_CMD_SPI_NOR | `spinorinfo`<br>`spinorerase`<br>`spinorwrite`<br>`spinorread` | |
 | | CONFIG_CMD_SPI_XFER | `spixfer` | |
-| | CONFIG_CMD_STACKOVERFLOW | `crash stack` | Adds option to `crash` command. |
 | x | CONFIG_CMD_SYSINFO | `sysinfo` | Used by firmware_ECSystemLocked |
 | x | CONFIG_CMD_SYSJUMP | `sysjump` | Used by firmware_ECSharedMem |
 | | CONFIG_CMD_SYSLOCK | `syslock` | |

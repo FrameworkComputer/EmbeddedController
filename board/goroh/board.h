@@ -44,7 +44,6 @@
 /* Optional console commands */
 #define CONFIG_CMD_FLASH
 #define CONFIG_CMD_SCRATCHPAD
-#define CONFIG_CMD_STACKOVERFLOW
 
 #define CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV 9000
 
