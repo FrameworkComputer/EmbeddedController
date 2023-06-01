@@ -95,7 +95,13 @@
 		gpio_ec_pch_wake_odl: ec_soc_wake_l {
 			gpios = <&gpio0 15 GPIO_OUTPUT_HIGH>;
 		};
-
+		/* STB dumping GPIOs */
+		gpio_ec_sfh_int_h: ec_sfh_int_h {
+			gpios = <&gpio0 16 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
+		};
+		gpio_sfh_ec_int_h: sfh_ec_int_h {
+			gpios = <&gpio0 17 GPIO_INPUT>;
+		};
 	};
 
 	gpio-interrupts {
@@ -131,11 +137,16 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
+		int_stb_dump: stb_dump {
+			irq-pin = <&gpio_sfh_ec_int_h>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "amd_stb_dump_interrupt";
+		};
 	};
 };
 
 &gpio0 {
-	ngpios = <16>;
+	ngpios = <18>;
 };
 
 &espi0 {

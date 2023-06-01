@@ -4,9 +4,11 @@
  */
 
 #include "console.h"
+#include "driver/amd_stb.h"
 #include "ec_app_main.h"
 #include "emul/emul_stub_device.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -43,6 +45,7 @@
 	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ec_soc_pwr_btn_l), gpios)
 #define PROCHOT_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(prochot_odl), gpios)
 #define LID_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(lid_open_ec), gpios)
+#define STB_OUT_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ec_sfh_int_h), gpios)
 
 /*
  * Provide standard array of power signals for the module based on our DTS enum
@@ -142,6 +145,11 @@ static void *amd_power_setup(void)
 	/* Add a callback for SYS reset so we can log edges */
 	const struct gpio_dt_spec *sys_reset_pin =
 		GPIO_DT_FROM_NODELABEL(gpio_sys_rst_l);
+	/* STB dump GPIOs */
+	const struct gpio_dt_spec *gpio_ec_sfh_int_h =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_sfh_int_h);
+	const struct gpio_dt_spec *gpio_sfh_ec_int_h =
+		GPIO_DT_FROM_NODELABEL(gpio_sfh_ec_int_h);
 
 	fixture.callback_sys_reset = (struct gpio_callback){
 		.pin_mask = BIT(sys_reset_pin->pin),
@@ -151,6 +159,10 @@ static void *amd_power_setup(void)
 	zassert_ok(gpio_add_callback(sys_reset_pin->port,
 				     &fixture.callback_sys_reset),
 		   "Could not configure GPIO callback.");
+
+	/* Configure and enable STB dump */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_stb_dump));
+	amd_stb_dump_init(gpio_ec_sfh_int_h, gpio_sfh_ec_int_h);
 
 	return &fixture;
 }
@@ -453,6 +465,34 @@ ZTEST(amd_power, test_power_suspend_hang)
 	zassert_equal(power_get_state(), POWER_S0);
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
 	zassert_true(strstr(buffer, "Detected sleep hang!") != NULL);
+}
+
+ZTEST(amd_power, test_power_stb_dump_interrupt)
+{
+	struct ec_params_host_sleep_event_v1 host_sleep_ev_p = {
+		.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND,
+		.suspend_params = { EC_HOST_SLEEP_TIMEOUT_DEFAULT },
+	};
+	struct ec_response_host_sleep_event_v1 host_sleep_ev_r;
+	struct host_cmd_handler_args host_sleep_ev_args = BUILD_HOST_COMMAND(
+		EC_CMD_HOST_SLEEP_EVENT, 1, host_sleep_ev_r, host_sleep_ev_p);
+	static const struct device *gpio_dev = GPIO_DEVICE;
+
+	amd_power_s0_on();
+
+	/* Send sleep event, but fail to actually transition the signal */
+	zassert_ok(host_command_process(&host_sleep_ev_args));
+	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
+
+	zassert_equal(power_get_state(), POWER_S0);
+	/* Watch for our STB dump to trigger */
+	zassert_equal(gpio_emul_output_get(gpio_dev, STB_OUT_PIN), 1);
+
+	/* But a reset came in before we finished the STB dump */
+	chipset_reset(CHIPSET_RESET_HANG_REBOOT);
+
+	/* Observe we're not longer asserting the OUT pin */
+	zassert_equal(gpio_emul_output_get(gpio_dev, STB_OUT_PIN), 0);
 }
 
 ZTEST(amd_power, test_power_forced_shutdown)
