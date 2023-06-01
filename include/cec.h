@@ -48,6 +48,8 @@ struct cec_header {
 /* CEC commands */
 #define CEC_MSG_IMAGE_VIEW_ON 0x04
 #define CEC_MSG_TEXT_VIEW_ON 0x0d
+#define CEC_MSG_REPORT_PHYSICAL_ADDRESS 0x84
+#define CEC_MSG_DEVICE_VENDOR_ID 0x87
 
 enum cec_action {
 	CEC_ACTION_NONE = 0,
