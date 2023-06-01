@@ -77,7 +77,7 @@
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
-			gpios = <&gpio0 11 (GPIO_OUTPUT_HIGH | GPIO_INPUT)>;
+			gpios = <&gpio0 11 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_sys_rst_l: ec_sys_rst_l {
