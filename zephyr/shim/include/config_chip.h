@@ -467,6 +467,7 @@
 #endif
 
 /* Bringup configuration */
+#undef CONFIG_BRINGUP
 #ifdef CONFIG_PLATFORM_EC_BRINGUP
 #define CONFIG_BRINGUP
 #endif
