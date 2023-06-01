@@ -223,12 +223,20 @@ config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	    kblog	- Print or toggle keyboard event log (current disabled)
 	    typematic	- Get/set typematic delays
 
+config PLATFORM_EC_KEYBOARD_BACKLIGHT
+	bool "Keyboard backlight"
+	help
+	  Enables support for a keyboard backlight. The board specific code must
+	  define the board_kblight_init() routine, unless the
+	  CONFIG_PLATFORM_EC_PWM_KBLIGHT option is enabled.
+
 config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
 	default y
 	depends on DT_HAS_CROS_EC_KBLIGHT_PWM_ENABLED
 	select PWM
 	select PLATFORM_EC_PWM_HC
+	select PLATFORM_EC_KEYBOARD_BACKLIGHT
 	help
 	  Enables a PWM-controlled keyboard backlight controlled by a PWM signal
 	  connected directly to the EC chipset. The board devicetree file must
