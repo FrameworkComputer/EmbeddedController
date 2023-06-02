@@ -48,7 +48,7 @@
 			gpios = <&gpiof 4 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_c1_retimer_int_odl: ec_c1_retimer_int_odl {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_ec_c1_retimer_rst_odl: ec_c1_retimer_rst_odl {
 			gpios = <&gpio0 3 GPIO_ODR_HIGH>;
