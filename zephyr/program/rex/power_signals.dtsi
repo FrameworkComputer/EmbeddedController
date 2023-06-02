@@ -68,7 +68,7 @@
 		compatible = "intel,ap-pwrseq-vw";
 		dbg-label = "SLP_S3_L input from PCH";
 		enum-name = "PWR_SLP_S3";
-		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S3";
 		vw-invert;
 /*
  * TODO: Initially, use virtual wire for sleep S3 signal instead of
