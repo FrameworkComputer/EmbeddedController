@@ -23,21 +23,6 @@
 			};
 		};
 
-		power-state-discharge-batt-low {
-			charge-state = "PWR_STATE_DISCHARGE";
-			/* Battery percent range (>= 0, <= 10) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
-
-			color-0 {
-				led-color = <&color_white>;
-				period-ms = <500>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <500>;
-			};
-		};
-
 		power-state-near-full {
 			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
 			/* Battery percent range (>= 97, <= 100) */
@@ -48,21 +33,24 @@
 			};
 		};
 
-		power-state-error {
-			charge-state = "PWR_STATE_ERROR";
+		power-state-idle {
+			charge-state = "PWR_STATE_IDLE";
 
 			color-0 {
-				led-color = <&color_red>;
-				period-ms = <500>;
-			};
-			color-1 {
-				led-color = <&color_blue>;
-				period-ms = <500>;
+				led-color = <&color_white>;
 			};
 		};
 
-		power-state-idle {
-			charge-state = "PWR_STATE_IDLE";
+		power-state-forced-idle {
+			charge-state = "PWR_STATE_FORCED_IDLE";
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
+		power-state-error {
+			charge-state = "PWR_STATE_ERROR";
 
 			color-0 {
 				led-color = <&color_red>;

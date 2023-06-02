@@ -202,41 +202,34 @@ static void set_color(int node_idx, uint32_t ticks)
 
 static int match_node(int node_idx)
 {
-	int active_charge_port = charge_manager_get_active_charge_port();
-
-	/**
-	 * TODO:
-	 * 1. standalone led behavior
-	 * 2. GPU Bay Module Fault
-	 */
-
-	/**
-	 * Charge LED should control the left side and right side.
-	 * If the chassis is opened or there isn't an active charge port, needs to open both sides.
-	 */
-	if (((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) ||
-		get_standalone_mode()) &&
-		(active_charge_port != -1)) {
-		gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_right_side), (active_charge_port < 2) ? 1 : 0);
-		gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_left_side), (active_charge_port >= 2) ? 1 : 0);
-	} else {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
-	}
-
 	/* Check if this node depends on power state */
 	if (node_array[node_idx].pwr_state != PWR_STATE_UNCHANGE) {
 		enum charge_state pwr_state = charge_get_state();
+		int port = charge_manager_get_active_charge_port();
+
+		if (pwr_state == PWR_STATE_DISCHARGE || pwr_state == PWR_STATE_DISCHARGE_FULL) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 0);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 0);
+		} else {
+			if (port < 0) {
+				LOG_ERR("Illegal condition, port:%d, pwr:%d", port, pwr_state);
+				return -1;
+			}
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_right_side), (port < 2) ? 1 : 0);
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_left_side), (port >= 2) ? 1 : 0);
+		}
 
 		if (node_array[node_idx].pwr_state != pwr_state)
 			return -1;
 
 		/* Check if this node depends on charge port */
-		if (node_array[node_idx].charge_port != -1)
-			if (node_array[node_idx].charge_port != active_charge_port)
+		if (node_array[node_idx].charge_port != -1) {
+
+			if (node_array[node_idx].charge_port != port)
 				return -1;
+		}
 	}
 
 	/* Check if this node depends on chipset state */
@@ -253,14 +246,6 @@ static int match_node(int node_idx)
 
 		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))
-			return -1;
-	}
-
-	if (node_array[node_idx].pwr_state == PWR_STATE_UNCHANGE &&
-		node_array[node_idx].chipset_state == 0 &&
-		node_array[node_idx].batt_lvl[0] == -1) {
-		if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) ||
-			get_standalone_mode())
 			return -1;
 	}
 
@@ -421,12 +406,20 @@ static void board_led_set_power(void)
 		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
 }
 
-/*
- * TODO:
- * 1. bbram implement
- * 2. FP level control
- * 3. Host cmd control
- */
+static void chassis_open_blink_leds(void)
+{
+	static uint32_t ticks;
+
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
+
+	ticks++;
+
+	if ((ticks / 3) % 2)
+		led_set_color(LED_RED, EC_LED_ID_BATTERY_LED);
+	else
+		led_set_color(LED_OFF, EC_LED_ID_BATTERY_LED);
+}
 
 /* =============================== */
 
@@ -465,6 +458,13 @@ static void led_tick(void)
 	/* we have an error, override LED control*/
 	if (diagnostics_tick())
 		return;
+
+	/* chassis open */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0 &&
+		!get_standalone_mode()) {
+		chassis_open_blink_leds();
+		return;
+	}
 
 	board_led_set_color();
 }
