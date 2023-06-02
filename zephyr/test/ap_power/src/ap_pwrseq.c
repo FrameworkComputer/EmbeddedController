@@ -263,6 +263,27 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_5)
 		      "AP_POWER_SHUTDOWN_COMPLETE event not generated");
 }
 
+ZTEST(ap_pwrseq, test_ap_pwrseq_6)
+{
+	zassert_equal(
+		0,
+		power_signal_emul_load(
+			EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_s3_rsmrst_fail)),
+		"Unable to load test platform `tp_sys_s3_dsw_pwrok_fail`");
+
+	ap_power_exit_hardoff();
+	k_msleep(1500);
+
+	zassert_equal(1, power_hard_off_count,
+		      "AP_POWER_HARD_OFF event generated");
+	zassert_equal(1, power_start_up_count,
+		      "AP_POWER_STARTUP event not generated");
+	zassert_equal(2, power_shutdown_count,
+		      "AP_POWER_SHUTDOWN event not generated");
+	zassert_equal(2, power_shutdown_complete_count,
+		      "AP_POWER_SHUTDOWN_COMPLETE event not generated");
+}
+
 ZTEST(ap_pwrseq, test_insufficient_power_blocks_s5)
 {
 	zassert_equal(0,
