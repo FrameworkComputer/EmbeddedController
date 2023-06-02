@@ -237,7 +237,7 @@ DT_FOREACH_STATUS_OKAY(cros_ec_motionsense_bodydetect,
 	.name = DT_NODE_FULL_NAME(id),                                       \
 	.active_mask = DT_STRING_TOKEN(id, active_mask),                     \
 	.location = DT_STRING_TOKEN(id, location),                           \
-	.default_range = DT_PROP(id, default_range),                         \
+	.default_range = (int)(DT_PROP(id, default_range)),                  \
 	SENSOR_I2C_SPI_ADDR_FLAGS(id) SENSOR_MUTEX(id) SENSOR_I2C_PORT(id)   \
 		SENSOR_ROT_STD_REF(id) SENSOR_DRV_DATA(id) SENSOR_CONFIG(id) \
 			SENSOR_INT_SIGNAL(id) SENSOR_FLAGS(id)               \
