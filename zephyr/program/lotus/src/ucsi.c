@@ -1,8 +1,8 @@
-/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+/* Copyright 2023 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * PD chip UCSI 
+ * PD chip UCSI
  */
 
 #include <atomic.h>
@@ -31,7 +31,7 @@ static struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
 	}
 };
 
-static int ucsi_debug_enable = 0;
+static int ucsi_debug_enable;
 
 void ucsi_set_debug(bool enable)
 {
@@ -39,9 +39,11 @@ void ucsi_set_debug(bool enable)
 }
 
 timestamp_t ucsi_wait_time;
+
 void ucsi_set_next_poll(uint32_t from_now_us)
 {
 	timestamp_t now = get_time();
+
 	ucsi_wait_time.val = now.val + from_now_us;
 }
 
@@ -117,23 +119,14 @@ int ucsi_write_tunnel(void)
 		if (*command == UCSI_CMD_GET_ALTERNATE_MODES)
 			offset = 1;
 
-		/** 
-		* those command will control specific pd port,
-		* so we need to check the command connector number.
-		*/
+		/**
+		 * those command will control specific pd port,
+		 * so we need to check the command connector number.
+		 */
 		change_connector_indicator =
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) & 0x7f;
 
 		if (change_connector_indicator > 0x02) {
-#ifdef CONFIG_BOARD_LOTUS
-			/*
-			 * Port 5 (b101) should be controller 1 UCSI port 1
-			 * Port 6 (b110) should be controller 1 UCSI port 2
-			 */
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) =
-				((*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset)
-				& 0x80) | (change_connector_indicator & 0x3));
-#else
 			/*
 			 * Port 3 (b011) should be controller 1 UCSI port 1
 			 * Port 4 (b100) should be controller 1 UCSI port 2
@@ -141,7 +134,6 @@ int ucsi_write_tunnel(void)
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) =
 				((*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset)
 				& 0x80) | (change_connector_indicator >> 1));
-#endif
 			i = 1;
 		} else
 			i = 0;
@@ -153,7 +145,8 @@ int ucsi_write_tunnel(void)
 	default:
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 
-			if (*command == UCSI_CMD_ACK_CC_CI && pd_chip_ucsi_info[i].write_tunnel_complete == 0) {
+			if (*command == UCSI_CMD_ACK_CC_CI &&
+			    pd_chip_ucsi_info[i].write_tunnel_complete == 0) {
 				pd_chip_ucsi_info[i].read_tunnel_complete = 1;
 				continue;
 			}
@@ -192,26 +185,17 @@ int ucsi_read_tunnel(int controller)
 		CPRINTS("CCI_REG failed");
 	/* we need to offset the pd connector number to correct number */
 	if (controller == 1 && (pd_chip_ucsi_info[controller].cci & 0xFE))
-#ifdef CONFIG_BOARD_LOTUS
-		/*
-		 * Port 5 (b101) should be controller 1 UCSI port 1 (b001)
-		 * Port 6 (b110) should be controller 1 UCSI port 2 (b010)
-		 * CCI connector change indicate offset bit 1, so need to add 0x08 (0x4 << 1)
-		 */
-		pd_chip_ucsi_info[controller].cci += 0x08;
-#else
 		/*
 		 * Port 3 (b011) should be controller 1 UCSI port 1 (b001)
 		 * Port 4 (b100) should be controller 1 UCSI port 2 (b010)
 		 * CCI connector change indicate offset bit 1, so need to add 0x04 (0x2 << 1)
 		 */
 		pd_chip_ucsi_info[controller].cci += 0x04;
-#endif
 	if (pd_chip_ucsi_info[controller].cci & 0xFF00) {
 		rv = cypd_read_reg_block(controller, CCG_MESSAGE_IN_REG,
 			pd_chip_ucsi_info[controller].message_in, 16);
 
-		if (rv != EC_SUCCESS) 
+		if (rv != EC_SUCCESS)
 			CPRINTS("MESSAGE_IN_REG failed");
 	} else {
 		memset(pd_chip_ucsi_info[controller].message_in, 0, 16);
@@ -247,14 +231,15 @@ int ucsi_startup(int controller)
 {
 	int rv = EC_SUCCESS;
 	int data;
+
 	ucsi_set_next_poll(0);
-	rv = cypd_write_reg8(controller, CCG_UCSI_CONTROL_REG ,CYPD_UCSI_START);
+	rv = cypd_write_reg8(controller, CCG_UCSI_CONTROL_REG, CYPD_UCSI_START);
 	if (rv != EC_SUCCESS)
 		CPRINTS("UCSI start command fail!");
 
 	if (cypd_wait_for_ack(controller, 100000) != EC_SUCCESS) {
-			CPRINTS("%s timeout on interrupt", __func__);
-			return EC_ERROR_INVAL;
+		CPRINTS("%s timeout on interrupt", __func__);
+		return EC_ERROR_INVAL;
 	}
 
 	rv = cypd_get_int(controller, &data);
@@ -299,7 +284,7 @@ void check_ucsi_event_from_host(void)
 	}
 
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-			(*host_get_memmap(0x00) & UCSI_EVENT)) {
+			(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & UCSI_EVENT)) {
 
 		/**
 		 * Following the specification, until the EC reads the VERSION register
@@ -312,7 +297,7 @@ void check_ucsi_event_from_host(void)
 		if (rv == EC_ERROR_BUSY)
 			return;
 
-		*host_get_memmap(0x00) &= ~UCSI_EVENT;
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~UCSI_EVENT;
 		return;
 	}
 
@@ -324,11 +309,13 @@ void check_ucsi_event_from_host(void)
 	case UCSI_CMD_GET_CAPABILITY:
 	case UCSI_CMD_GET_ERROR_STATUS:
 		/* Those command need to wait two pd chip to response completed */
-		if (pd_chip_ucsi_info[0].read_tunnel_complete && pd_chip_ucsi_info[1].read_tunnel_complete)
+		if (pd_chip_ucsi_info[0].read_tunnel_complete &&
+		    pd_chip_ucsi_info[1].read_tunnel_complete)
 			read_complete = 1;
 		break;
 	default:
-		if (pd_chip_ucsi_info[0].read_tunnel_complete || pd_chip_ucsi_info[1].read_tunnel_complete)
+		if (pd_chip_ucsi_info[0].read_tunnel_complete ||
+		    pd_chip_ucsi_info[1].read_tunnel_complete)
 			read_complete = 1;
 		break;
 	}
@@ -366,19 +353,18 @@ void check_ucsi_event_from_host(void)
 			}
 		}
 
-		if (
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CONNECTOR_STATUS &&
-			(((uint8_t*)message_in)[8] & 0x03) > 1)
-		{
+		if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) ==
+		    UCSI_CMD_GET_CONNECTOR_STATUS &&
+		    (((uint8_t *)message_in)[8] & 0x03) > 1) {
 			CPRINTS("Overriding Slow charger status");
 			/* Override not charging value with nominal charging */
-			((uint8_t*)message_in)[8] = (((uint8_t*)message_in)[8] & 0xFC) + 1;
+			((uint8_t *)message_in)[8] = (((uint8_t *)message_in)[8] & 0xFC) + 1;
 		}
 
-		msleep(2);
+		usleep(2 * MSEC);
 
 		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN), message_in, 16);
-		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CCI), cci, 4);
+		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CONN_CHANGE), cci, 4);
 
 		/**
 		 * TODO: process the two pd results for one response.
@@ -390,7 +376,7 @@ void check_ucsi_event_from_host(void)
 		pd_chip_ucsi_info[1].read_tunnel_complete = 0;
 
 		/* clear the UCSI command */
-		if (!(*host_get_memmap(0x00) & BIT(2)))
+		if (!(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & UCSI_EVENT))
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) = 0;
 
 		host_set_single_event(EC_HOST_EVENT_UCSI);

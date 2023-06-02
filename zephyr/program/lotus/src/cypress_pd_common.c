@@ -224,7 +224,7 @@ void cypd_print_buff(const char *msg, void *buff, int len)
 	uint8_t *data = (uint8_t *)buff;
 
 	CPRINTF("%s 0x", msg);
-	for (i = len-1; i >=0; i--) {
+	for (i = len-1; i >= 0; i--) {
 		CPRINTF("%02x", data[i]);
 	}
 	CPRINTF("\n");
@@ -811,7 +811,7 @@ DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
 
 void pd1_chip_interrupt_deferred(void)
 {
-	
+	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_1);
 }
 DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
 
@@ -868,7 +868,7 @@ void cypd_interrupt_handler_task(void *p)
 		 * need setting port current again
 		 */
 		if (evt & CCG_EVT_UCSI_PPM_RESET)
-			CPRINTS("TODO: set PD current");
+			CPRINTS("TODO: reset PD current if necessary");
 
 		if (evt & CCG_EVT_S_CHANGE)
 			update_system_power_state(2);
