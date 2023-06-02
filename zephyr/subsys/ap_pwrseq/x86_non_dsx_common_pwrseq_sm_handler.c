@@ -431,7 +431,8 @@ static int common_pwr_sm_run(int state)
 		return SYS_POWER_STATE_S5;
 
 	case SYS_POWER_STATE_S4:
-		if (signals_valid_and_on(IN_PCH_SLP_S5))
+		if (signals_valid_and_on(IN_PCH_SLP_S5) ||
+		    !rsmrst_power_is_good())
 			return SYS_POWER_STATE_S4S5;
 		else if (signals_valid_and_off(IN_PCH_SLP_S4))
 			return SYS_POWER_STATE_S4S3;
@@ -459,6 +460,10 @@ static int common_pwr_sm_run(int state)
 
 	case SYS_POWER_STATE_S3:
 		/* AP is out of suspend to RAM */
+		if (!rsmrst_power_is_good()) {
+			LOG_WRN("RSMRST De-asserted");
+			return SYS_POWER_STATE_S3S4;
+		}
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away, go straight to S5 */
 			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
