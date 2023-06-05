@@ -2410,6 +2410,12 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #define CONFIG_ACCELGYRO_LSM6DSM
 #endif
 
+#else
+/*
+ * CONFIG_SENSOR_TIGHT_TIMESTAMPS defaults to enabled in config.h, but
+ * requires motionsense support.
+ */
+#undef CONFIG_SENSOR_TIGHT_TIMESTAMPS
 #endif /* CONFIG_PLATFORM_EC_MOTIONSENSE */
 
 #undef CONFIG_LID_SWITCH
