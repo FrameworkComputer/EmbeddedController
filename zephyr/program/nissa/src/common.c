@@ -8,6 +8,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "hooks.h"
+#include "nissa_common.h"
 #include "system.h"
 #include "usb_mux.h"
 
@@ -17,8 +18,8 @@
 #include <ap_power/ap_power.h>
 LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-static void board_power_change(struct ap_power_ev_callback *cb,
-			       struct ap_power_ev_data data)
+__overridable void board_power_change(struct ap_power_ev_callback *cb,
+				      struct ap_power_ev_data data)
 {
 	/*
 	 * Enable power to pen garage when system is active (safe even if no
