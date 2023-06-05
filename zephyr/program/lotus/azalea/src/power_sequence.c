@@ -27,6 +27,7 @@
 
 #define IN_VR_PGOOD POWER_SIGNAL_MASK(X86_VR_PG)
 
+static int power_ready;
 static int power_s5_up;		/* Chipset is sequencing up or down */
 static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
@@ -121,6 +122,31 @@ static void clear_rtcwake(void)
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~BIT(0);
 }
 
+static void board_power_on(void);
+DECLARE_DEFERRED(board_power_on);
+DECLARE_HOOK(HOOK_INIT, board_power_on, HOOK_PRIO_DEFAULT);
+
+static void board_power_on(void)
+{
+	static int logs_printed; /* Only prints the log one time */
+
+	/*
+	 * we need to wait the 3VALW power rail ready
+	 * then enable 0.75VALW and 1.8VALW power rail
+	 */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_spok)) == 1) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 1);
+		power_ready = 1;
+		CPRINTS("0.75 and 1.8 VALW power rail ready");
+	} else {
+		if (!logs_printed) {
+			CPRINTS("wait 3VALW power rail ready");
+			logs_printed = 1;
+		}
+		hook_call_deferred(&board_power_on_data, 5 * MSEC);
+	}
+}
+
 void power_state_clear(int state)
 {
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE) &= ~state;
@@ -187,6 +213,16 @@ void s0ix_status_handle(void)
 DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
 #endif
 
+int get_power_rail_status(void)
+{
+	/*
+	 * If the 3VALW, 0.75VALW and 1.8VALW power rail not ready,
+	 * the unit should not power on.
+	 * This function will be used by PB task.
+	 */
+	return power_ready;
+}
+
 void power_s5_up_control(int control)
 {
 	CPRINTS("%s power s5 up!", control ? "setup" : "clear");
@@ -209,7 +245,6 @@ static void chipset_force_g3(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
 }
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
@@ -287,14 +322,6 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
-
-		if (power_wait_signals(X86_3VALW_PG)) {
-			/* something wrong, turn off power and force to g3 */
-			chipset_force_g3();
-			return POWER_G3;
-		}
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 1);
-		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 1);
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 1);
@@ -540,7 +567,6 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
 
 		return POWER_G3;
 	default:
