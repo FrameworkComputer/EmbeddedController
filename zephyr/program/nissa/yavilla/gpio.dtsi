@@ -149,7 +149,7 @@
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_pen_detect_odl: pen_detect_odl {
-			gpios = <&gpioj 1 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpioj 1 GPIO_INPUT>;
 		};
 		gpio_pg_pp1050_mem_s3_od: pg_pp1050_mem_s3_od {
 			gpios = <&gpiod 3 GPIO_INPUT>;

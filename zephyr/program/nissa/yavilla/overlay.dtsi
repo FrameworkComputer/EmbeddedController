@@ -84,6 +84,11 @@
 		  flags = <GPIO_INT_EDGE_FALLING>;
 		  handler = "bmi3xx_interrupt";
 		};
+		int_pen_det_l: pen_det_l {
+			irq-pin = <&gpio_pen_detect_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pen_detect_interrupt";
+		};
 		int_usb_c0: usb_c0 {
 			irq-pin = <&gpio_usb_c0_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
