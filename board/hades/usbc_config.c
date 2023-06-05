@@ -238,11 +238,36 @@ void board_reset_pd_mcu(void)
 		msleep(NCT3808_RESET_POST_DELAY_MS);
 }
 
+int board_tcpc_post_init(int port)
+{
+	int rv;
+
+	if (port != USBC_PORT_C0)
+		return EC_SUCCESS;
+
+	/* Disable P2 on C0 */
+	rv = i2c_write16(tcpc_config[port].i2c_info.port,
+			 NCT38XX_I2C_ADDR2_1_FLAGS, TCPC_REG_ALERT_MASK,
+			 TCPC_REG_ALERT_NONE);
+	rv |= i2c_write16(tcpc_config[port].i2c_info.port,
+			  NCT38XX_I2C_ADDR2_1_FLAGS, TCPC_REG_RX_DETECT,
+			  TCPC_REG_RX_DETECT_NONE);
+	rv |= i2c_write16(tcpc_config[port].i2c_info.port,
+			  NCT38XX_I2C_ADDR2_1_FLAGS, TCPC_REG_COMMAND,
+			  TCPC_REG_COMMAND_DISABLE_VBUS_DETECT);
+	if (rv)
+		CPRINTS("C0: Failed to disable P2 (0x%x)", rv);
+
+	return rv;
+}
+
 static void board_tcpc_init(void)
 {
 	/* Don't reset TCPCs after initial reset */
 	if (!system_jumped_late())
 		board_reset_pd_mcu();
+
+	board_tcpc_post_init(USBC_PORT_C0);
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
