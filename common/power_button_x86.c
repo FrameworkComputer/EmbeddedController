@@ -202,7 +202,7 @@ static void power_button_released(uint64_t tnow)
 /**
  * Set initial power button state.
  */
-static void set_initial_pwrbtn_state(void)
+test_export_static void set_initial_pwrbtn_state(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
 
