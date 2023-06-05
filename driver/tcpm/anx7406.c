@@ -152,10 +152,21 @@ static int anx7406_init(int port)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	/* Set VBUS OCP */
+	/*
+	 * Set VBUS OCP
+	 *
+	 * This is retried in case the TCPC just woke up from LPM. If you add
+	 * I2C above, you need to retry that instead.
+	 */
 	rv = tcpc_write(port, ANX7406_REG_VBUS_OCP, OCP_THRESHOLD);
-	if (rv)
-		return rv;
+	if (rv) {
+		/* Failed but this is expected if the chip is in LPM. */
+		CPRINTS("C%d: Retrying to set OCP", port);
+		msleep(5);
+		rv = tcpc_write(port, ANX7406_REG_VBUS_OCP, OCP_THRESHOLD);
+		if (rv)
+			return rv;
+	}
 
 	/* Disable CAP write protect */
 	rv = tcpc_update8(port, ANX7406_REG_TCPCCTRL, ANX7406_REG_CAP_WP,
