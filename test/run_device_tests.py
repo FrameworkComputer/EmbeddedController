@@ -763,8 +763,12 @@ def flash_and_run_test(
     if test.build_board is not None:
         build_board = test.build_board
 
-    # build test binary
-    build(test.test_name, build_board, args.compiler, test.apptype_to_use)
+    # attempt to build test binary, reporting a test failure on error
+    try:
+        build(test.test_name, build_board, args.compiler, test.apptype_to_use)
+    except Exception as exception:  # pylint: disable=broad-except
+        logging.error("failed to build %s: %s", test.test_name, exception)
+        return False
 
     if test.apptype_to_use == ApplicationType.PRODUCTION:
         image_path = os.path.join(EC_DIR, "build", build_board, "ec.bin")
