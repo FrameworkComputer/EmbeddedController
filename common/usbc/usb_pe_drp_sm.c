@@ -5696,7 +5696,7 @@ static void pe_vdm_send_request_entry(int port)
 	     pe[port].tx_type == TCPCI_MSG_SOP_PRIME_PRIME) &&
 	    !tc_is_vconn_src(port) &&
 	    port_discovery_vconn_swap_policy(
-		    port, BIT(PE_FLAGS_VCONN_SWAP_TO_ON_FN))) {
+		    port, PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON))) {
 		if (port_try_vconn_swap(port))
 			return;
 	}
