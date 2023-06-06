@@ -37,7 +37,6 @@ static void charger_chips_init(void)
 	uint16_t val = 0x0000; /*default ac setting */
 	uint32_t data = 0;
 
-	const struct battery_info *bi = battery_get_info();
 
 	/*
 	 * In our case the EC can boot before the charger has power so
@@ -58,7 +57,7 @@ static void charger_chips_init(void)
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2,
-			ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
+			ISL9241_CONTROL2_TRICKLE_CHG_CURR(128) |
 			ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
 			ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100))
 		goto init_fail;
@@ -115,8 +114,8 @@ void charger_update(void)
 			CPRINTS("read charger control1 fail");
 		}
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6800;
-		val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7) &
+		val |= ISL9241_CONTROL1_PROCHOT_REF_6800;
+		val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ << 7) &
 			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -158,4 +157,110 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	charge_set_input_current_limit(charge_ma, charge_mv);
 	/* sync-up ac prochot with current change */
 	isl9241_set_ac_prochot(0, prochot_ma);
+}
+
+void charge_gate_onoff(uint8_t enable)
+{
+	int control0 = 0x0000;
+	int control1 = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, &control0)) {
+		CPRINTS("read gate control1 fail");
+	}
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read gate control1 fail");
+	}
+
+	if (enable) {
+		control0 &= ~ISL9241_CONTROL0_NGATE_OFF;
+		control1 &= ~ISL9241_CONTROL1_BGATE_OFF;
+		CPRINTS("B&N Gate off");
+	} else {
+		control0 |= ISL9241_CONTROL0_NGATE_OFF;
+		control1 |= ISL9241_CONTROL1_BGATE_OFF;
+		CPRINTS("B&N Gate on");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, control0)) {
+		CPRINTS("Update gate control0 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update gate control1 fail");
+	}
+}
+
+void charger_psys_enable(uint8_t enable)
+{
+	int control1 = 0x0000;
+	int control4 = 0x0000;
+	int data = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read psys control1 fail");
+	}
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, &control4)) {
+		CPRINTS("read psys control1 fail");
+	}
+
+	if (enable) {
+		control1 &= ~ISL9241_CONTROL1_IMON;
+		control1 |= ISL9241_CONTROL1_PSYS;
+		control4 &= ~ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0B00;		/* Set ACOK reference to 4.544V */
+		CPRINTS("Power saving disable");
+	} else {
+		control1 |= ISL9241_CONTROL1_IMON;
+		control1 &= ~ISL9241_CONTROL1_PSYS;
+		control4 |= ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0000;		/* Set ACOK reference to 0V */
+		CPRINTS("Power saving enable");
+	}
+
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, data)) {
+		CPRINTS("Update ACOK reference fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update psys control1 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, control4)) {
+		CPRINTS("Update psys control4 fail");
+	}
+}
+
+/* Called on AP S5 -> S3 transition */
+static void board_charger_lpm_disable(void)
+{
+	charger_psys_enable(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_charger_lpm_disable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_charger_lpm_disable, HOOK_PRIO_DEFAULT);
+
+static void board_charger_lpm_enable(void)
+{
+	charger_psys_enable(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_charger_lpm_enable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_charger_lpm_enable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_charger_lpm_enable, HOOK_PRIO_DEFAULT);
+
+__override void board_hibernate(void)
+{
+	/* Turn off BGATE and NGATE for power saving */
+	charger_psys_enable(0);
+	charge_gate_onoff(0);
 }
