@@ -138,10 +138,6 @@
 			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			no-auto-init;
 		};
-		gpio_fan_enable: fan-enable {
-			gpios = <&gpio6 3 GPIO_OUTPUT>;
-			no-auto-init;
-		};
 		ec-i2c-sensor-scl {
 			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
@@ -156,7 +152,6 @@
 	aliases {
 		/*
 		 * Input GPIO when used with type-C port 1
-		 * Output when used with HDMI sub-board
 		 */
 		gpio-usb-c1-int-odl = &gpio_sb_1;
 		gpio-en-rails-odl = &gpio_sb_1;
@@ -164,11 +159,6 @@
 		 * Sub-board with type A USB, enable.
 		 */
 		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		/*
-		 * HPD pins for HDMI sub-board.
-		 */
-		gpio-hdmi-en-odl = &gpio_sb_3;
-		gpio-hpd-odl = &gpio_sb_4;
 		/*
 		 * Enable S5 rails for LTE sub-board
 		 */
@@ -194,8 +184,6 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		memory {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
@@ -203,8 +191,6 @@
 			sensor = <&temp_memory>;
 		};
 		charger {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
@@ -212,8 +198,6 @@
 			sensor = <&temp_charger>;
 		};
 		ambient {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
@@ -281,19 +265,6 @@
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
-		};
-	};
-
-	fans {
-		compatible = "cros-ec,fans";
-
-		fan_0 {
-			pwms = <&pwm5 5 PWM_KHZ(1) PWM_POLARITY_NORMAL>;
-			rpm_min = <2200>;
-			rpm_start = <2200>;
-			rpm_max = <4200>;
-			tach = <&tach2>;
-			enable_gpio = <&gpio_fan_enable>;
 		};
 	};
 
@@ -439,16 +410,6 @@
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm5_gpb7>;
 	pinctrl-names = "default";
-};
-
-/* Tachometer for fan speed measurement */
-&tach2 {
-	status = "okay";
-	pinctrl-0 = <&ta2_1_in_gp73>;
-	pinctrl-names = "default";
-	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
-	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
-	pulses-per-round = <2>; /* number of pulses per round of encoder */
 };
 
 /* host interface */
