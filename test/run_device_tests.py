@@ -822,9 +822,9 @@ def flash_and_run_test(
                 console_socket.makefile(mode="rwb", buffering=0)
             )
         else:
-            console = stack.enter_context(
-                open(get_console(board_config), "wb+", buffering=0)
-            )
+            # pylint: disable-next=consider-using-with
+            console_file = open(get_console(board_config), "wb+", buffering=0)
+            console = stack.enter_context(console_file)
 
         return run_test(test, console, executor=executor)
 
