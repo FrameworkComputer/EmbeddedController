@@ -18,10 +18,9 @@
 #define CONFIG_CMD_CHARGER_DUMP
 
 /* I2C Bus Configuration */
-#define I2C_PORT_HDMI2_EDID IT83XX_I2C_CH_B
 #undef I2C_PORT_USB_C0
+#define I2C_PORT_USB_C1 IT83XX_I2C_CH_B
 #define I2C_PORT_USB_C0 IT83XX_I2C_CH_C
-#define I2C_PORT_HDMI2_SRC_DDC IT83XX_I2C_CH_D
 #define I2C_PORT_HDMI1_EDID IT83XX_I2C_CH_E
 #define I2C_PORT_HDMI1_SRC_DDC IT83XX_I2C_CH_F
 
@@ -36,33 +35,32 @@
 #undef PD_MAX_POWER_MW
 #define PD_MAX_POWER_MW 65000
 #define CONFIG_USB_PD_VBUS_DETECT_GPIO
+#define CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 
-/* Override macro for C0 only */
-#define PORT_TO_HPD(port) (GPIO_USB_C0_DP_HPD)
-
-/* Power: Dedicated barreljack charger port */
-#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
-#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-#define DEDICATED_CHARGE_PORT 1
+/* Override macro for C0 C1 */
+#define PORT_TO_HPD(port) \
+	((port) ? GPIO_EC_AP_USB_C1_HPD : GPIO_EC_AP_USB_C0_HPD)
 
 /* USB Type-C */
 #undef CONFIG_USB_CHARGER
 #undef CONFIG_USB_MUX_PI3USB31532
 
 /* TCPC */
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
-#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0: ITE EC TCPC */
-#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0 C1: ITE EC TCPC */
+#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 2
 
 /* PPC */
 #define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
 #define CONFIG_USBC_PPC
 #define CONFIG_USBC_PPC_SYV682X
+#define CONFIG_CMD_PPC_DUMP
 
 /* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205 /* C0: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C0 C1: ITE Mux */
+#define I2C_PORT_USB_MUX0 I2C_PORT_USB_C0 /* Required for ITE Mux */
+#define I2C_PORT_USB_MUX1 I2C_PORT_USB_C1 /* Required for ITE Mux */
 
 /* USB Type A Features */
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -131,9 +129,10 @@
 
 enum charge_port {
 	CHARGE_PORT_TYPEC0,
+	CHARGE_PORT_TYPEC1,
 };
 
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
+enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1 = 1, USBC_PORT_COUNT };
 
 enum pwm_channel {
 	PWM_CH_LED_RED,
@@ -147,7 +146,8 @@ enum adc_channel {
 	ADC_VSNS_PP3300_A, /* ADC0 */
 	ADC_TEMP_SENSOR_1, /* ADC2 */
 	ADC_TEMP_SENSOR_2, /* ADC3 */
-	ADC_VBUS, /* ADC4 */
+	ADC_VBUS_C0, /* ADC4 */
+	ADC_VBUS_C1, /* ADC6 */
 	ADC_TEMP_SENSOR_3, /* ADC13 */
 	ADC_PPVAR_PWR_IN_IMON, /* ADC15 */
 	ADC_SNS_PPVAR_PWR_IN, /* ADC16 */
