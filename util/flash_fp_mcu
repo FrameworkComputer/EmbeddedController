@@ -51,7 +51,9 @@ check_hardware_write_protect_disabled() {
     exit "${EXIT_PRECONDITION}"
   fi
   if [[ "${hardware_write_protect_state}" != "0" ]]; then
-    echo "Please make sure hardware write protect is disabled."
+    echo "Unable to proceed because hardware write protect is enabled."
+    echo "Please disable the hardware write protect, so that we can" \
+    "reboot the FPMCU into the ROM bootloader."
     echo "See https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection"
     exit "${EXIT_PRECONDITION}"
   fi
