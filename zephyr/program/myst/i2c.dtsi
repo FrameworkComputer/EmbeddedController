@@ -170,10 +170,10 @@
 		status = "okay";
 		reg = <0x5c>;
 	};
-	amd_fp6_port1: amd_fp6@52 {
+	amd_fp6_port1: amd_fp6@58 {
 		compatible = "amd,usbc-mux-amd-fp6";
 		status = "okay";
-		reg = <0x52>;
+		reg = <0x58>;
 	};
 };
 
