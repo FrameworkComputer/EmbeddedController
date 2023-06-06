@@ -7,10 +7,10 @@
 	pwmleds {
 		compatible = "pwm-leds";
 		pwm_y: pwm_y {
-			pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+			pwms = <&pwm3 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
 		pwm_w: pwm_w {
-			pwms = <&pwm3 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
 	};
 
@@ -42,7 +42,7 @@
 };
 
 /* Amber "battery charging" LED */
-&pwm2 {
+&pwm3 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm3_gp80>;
@@ -50,7 +50,7 @@
 };
 
 /* White "battery full" LED */
-&pwm3 {
+&pwm4 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm4_gpb6>;
