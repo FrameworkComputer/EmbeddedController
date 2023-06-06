@@ -523,7 +523,7 @@ config_hatch() {
   # for pin name to number mapping.
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
- 
+
   local gpiochip_dev_path="*/pci0000\:00/INT34BB\:00/gpio/*"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
