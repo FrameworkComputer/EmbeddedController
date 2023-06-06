@@ -28,7 +28,6 @@ test-list-y=\
        aes \
        always_memset \
        benchmark \
-       cec \
        boringssl_crypto \
        compile_time_macros \
        cortexm_fpu \
