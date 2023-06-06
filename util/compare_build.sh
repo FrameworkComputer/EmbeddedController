@@ -81,7 +81,7 @@ assoc-rm-keys() {
   shift
 
   for key in "${@}"; do
-    unset arr["${key}"]
+    unset 'arr[${key}]'
   done
 }
 
