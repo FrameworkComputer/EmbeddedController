@@ -91,7 +91,7 @@ def build(opts):
             "When --code-coverage is selected, 'build' is a no-op. "
             "Run 'test' with --code-coverage instead."
         )
-        with open(opts.metrics, "w") as file:
+        with open(opts.metrics, "w", encoding="utf-8") as file:
             file.write(json_format.MessageToJson(metric_list))
         return
 
@@ -160,7 +160,7 @@ def build(opts):
                     variant,
                     build_target in BINARY_SIZE_BOARDS,
                 )
-    with open(opts.metrics, "w") as file:
+    with open(opts.metrics, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(metric_list))
 
     # Ensure that there are no regressions for boards that build successfully
@@ -180,7 +180,7 @@ UNITS = {
 
 def parse_memsize(filename, metric, variant, track_on_gerrit):
     """Parse the output of the build to extract the image size."""
-    with open(filename, "r") as infile:
+    with open(filename, "r", encoding="utf-8") as infile:
         # Skip header line
         infile.readline()
         for line in infile.readlines():
@@ -222,7 +222,7 @@ def write_metadata(opts, info):
     bundle_metadata_file = (
         opts.metadata if opts.metadata else DEFAULT_BUNDLE_METADATA_FILE
     )
-    with open(bundle_metadata_file, "w") as file:
+    with open(bundle_metadata_file, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(info))
 
 
@@ -284,7 +284,7 @@ def test(opts):
     """Runs all of the unit tests for EC firmware"""
     # TODO(b/169178847): Add appropriate metric information
     metrics = firmware_pb2.FwTestMetricList()
-    with open(opts.metrics, "w") as file:
+    with open(opts.metrics, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(metrics))
 
     # Run python unit tests.
