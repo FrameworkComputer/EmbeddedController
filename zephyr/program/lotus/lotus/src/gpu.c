@@ -62,11 +62,7 @@ void check_gpu_module(void)
 	default:
 		LOG_INF("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
 		/* Framework TODO remove for DVT, for now force on  unless feature is enabled */
-		if (flash_storage_get(FLASH_FLAGS_ENABLE_GPU_DETECT) == 0) {
-			module_present = 1;
-		} else {
-			module_present = 0;
-		}
+		module_present = 0;
 	break;
 	}
 

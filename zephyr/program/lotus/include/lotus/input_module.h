@@ -48,4 +48,6 @@ enum input_deck_mux {
 
 int get_deck_state(void);
 
+void input_modules_powerdown(void);
+
 #endif /*__BOARD_INPUT_MODULE_H__*/
