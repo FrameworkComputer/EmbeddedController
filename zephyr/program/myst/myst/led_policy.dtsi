@@ -24,7 +24,7 @@
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
 			color-0 {
-				led-color = <&color_white>;
+				led-color = <&color_blue>;
 			};
 		};
 
@@ -34,9 +34,9 @@
 			/* Battery percent range (>= Empty, <= Low) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
-			/* White 2 sec, off 1 sec */
+			/* Blue 2 sec, off 1 sec */
 			color-0 {
-				led-color = <&color_white>;
+				led-color = <&color_blue>;
 				period-ms = <2000>;
 			};
 			color-1 {
@@ -49,9 +49,9 @@
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
-			/* White 1 sec, off 1 sec */
+			/* Blue 1 sec, off 1 sec */
 			color-0 {
-				led-color = <&color_white>;
+				led-color = <&color_blue>;
 				period-ms = <1000>;
 			};
 			color-1 {
@@ -87,20 +87,20 @@
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
 			color-0 {
-				led-color = <&color_white>;
+				led-color = <&color_blue>;
 			};
 		};
 
 		power-state-forced-idle {
 			charge-state = "LED_PWRS_FORCED_IDLE";
 
-			/* Amber 2 sec, White 2 sec */
+			/* Amber 2 sec, Blue 2 sec */
 			color-0 {
 				led-color = <&color_amber>;
 				period-ms = <2000>;
 			};
 			color-1 {
-				led-color = <&color_white>;
+				led-color = <&color_blue>;
 				period-ms = <2000>;
 			};
 		};

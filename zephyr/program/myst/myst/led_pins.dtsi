@@ -6,10 +6,10 @@
 / {
 	pwmleds {
 		compatible = "pwm-leds";
-		pwm_y: pwm_y {
+		pwm_amber: pwm_amber {
 			pwms = <&pwm3 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
-		pwm_w: pwm_w {
+		pwm_blue: pwm_blue {
 			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
 	};
@@ -19,7 +19,7 @@
 
 		battery_led: battery-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
-			led-pwms = <&pwm_y &pwm_w>;
+			led-pwms = <&pwm_amber &pwm_blue>;
 
 			color_off: color-off {
 				led-color = "LED_OFF";
@@ -32,9 +32,9 @@
 				led-values = <100 0>;
 			};
 
-			color_white: color-white {
-				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
+			color_blue: color-blue {
+				led-color = "LED_BLUE";
+				br-color = "EC_LED_COLOR_BLUE";
 				led-values = <0 100>;
 			};
 		};
@@ -49,7 +49,7 @@
 	pinctrl-names = "default";
 };
 
-/* White "battery full" LED */
+/* Blue "battery full" LED */
 &pwm4 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
