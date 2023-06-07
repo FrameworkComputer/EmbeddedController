@@ -286,8 +286,6 @@ uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type)
 		 * Ref: Tiger Lake Platform PD Controller Interface Requirements
 		 * for Integrated USBC, section A.2.2: USB4 as DFP.
 		 * Enter safe mode before sending Enter USB SOP/SOP'/SOP''
-		 * TODO (b/156749387): Remove once data reset feature is in
-		 * place.
 		 */
 		usb_mux_set_safe_mode(port);
 
