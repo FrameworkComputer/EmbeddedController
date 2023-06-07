@@ -177,6 +177,7 @@ class TestConfig:
     ro_image: str = None
     build_board: str = None
     config_name: str = None
+    exclude_boards: List = field(default_factory=list)
     logs: List = field(init=False, default_factory=list)
     passed: bool = field(init=False, default=False)
     num_passes: int = field(init=False, default=0)
@@ -214,7 +215,13 @@ class AllTests:
             [] if with_private == PRIVATE_NO else AllTests.get_private_tests()
         )
 
-        return public_tests + private_tests
+        all_tests = public_tests + private_tests
+        board_tests = list(
+            filter(
+                lambda e: (board_config.name not in e.exclude_boards), all_tests
+            )
+        )
+        return board_tests
 
     @staticmethod
     def get_public_tests(board_config: BoardConfig) -> List[TestConfig]:
@@ -732,7 +739,11 @@ def get_test_list(
             if test_regex.fullmatch(test.config_name)
         ]
         if not tests:
-            logging.error('Unable to find test config for "%s"', test)
+            logging.error(
+                'Test "%s" is either not configured or not supported on board "%s"',
+                test,
+                config.name,
+            )
             sys.exit(1)
         test_list += tests
 
