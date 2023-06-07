@@ -3530,6 +3530,9 @@
 /* MKBP events are sent by using GPIO */
 #undef CONFIG_MKBP_USE_GPIO
 
+/* MKBP events GPIO is active high */
+#undef CONFIG_MKBP_USE_GPIO_ACTIVE_HIGH
+
 /*
  * MKBP events are notified by using both a GPIO and a host event.
  *
