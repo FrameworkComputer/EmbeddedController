@@ -15,6 +15,13 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+/* s0ix entry/exit flag state */
+enum s0ix_state {
+	CS_NONE,
+	CS_ENTER_S0ix,
+	CS_EXIT_S0ix,
+};
+
 int get_power_rail_status(void);
 
 void power_s5_up_control(int control);
