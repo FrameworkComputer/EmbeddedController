@@ -843,7 +843,6 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_polarity_dts_cc2_3A0);
 
 	RUN_TEST(test_mux_con_dis_as_src);
-	RUN_TEST(test_mux_con_dis_as_snk);
 	RUN_TEST(test_power_role_set);
 
 	RUN_TEST(test_typec_dis_as_src);

@@ -191,11 +191,6 @@ bool pd_capable(int port)
 	return true;
 }
 
-bool pd_waiting_on_partner_src_caps(int port)
-{
-	return false;
-}
-
 #ifndef CONFIG_TEST_USB_PE_SM
 enum idh_ptype get_usb_pd_mux_cable_type(int port)
 {

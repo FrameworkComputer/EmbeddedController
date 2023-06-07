@@ -191,11 +191,6 @@ bool pd_capable(int port)
 	return true;
 }
 
-bool pd_waiting_on_partner_src_caps(int port)
-{
-	return false;
-}
-
 void pd_set_suspend(int port, int suspend)
 {
 }

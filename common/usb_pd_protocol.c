@@ -412,15 +412,6 @@ bool pd_capable(int port)
 }
 
 /*
- * For TCPMv1, this routine always returns false so that the USB3 signals
- * are connected without delay when the initial connection is UFP.
- */
-bool pd_waiting_on_partner_src_caps(int port)
-{
-	return false;
-}
-
-/*
  * Return true if partner port is capable of communication over USB data
  * lines.
  */

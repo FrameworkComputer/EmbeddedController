@@ -787,16 +787,6 @@ bool pd_capable(int port)
 	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE);
 }
 
-/*
- * Return true if we transition through Unattached.SNK, but we're still waiting
- * to receive source caps from the partner. This indicates that the PD
- * capabilities are not yet known.
- */
-bool pd_waiting_on_partner_src_caps(int port)
-{
-	return !pd_get_src_cap_cnt(port);
-}
-
 enum pd_dual_role_states pd_get_dual_role(int port)
 {
 	return drp_state[port];
