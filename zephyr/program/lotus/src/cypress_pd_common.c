@@ -18,6 +18,7 @@
 #include "i2c.h"
 #include "power.h"
 #include "task.h"
+#include "ucsi.h"
 #include "usb_pd.h"
 #include "usb_tc_sm.h"
 #include "util.h"
@@ -75,7 +76,7 @@ static bool firmware_update;
 /*****************************************************************************/
 /* Internal functions */
 
-static int cypd_write_reg_block(int controller, int reg, void *data, int len)
+int cypd_write_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -99,7 +100,7 @@ static int cypd_write_reg16(int controller, int reg, int data)
 	return rv;
 }
 
-static int cypd_write_reg8(int controller, int reg, int data)
+int cypd_write_reg8(int controller, int reg, int data)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -111,7 +112,7 @@ static int cypd_write_reg8(int controller, int reg, int data)
 	return rv;
 }
 
-static int cypd_read_reg_block(int controller, int reg, void *data, int len)
+int cypd_read_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -157,7 +158,7 @@ static int cypd_reset(int controller)
 	return cypd_write_reg16(controller, CCG_RESET_REG, CCG_RESET_CMD);
 }
 
-static int cypd_get_int(int controller, int *intreg)
+int cypd_get_int(int controller, int *intreg)
 {
 	int rv;
 
@@ -167,7 +168,7 @@ static int cypd_get_int(int controller, int *intreg)
 	return rv;
 }
 
-static int cypd_clear_int(int controller, int mask)
+int cypd_clear_int(int controller, int mask)
 {
 	int rv;
 
@@ -177,7 +178,7 @@ static int cypd_clear_int(int controller, int mask)
 	return rv;
 }
 
-static int cypd_wait_for_ack(int controller, int timeout_us)
+int cypd_wait_for_ack(int controller, int timeout_us)
 {
 	int timeout;
 	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
@@ -215,6 +216,18 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		cypd_clear_int(controller, CCG_DEV_INTR);
 	usleep(50);
 	return rv;
+}
+
+void cypd_print_buff(const char *msg, void *buff, int len)
+{
+	int i;
+	uint8_t *data = (uint8_t *)buff;
+
+	CPRINTF("%s 0x", msg);
+	for (i = len-1; i >= 0; i--) {
+		CPRINTF("%02x", data[i]);
+	}
+	CPRINTF("\n");
 }
 
 #ifdef CONFIG_BOARD_LOTUS
@@ -643,10 +656,7 @@ static void cypd_handle_state(int controller)
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
 
-			/*
-			 * TODO: enable UCSI function
-			 * cyp5525_ucsi_startup(controller);
-			 */
+			ucsi_startup(controller);
 
 			update_system_power_state(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
@@ -785,9 +795,7 @@ void cypd_interrupt(int controller)
 		clear_mask |= CCG_ICLR_INTR;
 
 	if (data & CCG_UCSI_INTR) {
-		/*
-		 * TODO: implement ucsi_read_tunnel(controller);
-		 */
+		ucsi_read_tunnel(controller);
 		cypd_clear_int(controller, CCG_UCSI_INTR);
 	}
 
@@ -804,7 +812,6 @@ DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
 void pd1_chip_interrupt_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_1);
-
 }
 DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
 
@@ -816,6 +823,17 @@ void pd0_chip_interrupt(enum gpio_signal signal)
 void pd1_chip_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
+}
+
+static void cypd_ucsi_wait_delay_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_UCSI_PPM_RESET);
+}
+DECLARE_DEFERRED(cypd_ucsi_wait_delay_deferred);
+
+void cypd_usci_ppm_reset(void)
+{
+	hook_call_deferred(&cypd_ucsi_wait_delay_deferred_data, 1);
 }
 
 /*****************************************************************************/
@@ -844,6 +862,13 @@ void cypd_interrupt_handler_task(void *p)
 
 		if (firmware_update)
 			continue;
+
+		/*
+		 * USCI PPM RESET will make PD current setting to default
+		 * need setting port current again
+		 */
+		if (evt & CCG_EVT_UCSI_PPM_RESET)
+			CPRINTS("TODO: reset PD current if necessary");
 
 		if (evt & CCG_EVT_S_CHANGE)
 			update_system_power_state(2);
@@ -874,7 +899,7 @@ void cypd_interrupt_handler_task(void *p)
 			usleep(50);
 		}
 
-		/* check_ucsi_event_from_host(); */
+		check_ucsi_event_from_host();
 
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 			const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[i].gpio);
@@ -1054,7 +1079,17 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 				/* Flush console to avoid truncating output */
 				cflush();
 			}
-
+			CPRINTS("=====UCSI======");
+			cypd_read_reg16(i, CCG_VERSION_REG, &data);
+			CPRINTS(" Version: 0x%02x", data);
+			cypd_read_reg_block(i, CCG_CCI_REG, data16, 4);
+			cypd_print_buff("     CCI:", data16, 4);
+			cypd_read_reg_block(i, CCG_CONTROL_REG, data16, 8);
+			cypd_print_buff(" Control:", data16, 8);
+			cypd_read_reg_block(i, CCG_MESSAGE_IN_REG, data16, 16);
+			cypd_print_buff(" Msg  In:", data16, 16);
+			cypd_read_reg_block(i, CCG_MESSAGE_OUT_REG, data16, 16);
+			cypd_print_buff(" Msg Out:", data16, 16);
 		}
 
 	}
@@ -1107,7 +1142,10 @@ static int cmd_cypd_control(int argc, const char **argv)
 		} else if (!strncmp(argv[1], "verbose", 7)) {
 			verbose_msg_logging = (i != 0);
 			CPRINTS("verbose=%d", verbose_msg_logging);
-		}  else if (!strncmp(argv[1], "powerstate", 10)) {
+		} else if (!strncmp(argv[1], "ucsi", 4)) {
+			ucsi_set_debug(i != 0);
+			CPRINTS("ucsi verbose=%d", i);
+		} else if (!strncmp(argv[1], "powerstate", 10)) {
 			int pwrstate;
 
 			if (argc < 4)
