@@ -324,6 +324,7 @@ class AllTests:
             TestConfig(test_name="static_if"),
             TestConfig(test_name="stdlib"),
             TestConfig(test_name="std_vector"),
+            TestConfig(test_name="stm32f_rtc", exclude_boards=[DARTMONKEY]),
             TestConfig(
                 config_name="system_is_locked_wp_on",
                 test_name="system_is_locked",
@@ -345,9 +346,6 @@ class AllTests:
             TestConfig(test_name="utils", timeout_secs=20),
             TestConfig(test_name="utils_str"),
         ]
-
-        if board_config.name == BLOONCHIPPER:
-            tests.append(TestConfig(test_name="stm32f_rtc"))
 
         # Run panic data tests for all boards and RO versions.
         for variant_name, variant_info in board_config.variants.items():
