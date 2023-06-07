@@ -44,11 +44,25 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
 /******************************************************************************/
 
+/* Power on Gladios through CEC */
+struct cec_offline_policy gladios_cec_policy[] = {
+	{
+		.command = CEC_MSG_REPORT_PHYSICAL_ADDRESS,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	{
+		.command = CEC_MSG_DEVICE_VENDOR_ID,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	/* Terminator */
+	{ 0 },
+};
+
 /* CEC ports */
 const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &bitbang_cec_drv,
-		.offline_policy = NULL,
+		.offline_policy = gladios_cec_policy,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
