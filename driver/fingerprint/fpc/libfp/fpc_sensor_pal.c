@@ -55,4 +55,5 @@ int32_t FpcMalloc(void **data, size_t size)
 void FpcFree(void **data)
 {
 	shared_mem_release(*data);
+	*data = NULL;
 }
