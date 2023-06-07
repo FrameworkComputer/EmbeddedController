@@ -174,8 +174,8 @@ static void s5_inactive_timer_handler(struct k_timer *timer)
 
 static void shutdown_and_notify(enum ap_power_shutdown_reason reason)
 {
-	ap_power_force_shutdown(reason);
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
+	ap_power_force_shutdown(reason);
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 }
 
@@ -416,7 +416,10 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_S5G3:
-		shutdown_and_notify(AP_POWER_SHUTDOWN_G3);
+		/* Nofity power event after we remove power rails */
+		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
+		ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
+
 		/* Notify power event before we enter G3 */
 		ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
 		return SYS_POWER_STATE_G3;
@@ -586,9 +589,6 @@ static int common_pwr_sm_run(int state)
 		 * If support controlling power of wifi/WWAN/BT devices
 		 * add handling here.
 		 */
-
-		/* Nofity power event after we remove power rails */
-		ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 
 		/* Always enter into S5 state. The S5 state is required to
 		 * correctly handle global resets which have a bit of delay
