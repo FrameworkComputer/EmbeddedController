@@ -187,9 +187,8 @@ ZTEST_F(battery, test_is_charge_fet_disabled__i2c_error)
 
 ZTEST_F(battery, test_is_charge_fet_disabled)
 {
-	/* Custom data expected to be read from the battery */
-	static const uint8_t values[] = { 0x20, 0x54, 0x00, 0x00,
-					  0x00, 0x00, 0x00 };
+	static uint8_t values[] = { 0x20, 0x54 };
+
 	static struct battery2_read_data data = {
 		.count = ARRAY_SIZE(values),
 		.values = values,
