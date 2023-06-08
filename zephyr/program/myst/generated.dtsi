@@ -34,7 +34,7 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ccd_mode_odl: ccd_mode_odl {
-			gpios = <&gpiob 7 GPIO_ODR_LOW>;
+			gpios = <&gpiob 7 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		gpio_ec_bat_pres_odl: ec_bat_pres_odl {
