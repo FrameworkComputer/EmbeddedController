@@ -73,6 +73,7 @@ if(DEFINED CONFIG_BOARD_JOXER)
 			"joxer/src/keyboard.c"
 			"joxer/src/form_factor.c"
 			"joxer/src/board.c"
+			"joxer/src/thermal.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "joxer/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "joxer/src/charger.c")
