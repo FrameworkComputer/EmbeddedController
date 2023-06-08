@@ -55,6 +55,10 @@ int shared_mem_acquire(int size, char **dest_ptr);
 
 /**
  * Releases a shared memory area previously allocated via shared_mem_acquire().
+ *
+ * @param ptr pointer to previously acquired memory
+ *
+ * @note If ptr is NULL, this is a no-op.
  */
 void shared_mem_release(void *ptr);
 

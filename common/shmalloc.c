@@ -342,6 +342,9 @@ void shared_mem_release(void *ptr)
 	if (in_interrupt_context())
 		return;
 
+	if (ptr == NULL)
+		return;
+
 	mutex_lock(&shmem_lock);
 	do_release((struct shm_buffer *)ptr - 1);
 	mutex_unlock(&shmem_lock);

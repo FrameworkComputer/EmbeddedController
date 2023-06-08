@@ -79,6 +79,14 @@ static int test_shared_mem(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_shared_mem_release_null(void)
+{
+	/* This should be a no-op. We can't do much to test it directly. */
+	shared_mem_release(NULL);
+
+	return EC_SUCCESS;
+}
+
 static int test_scratchpad(void)
 {
 	uint32_t scratchpad_value;
@@ -369,6 +377,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_uint64divmod_1);
 	RUN_TEST(test_uint64divmod_2);
 	RUN_TEST(test_get_next_bit);
+	RUN_TEST(test_shared_mem_release_null);
 	RUN_TEST(test_shared_mem);
 	RUN_TEST(test_scratchpad);
 	RUN_TEST(test_cond_t);
