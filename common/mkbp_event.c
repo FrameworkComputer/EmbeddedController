@@ -104,11 +104,12 @@ static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 		lock_key = irq_lock();
 		*timestamp = __hw_clock_source_read();
 	}
-#if defined CONFIG_MKBP_USE_GPIO_ACTIVE_HIGH
-	gpio_set_level(GPIO_EC_INT_L, active);
-#else
-	gpio_set_level(GPIO_EC_INT_L, !active);
-#endif
+
+	if (IS_ENABLED(CONFIG_MKBP_USE_GPIO_ACTIVE_HIGH))
+		gpio_set_level(GPIO_EC_INT_L, active);
+	else
+		gpio_set_level(GPIO_EC_INT_L, !active);
+
 	if (timestamp)
 		irq_unlock(lock_key);
 
