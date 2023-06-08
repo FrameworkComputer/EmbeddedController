@@ -9,3 +9,6 @@ tests:
     tags:
       common
       system
+  system_safe_mode.disabled:
+    extra_configs:
+      - CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE=n

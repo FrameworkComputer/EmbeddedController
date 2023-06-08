@@ -9,5 +9,5 @@ project(system_safe_mode)
 # Include FFF fakes
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
-FILE(GLOB test_sources src/*.c)
-target_sources(app PRIVATE ${test_sources})
+target_sources_ifdef(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE app PRIVATE "src/system_safe_mode.c")
+target_sources_ifndef(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE app PRIVATE "src/system_safe_mode_disabled.c")
