@@ -308,6 +308,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_PANIC_OUTPUT=y
     - CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH=y
+    - CONFIG_PLATFORM_EC_DEBUG_ASSERT_REBOOTS=y
     - CONFIG_ZTEST_THREAD_PRIORITY=1
   drivers.power_host_sleep:
     extra_configs:

@@ -1595,6 +1595,10 @@ enum ec_feature_code {
 	 * The EC supports system safe mode panic recovery.
 	 */
 	EC_FEATURE_SYSTEM_SAFE_MODE = 47,
+	/*
+	 * The EC will reboot on runtime assertion failures.
+	 */
+	EC_FEATURE_ASSERT_REBOOTS = 48,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)

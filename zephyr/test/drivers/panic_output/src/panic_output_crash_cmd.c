@@ -6,6 +6,7 @@
 #include "console.h"
 #include "panic.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #include <signal.h>
 #include <stdint.h>
@@ -95,6 +96,15 @@ static int run_crash_command(int argc, const char **argv, k_timeout_t timeout)
 	}
 
 	return return_val;
+}
+
+ZTEST(panic_output, test_feature_present)
+{
+	struct ec_response_get_features feat = host_cmd_get_features();
+
+	zassert_true(feat.flags[1] &
+			     EC_FEATURE_MASK_1(EC_FEATURE_ASSERT_REBOOTS),
+		     "Failed to see feature present");
 }
 
 ZTEST(panic_output, test_console_cmd__unaligned)
