@@ -27,10 +27,10 @@
 #endif
 
 /* Time in us to timer clock ticks */
-#define APB1_TICKS(t) ((t)*apb1_freq_div_10k / 100)
+#define CEC_US_TO_TICKS(t) ((t)*apb1_freq_div_10k / 100)
 #if DEBUG_CEC
 /* Timer clock ticks to us */
-#define APB1_US(ticks) (100 * (ticks) / apb1_freq_div_10k)
+#define CEC_TICKS_TO_US(ticks) (100 * (ticks) / apb1_freq_div_10k)
 #endif
 
 /* Notification from interrupt to CEC task that data has been received */
@@ -55,7 +55,7 @@
  * the last bit (not from the start). We compensate by having one
  * free-time period less than in the spec.
  */
-#define NOMINAL_BIT_TICKS APB1_TICKS(2400)
+#define NOMINAL_BIT_TICKS CEC_US_TO_TICKS(2400)
 /* Resend */
 #define FREE_TIME_RS_TICKS (2 * (NOMINAL_BIT_TICKS))
 /* New initiator */
@@ -64,30 +64,30 @@
 #define FREE_TIME_PI_TICKS (6 * (NOMINAL_BIT_TICKS))
 
 /* Start bit timing */
-#define START_BIT_LOW_TICKS APB1_TICKS(3700)
-#define START_BIT_MIN_LOW_TICKS APB1_TICKS(3500)
-#define START_BIT_MAX_LOW_TICKS APB1_TICKS(3900)
-#define START_BIT_HIGH_TICKS APB1_TICKS(800)
-#define START_BIT_MIN_DURATION_TICKS APB1_TICKS(4300)
-#define START_BIT_MAX_DURATION_TICKS APB1_TICKS(5700)
+#define START_BIT_LOW_TICKS CEC_US_TO_TICKS(3700)
+#define START_BIT_MIN_LOW_TICKS CEC_US_TO_TICKS(3500)
+#define START_BIT_MAX_LOW_TICKS CEC_US_TO_TICKS(3900)
+#define START_BIT_HIGH_TICKS CEC_US_TO_TICKS(800)
+#define START_BIT_MIN_DURATION_TICKS CEC_US_TO_TICKS(4300)
+#define START_BIT_MAX_DURATION_TICKS CEC_US_TO_TICKS(5700)
 
 /* Data bit timing */
-#define DATA_ZERO_LOW_TICKS APB1_TICKS(1500)
-#define DATA_ZERO_MIN_LOW_TICKS APB1_TICKS(1300)
-#define DATA_ZERO_MAX_LOW_TICKS APB1_TICKS(1700)
-#define DATA_ZERO_HIGH_TICKS APB1_TICKS(900)
-#define DATA_ZERO_MIN_DURATION_TICKS APB1_TICKS(2050)
-#define DATA_ZERO_MAX_DURATION_TICKS APB1_TICKS(2750)
+#define DATA_ZERO_LOW_TICKS CEC_US_TO_TICKS(1500)
+#define DATA_ZERO_MIN_LOW_TICKS CEC_US_TO_TICKS(1300)
+#define DATA_ZERO_MAX_LOW_TICKS CEC_US_TO_TICKS(1700)
+#define DATA_ZERO_HIGH_TICKS CEC_US_TO_TICKS(900)
+#define DATA_ZERO_MIN_DURATION_TICKS CEC_US_TO_TICKS(2050)
+#define DATA_ZERO_MAX_DURATION_TICKS CEC_US_TO_TICKS(2750)
 
-#define DATA_ONE_LOW_TICKS APB1_TICKS(600)
-#define DATA_ONE_MIN_LOW_TICKS APB1_TICKS(400)
-#define DATA_ONE_MAX_LOW_TICKS APB1_TICKS(800)
-#define DATA_ONE_HIGH_TICKS APB1_TICKS(1800)
-#define DATA_ONE_MIN_DURATION_TICKS APB1_TICKS(2050)
-#define DATA_ONE_MAX_DURATION_TICKS APB1_TICKS(2750)
+#define DATA_ONE_LOW_TICKS CEC_US_TO_TICKS(600)
+#define DATA_ONE_MIN_LOW_TICKS CEC_US_TO_TICKS(400)
+#define DATA_ONE_MAX_LOW_TICKS CEC_US_TO_TICKS(800)
+#define DATA_ONE_HIGH_TICKS CEC_US_TO_TICKS(1800)
+#define DATA_ONE_MIN_DURATION_TICKS CEC_US_TO_TICKS(2050)
+#define DATA_ONE_MAX_DURATION_TICKS CEC_US_TO_TICKS(2750)
 
 /* Time from low that it should be safe to sample an ACK */
-#define NOMINAL_SAMPLE_TIME_TICKS APB1_TICKS(1050)
+#define NOMINAL_SAMPLE_TIME_TICKS CEC_US_TO_TICKS(1050)
 
 #define DATA_TIME(type, data) \
 	((data) ? (DATA_ONE_##type##_TICKS) : (DATA_ZERO_##type##_TICKS))
@@ -101,18 +101,18 @@
 #define DEBOUNCE_CUTOFF 3
 
 /* The limit how short a start-bit can be to trigger debounce logic */
-#define DEBOUNCE_LIMIT_TICKS APB1_TICKS(200)
+#define DEBOUNCE_LIMIT_TICKS CEC_US_TO_TICKS(200)
 /* The time we ignore the bus for the first three debounce cases */
-#define DEBOUNCE_WAIT_SHORT_TICKS APB1_TICKS(100)
+#define DEBOUNCE_WAIT_SHORT_TICKS CEC_US_TO_TICKS(100)
 /* The time we ignore the bus after the three initial debounce cases */
-#define DEBOUNCE_WAIT_LONG_TICKS APB1_TICKS(500)
+#define DEBOUNCE_WAIT_LONG_TICKS CEC_US_TO_TICKS(500)
 
 /*
  * The variance in timing we allow outside of the CEC specification for
  * incoming signals. Our measurements aren't 100% accurate either, so this
  * gives some robustness.
  */
-#define VALID_TOLERANCE_TICKS APB1_TICKS(100)
+#define VALID_TOLERANCE_TICKS CEC_US_TO_TICKS(100)
 
 /*
  * Defines used for setting capture timers to a point where we are
@@ -179,7 +179,11 @@ enum cec_state {
 };
 
 /* Edge to trigger capture timer interrupt on */
-enum cap_edge { CAP_EDGE_NONE, CAP_EDGE_FALLING, CAP_EDGE_RISING };
+enum cec_cap_edge {
+	CEC_CAP_EDGE_NONE,
+	CEC_CAP_EDGE_FALLING,
+	CEC_CAP_EDGE_RISING
+};
 
 /* Receive buffer and states */
 struct cec_rx {
@@ -259,11 +263,11 @@ static void send_mkbp_event(uint32_t event)
 	mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
 }
 
-static void tmr_cap_start(enum cap_edge edge, int timeout)
+static void cec_tmr_cap_start(enum cec_cap_edge edge, int timeout)
 {
 	int mdl = NPCX_MFT_MODULE_1;
 
-	if (edge == CAP_EDGE_NONE) {
+	if (edge == CEC_CAP_EDGE_NONE) {
 		/*
 		 * If edge is NONE, disable capture interrupts and wait for a
 		 * timeout only.
@@ -272,7 +276,7 @@ static void tmr_cap_start(enum cap_edge edge, int timeout)
 	} else {
 		/* Select edge to trigger capture on */
 		UPDATE_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEDG,
-			   edge == CAP_EDGE_RISING);
+			   edge == CEC_CAP_EDGE_RISING);
 		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
 	}
 
@@ -304,7 +308,7 @@ static void tmr_cap_start(enum cap_edge edge, int timeout)
 	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD, 1);
 }
 
-static void tmr_cap_stop(void)
+static void cec_tmr_cap_stop(void)
 {
 	int mdl = NPCX_MFT_MODULE_1;
 
@@ -312,7 +316,7 @@ static void tmr_cap_stop(void)
 	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD, 0);
 }
 
-static int tmr_cap_get(void)
+static int cec_tmr_cap_get(void)
 {
 	int mdl = NPCX_MFT_MODULE_1;
 
@@ -334,10 +338,10 @@ static void tmr2_stop(void)
 	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C2CSEL_FIELD, 0);
 }
 
-void enter_state(enum cec_state new_state)
+static void enter_state(enum cec_state new_state)
 {
 	int gpio = -1, timeout = -1;
-	enum cap_edge cap_edge = CAP_EDGE_NONE;
+	enum cec_cap_edge cap_edge = CEC_CAP_EDGE_NONE;
 	uint8_t addr;
 
 	cec_state = new_state;
@@ -347,8 +351,6 @@ void enter_state(enum cec_state new_state)
 		memset(&cec_rx, 0, sizeof(struct cec_rx));
 		memset(&cec_tx, 0, sizeof(struct cec_tx));
 		memset(&cec_rx_queue, 0, sizeof(struct cec_rx_queue));
-		cap_charge = 0;
-		cap_delay = 0;
 		cec_events = 0;
 		break;
 	case CEC_STATE_IDLE:
@@ -362,13 +364,13 @@ void enter_state(enum cec_state new_state)
 		} else {
 			/* Wait for incoming command */
 			gpio = 1;
-			cap_edge = CAP_EDGE_FALLING;
+			cap_edge = CEC_CAP_EDGE_FALLING;
 			timeout = 0;
 		}
 		break;
 	case CEC_STATE_INITIATOR_FREE_TIME:
 		gpio = 1;
-		cap_edge = CAP_EDGE_FALLING;
+		cap_edge = CEC_CAP_EDGE_FALLING;
 		if (cec_tx.resends)
 			timeout = FREE_TIME_RS_TICKS;
 		else if (cec_tx.present_initiator)
@@ -385,7 +387,7 @@ void enter_state(enum cec_state new_state)
 		break;
 	case CEC_STATE_INITIATOR_START_HIGH:
 		gpio = 1;
-		cap_edge = CAP_EDGE_FALLING;
+		cap_edge = CEC_CAP_EDGE_FALLING;
 		timeout = START_BIT_HIGH_TICKS;
 		break;
 	case CEC_STATE_INITIATOR_HEADER_INIT_LOW:
@@ -396,7 +398,7 @@ void enter_state(enum cec_state new_state)
 		break;
 	case CEC_STATE_INITIATOR_HEADER_INIT_HIGH:
 		gpio = 1;
-		cap_edge = CAP_EDGE_FALLING;
+		cap_edge = CEC_CAP_EDGE_FALLING;
 		timeout = DATA_HIGH(cec_transfer_get_bit(&cec_tx.transfer));
 		break;
 	case CEC_STATE_INITIATOR_HEADER_DEST_HIGH:
@@ -442,12 +444,12 @@ void enter_state(enum cec_state new_state)
 		break;
 	case CEC_STATE_FOLLOWER_START_LOW:
 		cec_tx.present_initiator = 0;
-		cap_edge = CAP_EDGE_RISING;
+		cap_edge = CEC_CAP_EDGE_RISING;
 		timeout = CAP_START_LOW_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_START_HIGH:
 		cec_rx.debounce_count = 0;
-		cap_edge = CAP_EDGE_FALLING;
+		cap_edge = CEC_CAP_EDGE_FALLING;
 		timeout = CAP_START_HIGH_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_DEBOUNCE:
@@ -461,13 +463,13 @@ void enter_state(enum cec_state new_state)
 	case CEC_STATE_FOLLOWER_HEADER_INIT_LOW:
 	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:
 	case CEC_STATE_FOLLOWER_EOM_LOW:
-		cap_edge = CAP_EDGE_RISING;
+		cap_edge = CEC_CAP_EDGE_RISING;
 		timeout = CAP_DATA_LOW_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
 	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
 	case CEC_STATE_FOLLOWER_EOM_HIGH:
-		cap_edge = CAP_EDGE_FALLING;
+		cap_edge = CEC_CAP_EDGE_FALLING;
 		timeout = CAP_DATA_HIGH_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_ACK_LOW:
@@ -507,16 +509,16 @@ void enter_state(enum cec_state new_state)
 			}
 			timeout = DATA_ZERO_HIGH_TICKS;
 		} else {
-			cap_edge = CAP_EDGE_FALLING;
+			cap_edge = CEC_CAP_EDGE_FALLING;
 			timeout = CAP_DATA_HIGH_TICKS;
 		}
 		break;
 	case CEC_STATE_FOLLOWER_DATA_LOW:
-		cap_edge = CAP_EDGE_RISING;
+		cap_edge = CEC_CAP_EDGE_RISING;
 		timeout = CAP_DATA_LOW_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_DATA_HIGH:
-		cap_edge = CAP_EDGE_FALLING;
+		cap_edge = CEC_CAP_EDGE_FALLING;
 		timeout = CAP_DATA_HIGH_TICKS;
 		break;
 		/* No default case, since all states must be handled explicitly
@@ -526,7 +528,7 @@ void enter_state(enum cec_state new_state)
 	if (gpio >= 0)
 		gpio_set_level(CEC_GPIO_OUT, gpio);
 	if (timeout >= 0) {
-		tmr_cap_start(cap_edge, timeout);
+		cec_tmr_cap_start(cap_edge, timeout);
 	}
 }
 
@@ -663,7 +665,7 @@ static void cec_event_cap(void)
 		break;
 	case CEC_STATE_FOLLOWER_START_LOW:
 		/* Rising edge of start bit, validate low time */
-		t = tmr_cap_get();
+		t = cec_tmr_cap_get();
 		if (VALID_LOW(START_BIT, t)) {
 			cec_rx.low_ticks = t;
 			enter_state(CEC_STATE_FOLLOWER_START_HIGH);
@@ -675,7 +677,7 @@ static void cec_event_cap(void)
 		}
 		break;
 	case CEC_STATE_FOLLOWER_START_HIGH:
-		if (VALID_HIGH(START_BIT, cec_rx.low_ticks, tmr_cap_get()))
+		if (VALID_HIGH(START_BIT, cec_rx.low_ticks, cec_tmr_cap_get()))
 			enter_state(CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
 		else
 			enter_state(CEC_STATE_IDLE);
@@ -683,7 +685,7 @@ static void cec_event_cap(void)
 	case CEC_STATE_FOLLOWER_HEADER_INIT_LOW:
 	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:
 	case CEC_STATE_FOLLOWER_DATA_LOW:
-		t = tmr_cap_get();
+		t = cec_tmr_cap_get();
 		if (VALID_LOW(DATA_ZERO, t)) {
 			cec_rx.low_ticks = t;
 			cec_transfer_set_bit(&cec_rx.transfer, 0);
@@ -697,7 +699,7 @@ static void cec_event_cap(void)
 		}
 		break;
 	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
-		t = tmr_cap_get();
+		t = cec_tmr_cap_get();
 		data = cec_transfer_get_bit(&cec_rx.transfer);
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			cec_transfer_inc_bit(&cec_rx.transfer);
@@ -710,7 +712,7 @@ static void cec_event_cap(void)
 		}
 		break;
 	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
-		t = tmr_cap_get();
+		t = cec_tmr_cap_get();
 		data = cec_transfer_get_bit(&cec_rx.transfer);
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			cec_transfer_inc_bit(&cec_rx.transfer);
@@ -723,7 +725,7 @@ static void cec_event_cap(void)
 		}
 		break;
 	case CEC_STATE_FOLLOWER_EOM_LOW:
-		t = tmr_cap_get();
+		t = cec_tmr_cap_get();
 		if (VALID_LOW(DATA_ZERO, t)) {
 			cec_rx.low_ticks = t;
 			cec_rx.eom = 0;
@@ -737,7 +739,7 @@ static void cec_event_cap(void)
 		}
 		break;
 	case CEC_STATE_FOLLOWER_EOM_HIGH:
-		t = tmr_cap_get();
+		t = cec_tmr_cap_get();
 		data = cec_rx.eom;
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t))
 			enter_state(CEC_STATE_FOLLOWER_ACK_LOW);
@@ -751,7 +753,7 @@ static void cec_event_cap(void)
 		enter_state(CEC_STATE_FOLLOWER_DATA_LOW);
 		break;
 	case CEC_STATE_FOLLOWER_DATA_HIGH:
-		t = tmr_cap_get();
+		t = cec_tmr_cap_get();
 		data = cec_transfer_get_bit(&cec_rx.transfer);
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			cec_transfer_inc_bit(&cec_rx.transfer);
@@ -810,6 +812,12 @@ static void cec_isr(void)
 }
 DECLARE_IRQ(NPCX_IRQ_MFT_1, cec_isr, 4);
 
+static void cec_trigger_send(void)
+{
+	/* Elevate to interrupt context */
+	tmr2_start(0);
+}
+
 static int cec_send(const uint8_t *msg, uint8_t len)
 {
 	int i;
@@ -825,8 +833,7 @@ static int cec_send(const uint8_t *msg, uint8_t len)
 
 	memcpy(cec_tx.transfer.buf, msg, len);
 
-	/* Elevate to interrupt context */
-	tmr2_start(0);
+	cec_trigger_send();
 
 	return 0;
 }
@@ -848,10 +855,45 @@ static enum ec_status hc_cec_write(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
 
-static int cec_set_enable(uint8_t enable)
+static void cec_enable_timer(void)
 {
 	int mdl = NPCX_MFT_MODULE_1;
 
+	/* Configure GPIO40/TA1 as capture timer input (TA1) */
+	CLEAR_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
+	SET_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
+
+	/* Enable timer interrupts */
+	SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
+	SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
+
+	/* Enable multifunction timer interrupt */
+	task_enable_irq(NPCX_IRQ_MFT_1);
+}
+
+static void cec_disable_timer(void)
+{
+	int mdl = NPCX_MFT_MODULE_1;
+
+	/* Disable timer interrupts */
+	CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
+	CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
+
+	tmr2_stop();
+	cec_tmr_cap_stop();
+
+	task_disable_irq(NPCX_IRQ_MFT_1);
+
+	/* Configure GPIO40/TA1 back to GPIO */
+	CLEAR_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
+	SET_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
+
+	cap_charge = 0;
+	cap_delay = 0;
+}
+
+static int cec_set_enable(uint8_t enable)
+{
 	if (enable != 0 && enable != 1)
 		return EC_RES_INVALID_PARAM;
 
@@ -864,33 +906,13 @@ static int cec_set_enable(uint8_t enable)
 		return EC_RES_SUCCESS;
 
 	if (enable) {
-		/* Configure GPIO40/TA1 as capture timer input (TA1) */
-		CLEAR_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
-		SET_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
-
 		enter_state(CEC_STATE_IDLE);
 
-		/* Enable timer interrupts */
-		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
-		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
-
-		/* Enable multifunction timer interrupt */
-		task_enable_irq(NPCX_IRQ_MFT_1);
+		cec_enable_timer();
 
 		CPRINTF("CEC enabled\n");
 	} else {
-		/* Disable timer interrupts */
-		CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
-		CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
-
-		tmr2_stop();
-		tmr_cap_stop();
-
-		task_disable_irq(NPCX_IRQ_MFT_1);
-
-		/* Configure GPIO40/TA1 back to GPIO */
-		CLEAR_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
-		SET_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
+		cec_disable_timer();
 
 		enter_state(CEC_STATE_DISABLED);
 
@@ -974,7 +996,7 @@ static int cec_get_next_msg(uint8_t *out)
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_MESSAGE, cec_get_next_msg);
 
-static void cec_init(void)
+static void cec_init_timer(void)
 {
 	int mdl = NPCX_MFT_MODULE_1;
 
@@ -989,6 +1011,11 @@ static void cec_init(void)
 
 	/* Enable capture TCNT1 into TCRA and preset TCNT1. */
 	SET_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEN);
+}
+
+static void cec_init(void)
+{
+	cec_init_timer();
 
 	/* If RO doesn't set it, RW needs to set it explicitly. */
 	gpio_set_level(CEC_GPIO_PULL_UP, 1);
