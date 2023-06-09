@@ -12,7 +12,7 @@ set(CC_NAME clang)
 set(CXX_NAME clang++)
 
 set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES CROSS_COMPILE CC_NAME CXX_NAME)
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/toolchain-common.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/toolchain-common.cmake")
 
 add_link_options(-lclang_rt.builtins-armv7m)
 add_link_options(-lnosys)
