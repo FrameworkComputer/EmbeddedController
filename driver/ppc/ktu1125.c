@@ -23,6 +23,8 @@
 
 static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
+static void ktu1125_handle_interrupt(int port);
+
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
@@ -437,12 +439,29 @@ static int ktu1125_set_sbu(int port, int enable)
 }
 #endif /* CONFIG_USBC_PPC_SBU */
 
+static void ktu1125_irq_deferred(void)
+{
+	int i;
+	uint32_t pending = atomic_clear(&irq_pending);
+
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
+		if (BIT(i) & pending)
+			ktu1125_handle_interrupt(i);
+}
+DECLARE_DEFERRED(ktu1125_irq_deferred);
+
+void ktu1125_interrupt(int port)
+{
+	atomic_or(&irq_pending, BIT(port));
+	hook_call_deferred(&ktu1125_irq_deferred_data, 0);
+}
+
 static void ktu1125_handle_interrupt(int port)
 {
 	int attempt = 0;
 
 	/*
-	 * KTU1135's /INT pin is level, so process interrupts until it
+	 * KTU1125's /INT pin is level, so process interrupts until it
 	 * deasserts if the chip has a dedicated interrupt pin.
 	 */
 #ifdef CONFIG_USBC_PPC_DEDICATED_INT
@@ -459,6 +478,13 @@ static void ktu1125_handle_interrupt(int port)
 			ppc_prints("Could not clear interrupts on first "
 				   "try, retrying",
 				   port);
+
+		if (attempt > 10) {
+			ppc_prints("Rescheduling interrupt handler", port);
+			atomic_or(&irq_pending, BIT(port));
+			hook_call_deferred(&ktu1125_irq_deferred_data, MSEC);
+			return;
+		}
 
 		/* Clear the interrupt by reading all 3 registers */
 		read_reg(port, KTU1125_INT_SNK, &snk);
@@ -500,23 +526,6 @@ static void ktu1125_handle_interrupt(int port)
 				pd_handle_cc_overvoltage(port);
 		}
 	}
-}
-
-static void ktu1125_irq_deferred(void)
-{
-	int i;
-	uint32_t pending = atomic_clear(&irq_pending);
-
-	for (i = 0; i < board_get_usb_pd_port_count(); i++)
-		if (BIT(i) & pending)
-			ktu1125_handle_interrupt(i);
-}
-DECLARE_DEFERRED(ktu1125_irq_deferred);
-
-void ktu1125_interrupt(int port)
-{
-	atomic_or(&irq_pending, BIT(port));
-	hook_call_deferred(&ktu1125_irq_deferred_data, 0);
 }
 
 const struct ppc_drv ktu1125_drv = {
