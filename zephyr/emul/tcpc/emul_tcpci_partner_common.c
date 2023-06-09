@@ -910,13 +910,12 @@ tcpci_partner_common_vconn_swap_handler(struct tcpci_partner_data *data)
 {
 	tcpci_partner_common_set_ams_ctrl_msg(data, PD_CTRL_VCONN_SWAP);
 
-	if (!data->vconn_supported) {
-		tcpci_partner_send_control_msg(data, PD_CTRL_NOT_SUPPORTED, 0);
+	tcpci_partner_send_control_msg(data, data->vcs_response, 0);
+
+	if (data->vcs_response != PD_CTRL_ACCEPT) {
 		tcpci_partner_common_clear_ams_ctrl_msg(data);
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	}
-
-	tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
 
 	if (data->vconn_role == PD_ROLE_VCONN_OFF) {
 		tcpci_partner_common_set_vconn(data, PD_ROLE_VCONN_SRC);
@@ -1651,7 +1650,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->rev = rev;
 	data->drs_to_dfp_supported = true;
 	data->drs_to_ufp_supported = true;
-	data->vconn_supported = true;
+	data->vcs_response = PD_CTRL_ACCEPT;
 
 	data->ops.transmit = tcpci_partner_transmit_op;
 	data->ops.rx_consumed = tcpci_partner_rx_consumed_op;
@@ -1676,8 +1675,8 @@ void tcpci_partner_set_drs_support(struct tcpci_partner_data *data,
 	data->drs_to_dfp_supported = drs_to_dfp_supported;
 }
 
-void tcpci_partner_set_vconn_support(struct tcpci_partner_data *data,
-				     bool vconn_supported)
+void tcpci_partner_set_vcs_response(struct tcpci_partner_data *data,
+				    enum pd_ctrl_msg_type vcs_response)
 {
-	data->vconn_supported = vconn_supported;
+	data->vcs_response = vcs_response;
 }
