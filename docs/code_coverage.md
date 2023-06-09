@@ -85,11 +85,12 @@ genhtml -q -s --branch-coverage -o build/zephyr/coverage_rpt/ \
 The coverage report top-level page is
 `build/zephyr/coverage_rpt/index.html`.
 
-For coverage report for a single test you can run:
-`./twister -v -i --coverage -p native_posix -p unit_testing -s external/platform/ec/zephyr/test/<testDir>/<testName>`
+For coverage report for a single test you can run: `./twister -v -i --coverage
+-p native_posix -p unit_testing -s <testDir>/<testName>`
 
 Example of running test tasks.default from zephyr/test/tasks/testcase.yaml:
-`./twister -v -i --coverage -p native_posix -p unit_testing -s external/platform/ec/zephyr/test/tasks/tasks.default`
+`./twister -v -i --coverage -p native_posix -p unit_testing -s
+tasks/tasks.default`
 
 ## Code Coverage in CQ
 
