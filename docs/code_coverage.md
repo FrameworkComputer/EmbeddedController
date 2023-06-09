@@ -88,7 +88,7 @@ The coverage report top-level page is
 For coverage report for a single test you can run: `./twister -v -i --coverage
 -p native_posix -p unit_testing -s <testDir>/<testName>`
 
-Example of running test tasks.default from zephyr/test/tasks/testcase.yaml:
+Example of running test `tasks.default` from `zephyr/test/tasks/testcase.yaml`:
 `./twister -v -i --coverage -p native_posix -p unit_testing -s
 tasks/tasks.default`
 
