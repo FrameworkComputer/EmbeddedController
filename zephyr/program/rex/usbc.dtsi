@@ -52,6 +52,12 @@
 					     &virtual_mux_c1>;
 				alternative-chain;
 			};
+			usb_mux_chain_hbr_port1: usb-mux-chain-1-hbr {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_hb_retimer
+					     &virtual_mux_c1>;
+				alternative-chain;
+			};
 		};
 		port1-muxes {
 			tcpci_mux_c1: tcpci-mux-c1 {

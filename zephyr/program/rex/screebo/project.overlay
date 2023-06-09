@@ -194,6 +194,7 @@
 	/delete-node/ ktu1125@38;
 	/delete-node/ ppc_syv@40;
 	/delete-node/ usb-c1-anx7452-retimer@10;
+	/delete-node/ usb-c1-hb-retimer@56;
 
 	ppc_syv_port1: ppc_syv@40 {
 		compatible = "silergy,syv682x";

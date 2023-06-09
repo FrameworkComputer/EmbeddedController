@@ -39,6 +39,7 @@ void ppc_interrupt(enum gpio_signal signal)
 			break;
 		case FW_USB_DB_USB4_ANX7452:
 		case FW_USB_DB_USB4_ANX7452_V2:
+		case FW_USB_DB_USB4_HB:
 			syv682x_interrupt(USBC_PORT_C1);
 			break;
 		case FW_USB_DB_USB4_KB8010:
