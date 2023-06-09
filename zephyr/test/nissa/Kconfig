@@ -29,6 +29,11 @@ choice TEST_TARGET
 	  select TEST_USB_PD_POLICY
 	  help
 	    The test target that exercises nissa/nivviks/{charger,usbc}.c
+
+	config TEST_NISSA_NEREID
+	  bool "Tests for Nereid-specific code"
+	  help
+		The test target that exercises nissa/nereid/*.c
 endchoice
 
 config TEST_USB_PD_POLICY

@@ -65,10 +65,12 @@ static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
 	case AP_POWER_RESUME:
 		fn = sm5803_disable_low_power_mode;
 		break;
+	/* LCOV_EXCL_START can only happen if init doesn't match these cases */
 	default:
 		LOG_WRN("%s: power event %d is not recognized", __func__,
 			data.event);
 		return;
+		/* LCOV_EXCL_STOP */
 	}
 
 	fn(CHARGER_PRIMARY);
@@ -235,6 +237,7 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	}
 }
 
+/* LCOV_EXCL_START function does nothing, but is required for build */
 void board_reset_pd_mcu(void)
 {
 	/*
@@ -243,6 +246,7 @@ void board_reset_pd_mcu(void)
 	 * to the EC.
 	 */
 }
+/* LCOV_EXCL_STOP */
 
 #define INT_RECHECK_US 5000
 
@@ -282,11 +286,13 @@ void usb_c0_interrupt(enum gpio_signal s)
 }
 
 /* C1 interrupt line shared by BC 1.2, TCPC, and charger */
+/* LCOV_EXCL_START schedule_deferred_pd_interrupt() is untestable */
 void usb_c1_interrupt(enum gpio_signal s)
 {
 	/* Charger and BC1.2 are handled in board_process_pd_alert */
 	schedule_deferred_pd_interrupt(1);
 }
+/* LCOV_EXCL_STOP */
 
 /*
  * Handle charger interrupts in the PD task. Not doing so can lead to a priority

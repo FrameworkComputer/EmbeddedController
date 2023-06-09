@@ -44,3 +44,15 @@ if(CONFIG_TEST_NISSA_NIVVIKS_CHARGER)
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/nivviks/src/charger.c
     )
 endif()
+
+if(CONFIG_TEST_NISSA_NEREID)
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
+    target_sources(
+            app PRIVATE
+            src/nereid.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nereid/src/charger.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nereid/src/hdmi.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nereid/src/keyboard.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nereid/src/usbc.c
+    )
+endif()

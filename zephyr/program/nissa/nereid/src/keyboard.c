@@ -5,7 +5,7 @@
 
 #include "ec_commands.h"
 
-static const struct ec_response_keybd_config nereid_kb_legacy = {
+test_export_static const struct ec_response_keybd_config nereid_kb_legacy = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
