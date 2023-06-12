@@ -131,7 +131,7 @@ class KconfigCheck:
             os.environ["KCONFIG_BINARY_DIR"] = temp_dir
             os.environ["ARCH_DIR"] = "arch"
             os.environ["ARCH"] = "*"
-            os.environ["BOARD_DIR"] = "boards/*/*"
+            os.environ["BOARD_DIR"] = "boards/posix/native_posix"
 
             if not filename:
                 filename = os.path.join(ZEPHYR_BASE, "Kconfig")

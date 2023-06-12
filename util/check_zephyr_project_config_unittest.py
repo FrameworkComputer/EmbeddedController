@@ -68,7 +68,7 @@ class TestKconfigCheck(unittest.TestCase):
         )
         self.assertEqual(os.environ["ARCH_DIR"], "arch")
         self.assertEqual(os.environ["ARCH"], "*")
-        self.assertEqual(os.environ["BOARD_DIR"], "boards/*/*")
+        self.assertEqual(os.environ["BOARD_DIR"], "boards/posix/native_posix")
 
     @mock.patch("zephyr_module.parse_modules")
     @mock.patch("zephyr_module.process_kconfig")
