@@ -97,11 +97,11 @@ DATA_ACCESS_VIOLATION_20000000_REGEX = re.compile(
 DATA_ACCESS_VIOLATION_24000000_REGEX = re.compile(
     r"Data access violation, mfar = 24000000\r\n"
 )
-DATA_ACCESS_VIOLATION_64060000_REGEX = re.compile(
-    r"Data access violation, mfar = 64060000\r\n"
+DATA_ACCESS_VIOLATION_64020000_REGEX = re.compile(
+    r"Data access violation, mfar = 64020000\r\n"
 )
-DATA_ACCESS_VIOLATION_64080000_REGEX = re.compile(
-    r"Data access violation, mfar = 64080000\r\n"
+DATA_ACCESS_VIOLATION_64040000_REGEX = re.compile(
+    r"Data access violation, mfar = 64040000\r\n"
 )
 
 PRINTF_CALLED_REGEX = re.compile(r"printf called\r\n")
@@ -441,8 +441,8 @@ HELIPILOT_CONFIG = BoardConfig(
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
     # TODO(b/286537264): Double check these values and ensure rollback tests pass
-    rollback_region0_regex=DATA_ACCESS_VIOLATION_64060000_REGEX,
-    rollback_region1_regex=DATA_ACCESS_VIOLATION_64080000_REGEX,
+    rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
+    rollback_region1_regex=DATA_ACCESS_VIOLATION_64040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
     variants={},
 )
