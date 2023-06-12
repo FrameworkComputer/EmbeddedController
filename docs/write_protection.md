@@ -224,10 +224,10 @@ https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/1222094
 The EC code command handlers (`command_flash_erase`, `command_flash_write`,
 etc.) return an error if `EC_FLASH_PROTECT_ALL_NOW` is set.
 
-["CCD open"]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Open-CCD
-[Cr50 console]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Consoles
+["CCD open"]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_gsc.md#ccd-open
+[Cr50 console]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_gsc.md#consoles
 [Servo]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/README.md
-[`OverrideWP`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md
+[`OverrideWP`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_gsc.md
 [`system_is_locked()`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/aaba1d5efd51082d143ce2ac64e6caf9cb14d5e5/common/system.c#195
 [wp_screw]: https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection
 [write_protect_gpio]: https://chromium.googlesource.com/chromiumos/platform/ec/+/aaba1d5efd51082d143ce2ac64e6caf9cb14d5e5/include/ec_commands.h#1599
