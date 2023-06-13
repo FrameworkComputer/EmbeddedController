@@ -153,7 +153,7 @@ uint16_t tcpc_get_alert_status(void)
 
 	/* Is the C1 port present and its IRQ line asserted? */
 	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
+	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
 		/*
 		 * C1 IRQ is shared between and TCPC; poll TCPC to see if
 		 * it asserted the IRQ.
@@ -276,14 +276,14 @@ void board_process_pd_alert(int port)
 	if (port != 1)
 		return;
 
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl)))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl)))
 		sm5803_handle_interrupt(port);
 
 	/*
 	 * Immediately schedule another TCPC interrupt if it seems we haven't
 	 * cleared all pending interrupts.
 	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl)))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl)))
 		schedule_deferred_pd_interrupt(port);
 }
 

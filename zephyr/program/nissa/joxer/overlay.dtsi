@@ -11,22 +11,6 @@
 		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &gpio_ec_wp_odl;
 		int-wp = &int_wp_l;
-		/*
-		 * USB-C: interrupt input.
-		 * I2C pins are on i2c_ec_i2c_sub_usb_c1
-		 */
-		gpio-usb-c1-int-odl = &gpio_sb_1;
-		/*
-		 * HDMI: power enable output, HDMI enable output,
-		 * and HPD input
-		 */
-		gpio-en-rails-odl = &gpio_sb_1;
-		gpio-hdmi-en-odl = &gpio_sb_4;
-		gpio-hpd-odl = &gpio_sb_3;
-		/*
-		 * Enable S5 rails for LTE sub-board
-		 */
-		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
 	ec-console {
@@ -109,7 +93,7 @@
 			handler = "usb_c0_interrupt";
 		};
 		int_usb_c1: usb_c1 {
-			irq-pin = <&gpio_sb_1>;
+			irq-pin = <&gpio_usb_c1_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_c1_interrupt";
 		};
@@ -120,7 +104,9 @@
 		unused-gpios = <&gpioc 3 0>,
 			       <&gpiod 4 0>,
 			       <&gpioh 2 0>,
-			       <&gpiol 4 0>;
+			       <&gpiok 7 0>,
+			       <&gpioc 6 0>,
+			       <&gpiof 0 0>;
 	};
 
 	named-gpios {
@@ -130,24 +116,6 @@
 		 */
 		gpio_usb_c0_prot_fault_odl: usb_c0_prot_fault_odl {
 			gpios = <&gpiok 6 GPIO_INPUT_PULL_UP>;
-		};
-
-		gpio_sb_1: sb_1 {
-			gpios = <&gpioe 6 0>;
-			no-auto-init;
-		};
-		gpio_sb_2: sb_2 {
-			gpios = <&gpiof 0 0>;
-			no-auto-init;
-		};
-
-		gpio_sb_3: sb_3 {
-			gpios = <&gpioe 7 0>;
-			no-auto-init;
-		};
-		gpio_sb_4: sb_4 {
-			gpios = <&gpioe 0 0>;
-			no-auto-init;
 		};
 		gpio_fan_enable: fan-enable {
 			gpios = <&gpiol 4 GPIO_OUTPUT>;
