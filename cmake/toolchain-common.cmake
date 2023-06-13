@@ -43,7 +43,9 @@ add_compile_options(-flto)
 add_link_options(-flto)
 
 # See https://www.chromium.org/chromium-os/build/c-exception-support
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
+add_compile_options(-fno-exceptions)
+add_compile_options(-fno-unwind-tables)
+add_compile_options(-fno-asynchronous-unwind-tables)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 
