@@ -12,6 +12,7 @@
 #include "ec_commands.h"
 #include "motion_sense.h"
 
+/* LCOV_EXCL_START */
 uint32_t get_feature_flags0(void)
 {
 	uint32_t result = 0
@@ -111,7 +112,9 @@ uint32_t get_feature_flags0(void)
 		;
 	return board_override_feature_flags0(result);
 }
+/* LCOV_EXCL_STOP */
 
+/* LCOV_EXCL_START */
 uint32_t get_feature_flags1(void)
 {
 	uint32_t result =
@@ -162,6 +165,7 @@ uint32_t get_feature_flags1(void)
 		;
 	return board_override_feature_flags1(result);
 }
+/* LCOV_EXCL_STOP */
 
 __overridable uint32_t board_override_feature_flags0(uint32_t flags0)
 {
