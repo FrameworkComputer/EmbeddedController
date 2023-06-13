@@ -48,3 +48,6 @@ register_rex_project(
 register_rex_project(
     project_name="screebo",
 )
+register_rex_project(
+    project_name="karis",
+)
