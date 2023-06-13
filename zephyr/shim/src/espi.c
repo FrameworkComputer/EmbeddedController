@@ -411,7 +411,7 @@ void lpc_update_host_event_status(void)
 		lpc_generate_sci();
 }
 
-static void host_command_init(void)
+static void lpc_host_command_init(void)
 {
 	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
@@ -424,7 +424,7 @@ static void host_command_init(void)
 	lpc_update_host_event_status();
 }
 
-DECLARE_HOOK(HOOK_INIT, host_command_init, HOOK_PRIO_INIT_LPC);
+DECLARE_HOOK(HOOK_INIT, lpc_host_command_init, HOOK_PRIO_INIT_LPC);
 
 static void handle_acpi_write(uint32_t data)
 {
