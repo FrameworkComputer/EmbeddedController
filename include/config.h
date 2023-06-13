@@ -4466,11 +4466,10 @@
 #undef CONFIG_UART_PAD_SWITCH
 
 /**
- * This will only be used for Kukui. Preserve EC reset logs and console
- * logs on SRAM/FLASH so that the logs will be preserved after EC shutting
- * down or sysjumped. It will keep the contents across EC resets, so we have
- * more information about system states. The contents on SRAM will be cleared
- * when checksum or validity check fails.
+ * Preserve EC reset logs and console logs on SRAM/FLASH so that the logs will
+ * be preserved after EC shutting down or sysjumped. It will keep the contents
+ * across EC resets, so we have more information about system states. The
+ * contents on SRAM will be cleared when checksum or validity check fails.
  */
 #undef CONFIG_PRESERVE_LOGS
 
