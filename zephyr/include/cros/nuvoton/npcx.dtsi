@@ -5,7 +5,7 @@
  */
 
 #include <cros/binman.dtsi>
-#include <nuvoton/npcx.dtsi>
+#include <nuvoton/npcx/npcx.dtsi>
 
 / {
 	chosen {
