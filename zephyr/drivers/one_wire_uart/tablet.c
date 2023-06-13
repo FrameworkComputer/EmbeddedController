@@ -31,6 +31,11 @@ static void recv_cb(uint8_t cmd, const uint8_t *payload, int length)
 			touchpad,
 			(const struct usb_hid_touchpad_report *)payload);
 	}
+	if (cmd == ROACH_CMD_UPDATER_COMMAND) {
+		struct i2c_target_data *data = touchpad->data;
+
+		ring_buf_put(data->usb_update_queue, (void *)payload, length);
+	}
 }
 
 static void base_shutdown_hook(struct ap_power_ev_callback *cb,

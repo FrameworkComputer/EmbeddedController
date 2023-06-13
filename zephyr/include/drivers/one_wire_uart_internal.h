@@ -84,6 +84,8 @@ struct i2c_target_data {
 	int write_buf_len;
 	bool in_reset;
 	struct k_msgq *touchpad_report_queue;
+	/* usb update stream to the host */
+	struct ring_buf *usb_update_queue;
 };
 
 /**

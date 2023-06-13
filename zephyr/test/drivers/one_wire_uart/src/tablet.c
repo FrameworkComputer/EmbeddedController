@@ -21,6 +21,8 @@
 #include <zephyr/ztest_test.h>
 
 const static struct device *dev = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
+const static struct device *touchpad =
+	DEVICE_DT_GET(DT_NODELABEL(hid_i2c_target));
 
 FAKE_VALUE_FUNC(int, mkbp_keyboard_add, const uint8_t *);
 
@@ -86,6 +88,35 @@ ZTEST(one_wire_uart_tablet, test_ap_power_state)
 	zassert_equal(k_msgq_num_used_get(data->tx_queue), 1);
 	zassert_ok(k_msgq_get(data->tx_queue, &msg, K_NO_WAIT));
 	zassert_equal(msg.payload[0], ROACH_CMD_RESUME);
+}
+
+ZTEST(one_wire_uart_tablet, test_updater_event)
+{
+	struct one_wire_uart_data *data = dev->data;
+	struct i2c_target_data *tp_data = touchpad->data;
+	struct one_wire_uart_message msg;
+	const uint8_t expected[4] = { 1, 2, 3, 4 };
+	uint8_t actual[4];
+
+	memset(&msg, 0, sizeof(msg));
+	msg.header.magic = 0xEC;
+	msg.header.payload_len = sizeof(expected) + 1;
+	msg.header.sender = 1;
+	msg.header.msg_id = 1;
+	msg.payload[0] = ROACH_CMD_UPDATER_COMMAND;
+	memcpy(msg.payload + 1, expected, sizeof(expected));
+	msg.header.checksum = checksum(&msg);
+
+	ring_buf_put(data->rx_ring_buf, (uint8_t *)&msg,
+		     sizeof(msg.header) + msg.header.payload_len);
+
+	process_rx_fifo(dev);
+	process_packet();
+
+	zassert_equal(ring_buf_size_get(tp_data->usb_update_queue),
+		      sizeof(expected));
+	ring_buf_get(tp_data->usb_update_queue, actual, sizeof(actual));
+	zassert_mem_equal(actual, expected, sizeof(expected));
 }
 
 static void tablet_before(void *fixture)

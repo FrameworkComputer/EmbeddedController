@@ -25,7 +25,13 @@
 #define CMD_REG 0x05
 #define DATA_REG 0x06
 
+#define USB_UPDATER_WRITE_REG 0x10
+#define USB_UPDATER_READ_REG 0x11
+
 #define HID_DESC_LENGTH 30
+
+const static struct device *one_wire_uart =
+	DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
 static void hid_reset(const struct device *dev)
 {
@@ -107,6 +113,17 @@ static int hid_handler(const struct device *dev, const uint8_t *in, int in_size,
 		}
 		/* TODO: implement GET_REPORT and SET_REPORT */
 		return 0;
+	}
+
+	if (reg == USB_UPDATER_WRITE_REG) {
+		one_wire_uart_send(one_wire_uart, ROACH_CMD_UPDATER_COMMAND,
+				   in + 1, in_size - 1);
+		return 0;
+	}
+
+	if (reg == USB_UPDATER_READ_REG) {
+		out[0] = ring_buf_get(data->usb_update_queue, out + 1, 255);
+		return out[0] + 1;
 	}
 
 	return 0;
@@ -202,6 +219,7 @@ void hid_i2c_touchpad_add(const struct device *dev,
 #define HID_I2C_TARGET_INIT(inst)                                              \
 	K_MSGQ_DEFINE(touchpad_report_queue##inst,                             \
 		      sizeof(struct usb_hid_touchpad_report), 16, 1);          \
+	RING_BUF_DECLARE(usb_update_queue##inst, 256);                         \
 	static const uint8_t report_desc##inst[] =                             \
 		REPORT_DESC(DT_INST_PROP(inst, max_pressure),                  \
 			    DT_INST_PROP(inst, logical_max_x),                 \
@@ -240,6 +258,7 @@ void hid_i2c_touchpad_add(const struct device *dev,
 		.dev = DEVICE_DT_INST_GET(inst),                             \
 		.in_reset = true,                                            \
 		.touchpad_report_queue = &touchpad_report_queue ## inst,     \
+		.usb_update_queue = &usb_update_queue ## inst,               \
 	}; \
 	I2C_DEVICE_DT_INST_DEFINE(inst, hid_i2c_target_init, NULL,             \
 				  &i2c_target_data##inst,                      \

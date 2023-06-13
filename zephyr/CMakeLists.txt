@@ -478,6 +478,11 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_SMART
                                                 "${PLATFORM_EC}/common/usb_port_power_smart.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_UPDATE
+                                                "${PLATFORM_EC}/common/update_fw.c"
+                                                "${PLATFORM_EC}/common/usb_update.c"
+                                                "${PLATFORM_EC}/common/queue_policies.c")
+
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/typec_control.c"
                                                 "${PLATFORM_EC}/common/usb_common.c"

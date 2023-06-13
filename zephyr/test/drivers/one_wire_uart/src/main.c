@@ -4,9 +4,12 @@
  */
 #include "drivers/one_wire_uart.h"
 #include "drivers/one_wire_uart_internal.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "timer.h"
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -277,13 +280,37 @@ ZTEST(one_wire_uart_driver, test_reset)
 	zassert_equal(msg.header.reset, 0);
 }
 
-static void one_wire_uart_driver_before(void *fixture)
+struct one_wire_uart_fixture {
+	one_wire_uart_msg_received_cb_t orig_cb;
+};
+
+static void *one_wire_uart_setup(void)
+{
+	struct one_wire_uart_data *data = dev->data;
+
+	struct one_wire_uart_fixture *fixture =
+		malloc(sizeof(struct one_wire_uart_fixture));
+
+	fixture->orig_cb = data->msg_received_cb;
+	one_wire_uart_set_callback(dev, on_message_received);
+
+	return fixture;
+}
+
+static void one_wire_uart_driver_before(void *f)
 {
 	one_wire_uart_reset(dev);
 
 	RESET_FAKE(on_message_received);
-	one_wire_uart_set_callback(dev, on_message_received);
 }
 
-ZTEST_SUITE(one_wire_uart_driver, NULL, NULL, one_wire_uart_driver_before, NULL,
-	    NULL);
+static void one_wire_uart_teardown(void *f)
+{
+	struct one_wire_uart_fixture *fixture = f;
+
+	one_wire_uart_set_callback(dev, fixture->orig_cb);
+}
+
+ZTEST_SUITE(one_wire_uart_driver, drivers_predicate_post_main,
+	    one_wire_uart_setup, one_wire_uart_driver_before, NULL,
+	    one_wire_uart_teardown);
