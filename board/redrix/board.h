@@ -13,9 +13,12 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Preserve log across EC reset. */
+#define CONFIG_PRESERVE_LOGS
+
 /* Increase tx buffer size. */
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 8192
+#define CONFIG_UART_TX_BUF_SIZE 16384
 
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
