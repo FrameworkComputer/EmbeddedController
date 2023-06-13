@@ -192,6 +192,10 @@
 	status = "okay";
 	current-speed = <460800>;
 	clock-frequency = <1804800>;
+
+	one_wire_uart: one-wire-uart {
+		compatible = "cros-ec,one-wire-uart";
+	};
 };
 
 &ite_uart2_wrapper {
