@@ -475,6 +475,7 @@ flash_fp_mcu_stm32() {
   if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "zork" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "myst" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "skyrim" ]]; then
     gpio in       "${gpio_boot0}" "${gpio_nrst}"
   fi
@@ -809,6 +810,20 @@ config_skyrim() {
   readonly GPIO_NRST=780
   # FPMCU BOOT0 is on AGPIO 130 = 768 + 130 = 898
   readonly GPIO_BOOT0=898
+  # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
+  readonly GPIO_PWREN=772
+}
+
+config_myst() {
+  readonly TRANSPORT="UART"
+
+  readonly DEVICE="/dev/ttyS1"
+
+  readonly GPIO_CHIP="gpiochip768"
+  # FPMCU RST_ODL is on AGPIO 40 = 768 + 40 = 808
+  readonly GPIO_NRST=808
+  # FPMCU BOOT0 is on AGPIO 132 = 768 + 132 = 900
+  readonly GPIO_BOOT0=900
   # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
   readonly GPIO_PWREN=772
 }
