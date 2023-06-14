@@ -187,7 +187,7 @@ static void ks_change_deferred(void)
 	debounced_ks_attached = ks_attached;
 	debounced_ks_open = ks_open;
 
-	mkbp_update_switches(EC_MKBP_FRONT_PROXIMITY, proximity_detected);
+	body_detect_change_state(proximity_detected, false);
 }
 DECLARE_DEFERRED(ks_change_deferred);
 
