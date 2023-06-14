@@ -142,8 +142,24 @@ void tablet_set_mode(int mode, uint32_t trigger)
 
 void tablet_disable(void)
 {
-	tablet_mode = 0;
+	bool need_to_notify = false;
+
+	/* Already disabled, nothing to do. */
+	if (disabled)
+		return;
+
 	disabled = true;
+	/*
+	 * We may have already transition to tablet mode:
+	 * At board init time, while the sensors are not running yet, we may
+	 * have read the Tablet GMR GPIO already, and transitioned to tablet
+	 * mode, especially if the GMR is not stuffed and the GPIO is floating.
+	 */
+	if (tablet_get_mode())
+		need_to_notify = true;
+	tablet_mode = 0;
+	if (need_to_notify)
+		notify_tablet_mode_change();
 }
 
 /* This ifdef can be removed once we clean up past projects which do own init */

@@ -26,7 +26,6 @@
 extern enum chipset_state_mask sensor_active;
 
 extern struct motion_sensor_t motion_sensors[];
-extern const unsigned int motion_sensor_count;
 
 void wait_for_valid_sample(void);
 void feed_accel_data(const float *array, int *idx,

@@ -53,13 +53,16 @@ struct motion_sensor_t motion_sensors[] = {
 		.default_range = 2,
 	},
 };
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int tablet_hook_count;
+/* Store value obtained by caller. */
+static int tablet_hook_value;
 
 static void tablet_mode_change_hook(void)
 {
 	tablet_hook_count++;
+	tablet_hook_value = tablet_get_mode();
 }
 DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, tablet_mode_change_hook,
 	     HOOK_PRIO_DEFAULT);
@@ -162,6 +165,58 @@ test_static int test_fast_transition(void)
 	return EC_SUCCESS;
 }
 
+/*
+ * Simulate disabling the sensors from boad_init() - when
+ * the firmware can work for both clamsheel and convertible.
+ */
+test_static int test_disable_sensors_GMR_low(void)
+{
+	/* Assume lid is open */
+	gpio_set_level(GPIO_LID_OPEN, 1);
+	/* GMR is not stuffed, assume low. */
+	gpio_set_level(GPIO_TABLET_MODE_L, 0);
+	msleep(50);
+	TEST_ASSERT(tablet_hook_count == 2);
+	TEST_ASSERT(tablet_get_mode());
+	TEST_ASSERT(tablet_hook_value == tablet_get_mode());
+
+	/* Disable tablet mode deteciton.*/
+	gmr_tablet_switch_disable();
+	motion_sensor_count = 0;
+
+	/* We should not be in tablet mode. */
+	TEST_ASSERT(!tablet_get_mode());
+	TEST_ASSERT(tablet_hook_value == tablet_get_mode());
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Simulate disabling the sensors from boad_init() - when
+ * the firmware can work for both clamsheel and convertible.
+ */
+test_static int test_disable_sensors_GMR_high(void)
+{
+	/* Assume lid is open */
+	gpio_set_level(GPIO_LID_OPEN, 1);
+	/* GMR is not stuffed, assume high. */
+	gpio_set_level(GPIO_TABLET_MODE_L, 1);
+	msleep(50);
+	TEST_ASSERT(tablet_hook_count == 1);
+	TEST_ASSERT(!tablet_get_mode());
+	TEST_ASSERT(tablet_hook_value == tablet_get_mode());
+
+	/* Disable tablet mode deteciton.*/
+	gmr_tablet_switch_disable();
+	motion_sensor_count = 0;
+
+	/* We should not be in tablet mode. */
+	TEST_ASSERT(!tablet_get_mode());
+	TEST_ASSERT(tablet_hook_value == tablet_get_mode());
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	test_reset();
@@ -169,6 +224,9 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_start_lid_close);
 	RUN_TEST(test_start_tablet_mode);
 	RUN_TEST(test_fast_transition);
+
+	RUN_TEST(test_disable_sensors_GMR_low);
+	RUN_TEST(test_disable_sensors_GMR_high);
 
 	test_print_result();
 }
