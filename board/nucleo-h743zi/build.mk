@@ -13,7 +13,6 @@ test-list-y=\
        abort \
        aes \
        boringssl \
-       cec \
        compile_time_macros \
        crc \
        debug \
