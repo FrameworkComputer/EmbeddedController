@@ -11,6 +11,7 @@
 #include "console.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/tcpci_ppc.h"
+#include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/ps8818_public.h"
 #include "driver/tcpm/anx7406.h"
 #include "driver/tcpm/nct38xx.h"
@@ -157,6 +158,23 @@ const static struct usb_mux_chain usbc2_ps8818 = {
 		},
 };
 
+const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
+	[USBC_PORT_C0] = {
+		.dp_enable_gpio = GPIO_USB_C0_IN_HPD,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == 1);
+
+const struct usb_mux_chain usbc0_pi3dpx1207_usb_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_C0_TCPC,
+			.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
+			.driver = &pi3dpx1207_usb_retimer,
+		},
+};
+
 /* USBC mux configuration - Alder Lake includes internal mux */
 const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
@@ -165,6 +183,7 @@ const struct usb_mux_chain usb_muxes[] = {
 			.driver = &virtual_usb_mux_driver,
 			.hpd_update = &virtual_hpd_update,
 		},
+		.next = &usbc0_pi3dpx1207_usb_retimer,
 	},
 	[USBC_PORT_C1] = {
 		.mux = &(const struct usb_mux) {
