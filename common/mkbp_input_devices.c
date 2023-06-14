@@ -6,6 +6,7 @@
 /* Input devices using Matrix Keyboard Protocol [MKBP] events for Chrome EC */
 
 #include "base_state.h"
+#include "body_detection.h"
 #include "button.h"
 #include "console.h"
 #include "hooks.h"
@@ -22,14 +23,28 @@
 
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
-/* Buttons and switch state. */
+/* Buttons state. */
 static uint32_t mkbp_button_state;
-static uint32_t mkbp_switch_state;
 
 static bool mkbp_init_done;
 
 uint32_t mkbp_get_switch_state(void)
 {
+	uint32_t mkbp_switch_state = 0;
+
+	/*
+	 * These all read already debounced states and cause no side effects
+	 * or latency.
+	 */
+	if (IS_ENABLED(CONFIG_LID_SWITCH))
+		mkbp_switch_state |= lid_is_open() << EC_MKBP_LID_OPEN;
+	if (IS_ENABLED(CONFIG_TABLET_MODE_SWITCH))
+		mkbp_switch_state |= tablet_get_mode() << EC_MKBP_TABLET_MODE;
+	if (IS_ENABLED(CONFIG_BASE_ATTACHED_SWITCH))
+		mkbp_switch_state |= base_get_state() << EC_MKBP_BASE_ATTACHED;
+	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MKBP))
+		mkbp_switch_state |= body_detect_get_state()
+				     << EC_MKBP_FRONT_PROXIMITY;
 	return mkbp_switch_state;
 };
 
@@ -72,21 +87,20 @@ void mkbp_button_update(enum keyboard_button_type button, int is_pressed)
 		      (const uint8_t *)&mkbp_button_state);
 };
 
-void mkbp_update_switches(uint32_t sw, int state)
+void mkbp_update_switches(void)
 {
-	mkbp_switch_state &= ~BIT(sw);
-	mkbp_switch_state |= (!!state << sw);
-
-	CPRINTS("mkbp switches: %x", mkbp_switch_state);
-
 	/*
 	 * Only inform AP mkbp changes when all switches initialized, in case
 	 * of the middle states causing the weird behaviour in the AP side,
 	 * especially when sysjumped while AP up.
 	 */
-	if (mkbp_init_done)
+	if (mkbp_init_done) {
+		uint32_t mkbp_switch_state = mkbp_get_switch_state();
+
+		CPRINTS("mkbp switches: %x", mkbp_switch_state);
 		mkbp_fifo_add(EC_MKBP_EVENT_SWITCH,
 			      (const uint8_t *)&mkbp_switch_state);
+	}
 }
 
 /*****************************************************************************/
@@ -108,39 +122,26 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 /**
  * Handle lid changing state.
  */
-static void mkbp_lid_change(void)
-{
-	mkbp_update_switches(EC_MKBP_LID_OPEN, lid_is_open());
-}
-DECLARE_HOOK(HOOK_LID_CHANGE, mkbp_lid_change, HOOK_PRIO_LAST);
-DECLARE_HOOK(HOOK_INIT, mkbp_lid_change, HOOK_PRIO_POST_LID);
+DECLARE_HOOK(HOOK_LID_CHANGE, mkbp_update_switches, HOOK_PRIO_LAST);
 #endif
 
 #ifdef CONFIG_TABLET_MODE_SWITCH
-static void mkbp_tablet_mode_change(void)
-{
-	mkbp_update_switches(EC_MKBP_TABLET_MODE, tablet_get_mode());
-}
-DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, mkbp_tablet_mode_change, HOOK_PRIO_LAST);
-DECLARE_HOOK(HOOK_INIT, mkbp_tablet_mode_change, HOOK_PRIO_POST_LID);
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, mkbp_update_switches, HOOK_PRIO_LAST);
 #endif
 
 #ifdef CONFIG_BASE_ATTACHED_SWITCH
-static void mkbp_base_attached_change(void)
-{
-	mkbp_update_switches(EC_MKBP_BASE_ATTACHED, base_get_state());
-}
-DECLARE_HOOK(HOOK_BASE_ATTACHED_CHANGE, mkbp_base_attached_change,
-	     HOOK_PRIO_LAST);
-DECLARE_HOOK(HOOK_INIT, mkbp_base_attached_change, HOOK_PRIO_POST_LID);
+DECLARE_HOOK(HOOK_BASE_ATTACHED_CHANGE, mkbp_update_switches, HOOK_PRIO_LAST);
+#endif
+
+#ifdef CONFIG_BODY_DETECTION_NOTIFY_MKBP
+DECLARE_HOOK(HOOK_BODY_DETECT_CHANGE, mkbp_update_switches, HOOK_PRIO_LAST);
 #endif
 
 static void mkbp_report_switch_on_init(void)
 {
 	/* All switches initialized, report switch state to AP */
 	mkbp_init_done = true;
-	mkbp_fifo_add(EC_MKBP_EVENT_SWITCH,
-		      (const uint8_t *)&mkbp_switch_state);
+	mkbp_update_switches();
 }
 DECLARE_HOOK(HOOK_INIT, mkbp_report_switch_on_init, HOOK_PRIO_LAST);
 

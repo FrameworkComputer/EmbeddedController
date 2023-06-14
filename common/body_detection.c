@@ -134,9 +134,6 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE))
 		host_set_single_event(EC_HOST_EVENT_BODY_DETECT_CHANGE);
 
-	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MKBP))
-		mkbp_update_switches(EC_MKBP_FRONT_PROXIMITY, motion_state);
-
 	hook_notify(HOOK_BODY_DETECT_CHANGE);
 }
 
