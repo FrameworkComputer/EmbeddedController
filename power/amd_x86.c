@@ -527,11 +527,12 @@ enum power_state power_handle_state(enum power_state state)
 		if ((gpio_get_level(GPIO_PCH_SLP_S0_L) == 1) &&
 		    (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1)) {
 			return POWER_S0ixS0;
-		} else if (!power_has_signals(IN_S5_PGOOD)) {
-			/* Lost power, start transition to G3 */
+		} else if (!power_has_signals(IN_S5_PGOOD) ||
+			   (gpio_get_level(GPIO_PCH_SLP_S5_L) == 0)) {
+			/* Lost power or AP shutdown, start transition to G3 */
+			power_reset_host_sleep_state();
 			return POWER_S0;
 		}
-
 		break;
 
 	case POWER_S0S0ix:

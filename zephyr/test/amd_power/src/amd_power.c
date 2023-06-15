@@ -468,6 +468,35 @@ ZTEST(amd_power, test_power_suspend_power_loss)
 		      power_get_state());
 }
 
+ZTEST(amd_power, test_power_suspend_shut_down)
+{
+	struct ec_params_host_sleep_event_v1 host_sleep_ev_p = {
+		.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND,
+		.suspend_params = { EC_HOST_SLEEP_TIMEOUT_DEFAULT },
+	};
+	struct ec_response_host_sleep_event_v1 host_sleep_ev_r;
+	struct host_cmd_handler_args host_sleep_ev_args = BUILD_HOST_COMMAND(
+		EC_CMD_HOST_SLEEP_EVENT, 1, host_sleep_ev_r, host_sleep_ev_p);
+	static const struct device *gpio_dev = GPIO_DEVICE;
+
+	amd_power_s0_on();
+
+	/* Sleepy time */
+	zassert_ok(host_command_process(&host_sleep_ev_args));
+	zassert_ok(gpio_emul_input_set(gpio_dev, SLP_S3_PIN, 0));
+	k_sleep(K_MSEC(500));
+
+	zassert_equal(hook_counts.suspend_count, 1);
+	zassert_equal(power_get_state(), POWER_S0ix, "power_state=%d",
+		      power_get_state());
+
+	/* Something caused AP shutdown while we slept */
+	zassert_ok(gpio_emul_input_set(gpio_dev, SLP_S5_PIN, 0));
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S5, "power_state=%d",
+		      power_get_state());
+}
+
 ZTEST(amd_power, test_power_suspend_hang)
 {
 	struct ec_params_host_sleep_event_v1 host_sleep_ev_p = {
