@@ -132,6 +132,15 @@ static void uldren_subboard_config(void)
 	enum uldren_sub_board_type sb = uldren_get_sb_type();
 	static struct ap_power_ev_callback power_cb;
 
+	/* Turn off unused pins */
+	gpio_pin_configure_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_sub_usb_a1_ilimit_sdp),
+		GPIO_DISCONNECTED);
+	gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
+			      GPIO_DISCONNECTED);
+	/* Disable second USB-A port enable GPIO */
+	usb_port_enable[1] = -1;
+
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	if (sb == ULDREN_SB_C_LTE || sb == ULDREN_SB_C) {
 		/* Configure interrupt input */
