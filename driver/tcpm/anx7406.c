@@ -168,6 +168,11 @@ static int anx7406_init(int port)
 			return rv;
 	}
 
+	rv = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
+			  TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL, MASK_SET);
+	if (rv)
+		return rv;
+
 	/* Disable CAP write protect */
 	rv = tcpc_update8(port, ANX7406_REG_TCPCCTRL, ANX7406_REG_CAP_WP,
 			  MASK_CLR);
