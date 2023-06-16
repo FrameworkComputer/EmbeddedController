@@ -291,6 +291,7 @@ def main():
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_BASE={zephyr_base}",
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
+        f"-x=PYTHON_EXECUTABLE={sys.executable}",
     ]
     is_in_chroot = Path("/etc/cros_chroot_version").is_file()
 
