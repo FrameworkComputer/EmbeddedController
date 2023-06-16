@@ -139,7 +139,7 @@ def find_paths():
         ec_base = cros_checkout / "src" / "platform" / "ec"
         try:
             zephyr_base = Path(os.environ["ZEPHYR_BASE"]).resolve()
-        except KeyError as err:
+        except KeyError:
             zephyr_base = (
                 cros_checkout / "src" / "third_party" / "zephyr" / "main"
             )
