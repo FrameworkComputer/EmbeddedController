@@ -85,10 +85,11 @@ $(BORINGSSL_OUTDIR)/libcrypto.a:
 		-DOPENSSL_NO_ASM=$(OPENSSL_NO_ASM) \
 		-DCROS_EC_REPO=$(CURDIR) \
 		-DCMAKE_TOOLCHAIN_FILE=$(BORINGSSL_TOOLCHAIN) \
+		-DCMAKE_VERBOSE_MAKEFILE=$(V) \
 		-B $(out)/third_party/boringssl/ \
 		-S $(BORINGSSL_DIR) \
 		-GNinja
-	ninja -C $(out)/third_party/boringssl/ crypto
+	cmake --build $(out)/third_party/boringssl/ -- crypto
 
 # Make sure the EC/FPMCU code can link to the boringssl library.
 CPPFLAGS += -I$(BORINGSSL_DIR) -I$(BORINGSSL_DIR)/include
@@ -139,6 +140,7 @@ $(GOOGLETEST_LIB):
 		-GNinja \
 		-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE) \
 		-DCMAKE_INSTALL_PREFIX=$(GOOGLETEST_INSTALL_DIR) \
+		-DCMAKE_VERBOSE_MAKEFILE=$(V) \
 		$(GOOGLETEST_DIR) && \
 	cmake --build . && \
 	cmake --install .
