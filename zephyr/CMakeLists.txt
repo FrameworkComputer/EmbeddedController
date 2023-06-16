@@ -64,7 +64,12 @@ if(DEFINED CONFIG_PLATFORM_EC)
 endif()
 
 # Set extra compiler flags.
-zephyr_cc_option(-mno-unaligned-access)
+
+if (DEFINED CONFIG_SOC_FAMILY_ARM)
+  # This flag is only used by ARM
+  zephyr_cc_option(-mno-unaligned-access)
+endif()
+
 zephyr_cc_option(-Wimplicit-fallthrough)
 
 if (DEFINED CONFIG_RISCV)
