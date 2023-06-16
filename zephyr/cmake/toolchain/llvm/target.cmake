@@ -25,4 +25,9 @@ if("${ARCH}" STREQUAL "arm")
 endif()
 
 set(CC clang)
-set(CROSS_COMPILE "/usr/bin/${CROSS_COMPILE_TARGET}-")
+
+# TODO(b/286589977): Remove if() when hermetic host toolchain is added to fwsdk.
+# Use non-hermetic host toolchain when running outside chroot.
+if(EXISTS /etc/cros_chroot_version)
+  set(CROSS_COMPILE "/usr/bin/${CROSS_COMPILE_TARGET}-")
+endif()
