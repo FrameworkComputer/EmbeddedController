@@ -1599,6 +1599,10 @@ enum ec_feature_code {
 	 * The EC will reboot on runtime assertion failures.
 	 */
 	EC_FEATURE_ASSERT_REBOOTS = 48,
+	/*
+	 * The EC image is built with tokenized logging enabled.
+	 */
+	EC_FEATURE_TOKENIZED_LOGGING = 49,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)

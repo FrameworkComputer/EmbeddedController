@@ -168,6 +168,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_DEBUG_ASSERT_REBOOTS
 		| EC_FEATURE_MASK_1(EC_FEATURE_ASSERT_REBOOTS)
 #endif
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED
+		| EC_FEATURE_MASK_1(EC_FEATURE_TOKENIZED_LOGGING)
+#endif
 		;
 	return board_override_feature_flags1(result);
 }
