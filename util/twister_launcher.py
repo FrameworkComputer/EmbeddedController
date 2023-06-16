@@ -244,7 +244,7 @@ def check_for_skipped_tests(outdir):
     found_skipped = False
     json_path = pathlib.Path(outdir) / "twister.json"
     if json_path.exists():
-        with open(json_path) as file:
+        with open(json_path, encoding="utf-8") as file:
             data = json.load(file)
 
             for testsuite in data["testsuites"]:
