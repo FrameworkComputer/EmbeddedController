@@ -39,6 +39,18 @@ config PLATFORM_EC_BC12_DETECT_RT1718S
 	   TCPC may be enabled without the BC 1.2 detection, the BC 1.2
 	   detection module is currently dependent on the TCPC existing.
 
+config PLATFORM_EC_BC12_DETECT_RT9490
+	bool "Enable BC 1.2 detection on the RT9490"
+	default y
+	depends on DT_HAS_RICHTEK_RT9490_ENABLED || DT_HAS_ZEPHYR_RT9490_EMUL_ENABLED
+	depends on PLATFORM_EC_I2C
+	help
+	   This enables the BC 1.2 detection on the R9490 charging chip.
+	   Note this chip provides both charging and BC1.2 detection
+	   capabilities. While the charger may be enabled without the BC 1.2
+	   detection, the BC 1.2 detection module is currently dependent on the
+	   charger existing.
+
 config PLATFORM_EC_BC12_CLIENT_MODE_ONLY_PI3USB9201
 	bool "Run as BC1.2 client while using PI3USB9201"
 	depends on PLATFORM_EC_BC12_DETECT_PI3USB9201
