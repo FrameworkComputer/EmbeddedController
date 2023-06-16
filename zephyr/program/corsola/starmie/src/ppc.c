@@ -10,10 +10,12 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 void c0_bc12_interrupt(enum gpio_signal signal)
 {
 	rt1739_interrupt(0);
 }
+#endif
 
 static void board_usbc_init(void)
 {

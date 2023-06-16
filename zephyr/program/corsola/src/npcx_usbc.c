@@ -69,8 +69,10 @@ void board_tcpc_init(void)
 	}
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT > 1 */
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
+#endif
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
@@ -264,10 +266,12 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 void bc12_interrupt(enum gpio_signal signal)
 {
 	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
+#endif
 
 __override int board_get_vbus_voltage(int port)
 {
