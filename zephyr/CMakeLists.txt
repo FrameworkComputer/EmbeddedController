@@ -394,6 +394,12 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PANIC
                                                 "${PLATFORM_EC}/common/panic_output.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PSE_LTC4291
                                                 "${PLATFORM_EC}/driver/pse_ltc4291.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RSA
+                                                "${PLATFORM_EC}/common/rsa.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RWSIG
+                                                "${PLATFORM_EC}/common/rwsig.c"
+                                                "${PLATFORM_EC}/common/vboot/common.c"
+                                                "${PLATFORM_EC}/common/vboot/vb21_lib.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
                                                 "${PLATFORM_EC}/common/sha256.c")
 zephyr_library_sources_ifdef(CONFIG_SOC_IT8XXX2_SHA256_HW_ACCELERATE
@@ -628,3 +634,24 @@ add_dependencies(app ec_version_header)
 
 # Include the directory containing the generated header.
 zephyr_include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
+
+# Sign RW firmware if RWSIG enabled
+if (DEFINED CONFIG_CROS_EC_RW AND DEFINED CONFIG_PLATFORM_EC_RWSIG)
+  add_custom_target(key_extract
+    COMMAND futility create
+      "${PLATFORM_EC}/${CONFIG_PLATFORM_EC_RWSIG_KEY_PATH}"
+      "${CMAKE_BINARY_DIR}/key"
+    COMMENT "Extracting signing keys"
+    VERBATIM
+  )
+
+  add_custom_target(sign_rw ALL
+    COMMAND futility sign --type rwsig
+            --prikey "${CMAKE_BINARY_DIR}/key.vbprik2"
+            "${CMAKE_BINARY_DIR}/zephyr/zephyr.bin"
+            "${CMAKE_BINARY_DIR}/ec.sig"
+    COMMENT "Signing EC RW"
+    DEPENDS zephyr_final key_extract
+    VERBATIM
+  )
+endif()

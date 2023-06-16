@@ -264,4 +264,22 @@ config TASK_TOUCHPAD_STACK_SIZE
 
 endif # HAS_TASK_CHG_RAMP
 
+config HAS_TASK_RWSIG
+	bool # Selected by PLATFORM_EC_RWSIG
+	help
+	  This turns on the RWSIG task which verifys and jumps to the RW
+	  firmware automatically.
+
+if HAS_TASK_RWSIG
+
+config TASK_RWSIG_STACK_SIZE
+	int "RWSIG task stack size"
+	default 1536
+	help
+	  The stack size of the RWSIG task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_RWSIG
+
 endmenu # Tasks
