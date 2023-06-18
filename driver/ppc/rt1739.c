@@ -353,6 +353,12 @@ int rt1739_init(int port)
 	return EC_SUCCESS;
 }
 
+static void rt1739_enable_bc12_detection(int port, bool enable)
+{
+	update_reg(port, RT1739_REG_BC12_SNK_FUNC, RT1739_BC12_SNK_EN,
+		   enable ? MASK_SET : MASK_CLR);
+}
+
 #ifdef CONFIG_USB_CHARGER
 static int rt1739_get_bc12_ilim(int charge_supplier)
 {
@@ -387,12 +393,6 @@ static void rt1739_update_charge_manager(int port,
 
 		current_bc12_type = new_bc12_type;
 	}
-}
-
-static void rt1739_enable_bc12_detection(int port, bool enable)
-{
-	update_reg(port, RT1739_REG_BC12_SNK_FUNC, RT1739_BC12_SNK_EN,
-		   enable ? MASK_SET : MASK_CLR);
 }
 
 static enum charge_supplier rt1739_bc12_get_device_type(int port)
@@ -498,11 +498,13 @@ void rt1739_interrupt(int port)
 void rt1739_pd_connect(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
-		if (ppc_chips[i].drv == &rt1739_ppc_drv && pd_is_connected(i))
+		if (ppc_chips[i].drv == &rt1739_ppc_drv && pd_is_connected(i)) {
 			update_reg(i, RT1739_REG_SBU_CTRL_01,
 				   RT1739_DM_SWEN | RT1739_DP_SWEN |
 					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
 				   MASK_SET);
+			rt1739_enable_bc12_detection(i, true);
+		}
 	}
 }
 DECLARE_HOOK(HOOK_USB_PD_CONNECT, rt1739_pd_connect, HOOK_PRIO_DEFAULT);
@@ -511,11 +513,13 @@ void rt1739_pd_disconnect(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
 		if (ppc_chips[i].drv == &rt1739_ppc_drv &&
-		    pd_is_disconnected(i))
+		    pd_is_disconnected(i)) {
 			update_reg(i, RT1739_REG_SBU_CTRL_01,
 				   RT1739_DM_SWEN | RT1739_DP_SWEN |
 					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
 				   MASK_CLR);
+			rt1739_enable_bc12_detection(i, false);
+		}
 	}
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, rt1739_pd_disconnect, HOOK_PRIO_DEFAULT);
