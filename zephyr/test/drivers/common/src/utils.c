@@ -236,7 +236,8 @@ enum ec_status host_cmd_host_event(enum ec_host_event_action action,
 }
 
 void host_cmd_motion_sense_dump(int max_sensor_count,
-				struct ec_response_motion_sense *response)
+				struct ec_response_motion_sense *response,
+				size_t response_size)
 {
 	struct ec_params_motion_sense params = {
 		.cmd = MOTIONSENSE_CMD_DUMP,
@@ -245,7 +246,18 @@ void host_cmd_motion_sense_dump(int max_sensor_count,
 		},
 	};
 
-	zassert_ok(ec_cmd_motion_sense_cmd_v4(NULL, &params, response),
+	struct host_cmd_handler_args args = {
+		.send_response = stub_send_response_callback,
+		.command = EC_CMD_MOTION_SENSE_CMD,
+		.version = 4,
+		.params = &params,
+		.params_size = sizeof(params),
+		.response = response,
+		.response_max = response_size,
+		.response_size = 0,
+	};
+
+	zassert_ok(host_command_process(&args),
 		   "Failed to get motion_sense dump");
 }
 
@@ -373,7 +385,8 @@ int host_cmd_motion_sense_calib(uint8_t sensor_num, bool enable,
 }
 
 int host_cmd_motion_sense_fifo_flush(uint8_t sensor_num,
-				     struct ec_response_motion_sense *response)
+				     struct ec_response_motion_sense *response,
+				     size_t response_size)
 {
 	struct ec_params_motion_sense params = {
 		.cmd = MOTIONSENSE_CMD_FIFO_FLUSH,
@@ -382,16 +395,39 @@ int host_cmd_motion_sense_fifo_flush(uint8_t sensor_num,
 		},
 	};
 
-	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
+	struct host_cmd_handler_args args = {
+		.send_response = stub_send_response_callback,
+		.command = EC_CMD_MOTION_SENSE_CMD,
+		.version = 1,
+		.params = &params,
+		.params_size = sizeof(params),
+		.response = response,
+		.response_max = response_size,
+		.response_size = 0,
+	};
+
+	return host_command_process(&args);
 }
 
-int host_cmd_motion_sense_fifo_info(struct ec_response_motion_sense *response)
+int host_cmd_motion_sense_fifo_info(struct ec_response_motion_sense *response,
+				    size_t response_size)
 {
 	struct ec_params_motion_sense params = {
 		.cmd = MOTIONSENSE_CMD_FIFO_INFO,
 	};
 
-	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
+	struct host_cmd_handler_args args = {
+		.send_response = stub_send_response_callback,
+		.command = EC_CMD_MOTION_SENSE_CMD,
+		.version = 1,
+		.params = &params,
+		.params_size = sizeof(params),
+		.response = response,
+		.response_max = response_size,
+		.response_size = 0,
+	};
+
+	return host_command_process(&args);
 }
 
 int host_cmd_motion_sense_fifo_read(uint8_t buffer_length,

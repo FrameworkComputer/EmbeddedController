@@ -117,7 +117,8 @@ ZTEST_USER(host_cmd_motion_sense, test_dump)
 		~(EC_MEMMAP_ACC_STATUS_PRESENCE_BIT);
 
 	/* Dump all the sensors info */
-	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS, result);
+	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS, result,
+				   sizeof(response_buffer));
 
 	zassert_equal(result->dump.module_flags, 0);
 	zassert_equal(result->dump.sensor_count, ALL_MOTION_SENSORS);
@@ -153,7 +154,8 @@ ZTEST_USER(host_cmd_motion_sense, test_dump)
 		EC_MEMMAP_ACC_STATUS_PRESENCE_BIT;
 
 	/* Dump all the sensors info */
-	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS, result);
+	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS, result,
+				   sizeof(response_buffer));
 
 	zassert_equal(result->dump.module_flags, MOTIONSENSE_MODULE_FLAG_ACTIVE,
 		      NULL);
@@ -166,7 +168,8 @@ ZTEST_USER(host_cmd_motion_sense, test_dump__large_max_sensor_count)
 	struct ec_response_motion_sense *result =
 		(struct ec_response_motion_sense *)response_buffer;
 
-	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS + 1, result);
+	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS + 1, result,
+				   sizeof(response_buffer));
 
 	zassert_equal(result->dump.sensor_count, ALL_MOTION_SENSORS);
 }
@@ -699,7 +702,8 @@ ZTEST(host_cmd_motion_sense, test_fifo_flush__invalid_sensor_num)
 	int rv;
 	struct ec_response_motion_sense response;
 
-	rv = host_cmd_motion_sense_fifo_flush(/*sensor_num=*/0xff, &response);
+	rv = host_cmd_motion_sense_fifo_flush(/*sensor_num=*/0xff, &response,
+					      sizeof(response));
 	zassert_equal(rv, EC_RES_INVALID_PARAM);
 }
 
@@ -709,7 +713,8 @@ ZTEST(host_cmd_motion_sense, test_fifo_flush)
 	struct ec_response_motion_sense *response =
 		(struct ec_response_motion_sense *)response_buffer;
 
-	zassert_ok(host_cmd_motion_sense_fifo_flush(/*sensor_num=*/0, response),
+	zassert_ok(host_cmd_motion_sense_fifo_flush(/*sensor_num=*/0, response,
+						    sizeof(response_buffer)),
 		   NULL);
 	zassert_equal(1, motion_sensors[0].flush_pending);
 }
@@ -720,7 +725,8 @@ ZTEST(host_cmd_motion_sense, test_fifo_info)
 	struct ec_response_motion_sense *response =
 		(struct ec_response_motion_sense *)response_buffer;
 
-	zassert_ok(host_cmd_motion_sense_fifo_info(response));
+	zassert_ok(host_cmd_motion_sense_fifo_info(response,
+						   sizeof(response_buffer)));
 }
 
 ZTEST(host_cmd_motion_sense, test_fifo_read)
