@@ -30,3 +30,5 @@ add_subdirectory(
     ${PLATFORM_EC}/zephyr/test/drivers/mock_panic_output
     mock_panic_output
 )
+
+zephyr_library_sources_ifdef(CONFIG_EC_HOST_CMD src/system.c)

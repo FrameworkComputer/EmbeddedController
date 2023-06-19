@@ -9,6 +9,7 @@
 #include "i2c.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
@@ -44,7 +45,7 @@ ZTEST_USER(i2c_passthru, test_read_without_write)
 	args.response_max = sizeof(response_buf);
 
 	zassert_ok(host_command_process(&args));
-	zassert_ok(args.result);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(response->i2c_status, EC_I2C_STATUS_NAK);
 	zassert_equal(args.response_size,
 		      sizeof(struct ec_response_i2c_passthru), NULL);
@@ -204,7 +205,7 @@ ZTEST_USER(i2c_passthru, test_passthru_protect_tcpcs)
 	passthru_args.response_max = sizeof(response_buf);
 
 	zassert_ok(host_command_process(&passthru_args));
-	zassert_ok(passthru_args.result);
+	CHECK_ARGS_RESULT(args)
 	zassert_ok(passthru_response->i2c_status);
 	zassert_equal(passthru_args.response_size,
 		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);
@@ -301,13 +302,13 @@ ZTEST_USER(i2c_passthru, test_passthru_restricted)
 	system_is_locked_fake.return_val = false;
 
 	zassert_ok(host_command_process(&tcpc_args));
-	zassert_ok(tcpc_args.result);
+	CHECK_ARGS_RESULT(tcpc_args)
 	zassert_ok(tcpc_response->i2c_status);
 	zassert_equal(tcpc_args.response_size,
 		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);
 
 	zassert_ok(host_command_process(&ps8xxx_args));
-	zassert_ok(ps8xxx_args.result);
+	CHECK_ARGS_RESULT(ps8xxx_args)
 	zassert_ok(ps8xxx_response->i2c_status);
 	zassert_equal(ps8xxx_args.response_size,
 		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);
@@ -316,7 +317,7 @@ ZTEST_USER(i2c_passthru, test_passthru_restricted)
 	system_is_locked_fake.return_val = true;
 
 	zassert_ok(host_command_process(&tcpc_args));
-	zassert_ok(tcpc_args.result);
+	CHECK_ARGS_RESULT(tcpc_args)
 	zassert_ok(tcpc_response->i2c_status);
 	zassert_equal(tcpc_args.response_size,
 		      sizeof(struct ec_response_i2c_passthru) + 2, NULL);

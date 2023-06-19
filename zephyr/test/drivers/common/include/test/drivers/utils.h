@@ -674,4 +674,10 @@ void test_set_chipset_to_g3_then_transition_to_s5(void);
 			  __LINE__)
 void check_console_cmd(const char *cmd, const char *expected_output,
 		       const int expected_rv, const char *file, const int line);
+
+/* The upstream struct ec_host_cmd_handler_args omits the result field, so skip
+ * checks of the result when using the upstream host commands.
+ */
+#define CHECK_ARGS_RESULT(args) \
+	COND_CODE_0(CONFIG_EC_HOST_CMD, (zassert_ok(args.result, NULL);), ())
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

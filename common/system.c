@@ -1713,7 +1713,8 @@ host_command_get_board_version(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION, host_command_get_board_version,
 		     EC_VER_MASK(0));
 
-static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
+STATIC_IF_NOT(CONFIG_ZTEST)
+enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 {
 	struct ec_params_reboot_ec p;
 

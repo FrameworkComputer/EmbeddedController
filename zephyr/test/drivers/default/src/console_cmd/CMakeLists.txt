@@ -23,7 +23,6 @@ target_sources(app PRIVATE
 	gpio.c
 	i2c_portmap.c
 	md.c
-	hcdebug.c
 	hibdelay.c
 	hostevent.c
 	panic_output.c
@@ -44,3 +43,6 @@ target_sources(app PRIVATE
 	version.c
 	waitms.c
 )
+
+# The upstream Host Command version doesn't support the hcdebug command
+zephyr_library_sources_ifndef(CONFIG_EC_HOST_CMD hcdebug.c)

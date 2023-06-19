@@ -43,6 +43,21 @@ static struct usb_mux *usbc1_virtual_usb_mux;
 /** Pointers to original usb muxes chain of port c1 */
 const struct usb_mux *org_mux[NUM_OF_PROXY];
 
+/* The upstream Host Command support calls the commands handlers in a separated
+ * thread (main or dedicated). The shim layer runs the handlers within the test
+ * task, so make sure to count the calls correctly.
+ */
+static bool task_is_host_command(void)
+{
+	task_id_t id = task_get_current();
+
+#ifdef CONFIG_EC_HOST_CMD
+	return (id == TASK_ID_TEST_RUNNER || id == TASK_ID_HOSTCMD);
+#else
+	return id == TASK_ID_TEST_RUNNER;
+#endif
+}
+
 /** Proxy function which check calls from usb_mux framework to driver */
 FAKE_VALUE_FUNC(int, proxy_init, const struct usb_mux *);
 static int proxy_init_custom(const struct usb_mux *me)
@@ -56,7 +71,7 @@ static int proxy_init_custom(const struct usb_mux *me)
 		ec = org_mux[i]->driver->init(org_mux[i]);
 	}
 
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+	if (task_is_host_command()) {
 		RETURN_FAKE_RESULT(proxy_init);
 	}
 
@@ -83,7 +98,7 @@ static int proxy_set_custom(const struct usb_mux *me, mux_state_t mux_state,
 		*ack_required = false;
 	}
 
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+	if (task_is_host_command()) {
 		RETURN_FAKE_RESULT(proxy_set);
 	}
 
@@ -119,7 +134,7 @@ static int proxy_get_custom(const struct usb_mux *me, mux_state_t *mux_state)
 		ec = org_mux[i]->driver->get(org_mux[i], mux_state);
 	}
 
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+	if (task_is_host_command()) {
 		zassert_true(proxy_get_mux_state_seq_idx < NUM_OF_PROXY,
 			     "%s called too many times without resetting "
 			     "mux_state_seq",
@@ -150,7 +165,7 @@ static int proxy_enter_low_power_mode_custom(const struct usb_mux *me)
 		ec = org_mux[i]->driver->enter_low_power_mode(org_mux[i]);
 	}
 
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+	if (task_is_host_command()) {
 		RETURN_FAKE_RESULT(proxy_enter_low_power_mode);
 	}
 
@@ -173,7 +188,7 @@ static int proxy_chipset_reset_custom(const struct usb_mux *me)
 		ec = org_mux[i]->driver->chipset_reset(org_mux[i]);
 	}
 
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+	if (task_is_host_command()) {
 		RETURN_FAKE_RESULT(proxy_chipset_reset);
 	}
 
@@ -220,7 +235,7 @@ static void proxy_hpd_update_custom(const struct usb_mux *me,
 		*ack_required = false;
 	}
 
-	if (task_get_current() != TASK_ID_TEST_RUNNER) {
+	if (!task_is_host_command()) {
 		/* Discard this call if made from different thread */
 		proxy_hpd_update_fake.call_count--;
 	}
@@ -241,7 +256,7 @@ const struct usb_mux_driver proxy_usb_mux = {
 FAKE_VALUE_FUNC(int, mock_board_init, const struct usb_mux *);
 static int mock_board_init_custom(const struct usb_mux *me)
 {
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+	if (task_is_host_command()) {
 		RETURN_FAKE_RESULT(mock_board_init);
 	}
 
@@ -256,7 +271,7 @@ FAKE_VALUE_FUNC(int, mock_board_set, const struct usb_mux *, mux_state_t);
 static int mock_board_set_custom(const struct usb_mux *me,
 				 mux_state_t mux_state)
 {
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+	if (task_is_host_command()) {
 		RETURN_FAKE_RESULT(mock_board_set);
 	}
 
