@@ -35,7 +35,10 @@ static const struct anx7483_register default_reg_configs[ANX7483_REG_MAX] = {
 		.def = ANX7483_AUX_SNOOPING_CTRL_REG_DEFAULT,
 		.reserved = ANX7483_AUX_SNOOPING_CTRL_REG_RESERVED_MASK,
 	},
-
+	{
+		.reg = ANX7483_CHIP_ID,
+		.def = ANX7483_CHIP_ID_DEFAULT,
+	},
 	/* CFG0 */
 	{
 		.reg = ANX7483_UTX1_PORT_CFG0_REG,
@@ -92,6 +95,14 @@ static const struct anx7483_register default_reg_configs[ANX7483_REG_MAX] = {
 	{
 		.reg = ANX7483_DRX2_PORT_CFG1_REG,
 		.def = ANX7483_DRX2_PORT_CFG1_REG_DEFAULT,
+	},
+	{
+		.reg = ANX7483_AUX_CFG_0,
+		.def = ANX7483_AUX_CFG_0_DEFAULT,
+	},
+	{
+		.reg = ANX7483_AUX_CFG_1,
+		.def = ANX7483_AUX_CFG_1_DEFAULT,
 	},
 
 	/* CFG2 */

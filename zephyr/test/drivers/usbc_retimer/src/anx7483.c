@@ -954,7 +954,7 @@ ZTEST(anx7483, test_emul_update_reserved)
  * Tests that the ANX7483 driver correctly configures the default tuning for
  * USB.
  */
-ZTEST(anx7483, test_tuning_usb)
+ZTEST(anx7483, test_tuning_usb_AA)
 {
 	/*
 	 * Vendor defined tuning settings, these should match those in the
@@ -998,12 +998,75 @@ ZTEST(anx7483, test_tuning_usb)
 	};
 	int rv;
 
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID,
+				       ANX7483_CHIP_ID_DEFAULT);
+	zexpect_ok(rv);
+
 	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_USB_ENABLED);
 	zexpect_ok(rv);
 
-	zassert_equal(ARRAY_SIZE(usb_enabled), anx7483_usb_enabled_count);
+	zassert_equal(ARRAY_SIZE(usb_enabled),
+		      anx7483_usb_enabled_count + anx7483_AA_usb_count);
 	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, usb_enabled,
-					  ARRAY_SIZE(usb_enabled));
+					  anx7483_usb_enabled_count +
+						  anx7483_AA_usb_count);
+	zexpect_ok(rv);
+}
+
+ZTEST(anx7483, test_tuning_usb_BA)
+{
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_usb_enabled struct within the driver.
+	 */
+	const struct anx7483_tuning_set usb_enabled[] = {
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+	};
+	int rv;
+
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID, ANX7483_BA);
+	zexpect_ok(rv);
+	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_USB_ENABLED);
+	zexpect_ok(rv);
+
+	zassert_equal(ARRAY_SIZE(usb_enabled),
+		      anx7483_usb_enabled_count + anx7483_BA_usb_count);
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, usb_enabled,
+					  anx7483_usb_enabled_count +
+						  anx7483_BA_usb_count);
 	zexpect_ok(rv);
 }
 
@@ -1011,7 +1074,7 @@ ZTEST(anx7483, test_tuning_usb)
  * Tests that the ANX7483 driver correctly configures the default tuning for
  * DisplayPort.
  */
-ZTEST(anx7483, test_tuning_dp)
+ZTEST(anx7483, test_tuning_dp_AA)
 {
 	/*
 	 * Vendor defined tuning settings, these should match those in the
@@ -1055,12 +1118,80 @@ ZTEST(anx7483, test_tuning_dp)
 	};
 	int rv;
 
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID,
+				       ANX7483_CHIP_ID_DEFAULT);
+	zexpect_ok(rv);
+
 	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_DP_ENABLED);
 	zexpect_ok(rv);
 
-	zassert_equal(ARRAY_SIZE(dp_enabled), anx7483_dp_enabled_count);
+	zassert_equal(ARRAY_SIZE(dp_enabled),
+		      anx7483_dp_enabled_count + anx7483_AA_dp_count);
 	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dp_enabled,
-					  ARRAY_SIZE(dp_enabled));
+					  anx7483_dp_enabled_count +
+						  anx7483_AA_dp_count);
+	zexpect_ok(rv);
+}
+
+ZTEST(anx7483, test_tuning_dp_BA)
+{
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_usb_enabled struct within the driver.
+	 */
+	const struct anx7483_tuning_set dp_enabled[] = {
+		{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
+
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+
+		{ ANX7483_AUX_CFG_1, ANX7483_AUX_CFG_1_REPLY },
+		{ ANX7483_AUX_CFG_0, ANX7483_AUX_CFG_0_REPLY },
+
+	};
+	int rv;
+
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID, ANX7483_BA);
+	zexpect_ok(rv);
+
+	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_DP_ENABLED);
+	zexpect_ok(rv);
+
+	zassert_equal(ARRAY_SIZE(dp_enabled),
+		      anx7483_dp_enabled_count + anx7483_BA_dp_count);
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dp_enabled,
+					  anx7483_dp_enabled_count +
+						  anx7483_BA_dp_count);
 	zexpect_ok(rv);
 }
 
@@ -1068,7 +1199,7 @@ ZTEST(anx7483, test_tuning_dp)
  * Tests that the ANX7483 driver correctly configures the default tuning for
  * dock mode in a non-flipped state.
  */
-ZTEST(anx7483, test_tuning_dock_noflip)
+ZTEST(anx7483, test_tuning_dock_noflip_AA)
 {
 	/*
 	 * Vendor defined tuning settings, these should match those in the
@@ -1113,12 +1244,81 @@ ZTEST(anx7483, test_tuning_dock_noflip)
 	};
 	int rv;
 
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID,
+				       ANX7483_CHIP_ID_DEFAULT);
+	zexpect_ok(rv);
+
 	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_DOCK);
 	zexpect_ok(rv);
 
-	zassert_equal(ARRAY_SIZE(dock_noflip), anx7483_dock_noflip_count);
+	zassert_equal(ARRAY_SIZE(dock_noflip),
+		      anx7483_dock_noflip_count + anx7483_AA_dock_noflip_count);
 	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dock_noflip,
-					  ARRAY_SIZE(dock_noflip));
+					  anx7483_dock_noflip_count +
+						  anx7483_AA_dock_noflip_count);
+
+	zexpect_ok(rv);
+}
+
+ZTEST(anx7483, test_tuning_dock_noflip_BA)
+{
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_dock_noflip struct within the driver.
+	 */
+	const test_export_static struct anx7483_tuning_set dock_noflip[] = {
+		{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
+
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+
+		{ ANX7483_AUX_CFG_1, ANX7483_AUX_CFG_1_REPLY },
+		{ ANX7483_AUX_CFG_0, ANX7483_AUX_CFG_0_REPLY },
+	};
+	int rv;
+
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID, ANX7483_BA);
+	zexpect_ok(rv);
+
+	rv = anx7483_set_default_tuning(&mux, USB_PD_MUX_DOCK);
+	zexpect_ok(rv);
+
+	zassert_equal(ARRAY_SIZE(dock_noflip),
+		      anx7483_dock_noflip_count + anx7483_BA_dock_noflip_count);
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dock_noflip,
+					  anx7483_dock_noflip_count +
+						  anx7483_BA_dock_noflip_count);
 	zexpect_ok(rv);
 }
 
@@ -1126,7 +1326,7 @@ ZTEST(anx7483, test_tuning_dock_noflip)
  * Tests that the ANX7483 driver correctly configures the default tuning for
  * dock mode in a flipped state.
  */
-ZTEST(anx7483, test_tuning_dock_flip)
+ZTEST(anx7483, test_tuning_dock_flip_AA)
 {
 	/*
 	 * Vendor defined tuning settings, these should match those in the
@@ -1171,12 +1371,88 @@ ZTEST(anx7483, test_tuning_dock_flip)
 	};
 	int rv;
 
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID,
+				       ANX7483_CHIP_ID_DEFAULT);
+	zexpect_ok(rv);
+
 	rv = anx7483_set_default_tuning(
 		&mux, USB_PD_MUX_DOCK | USB_PD_MUX_POLARITY_INVERTED);
 	zexpect_ok(rv);
 
-	zassert_equal(ARRAY_SIZE(dock_flip), anx7483_dock_flip_count);
+	zassert_equal(ARRAY_SIZE(dock_flip),
+		      anx7483_dock_flip_count + anx7483_AA_dock_flip_count);
+
 	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dock_flip,
-					  ARRAY_SIZE(dock_flip));
+					  anx7483_dock_flip_count +
+						  anx7483_AA_dock_flip_count);
+
+	zexpect_ok(rv);
+}
+
+/*
+ * Tests that the ANX7483 driver correctly configures the default tuning for
+ * dock mode in a flipped state.
+ */
+ZTEST(anx7483, test_tuning_dock_flip_BA)
+{
+	/*
+	 * Vendor defined tuning settings, these should match those in the
+	 * anx7483_dock_flip struct within the driver.
+	 */
+	const test_export_static struct anx7483_tuning_set dock_flip[] = {
+		{ ANX7483_AUX_SNOOPING_CTRL_REG, ANX7483_AUX_SNOOPING_DEF },
+
+		{ ANX7483_URX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_DRX2_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_URX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+		{ ANX7483_UTX1_PORT_CFG2_REG, ANX7483_CFG2_DEF },
+
+		{ ANX7483_URX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_DRX2_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_URX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+		{ ANX7483_UTX1_PORT_CFG0_REG, ANX7483_CFG0_DEF },
+
+		{ ANX7483_URX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+		{ ANX7483_DRX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_ENABLE },
+
+		{ ANX7483_URX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_UTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX2_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DTX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+		{ ANX7483_DRX1_PORT_CFG4_REG, ANX7483_CFG4_TERM_DISABLE },
+
+		{ ANX7483_URX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_UTX1_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_URX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+		{ ANX7483_DRX2_PORT_CFG1_REG, ANX7483_CFG1_DEF },
+
+		{ ANX7483_URX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_URX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_UTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_DRX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_OUT },
+		{ ANX7483_UTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DRX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX1_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+		{ ANX7483_DTX2_PORT_CFG3_REG, ANX7483_BA_CFG3_90Ohm_IN },
+
+		{ ANX7483_AUX_CFG_1, ANX7483_AUX_CFG_1_REPLY },
+		{ ANX7483_AUX_CFG_0, ANX7483_AUX_CFG_0_REPLY },
+	};
+	int rv;
+
+	rv = anx7483_emul_test_set_reg(ANX7483_CHIP_ID, ANX7483_BA);
+	zexpect_ok(rv);
+
+	rv = anx7483_set_default_tuning(
+		&mux, USB_PD_MUX_DOCK | USB_PD_MUX_POLARITY_INVERTED);
+	zexpect_ok(rv);
+
+	zassert_equal(ARRAY_SIZE(dock_flip),
+		      anx7483_dock_flip_count + anx7483_BA_dock_flip_count);
+
+	rv = anx7483_emul_validate_tuning(ANX7483_EMUL, dock_flip,
+					  anx7483_dock_flip_count +
+						  anx7483_BA_dock_flip_count);
 	zexpect_ok(rv);
 }
