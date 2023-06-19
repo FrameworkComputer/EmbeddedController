@@ -97,6 +97,12 @@
 				led-color = <&color_power_off>;
 			};
 		};
+		
+		pwr-power-state-off {
+			color-0 {
+				led-color = <&color_power_off>;
+			};
+		};
 
 		chassis_open {
 			color-0 {

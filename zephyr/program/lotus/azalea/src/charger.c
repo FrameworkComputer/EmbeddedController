@@ -140,8 +140,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 {
 	int prochot_ma;
 
-	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT) {
-		charge_ma = CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT;
+	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT) {
+		charge_ma = CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT;
 	}
 	/*
 	 * ac prochot should bigger than input current

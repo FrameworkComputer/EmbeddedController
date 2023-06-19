@@ -44,6 +44,11 @@ enum f75303_index {
 #define F75303_TEMP_REMOTE1_REGISTER 0x01
 #define F75303_TEMP_REMOTE2_REGISTER 0x23
 
+#define F75303_ALERT_CHANNEL_MASK 0x1F
+#define F75303_DP2_MASK BIT(2)
+#define F75303_DP1_MASK BIT(1)
+#define F75303_LOCAL_MASK BIT(0)
+
 /**
  * Get the last polled value of a sensor.
  *

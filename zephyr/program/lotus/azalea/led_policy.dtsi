@@ -7,7 +7,7 @@
 		power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= 0, <= 96) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY (BATTERY_LEVEL_NEAR_FULL-1)>;
+			batt-lvl = <BATTERY_LEVEL_EMPTY 96>;
 			color-0 {
 				led-color = <&color_amber>;
 			};
@@ -26,7 +26,7 @@
 		power-state-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 			/* Battery percent range (>= 97, <= 100) */
-			batt-lvl = <BATTERY_LEVEL_NEAR_FULL BATTERY_LEVEL_FULL>;
+			batt-lvl = <97 BATTERY_LEVEL_FULL>;
 
 			color-0 {
 				led-color = <&color_white>;

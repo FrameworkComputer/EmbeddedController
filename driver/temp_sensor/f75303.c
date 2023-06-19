@@ -124,7 +124,7 @@ DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 void f75303_update_temperature(int idx)
 {
 	int temp_reg = 0;
-	int rv;
+	int rv = EC_ERROR_INVAL;
 
 	if (idx >= F75303_IDX_COUNT)
 		return;
