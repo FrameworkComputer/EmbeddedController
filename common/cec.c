@@ -25,6 +25,10 @@
 #define CPRINTS(...)
 #endif
 
+/* Only one port is supported for now */
+#define CEC_PORT 0
+BUILD_ASSERT(CEC_PORT_COUNT == 1);
+
 /*
  * Free time timing (us). Our free-time is calculated from the end of
  * the last bit (not from the start). We compensate by having one
@@ -277,8 +281,6 @@ struct cec_offline_policy cec_default_policy[] = {
 	{ 0 },
 };
 
-__overridable const struct cec_config_t cec_config = {};
-
 static enum cec_action cec_find_action(const struct cec_offline_policy *policy,
 				       uint8_t command)
 {
@@ -299,6 +301,7 @@ int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
 {
 	uint8_t command;
 	char str_buf[hex_str_buf_size(msg_len)];
+	int port = CEC_PORT;
 
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		/* Forward to the AP */
@@ -312,7 +315,7 @@ int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
 
 	command = msg[1];
 
-	if (cec_find_action(cec_config.offline_policy, command) ==
+	if (cec_find_action(cec_config[port].offline_policy, command) ==
 	    CEC_ACTION_POWER_BUTTON)
 		/* Equal to PWRBTN_INITIAL_US (for x86). */
 		power_button_simulate_press(200);
@@ -412,8 +415,6 @@ static void enter_state(enum cec_state new_state)
 		gpio = 1;
 		memset(&cec_rx, 0, sizeof(struct cec_rx));
 		memset(&cec_tx, 0, sizeof(struct cec_tx));
-		memset(&cec_rx_queue, 0, sizeof(struct cec_rx_queue));
-		cec_events = 0;
 		break;
 	case CEC_STATE_IDLE:
 		cec_tx.transfer.bit = 0;
@@ -854,12 +855,15 @@ __overridable void cec_update_interrupt_time(void)
 {
 }
 
-static int cec_send(const uint8_t *msg, uint8_t len)
+static int bitbang_cec_send(int port, const uint8_t *msg, uint8_t len)
 {
 	int i;
 
+	if (cec_state == CEC_STATE_DISABLED)
+		return EC_ERROR_BUSY;
+
 	if (cec_tx.len != 0)
-		return -1;
+		return EC_ERROR_BUSY;
 
 	cec_tx.len = len;
 
@@ -871,38 +875,34 @@ static int cec_send(const uint8_t *msg, uint8_t len)
 
 	cec_trigger_send();
 
-	return 0;
+	return EC_SUCCESS;
 }
 
 static enum ec_status hc_cec_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_write *params = args->params;
-
-	if (cec_state == CEC_STATE_DISABLED)
-		return EC_RES_UNAVAILABLE;
+	int port = CEC_PORT;
 
 	if (args->params_size == 0 || args->params_size > MAX_CEC_MSG_LEN)
 		return EC_RES_INVALID_PARAM;
 
-	if (cec_send(params->msg, args->params_size) != 0)
+	if (cec_config[port].drv->send(port, params->msg, args->params_size) !=
+	    EC_SUCCESS)
 		return EC_RES_BUSY;
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
 
-static int cec_set_enable(uint8_t enable)
+static int bitbang_cec_set_enable(int port, uint8_t enable)
 {
-	if (enable != 0 && enable != 1)
-		return EC_RES_INVALID_PARAM;
-
 	/* Enabling when already enabled? */
 	if (enable && cec_state != CEC_STATE_DISABLED)
-		return EC_RES_SUCCESS;
+		return EC_SUCCESS;
 
 	/* Disabling when already disabled? */
 	if (!enable && cec_state == CEC_STATE_DISABLED)
-		return EC_RES_SUCCESS;
+		return EC_SUCCESS;
 
 	if (enable) {
 		enter_state(CEC_STATE_IDLE);
@@ -918,17 +918,43 @@ static int cec_set_enable(uint8_t enable)
 		CPRINTF("CEC disabled\n");
 	}
 
+	return EC_SUCCESS;
+}
+
+static enum ec_status cec_set_enable(int port, uint8_t enable)
+{
+	if (enable != 0 && enable != 1)
+		return EC_RES_INVALID_PARAM;
+
+	if (cec_config[port].drv->set_enable(port, enable) != EC_SUCCESS)
+		return EC_RES_ERROR;
+
+	if (enable == 0) {
+		/* If disabled, clear the rx queue and events. */
+		memset(&cec_rx_queue, 0, sizeof(struct cec_rx_queue));
+		cec_events = 0;
+	}
+
 	return EC_RES_SUCCESS;
 }
 
-static int cec_set_logical_addr(uint8_t logical_addr)
+static int bitbang_cec_set_logical_addr(int port, uint8_t logical_addr)
+{
+	cec_addr = logical_addr;
+	CPRINTF("CEC address set to: %u\n", cec_addr);
+
+	return EC_SUCCESS;
+}
+
+static enum ec_status cec_set_logical_addr(int port, uint8_t logical_addr)
 {
 	if (logical_addr >= CEC_BROADCAST_ADDR &&
 	    logical_addr != CEC_UNREGISTERED_ADDR)
 		return EC_RES_INVALID_PARAM;
 
-	cec_addr = logical_addr;
-	CPRINTF("CEC address set to: %u\n", cec_addr);
+	if (cec_config[port].drv->set_logical_addr(port, logical_addr) !=
+	    EC_SUCCESS)
+		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
 }
@@ -936,29 +962,49 @@ static int cec_set_logical_addr(uint8_t logical_addr)
 static enum ec_status hc_cec_set(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_set *params = args->params;
+	int port = CEC_PORT;
 
 	switch (params->cmd) {
 	case CEC_CMD_ENABLE:
-		return cec_set_enable(params->val);
+		return cec_set_enable(port, params->val);
 	case CEC_CMD_LOGICAL_ADDRESS:
-		return cec_set_logical_addr(params->val);
+		return cec_set_logical_addr(port, params->val);
 	}
 
 	return EC_RES_INVALID_PARAM;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_SET, hc_cec_set, EC_VER_MASK(0));
 
+static int bitbang_cec_get_enable(int port, uint8_t *enable)
+{
+	*enable = cec_state == CEC_STATE_DISABLED ? 0 : 1;
+
+	return EC_SUCCESS;
+}
+
+static int bitbang_cec_get_logical_addr(int port, uint8_t *logical_addr)
+{
+	*logical_addr = cec_addr;
+
+	return EC_SUCCESS;
+}
+
 static enum ec_status hc_cec_get(struct host_cmd_handler_args *args)
 {
 	struct ec_response_cec_get *response = args->response;
 	const struct ec_params_cec_get *params = args->params;
+	int port = CEC_PORT;
 
 	switch (params->cmd) {
 	case CEC_CMD_ENABLE:
-		response->val = cec_state == CEC_STATE_DISABLED ? 0 : 1;
+		if (cec_config[port].drv->get_enable(port, &response->val) !=
+		    EC_SUCCESS)
+			return EC_RES_ERROR;
 		break;
 	case CEC_CMD_LOGICAL_ADDRESS:
-		response->val = cec_addr;
+		if (cec_config[port].drv->get_logical_addr(
+			    port, &response->val) != EC_SUCCESS)
+			return EC_RES_ERROR;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
@@ -995,7 +1041,7 @@ static int cec_get_next_msg(uint8_t *out)
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_MESSAGE, cec_get_next_msg);
 
-static void cec_init(void)
+static int bitbang_cec_init(int port)
 {
 	cec_init_timer();
 
@@ -1007,13 +1053,68 @@ static void cec_init(void)
 	/* Ensure the CEC bus is not pulled low by default on startup. */
 	gpio_set_level(CEC_GPIO_OUT, 1);
 
+	return EC_SUCCESS;
+}
+
+static void cec_init(void)
+{
+	int port = CEC_PORT;
+
+	cec_config[port].drv->init(port);
+
 	CPRINTS("CEC initialized");
 }
 DECLARE_HOOK(HOOK_INIT, cec_init, HOOK_PRIO_LAST);
 
-void cec_task(void *unused)
+static int bitbang_cec_get_received_message(int port, uint8_t **msg,
+					    uint8_t *len)
+{
+	*msg = cec_rx.transfer.buf;
+	*len = cec_rx.transfer.byte;
+
+	return EC_SUCCESS;
+}
+
+static void handle_received_message(void)
 {
 	int rv;
+	uint8_t *msg;
+	uint8_t msg_len;
+	int port = CEC_PORT;
+
+	if (cec_config[port].drv->get_received_message(port, &msg, &msg_len) !=
+	    EC_SUCCESS) {
+		cprints(CC_CEC, "CEC: failed to get received message");
+		return;
+	}
+
+	if (cec_process_offline_message(&cec_rx_queue, msg, msg_len) ==
+	    EC_SUCCESS) {
+		CPRINTS("Message consumed offline");
+		/* Continue to queue message and notify AP. */
+	}
+	rv = cec_rx_queue_push(&cec_rx_queue, msg, msg_len);
+	if (rv == EC_ERROR_OVERFLOW) {
+		/* Queue full, prefer the most recent msg */
+		cec_rx_queue_flush(&cec_rx_queue);
+		rv = cec_rx_queue_push(&cec_rx_queue, msg, msg_len);
+	}
+	if (rv == EC_SUCCESS)
+		mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
+}
+
+const struct cec_drv bitbang_cec_drv = {
+	.init = &bitbang_cec_init,
+	.get_enable = &bitbang_cec_get_enable,
+	.set_enable = &bitbang_cec_set_enable,
+	.get_logical_addr = &bitbang_cec_get_logical_addr,
+	.set_logical_addr = &bitbang_cec_set_logical_addr,
+	.send = &bitbang_cec_send,
+	.get_received_message = &bitbang_cec_get_received_message,
+};
+
+void cec_task(void *unused)
+{
 	uint32_t events;
 
 	CPRINTF("CEC task starting\n");
@@ -1021,24 +1122,7 @@ void cec_task(void *unused)
 	while (1) {
 		events = task_wait_event(-1);
 		if (events & CEC_TASK_EVENT_RECEIVED_DATA) {
-			if (cec_process_offline_message(
-				    &cec_rx_queue, cec_rx.transfer.buf,
-				    cec_rx.transfer.byte) == EC_SUCCESS) {
-				CPRINTS("Message consumed offline");
-				/* Continue to queue message and notify AP. */
-			}
-			rv = cec_rx_queue_push(&cec_rx_queue,
-					       cec_rx.transfer.buf,
-					       cec_rx.transfer.byte);
-			if (rv == EC_ERROR_OVERFLOW) {
-				/* Queue full, prefer the most recent msg */
-				cec_rx_queue_flush(&cec_rx_queue);
-				rv = cec_rx_queue_push(&cec_rx_queue,
-						       cec_rx.transfer.buf,
-						       cec_rx.transfer.byte);
-			}
-			if (rv == EC_SUCCESS)
-				mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
+			handle_received_message();
 		}
 		if (events & CEC_TASK_EVENT_OKAY) {
 			send_mkbp_event(EC_MKBP_CEC_SEND_OK);

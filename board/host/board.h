@@ -51,6 +51,8 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
+
 /* Fake test charge suppliers */
 enum {
 	CHARGE_SUPPLIER_TEST1,

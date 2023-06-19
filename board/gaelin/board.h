@@ -166,6 +166,8 @@ enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
 
 enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_A1, USBA_PORT_COUNT };
 
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
+
 extern void adp_connect_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */

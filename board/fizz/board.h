@@ -222,6 +222,8 @@ enum mft_channel {
 	MFT_CH_COUNT
 };
 
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
+
 enum OEM_ID {
 	OEM_KENCH = 0,
 	OEM_TEEMO = 1,

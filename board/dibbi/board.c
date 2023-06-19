@@ -160,6 +160,15 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+/* CEC ports */
+const struct cec_config_t cec_config[] = {
+	[CEC_PORT_0] = {
+		.drv = &bitbang_cec_drv,
+		.offline_policy = NULL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
+
 void board_init(void)
 {
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT);

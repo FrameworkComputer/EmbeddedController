@@ -190,6 +190,8 @@ enum monitor_port {
 
 enum monitor_state { MONITOR_OFF, MONITOR_ON };
 
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
+
 extern void adp_connect_interrupt(enum gpio_signal signal);
 extern void monitor_interrupt(enum gpio_signal signal);
 

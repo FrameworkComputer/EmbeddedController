@@ -168,6 +168,8 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

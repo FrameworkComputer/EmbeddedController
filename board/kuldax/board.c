@@ -94,9 +94,14 @@ struct cec_offline_policy kuldax_cec_policy[] = {
 	{ 0 },
 };
 
-__override const struct cec_config_t cec_config = {
-	.offline_policy = kuldax_cec_policy,
+/* CEC ports */
+const struct cec_config_t cec_config[] = {
+	[CEC_PORT_0] = {
+		.drv = &bitbang_cec_drv,
+		.offline_policy = kuldax_cec_policy,
+	},
 };
+BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
 
 int board_set_active_charge_port(int port)
 {

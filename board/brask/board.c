@@ -5,6 +5,7 @@
 #include "adc.h"
 #include "builtin/assert.h"
 #include "button.h"
+#include "cec.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
@@ -73,6 +74,15 @@ __override void board_pchg_power_on(int port, bool on)
 }
 
 /******************************************************************************/
+
+/* CEC ports */
+const struct cec_config_t cec_config[] = {
+	[CEC_PORT_0] = {
+		.drv = &bitbang_cec_drv,
+		.offline_policy = NULL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
 
 int board_set_active_charge_port(int port)
 {

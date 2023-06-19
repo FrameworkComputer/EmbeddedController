@@ -31,6 +31,34 @@
  */
 #define CEC_MAX_RESENDS 5
 
+/* All return EC_SUCCESS if successful, non-zero if error. */
+struct cec_drv {
+	/* Initialise the CEC port */
+	int (*init)(int port);
+
+	/*
+	 * Get/set enable state.
+	 * enable = 0 means disabled, enable = 1 means enabled.
+	 */
+	int (*get_enable)(int port, uint8_t *enable);
+	int (*set_enable)(int port, uint8_t enable);
+
+	/* Get/set the logical address */
+	int (*get_logical_addr)(int port, uint8_t *logical_addr);
+	int (*set_logical_addr)(int port, uint8_t logical_addr);
+
+	/* Send a CEC message */
+	int (*send)(int port, const uint8_t *msg, uint8_t len);
+
+	/*
+	 * Get the received message. This should be called after the driver sets
+	 * CEC_TASK_EVENT_RECEIVED_DATA to indicate data is ready.
+	 */
+	int (*get_received_message)(int port, uint8_t **msg, uint8_t *len);
+};
+
+extern const struct cec_drv bitbang_cec_drv;
+
 /* Edge to trigger capture timer interrupt on */
 enum cec_cap_edge {
 	CEC_CAP_EDGE_NONE,
@@ -95,6 +123,7 @@ struct cec_offline_policy {
  * CEC configuration.
  */
 struct cec_config_t {
+	const struct cec_drv *drv;
 	/*
 	 * Actions taken on message received when the system is off.
 	 * Last entry must be null terminated.
@@ -102,8 +131,8 @@ struct cec_config_t {
 	struct cec_offline_policy *offline_policy;
 };
 
-/* CEC config definition. Override it as needed. */
-__override_proto extern const struct cec_config_t cec_config;
+/* CEC config definition. */
+extern const struct cec_config_t cec_config[];
 
 /**
  * Default policy provided for convenience.
