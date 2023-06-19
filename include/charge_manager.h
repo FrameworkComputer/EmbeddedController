@@ -368,4 +368,9 @@ __override_proto int board_get_vbus_voltage(int port);
 
 int is_pd_port(int port);
 
+/**
+ * Board specific callback to modify the delay time of leaving safe mode
+ */
+__override_proto int board_get_leave_safe_mode_delay_ms(void);
+
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

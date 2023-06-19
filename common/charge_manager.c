@@ -1234,6 +1234,11 @@ void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 }
 
 #ifdef CONFIG_CHARGE_MANAGER_SAFE_MODE
+__overridable int board_get_leave_safe_mode_delay_ms(void)
+{
+	return 500;
+}
+
 void charge_manager_leave_safe_mode(void)
 {
 	if (left_safe_mode)
@@ -1253,7 +1258,7 @@ void charge_manager_leave_safe_mode(void)
 	 * CHARGE_PORT_NONE around init time and not cut off the
 	 * input FETs.
 	 */
-	msleep(500);
+	msleep(board_get_leave_safe_mode_delay_ms());
 	CPRINTS("%s()", __func__);
 	cflush();
 	left_safe_mode = 1;
