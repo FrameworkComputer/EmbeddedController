@@ -14,6 +14,23 @@
 #error "Buffer size must not exceed 255 since offsets are uint8_t"
 #endif
 
+/* Notification from interrupt to CEC task that data has been received */
+#define CEC_TASK_EVENT_RECEIVED_DATA TASK_EVENT_CUSTOM_BIT(0)
+#define CEC_TASK_EVENT_OKAY TASK_EVENT_CUSTOM_BIT(1)
+#define CEC_TASK_EVENT_FAILED TASK_EVENT_CUSTOM_BIT(2)
+
+/* CEC broadcast address. Also the highest possible CEC address */
+#define CEC_BROADCAST_ADDR 15
+
+/* Address to indicate that no logical address has been set */
+#define CEC_UNREGISTERED_ADDR 255
+
+/*
+ * The CEC specification requires at least one and a maximum of
+ * five resends attempts
+ */
+#define CEC_MAX_RESENDS 5
+
 /* Edge to trigger capture timer interrupt on */
 enum cec_cap_edge {
 	CEC_CAP_EDGE_NONE,
