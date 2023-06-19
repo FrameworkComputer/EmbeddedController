@@ -138,7 +138,6 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
 #include "usbc_config.h"
 
 enum battery_type { BATTERY_NVT_CP813907, BATTERY_TYPE_COUNT };

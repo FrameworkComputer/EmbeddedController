@@ -4,26 +4,13 @@
  */
 
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usb_pd_tcpm.h>
 
 / {
 	aliases {
 		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &gpio_ec_wp_odl;
 		int-wp = &int_wp_l;
-		/*
-		 * USB-C: interrupt input.
-		 * I2C pins are on i2c_ec_i2c_sub_usb_c1
-		 */
-		gpio-usb-c1-int-odl = &gpio_sb_1;
-		/*
-		 * USB-A: VBUS enable output
-		 * LTE: power enable output
-		 */
-		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		/*
-		 * Enable S5 rails for LTE sub-board
-		 */
-		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
 	ec-console {
@@ -52,6 +39,9 @@
 		};
 		smp_highpower_si03058xl {
 			compatible = "smp,highpower_si03058xl", "battery-smart";
+		};
+		smp_si03054xl {
+			compatible = "smp,si03054xl", "battery-smart";
 		};
 	};
 
@@ -87,7 +77,7 @@
 			handler = "usb_c0_interrupt";
 		};
 		int_usb_c1: usb_c1 {
-			irq-pin = <&gpio_sb_1>;
+			irq-pin = <&gpio_usb_c1_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_c1_interrupt";
 		};
@@ -114,15 +104,6 @@
 		 */
 		gpio_usb_c0_prot_fault_odl: usb_c0_prot_fault_odl {
 			gpios = <&gpiok 6 GPIO_INPUT_PULL_UP>;
-		};
-
-		gpio_sb_1: sb_1 {
-			gpios = <&gpioe 6 0>;
-			no-auto-init;
-		};
-		gpio_sb_2: sb_2 {
-			gpios = <&gpiof 0 0>;
-			no-auto-init;
 		};
 		gpio_fan_enable: fan-enable {
 			gpios = <&gpioa 1 GPIO_OUTPUT>;
@@ -180,15 +161,10 @@
 	usba {
 		compatible = "cros-ec,usba-port-enable-pins";
 		/*
-		 * sb_2 is only configured as GPIO when USB-A1 is present,
-		 * but it's still safe to control when disabled.
-		 *
 		 * ILIM_SEL pins are referred to by legacy enum name,
-		 * GPIO_USB*_ILIM_SEL. The one for port A1 is unused on
-		 * sub-boards that don't have USB-A so is safe to control
-		 * regardless of system configuration.
+		 * GPIO_USB*_ILIM_SEL.
 		 */
-		enable-pins = <&gpio_en_usb_a0_vbus &gpio_sb_2>;
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_en_usb_a1_vbus>;
 		status = "okay";
 	};
 
@@ -201,6 +177,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
+			tcpc = <&usbpd0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -216,6 +193,7 @@
 			reg = <1>;
 			bc12 = <&bc12_port1>;
 			chg = <&chg_port1>;
+			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1 &tcpci_mux_1>;
@@ -235,6 +213,24 @@
 			};
 		};
 	};
+};
+
+&binman {
+	ec-rw {
+		size = <0x50000>;
+		rw-fw {
+			rw-fwid {
+				/* Fix the lcoation of the FWID to the
+				 * last 32 bytes of the flash. This
+				 * ensures the RW entries in the FMAP
+				 * stored in the RO section of flash
+				 * are always correct.
+				 */
+				offset = <(0x50000 - 32)>;
+			};
+		};
+	};
+	pad-after = <0x50000>;
 };
 
 &thermistor_3V3_51K1_47K_4050B {
@@ -335,6 +331,12 @@
 		compatible = "siliconmitus,sm5803";
 		status = "okay";
 		reg = <0x32>;
+	};
+
+	tcpc_port1: ps8745@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
 	};
 };
 

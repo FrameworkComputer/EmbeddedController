@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <inttypes.h>
-#include <zephyr/ztest.h>
-
 #include "math.h"
 #include "math_util.h"
 
-ZTEST_USER(math, bitmask_uint64)
+#include <inttypes.h>
+
+#include <zephyr/ztest.h>
+
+ZTEST_USER(math, test_bitmask_uint64)
 {
 	zassert_equal(bitmask_uint64(-1), 0);
 	zassert_equal(bitmask_uint64(64), 0);

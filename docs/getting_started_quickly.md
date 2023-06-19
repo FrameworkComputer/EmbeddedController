@@ -24,12 +24,8 @@ inside the Chromium OS chroot:
 1.  Initialize the checkout in the current directory:
 
     ```bash
-    repo init -u https://chromium.googlesource.com/chromiumos/manifest -b stable
+    repo init -u https://chromium.googlesource.com/chromiumos/manifest
     ```
-
-    NOTE: The
-    [`-b stable` flag](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Sync-to-Green)
-    only works for Googlers. Remove it if you are developing externally.
 
 1.  Update the working tree to the latest version:
 
@@ -66,5 +62,5 @@ inside the Chromium OS chroot:
 1.  Now, EC images for any board can be built with:
 
     ```bash
-    cd ~/trunk/src/platform/ec; make BOARD=${BOARD} -j
+    cd ~/chromiumos/src/platform/ec; make BOARD=${BOARD} -j
     ```

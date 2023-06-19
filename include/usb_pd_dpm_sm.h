@@ -8,11 +8,25 @@
  * Refer to USB PD 3.0 spec, version 2.0, sections 8.2 and 8.3
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 16
+
 #ifndef __CROS_EC_USB_DPM_H
 #define __CROS_EC_USB_DPM_H
 
 #include "ec_commands.h"
 #include "usb_pd_tcpm.h"
+#include "usb_sm.h"
+
+/**
+ * Sets the debug level for the DPM layer
+ *
+ * @param level debug level
+ */
+void dpm_set_debug_level(enum debug_level level);
 
 /*
  * Initializes DPM state for a port.
@@ -74,13 +88,40 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
  * Informs the DPM that a VDM NAK was received. Also applies when a VDM request
  * received a Not Supported response or timed out waiting for a response.
  *
- * @param port    USB-C port number
- * @param type    Transmit type (SOP, SOP') for request
- * @param svid    The SVID of the request
- * @param vdm_cmd The VDM command of the request
+ * @param port		USB-C port number
+ * @param type		Transmit type (SOP, SOP') for request
+ * @param svid		The SVID of the request
+ * @param vdm_cmd	The VDM command of the request
+ * @param vdm_header    VDM header reply (0 if a NAK wasn't actually received)
  */
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		   uint8_t vdm_cmd);
+		   uint8_t vdm_cmd, uint32_t vdm_header);
+
+/*
+ * Clears the VDM request in progress bit for this port
+ *
+ * @param[in]  port		USB-C port number
+ */
+void dpm_clear_vdm_request(int port);
+
+/*
+ * Checks the VDM request in progress bit for this port
+ *
+ * @param[in]  port		USB-C port number
+ * @return			true if VDM REQ is set
+ */
+bool dpm_check_vdm_request(int port);
+
+/*
+ * Informs the DPM of a received Attention message.  Note: all Attention
+ * messages are assumed to be SOP since cables are disallowed from sending
+ * this type of VDM.
+ *
+ * @param[in] port		USB-C port number
+ * @param[in] vdo_objects	Number of objects filled in
+ * @param[in] buf		Buffer containing received VDM (header and VDO)
+ */
+void dpm_notify_attention(int port, size_t vdo_objects, uint32_t *buf);
 
 /*
  * Determines the current allocation for the connection, past the basic

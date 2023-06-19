@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "charge_manager.h"
 #include "chipset.h"
 #include "console.h"
@@ -12,6 +10,8 @@
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -85,7 +85,7 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 		return 0;
 
 	/*
-	 * Defer setting the usb_mux until HPD goes high, svdm_dp_attention().
+	 * Defer setting the DP mux until HPD goes high, svdm_dp_attention().
 	 * The AP only supports one DP phy. An external DP mux switches between
 	 * the two ports. Should switch those muxes when it is really used,
 	 * i.e. HPD high; otherwise, the real use case is preempted, like:
@@ -104,7 +104,35 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 
 __override void svdm_dp_post_config(int port)
 {
+	/*
+	 * Connect the SBU lines in PPC chip such that the AUX termination
+	 * can be passed through.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+		ppc_set_sbu(port, 1);
+
+	/*
+	 * Connect the USB SS/DP lines in TCPC chip.
+	 *
+	 * When mf_pref not true, still use the dock muxing
+	 * because of the board USB-C topology (limited to 2
+	 * lanes DP).
+	 */
+	usb_mux_set(port, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT,
+		    polarity_rm_dts(pd_get_polarity(port)));
+
 	dp_flags[port] |= DP_FLAGS_DP_ON;
+	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
+		return;
+
+	CPRINTS("C%d: Pending HPD. HPD->1", port);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_hot_plug_det_r), 1);
+
+	/* set the minimum time delay (2ms) for the next HPD IRQ */
+	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+
+	usb_mux_hpd_update(port,
+			   USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 /**
@@ -117,15 +145,14 @@ __override void svdm_dp_post_config(int port)
  */
 static int is_dp_muxable(int port)
 {
-	int i;
-
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
-		if (i != port) {
-			if (usb_mux_get(i) & USB_PD_MUX_DP_ENABLED)
-				return 0;
-		}
-
-	return 1;
+	/*
+	 * Check the DP port selection mux, positive either:
+	 *  - no port is muxed, OE_L deasserted, HIGH, or
+	 *  - already muxed to the same port.
+	 */
+	return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_oe_l)) ||
+	       (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_sel)) ==
+		port);
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
@@ -164,32 +191,10 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_sel),
 				port == 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_oe_l), 0);
-
-		/* Connect the SBU lines in PPC chip. */
-		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-			ppc_set_sbu(port, 1);
-
-		/*
-		 * Connect the USB SS/DP lines in TCPC chip.
-		 *
-		 * When mf_pref not true, still use the dock muxing
-		 * because of the board USB-C topology (limited to 2
-		 * lanes DP).
-		 */
-		usb_mux_set(port, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT,
-			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
 		/* Disconnect the DP port selection mux. */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_oe_l), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_sel), 0);
-
-		/* Disconnect the SBU lines in PPC chip. */
-		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-			ppc_set_sbu(port, 0);
-
-		/* Disconnect the DP but keep the USB SS lines in TCPC chip. */
-		usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
-			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) && (irq || lvl))
@@ -198,6 +203,13 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 * present.
 		 */
 		pd_notify_dp_alt_mode_entry(port);
+
+	/* Its initial DP status message prior to config */
+	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
+		if (lvl)
+			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
+		return 1;
+	}
 
 	/* Configure TCPC for the HPD event, for proper muxing */
 	mux_state = (lvl ? USB_PD_MUX_HPD_LVL : USB_PD_MUX_HPD_LVL_DEASSERTED) |
@@ -238,6 +250,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 __override void svdm_exit_dp_mode(int port)
 {
 	CPRINTS("%s(%d)", __func__, port);
+	dp_flags[port] = 0;
+	dp_status[port] = 0;
 	if (is_dp_muxable(port)) {
 		/* Disconnect the DP port selection mux. */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_oe_l), 1);

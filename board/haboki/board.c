@@ -9,16 +9,16 @@
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/sm5803.h"
-#include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -526,19 +526,17 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
 	/* Limit C1 on board version 0 to 2.0 A */
 	if ((board_version == 0) && (port == 1))
-		icl = MIN(icl, 2000);
+		charge_ma = MIN(charge_ma, 2000);
 	/*
 	 * TODO(b/151955431): Characterize the input current limit in case a
 	 * scaling needs to be applied here
 	 */
-	charge_set_input_current_limit(icl, charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 int board_set_active_charge_port(int port)

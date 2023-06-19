@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "motion_sense.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 static int original_sensor_0_s0_config_odr;
 

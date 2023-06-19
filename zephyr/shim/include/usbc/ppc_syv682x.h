@@ -11,9 +11,8 @@
 #define PPC_CHIP_SYV682X(id)                                              \
 	{                                                                 \
 		.i2c_port = I2C_PORT_BY_DEV(id),                          \
-		.i2c_addr_flags = DT_REG_ADDR(id),                        \
-		.drv = &syv682x_drv,                                      \
+		.i2c_addr_flags = DT_REG_ADDR(id), .drv = &syv682x_drv,   \
 		.frs_en = COND_CODE_1(                                    \
 			DT_NODE_HAS_PROP(id, frs_en_gpio),                \
 			(GPIO_SIGNAL(DT_PHANDLE(id, frs_en_gpio))), (0)), \
-	},
+	}

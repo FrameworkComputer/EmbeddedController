@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "test/drivers/test_state.h"
@@ -13,6 +10,9 @@
 #include "usb_pd.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_prl_sm.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 static void console_cmd_usb_pd_after(void *fixture)
 {
@@ -188,6 +188,10 @@ ZTEST_USER(console_cmd_usb_pd, test_bistsharemode)
 	rv = shell_execute_cmd(get_ec_shell(), "pd bistsharemode disable");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pd bistsharemode foo");
+	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",
+		      EC_ERROR_PARAM2, rv);
 }
 
 ZTEST_USER(console_cmd_usb_pd, test_hard)
@@ -264,6 +268,22 @@ ZTEST_USER(console_cmd_usb_pd, test_dualrole)
 	rv = shell_execute_cmd(get_ec_shell(), "pd 0 dualrole x");
 	zassert_equal(rv, EC_ERROR_PARAM4, "Expected %d, but got %d",
 		      EC_ERROR_PARAM4, rv);
+
+	pd_set_dual_role(0, PD_DRP_TOGGLE_OFF);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: off",
+			  EC_SUCCESS);
+
+	pd_set_dual_role(0, PD_DRP_FREEZE);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: freeze",
+			  EC_SUCCESS);
+
+	pd_set_dual_role(0, PD_DRP_FORCE_SINK);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: force sink",
+			  EC_SUCCESS);
+
+	pd_set_dual_role(0, PD_DRP_FORCE_SOURCE);
+	CHECK_CONSOLE_CMD("pd 0 dualrole", "dual-role toggling: force source",
+			  EC_SUCCESS);
 }
 
 ZTEST_USER(console_cmd_usb_pd, test_state)
@@ -291,6 +311,15 @@ ZTEST_USER(console_cmd_usb_pd, test_timer)
 	rv = shell_execute_cmd(get_ec_shell(), "pd 0 timer");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
+}
+
+ZTEST_USER(console_cmd_usb_pd, test_cc)
+{
+	char expected_output[10];
+
+	snprintf(expected_output, sizeof(expected_output), "C0 CC%d",
+		 pd_get_task_cc_state(0));
+	CHECK_CONSOLE_CMD("pd 0 cc", expected_output, EC_SUCCESS);
 }
 
 static void set_device_vdo(int port, enum tcpci_msg_type type)

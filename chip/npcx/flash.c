@@ -6,18 +6,18 @@
 /* Flash memory module for Chrome EC */
 
 #include "builtin/assert.h"
+#include "console.h"
 #include "flash.h"
 #include "host_command.h"
+#include "hwtimer_chip.h"
 #include "registers.h"
 #include "spi_flash_reg.h"
 #include "switch.h"
 #include "system.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "task.h"
 #include "watchdog.h"
-#include "console.h"
-#include "hwtimer_chip.h"
 
 static int all_protected; /* Has all-flash protection been requested? */
 static int addr_prot_start;

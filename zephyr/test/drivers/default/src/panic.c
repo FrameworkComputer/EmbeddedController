@@ -8,17 +8,16 @@
  * @brief Unit Tests for panic.
  */
 
-#include <zephyr/device.h>
-
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
 #include "ec_tasks.h"
 #include "panic.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/device.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
 
 struct panic_test_fixture {
 	struct panic_data saved_pdata;

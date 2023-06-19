@@ -7,15 +7,19 @@
 #include "console.h"
 #include "cpu.h"
 #include "host_command.h"
-#include "panic.h"
 #include "panic-internal.h"
+#include "panic.h"
 #include "printf.h"
 #include "system.h"
+#include "system_safe_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
 #include "watchdog.h"
+
+#define BASE_EXCEPTION_FRAME_SIZE_BYTES (8 * sizeof(uint32_t))
+#define FPU_EXCEPTION_FRAME_SIZE_BYTES (18 * sizeof(uint32_t))
 
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
@@ -72,6 +76,53 @@ static void print_reg(int regnum, const uint32_t *regs, int index)
 static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
 {
 	return (exc_return & 0xf) == 1 || (exc_return & 0xf) == 9;
+}
+
+/*
+ * Returns the size of the exception frame.
+ *
+ * See B1.5.7 "Stack alignment on exception entry" of ARM DDI 0403D for details.
+ * In short, the exception frame size can be either 0x20, 0x24, 0x68, or 0x6c
+ * depending on FPU context and padding for 8-byte alignment.
+ */
+static uint32_t get_exception_frame_size(const struct panic_data *pdata)
+{
+	uint32_t frame_size = 0;
+
+	/* base exception frame */
+	frame_size += BASE_EXCEPTION_FRAME_SIZE_BYTES;
+
+	/* CPU uses xPSR[9] to indicate whether it padded the stack for
+	 * alignment or not.
+	 */
+	if (pdata->cm.frame[CORTEX_PANIC_FRAME_REGISTER_PSR] & BIT(9))
+		frame_size += sizeof(uint32_t);
+
+#ifdef CONFIG_FPU
+	/* CPU uses EXC_RETURN[4] to indicate whether it stored extended
+	 * frame for FPU or not.
+	 */
+	if (!(pdata->cm.regs[CORTEX_PANIC_REGISTER_LR] & BIT(4)))
+		frame_size += FPU_EXCEPTION_FRAME_SIZE_BYTES;
+#endif
+
+	return frame_size;
+}
+
+/*
+ * Returns the position of the process stack before the exception frame.
+ * It computes the size of the exception frame and adds it to psp.
+ * If the exception happened in the exception context, it returns psp as is.
+ */
+uint32_t get_panic_stack_pointer(const struct panic_data *pdata)
+{
+	uint32_t psp = pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
+
+	if (!is_frame_in_handler_stack(
+		    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]))
+		psp += get_exception_frame_size(pdata);
+
+	return psp;
 }
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
@@ -164,51 +215,6 @@ static void show_fault(uint32_t cfsr, uint32_t hfsr, uint32_t dfsr)
 }
 
 /*
- * Returns the size of the exception frame.
- *
- * See B1.5.7 "Stack alignment on exception entry" of ARM DDI 0403D for details.
- * In short, the exception frame size can be either 0x20, 0x24, 0x68, or 0x6c
- * depending on FPU context and padding for 8-byte alignment.
- */
-static uint32_t get_exception_frame_size(const struct panic_data *pdata)
-{
-	uint32_t frame_size = 0;
-
-	/* base exception frame */
-	frame_size += 8 * sizeof(uint32_t);
-
-	/* CPU uses xPSR[9] to indicate whether it padded the stack for
-	 * alignment or not. */
-	if (pdata->cm.frame[CORTEX_PANIC_FRAME_REGISTER_PSR] & BIT(9))
-		frame_size += sizeof(uint32_t);
-
-#ifdef CONFIG_FPU
-	/* CPU uses EXC_RETURN[4] to indicate whether it stored extended
-	 * frame for FPU or not. */
-	if (!(pdata->cm.regs[CORTEX_PANIC_REGISTER_LR] & BIT(4)))
-		frame_size += 18 * sizeof(uint32_t);
-#endif
-
-	return frame_size;
-}
-
-/*
- * Returns the position of the process stack before the exception frame.
- * It computes the size of the exception frame and adds it to psp.
- * If the exception happened in the exception context, it returns psp as is.
- */
-static uint32_t get_process_stack_position(const struct panic_data *pdata)
-{
-	uint32_t psp = pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
-
-	if (!is_frame_in_handler_stack(
-		    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]))
-		psp += get_exception_frame_size(pdata);
-
-	return psp;
-}
-
-/*
  * Show extra information that might be useful to understand a panic()
  *
  * We show fault register information, including the fault address registers
@@ -234,7 +240,7 @@ static void panic_show_process_stack(const struct panic_data *pdata)
 {
 	panic_printf("\n=========== Process Stack Contents ===========");
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID) {
-		uint32_t psp = get_process_stack_position(pdata);
+		uint32_t psp = get_panic_stack_pointer(pdata);
 		int i;
 		for (i = 0; i < 16; i++) {
 			if (psp + sizeof(uint32_t) >
@@ -287,6 +293,16 @@ void panic_data_print(const struct panic_data *pdata)
 #endif
 }
 
+/* This is just a placeholder function for returning from exception.
+ * It's not expected to actually be executed.
+ */
+static void exception_return_placeholder(void)
+{
+	panic_printf("Unexpected return from exception\n");
+	panic_reboot();
+	__builtin_unreachable();
+}
+
 void __keep report_panic(void)
 {
 	/*
@@ -310,7 +326,8 @@ void __keep report_panic(void)
 		     pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
 	/* If stack is valid, copy exception frame to pdata */
 	if ((sp & 3) == 0 && sp >= CONFIG_RAM_BASE &&
-	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE - 8 * sizeof(uint32_t)) {
+	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE -
+			    BASE_EXCEPTION_FRAME_SIZE_BYTES) {
 		const uint32_t *sregs = (const uint32_t *)sp;
 		int i;
 
@@ -352,6 +369,31 @@ void __keep report_panic(void)
 	/* Make sure that all changes are saved into RAM */
 	if (IS_ENABLED(CONFIG_ARMV7M_CACHE))
 		cpu_clean_invalidate_dcache();
+
+	/* Start safe mode if possible */
+	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
+		/* TODO: check for nested exceptions */
+		if (start_system_safe_mode() == EC_SUCCESS) {
+			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
+			/* If not in an interrupt context (e.g. software_panic),
+			 * the next highest priority task will immediately
+			 * execute when the current task is disabled on the
+			 * following line.
+			 */
+			task_disable_task(task_get_current());
+			/* Return from exception on process stack.
+			 * We should not actually land in
+			 * exception_return_placeholder function. Instead the
+			 * scheduler should interrupt and schedule
+			 * a different task since the current task has
+			 * been disabled.
+			 */
+			cpu_return_from_exception_psp(
+				exception_return_placeholder);
+			__builtin_unreachable();
+		}
+		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;
+	}
 
 	panic_reboot();
 }
@@ -471,10 +513,16 @@ void bus_fault_handler(void)
 
 void ignore_bus_fault(int ignored)
 {
-	if (IS_ENABLED(CHIP_FAMILY_STM32H7)) {
-		if (ignored == 0)
-			asm volatile("dsb; isb");
-	}
+	/*
+	 * According to
+	 * https://developer.arm.com/documentation/ddi0403/d/System-Level-Architecture/System-Level-Programmers--Model/Overview-of-system-level-terminology-and-operation/Exceptions?lang=en,
+	 * the Imprecise BusFault is an asynchronous fault in ARMv7-M.
+	 *
+	 * Before re-enabling the bus fault, we use a barrier to make sure that
+	 * the fault has been processed.
+	 */
+	if (ignored == 0)
+		asm volatile("dsb; isb");
 
 	/*
 	 * Flash code might call this before cpu_init(),

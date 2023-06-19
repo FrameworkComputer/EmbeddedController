@@ -13,11 +13,11 @@
 		compatible = "named-gpios";
 
 		gpio_usb_c0_pd_int_odl: usb_c0_pd_int_odl {
-			gpios = <&gpioe 0 GPIO_INPUT>;
+			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PD_INT_ODL";
 		};
 		gpio_usb_c1_pd_int_odl: usb_c1_pd_int_odl {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PD_INT_ODL";
 		};
 		gpio_usb_c0_swctl_int_odl: usb_c0_swctl_int_odl {
@@ -123,16 +123,17 @@
 			enum-name = "GPIO_SWITCHCAP_ON";
 		};
 		gpio_en_pp5000_s5: en_pp5000_s5 {
-			gpios = <&gpio7 3 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio7 3 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP5000";
 		};
 		ec_bl_disable_l {
 			/* The PMIC controls backlight enable and this pin must
-			 * be HiZ for normal operation. But the backlight can
-			 * be enabled by setting this pin low and configuring it
-			 * as an output.
+			 * be HiZ for normal operation. The EC is allowed to
+			 * drive low to abruptly removes power from the eDP
+			 * panel in cases like lid close. So the signal is open
+			 * drain (allowed to drive low, never drive high).
 			 */
-			gpios = <&gpiob 6 GPIO_INPUT>;
+			gpios = <&gpiob 6 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		lid_accel_int_l {
@@ -142,10 +143,10 @@
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_c0_pd_rst_l: usb_c0_pd_rst_l {
-			gpios = <&gpiof 1 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpiof 1 (GPIO_OUTPUT_HIGH | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c1_pd_rst_l: usb_c1_pd_rst_l {
-			gpios = <&gpioe 4 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpioe 4 (GPIO_OUTPUT_HIGH | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_dp_mux_oe_l: dp_mux_oe_l {
 			gpios = <&gpiob 1 GPIO_ODR_HIGH>;
@@ -165,19 +166,15 @@
 			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
 		gpio_ec_chg_led_y_c0: ec_chg_led_y_c0 {
-			#led-pin-cells = <1>;
 			gpios = <&gpio6 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_w_c0: ec_chg_led_w_c0 {
-			#led-pin-cells = <1>;
 			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_w_c1: ec_chg_led_w_c1 {
-			#led-pin-cells = <1>;
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_r_c0: ec_chg_led_r_c0 {
-			#led-pin-cells = <1>;
 			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 		};
 		ap_ec_spi_mosi {
@@ -264,7 +261,6 @@
 			<&gpiod 7 0>,
 			<&gpio8 6 0>,
 			<&gpiod 4 0>,
-			<&gpio4 1 0>,
 			<&gpio3 4 0>,
 			<&gpioc 7 0>,
 			<&gpioa 4 0>,

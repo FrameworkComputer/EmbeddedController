@@ -46,7 +46,7 @@
  * whether we're coming from a dead battery state.
  */
 #define NCT38XX_ROLE_CTRL_DEAD_BATTERY 0x0A
-#define NCT39XX_ROLE_CTRL_GOOD_BATTERY 0x4A
+#define NCT38XX_ROLE_CTRL_GOOD_BATTERY 0x4A
 
 #define NCT38XX_REG_GPIO_DATA_IN(n) (0xC0 + ((n)*8))
 #define NCT38XX_REG_GPIO_DATA_OUT(n) (0xC1 + ((n)*8))

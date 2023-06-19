@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-
 #include "clock.h"
 #include "common.h"
 #include "ec_commands.h"
@@ -23,12 +21,15 @@
 #include "timer.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
-#include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usart_tx_dma.h"
 #include "usb_api.h"
 #include "usb_descriptor.h"
 #include "util.h"
 
+#include <stdbool.h>
+
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #ifdef SECTION_IS_RW

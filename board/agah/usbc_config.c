@@ -3,12 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "cbi.h"
-#include "charger.h"
 #include "charge_ramp.h"
+#include "charger.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -26,12 +23,15 @@
 #include "task.h"
 #include "task_id.h"
 #include "timer.h"
-#include "usbc_config.h"
-#include "usbc_ppc.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_config.h"
+#include "usbc_ppc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -149,7 +149,7 @@ const static struct usb_mux_chain usbc2_ps8818 = {
 		&(const struct usb_mux){
 			.usb_port = USBC_PORT_C2,
 			.i2c_port = I2C_PORT_USB_C2_TCPC,
-			.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+			.i2c_addr_flags = PS8818_I2C_ADDR0_FLAGS,
 			.driver = &ps8818_usb_retimer_driver,
 			.board_set = &board_ps8818_mux_set,
 		},

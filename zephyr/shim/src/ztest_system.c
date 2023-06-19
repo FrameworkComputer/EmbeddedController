@@ -12,7 +12,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-char mock_jump_data[sizeof(struct jump_data) + 256];
+char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 
 /* When CONFIG_RAM_SIZE is defined, this is provided by common/system.c */
 #ifndef CONFIG_RAM_SIZE

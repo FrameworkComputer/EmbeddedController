@@ -7,6 +7,7 @@ zephyr_library_sources(crc.c)
 zephyr_library_sources(gpio.c)
 zephyr_library_sources(gpio_int.c)
 
+add_subdirectory("buttons")
 add_subdirectory("cbi")
 add_subdirectory("led_driver")
 
@@ -18,11 +19,13 @@ endif()
 
 zephyr_library_sources_ifdef(no_libgcc                  libgcc_${ARCH}.S)
 
-zephyr_library_sources_ifdef(CONFIG_ADC                     adc.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_ANX7452 anx7452_usb_mux.c)
+zephyr_library_sources_ifdef(CONFIG_NAMED_ADC_CHANNELS      adc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                             battery.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_RT9490
-                                                            bc12_rt9490.c)
+                                                            bc12_rt9490.c
+                                                            chg_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER     charger.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ               chipset_api.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
@@ -38,11 +41,12 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_CROS_DRV
                                                             ioex.c
                                                             ioex_drv.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_KB8010 kb8010_usb_mux.c)
 if (NOT DEFINED CONFIG_PLATFORM_EC_KEYBOARD_DISCRETE)
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
                                                             keyboard_raw.c)
 endif()
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyscan.c)
+zephyr_library_sources_ifdef(CONFIG_CROS_EC_KEYSCAN         keyscan.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER
                              log_backend_console_buffer.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT  mkbp_event.c)
@@ -53,26 +57,28 @@ zephyr_library_sources_ifdef(CONFIG_CROS_EC_POWER_SIGNAL_LIST
 							    power.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PWM_HC      pwm_hc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_PWM     pwm_led.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RANDOM      random.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RTC         rtc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_GPIO
-															switchcap_gpio.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_LN9310
-															switchcap_ln9310.c)
+							    switchcap_gpio.c)
+zephyr_library_sources_ifdef(CONFIG_CROS_EC_SWITCHCAP_LN9310
+							    switchcap_ln9310.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR temp_sensors.c
                                                             thermal.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TIMER       hwtimer.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C         i2c.c)
 zephyr_library_sources_ifdef(CONFIG_SHIMMED_TASKS           tasks.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_WATCHDOG    watchdog.c)
-zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER
+zephyr_library_sources_ifdef(CONFIG_WATCHDOG                watchdog.c)
+if (DEFINED CONFIG_PLATFORM_EC_USB_CHARGER)
+  zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER
                                                             bc12.c)
+endif()
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_PI3USB9201
 	                                                     bc12_pi3usb9201.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC    ppc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_NCT38XX
                                                             tcpc_nct38xx.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_TCPCI
-                                                            tcpc.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC        tcpc.c)
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBA        usba.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ power_host_sleep_api.c)
@@ -81,3 +87,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
                                                             bb_retimer_usb_mux.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_HB
                                                             bb_retimer_usb_mux.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE system_safe_mode.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_HW_ZEPHYR
+	                                                    sha256_hw.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP
+	                                                    register_memory_dump.c)

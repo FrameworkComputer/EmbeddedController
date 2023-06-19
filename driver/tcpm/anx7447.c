@@ -5,9 +5,9 @@
 
 /* ANX7447 port manager */
 
+#include "anx7447.h"
 #include "builtin/assert.h"
 #include "common.h"
-#include "anx7447.h"
 #include "console.h"
 #include "hooks.h"
 #include "tcpm/tcpci.h"
@@ -403,71 +403,6 @@ static int anx7447_release(int port)
 	return EC_SUCCESS;
 }
 
-static int anx7447_get_vbus_voltage(int port, int *vbus)
-{
-	int val;
-	int error;
-
-	/*
-	 * b:214893572#comment33: This function is partially copied from
-	 * tcpci_get_vbus_voltage because ANX7447 dev_cap_1 reports VBUS_MEASURE
-	 * unsupported, however, it actually does. So we have an identical
-	 * implementation but just skip the dev_cap_1 check.
-	 */
-
-	error = tcpc_read16(port, TCPC_REG_VBUS_VOLTAGE, &val);
-	if (error)
-		return error;
-
-	*vbus = TCPC_REG_VBUS_VOLTAGE_VBUS(val);
-	return EC_SUCCESS;
-}
-
-#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-/*
- * This interface are workable while ADC is enabled, before
- * calling them should make sure ec driver finished chip initialization.
- */
-static bool is_equal_greater_safe0v(int port)
-{
-	int vbus;
-	int error;
-
-	error = anx7447_get_vbus_voltage(port, &vbus);
-	if (error)
-		return true;
-
-	if (vbus > VSAFE0V_MAX)
-		return true;
-
-	return false;
-}
-
-int anx7447_set_power_supply_ready(int port)
-{
-	int count = 0;
-
-	while (is_equal_greater_safe0v(port)) {
-		if (count >= 10)
-			break;
-		msleep(100);
-		count++;
-	}
-
-	return tcpc_write(port, TCPC_REG_COMMAND, 0x77);
-}
-#endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC */
-
-int anx7447_power_supply_reset(int port)
-{
-	return tcpc_write(port, TCPC_REG_COMMAND, 0x66);
-}
-
-int anx7447_board_charging_enable(int port, int enable)
-{
-	return tcpc_write(port, TCPC_REG_COMMAND, enable ? 0x55 : 0x44);
-}
-
 static void anx7447_vendor_defined_alert(int port)
 {
 	int alert;
@@ -729,7 +664,7 @@ static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 	*ack_required = false;
 
 	/* This driver treats safe mode as none */
-	if (mux_state == USB_PD_MUX_SAFE_MODE)
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
 		mux_state = USB_PD_MUX_NONE;
 
 	cc_direction = mux_state & USB_PD_MUX_POLARITY_INVERTED;
@@ -1035,7 +970,11 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.get_vbus_voltage = &anx7447_get_vbus_voltage,
+	/*
+	 * b:214893572#comment33: ANX7447 dev_cap_1 reports VBUS_MEASURE
+	 * unsupported, however, it actually does.
+	 */
+	.get_vbus_voltage = &tcpci_get_vbus_voltage_no_check,
 	.select_rp_value = &tcpci_tcpm_select_rp_value,
 	.set_cc = &anx7447_set_cc,
 	.set_polarity = &anx7447_set_polarity,
@@ -1057,6 +996,8 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.get_chip_info = &anx7447_get_chip_info,
 	.set_snk_ctrl = &tcpci_tcpm_set_snk_ctrl,
 	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
+	.get_snk_ctrl = &tcpci_tcpm_get_snk_ctrl,
+	.get_src_ctrl = &tcpci_tcpm_get_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &anx7447_tcpc_enter_low_power_mode,
 #endif

@@ -70,7 +70,7 @@ static void nautilus_led_set_power_battery(void)
 {
 	static unsigned int power_ticks;
 	enum led_color cur_led_color = LED_RED;
-	enum charge_state chg_state = charge_get_state();
+	enum led_pwr_state chg_state = led_pwr_get_state();
 	int charge_percent = charge_get_percent();
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
@@ -89,27 +89,27 @@ static void nautilus_led_set_power_battery(void)
 
 	/* CHIPSET_STATE_OFF */
 	switch (chg_state) {
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
-		    charge_percent >= BATTERY_LEVEL_NEAR_FULL)
+		    charge_percent >= CONFIG_BATT_HOST_FULL_FACTOR)
 			cur_led_color = LED_GREEN;
 		else
 			cur_led_color = LED_OFF;
 		break;
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE:
 		cur_led_color = LED_RED;
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		cur_led_color =
 			((power_ticks++ % LED_TOTAL_TICKS) < LED_ON_TICKS) ?
 				LED_RED :
 				LED_GREEN;
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
-	case PWR_STATE_IDLE:
+	case LED_PWRS_CHARGE_NEAR_FULL:
+	case LED_PWRS_IDLE:
 		cur_led_color = LED_OFF;
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		cur_led_color = LED_GREEN;
 		break;
 	default:
@@ -119,7 +119,7 @@ static void nautilus_led_set_power_battery(void)
 
 	set_color(cur_led_color);
 
-	if (chg_state != PWR_STATE_ERROR)
+	if (chg_state != LED_PWRS_ERROR)
 		power_ticks = 0;
 }
 

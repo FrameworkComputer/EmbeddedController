@@ -2,7 +2,7 @@ description: Analogix ANX7447 USBC TCPC binding
 
 compatible: "analogix,anx7447-tcpc"
 
-include: i2c-device.yaml
+include: ["i2c-device.yaml", "cros-ec,tcpci.yaml"]
 
 properties:
   tcpc-flags:
@@ -10,3 +10,13 @@ properties:
     default: 0
     description: |
       TCPC configuration flags
+  irq-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      Interrupt from TCPC
+  rst-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      TCPC reset line

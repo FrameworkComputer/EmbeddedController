@@ -21,8 +21,8 @@
 #include "sha256.h"
 #include "system.h"
 #include "task.h"
-#include "usb_pd.h"
 #include "uart.h"
+#include "usb_pd.h"
 #include "vboot.h"
 #include "vboot_hash.h"
 

@@ -8,10 +8,10 @@
 #ifndef __CROS_EC_USB_PD_TIMER_H
 #define __CROS_EC_USB_PD_TIMER_H
 
-#include <stdbool.h>
-
 #include "atomic.h"
 #include "atomic_bit.h"
+
+#include <stdbool.h>
 
 /*
  * List of all timers that will be managed by usb_pd_timer
@@ -111,6 +111,14 @@ enum pd_task_timer {
 	 * of PD_T_SENDER_RESPONSE.
 	 */
 	PE_TIMER_SENDER_RESPONSE,
+
+	/*
+	 *  6.6.21 EPR Timers of PD R3.1 V1.6
+	 *  This timer is used to ensure the EPR Mode entry process completes
+	 *  within PD_T_ENTER_EPR.
+	 */
+	PE_TIMER_SINK_EPR_ENTER,
+	PE_TIMER_SINK_EPR_KEEP_ALIVE,
 
 	/*
 	 * This timer is used to ensure that the time before the next Sink

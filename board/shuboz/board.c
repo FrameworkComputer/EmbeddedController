@@ -7,11 +7,11 @@
 #include "button.h"
 #include "cbi_ssfc.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
@@ -45,6 +45,7 @@
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Motion sensors */

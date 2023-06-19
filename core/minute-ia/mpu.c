@@ -5,8 +5,8 @@
 
 /* MPU module for ISH */
 
-#include "mpu.h"
 #include "console.h"
+#include "mpu.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"

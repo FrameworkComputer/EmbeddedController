@@ -17,6 +17,7 @@
 #include <zephyr_adc.h>
 #endif /* CONFIG_ZEPHYR */
 
+#ifdef CONFIG_ADC
 /*
  * Boards must provide this list of ADC channel definitions.  This must match
  * the enum adc_channel list provided by the board.
@@ -26,6 +27,7 @@ extern const struct adc_t adc_channels[];
 #else
 extern struct adc_t adc_channels[];
 #endif
+#endif /* CONFIG_ADC */
 
 /**
  * ADC initial.

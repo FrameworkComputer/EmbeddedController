@@ -3,15 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/init.h>
-#include <zephyr/sys/atomic.h>
-#include <zephyr/shell/shell.h>
-
 #include "common.h"
+#include "ec_tasks.h"
 #include "host_command.h"
-#include "timer.h"
 #include "task.h"
+#include "timer.h"
+#include "zephyr_console_shim.h"
+
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/sys/atomic.h>
 
 /* Ensure that the idle task is at lower priority than lowest priority task. */
 BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,
@@ -78,25 +80,121 @@ static struct task_ctx_base_data *task_get_base_data(task_id_t cros_task_id)
 	return &shimmed_tasks_data[cros_task_id];
 }
 
-task_id_t task_get_current(void)
+test_export_static k_tid_t get_idle_thread(void)
 {
-	if (in_deferred_context()) {
+	extern struct k_thread z_idle_threads[];
+
+	if (!IS_ENABLED(CONFIG_SMP)) {
+		return &z_idle_threads[0];
+	}
+	__ASSERT(false, "%s does not support SMP", __func__);
+	return NULL;
+}
+
+test_export_static k_tid_t get_sysworkq_thread(void)
+{
+	return &k_sys_work_q.thread;
+}
+
+k_tid_t get_main_thread(void)
+{
+	/* Pointer to the main thread, defined in kernel/init.c */
+	extern struct k_thread z_main_thread;
+
+	return &z_main_thread;
+}
+
+test_mockable k_tid_t get_hostcmd_thread(void)
+{
+#ifdef HAS_TASK_HOSTCMD
+	if (IS_ENABLED(CONFIG_TASK_HOSTCMD_THREAD_MAIN)) {
+		return get_main_thread();
+	}
+	return task_to_k_tid[TASK_ID_HOSTCMD];
+#endif /* HAS_TASK_HOSTCMD */
+	__ASSERT(false, "HOSTCMD task is not enabled");
+	return NULL;
+}
+
+k_tid_t task_id_to_thread_id(task_id_t task_id)
+{
+	if (task_id < 0) {
+		__ASSERT(false, "Invalid task id %d", task_id);
+		return NULL;
+	}
+	if (task_id < TASK_ID_COUNT) {
+		return task_to_k_tid[task_id];
+	}
+	if (task_id < TASK_ID_COUNT + EXTRA_TASK_COUNT) {
+		switch (task_id) {
+		case TASK_ID_SYSWORKQ:
+			return get_sysworkq_thread();
+
+#ifdef HAS_TASK_HOSTCMD
+		case TASK_ID_HOSTCMD:
+			return get_hostcmd_thread();
+#endif /* HAS_TASK_HOSTCMD */
+
+#ifdef HAS_TASK_MAIN
+		case TASK_ID_MAIN:
+			return get_main_thread();
+#endif /* HAS_TASK_MAIN */
+
+		case TASK_ID_IDLE:
+			return get_idle_thread();
+
+		case TASK_ID_SHELL:
+			return get_shell_thread();
+		}
+	}
+	__ASSERT(false, "Failed to map task %d to thread", task_id);
+	return NULL;
+}
+
+task_id_t thread_id_to_task_id(k_tid_t thread_id)
+{
+	if (thread_id == NULL) {
+		__ASSERT(false, "Invalid thread_id");
+		return TASK_ID_INVALID;
+	}
+
+	if (get_sysworkq_thread() == thread_id) {
 		return TASK_ID_SYSWORKQ;
 	}
 
-#ifdef CONFIG_TASK_HOSTCMD_THREAD_MAIN
-	if (in_host_command_main()) {
+#ifdef HAS_TASK_HOSTCMD
+	if (get_hostcmd_thread() == thread_id) {
 		return TASK_ID_HOSTCMD;
 	}
-#endif
+#endif /* HAS_TASK_HOSTCMD */
 
-	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
-		if (task_to_k_tid[i] == k_current_get())
-			return i;
+#ifdef HAS_TASK_MAIN
+	if (get_main_thread() == thread_id) {
+		return TASK_ID_MAIN;
+	}
+#endif /* HAS_TASK_MAIN */
+
+	if (get_idle_thread() == thread_id) {
+		return TASK_ID_IDLE;
 	}
 
-	__ASSERT(false, "Task index out of bound");
-	return 0;
+	if (get_shell_thread() == thread_id) {
+		return TASK_ID_SHELL;
+	}
+
+	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
+		if (task_to_k_tid[i] == thread_id) {
+			return i;
+		}
+	}
+
+	__ASSERT(false, "Failed to map thread to task");
+	return TASK_ID_INVALID;
+}
+
+task_id_t task_get_current(void)
+{
+	return thread_id_to_task_id(k_current_get());
 }
 
 atomic_t *task_get_event_bitmap(task_id_t cros_task_id)
@@ -295,10 +393,8 @@ void start_ec_tasks(void)
  * This allows us to set events on tasks before they even start, e.g. in
  * INIT_HOOKS.
  */
-int init_signals(const struct device *unused)
+int init_signals(void)
 {
-	ARG_UNUSED(unused);
-
 	for (size_t i = 0; i < TASK_ID_COUNT + EXTRA_TASK_COUNT; ++i) {
 		struct task_ctx_base_data *const data = task_get_base_data(i);
 
@@ -349,5 +445,5 @@ inline bool in_deferred_context(void)
 	/*
 	 * Deferred calls run in the sysworkq.
 	 */
-	return (k_current_get() == &k_sys_work_q.thread);
+	return (k_current_get() == get_sysworkq_thread());
 }

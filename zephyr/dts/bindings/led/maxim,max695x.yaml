@@ -1,0 +1,18 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+    MAX6958/MAX6959 7-Segment LED Display
+
+    Example configuration
+
+    max695x@38 {
+            compatible = "maxim,max695x";
+            reg = <0x38>;
+    };
+
+
+compatible: "maxim,max695x"
+
+include: i2c-device.yaml

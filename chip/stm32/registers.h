@@ -113,28 +113,28 @@
 #define STM32_TIM32_CCR4(n) STM32_TIM_REG32(n, 0x40)
 /* Timer registers as struct */
 struct timer_ctlr {
-	unsigned cr1;
-	unsigned cr2;
-	unsigned smcr;
-	unsigned dier;
+	unsigned int cr1;
+	unsigned int cr2;
+	unsigned int smcr;
+	unsigned int dier;
 
-	unsigned sr;
-	unsigned egr;
-	unsigned ccmr1;
-	unsigned ccmr2;
+	unsigned int sr;
+	unsigned int egr;
+	unsigned int ccmr1;
+	unsigned int ccmr2;
 
-	unsigned ccer;
-	unsigned cnt;
-	unsigned psc;
-	unsigned arr;
+	unsigned int ccer;
+	unsigned int cnt;
+	unsigned int psc;
+	unsigned int arr;
 
-	unsigned ccr[5]; /* ccr[0] = reserved30 */
+	unsigned int ccr[5]; /* ccr[0] = reserved30 */
 
-	unsigned bdtr;
-	unsigned dcr;
-	unsigned dmar;
+	unsigned int bdtr;
+	unsigned int dcr;
+	unsigned int dmar;
 
-	unsigned option_register;
+	unsigned int option_register;
 };
 /* Must be volatile, or compiler optimizes out repeated accesses */
 typedef volatile struct timer_ctlr timer_ctlr_t;
@@ -190,8 +190,16 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_I2C3_PORT 2
 #define STM32_FMPI2C4_PORT 3
 
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
+#define stm32_i2c_reg(port, offset)                                        \
+	((uint16_t *)(((port) == 3 ? STM32_I2C4_BASE :                     \
+				     (STM32_I2C1_BASE + ((port)*0x400))) + \
+		      (offset)))
+#else
 #define stm32_i2c_reg(port, offset) \
 	((uint16_t *)((STM32_I2C1_BASE + ((port)*0x400)) + (offset)))
+#endif
+
 /* --- Power / Reset / Clocks --- */
 #define STM32_PWR_CR REG32(STM32_PWR_BASE + 0x00)
 #define STM32_PWR_CR_LPSDSR (1 << 0)

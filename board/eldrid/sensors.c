@@ -4,18 +4,18 @@
  */
 
 /* Volteer family-specific sensor configuration */
-#include "common.h"
 #include "accelgyro.h"
+#include "common.h"
 #include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/sync.h"
-#include "keyboard_scan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "task.h"
+#include "keyboard_scan.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "util.h"
 
 /******************************************************************************/

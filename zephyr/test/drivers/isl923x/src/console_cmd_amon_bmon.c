@@ -3,11 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/adc.h>
-#include <zephyr/drivers/adc/adc_emul.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "adc.h"
 #include "console.h"
 #include "driver/charger/isl923x.h"
@@ -18,6 +13,11 @@
 #include "test/drivers/charger_utils.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/adc/adc_emul.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 #define CHARGER_NUM get_charger_num(&isl923x_drv)

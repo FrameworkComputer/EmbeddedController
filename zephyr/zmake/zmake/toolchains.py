@@ -1,6 +1,7 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Definitions of toolchain variables."""
 
 import os
@@ -46,19 +47,29 @@ class GenericToolchain:
 class CorebootSdkToolchain(GenericToolchain):
     """Coreboot SDK toolchain installed in default location."""
 
+    @staticmethod
+    def _find_coreboot_sdk():
+        """Find coreboot-sdk, if available.
+
+        Returns:
+            The path to coreboot-sdk, or None if unavailable.
+        """
+        path = pathlib.Path(
+            os.environ.get("COREBOOT_SDK_ROOT", "/opt/coreboot-sdk")
+        ).resolve()
+        if path.is_dir():
+            return path
+        return None
+
     def probe(self):
-        # For now, we always assume it's at /opt/coreboot-sdk, since
-        # that's where it's installed in the chroot.  We may want to
-        # consider adding support for a coreboot-sdk built in the
-        # user's home directory, for example, which happens if a
-        # "make crossgcc" is done from the coreboot repository.
-        return pathlib.Path("/opt/coreboot-sdk").is_dir()
+        return bool(self._find_coreboot_sdk())
 
     def get_build_config(self):
         return (
             build_config.BuildConfig(
                 cmake_defs={
                     "TOOLCHAIN_ROOT": str(self.modules["ec"] / "zephyr"),
+                    "COREBOOT_SDK_ROOT": str(self._find_coreboot_sdk()),
                 },
             )
             | super().get_build_config()

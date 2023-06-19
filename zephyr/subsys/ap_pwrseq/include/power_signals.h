@@ -41,18 +41,6 @@
 
 #include <zephyr/devicetree.h>
 
-#if DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq)
-
-/*
- * Create guards so that code used for a source is only
- * included if that signal source is configured in the
- * devicetree.
- */
-#define HAS_GPIO_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_gpio)
-#define HAS_VW_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_vw)
-#define HAS_EXT_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_external)
-#define HAS_ADC_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_adc)
-
 /**
  * @brief Definitions for AP power sequence signals.
  *
@@ -64,7 +52,11 @@
  */
 #define PWR_SIGNAL_ENUM(id) DT_STRING_UPPER_TOKEN(id, enum_name)
 
+#define PWR_DT_INST_SIGNAL_ENUM(inst) \
+	DT_INST_STRING_UPPER_TOKEN(inst, enum_name)
+
 #define PWR_SIGNAL_ENUM_COMMA(id) PWR_SIGNAL_ENUM(id),
+
 /**
  * @brief Enum of all power signals.
  *
@@ -75,20 +67,19 @@
  * The order that these compatibles are processed in
  * must be the same as in power_signals.c
  */
+/* clang-format off */
 enum power_signal {
 	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_SIGNAL_ENUM_COMMA)
-		DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw,
-				       PWR_SIGNAL_ENUM_COMMA)
-			DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external,
-					       PWR_SIGNAL_ENUM_COMMA)
-				DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc,
-						       PWR_SIGNAL_ENUM_COMMA)
-					POWER_SIGNAL_COUNT,
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_SIGNAL_ENUM_COMMA)
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external, PWR_SIGNAL_ENUM_COMMA)
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_SIGNAL_ENUM_COMMA)
+	POWER_SIGNAL_COUNT,
 };
+/* clang-format on */
 
 #undef PWR_SIGNAL_ENUM_COMMA
 
-#if HAS_EXT_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_EXTERNAL
 /**
  * Definitions required for external (board-specific)
  * power signals.
@@ -135,7 +126,7 @@ int board_power_signal_get(enum power_signal signal);
  */
 int board_power_signal_set(enum power_signal signal, int value);
 
-#endif /* HAS_EXT_SIGNALS */
+#endif /* CONFIG_AP_PWRSEQ_SIGNAL_EXTERNAL */
 
 /**
  * @brief Get the value of this power signal.
@@ -324,7 +315,5 @@ static inline int power_wait_signals_timeout(power_signal_mask_t want,
  * @brief Create a mask from a power signal.
  */
 #define POWER_SIGNAL_MASK(signal) (1 << (signal))
-
-#endif /* DT_HAS_COMPAT_STATUS_OKAY */
 
 #endif /* __AP_PWRSEQ_POWER_SIGNALS_H__ */

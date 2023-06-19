@@ -52,6 +52,7 @@ import time
 
 import serial  # pylint:disable=import-error
 
+
 SCRIPT_VERSION = 5
 CCD_IS_UNRESTRICTED = 1 << 0
 WP_IS_DISABLED = 1 << 1

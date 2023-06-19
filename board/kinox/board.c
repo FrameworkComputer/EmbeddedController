@@ -6,23 +6,24 @@
 #include "builtin/assert.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
-#include "power_button.h"
 #include "hooks.h"
 #include "power.h"
+#include "power_button.h"
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 #include "usbc_ppc.h"
-#include "fw_config.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -100,8 +101,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 }
 

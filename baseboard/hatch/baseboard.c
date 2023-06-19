@@ -7,7 +7,7 @@
 #include "atomic.h"
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
 #include "cros_board_info.h"
@@ -346,13 +346,6 @@ int ppc_get_alert_status(int port)
 #else
 		       EC_SUCCESS;
 #endif
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 #ifdef USB_PD_PORT_TCPC_MST

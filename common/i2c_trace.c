@@ -6,8 +6,8 @@
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
-#include "stddef.h"
 #include "stdbool.h"
+#include "stddef.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)

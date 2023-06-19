@@ -23,12 +23,11 @@
 #include "uart.h"
 #include "usb_descriptor.h"
 #include "usb_pd.h"
-#include "usbc_ppc.h"
-#include "usb_descriptor.h"
 #include "usb_pd_dp_ufp.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
@@ -94,7 +93,8 @@ static void board_pwr_btn_interrupt(enum gpio_signal signal)
 }
 #endif /* SECTION_IS_RW */
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /*
  * Table GPIO signals control both power rails and reset lines to various chips

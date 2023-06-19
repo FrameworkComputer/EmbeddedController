@@ -3,17 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <errno.h>
-
 #include "common.h"
 #include "driver/stm_mems_common.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/i2c_mock.h"
 #include "i2c/i2c.h"
 #include "test/drivers/test_state.h"
+
+#include <errno.h>
+
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/ztest.h>
 
 #define MOCK_EMUL EMUL_DT_GET(DT_NODELABEL(i2c_mock))
 #define COMMON_DATA emul_i2c_mock_get_i2c_common_data(MOCK_EMUL)

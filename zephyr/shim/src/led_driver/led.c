@@ -5,7 +5,7 @@
  * Power and battery LED control.
  */
 
-#include <zephyr/drivers/gpio.h>
+#define DT_DRV_COMPAT cros_ec_led_policy
 
 #include "battery.h"
 #include "charge_manager.h"
@@ -21,10 +21,12 @@
 #include "util.h"
 
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
-#define LED_COLOR_NODE DT_PATH(led_colors)
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
+	     "Exactly one instance of cros-ec,led-policy should be defined.");
 
 struct led_color_node_t {
 	struct led_pins_node_t *pins_node;
@@ -33,10 +35,14 @@ struct led_color_node_t {
 
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
-#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
-DT_FOREACH_CHILD(PWM_LED_PINS_NODE, DECLARE_PINS_NODE)
-#elif DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED)
-DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, DECLARE_PINS_NODE)
+#if CONFIG_PLATFORM_EC_LED_DT_PWM
+DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
+	DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_pwm_led_pins), DT_FOREACH_CHILD,
+	DECLARE_PINS_NODE)
+#elif CONFIG_PLATFORM_EC_LED_DT_GPIO
+DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
+	DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_led_pins), DT_FOREACH_CHILD,
+	DECLARE_PINS_NODE)
 #endif
 
 /*
@@ -55,8 +61,10 @@ DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, DECLARE_PINS_NODE)
 #define MAX_COLOR 4
 
 struct node_prop_t {
-	enum charge_state pwr_state;
+	enum led_pwr_state pwr_state;
 	enum power_state chipset_state;
+	int batt_state_mask;
+	int batt_state;
 	int8_t batt_lvl[2];
 	int8_t charge_port;
 	struct led_color_node_t led_colors[MAX_COLOR];
@@ -101,6 +109,11 @@ struct node_prop_t {
 #define SET_LED_VALUES(state_id)                                              \
 	{ .pwr_state = GET_PROP(state_id, charge_state),                      \
 	  .chipset_state = GET_PROP(state_id, chipset_state),                 \
+	  .batt_state_mask =                                                  \
+		  COND_CODE_1(DT_NODE_HAS_PROP(state_id, batt_state_mask),    \
+			      (DT_PROP(state_id, batt_state_mask)), (-1)),    \
+	  .batt_state = COND_CODE_1(DT_NODE_HAS_PROP(state_id, batt_state),   \
+				    (DT_PROP(state_id, batt_state)), (-1)),   \
 	  .batt_lvl = COND_CODE_1(DT_NODE_HAS_PROP(state_id, batt_lvl),       \
 				  (DT_PROP(state_id, batt_lvl)),              \
 				  ({ -1, -1 })),                              \
@@ -113,8 +126,8 @@ struct node_prop_t {
 		  LED_COLOR_INIT(3, 4, state_id),                             \
 	  } },
 
-static const struct node_prop_t node_array[] = { DT_FOREACH_CHILD(
-	LED_COLOR_NODE, SET_LED_VALUES) };
+static const struct node_prop_t node_array[] = { DT_INST_FOREACH_CHILD(
+	0, SET_LED_VALUES) };
 
 test_export_static enum power_state get_chipset_state(void)
 {
@@ -188,8 +201,8 @@ static void set_color(int node_idx, uint32_t ticks)
 static int match_node(int node_idx)
 {
 	/* Check if this node depends on power state */
-	if (node_array[node_idx].pwr_state != PWR_STATE_UNCHANGE) {
-		enum charge_state pwr_state = charge_get_state();
+	if (node_array[node_idx].pwr_state != LED_PWRS_UNCHANGE) {
+		enum led_pwr_state pwr_state = led_pwr_get_state();
 
 		if (node_array[node_idx].pwr_state != pwr_state)
 			return -1;
@@ -211,9 +224,21 @@ static int match_node(int node_idx)
 			return -1;
 	}
 
+	/* check if this node depends on battery status */
+	if (node_array[node_idx].batt_state_mask != -1) {
+		int batt_state;
+
+		battery_status(&batt_state);
+		if ((node_array[node_idx].batt_state_mask & batt_state) !=
+		    (node_array[node_idx].batt_state_mask &
+		     node_array[node_idx].batt_state))
+			return -1;
+	}
+
 	/* Check if this node depends on battery level */
 	if (node_array[node_idx].batt_lvl[0] != -1) {
-		int curr_batt_lvl = charge_get_percent();
+		int curr_batt_lvl =
+			DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
 
 		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))

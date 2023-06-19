@@ -137,7 +137,7 @@ static int i2c_bang_in_bit(void)
 /* Write a byte to I2C bus. Return 0 if ack by the peripheral. */
 static int i2c_bang_out_byte(int send_start, int send_stop, unsigned char byte)
 {
-	unsigned bit;
+	unsigned int bit;
 	int nack;
 	int tmp = byte;
 

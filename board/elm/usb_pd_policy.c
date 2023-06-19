@@ -17,9 +17,9 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)

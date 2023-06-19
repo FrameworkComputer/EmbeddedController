@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "test_state.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 ZTEST_SUITE(console_cmd_hibdelay, ap_power_predicate_post_main, NULL, NULL,
 	    NULL, NULL);

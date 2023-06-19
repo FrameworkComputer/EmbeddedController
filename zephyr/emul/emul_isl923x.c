@@ -3,25 +3,29 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_isl923x_emul
-
-#include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/i2c_emul.h>
-#include <zephyr/drivers/emul.h>
-#include <errno.h>
-#include <zephyr/sys/__assert.h>
-#include <zephyr/ztest.h>
-
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
-#include "i2c.h"
 #include "emul/emul_stub_device.h"
+#include "i2c.h"
 
+#include <errno.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/__assert.h>
+
+#ifdef CONFIG_ZTEST
+#include <zephyr/ztest.h>
+#endif
+
+#define DT_DRV_COMPAT cros_isl923x_emul
+
 LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 
 /** Mask used for the charge current register */
@@ -56,6 +60,9 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 
 /** Mask used for the control 8 register */
 #define REG_CONTROL8_MASK GENMASK(15, 0)
+
+/** Mask used for the control 10 register */
+#define REG_CONTROL10_MASK GENMASK(15, 0)
 
 /** Mask used for the AC PROCHOT register */
 #define REG_PROCHOT_AC_MASK GENMASK(12, 7)
@@ -99,12 +106,20 @@ struct isl923x_emul_data {
 	uint16_t control_4_reg;
 	/** Emulated control 8 register (RAA489000-only) */
 	uint16_t control_8_reg;
+	/** Emulated control 10 register (RAA48900-only) */
+	uint16_t control_10_reg;
 	/** Emulated info 2 reg */
 	uint16_t info_2_reg;
 	/** Emulated AC PROCHOT register */
 	uint16_t ac_prochot_reg;
 	/** Emulated DC PROCHOT register */
 	uint16_t dc_prochot_reg;
+	/* Emulated RAA489000_REG_ADC_INPUT_CURRENT */
+	uint16_t adc_input_current_reg;
+	/* Emulated RAA489000_REG_ADC_CHARGE_CURRENT */
+	uint16_t adc_charge_current_reg;
+	/* Emulated RAA489000_REG_ADC_VSYS */
+	uint16_t adc_vsys_reg;
 	/** Emulated ADC vbus register */
 	uint16_t adc_vbus_reg;
 	/** Emulated input voltage register */
@@ -131,11 +146,13 @@ isl923x_emul_get_cfg(const struct emul *emulator)
 	return emulator->cfg;
 }
 
+#ifdef CONFIG_ZTEST
 static void isl923x_emul_reset(struct isl923x_emul_data *data)
 {
 	data->common.write_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
 	data->common.read_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
 }
+#endif
 
 void isl923x_emul_reset_registers(const struct emul *emulator)
 {
@@ -199,6 +216,17 @@ void raa489000_emul_set_acok_pin(const struct emul *emulator, uint16_t value)
 		data->info_2_reg &= ~RAA489000_INFO2_ACOK;
 }
 
+void raa489000_emul_set_state_machine_state(const struct emul *emulator,
+					    uint16_t value)
+{
+	struct isl923x_emul_data *data = emulator->data;
+
+	data->info_2_reg &=
+		~(RAA489000_INFO2_STATE_MASK << RAA489000_INFO2_STATE_SHIFT);
+	data->info_2_reg |= (value & RAA489000_INFO2_STATE_MASK)
+			    << RAA489000_INFO2_STATE_SHIFT;
+}
+
 /** Convenience macro for reading 16-bit registers */
 #define READ_REG_16(REG, BYTES, OUT)                             \
 	do {                                                     \
@@ -255,6 +283,9 @@ static int isl923x_emul_read_byte(const struct emul *emul, int reg,
 	case RAA489000_REG_CONTROL8:
 		READ_REG_16(data->control_8_reg, bytes, val);
 		break;
+	case RAA489000_REG_CONTROL10:
+		READ_REG_16(data->control_10_reg, bytes, val);
+		break;
 	case ISL9238_REG_INFO2:
 		READ_REG_16(data->info_2_reg, bytes, val);
 		break;
@@ -263,6 +294,15 @@ static int isl923x_emul_read_byte(const struct emul *emul, int reg,
 		break;
 	case ISL923X_REG_PROCHOT_DC:
 		READ_REG_16(data->dc_prochot_reg, bytes, val);
+		break;
+	case RAA489000_REG_ADC_INPUT_CURRENT:
+		READ_REG_16(data->adc_input_current_reg, bytes, val);
+		break;
+	case RAA489000_REG_ADC_CHARGE_CURRENT:
+		READ_REG_16(data->adc_charge_current_reg, bytes, val);
+		break;
+	case RAA489000_REG_ADC_VSYS:
+		READ_REG_16(data->adc_vsys_reg, bytes, val);
 		break;
 	case RAA489000_REG_ADC_VBUS:
 		READ_REG_16(data->adc_vbus_reg, bytes, val);
@@ -347,6 +387,28 @@ static int isl923x_emul_write_byte(const struct emul *emul, int reg,
 	case RAA489000_REG_CONTROL8:
 		WRITE_REG_16(data->control_8_reg, bytes, val,
 			     REG_CONTROL8_MASK);
+		break;
+	case RAA489000_REG_CONTROL10:
+		WRITE_REG_16(data->control_10_reg, bytes, val,
+			     REG_CONTROL10_MASK);
+		break;
+	case RAA489000_REG_ADC_INPUT_CURRENT:
+		__ASSERT(
+			false,
+			"Write to read-only reg RAA489000_REG_ADC_INPUT_CURRENT");
+		break;
+	case RAA489000_REG_ADC_CHARGE_CURRENT:
+		__ASSERT(
+			false,
+			"Write to read-only reg RAA489000_REG_ADC_CHARGE_CURRENT");
+		break;
+	case RAA489000_REG_ADC_VSYS:
+		__ASSERT(false,
+			 "Write to read-only reg RAA489000_REG_ADC_VSYS");
+		break;
+	case RAA489000_REG_ADC_VBUS:
+		__ASSERT(false,
+			 "Write to read-only reg RAA489000_REG_ADC_VBUS");
 		break;
 	case ISL9238_REG_INFO2:
 		__ASSERT(false, "Write to read-only reg ISL9238_REG_INFO2");
@@ -434,14 +496,14 @@ static int emul_isl923x_init(const struct emul *emul,
 		},                                                             \
 	}; \
 	EMUL_DT_INST_DEFINE(n, emul_isl923x_init, &isl923x_emul_data_##n,        \
-			    &isl923x_emul_cfg_##n, &i2c_common_emul_api)
+			    &isl923x_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_ISL923X)
 
 #ifdef CONFIG_ZTEST_NEW_API
 
 #define ISL923X_EMUL_RESET_RULE_AFTER(n) \
-	isl923x_emul_reset(&isl923x_emul_data_##n)
+	isl923x_emul_reset(&isl923x_emul_data_##n);
 
 static void emul_isl923x_reset_before(const struct ztest_unit_test *test,
 				      void *data)
@@ -449,7 +511,7 @@ static void emul_isl923x_reset_before(const struct ztest_unit_test *test,
 	ARG_UNUSED(test);
 	ARG_UNUSED(data);
 
-	DT_INST_FOREACH_STATUS_OKAY(ISL923X_EMUL_RESET_RULE_AFTER);
+	DT_INST_FOREACH_STATUS_OKAY(ISL923X_EMUL_RESET_RULE_AFTER)
 }
 ZTEST_RULE(emul_isl923x_reset, emul_isl923x_reset_before, NULL);
 #endif /* CONFIG_ZTEST_NEW_API */

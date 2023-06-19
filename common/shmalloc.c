@@ -5,8 +5,6 @@
  */
 
 /* Malloc/free memory module for Chrome EC */
-#include <stdint.h>
-
 #include "common.h"
 #include "hooks.h"
 #include "link_defs.h"
@@ -14,6 +12,8 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
+
+#include <stdint.h>
 
 static struct mutex shmem_lock;
 
@@ -340,6 +340,9 @@ int shared_mem_acquire(int size, char **dest_ptr)
 void shared_mem_release(void *ptr)
 {
 	if (in_interrupt_context())
+		return;
+
+	if (ptr == NULL)
 		return;
 
 	mutex_lock(&shmem_lock);

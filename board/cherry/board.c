@@ -5,7 +5,7 @@
 /* Cherry board configuration */
 
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accel_bma422.h"
@@ -261,13 +261,6 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 			},
 	},
 };
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
 
 /* Initialize board. */
 static void board_init(void)

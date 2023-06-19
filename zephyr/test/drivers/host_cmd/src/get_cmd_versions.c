@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "charge_state.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_USER(hc_get_cmd_versions, test_v0__both_versions)
 {
@@ -16,10 +16,9 @@ ZTEST_USER(hc_get_cmd_versions, test_v0__both_versions)
 		.cmd = EC_CMD_GET_CMD_VERSIONS,
 	};
 	struct ec_response_get_cmd_versions response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GET_CMD_VERSIONS, 0, response, params);
+	struct host_cmd_handler_args args;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_get_cmd_versions(&args, &params, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.version_mask, EC_VER_MASK(0) | EC_VER_MASK(1));
 }
@@ -30,10 +29,9 @@ ZTEST_USER(hc_get_cmd_versions, test_v1__only_v0)
 		.cmd = EC_CMD_HELLO,
 	};
 	struct ec_response_get_cmd_versions response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GET_CMD_VERSIONS, 1, response, params);
+	struct host_cmd_handler_args args;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_get_cmd_versions_v1(&args, &params, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.version_mask, EC_VER_MASK(0));
 }
@@ -45,10 +43,9 @@ ZTEST_USER(hc_get_cmd_versions, test_v1__bad_cmd)
 		.cmd = UINT16_MAX,
 	};
 	struct ec_response_get_cmd_versions response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GET_CMD_VERSIONS, 1, response, params);
 
-	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+	zassert_equal(ec_cmd_get_cmd_versions_v1(NULL, &params, &response),
+		      EC_RES_INVALID_PARAM);
 }
 
 ZTEST_SUITE(hc_get_cmd_versions, drivers_predicate_post_main, NULL, NULL, NULL,

@@ -1,0 +1,17 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description:  Kandou re-timing MUX
+
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
+
+compatible: "kandou,kb8010"
+
+properties:
+  reset-pin:
+    type: phandle
+    required: true
+
+  int-pin:
+    type: phandle

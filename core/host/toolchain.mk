@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 
 CROSS_COMPILE_HOST_DEFAULT:=x86_64-pc-linux-gnu-
+CMAKE_SYSTEM_PROCESSOR ?= x86_64
+OPENSSL_NO_ASM ?= 0
 
 $(call set-option,CROSS_COMPILE,\
 	$(CROSS_COMPILE_host),\

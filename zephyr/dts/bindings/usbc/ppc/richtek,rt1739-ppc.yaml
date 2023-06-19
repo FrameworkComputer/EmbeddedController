@@ -6,4 +6,10 @@ description: USBC PPC
 
 compatible: "richtek,rt1739-ppc"
 
-include: ppc-chip.yaml
+include: ["i2c-device.yaml", "ppc-chip.yaml"]
+
+properties:
+  frs_en_gpio:
+    type: phandle
+    description: The GPIO that controls FRS enable on this device
+    required: false

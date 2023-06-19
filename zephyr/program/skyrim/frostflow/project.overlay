@@ -1,0 +1,312 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Skyrim program common DTS includes */
+#include "../adc.dtsi"
+#include "../fan.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../usbc.dtsi"
+
+/* Frostflow project DTS includes*/
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/* Frostflow overrides follow... */
+/ {
+	/* battery overrides */
+	batteries {
+		default_battery: cdt_c340152 {
+			compatible = "cdt,c340152", "battery-smart";
+		};
+	};
+
+	named-gpios {
+		/* Frostflow-specific GPIO customizations */
+	};
+
+	gpio-interrupts {
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_lid_accel_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_soc: soc-pct2075 {
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			temp_host_release_halt = <70>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&soc_pct2075>;
+		};
+		temp_amb: amb-pct2075 {
+			temp_host_high = <65>;
+			temp_host_halt = <70>;
+			temp_host_release_high = <55>;
+			temp_host_release_halt = <60>;
+			temp_fan_off = <32>;
+			temp_fan_max = <45>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&amb_pct2075>;
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 1 0 0
+				 0 0 (-1)>;
+		};
+	};
+
+	ppc_port0: aoz1380 {
+		compatible = "aoz,aoz1380";
+		status = "okay";
+	};
+
+	fan_steps_clamshell: fan-steps-clamshell {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <(-1) 37 (-1) (-1) (-1)>;
+			temp_off = <(-1) 99 (-1) (-1) (-1)>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <(-1) 38 (-1) (-1) (-1)>;
+			temp_off = <(-1) 33 (-1) (-1) (-1)>;
+			rpm_target = <2600>;
+		};
+		level_2 {
+			temp_on = <(-1) 42 (-1) (-1) (-1)>;
+			temp_off = <(-1) 37 (-1) (-1) (-1)>;
+			rpm_target = <2900>;
+		};
+		level_3 {
+			temp_on = <(-1) 48 (-1) (-1) (-1)>;
+			temp_off = <(-1) 41 (-1) (-1) (-1)>;
+			rpm_target = <3200>;
+		};
+		level_4 {
+			temp_on = <(-1) 49 (-1) (-1) (-1)>;
+			temp_off = <(-1) 45 (-1) (-1) (-1)>;
+			rpm_target = <3500>;
+		};
+		level_5 {
+			temp_on = <(-1) 50 (-1) (-1) (-1)>;
+			temp_off = <(-1) 46 (-1) (-1) (-1)>;
+			rpm_target = <3700>;
+		};
+		level_6 {
+			temp_on = <(-1) 51 (-1) (-1) (-1)>;
+			temp_off = <(-1) 47 (-1) (-1) (-1)>;
+			rpm_target = <4200>;
+		};
+		level_7 {
+			temp_on = <(-1) 62 (-1) (-1) (-1)>;
+			temp_off = <(-1) 55 (-1) (-1) (-1)>;
+			rpm_target = <4600>;
+		};
+	};
+
+	fan_steps_tablet: fan-steps-tablet {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <(-1) 38 (-1) (-1) (-1)>;
+			temp_off = <(-1) 99 (-1) (-1) (-1)>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <(-1) 39 (-1) (-1) (-1)>;
+			temp_off = <(-1) 37 (-1) (-1) (-1)>;
+			rpm_target = <2600>;
+		};
+		level_2 {
+			temp_on = <(-1) 45 (-1) (-1) (-1)>;
+			temp_off = <(-1) 38 (-1) (-1) (-1)>;
+			rpm_target = <2900>;
+		};
+		level_3 {
+			temp_on = <(-1) 54 (-1) (-1) (-1)>;
+			temp_off = <(-1) 44 (-1) (-1) (-1)>;
+			rpm_target = <3200>;
+		};
+		level_4 {
+			temp_on = <(-1) 55 (-1) (-1) (-1)>;
+			temp_off = <(-1) 51 (-1) (-1) (-1)>;
+			rpm_target = <3500>;
+		};
+		level_5 {
+			temp_on = <(-1) 56 (-1) (-1) (-1)>;
+			temp_off = <(-1) 52 (-1) (-1) (-1)>;
+			rpm_target = <3700>;
+		};
+		level_6 {
+			temp_on = <(-1) 57 (-1) (-1) (-1)>;
+			temp_off = <(-1) 53 (-1) (-1) (-1)>;
+			rpm_target = <4200>;
+		};
+		level_7 {
+			temp_on = <(-1) 61 (-1) (-1) (-1)>;
+			temp_off = <(-1) 56 (-1) (-1) (-1)>;
+			rpm_target = <4600>;
+		};
+	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the board
+	 * dts files.
+	 */
+	Frostflow-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		* FW_CONFIG field to enable fingerprint or not.
+		*/
+		fingerprint {
+			enum-name = "FW_FINGERPRINT";
+			start = <0>;
+			size = <1>;
+
+			fingerprint-absent{
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FINGERPRINT_ABSENT";
+				value = <0>;
+			};
+			fingerprint-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FINGERPRINT_PRESENT";
+				value = <1>;
+			};
+		};
+		/*
+		* FW_CONFIG field to enable stylus or not.
+		*/
+		stylus {
+			enum-name = "FW_STYLUS";
+			start = <1>;
+			size = <1>;
+
+			stylus-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_ABSENT";
+				value = <0>;
+			};
+			stylus-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_PRESENT";
+				value = <1>;
+			};
+		};
+	};
+};
+
+/* i2c overrides */
+&i2c0_0 {
+	/delete-node/ nx20p348x@71;
+	/delete-node/ anx7483@3e;
+};
+
+&i2c1_0 {
+	/delete-node/ anx7483@3e;
+};
+
+&i2c4_1 {
+	/delete-node/ isl9538@9;
+};
+
+&amd_fp6_port0 {
+	board-set = "board_c0_amd_fp6_mux_set";
+};
+
+/* usbc overrides */
+&usbc_port0 {
+	/delete-property/ chg_alt;
+	usb-mux-chain-0 {
+		usb-muxes = <&amd_fp6_port0>;
+	};
+};
+
+&usbc_port1 {
+	/delete-node/ usb-mux-chain-1-anx;
+	/delete-node/ usb-mux-chain-1-ps;
+	usb-mux-chain-1-ps8818 {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port1 &ps8818_port1>;
+	};
+};
+
+&cros_kb_raw {
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+	>;
+};
+
+/* temperature sensor overrides */
+&temp_sensor_charger {
+	temp_host_high = <75>;
+	temp_host_halt = <80>;
+	temp_host_release_high = <65>;
+	temp_host_release_halt = <70>;
+};
+
+&temp_sensor_memory {
+	temp_host_high = <75>;
+	temp_host_halt = <80>;
+	temp_host_release_high = <65>;
+	temp_host_release_halt = <70>;
+};
+
+&temp_sensor_cpu {
+	/delete-property/ temp_host_high;
+	/delete-property/ temp_host_halt;
+	/delete-property/ temp_host_release_high;
+	/delete-property/ temp_fan_off;
+	/delete-property/ temp_fan_max;
+};
+
+/* fan overrides */
+&fan0 {
+	pwms = <&pwm0 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <2400>;
+	rpm_start = <2600>;
+	rpm_max = <4600>;
+	rpm_deviation = <2>;
+};

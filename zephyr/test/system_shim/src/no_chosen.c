@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "fakes.h"
 #include "system.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST(system, test_fail_get_bbram_no_device)
 {

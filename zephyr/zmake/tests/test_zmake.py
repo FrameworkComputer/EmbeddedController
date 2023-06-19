@@ -11,13 +11,14 @@ import re
 import unittest.mock
 
 import pytest  # pylint:disable=import-error
+from testfixtures import LogCapture  # pylint:disable=import-error
 import zmake.build_config
 import zmake.jobserver
 import zmake.multiproc as multiproc
 import zmake.output_packers
 import zmake.project
 import zmake.toolchains
-from testfixtures import LogCapture  # pylint:disable=import-error
+
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -163,8 +164,11 @@ class TestFilters:
         assert not recs
 
     @staticmethod
-    def test_filter_info(zmake_factory_from_dir, tmp_path):
+    def test_filter_info(zmake_factory_from_dir, tmp_path, monkeypatch):
         """Test what appears on the INFO level"""
+        monkeypatch.setattr(
+            os, "environ", {"TOOL_PATH_ninja": "/usr/bin/ninja"}
+        )
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.INFO)
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
@@ -191,8 +195,11 @@ class TestFilters:
         assert expected == set(recs)
 
     @staticmethod
-    def test_filter_debug(zmake_factory_from_dir, tmp_path):
+    def test_filter_debug(zmake_factory_from_dir, tmp_path, monkeypatch):
         """Test what appears on the DEBUG level"""
+        monkeypatch.setattr(
+            os, "environ", {"TOOL_PATH_ninja": "/usr/bin/ninja"}
+        )
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.DEBUG)
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
@@ -270,14 +277,19 @@ class TestFilters:
         ),
         (
             ["link"],
-            "{config.project_name} is_test={config.is_test}\n",
+            "{config.project_name} {config.zephyr_board}\n",
             None,
-            "link is_test=False\n",
+            "link some_board\n",
         ),
     ],
 )
 def test_list_projects(
-    project_names, fmt, search_dir, expected_output, capsys, zmake_from_dir
+    project_names,
+    fmt,
+    search_dir,
+    expected_output,
+    capsys,
+    zmake_factory_from_dir,
 ):
     """Test listing projects with default directory."""
     fake_projects = {
@@ -291,12 +303,14 @@ def test_list_projects(
         )
         for name in project_names
     }
+
+    zmk = zmake_factory_from_dir(projects_dir=search_dir)
     with unittest.mock.patch(
         "zmake.project.find_projects",
         autospec=True,
         return_value=fake_projects,
     ):
-        zmake_from_dir.list_projects(fmt=fmt, search_dir=search_dir)
+        zmk.list_projects(fmt=fmt)
 
     captured = capsys.readouterr()
     assert captured.out == expected_output

@@ -6,9 +6,10 @@
 #ifndef __UTIL_CROS_EC_DEV_H
 #define __UTIL_CROS_EC_DEV_H
 
+#include "ec_commands.h"
+
 #include <linux/ioctl.h>
 #include <linux/types.h>
-#include "ec_commands.h"
 
 #ifdef __cplusplus
 extern "C" {

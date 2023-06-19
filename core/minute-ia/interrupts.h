@@ -13,10 +13,10 @@
 
 #define USHRT_MAX 0xFFFF
 typedef struct {
-	unsigned irq;
-	unsigned trigger;
-	unsigned polarity;
-	unsigned vector;
+	unsigned int irq;
+	unsigned int trigger;
+	unsigned int polarity;
+	unsigned int vector;
 } irq_desc_t;
 
 #define INTR_DESC(__irq, __vector, __trig)                                \

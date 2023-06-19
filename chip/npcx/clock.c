@@ -162,6 +162,11 @@ void clock_turbo(void)
 	 */
 	NPCX_HFCBCD = NPCX_HFCBCD & 0xF3;
 }
+
+test_mockable void clock_enable_module(enum module_id module, int enable)
+{
+}
+
 #elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 void clock_turbo(void)
 {
@@ -189,7 +194,7 @@ void clock_normal(void)
 	NPCX_HFCBCD = (FIUDIV << 4);
 }
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 	/* Assume we have a single task using MODULE_FAST_CPU */
 	if (module == MODULE_FAST_CPU) {
@@ -198,6 +203,12 @@ void clock_enable_module(enum module_id module, int enable)
 		else
 			clock_normal();
 	}
+}
+
+#else
+
+test_mockable void clock_enable_module(enum module_id module, int enable)
+{
 }
 
 #endif

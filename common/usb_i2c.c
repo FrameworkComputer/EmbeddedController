@@ -4,21 +4,19 @@
  */
 
 #include "common.h"
-#include "link_defs.h"
-#include "registers.h"
-#include "i2c.h"
-#include "usb_descriptor.h"
-#include "util.h"
-
-#include "common.h"
 #include "console.h"
 #include "consumer.h"
+#include "i2c.h"
+#include "link_defs.h"
 #include "producer.h"
 #include "queue.h"
 #include "queue_policies.h"
+#include "registers.h"
 #include "task.h"
 #include "usb-stream.h"
+#include "usb_descriptor.h"
 #include "usb_i2c.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 

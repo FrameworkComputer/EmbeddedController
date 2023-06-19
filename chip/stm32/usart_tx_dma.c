@@ -2,13 +2,12 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "usart_tx_dma.h"
-
-#include "usart.h"
 #include "common.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "usart.h"
+#include "usart_tx_dma.h"
 #include "util.h"
 
 void usart_tx_dma_written(struct consumer const *consumer, size_t count)

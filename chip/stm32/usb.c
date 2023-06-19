@@ -15,10 +15,10 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_api.h"
 #include "usb_descriptor.h"
 #include "usb_hw.h"
+#include "util.h"
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)

@@ -8,4 +8,5 @@
 /**
  * See CONFIG_TASK_LIST in config.h for details.
  */
-#define CONFIG_TEST_TASK_LIST  /* No test task */
+#define CONFIG_TEST_TASK_LIST \
+	TASK_TEST(CEC, cec_task, NULL, TASK_STACK_SIZE)

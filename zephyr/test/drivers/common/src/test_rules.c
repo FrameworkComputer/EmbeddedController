@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "emul/tcpc/emul_tcpci.h"
 #include "motion_sense_fifo.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/utils.h"
 #include "usb_pd_tcpm.h"
+
+#include <zephyr/ztest.h>
 
 static void motion_sense_fifo_reset_before(const struct ztest_unit_test *test,
 					   void *data)

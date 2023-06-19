@@ -3,24 +3,29 @@
  * found in the LICENSE file.
  */
 
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/devicetree.h>
+#else
 #include "byteorder.h"
+#endif
+
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
-#include "hwtimer.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "sha256.h"
 #include "shared_mem.h"
-#include "task.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "timer.h"
 #include "touchpad.h"
 #include "update_fw.h"
-#include "util.h"
 #include "usb_api.h"
 #include "usb_hid_touchpad.h"
+#include "util.h"
 #include "watchdog.h"
 
 /* Console output macros */
@@ -93,6 +98,17 @@
 /* The actual FW_SIZE depends on IC. */
 #define FW_SIZE CONFIG_TOUCHPAD_VIRTUAL_SIZE
 #endif
+
+#ifdef CONFIG_ZEPHYR
+#if DT_HAS_COMPAT_STATUS_OKAY(elan_ekth3000)
+
+#define TP_NODE DT_INST(0, elan_ekth3000)
+#define GPIO_TOUCHPAD_INT GPIO_SIGNAL(DT_PROP(DT_PROP(TP_NODE, irq), irq_pin))
+#define CONFIG_TOUCHPAD_I2C_ADDR_FLAGS DT_REG_ADDR(TP_NODE)
+#define CONFIG_TOUCHPAD_I2C_PORT I2C_PORT_BY_DEV(TP_NODE)
+
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(elan_ekth3000) */
+#endif /* CONFIG_ZEPHYR */
 
 struct {
 	/* Max X/Y position */

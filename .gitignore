@@ -15,6 +15,9 @@ cscope.*
 # Git commit message template (see https://crbug.com/gerrit/10963)
 .gitmessage
 
+# Clion IDE
+.idea/
+
 # VSCode IDE
 .vscode/*
 !.vscode/README.md

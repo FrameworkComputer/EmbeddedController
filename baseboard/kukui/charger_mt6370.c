@@ -4,7 +4,7 @@
  */
 
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger_mt6370.h"
 #include "console.h"
 #include "driver/charger/rt946x.h"
@@ -77,7 +77,8 @@ int board_cut_off_battery(void)
 static void board_set_charge_limit_throttle(int charge_ma, int charge_mv)
 {
 	charge_set_input_current_limit(
-		MIN(throttled_ma, MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT)),
+		MIN(throttled_ma,
+		    MAX(charge_ma, CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT)),
 		charge_mv);
 }
 
@@ -329,14 +330,14 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 
 	/*
 	 * When the charger says it's done charging, even if fuel gauge says
-	 * SOC < BATTERY_LEVEL_NEAR_FULL, we'll overwrite SOC with
-	 * BATTERY_LEVEL_NEAR_FULL. So we can ensure both Chrome OS UI
+	 * SOC < CONFIG_BATT_HOST_FULL_FACTOR, we'll overwrite SOC with
+	 * CONFIG_BATT_HOST_FULL_FACTOR. So we can ensure both Chrome OS UI
 	 * and battery LED indicate full charge.
 	 *
 	 * Enable this hack on on-board gauge only (b/142097561)
 	 */
 	if (IS_ENABLED(CONFIG_BATTERY_MAX17055) && rt946x_is_charge_done()) {
-		curr->batt.state_of_charge = MAX(BATTERY_LEVEL_NEAR_FULL,
+		curr->batt.state_of_charge = MAX(CONFIG_BATT_HOST_FULL_FACTOR,
 						 curr->batt.state_of_charge);
 	}
 }
@@ -355,8 +356,8 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, board_charge_termination,
 	     HOOK_PRIO_DEFAULT);
 #endif
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	prev_charge_limit = charge_ma;
 	prev_charge_mv = charge_mv;

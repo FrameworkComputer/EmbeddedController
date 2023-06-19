@@ -24,14 +24,6 @@ def register_host_project(**kwargs):
     return _register_project(**kwargs)
 
 
-def register_host_test(test_name, **kwargs):
-    """Register a test project that runs on the host."""
-    kwargs.setdefault("is_test", True)
-    return register_host_project(
-        project_name="test-{}".format(test_name), **kwargs
-    )
-
-
 def register_raw_project(**kwargs):
     """Register a project that uses RawBinPacker."""
     kwargs.setdefault("supported_toolchains", ["coreboot-sdk", "zephyr"])
@@ -48,9 +40,11 @@ def register_binman_project(**kwargs):
 def register_npcx_project(**kwargs):
     """Register a project that uses NpcxPacker."""
     kwargs.setdefault("output_packer", zmake.output_packers.NpcxPacker)
+    kwargs.setdefault("modules", ["ec", "cmsis"])
     return register_binman_project(**kwargs)
 
 
 def register_mchp_project(**kwargs):
     kwargs.setdefault("output_packer", zmake.output_packers.MchpPacker)
+    kwargs.setdefault("modules", ["ec", "cmsis"])
     return register_binman_project(**kwargs)

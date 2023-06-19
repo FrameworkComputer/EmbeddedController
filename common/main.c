@@ -137,7 +137,7 @@ test_mockable __keep int main(void)
 	/* Main initialization stage.  Modules may enable interrupts here. */
 	cpu_init();
 
-#ifdef CONFIG_DMA
+#ifdef CONFIG_DMA_CROS
 	/* Initialize DMA.  Must be before UART. */
 	dma_init();
 #endif

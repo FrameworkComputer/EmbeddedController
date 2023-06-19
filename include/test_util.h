@@ -16,11 +16,15 @@ extern "C" {
 
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
+#include "math_util.h"
 #include "stack_trace.h"
+#include "string.h"
 
 #ifdef CONFIG_ZTEST
-#include <zephyr/ztest.h>
 #include "ec_tasks.h"
+
+#include <zephyr/ztest.h>
 #endif /* CONFIG_ZTEST */
 
 /* This allows tests to be easily commented out in run_test for debugging */
@@ -54,6 +58,17 @@ extern "C" {
 #define __auto_type auto
 #endif
 
+/* Tests comparing complex types that cannot be easily formatted for printing
+ * may define TEST_OPERATOR_INHIBIT_PRINT_EVAL to inhibit printing of the
+ * compared values on failure.
+ */
+#ifdef TEST_OPERATOR_INHIBIT_PRINT_EVAL
+#define TEST_OPERATOR_PRINT_EVAL(fmt, op, _a, _b)
+#else
+#define TEST_OPERATOR_PRINT_EVAL(fmt, op, _a, _b) \
+	ccprintf("\t\tEVAL: " fmt " " #op " " fmt "\n", _a, _b)
+#endif
+
 #define TEST_OPERATOR(a, b, op, fmt)                                         \
 	do {                                                                 \
 		__auto_type _a = (a);                                        \
@@ -61,8 +76,7 @@ extern "C" {
 		if (!(_a op _b)) {                                           \
 			ccprintf("%s:%d: ASSERTION failed: %s " #op " %s\n", \
 				 __FILE__, __LINE__, #a, #b);                \
-			ccprintf("\t\tEVAL: " fmt " " #op " " fmt "\n", _a,  \
-				 _b);                                        \
+			TEST_OPERATOR_PRINT_EVAL(fmt, op, _a, _b);           \
 			task_dump_trace();                                   \
 			return EC_ERROR_UNKNOWN;                             \
 		} else {                                                     \
@@ -81,17 +95,20 @@ extern "C" {
 #define TEST_NEAR(a, b, epsilon, fmt) \
 	TEST_OPERATOR(ABS((a) - (b)), epsilon, <, fmt)
 
-#define __ABS(n) ((n) > 0 ? (n) : -(n))
-
-#define TEST_ASSERT_ABS_LESS(n, t) TEST_OPERATOR(__ABS(n), t, <, "%d")
+#define TEST_ASSERT_ABS_LESS(n, t) TEST_OPERATOR(ABS(n), t, <, "%d")
 
 #define TEST_ASSERT_ARRAY_EQ(s, d, n)                                        \
 	do {                                                                 \
-		int __i;                                                     \
-		for (__i = 0; __i < n; ++__i)                                \
+		if (n < 0)                                                   \
+			return EC_ERROR_UNKNOWN;                             \
+                                                                             \
+		unsigned int __n = n;                                        \
+                                                                             \
+		for (unsigned int __i = 0; __i < __n; ++__i)                 \
+                                                                             \
 			if ((s)[__i] != (d)[__i]) {                          \
 				ccprintf("%s:%d: ASSERT_ARRAY_EQ failed at " \
-					 "index=%d: %d != %d\n",             \
+					 "index=%u: %d != %d\n",             \
 					 __FILE__, __LINE__, __i,            \
 					 (int)(s)[__i], (int)(d)[__i]);      \
 				task_dump_trace();                           \
@@ -99,13 +116,31 @@ extern "C" {
 			}                                                    \
 	} while (0)
 
+#define TEST_ASSERT_ARRAY_NE(s, d, n)                                         \
+	do {                                                                  \
+		if (n < 0)                                                    \
+			return EC_ERROR_UNKNOWN;                              \
+                                                                              \
+		if (memcmp(&s[0], &d[0], n) == 0) {                           \
+			ccprintf("%s:%d: ASSERT_ARRAY_NE failed\n", __FILE__, \
+				 __LINE__);                                   \
+			task_dump_trace();                                    \
+			return EC_ERROR_UNKNOWN;                              \
+		}                                                             \
+	} while (0)
+
 #define TEST_ASSERT_MEMSET(d, c, n)                                        \
 	do {                                                               \
-		int __i;                                                   \
-		for (__i = 0; __i < n; ++__i)                              \
+		if (n < 0)                                                 \
+			return EC_ERROR_UNKNOWN;                           \
+                                                                           \
+		unsigned int __n = n;                                      \
+                                                                           \
+		for (unsigned int __i = 0; __i < __n; ++__i)               \
+                                                                           \
 			if ((d)[__i] != (c)) {                             \
 				ccprintf("%s:%d: ASSERT_MEMSET failed at " \
-					 "index=%d: %d != %d\n",           \
+					 "index=%u: %d != %d\n",           \
 					 __FILE__, __LINE__, __i,          \
 					 (int)(d)[__i], (c));              \
 				task_dump_trace();                         \
@@ -171,8 +206,9 @@ void test_print_result(void);
 int test_get_error_count(void);
 
 /* Simulates host command sent from the host */
-int test_send_host_command(int command, int version, const void *params,
-			   int params_size, void *resp, int resp_size);
+enum ec_status test_send_host_command(int command, int version,
+				      const void *params, int params_size,
+				      void *resp, int resp_size);
 
 /* Optionally defined interrupt generator entry point */
 void interrupt_generator(void);
@@ -188,7 +224,7 @@ void task_trigger_test_interrupt(void (*isr)(void));
  * to udelay() from interrupt generator are delegated to this function
  * automatically.
  */
-void interrupt_generator_udelay(unsigned us);
+void interrupt_generator_udelay(unsigned int us);
 
 #ifdef EMU_BUILD
 void wait_for_task_started(void);
@@ -415,7 +451,7 @@ struct unit_test {
  */
 #define ztest_unit_test_setup_teardown(fn, setup, teardown) \
 	{                                                   \
-#fn, fn, setup, teardown                    \
+		#fn, fn, setup, teardown                    \
 	}
 
 /**

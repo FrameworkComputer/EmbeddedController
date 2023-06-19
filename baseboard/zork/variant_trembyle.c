@@ -499,7 +499,7 @@ struct usb_mux usbc1_ps8802 = {
 const struct usb_mux usbc1_ps8818 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
-	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+	.i2c_addr_flags = PS8818_I2C_ADDR0_FLAGS,
 	.driver = &ps8818_usb_retimer_driver,
 	.board_set = &board_ps8818_mux_set,
 };

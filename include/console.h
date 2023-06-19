@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "config.h"
+
 #include <stdbool.h>
 
 #ifdef CONFIG_ZEPHYR

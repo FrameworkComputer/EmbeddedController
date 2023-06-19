@@ -6,14 +6,14 @@
  * eMMC protocol.
  */
 
-#include <err.h>
 #include <errno.h>
-#include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <compile_time_macros.h>
+#include <err.h>
+#include <getopt.h>
 
 /* eMMC transfer block size */
 #define BLOCK_SIZE 512

@@ -8,9 +8,9 @@
 #include "console.h"
 #include "hpet.h"
 #include "hwtimer.h"
-#include "timer.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)

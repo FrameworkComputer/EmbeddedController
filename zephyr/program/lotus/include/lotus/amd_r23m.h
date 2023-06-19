@@ -31,6 +31,6 @@ int get_temp_amd_R23M(int idx, int *temp_ptr);
 void amdr23m_update_temperature(int idx);
 #endif
 
-int amdr23m_get_val(int idx, int *temp);
+int amdr23m_get_val_k(int idx, int *temp);
 
 #endif /* __CROS_EC_AMD_R23M_H */

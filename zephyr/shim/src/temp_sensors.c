@@ -214,34 +214,36 @@ const struct tmp112_sensor_t tmp112_sensors[TMP112_COUNT] = {
 __maybe_unused static int f75303_get_temp(const struct temp_sensor_t *sensor,
 					  int *temp_ptr)
 {
-	return f75303_get_val(sensor->idx, temp_ptr);
+	return f75303_get_val_k(sensor->idx, temp_ptr);
 }
-#endif /* F75303_COMPAT */
+#endif /* f75303_COMPAT */
 
-#define DEFINE_F75303_DATA(node_id)                     \
-	[F75303_SENSOR_ID(node_id)] = {                 \
-		.i2c_port = I2C_PORT_BY_DEV(node_id),   \
-		.i2c_addr_flags = DT_REG_ADDR(node_id), \
+#define DEFINE_F75303_DATA(sensor_id)                     \
+	[F75303_SENSOR_ID(sensor_id)] = {                 \
+		.i2c_port = I2C_PORT_BY_DEV(sensor_id),   \
+		.i2c_addr_flags = DT_REG_ADDR(sensor_id), \
 	},
 
-#define GET_ZEPHYR_TEMP_SENSOR_F75303(named_id)                  \
+#define GET_ZEPHYR_TEMP_SENSOR_F75303(named_id, sensor_id)       \
 	(&(const struct zephyr_temp_sensor){                     \
 		.read = &f75303_get_temp,                        \
 		.thermistor = NULL,                              \
 		.update_temperature = f75303_update_temperature, \
 		FILL_POWER_GOOD(named_id) })
 
-#define TEMP_F75303(named_id, sensor_id)                                \
-	[TEMP_SENSOR_ID(named_id)] = {                                  \
-		.name = DT_NODE_FULL_NAME(sensor_id),                   \
-		.idx = F75303_SENSOR_ID(sensor_id),                     \
-		.type = TEMP_SENSOR_TYPE_BOARD,                         \
-		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_F75303(named_id), \
+#define TEMP_F75303(named_id, sensor_id)                                    \
+	[TEMP_SENSOR_ID(named_id)] = {                                      \
+		.name = DT_NODE_FULL_NAME(sensor_id),                       \
+		.idx = F75303_SENSOR_ID(sensor_id),                         \
+		.type = TEMP_SENSOR_TYPE_BOARD,                             \
+		.zephyr_info =                                              \
+			GET_ZEPHYR_TEMP_SENSOR_F75303(named_id, sensor_id), \
 	}
 
-const struct f75303_sensor_t f75303_sensors[F75303_COUNT] = {
+const struct f75303_sensor_t f75303_sensors[F75303_IDX_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, DEFINE_F75303_DATA)
 };
+
 
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #if DT_HAS_COMPAT_STATUS_OKAY(AMDR23M_COMPAT)
@@ -251,7 +253,7 @@ const struct f75303_sensor_t f75303_sensors[F75303_COUNT] = {
 __maybe_unused static int amdr23m_get_temp(const struct temp_sensor_t *sensor,
 					  int *temp_ptr)
 {
-	return amdr23m_get_val(sensor->idx, temp_ptr);
+	return amdr23m_get_val_k(sensor->idx, temp_ptr);
 }
 #endif /* AMDR23M_COMPAT_COMPAT */
 
@@ -261,7 +263,7 @@ __maybe_unused static int amdr23m_get_temp(const struct temp_sensor_t *sensor,
 		.i2c_addr_flags = DT_REG_ADDR(node_id), \
 	},
 
-#define GET_ZEPHYR_TEMP_SENSOR_AMDR23M(named_id)                  \
+#define GET_ZEPHYR_TEMP_SENSOR_AMDR23M(named_id, sensor_id)        \
 	(&(const struct zephyr_temp_sensor){                     \
 		.read = &amdr23m_get_temp,                        \
 		.thermistor = NULL,                              \
@@ -273,7 +275,7 @@ __maybe_unused static int amdr23m_get_temp(const struct temp_sensor_t *sensor,
 		.name = DT_NODE_FULL_NAME(sensor_id),                   \
 		.idx = AMDR23M_SENSOR_ID(sensor_id),                     \
 		.type = TEMP_SENSOR_TYPE_BOARD,                         \
-		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_AMDR23M(named_id), \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_AMDR23M(named_id, sensor_id), \
 	}
 
 const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
@@ -318,9 +320,10 @@ const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
 	CHECK_COMPAT(PCT2075_COMPAT, named_id, sensor_id, TEMP_PCT2075)       \
 	CHECK_COMPAT(SB_TSI_COMPAT, named_id, sensor_id, TEMP_SB_TSI)         \
 	CHECK_COMPAT(TMP112_COMPAT, named_id, sensor_id, TEMP_TMP112)         \
+	CHECK_COMPAT(RT9490_CHG_COMPAT, named_id, sensor_id, TEMP_RT9490)     \
 	CHECK_COMPAT(F75303_COMPAT, named_id, sensor_id, TEMP_F75303)         \
-	CHECK_COMPAT(AMDR23M_COMPAT, named_id, sensor_id, TEMP_AMDR23M)         \
-	CHECK_COMPAT(RT9490_CHG_COMPAT, named_id, sensor_id, TEMP_RT9490)
+	CHECK_COMPAT(AMDR23M_COMPAT, named_id, sensor_id, TEMP_AMDR23M)
+
 
 #define TEMP_SENSOR_ENTRY(named_id) \
 	TEMP_SENSOR_FIND(named_id, DT_PHANDLE(named_id, sensor))

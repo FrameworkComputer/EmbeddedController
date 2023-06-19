@@ -9,8 +9,6 @@
  * USB Power Delivery Specification Revision 3.0, Version 2.0 Section 6.4.8
  */
 
-#include <stdbool.h>
-#include <stdint.h>
 #include "compile_time_macros.h"
 #include "console.h"
 #include "tcpm/tcpm.h"
@@ -22,8 +20,12 @@
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
+#include "usb_prl_sm.h"
 #include "usb_tbt_alt_mode.h"
 #include "usbc_ppc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
@@ -168,6 +170,9 @@ bool enter_usb_port_partner_is_capable(int port)
 	if (usb4_state[port] == USB4_INACTIVE)
 		return false;
 
+	if (prl_get_rev(port, TCPCI_MSG_SOP) < PD_REV30)
+		return false;
+
 	if (!PD_PRODUCT_IS_USB4(disc->identity.product_t1.raw_value))
 		return false;
 
@@ -281,8 +286,6 @@ uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type)
 		 * Ref: Tiger Lake Platform PD Controller Interface Requirements
 		 * for Integrated USBC, section A.2.2: USB4 as DFP.
 		 * Enter safe mode before sending Enter USB SOP/SOP'/SOP''
-		 * TODO (b/156749387): Remove once data reset feature is in
-		 * place.
 		 */
 		usb_mux_set_safe_mode(port);
 

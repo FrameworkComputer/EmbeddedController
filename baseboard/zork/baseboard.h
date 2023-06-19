@@ -76,7 +76,8 @@
 #define CONFIG_CHARGER
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
+#define CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT 512
 #define CONFIG_CHARGER_ISL9241
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
@@ -290,7 +291,6 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
-#include "math_util.h"
 #include "registers.h"
 
 enum power_signal {
@@ -317,23 +317,6 @@ enum sensor_id {
 	BASE_GYRO,
 	SENSOR_COUNT,
 };
-
-/*
- * Matrix to rotate accelerators into the standard reference frame.  The default
- * is the identity which is correct for the reference design.  Variations of
- * Zork may need to change it for manufacturability.
- * For the lid:
- *  +x to the right
- *  +y up
- *  +z out of the page
- *
- * The principle axes of the body are aligned with the lid when the lid is in
- * the 180 degree position (open, flat).
- *
- * Boards within the Zork family may need to modify this definition at
- * board_init() time.
- */
-extern mat33_fp_t zork_base_standard_ref;
 
 extern const struct thermistor_info thermistor_info;
 

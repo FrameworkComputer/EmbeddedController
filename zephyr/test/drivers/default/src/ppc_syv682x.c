@@ -3,26 +3,26 @@
  * found in the LICENSE file.
  */
 
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_syv682x.h"
+#include "syv682x.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
+#include "timer.h"
+#include "usbc_ppc.h"
+
 #include <zephyr/device.h>
 #include <zephyr/devicetree/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_syv682x.h"
-#include "test/drivers/stubs.h"
-#include "syv682x.h"
-#include "timer.h"
-#include "test/drivers/test_state.h"
-#include "test/drivers/utils.h"
-#include "usbc_ppc.h"
-
 #define SYV682X_NODE DT_NODELABEL(syv682x_emul)
-#define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)
+#define GPIO_USB_C1_FRS_EN_PATH NAMED_GPIOS_GPIO_NODE(usb_c1_frs_en)
 
 struct ppc_syv682x_fixture {
 	const struct emul *ppc_emul;
@@ -55,6 +55,14 @@ static void *syv682x_test_setup(void)
 	return &fixture;
 }
 
+static void syv682x_test_before(void *data)
+{
+	/* Reset ppc_discharge_vbus to disable to clear the cached force
+	 * discharge bit in the CONTROL_2 register
+	 */
+	ppc_discharge_vbus(syv682x_port, false);
+}
+
 static void syv682x_test_after(void *data)
 {
 	struct ppc_syv682x_fixture *fixture = data;
@@ -79,8 +87,8 @@ static void syv682x_test_after(void *data)
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST_SUITE(ppc_syv682x, drivers_predicate_post_main, syv682x_test_setup, NULL,
-	    syv682x_test_after, NULL);
+ZTEST_SUITE(ppc_syv682x, drivers_predicate_post_main, syv682x_test_setup,
+	    syv682x_test_before, syv682x_test_after, NULL);
 
 ZTEST_F(ppc_syv682x, test_syv682x_board_is_syv682c)
 {

@@ -11,9 +11,9 @@
 #include "chipset.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
-#include "hooks.h"
 
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1
@@ -139,7 +139,7 @@ static void led_set_battery(void)
 	if (!board_is_convertible()) {
 		if (chipset_in_state(CHIPSET_STATE_SUSPEND |
 				     CHIPSET_STATE_STANDBY) &&
-		    charge_get_state() != PWR_STATE_CHARGE) {
+		    led_pwr_get_state() != LED_PWRS_CHARGE) {
 			power_ticks++;
 
 			led_set_color_battery(0, power_ticks & 0x4 ? LED_WHITE :
@@ -152,12 +152,12 @@ static void led_set_battery(void)
 
 	power_ticks = 0;
 
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		set_active_port_color(LED_AMBER);
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
 			if (charge_get_percent() < 10)
 				led_set_color_battery(
@@ -173,17 +173,17 @@ static void led_set_battery(void)
 		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
 			led_set_color_battery(0, LED_OFF);
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		set_active_port_color((battery_ticks & 0x2) ? LED_WHITE :
 							      LED_OFF);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		set_active_port_color(LED_WHITE);
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		set_active_port_color(
 			(battery_ticks % LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
 				LED_AMBER :

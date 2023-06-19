@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
-#include "usb_mux.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "usb_mux.h"
+
+#include <zephyr/ztest.h>
 
 static void ap_mux_control_before(void *data)
 {

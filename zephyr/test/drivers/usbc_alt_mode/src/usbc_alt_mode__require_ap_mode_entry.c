@@ -3,15 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "test/drivers/utils.h"
 #include "test_usbc_alt_mode.h"
 
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+
+#include <gpio.h>
+
 /* Tests that require CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY enabled */
 
-ZTEST_F(usbc_alt_mode, verify_displayport_mode_reentry)
+ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_reentry)
 {
 	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		ztest_test_skip();
@@ -32,54 +35,22 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_reentry)
 	k_sleep(K_SECONDS(1));
 	zassert_true(fixture->partner.displayport_configured);
 
-	/* Verify that DisplayPort is the active alternate mode. */
-	struct ec_params_usb_pd_get_mode_response response;
-	int response_size;
+	/*
+	 * Verify that DisplayPort is the active alternate mode by checking our
+	 * MUX settings
+	 */
+	struct ec_response_typec_status status;
 
-	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &response, &response_size);
-
-	/* Response should be populated with a DisplayPort VDO */
-	zassert_equal(response_size, sizeof(response));
-	zassert_equal(response.svid, USB_SID_DISPLAYPORT);
-	zassert_equal(response.vdo[0],
-		      fixture->partner.modes_vdm[response.opos]);
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED),
+		      USB_PD_MUX_DP_ENABLED, "Failed to see DP mux set");
 }
 
-ZTEST_F(usbc_alt_mode, verify_mode_entry_via_pd_host_cmd)
+ZTEST_F(usbc_alt_mode, test_verify_mode_exit_via_pd_host_cmd)
 {
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
-		ztest_test_skip();
-	}
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
 
-	/* Verify entering mode */
-	struct ec_params_usb_pd_set_mode_request set_mode_params = {
-		.cmd = PD_ENTER_MODE,
-		.port = TEST_PORT,
-		.opos = 1, /* Second VDO (after Discovery Responses) */
-		.svid = USB_SID_DISPLAYPORT,
-	};
-
-	struct host_cmd_handler_args set_mode_args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_PD_SET_AMODE, 0, set_mode_params);
-
-	zassert_ok(host_command_process(&set_mode_args));
-
-	/* Verify that DisplayPort is the active alternate mode. */
-	struct ec_params_usb_pd_get_mode_response get_mode_response;
-	int response_size;
-
-	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &get_mode_response,
-				  &response_size);
-
-	/* Response should be populated with a DisplayPort VDO */
-	zassert_equal(response_size, sizeof(get_mode_response));
-	zassert_equal(get_mode_response.svid, USB_SID_DISPLAYPORT);
-	zassert_equal(get_mode_response.vdo[0],
-		      fixture->partner.modes_vdm[get_mode_response.opos]);
-}
-
-ZTEST_F(usbc_alt_mode, verify_mode_exit_via_pd_host_cmd)
-{
 	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		ztest_test_skip();
 	}
@@ -87,36 +58,69 @@ ZTEST_F(usbc_alt_mode, verify_mode_exit_via_pd_host_cmd)
 	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
 	k_sleep(K_SECONDS(1));
 
-	struct ec_params_usb_pd_get_mode_response get_mode_response;
-	int response_size;
-
-	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &get_mode_response,
-				  &response_size);
-
-	/* We require an the active alternate mode (DisplayPort in this case),
-	 * entering an alternate most (DisplayPort specifically) has already
-	 * been verified in another test
+	/*
+	 * Set HPD so we can see it clear on Exit
 	 */
-	zassert_equal(response_size, sizeof(get_mode_response));
-	zassert_equal(get_mode_response.svid, USB_SID_DISPLAYPORT);
-	zassert_equal(get_mode_response.vdo[0],
-		      fixture->partner.modes_vdm[get_mode_response.opos]);
+	uint32_t vdm_attention_data[2];
 
-	struct ec_params_usb_pd_set_mode_request set_mode_params = {
-		.cmd = PD_EXIT_MODE,
-		.port = TEST_PORT,
-		.opos = get_mode_response.opos,
-		.svid = get_mode_response.svid,
-	};
+	vdm_attention_data[0] =
+		VDO(USB_SID_DISPLAYPORT, 1,
+		    VDO_OPOS(1) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION);
+	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
+					      true, /* HPD_HI|LOW - Changed*/
+					      0, /* request exit DP */
+					      0, /* request exit USB */
+					      0, /* MF pref */
+					      true, /* DP Enabled */
+					      0, /* power low e.g. normal */
+					      0x2 /* Connected as Sink */);
+	tcpci_partner_send_data_msg(&fixture->partner, PD_DATA_VENDOR_DEF,
+				    vdm_attention_data, 2, 0);
 
-	struct host_cmd_handler_args set_mode_args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_PD_SET_AMODE, 0, set_mode_params);
+	k_sleep(K_SECONDS(1));
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
 
-	zassert_ok(host_command_process(&set_mode_args));
+	host_cmd_typec_control_exit_modes(TEST_PORT);
+	k_sleep(K_SECONDS(1));
+	zassert_false(fixture->partner.displayport_configured);
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
 
-	/* Verify mode was exited using get_amode command */
-	host_cmd_usb_pd_get_amode(TEST_PORT, 0, &get_mode_response,
-				  &response_size);
-	zassert_not_equal(get_mode_response.vdo[0],
-			  fixture->partner.modes_vdm[get_mode_response.opos]);
+	/*
+	 * Verify that DisplayPort is no longer active by checking our
+	 * MUX settings
+	 */
+	struct ec_response_typec_status status;
+
+	status = host_cmd_typec_status(TEST_PORT);
+	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED), 0);
+}
+
+ZTEST_F(usbc_alt_mode, test_verify_early_status_hpd_set)
+{
+	const struct gpio_dt_spec *gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		ztest_test_skip();
+	}
+
+	/*
+	 * Tweak our DP:Status reply to set HPD and ensure it's transmitted
+	 * through our HPD GPIO
+	 */
+	fixture->partner.dp_status_vdm[VDO_INDEX_HDR + 1] =
+		/* Mainly copied from hoho */
+		VDO_DP_STATUS(0, /* IRQ_HPD */
+			      true, /* HPD_HI|LOW - Changed*/
+			      0, /* request exit DP */
+			      0, /* request exit USB */
+			      0, /* MF pref */
+			      true, /* DP Enabled */
+			      0, /* power low e.g. normal */
+			      0x2 /* Connected as Sink */);
+
+	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+	k_sleep(K_SECONDS(1));
+
+	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
 }

@@ -7,7 +7,9 @@
  * RT1718S TCPC Driver
  */
 
+#include "battery.h"
 #include "console.h"
+#include "driver/bc12/rt1718s.h"
 #include "driver/tcpm/rt1718s.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
@@ -33,6 +35,7 @@
 #define FLAG_FRS_RX_SIGNALLED BIT(1)
 #define FLAG_FRS_VBUS_VALID_FALL BIT(2)
 static atomic_t frs_flag[CONFIG_USB_PD_PORT_MAX_COUNT];
+K_MUTEX_DEFINE(adc_lock);
 
 /* i2c_write function which won't wake TCPC from low power mode. */
 static int rt1718s_write(int port, int reg, int val, int len)
@@ -107,84 +110,6 @@ int rt1718s_sw_reset(int port)
 	return rv;
 }
 
-/* enable bc 1.2 sink function  */
-static int rt1718s_enable_bc12_sink(int port, bool en)
-{
-	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
-				    RT1718S_RT2_BC12_SNK_FUNC_BC12_SNK_EN,
-				    en ? 0xFF : 0);
-}
-
-static int rt1718s_set_bc12_sink_spec_ta(int port, bool en)
-{
-	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
-				    RT1718S_RT2_BC12_SNK_FUNC_SPEC_TA_EN,
-				    en ? 0xFF : 0);
-}
-
-static int rt1718s_set_bc12_sink_dcdt_sel(int port, uint8_t dcdt_sel)
-{
-	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
-				    RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_MASK,
-				    dcdt_sel);
-}
-
-static int rt1718s_set_bc12_sink_vlgc_option(int port, bool en)
-{
-	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
-				    RT1718S_RT2_BC12_SNK_FUNC_VLGC_OPT,
-				    en ? 0xFF : 0);
-}
-
-static int rt1718s_set_bc12_sink_vport_sel(int port, uint8_t sel)
-{
-	return rt1718s_update_bits8(
-		port, RT1718S_RT2_DPDM_CTR1_DPDM_SET,
-		RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_MASK, sel);
-}
-
-static int rt1718s_set_bc12_sink_wait_vbus(int port, bool en)
-{
-	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
-				    RT1718S_RT2_BC12_SNK_FUNC_BC12_WAIT_VBUS,
-				    en ? 0xFF : 0);
-}
-
-/*
- * rt1718s BC12 function initial
- */
-static int rt1718s_bc12_init(int port)
-{
-	/* Enable vendor defined BC12 function */
-	RETURN_ERROR(rt1718s_write8(port, RT1718S_RT_MASK6,
-				    RT1718S_RT_MASK6_M_BC12_SNK_DONE |
-					    RT1718S_RT_MASK6_M_BC12_TA_CHG));
-
-	RETURN_ERROR(rt1718s_write8(port, RT1718S_RT2_SBU_CTRL_01,
-				    RT1718S_RT2_SBU_CTRL_01_DPDM_VIEN |
-					    RT1718S_RT2_SBU_CTRL_01_DM_SWEN |
-					    RT1718S_RT2_SBU_CTRL_01_DP_SWEN));
-
-	/* Disable 2.7v mode */
-	RETURN_ERROR(rt1718s_set_bc12_sink_spec_ta(port, false));
-
-	/* DCDT select 600ms timeout */
-	RETURN_ERROR(rt1718s_set_bc12_sink_dcdt_sel(
-		port, RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_600MS));
-
-	/* Disable vlgc option */
-	RETURN_ERROR(rt1718s_set_bc12_sink_vlgc_option(port, false));
-
-	/* DPDM voltage selection */
-	RETURN_ERROR(rt1718s_set_bc12_sink_vport_sel(
-		port, RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_0_65V));
-
-	/* Disable sink wait vbus */
-	RETURN_ERROR(rt1718s_set_bc12_sink_wait_vbus(port, false));
-
-	return EC_SUCCESS;
-}
-
 static int rt1718s_workaround(int port)
 {
 	int device_id;
@@ -200,7 +125,7 @@ static int rt1718s_workaround(int port)
 	case RT1718S_DEVICE_ID_ES2:
 		RETURN_ERROR(rt1718s_update_bits8(
 			port, TCPC_REG_FAULT_CTRL,
-			TCPC_REG_FAULT_CTRL_VBUS_OCP_FAULT_DIS, 0xFF));
+			TCPC_REG_FAULT_CTRL_VCONN_OCP_FAULT_DIS, 0xFF));
 		RETURN_ERROR(rt1718s_update_bits8(
 			port, RT1718S_VCON_CTRL4,
 			RT1718S_VCON_CTRL4_UVP_CP_EN |
@@ -260,12 +185,18 @@ static int rt1718s_init(int port)
 {
 	static bool need_sw_reset = true;
 
+	/* Do not reset the TCPC when device is no battery connected, otherwise
+	 * the SINK GPIO to the PPC may be reset, and cause a brown-out.
+	 */
+	need_sw_reset &= battery_is_present() == BP_YES;
+
 	if (!system_jumped_late() && need_sw_reset) {
 		RETURN_ERROR(rt1718s_sw_reset(port));
 		need_sw_reset = false;
 	}
 
-	RETURN_ERROR(rt1718s_bc12_init(port));
+	if (IS_ENABLED(CONFIG_BC12_DETECT_RT1718S))
+		RETURN_ERROR(rt1718s_bc12_init(port));
 
 	/* Set VBUS_VOL_SEL to 20V */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT2_VBUS_VOL_CTRL,
@@ -324,95 +255,6 @@ static int rt1718s_init(int port)
 __overridable int board_rt1718s_init(int port)
 {
 	return EC_SUCCESS;
-}
-
-static enum charge_supplier rt1718s_get_bc12_type(int port)
-{
-	int data;
-
-	if (rt1718s_read8(port, RT1718S_RT2_BC12_STAT, &data))
-		return CHARGE_SUPPLIER_OTHER;
-
-	switch (data & RT1718S_RT2_BC12_STAT_PORT_STATUS_MASK) {
-	case RT1718S_RT2_BC12_STAT_PORT_STATUS_NONE:
-		return CHARGE_SUPPLIER_NONE;
-	case RT1718S_RT2_BC12_STAT_PORT_STATUS_SDP:
-		return CHARGE_SUPPLIER_BC12_SDP;
-	case RT1718S_RT2_BC12_STAT_PORT_STATUS_CDP:
-		return CHARGE_SUPPLIER_BC12_CDP;
-	case RT1718S_RT2_BC12_STAT_PORT_STATUS_DCP:
-		return CHARGE_SUPPLIER_BC12_DCP;
-	}
-
-	return CHARGE_SUPPLIER_OTHER;
-}
-
-static int rt1718s_get_bc12_ilim(enum charge_supplier supplier)
-{
-	switch (supplier) {
-	case CHARGE_SUPPLIER_BC12_DCP:
-	case CHARGE_SUPPLIER_BC12_CDP:
-		return USB_CHARGER_MAX_CURR_MA;
-	case CHARGE_SUPPLIER_BC12_SDP:
-	default:
-		return USB_CHARGER_MIN_CURR_MA;
-	}
-}
-
-static void rt1718s_update_charge_manager(int port,
-					  enum charge_supplier new_bc12_type)
-{
-	static enum charge_supplier current_bc12_type = CHARGE_SUPPLIER_NONE;
-
-	if (new_bc12_type != current_bc12_type) {
-		if (current_bc12_type != CHARGE_SUPPLIER_NONE)
-			charge_manager_update_charge(current_bc12_type, port,
-						     NULL);
-
-		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
-			struct charge_port_info chg = {
-				.current = rt1718s_get_bc12_ilim(new_bc12_type),
-				.voltage = USB_CHARGER_VOLTAGE_MV,
-			};
-
-			charge_manager_update_charge(new_bc12_type, port, &chg);
-		}
-
-		current_bc12_type = new_bc12_type;
-	}
-}
-
-static void rt1718s_bc12_usb_charger_task_init(const int port)
-{
-	rt1718s_enable_bc12_sink(port, false);
-}
-
-static void rt1718s_bc12_usb_charger_task_event(const int port, uint32_t evt)
-{
-	bool is_non_pd_sink = !pd_capable(port) &&
-			      !usb_charger_port_is_sourcing_vbus(port) &&
-			      pd_check_vbus_level(port, VBUS_PRESENT);
-
-	if (evt & USB_CHG_EVENT_VBUS) {
-		if (is_non_pd_sink)
-			rt1718s_enable_bc12_sink(port, true);
-		else
-			rt1718s_update_charge_manager(port,
-						      CHARGE_SUPPLIER_NONE);
-	}
-
-	/* detection done, update charge_manager and stop detection */
-	if (evt & USB_CHG_EVENT_BC12) {
-		int type;
-
-		if (is_non_pd_sink)
-			type = rt1718s_get_bc12_type(port);
-		else
-			type = CHARGE_SUPPLIER_NONE;
-
-		rt1718s_update_charge_manager(port, type);
-		rt1718s_enable_bc12_sink(port, false);
-	}
 }
 
 static void frs_gpio_disable_deferred(void)
@@ -512,19 +354,21 @@ void rt1718s_vendor_defined_alert(int port)
 		}
 	}
 
-	/* Process BC12 alert */
-	rv = rt1718s_read8(port, RT1718S_RT_INT6, &value);
-	if (rv)
-		return;
+	if (IS_ENABLED(CONFIG_BC12_DETECT_RT1718S)) {
+		/* Process BC12 alert */
+		rv = rt1718s_read8(port, RT1718S_RT_INT6, &value);
+		if (rv)
+			return;
 
-	/* clear BC12 alert */
-	rv = rt1718s_write8(port, RT1718S_RT_INT6, value);
-	if (rv)
-		return;
+		/* clear BC12 alert */
+		rv = rt1718s_write8(port, RT1718S_RT_INT6, value);
+		if (rv)
+			return;
 
-	/* check snk done */
-	if (value & RT1718S_RT_INT6_INT_BC12_SNK_DONE)
-		usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
+		/* check snk done */
+		if (value & RT1718S_RT_INT6_INT_BC12_SNK_DONE)
+			usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
+	}
 
 	/* clear the alerts from rt1718s_workaround() */
 	rv = rt1718s_write8(port, RT1718S_RT_INT2, 0xFF);
@@ -544,15 +388,37 @@ __overridable int board_rt1718s_set_snk_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
+__overridable int board_rt1718s_set_src_enable(int port, int enable)
+{
+	return EC_SUCCESS;
+}
+
 static int rt1718s_tcpm_set_snk_ctrl(int port, int enable)
 {
 	int rv;
 
-	rv = board_rt1718s_set_snk_enable(port, enable);
+	/* The order matters. Board hook should run after the tcpm call to
+	 * prevent the GPIO config auto-reload overwriting a wrong value.
+	 */
+	rv = tcpci_tcpm_set_snk_ctrl(port, enable);
 	if (rv)
 		return rv;
 
-	return tcpci_tcpm_set_snk_ctrl(port, enable);
+	return board_rt1718s_set_snk_enable(port, enable);
+}
+
+static int rt1718s_tcpm_set_src_ctrl(int port, int enable)
+{
+	int rv;
+
+	/* The order matters. Board hook should run after the tcpm call to
+	 * prevent the GPIO config auto-reload overwriting a wrong value.
+	 */
+	rv = tcpci_tcpm_set_src_ctrl(port, enable);
+	if (rv)
+		return rv;
+
+	return board_rt1718s_set_src_enable(port, enable);
 }
 
 static void rt1718s_alert(int port)
@@ -585,7 +451,6 @@ static int rt1718s_enter_low_power_mode(int port)
 
 int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
 {
-	static mutex_t adc_lock;
 	int rv;
 	const int max_wait_times = 30;
 
@@ -800,7 +665,7 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 #endif
 	.get_chip_info = &tcpci_get_chip_info,
 	.set_snk_ctrl = &rt1718s_tcpm_set_snk_ctrl,
-	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
+	.set_src_ctrl = &rt1718s_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &rt1718s_enter_low_power_mode,
 #endif
@@ -812,9 +677,4 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPM_SBU
 	.set_sbu = &rt1718s_set_sbu,
 #endif
-};
-
-const struct bc12_drv rt1718s_bc12_drv = {
-	.usb_charger_task_init = rt1718s_bc12_usb_charger_task_init,
-	.usb_charger_task_event = rt1718s_bc12_usb_charger_task_event,
 };

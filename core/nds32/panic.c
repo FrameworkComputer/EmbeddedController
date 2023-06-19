@@ -10,6 +10,7 @@
 #include "printf.h"
 #include "software_panic.h"
 #include "system.h"
+#include "system_safe_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -133,6 +134,14 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 	}
 }
 
+/**
+ * Returns the SP register
+ */
+uint32_t get_panic_stack_pointer(const struct panic_data *pdata)
+{
+	return pdata->nds_n8.regs[15];
+}
+
 static void print_panic_information(uint32_t *regs, uint32_t itype,
 				    uint32_t ipc, uint32_t ipsw)
 {
@@ -190,6 +199,26 @@ void report_panic(uint32_t *regs, uint32_t itype)
 	pdata->nds_n8.ipsw = regs[17];
 
 	print_panic_information(regs, itype, regs[16], regs[17]);
+
+	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
+		if (start_system_safe_mode() == EC_SUCCESS) {
+			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
+			/* If not in an interrupt context (e.g. software_panic),
+			 * the next highest priority task will immediately
+			 * execute when the current task is disabled on the
+			 * following line.
+			 */
+			task_disable_task(task_get_current());
+			/* Current task has been disabled.
+			 * Returning from the exception here should cause the
+			 * highest priority task that wasn't disabled to run.
+			 */
+			asm("iret");
+			__builtin_unreachable();
+		}
+		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;
+	}
+
 	panic_reboot();
 }
 

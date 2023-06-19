@@ -1,0 +1,35 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	nissa-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		fan {
+			enum-name = "FW_FAN";
+			start = <1>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <1>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <0>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+	};
+};

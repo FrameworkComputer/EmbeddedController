@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "board_rw.h"
 #include "common.h"
 #include "console.h"
 #include "fpsensor_detect.h"
@@ -13,7 +14,6 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
-#include "board_rw.h"
 
 #ifndef SECTION_IS_RW
 #error "This file should only be built for RW."
@@ -29,6 +29,7 @@ int console_is_restricted(void)
 	return system_is_locked();
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* SPI devices */
@@ -100,7 +101,7 @@ static void spi_configure(enum fp_sensor_spi_select spi_select)
 
 void board_init(void)
 {
-	enum fp_sensor_spi_select spi_select = get_fp_sensor_spi_select();
+	enum fp_sensor_spi_select spi_select = fpsensor_detect_get_spi_select();
 
 	/*
 	 * FP_RST_ODL pin is defined in gpio_rw.inc (with GPIO_OUT_HIGH

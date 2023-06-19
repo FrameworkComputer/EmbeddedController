@@ -1,0 +1,119 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		pwr-power-state-off {
+			color-0 {
+				led-color = <&color_power_off>;
+			};
+		};
+
+		pwr-power-state-on {
+			chipset-state = "POWER_S0";
+
+			color-0 {
+				led-color = <&color_power_green>;
+			};
+		};
+
+		pwr-power-state-s3 {
+			chipset-state = "POWER_S3";
+
+			color-0 {
+				led-color = <&color_power_green>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_power_off>;
+				period-ms = <3000>;
+			};
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		/* NOTE: &pwm number needs same with channel number */
+		led_power_red: ec_led1_odl {
+			pwms = <&pwm0
+				PWM_CHANNEL_0
+				PWM_HZ(324)
+				PWM_POLARITY_INVERTED>;
+		};
+
+		led_power_green: ec_led2_odl {
+			pwms = <&pwm1
+				PWM_CHANNEL_1
+				PWM_HZ(324)
+				PWM_POLARITY_INVERTED>;
+		};
+
+		led_power_blue: ec_led3_odl {
+			pwms = <&pwm2
+				PWM_CHANNEL_2
+				PWM_HZ(324)
+				PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_power_red &led_power_green
+				    &led_power_blue>;
+
+			color_power_off: color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0 0 0>;
+			};
+
+			color_power_green: color-power-green {
+				led-color = "LED_GREEN";
+				br-color = "EC_LED_COLOR_GREEN";
+				led-values = <0 100 0>;
+			};
+
+			color_power_blue: color-power-blue {
+				led-color = "LED_BLUE";
+				br-color = "EC_LED_COLOR_BLUE";
+				led-values = <0 0 100>;
+			};
+		};
+	};
+};
+
+/*
+ * LED1
+ * Broken, see b/269706760#comment4
+ */
+&pwm0 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm0_gpa0_default>;
+	pinctrl-names = "default";
+};
+
+/* LED2 */
+&pwm1 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+
+/* LED3 */
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};

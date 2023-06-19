@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_KEYBOARD_PROTOCOL_H
 #define __CROS_EC_KEYBOARD_PROTOCOL_H
 
-#include "common.h"
 #include "button.h"
+#include "common.h"
 
 /* Routines common to all protocols */
 

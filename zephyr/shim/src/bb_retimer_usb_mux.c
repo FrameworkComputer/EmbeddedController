@@ -3,16 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
 #include "usbc/usb_muxes.h"
 
-/**
- * This prevents creating struct usb_mux bb_controls[] for platforms that didn't
- * migrate USB mux configuration to DTS yet.
- */
-#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_usb_mux_chain)
+#include <zephyr/devicetree.h>
+#include <zephyr/sys/util_macro.h>
 
 BB_RETIMER_CHECK_SAME_CONTROLS(BB_RETIMER_INSTANCES_LIST)
 
@@ -35,5 +30,3 @@ BB_RETIMER_CHECK_SAME_CONTROLS(BB_RETIMER_INSTANCES_LIST)
 BB_CONTROLS_CONST struct bb_usb_control bb_controls[] = {
 	USB_MUX_BB_RETIMERS_CONTROLS_ARRAY
 };
-
-#endif /* #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_usb_mux_chain) */

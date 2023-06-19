@@ -3,17 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <atomic.h>
-#include <zephyr/device.h>
-#include <zephyr/drivers/espi.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <stdint.h>
-
-#include <ap_power/ap_power.h>
-#include <ap_power/ap_power_events.h>
-#include <ap_power/ap_power_espi.h>
 #include "acpi.h"
 #include "chipset.h"
 #include "common.h"
@@ -24,9 +13,23 @@
 #include "lpc.h"
 #include "port80.h"
 #include "power.h"
+#include "system_boot_time.h"
 #include "task.h"
 #include "timer.h"
 #include "zephyr_espi_shim.h"
+
+#include <stdint.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
+#include <ap_power/ap_power_espi.h>
+#include <ap_power/ap_power_events.h>
+#include <atomic.h>
 
 #define VWIRE_PULSE_TRIGGER_TIME \
 	CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US
@@ -160,6 +163,8 @@ static void espi_chipset_reset(void)
 	} else {
 		hook_notify(HOOK_CHIPSET_RESET);
 	}
+
+	update_ap_boot_time(ESPIRST);
 }
 DECLARE_DEFERRED(espi_chipset_reset);
 #endif /* CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK */
@@ -187,6 +192,10 @@ static void espi_vwire_handler(const struct device *dev,
 	if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
 	    event.evt_data == 0) {
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
+		update_ap_boot_time(PLTRST_LOW);
+	} else if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
+		   event.evt_data == 1) {
+		update_ap_boot_time(PLTRST_HIGH);
 	}
 #endif
 }
@@ -604,7 +613,7 @@ int lpc_keyboard_has_char(void)
 	return status;
 }
 
-void lpc_keyboard_put_char(uint8_t chr, int send_irq)
+test_mockable void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	uint32_t kb_char = chr;
 	int rv;
@@ -697,7 +706,7 @@ static void espi_peripheral_handler(const struct device *dev,
 	}
 }
 
-static int zephyr_shim_setup_espi(const struct device *unused)
+static int zephyr_shim_setup_espi(void)
 {
 	uint32_t enable = 1;
 	static const struct {

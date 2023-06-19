@@ -227,6 +227,7 @@
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_lsm6dsm>;
 			drv-data = <&lsm6dsm_data_gyro>;
+			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
 			alternate-for = <&base_gyro>;
 			alternate-ssfc-indicator = <&base_sensor_1>;
 		};

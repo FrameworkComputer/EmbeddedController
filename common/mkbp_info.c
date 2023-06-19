@@ -1,4 +1,4 @@
-/* Copyright 2021 The ChromiumOS Authors.
+/* Copyright 2021 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -120,12 +120,10 @@ static enum ec_status mkbp_get_info(struct host_cmd_handler_args *args)
 				args->response_size = sizeof(r->host_event);
 				break;
 
-#ifdef CONFIG_HOST_EVENT64
 			case EC_MKBP_EVENT_HOST_EVENT64:
 				r->host_event64 = host_get_events();
 				args->response_size = sizeof(r->host_event64);
 				break;
-#endif
 
 #ifdef CONFIG_MKBP_INPUT_DEVICES
 			case EC_MKBP_EVENT_BUTTON:

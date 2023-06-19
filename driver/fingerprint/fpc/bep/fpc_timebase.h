@@ -13,9 +13,9 @@
  * Supplies tick counter and wait operation(s).
  */
 
-#include <stdint.h>
-
 #include "common.h"
+
+#include <stdint.h>
 
 /**
  * @brief Reads the system tick counter.

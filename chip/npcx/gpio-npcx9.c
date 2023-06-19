@@ -181,21 +181,22 @@ GPIO_IRQ_FUNC(__gpio_wk1e_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_5));
 GPIO_IRQ_FUNC(__gpio_wk1f_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_6));
 GPIO_IRQ_FUNC(__gpio_wk1g_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_7));
 
-DECLARE_IRQ(NPCX_IRQ_CR_SIN2_WKINTA_0, __gpio_cr_sin2_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0, __gpio_wk0b_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTC_0, __gpio_wk0c_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_MTC_WKINTD_0, __gpio_rtc_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTE_0, __gpio_host_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTF_0, __gpio_wk0f_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTG_0, __gpio_wk0g_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTH_0, __gpio_wk0h_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTA_1, __gpio_wk1a_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTB_1, __gpio_wk1b_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_CR_SIN2_WKINTA_0, __gpio_cr_sin2_interrupt,
+	    NPCX_MIWU0_GROUP_A);
+DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0, __gpio_wk0b_interrupt, NPCX_MIWU0_GROUP_B);
+DECLARE_IRQ(NPCX_IRQ_WKINTC_0, __gpio_wk0c_interrupt, NPCX_MIWU0_GROUP_C);
+DECLARE_IRQ(NPCX_IRQ_MTC_WKINTD_0, __gpio_rtc_interrupt, NPCX_MIWU0_GROUP_D);
+DECLARE_IRQ(NPCX_IRQ_WKINTE_0, __gpio_host_interrupt, NPCX_MIWU0_GROUP_E);
+DECLARE_IRQ(NPCX_IRQ_WKINTF_0, __gpio_wk0f_interrupt, NPCX_MIWU0_GROUP_F);
+DECLARE_IRQ(NPCX_IRQ_WKINTG_0, __gpio_wk0g_interrupt, NPCX_MIWU0_GROUP_G);
+DECLARE_IRQ(NPCX_IRQ_WKINTH_0, __gpio_wk0h_interrupt, NPCX_MIWU0_GROUP_H);
+DECLARE_IRQ(NPCX_IRQ_WKINTA_1, __gpio_wk1a_interrupt, NPCX_MIWU1_GROUP_A);
+DECLARE_IRQ(NPCX_IRQ_WKINTB_1, __gpio_wk1b_interrupt, NPCX_MIWU1_GROUP_B);
 #ifdef NPCX_SELECT_KSI_TO_GPIO
-DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1, __gpio_wk1c_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1, __gpio_wk1c_interrupt, NPCX_MIWU1_GROUP_C);
 #endif
-DECLARE_IRQ(NPCX_IRQ_WKINTD_1, __gpio_wk1d_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTE_1, __gpio_wk1e_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTD_1, __gpio_wk1d_interrupt, NPCX_MIWU1_GROUP_D);
+DECLARE_IRQ(NPCX_IRQ_WKINTE_1, __gpio_wk1e_interrupt, NPCX_MIWU1_GROUP_E);
 #ifdef CONFIG_HOST_INTERFACE_SHI
 /*
  * HACK: Make CS GPIO P2 to improve SHI reliability.
@@ -204,10 +205,10 @@ DECLARE_IRQ(NPCX_IRQ_WKINTE_1, __gpio_wk1e_interrupt, 3);
  */
 DECLARE_IRQ(NPCX_IRQ_WKINTF_1, __gpio_wk1f_interrupt, 2);
 #else
-DECLARE_IRQ(NPCX_IRQ_WKINTF_1, __gpio_wk1f_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTF_1, __gpio_wk1f_interrupt, NPCX_MIWU1_GROUP_F);
 #endif
-DECLARE_IRQ(NPCX_IRQ_WKINTG_1, __gpio_wk1g_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTH_1, __gpio_wk1h_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTG_1, __gpio_wk1g_interrupt, NPCX_MIWU1_GROUP_G);
+DECLARE_IRQ(NPCX_IRQ_WKINTH_1, __gpio_wk1h_interrupt, NPCX_MIWU1_GROUP_H);
 DECLARE_IRQ(NPCX_IRQ_LCT_WKINTF_2, __gpio_lct_interrupt, 3);
 
 #undef GPIO_IRQ_FUNC

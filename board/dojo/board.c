@@ -7,17 +7,17 @@
 #include "cbi_fw_config.h"
 #include "cbi_ssfc.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
-#include "driver/accelgyro_icm426xx.h"
-#include "driver/accelgyro_icm42607.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_bmi_common_public.h"
 #include "driver/accelgyro_bmi260_public.h"
+#include "driver/accelgyro_bmi_common_public.h"
+#include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/retimer/ps8802.h"
 #include "driver/usb_mux/anx3443.h"
 #include "gpio.h"
@@ -467,14 +467,13 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/* Limit input current lower than 2944 mA for safety */
 	charge_ma = MIN(charge_ma, 2944);
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 /* NVME */

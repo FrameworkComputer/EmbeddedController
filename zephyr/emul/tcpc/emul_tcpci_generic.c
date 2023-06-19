@@ -3,22 +3,23 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_tcpci_generic_emul
-
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcpci_generic_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
+#include "emul/tcpc/emul_tcpci.h"
+#include "tcpm/tcpci.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
+#ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>
+#endif
 
-#include "tcpm/tcpci.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT cros_tcpci_generic_emul
 
-#include "emul/emul_common_i2c.h"
-#include "emul/tcpc/emul_tcpci.h"
+LOG_MODULE_REGISTER(tcpci_generic_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**
  * @brief Function called for each byte of read message from TCPCI emulator
@@ -154,7 +155,7 @@ struct i2c_emul_api i2c_tcpci_generic_emul_api = {
 
 #define TCPCI_GENERIC_EMUL(n)                                     \
 	TCPCI_EMUL_DEFINE(n, tcpci_generic_emul_init, NULL, NULL, \
-			  &i2c_tcpci_generic_emul_api)
+			  &i2c_tcpci_generic_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(TCPCI_GENERIC_EMUL)
 

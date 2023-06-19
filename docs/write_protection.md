@@ -188,79 +188,6 @@ If the `ro_at_boot` flag set, and the EC resets with the HW gpio disabled, the
 EC will leave the flash unprotected (`ro_now` and `all_now` flags are not set)
 but leave `ro_at_boot` flag set.
 
-### Changing Software Write Protection with flashrom
-
-#### View the current state of software write protection
-
-```bash
-(chroot) $ flashrom -p ec --wp-status
-```
-
-```
-WP: status: 0x00
-WP: status.srp0: 0
-WP: write protect is disabled.
-WP: write protect range: start=0x00000000, len=0x00000000
-```
-
-#### Enable software write protection
-
-This is immediate. The protection range indicates the RO region of the firmware.
-
-```bash
-(chroot) $ flashrom -p ec --wp-enable
-```
-
-```
-SUCCESS
-```
-
-```bash
-(chroot) $ flashrom -p ec --wp-status
-```
-
-```
-WP: status: 0x80
-WP: status.srp0: 1
-WP: write protect is enabled.
-WP: write protect range: start=0x00000000, len=0x0001f800
-```
-
-#### Disable software write protection
-
-Disable can only be done with hardware write protect disabled.
-
-```bash
-(chroot) $ flashrom -p ec --wp-disable
-```
-
-```
-FAILED: RO_AT_BOOT is not clear.
-FAILED
-```
-
-Reboot with [hardware write protection](#hw_wp) disabled. Note that protection
-is still enabled, but the protection range is zero.
-
-```bash
-(chroot) $ flashrom -p ec --wp-status
-```
-
-```
-WP: status: 0x80
-WP: status.srp0: 1
-WP: write protect is enabled.
-WP: write protect range: start=0x00000000, len=0x00000000
-```
-
-```bash
-(chroot) $ flashrom -p ec --wp-disable
-```
-
-```
-SUCCESS
-```
-
 ## system_is_locked()
 
 The [`system_is_locked()`] function in the EC code returns false if the HW write
@@ -297,10 +224,10 @@ https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/1222094
 The EC code command handlers (`command_flash_erase`, `command_flash_write`,
 etc.) return an error if `EC_FLASH_PROTECT_ALL_NOW` is set.
 
-["CCD open"]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Open-CCD
-[Cr50 console]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Consoles
+["CCD open"]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_gsc.md#ccd-open
+[Cr50 console]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_gsc.md#consoles
 [Servo]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/README.md
-[`OverrideWP`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md
+[`OverrideWP`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_gsc.md
 [`system_is_locked()`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/aaba1d5efd51082d143ce2ac64e6caf9cb14d5e5/common/system.c#195
 [wp_screw]: https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection
 [write_protect_gpio]: https://chromium.googlesource.com/chromiumos/platform/ec/+/aaba1d5efd51082d143ce2ac64e6caf9cb14d5e5/include/ec_commands.h#1599

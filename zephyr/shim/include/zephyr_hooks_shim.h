@@ -8,11 +8,11 @@
 #endif
 #define __CROS_EC_ZEPHYR_HOOKS_SHIM_H
 
-#include <zephyr/init.h>
-#include <zephyr/kernel.h>
-
 #include "common.h"
 #include "cros_version.h"
+
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
 
 /**
  * The internal data structure stored for a deferred function.
@@ -55,7 +55,7 @@ struct zephyr_shim_hook_list {
  * See include/hooks.h for documentation.
  */
 #define DECLARE_HOOK(_hooktype, _routine, _priority)                 \
-	STRUCT_SECTION_ITERABLE_ALTERNATE(                           \
+	static const STRUCT_SECTION_ITERABLE_ALTERNATE(              \
 		zephyr_shim_hook_##_hooktype, zephyr_shim_hook_info, \
 		_cros_hook_##_hooktype##_##_routine) = {             \
 		.routine = _routine,                                 \

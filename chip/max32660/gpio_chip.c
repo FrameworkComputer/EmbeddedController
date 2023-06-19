@@ -6,16 +6,16 @@
 /* MAX32660 GPIO module for Chrome EC */
 
 #include "clock.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "gpio.h"
+#include "gpio_regs.h"
 #include "hooks.h"
+#include "registers.h"
 #include "switch.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "registers.h"
-#include "gpio_regs.h"
 
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)

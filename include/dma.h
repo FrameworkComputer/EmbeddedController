@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_DMA_H
 #define __CROS_EC_DMA_H
 
-#ifdef CONFIG_DMA
+#ifdef CONFIG_DMA_CROS
 
 #include "common.h"
 #include "registers.h"
@@ -19,7 +19,7 @@
 struct dma_option {
 	enum dma_channel channel; /* DMA channel */
 	void *periph; /* Pointer to peripheral data register */
-	unsigned flags; /* DMA flags for the control register. Normally
+	unsigned int flags; /* DMA flags for the control register. Normally
 			   used to select memory size. */
 };
 
@@ -45,7 +45,7 @@ dma_chan_t *dma_get_channel(enum dma_channel channel);
  *
  * @return pointer to prepared channel
  */
-void dma_prepare_tx(const struct dma_option *option, unsigned count,
+void dma_prepare_tx(const struct dma_option *option, unsigned int count,
 		    const void *memory);
 
 /**
@@ -55,7 +55,7 @@ void dma_prepare_tx(const struct dma_option *option, unsigned count,
  * @param count		Number of bytes to transfer
  * @param memory	Pointer to memory address
  */
-void dma_start_rx(const struct dma_option *option, unsigned count,
+void dma_start_rx(const struct dma_option *option, unsigned int count,
 		  void *memory);
 
 /**
@@ -167,5 +167,5 @@ int dma_wait(enum dma_channel channel);
  */
 void dma_init(void);
 
-#endif /* CONFIG_DMA */
+#endif /* CONFIG_DMA_CROS */
 #endif

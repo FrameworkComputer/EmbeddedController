@@ -11,11 +11,11 @@
 #include "cbi_ssfc.h"
 #include "charger.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
@@ -24,9 +24,9 @@
 #include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "extpower.h"
-#include "gpio.h"
 #include "fan.h"
 #include "fan_chip.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "keyboard_8042.h"
 #include "lid_switch.h"
@@ -42,14 +42,15 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "temp_sensor/thermistor.h"
-#include "usb_mux.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
 #include "usbc_ppc.h"
 
 static void hdmi_hpd_interrupt_v2(enum ioex_signal signal);
 static void hdmi_hpd_interrupt_v3(enum gpio_signal signal);
 static void board_gmr_tablet_switch_isr(enum gpio_signal signal);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 static bool support_aoz_ppc;

@@ -6,9 +6,9 @@
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "registers.h"
 #include "task.h"
-#include "i2c.h"
 #include "timer.h"
 
 void button_event(enum gpio_signal signal)
@@ -29,6 +29,7 @@ __attribute__((weak)) void cts_irq2(enum gpio_signal signal)
 }
 #endif
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 void tick_event(void)

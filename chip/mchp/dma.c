@@ -9,9 +9,9 @@
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "tfdp_chip.h"
 #include "timer.h"
 #include "util.h"
-#include "tfdp_chip.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
@@ -106,7 +106,7 @@ void dma_go_chan(enum dma_channel ch)
 		MCHP_DMA_CH_CTRL(ch) |= MCHP_DMA_RUN;
 }
 
-void dma_prepare_tx(const struct dma_option *option, unsigned count,
+void dma_prepare_tx(const struct dma_option *option, unsigned int count,
 		    const void *memory)
 {
 	if (option != NULL)
@@ -139,7 +139,8 @@ void dma_xfr_prepare_tx(const struct dma_option *option, uint32_t count,
 	}
 }
 
-void dma_start_rx(const struct dma_option *option, unsigned count, void *memory)
+void dma_start_rx(const struct dma_option *option, unsigned int count,
+		  void *memory)
 {
 	if (option != NULL) {
 		prepare_channel(option->channel, count, option->periph, memory,

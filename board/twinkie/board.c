@@ -27,6 +27,7 @@ void vbus_event(enum gpio_signal signal)
 	ccprintf("INA!\n");
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Initialize board. */

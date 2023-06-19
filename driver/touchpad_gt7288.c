@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -12,6 +10,8 @@
 #include "task.h"
 #include "touchpad_gt7288.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 /* Define this to enable various warning messages during report parsing. */
 #undef DEBUG_CHECKS

@@ -6,6 +6,7 @@
 #define DT_DRV_COMPAT cros_ec_pwm_leds
 
 #include <string.h>
+
 #include <zephyr/devicetree.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)

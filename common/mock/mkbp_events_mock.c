@@ -8,10 +8,10 @@
  * @brief Mock event handling for MKBP keyboard protocol
  */
 
-#include <stdint.h>
-
 #include "common.h"
 #include "mock/mkbp_events_mock.h"
+
+#include <stdint.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."

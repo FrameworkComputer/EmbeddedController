@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-#include <string.h>
-
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -17,6 +14,9 @@
 #include "power_button.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdbool.h>
+#include <string.h>
 
 #define CPRINTS(format, args...) \
 	cprints(CC_USBCHARGE, "chargesplash: " format, ##args)
@@ -37,6 +37,10 @@ static bool display_initialized;
  * True if the chargesplash is locked out, and we must wait until no
  * requests happen during the chargesplash period until the lockout can
  * be cleared.
+ *
+ * A charger can be locked out if it's too flaky, causing the charging status
+ * to bounce between enabled/disabled too many times within a specified
+ * time period.
  */
 static bool locked_out;
 
@@ -249,6 +253,8 @@ static enum ec_status chargesplash_host_cmd(struct host_cmd_handler_args *args)
 	response->requested = power_on_for_chargesplash;
 	response->display_initialized = display_initialized;
 	response->locked_out = locked_out;
+
+	args->response_size = sizeof(*response);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGESPLASH, chargesplash_host_cmd,

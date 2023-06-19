@@ -57,7 +57,7 @@ const struct power_signal_info power_signal_list[] = {
 	},
 	[SC7X80_AP_SUSPEND] = {
 		GPIO_AP_SUSPEND,
-		POWER_SIGNAL_ACTIVE_HIGH,
+		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_NO_LOG,
 		"AP_SUSPEND",
 	},
 #ifdef CONFIG_CHIPSET_SC7180

@@ -70,7 +70,8 @@
 #define CONFIG_CHARGER
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
+#define CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT 512
 #define CONFIG_CHARGER_ISL9238C
 #define CONFIG_CHARGER_MAINTAIN_VBAT
 /* Not used in boot flow, set to 0 to suppress system_can_boot_ap warning */
@@ -109,6 +110,7 @@
 #define CONFIG_LED_COMMON
 
 /* PD / USB-C / PPC */
+#define CONFIG_BC12_DETECT_RT1718S
 #define CONFIG_CMD_PPC_DUMP
 #define CONFIG_HOSTCMD_PD_CONTROL
 #define CONFIG_IT83XX_TUNE_CC_PHY
@@ -212,8 +214,8 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
-#include "registers.h"
 #include "power/mt8192.h"
+#include "registers.h"
 
 enum adc_channel {
 	ADC_VBUS, /* ADC 0 */

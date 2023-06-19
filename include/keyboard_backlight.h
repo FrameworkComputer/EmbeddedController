@@ -32,12 +32,6 @@ struct kblight_drv {
 	int (*set)(int percent);
 
 	/**
-	 * Get the current brightness
-	 * @return Brightness in percentage
-	 */
-	int (*get)(void);
-
-	/**
 	 * Enable or disable keyboard backlight
 	 * @param enable: 1=Enable, 0=Disable.
 	 * @return EC_SUCCESS or EC_ERROR_*

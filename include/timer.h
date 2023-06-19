@@ -9,6 +9,8 @@
 #define __CROS_EC_TIMER_H
 
 #ifndef CONFIG_ZEPHYR
+#include <time.h>
+
 #include <sys/types.h>
 #else
 /* Data type for POSIX style clock() implementation */
@@ -24,6 +26,10 @@ typedef long clock_t;
 #define SEC_UL 1000000ul
 #define MINUTE 60000000
 #define HOUR 3600000000ull /* Too big to fit in a signed int */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Microsecond timestamp. */
 typedef union {
@@ -76,7 +82,7 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now);
  *
  * @param us		Number of microseconds to delay.
  */
-void udelay(unsigned us);
+void udelay(unsigned int us);
 
 /**
  * Sleep.
@@ -89,7 +95,7 @@ void udelay(unsigned us);
  *
  * @param us		Number of microseconds to sleep.
  */
-void usleep(unsigned us);
+void usleep(unsigned int us);
 
 /**
  * Sleep for milliseconds.
@@ -98,7 +104,7 @@ void usleep(unsigned us);
  *
  * @param ms		Number of milliseconds to sleep.
  */
-static inline void msleep(unsigned ms)
+static inline void msleep(unsigned int ms)
 {
 	usleep(ms * MSEC);
 }
@@ -110,7 +116,7 @@ static inline void msleep(unsigned ms)
  *
  * @param sec		Number of seconds to sleep.
  */
-static inline void sleep(unsigned sec)
+static inline void sleep(unsigned int sec)
 {
 	usleep(sec * SECOND);
 }
@@ -166,7 +172,7 @@ static inline int time_until(uint32_t from_time, uint32_t to_time)
  * @param start		Start time to compare against
  * @return number of microseconds that have elapsed since that start time
  */
-static inline unsigned time_since32(timestamp_t start)
+static inline unsigned int time_since32(timestamp_t start)
 {
 	return time_until(start.le.lo, get_time().le.lo);
 }
@@ -193,5 +199,9 @@ static inline int time_after(uint32_t a, uint32_t b)
 #ifdef CONFIG_ZTEST
 extern timestamp_t *get_time_mock;
 #endif /* CONFIG_ZTEST */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TIMER_H */

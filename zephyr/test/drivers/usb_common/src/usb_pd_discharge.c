@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
-
 #include "suite.h"
 #include "usb_pd.h"
 #include "usb_pd_flags.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/ztest_assert.h>
+#include <zephyr/ztest_test_new.h>
 
 #define TEST_PORT 0
 

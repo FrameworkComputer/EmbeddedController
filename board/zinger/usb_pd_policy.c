@@ -14,9 +14,9 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_pd.h"
 #include "usb_pd_pdo.h"
+#include "util.h"
 
 /* ------------------------- Power supply control ------------------------ */
 

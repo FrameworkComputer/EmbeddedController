@@ -6,10 +6,10 @@
 #ifndef __CROS_EC_POWER_MGT_H
 #define __CROS_EC_POWER_MGT_H
 
-#include <stdnoreturn.h>
-
 #include "common.h"
 #include "registers.h"
+
+#include <stdnoreturn.h>
 
 extern void uart_port_restore(void);
 extern void uart_to_idle(void);

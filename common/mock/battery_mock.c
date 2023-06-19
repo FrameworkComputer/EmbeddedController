@@ -41,6 +41,17 @@ void set_battery_serial_number(int new_value)
 	battery_serial_number_value = new_value;
 }
 
+static int battery_cycle_count_value;
+int battery_cycle_count(int *count)
+{
+	*count = battery_cycle_count_value;
+	return EC_SUCCESS;
+}
+void set_battery_cycle_count(int new_value)
+{
+	battery_cycle_count_value = new_value;
+}
+
 static int battery_design_voltage_value = 5000;
 int battery_design_voltage(int *voltage)
 {

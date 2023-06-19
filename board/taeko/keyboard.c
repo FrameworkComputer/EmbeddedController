@@ -5,9 +5,9 @@
 
 #include "common.h"
 #include "ec_commands.h"
+#include "fw_config.h"
 #include "keyboard_scan.h"
 #include "timer.h"
-#include "fw_config.h"
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {

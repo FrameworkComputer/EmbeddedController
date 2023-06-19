@@ -4,6 +4,8 @@
  */
 
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usbc_mux.h>
+#include <dt-bindings/usb_pd_tcpm.h>
 
 / {
 	aliases {
@@ -21,6 +23,9 @@
 	batteries {
 		default_battery: lgc {
 			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+		lgc_ap19b8m {
+			compatible = "lgc,ap19b8m", "battery-smart";
 		};
 		cosmx {
 			compatible = "cosmx,ap20cbl", "battery-smart";
@@ -118,6 +123,10 @@
 			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			no-auto-init;
 		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
 		ec-i2c-sensor-scl {
 			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
@@ -151,17 +160,17 @@
 		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
-	temp_memory: memory {
+	temp_memory_thermistor: memory {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_1>;
 	};
-	temp_charger: charger {
+	temp_charger_thermistor: charger {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_2>;
 	};
-	temp_ambient: ambient {
+	temp_ambient_thermistor: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_3>;
@@ -169,21 +178,21 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		memory {
-			temp_host_high = <75>;
-			temp_host_halt = <85>;
-			temp_host_release_high = <70>;
-			temp_host_release_halt = <80>;
+		temp_memory: memory {
+			temp_host_high = <78>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <0>;
+			temp_host_release_halt = <75>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_memory>;
+			sensor = <&temp_memory_thermistor>;
 		};
-		charger {
+		temp_charger: charger {
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_charger>;
+			sensor = <&temp_charger_thermistor>;
 		};
-		ambient {
+		temp_ambient: ambient {
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_ambient>;
+			sensor = <&temp_ambient_thermistor>;
 		};
 	};
 
@@ -211,6 +220,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
+			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -230,6 +240,7 @@
 			reg = <1>;
 			bc12 = <&bc12_port1>;
 			chg = <&chg_port1>;
+			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
@@ -249,8 +260,32 @@
 
 	kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm6 6 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+		pwms = <&pwm6 6 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
 	};
+
+	 /*
+	  * Declare unused GPIOs so that they are shut down
+	  * and use minimal power
+	  */
+	  unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio3 2 0>,
+			<&gpio3 5 0>,
+			<&gpio3 6 0>,
+			<&gpio5 7 0>,
+			<&gpio6 0 0>,
+			<&gpio6 3 0>,
+			<&gpio6 6 0>,
+			<&gpio7 3 0>,
+			<&gpio8 3 0>,
+			<&gpio8 6 0>,
+			<&gpiob 1 0>,
+			<&gpiob 7 0>,
+			<&gpioc 7 0>,
+			<&gpiof 2 0>,
+			<&gpiof 3 0>;
+	 };
 };
 
 &thermistor_3V3_51K1_47K_4050B {
@@ -309,6 +344,14 @@
 		status = "okay";
 		reg = <0x9>;
 	};
+
+	tcpc_port0: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
 };
 
 &i2c5_1 {
@@ -327,10 +370,19 @@
 		reg = <0x9>;
 	};
 
+	tcpc_port1: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
+
 	anx7483_mux_1: anx7483-mux-1@3e {
 		compatible = "analogix,anx7483";
 		reg = <0x3e>;
 		board-set = "anx7483_set_default_tuning";
+		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
 	};
 };
 
@@ -341,7 +393,6 @@
 
 &pwm6 {
 	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm6_gpc0>;
 	pinctrl-names = "default";
 };
@@ -351,4 +402,14 @@
 	status = "okay";
 	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
 	pinctrl-names = "default";
+};
+
+/*
+ * Declare GPIOs that have leakage current caused by board issues here. NPCX ec
+ * will disable their input buffers before entering deep sleep and restore them
+ * after waking up automatically for better power consumption.
+ */
+&power_leakage_io {
+	leak-gpios = <&gpioa 4 GPIO_OPEN_DRAIN
+		      &gpiof 1 GPIO_OPEN_DRAIN>;
 };

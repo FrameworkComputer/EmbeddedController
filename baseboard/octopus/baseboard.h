@@ -55,6 +55,14 @@
 
 /* Allow the EC to enter deep sleep in S0 */
 #define CONFIG_LOW_POWER_S0
+
+/*
+ * Increase period to prevent false positive hangs (b/255368431).
+ * TODO(b/281584278): Reevaluate period when more data is available.
+ */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 2100
+
 #elif defined(VARIANT_OCTOPUS_EC_ITE8320)
 /* IT83XX config */
 #define CONFIG_IT83XX_VCC_1P8V
@@ -125,6 +133,9 @@
  */
 #undef CONFIG_EXTPOWER_DEBOUNCE_MS
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 200
+/* Charger seems to overdraw by about 5% */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
 #elif defined(VARIANT_OCTOPUS_CHARGER_BQ25703)
 #define CONFIG_CHARGER_BQ25703
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
@@ -133,6 +144,9 @@
  */
 #undef CONFIG_EXTPOWER_DEBOUNCE_MS
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 50
+/* Charger seems to overdraw by about 5% */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
 #elif defined(CONFIG_CHARGER_RUNTIME_CONFIG)
 #define CONFIG_CHARGER_ISL9238
 #define CONFIG_CHARGER_BQ25710
@@ -150,7 +164,9 @@
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
-#define CONFIG_CHARGER_INPUT_CURRENT 512 /* Allow low-current USB charging */
+/* Allow low-current USB charging */
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
+#define CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT 512
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_USB_CHARGER
@@ -305,6 +321,9 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 #endif /* VARIANT_OCTOPUS_NO_SENSORS */
 
+/* System safe mode for improved panic debugging */
+#define CONFIG_SYSTEM_SAFE_MODE
+
 /*
  * Sensor stack in EC/Kernel depends on a hardware interrupt pin from EC->AP, so
  * do not define CONFIG_MKBP_USE_HOST_EVENT since all octopus boards use
@@ -312,6 +331,14 @@
  */
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
+
+/* Free up more flash. */
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_MFALLOW
+#undef CONFIG_CMD_MD
+#undef CONFIG_CMD_MMAPINFO
+#undef CONFIG_CONSOLE_CMDHELP
+#undef CONFIG_CONSOLE_HISTORY
 
 #ifndef __ASSEMBLER__
 

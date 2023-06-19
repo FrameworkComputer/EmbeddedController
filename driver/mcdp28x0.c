@@ -5,9 +5,9 @@
  * Megachips DisplayPort to HDMI protocol converter / level shifter driver.
  */
 
+#include "common.h"
 #include "config.h"
 #include "console.h"
-#include "common.h"
 #include "ec_commands.h"
 #include "mcdp28x0.h"
 #include "queue.h"

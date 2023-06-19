@@ -6,10 +6,10 @@
 #ifndef __HID_DEVICE_H
 #define __HID_DEVICE_H
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include "hooks.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 #define HID_SUBSYS_MAX_PAYLOAD_SIZE 4954
 

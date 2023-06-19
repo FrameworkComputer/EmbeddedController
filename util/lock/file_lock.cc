@@ -15,22 +15,23 @@
  * The current process's PID will be written to the file for debug purposes.
  */
 
+#include "android.h"
+#include "ipc_lock.h"
+#include "locks.h"
+
 #include <errno.h>
-#include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
-#include <sys/file.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
-#include "android.h"
-#include "ipc_lock.h"
-#include "locks.h"
+#include <fcntl.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define SLEEP_INTERVAL_MS 50
 

@@ -3,14 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/init.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include "common.h"
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
+#include "common.h"
 #include "ioexpander.h"
+
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(ioex_shim, LOG_LEVEL_ERR);
 
@@ -33,12 +34,10 @@ int ioex_init(int ioex)
 	return EC_SUCCESS;
 }
 
-static int ioex_init_default(const struct device *unused)
+static int ioex_init_default(void)
 {
 	int ret;
 	int i;
-
-	ARG_UNUSED(unused);
 
 	for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; i++) {
 		/* IO Expander has been initialized, skip re-initializing */

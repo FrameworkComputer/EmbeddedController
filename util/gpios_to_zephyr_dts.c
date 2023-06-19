@@ -32,8 +32,8 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <ctype.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /*

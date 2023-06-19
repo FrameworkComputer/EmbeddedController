@@ -14,8 +14,8 @@
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "vboot.h"
-
 #include "zephyr/devicetree.h"
+
 #include <stdint.h>
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
@@ -134,7 +134,7 @@ ZTEST(vboot_efs2, test_vboot_main_jump_timeout)
 	zassert_equal(show_power_shortage_called, 0, NULL);
 }
 
-#define PACKET_MODE_GPIO DT_PATH(named_gpios, ec_gsc_packet_mode)
+#define PACKET_MODE_GPIO NAMED_GPIOS_GPIO_NODE(ec_gsc_packet_mode)
 
 static const struct device *uart_shell_dev =
 	DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
@@ -244,12 +244,11 @@ ZTEST(vboot_efs2, test_vboot_main_vboot_get_rw_hash_fail)
 		.offset = 0,
 		.size = 0x12345,
 	};
-	struct host_cmd_handler_args hash_start_args = BUILD_HOST_COMMAND(
-		EC_CMD_VBOOT_HASH, 0, response, hash_start_params);
 
 	shell_backend_dummy_clear_output(shell_zephyr);
 
-	zassert_ok(host_command_process(&hash_start_args), NULL);
+	zassert_ok(ec_cmd_vboot_hash(NULL, &hash_start_params, &response),
+		   NULL);
 	vboot_main();
 
 	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
@@ -372,8 +371,8 @@ int board_set_active_charge_port(int port)
 	return EC_ERROR_INVAL;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 }
 
@@ -391,14 +390,4 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
-
-/* USBC PPC configuration */
-struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv,
-	},
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+enum usbc_port { USBC_PORT_COUNT };

@@ -16,7 +16,7 @@
  * This code is taken from core/cortex-m/include/fpu.h
  */
 
-#ifdef CONFIG_PLATFORM_EC_FPU
+#ifdef CONFIG_FPU
 
 /* Implementation for Cortex-M */
 #ifdef CONFIG_CPU_CORTEX_M
@@ -55,10 +55,12 @@ static inline float fabsf(float v)
 	__asm__("fabs.s %0, %1" : "=f"(abs) : "f"(v));
 	return abs;
 }
+#elif CONFIG_BOARD_NATIVE_POSIX
+#include <math.h>
 #else
 #error "Unsupported core: please add an implementation"
 #endif
 
-#endif /* CONFIG_PLATFORM_EC_FPU */
+#endif /* CONFIG_FPU */
 
 #endif /* __CROS_EC_MATH_H */

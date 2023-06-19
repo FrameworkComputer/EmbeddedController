@@ -7,12 +7,12 @@
 
 #include "battery.h"
 #include "builtin/assert.h"
-#include "clock.h"
 #include "charge_state.h"
+#include "clock.h"
 #include "console.h"
 #include "crc8.h"
-#include "host_command.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "i2c_bitbang.h"
 #include "i2c_private.h"
@@ -22,12 +22,13 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "watchdog.h"
 #include "virtual_battery.h"
+#include "watchdog.h"
 
 #ifdef CONFIG_ZEPHYR
-#include <zephyr/drivers/i2c.h>
 #include "i2c/i2c.h"
+
+#include <zephyr/drivers/i2c.h>
 #endif /* CONFIG_ZEPHYR */
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
@@ -51,10 +52,8 @@ BUILD_ASSERT(ARRAY_SIZE(port_mutex) < 32);
 static uint8_t port_protected[I2C_PORT_COUNT + I2C_BITBANG_PORT_COUNT];
 
 #ifdef CONFIG_ZEPHYR
-static int init_port_mutex(const struct device *dev)
+static int init_port_mutex(void)
 {
-	ARG_UNUSED(dev);
-
 	for (int i = 0; i < ARRAY_SIZE(port_mutex); ++i)
 		k_mutex_init(port_mutex + i);
 
@@ -269,7 +268,8 @@ int i2c_xfer_unlocked(const int port, const uint16_t addr_flags,
 		case 0:
 			return EC_SUCCESS;
 		case -EIO:
-			return EC_ERROR_INVAL;
+			ret = EC_ERROR_INVAL;
+			continue;
 		default:
 			return EC_ERROR_UNKNOWN;
 		}
@@ -840,6 +840,7 @@ int i2c_write_block(const int port, const uint16_t addr_flags, int offset,
 		uint8_t addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 
 		pec = cros_crc8(&addr_8bit, sizeof(uint8_t));
+		pec = cros_crc8_arg(&reg_address, sizeof(uint8_t), pec);
 		pec = cros_crc8_arg(data, len, pec);
 	}
 
@@ -854,7 +855,7 @@ int i2c_write_block(const int port, const uint16_t addr_flags, int offset,
 		if (rv)
 			continue;
 
-		if (I2C_USE_PEC(addr_flags)) {
+		if (IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(addr_flags)) {
 			rv = i2c_xfer_unlocked(port, addr_flags, data, len,
 					       NULL, 0, 0);
 			if (rv)

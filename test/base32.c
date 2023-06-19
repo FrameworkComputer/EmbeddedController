@@ -5,11 +5,12 @@
  * Test Base-32 encoding/decoding
  */
 
-#include <stdio.h>
-#include "common.h"
 #include "base32.h"
+#include "common.h"
 #include "test_util.h"
 #include "util.h"
+
+#include <stdio.h>
 
 DECLARE_EC_TEST(test_crc5)
 {

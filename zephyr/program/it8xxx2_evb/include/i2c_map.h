@@ -6,9 +6,9 @@
 #ifndef __ZEPHYR_CHROME_I2C_MAP_H
 #define __ZEPHYR_CHROME_I2C_MAP_H
 
-#include <zephyr/devicetree.h>
-
 #include "config.h"
+
+#include <zephyr/devicetree.h>
 
 /* We need registers.h to get the chip specific defines for now */
 #include "i2c/i2c.h"

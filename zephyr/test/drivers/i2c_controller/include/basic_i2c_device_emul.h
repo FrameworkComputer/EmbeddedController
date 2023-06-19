@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-
 #include "emul/emul_common_i2c.h"
+
+#include <stdint.h>
 
 #define BASIC_I2C_DEV_EXT_ACCESS_REG 0xFF
 

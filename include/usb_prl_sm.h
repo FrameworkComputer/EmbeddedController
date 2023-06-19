@@ -8,11 +8,10 @@
 #ifndef __CROS_EC_USB_PRL_H
 #define __CROS_EC_USB_PRL_H
 #include "common.h"
+#include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
-#include "timer.h"
-#include "usb_pd_tcpm.h"
 
 /**
  * Returns TX success time stamp.
@@ -143,5 +142,13 @@ void prl_hard_reset_complete(int port);
  * @param port USB-C port number
  */
 void prl_execute_hard_reset(int port);
+
+/**
+ * Enables or disables checking the data role on incoming messages.
+ *
+ * @param port USB-C port number
+ * @param enable True to enable checking, false to disable checking
+ */
+void prl_set_data_role_check(int port, bool enable);
 
 #endif /* __CROS_EC_USB_PRL_H */

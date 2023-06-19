@@ -1,14 +1,15 @@
-/* Copyright 2022 The ChromiumOS Authors.
+/* Copyright 2022 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-#include <ap_power/ap_power_interface.h>
 #include "common.h"
 #include "fan.h"
 #include "temp_sensor/temp_sensor.h"
 #include "thermal.h"
 #include "util.h"
+
+#include <ap_power/ap_power_interface.h>
 
 #define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_cpu))
 #define TEMP_5V TEMP_SENSOR_ID(DT_NODELABEL(temp_5v_regulator))

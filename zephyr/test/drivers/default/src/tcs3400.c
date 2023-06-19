@@ -3,18 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
-#include "i2c.h"
-#include "emul/emul_tcs3400.h"
+#include "driver/als_tcs3400.h"
 #include "emul/emul_common_i2c.h"
-
+#include "emul/emul_tcs3400.h"
+#include "i2c.h"
 #include "motion_sense.h"
 #include "motion_sense_fifo.h"
-#include "driver/als_tcs3400.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define TCS_NODE DT_NODELABEL(tcs_emul)
 #define TCS_CLR_SENSOR_ID SENSOR_ID(DT_NODELABEL(tcs3400_clear))

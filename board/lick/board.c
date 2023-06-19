@@ -6,6 +6,7 @@
 /* Lick board-specific configuration */
 
 #include "adc.h"
+#include "battery_smart.h"
 #include "button.h"
 #include "charge_state.h"
 #include "common.h"
@@ -23,13 +24,12 @@
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
-#include "task.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "tcpm/tcpci.h"
 #include "temp_sensor.h"
 #include "temp_sensor/thermistor.h"
 #include "util.h"
-#include "battery_smart.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)

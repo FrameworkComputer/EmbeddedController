@@ -38,9 +38,6 @@ GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C0_BC12_INT_ODL,  PIN(9, 5), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL,  PIN(E, 4), GPIO_INT_FALLING, bc12_interrupt)
 
-/* CCD mode line*/
-GPIO_INT(CCD_MODE_ODL,         PIN(E, 5), GPIO_INT_FALLING, ccd_mode_isr)
-
 GPIO_INT(HDMI_CONN_HPD,        PIN(7, 2), GPIO_INT_BOTH, hdmi_hpd_interrupt)
 
 /* Volume button interrupts */
@@ -81,6 +78,9 @@ GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
 GPIO(USB_C1_TCPC_RST_ODL,      PIN(3, 2), GPIO_ODR_HIGH)
 GPIO(EN_USB_A_5V,              PIN(3, 5), GPIO_OUT_LOW)
 GPIO(EN_USB_A_LOW_PWR_OD,      PIN(9, 4), GPIO_OUT_LOW)
+
+/* CCD mode line*/
+GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_INPUT)
 
 /* Misc Signals */
 GPIO(EC_BATT_PRES_ODL,         PIN(E, 1), GPIO_INPUT)

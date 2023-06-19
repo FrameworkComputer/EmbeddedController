@@ -3,10 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "atomic.h"
 #include "console.h"
 #include "driver/accel_bma2x2.h"
@@ -16,6 +12,10 @@
 #include "motion_sense_fifo.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, mock_set_range, struct motion_sensor_t *, int, int);
 FAKE_VALUE_FUNC(int, mock_set_offset, const struct motion_sensor_t *,
@@ -127,13 +127,25 @@ ZTEST_USER(host_cmd_motion_sense, test_dump)
 	 * tests in a loop, but since the number of sensors (as well as the
 	 * order) is adjustable by devicetree, it would be too difficult to hard
 	 * code here.
+	 * When CONFIG_GESTURE_HOST_DETECTION is enabled, ALL_MOTION_SENSORS is
+	 * increased by 1 (see include/motion_sense.h). Additionally,
+	 * host_cmd_motion_sense() only fills in |motion_sensor_count| worth of
+	 * data (not ALL_MOTION_SENSORS+1), and zeroes out the rest, so only
+	 * validate |motion_sensor_count| worth of data and that the rest is
+	 * zeroed out.
 	 */
 	for (int i = 0; i < ALL_MOTION_SENSORS; ++i) {
-		zassert_equal(result->dump.sensor[i].flags,
-			      MOTIONSENSE_SENSOR_FLAG_PRESENT, NULL);
-		zassert_equal(result->dump.sensor[i].data[0], i);
-		zassert_equal(result->dump.sensor[i].data[1], i + 1);
-		zassert_equal(result->dump.sensor[i].data[2], i + 2);
+		if (i < motion_sensor_count) {
+			zassert_equal(result->dump.sensor[i].flags,
+				      MOTIONSENSE_SENSOR_FLAG_PRESENT, NULL);
+			zassert_equal(result->dump.sensor[i].data[0], i);
+			zassert_equal(result->dump.sensor[i].data[1], i + 1);
+			zassert_equal(result->dump.sensor[i].data[2], i + 2);
+		} else {
+			zassert_equal(result->dump.sensor[i].data[0], 0);
+			zassert_equal(result->dump.sensor[i].data[1], 0);
+			zassert_equal(result->dump.sensor[i].data[2], 0);
+		}
 	}
 
 	/* Make sure that the accelerometer status presence bit is on */
@@ -872,7 +884,7 @@ ZTEST(host_cmd_motion_sense, test_spoof_invalid_mode)
 		      NULL);
 }
 
-ZTEST(host_cmd_motion_sense, set_kb_wake_lid_angle)
+ZTEST(host_cmd_motion_sense, test_set_kb_wake_lid_angle)
 {
 	struct ec_response_motion_sense response;
 	int16_t expected_lid_angle = 45;
@@ -885,7 +897,7 @@ ZTEST(host_cmd_motion_sense, set_kb_wake_lid_angle)
 	zassert_equal(expected_lid_angle, response.kb_wake_angle.ret);
 }
 
-ZTEST(host_cmd_motion_sense, get_lid_angle)
+ZTEST(host_cmd_motion_sense, test_get_lid_angle)
 {
 	struct ec_response_motion_sense response;
 	int rv;

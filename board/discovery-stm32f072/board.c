@@ -13,11 +13,11 @@
 #include "spi.h"
 #include "task.h"
 #include "usart-stm32f0.h"
-#include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usart_tx_dma.h"
+#include "usb-stream.h"
 #include "usb_gpio.h"
 #include "usb_spi.h"
-#include "usb-stream.h"
 #include "util.h"
 
 /******************************************************************************
@@ -25,6 +25,7 @@
  */
 void button_event(enum gpio_signal signal);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 static enum gpio_signal const usb_gpio_list[] = {
@@ -127,11 +128,11 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_CS },
+	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_CS, USB_SPI_ENABLED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-void usb_spi_board_enable(struct usb_spi_config const *config)
+void usb_spi_board_enable(void)
 {
 	/* Remap SPI2 to DMA channels 6 and 7 */
 	STM32_SYSCFG_CFGR1 |= BIT(24);
@@ -152,7 +153,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	spi_enable(&spi_devices[0], 1);
 }
 
-void usb_spi_board_disable(struct usb_spi_config const *config)
+void usb_spi_board_disable(void)
 {
 	spi_enable(&spi_devices[0], 0);
 
@@ -162,8 +163,6 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	/* Release SPI GPIOs */
 	gpio_config_module(MODULE_SPI_FLASH, 0);
 }
-
-USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
 
 /******************************************************************************
  * Initialize board.
@@ -178,6 +177,6 @@ static void board_init(void)
 	usart_init(&loopback_usart);
 	usart_init(&forward_usart);
 
-	usb_spi_enable(&usb_spi, 1);
+	usb_spi_enable(1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

@@ -3,23 +3,22 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT zephyr_tcs3400
-
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_tcs);
+#include "driver/als_tcs3400.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
+#include "emul/emul_tcs3400.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_tcs3400.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT zephyr_tcs3400_emul
 
-#include "driver/als_tcs3400.h"
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(emul_tcs);
 
 /** Run-time data used by the emulator */
 struct tcs_emul_data {
@@ -617,7 +616,7 @@ static int tcs_emul_init(const struct emul *emul, const struct device *parent)
 		.addr = DT_INST_REG_ADDR(n),                         \
 	};                                                           \
 	EMUL_DT_INST_DEFINE(n, tcs_emul_init, &tcs_emul_data_##n,    \
-			    &tcs_emul_cfg_##n, &i2c_common_emul_api)
+			    &tcs_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL)
 

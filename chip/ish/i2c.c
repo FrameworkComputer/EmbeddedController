@@ -6,16 +6,16 @@
 /* I2C port module for ISH */
 
 #include "common.h"
-#include "console.h"
 #include "config_chip.h"
+#include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "i2c.h"
-#include "registers.h"
 #include "ish_i2c.h"
+#include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "hwtimer.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
@@ -253,7 +253,7 @@ static void i2c_write_buffer(uint32_t *base, uint8_t len, const uint8_t *buffer,
 }
 
 static void i2c_write_read_commands(uint32_t *base, uint8_t len, int more_data,
-				    unsigned restart_flag)
+				    unsigned int restart_flag)
 {
 	/* this routine just set RX FIFO's control bit(s),
 	 * READ command or RESTART */

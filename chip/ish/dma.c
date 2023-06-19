@@ -7,8 +7,8 @@
 
 #include "common.h"
 #include "console.h"
-#include "registers.h"
 #include "ish_dma.h"
+#include "registers.h"
 #include "util.h"
 
 static int dma_init_called; /* If ish_dma_init is called */

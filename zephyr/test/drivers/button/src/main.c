@@ -3,11 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "button.h"
 #include "console.h"
 #include "hooks.h"
@@ -15,6 +10,11 @@
 #include "power.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 /*
  * TODO (b/b/253284635) Timeouts here don't quite align with the button press

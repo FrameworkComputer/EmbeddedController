@@ -13,16 +13,17 @@
 #include "mcdp28x0.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "usb_bb.h"
 #include "usb_descriptor.h"
 #include "usb_pd.h"
-#include "timer.h"
 #include "util.h"
 
 static volatile uint64_t hpd_prev_ts;
 static volatile int hpd_prev_level;
 
 void hpd_event(enum gpio_signal signal);
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /**

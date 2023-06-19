@@ -15,8 +15,9 @@ extern "C" {
 #include "atomic_t.h"
 #include "common.h"
 #include "compile_time_macros.h"
-#include <stdbool.h>
 #include "task_id.h"
+
+#include <stdbool.h>
 
 /* Task event bitmasks */
 /* Tasks may use the bits in TASK_EVENT_CUSTOM_BIT for their own events */
@@ -296,6 +297,11 @@ void task_enable_all_tasks(void);
  * Enable a task.
  */
 void task_enable_task(task_id_t tskid);
+
+/**
+ * Task is enabled.
+ */
+bool task_enabled(task_id_t tskid);
 
 /**
  * Disable a task.

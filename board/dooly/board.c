@@ -9,7 +9,7 @@
 #include "adc.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "core/cortex-m/cpu.h"
@@ -17,8 +17,8 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/als_tcs3400.h"
 #include "driver/ina3221.h"
-#include "driver/led/oz554.h"
 #include "driver/led/mp3385.h"
+#include "driver/led/oz554.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -41,8 +41,8 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_common.h"
@@ -323,8 +323,8 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 /* Called when the charge manager has switched to a new port. */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/* Blink alert if insufficient power per system_can_boot_ap(). */
 	int insufficient_power =
@@ -463,7 +463,8 @@ static void adp_state_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */

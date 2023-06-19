@@ -11,6 +11,7 @@ _common_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 common-y=util.o
 common-y+=version.o printf.o queue.o queue_policies.o irq_locking.o
+common-y+=gettimeofday.o
 
 common-$(CONFIG_ACCELGYRO_BMI160)+=math_util.o
 common-$(CONFIG_ACCELGYRO_BMI220)+=math_util.o
@@ -32,10 +33,6 @@ common-$(CONFIG_ACCEL_KX022)+=math_util.o
 common-$(CONFIG_BODY_DETECTION)+=math_util.o
 common-$(CONFIG_TEMP_SENSOR_TMP112)+=math_util.o
 common-$(CONFIG_TEMP_SENSOR_PCT2075)+=math_util.o
-ifneq ($(CORE),cortex-m)
-common-$(CONFIG_AES)+=aes.o
-endif
-common-$(CONFIG_AES_GCM)+=aes-gcm.o
 common-$(CONFIG_CMD_ADC)+=adc.o
 common-$(HAS_TASK_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
@@ -48,6 +45,7 @@ common-$(CONFIG_BASE32)+=base32.o
 common-$(CONFIG_BLINK)+=blink.o
 common-$(CONFIG_DETACHABLE_BASE)+=base_state.o
 common-$(CONFIG_BATTERY)+=battery.o math_util.o
+common-$(CONFIG_BATTERY_CONFIG_IN_CBI)+=battery_config.o
 common-$(CONFIG_BATTERY_V1)+=battery_v1.o
 common-$(CONFIG_BATTERY_V2)+=battery_v2.o
 common-$(CONFIG_BATTERY_FUEL_GAUGE)+=battery_fuel_gauge.o
@@ -69,14 +67,18 @@ common-$(CONFIG_CHIP_INIT_ROM_REGION)+=init_rom.o
 common-$(CONFIG_CMD_CHARGEN) += chargen.o
 common-$(CONFIG_CHARGER)+=charger.o
 ifneq ($(CONFIG_CHARGER),)
-common-$(CONFIG_BATTERY)+=charge_state_v2.o
+common-$(CONFIG_BATTERY)+=charge_state.o
+endif
+ifneq ($(CONFIG_EC_EC_COMM_BATTERY_CLIENT),)
+common-$(CONFIG_BATTERY)+=charger_base.o
 endif
 common-$(CONFIG_CHARGER_PROFILE_OVERRIDE_COMMON)+=charger_profile_override.o
 common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
 common-$(CONFIG_COMMON_GPIO)+=gpio.o gpio_commands.o
 common-$(CONFIG_IO_EXPANDER)+=ioexpander.o ioexpander_commands.o
 common-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic_output.o
-common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o
+common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o \
+	system_boot_time.o
 common-$(CONFIG_COMMON_TIMER)+=timer.o
 common-$(CONFIG_CRC8)+= crc8.o
 common-$(CONFIG_CURVE25519)+=curve25519.o
@@ -140,8 +142,9 @@ common-$(CONFIG_PWM)+=pwm.o
 common-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
 common-$(CONFIG_KEYBOARD_BACKLIGHT)+=keyboard_backlight.o
 common-$(CONFIG_RGB_KEYBOARD)+=rgb_keyboard.o
-common-$(CONFIG_RSA)+=rsa.o
+common-$(CONFIG_RNG)+=trng.o
 common-$(CONFIG_ROLLBACK)+=rollback.o
+common-$(CONFIG_RSA)+=rsa.o
 common-$(CONFIG_RWSIG)+=rwsig.o vboot/common.o
 common-$(CONFIG_RWSIG_TYPE_RWSIG)+=vboot/vb21_lib.o
 common-$(CONFIG_MATH_UTIL)+=math_util.o
@@ -185,7 +188,7 @@ common-$(CONFIG_USB_PD_DUAL_ROLE)+=usb_pd_dual_role.o
 common-$(CONFIG_USB_PD_HOST_CMD)+=usb_pd_host_cmd.o
 common-$(CONFIG_USB_PD_CONSOLE_CMD)+=usb_pd_console_cmd.o
 endif
-common-$(CONFIG_USB_PD_ALT_MODE_DFP)+=usb_pd_alt_mode_dfp.o
+common-$(CONFIG_USB_PD_DISCOVERY)+=usb_pd_discovery.o
 common-$(CONFIG_USB_PD_ALT_MODE_UFP)+=usb_pd_alt_mode_ufp.o
 common-$(CONFIG_USB_PD_DPS)+=dps.o
 common-$(CONFIG_USB_PD_LOGGING)+=event_log.o pd_log.o
@@ -216,13 +219,26 @@ common-$(HAS_TASK_PDCMD)+=host_command_pd.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
 common-$(HAS_TASK_LIGHTBAR)+=lb_common.o lightbar.o
 common-$(HAS_TASK_MOTIONSENSE)+=motion_sense.o
+common-$(CONFIG_SYSTEM_SAFE_MODE)+=system_safe_mode.o
 
 ifneq ($(HAVE_PRIVATE_AUDIO_CODEC_WOV_LIBS),y)
 common-$(CONFIG_AUDIO_CODEC_WOV)+=hotword_dsp_api.o
 endif
 
-ifneq ($(CONFIG_COMMON_RUNTIME),)
-ifneq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
+ifeq ($(USE_BUILTIN_STDLIB), 0)
+common-y+=shared_mem_libc.o
+else ifneq ($(CONFIG_COMMON_RUNTIME),)
+ifeq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
+# Ordinary RO is replaced with DFU bootloader stub, CONFIG_MALLOC should only affect RW.
+ifeq ($(CONFIG_MALLOC),y)
+common-rw+=shmalloc.o
+else ifeq ($(CONFIG_MALLOC),rw)
+common-rw+=shmalloc.o
+else
+common-rw+=shared_mem.o
+endif
+else
+# CONFIG_MALLOC affects both RO and RW as usual (with shared_mem in case it is disabled.)
 common-$(CONFIG_MALLOC)+=shmalloc.o
 common-$(call not_cfg,$(CONFIG_MALLOC))+=shared_mem.o
 endif
@@ -238,11 +254,6 @@ ifneq ($(CONFIG_RSA_OPTIMIZED),)
 $(out)/RW/common/rsa.o: CFLAGS+=-O3
 $(out)/RO/common/rsa.o: CFLAGS+=-O3
 endif
-
-# AES-GCM code needs C99, else we'd have to move many variables declarations
-# around.
-$(out)/RW/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
-$(out)/RO/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
 
 ifneq ($(CONFIG_BOOTBLOCK),)
 

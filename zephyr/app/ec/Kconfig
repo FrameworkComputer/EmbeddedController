@@ -27,6 +27,14 @@ config NUM_PREEMPT_PRIORITIES
 	default 26
 
 #
+# Override the LOG_PRINTK to be no as it currently makes multiple
+# tests timeout and a few others fail in console assertions
+# TODO(b/http://b/260772137) Fix LOG_PRINTK issue and remove override
+#
+config LOG_PRINTK
+       default n
+
+#
 # In Zephyr, the default system workqueue thread priority level is the lowest
 # cooperative priority. Override its priority to the second lowest preempt
 # priority. (i.e. NUM_PREEMPT_PRIORITIES - 1)
@@ -127,6 +135,7 @@ config CROS_EC_RO_MEM_OFF
 config CROS_EC_RO_SIZE
 	hex "The size of the RO region."
 	default 0xb000 if ARCH_POSIX
+	default $(dt_node_int_prop_hex,/binman/wp-ro,size)
 	help
 		This will be used (along with SYSTEM_RO_MEM_OFF) to determine if the
 		current PC is in the RO section.
@@ -140,6 +149,7 @@ config CROS_EC_RW_MEM_OFF
 config CROS_EC_RW_SIZE
 	hex "The size of the RW region."
 	default 0x75000 if ARCH_POSIX
+	default $(dt_node_int_prop_hex,/binman/ec-rw,size)
 	help
 		This will be used (along with SYSTEM_RW_MEM_OFF) to determine if the
 		current PC is in the RW section.
@@ -148,6 +158,23 @@ config CROS_EC_RW_SIZE
 config SHIMMED_TASKS
 	bool "Add support for shimming in platform/ec tasks as Zephyr threads"
 	default n if ARCH_POSIX
+	default y if PLATFORM_EC_USB_CHARGER
+	default y if HAS_TASK_CHARGER
+	default y if HAS_TASK_CHG_RAMP
+	default y if HAS_TASK_CHIPSET
+	default y if HAS_TASK_DPS
+	default y if HAS_TASK_HOSTCMD
+	default y if HAS_TASK_KEYSCAN
+	default y if HAS_TASK_KEYPROTO
+	default y if HAS_TASK_MOTIONSENSE
+	default y if HAS_TASK_PD_INT_SHARED
+	default y if HAS_TASK_POWERBTN
+	default y if HAS_TASK_USB_MUX
+	default y if TASK_HOSTCMD_THREAD_DEDICATED
+	default y if HAS_TASK_MAIN
+	default y if HAS_TASK_TOUCHPAD
+	default y if HAS_TASK_PD_C0
+	default y if HAS_TASK_PD_INT_C0
 	help
 	  When this option is enabled, a shimmed_tasks.h header with the
 	  CROS_EC_TASK_LIST defined needs to be included for the project to

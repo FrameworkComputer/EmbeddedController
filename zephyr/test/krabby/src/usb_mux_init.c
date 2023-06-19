@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/ztest.h>
-
 #include "driver/usb_mux/tusb1064.h"
 #include "emul/emul_tusb1064.h"
 #include "usb_mux.h"
 #include "usbc/usb_muxes.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 const static struct emul *emul = EMUL_DT_GET(DT_NODELABEL(tusb1064_mux_1));
 

@@ -48,9 +48,9 @@ Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 ***
 <!-- mdformat on -->
 
-This FPMCU board is Icetower Rev 0.1. |
-------------------------------------- |
-![Icetower board]                     |
+This FPMCU board is Icetower Rev 3. |
+----------------------------------- |
+![Icetower board]                   |
 
 <!-- mdformat off(b/139308852) -->
 *** note
@@ -69,7 +69,7 @@ debug a running program.
 
 There are several variants of Servo and the fingerprint team uses the
 [Servo Micro](#servo-micro) for its simplicity. It lacks builtin JTAG/SWD
-support for single step debugging, but Dragonclaw v0.3 and Icetower v0.1 have an
+support for single step debugging, but Dragonclaw v0.3 and Icetower v3 have an
 [SWD connector](#servo-micro-swd) that can be used.
 
 [Servo Micro](#servo-micro) |
@@ -118,8 +118,8 @@ Open **two** terminals and enter the chroot in each:
 # from a terminal on your machine
 (outside chroot) $ cd ~/chromiumos/src
 
-# enter the chroot (the flag is important)
-(outside chroot) $ cros_sdk --no-ns-pid
+# enter the chroot
+(outside chroot) $ cros_sdk
 ```
 
 <!-- mdformat off(b/139308852) -->
@@ -152,74 +152,113 @@ Run `servod`:
 You should see something like this. Leave it running:
 
 ```bash
-2019-04-11 15:21:53,715 - servod - INFO - Start
-2019-04-11 15:21:53,765 - servod - INFO - Found servo, vid: 0x18d1 pid: 0x5002 sid: 911416-00789
-2019-04-11 15:21:53,766 - servod - INFO - Found XML overlay for board zerblebarn
-2019-04-11 15:21:53,766 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servo_v2_r1.xml, None, 0)
-2019-04-11 15:21:53,767 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servo_v2_r0.xml, None, 0)
-2019-04-11 15:21:53,771 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/common.xml, None, 0)
-2019-04-11 15:21:53,772 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/power_tools.xml, None, 0)
-2019-04-11 15:21:53,774 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/keyboard.xml, None, 0)
-2019-04-11 15:21:53,775 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/uart_common.xml, None, 0)
-2019-04-11 15:21:53,777 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/ftdii2c_cmd.xml, None, 0)
-2019-04-11 15:21:53,777 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/usb_image_management.xml, None, 0)
-2019-04-11 15:21:53,784 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servo_zerblebarn_overlay.xml, None, 0)
-2019-04-11 15:21:53,785 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servoflex_v2_r0_p50.xml, None, 0)
-2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 1 to ftdi_empty
-2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 2 to ftdi_i2c
-2019-04-11 15:21:53,795 - Servod - INFO - Initializing interface 3 to ftdi_uart
-2019-04-11 15:21:53,799 - Servod - INFO - /dev/pts/8
-2019-04-11 15:21:53,799 - Servod - INFO - Initializing interface 4 to ftdi_uart
-2019-04-11 15:21:53,802 - Servod - INFO - /dev/pts/9
-2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 5 to ftdi_empty
-2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 6 to ftdi_empty
-2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 7 to ftdi_uart
-2019-04-11 15:21:53,805 - Servod - INFO - /dev/pts/10
-2019-04-11 15:21:53,805 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,805 - Servod - INFO - Initializing interface 8 to ftdi_uart
-2019-04-11 15:21:53,808 - Servod - INFO - /dev/pts/11
-2019-04-11 15:21:53,808 - Servod - INFO - Initializing interface 9 to ec3po_uart
-2019-04-11 15:21:53,811 - PD/Cr50 - EC3PO Interface - INFO - -------------------- PD/Cr50 console on: /dev/pts/12
-2019-04-11 15:21:53,811 - Servod - INFO - Initializing interface 10 to ec3po_uart
-2019-04-11 15:21:53,812 - EC - EC3PO Interface - INFO - -------------------- EC console on: /dev/pts/14
-2019-04-11 15:21:54,316 - Servod - INFO - Initialized i2c_mux to rem
-2019-04-11 15:21:54,317 - Servod - INFO - Initialized i2c_mux_en to on
-2019-04-11 15:21:54,319 - Servod - INFO - Initialized pch_disable to off
-2019-04-11 15:21:54,320 - Servod - INFO - Initialized jtag_buf_on_flex_en to off
-2019-04-11 15:21:54,321 - Servod - INFO - Initialized cold_reset to off
-2019-04-11 15:21:54,322 - Servod - INFO - Initialized warm_reset to off
-2019-04-11 15:21:54,323 - Servod - INFO - Initialized spi1_buf_on_flex_en to off
-2019-04-11 15:21:54,324 - Servod - INFO - Initialized spi_hold to off
-2019-04-11 15:21:54,326 - Servod - INFO - Initialized pwr_button to release
-2019-04-11 15:21:54,327 - Servod - INFO - Initialized lid_open to yes
-2019-04-11 15:21:54,328 - Servod - INFO - Initialized spi2_buf_on_flex_en to off
-2019-04-11 15:21:54,330 - Servod - INFO - Initialized rec_mode to off
-2019-04-11 15:21:54,331 - Servod - INFO - Initialized fw_up to off
-2019-04-11 15:21:54,332 - Servod - INFO - Initialized usb_mux_sel1 to dut_sees_usbkey
-2019-04-11 15:21:54,333 - Servod - INFO - Initialized prtctl4_pwren to on
-2019-04-11 15:21:54,334 - Servod - INFO - Initialized uart3_en to on
-2019-04-11 15:21:54,334 - Servod - INFO - Initialized dut_hub_pwren to on
-2019-04-11 15:21:54,335 - Servod - INFO - Initialized kbd_en to off
-2019-04-11 15:21:54,337 - Servod - INFO - Initialized spi1_vref to pp3300
-2019-04-11 15:21:54,338 - Servod - INFO - Initialized spi2_vref to pp1800
-2019-04-11 15:21:54,339 - Servod - INFO - Initialized uart2_en to on
-2019-04-11 15:21:54,340 - Servod - INFO - Initialized uart1_en to on
-2019-04-11 15:21:54,341 - Servod - INFO - Initialized jtag_buf_en to off
-2019-04-11 15:21:54,342 - Servod - INFO - Initialized fw_wp_en to off
-2019-04-11 15:21:54,343 - Servod - INFO - Initialized sd_vref_sel to off
-2019-04-11 15:21:54,343 - Servod - INFO - Initialized ec_ec3po_interp_connect to on
-2019-04-11 15:21:54,344 - Servod - INFO - Initialized uart3_vref to off
-2019-04-11 15:21:54,345 - Servod - INFO - Initialized jtag_vref_sel0 to pp3300
-2019-04-11 15:21:54,346 - Servod - INFO - Initialized jtag_vref_sel1 to pp3300
-2019-04-11 15:21:54,346 - Servod - INFO - Initialized fpmcu_ec3po_interp_connect to on
-2019-04-11 15:21:54,349 - ServoDeviceWatchdog - INFO - Watchdog setup for devices: set([(6353, 20482, '911416-00789')])
-2019-04-11 15:21:54,351 - servod - INFO - Listening on localhost port 9999
+2023-02-03 15:05:30,632 - servod - INFO - Start
+2023-02-03 15:05:30,639 - servod - INFO - Found XML overlay for board icetower
+2023-02-03 15:05:30,639 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/servo_micro.xml, None, 0)
+2023-02-03 15:05:30,640 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/common.xml, None, 0)
+2023-02-03 15:05:30,640 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/power_tools.xml, None, 0)
+2023-02-03 15:05:30,642 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/keyboard.xml, None, 0)
+2023-02-03 15:05:30,644 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/uart_common.xml, None, 0)
+2023-02-03 15:05:30,644 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/ec_info.xml, None, 0)
+2023-02-03 15:05:30,645 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/cpu_fw_spi.xml, None, 0)
+2023-02-03 15:05:30,645 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/servo_adc_enabled_noop.xml, None, 0)
+2023-02-03 15:05:30,648 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/servo_icetower_overlay.xml, None, 0)
+2023-02-03 15:05:30,648 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/servo_fpmcu_dev_board_common_overlay.xml, None, 0)
+2023-02-03 15:05:30,649 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/servoflex_v2_r0_p50.xml, None, 0)
+2023-02-03 15:05:30,649 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/fpmcu_dev_board_common_inas.xml, None, 0)
+2023-02-03 15:05:30,649 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/ina2xx.xml, None, 0)
+2023-02-03 15:05:30,650 - SystemConfig - INFO - Loading XML config (/usr/lib64/python3.6/site-packages/servo/data/servo_fpmcu_dev_board_uart_common_overlay.xml, None, 0)
+2023-02-03 15:05:30,655 - Servod - INFO - Initializing interface 1 to stm32_uart
+2023-02-03 15:05:30,655 - Interface.Build - INFO - Suart: interface: {'name': 'stm32_uart', 'interface': 0, 'index': 1}
+2023-02-03 15:05:30,661 - Interface.Build - INFO - /dev/pts/2
+2023-02-03 15:05:30,661 - Servod - INFO - Initializing interface 2 to stm32_i2c
+2023-02-03 15:05:30,661 - Interface.Build - INFO - Si2cBus: interface: {'name': 'stm32_i2c', 'interface': 4, 'index': 2}
+2023-02-03 15:05:30,661 - root - INFO - Skipping modprobe of i2c-dev: it is already loaded per existence of: /sys/module/i2c_dev/
+2023-02-03 15:05:30,661 - root - INFO - Executing command: ['modprobe', '--quiet', '--', 'i2c-pseudo']
+2023-02-03 15:05:30,664 - i2c_base - INFO - path b'/dev/i2c-pseudo-controller' not found, cannot start I2C pseudo adapter
+2023-02-03 15:05:30,665 - Servod - INFO - Initializing interface 3 to stm32_uart
+2023-02-03 15:05:30,666 - Interface.Build - INFO - Suart: interface: {'name': 'stm32_uart', 'interface': 3, 'index': 3}
+2023-02-03 15:05:30,670 - Interface.Build - INFO - /dev/pts/3
+2023-02-03 15:05:30,670 - Servod - INFO - Initializing interface 6 to ec3po_uart
+2023-02-03 15:05:30,673 - servo_micro - EC3PO Interface - INFO - -------------------- servo_micro console on: /dev/pts/4
+2023-02-03 15:05:30,673 - Servod - INFO - Initializing interface 7 to stm32_uart
+2023-02-03 15:05:30,673 - Interface.Build - INFO - Suart: interface: {'name': 'stm32_uart', 'interface': 6, 'index': 7}
+2023-02-03 15:05:30,678 - Interface.Build - INFO - /dev/pts/6
+2023-02-03 15:05:30,678 - Servod - INFO - Initializing interface 8 to stm32_uart
+2023-02-03 15:05:30,679 - Interface.Build - INFO - Suart: interface: {'name': 'stm32_uart', 'interface': 5, 'index': 8}
+2023-02-03 15:05:30,684 - Interface.Build - INFO - /dev/pts/7
+2023-02-03 15:05:30,684 - Servod - INFO - Initializing interface 9 to ec3po_uart
+2023-02-03 15:05:30,685 - PD/Cr50 - EC3PO Interface - INFO - -------------------- PD/Cr50 console on: /dev/pts/8
+2023-02-03 15:05:30,685 - Servod - INFO - Initializing interface 10 to ec3po_uart
+2023-02-03 15:05:30,687 - EC - EC3PO Interface - INFO - -------------------- EC console on: /dev/pts/10
+2023-02-03 15:05:30,687 - Servod - INFO - Initializing interface 11 to ec3po_uart
+2023-02-03 15:05:30,688 - CPU - EC3PO Interface - INFO - -------------------- CPU console on: /dev/pts/12
+2023-02-03 15:05:31,193 - Servod - INFO - Initialized init_keyboard to on
+2023-02-03 15:05:31,194 - root - WARNING - cpu_ec3po_interp_connect: '1' not found in the param values
+2023-02-03 15:05:31,195 - root - WARNING - cpu_ec3po_interp_connect: update drv to get and set values from the param map {'off': '0'}
+2023-02-03 15:05:31,195 - Servod - INFO - Initialized cpu_ec3po_interp_connect to off
+2023-02-03 15:05:31,200 - Servod - INFO - Initialized cpu_uart_raw_debug to off
+2023-02-03 15:05:31,202 - Servod - INFO - Initialized cpu_uart_timestamp to off
+2023-02-03 15:05:31,204 - Servod - INFO - Initialized ec_ec3po_interp_connect to on
+2023-02-03 15:05:31,205 - Servod - INFO - Initialized ec_uart_raw_debug to off
+2023-02-03 15:05:31,206 - Servod - INFO - Initialized ec_uart_timestamp to on
+2023-02-03 15:05:31,207 - Servod - INFO - Initialized ec_uart_flush to on
+2023-02-03 15:05:31,290 - CPU - EC3PO.Console - INFO - /dev/pts/12 - Disabling uart timestamps.
+2023-02-03 15:05:31,308 - Servod - INFO - Initialized uart1_en to on
+2023-02-03 15:05:31,335 - Servod - INFO - Initialized servo_micro_ec_boot_mode_uut to off
+2023-02-03 15:05:31,462 - Servod - INFO - Initialized servo_jtag_trst to off
+2023-02-03 15:05:31,564 - Servod - INFO - Initialized spi1_buf_en to off
+2023-02-03 15:05:31,664 - Servod - INFO - Initialized spi2_buf_en to off
+2023-02-03 15:05:31,767 - Servod - INFO - Initialized uart2_en to on
+2023-02-03 15:05:32,020 - Servod - INFO - Initialized spi1_vref to pp3300
+2023-02-03 15:05:32,268 - Servod - INFO - Initialized spi2_vref to pp1800
+2023-02-03 15:05:32,396 - Servod - INFO - Initialized servo_jtag_trst_dir to off
+2023-02-03 15:05:32,521 - Servod - INFO - Initialized servo_jtag_tdi_dir to off
+2023-02-03 15:05:32,620 - Servod - INFO - Initialized gpio_expander_reset to off
+2023-02-03 15:05:32,721 - Servod - INFO - Initialized uart3_on_spi1 to off
+2023-02-03 15:05:32,824 - Servod - INFO - Initialized SERVO_JTAG_TMS_DIR to off
+2023-02-03 15:05:32,952 - Servod - INFO - Initialized SERVO_JTAG_TDO_SEL to off
+2023-02-03 15:05:33,078 - Servod - INFO - Initialized SERVO_JTAG_TMS to off
+2023-02-03 15:05:33,206 - Servod - INFO - Initialized UART3_TX_SERVO_JTAG_TCK to off
+2023-02-03 15:05:33,334 - Servod - INFO - Initialized UART3_RX_JTAG_BUFFER_TO_SERVO_TDO to off
+2023-02-03 15:05:33,459 - Servod - INFO - Initialized SERVO_JTAG_TDO_BUFFER_EN to off
+2023-02-03 15:05:33,585 - Servod - INFO - Initialized SERVO_JTAG_TDI to off
+2023-02-03 15:05:33,711 - Servod - INFO - Initialized SERVO_JTAG_RTCK to off
+2023-02-03 15:05:33,808 - Servod - INFO - Initialized JTAG_BUFOUT_EN_L to off
+2023-02-03 15:05:33,936 - Servod - INFO - Initialized JTAG_BUFIN_EN_L to off
+2023-02-03 15:05:33,936 - Servod - INFO - Initialized usbpd_uart_routing to off
+2023-02-03 15:05:33,940 - Servod - INFO - Initialized fw_wp_en to off
+2023-02-03 15:05:33,943 - Servod - INFO - Initialized tp1 to off
+2023-02-03 15:05:33,948 - Servod - INFO - Initialized cold_reset to off
+2023-02-03 15:05:33,952 - Servod - INFO - Initialized pwr_button to release
+2023-02-03 15:05:33,958 - Servod - INFO - Initialized warm_reset to on
+2023-02-03 15:05:33,962 - Servod - INFO - Initialized rec_mode to on
+2023-02-03 15:05:33,968 - Servod - INFO - Initialized fw_up to off
+2023-02-03 15:05:33,972 - Servod - INFO - Initialized lid_open to yes
+2023-02-03 15:05:33,976 - Servod - INFO - Initialized pch_disable to off
+2023-02-03 15:05:33,978 - Servod - INFO - Initialized tp2 to off
+2023-02-03 15:05:34,380 - servoFirmwareChecker - INFO - servo_micro firmware up to date.
+2023-02-03 15:05:34,381 - Servod - INFO - Initialized servo_micro_firmware_uptodate to check
+2023-02-03 15:05:34,382 - Servod - INFO - Initialized servo_ec3po_interp_connect to on
+2023-02-03 15:05:34,384 - Servod - INFO - Initialized servo_micro_uart_raw_debug to off
+2023-02-03 15:05:34,385 - Servod - INFO - Initialized servo_micro_uart_timestamp to on
+2023-02-03 15:05:34,387 - Servod - INFO - Initialized usbpd_ec3po_interp_connect to on
+2023-02-03 15:05:34,389 - Servod - INFO - Initialized jtag_vref_sel0 to pp3300
+2023-02-03 15:05:34,391 - Servod - INFO - Initialized jtag_vref_sel1 to pp3300
+2023-02-03 15:05:34,398 - Servod - INFO - Initialized hpd to off
+2023-02-03 15:05:34,399 - Servod - INFO - Initialized fpmcu_ec3po_interp_connect to off
+2023-02-03 15:05:34,401 - Servod - INFO - Initialized fpmcu_ec3po_interp_connect_1 to off
+2023-02-03 15:05:34,401 - DeviceWatchdog - INFO - Watchdog setup for devices: [18d1:501a MICRO-S-2201160335]
+2023-02-03 15:05:34,402 - servod - INFO - Listening on localhost port 9999
 ```
 
 In the other terminal, build and flash the firmware:
+
+Make sure the toolchain is installed:
+
+```bash
+(chroot) $ sudo cros_setup_toolchains
+```
 
 Navigate to the EC source:
 
@@ -559,7 +598,7 @@ Make sure that this interface is disabled:
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
 [Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
-[Icetower board]: ../images/icetower_v0.1.jpg
+[Icetower board]: ../images/icetower_v3.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->

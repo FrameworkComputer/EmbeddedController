@@ -3,16 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-#include <zephyr/ztest.h>
-
 #include "hooks.h"
 #include "lid_switch.h"
+#include "mock/power.h"
 #include "power.h"
 #include "task.h"
 #include "util.h"
 
-#include "mock/power.h"
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
 
 LOG_MODULE_REGISTER(mock_power);
 

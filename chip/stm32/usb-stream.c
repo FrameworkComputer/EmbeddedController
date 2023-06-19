@@ -11,10 +11,10 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usart.h"
-#include "usb_hw.h"
 #include "usb-stream.h"
+#include "usb_hw.h"
+#include "util.h"
 
 static size_t rx_read(struct usb_stream_config const *config)
 {

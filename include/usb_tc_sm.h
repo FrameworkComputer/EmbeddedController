@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_USB_TC_H
 #define __CROS_EC_USB_TC_H
 
-#include "usb_sm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_sm.h"
 
 enum try_src_override_t {
 	TRY_SRC_OVERRIDE_OFF,

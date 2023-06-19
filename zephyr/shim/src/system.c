@@ -3,36 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/bbram.h>
-#include <drivers/cros_system.h>
-#include <zephyr/logging/log.h>
-
+#include "bbram.h"
 #include "common.h"
 #include "console.h"
 #include "cros_version.h"
 #include "system.h"
 #include "watchdog.h"
 
-#define BBRAM_REGION_PD0 DT_PATH(named_bbram_regions, pd0)
-#define BBRAM_REGION_PD1 DT_PATH(named_bbram_regions, pd1)
-#define BBRAM_REGION_PD2 DT_PATH(named_bbram_regions, pd2)
-#define BBRAM_REGION_TRY_SLOT DT_PATH(named_bbram_regions, try_slot)
-
-#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
-#define BBRAM_REGION_CHARGE_LIMIT_MAX DT_PATH(named_bbram_regions, charge_limit_max)
-#define BBRAM_REGION_FP_LED_LEVEL DT_PATH(named_bbram_regions, fp_led_level)
-#define BBRAM_REGION_KB_STATUS DT_PATH(named_bbram_regions, kb_status)
-#define BBRAM_REGION_BIOS_FUNCTION DT_PATH(named_bbram_regions, bios_function)
-#define BBRAM_REGION_CHASSIS_WAS_OPEN DT_PATH(named_bbram_regions, chassis_was_open)
-#define BBRAM_REGION_CHASSIS_MAGIC DT_PATH(named_bbram_regions, chassis_magic)
-#define BBRAM_REGION_CHASSIS_TOTAL DT_PATH(named_bbram_regions, chassis_total)
-#define BBRAM_REGION_CHASSIS_VTR_OPEN DT_PATH(named_bbram_regions, chassis_vtr_open)
-#endif
-
-#define GET_BBRAM_OFFSET(node) \
-	DT_PROP(DT_PATH(named_bbram_regions, node), offset)
-#define GET_BBRAM_SIZE(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
+#include <zephyr/device.h>
+#include <zephyr/drivers/bbram.h>
+#include <zephyr/logging/log.h>
+#include <drivers/cros_system.h>
 
 /* 2 second delay for waiting the H1 reset */
 #define WAIT_RESET_TIME                                     \
@@ -51,83 +32,83 @@ static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
 			int *size_out)
 {
 	switch (idx) {
-#if DT_NODE_EXISTS(BBRAM_REGION_PD0)
+#if BBRAM_HAS_REGION(pd0)
 	case SYSTEM_BBRAM_IDX_PD0:
-		*offset_out = DT_PROP(BBRAM_REGION_PD0, offset);
-		*size_out = DT_PROP(BBRAM_REGION_PD0, size);
+		*offset_out = BBRAM_REGION_OFFSET(pd0);
+		*size_out = BBRAM_REGION_SIZE(pd0);
 		break;
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_PD1)
+#if BBRAM_HAS_REGION(pd1)
 	case SYSTEM_BBRAM_IDX_PD1:
-		*offset_out = DT_PROP(BBRAM_REGION_PD1, offset);
-		*size_out = DT_PROP(BBRAM_REGION_PD1, size);
+		*offset_out = BBRAM_REGION_OFFSET(pd1);
+		*size_out = BBRAM_REGION_SIZE(pd1);
 		break;
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_PD2)
+#if BBRAM_HAS_REGION(pd2)
 	case SYSTEM_BBRAM_IDX_PD2:
-		*offset_out = DT_PROP(BBRAM_REGION_PD2, offset);
-		*size_out = DT_PROP(BBRAM_REGION_PD2, size);
+		*offset_out = BBRAM_REGION_OFFSET(pd2);
+		*size_out = BBRAM_REGION_SIZE(pd2);
 		break;
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_TRY_SLOT)
+#if BBRAM_HAS_REGION(try_slot)
 	case SYSTEM_BBRAM_IDX_TRY_SLOT:
-		*offset_out = DT_PROP(BBRAM_REGION_TRY_SLOT, offset);
-		*size_out = DT_PROP(BBRAM_REGION_TRY_SLOT, size);
+		*offset_out = BBRAM_REGION_OFFSET(try_slot);
+		*size_out = BBRAM_REGION_SIZE(try_slot);
 		break;
 #endif
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
-#if DT_NODE_EXISTS(BBRAM_REGION_CHARGE_LIMIT_MAX)
+#if BBRAM_HAS_REGION(charge_limit_max)
 	case SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX:
-		*offset_out = DT_PROP(BBRAM_REGION_CHARGE_LIMIT_MAX, offset);
-		*size_out = DT_PROP(BBRAM_REGION_CHARGE_LIMIT_MAX, size);
+		*offset_out = BBRAM_REGION_OFFSET(charge_limit_max);
+		*size_out = BBRAM_REGION_SIZE(charge_limit_max);
 		break;
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_FP_LED_LEVEL)
+#if BBRAM_HAS_REGION(fp_led_level)
 	case SYSTEM_BBRAM_IDX_FP_LED_LEVEL:
-		*offset_out = DT_PROP(BBRAM_REGION_FP_LED_LEVEL, offset);
-		*size_out = DT_PROP(BBRAM_REGION_FP_LED_LEVEL, size);
+		*offset_out = BBRAM_REGION_OFFSET(fp_led_level);
+		*size_out = BBRAM_REGION_SIZE(fp_led_level);
 		break;
 
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_KB_STATUS)
+#if BBRAM_HAS_REGION(kb_status)
 	case SYSTEM_BBRAM_IDX_KBSTATE:
-		*offset_out = DT_PROP(BBRAM_REGION_KB_STATUS, offset);
-		*size_out = DT_PROP(BBRAM_REGION_KB_STATUS, size);
+		*offset_out = BBRAM_REGION_OFFSET(kb_status);
+		*size_out = BBRAM_REGION_SIZE(kb_status);
 		break;
 
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_BIOS_FUNCTION)
+#if BBRAM_HAS_REGION(bios_function)
 	case SYSTEM_BBRAM_IDX_BIOS_FUNCTION:
-		*offset_out = DT_PROP(BBRAM_REGION_BIOS_FUNCTION, offset);
-		*size_out = DT_PROP(BBRAM_REGION_BIOS_FUNCTION, size);
+		*offset_out = BBRAM_REGION_OFFSET(bios_function);
+		*size_out = BBRAM_REGION_SIZE(bios_function);
 		break;
 
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_WAS_OPEN)
+#if BBRAM_HAS_REGION(chassis_was_open)
 	case SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN:
-		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_WAS_OPEN, offset);
-		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_WAS_OPEN, size);
+		*offset_out = BBRAM_REGION_OFFSET(chassis_was_open);
+		*size_out = BBRAM_REGION_SIZE(chassis_was_open);
 		break;
 
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_MAGIC)
+#if BBRAM_HAS_REGION(chassis_magic)
 	case SYSTEM_BBRAM_IDX_CHASSIS_MAGIC:
-		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_MAGIC, offset);
-		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_MAGIC, size);
+		*offset_out = BBRAM_REGION_OFFSET(chassis_magic);
+		*size_out = BBRAM_REGION_SIZE(chassis_magic);
 		break;
 
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_TOTAL)
+#if BBRAM_HAS_REGION(chassis_total)
 	case SYSTEM_BBRAM_IDX_CHASSIS_TOTAL:
-		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_TOTAL, offset);
-		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_TOTAL, size);
+		*offset_out = BBRAM_REGION_OFFSET(chassis_total);
+		*size_out = BBRAM_REGION_SIZE(chassis_total);
 		break;
 
 #endif
-#if DT_NODE_EXISTS(BBRAM_REGION_CHASSIS_VTR_OPEN)
+#if BBRAM_HAS_REGION(chassis_vtr_open)
 	case SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN:
-		*offset_out = DT_PROP(BBRAM_REGION_CHASSIS_VTR_OPEN, offset);
-		*size_out = DT_PROP(BBRAM_REGION_CHASSIS_VTR_OPEN, size);
+		*offset_out = BBRAM_REGION_OFFSET(chassis_vtr_open);
+		*size_out = BBRAM_REGION_SIZE(chassis_vtr_open);
 		break;
 
 #endif
@@ -177,8 +158,8 @@ void chip_save_reset_flags(uint32_t flags)
 		return;
 	}
 
-	bbram_write(bbram_dev, GET_BBRAM_OFFSET(saved_reset_flags),
-		    GET_BBRAM_SIZE(saved_reset_flags), (uint8_t *)&flags);
+	bbram_write(bbram_dev, BBRAM_REGION_OFFSET(saved_reset_flags),
+		    BBRAM_REGION_SIZE(saved_reset_flags), (uint8_t *)&flags);
 }
 
 uint32_t chip_read_reset_flags(void)
@@ -190,8 +171,8 @@ uint32_t chip_read_reset_flags(void)
 		return 0;
 	}
 
-	bbram_read(bbram_dev, GET_BBRAM_OFFSET(saved_reset_flags),
-		   GET_BBRAM_SIZE(saved_reset_flags), (uint8_t *)&flags);
+	bbram_read(bbram_dev, BBRAM_REGION_OFFSET(saved_reset_flags),
+		   BBRAM_REGION_SIZE(saved_reset_flags), (uint8_t *)&flags);
 
 	return flags;
 }
@@ -203,8 +184,8 @@ int system_set_scratchpad(uint32_t value)
 		return -EC_ERROR_INVAL;
 	}
 
-	return bbram_write(bbram_dev, GET_BBRAM_OFFSET(scratchpad),
-			   GET_BBRAM_SIZE(scratchpad), (uint8_t *)&value);
+	return bbram_write(bbram_dev, BBRAM_REGION_OFFSET(scratchpad),
+			   BBRAM_REGION_SIZE(scratchpad), (uint8_t *)&value);
 }
 
 int system_get_scratchpad(uint32_t *value)
@@ -214,8 +195,8 @@ int system_get_scratchpad(uint32_t *value)
 		return -EC_ERROR_INVAL;
 	}
 
-	if (bbram_read(bbram_dev, GET_BBRAM_OFFSET(scratchpad),
-		       GET_BBRAM_SIZE(scratchpad), (uint8_t *)value)) {
+	if (bbram_read(bbram_dev, BBRAM_REGION_OFFSET(scratchpad),
+		       BBRAM_REGION_SIZE(scratchpad), (uint8_t *)value)) {
 		return -EC_ERROR_INVAL;
 	}
 
@@ -426,10 +407,8 @@ static int check_reset_cause(void)
 	return 0;
 }
 
-test_export_static int system_preinitialize(const struct device *unused)
+test_export_static int system_preinitialize(void)
 {
-	ARG_UNUSED(unused);
-
 	if (bbram_dev && !device_is_ready(bbram_dev)) {
 		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
 		return -1;

@@ -6,13 +6,13 @@
 
 /* This file creates the UART Program Protocol API commands. */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "cmd.h"
 #include "lib_crc.h"
 #include "main.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 /* Extracting Byte - 8 bit: MSB, LSB */
 #define MSB(u16) ((uint8_t)((uint16_t)(u16) >> 8))

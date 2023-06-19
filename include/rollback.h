@@ -28,7 +28,7 @@ int rollback_get_minimum_version(void);
  * @return EC_SUCCESS on success, EC_ERROR_* on error (e.g. secret is not
  * initialized)
  */
-int rollback_get_secret(uint8_t *secret);
+enum ec_error_list rollback_get_secret(uint8_t *secret);
 
 /**
  * Update rollback protection block to the version passed as parameter.

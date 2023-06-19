@@ -123,36 +123,36 @@ static void rammus_led_set_power(void)
 
 static void rammus_led_set_battery(void)
 {
-	enum charge_state chg_state = charge_get_state();
+	enum led_pwr_state chg_state = led_pwr_get_state();
 	int charge_percent = charge_get_percent();
 	static unsigned int charge_ticks;
 
 	/* CHIPSET_STATE_OFF */
 	switch (chg_state) {
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
-		    charge_percent >= BATTERY_LEVEL_NEAR_FULL)
+		    charge_percent >= CONFIG_BATT_HOST_FULL_FACTOR)
 			config_battery_led(LED_STATE_FULL);
 		else
 			config_battery_led(LED_STATE_DISCHARGE);
 		charge_ticks = 0;
 		break;
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE:
 		config_battery_led(LED_STATE_CHARGE);
 		charge_ticks = 0;
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		if ((charge_ticks++ % LED_TOTAL_TICKS) < LED_CHARGE_PULSE)
 			config_battery_led(LED_STATE_ERROR_PHASE0);
 		else
 			config_battery_led(LED_STATE_ERROR_PHASE1);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
-	case PWR_STATE_IDLE:
+	case LED_PWRS_CHARGE_NEAR_FULL:
+	case LED_PWRS_IDLE:
 		config_battery_led(LED_STATE_DISCHARGE);
 		charge_ticks = 0;
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		config_battery_led(LED_STATE_FULL);
 		charge_ticks = 0;
 		break;

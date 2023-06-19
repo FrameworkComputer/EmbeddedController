@@ -70,16 +70,6 @@ static int lm3509_set_brightness(int percent)
 	return lm3509_write(LM3509_REG_BMAIN, brightness_to_bmain(percent));
 }
 
-static int lm3509_get_brightness(void)
-{
-	int rv, val;
-	rv = lm3509_read(LM3509_REG_BMAIN, &val);
-	if (rv)
-		return -1;
-	val &= LM3509_BMAIN_MASK;
-	return lm3509_brightness[val] / 10;
-}
-
 static int lm3509_init(void)
 {
 	return EC_SUCCESS;
@@ -88,7 +78,6 @@ static int lm3509_init(void)
 const struct kblight_drv kblight_lm3509 = {
 	.init = lm3509_init,
 	.set = lm3509_set_brightness,
-	.get = lm3509_get_brightness,
 	.enable = lm3509_power,
 	.get_enabled = lm3509_get_power,
 };

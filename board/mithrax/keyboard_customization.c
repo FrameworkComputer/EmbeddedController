@@ -5,9 +5,9 @@
 
 #include "common.h"
 #include "gpio.h"
-#include "keyboard_customization.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
+#include "keyboard_customization.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 
@@ -62,7 +62,7 @@ void board_keyboard_drive_col(int col)
 }
 
 #ifdef CONFIG_KEYBOARD_DEBUG
-static char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
+static uint8_t keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{ 'c', KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO,
 	  KLLI_UNKNO, KLLI_UNKNO },
 	{ KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO, KLLI_UNKNO,
@@ -89,14 +89,14 @@ static char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	  KLLI_UNKNO, KLLI_UNKNO },
 };
 
-char get_keycap_label(uint8_t row, uint8_t col)
+uint8_t get_keycap_label(uint8_t row, uint8_t col)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		return keycap_label[col][row];
 	return KLLI_UNKNO;
 }
 
-void set_keycap_label(uint8_t row, uint8_t col, char val)
+void set_keycap_label(uint8_t row, uint8_t col, uint8_t val)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		keycap_label[col][row] = val;

@@ -10,8 +10,9 @@
 
 #define VARIANT_ZORK_DALBOZ
 
-#include <stdbool.h>
 #include "baseboard.h"
+
+#include <stdbool.h>
 
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
@@ -20,6 +21,8 @@
 #define GPIO_USB2_ILIM_SEL GPIO_USB_A1_CHARGE_EN_DB_L
 
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 5
 
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_LSM6DSM

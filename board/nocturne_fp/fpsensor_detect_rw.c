@@ -7,12 +7,12 @@
 #include "gpio.h"
 #include "timer.h"
 
-enum fp_sensor_type get_fp_sensor_type(void)
+enum fp_sensor_type fpsensor_detect_get_type(void)
 {
 	return FP_SENSOR_TYPE_FPC;
 }
 
-enum fp_sensor_spi_select get_fp_sensor_spi_select(void)
+enum fp_sensor_spi_select fpsensor_detect_get_spi_select(void)
 {
 	enum fp_sensor_spi_select ret;
 

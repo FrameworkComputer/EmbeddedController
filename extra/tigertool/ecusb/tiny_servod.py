@@ -4,7 +4,8 @@
 
 """Helper class to facilitate communication to servo ec console."""
 
-from ecusb import pty_driver, stm32uart
+from ecusb import pty_driver
+from ecusb import stm32uart
 
 
 class TinyServod(object):

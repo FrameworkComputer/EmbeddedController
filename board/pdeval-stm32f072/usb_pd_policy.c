@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "anx7447.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -12,10 +12,10 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_pdo.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -40,11 +40,11 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 int pd_set_power_supply_ready(int port)
 {
 	/* Disable charging */
-	anx7447_board_charging_enable(port, 0);
+	tcpm_set_snk_ctrl(port, 0);
 
 	/* Provide VBUS */
 	gpio_set_level(GPIO_VBUS_PMIC_CTRL, 1);
-	anx7447_set_power_supply_ready(port);
+	tcpm_set_src_ctrl(port, 1);
 
 	/* notify host of power info change */
 
@@ -56,12 +56,12 @@ int pd_set_power_supply_ready(int port)
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS */
-	anx7447_power_supply_reset(port);
+	tcpm_set_src_ctrl(port, 0);
 	gpio_set_level(GPIO_VBUS_PMIC_CTRL, 0);
 	CPRINTS("Disable VBUS, port%d", port);
 
 	/* Enable charging */
-	anx7447_board_charging_enable(port, 1);
+	tcpm_set_snk_ctrl(port, 1);
 }
 #else
 int pd_set_power_supply_ready(int port)

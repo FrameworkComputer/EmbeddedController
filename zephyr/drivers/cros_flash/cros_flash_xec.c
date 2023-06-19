@@ -5,18 +5,19 @@
 
 #define DT_DRV_COMPAT microchip_xec_cros_flash
 
-#include <drivers/cros_flash.h>
+#include "../drivers/flash/spi_nor.h"
+#include "flash.h"
+#include "spi_flash_reg.h"
+#include "write_protect.h"
+
 #include <zephyr/drivers/flash.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <soc.h>
 
-#include "flash.h"
-#include "spi_flash_reg.h"
-#include "write_protect.h"
-#include "../drivers/flash/spi_nor.h"
+#include <drivers/cros_flash.h>
+#include <soc.h>
 
 LOG_MODULE_REGISTER(cros_flash, LOG_LEVEL_ERR);
 
@@ -31,7 +32,11 @@ struct cros_flash_xec_data {
 	const struct device *spi_ctrl_dev;
 };
 
-static struct spi_config spi_cfg;
+/* initialize spi_cfg, SPI driver checks "SPI word size" field */
+static struct spi_config spi_cfg = {
+	.operation = SPI_WORD_SET(8) | SPI_LINES_SINGLE,
+	.frequency = DT_PROP(DT_NODELABEL(int_flash), spi_max_frequency)
+};
 
 #define FLASH_DEV DT_NODELABEL(int_flash)
 #define SPI_CONTROLLER_DEV DT_NODELABEL(spi0)

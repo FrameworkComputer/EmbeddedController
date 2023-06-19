@@ -12,12 +12,13 @@
 #ifndef __EMUL_TCPCI_H
 #define __EMUL_TCPCI_H
 
+#include "emul/emul_common_i2c.h"
+
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-#include <usb_pd_tcpm.h>
 
-#include "emul/emul_common_i2c.h"
+#include <usb_pd_tcpm.h>
 
 /**
  * Number of emulated register. This include vendor registers defined in TCPCI
@@ -79,8 +80,7 @@ struct tcpci_ctx {
 	const struct tcpci_emul_partner_ops *partner;
 
 	/** Reference to Alert# GPIO emulator. */
-	const struct device *alert_gpio_port;
-	gpio_pin_t alert_gpio_pin;
+	struct gpio_dt_spec irq_gpio;
 };
 
 /** Run-time data used by the emulator */
@@ -94,7 +94,8 @@ struct tcpc_emul_data {
 	const struct i2c_common_emul_cfg i2c_cfg;
 };
 
-#define TCPCI_EMUL_DEFINE(n, init, cfg_ptr, chip_data_ptr, bus_api)          \
+#define TCPCI_EMUL_DEFINE(n, init, cfg_ptr, chip_data_ptr, bus_api,          \
+			  backend_api)                                       \
 	static uint8_t tcpci_emul_tx_buf_##n[128];                           \
 	static struct tcpci_emul_msg tcpci_emul_tx_msg_##n = {               \
 		.buf = tcpci_emul_tx_buf_##n,                                \
@@ -103,15 +104,7 @@ struct tcpc_emul_data {
 		.tx_msg = &tcpci_emul_tx_msg_##n,                            \
 		.error_on_ro_write = true,                                   \
 		.error_on_rsvd_write = true,                                 \
-		.alert_gpio_port = COND_CODE_1(                              \
-			DT_INST_NODE_HAS_PROP(n, alert_gpio),                \
-			(DEVICE_DT_GET(DT_GPIO_CTLR(                         \
-				DT_INST_PROP(n, alert_gpio), gpios))),       \
-			(NULL)),                                             \
-		.alert_gpio_pin = COND_CODE_1(                               \
-			DT_INST_NODE_HAS_PROP(n, alert_gpio),                \
-			(DT_GPIO_PIN(DT_INST_PROP(n, alert_gpio), gpios)),   \
-			(0)),                                                \
+		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}),      \
 	};                                                                   \
 	static struct tcpc_emul_data tcpc_emul_data_##n = {                \
 		.tcpci_ctx = &tcpci_ctx##n,                                \
@@ -122,7 +115,8 @@ struct tcpc_emul_data {
 			.addr = DT_INST_REG_ADDR(n),                       \
 		},                                                         \
 	}; \
-	EMUL_DT_INST_DEFINE(n, init, &tcpc_emul_data_##n, cfg_ptr, bus_api)
+	EMUL_DT_INST_DEFINE(n, init, &tcpc_emul_data_##n, cfg_ptr, bus_api,  \
+			    backend_api)
 
 /** Response from TCPCI specific device operations */
 enum tcpci_emul_ops_resp {
@@ -316,6 +310,14 @@ struct tcpci_emul_msg *tcpci_emul_get_tx_msg(const struct emul *emul);
  * @param rev Requested revision
  */
 void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev);
+
+/**
+ * @brief Set TCPCI VBUS Voltage in VBUS_VOLTAGE register
+ *
+ * @param emul Pointer to TCPC emulator
+ * @param vbus_mv Requested VBUS in mV
+ */
+void tcpci_emul_set_vbus_voltage(const struct emul *emul, uint32_t vbus_mv);
 
 /**
  * @brief Set callback which is called when alert register is changed

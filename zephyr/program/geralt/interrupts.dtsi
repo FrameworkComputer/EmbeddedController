@@ -1,0 +1,110 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		int-wp = &int_wp;
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_360: lid-360-l {
+			irq-pin = <&lid_360_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+		int_ap_in_sleep: ap-in-sleep {
+			irq-pin = <&ap_in_sleep_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_lid_imu: lid-imu {
+			irq-pin = <&lid_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
+		int_ap_wdtrst: ap-wdtrst {
+			irq-pin = <&ap_ec_wdtrst_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "chipset_watchdog_interrupt";
+		};
+		int_usb_c0_ppc_bc12: usb-c0-ppc-bc12 {
+			irq-pin = <&usb_c0_ppc_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_volume_up: volume-up {
+			irq-pin = <&volume_up_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_volume_down: volume-down {
+			irq-pin = <&volume_down_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_ac_present: ac-present {
+			irq-pin = <&ac_present>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_lid_open: lid-open {
+			irq-pin = <&lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_power_button: power-button {
+			irq-pin = <&power_button_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_pg_pp4200_s5: pg-pp4200-s5 {
+			irq-pin = <&pg_pp4200_s5_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_warm_rst: warm-rst {
+			irq-pin = <&ap_ec_warm_rst_req>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "chipset_reset_request_interrupt";
+		};
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_in_rst: ap-in-rst {
+			irq-pin = <&ap_sysrst_odl_r>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_wp: wp {
+			irq-pin = <&ec_flash_wp_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "switch_interrupt";
+		};
+		int_spi0_cs: spi0-cs {
+			irq-pin = <&spi0_cs>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "spi_event";
+		};
+		int_usb_c1_ppc: usb-c1-ppc {
+			irq-pin = <&usb_c1_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "ppc_interrupt";
+		};
+		int_ccd_mode_odl: ccd-mode-odl {
+			irq-pin = <&gpio_ccd_mode_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ccd_interrupt";
+		};
+		int_ap_xhci_init_done: ap-xhci-init-done {
+			irq-pin = <&ap_xhci_init_done>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "xhci_interrupt";
+		};
+	};
+};

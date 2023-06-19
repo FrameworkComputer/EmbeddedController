@@ -74,7 +74,7 @@ devicetree error: 'adc' is marked as required in 'properties:' in /home/sjg/c/sr
 [70/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charger.c.obj
 [71/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_pd_alt_mode_ufp.c.obj
 [72/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_manager.c.obj
-[73/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_state_v2.c.obj
+[73/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_state.c.obj
 [74/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_ramp.c.obj
 [75/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_ramp_sw.c.obj
 [76/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/cbi.c.obj

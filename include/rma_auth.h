@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_RMA_AUTH_H
 #define __CROS_EC_RMA_AUTH_H
 
-#include <stdint.h>
-
 #include "common.h" /* For __packed. */
+
+#include <stdint.h>
 
 /* Current challenge protocol version */
 #define RMA_CHALLENGE_VERSION 0

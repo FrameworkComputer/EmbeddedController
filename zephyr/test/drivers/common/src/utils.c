@@ -3,32 +3,32 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_dummy.h> /* nocheck */
-#include <zephyr/shell/shell_uart.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "acpi.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "charge_state.h"
 #include "chipset.h"
-#include "lpc.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/emul_stub_device.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
+#include "lpc.h"
 #include "power.h"
 #include "task.h"
 #include "tcpm/tcpci.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/utils.h"
 
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/ztest.h>
+
 #define BATTERY_NODE DT_NODELABEL(battery)
-#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PATH NAMED_GPIOS_GPIO_NODE(ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
 void test_set_battery_level(int percentage)
@@ -62,7 +62,7 @@ void test_set_chipset_to_s0(void)
 
 	/*
 	 * Make sure that battery is in good condition to
-	 * not trigger hibernate in charge_state_v2.c
+	 * not trigger hibernate in charge_state.c
 	 * Set battery voltage to expected value and capacity to 50%. Battery
 	 * will not be full and accepts charging, but will not trigger
 	 * hibernate. Charge level is set to the default value of an emulator
@@ -124,6 +124,7 @@ void test_set_chipset_to_g3(void)
 		      power_get_state());
 }
 
+#if DT_HAS_COMPAT_STATUS_OKAY(cros_isl923x_emul)
 void connect_source_to_port(struct tcpci_partner_data *partner,
 			    struct tcpci_src_emul_data *src, int pdo_index,
 			    const struct emul *tcpci_emul,
@@ -181,6 +182,7 @@ void disconnect_sink_from_port(const struct emul *tcpci_emul)
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul));
 	k_sleep(K_SECONDS(1));
 }
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(cros_isl923x_emul) */
 
 uint8_t acpi_read(uint8_t acpi_addr)
 {
@@ -227,10 +229,8 @@ enum ec_status host_cmd_host_event(enum ec_host_event_action action,
 		.action = action,
 		.mask_type = mask_type,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_HOST_EVENT, 0, *r, params);
 
-	ret_val = host_command_process(&args);
+	ret_val = ec_cmd_host_event(NULL, &params, r);
 
 	return ret_val;
 }
@@ -244,10 +244,8 @@ void host_cmd_motion_sense_dump(int max_sensor_count,
 			.max_sensor_count = max_sensor_count,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 4, *response, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_motion_sense_cmd_v4(NULL, &params, response),
 		   "Failed to get motion_sense dump");
 }
 
@@ -260,10 +258,8 @@ int host_cmd_motion_sense_data(uint8_t sensor_num,
 			.sensor_num = sensor_num,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 4, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v4(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_info(uint8_t cmd_version, uint8_t sensor_num,
@@ -291,10 +287,8 @@ int host_cmd_motion_sense_ec_rate(uint8_t sensor_num, int data_rate_ms,
 			.data = data_rate_ms,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_odr(uint8_t sensor_num, int32_t odr, bool round_up,
@@ -308,10 +302,8 @@ int host_cmd_motion_sense_odr(uint8_t sensor_num, int32_t odr, bool round_up,
 			.roundup = round_up,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_range(uint8_t sensor_num, int32_t range,
@@ -326,10 +318,8 @@ int host_cmd_motion_sense_range(uint8_t sensor_num, int32_t range,
 			.roundup = round_up,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_offset(uint8_t sensor_num, uint16_t flags,
@@ -346,10 +336,8 @@ int host_cmd_motion_sense_offset(uint8_t sensor_num, uint16_t flags,
 			.offset = { offset_x, offset_y, offset_z },
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_scale(uint8_t sensor_num, uint16_t flags,
@@ -366,10 +354,8 @@ int host_cmd_motion_sense_scale(uint8_t sensor_num, uint16_t flags,
 			.scale = { scale_x, scale_y, scale_z },
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_calib(uint8_t sensor_num, bool enable,
@@ -382,10 +368,8 @@ int host_cmd_motion_sense_calib(uint8_t sensor_num, bool enable,
 			.enable = enable,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_fifo_flush(uint8_t sensor_num,
@@ -397,10 +381,8 @@ int host_cmd_motion_sense_fifo_flush(uint8_t sensor_num,
 			.sensor_num = sensor_num,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_fifo_info(struct ec_response_motion_sense *response)
@@ -408,10 +390,8 @@ int host_cmd_motion_sense_fifo_info(struct ec_response_motion_sense *response)
 	struct ec_params_motion_sense params = {
 		.cmd = MOTIONSENSE_CMD_FIFO_INFO,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_fifo_read(uint8_t buffer_length,
@@ -423,10 +403,8 @@ int host_cmd_motion_sense_fifo_read(uint8_t buffer_length,
 			.max_data_vector = buffer_length,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_int_enable(int8_t enable,
@@ -438,10 +416,8 @@ int host_cmd_motion_sense_int_enable(int8_t enable,
 			.enable = enable,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_spoof(uint8_t sensor_num, uint8_t enable,
@@ -457,10 +433,8 @@ int host_cmd_motion_sense_spoof(uint8_t sensor_num, uint8_t enable,
 			.components = { values0, values1, values2 },
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_kb_wake_angle(
@@ -472,10 +446,8 @@ int host_cmd_motion_sense_kb_wake_angle(
 			.data = data,
 		},
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_lid_angle(struct ec_response_motion_sense *response)
@@ -483,10 +455,8 @@ int host_cmd_motion_sense_lid_angle(struct ec_response_motion_sense *response)
 	struct ec_params_motion_sense params = {
 		.cmd = MOTIONSENSE_CMD_LID_ANGLE,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 int host_cmd_motion_sense_tablet_mode_lid_angle(
@@ -499,10 +469,8 @@ int host_cmd_motion_sense_tablet_mode_lid_angle(
 				   .lid_angle = lid_angle,
 				   .hys_degree = hys_degree,
 			   } };
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
@@ -530,10 +498,8 @@ void host_cmd_typec_control_enter_mode(int port, enum typec_mode mode)
 		.command = TYPEC_CONTROL_COMMAND_ENTER_MODE,
 		.mode_to_enter = mode
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_typec_control(NULL, &params),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -542,10 +508,8 @@ void host_cmd_typec_control_exit_modes(int port)
 	struct ec_params_typec_control params = {
 		.port = port, .command = TYPEC_CONTROL_COMMAND_EXIT_MODES
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_typec_control(NULL, &params),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -557,10 +521,8 @@ void host_cmd_typec_control_usb_mux_set(int port,
 		.command = TYPEC_CONTROL_COMMAND_USB_MUX_SET,
 		.mux_params = mux_set,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_typec_control(NULL, &params),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -571,10 +533,8 @@ void host_cmd_typec_control_clear_events(int port, uint32_t events)
 		.command = TYPEC_CONTROL_COMMAND_CLEAR_EVENTS,
 		.clear_events_mask = events,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_typec_control(NULL, &params),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -585,10 +545,8 @@ void host_cmd_typec_control_bist_share_mode(int port, int enable)
 		.command = TYPEC_CONTROL_COMMAND_BIST_SHARE_MODE,
 		.bist_share_mode = enable
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_typec_control(NULL, &params),
 		   "Failed to send Type-C control for port %d", port);
 }
 
@@ -599,28 +557,19 @@ void host_cmd_typec_control_vdm_req(int port, struct typec_vdm_req vdm_req)
 		.command = TYPEC_CONTROL_COMMAND_SEND_VDM_REQ,
 		.vdm_req_params = vdm_req,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_typec_control(NULL, &params),
 		   "Failed to send Type-C control for port %d", port);
 }
 
-void host_cmd_usb_pd_get_amode(
-	uint8_t port, uint16_t svid_idx,
-	struct ec_params_usb_pd_get_mode_response *response, int *response_size)
+struct ec_response_typec_vdm_response host_cmd_typec_vdm_response(int port)
 {
-	struct ec_params_usb_pd_get_mode_request params = {
-		.port = port,
-		.svid_idx = svid_idx,
-	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_USB_PD_GET_AMODE, 0, params);
-	args.response = response;
+	struct ec_params_typec_vdm_response params = { .port = port };
+	struct ec_response_typec_vdm_response response;
 
-	zassert_ok(host_command_process(&args),
-		   "Failed to get alternate-mode info for port %d", port);
-	*response_size = args.response_size;
+	zassert_ok(ec_cmd_typec_vdm_response(NULL, &params, &response),
+		   "Failed to get Type-C state for port %d", port);
+	return response;
 }
 
 void host_events_save(struct host_events_ctx *host_events_ctx)

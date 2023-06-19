@@ -22,7 +22,7 @@
  * series of keys is pressed in rapid succession and the kernel is too busy
  * to read them out right away.
  *
- * RAM usage is (depth * #cols); A 16-entry FIFO will consume 16x13=208 bytes,
+ * RAM usage is (depth * #cols); A 16-entry FIFO will consume 16x16=256 bytes,
  * which is non-trivial but not horrible.
  */
 
@@ -30,7 +30,9 @@ static uint32_t fifo_start; /* first entry */
 static uint32_t fifo_end; /* last entry */
 static atomic_t fifo_entries; /* number of existing entries */
 static uint8_t fifo_max_depth = FIFO_DEPTH;
-static struct ec_response_get_next_event fifo[FIFO_DEPTH];
+static struct ec_response_get_next_event_v1 fifo[FIFO_DEPTH];
+
+BUILD_ASSERT(sizeof(fifo[0].data) >= KEYBOARD_COLS_MAX);
 
 /*
  * Mutex for critical sections of mkbp_fifo_add(), which is called
@@ -49,10 +51,8 @@ static int get_data_size(enum ec_mkbp_event e)
 	case EC_MKBP_EVENT_KEY_MATRIX:
 		return KEYBOARD_COLS_MAX;
 
-#ifdef CONFIG_HOST_EVENT64
 	case EC_MKBP_EVENT_HOST_EVENT64:
 		return sizeof(uint64_t);
-#endif
 
 	case EC_MKBP_EVENT_HOST_EVENT:
 	case EC_MKBP_EVENT_BUTTON:

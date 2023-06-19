@@ -3,23 +3,24 @@
  * found in the LICENSE file.
  */
 
+#include "comm-host.h"
+#include "cros_ec_dev.h"
+#include "ec_commands.h"
+#include "misc_util.h"
+
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <poll.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <fcntl.h>
+#include <poll.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "cros_ec_dev.h"
-#include "comm-host.h"
-#include "ec_commands.h"
-#include "misc_util.h"
 
 static int fd = -1;
 
@@ -291,4 +292,9 @@ int comm_init_dev(const char *device_name)
 	ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
 
 	return 0;
+}
+
+int comm_get_fd()
+{
+	return fd;
 }

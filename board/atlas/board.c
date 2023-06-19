@@ -9,13 +9,13 @@
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "charge_manager.h"
-#include "charger.h"
 #include "charge_state.h"
+#include "charger.h"
 #include "chipset.h"
 #include "console.h"
 #include "driver/als_opt3001.h"
-#include "driver/pmic_bd99992gw.h"
 #include "driver/charger/isl923x.h"
+#include "driver/pmic_bd99992gw.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
@@ -30,10 +30,10 @@
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "panic.h"
-#include "power_button.h"
 #include "power.h"
-#include "pwm_chip.h"
+#include "power_button.h"
 #include "pwm.h"
+#include "pwm_chip.h"
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
@@ -68,6 +68,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Keyboard scan. Increase output_settle_us to 80us from default 50us. */
@@ -531,38 +532,14 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-/*
- * Limit the input current to 95% negotiated limit,
- * to account for the charger chip margin.
- */
-
-static int charger_derate(int current)
-{
-	return current * 95 / 100;
-}
-
 static void board_charger_init(void)
 {
-	charger_set_input_current_limit(CHARGER_SOLO,
-					charger_derate(PD_MAX_CURRENT_MA));
+	charger_set_input_current_limit(
+		CHARGER_SOLO,
+		PD_MAX_CURRENT_MA *
+			(100 - CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT) / 100);
 }
 DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);
-
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_ma = charger_derate(charge_ma);
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
 
 static void board_chipset_suspend(void)
 {

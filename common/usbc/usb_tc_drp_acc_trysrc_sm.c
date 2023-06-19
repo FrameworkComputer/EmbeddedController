@@ -731,6 +731,7 @@ static void tc_detached(int port)
 {
 	TC_CLR_FLAG(port, TC_FLAGS_TS_DTS_PARTNER);
 	hook_notify(HOOK_USB_PD_DISCONNECT);
+	tc_enable_pd(port, 0);
 	tc_pd_connection(port, 0);
 	tcpm_debug_accessory(port, 0);
 	set_ccd_mode(port, 0);
@@ -800,19 +801,6 @@ enum pd_dual_role_states pd_get_dual_role(int port)
 {
 	return drp_state[port];
 }
-
-#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
-static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
-{
-	int j;
-
-	ccprintf("DevId:%d.%d Hash:", HW_DEV_ID_MAJ(dev_id),
-		 HW_DEV_ID_MIN(dev_id));
-	for (j = 0; j < PD_RW_HASH_SIZE / 4; j++)
-		ccprintf(" %08x ", hash[j]);
-	ccprintf("\n");
-}
-#endif /* CONFIG_CMD_PD_DEV_DUMP_INFO */
 
 const char *tc_get_current_state(int port)
 {
@@ -1561,6 +1549,9 @@ void tc_state_init(int port)
 {
 	enum usb_tc_state first_state;
 
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+		return;
+
 	/* For test builds, replicate static initialization */
 	if (IS_ENABLED(TEST_BUILD)) {
 		memset(&tc[port], 0, sizeof(tc[port]));
@@ -1726,7 +1717,7 @@ static void print_current_state(const int port)
 	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
 		CPRINTS_L1("C%d: %s", port, tc_state_names[get_state_tc(port)]);
 	else
-		CPRINTS("C%d: tc-st%d", port, get_state_tc(port));
+		CPRINTS_L1("C%d: tc-st%d", port, get_state_tc(port));
 }
 
 static void handle_device_access(int port)
@@ -1765,12 +1756,10 @@ void tc_event_check(int port, int evt)
 			pd_dpm_request(port, DPM_REQUEST_HARD_RESET_SEND);
 	}
 
-#ifdef CONFIG_POWER_COMMON
-	if (IS_ENABLED(CONFIG_POWER_COMMON)) {
+	if (IS_ENABLED(CONFIG_AP_POWER_CONTROL)) {
 		if (evt & PD_EVENT_POWER_STATE_CHANGE)
 			handle_new_power_state(port);
 	}
-#endif /* CONFIG_POWER_COMMON */
 
 	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 		int i;
@@ -1889,10 +1878,11 @@ static void pd_update_dual_role_config(int port)
 
 __maybe_unused static void handle_new_power_state(int port)
 {
-	if (!IS_ENABLED(CONFIG_POWER_COMMON))
+	if (!IS_ENABLED(CONFIG_AP_POWER_CONTROL))
 		assert(0);
 
-	if (IS_ENABLED(CONFIG_POWER_COMMON) && IS_ENABLED(CONFIG_USB_PE_SM)) {
+	if (IS_ENABLED(CONFIG_AP_POWER_CONTROL) &&
+	    IS_ENABLED(CONFIG_USB_PE_SM)) {
 		if (chipset_in_or_transitioning_to_state(
 			    CHIPSET_STATE_ANY_OFF)) {
 			/*
@@ -2266,7 +2256,6 @@ static void tc_unattached_snk_entry(const int port)
 
 #ifdef CONFIG_USB_PE_SM
 	CLR_FLAGS_ON_DISCONNECT(port);
-	tc_enable_pd(port, 0);
 	tc[port].ps_reset_state = PS_STATE0;
 #endif
 }
@@ -2817,7 +2806,6 @@ static void tc_unattached_src_entry(const int port)
 
 #ifdef CONFIG_USB_PE_SM
 	CLR_FLAGS_ON_DISCONNECT(port);
-	tc_enable_pd(port, 0);
 	tc[port].ps_reset_state = PS_STATE0;
 #endif
 
@@ -3749,6 +3737,13 @@ __maybe_unused static void tc_ct_attached_snk_entry(int port)
 
 	/* The port shall reject a VCONN swap request. */
 	TC_SET_FLAG(port, TC_FLAGS_REJECT_VCONN_SWAP);
+
+	/*
+	 * Type-C r 2.2: The Host shall not advertise dual-role data or
+	 * dual-role power in its SourceCapability or SinkCapability messages -
+	 * Host changes its advertised capabilities to UFP role/sink only role.
+	 */
+	tc_set_data_role(port, PD_ROLE_UFP);
 }
 
 __maybe_unused static void tc_ct_attached_snk_run(int port)

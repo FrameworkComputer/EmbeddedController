@@ -290,6 +290,12 @@ include test/build.mk
 include util/build.mk
 include util/lock/build.mk
 
+
+ifeq ($(CONFIG_BORINGSSL_CRYPTO), y)
+include third_party/boringssl/common/build.mk
+include crypto/build.mk
+endif
+
 includes+=$(includes-y)
 
 # Wrapper for fetching all the sources relevant to this build
@@ -325,6 +331,11 @@ ifeq ($(TEST_FUZZ),y)
 all-obj-$(1)+=$(call objs_from_dir_p,fuzz,$(PROJECT),$(1))
 else
 all-obj-$(1)+=$(call objs_from_dir_p,test,$(PROJECT),$(1))
+endif
+ifeq ($(CONFIG_BORINGSSL_CRYPTO), y)
+all-obj-$(1)+= \
+    $(call objs_from_dir_p,third_party/boringssl/common,boringssl,$(1))
+all-obj-$(1)+= $(call objs_from_dir_p,crypto,crypto,$(1))
 endif
 endef
 
@@ -371,6 +382,10 @@ ifeq ($(USE_BUILTIN_STDLIB), 1)
 dirs+=builtin
 else
 dirs+=libc
+endif
+ifeq ($(CONFIG_BORINGSSL_CRYPTO), y)
+dirs+=third_party/boringssl/common
+dirs+=crypto
 endif
 common_dirs=util
 

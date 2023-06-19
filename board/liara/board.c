@@ -17,6 +17,7 @@
 #include "pwm_chip.h"
 #include "switch.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {

@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-
 #include "driver/charger/rt9490.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_rt9490.h"
 #include "emul/emul_stub_device.h"
 #include "util.h"
+
+#include <zephyr/device.h>
 
 #define DT_DRV_COMPAT zephyr_rt9490_emul
 
@@ -115,7 +115,7 @@ static int rt9490_emul_init(const struct emul *emul,
 		.common = { .cfg = &common_cfg_##n }               \
 	};                                                         \
 	EMUL_DT_INST_DEFINE(n, rt9490_emul_init, &rt9490_data_##n, \
-			    &common_cfg_##n, &i2c_common_emul_api)
+			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_RT9490_EMUL)
 

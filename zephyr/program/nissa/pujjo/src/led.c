@@ -10,9 +10,9 @@
  */
 
 #include "common.h"
-#include "led_onoff_states.h"
-#include "led_common.h"
 #include "gpio.h"
+#include "led_common.h"
+#include "led_onoff_states.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)

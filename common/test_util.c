@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #endif
 
-#include <assert.h>
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -19,6 +18,8 @@
 #include "task.h"
 #include "test_util.h"
 #include "util.h"
+
+#include <assert.h>
 
 struct test_util_tag {
 	uint8_t error_count;
@@ -172,8 +173,9 @@ void test_run_multistep(void)
 }
 
 #ifdef HAS_TASK_HOSTCMD
-int test_send_host_command(int command, int version, const void *params,
-			   int params_size, void *resp, int resp_size)
+enum ec_status test_send_host_command(int command, int version,
+				      const void *params, int params_size,
+				      void *resp, int resp_size)
 {
 	struct host_cmd_handler_args args;
 

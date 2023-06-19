@@ -5,8 +5,8 @@
 
 /* Motion sense module to read from various motion sensors. */
 
-#include "acpi.h"
 #include "accelgyro.h"
+#include "acpi.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -20,8 +20,8 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "tablet_mode.h"
-#include "timer.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 /* Console output macros */

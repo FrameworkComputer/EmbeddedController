@@ -6,7 +6,7 @@
 /* Common USB PD charge configuration */
 
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "intelrvp.h"
@@ -119,11 +119,4 @@ int board_set_active_charge_port(int port)
 	CPRINTS("New chg p%d", port);
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }

@@ -10,13 +10,13 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
 #include "system.h"
 #include "util.h"
-#include "extpower.h"
 
 #define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
 /* Battery LED blinks every per 400ms */
@@ -72,12 +72,12 @@ static void board_led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
 		/* Always indicate amber on when charging. */
 		color = LED_AMBER;
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 			/* Discharging in S3: White 1 sec, off 1 sec */
 			period = (1 + 1) * LED_ONE_SEC;
@@ -111,7 +111,7 @@ static void board_led_set_battery(void)
 			}
 		}
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		/* Battery error: Amber on 0.5 sec, off 0.5 sec */
 		period = (1 + 1) * LED_HALF_ONE_SEC;
 		battery_ticks = battery_ticks % period;
@@ -120,7 +120,7 @@ static void board_led_set_battery(void)
 		else
 			color = LED_OFF;
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		/* Full Charged: Blue on */
 		/* S3: Blink white light (1 sec on, 1 sec off) */
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
@@ -135,10 +135,10 @@ static void board_led_set_battery(void)
 			color = LED_BLUE;
 		}
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		color = LED_BLUE;
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		/* Factory mode: Blue 2 sec, Amber 2 sec */
 		period = (2 + 2) * LED_ONE_SEC;
 		battery_ticks = battery_ticks % period;

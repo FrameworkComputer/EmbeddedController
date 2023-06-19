@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
-
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
-
 #include "common.h"
+#include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
-#include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
+
+LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**
  * @brief Start source capability timer. Capability message will be send after
@@ -126,9 +126,6 @@ tcpci_src_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
 		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
 	uint16_t header;
 
-	/* Data used for responses */
-	uint32_t rmdo;
-
 	header = sys_get_le16(msg->buf);
 
 	if (PD_HEADER_EXT(header)) {
@@ -168,9 +165,14 @@ tcpci_src_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
 							   0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_GET_REVISION:
-			rmdo = 0x31000000;
-			tcpci_partner_send_data_msg(
-				common_data, PD_DATA_REVISION, &rmdo, 1, 0);
+			if (!common_data->rmdo) {
+				tcpci_partner_send_control_msg(
+					common_data, PD_CTRL_NOT_SUPPORTED, 0);
+				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+			}
+			tcpci_partner_send_data_msg(common_data,
+						    PD_DATA_REVISION,
+						    &common_data->rmdo, 1, 0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;

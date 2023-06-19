@@ -10,8 +10,10 @@
 #endif
 #define __CROS_EC_ZEPHYR_HOST_COMMAND_H
 
-#include <zephyr/init.h>
 #include <stdbool.h>
+
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
 
 /* Initializes and runs the host command handler loop.  */
 void host_command_task(void *u);
@@ -19,19 +21,29 @@ void host_command_task(void *u);
 /* Takes over the main thread and runs the host command loop. */
 void host_command_main(void);
 
-/* True if running in the main thread. */
-bool in_host_command_main(void);
+/*
+ * Returns the main thread id. Will be the same as the HOSTCMD thread
+ * when CONFIG_TASK_HOSTCMD_THREAD_MAIN is enabled.
+ */
+k_tid_t get_main_thread(void);
+
+/*
+ * Returns the HOSTCMD thread id. Will be different than the main thread
+ * when CONFIG_TASK_HOSTCMD_THREAD_DEDICATED is enabled.
+ */
+k_tid_t get_hostcmd_thread(void);
 
 #ifdef CONFIG_PLATFORM_EC_HOSTCMD
 
 /**
  * See include/host_command.h for documentation.
  */
-#define DECLARE_HOST_COMMAND(_command, _routine, _version_mask)          \
-	STRUCT_SECTION_ITERABLE(host_command, _cros_hcmd_##_command) = { \
-		.command = _command,                                     \
-		.handler = _routine,                                     \
-		.version_mask = _version_mask,                           \
+#define DECLARE_HOST_COMMAND(_command, _routine, _version_mask)         \
+	static const STRUCT_SECTION_ITERABLE(host_command,              \
+					     _cros_hcmd_##_command) = { \
+		.command = _command,                                    \
+		.handler = _routine,                                    \
+		.version_mask = _version_mask,                          \
 	}
 #else /* !CONFIG_PLATFORM_EC_HOSTCMD */
 

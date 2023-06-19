@@ -4,8 +4,6 @@
  *
  * Battery LED control for nissa
  */
-#include <stdint.h>
-
 #include "charge_manager.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -15,6 +13,8 @@
 #include "led_onoff_states.h"
 #include "pwm.h"
 #include "util.h"
+
+#include <stdint.h>
 
 #define BAT_LED_ON_LVL 0
 #define BAT_LED_OFF_LVL 1
@@ -53,13 +53,8 @@ __override struct led_descriptor
 __override const struct led_descriptor
 	led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
 		[PWR_LED_STATE_ON] = { { EC_LED_COLOR_WHITE, LED_INDEFINITE } },
-		[PWR_LED_STATE_SUSPEND_AC] = { { EC_LED_COLOR_WHITE,
-						 1 * LED_ONE_SEC },
-					       { LED_OFF, 1 * LED_ONE_SEC } },
-		[PWR_LED_STATE_SUSPEND_NO_AC] = { { EC_LED_COLOR_WHITE,
-						    1 * LED_ONE_SEC },
-						  { LED_OFF,
-						    1 * LED_ONE_SEC } },
+		[PWR_LED_STATE_SUSPEND_AC] = { { LED_OFF, LED_INDEFINITE } },
+		[PWR_LED_STATE_SUSPEND_NO_AC] = { { LED_OFF, LED_INDEFINITE } },
 		[PWR_LED_STATE_OFF] = { { LED_OFF, LED_INDEFINITE } },
 	};
 

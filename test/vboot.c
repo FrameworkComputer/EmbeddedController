@@ -7,10 +7,10 @@
 
 #include "common.h"
 #include "rsa.h"
-#include "test_util.h"
-#include "vboot.h"
 #include "rsa2048-3.h"
 #include "rwsig.h"
+#include "test_util.h"
+#include "vboot.h"
 
 struct vboot_key {
 	struct vb21_packed_key vb21_key;

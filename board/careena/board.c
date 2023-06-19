@@ -18,6 +18,7 @@
 #include "switch.h"
 #include "thermal.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {

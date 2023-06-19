@@ -13,7 +13,8 @@ import string
 import subprocess
 import sys
 
-KEYMATRIX = {
+
+KEYMATRIX_0 = {
     "`": (3, 1),
     "1": (6, 1),
     "2": (6, 4),
@@ -89,6 +90,91 @@ KEYMATRIX = {
     "<left>": (7, 12),
 }
 
+KEYMATRIX_1 = {
+    "`": (3, 1),
+    "1": (7, 1),
+    "2": (6, 4),
+    "3": (6, 2),
+    "4": (6, 3),
+    "5": (3, 3),
+    "6": (3, 6),
+    "7": (6, 6),
+    "8": (6, 5),
+    "9": (6, 9),
+    "0": (0, 9),
+    "-": (3, 8),
+    "=": (0, 8),
+    "q": (6, 12),
+    "w": (7, 4),
+    "e": (5, 8),
+    "r": (7, 3),
+    "t": (2, 3),
+    "y": (2, 6),
+    "u": (7, 6),
+    "i": (7, 5),
+    "o": (6, 8),
+    "p": (7, 8),
+    "[": (2, 8),
+    "]": (2, 5),
+    "\\": (1, 11),
+    "a": (4, 1),
+    "s": (5, 6),
+    "d": (0, 14),
+    "f": (4, 3),
+    "g": (1, 3),
+    "h": (1, 6),
+    "j": (4, 6),
+    "k": (4, 5),
+    "l": (4, 9),
+    ";": (4, 8),
+    "'": (1, 8),
+    "z": (7, 9),
+    "x": (5, 5),
+    "c": (7, 13),
+    "v": (7, 2),
+    "b": (0, 3),
+    "n": (0, 6),
+    "m": (5, 1),
+    ",": (5, 4),
+    ".": (5, 9),
+    "/": (6, 11),
+    " ": (5, 3),
+    "<right>": (1, 12),
+    "<alt_r>": (0, 10),
+    "<down>": (5, 11),
+    "<tab>": (6, 1),
+    "<f10>": (1, 4),
+    "<shift_r>": (7, 7),
+    "<ctrl_r>": (4, 0),
+    "<esc>": (1, 1),
+    "<backspace>": (7, 11),
+    "<f2>": (3, 2),
+    "<alt_l>": (6, 10),
+    "<ctrl_l>": (2, 0),
+    "<f1>": (4, 2),
+    "<search>": (3, 0),
+    "<f3>": (2, 2),
+    "<f4>": (1, 2),
+    "<f5>": (4, 4),
+    "<f6>": (3, 4),
+    "<f7>": (2, 4),
+    "<f8>": (2, 9),
+    "<f9>": (1, 9),
+    "<up>": (2, 11),
+    "<shift_l>": (1, 7),
+    "<enter>": (4, 11),
+    "<left>": (0, 12),
+}
+
+# Extensible: when new model comes up in future that deviates from default keyboard matrix,
+# and most certainly different from frostflow, new KEYMATRIX_x entry can be defined first,
+# and then add an "model_name" : KEYMATRIX_x to here.
+MODEL_KBMATRIX_MAP = {
+    "default_matrix": KEYMATRIX_0,
+    "frostflow": KEYMATRIX_1,
+    # "mithrax" is another model that uses same kb matrix with frostflow,
+    # can add "mithrax" : KEYMATRIX_1
+}
 
 UNSHIFT_TABLE = {
     "~": "`",
@@ -119,6 +205,7 @@ for c in string.ascii_lowercase:
 
 
 def inject_event(key, press):
+    """Function inject_event()."""
     if len(key) >= 2 and key[0] != "<":
         key = "<" + key + ">"
     if key not in KEYMATRIX:
@@ -131,11 +218,13 @@ def inject_event(key, press):
 
 
 def inject_key(key):
+    """Function inject_key()."""
     inject_event(key, True)
     inject_event(key, False)
 
 
 def inject_string(string):
+    """Function inject_string()."""
     for c in string:
         if c in KEYMATRIX:
             inject_key(c)
@@ -148,7 +237,20 @@ def inject_string(string):
             sys.exit(1)
 
 
+def read_dutmodel():
+    """Function read_dutmodel()."""
+    try:
+        output = subprocess.check_output(
+            "cros_config / name", stderr=subprocess.DEVNULL, shell=True
+        )
+        modelstr = str(output, "UTF-8")
+    except subprocess.SubprocessError:
+        modelstr = ""
+    return modelstr
+
+
 def usage():
+    """Function usage()."""
     print(
         "Usage: %s [-s <string>] [-k <key>]" % this_script,
         "[-p <pressed-key>] [-r <released-key>] ...",
@@ -159,6 +261,7 @@ def usage():
 
 
 def help():
+    """Function help()."""
     usage()
     print("Valid keys are:")
     i = 0
@@ -172,6 +275,7 @@ def help():
 
 
 def usage_check(asserted_condition, message):
+    """Function usage_check()."""
     if asserted_condition:
         return
     print("%s:" % this_script, message)
@@ -196,6 +300,11 @@ for i in range(1, arg_len, 2):
         sys.argv[i] in ("-s", "-k", "-p", "-r"),
         "unknown flag: %s" % sys.argv[i],
     )
+
+KEYMATRIX = KEYMATRIX_0
+model = read_dutmodel()
+if model in MODEL_KBMATRIX_MAP:
+    KEYMATRIX = MODEL_KBMATRIX_MAP[model]
 
 for i in range(1, arg_len, 2):
     flag = sys.argv[i]

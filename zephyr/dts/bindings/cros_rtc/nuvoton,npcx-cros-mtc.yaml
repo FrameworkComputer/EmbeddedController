@@ -8,16 +8,15 @@ compatible: "nuvoton,npcx-cros-mtc"
 include: base.yaml
 
 properties:
-    reg:
-      required: true
+  reg:
+    required: true
 
-    mtc-alarm:
-      type: phandle
-      required: true
-      description: |
-        Mapping table between Wake-Up Input (WUI) and monotonic counter alarm
-        signal.
+  mtc-alarm:
+    type: phandle
+    required: true
+    description: |
+      Mapping table between Wake-Up Input (WUI) and monotonic counter alarm
+      signal.
 
-        For example, the WUI mapping on NPCX7 monotonic counter alarm would be
-           mtc-alarm = <&wui_mtc>;
-
+      For example, the WUI mapping on NPCX7 monotonic counter alarm would be
+         mtc-alarm = <&wui_mtc>;

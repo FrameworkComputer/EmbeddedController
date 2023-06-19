@@ -5,8 +5,8 @@
  * Test compile_time_macros.h
  */
 
-#include "stdbool.h"
 #include "common.h"
+#include "stdbool.h"
 #include "test_util.h"
 
 static int test_BIT(void)
@@ -24,6 +24,33 @@ static int test_BIT_ULL(void)
 	TEST_EQ(BIT_ULL(25), 0x0000000002000000ULL, "%Lu");
 	TEST_EQ(BIT_ULL(50), 0x0004000000000000ULL, "%Lu");
 	TEST_EQ(BIT_ULL(63), 0x8000000000000000ULL, "%Lu");
+
+	return EC_SUCCESS;
+}
+
+static int test_WRITE_MASK(void)
+{
+	uint8_t r8 __maybe_unused;
+	uint16_t r16 __maybe_unused;
+	uint32_t r32 __maybe_unused;
+
+	r8 = 0;
+	WRITE_MASK(r8, BIT(0) | BIT(1) | BIT(5), true);
+	TEST_EQ(r8, 0x23, "%u");
+	WRITE_MASK(r8, BIT(0), false);
+	TEST_EQ(r8, 0x22, "%u");
+
+	r16 = 0;
+	WRITE_MASK(r16, BIT(0) | BIT(9) | BIT(15), true);
+	TEST_EQ(r16, 0x8201, "%u");
+	WRITE_MASK(r16, BIT(0), false);
+	TEST_EQ(r16, 0x8200, "%u");
+
+	r32 = 0;
+	WRITE_MASK(r32, BIT(0) | BIT(25) | BIT(31), true);
+	TEST_EQ(r32, 0x82000001, "%u");
+	WRITE_MASK(r32, BIT(0), false);
+	TEST_EQ(r32, 0x82000000, "%u");
 
 	return EC_SUCCESS;
 }
@@ -111,6 +138,7 @@ void run_test(int argc, const char **argv)
 
 	RUN_TEST(test_BIT);
 	RUN_TEST(test_BIT_ULL);
+	RUN_TEST(test_WRITE_MASK);
 	RUN_TEST(test_WRITE_BIT);
 	RUN_TEST(test_GENMASK);
 	RUN_TEST(test_GENMASK_ULL);

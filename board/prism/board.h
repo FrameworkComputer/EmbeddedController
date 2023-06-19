@@ -184,6 +184,7 @@
 /*
  * Add rollback protection, and independent RW region protection.
  */
+#define CONFIG_LIBCRYPTOC
 #define CONFIG_ROLLBACK
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
 #define CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE 32

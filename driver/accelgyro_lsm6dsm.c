@@ -306,6 +306,9 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 				st_normalize(s, axis, fifo);
 			}
 
+			if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+			    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+				axis = s->spoof_xyz;
 			if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 				struct ec_response_motion_sensor_data vect;
 

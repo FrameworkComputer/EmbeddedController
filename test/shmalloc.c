@@ -4,17 +4,17 @@
  * found in the LICENSE file.
  */
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "link_defs.h"
 #include "shared_mem.h"
 #include "test_util.h"
+
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /*
  * Total size of memory in the malloc pool (shared between free and allocated

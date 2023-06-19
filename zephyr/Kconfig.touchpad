@@ -1,0 +1,19 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_TOUCHPAD
+	bool "Touchpad support"
+	select HAS_TASK_TOUCHPAD
+	help
+	  Enable touchpad support. Enabling this automatically enables
+	  HAS_TASK_TOUCHPAD to have a dedicated task for touchpad data
+	  pipeline.
+
+	  Must pick a driver from the options below.
+
+config PLATFORM_EC_TOUCHPAD_ELAN
+	bool "Elan touchpad driver"
+	select PLATFORM_EC_TOUCHPAD
+	help
+	  Adds support for Elan I2C touchpad.

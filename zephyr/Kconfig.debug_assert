@@ -32,6 +32,7 @@ endchoice # PLATFORM_EC_DEBUG_ASSERT_MODE
 config PLATFORM_EC_DEBUG_ASSERT_BRIEF
 	bool "Use brief assertion-failure messages"
 	depends on PLATFORM_EC_DEBUG_ASSERT_REBOOTS
+	select ASSERT_NO_COND_INFO
 	help
 	  Normally the assertion-failure messages include the expression that
 	  failed and the function name where the failure occurred. These are
@@ -42,5 +43,8 @@ config PLATFORM_EC_DEBUG_ASSERT_BRIEF
 	  This option is of course not available with
 	  PLATFORM_EC_DEBUG_ASSERT_BREAKPOINT, since that does not print a
 	  message at all.
+
+	  ASSERT_NO_FILE_INFO and ASSERT_NO_MSG_INFO can also be enabled to
+	  further limit image size.
 
 endif # PLATFORM_EC_DEBUG_ASSERT

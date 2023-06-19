@@ -22,6 +22,8 @@ static const union anahera_cbi_fw_config fw_config_defaults = {
 	.kb_bl = KEYBOARD_BACKLIGHT_DISABLED,
 };
 
+static uint32_t cbi_sku_id;
+
 /****************************************************************************
  * Anahera FW_CONFIG access
  */
@@ -42,6 +44,10 @@ void board_init_fw_config(void)
 			fw_config = fw_config_defaults;
 		}
 	}
+
+	/* Saving sku for later use */
+	if (cbi_get_sku_id(&cbi_sku_id) != EC_SUCCESS)
+		cbi_sku_id = 0;
 }
 
 union anahera_cbi_fw_config get_fw_config(void)
@@ -61,5 +67,7 @@ bool ec_cfg_has_kblight(void)
 
 bool ec_cfg_has_lte(void)
 {
-	return (fw_config.lte_db == LTE_PRESENT);
+	/* Also check for mis-configured skus 0xA0108~0xA010B */
+	return (fw_config.lte_db == LTE_PRESENT) ||
+	       ((cbi_sku_id >= 0xA0108) && (cbi_sku_id <= 0xA010B));
 }

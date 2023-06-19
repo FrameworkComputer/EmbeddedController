@@ -8,9 +8,8 @@
 #include "adc.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charger.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
+#include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -29,8 +28,8 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "regulator.h"
 #include "spi.h"
 #include "switch.h"
@@ -41,15 +40,16 @@
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
-#include "usbc_ppc.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_tc_sm.h"
+#include "usbc_ppc.h"
 
 static void bc12_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void xhci_init_done_interrupt(enum gpio_signal signal);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
@@ -90,11 +90,15 @@ __override void board_hibernate_late(void)
 	 * Don't care for devices with Z-state.
 	 */
 	gpio_set_level(GPIO_EN_PP5000_A, 0);
-	isl9238c_hibernate(CHARGER_SOLO);
 	gpio_set_level(GPIO_EN_SLP_Z, 1);
 
 	/* should not reach here */
 	__builtin_unreachable();
+}
+
+void board_hibernate(void)
+{
+	isl9238c_hibernate(CHARGER_SOLO);
 }
 
 static void board_tcpc_init(void)
@@ -308,10 +312,10 @@ __override int board_rt1718s_init(int port)
 
 	/* gpio 1/2 output high when receiving frx signal */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_VBUS_CTRL,
-					  RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS,
+					  RT1718S_GPIO_VBUS_CTRL_FRS_RX_VBUS,
 					  0xFF));
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_VBUS_CTRL,
-					  RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS,
+					  RT1718S_GPIO_VBUS_CTRL_FRS_RX_VBUS,
 					  0xFF));
 
 	/* Turn on SBU switch */

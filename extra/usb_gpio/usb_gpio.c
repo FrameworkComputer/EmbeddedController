@@ -4,11 +4,12 @@
  * found in the LICENSE file.
  */
 
-#include <libusb.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <libusb.h>
 #include <unistd.h>
 
 #define CHECK(expression)                                                     \

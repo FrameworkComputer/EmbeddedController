@@ -5,29 +5,27 @@
 
 /* ESPI module for Chrome EC */
 
-#include "common.h"
 #include "acpi.h"
+#include "chipset.h"
+#include "common.h"
 #include "console.h"
+#include "espi.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_protocol.h"
-#include "port80.h"
-#include "util.h"
-#include "chipset.h"
-
-#include "registers.h"
-#include "espi.h"
 #include "lpc.h"
 #include "lpc_chip.h"
+#include "port80.h"
+#include "power.h"
+#include "registers.h"
 #include "system.h"
+#include "system_boot_time.h"
 #include "task.h"
-#include "console.h"
+#include "tfdp_chip.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
-#include "power.h"
-#include "timer.h"
-#include "tfdp_chip.h"
 
 /* Console output macros */
 #ifdef CONFIG_MCHP_ESPI_DEBUG
@@ -836,6 +834,7 @@ int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 static void espi_chipset_reset(void)
 {
 	hook_notify(HOOK_CHIPSET_RESET);
+	update_ap_boot_time(ESPIRST);
 }
 DECLARE_DEFERRED(espi_chipset_reset);
 #endif
@@ -870,12 +869,15 @@ void espi_vw_evt_pltrst_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW PLTRST#: %d", wire_state);
 
-	if (wire_state) /* Platform Reset de-assertion */
+	if (wire_state) { /* Platform Reset de-assertion */
 		espi_host_init();
-	else /* assertion */
+		update_ap_boot_time(PLTRST_HIGH);
+	} else { /* assertion */
 #ifdef CONFIG_CHIPSET_RESET_HOOK
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
 #endif
+		update_ap_boot_time(PLTRST_LOW);
+	}
 }
 
 /* OOB Reset Warn event handler */
@@ -1057,14 +1059,13 @@ static void espi_mswv1_interrupt(void)
 	girq24_result = MCHP_INT_RESULT(24);
 	MCHP_INT_SOURCE(24) = girq24_result;
 
-	bpos = __builtin_ctz(girq24_result); /* rbit, clz sequence */
-	while (bpos != 32) {
+	while (girq24_result) {
+		bpos = __builtin_ctz(girq24_result); /* rbit, clz sequence */
 		d = *(uint8_t *)(MCHP_ESPI_MSVW_BASE + 8 + (12 * (bpos >> 2)) +
 				 (bpos & 0x03)) &
 		    0x01;
 		(girq24_vw_handlers[bpos])(d, bpos);
 		girq24_result &= ~(1ul << bpos);
-		bpos = __builtin_ctz(girq24_result);
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_GIRQ24, espi_mswv1_interrupt, 2);
@@ -1078,14 +1079,13 @@ static void espi_msvw2_interrupt(void)
 	girq25_result = MCHP_INT_RESULT(25);
 	MCHP_INT_SOURCE(25) = girq25_result;
 
-	bpos = __builtin_ctz(girq25_result); /* rbit, clz sequence */
-	while (bpos != 32) {
+	while (girq25_result) {
+		bpos = __builtin_ctz(girq25_result); /* rbit, clz sequence */
 		d = *(uint8_t *)(MCHP_ESPI_MSVW_BASE + (12 * 7) + 8 +
 				 (12 * (bpos >> 2)) + (bpos & 0x03)) &
 		    0x01;
 		(girq25_vw_handlers[bpos])(d, bpos);
 		girq25_result &= ~(1ul << bpos);
-		bpos = __builtin_ctz(girq25_result);
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_GIRQ25, espi_msvw2_interrupt, 2);

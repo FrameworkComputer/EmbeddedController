@@ -1,5 +1,4 @@
 #!/usr/bin/env vpython3
-
 # Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -35,6 +34,10 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/psutil/${vpython_platform}"
 #   version: "version:5.8.0.chromium.3"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pyelftools-py2_py3"
+#   version: "version:0.29"
 # >
 # wheel: <
 #   name: "infra/python/wheels/pykwalify-py2_py3"
@@ -78,14 +81,29 @@ import argparse
 import json
 import os
 import pathlib
+from pathlib import Path
 import re
 import shlex
 import shutil
+from shutil import which
+import socket
 import subprocess
 import sys
+import tempfile
 import time
-from pathlib import Path
-from shutil import which
+
+
+# Paths under the EC base dir that contain tests. This is used to define
+# Twister's search scope.
+EC_TEST_PATHS = [
+    Path("common"),
+    Path("zephyr/test"),
+]
+
+# Paths under ZEPHYR_BASE that we also wish to search for test cases.
+ZEPHYR_TEST_PATHS = [
+    Path("tests/subsys/shell"),
+]
 
 
 def find_checkout() -> Path:
@@ -115,7 +133,12 @@ def find_paths():
 
     if cros_checkout:
         ec_base = cros_checkout / "src" / "platform" / "ec"
-        zephyr_base = cros_checkout / "src" / "third_party" / "zephyr" / "main"
+        try:
+            zephyr_base = Path(os.environ["ZEPHYR_BASE"]).resolve()
+        except KeyError as err:
+            zephyr_base = (
+                cros_checkout / "src" / "third_party" / "zephyr" / "main"
+            )
         zephyr_modules_dir = cros_checkout / "src" / "third_party" / "zephyr"
     else:
         try:
@@ -176,28 +199,36 @@ def upload_results(ec_base, outdir):
 
     if is_rdb_login():
         json_path = pathlib.Path(outdir) / "twister.json"
-        cmd = [
-            "rdb",
-            "stream",
-            "-new",
-            "-realm",
-            "chromium:public",
-            "--",
-            str(ec_base / "util/zephyr_to_resultdb.py"),
-            "--result=" + str(json_path),
-            "--upload=True",
-        ]
 
-        start_time = time.time()
-        ret = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        end_time = time.time()
+        if json_path.exists():
+            hostname = socket.gethostname().split(".")[0]
+            cmd = [
+                "rdb",
+                "stream",
+                "-new",
+                "-realm",
+                "chromium:public",
+                "-tag",
+                "builder_name:" + hostname,
+                "--",
+                "vpython3",
+                str(ec_base / "util/zephyr_to_resultdb.py"),
+                "--result=" + str(json_path),
+                "--upload=True",
+            ]
 
-        # Extract URL to test report from captured output
-        rdb_url = re.search(
-            r"(?P<url>https?://[^\s]+)", ret.stderr.split("\n")[0]
-        ).group("url")
-        print(f"\nTEST RESULTS ({end_time - start_time:.3f}s): {rdb_url}\n")
-        flag = ret.returncode == 0
+            start_time = time.time()
+            ret = subprocess.run(
+                cmd, capture_output=True, text=True, check=True
+            )
+            end_time = time.time()
+
+            # Extract URL to test report from captured output
+            rdb_url = re.search(
+                r"(?P<url>https?://[^\s]+)", ret.stderr.split("\n")[0]
+            ).group("url")
+            print(f"\nTEST RESULTS ({end_time - start_time:.3f}s): {rdb_url}\n")
+            flag = ret.returncode == 0
     else:
         print("Unable to upload test results, please run 'rdb auth-login'\n")
 
@@ -208,17 +239,18 @@ def check_for_skipped_tests(outdir):
     """Checks Twister json test report for skipped tests"""
     found_skipped = False
     json_path = pathlib.Path(outdir) / "twister.json"
-    with open(json_path) as file:
-        data = json.load(file)
+    if json_path.exists():
+        with open(json_path) as file:
+            data = json.load(file)
 
-        for testsuite in data["testsuites"]:
-            for testcase in testsuite["testcases"]:
-                if testcase["status"] == "skipped":
-                    tc_name = testcase["identifier"]
-                    print(f"TEST SKIPPED: {tc_name}")
-                    found_skipped = True
+            for testsuite in data["testsuites"]:
+                for testcase in testsuite["testcases"]:
+                    if testcase["status"] == "skipped":
+                        tc_name = testcase["identifier"]
+                        print(f"TEST SKIPPED: {tc_name}")
+                        found_skipped = True
 
-        file.close()
+            file.close()
 
     return found_skipped
 
@@ -247,15 +279,10 @@ def main():
         zephyr_modules.append(ec_base)
 
     # Twister CLI args
-    # TODO(b/239165779): Reduce or remove the usage of label properties
-    # Zephyr upstream has deprecated the label property. We need to allow
-    # warnings during twister runs until all the label properties are removed
-    # from all board and test overlays.
     twister_cli = [
         sys.executable,
         str(zephyr_base / "scripts" / "twister"),  # Executable path
         "--ninja",
-        "--disable-warnings-as-errors",
         f"-x=DTS_ROOT={str( ec_base / 'zephyr')}",
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_BASE={zephyr_base}",
@@ -313,10 +340,16 @@ def main():
         for arg in intercepted_args.testsuite_root:
             twister_cli.extend(["-T", arg])
     else:
-        # Use EC base dir when no -T args specified. This will cause all
-        # Twister-compatible EC tests to run.
-        twister_cli.extend(["-T", str(ec_base)])
-        twister_cli.extend(["-T", str(zephyr_base / "tests/subsys/shell")])
+        # Use this set of test suite roots when no -T args are present. This
+        # should encompass all current Zephyr EC tests. The paths are meant to
+        # be as specific as possible to limit Twister's search scope. This saves
+        # significant time when starting Twister.
+        for path in EC_TEST_PATHS:
+            twister_cli.extend(["-T", str(ec_base / path)])
+
+        # Upstream tests we also wish to run:
+        for path in ZEPHYR_TEST_PATHS:
+            twister_cli.extend(["-T", str(zephyr_base / path)])
 
     if intercepted_args.platform:
         # Pass user-provided -p args when present.
@@ -332,75 +365,70 @@ def main():
     # Prepare environment variables for export to Twister. Inherit the parent
     # process's environment, but set some default values if not already set.
     twister_env = dict(os.environ)
-    extra_env_vars = {
-        "TOOLCHAIN_ROOT": os.environ.get(
-            "TOOLCHAIN_ROOT",
-            str(ec_base / "zephyr") if is_in_chroot else str(zephyr_base),
-        ),
-        "ZEPHYR_TOOLCHAIN_VARIANT": intercepted_args.toolchain,
-    }
-    gcov_tool = None
-    if intercepted_args.toolchain == "host":
-        append_cmake_compiler(
-            twister_cli, "CMAKE_C_COMPILER", ["x86_64-pc-linux-gnu-gcc", "gcc"]
-        )
-        append_cmake_compiler(
-            twister_cli,
-            "CMAKE_CXX_COMPILER",
-            ["x86_64-pc-linux-gnu-g++", "g++"],
-        )
-        gcov_tool = "gcov"
-    elif intercepted_args.toolchain == "llvm":
-        append_cmake_compiler(
-            twister_cli,
-            "CMAKE_C_COMPILER",
-            ["x86_64-pc-linux-gnu-clang", "clang"],
-        )
-        append_cmake_compiler(
-            twister_cli,
-            "CMAKE_CXX_COMPILER",
-            ["x86_64-pc-linux-gnu-clang++", "clang++"],
-        )
-        gcov_tool = str(ec_base / "util" / "llvm-gcov.sh")
-    else:
-        print("Unknown toolchain specified:", intercepted_args.toolchain)
-    if intercepted_args.gcov_tool:
-        gcov_tool = intercepted_args.gcov_tool
-    if gcov_tool:
-        twister_cli.extend(["--gcov-tool", gcov_tool])
-
-    twister_env.update(extra_env_vars)
-
-    # Append additional user-supplied args
-    twister_cli.extend(other_args)
-
-    # Print exact CLI args and environment variables depending on verbosity.
-    if intercepted_args.verbose > 0:
-        print("Calling:", " ".join(shlex.quote(str(x)) for x in twister_cli))
-        print(
-            "With environment overrides:",
-            " ".join(
-                f"{name}={shlex.quote(val)}"
-                for name, val in extra_env_vars.items()
+    with tempfile.TemporaryDirectory() as parsetab_dir:
+        extra_env_vars = {
+            "TOOLCHAIN_ROOT": os.environ.get(
+                "TOOLCHAIN_ROOT",
+                str(ec_base / "zephyr") if is_in_chroot else str(zephyr_base),
             ),
+            "ZEPHYR_TOOLCHAIN_VARIANT": intercepted_args.toolchain,
+            "PARSETAB_DIR": parsetab_dir,
+        }
+        gcov_tool = None
+        if intercepted_args.toolchain == "host":
+            gcov_tool = "gcov"
+            # Inside the chroot, the binutils is still at v2.36 and does not
+            # support the -no-pie flag with the linker and generates warnings.
+            # Disable warnings as errors for the GCC toolchain only.
+            twister_cli.extend(["--disable-warnings-as-errors"])
+        elif intercepted_args.toolchain == "llvm":
+            gcov_tool = str(ec_base / "util" / "llvm-gcov.sh")
+        else:
+            print("Unknown toolchain specified:", intercepted_args.toolchain)
+        if intercepted_args.gcov_tool:
+            gcov_tool = intercepted_args.gcov_tool
+        if gcov_tool:
+            twister_cli.extend(["--gcov-tool", gcov_tool])
+
+        twister_env.update(extra_env_vars)
+
+        # Append additional user-supplied args
+        twister_cli.extend(other_args)
+
+        # Print exact CLI args and environment variables depending on verbosity.
+        if intercepted_args.verbose > 0:
+            print(
+                "Calling:", " ".join(shlex.quote(str(x)) for x in twister_cli)
+            )
+            print(
+                "With environment overrides:",
+                " ".join(
+                    f"{name}={shlex.quote(val)}"
+                    for name, val in extra_env_vars.items()
+                ),
+            )
+            sys.stdout.flush()
+
+        # Invoke Twister and wait for it to exit.
+        result = subprocess.run(
+            twister_cli,
+            env=twister_env,
+            check=False,
+            close_fds=False,  # For GNUMakefile jobserver
         )
-        sys.stdout.flush()
 
-    # Invoke Twister and wait for it to exit.
-    result = subprocess.run(twister_cli, env=twister_env, check=False)
+        if check_for_skipped_tests(intercepted_args.outdir):
+            result.returncode = 1
 
-    if check_for_skipped_tests(intercepted_args.outdir):
-        result.returncode = 1
+        if result.returncode == 0:
+            print("TEST EXECUTION SUCCESSFUL")
+        else:
+            print("TEST EXECUTION FAILED")
 
-    if result.returncode == 0:
-        print("TEST EXECUTION SUCCESSFUL")
-    else:
-        print("TEST EXECUTION FAILED")
+        if is_tool("rdb") and intercepted_args.upload_cros_rdb:
+            upload_results(ec_base, intercepted_args.outdir)
 
-    if is_tool("rdb") and intercepted_args.upload_cros_rdb:
-        upload_results(ec_base, intercepted_args.outdir)
-
-    sys.exit(result.returncode)
+        sys.exit(result.returncode)
 
 
 if __name__ == "__main__":

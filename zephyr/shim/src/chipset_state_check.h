@@ -6,8 +6,8 @@
 #ifndef __CHIPSET_STATE_CHECK_H__
 #define __CHIPSET_STATE_CHECK_H__
 
-#include "chipset.h"
 #include "ap_power/ap_power_interface.h"
+#include "chipset.h"
 
 BUILD_ASSERT((int)AP_POWER_STATE_HARD_OFF == (int)CHIPSET_STATE_HARD_OFF);
 BUILD_ASSERT((int)AP_POWER_STATE_SOFT_OFF == (int)CHIPSET_STATE_SOFT_OFF);

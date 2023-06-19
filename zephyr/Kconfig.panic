@@ -2,6 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE
+	int "Size of preserved ram for panic and jump data"
+	default 1024
+	help
+	  Size of preserved non-initialized memory at end of ram for panic and
+	  jump data. The linker will ensure at least this much space is
+	  unallocated.
+
 if PLATFORM_EC_PANIC
 
 config PLATFORM_EC_SOFTWARE_PANIC

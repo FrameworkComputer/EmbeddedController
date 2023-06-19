@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "adc_chip.h"
+#include "common.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {

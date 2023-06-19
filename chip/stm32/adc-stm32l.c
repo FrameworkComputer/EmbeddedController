@@ -4,9 +4,9 @@
  */
 
 #include "adc.h"
+#include "clock.h"
 #include "common.h"
 #include "console.h"
-#include "clock.h"
 #include "dma.h"
 #include "hooks.h"
 #include "registers.h"

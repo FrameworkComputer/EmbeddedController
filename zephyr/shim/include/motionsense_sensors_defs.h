@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_MOTIONSENSE_SENSORS_DEFS_H
 #define __CROS_EC_MOTIONSENSE_SENSORS_DEFS_H
 
-#include <zephyr/devicetree.h>
-
 #include "common.h"
+
+#include <zephyr/devicetree.h>
 
 #define SENSOR_ID(id) DT_CAT(SENSOR_, id)
 
@@ -20,12 +20,14 @@
 		   (COND_CODE_0(DT_NODE_HAS_PROP(id, alternate_for), \
 				(SENSOR_ID(id), ), ())))
 
+/* clang-format off */
 enum sensor_id {
 #if DT_NODE_EXISTS(SENSOR_NODE)
 	DT_FOREACH_CHILD(SENSOR_NODE, SENSOR_ID_WITH_COMMA)
 #endif
-		SENSOR_COUNT,
+	SENSOR_COUNT,
 };
+/* clang-format on */
 
 #undef SENSOR_ID_WITH_COMMA
 /* Define the SENSOR_ID if:
@@ -35,12 +37,14 @@ enum sensor_id {
 	IF_ENABLED(DT_NODE_HAS_STATUS(id, okay),                     \
 		   (COND_CODE_1(DT_NODE_HAS_PROP(id, alternate_for), \
 				(SENSOR_ID(id), ), ())))
+/* clang-format off */
 enum sensor_alt_id {
 #if DT_NODE_EXISTS(SENSOR_ALT_NODE)
 	DT_FOREACH_CHILD(SENSOR_ALT_NODE, SENSOR_ID_WITH_COMMA)
 #endif
-		SENSOR_ALT_COUNT,
+	SENSOR_ALT_COUNT,
 };
+/* clang-format on */
 
 /*
  * Find the accelerometers for lid angle calculation.

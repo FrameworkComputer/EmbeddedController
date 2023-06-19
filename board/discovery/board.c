@@ -17,6 +17,7 @@
 
 void button_event(enum gpio_signal signal);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 void button_event(enum gpio_signal signal)

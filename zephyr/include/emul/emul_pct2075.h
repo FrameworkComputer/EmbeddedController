@@ -6,8 +6,9 @@
 #ifndef EMUL_PCT2075_H
 #define EMUL_PCT2075_H
 
-#include <zephyr/drivers/emul.h>
 #include "emul/emul_common_i2c.h"
+
+#include <zephyr/drivers/emul.h>
 
 #define PCT2075_REG_NUMBER 5
 

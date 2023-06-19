@@ -6,9 +6,11 @@
 #include "accelgyro.h"
 #include "body_detection.h"
 #include "console.h"
+#include "hooks.h"
 #include "hwtimer.h"
 #include "lid_switch.h"
 #include "math_util.h"
+#include "mkbp_input_devices.h"
 #include "motion_sense_fifo.h"
 #include "timer.h"
 
@@ -17,11 +19,17 @@
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
-static struct motion_sensor_t *body_sensor =
+const static struct body_detect_params default_body_detect_params = {
+	.var_noise_factor = CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR,
+	.var_threshold = CONFIG_BODY_DETECTION_VAR_THRESHOLD,
+	.confidence_delta = CONFIG_BODY_DETECTION_CONFIDENCE_DELTA,
+};
+
+test_export_static struct motion_sensor_t *body_sensor =
 	&motion_sensors[CONFIG_BODY_DETECTION_SENSOR];
 
 static int window_size = CONFIG_BODY_DETECTION_MAX_WINDOW_SIZE;
-static uint64_t var_threshold_scaled, confidence_delta_scaled;
+test_export_static uint64_t var_threshold_scaled, confidence_delta_scaled;
 static int stationary_timeframe;
 
 static int history_idx;
@@ -36,6 +44,12 @@ static struct body_detect_motion_data {
 	int sum; /* sum(history) */
 	uint64_t n2_variance; /* n^2 * var(history) */
 } data[2]; /* motion data for X-axis and Y-axis */
+
+static void print_body_detect_mode(void)
+{
+	CPRINTS("body detect mode %sabled",
+		body_detect_get_state() ? "en" : "dis");
+}
 
 /*
  * This function will update new variance and new sum according to incoming
@@ -113,9 +127,14 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 		/* reset time counting of stationary */
 		stationary_timeframe = 0;
 	}
+
 	/* state changing log */
-	CPRINTS("body_detect changed state to: %s body",
-		motion_state ? "on" : "off");
+	print_body_detect_mode();
+
+	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE))
+		host_set_single_event(EC_HOST_EVENT_BODY_DETECT_CHANGE);
+
+	hook_notify(HOOK_BODY_DETECT_CHANGE);
 }
 
 enum body_detect_states body_detect_get_state(void)
@@ -135,12 +154,13 @@ static void determine_window_size(int odr)
 	}
 }
 
-/* Determine variance threshold scale by range and resolution. */
-static void determine_threshold_scale(int range, int resolution, int rms_noise)
+/* Determine variance threshold scale by range. */
+static void determine_threshold_scale(int range, int rms_noise,
+				      int var_noise_factor, int var_threshold,
+				      int confidence_delta)
 {
 	/*
 	 * range:              g
-	 * resolution:         bits
 	 * data_1g:            LSB/g
 	 * data_1g / 9800:     LSB/(mm/s^2)
 	 * (data_1g / 9800)^2: (LSB^2)/(mm^2/s^4), which number of
@@ -148,9 +168,10 @@ static void determine_threshold_scale(int range, int resolution, int rms_noise)
 	 * rms_noise:          ug
 	 * var_noise:          mm^2/s^4
 	 */
-	const int data_1g = BIT(resolution - 1) / range;
+	const int data_1g = MOTION_SCALING_FACTOR / range;
 	const int multiplier = POW2(data_1g);
 	const int divisor = POW2(9800);
+
 	/*
 	 * We are measuring the var(X) + var(Y), so theoretically, the
 	 * var(noise) should be 2 * rms_noise^2. However, in most case, on a
@@ -158,34 +179,58 @@ static void determine_threshold_scale(int range, int resolution, int rms_noise)
 	 * rms_noise^2. We can multiply the rms_noise^2 with the
 	 * CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR / 100.
 	 */
-	const int var_noise = POW2((uint64_t)rms_noise) *
-			      CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR *
+	const int var_noise = POW2((uint64_t)rms_noise) * var_noise_factor *
 			      POW2(98) / 100 / POW2(10000);
 
 	var_threshold_scaled =
-		(uint64_t)(CONFIG_BODY_DETECTION_VAR_THRESHOLD + var_noise) *
-		multiplier / divisor;
+		(uint64_t)(var_threshold + var_noise) * multiplier / divisor;
 	confidence_delta_scaled =
-		(uint64_t)CONFIG_BODY_DETECTION_CONFIDENCE_DELTA * multiplier /
-		divisor;
+		(uint64_t)confidence_delta * multiplier / divisor;
 }
 
 void body_detect_reset(void)
 {
 	int odr = body_sensor->drv->get_data_rate(body_sensor);
-	int resolution = body_sensor->drv->get_resolution(body_sensor);
 	int rms_noise = body_sensor->drv->get_rms_noise(body_sensor);
+	int var_threshold, confidence_delta, var_noise_factor;
 
-	body_detect_change_state(BODY_DETECTION_ON_BODY, false);
+	if (motion_state == BODY_DETECTION_ON_BODY)
+		stationary_timeframe = 0;
+	else
+		body_detect_change_state(BODY_DETECTION_ON_BODY, false);
 	/*
 	 * The sensor is suspended since its ODR is 0,
 	 * there is no need to reset until sensor is up again
 	 */
 	if (odr == 0)
 		return;
+
+	/* If body detection params haven't been set, use the default ones. */
+	if (!body_sensor->bd_params)
+		body_sensor->bd_params = &default_body_detect_params;
+	/*
+	 * In case only some of the parameters have been specified use
+	 * the default values for the rest of them.
+	 */
+	if (body_sensor->bd_params->var_noise_factor != 0)
+		var_noise_factor = body_sensor->bd_params->var_noise_factor;
+	else
+		var_noise_factor = default_body_detect_params.var_noise_factor;
+
+	if (body_sensor->bd_params->var_threshold != 0)
+		var_threshold = body_sensor->bd_params->var_threshold;
+	else
+		var_threshold = default_body_detect_params.var_threshold;
+
+	if (body_sensor->bd_params->confidence_delta != 0)
+		confidence_delta = body_sensor->bd_params->confidence_delta;
+	else
+		confidence_delta = default_body_detect_params.confidence_delta;
+
 	determine_window_size(odr);
-	determine_threshold_scale(body_sensor->current_range, resolution,
-				  rms_noise);
+	determine_threshold_scale(body_sensor->current_range, rms_noise,
+				  var_noise_factor, var_threshold,
+				  confidence_delta);
 	/* initialize motion data and state */
 	memset(data, 0, sizeof(data));
 	history_idx = 0;
@@ -252,4 +297,39 @@ bool body_detect_get_spoof(void)
 {
 	return spoof_enable;
 }
-#endif
+
+static int command_setbodydetectionmode(int argc, const char **argv)
+{
+	if (argc == 1) {
+		print_body_detect_mode();
+		return EC_SUCCESS;
+	}
+
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* |+1| to also make sure the strings the same length. */
+	if (strncmp(argv[1], "on", strlen("on") + 1) == 0) {
+		body_detect_change_state(BODY_DETECTION_ON_BODY, true);
+		spoof_enable = true;
+	} else if (strncmp(argv[1], "off", strlen("off") + 1) == 0) {
+		body_detect_change_state(BODY_DETECTION_OFF_BODY, true);
+		spoof_enable = true;
+	} else if (strncmp(argv[1], "reset", strlen("reset") + 1) == 0) {
+		body_detect_reset();
+		/*
+		 * Don't call body_detect_set_spoof(), since
+		 * body_detect_change_state() was already called by
+		 * body_detect_reset().
+		 */
+		spoof_enable = false;
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(
+	bodydetectmode, command_setbodydetectionmode, "[on | off | reset]",
+	"Manually force body detect mode to on (body), off (body) or reset.");
+#endif /* CONFIG_ACCEL_SPOOF_MODE */

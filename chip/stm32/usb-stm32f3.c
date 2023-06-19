@@ -5,9 +5,8 @@
  * STM32F3 Family specific USB functionality
  */
 
-#include "usb-stm32f3.h"
-
 #include "system.h"
+#include "usb-stm32f3.h"
 #include "usb_api.h"
 
 void usb_connect(void)

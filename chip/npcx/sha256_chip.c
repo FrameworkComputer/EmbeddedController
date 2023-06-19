@@ -11,9 +11,9 @@
 #include "util.h"
 
 enum ncl_status {
-	NCL_STATUS_OK,
-	NCL_STATUS_FAIL,
-	NCL_STATUS_INVALID_PARAM,
+	NCL_STATUS_OK = 0xA5A5,
+	NCL_STATUS_FAIL = 0x5A5A,
+	NCL_STATUS_INVALID_PARAM = 0x02,
 	NCL_STATUS_PARAM_NOT_SUPPORTED,
 	NCL_STATUS_SYSTEM_BUSY,
 	NCL_STATUS_AUTHENTICATION_FAIL,
@@ -32,7 +32,7 @@ enum ncl_sha_type {
  * The base address of the table that holds the function pointer for each
  * SHA256 API in ROM.
  */
-#define NCL_SHA_BASE_ADDR 0x00000100UL
+#define NCL_SHA_BASE_ADDR 0x0000013CUL
 struct ncl_sha {
 	/* Get the SHA context size required by SHA APIs. */
 	uint32_t (*get_context_size)(void);

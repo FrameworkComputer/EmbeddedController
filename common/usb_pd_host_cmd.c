@@ -5,8 +5,6 @@
  * Host commands for USB-PD module.
  */
 
-#include <string.h>
-
 #include "atomic.h"
 #include "battery.h"
 #include "charge_manager.h"
@@ -17,8 +15,10 @@
 #include "tcpm/tcpm.h"
 #include "usb_common.h"
 #include "usb_mux.h"
-#include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
+
+#include <string.h>
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -102,52 +102,20 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO, hc_remote_pd_chip_info,
 #endif /* CONFIG_EC_CMD_PD_CHIP_INFO && !CONFIG_USB_PD_TCPC */
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_usb_pd_set_mode_request *p = args->params;
-
-	if ((p->port >= board_get_usb_pd_port_count()) || (!p->svid) ||
-	    (!p->opos))
-		return EC_RES_INVALID_PARAM;
-
-	switch (p->cmd) {
-	case PD_EXIT_MODE:
-		if (pd_dfp_exit_mode(p->port, TCPCI_MSG_SOP, p->svid, p->opos))
-			pd_send_vdm(p->port, p->svid,
-				    CMD_EXIT_MODE | VDO_OPOS(p->opos), NULL, 0);
-		else {
-			CPRINTF("Failed exit mode\n");
-			return EC_RES_ERROR;
-		}
-		break;
-	case PD_ENTER_MODE:
-		if (pd_dfp_enter_mode(p->port, TCPCI_MSG_SOP, p->svid, p->opos))
-			pd_send_vdm(p->port, p->svid,
-				    CMD_ENTER_MODE | VDO_OPOS(p->opos), NULL,
-				    0);
-		break;
-	default:
-		return EC_RES_INVALID_PARAM;
-	}
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE, hc_remote_pd_set_amode,
-		     EC_VER_MASK(0));
-
 static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 {
-	const uint8_t *port = args->params;
+	const struct ec_params_usb_pd_info_request *p = args->params;
 	struct ec_params_usb_pd_discovery_entry *r = args->response;
 
-	if (*port >= board_get_usb_pd_port_count())
+	if (p->port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
-	r->vid = pd_get_identity_vid(*port);
-	r->ptype = pd_get_product_type(*port);
+	r->vid = pd_get_identity_vid(p->port);
+	r->ptype = pd_get_product_type(p->port);
 
 	/* pid only included if vid is assigned */
 	if (r->vid)
-		r->pid = pd_get_identity_pid(*port);
+		r->pid = pd_get_identity_pid(p->port);
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
@@ -155,63 +123,9 @@ static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY, hc_remote_pd_discovery,
 		     EC_VER_MASK(0));
 
-static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
-{
-	struct svdm_amode_data *modep;
-	const struct ec_params_usb_pd_get_mode_request *p = args->params;
-	struct ec_params_usb_pd_get_mode_response *r = args->response;
-
-	if (p->port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	/* no more to send */
-	/* TODO(b/148528713): Use TCPMv2's separate storage for SOP'. */
-	if (p->svid_idx >= pd_get_svid_count(p->port, TCPCI_MSG_SOP)) {
-		r->svid = 0;
-		args->response_size = sizeof(r->svid);
-		return EC_RES_SUCCESS;
-	}
-
-	r->svid = pd_get_svid(p->port, p->svid_idx, TCPCI_MSG_SOP);
-	r->opos = 0;
-	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPCI_MSG_SOP),
-	       sizeof(uint32_t) * PDO_MODES);
-	modep = pd_get_amode_data(p->port, TCPCI_MSG_SOP, r->svid);
-
-	if (modep)
-		r->opos = pd_alt_mode(p->port, TCPCI_MSG_SOP, r->svid);
-
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE, hc_remote_pd_get_amode,
-		     EC_VER_MASK(0));
-
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 #ifdef CONFIG_COMMON_RUNTIME
-static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
-{
-	const uint8_t *port = args->params;
-	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
-	uint16_t dev_id;
-	uint32_t current_image;
-
-	if (*port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	pd_dev_get_rw_hash(*port, &dev_id, r->dev_rw_hash, &current_image);
-
-	r->dev_id = dev_id;
-	r->current_image = current_image;
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO, hc_remote_pd_dev_info,
-		     EC_VER_MASK(0));
-
 static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
 	[USB_PD_CTRL_ROLE_TOGGLE_ON] = PD_DRP_TOGGLE_ON,
 	[USB_PD_CTRL_ROLE_TOGGLE_OFF] = PD_DRP_TOGGLE_OFF,
@@ -234,6 +148,7 @@ static const mux_state_t typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
  * Bit 1: Optical/Non-optical cable
  * Bit 2: Legacy Thunderbolt adapter
  * Bit 3: Active Link Uni-Direction/Bi-Direction
+ * Bit 4: Retimer/Rediriver cable
  */
 static uint8_t get_pd_control_flags(int port)
 {
@@ -265,6 +180,9 @@ static uint8_t get_pd_control_flags(int port)
 				 0;
 	control_flags |= cable_resp.lsrx_comm == UNIDIR_LSRX_COMM ?
 				 USB_PD_CTRL_ACTIVE_LINK_UNIDIR :
+				 0;
+	control_flags |= cable_resp.retimer_type == USB_RETIMER ?
+				 USB_PD_CTRL_RETIMER_CABLE :
 				 0;
 
 	return control_flags;
@@ -363,14 +281,12 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 			r_v2->state[0] = '\0';
 
 		r_v2->control_flags = get_pd_control_flags(p->port);
-		if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
-			r_v2->dp_mode = get_dp_pin_mode(p->port);
-			if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
-				r_v2->cable_speed =
-					get_tbt_cable_speed(p->port);
-				r_v2->cable_gen =
-					get_tbt_rounded_support(p->port);
-			}
+
+		r_v2->dp_mode = get_dp_pin_mode(p->port);
+
+		if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)) {
+			r_v2->cable_speed = get_tbt_cable_speed(p->port);
+			r_v2->cable_gen = get_tbt_rounded_support(p->port);
 		}
 
 		if (args->version == 1)

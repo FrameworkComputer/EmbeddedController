@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
+#include "charge_ramp.h"
+#include "charger.h"
+#include "test/drivers/charger_utils.h"
+#include "test/drivers/test_state.h"
+
 #include <string.h>
+
 #include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
-
-#include "charger.h"
-#include "charge_ramp.h"
-#include "test/drivers/charger_utils.h"
-#include "test/drivers/test_state.h"
 
 /* This test suite only works if the chg_chips array is not const. */
 BUILD_ASSERT(IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG),

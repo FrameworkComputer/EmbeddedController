@@ -15,8 +15,9 @@ zephyr_find_mkbp_event_source(uint8_t event_type);
 /**
  * See include/mkbp_event.h for documentation.
  */
-#define DECLARE_EVENT_SOURCE(_type, _func)                                   \
-	STRUCT_SECTION_ITERABLE(mkbp_event_source, _cros_evtsrc_##_func) = { \
-		.event_type = _type,                                         \
-		.get_data = _func,                                           \
+#define DECLARE_EVENT_SOURCE(_type, _func)                             \
+	static const STRUCT_SECTION_ITERABLE(mkbp_event_source,        \
+					     _cros_evtsrc_##_func) = { \
+		.event_type = _type,                                   \
+		.get_data = _func,                                     \
 	}

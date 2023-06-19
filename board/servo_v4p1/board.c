@@ -10,7 +10,6 @@
 #include "common.h"
 #include "console.h"
 #include "dacs.h"
-#include <driver/gl3590.h>
 #include "driver/ioexpander/tca64xxa.h"
 #include "ec_version.h"
 #include "fusb302b.h"
@@ -30,15 +29,17 @@
 #include "tusb1064.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
-#include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usart_tx_dma.h"
+#include "usb-stream.h"
 #include "usb_gpio.h"
 #include "usb_i2c.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_spi.h"
-#include "usb-stream.h"
 #include "util.h"
+
+#include <driver/gl3590.h>
 
 #ifdef SECTION_IS_RO
 #define CROS_EC_SECTION "RO"
@@ -66,22 +67,125 @@ static void tca_evt(enum gpio_signal signal)
 }
 
 /*
- * TUSB1064 set mux board tuning.
- * Adds in board specific gain and DP lane count configuration
+ * Some DUTs are known to be incompatible with servo_v4p1 and USB3.
+ * Due to this USB3 to DUT is forced to be disabled by default.
+ * This command can enable or disable USB3 to DUT manually.
+ * This command is issued during initialization of servod,
+ * automatically enabling USB3 only on DUTs that are known to work
+ * with USB3 servo.
+ * For more information please refer to b/254857085 and b/263573379.
  */
-static int board_tusb1064_dp_rx_eq_set(const struct usb_mux *me,
-				       mux_state_t mux_state)
+static bool usb3_to_dut_enable;
+static int cmd_dut_usb3(int argc, const char *argv[])
+{
+	mux_state_t mux_state;
+
+	if (argc > 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "enable")) {
+		/*
+		 * Need to set this flag before usb_mux_set to prevent
+		 * calling additional set in board_tusb1064_set.
+		 */
+		usb3_to_dut_enable = true;
+
+		/* Need to reset DUT hub and force re-enumeration. */
+		gpio_set_level(GPIO_DUT_HUB_USB_RESET_L, 0);
+
+		/* Overwrite current Type-C mux state to enable USB3. */
+		mux_state = usb_mux_get(DUT) | USB_PD_MUX_USB_ENABLED;
+
+		usb_mux_set(DUT, mux_state, USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(DUT)));
+
+		/* Delay enabling DUT hub to avoid enumeration problems. */
+		usleep(MSEC);
+		gpio_set_level(GPIO_DUT_HUB_USB_RESET_L, 1);
+	} else if (!strcasecmp(argv[1], "disable")) {
+		/*
+		 * Make sure this flag is set to avoid calling additional
+		 * mux set operation in board specific routine.
+		 */
+		usb3_to_dut_enable = true;
+
+		/* No need to reset hub, devices should auto re-enumerate. */
+		mux_state = usb_mux_get(DUT) & ~USB_PD_MUX_USB_ENABLED;
+
+		usb_mux_set(DUT, mux_state, USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(DUT)));
+		usb3_to_dut_enable = false;
+	} else if (argc != 1) {
+		ccprintf("Invalid argument: %s\n", argv[1]);
+		return EC_ERROR_INVAL;
+	}
+
+	ccprintf("USB3 to DUT: %s\n",
+		 usb3_to_dut_enable ? "allowed/enabled" : "disabled");
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(dut_usb3, cmd_dut_usb3, "dut_usb3 [enable/disable]>",
+			"Enable or disable USB3 to DUT. Note that after every "
+			"'dut_usb3 enable' USB3 is enabled once and than only "
+			"allowed, not forced. Some other part of servo logic "
+			"(e.g. pd stack) can still enable/disable it.");
+
+/*
+ * TUSB1064 set mux board tuning.
+ * Adds in board specific gain and DP lane count configuration.
+ * Also adds USB3 quirk.
+ */
+static int board_tusb1064_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
+	bool unused;
 
 	/*
 	 * Apply 10dB gain. Note, this value is selected to match the gain that
 	 * would be set by default if the 2 GPIO gain set pins are left
 	 * floating.
 	 */
-	if (mux_state & USB_PD_MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		rv = tusb1064_set_dp_rx_eq(me, TUSB1064_DP_EQ_RX_10_0_DB);
+		/*
+		 * There is no need to perform any of additional
+		 * USB3 workaround related logic if we are using DP, so return.
+		 */
+		return rv;
+	}
 
+	/*
+	 * This function is issued after standard set operation.
+	 * Logic below overwrites any mux set operation issued by e.g.
+	 * pd stack. It prevents using USB3 to DUT on servo, unless
+	 * it is explicitly allowed.
+	 * If user is sure that specific DUT works with USB3 servo_v4p1,
+	 * can skip this logic setting usb3_to_dut_enable flag.
+	 * It can be done via console command usb3_dut [on\off].
+	 */
+	if (!usb3_to_dut_enable) {
+		/*
+		 * In this point servo is already connected to DUT.
+		 * USB3 can be already enabled for short moment.
+		 * Keep DUT hub in reset until MUX is finally set
+		 * (USB3 disabled) to prevent any enumeration issues.
+		 */
+		gpio_set_level(GPIO_DUT_HUB_USB_RESET_L, 0);
+
+		/*
+		 * Overwrite any set operation to disable USB3.
+		 * Note that we can use internal driver call as mux driver
+		 * already locked mutex inside usb_mux_set operation.
+		 * Also note that we can not use usb_mux_set to prevent
+		 * infinite recursion.
+		 */
+		rv = tusb1064_set_mux(me, mux_state & ~USB_PD_MUX_USB_ENABLED,
+				      &unused);
+
+		/* MUX is set, add preventive delay and enable DUT USB hub. */
+		usleep(MSEC);
+		gpio_set_level(GPIO_DUT_HUB_USB_RESET_L, 1);
+	}
 	return rv;
 }
 
@@ -97,7 +201,7 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 				.i2c_port = I2C_PORT_MASTER,
 				.i2c_addr_flags = TUSB1064_I2C_ADDR10_FLAGS,
 				.driver = &tusb1064_usb_mux_driver,
-				.board_set = &board_tusb1064_dp_rx_eq_set,
+				.board_set = &board_tusb1064_set,
 			},
 	}
 };
@@ -235,6 +339,7 @@ void ext_hpd_detection_enable(int enable)
 }
 #endif /* SECTION_IS_RO */
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

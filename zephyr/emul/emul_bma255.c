@@ -3,22 +3,21 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT zephyr_bma255
-
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_bma255);
+#include "driver/accel_bma2x2.h"
+#include "emul/emul_bma255.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_bma255.h"
+#define DT_DRV_COMPAT zephyr_bma255_emul
 
-#include "driver/accel_bma2x2.h"
-#include "emul/emul_stub_device.h"
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(emul_bma255);
 
 /** Run-time data used by the emulator */
 struct bma_emul_data {
@@ -1006,7 +1005,7 @@ static int bma_emul_init(const struct emul *emul, const struct device *parent)
 		.addr = DT_INST_REG_ADDR(n),                         \
 	};                                                           \
 	EMUL_DT_INST_DEFINE(n, bma_emul_init, &bma_emul_data_##n,    \
-			    &bma_emul_cfg_##n, &i2c_common_emul_api)
+			    &bma_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL)
 

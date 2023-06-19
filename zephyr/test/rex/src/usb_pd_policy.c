@@ -3,33 +3,23 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/fff.h>
-#include <zephyr/ztest.h>
-
 #include "charge_manager.h"
 #include "chipset.h"
 #include "ec_commands.h"
-#include "usb_pd.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
 
-DECLARE_FAKE_VALUE_FUNC(int, chipset_in_state, int);
-DEFINE_FAKE_VALUE_FUNC(int, chipset_in_state, int);
-DECLARE_FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
-DEFINE_FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
-DECLARE_FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
-DEFINE_FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
-DECLARE_FAKE_VOID_FUNC(pd_send_host_event, int);
-DEFINE_FAKE_VOID_FUNC(pd_send_host_event, int);
-DECLARE_FAKE_VALUE_FUNC(bool, tcpm_get_src_ctrl, int);
-DEFINE_FAKE_VALUE_FUNC(bool, tcpm_get_src_ctrl, int);
-DECLARE_FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
-DEFINE_FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
-int chipset_in_state_mock(int state_mask)
-{
-	return state_mask == (CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON);
-}
+FAKE_VALUE_FUNC(int, chipset_in_state, int);
+FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
+FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
+FAKE_VOID_FUNC(pd_send_host_event, int);
+FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
+FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
 
 int ppc_vbus_source_enable_0_mock(int port, int enable)
 {
@@ -84,7 +74,7 @@ void pd_send_host_event_mock(int mask)
 	zassert_equal(PD_EVENT_POWER_CHANGE, mask, NULL);
 }
 
-bool tcpm_get_src_ctrl_mock(int port)
+int ppc_is_sourcing_vbus_mock(int port)
 {
 	return port == 0;
 }
@@ -114,15 +104,24 @@ static void usb_pd_policy_before(void *fixture)
 	RESET_FAKE(ppc_vbus_source_enable);
 	RESET_FAKE(pd_set_vbus_discharge);
 	RESET_FAKE(pd_send_host_event);
-	RESET_FAKE(tcpm_get_src_ctrl);
+	RESET_FAKE(ppc_is_sourcing_vbus);
 	RESET_FAKE(ppc_vbus_sink_enable);
 }
 
 ZTEST_USER(usb_pd_policy, test_pd_check_vconn_swap)
 {
-	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
-	zassert_true(pd_check_vconn_swap(0), NULL, NULL);
-	zassert_equal(1, chipset_in_state_fake.call_count);
+	const struct gpio_dt_spec *const en_z1_rails =
+		GPIO_DT_FROM_NODELABEL(gpio_en_z1_rails);
+
+	/* AP 5V rail is off. */
+	zassert_false(gpio_pin_get_dt(en_z1_rails));
+	zassert_false(pd_check_vconn_swap(0));
+	zassert_false(pd_check_vconn_swap(1));
+
+	/*
+	 * Case with the rail on is untestable because emulated GPIOs don't
+	 * allow getting the current value of output pins.
+	 */
 }
 
 ZTEST_USER(usb_pd_policy, test_pd_power_supply_reset)
@@ -211,16 +210,16 @@ ZTEST_USER(usb_pd_policy, test_pd_set_power_supply_ready_case_4)
 
 ZTEST_USER(usb_pd_policy, test_board_vbus_source_enabled)
 {
-	tcpm_get_src_ctrl_fake.custom_fake = tcpm_get_src_ctrl_mock;
+	ppc_is_sourcing_vbus_fake.custom_fake = ppc_is_sourcing_vbus_mock;
 	zassert_true(board_vbus_source_enabled(0), NULL, NULL);
-	zassert_equal(1, tcpm_get_src_ctrl_fake.call_count);
+	zassert_equal(1, ppc_is_sourcing_vbus_fake.call_count);
 }
 
 ZTEST_USER(usb_pd_policy, test_board_is_sourcing_vbus)
 {
-	tcpm_get_src_ctrl_fake.custom_fake = tcpm_get_src_ctrl_mock;
+	ppc_is_sourcing_vbus_fake.custom_fake = ppc_is_sourcing_vbus_mock;
 	zassert_true(board_is_sourcing_vbus(0), NULL, NULL);
-	zassert_equal(1, tcpm_get_src_ctrl_fake.call_count);
+	zassert_equal(1, ppc_is_sourcing_vbus_fake.call_count);
 }
 
 ZTEST_SUITE(usb_pd_policy, NULL, NULL, usb_pd_policy_before, NULL, NULL);

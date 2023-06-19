@@ -11,8 +11,8 @@
 #include "tcpm/tcpm.h"
 #include "typec_control.h"
 #include "usb_pd.h"
-#include "usb_tc_sm.h"
 #include "usb_sm.h"
+#include "usb_tc_sm.h"
 #include "vpd_api.h"
 
 /* USB Type-C VCONN Powered Device module */

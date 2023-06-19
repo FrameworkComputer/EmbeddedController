@@ -109,12 +109,20 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	exti_events[bit] = signal;
 
 	group = bit / 4;
-	shift = (bit % 4) * 4;
+	shift = bit % 4;
 	bank = (g->port - STM32_GPIOA_BASE) / 0x400;
 
+#ifdef STM32_EXTI_EXTICR
+	/* STM32L5 has 8-bit fields as part of EXTI registers. */
+	STM32_EXTI_EXTICR(group) =
+		(STM32_EXTI_EXTICR(group) & ~(0xFF << (shift * 8))) |
+		(bank << (shift * 8));
+#else
+	/* Other STM chips have 4-bit fields as part of SYSCFG registers. */
 	STM32_SYSCFG_EXTICR(group) =
-		(STM32_SYSCFG_EXTICR(group) & ~(0xF << shift)) |
-		(bank << shift);
+		(STM32_SYSCFG_EXTICR(group) & ~(0xF << (shift * 4))) |
+		(bank << (shift * 4));
+#endif
 	STM32_EXTI_IMR |= g->mask;
 
 	return EC_SUCCESS;
@@ -142,11 +150,19 @@ int gpio_clear_pending_interrupt(enum gpio_signal signal)
 {
 	const struct gpio_info *g = gpio_list + signal;
 
-	if (!g->mask || signal >= GPIO_IH_COUNT)
+	if (!g->mask || signal >= GPIO_IH_COUNT) {
 		return EC_ERROR_INVAL;
+	}
 
 	/* Write 1 to clear interrupt */
+#ifdef STM32_EXTI_RPR
+	/* Separate rising and falling edge pending registers. */
+	STM32_EXTI_RPR = g->mask;
+	STM32_EXTI_FPR = g->mask;
+#else
+	/* One combined rising/falling edge pending registers. */
 	STM32_EXTI_PR = g->mask;
+#endif
 
 	return EC_SUCCESS;
 }
@@ -157,12 +173,21 @@ int gpio_clear_pending_interrupt(enum gpio_signal signal)
 void __keep gpio_interrupt(void)
 {
 	int bit;
+	uint8_t signal;
+#ifdef STM32_EXTI_RPR
+	/* process only GPIO EXTINTs (EXTINT0..15) not other EXTINTs */
+	uint32_t pending_r = STM32_EXTI_RPR & 0xFFFF;
+	uint32_t pending_f = STM32_EXTI_FPR & 0xFFFF;
+	uint32_t pending = pending_r | pending_f;
+	/* Write 1 to clear interrupt */
+	STM32_EXTI_RPR = pending_r;
+	STM32_EXTI_FPR = pending_f;
+#else
 	/* process only GPIO EXTINTs (EXTINT0..15) not other EXTINTs */
 	uint32_t pending = STM32_EXTI_PR & 0xFFFF;
-	uint8_t signal;
-
 	/* Write 1 to clear interrupt */
 	STM32_EXTI_PR = pending;
+#endif
 
 	while (pending) {
 		bit = get_next_bit(&pending);

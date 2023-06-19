@@ -5,13 +5,14 @@
 
 #include "accel_cal.h"
 #include "accelgyro.h"
+#include "gyro_cal.h"
+#include "gyro_cal_init_for_test.h"
 #include "hwtimer.h"
 #include "mag_cal.h"
 #include "online_calibration.h"
 #include "test_util.h"
-#include "gyro_cal_init_for_test.h"
-#include "gyro_cal.h"
 #include "timer.h"
+
 #include <stdio.h>
 
 int mkbp_send_event(uint8_t event_type)

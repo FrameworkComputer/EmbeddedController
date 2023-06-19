@@ -3,25 +3,24 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT zephyr_bmi
-
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_bmi);
+#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_bmi260.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "emul/emul_bmi.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/__assert.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_bmi.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT zephyr_bmi_emul
 
-#include "driver/accelgyro_bmi160.h"
-#include "driver/accelgyro_bmi260.h"
-#include "driver/accelgyro_bmi_common.h"
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(emul_bmi);
 
 /** Run-time data used by the emulator */
 struct bmi_emul_data {
@@ -1106,7 +1105,7 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 		.addr = DT_INST_REG_ADDR(n),                         \
 	};                                                           \
 	EMUL_DT_INST_DEFINE(n, bmi_emul_init, &bmi_emul_data_##n,    \
-			    &bmi_emul_cfg_##n, &i2c_common_emul_api)
+			    &bmi_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL)
 

@@ -28,8 +28,8 @@
 #include "i2c.h"
 #include "i2c_bitbang.h"
 #include "it8801.h"
-#include "keyboard_scan.h"
 #include "keyboard_backlight.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "panic.h"
 #include "power.h"
@@ -53,15 +53,14 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(0 /* port */);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(5),
-			   STM32_RANK(1) },
-	[ADC_EC_SKU_ID] = { "EC_SKU_ID", 3300, 4096, 0, STM32_AIN(15),
-			    STM32_RANK(2) },
+	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(5) },
+	[ADC_EC_SKU_ID] = { "EC_SKU_ID", 3300, 4096, 0, STM32_AIN(15) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -220,7 +219,7 @@ int board_set_active_charge_port(int charge_port)
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
 		break;
-	case CHARGE_PORT_NONE:
+	default:
 		/*
 		 * To ensure the fuel gauge (max17055) is always powered
 		 * even when battery is disconnected, keep VBAT rail on but
@@ -228,20 +227,9 @@ int board_set_active_charge_port(int charge_port)
 		 */
 		charger_set_current(CHARGER_SOLO, 0);
 		break;
-	default:
-		panic("Invalid charge port\n");
-		break;
 	}
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int board_discharge_on_ac(int enable)

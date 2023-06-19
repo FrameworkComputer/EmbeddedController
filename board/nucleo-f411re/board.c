@@ -13,8 +13,6 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "motion_sense.h"
-
-#include "gpio.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
@@ -24,6 +22,7 @@ void user_button_evt(enum gpio_signal signal)
 	ccprintf("Button %d, %d!\n", signal, gpio_get_level(signal));
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Initialize board. */

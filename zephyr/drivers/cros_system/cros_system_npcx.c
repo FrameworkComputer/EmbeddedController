@@ -3,21 +3,24 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <zephyr/drivers/watchdog.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-#include <soc/nuvoton_npcx/reg_def_cros.h>
-#include <zephyr/sys/util.h>
-
+#include "bbram.h"
 #include "drivers/cros_system.h"
 #include "gpio/gpio_int.h"
 #include "rom_chip.h"
 #include "soc_gpio.h"
 #include "soc_miwu.h"
 #include "system.h"
+#include "util.h"
+
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
+
+#include <soc.h>
+#include <soc/nuvoton_npcx/reg_def_cros.h>
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
@@ -84,7 +87,7 @@ struct cros_system_npcx_data {
 /* Get saved reset flag address in battery-backed ram */
 #define BBRAM_SAVED_RESET_FLAG_ADDR                    \
 	(DT_REG_ADDR(DT_INST(0, nuvoton_npcx_bbram)) + \
-	 DT_PROP(DT_PATH(named_bbram_regions, saved_reset_flags), offset))
+	 BBRAM_REGION_OFFSET(saved_reset_flags))
 
 /* Soc specific system local functions */
 static int system_npcx_watchdog_stop(void)
@@ -278,9 +281,9 @@ system_npcx_hibernate_by_lfw_in_last_ram(const struct device *dev,
 static inline int system_npcx_get_ram_blk_by_lfw_addr(char *address)
 {
 	return NPCX_RAM_BLOCK_COUNT -
-	       ceiling_fraction((uint32_t)address -
-					CONFIG_CROS_EC_PROGRAM_MEMORY_BASE,
-				NPCX_RAM_BLOCK_SIZE);
+	       DIV_ROUND_UP((uint32_t)address -
+				    CONFIG_CROS_EC_PROGRAM_MEMORY_BASE,
+			    NPCX_RAM_BLOCK_SIZE);
 }
 
 static void system_npcx_hibernate_by_disable_ram(const struct device *dev,
@@ -629,9 +632,8 @@ DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
 
 PINCTRL_DT_DEFINE(DBG_NODE);
 
-static int jtag_init(const struct device *dev)
+static int jtag_init(void)
 {
-	ARG_UNUSED(dev);
 	struct dbg_reg *const dbg_reg_base = HAL_DBG_REG_BASE_ADDR;
 	const struct pinctrl_dev_config *pcfg =
 		PINCTRL_DT_DEV_CONFIG_GET(DBG_NODE);

@@ -7,9 +7,9 @@
 #ifndef __CROS_EC_QUEUE_POLICIES_H
 #define __CROS_EC_QUEUE_POLICIES_H
 
-#include "queue.h"
 #include "consumer.h"
 #include "producer.h"
+#include "queue.h"
 
 /*
  * The direct notification policy manages a 1-to-1 producer consumer model.

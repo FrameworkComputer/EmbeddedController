@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
 #include "ec_app_main.h"
 #include "host_command.h"
+
+#include <zephyr/kernel.h>
 
 /** A stub main to call the real ec app main function. LCOV_EXCL_START */
 void main(void)

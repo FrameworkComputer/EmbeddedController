@@ -13,9 +13,10 @@ import logging
 import tempfile
 import unittest
 
+from ec3po import interpreter
+from ec3po import threadproc_shim
 import mock  # pylint:disable=import-error
 import six
-from ec3po import interpreter, threadproc_shim
 
 
 def GetBuiltins(func):

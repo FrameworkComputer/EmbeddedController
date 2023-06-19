@@ -3,9 +3,15 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_ln9310_emul
+#include "driver/ln9310.h"
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_ln9310.h"
+#include "emul/emul_stub_device.h"
+#include "hooks.h"
+#include "i2c.h"
 
 #include <errno.h>
+
 #include <zephyr/device.h>
 #include <zephyr/devicetree/gpio.h>
 #include <zephyr/drivers/emul.h>
@@ -13,16 +19,11 @@
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/__assert.h>
 
-#include "driver/ln9310.h"
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_ln9310.h"
-#include "hooks.h"
-#include "i2c.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT cros_ln9310_emul
 
-#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ln9310_emul, CONFIG_LN9310_EMUL_LOG_LEVEL);
 
 enum functional_mode {
@@ -504,7 +505,7 @@ static int emul_ln9310_init(const struct emul *emul,
 		.addr = DT_INST_REG_ADDR(n),                                     \
 	};                                                                       \
 	EMUL_DT_INST_DEFINE(n, emul_ln9310_init, &ln9310_emul_data_##n,          \
-			    &ln9310_emul_cfg_##n, &i2c_common_emul_api)
+			    &ln9310_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_LN9310)
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

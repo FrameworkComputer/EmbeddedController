@@ -1,0 +1,32 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_anx7452_emul>;
+			};
+		};
+	};
+
+};
+&i2c3 {
+	status = "okay";
+
+	/delete-node/ bbretimer@42;
+
+	usb_c1_anx7452_emul: anx7452@10 {
+		compatible = "analogix,anx7452";
+		reg = <0x10>;
+		usb-en-pin = <&usb_c1_usb_en>;
+		dp-en-pin = <&usb_c1_dp_en>;
+	};
+};

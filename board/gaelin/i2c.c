@@ -5,7 +5,6 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
-
 #include "i2c.h"
 
 /* I2C port map configuration */
@@ -41,6 +40,22 @@ const struct i2c_port_t i2c_ports[] = {
 		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
+	},
+	{
+		/* I2C5 */
+		.name = "scaler",
+		.port = I2C_PORT_SCALER,
+		.kbps = 400,
+		.scl = GPIO_SMSCALER_CLK,
+		.sda = GPIO_SMSCALER_DATA,
+	},
+	{
+		/* I2C6 */
+		.name = "usba0_retimer,usba1_retimer",
+		.port = I2C_PORT_USB_A0_A1_MIX,
+		.kbps = 1000,
+		.scl = GPIO_EC_I2C_USB_A0_A1_MIX_SCL,
+		.sda = GPIO_EC_I2C_USB_A0_A1_MIX_SDA,
 	},
 	{
 		/* I2C7 */

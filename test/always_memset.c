@@ -10,12 +10,11 @@
  * If optimization is disabled, the test_optimization_working test will fail.
  */
 
-#include <string.h>
-
 #include "common.h"
+#include "cryptoc/util.h"
 #include "test_util.h"
 
-#include "cryptoc/util.h"
+#include <string.h>
 
 /* 256 bytes of stack is only safe enough for a memcpy. */
 #define EXTRA_STACK_SIZE 256
@@ -79,8 +78,13 @@ fake_builtin_memset(char *dest, char c, size_t len)
  *   functionality.
  * - To check how much of the stack |space| was used by the caller,
  *   run "x/256xb $adr" or "x/64xw $adr" after the memcpy.
+ *
+ * Disable ASAN with the attribute because this function returns a pointer to
+ * stack memory, which is normally very naughty, but is what we want to test
+ * here.
  */
-test_static void exercise_memset(char **p)
+__attribute__((no_sanitize("address"))) test_static void
+exercise_memset(char **p)
 {
 	/*
 	 * Add extra stack space so that |buf| doesn't get trampled while the
@@ -135,8 +139,13 @@ test_static int test_optimization_working(void)
  * to optimize out the last memset due to no side effect.
  *
  * This function layout must remain identical to exercise_memset.
+ *
+ * Disable ASAN with the attribute because this function returns a pointer to
+ * stack memory, which is normally very naughty, but is what we want to test
+ * here.
  */
-test_static void exercise_always_memset(char **p)
+__attribute__((no_sanitize("address"))) test_static void
+exercise_always_memset(char **p)
 {
 	/*
 	 * Add extra stack space so that |buf| doesn't get trampled while the

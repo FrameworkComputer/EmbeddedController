@@ -6,11 +6,11 @@
 /* LCOV_EXCL_START */
 /* This is test code, so it should be excluded from coverage */
 
-#include <zephyr/logging/log.h>
-#include <zephyr/sys/util.h>
-
 #include "common.h"
 #include "drivers/cros_system.h"
+
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 

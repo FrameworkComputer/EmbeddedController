@@ -15,8 +15,8 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -55,6 +55,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(0 /* port */);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/
@@ -228,7 +229,7 @@ int board_set_active_charge_port(int charge_port)
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
 		break;
-	case CHARGE_PORT_NONE:
+	default:
 		/*
 		 * To ensure the fuel gauge (max17055) is always powered
 		 * even when battery is disconnected, keep VBAT rail on but
@@ -236,20 +237,9 @@ int board_set_active_charge_port(int charge_port)
 		 */
 		charger_set_current(CHARGER_SOLO, 0);
 		break;
-	default:
-		panic("Invalid charge port\n");
-		break;
 	}
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int board_discharge_on_ac(int enable)

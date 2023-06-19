@@ -5,10 +5,10 @@
  * CAPELLA CM32183 light sensor driver
  */
 
+#include "accelgyro.h"
 #include "common.h"
 #include "driver/als_cm32183.h"
 #include "i2c.h"
-#include "accelgyro.h"
 #include "math_util.h"
 
 struct cm32183_drv_data {

@@ -8,11 +8,11 @@
  * @brief Mock charge_manager
  */
 
-#include <stdlib.h>
-
 #include "charge_manager.h"
 #include "common.h"
 #include "mock/charge_manager_mock.h"
+
+#include <stdlib.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."

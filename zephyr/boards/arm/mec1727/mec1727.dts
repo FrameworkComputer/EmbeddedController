@@ -9,6 +9,9 @@
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <microchip/mec1727nsz.dtsi>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+
+#define GPIO_VOLTAGE_1P8 (1U << 11)
 
 / {
 	model = "MEC1727";
@@ -19,6 +22,11 @@
 		zephyr,shell-uart = &uart0;
 		zephyr,flash = &flash0;
 		zephyr,flash-controller = &int_flash;
+	};
+
+	/* MEC172x Chrome design - 256KB code size */
+	flash0: flash@c0000 {
+		reg = <0x000C0000 0x40000>;
 	};
 
 	named-pwms {
@@ -133,10 +141,9 @@
 
 &spi0 {
 	status = "okay";
-	compatible = "microchip,xec-qmspi-full-duplex";
+	compatible = "microchip,xec-qmspi-ldma";
 	clock-frequency = <12000000>;
 	lines = <2>;
-	port-sel = <2>;
 	chip-select = <0>;
 	pinctrl-0 = < &gpspi_cs_n_gpio116
 		      &gpspi_clk_gpio117

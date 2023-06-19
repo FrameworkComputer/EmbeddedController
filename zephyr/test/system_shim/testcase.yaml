@@ -4,5 +4,6 @@ common:
     system
 tests:
   system_shim.default:
-    extra_args: DTC_OVERLAY_FILE="./default.overlay"
+    extra_dtc_overlay_files:
+    - ./default.overlay
   system_shim.no_chosen: {}

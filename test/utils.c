@@ -14,6 +14,10 @@
 #include "util.h"
 #include "watchdog.h"
 
+#ifndef USE_BUILTIN_STDLIB
+#include <malloc.h>
+#endif
+
 static int test_uint64divmod_0(void)
 {
 	uint64_t n = 8567106442584750ULL;
@@ -64,6 +68,17 @@ static int test_shared_mem(void)
 	int sz = shared_mem_size();
 	char *mem1, *mem2;
 
+#ifndef USE_BUILTIN_STDLIB
+	/* Trim to make sure that other tests haven't fragmented the heap. */
+	malloc_trim(0);
+
+	/*
+	 * When using malloc() we can't allocate the full shared_mem_size() due
+	 * to the overhead of malloc's memory tracking. See test/malloc.c.
+	 */
+	sz *= 0.8;
+#endif
+
 	TEST_ASSERT(shared_mem_acquire(sz, &mem1) == EC_SUCCESS);
 	TEST_ASSERT(shared_mem_acquire(sz, &mem2) == EC_ERROR_BUSY);
 
@@ -75,6 +90,14 @@ static int test_shared_mem(void)
 	}
 
 	shared_mem_release(mem1);
+
+	return EC_SUCCESS;
+}
+
+test_static int test_shared_mem_release_null(void)
+{
+	/* This should be a no-op. We can't do much to test it directly. */
+	shared_mem_release(NULL);
 
 	return EC_SUCCESS;
 }
@@ -213,24 +236,6 @@ static int test_mula32(void)
 	TEST_ASSERT(r2 == 0x9df59b9fb0beabd6L);
 
 	/* well okay then */
-	return EC_SUCCESS;
-}
-
-#define SWAP_TEST_HARNESS(t, x, y)   \
-	do {                         \
-		t a = x, b = y;      \
-		swap(a, b);          \
-		TEST_ASSERT(a == y); \
-		TEST_ASSERT(b == x); \
-	} while (0)
-
-static int test_swap(void)
-{
-	SWAP_TEST_HARNESS(uint8_t, UINT8_MAX, 0);
-	SWAP_TEST_HARNESS(uint16_t, UINT16_MAX, 0);
-	SWAP_TEST_HARNESS(uint32_t, UINT32_MAX, 0);
-	SWAP_TEST_HARNESS(float, 1, 0);
-	SWAP_TEST_HARNESS(double, 1, 0);
 	return EC_SUCCESS;
 }
 
@@ -387,11 +392,11 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_uint64divmod_1);
 	RUN_TEST(test_uint64divmod_2);
 	RUN_TEST(test_get_next_bit);
+	RUN_TEST(test_shared_mem_release_null);
 	RUN_TEST(test_shared_mem);
 	RUN_TEST(test_scratchpad);
 	RUN_TEST(test_cond_t);
 	RUN_TEST(test_mula32);
-	RUN_TEST(test_swap);
 	RUN_TEST(test_bytes_are_trivial);
 	RUN_TEST(test_is_aligned);
 	RUN_TEST(test_safe_memcmp);

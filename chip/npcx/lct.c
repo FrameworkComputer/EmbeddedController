@@ -4,9 +4,9 @@
  */
 
 /* LCT (Long Countdown Timer) module for Chrome EC */
-#include "lct_chip.h"
 #include "console.h"
 #include "hooks.h"
+#include "lct_chip.h"
 #include "registers.h"
 #include "rtc.h"
 #include "task.h"

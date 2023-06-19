@@ -5,10 +5,11 @@
 
 /* Chipset interface APIs */
 
-#include "common.h"
-
 #include "ap_power/ap_power_interface.h"
+#include "charge_state.h"
 #include "chipset_state_check.h"
+#include "common.h"
+#include "system.h"
 
 int chipset_in_state(int state_mask)
 {
@@ -45,4 +46,30 @@ void chipset_throttle_cpu(int throttle)
 void init_reset_log(void)
 {
 	ap_power_init_reset_log();
+}
+
+bool board_ap_power_is_startup_ok(void)
+{
+	/*
+	 * Try multiple times with some delay to allow chargers to become ready
+	 * if needed. 40 tries with 100ms delay is arbitrary, but follows all
+	 * existing systems.
+	 */
+	for (int tries = 0; tries < 40; tries++) {
+		/*
+		 * TODO(b/260909787) this logic should be handled by a single
+		 * function that works in all configurations. system_can_boot_ap
+		 * is a subset of charge_prevent_power_on, but works in all
+		 * configurations.
+		 */
+		bool power_ok = IS_ENABLED(CONFIG_CHARGER) &&
+						IS_ENABLED(CONFIG_BATTERY) ?
+					!charge_prevent_power_on(false) :
+					system_can_boot_ap();
+		if (power_ok)
+			return true;
+
+		msleep(100);
+	}
+	return false;
 }

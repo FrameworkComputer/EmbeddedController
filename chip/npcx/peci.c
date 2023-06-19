@@ -15,8 +15,8 @@
 #include "peci.h"
 #include "registers.h"
 #include "task.h"
-#include "timer.h"
 #include "temp_sensor.h"
+#include "timer.h"
 #include "util.h"
 
 /* Initial PECI baud rate */

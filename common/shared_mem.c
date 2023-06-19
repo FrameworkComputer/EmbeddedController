@@ -58,6 +58,9 @@ int shared_mem_acquire(int size, char **dest_ptr)
 
 void shared_mem_release(void *ptr)
 {
+	if (ptr == NULL)
+		return;
+
 	buf_in_use = 0;
 }
 

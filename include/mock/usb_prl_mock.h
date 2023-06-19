@@ -9,7 +9,9 @@
 
 #include "common.h"
 #include "usb_emsg.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pe_sm.h"
 
 void mock_prl_reset(void);
 

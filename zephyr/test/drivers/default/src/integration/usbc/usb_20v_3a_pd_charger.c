@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery_smart.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
@@ -12,6 +10,8 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "usb_pd.h"
+
+#include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
 
@@ -166,20 +166,20 @@ ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_battery_not_charging)
 
 ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_charge_state)
 {
-	struct ec_response_charge_state charge_state;
+	struct ec_response_charge_state state;
 
 	disconnect_charger_from_port(fixture);
-	charge_state = host_cmd_charge_state(0);
+	state = host_cmd_charge_state(0);
 
-	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
-	zassert_equal(charge_state.get_state.chg_current, 0,
+	zassert_false(state.get_state.ac, "AC_OK not triggered");
+	zassert_equal(state.get_state.chg_current, 0,
 		      "Max charge current expected 0mA, but was %dmA",
-		      charge_state.get_state.chg_current);
-	zassert_equal(charge_state.get_state.chg_input_current,
-		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
+		      state.get_state.chg_current);
+	zassert_equal(state.get_state.chg_input_current,
+		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
 		      "Charge input current limit expected %dmA, but was %dmA",
-		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
-		      charge_state.get_state.chg_input_current);
+		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
+		      state.get_state.chg_input_current);
 }
 
 ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_typec_status)

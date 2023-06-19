@@ -11,24 +11,26 @@
 #include "board_config.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
 #include "cros_board_info.h"
-#include "driver/pmic_tps650x30.h"
-#include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/baro_bmp280.h"
 #include "driver/charger/isl923x.h"
 #include "driver/led/lm3509.h"
+#include "driver/pmic_tps650x30.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
-#include "driver/temp_sensor/f75303.h"
+#include "espi.h"
 #include "extpower.h"
+#include "fan.h"
+#include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -54,6 +56,7 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
+#include "temp_sensor/f75303.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -61,9 +64,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "espi.h"
-#include "fan.h"
-#include "fan_chip.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -145,6 +145,7 @@ void usb1_evt(enum gpio_signal signal)
 	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -747,8 +748,8 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Limit the input current to 96% negotiated limit,
@@ -760,8 +761,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 	    (model == MODEL_EKKO || model == MODEL_BARD))
 		factor = 95;
 	charge_ma = charge_ma * factor / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 void board_hibernate(void)

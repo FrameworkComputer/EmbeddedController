@@ -12,7 +12,7 @@ board-y=board.o
 test-list-y=\
        abort \
        aes \
-       cec \
+       boringssl_crypto \
        compile_time_macros \
        crc \
        debug \
@@ -30,6 +30,7 @@ test-list-y=\
        rollback_entropy \
        rsa3 \
        rtc \
+       sbrk \
        scratchpad \
        sha256 \
        sha256_unrolled \

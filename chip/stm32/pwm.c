@@ -6,8 +6,8 @@
 /* PWM control module for STM32 */
 
 #include "builtin/assert.h"
-#include "clock.h"
 #include "clock-f.h"
+#include "clock.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -40,7 +40,7 @@ static void pwm_configure(enum pwm_channel ch)
 {
 	const struct pwm_t *pwm = pwm_channels + ch;
 	timer_ctlr_t *tim = (timer_ctlr_t *)(pwm->tim.base);
-	volatile unsigned *ccmr = NULL;
+	volatile unsigned int *ccmr = NULL;
 	/* Default frequency = 100 Hz */
 	int frequency = pwm->frequency ? pwm->frequency : 100;
 	uint16_t ccer;

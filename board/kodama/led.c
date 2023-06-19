@@ -6,10 +6,10 @@
  */
 #include "charge_state.h"
 #include "driver/charger/rt946x.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
-#include "ec_commands.h"
 
 #define LED_RED MT6370_LED_ID1
 #define LED_GREEN MT6370_LED_ID2

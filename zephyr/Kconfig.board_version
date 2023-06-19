@@ -13,12 +13,12 @@ choice PLATFORM_EC_BOARD_VERSION_SOURCE
 
 config PLATFORM_EC_BOARD_VERSION_CBI
 	bool "Chromium OS Board Info (CBI)"
-	depends on PLATFORM_EC_CBI_EEPROM
+	depends on PLATFORM_EC_CBI_EEPROM || PLATFORM_EC_CBI_FLASH
 	help
 	  Choose this if the board version comes from Chromium Board Info
-	  within the EEPROM. This is the recommended approach and is used on
-	  newer boards. The version information is written into the EEPROM as
-	  part of the factory process.
+	  within the EEPROM or EC Flash. This is the recommended approach
+	  and is used on newer boards. The version information is written
+	  into the EEPROM or EC flash as part of the factory process.
 
 config PLATFORM_EC_BOARD_VERSION_GPIO
 	bool "Strapping GPIOs"

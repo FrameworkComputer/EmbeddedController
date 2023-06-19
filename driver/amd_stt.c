@@ -4,8 +4,8 @@
  */
 
 #include "amd_stt.h"
-#include "common.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "driver/sb_rmi.h"
 #include "hooks.h"
@@ -88,7 +88,9 @@ static void amd_stt_handler(void)
 
 	rv = write_stt_sensor_val(AMD_STT_PCB_SENSOR_APU, soc_temp_mk);
 	if (rv) {
-		CPRINTS("STT: Failed to write SOC temp rv:%d", rv);
+		/* Failure reason will be logged by write_stt_sensor_val(), so
+		 * no need to log it here too.
+		 */
 		return;
 	}
 
@@ -104,7 +106,9 @@ static void amd_stt_handler(void)
 
 	rv = write_stt_sensor_val(AMD_STT_PCB_SENSOR_REMOTE, ambient_temp_mk);
 	if (rv) {
-		CPRINTS("STT: Failed to write AMBIENT temp rv:%d", rv);
+		/* Failure reason will be logged by write_stt_sensor_val(), so
+		 * no need to log it here too.
+		 */
 		return;
 	}
 }

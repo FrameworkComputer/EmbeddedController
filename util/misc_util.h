@@ -6,15 +6,29 @@
 #ifndef __UTIL_MISC_UTIL_H
 #define __UTIL_MISC_UTIL_H
 
-/* Don't use a macro where an inline will do... */
-static inline int MIN(int a, int b)
-{
-	return a < b ? a : b;
-}
-static inline int MAX(int a, int b)
-{
-	return a > b ? a : b;
-}
+#include <stddef.h>
+#include <stdint.h>
+
+#define GENERIC_MAX(x, y) ((x) > (y) ? (x) : (y))
+#define GENERIC_MIN(x, y) ((x) < (y) ? (x) : (y))
+#ifndef MAX
+#define MAX(a, b)                            \
+	({                                   \
+		__typeof__(a) temp_a = (a);  \
+		__typeof__(b) temp_b = (b);  \
+                                             \
+		GENERIC_MAX(temp_a, temp_b); \
+	})
+#endif
+#ifndef MIN
+#define MIN(a, b)                            \
+	({                                   \
+		__typeof__(a) temp_a = (a);  \
+		__typeof__(b) temp_b = (b);  \
+                                             \
+		GENERIC_MIN(temp_a, temp_b); \
+	})
+#endif
 
 /**
  * Write a buffer to the file.
@@ -68,4 +82,16 @@ int ec_cmd_version_supported(int cmd, int ver);
  * <major>.<minor>.<sublevel>
  */
 int kernel_version_ge(int major, int minor, int sublevel);
+
+/**
+ * Prints data in hexdump canonical format.
+ *
+ * @param data Buffer of data to print
+ * @param len Length of data to print
+ * @param offset_start Starting offset added to the printed offset.
+ *     This only affects how the offset is printed, it does not affect
+ *     what data is printed.
+ */
+void hexdump_canonical(const uint8_t *data, size_t len, uint32_t offset_start);
+
 #endif

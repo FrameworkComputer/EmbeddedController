@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <stddef.h>
-
 #include "common.h"
 #include "printf.h"
 #include "uart.h"
+
+#include <stddef.h>
 
 static int __tx_char(void *context, int c)
 {
@@ -31,9 +31,10 @@ int uart_putc(int c)
 int uart_puts(const char *outstr)
 {
 	/* Put all characters in the output buffer */
-	while (*outstr) {
-		if (__tx_char(NULL, *outstr++) != 0)
+	for (; *outstr != '\0'; ++outstr) {
+		if (__tx_char(NULL, *outstr) != 0) {
 			break;
+		}
 	}
 
 	uart_tx_start();
@@ -48,8 +49,9 @@ int uart_put(const char *out, int len)
 
 	/* Put all characters in the output buffer */
 	for (written = 0; written < len; written++) {
-		if (__tx_char(NULL, *out++) != 0)
+		if (__tx_char(NULL, *out++) != 0) {
 			break;
+		}
 	}
 
 	uart_tx_start();
@@ -63,8 +65,9 @@ int uart_put_raw(const char *out, int len)
 
 	/* Put all characters in the output buffer */
 	for (written = 0; written < len; written++) {
-		if (uart_tx_char_raw(NULL, *out++) != 0)
+		if (uart_tx_char_raw(NULL, *out++) != 0) {
 			break;
+		}
 	}
 
 	uart_tx_start();

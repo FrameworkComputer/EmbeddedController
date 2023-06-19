@@ -60,7 +60,8 @@
 #define CONFIG_CHARGER
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
+#define CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT 512
 #define CONFIG_CHARGER_ISL9238C
 #define CONFIG_CHARGER_MAINTAIN_VBAT
 #define CONFIG_CHARGER_OTG
@@ -183,8 +184,8 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
-#include "registers.h"
 #include "power/mt8192.h"
+#include "registers.h"
 
 void board_reset_pd_mcu(void);
 enum board_sub_board board_get_sub_board(void);

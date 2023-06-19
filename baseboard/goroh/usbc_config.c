@@ -4,22 +4,22 @@
  */
 
 /* Goroh family-specific USB-C configuration */
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "common.h"
 #include "compile_time_macros.h"
 #include "config.h"
 #include "console.h"
-#include "hooks.h"
-#include "driver/tcpm/it8xxx2_pd_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/ps8818_public.h"
+#include "driver/tcpm/it8xxx2_pd_public.h"
 #include "driver/tcpm/tcpci.h"
-#include "usb_pd.h"
-#include "usbc_ppc.h"
 #include "gpio.h"
 #include "gpio_signal.h"
+#include "hooks.h"
+#include "usb_pd.h"
+#include "usbc_ppc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
@@ -81,7 +81,7 @@ static const struct usb_mux_chain goroh_usb_c1_ps8818_retimer = {
 		&(const struct usb_mux){
 			.usb_port = USBC_PORT_C1,
 			.i2c_port = I2C_PORT_USB_C1,
-			.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+			.i2c_addr_flags = PS8818_I2C_ADDR0_FLAGS,
 			.driver = &ps8818_usb_retimer_driver,
 		},
 	.next = NULL,

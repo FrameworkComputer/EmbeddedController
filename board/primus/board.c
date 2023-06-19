@@ -5,11 +5,11 @@
 
 #include "battery.h"
 #include "button.h"
+#include "charge_manager.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
-#include "charge_manager.h"
-#include "charge_state_v2.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "fw_config.h"
@@ -18,8 +18,8 @@
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "pwm.h"
 #include "registers.h"
 #include "switch.h"
@@ -27,7 +27,8 @@
 #include "usbc_config.h"
 #include "util.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -137,8 +138,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	else
 		charge_ma = charge_ma * 93 / 100;
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 static void configure_input_current_limit(void)
@@ -159,9 +159,7 @@ static void configure_input_current_limit(void)
 	else
 		adapter_current_ma = adapter_current_ma * 97 / 100;
 
-	charge_set_input_current_limit(MAX(adapter_current_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       adapter_current_mv);
+	charge_set_input_current_limit(adapter_current_ma, adapter_current_mv);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, configure_input_current_limit,
 	     HOOK_PRIO_DEFAULT);

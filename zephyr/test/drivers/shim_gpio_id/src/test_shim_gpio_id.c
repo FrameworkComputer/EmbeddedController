@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "system.h"
 #include "test/drivers/test_state.h"
 #include "util.h"
+
+#include <zephyr/ztest.h>
 
 /*
  * TODO(b/254924012): Test alternative GPIO when emulated gpio tristate is

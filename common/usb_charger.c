@@ -133,6 +133,15 @@ void usb_charger_task_set_event(int port, uint8_t event)
 #endif
 }
 
+void usb_charger_task_set_event_sync(int port, uint8_t event)
+{
+	struct bc12_config *bc12_port;
+
+	bc12_port = &bc12_ports[port];
+
+	bc12_port->drv->usb_charger_task_event(port, event);
+}
+
 static void usb_charger_init(void)
 {
 	int i;
@@ -175,9 +184,7 @@ void usb_charger_task_shared(void *u)
 			atomic_and(&usb_charger_port_events,
 				   ~PORT_EVENT_PACK(port, port_evt));
 
-			bc12_port = &bc12_ports[port];
-
-			bc12_port->drv->usb_charger_task_event(port, port_evt);
+			usb_charger_task_set_event_sync(port, port_evt);
 		}
 	}
 }
@@ -200,13 +207,14 @@ void usb_charger_task(void *u)
 	bc12_port = &bc12_ports[port];
 
 	ASSERT(bc12_port->drv->usb_charger_task_init);
+	ASSERT(bc12_port->drv->usb_charger_task_event);
+
 	bc12_port->drv->usb_charger_task_init(port);
 
 	while (1) {
 		evt = task_wait_event(-1);
 
-		ASSERT(bc12_port->drv->usb_charger_task_event);
-		bc12_port->drv->usb_charger_task_event(port, evt);
+		usb_charger_task_set_event_sync(port, evt);
 	}
 }
 

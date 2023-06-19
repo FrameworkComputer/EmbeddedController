@@ -5,8 +5,8 @@
 
 /* Type-C port manager */
 
-#include "atomic.h"
 #include "anx74xx.h"
+#include "atomic.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -1167,14 +1167,16 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 			tcpc_vbus[port] = BIT(VBUS_SAFE0V);
 		}
 
-		if ((get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_TCPC) &&
-		    IS_ENABLED(CONFIG_USB_CHARGER)) {
+		if (get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_TCPC) {
 			/* Update charge manager with new VBUS state */
-			usb_charger_vbus_change(port, !!(tcpc_vbus[port] &
-							 BIT(VBUS_PRESENT)));
+			if (IS_ENABLED(CONFIG_USB_CHARGER))
+				usb_charger_vbus_change(port,
+							!!(tcpc_vbus[port] &
+							   BIT(VBUS_PRESENT)));
 
-			if (pd_event)
+			if (pd_event) {
 				*pd_event |= TASK_EVENT_WAKE;
+			}
 		}
 	}
 }
@@ -1219,10 +1221,18 @@ void tcpci_tcpc_alert(int port)
 	 * completion events. This will send an event to the PD tasks
 	 * immediately
 	 */
-	if (alert & TCPC_REG_ALERT_TX_COMPLETE)
-		pd_transmit_complete(port, alert & TCPC_REG_ALERT_TX_SUCCESS ?
-						   TCPC_TX_COMPLETE_SUCCESS :
-						   TCPC_TX_COMPLETE_FAILED);
+	if (alert & TCPC_REG_ALERT_TX_COMPLETE) {
+		int tx_status;
+
+		if (alert & TCPC_REG_ALERT_TX_SUCCESS)
+			tx_status = TCPC_TX_COMPLETE_SUCCESS;
+		else if (alert & TCPC_REG_ALERT_TX_DISCARDED)
+			tx_status = TCPC_TX_COMPLETE_DISCARDED;
+		else
+			tx_status = TCPC_TX_COMPLETE_FAILED;
+
+		pd_transmit_complete(port, tx_status);
+	}
 
 	tcpc_get_bist_test_mode(port, &bist_mode);
 
@@ -1350,12 +1360,9 @@ void tcpci_tcpc_alert(int port)
 		task_set_event(PD_PORT_TO_TASK_ID(port), pd_event);
 }
 
-int tcpci_get_vbus_voltage(int port, int *vbus)
+int tcpci_get_vbus_voltage_no_check(int port, int *vbus)
 {
 	int error, val;
-
-	if (!(dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE))
-		return EC_ERROR_UNIMPLEMENTED;
 
 	error = tcpc_read16(port, TCPC_REG_VBUS_VOLTAGE, &val);
 	if (error)
@@ -1365,65 +1372,88 @@ int tcpci_get_vbus_voltage(int port, int *vbus)
 	return EC_SUCCESS;
 }
 
-/*
- * This call will wake up the TCPC if it is in low power mode upon accessing the
- * i2c bus (but the pd state machine should put it back into low power mode).
- *
- * Once it's called, the chip info will be stored in cache, which can be
- * accessed by tcpm_get_chip_info without worrying about chip states.
- */
-int tcpci_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 *chip_info)
+int tcpci_get_vbus_voltage(int port, int *vbus)
+{
+	if (!(dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE))
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return tcpci_get_vbus_voltage_no_check(port, vbus);
+}
+
+int tcpci_get_chip_info_mutable(
+	int port, int live, struct ec_response_pd_chip_info_v1 *const chip_info,
+	int (*const mutator)(int port, bool live,
+			     struct ec_response_pd_chip_info_v1 *cached))
 {
 	static struct ec_response_pd_chip_info_v1
 		cached_info[CONFIG_USB_PD_PORT_MAX_COUNT];
-	struct ec_response_pd_chip_info_v1 *i;
+	struct ec_response_pd_chip_info_v1 *info;
 	int error;
-	int val;
 
 	if (port >= board_get_usb_pd_port_count())
 		return EC_ERROR_INVAL;
 
-	i = &cached_info[port];
+	info = &cached_info[port];
 
-	/* If already cached && live data is not asked, return cached value */
-	if (i->vendor_id && !live) {
+	/* Fetch live data if nothing is cached or live data was requested */
+	if (!info->vendor_id || live) {
+		int vendor_id, product_id, device_id;
+
 		/*
-		 * If chip_info is NULL, chip info will be stored in cache and
-		 * can be read later by another call.
+		 * The cache is no longer valid because we're fetching. Avoid
+		 * storing the new vendor ID until we've actually succeeded so
+		 * future invocations won't see partial data and assume it's a
+		 * valid cache.
 		 */
-		if (chip_info)
-			memcpy(chip_info, i, sizeof(*i));
+		info->vendor_id = 0;
+		error = tcpc_read16(port, TCPC_REG_VENDOR_ID, &vendor_id);
+		if (error)
+			return error;
 
-		return EC_SUCCESS;
+		error = tcpc_read16(port, TCPC_REG_PRODUCT_ID, &product_id);
+		if (error)
+			return error;
+		info->product_id = product_id;
+
+		error = tcpc_read16(port, TCPC_REG_BCD_DEV, &device_id);
+		if (error)
+			return error;
+		info->device_id = device_id;
+
+		/*
+		 * This varies chip to chip; more specific driver code is
+		 * expected to override this value if it can by providing a
+		 * mutator.
+		 */
+		info->fw_version_number = -1;
+
+		info->vendor_id = vendor_id;
+		if (mutator != NULL) {
+			error = mutator(port, live, info);
+			if (error) {
+				/*
+				 * Mutator needs to have a complete view, but if
+				 * it fails the cache is invalidated.
+				 */
+				info->vendor_id = 0;
+				return error;
+			}
+		}
 	}
-
-	error = tcpc_read16(port, TCPC_REG_VENDOR_ID, &val);
-	if (error)
-		return error;
-	i->vendor_id = val;
-
-	error = tcpc_read16(port, TCPC_REG_PRODUCT_ID, &val);
-	if (error)
-		return error;
-	i->product_id = val;
-
-	error = tcpc_read16(port, TCPC_REG_BCD_DEV, &val);
-	if (error)
-		return error;
-	i->device_id = val;
-
 	/*
-	 * This varies chip to chip; more specific driver code is expected to
-	 * override this value if it can.
+	 * If chip_info is NULL, this invocation will ensure the cache is fresh
+	 * but return nothing.
 	 */
-	i->fw_version_number = -1;
-
-	/* Copy the cached value to return if chip_info is not NULL */
 	if (chip_info)
-		memcpy(chip_info, i, sizeof(*i));
+		memcpy(chip_info, info, sizeof(*info));
 
 	return EC_SUCCESS;
+}
+
+int tcpci_get_chip_info(int port, int live,
+			struct ec_response_pd_chip_info_v1 *chip_info)
+{
+	return tcpci_get_chip_info_mutable(port, live, chip_info, NULL);
 }
 
 /*
@@ -1605,7 +1635,7 @@ int tcpci_tcpm_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 	*ack_required = false;
 
 	/* This driver treats safe mode as none */
-	if (mux_state == USB_PD_MUX_SAFE_MODE)
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
 		mux_state = USB_PD_MUX_NONE;
 
 	/* Parameter is port only */
@@ -1848,7 +1878,7 @@ static const struct tcpc_reg_dump_map tcpc_regs[] = {
 /*
  * Dump standard TCPC registers.
  */
-void tcpc_dump_std_registers(int port)
+test_mockable void tcpc_dump_std_registers(int port)
 {
 	tcpc_dump_registers(port, tcpc_regs, ARRAY_SIZE(tcpc_regs));
 }
@@ -1889,6 +1919,9 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &tcpci_enter_low_power_mode,
+#endif
+#ifdef CONFIG_USB_PD_FRS_TCPC
+	.set_frs_enable = &tcpci_tcpc_fast_role_swap_enable,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 	.get_bist_test_mode = &tcpci_get_bist_test_mode,

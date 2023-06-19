@@ -5,7 +5,7 @@
 
 #include "driver/charger/rt9490.h"
 
-#define RT9490_BC12_COMPAT richtek_rt9490_bc12
+#define RT9490_BC12_COMPAT richtek_rt9490
 
 #define BC12_CHIP_RT9490(id)             \
 	{                                \

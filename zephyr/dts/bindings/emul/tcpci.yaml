@@ -7,8 +7,20 @@ description: Common TCPCI properties
 include: base.yaml
 
 properties:
-    alert_gpio:
-      type: phandle
-      required: false
-      description:
-        Reference to Alert# GPIO.
+  irq-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      Interrupt from TCPC using shim driver
+
+  rst-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      TCPC reset line using shim driver
+
+  int-pin:
+    type: phandles
+    required: false
+    description: |
+      Interrupt from TCPC using gpio-int

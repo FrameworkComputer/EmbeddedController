@@ -1,0 +1,48 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_TARGET
+	prompt "Select test target to build"
+	help
+	  Select the build target for a given test. Each test target must select
+	  exactly one, because some tests assume configuration that conflicts with
+	  others.
+
+	config TEST_NISSA_SUB_BOARD
+		bool "Tests for sub_board.c"
+		help
+		  The test target that exercises nissa/src/sub_board.c.
+
+	config TEST_NISSA_COMMON
+		bool "Tests for common.c"
+		help
+		  The test target that exercises nissa/src/common.c.
+
+	config TEST_NISSA_NIVVIKS
+	  bool "Tests for Nivviks-specific code"
+	  help
+	    The test target that exercises nissa/nivviks/*.c
+
+	config TEST_NISSA_NIVVIKS_CHARGER
+	  bool "Tests for Nivviks-specific charger/USB-C code"
+	  select TEST_USB_PD_POLICY
+	  help
+	    The test target that exercises nissa/nivviks/{charger,usbc}.c
+
+	config TEST_NISSA_NEREID
+	  bool "Tests for Nereid-specific code"
+	  help
+		The test target that exercises nissa/nereid/*.c
+endchoice
+
+config TEST_USB_PD_POLICY
+	bool
+	help
+	  Enable mocking of chipset_in_state() for PD policy testing.
+
+module = NISSA
+module-str = Nissa board-specific code (unit tests)
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"

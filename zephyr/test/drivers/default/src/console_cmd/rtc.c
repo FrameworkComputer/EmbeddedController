@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "system.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_USER(console_cmd_rtc, test_rtc_no_arg)
 {

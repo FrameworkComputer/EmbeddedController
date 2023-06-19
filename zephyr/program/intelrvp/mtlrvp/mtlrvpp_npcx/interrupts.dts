@@ -56,5 +56,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "board_connect_c0_sbu";
 		};
+		int_dc_jack_present: dc_jack_present {
+			irq-pin = <&std_adp_prsnt>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_dc_jack_interrupt";
+		};
 	};
 };

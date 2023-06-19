@@ -8,16 +8,15 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "cbi_fw_config.h"
-#include "cros_board_info.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
-#include "math_util.h"
+#include "cros_board_info.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/tusb544.h"
-#include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/raa489000.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -25,6 +24,7 @@
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "math_util.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -249,19 +249,6 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	return status;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * b/147463641: The charger IC seems to overdraw ~4%, therefore we
-	 * reduce our target accordingly.
-	 */
-	icl = icl * 96 / 100;
-	charge_set_input_current_limit(icl, charge_mv);
 }
 
 int board_is_sourcing_vbus(int port)

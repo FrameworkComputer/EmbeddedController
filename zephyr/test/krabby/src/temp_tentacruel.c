@@ -3,20 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/adc.h>
-#include <zephyr/drivers/adc/adc_emul.h>
-
-#include "charger.h"
 #include "charge_state.h"
+#include "charger.h"
 #include "charger_profile_override.h"
 #include "common.h"
 #include "config.h"
 #include "hooks.h"
-#include "util.h"
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
+#include "util.h"
+
+#include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/adc/adc_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 #define CHARGER_TEMP TEMP_SENSOR_ID(DT_NODELABEL(temp_charger))

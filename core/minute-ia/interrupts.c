@@ -444,10 +444,11 @@ void lapic_restore(void)
 
 void init_interrupts(void)
 {
-	unsigned entry;
+	unsigned int entry;
 	const struct irq_def *p;
-	unsigned num_system_irqs = ARRAY_SIZE(system_irqs);
-	unsigned max_entries = (read_ioapic_reg(IOAPIC_VERSION) >> 16) & 0xff;
+	unsigned int num_system_irqs = ARRAY_SIZE(system_irqs);
+	unsigned int max_entries = (read_ioapic_reg(IOAPIC_VERSION) >> 16) &
+				   0xff;
 
 	/* Setup gates for IRQs declared by drivers using DECLARE_IRQ */
 	for (p = __irq_data; p < __irq_data_end; p++)

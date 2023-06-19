@@ -3,37 +3,14 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_ioex_port
-#define DT_DRV_COMPAT_CHIP cros_ioex_chip
-
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/i2c.h>
-#include <errno.h>
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
-#include "gpio.h"
-#include <zephyr/drivers/gpio/gpio_utils.h>
-#include <zephyr/init.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/sys/util.h>
 #include "common.h"
 #include "config.h"
-#include "i2c.h"
-#include "ioexpander.h"
-
 /* Include drivers if enabled */
-#ifdef CONFIG_PLATFORM_EC_IOEX_CCGXXF
-#include "driver/tcpm/ccgxxf.h"
-#endif
 #ifdef CONFIG_PLATFORM_EC_IOEX_IT8801
 #include "driver/ioexpander/it8801.h"
-#endif
-#ifdef CONFIG_PLATFORM_EC_IOEX_NCT38XX
-#include "driver/tcpm/nct38xx.h"
 #endif
 #ifdef CONFIG_PLATFORM_EC_IOEX_PCA9675
 #include "driver/ioexpander/pca9675.h"
@@ -44,6 +21,30 @@
 #ifdef CONFIG_PLATFORM_EC_IOEX_TCA64XXA
 #include "driver/ioexpander/tca64xxa.h"
 #endif
+#ifdef CONFIG_PLATFORM_EC_IOEX_CCGXXF
+#include "driver/tcpm/ccgxxf.h"
+#endif
+#ifdef CONFIG_PLATFORM_EC_IOEX_NCT38XX
+#include "driver/tcpm/nct38xx.h"
+#endif
+#include "gpio.h"
+#include "i2c.h"
+#include "ioexpander.h"
+
+#include <errno.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_utils.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/util.h>
+
+#define DT_DRV_COMPAT cros_ioex_port
+#define DT_DRV_COMPAT_CHIP cros_ioex_chip
 
 LOG_MODULE_REGISTER(cros_ioex_port, CONFIG_GPIO_LOG_LEVEL);
 

@@ -2,28 +2,27 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <stdbool.h>
-
 #include "adc.h"
 #include "assert.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/retimer/ps8811.h"
+#include "driver/tcpm/tcpci.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
-#include "power_button.h"
 #include "hooks.h"
 #include "power.h"
+#include "power_button.h"
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 #include "usbc_ppc.h"
-#include "driver/tcpm/tcpci.h"
-#include "fw_config.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -39,6 +38,64 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
+
+/******************************************************************************/
+/* USB-A retimer control */
+
+const struct usb_mux usba_ps8811[] = {
+	[USBA_PORT_A0] = {
+		.usb_port = USBA_PORT_A0,
+		.i2c_port = I2C_PORT_USB_A0_A1_MIX,
+		.i2c_addr_flags = PS8811_I2C_ADDR_FLAGS0,
+	},
+	[USBA_PORT_A1] = {
+		.usb_port = USBA_PORT_A1,
+		.i2c_port = I2C_PORT_USB_A0_A1_MIX,
+		.i2c_addr_flags = PS8811_I2C_ADDR_FLAGS2,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usba_ps8811) == USBA_PORT_COUNT);
+
+static int usba_retimer_init(int port)
+{
+	int rv, val;
+	const struct usb_mux *me = &usba_ps8811[port];
+
+	rv = ps8811_i2c_read(me, PS8811_REG_PAGE1, PS8811_REG1_USB_BEQ_LEVEL,
+			     &val);
+
+	if (rv) {
+		CPRINTS("A%d: PS8811 retimer not detected!", port);
+	} else {
+		CPRINTS("A%d: PS8811 retimer detected", port);
+	}
+
+	if (port == USBA_PORT_A1) {
+		/* Set channel B output swing */
+		/* offset 0xA4, Data 0x04 */
+		rv |= ps8811_i2c_field_update(me, PS8811_REG_PAGE1,
+					      PS8811_REG1_USB_CHAN_B_SWING,
+					      PS8811_CHAN_B_SWING_MASK, 0x4);
+
+		/* Set channel B output DE level */
+		/* offset 0xA6, Data 0x12 */
+		rv |= ps8811_i2c_field_update(me, PS8811_REG_PAGE1,
+					      PS8811_REG1_USB_CHAN_B_DE_PS_MSB,
+					      PS8811_CHAN_B_DE_PS_MSB_MASK,
+					      0x12);
+	}
+
+	return rv;
+}
+
+void board_chipset_startup(void)
+{
+	int i;
+
+	for (i = 0; i < USBA_PORT_COUNT; i++)
+		usba_retimer_init(i);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 /******************************************************************************/
 
@@ -190,7 +247,8 @@ static void port_ocp_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&update_5v_usage_data, 0);
 }
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /*

@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-
 #include "driver/temp_sensor/pct2075.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
 #include "emul/emul_pct2075.h"
+#include "emul/emul_stub_device.h"
 #include "util.h"
+
+#include <zephyr/device.h>
 
 /* NOTE: The emulator doesn't support OS pin */
 
@@ -100,7 +100,7 @@ static int pct2075_emul_init(const struct emul *emul,
 		},                                                   \
 	}; \
 	EMUL_DT_INST_DEFINE(n, pct2075_emul_init, &pct2075_data_##n,   \
-			    &common_cfg_##n, &i2c_common_emul_api)
+			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_PCT2075_EMUL)
 

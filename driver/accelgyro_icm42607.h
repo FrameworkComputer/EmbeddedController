@@ -229,6 +229,7 @@ enum icm42607_ui_filt_bw {
 
 #define ICM42607_REG_WHO_AM_I 0x0075
 #define ICM42607_CHIP_ICM42607P 0x60
+#define ICM42607_CHIP_ICM42608P 0x3F
 
 /* MREG read access registers */
 #define ICM42607_REG_BLK_SEL_W 0x0079

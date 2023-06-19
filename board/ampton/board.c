@@ -13,8 +13,8 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/sync.h"
 #include "driver/tcpm/it83xx_pd.h"
@@ -60,7 +60,8 @@ int ppc_get_alert_status(int port)
 		return gpio_get_level(GPIO_USB_C1_PD_INT_ODL) == 0;
 }
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* USB-C MUX Configuration */

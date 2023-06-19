@@ -5,6 +5,13 @@
  * Test USB PE module.
  */
 #include "common.h"
+#include "mock/charge_manager_mock.h"
+#include "mock/dp_alt_mode_mock.h"
+#include "mock/tcpc_mock.h"
+#include "mock/usb_mux_mock.h"
+#include "mock/usb_pd_dpm_mock.h"
+#include "mock/usb_prl_mock.h"
+#include "mock/usb_tc_sm_mock.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -13,13 +20,6 @@
 #include "usb_pe.h"
 #include "usb_pe_sm.h"
 #include "usb_sm_checks.h"
-#include "mock/charge_manager_mock.h"
-#include "mock/usb_tc_sm_mock.h"
-#include "mock/tcpc_mock.h"
-#include "mock/usb_mux_mock.h"
-#include "mock/usb_pd_dpm_mock.h"
-#include "mock/dp_alt_mode_mock.h"
-#include "mock/usb_prl_mock.h"
 
 /* Install Mock TCPC and MUX drivers */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {

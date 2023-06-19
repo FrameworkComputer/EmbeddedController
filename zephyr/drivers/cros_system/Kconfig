@@ -92,3 +92,26 @@ config CROS_SYSTEM_NATIVE_POSIX_INIT_PRIORITY
 	  than CONFIG_SYSTEM_PRE_INIT_PRIORITY.
 
 endif # CROS_SYSTEM_NATIVE_POSIX
+
+menuconfig CROS_SYSTEM_STM32
+	bool "ST STM32 cros system driver"
+	depends on SOC_FAMILY_STM32 && IWDG_STM32 && HWINFO
+	select REBOOT
+	default y
+	help
+	  This option enables the cros system driver for the STM32 family of
+	  processors. The cros system driver provides the low-level driver
+	  related to chromium ec system functionality.
+
+if CROS_SYSTEM_STM32
+
+config CROS_SYSTEM_STM32_INIT_PRIORITY
+	int "cros_system STM32 initialization priority"
+	default 10
+	help
+	  This sets the STM32 cros_system driver initialization priority.
+	  The cros_system driver provides access to the STM32 reset cause
+	  and must be higher priority than
+	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CONFIG_CROS_SYSTEM_STM32

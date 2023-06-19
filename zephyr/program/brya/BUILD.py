@@ -33,6 +33,7 @@ def register_npcx9_variant(
             # Project-specific KConfig customization.
             *extra_kconfig_files,
         ],
+        inherited_from=["brya"],
     )
 
 

@@ -4,20 +4,20 @@
  * found in the LICENSE file.
  */
 
-#include <asm/byteorder.h>
-#include <endian.h>
-#include <fcntl.h>
-#include <getopt.h>
-#include <libusb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#include <asm/byteorder.h>
+#include <endian.h>
+#include <fcntl.h>
+#include <fmap.h>
+#include <getopt.h>
+#include <libusb.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
-
-#include <fmap.h>
 
 #ifndef __packed
 #define __packed __attribute__((packed))
@@ -25,8 +25,8 @@
 
 #include "compile_time_macros.h"
 #include "misc_util.h"
-#include "usb_descriptor.h"
 #include "update_fw.h"
+#include "usb_descriptor.h"
 #include "vb21_struct.h"
 
 #ifdef DEBUG
@@ -501,7 +501,8 @@ static int transfer_block(struct usb_endpoint *uep,
 	for (transfer_size = 0; transfer_size < payload_size;) {
 		int chunk_size;
 
-		chunk_size = MIN(uep->chunk_len, payload_size - transfer_size);
+		chunk_size = MIN((size_t)uep->chunk_len,
+				 payload_size - transfer_size);
 		xfer(uep, transfer_data_ptr, chunk_size, NULL, 0, 0);
 		transfer_data_ptr += chunk_size;
 		transfer_size += chunk_size;

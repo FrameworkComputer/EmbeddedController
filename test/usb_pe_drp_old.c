@@ -7,6 +7,7 @@
 #include "battery.h"
 #include "common.h"
 #include "gpio.h"
+#include "mock/usb_prl_mock.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -19,7 +20,6 @@
 #include "usb_prl_sm.h"
 #include "usb_sm_checks.h"
 #include "usb_tc_sm.h"
-#include "mock/usb_prl_mock.h"
 
 #define pe_set_flag(_p, name) pe_set_fn((_p), (name##_FN))
 #define pe_clr_flag(_p, name) pe_clr_fn((_p), (name##_FN))
@@ -83,11 +83,40 @@ void pd_set_error_recovery(int port)
 {
 }
 
+/* Skip discovery (and the corresponding DRS and VCS sequences) by default. A
+ * test may enable this to allow those sequences to run.
+ */
+static bool discovery_enabled;
+
+__override bool port_discovery_dr_swap_policy(int port, enum pd_data_role dr,
+					      bool dr_swap_flag)
+{
+	if (!discovery_enabled)
+		return false;
+
+	if (dr_swap_flag && dr == PD_ROLE_UFP)
+		return true;
+
+	return false;
+}
+
+__override bool port_discovery_vconn_swap_policy(int port, bool vconn_swap_flag)
+{
+	if (!discovery_enabled)
+		return false;
+
+	if (IS_ENABLED(CONFIG_USBC_VCONN) && vconn_swap_flag &&
+	    !tc_is_vconn_src(port) && tc_check_vconn_swap(port))
+		return true;
+
+	return false;
+}
+
 test_static void setup_source(void)
 {
 	/* Start PE. */
 	task_wait_event(10 * MSEC);
-	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
+	pd_disable_discovery(PORT0);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
 	/* As long as we're hacking our way to ready, clear any DPM requests */
 	pe_clr_dpm_requests(PORT0);
@@ -103,7 +132,7 @@ test_static void setup_sink(void)
 	task_wait_event(10 * MSEC);
 	pd_comm_enable(PORT0, 1);
 	task_wait_event(10 * MSEC);
-	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
+	pd_disable_discovery(PORT0);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
 	/* As long as we're hacking our way to ready, clear any DPM requests */
 	pe_clr_dpm_requests(PORT0);
@@ -131,7 +160,7 @@ static int test_pe_frs(void)
 	 * background tasks (ex. discovery) aren't running.
 	 */
 	tc_prs_src_snk_assert_rd(PORT0);
-	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
+	pd_disable_discovery(PORT0);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
 	pe_clr_dpm_requests(PORT0);
 	set_state_pe(PORT0, PE_SNK_READY);
@@ -332,6 +361,8 @@ test_static int test_prl_is_busy(enum pd_power_role pr)
 {
 	int ready_state;
 
+	discovery_enabled = true;
+
 	if (pr == PD_ROLE_SOURCE)
 		ready_state = PE_SRC_READY;
 	else
@@ -362,6 +393,8 @@ test_static int test_prl_is_busy(enum pd_power_role pr)
 	 * state that will handle sending the Port Discovery messages.
 	 */
 	TEST_ASSERT(get_state_pe(PORT0) != ready_state);
+
+	discovery_enabled = false;
 
 	return EC_SUCCESS;
 }

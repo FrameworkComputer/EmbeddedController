@@ -9,6 +9,7 @@
 #define __CROS_EC_MOTION_SENSE_H
 
 #include "atomic.h"
+#include "body_detection.h"
 #include "chipset.h"
 #include "common.h"
 #include "ec_commands.h"
@@ -202,6 +203,11 @@ struct motion_sensor_t {
 	 */
 	struct motion_data_t config[SENSOR_CONFIG_MAX];
 
+#ifdef CONFIG_BODY_DETECTION
+	/* Body detection sensor configuration. */
+	const struct body_detect_params *bd_params;
+#endif
+
 	/* state parameters */
 	enum sensor_state state;
 	intv3_t raw_xyz;
@@ -251,9 +257,9 @@ extern mutex_t g_sensor_mutex;
 extern struct motion_sensor_t motion_sensors[];
 
 #ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-extern unsigned motion_sensor_count;
+extern unsigned int motion_sensor_count;
 #else
-extern const unsigned motion_sensor_count;
+extern const unsigned int motion_sensor_count;
 #endif
 /* Needed if reading ALS via LPC is needed */
 extern const struct motion_sensor_t *motion_als_sensors[];
@@ -359,5 +365,9 @@ ec_motion_sensor_fill_values(struct ec_response_motion_sensor_data *dst,
 	dst->data[1] = v[1];
 	dst->data[2] = v[2];
 }
+
+#ifdef CONFIG_ZTEST
+enum sensor_config motion_sense_get_ec_config(void);
+#endif
 
 #endif /* __CROS_EC_MOTION_SENSE_H */

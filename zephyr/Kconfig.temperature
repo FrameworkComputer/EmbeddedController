@@ -4,6 +4,8 @@
 
 menuconfig PLATFORM_EC_TEMP_SENSOR
 	bool "Temperature sensors"
+	default y
+	depends on DT_HAS_CROS_EC_TEMP_SENSORS_ENABLED
 	help
 	  Support for temperature sensors. Once enabled, "temps" console
 	  command and EC_CMD_TEMP_SENSOR_GET_INFO host command are available.
@@ -33,6 +35,8 @@ config PLATFORM_EC_DPTF
 
 config PLATFORM_EC_THERMISTOR
 	bool "Thermistor support"
+	default y
+	depends on DT_HAS_CROS_EC_THERMISTOR_ENABLED
 	depends on ADC
 	help
 	  Enables support for thermistors (resistor whose resistance is
@@ -40,30 +44,40 @@ config PLATFORM_EC_THERMISTOR
 
 config PLATFORM_EC_TEMP_SENSOR_PCT2075
 	bool "PCT2075 support"
+	default y
+	depends on DT_HAS_NXP_PCT2075_ENABLED
 	help
 	  Enables support for the CrosEC PCT2075 sensor, an i2c peripheral
 	  temperature sensor from NXP.
 
 config PLATFORM_EC_TEMP_SENSOR_SB_TSI
 	bool "SB TSI support"
+	default y
+	depends on DT_HAS_AMD_SB_TSI_ENABLED
 	help
 	  Enables support for the Side Band Temperature Sensor Interface,
 	  an i2c peripheral available on AMD platforms.
 
 config PLATFORM_EC_TEMP_SENSOR_TMP112
 	bool "TMP112 support"
+	default y
+	depends on DT_HAS_CROS_EC_TEMP_SENSOR_TMP112_ENABLED
 	help
 	  Enables support for the CrosEC TMP112 driver, an i2c peripheral
 	  temperature sensor from TI.
 
 config PLATFORM_EC_TEMP_SENSOR_F75303
 	bool "F75303 support"
+	default y
+	depends on DT_HAS_CROS_EC_TEMP_SENSOR_F75303_ENABLED
 	help
 	  Enables support for the CrosEC F75303 driver, an i2c peripheral
-	  temperature sensor from FINTEK.
+	  temperature sensor from TI.
 
 config PLATFORM_EC_TEMP_SENSOR_AMD_R23M
 	bool "AMD R23M support"
+	default y
+	depends on DT_HAS_CROS_EC_TEMP_SENSOR_AMD_R23M_ENABLED
 	help
 	  Enables support for the CrosEC AMD R23M driver, an i2c peripheral
 	  temperature sensor from AMD.
@@ -93,6 +107,8 @@ config PLATFORM_EC_FAN
 	bool "Fan support"
 	default y
 	depends on DT_HAS_CROS_EC_FANS_ENABLED
+	select PWM
+	select SENSOR
 	help
 	  Enables support for fans. Allows periodic thermal task to
 	  automatically set the fan speed (control temperature).
@@ -102,6 +118,8 @@ config PLATFORM_EC_FAN
 	  available. Also enables a periodic task (1s) to verify fan is
 	  running (is not stalled).
 
+if PLATFORM_EC_FAN
+
 config PLATFORM_EC_CUSTOM_FAN_CONTROL
 	bool "Fan custom control support"
 	default n
@@ -109,7 +127,14 @@ config PLATFORM_EC_CUSTOM_FAN_CONTROL
 	  Enable fan custom control to let projects define
 	  their own fan control mechanism by EC.
 
-if PLATFORM_EC_FAN
+config PLATFORM_EC_CUSTOM_FAN_DUTY_CONTROL
+	bool "Fan custom control support"
+	default n
+	help
+	  Enable fan duty custom control to let projects define
+	  their own fan duty control mechanism by implementing
+	  the routine board_override_fan_control_duty().
+
 
 config PLATFORM_EC_NUM_FANS
 	int "Number of fans"

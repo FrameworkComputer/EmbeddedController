@@ -37,6 +37,8 @@ config PLATFORM_EC_USBC_SS_MUX_DFP_ONLY
 
 config PLATFORM_EC_USB_MUX_VIRTUAL
 	bool "USB Mux is virtual"
+	default y
+	depends on DT_HAS_CROS_EC_USBC_MUX_VIRTUAL_ENABLED
 	depends on PLATFORM_EC_USBC_SS_MUX
 	help
 	  Enable this if a virtual USB mux is supported on the EC, which is
@@ -46,7 +48,6 @@ config PLATFORM_EC_USB_MUX_VIRTUAL
 
 config PLATFORM_EC_USBC_RETIMER_FW_UPDATE
 	bool "Support firmware update of USB Type-C retimers"
-	default y
 	depends on PLATFORM_EC_USBC_SS_MUX
 	help
 	   Enable this to support USB Type-C retimer firmware update. Each

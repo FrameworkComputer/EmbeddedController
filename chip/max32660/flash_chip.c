@@ -5,16 +5,16 @@
 
 /* MAX32660 Flash Memory Module for Chrome EC */
 
+#include "common.h"
 #include "flash.h"
+#include "flc_regs.h"
+#include "icc_regs.h"
+#include "registers.h"
 #include "switch.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
-#include "registers.h"
-#include "common.h"
-#include "icc_regs.h"
-#include "flc_regs.h"
 
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

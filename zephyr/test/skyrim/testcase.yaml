@@ -1,0 +1,134 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_posix
+tests:
+  # Baseboard tests TEST_BOARD_POWER_SIGNALS
+  skyrim.baseboard:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+
+  skyrim.baseboard.power_signals:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_POWER_SIGNALS=y
+    - CONFIG_PLATFORM_EC_AMD_STB_DUMP=y
+    - CONFIG_PLATFORM_EC_THROTTLE_AP=y
+    - CONFIG_PLATFORM_EC_THROTTLE_AP_NO_FAN=y
+    - CONFIG_PLATFORM_EC_THROTTLE_AP_SINGLE_PIN=y
+
+  skyrim.baseboard.usb_pd_policy:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_USB_PD_POLICY=y
+
+  skyrim.baseboard.usb_pd_policy.discharge:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_USB_PD_POLICY=y
+    - CONFIG_USB_PD_DISCHARGE=y
+
+  # Crystaldrift tests
+  skyrim.crystaldrift:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+
+  skyrim.crystaldrift.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_FAN=y
+
+  skyrim.crystaldrift.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG_CUSTOM=y
+
+  skyrim.crystaldrift.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
+  # Frostflow tests
+  skyrim.frostflow:
+    extra_configs:
+    - CONFIG_TEST_BOARD_FROSTFLOW=y
+
+  skyrim.frostflow.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_FROSTFLOW=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+
+  skyrim.frostflow.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_FROSTFLOW=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
+  # Markarth tests
+  skyrim.markarth:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+
+  skyrim.markarth.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+
+  skyrim.markarth.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
+  # Skyrim tests
+  skyrim.skyrim:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+
+  skyrim.skyrim.alt_charger:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_ALT_CHARGER=y
+
+  skyrim.skyrim.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_FAN=y
+
+  skyrim.skyrim.form_factor:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_FORM_FACTOR=y
+    extra_dtc_overlay_files:
+    - ./boards/skyrim/skyrim.dtsi
+
+  skyrim.skyrim.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG=y
+
+  skyrim.skyrim.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
+  # Winterhold tests
+  skyrim.winterhold:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+
+  skyrim.winterhold.ppc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_TEST_BOARD_PPC_CONFIG_CUSTOM=y
+
+  skyrim.winterhold.usb_mux_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
+  skyrim.winterhold.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_TEST_BOARD_FAN=y
+    - CONFIG_TEST_BOARD_FAN_CUSTOM=y

@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "bc12/mt6360_public.h"
+#include "common.h"
 
 /* SD Card */
 int board_regulator_get_info(uint32_t index, char *name, uint16_t *num_voltages,

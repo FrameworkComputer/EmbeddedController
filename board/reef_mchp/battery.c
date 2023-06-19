@@ -18,8 +18,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "util.h"
 #include "tfdp_chip.h"
+#include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)

@@ -1,0 +1,203 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	aliases {
+		gpio-wp = &ec_flash_wp_odl;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		en_kb_bl: en_kb_bl {
+			gpios = <&gpioa 1 GPIO_OUTPUT>;
+			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
+		};
+
+		ec_flash_wp_odl: ec_flash_wp_odl {
+			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+
+		base_accel_int_l: base_accel_int_l {
+			gpios = <&gpioh 1 GPIO_INPUT>;
+		};
+
+		en_ec_id_odl: en_ec_id_odl {
+			gpios = <&gpioh 4 GPIO_ODR_HIGH>;
+		};
+
+		tchpad_int_odl: tchpad_int_odl {
+			gpios = <&gpiob 2 GPIO_OPEN_DRAIN>;
+		};
+
+		en_pp3300_tchpad_odl: en_pp3300_tchpad_odl {
+			gpios = <&gpiob 5 GPIO_OUTPUT>;
+		};
+
+		/* TODO: unimplemented GPIOs */
+		/* system.c related */
+		entering_rw: entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* gpioa2 */
+			<&gpioa 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa3 */
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa6 */
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa7 */
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiob6 */
+			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpiob7 */
+			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioc0 */
+			<&gpioc 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc1 */
+			<&gpioc 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc2 */
+			<&gpioc 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc3 */
+			<&gpioc 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc4 */
+			<&gpioc 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc5 */
+			<&gpioc 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc6 */
+			<&gpioc 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc7 */
+			<&gpioc 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiod0 */
+			<&gpiod 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod1 */
+			<&gpiod 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod2 */
+			<&gpiod 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod3 */
+			<&gpiod 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod4 */
+			<&gpiod 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod5 */
+			<&gpiod 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod6 */
+			<&gpiod 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod7 */
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioe0 */
+			<&gpioe 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe1 */
+			<&gpioe 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe2 */
+			<&gpioe 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe3 */
+			<&gpioe 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe4 */
+			<&gpioe 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe5 */
+			<&gpioe 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe6 */
+			<&gpioe 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe7 */
+			<&gpioe 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiof2 */
+			<&gpiof 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof3 */
+			<&gpiof 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof4 */
+			<&gpiof 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof5 */
+			<&gpiof 5 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiog0 */
+			<&gpiog 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiog1 */
+			<&gpiog 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiog2 */
+			<&gpiog 2 GPIO_INPUT>,
+			/* gpiog3 */
+			<&gpiog 3 GPIO_INPUT>,
+
+			/* gpioh0 */
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh3 */
+			<&gpioh 3 GPIO_INPUT_PULL_DOWN>,
+			/* TODO: gpioh5: EC_USB2_N */
+			<&gpioh 5 GPIO_INPUT_PULL_DOWN>,
+			/* TODO: gpioh6: EC_USB2_P */
+			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioi0 */
+			<&gpioi 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi2 */
+			<&gpioi 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi3 */
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi5 */
+			<&gpioi 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi6 */
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi7 */
+			<&gpioi 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioj0 */
+			<&gpioj 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj1 */
+			<&gpioj 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj2 */
+			<&gpioj 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj3 */
+			<&gpioj 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj4 */
+			<&gpioj 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj5 */
+			<&gpioj 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj6 */
+			<&gpioj 6 GPIO_OUTPUT_LOW>,
+			/* gpioj7 */
+			<&gpioj 7 GPIO_OUTPUT_LOW>,
+
+			/* gpiom0 */
+			<&gpiom 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom1 */
+			<&gpiom 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom2 */
+			<&gpiom 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom3 */
+			<&gpiom 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom4 */
+			<&gpiom 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom5 */
+			<&gpiom 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom6 */
+			<&gpiom 6 GPIO_INPUT_PULL_DOWN>;
+	};
+};
+
+&uart2 {
+	status = "okay";
+	current-speed = <460800>;
+	clock-frequency = <1804800>;
+};
+
+&ite_uart2_wrapper {
+	status = "okay";
+	pinctrl-0 = <&uart2_rx_gpf0_default
+		     &uart2_tx_gpf1_default>;
+	pinctrl-names = "default";
+};
+

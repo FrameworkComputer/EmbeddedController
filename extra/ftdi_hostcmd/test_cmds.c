@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "ec_commands.h"
+#include "mpsse.h"
+
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <unistd.h>
-
-#include "mpsse.h"
-
-#include "ec_commands.h"
 
 static int opt_verbose;
 
@@ -47,9 +47,9 @@ static const char *ec_strerr(enum ec_status r)
 	return "<undefined result>";
 };
 
-	/****************************************************************************
-	 * Debugging output
-	 */
+/****************************************************************************
+ * Debugging output
+ */
 
 #define LINELEN 16
 
@@ -456,12 +456,7 @@ static struct lookup cmd_table[] = {
 	{ 0xa0, "EC_CMD_CHARGE_STATE" },
 	{ 0xa1, "EC_CMD_CHARGE_CURRENT_LIMIT" },
 	{ 0xa2, "EC_CMD_EXT_POWER_CURRENT_LIMIT" },
-	{ 0xb0, "EC_CMD_SB_READ_WORD" },
-	{ 0xb1, "EC_CMD_SB_WRITE_WORD" },
-	{ 0xb2, "EC_CMD_SB_READ_BLOCK" },
-	{ 0xb3, "EC_CMD_SB_WRITE_BLOCK" },
 	{ 0xb4, "EC_CMD_BATTERY_VENDOR_PARAM" },
-	{ 0xb5, "EC_CMD_SB_FW_UPDATE" },
 	{ 0xd2, "EC_CMD_REBOOT_EC" },
 	{ 0xd3, "EC_CMD_GET_PANIC_INFO" },
 	{ 0xd1, "EC_CMD_REBOOT" },

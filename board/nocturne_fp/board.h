@@ -18,6 +18,8 @@
 
 #undef CONFIG_SYSTEM_UNLOCKED
 
+#define CONFIG_LTO
+
 /*
  * These allow console commands to be flagged as restricted.
  * Restricted commands will only be permitted to run when
@@ -91,7 +93,7 @@
 /* Optional features */
 #undef CONFIG_ADC
 #define CONFIG_CMD_IDLE_STATS
-#define CONFIG_DMA
+#define CONFIG_DMA_CROS
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_FPU
 /*
@@ -155,6 +157,7 @@
 /* SPI configuration for the fingerprint sensor */
 #define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_FP_PORT 2 /* SPI4: third master config */
+#define CONFIG_SPI_MUTABLE_DEVICE_LIST
 
 #define CONFIG_FINGERPRINT_MCU
 #ifdef SECTION_IS_RW
@@ -201,8 +204,7 @@
 #undef CONFIG_ROLLBACK_UPDATE
 #endif
 
-#define CONFIG_AES
-#define CONFIG_AES_GCM
+#define CONFIG_BORINGSSL_CRYPTO
 
 #define CONFIG_RNG
 
@@ -226,8 +228,8 @@
 #define TIM_CLOCK32 2
 #define TIM_WATCHDOG 16
 
-#include "gpio_signal.h"
 #include "board_rw.h"
+#include "gpio_signal.h"
 
 void slp_event(enum gpio_signal signal);
 

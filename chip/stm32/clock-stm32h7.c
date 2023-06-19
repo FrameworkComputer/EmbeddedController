@@ -13,8 +13,6 @@
  * but at least yields predictable behavior.
  */
 
-#include <stdbool.h>
-
 #include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
@@ -28,6 +26,8 @@
 #include "task.h"
 #include "uart.h"
 #include "util.h"
+
+#include <stdbool.h>
 
 /* Check chip family and variant for compatibility */
 #ifndef CHIP_FAMILY_STM32H7
@@ -383,7 +383,7 @@ static void clock_set_osc(enum clock_osc osc)
 	hook_notify(HOOK_FREQ_CHANGE);
 }
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 	/* Assume we have a single task using MODULE_FAST_CPU */
 	if (module == MODULE_FAST_CPU) {

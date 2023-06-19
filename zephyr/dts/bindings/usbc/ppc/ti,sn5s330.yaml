@@ -2,4 +2,4 @@ description: USBC PPC
 
 compatible: "ti,sn5s330"
 
-include: ppc-chip.yaml
+include: ["i2c-device.yaml", "ppc-chip.yaml"]

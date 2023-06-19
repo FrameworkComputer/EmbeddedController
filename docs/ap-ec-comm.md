@@ -106,6 +106,41 @@ they're being called with. Different versions of a command may have different
 parameter or response formats. `EC_CMD_GET_CMD_VERSIONS` returns the versions of
 the given command supported by the EC. These version numbers start at 0.
 
+## Tracing
+
+Command tracing can be done on the EC console (`hc debug` command) and/or in
+the kernel:
+```
+echo 1 > /sys/kernel/debug/tracing/events/cros_ec/enable
+cat /sys/kernel/debug/tracing/trace
+
+369.416372: cros_ec_request_start: version: 0, command: EC_CMD_USB_PD_POWER_INFO
+369.420528: cros_ec_request_done: version: 0, command: EC_CMD_USB_PD_POWER_INFO, ec result: EC_RES_SUCCESS, retval: 16
+369.420529: cros_ec_request_start: version: 0, command: EC_CMD_USB_PD_DISCOVERY
+369.421383: cros_ec_request_done: version: 0, command: EC_CMD_USB_PD_DISCOVERY, ec result: EC_RES_SUCCESS, retval: 5
+```
+
+## API synchronization
+
+EC, coreboot, user space (`platform2)` and kernel needs to access the same
+information contained in `ec_commands.h`.
+
+*   Coreboot regularly update [ec_commands.h].
+*   User space/depthcharge use `ec_commands.h` installed by
+  `chromeos-base/chromeos-ec-headers` package.
+*   Kernel `ec_commands.h` - named
+  `./include/linux/platform_data/cros_ec_commands.h` - is not a direct
+copy. New commands and options are added on a need-to-know basis
+alongside the kernel code that uses these commands.
+
+A copy of `ec_commands.h`, matching kernel standard is auto-generated at
+`/build/kernel/include/linux/mfd/cros_ec_commands.h` when
+`make build_cros_ec_commands` or `make buildall` is run. (It is far from
+perfect, since the kernel include file has not been updated with `clang-format` as
+`ec_commands.h` has been). Copy the necessary changes from that file to
+`include/linux/platform_data/cros_ec_commands.h` and push the changes upstream
+first following the [upstream instructions].
+
 ## Transport-specific details
 
 Although the command and response formats are the same across all transports,
@@ -165,3 +200,5 @@ after receiving a host packet and before it has a response ready.
 [Industrial I/O]: https://www.kernel.org/doc/html/v4.14/driver-api/iio/index.html
 [host command task]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/host_command.c
 [Transport-specific details]: #Transport_specific-details
+[ec_commands.h]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/coreboot/src/ec/google/chromeec/ec_commands.h
+[upstream instructions]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/kernel_development.md#Upstream-development.

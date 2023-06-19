@@ -1,0 +1,120 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_BOARD_VARIANT
+	prompt "Select board variant for tests"
+	help
+	  Board variant to use for tests
+
+	config TEST_BOARD_BASEBOARD
+		bool "Enable baseboard-specific tests"
+		help
+		Enable baseboard tests.
+
+	config TEST_BOARD_CRYSTALDRIFT
+		bool "Enable crystaldrift-specific tests"
+		help
+		Enable tests for crystaldrift variant.
+
+	config TEST_BOARD_FROSTFLOW
+		bool "Enable frostflow-specific tests"
+		help
+		Enable tests for frostflow variant.
+
+	config TEST_BOARD_MARKARTH
+		bool "Enable markarth-specific tests"
+		help
+		Enable tests for markarth variant.
+
+	config TEST_BOARD_SKYRIM
+		bool "Enable skyrim-specific tests"
+		help
+		Enable tests for skyrim variant.
+
+	config TEST_BOARD_WINTERHOLD
+		bool "Enable winterhold-specific tests"
+		help
+		Enable tests for winterhold variant.
+
+endchoice # TEST_BOARD_VARIANT
+
+config TEST_BOARD_NAME
+	string "Board name"
+	default "baseboard" if TEST_BOARD_BASEBOARD
+	default "crystaldrift" if TEST_BOARD_CRYSTALDRIFT
+	default "frostflow" if TEST_BOARD_FROSTFLOW
+	default "markarth" if TEST_BOARD_MARKARTH
+	default "skyrim" if TEST_BOARD_SKYRIM
+	default "winterhold" if TEST_BOARD_WINTERHOLD
+
+config TEST_BOARD_ALT_CHARGER
+	bool "Enable alt charger specific tests"
+
+config TEST_BOARD_ALT_CHARGER_CUSTOM
+	bool "ENable alt charger tests with a variant-specific test file"
+	select TEST_BOARD_ALT_CHARGER
+
+config TEST_BOARD_FAN
+	bool "Enable fan tests"
+
+config TEST_BOARD_FAN_CUSTOM
+	bool "ENable fan tests with a variant-specific test file"
+	select TEST_BOARD_FAN
+
+config TEST_BOARD_FORM_FACTOR
+	select PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT
+	select PLATFORM_EC_GMR_TABLET_MODE
+	select PLATFORM_EC_TABLET_MODE
+	bool "Run the tests intended for form factor testing"
+	help
+	  Include tests which checks accelerometer
+	  interrupt and tablet mode.
+
+config TEST_BOARD_USB_PD_POLICY
+	bool "Enable USB PD policy specific tests"
+	select TEST_ENABLE_USB_PD_HOST_CMD
+
+config TEST_BOARD_POWER_SIGNALS
+	bool "Enable power signals tests"
+	select AP_POWER_CONTROL
+	select BOARD_USB_HUB_RESET
+
+config TEST_BOARD_PPC_CONFIG
+	bool "Enable PPC config tests"
+
+config TEST_BOARD_PPC_CONFIG_CUSTOM
+	bool "ENable PPC config tests with a variant-specific test file"
+	select TEST_BOARD_PPC_CONFIG
+
+config TEST_BOARD_USB_MUX_CONFIG
+	bool "Enable USB mux config tests"
+	select AP_POWER_CONTROL
+	select PLATFORM_EC_USB_MUX_MOCK
+	select PLATFORM_EC_USBC_RETIMER_PS8811
+	select PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
+
+config TEST_BOARD_USB_MUX_CONFIG_CUSTOM
+	bool "Enable USB mux config tests with a variant-specific test file"
+	select TEST_BOARD_USB_MUX_CONFIG
+
+config SKYRIM_LOG_LEVEL
+	int "Fake config to allow building"
+	default 4 # Log level debug by default
+
+config AP_POWER_CONTROL
+	bool "Fake config to enable this feature"
+
+config TEST_ENABLE_USB_PD_HOST_CMD
+	bool "Fake config to enable this feature"
+
+config USB_PD_DISCHARGE
+	bool "Fake config to enable this feature"
+
+config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
+	bool "Fake config to enable this feature"
+
+config BOARD_USB_HUB_RESET
+	bool "Fake config to enable this feature"
+
+source "Kconfig.zephyr"

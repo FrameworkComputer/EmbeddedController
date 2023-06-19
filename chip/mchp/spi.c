@@ -9,14 +9,14 @@
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
+#include "hooks.h"
+#include "qmspi_chip.h"
 #include "registers.h"
 #include "spi.h"
+#include "spi_chip.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "hooks.h"
-#include "task.h"
-#include "spi_chip.h"
-#include "qmspi_chip.h"
 #if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
 #include "gpspi_chip.h"
 #endif

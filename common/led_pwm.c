@@ -165,9 +165,10 @@ static void pulse_leds(enum ec_led_colors color, int ontime, int period)
 	pulse_leds_deferred();
 }
 
+#ifdef CONFIG_BATTERY
 static int show_charge_state(void)
 {
-	enum charge_state chg_st = charge_get_state();
+	enum led_pwr_state chg_st = led_pwr_get_state();
 
 	/*
 	 * The colors listed below are the default, but can be overridden.
@@ -176,17 +177,18 @@ static int show_charge_state(void)
 	 * Solid Green == Charging (near full)
 	 * Fast Flash Red == Charging error or battery not present
 	 */
-	if (chg_st == PWR_STATE_CHARGE) {
+	if (chg_st == LED_PWRS_CHARGE) {
 		led_is_pulsing = 0;
 		set_led_color(CONFIG_LED_PWM_CHARGE_COLOR);
-	} else if (chg_st == PWR_STATE_CHARGE_NEAR_FULL ||
-		   chg_st == PWR_STATE_DISCHARGE_FULL) {
+	} else if (chg_st == LED_PWRS_CHARGE_NEAR_FULL ||
+		   chg_st == LED_PWRS_DISCHARGE_FULL) {
 		led_is_pulsing = 0;
 		set_led_color(CONFIG_LED_PWM_NEAR_FULL_COLOR);
 	} else if ((battery_is_present() != BP_YES) ||
-		   (chg_st == PWR_STATE_ERROR)) {
-		/* 500 ms period, 50% duty cycle. */
-		pulse_leds(CONFIG_LED_PWM_CHARGE_ERROR_COLOR, 1, 2);
+		   (chg_st == LED_PWRS_ERROR)) {
+		/* Ontime and period in PULSE_TICK units. */
+		pulse_leds(CONFIG_LED_PWM_CHARGE_ERROR_COLOR,
+			   LED_CHARGER_ERROR_ON_TIME, LED_CHARGER_ERROR_PERIOD);
 	} else {
 		/* Discharging or not charging. */
 #ifdef CONFIG_LED_PWM_CHARGE_STATE_ONLY
@@ -201,8 +203,10 @@ static int show_charge_state(void)
 	}
 	return 1;
 }
+#endif /* CONFIG_BATTERY */
 
 #ifndef CONFIG_LED_PWM_CHARGE_STATE_ONLY
+#ifdef CONFIG_BATTERY
 static int show_battery_state(void)
 {
 	int batt_percentage = charge_get_percent();
@@ -225,6 +229,7 @@ static int show_battery_state(void)
 	}
 	return 1;
 }
+#endif /* CONFIG_BATTERY */
 
 static int show_chipset_state(void)
 {
@@ -246,13 +251,17 @@ static int show_chipset_state(void)
 
 static void update_leds(void)
 {
+#ifdef CONFIG_BATTERY
 	/* Reflecting the charge state is the highest priority. */
 	if (show_charge_state())
 		return;
+#endif /* CONFIG_BATTERY */
 
 #ifndef CONFIG_LED_PWM_CHARGE_STATE_ONLY
+#ifdef CONFIG_BATTERY
 	if (show_battery_state())
 		return;
+#endif /* CONFIG_BATTERY */
 
 	if (show_chipset_state())
 		return;

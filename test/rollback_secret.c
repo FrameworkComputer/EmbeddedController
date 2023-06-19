@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-
 #include "mock/rollback_latest_mock.h"
 #include "rollback.h"
 #include "rollback_private.h"
 #include "string.h"
 #include "system.h"
 #include "test_util.h"
+
+#include <stdint.h>
 
 extern int get_latest_rollback(struct rollback_data *data);
 

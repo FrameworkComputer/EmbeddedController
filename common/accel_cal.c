@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "accel_cal.h"
 #include "common.h"
 #include "console.h"
-#include "accel_cal.h"
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 

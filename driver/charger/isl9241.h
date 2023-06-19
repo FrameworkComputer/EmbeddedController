@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Renesas (Intersil) ISL-9241 battery charger driver header.
+ * Renesas (Intersil) ISL-9241 (and RAA489110) battery charger driver header.
  */
 
 #ifndef __CROS_EC_ISL9241_H
@@ -46,10 +46,15 @@
 #define ISL9241_CONTROL0_INPUT_VTG_REGULATION BIT(2)
 #define ISL9241_CONTROL0_EN_VIN_VOUT_COMP BIT(5)
 #define ISL9241_CONTROL0_EN_CHARGE_PUMPS BIT(6)
+#define RAA489110_CONTROL0_EN_FORCE_BUCK_MODE BIT(10)
 #define ISL9241_CONTROL0_EN_BYPASS_GATE BIT(11)
 #define ISL9241_CONTROL0_NGATE_OFF BIT(12)
 
 #define ISL9241_REG_INFORMATION1 0x3A
+#define ISL9241_REG_INFORMATION1_LOW_VSYS_PROCHOT BIT(10)
+#define ISL9241_REG_INFORMATION1_DC_PROCHOT BIT(11)
+#define ISL9241_REG_INFORMATION1_AC_PROCHOT BIT(12)
+
 #define ISL9241_REG_ADAPTER_CUR_LIMIT2 0x3B
 
 /* Configures various charger options */
@@ -102,7 +107,11 @@
 #define ISL9241_REG_OTG_VOLTAGE 0x49
 #define ISL9241_REG_OTG_CURRENT 0x4A
 
+#ifdef CONFIG_CHARGER_RAA489110
+#define ISL9241_MV_TO_ACOK_REFERENCE(mv) (((mv) / 144) << 6)
+#else /* CONFIG_CHARGER_ISL9241 */
 #define ISL9241_MV_TO_ACOK_REFERENCE(mv) (((mv) / 96) << 6)
+#endif
 
 /* VIN Voltage (ADP Min Voltage) (default 4.096V) */
 #define ISL9241_REG_VIN_VOLTAGE 0x4B
@@ -126,6 +135,7 @@
 #define ISL9241_INFORMATION2_ACOK_PIN BIT(14)
 
 #define ISL9241_REG_CONTROL4 0x4E
+/* ISL9241 only */
 #define ISL9241_CONTROL4_FORCE_BUCK_MODE BIT(10)
 /* 11: Rsense (Rs1:Rs2) ratio for PSYS (0 - 2:1, 1 - 1:1) */
 #define ISL9241_CONTROL4_PSYS_RSENSE_RATIO BIT(11)
@@ -150,7 +160,11 @@
 #define ISL9241_REG_DEVICE_ID 0xFF
 
 #define ISL9241_VIN_ADC_BIT_OFFSET 6
+#ifdef CONFIG_CHARGER_RAA489110
+#define ISL9241_VIN_ADC_STEP_MV 144
+#else /* CONFIG_CHARGER_ISL9241 */
 #define ISL9241_VIN_ADC_STEP_MV 96
+#endif
 
 #define ISL9241_ADC_POLLING_TIME_US 400
 
@@ -165,5 +179,18 @@
  * gate. See 2.5.1 of application notes for details.
  */
 #define ISL9241_BYPASS_VSYS_TIMEOUT_MS 500
+
+/* Sense resistor default values in milli Ohm */
+#define ISL9241_DEFAULT_RS1 20 /* Input current sense resistor */
+#define ISL9241_DEFAULT_RS2 10 /* Battery charge current sense resistor */
+
+#define BOARD_RS1 CONFIG_CHARGER_SENSE_RESISTOR_AC
+#define BOARD_RS2 CONFIG_CHARGER_SENSE_RESISTOR
+
+#define BC_REG_TO_CURRENT(REG) (((REG)*ISL9241_DEFAULT_RS2) / BOARD_RS2)
+#define BC_CURRENT_TO_REG(CUR) (((CUR)*BOARD_RS2) / ISL9241_DEFAULT_RS2)
+
+#define AC_REG_TO_CURRENT(REG) (((REG)*ISL9241_DEFAULT_RS1) / BOARD_RS1)
+#define AC_CURRENT_TO_REG(CUR) (((CUR)*BOARD_RS1) / ISL9241_DEFAULT_RS1)
 
 #endif /* __CROS_EC_ISL9241_H */

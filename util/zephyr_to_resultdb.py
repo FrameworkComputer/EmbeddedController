@@ -2,17 +2,22 @@
 # Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """ Upload twister results to ResultDB
 
     Usage:
-    $ rdb stream -new -realm chromium:public -- ./util/zephyr_to_resultdb.py
-      --results=twister-out/twister.json --upload=True
+    $ rdb stream -new -realm chromium:public -tag builder_name:${HOSTNAME%%.*}
+      -- ./util/zephyr_to_resultdb.py --results=twister-out/twister.json
+      --upload=True
 """
 
 import argparse
 import base64
+import datetime
 import json
 import os
+import pathlib
+import re
 
 import requests  # pylint: disable=import-error
 
@@ -27,6 +32,9 @@ def translate_status(status):
         ret_status = "FAIL"
     elif status in ["skipped", "filtered"]:
         ret_status = "SKIP"
+    elif status == "blocked":
+        # Twister status for tests that didn't run due to test suite timeout
+        ret_status = "ABORT"
 
     return ret_status
 
@@ -47,7 +55,7 @@ def translate_duration(testcase):
     if not time:
         return None
 
-    return f"{time}ms"
+    return f"{float(time)/1000:.9f}s"
 
 
 def testcase_summary(testcase):
@@ -59,9 +67,7 @@ def testcase_summary(testcase):
         or "reason" in testcase
         or translate_status(testcase["status"]) == "SKIP"
     ):
-        html = (
-            '<p><text-artifact artifact-id="artifact-content-in-request"></p>'
-        )
+        html = '<p><text-artifact artifact-id="test_log"></p>'
 
     return html
 
@@ -82,28 +88,99 @@ def testcase_artifact(testcase):
     return base64.b64encode(artifact.encode())
 
 
-def testcase_to_result(testsuite, testcase):
-    """Translates ZTEST testcase to ResultDB format"""
+def testsuite_artifact(testsuite):
+    """Translates ZTEST testcase to ResultDB artifact"""
+    artifact = "Unknown"
+
+    if "log" in testsuite and testsuite["log"]:
+        artifact = testsuite["log"]
+
+    return base64.b64encode(artifact.encode())
+
+
+def testcase_to_result(testsuite, testcase, base_tags, config_tags):
+    """Translates ZTEST testcase to ResultDB format
+    See TestResult type in
+    https://crsrc.org/i/go/src/go.chromium.org/luci/resultdb/sink/proto/v1/test_result.proto
+    """
     result = {
         "testId": testcase["identifier"],
         "status": translate_status(testcase["status"]),
         "expected": translate_expected(testcase["status"]),
         "summaryHtml": testcase_summary(testcase),
         "artifacts": {
-            "artifact-content-in-request": {
+            "test_log": {
                 "contents": testcase_artifact(testcase),
-            }
+            },
+            "testsuite_log": {
+                "contents": testsuite_artifact(testsuite),
+            },
         },
-        # TODO(b/239952573) Add all test configs as tags
         "tags": [
-            {"key": "category", "value": "ChromeOS/EC"},
+            {"key": "suite", "value": testsuite["name"]},
             {"key": "platform", "value": testsuite["platform"]},
         ],
         "duration": translate_duration(testcase),
         "testMetadata": {"name": testcase["identifier"]},
     }
 
+    for (key, value) in base_tags:
+        result["tags"].append({"key": key, "value": value})
+
+    for (key, value) in config_tags:
+        result["tags"].append({"key": key.lower(), "value": value})
+
+    if result["status"] == "FAIL" and "log" in testcase and testcase["log"]:
+        assert_msg = re.findall(
+            r"Assertion failed.*$", testcase["log"], re.MULTILINE
+        )
+        if assert_msg:
+            result["failureReason"] = {"primaryErrorMessage": assert_msg[0]}
+        else:
+            result["failureReason"] = {
+                "primaryErrorMessage": "Assert not found - possibly occurred in test setup"
+            }
+
     return result
+
+
+def get_testsuite_config_tags(twister_dir, testsuite):
+    """Creates config tags from the testsuite"""
+    config_tags = []
+    suite_path = f"{twister_dir}/{testsuite['platform']}/{testsuite['name']}"
+    dot_config = f"{suite_path}/zephyr/.config"
+
+    if pathlib.Path(dot_config).exists():
+        with open(dot_config) as file:
+            lines = file.readlines()
+
+            for line in lines:
+                # Ignore empty lines and comments
+                if line.strip() and not line.startswith("#"):
+                    result = re.search(r"(\w+)=(.+$)", line)
+                    config_tags.append((result.group(1), result.group(2)))
+    else:
+        print(f"Can't find config file for {testsuite['name']}")
+
+    return config_tags
+
+
+def create_base_tags(data):
+    """Creates base tags needed for Testhaus"""
+    base_tags = []
+
+    queued_time = datetime.datetime.fromisoformat(
+        data["environment"]["run_date"]
+    )
+    base_tags.append(
+        ("queued_time", queued_time.strftime("%Y-%m-%d %H:%M:%S.%f UTC"))
+    )
+
+    base_tags.append(("zephyr_version", data["environment"]["zephyr_version"]))
+    base_tags.append(("board", data["environment"]["os"]))
+    base_tags.append(("toolchain", data["environment"]["toolchain"]))
+
+    return base_tags
 
 
 def json_to_resultdb(result_file):
@@ -111,11 +188,19 @@ def json_to_resultdb(result_file):
     with open(result_file) as file:
         data = json.load(file)
         results = []
+        base_tags = create_base_tags(data)
 
         for testsuite in data["testsuites"]:
+            config_tags = get_testsuite_config_tags(
+                os.path.dirname(result_file), testsuite
+            )
             for testcase in testsuite["testcases"]:
                 if testcase["status"]:
-                    results.append(testcase_to_result(testsuite, testcase))
+                    results.append(
+                        testcase_to_result(
+                            testsuite, testcase, base_tags, config_tags
+                        )
+                    )
 
         file.close()
 
@@ -125,10 +210,10 @@ def json_to_resultdb(result_file):
 class BytesEncoder(json.JSONEncoder):
     """Encoder for ResultDB format"""
 
-    def default(self, obj):
-        if isinstance(obj, bytes):
-            return obj.decode("utf-8")
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, bytes):
+            return o.decode("utf-8")
+        return json.JSONEncoder.default(self, o)
 
 
 def upload_results(results):
@@ -161,7 +246,7 @@ def main():
     args = parser.parse_args()
 
     if args.results:
-        print("Converting:", args.results)
+        print(f"Converting: {args.results}")
         rdb_results = json_to_resultdb(args.results)
         if args.upload:
             upload_results(rdb_results)

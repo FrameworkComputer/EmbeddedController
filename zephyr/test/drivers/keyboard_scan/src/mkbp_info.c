@@ -2,10 +2,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-#include <emul/emul_kb_raw.h>
-
 #include "console.h"
 #include "host_command.h"
 #include "keyboard_scan.h"
@@ -14,7 +10,12 @@
 #include "mkbp_input_devices.h"
 #include "test/drivers/test_state.h"
 
-ZTEST(mkbp_info, host_command_mkbp_info__keyboard_info)
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
+
+#include <emul/emul_kb_raw.h>
+
+ZTEST(mkbp_info, test_host_command_mkbp_info__keyboard_info)
 {
 	/* Get the number of keyboard rows and columns */
 
@@ -24,16 +25,13 @@ ZTEST(mkbp_info, host_command_mkbp_info__keyboard_info)
 		.info_type = EC_MKBP_INFO_KBD,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 	zassert_equal(KEYBOARD_ROWS, response.rows, NULL);
 	zassert_equal(KEYBOARD_COLS_MAX, response.cols, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__supported_buttons)
+ZTEST(mkbp_info, test_host_command_mkbp_info__supported_buttons)
 {
 	/* Get the set of supported buttons */
 
@@ -44,15 +42,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__supported_buttons)
 		.event_type = EC_MKBP_EVENT_BUTTON,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 	zassert_equal(get_supported_buttons(), response.buttons, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__supported_switches)
+ZTEST(mkbp_info, test_host_command_mkbp_info__supported_switches)
 {
 	/* Get the set of supported switches */
 
@@ -63,15 +58,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__supported_switches)
 		.event_type = EC_MKBP_EVENT_SWITCH,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 	zassert_equal(get_supported_switches(), response.switches, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__supported_invalid)
+ZTEST(mkbp_info, test_host_command_mkbp_info__supported_invalid)
 {
 	/* Request support info on a non-existent type of input device. */
 
@@ -82,15 +74,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__supported_invalid)
 		.event_type = EC_MKBP_EVENT_COUNT, /* Unsupported */
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_RES_INVALID_PARAM, ret,
 		      "Host command didn't fail properly: %d", ret);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_keyboard_matrix)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_keyboard_matrix)
 {
 	/* Hold down a key so we can validate the returned keyboard matrix state
 	 */
@@ -110,10 +99,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_keyboard_matrix)
 		.event_type = EC_MKBP_EVENT_KEY_MATRIX,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 
 	zassert_true(response.key_matrix[KEYBOARD_COL_KEY_R] &
@@ -121,7 +107,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_keyboard_matrix)
 		     "Expected key is not pressed");
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_host_events)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_host_events)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -130,15 +116,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_host_events)
 		.event_type = EC_MKBP_EVENT_HOST_EVENT,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 	zassert_equal((uint32_t)host_get_events(), response.host_event, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_host_events64)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_host_events64)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -147,15 +130,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_host_events64)
 		.event_type = EC_MKBP_EVENT_HOST_EVENT64,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 	zassert_equal(host_get_events(), response.host_event64, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_buttons)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_buttons)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -164,15 +144,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_buttons)
 		.event_type = EC_MKBP_EVENT_BUTTON,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 	zassert_equal(mkbp_get_button_state(), response.buttons, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_switches)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_switches)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -181,15 +158,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_switches)
 		.event_type = EC_MKBP_EVENT_SWITCH,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 	zassert_equal(mkbp_get_switch_state(), response.switches, NULL);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__current_invalid)
+ZTEST(mkbp_info, test_host_command_mkbp_info__current_invalid)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -198,15 +172,12 @@ ZTEST(mkbp_info, host_command_mkbp_info__current_invalid)
 		.event_type = EC_MKBP_EVENT_COUNT, /* Unsupported */
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Host command failed: %d",
 		      ret);
 }
 
-ZTEST(mkbp_info, host_command_mkbp_info__invalid)
+ZTEST(mkbp_info, test_host_command_mkbp_info__invalid)
 {
 	int ret;
 	union ec_response_get_next_data response;
@@ -214,10 +185,7 @@ ZTEST(mkbp_info, host_command_mkbp_info__invalid)
 		.info_type = -1, /* Unsupported */
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_MKBP_INFO, 0, response, request);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_mkbp_info_get_next_data(NULL, &request, &response);
 	zassert_equal(EC_RES_ERROR, ret, "Host command failed: %d", ret);
 }
 

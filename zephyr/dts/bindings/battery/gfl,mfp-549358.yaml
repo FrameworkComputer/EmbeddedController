@@ -1,0 +1,53 @@
+description: "Gfl MFP-549358"
+compatible: "gfl,mfp-549358"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "gfl,mfp-549358"
+
+  # Fuel gauge
+  manuf_name:
+    default: "GFL"
+  device_name:
+    default: "MFP-549358"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  fet_mfgacc_support:
+    default: 1
+  fet_reg_addr:
+    default: 0x54
+  fet_reg_mask:
+    default: 0x0006
+  fet_disconnect_val:
+    default: 0x0000
+  fet_cfet_mask:
+    default: 0x4000
+  fet_cfet_off_val:
+    default: 0x4000
+
+  # Battery info
+  voltage_max:
+    default: 13200
+  voltage_normal:
+    default: 11550
+  voltage_min:
+    default: 9000
+  precharge_current:
+    default: 100
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 50
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

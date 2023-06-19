@@ -40,6 +40,7 @@ chip-$(CONFIG_CEC)+=cec.o
 # pwm functions are implemented with the fan functions
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o
+chip-$(CONFIG_RNG)+=trng.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
@@ -91,5 +92,5 @@ cmd_ecst=$(show_esct_cmd)$(call moveflat,$@,$@.tmp);$(call bld_ecst,$@.tmp,$@)
 cmd_org_ec_elf_to_flat = $(OBJCOPY) --set-section-flags .roshared=share \
                          -O binary $(patsubst %.flat,%.elf,$@) $@
 cmd_npcx_ro_elf_to_flat=$(cmd_org_ec_elf_to_flat);$(cmd_ecst)
-cmd_ec_elf_to_flat = $(if $(filter $(out)/RO/ec.RO.flat, $@), \
+cmd_ec_elf_to_flat = $(if $(filter %.RO.flat, $@), \
                      $(cmd_npcx_ro_elf_to_flat), $(cmd_org_ec_elf_to_flat) )

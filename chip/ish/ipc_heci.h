@@ -7,6 +7,8 @@
 #ifndef __IPC_HECI_H
 #define __IPC_HECI_H
 
+#include <stddef.h>
+
 enum IPC_ERR {
 	IPC_ERR_IPC_IS_NOT_READY = EC_ERROR_INTERNAL_FIRST + 0,
 	IPC_ERR_TOO_SMALL_BUFFER = EC_ERROR_INTERNAL_FIRST + 1,

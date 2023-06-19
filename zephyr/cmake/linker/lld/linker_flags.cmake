@@ -7,3 +7,6 @@ include("${ZEPHYR_BASE}/cmake/linker/ld/linker_flags.cmake")
 # ld/linker_flags.cmake includes ${LINKER}/${COMPILER}/linker_flags.cmake but
 # that doesn't exist for ldd, so import the path that actually exists.
 include("${ZEPHYR_BASE}/cmake/linker/ld/${COMPILER}/linker_flags.cmake" OPTIONAL)
+
+# Add the -nopie option to the linker flags to match the compilation options
+set_property(TARGET linker PROPERTY no_position_independent "-nopie")

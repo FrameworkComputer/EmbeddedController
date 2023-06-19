@@ -7,8 +7,8 @@
 
 #include "battery_smart.h"
 #include "charger.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "util.h"
 
 static const struct charger_info mock_charger_info = {
@@ -136,7 +136,8 @@ static enum ec_error_list mock_set_input_current_limit(int chgnum, int current)
 
 static enum ec_error_list mock_post_init(int chgnum)
 {
-	mock_current = mock_input_current = CONFIG_CHARGER_INPUT_CURRENT;
+	mock_current = mock_input_current =
+		CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT;
 	return EC_SUCCESS;
 }
 

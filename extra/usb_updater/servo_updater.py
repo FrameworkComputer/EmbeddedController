@@ -16,9 +16,9 @@ import re
 import subprocess
 import time
 
+from ecusb import tiny_servod
 import ecusb.tiny_servo_common as c
 import fw_update
-from ecusb import tiny_servod
 
 
 class ServoUpdaterException(Exception):

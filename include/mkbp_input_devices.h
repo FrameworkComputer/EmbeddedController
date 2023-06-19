@@ -12,14 +12,6 @@
 #include "ec_commands.h"
 
 /**
- * Update the state of the switches.
- *
- * @param sw		The switch that changed.
- * @param state		The state of the switch.
- */
-void mkbp_update_switches(uint32_t sw, int state);
-
-/**
  * Update the state of buttons
  *
  * @param button	The button that changed.

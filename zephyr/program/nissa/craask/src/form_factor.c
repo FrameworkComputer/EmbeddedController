@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/logging/log.h>
-
 #include "accelgyro.h"
 #include "button.h"
 #include "cros_board_info.h"
@@ -16,11 +13,13 @@
 #include "driver/accelgyro_lsm6dso.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
-#include "motionsense_sensors.h"
 #include "motion_sense.h"
+#include "motionsense_sensors.h"
+#include "nissa_sub_board.h"
 #include "tablet_mode.h"
 
-#include "nissa_common.h"
+#include <zephyr/devicetree.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
@@ -50,9 +49,9 @@ void motion_interrupt(enum gpio_signal signal)
 void lid_accel_interrupt(enum gpio_signal signal)
 {
 	if (use_alt_lid_accel)
-		lis2dw12_interrupt(signal);
-	else
 		bma4xx_interrupt(signal);
+	else
+		lis2dw12_interrupt(signal);
 }
 
 static void form_factor_init(void)

@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-
 #include "console.h"
 #include "drivers/cros_rtc.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
 #include "util.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(shim_cros_rtc, LOG_LEVEL_ERR);
 
@@ -36,10 +36,8 @@ void rtc_callback(const struct device *dev)
 }
 
 /** Initialize the rtc. */
-static int system_init_rtc(const struct device *unused)
+static int system_init_rtc(void)
 {
-	ARG_UNUSED(unused);
-
 	cros_rtc_dev = DEVICE_DT_GET(CROS_RTC_NODE);
 	if (!cros_rtc_dev) {
 		LOG_ERR("Error: device %s is not ready", cros_rtc_dev->name);
@@ -95,7 +93,13 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 		return;
 	}
 
-	seconds += system_get_rtc_sec();
+	/*
+	 * Adding 1 additional second because system_get_rtc_sec
+	 * returns the number of seconds truncated to the nearest
+	 * integer. This results in missed alarms if the actual
+	 * value is 7.99 seconds and 7 seconds is returned.
+	 */
+	seconds += system_get_rtc_sec() + 1;
 
 	cros_rtc_set_alarm(cros_rtc_dev, seconds, microseconds);
 }

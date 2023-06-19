@@ -38,7 +38,7 @@ GPIO_INT(USB_C0_BC12_INT_ODL,  PIN(9, 5), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL,  PIN(E, 4), GPIO_INT_FALLING, bc12_interrupt)
 
 /* CCD mode line*/
-GPIO_INT(CCD_MODE_ODL,         PIN(E, 5), GPIO_INT_FALLING, ccd_mode_isr)
+GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_INPUT)
 
 GPIO_INT(HDMI_CONN_HPD,        PIN(7, 2), GPIO_INT_BOTH, hdmi_hpd_interrupt)
 

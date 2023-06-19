@@ -5,8 +5,9 @@
  * 8042 keyboard protocol
  */
 
-#include "button.h"
+#include "atkbd_protocol.h"
 #include "builtin/assert.h"
+#include "button.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -14,7 +15,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i8042_protocol.h"
-#include "atkbd_protocol.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
@@ -78,15 +78,25 @@ enum scancode_set_list {
 #define KB_TO_HOST_RETRIES 3
 
 /*
+ * Timeout for SETLEDS command. Kernel is supposed to send the second byte
+ * within this period. When timeout occurs, the second byte is received as
+ * 'Unsupported AT keyboard command 0x00' (or 0x04). You can evaluate your
+ * timeout is too long or too short by calculating the duration between 'KB
+ * SETLEDS' and 'Unsupported AT...'.
+ */
+#define SETLEDS_TIMEOUT (30 * MSEC)
+
+/*
  * Mutex to control write access to the to-host buffer head.  Don't need to
  * mutex the tail because reads are only done in one place.
  */
-static mutex_t to_host_mutex;
+K_MUTEX_DEFINE(to_host_mutex);
 
 /* Queue command/data to the host */
 enum {
 	CHAN_KBD = 0,
 	CHAN_AUX,
+	CHAN_CMD,
 };
 struct data_byte {
 	uint8_t chan;
@@ -94,6 +104,7 @@ struct data_byte {
 };
 
 static struct queue const to_host = QUEUE_NULL(16, struct data_byte);
+static struct queue const to_host_cmd = QUEUE_NULL(16, struct data_byte);
 
 /* Queue command/data from the host */
 enum {
@@ -162,6 +173,7 @@ static int typematic_inter_delay;
 static int typematic_len; /* length of typematic_scan_code */
 static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
 static timestamp_t typematic_deadline;
+static timestamp_t setleds_deadline;
 
 #define KB_SYSJUMP_TAG 0x4b42 /* "KB" */
 #define KB_HOOK_VERSION 2
@@ -182,18 +194,16 @@ struct kblog_t {
 	/*
 	 * Type:
 	 *
-	 * s = byte enqueued to send to host
 	 * a = aux byte enqueued to send to host
-	 * t = to-host queue tail pointer before type='s' bytes enqueued
-	 *
-	 * d = data byte from host
 	 * c = command byte from host
-	 *
-	 * k = to-host queue head pointer before byte dequeued
-	 * K = byte actually sent to host via LPC
-	 * A = byte actually sent to host via LPC as AUX
-	 *
+	 * d = data byte from host
+	 * r = typematic
+	 * s = byte enqueued to send to host
+	 * t = to-host queue tail pointer before type='s' bytes enqueued
+	 * u = byte enqueued to send to host with priority
 	 * x = to_host queue was cleared
+	 * A = byte actually sent to host via LPC as AUX
+	 * K = byte actually sent to host via LPC
 	 *
 	 * The to-host head and tail pointers are logged pre-wrapping to the
 	 * queue size.  This means that they continually increment as units
@@ -265,7 +275,7 @@ static void aux_enable_irq(int enable)
  * host cannot read the previous byte away in time.
  *
  * @param len		Number of bytes to send to the host
- * @param to_host	Data to send
+ * @param bytes		Data to send
  * @param chan		Channel to send data on
  */
 static void i8042_send_to_host(int len, const uint8_t *bytes, uint8_t chan,
@@ -281,15 +291,29 @@ static void i8042_send_to_host(int len, const uint8_t *bytes, uint8_t chan,
 		for (i = 0; i < len; i++)
 			kblog_put('r', bytes[i]);
 	} else {
-		for (i = 0; i < len; i++)
-			kblog_put(chan == CHAN_AUX ? 'a' : 's', bytes[i]);
+		struct queue const *queue = &to_host;
 
-		if (queue_space(&to_host) >= len) {
-			kblog_put('t', to_host.state->tail);
+		if (chan == CHAN_CMD)
+			queue = &to_host_cmd;
+
+		for (i = 0; i < len; i++) {
+			char type;
+
+			if (chan == CHAN_AUX)
+				type = 'a';
+			else if (chan == CHAN_CMD)
+				type = 'u';
+			else
+				type = 's';
+			kblog_put(type, bytes[i]);
+		}
+
+		if (queue_space(queue) >= len) {
+			kblog_put('t', queue->state->tail);
 			for (i = 0; i < len; i++) {
 				data.chan = chan;
 				data.byte = bytes[i];
-				queue_add_unit(&to_host, &data);
+				queue_add_unit(queue, &data);
 			}
 		}
 	}
@@ -406,7 +430,7 @@ static void set_typematic_delays(uint8_t data)
 		((typematic_value_from_host & 0x7) + 8) / 240;
 }
 
-static void reset_rate_and_delay(void)
+test_export_static void reset_rate_and_delay(void)
 {
 	set_typematic_delays(DEFAULT_TYPEMATIC_VALUE);
 }
@@ -417,6 +441,7 @@ void keyboard_clear_buffer(void)
 	mutex_lock(&to_host_mutex);
 	kblog_put('x', queue_count(&to_host));
 	queue_init(&to_host);
+	queue_init(&to_host_cmd);
 	mutex_unlock(&to_host_mutex);
 	lpc_keyboard_clear_buffer();
 }
@@ -426,7 +451,7 @@ static void keyboard_wakeup(void)
 	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 }
 
-static void set_typematic_key(const uint8_t *scan_code, int32_t len)
+test_export_static void set_typematic_key(const uint8_t *scan_code, int32_t len)
 {
 	typematic_deadline.val = get_time().val + typematic_first_delay;
 	memcpy(typematic_scan_code, scan_code, len);
@@ -445,7 +470,7 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 	enum ec_error_list ret;
 
 #ifdef CONFIG_KEYBOARD_DEBUG
-	char mylabel = get_keycap_label(row, col);
+	uint8_t mylabel = get_keycap_label(row, col);
 
 	if (mylabel & KEYCAP_LONG_LABEL_BIT)
 		CPRINTS("KB (%d,%d)=%d %s", row, col, is_pressed,
@@ -664,6 +689,8 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 			/* Chrome OS doesn't have keyboard LEDs, so ignore */
 			output[out_len++] = ATKBD_RET_ACK;
 			data_port_state = STATE_ATKBD_SETLEDS;
+			setleds_deadline.val = get_time().val + SETLEDS_TIMEOUT;
+			CPRINTS5("KB SETLEDS");
 			break;
 
 		case ATKBD_CMD_EX_SETLEDS:
@@ -711,9 +738,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			output[out_len++] = ATKBD_RET_ACK;
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-			output[out_len++] = ATKBD_RET_TEST_SUCCESS; /* keyboard BAT test success */
-#endif /* CONFIG_CUSTOMIZED_DESIGN */
+			output[out_len++] = ATKBD_RET_TEST_SUCCESS;
 			break;
 
 		case ATKBD_CMD_RESEND:
@@ -874,20 +899,23 @@ static void i8042_handle_from_host(void)
 	struct host_byte h;
 	int ret_len;
 	uint8_t output[MAX_SCAN_CODE_LEN];
-	uint8_t chan = CHAN_KBD;
+	uint8_t chan;
 
 	while (queue_remove_unit(&from_host, &h)) {
 		if (h.type == HOST_COMMAND) {
 			ret_len = handle_keyboard_command(h.byte, output);
+			chan = CHAN_KBD;
 		} else {
 			CPRINTS5("KB recv data: 0x%02x", h.byte);
 			kblog_put('d', h.byte);
 
 			if (IS_ENABLED(CONFIG_8042_AUX) &&
-			    handle_mouse_data(h.byte, output, &ret_len))
+			    handle_mouse_data(h.byte, output, &ret_len)) {
 				chan = CHAN_AUX;
-			else
+			} else {
 				ret_len = handle_keyboard_data(h.byte, output);
+				chan = CHAN_CMD;
+			}
 		}
 
 		i8042_send_to_host(ret_len, output, chan, 0);
@@ -931,10 +959,14 @@ void keyboard_protocol_task(void *u)
 			i8042_handle_from_host();
 
 			/* Check if we have data to send to host */
-			if (queue_is_empty(&to_host))
+			if (queue_is_empty(&to_host) &&
+			    queue_is_empty(&to_host_cmd))
 				break;
 
-			/* Handle data waiting for host */
+			/*
+			 * Check if the output buffer is full. We can't proceed
+			 * until the host read the data.
+			 */
 			if (lpc_keyboard_has_char()) {
 				/* If interrupts disabled, nothing we can do */
 				if (!i8042_keyboard_irq_enabled &&
@@ -952,26 +984,53 @@ void keyboard_protocol_task(void *u)
 				 * data?  Send it another interrupt in case it
 				 * somehow missed the first one.
 				 */
-				CPRINTS("KB extra IRQ");
+				CPRINTS("KB host not responding");
 				lpc_keyboard_resume_irq();
 				retries = 0;
 				break;
 			}
 
+			/*
+			 * We know DBBOUT is empty but we need act quickly as
+			 * the host might be sending a byte to DBBIN.
+			 *
+			 * So be cautious if you're adding any code below up to
+			 * lpc_keyboard_put_char since that'll increase the race
+			 * condition. For example, you don't want to add CPRINTS
+			 * or kblog_put.
+			 *
+			 * We should claim OBF=1 atomically to prevent the host
+			 * from writing to DBBIN (i.e. set-ibf-if-not-obf). It's
+			 * not possible for NPCX because NPCX's HIKMST-IBF is
+			 * read-only.
+			 */
+
 			/* Get a char from buffer. */
-			kblog_put('k', to_host.state->head);
-			queue_remove_unit(&to_host, &entry);
+			if (queue_count(&to_host_cmd)) {
+				queue_remove_unit(&to_host_cmd, &entry);
+			} else if (data_port_state == STATE_ATKBD_SETLEDS) {
+				/* to_host_cmd is empty but in SETLEDS */
+				if (!timestamp_expired(setleds_deadline, &t))
+					/* Let's wait for the 2nd byte. */
+					break;
+				/* Didn't receive 2nd byte. Go back to CMD. */
+				CPRINTS("KB SETLEDS timeout");
+				data_port_state = STATE_ATKBD_CMD;
+			} else {
+				/* to_host isn't empty && not in SETLEDS */
+				queue_remove_unit(&to_host, &entry);
+			}
 
 			/* Write to host. */
 			if (entry.chan == CHAN_AUX &&
 			    IS_ENABLED(CONFIG_8042_AUX)) {
-				kblog_put('A', entry.byte);
 				lpc_aux_put_char(entry.byte,
 						 i8042_aux_irq_enabled);
+				kblog_put('A', entry.byte);
 			} else {
-				kblog_put('K', entry.byte);
 				lpc_keyboard_put_char(
 					entry.byte, i8042_keyboard_irq_enabled);
+				kblog_put('K', entry.byte);
 			}
 			retries = 0;
 		}
@@ -1368,3 +1427,32 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 
 #endif /* CONFIG_POWER_BUTTON && !CONFIG_MKBP_INPUT_DEVICES */
 #endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
+
+#ifdef TEST_BUILD
+void test_keyboard_8042_set_resend_command(const uint8_t *data, int length)
+{
+	length = MIN(length, sizeof(resend_command));
+
+	memcpy(resend_command, data, length);
+	resend_command_len = length;
+}
+
+void test_keyboard_8042_reset(void)
+{
+	/* Initialize controller ram */
+	memset(controller_ram, 0, sizeof(controller_ram));
+	controller_ram[0] = I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS;
+
+	/* Typematic state reset */
+	reset_rate_and_delay();
+	clear_typematic_key();
+
+	/* Use default scancode set # 2 */
+	scancode_set = SCANCODE_SET_2;
+
+	/* Keyboard not enabled (matches I8042_KBD_DIS bit being set) */
+	keyboard_enabled = false;
+
+	A20_status = 0;
+}
+#endif /* TEST_BUILD */

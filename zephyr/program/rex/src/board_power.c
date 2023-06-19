@@ -3,8 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
+#include "gpio/gpio.h"
+#include "gpio_signal.h"
+#include "system_boot_time.h"
+
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
@@ -13,12 +17,10 @@
 #include <power_signals.h>
 #include <x86_power_signals.h>
 
-#include "gpio_signal.h"
-#include "gpio/gpio.h"
-
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
-#if CONFIG_X86_NON_DSX_PWRSEQ_MTL
+#if defined(CONFIG_X86_NON_DSX_PWRSEQ_MTL) || \
+	defined(CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL)
 #define X86_NON_DSX_MTL_FORCE_SHUTDOWN_TO_MS 50
 
 void board_ap_power_force_shutdown(void)
@@ -46,6 +48,8 @@ void board_ap_power_action_g3_s5(void)
 {
 	/* Turn on the PP3300_PRIM rail. */
 	power_signal_set(PWR_EN_PP3300_A, 1);
+
+	update_ap_boot_time(ARAIL);
 
 	if (!power_wait_signals_timeout(
 		    IN_PGOOD_ALL_CORE,

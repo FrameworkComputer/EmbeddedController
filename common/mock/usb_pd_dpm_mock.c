@@ -8,14 +8,20 @@
  * Refer to USB PD 3.0 spec, version 2.0, sections 8.2 and 8.3
  */
 
-#include "usb_pd.h"
-#include "mock/usb_pd_dpm_mock.h"
 #include "memory.h"
+#include "mock/usb_pd_dpm_mock.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."
 #endif
+
+__overridable const struct svdm_response svdm_rsp = {
+	.identity = NULL,
+	.svids = NULL,
+	.modes = NULL,
+};
 
 struct mock_dpm_port_t dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -23,6 +29,14 @@ void mock_dpm_reset(void)
 {
 	/* Reset all values to 0. */
 	memset(dpm, 0, sizeof(dpm));
+}
+
+void dfp_consume_attention(int port, uint32_t *payload)
+{
+}
+
+void pd_prepare_sysjump(void)
+{
 }
 
 void dpm_init(int port)
@@ -41,7 +55,11 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 }
 
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		   uint8_t vdm_cmd)
+		   uint8_t vdm_cmd, uint32_t vdm_header)
+{
+}
+
+void dpm_notify_attention(int port, size_t vdo_objects, uint32_t *buf)
 {
 }
 

@@ -3,21 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
+#include "emul/emul_common_i2c.h"
+#include "emul/tcpc/emul_tcpci.h"
+#include "tcpm/tcpci.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/ztest.h>
 
-#include "tcpm/tcpci.h"
-
-#include "emul/emul_common_i2c.h"
-#include "emul/tcpc/emul_tcpci.h"
+LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**
  * @brief Returns number of bytes in specific register
@@ -144,6 +142,36 @@ static int set_reg(struct tcpci_ctx *ctx, int reg, uint16_t val)
 	return 0;
 }
 
+/**
+ * @brief Update value of given register of TCPCI
+ *
+ * @param ctx Pointer to TCPCI context
+ * @param reg Register address which value will be changed
+ * @param val New value of the register
+ * @param mask Mask to apply with the val
+ *
+ * @return 0 on success
+ * @return -EINVAL when register is out of range defined in TCPCI specification
+ */
+static int update_reg(struct tcpci_ctx *ctx, int reg, uint16_t val,
+		      uint16_t mask)
+{
+	uint16_t v;
+
+	if (get_reg(ctx, reg, &v)) {
+		return -EINVAL;
+	}
+
+	v &= ~mask;
+	v |= (val & mask);
+
+	if (set_reg(ctx, reg, v)) {
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /** Check description in emul_tcpci.h */
 int tcpci_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
 {
@@ -222,11 +250,10 @@ static int tcpci_emul_alert_changed(const struct emul *emul)
 	bool alert_is_active = tcpci_emul_check_int(ctx);
 
 	/** Trigger GPIO. */
-	if (ctx->alert_gpio_port != NULL) {
+	if (ctx->irq_gpio.port != NULL) {
 		/* Triggers on edge falling, so set to 0 when there is an alert.
 		 */
-		rc = gpio_emul_input_set(ctx->alert_gpio_port,
-					 ctx->alert_gpio_pin,
+		rc = gpio_emul_input_set(ctx->irq_gpio.port, ctx->irq_gpio.pin,
 					 alert_is_active ? 0 : 1);
 		if (rc != 0)
 			return rc;
@@ -462,6 +489,29 @@ void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev)
 					   TCPC_REG_PD_INT_REV_VER_1_1);
 		return;
 	}
+}
+
+void tcpci_emul_set_vbus_voltage(const struct emul *emul, uint32_t vbus_mv)
+{
+	uint16_t meas;
+	uint16_t scale = 0;
+
+	__ASSERT(!(vbus_mv % TCPC_REG_VBUS_VOLTAGE_LSB),
+		 "vbus_mv must be divisible by %d (%d)",
+		 TCPC_REG_VBUS_VOLTAGE_LSB, vbus_mv);
+
+	meas = vbus_mv / TCPC_REG_VBUS_VOLTAGE_LSB;
+
+	while (meas >= (1 << 10) && scale < 3) {
+		__ASSERT(!(meas & 1), "vbus_mv %d does not fit into the reg.",
+			 vbus_mv);
+		meas >>= 1;
+		scale += 1;
+	}
+	__ASSERT(scale < 3, "scale %d, meas %d doesn't fit into the reg.",
+		 scale, meas);
+
+	tcpci_emul_set_reg(emul, TCPC_REG_VBUS_VOLTAGE, (scale << 10) | meas);
 }
 
 /** Check description in emul_tcpci.h */
@@ -1154,11 +1204,30 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 				TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK);
 		}
 		break;
+	case TCPC_REG_COMMAND_DISABLE_VBUS_DETECT:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0,
+			   TCPC_REG_POWER_STATUS_VBUS_DET);
+		break;
 	case TCPC_REG_COMMAND_ENABLE_VBUS_DETECT:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0xFF,
+			   TCPC_REG_POWER_STATUS_VBUS_DET);
+		break;
 	case TCPC_REG_COMMAND_SNK_CTRL_LOW:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0,
+			   TCPC_REG_POWER_STATUS_SINKING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_SNK_CTRL_HIGH:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0xFF,
+			   TCPC_REG_POWER_STATUS_SINKING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_SRC_CTRL_LOW:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0,
+			   TCPC_REG_POWER_STATUS_SOURCING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_SRC_CTRL_HIGH:
+		update_reg(ctx, TCPC_REG_POWER_STATUS, 0xFF,
+			   TCPC_REG_POWER_STATUS_SOURCING_VBUS);
+		break;
 	case TCPC_REG_COMMAND_I2CIDLE:
 		break;
 	default:

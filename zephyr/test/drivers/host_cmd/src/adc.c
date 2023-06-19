@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/fff.h>
-#include <zephyr/ztest.h>
-
 #include "adc.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
+#include <zephyr/drivers/emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
+
 FAKE_VALUE_FUNC(int, adc_read_channel, enum adc_channel);
 
-ZTEST(hc_adc, normal_path)
+ZTEST(hc_adc, test_normal_path)
 {
 	struct ec_params_adc_read params = {
 		.adc_channel = ADC_TEMP_SENSOR_CHARGER,
@@ -24,17 +24,14 @@ ZTEST(hc_adc, normal_path)
 
 	adc_read_channel_fake.return_val = 123;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_ADC_READ, UINT8_C(0), response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_adc_read(NULL, &params, &response);
 
 	zassert_ok(ret, "Host command returned %u", ret);
 	zassert_equal(1, adc_read_channel_fake.call_count);
 	zassert_equal(123, response.adc_value);
 }
 
-ZTEST(hc_adc, bad_ch_number)
+ZTEST(hc_adc, test_bad_ch_number)
 {
 	struct ec_params_adc_read params = {
 		.adc_channel = ADC_CH_COUNT + 1, /* Invalid */
@@ -42,10 +39,7 @@ ZTEST(hc_adc, bad_ch_number)
 	struct ec_response_adc_read response;
 	uint16_t ret;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_ADC_READ, UINT8_C(0), response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_adc_read(NULL, &params, &response);
 
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Host command returned %u",
 		      ret);

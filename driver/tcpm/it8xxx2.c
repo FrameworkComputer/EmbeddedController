@@ -9,17 +9,17 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "hooks.h"
 #include "it83xx_pd.h"
 #include "ite_pd_intc.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_common.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
-#include "hooks.h"
+#include "util.h"
 
 #ifdef CONFIG_USB_PD_TCPMV1
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
@@ -349,10 +349,21 @@ static void it8xxx2_enable_vconn(enum usbpd_port port, int enabled)
 
 static void it8xxx2_enable_cc(enum usbpd_port port, int enable)
 {
-	if (enable)
+	if (enable) {
+#ifdef IT8XXX2_USBPD_CCGCR_BIT7_RESERVED
+		IT83XX_USBPD_CCCSR(port) &= ~(USBPD_REG_MASK_CC1_DISCONNECT |
+					      USBPD_REG_MASK_CC2_DISCONNECT);
+#else
 		IT83XX_USBPD_CCGCR(port) &= ~USBPD_REG_MASK_DISABLE_CC;
-	else
+#endif
+	} else {
+#ifdef IT8XXX2_USBPD_CCGCR_BIT7_RESERVED
+		IT83XX_USBPD_CCCSR(port) |= (USBPD_REG_MASK_CC1_DISCONNECT |
+					     USBPD_REG_MASK_CC2_DISCONNECT);
+#else
 		IT83XX_USBPD_CCGCR(port) |= USBPD_REG_MASK_DISABLE_CC;
+#endif
+	}
 }
 
 static void it8xxx2_set_power_role(enum usbpd_port port, int power_role)

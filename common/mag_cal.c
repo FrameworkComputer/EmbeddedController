@@ -8,7 +8,6 @@
 #include "mag_cal.h"
 #include "mat33.h"
 #include "mat44.h"
-
 #include "math.h"
 #include "math_util.h"
 #include "util.h"

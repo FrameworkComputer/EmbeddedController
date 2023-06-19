@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "fakes.h"
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/bbram.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
-
-#include "fakes.h"
 
 DEFINE_FAKE_VALUE_FUNC(int, cros_system_native_posix_get_reset_cause,
 		       const struct device *);

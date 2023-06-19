@@ -1,0 +1,287 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../npcx_adc.dtsi"
+#include "../npcx_gpio.dtsi"
+#include "../npcx_host_interface.dtsi"
+#include "../npcx_i2c.dtsi"
+#include "../npcx_interrupts.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/battery.h>
+
+/ {
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* base_imu_int_l */
+			<&gpio5 6 0>,
+			/* ec_pen_chg_dis_odl */
+			<&gpioe 4 0>,
+			/* lid_accel_int_l */
+			<&gpiob 3 0>,
+			/* gpio_tablet_mode_l */
+			<&gpiob 2 0>,
+			/* LED3 */
+			<&gpioc 4 0>;
+	};
+
+	batteries {
+		default_battery: lgc_ap18c8k {
+			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+		cosmx_ap20cbl-2 {
+			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		};
+		lgc_ap19b8k {
+			compatible = "lgc,ap19b8k", "battery-smart";
+		};
+		panasonic_ap19b5k {
+			compatible = "panasonic,ap19b5k", "battery-smart";
+		};
+		smp_ap18c7k {
+			compatible = "smp,ap18c7k", "battery-smart";
+		};
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		debounce-down = <20000>;
+		debounce-up = <20000>;
+
+		actual-key-mask = <
+			0x1c	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xf5	/* C5 */
+			0xff	/* C6 */
+			0xa4	/* C7 */
+			0xff	/* C8 */
+			0xfe	/* C9 */
+			0x55	/* C10 */
+			0xfa	/* C11 */
+			0xca	/* C12 */
+		>;
+	};
+
+	led_colors: led-colors {
+		compatible = "cros-ec,led-policy";
+
+		/* Voltorb LED bat charge */
+		bat-power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= Empty, <= 99%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 99>;
+
+			color-0 {
+				led-color = <&color_amber>;
+			};
+		};
+
+		/* Voltorb LED bat charge near full */
+		bat-power-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			color-0 {
+				led-color = <&color_blue>;
+			};
+		};
+
+		/* Voltorb LED bat discharge */
+		bat-power-state-discharge-s0 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S0";
+
+			color-0 {
+				led-color = <&color_blue>;
+			};
+		};
+		bat-power-state-discharge-s3 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			color-0 {
+				led-color = <&color_amber>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <3000>;
+			};
+		};
+		bat-power-state-discharge-s5 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_off>;
+			};
+		};
+
+		/* Voltorb LED bat error */
+		bat-power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			color-0 {
+				led-color = <&color_amber>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		/* Voltorb LED power idle */
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			color-0 {
+				led-color = <&color_blue>;
+			};
+		};
+
+		/* Voltorb LED power forced idle */
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			color-0 {
+				led-color = <&color_amber>;
+				period-ms = <2000>;
+			};
+			color-1 {
+				led-color = <&color_blue>;
+				period-ms = <2000>;
+			};
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		led_amber: ec_led1_odl {
+			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+
+		led_blue: ec_led2_odl {
+			pwms = <&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_amber &led_blue>;
+
+			color_off: color-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color_amber: color-amber {
+				led-color = "LED_AMBER";
+				br-color = "EC_LED_COLOR_AMBER";
+				led-values = <100 0>;
+			};
+
+			color_blue: color_blue {
+				led-color = "LED_BLUE";
+				br-color = "EC_LED_COLOR_BLUE";
+				led-values = <0 100>;
+			};
+		};
+	};
+
+	/* temp sensors */
+	named-adc-channels {
+		adc_temp_charger: temp-charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 8>;
+		};
+	};
+
+	temp_charger_thermistor: charger-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_charger>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_sensor_charger: charger-thermistor {
+			temp_host_halt = <75>;
+			temp_host_release_halt = <65>;
+			sensor = <&temp_charger_thermistor>;
+		};
+	};
+};
+
+/* Amber LED */
+&pwm0_gpc3 {
+	drive-open-drain;
+};
+
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};
+
+/* Blue LED */
+&pwm1_gpc2 {
+	drive-open-drain;
+};
+
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
+};
+
+/* gpio overrides */
+/ {
+	named-gpios {
+		/delete-node/ base_imu_int_l;
+		/delete-node/ ec_pen_chg_dis_odl;
+		/delete-node/ lid_accel_int_l;
+		/delete-node/ gpio_tablet_mode_l;
+	};
+};
+
+/* interrupts overrides */
+/ {
+	gpio-interrupts {
+		/delete-node/ base_imu;
+		/delete-node/ tablet_mode;
+	};
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+/* adc0 overrides */
+&adc0 {
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42
+		     &adc0_chan8_gpf1>;
+};

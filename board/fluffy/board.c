@@ -11,12 +11,13 @@
 #include "ec_version.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "usb_descriptor.h"
 #include "registers.h"
 #include "timer.h"
+#include "usb_descriptor.h"
 #include "usb_pd.h"
 #include "util.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

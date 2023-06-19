@@ -5,6 +5,7 @@
 
 /* Richtek RT1739 USB-C Power Path Controller */
 #include "atomic.h"
+#include "battery.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"
@@ -89,19 +90,26 @@ static int rt1739_vbus_sink_enable(int port, int enable)
 #ifdef CONFIG_CMD_PPC_DUMP
 static int rt1739_dump(int port)
 {
+	ccprintf("    ");
+	for (int i = 0; i < 16; i++) {
+		ccprintf("%2X ", i);
+	}
+	ccprintf("\n");
+
 	for (int i = 0; i <= 0x61; i++) {
 		int val = 0;
 		int rt = read_reg(port, i, &val);
 
 		if (i % 16 == 0)
-			CPRINTF("%02X: ", i);
+			ccprintf("%02X: ", i);
 		if (rt)
-			CPRINTF("-- ");
+			ccprintf("-- ");
 		else
-			CPRINTF("%02X ", val);
+			ccprintf("%02X ", val);
 		if (i % 16 == 15)
-			CPRINTF("\n");
+			ccprintf("\n");
 	}
+	ccprintf("\n");
 
 	return EC_SUCCESS;
 }
@@ -156,7 +164,7 @@ static int rt1739_get_device_id(int port, int *device_id)
 
 static int rt1739_workaround(int port)
 {
-	int device_id;
+	int device_id, vconn_ctrl4;
 
 	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
 
@@ -171,6 +179,8 @@ static int rt1739_workaround(int port)
 					       RT1739_UVLO_DISVBUS_EN |
 					       RT1739_SCP_DISVBUS_EN |
 					       RT1739_OCPS_DISVBUS_EN));
+		RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
+					RT1739_VCONN_CLIMIT_EN, MASK_SET));
 		break;
 
 	case RT1739_DEVICE_ID_ES2:
@@ -202,6 +212,22 @@ static int rt1739_workaround(int port)
 		RETURN_ERROR(
 			write_reg(port, RT1739_REG_VBUS_CTRL1,
 				  RT1739_HVLV_SCP_EN | RT1739_HVLV_OCRC_EN));
+		RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
+					RT1739_VCONN_CLIMIT_EN, MASK_SET));
+		break;
+
+	case RT1739_DEVICE_ID_ES4:
+		CPRINTS("RT1739 ES4");
+		RETURN_ERROR(update_reg(port, RT1739_REG_LVHVSW_OV_CTRL,
+					RT1739_OT_SEL_LVL, MASK_CLR));
+		RETURN_ERROR(
+			read_reg(port, RT1739_REG_VCONN_CTRL4, &vconn_ctrl4));
+		vconn_ctrl4 &= ~RT1739_VCONN_OCP_SEL_MASK;
+		vconn_ctrl4 |= RT1739_VCONN_OCP_SEL_600MA;
+		RETURN_ERROR(
+			write_reg(port, RT1739_REG_VCONN_CTRL4, vconn_ctrl4));
+		RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
+					RT1739_VCONN_CLIMIT_EN, MASK_CLR));
 		break;
 
 	default:
@@ -238,27 +264,72 @@ static int rt1739_set_frs_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
-static int rt1739_init(int port)
+static int rt1739_src_oc(enum tcpc_rp_value rp)
 {
-	int device_id, oc_setting;
+	switch (rp) {
+	case TYPEC_RP_3A0:
+		return RT1739_LV_SRC_OCP_SEL_3_3A;
+	case TYPEC_RP_1A5:
+		return RT1739_LV_SRC_OCP_SEL_1_75A;
+	default:
+		return RT1739_LV_SRC_OCP_SEL_1_25A;
+	}
+}
+
+static int rt1739_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	int reg;
+
+	RETURN_ERROR(read_reg(port, RT1739_REG_VBUS_OC_SETTING, &reg));
+	reg = (reg & ~RT1739_LV_SRC_OCP_MASK) | rt1739_src_oc(rp);
+	return write_reg(port, RT1739_REG_VBUS_OC_SETTING, reg);
+}
+
+int rt1739_init(int port)
+{
+	int device_id, oc_setting, sys_ctrl, vbus_switch_ctrl;
+	bool batt_connected = false;
 
 	atomic_clear(&flags[port]);
 
-	RETURN_ERROR(write_reg(port, RT1739_REG_SW_RESET, RT1739_SW_RESET));
-	usleep(1 * MSEC);
+	RETURN_ERROR(read_reg(port, RT1739_REG_SYS_CTRL, &sys_ctrl));
+	RETURN_ERROR(
+		read_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, &vbus_switch_ctrl));
+
+	if (IS_ENABLED(CONFIG_BATTERY_FUEL_GAUGE)) {
+		batt_connected = (battery_get_disconnect_state() ==
+				  BATTERY_NOT_DISCONNECTED);
+	}
+
+	if (sys_ctrl & RT1739_DEAD_BATTERY) {
+		/*
+		 * Dead battery boot, see b/267412033#comment6 for the init
+		 * sequence.
+		 */
+		RETURN_ERROR(
+			write_reg(port, RT1739_REG_SYS_CTRL,
+				  RT1739_DEAD_BATTERY | RT1739_SHUTDOWN_OFF));
+		rt1739_vbus_sink_enable(port, true);
+		RETURN_ERROR(write_reg(port, RT1739_REG_SYS_CTRL,
+				       RT1739_OT_EN | RT1739_SHUTDOWN_OFF));
+	} else if (batt_connected || !(vbus_switch_ctrl & RT1739_HV_SNK_EN)) {
+		/* b/275294155: reset vbus switch only instead of doing a full
+		 * reset
+		 */
+		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, 0));
+	}
 	RETURN_ERROR(write_reg(port, RT1739_REG_SYS_CTRL,
 			       RT1739_OT_EN | RT1739_SHUTDOWN_OFF));
 
 	RETURN_ERROR(rt1739_workaround(port));
 	RETURN_ERROR(rt1739_set_frs_enable(port, false));
+	RETURN_ERROR(rt1739_set_vconn(port, false));
 	RETURN_ERROR(update_reg(port, RT1739_REG_VBUS_DET_EN,
 				RT1739_VBUS_PRESENT_EN, MASK_SET));
 	RETURN_ERROR(update_reg(port, RT1739_REG_SBU_CTRL_01,
 				RT1739_DM_SWEN | RT1739_DP_SWEN, MASK_SET));
 	RETURN_ERROR(update_reg(port, RT1739_REG_SBU_CTRL_01,
 				RT1739_SBUSW_MUX_SEL, MASK_CLR));
-	RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
-				RT1739_VCONN_CLIMIT_EN, MASK_SET));
 
 	/* VBUS OVP -> 23V */
 	RETURN_ERROR(write_reg(
@@ -267,17 +338,22 @@ static int rt1739_init(int port)
 			(RT1739_OVP_SEL_23_0V << RT1739_VIN_HV_OVP_SEL_SHIFT)));
 	/* VBUS OCP -> 3.3A (or 5.5A for ES2 HV Sink) */
 	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
+	oc_setting = RT1739_OCP_TIMEOUT_SEL_16MS;
 	if (device_id == RT1739_DEVICE_ID_ES2)
-		oc_setting = (RT1739_LV_SRC_OCP_SEL_3_3A |
-			      RT1739_HV_SINK_OCP_SEL_5_5A);
+		oc_setting |= RT1739_HV_SINK_OCP_SEL_5_5A;
 	else
-		oc_setting = (RT1739_LV_SRC_OCP_SEL_3_3A |
-			      RT1739_HV_SINK_OCP_SEL_3_3A);
+		oc_setting |= RT1739_HV_SINK_OCP_SEL_3_3A;
+#if defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
+	oc_setting |= rt1739_src_oc(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT);
+#else
+	oc_setting |= rt1739_src_oc(CONFIG_USB_PD_PULLUP);
+#endif
 	RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_OC_SETTING, oc_setting));
 
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_USB_CHARGER
 static int rt1739_get_bc12_ilim(int charge_supplier)
 {
 	switch (charge_supplier) {
@@ -375,6 +451,7 @@ static void rt1739_usb_charger_task_event(const int port, uint32_t evt)
 		rt1739_enable_bc12_detection(port, false);
 	}
 }
+#endif /* CONFIG_USB_CHARGER */
 
 static atomic_t pending_events;
 
@@ -396,8 +473,10 @@ void rt1739_deferred_interrupt(void)
 		if (read_reg(port, RT1739_REG_INT_EVENT5, &event5))
 			continue;
 
+#ifdef CONFIG_USB_CHARGER
 		if (event5 & RT1739_BC12_SNK_DONE_INT)
 			usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
+#endif /* CONFIG_USB_CHARGER */
 
 		/* write to clear EVENT4 since FRS interrupt has been handled */
 		write_reg(port, RT1739_REG_INT_EVENT4, event4);
@@ -415,6 +494,32 @@ void rt1739_interrupt(int port)
 	hook_call_deferred(&rt1739_deferred_interrupt_data, 0);
 }
 
+/* disconnect SBU, DP, DM when unused to save power */
+void rt1739_pd_connect(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+		if (ppc_chips[i].drv == &rt1739_ppc_drv && pd_is_connected(i))
+			update_reg(i, RT1739_REG_SBU_CTRL_01,
+				   RT1739_DM_SWEN | RT1739_DP_SWEN |
+					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
+				   MASK_SET);
+	}
+}
+DECLARE_HOOK(HOOK_USB_PD_CONNECT, rt1739_pd_connect, HOOK_PRIO_DEFAULT);
+
+void rt1739_pd_disconnect(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+		if (ppc_chips[i].drv == &rt1739_ppc_drv &&
+		    pd_is_disconnected(i))
+			update_reg(i, RT1739_REG_SBU_CTRL_01,
+				   RT1739_DM_SWEN | RT1739_DP_SWEN |
+					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
+				   MASK_CLR);
+	}
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, rt1739_pd_disconnect, HOOK_PRIO_DEFAULT);
+
 const struct ppc_drv rt1739_ppc_drv = {
 	.init = &rt1739_init,
 	.is_sourcing_vbus = &rt1739_is_sourcing_vbus,
@@ -426,6 +531,7 @@ const struct ppc_drv rt1739_ppc_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 	.is_vbus_present = &rt1739_is_vbus_present,
 #endif
+	.set_vbus_source_current_limit = &rt1739_set_vbus_source_current_limit,
 #ifdef CONFIG_USBC_PPC_POLARITY
 	.set_polarity = &rt1739_set_polarity,
 #endif
@@ -438,6 +544,7 @@ const struct ppc_drv rt1739_ppc_drv = {
 	.interrupt = &rt1739_interrupt,
 };
 
+#ifdef CONFIG_USB_CHARGER
 const struct bc12_drv rt1739_bc12_drv = {
 	.usb_charger_task_init = rt1739_usb_charger_task_init,
 	.usb_charger_task_event = rt1739_usb_charger_task_event,
@@ -451,3 +558,4 @@ struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
 	},
 };
 #endif /* CONFIG_BC12_SINGLE_DRIVER */
+#endif /* CONFIG_USB_CHARGER */

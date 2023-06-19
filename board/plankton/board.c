@@ -22,6 +22,7 @@
 void button_event(enum gpio_signal signal);
 void hpd_event(enum gpio_signal signal);
 void vbus_event(enum gpio_signal signal);
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 static volatile uint64_t hpd_prev_ts;

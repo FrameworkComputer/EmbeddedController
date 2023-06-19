@@ -5,7 +5,7 @@
 
 #include "battery_smart.h"
 #include "button.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "cros_board_info.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
@@ -29,8 +29,8 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "usb_charge.h"
-#include "usb_pd_tcpm.h"
 #include "usb_mux.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
@@ -44,6 +44,7 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 	gpio_set_level(GPIO_DP1_HPD, gpio_get_level(signal));
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Motion sensors */
@@ -504,16 +505,3 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	GPIO_EN_USB_A1_5V,
 };
-
-__override void board_set_charge_limit(int port, int supplier, int charge_ma,
-				       int max_ma, int charge_mv)
-{
-	/*
-	 * Limit the input current to 95% negotiated limit,
-	 * to account for the charger chip margin.
-	 */
-	charge_ma = charge_ma * 95 / 100;
-
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}

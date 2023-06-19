@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/fff.h>
-#include <zephyr/ztest.h>
-
 #include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "emul/emul_rt9490.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, board_get_version);
 

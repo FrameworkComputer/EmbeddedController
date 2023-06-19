@@ -17,9 +17,9 @@
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 #include "timer.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_config.h"
-#include "usb_mux.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 
@@ -286,8 +286,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
@@ -299,8 +299,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 		charge_ma = max_ma;
 	}
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 uint16_t tcpc_get_alert_status(void)

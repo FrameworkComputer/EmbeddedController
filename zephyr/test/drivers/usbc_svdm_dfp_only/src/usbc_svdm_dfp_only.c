@@ -9,15 +9,15 @@
  * The tests correspond to TEST.PD.PVDM.SRC.1 Discovery Process and Enter Mode
  * as defined by the USB Power Delivery Compliance Test Specification.
  */
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/ztest.h>
-
-#include "usb_pd.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "usb_pd.h"
+
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/ztest.h>
 
 struct usbc_svdm_dfp_only_fixture {
 	const struct emul *tcpci_emul;

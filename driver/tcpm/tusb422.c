@@ -6,10 +6,10 @@
 /* Type-C port manager for TI TUSB422 Port Controller */
 
 #include "common.h"
-#include "tusb422.h"
 #include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
+#include "tusb422.h"
 #include "usb_pd.h"
 
 #ifndef CONFIG_USB_PD_TCPM_TCPCI

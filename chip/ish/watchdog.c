@@ -23,9 +23,9 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "ish_persistent_data.h"
-#include "task.h"
 #include "registers.h"
 #include "system.h"
+#include "task.h"
 #include "watchdog.h"
 
 /* Units are hundreds of milliseconds */

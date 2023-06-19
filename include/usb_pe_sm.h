@@ -192,14 +192,6 @@ int pe_set_ado(int port, uint32_t data);
  */
 void pe_clear_ado(int port);
 
-/**
- * Gets port partner's RMDO from the PE state.
- *
- * @param port USB-C port number
- * @return port partner's Revision Message Data Object (RMDO).
- */
-struct rmdo pe_get_partner_rmdo(int port);
-
 #ifdef TEST_BUILD
 /**
  * Clears all internal port data, as we would on a detach event
@@ -208,5 +200,28 @@ struct rmdo pe_get_partner_rmdo(int port);
  */
 void pe_clear_port_data(int port);
 #endif /* TEST_BUILD */
+
+/**
+ * Check whether the port is in EPR mode or not.
+ *
+ * @param port USB-C port number
+ * @return true if the port is in EPR mode or false.
+ */
+bool pe_snk_in_epr_mode(int port);
+
+/**
+ * Make a sink exit EPR mode explicitly.
+ *
+ * @param port USB-C port number
+ */
+void pe_snk_epr_explicit_exit(int port);
+
+/**
+ * Checks whether the port is ready for EPR entry.
+ *
+ * @param port USB-C port number
+ * @return true if the port can enter EPR mode or false.
+ */
+bool pe_snk_can_enter_epr_mode(int port);
 
 #endif /* __CROS_EC_USB_PE_H */

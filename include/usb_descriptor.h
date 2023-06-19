@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_USB_DESCRIPTOR_H
 #define __CROS_EC_USB_DESCRIPTOR_H
 
-#include <stddef.h> /* for wchar_t */
+#include <stdint.h>
 
 #define USB_MAX_PACKET_SIZE 64
 
@@ -325,13 +325,13 @@ struct usb_ms_ext_compat_id_desc {
 /* Helpers for descriptors */
 
 #define WIDESTR(quote) WIDESTR2(quote)
-#define WIDESTR2(quote) L##quote
+#define WIDESTR2(quote) u##quote
 
 #define USB_STRING_DESC(str)                                              \
 	(const void *)&(const struct {                                    \
 		uint8_t _len;                                             \
 		uint8_t _type;                                            \
-		wchar_t _data[sizeof(str)];                               \
+		uint16_t _data[sizeof(str)];                              \
 	})                                                                \
 	{                                                                 \
 		/* Total size of the descriptor is :                      \
@@ -350,7 +350,7 @@ struct usb_ms_ext_compat_id_desc {
 	((const void *)&(const struct {                                        \
 		uint8_t _len;                                                  \
 		uint8_t _type;                                                 \
-		wchar_t _data[sizeof(str) - 1];                                \
+		uint16_t _data[sizeof(str) - 1];                               \
 		uint16_t _vendor;                                              \
 	}){                                                                    \
 		/* Total size of the descriptor is :                           \
@@ -368,7 +368,7 @@ struct usb_ms_ext_compat_id_desc {
 struct usb_string_desc {
 	uint8_t _len;
 	uint8_t _type;
-	wchar_t _data[CONFIG_SERIALNO_LEN];
+	uint16_t _data[CONFIG_SERIALNO_LEN];
 };
 #define USB_WR_STRING_DESC(str)                                         \
 	(&(struct usb_string_desc){                                     \

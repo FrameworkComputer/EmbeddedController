@@ -21,6 +21,16 @@
 #define JUMP_DATA_SIZE_V1 12 /* Size of version 1 jump data struct */
 #define JUMP_DATA_SIZE_V2 16 /* Size of version 2 jump data struct */
 
+#define JUMP_TAG_MAX_SIZE 255
+
+#if !defined(CONFIG_RAM_SIZE) || !(CONFIG_RAM_SIZE > 0)
+/* Disable check by setting jump data min address to zero */
+#define JUMP_DATA_MIN_ADDRESS 0
+#else
+#define JUMP_DATA_MIN_ADDRESS \
+	(CONFIG_RAM_BASE + CONFIG_RAM_SIZE - CONFIG_PRESERVED_END_OF_RAM_SIZE)
+#endif
+
 struct jump_data {
 	/*
 	 * Add new fields to the _start_ of the struct, since we copy it to the

@@ -24,15 +24,15 @@
  */
 
 #include "builtin/assert.h"
-#include "registers.h"
 #include "console.h"
-#include "task.h"
-#include "util.h"
+#include "hooks.h"
+#include "hwtimer.h"
 #include "ipc_heci.h"
 #include "ish_fwst.h"
 #include "queue.h"
-#include "hooks.h"
-#include "hwtimer.h"
+#include "registers.h"
+#include "task.h"
+#include "util.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)

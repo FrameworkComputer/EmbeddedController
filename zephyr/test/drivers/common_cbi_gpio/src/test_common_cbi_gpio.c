@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "cros_board_info.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, system_get_board_version);
 FAKE_VALUE_FUNC(int, cbi_set_board_info, enum cbi_data_tag, const uint8_t *,

@@ -7,16 +7,17 @@
  * @file fpsensor_crypto_mock.c
  * @brief Mock fpsensor_crypto library
  */
-#include "sha256.h"
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include "assert.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "fpsensor_private.h"
+#include "fpsensor_utils.h"
 #include "mock/fpsensor_crypto_mock.h"
+#include "sha256.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."

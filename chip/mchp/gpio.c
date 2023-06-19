@@ -8,13 +8,13 @@
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "lpc_chip.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "tfdp_chip.h"
 #include "timer.h"
 #include "util.h"
-#include "lpc_chip.h"
-#include "tfdp_chip.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)

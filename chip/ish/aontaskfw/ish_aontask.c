@@ -45,8 +45,8 @@
 
 #include "common.h"
 #include "ia_structs.h"
-#include "ish_aon_share.h"
 #include "ish_aon_defs.h"
+#include "ish_aon_share.h"
 #include "ish_dma.h"
 #include "power_mgt.h"
 

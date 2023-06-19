@@ -19,6 +19,9 @@ if PLATFORM_EC_LED_COMMON
 
 config PLATFORM_EC_LED_PWM
 	bool "PWM (Pulse Width Modulation) LEDs"
+	default y
+	depends on DT_HAS_CROS_EC_PWM_LEDS_ENABLED
+	select PWM
 	help
 	  Enable PWM (Pulse Width Modulation) controlled LEDs that conform to
 	  the Chromium OS LED behavior specification.
@@ -167,6 +170,8 @@ endif # PLATFORM_EC_LED_COMMON
 
 config PLATFORM_EC_MAX695X_SEVEN_SEGMENT_DISPLAY
 	bool "MAX695X Seven Segment Display"
+	default y
+	depends on DT_HAS_MAXIM_MAX695X_ENABLED
 	help
 	  Enable this to support MAX6958/MAX6959 7-Segment LED Display.
 	  The MAX6958/MAX6959 is a compact multiplexed common - cathode display

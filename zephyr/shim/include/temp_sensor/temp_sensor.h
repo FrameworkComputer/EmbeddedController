@@ -6,9 +6,10 @@
 #ifndef ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_
 #define ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_
 
-#include <zephyr/devicetree.h>
-#include "include/temp_sensor.h"
 #include "charger/chg_rt9490.h"
+#include "temp_sensor.h"
+
+#include <zephyr/devicetree.h>
 
 #ifdef CONFIG_PLATFORM_EC_TEMP_SENSOR
 
@@ -29,7 +30,7 @@
 	DT_FOREACH_STATUS_OKAY(PCT2075_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, fn)                           \
-	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                           \
+	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(THERMISTOR_COMPAT, fn)
@@ -121,10 +122,12 @@ enum temp_sensor_id {
 #define PCT2075_SENSOR_ID(node_id) DT_CAT(PCT2075_, node_id)
 #define PCT2075_SENSOR_ID_WITH_COMMA(node_id) PCT2075_SENSOR_ID(node_id),
 
+/* clang-format off */
 enum pct2075_sensor {
 	DT_FOREACH_STATUS_OKAY(PCT2075_COMPAT, PCT2075_SENSOR_ID_WITH_COMMA)
-		PCT2075_COUNT,
+	PCT2075_COUNT,
 };
+/* clang-format on */
 
 #undef PCT2075_SENSOR_ID_WITH_COMMA
 
@@ -137,29 +140,26 @@ enum pct2075_sensor {
 #define TMP112_SENSOR_ID(node_id) DT_CAT(TMP112_, node_id)
 #define TMP112_SENSOR_ID_WITH_COMMA(node_id) TMP112_SENSOR_ID(node_id),
 
+/* clang-format off */
 enum tmp112_sensor {
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, TMP112_SENSOR_ID_WITH_COMMA)
-		TMP112_COUNT,
+	TMP112_COUNT,
 };
+/* clang-format on */
 
 #undef TMP112_SENSOR_ID_WITH_COMMA
 
 /* F75303 access array */
 /*
- * Get the F75303 sensor ID from a hardware device node.
+ * Get the F75303 sensor ID.
+ *
+ * The F75303 driver only supports a single device instance on the board. Each
+ * device supports 3 temperature sensor types: local, remote1, and remote2.
+ * Use the temperature sensor type as the sensor ID.
  *
  * @param node_id: node id of a hardware F75303 sensor node
  */
-#define F75303_SENSOR_ID(node_id) DT_CAT(F75303_, node_id)
-#define F75303_SENSOR_ID_WITH_COMMA(node_id) F75303_SENSOR_ID(node_id),
-
-enum f75303_sensor {
-	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, F75303_SENSOR_ID_WITH_COMMA)
-		F75303_COUNT,
-};
-
-#undef F75303_SENSOR_ID_WITH_COMMA
-
+#define F75303_SENSOR_ID(node_id) DT_STRING_TOKEN(node_id, temperature_type)
 
 /* AMDR23M access array */
 /*

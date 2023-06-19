@@ -300,14 +300,19 @@ int board_set_active_charge_port(int charge_port);
 /**
  * Set the charge current limit.
  *
+ * The default implementation of this function derates charge_ma by
+ * CONFIG_CHARGER_INPUT_CURRENT_PCT (if configured), and clamps charge_ma to
+ * a lower bound of CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT (if configured).
+ *
  * @param port PD port.
  * @param supplier Identified CHARGE_SUPPLIER_*.
  * @param charge_ma Desired charge current limit, <= max_ma.
  * @param max_ma Maximum charge current limit, >= charge_ma.
  * @param charge_mv Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv);
+__override_proto void board_set_charge_limit(int port, int supplier,
+					     int charge_ma, int max_ma,
+					     int charge_mv);
 
 /**
  * Get whether the port is sourcing power on VBUS.

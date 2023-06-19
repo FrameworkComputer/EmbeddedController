@@ -3,20 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/sn5s330_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sn5s330.h"
-#include "usbc_ppc.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+#include "usbc_ppc.h"
+
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /** This must match the index of the sn5s330 in ppc_chips[] */
 #define SN5S330_PORT 0

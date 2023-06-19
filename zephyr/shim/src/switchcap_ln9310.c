@@ -3,27 +3,23 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
+#define DT_DRV_COMPAT lion_ln9310
+
 #include "common.h"
 #include "ln9310.h"
 
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+
 /* TODO(b/218600962): Consolidate switchcap code. */
 
-#if DT_NODE_EXISTS(DT_PATH(switchcap))
+#define SC_PIN_ENABLE_GPIO DT_INST_PROP(0, enable_pin)
+#define SC_PIN_ENABLE GPIO_DT_FROM_NODE(SC_PIN_ENABLE_GPIO)
 
-#if !DT_NODE_HAS_COMPAT(DT_PATH(switchcap), switchcap_ln9310)
-#error "Invalid /switchcap node in device tree"
-#endif
+#define SC_PORT_NODE DT_INST_PHANDLE(0, port)
+#define SC_PORT DT_STRING_UPPER_TOKEN_BY_IDX(SC_PORT_NODE, enum_names, 0)
 
-#define SC_PIN_ENABLE_PHANDLE \
-	DT_PHANDLE_BY_IDX(DT_PATH(switchcap), enable_pin, 0)
-#define SC_PIN_ENABLE GPIO_DT_FROM_NODE(SC_PIN_ENABLE_PHANDLE)
-
-#define SC_PORT_PHANDLE DT_PHANDLE(DT_PATH(switchcap), port)
-#define SC_PORT DT_STRING_UPPER_TOKEN_BY_IDX(SC_PORT_PHANDLE, enum_names, 0)
-
-#define SC_ADDR_FLAGS DT_STRING_UPPER_TOKEN(DT_PATH(switchcap), addr_flags)
+#define SC_ADDR_FLAGS DT_INST_STRING_UPPER_TOKEN(0, addr_flags)
 
 void board_set_switchcap_power(int enable)
 {
@@ -45,5 +41,3 @@ const struct ln9310_config_t ln9310_config = {
 	.i2c_port = SC_PORT,
 	.i2c_addr_flags = SC_ADDR_FLAGS,
 };
-
-#endif

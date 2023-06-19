@@ -221,7 +221,7 @@ void chipset_ap_rst_interrupt(enum gpio_signal signal);
 /**
  * GPIO interrupt handler of warm reset signal from servo or H1.
  *
- * It is used in Qualcomm chipset power sequence.
+ * It is used in Qualcomm/MediaTek chipset power sequence.
  */
 void chipset_warm_reset_interrupt(enum gpio_signal signal);
 
@@ -298,5 +298,21 @@ static inline enum chipset_shutdown_reason chipset_get_shutdown_reason(void)
 }
 
 #endif /* !CONFIG_CMD_AP_RESET_LOG */
+
+#ifdef TEST_BUILD
+/**
+ * @brief Gets the number of AP resets since the EC booted. Takes the reset log
+ *        mutex for thread safety.
+ *
+ * @return uint32_t AP reset count
+ */
+uint32_t test_chipset_get_ap_resets_since_ec_boot(void);
+
+/**
+ * @brief Corrupts the stored reset log checksum, which forces init_reset_log()
+ *        to wipe the log and fully reset.
+ */
+void test_chipset_corrupt_reset_log_checksum(void);
+#endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_CHIPSET_H */

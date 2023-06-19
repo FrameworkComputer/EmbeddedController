@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import argparse
 import array
+from distutils import sysconfig
 import json
 import logging
 import os
@@ -21,10 +22,10 @@ import struct
 import sys
 import time
 import traceback
-from distutils import sysconfig
 
-import usb  # pylint:disable=import-error
 from stats_manager import StatsManager  # pylint:disable=import-error
+import usb  # pylint:disable=import-error
+
 
 # Directory where hdctools installs configuration files into.
 LIB_DIR = os.path.join(

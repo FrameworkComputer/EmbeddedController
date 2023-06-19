@@ -283,7 +283,7 @@ The [chargestate] command may also be invoked.
 [Kconfig.tasks]: https://crsrc.org/o/src/platform/ec/zephyr/Kconfig.tasks?q=%22config%20HAS_TASK_CHARGER%22&ss=chromiumos
 [Kconfig.usb_charger]: https://crsrc.org/o/src/platform/ec/zephyr/Kconfig.usb_charger?q=%22config%20PLATFORM_EC_USB_CHARGER%22&ss=chromiumos
 [charger bindings directory]: https://crsrc.org/o/src/platform/ec/zephyr/dts/bindings/charger/
-[charger thread]: https://crsrc.org/o/src/platform/ec/common/charge_state_v2.c?q=%22void%20charger_task%22&ss=chromiumos
+[charger thread]: https://crsrc.org/o/src/platform/ec/common/charge_state.c?q=%22void%20charger_task%22&ss=chromiumos
 [chargestate]: ./zephyr_battery.md#chargestate
 [chgstate]: ./zephyr_battery.md#chgstate
 [chgsup]: #chgsup

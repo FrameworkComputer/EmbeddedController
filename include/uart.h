@@ -8,9 +8,10 @@
 #ifndef __CROS_EC_UART_H
 #define __CROS_EC_UART_H
 
-#include <stdarg.h> /* For va_list */
 #include "common.h"
 #include "gpio_signal.h"
+
+#include <stdarg.h> /* For va_list */
 
 /**
  * Initialize the UART module.

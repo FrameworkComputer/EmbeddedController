@@ -18,6 +18,7 @@
 #define __CROS_EC_SHARED_MEM_H
 
 #include "common.h"
+
 #include <stddef.h>
 
 /**
@@ -29,7 +30,7 @@ int shared_mem_size(void);
 #define SHARED_MEM_CHECK_SIZE(size) \
 	BUILD_ASSERT((size) <= CONFIG_SHAREDMEM_MINIMUM_SIZE)
 
-/*
+/**
  * Acquires a shared memory area of the requested size in bytes.
  *
  * Doing a sysjump between images will corrupt and/or erase shared memory as
@@ -54,6 +55,10 @@ int shared_mem_acquire(int size, char **dest_ptr);
 
 /**
  * Releases a shared memory area previously allocated via shared_mem_acquire().
+ *
+ * @param ptr pointer to previously acquired memory
+ *
+ * @note If ptr is NULL, this is a no-op.
  */
 void shared_mem_release(void *ptr);
 

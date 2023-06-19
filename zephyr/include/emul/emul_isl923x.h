@@ -7,8 +7,8 @@
 #define ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_
 
 #include <zephyr/device.h>
-#include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 /**
  * @brief Get the emulator's parent bus device
@@ -84,6 +84,14 @@ void isl923x_emul_set_adc_vbus(const struct emul *emulator, uint16_t vbus_mv);
  * @param value If 1, AC adapter is present. If 0, no adapter is present
  */
 void raa489000_emul_set_acok_pin(const struct emul *emulator, uint16_t value);
+
+/**
+ * @brief Set the value of the state machine status bits in the INFO2 register.
+ *
+ * @param value State machine state, such as RAA489000_INFO2_STATE_OTG
+ */
+void raa489000_emul_set_state_machine_state(const struct emul *emulator,
+					    uint16_t value);
 
 /**
  * @brief Peek at a register value. This function will assert if the requested

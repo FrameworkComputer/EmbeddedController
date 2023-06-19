@@ -7,11 +7,11 @@
 #define __CROS_EC_INCLUDE_VBOOT_H
 
 #include "common.h"
-#include "vb21_struct.h"
 #include "rsa.h"
 #include "sha256.h"
 #include "stdbool.h"
 #include "timer.h"
+#include "vb21_struct.h"
 
 /**
  * Validate key contents.

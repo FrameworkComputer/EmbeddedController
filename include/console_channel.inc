@@ -27,13 +27,14 @@ CONSOLE_CHANNEL(CC_CHARGER,      "charger")
 CONSOLE_CHANNEL(CC_CHIPSET,      "chipset")
 #endif
 CONSOLE_CHANNEL(CC_CLOCK,        "clock")
-#ifdef CONFIG_DMA
+#ifdef CONFIG_DMA_CROS
 CONSOLE_CHANNEL(CC_DMA,          "dma")
 #endif
 #if defined(CONFIG_DEVICE_EVENT) || defined(CONFIG_HOSTCMD_EVENTS)
 CONSOLE_CHANNEL(CC_EVENTS,       "events")
 #endif
-#if defined(HAS_TASK_FPSENSOR) || defined(CONFIG_FINGERPRINT_MCU)
+#if defined(HAS_TASK_FPSENSOR) || defined(CONFIG_FINGERPRINT_MCU) || \
+	defined(TEST_BUILD)
 CONSOLE_CHANNEL(CC_FP,           "fingerprint")
 #endif
 #ifdef CONFIG_GESTURE_SW_DETECTION

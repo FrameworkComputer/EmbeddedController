@@ -1,0 +1,306 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		ioex_kbd_intr_n: ioex-kbd-intr-n {
+			gpios = <&gpio_140_176 29 GPIO_INPUT>;
+			enum-name = "GPIO_KB_DISCRETE_INT";
+		}; /* GPIO175 */
+		all_sys_pwrgd: all-sys-pwrgd {
+			gpios = <&gpio_040_076 15 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
+		}; /* GPIO057 */
+		rsmrst_pwrgd: rsmrst-pwrgd {
+			gpios = <&gpio_000_036 9 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
+		}; /* GPIO011 */
+		pch_slp_s0_n: pch-slp-s0-n-ec {
+			gpios = <&gpio_000_036 2 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L"; /* 1.8V */
+		}; /* GPIO002 */
+		pm-slp-s3-n-ec {
+			gpios = <&gpio_000_036 12 GPIO_INPUT>; /* 1.8V */
+			enum-name = "GPIO_PCH_SLP_S3_L";
+		}; /* GPIO014 */
+		pm-slp-s4-n-ec {
+			gpios = <&gpio_000_036 13 GPIO_INPUT>; /* 1.8V */
+		}; /* GPIO015 */
+		volume-up {
+			gpios = <&gpio_000_036 30 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		}; /* GPIO036 */
+		vol-dn-ec-r {
+			gpios = <&gpio_240_276 12 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		}; /* GPIO254 */
+		smc_lid: smc-lid {
+			gpios = <&gpio_200_236 22 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_LID_OPEN";
+		}; /* GPIO226 */
+		smc_onoff_n: smc-onoff-n {
+			gpios = <&gpio_240_276 6 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		}; /* GPIO246 */
+		/* NOTE: Netname is SUSWARN */
+		gpio_wp: wp-l {
+			gpios = <&gpio_000_036 20 GPIO_INPUT>;
+		}; /* GPIO024 */
+		std_adp_prsnt: std-adp-prsnt {
+			gpios = <&gpio_040_076 3 GPIO_INPUT>;
+			enum-name = "GPIO_DC_JACK_PRESENT";
+		}; /* GPIO043 */
+		bc_acok: bc-acok-ec {
+			gpios = <&gpio_140_176 14 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		}; /* GPIO156 */
+
+		/*
+		 * Note - the Intel boards implement their own handlers
+		 * for tcpc_get_alert_status().  These handlers use
+		 * gpio_get_level(), which returns the raw state of the pin,
+		 * ignoring the GPIO_ACTIVE_LOW flag.
+		 *
+		 * However, the interrupt pin is shared with the upstream
+		 * driver gpio_nct38xx_alert.c, which does use the logical
+		 * level of the pin and requires that the signal is active low.
+		 *
+		 * Mark the signal active low here as well which ensures there
+		 * is no conflict between the gpio_pin_configure_dt() run by
+		 * the named-gpios driver and the gpio_nct38xx_alert.c driver.
+		 */
+		usbc_tcpc_alrt_p0: usbc-tcpc-alrt-p0 {
+			gpios = <&gpio_140_176 3 (GPIO_INPUT | \
+				GPIO_ACTIVE_LOW)>;
+		}; /* GPIO143 */
+		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P0 */
+		usb_c0_c1_tcpc_rst_odl: usb-c0-c1-tcpc-rst-odl {
+			gpios = <&gpio_240_276 0 GPIO_ODR_HIGH>;
+		}; /* GPIO240 */
+		/* NOTE: Netname is USBC_TCPC_ALRT_P1 */
+		usbc_tcpc_ppc_alrt_p0: usbc-tcpc-ppc-alrt-p0 {
+			gpios = <&gpio_240_276 1 GPIO_INPUT>;
+		}; /* GPIO241 */
+		usbc_tcpc_ppc_alrt_p1: usbc-tcpc-ppc-alrt-p1 {
+			gpios = <&gpio_140_176 13 GPIO_INPUT>;
+		}; /* GPIO155 */
+		usbc_tcpc_alrt_p2: usbc-tcpc-alrt-p2 {
+			gpios = <&gpio_200_236 17 GPIO_INPUT>;
+		}; /* GPIO221 */
+		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P3 */
+		usbc_tcpc_alrt_p3: usbc-tcpc-alrt-p3 {
+			gpios = <&gpio_000_036 28 GPIO_INPUT>;
+		}; /* GPIO034 */
+		gpio_ec_pch_wake_odl: pch-wake-n {
+			gpios = <&gpio_040_076 9 GPIO_ODR_HIGH>;
+		}; /* GPIO051 */
+		plt-rst-l {
+			gpios = <&gpio_040_076 10 GPIO_INPUT>; /* 1.8V */
+		}; /* GPIO052 */
+		slate-mode-indication {
+			gpios = <&gpio_200_236 18 GPIO_INPUT>; /* 1.8V */
+		}; /* GPIO222 */
+		prochot-ec {
+			gpios = <&gpio_240_276 3 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_PROCHOT";
+		}; /* GPIO243 */
+		sys_rst_odl: sys-rst-odl-ec {
+			gpios = <&gpio_140_176 21 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_SYS_RESET_L";
+		}; /* GPIO165 */
+		ec_pch_rsmrst_l: pm-rsmrst-r-n {
+			gpios = <&gpio_040_076 12 GPIO_OUTPUT_LOW>; /* 1.8V */
+			enum-name = "GPIO_PCH_RSMRST_L";
+		}; /* GPIO054 */
+		pm-pwrbtn-n-ec {
+			gpios = <&gpio_240_276 5 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		}; /* GPIO245 */
+		ec_spi_oe_mecc: ec-spi-oe-mecc-r {
+			gpios = <&gpio_040_076 11 GPIO_OUTPUT_LOW>; /* 1.8V */
+		}; /* GPIO053 */
+		en_pp3300_a: ec-ds3-r {
+			gpios = <&gpio_000_036 21 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_PP3300_A";
+			alias = "GPIO_TEMP_SENSOR_POWER";
+		}; /* GPIO025 */
+		ec_pch_pwrok_od: pch-pwrok-ec-r {
+			gpios = <&gpio_100_136 6 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWROK";
+		}; /* GPIO106 */
+		sys_pwrok_ec: sys-pwrok-ec {
+			gpios = <&gpio_200_236 2 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_SYS_PWROK";
+		}; /* GPIO202 */
+		bat-det-ec {
+			gpios = <&gpio_200_236 6 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		}; /* GPIO206 */
+		edp-bklt-en {
+			gpios = <&gpio_000_036 18 GPIO_OUTPUT_HIGH>;
+		}; /* GPIO022 */
+		/* TODO: move both LEDs to PWM */
+		led-1-l-ec {
+			gpios = <&gpio_140_176 15 GPIO_OUTPUT_HIGH>;
+		}; /* GPIO157 */
+		led-2-l-ec {
+			gpios = <&gpio_140_176 11 GPIO_OUTPUT_HIGH>;
+		}; /* GPIO153 */
+		gpio_fan_control: therm-sen-mecc-r {
+			gpios = <&gpio_200_236 1 GPIO_OUTPUT_LOW>;
+		}; /* GPIO201 */
+		/* NOTE: Netname is USBC_TCPC_ALRT_P3 */
+		ccd_mode_odl: ccd-mode-odl {
+			gpios = <&gpio_240_276 2 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		}; /* GPIO242 */
+		smb-bs-clk {
+			gpios = <&gpio_000_036 4 GPIO_INPUT>;
+		}; /* GPIO004 */
+		smb-bs-data {
+			gpios = <&gpio_000_036 3 GPIO_INPUT>;
+		}; /* GPIO003 */
+		usbc-tcpc-i2c-clk-aic1 {
+			gpios = <&gpio_140_176 0 GPIO_INPUT>;
+		}; /* GPIO140 */
+		usbc-tcpc-i2c-data-aic1 {
+			gpios = <&gpio_100_136 26 GPIO_INPUT>;
+		}; /* GPIO132 */
+		usbc-tcpc-i2c-clk-aic2 {
+			gpios = <&gpio_000_036 11 GPIO_INPUT>;
+		}; /* GPIO013 */
+		usbc-tcpc-i2c-data-aic2 {
+			gpios = <&gpio_000_036 10 GPIO_INPUT>;
+		}; /* GPIO012 */
+		espi-alert0-n-r {
+			gpios = <&gpio_040_076 19 GPIO_INPUT>;
+		}; /* GPIO063 */
+		slp-s0-cs-n-ec {
+			gpios = <&gpio_140_176 12 GPIO_INPUT>;
+		}; /* GPIO154 */
+		rtc-rst-n-r {
+			gpios = <&gpio_240_276 13 GPIO_INPUT>;
+		}; /* GPIO255 */
+		cpu-cat-err-mecc {
+			gpios = <&gpio_000_036 0 GPIO_INPUT>;
+		}; /* GPIO000 */
+		ec-peci-ec {
+			gpios = <&gpio_040_076 2 GPIO_INPUT>;
+		}; /* GPIO042 */
+		std-adpt-cntrl-GPIO_r {
+			gpios = <&gpio_240_276 4 GPIO_INPUT>;
+		}; /* GPIO244 */
+		boot-stall-r {
+			gpios = <&gpio_040_076 18 GPIO_INPUT>;
+		}; /* GPIO062 */
+		usbc_tcpc_ppc_alrt_p2: usbc-tcpc-ppc-alrt-p2 {
+			gpios = <&gpio_140_176 4 GPIO_INPUT>;
+		}; /* GPIO144 */
+
+		/* KBD IOEX configuration */
+		srtc-rst {
+			gpios = <&ioex_it8801_port0 3 GPIO_OUTPUT_LOW>;
+		};
+		ec-h1-packet-mode {
+			gpios = <&ioex_it8801_port0 4 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		rtc-rst {
+			gpios = <&ioex_it8801_port0 6 GPIO_OUTPUT_LOW>;
+		};
+		ec-entering-rw {
+			gpios = <&ioex_it8801_port0 7 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		ioex-sys-rst-odl-ec {
+			gpios = <&ioex_it8801_port1 0 GPIO_INPUT>;
+		};
+		ioex-slate-mode-indication {
+			gpios = <&ioex_it8801_port1 2 GPIO_INPUT>;
+		};
+
+		/* USB C IOEX configuration */
+		usb_c0_hb_retimer_ls_en: usb-c0-hbr-ls-en {
+			gpios = <&ioex_c0 2 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_HBR_LS_EN";
+			no-auto-init;
+		};
+		usb_c0_hb_retimer_rst: usb-c0-hbr-rst {
+			gpios = <&ioex_c0 3 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_HBR_RST";
+			no-auto-init;
+		};
+		usb_c1_hb_retimer_ls_en: usb-c1-hbr-ls-en {
+			gpios = <&ioex_c1 2 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_HBR_LS_EN";
+			no-auto-init;
+		};
+		usb_c1_hb_retimer_rst: usb-c1-hbr-rst {
+			gpios = <&ioex_c1 3 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_HBR_RST";
+			no-auto-init;
+		};
+		usb-c0-mux-oe-n {
+			gpios = <&ioex_c0 4 GPIO_OUTPUT_LOW>;
+			no-auto-init;
+		};
+		usb-c0-mux-sbu-sel-0 {
+			gpios = <&ioex_c0 6 GPIO_OUTPUT_HIGH>;
+			enum-name = "IOEX_USB_C0_MUX_SBU_SEL_0";
+			no-auto-init;
+		};
+		usb-c0-mux-sbu-sel-1 {
+			gpios = <&ioex_c1 4 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_MUX_SBU_SEL_1";
+			no-auto-init;
+		};
+		usb-c0-c1-prochot-n {
+			gpios = <&ioex_c1 6 GPIO_INPUT>;
+			no-auto-init;
+		};
+		dg-bssb-sbu-sel {
+			gpios = <&ioex_c2_port1 4 GPIO_INPUT>;
+			no-auto-init;
+		};
+		usb_c2_hb_retimer_rst: usb-c2-hbr-rst {
+			gpios = <&ioex_c2_port1 1 (GPIO_ODR_LOW | \
+				GPIO_VOLTAGE_1P8)>;
+			enum-name = "IOEX_USB_C2_HBR_RST";
+			no-auto-init;
+		};
+		usb_c2_hb_retimer_ls_en: usb-c2-hbr-ls-en {
+			gpios = <&ioex_c2_port2 0 (GPIO_ODR_LOW | \
+				GPIO_VOLTAGE_1P8)>;
+			enum-name = "IOEX_USB_C2_HBR_LS_EN";
+			no-auto-init;
+		};
+		usb_c3_hb_retimer_rst: usb-c3-hbr-rst {
+			gpios = <&ioex_c2_port1 3 (GPIO_ODR_LOW | \
+				GPIO_VOLTAGE_1P8)>;
+			enum-name = "IOEX_USB_C3_HBR_RST";
+			no-auto-init;
+		};
+		usb_c3_hb_retimer_ls_en: usb-c3-hbr-ls-en {
+			gpios = <&ioex_c2_port3 3 (GPIO_ODR_LOW | \
+				GPIO_VOLTAGE_1P8)>;
+			enum-name = "IOEX_USB_C3_HBR_LS_EN";
+			no-auto-init;
+		};
+		usb-c2-c3-prochot-n {
+			gpios = <&ioex_c2_port0 0 GPIO_INPUT>;
+			no-auto-init;
+		};
+		/* unimplemented GPIOs */
+		en-pp5000 {
+			enum-name = "GPIO_EN_PP5000";
+		};
+	};
+};

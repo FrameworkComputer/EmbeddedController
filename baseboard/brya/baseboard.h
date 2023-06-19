@@ -68,7 +68,8 @@
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 512
+#define CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT 512
 
 #define CONFIG_CMD_CHARGER_DUMP
 
@@ -240,13 +241,13 @@
 
 #ifndef __ASSEMBLER__
 
-#include <stdbool.h>
-#include <stdint.h>
-
+#include "baseboard_usbc_config.h"
 #include "cbi.h"
 #include "common.h"
-#include "baseboard_usbc_config.h"
 #include "extpower.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 /*
  * Check battery disconnect state.

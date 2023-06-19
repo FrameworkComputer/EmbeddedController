@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
@@ -18,11 +12,18 @@
 #include "emul/tcpc/emul_tcpci_partner_drp.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "host_command.h"
-#include "test/drivers/stubs.h"
 #include "tcpm/tcpci.h"
-#include "test/drivers/utils.h"
+#include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "usb_pd.h"
+
+#include <stdint.h>
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 #define TEST_PORT 0
 
@@ -123,7 +124,7 @@ static void usbc_console_pd_after(void *data)
 	common_after(&outer->common);
 }
 
-ZTEST_USER_F(usbc_console_pd, pd_command)
+ZTEST_USER_F(usbc_console_pd, test_pd_command)
 {
 	struct common_fixture *common = &fixture->common;
 	struct tcpci_src_emul_data *src_ext = &common->src_ext;

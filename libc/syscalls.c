@@ -11,10 +11,18 @@
  * https://sourceware.org/git/?p=newlib-cygwin.git;a=tree;f=libgloss/libnosys.
  */
 
+#include "gettimeofday.h"
+#include "link_defs.h"
 #include "panic.h"
+#include "shared_mem.h"
 #include "software_panic.h"
+#include "system.h"
 #include "task.h"
 #include "uart.h"
+
+#include <errno.h>
+
+#include <sys/stat.h>
 
 /**
  * Reboot the system.
@@ -42,4 +50,76 @@ void _exit(int rc)
 int _write(int fd, char *buf, int len)
 {
 	return uart_put(buf, len);
+}
+
+/**
+ * Create a directory.
+ *
+ * @warning Not implemented.
+ *
+ * @note Unlike the other functions in this file, this is not overriding a
+ * stub version in libnosys. There's no "_mkdir" stub in libnosys, so this
+ * provides the actual "mkdir" function.
+ *
+ * @param pathname directory to create
+ * @param mode mode for the new directory
+ * @return -1 (error) always
+ */
+int mkdir(const char *pathname, mode_t mode)
+{
+	errno = ENOSYS;
+	return -1;
+}
+
+/**
+ * Get the time.
+ *
+ * This function is called from the libc gettimeofday() function.
+ *
+ * @warning This does not match gettimeofday() exactly; it does not return the
+ * time since the Unix Epoch.
+ *
+ * @param[out] tv time
+ * @param[in] tz ignored
+ * @return 0 on success
+ * @return -1 on error (errno is set to indicate error)
+ */
+int _gettimeofday(struct timeval *restrict tv, void *restrict tz)
+{
+	enum ec_error_list ret = ec_gettimeofday(tv, tz);
+
+	if (ret == EC_ERROR_INVAL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Change program's data space by increment bytes.
+ *
+ * This function is called from the libc sbrk() function (which is in turn
+ * called from malloc() when memory needs to be allocated or released).
+ *
+ * @param incr[in] amount to increment or decrement. 0 means return current
+ * program break.
+ * @return the previous program break (address) on success
+ * @return (void*)-1 on error and errno is set to ENOMEM.
+ */
+void *_sbrk(intptr_t incr)
+{
+	static char *heap_end = __shared_mem_buf;
+	char *prev_heap_end;
+
+	if ((heap_end + incr < __shared_mem_buf) ||
+	    (heap_end + incr > (__shared_mem_buf + shared_mem_size()))) {
+		errno = ENOMEM;
+		return (void *)-1;
+	}
+
+	prev_heap_end = heap_end;
+	heap_end += incr;
+
+	return (void *)prev_heap_end;
 }

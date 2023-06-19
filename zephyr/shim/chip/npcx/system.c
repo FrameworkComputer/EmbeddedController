@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/bbram.h>
-#include <zephyr/logging/log.h>
-
 #include "system.h"
 #include "system_chip.h"
+
+#include <zephyr/drivers/bbram.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(shim_npcx_system, LOG_LEVEL_ERR);
 
@@ -73,10 +73,8 @@ void system_mpu_config(void)
 	CPU_MPU_RASR = 0x03080013;
 }
 
-static int chip_system_init(const struct device *unused)
+static int chip_system_init(void)
 {
-	ARG_UNUSED(unused);
-
 	/*
 	 * Check BBRAM power status.
 	 */

@@ -9,19 +9,17 @@
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "cbi_ssfc.h"
-#include "cbi_fw_config.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
-#include "driver/temp_sensor/thermistor.h"
-#include "temp_sensor.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/pi3usb3x532.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -36,6 +34,7 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -122,6 +121,7 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -309,19 +309,6 @@ int board_set_active_charge_port(int port)
 	charger_discharge_on_ac(0);
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * b/147463641: The charger IC seems to overdraw ~4%, therefore we
-	 * reduce our target accordingly.
-	 */
-	icl = icl * 96 / 100;
-	charge_set_input_current_limit(icl, charge_mv);
 }
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)

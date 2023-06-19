@@ -73,6 +73,7 @@ const struct vcmp_t vcmp_list[] = {
 BUILD_ASSERT(ARRAY_SIZE(vcmp_list) <= CHIP_VCMP_COUNT);
 BUILD_ASSERT(ARRAY_SIZE(vcmp_list) == VCMP_COUNT);
 
+#if !defined(BOARD_DIBBI) && !defined(BOARD_TARANZA) && !defined(BOARD_BOXY)
 /* I2C Ports */
 const struct i2c_port_t i2c_ports[] = {
 	{ .name = "eeprom",
@@ -86,6 +87,7 @@ const struct i2c_port_t i2c_ports[] = {
 	  .kbps = 100,
 	  .scl = GPIO_EC_I2C_BATTERY_SCL,
 	  .sda = GPIO_EC_I2C_BATTERY_SDA },
+
 #if defined(HAS_TASK_MOTIONSENSE) || defined(BOARD_SHOTZO)
 	{ .name = "sensor",
 	  .port = I2C_PORT_SENSOR,
@@ -109,3 +111,4 @@ const struct i2c_port_t i2c_ports[] = {
 	  .sda = GPIO_EC_I2C_USB_C0_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+#endif

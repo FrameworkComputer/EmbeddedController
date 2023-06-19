@@ -4,8 +4,8 @@
  */
 /* STM32F072-discovery board based USB PD evaluation configuration */
 
-#include "common.h"
 #include "anx7447.h"
+#include "common.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -27,6 +27,7 @@ void alert_event(enum gpio_signal signal)
 	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 const void *const usb_strings[] = {

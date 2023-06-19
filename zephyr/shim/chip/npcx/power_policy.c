@@ -3,14 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/pm/pm.h>
-#include <zephyr/pm/policy.h>
-#include <soc.h>
-
 #include "console.h"
 #include "cros_version.h"
 #include "system.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/pm/pm.h>
+#include <zephyr/pm/policy.h>
+
+#include <soc.h>
 
 static const struct pm_state_info residency_info[] =
 	PM_STATE_INFO_LIST_FROM_DT_CPU(DT_NODELABEL(cpu0));

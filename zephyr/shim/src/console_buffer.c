@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
+
+#include <zephyr/kernel.h>
 
 static char console_buf[CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE];
 static uint32_t previous_snapshot_idx;

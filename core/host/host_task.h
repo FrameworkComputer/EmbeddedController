@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_HOST_TASK_H
 #define __CROS_EC_HOST_TASK_H
 
-#include <pthread.h>
-
 #include "task.h"
+
+#include <pthread.h>
 
 /**
  * Returns the thread corresponding to the task.

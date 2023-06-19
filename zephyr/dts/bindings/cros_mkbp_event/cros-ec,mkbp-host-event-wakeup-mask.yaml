@@ -1,0 +1,9 @@
+# Copyright 2022 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: EC MKBP host event wakeup node
+
+compatible: "cros-ec,mkbp-host-event-wakeup-mask"
+
+include: ["ec-event-wakeup-mask-base.yaml"]

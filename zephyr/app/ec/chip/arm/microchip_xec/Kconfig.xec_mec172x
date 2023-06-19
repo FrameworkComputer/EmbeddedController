@@ -33,13 +33,11 @@ config CROS_EC_DATA_RAM_SIZE
 config CROS_EC_RAM_SIZE
 	default 0x00f800
 
-config FLASH_SIZE
-	default 512
-
 config CROS_EC_RO_MEM_OFF
 	default 0x0
 
 # was 0x40000
+# TODO(b/268254046): mchp Zephyr: MEC172x: verify RO flash size.
 config CROS_EC_RO_SIZE
 	default 0x3F000
 
@@ -47,8 +45,5 @@ config CROS_EC_RO_SIZE
 # time.
 config CROS_EC_RW_MEM_OFF
 	default 0x0
-
-config CROS_EC_RW_SIZE
-	default 0x40000
 
 endif # SOC_SERIES_MEC172X

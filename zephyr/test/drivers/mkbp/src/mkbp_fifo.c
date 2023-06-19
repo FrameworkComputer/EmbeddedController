@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/drivers/i2c_emul.h>
-
 #include "keyboard_config.h"
 #include "mkbp_fifo.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /* Tests for Matrix Keyboard Protocol (MKBP) */
 
@@ -64,7 +64,12 @@ ZTEST_F(mkbp_fifo, test_fifo_add_keyboard_key_matrix_event)
 	fill_array_with_incrementing_numbers(fixture->input_event_data,
 					     KEY_MATRIX_EVENT_DATA_SIZE);
 
-	/* Keyboard Key Matrix Event */
+	/* Keyboard Key Matrix Event
+	 * Push twice to verify their buffers do not overlap.
+	 */
+	zassert_ok(mkbp_fifo_add(EC_MKBP_EVENT_KEY_MATRIX,
+				 fixture->input_event_data),
+		   NULL);
 	zassert_ok(mkbp_fifo_add(EC_MKBP_EVENT_KEY_MATRIX,
 				 fixture->input_event_data),
 		   NULL);

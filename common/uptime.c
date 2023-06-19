@@ -2,12 +2,12 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <stddef.h>
-
 #include "chipset.h"
-#include "system.h"
 #include "host_command.h"
+#include "system.h"
 #include "util.h"
+
+#include <stddef.h>
 
 static enum ec_status
 host_command_get_uptime_info(struct host_cmd_handler_args *args)

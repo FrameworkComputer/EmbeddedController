@@ -3,11 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <zephyr/kernel.h>
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "ec_tasks.h"
 #include "emul/emul_isl923x.h"
@@ -15,11 +10,17 @@
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "host_command.h"
-#include "test/drivers/stubs.h"
 #include "tcpm/tcpci.h"
-#include "test/drivers/utils.h"
+#include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "usb_pd_vdo.h"
+
+#include <stdint.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/ztest.h>
 
 #define TEST_PORT USBC_PORT_C0
 /* Remove polarity for any mux checks */
@@ -210,7 +211,7 @@ static void usbc_tbt_mode_after(void *data)
 	tcpci_partner_common_clear_logged_msgs(&fix->partner);
 }
 
-ZTEST_F(usbc_tbt_mode, verify_discovery)
+ZTEST_F(usbc_tbt_mode, test_verify_discovery)
 {
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
@@ -246,7 +247,7 @@ ZTEST_F(usbc_tbt_mode, verify_discovery)
 }
 
 /* Without an e-marked cable, TBT mode cannot be entered */
-ZTEST_F(usbc_tbt_mode, verify_tbt_entry_fail)
+ZTEST_F(usbc_tbt_mode, test_verify_tbt_entry_fail)
 {
 	struct ec_response_typec_status status;
 
@@ -284,7 +285,7 @@ ZTEST_F(usbc_tbt_mode, verify_tbt_entry_fail)
 }
 
 /* With passive e-marked cable, TBT mode can be entered on SOP only */
-ZTEST_F(usbc_tbt_mode, verify_tbt_passive_entry_exit)
+ZTEST_F(usbc_tbt_mode, test_verify_tbt_passive_entry_exit)
 {
 	struct ec_response_typec_status status;
 

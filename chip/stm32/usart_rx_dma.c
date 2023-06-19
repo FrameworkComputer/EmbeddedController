@@ -3,14 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include "usart_rx_dma.h"
-
 #include "atomic.h"
 #include "common.h"
 #include "console.h"
 #include "registers.h"
 #include "system.h"
 #include "usart_host_command.h"
+#include "usart_rx_dma.h"
 #include "util.h"
 
 typedef size_t (*add_data_t)(struct usart_config const *config,

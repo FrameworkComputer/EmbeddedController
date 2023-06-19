@@ -29,6 +29,16 @@ config PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	  This is a helper symbol that indicates the BC1.2 chip needs to be
 	  triggered on data role swaps in addition to VBUS changes.
 
+config PLATFORM_EC_BC12_DETECT_RT1718S
+	bool "Enable support for BC 1.2 detection on the RT1718S"
+	depends on DT_HAS_RICHTEK_RT1718S_BC12_ENABLED && PLATFORM_EC_USB_PD_TCPM_RT1718S
+	default y
+	help
+	   This enables the BC 1.2 detection on the highly-integrated RT1718S
+	   chip.  Note this chip also functions as a TCPC and a PPC. While the
+	   TCPC may be enabled without the BC 1.2 detection, the BC 1.2
+	   detection module is currently dependent on the TCPC existing.
+
 config PLATFORM_EC_BC12_CLIENT_MODE_ONLY_PI3USB9201
 	bool "Run as BC1.2 client while using PI3USB9201"
 	depends on PLATFORM_EC_BC12_DETECT_PI3USB9201
@@ -39,6 +49,8 @@ config PLATFORM_EC_BC12_CLIENT_MODE_ONLY_PI3USB9201
 
 config PLATFORM_EC_BC12_DETECT_PI3USB9201
 	bool "Enable support for Pericom PI3USB9201"
+	default y
+	depends on DT_HAS_PERICOM_PI3USB9201_ENABLED || DT_HAS_ZEPHYR_PI3USB9201_EMUL_ENABLED
 	select PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	help
 	  This is a Dual-Role USB Charging-Type Detector. It can operate in

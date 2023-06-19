@@ -6,7 +6,7 @@ description: USBC RT1718S TCPC
 
 compatible: "richtek,rt1718s-tcpc"
 
-include: i2c-device.yaml
+include: ["i2c-device.yaml", "cros-ec,tcpci.yaml"]
 
 properties:
   tcpc-flags:
@@ -14,4 +14,8 @@ properties:
     default: 0
     description: |
       TCPC configuration flags
-
+  irq-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      Interrupt from TCPC

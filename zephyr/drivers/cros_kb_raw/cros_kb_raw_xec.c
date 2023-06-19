@@ -5,19 +5,20 @@
 
 #define DT_DRV_COMPAT microchip_xec_cros_kb_raw
 
-#include <assert.h>
-#include <drivers/cros_kb_raw.h>
-#include <zephyr/drivers/clock_control.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
-#include <soc.h>
-#include <soc/microchip_xec/reg_def_cros.h>
-
 #include "ec_tasks.h"
 #include "keyboard_raw.h"
 #include "task.h"
 
+#include <assert.h>
+
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/logging/log.h>
+
+#include <drivers/cros_kb_raw.h>
+#include <soc.h>
+#include <soc/microchip_xec/reg_def_cros.h>
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED

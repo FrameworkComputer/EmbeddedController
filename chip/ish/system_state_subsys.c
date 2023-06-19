@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
 #include "heci_client.h"
 #include "registers.h"
 #include "system_state.h"
-#include "console.h"
 
 #ifdef SS_SUBSYSTEM_DEBUG
 #define CPUTS(outstr) cputs(CC_LPC, outstr)

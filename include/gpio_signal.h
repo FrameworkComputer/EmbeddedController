@@ -24,6 +24,7 @@
 #define UNIMPLEMENTED(name) GPIO_##name,
 #define GPIO_INT(name, pin, flags, signal) GPIO_##name,
 
+#define GPIO_SIGNAL_NONE -1 /* Invalid signal */
 #define GPIO_SIGNAL_START 0 /* The first valid GPIO signal is 0 */
 
 enum gpio_signal {

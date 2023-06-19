@@ -3,19 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
+#include "usb_charge.h"
 #include "usbc/bc12_pi3usb9201.h"
 #include "usbc/bc12_rt1718s.h"
 #include "usbc/bc12_rt1739.h"
 #include "usbc/bc12_rt9490.h"
 #include "usbc/tcpc_rt1718s.h"
 #include "usbc/utils.h"
-#include "usb_charge.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(RT1718S_BC12_COMPAT) ||    \
-	DT_HAS_COMPAT_STATUS_OKAY(RT1739_BC12_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(RT9490_BC12_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(PI3USB9201_COMPAT)
+#include <zephyr/devicetree.h>
 
 /* Check RT1718S dependency. BC12 node must be dependent on TCPC node. */
 #if DT_HAS_COMPAT_STATUS_OKAY(RT1718S_BC12_COMPAT)
@@ -42,5 +38,3 @@ BUILD_ASSERT(DT_HAS_COMPAT_STATUS_OKAY(RT1718S_TCPC_COMPAT));
 /* BC1.2 controllers */
 struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = { DT_FOREACH_STATUS_OKAY(
 	named_usbc_port, BC12_CHIP) };
-
-#endif /* #if DT_HAS_COMPAT_STATUS_OKAY */

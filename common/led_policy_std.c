@@ -6,14 +6,14 @@
  * This assumes a red/green battery led and a single power led.
  */
 
-#include "gpio.h"
-#include "hooks.h"
 #include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "gpio.h"
+#include "hooks.h"
 #include "led_common.h"
-#include "util.h"
 #include "lid_switch.h"
+#include "util.h"
 
 #ifdef CONFIG_LED_BAT_ACTIVE_LOW
 #define BAT_LED_ON 0
@@ -159,11 +159,11 @@ static void std_led_set_battery(void)
 	 * Same as the chromeos spec
 	 * Green/Amber for CHARGE_FLAG_FORCE_IDLE
 	 */
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
 		bat_led_set_color(LED_AMBER);
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if (charge_get_percent() < 3)
 			bat_led_set_color((battery_second & 1) ? LED_OFF :
 								 LED_AMBER);
@@ -173,16 +173,16 @@ static void std_led_set_battery(void)
 		else
 			bat_led_set_color(LED_OFF);
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		bat_led_set_color((battery_second & 1) ? LED_OFF : LED_RED);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		bat_led_set_color(LED_GREEN);
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE. */
+	case LED_PWRS_IDLE: /* External power connected in IDLE. */
 		bat_led_set_color(LED_GREEN);
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		bat_led_set_color((battery_second & 0x2) ? LED_GREEN :
 							   LED_AMBER);
 		break;

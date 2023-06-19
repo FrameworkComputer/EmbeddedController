@@ -8,9 +8,9 @@
 #define __MOCK_USB_TC_SM_MOCK_H
 
 #include "common.h"
-#include "usb_tc_sm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_tc_sm.h"
 
 struct mock_tc_port_t {
 	int rev;

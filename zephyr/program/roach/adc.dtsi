@@ -1,0 +1,22 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_ec_id: ec_id {
+			enum-name = "ADC_ID_1";
+			io-channels = <&adc0 1>;
+		};
+
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch1_gpi1_default>;
+	pinctrl-names = "default";
+};

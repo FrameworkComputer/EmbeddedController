@@ -9,8 +9,8 @@
 #include "ec_commands.h"
 #include "stddef.h"
 #include "system.h"
-#include "util.h"
 #include "test_util.h"
+#include "util.h"
 
 /*
  * Tests that fw version adheres to the expected format.

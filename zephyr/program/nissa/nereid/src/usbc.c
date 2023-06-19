@@ -3,46 +3,21 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-#include <ap_power/ap_power.h>
-
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "chipset.h"
-#include "hooks.h"
-#include "usb_mux.h"
-#include "system.h"
 #include "driver/charger/sm5803.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
+#include "hooks.h"
+#include "system.h"
+#include "usb_mux.h"
 
-#include "nissa_common.h"
+#include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
-
-struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it8xxx2_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
-	},
-	{
-		/*
-		 * Sub-board: optional PS8745 TCPC+redriver. Behaves the same
-		 * as PS8815.
-		 */
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1_TCPC,
-			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-		/* PS8745 implements TCPCI 2.0 */
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-	},
-};
 
 /* Vconn control for integrated ITE TCPC */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
@@ -90,10 +65,12 @@ static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
 	case AP_POWER_RESUME:
 		fn = sm5803_disable_low_power_mode;
 		break;
+	/* LCOV_EXCL_START can only happen if init doesn't match these cases */
 	default:
 		LOG_WRN("%s: power event %d is not recognized", __func__,
 			data.event);
 		return;
+		/* LCOV_EXCL_STOP */
 	}
 
 	fn(CHARGER_PRIMARY);
@@ -101,7 +78,7 @@ static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
 		fn(CHARGER_SECONDARY);
 }
 
-static int board_chargers_suspend_init(const struct device *unused)
+static int board_chargers_suspend_init(void)
 {
 	static struct ap_power_ev_callback cb = {
 		.handler = board_chargers_suspend,
@@ -260,6 +237,7 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	}
 }
 
+/* LCOV_EXCL_START function does nothing, but is required for build */
 void board_reset_pd_mcu(void)
 {
 	/*
@@ -268,6 +246,7 @@ void board_reset_pd_mcu(void)
 	 * to the EC.
 	 */
 }
+/* LCOV_EXCL_STOP */
 
 #define INT_RECHECK_US 5000
 
@@ -307,69 +286,23 @@ void usb_c0_interrupt(enum gpio_signal s)
 }
 
 /* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-static void check_c1_line(void);
-DECLARE_DEFERRED(check_c1_line);
-
-static void notify_c1_chips(void)
-{
-	schedule_deferred_pd_interrupt(1);
-	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
-	/* Charger is handled in board_process_pd_alert */
-}
-
-static void check_c1_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips.
-	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
-		notify_c1_chips();
-		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-	}
-}
-
+/* LCOV_EXCL_START schedule_deferred_pd_interrupt() is untestable */
 void usb_c1_interrupt(enum gpio_signal s)
 {
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c1_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c1_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
+	/* Charger and BC1.2 are handled in board_process_pd_alert */
+	schedule_deferred_pd_interrupt(1);
 }
-
-/*
- * Check state of IRQ lines at startup, ensuring an IRQ that happened before
- * the EC started up won't get lost (leaving the IRQ line asserted and blocking
- * any further interrupts on the port).
- *
- * Although the PD task will check for pending TCPC interrupts on startup,
- * the charger sharing the IRQ will not be polled automatically.
- */
-void board_handle_initial_typec_irq(void)
-{
-	check_c0_line();
-	if (board_get_usb_pd_port_count() == 2)
-		check_c1_line();
-}
-/*
- * This must run after sub-board detection (which happens in EC main()),
- * but isn't depended on by anything else either.
- */
-DECLARE_HOOK(HOOK_INIT, board_handle_initial_typec_irq, HOOK_PRIO_LAST);
+/* LCOV_EXCL_STOP */
 
 /*
  * Handle charger interrupts in the PD task. Not doing so can lead to a priority
  * inversion where we fail to respond to TCPC alerts quickly enough because we
- * don't get another edge on a shared IRQ until the charger interrupt is cleared
- * (or the IRQ is polled again), which happens in the low-priority charger task:
- * the high-priority type-C handler is thus blocked on the lower-priority
- * charger.
+ * don't get another edge on a shared IRQ until the other interrupt is cleared
+ * (or the IRQ is polled again), which happens in lower-priority tasks: the
+ * high-priority type-C handler is thus blocked on the lower-priority one(s).
  *
- * To avoid that, we run charger interrupts at the same priority.
+ * To avoid that, we run charger and BC1.2 interrupts synchronously alongside
+ * PD interrupts so they have the same priority.
  */
 void board_process_pd_alert(int port)
 {
@@ -377,10 +310,19 @@ void board_process_pd_alert(int port)
 	 * Port 0 doesn't use an external TCPC, so its interrupts don't need
 	 * this special handling.
 	 */
-	if (port == 1 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
+	if (port != 1)
+		return;
+
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
 		sm5803_handle_interrupt(port);
+		usb_charger_task_set_event_sync(1, USB_CHG_EVENT_BC12);
 	}
+	/*
+	 * Immediately schedule another TCPC interrupt if it seems we haven't
+	 * cleared all pending interrupts.
+	 */
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl)))
+		schedule_deferred_pd_interrupt(port);
 }
 
 int pd_snk_is_vbus_provided(int port)

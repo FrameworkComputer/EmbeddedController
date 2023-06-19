@@ -4,9 +4,9 @@
  *
  * Richtek 5A 1-4 cell buck-boost switching battery charger driver.
  */
-#include <stdbool.h>
-
 #include "temp_sensor.h"
+
+#include <stdbool.h>
 
 #ifndef __CROS_EC_RT9490_H
 #define __CROS_EC_RT9490_H
@@ -275,3 +275,4 @@ extern const struct thermistor_info rt9490_thermistor_info;
 
 int rt9490_get_thermistor_val(const struct temp_sensor_t *sensor,
 			      int *temp_ptr);
+extern const struct rt9490_init_setting rt9490_setting;

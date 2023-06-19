@@ -15,7 +15,8 @@
 #include "power.h"
 #include "task.h"
 
-#include "gpio_list.h" /* has to be included last */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* I2C port map */
 #ifdef BOARD_ADL_ISH_LITE

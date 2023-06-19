@@ -3,33 +3,24 @@
  * found in the LICENSE file.
  */
 
+#define DT_DRV_COMPAT cros_ec_switchcap_gpio
+
+#include "common.h"
+
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
-#include "common.h"
 
 /* TODO(b/218600962): Consolidate switchcap code. */
 
-#if DT_NODE_EXISTS(DT_PATH(switchcap))
+#define SC_PIN_ENABLE_GPIO DT_INST_PROP(0, enable_pin)
+#define SC_PIN_ENABLE GPIO_DT_FROM_NODE(SC_PIN_ENABLE_GPIO)
 
-#if !DT_NODE_HAS_COMPAT(DT_PATH(switchcap), switchcap_gpio)
-#error "Invalid /switchcap node in device tree"
-#endif
+#define SC_PIN_POWER_GOOD_GPIO DT_INST_PROP(0, power_good_pin)
+#define SC_PIN_POWER_GOOD_EXISTS DT_NODE_EXISTS(SC_PIN_POWER_GOOD_GPIO)
+#define SC_PIN_POWER_GOOD GPIO_DT_FROM_NODE(SC_PIN_POWER_GOOD_GPIO)
 
-#define SC_PIN_ENABLE_PHANDLE \
-	DT_PHANDLE_BY_IDX(DT_PATH(switchcap), enable_pin, 0)
-#define SC_PIN_ENABLE GPIO_DT_FROM_NODE(SC_PIN_ENABLE_PHANDLE)
-
-#define SC_PIN_POWER_GOOD_PHANDLE \
-	DT_PHANDLE_BY_IDX(DT_PATH(switchcap), power_good_pin, 0)
-#define SC_PIN_POWER_GOOD_EXISTS DT_NODE_EXISTS(SC_PIN_POWER_GOOD_PHANDLE)
-#define SC_PIN_POWER_GOOD GPIO_DT_FROM_NODE(SC_PIN_POWER_GOOD_PHANDLE)
-
-#if DT_NODE_HAS_PROP(DT_PATH(switchcap), poff_delay_ms)
-static const int32_t poff_delay_ms = DT_PROP(DT_PATH(switchcap), poff_delay_ms);
-#else
-static const int32_t poff_delay_ms;
-#endif
+static const int32_t poff_delay_ms = DT_INST_PROP_OR(0, poff_delay_ms, 0);
 
 void board_set_switchcap_power(int enable)
 {
@@ -51,5 +42,3 @@ int board_is_switchcap_power_good(void)
 	return 1;
 #endif
 }
-
-#endif

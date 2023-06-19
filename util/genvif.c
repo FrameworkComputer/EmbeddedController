@@ -5,25 +5,25 @@
 
 #define _GNU_SOURCE /* for asprintf */
 
+#include "charge_manager.h"
+#include "config.h"
+#include "genvif.h"
+#include "usb_pd.h"
+#include "usb_pd_pdo.h"
+#include "usb_pd_tcpm.h"
+
+#include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <getopt.h>
+#include <string.h>
+
 #include <dirent.h>
-#include <limits.h>
-#include <ctype.h>
-
-#include "config.h"
-#include "usb_pd.h"
-#include "usb_pd_pdo.h"
-#include "usb_pd_tcpm.h"
-#include "charge_manager.h"
-
-#include "genvif.h"
+#include <getopt.h>
 
 #define VIF_APP_VENDOR_VALUE "Google"
 #define VIF_APP_NAME_VALUE "EC GENVIF"

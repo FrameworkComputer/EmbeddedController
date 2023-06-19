@@ -26,18 +26,18 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 static void kakadu_led_set_battery(void)
 {
-	enum charge_state chstate;
+	enum led_pwr_state chstate;
 	enum power_state powerstate;
 	static uint8_t prv_white, prv_amber;
 	static uint8_t time_cnt;
 	uint8_t br[EC_LED_COLOR_COUNT] = { 0 };
 
-	chstate = charge_get_state();
+	chstate = led_pwr_get_state();
 	powerstate = power_get_state();
 
 	switch (chstate) {
-	case PWR_STATE_CHARGE:
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		if (charge_get_percent() < 94) {
 			br[EC_LED_COLOR_AMBER] = 1;
 			br[EC_LED_COLOR_WHITE] = 0;
@@ -46,7 +46,7 @@ static void kakadu_led_set_battery(void)
 		br[EC_LED_COLOR_WHITE] = 1;
 		br[EC_LED_COLOR_AMBER] = 0;
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if (powerstate == POWER_S0) {
 			/* display SoC 10% = real battery SoC 13%*/
 			if (charge_get_percent() < 14) {
@@ -84,7 +84,7 @@ static void kakadu_led_set_battery(void)
 			br[EC_LED_COLOR_AMBER] = 0;
 		}
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		if (powerstate == POWER_S0) {
 			if (time_cnt < 1) {
 				time_cnt++;

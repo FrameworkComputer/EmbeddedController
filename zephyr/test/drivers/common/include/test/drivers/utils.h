@@ -6,19 +6,20 @@
 #ifndef ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 #define ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/ztest.h>
-#include <stddef.h>
-#include <string.h>
-
 #include "charger.h"
-#include "lpc.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "extpower.h"
 #include "host_command.h"
+#include "lpc.h"
 #include "power.h"
 #include "usbc/utils.h"
+
+#include <stddef.h>
+#include <string.h>
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/ztest.h>
 
 /**
  * @brief Helper macro for EMUL_GET_USBC_BINDING. If @p usbc_id has the same
@@ -104,10 +105,9 @@ void acpi_write(uint8_t acpi_addr, uint8_t write_byte);
 static inline struct ec_response_get_features host_cmd_get_features(void)
 {
 	struct ec_response_get_features response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_FEATURES, 0, response);
 
-	zassert_ok(host_command_process(&args), "Failed to get features");
+	zassert_ok(ec_cmd_get_features(NULL, &response),
+		   "Failed to get features");
 	return response;
 }
 
@@ -127,10 +127,8 @@ static inline struct ec_response_charge_state host_cmd_charge_state(int chgnum)
 		.cmd = CHARGE_STATE_CMD_GET_STATE,
 	};
 	struct ec_response_charge_state response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_CHARGE_STATE, 0, response, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_charge_state(NULL, &params, &response),
 		   "Failed to get charge state for chgnum %d", chgnum);
 	return response;
 }
@@ -148,10 +146,8 @@ static inline struct ec_response_usb_pd_power_info host_cmd_power_info(int port)
 {
 	struct ec_params_usb_pd_power_info params = { .port = port };
 	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_usb_pd_power_info(NULL, &params, &response),
 		   "Failed to get power info for port %d", port);
 	return response;
 }
@@ -169,23 +165,30 @@ static inline struct ec_response_typec_status host_cmd_typec_status(int port)
 {
 	struct ec_params_typec_status params = { .port = port };
 	struct ec_response_typec_status response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_TYPEC_STATUS, 0, response, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_typec_status(NULL, &params, &response),
 		   "Failed to get Type-C state for port %d", port);
 	return response;
 }
+
+/**
+ * Run the host command to get the most recent VDM response for the AP
+ *
+ * This function asserts a successful host command processing and will make a
+ * call to the zassert_* API. A failure here will fail the calling test.
+ *
+ * @param port The USB port to get info from.
+ * @return The result of the query.
+ */
+struct ec_response_typec_vdm_response host_cmd_typec_vdm_response(int port);
 
 static inline struct ec_response_usb_pd_control
 host_cmd_usb_pd_control(int port, enum usb_pd_control_swap swap)
 {
 	struct ec_params_usb_pd_control params = { .port = port, .swap = swap };
 	struct ec_response_usb_pd_control response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_USB_PD_CONTROL, 0, response, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_usb_pd_control(NULL, &params, &response),
 		   "Failed to process usb_pd_control_swap for port %d, swap %d",
 		   port, swap);
 	return response;
@@ -203,10 +206,8 @@ host_cmd_usb_pd_control(int port, enum usb_pd_control_swap swap)
 static inline void host_cmd_pd_control(int port, enum ec_pd_control_cmd cmd)
 {
 	struct ec_params_pd_control params = { .chip = port, .subcmd = cmd };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PD_CONTROL, 0, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_pd_control(NULL, &params),
 		   "Failed to process pd_control for port %d, cmd %d", port,
 		   cmd);
 }
@@ -227,10 +228,8 @@ host_cmd_charge_control(enum ec_charge_control_mode mode,
 							   .upper = -1,
 						   } };
 	struct ec_response_charge_control response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, 2, response, params);
 
-	zassert_ok(host_command_process(&args),
+	zassert_ok(ec_cmd_charge_control_v2(NULL, &params, &response),
 		   "Failed to get charge control values");
 
 	return response;
@@ -481,17 +480,6 @@ int host_cmd_motion_sense_tablet_mode_lid_angle(
  */
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 			      void *response, size_t response_size);
-/**
- * @brief Run the host command to get the PD alternative mode response.
- *
- * @param port          The USB-C port number
- * @param response      Destination for command response.
- * @param response_size Destination of response size from request params.
- */
-void host_cmd_usb_pd_get_amode(
-	uint8_t port, uint16_t svid_idx,
-	struct ec_params_usb_pd_get_mode_response *response,
-	int *response_size);
 
 /**
  * Run the host command to control PD port behavior, with the sub-command of
@@ -592,7 +580,11 @@ static inline void set_ac_enabled(bool enabled)
 
 	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, enabled),
 		   NULL);
-	k_sleep(K_MSEC(CONFIG_EXTPOWER_DEBOUNCE_MS + 1));
+	/*
+	 * b/253284635 - Sleep for a full second past the debounce time
+	 * to ensure the power button debounce logic runs.
+	 */
+	k_sleep(K_MSEC(CONFIG_EXTPOWER_DEBOUNCE_MS + 1000));
 	zassert_equal(enabled, extpower_is_present(), NULL);
 }
 

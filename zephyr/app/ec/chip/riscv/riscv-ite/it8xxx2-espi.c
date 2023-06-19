@@ -2,11 +2,12 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <soc_espi.h>
-#include <ap_power/ap_power.h>
-#include <chipset.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
+#include <chipset.h>
+#include <soc_espi.h>
 
 LOG_MODULE_REGISTER(ec_chip_it8xxx2_espi, CONFIG_ESPI_LOG_LEVEL);
 
@@ -45,7 +46,7 @@ static void espi_enable_callback(struct ap_power_ev_callback *cb,
 	}
 }
 
-static int init_espi_enable_callback(const struct device *unused)
+static int init_espi_enable_callback(void)
 {
 	static struct ap_power_ev_callback cb;
 

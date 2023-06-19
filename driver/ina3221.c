@@ -8,9 +8,9 @@
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ina3221.h"
 #include "system.h"
 #include "timer.h"
-#include "ina3221.h"
 #include "util.h"
 
 /* Console output macros */

@@ -5,6 +5,7 @@
 """Configuration to allow pip install."""
 import setuptools
 
+
 setuptools.setup(
     name="zephyr-chrome-utils",
     version="0.1",

@@ -8,17 +8,16 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "ec_commands.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/fusb302.h"
 #include "driver/temp_sensor/tmp432.h"
+#include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -37,8 +36,8 @@
 #include "tcpm/tcpm.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
-#include "timer.h"
 #include "thermal.h"
+#include "timer.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
@@ -64,6 +63,7 @@ static void warm_reset_request_interrupt(enum gpio_signal signal)
 	chipset_reset(CHIPSET_RESET_AP_REQ);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/
@@ -210,13 +210,6 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int extpower_is_present(void)

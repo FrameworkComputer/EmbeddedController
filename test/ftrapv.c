@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <stdlib.h>
-
 #include "common.h"
 #include "panic.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
+
+#include <stdlib.h>
 
 /*
  * trapping addition: __addvsi3.

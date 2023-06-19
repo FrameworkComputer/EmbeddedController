@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include "stddef.h"
 #include "common.h"
 #include "config.h"
 #include "link_defs.h"
 #include "registers.h"
-#include "util.h"
+#include "stddef.h"
 #include "usb_api.h"
 #include "usb_hw.h"
 #include "usb_isochronous.h"
+#include "util.h"
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)

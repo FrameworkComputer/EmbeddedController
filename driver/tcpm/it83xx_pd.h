@@ -7,9 +7,9 @@
 #ifndef __CROS_EC_DRIVER_TCPM_IT83XX_H
 #define __CROS_EC_DRIVER_TCPM_IT83XX_H
 
-#include <stdint.h>
-
 #include "driver/tcpm/it8xxx2_pd_public.h"
+
+#include <stdint.h>
 
 /* USBPD Controller */
 #if defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)
@@ -134,7 +134,11 @@
 #define USBPD_REG_MASK_CC_SELECT_RP_RESERVED (BIT(3) | BIT(2) | BIT(1))
 #define USBPD_REG_MASK_CC_SELECT_RP_DEF (BIT(3) | BIT(2))
 #define USBPD_REG_MASK_CC_SELECT_RP_1A5 BIT(3)
+#ifdef IT8XXX2_USBPD_RP_3A0_VALUE_IS_ZERO
+#define USBPD_REG_MASK_CC_SELECT_RP_3A0 0
+#else
 #define USBPD_REG_MASK_CC_SELECT_RP_3A0 BIT(2)
+#endif
 #define USBPD_REG_MASK_CC1_CC2_SELECTION BIT(0)
 #define IT83XX_USBPD_CCCSR(p) REG8(IT83XX_USBPD_BASE(p) + 0x05)
 #define USBPD_REG_MASK_CC2_DISCONNECT BIT(7)

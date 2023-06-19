@@ -6,6 +6,7 @@
 /* UART module for Chrome EC */
 
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -13,7 +14,6 @@
 #include "hwtimer_chip.h"
 #include "lpc.h"
 #include "registers.h"
-#include "clock_chip.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"

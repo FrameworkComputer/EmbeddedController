@@ -9,8 +9,8 @@
 #define __CROS_EC_NEWTON_FIT_H
 
 #include "queue.h"
-#include "vec3.h"
 #include "stdbool.h"
+#include "vec3.h"
 
 struct newton_fit_orientation {
 	/** An orientations. */

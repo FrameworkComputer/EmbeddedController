@@ -1,0 +1,170 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <it8xxx2_emul.dts>
+
+/ {
+	pinctrl: pinctrl {
+		compatible = "ite,it8xxx2-pinctrl";
+		status = "disabled";
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_charger: charger {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_CHARGER",
+				"I2C_PORT_BATTERY";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			status = "okay";
+			reg = <0>;
+			chg = <&charger>;
+			tcpc = <&tcpci_emul>;
+			ppc = <&ppc0_emul>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			status = "okay";
+			reg = <1>;
+			tcpc = <&rt1718s_emul>;
+			ppc = <&ppc1_emul>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tusb1064_mux_1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+			/**
+			 * this has to be strictly lower than the desired
+			 * voltage in smart battery emulator (5000mV).
+			 */
+			voltage_min = <4000>;
+		};
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_vbus_c0 {
+			enum-name = "ADC_VBUS_C0";
+			io-channels = <&adc0 0>;
+			mul = <10>;
+		};
+		adc_board_id0 {
+			enum-name = "ADC_BOARD_ID_0";
+			io-channels = <&adc0 1>;
+		};
+		adc_board_id1 {
+			enum-name = "ADC_BOARD_ID_1";
+			io-channels = <&adc0 2>;
+		};
+		adc_vbus_c1 {
+			enum-name = "ADC_VBUS_C1";
+			io-channels = <&adc0 7>;
+			mul = <10>;
+		};
+		adc_charger: charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 5>;
+		};
+	};
+};
+
+&i2c_ctrl0 {
+	status="okay";
+
+	charger: rt9490@53 {
+		compatible = "richtek,rt9490", "zephyr,rt9490-emul";
+		status = "okay";
+		reg = <0x53>;
+	};
+
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
+
+	tcpci_emul: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+
+	ppc0_emul: syv682x@42 {
+		compatible = "zephyr,syv682x-emul";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&gpio_ec_x_gpio1>;
+		alert_gpio = <&gpio_x_ec_gpio2>;
+	};
+
+	ppc1_emul: syv682x@43 {
+		compatible = "zephyr,syv682x-emul";
+		status = "okay";
+		reg = <0x43>;
+		/*
+		 * the gpio pins are intentionally reused in both ppc emuls, to
+		 * avoid handling different frs-en pin names on krabby and
+		 * tentacruel.
+		 */
+		frs_en_gpio = <&gpio_ec_x_gpio1>;
+		alert_gpio = <&gpio_x_ec_gpio2>;
+	};
+
+	rt1718s_emul: rt1718s@2c {
+		compatible = "cros,rt1718s-tcpc-emul", "richtek,rt1718s-tcpc";
+		status = "okay";
+		reg = <0x2c>;
+	};
+};
+
+&adc0 {
+	status = "okay";
+};
+
+&i2c_ctrl4 {
+	status="okay";
+
+	tusb1064_mux_1: tusb1064-mux-1@44 {
+		compatible = "zephyr,tusb1064-emul";
+		reg = <0x44>;
+		board-init = "tusb1064_mux_1_board_init";
+	};
+};

@@ -9,8 +9,8 @@
 #include "console.h"
 #include "g753.h"
 #include "gpio.h"
-#include "i2c.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "util.h"
 
 static int temp_val_local;

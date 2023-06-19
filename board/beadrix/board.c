@@ -8,17 +8,17 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
-#include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
-#include "driver/usb_mux/pi3usb3x532.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
+#include "driver/usb_mux/pi3usb3x532.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -472,19 +472,6 @@ int board_set_active_charge_port(int port)
 	charger_discharge_on_ac(0);
 
 	return EC_SUCCESS;
-}
-
-/* Vconn control for integrated ITE TCPC */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * TODO(b/151955431): Characterize the input current limit in case a
-	 * scaling needs to be applied here
-	 */
-	charge_set_input_current_limit(icl, charge_mv);
 }
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)

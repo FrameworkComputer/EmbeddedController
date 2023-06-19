@@ -15,6 +15,7 @@ import zmake.modules
 import zmake.output_packers
 import zmake.project
 
+
 board_names = st.text(alphabet=set(string.ascii_lowercase) | {"_"}, min_size=1)
 sets_of_board_names = st.lists(st.lists(board_names, unique=True))
 
@@ -135,9 +136,13 @@ def test_find_projects_empty(tmp_path):
 
 CONFIG_FILE_1 = """
 register_raw_project(project_name="one", zephyr_board="one")
-register_host_test(test_name="two")
+register_host_project(project_name="two")
 register_npcx_project(project_name="three", zephyr_board="three")
-register_binman_project(project_name="four", zephyr_board="four")
+register_binman_project(
+    project_name="four",
+    zephyr_board="four",
+    inherited_from="baseboard"
+)
 """
 
 CONFIG_FILE_2 = """
@@ -145,6 +150,7 @@ register_raw_project(
     project_name="five",
     zephyr_board="foo",
     dts_overlays=[here / "gpio.dts"],
+    inherited_from=["root", "myboard"],
 )
 """
 
@@ -164,23 +170,20 @@ def test_find_projects(tmp_path):
     projects = zmake.project.find_projects(tmp_path)
     assert len(projects) == 5
     assert projects["one"].config.project_dir == cf1_dir
-    assert not projects["one"].config.is_test
 
-    assert projects["test-two"].config.project_dir == cf1_dir
-    assert projects["test-two"].config.zephyr_board == "native_posix"
-    assert projects["test-two"].config.is_test
+    assert projects["two"].config.project_dir == cf1_dir
+    assert projects["two"].config.zephyr_board == "native_posix"
 
     assert projects["three"].config.project_dir == cf1_dir
-    assert not projects["three"].config.is_test
     assert projects["three"].config.zephyr_board == "three"
 
     assert projects["four"].config.project_dir == cf1_dir
-    assert not projects["four"].config.is_test
     assert projects["four"].config.zephyr_board == "four"
+    assert projects["four"].config.full_name == "baseboard.four"
 
     assert projects["five"].config.project_dir == cf2_dir
-    assert not projects["five"].config.is_test
     assert projects["five"].config.zephyr_board == "foo"
+    assert projects["five"].config.full_name == "root.myboard.five"
 
 
 def test_find_projects_name_conflict(tmp_path):
@@ -222,6 +225,9 @@ another = some_variant.variant(
         tmp_path / "gpio.dts",
         tmp_path / "another.dts",
     ]
+    assert projects["some"].config.full_name == "some"
+    assert projects["some-variant"].config.full_name == "some.some-variant"
+    assert projects["another"].config.full_name == "some.some-variant.another"
 
 
 @pytest.mark.parametrize(

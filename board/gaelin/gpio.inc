@@ -45,8 +45,25 @@ GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
 GPIO(ANALOG_PPVAR_PWR_IN_IMON_EC,    PIN(4, 2), GPIO_INPUT)
 
 /* Display */
-GPIO(DP_CONN_OC_ODL,                 PIN(2, 5), GPIO_INPUT)
+GPIO(EC_OVERRIDE_SCLR_EN,            PIN(D, 4), GPIO_OUT_HIGH)
 
+/* TODO(b/260063632): the gpio pin control is wip, setting to level high
+                      to enable the backlight by default */
+GPIO(EC_12VSC_EN,                    PIN(D, 2), GPIO_OUT_HIGH)
+
+GPIO(OSD_STS,                        PIN(4, 1), GPIO_INPUT)
+GPIO(DISP_MODE,                      PIN(A, 0), GPIO_INPUT)
+GPIO(PANEL_PWR_STS,                  PIN(9, 5), GPIO_INPUT)
+GPIO(EN_SCLR_RAILS,                  PIN(0, 4), GPIO_INPUT)
+GPIO(HDMI_5V_IN,                     PIN(9, 3), GPIO_INPUT)
+GPIO(HDMI0_CABLE_DET,                PIN(9, 6), GPIO_INPUT)
+GPIO(WP_EC,                          PIN(C, 3), GPIO_INPUT)
+GPIO(OSD_INT,                        PIN(0, 5), GPIO_INPUT)
+
+/* Audio */
+/* TODO(b/260063632): the gpio pin control is wip, setting to level high
+                      to enable the speaker by default */
+GPIO(EC_AMP_SD,                      PIN(5, 6), GPIO_OUT_HIGH)
 
 /* BarrelJack */
 GPIO(EN_PPVAR_BJ_ADP_L,              PIN(0, 7), GPIO_OUT_LOW)
@@ -77,6 +94,8 @@ GPIO(HDMI_CEC_OUT,                   PIN(D, 3), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(HDMI_CEC_PULL_UP,               PIN(C, 2), GPIO_OUT_HIGH)
 
 /* I2C SCL/SDA */
+GPIO(SMSCALER_CLK,                   PIN(3, 3), GPIO_INPUT)
+GPIO(SMSCALER_DATA,                  PIN(3, 6), GPIO_INPUT)
 GPIO(EC_I2C_MISC_SCL_R,              PIN(B, 3), GPIO_INPUT)
 GPIO(EC_I2C_MISC_SDA_R,              PIN(B, 2), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_PPC_BC_SCL,       PIN(9, 2), GPIO_INPUT)
@@ -87,6 +106,8 @@ GPIO(EC_I2C_USB_C0_TCPC_SCL,         PIN(9, 0), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_TCPC_SDA,         PIN(8, 7), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SCL,         PIN(F, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SDA,         PIN(F, 2), GPIO_INPUT)
+GPIO(EC_I2C_USB_A0_A1_MIX_SCL,       PIN(E, 4), GPIO_INPUT)
+GPIO(EC_I2C_USB_A0_A1_MIX_SDA,       PIN(E, 3), GPIO_INPUT)
 
 /* USBA */
 GPIO(EN_PP5000_USBA,                 PIN(D, 7), GPIO_OUT_LOW)
@@ -102,7 +123,6 @@ GPIO(USB_A_OC_SOC_L,                 PIN(8, 0), GPIO_OUT_HIGH)
 
 /* LED */
 /* TODO(b/197471359): LED implementation */
-GPIO(LED_GREEN_L,                    PIN(C, 3), GPIO_OUT_LOW)
 GPIO(LED_RED_L,                      PIN(C, 4), GPIO_OUT_LOW)
 
 /* USBC */
@@ -143,14 +163,12 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(8, 1))       /* GPIO81/PECI_DATA */
-UNUSED(PIN(5, 6))       /* GPIO56/CLKRUN# */
 UNUSED(PIN(8, 6))       /* GPIO86/TXD/CR_SOUT2 */
 UNUSED(PIN(1, 3))       /* KSO06/GPO13/GP_SEL# */
 UNUSED(PIN(1, 2))       /* KSO07/GPO12/JEN# */
 UNUSED(PIN(0, 6))       /* KSO11/GPIO06/P80_CLK */
-UNUSED(PIN(0, 4))       /* KSO13/GPIO04 */
 UNUSED(PIN(B, 4))       /* GPIOB4/I2C0_SDA0 */
-UNUSED(PIN(0, 5))       /* KSO12/GPIO05 */
+UNUSED(PIN(2, 5))       /* KSI4/GPIO25/TRACECLK/GP_SCLK */
 UNUSED(PIN(B, 5))       /* GPIOB5/I2C0_SCL0 */
 UNUSED(PIN(8, 3))       /* KSO15/GPIO83 */
 UNUSED(PIN(B, 1))       /* KSO17/GPIOB1/CR_SIN4 */

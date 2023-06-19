@@ -16,6 +16,7 @@ import os
 
 import numpy  # pylint:disable=import-error
 
+
 STATS_PREFIX = "@@"
 NAN_TAG = "*"
 NAN_DESCRIPTION = "%s domains contain NaN samples" % NAN_TAG

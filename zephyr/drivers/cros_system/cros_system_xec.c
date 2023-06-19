@@ -3,18 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
-#include <drivers/cros_system.h>
-#include <zephyr/drivers/watchdog.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-#include <soc/microchip_xec/reg_def_cros.h>
-#include <zephyr/sys/util.h>
-
+#include "bbram.h"
+#include "gpio/gpio_int.h"
 #include "system.h"
 #include "system_chip.h"
+
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
 #include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
-#include "gpio/gpio_int.h"
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
+
+#include <drivers/cros_system.h>
+#include <soc.h>
+#include <soc/microchip_xec/reg_def_cros.h>
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
@@ -73,7 +75,7 @@ struct cros_system_xec_data {
 /* Get saved reset flag address in battery-backed ram */
 #define BBRAM_SAVED_RESET_FLAG_ADDR                     \
 	(DT_REG_ADDR(DT_INST(0, microchip_xec_bbram)) + \
-	 DT_PROP(DT_PATH(named_bbram_regions, saved_reset_flags), offset))
+	 BBRAM_REGION_OFFSET(offset)
 
 /* Soc specific system local functions */
 static int system_xec_watchdog_stop(void)

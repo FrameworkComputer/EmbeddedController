@@ -57,8 +57,8 @@ This document will assume you are using Servo V4.
 # from a terminal on your machine
 (outside chroot) $ cd ~/chromiumos/src
 
-# enter the chroot (the flag is important)
-(outside chroot) $ cros_sdk --no-ns-pid
+# enter the chroot
+(outside chroot) $ cros_sdk
 
 # build autotest for the board to be tested
 (chroot) $ emerge-<BOARD> autotest
@@ -79,7 +79,7 @@ Use another terminal and enter the chroot like before:
 
 ```bash
 (outside chroot) $ cd ~/chromiumos/src
-(outside chroot) $ cros_sdk --no-ns-pid
+(outside chroot) $ cros_sdk
 ```
 
 To run a single test, use this command in your chroot:

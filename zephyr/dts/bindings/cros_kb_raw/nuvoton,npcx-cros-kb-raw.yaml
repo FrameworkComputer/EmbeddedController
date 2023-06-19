@@ -8,26 +8,26 @@ compatible: "nuvoton,npcx-cros-kb-raw"
 include: [base.yaml, pinctrl-device.yaml]
 
 properties:
-    reg:
-        required: true
+  reg:
+    required: true
 
-    clocks:
-        required: true
+  clocks:
+    required: true
 
-    pinctrl-0:
-        required: true
+  pinctrl-0:
+    required: true
 
-    pinctrl-names:
-        required: true
+  pinctrl-names:
+    required: true
 
-    wui_maps:
-        type: phandles
-        required: true
-        description: |
-            Mapping table between Wake-Up Input (WUI) and 8 IOs belong to this device.
-            Please notice not all IOs connect to WUIs.
+  wui_maps:
+    type: phandles
+    required: true
+    description: |
+        Mapping table between Wake-Up Input (WUI) and 8 IOs belong to this device.
+        Please notice not all IOs connect to WUIs.
 
-            In this case, it will be presented by wui_none.
-            For example the WUI mapping on NPCX7 KSI pads would be
-               wui_maps = <&wui_io30 &wui_io31 &wui_io27 &wui_io26
-                           &wui_io25 &wui_io24 &wui_io23 &wui_io22>;
+        In this case, it will be presented by wui_none.
+        For example the WUI mapping on NPCX7 KSI pads would be
+           wui_maps = <&wui_io30 &wui_io31 &wui_io27 &wui_io26
+                       &wui_io25 &wui_io24 &wui_io23 &wui_io22>;

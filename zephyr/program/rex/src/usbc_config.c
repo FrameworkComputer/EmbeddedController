@@ -3,40 +3,40 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "battery_fuel_gauge.h"
-#include "charger.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "driver/charger/isl9241.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/nct38xx.h"
-#include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
-#include "driver/ppc/nx20p348x.h"
 #include "ppc/syv682x_public.h"
 #include "system.h"
 #include "task.h"
 #include "usb_mux.h"
+#include "usbc_config.h"
 #include "usbc_ppc.h"
+
+#include <stdbool.h>
+
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
+/* eSPI device */
+#define espi_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_espi))
+
 /*******************************************************************/
 /* USB-C Configuration Start */
-
-/* USB-C ports */
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
-BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 static void usbc_interrupt_init(void)
 {
@@ -49,10 +49,6 @@ static void usbc_interrupt_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
 
-	/* Enable TCPC interrupts. */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
-
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
@@ -62,12 +58,14 @@ static void usbc_interrupt_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_POST_I2C);
 
-void board_overcurrent_event(int port, int is_overcurrented)
+__override void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/*
-	 * TODO: Meteorlake PCH does not use Physical GPIO for over current
-	 * error, hence Send 'Over Current Virtual Wire' eSPI signal.
+	 * Meteorlake PCH uses Virtual Wire for over current error,
+	 * hence Send 'Over Current Virtual Wire' eSPI signal.
 	 */
+	espi_send_vwire(espi_dev, port + ESPI_VWIRE_SIGNAL_SLV_GPIO_0,
+			!is_overcurrented);
 }
 
 void sbu_fault_interrupt(enum gpio_signal signal)
@@ -78,42 +76,30 @@ void sbu_fault_interrupt(enum gpio_signal signal)
 	pd_handle_overcurrent(port);
 }
 
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port;
-
-	switch (signal) {
-	case GPIO_USB_C0_TCPC_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
-static void reset_nct38xx_port(int port)
+void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;
 	const struct device *ioex_port0, *ioex_port1;
 
 	/* TODO(b/225189538): Save and restore ioex signals */
 	if (port == USBC_PORT_C0) {
-		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_odl);
+		reset_gpio_l = &tcpc_config[0].rst_gpio;
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
 		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
+#if DT_NODE_EXISTS(DT_NODELABEL(nct3807_C1))
+	} else if (port == USBC_PORT_C1) {
+		reset_gpio_l = &tcpc_config[1].rst_gpio;
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port0));
+		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
+#endif
 	} else {
 		/* Invalid port: do nothing */
 		return;
 	}
 
-	gpio_pin_set_dt(reset_gpio_l, 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(reset_gpio_l, 1);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	gpio_pin_set_dt(reset_gpio_l, 0);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0) {
 		msleep(NCT3807_RESET_POST_DELAY_MS);
@@ -122,61 +108,6 @@ static void reset_nct38xx_port(int port)
 	/* Re-enable the IO expander pins */
 	gpio_reset_port(ioex_port0);
 	gpio_reset_port(ioex_port1);
-}
-
-void board_reset_pd_mcu(void)
-{
-	/* Reset TCPC0 */
-	reset_nct38xx_port(USBC_PORT_C0);
-
-	/* Reset TCPC1 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl), 1);
-	msleep(PS8815_FW_INIT_DELAY_MS);
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-	const struct gpio_dt_spec *tcpc_c0_rst_l;
-	const struct gpio_dt_spec *tcpc_c0_int_l;
-	const struct gpio_dt_spec *tcpc_c1_rst_l;
-	const struct gpio_dt_spec *tcpc_c1_int_l;
-
-	tcpc_c0_rst_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_odl);
-	tcpc_c0_int_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl);
-
-	tcpc_c1_rst_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_rt_rst_r_odl);
-	tcpc_c1_int_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl);
-
-	/*
-	 * Check which port has the ALERT line set and ignore if that TCPC has
-	 * its reset line active.
-	 */
-	if (!gpio_pin_get_dt(tcpc_c0_int_l) && gpio_pin_get_dt(tcpc_c0_rst_l)) {
-		status |= PD_STATUS_TCPC_ALERT_0;
-	}
-
-	if (!gpio_pin_get_dt(tcpc_c1_int_l) && gpio_pin_get_dt(tcpc_c1_rst_l)) {
-		status |= PD_STATUS_TCPC_ALERT_1;
-	}
-
-	return status;
-}
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(USBC_PORT_C1);
-		break;
-	default:
-		break;
-	}
 }
 
 void bc12_interrupt(enum gpio_signal signal)
@@ -193,13 +124,6 @@ void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
-
 static void board_disable_charger_ports(void)
 {
 	int i;
@@ -207,7 +131,7 @@ static void board_disable_charger_ports(void)
 	CPRINTSUSB("Disabling all charger ports");
 
 	/* Disable all ports. */
-	for (i = 0; i < ppc_cnt; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		/*
 		 * If this port had booted in dead battery mode, go
 		 * ahead and reset it so EN_SNK responds properly.
@@ -229,9 +153,8 @@ static void board_disable_charger_ports(void)
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	bool is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
-	int rv;
 
 	if (port == CHARGE_PORT_NONE) {
 		board_disable_charger_ports();
@@ -249,7 +172,6 @@ int board_set_active_charge_port(int port)
 	 * sufficient battery to do so, which will bring EN_SNK back under
 	 * normal control.
 	 */
-	rv = EC_SUCCESS;
 	if (port == USBC_PORT_C0 &&
 	    nct38xx_get_boot_type(port) == NCT38XX_BOOT_DEAD_BATTERY) {
 		/* Handle dead battery boot case */
@@ -265,12 +187,8 @@ int board_set_active_charge_port(int port)
 		}
 	}
 
-	if (rv != EC_SUCCESS) {
-		return rv;
-	}
-
 	/* Check if the port is sourcing VBUS. */
-	if (tcpm_get_src_ctrl(port)) {
+	if (ppc_is_sourcing_vbus(port)) {
 		CPRINTSUSB("Skip enable C%d", port);
 		return EC_ERROR_INVAL;
 	}
@@ -281,7 +199,7 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < ppc_cnt; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (i == port) {
 			continue;
 		}

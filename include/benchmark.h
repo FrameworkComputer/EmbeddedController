@@ -8,17 +8,18 @@
 #ifndef __CROS_EC_BENCHMARK_H
 #define __CROS_EC_BENCHMARK_H
 
-#include <array>
-#include <optional>
-#include <functional>
 #include <stdint.h>
+
+#include <array>
+#include <functional>
+#include <optional>
 #include <string_view>
 
 extern "C" {
+#include "clock.h"
 #include "console.h"
 #include "timer.h"
 #include "util.h"
-#include "clock.h"
 #include "watchdog.h"
 }
 
@@ -41,12 +42,40 @@ struct BenchmarkResult {
 	std::string_view name;
 	/* Total elapsed time (us) for all iterations */
 	uint32_t elapsed_time;
-	/* Average elapsed time (ns) for a single iteration */
+	/* Average elapsed time (us) for a single iteration */
 	uint32_t average_time;
 	/* Minimum elapsed time (us) for a single iteration */
 	uint32_t min_time;
 	/* Maximum elapsed time (us) for a single iteration */
 	uint32_t max_time;
+
+	/* Compare two BenchmarkResult structs and print delta between baseline
+	 * and other. */
+	static void compare(const BenchmarkResult &baseline,
+			    const BenchmarkResult &other)
+	{
+		auto print_comparison = [](std::string_view title,
+					   uint32_t baseline, uint32_t other) {
+			ccprintf(" %7s (us): %9u %9u %+9d (%+d%%)\n",
+				 title.data(), baseline, other,
+				 other - baseline,
+				 100 *
+					 (static_cast<int32_t>(other) -
+					  static_cast<int32_t>(baseline)) /
+					 static_cast<int32_t>(baseline));
+		};
+		ccprintf("-----------------------------------------------\n");
+		ccprintf("Compare: %s vs %s\n", baseline.name.data(),
+			 other.name.data());
+		ccprintf("-----------------------------------------------\n");
+		print_comparison("Elapsed", baseline.elapsed_time,
+				 other.elapsed_time);
+		print_comparison("Min", baseline.min_time, other.min_time);
+		print_comparison("Max", baseline.max_time, other.max_time);
+		print_comparison("Avg", baseline.average_time,
+				 other.average_time);
+		cflush();
+	}
 };
 
 /* Benchmark main class responsible for running the experiments and
@@ -115,42 +144,27 @@ template <int MAX_NUM_RESULTS = 5> class Benchmark {
 		return result;
 	}
 
-	void print_results()
+	void print_results() const
 	{
-		print_header();
-		for (int i = 0; i < num_results_; ++i)
-			print_result(results_[i]);
+		for (int i = 0; i < num_results_; ++i) {
+			auto &result = results_[i];
+			ccprintf("------------------------------\n");
+			ccprintf("Benchmark: %s\n", result.name.data());
+			ccprintf("------------------------------\n");
+			ccprintf(" Iterations:   %u\n",
+				 options_.num_iterations);
+			ccprintf(" Elapsed (us): %u\n", result.elapsed_time);
+			ccprintf(" Min (us):     %u\n", result.min_time);
+			ccprintf(" Max (us):     %u\n", result.max_time);
+			ccprintf(" Avg (us):     %u\n", result.average_time);
+			cflush();
+		}
 	}
 
     private:
 	const BenchmarkOptions options_;
 	std::array<BenchmarkResult, MAX_NUM_RESULTS> results_;
 	int num_results_ = 0;
-
-	/* Print table header with column names */
-	void print_header()
-	{
-		constexpr char kSeparator[] = "--------------------------";
-
-		ccprintf("%16s | %15s | %13s | %13s | %13s | %13s\n",
-			 "Test Name", "Num Iterations", "Elapsed (us)",
-			 "Min (us)", "Max (us)", "Avg (us)");
-		ccprintf("%.*s | %.*s | %.*s | %.*s | %.*s | %.*s\n", 16,
-			 kSeparator, 15, kSeparator, 13, kSeparator, 13,
-			 kSeparator, 13, kSeparator, 13, kSeparator);
-		cflush();
-	}
-
-	/* Print a single benchmark result */
-	int print_result(const BenchmarkResult &result)
-	{
-		ccprintf("%16s | %15u | %13u | %13u | %13u | %13u\n",
-			 result.name.data(), options_.num_iterations,
-			 result.elapsed_time, result.min_time, result.max_time,
-			 result.average_time);
-		cflush();
-		return EC_SUCCESS;
-	}
 };
 
 #endif /* __CROS_EC_BENCHMARK_H */

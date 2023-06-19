@@ -4,8 +4,6 @@
  */
 
 #include <cros/binman.dtsi>
-#include <ite/it8xxx2.dtsi>
-#include <ite/it8xxx2-pinctrl-map.dtsi>
 
 / {
 	chosen {
@@ -51,18 +49,6 @@
 	};
 
 	soc {
-		shi: shi@f03a00 {
-			compatible = "ite,it8xxx2-cros-shi";
-			reg = <0x00f03a00 0x30>;
-			interrupts = <171 0>;
-			interrupt-parent = <&intc>;
-			pinctrl-0 = <&shi_mosi_gpm0_default
-				     &shi_miso_gpm1_default
-				     &shi_clk_gpm4_default
-				     &shi_cs_gpm5_default>;
-			pinctrl-names = "default";
-		};
-
 		fiu0: cros-flash@80000000 {
 			compatible = "ite,it8xxx2-cros-flash";
 			reg = <0x80000000 0x100000>;
@@ -86,16 +72,28 @@
 	};
 
 	/* it8xxx2 has 1MB of flash. currently, we use 768KB from flash. */
-	binman {
-		wp-ro {
-			offset = <0x0>;
-			size = <0x60000>;
-		};
-		ec-rw {
-			offset = <0x60000>;
-			size = <0x60000>;
-		};
-		pad-byte = <0xff>;
-		pad-after = <0x40000>;
+};
+
+&binman {
+	wp-ro {
+		offset = <0x0>;
+		size = <0x60000>;
 	};
+	ec-rw {
+		offset = <0x60000>;
+		size = <0x60000>;
+		rw-fw {
+			rw-fwid {
+				/* Fix the lcoation of the FWID to the
+				 * last 32 bytes of the flash. This
+				 * ensures the RW entries in the FMAP
+				 * stored in the RO section of flash
+				 * are always correct.
+				 */
+				offset = <(0x60000 - 32)>;
+			};
+		};
+	};
+	pad-byte = <0xff>;
+	pad-after = <0x40000>;
 };

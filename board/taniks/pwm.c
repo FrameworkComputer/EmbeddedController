@@ -4,7 +4,6 @@
  */
 
 #include "common.h"
-
 #include "compile_time_macros.h"
 #include "hooks.h"
 #include "pwm.h"

@@ -60,7 +60,7 @@ static void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
-/* Must come after other header files and GPIO interrupts*/
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -172,7 +172,8 @@ static void set_input_limit_on_ac_removal(void)
 	if (get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
 		return;
 
-	charger_set_input_current_limit(0, CONFIG_CHARGER_INPUT_CURRENT);
+	charger_set_input_current_limit(0,
+					CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT);
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, set_input_limit_on_ac_removal, HOOK_PRIO_DEFAULT);
 

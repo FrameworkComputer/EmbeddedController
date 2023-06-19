@@ -5,16 +5,17 @@
 
 #define DT_DRV_COMPAT ite_it8xxx2_cros_flash
 
-#include <drivers/cros_flash.h>
-#include <zephyr/drivers/flash.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-
 #include "flash.h"
 #include "host_command.h"
 #include "system.h"
 #include "watchdog.h"
+
+#include <zephyr/drivers/flash.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <drivers/cros_flash.h>
+#include <soc.h>
 
 LOG_MODULE_REGISTER(cros_flash, LOG_LEVEL_ERR);
 
@@ -179,7 +180,7 @@ static int cros_flash_it8xxx2_write(const struct device *dev, int offset,
 	 * chance to go back to hook task to touch watchdog. Reload watchdog
 	 * on each flash write to prevent the reset.
 	 */
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG))
+	if (IS_ENABLED(CONFIG_WATCHDOG))
 		watchdog_reload();
 
 	return flash_write(flash_controller, offset, src_data, size);
@@ -208,7 +209,7 @@ static int cros_flash_it8xxx2_erase(const struct device *dev, int offset,
 	 */
 	if (IS_ENABLED(HAS_TASK_HOSTCMD) &&
 	    IS_ENABLED(CONFIG_HOST_COMMAND_STATUS)) {
-		irq_enable(DT_IRQN(DT_NODELABEL(shi)));
+		irq_enable(DT_IRQN(DT_NODELABEL(shi0)));
 	}
 	/* Always use sector erase command */
 	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE) {
@@ -222,7 +223,7 @@ static int cros_flash_it8xxx2_erase(const struct device *dev, int offset,
 		 * If requested erase size is too large at one time on KGD
 		 * flash, we need to reload watchdog to prevent the reset.
 		 */
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG) && (size > 0x10000))
+		if (IS_ENABLED(CONFIG_WATCHDOG) && (size > 0x10000))
 			watchdog_reload();
 	}
 	/* Restore interrupts */

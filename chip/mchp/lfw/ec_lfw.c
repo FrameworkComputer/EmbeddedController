@@ -6,29 +6,31 @@
  *
  */
 
-#include <stdint.h>
-
+#include "clock.h"
 #include "config.h"
+#include "cpu.h"
 #include "cros_version.h"
+#include "dma.h"
 #include "gpio.h"
+#include "hwtimer.h"
+#include "registers.h"
 #include "spi.h"
 #include "spi_flash.h"
-#include "util.h"
-#include "timer.h"
-#include "dma.h"
-#include "registers.h"
-#include "cpu.h"
-#include "clock.h"
 #include "system.h"
-#include "hwtimer.h"
-#include "gpio_list.h"
 #include "tfdp_chip.h"
+#include "timer.h"
+#include "util.h"
+
+#include <stdint.h>
 
 #ifdef CONFIG_MCHP_LFW_DEBUG
 #include "dma_chip.h"
 #endif
 
 #include "ec_lfw.h"
+
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /*
  * Check if LFW build is pulling in GPSPI which is not

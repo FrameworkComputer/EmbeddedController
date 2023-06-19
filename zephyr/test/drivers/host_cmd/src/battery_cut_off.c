@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"
@@ -13,6 +10,9 @@
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 struct host_cmd_battery_cut_off_fixture {
 	const struct emul *emul;
@@ -54,23 +54,19 @@ ZTEST_SUITE(host_cmd_battery_cut_off, drivers_predicate_post_main,
 ZTEST_USER_F(host_cmd_battery_cut_off, test_fail_sb_write)
 {
 	int rv;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_BATTERY_CUT_OFF, UINT8_C(0));
 
 	/* Force a failure on the battery i2c write to 0x00 */
 	i2c_common_emul_set_write_fail_reg(fixture->i2c_emul, 0);
 
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_cut_off(NULL);
 	zassert_equal(EC_RES_ERROR, rv, "Expected 0, but got %d", rv);
 }
 
 ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_battery)
 {
 	int rv;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_BATTERY_CUT_OFF, UINT8_C(0));
 
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_cut_off(NULL);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
 	zassert_true(battery_is_cut_off(), NULL);
 }
@@ -81,10 +77,8 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_v1)
 	struct ec_params_battery_cutoff params = {
 		.flags = 0,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_BATTERY_CUT_OFF, UINT8_C(1), params);
 
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_cut_off_v1(NULL, &params);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
 	zassert_true(battery_is_cut_off(), NULL);
 }
@@ -95,10 +89,8 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_at_shutdown)
 	struct ec_params_battery_cutoff params = {
 		.flags = EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_BATTERY_CUT_OFF, UINT8_C(1), params);
 
-	rv = host_command_process(&args);
+	rv = ec_cmd_battery_cut_off_v1(NULL, &params);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
 	zassert_false(battery_is_cut_off(), NULL);
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);

@@ -6,10 +6,10 @@
  * section definitions to export different tasklists.
  */
 
-#include <stdint.h>
-
 #include "config.h"
 #include "task_id.h"
+
+#include <stdint.h>
 
 #ifdef SECTION_IS_RO
 #define GET_TASKINFOS_FUNC get_ro_taskinfos

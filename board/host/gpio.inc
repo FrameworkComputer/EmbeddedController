@@ -14,6 +14,7 @@ GPIO_INT(AC_PRESENT,           PIN(0, 2), GPIO_INT_BOTH, extpower_interrupt)
 GPIO_INT(VOLUME_DOWN_L,        PIN(0, 3), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(VOLUME_UP_L,          PIN(0, 4), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(CHARGE_DONE,          PIN(0, 5), GPIO_INT_BOTH, inductive_charging_interrupt)
+GPIO_INT(TABLET_MODE_L,        PIN(0, 19), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 /* Fingerprint */
 GPIO_INT(FPS_INT,              PIN(0, 14), GPIO_INT_RISING, fps_event)
 

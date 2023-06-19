@@ -19,6 +19,7 @@
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "motionsense.dtsi"
+#include <cros/thermistor/thermistor.dtsi>
 
 /* evoker overrides follow... */
 /* battery overrides */
@@ -56,4 +57,42 @@
 	gpio-interrupts {
 		/delete-node/ usb_a0_oc;
 	};
+};
+
+/* adc0 overrides */
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42
+		     &adc0_chan4_gp41>;
+	pinctrl-names = "default";
+};
+
+/* temp sensors */
+/ {
+	named-adc-channels {
+		adc_temp_sensor_1: temp_sensor_1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 4>;
+		};
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		charger {
+			power-good-pin = <&gpio_en_pp5000_s5>;
+			sensor = <&temp_charger>;
+		};
+	};
+
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
 };

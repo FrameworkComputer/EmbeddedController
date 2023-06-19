@@ -8,11 +8,11 @@
 #include "clock.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "math_util.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
 #include "util.h"
-#include "math_util.h"
 
 #define PWM_CTRX_MIN 100
 #define PWM_EC_FREQ 8000000

@@ -7,10 +7,10 @@
  * LIS2DW12 accelerometer module for Chrome EC 3D digital accelerometer.
  * For more details on LIS2DW12 device please refers to www.st.com.
  */
+#include "accel_lis2dw12.h"
 #include "accelgyro.h"
 #include "common.h"
 #include "console.h"
-#include "accel_lis2dw12.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "math_util.h"
@@ -122,6 +122,9 @@ static int lis2dw12_load_fifo(struct motion_sensor_t *s, int nsamples)
 			/* Apply precision, sensitivity and rotation vector. */
 			st_normalize(s, axis, &fifo[i]);
 
+			if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+			    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+				axis = s->spoof_xyz;
 			if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 				struct ec_response_motion_sensor_data vect;
 				/* Fill vector array. */
@@ -357,7 +360,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	 * But lis2dw12 needs switch low power mode according to odr value.
 	 */
 	if (!IS_ENABLED(CONFIG_ACCEL_LIS2DWL)) {
-		if (reg_val > LIS2DW12_ODR_200HZ_VAL)
+		if (reg_val >= LIS2DW12_ODR_50HZ_VAL)
 			ret = lis2dw12_set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
 		else
 			ret = lis2dw12_set_power_mode(
@@ -379,6 +382,35 @@ unlock_rate:
 
 	return ret;
 }
+
+#ifdef CONFIG_BODY_DETECTION
+static int get_rms_noise(const struct motion_sensor_t *s)
+{
+	fp_t rate, noise_density_ug;
+
+	/* change unit of ODR to Hz to prevent INT_TO_FP() overflow */
+	rate = INT_TO_FP(st_get_data_rate(s) / 1000);
+
+	/*
+	 * LIS2DW12: 90ug/sqrt(Hz) when ODR is over 50Hz
+	 * When lower, we are in power mode 2, so the noise density does not
+	 * depend on frequency and the RMS at +/-2g is 2.4mg.
+	 *
+	 * LIS12DWL: 110uq/sqr(Hz) for all frequencies, since low power mode
+	 * is not used.
+	 */
+
+	if (!IS_ENABLED(CONFIG_ACCEL_LIS2DWL)) {
+		if (rate < INT_TO_FP(50))
+			return 2400;
+		noise_density_ug = INT_TO_FP(90);
+	} else {
+		noise_density_ug = INT_TO_FP(110);
+	}
+
+	return FP_TO_INT(fp_mul(fp_sqrtf(rate), noise_density_ug));
+}
+#endif
 
 static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
@@ -476,6 +508,11 @@ static int init(struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
+	ret = st_write_data_with_mask(s, LIS2DW12_LOW_NOISE_ADDR,
+				      LIS2DW12_LOW_NOISE_MASK, LIS2DW12_EN_BIT);
+	if (ret != EC_SUCCESS)
+		goto err_unlock;
+
 	/* Interrupt trigger level of power-on-reset is HIGH */
 	if (IS_ENABLED(ACCEL_LIS2DW12_INT_ENABLE)) {
 		ret = st_write_data_with_mask(s, LIS2DW12_H_ACTIVE_ADDR,
@@ -527,4 +564,7 @@ const struct accelgyro_drv lis2dw12_drv = {
 #ifdef ACCEL_LIS2DW12_INT_ENABLE
 	.irq_handler = lis2dw12_irq_handler,
 #endif /* ACCEL_LIS2DW12_INT_ENABLE */
+#ifdef CONFIG_BODY_DETECTION
+	.get_rms_noise = get_rms_noise,
+#endif
 };

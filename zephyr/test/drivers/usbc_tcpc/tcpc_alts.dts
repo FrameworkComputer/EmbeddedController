@@ -1,0 +1,88 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ /* Define nodes with the "is-alt" property set. Used by the TCPC shim
+  * test to validate the runtime replacement of the TCPC driver.
+  */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+&i2c0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	tcpc_anx7447_alt: tcpc-anx7447-alt@2c {
+		compatible = "analogix,anx7447-tcpc", "cros,i2c-mock";
+		reg = <0x2c>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+		is-alt;
+	};
+
+	tcpc_ccgxxf_alt: tcpc-ccgxxf-alt@11 {
+		compatible = "cypress,ccgxxf", "cros,i2c-mock";
+		reg = <0x11>;
+		is-alt;
+	};
+
+	tcpc_fusb302_alt: tcpc-fusb302-alt@22 {
+		compatible = "fairchild,fusb302", "cros,i2c-mock";
+		reg = <0x22>;
+		is-alt;
+	};
+
+	tcpc_ps8xxx_alt: tcpc-ps8xxx-alt@b {
+		compatible = "parade,ps8xxx", "cros,i2c-mock";
+		reg = < 0xb >;
+		tcpc-flags = < 0xd8 >;
+		is-alt;
+	};
+
+	tcpc_raa489000_alt: tcpc-raa489000-alt@e {
+		compatible = "renesas,raa489000", "cros,i2c-mock";
+		reg = <0xe>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+		is-alt;
+	};
+
+	tcpc_nct38xx_alt: tcpc-nct38xx-alt@73 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x73>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+		is-alt;
+	};
+
+
+	tcpc_rt1715_alt: tcpc-rt1715-alt@a{
+		compatible = "richtek,rt1715-tcpc", "cros,i2c-mock";
+		reg = <0xa>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+		is-alt;
+	};
+
+	tcpc_rt1718s_alt: tcpc-rt1718s-alt@40 {
+		compatible = "richtek,rt1718s-tcpc", "cros,i2c-mock";
+		reg = <0x40>;
+		tcpc-flags = <(
+			TCPC_FLAGS_ALERT_OD |
+			TCPC_FLAGS_CONTROL_VCONN |
+			TCPC_FLAGS_CONTROL_FRS)>;
+		is-alt;
+	};
+
+	tcpc_alt: tcpc-alt@41 {
+		compatible = "cros-ec,tcpci", "cros,i2c-mock";
+		reg = <0x41>;
+		is-alt;
+	};
+};

@@ -1,0 +1,33 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Workaround for not being able to have commas in macro arguments
+DT_CHOSEN_ZEPHYR_ENTROPY := zephyr,entropy
+
+config PLATFORM_EC_RANDOM
+	bool "Enable shim for random number generator"
+	depends on $(dt_chosen_enabled,$(DT_CHOSEN_ZEPHYR_ENTROPY))
+	select ENTROPY_GENERATOR
+	help
+	  If enabled, trng_rand() and trng_rand_bytes() functions will be
+	  available. These functions are implemented using Zephyr's entropy API.
+
+if PLATFORM_EC_RANDOM
+
+config PLATFORM_EC_HOSTCMD_RAND
+	bool "Host Command: EC_CMD_RAND_NUM"
+	default n
+	help
+	  Enable the EC_CMD_RAND_NUM host commnand which provides random number
+	  to host.
+
+config PLATFORM_EC_CONSOLE_CMD_RAND
+	bool "Enable 'rand' console command"
+	depends on SHELL
+	default n
+	help
+	  Enable the 'rand' console command. The command is used to check random
+	  number generator.
+
+endif  # PLATFORM_EC_RANDOM

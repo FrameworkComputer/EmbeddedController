@@ -3,29 +3,28 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
+#include "chipset.h"
 #include "common.h"
+#include "driver/retimer/bb_retimer.h"
 #include "ec_tasks.h"
 #include "emul/emul_bb_retimer.h"
 #include "emul/emul_common_i2c.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "test/drivers/stubs.h"
-#include "usb_prl_sm.h"
-#include "usb_tc_sm.h"
-#include "chipset.h"
-
-#include "driver/retimer/bb_retimer.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "usb_prl_sm.h"
+#include "usb_tc_sm.h"
 
-#define GPIO_USB_C1_LS_EN_PATH DT_PATH(named_gpios, usb_c1_ls_en)
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+
+#define GPIO_USB_C1_LS_EN_PATH NAMED_GPIOS_GPIO_NODE(usb_c1_ls_en)
 #define GPIO_USB_C1_LS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_LS_EN_PATH, gpios)
-#define GPIO_USB_C1_RT_RST_ODL_PATH DT_PATH(named_gpios, usb_c1_rt_rst_odl)
+#define GPIO_USB_C1_RT_RST_ODL_PATH NAMED_GPIOS_GPIO_NODE(usb_c1_rt_rst_odl)
 #define GPIO_USB_C1_RT_RST_ODL_PORT \
 	DT_GPIO_PIN(GPIO_USB_C1_RT_RST_ODL_PATH, gpios)
 #define BB_RETIMER_NODE DT_NODELABEL(usb_c1_bb_retimer_emul)
@@ -239,6 +238,35 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_idle_mode)
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	zassert_equal(conn, usb3_conn, "Expected state 0x%02x, got 0x%02x",
 		      usb3_conn, conn);
+}
+
+/** Test retimer dp connection setting. */
+ZTEST_USER(bb_retimer_no_tasks, test_bb_retimer_set_dp_connection)
+{
+	const uint32_t enable_dp_conn = BB_RETIMER_DP_CONNECTION;
+	const uint32_t disable_dp_conn = 0;
+	const struct emul *emul = EMUL_DT_GET(BB_RETIMER_NODE);
+	struct usb_mux usb_mux_c1;
+	uint32_t conn;
+
+	set_test_runner_tid();
+
+	usb_mux_c1 = *usb_muxes[USBC_PORT_C1].mux;
+
+	/* Check if DP is enabled */
+	zassert_equal(EC_SUCCESS,
+		      bb_retimer_set_dp_connection(&usb_mux_c1, true), NULL);
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	zassert_equal(conn, enable_dp_conn, "Expected state 0x%02x, got 0x%02x",
+		      enable_dp_conn, conn);
+
+	/* Check if DP is disabled */
+	zassert_equal(EC_SUCCESS,
+		      bb_retimer_set_dp_connection(&usb_mux_c1, false), NULL);
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	zassert_equal(conn, disable_dp_conn,
+		      "Expected state 0x%02x, got 0x%02x", disable_dp_conn,
+		      conn);
 }
 
 /** Test setting different options for DFP role */
@@ -600,23 +628,23 @@ ZTEST_USER(bb_retimer, test_bb_console_cmd)
 	int rv;
 
 	/* Validate well formed shell commands */
-	rv = shell_execute_cmd(get_ec_shell(), "bb 1 r 2");
+	rv = shell_execute_cmd(get_ec_shell(), "retimer 1 r 2");
 	zassert_ok(rv, "rv=%d", rv);
-	rv = shell_execute_cmd(get_ec_shell(), "bb 1 w 2 0");
+	rv = shell_execute_cmd(get_ec_shell(), "retimer 1 w 2 0");
 	zassert_ok(rv, "rv=%d", rv);
 
 	/* Validate errors for malformed shell commands */
-	rv = shell_execute_cmd(get_ec_shell(), "bb x");
+	rv = shell_execute_cmd(get_ec_shell(), "retimer x");
 	zassert_equal(EC_ERROR_PARAM_COUNT, rv, "rv=%d", rv);
-	rv = shell_execute_cmd(get_ec_shell(), "bb x r 2");
+	rv = shell_execute_cmd(get_ec_shell(), "retimer x r 2");
 	zassert_equal(EC_ERROR_PARAM1, rv, "rv=%d", rv);
-	rv = shell_execute_cmd(get_ec_shell(), "bb 0 r 2");
-	zassert_equal(EC_ERROR_PARAM1, rv, "rv=%d", rv);
-	rv = shell_execute_cmd(get_ec_shell(), "bb 1 x 2");
+	rv = shell_execute_cmd(get_ec_shell(), "retimer 0 r 2");
+	zassert_equal(EC_ERROR_UNIMPLEMENTED, rv, "rv=%d", rv);
+	rv = shell_execute_cmd(get_ec_shell(), "retimer 1 x 2");
 	zassert_equal(EC_ERROR_PARAM2, rv, "rv=%d", rv);
-	rv = shell_execute_cmd(get_ec_shell(), "bb 1 r x");
+	rv = shell_execute_cmd(get_ec_shell(), "retimer 1 r x");
 	zassert_equal(EC_ERROR_PARAM3, rv, "rv=%d", rv);
-	rv = shell_execute_cmd(get_ec_shell(), "bb 1 w 2 x");
+	rv = shell_execute_cmd(get_ec_shell(), "retimer 1 w 2 x");
 	zassert_equal(EC_ERROR_PARAM4, rv, "rv=%d", rv);
 }
 

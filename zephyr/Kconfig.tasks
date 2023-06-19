@@ -270,4 +270,23 @@ config TASK_CYPD_STACK_SIZE
 
 endif # HASK_TASK_CYPD
 
+config HAS_TASK_TOUCHPAD
+	bool
+	help
+	  This turns on the touchpad task which handles the input event from
+	  touchpad, and forwards the event to AP through either USB-HID or MKBP
+	  interface.
+
+if HAS_TASK_TOUCHPAD
+
+config TASK_TOUCHPAD_STACK_SIZE
+	int "TOUCHPAD task stack size"
+	default 1280
+	help
+	  The stack size of the touchpad task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_TOUCHPAD
+
 endmenu # Tasks

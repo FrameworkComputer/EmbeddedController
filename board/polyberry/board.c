@@ -8,17 +8,19 @@
 #include "dma.h"
 #include "ec_version.h"
 #include "gpio.h"
-#include "gpio_list.h"
 #include "hooks.h"
 #include "registers.h"
 #include "stm32-dma.h"
 #include "task.h"
 #include "update_fw.h"
 #include "usb_descriptor.h"
-#include "util.h"
 #include "usb_dwc_console.h"
 #include "usb_dwc_update.h"
 #include "usb_hw.h"
+#include "util.h"
+
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.

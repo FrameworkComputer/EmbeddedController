@@ -5,10 +5,12 @@
  * Standalone utility to parse EC panicinfo.
  */
 
+#include "compile_time_macros.h"
+
 #include <stdint.h>
 #include <stdio.h>
-#include "compile_time_macros.h"
-#include "ec_panicinfo.h"
+
+#include <libec/ec_panicinfo.h>
 
 int main(int argc, char *argv[])
 {
@@ -16,11 +18,9 @@ int main(int argc, char *argv[])
 	 * panic_data size could change with time, as new architecture are
 	 * added (or, less likely, removed).
 	 */
-	char pdata[4096];
-	size_t size = 0;
-	size_t read;
+	const size_t max_size = 4096;
 
-	BUILD_ASSERT(sizeof(pdata) > sizeof(struct panic_data) * 2);
+	BUILD_ASSERT(max_size > sizeof(struct panic_data) * 2);
 
 	/*
 	 * Provide a minimal help message.
@@ -35,21 +35,19 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	while (1) {
-		read = fread(&pdata[size], 1, sizeof(pdata) - size, stdin);
-		if (read < 0) {
-			fprintf(stderr, "Cannot read panicinfo from stdin.\n");
-			return 1;
-		}
-		if (read == 0)
-			break;
-
-		size += read;
-		if (size == sizeof(pdata)) {
-			fprintf(stderr, "Too much panicinfo data in stdin.\n");
-			return 1;
-		}
+	auto data = ec::GetPanicInput(4096);
+	if (!data.has_value()) {
+		fprintf(stderr, "%s", data.error().c_str());
+		return 1;
 	}
 
-	return parse_panic_info(pdata, size) ? 1 : 0;
+	auto result = ec::ParsePanicInfo(data.value());
+
+	if (!result.has_value()) {
+		fprintf(stderr, "%s", result.error().c_str());
+		return 1;
+	}
+	printf("%s", result.value().c_str());
+
+	return 0;
 }

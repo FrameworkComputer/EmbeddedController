@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/emul.h>
-#include <zephyr/ztest.h>
-
 #include "emul/tcpc/emul_tcpci.h"
 #include "tcpm/anx7447_public.h"
 #include "tcpm/tcpci.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "usb_pd.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 #define ANX7447_NODE DT_NODELABEL(anx7447_emul)
 
@@ -20,7 +20,7 @@ static const int tcpm_anx7447_port = USBC_PORT_C0;
 ZTEST_SUITE(low_power_mode, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);
 
-ZTEST(low_power_mode, enter_low_power_in_source_mode)
+ZTEST(low_power_mode, test_enter_low_power_in_source_mode)
 {
 	uint16_t reg_val = 0;
 	const struct emul *anx7447_emul = EMUL_DT_GET(ANX7447_NODE);
@@ -40,7 +40,7 @@ ZTEST(low_power_mode, enter_low_power_in_source_mode)
 		"Role register value is not as expected while entering low power mode");
 }
 
-ZTEST(low_power_mode, enter_low_power_not_in_source_mode)
+ZTEST(low_power_mode, test_enter_low_power_not_in_source_mode)
 {
 	uint16_t reg_val = 0;
 	const struct emul *anx7447_emul = EMUL_DT_GET(ANX7447_NODE);

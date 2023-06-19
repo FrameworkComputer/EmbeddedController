@@ -2,14 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-
 #include "host_command.h"
 #include "led_common.h"
 #include "test/drivers/test_state.h"
 
-ZTEST(led_common, host_command__query)
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
+
+ZTEST(led_common, test_host_command__query)
 {
 	/* Gets the brightness range for an LED */
 
@@ -27,17 +27,14 @@ ZTEST(led_common, host_command__query)
 		[EC_LED_COLOR_WHITE] = 1, [EC_LED_COLOR_AMBER] = 0,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_ok(ret, "Host command returned %d", ret);
 	zassert_mem_equal(expected_brightness_ranges, response.brightness_range,
 			  sizeof(expected_brightness_ranges), NULL);
 }
 
-ZTEST(led_common, host_command__invalid_led)
+ZTEST(led_common, test_host_command__invalid_led)
 {
 	/* Try accessing info on a non-existent LED */
 
@@ -48,16 +45,13 @@ ZTEST(led_common, host_command__invalid_led)
 		.flags = EC_LED_FLAGS_QUERY,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Host command returned %d",
 		      ret);
 }
 
-ZTEST(led_common, host_command__supported_channel)
+ZTEST(led_common, test_host_command__supported_channel)
 {
 	/* Try setting brightness on a color channel that is not supported */
 
@@ -72,16 +66,13 @@ ZTEST(led_common, host_command__supported_channel)
 		},
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_INVALID_PARAM, ret, "Host command returned %d",
 		      ret);
 }
 
-ZTEST(led_common, host_command__manual_control)
+ZTEST(led_common, test_host_command__manual_control)
 {
 	/* Set brightness for an LED directly */
 
@@ -96,10 +87,7 @@ ZTEST(led_common, host_command__manual_control)
 		},
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_SUCCESS, ret, "Host command returned %d", ret);
 	zassert_true(
@@ -112,7 +100,7 @@ ZTEST(led_common, host_command__manual_control)
 
 FAKE_VOID_FUNC(board_led_auto_control);
 
-ZTEST(led_common, host_command__auto_control)
+ZTEST(led_common, test_host_command__auto_control)
 {
 	/* Configure an LED for automatic control */
 
@@ -123,10 +111,7 @@ ZTEST(led_common, host_command__auto_control)
 		.flags = EC_LED_FLAGS_AUTO,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_LED_CONTROL, 1, response, params);
-
-	ret = host_command_process(&args);
+	ret = ec_cmd_led_control_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_SUCCESS, ret, "Host command returned %d", ret);
 	zassert_equal(1, board_led_auto_control_fake.call_count,

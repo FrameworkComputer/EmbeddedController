@@ -39,9 +39,12 @@ CLANG_BOARDS:= \
 	bloonchipper \
 	dartmonkey \
 	hatch_fp \
+	helipilot \
 	nami_fp \
 	nocturne_fp \
 	nucleo-dartmonkey \
+	nucleo-h743zi \
+	nucleo-f412zg \
 
 ifeq ($(filter $(BOARD), $(CLANG_BOARDS)), $(BOARD))
 CC=clang
@@ -113,7 +116,7 @@ else
 HOSTGCOV=$(CURDIR)/util/llvm-gcov.sh
 endif
 
-C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
+C_WARN = -Wstrict-prototypes -Wno-pointer-sign
 C_WARN += -Werror-implicit-function-declaration
 COMMON_WARN += -Wall -Wundef \
 	-Wno-trigraphs -Wno-format-security -Wno-address-of-packed-member \
@@ -194,7 +197,7 @@ CPPFLAGS+=-Og
 endif
 CPPFLAGS+= -DCHROMIUM_EC=$(EMPTY)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(COMMON_WARN) $(CFLAGS_y)
-CFLAGS+= -ffunction-sections -fshort-wchar
+CFLAGS+= -ffunction-sections
 CFLAGS+= -fno-delete-null-pointer-checks
 CFLAGS+= -fno-PIC
 ifneq ($(cc-name),clang)
@@ -205,13 +208,6 @@ CXXFLAGS=$(CXXFLAGS_WARN)
 CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 CPPFLAGS+=-DUSE_BUILTIN_STDLIB
-else
-# TODO(https://issuetracker.google.com/234507656#comment19): C++ include path
-# should not be necessary.
-CXXFLAGS+=-I/usr/armv7m-cros-eabi/usr/include/c++/v1
-# TODO(https://issuetracker.google.com/254916723): Remove when toolchain is
-# fixed.
-CPPFLAGS+=-D_GNU_SOURCE
 endif
 
 ifeq ($(LIBFTDI_NAME),)
@@ -228,6 +224,9 @@ LIBFTDIUSB_HOST_LDLIBS:=$(shell $(HOST_PKG_CONFIG) --libs   lib${LIBFTDI_NAME} l
 
 LIBFTDIUSB_BUILD_CFLAGS:=$(shell $(BUILD_PKG_CONFIG) --cflags lib${LIBFTDI_NAME} libusb-1.0)
 LIBFTDIUSB_BUILD_LDLIBS:=$(shell $(BUILD_PKG_CONFIG) --libs   lib${LIBFTDI_NAME} libusb-1.0)
+
+LIBEC_HOST_CFLAGS:=$(shell $(HOST_PKG_CONFIG) --cflags libec)
+LIBEC_HOST_LDLIBS:=$(shell $(HOST_PKG_CONFIG) --libs libec)
 
 ifeq ($(TEST_FUZZ),y)
 LIBPROTOBUF_CFLAGS:=$(shell $(PKG_CONFIG) --cflags protobuf)
@@ -247,6 +246,7 @@ HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) \
 HOST_CFLAGS+=$(LIBFTDIUSB_HOST_CFLAGS)
 HOST_CFLAGS+=-DCHROMIUM_EC=$(EMPTY)
 HOST_CXXFLAGS=$(HOST_CFLAGS) -Wno-c99-designator
+HOST_CXXFLAGS+=$(LIBEC_HOST_CFLAGS)
 ifneq (${SYSROOT},)
   LDFLAGS_EXTRA+=--sysroot=${SYSROOT}
 endif
@@ -266,8 +266,9 @@ HOST_LDFLAGS=$(LIBFTDIUSB_HOST_LDLIBS)
 ifneq (${HOST_SYSROOT},)
   HOST_LDFLAGS+=--sysroot=${HOST_SYSROOT}
 endif
+HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
-		  -fuse-ld=bfd -no-pie \
+		  -no-pie -flto\
 		  $(if $(TEST_COVERAGE), --coverage,) \
 		  $(if $(TEST_ASAN), -fsanitize=address) \
 		  $(if $(TEST_MSAN), -fsanitize=memory) \

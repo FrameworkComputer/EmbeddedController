@@ -3,22 +3,23 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_lis2dw12_emul
-
-#include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/i2c_emul.h>
-#include <zephyr/drivers/emul.h>
-#include <errno.h>
-#include <zephyr/sys/__assert.h>
-
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"
-#include "i2c.h"
 #include "emul/emul_stub_device.h"
+#include "i2c.h"
 
+#include <errno.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/__assert.h>
+
+#define DT_DRV_COMPAT cros_lis2dw12_emul
+
 LOG_MODULE_REGISTER(lis2dw12_emul, CONFIG_LIS2DW12_EMUL_LOG_LEVEL);
 
 struct lis2dw12_emul_data {
@@ -292,7 +293,8 @@ void lis2dw12_emul_clear_accel_reading(const struct emul *emul)
 		},                                                        \
 	}; \
 	EMUL_DT_INST_DEFINE(n, emul_lis2dw12_init, &lis2dw12_emul_data_##n, \
-			    &lis2dw12_emul_cfg_##n, &i2c_common_emul_api)
+			    &lis2dw12_emul_cfg_##n, &i2c_common_emul_api,   \
+			    NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_LIS2DW12)
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

@@ -2,14 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-#include <zephyr/shell/shell_dummy.h>
-
 #include "console.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 BUILD_ASSERT(IS_ENABLED(CONFIG_HWTIMER_64BIT),
 	     "Tests expect the 64-bit HW timer");
@@ -25,7 +25,7 @@ FAKE_VALUE_FUNC(int, __hw_clock_source_init64, uint64_t);
 
 FAKE_VALUE_FUNC(uint8_t *, system_get_jump_tag, uint16_t, int *, int *);
 
-ZTEST(timer, init_from_jump_tag)
+ZTEST(timer, test_init_from_jump_tag)
 {
 	/* When initializing after a system jump, the timer should get set to
 	 * the time before the jump (stored in a jump tag)
@@ -42,7 +42,7 @@ ZTEST(timer, init_from_jump_tag)
 		      __hw_clock_source_init64_fake.arg0_history[0], NULL);
 }
 
-ZTEST(timer, init_from_zero)
+ZTEST(timer, test_init_from_zero)
 {
 	/* When there is no jump tag, the timer should initialize to zero. */
 
@@ -56,7 +56,7 @@ ZTEST(timer, init_from_zero)
 	zassert_equal(0, __hw_clock_source_init64_fake.arg0_history[0], NULL);
 }
 
-ZTEST(timer, console_cmd_gettime)
+ZTEST(timer, test_console_cmd_gettime)
 {
 	/* Should print the current time */
 	timestamp_t fake_time;
@@ -76,7 +76,7 @@ ZTEST(timer, console_cmd_gettime)
 		   "Actual: '%s'", outbuffer);
 }
 
-ZTEST(timer, console_cmd_timerinfo)
+ZTEST(timer, test_console_cmd_timerinfo)
 {
 	/* Prints current time and info on running timers. */
 	timestamp_t fake_time;

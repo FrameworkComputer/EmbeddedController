@@ -2,29 +2,30 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <stdbool.h>
-
 #include "adc.h"
 #include "builtin/assert.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/tcpm/tcpci.h"
+#include "driver/wpc/cps8100.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
-#include "power_button.h"
 #include "hooks.h"
 #include "peripheral_charger.h"
 #include "power.h"
+#include "power_button.h"
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 #include "usbc_ppc.h"
-#include "driver/tcpm/tcpci.h"
-#include "fw_config.h"
+
+#include <stdbool.h>
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -41,7 +42,6 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
-extern struct pchg_drv cps8100_drv;
 struct pchg pchgs[] = {
 	[0] = {
 		.cfg = &(const struct pchg_config) {
@@ -58,7 +58,11 @@ struct pchg pchgs[] = {
 		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
 	},
 };
-const int pchg_count = ARRAY_SIZE(pchgs);
+
+int board_get_pchg_count(void)
+{
+	return ARRAY_SIZE(pchgs);
+}
 
 __override void board_pchg_power_on(int port, bool on)
 {
@@ -219,7 +223,8 @@ static void port_ocp_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&update_5v_usage_data, 0);
 }
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /*

@@ -10,8 +10,9 @@
 
 #define VARIANT_ZORK_TREMBYLE
 
-#include <stdbool.h>
 #include "baseboard.h"
+
+#include <stdbool.h>
 
 #undef CONFIG_USB_PORT_POWER_SMART_PORT_COUNT
 #define CONFIG_USB_PORT_POWER_SMART_PORT_COUNT 1

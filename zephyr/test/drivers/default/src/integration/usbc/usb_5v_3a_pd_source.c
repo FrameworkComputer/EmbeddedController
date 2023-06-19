@@ -3,11 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/sys/slist.h>
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "dps.h"
@@ -20,9 +15,14 @@
 #include "test/drivers/utils.h"
 #include "usb_pd.h"
 
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/slist.h>
+#include <zephyr/ztest.h>
+
 #define BATTERY_NODE DT_NODELABEL(battery)
 
-#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PATH NAMED_GPIOS_GPIO_NODE(ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
 #define TEST_PORT 0
@@ -162,20 +162,20 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_battery_not_charging)
 
 ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_charge_state)
 {
-	struct ec_response_charge_state charge_state;
+	struct ec_response_charge_state state;
 
 	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
-	charge_state = host_cmd_charge_state(TEST_PORT);
+	state = host_cmd_charge_state(TEST_PORT);
 
-	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
-	zassert_equal(charge_state.get_state.chg_current, 0,
+	zassert_false(state.get_state.ac, "AC_OK not triggered");
+	zassert_equal(state.get_state.chg_current, 0,
 		      "Max charge current expected 0mA, but was %dmA",
-		      charge_state.get_state.chg_current);
-	zassert_equal(charge_state.get_state.chg_input_current,
-		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
+		      state.get_state.chg_current);
+	zassert_equal(state.get_state.chg_input_current,
+		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
 		      "Charge input current limit expected %dmA, but was %dmA",
-		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
-		      charge_state.get_state.chg_input_current);
+		      CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT,
+		      state.get_state.chg_input_current);
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_typec_status)

@@ -66,7 +66,7 @@ static const char *get_error_text(int rv)
 
 static void print_item_name(const char *name)
 {
-	ccprintf("  %-11s", name);
+	ccprintf("  %-14s", name);
 }
 
 static int check_print_error(int rv)
@@ -215,6 +215,10 @@ static void print_battery_info(void)
 	if (check_print_error(battery_design_capacity(&value)))
 		ccprintf("%d mAh\n", value);
 
+	print_item_name("Charge Cycle:");
+	if (check_print_error(battery_cycle_count(&value)))
+		ccprintf("%d\n", value);
+
 	print_item_name("Time-full:");
 	if (check_print_error(battery_time_to_full(&value))) {
 		if (value == 65535) {
@@ -239,10 +243,10 @@ static void print_battery_info(void)
 		ccprintf("%dh:%d\n", hour, minute);
 	}
 
-	print_item_name("full_factor:");
+	print_item_name("Full Factor:");
 	ccprintf("0.%d\n", batt_host_full_factor);
 
-	print_item_name("shutdown_soc:");
+	print_item_name("Shutdown SoC:");
 	ccprintf("%d %%\n", batt_host_shutdown_pct);
 
 #ifdef CONFIG_BATTERY_FUEL_GAUGE
@@ -311,10 +315,16 @@ int battery_is_cut_off(void)
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_CUT_OFF);
 }
 
+int battery_cutoff_in_progress(void)
+{
+	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_IN_PROGRESS);
+}
+
 static void pending_cutoff_deferred(void)
 {
 	int rv;
 
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 	rv = board_cut_off_battery();
 
 	if (rv == EC_RES_SUCCESS) {
@@ -350,6 +360,7 @@ static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 		}
 	}
 
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
 		CUTOFFPRINTS("is successful.");
@@ -387,6 +398,7 @@ static int command_cutoff(int argc, const char **argv)
 		}
 	}
 
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
 		ccprints("Battery cut off");

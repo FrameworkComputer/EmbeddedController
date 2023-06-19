@@ -4,18 +4,19 @@
  * found in the LICENSE file.
  */
 
+#include "com_port.h"
+#include "main.h"
+
 #include <errno.h>
-#include <fcntl.h>
-#include <poll.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <fcntl.h>
+#include <poll.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
-
-#include "com_port.h"
-#include "main.h"
 
 /*---------------------------------------------------------------------------
  * Constant definitions

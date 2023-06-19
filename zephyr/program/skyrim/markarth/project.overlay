@@ -1,0 +1,296 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Skyrim program common DTS includes */
+#include "../adc.dtsi"
+#include "../fan.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../usbc.dtsi"
+
+/* Markarth project DTS includes*/
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/* Markarth overrides follow... */
+/ {
+	/* battery overrides */
+	batteries {
+		default_battery: lgc_ap19b8m-2 {
+			compatible = "lgc,ap19b8m", "battery-smart";
+		};
+		cosmx_ap20cbl-3 {
+			compatible = "cosmx,ap20cbl-3", "battery-smart";
+		};
+	};
+
+	named-gpios {
+		/* Markarth-specific GPIO customizations */
+		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
+			gpios = <&gpioa 4 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+		gpio_usb_c1_bc12_int_odl: usb_c1_bc12_int_odl {
+			gpios = <&gpio9 6 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
+		};
+	};
+
+	gpio-interrupts {
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_lid_accel_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+	};
+
+	/* gpio-interrupts overrides */
+	gpio-interrupts {
+		/delete-node/ usb_c0_bc12;
+		/delete-node/ usb_c1_bc12;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_f75303_local: f75303-local {
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&f75303_local>;
+		};
+		temp_f75303_remote_1: f75303-remote-1 {
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&f75303_remote_1>;
+		};
+		temp_f75303_remote_2: f75303-remote-2 {
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&f75303_remote_2>;
+		};
+	};
+
+	fan_steps: fan-step {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <(-1) (-1) 75 (-1) 30 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 99 (-1)>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <(-1) (-1) 75 (-1) 35 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 32 (-1)>;
+			rpm_target = <2200>;
+		};
+		level_2 {
+			temp_on = <(-1) (-1) 75 (-1) 40 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 37 (-1)>;
+			rpm_target = <2400>;
+		};
+		level_3 {
+			temp_on = <(-1) (-1) 75 (-1) 43 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 41 (-1)>;
+			rpm_target = <2700>;
+		};
+		level_4 {
+			temp_on = <(-1) (-1) 75 (-1) 46 (-1)>;
+			temp_off = <(-1) (-1) 99 (-1) 44 (-1)>;
+			rpm_target = <3000>;
+		};
+		level_5 {
+			temp_on = <(-1) (-1) 95 (-1) 50 (-1)>;
+			temp_off = <(-1) (-1) 90 (-1) 48 (-1)>;
+			rpm_target = <3300>;
+		};
+	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the overlay
+	 * files.
+	 */
+	markarth-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <0>;
+			size = <1>;
+
+			ff-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CLAMSHELL";
+				value = <0>;
+			};
+			ff-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CONVERTIBLE";
+				value = <1>;
+				default;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable KB back light or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <1>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+
+	ppc_port0: aoz1380 {
+		compatible = "aoz,aoz1380";
+		status = "okay";
+	};
+};
+
+/* i2c overrides */
+&i2c0_0 {
+	/delete-node/ nx20p348x@71;
+	/delete-node/ pi3usb9201@5f;
+	/delete-node/ anx7483@3e;
+};
+
+&amd_fp6_port0 {
+	board-set = "board_c0_amd_fp6_mux_set";
+};
+
+&i2c1_0 {
+	/delete-node/ pi3usb9201@5f;
+	/delete-node/ anx7483@3e;
+};
+
+&i2c4_1 {
+	/delete-node/ isl9538@9;
+};
+
+/* usbc overrides */
+&usbc_port0 {
+	/delete-property/ bc12;
+	/delete-property/ chg_alt;
+	usb-mux-chain-0 {
+		usb-muxes = <&amd_fp6_port0>;
+	};
+};
+
+&usbc_port1 {
+	/delete-property/ bc12;
+	/delete-node/ usb-mux-chain-1-anx;
+	/delete-node/ usb-mux-chain-1-ps;
+	usb-mux-chain-1-ps8818 {
+		compatible = "cros-ec,usb-mux-chain";
+		usb-muxes = <&amd_fp6_port1 &ps8818_port1>;
+	};
+};
+
+&i2c6_1 {
+	/delete-node/ soc-pct2075@48;
+	/delete-node/ amb-pct2075@4f;
+	f75303_local: f75303-local@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4d>;
+		temperature-type = "F75303_IDX_LOCAL";
+	};
+	f75303_remote_1: f75303-remote-1@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4d>;
+		temperature-type = "F75303_IDX_REMOTE1";
+	};
+	f75303_remote_2: f75303-remote-2@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		reg = <0x4d>;
+		temperature-type = "F75303_IDX_REMOTE2";
+	};
+};
+
+&i2c_sensor {
+	/delete-node/ enum-names;
+	enum-names = "I2C_PORT_THERMAL";
+};
+
+&cros_kb_raw {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+	>;
+};
+
+&temp_sensor_cpu {
+	temp_host_warn = <92>;
+	temp_host_high = <95>;
+	temp_host_halt = <100>;
+	temp_host_release_warn = <91>;
+	temp_host_release_high = <80>;
+	temp_host_release_halt = <90>;
+};
+
+&temp_sensor_charger {
+	/delete-property/ temp_host_high;
+	/delete-property/ temp_host_halt;
+	/delete-property/ temp_host_release_high;
+	/delete-property/ temp_host_release_halt;
+};
+
+&temp_sensor_memory {
+	/delete-property/ temp_host_high;
+	/delete-property/ temp_host_halt;
+	/delete-property/ temp_host_release_high;
+	/delete-property/ temp_host_release_halt;
+};
+
+/* fan overrides */
+&fan0 {
+	pwms = <&pwm0 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <2100>;
+	rpm_start = <2400>;
+	rpm_max = <4464>;
+	rpm_deviation = <2>;
+};

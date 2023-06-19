@@ -3,46 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "chipset.h"
-#include "hooks.h"
-#include "usb_mux.h"
-#include "system.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/retimer/anx7483_public.h"
-#include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/raa489000.h"
+#include "driver/tcpm/tcpci.h"
+#include "hooks.h"
+#include "system.h"
 #include "temp_sensor/temp_sensor.h"
-#include "nissa_common.h"
+#include "usb_mux.h"
+
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
-
-struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C0_TCPC,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.drv = &raa489000_tcpm_drv,
-		/* RAA489000 implements TCPCI 2.0 */
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_VBUS_MONITOR,
-	},
-	{ /* sub-board */
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1_TCPC,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.drv = &raa489000_tcpm_drv,
-		/* RAA489000 implements TCPCI 2.0 */
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_VBUS_MONITOR,
-	},
-};
 
 int board_is_sourcing_vbus(int port)
 {
@@ -163,12 +137,26 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
+/* VBUS_CURRENT_TARGET */
+#define RAA489000_VBUS_CURRENT_TARGET_3_3A 0x68 /* 3.3A */
+
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
+	int rv;
+
 	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return;
 
-	raa489000_set_output_current(port, rp);
+	int selected_cur = rp == TYPEC_RP_3A0 ?
+				   RAA489000_VBUS_CURRENT_TARGET_3_3A :
+				   RAA489000_VBUS_CURRENT_TARGET_1_5A;
+
+	rv = tcpc_write16(port, RAA489000_VBUS_CURRENT_TARGET, selected_cur);
+
+	if (rv != EC_SUCCESS) {
+		LOG_WRN("Failed to set source ilimit on port %d to %d: %d",
+			port, selected_cur, rv);
+	}
 }
 
 int pd_set_power_supply_ready(int port)
@@ -214,74 +202,44 @@ void board_reset_pd_mcu(void)
  * Because the TCPCs and BC1.2 chips share interrupt lines, it's possible
  * for an interrupt to be lost if one asserts the IRQ, the other does the same
  * then the first releases it: there will only be one falling edge to trigger
- * the interrupt, and the line will be held low. We handle this by running a
- * deferred check after a falling edge to see whether the IRQ is still being
- * asserted. If it is, we assume an interrupt may have been lost and we need
- * to poll each chip for events again.
+ * the interrupt, and the line will be held low. We handle this by polling the
+ * IRQ GPIO on the USB-PD task after processing TCPC interrupts, synchronously
+ * running the BC1.2 interrupt handler to ensure we continue processing
+ * interrupts as long as either source is asserting the IRQ.
  */
-#define USBC_INT_POLL_DELAY_US 5000
-
-static void poll_c0_int(void);
-DECLARE_DEFERRED(poll_c0_int);
-static void poll_c1_int(void);
-DECLARE_DEFERRED(poll_c1_int);
-
-static void usbc_interrupt_trigger(int port)
+void board_process_pd_alert(int port)
 {
-	schedule_deferred_pd_interrupt(port);
-	usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
-}
+	const struct gpio_dt_spec *gpio;
 
-static inline void poll_usb_gpio(int port, const struct gpio_dt_spec *gpio,
-				 const struct deferred_data *ud)
-{
-	if (!gpio_pin_get_dt(gpio)) {
-		usbc_interrupt_trigger(port);
-		hook_call_deferred(ud, USBC_INT_POLL_DELAY_US);
+	if (port == 0) {
+		gpio = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl);
+	} else {
+		gpio = GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl);
 	}
-}
 
-static void poll_c0_int(void)
-{
-	poll_usb_gpio(0, GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl),
-		      &poll_c0_int_data);
-}
+	if (!gpio_pin_get_dt(gpio)) {
+		usb_charger_task_set_event_sync(port, USB_CHG_EVENT_BC12);
+	}
 
-static void poll_c1_int(void)
-{
-	poll_usb_gpio(1, GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
-		      &poll_c1_int_data);
+	/*
+	 * Immediately schedule another TCPC interrupt if it seems we haven't
+	 * cleared all pending interrupts.
+	 */
+	if (!gpio_pin_get_dt(gpio))
+		schedule_deferred_pd_interrupt(port);
 }
 
 void usb_interrupt(enum gpio_signal signal)
 {
 	int port;
-	const struct deferred_data *ud;
 
 	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl))) {
 		port = 0;
-		ud = &poll_c0_int_data;
 	} else {
 		port = 1;
-		ud = &poll_c1_int_data;
 	}
-	/*
-	 * We've just been called from a falling edge, so there's definitely
-	 * no lost IRQ right now. Cancel any pending check.
-	 */
-	hook_call_deferred(ud, -1);
-	/* Trigger polling of TCPC and BC1.2 in respective tasks */
-	usbc_interrupt_trigger(port);
-	/* Check for lost interrupts in a bit */
-	hook_call_deferred(ud, USBC_INT_POLL_DELAY_US);
-}
-
-__override void board_set_charge_limit(int port, int supplier, int charge_ma,
-				       int max_ma, int charge_mv)
-{
-	charge_ma = (charge_ma * 90) / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	/* Trigger polling of TCPC and BC1.2 in USB-PD task */
+	schedule_deferred_pd_interrupt(port);
 }
 
 struct chg_curr_step {

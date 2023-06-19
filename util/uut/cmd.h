@@ -8,6 +8,7 @@
 #define __UTIL_UUT_CMD_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /*---------------------------------------------------------------------------
  * Constant definitions

@@ -9,13 +9,13 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "extpower.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -26,9 +26,9 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
-#include "system.h"
 #include "shi_chip.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "usbc_ocp.h"
@@ -44,6 +44,7 @@ static void usba_oc_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* GPIO Interrupt Handlers */
@@ -269,8 +270,6 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_hibernate(void)
 {
-	int i;
-
 	/*
 	 * Sensors are unpowered in hibernate. Apply PD to the
 	 * interrupt lines such that they don't float.
@@ -290,8 +289,7 @@ void board_hibernate(void)
 	 * otherwise, ACOK won't go High and can't wake EC up. Check the
 	 * bug b/170324206 for details.
 	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
-		ppc_vbus_sink_enable(i, 1);
+	ppc_vbus_sink_enable(USB_PD_PORT_C0, 1);
 }
 
 __override uint16_t board_get_ps8xxx_product_id(int port)
@@ -323,9 +321,9 @@ void board_tcpc_init(void)
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
 	 */
-	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
-		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	usb_mux_hpd_update(USB_PD_PORT_C0,
+			   USB_PD_MUX_HPD_LVL_DEASSERTED |
+				   USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -405,24 +403,20 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
-	int i;
+	int is_real_port = (port == USB_PD_PORT_C0);
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
 
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTS("Disabling all charging port");
-
-		/* Disable all ports. */
-		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-			/*
-			 * Do not return early if one fails otherwise we can
-			 * get into a boot loop assertion failure.
-			 */
-			if (board_vbus_sink_enable(i, 0))
-				CPRINTS("Disabling p%d sink path failed.", i);
-		}
+		/*
+		 * Do not return early if one fails otherwise we can
+		 * get into a boot loop assertion failure.
+		 */
+		if (board_vbus_sink_enable(USB_PD_PORT_C0, 0))
+			CPRINTS("Disabling p%d sink path failed.",
+				USB_PD_PORT_C0);
 
 		return EC_SUCCESS;
 	}
@@ -435,18 +429,6 @@ int board_set_active_charge_port(int port)
 
 	CPRINTS("New charge port: p%d", port);
 
-	/*
-	 * Turn off the other ports' sink path FETs, before enabling the
-	 * requested charge port.
-	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		if (i == port)
-			continue;
-
-		if (board_vbus_sink_enable(i, 0))
-			CPRINTS("p%d: sink path disable failed.", i);
-	}
-
 	/* Enable requested charge port. */
 	if (board_vbus_sink_enable(port, 1)) {
 		CPRINTS("p%d: sink path enable failed.", port);
@@ -456,8 +438,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
@@ -469,9 +451,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 		charge_ma = max_ma;
 	}
 
-	charge_ma = charge_ma * 95 / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 uint16_t tcpc_get_alert_status(void)

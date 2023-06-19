@@ -1,0 +1,185 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Device tree for a generic Nissa device based on a NPCX EC, suitable for board
+ * unit tests.
+ */
+#include <npcx_emul.dts>
+#include "../program/nissa/cbi.dtsi"
+
+/ {
+	aliases {
+		/* type-C */
+		gpio-usb-c1-int-odl = &gpio_sb_1;
+		/* type-A */
+		gpio-en-usb-a1-vbus = &gpio_sb_2;
+		/* HDMI */
+		gpio-en-rails-odl = &gpio_sb_1;
+		gpio-hdmi-en-odl = &gpio_sb_3;
+		gpio-hpd-odl = &gpio_sb_4;
+		/* LTE */
+		gpio-en-sub-s5-rails = &gpio_sb_2;
+
+		gpio-wp = &gpio_ec_wp_odl;
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt_c0";
+		};
+
+		int_usb_c1: usb_c1 {
+			irq-pin = <&gpio_sb_1>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt_c1";
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
+			gpios = <&gpio6 1 GPIO_OUTPUT>;
+		};
+
+		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
+			gpios = <&gpioe 4 GPIO_OUTPUT>;
+		};
+
+		gpio_ec_wp_odl: ec_wp_odl {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+
+		entering_rw {
+			gpios = <&gpio0 3 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+
+		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
+			gpios = <&gpioe 2 GPIO_OUTPUT>;
+		};
+
+		gpio_en_slp_z: en_slp_z {
+			gpios = <&gpioe 1 GPIO_OUTPUT>;
+		};
+
+		gpio_hdmi_sel: hdmi_sel {
+			gpios = <&gpioc 6 GPIO_OUTPUT>;
+		};
+
+		gpio_usb_a0_enable: usb_a0_enable {
+			gpios = <&gpio1 0 GPIO_OUTPUT>;
+		};
+
+		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
+			gpios = <&gpio1 2 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB1_ILIM_SEL";
+		};
+
+		gpio_sub_usb_a1_ilimit_sdp: usb_a1_ilimit_sdp {
+			gpios = <&gpio1 3 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB2_ILIM_SEL";
+		};
+
+		gpio_usb_c0_int_odl: usb_c0_int_odl {
+			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
+		};
+
+		gpio_sb_1: sb-1 {
+			gpios = <&gpio0 2 GPIO_PULL_UP>;
+			no-auto-init;
+		};
+
+		gpio_sb_2: sb-2 {
+			gpios = <&gpiod 4 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+
+		gpio_sb_3: sb-3 {
+			gpios = <&gpiof 4 0>;
+			no-auto-init;
+		};
+
+		gpio_sb_4: sb-4 {
+			gpios = <&gpiof 5 GPIO_INPUT>;
+			no-auto-init;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {
+			i2c-port = <&i2c_ctrl1>;
+			enum-names = "I2C_PORT_USB_C1_TCPC";
+		};
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_usb_a0_enable &gpio_sb_2>;
+		status = "okay";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpci_emul_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpci_emul_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+			usb_mux_chain_1_no_mux: usb-mux-chain-1-alternate {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c_ctrl0 {
+	tcpci_emul_0: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};
+
+&i2c_ctrl1 {
+	tcpci_emul_1: tcpci_emul@84 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x84>;
+	};
+};

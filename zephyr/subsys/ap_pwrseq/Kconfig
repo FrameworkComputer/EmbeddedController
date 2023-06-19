@@ -4,6 +4,8 @@
 
 menuconfig AP_PWRSEQ
 	bool "AP Power sequencing support"
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_ENABLED && !TEST_DISABLE_AP_PWRSEQ
 	select HAS_TASK_POWERBTN
 	select GPIO_GET_CONFIG
 	help
@@ -20,6 +22,56 @@ if AP_PWRSEQ
 module = AP_PWRSEQ
 module-str = AP power sequencing
 source "subsys/logging/Kconfig.template.log_config"
+
+config AP_PWRSEQ_DRIVER
+	bool "AP Power sequencing driver support"
+	select SMF
+	select SMF_ANCESTOR_SUPPORT
+	select EVENTS
+	help
+	  AP power sequence driver establishes an underlaying framework to
+	  easily add or extend AP Power Sequence action handler routines, it is
+	  designed to follow the zephyr's State Machine Framework (SMF).
+
+config AP_PWRSEQ_SIGNAL_ADC
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_ADC_ENABLED
+	select SENSOR
+	help
+	  Helper symbol to enable ADC based power sequencing.
+
+config AP_PWRSEQ_SIGNAL_EXTERNAL
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_EXTERNAL_ENABLED
+	help
+	  Helper symbol to enable external signal based power sequencing.
+
+config AP_PWRSEQ_SIGNAL_GPIO
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_GPIO_ENABLED
+	help
+	  Helper symbol to enable GPIO based power sequencing.
+
+config AP_PWRSEQ_SIGNAL_VW
+	bool
+	default y
+	depends on DT_HAS_INTEL_AP_PWRSEQ_VW_ENABLED
+	help
+	  Helper symbol to enable virtual wire (VW) based power sequencing.
+
+config AP_PWRSEQ_SIGNAL_DEBUG_NAMES
+	bool
+	default y if PLATFORM_EC_BRINGUP
+	help
+	  Enable this option to allow display of the more descriptive
+	  dbg-name based signal names.
+	  Disable this option to just show the enum-name of the signals.
+	  Enabled by default during bringup.
+
+	  Disabling the option will save around 520 bytes of flash space.
 
 config AP_PWRSEQ_AUTOSTART
 	bool "Start the power sequence thread automatically"
@@ -117,6 +169,15 @@ config AP_PWRSEQ_S0IX_ERROR_RECOVERY
 	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
 	  command.
 
+config AP_PWRSEQ_S0IX_COUNTER
+	bool "Enable S0ix counter"
+	depends on AP_PWRSEQ_S0IX
+	depends on AP_PWRSEQ_HOST_SLEEP
+	default y
+	help
+	  Enables counter which increases at every transitions to S0ix state.
+	  Counter can be read via host command.
+
 config AP_PWRSEQ_DEBUG_MODE_COMMAND
 	bool "Console commands to enable/disable AP debug mode"
 	depends on X86_NON_DSX_PWRSEQ
@@ -127,3 +188,9 @@ config AP_PWRSEQ_DEBUG_MODE_COMMAND
 	  command to enable debug mode and prevent force shutdown.
 
 endif
+
+config AP_EVENTS
+	bool "Enable AP events"
+	default y
+	help
+	  Helper symbol to enable Application Processor(AP) events.

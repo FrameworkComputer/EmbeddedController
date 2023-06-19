@@ -12,6 +12,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Dict, Optional, Set, Union
 
@@ -24,6 +25,7 @@ import zmake.multiproc
 import zmake.project
 import zmake.util as util
 import zmake.version
+
 
 ninja_warnings = re.compile(r"^(\S*: )?warning:.*")
 ninja_errors = re.compile(r"error:.*")
@@ -163,6 +165,7 @@ class Zmake:
         goma=False,
         gomacc="/mnt/host/depot_tools/.cipd_bin/gomacc",
         modules_dir=None,
+        projects_dir=None,
         zephyr_base=None,
     ):
         zmake.multiproc.LogWriter.reset()
@@ -176,6 +179,7 @@ class Zmake:
             self.zephyr_base = (
                 self.checkout / "src" / "third_party" / "zephyr" / "main"
             )
+        self.zephyr_base = self.zephyr_base.resolve()
 
         if modules_dir:
             self.module_paths = zmake.modules.locate_from_directory(modules_dir)
@@ -184,6 +188,11 @@ class Zmake:
                 self.checkout
             )
 
+        if projects_dir:
+            self.projects_dir = projects_dir.resolve()
+        else:
+            self.projects_dir = self.module_paths["ec"] / "zephyr"
+
         if jobserver:
             self.jobserver = jobserver
         else:
@@ -191,6 +200,7 @@ class Zmake:
 
         self.executor = zmake.multiproc.Executor()
         self._sequential = self.jobserver.is_sequential() and not goma
+        self.cmp_failed_projects = {}
         self.failed_projects = []
 
     @property
@@ -209,9 +219,7 @@ class Zmake:
 
         Returns a list of projects.
         """
-        found_projects = zmake.project.find_projects(
-            self.module_paths["ec"] / "zephyr"
-        )
+        found_projects = zmake.project.find_projects(self.projects_dir)
         if all_projects:
             projects = set(found_projects.values())
         else:
@@ -234,12 +242,14 @@ class Zmake:
         clobber=False,
         bringup=False,
         coverage=False,
+        cmake_defs=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
         delete_intermediates=False,
         static_version=False,
         save_temps=False,
+        wait_for_executor=True,
     ):
         """Locate and configure the specified projects."""
         # Resolve build_dir if needed.
@@ -264,6 +274,7 @@ class Zmake:
                     clobber=clobber,
                     bringup=bringup,
                     coverage=coverage,
+                    cmake_defs=cmake_defs,
                     allow_warnings=allow_warnings,
                     extra_cflags=extra_cflags,
                     delete_intermediates=delete_intermediates,
@@ -275,19 +286,23 @@ class Zmake:
                 result = self.executor.wait()
                 if result:
                     return result
-        result = self.executor.wait()
-        if result:
-            return result
-        non_test_projects = [p for p in projects if not p.config.is_test]
-        if len(non_test_projects) > 1 and coverage and build_after_configure:
+        if coverage and build_after_configure:
+            result = self.executor.wait()
+            if result:
+                return result
             result = self._merge_lcov_files(
-                projects=non_test_projects,
+                projects=projects,
                 build_dir=build_dir,
                 output_file=build_dir / "all_builds.info",
             )
             if result:
                 self.failed_projects.append(str(build_dir / "all_builds.info"))
                 return result
+        elif wait_for_executor:
+            result = self.executor.wait()
+            if result:
+                return result
+
         return 0
 
     def build(
@@ -298,6 +313,7 @@ class Zmake:
         clobber=False,
         bringup=False,
         coverage=False,
+        cmake_defs=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
@@ -313,6 +329,7 @@ class Zmake:
             clobber=clobber,
             bringup=bringup,
             coverage=coverage,
+            cmake_defs=cmake_defs,
             allow_warnings=allow_warnings,
             all_projects=all_projects,
             extra_cflags=extra_cflags,
@@ -331,6 +348,10 @@ class Zmake:
         all_projects=False,
         extra_cflags=None,
         keep_temps=False,
+        cmake_defs=None,
+        compare_configs=False,
+        compare_binaries_disable=False,
+        compare_devicetrees=False,
     ):
         """Compare EC builds at two commits."""
         temp_dir = tempfile.mkdtemp(prefix="zcompare-")
@@ -364,6 +385,7 @@ class Zmake:
                 transformed_module = {module_name: new_path}
                 self.module_paths.update(transformed_module)
 
+            self.projects_dir = checkout.projects_dir
             self.zephyr_base = checkout.zephyr_dir
 
             self.logger.info("Building projects at %s", checkout.ref)
@@ -374,6 +396,7 @@ class Zmake:
                 clobber=False,
                 bringup=False,
                 coverage=False,
+                cmake_defs=cmake_defs,
                 allow_warnings=False,
                 all_projects=all_projects,
                 extra_cflags=extra_cflags,
@@ -381,49 +404,36 @@ class Zmake:
                 delete_intermediates=False,
                 static_version=True,
                 save_temps=False,
+                wait_for_executor=False,
             )
-
+            if not result:
+                result = self.executor.wait()
             if result:
                 self.logger.error(
                     "compare-builds failed to build all projects at %s",
                     checkout.ref,
                 )
                 return result
+        if not compare_binaries_disable:
+            failed_projects = cmp_builds.check_binaries(projects)
+            self.cmp_failed_projects["binary"] = failed_projects
+            self.failed_projects.extend(failed_projects)
+        if compare_configs:
+            failed_projects = cmp_builds.check_configs(projects)
+            self.cmp_failed_projects["config"] = failed_projects
+            self.failed_projects.extend(failed_projects)
+        if compare_devicetrees:
+            failed_projects = cmp_builds.check_devicetrees(projects)
+            self.cmp_failed_projects["devicetree"] = failed_projects
+            self.failed_projects.extend(failed_projects)
 
-        self.failed_projects = cmp_builds.check_binaries(projects)
-
+        self.failed_projects = list(set(self.failed_projects))
         if len(self.failed_projects) == 0:
             self.logger.info("Zephyr compare builds successful:")
             for checkout in cmp_builds.checkouts:
                 self.logger.info("   %s: %s", checkout.ref, checkout.full_ref)
 
         return len(self.failed_projects)
-
-    def test(  # pylint: disable=unused-argument
-        self,
-        project_names,
-    ):
-        """Build and run tests for the specified projects.
-
-        Using zmake to run tests is no longer supported. Use twister.
-        """
-        self.logger.error(
-            "zmake test is deprecated. Use twister -T zephyr/test/<test_dir>."
-        )
-
-        return 0
-
-    def testall(
-        self,
-    ):
-        """Build and run tests for all projects.
-
-        Using zmake to run tests is no longer supported. Use twister.
-        """
-        self.logger.error(
-            "zmake testall is deprecated. To build all packages, use zmake build -a."
-        )
-        return self.test([])
 
     def _configure(
         self,
@@ -434,6 +444,7 @@ class Zmake:
         clobber=False,
         bringup=False,
         coverage=False,
+        cmake_defs=None,
         allow_warnings=False,
         extra_cflags=None,
         delete_intermediates=False,
@@ -470,19 +481,18 @@ class Zmake:
                         ),
                         "ZEPHYR_BASE": str(self.zephyr_base),
                         "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
-                        "ZMAKE_PROJECT_NAME": project.config.project_name,
+                        "PYTHON_PREFER": sys.executable,
                         **(
                             {"EXTRA_EC_VERSION_FLAGS": "--static"}
                             if static_version
                             else {}
                         ),
-                        **(
-                            {"EXTRA_CFLAGS": "-save-temps=obj"}
-                            if save_temps
-                            else {}
-                        ),
                     },
                 )
+                if cmake_defs:
+                    base_config |= zmake.build_config.BuildConfig.from_args(
+                        cmake_defs
+                    )
 
                 # Prune the module paths to just those required by the project.
                 module_paths = project.prune_modules(self.module_paths)
@@ -498,7 +508,7 @@ class Zmake:
                 dts_overlay_config = project.find_dts_overlays(module_paths)
 
                 toolchain_support = project.get_toolchain(
-                    module_paths, override=toolchain
+                    self.module_paths, override=toolchain
                 )
                 toolchain_config = toolchain_support.get_build_config()
 
@@ -510,9 +520,13 @@ class Zmake:
                     base_config |= zmake.build_config.BuildConfig(
                         kconfig_defs={"CONFIG_COVERAGE": "y"}
                     )
-                if allow_warnings:
+                if save_temps:
                     base_config |= zmake.build_config.BuildConfig(
-                        cmake_defs={"ALLOW_WARNINGS": "ON"}
+                        kconfig_defs={"CONFIG_COMPILER_SAVE_TEMPS": "y"}
+                    )
+                if not allow_warnings:
+                    base_config |= zmake.build_config.BuildConfig(
+                        kconfig_defs={"CONFIG_COMPILER_WARNINGS_AS_ERRORS": "y"}
                     )
                 if extra_cflags:
                     base_config |= zmake.build_config.BuildConfig(
@@ -563,8 +577,13 @@ class Zmake:
                     )
                     wait_funcs.append(wait_func)
             # Outside the with...get_job above.
+            result = 0
             for wait_func in wait_funcs:
-                wait_func()
+                if wait_func():
+                    result = 1
+            if result:
+                self.failed_projects.append(project.config.project_name)
+                return 1
 
             if build_after_configure:
                 self._build(
@@ -697,8 +716,13 @@ class Zmake:
                 )
                 wait_funcs.append(wait_func)
         # Outside the with...get_job above.
+        result = 0
         for wait_func in wait_funcs:
-            wait_func()
+            if wait_func():
+                result = 1
+        if result:
+            self.failed_projects.append(project.config.project_name)
+            return 1
 
         with self.jobserver.get_job():
             # Run the packer.
@@ -708,9 +732,9 @@ class Zmake:
                 if not newdir.exists():
                     newdir.mkdir()
 
-            # For non-tests, they won't link with coverage, so don't pack the
-            # firmware. Also generate a lcov file.
-            if coverage and not project.config.is_test:
+            # Projects won't link with coverage, so don't pack the firmware.
+            # Also generate a lcov file.
+            if coverage:
                 self._run_lcov(
                     build_dir,
                     output_dir / "zephyr.info",
@@ -742,14 +766,17 @@ class Zmake:
         """Builds one sub-dir of a configured project (build-ro, etc)."""
 
         with self.jobserver.get_job():
-            cmd = ["/usr/bin/ninja", "-C", dirs[build_name].as_posix()]
+            cmd = [
+                util.get_tool_path("ninja"),
+                "-C",
+                dirs[build_name].as_posix(),
+            ]
             if self.goma:
                 # Go nuts ninja, goma does the heavy lifting!
                 cmd.append("-j1024")
             elif self._sequential:
                 cmd.append("-j1")
-            # Only tests will actually build with coverage enabled.
-            if coverage and not project.config.is_test:
+            if coverage:
                 cmd.append("all.libraries")
             self.logger.info(
                 "Building %s:%s: %s",
@@ -808,7 +835,7 @@ class Zmake:
         else:
             self.logger.info("Running lcov on %s.", build_dir)
         cmd = [
-            "/usr/bin/lcov",
+            util.get_tool_path("lcov"),
             "--gcov-tool",
             gcov,
             "-q",
@@ -860,7 +887,7 @@ class Zmake:
         # Merge info files into a single lcov.info
         self.logger.info("Merging coverage data into %s.", output_file)
         cmd = [
-            "/usr/bin/lcov",
+            util.get_tool_path("lcov"),
             "-o",
             output_file,
             "--rc",
@@ -885,18 +912,13 @@ class Zmake:
             raise OSError(get_process_failure_msg(proc))
         return 0
 
-    def list_projects(self, fmt, search_dir):
+    def list_projects(self, fmt):
         """List project names known to zmake on stdout.
 
         Args:
             fmt: The formatting string to print projects with.
-            search_dir: Directory to start the search for
-                BUILD.py files at.
         """
-        if not search_dir:
-            search_dir = self.module_paths["ec"] / "zephyr"
-
-        for project in zmake.project.find_projects(search_dir).values():
+        for project in zmake.project.find_projects(self.projects_dir).values():
             print(fmt.format(config=project.config), end="")
 
         return 0

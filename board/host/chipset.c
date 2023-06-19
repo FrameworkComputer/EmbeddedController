@@ -8,12 +8,13 @@
 /* Does not run a chipset task, but does emulate an AP chipset */
 #define CONFIG_AP_POWER_CONTROL
 
-#include <stdio.h>
 #include "chipset.h"
 #include "common.h"
 #include "hooks.h"
 #include "task.h"
 #include "test_util.h"
+
+#include <stdio.h>
 
 static int chipset_state = CHIPSET_STATE_SOFT_OFF;
 static int power_on_req;

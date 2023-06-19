@@ -17,9 +17,9 @@
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "mkbp_event.h"
 #include "stdbool.h"
-#include "host_command.h"
 #include "system.h"
 #include "task.h"
 #include "typec_control.h"
@@ -34,6 +34,12 @@
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 #include "util.h"
+
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 43
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -296,7 +302,7 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 		((drp_state == PD_DRP_TOGGLE_ON) && auto_toggle_supported);
 
 	/* Set to appropriate port state */
-	if (cc_is_open(cc1, cc2)) {
+	if (cc_is_open(cc1, cc2) || cc_is_pwred_cbl_without_snk(cc1, cc2)) {
 		/*
 		 * If nothing is attached then use drp_state to determine next
 		 * state. If DRP auto toggle is still on, then remain in the
@@ -385,7 +391,7 @@ mux_state_t get_mux_mode_to_set(int port)
 	 * If the SoC is down, then we disconnect the MUX to save power since
 	 * no one cares about the data lines.
 	 */
-	if (IS_ENABLED(CONFIG_POWER_COMMON) &&
+	if (IS_ENABLED(CONFIG_AP_POWER_CONTROL) &&
 	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
 		return USB_PD_MUX_NONE;
 
@@ -525,6 +531,16 @@ __overridable int pd_check_data_swap(int port, enum pd_data_role data_role)
 
 __overridable int pd_check_power_swap(int port)
 {
+#ifdef CONFIG_CHARGE_MANAGER
+	/*
+	 * If the Type-C port is our active charge port and we don't have a
+	 * battery, don't allow power role swap (to source).
+	 */
+	if (!IS_ENABLED(CONFIG_BATTERY) &&
+	    port == charge_manager_get_active_charge_port())
+		return 0;
+#endif
+
 	/*
 	 * Allow power swap if we are acting as a dual role device.  If we are
 	 * not acting as dual role (ex. suspended), then only allow power swap
@@ -866,7 +882,7 @@ int pd_send_alert_msg(int port, uint32_t ado)
 	 * ADO before sending to a USB PD 3.0 partner and block the
 	 * message if the ADO is empty.
 	 */
-	partner_rmdo = pe_get_partner_rmdo(port);
+	partner_rmdo = pd_get_partner_rmdo(port);
 	if (partner_rmdo.major_rev == 0) {
 		ado &= ~(ADO_EXTENDED_ALERT_EVENT |
 			 ADO_EXTENDED_ALERT_EVENT_TYPE);

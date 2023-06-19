@@ -3,25 +3,26 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_sn5s330_emul
-
-#include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/i2c_emul.h>
-#include <zephyr/drivers/emul.h>
-#include <errno.h>
-#include <zephyr/sys/__assert.h>
-#include <zephyr/devicetree/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/sn5s330_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sn5s330.h"
-#include "i2c.h"
 #include "emul/emul_stub_device.h"
+#include "i2c.h"
 
+#include <errno.h>
+
+#include <zephyr/device.h>
+#include <zephyr/devicetree/gpio.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/__assert.h>
+
+#define DT_DRV_COMPAT cros_sn5s330_emul
+
 LOG_MODULE_REGISTER(sn5s330_emul, CONFIG_SN5S330_EMUL_LOG_LEVEL);
 
 struct sn5s330_emul_data {
@@ -189,6 +190,7 @@ static void sn5s330_emul_set_int_pin(const struct emul *emul, bool val)
 	struct sn5s330_emul_data *data = emul->data;
 	int res = gpio_emul_input_set(data->gpio_int_port, data->gpio_int_pin,
 				      val);
+	ARG_UNUSED(res);
 	__ASSERT_NO_MSG(res == 0);
 }
 
@@ -347,7 +349,7 @@ static int emul_sn5s330_init(const struct emul *emul,
 		},                                                             \
 	}; \
 	EMUL_DT_INST_DEFINE(n, emul_sn5s330_init, &sn5s330_emul_data_##n,        \
-			    &sn5s330_emul_cfg_##n, &i2c_common_emul_api)
+			    &sn5s330_emul_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_SN5S330)
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

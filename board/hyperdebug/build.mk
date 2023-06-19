@@ -10,4 +10,7 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32l5
 CHIP_VARIANT:=stm32l552xe
 
-board-y=board.o
+# These files are compiled into RO
+chip-ro=bkpdata.o system.o
+
+board-rw=board.o gpio.o spi.o i2c.o

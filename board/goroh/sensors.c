@@ -11,8 +11,8 @@
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "spi.h"
-#include "thermal.h"
 #include "temp_sensor.h"
+#include "thermal.h"
 
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;

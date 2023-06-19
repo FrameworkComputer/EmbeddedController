@@ -197,7 +197,7 @@ static void clock_set_osc(enum clock_osc osc)
 
 static uint64_t clock_mask;
 
-void clock_enable_module(enum module_id module, int enable)
+test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 	uint64_t new_mask;
 

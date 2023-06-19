@@ -5,8 +5,8 @@
 
 #include "battery_smart.h"
 #include "button.h"
-#include "cros_board_info.h"
 #include "charge_state.h"
+#include "cros_board_info.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
@@ -18,8 +18,8 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "keyboard_8042_sharedlib.h"
 #include "ioexpander.h"
+#include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -41,6 +41,7 @@
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /*****************************************************************************

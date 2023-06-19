@@ -28,10 +28,13 @@ __override void board_hibernate_late(void)
 			return;
 	}
 
-	isl9238c_hibernate(CHARGER_SOLO);
-
 	gpio_set_level(GPIO_EN_SLP_Z, 1);
 
 	/* should not reach here */
 	__builtin_unreachable();
+}
+
+void board_hibernate(void)
+{
+	isl9238c_hibernate(CHARGER_SOLO);
 }

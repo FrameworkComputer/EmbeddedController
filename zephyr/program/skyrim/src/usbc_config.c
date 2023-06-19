@@ -5,17 +5,15 @@
 
 /* Skyrim family-specific USB-C configuration */
 
-#include <zephyr/drivers/gpio.h>
-
-#include "cros_board_info.h"
-#include "cros_cbi.h"
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
 #include "charge_state.h"
 #include "charger.h"
+#include "cros_board_info.h"
+#include "cros_cbi.h"
 #include "driver/bc12/pi3usb9201.h"
+#include "driver/charger/isl923x_public.h"
 #include "driver/charger/isl9241.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/anx7483_public.h"
@@ -29,8 +27,10 @@
 #include "power.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
-#include "usbc_ppc.h"
 #include "usbc/usb_muxes.h"
+#include "usbc_ppc.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -50,13 +50,11 @@ static void usbc_interrupt_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
 
-	/* Enable TCPC interrupts. */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
-
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
+#endif
 
 	/* Enable SBU fault interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_sbu_fault));
@@ -190,15 +188,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_ma = (charge_ma * CONFIG_BOARD_INPUT_CURRENT_SCALE_FACTOR) / 100;
-
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
-
 void sbu_fault_interrupt(enum gpio_signal signal)
 {
 	int port = signal == IOEX_USB_C1_FAULT_ODL ? 1 : 0;
@@ -207,17 +196,25 @@ void sbu_fault_interrupt(enum gpio_signal signal)
 	pd_handle_overcurrent(port);
 }
 
-void usb_fault_interrupt(enum gpio_signal signal)
+static void usb_fault_alert(void)
 {
 	int out;
 
-	CPRINTSUSB("USB fault(%d), alerting the SoC", signal);
 	out = gpio_pin_get_dt(
 		      GPIO_DT_FROM_NODELABEL(gpio_usb_hub_fault_q_odl)) &&
 	      gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_a0_fault_odl)) &&
 	      gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_a1_fault_db_odl));
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_fault_odl), out);
+
+	if (out == 0)
+		CPRINTSUSB("USB fault, alerting the SoC");
+}
+DECLARE_DEFERRED(usb_fault_alert);
+
+void usb_fault_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&usb_fault_alert_data, 0);
 }
 
 void usb_pd_soc_interrupt(enum gpio_signal signal)
@@ -231,61 +228,73 @@ void usb_pd_soc_interrupt(enum gpio_signal signal)
 
 #ifdef CONFIG_CHARGER_ISL9241
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
-#define SKYRIM_AC_PROCHOT_CURRENT_MA 3328
-static void set_ac_prochot(void)
+static void charger_prochot_init_isl9241(void)
 {
-	isl9241_set_ac_prochot(CHARGER_SOLO, SKYRIM_AC_PROCHOT_CURRENT_MA);
+	isl9241_set_ac_prochot(CHARGER_SOLO, CONFIG_AC_PROCHOT_CURRENT_MA);
 }
-DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9241, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_CHARGER_ISL9241 */
 
-void tcpc_alert_event(enum gpio_signal signal)
+#ifdef CONFIG_CHARGER_ISL9238
+static void charger_prochot_init_isl9238(void)
 {
-	int port;
-
-	switch (signal) {
-	case GPIO_USB_C0_TCPC_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
+	isl923x_set_ac_prochot(CHARGER_SOLO, CONFIG_AC_PROCHOT_CURRENT_MA);
+	isl923x_set_dc_prochot(CHARGER_SOLO, CONFIG_DC_PROCHOT_CURRENT_MA);
 }
+DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9238, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_CHARGER_ISL9238 */
 
 static void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;
 	const struct device *ioex_port0, *ioex_port1;
+	int rv;
 
-	/* TODO(b/225189538): Save and restore ioex signals */
+	/* The maximum pin numbers of the NCT38xx IO expander port is 8 */
+	gpio_flags_t saved_port0_flags[8] = { 0 };
+	gpio_flags_t saved_port1_flags[8] = { 0 };
+
 	if (port == USBC_PORT_C0) {
-		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_l);
+		reset_gpio_l = &tcpc_config[0].rst_gpio;
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
 		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
 	} else if (port == USBC_PORT_C1) {
-		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_rst_l);
+		reset_gpio_l = &tcpc_config[1].rst_gpio;
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port0));
 		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
 	} else {
 		/* Invalid port: do nothing */
 		return;
 	}
+	gpio_save_port_config(ioex_port0, saved_port0_flags,
+			      ARRAY_SIZE(saved_port0_flags));
+	gpio_save_port_config(ioex_port1, saved_port1_flags,
+			      ARRAY_SIZE(saved_port1_flags));
 
-	gpio_pin_set_dt(reset_gpio_l, 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(reset_gpio_l, 1);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	gpio_pin_set_dt(reset_gpio_l, 0);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
 
 	/* Re-enable the IO expander pins */
-	gpio_reset_port(ioex_port0);
-	gpio_reset_port(ioex_port1);
+	gpio_restore_port_config(ioex_port0, saved_port0_flags,
+				 ARRAY_SIZE(saved_port0_flags));
+	gpio_restore_port_config(ioex_port1, saved_port1_flags,
+				 ARRAY_SIZE(saved_port1_flags));
+
+	if (power_get_state() == POWER_S0) {
+		/* If we transitioned to S0 during the reset then the restore
+		 * may set the vbus enable pin low. Ensure the A port is
+		 * always powered in S0.
+		 */
+		rv = usb_charge_set_mode(port, USB_CHARGE_MODE_ENABLED,
+					 USB_ALLOW_SUSPEND_CHARGE);
+		if (rv)
+			CPRINTSUSB("S0 TCPC enable failure on port %d(%d)",
+				   port, rv);
+	}
 }
 
 void board_reset_pd_mcu(void)
@@ -297,31 +306,7 @@ void board_reset_pd_mcu(void)
 	reset_nct38xx_port(USBC_PORT_C1);
 }
 
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	/*
-	 * Check which port has the ALERT line set and ignore if that TCPC has
-	 * its reset line active.
-	 */
-	if (!gpio_pin_get_dt(
-		    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-			    gpio_usb_c0_tcpc_rst_l)) != 0)
-			status |= PD_STATUS_TCPC_ALERT_0;
-	}
-
-	if (!gpio_pin_get_dt(
-		    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
-			    gpio_usb_c1_tcpc_rst_l)) != 0)
-			status |= PD_STATUS_TCPC_ALERT_1;
-	}
-
-	return status;
-}
-
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -374,6 +359,7 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 	return voltage < BC12_MIN_VOLTAGE;
 }
+#endif
 
 #define SAFE_RESET_VBUS_DELAY_MS 900
 #define SAFE_RESET_VBUS_MV 5000

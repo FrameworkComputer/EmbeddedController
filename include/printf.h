@@ -8,12 +8,13 @@
 #ifndef __CROS_EC_PRINTF_H
 #define __CROS_EC_PRINTF_H
 
+#include "common.h"
+#include "console.h"
+
 #include <stdarg.h> /* For va_list */
 #include <stdbool.h>
 #include <stddef.h> /* For size_t */
-#include "console.h"
 #include <stdio.h>
-#include "common.h"
 
 /**
  * Buffer size in bytes large enough to hold the largest possible timestamp.

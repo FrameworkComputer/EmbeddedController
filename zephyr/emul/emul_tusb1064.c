@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-
 #include "driver/usb_mux/tusb1064.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
 #include "util.h"
+
+#include <zephyr/device.h>
 
 #define DT_DRV_COMPAT zephyr_tusb1064_emul
 
@@ -101,7 +101,7 @@ static int tusb1064_emul_init(const struct emul *emul,
 		.common = { .cfg = &common_cfg_##n }                   \
 	};                                                             \
 	EMUL_DT_INST_DEFINE(n, tusb1064_emul_init, &tusb1064_data_##n, \
-			    &common_cfg_##n, &i2c_common_emul_api)
+			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_TUSB1064_EMUL)
 

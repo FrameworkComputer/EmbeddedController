@@ -181,17 +181,17 @@ enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
 
-/*
- * firmware config fields
- */
-/*
- * Barrel-jack power (2 bits).
- */
-#define EC_CFG_BJ_POWER_L 0
-#define EC_CFG_BJ_POWER_H 1
-#define EC_CFG_BJ_POWER_MASK GENMASK(EC_CFG_BJ_POWER_H, EC_CFG_BJ_POWER_L)
+enum monitor_port {
+	HDMI1_MONITOR,
+	HDMI2_MONITOR,
+	OPTION_MONITOR,
+	MONITOR_COUNT
+};
+
+enum monitor_state { MONITOR_OFF, MONITOR_ON };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
+extern void monitor_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

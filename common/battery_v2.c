@@ -86,7 +86,7 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 	const struct ec_params_battery_static_info *p = args->params;
 	const struct battery_static_info *bs;
 
-	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
+	if (p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
 	bs = &battery_static[p->index];
 
@@ -98,16 +98,11 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 		r->design_voltage = bs->design_voltage;
 		r->cycle_count = bs->cycle_count;
 
-		/* Truncate strings to reduced v0 size */
-		memcpy(&r->manufacturer, &bs->manufacturer_ext,
-		       sizeof(r->manufacturer));
-		r->manufacturer[sizeof(r->manufacturer) - 1] = 0;
-		memcpy(&r->model, &bs->model_ext, sizeof(r->model));
-		r->model[sizeof(r->model) - 1] = 0;
-		memcpy(&r->serial, &bs->serial_ext, sizeof(r->serial));
-		r->serial[sizeof(r->serial) - 1] = 0;
-		memcpy(&r->type, &bs->type_ext, sizeof(r->type));
-		r->type[sizeof(r->type) - 1] = 0;
+		strzcpy(r->manufacturer, bs->manufacturer_ext,
+			sizeof(r->manufacturer));
+		strzcpy(r->model, bs->model_ext, sizeof(r->model));
+		strzcpy(r->serial, bs->serial_ext, sizeof(r->serial));
+		strzcpy(r->type, bs->type_ext, sizeof(r->type));
 
 		args->response_size = sizeof(*r);
 	} else if (args->version == 1) {
@@ -117,16 +112,25 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 		r->design_voltage = bs->design_voltage;
 		r->cycle_count = bs->cycle_count;
 
-		/* Truncate strings to reduced size */
-		memcpy(r->manufacturer_ext, &bs->manufacturer_ext,
-		       sizeof(r->manufacturer_ext));
-		r->manufacturer_ext[sizeof(r->manufacturer_ext) - 1] = 0;
-		memcpy(r->model_ext, &bs->model_ext, sizeof(r->model_ext));
-		r->model_ext[sizeof(r->model_ext) - 1] = 0;
-		memcpy(r->serial_ext, &bs->serial_ext, sizeof(r->serial_ext));
-		r->serial_ext[sizeof(r->serial_ext) - 1] = 0;
-		memcpy(r->type_ext, &bs->type_ext, sizeof(r->type_ext));
-		r->type_ext[sizeof(r->type_ext) - 1] = 0;
+		strzcpy(r->manufacturer_ext, bs->manufacturer_ext,
+			sizeof(r->manufacturer_ext));
+		strzcpy(r->model_ext, bs->model_ext, sizeof(r->model_ext));
+		strzcpy(r->serial_ext, bs->serial_ext, sizeof(r->serial_ext));
+		strzcpy(r->type_ext, bs->type_ext, sizeof(r->type_ext));
+
+		args->response_size = sizeof(*r);
+	} else if (args->version == 2) {
+		struct ec_response_battery_static_info_v2 *r = args->response;
+
+		r->design_capacity = bs->design_capacity;
+		r->design_voltage = bs->design_voltage;
+		r->cycle_count = bs->cycle_count;
+
+		strzcpy(r->manufacturer, bs->manufacturer_ext,
+			sizeof(r->manufacturer));
+		strzcpy(r->device_name, bs->model_ext, sizeof(r->device_name));
+		strzcpy(r->serial, bs->serial_ext, sizeof(r->serial));
+		strzcpy(r->chemistry, bs->type_ext, sizeof(r->chemistry));
 
 		args->response_size = sizeof(*r);
 	} else {
@@ -136,7 +140,7 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_STATIC, host_command_battery_get_static,
-		     EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
 static enum ec_status
 host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
@@ -144,7 +148,7 @@ host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
 	const struct ec_params_battery_dynamic_info *p = args->params;
 	struct ec_response_battery_dynamic_info *r = args->response;
 
-	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
+	if (p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	args->response_size = sizeof(*r);

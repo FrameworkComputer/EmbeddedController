@@ -67,13 +67,8 @@ static enum ec_error_list set(const char *name, int value)
 	if (!gpio_is_implemented(signal))
 		return EC_ERROR_INVAL;
 
-	if (IS_ENABLED(CONFIG_GPIO_GET_EXTENDED)) {
-		if (!(gpio_get_flags(signal) & GPIO_OUTPUT))
-			return EC_ERROR_INVAL;
-	} else {
-		if (!(gpio_get_default_flags(signal) & GPIO_OUTPUT))
-			return EC_ERROR_INVAL;
-	}
+	if (!(gpio_get_flags(signal) & GPIO_OUTPUT))
+		return EC_ERROR_INVAL;
 
 	gpio_set_level(signal, value);
 
@@ -163,7 +158,6 @@ static int command_gpio_set(int argc, const char **argv)
 	int gpio;
 	int flags = 0;
 	int af = -1;
-	char *e;
 
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
@@ -178,16 +172,20 @@ static int command_gpio_set(int argc, const char **argv)
 		flags = GPIO_OUT_HIGH;
 	else if (strcasecmp(argv[2], "0") == 0)
 		flags = GPIO_OUT_LOW;
+#ifndef CONFIG_ZEPHYR
 	else if (strcasecmp(argv[2], "A") == 0)
 		flags = GPIO_ANALOG;
 	else if (strcasecmp(argv[2], "ALT") == 0) {
+		char *e;
 		if (argc >= 4) {
 			af = strtoi(argv[3], &e, 0);
 			if (*e || af < 0 || af > 5)
 				return EC_ERROR_PARAM2;
 		}
 		flags = GPIO_ALTERNATE;
-	} else
+	}
+#endif
+	else
 		return EC_ERROR_PARAM2;
 
 	/* Update alt function if requested. */

@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST(host_request_expected_size, test_mismatched_host_request_version)
 {

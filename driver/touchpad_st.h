@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_TOUCHPAD_ST_H
 #define __CROS_EC_TOUCHPAD_ST_H
 
-#include <stdint.h>
-
 #include "common.h"
+
+#include <stdint.h>
 
 #define ST_VENDOR_ID 0x0483
 
@@ -190,8 +190,8 @@ struct st_tp_host_buffer_heat_map_t {
 
 struct st_tp_event_t {
 #define ST_TP_EVENT_MAGIC 0x3
-	unsigned magic : 2; /* should always be 0x3 */
-	unsigned major_high : 2;
+	unsigned int magic : 2; /* should always be 0x3 */
+	unsigned int major_high : 2;
 #define ST_TP_EVENT_ID_CONTROLLER_READY 0x0
 #define ST_TP_EVENT_ID_ENTER_POINTER 0x1
 #define ST_TP_EVENT_ID_MOTION_POINTER 0x2
@@ -200,7 +200,7 @@ struct st_tp_event_t {
 #define ST_TP_EVENT_ID_USER_REPORT 0x5
 #define ST_TP_EVENT_ID_DEBUG_REPORT 0xe
 #define ST_TP_EVENT_ID_ERROR_REPORT 0xf
-	unsigned evt_id : 4;
+	unsigned int evt_id : 4;
 
 	union {
 		struct {
@@ -209,10 +209,10 @@ struct st_tp_event_t {
 #define ST_TP_TOUCH_TYPE_GLOVE 0x2
 #define ST_TP_TOUCH_TYPE_STYLUS 0x3
 #define ST_TP_TOUCH_TYPE_PALM 0x4
-			unsigned touch_type : 4;
-			unsigned touch_id : 4;
-			unsigned y : 12;
-			unsigned x : 12;
+			unsigned int touch_type : 4;
+			unsigned int touch_id : 4;
+			unsigned int y : 12;
+			unsigned int x : 12;
 			uint8_t z;
 			uint8_t minor : 4; // need to be concat with minor_high
 			uint8_t major : 4; // need to be concat with major_high
@@ -229,9 +229,9 @@ struct st_tp_event_t {
 		} __packed report;
 	} __packed; /* anonymous */
 
-	unsigned minor_high : 2;
-	unsigned reserved : 1;
-	unsigned evt_left : 5;
+	unsigned int minor_high : 2;
+	unsigned int reserved : 1;
+	unsigned int evt_left : 5;
 } __packed;
 
 struct st_tp_fw_header_t {

@@ -833,7 +833,7 @@ struct stm32_spi_regs {
 	uint16_t _pad0;
 	uint16_t cr2;
 	uint16_t _pad1;
-	unsigned sr;
+	unsigned int sr;
 	uint8_t dr;
 	uint8_t _pad2;
 	uint16_t _pad3;

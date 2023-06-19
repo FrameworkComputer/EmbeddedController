@@ -5,22 +5,24 @@
 
 #define DT_DRV_COMPAT ite_it8xxx2_cros_kb_raw
 
-#include <assert.h>
-#include <drivers/cros_kb_raw.h>
-#include <zephyr/drivers/clock_control.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/interrupt_controller/wuc_ite_it8xxx2.h>
-#include <zephyr/dt-bindings/interrupt-controller/it8xxx2-wuc.h>
-#include <zephyr/kernel.h>
-#include <soc.h>
-#include <soc_dt.h>
-#include <soc/ite_it8xxx2/reg_def_cros.h>
-
 #include "ec_tasks.h"
 #include "keyboard_raw.h"
 #include "task.h"
 
+#include <assert.h>
+
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/interrupt_controller/wuc_ite_it8xxx2.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/dt-bindings/interrupt-controller/it8xxx2-wuc.h>
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+
+#include <drivers/cros_kb_raw.h>
+#include <soc.h>
+#include <soc/ite_it8xxx2/reg_def_cros.h>
+#include <soc_dt.h>
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #define KEYBOARD_KSI_PIN_COUNT IT8XXX2_DT_INST_WUCCTRL_LEN(0)
@@ -41,6 +43,8 @@ struct cros_kb_raw_ite_config {
 	int irq;
 	/* KSI[7:0] wake-up input source configuration list */
 	const struct cros_kb_raw_wuc_map_cfg *wuc_map_list;
+	/* KSI/KSO keyboard scan alternate configuration */
+	const struct pinctrl_dev_config *pcfg;
 };
 
 struct cros_kb_raw_ite_data {
@@ -127,6 +131,33 @@ static int cros_kb_raw_ite_drive_column(const struct device *dev, int col)
 	return 0;
 }
 
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
+static int cros_kb_raw_ite_config_alt(const struct device *dev, bool enable)
+{
+	const struct cros_kb_raw_ite_config *config = dev->config;
+	int status = 0;
+
+	if (enable) {
+		/* Set KSI/KSO pins of cros_kb_raw node to kbs mode */
+		status = pinctrl_apply_state(config->pcfg,
+					     PINCTRL_STATE_DEFAULT);
+		if (status < 0) {
+			LOG_ERR("Failed to enable KSI and KSO kbs mode");
+			return status;
+		}
+	} else {
+		/* Set KSI/KSO pins of cros_kb_raw node to gpio mode */
+		status = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_SLEEP);
+		if (status < 0) {
+			LOG_ERR("Failed to enable KSI and KSO gpio mode");
+			return status;
+		}
+	}
+
+	return 0;
+}
+#endif
+
 static void cros_kb_raw_ite_ksi_isr(const struct device *dev)
 {
 	const struct cros_kb_raw_ite_config *config = dev->config;
@@ -155,19 +186,22 @@ static int cros_kb_raw_ite_init(const struct device *dev)
 	const struct cros_kb_raw_ite_config *config = dev->config;
 	struct cros_kb_raw_ite_data *data = dev->data;
 	struct kscan_it8xxx2_regs *const inst = config->base;
+	int status;
 
 	/* Ensure top-level interrupt is disabled */
 	cros_kb_raw_ite_enable_interrupt(dev, 0);
 
 	/*
-	 * bit2, Setting 1 enables the internal pull-up of the KSO[15:0] pins.
-	 * To pull up KSO[17:16], set the GPCR registers of their
-	 * corresponding GPIO ports.
-	 * bit0, Setting 1 enables the open-drain mode of the KSO[17:0] pins.
+	 * Enable the internal pull-up and kbs mode of the KSI[7:0] pins.
+	 * Enable the internal pull-up and kbs mode of the KSO[15:0] pins.
+	 * Enable the open-drain mode of the KSO[17:0] pins.
 	 */
-	inst->KBS_KSOCTRL = (IT8XXX2_KBS_KSOPU | IT8XXX2_KBS_KSOOD);
-	/* bit2, 1 enables the internal pull-up of the KSI[7:0] pins. */
-	inst->KBS_KSICTRL = IT8XXX2_KBS_KSIPU;
+	status = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+	if (status < 0) {
+		LOG_ERR("Failed to configure KSI[7:0] and KSO[15:0] pins");
+		return status;
+	}
+
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	/* KSO[2] output high, others output low. */
 	inst->KBS_KSOL = BIT(2);
@@ -230,15 +264,21 @@ static const struct cros_kb_raw_driver_api cros_kb_raw_ite_driver_api = {
 	.drive_colum = cros_kb_raw_ite_drive_column,
 	.read_rows = cros_kb_raw_ite_read_row,
 	.enable_interrupt = cros_kb_raw_ite_enable_interrupt,
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
+	.config_alt = cros_kb_raw_ite_config_alt,
+#endif
 };
 static const struct cros_kb_raw_wuc_map_cfg
 	cros_kb_raw_wuc_0[IT8XXX2_DT_INST_WUCCTRL_LEN(0)] =
 		IT8XXX2_DT_WUC_ITEMS_LIST(0);
 
+PINCTRL_DT_INST_DEFINE(0);
+
 static const struct cros_kb_raw_ite_config cros_kb_raw_cfg = {
 	.base = (struct kscan_it8xxx2_regs *)DT_INST_REG_ADDR(0),
 	.irq = DT_INST_IRQN(0),
 	.wuc_map_list = cros_kb_raw_wuc_0,
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
 };
 
 static struct cros_kb_raw_ite_data cros_kb_raw_data;

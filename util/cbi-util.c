@@ -5,20 +5,21 @@
  * Cros Board Info utility
  */
 
-#include <compile_time_macros.h>
+#include "crc8.h"
+#include "cros_board_info.h"
+
 #include <errno.h>
-#include <dirent.h>
-#include <getopt.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 
-#include "cros_board_info.h"
-#include "crc8.h"
+#include <compile_time_macros.h>
+#include <dirent.h>
+#include <getopt.h>
+#include <unistd.h>
 
 #define ARGS_MASK_BOARD_VERSION BIT(0)
 #define ARGS_MASK_FILENAME BIT(1)
@@ -83,6 +84,32 @@ static const char *field_name[] = {
 	"SSFC",
 	"REWORK_ID",
 	"FACTORY_CALIBRATION_DATA",
+	"BATT_SHIP_MODE_FLAGS",
+	"BATT_SHIP_MODE_REG_ADDR",
+	"BATT_SHIP_MODE_REG_DATA",
+	"BATT_SLEEP_MODE_FLAGS",
+	"BATT_SLEEP_MODE_REG_ADDR",
+	"BATT_SLEEP_MODE_REG_DATA",
+	"BATT_FET_FLAGS",
+	"BATT_FET_REG_ADDR",
+	"BATT_FET_REG_MASK",
+	"BATT_FET_DISCONNECT_VAL",
+	"BATT_FET_CFET_MASK",
+	"BATT_FET_CFET_OFF_VAL",
+	"FUEL_GAUGE_FLAGS",
+	"FUEL_GAUGE_MANUF_NAME",
+	"FUEL_GAUGE_DEVICE_NAME",
+	"BATT_VOLTAGE_MAX",
+	"BATT_VOLTAGE_NORMAL",
+	"BATT_VOLTAGE_MIN",
+	"BATT_PRECHARGE_VOLTAGE",
+	"BATT_PRECHARGE_CURRENT",
+	"BATT_START_CHARGING_MIN_C",
+	"BATT_START_CHARGING_MAX_C",
+	"BATT_CHARGING_MIN_C",
+	"BATT_CHARGING_MAX_C",
+	"BATT_DISCHARGING_MIN_C",
+	"BATT_DISCHARGING_MAX_C",
 };
 BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
 

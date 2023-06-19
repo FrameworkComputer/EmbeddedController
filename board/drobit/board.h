@@ -89,6 +89,8 @@
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 2
 
 /*
  * Macros for GPIO signals used in common code that don't match the

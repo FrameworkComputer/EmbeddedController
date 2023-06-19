@@ -25,6 +25,7 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
  * 4. If state is S0ix and no lazy or active wake mask is set, then use default
  *    S0ix mask to be compatible with older BIOS versions.
  */
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 void power_update_wake_mask(void)
 {
 	host_event_t wake_mask;
@@ -44,6 +45,28 @@ void power_update_wake_mask(void)
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, wake_mask);
 }
+#else
+void power_update_wake_mask(void)
+{
+	const struct device *dev = ap_pwrseq_get_instance();
+	host_event_t wake_mask;
+	enum ap_pwrseq_state state;
+
+	state = ap_pwrseq_get_current_state(dev);
+
+	if (state == AP_POWER_STATE_S0)
+		wake_mask = 0;
+	else if (lpc_is_active_wm_set_by_host() ||
+		 ap_power_get_lazy_wake_mask(state, &wake_mask))
+		return;
+#if CONFIG_AP_PWRSEQ_S0IX
+	if ((state == AP_POWER_STATE_S0IX) && (wake_mask == 0))
+		wake_mask = DEFAULT_WAKE_MASK_S0IX;
+#endif
+
+	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, wake_mask);
+}
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 static void power_update_wake_mask_deferred(struct k_work *work)
 {
@@ -113,8 +136,17 @@ enum ap_power_sleep_type sleep_state = AP_POWER_SLEEP_NONE;
  */
 static void power_s0ix_suspend_clear_masks(void)
 {
-	backup_sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
-	backup_smi_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+	host_event_t sci_mask, smi_mask;
+
+	sci_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+	smi_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+
+	/* Do not backup already-cleared SCI/SMI masks. */
+	if (!sci_mask && !smi_mask)
+		return;
+
+	backup_sci_mask = sci_mask;
+	backup_smi_mask = smi_mask;
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
 }
@@ -160,6 +192,10 @@ enum ap_power_sleep_type ap_power_sleep_get_notify(void)
 	return sleep_state;
 }
 
+#ifdef CONFIG_AP_PWRSEQ_S0IX_COUNTER
+atomic_t s0ix_counter;
+#endif
+
 void ap_power_sleep_notify_transition(enum ap_power_sleep_type check_state)
 {
 	if (sleep_state != check_state)
@@ -172,6 +208,9 @@ void ap_power_sleep_notify_transition(enum ap_power_sleep_type check_state)
 		 */
 		power_s0ix_suspend_clear_masks();
 		ap_power_ev_send_callbacks(AP_POWER_SUSPEND);
+#ifdef CONFIG_AP_PWRSEQ_S0IX_COUNTER
+		atomic_inc(&s0ix_counter);
+#endif
 	} else if (check_state == AP_POWER_SLEEP_RESUME) {
 		ap_power_ev_send_callbacks(AP_POWER_RESUME);
 		/*
@@ -219,7 +258,6 @@ void ap_power_chipset_handle_host_sleep_event(
 		ap_power_sleep_set_notify(AP_POWER_SLEEP_SUSPEND);
 		ap_power_ev_send_callbacks(AP_POWER_S0IX_SUSPEND_START);
 		power_signal_enable(PWR_SLP_S0);
-
 	} else if (state == HOST_SLEEP_EVENT_S0IX_RESUME) {
 		/*
 		 * Set sleep state to resume; restore SCI/SMI masks;
@@ -242,7 +280,12 @@ void ap_power_chipset_handle_host_sleep_event(
 		power_signal_disable(PWR_SLP_S0);
 	}
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
+
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 	ap_pwrseq_wake();
+#else
+	ap_pwrseq_post_event(ap_pwrseq_get_instance(), AP_PWRSEQ_EVENT_HOST);
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
 }
 
 uint16_t host_get_sleep_timeout(void)

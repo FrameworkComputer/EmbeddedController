@@ -16,15 +16,32 @@ menuconfig PLATFORM_EC_BATTERY
 
 if PLATFORM_EC_BATTERY
 
+config PLATFORM_EC_BATTERY_CONFIG_IN_CBI
+	bool "Support battery-config-in-CBI"
+	depends on CBI_EEPROM
+	help
+	  If this is enabled, a board reads battery config from CBI and updates
+	  each param in the default battery info using discovered data.
+
+config PLATFORM_EC_CONSOLE_CMD_BATTERY_CONFIG
+	bool "Console commands: bcfg"
+	depends on PLATFORM_EC_BATTERY_CONFIG_IN_CBI
+	help
+	  Enables console commands:
+
+          bcfg read | dump | reset - Read, dump, reset battery config read from
+          CBI.
+
 choice PLATFORM_EC_BATTERY_SELECT
 	prompt "Select the battery to use"
+	default PLATFORM_EC_BATTERY_SMART if DT_HAS_BATTERY_SMART_ENABLED
 	help
 	  Select the battery used on the board. If you are ensure, select the
 	  smart battery option.
 
 config PLATFORM_EC_BATTERY_SMART
 	bool "Support a smart battery"
-	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_I2C
 	help
 	  Many batteries support the Smart Battery Specification and therefore
 	  have common registers which can be accessed to control and monitor
@@ -36,6 +53,7 @@ endchoice # PLATFORM_EC_BATTERY_SELECT
 
 choice PLATFORM_EC_BATTERY_PRESENT_MODE
 	prompt "Method to use to detect the battery"
+	default PLATFORM_EC_BATTERY_PRESENT_GPIO if $(dt_path_enabled,/named-gpios/ec_batt_pres_odl)
 	help
 	  This selects the method to use to detect the presence of a battery.
 
@@ -176,6 +194,49 @@ config PLATFORM_EC_BATTERY_MAX_IMBALANCE_MV
 	  system tolerant of larger values of
 	  CONFIG_PLATFORM_EC_BATTERY_MAX_IMBALANCE_MV.
 
+config PLATFORM_EC_BATTERY_STBL_STAT
+	bool "Check whether the battery is initialized and stable"
+	help
+	  Enables support for checking the specific battery status to
+	  judge whether the battery is initialized and stable when the battery
+	  wakes up from ship mode. Use two MASKs to provide logical AND and
+	  logical OR options for different status.
+
+	  For example:
+	    STATUS_TERMINATE_CHARGE_ALARM(TCA):0x4000
+	    STATUS_TERMINATE_DISCHARGE_ALARM(TDA):0x0800
+
+	  Logical OR -- just check one of TCA/TDA mask:
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK1=(0x4000 | 0x0800)
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK2=0xFFFF
+
+	  Logical AND -- check both TCA/TDA mask:
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK1=0x4000
+	    CONFIG_PLATFORM_EC_BATT_ALARM_MASK2=0x0800
+
+	  The default configuration is logical OR.
+
+if PLATFORM_EC_BATTERY_STBL_STAT
+
+config PLATFORM_EC_BATT_ALARM_MASK1
+	hex "The battery status mask"
+	default 0x4800
+	help
+	  Use two MASKs to provide logical AND and logical OR options for different
+	  status. Default mask 0x4800 means
+	  (STATUS_TERMINATE_CHARGE_ALARM | STATUS_TERMINATE_DISCHARGE_ALARM),
+	  any one of these two masks is set, the battery state can be considered
+	  stable.
+
+config PLATFORM_EC_BATT_ALARM_MASK2
+	hex "The battery status mask"
+	default 0xFFFF
+	help
+	  Use two MASKs to provide logical AND and logical OR options for different
+	  status. Default mask 0xFFFF means do not use this mask.
+
+endif # PLATFORM_EC_BATTERY_STBL_STAT
+
 config PLATFORM_EC_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON
 	int "Minimum battery percentage for power on with an imbalanced pack"
 	depends on PLATFORM_EC_BATTERY_MEASURE_IMBALANCE
@@ -256,5 +317,12 @@ config PLATFORM_EC_SMART_BATTERY_OPTIONAL_MFG_FUNC
 	  Only make sense when PLATFORM_EC_I2C_VIRTUAL_BATTERY.
 
 endif # PLATFORM_EC_I2C_VIRTUAL_BATTERY
+
+config PLATFORM_EC_BATT_HOST_FULL_FACTOR
+	int "This value is used by the host to calculate the ETA for full charge"
+	default 97
+	help
+	  Today, EC's PLATFORM_EC_BATT_HOST_FULL_FACTOR is the source of truth.
+	  Powerd gets the value from the EC over EC_CMD_DISPLAY_SOC.
 
 endif # PLATFORM_EC_BATTERY

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/dts-v1/;
-
 #include <cros/binman.dtsi>
 #include <nuvoton/npcx.dtsi>
 
@@ -88,16 +86,6 @@
 			reg = <0x400b7000 0x2000>;
 			mtc-alarm = <&wui_mtc>;
 		};
-
-		shi: shi@4000f000 {
-			compatible = "nuvoton,npcx-cros-shi";
-			reg = <0x4000f000 0x120>;
-			interrupts = <18 1>;
-			clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL5 1>;
-			shi-cs-wui =<&wui_io53>;
-			label = "SHI";
-			status = "disabled";
-		};
 	};
 
 	power-states {
@@ -127,4 +115,8 @@
 
 &mdc {
 	status = "okay";
+};
+
+&shi0 {
+	shi-cs-wui =<&wui_io53>;
 };

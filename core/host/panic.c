@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-
 #include "config.h"
 #include "panic.h"
 #include "stack_trace.h"
+
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum)

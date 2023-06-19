@@ -35,8 +35,8 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
@@ -124,7 +124,8 @@ static void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */
@@ -163,11 +164,33 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+/* Set aux switch to 0xc when CCD enabled on port C0 */
+static int board_anx7447_mux_set_c0(const struct usb_mux *me,
+				    mux_state_t mux_state)
+{
+	int port = me->usb_port;
+	int rv = EC_SUCCESS;
+
+	if (port != USB_PD_PORT_TCPC_0)
+		return rv;
+
+	if (gpio_get_level(GPIO_CCD_MODE_ODL))
+		return rv;
+
+	CPRINTS("C%d: set AUX_SW_SEL=0x%x", port, 0xc);
+	rv = tcpc_write(port, ANX7447_REG_TCPC_AUX_SWITCH, 0xc);
+	if (rv)
+		CPRINTS("C%d: Setting AUX_SW_SEL failed", port);
+
+	return rv;
+}
+
 const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USB_PD_PORT_TCPC_0,
 			.driver = &anx7447_usb_mux_driver,
+			.board_set = &board_anx7447_mux_set_c0,
 			.hpd_update = &anx7447_tcpc_update_hpd_status,
 		},
 	},
@@ -422,26 +445,6 @@ static void board_update_sensor_config_from_sku(void)
 	}
 }
 
-static void anx7447_set_aux_switch(void)
-{
-	const int port = USB_PD_PORT_TCPC_0;
-
-	/* Debounce */
-	if (gpio_get_level(GPIO_CCD_MODE_ODL))
-		return;
-
-	CPRINTS("C%d: AUX_SW_SEL=0x%x", port, 0xc);
-	if (tcpc_write(port, ANX7447_REG_TCPC_AUX_SWITCH, 0xc))
-		CPRINTS("C%d: Setting AUX_SW_SEL failed", port);
-}
-DECLARE_DEFERRED(anx7447_set_aux_switch);
-
-void ccd_mode_isr(enum gpio_signal signal)
-{
-	/* Wait 2 seconds until all mux setting is done by PD task */
-	hook_call_deferred(&anx7447_set_aux_switch_data, 2 * SECOND);
-}
-
 static void board_init(void)
 {
 	/* Initialize Fans */
@@ -455,10 +458,6 @@ static void board_init(void)
 
 	/* Enable HDMI HPD interrupt. */
 	gpio_enable_interrupt(GPIO_HDMI_CONN_HPD);
-
-	/* Trigger once to set mux in case CCD cable is already connected. */
-	ccd_mode_isr(GPIO_CCD_MODE_ODL);
-	gpio_enable_interrupt(GPIO_CCD_MODE_ODL);
 
 	board_update_sensor_config_from_sku();
 }

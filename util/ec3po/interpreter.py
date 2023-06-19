@@ -25,6 +25,7 @@ import traceback
 
 import six
 
+
 COMMAND_RETRIES = 3  # Number of attempts to retry a command.
 EC_MAX_READ = 1024  # Max bytes to read at a time from the EC.
 EC_SYN = b"\xec"  # Byte indicating EC interrogation.

@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "cbi_ec_fw_config.h"
 #include "common.h"
 #include "console.h"
-#include "cbi_ec_fw_config.h"
 #include "cros_board_info.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)

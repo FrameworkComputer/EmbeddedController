@@ -3,14 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <stdbool.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_uart.h>
-#include <zephyr/sys/__assert.h>
-#include <zephyr/ztest.h>
-
 #include "chipset.h"
 #include "config.h"
 #include "ec_commands.h"
@@ -18,9 +10,18 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
-#include "timer.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "timer.h"
+
+#include <stdbool.h>
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/sys/__assert.h>
+#include <zephyr/ztest.h>
 
 /* Do a chargesplash host cmd */
 static enum ec_status
@@ -28,10 +29,8 @@ chargesplash_hostcmd(enum ec_chargesplash_cmd cmd,
 		     struct ec_response_chargesplash *response)
 {
 	struct ec_params_chargesplash params = { .cmd = cmd };
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_CHARGESPLASH, 0, *response, params);
 
-	return host_command_process(&args);
+	return ec_cmd_chargesplash(NULL, &params, response);
 }
 
 static bool is_chargesplash_requested(void)

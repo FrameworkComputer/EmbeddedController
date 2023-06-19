@@ -5,17 +5,17 @@
  */
 
 #include <errno.h>
-#include <getopt.h>
-#include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <getopt.h>
+#include <libusb.h>
+#include <poll.h>
 #include <sys/select.h>
 #include <unistd.h>
-
-#include <libusb.h>
 
 /* Command line options */
 static uint16_t vid = 0x18d1; /* Google */

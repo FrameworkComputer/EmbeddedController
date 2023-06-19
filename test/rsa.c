@@ -5,8 +5,8 @@
  * Tests RSA implementation.
  */
 
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "rsa.h"
 #include "test_util.h"
 #include "util.h"
