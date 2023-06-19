@@ -277,6 +277,32 @@ void usb_c1_interrupt(enum gpio_signal s)
 }
 
 /*
+ * Check state of IRQ lines at startup, ensuring an IRQ that happened before
+ * the EC started up won't get lost (leaving the IRQ line asserted and blocking
+ * any further interrupts on the port).
+ *
+ * Although the PD task will check for pending TCPC interrupts on startup,
+ * the charger sharing the IRQ will not be polled automatically.
+ */
+void board_handle_initial_typec_irq(void)
+{
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl))) {
+		/* Only charger IRQ has to be checked on C0 interrupt */
+		sm5803_interrupt(0);
+	}
+
+	/*
+	 * C1 port IRQ already handled by board_process_pd_alert(), we don't
+	 * need check IRQ here at initial.
+	 */
+}
+/*
+ * This must run after sub-board detection (which happens in EC main()),
+ * but isn't depended on by anything else either.
+ */
+DECLARE_HOOK(HOOK_INIT, board_handle_initial_typec_irq, HOOK_PRIO_LAST);
+
+/*
  * Handle charger interrupts in the PD task. Not doing so can lead to a priority
  * inversion where we fail to respond to TCPC alerts quickly enough because we
  * don't get another edge on a shared IRQ until the other interrupt is cleared
