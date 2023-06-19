@@ -884,6 +884,9 @@
 #undef CONFIG_CEC
 #undef CONFIG_CEC_DEBUG
 
+/* CEC drivers */
+#undef CONFIG_CEC_BITBANG
+
 /*****************************************************************************/
 
 /* Compile charge manager */

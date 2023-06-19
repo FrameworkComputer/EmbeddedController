@@ -84,6 +84,9 @@ driver-$(CONFIG_CHARGER_RT9490)+=charger/rt9490.o
 driver-$(CONFIG_CHARGER_SY21612)+=charger/sy21612.o
 driver-$(CONFIG_CHARGER_SM5803)+=charger/sm5803.o
 
+# CEC drivers
+driver-$(CONFIG_CEC_BITBANG)+=cec/bitbang.o
+
 # DP Redrivers
 driver-$(CONFIG_DP_REDRIVER_TDP142)+=retimer/tdp142.o
 

@@ -12,6 +12,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
+#include "driver/cec/bitbang.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/temp_sensor/thermistor.h"

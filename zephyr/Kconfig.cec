@@ -14,4 +14,12 @@ config PLATFORM_EC_CEC_DEBUG
 	help
 	  Enable CEC debug logs.
 
+config PLATFORM_EC_CEC_BITBANG
+	bool "CEC bitbang driver"
+	help
+	  Enable the CEC bitbang driver. This driver uses GPIOs and a hardware
+	  timer to send and receive CEC messages. It can be used on ECs without
+	  a CEC peripheral, or in addition to a CEC peripheral to enable more
+	  CEC ports.
+
 endif # PLATFORM_EC_CEC

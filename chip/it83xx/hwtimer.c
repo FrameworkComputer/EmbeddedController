@@ -207,7 +207,7 @@ static void __hw_clock_source_irq(void)
 	}
 #endif
 
-#ifdef CONFIG_CEC
+#ifdef CONFIG_CEC_BITBANG
 	if (irq == et_ctrl_regs[CEC_EXT_TIMER].irq) {
 		cec_ext_timer_interrupt();
 		return;

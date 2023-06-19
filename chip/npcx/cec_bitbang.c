@@ -6,6 +6,7 @@
 #include "cec.h"
 #include "clock_chip.h"
 #include "console.h"
+#include "driver/cec/bitbang.h"
 #include "fan_chip.h"
 #include "registers.h"
 #include "task.h"

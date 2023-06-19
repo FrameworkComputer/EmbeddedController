@@ -4,8 +4,9 @@
  */
 
 #include "cec.h"
-#include "cec_chip.h"
+#include "cec_bitbang_chip.h"
 #include "console.h"
+#include "driver/cec/bitbang.h"
 #include "gpio.h"
 #include "hwtimer_chip.h"
 #include "task.h"

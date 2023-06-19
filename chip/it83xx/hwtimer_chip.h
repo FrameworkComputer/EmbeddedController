@@ -23,12 +23,12 @@
  * has a CEC peripheral, devices without a fan can have up to two CEC ports, and
  * devices with a fan up to one.
  */
-#if defined(CONFIG_FANS) && defined(CONFIG_CEC)
-#error "Can't enable both CONFIG_FANS and CONFIG_CEC"
+#if defined(CONFIG_FANS) && defined(CONFIG_CEC_BITBANG)
+#error "Can't enable both CONFIG_FANS and CONFIG_CEC_BITBANG"
 #endif
 #if defined(CONFIG_FANS)
 #define FAN_CTRL_EXT_TIMER EXT_TIMER_5
-#elif defined(CONFIG_CEC)
+#elif defined(CONFIG_CEC_BITBANG)
 #define CEC_EXT_TIMER EXT_TIMER_5
 #endif
 

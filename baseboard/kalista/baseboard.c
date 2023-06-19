@@ -15,6 +15,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/cec/bitbang.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"

@@ -12,6 +12,7 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/cec/bitbang.h"
 #include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
