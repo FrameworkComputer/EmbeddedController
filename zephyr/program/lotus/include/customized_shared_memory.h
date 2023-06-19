@@ -70,6 +70,14 @@
 
 #define EC_CUSTOMIZED_MEMMAP_PD_VERSION		0x14C
 
+#define EC_CUSTOMIZED_MEMMAP_GPU_CONTROL        0x150
+#define SET_APU_MUX     BIT(0)
+#define SET_GPU_MUX     BIT(1)
+#define GPU_MUX         BIT(2) /* 0:APU; 1:GPU*/
+#define GPU_PRESENT     BIT(3) /* 0:gpu no exist; 1:gpu exist*/
+#define ASSERTED_EDP_RESET      BIT(4)
+#define DEASSERTED_EDP_RESET    BIT(5)
+
 #define EC_CUSTOMIZED_MEMMAP_DISPLAY_ON		0x153
 
 #endif /* __BOARD_CUSTOMIZED_SHARED_MEMORY_H */

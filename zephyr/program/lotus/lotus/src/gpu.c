@@ -7,6 +7,8 @@
  */
 
 #include "adc.h"
+#include "chipset.h"
+#include "customized_shared_memory.h"
 #include "gpio/gpio_int.h"
 #include "gpio.h"
 #include "gpu.h"
@@ -26,7 +28,6 @@ LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 #define GPU_F75303_I2C_ADDR_FLAGS 0x4D
 
 static int module_present;
-static int gpu_detected;
 bool gpu_present(void)
 {
 	return module_present;
@@ -46,8 +47,15 @@ void check_gpu_module(void)
 {
 	int gpu_id_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
 	int gpu_id_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
+	int switch_status = 0;
 
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_chassis_open));
+	if (board_get_version() >= BOARD_VERSION_7) {
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_beam_open));
+		switch_status = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
+	} else {
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_chassis_open));
+		switch_status = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
+	}
 
 	switch (VALID_BOARDID(gpu_id_1, gpu_id_0)) {
 	case VALID_BOARDID(BOARD_VERSION_12, BOARD_VERSION_12):
@@ -67,17 +75,23 @@ void check_gpu_module(void)
 	break;
 	}
 
+	/* The chassis or f_beam is opened, turn off the power */
+	if (!switch_status)
+		module_present = 0;
+
 	if (module_present) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
 		if (board_get_version() >= BOARD_VERSION_7)
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 0);
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) |= GPU_PRESENT;
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 		if (board_get_version() >= BOARD_VERSION_7)
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 1);
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) &= GPU_PRESENT;
 	}
 	update_gpu_ac_power_state();
 }
@@ -127,26 +141,58 @@ void beam_open_interrupt(enum gpio_signal signal)
 	}
 }
 
-static void gpu_mux_configure(void)
+void gpu_smart_access_graphic(void);
+DECLARE_DEFERRED(gpu_smart_access_graphic);
+
+void gpu_smart_access_graphic(void)
 {
-	int rv = 1;
-	int data;
+	uint8_t gpu_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL);
 
-	if (module_present) {
-		/* TODO Setup real gpu detection, for now just detect thermal sensor*/
-		/* Disable gpu detection until mux is fixed */
-		rv = i2c_read8(I2C_PORT_GPU0, 0x4d, 0x00, &data);
-		if (rv == EC_SUCCESS && flash_storage_get(FLASH_FLAGS_ENABLE_GPU_MUX)) {
-			LOG_INF("dGPU detected, enabling mux");
-			gpu_detected = 1;
-
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 1);
-		} else {
-			LOG_INF("dGPU not enabling mux");
-		}
+	/**
+	 * Host updated the shared memory to control the mux,
+	 * after switching the mux, clear the shared memory BIT(0) and BIT(1).
+	 */
+	if ((gpu_status & 0x03) == SET_GPU_MUX) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 1);
+		gpu_status &= 0xFC;
+		gpu_status |= GPU_MUX;
 	}
+
+	if ((gpu_status & 0x03) == SET_APU_MUX) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+		gpu_status &= 0xFC;
+		gpu_status &= ~GPU_MUX;
+	}
+
+	/**
+	 * Host updated the shared memory to reset the edp,
+	 * after controlling the reset pin, clear the shared memory BIT(4) and BIT(5).
+	 */
+	if ((gpu_status & 0x30) == ASSERTED_EDP_RESET) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), 0);
+		gpu_status &= 0xCF;
+	}
+
+	if ((gpu_status & 0x30) == DEASSERTED_EDP_RESET) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), 1);
+		gpu_status &= 0xCF;
+	}
+
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) = gpu_status;
+
+	/* Polling to check the shared memory of the GPU */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		hook_call_deferred(&gpu_smart_access_graphic_data, 10 * MSEC);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, gpu_mux_configure, HOOK_PRIO_DEFAULT);
+
+
+static void start_smart_access_graphic(void)
+{
+	/* Check GPU is present then polling the namespace to do the smart access graphic */
+	if (gpu_present())
+		hook_call_deferred(&gpu_smart_access_graphic_data, 10 * MSEC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, start_smart_access_graphic, HOOK_PRIO_DEFAULT);
 
 static void f75303_disable_alert_mask(void)
 {
