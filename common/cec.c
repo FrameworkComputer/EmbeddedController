@@ -36,8 +36,11 @@ static mutex_t rx_queue_readoffset_mutex;
 /* Queue of completed incoming CEC messages */
 static struct cec_rx_queue cec_rx_queue;
 
-/* Events to send to AP */
-static atomic_t cec_events;
+/* MKBP events to send to the AP (enum mkbp_cec_event) */
+static atomic_t cec_mkbp_events;
+
+/* Task events for each port (CEC_TASK_EVENT_*) */
+static atomic_t cec_task_events[CEC_PORT_COUNT];
 
 int cec_transfer_get_bit(const struct cec_msg_transfer *transfer)
 {
@@ -217,9 +220,15 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg, uint8_t *msg_len)
 	return 0;
 }
 
+void cec_task_set_event(int port, uint32_t event)
+{
+	atomic_or(&cec_task_events[port], event);
+	task_wake(TASK_ID_CEC);
+}
+
 static void send_mkbp_event(uint32_t event)
 {
-	atomic_or(&cec_events, event);
+	atomic_or(&cec_mkbp_events, event);
 	mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
 }
 
@@ -250,7 +259,7 @@ static enum ec_status cec_set_enable(int port, uint8_t enable)
 	if (enable == 0) {
 		/* If disabled, clear the rx queue and events. */
 		memset(&cec_rx_queue, 0, sizeof(struct cec_rx_queue));
-		cec_events = 0;
+		cec_mkbp_events = 0;
 	}
 
 	return EC_RES_SUCCESS;
@@ -314,7 +323,7 @@ DECLARE_HOST_COMMAND(EC_CMD_CEC_GET, hc_cec_get, EC_VER_MASK(0));
 
 static int cec_get_next_event(uint8_t *out)
 {
-	uint32_t event_out = atomic_clear(&cec_events);
+	uint32_t event_out = atomic_clear(&cec_mkbp_events);
 
 	memcpy(out, &event_out, sizeof(event_out));
 
@@ -380,20 +389,24 @@ static void handle_received_message(void)
 void cec_task(void *unused)
 {
 	uint32_t events;
+	int port;
 
 	CPRINTF("CEC task starting\n");
 
 	while (1) {
-		events = task_wait_event(-1);
-		if (events & CEC_TASK_EVENT_RECEIVED_DATA) {
-			handle_received_message();
-		}
-		if (events & CEC_TASK_EVENT_OKAY) {
-			send_mkbp_event(EC_MKBP_CEC_SEND_OK);
-			CPRINTS("SEND OKAY");
-		} else if (events & CEC_TASK_EVENT_FAILED) {
-			send_mkbp_event(EC_MKBP_CEC_SEND_FAILED);
-			CPRINTS("SEND FAILED");
+		task_wait_event(-1);
+		for (port = 0; port < CEC_PORT_COUNT; port++) {
+			events = atomic_clear(&cec_task_events[port]);
+			if (events & CEC_TASK_EVENT_RECEIVED_DATA) {
+				handle_received_message();
+			}
+			if (events & CEC_TASK_EVENT_OKAY) {
+				send_mkbp_event(EC_MKBP_CEC_SEND_OK);
+				CPRINTS("SEND OKAY");
+			} else if (events & CEC_TASK_EVENT_FAILED) {
+				send_mkbp_event(EC_MKBP_CEC_SEND_FAILED);
+				CPRINTS("SEND FAILED");
+			}
 		}
 	}
 }

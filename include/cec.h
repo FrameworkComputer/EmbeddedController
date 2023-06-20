@@ -202,3 +202,11 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg,
  */
 int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
 				uint8_t msg_len);
+
+/**
+ * Set a given task event for a given CEC port.
+ *
+ * @param port		Port the event occurred on
+ * @param event		Event type (CEC_TASK_EVENT_*)
+ */
+void cec_task_set_event(int port, uint32_t event);

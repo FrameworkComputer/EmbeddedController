@@ -368,8 +368,8 @@ static void enter_state(int port, enum cec_state new_state)
 		if (cec_rx.eom || cec_rx.transfer.byte >= MAX_CEC_MSG_LEN) {
 			addr = cec_rx.transfer.buf[0] & 0x0f;
 			if (addr == cec_addr || addr == CEC_BROADCAST_ADDR) {
-				task_set_event(TASK_ID_CEC,
-					       CEC_TASK_EVENT_RECEIVED_DATA);
+				cec_task_set_event(
+					port, CEC_TASK_EVENT_RECEIVED_DATA);
 			}
 			timeout = DATA_ZERO_HIGH_TICKS;
 		} else {
@@ -454,8 +454,7 @@ void cec_event_timeout(int port)
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
 				enter_state(port, CEC_STATE_IDLE);
-				task_set_event(TASK_ID_CEC,
-					       CEC_TASK_EVENT_OKAY);
+				cec_task_set_event(port, CEC_TASK_EVENT_OKAY);
 			}
 		} else {
 			if (cec_tx.resends < CEC_MAX_RESENDS) {
@@ -468,8 +467,7 @@ void cec_event_timeout(int port)
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
 				enter_state(port, CEC_STATE_IDLE);
-				task_set_event(TASK_ID_CEC,
-					       CEC_TASK_EVENT_FAILED);
+				cec_task_set_event(port, CEC_TASK_EVENT_FAILED);
 			}
 		}
 		break;
