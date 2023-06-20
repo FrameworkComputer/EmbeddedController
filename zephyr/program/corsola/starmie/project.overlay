@@ -412,7 +412,7 @@
 
 			color-1 {
 				led-color = <&color_battery_off>;
-				period-ms = <1000>;
+				period-ms = <3000>;
 			};
 		};
 
