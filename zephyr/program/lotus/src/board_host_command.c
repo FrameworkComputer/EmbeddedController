@@ -29,18 +29,34 @@
 #include "util.h"
 #include "zephyr_console_shim.h"
 
+#ifdef CONFIG_BOARD_LOTUS
+#include "gpu.h"
+#endif
+
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
 
 static void sci_enable(void);
 DECLARE_DEFERRED(sci_enable);
+
+#ifdef CONFIG_BOARD_LOTUS
+static void gpu_typec_detect()
+{
+	set_host_dp_ready(1);
+}
+DECLARE_DEFERRED(gpu_typec_detect);
+#endif
+
 static void sci_enable(void)
 {
 	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY) {
 		/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		bios_function_detect();
+#ifdef CONFIG_BOARD_LOTUS
+		hook_call_deferred(&gpu_typec_detect_data, 500 * MSEC);
+#endif
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -48,6 +64,9 @@ static void sci_enable(void)
 static void sci_disable(void)
 {
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+#ifdef CONFIG_BOARD_LOTUS
+	set_host_dp_ready(0);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, sci_disable, HOOK_PRIO_DEFAULT);
 

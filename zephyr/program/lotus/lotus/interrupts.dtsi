@@ -67,5 +67,15 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "beam_open_interrupt";
 		};
+		int_gpu_pd: gpu_pd {
+			irq-pin = <&gpio_gpu_i2c_s5_int>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "gpu_pd_interrupt";
+		};
+		int_dp_hot_plug: dp_hot_plug {
+			irq-pin = <&gpio_gpu_b_gpio01_ec>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "dp_hot_plug_interrupt";
+		};
 	};
 };

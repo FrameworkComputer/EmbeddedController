@@ -12,4 +12,6 @@ bool gpu_present(void);
 
 void gpu_post_power_init(void);
 
+void set_host_dp_ready(int ready);
+
 #endif /* __BOARD_GPU_H__ */

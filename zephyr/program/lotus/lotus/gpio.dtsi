@@ -83,7 +83,7 @@
 		gpu_b_gpio00_ec {
 			gpios = <&gpio3 1 GPIO_ODR_HIGH>;	/* Reserved */
 		};
-		gpu_b_gpio01_ec {
+		gpio_gpu_b_gpio01_ec: gpu_b_gpio01_ec {
 			gpios = <&gpio3 0 GPIO_ODR_HIGH>;	/* Control 2nd Batt discharge */
 		};
 		gpio_gpu_b_gpio02_ec: gpu_b_gpio02_ec {
@@ -265,7 +265,7 @@
 			gpios = <&gpio9 7 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_GOOD_VR";
 		};
-		gpu_i2c_s5_int {
+		gpio_gpu_i2c_s5_int: gpu_i2c_s5_int {
 			gpios = <&gpioa 5 GPIO_INPUT>;
 		};
 		gpio_wl_rst_l: wl_rst_l {
