@@ -754,10 +754,37 @@ test_static int test_atkbd_set_leds_keypress_during(void)
 	press_key(1, 1, 0);
 
 	/* Scancode is kept in queue during SETLEDS. */
-	VERIFY_NO_CHAR();
+	msleep(15);
+	TEST_EQ(output_buffer.full, 0, "%d");
 
+	/* 2nd byte arrives (before timer expires) */
 	i8042_write_data(0x01);
 	VERIFY_ATKBD_ACK();
+
+	/* Scancode previously queued should be sent now. */
+	VERIFY_LPC_CHAR("\x01\x81");
+
+	return EC_SUCCESS;
+}
+
+test_static int test_atkbd_set_leds_keypress_timeout(void)
+{
+	ENABLE_KEYSTROKE(1);
+
+	/* This should pause scanning. */
+	i8042_write_data(ATKBD_CMD_SETLEDS);
+	VERIFY_ATKBD_ACK();
+
+	/* Simulate keypress while keyboard is waiting for option byte */
+	press_key(1, 1, 1);
+	press_key(1, 1, 0);
+
+	/* Scancode is kept in queue during SETLEDS. */
+	msleep(15);
+	TEST_EQ(output_buffer.full, 0, "%d");
+
+	/* Further wait until timer expires. */
+	msleep(15);
 
 	/* Scancode previously queued should be sent now. */
 	VERIFY_LPC_CHAR("\x01\x81");
@@ -997,6 +1024,7 @@ void run_test(int argc, const char **argv)
 		RUN_TEST(test_atkbd_echo);
 		RUN_TEST(test_atkbd_get_id);
 		RUN_TEST(test_atkbd_set_leds_keypress_during);
+		RUN_TEST(test_atkbd_set_leds_keypress_timeout);
 		RUN_TEST(test_atkbd_set_leds_abort_set);
 		RUN_TEST(test_atkbd_set_ex_leds);
 		RUN_TEST(test_atkbd_reset);

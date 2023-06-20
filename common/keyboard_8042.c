@@ -1006,13 +1006,31 @@ void keyboard_protocol_task(void *u)
 			if (queue_count(&to_host_cmd)) {
 				queue_remove_unit(&to_host_cmd, &entry);
 			} else if (data_port_state == STATE_ATKBD_SETLEDS) {
-				/* to_host_cmd is empty but in SETLEDS */
-				if (!timestamp_expired(setleds_deadline, &t))
-					/* Let's wait for the 2nd byte. */
+				/*
+				 * to_host_cmd == empty and to_host != empty.
+				 * We're in SETLEDS thus expecting the 2nd byte.
+				 * Until timer expires, don't process scancode.
+				 */
+				if (!timestamp_expired(setleds_deadline, &t)) {
+					/*
+					 * Let's wait for the 2nd byte but we
+					 * don't want to wait too long because
+					 * we already have scancode to send.
+					 */
+					if (wait == -1 ||
+					    wait > setleds_deadline.val - t.val)
+						wait = setleds_deadline.val -
+						       t.val;
 					break;
-				/* Didn't receive 2nd byte. Go back to CMD. */
+				}
+				/*
+				 * Didn't receive 2nd byte. Go back to CMD. We
+				 * don't need to cancel the timer because going
+				 * back to CMD state implicitly disables timer.
+				 */
 				CPRINTS("KB SETLEDS timeout");
 				data_port_state = STATE_ATKBD_CMD;
+				queue_remove_unit(&to_host, &entry);
 			} else {
 				/* to_host isn't empty && not in SETLEDS */
 				queue_remove_unit(&to_host, &entry);
