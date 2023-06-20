@@ -244,6 +244,10 @@ struct ec_response_chassis_counter {
  */
 #define EC_CMD_CHECK_DECK_STATE		0x3E16
 
+struct ec_params_deck_state {
+	uint8_t mode;
+} __ec_align1;
+
 struct ec_response_deck_state {
 	uint8_t input_deck_board_id[8];
 	uint8_t deck_state;

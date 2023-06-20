@@ -28,6 +28,7 @@ LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_INF);
 
 int oc_count;
 int force_on;
+int detect_mode;
 int hub_board_id[8];	/* EC console Debug use */
 enum input_deck_state deck_state;
 
@@ -35,6 +36,17 @@ void module_oc_interrupt(enum gpio_signal signal)
 {
     oc_count++;
 }
+
+void set_detect_mode(int mode)
+{
+	detect_mode = mode;
+}
+
+int get_detect_mode(void)
+{
+	return detect_mode;
+}
+
 
 static void set_hub_mux(uint8_t input)
 {
@@ -72,9 +84,15 @@ static void scan_c_deck(bool full_scan)
 
 static void board_input_module_init(void)
 {
-	deck_state = DECK_OFF;
+	/* need to wait bios_function_init() to update detect mode */
+	if (detect_mode == 0x02)
+		deck_state = DECK_FORCE_ON;
+	else if (detect_mode == 0x04)
+		deck_state = DECK_FORCE_OFF;
+	else
+		deck_state = DECK_OFF;
 }
-DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT + 2);
 
 static void poll_c_deck(void)
 {
@@ -127,17 +145,24 @@ DECLARE_HOOK(HOOK_TICK, poll_c_deck, HOOK_PRIO_DEFAULT);
 
 static void input_modules_powerup(void)
 {
-	if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON)
+	if (deck_state == DECK_FORCE_ON)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+	else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON)
 		deck_state = DECK_DISCONNECTED;
+
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, input_modules_powerup, HOOK_PRIO_DEFAULT);
 
 void input_modules_powerdown(void)
 {
-	deck_state = DECK_OFF;
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
-	/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD*/
-	set_hub_mux(TOP_ROW_NOT_CONNECTED);
+	if (deck_state == DECK_FORCE_ON)
+		 gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+	else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON) {
+		deck_state = DECK_OFF;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+		/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD */
+		set_hub_mux(TOP_ROW_NOT_CONNECTED);
+	}
 }
 
 int get_deck_state(void)
@@ -148,9 +173,21 @@ int get_deck_state(void)
 /* Host command */
 static enum ec_status check_deck_state(struct host_cmd_handler_args *args)
 {
+	const struct ec_params_deck_state *p = args->params;
 	struct ec_response_deck_state *r = args->response;
 	int idx;
 
+	/* set mode */
+	if (p->mode == 0x01)
+		deck_state = DECK_DISCONNECTED;
+	else if (p->mode == 0x02)
+		deck_state = DECK_FORCE_ON;
+	else if (p->mode == 0x04)
+		deck_state = DECK_FORCE_OFF;
+
+	set_detect_mode(p->mode);
+
+	/* return deck status */
 	for (idx = 0; idx < 8; idx++)
 		r->input_deck_board_id[idx] = (uint8_t)hub_board_id[idx];
 

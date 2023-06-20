@@ -19,6 +19,10 @@
 #include "util.h"
 #include "zephyr_console_shim.h"
 
+#ifdef CONFIG_BOARD_LOTUS
+#include "input_module.h"
+#endif
+
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
@@ -64,7 +68,10 @@ void bios_function_detect(void)
 	system_set_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, ac_boot_status());
 
 	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
-		flash_storage_commit();
+#ifdef CONFIG_BOARD_LOTUS
+	flash_storage_update(FLASH_FLAGS_INPUT_MODULE_POWER, get_detect_mode());
+#endif
+	flash_storage_commit();
 }
 
 int chassis_cmd_clear(int type)
@@ -140,6 +147,9 @@ static void bios_function_init(void)
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
 
+#ifdef CONFIG_BOARD_LOTUS
+	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
+#endif
 	check_chassis_open(1);
 	hook_call_deferred(&board_customer_tick_data, 1000 * MSEC);
 }
