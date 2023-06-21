@@ -659,7 +659,7 @@ static void perform_mux_hpd_update(int port, int index, mux_state_t hpd_state)
 	configure_mux(port, index, USB_MUX_HPD_UPDATE, &hpd_state);
 }
 
-void usb_mux_hpd_update(int port, mux_state_t hpd_state)
+test_mockable void usb_mux_hpd_update(int port, mux_state_t hpd_state)
 {
 	if (port >= board_get_usb_pd_port_count())
 		return;

@@ -9,6 +9,7 @@ project(kingler)
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
 zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/corsola/include")
+zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/../test/drivers/common/include")
 
 target_sources(app PRIVATE src/fakes.c)
 

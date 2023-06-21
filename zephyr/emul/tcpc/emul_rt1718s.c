@@ -38,6 +38,8 @@ static bool is_valid_rt1718s_page1_register(int reg)
 	case RT1718S_GPIO_CTRL(RT1718S_GPIO1):
 	case RT1718S_GPIO_CTRL(RT1718S_GPIO2):
 	case RT1718S_GPIO_CTRL(RT1718S_GPIO3):
+	case RT1718S_GPIO1_VBUS_CTRL:
+	case RT1718S_GPIO2_VBUS_CTRL:
 		return true;
 	default:
 		return false;

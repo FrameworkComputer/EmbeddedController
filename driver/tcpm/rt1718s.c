@@ -98,7 +98,7 @@ int rt1718s_read16(int port, int reg, int *val)
 	return rt1718s_read(port, reg, val, 2);
 }
 
-int rt1718s_sw_reset(int port)
+test_mockable int rt1718s_sw_reset(int port)
 {
 	int rv;
 
@@ -449,7 +449,8 @@ static int rt1718s_enter_low_power_mode(int port)
 }
 #endif
 
-int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
+test_mockable int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel,
+				  int *adc_val)
 {
 	int rv;
 	const int max_wait_times = 30;

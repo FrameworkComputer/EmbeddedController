@@ -489,7 +489,7 @@ static void nx20p348x_irq_deferred(void)
 }
 DECLARE_DEFERRED(nx20p348x_irq_deferred);
 
-void nx20p348x_interrupt(int port)
+test_mockable void nx20p348x_interrupt(int port)
 {
 	atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&nx20p348x_irq_deferred_data, 0);

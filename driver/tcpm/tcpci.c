@@ -1360,7 +1360,7 @@ void tcpci_tcpc_alert(int port)
 		task_set_event(PD_PORT_TO_TASK_ID(port), pd_event);
 }
 
-int tcpci_get_vbus_voltage_no_check(int port, int *vbus)
+test_mockable int tcpci_get_vbus_voltage_no_check(int port, int *vbus)
 {
 	int error, val;
 

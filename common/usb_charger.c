@@ -123,7 +123,7 @@ void usb_charger_reset_charge(int port)
 #endif
 }
 
-void usb_charger_task_set_event(int port, uint8_t event)
+test_mockable void usb_charger_task_set_event(int port, uint8_t event)
 {
 #ifdef CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK
 	atomic_or(&usb_charger_port_events, PORT_EVENT_PACK(port, event));
