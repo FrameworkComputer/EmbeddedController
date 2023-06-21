@@ -7780,6 +7780,12 @@ struct ec_params_fp_seed {
 
 /* FP TPM seed has been set or not */
 #define FP_ENC_STATUS_SEED_SET BIT(0)
+/* FP using nonce context or not */
+#define FP_CONTEXT_STATUS_NONCE_CONTEXT_SET BIT(1)
+/* FP match had been processed or not */
+#define FP_CONTEXT_STATUS_MATCH_PROCESSED_SET BIT(2)
+/* FP auth_nonce had been set or not*/
+#define FP_CONTEXT_AUTH_NONCE_SET BIT(3)
 
 struct ec_response_fp_encryption_status {
 	/* Used bits in encryption engine status */

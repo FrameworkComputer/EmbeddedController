@@ -67,6 +67,7 @@ static void _fp_clear_context(void)
 	templ_valid = 0;
 	templ_dirty = 0;
 	template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
+	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
 	OPENSSL_cleanse(fp_buffer, sizeof(fp_buffer));
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
 	OPENSSL_cleanse(user_id, sizeof(user_id));
@@ -220,7 +221,14 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 		if (sensor_mode & FP_MODE_RESET_SENSOR)
 			return EC_RES_BUSY;
 
+		if (fp_encryption_status &
+		    FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) {
+			/* Reject the request to prevent downgrade attack. */
+			return EC_RES_ACCESS_DENIED;
+		}
+
 		memcpy(user_id, p->userid, sizeof(user_id));
+
 		return EC_RES_SUCCESS;
 	}
 

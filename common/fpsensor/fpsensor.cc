@@ -144,6 +144,15 @@ static uint32_t fp_process_match(void)
 
 	/* match finger against current templates */
 	fp_disable_positive_match_secret(&positive_match_secret_state);
+
+	if ((fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) &&
+	    (fp_encryption_status & FP_CONTEXT_STATUS_MATCH_PROCESSED_SET)) {
+		CPRINTS("Cannot process match twice in nonce context");
+		return EC_MKBP_FP_ERRCODE(EC_MKBP_FP_ERR_MATCH_NO_INTERNAL);
+	}
+
+	fp_encryption_status |= FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
+
 	CPRINTS("Matching/%d ...", templ_valid);
 	if (templ_valid) {
 		res = fp_finger_match(fp_template[0], templ_valid, fp_buffer,
