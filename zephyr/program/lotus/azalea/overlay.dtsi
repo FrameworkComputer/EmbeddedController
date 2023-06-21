@@ -10,6 +10,18 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
+		local-f75303 {
+			temp_host_warn = <67>;
+			temp_host_high = <70>;
+			temp_host_halt = <120>;
+			temp_host_release_warn = <45>;
+			temp_host_release_high = <55>;
+			temp_host_release_halt = <115>;
+			temp_fan_off = <41>;
+			temp_fan_max = <100>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&local_f75303>;
+		};
 		cpu-f75303 {
 			temp_host_warn = <67>;
 			temp_host_high = <70>;
@@ -17,24 +29,12 @@
 			temp_host_release_warn = <45>;
 			temp_host_release_high = <55>;
 			temp_host_release_halt = <115>;
-			temp_fan_off = <45>;
-			temp_fan_max = <60>;
+			temp_fan_off = <47>;
+			temp_fan_max = <55>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
 		};
 		ddr-f75303 {
-			temp_host_warn = <67>;
-			temp_host_high = <70>;
-			temp_host_halt = <120>;
-			temp_host_release_warn = <45>;
-			temp_host_release_high = <55>;
-			temp_host_release_halt = <115>;
-			temp_fan_off = <45>;
-			temp_fan_max = <60>;
-			power-good-pin = <&gpio_slp_s3_l>;
-			sensor = <&ddr_f75303>;
-		};
-		local-f75303 {
 			temp_host_warn = <55>;
 			temp_host_high = <70>;
 			temp_host_halt = <120>;
@@ -44,7 +44,7 @@
 			temp_fan_off = <128>;
 			temp_fan_max = <128>;
 			power-good-pin = <&gpio_slp_s3_l>;
-			sensor = <&local_f75303>;
+			sensor = <&ddr_f75303>;
 		};
 		amd-apu {
 			temp_host_warn = <108>;
