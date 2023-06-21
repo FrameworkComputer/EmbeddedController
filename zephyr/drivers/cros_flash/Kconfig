@@ -21,9 +21,8 @@ config CROS_FLASH_NPCX_INIT_PRIORITY
 	default 85
 	help
 	  This sets the priority of the NPCX flash driver for zephyr shim.
-	  This driver depends on the SPI controller and SPI NOR flash drivers.
-	  Its priority must be lower than CONFIG_SPI_INIT_PRIORITY and
-	  CONFIG_SPI_NOR_INIT_PRIORITY.
+	  This driver depends on the NPCX QSPI bus controller and NPCX NOR flash
+	  drivers. Its priority must be lower than CONFIG_FLASH_NPCX_FIU_NOR_INIT.
 
 endif # CROS_FLASH_NPCX
 
