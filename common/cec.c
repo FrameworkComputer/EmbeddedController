@@ -25,7 +25,11 @@
 
 /* Only one port is supported for now */
 #define CEC_PORT 0
+#ifndef TEST_BUILD
 BUILD_ASSERT(CEC_PORT_COUNT == 1);
+#endif
+
+#define CEC_SEND_RESULTS (EC_MKBP_CEC_SEND_OK | EC_MKBP_CEC_SEND_FAILED)
 
 /*
  * Mutex for the read-offset of the rx queue. Needed since the
@@ -37,7 +41,7 @@ static mutex_t rx_queue_readoffset_mutex;
 static struct cec_rx_queue cec_rx_queue;
 
 /* MKBP events to send to the AP (enum mkbp_cec_event) */
-static atomic_t cec_mkbp_events;
+static atomic_t cec_mkbp_events[CEC_PORT_COUNT];
 
 /* Task events for each port (CEC_TASK_EVENT_*) */
 static atomic_t cec_task_events[CEC_PORT_COUNT];
@@ -226,9 +230,21 @@ void cec_task_set_event(int port, uint32_t event)
 	task_wake(TASK_ID_CEC);
 }
 
-static void send_mkbp_event(uint32_t event)
+static void send_mkbp_event(int port, uint32_t event)
 {
-	atomic_or(&cec_mkbp_events, event);
+	/*
+	 * We only support one transmission at a time on each port, so there
+	 * should only be one send result set at a time. The host should read
+	 * the send result before starting the next transmission, so this only
+	 * happens if the host is misbehaving.
+	 */
+	if ((event & CEC_SEND_RESULTS) &&
+	    (cec_mkbp_events[port] & CEC_SEND_RESULTS)) {
+		CPRINTS("CEC WARNING: host did not clear send result");
+		atomic_clear_bits(&cec_mkbp_events[port], CEC_SEND_RESULTS);
+	}
+
+	atomic_or(&cec_mkbp_events[port], event);
 	mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
 }
 
@@ -278,7 +294,7 @@ static enum ec_status cec_set_enable(int port, uint8_t enable)
 	if (enable == 0) {
 		/* If disabled, clear the rx queue and events. */
 		memset(&cec_rx_queue, 0, sizeof(struct cec_rx_queue));
-		cec_mkbp_events = 0;
+		cec_mkbp_events[port] = 0;
 	}
 
 	return EC_RES_SUCCESS;
@@ -348,9 +364,34 @@ DECLARE_HOST_COMMAND(EC_CMD_CEC_GET, hc_cec_get, EC_VER_MASK(0));
 
 static int cec_get_next_event(uint8_t *out)
 {
-	uint32_t event_out = atomic_clear(&cec_mkbp_events);
+	uint32_t event_out = 0;
+	uint32_t events;
+	int port;
+
+	/* Find a port with pending events */
+	for (port = 0; port < CEC_PORT_COUNT; port++) {
+		if (!cec_mkbp_events[port])
+			continue;
+
+		events = atomic_clear(&cec_mkbp_events[port]);
+		event_out = EC_MKBP_EVENT_CEC_PACK(events, port);
+		break;
+	}
+
+	if (!event_out) {
+		/* Didn't find any events */
+		return 0;
+	}
 
 	memcpy(out, &event_out, sizeof(event_out));
+
+	/* Notify the AP if there are more events to send */
+	for (port = 0; port < CEC_PORT_COUNT; port++) {
+		if (cec_mkbp_events[port]) {
+			mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
+			break;
+		}
+	}
 
 	return sizeof(event_out);
 }
@@ -426,10 +467,10 @@ void cec_task(void *unused)
 				handle_received_message();
 			}
 			if (events & CEC_TASK_EVENT_OKAY) {
-				send_mkbp_event(EC_MKBP_CEC_SEND_OK);
+				send_mkbp_event(port, EC_MKBP_CEC_SEND_OK);
 				CPRINTS("SEND OKAY");
 			} else if (events & CEC_TASK_EVENT_FAILED) {
-				send_mkbp_event(EC_MKBP_CEC_SEND_FAILED);
+				send_mkbp_event(port, EC_MKBP_CEC_SEND_FAILED);
 				CPRINTS("SEND FAILED");
 			}
 		}

@@ -12,6 +12,11 @@
 			compatible = "cros-ec,cec";
 			reg = <0>;
 		};
+
+		cec1@1 {
+			compatible = "cros-ec,cec";
+			reg = <1>;
+		};
 	};
 };
 

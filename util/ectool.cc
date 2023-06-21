@@ -11233,6 +11233,13 @@ static void cmd_cec_help(const char *cmd)
 		cmd, cmd, cmd, cmd);
 }
 
+static long timespec_diff_ms(const struct timespec *t1,
+			     const struct timespec *t2)
+{
+	return ((t1->tv_sec - t2->tv_sec) * 1000 +
+		(t1->tv_nsec - t2->tv_nsec) / 1000000);
+}
+
 static int cmd_cec_write(int argc, char *argv[])
 {
 	char *e;
@@ -11244,6 +11251,10 @@ static int cmd_cec_write(int argc, char *argv[])
 	int version;
 	uint8_t *msg_param;
 	int port = CEC_PORT;
+	struct timespec start, now;
+	const long timeout_ms = 1000; /* How long to wait for the send result */
+	long elapsed_ms;
+	uint32_t event_port, events;
 
 	if (argc < 3 || argc > 18) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -11284,20 +11295,38 @@ static int cmd_cec_write(int argc, char *argv[])
 	else
 		rv = ec_command(EC_CMD_CEC_WRITE_MSG, version, &p_v1,
 				sizeof(p_v1), NULL, 0);
-
 	if (rv < 0)
 		return rv;
 
-	rv = wait_event(EC_MKBP_EVENT_CEC_EVENT, &buffer, sizeof(buffer), 1000);
-	if (rv < 0)
-		return rv;
+	/*
+	 * Wait for a send OK or send failed event. Retry multiple times since
+	 * we might receive other events or events for other ports.
+	 */
+	clock_gettime(CLOCK_REALTIME, &start);
+	while (true) {
+		clock_gettime(CLOCK_REALTIME, &now);
+		elapsed_ms = timespec_diff_ms(&now, &start);
+		if (elapsed_ms >= timeout_ms)
+			break;
 
-	if (buffer.data.cec_events & EC_MKBP_CEC_SEND_OK)
-		return 0;
+		rv = wait_event(EC_MKBP_EVENT_CEC_EVENT, &buffer,
+				sizeof(buffer), timeout_ms - elapsed_ms);
+		if (rv < 0)
+			return rv;
 
-	if (buffer.data.cec_events & EC_MKBP_CEC_SEND_FAILED) {
-		fprintf(stderr, "Send failed\n");
-		return -1;
+		event_port = EC_MKBP_EVENT_CEC_GET_PORT(buffer.data.cec_events);
+		events = EC_MKBP_EVENT_CEC_GET_EVENTS(buffer.data.cec_events);
+
+		if (event_port != port)
+			continue;
+
+		if (events & EC_MKBP_CEC_SEND_OK)
+			return 0;
+
+		if (events & EC_MKBP_CEC_SEND_FAILED) {
+			fprintf(stderr, "Send failed\n");
+			return -1;
+		}
 	}
 
 	fprintf(stderr, "No send result received\n");

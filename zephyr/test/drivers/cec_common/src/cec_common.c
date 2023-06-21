@@ -11,6 +11,7 @@
 #include <zephyr/ztest.h>
 
 #define TEST_PORT 0
+#define TEST_PORT_1 1
 
 FAKE_VALUE_FUNC(int, mock_init, int);
 FAKE_VALUE_FUNC(int, mock_get_enable, int, uint8_t *);
@@ -22,6 +23,7 @@ FAKE_VALUE_FUNC(int, mock_get_received_message, int, uint8_t **, uint8_t *);
 
 struct cec_common_fixture {
 	const struct cec_drv *cec_0_drv;
+	const struct cec_drv *cec_1_drv;
 	struct cec_drv mock_drv;
 };
 
@@ -65,6 +67,7 @@ static void *cec_common_setup(void)
 	};
 
 	fixture.cec_0_drv = cec_config[TEST_PORT].drv;
+	fixture.cec_1_drv = cec_config[TEST_PORT_1].drv;
 
 	return &fixture;
 }
@@ -86,6 +89,7 @@ static void cec_common_after(void *fixture)
 	struct cec_common_fixture *f = fixture;
 
 	cec_config[TEST_PORT].drv = f->cec_0_drv;
+	cec_config[TEST_PORT_1].drv = f->cec_1_drv;
 }
 
 /* Test basic get_bit/set_bit/inc_bit behaviour */
@@ -603,6 +607,123 @@ ZTEST_USER_F(cec_common, test_hc_cec_write_v1)
 	zassert_equal(mock_send_fake.arg0_val, TEST_PORT);
 	zassert_ok(memcmp(saved_msg_send_custom_fake, msg, msg_len));
 	zassert_equal(mock_send_fake.arg2_val, msg_len);
+}
+
+static int
+host_cmd_get_next_event_v2(struct ec_response_get_next_event_v1 *response)
+{
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_GET_NEXT_EVENT, 2, *response);
+
+	return host_command_process(&args);
+}
+
+static int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event)
+{
+	/* Read MKBP events until we find one of type CEC_EVENT */
+	while (host_cmd_get_next_event_v2(event) == EC_RES_SUCCESS) {
+		if ((event->event_type & EC_MKBP_EVENT_TYPE_MASK) ==
+		    EC_MKBP_EVENT_CEC_EVENT)
+			return 0;
+	}
+	/* No more events */
+	return -1;
+}
+
+static bool cec_event_matches(struct ec_response_get_next_event_v1 *event,
+			      int port, enum mkbp_cec_event events)
+{
+	return ((EC_MKBP_EVENT_CEC_GET_PORT(event->data.cec_events) == port) &&
+		(EC_MKBP_EVENT_CEC_GET_EVENTS(event->data.cec_events) ==
+		 events));
+}
+
+ZTEST_USER_F(cec_common, test_mkbp_event_send_ok)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Set task event and wait 1s to allow task to run */
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_OKAY);
+	k_sleep(K_SECONDS(1));
+
+	/* Check MKBP event was sent */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_OK));
+
+	/* Check there are no more events */
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+}
+
+ZTEST_USER_F(cec_common, test_mkbp_event_send_failed)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Set task event and wait 1s to allow task to run */
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_FAILED);
+	k_sleep(K_SECONDS(1));
+
+	/* Check MKBP event was sent */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_FAILED));
+
+	/* Check there are no more events */
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+}
+
+ZTEST_USER_F(cec_common, test_mkbp_event_multiple_send_results)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Set two send results on the same port */
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_OKAY);
+	k_sleep(K_SECONDS(1));
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_FAILED);
+	k_sleep(K_SECONDS(1));
+
+	/* Only the most recent send result is kept */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_FAILED));
+
+	/* Check there are no more events */
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+}
+
+ZTEST_USER_F(cec_common, test_mkbp_event_no_events)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Send a MKBP event without setting any events */
+	mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
+
+	/* Check an event is available, but the data is zero */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(cec_event_matches(&event, 0, 0));
+
+	/* Check there are no more events */
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+}
+
+ZTEST_USER_F(cec_common, test_mkbp_event_multiple_ports)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Set events on two different ports */
+	cec_task_set_event(TEST_PORT_1, CEC_TASK_EVENT_FAILED);
+	k_sleep(K_SECONDS(1));
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_OKAY);
+	k_sleep(K_SECONDS(1));
+
+	/* Check we can retrieve all events */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_OK));
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(cec_event_matches(&event, TEST_PORT_1,
+				       EC_MKBP_CEC_SEND_FAILED));
+
+	/* Check there are no more events */
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
 }
 
 ZTEST_SUITE(cec_common, drivers_predicate_post_main, cec_common_setup,
