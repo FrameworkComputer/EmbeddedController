@@ -131,7 +131,7 @@ struct cec_config_t {
 };
 
 /* CEC config definition. */
-extern const struct cec_config_t cec_config[];
+extern test_overridable_const struct cec_config_t cec_config[];
 
 /**
  * Default policy provided for convenience.

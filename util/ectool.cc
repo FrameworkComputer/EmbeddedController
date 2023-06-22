@@ -11210,6 +11210,12 @@ int cmd_wait_event(int argc, char *argv[])
 	return 0;
 }
 
+/*
+ * For now the EC only supports port 0. Once support for multiple ports is
+ * complete, the port will be passed as a command parameter.
+ */
+#define CEC_PORT 0
+
 static void cmd_cec_help(const char *cmd)
 {
 	fprintf(stderr,
@@ -11325,6 +11331,7 @@ static int cmd_cec_set(int argc, char *argv[])
 	struct ec_params_cec_set p;
 	uint8_t val;
 	int cmd;
+	int port = CEC_PORT;
 
 	if (argc != 4) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -11344,6 +11351,7 @@ static int cmd_cec_set(int argc, char *argv[])
 		return -1;
 	}
 	p.cmd = cmd;
+	p.port = port;
 	p.val = val;
 
 	return ec_command(EC_CMD_CEC_SET, 0, &p, sizeof(p), NULL, 0);
@@ -11354,6 +11362,7 @@ static int cmd_cec_get(int argc, char *argv[])
 	int rv, cmd;
 	struct ec_params_cec_get p;
 	struct ec_response_cec_get r;
+	int port = CEC_PORT;
 
 	if (argc != 3) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -11367,6 +11376,7 @@ static int cmd_cec_get(int argc, char *argv[])
 		return -1;
 	}
 	p.cmd = cmd;
+	p.port = port;
 
 	rv = ec_command(EC_CMD_CEC_GET, 0, &p, sizeof(p), &r, sizeof(r));
 	if (rv < 0)

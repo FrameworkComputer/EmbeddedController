@@ -15,6 +15,7 @@
 		.offline_policy = NULL, \
 	},
 
-const struct cec_config_t cec_config[] = { DT_FOREACH_STATUS_OKAY(cros_ec_cec,
-								  CEC_PORT) };
+test_overridable_const struct cec_config_t cec_config[] = {
+	DT_FOREACH_STATUS_OKAY(cros_ec_cec, CEC_PORT)
+};
 BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);

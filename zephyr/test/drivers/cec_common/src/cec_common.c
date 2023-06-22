@@ -5,8 +5,79 @@
 
 #include "cec.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
+#include <zephyr/fff.h>
 #include <zephyr/ztest.h>
+
+#define TEST_PORT 0
+
+FAKE_VALUE_FUNC(int, mock_init, int);
+FAKE_VALUE_FUNC(int, mock_get_enable, int, uint8_t *);
+FAKE_VALUE_FUNC(int, mock_set_enable, int, uint8_t);
+FAKE_VALUE_FUNC(int, mock_get_logical_addr, int, uint8_t *);
+FAKE_VALUE_FUNC(int, mock_set_logical_addr, int, uint8_t);
+FAKE_VALUE_FUNC(int, mock_send, int, const uint8_t *, uint8_t);
+FAKE_VALUE_FUNC(int, mock_get_received_message, int, uint8_t **, uint8_t *);
+
+struct cec_common_fixture {
+	const struct cec_drv *cec_0_drv;
+	struct cec_drv mock_drv;
+};
+
+static uint8_t enable_custom_fake;
+static int get_enable_custom_fake(int port, uint8_t *enable)
+{
+	*enable = enable_custom_fake;
+
+	return EC_SUCCESS;
+}
+
+static uint8_t logical_addr_custom_fake;
+static int get_logical_addr_custom_fake(int port, uint8_t *logical_addr)
+{
+	*logical_addr = logical_addr_custom_fake;
+
+	return EC_SUCCESS;
+}
+
+static void *cec_common_setup(void)
+{
+	static struct cec_common_fixture fixture = {
+		.mock_drv = {
+			.init = mock_init,
+			.get_enable = mock_get_enable,
+			.set_enable = mock_set_enable,
+			.get_logical_addr = mock_get_logical_addr,
+			.set_logical_addr = mock_set_logical_addr,
+			.send = mock_send,
+			.get_received_message = mock_get_received_message,
+		},
+	};
+
+	fixture.cec_0_drv = cec_config[TEST_PORT].drv;
+
+	return &fixture;
+}
+
+static void cec_common_before(void *fixture)
+{
+	RESET_FAKE(mock_init);
+	RESET_FAKE(mock_get_enable);
+	RESET_FAKE(mock_set_enable);
+	RESET_FAKE(mock_get_logical_addr);
+	RESET_FAKE(mock_set_logical_addr);
+	RESET_FAKE(mock_send);
+	RESET_FAKE(mock_get_received_message);
+	FFF_RESET_HISTORY();
+}
+
+static void cec_common_after(void *fixture)
+{
+	struct cec_common_fixture *f = fixture;
+
+	cec_config[TEST_PORT].drv = f->cec_0_drv;
+}
 
 /* Test basic get_bit/set_bit/inc_bit behaviour */
 ZTEST_USER(cec_common, test_cec_transfer)
@@ -236,4 +307,187 @@ ZTEST_USER(cec_common, test_cec_rx_queue_overflow)
 		      EC_SUCCESS);
 }
 
-ZTEST_SUITE(cec_common, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+static int host_cmd_cec_set(int port, enum cec_command cmd, uint8_t val)
+{
+	struct ec_params_cec_set params = {
+		.cmd = cmd,
+		.port = port,
+		.val = val,
+	};
+
+	return ec_cmd_cec_set(NULL, &params);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_set_invalid_param)
+{
+	/* Invalid port */
+	zassert_equal(host_cmd_cec_set(CEC_PORT_COUNT, CEC_CMD_ENABLE, 0),
+		      EC_RES_INVALID_PARAM);
+
+	/* Invalid cmd */
+	zassert_equal(host_cmd_cec_set(TEST_PORT, 7, 0), EC_RES_INVALID_PARAM);
+
+	/* Invalid enable val */
+	zassert_equal(host_cmd_cec_set(TEST_PORT, CEC_CMD_ENABLE, 2),
+		      EC_RES_INVALID_PARAM);
+
+	/* Invalid logical_addr val */
+	zassert_equal(host_cmd_cec_set(TEST_PORT, CEC_CMD_LOGICAL_ADDRESS,
+				       CEC_BROADCAST_ADDR + 1),
+		      EC_RES_INVALID_PARAM);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_set_enable_error)
+{
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Driver returns error */
+	mock_set_enable_fake.return_val = EC_ERROR_UNKNOWN;
+	zassert_equal(host_cmd_cec_set(TEST_PORT, CEC_CMD_ENABLE, 0),
+		      EC_RES_ERROR);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_set_enable_0)
+{
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Set enable to 0 */
+	mock_set_enable_fake.return_val = EC_SUCCESS;
+	zassert_ok(host_cmd_cec_set(TEST_PORT, CEC_CMD_ENABLE, 0));
+	zassert_equal(mock_set_enable_fake.call_count, 1);
+	zassert_equal(mock_set_enable_fake.arg0_val, TEST_PORT);
+	zassert_equal(mock_set_enable_fake.arg1_val, 0);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_set_enable_1)
+{
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Set enable to 1 */
+	mock_set_enable_fake.return_val = EC_SUCCESS;
+	zassert_ok(host_cmd_cec_set(TEST_PORT, CEC_CMD_ENABLE, 1));
+	zassert_equal(mock_set_enable_fake.call_count, 1);
+	zassert_equal(mock_set_enable_fake.arg0_val, TEST_PORT);
+	zassert_equal(mock_set_enable_fake.arg1_val, 1);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_set_logical_addr_error)
+{
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Driver returns error */
+	mock_set_logical_addr_fake.return_val = EC_ERROR_UNKNOWN;
+	zassert_equal(host_cmd_cec_set(TEST_PORT, CEC_CMD_LOGICAL_ADDRESS, 0x4),
+		      EC_RES_ERROR);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_set_logical_addr)
+{
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Set logical address to 0x4 */
+	mock_set_logical_addr_fake.return_val = EC_SUCCESS;
+	zassert_ok(host_cmd_cec_set(TEST_PORT, CEC_CMD_LOGICAL_ADDRESS, 0x4));
+	zassert_equal(mock_set_logical_addr_fake.call_count, 1);
+	zassert_equal(mock_set_logical_addr_fake.arg0_val, TEST_PORT);
+	zassert_equal(mock_set_logical_addr_fake.arg1_val, 0x4);
+}
+
+static int host_cmd_cec_get(int port, enum cec_command cmd,
+			    struct ec_response_cec_get *response)
+{
+	struct ec_params_cec_get params = {
+		.cmd = cmd,
+		.port = port,
+	};
+
+	return ec_cmd_cec_get(NULL, &params, response);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_get_invalid_param)
+{
+	struct ec_response_cec_get response;
+
+	/* Invalid port */
+	zassert_equal(host_cmd_cec_get(CEC_PORT_COUNT, CEC_CMD_ENABLE,
+				       &response),
+		      EC_RES_INVALID_PARAM);
+
+	/* Invalid cmd */
+	zassert_equal(host_cmd_cec_get(TEST_PORT, 7, &response),
+		      EC_RES_INVALID_PARAM);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_get_enable_error)
+{
+	struct ec_response_cec_get response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Driver returns error */
+	mock_get_enable_fake.return_val = EC_ERROR_UNKNOWN;
+	zassert_equal(host_cmd_cec_get(TEST_PORT, CEC_CMD_ENABLE, &response),
+		      EC_RES_ERROR);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_get_enable_0)
+{
+	struct ec_response_cec_get response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Get enable returns 0 */
+	enable_custom_fake = 0;
+	mock_get_enable_fake.custom_fake = get_enable_custom_fake;
+	zassert_ok(host_cmd_cec_get(TEST_PORT, CEC_CMD_ENABLE, &response));
+	zassert_equal(mock_get_enable_fake.call_count, 1);
+	zassert_equal(mock_get_enable_fake.arg0_val, TEST_PORT);
+	zassert_equal(response.val, 0);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_get_enable_1)
+{
+	struct ec_response_cec_get response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Get enable returns 1 */
+	enable_custom_fake = 1;
+	mock_get_enable_fake.custom_fake = get_enable_custom_fake;
+	zassert_ok(host_cmd_cec_get(TEST_PORT, CEC_CMD_ENABLE, &response));
+	zassert_equal(mock_get_enable_fake.call_count, 1);
+	zassert_equal(mock_get_enable_fake.arg0_val, TEST_PORT);
+	zassert_equal(response.val, 1);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_get_logical_addr_error)
+{
+	struct ec_response_cec_get response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Driver returns error */
+	mock_get_logical_addr_fake.return_val = EC_ERROR_UNKNOWN;
+	zassert_equal(host_cmd_cec_get(TEST_PORT, CEC_CMD_LOGICAL_ADDRESS,
+				       &response),
+		      EC_RES_ERROR);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_get_logical_addr)
+{
+	struct ec_response_cec_get response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Get logical_addr returns 0x4 */
+	logical_addr_custom_fake = 0x4;
+	mock_get_logical_addr_fake.custom_fake = get_logical_addr_custom_fake;
+	zassert_ok(host_cmd_cec_get(TEST_PORT, CEC_CMD_LOGICAL_ADDRESS,
+				    &response));
+	zassert_equal(mock_get_logical_addr_fake.call_count, 1);
+	zassert_equal(mock_get_logical_addr_fake.arg0_val, TEST_PORT);
+	zassert_equal(response.val, 0x4);
+}
+
+ZTEST_SUITE(cec_common, drivers_predicate_post_main, cec_common_setup,
+	    cec_common_before, cec_common_after, NULL);
