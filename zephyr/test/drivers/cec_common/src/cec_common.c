@@ -41,6 +41,15 @@ static int get_logical_addr_custom_fake(int port, uint8_t *logical_addr)
 	return EC_SUCCESS;
 }
 
+static uint8_t saved_msg_send_custom_fake[MAX_CEC_MSG_LEN];
+static int send_custom_fake(int port, const uint8_t *msg, uint8_t len)
+{
+	memcpy(saved_msg_send_custom_fake, msg,
+	       MIN(len, sizeof(saved_msg_send_custom_fake)));
+
+	return EC_SUCCESS;
+}
+
 static void *cec_common_setup(void)
 {
 	static struct cec_common_fixture fixture = {
@@ -487,6 +496,113 @@ ZTEST_USER_F(cec_common, test_hc_cec_get_logical_addr)
 	zassert_equal(mock_get_logical_addr_fake.call_count, 1);
 	zassert_equal(mock_get_logical_addr_fake.arg0_val, TEST_PORT);
 	zassert_equal(response.val, 0x4);
+}
+
+static int host_cmd_cec_write(const uint8_t *msg, uint8_t msg_len)
+{
+	struct ec_params_cec_write params;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_CEC_WRITE_MSG, 0, params);
+
+	memcpy(params.msg, msg, MIN(msg_len, sizeof(params.msg)));
+	args.params_size = msg_len;
+
+	return host_command_process(&args);
+}
+
+static int host_cmd_cec_write_v1(int port, const uint8_t *msg, uint8_t msg_len)
+{
+	struct ec_params_cec_write_v1 params_v1;
+
+	params_v1.port = port;
+	params_v1.msg_len = msg_len;
+	memcpy(params_v1.msg, msg, MIN(msg_len, sizeof(params_v1.msg)));
+
+	return ec_cmd_cec_write_v1(NULL, &params_v1);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_write_v0_invalid_param)
+{
+	const uint8_t msg[] = { 0x4f, 0x87, 0x00, 0x0c, 0x03 };
+
+	/* Invalid msg_len */
+	zassert_equal(host_cmd_cec_write(msg, 0), EC_RES_INVALID_PARAM);
+	zassert_equal(host_cmd_cec_write(msg, MAX_CEC_MSG_LEN + 1),
+		      EC_RES_INVALID_PARAM);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_write_v1_invalid_param)
+{
+	const uint8_t msg[] = { 0x4f, 0x87, 0x00, 0x0c, 0x03 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+
+	/* Invalid port */
+	zassert_equal(host_cmd_cec_write_v1(CEC_PORT_COUNT, msg, msg_len),
+		      EC_RES_INVALID_PARAM);
+
+	/* Invalid msg_len */
+	zassert_equal(host_cmd_cec_write_v1(TEST_PORT, msg, 0),
+		      EC_RES_INVALID_PARAM);
+	zassert_equal(host_cmd_cec_write_v1(TEST_PORT, msg,
+					    MAX_CEC_MSG_LEN + 1),
+		      EC_RES_INVALID_PARAM);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_write_v0_error)
+{
+	const uint8_t msg[] = { 0x4f, 0x87, 0x00, 0x0c, 0x03 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Driver returns error */
+	mock_send_fake.return_val = EC_ERROR_UNKNOWN;
+	zassert_equal(host_cmd_cec_write(msg, msg_len), EC_RES_BUSY);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_write_v1_error)
+{
+	const uint8_t msg[] = { 0x4f, 0x87, 0x00, 0x0c, 0x03 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Driver returns error */
+	mock_send_fake.return_val = EC_ERROR_UNKNOWN;
+	zassert_equal(host_cmd_cec_write_v1(TEST_PORT, msg, msg_len),
+		      EC_RES_BUSY);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_write_v0)
+{
+	const uint8_t msg[] = { 0x4f, 0x87, 0x00, 0x0c, 0x03 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Write succeeds */
+	mock_send_fake.custom_fake = send_custom_fake;
+	zassert_ok(host_cmd_cec_write(msg, msg_len));
+	zassert_equal(mock_send_fake.call_count, 1);
+	zassert_equal(mock_send_fake.arg0_val, TEST_PORT);
+	zassert_ok(memcmp(saved_msg_send_custom_fake, msg, msg_len));
+	zassert_equal(mock_send_fake.arg2_val, msg_len);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_write_v1)
+{
+	const uint8_t msg[] = { 0x4f, 0x87, 0x00, 0x0c, 0x03 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Write succeeds */
+	mock_send_fake.custom_fake = send_custom_fake;
+	zassert_ok(host_cmd_cec_write_v1(TEST_PORT, msg, msg_len));
+	zassert_equal(mock_send_fake.call_count, 1);
+	zassert_equal(mock_send_fake.arg0_val, TEST_PORT);
+	zassert_ok(memcmp(saved_msg_send_custom_fake, msg, msg_len));
+	zassert_equal(mock_send_fake.arg2_val, msg_len);
 }
 
 ZTEST_SUITE(cec_common, drivers_predicate_post_main, cec_common_setup,

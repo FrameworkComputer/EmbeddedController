@@ -247,6 +247,7 @@ _CROS_EC_C0_F_PF_RF(EC_CMD_BATTERY_VENDOR_PARAM, battery_vendor_param);
 _CROS_EC_C0_F_PF(EC_CMD_BUTTON, button);
 _CROS_EC_C0_F_PF_RF(EC_CMD_CEC_GET, cec_get);
 _CROS_EC_C0_F_PF(EC_CMD_CEC_SET, cec_set);
+_CROS_EC_C1_F_PF(EC_CMD_CEC_WRITE_MSG, cec_write);
 _CROS_EC_C0_F_PF_RF(EC_CMD_CHARGESPLASH, chargesplash);
 _CROS_EC_CV_F_P_R(EC_CMD_CHARGE_CONTROL, 2, charge_control_v2, charge_control,
 		  charge_control);

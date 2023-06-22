@@ -234,19 +234,38 @@ static void send_mkbp_event(uint32_t event)
 
 static enum ec_status hc_cec_write(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_cec_write *params = args->params;
-	int port = CEC_PORT;
+	int port;
+	uint8_t msg_len;
+	const uint8_t *msg;
 
-	if (args->params_size == 0 || args->params_size > MAX_CEC_MSG_LEN)
+	if (args->version == 0) {
+		const struct ec_params_cec_write *params = args->params;
+
+		/* v0 only supports one port, so we assume it's port 0. */
+		port = 0;
+		msg_len = args->params_size;
+		msg = params->msg;
+	} else {
+		const struct ec_params_cec_write_v1 *params_v1 = args->params;
+
+		port = params_v1->port;
+		msg_len = params_v1->msg_len;
+		msg = params_v1->msg;
+	}
+
+	if (port < 0 || port >= CEC_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	if (cec_config[port].drv->send(port, params->msg, args->params_size) !=
-	    EC_SUCCESS)
+	if (msg_len == 0 || msg_len > MAX_CEC_MSG_LEN)
+		return EC_RES_INVALID_PARAM;
+
+	if (cec_config[port].drv->send(port, msg, msg_len) != EC_SUCCESS)
 		return EC_RES_BUSY;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static enum ec_status cec_set_enable(int port, uint8_t enable)
 {

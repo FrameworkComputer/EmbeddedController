@@ -11239,7 +11239,11 @@ static int cmd_cec_write(int argc, char *argv[])
 	long val;
 	int rv, i, msg_len;
 	struct ec_params_cec_write p;
+	struct ec_params_cec_write_v1 p_v1;
 	struct ec_response_get_next_event_v1 buffer;
+	int version;
+	uint8_t *msg_param;
+	int port = CEC_PORT;
 
 	if (argc < 3 || argc > 18) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -11248,21 +11252,39 @@ static int cmd_cec_write(int argc, char *argv[])
 	}
 
 	msg_len = argc - 2;
+
+	rv = get_latest_cmd_version(EC_CMD_CEC_WRITE_MSG, &version);
+	if (rv < 0)
+		return rv;
+
+	if (version == 0) {
+		msg_param = p.msg;
+	} else {
+		p_v1.port = port;
+		p_v1.msg_len = msg_len;
+		msg_param = p_v1.msg;
+	}
+
 	for (i = 0; i < msg_len; i++) {
 		val = strtol(argv[i + 2], &e, 16);
 		if (e && *e)
 			return -1;
 		if (val < 0 || val > 0xff)
 			return -1;
-		p.msg[i] = (uint8_t)val;
+		msg_param[i] = (uint8_t)val;
 	}
 
 	printf("Write to CEC: ");
 	for (i = 0; i < msg_len; i++)
-		printf("0x%02x ", p.msg[i]);
+		printf("0x%02x ", msg_param[i]);
 	printf("\n");
 
-	rv = ec_command(EC_CMD_CEC_WRITE_MSG, 0, &p, msg_len, NULL, 0);
+	if (version == 0)
+		rv = ec_command(EC_CMD_CEC_WRITE_MSG, 0, &p, msg_len, NULL, 0);
+	else
+		rv = ec_command(EC_CMD_CEC_WRITE_MSG, version, &p_v1,
+				sizeof(p_v1), NULL, 0);
+
 	if (rv < 0)
 		return rv;
 
