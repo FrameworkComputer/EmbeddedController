@@ -387,6 +387,16 @@ struct i2c_common_emul_data *
 emul_tcpci_generic_get_i2c_common_data(const struct emul *emul);
 
 /**
+ * @brief Set the VBUS level of the emulator, and trigger interrupts as needed.
+ *
+ * @param emul Pointer to TCPC emulator
+ * @param level One of VBUS_PRESENT, VBUS_REMOVED or VBUS_SAFE0V
+ *
+ * @return 0 for success, or non-0 for errors.
+ */
+int tcpci_emul_set_vbus_level(const struct emul *emul, enum vbus_level level);
+
+/**
  * @}
  */
 
