@@ -161,11 +161,7 @@ void connect_sink_to_port(struct tcpci_partner_data *partner,
 	__ASSERT_NO_MSG(EMUL_DT_GET(DT_NODELABEL(isl923x_emul)) ==
 			charger_emul);
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
-	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
-	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_EXT_STATUS,
-			   TCPC_REG_EXT_STATUS_SAFE0V);
-
+	zassert_ok(tcpci_emul_set_vbus_level(tcpci_emul, VBUS_SAFE0V));
 	tcpci_tcpc_alert(0);
 	k_sleep(K_SECONDS(1));
 

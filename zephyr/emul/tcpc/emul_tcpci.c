@@ -646,7 +646,6 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 {
 	struct tcpc_emul_data *tcpc_data = emul->data;
 	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-	uint16_t power_status;
 	uint16_t val;
 	uint16_t term;
 	int rc;
@@ -680,11 +679,9 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 	 */
 
 	/* Clear VBUS present in case if source partner is disconnected */
-	get_reg(ctx, TCPC_REG_POWER_STATUS, &power_status);
-	if (power_status & TCPC_REG_POWER_STATUS_VBUS_PRES) {
-		power_status &= ~TCPC_REG_POWER_STATUS_VBUS_PRES;
-		set_reg(ctx, TCPC_REG_POWER_STATUS, power_status);
-	}
+	rc = tcpci_emul_set_vbus_level(emul, VBUS_SAFE0V);
+	if (rc != 0)
+		return rc;
 
 	return 0;
 }
