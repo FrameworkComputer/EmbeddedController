@@ -4,6 +4,7 @@
  */
 
 #include "cec.h"
+#include "chipset.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
@@ -48,6 +49,23 @@ static int send_custom_fake(int port, const uint8_t *msg, uint8_t len)
 {
 	memcpy(saved_msg_send_custom_fake, msg,
 	       MIN(len, sizeof(saved_msg_send_custom_fake)));
+
+	return EC_SUCCESS;
+}
+
+static uint8_t received_message_custom_fake[MAX_CEC_MSG_LEN];
+static uint8_t received_message_len_custom_fake;
+static void set_received_message_custom_fake(const uint8_t *msg, uint8_t len)
+{
+	memcpy(received_message_custom_fake, msg,
+	       MIN(len, sizeof(received_message_custom_fake)));
+	received_message_len_custom_fake = len;
+}
+static int get_received_message_custom_fake(int port, uint8_t **msg,
+					    uint8_t *len)
+{
+	*msg = received_message_custom_fake;
+	*len = received_message_len_custom_fake;
 
 	return EC_SUCCESS;
 }
@@ -671,6 +689,25 @@ ZTEST_USER_F(cec_common, test_mkbp_event_send_failed)
 	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
 }
 
+ZTEST_USER_F(cec_common, test_mkbp_event_multiple_events)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Set two events on the same port */
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_OKAY);
+	k_sleep(K_SECONDS(1));
+	send_mkbp_event(TEST_PORT, EC_MKBP_CEC_HAVE_DATA);
+
+	/* Check the MKBP event contains both events */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT,
+				  EC_MKBP_CEC_SEND_OK | EC_MKBP_CEC_HAVE_DATA));
+
+	/* Check there are no more events */
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+}
+
 ZTEST_USER_F(cec_common, test_mkbp_event_multiple_send_results)
 {
 	struct ec_response_get_next_event_v1 event;
@@ -714,16 +751,285 @@ ZTEST_USER_F(cec_common, test_mkbp_event_multiple_ports)
 	k_sleep(K_SECONDS(1));
 	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_OKAY);
 	k_sleep(K_SECONDS(1));
+	send_mkbp_event(TEST_PORT_1, EC_MKBP_CEC_HAVE_DATA);
 
 	/* Check we can retrieve all events */
 	zassert_ok(get_next_cec_mkbp_event(&event));
 	zassert_true(cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_OK));
 	zassert_ok(get_next_cec_mkbp_event(&event));
 	zassert_true(cec_event_matches(&event, TEST_PORT_1,
-				       EC_MKBP_CEC_SEND_FAILED));
+				       EC_MKBP_CEC_SEND_FAILED |
+					       EC_MKBP_CEC_HAVE_DATA));
 
 	/* Check there are no more events */
 	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+}
+
+/*
+ * Test case for cec_process_offline_message:
+ * - set AP power state to initial_state
+ * - call cec_process_offline_message() with the given msg and msg_len
+ * - check it returns exp_rv
+ * - wait 1s then check the AP power state is now exp_final_state
+ */
+static void process_message_f(const uint8_t *msg, uint8_t msg_len, int exp_rv,
+			      enum chipset_state_mask initial_state,
+			      enum chipset_state_mask exp_final_state, int line)
+{
+	if (initial_state == CHIPSET_STATE_ON) {
+		test_set_chipset_to_s0();
+		zassert_true(chipset_in_state(CHIPSET_STATE_ON),
+			     "process_message failed line %d", line);
+	} else if (initial_state == CHIPSET_STATE_ANY_OFF) {
+		test_set_chipset_to_g3();
+		zassert_true(chipset_in_state(CHIPSET_STATE_ANY_OFF),
+			     "process_message failed line %d", line);
+	} else {
+		zassert_unreachable("process_message failed line %d", line);
+	}
+	zassert_equal(cec_process_offline_message(TEST_PORT, msg, msg_len),
+		      exp_rv, "process_message failed line %d", line);
+	k_sleep(K_SECONDS(1));
+	zassert_true(chipset_in_state(exp_final_state),
+		     "process_message failed line %d", line);
+}
+#define process_message(msg, msg_len, exp_rv, initial_state, exp_final_state) \
+	process_message_f(msg, msg_len, exp_rv, initial_state,                \
+			  exp_final_state, __LINE__)
+
+ZTEST_USER_F(cec_common, test_cec_process_offline_message)
+{
+	struct cec_offline_policy test_cec_policy[] = {
+		{
+			.command = CEC_MSG_IMAGE_VIEW_ON,
+			.action = CEC_ACTION_POWER_BUTTON,
+		},
+		{
+			.command = CEC_MSG_TEXT_VIEW_ON,
+			.action = CEC_ACTION_POWER_BUTTON,
+		},
+		/* Terminator */
+		{ 0 },
+	};
+	const uint8_t msg_ivo[] = { 0x04, CEC_MSG_IMAGE_VIEW_ON };
+	const uint8_t msg_tvo[] = { 0x04, CEC_MSG_TEXT_VIEW_ON };
+	const uint8_t msg_dvi[] = { 0x04, CEC_MSG_DEVICE_VENDOR_ID };
+	const uint8_t msg1[] = { 0x04 };
+	const uint8_t msg0[] = {};
+
+	cec_config[TEST_PORT].offline_policy = test_cec_policy;
+
+	/* If the AP is on, return value is NOT_HANDLED and the AP stays on */
+	process_message(msg_ivo, ARRAY_SIZE(msg_ivo), EC_ERROR_NOT_HANDLED,
+			CHIPSET_STATE_ON, CHIPSET_STATE_ON);
+
+	/* If the message maps to CEC_ACTION_POWER_BUTTON, the AP powers on */
+	/* Image View On */
+	process_message(msg_ivo, ARRAY_SIZE(msg_ivo), EC_SUCCESS,
+			CHIPSET_STATE_ANY_OFF, CHIPSET_STATE_ON);
+	/* Text View On */
+	process_message(msg_tvo, ARRAY_SIZE(msg_tvo), EC_SUCCESS,
+			CHIPSET_STATE_ANY_OFF, CHIPSET_STATE_ON);
+
+	/* If the message is not mapped to an action, the AP stays off */
+	/* Device Vendor Id */
+	process_message(msg_dvi, ARRAY_SIZE(msg_dvi), EC_SUCCESS,
+			CHIPSET_STATE_ANY_OFF, CHIPSET_STATE_ANY_OFF);
+
+	/* 1-byte message is valid but matches no action, AP stays off */
+	process_message(msg1, ARRAY_SIZE(msg1), EC_SUCCESS,
+			CHIPSET_STATE_ANY_OFF, CHIPSET_STATE_ANY_OFF);
+
+	/* 0-byte message is invalid, AP stays off */
+	process_message(msg0, ARRAY_SIZE(msg0), EC_ERROR_INVAL,
+			CHIPSET_STATE_ANY_OFF, CHIPSET_STATE_ANY_OFF);
+
+	/* If the policy is NULL, AP stays off */
+	cec_config[TEST_PORT].offline_policy = NULL;
+	process_message(msg_ivo, ARRAY_SIZE(msg_ivo), EC_SUCCESS,
+			CHIPSET_STATE_ANY_OFF, CHIPSET_STATE_ANY_OFF);
+}
+
+static int host_cmd_cec_read(int port, struct ec_response_cec_read *response)
+{
+	struct ec_params_cec_read params = {
+		.port = port,
+	};
+
+	return ec_cmd_cec_read(NULL, &params, response);
+}
+
+ZTEST_USER_F(cec_common, test_hc_cec_read_invalid_param)
+{
+	struct ec_response_cec_read response;
+
+	/* Invalid port */
+	zassert_equal(host_cmd_cec_read(CEC_PORT_COUNT, &response),
+		      EC_RES_INVALID_PARAM);
+}
+
+/* Message received successfully */
+ZTEST_USER_F(cec_common, test_receive_message)
+{
+	const uint8_t msg[] = { 0x0f, 0x87, 0x00, 0xe0, 0x91 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+	struct ec_response_get_next_event_v1 event;
+	struct ec_response_cec_read response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* Set up fake for drv->get_received_message() */
+	set_received_message_custom_fake(msg, msg_len);
+	mock_get_received_message_fake.custom_fake =
+		get_received_message_custom_fake;
+
+	/* Set RECEIVED_DATA event and wait 1s to allow task to run */
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_RECEIVED_DATA);
+	k_sleep(K_SECONDS(1));
+
+	/* Check drv->get_received_message() was called and MKBP event sent */
+	zassert_equal(mock_get_received_message_fake.call_count, 1);
+	zassert_equal(mock_get_received_message_fake.arg0_val, TEST_PORT);
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_HAVE_DATA));
+
+	/* Send read command and check the response contains our message */
+	zassert_ok(host_cmd_cec_read(TEST_PORT, &response));
+	zassert_equal(response.msg_len, msg_len);
+	zassert_ok(memcmp(response.msg, msg, msg_len));
+}
+
+/* drv->get_received_message() returns an error */
+ZTEST_USER_F(cec_common, test_receive_message_error)
+{
+	struct ec_response_get_next_event_v1 event;
+	struct ec_response_cec_read response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+
+	/* drv->get_received_message() returns an error */
+	mock_get_received_message_fake.return_val = EC_ERROR_UNKNOWN;
+
+	/* Set RECEIVED_DATA event and wait 1s to allow task to run */
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_RECEIVED_DATA);
+	k_sleep(K_SECONDS(1));
+
+	/* Check drv->get_received_message() was called */
+	zassert_equal(mock_get_received_message_fake.call_count, 1);
+
+	/* Check there was no MKBP event sent */
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+
+	/* Read command returns EC_RES_UNAVAILABLE */
+	zassert_equal(host_cmd_cec_read(TEST_PORT, &response),
+		      EC_RES_UNAVAILABLE);
+}
+
+/* Rx queue overflows */
+ZTEST_USER_F(cec_common, test_receive_message_overflow)
+{
+	uint8_t msg1[MAX_CEC_MSG_LEN];
+	uint8_t msg2[MAX_CEC_MSG_LEN];
+	const uint8_t msg1_len = ARRAY_SIZE(msg1);
+	const uint8_t msg2_len = ARRAY_SIZE(msg2);
+	struct ec_response_get_next_event_v1 event;
+	struct ec_response_cec_read response;
+
+	memset(msg1, 0x01, sizeof(msg1));
+	memset(msg2, 0x02, sizeof(msg2));
+
+	/* Check adding both messages to the queue will cause it to overflow */
+	zassert_true(msg1_len + msg2_len > CEC_RX_BUFFER_SIZE);
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+	mock_get_received_message_fake.custom_fake =
+		get_received_message_custom_fake;
+
+	/* Receive msg1 */
+	set_received_message_custom_fake(msg1, msg1_len);
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_RECEIVED_DATA);
+	k_sleep(K_SECONDS(1));
+
+	/* Check drv->get_received_message() was called and MKBP event sent */
+	zassert_equal(mock_get_received_message_fake.call_count, 1);
+	zassert_equal(mock_get_received_message_fake.arg0_val, TEST_PORT);
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_HAVE_DATA));
+
+	/* Receive msg2 */
+	set_received_message_custom_fake(msg2, msg2_len);
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_RECEIVED_DATA);
+	k_sleep(K_SECONDS(1));
+
+	/* Check drv->get_received_message() was called and MKBP event sent */
+	zassert_equal(mock_get_received_message_fake.call_count, 2);
+	zassert_equal(mock_get_received_message_fake.arg0_val, TEST_PORT);
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_HAVE_DATA));
+
+	/*
+	 * When the rx queue overflows, we flush it and prefer the most recent
+	 * message, so check the read command returns msg2.
+	 */
+	zassert_ok(host_cmd_cec_read(TEST_PORT, &response));
+	zassert_equal(response.msg_len, msg2_len);
+	zassert_ok(memcmp(response.msg, msg2, msg2_len));
+
+	/* Reading again returns EC_RES_UNAVAILABLE (msg1 was lost) */
+	zassert_equal(host_cmd_cec_read(TEST_PORT, &response),
+		      EC_RES_UNAVAILABLE);
+}
+
+ZTEST_USER_F(cec_common, test_receive_message_multiple_ports)
+{
+	const uint8_t msg1[] = { 0x0f, 0x87, 0x00, 0xe0, 0x91 };
+	const uint8_t msg1_len = ARRAY_SIZE(msg1);
+	const uint8_t msg2[] = { 0x04, 0x46 };
+	const uint8_t msg2_len = ARRAY_SIZE(msg2);
+	struct ec_response_get_next_event_v1 event;
+	struct ec_response_cec_read response;
+
+	cec_config[TEST_PORT].drv = &fixture->mock_drv;
+	cec_config[TEST_PORT_1].drv = &fixture->mock_drv;
+	mock_get_received_message_fake.custom_fake =
+		get_received_message_custom_fake;
+
+	/* Receive msg1 on port 0 */
+	set_received_message_custom_fake(msg1, msg1_len);
+	cec_task_set_event(TEST_PORT, CEC_TASK_EVENT_RECEIVED_DATA);
+	k_sleep(K_SECONDS(1));
+
+	/* Receive msg2 on port 1 */
+	set_received_message_custom_fake(msg2, msg2_len);
+	cec_task_set_event(TEST_PORT_1, CEC_TASK_EVENT_RECEIVED_DATA);
+	k_sleep(K_SECONDS(1));
+
+	/* Check MKBP events were sent */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_HAVE_DATA));
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT_1, EC_MKBP_CEC_HAVE_DATA));
+
+	/* Send read command on port 0, check it's equal to msg1 */
+	zassert_ok(host_cmd_cec_read(TEST_PORT, &response));
+	zassert_equal(response.msg_len, msg1_len);
+	zassert_ok(memcmp(response.msg, msg1, msg1_len));
+
+	/* Send read command on port 1, check it's equal to msg2 */
+	zassert_ok(host_cmd_cec_read(TEST_PORT_1, &response));
+	zassert_equal(response.msg_len, msg2_len);
+	zassert_ok(memcmp(response.msg, msg2, msg2_len));
+
+	/* No more messages */
+	zassert_equal(host_cmd_cec_read(TEST_PORT, &response),
+		      EC_RES_UNAVAILABLE);
+	zassert_equal(host_cmd_cec_read(TEST_PORT_1, &response),
+		      EC_RES_UNAVAILABLE);
 }
 
 ZTEST_SUITE(cec_common, drivers_predicate_post_main, cec_common_setup,

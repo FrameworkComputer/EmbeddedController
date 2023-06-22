@@ -531,13 +531,13 @@ static int read_mapped_string(uint8_t offset, char *buffer, int max_size)
 	return ret;
 }
 
-static int wait_event(long event_type,
-		      struct ec_response_get_next_event_v1 *buffer,
-		      size_t buffer_size, long timeout)
+static int wait_event_mask(unsigned long event_mask,
+			   struct ec_response_get_next_event_v1 *buffer,
+			   size_t buffer_size, long timeout)
 {
 	int rv;
 
-	rv = ec_pollevent(1 << event_type, buffer, buffer_size, timeout);
+	rv = ec_pollevent(event_mask, buffer, buffer_size, timeout);
 	if (rv == 0) {
 		fprintf(stderr, "Timeout waiting for MKBP event\n");
 		return -ETIMEDOUT;
@@ -547,6 +547,13 @@ static int wait_event(long event_type,
 	}
 
 	return rv;
+}
+
+static int wait_event(long event_type,
+		      struct ec_response_get_next_event_v1 *buffer,
+		      size_t buffer_size, long timeout)
+{
+	return wait_event_mask(1 << event_type, buffer, buffer_size, timeout);
 }
 
 int cmd_adc_read(int argc, char *argv[])
@@ -11334,12 +11341,59 @@ static int cmd_cec_write(int argc, char *argv[])
 	return -1;
 }
 
+static int cec_read_handle_cec_event(int port, uint32_t cec_events,
+				     uint8_t *msg, uint8_t *msg_len)
+{
+	int rv;
+	uint32_t event_port, events;
+	struct ec_params_cec_read p;
+	struct ec_response_cec_read r;
+
+	/* Extract the port and events */
+	event_port = EC_MKBP_EVENT_CEC_GET_PORT(cec_events);
+	events = EC_MKBP_EVENT_CEC_GET_EVENTS(cec_events);
+
+	/* Check if it's the HAVE_DATA event we're waiting for */
+	if (event_port != port || !(events & EC_MKBP_CEC_HAVE_DATA)) {
+		*msg_len = 0;
+		return 0;
+	}
+
+	/* Data is ready, so send the read command */
+	p.port = port;
+	rv = ec_command(EC_CMD_CEC_READ_MSG, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0) {
+		/*
+		 * When the kernel driver is enabled it may read the data out
+		 * first, so the queue will be empty and the command will
+		 * returns EC_RES_UNAVAILABLE. The ectool read command is still
+		 * useful for testing if the kernel driver is not enabled.
+		 */
+		printf("Note: `cec read` doesn't work if the cros_ec_cec "
+		       "kernel driver is running\n");
+		return rv;
+	}
+
+	/* Message received successfully */
+	memcpy(msg, r.msg, r.msg_len);
+	*msg_len = r.msg_len;
+	return 0;
+}
+
 static int cmd_cec_read(int argc, char *argv[])
 {
 	int i, rv;
 	char *e;
 	struct ec_response_get_next_event_v1 buffer;
-	long timeout = 5000;
+	long timeout_ms = 5000;
+	int port = CEC_PORT;
+	unsigned long event_mask;
+	struct timespec start, now;
+	long elapsed_ms;
+	int event_size;
+	bool received = false;
+	uint8_t msg[MAX_CEC_MSG_LEN];
+	uint8_t msg_len;
 
 	if (!ec_pollevent) {
 		fprintf(stderr, "Polling for MKBP event not supported\n");
@@ -11347,21 +11401,68 @@ static int cmd_cec_read(int argc, char *argv[])
 	}
 
 	if (argc >= 3) {
-		timeout = strtol(argv[2], &e, 0);
+		timeout_ms = strtol(argv[2], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "Bad timeout value '%s'.\n", argv[2]);
 			return -1;
 		}
 	}
 
-	rv = wait_event(EC_MKBP_EVENT_CEC_MESSAGE, &buffer, sizeof(buffer),
-			timeout);
-	if (rv < 0)
-		return rv;
+	/*
+	 * There are two ways of receiving CEC messages:
+	 * 1. Old EC firmware which only supports one port sends the data in a
+	 *    cec_message MKBP event.
+	 * 2. New EC firmware which supports multiple ports sends
+	 *    EC_MKBP_CEC_HAVE_DATA to notify that data is ready, then
+	 *    EC_CMD_CEC_READ_MSG is used to read it.
+	 * To make ectool compatible with both, we wait for either
+	 * EC_MKBP_EVENT_CEC_MESSAGE or EC_MKBP_CEC_HAVE_DATA.
+	 */
+	event_mask = BIT(EC_MKBP_EVENT_CEC_EVENT) |
+		     BIT(EC_MKBP_EVENT_CEC_MESSAGE);
+	clock_gettime(CLOCK_REALTIME, &start);
+	while (true) {
+		clock_gettime(CLOCK_REALTIME, &now);
+		elapsed_ms = timespec_diff_ms(&now, &start);
+		if (elapsed_ms >= timeout_ms)
+			break;
+
+		rv = wait_event_mask(event_mask, &buffer, sizeof(buffer),
+				     timeout_ms - elapsed_ms);
+		if (rv < 0)
+			return rv;
+		event_size = rv;
+
+		if (buffer.event_type == EC_MKBP_EVENT_CEC_EVENT) {
+			rv = cec_read_handle_cec_event(
+				port, buffer.data.cec_events, msg, &msg_len);
+			if (rv < 0)
+				return rv;
+
+			/* Message received successfully */
+			if (msg_len) {
+				received = true;
+				break;
+			}
+			/* No message received, continue waiting */
+
+		} else if (buffer.event_type == EC_MKBP_EVENT_CEC_MESSAGE) {
+			/* Message received successfully */
+			received = true;
+			msg_len = event_size - 1;
+			memcpy(msg, buffer.data.cec_message, msg_len);
+			break;
+		}
+	}
+
+	if (!received) {
+		fprintf(stderr, "Timed out waiting for message\n");
+		return -1;
+	}
 
 	printf("CEC data: ");
-	for (i = 0; i < rv - 1; i++)
-		printf("0x%02x ", buffer.data.cec_message[i]);
+	for (i = 0; i < msg_len; i++)
+		printf("0x%02x ", msg[i]);
 	printf("\n");
 
 	return 0;

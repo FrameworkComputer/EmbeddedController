@@ -196,13 +196,12 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg,
 /**
  * Process a CEC message when the AP is off.
  *
- * @param queue		Queue to retrieve message from
- * @param msg		Buffer to store retrieved message in
+ * @param port		CEC port the message was received on
+ * @param msg		Buffer containing the message to process
  * @param msg_len	Number of data bytes in msg
  * @return EC_SUCCESS if the message is consumed or EC_ERROR_* otherwise.
  */
-int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
-				uint8_t msg_len);
+int cec_process_offline_message(int port, const uint8_t *msg, uint8_t msg_len);
 
 /**
  * Set a given task event for a given CEC port.
