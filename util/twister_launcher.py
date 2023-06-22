@@ -82,6 +82,7 @@ parameters that may be used, please consult the Twister documentation.
 # [VPYTHON:END]
 
 import argparse
+import hashlib
 import json
 import os
 import pathlib
@@ -95,6 +96,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from typing import List
 
 
 # Paths under the EC base dir that contain tests. This is used to define
@@ -269,8 +271,110 @@ def append_cmake_compiler(cmdline, cmake_var, exe_options):
             return
 
 
+def in_cros_sdk() -> bool:
+    """Detect if the development environment is CrOS SDK.
+
+    Returns:
+        True if the environment looks like Firmware SDK, False otherwise.
+    """
+    return Path("/etc/cros_chroot_version").is_file()
+
+
+def running_in_bazel() -> bool:
+    """Detect if we're running as inside of a Bazel build already.
+
+    Returns:
+        True if it looks like we're running from a Bazel rule, False otherwise.
+    """
+    return "BAZEL_TWISTER_CWD" in os.environ
+
+
+def in_fwsdk() -> bool:
+    """Detect if the development environment is Firmware SDK.
+
+    Returns:
+        True if the environment looks like Firmware SDK, False otherwise.
+    """
+    # CrOS SDK cannot be FWSDK.  Check early and stop to prevent us from
+    # breaking anything in CrOS SDK.
+    if in_cros_sdk():
+        return False
+
+    # If we're already re-launched under Bazel, we're in Firmware SDK.
+    if running_in_bazel():
+        return True
+
+    # Otherwise, ask Bazel to see if it knows about Firmware SDK rules.
+    try:
+        subprocess.run(
+            [
+                "bazel",
+                "query",
+                "//platform/rules_cros_firmware/cros_firmware:*",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        return False
+    return True
+
+
+def maybe_relaunch_in_bazel(
+    argv: List[str], cwd: Path, sandbox_debug: bool = False
+):
+    """If Firmware SDK environment is detected, relaunch in Bazel.
+
+    Args:
+        argv: The command line to re-launch with.
+        cwd: The directory to run inside.
+        sandbox_debug: If True, run bazel with --sandbox_debug.
+    """
+    if not in_fwsdk():
+        return False
+
+    if running_in_bazel():
+        return False
+
+    gen_starlark = f"""
+load(
+    "//platform/rules_cros_firmware/cros_firmware/twister:twister.bzl",
+    "twister_test_binary",
+)
+twister_test_binary(
+    name = "run_twister",
+    args = {argv!r},
+    cwd = {str(cwd)!r},
+)"""
+    run_hash = hashlib.md5(gen_starlark.encode("utf-8")).hexdigest()
+    twister_bzl_dir = Path(__file__).parent.parent / "build" / "twister-bzl"
+    run_dir = twister_bzl_dir / run_hash
+
+    if not run_dir.is_dir():
+        run_dir.mkdir(parents=True)
+        (run_dir / "BUILD.bazel").write_text(gen_starlark, encoding="utf-8")
+
+    bazel_cmd = ["bazel", "build", ":run_twister"]
+    if sandbox_debug:
+        bazel_cmd.append("--sandbox_debug")
+
+    result = subprocess.run(bazel_cmd, cwd=run_dir, check=False)
+    sys.exit(result.returncode)
+
+
 def main():
     """Run Twister using defaults for the EC project."""
+
+    bazel_outdir = None
+    if "BAZEL_TWISTER_CWD" in os.environ:
+        # Resolve any paths relative to the execroot prior to changing
+        # directories.
+        bazel_outdir = Path(os.environ["BAZEL_TWISTER_OUTDIR"]).resolve()
+        os.environ["TOOLCHAIN_ROOT"] = str(
+            Path(os.environ["TOOLCHAIN_ROOT"]).resolve()
+        )
+        os.chdir(os.environ["BAZEL_TWISTER_CWD"])
 
     # Get paths for the build.
     ec_base, zephyr_base, zephyr_modules_dir = find_paths()
@@ -293,7 +397,6 @@ def main():
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
         f"-x=PYTHON_EXECUTABLE={sys.executable}",
     ]
-    is_in_chroot = Path("/etc/cros_chroot_version").is_file()
 
     # `-T` flags (used for specifying test directories to build and run)
     # require special handling. When run without `-T` flags, Twister will
@@ -314,13 +417,13 @@ def main():
     parser.add_argument(
         "-O",
         "--outdir",
-        default=os.path.join(os.getcwd(), "twister-out"),
+        default=bazel_outdir or os.path.join(os.getcwd(), "twister-out"),
     )
     parser.add_argument(
         "--toolchain",
         default=os.environ.get(
             "ZEPHYR_TOOLCHAIN_VARIANT",
-            "llvm" if is_in_chroot else "host",
+            "llvm" if in_cros_sdk() else "host",
         ),
     )
     parser.add_argument(
@@ -333,8 +436,29 @@ def main():
         action="store_const",
         const="llvm",
     )
+    parser.add_argument(
+        "--sandbox-debug",
+        action="store_true",
+        default=False,
+        help="When running under Bazel, enable sandbox debugging mode.",
+    )
+    parser.add_argument(
+        "-h",
+        "--help",
+        action="store_true",
+    )
 
     intercepted_args, other_args = parser.parse_known_args()
+
+    # We allow help to run outside the sandbox.
+    if intercepted_args.help:
+        twister_cli.append("--help")
+    else:
+        maybe_relaunch_in_bazel(
+            sys.argv[1:],
+            Path.cwd(),
+            sandbox_debug=intercepted_args.sandbox_debug,
+        )
 
     for _ in range(intercepted_args.verbose):
         # Pass verbosity setting through to twister
@@ -368,7 +492,7 @@ def main():
     twister_cli.extend(["--outdir", intercepted_args.outdir])
 
     toolchain_root = (
-        str(ec_base / "zephyr") if is_in_chroot else str(zephyr_base)
+        str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base)
     )
     twister_cli.extend([f"-x=TOOLCHAIN_ROOT={toolchain_root}"])
 
@@ -379,7 +503,7 @@ def main():
         extra_env_vars = {
             "TOOLCHAIN_ROOT": os.environ.get(
                 "TOOLCHAIN_ROOT",
-                str(ec_base / "zephyr") if is_in_chroot else str(zephyr_base),
+                str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base),
             ),
             # TODO(https://github.com/zephyrproject-rtos/zephyr/issues/59453):
             # This ought to be passed as a CMake variable but can't due to how
