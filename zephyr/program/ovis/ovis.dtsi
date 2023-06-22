@@ -11,10 +11,6 @@
 		gpio-cbi-wp = &gpio_ec_cbi_wp;
 	};
 
-	chosen {
-		/delete-property/ cros-ec,raw-kb;
-	};
-
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -28,9 +24,6 @@
 		enable-pins = <&gpio_en_usb_a_vbus>;
 	};
 };
-
-/* This is required for  npcx */
-/delete-node/ &cros_kb_raw;
 
 /* host interface */
 &espi0 {
