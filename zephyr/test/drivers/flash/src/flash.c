@@ -333,8 +333,8 @@ ZTEST_USER(flash, test_hostcmd_flash_info_2)
 	struct ec_params_flash_info_2 params = {
 		.num_banks_desc = 1,
 	};
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_FLASH_INFO, 2, *response, params);
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_FLASH_INFO, 2, response_buffer, params);
 
 	/* Get the flash info. */
 	zassert_ok(host_command_process(&args), NULL);
