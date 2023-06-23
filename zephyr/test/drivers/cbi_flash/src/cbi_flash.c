@@ -49,8 +49,8 @@ ZTEST(cbi_flash, test_cbi_flash_load)
 		zassert_equal(data[index], index % 255);
 	}
 
-	zassert_ok(cbi_config.drv->load(211, data, CBI_IMAGE_SIZE - 400));
-	for (index = 0; index < CBI_IMAGE_SIZE - 400; index++) {
+	zassert_ok(cbi_config.drv->load(211, data, CBI_IMAGE_SIZE - 211));
+	for (index = 0; index < CBI_IMAGE_SIZE - 211; index++) {
 		zassert_equal(data[index], (index + 211) % 255);
 	}
 

@@ -680,7 +680,7 @@ int crec_flash_is_erased(uint32_t offset, int size)
 static bool check_cbi_section_overlap(int offset, int size)
 {
 	int cbi_start = CBI_FLASH_OFFSET;
-	int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+	int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 	int sec_start = offset;
 	int sec_end = offset + size;
 
@@ -697,7 +697,7 @@ static bool check_cbi_section_overlap(int offset, int size)
 static void protect_cbi_overlapped_section(int offset, int size, char *data)
 {
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 		int cbi_fill_start = MAX(CBI_FLASH_OFFSET, offset);
 		int cbi_fill_size = MIN(cbi_end, sec_end) - cbi_fill_start;
@@ -780,7 +780,7 @@ int crec_flash_write(int offset, int size, const char *data)
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 
 		if (offset < CBI_FLASH_OFFSET) {
@@ -809,7 +809,7 @@ int crec_flash_erase(int offset, int size)
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 
 		if (offset < CBI_FLASH_OFFSET) {
