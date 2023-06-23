@@ -313,7 +313,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_PCAL6408
                                                 "${PLATFORM_EC}/driver/ioexpander/pcal6408.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_TCA64XXA
                                                 "${PLATFORM_EC}/driver/ioexpander/tca64xxa.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
+zephyr_library_sources_ifdef(CONFIG_HAS_TASK_KEYSCAN
                                                 "${PLATFORM_EC}/common/keyboard_scan.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RGB_KEYBOARD
                                                 "${PLATFORM_EC}/common/rgb_keyboard.c")

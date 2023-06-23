@@ -7,8 +7,22 @@ CHOSEN_CROS_EC_RAW_KB := cros-ec,raw-kb
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Keyboard support"
 	default y
-	depends on DT_HAS_CROS_KEYSCAN_ENABLED || $(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB))
+	depends on ($(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB)) || $(dt_nodelabel_enabled,kb_discrete))
+	help
+	  Enable keyboard support.
+
+if PLATFORM_EC_KEYBOARD
+
+choice PLATFORM_EC_KEYBOARD_DRIVER
+	prompt "Select the keyboard driver to use"
+	help
+	  Select the keyboard driver to use for the specific device keyboard
+	  implementation.
+
+config PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
+	prompt "Shimmed raw keyboard driver"
 	select HAS_TASK_KEYSCAN
+	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB))
 	help
 	  Enable compilation of support for scanning a keyboard and providing
 	  the resulting input to the AP over the host interface. This consists
@@ -19,7 +33,15 @@ menuconfig PLATFORM_EC_KEYBOARD
 	  Enabling this automatically enables HAS_TASK_KEYSCAN since keyboard
 	  scanning must run in its own task.
 
-if PLATFORM_EC_KEYBOARD
+config PLATFORM_EC_KEYBOARD_DISCRETE
+	bool "Support discrete Keyboard"
+	select HAS_TASK_KEYSCAN
+	depends on $(dt_nodelabel_enabled,kb_discrete)
+	help
+	  Enable support for a discrete Keyboard if the platform needs one
+	  or the raw Keyboard support is not built-in in the EC.
+
+endchoice # PLATFORM_EC_KEYBOARD_DRIVER
 
 config CROS_EC_KEYSCAN
 	bool "Devicetree based keyscan map"
@@ -60,14 +82,6 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
 	  a key.
 
 endchoice # PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
-
-config PLATFORM_EC_KEYBOARD_DISCRETE
-	bool "Support discrete Keyboard"
-	default y
-	depends on $(dt_nodelabel_enabled,kb_discrete)
-	help
-	  Enable support for a discrete Keyboard if the platform needs one
-	  or the raw Keyboard support is not built-in in the EC.
 
 config PLATFORM_EC_KEYBOARD_DEBUG
 	bool "Enable keyboard debug prints"

@@ -29,31 +29,3 @@
 			>;
 	};
 };
-
-&cros_kb_raw {
-	status = "okay";
-	/* No KSO2 (it's inverted and implemented by GPIO) */
-	pinctrl-0 = <
-		&ksi0_gp31
-		&ksi1_gp30
-		&ksi2_gp27
-		&ksi3_gp26
-		&ksi4_gp25
-		&ksi5_gp24
-		&ksi6_gp23
-		&ksi7_gp22
-		&kso00_gp21
-		&kso01_gp20
-		&kso03_gp16
-		&kso04_gp15
-		&kso05_gp14
-		&kso06_gp13
-		&kso07_gp12
-		&kso08_gp11
-		&kso09_gp10
-		&kso10_gp07
-		&kso11_gp06
-		&kso12_gp05
-	>;
-	pinctrl-names = "default";
-};

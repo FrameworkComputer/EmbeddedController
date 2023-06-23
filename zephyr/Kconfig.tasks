@@ -135,7 +135,6 @@ endif # HAS_TASK_KEYPROTO
 
 config HAS_TASK_KEYSCAN
 	bool
-	depends on PLATFORM_EC_KEYBOARD
 	help
 	  This turns on the keyscan task which handles scanning the keyboard
 	  and producing a list of changes in the key state. This list can either
