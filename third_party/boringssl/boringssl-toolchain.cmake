@@ -16,3 +16,9 @@ include("${CROS_EC_REPO}/cmake/toolchain-common.cmake")
 # better way to disable the filesystem, threads and locks usages.
 add_definitions(-D__TRUSTY__)
 set(ANDROID TRUE)
+
+# TODO(b/287661706): This can be removed once https://crrev.com/c/4610318 lands.
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL armv7)
+    add_compile_options(-mcpu=cortex-m4)
+    add_compile_options(-mfloat-abi=hard)
+endif ()
