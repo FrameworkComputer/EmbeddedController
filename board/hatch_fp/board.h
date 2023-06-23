@@ -17,8 +17,6 @@
 
 #undef CONFIG_SYSTEM_UNLOCKED
 
-#define CONFIG_LTO
-
 /*-------------------------------------------------------------------------*
  * Flash layout:
  *
