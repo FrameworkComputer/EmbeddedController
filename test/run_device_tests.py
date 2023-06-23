@@ -260,6 +260,7 @@ class AllTests:
                 toggle_power=True,
                 enable_hw_write_protect=True,
             ),
+            TestConfig(test_name="fpsensor_auth_crypto_stateful"),
             TestConfig(test_name="fpsensor_auth_crypto_stateless"),
             TestConfig(test_name="fpsensor_hw"),
             TestConfig(
