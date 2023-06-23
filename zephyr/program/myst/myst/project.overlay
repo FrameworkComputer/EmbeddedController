@@ -25,6 +25,9 @@
 		default_battery: lgc_ap19b8m {
 			compatible = "lgc,ap19b8m", "battery-smart";
 		};
+		cosmx-2 {
+			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		};
 	};
 
 	named-gpios {
