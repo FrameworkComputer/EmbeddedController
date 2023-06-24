@@ -155,6 +155,12 @@
 			gpios = <&gpiog 3 GPIO_OUTPUT>;
 			no-auto-init;
 		};
+		gpio_ec_chg_led_r: ec_chg_led_r {
+			gpios = <&gpioa 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_chg_led_b: ec_chg_led_b {
+			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	temp_memory: memory {
