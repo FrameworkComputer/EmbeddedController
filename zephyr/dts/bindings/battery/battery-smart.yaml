@@ -39,6 +39,7 @@ properties:
       - "dynapack,hpp_gg02047xl"
       - "ganfeng,7c01"
       - "ganfeng,sg20"
+      - "pow-tech,sg20"
       - "pow-tech,sg20qt1c"
       - "getac,bq40z50-R3-S3"
       - "getac,bq40z50-R3-S2"

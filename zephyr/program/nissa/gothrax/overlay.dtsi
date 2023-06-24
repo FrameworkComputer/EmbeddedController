@@ -42,8 +42,8 @@
 	};
 
 	batteries {
-		default_battery: smp {
-			compatible = "smp,l20m3pg0", "battery-smart";
+		default_battery: pow-tech_sg20 {
+			compatible = "pow-tech,sg20", "battery-smart";
 		};
 	};
 
