@@ -151,10 +151,6 @@
 			gpios = <&gpioe 0 0>;
 			no-auto-init;
 		};
-		gpio_fan_enable: fan-enable {
-			gpios = <&gpiog 3 GPIO_OUTPUT>;
-			no-auto-init;
-		};
 		gpio_ec_chg_led_r: ec_chg_led_r {
 			gpios = <&gpioa 1 GPIO_OUTPUT_LOW>;
 		};
@@ -182,8 +178,6 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		memory {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
@@ -191,8 +185,6 @@
 			sensor = <&temp_memory>;
 		};
 		charger {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
@@ -200,8 +192,6 @@
 			sensor = <&temp_charger>;
 		};
 		ambient {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
@@ -265,18 +255,6 @@
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
-		};
-	};
-	fans {
-		compatible = "cros-ec,fans";
-
-		fan_0 {
-			pwms = <&pwm0 0 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
-			tach = <&tach1>;
-			rpm_min = <1500>;
-			rpm_start = <1500>;
-			rpm_max = <6500>;
-			enable_gpio = <&gpio_fan_enable>;
 		};
 	};
 };
