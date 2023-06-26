@@ -2004,12 +2004,14 @@ static void tch_sending_chunked_message_run(const int port)
 	 * Message Transmitted from Protocol Layer &
 	 * Last Chunk
 	 */
-	else if (tx_emsg[port].len == pdmsg[port].send_offset)
+	else if (tx_emsg[port].len == pdmsg[port].send_offset &&
+		 PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE)) {
+		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 		set_state_tch(port, TCH_MESSAGE_SENT);
-	/*
-	 * Any message received and not in state TCH_Wait_Chunk_Request
-	 */
-	else if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
+		/*
+		 * Any message received and not in state TCH_Wait_Chunk_Request
+		 */
+	} else if (TCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
 		TCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
 		set_state_tch(port, TCH_MESSAGE_RECEIVED);
 	}
@@ -2017,8 +2019,11 @@ static void tch_sending_chunked_message_run(const int port)
 	 * Message Transmitted from Protocol Layer &
 	 * Not Last Chunk
 	 */
-	else
+	else if (pdmsg[port].send_offset < tx_emsg[port].len &&
+		 PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE)) {
+		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 		set_state_tch(port, TCH_WAIT_CHUNK_REQUEST);
+	}
 }
 
 /*
