@@ -84,7 +84,7 @@
 			gpios = <&gpio3 1 GPIO_ODR_HIGH>;	/* Reserved */
 		};
 		gpio_gpu_b_gpio01_ec: gpu_b_gpio01_ec {
-			gpios = <&gpio3 0 GPIO_ODR_HIGH>;	/* Control 2nd Batt discharge */
+			gpios = <&gpio3 0 GPIO_INPUT>;	/* Control 2nd Batt discharge */
 		};
 		gpio_gpu_b_gpio02_ec: gpu_b_gpio02_ec {
 			gpios = <&gpio2 7 GPIO_OUTPUT_LOW>;	/* PWR switch from AC to DC */

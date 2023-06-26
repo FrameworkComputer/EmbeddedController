@@ -41,7 +41,7 @@ static void sci_enable(void);
 DECLARE_DEFERRED(sci_enable);
 
 #ifdef CONFIG_BOARD_LOTUS
-static void gpu_typec_detect()
+static void gpu_typec_detect(void)
 {
 	set_host_dp_ready(1);
 }
@@ -55,7 +55,8 @@ static void sci_enable(void)
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		bios_function_detect();
 #ifdef CONFIG_BOARD_LOTUS
-		hook_call_deferred(&gpu_typec_detect_data, 500 * MSEC);
+		/* hook_call_deferred(&gpu_typec_detect_data, 500 * MSEC); */
+		gpu_typec_detect();
 #endif
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);

@@ -121,6 +121,7 @@ void dp_hot_plug_interrupt(enum gpio_signal signal)
 		host_set_single_event(EC_HOST_EVENT_DGPU_TYPEC_NOTIFY);
 }
 
+/* Currently, the GPU pd interrupt does not function */
 void gpu_pd_interrupt(enum gpio_signal signal)
 {
 	CPRINTS("gpu pd interrupt!");
