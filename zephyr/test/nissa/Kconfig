@@ -34,6 +34,12 @@ choice TEST_TARGET
 	  bool "Tests for Nereid-specific code"
 	  help
 		The test target that exercises nissa/nereid/*.c
+
+	config TEST_NISSA_GOTHRAX
+	  bool "Tests for Gothrax-specific code"
+	  select TEST_USB_PD_POLICY
+	  help
+		The test target that exercises nissa/gothrax/*.c
 endchoice
 
 config TEST_USB_PD_POLICY
