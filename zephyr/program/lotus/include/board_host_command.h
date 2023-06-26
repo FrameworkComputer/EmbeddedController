@@ -202,6 +202,16 @@ struct ec_response_fp_led_level {
 
 /*****************************************************************************/
 /*
+ * This command return the chassis status
+ */
+#define EC_CMD_CHASSIS_OPEN_CHECK	0x3E0F
+
+struct ec_response_chassis_open_check {
+	uint8_t status;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
  * This command uses to notify the EC that the system is in ACPI mode.
  */
 #define EC_CMD_ACPI_NOTIFY		0x3E10

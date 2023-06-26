@@ -269,6 +269,19 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control, EC_VER_MASK(0));
 
+static enum ec_status chassis_open_check(struct host_cmd_handler_args *args)
+{
+	struct ec_response_chassis_open_check *r = args->response;
+	int status = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
+
+	r->status = !status & 0x01;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_OPEN_CHECK, chassis_open_check, EC_VER_MASK(0));
+
 static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 {
 	hook_call_deferred(&sci_enable_data, 250 * MSEC);
