@@ -22,6 +22,7 @@
 
 #define RT1739_FLAGS_SOURCE_ENABLED BIT(0)
 #define RT1739_FLAGS_FRS_ENABLED BIT(1)
+static int rt1739_pd_connect_flag;
 static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -432,9 +433,16 @@ static void rt1739_usb_charger_task_event(const int port, uint32_t evt)
 
 	/* vbus change, start bc12 detection */
 	if (evt & USB_CHG_EVENT_VBUS) {
-		if (is_non_pd_sink)
+		if (is_non_pd_sink) {
+			if (!(rt1739_pd_connect_flag & BIT(port))) {
+				update_reg(port, RT1739_REG_SBU_CTRL_01,
+					   RT1739_DM_SWEN | RT1739_DP_SWEN |
+						   RT1739_SBU1_SWEN |
+						   RT1739_SBU2_SWEN,
+					   MASK_SET);
+			}
 			rt1739_enable_bc12_detection(port, true);
-		else
+		} else
 			rt1739_update_charge_manager(port,
 						     CHARGE_SUPPLIER_NONE);
 	}
@@ -498,11 +506,13 @@ void rt1739_interrupt(int port)
 void rt1739_pd_connect(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
-		if (ppc_chips[i].drv == &rt1739_ppc_drv && pd_is_connected(i))
+		if (ppc_chips[i].drv == &rt1739_ppc_drv && pd_is_connected(i)) {
 			update_reg(i, RT1739_REG_SBU_CTRL_01,
 				   RT1739_DM_SWEN | RT1739_DP_SWEN |
 					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
 				   MASK_SET);
+			rt1739_pd_connect_flag |= BIT(i);
+		}
 	}
 }
 DECLARE_HOOK(HOOK_USB_PD_CONNECT, rt1739_pd_connect, HOOK_PRIO_DEFAULT);
@@ -511,11 +521,13 @@ void rt1739_pd_disconnect(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
 		if (ppc_chips[i].drv == &rt1739_ppc_drv &&
-		    pd_is_disconnected(i))
+		    pd_is_disconnected(i)) {
 			update_reg(i, RT1739_REG_SBU_CTRL_01,
 				   RT1739_DM_SWEN | RT1739_DP_SWEN |
 					   RT1739_SBU1_SWEN | RT1739_SBU2_SWEN,
 				   MASK_CLR);
+			rt1739_pd_connect_flag &= ~BIT(i);
+		}
 	}
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, rt1739_pd_disconnect, HOOK_PRIO_DEFAULT);
