@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "ec_commands.h"
+#include "fpsensor_auth_commands.h"
 #include "fpsensor_auth_crypto.h"
 #include "fpsensor_state.h"
 #include "mock/fpsensor_state_mock.h"
@@ -59,6 +60,41 @@ test_static enum ec_error_list test_set_fp_tpm_seed(void)
 				    sizeof(resp));
 
 	return check_seed_set_result(rv, FP_ENC_STATUS_SEED_SET, &resp);
+}
+
+test_static enum ec_error_list test_fp_command_check_context_cleared(void)
+{
+	fp_reset_and_clear_context();
+	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
+
+	struct ec_params_fp_context_v1 params = {
+		.action = FP_CONTEXT_GET_RESULT,
+		.userid = { 0, 1, 2, 3, 4, 5, 6, 7 },
+	};
+	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &params,
+				       sizeof(params), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
+
+	fp_reset_and_clear_context();
+	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
+
+	templ_valid++;
+	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
+
+	fp_reset_and_clear_context();
+	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
+
+	templ_dirty |= BIT(0);
+	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
+
+	fp_reset_and_clear_context();
+	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
+
+	positive_match_secret_state.template_matched = 0;
+	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
+
+	return EC_SUCCESS;
 }
 
 test_static enum ec_error_list
@@ -199,6 +235,7 @@ test_static enum ec_error_list test_fp_command_establish_pairing_key_fail(void)
 extern "C" void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_command_establish_pairing_key_without_seed);
+	RUN_TEST(test_fp_command_check_context_cleared);
 
 	// All tests after this require the TPM seed to be set.
 	RUN_TEST(test_set_fp_tpm_seed);

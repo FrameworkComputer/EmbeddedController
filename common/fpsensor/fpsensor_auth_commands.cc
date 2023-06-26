@@ -6,6 +6,7 @@
 #include "crypto/elliptic_curve_key.h"
 #include "ec_commands.h"
 #include "fpsensor.h"
+#include "fpsensor_auth_commands.h"
 #include "fpsensor_auth_crypto.h"
 #include "fpsensor_crypto.h"
 #include "fpsensor_state.h"
@@ -13,7 +14,23 @@
 #include "openssl/mem.h"
 #include "scoped_fast_cpu.h"
 
+#include <algorithm>
+#include <array>
 #include <utility>
+
+enum ec_error_list check_context_cleared()
+{
+	for (uint32_t partial : user_id)
+		if (partial != 0)
+			return EC_ERROR_ACCESS_DENIED;
+	if (templ_valid != 0)
+		return EC_ERROR_ACCESS_DENIED;
+	if (templ_dirty != 0)
+		return EC_ERROR_ACCESS_DENIED;
+	if (positive_match_secret_state.template_matched != FP_NO_SUCH_TEMPLATE)
+		return EC_ERROR_ACCESS_DENIED;
+	return EC_SUCCESS;
+}
 
 static enum ec_status
 fp_command_establish_pairing_key_keygen(struct host_cmd_handler_args *args)
