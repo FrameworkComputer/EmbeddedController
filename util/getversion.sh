@@ -118,6 +118,9 @@ main() {
       dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
       ;;
     (*_fp|*dartmonkey|*bloonchipper)
+      if [[ -d ../../third_party/boringssl ]]; then
+        dir_list+=( ../../third_party/boringssl )
+      fi
       if [[ -d ../../third_party/cryptoc ]]; then
         dir_list+=( ../../third_party/cryptoc )
       fi
