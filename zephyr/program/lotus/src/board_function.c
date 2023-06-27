@@ -13,6 +13,7 @@
 #include "customized_shared_memory.h"
 #include "diagnostics.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "flash_storage.h"
 #include "hooks.h"
 #include "system.h"
@@ -31,6 +32,8 @@ static uint8_t chassis_open_count;
 static uint8_t chassis_press_counter;
 /* make sure only trigger once */
 static uint8_t chassis_once_flag;
+
+static uint64_t chassis_open_hibernate_time;
 
 int bios_function_status(uint16_t type, uint16_t addr, uint8_t flag)
 {
@@ -84,6 +87,48 @@ int chassis_cmd_clear(int type)
 	return -1;
 }
 
+static void chassis_open_hibernate(void)
+{
+	uint64_t now;
+	int chassis_status = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
+
+	/* We don't need to hibernate EC when extpower is present or chassis is closed */
+	if (extpower_is_present() || chassis_status || !chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
+	/* EC does not update the chassis open hibernate timer, ignore it */
+	if (!chassis_open_hibernate_time)
+		return;
+
+	now = get_time().val;
+	CPRINTS("chassis_open_hibernate_time:%lld, now:%lld", chassis_open_hibernate_time, now);
+	if (now > chassis_open_hibernate_time) {
+		CPRINTS("Chassis open hibernate");
+		system_hibernate(0, 0);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, chassis_open_hibernate, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(chassis_open_hibernate);
+
+__override enum critical_shutdown
+board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
+		     uint64_t now)
+{
+	/* update the chassis open target time = 30s - 28s*/
+	chassis_open_hibernate_time = *target - 28000000;
+
+	/* After setting the chassis open hibernate timer, delay 2.5s to check the chassis status */
+	hook_call_deferred(&chassis_open_hibernate_data, 2500 * MSEC);
+
+	CPRINTS("target:%lld, now:%lld", *target, now);
+
+	if (now < *target)
+		return CRITICAL_SHUTDOWN_IGNORE;
+
+	CPRINTS("SDC Safe");
+	return CRITICAL_SHUTDOWN_HIBERNATE;
+}
+
 __overridable void project_chassis_function(enum gpio_signal signal)
 {
 }
@@ -109,6 +154,8 @@ static void check_chassis_open(void)
 		CPRINTS("Chassis was closed");
 		chassis_once_flag = 0;
 	}
+
+	hook_call_deferred(&chassis_open_hibernate_data, 0);
 }
 DECLARE_DEFERRED(check_chassis_open);
 
