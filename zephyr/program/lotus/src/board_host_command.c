@@ -332,6 +332,17 @@ static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_a
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_SIMPLE_VERSION, host_command_get_simple_version, EC_VER_MASK(0));
 
+static enum ec_status get_active_charge_pd_chip(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_active_charge_pd_chip *r = args->response;
+
+	r->pd_chip = active_charge_pd_chip();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_ACTIVE_CHARGE_PD_CHIP, get_active_charge_pd_chip, EC_VER_MASK(0));
+
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/

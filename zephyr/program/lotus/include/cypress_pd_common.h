@@ -475,4 +475,11 @@ int pd_get_active_current(int port);
  */
 void cypd_set_power_active(enum power_state power);
 
+/**
+ * Get the active charge pd chip
+ *
+ * @return int
+ */
+int active_charge_pd_chip(void);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

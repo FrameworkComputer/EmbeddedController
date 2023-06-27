@@ -259,4 +259,15 @@ struct ec_response_get_custom_version {
 	char simple_version[9];
 } __ec_align4;
 
+/*****************************************************************************/
+/*
+ * This command returns the active charge pd chip.
+ */
+#define EC_CMD_GET_ACTIVE_CHARGE_PD_CHIP	0x3E18
+
+struct ec_response_get_active_charge_pd_chip {
+	uint8_t pd_chip;
+} __ec_align1;
+
+
 #endif /* __BOARD_HOST_COMMAND_H */
