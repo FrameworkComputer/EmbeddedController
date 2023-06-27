@@ -322,10 +322,23 @@ a lot easier during both development and testing.
 ## Power
 
 See [Measuring Power] for instructions on how to measure power with the
-fingerprint development boards. *Make sure that any debuggers are completely
-disconnected.*
+fingerprint development boards.
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure that any debuggers are completely disconnected when
+measuring power.
+***
+<!-- mdformat on -->
 
 ### Dragonclaw v0.3
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure that any debuggers are completely disconnected when
+measuring power.
+***
+<!-- mdformat on -->
 
 ```bash
 (chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
@@ -378,6 +391,13 @@ measure the 1.8V fingerprint sensor rail. See http://b/178098140.
 Additionally, before https://crrev.com/c/2689101, the sleep GPIOs were not
 configured correctly, so the change needs to be cherry-picked in order to
 measure releases before that point.
+***
+<!-- mdformat on -->
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure that any debuggers are completely disconnected when
+measuring power.
 ***
 <!-- mdformat on -->
 
