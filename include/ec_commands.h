@@ -789,17 +789,23 @@ enum host_event_code {
 	/* Body detect (lap/desk) change event */
 	EC_HOST_EVENT_BODY_DETECT_CHANGE = 33,
 
+	/* For notice host DGPU */
+	EC_HOST_EVENT_DGPU_TYPEC_NOTIFY = 58,
+
 	/* UCSI done */
-	EC_HOST_EVENT_UCSI = 48,
+	EC_HOST_EVENT_UCSI = 59,
 
 	/* BTP fundtion: update battery capacity */
-	EC_HOST_EVENT_BATT_BTP = 49,
+	EC_HOST_EVENT_BATT_BTP = 60,
 
 	/* Thermal Qevent fundtion: send Qevent to notice host read acpi temp */
-	EC_HOST_EVENT_THERMAL_QEVENT = 50,
+	EC_HOST_EVENT_THERMAL_QEVENT = 61,
+
+	/* ALS */
+	EC_HOST_EVENT_ALS  = 62,
 
 	/* For modern satndby */
-	EC_HOST_EVENT_PB_RELEASE = 51,
+	EC_HOST_EVENT_PB_RELEASE = 63,
 
 
 	/*
@@ -849,9 +855,11 @@ enum host_event_code {
 		[EC_HOST_EVENT_WOV] = "WOV",                                   \
 		[EC_HOST_EVENT_INVALID] = "INVALID",                           \
 		[EC_HOST_EVENT_BODY_DETECT_CHANGE] = "BODY_DETECT_CHANGE",     \
+		[EC_HOST_EVENT_DGPU_TYPEC_NOTIFY] = "DGPU_TYPEC_DETECT",     \
 		[EC_HOST_EVENT_UCSI] = "UCSI",                                 \
 		[EC_HOST_EVENT_BATT_BTP] = "BATTERY_TRIP_POINT",               \
 		[EC_HOST_EVENT_THERMAL_QEVENT] = "THERMAL_QEVENT",             \
+		[EC_HOST_EVENT_ALS] = "ALS_QEVENT",              \
 		[EC_HOST_EVENT_PB_RELEASE] = "POWER_BTN_RELEASE",              \
 	}
 /* clang-format on */
