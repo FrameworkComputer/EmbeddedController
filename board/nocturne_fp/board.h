@@ -18,6 +18,8 @@
 
 #undef CONFIG_SYSTEM_UNLOCKED
 
+#define CONFIG_ALLOW_UNALIGNED_ACCESS
+
 /*
  * These allow console commands to be flagged as restricted.
  * Restricted commands will only be permitted to run when
