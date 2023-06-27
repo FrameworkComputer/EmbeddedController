@@ -188,6 +188,7 @@
 		status = "okay";
 		reg = <0x5c>;
 		irq-gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
+		fixed = <USB_PD_MUX_USB_ENABLED>;
 	};
 };
 
