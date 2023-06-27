@@ -51,15 +51,9 @@ enum breath_status {
 
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
-#if CONFIG_PLATFORM_EC_LED_DT_PWM
 DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
 	DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_pwm_led_pins), DT_FOREACH_CHILD,
 	DECLARE_PINS_NODE)
-#elif CONFIG_PLATFORM_EC_LED_DT_GPIO
-DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
-	DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_led_pins), DT_FOREACH_CHILD,
-	DECLARE_PINS_NODE)
-#endif
 
 /*
  * Currently 4 different colors are supported for blinking LED, each of which
