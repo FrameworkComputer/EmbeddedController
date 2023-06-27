@@ -95,6 +95,7 @@ void amdr23m_update_temperature(int idx)
 	 */
 	if (!gpu_present()) {
 		temps[idx] = C_TO_K(0);
+		initialized = 0;
 		return;
 	}
 
@@ -140,3 +141,11 @@ void amdr23m_update_temperature(int idx)
 	 */
 	temps[idx] = C_TO_K(reg[3] >> 1);
 }
+
+void reset_gpu(void)
+{
+	CPRINTS("System power up, reset GPU");
+	initialized = 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, reset_gpu, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, reset_gpu, HOOK_PRIO_DEFAULT);
