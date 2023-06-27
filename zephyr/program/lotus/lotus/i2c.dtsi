@@ -44,7 +44,7 @@
 			dynamic-speed;
 		};
 		i2c_gpu0: gpu0 {
-			i2c-port = <&i2c5_1>;
+			i2c-port = <&i2c5_0>;
 			enum-names = "I2C_PORT_GPU0";
 		};
 		i2c_gpu1: gpu1 {
@@ -134,11 +134,11 @@
 	status = "okay";
 };
 
-&i2c5_1 {
+&i2c5_0 {
 	status = "okay";
 	label = "I2C_PORT5";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
-	pinctrl-0 = <&i2c5_1_sda_scl_gpf4_f5>;
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
 	pinctrl-names = "default";
 
 	/* TODO: Add the device on this bus */

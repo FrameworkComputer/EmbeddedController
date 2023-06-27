@@ -50,18 +50,10 @@
 	pulses-per-round = <2>; /* number of pulses per round of encoder */
 };
 
-&pwm0_gpc3 {
-	drive-open-drain;
-};
-
 &pwm0 {
 	status = "okay";
 	pinctrl-0 = <&pwm0_gpc3>;
 	pinctrl-names = "default";
-};
-
-&pwm1_gpc2 {
-	drive-open-drain;
 };
 
 &pwm1 {
