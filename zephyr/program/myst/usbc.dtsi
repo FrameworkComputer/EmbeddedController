@@ -16,7 +16,7 @@
 			ppc = <&ppc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&amd_fp6_port0>;
+				usb-muxes = <&amd_fp8_port0>;
 			};
 		};
 
@@ -25,7 +25,7 @@
 			reg = <1>;
 			usb-mux-chain-1-anx {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&amd_fp6_port1>;
+				usb-muxes = <&amd_fp8_port1>;
 			};
 		};
 	};

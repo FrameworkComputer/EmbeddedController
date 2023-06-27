@@ -83,9 +83,9 @@
 			handler = "ppc_interrupt";
 		};
 		int_usb_pd_soc: usb_pd_soc {
-			irq-pin = <&gpio_ec_c0_retimer_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_pd_soc_interrupt";
+			irq-pin = <&gpio_soc_usbc_pd_int>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "amd_fp8_mux_interrupt";
 		};
 		int_lid_accel: lid_accel {
 			irq-pin = <&gpio_3axis_int_l>;

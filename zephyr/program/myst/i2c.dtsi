@@ -165,15 +165,29 @@
 	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
 	pinctrl-names = "default";
 
-	amd_fp6_port0: amd_fp6@5c {
-		compatible = "amd,usbc-mux-amd-fp6";
+	amd_fp8_port0: amd_fp8@54 {
+		compatible = "amd,usbc-mux-amd-fp8";
 		status = "okay";
-		reg = <0x5c>;
+		reg = <0x54>;
+		irq-gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
 	};
-	amd_fp6_port1: amd_fp6@58 {
-		compatible = "amd,usbc-mux-amd-fp6";
+
+	amd_fp8_port1: amd_fp8@58 {
+		compatible = "amd,usbc-mux-amd-fp8";
 		status = "okay";
 		reg = <0x58>;
+		irq-gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
+	};
+
+	/*
+	 * This isn't controlled by the EC, but all muxes might have to be
+	 * checked to clear the interrupt line.
+	 */
+	amd_fp8_internal: amd_fp8@5c {
+		compatible = "amd,usbc-mux-amd-fp8";
+		status = "okay";
+		reg = <0x5c>;
+		irq-gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
 	};
 };
 
