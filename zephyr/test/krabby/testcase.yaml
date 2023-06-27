@@ -31,3 +31,15 @@ tests:
     - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
     extra_dtc_overlay_files:
     - krabby.tentacruel.overlay
+  krabby.starmie:
+    extra_configs:
+    - CONFIG_TEST_STARMIE=y
+    - CONFIG_AP_ARM_MTK_MT8186=y
+    - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
+    - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+    - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+    - CONFIG_PLATFORM_EC_POWERSEQ=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+    - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+    - krabby.starmie.overlay

@@ -37,3 +37,9 @@ target_sources_ifdef(CONFIG_TEST_TENTACRUEL
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/tentacruel/src/ppc.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/tentacruel/src/temp.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/tentacruel/src/sensor.c)
+
+target_sources_ifdef(CONFIG_TEST_STARMIE
+	app PRIVATE
+	src/temp_starmie.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/starmie/src/thermal.c
+)
