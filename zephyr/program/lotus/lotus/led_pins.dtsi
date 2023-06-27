@@ -4,26 +4,22 @@
  */
 
 / {
-	pwm_pins {
-		compatible = "cros-ec,pwm-pin-config";
+	pwmleds {
+		compatible = "pwm-leds";
 
 		pwm_b: pwm_b {
-			#led-pin-cells = <1>;
 			pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 
 		pwm_r: pwm_r {
-			#led-pin-cells = <1>;
 			pwms = <&pwm3 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 
 		pwm_g: pwm_g {
-			#led-pin-cells = <1>;
 			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 
 		pwm_power_w: pwm_power_w {
-			#led-pin-cells = <1>;
 			pwms = <&pwm5 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 	};
