@@ -22,13 +22,13 @@
 
 #define AMD_FP8_MUX_COUNT 3
 
-#define AMD_FP8_MUX_HELPER(id)                                      \
-	{                                                           \
-		.mux = { .i2c_port = I2C_PORT_BY_DEV(id),           \
-			 .i2c_addr_flags = DT_REG_ADDR(id),         \
-			 .usb_port = USB_MUX_PORT(id) },            \
-		.port = 0,                                          \
-		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}), \
+#define AMD_FP8_MUX_HELPER(id)                                         \
+	{                                                              \
+		.mux = { .i2c_port = I2C_PORT_BY_DEV(id),              \
+			 .i2c_addr_flags = DT_REG_ADDR(id),            \
+			 .usb_port = USB_MUX_PORT(id) },               \
+		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),    \
+		.fixed_state = DT_PROP_OR(id, fixed, USB_PD_MUX_NONE), \
 	},
 
 struct amd_fp8_mux_state {
@@ -43,6 +43,14 @@ struct amd_fp8_mux_state {
 	/* Each mux has two ports, but only port-0 is currently used. */
 	uint8_t port;
 	const struct gpio_dt_spec irq_gpio;
+
+	/*
+	 * We can have muxes that are connected to type-A ports. These still
+	 * need to be configured to enable full USB3 speeds, but exist outside
+	 * of the normal mux flow. fixed_state allows us to configure these
+	 * muxes internally in the driver.
+	 */
+	const mux_state_t fixed_state;
 };
 
 static struct amd_fp8_mux_state amd_fp8_muxes[] = { DT_FOREACH_STATUS_OKAY(
@@ -101,6 +109,100 @@ static bool amd_fp8_mux_supports_usb4(uint8_t addr, uint8_t port)
 	default:
 		return false;
 	}
+}
+
+static int amd_fp8_set_mux_unsafe(struct amd_fp8_mux_state *amd_mux,
+				  mux_state_t mux_state)
+{
+	uint8_t ctrl;
+	uint8_t payload[AMD_FP8_WRITE1_USB4_LEN];
+	uint8_t payload_len = AMD_FP8_WRITE1_USB3_LEN;
+	int rv;
+	const uint8_t i2c_addr = amd_mux->mux.i2c_addr_flags;
+	const int usb_port = amd_mux->mux.usb_port;
+
+	if (amd_mux->port != 0) {
+		CPRINTSUSB("AMD FP8(%02x): Invalid mux port", i2c_addr);
+		return EC_ERROR_INVAL;
+	}
+
+	/*
+	 * Validate that the mux is ready and isn't already processing a
+	 * command.
+	 */
+
+	if (!amd_mux->xbar_ready) {
+		CPRINTSUSB("AMD FP8(%02x): skip mux set, xbar not ready",
+			   i2c_addr);
+		return EC_ERROR_BUSY;
+	}
+
+	if (amd_mux->in_progress) {
+		CPRINTSUSB("AMD FP8(%02x): skip mux set, in progress",
+			   i2c_addr);
+		return EC_ERROR_BUSY;
+	}
+
+	/* This driver treats safe mode as none */
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
+		mux_state = USB_PD_MUX_NONE;
+
+	/* Set our port. */
+	payload[AMD_FP8_MUX_WRITE1_INDEX_BYTE] = amd_mux->port;
+
+	if (mux_state == USB_PD_MUX_NONE) {
+		ctrl = AMD_FP8_CONTROL_SAFE;
+	} else if ((mux_state & USB_PD_MUX_USB_ENABLED) &&
+		   (mux_state & USB_PD_MUX_DP_ENABLED)) {
+		ctrl = AMD_FP8_CONTROL_DOCK;
+	} else if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		ctrl = AMD_FP8_CONTROL_USB;
+	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		ctrl = AMD_FP8_CONTROL_DP;
+	} else {
+		/* (b/276335130): Add USB4 and TBT3 handling */
+		CPRINTSUSB("AMD FP8(%02x): unhandled mux_state %x", i2c_addr,
+			   mux_state);
+		return EC_ERROR_INVAL;
+	}
+
+	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
+		ctrl |= AMD_FP8_MUX_W1_CTRL_FLIP;
+
+	/* TODO(b/276335130): Add Data reset request */
+
+	/* These are only relevant for USB4/TBT. */
+	if (amd_fp8_mux_supports_usb4(i2c_addr, usb_port)) {
+		payload_len = AMD_FP8_WRITE1_USB4_LEN;
+
+		if (pd_get_data_role(usb_port) == PD_ROLE_UFP)
+			ctrl |= AMD_FP8_MUX_W1_CTRL_UFP;
+
+		/* TODO(b/276335130): Add Cable information */
+		payload[AMD_FP8_MUX_WRITE1_CABLE_BYTE] = 0;
+		payload[AMD_FP8_MUX_WRITE1_VER_BYTE] = 0;
+
+		if (pd_is_connected(usb_port))
+			payload[AMD_FP8_MUX_WRITE1_SPEED_BYTE] =
+				AMD_FP8_MUX_W1_SPEED_TC;
+		else
+			payload[AMD_FP8_MUX_WRITE1_SPEED_BYTE] = 0;
+	}
+
+	payload[AMD_FP8_MUX_WRITE1_CONTROL_BYTE] = ctrl;
+
+	rv = i2c_xfer(amd_mux->mux.i2c_port, i2c_addr, payload, payload_len,
+		      NULL, 0);
+	if (rv) {
+		CPRINTSUSB("AMD FP8(%02x): I2C mux error, %d", usb_port, rv);
+		return rv;
+	}
+
+	/* Save our mux state now that it's passed error checks */
+	amd_mux->next_state = mux_state;
+	amd_mux->in_progress = true;
+
+	return rv;
 }
 
 static int amd_fp8_read_int_status(const struct amd_fp8_mux_state *amd_mux,
@@ -185,6 +287,34 @@ static void amd_fp8_check_command_state(struct amd_fp8_mux_state *amd_mux,
 	amd_mux->next_state = USB_PD_MUX_NONE;
 }
 
+static void amd_fp8_update_fixed_states(void)
+{
+	int rv;
+
+	for (size_t i = 0; i < ARRAY_SIZE(amd_fp8_muxes); i++) {
+		struct amd_fp8_mux_state *amd_mux = &amd_fp8_muxes[i];
+
+		/* Set fixed mux state. */
+		if (!amd_mux->xbar_ready)
+			continue;
+
+		if (amd_mux->in_progress)
+			continue;
+
+		if (amd_mux->fixed_state == USB_PD_MUX_NONE)
+			continue;
+
+		if (amd_mux->current_state == amd_mux->fixed_state)
+			continue;
+
+		rv = amd_fp8_set_mux_unsafe(amd_mux, amd_mux->fixed_state);
+		if (rv)
+			CPRINTSUSB("AMD FP8(%02x): fixed mux state fail %x, %d",
+				   amd_mux->mux.i2c_addr_flags,
+				   amd_mux->fixed_state, rv);
+	}
+}
+
 void amd_fp8_mux_interrupt_handler(void)
 {
 	uint8_t int_status;
@@ -243,6 +373,9 @@ void amd_fp8_mux_interrupt_handler(void)
 		if (!int_asserted)
 			break;
 	}
+
+	amd_fp8_update_fixed_states();
+
 	k_mutex_unlock(&amd_fp8_lock);
 
 	if (int_asserted) {
@@ -265,11 +398,19 @@ void amd_fp8_mux_interrupt(enum gpio_signal signal)
 static int amd_fp8_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 			   bool *ack_required)
 {
-	uint8_t ctrl;
-	uint8_t payload[AMD_FP8_WRITE1_USB4_LEN];
-	uint8_t payload_len = AMD_FP8_WRITE1_USB3_LEN;
-	int rv;
 	struct amd_fp8_mux_state *amd_mux;
+	int rv;
+
+	/* This driver does require host command ACKs */
+	*ack_required = true;
+
+	/* Mux is not powered in Z1 */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+		/* We won't be getting any ACK's from the SoC */
+		*ack_required = false;
+		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS :
+							EC_ERROR_NOT_POWERED;
+	}
 
 	k_mutex_lock(&amd_fp8_lock, K_FOREVER);
 	amd_mux = amd_fp8_lookup_mux_state(me);
@@ -281,96 +422,7 @@ static int amd_fp8_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 		return EC_ERROR_INVAL;
 	}
 
-	if (amd_mux->port != 0) {
-		CPRINTSUSB("C%d: Invalid mux port", me->usb_port);
-		k_mutex_unlock(&amd_fp8_lock);
-		return EC_ERROR_INVAL;
-	}
-
-	/*
-	 * Validate that the mux is ready and isn't already processing a
-	 * command.
-	 */
-	if (!amd_mux->xbar_ready || amd_mux->in_progress) {
-		CPRINTSUSB("C%d: skip mux set, xbar: %d, in_progress: %d",
-			   me->usb_port, amd_mux->xbar_ready,
-			   amd_mux->in_progress);
-		k_mutex_unlock(&amd_fp8_lock);
-		return EC_ERROR_BUSY;
-	}
-
-	/* This driver does require host command ACKs */
-	*ack_required = true;
-
-	/* This driver treats safe mode as none */
-	if (mux_state & USB_PD_MUX_SAFE_MODE)
-		mux_state = USB_PD_MUX_NONE;
-
-	/* Set our port. */
-	payload[AMD_FP8_MUX_WRITE1_INDEX_BYTE] = amd_mux->port;
-
-	if (mux_state == USB_PD_MUX_NONE) {
-		ctrl = AMD_FP8_CONTROL_SAFE;
-	} else if ((mux_state & USB_PD_MUX_USB_ENABLED) &&
-		   (mux_state & USB_PD_MUX_DP_ENABLED)) {
-		ctrl = AMD_FP8_CONTROL_DOCK;
-	} else if (mux_state & USB_PD_MUX_USB_ENABLED) {
-		ctrl = AMD_FP8_CONTROL_USB;
-	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		ctrl = AMD_FP8_CONTROL_DP;
-	} else {
-		/* (b/276335130): Add USB4 and TBT3 handling */
-		CPRINTSUSB("C%d: unhandled mux_state %x", me->usb_port,
-			   mux_state);
-		k_mutex_unlock(&amd_fp8_lock);
-		return EC_ERROR_INVAL;
-	}
-
-	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-		ctrl |= AMD_FP8_MUX_W1_CTRL_FLIP;
-
-	/* TODO(b/276335130): Add Data reset request */
-
-	/* These are only relevant for USB4/TBT. */
-	if (amd_fp8_mux_supports_usb4(me->i2c_addr_flags, amd_mux->port)) {
-		payload_len = AMD_FP8_WRITE1_USB4_LEN;
-
-		if (pd_get_data_role(me->usb_port) == PD_ROLE_UFP)
-			ctrl |= AMD_FP8_MUX_W1_CTRL_UFP;
-
-		/* TODO(b/276335130): Add Cable information */
-		payload[AMD_FP8_MUX_WRITE1_CABLE_BYTE] = 0;
-		payload[AMD_FP8_MUX_WRITE1_VER_BYTE] = 0;
-
-		if (pd_is_connected(me->usb_port))
-			payload[AMD_FP8_MUX_WRITE1_SPEED_BYTE] =
-				AMD_FP8_MUX_W1_SPEED_TC;
-		else
-			payload[AMD_FP8_MUX_WRITE1_SPEED_BYTE] = 0;
-	}
-
-	payload[AMD_FP8_MUX_WRITE1_CONTROL_BYTE] = ctrl;
-
-	/* Mux is not powered in Z1 */
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
-		/* We won't be getting any ACK's from the SoC */
-		*ack_required = false;
-		k_mutex_unlock(&amd_fp8_lock);
-		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS :
-							EC_ERROR_NOT_POWERED;
-	}
-
-	rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags, payload, payload_len,
-		      NULL, 0);
-	if (rv) {
-		CPRINTSUSB("C%d: I2C mux error, %d", me->usb_port, rv);
-		k_mutex_unlock(&amd_fp8_lock);
-		return rv;
-	}
-
-	/* Save our mux state now that it's passed error checks */
-	amd_mux->next_state = mux_state;
-	amd_mux->in_progress = true;
+	rv = amd_fp8_set_mux_unsafe(amd_mux, mux_state);
 	k_mutex_unlock(&amd_fp8_lock);
 	return rv;
 }

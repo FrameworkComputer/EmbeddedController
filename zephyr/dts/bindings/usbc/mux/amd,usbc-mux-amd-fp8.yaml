@@ -13,3 +13,7 @@ properties:
     type: phandle-array
     required: true
     description: Interrupt from SoC
+
+  fixed:
+    type: int
+    description: Fixed mux state to always apply
