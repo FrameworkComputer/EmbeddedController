@@ -11,10 +11,15 @@
 #include "i2c.h"
 #include "hooks.h"
 #include "lotus/gpu.h"
+#include "math_util.h"
 #include "system.h"
 #include "temp_sensor/f75303.h"
 #include "temp_sensor/temp_sensor.h"
 #include "util.h"
+
+#define F75303_RESOLUTION 11
+#define F75303_SHIFT1 (16 - F75303_RESOLUTION)
+#define F75303_SHIFT2 (F75303_RESOLUTION - 8)
 
 #define F75303_SENSOR_ID_INTERNAL(node_id) DT_CAT(F75303_, node_id)
 #define F75303_SENSOR_ID_WITH_COMMA_INTERNAL(node_id) F75303_SENSOR_ID_INTERNAL(node_id),
@@ -46,13 +51,13 @@ static int get_temp(int sensor, const int offset, int *temp)
 	if (rv != 0)
 		return rv;
 
-	*temp = C_TO_K(temp_raw);
+	*temp = CELSIUS_TO_MILLI_KELVIN(temp_raw);
 	return EC_SUCCESS;
 }
 
-int f75303_get_val_k(int idx, int *temp)
+int f75303_get_val(int idx, int *temp)
 {
-	if (idx < 0 || F75303_COUNT <= idx)
+	if (idx < 0 || F75303_IDX_COUNT <= idx)
 		return EC_ERROR_INVAL;
 
 	if (fake_temp[idx] != -1) {
@@ -60,10 +65,34 @@ int f75303_get_val_k(int idx, int *temp)
 		return EC_SUCCESS;
 	}
 
-	if (!gpu_present() && (idx < 3))
-		*temp = 0;
-	else
-		*temp = temps[idx];
+	*temp = temps[idx];
+	return EC_SUCCESS;
+}
+
+static inline int f75303_reg_to_mk(int16_t reg)
+{
+	int temp_mc;
+
+	temp_mc = (((reg >> F75303_SHIFT1) * 1000) >> F75303_SHIFT2);
+
+	return MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc);
+}
+
+int f75303_get_val_k(int idx, int *temp_k_ptr)
+{
+	if (idx >= F75303_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
+	return EC_SUCCESS;
+}
+
+int f75303_get_val_mk(int idx, int *temp_mk_ptr)
+{
+	if (idx >= F75303_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_mk_ptr = temps[idx];
 	return EC_SUCCESS;
 }
 
