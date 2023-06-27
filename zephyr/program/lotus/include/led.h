@@ -10,9 +10,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pwm.h>
 
-#define COMPAT_GPIO_LED cros_ec_gpio_led_pins
-#define COMPAT_PWM_LED cros_ec_pwm_led_pins
-
 #define PINS_NODE(id) DT_CAT(PIN_NODE_, id)
 #define PINS_ARRAY(id) DT_CAT(PINS_ARRAY_, id)
 
@@ -24,19 +21,17 @@
 		    (DT_STRING_UPPER_TOKEN(id, prop)), (0))
 
 /*
- * Return string-token if the property exists, otherwise return -1
+ * Return string-token if the property exists, otherwise return
+ * EC_LED_COLOR_INVALID.
  */
-#define GET_PROP_NVE(id, prop)                  \
+#define GET_COLOR_PROP_NVE(id, prop)                  \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, prop), \
-		    (DT_STRING_UPPER_TOKEN(id, prop)), (-1))
+		    (DT_STRING_UPPER_TOKEN(id, prop)), (EC_LED_COLOR_INVALID))
 
 #define LED_ENUM(id, enum_name) DT_STRING_TOKEN(id, enum_name)
 #define LED_ENUM_WITH_COMMA(id, enum_name)           \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), \
 		    (LED_ENUM(id, enum_name), ), ())
-
-#define GPIO_LED_PINS_NODE DT_PATH(gpio_led_pins)
-#define PWM_LED_PINS_NODE DT_PATH(pwm_led_pins)
 
 #define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
@@ -101,15 +96,8 @@ struct led_pins_node_t {
 	/* Brightness Range color, only used to support ectool functionality */
 	enum ec_led_colors br_color;
 
-#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED)
-	/* Array of GPIO pins to set to enable particular color */
-	struct gpio_pin_t *gpio_pins;
-#endif
-
-#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
 	/* Array of PWM pins to set to enable particular color */
 	struct pwm_pin_t *pwm_pins;
-#endif
 
 	/* Number of pins per color */
 	uint8_t pins_count;
