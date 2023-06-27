@@ -15,12 +15,15 @@
 
 /* Chip-specific registers */
 #define BMI3_REG_CHIP_ID 0x00
+#define BMI3_REG_ERR_REG 0x01
 
 #define BMI3_REG_STATUS 0x02
 #define BMI3_STAT_DATA_RDY_ACCEL_POS 7
 #define BMI3_STAT_DATA_RDY_ACCEL_MSK 0x80
 
 #define BMI3_REG_ACC_DATA_X 0x03
+#define BMI3_REG_ACC_DATA_Y 0x04
+#define BMI3_REG_ACC_DATA_Z 0x05
 #define BMI3_ACC_RANGE_2G 0x00
 #define BMI3_ACC_RANGE_4G 0x01
 #define BMI3_ACC_RANGE_8G 0x02
@@ -31,6 +34,8 @@
 #define BMI3_ACC_MODE_HIGH_PERF 0x07
 
 #define BMI3_REG_GYR_DATA_X 0x06
+#define BMI3_REG_GYR_DATA_Y 0x07
+#define BMI3_REG_GYR_DATA_Z 0x08
 #define BMI3_GYR_RANGE_125DPS 0x00
 #define BMI3_GYR_RANGE_250DPS 0x01
 #define BMI3_GYR_RANGE_500DPS 0x02
@@ -42,6 +47,11 @@
 #define BMI3_GYR_MODE_LOW_PWR 0x03
 #define BMI3_GYR_MODE_NORMAL 0X04
 #define BMI3_GYR_MODE_HIGH_PERF 0x07
+
+#define BMI3_REG_TEMP_DATA 0x09
+
+#define BMI3_REG_SENSOR_TIME_0 0x0a
+#define BMI3_REG_SENSOR_TIME_1 0x0b
 
 #define BMI3_REG_INT_STATUS_INT1 0x0D
 #define BMI3_REG_FIFO_FILL_LVL 0x15
@@ -101,6 +111,7 @@
 
 /* FIFO sensor data length (in word), Accel or Gyro */
 #define BMI3_FIFO_ENTRY 0x3
+
 /* Macro to define accelerometer configuration value for FOC */
 #define BMI3_FOC_ACC_CONF_VAL_LSB 0xB7
 #define BMI3_FOC_ACC_CONF_VAL_MSB 0x40

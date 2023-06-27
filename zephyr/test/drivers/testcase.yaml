@@ -104,6 +104,15 @@ tests:
     extra_conf_files:
     - prj.conf
     - ap_vdm_control/prj.conf
+  drivers.bmi3xx:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_BMI3XX=y
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./bmi3xx/sensor.dts
+    extra_conf_files:
+    - prj.conf
+    - ./bmi3xx/prj.conf
   drivers.button:
     timeout: 360
     extra_configs:

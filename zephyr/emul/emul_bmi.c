@@ -97,6 +97,19 @@ void bmi_emul_set_reg(const struct emul *emul, int reg, uint8_t val)
 }
 
 /** Check description in emul_bmi.h */
+void bmi_emul_set_reg16(const struct emul *emul, int reg, uint16_t val)
+{
+	struct bmi_emul_data *data;
+
+	if (reg < 0 || reg > BMI_EMUL_MAX_REG) {
+		return;
+	}
+
+	data = emul->data;
+	((uint16_t *)(data->reg))[reg] = val;
+}
+
+/** Check description in emul_bmi.h */
 uint8_t bmi_emul_get_reg(const struct emul *emul, int reg)
 {
 	struct bmi_emul_data *data;
@@ -108,6 +121,20 @@ uint8_t bmi_emul_get_reg(const struct emul *emul, int reg)
 	data = emul->data;
 
 	return data->reg[reg];
+}
+
+/** Check description in emul_bmi.h */
+uint16_t bmi_emul_get_reg16(const struct emul *emul, int reg)
+{
+	struct bmi_emul_data *data;
+
+	if (reg < 0 || reg > BMI_EMUL_MAX_REG) {
+		return 0;
+	}
+
+	data = emul->data;
+
+	return ((uint16_t *)(data->reg))[reg];
 }
 
 /**
@@ -529,7 +556,7 @@ static uint8_t bmi_emul_get_frame_len(const struct emul *emul,
 		}
 
 		/* Empty fifo */
-		return 1;
+		return data->type_data->reg_bytes;
 	}
 
 	/* Config FIFO frame */
@@ -565,6 +592,12 @@ static uint8_t bmi_emul_get_frame_len(const struct emul *emul,
 	if (frame->type & BMI_EMUL_FRAME_GYR) {
 		len += 6;
 	}
+	if (frame->type & BMI_EMUL_FRAME_TEMP) {
+		len += 2;
+	}
+	if (frame->type & BMI_EMUL_FRAME_TIME) {
+		len += 2;
+	}
 
 	return len;
 }
@@ -587,9 +620,12 @@ static void bmi_emul_set_current_frame(const struct emul *emul,
 				       int acc_shift, int gyr_shift)
 {
 	struct bmi_emul_data *data;
+	const struct bmi_emul_type_data *type_data;
+
 	int i = 0;
 
 	data = emul->data;
+	type_data = data->type_data;
 
 	data->fifo_frame_byte = 0;
 	data->fifo_frame_len =
@@ -604,7 +640,12 @@ static void bmi_emul_set_current_frame(const struct emul *emul,
 		}
 
 		/* Empty header */
-		data->fifo[i] = BMI_EMUL_FIFO_HEAD_EMPTY;
+		if (data->type_data->reg_bytes == 1) {
+			data->fifo[i] = BMI_EMUL_FIFO_HEAD_EMPTY;
+		} else if (data->type_data->reg_bytes == 2) {
+			data->fifo[i] = 0;
+			data->fifo[i + 1] = BMI_EMUL_FIFO_HEAD_EMPTY;
+		}
 
 		return;
 	}
@@ -614,7 +655,7 @@ static void bmi_emul_set_current_frame(const struct emul *emul,
 		/* Header */
 		data->fifo[0] = BMI_EMUL_FIFO_HEAD_CONFIG;
 		data->fifo[1] = frame->config;
-		if (data->type_data->sensortime_follow_config_frame) {
+		if (type_data->sensortime_follow_config_frame) {
 			bmi_emul_set_sensortime_reg(emul, &(data->fifo[2]));
 		}
 
@@ -637,39 +678,59 @@ static void bmi_emul_set_current_frame(const struct emul *emul,
 		i = 1;
 	}
 
-	if (frame->type & BMI_EMUL_FRAME_MAG) {
-		bmi_emul_set_data_reg(emul, frame->mag_x, &(data->fifo[i]), 0);
-		i += 2;
-		bmi_emul_set_data_reg(emul, frame->mag_y, &(data->fifo[i]), 0);
-		i += 2;
-		bmi_emul_set_data_reg(emul, frame->mag_z, &(data->fifo[i]), 0);
-		i += 2;
-		bmi_emul_set_data_reg(emul, frame->rhall, &(data->fifo[i]), 0);
-		i += 2;
-	}
+	for (int j = 0; j < ARRAY_SIZE(type_data->frame_order); j++) {
+		uint8_t ft = type_data->frame_order[j];
 
-	if (frame->type & BMI_EMUL_FRAME_GYR) {
-		bmi_emul_set_data_reg(emul, frame->gyr_x, &(data->fifo[i]),
-				      gyr_shift);
-		i += 2;
-		bmi_emul_set_data_reg(emul, frame->gyr_y, &(data->fifo[i]),
-				      gyr_shift);
-		i += 2;
-		bmi_emul_set_data_reg(emul, frame->gyr_z, &(data->fifo[i]),
-				      gyr_shift);
-		i += 2;
-	}
+		if (ft == BMI_EMUL_FRAME_NONE)
+			break;
 
-	if (frame->type & BMI_EMUL_FRAME_ACC) {
-		bmi_emul_set_data_reg(emul, frame->acc_x, &(data->fifo[i]),
-				      acc_shift);
-		i += 2;
-		bmi_emul_set_data_reg(emul, frame->acc_y, &(data->fifo[i]),
-				      acc_shift);
-		i += 2;
-		bmi_emul_set_data_reg(emul, frame->acc_z, &(data->fifo[i]),
-				      acc_shift);
-		i += 2;
+		if ((frame->type & BMI_EMUL_FRAME_MAG) &&
+		    ft == BMI_EMUL_FRAME_MAG) {
+			bmi_emul_set_data_reg(emul, frame->mag_x,
+					      &(data->fifo[i]), 0);
+			i += 2;
+			bmi_emul_set_data_reg(emul, frame->mag_y,
+					      &(data->fifo[i]), 0);
+			i += 2;
+			bmi_emul_set_data_reg(emul, frame->mag_z,
+					      &(data->fifo[i]), 0);
+			i += 2;
+			bmi_emul_set_data_reg(emul, frame->rhall,
+					      &(data->fifo[i]), 0);
+			i += 2;
+		} else if ((frame->type & BMI_EMUL_FRAME_GYR) &&
+			   ft == BMI_EMUL_FRAME_GYR) {
+			bmi_emul_set_data_reg(emul, frame->gyr_x,
+					      &(data->fifo[i]), gyr_shift);
+			i += 2;
+			bmi_emul_set_data_reg(emul, frame->gyr_y,
+					      &(data->fifo[i]), gyr_shift);
+			i += 2;
+			bmi_emul_set_data_reg(emul, frame->gyr_z,
+					      &(data->fifo[i]), gyr_shift);
+			i += 2;
+		} else if ((frame->type & BMI_EMUL_FRAME_ACC) &&
+			   ft == BMI_EMUL_FRAME_ACC) {
+			bmi_emul_set_data_reg(emul, frame->acc_x,
+					      &(data->fifo[i]), acc_shift);
+			i += 2;
+			bmi_emul_set_data_reg(emul, frame->acc_y,
+					      &(data->fifo[i]), acc_shift);
+			i += 2;
+			bmi_emul_set_data_reg(emul, frame->acc_z,
+					      &(data->fifo[i]), acc_shift);
+			i += 2;
+		} else if ((frame->type & BMI_EMUL_FRAME_TEMP) &&
+			   ft == BMI_EMUL_FRAME_TEMP) {
+			bmi_emul_set_data_reg(emul, frame->temp,
+					      &(data->fifo[i]), 0);
+			i += 2;
+		} else if ((frame->type & BMI_EMUL_FRAME_TIME) &&
+			   ft == BMI_EMUL_FRAME_TIME) {
+			bmi_emul_set_data_reg(emul, frame->time,
+					      &(data->fifo[i]), 0);
+			i += 2;
+		}
 	}
 }
 
@@ -686,6 +747,11 @@ static void bmi_emul_updata_int_off(const struct emul *emul)
 	uint8_t gyr98;
 
 	data = emul->data;
+
+	/* No NVM */
+	if (!data->type_data->nvm_len) {
+		return;
+	}
 
 	data->off_acc_x = bmi_emul_acc_nvm_to_off(
 		data->reg[data->type_data->acc_off_reg]);
@@ -790,6 +856,32 @@ bool bmi_emul_is_cmd_end(const struct emul *emul)
 }
 
 /**
+ * @brief Handle I2C read message. BMI model specific read function is called.
+ *        It is checked if accessed register isn't WO.
+ *
+ * @param emul Pointer to BMI emulator
+ * @param reg Register address to read
+ * @param buf Pointer where result should be stored
+ * @param byte Byte which is accessed during block read
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
+static int bmi_emul_start_write(const struct emul *emul, int reg)
+{
+	struct bmi_emul_data *data;
+	int ret;
+
+	data = emul->data;
+
+	if (data->type_data->start_write == NULL) {
+		return 0;
+	}
+	ret = data->type_data->start_write(data->reg, emul, reg);
+	return ret;
+}
+
+/**
  * @brief Handle I2C write message. BMI model specific write function is called.
  *        It is checked if accessed register isn't RO and reserved bits are set
  *        to 0. Write set value of reg field of bmi emulator data ignoring
@@ -852,6 +944,31 @@ static int bmi_emul_handle_write(const struct emul *emul, int reg, uint8_t val,
 	}
 
 	return 0;
+}
+
+/**
+ * @brief Called at the end of I2C write message.
+ *
+ * @param target Pointer to emulator
+ * @param reg Address which is now accessed by write command (first byte of last
+ *            I2C write message)
+ * @param bytes Number of bytes responeded to the I2C write message
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
+static int bmi_emul_finish_write(const struct emul *emul, int reg, int bytes)
+{
+	struct bmi_emul_data *data;
+	int ret;
+
+	data = emul->data;
+
+	if (data->type_data->finish_write == NULL) {
+		return 0;
+	}
+	ret = data->type_data->finish_write(data->reg, emul, reg, bytes);
+	return ret;
 }
 
 /** Check description in emul_bmi.h */
@@ -999,6 +1116,32 @@ uint8_t bmi_emul_get_fifo_data(const struct emul *emul, int byte, bool tag_time,
  * @return 0 on success
  * @return -EIO on error
  */
+static int bmi_emul_start_read(const struct emul *emul, int reg)
+{
+	struct bmi_emul_data *data;
+	int ret;
+
+	data = emul->data;
+
+	if (data->type_data->start_read == NULL) {
+		return 0;
+	}
+	ret = data->type_data->start_read(data->reg, emul, reg);
+	return ret;
+}
+
+/**
+ * @brief Handle I2C read message. BMI model specific read function is called.
+ *        It is checked if accessed register isn't WO.
+ *
+ * @param emul Pointer to BMI emulator
+ * @param reg Register address to read
+ * @param buf Pointer where result should be stored
+ * @param byte Byte which is accessed during block read
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
 static int bmi_emul_handle_read(const struct emul *emul, int reg, uint8_t *buf,
 				int byte)
 {
@@ -1070,6 +1213,9 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 	case BMI_EMUL_260:
 		data->type_data = get_bmi260_emul_type_data();
 		break;
+	case BMI_EMUL_3XX:
+		data->type_data = get_bmi3xx_emul_type_data();
+		break;
 	}
 
 	/* Set callback access_reg to type specific function */
@@ -1078,6 +1224,20 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 	data->type_data->reset(data->reg, emul);
 
 	return 0;
+}
+
+/**
+ * @brief Reset BMI emulators
+ *
+ * Reset the registers to the default state.
+ *
+ * @param emul Emulation information
+ */
+void bmi_emul_reset(const struct emul *emul)
+{
+	struct bmi_emul_data *data = emul->data;
+
+	data->type_data->reset(data->reg, emul);
 }
 
 #define BMI_EMUL(n)                                                  \
@@ -1090,10 +1250,10 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 					simulate_command_exec_time),	\
 		.type = DT_STRING_TOKEN(DT_DRV_INST(n), device_model),	\
 		.common = {						\
-			.start_write = NULL,				\
+			.start_write = bmi_emul_start_write,		\
 			.write_byte = bmi_emul_handle_write,		\
-			.finish_write = NULL,				\
-			.start_read = NULL,				\
+			.finish_write = bmi_emul_finish_write,		\
+			.start_read = bmi_emul_start_read,		\
 			.read_byte = bmi_emul_handle_read,		\
 			.finish_read = bmi_emul_finish_read,		\
 			.access_reg = NULL,				\

@@ -765,7 +765,10 @@ const int bmi160_nvm_reg[] = {
 /** Confguration of BMI160 */
 struct bmi_emul_type_data bmi160_emul = {
 	.sensortime_follow_config_frame = false,
+	.start_write = NULL,
 	.handle_write = bmi160_emul_handle_write,
+	.finish_write = NULL,
+	.start_read = NULL,
 	.handle_read = bmi160_emul_handle_read,
 	.finish_read = bmi160_emul_finish_read,
 	.access_reg = bmi160_emul_access_reg,
@@ -776,6 +779,9 @@ struct bmi_emul_type_data bmi160_emul = {
 	.gyr_off_reg = BMI160_OFFSET_GYR70,
 	.acc_off_reg = BMI160_OFFSET_ACC70,
 	.gyr98_off_reg = BMI160_OFFSET_EN_GYR98,
+	.frame_order = { BMI_EMUL_FRAME_MAG, BMI_EMUL_FRAME_GYR,
+			 BMI_EMUL_FRAME_ACC, BMI_EMUL_FRAME_NONE },
+	.reg_bytes = 1,
 };
 
 /** Check description in emul_bmi.h */
