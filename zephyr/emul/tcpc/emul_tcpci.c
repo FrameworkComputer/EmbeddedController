@@ -583,9 +583,10 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 {
 	struct tcpc_emul_data *tcpc_data = emul->data;
 	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-	uint16_t cc_status, alert, role_ctrl, power_status;
+	uint16_t cc_status, alert, role_ctrl;
 	enum tcpc_cc_voltage_status cc1_v, cc2_v;
 	enum tcpc_cc_pull cc1_r, cc2_r;
+	int rc;
 
 	if (polarity == POLARITY_CC1) {
 		cc1_v = partner_cc1;
@@ -625,15 +626,9 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 	set_reg(ctx, TCPC_REG_ALERT, alert | TCPC_REG_ALERT_CC_STATUS);
 
 	if (partner_power_role == PD_ROLE_SOURCE) {
-		get_reg(ctx, TCPC_REG_POWER_STATUS, &power_status);
-		if (power_status & TCPC_REG_POWER_STATUS_VBUS_DET) {
-			/*
-			 * Set TCPCI emulator VBUS to present (connected,
-			 * above 4V) only if VBUS detection is enabled
-			 */
-			set_reg(ctx, TCPC_REG_POWER_STATUS,
-				TCPC_REG_POWER_STATUS_VBUS_PRES | power_status);
-		}
+		rc = tcpci_emul_set_vbus_level(emul, VBUS_PRESENT);
+		if (rc)
+			return rc;
 	}
 
 	tcpci_emul_alert_changed(emul);
@@ -646,7 +641,6 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 {
 	struct tcpc_emul_data *tcpc_data = emul->data;
 	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-	uint16_t power_status;
 	uint16_t val;
 	uint16_t term;
 	int rc;
@@ -680,11 +674,9 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 	 */
 
 	/* Clear VBUS present in case if source partner is disconnected */
-	get_reg(ctx, TCPC_REG_POWER_STATUS, &power_status);
-	if (power_status & TCPC_REG_POWER_STATUS_VBUS_PRES) {
-		power_status &= ~TCPC_REG_POWER_STATUS_VBUS_PRES;
-		set_reg(ctx, TCPC_REG_POWER_STATUS, power_status);
-	}
+	rc = tcpci_emul_set_vbus_level(emul, VBUS_REMOVED);
+	if (rc != 0)
+		return rc;
 
 	return 0;
 }
@@ -1463,4 +1455,52 @@ void tcpci_emul_i2c_init(const struct emul *emul, const struct device *i2c_dev)
 	ctx->common.cfg = &tcpc_data->i2c_cfg;
 
 	i2c_common_emul_init(&ctx->common);
+}
+
+/** Check description in emul_tcpci.h */
+int tcpci_emul_set_vbus_level(const struct emul *emul, enum vbus_level level)
+{
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	uint16_t revision;
+	int rc;
+	uint16_t power_status;
+	uint16_t ext_status;
+
+	switch (level) {
+	case VBUS_SAFE0V:
+		power_status = TCPC_REG_POWER_STATUS_VBUS_DET;
+		ext_status = TCPC_REG_EXT_STATUS_SAFE0V;
+		break;
+	case VBUS_PRESENT:
+		power_status = TCPC_REG_POWER_STATUS_VBUS_DET |
+			       TCPC_REG_POWER_STATUS_VBUS_PRES;
+		ext_status = 0;
+		break;
+	case VBUS_REMOVED:
+		power_status = TCPC_REG_POWER_STATUS_VBUS_DET;
+		ext_status = 0;
+		break;
+	default:
+		return EC_ERROR_PARAM1;
+	}
+
+	rc = get_reg(ctx, TCPC_REG_PD_INT_REV, &revision);
+	if (rc)
+		return rc;
+	rc = update_reg(ctx, TCPC_REG_POWER_STATUS, power_status,
+			TCPC_REG_POWER_STATUS_VBUS_DET |
+				TCPC_REG_POWER_STATUS_VBUS_PRES);
+	if (rc)
+		return rc;
+	if (TCPC_REG_PD_INT_REV_REV(revision) == TCPC_REG_PD_INT_REV_REV_2_0) {
+		rc = update_reg(ctx, TCPC_REG_EXT_STATUS, ext_status,
+				TCPC_REG_EXT_STATUS_SAFE0V);
+		if (rc)
+			return rc;
+	}
+	rc = tcpci_emul_alert_changed(emul);
+	if (rc)
+		return rc;
+	return EC_SUCCESS;
 }

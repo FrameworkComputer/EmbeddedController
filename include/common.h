@@ -35,7 +35,7 @@
  * way of ensuring that the given section is in the same relative location in
  * both the RO/RW images.
  */
-#ifdef CONFIG_ZEPHYR
+#if defined(CONFIG_ZEPHYR) && !defined(CONFIG_SOC_FAMILY_INTEL_ISH)
 #define FIXED_SECTION(name) __attribute__((section(".fixed." name)))
 #else
 #define FIXED_SECTION(name) __attribute__((section(".rodata." name)))

@@ -207,6 +207,13 @@ static void __hw_clock_source_irq(void)
 	}
 #endif
 
+#ifdef CONFIG_CEC_BITBANG
+	if (irq == et_ctrl_regs[CEC_EXT_TIMER].irq) {
+		cec_ext_timer_interrupt();
+		return;
+	}
+#endif
+
 	/* Interrupt of free running timer TIMER_H. */
 	if (irq == et_ctrl_regs[FREE_EXT_TIMER_H].irq) {
 		free_run_timer_overflow();

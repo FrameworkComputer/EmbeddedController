@@ -53,7 +53,6 @@
 /* Optional console commands */
 #define CONFIG_CMD_FLASH
 #define CONFIG_CMD_SCRATCHPAD
-#define CONFIG_CMD_STACKOVERFLOW
 
 /* Sensor */
 

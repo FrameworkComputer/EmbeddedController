@@ -64,12 +64,10 @@ if(DEFINED CONFIG_PLATFORM_EC)
 endif()
 
 # Set extra compiler flags.
-
-if (DEFINED CONFIG_SOC_FAMILY_ARM)
+if (DEFINED CONFIG_ARM)
   # This flag is only used by ARM
   zephyr_cc_option(-mno-unaligned-access)
 endif()
-
 zephyr_cc_option(-Wimplicit-fallthrough)
 
 if (DEFINED CONFIG_RISCV)
@@ -322,14 +320,13 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RGB_KEYBOARD
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042
                                                 "${PLATFORM_EC}/common/keyboard_8042.c"
                                                 "${PLATFORM_EC}/common/keyboard_8042_sharedlib.c")
+zephyr_library_sources_ifdef(CONFIG_MKBP_PROTOCOL
+                                                "${PLATFORM_EC}/common/mkbp_fifo.c"
+                                                "${PLATFORM_EC}/common/mkbp_info.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
-                                                "${PLATFORM_EC}/common/keyboard_mkbp.c"
-                                                "${PLATFORM_EC}/common/mkbp_fifo.c"
-                                                "${PLATFORM_EC}/common/mkbp_info.c")
+                                                "${PLATFORM_EC}/common/keyboard_mkbp.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_INPUT_DEVICES
-                                                "${PLATFORM_EC}/common/mkbp_input_devices.c"
-                                                "${PLATFORM_EC}/common/mkbp_fifo.c"
-                                                "${PLATFORM_EC}/common/mkbp_info.c")
+                                                "${PLATFORM_EC}/common/mkbp_input_devices.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_VIVALDI
                                                 "${PLATFORM_EC}/common/keyboard_vivaldi.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PWM_KBLIGHT
@@ -396,6 +393,12 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PANIC
                                                 "${PLATFORM_EC}/common/panic_output.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PSE_LTC4291
                                                 "${PLATFORM_EC}/driver/pse_ltc4291.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RSA
+                                                "${PLATFORM_EC}/common/rsa.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RWSIG
+                                                "${PLATFORM_EC}/common/rwsig.c"
+                                                "${PLATFORM_EC}/common/vboot/common.c"
+                                                "${PLATFORM_EC}/common/vboot/vb21_lib.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
                                                 "${PLATFORM_EC}/common/sha256.c")
 zephyr_library_sources_ifdef(CONFIG_SOC_IT8XXX2_SHA256_HW_ACCELERATE
@@ -630,3 +633,24 @@ add_dependencies(app ec_version_header)
 
 # Include the directory containing the generated header.
 zephyr_include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
+
+# Sign RW firmware if RWSIG enabled
+if (DEFINED CONFIG_CROS_EC_RW AND DEFINED CONFIG_PLATFORM_EC_RWSIG)
+  add_custom_target(key_extract
+    COMMAND futility create
+      "${PLATFORM_EC}/${CONFIG_PLATFORM_EC_RWSIG_KEY_PATH}"
+      "${CMAKE_BINARY_DIR}/key"
+    COMMENT "Extracting signing keys"
+    VERBATIM
+  )
+
+  add_custom_target(sign_rw ALL
+    COMMAND futility sign --type rwsig
+            --prikey "${CMAKE_BINARY_DIR}/key.vbprik2"
+            "${CMAKE_BINARY_DIR}/zephyr/zephyr.bin"
+            "${CMAKE_BINARY_DIR}/ec.sig"
+    COMMENT "Signing EC RW"
+    DEPENDS zephyr_final key_extract
+    VERBATIM
+  )
+endif()

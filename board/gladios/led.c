@@ -84,41 +84,36 @@ static int set_color(enum ec_led_id id, enum led_color color, int duty)
 	}
 }
 
-#define LED_PULSE_US (2 * SECOND)
-/* 40 msec for nice and smooth transition. */
-#define LED_PULSE_TICK_US (40 * MSEC)
+#define LED_PULSE_US (1500 * MSEC)
+#define LED_OFF_TIME_US (1500 * MSEC)
+/* 30 msec for nice and smooth transition. */
+#define LED_PULSE_TICK_US (30 * MSEC)
 
 /*
  * When pulsing is enabled, brightness is incremented by <duty_inc> every
  * <interval> usec from 0 to 100% in LED_PULSE_US usec. Then it's decremented
- * likewise in LED_PULSE_US usec.
+ * likewise in LED_PULSE_US usec. Stay 0 for <off_time>.
  */
 static struct {
 	uint32_t interval;
 	int duty_inc;
 	enum led_color color;
+	uint32_t off_time;
 	int duty;
 } led_pulse;
 
-#define CONFIG_TICK(interval, color) \
-	config_tick((interval), 100 / (LED_PULSE_US / (interval)), (color))
+#define CONFIG_TICK(interval, color)                                        \
+	config_tick((interval), 100 / (LED_PULSE_US / (interval)), (color), \
+		    (LED_OFF_TIME_US))
 
-static void config_tick(uint32_t interval, int duty_inc, enum led_color color)
+static void config_tick(uint32_t interval, int duty_inc, enum led_color color,
+			uint32_t off_time)
 {
 	led_pulse.interval = interval;
 	led_pulse.duty_inc = duty_inc;
 	led_pulse.color = color;
+	led_pulse.off_time = off_time;
 	led_pulse.duty = 0;
-}
-
-static void pulse_power_led(enum led_color color)
-{
-	set_color(EC_LED_ID_POWER_LED, color, led_pulse.duty);
-	if (led_pulse.duty + led_pulse.duty_inc > 100)
-		led_pulse.duty_inc = led_pulse.duty_inc * -1;
-	else if (led_pulse.duty + led_pulse.duty_inc < 0)
-		led_pulse.duty_inc = led_pulse.duty_inc * -1;
-	led_pulse.duty += led_pulse.duty_inc;
 }
 
 static void led_tick(void);
@@ -129,10 +124,21 @@ static void led_tick(void)
 	uint32_t next = 0;
 	uint32_t start = get_time().le.lo;
 
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		pulse_power_led(led_pulse.color);
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED)) {
+		set_color(EC_LED_ID_POWER_LED, led_pulse.color, led_pulse.duty);
+		if (led_pulse.duty + led_pulse.duty_inc > 100) {
+			led_pulse.duty_inc = led_pulse.duty_inc * -1;
+		} else if (led_pulse.duty + led_pulse.duty_inc < 0) {
+			led_pulse.duty_inc = led_pulse.duty_inc * -1;
+			next = led_pulse.off_time;
+		}
+		led_pulse.duty += led_pulse.duty_inc;
+	}
+
+	if (next == 0)
+		next = led_pulse.interval;
 	elapsed = get_time().le.lo - start;
-	next = led_pulse.interval > elapsed ? led_pulse.interval - elapsed : 0;
+	next = next > elapsed ? next - elapsed : 0;
 	hook_call_deferred(&led_tick_data, next);
 }
 
@@ -186,7 +192,7 @@ void led_alert(int enable)
 {
 	if (enable) {
 		/* Overwrite the current signal */
-		config_tick(1 * SECOND, 100, LED_RED);
+		config_tick(1 * SECOND, 100, LED_RED, 0);
 		led_tick();
 	} else {
 		/* Restore the previous signal */

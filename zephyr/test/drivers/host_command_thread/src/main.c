@@ -19,7 +19,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
-#define CUSTOM_COMMAND_ID 0x0088
+#define CUSTOM_COMMAND_ID 0x8888
 
 /* Thread id of fake main thread */
 static k_tid_t fake_main_tid;

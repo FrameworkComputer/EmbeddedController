@@ -47,10 +47,12 @@ static void check_alternate_devices(void)
 }
 DECLARE_HOOK(HOOK_INIT, check_alternate_devices, HOOK_PRIO_DEFAULT);
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 void bc12_interrupt(enum gpio_signal signal)
 {
 	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
+#endif
 
 /* USB Mux C1 : board_init of PS8743 */
 int ps8743_eq_c1_setting(void)
@@ -66,9 +68,11 @@ static void board_usbc_init(void)
 		gpio_enable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 		/* Enable BC1.2 interrupts. */
 		gpio_enable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
+#endif
 	} else {
 		gpio_enable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));

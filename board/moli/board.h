@@ -20,6 +20,7 @@
 
 /* HDMI CEC */
 #define CONFIG_CEC
+#define CONFIG_CEC_BITBANG
 #define CEC_GPIO_OUT GPIO_HDMI_CEC_OUT
 #define CEC_GPIO_IN GPIO_HDMI_CEC_IN
 #define CEC_GPIO_PULL_UP GPIO_HDMI_CEC_PULL_UP
@@ -189,6 +190,8 @@ enum monitor_port {
 };
 
 enum monitor_state { MONITOR_OFF, MONITOR_ON };
+
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
 extern void monitor_interrupt(enum gpio_signal signal);

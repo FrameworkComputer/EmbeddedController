@@ -52,6 +52,7 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 
 config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
 	bool "mkbp"
+	select MKBP_PROTOCOL
 	help
 	  Use the MKBP protocol to communicate with the AP. This protocol is
 	  usually used on ARM-based platforms. It sends the raw scan code, like

@@ -6,6 +6,7 @@
 /* Waddledoo board-specific configuration */
 
 #include "adc.h"
+#include "battery_fuel_gauge.h"
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "cbi_ssfc.h"
@@ -1143,4 +1144,17 @@ __override void lid_angle_peripheral_enable(int enable)
 		if (!chipset_in_s0)
 			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
+}
+
+__override int board_get_leave_safe_mode_delay_ms(void)
+{
+	const struct fuel_gauge_info *const fuel_gauge =
+		&get_batt_params()->fuel_gauge;
+
+	/* If it's COSMX battery, there's need more delay time. */
+	if (!strcasecmp(fuel_gauge->manuf_name, "COSMX KT0030B002") ||
+	    !strcasecmp(fuel_gauge->manuf_name, "COSMX KT0030B004"))
+		return 2000;
+	else
+		return 500;
 }

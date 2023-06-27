@@ -9,11 +9,14 @@
 #include "driver/ppc/rt1739.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "system.h"
 
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 void c0_bc12_interrupt(enum gpio_signal signal)
 {
 	rt1739_interrupt(0);
 }
+#endif
 
 static void board_usbc_init(void)
 {
@@ -30,7 +33,17 @@ void ppc_interrupt(enum gpio_signal signal)
 
 static int set_rt1739(void)
 {
-	rt1739_init(0);
+	/*
+	 * (b:286803490#comment12)
+	 * this is a workaround, we initialize rt1739 in an early stage to turn
+	 * on an internal MOS, so the system can boot up with lower voltage. We
+	 * only want to perform this workaround once, so we do it in RO, and not
+	 * do it again in RW, otherwise,re-initialize rt1739 in RW again would
+	 * cause a temporary voltage drop due to switching an internal MOS, and
+	 * EC would have abnormal behaviors due to sensing the wrong voltage.
+	 */
+	if (!system_is_in_rw())
+		rt1739_init(0);
 	return 0;
 }
 

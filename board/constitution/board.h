@@ -20,6 +20,7 @@
 
 /* HDMI CEC */
 #define CONFIG_CEC
+#define CONFIG_CEC_BITBANG
 #define CEC_GPIO_OUT GPIO_HDMIB_CEC_OUT
 #define CEC_GPIO_IN GPIO_HDMIB_CEC_IN
 #define CEC_GPIO_PULL_UP GPIO_HDMIB_CEC_PULL_UP
@@ -188,6 +189,8 @@ enum pwm_channel {
 enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
+
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
 

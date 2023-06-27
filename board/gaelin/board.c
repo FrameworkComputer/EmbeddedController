@@ -5,12 +5,14 @@
 #include "adc.h"
 #include "assert.h"
 #include "button.h"
+#include "cec.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/cec/bitbang.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/tcpm/tcpci.h"
 #include "fw_config.h"
@@ -98,6 +100,15 @@ void board_chipset_startup(void)
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 /******************************************************************************/
+
+/* CEC ports */
+const struct cec_config_t cec_config[] = {
+	[CEC_PORT_0] = {
+		.drv = &bitbang_cec_drv,
+		.offline_policy = NULL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
 
 int board_set_active_charge_port(int port)
 {

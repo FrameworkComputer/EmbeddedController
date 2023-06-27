@@ -78,6 +78,12 @@
 	wp-ro {
 		offset = <0x0>;
 		size = <0x60000>;
+
+		pstate: pstate {
+			type = "section";
+			offset = <(0x60000 - 4096)>;
+			size = <4096>;
+		};
 	};
 	ec-rw {
 		offset = <0x60000>;

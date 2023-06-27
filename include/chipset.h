@@ -128,8 +128,7 @@ void init_reset_log(void);
 
 #else /* !CONFIG_AP_POWER_CONTROL */
 
-#ifdef CONFIG_TEST_USB_PD_POLICY
-
+#if defined(CONFIG_TEST_USB_PD_POLICY) || defined(CONFIG_SOC_FAMILY_INTEL_ISH)
 int chipset_in_state(int state_mask);
 
 #else

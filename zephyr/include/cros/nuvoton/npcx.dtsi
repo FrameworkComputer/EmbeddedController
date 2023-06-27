@@ -5,7 +5,7 @@
  */
 
 #include <cros/binman.dtsi>
-#include <nuvoton/npcx.dtsi>
+#include <nuvoton/npcx/npcx.dtsi>
 
 / {
 	chosen {
@@ -79,6 +79,7 @@
 			clocks = <&pcc NPCX_CLOCK_BUS_APB1 NPCX_PWDWN_CTL1 0>;
 			wui_maps = <&wui_io31 &wui_io30 &wui_io27 &wui_io26
 				    &wui_io25 &wui_io24 &wui_io23 &wui_io22>;
+			status = "disabled";
 		};
 
 		mtc: mtc@400b7000 {

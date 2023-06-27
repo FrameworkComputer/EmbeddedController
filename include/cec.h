@@ -14,11 +14,47 @@
 #error "Buffer size must not exceed 255 since offsets are uint8_t"
 #endif
 
-/* Edge to trigger capture timer interrupt on */
-enum cec_cap_edge {
-	CEC_CAP_EDGE_NONE,
-	CEC_CAP_EDGE_FALLING,
-	CEC_CAP_EDGE_RISING
+/* Notification from interrupt to CEC task that data has been received */
+#define CEC_TASK_EVENT_RECEIVED_DATA TASK_EVENT_CUSTOM_BIT(0)
+#define CEC_TASK_EVENT_OKAY TASK_EVENT_CUSTOM_BIT(1)
+#define CEC_TASK_EVENT_FAILED TASK_EVENT_CUSTOM_BIT(2)
+
+/* CEC broadcast address. Also the highest possible CEC address */
+#define CEC_BROADCAST_ADDR 15
+
+/* Address to indicate that no logical address has been set */
+#define CEC_UNREGISTERED_ADDR 255
+
+/*
+ * The CEC specification requires at least one and a maximum of
+ * five resends attempts
+ */
+#define CEC_MAX_RESENDS 5
+
+/* All return EC_SUCCESS if successful, non-zero if error. */
+struct cec_drv {
+	/* Initialise the CEC port */
+	int (*init)(int port);
+
+	/*
+	 * Get/set enable state.
+	 * enable = 0 means disabled, enable = 1 means enabled.
+	 */
+	int (*get_enable)(int port, uint8_t *enable);
+	int (*set_enable)(int port, uint8_t enable);
+
+	/* Get/set the logical address */
+	int (*get_logical_addr)(int port, uint8_t *logical_addr);
+	int (*set_logical_addr)(int port, uint8_t logical_addr);
+
+	/* Send a CEC message */
+	int (*send)(int port, const uint8_t *msg, uint8_t len);
+
+	/*
+	 * Get the received message. This should be called after the driver sets
+	 * CEC_TASK_EVENT_RECEIVED_DATA to indicate data is ready.
+	 */
+	int (*get_received_message)(int port, uint8_t **msg, uint8_t *len);
 };
 
 /* CEC message during transfer */
@@ -78,6 +114,7 @@ struct cec_offline_policy {
  * CEC configuration.
  */
 struct cec_config_t {
+	const struct cec_drv *drv;
 	/*
 	 * Actions taken on message received when the system is off.
 	 * Last entry must be null terminated.
@@ -85,8 +122,8 @@ struct cec_config_t {
 	struct cec_offline_policy *offline_policy;
 };
 
-/* CEC config definition. Override it as needed. */
-__override_proto extern const struct cec_config_t cec_config;
+/* CEC config definition. */
+extern const struct cec_config_t cec_config[];
 
 /**
  * Default policy provided for convenience.
@@ -157,63 +194,3 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg,
  */
 int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
 				uint8_t msg_len);
-
-/**
- * Start the capture timer. An interrupt will be triggered when either a capture
- * edge or a timeout occurs.
- * If edge is NONE, disable the capture interrupt and wait for a timeout only.
- * If timeout is 0, disable the timeout interrupt and wait for a capture event
- * only.
- *
- * @param edge		Edge to trigger on
- * @param timeout	Timeout to program into the capture timer
- */
-void cec_tmr_cap_start(enum cec_cap_edge edge, int timeout);
-
-/**
- * Stop the capture timer.
- */
-void cec_tmr_cap_stop(void);
-
-/**
- * Return the time measured by the capture timer.
- */
-int cec_tmr_cap_get(void);
-
-/**
- * Called when a transfer is initiated from the host. Should trigger an
- * interrupt which then calls cec_event_tx(). It must be called from interrupt
- * context since the CEC state machine relies on the fact that the state is only
- * modified from interrupt context for synchronisation.
- */
-void cec_trigger_send(void);
-
-/**
- * Enable timers used for CEC.
- */
-void cec_enable_timer(void);
-
-/**
- * Disable timers used for CEC.
- */
-void cec_disable_timer(void);
-
-/**
- * Initialise timers used for CEC.
- */
-void cec_init_timer(void);
-
-/**
- * Event for timeout.
- */
-void cec_event_timeout(void);
-
-/**
- * Event for capture edge.
- */
-void cec_event_cap(void);
-
-/**
- * Event for transfer from host.
- */
-void cec_event_tx(void);

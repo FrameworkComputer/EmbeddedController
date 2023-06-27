@@ -884,6 +884,9 @@
 #undef CONFIG_CEC
 #undef CONFIG_CEC_DEBUG
 
+/* CEC drivers */
+#undef CONFIG_CEC_BITBANG
+
 /*****************************************************************************/
 
 /* Compile charge manager */
@@ -1727,7 +1730,6 @@
 #undef CONFIG_CMD_SPI_FLASH
 #undef CONFIG_CMD_SPI_NOR
 #undef CONFIG_CMD_SPI_XFER
-#undef CONFIG_CMD_STACKOVERFLOW
 #define CONFIG_CMD_SYSINFO
 #define CONFIG_CMD_SYSJUMP
 #define CONFIG_CMD_SYSLOCK

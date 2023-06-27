@@ -45,6 +45,7 @@ rsource "Kconfig.charger"
 rsource "Kconfig.chargesplash"
 rsource "Kconfig.board_version"
 rsource "Kconfig.cbi"
+rsource "Kconfig.cec"
 rsource "Kconfig.console"
 rsource "Kconfig.console_cmd_mem"
 rsource "Kconfig.debug_assert"
@@ -68,6 +69,7 @@ rsource "Kconfig.pmic"
 rsource "Kconfig.mkbp_event"
 rsource "Kconfig.motionsense"
 rsource "Kconfig.random"
+rsource "Kconfig.rsa"
 rsource "Kconfig.rtc"
 rsource "Kconfig.stacks"
 rsource "Kconfig.system"
@@ -491,8 +493,14 @@ config PLATFORM_EC_LID_SWITCH
 
 	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
 
+config MKBP_PROTOCOL
+	bool "MKBP protocol support"
+	help
+	  Enable the MKBP support protocol code.
+
 config PLATFORM_EC_MKBP_INPUT_DEVICES
 	bool "Input devices via MKBP"
+	select MKBP_PROTOCOL
 	help
 	  Enable passing events from various input sources to AP via MKBP.
 	  This include buttons (power, volume); switches (lid, tablet mode)

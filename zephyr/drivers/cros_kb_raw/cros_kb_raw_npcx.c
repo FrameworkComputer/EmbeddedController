@@ -30,7 +30,7 @@
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
-#if !DT_NODE_EXISTS(KBD_KS02_NODE)
+#if !DT_NODE_EXISTS(KBD_KSO2_NODE)
 #error gpio_kbd_kso2 alias has to point to the keyboard column 2 output pin.
 #endif
 #endif /* CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED */

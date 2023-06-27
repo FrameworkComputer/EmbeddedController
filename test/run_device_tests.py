@@ -260,6 +260,11 @@ class AllTests:
                 toggle_power=True,
                 enable_hw_write_protect=True,
             ),
+            # TODO(b/274162810): Re-enable test on bloonchipper when LTO is re-enabled.
+            TestConfig(
+                test_name="fpsensor_auth_crypto_stateful",
+                exclude_boards=[BLOONCHIPPER],
+            ),
             TestConfig(test_name="fpsensor_auth_crypto_stateless"),
             TestConfig(test_name="fpsensor_hw"),
             TestConfig(

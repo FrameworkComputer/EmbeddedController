@@ -8,9 +8,11 @@
 #include "adc_chip.h"
 #include "board.h"
 #include "button.h"
+#include "cec.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
+#include "driver/cec/bitbang.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/temp_sensor/thermistor.h"
@@ -158,6 +160,15 @@ const struct temp_sensor_t temp_sensors[] = {
 			    .idx = ADC_TEMP_SENSOR_3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/* CEC ports */
+const struct cec_config_t cec_config[] = {
+	[CEC_PORT_0] = {
+		.drv = &bitbang_cec_drv,
+		.offline_policy = NULL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
 
 void board_init(void)
 {

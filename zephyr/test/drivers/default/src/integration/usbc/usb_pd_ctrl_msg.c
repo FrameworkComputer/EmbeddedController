@@ -46,20 +46,8 @@ tcpci_drp_emul_connect_partner(struct tcpci_partner_data *partner_emul,
 			       const struct emul *tcpci_emul,
 			       const struct emul *charger_emul)
 {
-	/*
-	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
-	 *   vbus, as well as alerting should all be a part of the connect
-	 *   function.
-	 */
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
-	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
-
-	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_EXT_STATUS,
-			   TCPC_REG_EXT_STATUS_SAFE0V);
-
-	tcpci_tcpc_alert(TEST_USB_PORT);
-
+	zassert_ok(tcpci_emul_set_vbus_level(tcpci_emul, VBUS_SAFE0V));
 	zassert_ok(tcpci_partner_connect_to_tcpci(partner_emul, tcpci_emul),
 		   NULL);
 }

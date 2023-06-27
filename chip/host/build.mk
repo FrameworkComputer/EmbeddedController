@@ -19,5 +19,3 @@ chip-$(CONFIG_USB_PD_TCPC)+=usb_pd_phy.o
 dirs-y += chip/host/dcrypto
 
 chip-$(CONFIG_I2C)+= i2c.o
-
-chip-$(CONFIG_CEC)+= cec.o

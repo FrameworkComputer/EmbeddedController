@@ -4,6 +4,7 @@
  */
 
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usbc_mux.h>
 #include <dt-bindings/usb_pd_tcpm.h>
 
 / {
@@ -100,12 +101,12 @@
 		int_usb_c0: usb_c0 {
 			irq-pin = <&gpio_usb_c0_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_c0_interrupt";
+			handler = "usb_interrupt";
 		};
 		int_usb_c1: usb_c1 {
 			irq-pin = <&gpio_sb_1>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_c1_interrupt";
+			handler = "usb_interrupt";
 		};
 	};
 
@@ -227,7 +228,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
-			tcpc = <&usbpd0>;
+			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -246,7 +247,7 @@
 			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_1 &tcpci_mux_1>;
+				usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
 			};
 			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
 				compatible = "cros-ec,usb-mux-chain";
@@ -257,9 +258,6 @@
 		port1-muxes {
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
-			};
-			tcpci_mux_1: tcpci-mux-1 {
-				compatible = "parade,usbc-mux-ps8xxx";
 			};
 		};
 	};
@@ -382,16 +380,24 @@
 		reg = <0x5f>;
 	};
 
-	chg_port1: sm5803@32 {
-		compatible = "siliconmitus,sm5803";
+	chg_port1: isl923x@9 {
+		compatible = "intersil,isl923x";
 		status = "okay";
-		reg = <0x32>;
+		reg = <0x9>;
 	};
 
-	tcpc_port1: ps8745@b {
-		compatible = "parade,ps8xxx";
-		reg = <0xb>;
-		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+	tcpc_port1: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
+	anx7483_mux_1: anx7483-mux-1@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "anx7483_set_default_tuning";
+		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
 	};
 };
 
@@ -418,10 +424,17 @@
 		reg = <0x5f>;
 	};
 
-	chg_port0: sm5803@32 {
-		compatible = "siliconmitus,sm5803";
+	chg_port0: isl923x@9 {
+		compatible = "intersil,isl923x";
 		status = "okay";
-		reg = <0x32>;
+		reg = <0x9>;
+	};
+	tcpc_port0: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
 	};
 };
 
@@ -442,6 +455,3 @@
 	pinctrl-names = "default";
 };
 
-&usbpd0 {
-	status = "okay";
-};

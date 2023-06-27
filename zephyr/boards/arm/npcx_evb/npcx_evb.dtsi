@@ -66,11 +66,6 @@
 			io-channels = <&adc0 4>;
 		};
 	};
-
-	/* Override keyboard scanning */
-	soc {
-		/delete-node/ kscan@400a3000;
-	};
 };
 
 &i2c0_0 {

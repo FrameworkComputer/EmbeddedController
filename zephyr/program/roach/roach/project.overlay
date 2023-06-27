@@ -11,3 +11,4 @@
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
 #include "../pwm.dtsi"
+#include "../rwsig.dtsi"

@@ -114,7 +114,8 @@
 #if defined(TEST_FPSENSOR) || defined(TEST_FPSENSOR_STATE) || \
 	defined(TEST_FPSENSOR_CRYPTO) ||                      \
 	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATELESS) ||       \
-	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL)
+	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL) ||        \
+	defined(TEST_FPSENSOR_AUTH_COMMANDS)
 #define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
 #define CONFIG_SHA256
@@ -377,9 +378,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_CEC
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
-#define CEC_GPIO_OUT 0
-#define CEC_GPIO_IN 0
-#define CEC_GPIO_PULL_UP 0
 #endif
 
 #ifdef TEST_LIGHTBAR

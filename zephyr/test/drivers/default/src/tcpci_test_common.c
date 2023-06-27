@@ -57,6 +57,7 @@ void test_tcpci_init(const struct emul *emul,
 	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
 			   TCPC_REG_POWER_STATUS_UNINIT);
 	zassert_equal(EC_ERROR_TIMEOUT, drv->init(port));
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS, 0);
 
 	/*
 	 * Set expected alert mask. It is used in test until vSafe0V tcpc
@@ -68,8 +69,7 @@ void test_tcpci_init(const struct emul *emul,
 		   TCPC_REG_ALERT_FAULT | TCPC_REG_ALERT_POWER_STATUS;
 
 	/* Set TCPCI emulator VBUS to safe0v (disconnected) */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_SAFE0V));
 
 	/* Test init with VBUS safe0v without vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));
@@ -80,9 +80,7 @@ void test_tcpci_init(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 
 	/* Set TCPCI emulator VBUS to present (connected, above 4V) */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_PRES |
-				   TCPC_REG_POWER_STATUS_VBUS_DET);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_PRESENT));
 
 	/* Test init with VBUS present without vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));
@@ -105,10 +103,7 @@ void test_tcpci_init(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 
 	/* Set TCPCI emulator VBUS to safe0v (disconnected) */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
-	tcpci_emul_set_reg(emul, TCPC_REG_EXT_STATUS,
-			   TCPC_REG_EXT_STATUS_SAFE0V);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_SAFE0V));
 
 	/* Test init with VBUS safe0v with vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));
@@ -122,7 +117,7 @@ void test_tcpci_init(const struct emul *emul,
 	 * Set TCPCI emulator VBUS to disconnected but not at vSafe0V
 	 * (VBUS in 0.8V - 3.5V range)
 	 */
-	tcpci_emul_set_reg(emul, TCPC_REG_EXT_STATUS, 0);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_REMOVED));
 
 	/* Test init with VBUS not safe0v with vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));

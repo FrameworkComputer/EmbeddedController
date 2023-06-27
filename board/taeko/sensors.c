@@ -231,11 +231,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-#ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-#else
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-#endif
 
 static void board_detect_motionsensor(void)
 {

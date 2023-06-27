@@ -169,6 +169,7 @@ config SHIMMED_TASKS
 	default y if HAS_TASK_MOTIONSENSE
 	default y if HAS_TASK_PD_INT_SHARED
 	default y if HAS_TASK_POWERBTN
+	default y if HAS_TASK_RWSIG
 	default y if HAS_TASK_USB_MUX
 	default y if TASK_HOSTCMD_THREAD_DEDICATED
 	default y if HAS_TASK_MAIN

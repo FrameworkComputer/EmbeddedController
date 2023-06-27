@@ -11,7 +11,9 @@ add_subdirectory("buttons")
 add_subdirectory("cbi")
 add_subdirectory("led_driver")
 
-if (DEFINED CONFIG_ARCH_POSIX)
+if (DEFINED CONFIG_SOC_FAMILY_INTEL_ISH)
+  zephyr_library_sources(ish_system.c)
+elseif (DEFINED CONFIG_ARCH_POSIX)
   zephyr_library_sources(ztest_system.c)
 else()
   zephyr_library_sources(system.c)
@@ -23,8 +25,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_ANX7452 anx7452_usb
 zephyr_library_sources_ifdef(CONFIG_NAMED_ADC_CHANNELS      adc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                             battery.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_RT9490
+                                                            bc12_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_RT9490
-                                                            bc12_rt9490.c
                                                             chg_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER     charger.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ               chipset_api.c)

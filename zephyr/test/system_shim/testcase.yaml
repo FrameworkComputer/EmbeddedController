@@ -6,4 +6,6 @@ tests:
   system_shim.default:
     extra_dtc_overlay_files:
     - ./default.overlay
-  system_shim.no_chosen: {}
+  system_shim.ish:
+    extra_configs:
+    - CONFIG_SYSTEM_SHIM_TEST_ISH=y

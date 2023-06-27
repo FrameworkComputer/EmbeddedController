@@ -181,7 +181,9 @@ static void baseboard_x_ec_gpio2_init(void)
 {
 	static struct ppc_drv virtual_ppc_drv = { 0 };
 	static struct tcpm_drv virtual_tcpc_drv = { 0 };
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 	static struct bc12_drv virtual_bc12_drv = { 0 };
+#endif
 
 	/* no sub board */
 	if (corsola_get_db_type() == CORSOLA_DB_NONE) {
@@ -210,8 +212,10 @@ static void baseboard_x_ec_gpio2_init(void)
 		(const struct ppc_config_t){ .drv = &virtual_ppc_drv };
 	tcpc_config[USBC_PORT_C1] =
 		(const struct tcpc_config_t){ .drv = &virtual_tcpc_drv };
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 	bc12_ports[USBC_PORT_C1] =
 		(const struct bc12_config){ .drv = &virtual_bc12_drv };
+#endif
 	/* Use virtual mux to notify AP the mainlink direction. */
 	USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_1_hdmi_db);
 

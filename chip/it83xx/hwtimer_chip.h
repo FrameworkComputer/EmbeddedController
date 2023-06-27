@@ -17,7 +17,21 @@
 
 #define FREE_EXT_TIMER_L EXT_TIMER_3
 #define FREE_EXT_TIMER_H EXT_TIMER_4
+
+/*
+ * We only have one free timer, so use it for either fans or CEC. Since ITE also
+ * has a CEC peripheral, devices without a fan can have up to two CEC ports, and
+ * devices with a fan up to one.
+ */
+#if defined(CONFIG_FANS) && defined(CONFIG_CEC_BITBANG)
+#error "Can't enable both CONFIG_FANS and CONFIG_CEC_BITBANG"
+#endif
+#if defined(CONFIG_FANS)
 #define FAN_CTRL_EXT_TIMER EXT_TIMER_5
+#elif defined(CONFIG_CEC_BITBANG)
+#define CEC_EXT_TIMER EXT_TIMER_5
+#endif
+
 #define EVENT_EXT_TIMER EXT_TIMER_6
 /*
  * The low power timer is used to continue system time when EC goes into low
@@ -75,6 +89,7 @@ uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer);
 void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq);
 void ext_timer_stop(enum ext_timer_sel ext_timer, int dis_irq);
 void fan_ext_timer_interrupt(void);
+void cec_ext_timer_interrupt(void);
 void update_exc_start_time(void);
 
 /**

@@ -78,6 +78,40 @@ def _init_log(verbose):
     return log
 
 
+def _default_y(defaults):
+    """Return true if the symbol default is 'default y'
+
+    True if the symbol has any 'default y' definition, regardless of other
+    conditions.
+    """
+    for val, _ in defaults:
+        if (
+            isinstance(val, kconfiglib.Symbol)
+            and val.is_constant
+            and val.str_value == "y"
+        ):
+            return True
+    return False
+
+
+def _default_y_if_ztest(defaults):
+    """Return true if the symbol default is 'default y' if ZTEST
+
+
+    True if the symbol has any 'default y if ZTEST' definition.
+    """
+    for val, cond in defaults:
+        if (
+            isinstance(val, kconfiglib.Symbol)
+            and val.is_constant
+            and val.str_value == "y"
+            and isinstance(cond, kconfiglib.Symbol)
+            and cond.name == "ZTEST"
+        ):
+            return True
+    return False
+
+
 class KconfigCheck:
     """Validate Zephyr project configuration files.
 
@@ -216,7 +250,10 @@ class KconfigCheck:
         for name, val in kconf.syms.items():
             dep = kconfiglib.expr_str(val.direct_dep)
             if "DT_HAS_" in dep:
-                symbols[name] = dep
+                if _default_y(val.orig_defaults) and not _default_y_if_ztest(
+                    val.orig_defaults
+                ):
+                    symbols[name] = dep
 
         self.log.info("Checking %s", file_name)
 
