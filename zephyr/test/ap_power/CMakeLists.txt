@@ -12,8 +12,9 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-FILE(GLOB test_sources src/*.c)
-target_sources(app PRIVATE ${test_sources})
+target_sources(app PRIVATE src/ap_pwrseq.c src/console_command.c
+	       src/events.c src/hibdelay.c src/hibernate.c src/host_command.c
+	       src/test_mocks.c src/main.c)
 
 target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_ADL app PRIVATE
-		     src/boards/alderlake.c)
+		     src/boards/alderlake.c src/signals.c)
