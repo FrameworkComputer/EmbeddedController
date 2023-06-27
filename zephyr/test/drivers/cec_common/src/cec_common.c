@@ -1032,5 +1032,13 @@ ZTEST_USER_F(cec_common, test_receive_message_multiple_ports)
 		      EC_RES_UNAVAILABLE);
 }
 
+ZTEST_USER_F(cec_common, test_hc_port_count)
+{
+	struct ec_response_cec_port_count response;
+
+	zassert_ok(ec_cmd_cec_port_count(NULL, &response));
+	zassert_equal(response.port_count, CEC_PORT_COUNT);
+}
+
 ZTEST_SUITE(cec_common, drivers_predicate_post_main, cec_common_setup,
 	    cec_common_before, cec_common_after, NULL);

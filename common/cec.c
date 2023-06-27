@@ -373,6 +373,17 @@ static enum ec_status hc_cec_get(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_GET, hc_cec_get, EC_VER_MASK(0));
 
+static enum ec_status hc_port_count(struct host_cmd_handler_args *args)
+{
+	struct ec_response_cec_port_count *response = args->response;
+
+	response->port_count = CEC_PORT_COUNT;
+	args->response_size = sizeof(*response);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CEC_PORT_COUNT, hc_port_count, EC_VER_MASK(0));
+
 static int cec_get_next_event(uint8_t *out)
 {
 	uint32_t event_out = 0;
