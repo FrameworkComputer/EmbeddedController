@@ -364,11 +364,27 @@ class AllTests:
             TestConfig(test_name="timer"),
             TestConfig(test_name="timer_dos"),
             TestConfig(test_name="tpm_seed_clear"),
+            TestConfig(test_name="unaligned_access"),
             TestConfig(test_name="utils", timeout_secs=20),
             TestConfig(test_name="utils_str"),
         ]
 
-        # Run panic data tests for all boards and RO versions.
+        # Run unaligned access tests for all boards and RO versions.
+        for variant_name, variant_info in board_config.variants.items():
+            tests.append(
+                TestConfig(
+                    config_name="unaligned_access_" + variant_name,
+                    test_name="unaligned_access",
+                    fail_regexes=[
+                        SINGLE_CHECK_FAILED_REGEX,
+                        ALL_TESTS_FAILED_REGEX,
+                    ],
+                    ro_image=variant_info.get("ro_image_path"),
+                    build_board=variant_info.get("build_board"),
+                )
+            )
+
+        # Run panic data test for all boards and RO versions.
         for variant_name, variant_info in board_config.variants.items():
             tests.append(
                 TestConfig(

@@ -15,8 +15,16 @@
 
 void cpu_init(void)
 {
-	/* Catch divide by 0 and unaligned access */
-	CPU_NVIC_CCR |= CPU_NVIC_CCR_DIV_0_TRAP | CPU_NVIC_CCR_UNALIGN_TRAP;
+	/* Catch divide by 0 */
+	CPU_NVIC_CCR |= CPU_NVIC_CCR_DIV_0_TRAP;
+
+	if (IS_ENABLED(CONFIG_ALLOW_UNALIGNED_ACCESS)) {
+		/* Disable trapping on unaligned access */
+		CPU_NVIC_CCR &= ~CPU_NVIC_CCR_UNALIGN_TRAP;
+	} else {
+		/* Catch unaligned access */
+		CPU_NVIC_CCR |= CPU_NVIC_CCR_UNALIGN_TRAP;
+	}
 
 	/* Enable reporting of memory faults, bus faults and usage faults */
 	CPU_NVIC_SHCSR |= CPU_NVIC_SHCSR_MEMFAULTENA |
