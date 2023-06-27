@@ -12,6 +12,10 @@
 #include <timer.h>
 #include <x86_power_signals.h>
 
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include <ap_power/ap_pwrseq_sm.h>
+#endif
+
 void board_ap_power_force_shutdown(void)
 {
 	/* Turn off PCH_RMSRST to meet tPCH12 */
@@ -21,6 +25,26 @@ void board_ap_power_force_shutdown(void)
 	power_signal_set(PWR_EN_PP3300_A, 0);
 }
 
+#if defined(CONFIG_AP_PWRSEQ_DRIVER)
+static int board_ap_power_g3_run(void *data)
+{
+	/* Turn on the PP3300_PRIM rail. */
+	power_signal_set(PWR_EN_PP3300_A, 1);
+
+	return 0;
+}
+
+AP_POWER_APP_STATE_DEFINE(AP_POWER_STATE_G3, NULL, board_ap_power_g3_run, NULL);
+
+static int board_ap_power_s0_run(void *data)
+{
+	power_signal_set(PWR_PCH_PWROK, 1);
+
+	return 0;
+}
+
+AP_POWER_APP_STATE_DEFINE(AP_POWER_STATE_S0, NULL, board_ap_power_s0_run, NULL);
+#else
 void board_ap_power_action_g3_s5(void)
 {
 	/* Turn on the PP3300_PRIM rail. */
@@ -36,3 +60,4 @@ bool board_ap_power_check_power_rails_enabled(void)
 {
 	return power_signal_get(PWR_EN_PP3300_A);
 }
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */

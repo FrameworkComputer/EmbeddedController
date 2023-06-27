@@ -12,6 +12,10 @@
 #include <timer.h>
 #include <x86_power_signals.h>
 
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include <ap_power/ap_pwrseq_sm.h>
+#endif
+
 static bool signal_PWR_ALL_SYS_PWRGD;
 static bool signal_PWR_DSW_PWROK;
 static bool signal_PWR_PG_PP1P05;
@@ -74,6 +78,7 @@ static void generate_ec_soc_dsw_pwrok_handler(void)
 	}
 }
 
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 void board_ap_power_action_g3_s5(void)
 {
 	power_signal_enable(PWR_DSW_PWROK);
@@ -102,3 +107,36 @@ bool board_ap_power_check_power_rails_enabled(void)
 {
 	return true;
 }
+
+#else
+static int board_ap_power_g3_run(void *data)
+{
+	if (ap_pwrseq_sm_is_event_set(data, AP_PWRSEQ_EVENT_POWER_STARTUP)) {
+		power_signal_enable(PWR_DSW_PWROK);
+		power_signal_enable(PWR_PG_PP1P05);
+
+		power_signal_set(PWR_EN_PP5000_A, 1);
+		power_signal_set(PWR_EN_PP3300_A, 1);
+
+		power_wait_signals_timeout(
+			POWER_SIGNAL_MASK(PWR_DSW_PWROK),
+			AP_PWRSEQ_DT_VALUE(wait_signal_timeout));
+	}
+
+	generate_ec_soc_dsw_pwrok_handler();
+
+	if (!power_signal_get(PWR_EC_SOC_DSW_PWROK))
+		return 1;
+
+	return 0;
+}
+
+AP_POWER_APP_STATE_DEFINE(AP_POWER_STATE_G3, NULL, board_ap_power_g3_run, NULL);
+
+static int board_ap_power_s0_run(void *data)
+{
+	return board_ap_power_assert_pch_power_ok();
+}
+
+AP_POWER_APP_STATE_DEFINE(AP_POWER_STATE_S0, NULL, board_ap_power_s0_run, NULL);
+#endif

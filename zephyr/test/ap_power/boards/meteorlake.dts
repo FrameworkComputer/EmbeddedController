@@ -171,18 +171,18 @@
 
 		pch_pwrok-rsmrst-emul {
 			output-signal = <&rsmrst>;
-			assert-delay-ms = <60>;
+			assert-delay-ms = <90>;
 			invert-value;
 		};
 
 		pch-pwrok-slp-s5-emul {
 			output-signal = <&slp_s5>;
-			assert-delay-ms = <50>;
+			assert-delay-ms = <60>;
 		};
 
 		pch-pwrok-slp-s4-emul {
 			output-signal = <&slp_s4>;
-			assert-delay-ms = <30>;
+			assert-delay-ms = <40>;
 		};
 
 		pch-pwrok-slp-s3-emul {

@@ -56,6 +56,10 @@
 		compatible = "cros,clock-control-emul";
 		clock-frequency = <DT_FREQ_M(100)>; /* 100 MHz */
 	};
+	ap-power {
+		compatible = "ap-pwrseq-sub-states";
+		chipset = "AP_POWER_STATE_S0IX";
+	};
 };
 
 &espi0 {
