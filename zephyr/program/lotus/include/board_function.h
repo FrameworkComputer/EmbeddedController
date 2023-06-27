@@ -22,4 +22,6 @@ int ac_boot_status(void);
 /* for host cmd clear count */
 int chassis_cmd_clear(int type);
 
+__override_proto void project_chassis_function(enum gpio_signal signal);
+
 #endif	/* __CROS_EC_BOARD_FUNCTION_H */

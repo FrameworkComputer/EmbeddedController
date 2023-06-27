@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "gpu.h"
 #include "board_adc.h"
+#include "board_function.h"
 #include "console.h"
 #include "driver/temp_sensor/f75303.h"
 #include "system.h"
@@ -84,7 +85,7 @@ DECLARE_DEFERRED(check_gpu_module);
 DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
 
 
-void chassis_open_interrupt(enum gpio_signal signal)
+__override void project_chassis_function(enum gpio_signal signal)
 {
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
 

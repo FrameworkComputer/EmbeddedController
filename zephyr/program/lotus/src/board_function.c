@@ -84,51 +84,38 @@ int chassis_cmd_clear(int type)
 	return -1;
 }
 
-static void check_chassis_open(int init)
+__overridable void project_chassis_function(enum gpio_signal signal)
+{
+}
+
+static void check_chassis_open(void)
 {
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0
-		&& !chassis_once_flag) {
+			&& !chassis_once_flag) {
+
+		CPRINTS("Chassis was opened");
 		chassis_once_flag = 1;
+
+		/* Record the chassis was open status in bbram */
 		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
 
-		if (init) {
-			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
-							&chassis_vtr_open_count);
-			if (chassis_vtr_open_count < 0xFF)
-				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
-								++chassis_vtr_open_count);
-		} else {
-			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
-							&chassis_open_count);
-			if (chassis_open_count < 0xFF)
-				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
-								++chassis_open_count);
-		}
-
-		/* counter for chasis pin */
+		/* Counter for chasis pin */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			if (chassis_press_counter < 0xFF)
 				chassis_press_counter++;
+	} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1
+			&& chassis_once_flag) {
 
-		CPRINTS("Chassis was open");
-	} else if (chassis_once_flag) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) {
-			CPRINTS("Chassis was close");
-			chassis_once_flag = 0;
-		}
+		CPRINTS("Chassis was closed");
+		chassis_once_flag = 0;
 	}
 }
+DECLARE_DEFERRED(check_chassis_open);
 
-static void board_customer_tick(void);
-DECLARE_DEFERRED(board_customer_tick);
-
-/*
- * for use experience, setting debounce time to 250 ms.
- */
-static void board_customer_tick(void)
+void chassis_interrupt_handler(enum gpio_signal signal)
 {
-	check_chassis_open(0);
-	hook_call_deferred(&board_customer_tick_data, 250 * MSEC);
+	project_chassis_function(signal);
+	hook_call_deferred(&check_chassis_open_data, 50 * MSEC);
 }
 
 static void bios_function_init(void)
@@ -140,7 +127,6 @@ static void bios_function_init(void)
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
 
-	check_chassis_open(1);
-	hook_call_deferred(&board_customer_tick_data, 1000 * MSEC);
+	check_chassis_open();
 }
 DECLARE_HOOK(HOOK_INIT, bios_function_init, HOOK_PRIO_DEFAULT + 1);
