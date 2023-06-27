@@ -5695,8 +5695,15 @@ static void pe_vdm_send_request_entry(int port)
 	if ((pe[port].tx_type == TCPCI_MSG_SOP_PRIME ||
 	     pe[port].tx_type == TCPCI_MSG_SOP_PRIME_PRIME) &&
 	    !tc_is_vconn_src(port) &&
-	    port_discovery_vconn_swap_policy(
-		    port, BIT(PE_FLAGS_VCONN_SWAP_TO_ON_FN))) {
+	    /* TODO(b/188578923): Passing true indicates that the PE wants to
+	     * swap to VCONN Source at this time. It would make more sense to
+	     * pass the current value of PE_FLAGS_VCONN_SWAP_TO_ON, but the PE
+	     * does not actually set the flag when it wants to send a message to
+	     * the cable. The existing mechanisms to control the VCONN role are
+	     * clunky and hard to get right. The DPM should centralize logic
+	     * about VCONN role policy.
+	     */
+	    port_discovery_vconn_swap_policy(port, true)) {
 		if (port_try_vconn_swap(port))
 			return;
 	}
