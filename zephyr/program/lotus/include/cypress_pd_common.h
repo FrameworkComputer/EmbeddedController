@@ -89,6 +89,8 @@
 	(0x102A + (x * 0x1000))
 #define CCG_DP_ALT_MODE_CONFIG_REG(x) \
 	(0x102B + (x * 0x1000))
+#define CCG_PORT_VBUS_FET_CONTROL(x) \
+	(0x1032 + (x * 0x1000))
 #define CCG_PORT_INTR_STATUS_REG(x) \
 	(0x1034 + (x * 0x1000))
 #define CCG_SINK_PPS_AVS_CTRL_REG(x) \
@@ -180,6 +182,15 @@
 #define EPR_EVENT_POWER_ROLE_MASK 0x80
 #define EPR_EVENT_POWER_ROLE_SINK 0x80
 
+/************************************************/
+/*  VBUS CONSUMER FET CONTROL                   */
+/************************************************/
+#define CCG_EC_CTRL_EN BIT(0)
+#define CCG_EC_CFET_OPEN 0x03
+
+
+
+
 enum epr_event_type {
 	EPR_MODE_ENTERED,
 	EPR_MODE_EXITED,
@@ -213,13 +224,16 @@ enum pd_task_evt {
 	CCG_EVT_PORT_ENABLE = BIT(11),
 	CCG_EVT_PORT_DISABLE = BIT(12),
 	CCG_EVT_UCSI_PPM_RESET = BIT(13),
-	CCG_EVT_PDO_INIT_0 = BIT(16),
-	CCG_EVT_PDO_INIT_1 = BIT(17),
-	CCG_EVT_PDO_C0P0 = BIT(18),
-	CCG_EVT_PDO_C0P1 = BIT(19),
-	CCG_EVT_PDO_C1P0 = BIT(20),
-	CCG_EVT_PDO_C1P1 = BIT(21),
-	CCG_EVT_PDO_RESET = BIT(22),
+	CCG_EVT_CFET_VBUS_OFF = BIT(14),
+	CCG_EVT_CFET_VBUS_ON = BIT(15),
+	CCG_EVT_CFET_FULL_VBUS_ON = BIT(16),
+	CCG_EVT_PDO_INIT_0 = BIT(17),
+	CCG_EVT_PDO_INIT_1 = BIT(18),
+	CCG_EVT_PDO_C0P0 = BIT(19),
+	CCG_EVT_PDO_C0P1 = BIT(20),
+	CCG_EVT_PDO_C1P0 = BIT(21),
+	CCG_EVT_PDO_C1P1 = BIT(22),
+	CCG_EVT_PDO_RESET = BIT(23),
 };
 
 /************************************************
@@ -481,5 +495,12 @@ void cypd_set_power_active(enum power_state power);
  * @return int
  */
 int active_charge_pd_chip(void);
+
+/**
+ * Return Power source port state
+ *
+ * @return int
+ */
+int cypd_vbus_state_check(void);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

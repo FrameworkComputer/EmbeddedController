@@ -11,6 +11,7 @@
 #include "charge_state.h"
 #include "console.h"
 #include "cypress_pd_common.h"
+#include "cpu_power.h"
 #include "driver/charger/isl9241.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -70,6 +71,7 @@ static struct pd_port_current_state_t pd_port_states[] = {
 };
 
 static int prev_charge_port = -1;
+static int init_charge_port;
 static bool verbose_msg_logging;
 static bool firmware_update;
 
@@ -300,6 +302,7 @@ DECLARE_DEFERRED(pd1_update_state_deferred);
 static void update_power_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PWRSTAT);
+	update_soc_power_limit(false, false);
 }
 DECLARE_DEFERRED(update_power_state_deferred);
 
@@ -1063,6 +1066,74 @@ static void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id,
 	}
 }
 
+static void vbus_on_event_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_ON);
+}
+DECLARE_DEFERRED(vbus_on_event_deferred);
+
+void cypd_cfet_vbus_off(void)
+{
+	int rv, i;
+
+	CPRINTS("Disable all type-c port to change the charger port");
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(0),
+		CCG_EC_CTRL_EN);
+		if (rv != EC_SUCCESS)
+			CPRINTS("CMD Response fail");
+		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(1),
+		CCG_EC_CTRL_EN);
+		if (rv != EC_SUCCESS)
+			CPRINTS("CMD Response fail");
+	}
+
+	/* turn on VBUS C-FET of chosen port */
+	if (prev_charge_port >= 0) {
+		hook_call_deferred(&vbus_on_event_deferred_data, 250 * MSEC);
+		return;
+	}
+
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+	CPRINTS("Updating %s port %d", __func__, prev_charge_port);
+}
+
+void cypd_cfet_vbus_on(void)
+{
+	int rv;
+	int pd_controller = (prev_charge_port & 0x02) >> 1;
+	int pd_port = prev_charge_port & 0x01;
+
+	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
+		CCG_EC_CFET_OPEN);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CMD Response fail");
+
+	CPRINTS("PD VBUS ON");
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+	CPRINTS("Updating %s port %d", __func__, prev_charge_port);
+}
+
+void cypd_cfet_full_vbus_on(void)
+{
+	int rv, i;
+
+	CPRINTS("Open Vbus Port");
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(0),
+		0);
+		if (rv != EC_SUCCESS)
+			CPRINTS("CMD Response fail");
+		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(1),
+		0);
+		if (rv != EC_SUCCESS)
+			CPRINTS("CMD Response fail");
+	}
+
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+	CPRINTS("Updating %s port %d", __func__, prev_charge_port);
+}
+
 /*****************************************************************************/
 /* Interrupt handler */
 
@@ -1301,6 +1372,17 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CCG_EVT_PDO_C1P1)
 			cypd_set_typec_profile(1, 1);
 
+		if (evt & CCG_EVT_UPDATE_PWRSTAT)
+			cypd_update_power_status(2);
+
+		if (evt & CCG_EVT_CFET_VBUS_OFF)
+			cypd_cfet_vbus_off();
+
+		if (evt & CCG_EVT_CFET_VBUS_ON)
+			cypd_cfet_vbus_on();
+
+		if (evt & CCG_EVT_CFET_FULL_VBUS_ON)
+			cypd_cfet_full_vbus_on();
 
 		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 |
 					CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1)) {
@@ -1357,12 +1439,54 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
+/**
+ * Set active charge port -- only one port can be active at a time.
+ *
+ * @param charge_port   Charge port to enable.
+ *
+ * Returns EC_SUCCESS if charge port is accepted and made active,
+ * EC_ERROR_* otherwise.
+ */
 int board_set_active_charge_port(int charge_port)
 {
-	prev_charge_port = charge_port;
 
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-	CPRINTS("Updating %s port %d", __func__, charge_port);
+	/* if battery D-FET not open , EC should not control VBUS FET */
+	if (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) {
+		/* check if CYPD ready */
+		if (charge_port == -1)
+			return EC_ERROR_TRY_AGAIN;
+
+		/* store current port and update power limit */
+		prev_charge_port = charge_port;
+		hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+		CPRINTS("Updating %s port %d", __func__, charge_port);
+		return EC_SUCCESS;
+	}
+
+	/*
+	 * 1.Disable connect need close CFET
+	 * 2.new power source in still need close FET first
+	 */
+	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
+		update_soc_power_limit(false, true);
+		task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_OFF);
+	}
+
+	/* init VBUS state when wake from EC hibernate or EC reset */
+	if (!init_charge_port && charge_port != -1) {
+		CPRINTS("Init check %s port %d, prev:%d", __func__, charge_port, prev_charge_port);
+		init_charge_port = 1;
+		prev_charge_port = charge_port;
+		update_soc_power_limit(false, true);
+		task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_OFF);
+	}
+
+	/* when all port disconnect power source need reset VBUS for next connection */
+	if (charge_port == -1 && prev_charge_port != charge_port) {
+		task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_FULL_VBUS_ON);
+	}
+
+	prev_charge_port = charge_port;
 
 	return EC_SUCCESS;
 }
