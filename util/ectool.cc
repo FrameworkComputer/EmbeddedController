@@ -11217,20 +11217,14 @@ int cmd_wait_event(int argc, char *argv[])
 	return 0;
 }
 
-/*
- * For now the EC only supports port 0. Once support for multiple ports is
- * complete, the port will be passed as a command parameter.
- */
-#define CEC_PORT 0
-
 static void cmd_cec_help(void)
 {
-	fprintf(stderr, "  Usage: cec write [write bytes...]\n"
+	fprintf(stderr, "  Usage: cec <port> write [write bytes...]\n"
 			"    Write message on the CEC bus\n"
-			"  Usage: cec read [timeout]\n"
+			"  Usage: cec <port> read [timeout]\n"
 			"    [timeout] in seconds\n"
-			"  Usage: cec get <param>\n"
-			"  Usage: cec set <param> <val>\n"
+			"  Usage: cec <port> get <param>\n"
+			"  Usage: cec <port> set <param> <val>\n"
 			"    <param> is one of:\n"
 			"      address: CEC receive address\n"
 			"        <val> is the new CEC address\n"
@@ -11245,7 +11239,7 @@ static long timespec_diff_ms(const struct timespec *t1,
 		(t1->tv_nsec - t2->tv_nsec) / 1000000);
 }
 
-static int cmd_cec_write(int argc, char *argv[])
+static int cmd_cec_write(int port, int argc, char *argv[])
 {
 	char *e;
 	long val;
@@ -11255,7 +11249,6 @@ static int cmd_cec_write(int argc, char *argv[])
 	struct ec_response_get_next_event_v1 buffer;
 	int version;
 	uint8_t *msg_param;
-	int port = CEC_PORT;
 	struct timespec start, now;
 	const long timeout_ms = 1000; /* How long to wait for the send result */
 	long elapsed_ms;
@@ -11378,13 +11371,12 @@ static int cec_read_handle_cec_event(int port, uint32_t cec_events,
 	return 0;
 }
 
-static int cmd_cec_read(int argc, char *argv[])
+static int cmd_cec_read(int port, int argc, char *argv[])
 {
 	int i, rv;
 	char *e;
 	struct ec_response_get_next_event_v1 buffer;
 	long timeout_ms = 5000;
-	int port = CEC_PORT;
 	unsigned long event_mask;
 	struct timespec start, now;
 	long elapsed_ms;
@@ -11475,13 +11467,12 @@ static int cec_cmd_from_str(const char *str)
 	return -1;
 }
 
-static int cmd_cec_set(int argc, char *argv[])
+static int cmd_cec_set(int port, int argc, char *argv[])
 {
 	char *e;
 	struct ec_params_cec_set p;
 	uint8_t val;
 	int cmd;
-	int port = CEC_PORT;
 
 	if (argc != 4) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -11507,12 +11498,11 @@ static int cmd_cec_set(int argc, char *argv[])
 	return ec_command(EC_CMD_CEC_SET, 0, &p, sizeof(p), NULL, 0);
 }
 
-static int cmd_cec_get(int argc, char *argv[])
+static int cmd_cec_get(int port, int argc, char *argv[])
 {
 	int rv, cmd;
 	struct ec_params_cec_get p;
 	struct ec_response_cec_get r;
-	int port = CEC_PORT;
 
 	if (argc != 3) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -11539,19 +11529,32 @@ static int cmd_cec_get(int argc, char *argv[])
 
 int cmd_cec(int argc, char *argv[])
 {
-	if (argc < 2) {
+	int port;
+	char *e;
+
+	if (argc < 3) {
 		fprintf(stderr, "Invalid number of params\n");
 		cmd_cec_help();
 		return -1;
 	}
+
+	port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Invalid port: %s\n", argv[1]);
+		cmd_cec_help();
+		return -1;
+	}
+	argc--;
+	argv++;
+
 	if (!strcmp(argv[1], "write"))
-		return cmd_cec_write(argc, argv);
+		return cmd_cec_write(port, argc, argv);
 	if (!strcmp(argv[1], "read"))
-		return cmd_cec_read(argc, argv);
+		return cmd_cec_read(port, argc, argv);
 	if (!strcmp(argv[1], "get"))
-		return cmd_cec_get(argc, argv);
+		return cmd_cec_get(port, argc, argv);
 	if (!strcmp(argv[1], "set"))
-		return cmd_cec_set(argc, argv);
+		return cmd_cec_set(port, argc, argv);
 
 	fprintf(stderr, "Invalid sub command: %s\n", argv[1]);
 	cmd_cec_help();
