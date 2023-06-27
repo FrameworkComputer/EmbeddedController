@@ -745,19 +745,26 @@ int pd_set_frs_enable(int port, int enable)
 void tcpc_dump_registers(int port, const struct tcpc_reg_dump_map *reg,
 			 int count)
 {
-	int i, val;
+	for (int i = 0; i < count; i++, reg++) {
+		int val;
+		int rv;
 
-	for (i = 0; i < count; i++, reg++) {
 		switch (reg->size) {
 		case 1:
-			tcpc_read(port, reg->addr, &val);
-			ccprintf("  %-30s(0x%02x) =   0x%02x\n", reg->name,
-				 reg->addr, (uint8_t)val);
+			rv = tcpc_read(port, reg->addr, &val);
+			ccprintf("  %-30s(0x%02x) = ", reg->name, reg->addr);
+			if (rv)
+				ccprintf("ERR(%d)\n", rv);
+			else
+				ccprintf("  0x%02x\n", (uint8_t)val);
 			break;
 		case 2:
-			tcpc_read16(port, reg->addr, &val);
-			ccprintf("  %-30s(0x%02x) = 0x%04x\n", reg->name,
-				 reg->addr, (uint16_t)val);
+			rv = tcpc_read16(port, reg->addr, &val);
+			ccprintf("  %-30s(0x%02x) = ", reg->name, reg->addr);
+			if (rv)
+				ccprintf("ERR(%d)\n", rv);
+			else
+				ccprintf("0x%04x\n", (uint16_t)val);
 			break;
 		}
 		cflush();
