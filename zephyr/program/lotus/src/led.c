@@ -218,7 +218,7 @@ static int match_node(int node_idx)
 		enum led_pwr_state pwr_state = led_pwr_get_state();
 		int port = charge_manager_get_active_charge_port();
 
-		if (port < 0) {
+		if (pwr_state == LED_PWRS_DISCHARGE || pwr_state == LED_PWRS_DISCHARGE_FULL) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 0);
 		} else {
