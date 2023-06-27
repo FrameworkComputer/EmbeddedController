@@ -341,7 +341,7 @@ measuring power.
 <!-- mdformat on -->
 
 ```bash
-(chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
+(chroot) $ dut-control -t 60 ppvar_fp_mw ppvar_fp_mv ppvar_mcu_mw ppvar_mcu_mv
 ```
 
 **Firmware Version**:
@@ -402,7 +402,7 @@ measuring power.
 <!-- mdformat on -->
 
 ```bash
-(chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw
+(chroot) $ dut-control -t 60 ppvar_fp_mw ppvar_fp_mv ppvar_mcu_mw ppvar_mcu_mv
 ```
 
 **Firmware Version**:
