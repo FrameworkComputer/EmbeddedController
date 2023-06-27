@@ -18,3 +18,6 @@ target_sources(app PRIVATE src/ap_pwrseq.c src/console_command.c
 
 target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_ADL app PRIVATE
 		     src/boards/alderlake.c src/signals.c)
+
+target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_MTL app PRIVATE
+		     src/boards/meteorlake.c)
