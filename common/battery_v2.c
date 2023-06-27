@@ -9,6 +9,7 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "math_util.h"
@@ -281,6 +282,13 @@ int update_static_battery_info(void)
 	/* Zero the dynamic entries. They'll come next. */
 	memset(&battery_dynamic[BATT_IDX_MAIN], 0,
 	       sizeof(battery_dynamic[BATT_IDX_MAIN]));
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	if (extpower_is_present())
+		battery_dynamic[BATT_IDX_MAIN].flags |= EC_BATT_FLAG_AC_PRESENT;
+	else
+		battery_dynamic[BATT_IDX_MAIN].flags &= ~EC_BATT_FLAG_AC_PRESENT;
+#endif
 
 	if (rv)
 		charge_problem(PR_STATIC_UPDATE, rv);

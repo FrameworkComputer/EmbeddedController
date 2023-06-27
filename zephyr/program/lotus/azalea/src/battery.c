@@ -53,20 +53,24 @@ enum battery_present battery_is_present(void)
 static void battery_percentage_control(void)
 {
 	enum ec_charge_control_mode new_mode;
+	uint32_t memmap_cap = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	uint32_t memmap_lfcc = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	uint32_t batt_os_percentage;
 	int rv;
 
+	batt_os_percentage = 1000 * memmap_cap / (memmap_lfcc + 1);
 	if (charging_maximum_level == EC_CHARGE_LIMIT_RESTORE)
 		system_get_bbram(SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX, &charging_maximum_level);
 
 	if (charging_maximum_level & CHG_LIMIT_OVERRIDE) {
 		new_mode = CHARGE_CONTROL_NORMAL;
-		if (charge_get_percent() == 100)
+		if (batt_os_percentage == 1000)
 			charging_maximum_level = charging_maximum_level | 0x64;
 	} else if (charging_maximum_level < 20)
 		new_mode = CHARGE_CONTROL_NORMAL;
-	else if (charge_get_percent() > charging_maximum_level)
+	else if (batt_os_percentage > charging_maximum_level * 10)
 		new_mode = CHARGE_CONTROL_DISCHARGE;
-	else if (charge_get_percent() == charging_maximum_level)
+	else if (batt_os_percentage == charging_maximum_level * 10)
 		new_mode = CHARGE_CONTROL_IDLE;
 	else
 		new_mode = CHARGE_CONTROL_NORMAL;

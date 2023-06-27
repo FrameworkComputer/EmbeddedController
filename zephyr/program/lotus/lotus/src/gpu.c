@@ -62,21 +62,21 @@ void check_gpu_module(void)
 	default:
 		LOG_INF("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
 		/* Framework TODO remove for DVT, for now force on  unless feature is enabled */
-		if (flash_storage_get(FLASH_FLAGS_ENABLE_GPU_DETECT) == 0) {
-			module_present = 1;
-		} else {
-			module_present = 0;
-		}
+		module_present = 0;
 	break;
 	}
 
 	if (module_present) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
+		if (board_get_version() >= BOARD_VERSION_7)
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 0);
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
+		if (board_get_version() >= BOARD_VERSION_7)
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 1);
 	}
 	update_gpu_ac_power_state();
 }
@@ -87,6 +87,31 @@ DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
 void chassis_open_interrupt(enum gpio_signal signal)
 {
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
+
+	/* The dGPU SW is SW3 at DVT phase */
+	if (board_get_version() >= BOARD_VERSION_7)
+		return;
+
+	if (!open_state) {
+		/* Make sure the module is off as fast as possible! */
+		LOG_INF("Powering off GPU");
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+		module_present = 0;
+	} else {
+		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
+	}
+}
+
+void beam_open_interrupt(enum gpio_signal signal)
+{
+	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
+
+	/* The dGPU SW is SW4 at DVT phase */
+	if (board_get_version() < BOARD_VERSION_7)
+		return;
 
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */

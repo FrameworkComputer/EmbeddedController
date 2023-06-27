@@ -76,6 +76,10 @@ static bool firmware_update;
 /*****************************************************************************/
 /* Internal functions */
 
+static void cypd_update_port_state(int controller, int port);
+static void cypd_pdo_reset_deferred(void);
+static void cypd_set_prepare_pdo(int controller, int port);
+
 int cypd_write_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
@@ -202,6 +206,9 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 {
 	int rv = EC_SUCCESS;
 	int intr_status;
+	int event;
+	int cmd_port = reg & 0x2000 ? 1 : 0;
+	int ack_mask = 0;
 
 	rv = cypd_write_reg8(controller, reg, data);
 	if (rv != EC_SUCCESS)
@@ -212,8 +219,32 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		return EC_ERROR_INVAL;
 	}
 	rv = cypd_get_int(controller, &intr_status);
-	if (intr_status & CCG_DEV_INTR)
-		cypd_clear_int(controller, CCG_DEV_INTR);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Get INT Fail");
+
+	if (intr_status & CCG_DEV_INTR) {
+		rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
+		if (rv != EC_SUCCESS)
+			CPRINTS("fail to read DEV response");
+		ack_mask = CCG_DEV_INTR;
+	} else if (intr_status & CCG_PORT0_INTR && !cmd_port) {
+		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), &event);
+		if (rv != EC_SUCCESS)
+			CPRINTS("fail to read P0 response");
+		ack_mask = CCG_PORT0_INTR;
+	} else if (intr_status & CCG_PORT1_INTR && cmd_port) {
+		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(1), &event);
+		if (rv != EC_SUCCESS)
+			CPRINTS("fail to read P1 response");
+		ack_mask = CCG_PORT1_INTR;
+	}
+
+	/* only clear response code let main task handle event code */
+	if (event < 0x80) {
+		cypd_clear_int(controller, ack_mask);
+		rv = event & CCG_RESPONSE_SUCCESS ? EC_SUCCESS : EC_ERROR_INVAL;
+	}
+
 	usleep(50);
 	return rv;
 }
@@ -317,6 +348,351 @@ static void cypd_get_version(int controller)
 	/* store the FW2 version into pd_chip_info struct */
 	for (i = 0; i < 8; i++)
 		pd_chip_config[controller].version[i] = data[16+i];
+}
+
+static void pdo_init_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_INIT_0);
+}
+DECLARE_DEFERRED(pdo_init_deferred);
+
+static void cypd_pdo_init(int controller, int port, uint8_t profile)
+{
+	int rv;
+
+	/*
+	 * EC needs to provide the data for all Source PDOs when doing a dynamic update of the PDOs.
+	 * If less than 7 PDOs are required, the remaining PDO values should be set to 0.
+	 */
+	uint8_t pdos_reg[32] = {
+			0x50, 0x43, 0x52, 0x53,	/* “SRCP”		*/
+			0x96, 0x90, 0x01, 0x27,	/* PDO0 - 1.5A	*/
+			0x2c, 0x91, 0x01, 0x27,	/* PDO1 - 3A	*/
+			0x00, 0x00, 0x00, 0x00,	/* PDO2			*/
+			0x00, 0x00, 0x00, 0x00,	/* PDO3			*/
+			0x00, 0x00, 0x00, 0x00,	/* PDO4			*/
+			0x00, 0x00, 0x00, 0x00,	/* PDO5			*/
+			0x00, 0x00, 0x00, 0x00	/* PDO6			*/
+		};
+
+	rv = cypd_write_reg_block(controller, CCG_WRITE_DATA_MEMORY_REG(port, 0),
+		pdos_reg, sizeof(pdos_reg));
+	if (rv != EC_SUCCESS)
+		CPRINTS("SET CCG_MEMORY failed");
+
+	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), profile);
+	if (rv != EC_SUCCESS)
+		CPRINTS("SET CCG_SELECT_REG failed");
+
+	memset(pdos_reg, 0, sizeof(pdos_reg));
+
+	/* Clear Signature “SRCP” for PDO update finish */
+	rv = cypd_write_reg_block(controller, CCG_WRITE_DATA_MEMORY_REG(port, 0),
+		pdos_reg, sizeof(pdos_reg));
+	if (rv != EC_SUCCESS)
+		CPRINTS("CLEAR CCG_MEMORY failed");
+}
+
+static int cypd_select_pdo(int controller, int port, uint8_t profile)
+{
+	int rv;
+
+	rv = cypd_write_reg8_wait_ack(controller, CCG_PD_CONTROL_REG(port), profile);
+	if (rv != EC_SUCCESS)
+		CPRINTS("SET TYPEC RP failed");
+
+	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), profile);
+	if (rv != EC_SUCCESS)
+		CPRINTS("SET CCG_SELECT_REG failed");
+
+	return rv;
+}
+
+static int pd_3a_flag;
+static int pd_3a_set;
+static int pd_3a_controller;
+static int pd_3a_port;
+static int pd_port0_1_5A;
+static int pd_port1_1_5A;
+static int pd_port2_1_5A;
+static int pd_port3_1_5A;
+
+int cypd_port_3a_status(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	if (pd_3a_flag &&
+		controller == pd_3a_controller &&
+		port_idx == pd_3a_port)
+		return true;
+	return false;
+}
+
+int cypd_port_3a_set(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	if (pd_3a_set)
+		return false;
+
+	pd_3a_set = 1;
+	pd_3a_flag = 1;
+	pd_3a_controller = controller;
+	pd_3a_port = port_idx;
+
+	return true;
+}
+
+void cypd_port_1_5a_set(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	switch (port_idx) {
+	case 0:
+		pd_port0_1_5A = 1;
+		break;
+	case 1:
+		pd_port1_1_5A = 1;
+		break;
+	case 2:
+		pd_port2_1_5A = 1;
+		break;
+	case 3:
+		pd_port3_1_5A = 1;
+		break;
+	}
+}
+
+int cypd_port_force_3A(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+	int port_1_5A_idx;
+
+	port_1_5A_idx = pd_port0_1_5A + pd_port1_1_5A + pd_port2_1_5A + pd_port3_1_5A;
+
+	if (port_1_5A_idx >= 3) {
+		switch (port_idx) {
+		case 0:
+			if (!pd_port0_1_5A)
+				return true;
+			break;
+		case 1:
+			if (!pd_port1_1_5A)
+				return true;
+			break;
+		case 2:
+			if (!pd_port2_1_5A)
+				return true;
+			break;
+		case 3:
+			if (!pd_port3_1_5A)
+				return true;
+			break;
+		}
+	}
+	return false;
+}
+
+void cypd_release_port(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	/* if port disconnect should set RP and PDO to default */
+	cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+
+	if (cypd_port_3a_status(controller, port)) {
+		pd_3a_set = 0;
+		pd_3a_flag = 0;
+	}
+
+	switch (port_idx) {
+	case 0:
+		pd_port0_1_5A = 0;
+		break;
+	case 1:
+		pd_port1_1_5A = 0;
+		break;
+	case 2:
+		pd_port2_1_5A = 0;
+		break;
+	case 3:
+		pd_port3_1_5A = 0;
+		break;
+	}
+}
+
+/*
+ * function for profile check, if profile not change
+ * don't send again.
+ */
+int cypd_profile_check(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	switch (port_idx) {
+	case 0:
+		if (pd_port0_1_5A)
+			return true;
+		break;
+	case 1:
+		if (pd_port1_1_5A)
+			return true;
+		break;
+	case 2:
+		if (pd_port2_1_5A)
+			return true;
+		break;
+	case 3:
+		if (pd_port3_1_5A)
+			return true;
+		break;
+	}
+
+	return false;
+}
+
+static void pdo_c0p0_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_C0P0);
+}
+DECLARE_DEFERRED(pdo_c0p0_deferred);
+
+static void pdo_c0p1_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_C0P1);
+}
+DECLARE_DEFERRED(pdo_c0p1_deferred);
+
+static void pdo_c1p0_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_C1P0);
+}
+DECLARE_DEFERRED(pdo_c1p0_deferred);
+
+static void pdo_c1p1_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_C1P1);
+}
+DECLARE_DEFERRED(pdo_c1p1_deferred);
+
+static void cypd_set_prepare_pdo(int controller, int port)
+{
+	switch (controller) {
+	case 0:
+		if (!port)
+			hook_call_deferred(&pdo_c0p0_deferred_data, 10 * MSEC);
+		else
+			hook_call_deferred(&pdo_c0p1_deferred_data, 20 * MSEC);
+		break;
+	case 1:
+		if (!port)
+			hook_call_deferred(&pdo_c1p0_deferred_data, 10 * MSEC);
+		else
+			hook_call_deferred(&pdo_c1p1_deferred_data, 20 * MSEC);
+		break;
+	}
+}
+
+void cypd_set_typec_profile(int controller, int port)
+{
+	int rv;
+	uint8_t pd_status_reg[4];
+	uint8_t rdo_reg[4];
+
+	int rdo_max_current = 0;
+	int port_idx = (controller << 1) + port;
+
+	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_PD_STATUS_REG failed");
+
+	/*do we have a valid PD contract*/
+	pd_port_states[port_idx].pd_state = pd_status_reg[1] & BIT(2) ? 1 : 0;
+	pd_port_states[port_idx].power_role =
+			pd_status_reg[1] & BIT(0) ? PD_ROLE_SOURCE : PD_ROLE_SINK;
+
+	if (pd_port_states[port_idx].power_role == PD_ROLE_SOURCE) {
+		if (pd_port_states[port_idx].pd_state) {
+			/*
+			 * first time set 3A PDO to device
+			 * when device request RDO <= 1.5A
+			 * resend 1.5A pdo to device
+			 */
+
+			cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
+			rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
+
+			if ((cypd_port_force_3A(controller, port) && !pd_3a_flag) ||
+				cypd_port_3a_status(controller, port)) {
+				if (!cypd_port_3a_set(controller, port))
+					return;
+				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+				if (rv != EC_SUCCESS) {
+					CPRINTS("PD Select PDO 3A failed");
+					pd_3a_set = 0;
+					cypd_set_prepare_pdo(controller, port);
+					return;
+				}
+			} else if (rdo_max_current <= 1500 &&
+					!cypd_profile_check(controller, port)) {
+				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+				if (rv != EC_SUCCESS) {
+					CPRINTS("PD Select PDO 1.5A failed");
+					cypd_set_prepare_pdo(controller, port);
+					return;
+				}
+				cypd_port_1_5a_set(controller, port);
+			} else if (!pd_3a_flag &&
+					cypd_port_3a_set(controller, port)) {
+				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+				if (rv != EC_SUCCESS) {
+					CPRINTS("PD Select PDO 3A failed");
+					pd_3a_set = 0;
+					cypd_set_prepare_pdo(controller, port);
+					return;
+				}
+			} else if (!cypd_profile_check(controller, port)) {
+				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+				if (rv != EC_SUCCESS) {
+					CPRINTS("PD Select PDO 1.5A failed");
+					cypd_set_prepare_pdo(controller, port);
+					return;
+				}
+				cypd_port_1_5a_set(controller, port);
+			}
+		} else {
+			cypd_write_reg8(controller, CCG_PD_CONTROL_REG(port),
+				CCG_PD_CMD_SET_TYPEC_1_5A);
+		}
+	}
+
+	cypd_update_port_state(controller, port);
+}
+
+void cypd_port_current_setting(void)
+{
+	for (int i = 0; i < PD_CHIP_COUNT; i++) {
+		cypd_set_prepare_pdo(i, 0);
+		cypd_set_prepare_pdo(i, 1);
+	}
+}
+
+static void cypd_pdo_reset_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_RESET);
+}
+DECLARE_DEFERRED(cypd_pdo_reset_deferred);
+
+static void cypd_ppm_port_clear(void)
+{
+	pd_port0_1_5A = 0;
+	pd_port1_1_5A = 0;
+	pd_port2_1_5A = 0;
+	pd_port3_1_5A = 0;
+	pd_3a_set = 0;
+
+	/* need init PDO again because PD chip will clear PDO data */
+	hook_call_deferred(&pdo_init_deferred_data, 1);
 }
 
 static void cypd_update_port_state(int controller, int port)
@@ -661,6 +1037,10 @@ static void cypd_handle_state(int controller)
 			update_system_power_state(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
+			/* Update PDO format after init complete */
+			if (controller)
+				hook_call_deferred(&pdo_init_deferred_data, 1 * MSEC);
+
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CCG_STATE_READY;
 		break;
@@ -734,6 +1114,7 @@ void cypd_port_int(int controller, int port)
 		pd_port_states[port_idx].current = 0;
 		pd_port_states[port_idx].voltage = 0;
 		pd_set_input_current_limit(port_idx, 0, 0);
+		cypd_release_port(controller, port);
 		cypd_update_port_state(controller, port);
 
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
@@ -741,11 +1122,11 @@ void cypd_port_int(int controller, int port)
 		break;
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
-		cypd_update_port_state(controller, port);
+		cypd_set_prepare_pdo(controller, port);
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
-		cypd_update_port_state(controller, port);
+		cypd_set_typec_profile(controller, port);
 		break;
 	case CCG_RESPONSE_EPR_EVENT:
 		CPRINTS("CCG_RESPONSE_EPR_EVENT %d", port_idx);
@@ -833,7 +1214,8 @@ DECLARE_DEFERRED(cypd_ucsi_wait_delay_deferred);
 
 void cypd_usci_ppm_reset(void)
 {
-	hook_call_deferred(&cypd_ucsi_wait_delay_deferred_data, 1);
+	/* wait PD chip finish UCSI process */
+	hook_call_deferred(&cypd_ucsi_wait_delay_deferred_data, 500 * MSEC);
 }
 
 /*****************************************************************************/
@@ -868,7 +1250,10 @@ void cypd_interrupt_handler_task(void *p)
 		 * need setting port current again
 		 */
 		if (evt & CCG_EVT_UCSI_PPM_RESET)
-			CPRINTS("TODO: reset PD current if necessary");
+			cypd_ppm_port_clear();
+
+		if (evt & CCG_EVT_PDO_RESET)
+			cypd_port_current_setting();
 
 		if (evt & CCG_EVT_S_CHANGE)
 			update_system_power_state(2);
@@ -888,6 +1273,34 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_handle_state(1);
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
+
+		if (evt & CCG_EVT_PDO_INIT_0) {
+			/* update new PDO format to select pdo register */
+			cypd_pdo_init(0, 0, CCG_PD_CMD_SET_TYPEC_3A);
+			cypd_pdo_init(1, 0, CCG_PD_CMD_SET_TYPEC_3A);
+			task_wait_event_mask(TASK_EVENT_TIMER, 10);
+			task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_INIT_1);
+		}
+
+		if (evt & CCG_EVT_PDO_INIT_1) {
+			/* update new PDO format to select pdo register */
+			cypd_pdo_init(0, 1, CCG_PD_CMD_SET_TYPEC_3A);
+			cypd_pdo_init(1, 1, CCG_PD_CMD_SET_TYPEC_3A);
+			task_wait_event_mask(TASK_EVENT_TIMER, 10);
+		}
+
+		if (evt & CCG_EVT_PDO_C0P0)
+			cypd_set_typec_profile(0, 0);
+
+		if (evt & CCG_EVT_PDO_C0P1)
+			cypd_set_typec_profile(0, 1);
+
+		if (evt & CCG_EVT_PDO_C1P0)
+			cypd_set_typec_profile(1, 0);
+
+		if (evt & CCG_EVT_PDO_C1P1)
+			cypd_set_typec_profile(1, 1);
+
 
 		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 |
 					CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1)) {
@@ -957,6 +1370,14 @@ int board_set_active_charge_port(int charge_port)
 uint8_t *get_pd_version(int controller)
 {
 	return pd_chip_config[controller].version;
+}
+
+int active_charge_pd_chip(void)
+{
+	if (prev_charge_port == -1)
+		return 0xff;
+
+	return (prev_charge_port < 2) ? 0 : 1;
 }
 
 void set_pd_fw_update(bool is_update)

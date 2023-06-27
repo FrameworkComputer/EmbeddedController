@@ -25,10 +25,6 @@
 			enum-name = "ADC_GPU_BOARD_ID_1";
 			io-channels = <&adc0 3>;
 		};
-		adc_psys_chgr: psys-chgr {
-			enum-name = "ADC_PSYS";
-			io-channels = <&adc0 4>;
-		};
 		adc_i_adp: i-adp {
 			enum-name = "ADC_ADAPTER_CURRENT";
 			io-channels = <&adc0 5>;
@@ -42,7 +38,6 @@
 		     &adc0_chan1_gp44
 		     &adc0_chan2_gp43
 		     &adc0_chan3_gp42
-		     &adc0_chan4_gp41
 		     &adc0_chan5_gp37>;
 	pinctrl-names = "default";
 };

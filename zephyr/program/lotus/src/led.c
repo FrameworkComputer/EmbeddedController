@@ -218,7 +218,7 @@ static int match_node(int node_idx)
 		enum led_pwr_state pwr_state = led_pwr_get_state();
 		int port = charge_manager_get_active_charge_port();
 
-		if (pwr_state == LED_PWRS_DISCHARGE || pwr_state == LED_PWRS_DISCHARGE_FULL) {
+		if (port < 0) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 0);
 		} else {
@@ -251,9 +251,21 @@ static int match_node(int node_idx)
 			return -1;
 	}
 
+	/* check if this node depends on battery status */
+	if (node_array[node_idx].batt_state_mask != -1) {
+		int batt_state;
+
+		battery_status(&batt_state);
+		if ((node_array[node_idx].batt_state_mask & batt_state) !=
+		    (node_array[node_idx].batt_state_mask &
+		     node_array[node_idx].batt_state))
+			return -1;
+	}
+
 	/* Check if this node depends on battery level */
 	if (node_array[node_idx].batt_lvl[0] != -1) {
-		int curr_batt_lvl = charge_get_percent();
+		int curr_batt_lvl =
+			DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
 
 		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))

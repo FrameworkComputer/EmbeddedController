@@ -62,5 +62,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "chassis_open_interrupt";
 		};
+		int_beam_open: beam_open {
+			irq-pin = <&gpio_f_beam_open_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "beam_open_interrupt";
+		};
 	};
 };

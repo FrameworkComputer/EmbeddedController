@@ -20,6 +20,7 @@
 #include "i2c.h"
 #include "math_util.h"
 #include "system.h"
+#include "throttle_ap.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
@@ -258,7 +259,6 @@ void board_check_current(void)
 
 	if (active_port == CHARGE_PORT_NONE) {
 		curr_status = EC_DEASSERTED_PROCHOT;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 		hook_call_deferred(&board_check_current_data, 100 * MSEC);
 		return;
 	}
@@ -271,23 +271,24 @@ void board_check_current(void)
 	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > pd_get_active_current(active_port)) {
 		/* Only assert the prochot at EVT phase */
 		curr_status = EC_ASSERTED_PROCHOT;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
 		hook_call_deferred(&board_check_current_data, 10 * MSEC);
 	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		/* Don't need to de-assert the prochot when system in S5/G3 */
 		curr_status = EC_DEASSERTED_PROCHOT;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
 		hook_call_deferred(&board_check_current_data, 100 * MSEC);
 	} else {
 		curr_status = EC_DEASSERTED_PROCHOT;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 		hook_call_deferred(&board_check_current_data, 10 * MSEC);
 	}
 
-	if (curr_status != pre_status)
+	if ((curr_status != pre_status) && !chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		CPRINTS("EC %sassert prochot!! INA236 current=%d mA",
 			curr_status == EC_DEASSERTED_PROCHOT ? "de-" : "",
 			(INA2XX_SHUNT_UV(sv) / shunt_register));
+
+		throttle_ap((curr_status == EC_ASSERTED_PROCHOT) ? THROTTLE_ON : THROTTLE_OFF,
+				THROTTLE_HARD, THROTTLE_SRC_AC);
+	}
 
 	pre_status = curr_status;
 }

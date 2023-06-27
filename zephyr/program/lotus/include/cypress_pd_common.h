@@ -65,6 +65,8 @@
 /************************************************/
 #define CCG_DM_CONTROL_REG(x) \
 	(0x1000 + (x * 0x1000))
+#define CCG_SELECT_SOURCE_PDO_MASK_REG(x) \
+	(0x1002 + (x * 0x1000))
 #define CCG_SELECT_SOURCE_PDO_REG(x) \
 	(0x1004 + (x * 0x1000))
 #define CCG_SELECT_SINK_PDO_REG(x) \
@@ -211,6 +213,13 @@ enum pd_task_evt {
 	CCG_EVT_PORT_ENABLE = BIT(11),
 	CCG_EVT_PORT_DISABLE = BIT(12),
 	CCG_EVT_UCSI_PPM_RESET = BIT(13),
+	CCG_EVT_PDO_INIT_0 = BIT(16),
+	CCG_EVT_PDO_INIT_1 = BIT(17),
+	CCG_EVT_PDO_C0P0 = BIT(18),
+	CCG_EVT_PDO_C0P1 = BIT(19),
+	CCG_EVT_PDO_C1P0 = BIT(20),
+	CCG_EVT_PDO_C1P1 = BIT(21),
+	CCG_EVT_PDO_RESET = BIT(22),
 };
 
 /************************************************
@@ -465,5 +474,12 @@ int pd_get_active_current(int port);
  * @param power		The power state
  */
 void cypd_set_power_active(enum power_state power);
+
+/**
+ * Get the active charge pd chip
+ *
+ * @return int
+ */
+int active_charge_pd_chip(void);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

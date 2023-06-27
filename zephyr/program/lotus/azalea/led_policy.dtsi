@@ -85,16 +85,5 @@
 				led-color = <&color_power_off>;
 			};
 		};
-
-		chassis_open {
-			color-0 {
-				led-color = <&color_red>;
-				period-ms = <500>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <500>;
-			};
-		};
 	};
 };

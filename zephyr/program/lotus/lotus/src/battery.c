@@ -44,15 +44,13 @@ enum battery_present battery_is_present(void)
 	}
 
 	/* check the battery present pin first */
-	/* TODO: remove the comment at DVT phase
-	 * if (board_get_version() > BOARD_VERSION_4) {
-	 *	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 1) {
-	 *		k_timer_stop(&check_battery_timer);
-	 *		power_on_check_batt = 0;
-	 *		return BP_YES;
-	 *	}
-	 * }
-	 */
+	if (board_get_version() >= BOARD_VERSION_7) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 1) {
+			k_timer_stop(&check_battery_timer);
+			power_on_check_batt = 0;
+			return BP_YES;
+		}
+	}
 
 	/* try to read the battery information */
 	if (battery_device_name(text, sizeof(text))) {
@@ -83,8 +81,12 @@ static void battery_percentage_control(void)
 {
 	enum ec_charge_control_mode new_mode;
 	static int in_percentage_control;
+	uint32_t memmap_cap = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	uint32_t memmap_lfcc = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	uint32_t batt_os_percentage;
 	int rv;
 
+	batt_os_percentage = 1000 * memmap_cap / (memmap_lfcc + 1);
 	/**
 	 * If the host command EC_CMD_CHARGE_CONTROL set control mode to CHARGE_CONTROL_DISCHARGE
 	 * or CHARGE_CONTROL_IDLE, ignore the battery_percentage_control();
@@ -97,14 +99,14 @@ static void battery_percentage_control(void)
 
 	if (charging_maximum_level & CHG_LIMIT_OVERRIDE) {
 		new_mode = CHARGE_CONTROL_NORMAL;
-		if (charge_get_percent() == 100)
+		if (batt_os_percentage == 1000)
 			charging_maximum_level = charging_maximum_level | 0x64;
 	} else if (charging_maximum_level < 20)
 		new_mode = CHARGE_CONTROL_NORMAL;
-	else if (charge_get_percent() > charging_maximum_level) {
+	else if (batt_os_percentage > charging_maximum_level * 10) {
 		new_mode = CHARGE_CONTROL_DISCHARGE;
 		in_percentage_control = 1;
-	} else if (charge_get_percent() == charging_maximum_level) {
+	} else if (batt_os_percentage == charging_maximum_level * 10) {
 		new_mode = CHARGE_CONTROL_IDLE;
 		in_percentage_control = 1;
 	} else {
