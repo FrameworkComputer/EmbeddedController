@@ -350,7 +350,7 @@ measuring power.
 #### MCU is idle
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:off
+(chroot) $ dut-control fpmcu_slp:off
 ```
 
 ```
@@ -367,7 +367,7 @@ measuring power.
 #### MCU in low power mode (suspend)
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:on
+(chroot) $ dut-control fpmcu_slp:on
 ```
 
 ```
@@ -411,7 +411,7 @@ measuring power.
 #### MCU is idle
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:off
+(chroot) $ dut-control fpmcu_slp:off
 ```
 
 ```
@@ -426,7 +426,7 @@ measuring power.
 #### MCU in low power mode (suspend)
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:on
+(chroot) $ dut-control fpmcu_slp:on
 ```
 
 ```
