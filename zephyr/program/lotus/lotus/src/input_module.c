@@ -72,12 +72,7 @@ static void scan_c_deck(bool full_scan)
 
 static void board_input_module_init(void)
 {
-	/* Illuminate motherboard and daughter board LEDs equally to start. */
-	if (flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER) == 0) {
-		deck_state = DECK_NO_DETECTION;
-	} else {
-		deck_state = DECK_OFF;
-	}
+	deck_state = DECK_OFF;
 }
 DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT);
 
@@ -132,26 +127,18 @@ DECLARE_HOOK(HOOK_TICK, poll_c_deck, HOOK_PRIO_DEFAULT);
 
 static void input_modules_powerup(void)
 {
-	if (deck_state == DECK_NO_DETECTION) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
-	} else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON) {
+	if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON)
 		deck_state = DECK_DISCONNECTED;
-	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, input_modules_powerup, HOOK_PRIO_DEFAULT);
 
-static void input_modules_powerdown(void)
+void input_modules_powerdown(void)
 {
-	if (deck_state == DECK_NO_DETECTION) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
-	} else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON) {
-		deck_state = DECK_OFF;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
-		/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD*/
-		set_hub_mux(TOP_ROW_NOT_CONNECTED);
-	}
+	deck_state = DECK_OFF;
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+	/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD*/
+	set_hub_mux(TOP_ROW_NOT_CONNECTED);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_modules_powerdown, HOOK_PRIO_DEFAULT);
 
 int get_deck_state(void)
 {
