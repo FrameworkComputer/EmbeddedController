@@ -590,7 +590,6 @@ static void peripheral_power_resume(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_kbl_pwr_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 
@@ -608,7 +607,6 @@ static void peripheral_power_suspend(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_kbl_pwr_en), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
 
